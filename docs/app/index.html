@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HNK Web Studio v2.1 — One-Tap AI Studio</title>
-<meta name="description" content="Browser ထဲမှာ One-Tap 90 + Visual Library 355 + Smart Workflow 8 + Retouch Pro 50 — HNK Create Studio Web App v2.1">
+<meta name="description" content="Browser ထဲမှာ One-Tap Workflow 119 + Visual Library 355 + Smart Workflow 8 + Retouch Pro 50 — HNK Create Studio Web App v2.1">
 <meta name="theme-color" content="#0b0d14">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="lib/icon-512.png">
@@ -124,7 +124,7 @@ select.inp{padding:9px 10px}
   <h1>Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ</h1>
   <p class="lede">Plugin ရဲ့ တကယ့် prompt data အစစ်ကို web ထဲ တိုက်ရိုက်ထည့်ထား — Preset · Wedding Suite · Lighting · Retouch Pro · Camera အကုန်။</p>
   <div class="statline">
-    <div><b id="stTapCount">90</b><span>One-Tap</span></div>
+    <div><b id="stTapCount">119</b><span>One-Tap Workflows</span></div>
     <div><b>355</b><span>Visual Library</span></div>
     <div><b>8</b><span>Smart Workflow</span></div>
     <div><b>50</b><span>Retouch Pro</span></div>
@@ -359,6 +359,38 @@ function refNote(needRef){
   return "IMAGE 1 (ပင်မပုံ) + IMAGE 2 (reference) နှစ်ပုံလိုတယ်";
 }
 
+/* Panel-exact tables: Create page Prompt Library + Image→Prompt scene builder */
+var PROMPT_LIB = [
+  ["Studio Portrait", "studio portrait of a person, soft key light with large octabox, subtle rim light, clean seamless grey backdrop, 85mm f1.8 look, natural skin texture"],
+  ["Golden Hour", "outdoor portrait at golden hour, warm backlight and gentle lens flare, creamy bokeh, soft rim light on hair, cinematic color"],
+  ["Vietnam Soft", "soft airy beauty portrait, pastel tones, gentle glow, delicate makeup, dreamy Vietnamese aesthetic, fine skin detail"],
+  ["Douyin Glam", "Douyin-style glam portrait, glossy skin, bright even light, sharp catchlights, high-fashion makeup, ultra clean retouch"],
+  ["Editorial B&W", "high-fashion black and white editorial portrait, dramatic Rembrandt lighting, deep contrast, fine film grain"],
+  ["Wedding Field", "bride in white gown standing in a green field at sunset, flowing veil in the wind, warm romantic light, luxury editorial wedding photograph"],
+  ["Product Clean", "product photograph on a clean seamless background, soft gradient light, crisp reflections, commercial studio quality"],
+  ["Cyberpunk Night", "cinematic cyberpunk street at night, neon signage, wet reflective ground, moody teal and magenta lighting, volumetric haze"]
+];
+var I2P_SECTIONS = {
+  bg: "BACKGROUND: every element of the background - walls, sky, landscape, architecture, textures, depth layers and their exact appearance.",
+  fg: "FOREGROUND: any foreground elements - props, plants, fabrics, bokeh objects - their position, distance and blur.",
+  objects: "OBJECTS & PROPS: every visible object with its material, color, condition, position and relative scale.",
+  light: "LIGHTING: every light source, its direction, quality (hard/soft), intensity, shadows, highlights, time of day and atmosphere.",
+  color: "COLOR: the full color palette, grading style, saturation, contrast character and overall mood."
+};
+var I2P_LABELS = { objects: "Objects & Props", light: "Lighting", color: "Color", bg: "Background", fg: "Foreground" };
+var SCENE_ADAPT_ON = "Re-light and color-grade the IMAGE 1 subject so they naturally match the new scene's lighting direction, intensity and color palette.";
+state.i2p = { objects: true, light: true, color: true, bg: true, fg: true };
+function buildExtractPrompt(){
+  var secs=[];
+  for (var k in I2P_SECTIONS){ if(state.i2p[k]) secs.push("- "+I2P_SECTIONS[k]); }
+  if(!secs.length) return "";
+  return "Analyze IMAGE 1 and write ONE exhaustive photographic scene description to be used as an AI image-generation prompt.\n"+
+    "CRITICAL: EXCLUDE every person, human figure, face and body completely - describe the scene as if it were empty of people.\n"+
+    "Describe in rich detail:\n"+secs.join("\n")+
+    "\nAlways also state: location type, time of day, atmosphere, and the camera angle / lens feel of the original photo.\n"+
+    "Output ONLY the scene description in English as flowing prose (no lists, no headings, no explanations, no quotes). Maximum 2500 characters.";
+}
+
 var PRESET_GROUPS = [
   ["Composite / Style", ["fgProps","textLogo","style","fgbglc","hair","access","pose"]],
   ["Subject Replace", ["repSolo","repCouple","repFamily"]],
@@ -467,6 +499,54 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   gm.b.appendChild(el("div","mut","တစ်ခုထက်ပိုပေါင်းချင်ရင် Add-ons ထဲက Replace Mix toggle တွေသုံးပါ"));
   host.appendChild(gm.g);
 
+  var gpl = grp("📝 Prompt Library", PROMPT_LIB.length+" ခု", false);
+  var plchips=el("div","chips");
+  PROMPT_LIB.forEach(function(p){
+    total++;
+    plchips.appendChild(tapChip(p[0], p[1], function(){
+      applyTap(p[1], "Prompt Library · "+p[0]);
+    }));
+  });
+  gpl.b.appendChild(plchips);
+  host.appendChild(gpl.g);
+
+  var gi = grp("🏞 Scene Builder (Image → Prompt)", "5 ခု", false);
+  gi.b.appendChild(el("div","mut","IMAGE 2 (scene ဓာတ်ပုံ) ကို AI နဲ့ ခွဲခြမ်းပြီး scene prompt အသေးစိတ် ထုတ်ယူတယ် — ရွေးထားတဲ့ အပိုင်းတွေကိုပဲ ဖော်ပြမယ်"));
+  var ichips=el("div","chips");
+  Object.keys(I2P_SECTIONS).forEach(function(k){
+    total++;
+    var c=el("button","chip"+(state.i2p[k]?" on":""), I2P_LABELS[k]);
+    c.title=I2P_SECTIONS[k];
+    c.onclick=function(){ state.i2p[k]=!state.i2p[k]; c.className="chip"+(state.i2p[k]?" on":""); };
+    ichips.appendChild(c);
+  });
+  gi.b.appendChild(ichips);
+  var irow=el("div","row"); irow.style.marginTop="10px";
+  var ibtn=el("button","btn btn-gold","🪄 Scene ထုတ်ယူ → Prompt");
+  ibtn.onclick=async function(){
+    if(!state.key){ setSt("stGen","အဆင့် 1 မှာ API key အရင်ထည့်ပါ","err"); $("cardKey").scrollIntoView({behavior:"smooth"}); return; }
+    var src = state.refs[1] || state.refs[0];
+    if(!src){ setSt("stGen","Scene ခွဲခြမ်းဖို့ IMAGE 2 (ဒါမှမဟုတ် IMAGE 1) အရင်တင်ပါ","err"); return; }
+    var instr=buildExtractPrompt();
+    if(!instr){ setSt("stGen","အပိုင်း တစ်ခုလောက်တော့ ရွေးပါ","err"); return; }
+    ibtn.disabled=true; ibtn.textContent="ခွဲခြမ်းနေသည်…";
+    try{
+      var out=await geminiText([
+        { text: instr },
+        { text: "IMAGE 1:" },
+        { inline_data: { mime_type: src.mime, data: src.b64 } }
+      ]);
+      if(!out) throw new Error("empty");
+      applyTap(out.slice(0,2500)+"\n\n"+D.guards.sceneFit+"\n"+SCENE_ADAPT_ON+"\n"+D.guards.sceneGuard,
+        "Scene Builder · scene ထုတ်ပြီး — IMAGE 1 (subject) နဲ့ Generate နှိပ်ပါ");
+      setSt("stGen","Scene prompt ထုတ်ပြီး ✓","ok");
+    }catch(e){ setSt("stGen","ခွဲခြမ်းမရ — "+((e&&e.message)||e),"err"); }
+    ibtn.disabled=false; ibtn.textContent="🪄 Scene ထုတ်ယူ → Prompt";
+  };
+  irow.appendChild(ibtn);
+  gi.b.appendChild(irow);
+  host.appendChild(gi.g);
+
   var gr = grp("✨ Retouch Pro", D.retouch.sliders.length+" ခု", false);
   var srow=el("div","row");
   srow.appendChild(el("span","mut","အားပြင်း:"));
@@ -485,7 +565,8 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   gr.b.appendChild(el("div","mut","Chip တွေက toggle — ဖွင့်ထားသမျှ Generate မှာ Retouch block အဖြစ် ပေါင်းသွားမယ် (Add-ons summary မှာ ပြ)"));
   host.appendChild(gr.g);
 
-  $("stTapCount").textContent = String(total);
+  /* site-audit parity: taps + 8 style chains + 8 staged workflows = 119 */
+  $("stTapCount").textContent = String(total + D.chains.length + LW.workflows.length);
 })();
 
 function rtLabel(s){
@@ -709,10 +790,11 @@ if ("serviceWorker" in navigator) {
 }
 
 /* ---------- generate ---------- */
-async function geminiText(prompt){
+async function geminiText(promptOrParts){
+  var parts = typeof promptOrParts === "string" ? [{text: promptOrParts}] : promptOrParts;
   var r=await fetch(API_BASE+"/models/"+MODEL_TEXT+":generateContent?key="+encodeURIComponent(state.key),{
     method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+    body:JSON.stringify({contents:[{parts:parts}]})});
   var j=await r.json().catch(function(){return null;});
   var t=j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts;
   return (t&&t[0]&&t[0].text)||"";
