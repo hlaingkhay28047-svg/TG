@@ -285,17 +285,17 @@ textarea.wiz-prompt{min-height:220px}
   </section>
 
   <section class="card">
-    <h2>ဘယ်စက်မှာမဆို သုံးလို့ရတယ်</h2>
+    <h2 id="platH2"></h2>
     <div class="subh">📱 Android</div>
-    <p class="mut">Chrome နဲ့ဖွင့် → menu (⋮) → <b style="color:var(--gold-hi)">"Add to Home screen" / "Install app"</b> → app icon နဲ့ တစ်ချက်နှိပ်ဖွင့်လို့ရပြီ။</p>
+    <p class="mut" id="platP1"></p>
     <div class="subh">🍎 iPhone / iPad (iOS)</div>
-    <p class="mut">Safari နဲ့ဖွင့် → Share (⬆︎) ခလုတ် → <b style="color:var(--gold-hi)">"Add to Home Screen"</b> → home screen မှာ HNK icon ပေါ်လာမယ်။</p>
+    <p class="mut" id="platP2"></p>
     <div class="subh">💻 Windows / Mac (Browser)</div>
-    <p class="mut">Chrome / Edge မှာ address bar ညာဘက်က <b style="color:var(--gold-hi)">install (⊕) icon</b> နှိပ်ရင် desktop app လို သီးသန့် window နဲ့ ပွင့်မယ်။</p>
-    <div class="subh">🎨 Photoshop (Windows / Mac) — အင်္ဂါရပ် အပြည့်ဆုံး</div>
-    <p class="mut">CCX ဖိုင် download → double-click → Creative Cloud က install ပေးမယ် → Photoshop ထဲ Plugins → HNK Ai Panel။ RunningHub Enterprise engine · Layer တိုက်ရိုက်ထည့် · Retouch slider 50 အပြည့် — panel မှာသာ ရတယ်။</p>
+    <p class="mut" id="platP3"></p>
+    <div class="subh" id="platPS"></div>
+    <p class="mut" id="platP4"></p>
     <div class="row" style="margin-top:10px">
-      <a class="btn grow" href="../" style="text-align:center">Website ကြည့်ရန်</a>
+      <a class="btn grow" href="../" style="text-align:center" id="siteLink"></a>
       <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.1.1.ccx" download style="text-align:center">CCX Download (v6.1.1)</a>
     </div>
   </section>
@@ -320,7 +320,7 @@ textarea.wiz-prompt{min-height:220px}
   </section>
 
   <section class="card">
-    <h2>Visual Library <span class="mut" style="text-transform:none;letter-spacing:0">— 355 ပုံ</span></h2>
+    <h2>Visual Library <span class="mut" style="text-transform:none;letter-spacing:0">— 355</span></h2>
     <div class="row">
       <input class="inp grow" id="libSearch" placeholder="ရှာရန် — wedding, child, lighting, myanmar…">
     </div>
@@ -374,8 +374,8 @@ textarea.wiz-prompt{min-height:220px}
     <div class="row" id="genOpts">
       <select class="inp" id="selModel" style="flex:1">
         <option value="auto">Model: Auto</option>
-        <option value="gemini-2.5-flash-image">Flash (မြန်)</option>
-        <option value="gemini-3-pro-image-preview">Pro (အရည်အသွေး)</option>
+        <option value="gemini-2.5-flash-image" id="optFlash"></option>
+        <option value="gemini-3-pro-image-preview" id="optPro"></option>
       </select>
       <select class="inp" id="selRatio" style="flex:1">
         <option value="">Ratio: Auto</option>
@@ -401,7 +401,7 @@ textarea.wiz-prompt{min-height:220px}
     <button class="btn btn-gold gen" id="btnGen">⚡ GENERATE</button>
     <div class="spin" id="spin">တိုက်ရိုက် ထုတ်နေပါတယ် — စက္ကန့် ၂၀-၆၀ လောက် စောင့်ပါ…</div>
     <div class="status" id="stGen"></div>
-    <button class="btn" id="btnRetry" style="display:none;margin-top:8px">🔄 ပြန်စမ်းမယ်</button>
+    <button class="btn" id="btnRetry" style="display:none;margin-top:8px"></button>
   </section>
 
   <section class="card result-box" id="resultBox">
@@ -412,7 +412,7 @@ textarea.wiz-prompt{min-height:220px}
       <button class="btn" id="btnToRef"></button>
       <button class="btn" id="btnCmp">🆚 Before/After</button>
     </div>
-    <div class="subh" style="margin-top:12px">➡ ရလဒ်ကို ဆက်ပြင်မယ်</div>
+    <div class="subh" style="margin-top:12px" id="chainH"></div>
     <div class="chainrow" id="chainRow"></div>
     <div id="cmpWrap" style="display:none;margin-top:12px">
       <div class="cmp" id="cmpBox">
@@ -455,13 +455,13 @@ textarea.wiz-prompt{min-height:220px}
 </div></footer>
 
 <div class="onb" id="onb"><div class="onb-card">
-  <h3>👋 HNK Web Studio မှ ကြိုဆိုပါတယ်</h3>
-  <div class="onb-step"><span class="n">1</span><span><b>Setup</b> tab မှာ Gemini API key ထည့်ပါ — aistudio.google.com/apikey မှာ အခမဲ့ရ၊ တစ်ခါထည့်ရုံပဲ</span></div>
-  <div class="onb-step"><span class="n">2</span><span><b>Library</b> ဒါမှမဟုတ် ဖုန်းထဲက ကိုယ့်ပုံကို IMAGE 1 အဖြစ် ရွေးပါ</span></div>
-  <div class="onb-step"><span class="n">3</span><span><b>Workflow</b> ထဲက ကြိုက်တဲ့ card နှိပ်ပြီး wizard အတိုင်း Generate — ပြီးပြီ!</span></div>
+  <h3 id="onbH"></h3>
+  <div class="onb-step"><span class="n">1</span><span id="onb1"></span></div>
+  <div class="onb-step"><span class="n">2</span><span id="onb2"></span></div>
+  <div class="onb-step"><span class="n">3</span><span id="onb3"></span></div>
   <div class="row" style="margin-top:16px">
-    <button class="btn btn-gold grow" id="onbKey">🔑 Key အရင်ထည့်မယ်</button>
-    <button class="btn grow" id="onbSkip">စကြည့်မယ် →</button>
+    <button class="btn btn-gold grow" id="onbKey"></button>
+    <button class="btn grow" id="onbSkip"></button>
   </div>
 </div></div>
 <nav class="tabbar" id="tabbar"></nav>
@@ -531,6 +531,8 @@ var TR_X = {"hero_h1": {"shn": "One-Tap ၶွင် Photoshop panel ႁွတ�
 var TR_NEW = {"banner_key": {"my": "🔑 API key မထည့်ရသေးပါ — ဒီမှာနှိပ်ပြီး Setup မှာ ထည့်ပါ (တစ်ခါထည့်ရုံပဲ)", "en": "🔑 No API key yet — tap here to add it in Setup (one time only)", "shn": "🔑 ပႆႇသႂ်ႇ API key — ၼဵၵ်းတီႈၼႆႈသေ သႂ်ႇတီႈ Setup", "kac": "🔑 API key rai n bang shi — ndai dip nna Setup hta bang u", "th": "🔑 ยังไม่มี API key — แตะที่นี่เพื่อใส่ใน Setup (ครั้งเดียว)", "zh": "🔑 尚未填写 API key — 点此前往 Setup 填写（仅需一次）", "vi": "🔑 Chưa có API key — chạm vào đây để thêm trong Setup (chỉ một lần)", "id": "🔑 Belum ada API key — ketuk di sini untuk mengisi di Setup (sekali saja)", "ms": "🔑 Belum ada API key — ketik di sini untuk isi di Setup (sekali sahaja)"}, "share_h2": {"my": "မိတ်ဆွေတွေကို ဝေမျှရန်", "en": "Share with friends", "shn": "ၽႄႈပၼ်ဢူၺ်းၵေႃႉ", "kac": "Manang ni hpe garan u", "th": "แชร์ให้เพื่อน", "zh": "分享给朋友", "vi": "Chia sẻ với bạn bè", "id": "Bagikan ke teman", "ms": "Kongsi dengan rakan"}, "share_p": {"my": "Link ကို Messenger / Telegram / Viber ဘယ်မှာပို့ပို့ — HNK logo နဲ့ preview card လှလှလေး ပေါ်ပြီး နှိပ်လိုက်တာနဲ့ ဒီ app ထဲ တန်းရောက်မယ်။", "en": "Paste the link anywhere — Messenger, Telegram, Viber — a beautiful HNK preview card appears, and one tap opens this app.", "shn": "သူင်ႇ link တီႈလႂ်ၵေႃႈလႆႈ — preview card ႁၢင်ႈလီ တေဢွၵ်ႇမႃး၊ ၼဵၵ်းၺႃး ၶဝ်ႈ app ၵမ်းလဵဝ်", "kac": "Link hpe gara kaw tim shagun u — preview card tsawm ai pru na, dip yang app hta shang na", "th": "วางลิงก์ที่ไหนก็ได้ — จะขึ้นการ์ดพรีวิวสวย ๆ แตะแล้วเข้าแอปทันที", "zh": "把链接粘贴到任何地方 — 会显示精美的预览卡片，点一下即可打开应用", "vi": "Dán link ở bất cứ đâu — thẻ xem trước đẹp sẽ hiện ra, chạm là mở app", "id": "Tempel tautan di mana saja — kartu pratinjau cantik muncul, sekali ketuk langsung buka", "ms": "Tampal pautan di mana-mana — kad pratonton cantik muncul, satu ketikan terus buka"}, "share_btn": {"my": "📤 Share Link", "en": "📤 Share Link", "shn": "📤 ၽႄႈ Link", "kac": "📤 Link garan", "th": "📤 แชร์ลิงก์", "zh": "📤 分享链接", "vi": "📤 Chia sẻ link", "id": "📤 Bagikan tautan", "ms": "📤 Kongsi pautan"}, "copy_btn": {"my": "🔗 Link ကူးယူ", "en": "🔗 Copy Link", "shn": "🔗 ၶူတ်ႉ Link", "kac": "🔗 Link copy", "th": "🔗 คัดลอกลิงก์", "zh": "🔗 复制链接", "vi": "🔗 Sao chép link", "id": "🔗 Salin tautan", "ms": "🔗 Salin pautan"}};
 Object.keys(TR_X).forEach(function(k){ if(TR[k]) Object.keys(TR_X[k]).forEach(function(l){ TR[k][l]=TR_X[k][l]; }); });
 Object.keys(TR_NEW).forEach(function(k){ TR[k]=TR_NEW[k]; });
+var TR_MORE={"lb_src": {"my": "Ref ပုံ", "en": "SOURCE", "shn": "Ref", "kac": "Source", "th": "ต้นทาง", "zh": "来源", "vi": "NGUỒN", "id": "SUMBER", "ms": "SUMBER"}, "lb_res": {"my": "ရလဒ်", "en": "RESULT", "shn": "ၽွၼ်းလႆႈ", "kac": "Lachyum", "th": "ผลลัพธ์", "zh": "结果", "vi": "KẾT QUẢ", "id": "HASIL", "ms": "HASIL"}, "lb_before": {"my": "မူရင်း", "en": "BEFORE", "shn": "မိူဝ်ႈဢွၼ်", "kac": "Shawng", "th": "ก่อน", "zh": "之前", "vi": "TRƯỚC", "id": "SEBELUM", "ms": "SEBELUM"}, "lb_after": {"my": "ပြင်ပြီး", "en": "AFTER", "shn": "ဝၢႆးလင်", "kac": "Hpang", "th": "หลัง", "zh": "之后", "vi": "SAU", "id": "SESUDAH", "ms": "SELEPAS"}, "wf_note": {"my": "Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · Web version က Gemini engine နဲ့ အလုပ်လုပ်တယ်", "en": "Tap any card to open its wizard — Guide → Images → Generate · web version runs on the Gemini engine"}, "sb_note": {"my": "IMAGE 2 (scene ဓာတ်ပုံ) ကို AI နဲ့ ခွဲခြမ်းပြီး scene prompt အသေးစိတ် ထုတ်ယူတယ် — ရွေးထားတဲ့ အပိုင်းတွေကိုပဲ ဖော်ပြမယ်", "en": "Analyzes IMAGE 2 (a scene photo) with AI and extracts a detailed scene prompt — only the ticked aspects are described"}, "sb_btn": {"my": "🪄 Scene ထုတ်ယူ → Prompt", "en": "🪄 Extract Scene → Prompt"}, "rt_strength": {"my": "အားပြင်း:", "en": "Strength:"}, "rt_note": {"my": "Chip တွေက toggle — ဖွင့်ထားသမျှ Generate မှာ Retouch block အဖြစ် ပေါင်းသွားမယ် (Add-ons summary မှာ ပြ)", "en": "Chips are toggles — everything enabled blends into Generate as a retouch block (shown in the Add-ons summary)"}, "addon_on": {"my": "ဖွင့်ထား: {B} — Generate မှာ အလိုအလျောက် ပေါင်းမယ်", "en": "Active: {B} — blends automatically into Generate"}, "addon_off": {"my": "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်", "en": "Nothing enabled — that’s fine too"}, "retry": {"my": "🔄 ပြန်စမ်းမယ်", "en": "🔄 Retry"}, "chain_h": {"my": "➡ ရလဒ်ကို ဆက်ပြင်မယ်", "en": "➡ Continue editing this result"}, "opt_flash": {"my": "Flash (မြန်)", "en": "Flash (fast)"}, "opt_pro": {"my": "Pro (အရည်အသွေး)", "en": "Pro (quality)"}, "plat_h2": {"my": "ဘယ်စက်မှာမဆို သုံးလို့ရတယ်", "en": "Works on every device"}, "plat_p1": {"my": "Chrome နဲ့ဖွင့် → menu (⋮) → “Add to Home screen” / “Install app” → app icon နဲ့ တစ်ချက်နှိပ်ဖွင့်လို့ရပြီ။", "en": "Open in Chrome → menu (⋮) → “Add to Home screen” / “Install app” → launch from an app icon."}, "plat_p2": {"my": "Safari နဲ့ဖွင့် → Share (⬆︎) ခလုတ် → “Add to Home Screen” → home screen မှာ HNK icon ပေါ်လာမယ်။", "en": "Open in Safari → Share (⬆︎) → “Add to Home Screen” → the HNK icon appears on your home screen."}, "plat_p3": {"my": "Chrome / Edge မှာ address bar ညာဘက်က install (⊕) icon နှိပ်ရင် desktop app လို သီးသန့် window နဲ့ ပွင့်မယ်။", "en": "In Chrome / Edge, click the install (⊕) icon in the address bar to run it as a desktop app."}, "plat_p4": {"my": "CCX ဖိုင် download → double-click → Creative Cloud က install ပေးမယ် → Photoshop ထဲ Plugins → HNK Ai Panel။ RunningHub Enterprise engine · Layer တိုက်ရိုက်ထည့် · Retouch slider 50 အပြည့် — panel မှာသာ ရတယ်။", "en": "Download the CCX → double-click → Creative Cloud installs it → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · direct layer placement · full 50-slider retouch — panel only."}, "plat_ps": {"my": "🎨 Photoshop (Windows / Mac) — အင်္ဂါရပ် အပြည့်ဆုံး", "en": "🎨 Photoshop (Windows / Mac) — fullest feature set"}, "site_link": {"my": "Website ကြည့်ရန်", "en": "View website"}, "onb_h": {"my": "👋 HNK Web Studio မှ ကြိုဆိုပါတယ်", "en": "👋 Welcome to HNK Web Studio"}, "onb_1": {"my": "Setup tab မှာ Gemini API key ထည့်ပါ — aistudio.google.com/apikey မှာ အခမဲ့ရ၊ တစ်ခါထည့်ရုံပဲ", "en": "Add your Gemini API key in the Setup tab — free at aistudio.google.com/apikey, one time only"}, "onb_2": {"my": "Library ဒါမှမဟုတ် ဖုန်းထဲက ကိုယ့်ပုံကို IMAGE 1 အဖြစ် ရွေးပါ", "en": "Pick your photo as IMAGE 1 — from the Library or your phone"}, "onb_3": {"my": "Workflow ထဲက ကြိုက်တဲ့ card နှိပ်ပြီး wizard အတိုင်း Generate — ပြီးပြီ!", "en": "Tap any Workflow card and follow the wizard to Generate — done!"}, "onb_key": {"my": "🔑 Key အရင်ထည့်မယ်", "en": "🔑 Add key first"}, "onb_skip": {"my": "စကြည့်မယ် →", "en": "Explore first →"}};
+Object.keys(TR_MORE).forEach(function(k){ TR[k]=TR_MORE[k]; });
 function t(k){ var e=TR[k]; return e ? (e[LANG]!==undefined ? e[LANG] : (e.en!==undefined ? e.en : e.my)) : k; }
 function applyLang(){
   $("heroH1").innerHTML=t("hero_h1");
@@ -567,6 +569,23 @@ function applyLang(){
   };
   /* new multilingual statics */
   $("keyBanner").textContent=t("banner_key");
+  $("btnRetry").textContent=t("retry");
+  $("chainH").textContent=t("chain_h");
+  $("optFlash").textContent=t("opt_flash");
+  $("optPro").textContent=t("opt_pro");
+  $("platH2").textContent=t("plat_h2");
+  $("platP1").textContent=t("plat_p1");
+  $("platP2").textContent=t("plat_p2");
+  $("platP3").textContent=t("plat_p3");
+  $("platP4").textContent=t("plat_p4");
+  $("platPS").textContent=t("plat_ps");
+  $("siteLink").textContent=t("site_link");
+  $("onbH").textContent=t("onb_h");
+  $("onb1").textContent=t("onb_1");
+  $("onb2").textContent=t("onb_2");
+  $("onb3").textContent=t("onb_3");
+  $("onbKey").textContent=t("onb_key");
+  $("onbSkip").textContent=t("onb_skip");
   $("shareH2").textContent=t("share_h2");
   $("shareP").textContent=t("share_p");
   $("btnShare").textContent=t("share_btn");
@@ -760,7 +779,7 @@ function renderRefStrip(){
     d.onclick=function(){ state.pickSlot=i; $("filePick").click(); };
     host.appendChild(d);
   });
-  host.appendChild(el("div","note", LANG==="en" ? "Images used by Generate — tap to change" : "Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်"));
+  host.appendChild(el("div","note", LANG!=="my" ? "Images used by Generate — tap to change" : "Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်"));
 }
 function renderRefs(){
   renderRefStrip();
@@ -1122,9 +1141,9 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     if (wiz.step===3){
       var n=state.refs.filter(Boolean).length;
       body.appendChild(el("p",null,t("wiz_ready")));
-      body.appendChild(el("p","mut",(LANG==="en"?"Images: ":"ပုံ ")+n+" · prompt "+wiz.prompt.length+(LANG==="en"?" chars · Gemini engine · guards included":" လုံး · Gemini engine · guard ပါပြီးသား")));
+      body.appendChild(el("p","mut",(LANG!=="my"?"Images: ":"ပုံ ")+n+" · prompt "+wiz.prompt.length+(LANG!=="my"?" chars · Gemini engine · guards included":" လုံး · Gemini engine · guard ပါပြီးသား")));
       body.appendChild(el("p","mut",t("wiz_gennote")));
-      var advH=el("button","wizadv-h","⚙️ Advanced — "+(LANG==="en"?"edit the prompt (optional)":"prompt ပြင်ချင်ရင် (မပြင်လည်းရ)"));
+      var advH=el("button","wizadv-h","⚙️ Advanced — "+(LANG!=="my"?"edit the prompt (optional)":"prompt ပြင်ချင်ရင် (မပြင်လည်းရ)"));
       var advB=el("div","wizadv-b");
       advB.appendChild(el("p","mut",t("wiz_promptnote")));
       var ta=document.createElement("textarea"); ta.className="inp wiz-prompt"; ta.id="wizPrompt"; ta.value=wiz.prompt;
@@ -1363,8 +1382,8 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       v.appendChild(i1); v.appendChild(ir);
       v.appendChild(el("div","dvd"));
       v.appendChild(el("span","arw","➜"));
-      v.appendChild(el("span","lb b", LANG==="en"?"SOURCE":"Ref ပုံ"));
-      v.appendChild(el("span","lb a", LANG==="en"?"RESULT":"ရလဒ်"));
+      v.appendChild(el("span","lb b", t("lb_src")));
+      v.appendChild(el("span","lb a", t("lb_res")));
       if(w.badge) v.appendChild(el("span","bdg",w.badge));
       return v;
     }
@@ -1374,8 +1393,8 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       i2.className="aft"; i2.style.filter=w.fx.a||"";
       v.appendChild(i1); v.appendChild(i2);
       v.appendChild(el("div","dvd"));
-      v.appendChild(el("span","lb b", LANG==="en"?"BEFORE":"မူရင်း"));
-      v.appendChild(el("span","lb a", LANG==="en"?"AFTER":"ပြင်ပြီး"));
+      v.appendChild(el("span","lb b", t("lb_before")));
+      v.appendChild(el("span","lb a", t("lb_after")));
     } else v.appendChild(i1);
     if(w.badge) v.appendChild(el("span","bdg",w.badge));
     return v;
@@ -1383,7 +1402,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   var wfById={}, wfIndex=[];
   function renderFavRecent(){
     var host=$("wfFavHost"); host.innerHTML="";
-    [[favList(),"⭐ Favorites"],[recentList(),"🕘 "+(LANG==="en"?"Recent":"မကြာခင်သုံးခဲ့")]].forEach(function(pair){
+    [[favList(),"⭐ Favorites"],[recentList(),"🕘 "+(LANG!=="my"?"Recent":"မကြာခင်သုံးခဲ့")]].forEach(function(pair){
       var ids=pair[0].filter(function(id){return wfById[id];});
       if(!ids.length) return;
       host.appendChild(el("div","subh",pair[1]));
@@ -1430,7 +1449,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   renderFavRecent();
   $("wfPageH2").textContent = "🧠 Smart Workflow — " + wfTotal + t("unit");
   var _swc=$("stWfCount"); if(_swc) _swc.textContent=String(wfTotal);
-  wfHost.appendChild(el("div","mut","Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · Web version က Gemini engine နဲ့ အလုပ်လုပ်တယ်"));
+  wfHost.appendChild(el("div","mut",t("wf_note")));
 
   /* live search across all 108 workflows */
   $("wfSearch").oninput=function(){
@@ -1472,7 +1491,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   })();
 
   var gi = grp("🏞 Scene Builder (Image → Prompt)", "5"+t("unit"), false);
-  gi.b.appendChild(el("div","mut","IMAGE 2 (scene ဓာတ်ပုံ) ကို AI နဲ့ ခွဲခြမ်းပြီး scene prompt အသေးစိတ် ထုတ်ယူတယ် — ရွေးထားတဲ့ အပိုင်းတွေကိုပဲ ဖော်ပြမယ်"));
+  gi.b.appendChild(el("div","mut",t("sb_note")));
   var ichips=el("div","chips");
   Object.keys(I2P_SECTIONS).forEach(function(k){
     total++;
@@ -1483,7 +1502,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   });
   gi.b.appendChild(ichips);
   var irow=el("div","row"); irow.style.marginTop="10px";
-  var ibtn=el("button","btn btn-gold","🪄 Scene ထုတ်ယူ → Prompt");
+  var ibtn=el("button","btn btn-gold",t("sb_btn"));
   ibtn.onclick=async function(){
     if(!state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); toast(t("st_needkey"),"err"); return; }
     var src = state.refs[1] || state.refs[0];
@@ -1502,7 +1521,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         "Scene Builder · scene ထုတ်ပြီး — IMAGE 1 (subject) နဲ့ Generate နှိပ်ပါ");
       setSt("stGen","Scene prompt ထုတ်ပြီး ✓","ok");
     }catch(e){ setSt("stGen","ခွဲခြမ်းမရ — "+((e&&e.message)||e),"err"); }
-    ibtn.disabled=false; ibtn.textContent="🪄 Scene ထုတ်ယူ → Prompt";
+    ibtn.disabled=false; ibtn.textContent=t("sb_btn");
   };
   irow.appendChild(ibtn);
   gi.b.appendChild(irow);
@@ -1510,7 +1529,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
 
   var gr = grp("✨ Retouch Pro", D.retouch.sliders.length+t("unit"), false);
   var srow=el("div","row");
-  srow.appendChild(el("span","mut","အားပြင်း:"));
+  srow.appendChild(el("span","mut",t("rt_strength")));
   [30,60,90].forEach(function(v){
     var b=el("button","chip"+(v===state.rtStrength?" on":""), v+"%");
     b.onclick=function(){
@@ -1523,7 +1542,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   gr.b.appendChild(srow);
   var rthost=el("div","chips"); rthost.id="rtChips";
   gr.b.appendChild(rthost);
-  gr.b.appendChild(el("div","mut","Chip တွေက toggle — ဖွင့်ထားသမျှ Generate မှာ Retouch block အဖြစ် ပေါင်းသွားမယ် (Add-ons summary မှာ ပြ)"));
+  gr.b.appendChild(el("div","mut",t("rt_note")));
   host.appendChild(gr.g);
 
   /* audit parity, data-derived: presets + wedding + relight + cleanup + mix
@@ -1739,7 +1758,7 @@ function renderAddonSummary(){
   if(buildCameraPrompt()) bits.push("Camera ✓");
   n=D.retouch.sliders.filter(function(s){return state.rt[s.key];}).length;
   if(n) bits.push("Retouch "+n+" ("+state.rtStrength+"%)");
-  $("addonSummary").innerHTML = bits.length ? "ဖွင့်ထား: <b>"+bits.join(" · ")+"</b> — Generate မှာ အလိုအလျောက် ပေါင်းမယ်" : "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်";
+  $("addonSummary").innerHTML = bits.length ? t("addon_on").replace("{B}","<b>"+bits.join(" · ")+"</b>") : t("addon_off");
   saveState();
 }
 renderAddonSummary();
@@ -1756,7 +1775,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="3.4.0";
+var APP_VER="3.4.1";
 fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
   if (v && v.v && v.v !== APP_VER){
     var t=$("toast");
@@ -1935,7 +1954,7 @@ $("btnGen").onclick = async function(){
         var overloaded = x.code===503 || /high demand|overloaded|unavailable/i.test(x.err||"");
         if(!overloaded) return x;
         return callModel(ALT_MODEL).then(function(y){
-          if(y.out){ toast(LANG==="en" ? "Busy model — switched to backup model ✓" : "Model ပြည့်နေလို့ backup model နဲ့ ထုတ်ပေးလိုက်ပြီ ✓","ok"); return y; }
+          if(y.out){ toast(LANG!=="my" ? "Busy model — switched to backup model ✓" : "Model ပြည့်နေလို့ backup model နဲ့ ထုတ်ပေးလိုက်ပြီ ✓","ok"); return y; }
           return y.err ? y : x;
         });
       });
