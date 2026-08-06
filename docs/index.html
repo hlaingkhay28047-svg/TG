@@ -142,6 +142,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
 .prov-card { border: 1px solid var(--line-soft); border-radius: 14px; background: var(--panel); padding: 22px; }
 .prov-card h3 { color: var(--gold-hi); font-size: 16px; margin-bottom: 8px; letter-spacing: 0.04em; }
 .prov-card p { font-size: 14px; color: var(--muted); }
+.prov-card.rh { border-color: var(--gold); background: linear-gradient(160deg, rgba(217,164,65,0.10), rgba(19,24,38,0.6)); }
 
 /* install — a true sequence, so numbers carry meaning */
 .steps { counter-reset: step; display: flex; flex-direction: column; gap: 14px; max-width: 640px; padding-bottom: 74px; }
@@ -160,6 +161,17 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
 }
 .step h3 { font-size: 15.5px; margin-bottom: 3px; }
 .step p { font-size: 13.5px; color: var(--muted); }
+
+
+/* ---- mobile ---- */
+@media (max-width: 640px) {
+  .kick { letter-spacing: 0.16em; font-size: 10px; }
+  .hero-in { padding: 72px 0 46px; }
+  .wf { flex-wrap: wrap; align-items: flex-start; }
+  .wf-thumb { width: 54px; height: 54px; }
+  .wf-txt { flex: 1 1 0; min-width: 200px; }
+  .wf-chips { flex: 1 1 100%; justify-content: flex-start; margin-top: 10px; }
+}
 
 /* footer */
 .foot { border-top: 1px solid var(--line-soft); padding: 34px 0 46px; }
@@ -236,15 +248,15 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
   </div>
 </div></section>
 
-<section class="sec"><div class="wrap">
+<section class="sec" id="runninghub"><div class="wrap">
   <div class="sec-head">
-    <div class="kick">Providers</div>
+    <div class="kick">Providers &middot; RunningHub Enterprise Ready</div>
     <h2>AI Engine သုံးမျိုး — ကိုယ်ကြိုက်တာရွေး</h2>
   </div>
   <div class="prov">
+    <div class="prov-card rh"><h3>RunningHub Enterprise</h3><p>Nano Banana 2/Pro · GPT Image 2 · Qwen · FLUX · WAN — Enterprise share key တစ်ခုတည်းနဲ့ model အားလုံးသုံး၊ API sample paste ရုံနဲ့ auto-fill setup။ AI Tools tab ရဲ့ Settings ထဲမှာ။</p></div>
     <div class="prov-card"><h3>Google Gemini</h3><p>Flash · Pro image models — 1K/2K/4K output၊ EN↔MY translation နဲ့ prompt improve ပါ။</p></div>
     <div class="prov-card"><h3>OpenAI GPT Image</h3><p>gpt-image-2 · gpt-image-1 — generations နဲ့ edits (reference ၁၀ ပုံအထိ multipart)။</p></div>
-    <div class="prov-card"><h3>RunningHub Enterprise</h3><p>Nano Banana 2/Pro · GPT Image 2 · Qwen · FLUX · WAN — Enterprise share key တစ်ခုတည်းနဲ့၊ API sample paste ရုံ auto-fill။</p></div>
   </div>
 </div></section>
 
