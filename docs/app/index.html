@@ -811,6 +811,7 @@ function tapChip(label, title, fn){
   return c;
 }
 function applyTap(text, note){
+  state.imgRoles=null;
   $("prompt").value = text;
   $("tapNote").textContent = note || "";
   switchPage("pgCreate");
@@ -1118,6 +1119,10 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     } else {
       var gen=el("button","btn btn-gold","⚡ GENERATE");
       gen.onclick=function(){
+        var inputs=wizInputs(w);
+        for(var ri=inputs.length; ri<state.refs.length; ri++) state.refs[ri]=null;
+        state.imgRoles=inputs.map(function(x){ return x.label; });
+        renderRefs();
         $("prompt").value=wiz.prompt;
         $("tapNote").textContent=w.title+" · Smart Workflow";
         closeWizard();
@@ -1678,7 +1683,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="3.2.0";
+var APP_VER="3.2.1";
 fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
   if (v && v.v && v.v !== APP_VER){
     var t=$("toast");
@@ -1800,8 +1805,14 @@ $("btnGen").onclick = async function(){
     $("spin").textContent=t("spin_gen");
     var parts=[];
     var refs=state.refs.filter(Boolean);
-    refs.forEach(function(r,i){
-      parts.push({text: i===0?"IMAGE "+(i+1)+" = MAIN SUBJECT (keep this person's identity exactly):":"IMAGE "+(i+1)+" = REFERENCE ONLY (style/scene, not identity):"});
+    var sendIdx=0;
+    state.refs.forEach(function(r,slot){
+      if(!r) return;
+      sendIdx++;
+      var role = state.imgRoles && state.imgRoles[slot]
+        ? state.imgRoles[slot]
+        : (slot===0 ? "MAIN SUBJECT (keep this person's identity exactly)" : "REFERENCE ONLY (style/scene, not identity)");
+      parts.push({text: "IMAGE "+sendIdx+" = "+role+":"});
       parts.push({inline_data:{mime_type:r.mime, data:r.b64}});
     });
     var blocks=[ text || "Enhance this photo naturally." ];
