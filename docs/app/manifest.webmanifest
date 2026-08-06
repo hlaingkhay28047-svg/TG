@@ -1,0 +1,14 @@
+{
+  "name": "HNK Web Studio",
+  "short_name": "HNK Studio",
+  "description": "One-Tap AI Studio — HNK Create Studio web app",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#0b0d14",
+  "theme_color": "#0b0d14",
+  "icons": [
+    { "src": "lib/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "lib/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
