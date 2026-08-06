@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v2-8";
+var CACHE = "hnk-web-studio-v2-9";
 
 self.addEventListener("install", function (e) {
   self.skipWaiting();
