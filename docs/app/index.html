@@ -1985,11 +1985,12 @@ function toggleChips(host, items, stateObj, getKey, getLabel, getTitle){
   });
   host.appendChild(chips);
 }
-function pickChips(host, items, obj, prop){
+function pickChips(host, items, obj, prop, descFn){
   var chips=el("div","chips");
   items.forEach(function(it){
     var label=it[0], val=it[1];
     var c=el("button","chip"+(obj[prop]===val?" on":""), label==="off"?"–":label);
+    if (descFn && label!=="off") { var d=descFn(it); if(d) c.title=d; }
     c.onclick=function(){
       obj[prop]=val;
       chips.querySelectorAll(".chip").forEach(function(x,idx){ x.className="chip"+(items[idx][1]===val?" on":""); });
@@ -2007,16 +2008,17 @@ function pickChips(host, items, obj, prop){
   toggleChips(host, D.cleanups, state.clean, function(c){return c.key;}, function(c){return c.label||c.key;}, function(c){return c.text.slice(0,120);});
   host.appendChild(el("div","subh",t("sub_mix")));
   toggleChips(host, D.rmix, state.rmix, function(m){return m.key;}, function(m){return m.label||m.key;}, function(m){return m.text;});
+  host.appendChild(el("div","mut",L9({my:"Camera Body → Bokeh အထိက Optional — ဓာတ်ပုံ style ကို ပိုပီပီပြင်ပြင်ဖြစ်စေချင်ရင်ပဲ ရွေးပါ၊ နှိပ်ပြီးကြည့်ရင် ရှင်းလင်းချက် ပေါ်လာမယ် — မသေချာရင် ချန်ထားလည်း ရတယ်",en:"Camera Body → Bokeh are all optional - pick them only if you want a specific photographic look; hover/tap a chip to see what it does, or skip this whole section entirely",shn:"Camera Body → Bokeh ပဵၼ် optional တင်းသဵင်ႈ — ဢဝ်ၵူၺ်းယဝ်ႉ ႁႂ်ႈလႆႈ style ၶိုၵ်ႉၶႅမ်ႉ၊ ဢမ်ႇမၢၼ်ႇၵေႃႈ ဝၢင်းဝႆႉလႆႈ",kac:"Camera Body → Bokeh yawng gaw optional re - style ra ai hte sha lata u, n chye yang ndai part hpe skip mai ai",th:"Camera Body → Bokeh ทั้งหมดเป็นตัวเลือกเสริม — เลือกเฉพาะเมื่อต้องการลุคเฉพาะ แตะดูคำอธิบายได้ หรือข้ามได้เลยถ้าไม่แน่ใจ",zh:"从 Camera Body 到 Bokeh 全部为可选项 — 只有想要特定摄影风格时才选，点按可查看说明，不确定可整段跳过",vi:"Camera Body → Bokeh đều là tùy chọn - chỉ chọn nếu muốn một phong cách nhiếp ảnh cụ thể, chạm để xem giải thích, hoặc bỏ qua nếu không chắc",id:"Camera Body → Bokeh semuanya opsional - pilih hanya jika ingin gaya foto tertentu, ketuk untuk melihat penjelasan, atau lewati jika tidak yakin",ms:"Camera Body → Bokeh semuanya pilihan - pilih hanya jika mahukan gaya foto tertentu, ketik untuk lihat penjelasan, atau langkau jika tidak pasti"})));
   host.appendChild(el("div","subh","CAMERA BODY"));
-  pickChips(host, D.camera.bodies, state.cam, "body");
+  pickChips(host, D.camera.bodies, state.cam, "body", function(it){ return it[1]; });
   host.appendChild(el("div","subh","LENS (MM)"));
-  pickChips(host, D.camera.mm, state.cam, "mm");
+  pickChips(host, D.camera.mm, state.cam, "mm", function(it){ return it[0]+"mm — "+(D.camera.mmTxt[it[0]]||""); });
   host.appendChild(el("div","subh","APERTURE"));
-  pickChips(host, D.camera.f, state.cam, "f");
+  pickChips(host, D.camera.f, state.cam, "f", function(it){ return it[0]+" — "+camFTxt(it[1]); });
   host.appendChild(el("div","subh","FILM LOOK"));
-  pickChips(host, D.camera.films, state.cam, "film");
+  pickChips(host, D.camera.films, state.cam, "film", function(it){ return it[1]; });
   host.appendChild(el("div","subh","BOKEH"));
-  pickChips(host, D.camera.bokehs, state.cam, "bokeh");
+  pickChips(host, D.camera.bokehs, state.cam, "bokeh", function(it){ return it[1]; });
 })();
 
 function camFTxt(f){
@@ -2090,7 +2092,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.0";
+var APP_VER="4.4.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
