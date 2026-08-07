@@ -185,9 +185,25 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
 
 
 /* ---- mobile ---- */
+/* phones: show the full hero artwork (2:1) at the top, text flows below it */
+@media (max-width: 720px) {
+  .hero {
+    min-height: 0;
+    display: block;
+    background-size: 100% auto;
+    background-position: top center;
+    background-repeat: no-repeat;
+    background-color: #0b0d14;
+  }
+  .hero::before {
+    background: linear-gradient(180deg,
+      rgba(11,13,20,0) 0%, rgba(11,13,20,0) 32%,
+      rgba(11,13,20,0.45) 46%, rgba(11,13,20,0.96) 62%);
+  }
+  .hero-in { padding-top: calc(50vw + 18px); padding-bottom: 46px; }
+}
 @media (max-width: 640px) {
   .kick { letter-spacing: 0.16em; font-size: 10px; }
-  .hero-in { padding-top: 72px; padding-bottom: 46px; }
 }
 
 /* footer */
