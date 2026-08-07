@@ -83,13 +83,37 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
   background: linear-gradient(180deg, rgba(11,13,20,0.55) 0%, rgba(11,13,20,0.25) 35%, rgba(11,13,20,0.94) 88%);
 }
 .hero-in { position: relative; width: 100%; padding-top: 96px; padding-bottom: 64px; }
+.hero .kick { display: inline-flex; align-items: center; gap: 10px; }
+.hero .kick::before { content: ""; width: 26px; height: 2px; background: var(--gold); flex: none; }
 .hero h1 {
   font-size: clamp(34px, 6vw, 62px);
   line-height: 1.22; font-weight: 800; text-wrap: balance;
   max-width: 17ch; margin: 14px 0 18px;
+  text-shadow: 0 2px 26px rgba(0, 0, 0, 0.5);
 }
-.hero h1 em { font-style: normal; color: var(--gold-hi); }
-.hero p.lede { max-width: 52ch; color: var(--cream); font-size: 18px; margin-bottom: 26px; }
+.hero h1 em {
+  font-style: normal; color: var(--gold-hi);
+  background: linear-gradient(115deg, #f7e2a6 0%, #e9b949 45%, #f9ecc4 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero p.lede {
+  max-width: 52ch; color: var(--cream); font-size: 18px; margin-bottom: 26px;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
+}
+.hero-cap {
+  position: absolute; right: 20px; bottom: 20px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 8px 15px; border-radius: 999px;
+  background: rgba(11, 13, 20, 0.55);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid rgba(233, 185, 73, 0.38);
+  color: #f3e7c8; font-size: 12.5px; font-weight: 700; letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.hero-cap .dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--gold); box-shadow: 0 0 10px var(--gold);
+}
 .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 34px; }
 .btn-gold {
   background: var(--gold); color: #1a1408; font-weight: 800;
@@ -201,6 +225,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
       rgba(11,13,20,0.45) 46%, rgba(11,13,20,0.96) 62%);
   }
   .hero-in { padding-top: calc(50vw + 18px); padding-bottom: 46px; }
+  .hero-cap { top: calc(50vw - 42px); bottom: auto; right: 12px; font-size: 11px; padding: 6px 12px; }
 }
 @media (max-width: 640px) {
   .kick { letter-spacing: 0.16em; font-size: 10px; }
@@ -220,7 +245,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
   <a class="nav-cta" href="download/HNK_Ai_Panel_v6.1.1.ccx" download>Download CCX</a>
 </div></nav>
 
-<header class="hero"><div class="wrap hero-in">
+<header class="hero">
+<div class="hero-cap"><span class="dot"></span>HNK Ai နဲ့ One-Tap ဖန်တီးထားတဲ့ Artwork</div>
+<div class="wrap hero-in">
   <div class="kick">HNK Create Studio · Photoshop UXP Panel · v6.1.1</div>
   <h1>Photoshop ထဲမှာ <em>AI Studio</em> တစ်ခုလုံး</h1>
   <p class="lede">မြန်မာ studio ဓာတ်ပုံဆရာတွေအတွက် — Portrait · Wedding · Graduation။ Prompt ရေး၊ Reference ထည့်၊ Generate နှိပ် — ကျန်တာ panel က တာဝန်ယူတယ်။</p>
