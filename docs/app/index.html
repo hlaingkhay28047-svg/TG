@@ -1269,19 +1269,72 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       roMkCopy:"MAKEUP SOURCE (its exact makeup is copied)",
       roMatch:"MASTER MATCH SOURCE (IMAGE 1 is matched to this photo\u2019s look)"
     };
+    /* human-friendly card summaries — never show raw prompt text on a card */
+    var PR_SUM={
+      hair:{my:"IMAGE 2 က ဆံပင်ပုံစံကို မင်းရဲ့လူပေါ် ထည့်ပေး — မျက်နှာ မပြောင်း",en:"Copy the hairstyle from IMAGE 2 onto your subject — face unchanged"},
+      access:{my:"IMAGE 2 က လက်ဝတ်ရတနာတွေ ကူးထည့် — နားကပ်၊ ဆွဲကြိုး၊ လက်ကောက်",en:"Copy the jewelry from IMAGE 2 — earrings, necklace, bracelets"},
+      pose:{my:"IMAGE 2 ရဲ့ body pose အတိုင်း ပြန် pose ချပေး — identity မပျက်",en:"Re-pose your subject to match IMAGE 2 — identity kept"},
+      style:{my:"IMAGE 2 ရဲ့ ဓာတ်ပုံ style တစ်ခုလုံး ကူးယူ — အရောင်၊ အလင်း၊ mood",en:"Transfer IMAGE 2's whole photographic style — color, light, mood"},
+      restore:{my:"ပုံဟောင်း/ပျက်နေတဲ့ပုံကို museum-quality ပြန်ပြုပြင်",en:"Restore old or damaged photos to archival quality"},
+      repSolo:{my:"IMAGE 2 scene ထဲကို မင်းရဲ့လူ အစားထိုးဝင် — မျက်နှာ identity အတိုင်း",en:"Put your person into IMAGE 2's scene, replacing its person"},
+      repCouple:{my:"IMAGE 2 scene ထဲကို မင်းရဲ့စုံတွဲ အစားထိုး — မျက်နှာနှစ်ယောက်စလုံး အတိုင်း",en:"Put your couple into IMAGE 2's scene, replacing its couple"},
+      repFamily:{my:"IMAGE 2 scene ထဲကို မိသားစုတစ်စု အစားထိုး — အယောက်ရေ/မျက်နှာ အတိုင်း",en:"Put your family into IMAGE 2's scene — same faces, same count"},
+      evoto:{my:"Evoto-style professional အသားအရေ retouch — texture မပျက်",en:"Professional Evoto-style skin retouch — texture preserved"},
+      meitu:{my:"Meitu-style beauty retouch — အသားချောနုနု",en:"Meitu-style soft beauty retouch"},
+      fgProps:{my:"IMAGE 2 ရဲ့ ရှေ့ခံ အလှဆင် props တွေ ကူးထည့်",en:"Copy IMAGE 2's decorative foreground props"},
+      textLogo:{my:"IMAGE 2 က စာသား/လိုဂိုကို ကူးထည့်",en:"Copy the text or logo element from IMAGE 2"},
+      fgbglc:{my:"Studio composite — IMAGE 2 ရဲ့ နောက်ခံ+ရှေ့ခံ+အလင်းထဲ မင်းရဲ့လူ",en:"Studio composite — your person in IMAGE 2's set and light"},
+      roFaceRep:{my:"IMAGE 2 က မျက်နှာ identity ကို ပြောင်းတင် — ခေါင်းအနေအထား/expression မူရင်းအတိုင်း",en:"Transplant IMAGE 2's facial identity — original angle and expression kept"},
+      roFaceSwap:{my:"IMAGE 2 က မျက်နှာ + expression အတိအကျ လဲထည့်",en:"Swap in IMAGE 2's face exactly — identity and expression"},
+      roBgRep:{my:"လူ မူရင်းအတိုင်း — နောက်ခံကိုပဲ IMAGE 2 နဲ့ လဲ",en:"Keep your subject — replace only the background with IMAGE 2"},
+      roBgSwap:{my:"မင်းရဲ့လူကို IMAGE 2 ရဲ့ scene ကျယ်ထဲ ထည့် — နေရာ/scale သဘာဝကျ",en:"Place your subject into IMAGE 2's world — natural spot and scale"},
+      roFgRep:{my:"ရှေ့ခံ element တွေကို IMAGE 2 ဟာနဲ့ လဲ — မျက်နှာမဖုံး",en:"Replace foreground elements with IMAGE 2's — faces never covered"},
+      roSubSwap:{my:"IMAGE 1 ထဲက လူနေရာမှာ IMAGE 2 က လူ အစားဝင် — scene မပြောင်း",en:"IMAGE 2's person takes the spot in your scene — scene unchanged"},
+      roLcRef:{my:"IMAGE 2 ရဲ့ အလင်း/အရောင် mood နဲ့ ပြန်ထွန်း — inspiration အဖြစ်",en:"Relight and regrade inspired by IMAGE 2's mood"},
+      roLcCopy:{my:"IMAGE 2 ရဲ့ အလင်းစနစ် + color grade အတိအကျ ကူးတင်",en:"Copy IMAGE 2's exact lighting setup and color grade"},
+      roDressRef:{my:"IMAGE 2 ဝတ်စုံ style ကို မှီငြမ်းပြီး ဝတ်စုံအသစ် design",en:"Design a new outfit inspired by IMAGE 2's style"},
+      roDressRep:{my:"IMAGE 2 က ဝတ်စုံ အတိအကျကို မင်းရဲ့လူပေါ် ဝတ်ပေး",en:"Put IMAGE 2's exact outfit onto your subject"},
+      roMkCopy:{my:"IMAGE 2 ရဲ့ မိတ်ကပ် အတိအကျ ကူး — identity မပြောင်း",en:"Copy IMAGE 2's exact makeup — identity unchanged"},
+      roMatch:{my:"အရောင်+အလင်း+မိတ်ကပ်+retouch style အကုန် IMAGE 2 နဲ့ တူအောင်ညှိ",en:"Match color, light, makeup and retouch style to IMAGE 2"},
+      scnGrad:{my:"နိုင်ငံတကာစတိုင် ဘွဲ့ယူ luxury indoor set ထဲ ထည့်ပေး",en:"Place your subject in a luxury international graduation set"},
+      scnPrewed:{my:"Luxury prewedding indoor set — ခန့်ညားတဲ့ မီးရောင်နဲ့",en:"A grand luxury indoor prewedding set"},
+      scnVietnam:{my:"ဗီယက်နမ် style ပျော့ပျောင်းနူးညံ့ pastel studio set",en:"A soft airy pastel Vietnamese studio set"},
+      scnMyanmar:{my:"မြန်မာ့ရိုးရာ ခန့်ညားတဲ့ set — ရွှေရောင်အလှ",en:"An elegant Myanmar traditional set"},
+      scnChinese:{my:"တရုတ် classic set — အနီရောင် ခန့်ညား",en:"A refined Chinese classical set"},
+      scnShan:{my:"ရှမ်းရိုးရာ set — ရိုးရာအလှဆင်နဲ့",en:"A Shan cultural set with traditional decor"},
+      scnNewborn:{my:"မွေးကင်းစ/ကလေး studio set — နူးညံ့ ဘေးကင်း",en:"A soft, safe newborn studio setup"},
+      scnBday:{my:"မွေးနေ့ပါတီ premium set — အသက်စာတန်းပါ",en:"A premium birthday party set with age lettering"},
+      scnScarf:{my:"ပဝါလွင့် scene — လေထဲ လွင့်နေတဲ့ ပဝါအလှ",en:"A flying-scarf scene in the wind"}
+    };
     function presetWf(p){
       var req=["Your Photo (Subject)"], opt=[];
       if(p.needRef){
         req.push(p.roles && p.roles.ref1 ? p.roles.ref1 : (REF_LBL[p.key] || "REFERENCE SOURCE (applied to IMAGE 1)"));
         if(p.roles && p.roles.ref2) opt.push(p.roles.ref2);
       }
-      return { id:"pr-"+p.key, title:p.label.replace(/\s*\(.*?\)\s*$/,""), summary:p.summary||"",
+      return { id:"pr-"+p.key, title:p.label.replace(/\s*\(.*?\)\s*$/,""),
+        summary: PR_SUM[p.key] ? L9(PR_SUM[p.key]) : (p.summary||""),
         explanation:p.summary||"", visual:findVis(kwOf(p.label, PR_KW[p.key])), req:req, opt:opt, prompt:p.text, negative:"" };
     }
     var byId={}; D.presets.forEach(function(p){ byId[p.key]=p; });
     function prs(keys){ return keys.filter(function(k){return byId[k];}).map(function(k){ return presetWf(byId[k]); }); }
+    var ST_SUM={
+      "subject-face":{my:"လူ (သို့) မျက်နှာကို base ပုံပေါ် ပြောင်းတင် — scene မပြောင်း",en:"Transfer a subject or face onto a base photo — scene kept"},
+      "retouch":{my:"သဘာဝကျကျ portrait retouch — identity အတိုင်း",en:"Natural portrait enhancement — identity kept"},
+      "bg-replace":{my:"နောက်ခံပဲ လဲ — လူ၊ pose၊ အလင်း မူရင်းအတိုင်း",en:"Replace only the background — subject, pose and light kept"},
+      "reference-transfer":{my:"Reference scene တစ်ခုလုံးယူပြီး မင်းရဲ့လူ တင် — ref ထဲက လူဖယ်",en:"Use the whole reference scene with your subject — its people removed"},
+      "upscale":{my:"ပုံကြည်အောင် upscale — detail အစစ် ပြန်ဖော်",en:"Upscale with real detail recovery"},
+      "object-edit":{my:"ပစ္စည်း ဖယ်/ထည့်/ပြောင်း — ကျန်တာ မထိ",en:"Remove, add or change objects — everything else untouched"},
+      "water-edit":{my:"ရေ/ရေပြင် ပြင်ဆင် — reflection မှန်မှန်နဲ့",en:"Water edits with correct reflections"},
+      "text-logo":{my:"စာသား/လိုဂို ထည့် — ဒီဇိုင်းအတိုင်း အတိအကျ",en:"Add text or a logo exactly as designed"},
+      "gown-perfect":{my:"ဂါဝန်ကို စင်ကြယ်ဖြူဖွေးအောင် — design မပျက်",en:"Perfect the gown to pristine white — design unchanged"},
+      "bridal-decor":{my:"Studio ကို luxury bridal ပန်းခန်းအဖြစ် ပြောင်း",en:"Transform the studio into a luxury bridal floral set"}
+    };
     var staged={}; LW.workflows.forEach(function(w){ if(!w.kind) staged[w.id]=w; });
-    function st(ids){ return ids.filter(function(id){return staged[id];}).map(function(id){return staged[id];}); }
+    function st(ids){ return ids.filter(function(id){return staged[id];}).map(function(id){
+      var w=staged[id];
+      return ST_SUM[id] ? Object.assign({}, w, { summary:L9(ST_SUM[id]) }) : w;
+    }); }
 
     var cats=[];
     var mm=LANG!=="en";
@@ -1316,7 +1369,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     });
     cats.push({ t:"💍 Wedding Suite",
       desc: L9({"my": "ပန်းလမ်း၊ ဇာခန်း၊ ဂါဝန်တန်း၊ ပန်းပွင့်မိုး၊ မြင်း/ရေ/အလင်း — wedding အထူး ၃၉ မျိုး", "en": "Flower trails, veils, gown trains, petal rain and scene extras — 39 wedding one-taps", "shn": "သဵၼ်ႈမွၵ်ႇ၊ veil၊ gown train၊ မွၵ်ႇပိဝ် — wedding 39", "kac": "Nampan lam, veil, gown train, nampan marang — wedding 39", "th": "ทางดอกไม้ วีล ชายกระโปรง ฝนกลีบดอก และฉากพิเศษ — 39 แบบ", "zh": "花径、头纱、裙摆、花瓣雨与场景加成 — 39 个婚纱一键", "vi": "Lối hoa, voan, đuôi váy, mưa cánh hoa và cảnh phụ — 39 one-tap cưới", "id": "Jalur bunga, kerudung, ekor gaun, hujan kelopak — 39 one-tap", "ms": "Laluan bunga, tudung, ekor gaun, hujan kelopak — 39 one-tap"}),
-      items: [staged["bridal-decor"]].filter(Boolean).concat(wed) });
+      items: st(["bridal-decor"]).concat(wed) });
     var lightItems = LW.items.filter(function(it){ return it.c==="Lighting"; });
     var li=0;
     cats.push({ t:"💡 Studio Relight",
@@ -1840,7 +1893,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="3.6.1";
+var APP_VER="3.6.2";
 fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
   if (v && v.v && v.v !== APP_VER){
     var t=$("toast");
