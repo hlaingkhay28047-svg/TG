@@ -2071,7 +2071,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.2.1";
+var APP_VER="4.2.2";
 fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
   if (v && v.v && v.v !== APP_VER){
     var t=$("toast");
