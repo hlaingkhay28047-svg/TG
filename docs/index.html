@@ -82,7 +82,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(11,13,20,0.55) 0%, rgba(11,13,20,0.25) 35%, rgba(11,13,20,0.94) 88%);
 }
-.hero-in { position: relative; width: 100%; padding-top: 96px; padding-bottom: 64px; }
+.hero-in { position: relative; z-index: 2; width: 100%; padding-top: 96px; padding-bottom: 64px; }
 .hero .kick { display: inline-flex; align-items: center; gap: 10px; }
 .hero .kick::before { content: ""; width: 26px; height: 2px; background: var(--gold); flex: none; }
 .hero h1 {
@@ -113,14 +113,90 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
 .hero-cap .dot {
   width: 7px; height: 7px; border-radius: 50%; flex: none;
   background: var(--gold); box-shadow: 0 0 10px var(--gold);
+  animation: capPulse 2.6s ease-in-out infinite;
+}
+@keyframes capPulse {
+  0%, 100% { box-shadow: 0 0 6px var(--gold); }
+  50% { box-shadow: 0 0 16px var(--gold), 0 0 30px rgba(233,185,73,0.55); }
+}
+
+/* ---- hero cinematic FX ---- */
+.fx-rays {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 38%, rgba(255, 224, 150, 0.14) 47%, transparent 56%),
+    linear-gradient(115deg, transparent 60%, rgba(255, 224, 150, 0.10) 68%, transparent 76%);
+  background-size: 220% 100%;
+  animation: raySweep 9s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+@keyframes raySweep {
+  from { background-position: 18% 0; opacity: 0.55; }
+  to   { background-position: 82% 0; opacity: 1; }
+}
+.fx-sparks { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.fx-sparks i {
+  position: absolute; display: block;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: radial-gradient(circle, #ffe9ae 0%, rgba(233, 185, 73, 0.85) 55%, transparent 72%);
+  box-shadow: 0 0 12px 2px rgba(233, 185, 73, 0.5);
+  opacity: 0;
+  animation: sparkFloat 7s linear infinite;
+}
+.fx-sparks i:nth-child(1) { left: 8%;  top: 74%; animation-duration: 8.5s; animation-delay: 0s;   transform: scale(0.8); }
+.fx-sparks i:nth-child(2) { left: 22%; top: 86%; animation-duration: 7.2s; animation-delay: 1.6s; transform: scale(0.55); }
+.fx-sparks i:nth-child(3) { left: 37%; top: 70%; animation-duration: 9.4s; animation-delay: 3.1s; transform: scale(1); }
+.fx-sparks i:nth-child(4) { left: 52%; top: 84%; animation-duration: 6.8s; animation-delay: 0.9s; transform: scale(0.6); }
+.fx-sparks i:nth-child(5) { left: 66%; top: 76%; animation-duration: 8.1s; animation-delay: 2.4s; transform: scale(0.9); }
+.fx-sparks i:nth-child(6) { left: 78%; top: 88%; animation-duration: 7.6s; animation-delay: 4.2s; transform: scale(0.7); }
+.fx-sparks i:nth-child(7) { left: 88%; top: 72%; animation-duration: 9s;   animation-delay: 1.2s; transform: scale(0.5); }
+.fx-sparks i:nth-child(8) { left: 45%; top: 92%; animation-duration: 8.8s; animation-delay: 5.3s; transform: scale(0.85); }
+@keyframes sparkFloat {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  12%  { opacity: 0.9; }
+  60%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-46vh) scale(1); }
+}
+
+/* entrance: staggered fade-up for hero copy */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.hero .kick, .hero h1, .hero p.lede, .hero-ctas, .hero-stats { animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hero h1 { animation-delay: 0.08s; }
+.hero p.lede { animation-delay: 0.16s; }
+.hero-ctas { animation-delay: 0.24s; }
+.hero-stats { animation-delay: 0.32s; }
+
+/* headline gold shimmer */
+.hero h1 em { background-size: 220% 100%; animation: goldShine 5s ease-in-out infinite; }
+@keyframes goldShine {
+  0%, 100% { background-position: 0% 0; }
+  50% { background-position: 100% 0; }
 }
 .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 34px; }
 .btn-gold {
   background: var(--gold); color: #1a1408; font-weight: 800;
   padding: 13px 26px; border-radius: 11px; font-size: 16px;
   border: 1px solid var(--gold);
+  position: relative; overflow: hidden;
+  box-shadow: 0 4px 22px rgba(233, 185, 73, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
-.btn-gold:hover { background: var(--gold-hi); }
+.btn-gold::after {
+  content: ""; position: absolute; top: 0; left: -70%;
+  width: 42%; height: 100%; pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-20deg);
+  animation: sheen 4.4s ease-in-out infinite;
+}
+@keyframes sheen {
+  0%, 55% { left: -70%; }
+  85%, 100% { left: 140%; }
+}
+.btn-gold:hover {
+  background: var(--gold-hi);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(233, 185, 73, 0.45);
+}
 .btn-ghost {
   border: 1px solid var(--line); color: var(--cream);
   padding: 13px 26px; border-radius: 11px; font-weight: 700; font-size: 16px;
@@ -246,6 +322,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-hi); outli
 </div></nav>
 
 <header class="hero">
+<div class="fx-rays"></div>
+<div class="fx-sparks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="hero-cap"><span class="dot"></span>HNK Ai နဲ့ One-Tap ဖန်တီးထားတဲ့ Artwork</div>
 <div class="wrap hero-in">
   <div class="kick">HNK Create Studio · Photoshop UXP Panel · v6.1.1</div>
