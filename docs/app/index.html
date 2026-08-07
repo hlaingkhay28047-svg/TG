@@ -288,7 +288,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
   <div class="keybanner" id="keyBanner">🔑 API key မထည့်ရသေးပါ — ဒီမှာနှိပ်ပြီး Setup မှာ ထည့်ပါ (တစ်ခါထည့်ရုံပဲ)</div>
   <section class="card">
-    <h2 id="wfPageH2">🧠 Smart Workflow</h2>
+    <h2 id="wfPageH2">🧠 SMART WORKFLOW</h2>
     <div class="row"><input class="inp grow" id="wfSearch" placeholder="Workflow ရှာရန် — veil, retouch, relight…"></div>
     <div id="wfFavHost"></div>
     <div id="wfHost"></div>
@@ -297,7 +297,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
 <div class="page" id="pgHome">
   <section class="card" id="cardKey">
-    <h2>Gemini API Key</h2>
+    <h2>GEMINI API KEY</h2>
     <div class="row">
       <input class="inp grow" id="apiKey" type="password" placeholder="AIza… (aistudio.google.com/apikey မှာ အခမဲ့ရ)">
       <button class="btn" id="btnShowKey"></button>
@@ -309,11 +309,11 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
   <section class="card">
     <h2 id="platH2"></h2>
-    <div class="subh">📱 Android</div>
+    <div class="subh">📱 ANDROID</div>
     <p class="mut" id="platP1"></p>
-    <div class="subh">🍎 iPhone / iPad (iOS)</div>
+    <div class="subh">🍎 IPHONE / IPAD (IOS)</div>
     <p class="mut" id="platP2"></p>
-    <div class="subh">💻 Windows / Mac (Browser)</div>
+    <div class="subh">💻 WINDOWS / MAC (BROWSER)</div>
     <p class="mut" id="platP3"></p>
     <div class="subh" id="platPS"></div>
     <p class="mut" id="platP4"></p>
@@ -343,7 +343,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   </section>
 
   <section class="card">
-    <h2>Visual Library <span class="mut" style="text-transform:none;letter-spacing:0">— 355</span></h2>
+    <h2>VISUAL LIBRARY <span class="mut" style="letter-spacing:0">— 355</span></h2>
     <div class="row">
       <input class="inp grow" id="libSearch" placeholder="ရှာရန် — wedding, child, lighting, myanmar…">
     </div>
@@ -369,7 +369,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
 <div class="page" id="pgStudio">
   <section class="card">
-    <h2>🛠 Studio Tools <span class="mut" style="text-transform:none;letter-spacing:0">— Scene Builder · Retouch Pro · Add-ons</span></h2>
+    <h2>🛠 STUDIO TOOLS <span class="mut" style="letter-spacing:0">— Scene Builder · Retouch Pro · Add-ons</span></h2>
     <div id="oneTapHost"></div>
   </section>
 
@@ -382,7 +382,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
 <div class="page" id="pgCreate">
   <section class="card">
-    <h2>Prompt</h2>
+    <h2>PROMPT</h2>
     <div class="refstrip" id="refStrip"></div>
     <textarea class="inp" id="prompt" placeholder="One-Tap နှိပ်ရင် ဒီမှာ prompt အလိုအလျောက် ရောက်လာမယ် — ကိုယ်တိုင်လည်း English/မြန်မာလို ရေးလို့ရတယ်…"></textarea>
     <div class="mut" id="tapNote" style="margin-top:6px"></div>
@@ -393,7 +393,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   </section>
 
   <section class="card">
-    <h2>Generate</h2>
+    <h2>GENERATE</h2>
     <div class="row" id="genOpts">
       <select class="inp" id="selModel" style="flex:1">
         <option value="auto">Model: Auto</option>
@@ -453,7 +453,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
 <div class="page" id="pgGallery">
   <section class="card">
-    <h2>🗂 My Gallery</h2>
+    <h2>🗂 MY GALLERY</h2>
     <p class="mut" id="galNote">ထုတ်ပြီးသမျှ ရလဒ်တွေ ဒီမှာ အလိုအလျောက် စုသိမ်းထားတယ် (ဖုန်းထဲမှာပဲ) — reload လုပ်လည်း မပျောက်ဘူး။</p>
     <div class="lib-pick" id="galPick">
       <img id="galPickImg" alt="">
@@ -1741,7 +1741,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     wfHost.appendChild(g.g);
   });
   renderFavRecent();
-  $("wfPageH2").textContent = "🧠 Smart Workflow — " + wfTotal + t("unit");
+  $("wfPageH2").textContent = "🧠 SMART WORKFLOW — " + wfTotal + t("unit");
   var _swc=$("stWfCount"); if(_swc) _swc.textContent=String(wfTotal);
   wfHost.appendChild(el("div","mut",t("wf_note")));
 
@@ -1848,7 +1848,9 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   $("stTapCount").textContent = String(tapTotal);
 })();
 
+var RT_LABEL_OVERRIDE = { bodyHairRm:"Body Hair Removal", dressColorPure:"Pure Dress Color", legLen:"Leg Length" };
 function rtLabel(s){
+  if (RT_LABEL_OVERRIDE[s.key]) return RT_LABEL_OVERRIDE[s.key];
   return s.key.replace(/([A-Z])/g," $1").replace(/^./,function(c){return c.toUpperCase();});
 }
 function rtLine(s){
@@ -1856,21 +1858,38 @@ function rtLine(s){
   var line = neg && s.lineNeg ? s.lineNeg : s.line;
   return line.replace(/\b60(?=%)/g, String(state.rtStrength));
 }
+var RT_GROUPS = [
+  { t: L9({my:"အသားအရေ",en:"Skin",shn:"ၽိဝ်ၼင်",kac:"Hpyi",th:"ผิว",zh:"皮肤",vi:"Da",id:"Kulit",ms:"Kulit"}), keys:["smooth","acne","spots","wrinkle","tone","glow"] },
+  { t: L9({my:"မျက်နှာပုံသဏ္ဌာန်",en:"Face Shape",shn:"ႁၢင်ႈၼႃႈ",kac:"Myi man mahtang",th:"รูปหน้า",zh:"脸型",vi:"Dáng mặt",id:"Bentuk wajah",ms:"Bentuk wajah"}), keys:["reshape","faceSlim","jaw","chin","noseSize","eyeSize","lipFull"] },
+  { t: L9({my:"မျက်လုံး၊ နှုတ်ခမ်း၊ မျက်ခုံး",en:"Eyes, Lips & Brows",shn:"တႃ၊ ႁွႆႇ၊ ၶိဝ်တႃ",kac:"Myi, moi, myi mahkang",th:"ตา ริมฝีปาก คิ้ว",zh:"眼睛、嘴唇与眉毛",vi:"Mắt, môi & lông mày",id:"Mata, bibir & alis",ms:"Mata, bibir & kening"}), keys:["lash","brow","lipSmooth","teeth","eyeWhite"] },
+  { t: L9({my:"ဆံပင်",en:"Hair",shn:"ၶူၼ်ႁူဝ်",kac:"Kara",th:"ผม",zh:"头发",vi:"Tóc",id:"Rambut",ms:"Rambut"}), keys:["hairStray","hairSmooth","hairShine","hairVolume","hairGloss","hairFill"] },
+  { t: L9({my:"ခန္ဓာကိုယ် ပုံသဏ္ဌာန်",en:"Body Shape",shn:"ႁၢင်ႈတူဝ်",kac:"Hkum mahtang",th:"รูปร่าง",zh:"身形",vi:"Dáng người",id:"Bentuk tubuh",ms:"Bentuk badan"}), keys:["waist","bodySlim","shoulder","hip","legLen","armSlim","bust","butt","thigh","calf","neck","fingers"] },
+  { t: L9({my:"ခန္ဓာကိုယ် အသားအရေ",en:"Body Skin",shn:"ၽိဝ်ၼင်တူဝ်",kac:"Hkum hpyi",th:"ผิวกาย",zh:"身体皮肤",vi:"Da cơ thể",id:"Kulit tubuh",ms:"Kulit badan"}), keys:["bodySmooth","bodyBlemish","bodyTone","bodyGlow","bodyHairRm"] },
+  { t: L9({my:"ဝတ်စုံ",en:"Dress / Outfit",shn:"ၶူဝ်းၼုင်ႈ",kac:"Palawng",th:"เสื้อผ้า",zh:"服装",vi:"Trang phục",id:"Busana",ms:"Pakaian"}), keys:["dressSmooth","dressEdge","dressWrinkle","dressTexture","dressFit","dressClean","dressColorPure"] },
+  { t: L9({my:"နောက်ခံ",en:"Background",shn:"ပိုၼ်ႉလင်",kac:"Hpang",th:"พื้นหลัง",zh:"背景",vi:"Nền",id:"Latar belakang",ms:"Latar belakang"}), keys:["bgSmooth","bgRecolor"] }
+];
 function renderRtChips(){
   var host=$("rtChips"); host.innerHTML="";
-  D.retouch.sliders.forEach(function(s){
-    var on = !!state.rt[s.key];
-    var lbl = rtLabel(s) + (s.bipolar && state.rt[s.key]===-1 ? " (−)" : "");
-    var c=el("button","chip"+(on?" on":""), lbl);
-    c.title = rtLine(s).replace(/^- /,"");
-    c.onclick=function(){
-      /* off -> + ; + -> (bipolar? − : off) ; − -> off */
-      if(!state.rt[s.key]) state.rt[s.key]=1;
-      else if(state.rt[s.key]===1 && s.bipolar && s.lineNeg) state.rt[s.key]=-1;
-      else state.rt[s.key]=0;
-      renderRtChips(); renderAddonSummary();
-    };
-    host.appendChild(c);
+  var byKeyRt={}; D.retouch.sliders.forEach(function(s){ byKeyRt[s.key]=s; });
+  RT_GROUPS.forEach(function(grp){
+    host.appendChild(el("div","subh",grp.t));
+    var row=el("div","chips");
+    grp.keys.forEach(function(key){
+      var s=byKeyRt[key]; if(!s) return;
+      var on = !!state.rt[s.key];
+      var lbl = rtLabel(s) + (s.bipolar && state.rt[s.key]===-1 ? " (−)" : "");
+      var c=el("button","chip"+(on?" on":""), lbl);
+      c.title = rtLine(s).replace(/^- /,"");
+      c.onclick=function(){
+        /* off -> + ; + -> (bipolar? − : off) ; − -> off */
+        if(!state.rt[s.key]) state.rt[s.key]=1;
+        else if(state.rt[s.key]===1 && s.bipolar && s.lineNeg) state.rt[s.key]=-1;
+        else state.rt[s.key]=0;
+        renderRtChips(); renderAddonSummary();
+      };
+      row.appendChild(c);
+    });
+    host.appendChild(row);
   });
 }
 renderRtChips();
@@ -1988,15 +2007,15 @@ function pickChips(host, items, obj, prop){
   toggleChips(host, D.cleanups, state.clean, function(c){return c.key;}, function(c){return c.label||c.key;}, function(c){return c.text.slice(0,120);});
   host.appendChild(el("div","subh",t("sub_mix")));
   toggleChips(host, D.rmix, state.rmix, function(m){return m.key;}, function(m){return m.label||m.key;}, function(m){return m.text;});
-  host.appendChild(el("div","subh","Camera Body"));
+  host.appendChild(el("div","subh","CAMERA BODY"));
   pickChips(host, D.camera.bodies, state.cam, "body");
-  host.appendChild(el("div","subh","Lens (mm)"));
+  host.appendChild(el("div","subh","LENS (MM)"));
   pickChips(host, D.camera.mm, state.cam, "mm");
-  host.appendChild(el("div","subh","Aperture"));
+  host.appendChild(el("div","subh","APERTURE"));
   pickChips(host, D.camera.f, state.cam, "f");
-  host.appendChild(el("div","subh","Film Look"));
+  host.appendChild(el("div","subh","FILM LOOK"));
   pickChips(host, D.camera.films, state.cam, "film");
-  host.appendChild(el("div","subh","Bokeh"));
+  host.appendChild(el("div","subh","BOKEH"));
   pickChips(host, D.camera.bokehs, state.cam, "bokeh");
 })();
 
@@ -2071,7 +2090,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.3.3";
+var APP_VER="4.4.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
