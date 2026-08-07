@@ -234,7 +234,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .cmp{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#050b10}
 .cmp img{display:block;width:100%}
 .cmp-top{position:absolute;top:0;left:0;bottom:0;width:50%;overflow:hidden}
-.cmp-top img{width:auto;height:100%}
+.cmp-top img{width:auto;max-width:none;height:100%;object-fit:cover;object-position:center}
 .cmp-line{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--gold)}
 
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin-top:10px}
@@ -2092,7 +2092,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.1";
+var APP_VER="4.4.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
