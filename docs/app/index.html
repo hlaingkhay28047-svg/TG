@@ -1126,7 +1126,9 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     host.appendChild(dots);
     var body=el("div","wiz-body");
     if (wiz.step===1){
-      if (w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=w.svg; body.appendChild(sv); }
+      if (w.cardImg||w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=w.cardImg||w.svg;
+        if(w.cardImg&&w.svg) sv.onerror=function(){ this.onerror=null; this.src=w.svg; };
+        body.appendChild(sv); }
       else if (w.vis2){
         /* transfer-type: show source ➜ result pair, full quality */
         var pr=el("div","wizpair");
@@ -1471,7 +1473,8 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         if(CAT_LOOK[i][0].test(c.t)){ look(c.items, CAT_LOOK[i][1], CAT_LOOK[i][2]); break; }
       }
       c.items.forEach(function(w){ if(w.vis2) w.fx=null; });
-      c.items.forEach(function(w){ try{ w.svg=svgFor(w); }catch(e){} });
+      /* real-photo composite card (source ➜ result), SVG diagram as fallback */
+      c.items.forEach(function(w){ w.cardImg="lib/wf/cards/"+w.id+".jpg"; try{ w.svg=svgFor(w); }catch(e){} });
     });
     return cats;
   }
@@ -1651,9 +1654,10 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   }
   /* designed card visual: before→after split with per-operation filters + badge */
   function cardVisual(w){
-    if(w.svg){
+    if(w.cardImg||w.svg){
       var sv=el("div","wfv");
-      var si=document.createElement("img"); si.src=w.svg; si.className="svgv"; si.loading="lazy"; si.alt=w.title;
+      var si=document.createElement("img"); si.src=w.cardImg||w.svg; si.className="svgv"; si.loading="lazy"; si.alt=w.title;
+      if(w.cardImg&&w.svg) si.onerror=function(){ this.onerror=null; this.src=w.svg; };
       sv.appendChild(si);
       if(w.badge) sv.appendChild(el("span","bdg",w.badge));
       return sv;
@@ -2063,7 +2067,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="3.7.0";
+var APP_VER="3.8.0";
 fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
   if (v && v.v && v.v !== APP_VER){
     var t=$("toast");
