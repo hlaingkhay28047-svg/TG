@@ -6766,6 +6766,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   host.appendChild(gi.g);
 
   var gr = grp("✨ Retouch Pro", D.retouch.sliders.length+t("unit"), false);
+  gr.g.querySelector(".cnt").id = "rtGroupCount";
   var srow=el("div","row");
   srow.appendChild(el("span","mut",t("rt_strength")));
   [30,60,90].forEach(function(v){
@@ -6777,6 +6778,14 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     };
     srow.appendChild(b);
   });
+  var rtClearBtn=el("button","chip","🗑 "+L9({my:"အားလုံးဖျက်",en:"Clear all",shn:"လၢင်ႉပႅတ်ႈတင်းသဵင်ႈ",kac:"Yawng hkrat kau",th:"ล้างทั้งหมด",zh:"全部清除",vi:"Xóa tất cả",id:"Hapus semua",ms:"Padam semua"}));
+  rtClearBtn.style.marginLeft="auto";
+  rtClearBtn.onclick=function(){
+    D.retouch.sliders.forEach(function(s){ state.rt[s.key]=0; });
+    renderRtChips(); renderAddonSummary();
+    toast(L9({my:"Retouch ရွေးထားသမျှ ဖျက်လိုက်ပြီ ✓",en:"All retouch selections cleared ✓",shn:"လၢင်ႉပႅတ်ႈ Retouch ဢၼ်လိူၵ်ႈဝႆႉတင်းသဵင်ႈယဝ်ႉ ✓",kac:"Retouch lata da ai yawng hkrat kau sai ✓",th:"ล้างการเลือกรีทัชทั้งหมดแล้ว ✓",zh:"已清除全部精修选择 ✓",vi:"Đã xóa mọi lựa chọn retouch ✓",id:"Semua pilihan retouch dihapus ✓",ms:"Semua pilihan retouch dipadam ✓"}),"ok");
+  };
+  srow.appendChild(rtClearBtn);
   gr.b.appendChild(srow);
   var rthost=el("div","chips"); rthost.id="rtChips";
   gr.b.appendChild(rthost);
@@ -6815,8 +6824,11 @@ var RT_GROUPS = [
 function renderRtChips(){
   var host=$("rtChips"); host.innerHTML="";
   var byKeyRt={}; D.retouch.sliders.forEach(function(s){ byKeyRt[s.key]=s; });
+  var totalOn=0;
   RT_GROUPS.forEach(function(grp){
-    host.appendChild(el("div","subh",grp.t));
+    var groupOn=grp.keys.filter(function(key){ return byKeyRt[key] && state.rt[byKeyRt[key].key]; }).length;
+    totalOn+=groupOn;
+    host.appendChild(el("div","subh",grp.t+(groupOn?" · "+groupOn:"")));
     var row=el("div","chips");
     grp.keys.forEach(function(key){
       var s=byKeyRt[key]; if(!s) return;
@@ -6835,6 +6847,8 @@ function renderRtChips(){
     });
     host.appendChild(row);
   });
+  var cntEl=$("rtGroupCount");
+  if(cntEl) cntEl.textContent = totalOn ? totalOn+"/"+D.retouch.sliders.length+t("unit") : D.retouch.sliders.length+t("unit");
 }
 renderRtChips();
 
@@ -7036,7 +7050,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.3";
+var APP_VER="4.4.4";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
