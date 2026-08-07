@@ -1478,7 +1478,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       }
       c.items.forEach(function(w){ if(w.vis2) w.fx=null; });
       /* real-photo composite card (source ➜ result), SVG diagram as fallback */
-      c.items.forEach(function(w){ w.cardImg="lib/wf/cards4/"+w.id+".jpg"; try{ w.svg=svgFor(w); }catch(e){} });
+      c.items.forEach(function(w){ w.cardImg="lib/wf/cards5/"+w.id+".jpg"; try{ w.svg=svgFor(w); }catch(e){} });
     });
     return cats;
   }
@@ -2071,7 +2071,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.1.0";
+var APP_VER="4.2.0";
 fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
   if (v && v.v && v.v !== APP_VER){
     var t=$("toast");
