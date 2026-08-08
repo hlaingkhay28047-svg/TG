@@ -2810,14 +2810,26 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.7.1";
+var APP_VER="4.7.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
   var fv=document.getElementById("footVer"); if(fv) fv.textContent=vv;
 })();
+function verNewer(a,b){
+  var pa=String(a||"").split(".").map(function(n){return parseInt(n,10)||0;});
+  var pb=String(b||"").split(".").map(function(n){return parseInt(n,10)||0;});
+  for(var i=0;i<Math.max(pa.length,pb.length);i++){
+    var x=pa[i]||0, y=pb[i]||0;
+    if(x!==y) return x>y;
+  }
+  return false;
+}
 fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
-  if (v && v.v && v.v !== APP_VER){
+  /* Only alert when the fetched version is genuinely NEWER — a stale/CDN-cached
+     version.json (older than what's already running) must never trigger this,
+     since a not-equal check would wrongly claim an old build is "new". */
+  if (v && v.v && verNewer(v.v, APP_VER)){
     var t=$("toast");
     t.textContent="🔔 Version အသစ် ("+v.v+") ထွက်ပြီ — ဒီစာကို နှိပ်ပြီး refresh လုပ်ပါ";
     t.className="toast on ok";
