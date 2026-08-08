@@ -6972,6 +6972,28 @@ function toggleChips(host, items, stateObj, getKey, getLabel, getTitle){
   });
   host.appendChild(chips);
 }
+function cleanupChips(host, items, stateObj, getKey, getLabel, getTitle){
+  var chips=el("div","chips");
+  items.forEach(function(it){
+    var k=getKey(it);
+    var c=el("button","chip"+(stateObj[k]?" on":""), getLabel(it));
+    if(getTitle) c.title=getTitle(it)||"";
+    c.onclick=function(){
+      if(k==="full"){
+        var turningOn=!stateObj.full;
+        items.forEach(function(x){ stateObj[getKey(x)]=false; });
+        stateObj.full=turningOn;
+      } else {
+        stateObj[k]=!stateObj[k];
+        if(stateObj[k]) stateObj.full=false;
+      }
+      chips.querySelectorAll(".chip").forEach(function(x,idx){ x.className="chip"+(stateObj[getKey(items[idx])]?" on":""); });
+      renderAddonSummary();
+    };
+    chips.appendChild(c);
+  });
+  host.appendChild(chips);
+}
 function pickChips(host, items, obj, prop, descFn){
   var chips=el("div","chips");
   items.forEach(function(it){
@@ -6992,7 +7014,7 @@ function pickChips(host, items, obj, prop, descFn){
   host.appendChild(el("div","subh",t("sub_chains")));
   toggleChips(host, D.chains, state.chains, function(c){return c.key;}, function(c){return c.label;}, function(c){return c.text;});
   host.appendChild(el("div","subh",t("sub_cleanup")));
-  toggleChips(host, D.cleanups, state.clean, function(c){return c.key;}, function(c){return c.label||c.key;}, function(c){return c.text.slice(0,120);});
+  cleanupChips(host, D.cleanups, state.clean, function(c){return c.key;}, function(c){return c.label||c.key;}, function(c){return c.text.slice(0,120);});
   host.appendChild(el("div","subh",t("sub_mix")));
   toggleChips(host, D.rmix, state.rmix, function(m){return m.key;}, function(m){return m.label||m.key;}, function(m){return m.text;});
   host.appendChild(el("div","mut",L9({my:"Camera Body → Bokeh အထိက Optional — ဓာတ်ပုံ style ကို ပိုပီပီပြင်ပြင်ဖြစ်စေချင်ရင်ပဲ ရွေးပါ၊ နှိပ်ပြီးကြည့်ရင် ရှင်းလင်းချက် ပေါ်လာမယ် — မသေချာရင် ချန်ထားလည်း ရတယ်",en:"Camera Body → Bokeh are all optional - pick them only if you want a specific photographic look; hover/tap a chip to see what it does, or skip this whole section entirely",shn:"Camera Body → Bokeh ပဵၼ် optional တင်းသဵင်ႈ — ဢဝ်ၵူၺ်းယဝ်ႉ ႁႂ်ႈလႆႈ style ၶိုၵ်ႉၶႅမ်ႉ၊ ဢမ်ႇမၢၼ်ႇၵေႃႈ ဝၢင်းဝႆႉလႆႈ",kac:"Camera Body → Bokeh yawng gaw optional re - style ra ai hte sha lata u, n chye yang ndai part hpe skip mai ai",th:"Camera Body → Bokeh ทั้งหมดเป็นตัวเลือกเสริม — เลือกเฉพาะเมื่อต้องการลุคเฉพาะ แตะดูคำอธิบายได้ หรือข้ามได้เลยถ้าไม่แน่ใจ",zh:"从 Camera Body 到 Bokeh 全部为可选项 — 只有想要特定摄影风格时才选，点按可查看说明，不确定可整段跳过",vi:"Camera Body → Bokeh đều là tùy chọn - chỉ chọn nếu muốn một phong cách nhiếp ảnh cụ thể, chạm để xem giải thích, hoặc bỏ qua nếu không chắc",id:"Camera Body → Bokeh semuanya opsional - pilih hanya jika ingin gaya foto tertentu, ketuk untuk melihat penjelasan, atau lewati jika tidak yakin",ms:"Camera Body → Bokeh semuanya pilihan - pilih hanya jika mahukan gaya foto tertentu, ketik untuk lihat penjelasan, atau langkau jika tidak pasti"})));
@@ -7084,7 +7106,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.8";
+var APP_VER="4.4.9";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
