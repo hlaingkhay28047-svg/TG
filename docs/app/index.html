@@ -479,6 +479,10 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
         <option value="high">High Detail</option>
       </select>
     </div>
+    <label class="mut" id="fallbackRow" style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer">
+      <input type="checkbox" id="chkFallback" checked style="width:auto">
+      <span id="fallbackLabel"></span>
+    </label>
     <div class="addons" id="addonSummaryCreate" style="cursor:pointer"></div>
     <button class="btn btn-gold gen" id="btnGen">⚡ GENERATE</button>
     <div class="spin" id="spin">တိုက်ရိုက် ထုတ်နေပါတယ် — စက္ကန့် ၂၀-၆၀ လောက် စောင့်ပါ…</div>
@@ -1335,6 +1339,21 @@ $("btnSaveOaKey").onclick = async function(){
   renderOaProviderOption();
 };
 renderOaProviderOption();
+
+/* ---------- provider auto-fallback ----------
+   If the selected provider's generation fails, retry with any OTHER
+   configured provider before giving up — Gemini's own busy-model retry
+   already covers same-provider fallback; this covers cross-provider. */
+var FALLBACK_LS_KEY = "hnk_provider_fallback";
+(function initFallbackChk(){
+  var saved = null;
+  try { saved = localStorage.getItem(FALLBACK_LS_KEY); } catch(e){}
+  $("chkFallback").checked = saved === null ? true : saved === "1";
+  $("fallbackLabel").textContent = L9({my:"Provider တစ်ခု မအောင်မြင်ရင် ကျန် configure ထားတဲ့ provider တွေနဲ့ auto-fallback လုပ်ပါ",en:"Auto-fallback to other configured providers if one fails",shn:"Provider ဢၼ်ဢမ်ႇသေၽွင်ႈ auto-fallback ၸူးဢၼ်ၵိုတ်း",kac:"Provider langai n byin yang, kaga configure sha ai ni de auto-fallback galaw",th:"สลับไปใช้ provider อื่นที่ตั้งค่าไว้อัตโนมัติหากตัวหนึ่งล้มเหลว",zh:"若某个 provider 失败，自动切换到其他已配置的 provider",vi:"Tự động chuyển sang provider khác đã cấu hình nếu một cái thất bại",id:"Auto-fallback ke provider lain yang dikonfigurasi jika satu gagal",ms:"Auto-fallback ke provider lain yang dikonfigurasi jika satu gagal"});
+  $("chkFallback").addEventListener("change", function(){
+    try{ localStorage.setItem(FALLBACK_LS_KEY, this.checked ? "1" : "0"); }catch(e){}
+  });
+})();
 
 /* ---------- refs ---------- */
 function renderRefStrip(){
@@ -2791,7 +2810,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.6.0";
+var APP_VER="4.7.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -2945,30 +2964,14 @@ $("btnGen").onclick = async function(){
     var ratio=$("selRatio").value;
     if(ratio) finalPrompt+="\nOutput aspect ratio: "+ratio+".";
     var count=parseInt($("selCount").value,10)||1;
-    var oneCall;
-    if(provider==="runninghub"){
-      /* RunningHub path: same finalPrompt (task text + guards) and same
-         reference images as Gemini would get, routed through the user's own
-         Enterprise-Shared key + model mapping instead. */
-      var refDataUrls = refs.map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
-      oneCall = function(){
-        return rhGenerateOne(state.rhKey, rhActive.mc, finalPrompt, ratio, refDataUrls, function(elapsed){
-          $("spin").textContent = t("spin_gen")+" · "+Math.round(elapsed/1000)+"s";
-        }).then(function(outs){
-          return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
-        }).catch(function(e){ return { err: rhFriendly(e) }; });
-      };
-    } else if(provider==="openai"){
-      /* OpenAI path: same finalPrompt + reference images as Gemini/RunningHub,
-         routed to gpt-image-1 via the user's own key — single request, no
-         upload/poll cycle needed. */
-      var oaRefDataUrls = refs.map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
-      oneCall = function(){
-        return oaGenerateOne(state.oaKey, finalPrompt, oaRefDataUrls, ratio)
-          .then(function(outs){ return outs[0] ? { out: outs[0] } : { err: oaFriendly({status:0}) }; })
-          .catch(function(e){ return { err: oaFriendly(e) }; });
-      };
-    } else {
+    var refDataUrls = refs.map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
+    var rhActiveForFallback = rhActiveModelCfg();
+    var PROVIDER_LABEL = { gemini:"Gemini", runninghub:"RunningHub", openai:"OpenAI" };
+    /* Build a call function for every CONFIGURED provider (not just the
+       selected one) so the fallback dispatcher below can try others if the
+       selected one fails — regardless of which is currently selected. */
+    var providerFns = {};
+    if(state.key){
       parts.push({text:finalPrompt});
       var model=$("selModel").value;
       if(model==="auto") model = refs.length? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
@@ -3006,9 +3009,9 @@ $("btnGen").onclick = async function(){
           })
           .catch(function(e){ return { err:String(e) }; });
       };
-      /* 503 / overloaded → automatically retry once on the other image model */
+      /* 503 / overloaded → automatically retry once on the other image model (same provider) */
       var ALT_MODEL = model==="gemini-3-pro-image-preview" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
-      oneCall = function(){
+      providerFns.gemini = function(){
         return callModel(model).then(function(x){
           if(x.out) return x;
           var overloaded = x.code===503 || /high demand|overloaded|unavailable/i.test(x.err||"");
@@ -3019,6 +3022,52 @@ $("btnGen").onclick = async function(){
           });
         });
       };
+    }
+    if(state.rhKey && rhActiveForFallback){
+      /* RunningHub path: same finalPrompt (task text + guards) and same
+         reference images as Gemini would get, routed through the user's own
+         Enterprise-Shared key + model mapping instead. */
+      providerFns.runninghub = function(){
+        return rhGenerateOne(state.rhKey, rhActiveForFallback.mc, finalPrompt, ratio, refDataUrls, function(elapsed){
+          $("spin").textContent = t("spin_gen")+" · "+Math.round(elapsed/1000)+"s";
+        }).then(function(outs){
+          return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
+        }).catch(function(e){ return { err: rhFriendly(e) }; });
+      };
+    }
+    if(state.oaKey){
+      /* OpenAI path: same finalPrompt + reference images as Gemini/RunningHub,
+         routed to gpt-image-1 via the user's own key — single request, no
+         upload/poll cycle needed. */
+      providerFns.openai = function(){
+        return oaGenerateOne(state.oaKey, finalPrompt, refDataUrls, ratio)
+          .then(function(outs){ return outs[0] ? { out: outs[0] } : { err: oaFriendly({status:0}) }; })
+          .catch(function(e){ return { err: oaFriendly(e) }; });
+      };
+    }
+    /* Fallback dispatcher: try the selected provider first; if it fails and
+       auto-fallback is on, try any OTHER configured provider before giving
+       up. A successful fallback surfaces which provider actually delivered
+       the result, so it's never a silent switch. */
+    var fallbackOn = $("chkFallback") ? $("chkFallback").checked : true;
+    var tryOrder = [provider].concat(["gemini","runninghub","openai"].filter(function(p){ return p!==provider; }));
+    if(!fallbackOn) tryOrder = [provider];
+    tryOrder = tryOrder.filter(function(p){ return providerFns[p]; });
+    function oneCall(){
+      var i=0;
+      function attempt(){
+        var p=tryOrder[i];
+        return providerFns[p]().then(function(x){
+          if(x.out){
+            if(i>0) toast(L9({my:"X ကနေ generate မအောင်မြင်လို့ Y နဲ့ ပြောင်းထုတ်ပေးလိုက်ပြီ ✓",en:"X failed — switched to Y ✓",shn:"X ဢမ်ႇသေၽွင်ႈ — လႅၵ်ႈၸႂ်ႉ Y ယဝ်ႉ ✓",kac:"X n byin ai — Y de galai kau sai ✓",th:"X ล้มเหลว — สลับไปใช้ Y แล้ว ✓",zh:"X 失败 — 已切换到 Y ✓",vi:"X thất bại — đã chuyển sang Y ✓",id:"X gagal — beralih ke Y ✓",ms:"X gagal — bertukar ke Y ✓"}).replace("X",PROVIDER_LABEL[tryOrder[0]]).replace("Y",PROVIDER_LABEL[p]), "ok");
+            return x;
+          }
+          i++;
+          if(i<tryOrder.length) return attempt();
+          return x;
+        });
+      }
+      return attempt();
     }
     var doneN=0, t0=Date.now();
     var spinBase=t("spin_gen");
