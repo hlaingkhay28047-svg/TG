@@ -322,23 +322,18 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
     <div class="row" style="margin-top:14px">
       <select class="inp grow" id="rhModelSel"></select>
-      <button class="btn" id="btnRhDiscover"></button>
     </div>
-    <div class="mut" id="rhAppsList" style="margin-top:6px"></div>
-
     <div class="mut" style="margin-top:12px" id="rhSampleNote"></div>
-    <textarea class="inp" id="rhSample" style="min-height:70px" placeholder='{"webappId":"…","nodeInfoList":[{"nodeId":"…","fieldName":"text","fieldValue":"…"}]}'></textarea>
     <div class="row" style="margin-top:6px">
-      <button class="btn grow" id="btnRhAutofill"></button>
+      <input class="inp grow" id="rhApiPath" placeholder="rhart-image-n-g31-flash/image-to-image">
     </div>
-
-    <div class="wfgrid" id="rhFormGrid" style="margin-top:10px">
-      <input class="inp" id="rhWebappId" placeholder="webappId">
-      <input class="inp" id="rhNodePrompt" placeholder="prompt nodeId">
-      <input class="inp" id="rhNodeImage" placeholder="image nodeId">
-      <input class="inp" id="rhNodeRefs" placeholder="refs nodeId (optional)">
-      <input class="inp" id="rhNodeSize" placeholder="size nodeId (optional)">
-      <input class="inp" id="rhNodeRatio" placeholder="ratio nodeId (optional)">
+    <div class="row" style="margin-top:6px">
+      <select class="inp grow" id="rhQuality">
+        <option value="">quality: none (most models)</option>
+        <option value="low">quality: low</option>
+        <option value="medium">quality: medium</option>
+        <option value="high">quality: high</option>
+      </select>
     </div>
     <div class="row" style="margin-top:8px">
       <button class="btn btn-gold grow" id="btnRhSaveModel"></button>
@@ -573,17 +568,23 @@ var LS_KEY = "hnk_web_studio_key";
 var RH_LS_KEY = "hnk_rh_apikey";
 var RH_LS_CFG = "hnk_rh_config";
 var RH_BASE = "https://www.runninghub.ai";
-var RH_PATHS = { upload:"/task/openapi/upload", run:"/task/openapi/ai-app/run", status:"/task/openapi/status", outputs:"/task/openapi/outputs", cancel:"/task/openapi/cancel", apps:"/task/openapi/ai-app/list" };
+/* RunningHub's "Standard Model API" (openapi/v2) — a fixed per-model endpoint
+   path, Bearer-token auth, JSON in/out. No app/workflow build-out or node-ID
+   hunting needed: paste the Enterprise-Shared key and, for any model with a
+   built-in apiPath below, it just works. Confirmed live against a real
+   Enterprise-Shared key + the runninghub.ai API docs (2026-08). */
+var RH_V2_BASE = "https://www.runninghub.ai/openapi/v2";
+var RH_V2_PATHS = { upload:"/media/upload/binary", query:"/query" };
 var RH_POLL_MS = 2500, RH_TIMEOUT_MS = 180000;
 var RH_MODELS = [
-  { id:"nano-banana-2",    label:"Nano Banana 2" },
-  { id:"nano-banana-pro",  label:"Nano Banana Pro" },
-  { id:"gpt-image-2",      label:"GPT Image 2" },
-  { id:"qwen-image-2",     label:"Qwen Image 2" },
-  { id:"qwen-image-2-pro", label:"Qwen Image 2 Pro" },
-  { id:"flux-2-dev",       label:"Flux 2 Dev" },
-  { id:"wan-image-edit",   label:"Wan Image Edit" },
-  { id:"upscale-pro",      label:"Upscale Pro" }
+  { id:"nano-banana-2",    label:"Nano Banana 2",    apiPath:"rhart-image-n-g31-flash/image-to-image" },
+  { id:"nano-banana-pro",  label:"Nano Banana Pro",  apiPath:"" },
+  { id:"gpt-image-2",      label:"GPT Image 2",      apiPath:"" },
+  { id:"qwen-image-2",     label:"Qwen Image 2",     apiPath:"" },
+  { id:"qwen-image-2-pro", label:"Qwen Image 2 Pro", apiPath:"" },
+  { id:"flux-2-dev",       label:"Flux 2 Dev",       apiPath:"" },
+  { id:"wan-image-edit",   label:"Wan Image Edit",   apiPath:"" },
+  { id:"upscale-pro",      label:"Upscale Pro",      apiPath:"" }
 ];
 /* OpenAI (GPT Image) — same bring-your-own-key reasoning as RunningHub above.
    Unlike RunningHub this is a single synchronous request (no upload/poll
@@ -912,75 +913,36 @@ function rhCfg(){
   return { models:{}, activeModel:"" };
 }
 function rhSaveCfg(c){ try{ localStorage.setItem(RH_LS_CFG, JSON.stringify(c)); }catch(e){} }
-function rhModelCfg(id){ var c=rhCfg(); return (c.models && c.models[id]) || null; }
-function rhIsConfigured(id){ var mc=rhModelCfg(id); return !!(mc && mc.webappId && mc.nodes && mc.nodes.prompt && mc.nodes.prompt.nodeId); }
+function rhModelDef(id){ return RH_MODELS.find(function(m){ return m.id===id; }) || null; }
+/* Effective endpoint path for a model: a user-entered override in localStorage
+   wins if present, otherwise the built-in default shipped in RH_MODELS above.
+   Models with a built-in default work the instant a key is saved — no setup. */
+function rhEffectiveApiPath(id){
+  var c=rhCfg(); var mc=c.models && c.models[id];
+  if(mc && mc.apiPath) return mc.apiPath;
+  var def=rhModelDef(id);
+  return (def && def.apiPath) || "";
+}
+/* Some RunningHub Standard-API endpoints require a "quality" field
+   (low/medium/high) in the body, others reject it entirely — confirmed by
+   diffing real per-model docs (e.g. rhart-image-n-g31-flash needs no quality,
+   rhart-image-g-2-official requires it). Left blank for a model, it's simply
+   omitted from the request. */
+function rhEffectiveQuality(id){
+  var c=rhCfg(); var mc=c.models && c.models[id];
+  if(mc && mc.quality) return mc.quality;
+  var def=rhModelDef(id);
+  return (def && def.quality) || "";
+}
+function rhIsConfigured(id){ return !!rhEffectiveApiPath(id); }
 function rhAnyConfigured(){ return RH_MODELS.some(function(m){ return rhIsConfigured(m.id); }); }
 function rhActiveModelCfg(){
   var c=rhCfg();
-  if(c.activeModel && rhIsConfigured(c.activeModel)) return { id:c.activeModel, mc:c.models[c.activeModel] };
+  if(c.activeModel && rhIsConfigured(c.activeModel)) return { id:c.activeModel, apiPath:rhEffectiveApiPath(c.activeModel), quality:rhEffectiveQuality(c.activeModel) };
   var found=RH_MODELS.find(function(m){ return rhIsConfigured(m.id); });
-  return found ? { id:found.id, mc:c.models[found.id] } : null;
+  return found ? { id:found.id, apiPath:rhEffectiveApiPath(found.id), quality:rhEffectiveQuality(found.id) } : null;
 }
 
-/* Parse a pasted RunningHub API sample (JSON body or a curl containing one) —
-   ported from the plugin's runninghub-setup.js so users can reuse the exact
-   same sample they already have from setting up the panel. */
-function rhParseApiSample(text){
-  text=String(text==null?"":text);
-  var webappId="";
-  var m=text.match(/"?(?:webappId|appId|webAppId)"?\s*[:=]\s*"?([A-Za-z0-9_\-]+)"?/i);
-  if(m) webappId=m[1];
-  var nodes=[];
-  try {
-    var body=JSON.parse(text);
-    var list=body.nodeInfoList||(body.data&&body.data.nodeInfoList);
-    if(!webappId && (body.webappId||body.appId)) webappId=String(body.webappId||body.appId);
-    if(Array.isArray(list)) list.forEach(function(n){ if(n && n.nodeId!=null) nodes.push({nodeId:String(n.nodeId),fieldName:String(n.fieldName||""),fieldValue:n.fieldValue}); });
-  } catch(e){}
-  if(!nodes.length){
-    var re=/nodeId"?\s*[:=]\s*"?([A-Za-z0-9_\-]+)"?[\s\S]{0,160}?fieldName"?\s*[:=]\s*"?([A-Za-z0-9_]+)"?(?:[\s\S]{0,200}?fieldValue"?\s*[:=]\s*"?([^",}\n]*))?/gi;
-    var mm; while((mm=re.exec(text))) nodes.push({nodeId:mm[1],fieldName:(mm[2]||""),fieldValue:mm[3]});
-  }
-  return { webappId:webappId, nodes:nodes };
-}
-function rhMapSampleToForm(parsed){
-  parsed=parsed||{nodes:[]};
-  var form={ webappId:parsed.webappId||"", prompt:"", image:"", negative:"", size:"", ratio:"", refs:"" };
-  var images=[], texts=[];
-  (parsed.nodes||[]).forEach(function(n){
-    var fn=String(n.fieldName||"").toLowerCase(), fv=String(n.fieldValue==null?"":n.fieldValue).toLowerCase();
-    if(fn.indexOf("image")!==-1||fn.indexOf("img")!==-1||/\.(png|jpe?g|webp)$/i.test(fv)||fv.indexOf("http")===0) images.push(n);
-    else if(fn.indexOf("text")!==-1||fn.indexOf("prompt")!==-1||fn.indexOf("string")!==-1) texts.push(n);
-    else if(fn.indexOf("ratio")!==-1||fn.indexOf("size")!==-1||fn.indexOf("resolution")!==-1){ if(!form.size) form.size=n.nodeId; }
-  });
-  var neg=null, prompt=null;
-  texts.forEach(function(n){
-    var fn=String(n.fieldName||"").toLowerCase(), fv=String(n.fieldValue||"").toLowerCase();
-    if(!neg && (fn.indexOf("neg")!==-1 || /negative|avoid|worst|blurry|watermark|deformed|lowres/.test(fv))) neg=n;
-    else if(!prompt) prompt=n;
-  });
-  if(!prompt && texts.length) prompt=texts[0];
-  if(prompt) form.prompt=prompt.nodeId;
-  if(neg) form.negative=neg.nodeId;
-  if(images[0]) form.image=images[0].nodeId;
-  if(images[1]) form.refs=images[1].nodeId;
-  return form;
-}
-function rhMatchAppToModel(name){
-  var n=String(name||"").toLowerCase().replace(/[^a-z0-9]+/g," ");
-  if(!n.trim()) return null;
-  if(/nano\s*banana.*pro|banana\s*pro/.test(n)) return "nano-banana-pro";
-  if(/nano\s*banana|banana/.test(n)) return "nano-banana-2";
-  if(/gpt.*image|image.*gpt/.test(n)) return "gpt-image-2";
-  if(/qwen.*pro/.test(n)) return "qwen-image-2-pro";
-  if(/qwen/.test(n)) return "qwen-image-2";
-  if(/flux/.test(n)) return "flux-2-dev";
-  if(/wan/.test(n)) return "wan-image-edit";
-  if(/upscal|esrgan|enhance|super\s*res/.test(n)) return "upscale-pro";
-  return null;
-}
-
-function rhUrl(path){ return RH_BASE+path; }
 function rhDataUrlToBlob(dataUrl){
   var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
   var mime=m?m[1]:"application/octet-stream", b64=m?m[2]:"";
@@ -993,60 +955,58 @@ function rhBytesToDataUrl(bytes, mime){
   for(var i=0;i<bytes.length;i+=chunk) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+chunk));
   return "data:"+(mime||"image/png")+";base64,"+btoa(bin);
 }
-function rhPostJson(apiKey, path, extra){
-  var body=Object.assign({apiKey:apiKey}, extra||{});
-  return fetch(rhUrl(path), { method:"POST", headers:{"Content-Type":"application/json","Accept":"application/json"}, body:JSON.stringify(body) });
+function rhV2Headers(apiKey){ return {"Content-Type":"application/json","Authorization":"Bearer "+apiKey}; }
+var RH_RATIO_ENUM = ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"];
+function rhV2Ratio(ratio){ return RH_RATIO_ENUM.indexOf(ratio)>=0 ? ratio : ""; }
+/* selSize gives "", "1K", "2K", "4K" — the Standard API requires a lowercase
+   1k/2k/4k on every call, so "Auto" maps to the cheapest tier. */
+function rhV2Resolution(sizeSel){
+  var s=String(sizeSel||"").toLowerCase();
+  return (s==="1k"||s==="2k"||s==="4k") ? s : "1k";
 }
-async function rhUploadOne(apiKey, dataUrl, idx){
+async function rhV2Upload(apiKey, dataUrl, idx){
   var fd=new FormData();
-  fd.append("apiKey", apiKey); fd.append("fileType","image");
   fd.append("file", rhDataUrlToBlob(dataUrl), "hnk_"+(idx||0)+".png");
-  var r=await fetch(rhUrl(RH_PATHS.upload), { method:"POST", headers:{"Accept":"application/json"}, body:fd });
+  var r=await fetch(RH_V2_BASE+RH_V2_PATHS.upload, { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd });
   if(!r.ok){ var e=new Error("upload-failed"); e.status=r.status; throw e; }
   var j=await r.json().catch(function(){return null;});
-  var fileName=j && (j.fileName || (j.data && (j.data.fileName || j.data.fileId)));
-  if(!fileName){ var e2=new Error("upload-failed"); e2.status=200; e2.body=j; throw e2; }
-  return fileName;
+  var url=j && j.data && (j.data.download_url || j.data.fileName);
+  if(!url){ var e2=new Error("upload-failed"); e2.status=200; e2.body=j; throw e2; }
+  if(!/^https?:\/\//i.test(url)) url = RH_BASE+"/"+String(url).replace(/^\/+/,"");
+  return url;
 }
-async function rhUploadAll(apiKey, dataUrls){
+async function rhV2UploadAll(apiKey, dataUrls){
   var out=[];
-  for(var i=0;i<dataUrls.length;i++) out.push(await rhUploadOne(apiKey, dataUrls[i], i));
+  for(var i=0;i<dataUrls.length;i++) out.push(await rhV2Upload(apiKey, dataUrls[i], i));
   return out;
 }
-async function rhSubmit(apiKey, webappId, nodeInfoList){
-  var r=await rhPostJson(apiKey, RH_PATHS.run, {webappId:webappId, nodeInfoList:nodeInfoList});
-  if(!r.ok){ var e=new Error("submit-failed"); e.status=r.status; throw e; }
+async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, quality){
+  var body={ imageUrls: imageUrls||[], prompt: promptText||"", resolution: resolution||"1k" };
+  var r2=rhV2Ratio(ratio); if(r2) body.aspectRatio=r2;
+  if(quality) body.quality=quality;
+  var r=await fetch(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
   var j=await r.json().catch(function(){return null;});
-  var taskId=j && (j.taskId || (j.data && j.data.taskId));
-  if(!taskId){ var e2=new Error("submit-failed"); e2.status=200; e2.body=j; throw e2; }
-  return taskId;
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  return j.taskId;
 }
-async function rhStatusOnce(apiKey, taskId){
-  var r=await rhPostJson(apiKey, RH_PATHS.status, {taskId:taskId});
-  if(!r.ok){ var e=new Error("status-failed"); e.status=r.status; throw e; }
+async function rhV2Query(apiKey, taskId){
+  var r=await fetch(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:taskId}) });
   var j=await r.json().catch(function(){return null;});
-  var s=j && (j.status || (j.data && (j.data.status || j.data)));
-  return String(s||"").toUpperCase();
+  if(!r.ok){ var e=new Error("query-failed"); e.status=r.status; e.body=j; throw e; }
+  return j||{};
 }
-async function rhPollUntilDone(apiKey, taskId, onTick){
+async function rhV2PollUntilDone(apiKey, taskId, onTick){
   var start=Date.now();
   while(true){
-    var s=await rhStatusOnce(apiKey, taskId);
+    var j=await rhV2Query(apiKey, taskId);
+    var s=String(j.status||"").toUpperCase();
     var elapsed=Date.now()-start;
     if(typeof onTick==="function") onTick(elapsed, s);
-    if(s==="SUCCESS"||s==="COMPLETED"||s==="DONE") return;
-    if(s==="FAILED"||s==="ERROR"){ var e=new Error("failed"); e.code="failed"; throw e; }
+    if(s==="SUCCESS") return j;
+    if(s==="FAILED"){ var e=new Error("failed"); e.code="failed"; e.body=j; throw e; }
     if(elapsed>=RH_TIMEOUT_MS){ var e2=new Error("timeout"); e2.code="timeout"; throw e2; }
     await new Promise(function(res){ setTimeout(res, RH_POLL_MS); });
   }
-}
-async function rhOutputs(apiKey, taskId){
-  var r=await rhPostJson(apiKey, RH_PATHS.outputs, {taskId:taskId});
-  if(!r.ok){ var e=new Error("outputs-failed"); e.status=r.status; throw e; }
-  var j=await r.json().catch(function(){return null;});
-  var list=j && (j.outputs || j.data || []);
-  if(!Array.isArray(list)) list=list?[list]:[];
-  return list.map(function(o){ return typeof o==="string"?o:(o.fileUrl||o.url); }).filter(Boolean);
 }
 async function rhDownloadAsDataUrl(url){
   var r=await fetch(url, {headers:{"Accept":"image/*"}});
@@ -1058,50 +1018,24 @@ async function rhDownloadAsDataUrl(url){
 async function rhVerifyKey(apiKey){
   if(!apiKey) return {ok:false, code:"invalid-key"};
   try {
-    var r=await rhPostJson(apiKey, RH_PATHS.status, {taskId:"__hnk_verify__"});
+    var r=await fetch(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:"__hnk_verify__"}) });
     if(r.status===401||r.status===403) return {ok:false, code:"invalid-key"};
     return {ok:true};
   } catch(e){ return {ok:false, code:"network"}; }
-}
-async function rhDiscoverApps(apiKey){
-  try {
-    var r=await rhPostJson(apiKey, RH_PATHS.apps, {});
-    if(r.status===401||r.status===403) return {ok:false, apps:[], code:"invalid-key"};
-    if(!r.ok) return {ok:false, apps:[], code:"unknown"};
-    var j=await r.json().catch(function(){return null;});
-    var list=(j && (j.apps||j.data||j.list))||[];
-    if(!Array.isArray(list)) list=[];
-    var apps=list.map(function(a){ return {id:String(a.webappId||a.id||a.appId||""), name:String(a.name||a.title||a.webappId||a.id||"")}; }).filter(function(a){return a.id;});
-    return {ok:true, apps:apps};
-  } catch(e){ return {ok:false, apps:[], code:"network"}; }
-}
-/* Build nodeInfoList for one generation. The whole compiled prompt (task text
-   + guards, already merged the same way it is for Gemini) goes into the
-   prompt node — there is no separate negative text to send once merged. */
-function rhBuildNodeInfoList(mc, promptText, ratio, uploadedNames){
-  var nodes=mc.nodes||{}, out=[];
-  function push(node, value){ if(node && value!=null && value!=="") out.push({nodeId:node.nodeId, fieldName:node.fieldName, fieldValue:value}); }
-  push(nodes.prompt, promptText||"");
-  if(ratio) push(nodes.ratio, ratio);
-  if(uploadedNames && uploadedNames.length){
-    if(nodes.image) push(nodes.image, uploadedNames[0]);
-    for(var i=1;i<uploadedNames.length;i++) push(nodes.refs, uploadedNames[i]);
-  }
-  return out;
 }
 /* One end-to-end generation: upload refs -> submit -> poll -> download outputs.
    Returns an array of {mime,b64} — the exact shape the Gemini path already
    produces, so the shared history/gallery/result-display code needs no
    provider-specific branch downstream. */
-async function rhGenerateOne(apiKey, mc, promptText, ratio, refDataUrls, onTick){
-  var uploaded = refDataUrls.length ? await rhUploadAll(apiKey, refDataUrls) : [];
-  var nodeInfoList = rhBuildNodeInfoList(mc, promptText, ratio, uploaded);
-  var taskId = await rhSubmit(apiKey, mc.webappId, nodeInfoList);
-  await rhPollUntilDone(apiKey, taskId, onTick);
-  var urls = await rhOutputs(apiKey, taskId);
+async function rhGenerateOne(apiKey, apiPath, promptText, ratio, refDataUrls, resolution, quality, onTick){
+  var imageUrls = refDataUrls.length ? await rhV2UploadAll(apiKey, refDataUrls) : [];
+  var taskId = await rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, quality);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
+  var results = (final && final.results) || [];
   var outs=[];
-  for(var i=0;i<urls.length;i++){
-    var dataUrl = await rhDownloadAsDataUrl(urls[i]);
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    var dataUrl = await rhDownloadAsDataUrl(results[i].url);
     var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
     if(m) outs.push({mime:m[1], b64:m[2]});
   }
@@ -1120,7 +1054,7 @@ function rhFriendly(e){
 try { state.rhKey = localStorage.getItem(RH_LS_KEY) || ""; } catch(e){}
 if (state.rhKey) { $("rhKey").value = state.rhKey; }
 $("rhOptTag").textContent = L9({my:"(ချန်ထားလို့ရ)",en:"(optional)",shn:"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)",kac:"(n ra ai)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"});
-$("rhIntro").textContent = L9({my:"Photoshop plugin မှာ RunningHub Enterprise-Shared key setup လုပ်ထားပြီးသားရှိရင် ဒီမှာလည်း တူတူသုံးလို့ရပါတယ် — key ကိုယ်တိုင်၊ webappId/node id ကိုယ်တိုင် ထည့်ရပါမယ်၊ browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ — ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"If you already set up a RunningHub Enterprise-Shared key for the Photoshop plugin, you can reuse it here too — paste your own key and webappId/node ids; everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.",shn:"RunningHub Enterprise-Shared key ၾၢႆႇ Photoshop plugin ၸႂ်ႉၽွင်းၶၢဝ်းၶၢဝ်း ၸၢမ်းၸႂ်ႉတီႈၼႆႈလႆႈ",kac:"Photoshop plugin hta RunningHub Enterprise-Shared key setup galaw sai yang, ndai hta mung bai lang mai ai",th:"หากตั้งค่า RunningHub Enterprise-Shared key ไว้กับปลั๊กอิน Photoshop แล้ว ใช้ที่นี่ซ้ำได้",zh:"如果你已经为 Photoshop 插件配置过 RunningHub Enterprise-Shared key，这里也能沿用同一把",vi:"Nếu bạn đã cấu hình RunningHub Enterprise-Shared key cho plugin Photoshop, có thể dùng lại ở đây",id:"Jika Anda sudah menyiapkan RunningHub Enterprise-Shared key untuk plugin Photoshop, bisa dipakai ulang di sini",ms:"Jika anda sudah sediakan RunningHub Enterprise-Shared key untuk plugin Photoshop, boleh guna semula di sini"});
+$("rhIntro").textContent = L9({my:"RunningHub Enterprise-Shared key ကို paste ပြီး Save & Verify နှိပ်ရုံပါပဲ — Nano Banana 2 က key ချက်ချင်း အလိုအလျောက် အသုံးပြုလို့ရပါပြီ (webappId/node id ထည့်စရာမလိုပါ)။ Model တခြားများ ဆက်ချိတ်ချင်ရင် endpoint path ကို RunningHub API docs ကနေ ကူးထည့်ရုံပါပဲ — browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ၊ ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Paste your RunningHub Enterprise-Shared key and tap Save & Verify — Nano Banana 2 works instantly with just the key (no webappId/node id needed). To add other models, paste the endpoint path from RunningHub's API docs. Everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.",shn:"RunningHub Enterprise-Shared key ၾၢႆႇ Photoshop plugin ၸႂ်ႉၽွင်းၶၢဝ်းၶၢဝ်း ၸၢမ်းၸႂ်ႉတီႈၼႆႈလႆႈ",kac:"RunningHub Enterprise-Shared key hpe paste nna Save & Verify dip u — Nano Banana 2 gaw key sha hte galoi mung galaw mai ai",th:"วางคีย์ RunningHub Enterprise-Shared แล้วกด Save & Verify — Nano Banana 2 ใช้งานได้ทันทีด้วย key เท่านั้น",zh:"粘贴 RunningHub Enterprise-Shared key 并点击 Save & Verify — Nano Banana 2 只需 key 即可立即使用",vi:"Dán RunningHub Enterprise-Shared key và bấm Save & Verify — Nano Banana 2 hoạt động ngay chỉ với key",id:"Tempel RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 langsung berfungsi hanya dengan key",ms:"Tampal RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 terus berfungsi hanya dengan key"});
 $("btnShowRhKey").textContent = "👁";
 $("btnSaveRhKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
 $("btnShowRhKey").onclick = function(){ var k=$("rhKey"); k.type = k.type==="password"?"text":"password"; };
@@ -1139,20 +1073,13 @@ $("btnSaveRhKey").onclick = async function(){
   renderRhProviderOption();
 };
 
-RH_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; $("rhModelSel").appendChild(o); });
-$("btnRhDiscover").textContent = L9({my:"App များ ရှာ",en:"Discover apps",shn:"ႁႃ App",kac:"App ni tam la",th:"ค้นหาแอป",zh:"发现应用",vi:"Tìm apps",id:"Cari aplikasi",ms:"Cari aplikasi"});
-$("rhSampleNote").textContent = L9({my:"RunningHub console ကနေ API call sample (JSON) ကို copy ပြီး ဒီမှာ paste လုပ်ပါ — webappId + node id တွေ auto-fill လုပ်ပေးပါလိမ့်မယ် (review ပြီးမှ save ပါ)",en:"Copy an API call sample (JSON) from your RunningHub console and paste it here — webappId + node ids auto-fill below (review before saving)",shn:"Copy API call sample (JSON) တီႈ RunningHub console သေ paste တီႈၼႆႈ",kac:"RunningHub console kaw na API call sample (JSON) hpe copy nna ndai hta paste u",th:"คัดลอกตัวอย่างการเรียก API (JSON) จากคอนโซล RunningHub มาวางที่นี่",zh:"从 RunningHub 控制台复制一个 API 调用示例（JSON）粘贴到这里",vi:"Sao chép một mẫu gọi API (JSON) từ console RunningHub và dán vào đây",id:"Salin contoh panggilan API (JSON) dari console RunningHub dan tempel di sini",ms:"Salin contoh panggilan API (JSON) dari konsol RunningHub dan tampal di sini"});
-$("btnRhAutofill").textContent = L9({my:"Sample ကနေ Auto-fill",en:"Auto-fill from sample",shn:"Auto-fill တီႈ sample",kac:"Sample kaw na Auto-fill",th:"เติมอัตโนมัติจากตัวอย่าง",zh:"从示例自动填充",vi:"Tự điền từ mẫu",id:"Isi otomatis dari sampel",ms:"Isi automatik dari sampel"});
-$("btnRhSaveModel").textContent = L9({my:"ဒီ Model Mapping ကို Save",en:"Save this model's mapping",shn:"Save mapping Model ၼႆႉ",kac:"Ndai model a mapping hpe Save",th:"บันทึกการแม็พของโมเดลนี้",zh:"保存该模型的映射",vi:"Lưu ánh xạ model này",id:"Simpan pemetaan model ini",ms:"Simpan pemetaan model ini"});
+RH_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label+(m.apiPath?" ✓":""); $("rhModelSel").appendChild(o); });
+$("rhSampleNote").textContent = L9({my:"Endpoint path ကို RunningHub API docs (model page ရဲ့ \"Endpoint:\" line) ကနေ copy ပြီး ဒီမှာ paste ပါ — ✓ ပါတဲ့ model တွေက built-in ဖြစ်လို့ ဘာမှ ဖြည့်စရာမလိုပါ။",en:"Copy the endpoint path from RunningHub's API docs (the \"Endpoint:\" line on the model's page) and paste it here — models marked ✓ already have a built-in default, nothing to fill in.",shn:"Endpoint path ကို RunningHub API docs ၵႂႃႇ copy ဢဝ်",kac:"Endpoint path hpe RunningHub API docs kaw na copy la u",th:"คัดลอก endpoint path จากเอกสาร API ของ RunningHub มาวางที่นี่",zh:"从 RunningHub API 文档复制端点路径粘贴到这里",vi:"Sao chép endpoint path từ tài liệu API của RunningHub và dán vào đây",id:"Salin endpoint path dari dokumen API RunningHub dan tempel di sini",ms:"Salin laluan endpoint dari dokumen API RunningHub dan tampal di sini"});
+$("btnRhSaveModel").textContent = L9({my:"ဒီ Model ကို Save",en:"Save this model",shn:"Save Model ၼႆႉ",kac:"Ndai model hpe Save",th:"บันทึกโมเดลนี้",zh:"保存该模型",vi:"Lưu model này",id:"Simpan model ini",ms:"Simpan model ini"});
 
 function rhLoadFormFor(id){
-  var mc=rhModelCfg(id)||{webappId:"",nodes:{}};
-  $("rhWebappId").value = mc.webappId||"";
-  $("rhNodePrompt").value = (mc.nodes.prompt && mc.nodes.prompt.nodeId)||"";
-  $("rhNodeImage").value = (mc.nodes.image && mc.nodes.image.nodeId)||"";
-  $("rhNodeRefs").value = (mc.nodes.refs && mc.nodes.refs.nodeId)||"";
-  $("rhNodeSize").value = (mc.nodes.size && mc.nodes.size.nodeId)||"";
-  $("rhNodeRatio").value = (mc.nodes.ratio && mc.nodes.ratio.nodeId)||"";
+  $("rhApiPath").value = rhEffectiveApiPath(id);
+  $("rhQuality").value = rhEffectiveQuality(id);
 }
 function rhRenderConfiguredList(){
   var c=rhCfg();
@@ -1184,67 +1111,17 @@ rhLoadFormFor($("rhModelSel").value);
 rhRenderConfiguredList();
 renderRhProviderOption();
 
-$("btnRhAutofill").onclick = function(){
-  var form = rhMapSampleToForm(rhParseApiSample($("rhSample").value));
-  if(form.webappId) $("rhWebappId").value = form.webappId;
-  if(form.prompt) $("rhNodePrompt").value = form.prompt;
-  if(form.image) $("rhNodeImage").value = form.image;
-  if(form.refs) $("rhNodeRefs").value = form.refs;
-  if(form.size) $("rhNodeSize").value = form.size;
-  if(form.ratio) $("rhNodeRatio").value = form.ratio;
-  toast(L9({my:"Auto-fill ပြီးပါပြီ — review ပြီးမှ Save နှိပ်ပါ",en:"Auto-filled — review, then tap Save",shn:"Auto-fill ယဝ်ႉ",kac:"Auto-fill ngut sai",th:"เติมอัตโนมัติแล้ว — ตรวจสอบก่อนกด Save",zh:"已自动填充 — 请检查后再保存",vi:"Đã tự điền — kiểm tra rồi bấm Lưu",id:"Terisi otomatis — periksa lalu tekan Simpan",ms:"Diisi automatik — semak kemudian tekan Simpan"}),"ok");
-};
 $("btnRhSaveModel").onclick = function(){
   var id=$("rhModelSel").value;
-  var webappId=$("rhWebappId").value.trim();
-  var form={
-    webappId: webappId,
-    prompt: $("rhNodePrompt").value.trim(),
-    image: $("rhNodeImage").value.trim(),
-    refs: $("rhNodeRefs").value.trim(),
-    size: $("rhNodeSize").value.trim(),
-    ratio: $("rhNodeRatio").value.trim()
-  };
-  var FIELD={prompt:"text",image:"image",refs:"image",size:"value",ratio:"value"};
-  var nodes={};
-  Object.keys(FIELD).forEach(function(k){ if(form[k]) nodes[k]={nodeId:form[k], fieldName:FIELD[k]}; });
+  var apiPath=$("rhApiPath").value.trim().replace(/^\/+/,"").replace(/^openapi\/v2\//,"");
   var c=rhCfg();
-  if(!webappId || !nodes.prompt){ setSt("stRhModel", L9({my:"webappId + prompt nodeId ဖြည့်ပါ",en:"webappId + prompt nodeId are required",shn:"လူဝ်ႇ webappId + prompt nodeId",kac:"webappId + prompt nodeId ra ai",th:"ต้องกรอก webappId + prompt nodeId",zh:"需要 webappId + prompt nodeId",vi:"Cần webappId + prompt nodeId",id:"webappId + prompt nodeId wajib diisi",ms:"webappId + prompt nodeId diperlukan"}), "err"); return; }
-  c.models[id]={webappId:webappId, nodes:nodes};
+  if(!apiPath){ setSt("stRhModel", L9({my:"endpoint path ဖြည့်ပါ",en:"Endpoint path is required",shn:"လူဝ်ႇ endpoint path",kac:"endpoint path ra ai",th:"ต้องกรอก endpoint path",zh:"需要 endpoint path",vi:"Cần endpoint path",id:"endpoint path wajib diisi",ms:"laluan endpoint diperlukan"}), "err"); return; }
+  c.models[id]={apiPath:apiPath};
   if(!c.activeModel) c.activeModel=id;
   rhSaveCfg(c);
   setSt("stRhModel", L9({my:"Save ပြီးပါပြီ ✓",en:"Saved ✓",shn:"Save ယဝ်ႉ ✓",kac:"Save byin sai ✓",th:"บันทึกแล้ว ✓",zh:"已保存 ✓",vi:"Đã lưu ✓",id:"Tersimpan ✓",ms:"Disimpan ✓"}), "ok");
   rhRenderConfiguredList();
   renderRhProviderOption();
-};
-$("btnRhDiscover").onclick = async function(){
-  if(!state.rhKey){ setSt("stRhModel", L9({my:"key ထည့်ပြီး save ပါဦး",en:"Save a key first",shn:"Save key ဢွၼ်တၢင်း",kac:"Key hpe shawng save u",th:"บันทึก key ก่อน",zh:"请先保存 key",vi:"Lưu key trước",id:"Simpan key dulu",ms:"Simpan key dahulu"}), "err"); return; }
-  var btn=this; if(btn.disabled) return; btn.disabled=true;
-  $("rhAppsList").textContent = L9({my:"ရှာနေတယ်…",en:"Searching…",shn:"ႁႃဝႆႉ…",kac:"Tam nga ai…",th:"กำลังค้นหา…",zh:"搜索中…",vi:"Đang tìm…",id:"Mencari…",ms:"Mencari…"});
-  var res = await rhDiscoverApps(state.rhKey);
-  btn.disabled=false;
-  if(!res.ok){ $("rhAppsList").textContent = rhFriendly({code:res.code}); return; }
-  if(!res.apps.length){ $("rhAppsList").textContent = L9({my:"App မတွေ့ပါ",en:"No apps found",shn:"ဢမ်ႇႁၼ် App",kac:"App n mu ai",th:"ไม่พบแอป",zh:"未找到应用",vi:"Không tìm thấy app",id:"Tidak ada aplikasi ditemukan",ms:"Tiada aplikasi dijumpai"}); return; }
-  $("rhAppsList").innerHTML="";
-  res.apps.forEach(function(a){
-    var guess=rhMatchAppToModel(a.name);
-    var row=document.createElement("div"); row.style.margin="4px 0";
-    row.textContent=a.name+" ("+a.id+")"+(guess?" → "+guess:"");
-    if(guess){
-      var applyBtn=document.createElement("button"); applyBtn.className="btn"; applyBtn.style.marginLeft="8px";
-      applyBtn.textContent=L9({my:"webappId Apply",en:"Apply webappId",shn:"Apply webappId",kac:"webappId Apply",th:"ใช้ webappId",zh:"应用 webappId",vi:"Áp dụng webappId",id:"Terapkan webappId",ms:"Guna webappId"});
-      applyBtn.onclick=function(){
-        var c=rhCfg(); var existing=c.models[guess]||{webappId:"",nodes:{}};
-        c.models[guess]={webappId:a.id, nodes:existing.nodes||{}};
-        rhSaveCfg(c);
-        $("rhModelSel").value=guess; rhLoadFormFor(guess);
-        toast(L9({my:"webappId auto-map ပြီးပါပြီ — node id တွေဆက်ဖြည့်ပါ",en:"webappId auto-mapped — still add node ids below",shn:"webappId auto-map ယဝ်ႉ",kac:"webappId auto-map byin sai",th:"แม็พ webappId อัตโนมัติแล้ว — ยังต้องเพิ่ม node id ด้านล่าง",zh:"已自动映射 webappId — 仍需在下方填写 node id",vi:"Đã tự động ánh xạ webappId — vẫn cần thêm node id bên dưới",id:"webappId otomatis dipetakan — tetap tambahkan node id di bawah",ms:"webappId dipetakan automatik — tambah node id di bawah"}),"ok");
-        rhRenderConfiguredList();
-      };
-      row.appendChild(applyBtn);
-    }
-    $("rhAppsList").appendChild(row);
-  });
 };
 
 /* ---------- OpenAI (GPT Image) — optional 3rd generation provider ----------
@@ -2810,7 +2687,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.7.2";
+var APP_VER="4.8.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -2978,6 +2855,7 @@ $("btnGen").onclick = async function(){
     var count=parseInt($("selCount").value,10)||1;
     var refDataUrls = refs.map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
     var rhActiveForFallback = rhActiveModelCfg();
+    var sizeSel=$("selSize").value;
     var PROVIDER_LABEL = { gemini:"Gemini", runninghub:"RunningHub", openai:"OpenAI" };
     /* Build a call function for every CONFIGURED provider (not just the
        selected one) so the fallback dispatcher below can try others if the
@@ -2987,7 +2865,6 @@ $("btnGen").onclick = async function(){
       parts.push({text:finalPrompt});
       var model=$("selModel").value;
       if(model==="auto") model = refs.length? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
-      var sizeSel=$("selSize").value;
       var makeBody = function(m){
         var gc={ responseModalities:["TEXT","IMAGE"] };
         var ic={};
@@ -3040,7 +2917,7 @@ $("btnGen").onclick = async function(){
          reference images as Gemini would get, routed through the user's own
          Enterprise-Shared key + model mapping instead. */
       providerFns.runninghub = function(){
-        return rhGenerateOne(state.rhKey, rhActiveForFallback.mc, finalPrompt, ratio, refDataUrls, function(elapsed){
+        return rhGenerateOne(state.rhKey, rhActiveForFallback.apiPath, finalPrompt, ratio, refDataUrls, rhV2Resolution(sizeSel), rhActiveForFallback.quality, function(elapsed){
           $("spin").textContent = t("spin_gen")+" · "+Math.round(elapsed/1000)+"s";
         }).then(function(outs){
           return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
