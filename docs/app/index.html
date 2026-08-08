@@ -5734,6 +5734,8 @@ $("btnShowKey").onclick = function(){ var k=$("apiKey"); k.type = k.type==="pass
 $("btnSaveKey").onclick = async function(){
   var k = $("apiKey").value.trim();
   if (!k) { setSt("stKey",t("st_needkey"),"err"); return; }
+  var btn=this; if(btn.disabled) return;
+  btn.disabled=true;
   setSt("stKey",t("st_key_checking"));
   try {
     var r = await fetch(API_BASE+"/models/"+MODEL_TEXT+":generateContent?key="+encodeURIComponent(k), {
@@ -5745,7 +5747,9 @@ $("btnSaveKey").onclick = async function(){
     else { state.key=k; try{localStorage.setItem(LS_KEY,k);}catch(e){} setSt("stKey",t("st_key_savedstatus").replace("{S}",r.status),"ok"); }
     updateKeyBanner();
   } catch(e){ setSt("stKey",t("st_key_noconn"),"err"); }
+  btn.disabled=false;
 };
+$("apiKey").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("btnSaveKey").click(); } });
 
 /* ---------- refs ---------- */
 function renderRefStrip(){
@@ -7080,7 +7084,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.7";
+var APP_VER="4.4.8";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
