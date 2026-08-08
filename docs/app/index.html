@@ -362,6 +362,10 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
       </div>
     </div>
     <div class="lib-grid" id="libGrid"></div>
+    <div class="mut" id="libEmpty" style="display:none;text-align:center;padding:22px 10px">
+      <div style="font-size:32px;opacity:.5;margin-bottom:6px">🔍</div>
+      <span id="libEmptyTxt"></span>
+    </div>
     <div class="row" style="margin-top:10px;justify-content:center">
       <button class="btn" id="libMore"></button>
       <span class="mut" id="libCount"></span>
@@ -5678,6 +5682,7 @@ function renderGallery(){
         var im=document.createElement("img");
         im.src="data:"+it.mime+";base64,"+it.b64;
         im.loading="lazy";
+        im.alt=(it.prompt||"").slice(0,80)||"gallery result";
         im.className = galSel && galSel.id===it.id ? "sel" : "";
         im.onclick=function(){
           galSel=it;
@@ -5749,7 +5754,7 @@ function renderRefStrip(){
   state.refs.forEach(function(ref,i){
     var d=el("div","rs"+(ref?" filled":""));
     if(ref){
-      var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; d.appendChild(im);
+      var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
       var x=el("button","rsx","✕");
       x.onclick=function(ev){ ev.stopPropagation(); state.refs[i]=null; state.imgRoles=null; renderRefs(); };
       d.appendChild(x);
@@ -5766,7 +5771,7 @@ function renderRefs(){
   state.refs.forEach(function(ref,i){
     var d=el("div","ref"+(ref?" filled":""));
     if (ref) {
-      var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; d.appendChild(im);
+      var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
       var x=el("button","x","✕");
       x.onclick=function(){ state.refs[i]=null; state.imgRoles=null; renderRefs(); };
       d.appendChild(x);
@@ -6111,7 +6116,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         var ref=state.refs[i];
         var slot=el("div","wslot"+(ref?" filled":""));
         var th=el("div","th");
-        if(ref){ var tim=document.createElement("img"); tim.src="data:"+ref.mime+";base64,"+ref.b64; th.appendChild(tim); }
+        if(ref){ var tim=document.createElement("img"); tim.src="data:"+ref.mime+";base64,"+ref.b64; tim.alt="IMAGE "+(i+1); th.appendChild(tim); }
         else th.textContent="+";
         slot.appendChild(th);
         var col=el("div");
@@ -6899,6 +6904,11 @@ function renderLibGrid(reset){
   lib.shown=end;
   $("libCount").textContent = end+" / "+lib.list.length;
   $("libMore").style.display = end < lib.list.length ? "" : "none";
+  var empty=$("libEmpty");
+  if(empty){
+    empty.style.display = lib.list.length ? "none" : "";
+    if(!lib.list.length) $("libEmptyTxt").textContent = L9({my:"ဒီစကားလုံးနဲ့ ဘာမှ မတွေ့ပါ — တခြားစကားလုံးနဲ့ ရှာကြည့်ပါ",en:"No matches for that — try a different search",shn:"ဢမ်ႇႁၼ်သင် — ၸၢမ်းသွၵ်ႈတူၺ်းၶေႃႈၵႂၢမ်းတၢင်ႇဢၼ်",kac:"Hpa n mu ai — ga langai bai tam yu u",th:"ไม่พบผลลัพธ์ — ลองค้นหาคำอื่น",zh:"没有匹配结果 — 试试其他关键词",vi:"Không tìm thấy — hãy thử từ khóa khác",id:"Tidak ada hasil — coba kata kunci lain",ms:"Tiada hasil — cuba kata carian lain"});
+  }
 }
 function libSelect(it, imEl){
   lib.sel=it.id; lib.selItem=it;
@@ -7062,7 +7072,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.5";
+var APP_VER="4.4.6";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -7299,6 +7309,7 @@ function showResult(){
   state.hist.forEach(function(e,i){
     var im=document.createElement("img");
     im.src="data:"+e.mime+";base64,"+e.b64;
+    im.alt="result "+(i+1);
     im.className=i===state.histSel?"sel":"";
     im.onclick=function(){ state.histSel=i; showResult(); };
     h.appendChild(im);
