@@ -423,6 +423,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
         <option value="high">High Detail</option>
       </select>
     </div>
+    <div class="addons" id="addonSummaryCreate" style="cursor:pointer"></div>
     <button class="btn btn-gold gen" id="btnGen">⚡ GENERATE</button>
     <div class="spin" id="spin">တိုက်ရိုက် ထုတ်နေပါတယ် — စက္ကန့် ၂၀-၆၀ လောက် စောင့်ပါ…</div>
     <div class="status" id="stGen"></div>
@@ -469,7 +470,11 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
       </div>
     </div>
     <div class="lib-grid" id="galGrid"></div>
-    <div class="mut" id="galEmpty" style="margin-top:10px">ရလဒ် မရှိသေးပါ — Generate လုပ်ပြီးရင် ဒီမှာ ရောက်လာမယ်။</div>
+    <div id="galEmpty" style="margin-top:10px;text-align:center;padding:26px 10px">
+      <div style="font-size:38px;opacity:.5;margin-bottom:10px">🗂</div>
+      <p class="mut" id="galEmptyTxt">ရလဒ် မရှိသေးပါ — Generate လုပ်ပြီးရင် ဒီမှာ ရောက်လာမယ်။</p>
+      <button class="btn btn-gold" id="galEmptyGo" style="margin-top:14px">🧠 Workflow ကနေ စမယ်</button>
+    </div>
   </section>
 </div><!-- /pgGallery -->
 
@@ -5524,7 +5529,8 @@ function applyLang(){
   $("resultH2").textContent=t("result_h2");
   $("btnToRef").textContent=t("to_ref");
   $("galNote").textContent=t("gal_note");
-  $("galEmpty").textContent=t("gal_empty");
+  $("galEmptyTxt").textContent=t("gal_empty");
+  $("galEmptyGo").textContent=L9({my:"🧠 Workflow ကနေ စမယ်",en:"🧠 Start from Workflow",shn:"🧠 တႄႇတီႈ Workflow",kac:"🧠 Workflow kaw na hpang",th:"🧠 เริ่มจาก Workflow",zh:"🧠 从 Workflow 开始",vi:"🧠 Bắt đầu từ Workflow",id:"🧠 Mulai dari Workflow",ms:"🧠 Mula dari Workflow"});
   $("galDel").textContent=t("gal_del");
   $("spin").textContent=t("spin_gen");
   var LANGS=[["my","🌐 မြန်မာ"],["en","🌐 English"],["shn","🌐 တႆး"],["kac","🌐 Jinghpaw"],["th","🌐 ไทย"],["zh","🌐 中文"],["vi","🌐 Tiếng Việt"],["id","🌐 Indonesia"],["ms","🌐 Melayu"]];
@@ -5700,6 +5706,7 @@ $("galDel").onclick=function(){
   if(!galSel) return;
   galleryDel(galSel.id, function(){ galSel=null; renderGallery(); });
 };
+$("galEmptyGo").onclick=function(){ switchPage("pgWf"); };
 (function buildTabbar(){
   var bar=$("tabbar");
   PAGES.forEach(function(p){
@@ -7032,10 +7039,15 @@ function renderAddonSummary(){
   if(buildCameraPrompt()) bits.push("Camera ✓");
   n=D.retouch.sliders.filter(function(s){return state.rt[s.key];}).length;
   if(n) bits.push("Retouch "+n+" ("+state.rtStrength+"%)");
-  $("addonSummary").innerHTML = bits.length ? t("addon_on").replace("{B}","<b>"+bits.join(" · ")+"</b>") : t("addon_off");
+  var html = bits.length ? t("addon_on").replace("{B}","<b>"+bits.join(" · ")+"</b>") : t("addon_off");
+  $("addonSummary").innerHTML = html;
+  var acHost=$("addonSummaryCreate");
+  if(acHost) acHost.innerHTML = html + (bits.length ? " · <u>"+L9({my:"Studio မှာ ပြင်ရန်",en:"edit in Studio",shn:"မႄးတီႈ Studio",kac:"Studio kaw galaw",th:"แก้ไขใน Studio",zh:"在Studio中编辑",vi:"chỉnh sửa trong Studio",id:"edit di Studio",ms:"edit dalam Studio"})+"</u>" : "");
   saveState();
 }
 renderAddonSummary();
+var _acHost=$("addonSummaryCreate");
+if(_acHost) _acHost.onclick=function(){ switchPage("pgStudio"); };
 
 /* restore last prompt + keep saving as the user types */
 if (state.savedPrompt && !$("prompt").value) $("prompt").value = state.savedPrompt;
@@ -7050,7 +7062,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.4";
+var APP_VER="4.4.5";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
