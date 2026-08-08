@@ -5663,12 +5663,16 @@ function galleryAdd(out, promptSnippet){
         };
       }
     };
-  }).catch(function(){});
+  }).catch(function(){
+    toast(L9({my:"ရလဒ်ကို Gallery ထဲ မသိမ်းနိုင်ခဲ့ပါ — browser storage ပြည့်နေခြင်း/ပိတ်ထားခြင်း ဖြစ်နိုင်တယ်",en:"Couldn't save this result to Gallery — your browser storage may be full or blocked",shn:"သိမ်းဢမ်ႇလႆႈၽွၼ်းလႆႈၼႆႉၼႂ်း Gallery — browser storage ပွင်ႇတဵမ်/ပိၵ်ႉဝႆႉ ၸၢင်ႈပဵၼ်လႆႈ",kac:"Lachyum ndai hpe Gallery kaw n da lu ai — browser storage hpring nga ai/gasan da ai mung mai ai",th:"บันทึกผลลัพธ์นี้ลง Gallery ไม่ได้ — พื้นที่จัดเก็บของเบราว์เซอร์อาจเต็มหรือถูกบล็อก",zh:"无法把此结果保存到 Gallery — 浏览器存储可能已满或被阻止",vi:"Không thể lưu kết quả này vào Gallery — bộ nhớ trình duyệt có thể đầy hoặc bị chặn",id:"Tidak dapat menyimpan hasil ini ke Gallery — penyimpanan browser mungkin penuh atau diblokir",ms:"Tidak dapat simpan hasil ini ke Gallery — storan pelayar mungkin penuh atau disekat"}),"err");
+  });
 }
 function galleryDel(id, cb){
   galDb().then(function(d){
     d.transaction("gal","readwrite").objectStore("gal").delete(id).onsuccess=function(){ if(cb) cb(); };
-  }).catch(function(){});
+  }).catch(function(){
+    toast(L9({my:"ပုံကို ဖျက်၍ မရပါ",en:"Couldn't delete this photo",shn:"မွတ်ႇဢမ်ႇလႆႈၶႅပ်းႁၢင်ႈၼႆႉ",kac:"Ndai sumla hpe n mai shamat ai",th:"ลบรูปนี้ไม่ได้",zh:"无法删除这张照片",vi:"Không thể xóa ảnh này",id:"Tidak dapat menghapus foto ini",ms:"Tidak dapat memadam foto ini"}),"err");
+  });
 }
 var galSel=null;
 function renderGallery(){
@@ -5698,7 +5702,12 @@ function renderGallery(){
         grid.appendChild(im);
       });
     };
-  }).catch(function(){});
+  }).catch(function(){
+    $("galGrid").innerHTML="";
+    $("galPick").className="lib-pick";
+    $("galEmpty").style.display="";
+    toast(L9({my:"Gallery ကို ဖွင့်၍ မရပါ — browser storage ခွင့်ပြုချက် စစ်ပါ",en:"Couldn't open Gallery storage — check your browser's storage permissions",shn:"ပိုတ်ႇဢမ်ႇလႆႈ Gallery storage — တွပ်ႇထၢမ်တူၺ်း browser storage ၶႂၢင်ႉၶႂၢၵ်ႈ",kac:"Gallery storage hpe n mai hpaw ai — browser storage ra ai lam yu chyam u",th:"เปิดพื้นที่จัดเก็บ Gallery ไม่ได้ — ตรวจสอบสิทธิ์การจัดเก็บของเบราว์เซอร์",zh:"无法打开 Gallery 存储 — 请检查浏览器存储权限",vi:"Không thể mở bộ nhớ Gallery — kiểm tra quyền lưu trữ trình duyệt",id:"Tidak dapat membuka penyimpanan Gallery — periksa izin penyimpanan browser Anda",ms:"Tidak dapat membuka storan Gallery — semak kebenaran storan pelayar anda"}),"err");
+  });
 }
 $("galToImg1").onclick=function(){
   if(!galSel) return;
@@ -7112,7 +7121,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.10";
+var APP_VER="4.4.11";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
