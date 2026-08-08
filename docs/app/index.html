@@ -1032,6 +1032,48 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       "Optionally add a decor reference as IMAGE 2 (floral style to copy)",
       "Tap Start — the luxury floral-set prompt loads (subject stays exact)",
       "Tap GENERATE — white floral installations frame the subject with soft window shadows"
+    ],
+    "film-grade": [
+      "Add the photo to color-grade as IMAGE 1",
+      "Tap Start — the cinematic film-grade prompt loads",
+      "Tap GENERATE — warm golden tones and soft filmic shadows apply; identity, pose and scene stay exact",
+      "This is a color-grade pass only — nothing else about the photo changes"
+    ],
+    "white-balance-fix": [
+      "Add the color-cast photo (orange/green/blue tint) as IMAGE 1",
+      "Tap Start — the white-balance correction prompt loads",
+      "Tap GENERATE — whites turn neutral and skin tones read natural; genuine warm light sources (candles, sunset) stay warm",
+      "Pose, identity and clothing never change — this is a color-cast fix only"
+    ],
+    "sky-water-enhance": [
+      "Add the photo with sky and/or water as IMAGE 1",
+      "Tap Start — the sky & water enhance prompt loads",
+      "Tap GENERATE — sky blue deepens, water turns rich turquoise with clearer waves; light direction stays consistent",
+      "Only the sky and water change — the subject is never touched"
+    ],
+    "editorial-caption": [
+      "Add the photo to caption as IMAGE 1",
+      "Tap Start — the magazine-poster caption prompt loads (default title: “Forever”)",
+      "Want a different word? Edit the prompt text before generating",
+      "Tap GENERATE — a soft elegant title lands in open space; it never covers a face"
+    ],
+    "couple-compose": [
+      "Add the bride's solo photo as IMAGE 1",
+      "Add the groom's solo photo as IMAGE 2 — two separate photos are combined into one",
+      "Tap Start — the couple-compose prompt loads (both faces locked to their own source photo)",
+      "Tap GENERATE — one new couple portrait forms with matched lighting and color grade"
+    ],
+    "magazine-cover": [
+      "Add the photo for the cover treatment as IMAGE 1",
+      "Tap Start — the fashion-magazine masthead prompt loads (default title: “STYLE”)",
+      "Want a different word? Edit the prompt text before generating",
+      "Tap GENERATE — a bold full-width masthead lands at the top; it never covers the subject, and the photo below stays exact"
+    ],
+    "silhouette-romance": [
+      "Add the solo portrait as IMAGE 1 (works best with a plain, side-lit wall behind you)",
+      "Tap Start — the silhouette-romance prompt loads",
+      "Tap GENERATE — a soft, warm partner shadow appears on the wall, as if cast from just outside the frame",
+      "Your pose, identity and the existing lighting never change — only the backdrop gains the shadow"
     ]
   };
   var WF_STEPS = {
@@ -1094,6 +1136,48 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       "အလှဆင်ပုံစံ reference ရှိရင် IMAGE 2 မှာ တင်ပါ — မတင်လည်းရ",
       "“Start” နှိပ်ပါ — လူ/ဂါဝန်/pose မပြောင်းဘဲ ပန်းအလှဆင် scene ထည့်မယ့် prompt ရောက်လာမယ်",
       "GENERATE နှိပ်ပါ — နှင်းဆီဖြူ/lily/orchid အလှဆင်တွေ ဘေးနှစ်ဖက်ကနေ ဘောင်ခတ်ပြီး နံရံမှာ window-light အရိပ်လှလှ ကျလာမယ်"
+    ],
+    "film-grade": [
+      "IMAGE 1 မှာ color grade လုပ်ချင်တဲ့ပုံ တင်ပါ",
+      "“Start” နှိပ်ပါ — cinematic film-grade prompt ရောက်လာမယ်",
+      "GENERATE နှိပ်ပါ — နွေးထွေးတဲ့ golden tone၊ မှေးမှိန်တဲ့ shadow ဝင်လာမယ်၊ identity/pose/scene အတိအကျ ကျန်မယ်",
+      "ဒါက အရောင် grade ချသွားတာပဲ — ကျန်တာ ဘာမှ မပြောင်းဘူး"
+    ],
+    "white-balance-fix": [
+      "အရောင် cast ပါတဲ့ (လိမ်ဝါ/ စိမ်းစိမ်း/ ပြာပြာ) ပုံကို IMAGE 1 မှာ တင်ပါ",
+      "“Start” နှိပ်ပါ — white-balance ပြင်မယ့် prompt ရောက်လာမယ်",
+      "GENERATE နှိပ်ပါ — အဖြူဟာ true white ဖြစ်လာမယ်၊ အရေပြားအရောင် သဘာဝကျလာမယ်၊ ဖယောင်းတိုင်/နေဝင်ရောင်လို ရည်ရွယ်ချက်ရှိတဲ့ warm light တွေတော့ ဒီအတိုင်း ကျန်နေမယ်",
+      "Pose/identity/အဝတ်အစား လုံးဝမပြောင်းဘူး — အရောင် cast ပဲ ပြင်ပေးတာပါ"
+    ],
+    "sky-water-enhance": [
+      "ကောင်းကင် နဲ့/(သို့) ရေ ပါတဲ့ ပုံကို IMAGE 1 မှာ တင်ပါ",
+      "“Start” နှိပ်ပါ — sky & water enhance prompt ရောက်လာမယ်",
+      "GENERATE နှိပ်ပါ — ကောင်းကင်အပြာ ပိုနက်လာမယ်၊ ရေက turquoise တောက်ပလာမယ်၊ လှိုင်းလေးတွေ ပိုကြည်လာမယ်၊ အလင်းရောင် direction တော့ မပြောင်းဘူး",
+      "ကောင်းကင်/ရေပဲ ပြောင်းမယ် — subject ကို လုံးဝမထိဘူး"
+    ],
+    "editorial-caption": [
+      "Caption ထည့်ချင်တဲ့ ပုံကို IMAGE 1 မှာ တင်ပါ",
+      "“Start” နှိပ်ပါ — magazine-poster caption prompt ရောက်လာမယ် (မူလ စာလုံး: “Forever”)",
+      "စာလုံး အခြားလိုချင်ရင် Generate မလုပ်ခင် prompt ထဲ ပြင်ရေးနိုင်ပါတယ်",
+      "GENERATE နှိပ်ပါ — နူးညံ့တဲ့ ခေါင်းစဉ်က နေရာလွတ်မှာ ဝင်လာမယ်၊ မျက်နှာကို ဘယ်တော့မှ မဖုံးဘူး"
+    ],
+    "couple-compose": [
+      "သတို့သမီးရဲ့ တစ်ကိုယ်တည်းပုံကို IMAGE 1 မှာ တင်ပါ",
+      "သတို့သားရဲ့ တစ်ကိုယ်တည်းပုံကို IMAGE 2 မှာ တင်ပါ — ပုံနှစ်ပုံသီးခြားစီကို ပေါင်းစပ်ပေးမှာပါ",
+      "“Start” နှိပ်ပါ — couple-compose prompt ရောက်လာမယ် (မျက်နှာနှစ်ခုစလုံး သူ့မူရင်းပုံအတိုင်း lock ထားမယ်)",
+      "GENERATE နှိပ်ပါ — အလင်းရောင်/အရောင် တထပ်တည်း ကိုက်ညီတဲ့ တွဲပုံအသစ် တစ်ပုံ ဖြစ်ပေါ်လာမယ်"
+    ],
+    "magazine-cover": [
+      "Cover ပုံစံ ထည့်ချင်တဲ့ ပုံကို IMAGE 1 မှာ တင်ပါ",
+      "“Start” နှိပ်ပါ — fashion-magazine masthead prompt ရောက်လာမယ် (မူလ စာလုံး: “STYLE”)",
+      "စာလုံး အခြားလိုချင်ရင် Generate မလုပ်ခင် prompt ထဲ ပြင်ရေးနိုင်ပါတယ်",
+      "GENERATE နှိပ်ပါ — ခေါင်းစီး ရဲရဲ full-width တစ်ခု အပေါ်ဆုံးမှာ ဝင်လာမယ်၊ subject ကို ဘယ်တော့မှ မဖုံးဘူး၊ အောက်က ဓာတ်ပုံ အတိအကျ ကျန်မယ်"
+    ],
+    "silhouette-romance": [
+      "တစ်ကိုယ်တည်း portrait ကို IMAGE 1 မှာ တင်ပါ (နောက်ခံမှာ ရိုးရှင်းတဲ့ နံရံနဲ့ ဘေးကနေ အလင်းရောင်ကျနေတဲ့ပုံဆို အကောင်းဆုံး)",
+      "“Start” နှိပ်ပါ — silhouette-romance prompt ရောက်လာမယ်",
+      "GENERATE နှိပ်ပါ — frame အပြင်ဘက်ကနေ ကျသလို နူးညံ့တဲ့ warm-toned အချစ်ရိပ် နံရံပေါ် ပေါ်လာမယ်",
+      "Pose/identity/လက်ရှိအလင်းရောင် လုံးဝမပြောင်းဘူး — နောက်ခံမှာပဲ ရိပ်ထပ်တိုးလာတာပါ"
     ]
   };
   /* ---- 4-step workflow wizard: 1 Guide · 2 Images · 3 Prompt · 4 Generate ---- */
@@ -2186,7 +2270,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.14";
+var APP_VER="4.4.15";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
