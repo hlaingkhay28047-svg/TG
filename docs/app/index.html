@@ -6699,18 +6699,25 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   renderFavRecent();
   $("wfPageH2").textContent = "🧠 SMART WORKFLOW — " + wfTotal + t("unit");
   var _swc=$("stWfCount"); if(_swc) _swc.textContent=String(wfTotal);
+  var wfEmpty=el("div","mut","");
+  wfEmpty.id="wfEmpty";
+  wfEmpty.style.cssText="display:none;text-align:center;padding:22px 10px";
+  var wfEmptyIcon=el("div",null,"🔍"); wfEmptyIcon.style.cssText="font-size:32px;opacity:.5;margin-bottom:6px";
+  wfEmpty.appendChild(wfEmptyIcon);
+  var wfEmptyTxt=el("span",null,L9({my:"ဒီစကားလုံးနဲ့ workflow ဘာမှ မတွေ့ပါ — တခြားစကားလုံးနဲ့ ရှာကြည့်ပါ",en:"No workflows match that — try a different search",shn:"ဢမ်ႇႁၼ် workflow သင် — ၸၢမ်းသွၵ်ႈတူၺ်းၶေႃႈၵႂၢမ်းတၢင်ႇဢၼ်",kac:"Workflow n mu ai — ga langai bai tam yu u",th:"ไม่พบเวิร์กโฟลว์ — ลองค้นหาคำอื่น",zh:"没有匹配的工作流 — 试试其他关键词",vi:"Không tìm thấy workflow — hãy thử từ khóa khác",id:"Tidak ada workflow yang cocok — coba kata kunci lain",ms:"Tiada aliran kerja sepadan — cuba kata carian lain"}));
+  wfEmpty.appendChild(wfEmptyTxt);
+  wfHost.appendChild(wfEmpty);
   wfHost.appendChild(el("div","mut",t("wf_note")));
 
   /* live search across all 108 workflows */
   $("wfSearch").oninput=function(){
     var q=this.value.trim().toLowerCase();
-    var openSet={};
+    var anyMatch=false;
     wfIndex.forEach(function(it){
       var hit=!q || it.q.indexOf(q)>=0;
       it.el.style.display=hit?"":"none";
-      if(hit && q) openSet[it.grp.g?"x":"y"]=1;
+      if(hit) anyMatch=true;
     });
-    wfCats.forEach(function(){});
     var grps=wfHost.querySelectorAll(".grp");
     for(var i=0;i<grps.length;i++){
       var anyVisible=grps[i].querySelector(".wfmini:not([style*='none'])");
@@ -6722,6 +6729,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         grps[i].className="grp"+(i===0?" open":"");
       }
     }
+    wfEmpty.style.display = (q && !anyMatch) ? "" : "none";
   };
 
   /* result → continue-editing chain */
@@ -7072,7 +7080,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.6";
+var APP_VER="4.4.7";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
