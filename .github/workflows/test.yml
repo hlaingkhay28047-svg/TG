@@ -28,3 +28,6 @@ jobs:
 
       - name: Run workflow sweep against docs/app/index.html
         run: node test/sweep_workflows.js
+
+      - name: Run RunningHub Enterprise provider sweep (mocked)
+        run: node test/sweep_runninghub.js
