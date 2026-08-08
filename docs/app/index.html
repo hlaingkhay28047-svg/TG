@@ -6932,8 +6932,12 @@ function libSelect(it, imEl){
   $("libPickTitle").textContent=it.t;
   $("libPickSub").textContent=(it.tm||it.f||"")+(it.g?" · "+it.g:"");
 }
-async function libToSlot(slot){
+async function libToSlot(slot, btn){
   var it=lib.selItem; if(!it) return;
+  if(btn.disabled) return;
+  var origTxt=btn.textContent;
+  btn.disabled=true;
+  btn.textContent=L9({my:"ယူနေသည်…",en:"Loading…",shn:"တိုၵ်ႉဢဝ်ယူႇ…",kac:"La nga ai…",th:"กำลังโหลด…",zh:"加载中…",vi:"Đang tải…",id:"Memuat…",ms:"Memuatkan…"});
   try{
     var r=await fetch("lib/full/"+it.id+".jpg");
     var bl=await r.blob();
@@ -6948,9 +6952,11 @@ async function libToSlot(slot){
     setSt("stGen","Library · "+it.t+" → IMAGE "+(slot+1)+" ✓","ok");
     $("refs").scrollIntoView({behavior:"smooth", block:"center"});
   }catch(e){ setSt("stGen","Library ပုံ မယူနိုင်ပါ — internet စစ်ပါ","err"); }
+  btn.disabled=false;
+  btn.textContent=origTxt;
 }
-$("libToImg1").onclick=function(){ libToSlot(0); };
-$("libToImg2").onclick=function(){ libToSlot(1); };
+$("libToImg1").onclick=function(){ libToSlot(0, this); };
+$("libToImg2").onclick=function(){ libToSlot(1, this); };
 $("libSearch").oninput=function(){ lib.search=this.value; renderLibGrid(true); };
 $("libMore").onclick=function(){ renderLibGrid(false); };
 renderLibFilters();
@@ -7106,7 +7112,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.9";
+var APP_VER="4.4.10";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
