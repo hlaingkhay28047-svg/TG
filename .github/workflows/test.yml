@@ -34,3 +34,6 @@ jobs:
 
       - name: Run OpenAI provider sweep (mocked)
         run: node test/sweep_openai.js
+
+      - name: Run cross-provider auto-fallback sweep (mocked)
+        run: node test/sweep_fallback.js
