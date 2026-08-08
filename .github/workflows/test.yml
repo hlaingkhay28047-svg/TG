@@ -1,0 +1,30 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sweep:
+    name: Workflow sweep (mocked generate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install playwright-core
+          npx playwright install --with-deps chromium
+
+      - name: Serve docs/app
+        run: |
+          python3 -m http.server 8931 --directory docs/app &
+          sleep 1
+
+      - name: Run workflow sweep against docs/app/index.html
+        run: node test/sweep_workflows.js
