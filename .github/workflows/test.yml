@@ -31,3 +31,6 @@ jobs:
 
       - name: Run RunningHub Enterprise provider sweep (mocked)
         run: node test/sweep_runninghub.js
+
+      - name: Run OpenAI provider sweep (mocked)
+        run: node test/sweep_openai.js

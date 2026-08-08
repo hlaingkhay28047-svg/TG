@@ -347,6 +347,17 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     <div class="mut" id="rhConfiguredList" style="margin-top:10px"></div>
   </section>
 
+  <section class="card" id="cardOa">
+    <h2>🤖 OPENAI (GPT IMAGE) <span class="mut" style="letter-spacing:0" id="oaOptTag"></span></h2>
+    <p class="mut" id="oaIntro"></p>
+    <div class="row">
+      <input class="inp grow" id="oaKey" type="password" placeholder="sk-… (platform.openai.com/api-keys)">
+      <button class="btn" id="btnShowOaKey"></button>
+      <button class="btn btn-gold" id="btnSaveOaKey"></button>
+    </div>
+    <div class="status" id="stOaKey"></div>
+  </section>
+
   <section class="card">
     <h2 id="platH2"></h2>
     <div class="subh">📱 ANDROID</div>
@@ -570,6 +581,12 @@ var RH_MODELS = [
   { id:"wan-image-edit",   label:"Wan Image Edit" },
   { id:"upscale-pro",      label:"Upscale Pro" }
 ];
+/* OpenAI (GPT Image) — same bring-your-own-key reasoning as RunningHub above.
+   Unlike RunningHub this is a single synchronous request (no upload/poll
+   cycle), closer in shape to the Gemini call it sits next to. */
+var OA_LS_KEY = "hnk_oa_apikey";
+var OA_BASE = "https://api.openai.com/v1";
+var OA_MODEL = "gpt-image-1";
 var LS_STATE = "hnk_web_studio_v2_state";
 
 /* ---------- language (my/en) — toggle reloads so every builder re-reads t() ---------- */
@@ -695,7 +712,7 @@ var D = JSON.parse(document.getElementById("hnkData").textContent);
 var LW = JSON.parse(document.getElementById("hnkLibWf").textContent);
 
 var state = {
-  key: "", rhKey: "", refs: [null,null,null], pickSlot: 0, result: null, hist: [], histSel: -1,
+  key: "", rhKey: "", oaKey: "", refs: [null,null,null], pickSlot: 0, result: null, hist: [], histSel: -1,
   chains: {}, clean: {}, rmix: {},
   cam: { body:null, mm:null, f:null, film:null, bokeh:null },
   rt: {}, rtStrength: 60
@@ -1225,6 +1242,99 @@ $("btnRhDiscover").onclick = async function(){
     $("rhAppsList").appendChild(row);
   });
 };
+
+/* ---------- OpenAI (GPT Image) — optional 3rd generation provider ----------
+   A single synchronous request (no upload/poll cycle), so it's structurally
+   closer to the Gemini call it sits next to than to the RunningHub flow.
+   Same bring-your-own-key reasoning as RunningHub: a public static site
+   can't safely hide an embedded secret, so each user pastes their own key —
+   it lives only in this browser's localStorage and is sent straight to
+   OpenAI, never through any server. */
+function oaUrl(path){ return OA_BASE+path; }
+/* size only matters for image generations/edits; gpt-image-1 accepts a
+   small fixed set, so map the app's free-form ratio dropdown onto it. */
+function oaSizeFromRatio(ratio){
+  if(!ratio) return "auto";
+  var parts=ratio.split(":").map(Number);
+  if(parts.length!==2 || !parts[0] || !parts[1]) return "auto";
+  if(parts[0]===parts[1]) return "1024x1024";
+  return parts[0]>parts[1] ? "1536x1024" : "1024x1536";
+}
+async function oaVerifyKey(apiKey){
+  if(!apiKey) return {ok:false, code:"invalid-key"};
+  try {
+    var r=await fetch(oaUrl("/models"), { headers:{"Authorization":"Bearer "+apiKey} });
+    if(r.status===401) return {ok:false, code:"invalid-key"};
+    return {ok:r.ok, code:r.ok?"":"unknown"};
+  } catch(e){ return {ok:false, code:"network"}; }
+}
+/* One generation: images/edits when refs are supplied (multipart, image[]
+   repeated per RunningHub-style multi-file upload), else images/generations
+   (JSON, text-only). Both return the same {data:[{b64_json}]} shape. */
+async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio){
+  var size = oaSizeFromRatio(ratio);
+  var r;
+  if(refDataUrls && refDataUrls.length){
+    var fd=new FormData();
+    fd.append("model", OA_MODEL);
+    fd.append("prompt", promptText);
+    fd.append("size", size);
+    refDataUrls.forEach(function(du, i){ fd.append("image[]", rhDataUrlToBlob(du), "hnk_"+i+".png"); });
+    r=await fetch(oaUrl("/images/edits"), { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd });
+  } else {
+    r=await fetch(oaUrl("/images/generations"), { method:"POST",
+      headers:{"Authorization":"Bearer "+apiKey, "Content-Type":"application/json"},
+      body: JSON.stringify({ model:OA_MODEL, prompt:promptText, size:size }) });
+  }
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok){ var e=new Error("openai-failed"); e.status=r.status; e.body=j; throw e; }
+  var b64 = j && j.data && j.data[0] && j.data[0].b64_json;
+  if(!b64){ var e2=new Error("openai-empty"); e2.status=200; throw e2; }
+  return [{ mime:"image/png", b64: b64 }];
+}
+function oaFriendly(e){
+  var status=(e && e.status)||0;
+  var msg=((e && e.body && e.body.error && e.body.error.message) || "").toLowerCase();
+  var code=((e && e.body && e.body.error && e.body.error.code) || "").toLowerCase();
+  if(status===401) return L9({my:"OpenAI key မှားနေပါတယ် — Setup မှာ ပြန်စစ်ပါ",en:"OpenAI key is invalid — recheck it in Setup",shn:"OpenAI key ၽိတ်းယူႇ — ၾၢႆႇ Setup ၵႂႃႇပွင်ႇတူၺ်း",kac:"OpenAI key n teng ai — Setup kaw bai yu chyam u",th:"OpenAI key ไม่ถูกต้อง — ตรวจสอบใน Setup",zh:"OpenAI key 无效 — 请在 Setup 中重新检查",vi:"OpenAI key không hợp lệ — kiểm tra lại trong Setup",id:"OpenAI key tidak valid — periksa lagi di Setup",ms:"OpenAI key tidak sah — semak semula dalam Setup"});
+  if(status===429 || code==="insufficient_quota") return L9({my:"OpenAI credit/quota မလုံလောက်ပါ — account ကို top up လုပ်ပါ",en:"Not enough OpenAI credits/quota — top up your account",shn:"OpenAI credit ဢမ်ႇပဵင်း — top up ဢေႃးၶွင်ႉၸဝ်ႈၵဝ်ႇ",kac:"OpenAI credit n law ai — na account hpe top up galaw u",th:"เครดิต/โควตา OpenAI ไม่พอ — เติมเงินในบัญชี",zh:"OpenAI 额度不足 — 请为账户充值",vi:"Không đủ credit/quota OpenAI — nạp thêm cho tài khoản",id:"Kredit/kuota OpenAI tidak cukup — top up akun Anda",ms:"Kredit/kuota OpenAI tidak mencukupi — top up akaun anda"});
+  if(status===400 && (msg.indexOf("safety")>=0 || msg.indexOf("policy")>=0 || code.indexOf("content_policy")>=0)) return L9({my:"OpenAI safety policy က ပိတ်လိုက်ပါတယ် — prompt (သို့) ပုံ ပြောင်းကြည့်ပါ",en:"Blocked by OpenAI's safety policy — try a different photo or reword the prompt",shn:"OpenAI safety policy ႁႄႉပႅတ်ႈယဝ်ႉ",kac:"OpenAI safety policy pat kau ai",th:"ถูกบล็อกโดยนโยบายความปลอดภัยของ OpenAI",zh:"被 OpenAI 安全政策拦截 — 请更换照片或改写 prompt",vi:"Bị chặn bởi chính sách an toàn của OpenAI",id:"Diblokir oleh kebijakan keamanan OpenAI",ms:"Disekat oleh dasar keselamatan OpenAI"});
+  return L9({my:"OpenAI error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"OpenAI error — try again ("+(status||"?")+")",shn:"OpenAI error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"OpenAI error — bai chyam u ("+(status||"?")+")",th:"OpenAI error — ลองใหม่ ("+(status||"?")+")",zh:"OpenAI 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi OpenAI — thử lại ("+(status||"?")+")",id:"Error OpenAI — coba lagi ("+(status||"?")+")",ms:"Ralat OpenAI — cuba lagi ("+(status||"?")+")"});
+}
+function renderOaProviderOption(){
+  var sel=$("selProvider");
+  var had = sel.querySelector('option[value="openai"]');
+  if(state.oaKey){
+    if(!had){ var o=document.createElement("option"); o.value="openai"; o.textContent="Provider: OpenAI"; sel.appendChild(o); }
+  } else if(had){
+    if(sel.value==="openai") sel.value="gemini";
+    had.remove();
+  }
+}
+
+/* ---- Setup UI wiring ---- */
+try { state.oaKey = localStorage.getItem(OA_LS_KEY) || ""; } catch(e){}
+if (state.oaKey) { $("oaKey").value = state.oaKey; }
+$("oaOptTag").textContent = L9({my:"(ချန်ထားလို့ရ)",en:"(optional)",shn:"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)",kac:"(n ra ai)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"});
+$("oaIntro").textContent = L9({my:"OpenAI ကိုယ်ပိုင် API key (sk-…) ထည့်ရင် gpt-image-1 နဲ့လည်း ဒီ Smart Workflow card 115 ခုလုံးကို ထုတ်လို့ရပါတယ် — key ကို browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ — ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Add your own OpenAI API key (sk-…) to generate any of the 115 Smart Workflow cards through gpt-image-1 too — the key stays in this browser's localStorage and is sent straight to OpenAI, never through any server.",shn:"သႂ်ႇ OpenAI API key ၸဝ်ႈၵဝ်ႇ (sk-…) ႁႂ်ႈၸႂ်ႉ gpt-image-1 ၸၢမ်းလႆႈ",kac:"Nang a OpenAI API key (sk-…) hpe bang u",th:"เพิ่ม API key ของคุณเอง (sk-…) เพื่อใช้ gpt-image-1",zh:"添加你自己的 OpenAI API key（sk-…）即可用 gpt-image-1 生成",vi:"Thêm API key OpenAI của riêng bạn (sk-…) để dùng gpt-image-1",id:"Tambahkan API key OpenAI Anda sendiri (sk-…) untuk memakai gpt-image-1",ms:"Tambah API key OpenAI anda sendiri (sk-…) untuk guna gpt-image-1"});
+$("btnShowOaKey").textContent = "👁";
+$("btnSaveOaKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
+$("btnShowOaKey").onclick = function(){ var k=$("oaKey"); k.type = k.type==="password"?"text":"password"; };
+$("btnSaveOaKey").onclick = async function(){
+  var k=$("oaKey").value.trim();
+  if(!k){ setSt("stOaKey", L9({my:"key ထည့်ပါ",en:"Enter a key",shn:"သႂ်ႇ key",kac:"key jaw u",th:"กรอก key",zh:"请输入 key",vi:"Nhập key",id:"Masukkan key",ms:"Masukkan key"}), "err"); return; }
+  var btn=this; if(btn.disabled) return; btn.disabled=true;
+  setSt("stOaKey", L9({my:"စစ်နေတယ်…",en:"Checking…",shn:"တွပ်ႇထၢမ်ဝႆႉ…",kac:"Yu chyam nga ai…",th:"กำลังตรวจสอบ…",zh:"检查中…",vi:"Đang kiểm tra…",id:"Memeriksa…",ms:"Menyemak…"}));
+  try {
+    var res = await oaVerifyKey(k);
+    state.oaKey=k; try{localStorage.setItem(OA_LS_KEY,k);}catch(e){}
+    if(res.ok) setSt("stOaKey", L9({my:"Key အလုပ်လုပ်ပါတယ် ✓",en:"Key verified ✓",shn:"Key ၸႂ်ႉလႆႈ ✓",kac:"Key teng ai ✓",th:"Key ใช้งานได้ ✓",zh:"Key 已验证 ✓",vi:"Key hợp lệ ✓",id:"Key terverifikasi ✓",ms:"Key disahkan ✓"}), "ok");
+    else setSt("stOaKey", res.code==="invalid-key" ? oaFriendly({status:401}) : L9({my:"Network error — ပြန်စမ်းပါ",en:"Network error — try again",shn:"Network error — ၸၢမ်းၶိုၼ်း",kac:"Network error — bai chyam u",th:"Network error — ลองใหม่",zh:"网络错误 — 请重试",vi:"Lỗi mạng — thử lại",id:"Error jaringan — coba lagi",ms:"Ralat rangkaian — cuba lagi"}), "err");
+  } catch(e){ setSt("stOaKey", L9({my:"Network error — ပြန်စမ်းပါ",en:"Network error — try again",shn:"Network error — ၸၢမ်းၶိုၼ်း",kac:"Network error — bai chyam u",th:"Network error — ลองใหม่",zh:"网络错误 — 请重试",vi:"Lỗi mạng — thử lại",id:"Error jaringan — coba lagi",ms:"Ralat rangkaian — cuba lagi"}), "err"); }
+  btn.disabled=false;
+  renderOaProviderOption();
+};
+renderOaProviderOption();
 
 /* ---------- refs ---------- */
 function renderRefStrip(){
@@ -2681,7 +2791,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.5.0";
+var APP_VER="4.6.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -2799,6 +2909,7 @@ $("btnGen").onclick = async function(){
   var rhActive = provider==="runninghub" ? rhActiveModelCfg() : null;
   if(provider==="gemini" && !state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); toast(t("st_needkey"),"err"); return; }
   if(provider==="runninghub" && (!state.rhKey || !rhActive)){ switchPage("pgHome"); var m=L9({my:"RunningHub key/model setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key/model isn't set up yet — configure it in Setup",shn:"RunningHub key/model ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key/model n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key/model — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key/model — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key/model — cấu hình trong Setup",id:"RunningHub key/model belum disiapkan — atur di Setup",ms:"RunningHub key/model belum disediakan — konfigurasi dalam Setup"}); setSt("stRhKey",m,"err"); toast(m,"err"); return; }
+  if(provider==="openai" && !state.oaKey){ switchPage("pgHome"); var mo=L9({my:"OpenAI key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"OpenAI key isn't set up yet — add it in Setup",shn:"OpenAI key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"OpenAI key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า OpenAI key — เพิ่มใน Setup",zh:"尚未设置 OpenAI key — 请在 Setup 中添加",vi:"Chưa thiết lập OpenAI key — thêm trong Setup",id:"OpenAI key belum disiapkan — tambahkan di Setup",ms:"OpenAI key belum disediakan — tambah dalam Setup"}); setSt("stOaKey",mo,"err"); toast(mo,"err"); return; }
   var text=$("prompt").value.trim();
   if(!text && !state.refs.some(Boolean)){ setSt("stGen",t("st_needany"),"err"); return; }
   var btn=$("btnGen"); btn.disabled=true; $("spin").className="spin on"; setSt("stGen","");
@@ -2846,6 +2957,16 @@ $("btnGen").onclick = async function(){
         }).then(function(outs){
           return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
         }).catch(function(e){ return { err: rhFriendly(e) }; });
+      };
+    } else if(provider==="openai"){
+      /* OpenAI path: same finalPrompt + reference images as Gemini/RunningHub,
+         routed to gpt-image-1 via the user's own key — single request, no
+         upload/poll cycle needed. */
+      var oaRefDataUrls = refs.map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
+      oneCall = function(){
+        return oaGenerateOne(state.oaKey, finalPrompt, oaRefDataUrls, ratio)
+          .then(function(outs){ return outs[0] ? { out: outs[0] } : { err: oaFriendly({status:0}) }; })
+          .catch(function(e){ return { err: oaFriendly(e) }; });
       };
     } else {
       parts.push({text:finalPrompt});
