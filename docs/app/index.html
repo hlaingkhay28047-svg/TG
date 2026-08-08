@@ -310,6 +310,43 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     <div class="status" id="stKey"></div>
   </section>
 
+  <section class="card" id="cardRh">
+    <h2>🔗 RUNNINGHUB ENTERPRISE <span class="mut" style="letter-spacing:0" id="rhOptTag"></span></h2>
+    <p class="mut" id="rhIntro"></p>
+    <div class="row">
+      <input class="inp grow" id="rhKey" type="password" placeholder="RunningHub Enterprise-Shared Key">
+      <button class="btn" id="btnShowRhKey"></button>
+      <button class="btn btn-gold" id="btnSaveRhKey"></button>
+    </div>
+    <div class="status" id="stRhKey"></div>
+
+    <div class="row" style="margin-top:14px">
+      <select class="inp grow" id="rhModelSel"></select>
+      <button class="btn" id="btnRhDiscover"></button>
+    </div>
+    <div class="mut" id="rhAppsList" style="margin-top:6px"></div>
+
+    <div class="mut" style="margin-top:12px" id="rhSampleNote"></div>
+    <textarea class="inp" id="rhSample" style="min-height:70px" placeholder='{"webappId":"…","nodeInfoList":[{"nodeId":"…","fieldName":"text","fieldValue":"…"}]}'></textarea>
+    <div class="row" style="margin-top:6px">
+      <button class="btn grow" id="btnRhAutofill"></button>
+    </div>
+
+    <div class="wfgrid" id="rhFormGrid" style="margin-top:10px">
+      <input class="inp" id="rhWebappId" placeholder="webappId">
+      <input class="inp" id="rhNodePrompt" placeholder="prompt nodeId">
+      <input class="inp" id="rhNodeImage" placeholder="image nodeId">
+      <input class="inp" id="rhNodeRefs" placeholder="refs nodeId (optional)">
+      <input class="inp" id="rhNodeSize" placeholder="size nodeId (optional)">
+      <input class="inp" id="rhNodeRatio" placeholder="ratio nodeId (optional)">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn btn-gold grow" id="btnRhSaveModel"></button>
+    </div>
+    <div class="status" id="stRhModel"></div>
+    <div class="mut" id="rhConfiguredList" style="margin-top:10px"></div>
+  </section>
+
   <section class="card">
     <h2 id="platH2"></h2>
     <div class="subh">📱 ANDROID</div>
@@ -402,6 +439,9 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   <section class="card">
     <h2>GENERATE</h2>
     <div class="row" id="genOpts">
+      <select class="inp" id="selProvider" style="flex:1">
+        <option value="gemini">Provider: Gemini</option>
+      </select>
       <select class="inp" id="selModel" style="flex:1">
         <option value="auto">Model: Auto</option>
         <option value="gemini-2.5-flash-image" id="optFlash"></option>
@@ -511,6 +551,25 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 var API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 var MODEL_TEXT = "gemini-2.5-flash";
 var LS_KEY = "hnk_web_studio_key";
+/* RunningHub Enterprise — same OpenAPI shape the Photoshop plugin uses.
+   Each user pastes their OWN key + per-model app/node mapping; nothing here
+   is a secret baked into the shipped file (see PR discussion: a public
+   static site can't safely hide an embedded key). */
+var RH_LS_KEY = "hnk_rh_apikey";
+var RH_LS_CFG = "hnk_rh_config";
+var RH_BASE = "https://www.runninghub.ai";
+var RH_PATHS = { upload:"/task/openapi/upload", run:"/task/openapi/ai-app/run", status:"/task/openapi/status", outputs:"/task/openapi/outputs", cancel:"/task/openapi/cancel", apps:"/task/openapi/ai-app/list" };
+var RH_POLL_MS = 2500, RH_TIMEOUT_MS = 180000;
+var RH_MODELS = [
+  { id:"nano-banana-2",    label:"Nano Banana 2" },
+  { id:"nano-banana-pro",  label:"Nano Banana Pro" },
+  { id:"gpt-image-2",      label:"GPT Image 2" },
+  { id:"qwen-image-2",     label:"Qwen Image 2" },
+  { id:"qwen-image-2-pro", label:"Qwen Image 2 Pro" },
+  { id:"flux-2-dev",       label:"Flux 2 Dev" },
+  { id:"wan-image-edit",   label:"Wan Image Edit" },
+  { id:"upscale-pro",      label:"Upscale Pro" }
+];
 var LS_STATE = "hnk_web_studio_v2_state";
 
 /* ---------- language (my/en) — toggle reloads so every builder re-reads t() ---------- */
@@ -636,7 +695,7 @@ var D = JSON.parse(document.getElementById("hnkData").textContent);
 var LW = JSON.parse(document.getElementById("hnkLibWf").textContent);
 
 var state = {
-  key: "", refs: [null,null,null], pickSlot: 0, result: null, hist: [], histSel: -1,
+  key: "", rhKey: "", refs: [null,null,null], pickSlot: 0, result: null, hist: [], histSel: -1,
   chains: {}, clean: {}, rmix: {},
   cam: { body:null, mm:null, f:null, film:null, bokeh:null },
   rt: {}, rtStrength: 60
@@ -820,6 +879,352 @@ $("btnSaveKey").onclick = async function(){
   btn.disabled=false;
 };
 $("apiKey").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("btnSaveKey").click(); } });
+
+/* ---------- RunningHub Enterprise (optional 2nd generation provider) ----------
+   Same request shape the Photoshop plugin uses (apiKey in the JSON/multipart
+   body, not a header) — see src/providers/runninghub-*.js in HNK-Ai-V1.
+   Each user pastes their OWN Enterprise-Shared key + per-model webappId/node
+   mapping here; it lives only in their own browser's localStorage and is sent
+   straight from their browser to RunningHub, never through any HNK server. */
+function rhCfg(){
+  try { var c=JSON.parse(localStorage.getItem(RH_LS_CFG)||"null"); if(c && typeof c==="object"){ if(!c.models) c.models={}; return c; } } catch(e){}
+  return { models:{}, activeModel:"" };
+}
+function rhSaveCfg(c){ try{ localStorage.setItem(RH_LS_CFG, JSON.stringify(c)); }catch(e){} }
+function rhModelCfg(id){ var c=rhCfg(); return (c.models && c.models[id]) || null; }
+function rhIsConfigured(id){ var mc=rhModelCfg(id); return !!(mc && mc.webappId && mc.nodes && mc.nodes.prompt && mc.nodes.prompt.nodeId); }
+function rhAnyConfigured(){ return RH_MODELS.some(function(m){ return rhIsConfigured(m.id); }); }
+function rhActiveModelCfg(){
+  var c=rhCfg();
+  if(c.activeModel && rhIsConfigured(c.activeModel)) return { id:c.activeModel, mc:c.models[c.activeModel] };
+  var found=RH_MODELS.find(function(m){ return rhIsConfigured(m.id); });
+  return found ? { id:found.id, mc:c.models[found.id] } : null;
+}
+
+/* Parse a pasted RunningHub API sample (JSON body or a curl containing one) —
+   ported from the plugin's runninghub-setup.js so users can reuse the exact
+   same sample they already have from setting up the panel. */
+function rhParseApiSample(text){
+  text=String(text==null?"":text);
+  var webappId="";
+  var m=text.match(/"?(?:webappId|appId|webAppId)"?\s*[:=]\s*"?([A-Za-z0-9_\-]+)"?/i);
+  if(m) webappId=m[1];
+  var nodes=[];
+  try {
+    var body=JSON.parse(text);
+    var list=body.nodeInfoList||(body.data&&body.data.nodeInfoList);
+    if(!webappId && (body.webappId||body.appId)) webappId=String(body.webappId||body.appId);
+    if(Array.isArray(list)) list.forEach(function(n){ if(n && n.nodeId!=null) nodes.push({nodeId:String(n.nodeId),fieldName:String(n.fieldName||""),fieldValue:n.fieldValue}); });
+  } catch(e){}
+  if(!nodes.length){
+    var re=/nodeId"?\s*[:=]\s*"?([A-Za-z0-9_\-]+)"?[\s\S]{0,160}?fieldName"?\s*[:=]\s*"?([A-Za-z0-9_]+)"?(?:[\s\S]{0,200}?fieldValue"?\s*[:=]\s*"?([^",}\n]*))?/gi;
+    var mm; while((mm=re.exec(text))) nodes.push({nodeId:mm[1],fieldName:(mm[2]||""),fieldValue:mm[3]});
+  }
+  return { webappId:webappId, nodes:nodes };
+}
+function rhMapSampleToForm(parsed){
+  parsed=parsed||{nodes:[]};
+  var form={ webappId:parsed.webappId||"", prompt:"", image:"", negative:"", size:"", ratio:"", refs:"" };
+  var images=[], texts=[];
+  (parsed.nodes||[]).forEach(function(n){
+    var fn=String(n.fieldName||"").toLowerCase(), fv=String(n.fieldValue==null?"":n.fieldValue).toLowerCase();
+    if(fn.indexOf("image")!==-1||fn.indexOf("img")!==-1||/\.(png|jpe?g|webp)$/i.test(fv)||fv.indexOf("http")===0) images.push(n);
+    else if(fn.indexOf("text")!==-1||fn.indexOf("prompt")!==-1||fn.indexOf("string")!==-1) texts.push(n);
+    else if(fn.indexOf("ratio")!==-1||fn.indexOf("size")!==-1||fn.indexOf("resolution")!==-1){ if(!form.size) form.size=n.nodeId; }
+  });
+  var neg=null, prompt=null;
+  texts.forEach(function(n){
+    var fn=String(n.fieldName||"").toLowerCase(), fv=String(n.fieldValue||"").toLowerCase();
+    if(!neg && (fn.indexOf("neg")!==-1 || /negative|avoid|worst|blurry|watermark|deformed|lowres/.test(fv))) neg=n;
+    else if(!prompt) prompt=n;
+  });
+  if(!prompt && texts.length) prompt=texts[0];
+  if(prompt) form.prompt=prompt.nodeId;
+  if(neg) form.negative=neg.nodeId;
+  if(images[0]) form.image=images[0].nodeId;
+  if(images[1]) form.refs=images[1].nodeId;
+  return form;
+}
+function rhMatchAppToModel(name){
+  var n=String(name||"").toLowerCase().replace(/[^a-z0-9]+/g," ");
+  if(!n.trim()) return null;
+  if(/nano\s*banana.*pro|banana\s*pro/.test(n)) return "nano-banana-pro";
+  if(/nano\s*banana|banana/.test(n)) return "nano-banana-2";
+  if(/gpt.*image|image.*gpt/.test(n)) return "gpt-image-2";
+  if(/qwen.*pro/.test(n)) return "qwen-image-2-pro";
+  if(/qwen/.test(n)) return "qwen-image-2";
+  if(/flux/.test(n)) return "flux-2-dev";
+  if(/wan/.test(n)) return "wan-image-edit";
+  if(/upscal|esrgan|enhance|super\s*res/.test(n)) return "upscale-pro";
+  return null;
+}
+
+function rhUrl(path){ return RH_BASE+path; }
+function rhDataUrlToBlob(dataUrl){
+  var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
+  var mime=m?m[1]:"application/octet-stream", b64=m?m[2]:"";
+  var bin=atob(b64), bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  return new Blob([bytes],{type:mime});
+}
+function rhBytesToDataUrl(bytes, mime){
+  var bin="", chunk=0x8000;
+  for(var i=0;i<bytes.length;i+=chunk) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+chunk));
+  return "data:"+(mime||"image/png")+";base64,"+btoa(bin);
+}
+function rhPostJson(apiKey, path, extra){
+  var body=Object.assign({apiKey:apiKey}, extra||{});
+  return fetch(rhUrl(path), { method:"POST", headers:{"Content-Type":"application/json","Accept":"application/json"}, body:JSON.stringify(body) });
+}
+async function rhUploadOne(apiKey, dataUrl, idx){
+  var fd=new FormData();
+  fd.append("apiKey", apiKey); fd.append("fileType","image");
+  fd.append("file", rhDataUrlToBlob(dataUrl), "hnk_"+(idx||0)+".png");
+  var r=await fetch(rhUrl(RH_PATHS.upload), { method:"POST", headers:{"Accept":"application/json"}, body:fd });
+  if(!r.ok){ var e=new Error("upload-failed"); e.status=r.status; throw e; }
+  var j=await r.json().catch(function(){return null;});
+  var fileName=j && (j.fileName || (j.data && (j.data.fileName || j.data.fileId)));
+  if(!fileName){ var e2=new Error("upload-failed"); e2.status=200; e2.body=j; throw e2; }
+  return fileName;
+}
+async function rhUploadAll(apiKey, dataUrls){
+  var out=[];
+  for(var i=0;i<dataUrls.length;i++) out.push(await rhUploadOne(apiKey, dataUrls[i], i));
+  return out;
+}
+async function rhSubmit(apiKey, webappId, nodeInfoList){
+  var r=await rhPostJson(apiKey, RH_PATHS.run, {webappId:webappId, nodeInfoList:nodeInfoList});
+  if(!r.ok){ var e=new Error("submit-failed"); e.status=r.status; throw e; }
+  var j=await r.json().catch(function(){return null;});
+  var taskId=j && (j.taskId || (j.data && j.data.taskId));
+  if(!taskId){ var e2=new Error("submit-failed"); e2.status=200; e2.body=j; throw e2; }
+  return taskId;
+}
+async function rhStatusOnce(apiKey, taskId){
+  var r=await rhPostJson(apiKey, RH_PATHS.status, {taskId:taskId});
+  if(!r.ok){ var e=new Error("status-failed"); e.status=r.status; throw e; }
+  var j=await r.json().catch(function(){return null;});
+  var s=j && (j.status || (j.data && (j.data.status || j.data)));
+  return String(s||"").toUpperCase();
+}
+async function rhPollUntilDone(apiKey, taskId, onTick){
+  var start=Date.now();
+  while(true){
+    var s=await rhStatusOnce(apiKey, taskId);
+    var elapsed=Date.now()-start;
+    if(typeof onTick==="function") onTick(elapsed, s);
+    if(s==="SUCCESS"||s==="COMPLETED"||s==="DONE") return;
+    if(s==="FAILED"||s==="ERROR"){ var e=new Error("failed"); e.code="failed"; throw e; }
+    if(elapsed>=RH_TIMEOUT_MS){ var e2=new Error("timeout"); e2.code="timeout"; throw e2; }
+    await new Promise(function(res){ setTimeout(res, RH_POLL_MS); });
+  }
+}
+async function rhOutputs(apiKey, taskId){
+  var r=await rhPostJson(apiKey, RH_PATHS.outputs, {taskId:taskId});
+  if(!r.ok){ var e=new Error("outputs-failed"); e.status=r.status; throw e; }
+  var j=await r.json().catch(function(){return null;});
+  var list=j && (j.outputs || j.data || []);
+  if(!Array.isArray(list)) list=list?[list]:[];
+  return list.map(function(o){ return typeof o==="string"?o:(o.fileUrl||o.url); }).filter(Boolean);
+}
+async function rhDownloadAsDataUrl(url){
+  var r=await fetch(url, {headers:{"Accept":"image/*"}});
+  if(!r.ok){ var e=new Error("download-failed"); e.status=r.status; throw e; }
+  var ab=await r.arrayBuffer();
+  var ct=(r.headers && r.headers.get && r.headers.get("content-type"))||"image/png";
+  return rhBytesToDataUrl(new Uint8Array(ab), ct);
+}
+async function rhVerifyKey(apiKey){
+  if(!apiKey) return {ok:false, code:"invalid-key"};
+  try {
+    var r=await rhPostJson(apiKey, RH_PATHS.status, {taskId:"__hnk_verify__"});
+    if(r.status===401||r.status===403) return {ok:false, code:"invalid-key"};
+    return {ok:true};
+  } catch(e){ return {ok:false, code:"network"}; }
+}
+async function rhDiscoverApps(apiKey){
+  try {
+    var r=await rhPostJson(apiKey, RH_PATHS.apps, {});
+    if(r.status===401||r.status===403) return {ok:false, apps:[], code:"invalid-key"};
+    if(!r.ok) return {ok:false, apps:[], code:"unknown"};
+    var j=await r.json().catch(function(){return null;});
+    var list=(j && (j.apps||j.data||j.list))||[];
+    if(!Array.isArray(list)) list=[];
+    var apps=list.map(function(a){ return {id:String(a.webappId||a.id||a.appId||""), name:String(a.name||a.title||a.webappId||a.id||"")}; }).filter(function(a){return a.id;});
+    return {ok:true, apps:apps};
+  } catch(e){ return {ok:false, apps:[], code:"network"}; }
+}
+/* Build nodeInfoList for one generation. The whole compiled prompt (task text
+   + guards, already merged the same way it is for Gemini) goes into the
+   prompt node — there is no separate negative text to send once merged. */
+function rhBuildNodeInfoList(mc, promptText, ratio, uploadedNames){
+  var nodes=mc.nodes||{}, out=[];
+  function push(node, value){ if(node && value!=null && value!=="") out.push({nodeId:node.nodeId, fieldName:node.fieldName, fieldValue:value}); }
+  push(nodes.prompt, promptText||"");
+  if(ratio) push(nodes.ratio, ratio);
+  if(uploadedNames && uploadedNames.length){
+    if(nodes.image) push(nodes.image, uploadedNames[0]);
+    for(var i=1;i<uploadedNames.length;i++) push(nodes.refs, uploadedNames[i]);
+  }
+  return out;
+}
+/* One end-to-end generation: upload refs -> submit -> poll -> download outputs.
+   Returns an array of {mime,b64} — the exact shape the Gemini path already
+   produces, so the shared history/gallery/result-display code needs no
+   provider-specific branch downstream. */
+async function rhGenerateOne(apiKey, mc, promptText, ratio, refDataUrls, onTick){
+  var uploaded = refDataUrls.length ? await rhUploadAll(apiKey, refDataUrls) : [];
+  var nodeInfoList = rhBuildNodeInfoList(mc, promptText, ratio, uploaded);
+  var taskId = await rhSubmit(apiKey, mc.webappId, nodeInfoList);
+  await rhPollUntilDone(apiKey, taskId, onTick);
+  var urls = await rhOutputs(apiKey, taskId);
+  var outs=[];
+  for(var i=0;i<urls.length;i++){
+    var dataUrl = await rhDownloadAsDataUrl(urls[i]);
+    var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
+    if(m) outs.push({mime:m[1], b64:m[2]});
+  }
+  return outs;
+}
+function rhFriendly(e){
+  var status=(e && e.status)||0, code=(e && e.code)||"";
+  if(status===401||status===403||code==="invalid-key") return L9({my:"RunningHub key မှားနေပါတယ် — Setup မှာ ပြန်စစ်ပါ",en:"RunningHub key is invalid — recheck it in Setup",shn:"RunningHub key ၽိတ်းယူႇ — ၾၢႆႇ Setup ၵႂႃႇပွင်ႇတူၺ်း",kac:"RunningHub key n teng ai — Setup kaw bai yu chyam u",th:"RunningHub key ไม่ถูกต้อง — ตรวจสอบใน Setup",zh:"RunningHub key 无效 — 请在 Setup 中重新检查",vi:"RunningHub key không hợp lệ — kiểm tra lại trong Setup",id:"RunningHub key tidak valid — periksa lagi di Setup",ms:"RunningHub key tidak sah — semak semula dalam Setup"});
+  if(status===402||code==="insufficient-credits") return L9({my:"RunningHub credit မလုံလောက်ပါ — account ကို top up လုပ်ပါ",en:"Not enough RunningHub credits — top up your account",shn:"RunningHub credit ဢမ်ႇပဵင်း — top up ဢေႃးၶွင်ႉၸဝ်ႈၵဝ်ႇ",kac:"RunningHub credit n law ai — na account hpe top up galaw u",th:"เครดิต RunningHub ไม่พอ — เติมเงินในบัญชี",zh:"RunningHub 额度不足 — 请为账户充值",vi:"Không đủ credit RunningHub — nạp thêm cho tài khoản",id:"Kredit RunningHub tidak cukup — top up akun Anda",ms:"Kredit RunningHub tidak mencukupi — top up akaun anda"});
+  if(code==="timeout") return L9({my:"RunningHub timeout ဖြစ်သွားပါတယ် — ပြန်စမ်းကြည့်ပါ",en:"RunningHub timed out — try again",shn:"RunningHub timeout ဝႆႉ — ၸၢမ်းၶိုၼ်း",kac:"RunningHub timeout byin mat sai — bai chyam u",th:"RunningHub หมดเวลา — ลองใหม่อีกครั้ง",zh:"RunningHub 超时 — 请重试",vi:"RunningHub hết thời gian chờ — thử lại",id:"RunningHub timeout — coba lagi",ms:"RunningHub timeout — cuba lagi"});
+  if(code==="failed") return L9({my:"RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"The RunningHub task failed — try a different prompt/photo",shn:"RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",kac:"RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",th:"งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",zh:"RunningHub 任务失败 — 请更换 prompt 或图片",vi:"Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",id:"Tugas RunningHub gagal — coba prompt/foto lain",ms:"Tugas RunningHub gagal — cuba prompt/foto lain"});
+  return L9({my:"RunningHub error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"RunningHub error — try again ("+(status||"?")+")",shn:"RunningHub error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"RunningHub error — bai chyam u ("+(status||"?")+")",th:"RunningHub error — ลองใหม่ ("+(status||"?")+")",zh:"RunningHub 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi RunningHub — thử lại ("+(status||"?")+")",id:"Error RunningHub — coba lagi ("+(status||"?")+")",ms:"Ralat RunningHub — cuba lagi ("+(status||"?")+")"});
+}
+
+/* ---- Setup UI wiring ---- */
+try { state.rhKey = localStorage.getItem(RH_LS_KEY) || ""; } catch(e){}
+if (state.rhKey) { $("rhKey").value = state.rhKey; }
+$("rhOptTag").textContent = L9({my:"(ချန်ထားလို့ရ)",en:"(optional)",shn:"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)",kac:"(n ra ai)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"});
+$("rhIntro").textContent = L9({my:"Photoshop plugin မှာ RunningHub Enterprise-Shared key setup လုပ်ထားပြီးသားရှိရင် ဒီမှာလည်း တူတူသုံးလို့ရပါတယ် — key ကိုယ်တိုင်၊ webappId/node id ကိုယ်တိုင် ထည့်ရပါမယ်၊ browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ — ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"If you already set up a RunningHub Enterprise-Shared key for the Photoshop plugin, you can reuse it here too — paste your own key and webappId/node ids; everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.",shn:"RunningHub Enterprise-Shared key ၾၢႆႇ Photoshop plugin ၸႂ်ႉၽွင်းၶၢဝ်းၶၢဝ်း ၸၢမ်းၸႂ်ႉတီႈၼႆႈလႆႈ",kac:"Photoshop plugin hta RunningHub Enterprise-Shared key setup galaw sai yang, ndai hta mung bai lang mai ai",th:"หากตั้งค่า RunningHub Enterprise-Shared key ไว้กับปลั๊กอิน Photoshop แล้ว ใช้ที่นี่ซ้ำได้",zh:"如果你已经为 Photoshop 插件配置过 RunningHub Enterprise-Shared key，这里也能沿用同一把",vi:"Nếu bạn đã cấu hình RunningHub Enterprise-Shared key cho plugin Photoshop, có thể dùng lại ở đây",id:"Jika Anda sudah menyiapkan RunningHub Enterprise-Shared key untuk plugin Photoshop, bisa dipakai ulang di sini",ms:"Jika anda sudah sediakan RunningHub Enterprise-Shared key untuk plugin Photoshop, boleh guna semula di sini"});
+$("btnShowRhKey").textContent = "👁";
+$("btnSaveRhKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
+$("btnShowRhKey").onclick = function(){ var k=$("rhKey"); k.type = k.type==="password"?"text":"password"; };
+$("btnSaveRhKey").onclick = async function(){
+  var k=$("rhKey").value.trim();
+  if(!k){ setSt("stRhKey", L9({my:"key ထည့်ပါ",en:"Enter a key",shn:"သႂ်ႇ key",kac:"key jaw u",th:"กรอก key",zh:"请输入 key",vi:"Nhập key",ms:"Masukkan key",id:"Masukkan key"}), "err"); return; }
+  var btn=this; if(btn.disabled) return; btn.disabled=true;
+  setSt("stRhKey", L9({my:"စစ်နေတယ်…",en:"Checking…",shn:"တွပ်ႇထၢမ်ဝႆႉ…",kac:"Yu chyam nga ai…",th:"กำลังตรวจสอบ…",zh:"检查中…",vi:"Đang kiểm tra…",id:"Memeriksa…",ms:"Menyemak…"}));
+  try {
+    var res = await rhVerifyKey(k);
+    state.rhKey=k; try{localStorage.setItem(RH_LS_KEY,k);}catch(e){}
+    if(res.ok) setSt("stRhKey", L9({my:"Key အလုပ်လုပ်ပါတယ် ✓",en:"Key verified ✓",shn:"Key ၸႂ်ႉလႆႈ ✓",kac:"Key teng ai ✓",th:"Key ใช้งานได้ ✓",zh:"Key 已验证 ✓",vi:"Key hợp lệ ✓",id:"Key terverifikasi ✓",ms:"Key disahkan ✓"}), "ok");
+    else setSt("stRhKey", rhFriendly(res), "err");
+  } catch(e){ setSt("stRhKey", L9({my:"Network error — ပြန်စမ်းပါ",en:"Network error — try again",shn:"Network error — ၸၢမ်းၶိုၼ်း",kac:"Network error — bai chyam u",th:"Network error — ลองใหม่",zh:"网络错误 — 请重试",vi:"Lỗi mạng — thử lại",id:"Error jaringan — coba lagi",ms:"Ralat rangkaian — cuba lagi"}), "err"); }
+  btn.disabled=false;
+  renderRhProviderOption();
+};
+
+RH_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; $("rhModelSel").appendChild(o); });
+$("btnRhDiscover").textContent = L9({my:"App များ ရှာ",en:"Discover apps",shn:"ႁႃ App",kac:"App ni tam la",th:"ค้นหาแอป",zh:"发现应用",vi:"Tìm apps",id:"Cari aplikasi",ms:"Cari aplikasi"});
+$("rhSampleNote").textContent = L9({my:"RunningHub console ကနေ API call sample (JSON) ကို copy ပြီး ဒီမှာ paste လုပ်ပါ — webappId + node id တွေ auto-fill လုပ်ပေးပါလိမ့်မယ် (review ပြီးမှ save ပါ)",en:"Copy an API call sample (JSON) from your RunningHub console and paste it here — webappId + node ids auto-fill below (review before saving)",shn:"Copy API call sample (JSON) တီႈ RunningHub console သေ paste တီႈၼႆႈ",kac:"RunningHub console kaw na API call sample (JSON) hpe copy nna ndai hta paste u",th:"คัดลอกตัวอย่างการเรียก API (JSON) จากคอนโซล RunningHub มาวางที่นี่",zh:"从 RunningHub 控制台复制一个 API 调用示例（JSON）粘贴到这里",vi:"Sao chép một mẫu gọi API (JSON) từ console RunningHub và dán vào đây",id:"Salin contoh panggilan API (JSON) dari console RunningHub dan tempel di sini",ms:"Salin contoh panggilan API (JSON) dari konsol RunningHub dan tampal di sini"});
+$("btnRhAutofill").textContent = L9({my:"Sample ကနေ Auto-fill",en:"Auto-fill from sample",shn:"Auto-fill တီႈ sample",kac:"Sample kaw na Auto-fill",th:"เติมอัตโนมัติจากตัวอย่าง",zh:"从示例自动填充",vi:"Tự điền từ mẫu",id:"Isi otomatis dari sampel",ms:"Isi automatik dari sampel"});
+$("btnRhSaveModel").textContent = L9({my:"ဒီ Model Mapping ကို Save",en:"Save this model's mapping",shn:"Save mapping Model ၼႆႉ",kac:"Ndai model a mapping hpe Save",th:"บันทึกการแม็พของโมเดลนี้",zh:"保存该模型的映射",vi:"Lưu ánh xạ model này",id:"Simpan pemetaan model ini",ms:"Simpan pemetaan model ini"});
+
+function rhLoadFormFor(id){
+  var mc=rhModelCfg(id)||{webappId:"",nodes:{}};
+  $("rhWebappId").value = mc.webappId||"";
+  $("rhNodePrompt").value = (mc.nodes.prompt && mc.nodes.prompt.nodeId)||"";
+  $("rhNodeImage").value = (mc.nodes.image && mc.nodes.image.nodeId)||"";
+  $("rhNodeRefs").value = (mc.nodes.refs && mc.nodes.refs.nodeId)||"";
+  $("rhNodeSize").value = (mc.nodes.size && mc.nodes.size.nodeId)||"";
+  $("rhNodeRatio").value = (mc.nodes.ratio && mc.nodes.ratio.nodeId)||"";
+}
+function rhRenderConfiguredList(){
+  var c=rhCfg();
+  var configured = RH_MODELS.filter(function(m){ return rhIsConfigured(m.id); });
+  var host=$("rhConfiguredList");
+  if(!configured.length){ host.textContent = L9({my:"model တစ်ခုမှ configure မရသေးပါ",en:"No models configured yet",shn:"model တစ်ခုမွ ဢမ်ႇပႆႇ configure",kac:"Model langai mung n configure shi shi ai",th:"ยังไม่มีการตั้งค่าโมเดลใด",zh:"尚未配置任何模型",vi:"Chưa cấu hình model nào",id:"Belum ada model yang dikonfigurasi",ms:"Belum ada model dikonfigurasi"}); return; }
+  host.innerHTML="";
+  configured.forEach(function(m){
+    var b=document.createElement("span"); b.className="chip"+(c.activeModel===m.id?" on":"");
+    b.textContent=(c.activeModel===m.id?"★ ":"")+m.label;
+    b.style.cursor="pointer"; b.style.marginRight="6px";
+    b.title = L9({my:"Generate မှာ ဒီ model သုံးဖို့ နှိပ်ပါ",en:"Tap to use this model for Generate",shn:"ၼဵၵ်းသေ ၸႂ်ႉ model ၼႆႉ",kac:"Generate hta ndai model hpe lang na dip u",th:"แตะเพื่อใช้โมเดลนี้ตอน Generate",zh:"点击以在生成时使用此模型",vi:"Chạm để dùng model này khi Generate",id:"Ketuk untuk memakai model ini saat Generate",ms:"Ketik untuk guna model ini semasa Generate"});
+    b.onclick=function(){ var cc=rhCfg(); cc.activeModel=m.id; rhSaveCfg(cc); rhRenderConfiguredList(); renderRhProviderOption(); };
+    host.appendChild(b);
+  });
+}
+function renderRhProviderOption(){
+  var sel=$("selProvider");
+  var had = sel.querySelector('option[value="runninghub"]');
+  if(rhAnyConfigured() && state.rhKey){
+    if(!had){ var o=document.createElement("option"); o.value="runninghub"; o.textContent="Provider: RunningHub"; sel.appendChild(o); }
+  } else if(had){
+    if(sel.value==="runninghub") sel.value="gemini";
+    had.remove();
+  }
+}
+$("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
+rhLoadFormFor($("rhModelSel").value);
+rhRenderConfiguredList();
+renderRhProviderOption();
+
+$("btnRhAutofill").onclick = function(){
+  var form = rhMapSampleToForm(rhParseApiSample($("rhSample").value));
+  if(form.webappId) $("rhWebappId").value = form.webappId;
+  if(form.prompt) $("rhNodePrompt").value = form.prompt;
+  if(form.image) $("rhNodeImage").value = form.image;
+  if(form.refs) $("rhNodeRefs").value = form.refs;
+  if(form.size) $("rhNodeSize").value = form.size;
+  if(form.ratio) $("rhNodeRatio").value = form.ratio;
+  toast(L9({my:"Auto-fill ပြီးပါပြီ — review ပြီးမှ Save နှိပ်ပါ",en:"Auto-filled — review, then tap Save",shn:"Auto-fill ယဝ်ႉ",kac:"Auto-fill ngut sai",th:"เติมอัตโนมัติแล้ว — ตรวจสอบก่อนกด Save",zh:"已自动填充 — 请检查后再保存",vi:"Đã tự điền — kiểm tra rồi bấm Lưu",id:"Terisi otomatis — periksa lalu tekan Simpan",ms:"Diisi automatik — semak kemudian tekan Simpan"}),"ok");
+};
+$("btnRhSaveModel").onclick = function(){
+  var id=$("rhModelSel").value;
+  var webappId=$("rhWebappId").value.trim();
+  var form={
+    webappId: webappId,
+    prompt: $("rhNodePrompt").value.trim(),
+    image: $("rhNodeImage").value.trim(),
+    refs: $("rhNodeRefs").value.trim(),
+    size: $("rhNodeSize").value.trim(),
+    ratio: $("rhNodeRatio").value.trim()
+  };
+  var FIELD={prompt:"text",image:"image",refs:"image",size:"value",ratio:"value"};
+  var nodes={};
+  Object.keys(FIELD).forEach(function(k){ if(form[k]) nodes[k]={nodeId:form[k], fieldName:FIELD[k]}; });
+  var c=rhCfg();
+  if(!webappId || !nodes.prompt){ setSt("stRhModel", L9({my:"webappId + prompt nodeId ဖြည့်ပါ",en:"webappId + prompt nodeId are required",shn:"လူဝ်ႇ webappId + prompt nodeId",kac:"webappId + prompt nodeId ra ai",th:"ต้องกรอก webappId + prompt nodeId",zh:"需要 webappId + prompt nodeId",vi:"Cần webappId + prompt nodeId",id:"webappId + prompt nodeId wajib diisi",ms:"webappId + prompt nodeId diperlukan"}), "err"); return; }
+  c.models[id]={webappId:webappId, nodes:nodes};
+  if(!c.activeModel) c.activeModel=id;
+  rhSaveCfg(c);
+  setSt("stRhModel", L9({my:"Save ပြီးပါပြီ ✓",en:"Saved ✓",shn:"Save ယဝ်ႉ ✓",kac:"Save byin sai ✓",th:"บันทึกแล้ว ✓",zh:"已保存 ✓",vi:"Đã lưu ✓",id:"Tersimpan ✓",ms:"Disimpan ✓"}), "ok");
+  rhRenderConfiguredList();
+  renderRhProviderOption();
+};
+$("btnRhDiscover").onclick = async function(){
+  if(!state.rhKey){ setSt("stRhModel", L9({my:"key ထည့်ပြီး save ပါဦး",en:"Save a key first",shn:"Save key ဢွၼ်တၢင်း",kac:"Key hpe shawng save u",th:"บันทึก key ก่อน",zh:"请先保存 key",vi:"Lưu key trước",id:"Simpan key dulu",ms:"Simpan key dahulu"}), "err"); return; }
+  var btn=this; if(btn.disabled) return; btn.disabled=true;
+  $("rhAppsList").textContent = L9({my:"ရှာနေတယ်…",en:"Searching…",shn:"ႁႃဝႆႉ…",kac:"Tam nga ai…",th:"กำลังค้นหา…",zh:"搜索中…",vi:"Đang tìm…",id:"Mencari…",ms:"Mencari…"});
+  var res = await rhDiscoverApps(state.rhKey);
+  btn.disabled=false;
+  if(!res.ok){ $("rhAppsList").textContent = rhFriendly({code:res.code}); return; }
+  if(!res.apps.length){ $("rhAppsList").textContent = L9({my:"App မတွေ့ပါ",en:"No apps found",shn:"ဢမ်ႇႁၼ် App",kac:"App n mu ai",th:"ไม่พบแอป",zh:"未找到应用",vi:"Không tìm thấy app",id:"Tidak ada aplikasi ditemukan",ms:"Tiada aplikasi dijumpai"}); return; }
+  $("rhAppsList").innerHTML="";
+  res.apps.forEach(function(a){
+    var guess=rhMatchAppToModel(a.name);
+    var row=document.createElement("div"); row.style.margin="4px 0";
+    row.textContent=a.name+" ("+a.id+")"+(guess?" → "+guess:"");
+    if(guess){
+      var applyBtn=document.createElement("button"); applyBtn.className="btn"; applyBtn.style.marginLeft="8px";
+      applyBtn.textContent=L9({my:"webappId Apply",en:"Apply webappId",shn:"Apply webappId",kac:"webappId Apply",th:"ใช้ webappId",zh:"应用 webappId",vi:"Áp dụng webappId",id:"Terapkan webappId",ms:"Guna webappId"});
+      applyBtn.onclick=function(){
+        var c=rhCfg(); var existing=c.models[guess]||{webappId:"",nodes:{}};
+        c.models[guess]={webappId:a.id, nodes:existing.nodes||{}};
+        rhSaveCfg(c);
+        $("rhModelSel").value=guess; rhLoadFormFor(guess);
+        toast(L9({my:"webappId auto-map ပြီးပါပြီ — node id တွေဆက်ဖြည့်ပါ",en:"webappId auto-mapped — still add node ids below",shn:"webappId auto-map ယဝ်ႉ",kac:"webappId auto-map byin sai",th:"แม็พ webappId อัตโนมัติแล้ว — ยังต้องเพิ่ม node id ด้านล่าง",zh:"已自动映射 webappId — 仍需在下方填写 node id",vi:"Đã tự động ánh xạ webappId — vẫn cần thêm node id bên dưới",id:"webappId otomatis dipetakan — tetap tambahkan node id di bawah",ms:"webappId dipetakan automatik — tambah node id di bawah"}),"ok");
+        rhRenderConfiguredList();
+      };
+      row.appendChild(applyBtn);
+    }
+    $("rhAppsList").appendChild(row);
+  });
+};
 
 /* ---------- refs ---------- */
 function renderRefStrip(){
@@ -1300,7 +1705,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       body.appendChild(el("p",null,t("wiz_ready")));
       /* generate options inside the wizard — mirrors + syncs the Create selects */
       var row=el("div","wizrow");
-      [["selModel"],["selRatio"],["selCount"],["selSize"],["selQual"]].forEach(function(pair){
+      [["selProvider"],["selModel"],["selRatio"],["selCount"],["selSize"],["selQual"]].forEach(function(pair){
         var mainSel=$(pair[0]);
         var c=mainSel.cloneNode(true);
         c.id="wiz_"+pair[0];
@@ -2276,7 +2681,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.4.19";
+var APP_VER="4.5.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -2390,13 +2795,16 @@ function friendly(status, body){
   return "Error "+status+(msg?": "+msg.slice(0,140):"");
 }
 $("btnGen").onclick = async function(){
-  if(!state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); toast(t("st_needkey"),"err"); return; }
+  var provider = ($("selProvider") && $("selProvider").value) || "gemini";
+  var rhActive = provider==="runninghub" ? rhActiveModelCfg() : null;
+  if(provider==="gemini" && !state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); toast(t("st_needkey"),"err"); return; }
+  if(provider==="runninghub" && (!state.rhKey || !rhActive)){ switchPage("pgHome"); var m=L9({my:"RunningHub key/model setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key/model isn't set up yet — configure it in Setup",shn:"RunningHub key/model ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key/model n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key/model — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key/model — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key/model — cấu hình trong Setup",id:"RunningHub key/model belum disiapkan — atur di Setup",ms:"RunningHub key/model belum disediakan — konfigurasi dalam Setup"}); setSt("stRhKey",m,"err"); toast(m,"err"); return; }
   var text=$("prompt").value.trim();
   if(!text && !state.refs.some(Boolean)){ setSt("stGen",t("st_needany"),"err"); return; }
   var btn=$("btnGen"); btn.disabled=true; $("spin").className="spin on"; setSt("stGen","");
   $("btnRetry").style.display="none";
   try{
-    if(text && hasMyanmar(text)){
+    if(text && hasMyanmar(text) && state.key){
       $("spin").textContent=t("spin_tr");
       var tr=await geminiText("Translate this Burmese image-generation prompt to natural, detailed English. Return ONLY the translation:\n\n"+text);
       if(tr) text=tr;
@@ -2425,56 +2833,71 @@ $("btnGen").onclick = async function(){
     if($("selQual").value==="high") finalPrompt+="\nQUALITY: ultra-detailed professional finish — crisp micro-detail in skin, hair and fabric, clean edges, accurate materials, no artifacts.";
     var ratio=$("selRatio").value;
     if(ratio) finalPrompt+="\nOutput aspect ratio: "+ratio+".";
-    parts.push({text:finalPrompt});
-    var model=$("selModel").value;
-    if(model==="auto") model = refs.length? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
-    var sizeSel=$("selSize").value;
-    function makeBody(m){
-      var gc={ responseModalities:["TEXT","IMAGE"] };
-      var ic={};
-      if(ratio) ic.aspectRatio=ratio;
-      if(sizeSel && m==="gemini-3-pro-image-preview") ic.imageSize=sizeSel;
-      if(Object.keys(ic).length) gc.imageConfig=ic;
-      return { contents:[{parts:parts}], generationConfig:gc };
-    }
     var count=parseInt($("selCount").value,10)||1;
-    function callModel(m){
-      return fetch(API_BASE+"/models/"+m+":generateContent?key="+encodeURIComponent(state.key),{
-        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(makeBody(m))})
-        .then(function(r){ return r.json().catch(function(){return null;}).then(function(j){ return {r:r,j:j}; }); })
-        .then(function(x){
-          if(!x.r.ok) return { err: friendly(x.r.status,x.j), code:x.r.status };
-          var cparts=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].content&&x.j.candidates[0].content.parts||[];
-          for(var i=0;i<cparts.length;i++){
-            var d=cparts[i].inline_data||cparts[i].inlineData;
-            if(d&&d.data) return { out:{mime:d.mime_type||d.mimeType||"image/png", b64:d.data} };
-          }
-          /* HTTP 200 but no image part — surface the real reason instead of a generic message */
-          var fin=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].finishReason||"";
-          var blk=x.j&&x.j.promptFeedback&&x.j.promptFeedback.blockReason||"";
-          if(/SAFETY|PROHIBITED|IMAGE_SAFETY|BLOCKLIST/i.test(fin+" "+blk)){
-            return { err: L9({my:"Safety filter က ပိတ်လိုက်ပါတယ် (X) — ပုံပြောင်းကြည့်ပါ (သို့) prompt ကို ပြောင်းရေးပြီး ပြန်စမ်းပါ။",en:"Blocked by safety filter (X) — try a different photo or reword the prompt.",shn:"Safety filter ႁႄႉပႅတ်ႈယဝ်ႉ (X) — ၸၢမ်းလႅၵ်ႈၶႅပ်းႁၢင်ႈ ဢမ်ႇၼၼ် မႄးတႅမ်ႈ prompt သေ ၸၢမ်းၶိုၼ်း။",kac:"Safety filter pat kau ai (X) — sumla kaga langai chyam u shing nrai prompt hpe galai ka nna bai chyam u.",th:"ถูกบล็อกโดย safety filter (X) — ลองใช้ภาพอื่นหรือเขียน prompt ใหม่.",zh:"被安全过滤器拦截 (X) — 请换一张照片或改写 prompt。",vi:"Bị chặn bởi bộ lọc an toàn (X) — hãy thử ảnh khác hoặc viết lại prompt.",id:"Diblokir oleh safety filter (X) — coba foto lain atau ubah kata-kata prompt.",ms:"Disekat oleh penapis keselamatan (X) — cuba foto lain atau ubah semula prompt."}).replace("X", blk||fin), safety:true };
-          }
-          var txtPart="";
-          for(var ti=0;ti<cparts.length;ti++){ if(cparts[ti].text){ txtPart=cparts[ti].text; break; } }
-          if(txtPart) return { err:L9({my:"Model က ပုံအစား စာပြန်လာပါတယ် — ",en:"Model replied with text instead of an image: ",shn:"Model ဢမ်ႇပၼ်ၶႅပ်းႁၢင်ႈသေ တွပ်ႇမႃးပဵၼ်လိၵ်ႈ — ",kac:"Model gaw sumla malai laika hte htai wa ai: ",th:"Model ตอบกลับเป็นข้อความแทนรูปภาพ: ",zh:"模型返回了文字而非图片: ",vi:"Model trả lời bằng văn bản thay vì ảnh: ",id:"Model membalas dengan teks, bukan gambar: ",ms:"Model membalas dengan teks dan bukannya imej: "})+txtPart.slice(0,200) };
-          if(fin||blk) return { err:L9({my:"ပုံမပြန်လာပါ (",en:"No image returned (",shn:"ၶႅပ်းႁၢင်ႈဢမ်ႇဢွၵ်ႇမႃး (",kac:"Sumla n pru wa ai (",th:"ไม่มีภาพส่งกลับมา (",zh:"未返回图片 (",vi:"Không có ảnh trả về (",id:"Tidak ada gambar dikembalikan (",ms:"Tiada imej dikembalikan ("})+(fin||blk)+")" };
-          return { err:null };
-        })
-        .catch(function(e){ return { err:String(e) }; });
-    }
-    /* 503 / overloaded → automatically retry once on the other image model */
-    var ALT_MODEL = model==="gemini-3-pro-image-preview" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
-    function oneCall(){
-      return callModel(model).then(function(x){
-        if(x.out) return x;
-        var overloaded = x.code===503 || /high demand|overloaded|unavailable/i.test(x.err||"");
-        if(!overloaded) return x;
-        return callModel(ALT_MODEL).then(function(y){
-          if(y.out){ toast(L9({my:"Model ပြည့်နေလို့ backup model နဲ့ ထုတ်ပေးလိုက်ပြီ ✓",en:"Busy model — switched to backup model ✓",shn:"Model ၵိုၼ်းၶွၼ်ႈဝႆႉလႄႈ ၸႂ်ႉ backup model ႁဵတ်းဢွၵ်ႇပၼ်ယဝ်ႉ ✓",kac:"Model kyin taw — backup model de galai kau sai ✓",th:"Model ไม่ว่าง — สลับไปใช้ model สำรองแล้ว ✓",zh:"模型繁忙 — 已切换到备用模型 ✓",vi:"Model đang bận — đã chuyển sang model dự phòng ✓",id:"Model sibuk — beralih ke model cadangan ✓",ms:"Model sibuk — bertukar ke model sandaran ✓"}),"ok"); return y; }
-          return y.err ? y : x;
+    var oneCall;
+    if(provider==="runninghub"){
+      /* RunningHub path: same finalPrompt (task text + guards) and same
+         reference images as Gemini would get, routed through the user's own
+         Enterprise-Shared key + model mapping instead. */
+      var refDataUrls = refs.map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
+      oneCall = function(){
+        return rhGenerateOne(state.rhKey, rhActive.mc, finalPrompt, ratio, refDataUrls, function(elapsed){
+          $("spin").textContent = t("spin_gen")+" · "+Math.round(elapsed/1000)+"s";
+        }).then(function(outs){
+          return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
+        }).catch(function(e){ return { err: rhFriendly(e) }; });
+      };
+    } else {
+      parts.push({text:finalPrompt});
+      var model=$("selModel").value;
+      if(model==="auto") model = refs.length? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
+      var sizeSel=$("selSize").value;
+      var makeBody = function(m){
+        var gc={ responseModalities:["TEXT","IMAGE"] };
+        var ic={};
+        if(ratio) ic.aspectRatio=ratio;
+        if(sizeSel && m==="gemini-3-pro-image-preview") ic.imageSize=sizeSel;
+        if(Object.keys(ic).length) gc.imageConfig=ic;
+        return { contents:[{parts:parts}], generationConfig:gc };
+      };
+      var callModel = function(m){
+        return fetch(API_BASE+"/models/"+m+":generateContent?key="+encodeURIComponent(state.key),{
+          method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(makeBody(m))})
+          .then(function(r){ return r.json().catch(function(){return null;}).then(function(j){ return {r:r,j:j}; }); })
+          .then(function(x){
+            if(!x.r.ok) return { err: friendly(x.r.status,x.j), code:x.r.status };
+            var cparts=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].content&&x.j.candidates[0].content.parts||[];
+            for(var i=0;i<cparts.length;i++){
+              var d=cparts[i].inline_data||cparts[i].inlineData;
+              if(d&&d.data) return { out:{mime:d.mime_type||d.mimeType||"image/png", b64:d.data} };
+            }
+            /* HTTP 200 but no image part — surface the real reason instead of a generic message */
+            var fin=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].finishReason||"";
+            var blk=x.j&&x.j.promptFeedback&&x.j.promptFeedback.blockReason||"";
+            if(/SAFETY|PROHIBITED|IMAGE_SAFETY|BLOCKLIST/i.test(fin+" "+blk)){
+              return { err: L9({my:"Safety filter က ပိတ်လိုက်ပါတယ် (X) — ပုံပြောင်းကြည့်ပါ (သို့) prompt ကို ပြောင်းရေးပြီး ပြန်စမ်းပါ။",en:"Blocked by safety filter (X) — try a different photo or reword the prompt.",shn:"Safety filter ႁႄႉပႅတ်ႈယဝ်ႉ (X) — ၸၢမ်းလႅၵ်ႈၶႅပ်းႁၢင်ႈ ဢမ်ႇၼၼ် မႄးတႅမ်ႈ prompt သေ ၸၢမ်းၶိုၼ်း။",kac:"Safety filter pat kau ai (X) — sumla kaga langai chyam u shing nrai prompt hpe galai ka nna bai chyam u.",th:"ถูกบล็อกโดย safety filter (X) — ลองใช้ภาพอื่นหรือเขียน prompt ใหม่.",zh:"被安全过滤器拦截 (X) — 请换一张照片或改写 prompt。",vi:"Bị chặn bởi bộ lọc an toàn (X) — hãy thử ảnh khác hoặc viết lại prompt.",id:"Diblokir oleh safety filter (X) — coba foto lain atau ubah kata-kata prompt.",ms:"Disekat oleh penapis keselamatan (X) — cuba foto lain atau ubah semula prompt."}).replace("X", blk||fin), safety:true };
+            }
+            var txtPart="";
+            for(var ti=0;ti<cparts.length;ti++){ if(cparts[ti].text){ txtPart=cparts[ti].text; break; } }
+            if(txtPart) return { err:L9({my:"Model က ပုံအစား စာပြန်လာပါတယ် — ",en:"Model replied with text instead of an image: ",shn:"Model ဢမ်ႇပၼ်ၶႅပ်းႁၢင်ႈသေ တွပ်ႇမႃးပဵၼ်လိၵ်ႈ — ",kac:"Model gaw sumla malai laika hte htai wa ai: ",th:"Model ตอบกลับเป็นข้อความแทนรูปภาพ: ",zh:"模型返回了文字而非图片: ",vi:"Model trả lời bằng văn bản thay vì ảnh: ",id:"Model membalas dengan teks, bukan gambar: ",ms:"Model membalas dengan teks dan bukannya imej: "})+txtPart.slice(0,200) };
+            if(fin||blk) return { err:L9({my:"ပုံမပြန်လာပါ (",en:"No image returned (",shn:"ၶႅပ်းႁၢင်ႈဢမ်ႇဢွၵ်ႇမႃး (",kac:"Sumla n pru wa ai (",th:"ไม่มีภาพส่งกลับมา (",zh:"未返回图片 (",vi:"Không có ảnh trả về (",id:"Tidak ada gambar dikembalikan (",ms:"Tiada imej dikembalikan ("})+(fin||blk)+")" };
+            return { err:null };
+          })
+          .catch(function(e){ return { err:String(e) }; });
+      };
+      /* 503 / overloaded → automatically retry once on the other image model */
+      var ALT_MODEL = model==="gemini-3-pro-image-preview" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
+      oneCall = function(){
+        return callModel(model).then(function(x){
+          if(x.out) return x;
+          var overloaded = x.code===503 || /high demand|overloaded|unavailable/i.test(x.err||"");
+          if(!overloaded) return x;
+          return callModel(ALT_MODEL).then(function(y){
+            if(y.out){ toast(L9({my:"Model ပြည့်နေလို့ backup model နဲ့ ထုတ်ပေးလိုက်ပြီ ✓",en:"Busy model — switched to backup model ✓",shn:"Model ၵိုၼ်းၶွၼ်ႈဝႆႉလႄႈ ၸႂ်ႉ backup model ႁဵတ်းဢွၵ်ႇပၼ်ယဝ်ႉ ✓",kac:"Model kyin taw — backup model de galai kau sai ✓",th:"Model ไม่ว่าง — สลับไปใช้ model สำรองแล้ว ✓",zh:"模型繁忙 — 已切换到备用模型 ✓",vi:"Model đang bận — đã chuyển sang model dự phòng ✓",id:"Model sibuk — beralih ke model cadangan ✓",ms:"Model sibuk — bertukar ke model sandaran ✓"}),"ok"); return y; }
+            return y.err ? y : x;
+          });
         });
-      });
+      };
     }
     var doneN=0, t0=Date.now();
     var spinBase=t("spin_gen");
