@@ -18,7 +18,7 @@ jobs:
 
       - name: Install Playwright + Chromium
         run: |
-          npm install playwright-core
+          npm install playwright-core@1.62.1
           npx playwright install --with-deps chromium
 
       - name: Serve docs/app
