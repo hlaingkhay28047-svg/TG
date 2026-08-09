@@ -2990,6 +2990,8 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       return pair(_mount(216,60,114,96,0,0)+_person(87,130,70,_LT)+'<rect x="112" y="64" width="34" height="26" rx="4" fill="none" stroke="'+_GD+'" stroke-width="2.5"/>', _mount(216,60,114,96,_GD,.9)+_person(273,168,56,_LT));
     if(id==="reference-transfer")
       return pair(_mount(30,60,114,96,_GD,.9)+_person(87,168,54,_DM,1)+'<line x1="64" y1="140" x2="110" y2="192" stroke="'+_MU+'" stroke-width="3"/>', _mount(216,60,114,96,_GD,.9)+_person(273,168,56,_LT));
+    if(id==="master-bgfg-replace")
+      return pair(_mount(30,60,114,96,_GD,.9)+_person(87,168,54,_DM,1)+'<line x1="64" y1="140" x2="110" y2="192" stroke="'+_MU+'" stroke-width="3"/><line x1="110" y1="140" x2="64" y2="192" stroke="'+_MU+'" stroke-width="3"/>', _mount(216,60,114,96,_GD,.9)+_person(273,168,56,_GD,1)+_sp(310,66,6,_GD), LB.img2, LB.res);
     if(id==="pr-repSolo")
       return pair(_mount(30,60,114,96,_GD,.85)+_person(87,166,58,_GD,1), _mount(216,60,114,96,_GD,.85)+_person(273,166,58,_LT));
     if(id==="pr-repCouple")
@@ -3933,7 +3935,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.20.0";
+var APP_VER="4.20.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
