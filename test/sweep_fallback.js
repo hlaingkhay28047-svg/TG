@@ -24,10 +24,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
         return Promise.resolve(new Response(JSON.stringify({error:{message:"quota exceeded"}}), {status:429}));
       }
       if (u.indexOf("www.runninghub.ai") >= 0) {
-        if (u.indexOf("/task/openapi/upload") >= 0) return Promise.resolve(new Response(JSON.stringify({fileName:"mock.png"}), {status:200}));
-        if (u.indexOf("/task/openapi/ai-app/run") >= 0) return Promise.resolve(new Response(JSON.stringify({taskId:"t1"}), {status:200}));
-        if (u.indexOf("/task/openapi/status") >= 0) return Promise.resolve(new Response(JSON.stringify({status:"SUCCESS"}), {status:200}));
-        if (u.indexOf("/task/openapi/outputs") >= 0) return Promise.resolve(new Response(JSON.stringify({outputs:["https://mock.runninghub.test/out.png"]}), {status:200}));
+        if (u.indexOf("/openapi/v2/media/upload/binary") >= 0) return Promise.resolve(new Response(JSON.stringify({code:0,message:"success",data:{type:"image",download_url:"https://mock.runninghub.test/out.png",fileName:"openapi/mock.png",size:"100"}}), {status:200}));
+        if (u.indexOf("/openapi/v2/query") >= 0) return Promise.resolve(new Response(JSON.stringify({taskId:"t1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
+        if (u.indexOf("/openapi/v2/rhart-image-n-g31-flash/image-to-image") >= 0) return Promise.resolve(new Response(JSON.stringify({taskId:"t1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
       if (u.indexOf("mock.runninghub.test") >= 0) {
         var bin = atob("${B64}");
@@ -45,10 +44,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   await page.evaluate(() => {
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
     state.key = "TEST_GEMINI_KEY_THAT_FAILS";
-    state.rhKey = "TEST_RH_KEY";
-    rhSaveCfg({ activeModel: "nano-banana-2", models: { "nano-banana-2": {
-      webappId: "mock-webapp-id", nodes: { prompt: { nodeId: "n_prompt", fieldName: "text" }, image: { nodeId: "n_image", fieldName: "image" } }
-    } } });
+    state.rhKey = "TEST_RH_KEY"; // Nano Banana 2 has a built-in apiPath default — key alone is enough
     renderRhProviderOption();
     document.getElementById("selProvider").value = "gemini";
   });
