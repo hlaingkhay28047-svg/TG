@@ -28,12 +28,24 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     window.__reqs = [];
     window.__outs = ["STAGE1OUT", "STAGE2OUT", "STAGE3OUT", "STAGE4OUT"];
     window.__callN = 0;
+    window.__failOnCall = -1; // 0-based call index to fail with a safety-block response, or -1 for none
     const realFetch = window.fetch;
     window.fetch = function(url, opts){
       if (String(url).indexOf(":generateContent") >= 0) {
+        var thisCall = window.__callN;
         try { window.__reqs.push(JSON.parse(opts.body)); } catch(e) { window.__reqs.push({parseError:String(e)}); }
-        var out = window.__outs[window.__callN] || "${B64}";
         window.__callN++;
+        if (window.__failOnCall === thisCall) {
+          return new Promise(function(resolve){
+            setTimeout(function(){
+              resolve(new Response(JSON.stringify({
+                candidates:[{content:{parts:[]},finishReason:"SAFETY"}],
+                promptFeedback:{blockReason:"SAFETY"}
+              }), {status:200, headers:{"Content-Type":"application/json"}}));
+            }, 60);
+          });
+        }
+        var out = window.__outs[thisCall] || "${B64}";
         // A small deliberate response delay (the request is recorded above
         // BEFORE this delay) gives the pipeline-cancel test a real window to
         // click Cancel after stage 1's request fires but before stage 2's
@@ -174,7 +186,89 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   }, B64);
   report("pipeline cancel stops after the in-flight stage instead of running the rest", cancelResult.reqCount === 1 && cancelResult.restoredToOriginal, JSON.stringify(cancelResult));
 
-  // 7) "set as before photo" feeds the latest result back into IMAGE 1
+  // 7) a genuine mid-pipeline failure (e.g. a safety-filter block) must show
+  // as a real error with a retry option — not get repackaged as a false
+  // "Pipeline stopped ✓" success message indistinguishable from a deliberate cancel
+  const failResult = await page.evaluate(async (b64) => {
+    rsSetMode("pipeline");
+    state.refs = [{ mime: "image/png", b64: b64, label: "original" }, null, null];
+    renderRefs();
+    document.querySelectorAll("#rsRecipeGrid .chip")[0].click(); // 2-stage recipe
+    window.__reqs = []; window.__callN = 0; window.__failOnCall = 1; // stage 2 fails
+    document.getElementById("btnRsGen").onclick();
+    for (let w = 0; w < 300 && document.getElementById("btnRsGen").disabled; w++) await new Promise(r => setTimeout(r, 30));
+    window.__failOnCall = -1;
+    const statusText = document.getElementById("stRsGen").textContent;
+    const statusClass = document.getElementById("stRsGen").className;
+    return {
+      reqCount: window.__reqs.length,
+      retryShown: document.getElementById("btnRsRetry").style.display !== "none",
+      statusIsError: statusClass.indexOf("err") >= 0,
+      notFalselyReportedAsStopped: !/✓/.test(statusText),
+      partialResultStillShown: document.getElementById("rsResultBox").className.indexOf(" on") >= 0
+    };
+  }, B64);
+  report("a real mid-pipeline failure surfaces as an error with retry, not a false 'stopped ✓' message", failResult.reqCount === 2 && failResult.retryShown && failResult.statusIsError && failResult.notFalselyReportedAsStopped && failResult.partialResultStillShown, JSON.stringify(failResult));
+
+  // 8) editing the pipeline queue (e.g. tapping a different recipe) WHILE a
+  // run is already in flight must not corrupt that already-running execution
+  const queueMutationResult = await page.evaluate(async (b64) => {
+    rsSetMode("pipeline");
+    state.refs = [{ mime: "image/png", b64: b64, label: "original" }, null, null];
+    renderRefs();
+    document.querySelectorAll("#rsRecipeGrid .chip")[0].click(); // evoto, rsGlam
+    window.__reqs = []; window.__callN = 0;
+    document.getElementById("btnRsGen").onclick();
+    for (let w = 0; w < 20 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 10));
+    rsPipelineQueue = ["rsNatural", "rsEditorial", "rsGlam"]; // simulates tapping another recipe mid-run
+    for (let w = 0; w < 300 && document.getElementById("btnRsGen").disabled; w++) await new Promise(r => setTimeout(r, 30));
+    return { reqCount: window.__reqs.length };
+  }, B64);
+  report("mid-run edits to the pipeline queue don't corrupt the already-running execution", queueMutationResult.reqCount === 2, JSON.stringify(queueMutationResult));
+
+  // 9) a reference image left in slot 2/3 by another page (Studio/Create)
+  // must not silently ride along into a Retouch Studio request, and must be
+  // restored afterward so those other pages are unaffected
+  const staleRefResult = await page.evaluate(async (b64) => {
+    rsSetMode("onetap");
+    state.refs = [{ mime: "image/png", b64: b64, label: "before" }, { mime: "image/png", b64: "STALE_REF", label: "leftover" }, null];
+    renderRefs();
+    window.__reqs = []; window.__callN = 0;
+    document.querySelectorAll("#rsPresetGrid .chip")[0].click();
+    for (let w = 0; w < 100 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 30));
+    for (let w = 0; w < 100 && document.getElementById("btnRsGen").disabled; w++) await new Promise(r => setTimeout(r, 30));
+    const r = window.__reqs[0] || {};
+    const parts = (r.contents && r.contents[0] && r.contents[0].parts) || [];
+    const imgDatas = parts.filter(p => p.inline_data && p.inline_data.data).map(p => p.inline_data.data);
+    return {
+      imgCount: imgDatas.length,
+      leakedStaleRef: imgDatas.indexOf("STALE_REF") >= 0,
+      slot1RestoredAfter: state.refs[1] && state.refs[1].b64 === "STALE_REF"
+    };
+  }, B64);
+  report("a leftover reference image in slot 2/3 doesn't leak into the request and is restored after", staleRefResult.imgCount === 1 && !staleRefResult.leakedStaleRef && staleRefResult.slot1RestoredAfter, JSON.stringify(staleRefResult));
+
+  // 10) generation controls must reject re-entrant taps while one generation
+  // is already running, so two concurrent calls into the shared dispatcher
+  // can never race each other over state.hist/state.refs
+  const reentrancyResult = await page.evaluate(async (b64) => {
+    rsSetMode("pipeline");
+    state.refs = [{ mime: "image/png", b64: b64, label: "original" }, null, null];
+    renderRefs();
+    document.querySelectorAll("#rsRecipeGrid .chip")[0].click();
+    window.__reqs = []; window.__callN = 0;
+    document.getElementById("btnRsGen").onclick();
+    for (let w = 0; w < 20 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 10));
+    const chipsDisabledDuringRun = Array.from(document.querySelectorAll("#rsPresetGrid .chip")).every(c => c.disabled);
+    document.querySelectorAll("#rsPresetGrid .chip")[0].click(); // attempted re-entrant tap while busy
+    const genDisabledDuringRun = document.getElementById("btnRsGen").disabled;
+    document.getElementById("btnRsGen").onclick(); // attempted re-entrant tap on Generate itself
+    for (let w = 0; w < 300 && document.getElementById("btnRsGen").disabled; w++) await new Promise(r => setTimeout(r, 30));
+    return { reqCount: window.__reqs.length, chipsDisabledDuringRun, genDisabledDuringRun };
+  }, B64);
+  report("controls reject re-entrant generation while one is already running", reentrancyResult.reqCount === 2 && reentrancyResult.chipsDisabledDuringRun && reentrancyResult.genDisabledDuringRun, JSON.stringify(reentrancyResult));
+
+  // 11) "set as before photo" feeds the latest result back into IMAGE 1
   const toRefResult = await page.evaluate(() => {
     document.getElementById("btnRsToRef").click();
     return { refLabel: state.refs[0] && state.refs[0].label };

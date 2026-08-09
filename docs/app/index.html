@@ -3375,22 +3375,49 @@ $("rsClearAll").onclick=function(){
 /* generate: steer the shared $("btnGen") provider/fallback dispatcher's
    inputs (prompt text + IMAGE 1) instead of duplicating that ~150-line
    dispatcher. state.hist growing tells us it actually produced a result. */
+var rsBusy=false;
 function rsSyncGenControls(busy){
+  rsBusy=busy;
   $("btnRsGen").disabled=busy;
   $("rsSpin").className="spin"+(busy?" on":"");
   $("btnRsRetry").style.display="none";
+  /* one-tap presets and the pipeline builder stay visible/tappable while a
+     generation is in flight (so the user can still switch tabs to look
+     around) — but re-entering the shared $("btnGen") dispatcher a second
+     time while it's already running would race two concurrent generations
+     against the same state.hist/state.refs, so the actual triggers are
+     disabled for the duration. */
+  document.querySelectorAll("#rsPresetGrid .chip, #rsRecipeGrid .chip, #rsPipelinePicker .chip, #rsPipelineQueue .chip").forEach(function(c){ c.disabled=busy; });
 }
 async function rsDoGenerate(promptText){
   if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); return false; }
   $("prompt").value=promptText;
   state.imgRoles=null;
-  var beforeLen=state.hist.length;
-  await $("btnGen").onclick();
+  /* Retouch Studio is a single-photo (IMAGE 1) tool — but state.refs is the
+     same shared 3-slot array Studio/Create use for extra style references,
+     so a photo left in slot 2/3 from another page would otherwise silently
+     ride along into every retouch request. Blank them for just this call
+     and restore right after, so Studio/Create are unaffected. */
+  var savedExtra1=state.refs[1], savedExtra2=state.refs[2];
+  state.refs[1]=null; state.refs[2]=null;
+  /* state.hist is shared app-wide and capped at 8 entries — once a user has
+     generated 8+ results (trivially easy across a normal session), a fresh
+     success just unshifts-then-pops and LEAVES THE LENGTH UNCHANGED, so
+     comparing lengths silently misreports every later success as a failure.
+     A new result is always unshifted to the FRONT on success, so compare
+     object identity of state.hist[0] instead — cap-independent. */
+  var beforeFirst=state.hist[0];
+  try{
+    await $("btnGen").onclick();
+  } finally {
+    state.refs[1]=savedExtra1; state.refs[2]=savedExtra2;
+  }
   var srcSt=$("stGen");
   setSt("stRsGen", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
-  return state.hist.length>beforeLen;
+  return state.hist[0]!==beforeFirst;
 }
 async function rsRunOnetap(key){
+  if(rsBusy) return;
   if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
   rsSyncGenControls(true);
   var ok=await rsDoGenerate(rsPresetText(key, state.rtStrength));
@@ -3398,22 +3425,29 @@ async function rsRunOnetap(key){
   if(ok) rsShowResult(); else $("btnRsRetry").style.display="";
 }
 async function rsRunPipeline(){
+  if(rsBusy) return;
   if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
   if(!rsPipelineQueue.length){ setSt("stRsGen", L9({my:"Pipeline stage အရင်ရွေးပါ",en:"Pick pipeline stages first",shn:"လိူၵ်ႈ stage ဢွၼ်တၢင်း",kac:"Stage ni shawng tawn u",th:"เลือกขั้นตอนก่อน",zh:"请先选择流水线阶段",vi:"Chọn giai đoạn trước",id:"Pilih tahap pipeline dulu",ms:"Pilih peringkat pipeline dahulu"}), "err"); return; }
   rsPipelineCancel=false;
   rsSyncGenControls(true);
   $("btnRsCancel").style.display="";
-  var savedBefore=state.refs[0], ranAny=false, stopped=false;
-  for(var i=0;i<rsPipelineQueue.length;i++){
+  /* Snapshot the queue: rsPipelineQueue is the same live array the recipe
+     chips reassign and the custom-picker push/remove chips mutate. Reading
+     it fresh on every loop iteration would let a mid-run tap on those
+     controls (still interactive during a run) silently swap out stages the
+     user never meant to run, or skip/duplicate ones already queued. */
+  var queue=rsPipelineQueue.slice();
+  var savedBefore=state.refs[0], ranAny=false, stopped=false, failed=false;
+  for(var i=0;i<queue.length;i++){
     if(rsPipelineCancel){ stopped=true; break; }
-    var key=rsPipelineQueue[i];
-    var label=(i+1)+"/"+rsPipelineQueue.length+" · "+rsPresetLabel(key)+"…";
+    var key=queue[i];
+    var label=(i+1)+"/"+queue.length+" · "+rsPresetLabel(key)+"…";
     $("rsStageProgress").textContent=label;
     setSt("stRsGen", label);
     var ok=await rsDoGenerate(rsPresetText(key, state.rtStrength));
-    if(!ok){ stopped=true; break; }
+    if(!ok){ failed=true; break; }
     ranAny=true;
-    if(i<rsPipelineQueue.length-1){
+    if(i<queue.length-1){
       var out=state.hist[0];
       state.refs[0]={ mime:out.mime, b64:out.b64, label:"stage "+(i+1) };
     }
@@ -3423,7 +3457,14 @@ async function rsRunPipeline(){
   $("btnRsCancel").style.display="none";
   $("rsStageProgress").textContent="";
   rsSyncGenControls(false);
-  if(ranAny){
+  if(failed){
+    /* a stage actually failed (safety filter, no image returned, etc.) —
+       rsDoGenerate already surfaced the real error via setSt("stRsGen",...);
+       don't overwrite it with a generic "stopped" success message, and
+       still show whatever earlier stages DID finish. */
+    if(ranAny) rsShowResult();
+    $("btnRsRetry").style.display="";
+  } else if(ranAny){
     setSt("stRsGen", stopped ? L9({my:"Pipeline ရပ်လိုက်ပြီ — ရရှိပြီးသား အဆင့်တွေက ရလဒ်ထဲ ရှိတယ် ✓",en:"Pipeline stopped — the stages that finished are in the result ✓",shn:"ၵိုတ်း Pipeline ယဝ်ႉ — ၸၼ်ႉဢၼ်ယဝ်ႉယဝ်ႉ ယူႇတီႈၽွၼ်း ✓",kac:"Pipeline hkring sai — ngut wa sai ai stage ni gaw lachyum kaw nga ai ✓",th:"หยุด Pipeline แล้ว — ขั้นตอนที่เสร็จอยู่ในผลลัพธ์แล้ว ✓",zh:"流水线已停止 — 已完成的阶段已在结果中 ✓",vi:"Đã dừng Pipeline — các giai đoạn đã hoàn thành có trong kết quả ✓",id:"Pipeline dihentikan — tahap yang selesai ada di hasil ✓",ms:"Pipeline dihentikan — peringkat yang selesai ada dalam hasil ✓"}) : L9({my:"Pipeline ပြီးပြီ ✓",en:"Pipeline complete ✓",shn:"Pipeline ယဝ်ႉတူဝ်ႈ ✓",kac:"Pipeline ngut sai ✓",th:"Pipeline เสร็จแล้ว ✓",zh:"流水线已完成 ✓",vi:"Pipeline hoàn tất ✓",id:"Pipeline selesai ✓",ms:"Pipeline selesai ✓"}), "ok");
     rsShowResult();
   } else {
@@ -3431,6 +3472,7 @@ async function rsRunPipeline(){
   }
 }
 $("btnRsGen").onclick=async function(){
+  if(rsBusy) return;
   if(rsMode==="pipeline"){ await rsRunPipeline(); return; }
   var hasSlider = D.retouch.sliders.some(function(s){ return state.rt[s.key]; });
   if(!hasSlider){ setSt("stRsGen", L9({my:"Slider အနည်းဆုံး တစ်ခု ရွေးပါ",en:"Pick at least one slider",shn:"ထၢႆႇ slider ဢၼ်ၼိုင်ႈဢွၼ်တၢင်း",kac:"Slider langai loi loi tawn u",th:"เลือกอย่างน้อยหนึ่ง slider",zh:"请至少选择一个滑块",vi:"Chọn ít nhất một slider",id:"Pilih setidaknya satu slider",ms:"Pilih sekurang-kurangnya satu slider"}), "err"); return; }
@@ -3445,14 +3487,15 @@ $("btnRsCancel").onclick=function(){
   setSt("stRsGen", L9({my:"နောက်အဆင့် မစခင် ရပ်တော့မယ်…",en:"Stopping before the next stage…",shn:"တေၵိုတ်း ၵွၼ်ႇထိုင် ၸၼ်ႉထႅင်ႈ…",kac:"Stage kaga n hpang shi yang hkring na…",th:"กำลังหยุดก่อนขั้นตอนถัดไป…",zh:"将在下一阶段前停止…",vi:"Sẽ dừng trước giai đoạn tiếp theo…",id:"Akan berhenti sebelum tahap berikutnya…",ms:"Akan berhenti sebelum peringkat seterusnya…"}));
 };
 $("btnRsRetry").onclick=async function(){
+  if(rsBusy) return;
   this.style.display="none";
   rsSyncGenControls(true);
-  var beforeLen=state.hist.length;
+  var beforeFirst=state.hist[0]; // see rsDoGenerate's comment: length alone misreports success once history is at its 8-item cap
   await $("btnGen").onclick();
   var srcSt=$("stGen");
   setSt("stRsGen", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
   rsSyncGenControls(false);
-  if(state.hist.length>beforeLen) rsShowResult(); else this.style.display="";
+  if(state.hist[0]!==beforeFirst) rsShowResult(); else this.style.display="";
 };
 
 /* before/after: always-on compare slider, IMAGE 1 vs the selected result */
@@ -3515,9 +3558,9 @@ $("btnRsToRef").onclick=function(){
 
 /* static labels + first render */
 $("rsIntro").textContent = L9({my:"မူရင်းပုံတစ်ပုံ တင်ပြီး — One-tap preset (ဒါမှမဟုတ်) Slider (ဒါမှမဟုတ်) Pipeline သုံးပြီး ပရော်ဖက်ရှင်နယ် skin retouch ရလဒ် ရယူပါ",en:"Upload one photo, then use a One-tap preset, fine-tune Sliders, or chain a Pipeline for a professional skin-retouch result",shn:"ၶိုၼ်ႈၶႅပ်းႁၢင်ႈၼိုင်ႈဢၼ်သေ ၸႂ်ႉ One-tap preset / Slider / Pipeline ႁဵတ်းၽွၼ်း retouch ၸၼ်ႉသုင်",kac:"Sumla langai jaw let na One-tap preset, Slider hpe galai chyam, shingnrai Pipeline hte professional skin-retouch lachyum hpe la u",th:"อัปโหลดรูปหนึ่งรูป แล้วใช้ One-tap preset, ปรับ Slider หรือต่อ Pipeline เพื่อผลลัพธ์รีทัชผิวระดับมืออาชีพ",zh:"上传一张照片，然后使用一键预设、微调滑块或串联流水线，获得专业级皮肤精修效果",vi:"Tải lên một ảnh, sau đó dùng preset một chạm, tinh chỉnh Slider, hoặc nối Pipeline để có kết quả retouch da chuyên nghiệp",id:"Unggah satu foto, lalu gunakan preset sekali ketuk, sesuaikan Slider, atau rangkai Pipeline untuk hasil retouch kulit profesional",ms:"Muat naik satu foto, kemudian guna preset sekali ketik, laraskan Slider, atau rangkaikan Pipeline untuk hasil retouch kulit profesional"});
-$("rsTabOnetap").textContent = "⚡ One-Tap";
-$("rsTabSliders").textContent = "🎚 Sliders";
-$("rsTabPipeline").textContent = "🔗 Pipeline";
+$("rsTabOnetap").textContent = "⚡ "+L9({my:"One-Tap",en:"One-Tap",shn:"One-Tap",kac:"One-Tap",th:"One-Tap",zh:"一键",vi:"One-Tap",id:"One-Tap",ms:"One-Tap"});
+$("rsTabSliders").textContent = "🎚 "+L9({my:"Sliders",en:"Sliders",shn:"Sliders",kac:"Sliders",th:"Sliders",zh:"滑块",vi:"Sliders",id:"Slider",ms:"Slider"});
+$("rsTabPipeline").textContent = "🔗 "+L9({my:"Pipeline",en:"Pipeline",shn:"Pipeline",kac:"Pipeline",th:"Pipeline",zh:"流水线",vi:"Pipeline",id:"Pipeline",ms:"Pipeline"});
 $("rsOnetapNote").textContent = L9({my:"Preset တစ်ခု နှိပ်လိုက်ရင် ချက်ချင်း retouch ထုတ်ပေးပါလိမ့်မယ် (Sliders tab ကရွေးထားတာတွေရှိရင် ပေါင်းပြီး ထည့်ပေးပါမယ်)",en:"Tap a preset to retouch instantly (anything picked in the Sliders tab is layered on top automatically)",shn:"ၼဵၵ်း preset ဢွၼ်ၼိုင်ႈ ၽွင်ႈၶိုၼ်း ၶၢင်းၶၢင်း (Sliders tab ဢၼ်လိူၵ်ႈဝႆႉ ၸွမ်းတေၸူမ်းၸွႆႈ)",kac:"Preset langai dip u nna gaw hprawng ai hte retouch pru wa na re (Sliders tab kaw tawn da ai ni mung shakap jaw sana)",th:"แตะ preset เพื่อรีทัชทันที (สิ่งที่เลือกในแท็บ Sliders จะถูกซ้อนเพิ่มให้อัตโนมัติ)",zh:"点按预设即可立即精修（Sliders 标签中已选的项会自动叠加）",vi:"Chạm vào preset để retouch ngay lập tức (mọi thứ đã chọn ở tab Sliders sẽ tự động được thêm vào)",id:"Ketuk preset untuk retouch instan (apa pun yang dipilih di tab Slider akan otomatis ditambahkan)",ms:"Ketik preset untuk retouch serta-merta (apa-apa yang dipilih dalam tab Slider akan ditambah secara automatik)"});
 $("rsStrengthLbl").textContent = t("rt_strength");
 $("rsClearAll").textContent = "🗑 "+L9({my:"အားလုံးဖျက်",en:"Clear all",shn:"လၢင်ႉပႅတ်ႈတင်းသဵင်ႈ",kac:"Yawng hkrat kau",th:"ล้างทั้งหมด",zh:"全部清除",vi:"Xóa tất cả",id:"Hapus semua",ms:"Padam semua"});
