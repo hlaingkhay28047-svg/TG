@@ -123,6 +123,8 @@ select.inp{padding:9px 10px}
 .hist{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .hist img{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line-soft);cursor:pointer}
 .hist img.sel{border-color:var(--gold)}
+.hist video{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line-soft);cursor:pointer;background:#000}
+.hist video.sel{border-color:var(--gold)}
 
 .foot{border-top:1px solid var(--line-soft);margin-top:30px;padding:20px 0 34px}
 .foot p{font-size:12px;color:var(--muted)}
@@ -509,6 +511,51 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
   </div><!-- /pgCreate -->
 
+<div class="page" id="pgVideo">
+  <section class="card">
+    <h2>🎬 VIDEO — IMAGE TO VIDEO</h2>
+    <p class="mut" id="vidIntro"></p>
+    <div class="refstrip" id="vidRefStrip"></div>
+  </section>
+
+  <section class="card">
+    <h2>PROMPT</h2>
+    <textarea class="inp" id="vidPrompt" placeholder="…"></textarea>
+    <div class="mut" id="vidPromptCount" style="margin-top:4px;text-align:right;font-size:11px"></div>
+  </section>
+
+  <section class="card">
+    <h2>GENERATE</h2>
+    <div class="row" id="vidOpts">
+      <select class="inp" id="selVidModel" style="flex:1"></select>
+      <select class="inp" id="selVidRes" style="flex:1"></select>
+      <select class="inp" id="selVidDur" style="flex:1"></select>
+      <select class="inp" id="selVidAspect" style="flex:1">
+        <option value="">Ratio: Auto</option>
+        <option value="16:9">16:9</option>
+        <option value="9:16">9:16</option>
+      </select>
+    </div>
+    <div class="mut" id="vidNeedNote" style="margin-top:6px"></div>
+    <button class="btn btn-gold gen" id="btnVidGen">🎬 GENERATE VIDEO</button>
+    <div class="spin" id="vidSpin"></div>
+    <div class="status" id="stVidGen"></div>
+    <button class="btn" id="btnVidRetry" style="display:none;margin-top:8px"></button>
+  </section>
+
+  <section class="card result-box" id="vidResultBox">
+    <h2 id="vidResultH2"></h2>
+    <div class="result-img"><video id="vidResultVideo" controls playsinline style="width:100%;border-radius:12px;background:#000"></video></div>
+    <p class="mut" id="vidExpireNote" style="margin-top:8px"></p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-gold grow" id="btnVidDl"></button>
+      <a class="btn" id="btnVidOpen" target="_blank" rel="noopener"></a>
+    </div>
+    <div class="subh" style="margin-top:12px" id="vidHistH"></div>
+    <div class="hist" id="vidHist"></div>
+  </section>
+</div><!-- /pgVideo -->
+
 <div class="page" id="pgGallery">
   <section class="card">
     <h2>🗂 MY GALLERY</h2>
@@ -731,7 +778,8 @@ var state = {
   key: "", rhKey: "", oaKey: "", refs: [null,null,null], pickSlot: 0, result: null, hist: [], histSel: -1,
   chains: {}, clean: {}, rmix: {},
   cam: { body:null, mm:null, f:null, film:null, bokeh:null },
-  rt: {}, rtStrength: 60
+  rt: {}, rtStrength: 60,
+  vidHist: [] /* session-only — RunningHub result URLs, never persisted (24h-valid, too large for the IndexedDB Gallery) */
 };
 /* restore saved toggles/prompt before the UI is built from state */
 try {
@@ -772,6 +820,7 @@ var PAGES=[
   ["pgLib","🖼️","Library"],
   ["pgStudio","⚡","Studio"],
   ["pgCreate","✨","Create"],
+  ["pgVideo","🎬","Video"],
   ["pgGallery","🗂","Gallery"],
   ["pgHome","⚙️","Setup"]
 ];
@@ -1018,8 +1067,9 @@ async function rhV2Query(apiKey, taskId){
   if(!r.ok){ var e=new Error("query-failed"); e.status=r.status; e.body=j; throw e; }
   return j||{};
 }
-async function rhV2PollUntilDone(apiKey, taskId, onTick){
+async function rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs){
   var start=Date.now();
+  var limit = timeoutMs || RH_TIMEOUT_MS;
   while(true){
     var j=await rhV2Query(apiKey, taskId);
     var s=String(j.status||"").toUpperCase();
@@ -1027,7 +1077,7 @@ async function rhV2PollUntilDone(apiKey, taskId, onTick){
     if(typeof onTick==="function") onTick(elapsed, s);
     if(s==="SUCCESS") return j;
     if(s==="FAILED"){ var e=new Error("failed"); e.code="failed"; e.body=j; throw e; }
-    if(elapsed>=RH_TIMEOUT_MS){ var e2=new Error("timeout"); e2.code="timeout"; throw e2; }
+    if(elapsed>=limit){ var e2=new Error("timeout"); e2.code="timeout"; throw e2; }
     await new Promise(function(res){ setTimeout(res, RH_POLL_MS); });
   }
 }
@@ -1063,6 +1113,58 @@ async function rhGenerateOne(apiKey, apiPath, promptText, ratio, refDataUrls, re
     if(m) outs.push({mime:m[1], b64:m[2]});
   }
   return outs;
+}
+/* ---------- RunningHub video generation (image-to-video) ----------
+   RunningHub-only — Gemini/OpenAI have no video path in this app. Confirmed
+   live against RunningHub's own API docs for these exact two endpoints
+   (2026-08); nothing here is guessed. Video results stay as the raw
+   RunningHub result URL (valid 24h) instead of being downloaded+base64'd
+   like image results — a 6-10s clip can be tens of MB, too large to safely
+   hold as a base64 string or push into the IndexedDB Gallery, so video
+   history is session-only (same in-memory pattern as state.hist already
+   uses, just without the Gallery persistence step). */
+var RH_VIDEO_TIMEOUT_MS = 600000; /* video renders run far longer than images */
+var RH_VIDEO_MODELS = [
+  { id:"rh-video-g-off", label:"RH Video G (Official)", apiPath:"rhart-video-g-official/image-to-video",
+    imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false,
+    resolutions:["720p","480p"], durations:["6","10"], aspect:false, promptMax:800 },
+  { id:"gemini-omni-video", label:"Gemini Omni Flash (Video)", apiPath:"gemini-omni-flash/image-to-video",
+    imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:true,
+    resolutions:["720p","1080p","4k"], durations:["4","6","8","10"], aspect:true, promptMax:2048 }
+];
+function rhVideoModelDef(id){ return RH_VIDEO_MODELS.find(function(m){ return m.id===id; }) || null; }
+async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam){
+  var body={ prompt: promptText||"" };
+  imageUrls = imageUrls||[];
+  if(imageParam==="imageUrl") body.imageUrl = imageUrls[0]||"";
+  else body.imageUrls = imageUrls;
+  if(resolution) body.resolution = resolution;
+  if(duration) body.duration = String(duration);
+  if(aspectRatio) body.aspectRatio = aspectRatio;
+  var r=await fetch(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  return j.taskId;
+}
+async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick){
+  var imageUrls = imageDataUrls.length ? await rhV2UploadAll(apiKey, imageDataUrls) : [];
+  var taskId = await rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS);
+  var results=(final && final.results)||[];
+  var outs=[];
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    outs.push({ url:results[i].url, outputType:results[i].outputType||"video" });
+  }
+  return outs;
+}
+/* Fetched only when the user actually asks to download — plain <video src>
+   playback needs no CORS fetch at all, so this stays an on-demand cost. */
+async function rhVideoDownloadBlobUrl(url){
+  var r=await fetch(url);
+  if(!r.ok){ var e=new Error("download-failed"); e.status=r.status; throw e; }
+  var blob=await r.blob();
+  return URL.createObjectURL(blob);
 }
 function rhFriendly(e){
   var status=(e && e.status)||0, code=(e && e.code)||"";
@@ -1257,21 +1359,23 @@ var FALLBACK_LS_KEY = "hnk_provider_fallback";
 
 /* ---------- refs ---------- */
 function renderRefStrip(){
-  var host=$("refStrip"); if(!host) return;
-  host.innerHTML="";
-  state.refs.forEach(function(ref,i){
-    var d=el("div","rs"+(ref?" filled":""));
-    if(ref){
-      var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
-      var x=el("button","rsx","✕");
-      x.onclick=function(ev){ ev.stopPropagation(); state.refs[i]=null; state.imgRoles=null; renderRefs(); };
-      d.appendChild(x);
-    } else d.appendChild(document.createTextNode("+"));
-    d.appendChild(el("span","tag","IMG "+(i+1)));
-    d.onclick=function(){ state.pickSlot=i; $("filePick").click(); };
-    host.appendChild(d);
+  ["refStrip","vidRefStrip"].forEach(function(hostId){
+    var host=$(hostId); if(!host) return;
+    host.innerHTML="";
+    state.refs.forEach(function(ref,i){
+      var d=el("div","rs"+(ref?" filled":""));
+      if(ref){
+        var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
+        var x=el("button","rsx","✕");
+        x.onclick=function(ev){ ev.stopPropagation(); state.refs[i]=null; state.imgRoles=null; renderRefs(); };
+        d.appendChild(x);
+      } else d.appendChild(document.createTextNode("+"));
+      d.appendChild(el("span","tag","IMG "+(i+1)));
+      d.onclick=function(){ state.pickSlot=i; $("filePick").click(); };
+      host.appendChild(d);
+    });
+    host.appendChild(el("div","note", L9({my:"Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်",en:"Images used by Generate — tap to change",shn:"ၶႅပ်းႁၢင်ႈဢၼ် Generate တေၸႂ်ႉ — ၼဵၵ်းသေ လႅၵ်ႈလႆႈ",kac:"Generate hta lang na sumla ni — dip nna galai mai ai",th:"ภาพที่ Generate จะใช้ — แตะเพื่อเปลี่ยน",zh:"Generate 使用的图片 — 点按可更换",vi:"Ảnh sẽ dùng cho Generate — chạm để thay đổi",id:"Gambar yang dipakai Generate — ketuk untuk mengganti",ms:"Imej yang digunakan oleh Generate — ketik untuk tukar"})));
   });
-  host.appendChild(el("div","note", L9({my:"Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်",en:"Images used by Generate — tap to change",shn:"ၶႅပ်းႁၢင်ႈဢၼ် Generate တေၸႂ်ႉ — ၼဵၵ်းသေ လႅၵ်ႈလႆႈ",kac:"Generate hta lang na sumla ni — dip nna galai mai ai",th:"ภาพที่ Generate จะใช้ — แตะเพื่อเปลี่ยน",zh:"Generate 使用的图片 — 点按可更换",vi:"Ảnh sẽ dùng cho Generate — chạm để thay đổi",id:"Gambar yang dipakai Generate — ketuk untuk mengganti",ms:"Imej yang digunakan oleh Generate — ketik untuk tukar"})));
 }
 function renderRefs(){
   renderRefStrip();
@@ -2710,7 +2814,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.8.1";
+var APP_VER="4.9.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -3086,4 +3190,115 @@ window.addEventListener("resize",function(){ if($("cmpWrap").style.display!=="no
   box.addEventListener("pointerup",function(){ dragging=false; });
   box.addEventListener("pointercancel",function(){ dragging=false; });
 })();
+
+/* ---------- video generation (RunningHub-only — image to video) ---------- */
+state.vidHistSel = -1;
+function vidModelDef(){ return rhVideoModelDef($("selVidModel").value) || RH_VIDEO_MODELS[0]; }
+function updateVidPromptCount(){
+  var m=vidModelDef();
+  $("vidPromptCount").textContent = $("vidPrompt").value.length+" / "+m.promptMax;
+}
+function updateVidModelUI(){
+  var m=vidModelDef();
+  var res=$("selVidRes"); res.innerHTML="";
+  m.resolutions.forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent="Res: "+r; res.appendChild(o); });
+  var dur=$("selVidDur"); dur.innerHTML="";
+  m.durations.forEach(function(d){ var o=document.createElement("option"); o.value=d; o.textContent=d+"s"; dur.appendChild(o); });
+  $("selVidAspect").style.display = m.aspect ? "" : "none";
+  $("vidPrompt").setAttribute("maxlength", m.promptMax);
+  updateVidPromptCount();
+  var needTxt;
+  if(m.minImages===m.maxImages){
+    needTxt=L9({my:"ပုံ "+m.minImages+" ပုံ လိုအပ်ပါတယ်",en:"Needs "+m.minImages+" reference image"+(m.minImages>1?"s":""),shn:"လူဝ်ႇၶႅပ်းႁၢင်ႈ "+m.minImages+" ဢၼ်",kac:"Sumla "+m.minImages+" ra ai",th:"ต้องการรูปอ้างอิง "+m.minImages+" รูป",zh:"需要 "+m.minImages+" 张参考图片",vi:"Cần "+m.minImages+" ảnh tham chiếu",id:"Butuh "+m.minImages+" gambar referensi",ms:"Perlukan "+m.minImages+" imej rujukan"});
+  } else if(m.oddOnly){
+    needTxt=L9({my:"ပုံ ၁ ပုံ (သို့) ၃ ပုံ လိုအပ်ပါတယ် — ၂ ပုံ မရပါ",en:"Needs 1 or 3 reference images — 2 is not supported",shn:"လူဝ်ႇၶႅပ်းႁၢင်ႈ 1 ဢမ်ႇၼၼ် 3 — 2 ဢမ်ႇလႆႈ",kac:"Sumla sumla 1 nrai 3 ra ai — 2 gaw n mai byin ai",th:"ต้องการรูปอ้างอิง 1 หรือ 3 รูป — ใช้ 2 รูปไม่ได้",zh:"需要 1 张或 3 张参考图片 — 不支持 2 张",vi:"Cần 1 hoặc 3 ảnh tham chiếu — không hỗ trợ 2 ảnh",id:"Butuh 1 atau 3 gambar referensi — 2 gambar tidak didukung",ms:"Perlukan 1 atau 3 imej rujukan — 2 imej tidak disokong"});
+  } else {
+    needTxt=L9({my:"ပုံ "+m.minImages+"-"+m.maxImages+" ပုံ လိုအပ်ပါတယ်",en:"Needs "+m.minImages+"-"+m.maxImages+" reference images",shn:"လူဝ်ႇၶႅပ်းႁၢင်ႈ "+m.minImages+"-"+m.maxImages,kac:"Sumla "+m.minImages+"-"+m.maxImages+" ra ai",th:"ต้องการรูปอ้างอิง "+m.minImages+"-"+m.maxImages+" รูป",zh:"需要 "+m.minImages+"-"+m.maxImages+" 张参考图片",vi:"Cần "+m.minImages+"-"+m.maxImages+" ảnh tham chiếu",id:"Butuh "+m.minImages+"-"+m.maxImages+" gambar referensi",ms:"Perlukan "+m.minImages+"-"+m.maxImages+" imej rujukan"});
+  }
+  $("vidNeedNote").textContent = needTxt;
+}
+RH_VIDEO_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; $("selVidModel").appendChild(o); });
+$("selVidModel").onchange = updateVidModelUI;
+$("vidPrompt").addEventListener("input", updateVidPromptCount);
+updateVidModelUI();
+
+$("vidIntro").textContent = L9({my:"ရှိပြီးသား ပုံကနေ ရွေ့လျားနေတဲ့ ဗီဒီယို ဆောက်ပေးမယ် — RunningHub Enterprise key လိုအပ်ပါတယ် (Gemini/OpenAI နဲ့ မရသေးပါ)။",en:"Turn an existing photo into a moving video — needs your RunningHub Enterprise key (not available via Gemini/OpenAI yet).",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈပဵၼ်ဝီဒီရူဝ်ႈ — လူဝ်ႇ RunningHub Enterprise key",kac:"Nga ai sumla hpe video ni hku galai ai — RunningHub Enterprise key ra ai",th:"เปลี่ยนรูปที่มีอยู่ให้เป็นวิดีโอเคลื่อนไหว — ต้องมี RunningHub Enterprise key",zh:"把现有照片变成动态视频 — 需要你的 RunningHub Enterprise key",vi:"Biến ảnh có sẵn thành video chuyển động — cần key RunningHub Enterprise",id:"Ubah foto yang ada menjadi video bergerak — perlu RunningHub Enterprise key",ms:"Tukar foto sedia ada kepada video bergerak — perlukan RunningHub Enterprise key"});
+$("vidPrompt").placeholder = L9({my:"ဗီဒီယိုထဲမှာ ဘာဖြစ်စေချင်လဲ ရေးပါ — ဥပမာ: subject slowly turns and smiles, camera slowly pushes in…",en:"Describe what should happen in the video — e.g. subject slowly turns and smiles, camera slowly pushes in…",shn:"တႅမ်ႈဝႃႈသင်တေပဵၼ်ၼႂ်းဝီဒီရူဝ်ႈ",kac:"Video kata gaw n gara hku byin na ni tsun dan u",th:"อธิบายว่าจะเกิดอะไรขึ้นในวิดีโอ",zh:"描述视频中应该发生的事情",vi:"Mô tả điều sẽ xảy ra trong video",id:"Jelaskan apa yang harus terjadi di video",ms:"Terangkan apa yang patut berlaku dalam video"});
+$("vidSpin").textContent = L9({my:"ဗီဒီယို ထုတ်နေပါတယ် — မိနစ်အနည်းငယ် စောင့်ပါ…",en:"Generating video — allow a few minutes…",shn:"ႁဵတ်းဝီဒီရူဝ်ႈယူႇ — ၶွႆတွင်ၵမ်ႈၽွင်ႈ",kac:"Video galaw nga ai — mizan langai nga chyam sit u",th:"กำลังสร้างวิดีโอ — รอสักครู่",zh:"正在生成视频 — 请稍候几分钟",vi:"Đang tạo video — vui lòng chờ vài phút",id:"Membuat video — tunggu beberapa menit",ms:"Menjana video — tunggu beberapa minit"});
+$("btnVidRetry").textContent = L9({my:"🔁 ပြန်စမ်း",en:"🔁 Retry",shn:"🔁 ၸၢမ်းၶိုၼ်း",kac:"🔁 Bai chyam",th:"🔁 ลองใหม่",zh:"🔁 重试",vi:"🔁 Thử lại",id:"🔁 Coba lagi",ms:"🔁 Cuba lagi"});
+$("vidResultH2").textContent = L9({my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"});
+$("vidExpireNote").textContent = L9({my:"⚠ ဒီ link က ၂၄ နာရီပဲ အလုပ်လုပ်ပါတယ် — download ချက်ချင်း လုပ်ထားပါ။ Page ပြန် reload လုပ်ရင် ဒီရလဒ် ပျောက်သွားမယ် (ဖိုင်အရွယ်အစား ကြီးလို့ Gallery ထဲ မသိမ်းပါ)။",en:"⚠ This link only works for 24 hours — download it right away. Reloading the page will lose this result (not saved to Gallery — the file is too large).",shn:"⚠ Link ၼႆႉ ၸႂ်ႉလႆႈ 24 ၸူဝ်ႈမွင်းၵူၺ်း — download ဝႆႉလႄႈလီ",kac:"⚠ Ndai link gaw 24 hour sha byin ai — hpang de download nna da u",th:"⚠ ลิงก์นี้ใช้ได้แค่ 24 ชั่วโมง — ดาวน์โหลดทันที",zh:"⚠ 此链接仅 24 小时有效 — 请立即下载。刷新页面会丢失该结果（文件过大未保存到 Gallery）。",vi:"⚠ Liên kết này chỉ hoạt động trong 24 giờ — hãy tải xuống ngay. Tải lại trang sẽ mất kết quả này (không lưu vào Gallery vì file quá lớn).",id:"⚠ Tautan ini hanya berfungsi 24 jam — unduh segera. Memuat ulang halaman akan menghilangkan hasil ini (tidak disimpan ke Gallery karena ukuran file terlalu besar).",ms:"⚠ Pautan ini hanya berfungsi 24 jam — muat turun segera. Memuat semula halaman akan kehilangan hasil ini (tidak disimpan ke Gallery kerana saiz fail terlalu besar)."});
+var VID_DL_LABEL = L9({my:"⬇ Download",en:"⬇ Download",shn:"⬇ Download",kac:"⬇ Download",th:"⬇ ดาวน์โหลด",zh:"⬇ 下载",vi:"⬇ Tải xuống",id:"⬇ Unduh",ms:"⬇ Muat turun"});
+var VID_DL_BUSY = L9({my:"⬇ Download လုပ်နေတယ်…",en:"⬇ Downloading…",shn:"⬇ Download ဝႆႉယူႇ…",kac:"⬇ Download nga ai…",th:"⬇ กำลังดาวน์โหลด…",zh:"⬇ 下载中…",vi:"⬇ Đang tải…",id:"⬇ Mengunduh…",ms:"⬇ Memuat turun…"});
+$("btnVidDl").textContent = VID_DL_LABEL;
+$("btnVidOpen").textContent = L9({my:"↗ Direct Link ဖွင့်",en:"↗ Open direct link",shn:"↗ ပိုတ်ႇ Direct Link",kac:"↗ Direct Link hpaw",th:"↗ เปิดลิงก์โดยตรง",zh:"↗ 打开原始链接",vi:"↗ Mở liên kết trực tiếp",id:"↗ Buka tautan langsung",ms:"↗ Buka pautan terus"});
+$("vidHistH").textContent = L9({my:"လတ်တလော ထုတ်ခဲ့တဲ့ ဗီဒီယိုများ (session အတွင်းပဲ)",en:"Recent videos (this session only)",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်းဝႆႉမိူဝ်ႈလဵဝ်",kac:"Video ni na galaw da ai (session sha)",th:"วิดีโอล่าสุด (เฉพาะเซสชันนี้)",zh:"最近生成的视频（仅本次会话）",vi:"Video gần đây (chỉ trong phiên này)",id:"Video terbaru (hanya sesi ini)",ms:"Video terkini (sesi ini sahaja)"});
+
+function showVidResult(){
+  var out=state.vidHist[state.vidHistSel]; if(!out) return;
+  $("vidResultBox").className="card result-box on";
+  $("vidResultVideo").src=out.url;
+  $("btnVidOpen").href=out.url;
+  var h=$("vidHist"); h.innerHTML="";
+  state.vidHist.forEach(function(e,i){
+    var v=document.createElement("video");
+    v.src=e.url; v.muted=true; v.preload="metadata"; v.playsInline=true;
+    v.className=i===state.vidHistSel?"sel":"";
+    v.onclick=function(){ state.vidHistSel=i; showVidResult(); };
+    h.appendChild(v);
+  });
+  $("vidResultBox").scrollIntoView({behavior:"smooth"});
+}
+
+$("btnVidGen").onclick = async function(){
+  if(!state.rhKey){
+    switchPage("pgHome");
+    var mk=L9({my:"RunningHub key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key isn't set up yet — add it in Setup",shn:"RunningHub key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key — cấu hình trong Setup",id:"RunningHub key belum disiapkan — atur di Setup",ms:"RunningHub key belum disediakan — konfigurasi dalam Setup"});
+    setSt("stRhKey", mk, "err"); toast(mk,"err"); return;
+  }
+  var m=vidModelDef();
+  var refs=state.refs.filter(Boolean);
+  if(refs.length<m.minImages){ setSt("stVidGen", L9({my:"ပုံ အနည်းဆုံး "+m.minImages+" ပုံ ထည့်ပါ",en:"Add at least "+m.minImages+" reference image"+(m.minImages>1?"s":""),shn:"ထၢႆႇၶႅပ်းႁၢင်ႈ "+m.minImages+" ဢမ်ႇယွမ်း",kac:"Sumla "+m.minImages+" n law law bang u",th:"เพิ่มรูปอ้างอิงอย่างน้อย "+m.minImages+" รูป",zh:"至少添加 "+m.minImages+" 张参考图片",vi:"Thêm ít nhất "+m.minImages+" ảnh tham chiếu",id:"Tambahkan minimal "+m.minImages+" gambar referensi",ms:"Tambah sekurang-kurangnya "+m.minImages+" imej rujukan"}), "err"); return; }
+  if(m.oddOnly && refs.length===2){ setSt("stVidGen", L9({my:"ပုံ ၂ ပုံ မရပါ — ၁ ပုံ (သို့) ၃ ပုံ ထည့်ပါ",en:"2 images isn't supported — use 1 or 3",shn:"ၶႅပ်းႁၢင်ႈ 2 ဢမ်ႇလႆႈ — ၸႂ်ႉ 1 ဢမ်ႇၼၼ် 3",kac:"Sumla 2 n mai byin ai — 1 nrai 3 lang u",th:"ใช้ 2 รูปไม่ได้ — ใช้ 1 หรือ 3 รูป",zh:"不支持 2 张图片 — 请用 1 张或 3 张",vi:"Không hỗ trợ 2 ảnh — dùng 1 hoặc 3 ảnh",id:"2 gambar tidak didukung — gunakan 1 atau 3",ms:"2 imej tidak disokong — guna 1 atau 3"}), "err"); return; }
+  var text=$("vidPrompt").value.trim();
+  if(!text){ setSt("stVidGen", L9({my:"Prompt ရေးပါ — ဗီဒီယိုထဲမှာ ဘာဖြစ်စေချင်လဲ ဖော်ပြပါ",en:"Write a prompt describing what should happen in the video",shn:"တႅမ်ႈ prompt ဝႃႈသင်တေပဵၼ်",kac:"Video kata n gara hku byin na tsun dan prompt ka jaw u",th:"เขียน prompt อธิบายสิ่งที่จะเกิดขึ้นในวิดีโอ",zh:"请写一个 prompt 描述视频中应该发生的事情",vi:"Viết prompt mô tả điều sẽ xảy ra trong video",id:"Tulis prompt yang menjelaskan apa yang terjadi di video",ms:"Tulis prompt yang menerangkan apa yang berlaku dalam video"}), "err"); return; }
+  var refDataUrls=refs.slice(0,m.maxImages).map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
+  var resolution=$("selVidRes").value, duration=$("selVidDur").value, aspectRatio=m.aspect?$("selVidAspect").value:"";
+  var btn=this; btn.disabled=true; $("vidSpin").className="spin on"; setSt("stVidGen","");
+  $("btnVidRetry").style.display="none";
+  var spinBase=$("vidSpin").textContent;
+  try{
+    var outs=await rhGenerateVideo(state.rhKey, m.apiPath, text, refDataUrls, resolution, duration, aspectRatio, m.imageParam, function(elapsed){
+      $("vidSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
+    });
+    if(!outs.length){
+      setSt("stVidGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
+      $("btnVidRetry").style.display="";
+    } else {
+      state.vidHist.unshift({ url:outs[0].url, prompt:text.slice(0,120), resolution:resolution, duration:duration, ts:Date.now() });
+      while(state.vidHist.length>6) state.vidHist.pop();
+      state.vidHistSel=0;
+      showVidResult();
+      setSt("stVidGen", t("st_done"), "ok");
+    }
+  } catch(e){
+    setSt("stVidGen", rhFriendly(e), "err");
+    $("btnVidRetry").style.display="";
+  }
+  btn.disabled=false; $("vidSpin").className="spin"; $("vidSpin").textContent=spinBase;
+};
+$("btnVidRetry").onclick=function(){ this.style.display="none"; $("btnVidGen").onclick(); };
+$("btnVidDl").onclick=async function(){
+  var out=state.vidHist[state.vidHistSel]; if(!out) return;
+  var btn=this; if(btn.disabled) return; btn.disabled=true; btn.textContent=VID_DL_BUSY;
+  try{
+    var blobUrl=await rhVideoDownloadBlobUrl(out.url);
+    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-web-studio-video.mp4";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);
+  } catch(e){
+    toast(L9({my:"Download မအောင်မြင်ပါ — Direct Link ကို နှိပ်ပြီး manual download လုပ်ကြည့်ပါ",en:"Download failed — try the Direct Link button to save it manually",shn:"Download ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းၼဵၵ်း Direct Link",kac:"Download n byin ai — Direct Link dip nna chyam u",th:"ดาวน์โหลดล้มเหลว — ลองใช้ปุ่ม Direct Link",zh:"下载失败 — 请尝试点击“直接链接”按钮手动保存",vi:"Tải xuống thất bại — thử nút Direct Link để lưu thủ công",id:"Unduh gagal — coba tombol Direct Link untuk menyimpan manual",ms:"Muat turun gagal — cuba butang Direct Link untuk simpan secara manual"}), "err");
+  }
+  btn.disabled=false; btn.textContent=VID_DL_LABEL;
+};
 </script>
