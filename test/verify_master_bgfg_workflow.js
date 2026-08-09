@@ -1,0 +1,116 @@
+/* v4.20.0: locks in the new "Master BG FG Replace" Smart Workflow —
+   removes the person from IMAGE 2, rebuilds the scene, inserts the exact
+   IMAGE 1 subject in their place. Confirms the card renders in the
+   Background & Scene category on the Workflow page, its wizard opens with
+   2 image slots and generic guide steps, and GENERATE sends a well-formed
+   request whose prompt text references both IMAGE 1 and IMAGE 2 and
+   carries the negative/AVOID list.
+   Run against the deployed docs/app/index.html (same pattern as
+   test/sweep_workflows.js). Usage: PORT=8931 node test/verify_master_bgfg_workflow.js */
+const { chromium } = require("playwright-core");
+const PORT = process.env.PORT || 8931;
+const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errors = [];
+  page.on("pageerror", e => errors.push(String(e)));
+
+  await page.addInitScript(`
+    window.__reqs = [];
+    const realFetch = window.fetch;
+    window.fetch = function(url, opts){
+      if (String(url).indexOf(":generateContent") >= 0) {
+        try { window.__reqs.push(JSON.parse(opts.body)); } catch(e) { window.__reqs.push({parseError:String(e)}); }
+        return Promise.resolve(new Response(JSON.stringify({
+          candidates:[{content:{parts:[{inline_data:{mime_type:"image/png",data:"${B64}"}}]},finishReason:"STOP"}]
+        }), {status:200, headers:{"Content-Type":"application/json"}}));
+      }
+      return realFetch.apply(this, arguments);
+    };
+  `);
+
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1000);
+  await page.evaluate(() => {
+    state.key = "TEST_KEY";
+    const onb = document.querySelector(".onb"); if (onb) onb.classList.remove("on");
+    window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
+  });
+
+  let pass = 0, fail = 0;
+  function check(cond, label, extra) {
+    if (cond) { pass++; console.log("PASS (" + label + ")"); }
+    else { fail++; console.log("FAIL (" + label + ") :: " + (extra !== undefined ? JSON.stringify(extra) : "")); }
+  }
+
+  const cardInfo = await page.evaluate(() => {
+    document.querySelectorAll("#wfHost .grp").forEach(g => g.classList.add("open"));
+    const cards = Array.from(document.querySelectorAll("#wfHost .wfmini"));
+    const idx = cards.findIndex(c => c.querySelector(".t") && c.querySelector(".t").textContent.indexOf("Master BG FG Replace") >= 0);
+    return { idx, total: cards.length };
+  });
+  check(cardInfo.idx >= 0, "card renders in the Workflow page grid", cardInfo);
+
+  if (cardInfo.idx < 0) {
+    console.log("FAIL " + pass + "/" + (pass + fail + 1));
+    await browser.close();
+    process.exit(1);
+  }
+
+  const res = await page.evaluate(async (arg) => {
+    const [idx, b64] = arg;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const card = document.querySelectorAll("#wfHost .wfmini")[idx];
+    state.refs = [null, null, null, null];
+    state.imgRoles = null;
+    window.__reqs = [];
+    card.click();
+    await sleep(30);
+    const gold = () => document.querySelector(".wiz.on .wiz-nav .btn-gold");
+    if (!gold()) return { ok: false, reason: "wizard did not open" };
+    for (let s = 0; s < 4; s++) state.refs[s] = { mime: "image/png", b64: b64, label: "t" + s };
+    gold().click(); await sleep(30);            // step 1 -> 2 (Images)
+    if (!gold()) return { ok: false, reason: "no next on step2" };
+    if (gold().disabled) return { ok: false, reason: "next disabled on step2" };
+    gold().click(); await sleep(30);            // step 2 -> 3 (Generate)
+    if (!gold()) return { ok: false, reason: "no GENERATE button" };
+    gold().click();
+    for (let w = 0; w < 100 && !window.__reqs.length; w++) await sleep(50);
+    if (!window.__reqs.length) return { ok: false, reason: "no request sent" };
+    const r = window.__reqs[0];
+    if (!r || r.parseError) return { ok: false, reason: "bad request body" };
+    const parts = r.contents && r.contents[0] && r.contents[0].parts || [];
+    const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
+    const imgs = parts.filter(p => p.inline_data && p.inline_data.data).length;
+    const wz = document.getElementById("wiz");
+    if (wz) { wz.className = "wiz"; document.body.style.overflow = ""; window._wizOnPick = null; }
+    return {
+      ok: true,
+      txtLen: txt.length,
+      imgs: imgs,
+      hasGuard: txt.indexOf("GUARD (HNK edit rule)") >= 0,
+      hasImage1: txt.indexOf("IMAGE 1") >= 0,
+      hasImage2: txt.indexOf("IMAGE 2") >= 0,
+      hasAvoid: txt.indexOf("AVOID:") >= 0,
+      hasPlaceholder: /\{[A-Z_]+\}/.test(txt),
+      hasImageModality: ((r.generationConfig && r.generationConfig.responseModalities) || []).indexOf("IMAGE") >= 0
+    };
+  }, [cardInfo.idx, B64]);
+
+  check(res.ok, "wizard completes and sends a request", res);
+  if (res.ok) {
+    check(res.imgs === 2, "exactly 2 images attached (IMAGE 1 subject + IMAGE 2 scene)", res);
+    check(res.hasGuard, "TASK GUARD present in the assembled prompt", res);
+    check(res.hasImage1 && res.hasImage2, "prompt text references both IMAGE 1 and IMAGE 2", res);
+    check(res.hasAvoid, "negative prompt appended via AVOID:", res);
+    check(!res.hasPlaceholder, "no leftover {PLACEHOLDER} tokens", res);
+    check(res.hasImageModality, "generationConfig requests IMAGE modality", res);
+  }
+  check(errors.length === 0, "no JS errors", errors);
+
+  console.log((fail === 0 ? "PASS " : "FAIL ") + pass + "/" + (pass + fail));
+  await browser.close();
+  process.exit(fail ? 1 : 0);
+})();
