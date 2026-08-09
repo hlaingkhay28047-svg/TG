@@ -55,3 +55,6 @@ jobs:
 
       - name: Run Retouch Studio sweep (mocked)
         run: node test/sweep_retouch_studio.js
+
+      - name: Verify bottom tab bar stays reachable on a real phone width
+        run: node test/verify_tabbar_reachable.js

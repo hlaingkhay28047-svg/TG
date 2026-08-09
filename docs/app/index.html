@@ -133,8 +133,9 @@ select.inp{padding:9px 10px}
 body{padding-bottom:76px}
 .page{display:none}
 .page.on{display:block}
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;background:rgba(11,13,20,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom)}
-.tabb{flex:1;background:none;border:none;color:var(--muted);padding:9px 2px 10px;font-size:10.5px;font-weight:800;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:rgba(11,13,20,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom)}
+.tabbar::-webkit-scrollbar{display:none}
+.tabb{flex:1 0 auto;min-width:58px;background:none;border:none;color:var(--muted);padding:9px 4px 10px;font-size:10.5px;font-weight:800;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}
 .tabb .ic{font-size:19px;line-height:1}
 .tabb.on{color:var(--gold-hi)}
 .tabb.on .ic{transform:translateY(-1px)}
@@ -1074,7 +1075,19 @@ function switchPage(id){
     var pg=$(p[0]); if(pg) pg.className="page"+(p[0]===id?" on":"");
   });
   var bar=$("tabbar");
-  if(bar){ var bs=bar.children; for(var i=0;i<bs.length;i++) bs[i].className="tabb"+(PAGES[i][0]===id?" on":""); }
+  if(bar){
+    var bs=bar.children, activeBtn=null;
+    for(var i=0;i<bs.length;i++){
+      bs[i].className="tabb"+(PAGES[i][0]===id?" on":"");
+      if(PAGES[i][0]===id) activeBtn=bs[i];
+    }
+    /* the tab bar has more items than a phone screen can show at once and
+       scrolls horizontally (see .tabbar overflow-x) — always bring the
+       newly-active tab into view so a page reached indirectly (e.g. the
+       key-setup banner jumping to Setup) doesn't leave its tab hidden
+       off-screen with no visual cue that more tabs exist. */
+    if(activeBtn && activeBtn.scrollIntoView) activeBtn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+  }
   window.scrollTo(0,0);
   try{ localStorage.setItem("hnk_web_studio_page", id); }catch(e){}
   if (id==="pgGallery" && typeof renderGallery==="function") renderGallery();
@@ -3787,7 +3800,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.15.0";
+var APP_VER="4.15.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
