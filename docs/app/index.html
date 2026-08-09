@@ -3568,6 +3568,19 @@ function updateT2IModelUI(){
     var auto=document.createElement("option"); auto.value=""; auto.textContent="Ratio: Auto"; sel.appendChild(auto);
     ratioList.forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent=r; sel.appendChild(o); });
   }
+  /* Only offer the size tiers a model actually honors — flux-2-dev and
+     youchuan-v81 have neither resolutionField nor sizeField and would
+     silently ignore any pick; rh-imagine-quality only supports 1k/2k, so
+     a "4K" pick would silently get clamped to 2k in rhV2SubmitT2I with no
+     visible sign the choice was downgraded. Showing only the tiers a model
+     honors makes every visible option actually take effect. */
+  var sizeTiers = m.resolutionField ? (m.resolutionEnum || ["1k","2k","4k"]) : (m.sizeField ? ["1k","2k"] : null);
+  $("selT2IRes").style.display = sizeTiers ? "" : "none";
+  if(sizeTiers){
+    var rs=$("selT2IRes"); rs.innerHTML="";
+    var autoR=document.createElement("option"); autoR.value=""; autoR.textContent="Size: Auto"; rs.appendChild(autoR);
+    sizeTiers.forEach(function(t){ var o=document.createElement("option"); o.value=t.toUpperCase(); o.textContent=t.toUpperCase(); rs.appendChild(o); });
+  }
   $("t2iPrompt").setAttribute("maxlength", m.promptMax||20000);
   updateT2IPromptCount();
 }

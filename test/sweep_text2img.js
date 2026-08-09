@@ -68,6 +68,27 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     process.exit(1);
   }
 
+  // Size picker must only offer tiers a model actually honors: hidden
+  // entirely for flux-2-dev (no resolutionField/sizeField), and limited to
+  // 1K/2K only for rh-imagine-quality (never letting "4K" be picked at all,
+  // rather than silently downgrading it after the fact).
+  const sizeUi = await page.evaluate(() => {
+    document.getElementById("selT2IModel").value = "flux-2-dev";
+    document.getElementById("selT2IModel").onchange();
+    const fluxHidden = document.getElementById("selT2IRes").style.display === "none";
+    document.getElementById("selT2IModel").value = "rh-imagine-quality";
+    document.getElementById("selT2IModel").onchange();
+    const imagineOptions = Array.from(document.getElementById("selT2IRes").options).map(o => o.value);
+    return { fluxHidden, imagineOptions };
+  });
+  console.log("size-picker UI:", JSON.stringify(sizeUi));
+  const sizeUiOk = sizeUi.fluxHidden && sizeUi.imagineOptions.indexOf("4K") < 0 && sizeUi.imagineOptions.indexOf("2K") >= 0;
+  console.log(sizeUiOk ? "PASS (size picker matches model capability)" : ("FAIL (size picker): " + JSON.stringify(sizeUi)));
+  if (!sizeUiOk) {
+    await browser.close();
+    process.exit(1);
+  }
+
   async function runModel(modelId, ratioValue, sizeValue, prompt, apiPathFragment) {
     return page.evaluate(async (args) => {
       var [modelId, ratioValue, sizeValue, prompt, apiPathFragment] = args;
@@ -78,7 +99,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       if (document.getElementById("selT2IRatio").style.display !== "none") {
         document.getElementById("selT2IRatio").value = ratioValue;
       }
-      document.getElementById("selT2IRes").value = sizeValue;
+      if (document.getElementById("selT2IRes").style.display !== "none") {
+        document.getElementById("selT2IRes").value = sizeValue;
+      }
       document.getElementById("t2iPrompt").value = prompt;
       document.getElementById("btnT2IGen").onclick();
       const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -106,13 +129,13 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && qwen.body.aspectRatio === undefined && qwen.body.resolution === undefined;
   console.log(qwenOk ? "PASS (qwen t2i size mapping)" : ("FAIL (qwen t2i): " + JSON.stringify(qwen)));
 
-  // RH Imagine Image Quality: resolution enum is 1k/2k ONLY — a "4K" request
-  // (not in this model's enum) must clamp down instead of sending "4k".
-  const imagine = await runModel("rh-imagine-quality", "1:1", "4K", "a bowl of fruit, still life", "rhart-imagine-image-quality/text-to-image");
+  // RH Imagine Image Quality: resolution enum is 1k/2k ONLY (the picker no
+  // longer even offers "4K", verified above) — a legitimate "2K" pick must
+  // be honored exactly, and numImages must always be sent.
+  const imagine = await runModel("rh-imagine-quality", "1:1", "2K", "a bowl of fruit, still life", "rhart-imagine-image-quality/text-to-image");
   console.log("imagine body:", JSON.stringify(imagine.body));
-  const imagineOk = imagine.ok && imagine.body && imagine.body.numImages === "1"
-    && (imagine.body.resolution === "1k" || imagine.body.resolution === "2k");
-  console.log(imagineOk ? "PASS (imagine clamp + numImages)" : ("FAIL (imagine): " + JSON.stringify(imagine)));
+  const imagineOk = imagine.ok && imagine.body && imagine.body.numImages === "1" && imagine.body.resolution === "2k";
+  console.log(imagineOk ? "PASS (imagine size honored + numImages)" : ("FAIL (imagine): " + JSON.stringify(imagine)));
 
   const overall = fluxOk && qwenOk && imagineOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
