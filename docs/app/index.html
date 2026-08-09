@@ -343,26 +343,34 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     </div>
     <div class="status" id="stRhKey"></div>
 
-    <div class="row" style="margin-top:14px">
-      <select class="inp grow" id="rhModelSel"></select>
+    <!-- once the key above is saved, per-model overrides are rarely
+         touched again — collapsed by default so the key field (the
+         actual required step) isn't buried under it on first visit -->
+    <div class="grp" id="rhGrpAdvanced">
+      <button class="grp-h"><span class="car">▶</span><span>⚙ MODEL CONFIG (ADVANCED)</span></button>
+      <div class="grp-b">
+        <div class="row">
+          <select class="inp grow" id="rhModelSel"></select>
+        </div>
+        <div class="mut" style="margin-top:12px" id="rhSampleNote"></div>
+        <div class="row" style="margin-top:6px">
+          <input class="inp grow" id="rhApiPath" placeholder="rhart-image-n-g31-flash/image-to-image">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <select class="inp grow" id="rhQuality">
+            <option value="">quality: none (most models)</option>
+            <option value="low">quality: low</option>
+            <option value="medium">quality: medium</option>
+            <option value="high">quality: high</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn grow" id="btnRhSaveModel"></button>
+        </div>
+        <div class="status" id="stRhModel"></div>
+        <div class="mut chips" id="rhConfiguredList" style="margin-top:10px"></div>
+      </div>
     </div>
-    <div class="mut" style="margin-top:12px" id="rhSampleNote"></div>
-    <div class="row" style="margin-top:6px">
-      <input class="inp grow" id="rhApiPath" placeholder="rhart-image-n-g31-flash/image-to-image">
-    </div>
-    <div class="row" style="margin-top:6px">
-      <select class="inp grow" id="rhQuality">
-        <option value="">quality: none (most models)</option>
-        <option value="low">quality: low</option>
-        <option value="medium">quality: medium</option>
-        <option value="high">quality: high</option>
-      </select>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <button class="btn grow" id="btnRhSaveModel"></button>
-    </div>
-    <div class="status" id="stRhModel"></div>
-    <div class="mut chips" id="rhConfiguredList" style="margin-top:10px"></div>
   </section>
 
   <section class="card" id="cardOa">
@@ -378,14 +386,25 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
   <section class="card">
     <h2 id="platH2"></h2>
-    <div class="subh">📱 ANDROID</div>
-    <p class="mut" id="platP1"></p>
-    <div class="subh">🍎 IPHONE / IPAD (IOS)</div>
-    <p class="mut" id="platP2"></p>
-    <div class="subh">💻 WINDOWS / MAC (BROWSER)</div>
-    <p class="mut" id="platP3"></p>
-    <div class="subh" id="platPS"></div>
-    <p class="mut" id="platP4"></p>
+    <!-- a user only needs their own platform's install steps, not all 4 at
+         once — each used to be a permanently-expanded subh+paragraph; now
+         a closed-by-default .grp accordion (Studio's Add-ons pattern). -->
+    <div class="grp" id="platGrpAndroid">
+      <button class="grp-h"><span class="car">▶</span><span>📱 ANDROID</span></button>
+      <div class="grp-b"><p class="mut" id="platP1"></p></div>
+    </div>
+    <div class="grp" id="platGrpIos">
+      <button class="grp-h"><span class="car">▶</span><span>🍎 IPHONE / IPAD (IOS)</span></button>
+      <div class="grp-b"><p class="mut" id="platP2"></p></div>
+    </div>
+    <div class="grp" id="platGrpDesktop">
+      <button class="grp-h"><span class="car">▶</span><span>💻 WINDOWS / MAC (BROWSER)</span></button>
+      <div class="grp-b"><p class="mut" id="platP3"></p></div>
+    </div>
+    <div class="grp" id="platGrpPs">
+      <button class="grp-h"><span class="car">▶</span><span id="platPS"></span></button>
+      <div class="grp-b"><p class="mut" id="platP4"></p></div>
+    </div>
     <div class="row" style="margin-top:10px">
       <a class="btn grow" href="../" style="text-align:center" id="siteLink"></a>
       <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.1.1.ccx" download style="text-align:center">CCX Download (v6.1.1)</a>
@@ -2106,6 +2125,15 @@ $("filePick").onchange = function(){
   rd.readAsDataURL(f);
 };
 
+/* static (non-JS-built) accordions wire up the same open/close toggle
+   the grp() builder below uses, so a hand-written .grp/.grp-h/.grp-b
+   block (like Setup's Platform Guide) behaves identically to a built one */
+["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced"].forEach(function(id){
+  var g=$(id); if(!g) return;
+  var h=g.querySelector(".grp-h");
+  h.onclick=function(){ g.className = g.className.indexOf("open")>=0 ? "grp" : "grp open"; };
+});
+
 /* ---------- one-tap studio ---------- */
 function grp(title, count, open){
   var g=el("div","grp"+(open?" open":""));
@@ -3739,24 +3767,39 @@ function pickChips(host, items, obj, prop, descFn){
   host.appendChild(chips);
 }
 (function buildAddons(){
+  /* each optional add-on category used to be a flat subh+chips wall,
+     always fully expanded — 9 stacked sections on one page, most of them
+     skippable per the camera intro text below. Collapsing each into its
+     own closed-by-default .grp accordion (same component Workflow/Scene
+     Builder/Retouch Pro already use) cuts the default height dramatically
+     while keeping every option one tap away. */
   var host=$("addonHost");
-  host.appendChild(el("div","subh",t("sub_chains")));
-  toggleChips(host, D.chains, state.chains, function(c){return c.key;}, function(c){return c.label;}, function(c){return c.text;});
-  host.appendChild(el("div","subh",t("sub_cleanup")));
-  cleanupChips(host, D.cleanups, state.clean, function(c){return c.key;}, function(c){return c.label||c.key;}, function(c){return c.text.slice(0,120);});
-  host.appendChild(el("div","subh",t("sub_mix")));
-  toggleChips(host, D.rmix, state.rmix, function(m){return m.key;}, function(m){return m.label||m.key;}, function(m){return m.text;});
-  host.appendChild(el("div","mut",L9({my:"Camera Body → Bokeh အထိက Optional — ဓာတ်ပုံ style ကို ပိုပီပီပြင်ပြင်ဖြစ်စေချင်ရင်ပဲ ရွေးပါ၊ နှိပ်ပြီးကြည့်ရင် ရှင်းလင်းချက် ပေါ်လာမယ် — မသေချာရင် ချန်ထားလည်း ရတယ်",en:"Camera Body → Bokeh are all optional - pick them only if you want a specific photographic look; hover/tap a chip to see what it does, or skip this whole section entirely",shn:"Camera Body → Bokeh ပဵၼ် optional တင်းသဵင်ႈ — ဢဝ်ၵူၺ်းယဝ်ႉ ႁႂ်ႈလႆႈ style ၶိုၵ်ႉၶႅမ်ႉ၊ ဢမ်ႇမၢၼ်ႇၵေႃႈ ဝၢင်းဝႆႉလႆႈ",kac:"Camera Body → Bokeh yawng gaw optional re - style ra ai hte sha lata u, n chye yang ndai part hpe skip mai ai",th:"Camera Body → Bokeh ทั้งหมดเป็นตัวเลือกเสริม — เลือกเฉพาะเมื่อต้องการลุคเฉพาะ แตะดูคำอธิบายได้ หรือข้ามได้เลยถ้าไม่แน่ใจ",zh:"从 Camera Body 到 Bokeh 全部为可选项 — 只有想要特定摄影风格时才选，点按可查看说明，不确定可整段跳过",vi:"Camera Body → Bokeh đều là tùy chọn - chỉ chọn nếu muốn một phong cách nhiếp ảnh cụ thể, chạm để xem giải thích, hoặc bỏ qua nếu không chắc",id:"Camera Body → Bokeh semuanya opsional - pilih hanya jika ingin gaya foto tertentu, ketuk untuk melihat penjelasan, atau lewati jika tidak yakin",ms:"Camera Body → Bokeh semuanya pilihan - pilih hanya jika mahukan gaya foto tertentu, ketik untuk lihat penjelasan, atau langkau jika tidak pasti"})));
-  host.appendChild(el("div","subh","CAMERA BODY"));
-  pickChips(host, D.camera.bodies, state.cam, "body", function(it){ return it[1]; });
-  host.appendChild(el("div","subh","LENS (MM)"));
-  pickChips(host, D.camera.mm, state.cam, "mm", function(it){ return it[0]+"mm — "+(D.camera.mmTxt[it[0]]||""); });
-  host.appendChild(el("div","subh","APERTURE"));
-  pickChips(host, D.camera.f, state.cam, "f", function(it){ return it[0]+" — "+camFTxt(it[1]); });
-  host.appendChild(el("div","subh","FILM LOOK"));
-  pickChips(host, D.camera.films, state.cam, "film", function(it){ return it[1]; });
-  host.appendChild(el("div","subh","BOKEH"));
-  pickChips(host, D.camera.bokehs, state.cam, "bokeh", function(it){ return it[1]; });
+
+  var gc=grp(t("sub_chains"), D.chains.length+t("unit"), false);
+  toggleChips(gc.b, D.chains, state.chains, function(c){return c.key;}, function(c){return c.label;}, function(c){return c.text;});
+  host.appendChild(gc.g);
+
+  var gcl=grp(t("sub_cleanup"), D.cleanups.length+t("unit"), false);
+  cleanupChips(gcl.b, D.cleanups, state.clean, function(c){return c.key;}, function(c){return c.label||c.key;}, function(c){return c.text.slice(0,120);});
+  host.appendChild(gcl.g);
+
+  var gm=grp(t("sub_mix"), D.rmix.length+t("unit"), false);
+  toggleChips(gm.b, D.rmix, state.rmix, function(m){return m.key;}, function(m){return m.label||m.key;}, function(m){return m.text;});
+  host.appendChild(gm.g);
+
+  var gcam=grp("📷 CAMERA PRO", "5"+t("unit"), false);
+  gcam.b.appendChild(el("div","mut",L9({my:"Camera Body → Bokeh အထိက Optional — ဓာတ်ပုံ style ကို ပိုပီပီပြင်ပြင်ဖြစ်စေချင်ရင်ပဲ ရွေးပါ၊ နှိပ်ပြီးကြည့်ရင် ရှင်းလင်းချက် ပေါ်လာမယ် — မသေချာရင် ချန်ထားလည်း ရတယ်",en:"Camera Body → Bokeh are all optional - pick them only if you want a specific photographic look; hover/tap a chip to see what it does, or skip this whole section entirely",shn:"Camera Body → Bokeh ပဵၼ် optional တင်းသဵင်ႈ — ဢဝ်ၵူၺ်းယဝ်ႉ ႁႂ်ႈလႆႈ style ၶိုၵ်ႉၶႅမ်ႉ၊ ဢမ်ႇမၢၼ်ႇၵေႃႈ ဝၢင်းဝႆႉလႆႈ",kac:"Camera Body → Bokeh yawng gaw optional re - style ra ai hte sha lata u, n chye yang ndai part hpe skip mai ai",th:"Camera Body → Bokeh ทั้งหมดเป็นตัวเลือกเสริม — เลือกเฉพาะเมื่อต้องการลุคเฉพาะ แตะดูคำอธิบายได้ หรือข้ามได้เลยถ้าไม่แน่ใจ",zh:"从 Camera Body 到 Bokeh 全部为可选项 — 只有想要特定摄影风格时才选，点按可查看说明，不确定可整段跳过",vi:"Camera Body → Bokeh đều là tùy chọn - chỉ chọn nếu muốn một phong cách nhiếp ảnh cụ thể, chạm để xem giải thích, hoặc bỏ qua nếu không chắc",id:"Camera Body → Bokeh semuanya opsional - pilih hanya jika ingin gaya foto tertentu, ketuk untuk melihat penjelasan, atau lewati jika tidak yakin",ms:"Camera Body → Bokeh semuanya pilihan - pilih hanya jika mahukan gaya foto tertentu, ketik untuk lihat penjelasan, atau langkau jika tidak pasti"})));
+  gcam.b.appendChild(el("div","subh","CAMERA BODY"));
+  pickChips(gcam.b, D.camera.bodies, state.cam, "body", function(it){ return it[1]; });
+  gcam.b.appendChild(el("div","subh","LENS (MM)"));
+  pickChips(gcam.b, D.camera.mm, state.cam, "mm", function(it){ return it[0]+"mm — "+(D.camera.mmTxt[it[0]]||""); });
+  gcam.b.appendChild(el("div","subh","APERTURE"));
+  pickChips(gcam.b, D.camera.f, state.cam, "f", function(it){ return it[0]+" — "+camFTxt(it[1]); });
+  gcam.b.appendChild(el("div","subh","FILM LOOK"));
+  pickChips(gcam.b, D.camera.films, state.cam, "film", function(it){ return it[1]; });
+  gcam.b.appendChild(el("div","subh","BOKEH"));
+  pickChips(gcam.b, D.camera.bokehs, state.cam, "bokeh", function(it){ return it[1]; });
+  host.appendChild(gcam.g);
 })();
 
 function camFTxt(f){
@@ -3835,7 +3878,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.17.0";
+var APP_VER="4.18.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
