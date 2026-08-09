@@ -41,5 +41,8 @@ jobs:
       - name: Run RunningHub video-generation sweep (mocked)
         run: node test/sweep_video.js
 
+      - name: Run RunningHub text-to-image sweep (mocked)
+        run: node test/sweep_text2img.js
+
       - name: Run update-available version-check regression test
         run: node test/verify_version_check.js

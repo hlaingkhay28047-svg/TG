@@ -556,6 +556,42 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   </section>
 </div><!-- /pgVideo -->
 
+<div class="page" id="pgText2Img">
+  <section class="card">
+    <h2>PROMPT</h2>
+    <textarea class="inp" id="t2iPrompt" placeholder="…"></textarea>
+    <div class="mut" id="t2iPromptCount" style="margin-top:4px;text-align:right;font-size:11px"></div>
+  </section>
+
+  <section class="card">
+    <h2>GENERATE</h2>
+    <div class="row" id="t2iOpts">
+      <select class="inp" id="selT2IModel" style="flex:1"></select>
+      <select class="inp" id="selT2IRatio" style="flex:1"></select>
+      <select class="inp" id="selT2IRes" style="flex:1">
+        <option value="">Size: Auto</option>
+        <option value="1K">1K</option>
+        <option value="2K">2K</option>
+        <option value="4K">4K</option>
+      </select>
+    </div>
+    <button class="btn btn-gold gen" id="btnT2IGen">🖌️ GENERATE IMAGE</button>
+    <div class="spin" id="t2iSpin"></div>
+    <div class="status" id="stT2IGen"></div>
+    <button class="btn" id="btnT2IRetry" style="display:none;margin-top:8px"></button>
+  </section>
+
+  <section class="card result-box" id="t2iResultBox">
+    <h2 id="t2iResultH2"></h2>
+    <div class="result-img"><img id="t2iResultImg" alt="result"></div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn btn-gold grow" id="btnT2IDl" download="hnk-text2img.png" style="text-align:center">⬇ Download</a>
+      <button class="btn" id="btnT2IToRef"></button>
+    </div>
+    <div class="hist" id="t2iHist"></div>
+  </section>
+</div><!-- /pgText2Img -->
+
 <div class="page" id="pgGallery">
   <section class="card">
     <h2>🗂 MY GALLERY</h2>
@@ -791,7 +827,8 @@ var state = {
   chains: {}, clean: {}, rmix: {},
   cam: { body:null, mm:null, f:null, film:null, bokeh:null },
   rt: {}, rtStrength: 60,
-  vidHist: [] /* session-only — RunningHub result URLs, never persisted (24h-valid, too large for the IndexedDB Gallery) */
+  vidHist: [], /* session-only — RunningHub result URLs, never persisted (24h-valid, too large for the IndexedDB Gallery) */
+  t2iHist: [], t2iHistSel: -1 /* text-to-image results — plain {mime,b64} images, same shape as state.hist, so they go into the Gallery too */
 };
 /* restore saved toggles/prompt before the UI is built from state */
 try {
@@ -833,6 +870,7 @@ var PAGES=[
   ["pgStudio","⚡","Studio"],
   ["pgCreate","✨","Create"],
   ["pgVideo","🎬","Video"],
+  ["pgText2Img","📝","Text2Img"],
   ["pgGallery","🗂","Gallery"],
   ["pgHome","⚙️","Setup"]
 ];
@@ -1280,6 +1318,87 @@ async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resol
   for(var i=0;i<results.length;i++){
     if(!results[i] || !results[i].url) continue;
     outs.push({ url:results[i].url, outputType:results[i].outputType||"video" });
+  }
+  return outs;
+}
+/* ---------- RunningHub text-to-image (no reference photo needed) ----------
+   A separate catalog from RH_MODELS/RH_VIDEO_MODELS: these 5 endpoints don't
+   take any input image at all, so they don't fit the edit-a-photo pipeline
+   the rest of the app is built around. Confirmed against real RunningHub API
+   docs pasted for each exact endpoint (2026-08) — nothing here is guessed.
+   Every one of these endpoints uses a different subset of resolution/size/
+   aspectRatio/numImages/outputFormat fields, so each model entry declares
+   which fields it needs and rhV2SubmitT2I builds the body from that — same
+   pattern as sizeParam/whParam on the image-edit side. Results are plain
+   {mime,b64} images (small, unlike video), so they reuse the same Gallery/
+   IndexedDB persistence as every other image result. */
+var RH_T2I_MODELS = [
+  { id:"flux-2-dev", label:"Flux 2 Dev", apiPath:"rhart-image/f-2-dev/text-to-image",
+    ratios:["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired:true,
+    extra:{ outputFormat:"png" } },
+  { id:"nano-banana-pro-t2i", label:"Nano Banana Pro (Text-to-Image)", apiPath:"rhart-image-n-pro-official/text-to-image",
+    ratios:["1:1","3:2","2:3","3:4","4:3","4:5","5:4","9:16","16:9","21:9"],
+    resolutionField:"resolution", promptMax:20000 },
+  { id:"rh-imagine-quality", label:"RH Imagine Image Quality", apiPath:"rhart-imagine-image-quality/text-to-image",
+    ratios:["1:1","16:9","9:16","4:3","3:4","3:2","2:3"],
+    resolutionField:"resolution", resolutionEnum:["1k","2k"], numImagesField:"numImages",
+    promptMax:4000, extra:{ outputFormat:"png" } },
+  { id:"qwen-image-3-pro-t2i", label:"Qwen Image 3.0 Pro (Text-to-Image)", apiPath:"alibaba/qwen-image-3.0-pro/text-to-image",
+    sizeField:"size", promptMax:2048 },
+  { id:"youchuan-v81", label:"Midjourney v8.1 (RunningHub)", apiPath:"youchuan/text-to-image-v81",
+    ratios:["1:1","4:3","3:2","16:9","3:4","2:3","9:16"], promptMax:8192, extra:{ hd:true } }
+];
+function rhT2IModelDef(id){ return RH_T2I_MODELS.find(function(m){ return m.id===id; }) || null; }
+/* Qwen 3.0 Pro's text-to-image "size" enum — same ratio->WxH pairing as its
+   image-edit sibling's own (separately confirmed) enum, kept as its own map
+   since the two endpoints' option lists aren't guaranteed to always match. */
+var RH_QWEN3_T2I_SIZE_MAP = {
+  "1:1":  { std:"1024*1024", hd:"1600*1600" },
+  "2:3":  { std:"768*1152",  hd:"1280*1920" },
+  "3:2":  { std:"1152*768",  hd:"1920*1280" },
+  "3:4":  { std:"768*1024",  hd:"1536*2048" },
+  "4:3":  { std:"1024*768",  hd:"1792*1344" },
+  "9:16": { std:"576*1024",  hd:"1152*2048" },
+  "16:9": { std:"1024*576",  hd:"2048*1152" }
+};
+function rhQwen3T2ISize(ratio, sizeSel){
+  var m = RH_QWEN3_T2I_SIZE_MAP[ratio];
+  if(!m) return "";
+  var s = String(sizeSel||"").toLowerCase();
+  return (s==="2k"||s==="4k") ? m.hd : m.std;
+}
+async function rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel){
+  var body = { prompt: model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"") };
+  if(model.ratios){
+    var useRatio = model.ratios.indexOf(ratio)>=0 ? ratio : (model.ratioRequired ? model.ratios[0] : "");
+    if(useRatio) body.aspectRatio = useRatio;
+  }
+  if(model.resolutionField){
+    var allowed = model.resolutionEnum || ["1k","2k","4k"];
+    var res = String(sizeSel||"").toLowerCase();
+    body[model.resolutionField] = allowed.indexOf(res)>=0 ? res : allowed[0];
+  }
+  if(model.sizeField){
+    var sz = rhQwen3T2ISize(ratio, sizeSel);
+    if(sz) body[model.sizeField] = sz;
+  }
+  if(model.numImagesField) body[model.numImagesField] = "1";
+  if(model.extra) Object.keys(model.extra).forEach(function(k){ body[k]=model.extra[k]; });
+  var r=await fetch(RH_V2_BASE+"/"+String(model.apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  return j.taskId;
+}
+async function rhGenerateT2I(apiKey, model, promptText, ratio, sizeSel, onTick){
+  var taskId = await rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
+  var results = (final && final.results) || [];
+  var outs=[];
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    var dataUrl = await rhDownloadAsDataUrl(results[i].url);
+    var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
+    if(m) outs.push({mime:m[1], b64:m[2]});
   }
   return outs;
 }
@@ -2940,7 +3059,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.9.1";
+var APP_VER="4.10.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -3428,5 +3547,112 @@ $("btnVidDl").onclick=async function(){
     toast(L9({my:"Download မအောင်မြင်ပါ — Direct Link ကို နှိပ်ပြီး manual download လုပ်ကြည့်ပါ",en:"Download failed — try the Direct Link button to save it manually",shn:"Download ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းၼဵၵ်း Direct Link",kac:"Download n byin ai — Direct Link dip nna chyam u",th:"ดาวน์โหลดล้มเหลว — ลองใช้ปุ่ม Direct Link",zh:"下载失败 — 请尝试点击“直接链接”按钮手动保存",vi:"Tải xuống thất bại — thử nút Direct Link để lưu thủ công",id:"Unduh gagal — coba tombol Direct Link untuk menyimpan manual",ms:"Muat turun gagal — cuba butang Direct Link untuk simpan secara manual"}), "err");
   }
   btn.disabled=false; btn.textContent=VID_DL_LABEL;
+};
+
+/* ---------- text-to-image (RunningHub-only — no reference photo) ---------- */
+function t2iModelDef(){ return rhT2IModelDef($("selT2IModel").value) || RH_T2I_MODELS[0]; }
+function updateT2IPromptCount(){
+  var m=t2iModelDef();
+  $("t2iPromptCount").textContent = $("t2iPrompt").value.length+" / "+(m.promptMax||20000);
+}
+function updateT2IModelUI(){
+  var m=t2iModelDef();
+  /* sizeField models (Qwen 3.0 Pro T2I) have no "ratios" list of their own —
+     they derive "size" from a ratio too, just via RH_QWEN3_T2I_SIZE_MAP
+     instead of an aspectRatio field — so the ratio picker must stay visible
+     for them as well, or rhQwen3T2ISize() never gets a ratio to work with. */
+  var ratioList = m.ratios || (m.sizeField ? Object.keys(RH_QWEN3_T2I_SIZE_MAP) : null);
+  $("selT2IRatio").style.display = ratioList ? "" : "none";
+  if(ratioList){
+    var sel=$("selT2IRatio"); sel.innerHTML="";
+    var auto=document.createElement("option"); auto.value=""; auto.textContent="Ratio: Auto"; sel.appendChild(auto);
+    ratioList.forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent=r; sel.appendChild(o); });
+  }
+  /* Only offer the size tiers a model actually honors — flux-2-dev and
+     youchuan-v81 have neither resolutionField nor sizeField and would
+     silently ignore any pick; rh-imagine-quality only supports 1k/2k, so
+     a "4K" pick would silently get clamped to 2k in rhV2SubmitT2I with no
+     visible sign the choice was downgraded. Showing only the tiers a model
+     honors makes every visible option actually take effect. */
+  var sizeTiers = m.resolutionField ? (m.resolutionEnum || ["1k","2k","4k"]) : (m.sizeField ? ["1k","2k"] : null);
+  $("selT2IRes").style.display = sizeTiers ? "" : "none";
+  if(sizeTiers){
+    var rs=$("selT2IRes"); rs.innerHTML="";
+    var autoR=document.createElement("option"); autoR.value=""; autoR.textContent="Size: Auto"; rs.appendChild(autoR);
+    sizeTiers.forEach(function(t){ var o=document.createElement("option"); o.value=t.toUpperCase(); o.textContent=t.toUpperCase(); rs.appendChild(o); });
+  }
+  $("t2iPrompt").setAttribute("maxlength", m.promptMax||20000);
+  updateT2IPromptCount();
+}
+RH_T2I_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; $("selT2IModel").appendChild(o); });
+$("selT2IModel").onchange = updateT2IModelUI;
+$("t2iPrompt").addEventListener("input", updateT2IPromptCount);
+updateT2IModelUI();
+
+$("t2iPrompt").placeholder = L9({my:"ဘယ်လို ပုံမျိုး လိုချင်လဲ ဖော်ပြပါ — ဥပမာ: a photorealistic portrait of a woman in a red dress standing in a garden at golden hour…",en:"Describe the image you want — e.g. a photorealistic portrait of a woman in a red dress standing in a garden at golden hour…",shn:"တႅမ်ႈဝႃႈလွင်ႈၶႅပ်းႁၢင်ႈဢၼ်လူဝ်ႇ",kac:"Sumla n gara hku ra ai ni tsun dan u",th:"อธิบายภาพที่ต้องการ",zh:"描述你想要的图片",vi:"Mô tả bức ảnh bạn muốn",id:"Jelaskan gambar yang Anda inginkan",ms:"Terangkan imej yang anda mahu"});
+$("t2iSpin").textContent = L9({my:"ပုံ ထုတ်နေပါတယ် — စက္ကန့် အနည်းငယ် စောင့်ပါ…",en:"Generating image — allow a few seconds…",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈယူႇ — ၶွႆတွင်ၵမ်ႈၽွင်ႈ",kac:"Sumla galaw nga ai — miting langai nga chyam sit u",th:"กำลังสร้างภาพ — รอสักครู่",zh:"正在生成图片 — 请稍候",vi:"Đang tạo ảnh — vui lòng chờ",id:"Membuat gambar — tunggu sebentar",ms:"Menjana imej — tunggu sebentar"});
+$("btnT2IRetry").textContent = L9({my:"🔁 ပြန်စမ်း",en:"🔁 Retry",shn:"🔁 ၸၢမ်းၶိုၼ်း",kac:"🔁 Bai chyam",th:"🔁 ลองใหม่",zh:"🔁 重试",vi:"🔁 Thử lại",id:"🔁 Coba lagi",ms:"🔁 Cuba lagi"});
+$("t2iResultH2").textContent = L9({my:"ရလဒ်",en:"Result",shn:"လွင်ႈဢွၵ်ႇမႃး",kac:"Ah kyu",th:"ผลลัพธ์",zh:"结果",vi:"Kết quả",id:"Hasil",ms:"Hasil"});
+$("btnT2IToRef").textContent = L9({my:"↺ IMAGE 1 အဖြစ်သုံး",en:"↺ Use as IMAGE 1",shn:"↺ ၸႂ်ႉပဵၼ် IMAGE 1",kac:"↺ IMAGE 1 hku lang",th:"↺ ใช้เป็น IMAGE 1",zh:"↺ 用作 IMAGE 1",vi:"↺ Dùng làm IMAGE 1",id:"↺ Gunakan sebagai IMAGE 1",ms:"↺ Guna sebagai IMAGE 1"});
+
+function showT2IResult(){
+  var out=state.t2iHist[state.t2iHistSel]; if(!out) return;
+  $("t2iResultBox").className="card result-box on";
+  var src="data:"+out.mime+";base64,"+out.b64;
+  $("t2iResultImg").src=src;
+  $("btnT2IDl").href=src;
+  var h=$("t2iHist"); h.innerHTML="";
+  state.t2iHist.forEach(function(e,i){
+    var im=document.createElement("img");
+    im.src="data:"+e.mime+";base64,"+e.b64;
+    im.alt="result "+(i+1);
+    im.className=i===state.t2iHistSel?"sel":"";
+    im.onclick=function(){ state.t2iHistSel=i; showT2IResult(); };
+    h.appendChild(im);
+  });
+  $("t2iResultBox").scrollIntoView({behavior:"smooth"});
+}
+
+$("btnT2IGen").onclick = async function(){
+  if(!state.rhKey){
+    switchPage("pgHome");
+    var mk=L9({my:"RunningHub key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key isn't set up yet — add it in Setup",shn:"RunningHub key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key — cấu hình trong Setup",id:"RunningHub key belum disiapkan — atur di Setup",ms:"RunningHub key belum disediakan — konfigurasi dalam Setup"});
+    setSt("stRhKey", mk, "err"); toast(mk,"err"); return;
+  }
+  var m=t2iModelDef();
+  var text=$("t2iPrompt").value.trim();
+  if(!text){ setSt("stT2IGen", L9({my:"Prompt ရေးပါ — ဘယ်လို ပုံမျိုး လိုချင်လဲ ဖော်ပြပါ",en:"Write a prompt describing the image you want",shn:"တႅမ်ႈ prompt",kac:"Prompt ka jaw u",th:"เขียน prompt อธิบายภาพที่ต้องการ",zh:"请写一个 prompt 描述想要的图片",vi:"Viết prompt mô tả ảnh bạn muốn",id:"Tulis prompt yang menjelaskan gambar yang diinginkan",ms:"Tulis prompt yang menerangkan imej yang dikehendaki"}), "err"); return; }
+  var ratio=$("selT2IRatio").value, sizeSel=$("selT2IRes").value;
+  var btn=this; btn.disabled=true; $("t2iSpin").className="spin on"; setSt("stT2IGen","");
+  $("btnT2IRetry").style.display="none";
+  var spinBase=$("t2iSpin").textContent;
+  try{
+    var outs=await rhGenerateT2I(state.rhKey, m, text, ratio, sizeSel, function(elapsed){
+      $("t2iSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
+    });
+    if(!outs.length){
+      setSt("stT2IGen", L9({my:"ပုံ မထွက်လာပါ — ပြန်စမ်းပါ",en:"No image was returned — try again",shn:"ၶႅပ်းႁၢင်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Sumla n pru wa ai — bai chyam u",th:"ไม่มีภาพส่งกลับมา — ลองใหม่",zh:"未返回图片 — 请重试",vi:"Không có ảnh trả về — thử lại",id:"Tidak ada gambar dikembalikan — coba lagi",ms:"Tiada imej dikembalikan — cuba lagi"}), "err");
+      $("btnT2IRetry").style.display="";
+    } else {
+      for(var oi=outs.length-1; oi>=0; oi--) state.t2iHist.unshift(outs[oi]);
+      while(state.t2iHist.length>8) state.t2iHist.pop();
+      state.t2iHistSel=0;
+      outs.forEach(function(o){ galleryAdd(o, text.slice(0,160)); });
+      showT2IResult();
+      setSt("stT2IGen", t("st_done"), "ok");
+    }
+  } catch(e){
+    setSt("stT2IGen", rhFriendly(e), "err");
+    $("btnT2IRetry").style.display="";
+  }
+  btn.disabled=false; $("t2iSpin").className="spin"; $("t2iSpin").textContent=spinBase;
+};
+$("btnT2IRetry").onclick=function(){ this.style.display="none"; $("btnT2IGen").onclick(); };
+$("btnT2IToRef").onclick=function(){
+  var out=state.t2iHist[state.t2iHistSel]; if(!out) return;
+  state.refs[0]={mime:out.mime,b64:out.b64,label:"t2i"};
+  state.imgRoles=null;
+  renderRefs();
+  setSt("stT2IGen", L9({my:"ရလဒ်ကို IMAGE 1 ထဲ ထည့်ပြီး ✓ — Create page က ဆက် edit လို့ရပြီ",en:"Result loaded into IMAGE 1 ✓ — keep editing it on the Create page",shn:"ဢဝ်ၽွၼ်းသႂ်ႇ IMAGE 1 ယဝ်ႉ ✓",kac:"Ah kyu hpe IMAGE 1 kaw jaw sai ✓",th:"ใส่ผลลัพธ์ใน IMAGE 1 แล้ว ✓",zh:"结果已放入 IMAGE 1 ✓",vi:"Đã đưa kết quả vào IMAGE 1 ✓",id:"Hasil dimasukkan ke IMAGE 1 ✓",ms:"Hasil dimasukkan ke IMAGE 1 ✓"}), "ok");
 };
 </script>
