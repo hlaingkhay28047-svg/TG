@@ -1115,9 +1115,23 @@ function rhWanWH(ratio, sizeSel){
   if(rw>=rh){ w=base; h=Math.round(base*rh/rw); } else { h=base; w=Math.round(base*rw/rh); }
   return { w: Math.max(512,Math.min(4096,w)), h: Math.max(512,Math.min(4096,h)) };
 }
+/* Plain slice(0,maxLen) would cut from the tail — but finalPrompt always ends
+   with the fixed "TASK GUARD:" block (identity/pixel-preservation rules) that
+   must never be silently dropped just because Style Chains/Cleanup/Camera/
+   Retouch add-ons made the task description in front of it long. Trim the
+   task description instead and always keep the guard block intact. */
+function rhTruncatePrompt(promptText, maxLen){
+  var s = String(promptText||"");
+  if(!maxLen || s.length<=maxLen) return s;
+  var gi = s.indexOf("TASK GUARD:");
+  if(gi<0) return s.slice(0,maxLen);
+  var guardPart = s.slice(gi);
+  if(guardPart.length>=maxLen) return guardPart.slice(0,maxLen);
+  return s.slice(0,gi).slice(0, maxLen-guardPart.length) + guardPart;
+}
 async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
   var cfg = modelCfg || {};
-  var body={ prompt: (cfg.promptMax ? String(promptText||"").slice(0,cfg.promptMax) : (promptText||"")) };
+  var body={ prompt: rhTruncatePrompt(promptText, cfg.promptMax) };
   imageUrls = imageUrls||[];
   var imageParam = cfg.imageParam || "imageUrls";
   if(imageParam==="image") body.image = imageUrls[0]||"";
@@ -1282,6 +1296,7 @@ function rhFriendly(e){
   if(status===401||status===403||code==="invalid-key") return L9({my:"RunningHub key မှားနေပါတယ် — Setup မှာ ပြန်စစ်ပါ",en:"RunningHub key is invalid — recheck it in Setup",shn:"RunningHub key ၽိတ်းယူႇ — ၾၢႆႇ Setup ၵႂႃႇပွင်ႇတူၺ်း",kac:"RunningHub key n teng ai — Setup kaw bai yu chyam u",th:"RunningHub key ไม่ถูกต้อง — ตรวจสอบใน Setup",zh:"RunningHub key 无效 — 请在 Setup 中重新检查",vi:"RunningHub key không hợp lệ — kiểm tra lại trong Setup",id:"RunningHub key tidak valid — periksa lagi di Setup",ms:"RunningHub key tidak sah — semak semula dalam Setup"});
   if(status===402||code==="insufficient-credits") return L9({my:"RunningHub credit မလုံလောက်ပါ — account ကို top up လုပ်ပါ",en:"Not enough RunningHub credits — top up your account",shn:"RunningHub credit ဢမ်ႇပဵင်း — top up ဢေႃးၶွင်ႉၸဝ်ႈၵဝ်ႇ",kac:"RunningHub credit n law ai — na account hpe top up galaw u",th:"เครดิต RunningHub ไม่พอ — เติมเงินในบัญชี",zh:"RunningHub 额度不足 — 请为账户充值",vi:"Không đủ credit RunningHub — nạp thêm cho tài khoản",id:"Kredit RunningHub tidak cukup — top up akun Anda",ms:"Kredit RunningHub tidak mencukupi — top up akaun anda"});
   if(code==="timeout") return L9({my:"RunningHub timeout ဖြစ်သွားပါတယ် — ပြန်စမ်းကြည့်ပါ",en:"RunningHub timed out — try again",shn:"RunningHub timeout ဝႆႉ — ၸၢမ်းၶိုၼ်း",kac:"RunningHub timeout byin mat sai — bai chyam u",th:"RunningHub หมดเวลา — ลองใหม่อีกครั้ง",zh:"RunningHub 超时 — 请重试",vi:"RunningHub hết thời gian chờ — thử lại",id:"RunningHub timeout — coba lagi",ms:"RunningHub timeout — cuba lagi"});
+  if(code==="no-image") return L9({my:"ဒီ model အတွက် ပုံ တစ်ပုံ ထည့်ပါ — text prompt တစ်ခုတည်းနဲ့ မလုံလောက်ပါ",en:"This model needs an image — a text prompt alone isn't enough",shn:"Model ၼႆႉလူဝ်ႇၶႅပ်းႁၢင်ႈ — prompt ၵူၺ်းဢမ်ႇပဵင်း",kac:"Ndai model gaw sumla ra ai — prompt sha n law ai",th:"โมเดลนี้ต้องการรูปภาพ — พิมพ์ prompt อย่างเดียวไม่พอ",zh:"此模型需要一张图片 — 仅有文字提示词是不够的",vi:"Model này cần một ảnh — chỉ có prompt văn bản là không đủ",id:"Model ini butuh gambar — prompt teks saja tidak cukup",ms:"Model ini memerlukan imej — prompt teks sahaja tidak mencukupi"});
   if(code==="failed") return L9({my:"RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"The RunningHub task failed — try a different prompt/photo",shn:"RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",kac:"RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",th:"งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",zh:"RunningHub 任务失败 — 请更换 prompt 或图片",vi:"Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",id:"Tugas RunningHub gagal — coba prompt/foto lain",ms:"Tugas RunningHub gagal — cuba prompt/foto lain"});
   return L9({my:"RunningHub error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"RunningHub error — try again ("+(status||"?")+")",shn:"RunningHub error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"RunningHub error — bai chyam u ("+(status||"?")+")",th:"RunningHub error — ลองใหม่ ("+(status||"?")+")",zh:"RunningHub 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi RunningHub — thử lại ("+(status||"?")+")",id:"Error RunningHub — coba lagi ("+(status||"?")+")",ms:"Ralat RunningHub — cuba lagi ("+(status||"?")+")"});
 }

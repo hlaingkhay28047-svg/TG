@@ -81,7 +81,16 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       qwenSizeAuto: rhQwenSize("", "1K"),
       wanWh16_9: rhWanWH("16:9", ""),
       wanWhAuto: rhWanWH("", "1K"),
-      scale1k: rhScaleFromSize(""), scale2k: rhScaleFromSize("2K"), scale4k: rhScaleFromSize("4K")
+      scale1k: rhScaleFromSize(""), scale2k: rhScaleFromSize("2K"), scale4k: rhScaleFromSize("4K"),
+      // rhTruncatePrompt must keep the TASK GUARD block intact and trim the
+      // task description instead, never the other way around (regression for
+      // the .slice(0,maxLen) bug the adversarial review caught).
+      truncKeepsGuard: (function(){
+        var head = "x".repeat(2000);
+        var guard = "TASK GUARD:\nkeep this exact block intact no matter what.";
+        var out = rhTruncatePrompt(head + "\n\n" + guard, 800);
+        return { len: out.length, hasGuard: out.indexOf(guard) >= 0, hasFullHead: out.indexOf(head) >= 0 };
+      })()
     };
   });
   console.log("setup:", JSON.stringify(setup));
@@ -91,7 +100,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && setup.upscaleImageParam === "imageUrl"
     && setup.qwenSize1_1_hd === "1536*1536" && setup.qwenSize16_9_std === "1280*720" && setup.qwenSizeAuto === ""
     && setup.wanWh16_9 && setup.wanWh16_9.w === 1024 && setup.wanWh16_9.h === 576 && setup.wanWhAuto === null
-    && setup.scale1k === "2x" && setup.scale2k === "4x" && setup.scale4k === "6x";
+    && setup.scale1k === "2x" && setup.scale2k === "4x" && setup.scale4k === "6x"
+    && setup.truncKeepsGuard.len <= 800 && setup.truncKeepsGuard.hasGuard === true && setup.truncKeepsGuard.hasFullHead === false;
   if (!setupOk) {
     console.log("FAIL: RunningHub provider option/config did not register correctly for all built-in models");
     await browser.close();
@@ -172,7 +182,27 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && upResult.body.imageUrls === undefined && upResult.body.prompt === undefined;
   console.log(upOk ? "PASS (upscale no-prompt body)" : ("FAIL (upscale no-prompt body): " + JSON.stringify(upResult)));
 
-  const overall = result === "OK" && qwenOk && upOk;
+  // Upscale Pro with no image attached must surface a helpful "add an image"
+  // message, not the generic "RunningHub error — try again (?)" fallback.
+  const noImgMsg = await page.evaluate(async () => {
+    var c = rhCfg(); c.activeModel = "upscale-pro"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("prompt").value = "some text but no image";
+    for (let i = 0; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 60; w++) {
+      const st = document.getElementById("stGen");
+      if (st && st.className.indexOf("err") >= 0 && st.textContent) return st.textContent;
+      await sleep(50);
+    }
+    return "TIMEOUT — no error message appeared";
+  });
+  console.log("no-image message:", noImgMsg);
+  const noImgOk = /image|ပုံ/i.test(noImgMsg) && noImgMsg.indexOf("(?)") < 0;
+  console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
+
+  const overall = result === "OK" && qwenOk && upOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);
