@@ -539,6 +539,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     <div class="mut" id="vidNeedNote" style="margin-top:6px"></div>
     <button class="btn btn-gold gen" id="btnVidGen">🎬 GENERATE VIDEO</button>
     <div class="spin" id="vidSpin"></div>
+    <button class="btn" id="btnVidCancel" style="display:none;margin-top:8px"></button>
     <div class="status" id="stVidGen"></div>
     <button class="btn" id="btnVidRetry" style="display:none;margin-top:8px"></button>
   </section>
@@ -580,6 +581,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     </div>
     <button class="btn btn-gold gen" id="btnVuGen">🚀 UPSCALE VIDEO</button>
     <div class="spin" id="vuSpin"></div>
+    <button class="btn" id="btnVuCancel" style="display:none;margin-top:8px"></button>
     <div class="status" id="stVuGen"></div>
     <button class="btn" id="btnVuRetry" style="display:none;margin-top:8px"></button>
   </section>
@@ -623,6 +625,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     </div>
     <button class="btn btn-gold gen" id="btnT2IGen">🖌️ GENERATE IMAGE</button>
     <div class="spin" id="t2iSpin"></div>
+    <button class="btn" id="btnT2ICancel" style="display:none;margin-top:8px"></button>
     <div class="status" id="stT2IGen"></div>
     <button class="btn" id="btnT2IRetry" style="display:none;margin-top:8px"></button>
   </section>
@@ -827,6 +830,11 @@ var TR = {
   wiz_start: { my: 'စမယ် →', en: 'Start →' },
   wiz_next: { my: 'ရှေ့ဆက် →', en: 'Next →' },
   wiz_back: { my: '← နောက်ပြန်', en: '← Back' },
+  wiz_generate: { my: '⚡ GENERATE', en: '⚡ GENERATE' },
+  lb_remove_image: { my: 'ပုံ ဖျက်', en: 'Remove image' },
+  lb_close: { my: 'ပိတ်', en: 'Close' },
+  lb_favorite: { my: 'အကြိုက်', en: 'Favorite' },
+  btn_cancel: { my: '✕ ရပ်မယ်', en: '✕ Cancel' },
   wiz_req: { my: 'မဖြစ်မနေ လိုတယ်', en: 'Required' },
   wiz_opt: { my: 'Optional — မထည့်လည်းရ', en: 'Optional' },
   wiz_pick: { my: '📁 ရွေး', en: '📁 Pick' },
@@ -880,6 +888,16 @@ function applyLang(){
     sel.appendChild(o);
   });
   sel.onchange=function(){
+    /* switching language reloads the page (every t()/L9() call needs a fresh
+       LANG) — state.refs (uploaded images) are never persisted (base64 data
+       is too large for localStorage to hold safely), so warn before wiping
+       them instead of silently losing a user's picked photos. */
+    var hasRefs = state.refs.some(function(r){ return !!r; });
+    if(hasRefs && !confirm(L9({my:"Language ပြောင်းရင် ဒီစာမျက်နှာ ပြန်ရိုက်ရမှာမို့ တင်ထားတဲ့ ပုံတွေ ပျောက်သွားပါမယ် — ဆက်လုပ်မလား?",en:"Changing language reloads the page — your uploaded images will be lost. Continue?",shn:"လႅၵ်ႈ language ၸၢင်ႈလုမ်း ၶႅပ်းႁၢင်ႈဢၼ်ၶိုၼ်ႈဝႆႉ — ဢဝ်ႁဵတ်းၵႂႃႇလႄႇ?",kac:"Language galai yang ai gaw ndai page hpe bai hpaw ra ai — sumla tawn da ai ni mat na ra ai. Sha na i?",th:"เปลี่ยนภาษาจะโหลดหน้าใหม่ — รูปที่อัปโหลดไว้จะหายไป ดำเนินการต่อหรือไม่?",zh:"切换语言会重新加载页面 — 已上传的图片将丢失，是否继续？",vi:"Đổi ngôn ngữ sẽ tải lại trang — ảnh đã tải lên sẽ bị mất. Tiếp tục?",id:"Mengubah bahasa akan memuat ulang halaman — gambar yang diunggah akan hilang. Lanjutkan?",ms:"Menukar bahasa akan memuat semula halaman — imej yang dimuat naik akan hilang. Teruskan?"}))){
+      sel.value = LANG;
+      return;
+    }
+    clearTimeout(state._pt); saveState();
     try{ localStorage.setItem("hnk_ws_lang", sel.value); }catch(e){}
     location.reload();
   };
@@ -940,9 +958,27 @@ function saveState(){
 }
 
 function $(id){ return document.getElementById(id); }
+/* Thumbnail grids (Library/Gallery/result-history strips) are built from
+   plain <img>/<video> elements with only an onclick handler — mouse-only,
+   invisible to keyboard and screen-reader users. This makes any such
+   element a real, focusable, activatable control without changing its
+   click behavior. */
+function makePickable(elm, onActivate){
+  elm.onclick=onActivate;
+  elm.tabIndex=0;
+  elm.setAttribute("role","button");
+  elm.onkeydown=function(ev){
+    if(ev.key==="Enter" || ev.key===" " || ev.key==="Spacebar"){ ev.preventDefault(); onActivate(); }
+  };
+}
 var _toastT=null;
+/* The update-available banner (below) sets this so it isn't immediately
+   overwritten by the next routine toast() call from anywhere else in the
+   app — without it, almost nobody ever saw the update notice. */
+var _toastSticky=false;
 function toast(msg, cls){
   var t=$("toast"); if(!t) return;
+  if (_toastSticky) return;
   t.textContent=msg; t.className="toast on"+(cls?" "+cls:"");
   clearTimeout(_toastT); _toastT=setTimeout(function(){ t.className="toast"; }, 2600);
 }
@@ -1031,7 +1067,7 @@ function renderGallery(){
         im.loading="lazy";
         im.alt=(it.prompt||"").slice(0,80)||"gallery result";
         im.className = galSel && galSel.id===it.id ? "sel" : "";
-        im.onclick=function(){
+        makePickable(im, function(){
           galSel=it;
           var src="data:"+it.mime+";base64,"+it.b64;
           $("galPick").className="lib-pick on";
@@ -1041,7 +1077,7 @@ function renderGallery(){
           var g=grid.querySelectorAll("img");
           for(var i=0;i<g.length;i++) g[i].className="";
           im.className="sel";
-        };
+        });
         grid.appendChild(im);
       });
     };
@@ -1057,7 +1093,7 @@ $("galToImg1").onclick=function(){
   state.refs[0]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
   state.imgRoles=null;
   renderRefs();
-  toast("Gallery ပုံ → IMAGE 1 ✓","ok");
+  toast(L9({my:"Gallery ပုံ → IMAGE 1 ✓",en:"Gallery image → IMAGE 1 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 1 ✓",kac:"Gallery sumla → IMAGE 1 ✓",th:"รูป Gallery → IMAGE 1 ✓",zh:"Gallery 图片 → IMAGE 1 ✓",vi:"Ảnh Gallery → IMAGE 1 ✓",id:"Gambar Gallery → IMAGE 1 ✓",ms:"Imej Gallery → IMAGE 1 ✓"}),"ok");
 };
 $("galDel").onclick=function(){
   if(!galSel) return;
@@ -1300,23 +1336,40 @@ async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolut
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhV2Query(apiKey, taskId){
-  var r=await fetch(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:taskId}) });
+async function rhV2Query(apiKey, taskId, signal){
+  var r=await fetch(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:taskId}), signal:signal });
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("query-failed"); e.status=r.status; e.body=j; throw e; }
   return j||{};
 }
-async function rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs){
+/* signal (optional AbortSignal) lets the caller cancel an in-flight
+   generation — RunningHub video jobs can run up to RH_VIDEO_TIMEOUT_MS
+   (10 min) with nothing else to interrupt them (see the Cancel buttons
+   wired next to the spinner on Video/VidUp/Studio/Text2Img). */
+async function rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs, signal){
   var start=Date.now();
   var limit = timeoutMs || RH_TIMEOUT_MS;
   while(true){
-    var j=await rhV2Query(apiKey, taskId);
+    if(signal && signal.aborted){ var ec=new Error("cancelled"); ec.code="cancelled"; throw ec; }
+    var j;
+    try {
+      j=await rhV2Query(apiKey, taskId, signal);
+    } catch(qe){
+      /* Cancel landing WHILE the query fetch is in flight rejects it with
+         the browser's own AbortError, not our "cancelled"-coded Error —
+         normalize it the same way so the caller shows a neutral "Cancelled"
+         instead of a scary generic RunningHub error for an action the user
+         deliberately took. */
+      if(signal && signal.aborted){ var ec3=new Error("cancelled"); ec3.code="cancelled"; throw ec3; }
+      throw qe;
+    }
     var s=String(j.status||"").toUpperCase();
     var elapsed=Date.now()-start;
     if(typeof onTick==="function") onTick(elapsed, s);
     if(s==="SUCCESS") return j;
     if(s==="FAILED"){ var e=new Error("failed"); e.code="failed"; e.body=j; throw e; }
     if(elapsed>=limit){ var e2=new Error("timeout"); e2.code="timeout"; throw e2; }
+    if(signal && signal.aborted){ var ec2=new Error("cancelled"); ec2.code="cancelled"; throw ec2; }
     await new Promise(function(res){ setTimeout(res, RH_POLL_MS); });
   }
 }
@@ -1339,10 +1392,10 @@ async function rhVerifyKey(apiKey){
    Returns an array of {mime,b64} — the exact shape the Gemini path already
    produces, so the shared history/gallery/result-display code needs no
    provider-specific branch downstream. */
-async function rhGenerateOne(apiKey, apiPath, promptText, ratio, refDataUrls, resolution, modelCfg, onTick){
+async function rhGenerateOne(apiKey, apiPath, promptText, ratio, refDataUrls, resolution, modelCfg, onTick, signal){
   var imageUrls = refDataUrls.length ? await rhV2UploadAll(apiKey, refDataUrls) : [];
   var taskId = await rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, modelCfg);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -1371,11 +1424,11 @@ async function rhV2SubmitUpscale(apiKey, apiPath, imageUrl, scale){
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhGenerateUpscale(apiKey, apiPath, refDataUrls, sizeSel, onTick){
+async function rhGenerateUpscale(apiKey, apiPath, refDataUrls, sizeSel, onTick, signal){
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
   var imageUrls = await rhV2UploadAll(apiKey, [refDataUrls[0]]);
   var taskId = await rhV2SubmitUpscale(apiKey, apiPath, imageUrls[0], rhScaleFromSize(sizeSel));
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -1414,11 +1467,11 @@ async function rhV2SubmitUpscaleTransparent(apiKey, apiPath, imageUrl, sizeSel){
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhGenerateUpscaleTransparent(apiKey, apiPath, refDataUrls, sizeSel, onTick){
+async function rhGenerateUpscaleTransparent(apiKey, apiPath, refDataUrls, sizeSel, onTick, signal){
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
   var imageUrls = await rhV2UploadAll(apiKey, [refDataUrls[0]]);
   var taskId = await rhV2SubmitUpscaleTransparent(apiKey, apiPath, imageUrls[0], sizeSel);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -1461,10 +1514,10 @@ async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolutio
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick){
+async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick, signal){
   var imageUrls = imageDataUrls.length ? await rhV2UploadAll(apiKey, imageDataUrls) : [];
   var taskId = await rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -1508,11 +1561,11 @@ async function rhV2SubmitVideoUpscale(apiKey, videoUrl, targetResolution){
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, onTick){
+async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, onTick, signal){
   if(!videoDataUrl){ var e0=new Error("no-video"); e0.code="no-video"; throw e0; }
   var videoUrl = await rhV2UploadVideo(apiKey, videoDataUrl);
   var taskId = await rhV2SubmitVideoUpscale(apiKey, videoUrl, targetResolution);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -1589,9 +1642,9 @@ async function rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel){
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhGenerateT2I(apiKey, model, promptText, ratio, sizeSel, onTick){
+async function rhGenerateT2I(apiKey, model, promptText, ratio, sizeSel, onTick, signal){
   var taskId = await rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -1617,6 +1670,7 @@ function rhFriendly(e){
   if(code==="timeout") return L9({my:"RunningHub timeout ဖြစ်သွားပါတယ် — ပြန်စမ်းကြည့်ပါ",en:"RunningHub timed out — try again",shn:"RunningHub timeout ဝႆႉ — ၸၢမ်းၶိုၼ်း",kac:"RunningHub timeout byin mat sai — bai chyam u",th:"RunningHub หมดเวลา — ลองใหม่อีกครั้ง",zh:"RunningHub 超时 — 请重试",vi:"RunningHub hết thời gian chờ — thử lại",id:"RunningHub timeout — coba lagi",ms:"RunningHub timeout — cuba lagi"});
   if(code==="no-image") return L9({my:"ဒီ model အတွက် ပုံ တစ်ပုံ ထည့်ပါ — text prompt တစ်ခုတည်းနဲ့ မလုံလောက်ပါ",en:"This model needs an image — a text prompt alone isn't enough",shn:"Model ၼႆႉလူဝ်ႇၶႅပ်းႁၢင်ႈ — prompt ၵူၺ်းဢမ်ႇပဵင်း",kac:"Ndai model gaw sumla ra ai — prompt sha n law ai",th:"โมเดลนี้ต้องการรูปภาพ — พิมพ์ prompt อย่างเดียวไม่พอ",zh:"此模型需要一张图片 — 仅有文字提示词是不够的",vi:"Model này cần một ảnh — chỉ có prompt văn bản là không đủ",id:"Model ini butuh gambar — prompt teks saja tidak cukup",ms:"Model ini memerlukan imej — prompt teks sahaja tidak mencukupi"});
   if(code==="no-video") return L9({my:"အရင် ဗီဒီယို ဖိုင် တစ်ခု ရွေးပါ",en:"Pick a video file first",shn:"ထၢႆႇဝီဒီရူဝ်ႈဢွၼ်တၢင်း",kac:"Video langai n tawn shangun u",th:"เลือกไฟล์วิดีโอก่อน",zh:"请先选择一个视频文件",vi:"Hãy chọn một tệp video trước",id:"Pilih file video terlebih dahulu",ms:"Pilih fail video dahulu"});
+  if(code==="cancelled") return L9({my:"ရပ်လိုက်ပါပြီ",en:"Cancelled",shn:"ၵိုတ်းယဝ်ႉ",kac:"Hkum tawn kau sai",th:"ยกเลิกแล้ว",zh:"已取消",vi:"Đã hủy",id:"Dibatalkan",ms:"Dibatalkan"});
   if(code==="failed") return L9({my:"RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"The RunningHub task failed — try a different prompt/photo",shn:"RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",kac:"RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",th:"งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",zh:"RunningHub 任务失败 — 请更换 prompt 或图片",vi:"Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",id:"Tugas RunningHub gagal — coba prompt/foto lain",ms:"Tugas RunningHub gagal — cuba prompt/foto lain"});
   return L9({my:"RunningHub error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"RunningHub error — try again ("+(status||"?")+")",shn:"RunningHub error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"RunningHub error — bai chyam u ("+(status||"?")+")",th:"RunningHub error — ลองใหม่ ("+(status||"?")+")",zh:"RunningHub 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi RunningHub — thử lại ("+(status||"?")+")",id:"Error RunningHub — coba lagi ("+(status||"?")+")",ms:"Ralat RunningHub — cuba lagi ("+(status||"?")+")"});
 }
@@ -1686,17 +1740,55 @@ function renderRhProviderOption(){
    controls visible would let a user configure settings that silently do
    nothing. Hidden whenever the active provider+model is upscale-kind,
    rather than accepted-and-ignored. */
+var _selRatioDefaultHtml = null;
+/* Z-Image Turbo and Qwen honor only a SUBSET of the shared ratio picker's
+   options (Z-Image rejects "4:5" outright — falls back to 1:1 with no UI
+   sign; Qwen silently drops the size field for any ratio outside its own
+   map) — narrow the dropdown to what the active model actually honors,
+   the same "never offer a control the model will ignore" rule already
+   applied to Ratio/Quality/Count on upscale-kind models below. */
+function rhNarrowRatioOptionsFor(active){
+  var sel=$("selRatio");
+  if(!_selRatioDefaultHtml) _selRatioDefaultHtml = sel.innerHTML;
+  if(active && active.kind==="zimage"){
+    var cur=sel.value;
+    sel.innerHTML="";
+    RH_ZIMAGE_RATIO_ENUM.forEach(function(r){ var o=document.createElement("option"); o.textContent=r; sel.appendChild(o); });
+    sel.value = RH_ZIMAGE_RATIO_ENUM.indexOf(cur)>=0 ? cur : RH_ZIMAGE_RATIO_ENUM[0];
+    return;
+  }
+  if(active && active.sizeParam){
+    var cur2=sel.value, ratios=Object.keys(RH_QWEN_SIZE_MAP);
+    sel.innerHTML="";
+    var auto=document.createElement("option"); auto.value=""; auto.textContent="Ratio: Auto"; sel.appendChild(auto);
+    ratios.forEach(function(r){ var o=document.createElement("option"); o.textContent=r; sel.appendChild(o); });
+    sel.value = ratios.indexOf(cur2)>=0 ? cur2 : "";
+    return;
+  }
+  if(sel.innerHTML!==_selRatioDefaultHtml){
+    var cur3=sel.value;
+    sel.innerHTML=_selRatioDefaultHtml;
+    /* The full list is a strict superset of both narrowed lists, so the
+       previously-picked ratio is almost always still valid here — preserve
+       it instead of silently reverting to "Auto" (same pattern as the two
+       narrowing branches above). */
+    var stillValid=Array.prototype.some.call(sel.options, function(o){ return o.value===cur3; });
+    if(stillValid) sel.value=cur3;
+  }
+}
 function updateGenOptsForRHKind(){
   var provider = $("selProvider").value;
   var isUpscaleKind = false;
+  var active = null;
   if(provider==="runninghub"){
-    var active = rhActiveModelCfg();
+    active = rhActiveModelCfg();
     isUpscaleKind = !!(active && (active.kind==="upscale" || active.kind==="upscale-transparent"));
   }
   $("selRatio").style.display = isUpscaleKind ? "none" : "";
   $("selQual").style.display = isUpscaleKind ? "none" : "";
   $("selCount").style.display = isUpscaleKind ? "none" : "";
   if(isUpscaleKind) $("selCount").value = "1";
+  if(!isUpscaleKind) rhNarrowRatioOptionsFor(active);
 }
 $("selProvider").onchange = updateGenOptsForRHKind;
 $("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
@@ -1836,7 +1928,7 @@ function renderRefStrip(){
       if(ref){
         var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
         var x=el("button","rsx","✕");
-        x.setAttribute("aria-label","Remove image");
+        x.setAttribute("aria-label",t("lb_remove_image"));
         x.onclick=function(ev){ ev.stopPropagation(); state.refs[i]=null; state.imgRoles=null; renderRefs(); };
         d.appendChild(x);
       } else d.appendChild(document.createTextNode("+"));
@@ -1855,7 +1947,7 @@ function renderRefs(){
     if (ref) {
       var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
       var x=el("button","x","✕");
-      x.setAttribute("aria-label","Remove image");
+      x.setAttribute("aria-label",t("lb_remove_image"));
       x.onclick=function(){ state.refs[i]=null; state.imgRoles=null; renderRefs(); };
       d.appendChild(x);
     } else {
@@ -1888,6 +1980,15 @@ function downscale(dataUrl, cb){
 $("filePick").onchange = function(){
   var f=this.files && this.files[0]; this.value="";
   if(!f) return;
+  /* accept="image/..." is only a UI hint — some browsers/OSes still let a
+     user pick a non-image file through it (same gap already guarded for
+     video uploads below), which would otherwise fail confusingly deep in
+     the generate call instead of here, immediately, with a clear reason. */
+  var looksImage = (f.type && f.type.toLowerCase().indexOf("image/")===0) || /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(f.name||"");
+  if(!looksImage){
+    toast(L9({my:"ပုံဖိုင်ပဲ ရပါတယ် — ရွေးထားတဲ့ ဖိုင်က ပုံ မဟုတ်ပုံရပါတယ်",en:"Images only — the file you picked doesn't look like an image",shn:"ၶႅပ်းႁၢင်ႈၵူၺ်း လႆႈ — ဢၼ်ထၢႆႇဝႆႉၼၼ်ႉ ဢမ်ႇပဵၼ်ၶႅပ်းႁၢင်ႈ",kac:"Sumla sha ra ai — tawn da ai file gaw sumla n rai ai zawn nga ai",th:"ใช้ได้เฉพาะรูปภาพ — ไฟล์ที่เลือกดูเหมือนไม่ใช่รูปภาพ",zh:"仅支持图片 — 所选文件看起来不是图片",vi:"Chỉ nhận ảnh — tệp bạn chọn có vẻ không phải là ảnh",id:"Hanya gambar — file yang dipilih tampaknya bukan gambar",ms:"Hanya imej — fail yang dipilih nampaknya bukan imej"}), "err");
+    return;
+  }
   var rd=new FileReader();
   rd.onload=function(){
     downscale(String(rd.result), function(dataUrl){
@@ -2241,7 +2342,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     var w=wiz.w, host=$("wizIn"); host.innerHTML="";
     var top=el("div","wiz-top");
     top.appendChild(el("div","ttl","🧠 "+w.title));
-    var x=el("button","wiz-x","✕"); x.setAttribute("aria-label","Close"); x.onclick=closeWizard; top.appendChild(x);
+    var x=el("button","wiz-x","✕"); x.setAttribute("aria-label",t("lb_close")); x.onclick=closeWizard; top.appendChild(x);
     host.appendChild(top);
     var dots=el("div","wiz-dots");
     [["Guide"],["Images"],["Generate"]].forEach(function(d,i){
@@ -2343,7 +2444,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       next.onclick=function(){ wiz.step++; renderWiz(); $("wiz").scrollTop=0; };
       nav.appendChild(next);
     } else {
-      var gen=el("button","btn btn-gold","⚡ GENERATE");
+      var gen=el("button","btn btn-gold",t("wiz_generate"));
       gen.onclick=function(){
         var inputs=wizInputs(w);
         for(var ri=inputs.length; ri<state.refs.length; ri++) state.refs[ri]=null;
@@ -2852,7 +2953,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       var m=el("button","wfmini");
       var cv=cardVisual(w); if(cv) m.appendChild(cv);
       var fav=el("button","fav"+(favList().indexOf(w.id)>=0?" on":""), "★");
-      fav.setAttribute("aria-label","Favorite");
+      fav.setAttribute("aria-label",t("lb_favorite"));
       fav.setAttribute("aria-pressed", favList().indexOf(w.id)>=0 ? "true" : "false");
       fav.onclick=function(ev){
         ev.stopPropagation();
@@ -2941,10 +3042,10 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   ibtn.onclick=async function(){
     if(!state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); toast(t("st_needkey"),"err"); return; }
     var src = state.refs[1] || state.refs[0];
-    if(!src){ setSt("stGen","Scene ခွဲခြမ်းဖို့ IMAGE 2 (ဒါမှမဟုတ် IMAGE 1) အရင်တင်ပါ","err"); return; }
+    if(!src){ setSt("stGen",L9({my:"Scene ခွဲခြမ်းဖို့ IMAGE 2 (ဒါမှမဟုတ် IMAGE 1) အရင်တင်ပါ",en:"Upload IMAGE 2 (or IMAGE 1) first to analyze the scene",shn:"ၶိုၼ်ႈ IMAGE 2 (ဢမ်ႇၼၼ် IMAGE 1) ဢွၼ်တၢင်း ၸင်ႇၶႅၼ်ႇ Scene",kac:"Scene hpe hpai chyam na IMAGE 2 (nrai IMAGE 1) hpe shawng jaw u",th:"อัปโหลด IMAGE 2 (หรือ IMAGE 1) ก่อนเพื่อวิเคราะห์ฉาก",zh:"请先上传 IMAGE 2（或 IMAGE 1）以分析场景",vi:"Tải lên IMAGE 2 (hoặc IMAGE 1) trước để phân tích cảnh",id:"Unggah IMAGE 2 (atau IMAGE 1) terlebih dahulu untuk menganalisis scene",ms:"Muat naik IMAGE 2 (atau IMAGE 1) dahulu untuk menganalisis adegan"}),"err"); return; }
     var instr=buildExtractPrompt();
-    if(!instr){ setSt("stGen","အပိုင်း တစ်ခုလောက်တော့ ရွေးပါ","err"); return; }
-    ibtn.disabled=true; ibtn.textContent="ခွဲခြမ်းနေသည်…";
+    if(!instr){ setSt("stGen",L9({my:"အပိုင်း တစ်ခုလောက်တော့ ရွေးပါ",en:"Pick at least one section",shn:"ထၢႆႇပွင်ႈလွင်ႈဢၼ်ၼိုင်ႈဢွၼ်တၢင်း",kac:"Section langai loi loi tawn u",th:"เลือกอย่างน้อยหนึ่งส่วน",zh:"请至少选择一个部分",vi:"Chọn ít nhất một phần",id:"Pilih setidaknya satu bagian",ms:"Pilih sekurang-kurangnya satu bahagian"}),"err"); return; }
+    ibtn.disabled=true; ibtn.textContent=L9({my:"ခွဲခြမ်းနေသည်…",en:"Analyzing…",shn:"ၽၢတ်ႇၽၢႆႇယူႇ…",kac:"Yu chyai nga ai…",th:"กำลังวิเคราะห์…",zh:"分析中…",vi:"Đang phân tích…",id:"Menganalisis…",ms:"Menganalisis…"});
     try{
       var out=await geminiText([
         { text: instr },
@@ -2953,9 +3054,9 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       ]);
       if(!out) throw new Error("empty");
       applyTap(out.slice(0,2500)+"\n\n"+D.guards.sceneFit+"\n"+SCENE_ADAPT_ON+"\n"+D.guards.sceneGuard,
-        "Scene Builder · scene ထုတ်ပြီး — IMAGE 1 (subject) နဲ့ Generate နှိပ်ပါ");
-      setSt("stGen","Scene prompt ထုတ်ပြီး ✓","ok");
-    }catch(e){ setSt("stGen","ခွဲခြမ်းမရ — "+((e&&e.message)||e),"err"); }
+        L9({my:"Scene Builder · scene ထုတ်ပြီး — IMAGE 1 (subject) နဲ့ Generate နှိပ်ပါ",en:"Scene Builder · scene extracted — add IMAGE 1 (subject) and tap Generate",shn:"Scene Builder · ဢွၵ်ႇ scene ယဝ်ႉ — သႂ်ႇ IMAGE 1 (subject) ၼဵၵ်း Generate",kac:"Scene Builder · scene la sai — IMAGE 1 (subject) jaw nna Generate dip u",th:"Scene Builder · ดึงฉากแล้ว — เพิ่ม IMAGE 1 (subject) แล้วแตะ Generate",zh:"Scene Builder · 场景已提取 — 添加 IMAGE 1（主体）并点击 Generate",vi:"Scene Builder · đã trích xuất cảnh — thêm IMAGE 1 (chủ thể) và bấm Generate",id:"Scene Builder · scene diekstrak — tambahkan IMAGE 1 (subjek) dan ketuk Generate",ms:"Scene Builder · adegan diekstrak — tambah IMAGE 1 (subjek) dan ketik Generate"}));
+      setSt("stGen",L9({my:"Scene prompt ထုတ်ပြီး ✓",en:"Scene prompt extracted ✓",shn:"ဢွၵ်ႇ Scene prompt ယဝ်ႉ ✓",kac:"Scene prompt la sai ✓",th:"ดึง Scene prompt แล้ว ✓",zh:"场景提示词已提取 ✓",vi:"Đã trích xuất Scene prompt ✓",id:"Scene prompt diekstrak ✓",ms:"Scene prompt diekstrak ✓"}),"ok");
+    }catch(e){ setSt("stGen",L9({my:"ခွဲခြမ်းမရ — ",en:"Couldn't analyze — ",shn:"ၽၢတ်ႇဢမ်ႇလႆႈ — ",kac:"Yu chyai n mai ai — ",th:"วิเคราะห์ไม่ได้ — ",zh:"无法分析 — ",vi:"Không thể phân tích — ",id:"Tidak dapat menganalisis — ",ms:"Tidak dapat menganalisis — "})+((e&&e.message)||e),"err"); }
     ibtn.disabled=false; ibtn.textContent=t("sb_btn");
   };
   irow.appendChild(ibtn);
@@ -3084,7 +3185,7 @@ function renderLibGrid(reset){
       var im=document.createElement("img");
       im.src="lib/ui/"+it.id+".jpg"; im.loading="lazy"; im.alt=it.t; im.title=it.t;
       im.className = lib.sel===it.id ? "sel" : "";
-      im.onclick=function(){ libSelect(it, im); };
+      makePickable(im, function(){ libSelect(it, im); });
       host.appendChild(im);
     })(lib.list[i]);
   }
@@ -3124,9 +3225,9 @@ async function libToSlot(slot, btn){
     state.refs[slot]={mime:"image/jpeg", b64:b64, label:it.t};
     state.imgRoles=null;
     renderRefs();
-    setSt("stGen","Library · "+it.t+" → IMAGE "+(slot+1)+" ✓","ok");
+    setSt("stGen",L9({my:"Library · ",en:"Library · ",shn:"Library · ",kac:"Library · ",th:"Library · ",zh:"Library · ",vi:"Library · ",id:"Library · ",ms:"Library · "})+it.t+" → IMAGE "+(slot+1)+" ✓","ok");
     $("refs").scrollIntoView({behavior:"smooth", block:"center"});
-  }catch(e){ setSt("stGen","Library ပုံ မယူနိုင်ပါ — internet စစ်ပါ","err"); }
+  }catch(e){ setSt("stGen",L9({my:"Library ပုံ မယူနိုင်ပါ — internet စစ်ပါ",en:"Couldn't load this Library image — check your internet",shn:"ဢဝ်ဢမ်ႇလႆႈၶႅပ်းႁၢင်ႈ Library — တွပ်ႇထၢမ် internet",kac:"Library sumla n mai la ai — internet yu chyam u",th:"โหลดรูป Library ไม่ได้ — ตรวจสอบอินเทอร์เน็ต",zh:"无法加载此 Library 图片 — 请检查网络",vi:"Không thể tải ảnh Library này — kiểm tra kết nối internet",id:"Tidak dapat memuat gambar Library ini — periksa internet Anda",ms:"Tidak dapat memuat imej Library ini — semak internet anda"}),"err"); }
   btn.disabled=false;
   btn.textContent=origTxt;
 }
@@ -3287,7 +3388,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.12.1";
+var APP_VER="4.13.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -3308,11 +3409,17 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
      since a not-equal check would wrongly claim an old build is "new". */
   if (v && v.v && verNewer(v.v, APP_VER)){
     var t=$("toast");
-    t.textContent="🔔 Version အသစ် ("+v.v+") ထွက်ပြီ — ဒီစာကို နှိပ်ပြီး refresh လုပ်ပါ";
+    t.textContent=L9({my:"🔔 Version အသစ် ("+v.v+") ထွက်ပြီ — ဒီစာကို နှိပ်ပြီး refresh လုပ်ပါ",en:"🔔 A new version ("+v.v+") is out — tap this to refresh",shn:"🔔 Version မႂ်ႇ ("+v.v+") ဢွၵ်ႇယဝ်ႉ — ၼဵၵ်းသေ refresh",kac:"🔔 Version namsan ("+v.v+") pru wa sai — ndai hpe dip nna refresh galaw u",th:"🔔 มีเวอร์ชันใหม่ ("+v.v+") ออกแล้ว — แตะที่นี่เพื่อรีเฟรช",zh:"🔔 有新版本 ("+v.v+") 发布 — 点按此处刷新",vi:"🔔 Đã có phiên bản mới ("+v.v+") — chạm vào đây để làm mới",id:"🔔 Versi baru ("+v.v+") telah rilis — ketuk untuk memuat ulang",ms:"🔔 Versi baharu ("+v.v+") telah dikeluarkan — ketik untuk muat semula"});
     t.className="toast on ok";
     t.style.cursor="pointer";
     t.onclick=function(){ location.reload(); };
-    clearTimeout(_toastT); /* stay until tapped */
+    clearTimeout(_toastT); _toastSticky=true;
+    /* Bounded, not forever: if the user notices this but never taps it, it
+       must not permanently silence toast() for the rest of the session (a
+       real regression a prior pass introduced — see toast()'s own comment).
+       20s is generous — far longer than a routine 2.6s toast — while still
+       guaranteeing recovery. */
+    setTimeout(function(){ _toastSticky=false; if(t.className.indexOf(" ok")>=0 && t.onclick) t.className="toast"; }, 20000);
   }
 }).catch(function(){});
 
@@ -3324,8 +3431,11 @@ function pushPromptHistory(p){
   if(!p || p.length<4) return;
   var list=phLoad().filter(function(it){ return it.p!==p; });
   list.unshift({ p:p, star:false });
-  /* starred entries never fall off; cap unstarred at 20 */
-  var starred=list.filter(function(it){return it.star;});
+  /* unstarred entries cap at 20; starred ones are kept far longer (a
+     deliberate "never lose what I starred" promise) but still capped at 60
+     — every other history array in the app has a ceiling, and an unbounded
+     list is the one gap left after months of a power user starring prompts. */
+  var starred=list.filter(function(it){return it.star;}).slice(0,60);
   var rest=list.filter(function(it){return !it.star;}).slice(0,20);
   phSave(starred.concat(rest));
   renderPromptHist();
@@ -3406,11 +3516,11 @@ async function geminiText(promptOrParts){
 }
 function friendly(status, body){
   var msg=(body&&body.error&&body.error.message)||"";
-  if(status===403||status===401||/API key/i.test(msg)) return "API key ပြဿနာ — အဆင့် 1 မှာ ပြန်စစ်ပါ";
-  if(status===429||/quota|exhausted/i.test(msg)) return "Quota ကုန်နေပါတယ် — ခဏနေ ပြန်စမ်းပါ";
-  if(status===503||/high demand|overloaded|unavailable/i.test(msg)) return "Model အသုံးများနေလို့ ခဏပြည့်နေတယ် — model နှစ်ခုလုံး စမ်းပြီးပြီ၊ ၁-၂ မိနစ်နေ ပြန်စမ်းပါ (Model ကို Flash ရွေးထားရင် ပိုမြန်တတ်တယ်)";
-  if(/safety|blocked/i.test(msg)) return "Safety ကြောင့် ငြင်းခံရ — prompt ပြောင်းကြည့်ပါ";
-  return "Error "+status+(msg?": "+msg.slice(0,140):"");
+  if(status===403||status===401||/API key/i.test(msg)) return L9({my:"API key ပြဿနာ — အဆင့် 1 မှာ ပြန်စစ်ပါ",en:"API key problem — recheck it in Step 1",shn:"API key ပၼ်ႁႃ — ၶိုၼ်းတူၺ်း ၾၢႆႇ ဢၼ်ႉတွၼ်ႈ 1",kac:"API key ra ai gaw — Step 1 hta bai yu chyam u",th:"ปัญหา API key — ตรวจสอบใหม่ในขั้นตอนที่ 1",zh:"API key 有问题 — 请在第 1 步重新检查",vi:"Sự cố API key — kiểm tra lại ở Bước 1",id:"Masalah API key — periksa lagi di Langkah 1",ms:"Masalah API key — semak semula di Langkah 1"});
+  if(status===429||/quota|exhausted/i.test(msg)) return L9({my:"Quota ကုန်နေပါတယ် — ခဏနေ ပြန်စမ်းပါ",en:"Quota exhausted — try again shortly",shn:"Quota မွတ်ႇယဝ်ႉ — ၸၢမ်းၶိုၼ်းဢိတ်းဢွတ်း",kac:"Quota ma sai — nau ni ram na bai chyam u",th:"โควตาหมด — ลองใหม่อีกครั้งในอีกสักครู่",zh:"额度已用尽 — 请稍后重试",vi:"Đã hết hạn ngạch — thử lại sau một lát",id:"Kuota habis — coba lagi sebentar lagi",ms:"Kuota habis — cuba lagi sebentar lagi"});
+  if(status===503||/high demand|overloaded|unavailable/i.test(msg)) return L9({my:"Model အသုံးများနေလို့ ခဏပြည့်နေတယ် — model နှစ်ခုလုံး စမ်းပြီးပြီ၊ ၁-၂ မိနစ်နေ ပြန်စမ်းပါ (Model ကို Flash ရွေးထားရင် ပိုမြန်တတ်တယ်)",en:"Model is overloaded right now — both models were tried; wait 1-2 minutes and try again (the Flash model tends to be faster)",shn:"Model ၸႂ်ႉၵေႃႈၼမ်ဝႆႉ — ၸၢမ်းသွင်ဢၼ်ယဝ်ႉ ၊ ၶၢမ်ႇ 1-2 မိတ်ႉၶိုၼ်းၸၢမ်း",kac:"Model gaw sha hkrai lang ai — model lahkawng mung chyam sai, mit 1-2 na ram bai chyam u",th:"โมเดลมีการใช้งานมากในตอนนี้ — ลองทั้งสองโมเดลแล้ว รอ 1-2 นาทีแล้วลองใหม่ (โมเดล Flash มักจะเร็วกว่า)",zh:"模型当前使用量过大 — 已尝试两个模型，请等待 1-2 分钟后重试（Flash 模型通常更快）",vi:"Model đang quá tải — đã thử cả hai model, đợi 1-2 phút rồi thử lại (model Flash thường nhanh hơn)",id:"Model sedang kelebihan beban — kedua model sudah dicoba, tunggu 1-2 menit lalu coba lagi (model Flash biasanya lebih cepat)",ms:"Model terlebih beban sekarang — kedua-dua model telah dicuba, tunggu 1-2 minit dan cuba lagi (model Flash biasanya lebih pantas)"});
+  if(/safety|blocked/i.test(msg)) return L9({my:"Safety ကြောင့် ငြင်းခံရ — prompt ပြောင်းကြည့်ပါ",en:"Blocked by safety filters — try changing the prompt",shn:"ထုၵ်ႇႁၢမ်ႈယွၼ်ႉ safety — ၸၢမ်းလႅၵ်ႈ prompt",kac:"Safety a majoi mahkrup ai — prompt hpe galai chyam u",th:"ถูกบล็อกโดยตัวกรองความปลอดภัย — ลองเปลี่ยน prompt",zh:"被安全过滤器拦截 — 请尝试更改 prompt",vi:"Bị chặn bởi bộ lọc an toàn — thử thay đổi prompt",id:"Diblokir oleh filter keamanan — coba ubah prompt",ms:"Disekat oleh penapis keselamatan — cuba tukar prompt"});
+  return L9({my:"Error "+status+(msg?": "+msg.slice(0,140):""),en:"Error "+status+(msg?": "+msg.slice(0,140):""),shn:"Error "+status+(msg?": "+msg.slice(0,140):""),kac:"Error "+status+(msg?": "+msg.slice(0,140):""),th:"Error "+status+(msg?": "+msg.slice(0,140):""),zh:"错误 "+status+(msg?": "+msg.slice(0,140):""),vi:"Lỗi "+status+(msg?": "+msg.slice(0,140):""),id:"Error "+status+(msg?": "+msg.slice(0,140):""),ms:"Ralat "+status+(msg?": "+msg.slice(0,140):"")});
 }
 $("btnGen").onclick = async function(){
   var provider = ($("selProvider") && $("selProvider").value) || "gemini";
@@ -3568,13 +3678,23 @@ $("btnGen").onclick = async function(){
       var secs=Math.round((Date.now()-t0)/1000);
       $("spin").textContent=spinBase+" · "+secs+"s"+(count>1?" · "+doneN+"/"+count:"");
     }, 1000);
-    var calls=[]; for(var ci=0;ci<count;ci++) calls.push(oneCall().then(function(x){ doneN++; return x; }));
+    /* Count>1 stagger: firing all requests in the same tick is the most
+       likely way to trip a free-tier per-second rate limit (surfaces as a
+       generic 429 on some but not all of them) — a small stagger avoids the
+       burst without meaningfully slowing down the total wait. */
+    var calls=[];
+    for(var ci=0;ci<count;ci++){
+      calls.push((function(delay){
+        return new Promise(function(res){ setTimeout(res, delay); })
+          .then(oneCall).then(function(x){ doneN++; return x; });
+      })(ci*250));
+    }
     var rets=await Promise.all(calls);
     clearInterval(spinT);
     var outs=rets.filter(function(x){return x.out;}).map(function(x){return x.out;});
     if(!outs.length){
       var firstErr=(rets.find(function(x){return x.err;})||{}).err;
-      throw new Error(firstErr || "ပုံမထွက်လာပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ");
+      throw new Error(firstErr || L9({my:"ပုံမထွက်လာပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"No image came back — try changing the prompt and retry",shn:"ဢမ်ႇမီးၶႅပ်းႁၢင်ႈဢွၵ်ႇမႃး — ၸၢမ်းလႅၵ်ႈ prompt ၶိုၼ်းၸၢမ်း",kac:"Sumla n pru wa ai — prompt hpe galai nna bai chyam u",th:"ไม่มีรูปออกมา — ลองเปลี่ยน prompt แล้วลองใหม่",zh:"没有生成图片 — 请更改 prompt 后重试",vi:"Không có ảnh trả về — thử thay đổi prompt rồi thử lại",id:"Tidak ada gambar yang dihasilkan — coba ubah prompt dan coba lagi",ms:"Tiada imej dihasilkan — cuba tukar prompt dan cuba lagi"}));
     }
     for(var oi=outs.length-1;oi>=0;oi--){ state.hist.unshift(outs[oi]); }
     while(state.hist.length>8) state.hist.pop();
@@ -3602,7 +3722,7 @@ function showResult(){
     im.src="data:"+e.mime+";base64,"+e.b64;
     im.alt="result "+(i+1);
     im.className=i===state.histSel?"sel":"";
-    im.onclick=function(){ state.histSel=i; showResult(); };
+    makePickable(im, function(){ state.histSel=i; showResult(); });
     h.appendChild(im);
   });
   if($("cmpWrap").style.display!=="none") refreshCmp();
@@ -3614,7 +3734,7 @@ $("btnToRef").onclick=function(){
   state.imgRoles=null;
   renderRefs();
   if($("cmpWrap").style.display!=="none") refreshCmp();
-  setSt("stGen","ရလဒ်ကို IMAGE 1 ထဲ ထည့်ပြီး ✓ — ဆက် edit လို့ရပြီ","ok");
+  setSt("stGen",L9({my:"ရလဒ်ကို IMAGE 1 ထဲ ထည့်ပြီး ✓ — ဆက် edit လို့ရပြီ",en:"Result added to IMAGE 1 ✓ — ready to keep editing",shn:"သႂ်ႇၽွၼ်းလႆႈၶဝ်ႈ IMAGE 1 ယဝ်ႉ ✓ — ႁပ်ႉၸႂ်ႉ edit ၵႂႃႇလႆႈယဝ်ႉ",kac:"Lachyum hpe IMAGE 1 kaw jaw sai ✓ — edit galoi mung mai ai",th:"เพิ่มผลลัพธ์ลง IMAGE 1 แล้ว ✓ — พร้อมแก้ไขต่อ",zh:"结果已添加到 IMAGE 1 ✓ — 可以继续编辑",vi:"Đã thêm kết quả vào IMAGE 1 ✓ — sẵn sàng chỉnh sửa tiếp",id:"Hasil ditambahkan ke IMAGE 1 ✓ — siap untuk terus mengedit",ms:"Hasil ditambah ke IMAGE 1 ✓ — sedia untuk terus mengedit"}),"ok");
 };
 
 /* before/after compare: IMAGE 1 vs current result */
@@ -3635,7 +3755,7 @@ function refreshCmp(){
 $("btnCmp").onclick=function(){
   var out=state.hist[state.histSel]||state.result;
   if(!out) return;
-  if(!state.refs[0]){ toast("နှိုင်းဖို့ IMAGE 1 (မူရင်းပုံ) လိုတယ်","err"); return; }
+  if(!state.refs[0]){ toast(L9({my:"နှိုင်းဖို့ IMAGE 1 (မူရင်းပုံ) လိုတယ်",en:"Need IMAGE 1 (the original photo) to compare",shn:"လူဝ်ႇ IMAGE 1 (ၶႅပ်းႁၢင်ႈမူႇလ) တႃႇတဵင်ႇတူၺ်း",kac:"Nsen chyai na IMAGE 1 (dip sumla) ra ai",th:"ต้องมี IMAGE 1 (รูปต้นฉบับ) เพื่อเปรียบเทียบ",zh:"需要 IMAGE 1（原图）才能比较",vi:"Cần IMAGE 1 (ảnh gốc) để so sánh",id:"Perlu IMAGE 1 (foto asli) untuk membandingkan",ms:"Perlu IMAGE 1 (foto asal) untuk membandingkan"}),"err"); return; }
   var wrap=$("cmpWrap");
   if(wrap.style.display!=="none"){ wrap.style.display="none"; this.classList.remove("active"); return; }
   refreshCmp();
@@ -3721,7 +3841,7 @@ function showVidResult(){
     var v=document.createElement("video");
     v.src=e.url; v.muted=true; v.preload="metadata"; v.playsInline=true;
     v.className=i===state.vidHistSel?"sel":"";
-    v.onclick=function(){ state.vidHistSel=i; showVidResult(); };
+    makePickable(v, function(){ state.vidHistSel=i; showVidResult(); });
     h.appendChild(v);
   });
   $("vidResultBox").scrollIntoView({behavior:"smooth"});
@@ -3744,10 +3864,12 @@ $("btnVidGen").onclick = async function(){
   var btn=this; btn.disabled=true; $("vidSpin").className="spin on"; setSt("stVidGen","");
   $("btnVidRetry").style.display="none";
   var spinBase=$("vidSpin").textContent;
+  var abort=new AbortController(); state.vidAbort=abort;
+  $("btnVidCancel").textContent=t("btn_cancel"); $("btnVidCancel").style.display="";
   try{
     var outs=await rhGenerateVideo(state.rhKey, m.apiPath, text, refDataUrls, resolution, duration, aspectRatio, m.imageParam, function(elapsed){
       $("vidSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
-    });
+    }, abort.signal);
     if(!outs.length){
       setSt("stVidGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
       $("btnVidRetry").style.display="";
@@ -3759,11 +3881,14 @@ $("btnVidGen").onclick = async function(){
       setSt("stVidGen", t("st_done"), "ok");
     }
   } catch(e){
-    setSt("stVidGen", rhFriendly(e), "err");
-    $("btnVidRetry").style.display="";
+    setSt("stVidGen", rhFriendly(e), (e&&e.code==="cancelled")?"ok":"err");
+    if(!(e&&e.code==="cancelled")) $("btnVidRetry").style.display="";
   }
+  state.vidAbort=null;
+  $("btnVidCancel").style.display="none";
   btn.disabled=false; $("vidSpin").className="spin"; $("vidSpin").textContent=spinBase;
 };
+$("btnVidCancel").onclick=function(){ if(state.vidAbort) state.vidAbort.abort(); };
 $("btnVidRetry").onclick=function(){ this.style.display="none"; $("btnVidGen").onclick(); };
 $("btnVidDl").onclick=async function(){
   var out=state.vidHist[state.vidHistSel]; if(!out) return;
@@ -3837,7 +3962,7 @@ function showVuResult(){
     var v=document.createElement("video");
     v.src=e.url; v.muted=true; v.preload="metadata"; v.playsInline=true;
     v.className=i===state.vuHistSel?"sel":"";
-    v.onclick=function(){ state.vuHistSel=i; showVuResult(); };
+    makePickable(v, function(){ state.vuHistSel=i; showVuResult(); });
     h.appendChild(v);
   });
   $("vuResultBox").scrollIntoView({behavior:"smooth"});
@@ -3855,10 +3980,12 @@ $("btnVuGen").onclick = async function(){
   var btn=this; btn.disabled=true; $("vuSpin").className="spin on"; setSt("stVuGen","");
   $("btnVuRetry").style.display="none";
   var spinBase=$("vuSpin").textContent;
+  var abort=new AbortController(); state.vuAbort=abort;
+  $("btnVuCancel").textContent=t("btn_cancel"); $("btnVuCancel").style.display="";
   try{
     var outs=await rhGenerateVideoUpscale(state.rhKey, videoDataUrl, targetResolution, function(elapsed){
       $("vuSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
-    });
+    }, abort.signal);
     if(!outs.length){
       setSt("stVuGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
       $("btnVuRetry").style.display="";
@@ -3870,11 +3997,14 @@ $("btnVuGen").onclick = async function(){
       setSt("stVuGen", t("st_done"), "ok");
     }
   } catch(e){
-    setSt("stVuGen", rhFriendly(e), "err");
-    $("btnVuRetry").style.display="";
+    setSt("stVuGen", rhFriendly(e), (e&&e.code==="cancelled")?"ok":"err");
+    if(!(e&&e.code==="cancelled")) $("btnVuRetry").style.display="";
   }
+  state.vuAbort=null;
+  $("btnVuCancel").style.display="none";
   btn.disabled=false; $("vuSpin").className="spin"; $("vuSpin").textContent=spinBase;
 };
+$("btnVuCancel").onclick=function(){ if(state.vuAbort) state.vuAbort.abort(); };
 $("btnVuRetry").onclick=function(){ this.style.display="none"; $("btnVuGen").onclick(); };
 $("btnVuDl").onclick=async function(){
   var out=state.vuHist[state.vuHistSel]; if(!out) return;
@@ -3949,7 +4079,7 @@ function showT2IResult(){
     im.src="data:"+e.mime+";base64,"+e.b64;
     im.alt="result "+(i+1);
     im.className=i===state.t2iHistSel?"sel":"";
-    im.onclick=function(){ state.t2iHistSel=i; showT2IResult(); };
+    makePickable(im, function(){ state.t2iHistSel=i; showT2IResult(); });
     h.appendChild(im);
   });
   $("t2iResultBox").scrollIntoView({behavior:"smooth"});
@@ -3968,10 +4098,12 @@ $("btnT2IGen").onclick = async function(){
   var btn=this; btn.disabled=true; $("t2iSpin").className="spin on"; setSt("stT2IGen","");
   $("btnT2IRetry").style.display="none";
   var spinBase=$("t2iSpin").textContent;
+  var abort=new AbortController(); state.t2iAbort=abort;
+  $("btnT2ICancel").textContent=t("btn_cancel"); $("btnT2ICancel").style.display="";
   try{
     var outs=await rhGenerateT2I(state.rhKey, m, text, ratio, sizeSel, function(elapsed){
       $("t2iSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
-    });
+    }, abort.signal);
     if(!outs.length){
       setSt("stT2IGen", L9({my:"ပုံ မထွက်လာပါ — ပြန်စမ်းပါ",en:"No image was returned — try again",shn:"ၶႅပ်းႁၢင်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Sumla n pru wa ai — bai chyam u",th:"ไม่มีภาพส่งกลับมา — ลองใหม่",zh:"未返回图片 — 请重试",vi:"Không có ảnh trả về — thử lại",id:"Tidak ada gambar dikembalikan — coba lagi",ms:"Tiada imej dikembalikan — cuba lagi"}), "err");
       $("btnT2IRetry").style.display="";
@@ -3984,11 +4116,14 @@ $("btnT2IGen").onclick = async function(){
       setSt("stT2IGen", t("st_done"), "ok");
     }
   } catch(e){
-    setSt("stT2IGen", rhFriendly(e), "err");
-    $("btnT2IRetry").style.display="";
+    setSt("stT2IGen", rhFriendly(e), (e&&e.code==="cancelled")?"ok":"err");
+    if(!(e&&e.code==="cancelled")) $("btnT2IRetry").style.display="";
   }
+  state.t2iAbort=null;
+  $("btnT2ICancel").style.display="none";
   btn.disabled=false; $("t2iSpin").className="spin"; $("t2iSpin").textContent=spinBase;
 };
+$("btnT2ICancel").onclick=function(){ if(state.t2iAbort) state.t2iAbort.abort(); };
 $("btnT2IRetry").onclick=function(){ this.style.display="none"; $("btnT2IGen").onclick(); };
 $("btnT2IToRef").onclick=function(){
   var out=state.t2iHist[state.t2iHistSel]; if(!out) return;
