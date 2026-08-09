@@ -48,7 +48,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
           || u.indexOf("/openapi/v2/topazlabs/image-upscale-standard-v2") >= 0
           || u.indexOf("/openapi/v2/seedream-v4/image-to-image") >= 0
           || u.indexOf("/openapi/v2/seedream-v4.5/image-to-image") >= 0
-          || u.indexOf("/openapi/v2/rhart-imagine-image-quality/edit") >= 0) {
+          || u.indexOf("/openapi/v2/rhart-imagine-image-quality/edit") >= 0
+          || u.indexOf("/openapi/v2/rhart-image/z-image-turbo/image-to-image") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
       return realFetch.apply(this, arguments);
@@ -66,7 +67,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off",
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
       "wan-image-edit", "wan-image-edit-pro", "upscale-pro", "seedream-v4", "seedream-v4-5",
-      "rh-imagine-quality-edit"];
+      "rh-imagine-quality-edit", "z-image-turbo"];
     var stillUnconfigured = ["gpt-image-2", "flux-2-dev"];
     return {
       hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
@@ -84,6 +85,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       seedream45Kind: rhEffectiveKind("seedream-v4-5"),
       imagineKind: rhEffectiveKind("rh-imagine-quality-edit"),
       imagineImageParam: rhEffectiveImageParam("rh-imagine-quality-edit"),
+      zimageKind: rhEffectiveKind("z-image-turbo"),
+      zimageImageParam: rhEffectiveImageParam("z-image-turbo"),
       // pure function checks — no network involved
       qwenSize1_1_hd: rhQwenSize("1:1", "2K"),
       qwenSize16_9_std: rhQwenSize("16:9", ""),
@@ -109,6 +112,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && setup.upscaleImageParam === "imageUrl"
     && setup.seedreamKind === "seedream" && setup.seedream45Kind === "seedream"
     && setup.imagineKind === "imagine" && setup.imagineImageParam === "imageUrl"
+    && setup.zimageKind === "zimage" && setup.zimageImageParam === "imageUrl"
     && setup.qwenSize1_1_hd === "1536*1536" && setup.qwenSize16_9_std === "1280*720" && setup.qwenSizeAuto === ""
     && setup.wanWh16_9 && setup.wanWh16_9.w === 1024 && setup.wanWh16_9.h === 576 && setup.wanWhAuto === null
     && setup.scale1k === "2x" && setup.scale2k === "4x" && setup.scale4k === "6x"
@@ -248,6 +252,55 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && imagineResult.body.imageUrls === undefined;
   console.log(imagineOk ? "PASS (imagine edit resolution clamp + numImages)" : ("FAIL (imagine edit): " + JSON.stringify(imagineResult)));
 
+  // Z-Image Turbo: pick "4:5" — a ratio the shared #selRatio dropdown DOES
+  // offer, but Z-Image Turbo's own aspectRatio enum does NOT include (its
+  // enum is a strict subset of the shared dropdown's options). Must fall
+  // back to the confirmed default "1:1" rather than sending the invalid
+  // "4:5" value straight through. Also confirms outputFormat is always
+  // sent and resolution is never sent (this endpoint has no such field).
+  const zimageResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "z-image-turbo"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selRatio").value = "4:5";
+    document.getElementById("selSize").value = "2K";
+    document.getElementById("prompt").value = "test z-image prompt";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/z-image-turbo/image-to-image") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body, st: document.getElementById("stGen").textContent };
+  }, B64);
+  console.log("z-image submit body (ratio 4:5 out of endpoint enum):", JSON.stringify(zimageResult.body));
+  const zimageOk = zimageResult.ok && zimageResult.body && zimageResult.body.aspectRatio === "1:1"
+    && zimageResult.body.outputFormat === "png" && zimageResult.body.resolution === undefined
+    && typeof zimageResult.body.imageUrl === "string" && zimageResult.body.imageUrl.length > 0
+    && zimageResult.body.imageUrls === undefined;
+  console.log(zimageOk ? "PASS (z-image out-of-enum ratio falls back to 1:1)" : ("FAIL (z-image): " + JSON.stringify(zimageResult)));
+
+  // A valid Z-Image Turbo ratio must pass through unchanged (not always 1:1).
+  const zimageValidResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "z-image-turbo"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selRatio").value = "16:9";
+    document.getElementById("prompt").value = "test z-image prompt 2";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/z-image-turbo/image-to-image") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
+  }, B64);
+  console.log("z-image submit body (valid ratio 16:9):", JSON.stringify(zimageValidResult.body));
+  const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body.aspectRatio === "16:9";
+  console.log(zimageValidOk ? "PASS (z-image valid ratio passes through)" : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
+
   // Upscale Pro with no image attached must surface a helpful "add an image"
   // message, not the generic "RunningHub error — try again (?)" fallback.
   const noImgMsg = await page.evaluate(async () => {
@@ -268,7 +321,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const noImgOk = /image|ပုံ/i.test(noImgMsg) && noImgMsg.indexOf("(?)") < 0;
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
-  const overall = result === "OK" && qwenOk && upOk && seedreamOk && imagineOk && noImgOk;
+  const overall = result === "OK" && qwenOk && upOk && seedreamOk && imagineOk && zimageOk && zimageValidOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);
