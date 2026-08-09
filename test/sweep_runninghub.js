@@ -48,11 +48,18 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     state.rhKey = "TEST_RH_KEY";
     renderRhProviderOption();
     var opt = document.querySelector('#selProvider option[value="runninghub"]');
-    return { hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(), apiPath: rhEffectiveApiPath("nano-banana-2") };
+    var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off"];
+    return {
+      hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
+      apiPath: rhEffectiveApiPath("nano-banana-2"),
+      allBuiltinsConfigured: builtins.every(function(id){ return rhIsConfigured(id); }),
+      g2OffQuality: rhEffectiveQuality("rh-image-g2-off"),
+      xOffImageParam: rhEffectiveImageParam("rh-image-x-off")
+    };
   });
   console.log("setup:", JSON.stringify(setup));
-  if (!setup.hasOption || !setup.configured || !setup.active) {
-    console.log("FAIL: RunningHub provider option/config did not register (Nano Banana 2 built-in default should activate on key alone)");
+  if (!setup.hasOption || !setup.configured || !setup.active || !setup.allBuiltinsConfigured || setup.g2OffQuality !== "medium" || setup.xOffImageParam !== "image") {
+    console.log("FAIL: RunningHub provider option/config did not register correctly for all 4 built-in models");
     await browser.close();
     process.exit(1);
   }
