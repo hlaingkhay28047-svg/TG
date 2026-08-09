@@ -3136,7 +3136,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       applyTap(out.slice(0,2500)+"\n\n"+D.guards.sceneFit+"\n"+SCENE_ADAPT_ON+"\n"+D.guards.sceneGuard,
         L9({my:"Scene Builder · scene ထုတ်ပြီး — IMAGE 1 (subject) နဲ့ Generate နှိပ်ပါ",en:"Scene Builder · scene extracted — add IMAGE 1 (subject) and tap Generate",shn:"Scene Builder · ဢွၵ်ႇ scene ယဝ်ႉ — သႂ်ႇ IMAGE 1 (subject) ၼဵၵ်း Generate",kac:"Scene Builder · scene la sai — IMAGE 1 (subject) jaw nna Generate dip u",th:"Scene Builder · ดึงฉากแล้ว — เพิ่ม IMAGE 1 (subject) แล้วแตะ Generate",zh:"Scene Builder · 场景已提取 — 添加 IMAGE 1（主体）并点击 Generate",vi:"Scene Builder · đã trích xuất cảnh — thêm IMAGE 1 (chủ thể) và bấm Generate",id:"Scene Builder · scene diekstrak — tambahkan IMAGE 1 (subjek) dan ketuk Generate",ms:"Scene Builder · adegan diekstrak — tambah IMAGE 1 (subjek) dan ketik Generate"}));
       setSt("stGen",L9({my:"Scene prompt ထုတ်ပြီး ✓",en:"Scene prompt extracted ✓",shn:"ဢွၵ်ႇ Scene prompt ယဝ်ႉ ✓",kac:"Scene prompt la sai ✓",th:"ดึง Scene prompt แล้ว ✓",zh:"场景提示词已提取 ✓",vi:"Đã trích xuất Scene prompt ✓",id:"Scene prompt diekstrak ✓",ms:"Scene prompt diekstrak ✓"}),"ok");
-    }catch(e){ setSt("stGen",L9({my:"ခွဲခြမ်းမရ — ",en:"Couldn't analyze — ",shn:"ၽၢတ်ႇဢမ်ႇလႆႈ — ",kac:"Yu chyai n mai ai — ",th:"วิเคราะห์ไม่ได้ — ",zh:"无法分析 — ",vi:"Không thể phân tích — ",id:"Tidak dapat menganalisis — ",ms:"Tidak dapat menganalisis — "})+((e&&e.message)||e),"err"); }
+    }catch(e){ setSt("stGen",L9({my:"ခွဲခြမ်းမရ — ",en:"Couldn't analyze — ",shn:"ၽၢတ်ႇဢမ်ႇလႆႈ — ",kac:"Yu chyai n mai ai — ",th:"วิเคราะห์ไม่ได้ — ",zh:"无法分析 — ",vi:"Không thể phân tích — ",id:"Tidak dapat menganalisis — ",ms:"Tidak dapat menganalisis — "})+friendlyError(e),"err"); }
     ibtn.disabled=false; ibtn.textContent=t("sb_btn");
   };
   irow.appendChild(ibtn);
@@ -3800,7 +3800,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.15.1";
+var APP_VER="4.15.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -3934,6 +3934,18 @@ function friendly(status, body){
   if(/safety|blocked/i.test(msg)) return L9({my:"Safety ကြောင့် ငြင်းခံရ — prompt ပြောင်းကြည့်ပါ",en:"Blocked by safety filters — try changing the prompt",shn:"ထုၵ်ႇႁၢမ်ႈယွၼ်ႉ safety — ၸၢမ်းလႅၵ်ႈ prompt",kac:"Safety a majoi mahkrup ai — prompt hpe galai chyam u",th:"ถูกบล็อกโดยตัวกรองความปลอดภัย — ลองเปลี่ยน prompt",zh:"被安全过滤器拦截 — 请尝试更改 prompt",vi:"Bị chặn bởi bộ lọc an toàn — thử thay đổi prompt",id:"Diblokir oleh filter keamanan — coba ubah prompt",ms:"Disekat oleh penapis keselamatan — cuba tukar prompt"});
   return L9({my:"Error "+status+(msg?": "+msg.slice(0,140):""),en:"Error "+status+(msg?": "+msg.slice(0,140):""),shn:"Error "+status+(msg?": "+msg.slice(0,140):""),kac:"Error "+status+(msg?": "+msg.slice(0,140):""),th:"Error "+status+(msg?": "+msg.slice(0,140):""),zh:"错误 "+status+(msg?": "+msg.slice(0,140):""),vi:"Lỗi "+status+(msg?": "+msg.slice(0,140):""),id:"Error "+status+(msg?": "+msg.slice(0,140):""),ms:"Ralat "+status+(msg?": "+msg.slice(0,140):"")});
 }
+/* friendly(status,body) only covers HTTP-response-shaped failures — a raw
+   JS exception (a fetch() call that never got a response at all, e.g. the
+   device lost its connection mid-request) has no status/body and was
+   falling through to a bare "TypeError: Failed to fetch" shown verbatim to
+   the user, in English, regardless of their chosen language. */
+function friendlyError(e){
+  var msg=(e&&e.message)||String(e||"");
+  if(/Failed to fetch|NetworkError|Load failed|ERR_CONNECTION|ERR_INTERNET|ERR_NAME_NOT_RESOLVED/i.test(msg)){
+    return L9({my:"Internet ချိတ်ဆက်မှု ပြဿနာ — network စစ်ပြီး ပြန်စမ်းပါ",en:"Connection problem — check your internet and try again",shn:"ပၼ်ႁႃ ၵပ်းသိုပ်ႇ Internet — တူၺ်း network ၶိုၼ်းသေ ၸၢမ်း",kac:"Internet ra ai gaw — network hpe yu chyam nna bai chyam u",th:"ปัญหาการเชื่อมต่อ — ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่",zh:"连接问题 — 请检查网络后重试",vi:"Sự cố kết nối — kiểm tra internet và thử lại",id:"Masalah koneksi — periksa internet Anda dan coba lagi",ms:"Masalah sambungan — semak internet anda dan cuba lagi"});
+  }
+  return L9({my:"မမျှော်လင့်ထားတဲ့ error — ",en:"Unexpected error — ",shn:"Error ဢၼ်ဢမ်ႇထၢင်ႇဝႆႉ — ",kac:"N myit yu ai error — ",th:"ข้อผิดพลาดที่ไม่คาดคิด — ",zh:"意外错误 — ",vi:"Lỗi không mong muốn — ",id:"Error tak terduga — ",ms:"Ralat tidak dijangka — "})+msg.slice(0,160);
+}
 $("btnGen").onclick = async function(){
   var provider = ($("selProvider") && $("selProvider").value) || "gemini";
   var rhActive = provider==="runninghub" ? rhActiveModelCfg() : null;
@@ -4018,7 +4030,7 @@ $("btnGen").onclick = async function(){
             if(fin||blk) return { err:L9({my:"ပုံမပြန်လာပါ (",en:"No image returned (",shn:"ၶႅပ်းႁၢင်ႈဢမ်ႇဢွၵ်ႇမႃး (",kac:"Sumla n pru wa ai (",th:"ไม่มีภาพส่งกลับมา (",zh:"未返回图片 (",vi:"Không có ảnh trả về (",id:"Tidak ada gambar dikembalikan (",ms:"Tiada imej dikembalikan ("})+(fin||blk)+")" };
             return { err:null };
           })
-          .catch(function(e){ return { err:String(e) }; });
+          .catch(function(e){ return { err:friendlyError(e) }; });
       };
       /* 503 / overloaded → automatically retry once on the other image model (same provider) */
       var ALT_MODEL = model==="gemini-3-pro-image-preview" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
