@@ -432,6 +432,73 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   </section>
 </div><!-- /pgStudio -->
 
+<div class="page" id="pgRetouch">
+  <section class="card">
+    <h2 id="rsH2">💎 RETOUCH STUDIO</h2>
+    <p class="mut" id="rsIntro"></p>
+    <div id="rsPicker"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" id="rsModeTabs">
+      <button class="chip on" id="rsTabOnetap"></button>
+      <button class="chip" id="rsTabSliders"></button>
+      <button class="chip" id="rsTabPipeline"></button>
+    </div>
+
+    <div id="rsOnetapPane">
+      <p class="mut" id="rsOnetapNote"></p>
+      <div class="chips" id="rsPresetGrid"></div>
+    </div>
+
+    <div id="rsSlidersPane" style="display:none">
+      <div class="row">
+        <span class="mut" id="rsStrengthLbl"></span>
+        <span id="rsStrengthChips"></span>
+        <button class="chip" id="rsClearAll" style="margin-left:auto"></button>
+      </div>
+      <div id="rsChips" style="margin-top:8px"></div>
+    </div>
+
+    <div id="rsPipelinePane" style="display:none">
+      <p class="mut" id="rsPipelineNote"></p>
+      <div class="subh" id="rsRecipesH"></div>
+      <div class="chips" id="rsRecipeGrid"></div>
+      <div class="subh" id="rsCustomH"></div>
+      <p class="mut" id="rsCustomNote"></p>
+      <div class="chips" id="rsPipelinePicker"></div>
+      <div class="mut" id="rsQueueLabel" style="margin-top:10px"></div>
+      <div class="chips" id="rsPipelineQueue"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <button class="btn btn-gold gen" id="btnRsGen"></button>
+    <div class="spin" id="rsSpin"></div>
+    <button class="btn" id="btnRsCancel" style="display:none;margin-top:8px"></button>
+    <div class="status" id="stRsGen"></div>
+    <button class="btn" id="btnRsRetry" style="display:none;margin-top:8px"></button>
+  </section>
+
+  <section class="card result-box" id="rsResultBox">
+    <h2 id="rsResultH2"></h2>
+    <div id="rsStageProgress" class="mut" style="margin-bottom:8px"></div>
+    <div class="cmp" id="rsCmp">
+      <img id="rsCmpAfter" alt="after">
+      <div class="cmp-top" id="rsCmpTop"><img id="rsCmpBefore" alt="before"></div>
+      <div class="cmp-line" id="rsCmpLine"></div>
+    </div>
+    <input type="range" id="rsCmpRange" min="0" max="100" value="50" style="width:100%;margin-top:8px;accent-color:var(--gold)">
+    <div class="row" style="justify-content:space-between"><span class="mut" id="rsCmpBeforeLbl"></span><span class="mut" id="rsCmpAfterLbl"></span></div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn btn-gold grow" id="btnRsDl" download="hnk-retouch.png" style="text-align:center">⬇ Download</a>
+      <button class="btn" id="btnRsToRef"></button>
+    </div>
+    <div class="subh" style="margin-top:12px" id="rsHistH"></div>
+    <div class="hist" id="rsHist"></div>
+  </section>
+</div><!-- /pgRetouch -->
+
 <div class="page" id="pgCreate">
   <section class="card">
     <h2>PROMPT</h2>
@@ -994,6 +1061,7 @@ var PAGES=[
   ["pgWf","🧠","Workflow"],
   ["pgLib","🖼️","Library"],
   ["pgStudio","⚡","Studio"],
+  ["pgRetouch","💎","Retouch"],
   ["pgCreate","✨","Create"],
   ["pgVideo","🎬","Video"],
   ["pgVideoUp","🚀","VidUp"],
@@ -1941,6 +2009,7 @@ function renderRefStrip(){
 }
 function renderRefs(){
   renderRefStrip();
+  renderRsPicker();
   var host=$("refs"); host.innerHTML="";
   state.refs.forEach(function(ref,i){
     var d=el("div","ref"+(ref?" filled":""));
@@ -3119,8 +3188,15 @@ var RT_GROUPS = [
   { t: L9({my:"ဝတ်စုံ",en:"Dress / Outfit",shn:"ၶူဝ်းၼုင်ႈ",kac:"Palawng",th:"เสื้อผ้า",zh:"服装",vi:"Trang phục",id:"Busana",ms:"Pakaian"}), keys:["dressSmooth","dressEdge","dressWrinkle","dressTexture","dressFit","dressClean","dressColorPure"] },
   { t: L9({my:"နောက်ခံ",en:"Background",shn:"ပိုၼ်ႉလင်",kac:"Hpang",th:"พื้นหลัง",zh:"背景",vi:"Nền",id:"Latar belakang",ms:"Latar belakang"}), keys:["bgSmooth","bgRecolor"] }
 ];
-function renderRtChips(){
-  var host=$("rtChips"); host.innerHTML="";
+/* Retouch Pro's slider chips render into TWO places sharing the same global
+   state.rt/state.rtStrength — the collapsible group on Studio (#rtChips) and
+   the dedicated Retouch Studio page's Sliders tab (#rsChips, may not exist
+   yet on first call order but is always in the DOM once built). Both re-run
+   on every change so they never drift out of sync with each other. */
+var RT_CHIP_HOST_IDS = ["rtChips","rsChips"];
+function renderRtChipsInto(hostId){
+  var host=$(hostId); if(!host) return;
+  host.innerHTML="";
   var byKeyRt={}; D.retouch.sliders.forEach(function(s){ byKeyRt[s.key]=s; });
   var totalOn=0;
   RT_GROUPS.forEach(function(grp){
@@ -3148,7 +3224,322 @@ function renderRtChips(){
   var cntEl=$("rtGroupCount");
   if(cntEl) cntEl.textContent = totalOn ? totalOn+"/"+D.retouch.sliders.length+t("unit") : D.retouch.sliders.length+t("unit");
 }
+function renderRtChips(){ RT_CHIP_HOST_IDS.forEach(renderRtChipsInto); }
 renderRtChips();
+
+/* ---------- Retouch Studio: one-tap presets, slider fine-tune (reuses
+   Retouch Pro above), and multi-stage pipeline chaining, all delegating
+   generation to the shared $("btnGen") provider/fallback dispatcher so this
+   page never duplicates that logic. ---------- */
+var RS_NEW_PRESETS = [
+  { key:"rsEditorial", icon:"📰",
+    label: L9({my:"Editorial Glow",en:"Editorial Glow",shn:"Editorial Glow",kac:"Editorial Glow",th:"Editorial Glow",zh:"杂志质感",vi:"Editorial Glow",id:"Editorial Glow",ms:"Editorial Glow"}),
+    text: function(n){ return "Professional editorial-magazine skin retouch on IMAGE 1 at "+n+"% strength: crisp frequency-separation skin smoothing that keeps real pore texture, bright even luminous complexion, soft dodge-and-burn for cheekbone and jaw definition, sharpened catchlight in the eyes, clean glossy hair flyaways removed, subtle color grade toward warm editorial tones. Preserve natural skin texture and the person's identity fully unchanged — no plastic or waxy over-smoothing."; } },
+  { key:"rsNatural", icon:"🌤",
+    label: L9({my:"နေ့စဉ် Natural",en:"Natural Everyday",shn:"Natural ဝၼ်းလဵဝ်",kac:"Shani shagu Natural",th:"เป็นธรรมชาติทุกวัน",zh:"自然日常",vi:"Tự nhiên hàng ngày",id:"Natural Harian",ms:"Natural Harian"}),
+    text: function(n){ return "Light, natural everyday skin retouch on IMAGE 1 at "+n+"% strength: gentle blemish and redness removal, soft even skin tone, minor under-eye brightening, keep every pore and fine texture fully visible. The result must still look like an un-retouched real photo — subtle enough that a viewer cannot tell it was edited. Keep the person's identity, facial structure and proportions fully unchanged."; } },
+  { key:"rsGlam", icon:"💄",
+    label: L9({my:"Glam Beauty",en:"Glam Beauty",shn:"Glam Beauty",kac:"Glam Beauty",th:"Glam Beauty",zh:"魅力美妆",vi:"Glam Beauty",id:"Glam Beauty",ms:"Glam Beauty"}),
+    text: function(n){ return "Glamorous studio beauty retouch on IMAGE 1 at "+n+"% strength: flawless porcelain-smooth skin with a luminous highlight on cheekbones and nose bridge, enhanced lash and lip definition, whitened brightened eyes, glossy voluminous hair, soft studio-light color grade. Preserve the person's identity and natural facial proportions — a polished glam finish, not a face swap."; } }
+];
+function rsPresetByKey(key){
+  var local = RS_NEW_PRESETS.filter(function(p){ return p.key===key; })[0];
+  if(local) return local;
+  var dp = D.presets.filter(function(p){ return p.key===key; })[0];
+  if(dp) return { key:dp.key, icon:"✨", label:dp.label, text:function(n){ return dp.text.replace(/\b60(?=%)/g, String(n)); } };
+  return null;
+}
+function rsPresetLabel(key){ var p=rsPresetByKey(key); return p ? p.label : key; }
+function rsPresetText(key, strength){ var p=rsPresetByKey(key); return p ? p.text(strength) : ""; }
+var RS_ONETAP_KEYS = ["evoto","meitu","rsEditorial","rsNatural","rsGlam"];
+var RS_PIPELINES = [
+  { key:"rsPipeGlow", icon:"🧴➜✨",
+    label: L9({my:"အသားအရေ သန့်စင် → Glam Finish",en:"Skin Clean-up → Glam Finish",shn:"ၽိဝ်ၼင် သုၵ်ႉ → Glam Finish",kac:"Hpyi seng → Glam Finish",th:"ทำความสะอาดผิว → Glam Finish",zh:"肌肤清理 → 魅力收尾",vi:"Làm sạch da → Glam Finish",id:"Bersihkan Kulit → Glam Finish",ms:"Bersihkan Kulit → Glam Finish"}),
+    steps:["evoto","rsGlam"] },
+  { key:"rsPipeNatural", icon:"🧹➜🌤",
+    label: L9({my:"သန့်စင် → နေ့စဉ် Natural",en:"Clean-up → Everyday Natural",shn:"လၢင်ႉၶိုၼ်း → Natural ဝၼ်းလဵဝ်",kac:"Seng → Shani shagu Natural",th:"ทำความสะอาด → เป็นธรรมชาติทุกวัน",zh:"清理 → 日常自然",vi:"Làm sạch → Tự nhiên hàng ngày",id:"Bersihkan → Alami Harian",ms:"Bersihkan → Semula Jadi Harian"}),
+    steps:["meitu","rsNatural"] }
+];
+
+var rsMode="onetap";
+var rsPipelineQueue=[];
+var rsPipelineCancel=false;
+var RS_NEED_PHOTO = L9({my:"အရင်ဆုံး မူရင်းပုံ တင်ပါ",en:"Upload the before photo first",shn:"တင်ဢွၼ်တၢင်း ၶႅပ်းႁၢင်ႈမူႇလ",kac:"Shawng na sumla shawng jaw u",th:"อัปโหลดรูปต้นฉบับก่อน",zh:"请先上传原始照片",vi:"Hãy tải ảnh gốc lên trước",id:"Unggah dulu foto sebelum",ms:"Muat naik dahulu foto asal"});
+var RS_GEN_LABELS = {
+  sliders: "🎚 "+L9({my:"Slider အတိုင်း Retouch လုပ်မယ်",en:"Apply Slider Retouch",shn:"ၸႂ်ႉ Slider Retouch",kac:"Slider Retouch Galaw",th:"ใช้ Slider Retouch",zh:"应用滑块精修",vi:"Áp dụng Slider Retouch",id:"Terapkan Slider Retouch",ms:"Guna Slider Retouch"}),
+  pipeline: "🔗 "+L9({my:"Pipeline စတင်မယ်",en:"Run Pipeline",shn:"တႄႇ Pipeline",kac:"Pipeline Hpang",th:"เริ่ม Pipeline",zh:"运行流水线",vi:"Chạy Pipeline",id:"Jalankan Pipeline",ms:"Jalankan Pipeline"})
+};
+
+function renderRsPicker(){
+  var host=$("rsPicker"); if(!host) return;
+  host.innerHTML="";
+  var ref=state.refs[0];
+  var d=el("div","ref"+(ref?" filled":""));
+  if(ref){
+    var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
+    var x=el("button","x","✕");
+    x.setAttribute("aria-label",t("lb_remove_image"));
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.imgRoles=null; renderRefs(); };
+    d.appendChild(x);
+  } else {
+    var a=el("button","add","+");
+    a.title = RS_NEED_PHOTO;
+    a.onclick=function(){ state.pickSlot=0; $("filePick").click(); };
+    d.appendChild(a);
+  }
+  d.appendChild(el("span","tag", L9({my:"မူရင်း",en:"Before",shn:"မူႇလ",kac:"Shawng",th:"ก่อน",zh:"之前",vi:"Trước",id:"Sebelum",ms:"Sebelum"})));
+  host.appendChild(d);
+}
+
+function renderRsPresetGrid(){
+  var host=$("rsPresetGrid"); if(!host) return;
+  host.innerHTML="";
+  RS_ONETAP_KEYS.forEach(function(key){
+    var p=rsPresetByKey(key); if(!p) return;
+    var c=el("button","chip", (p.icon?p.icon+" ":"")+p.label);
+    c.title = p.text(state.rtStrength);
+    c.onclick=function(){ rsRunOnetap(key); };
+    host.appendChild(c);
+  });
+}
+function renderRsRecipeGrid(){
+  var host=$("rsRecipeGrid"); if(!host) return;
+  host.innerHTML="";
+  RS_PIPELINES.forEach(function(rp){
+    var c=el("button","chip", (rp.icon?rp.icon+" ":"")+rp.label);
+    c.title = rp.steps.map(rsPresetLabel).join(" → ");
+    c.onclick=function(){ rsPipelineQueue=rp.steps.slice(); renderRsPipelineQueue(); };
+    host.appendChild(c);
+  });
+}
+function renderRsPipelinePicker(){
+  var host=$("rsPipelinePicker"); if(!host) return;
+  host.innerHTML="";
+  RS_ONETAP_KEYS.forEach(function(key){
+    var p=rsPresetByKey(key); if(!p) return;
+    var c=el("button","chip", "+ "+(p.icon?p.icon+" ":"")+p.label);
+    c.onclick=function(){
+      if(rsPipelineQueue.length>=6){ toast(L9({my:"Pipeline တစ်ခုလျှင် အများဆုံး အဆင့် ၆ ဆင့်ပဲ ရပါတယ်",en:"A pipeline can hold at most 6 stages",shn:"Pipeline ၼိုင်ႈဢၼ် ၸၢင်ႈသႂ်ႇလႆႈ 6 ၸၼ်ႉၵူၺ်း",kac:"Pipeline langai gaw stage 6 sha hkum mai ai",th:"หนึ่ง pipeline ใส่ได้สูงสุด 6 ขั้นตอน",zh:"一个流水线最多 6 个阶段",vi:"Một pipeline chứa tối đa 6 giai đoạn",id:"Satu pipeline maksimal 6 tahap",ms:"Satu pipeline maksimum 6 peringkat"}),"err"); return; }
+      rsPipelineQueue.push(key);
+      renderRsPipelineQueue();
+    };
+    host.appendChild(c);
+  });
+}
+function renderRsPipelineQueue(){
+  var host=$("rsPipelineQueue"); if(!host) return;
+  host.innerHTML="";
+  if(!rsPipelineQueue.length){
+    host.appendChild(el("div","mut", L9({my:"Pipeline stage မရွေးရသေးပါ — အပေါ်က recipe တစ်ခုကို နှိပ်ပါ (ဒါမှမဟုတ်) preset တွေကို စီပေါင်းထည့်ပါ",en:"No stages picked yet — tap a recipe above, or add presets one by one",shn:"ပႆႇလိူၵ်ႈ stage — ၼဵၵ်း recipe ဢွၼ်ၼိုင်ႈ ဢမ်ႇၼၼ် သိုပ်ႇသႂ်ႇ preset",kac:"Stage n rai shi ai — Recipe langai dip u shingnrai preset ni hpe jawm jaw u",th:"ยังไม่เลือกขั้นตอน — แตะ recipe ด้านบน หรือเพิ่ม preset ทีละอัน",zh:"尚未选择阶段 — 点按上方配方，或逐个添加 preset",vi:"Chưa chọn giai đoạn nào — chạm vào công thức ở trên, hoặc thêm preset lần lượt",id:"Belum ada tahap dipilih — ketuk resep di atas, atau tambahkan preset satu per satu",ms:"Belum ada peringkat dipilih — ketik resipi di atas, atau tambah preset satu demi satu"})));
+    return;
+  }
+  rsPipelineQueue.forEach(function(key,i){
+    var c=el("button","chip on", (i+1)+". "+rsPresetLabel(key)+" ✕");
+    c.onclick=function(){ rsPipelineQueue.splice(i,1); renderRsPipelineQueue(); };
+    host.appendChild(c);
+  });
+}
+
+function rsSetMode(mode){
+  rsMode=mode;
+  [["onetap","rsTabOnetap","rsOnetapPane"],["sliders","rsTabSliders","rsSlidersPane"],["pipeline","rsTabPipeline","rsPipelinePane"]].forEach(function(m){
+    var tabBtn=$(m[1]); if(tabBtn) tabBtn.className="chip"+(m[0]===mode?" on":"");
+    var pane=$(m[2]); if(pane) pane.style.display=(m[0]===mode?"":"none");
+  });
+  $("btnRsGen").style.display = mode==="onetap" ? "none" : "";
+  if(RS_GEN_LABELS[mode]) $("btnRsGen").textContent = RS_GEN_LABELS[mode];
+}
+$("rsTabOnetap").onclick=function(){ rsSetMode("onetap"); };
+$("rsTabSliders").onclick=function(){ rsSetMode("sliders"); };
+$("rsTabPipeline").onclick=function(){ rsSetMode("pipeline"); };
+
+function renderRsStrengthChips(){
+  var host=$("rsStrengthChips"); if(!host) return;
+  host.innerHTML="";
+  [30,60,90].forEach(function(v){
+    var b=el("button","chip"+(v===state.rtStrength?" on":""), v+"%");
+    b.onclick=function(){
+      state.rtStrength=v;
+      renderRsStrengthChips();
+      renderRtChips(); renderAddonSummary(); renderRsPresetGrid();
+    };
+    host.appendChild(b);
+  });
+}
+$("rsClearAll").onclick=function(){
+  D.retouch.sliders.forEach(function(s){ state.rt[s.key]=0; });
+  renderRtChips(); renderAddonSummary();
+  toast(L9({my:"Retouch ရွေးထားသမျှ ဖျက်လိုက်ပြီ ✓",en:"All retouch selections cleared ✓",shn:"လၢင်ႉပႅတ်ႈ Retouch ဢၼ်လိူၵ်ႈဝႆႉတင်းသဵင်ႈယဝ်ႉ ✓",kac:"Retouch lata da ai yawng hkrat kau sai ✓",th:"ล้างการเลือกรีทัชทั้งหมดแล้ว ✓",zh:"已清除全部精修选择 ✓",vi:"Đã xóa mọi lựa chọn retouch ✓",id:"Semua pilihan retouch dihapus ✓",ms:"Semua pilihan retouch dipadam ✓"}),"ok");
+};
+
+/* generate: steer the shared $("btnGen") provider/fallback dispatcher's
+   inputs (prompt text + IMAGE 1) instead of duplicating that ~150-line
+   dispatcher. state.hist growing tells us it actually produced a result. */
+function rsSyncGenControls(busy){
+  $("btnRsGen").disabled=busy;
+  $("rsSpin").className="spin"+(busy?" on":"");
+  $("btnRsRetry").style.display="none";
+}
+async function rsDoGenerate(promptText){
+  if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); return false; }
+  $("prompt").value=promptText;
+  state.imgRoles=null;
+  var beforeLen=state.hist.length;
+  await $("btnGen").onclick();
+  var srcSt=$("stGen");
+  setSt("stRsGen", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
+  return state.hist.length>beforeLen;
+}
+async function rsRunOnetap(key){
+  if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
+  rsSyncGenControls(true);
+  var ok=await rsDoGenerate(rsPresetText(key, state.rtStrength));
+  rsSyncGenControls(false);
+  if(ok) rsShowResult(); else $("btnRsRetry").style.display="";
+}
+async function rsRunPipeline(){
+  if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
+  if(!rsPipelineQueue.length){ setSt("stRsGen", L9({my:"Pipeline stage အရင်ရွေးပါ",en:"Pick pipeline stages first",shn:"လိူၵ်ႈ stage ဢွၼ်တၢင်း",kac:"Stage ni shawng tawn u",th:"เลือกขั้นตอนก่อน",zh:"请先选择流水线阶段",vi:"Chọn giai đoạn trước",id:"Pilih tahap pipeline dulu",ms:"Pilih peringkat pipeline dahulu"}), "err"); return; }
+  rsPipelineCancel=false;
+  rsSyncGenControls(true);
+  $("btnRsCancel").style.display="";
+  var savedBefore=state.refs[0], ranAny=false, stopped=false;
+  for(var i=0;i<rsPipelineQueue.length;i++){
+    if(rsPipelineCancel){ stopped=true; break; }
+    var key=rsPipelineQueue[i];
+    var label=(i+1)+"/"+rsPipelineQueue.length+" · "+rsPresetLabel(key)+"…";
+    $("rsStageProgress").textContent=label;
+    setSt("stRsGen", label);
+    var ok=await rsDoGenerate(rsPresetText(key, state.rtStrength));
+    if(!ok){ stopped=true; break; }
+    ranAny=true;
+    if(i<rsPipelineQueue.length-1){
+      var out=state.hist[0];
+      state.refs[0]={ mime:out.mime, b64:out.b64, label:"stage "+(i+1) };
+    }
+  }
+  state.refs[0]=savedBefore;
+  renderRefs();
+  $("btnRsCancel").style.display="none";
+  $("rsStageProgress").textContent="";
+  rsSyncGenControls(false);
+  if(ranAny){
+    setSt("stRsGen", stopped ? L9({my:"Pipeline ရပ်လိုက်ပြီ — ရရှိပြီးသား အဆင့်တွေက ရလဒ်ထဲ ရှိတယ် ✓",en:"Pipeline stopped — the stages that finished are in the result ✓",shn:"ၵိုတ်း Pipeline ယဝ်ႉ — ၸၼ်ႉဢၼ်ယဝ်ႉယဝ်ႉ ယူႇတီႈၽွၼ်း ✓",kac:"Pipeline hkring sai — ngut wa sai ai stage ni gaw lachyum kaw nga ai ✓",th:"หยุด Pipeline แล้ว — ขั้นตอนที่เสร็จอยู่ในผลลัพธ์แล้ว ✓",zh:"流水线已停止 — 已完成的阶段已在结果中 ✓",vi:"Đã dừng Pipeline — các giai đoạn đã hoàn thành có trong kết quả ✓",id:"Pipeline dihentikan — tahap yang selesai ada di hasil ✓",ms:"Pipeline dihentikan — peringkat yang selesai ada dalam hasil ✓"}) : L9({my:"Pipeline ပြီးပြီ ✓",en:"Pipeline complete ✓",shn:"Pipeline ယဝ်ႉတူဝ်ႈ ✓",kac:"Pipeline ngut sai ✓",th:"Pipeline เสร็จแล้ว ✓",zh:"流水线已完成 ✓",vi:"Pipeline hoàn tất ✓",id:"Pipeline selesai ✓",ms:"Pipeline selesai ✓"}), "ok");
+    rsShowResult();
+  } else {
+    $("btnRsRetry").style.display="";
+  }
+}
+$("btnRsGen").onclick=async function(){
+  if(rsMode==="pipeline"){ await rsRunPipeline(); return; }
+  var hasSlider = D.retouch.sliders.some(function(s){ return state.rt[s.key]; });
+  if(!hasSlider){ setSt("stRsGen", L9({my:"Slider အနည်းဆုံး တစ်ခု ရွေးပါ",en:"Pick at least one slider",shn:"ထၢႆႇ slider ဢၼ်ၼိုင်ႈဢွၼ်တၢင်း",kac:"Slider langai loi loi tawn u",th:"เลือกอย่างน้อยหนึ่ง slider",zh:"请至少选择一个滑块",vi:"Chọn ít nhất một slider",id:"Pilih setidaknya satu slider",ms:"Pilih sekurang-kurangnya satu slider"}), "err"); return; }
+  if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
+  rsSyncGenControls(true);
+  var ok=await rsDoGenerate("");
+  rsSyncGenControls(false);
+  if(ok) rsShowResult(); else $("btnRsRetry").style.display="";
+};
+$("btnRsCancel").onclick=function(){
+  rsPipelineCancel=true;
+  setSt("stRsGen", L9({my:"နောက်အဆင့် မစခင် ရပ်တော့မယ်…",en:"Stopping before the next stage…",shn:"တေၵိုတ်း ၵွၼ်ႇထိုင် ၸၼ်ႉထႅင်ႈ…",kac:"Stage kaga n hpang shi yang hkring na…",th:"กำลังหยุดก่อนขั้นตอนถัดไป…",zh:"将在下一阶段前停止…",vi:"Sẽ dừng trước giai đoạn tiếp theo…",id:"Akan berhenti sebelum tahap berikutnya…",ms:"Akan berhenti sebelum peringkat seterusnya…"}));
+};
+$("btnRsRetry").onclick=async function(){
+  this.style.display="none";
+  rsSyncGenControls(true);
+  var beforeLen=state.hist.length;
+  await $("btnGen").onclick();
+  var srcSt=$("stGen");
+  setSt("stRsGen", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
+  rsSyncGenControls(false);
+  if(state.hist.length>beforeLen) rsShowResult(); else this.style.display="";
+};
+
+/* before/after: always-on compare slider, IMAGE 1 vs the selected result */
+function rsCmpLayout(){
+  var pct=parseInt($("rsCmpRange").value,10);
+  $("rsCmpTop").style.width=pct+"%";
+  $("rsCmpLine").style.left=pct+"%";
+  var w=$("rsCmp").clientWidth;
+  $("rsCmpBefore").style.width=w+"px";
+}
+function rsShowResult(){
+  var out=state.hist[state.histSel]||state.result; if(!out) return;
+  $("rsResultBox").className="card result-box on";
+  var src="data:"+out.mime+";base64,"+out.b64;
+  $("rsCmpAfter").src=src;
+  $("btnRsDl").href=src;
+  if(state.refs[0]) $("rsCmpBefore").src="data:"+state.refs[0].mime+";base64,"+state.refs[0].b64;
+  rsCmpLayout();
+  var h=$("rsHist"); h.innerHTML="";
+  state.hist.forEach(function(e,i){
+    var im=document.createElement("img");
+    im.src="data:"+e.mime+";base64,"+e.b64;
+    im.alt="result "+(i+1);
+    im.className=i===state.histSel?"sel":"";
+    makePickable(im, function(){ state.histSel=i; rsShowResult(); });
+    h.appendChild(im);
+  });
+  $("rsResultBox").scrollIntoView({behavior:"smooth"});
+}
+$("rsCmpRange").oninput=rsCmpLayout;
+window.addEventListener("resize",function(){ if($("rsResultBox").className.indexOf(" on")>=0) rsCmpLayout(); });
+$("btnRsToRef").onclick=function(){
+  var out=state.hist[state.histSel]||state.result; if(!out) return;
+  state.refs[0]={mime:out.mime,b64:out.b64,label:"result"};
+  state.imgRoles=null;
+  renderRefs();
+  rsCmpLayout();
+  setSt("stRsGen",L9({my:"ရလဒ်ကို မူရင်းပုံအဖြစ် ထည့်ပြီး ✓ — ဆက် retouch လုပ်လို့ရပြီ",en:"Result set as the before photo ✓ — ready to keep retouching",shn:"ဝႆႉၽွၼ်း ပဵၼ်ၶႅပ်းႁၢင်ႈမူႇလ ယဝ်ႉ ✓ — ႁပ်ႉၸႂ်ႉ retouch ၵႂႃႇလႆႈယဝ်ႉ",kac:"Lachyum hpe shawng na sumla ngu jaw sai ✓ — retouch galoi mung mai ai",th:"ตั้งผลลัพธ์เป็นรูปต้นฉบับแล้ว ✓ — พร้อมรีทัชต่อ",zh:"已将结果设为原始照片 ✓ — 可以继续精修",vi:"Đã đặt kết quả làm ảnh gốc ✓ — sẵn sàng retouch tiếp",id:"Hasil dijadikan foto sebelum ✓ — siap untuk terus retouch",ms:"Hasil dijadikan foto asal ✓ — sedia untuk terus retouch"}),"ok");
+};
+(function(){
+  var box=$("rsCmp"), dragging=false;
+  function pctFromX(clientX){
+    var r=box.getBoundingClientRect();
+    return Math.max(0,Math.min(100,((clientX-r.left)/r.width)*100));
+  }
+  function apply(clientX){
+    var pct=Math.round(pctFromX(clientX));
+    $("rsCmpRange").value=pct;
+    rsCmpLayout();
+  }
+  box.addEventListener("pointerdown",function(e){
+    dragging=true;
+    try{ box.setPointerCapture(e.pointerId); }catch(err){}
+    apply(e.clientX);
+  });
+  box.addEventListener("pointermove",function(e){ if(dragging) apply(e.clientX); });
+  box.addEventListener("pointerup",function(){ dragging=false; });
+  box.addEventListener("pointercancel",function(){ dragging=false; });
+})();
+
+/* static labels + first render */
+$("rsIntro").textContent = L9({my:"မူရင်းပုံတစ်ပုံ တင်ပြီး — One-tap preset (ဒါမှမဟုတ်) Slider (ဒါမှမဟုတ်) Pipeline သုံးပြီး ပရော်ဖက်ရှင်နယ် skin retouch ရလဒ် ရယူပါ",en:"Upload one photo, then use a One-tap preset, fine-tune Sliders, or chain a Pipeline for a professional skin-retouch result",shn:"ၶိုၼ်ႈၶႅပ်းႁၢင်ႈၼိုင်ႈဢၼ်သေ ၸႂ်ႉ One-tap preset / Slider / Pipeline ႁဵတ်းၽွၼ်း retouch ၸၼ်ႉသုင်",kac:"Sumla langai jaw let na One-tap preset, Slider hpe galai chyam, shingnrai Pipeline hte professional skin-retouch lachyum hpe la u",th:"อัปโหลดรูปหนึ่งรูป แล้วใช้ One-tap preset, ปรับ Slider หรือต่อ Pipeline เพื่อผลลัพธ์รีทัชผิวระดับมืออาชีพ",zh:"上传一张照片，然后使用一键预设、微调滑块或串联流水线，获得专业级皮肤精修效果",vi:"Tải lên một ảnh, sau đó dùng preset một chạm, tinh chỉnh Slider, hoặc nối Pipeline để có kết quả retouch da chuyên nghiệp",id:"Unggah satu foto, lalu gunakan preset sekali ketuk, sesuaikan Slider, atau rangkai Pipeline untuk hasil retouch kulit profesional",ms:"Muat naik satu foto, kemudian guna preset sekali ketik, laraskan Slider, atau rangkaikan Pipeline untuk hasil retouch kulit profesional"});
+$("rsTabOnetap").textContent = "⚡ One-Tap";
+$("rsTabSliders").textContent = "🎚 Sliders";
+$("rsTabPipeline").textContent = "🔗 Pipeline";
+$("rsOnetapNote").textContent = L9({my:"Preset တစ်ခု နှိပ်လိုက်ရင် ချက်ချင်း retouch ထုတ်ပေးပါလိမ့်မယ် (Sliders tab ကရွေးထားတာတွေရှိရင် ပေါင်းပြီး ထည့်ပေးပါမယ်)",en:"Tap a preset to retouch instantly (anything picked in the Sliders tab is layered on top automatically)",shn:"ၼဵၵ်း preset ဢွၼ်ၼိုင်ႈ ၽွင်ႈၶိုၼ်း ၶၢင်းၶၢင်း (Sliders tab ဢၼ်လိူၵ်ႈဝႆႉ ၸွမ်းတေၸူမ်းၸွႆႈ)",kac:"Preset langai dip u nna gaw hprawng ai hte retouch pru wa na re (Sliders tab kaw tawn da ai ni mung shakap jaw sana)",th:"แตะ preset เพื่อรีทัชทันที (สิ่งที่เลือกในแท็บ Sliders จะถูกซ้อนเพิ่มให้อัตโนมัติ)",zh:"点按预设即可立即精修（Sliders 标签中已选的项会自动叠加）",vi:"Chạm vào preset để retouch ngay lập tức (mọi thứ đã chọn ở tab Sliders sẽ tự động được thêm vào)",id:"Ketuk preset untuk retouch instan (apa pun yang dipilih di tab Slider akan otomatis ditambahkan)",ms:"Ketik preset untuk retouch serta-merta (apa-apa yang dipilih dalam tab Slider akan ditambah secara automatik)"});
+$("rsStrengthLbl").textContent = t("rt_strength");
+$("rsClearAll").textContent = "🗑 "+L9({my:"အားလုံးဖျက်",en:"Clear all",shn:"လၢင်ႉပႅတ်ႈတင်းသဵင်ႈ",kac:"Yawng hkrat kau",th:"ล้างทั้งหมด",zh:"全部清除",vi:"Xóa tất cả",id:"Hapus semua",ms:"Padam semua"});
+$("rsPipelineNote").textContent = L9({my:"Preset အများကြီးကို အစဉ်လိုက် ဆက်တိုက်ပြင်ဆင်ချင်ရင် — အဆင့်တစ်ခုပြီးမှ နောက်တစ်ဆင့် ဆက်ပြေးပေးပါမယ် (ကြားထဲ ရပ်ချင်ရင် Cancel နှိပ်နိုင်တယ်)",en:"Chain multiple presets in sequence — each stage's result feeds into the next automatically (tap Cancel between stages to stop)",shn:"ၶူတ်ႈ preset ၼမ်ၼမ် ဢွၼ်ၵၼ်ၵႂႃႇ — ၸၼ်ႉၼိုင်ႈယဝ်ႉၵေႃႈ ၸၼ်ႉထႅင်ႈဢၼ်ၼိုင်ႈ ၸူမ်းၸွႆႈၵႂႃႇ",kac:"Preset law law hpe shingjang chyam u — stage langai ngut yang kaga langai de hprawng shan mat na re (laklai hta hkring mayu yang Cancel dip mai ai)",th:"ต่อ preset หลายตัวเรียงลำดับ — ผลของแต่ละขั้นตอนจะป้อนเข้าขั้นต่อไปอัตโนมัติ (แตะ Cancel ระหว่างขั้นตอนเพื่อหยุด)",zh:"依次串联多个预设 — 每个阶段的结果会自动传入下一阶段（阶段之间可点按 Cancel 停止）",vi:"Nối nhiều preset theo thứ tự — kết quả mỗi giai đoạn tự động đưa vào giai đoạn tiếp theo (chạm Cancel giữa các giai đoạn để dừng)",id:"Rangkai beberapa preset secara berurutan — hasil tiap tahap otomatis masuk ke tahap berikutnya (ketuk Cancel di antara tahap untuk berhenti)",ms:"Rangkaikan beberapa preset secara berurutan — hasil setiap peringkat automatik dimasukkan ke peringkat seterusnya (ketik Cancel antara peringkat untuk berhenti)"});
+$("rsRecipesH").textContent = L9({my:"အသင့်စီထားသော Recipes",en:"Curated Recipes",shn:"Recipes ၸုၵ်ႈမူၼ်ႉ",kac:"Ra let da ai Recipe",th:"สูตรสำเร็จ",zh:"精选配方",vi:"Công thức có sẵn",id:"Resep Kurasi",ms:"Resipi Terpilih"});
+$("rsCustomH").textContent = L9({my:"ကိုယ်ပိုင် Pipeline တည်ဆောက်ရန်",en:"Build Your Own",shn:"တႄႇသၢင်ႈ ႁင်းၶဝ်ႈ",kac:"Nang hkum a lam de galaw",th:"สร้างของคุณเอง",zh:"自定义构建",vi:"Tự xây dựng",id:"Buat Milikmu Sendiri",ms:"Bina Sendiri"});
+$("rsCustomNote").textContent = L9({my:"Preset တွေကို အစဉ်လိုက် နှိပ်ပေါင်းထည့်ပါ",en:"Tap presets below to add them to your queue in order",shn:"ၼဵၵ်းသႂ်ႇ preset ဢွၼ်တၢင်းလင်",kac:"Preset ni hpe laklai hte dip nna queue kaw jaw u",th:"แตะ preset ด้านล่างเพื่อเพิ่มเข้าคิวตามลำดับ",zh:"点按下方预设，按顺序加入队列",vi:"Chạm vào các preset bên dưới để thêm vào hàng đợi theo thứ tự",id:"Ketuk preset di bawah untuk menambahkannya ke antrean secara berurutan",ms:"Ketik preset di bawah untuk menambah ke dalam baris giliran mengikut urutan"});
+$("rsQueueLabel").textContent = L9({my:"လက်ရှိ Pipeline အစီအစဉ် (နှိပ်ရင် ဖြုတ်ပါမယ်)",en:"Current pipeline queue (tap a stage to remove it)",shn:"Pipeline ဢၼ်ပဵၼ်ယူႇလဵဝ် (ၼဵၵ်းသေ ဢဝ်ဢွၵ်ႇလႆႈ)",kac:"Ya na pipeline queue (dip yang gawt kau na re)",th:"คิว pipeline ปัจจุบัน (แตะเพื่อลบขั้นตอน)",zh:"当前流水线队列（点按某阶段可移除）",vi:"Hàng đợi pipeline hiện tại (chạm vào một giai đoạn để xóa)",id:"Antrean pipeline saat ini (ketuk tahap untuk menghapusnya)",ms:"Baris giliran pipeline semasa (ketik peringkat untuk membuangnya)"});
+$("btnRsCancel").textContent = "✕ "+L9({my:"ရပ်မယ်",en:"Cancel",shn:"ၵိုတ်း",kac:"Hkum galaw",th:"ยกเลิก",zh:"取消",vi:"Hủy",id:"Batal",ms:"Batal"});
+$("btnRsRetry").textContent = t("retry");
+$("rsResultH2").textContent = L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After",shn:"ၽွၼ်း — မူႇလ vs ယဝ်ႉ",kac:"Lachyum — Shawng hte Ngut",th:"ผลลัพธ์ — ก่อนกับหลัง",zh:"结果 — 前后对比",vi:"Kết quả — Trước và Sau",id:"Hasil — Sebelum vs Sesudah",ms:"Hasil — Sebelum lwn Selepas"});
+$("btnRsToRef").textContent = t("to_ref");
+$("rsCmpBeforeLbl").textContent = L9({my:"◀ မူရင်း",en:"◀ Before",shn:"◀ မူႇလ",kac:"◀ Shawng",th:"◀ ก่อน",zh:"◀ 之前",vi:"◀ Trước",id:"◀ Sebelum",ms:"◀ Sebelum"});
+$("rsCmpAfterLbl").textContent = L9({my:"ပြီးပြီ ▶",en:"After ▶",shn:"ယဝ်ႉ ▶",kac:"Ngut ▶",th:"หลัง ▶",zh:"之后 ▶",vi:"Sau ▶",id:"Sesudah ▶",ms:"Selepas ▶"});
+$("rsHistH").textContent = L9({my:"ရလဒ် မှတ်တမ်း",en:"Result History",shn:"ၽွၼ်းၵဝ်ႇ",kac:"Lachyum Sim",th:"ประวัติผลลัพธ์",zh:"结果历史",vi:"Lịch sử kết quả",id:"Riwayat Hasil",ms:"Sejarah Hasil"});
+renderRsPresetGrid();
+renderRsRecipeGrid();
+renderRsPipelinePicker();
+renderRsPipelineQueue();
+renderRsStrengthChips();
+rsSetMode("onetap");
+renderRsPicker();
 
 /* ---------- visual library (366) ---------- */
 var lib = { filter: "featured", search: "", shown: 0, page: 24, list: [], sel: null };
@@ -3388,7 +3779,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.13.0";
+var APP_VER="4.14.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

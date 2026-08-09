@@ -52,3 +52,6 @@ jobs:
 
       - name: Run v4.13.0 full-app-upgrade regression sweep (mocked)
         run: node test/sweep_v413_upgrades.js
+
+      - name: Run Retouch Studio sweep (mocked)
+        run: node test/sweep_retouch_studio.js
