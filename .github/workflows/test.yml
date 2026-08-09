@@ -73,3 +73,6 @@ jobs:
 
       - name: Verify Phase 4 Studio/Setup accordion conversion
         run: node test/verify_phase4_accordion.js
+
+      - name: Verify Phase 5 nav regroup (4 top-level tabs, all pages reachable)
+        run: node test/verify_phase5_nav_regroup.js

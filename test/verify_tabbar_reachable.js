@@ -4,9 +4,14 @@
    overflowed the viewport and pushed "Setup" (which holds the user's
    saved Gemini/RunningHub API keys) completely off-screen with no way to
    reach it — visually indistinguishable from "my settings disappeared".
-   Fix: .tabbar scrolls horizontally, and switchPage() scrolls the newly
-   active tab into view so Setup is always reachable, not just swipe-
-   discoverable.
+   v4.15.1 fixed it by letting .tabbar scroll horizontally. v4.19.0's
+   Phase 5 nav regroup (10 flat tabs -> 4 top-level tabs, each holding
+   its pages as second-level .subtabbar entries) fixes the same class of
+   bug more fundamentally: 4 short tabs fit a real phone width without
+   ever needing to scroll, so the original failure mode can't recur. The
+   horizontal-scroll fallback stays in the CSS as a safety net (and is
+   exercised for real by the 6-item Create .subtabbar), but the primary
+   nav no longer depends on it.
    Usage: PORT=8931 node test/verify_tabbar_reachable.js   (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
 const PORT = process.env.PORT || 8931;
@@ -33,8 +38,8 @@ const PORT = process.env.PORT || 8931;
     };
   });
   console.log("tabbar overflow:", JSON.stringify(overflowResult));
-  const overflowOk = overflowResult.tabCount >= 10 && overflowResult.canScroll;
-  console.log(overflowOk ? "PASS (tab bar allows horizontal scroll instead of clipping tabs)" : "FAIL (tab bar overflow)");
+  const overflowOk = overflowResult.tabCount === 4 && !overflowResult.overflowsAtThisWidth && overflowResult.canScroll;
+  console.log(overflowOk ? "PASS (4 top-level tabs fit a real phone width with no overflow; scroll fallback still present)" : "FAIL (top tab bar regression)");
 
   const reachResult = await page.evaluate(() => {
     switchPage("pgHome");
