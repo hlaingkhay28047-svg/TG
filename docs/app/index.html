@@ -1093,7 +1093,7 @@ $("galToImg1").onclick=function(){
   state.refs[0]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
   state.imgRoles=null;
   renderRefs();
-  toast("Gallery ပုံ → IMAGE 1 ✓","ok");
+  toast(L9({my:"Gallery ပုံ → IMAGE 1 ✓",en:"Gallery image → IMAGE 1 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 1 ✓",kac:"Gallery sumla → IMAGE 1 ✓",th:"รูป Gallery → IMAGE 1 ✓",zh:"Gallery 图片 → IMAGE 1 ✓",vi:"Ảnh Gallery → IMAGE 1 ✓",id:"Gambar Gallery → IMAGE 1 ✓",ms:"Imej Gallery → IMAGE 1 ✓"}),"ok");
 };
 $("galDel").onclick=function(){
   if(!galSel) return;
@@ -1351,7 +1351,18 @@ async function rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs, signal){
   var limit = timeoutMs || RH_TIMEOUT_MS;
   while(true){
     if(signal && signal.aborted){ var ec=new Error("cancelled"); ec.code="cancelled"; throw ec; }
-    var j=await rhV2Query(apiKey, taskId, signal);
+    var j;
+    try {
+      j=await rhV2Query(apiKey, taskId, signal);
+    } catch(qe){
+      /* Cancel landing WHILE the query fetch is in flight rejects it with
+         the browser's own AbortError, not our "cancelled"-coded Error —
+         normalize it the same way so the caller shows a neutral "Cancelled"
+         instead of a scary generic RunningHub error for an action the user
+         deliberately took. */
+      if(signal && signal.aborted){ var ec3=new Error("cancelled"); ec3.code="cancelled"; throw ec3; }
+      throw qe;
+    }
     var s=String(j.status||"").toUpperCase();
     var elapsed=Date.now()-start;
     if(typeof onTick==="function") onTick(elapsed, s);
@@ -1754,7 +1765,16 @@ function rhNarrowRatioOptionsFor(active){
     sel.value = ratios.indexOf(cur2)>=0 ? cur2 : "";
     return;
   }
-  if(sel.innerHTML!==_selRatioDefaultHtml) sel.innerHTML=_selRatioDefaultHtml;
+  if(sel.innerHTML!==_selRatioDefaultHtml){
+    var cur3=sel.value;
+    sel.innerHTML=_selRatioDefaultHtml;
+    /* The full list is a strict superset of both narrowed lists, so the
+       previously-picked ratio is almost always still valid here — preserve
+       it instead of silently reverting to "Auto" (same pattern as the two
+       narrowing branches above). */
+    var stillValid=Array.prototype.some.call(sel.options, function(o){ return o.value===cur3; });
+    if(stillValid) sel.value=cur3;
+  }
 }
 function updateGenOptsForRHKind(){
   var provider = $("selProvider").value;
@@ -3393,7 +3413,13 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
     t.className="toast on ok";
     t.style.cursor="pointer";
     t.onclick=function(){ location.reload(); };
-    clearTimeout(_toastT); _toastSticky=true; /* stay until tapped — see toast() */
+    clearTimeout(_toastT); _toastSticky=true;
+    /* Bounded, not forever: if the user notices this but never taps it, it
+       must not permanently silence toast() for the rest of the session (a
+       real regression a prior pass introduced — see toast()'s own comment).
+       20s is generous — far longer than a routine 2.6s toast — while still
+       guaranteeing recovery. */
+    setTimeout(function(){ _toastSticky=false; if(t.className.indexOf(" ok")>=0 && t.onclick) t.className="toast"; }, 20000);
   }
 }).catch(function(){});
 
@@ -3729,7 +3755,7 @@ function refreshCmp(){
 $("btnCmp").onclick=function(){
   var out=state.hist[state.histSel]||state.result;
   if(!out) return;
-  if(!state.refs[0]){ toast("နှိုင်းဖို့ IMAGE 1 (မူရင်းပုံ) လိုတယ်","err"); return; }
+  if(!state.refs[0]){ toast(L9({my:"နှိုင်းဖို့ IMAGE 1 (မူရင်းပုံ) လိုတယ်",en:"Need IMAGE 1 (the original photo) to compare",shn:"လူဝ်ႇ IMAGE 1 (ၶႅပ်းႁၢင်ႈမူႇလ) တႃႇတဵင်ႇတူၺ်း",kac:"Nsen chyai na IMAGE 1 (dip sumla) ra ai",th:"ต้องมี IMAGE 1 (รูปต้นฉบับ) เพื่อเปรียบเทียบ",zh:"需要 IMAGE 1（原图）才能比较",vi:"Cần IMAGE 1 (ảnh gốc) để so sánh",id:"Perlu IMAGE 1 (foto asli) untuk membandingkan",ms:"Perlu IMAGE 1 (foto asal) untuk membandingkan"}),"err"); return; }
   var wrap=$("cmpWrap");
   if(wrap.style.display!=="none"){ wrap.style.display="none"; this.classList.remove("active"); return; }
   refreshCmp();

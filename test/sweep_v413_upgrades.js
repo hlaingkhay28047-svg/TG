@@ -11,6 +11,14 @@
      accepting it (the accept="image/..." hint is not enforced everywhere)
    - friendly() (the Gemini error translator) is now localized, not
      Burmese-only
+   - the ratio dropdown preserves the user's picked value across both a
+     narrow AND a restore-to-full-list, not just the narrow
+   - the "update available" sticky toast can't permanently silence toast()
+     for the rest of the session if the user never taps it (bounded, not
+     forever — found by adversarial review of the first v4.13.0 pass)
+   - cancelling while the /query poll fetch is actually in flight (not just
+     between poll ticks) still normalizes to a "cancelled" error instead of
+     a raw AbortError misread as a generic failure (same review finding)
    Usage: PORT=8931 node test/sweep_v413_upgrades.js   (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
 const PORT = process.env.PORT || 8931;
@@ -80,21 +88,25 @@ const PORT = process.env.PORT || 8931;
   const ratioResult = await page.evaluate(() => {
     switchPage("pgCreate");
     state.rhKey = "TEST_KEY";
+    document.getElementById("selRatio").value = "16:9"; // a value valid in every list below
     var c = rhCfg(); c.activeModel = "z-image-turbo"; rhSaveCfg(c);
     renderRhProviderOption();
     document.getElementById("selProvider").value = "runninghub";
     updateGenOptsForRHKind();
     var zOptions = Array.from(document.getElementById("selRatio").options).map(o => o.value || o.textContent);
     var has45 = zOptions.indexOf("4:5") >= 0;
+    var preservedThroughNarrow = document.getElementById("selRatio").value === "16:9";
     var c2 = rhCfg(); c2.activeModel = "nano-banana-2"; rhSaveCfg(c2);
     updateGenOptsForRHKind();
     var restoredOptions = Array.from(document.getElementById("selRatio").options).map(o => o.value || o.textContent);
     var restoredHas45 = restoredOptions.indexOf("4:5") >= 0;
-    return { zOptions: zOptions, has45: has45, restoredHas45: restoredHas45 };
+    var preservedThroughRestore = document.getElementById("selRatio").value === "16:9";
+    return { zOptions, has45, restoredHas45, preservedThroughNarrow, preservedThroughRestore };
   });
   console.log("ratio narrowing:", JSON.stringify(ratioResult));
-  const ratioOk = !ratioResult.has45 && ratioResult.restoredHas45 && ratioResult.zOptions.length === 7;
-  console.log(ratioOk ? "PASS (ratio dropdown narrows for Z-Image Turbo and restores)" : "FAIL (ratio narrowing)");
+  const ratioOk = !ratioResult.has45 && ratioResult.restoredHas45 && ratioResult.zOptions.length === 7
+    && ratioResult.preservedThroughNarrow && ratioResult.preservedThroughRestore;
+  console.log(ratioOk ? "PASS (ratio dropdown narrows for Z-Image Turbo, preserves value through narrow and restore)" : "FAIL (ratio narrowing)");
 
   const mimeResult = await page.evaluate(() => {
     state.refs = [null, null, null];
@@ -117,7 +129,53 @@ const PORT = process.env.PORT || 8931;
   const friendlyOk = /quota/i.test(friendlyResult) && !/[က-႟]/.test(friendlyResult);
   console.log(friendlyOk ? "PASS (friendly() localizes, no Burmese leak at en)" : "FAIL (friendly localization)");
 
-  const overall = cancelOk && kbOk && ratioOk && mimeOk && friendlyOk;
+  // Sticky toast must not permanently silence toast() forever if the update
+  // banner is shown but never tapped — only gate while sticky is true.
+  const stickyResult = await page.evaluate(() => {
+    _toastSticky = true;
+    toast("should be blocked", "ok");
+    var blockedText = document.getElementById("toast").textContent;
+    _toastSticky = false;
+    toast("should show now", "ok");
+    var recoveredText = document.getElementById("toast").textContent;
+    return { blockedText, recoveredText };
+  });
+  console.log("sticky toast gating:", JSON.stringify(stickyResult));
+  const stickyOk = stickyResult.blockedText !== "should be blocked" && stickyResult.recoveredText === "should show now";
+  console.log(stickyOk ? "PASS (sticky toast blocks while set, recovers once cleared)" : "FAIL (sticky toast)");
+
+  // Cancelling while the /query poll fetch is actually in flight (not just
+  // between ticks) must still surface as a "cancelled" error, not a raw
+  // AbortError misread as a generic RunningHub failure.
+  await page.addInitScript(() => {}); // no-op, keep prior init script active
+  const inFlightCancelResult = await page.evaluate(async () => {
+    var ctrl = new AbortController();
+    var hangingFetch = function(req) {
+      // Simulate rhV2Query's fetch actually being in flight when abort() fires.
+      return new Promise((resolve, reject) => {
+        ctrl.signal.addEventListener("abort", () => {
+          var err = new DOMException("The user aborted a request.", "AbortError");
+          reject(err);
+        });
+      });
+    };
+    var origFetch = window.fetch;
+    window.fetch = function(url, opts) {
+      if (String(url).indexOf("/openapi/v2/query") >= 0) return hangingFetch();
+      return origFetch(url, opts);
+    };
+    var pollPromise = rhV2PollUntilDone("TEST_KEY", "T1", null, 60000, ctrl.signal);
+    setTimeout(() => ctrl.abort(), 100);
+    var code = null;
+    try { await pollPromise; } catch (e) { code = e && e.code; }
+    window.fetch = origFetch;
+    return { code };
+  });
+  console.log("in-flight cancel:", JSON.stringify(inFlightCancelResult));
+  const inFlightCancelOk = inFlightCancelResult.code === "cancelled";
+  console.log(inFlightCancelOk ? "PASS (cancel during in-flight query fetch normalizes to 'cancelled')" : "FAIL (in-flight cancel)");
+
+  const overall = cancelOk && kbOk && ratioOk && mimeOk && friendlyOk && stickyOk && inFlightCancelOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);
