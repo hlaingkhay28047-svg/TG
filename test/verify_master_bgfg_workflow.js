@@ -5,6 +5,11 @@
    2 image slots and generic guide steps, and GENERATE sends a well-formed
    request whose prompt text references both IMAGE 1 and IMAGE 2 and
    carries the negative/AVOID list.
+   v4.20.2: also locks in the fix for a real user-reported bug — since no
+   curated lib/wf/cards5/master-bgfg-replace.jpg exists yet, the card used
+   to always attempt (and fail) that fetch before falling back to its local
+   SVG icon; on a slow connection that left the card visibly blank for a
+   noticeable stretch. Confirms that request is never made at all.
    Run against the deployed docs/app/index.html (same pattern as
    test/sweep_workflows.js). Usage: PORT=8931 node test/verify_master_bgfg_workflow.js */
 const { chromium } = require("playwright-core");
@@ -16,6 +21,12 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   page.on("pageerror", e => errors.push(String(e)));
+
+  let cardJpgRequested = false;
+  await page.route("**/lib/wf/cards5/master-bgfg-replace.jpg", (route) => {
+    cardJpgRequested = true;
+    route.abort();
+  });
 
   await page.addInitScript(`
     window.__reqs = [];
@@ -52,6 +63,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { idx, total: cards.length };
   });
   check(cardInfo.idx >= 0, "card renders in the Workflow page grid", cardInfo);
+  check(!cardJpgRequested, "never attempts the non-existent curated card JPG (would blank-flash on a slow connection)");
 
   if (cardInfo.idx < 0) {
     console.log("FAIL " + pass + "/" + (pass + fail + 1));
