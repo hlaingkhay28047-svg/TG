@@ -70,3 +70,6 @@ jobs:
 
       - name: Verify Phase 3 header + empty-state standardization
         run: node test/verify_phase3_header_emptystate.js
+
+      - name: Verify Phase 4 Studio/Setup accordion conversion
+        run: node test/verify_phase4_accordion.js
