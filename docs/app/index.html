@@ -687,6 +687,10 @@ var RH_MODELS = [
   /* Wan's image-edit takes explicit width/height ints (512-4096, default
      1024x1024), not resolution/aspectRatio — mapped via RH_WAN_RATIO_WH. */
   { id:"wan-image-edit",    label:"Wan Image Edit",          apiPath:"alibaba/wan-2.7/image-edit", whParam:true, promptMax:2048 },
+  /* Wan Image Edit Pro: confirmed identical request shape to Wan Image Edit
+     above (imageUrls/prompt/width/height, same 512-4096 range) — only the
+     apiPath differs, so it reuses whParam/RH_WAN_RATIO_WH unchanged. */
+  { id:"wan-image-edit-pro", label:"Wan Image Edit Pro",     apiPath:"alibaba/wan-2.7/image-edit-pro", whParam:true, promptMax:2048 },
   /* Upscale has a fundamentally different shape (no prompt at all — a single
      imageUrl + a "scale" enum) so it's routed through a dedicated submit path
      (rhV2SubmitUpscale) instead of the generic edit/generate one. */
@@ -3074,7 +3078,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.10.1";
+var APP_VER="4.10.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

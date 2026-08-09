@@ -64,7 +64,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var opt = document.querySelector('#selProvider option[value="runninghub"]');
     var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off",
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
-      "wan-image-edit", "upscale-pro", "seedream-v4", "seedream-v4-5"];
+      "wan-image-edit", "wan-image-edit-pro", "upscale-pro", "seedream-v4", "seedream-v4-5"];
     var stillUnconfigured = ["gpt-image-2", "flux-2-dev"];
     return {
       hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
@@ -75,6 +75,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       xOffImageParam: rhEffectiveImageParam("rh-image-x-off"),
       qwenSizeParam: rhEffectiveSizeParam("qwen-image-2"),
       wanWhParam: rhEffectiveWhParam("wan-image-edit"),
+      wanProWhParam: rhEffectiveWhParam("wan-image-edit-pro"),
       upscaleKind: rhEffectiveKind("upscale-pro"),
       upscaleImageParam: rhEffectiveImageParam("upscale-pro"),
       seedreamKind: rhEffectiveKind("seedream-v4"),
@@ -100,7 +101,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log("setup:", JSON.stringify(setup));
   var setupOk = setup.hasOption && setup.configured && setup.active && setup.allBuiltinsConfigured
     && setup.noneOfUnconfigured && setup.g2OffQuality === "medium" && setup.xOffImageParam === "image"
-    && setup.qwenSizeParam === true && setup.wanWhParam === true && setup.upscaleKind === "upscale"
+    && setup.qwenSizeParam === true && setup.wanWhParam === true && setup.wanProWhParam === true && setup.upscaleKind === "upscale"
     && setup.upscaleImageParam === "imageUrl"
     && setup.seedreamKind === "seedream" && setup.seedream45Kind === "seedream"
     && setup.qwenSize1_1_hd === "1536*1536" && setup.qwenSize16_9_std === "1280*720" && setup.qwenSizeAuto === ""
