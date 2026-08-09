@@ -159,6 +159,15 @@ body{padding-bottom:76px}
 .tabb .ic{font-size:19px;line-height:1}
 .tabb.on{color:var(--gold-hi)}
 .tabb.on .ic{transform:translateY(-1px)}
+/* second-level tabs for a top-level group with more than one page
+   (Create: Freeform/Studio/Retouch/Text→Img/Video/VidUp, Library:
+   Reference/Gallery) — flows with the page content rather than fixed,
+   so it doesn't compete with the primary bottom nav for screen space */
+.subtabbar{display:none;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:var(--sp-3) 0}
+.subtabbar::-webkit-scrollbar{display:none}
+.subtabbar.on{display:flex}
+.subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
+.subtab.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
 .toast{position:fixed;left:16px;right:16px;bottom:86px;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 .toast.on{display:block}
 .toast.ok{color:var(--ok)} .toast.err{color:var(--err)}
@@ -295,6 +304,8 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 </div></nav>
 
 <main class="wrap">
+
+<nav class="subtabbar" id="subtabbar"></nav>
 
 <div class="page on" id="pgWf">
   <header class="hero-strip">
@@ -1099,36 +1110,74 @@ function setSt(id, msg, cls){
 /* ---------- pages ---------- */
 var PAGES=[
   ["pgWf","🧠","Workflow"],
-  ["pgLib","🖼️","Library"],
+  ["pgCreate","✍️","Freeform"],
   ["pgStudio","⚡","Studio"],
   ["pgRetouch","💎","Retouch"],
-  ["pgCreate","✨","Create"],
+  ["pgText2Img","📝","Text→Img"],
   ["pgVideo","🎬","Video"],
   ["pgVideoUp","🚀","VidUp"],
-  ["pgText2Img","📝","Text2Img"],
+  ["pgLib","📚","Reference"],
   ["pgGallery","🗂","Gallery"],
   ["pgHome","⚙️","Setup"]
 ];
+/* the original flat 10-tab bar overflowed a real phone width (see
+   verify_tabbar_reachable's history) — regrouped into 4 top-level tabs,
+   each holding its related pages as second-level .subtab entries. Every
+   original page id below is unchanged, so every deep link / switchPage()
+   call elsewhere in the app still works exactly as before; only how you
+   *navigate there* changed. */
+var TOPGROUPS=[
+  { id:"grpWf", ic:"🧠", label:"Workflow", pages:["pgWf"] },
+  { id:"grpCreate", ic:"✨", label:"Create", pages:["pgCreate","pgStudio","pgRetouch","pgText2Img","pgVideo","pgVideoUp"] },
+  { id:"grpLib", ic:"🖼️", label:"Library", pages:["pgLib","pgGallery"] },
+  { id:"grpHome", ic:"⚙️", label:"Setup", pages:["pgHome"] }
+];
+function findGroup(id){
+  for(var i=0;i<TOPGROUPS.length;i++){ if(TOPGROUPS[i].pages.indexOf(id)>=0) return TOPGROUPS[i]; }
+  return TOPGROUPS[0];
+}
+function pageMeta(id){
+  for(var i=0;i<PAGES.length;i++){ if(PAGES[i][0]===id) return PAGES[i]; }
+  return null;
+}
 var curPage="pgWf";
+var lastPageOfGroup={};
+function renderSubtabs(grp, activeId){
+  var host=$("subtabbar");
+  if(!host) return;
+  if(grp.pages.length<2){ host.className="subtabbar"; host.innerHTML=""; return; }
+  host.innerHTML="";
+  var activeBtn=null;
+  grp.pages.forEach(function(pid){
+    var meta=pageMeta(pid);
+    var b=document.createElement("button");
+    b.className="subtab"+(pid===activeId?" on":"");
+    b.textContent=(meta[1]?meta[1]+" ":"")+meta[2];
+    b.onclick=function(){ switchPage(pid); };
+    host.appendChild(b);
+    if(pid===activeId) activeBtn=b;
+  });
+  host.className="subtabbar on";
+  /* Create's 6 sub-tabs are wider than a phone screen — bring the active
+     one into view so switching here (e.g. from the key-setup banner)
+     doesn't leave it scrolled off-screen with no visual cue */
+  if(activeBtn && activeBtn.scrollIntoView) activeBtn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+}
 function switchPage(id){
   curPage=id;
   PAGES.forEach(function(p){
     var pg=$(p[0]); if(pg) pg.className="page"+(p[0]===id?" on":"");
   });
+  var grp=findGroup(id);
+  lastPageOfGroup[grp.id]=id;
   var bar=$("tabbar");
   if(bar){
-    var bs=bar.children, activeBtn=null;
+    var bs=bar.children;
     for(var i=0;i<bs.length;i++){
-      bs[i].className="tabb"+(PAGES[i][0]===id?" on":"");
-      if(PAGES[i][0]===id) activeBtn=bs[i];
+      bs[i].className="tabb"+(TOPGROUPS[i].id===grp.id?" on":"");
     }
-    /* the tab bar has more items than a phone screen can show at once and
-       scrolls horizontally (see .tabbar overflow-x) — always bring the
-       newly-active tab into view so a page reached indirectly (e.g. the
-       key-setup banner jumping to Setup) doesn't leave its tab hidden
-       off-screen with no visual cue that more tabs exist. */
-    if(activeBtn && activeBtn.scrollIntoView) activeBtn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
   }
+  renderSubtabs(grp, id);
   window.scrollTo(0,0);
   try{ localStorage.setItem("hnk_web_studio_page", id); }catch(e){}
   if (id==="pgGallery" && typeof renderGallery==="function") renderGallery();
@@ -1222,13 +1271,18 @@ $("galDel").onclick=function(){
 $("galEmptyGo").onclick=function(){ switchPage("pgWf"); };
 (function buildTabbar(){
   var bar=$("tabbar");
-  PAGES.forEach(function(p){
+  TOPGROUPS.forEach(function(g){
     var b=document.createElement("button");
-    b.className="tabb"+(p[0]===curPage?" on":"");
-    var ic=document.createElement("span"); ic.className="ic"; ic.textContent=p[1];
+    b.className="tabb"+(g.pages.indexOf(curPage)>=0?" on":"");
+    var ic=document.createElement("span"); ic.className="ic"; ic.textContent=g.ic;
     b.appendChild(ic);
-    b.appendChild(document.createTextNode(p[2]));
-    b.onclick=function(){ switchPage(p[0]); };
+    b.appendChild(document.createTextNode(g.label));
+    b.onclick=function(){
+      /* re-entering a group returns you to whichever of its pages you
+         were last on, not always back to the first one — so tapping
+         "Create" after browsing Video doesn't reset you to Freeform */
+      switchPage(lastPageOfGroup[g.id] || g.pages[0]);
+    };
     bar.appendChild(b);
   });
 })();
@@ -3878,7 +3932,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.18.0";
+var APP_VER="4.19.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
