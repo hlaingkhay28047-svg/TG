@@ -705,7 +705,19 @@ var RH_MODELS = [
      documented sequentialImageGeneration/maxImages defaults for a single
      output image. */
   { id:"seedream-v4",       label:"Seedream v4",             apiPath:"seedream-v4/image-to-image",   kind:"seedream", promptMax:2000 },
-  { id:"seedream-v4-5",     label:"Seedream v4.5",           apiPath:"seedream-v4.5/image-to-image", kind:"seedream", promptMax:2000 }
+  { id:"seedream-v4-5",     label:"Seedream v4.5",           apiPath:"seedream-v4.5/image-to-image", kind:"seedream", promptMax:2000 },
+  /* RH Imagine Image Quality (edit) — the image-edit sibling of the
+     already-shipped text-to-image model of the same name. Confirmed shape:
+     single "imageUrl" (not imageUrls), a required "resolution" enum limited
+     to 1k/2k only (no 4k, unlike most other endpoints), a required
+     "numImages" enum sent as a string, and an optional aspectRatio. Routed
+     through kind:"imagine", which clamps the shared selSize picker's 4K
+     option down to the endpoint's real 2k ceiling (the same coarsening
+     already accepted for Qwen's HD tier) rather than sending an invalid
+     value, and omits aspectRatio entirely when no ratio is selected/valid —
+     matching the same "let the endpoint decide" behavior used everywhere
+     else in this app instead of guessing at a literal "auto" string. */
+  { id:"rh-imagine-quality-edit", label:"RH Imagine Image Quality", apiPath:"rhart-imagine-image-quality/edit", imageParam:"imageUrl", kind:"imagine" }
 ];
 /* OpenAI (GPT Image) — same bring-your-own-key reasoning as RunningHub above.
    Unlike RunningHub this is a single synchronous request (no upload/poll
@@ -1194,6 +1206,11 @@ async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolut
     body.resolution = resolution || "1k";
     body.sequentialImageGeneration = "disabled";
     body.maxImages = 1;
+  } else if(cfg.kind==="imagine"){
+    var res3 = String(resolution||"").toLowerCase();
+    body.resolution = (res3==="2k"||res3==="4k") ? "2k" : "1k";
+    body.numImages = "1";
+    var r3=rhV2Ratio(ratio); if(r3) body.aspectRatio=r3;
   } else if(cfg.sizeParam){
     var sz = rhQwenSize(ratio, resolution);
     if(sz) body.size = sz;
@@ -3078,7 +3095,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.10.2";
+var APP_VER="4.10.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
