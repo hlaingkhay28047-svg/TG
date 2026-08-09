@@ -38,5 +38,8 @@ jobs:
       - name: Run cross-provider auto-fallback sweep (mocked)
         run: node test/sweep_fallback.js
 
+      - name: Run RunningHub video-generation sweep (mocked)
+        run: node test/sweep_video.js
+
       - name: Run update-available version-check regression test
         run: node test/verify_version_check.js
