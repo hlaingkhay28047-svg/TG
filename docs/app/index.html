@@ -560,7 +560,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   <section class="card">
     <h2>🚀 VIDEO UPSCALE</h2>
     <p class="mut" id="vuIntro"></p>
-    <input type="file" accept="video/mp4,video/quicktime,.mov" id="vuFilePick" style="display:none">
+    <input type="file" accept="video/mp4" id="vuFilePick" style="display:none">
     <button class="btn" id="btnVuPick"></button>
     <div class="mut" id="vuFormatNote" style="margin-top:4px;font-size:11px"></div>
     <div class="mut" id="vuFileName" style="margin-top:6px"></div>
@@ -3784,7 +3784,7 @@ state.vuHistSel = -1;
 
 $("vuIntro").textContent = L9({my:"ရှိပြီးသား ဗီဒီယို ဖိုင်ကို resolution မြှင့်ပေးမယ် — RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Upscale an existing video file to a higher resolution — needs your RunningHub Enterprise key.",shn:"ႁဵတ်းႁႂ်ႈဝီဒီရူဝ်ႈဢၼ်မီးယူႇ resolution သုင်ၶိုၼ်ႈ — လူဝ်ႇ RunningHub Enterprise key",kac:"Video nga ai hpe resolution grau na ni galaw ai — RunningHub Enterprise key ra ai",th:"อัปสเกลวิดีโอที่มีอยู่ให้มีความละเอียดสูงขึ้น — ต้องมี RunningHub Enterprise key",zh:"把现有视频提升到更高分辨率 — 需要你的 RunningHub Enterprise key",vi:"Nâng cấp độ phân giải của video có sẵn — cần key RunningHub Enterprise",id:"Tingkatkan resolusi video yang ada — perlu RunningHub Enterprise key",ms:"Tingkatkan resolusi video sedia ada — perlukan RunningHub Enterprise key"});
 $("btnVuPick").textContent = L9({my:"📁 ဗီဒီယို ဖိုင် ရွေးရန် (MP4)",en:"📁 Pick a video file (MP4)",shn:"📁 ထၢႆႇဝီဒီရူဝ်ႈ (MP4)",kac:"📁 Video langai tawn shangun (MP4)",th:"📁 เลือกไฟล์วิดีโอ (MP4)",zh:"📁 选择视频文件（MP4）",vi:"📁 Chọn tệp video (MP4)",id:"📁 Pilih file video (MP4)",ms:"📁 Pilih fail video (MP4)"});
-$("vuFormatNote").textContent = L9({my:"MP4 ဖိုင် အကောင်းဆုံးပါ — iPhone ရဲ့ .mov လိုမျိုး တခြား format ဆိုရင် ပြောင်းရနိုင်ပါတယ်",en:"MP4 works best — other formats (like an iPhone's .mov) may need converting first",shn:"MP4 လီသုတ်း — format ဢၼ်ၽိတ်းၵၼ် (iPhone .mov ၸိူဝ်းၼႆႉ) လူဝ်ႇလႅၵ်ႈ",kac:"MP4 gaw grau kaja ai — iPhone .mov nga ai zawn re gaw galai ra ai",th:"MP4 ใช้ได้ดีที่สุด — รูปแบบอื่น (เช่น .mov ของ iPhone) อาจต้องแปลงก่อน",zh:"MP4 效果最佳 — 其他格式（如 iPhone 的 .mov）可能需要先转换",vi:"MP4 hoạt động tốt nhất — định dạng khác (như .mov của iPhone) có thể cần chuyển đổi trước",id:"MP4 paling optimal — format lain (seperti .mov iPhone) mungkin perlu dikonversi dulu",ms:"MP4 berfungsi terbaik — format lain (seperti .mov iPhone) mungkin perlu ditukar dahulu"});
+$("vuFormatNote").textContent = L9({my:"MP4 ဖိုင်ပဲ ရပါတယ် — iPhone ရဲ့ .mov လိုမျိုး တခြား format ဆိုရင် အရင် MP4 ပြောင်းပေးပါ",en:"MP4 only — other formats (like an iPhone's .mov) need converting to MP4 first",shn:"လႆႈသမ်ႉ MP4 ၵူၺ်း — format ဢၼ်ၽိတ်းၵၼ် (iPhone .mov ၸိူဝ်းၼႆႉ) လူဝ်ႇလႅၵ်ႈပဵၼ် MP4 ဢွၼ်တၢင်း",kac:"MP4 sha ra ai — iPhone .mov nga ai zawn re gaw MP4 hku shawng galai ra ai",th:"รับเฉพาะ MP4 — รูปแบบอื่น (เช่น .mov ของ iPhone) ต้องแปลงเป็น MP4 ก่อน",zh:"仅支持 MP4 — 其他格式（如 iPhone 的 .mov）需要先转换为 MP4",vi:"Chỉ hỗ trợ MP4 — định dạng khác (như .mov của iPhone) cần chuyển sang MP4 trước",id:"Hanya MP4 — format lain (seperti .mov iPhone) perlu dikonversi ke MP4 dulu",ms:"MP4 sahaja — format lain (seperti .mov iPhone) perlu ditukar ke MP4 dahulu"});
 function updateVuNeedNote(){
   $("vuNeedNote").textContent = state.vuFile ? "" : L9({my:"⚠ ဗီဒီယို ဖိုင် တစ်ခု ရွေးရပါမယ်",en:"⚠ You'll need to pick a video file",shn:"⚠ လူဝ်ႇထၢႆႇဝီဒီရူဝ်ႈဢွၼ်တၢင်း",kac:"⚠ Video langai tawn shangun ra ai",th:"⚠ ต้องเลือกไฟล์วิดีโอก่อน",zh:"⚠ 需要先选择一个视频文件",vi:"⚠ Bạn cần chọn một tệp video",id:"⚠ Anda perlu memilih file video",ms:"⚠ Anda perlu pilih fail video"});
 }
@@ -3801,6 +3801,18 @@ $("btnVuPick").onclick = function(){ $("vuFilePick").click(); };
 $("vuFilePick").onchange = function(){
   var f=this.files && this.files[0]; this.value="";
   if(!f) return;
+  /* The input's accept="video/mp4" is only a UI hint — some browsers/OSes
+     still let a user pick a non-MP4 file (e.g. an iPhone .mov) through an
+     "All Files" toggle. RunningHub's video-upscaler endpoint only accepts
+     MP4, and the upload path always sends an ".mp4" filename regardless of
+     the real file, so silently accepting a non-MP4 file here would upload
+     a mislabeled file and fail with a confusing generic error later.
+     Reject it clearly up front instead. */
+  var looksMp4 = (f.type && f.type.toLowerCase()==="video/mp4") || /\.mp4$/i.test(f.name||"");
+  if(!looksMp4){
+    toast(L9({my:"MP4 ဖိုင်ပဲ ရပါတယ် — ရွေးထားတဲ့ ဖိုင်က MP4 မဟုတ်ပုံရပါတယ်",en:"MP4 only — the file you picked doesn't look like an MP4",shn:"လႆႈသမ်ႉ MP4 ၵူၺ်း — ဢၼ်ထၢႆႇဝႆႉၼၼ်ႉ ဢမ်ႇၸႂ်ႈ MP4",kac:"MP4 sha ra ai — tawn ai file gaw MP4 n rai ai zawn re",th:"รับเฉพาะ MP4 — ไฟล์ที่เลือกดูเหมือนจะไม่ใช่ MP4",zh:"仅支持 MP4 — 你选择的文件看起来不是 MP4",vi:"Chỉ hỗ trợ MP4 — tệp bạn chọn có vẻ không phải MP4",id:"Hanya MP4 — file yang dipilih sepertinya bukan MP4",ms:"MP4 sahaja — fail yang dipilih nampaknya bukan MP4"}), "err");
+    return;
+  }
   var rd=new FileReader();
   rd.onload=function(){
     var dataUrl=String(rd.result);
