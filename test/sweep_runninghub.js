@@ -49,7 +49,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
           || u.indexOf("/openapi/v2/seedream-v4/image-to-image") >= 0
           || u.indexOf("/openapi/v2/seedream-v4.5/image-to-image") >= 0
           || u.indexOf("/openapi/v2/rhart-imagine-image-quality/edit") >= 0
-          || u.indexOf("/openapi/v2/rhart-image/z-image-turbo/image-to-image") >= 0) {
+          || u.indexOf("/openapi/v2/rhart-image/z-image-turbo/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/topazlabs/image-upscale-transparent") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
       return realFetch.apply(this, arguments);
@@ -67,7 +68,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off",
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
       "wan-image-edit", "wan-image-edit-pro", "upscale-pro", "seedream-v4", "seedream-v4-5",
-      "rh-imagine-quality-edit", "z-image-turbo"];
+      "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent"];
     var stillUnconfigured = ["gpt-image-2", "flux-2-dev"];
     return {
       hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
@@ -87,6 +88,10 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       imagineImageParam: rhEffectiveImageParam("rh-imagine-quality-edit"),
       zimageKind: rhEffectiveKind("z-image-turbo"),
       zimageImageParam: rhEffectiveImageParam("z-image-turbo"),
+      upTransparentKind: rhEffectiveKind("upscale-transparent"),
+      upTransparentImageParam: rhEffectiveImageParam("upscale-transparent"),
+      upTransparentWh2k: rhUpscaleTransparentWH("2K"),
+      upTransparentWhAuto: rhUpscaleTransparentWH(""),
       // pure function checks — no network involved
       qwenSize1_1_hd: rhQwenSize("1:1", "2K"),
       qwenSize16_9_std: rhQwenSize("16:9", ""),
@@ -113,6 +118,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && setup.seedreamKind === "seedream" && setup.seedream45Kind === "seedream"
     && setup.imagineKind === "imagine" && setup.imagineImageParam === "imageUrl"
     && setup.zimageKind === "zimage" && setup.zimageImageParam === "imageUrl"
+    && setup.upTransparentKind === "upscale-transparent" && setup.upTransparentImageParam === "imageUrl"
+    && setup.upTransparentWh2k && setup.upTransparentWh2k.w === 2560 && setup.upTransparentWh2k.h === 1440
+    && setup.upTransparentWhAuto === null
     && setup.qwenSize1_1_hd === "1536*1536" && setup.qwenSize16_9_std === "1280*720" && setup.qwenSizeAuto === ""
     && setup.wanWh16_9 && setup.wanWh16_9.w === 1024 && setup.wanWh16_9.h === 576 && setup.wanWhAuto === null
     && setup.scale1k === "2x" && setup.scale2k === "4x" && setup.scale4k === "6x"
@@ -301,6 +309,53 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body.aspectRatio === "16:9";
   console.log(zimageValidOk ? "PASS (z-image valid ratio passes through)" : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
 
+  // Upscale Transparent: activate it, pick "2K" (-> 2560x1440), and inspect
+  // the actual request body — must carry outputWidth/outputHeight (never
+  // "scale", which is Upscale Pro's field, not this endpoint's), no prompt,
+  // and singular imageUrl.
+  const upTransparentResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "upscale-transparent"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selSize").value = "2K";
+    document.getElementById("prompt").value = "";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/topazlabs/image-upscale-transparent") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
+  }, B64);
+  console.log("upscale-transparent submit body:", JSON.stringify(upTransparentResult.body));
+  const upTransparentOk = upTransparentResult.ok && upTransparentResult.body
+    && upTransparentResult.body.outputWidth === 2560 && upTransparentResult.body.outputHeight === 1440
+    && upTransparentResult.body.scale === undefined && upTransparentResult.body.prompt === undefined
+    && typeof upTransparentResult.body.imageUrl === "string" && upTransparentResult.body.imageUrl.length > 0
+    && upTransparentResult.body.imageUrls === undefined;
+  console.log(upTransparentOk ? "PASS (upscale-transparent outputWidth/outputHeight body)" : ("FAIL (upscale-transparent): " + JSON.stringify(upTransparentResult)));
+
+  // Upscale Transparent with no image attached must surface the same
+  // helpful "add an image" message as Upscale Pro (shared no-image guard).
+  const upTransparentNoImgMsg = await page.evaluate(async () => {
+    var c = rhCfg(); c.activeModel = "upscale-transparent"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("prompt").value = "some text but no image";
+    for (let i = 0; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 60; w++) {
+      const st = document.getElementById("stGen");
+      if (st && st.className.indexOf("err") >= 0 && st.textContent) return st.textContent;
+      await sleep(50);
+    }
+    return "TIMEOUT — no error message appeared";
+  });
+  console.log("upscale-transparent no-image message:", upTransparentNoImgMsg);
+  const upTransparentNoImgOk = /image|ပုံ/i.test(upTransparentNoImgMsg) && upTransparentNoImgMsg.indexOf("(?)") < 0;
+  console.log(upTransparentNoImgOk ? "PASS (upscale-transparent no-image message)" : ("FAIL (upscale-transparent no-image message): " + upTransparentNoImgMsg));
+
   // Upscale Pro with no image attached must surface a helpful "add an image"
   // message, not the generic "RunningHub error — try again (?)" fallback.
   const noImgMsg = await page.evaluate(async () => {
@@ -321,7 +376,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const noImgOk = /image|ပုံ/i.test(noImgMsg) && noImgMsg.indexOf("(?)") < 0;
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
-  const overall = result === "OK" && qwenOk && upOk && seedreamOk && imagineOk && zimageOk && zimageValidOk && noImgOk;
+  const overall = result === "OK" && qwenOk && upOk && seedreamOk && imagineOk && zimageOk && zimageValidOk
+    && upTransparentOk && upTransparentNoImgOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

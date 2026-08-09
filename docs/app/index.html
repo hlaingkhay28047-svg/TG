@@ -728,7 +728,12 @@ var RH_MODELS = [
      outputFormat:"png", and never sends resolution — this endpoint simply
      doesn't accept it, so sending one would be inventing an undeclared
      parameter rather than a confirmed default. */
-  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", imageParam:"imageUrl", kind:"zimage" }
+  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", imageParam:"imageUrl", kind:"zimage" },
+  /* Upscale Transparent: a second Upscale variant, routed through its own
+     dedicated submit/generate pair (rhV2SubmitUpscaleTransparent /
+     rhGenerateUpscaleTransparent) since — like Upscale Pro — its body shape
+     doesn't overlap with the generic edit/generate path at all. */
+  { id:"upscale-transparent", label:"Upscale Transparent", apiPath:"topazlabs/image-upscale-transparent", imageParam:"imageUrl", kind:"upscale-transparent" }
 ];
 /* OpenAI (GPT Image) — same bring-your-own-key reasoning as RunningHub above.
    Unlike RunningHub this is a single synchronous request (no upload/poll
@@ -1322,6 +1327,49 @@ async function rhGenerateUpscale(apiKey, apiPath, refDataUrls, sizeSel, onTick){
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
   var imageUrls = await rhV2UploadAll(apiKey, [refDataUrls[0]]);
   var taskId = await rhV2SubmitUpscale(apiKey, apiPath, imageUrls[0], rhScaleFromSize(sizeSel));
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
+  var results = (final && final.results) || [];
+  var outs=[];
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    var dataUrl = await rhDownloadAsDataUrl(results[i].url);
+    var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
+    if(m) outs.push({mime:m[1], b64:m[2]});
+  }
+  return outs;
+}
+/* ---------- RunningHub image upscaling ("Upscale Transparent") ----------
+   A second Upscale variant with a genuinely different body shape from
+   "Upscale Pro" above — confirmed from topazlabs/image-upscale-transparent
+   in model-registry.public.json: still no prompt and a single imageUrl, but
+   instead of a relative "scale" enum it takes explicit absolute
+   outputWidth/outputHeight ints (optional, defaulting to the endpoint's own
+   1920x1080 when omitted) plus an optional cropToFill boolean (default
+   false) and an outputFormat whose only valid value is "png" (so there's
+   nothing to pick — left unset to use the confirmed default rather than
+   redundantly repeating it). selSize maps to real target resolutions
+   (1080p/1440p/2160p) rather than a multiplier; "Auto" omits both fields
+   entirely so RunningHub's own confirmed 1920x1080 default applies. */
+function rhUpscaleTransparentWH(sizeSel){
+  var s=String(sizeSel||"").toLowerCase();
+  if(s==="4k") return {w:3840,h:2160};
+  if(s==="2k") return {w:2560,h:1440};
+  if(s==="1k") return {w:1920,h:1080};
+  return null;
+}
+async function rhV2SubmitUpscaleTransparent(apiKey, apiPath, imageUrl, sizeSel){
+  var body = { imageUrl: imageUrl||"" };
+  var wh = rhUpscaleTransparentWH(sizeSel);
+  if(wh){ body.outputWidth = wh.w; body.outputHeight = wh.h; }
+  var r=await fetch(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  return j.taskId;
+}
+async function rhGenerateUpscaleTransparent(apiKey, apiPath, refDataUrls, sizeSel, onTick){
+  if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
+  var imageUrls = await rhV2UploadAll(apiKey, [refDataUrls[0]]);
+  var taskId = await rhV2SubmitUpscaleTransparent(apiKey, apiPath, imageUrls[0], sizeSel);
   var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
   var results = (final && final.results) || [];
   var outs=[];
@@ -3115,7 +3163,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.10.4";
+var APP_VER="4.10.5";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -3348,6 +3396,8 @@ $("btnGen").onclick = async function(){
         var onTick = function(elapsed){ $("spin").textContent = t("spin_gen")+" · "+Math.round(elapsed/1000)+"s"; };
         var call = rhActiveForFallback.kind==="upscale"
           ? rhGenerateUpscale(state.rhKey, rhActiveForFallback.apiPath, refDataUrls, sizeSel, onTick)
+          : rhActiveForFallback.kind==="upscale-transparent"
+          ? rhGenerateUpscaleTransparent(state.rhKey, rhActiveForFallback.apiPath, refDataUrls, sizeSel, onTick)
           : rhGenerateOne(state.rhKey, rhActiveForFallback.apiPath, finalPrompt, ratio, refDataUrls, rhV2Resolution(sizeSel), rhActiveForFallback, onTick);
         return call.then(function(outs){
           return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
