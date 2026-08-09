@@ -131,6 +131,36 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     process.exit(1);
   }
 
+  // Ratio/Quality/Count are silent no-ops for upscale-kind RH models (see
+  // rhGenerateUpscale/rhGenerateUpscaleTransparent — neither reads prompt,
+  // ratio, or count at all) — the Create page must hide them rather than
+  // let a user configure settings that get silently ignored, and must
+  // switch back to visible when a non-upscale model is active.
+  const genOptsUi = await page.evaluate(() => {
+    document.getElementById("selProvider").value = "runninghub";
+    var c1 = rhCfg(); c1.activeModel = "upscale-pro"; rhSaveCfg(c1);
+    document.getElementById("selProvider").onchange();
+    var hiddenForUpscale = document.getElementById("selRatio").style.display === "none"
+      && document.getElementById("selQual").style.display === "none"
+      && document.getElementById("selCount").style.display === "none";
+    var c2 = rhCfg(); c2.activeModel = "nano-banana-2"; rhSaveCfg(c2);
+    document.getElementById("selProvider").onchange();
+    var visibleForNonUpscale = document.getElementById("selRatio").style.display !== "none"
+      && document.getElementById("selQual").style.display !== "none"
+      && document.getElementById("selCount").style.display !== "none";
+    document.getElementById("selProvider").value = "gemini";
+    document.getElementById("selProvider").onchange();
+    var visibleForGemini = document.getElementById("selRatio").style.display !== "none";
+    return { hiddenForUpscale, visibleForNonUpscale, visibleForGemini };
+  });
+  console.log("genOpts UI (upscale-kind hides Ratio/Quality/Count):", JSON.stringify(genOptsUi));
+  const genOptsUiOk = genOptsUi.hiddenForUpscale && genOptsUi.visibleForNonUpscale && genOptsUi.visibleForGemini;
+  console.log(genOptsUiOk ? "PASS (genOpts hidden for upscale-kind, visible otherwise)" : ("FAIL (genOpts UI): " + JSON.stringify(genOptsUi)));
+  if (!genOptsUiOk) {
+    await browser.close();
+    process.exit(1);
+  }
+
   const result = await page.evaluate(async (b64) => {
     document.querySelectorAll("#wfHost .grp").forEach(g => g.classList.add("open"));
     const card = document.querySelectorAll("#wfHost .wfmini")[0];

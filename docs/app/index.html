@@ -72,7 +72,7 @@ h1 em{font-style:normal;color:var(--gold-hi)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .grow{flex:1;min-width:0}
 .inp{width:100%;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:9px;color:var(--cream);padding:10px 12px;font-size:14px}
-#genOpts select{min-width:132px}
+#genOpts select,#vidOpts select,#vuOpts select,#t2iOpts select{min-width:132px}
 .inp:focus{border-color:var(--gold);outline:none}
 textarea.inp{min-height:110px;resize:vertical;line-height:1.8}
 select.inp{padding:9px 10px}
@@ -106,11 +106,11 @@ select.inp{padding:9px 10px}
 .ref.filled{border-style:solid}
 .ref img{width:100%;height:100%;object-fit:cover}
 .ref .add{font-size:26px;color:var(--gold);background:none;border:none;width:100%;height:100%}
-.ref .x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:7px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:12px;display:none}
+.ref .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:13px;display:none}
 .ref.filled .x{display:block}
 .ref .tag{position:absolute;left:4px;bottom:4px;background:rgba(11,13,20,.8);border-radius:6px;padding:1px 7px;font-size:10px;color:var(--gold-hi);font-weight:800}
 
-#genOpts .inp{flex:1 1 30%;min-width:30%}
+#genOpts .inp,#vidOpts .inp,#vuOpts .inp,#t2iOpts .inp{flex:1 1 30%;min-width:30%}
 .gen{width:100%;margin-top:12px;padding:15px;font-size:16px;border-radius:12px}
 .spin{display:none;margin-top:10px;color:var(--gold-hi);font-size:13px}
 .spin.on{display:block}
@@ -206,7 +206,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .refstrip .rs.filled{border-style:solid}
 .refstrip .rs img{width:100%;height:100%;object-fit:cover}
 .refstrip .rs .tag{position:absolute;left:2px;bottom:2px;background:rgba(11,13,20,.85);border-radius:5px;padding:0 4px;font-size:8.5px;color:var(--gold-hi);font-weight:800}
-.refstrip .rsx{position:absolute;top:1px;right:1px;width:16px;height:16px;border-radius:5px;border:none;background:rgba(11,13,20,.85);color:var(--cream);font-size:9px;display:flex;align-items:center;justify-content:center;padding:0}
+.refstrip .rsx{position:absolute;top:1px;right:1px;width:20px;height:20px;border-radius:6px;border:none;background:rgba(11,13,20,.85);color:var(--cream);font-size:10px;display:flex;align-items:center;justify-content:center;padding:0}
 .refstrip .note{font-size:11px;color:var(--muted);line-height:1.5}
 .wfmini{position:relative}
 .wfmini .fav{position:absolute;top:6px;right:6px;background:rgba(11,13,20,.72);border:none;border-radius:7px;padding:2px 6px;font-size:12px;color:var(--muted);z-index:2}
@@ -338,7 +338,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
       </select>
     </div>
     <div class="row" style="margin-top:8px">
-      <button class="btn btn-gold grow" id="btnRhSaveModel"></button>
+      <button class="btn grow" id="btnRhSaveModel"></button>
     </div>
     <div class="status" id="stRhModel"></div>
     <div class="mut" id="rhConfiguredList" style="margin-top:10px"></div>
@@ -375,7 +375,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     <h2 id="shareH2"></h2>
     <p class="mut" id="shareP"></p>
     <div class="row" style="margin-top:10px">
-      <button class="btn btn-gold grow" id="btnShare"></button>
+      <button class="btn grow" id="btnShare"></button>
       <button class="btn grow" id="btnCopyLink"></button>
     </div>
     <div class="status" id="stShare"></div>
@@ -562,7 +562,10 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     <p class="mut" id="vuIntro"></p>
     <input type="file" accept="video/mp4" id="vuFilePick" style="display:none">
     <button class="btn" id="btnVuPick"></button>
+    <div class="mut" id="vuFormatNote" style="margin-top:4px;font-size:11px"></div>
     <div class="mut" id="vuFileName" style="margin-top:6px"></div>
+    <video id="vuPreview" muted playsinline preload="metadata" style="display:none;width:100%;max-height:180px;border-radius:12px;background:#000;margin-top:8px"></video>
+    <div class="mut" id="vuNeedNote" style="margin-top:6px"></div>
   </section>
 
   <section class="card">
@@ -595,6 +598,11 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 </div><!-- /pgVideoUp -->
 
 <div class="page" id="pgText2Img">
+  <section class="card">
+    <h2>📝 TEXT TO IMAGE</h2>
+    <p class="mut" id="t2iIntro"></p>
+  </section>
+
   <section class="card">
     <h2>PROMPT</h2>
     <textarea class="inp" id="t2iPrompt" placeholder="…"></textarea>
@@ -1619,6 +1627,7 @@ if (state.rhKey) { $("rhKey").value = state.rhKey; }
 $("rhOptTag").textContent = L9({my:"(ချန်ထားလို့ရ)",en:"(optional)",shn:"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)",kac:"(n ra ai)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"});
 $("rhIntro").textContent = L9({my:"RunningHub Enterprise-Shared key ကို paste ပြီး Save & Verify နှိပ်ရုံပါပဲ — Nano Banana 2 က key ချက်ချင်း အလိုအလျောက် အသုံးပြုလို့ရပါပြီ (webappId/node id ထည့်စရာမလိုပါ)။ Model တခြားများ ဆက်ချိတ်ချင်ရင် endpoint path ကို RunningHub API docs ကနေ ကူးထည့်ရုံပါပဲ — browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ၊ ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Paste your RunningHub Enterprise-Shared key and tap Save & Verify — Nano Banana 2 works instantly with just the key (no webappId/node id needed). To add other models, paste the endpoint path from RunningHub's API docs. Everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.",shn:"RunningHub Enterprise-Shared key ၾၢႆႇ Photoshop plugin ၸႂ်ႉၽွင်းၶၢဝ်းၶၢဝ်း ၸၢမ်းၸႂ်ႉတီႈၼႆႈလႆႈ",kac:"RunningHub Enterprise-Shared key hpe paste nna Save & Verify dip u — Nano Banana 2 gaw key sha hte galoi mung galaw mai ai",th:"วางคีย์ RunningHub Enterprise-Shared แล้วกด Save & Verify — Nano Banana 2 ใช้งานได้ทันทีด้วย key เท่านั้น",zh:"粘贴 RunningHub Enterprise-Shared key 并点击 Save & Verify — Nano Banana 2 只需 key 即可立即使用",vi:"Dán RunningHub Enterprise-Shared key và bấm Save & Verify — Nano Banana 2 hoạt động ngay chỉ với key",id:"Tempel RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 langsung berfungsi hanya dengan key",ms:"Tampal RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 terus berfungsi hanya dengan key"});
 $("btnShowRhKey").textContent = "👁";
+$("btnShowRhKey").setAttribute("aria-label", t("btn_show"));
 $("btnSaveRhKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
 $("btnShowRhKey").onclick = function(){ var k=$("rhKey"); k.type = k.type==="password"?"text":"password"; };
 $("btnSaveRhKey").onclick = async function(){
@@ -1668,7 +1677,28 @@ function renderRhProviderOption(){
     if(sel.value==="runninghub") sel.value="gemini";
     had.remove();
   }
+  updateGenOptsForRHKind();
 }
+/* Ratio/Quality/Count only ever reach RunningHub's generic edit path
+   (rhV2Submit) via finalPrompt or an explicit aspectRatio field — for
+   upscale-kind models (Upscale Pro/Transparent) the whole prompt is
+   dropped and only Size matters (see rhGenerateUpscale), so leaving these
+   controls visible would let a user configure settings that silently do
+   nothing. Hidden whenever the active provider+model is upscale-kind,
+   rather than accepted-and-ignored. */
+function updateGenOptsForRHKind(){
+  var provider = $("selProvider").value;
+  var isUpscaleKind = false;
+  if(provider==="runninghub"){
+    var active = rhActiveModelCfg();
+    isUpscaleKind = !!(active && (active.kind==="upscale" || active.kind==="upscale-transparent"));
+  }
+  $("selRatio").style.display = isUpscaleKind ? "none" : "";
+  $("selQual").style.display = isUpscaleKind ? "none" : "";
+  $("selCount").style.display = isUpscaleKind ? "none" : "";
+  if(isUpscaleKind) $("selCount").value = "1";
+}
+$("selProvider").onchange = updateGenOptsForRHKind;
 $("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
 rhLoadFormFor($("rhModelSel").value);
 rhRenderConfiguredList();
@@ -1762,6 +1792,7 @@ if (state.oaKey) { $("oaKey").value = state.oaKey; }
 $("oaOptTag").textContent = L9({my:"(ချန်ထားလို့ရ)",en:"(optional)",shn:"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)",kac:"(n ra ai)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"});
 $("oaIntro").textContent = L9({my:"OpenAI ကိုယ်ပိုင် API key (sk-…) ထည့်ရင် gpt-image-1 နဲ့လည်း ဒီ Smart Workflow card 115 ခုလုံးကို ထုတ်လို့ရပါတယ် — key ကို browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ — ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Add your own OpenAI API key (sk-…) to generate any of the 115 Smart Workflow cards through gpt-image-1 too — the key stays in this browser's localStorage and is sent straight to OpenAI, never through any server.",shn:"သႂ်ႇ OpenAI API key ၸဝ်ႈၵဝ်ႇ (sk-…) ႁႂ်ႈၸႂ်ႉ gpt-image-1 ၸၢမ်းလႆႈ",kac:"Nang a OpenAI API key (sk-…) hpe bang u",th:"เพิ่ม API key ของคุณเอง (sk-…) เพื่อใช้ gpt-image-1",zh:"添加你自己的 OpenAI API key（sk-…）即可用 gpt-image-1 生成",vi:"Thêm API key OpenAI của riêng bạn (sk-…) để dùng gpt-image-1",id:"Tambahkan API key OpenAI Anda sendiri (sk-…) untuk memakai gpt-image-1",ms:"Tambah API key OpenAI anda sendiri (sk-…) untuk guna gpt-image-1"});
 $("btnShowOaKey").textContent = "👁";
+$("btnShowOaKey").setAttribute("aria-label", t("btn_show"));
 $("btnSaveOaKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
 $("btnShowOaKey").onclick = function(){ var k=$("oaKey"); k.type = k.type==="password"?"text":"password"; };
 $("btnSaveOaKey").onclick = async function(){
@@ -1805,6 +1836,7 @@ function renderRefStrip(){
       if(ref){
         var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
         var x=el("button","rsx","✕");
+        x.setAttribute("aria-label","Remove image");
         x.onclick=function(ev){ ev.stopPropagation(); state.refs[i]=null; state.imgRoles=null; renderRefs(); };
         d.appendChild(x);
       } else d.appendChild(document.createTextNode("+"));
@@ -1823,6 +1855,7 @@ function renderRefs(){
     if (ref) {
       var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
       var x=el("button","x","✕");
+      x.setAttribute("aria-label","Remove image");
       x.onclick=function(){ state.refs[i]=null; state.imgRoles=null; renderRefs(); };
       d.appendChild(x);
     } else {
@@ -2208,7 +2241,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     var w=wiz.w, host=$("wizIn"); host.innerHTML="";
     var top=el("div","wiz-top");
     top.appendChild(el("div","ttl","🧠 "+w.title));
-    var x=el("button","wiz-x","✕"); x.onclick=closeWizard; top.appendChild(x);
+    var x=el("button","wiz-x","✕"); x.setAttribute("aria-label","Close"); x.onclick=closeWizard; top.appendChild(x);
     host.appendChild(top);
     var dots=el("div","wiz-dots");
     [["Guide"],["Images"],["Generate"]].forEach(function(d,i){
@@ -2220,21 +2253,21 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     host.appendChild(dots);
     var body=el("div","wiz-body");
     if (wiz.step===1){
-      if (w.cardImg||w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=w.cardImg||w.svg;
+      if (w.cardImg||w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=w.cardImg||w.svg; sv.alt=w.title;
         if(w.cardImg&&w.svg) sv.onerror=function(){ this.onerror=null; this.src=w.svg; };
         body.appendChild(sv); }
       else if (w.vis2){
         /* transfer-type: show source ➜ result pair, full quality */
         var pr=el("div","wizpair");
-        var a=document.createElement("img"); a.src=fullSrc(visSrc(w)); pr.appendChild(a);
+        var a=document.createElement("img"); a.src=fullSrc(visSrc(w)); a.alt=t("lb_before"); pr.appendChild(a);
         var mid=el("span","arw","➜"); pr.appendChild(mid);
-        var c=document.createElement("img"); c.src=fullSrc(w.vis2); pr.appendChild(c);
+        var c=document.createElement("img"); c.src=fullSrc(w.vis2); c.alt=t("lb_after"); pr.appendChild(c);
         body.appendChild(pr);
         var cap=el("div","mut"); cap.style.textAlign="center"; cap.style.marginTop="4px";
         cap.textContent=t("lb_src")+" ➜ "+t("lb_res");
         body.appendChild(cap);
       }
-      else if (w.visual){ var im=document.createElement("img"); im.className="wiz-visual"; im.src=fullSrc(visSrc(w)); body.appendChild(im); }
+      else if (w.visual){ var im=document.createElement("img"); im.className="wiz-visual"; im.src=fullSrc(visSrc(w)); im.alt=w.title; body.appendChild(im); }
       body.appendChild(el("div","s",w.summary)).style.margin="10px 0 2px";
       body.appendChild(el("p","mut",w.explanation));
       stepsFor(w).forEach(function(s,i){
@@ -2819,6 +2852,8 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       var m=el("button","wfmini");
       var cv=cardVisual(w); if(cv) m.appendChild(cv);
       var fav=el("button","fav"+(favList().indexOf(w.id)>=0?" on":""), "★");
+      fav.setAttribute("aria-label","Favorite");
+      fav.setAttribute("aria-pressed", favList().indexOf(w.id)>=0 ? "true" : "false");
       fav.onclick=function(ev){
         ev.stopPropagation();
         var l=favList(), i=l.indexOf(w.id);
@@ -3252,7 +3287,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.11.0";
+var APP_VER="4.12.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -3749,6 +3784,11 @@ state.vuHistSel = -1;
 
 $("vuIntro").textContent = L9({my:"ရှိပြီးသား ဗီဒီယို ဖိုင်ကို resolution မြှင့်ပေးမယ် — RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Upscale an existing video file to a higher resolution — needs your RunningHub Enterprise key.",shn:"ႁဵတ်းႁႂ်ႈဝီဒီရူဝ်ႈဢၼ်မီးယူႇ resolution သုင်ၶိုၼ်ႈ — လူဝ်ႇ RunningHub Enterprise key",kac:"Video nga ai hpe resolution grau na ni galaw ai — RunningHub Enterprise key ra ai",th:"อัปสเกลวิดีโอที่มีอยู่ให้มีความละเอียดสูงขึ้น — ต้องมี RunningHub Enterprise key",zh:"把现有视频提升到更高分辨率 — 需要你的 RunningHub Enterprise key",vi:"Nâng cấp độ phân giải của video có sẵn — cần key RunningHub Enterprise",id:"Tingkatkan resolusi video yang ada — perlu RunningHub Enterprise key",ms:"Tingkatkan resolusi video sedia ada — perlukan RunningHub Enterprise key"});
 $("btnVuPick").textContent = L9({my:"📁 ဗီဒီယို ဖိုင် ရွေးရန် (MP4)",en:"📁 Pick a video file (MP4)",shn:"📁 ထၢႆႇဝီဒီရူဝ်ႈ (MP4)",kac:"📁 Video langai tawn shangun (MP4)",th:"📁 เลือกไฟล์วิดีโอ (MP4)",zh:"📁 选择视频文件（MP4）",vi:"📁 Chọn tệp video (MP4)",id:"📁 Pilih file video (MP4)",ms:"📁 Pilih fail video (MP4)"});
+$("vuFormatNote").textContent = L9({my:"MP4 ဖိုင်ပဲ ရပါတယ် — iPhone ရဲ့ .mov လိုမျိုး တခြား format ဆိုရင် အရင် MP4 ပြောင်းပေးပါ",en:"MP4 only — other formats (like an iPhone's .mov) need converting to MP4 first",shn:"လႆႈသမ်ႉ MP4 ၵူၺ်း — format ဢၼ်ၽိတ်းၵၼ် (iPhone .mov ၸိူဝ်းၼႆႉ) လူဝ်ႇလႅၵ်ႈပဵၼ် MP4 ဢွၼ်တၢင်း",kac:"MP4 sha ra ai — iPhone .mov nga ai zawn re gaw MP4 hku shawng galai ra ai",th:"รับเฉพาะ MP4 — รูปแบบอื่น (เช่น .mov ของ iPhone) ต้องแปลงเป็น MP4 ก่อน",zh:"仅支持 MP4 — 其他格式（如 iPhone 的 .mov）需要先转换为 MP4",vi:"Chỉ hỗ trợ MP4 — định dạng khác (như .mov của iPhone) cần chuyển sang MP4 trước",id:"Hanya MP4 — format lain (seperti .mov iPhone) perlu dikonversi ke MP4 dulu",ms:"MP4 sahaja — format lain (seperti .mov iPhone) perlu ditukar ke MP4 dahulu"});
+function updateVuNeedNote(){
+  $("vuNeedNote").textContent = state.vuFile ? "" : L9({my:"⚠ ဗီဒီယို ဖိုင် တစ်ခု ရွေးရပါမယ်",en:"⚠ You'll need to pick a video file",shn:"⚠ လူဝ်ႇထၢႆႇဝီဒီရူဝ်ႈဢွၼ်တၢင်း",kac:"⚠ Video langai tawn shangun ra ai",th:"⚠ ต้องเลือกไฟล์วิดีโอก่อน",zh:"⚠ 需要先选择一个视频文件",vi:"⚠ Bạn cần chọn một tệp video",id:"⚠ Anda perlu memilih file video",ms:"⚠ Anda perlu pilih fail video"});
+}
+updateVuNeedNote();
 $("vuSpin").textContent = L9({my:"ဗီဒီယို resolution မြှင့်နေပါတယ် — မိနစ်အနည်းငယ် စောင့်ပါ…",en:"Upscaling video — allow a few minutes…",shn:"ႁဵတ်း resolution သုင်ၶိုၼ်ႈယူႇ — ၶွႆတွင်ၵမ်ႈၽွင်ႈ",kac:"Video resolution grau na ni galaw nga ai — mizan langai nga chyam sit u",th:"กำลังอัปสเกลวิดีโอ — รอสักครู่",zh:"正在提升视频分辨率 — 请稍候几分钟",vi:"Đang nâng cấp video — vui lòng chờ vài phút",id:"Meningkatkan resolusi video — tunggu beberapa menit",ms:"Meningkatkan resolusi video — tunggu beberapa minit"});
 $("btnVuRetry").textContent = L9({my:"🔁 ပြန်စမ်း",en:"🔁 Retry",shn:"🔁 ၸၢမ်းၶိုၼ်း",kac:"🔁 Bai chyam",th:"🔁 ลองใหม่",zh:"🔁 重试",vi:"🔁 Thử lại",id:"🔁 Coba lagi",ms:"🔁 Cuba lagi"});
 $("vuResultH2").textContent = L9({my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"});
@@ -3761,6 +3801,18 @@ $("btnVuPick").onclick = function(){ $("vuFilePick").click(); };
 $("vuFilePick").onchange = function(){
   var f=this.files && this.files[0]; this.value="";
   if(!f) return;
+  /* The input's accept="video/mp4" is only a UI hint — some browsers/OSes
+     still let a user pick a non-MP4 file (e.g. an iPhone .mov) through an
+     "All Files" toggle. RunningHub's video-upscaler endpoint only accepts
+     MP4, and the upload path always sends an ".mp4" filename regardless of
+     the real file, so silently accepting a non-MP4 file here would upload
+     a mislabeled file and fail with a confusing generic error later.
+     Reject it clearly up front instead. */
+  var looksMp4 = (f.type && f.type.toLowerCase()==="video/mp4") || /\.mp4$/i.test(f.name||"");
+  if(!looksMp4){
+    toast(L9({my:"MP4 ဖိုင်ပဲ ရပါတယ် — ရွေးထားတဲ့ ဖိုင်က MP4 မဟုတ်ပုံရပါတယ်",en:"MP4 only — the file you picked doesn't look like an MP4",shn:"လႆႈသမ်ႉ MP4 ၵူၺ်း — ဢၼ်ထၢႆႇဝႆႉၼၼ်ႉ ဢမ်ႇၸႂ်ႈ MP4",kac:"MP4 sha ra ai — tawn ai file gaw MP4 n rai ai zawn re",th:"รับเฉพาะ MP4 — ไฟล์ที่เลือกดูเหมือนจะไม่ใช่ MP4",zh:"仅支持 MP4 — 你选择的文件看起来不是 MP4",vi:"Chỉ hỗ trợ MP4 — tệp bạn chọn có vẻ không phải MP4",id:"Hanya MP4 — file yang dipilih sepertinya bukan MP4",ms:"MP4 sahaja — fail yang dipilih nampaknya bukan MP4"}), "err");
+    return;
+  }
   var rd=new FileReader();
   rd.onload=function(){
     var dataUrl=String(rd.result);
@@ -3768,6 +3820,8 @@ $("vuFilePick").onchange = function(){
     if(m){
       state.vuFile={mime:m[1],b64:m[2],name:f.name};
       $("vuFileName").textContent=f.name;
+      var pv=$("vuPreview"); pv.src=dataUrl; pv.style.display="";
+      updateVuNeedNote();
     }
   };
   rd.readAsDataURL(f);
@@ -3876,6 +3930,7 @@ $("selT2IModel").onchange = updateT2IModelUI;
 $("t2iPrompt").addEventListener("input", updateT2IPromptCount);
 updateT2IModelUI();
 
+$("t2iIntro").textContent = L9({my:"Prompt တစ်ခုတည်းနဲ့ ပုံအသစ် ထုတ်ပေးမယ် — reference ပုံ မလိုပါ။ RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Generate a brand-new image from just a text prompt — no reference photo needed. Needs your RunningHub Enterprise key.",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈမႂ်ႇတီႈ prompt ၵူၺ်း — ဢမ်ႇလူဝ်ႇ reference ၶႅပ်းႁၢင်ႈ",kac:"Prompt sha hte lam de sumla nngai galaw ai — reference sumla n ra ai",th:"สร้างภาพใหม่จากข้อความอย่างเดียว — ไม่ต้องใช้รูปอ้างอิง",zh:"仅凭文字提示词生成全新图片 — 不需要参考图片",vi:"Tạo ảnh hoàn toàn mới chỉ từ một prompt văn bản — không cần ảnh tham chiếu",id:"Buat gambar baru hanya dari prompt teks — tidak perlu foto referensi",ms:"Jana imej baharu hanya daripada prompt teks — tidak perlu foto rujukan"});
 $("t2iPrompt").placeholder = L9({my:"ဘယ်လို ပုံမျိုး လိုချင်လဲ ဖော်ပြပါ — ဥပမာ: a photorealistic portrait of a woman in a red dress standing in a garden at golden hour…",en:"Describe the image you want — e.g. a photorealistic portrait of a woman in a red dress standing in a garden at golden hour…",shn:"တႅမ်ႈဝႃႈလွင်ႈၶႅပ်းႁၢင်ႈဢၼ်လူဝ်ႇ",kac:"Sumla n gara hku ra ai ni tsun dan u",th:"อธิบายภาพที่ต้องการ",zh:"描述你想要的图片",vi:"Mô tả bức ảnh bạn muốn",id:"Jelaskan gambar yang Anda inginkan",ms:"Terangkan imej yang anda mahu"});
 $("t2iSpin").textContent = L9({my:"ပုံ ထုတ်နေပါတယ် — စက္ကန့် အနည်းငယ် စောင့်ပါ…",en:"Generating image — allow a few seconds…",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈယူႇ — ၶွႆတွင်ၵမ်ႈၽွင်ႈ",kac:"Sumla galaw nga ai — miting langai nga chyam sit u",th:"กำลังสร้างภาพ — รอสักครู่",zh:"正在生成图片 — 请稍候",vi:"Đang tạo ảnh — vui lòng chờ",id:"Membuat gambar — tunggu sebentar",ms:"Menjana imej — tunggu sebentar"});
 $("btnT2IRetry").textContent = L9({my:"🔁 ပြန်စမ်း",en:"🔁 Retry",shn:"🔁 ၸၢမ်းၶိုၼ်း",kac:"🔁 Bai chyam",th:"🔁 ลองใหม่",zh:"🔁 重试",vi:"🔁 Thử lại",id:"🔁 Coba lagi",ms:"🔁 Cuba lagi"});
