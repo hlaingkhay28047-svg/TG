@@ -5,6 +5,14 @@
    2 image slots and generic guide steps, and GENERATE sends a well-formed
    request whose prompt text references both IMAGE 1 and IMAGE 2 and
    carries the negative/AVOID list.
+   v4.20.2: fixed a real user-reported bug — with no curated
+   lib/wf/cards5/master-bgfg-replace.jpg, the card always attempted (and
+   failed) that fetch before falling back to its local SVG icon; on a slow
+   connection that left the card visibly blank for a noticeable stretch.
+   v4.20.3: a real curated photo now exists at that path (generated via the
+   live Gemini API from this exact workflow, then committed as the card's
+   thumbnail) — confirms the card loads that real JPG successfully instead
+   of falling back to the SVG icon.
    Run against the deployed docs/app/index.html (same pattern as
    test/sweep_workflows.js). Usage: PORT=8931 node test/verify_master_bgfg_workflow.js */
 const { chromium } = require("playwright-core");
@@ -16,6 +24,11 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   page.on("pageerror", e => errors.push(String(e)));
+
+  let cardJpgStatus = null;
+  page.on("response", (res) => {
+    if (res.url().indexOf("/lib/wf/cards5/master-bgfg-replace.jpg") >= 0) cardJpgStatus = res.status();
+  });
 
   await page.addInitScript(`
     window.__reqs = [];
@@ -49,9 +62,22 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     document.querySelectorAll("#wfHost .grp").forEach(g => g.classList.add("open"));
     const cards = Array.from(document.querySelectorAll("#wfHost .wfmini"));
     const idx = cards.findIndex(c => c.querySelector(".t") && c.querySelector(".t").textContent.indexOf("Master BG FG Replace") >= 0);
+    if (idx >= 0) cards[idx].scrollIntoView({ block: "center" });
     return { idx, total: cards.length };
   });
   check(cardInfo.idx >= 0, "card renders in the Workflow page grid", cardInfo);
+
+  if (cardInfo.idx >= 0) {
+    await page.waitForTimeout(800); // let the lazy-loaded card image finish fetching
+    const thumbInfo = await page.evaluate((idx) => {
+      const card = document.querySelectorAll("#wfHost .wfmini")[idx];
+      const img = card.querySelector("img");
+      return img ? { src: img.src, complete: img.complete, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight } : { noImg: true };
+    }, cardInfo.idx);
+    check(cardJpgStatus === 200, "curated card JPG loads successfully (status 200)", { cardJpgStatus });
+    check(thumbInfo.src.indexOf("cards5/master-bgfg-replace.jpg") >= 0, "card shows the real curated photo, not the SVG fallback", thumbInfo);
+    check(thumbInfo.complete && thumbInfo.naturalWidth > 0, "curated photo actually rendered (non-zero dimensions)", thumbInfo);
+  }
 
   if (cardInfo.idx < 0) {
     console.log("FAIL " + pass + "/" + (pass + fail + 1));

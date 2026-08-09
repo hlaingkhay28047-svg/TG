@@ -2762,6 +2762,12 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       return ST_SUM[id] ? Object.assign({}, w, { summary:L9(ST_SUM[id]) }) : w;
     }); }
 
+    /* ids with no curated lib/wf/cards5/<id>.jpg yet — skip that request entirely so the
+       card renders its instant local SVG icon straight away instead of waiting out a
+       guaranteed 404 first (very visible on slow connections). Remove an id here once a
+       real photo is added for it. */
+    var NO_CARD_JPG=[];
+
     var cats=[];
     var mm=LANG!=="en";
     cats.push({ t:"🧑‍🦰 Face & Portrait", open:true,
@@ -2895,7 +2901,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       }
       c.items.forEach(function(w){ if(w.vis2) w.fx=null; });
       /* real-photo composite card (source ➜ result), SVG diagram as fallback */
-      c.items.forEach(function(w){ w.cardImg="lib/wf/cards5/"+w.id+".jpg"; try{ w.svg=svgFor(w); }catch(e){} });
+      c.items.forEach(function(w){ if(NO_CARD_JPG.indexOf(w.id)<0) w.cardImg="lib/wf/cards5/"+w.id+".jpg"; try{ w.svg=svgFor(w); }catch(e){} });
     });
     return cats;
   }
@@ -3935,7 +3941,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.20.1";
+var APP_VER="4.20.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
