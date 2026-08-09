@@ -58,3 +58,6 @@ jobs:
 
       - name: Verify bottom tab bar stays reachable on a real phone width
         run: node test/verify_tabbar_reachable.js
+
+      - name: Verify network-failure errors are localized, not raw exceptions
+        run: node test/verify_network_error_friendly.js
