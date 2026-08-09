@@ -105,6 +105,14 @@ select.inp{padding:9px 10px}
 .subh:first-child{margin-top:0}
 .subh b{color:var(--gold-hi)}
 
+/* shared empty-state pattern (icon + message + optional CTA), replacing
+   3 separately hand-rolled versions with slightly different icon sizes
+   and spacing that had drifted apart with no shared source of truth */
+.empty-state{display:none;text-align:center;padding:var(--sp-6) var(--sp-3)}
+.empty-state.on{display:block}
+.empty-state .ic{font-size:32px;opacity:.5;margin-bottom:var(--sp-2)}
+.empty-state .btn{margin-top:var(--sp-4)}
+
 .grp{border:1px solid var(--line-soft);border-radius:var(--r-md);margin:var(--sp-3) 0;overflow:hidden}
 .grp-h{display:flex;align-items:center;gap:var(--sp-2);width:100%;background:var(--panel-2);border:none;color:var(--cream);padding:11px 14px;font-size:var(--fs-base);font-weight:800;text-align:left}
 .grp-h .car{color:var(--gold);transition:transform .15s;font-size:var(--fs-xs)}
@@ -404,7 +412,8 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   </section>
 
   <section class="card">
-    <h2>VISUAL LIBRARY <span class="mut" style="letter-spacing:0">— 366</span></h2>
+    <h2>VISUAL LIBRARY</h2>
+    <p class="mut">366</p>
     <div class="row">
       <input class="inp grow" id="libSearch" placeholder="ရှာရန် — wedding, child, lighting, myanmar…">
     </div>
@@ -421,9 +430,9 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
       </div>
     </div>
     <div class="lib-grid" id="libGrid"></div>
-    <div class="mut" id="libEmpty" style="display:none;text-align:center;padding:22px 10px">
-      <div style="font-size:32px;opacity:.5;margin-bottom:6px">🔍</div>
-      <span id="libEmptyTxt"></span>
+    <div class="empty-state" id="libEmpty">
+      <div class="ic">🔍</div>
+      <p class="mut" id="libEmptyTxt"></p>
     </div>
     <div class="row" style="margin-top:10px;justify-content:center">
       <button class="btn" id="libMore"></button>
@@ -434,7 +443,8 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
 <div class="page" id="pgStudio">
   <section class="card">
-    <h2>🛠 STUDIO TOOLS <span class="mut" style="letter-spacing:0">— Scene Builder · Retouch Pro · Add-ons</span></h2>
+    <h2>🛠 STUDIO TOOLS</h2>
+    <p class="mut">Scene Builder · Retouch Pro · Add-ons</p>
     <div id="oneTapHost"></div>
   </section>
 
@@ -735,10 +745,10 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
       </div>
     </div>
     <div class="lib-grid" id="galGrid"></div>
-    <div id="galEmpty" style="margin-top:10px;text-align:center;padding:26px 10px">
-      <div style="font-size:38px;opacity:.5;margin-bottom:10px">🗂</div>
+    <div id="galEmpty" class="empty-state on" style="margin-top:10px">
+      <div class="ic">🗂</div>
       <p class="mut" id="galEmptyTxt">ရလဒ် မရှိသေးပါ — Generate လုပ်ပြီးရင် ဒီမှာ ရောက်လာမယ်။</p>
-      <button class="btn btn-gold" id="galEmptyGo" style="margin-top:14px">🧠 Workflow ကနေ စမယ်</button>
+      <button class="btn btn-gold" id="galEmptyGo">🧠 Workflow ကနေ စမယ်</button>
     </div>
   </section>
 </div><!-- /pgGallery -->
@@ -1148,7 +1158,7 @@ function renderGallery(){
     d.transaction("gal").objectStore("gal").getAll().onsuccess=function(e){
       var items=(e.target.result||[]).reverse();
       var grid=$("galGrid"); grid.innerHTML="";
-      $("galEmpty").style.display=items.length?"none":"";
+      $("galEmpty").classList.toggle("on",!items.length);
       if(galSel && !items.some(function(it){ return it.id===galSel.id; })) galSel=null;
       if(!galSel){ $("galPick").className="lib-pick"; }
       if(!items.length){ return; }
@@ -1175,7 +1185,7 @@ function renderGallery(){
   }).catch(function(){
     $("galGrid").innerHTML="";
     $("galPick").className="lib-pick";
-    $("galEmpty").style.display="";
+    $("galEmpty").classList.add("on");
     toast(L9({my:"Gallery ကို ဖွင့်၍ မရပါ — browser storage ခွင့်ပြုချက် စစ်ပါ",en:"Couldn't open Gallery storage — check your browser's storage permissions",shn:"ပိုတ်ႇဢမ်ႇလႆႈ Gallery storage — တွပ်ႇထၢမ်တူၺ်း browser storage ၶႂၢင်ႉၶႂၢၵ်ႈ",kac:"Gallery storage hpe n mai hpaw ai — browser storage ra ai lam yu chyam u",th:"เปิดพื้นที่จัดเก็บ Gallery ไม่ได้ — ตรวจสอบสิทธิ์การจัดเก็บของเบราว์เซอร์",zh:"无法打开 Gallery 存储 — 请检查浏览器存储权限",vi:"Không thể mở bộ nhớ Gallery — kiểm tra quyền lưu trữ trình duyệt",id:"Tidak dapat membuka penyimpanan Gallery — periksa izin penyimpanan browser Anda",ms:"Tidak dapat membuka storan Gallery — semak kebenaran storan pelayar anda"}),"err");
   });
 }
@@ -3069,12 +3079,11 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   renderFavRecent();
   $("wfPageH2").textContent = "🧠 SMART WORKFLOW — " + wfTotal + t("unit");
   var _swc=$("stWfCount"); if(_swc) _swc.textContent=String(wfTotal);
-  var wfEmpty=el("div","mut","");
+  var wfEmpty=el("div","empty-state","");
   wfEmpty.id="wfEmpty";
-  wfEmpty.style.cssText="display:none;text-align:center;padding:22px 10px";
-  var wfEmptyIcon=el("div",null,"🔍"); wfEmptyIcon.style.cssText="font-size:32px;opacity:.5;margin-bottom:6px";
+  var wfEmptyIcon=el("div","ic","🔍");
   wfEmpty.appendChild(wfEmptyIcon);
-  var wfEmptyTxt=el("span",null,L9({my:"ဒီစကားလုံးနဲ့ workflow ဘာမှ မတွေ့ပါ — တခြားစကားလုံးနဲ့ ရှာကြည့်ပါ",en:"No workflows match that — try a different search",shn:"ဢမ်ႇႁၼ် workflow သင် — ၸၢမ်းသွၵ်ႈတူၺ်းၶေႃႈၵႂၢမ်းတၢင်ႇဢၼ်",kac:"Workflow n mu ai — ga langai bai tam yu u",th:"ไม่พบเวิร์กโฟลว์ — ลองค้นหาคำอื่น",zh:"没有匹配的工作流 — 试试其他关键词",vi:"Không tìm thấy workflow — hãy thử từ khóa khác",id:"Tidak ada workflow yang cocok — coba kata kunci lain",ms:"Tiada aliran kerja sepadan — cuba kata carian lain"}));
+  var wfEmptyTxt=el("p","mut",L9({my:"ဒီစကားလုံးနဲ့ workflow ဘာမှ မတွေ့ပါ — တခြားစကားလုံးနဲ့ ရှာကြည့်ပါ",en:"No workflows match that — try a different search",shn:"ဢမ်ႇႁၼ် workflow သင် — ၸၢမ်းသွၵ်ႈတူၺ်းၶေႃႈၵႂၢမ်းတၢင်ႇဢၼ်",kac:"Workflow n mu ai — ga langai bai tam yu u",th:"ไม่พบเวิร์กโฟลว์ — ลองค้นหาคำอื่น",zh:"没有匹配的工作流 — 试试其他关键词",vi:"Không tìm thấy workflow — hãy thử từ khóa khác",id:"Tidak ada workflow yang cocok — coba kata kunci lain",ms:"Tiada aliran kerja sepadan — cuba kata carian lain"}));
   wfEmpty.appendChild(wfEmptyTxt);
   wfHost.appendChild(wfEmpty);
   wfHost.appendChild(el("div","mut",t("wf_note")));
@@ -3099,7 +3108,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         grps[i].className="grp"+(i===0?" open":"");
       }
     }
-    wfEmpty.style.display = (q && !anyMatch) ? "" : "none";
+    wfEmpty.classList.toggle("on", !!(q && !anyMatch));
   };
 
   /* result → continue-editing chain */
@@ -3632,7 +3641,7 @@ function renderLibGrid(reset){
   $("libMore").style.display = end < lib.list.length ? "" : "none";
   var empty=$("libEmpty");
   if(empty){
-    empty.style.display = lib.list.length ? "none" : "";
+    empty.classList.toggle("on",!lib.list.length);
     if(!lib.list.length) $("libEmptyTxt").textContent = L9({my:"ဒီစကားလုံးနဲ့ ဘာမှ မတွေ့ပါ — တခြားစကားလုံးနဲ့ ရှာကြည့်ပါ",en:"No matches for that — try a different search",shn:"ဢမ်ႇႁၼ်သင် — ၸၢမ်းသွၵ်ႈတူၺ်းၶေႃႈၵႂၢမ်းတၢင်ႇဢၼ်",kac:"Hpa n mu ai — ga langai bai tam yu u",th:"ไม่พบผลลัพธ์ — ลองค้นหาคำอื่น",zh:"没有匹配结果 — 试试其他关键词",vi:"Không tìm thấy — hãy thử từ khóa khác",id:"Tidak ada hasil — coba kata kunci lain",ms:"Tiada hasil — cuba kata carian lain"});
   }
 }
@@ -3826,7 +3835,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.16.0";
+var APP_VER="4.17.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

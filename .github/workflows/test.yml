@@ -67,3 +67,6 @@ jobs:
 
       - name: Verify Phase 2 design-token scale (spacing/type/radius)
         run: node test/verify_phase2_design_tokens.js
+
+      - name: Verify Phase 3 header + empty-state standardization
+        run: node test/verify_phase3_header_emptystate.js
