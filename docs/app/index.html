@@ -341,7 +341,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
       <button class="btn grow" id="btnRhSaveModel"></button>
     </div>
     <div class="status" id="stRhModel"></div>
-    <div class="mut" id="rhConfiguredList" style="margin-top:10px"></div>
+    <div class="mut chips" id="rhConfiguredList" style="margin-top:10px"></div>
   </section>
 
   <section class="card" id="cardOa">
@@ -1662,7 +1662,7 @@ function rhRenderConfiguredList(){
   configured.forEach(function(m){
     var b=document.createElement("span"); b.className="chip"+(c.activeModel===m.id?" on":"");
     b.textContent=(c.activeModel===m.id?"★ ":"")+m.label;
-    b.style.cursor="pointer"; b.style.marginRight="6px";
+    b.style.cursor="pointer";
     b.title = L9({my:"Generate မှာ ဒီ model သုံးဖို့ နှိပ်ပါ",en:"Tap to use this model for Generate",shn:"ၼဵၵ်းသေ ၸႂ်ႉ model ၼႆႉ",kac:"Generate hta ndai model hpe lang na dip u",th:"แตะเพื่อใช้โมเดลนี้ตอน Generate",zh:"点击以在生成时使用此模型",vi:"Chạm để dùng model này khi Generate",id:"Ketuk untuk memakai model ini saat Generate",ms:"Ketik untuk guna model ini semasa Generate"});
     b.onclick=function(){ var cc=rhCfg(); cc.activeModel=m.id; rhSaveCfg(cc); rhRenderConfiguredList(); renderRhProviderOption(); };
     host.appendChild(b);
@@ -3287,7 +3287,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.12.0";
+var APP_VER="4.12.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
