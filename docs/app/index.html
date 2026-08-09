@@ -2766,7 +2766,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
        card renders its instant local SVG icon straight away instead of waiting out a
        guaranteed 404 first (very visible on slow connections). Remove an id here once a
        real photo is added for it. */
-    var NO_CARD_JPG=["master-bgfg-replace"];
+    var NO_CARD_JPG=[];
 
     var cats=[];
     var mm=LANG!=="en";
@@ -3941,7 +3941,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.20.2";
+var APP_VER="4.20.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
