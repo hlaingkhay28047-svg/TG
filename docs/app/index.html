@@ -690,7 +690,18 @@ var RH_MODELS = [
   /* Upscale has a fundamentally different shape (no prompt at all — a single
      imageUrl + a "scale" enum) so it's routed through a dedicated submit path
      (rhV2SubmitUpscale) instead of the generic edit/generate one. */
-  { id:"upscale-pro",       label:"Upscale Pro",             apiPath:"topazlabs/image-upscale-standard-v2", imageParam:"imageUrl", kind:"upscale" }
+  { id:"upscale-pro",       label:"Upscale Pro",             apiPath:"topazlabs/image-upscale-standard-v2", imageParam:"imageUrl", kind:"upscale" },
+  /* Seedream v4/v4.5 image-to-image: confirmed identical request shape for
+     both versions (only apiPath differs) — imageUrls array, prompt 5-2000
+     chars, optional width/height (512-8192), and an optional "resolution"
+     enum (1k/2k/4k) that takes priority over width/height when set. Routed
+     through rhV2Submit's kind:"seedream" branch, which always sends
+     resolution (from the existing selSize picker) instead of width/height —
+     an explicit, confirmed field rather than guessed dimensions — plus the
+     documented sequentialImageGeneration/maxImages defaults for a single
+     output image. */
+  { id:"seedream-v4",       label:"Seedream v4",             apiPath:"seedream-v4/image-to-image",   kind:"seedream", promptMax:2000 },
+  { id:"seedream-v4-5",     label:"Seedream v4.5",           apiPath:"seedream-v4.5/image-to-image", kind:"seedream", promptMax:2000 }
 ];
 /* OpenAI (GPT Image) — same bring-your-own-key reasoning as RunningHub above.
    Unlike RunningHub this is a single synchronous request (no upload/poll
@@ -1175,7 +1186,11 @@ async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolut
   if(imageParam==="image") body.image = imageUrls[0]||"";
   else if(imageParam==="imageUrl") body.imageUrl = imageUrls[0]||"";
   else body.imageUrls = imageUrls;
-  if(cfg.sizeParam){
+  if(cfg.kind==="seedream"){
+    body.resolution = resolution || "1k";
+    body.sequentialImageGeneration = "disabled";
+    body.maxImages = 1;
+  } else if(cfg.sizeParam){
     var sz = rhQwenSize(ratio, resolution);
     if(sz) body.size = sz;
   } else if(cfg.whParam){
@@ -3059,7 +3074,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.10.0";
+var APP_VER="4.10.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
