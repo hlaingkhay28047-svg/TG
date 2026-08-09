@@ -61,3 +61,6 @@ jobs:
 
       - name: Verify network-failure errors are localized, not raw exceptions
         run: node test/verify_network_error_friendly.js
+
+      - name: Verify Phase 1 UI/UX fixes (empty gen card, dropdown clipping)
+        run: node test/verify_phase1_ui_fixes.js

@@ -72,7 +72,12 @@ h1 em{font-style:normal;color:var(--gold-hi)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .grow{flex:1;min-width:0}
 .inp{width:100%;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:9px;color:var(--cream);padding:10px 12px;font-size:14px}
-#genOpts select,#vidOpts select,#vuOpts select,#t2iOpts select{min-width:132px}
+/* select.inp needs equal-or-higher specificity than the #host .inp rule
+   below (which sets flex:1 1 30%) — a bare type selector loses to that
+   class selector regardless of source order, so a plain "select" min-width
+   here was silently overridden, letting 3 dropdowns squeeze onto one row
+   and clip their labels ("Model: A…", "Ratio: Au…") on a phone screen. */
+#genOpts select.inp,#vidOpts select.inp,#vuOpts select.inp,#t2iOpts select.inp{flex:1 1 132px;min-width:132px}
 .inp:focus{border-color:var(--gold);outline:none}
 textarea.inp{min-height:110px;resize:vertical;line-height:1.8}
 select.inp{padding:9px 10px}
@@ -469,7 +474,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="rsGenCard">
     <button class="btn btn-gold gen" id="btnRsGen"></button>
     <div class="spin" id="rsSpin"></div>
     <div class="status" id="stRsGen"></div>
@@ -3353,6 +3358,19 @@ function rsSetMode(mode){
   });
   $("btnRsGen").style.display = mode==="onetap" ? "none" : "";
   if(RS_GEN_LABELS[mode]) $("btnRsGen").textContent = RS_GEN_LABELS[mode];
+  rsSyncGenCardVisibility();
+}
+/* In One-Tap mode the Generate button is hidden (chips fire generation
+   directly) — but the card wrapping it also holds the spinner, status line
+   and Retry button, and hiding only the button left an empty rounded box
+   with nothing in it sitting between the presets and the result on every
+   first visit. Show the card only when it actually has something to say:
+   Sliders mode (Generate lives there), an active generation, or a Retry
+   waiting for the user. */
+function rsSyncGenCardVisibility(){
+  var card=$("rsGenCard"); if(!card) return;
+  var show = rsMode!=="onetap" || rsBusy || $("btnRsRetry").style.display!=="none";
+  card.style.display = show ? "" : "none";
 }
 $("rsTabOnetap").onclick=function(){ rsSetMode("onetap"); };
 $("rsTabSliders").onclick=function(){ rsSetMode("sliders"); };
@@ -3399,6 +3417,7 @@ function rsSyncGenControls(busy){
      already running would race two concurrent generations against the same
      state.hist/state.refs, so the actual triggers are disabled meanwhile. */
   document.querySelectorAll("#rsPresetGrid .chip, #rsBundleGrid .chip, #rsRerunChips .chip").forEach(function(c){ c.disabled=busy; });
+  rsSyncGenCardVisibility();
 }
 async function rsDoGenerate(promptText){
   if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); return false; }
@@ -3435,7 +3454,7 @@ async function rsRunOnetap(key){
   rsSyncGenControls(true);
   var ok=await rsDoGenerate(rsPresetText(key, state.rtStrength));
   rsSyncGenControls(false);
-  if(ok) rsShowResult(); else $("btnRsRetry").style.display="";
+  if(ok) rsShowResult(); else { $("btnRsRetry").style.display=""; rsSyncGenCardVisibility(); }
 }
 $("btnRsGen").onclick=async function(){
   if(rsBusy) return;
@@ -3446,7 +3465,7 @@ $("btnRsGen").onclick=async function(){
   rsSyncGenControls(true);
   var ok=await rsDoGenerate("");
   rsSyncGenControls(false);
-  if(ok) rsShowResult(); else $("btnRsRetry").style.display="";
+  if(ok) rsShowResult(); else { $("btnRsRetry").style.display=""; rsSyncGenCardVisibility(); }
 };
 $("btnRsRetry").onclick=async function(){
   if(rsBusy) return;
@@ -3457,7 +3476,7 @@ $("btnRsRetry").onclick=async function(){
   var srcSt=$("stGen");
   setSt("stRsGen", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
   rsSyncGenControls(false);
-  if(state.hist[0]!==beforeFirst) rsShowResult(); else this.style.display="";
+  if(state.hist[0]!==beforeFirst) rsShowResult(); else { this.style.display=""; rsSyncGenCardVisibility(); }
 };
 
 /* before/after: always-on compare slider, IMAGE 1 vs the selected result */
@@ -3800,7 +3819,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.15.2";
+var APP_VER="4.15.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
