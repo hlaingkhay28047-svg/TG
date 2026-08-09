@@ -45,7 +45,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       }
       if (u.indexOf("/openapi/v2/rhart-image-n-g31-flash/image-to-image") >= 0
           || u.indexOf("/openapi/v2/alibaba/qwen-image-2.0/image-edit") >= 0
-          || u.indexOf("/openapi/v2/topazlabs/image-upscale-standard-v2") >= 0) {
+          || u.indexOf("/openapi/v2/topazlabs/image-upscale-standard-v2") >= 0
+          || u.indexOf("/openapi/v2/seedream-v4/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/seedream-v4.5/image-to-image") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
       return realFetch.apply(this, arguments);
@@ -62,7 +64,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var opt = document.querySelector('#selProvider option[value="runninghub"]');
     var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off",
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
-      "wan-image-edit", "upscale-pro"];
+      "wan-image-edit", "upscale-pro", "seedream-v4", "seedream-v4-5"];
     var stillUnconfigured = ["gpt-image-2", "flux-2-dev"];
     return {
       hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
@@ -75,6 +77,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       wanWhParam: rhEffectiveWhParam("wan-image-edit"),
       upscaleKind: rhEffectiveKind("upscale-pro"),
       upscaleImageParam: rhEffectiveImageParam("upscale-pro"),
+      seedreamKind: rhEffectiveKind("seedream-v4"),
+      seedream45Kind: rhEffectiveKind("seedream-v4-5"),
       // pure function checks — no network involved
       qwenSize1_1_hd: rhQwenSize("1:1", "2K"),
       qwenSize16_9_std: rhQwenSize("16:9", ""),
@@ -98,6 +102,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && setup.noneOfUnconfigured && setup.g2OffQuality === "medium" && setup.xOffImageParam === "image"
     && setup.qwenSizeParam === true && setup.wanWhParam === true && setup.upscaleKind === "upscale"
     && setup.upscaleImageParam === "imageUrl"
+    && setup.seedreamKind === "seedream" && setup.seedream45Kind === "seedream"
     && setup.qwenSize1_1_hd === "1536*1536" && setup.qwenSize16_9_std === "1280*720" && setup.qwenSizeAuto === ""
     && setup.wanWh16_9 && setup.wanWh16_9.w === 1024 && setup.wanWh16_9.h === 576 && setup.wanWhAuto === null
     && setup.scale1k === "2x" && setup.scale2k === "4x" && setup.scale4k === "6x"
@@ -182,6 +187,33 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && upResult.body.imageUrls === undefined && upResult.body.prompt === undefined;
   console.log(upOk ? "PASS (upscale no-prompt body)" : ("FAIL (upscale no-prompt body): " + JSON.stringify(upResult)));
 
+  // Seedream v4: activate it, generate at "2K" size, and inspect the actual
+  // request body — must carry resolution (mapped from selSize, NOT width/
+  // height), sequentialImageGeneration:"disabled", maxImages:1, and imageUrls
+  // (never aspectRatio, which this endpoint doesn't declare at all).
+  const seedreamResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "seedream-v4"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selRatio").value = "16:9";
+    document.getElementById("selSize").value = "2K";
+    document.getElementById("prompt").value = "test seedream prompt";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/seedream-v4/image-to-image") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body, st: document.getElementById("stGen").textContent };
+  }, B64);
+  console.log("seedream submit body:", JSON.stringify(seedreamResult.body));
+  const seedreamOk = seedreamResult.ok && seedreamResult.body && seedreamResult.body.resolution === "2k"
+    && seedreamResult.body.sequentialImageGeneration === "disabled" && seedreamResult.body.maxImages === 1
+    && Array.isArray(seedreamResult.body.imageUrls)
+    && seedreamResult.body.aspectRatio === undefined && seedreamResult.body.width === undefined && seedreamResult.body.height === undefined;
+  console.log(seedreamOk ? "PASS (seedream resolution + sequential/maxImages defaults)" : ("FAIL (seedream): " + JSON.stringify(seedreamResult)));
+
   // Upscale Pro with no image attached must surface a helpful "add an image"
   // message, not the generic "RunningHub error — try again (?)" fallback.
   const noImgMsg = await page.evaluate(async () => {
@@ -202,7 +234,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const noImgOk = /image|ပုံ/i.test(noImgMsg) && noImgMsg.indexOf("(?)") < 0;
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
-  const overall = result === "OK" && qwenOk && upOk && noImgOk;
+  const overall = result === "OK" && qwenOk && upOk && seedreamOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);
