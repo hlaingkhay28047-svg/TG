@@ -556,6 +556,44 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
   </section>
 </div><!-- /pgVideo -->
 
+<div class="page" id="pgVideoUp">
+  <section class="card">
+    <h2>🚀 VIDEO UPSCALE</h2>
+    <p class="mut" id="vuIntro"></p>
+    <input type="file" accept="video/mp4" id="vuFilePick" style="display:none">
+    <button class="btn" id="btnVuPick"></button>
+    <div class="mut" id="vuFileName" style="margin-top:6px"></div>
+  </section>
+
+  <section class="card">
+    <h2>GENERATE</h2>
+    <div class="row" id="vuOpts">
+      <select class="inp" id="selVuRes" style="flex:1">
+        <option value="720p">720p</option>
+        <option value="1080p" selected>1080p</option>
+        <option value="2k">2K</option>
+        <option value="4k">4K</option>
+      </select>
+    </div>
+    <button class="btn btn-gold gen" id="btnVuGen">🚀 UPSCALE VIDEO</button>
+    <div class="spin" id="vuSpin"></div>
+    <div class="status" id="stVuGen"></div>
+    <button class="btn" id="btnVuRetry" style="display:none;margin-top:8px"></button>
+  </section>
+
+  <section class="card result-box" id="vuResultBox">
+    <h2 id="vuResultH2"></h2>
+    <div class="result-img"><video id="vuResultVideo" controls playsinline style="width:100%;border-radius:12px;background:#000"></video></div>
+    <p class="mut" id="vuExpireNote" style="margin-top:8px"></p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-gold grow" id="btnVuDl"></button>
+      <a class="btn" id="btnVuOpen" target="_blank" rel="noopener"></a>
+    </div>
+    <div class="subh" style="margin-top:12px" id="vuHistH"></div>
+    <div class="hist" id="vuHist"></div>
+  </section>
+</div><!-- /pgVideoUp -->
+
 <div class="page" id="pgText2Img">
   <section class="card">
     <h2>PROMPT</h2>
@@ -871,6 +909,7 @@ var state = {
   cam: { body:null, mm:null, f:null, film:null, bokeh:null },
   rt: {}, rtStrength: 60,
   vidHist: [], /* session-only — RunningHub result URLs, never persisted (24h-valid, too large for the IndexedDB Gallery) */
+  vuFile: null, vuHist: [], /* video upscale: uploaded source file + session-only result URLs, same non-persisted reasoning as vidHist */
   t2iHist: [], t2iHistSel: -1 /* text-to-image results — plain {mime,b64} images, same shape as state.hist, so they go into the Gallery too */
 };
 /* restore saved toggles/prompt before the UI is built from state */
@@ -913,6 +952,7 @@ var PAGES=[
   ["pgStudio","⚡","Studio"],
   ["pgCreate","✨","Create"],
   ["pgVideo","🎬","Video"],
+  ["pgVideoUp","🚀","VidUp"],
   ["pgText2Img","📝","Text2Img"],
   ["pgGallery","🗂","Gallery"],
   ["pgHome","⚙️","Setup"]
@@ -1425,6 +1465,54 @@ async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resol
   }
   return outs;
 }
+/* ---------- RunningHub video upscaling (existing video -> higher resolution) ----------
+   A third video-family capability, distinct from both image-to-video
+   generation above and image upscaling (Upscale Pro/Transparent) — this
+   takes an EXISTING video as input (not an image) and returns it at a
+   higher target resolution. Confirmed from rhart-video/video-upscaler in
+   model-registry.public.json: videoUrl (required) + targetResolution
+   (required enum 720p/1080p/2k/4k, default 1080p). Reuses the same
+   media/upload/binary endpoint as image uploads (it accepts any file, not
+   just images) but with an .mp4 filename — rhV2Upload's hardcoded ".png"
+   filename would misrepresent a video file's type to RunningHub's own
+   accept-list ([MP4]), so this gets its own dedicated upload call. Results
+   stay as the raw RunningHub URL (same 24h-valid, session-only pattern as
+   image-to-video — an upscaled video can be even larger than a generated
+   one, too large to safely hold as base64 or push into the Gallery). */
+var RH_VU_APIPATH = "rhart-video/video-upscaler";
+var RH_VU_RES_ENUM = ["720p","1080p","2k","4k"];
+async function rhV2UploadVideo(apiKey, dataUrl){
+  var fd=new FormData();
+  fd.append("file", rhDataUrlToBlob(dataUrl), "hnk_video.mp4");
+  var r=await fetch(RH_V2_BASE+RH_V2_PATHS.upload, { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd });
+  if(!r.ok){ var e=new Error("upload-failed"); e.status=r.status; throw e; }
+  var j=await r.json().catch(function(){return null;});
+  var url=j && j.data && (j.data.download_url || j.data.fileName);
+  if(!url){ var e2=new Error("upload-failed"); e2.status=200; e2.body=j; throw e2; }
+  if(!/^https?:\/\//i.test(url)) url = RH_BASE+"/"+String(url).replace(/^\/+/,"");
+  return url;
+}
+async function rhV2SubmitVideoUpscale(apiKey, videoUrl, targetResolution){
+  var res = RH_VU_RES_ENUM.indexOf(targetResolution)>=0 ? targetResolution : "1080p";
+  var body = { videoUrl: videoUrl||"", targetResolution: res };
+  var r=await fetch(RH_V2_BASE+"/"+RH_VU_APIPATH, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  return j.taskId;
+}
+async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, onTick){
+  if(!videoDataUrl){ var e0=new Error("no-video"); e0.code="no-video"; throw e0; }
+  var videoUrl = await rhV2UploadVideo(apiKey, videoDataUrl);
+  var taskId = await rhV2SubmitVideoUpscale(apiKey, videoUrl, targetResolution);
+  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS);
+  var results=(final && final.results)||[];
+  var outs=[];
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    outs.push({ url:results[i].url, outputType:results[i].outputType||"video" });
+  }
+  return outs;
+}
 /* ---------- RunningHub text-to-image (no reference photo needed) ----------
    A separate catalog from RH_MODELS/RH_VIDEO_MODELS: these 5 endpoints don't
    take any input image at all, so they don't fit the edit-a-photo pipeline
@@ -1520,6 +1608,7 @@ function rhFriendly(e){
   if(status===402||code==="insufficient-credits") return L9({my:"RunningHub credit မလုံလောက်ပါ — account ကို top up လုပ်ပါ",en:"Not enough RunningHub credits — top up your account",shn:"RunningHub credit ဢမ်ႇပဵင်း — top up ဢေႃးၶွင်ႉၸဝ်ႈၵဝ်ႇ",kac:"RunningHub credit n law ai — na account hpe top up galaw u",th:"เครดิต RunningHub ไม่พอ — เติมเงินในบัญชี",zh:"RunningHub 额度不足 — 请为账户充值",vi:"Không đủ credit RunningHub — nạp thêm cho tài khoản",id:"Kredit RunningHub tidak cukup — top up akun Anda",ms:"Kredit RunningHub tidak mencukupi — top up akaun anda"});
   if(code==="timeout") return L9({my:"RunningHub timeout ဖြစ်သွားပါတယ် — ပြန်စမ်းကြည့်ပါ",en:"RunningHub timed out — try again",shn:"RunningHub timeout ဝႆႉ — ၸၢမ်းၶိုၼ်း",kac:"RunningHub timeout byin mat sai — bai chyam u",th:"RunningHub หมดเวลา — ลองใหม่อีกครั้ง",zh:"RunningHub 超时 — 请重试",vi:"RunningHub hết thời gian chờ — thử lại",id:"RunningHub timeout — coba lagi",ms:"RunningHub timeout — cuba lagi"});
   if(code==="no-image") return L9({my:"ဒီ model အတွက် ပုံ တစ်ပုံ ထည့်ပါ — text prompt တစ်ခုတည်းနဲ့ မလုံလောက်ပါ",en:"This model needs an image — a text prompt alone isn't enough",shn:"Model ၼႆႉလူဝ်ႇၶႅပ်းႁၢင်ႈ — prompt ၵူၺ်းဢမ်ႇပဵင်း",kac:"Ndai model gaw sumla ra ai — prompt sha n law ai",th:"โมเดลนี้ต้องการรูปภาพ — พิมพ์ prompt อย่างเดียวไม่พอ",zh:"此模型需要一张图片 — 仅有文字提示词是不够的",vi:"Model này cần một ảnh — chỉ có prompt văn bản là không đủ",id:"Model ini butuh gambar — prompt teks saja tidak cukup",ms:"Model ini memerlukan imej — prompt teks sahaja tidak mencukupi"});
+  if(code==="no-video") return L9({my:"အရင် ဗီဒီယို ဖိုင် တစ်ခု ရွေးပါ",en:"Pick a video file first",shn:"ထၢႆႇဝီဒီရူဝ်ႈဢွၼ်တၢင်း",kac:"Video langai n tawn shangun u",th:"เลือกไฟล์วิดีโอก่อน",zh:"请先选择一个视频文件",vi:"Hãy chọn một tệp video trước",id:"Pilih file video terlebih dahulu",ms:"Pilih fail video dahulu"});
   if(code==="failed") return L9({my:"RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"The RunningHub task failed — try a different prompt/photo",shn:"RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",kac:"RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",th:"งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",zh:"RunningHub 任务失败 — 请更换 prompt 或图片",vi:"Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",id:"Tugas RunningHub gagal — coba prompt/foto lain",ms:"Tugas RunningHub gagal — cuba prompt/foto lain"});
   return L9({my:"RunningHub error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"RunningHub error — try again ("+(status||"?")+")",shn:"RunningHub error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"RunningHub error — bai chyam u ("+(status||"?")+")",th:"RunningHub error — ลองใหม่ ("+(status||"?")+")",zh:"RunningHub 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi RunningHub — thử lại ("+(status||"?")+")",id:"Error RunningHub — coba lagi ("+(status||"?")+")",ms:"Ralat RunningHub — cuba lagi ("+(status||"?")+")"});
 }
@@ -3163,7 +3252,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.10.5";
+var APP_VER="4.11.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -3647,6 +3736,98 @@ $("btnVidDl").onclick=async function(){
   try{
     var blobUrl=await rhVideoDownloadBlobUrl(out.url);
     var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-web-studio-video.mp4";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);
+  } catch(e){
+    toast(L9({my:"Download မအောင်မြင်ပါ — Direct Link ကို နှိပ်ပြီး manual download လုပ်ကြည့်ပါ",en:"Download failed — try the Direct Link button to save it manually",shn:"Download ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းၼဵၵ်း Direct Link",kac:"Download n byin ai — Direct Link dip nna chyam u",th:"ดาวน์โหลดล้มเหลว — ลองใช้ปุ่ม Direct Link",zh:"下载失败 — 请尝试点击“直接链接”按钮手动保存",vi:"Tải xuống thất bại — thử nút Direct Link để lưu thủ công",id:"Unduh gagal — coba tombol Direct Link untuk menyimpan manual",ms:"Muat turun gagal — cuba butang Direct Link untuk simpan secara manual"}), "err");
+  }
+  btn.disabled=false; btn.textContent=VID_DL_LABEL;
+};
+
+/* ---------- video upscaling (RunningHub-only — existing video -> higher resolution) ---------- */
+state.vuHistSel = -1;
+
+$("vuIntro").textContent = L9({my:"ရှိပြီးသား ဗီဒီယို ဖိုင်ကို resolution မြှင့်ပေးမယ် — RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Upscale an existing video file to a higher resolution — needs your RunningHub Enterprise key.",shn:"ႁဵတ်းႁႂ်ႈဝီဒီရူဝ်ႈဢၼ်မီးယူႇ resolution သုင်ၶိုၼ်ႈ — လူဝ်ႇ RunningHub Enterprise key",kac:"Video nga ai hpe resolution grau na ni galaw ai — RunningHub Enterprise key ra ai",th:"อัปสเกลวิดีโอที่มีอยู่ให้มีความละเอียดสูงขึ้น — ต้องมี RunningHub Enterprise key",zh:"把现有视频提升到更高分辨率 — 需要你的 RunningHub Enterprise key",vi:"Nâng cấp độ phân giải của video có sẵn — cần key RunningHub Enterprise",id:"Tingkatkan resolusi video yang ada — perlu RunningHub Enterprise key",ms:"Tingkatkan resolusi video sedia ada — perlukan RunningHub Enterprise key"});
+$("btnVuPick").textContent = L9({my:"📁 ဗီဒီယို ဖိုင် ရွေးရန် (MP4)",en:"📁 Pick a video file (MP4)",shn:"📁 ထၢႆႇဝီဒီရူဝ်ႈ (MP4)",kac:"📁 Video langai tawn shangun (MP4)",th:"📁 เลือกไฟล์วิดีโอ (MP4)",zh:"📁 选择视频文件（MP4）",vi:"📁 Chọn tệp video (MP4)",id:"📁 Pilih file video (MP4)",ms:"📁 Pilih fail video (MP4)"});
+$("vuSpin").textContent = L9({my:"ဗီဒီယို resolution မြှင့်နေပါတယ် — မိနစ်အနည်းငယ် စောင့်ပါ…",en:"Upscaling video — allow a few minutes…",shn:"ႁဵတ်း resolution သုင်ၶိုၼ်ႈယူႇ — ၶွႆတွင်ၵမ်ႈၽွင်ႈ",kac:"Video resolution grau na ni galaw nga ai — mizan langai nga chyam sit u",th:"กำลังอัปสเกลวิดีโอ — รอสักครู่",zh:"正在提升视频分辨率 — 请稍候几分钟",vi:"Đang nâng cấp video — vui lòng chờ vài phút",id:"Meningkatkan resolusi video — tunggu beberapa menit",ms:"Meningkatkan resolusi video — tunggu beberapa minit"});
+$("btnVuRetry").textContent = L9({my:"🔁 ပြန်စမ်း",en:"🔁 Retry",shn:"🔁 ၸၢမ်းၶိုၼ်း",kac:"🔁 Bai chyam",th:"🔁 ลองใหม่",zh:"🔁 重试",vi:"🔁 Thử lại",id:"🔁 Coba lagi",ms:"🔁 Cuba lagi"});
+$("vuResultH2").textContent = L9({my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"});
+$("vuExpireNote").textContent = L9({my:"⚠ ဒီ link က ၂၄ နာရီပဲ အလုပ်လုပ်ပါတယ် — download ချက်ချင်း လုပ်ထားပါ။ Page ပြန် reload လုပ်ရင် ဒီရလဒ် ပျောက်သွားမယ် (ဖိုင်အရွယ်အစား ကြီးလို့ Gallery ထဲ မသိမ်းပါ)။",en:"⚠ This link only works for 24 hours — download it right away. Reloading the page will lose this result (not saved to Gallery — the file is too large).",shn:"⚠ Link ၼႆႉ ၸႂ်ႉလႆႈ 24 ၸူဝ်ႈမွင်းၵူၺ်း — download ဝႆႉလႄႈလီ",kac:"⚠ Ndai link gaw 24 hour sha byin ai — hpang de download nna da u",th:"⚠ ลิงก์นี้ใช้ได้แค่ 24 ชั่วโมง — ดาวน์โหลดทันที",zh:"⚠ 此链接仅 24 小时有效 — 请立即下载。刷新页面会丢失该结果（文件过大未保存到 Gallery）。",vi:"⚠ Liên kết này chỉ hoạt động trong 24 giờ — hãy tải xuống ngay. Tải lại trang sẽ mất kết quả này (không lưu vào Gallery vì file quá lớn).",id:"⚠ Tautan ini hanya berfungsi 24 jam — unduh segera. Memuat ulang halaman akan menghilangkan hasil ini (tidak disimpan ke Gallery karena ukuran file terlalu besar).",ms:"⚠ Pautan ini hanya berfungsi 24 jam — muat turun segera. Memuat semula halaman akan kehilangan hasil ini (tidak disimpan ke Gallery kerana saiz fail terlalu besar)."});
+$("btnVuDl").textContent = VID_DL_LABEL;
+$("btnVuOpen").textContent = L9({my:"↗ Direct Link ဖွင့်",en:"↗ Open direct link",shn:"↗ ပိုတ်ႇ Direct Link",kac:"↗ Direct Link hpaw",th:"↗ เปิดลิงก์โดยตรง",zh:"↗ 打开原始链接",vi:"↗ Mở liên kết trực tiếp",id:"↗ Buka tautan langsung",ms:"↗ Buka pautan terus"});
+$("vuHistH").textContent = L9({my:"လတ်တလော resolution မြှင့်ခဲ့တဲ့ ဗီဒီယိုများ (session အတွင်းပဲ)",en:"Recently upscaled videos (this session only)",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်း resolution သုင်ၶိုၼ်ႈဝႆႉမိူဝ်ႈလဵဝ်",kac:"Video resolution grau na ni galaw da ai (session sha)",th:"วิดีโออัปสเกลล่าสุด (เฉพาะเซสชันนี้)",zh:"最近提升分辨率的视频（仅本次会话）",vi:"Video vừa nâng cấp gần đây (chỉ trong phiên này)",id:"Video yang baru ditingkatkan (hanya sesi ini)",ms:"Video yang baru ditingkatkan (sesi ini sahaja)"});
+
+$("btnVuPick").onclick = function(){ $("vuFilePick").click(); };
+$("vuFilePick").onchange = function(){
+  var f=this.files && this.files[0]; this.value="";
+  if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    var dataUrl=String(rd.result);
+    var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if(m){
+      state.vuFile={mime:m[1],b64:m[2],name:f.name};
+      $("vuFileName").textContent=f.name;
+    }
+  };
+  rd.readAsDataURL(f);
+};
+
+function showVuResult(){
+  var out=state.vuHist[state.vuHistSel]; if(!out) return;
+  $("vuResultBox").className="card result-box on";
+  $("vuResultVideo").src=out.url;
+  $("btnVuOpen").href=out.url;
+  var h=$("vuHist"); h.innerHTML="";
+  state.vuHist.forEach(function(e,i){
+    var v=document.createElement("video");
+    v.src=e.url; v.muted=true; v.preload="metadata"; v.playsInline=true;
+    v.className=i===state.vuHistSel?"sel":"";
+    v.onclick=function(){ state.vuHistSel=i; showVuResult(); };
+    h.appendChild(v);
+  });
+  $("vuResultBox").scrollIntoView({behavior:"smooth"});
+}
+
+$("btnVuGen").onclick = async function(){
+  if(!state.rhKey){
+    switchPage("pgHome");
+    var mk=L9({my:"RunningHub key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key isn't set up yet — add it in Setup",shn:"RunningHub key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key — cấu hình trong Setup",id:"RunningHub key belum disiapkan — atur di Setup",ms:"RunningHub key belum disediakan — konfigurasi dalam Setup"});
+    setSt("stRhKey", mk, "err"); toast(mk,"err"); return;
+  }
+  if(!state.vuFile){ setSt("stVuGen", rhFriendly({code:"no-video"}), "err"); return; }
+  var targetResolution=$("selVuRes").value;
+  var videoDataUrl="data:"+state.vuFile.mime+";base64,"+state.vuFile.b64;
+  var btn=this; btn.disabled=true; $("vuSpin").className="spin on"; setSt("stVuGen","");
+  $("btnVuRetry").style.display="none";
+  var spinBase=$("vuSpin").textContent;
+  try{
+    var outs=await rhGenerateVideoUpscale(state.rhKey, videoDataUrl, targetResolution, function(elapsed){
+      $("vuSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
+    });
+    if(!outs.length){
+      setSt("stVuGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
+      $("btnVuRetry").style.display="";
+    } else {
+      state.vuHist.unshift({ url:outs[0].url, resolution:targetResolution, ts:Date.now() });
+      while(state.vuHist.length>6) state.vuHist.pop();
+      state.vuHistSel=0;
+      showVuResult();
+      setSt("stVuGen", t("st_done"), "ok");
+    }
+  } catch(e){
+    setSt("stVuGen", rhFriendly(e), "err");
+    $("btnVuRetry").style.display="";
+  }
+  btn.disabled=false; $("vuSpin").className="spin"; $("vuSpin").textContent=spinBase;
+};
+$("btnVuRetry").onclick=function(){ this.style.display="none"; $("btnVuGen").onclick(); };
+$("btnVuDl").onclick=async function(){
+  var out=state.vuHist[state.vuHistSel]; if(!out) return;
+  var btn=this; if(btn.disabled) return; btn.disabled=true; btn.textContent=VID_DL_BUSY;
+  try{
+    var blobUrl=await rhVideoDownloadBlobUrl(out.url);
+    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-web-studio-video-upscaled.mp4";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);
   } catch(e){
