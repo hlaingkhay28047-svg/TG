@@ -576,15 +576,26 @@ var RH_BASE = "https://www.runninghub.ai";
 var RH_V2_BASE = "https://www.runninghub.ai/openapi/v2";
 var RH_V2_PATHS = { upload:"/media/upload/binary", query:"/query" };
 var RH_POLL_MS = 2500, RH_TIMEOUT_MS = 180000;
+/* Every entry below with a non-empty apiPath was confirmed against RunningHub's
+   own live API docs for that exact endpoint (request params, required fields)
+   — nothing here is guessed. RunningHub's Standard-API catalog names (its own
+   "全能图片"/all-purpose-image line) don't map onto vendor brand names like
+   "Qwen"/"GPT", so confirmed entries use RunningHub's own naming rather than
+   force-fitting them into the placeholder vendor labels below. imageParam
+   defaults to "imageUrls" (array); a few endpoints take a single "image"
+   string instead. */
 var RH_MODELS = [
-  { id:"nano-banana-2",    label:"Nano Banana 2",    apiPath:"rhart-image-n-g31-flash/image-to-image" },
-  { id:"nano-banana-pro",  label:"Nano Banana Pro",  apiPath:"" },
-  { id:"gpt-image-2",      label:"GPT Image 2",      apiPath:"" },
-  { id:"qwen-image-2",     label:"Qwen Image 2",     apiPath:"" },
-  { id:"qwen-image-2-pro", label:"Qwen Image 2 Pro", apiPath:"" },
-  { id:"flux-2-dev",       label:"Flux 2 Dev",       apiPath:"" },
-  { id:"wan-image-edit",   label:"Wan Image Edit",   apiPath:"" },
-  { id:"upscale-pro",      label:"Upscale Pro",      apiPath:"" }
+  { id:"nano-banana-2",     label:"Nano Banana 2",           apiPath:"rhart-image-n-g31-flash/image-to-image" },
+  { id:"rh-image-g2-off",   label:"RH Image G-2 (Official)", apiPath:"rhart-image-g-2-official/image-to-image", quality:"medium" },
+  { id:"rh-image-g2",       label:"RH Image G-2",            apiPath:"rhart-image-g-2/image-to-image" },
+  { id:"rh-image-x-off",    label:"RH Image X (Official)",   apiPath:"rhart-image-x-official/edit", imageParam:"image" },
+  { id:"nano-banana-pro",   label:"Nano Banana Pro",         apiPath:"" },
+  { id:"gpt-image-2",       label:"GPT Image 2",             apiPath:"" },
+  { id:"qwen-image-2",      label:"Qwen Image 2",            apiPath:"" },
+  { id:"qwen-image-2-pro",  label:"Qwen Image 2 Pro",        apiPath:"" },
+  { id:"flux-2-dev",        label:"Flux 2 Dev",              apiPath:"" },
+  { id:"wan-image-edit",    label:"Wan Image Edit",          apiPath:"" },
+  { id:"upscale-pro",       label:"Upscale Pro",             apiPath:"" }
 ];
 /* OpenAI (GPT Image) — same bring-your-own-key reasoning as RunningHub above.
    Unlike RunningHub this is a single synchronous request (no upload/poll
@@ -934,13 +945,21 @@ function rhEffectiveQuality(id){
   var def=rhModelDef(id);
   return (def && def.quality) || "";
 }
+/* Most Standard-API endpoints take an "imageUrls" array; a few (e.g.
+   rhart-image-x-official/edit) take a single "image" string instead —
+   confirmed per-endpoint from real docs, never guessed. */
+function rhEffectiveImageParam(id){
+  var def=rhModelDef(id);
+  return (def && def.imageParam) || "imageUrls";
+}
 function rhIsConfigured(id){ return !!rhEffectiveApiPath(id); }
 function rhAnyConfigured(){ return RH_MODELS.some(function(m){ return rhIsConfigured(m.id); }); }
+function rhModelCfgOut(id){ return { id:id, apiPath:rhEffectiveApiPath(id), quality:rhEffectiveQuality(id), imageParam:rhEffectiveImageParam(id) }; }
 function rhActiveModelCfg(){
   var c=rhCfg();
-  if(c.activeModel && rhIsConfigured(c.activeModel)) return { id:c.activeModel, apiPath:rhEffectiveApiPath(c.activeModel), quality:rhEffectiveQuality(c.activeModel) };
+  if(c.activeModel && rhIsConfigured(c.activeModel)) return rhModelCfgOut(c.activeModel);
   var found=RH_MODELS.find(function(m){ return rhIsConfigured(m.id); });
-  return found ? { id:found.id, apiPath:rhEffectiveApiPath(found.id), quality:rhEffectiveQuality(found.id) } : null;
+  return found ? rhModelCfgOut(found.id) : null;
 }
 
 function rhDataUrlToBlob(dataUrl){
@@ -980,8 +999,12 @@ async function rhV2UploadAll(apiKey, dataUrls){
   for(var i=0;i<dataUrls.length;i++) out.push(await rhV2Upload(apiKey, dataUrls[i], i));
   return out;
 }
-async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, quality){
-  var body={ imageUrls: imageUrls||[], prompt: promptText||"", resolution: resolution||"1k" };
+async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, quality, imageParam){
+  var body={ prompt: promptText||"", resolution: resolution||"1k" };
+  imageUrls = imageUrls||[];
+  if(imageParam==="image") body.image = imageUrls[0]||"";
+  else if(imageParam==="imageUrl") body.imageUrl = imageUrls[0]||"";
+  else body.imageUrls = imageUrls;
   var r2=rhV2Ratio(ratio); if(r2) body.aspectRatio=r2;
   if(quality) body.quality=quality;
   var r=await fetch(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
@@ -1027,9 +1050,9 @@ async function rhVerifyKey(apiKey){
    Returns an array of {mime,b64} — the exact shape the Gemini path already
    produces, so the shared history/gallery/result-display code needs no
    provider-specific branch downstream. */
-async function rhGenerateOne(apiKey, apiPath, promptText, ratio, refDataUrls, resolution, quality, onTick){
+async function rhGenerateOne(apiKey, apiPath, promptText, ratio, refDataUrls, resolution, quality, imageParam, onTick){
   var imageUrls = refDataUrls.length ? await rhV2UploadAll(apiKey, refDataUrls) : [];
-  var taskId = await rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, quality);
+  var taskId = await rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, quality, imageParam);
   var final = await rhV2PollUntilDone(apiKey, taskId, onTick);
   var results = (final && final.results) || [];
   var outs=[];
@@ -2687,7 +2710,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.8.0";
+var APP_VER="4.8.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -2917,7 +2940,7 @@ $("btnGen").onclick = async function(){
          reference images as Gemini would get, routed through the user's own
          Enterprise-Shared key + model mapping instead. */
       providerFns.runninghub = function(){
-        return rhGenerateOne(state.rhKey, rhActiveForFallback.apiPath, finalPrompt, ratio, refDataUrls, rhV2Resolution(sizeSel), rhActiveForFallback.quality, function(elapsed){
+        return rhGenerateOne(state.rhKey, rhActiveForFallback.apiPath, finalPrompt, ratio, refDataUrls, rhV2Resolution(sizeSel), rhActiveForFallback.quality, rhActiveForFallback.imageParam, function(elapsed){
           $("spin").textContent = t("spin_gen")+" · "+Math.round(elapsed/1000)+"s";
         }).then(function(outs){
           return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
