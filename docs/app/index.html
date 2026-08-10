@@ -206,7 +206,11 @@ textarea.wiz-prompt{min-height:220px}
 .wizpair img{flex:1;min-width:0;aspect-ratio:4/5;object-fit:cover;object-position:center 12%;border-radius:12px;border:1px solid var(--line)}
 .wizpair .arw{position:static;transform:none;flex:none}
 .wizrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.wizrow .inp{flex:1 1 30%;min-width:30%}
+/* matches #genOpts select.inp (Freeform's working Generate row) — 30%
+   packed 3-per-row here at phone widths and clipped its own selected-option
+   text ("Provider: Gemini" rendered as "Provider: ("); 132px naturally
+   wraps to 2-per-row instead, same as Freeform, with room for the text */
+.wizrow .inp{flex:1 1 132px;min-width:132px}
 
 /* compact workflow mini-cards */
 .wfgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
@@ -1017,6 +1021,19 @@ function applyLang(){
     }
     clearTimeout(state._pt); saveState();
     try{ localStorage.setItem("hnk_ws_lang", sel.value); }catch(e){}
+    /* This reload re-runs the whole init path, including the "returning
+       visitor -> compact hero" check below (keyed on hnk_ws_seen, which was
+       already set right after first paint). Without this flag that check
+       can't tell "reload because the user just switched language" apart
+       from "a genuine new visit", and would wrongly collapse the hero
+       (hiding .lede/.statline) even for someone on their very first visit.
+       Stash the hero's state from right before this reload so the init
+       path can restore it exactly, instead of re-deriving it from
+       hnk_ws_seen. */
+    try{
+      var heroWasMini = document.querySelector(".hero-strip").className.indexOf("hero-mini")>=0;
+      sessionStorage.setItem("hnk_ws_langswitch", heroWasMini?"1":"0");
+    }catch(e){}
     location.reload();
   };
   /* new multilingual statics */
@@ -1678,7 +1695,7 @@ async function rhGenerateUpscaleTransparent(apiKey, apiPath, refDataUrls, sizeSe
    uses, just without the Gallery persistence step). */
 var RH_VIDEO_TIMEOUT_MS = 600000; /* video renders run far longer than images */
 var RH_VIDEO_MODELS = [
-  { id:"rh-video-g-off", label:"RH Video G (Official)", apiPath:"rhart-video-g-official/image-to-video",
+  { id:"rh-video-g-off", label:"RH Video G", apiPath:"rhart-video-g-official/image-to-video",
     imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false,
     resolutions:["720p","480p"], durations:["6","10"], aspect:false, promptMax:800 },
   { id:"gemini-omni-video", label:"Gemini Omni Flash (Video)", apiPath:"gemini-omni-flash/image-to-video",
@@ -3972,7 +3989,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.20.25";
+var APP_VER="4.20.26";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -4060,7 +4077,18 @@ updateKeyBanner();
 /* first-run onboarding + compact hero on revisit */
 try {
   if (!localStorage.getItem("hnk_ws_onboarded")) $("onb").className="onb on";
-  if (localStorage.getItem("hnk_ws_seen")) document.querySelector(".hero-strip").className="hero-strip hero-mini";
+  /* A reload triggered by the language switcher (see #selLang's onchange)
+     is not a "returning visitor" event — restore whatever hero state was
+     showing right before that reload instead of consulting hnk_ws_seen,
+     otherwise a first-time visitor who merely changes language gets the
+     hero (and .lede/.statline) wrongly collapsed. */
+  var _langSwitchMini = sessionStorage.getItem("hnk_ws_langswitch");
+  sessionStorage.removeItem("hnk_ws_langswitch");
+  if (_langSwitchMini!==null) {
+    if (_langSwitchMini==="1") document.querySelector(".hero-strip").className="hero-strip hero-mini";
+  } else if (localStorage.getItem("hnk_ws_seen")) {
+    document.querySelector(".hero-strip").className="hero-strip hero-mini";
+  }
   localStorage.setItem("hnk_ws_seen","1");
 } catch(e){}
 function onbClose(){ $("onb").className="onb"; try{ localStorage.setItem("hnk_ws_onboarded","1"); }catch(e){} }
