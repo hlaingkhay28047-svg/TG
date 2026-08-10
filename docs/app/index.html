@@ -70,7 +70,7 @@ input,textarea,select{font-family:inherit}
 h1{font-size:var(--fs-xl);font-weight:800;line-height:1.3;margin:var(--sp-1) 0 var(--sp-1)}
 h1 em{font-style:normal;color:var(--gold-hi)}
 .lede{color:var(--muted);font-size:var(--fs-md);margin-bottom:var(--sp-2)}
-.statline{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0 2px}
+.statline{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:8px 0 2px}
 .statline b{color:var(--gold-hi);font-size:17px}
 .statline span{font-size:11.5px;color:var(--muted);display:block;line-height:1.4}
 
@@ -87,6 +87,10 @@ h1 em{font-style:normal;color:var(--gold-hi)}
 #genOpts select.inp,#vidOpts select.inp,#vuOpts select.inp,#t2iOpts select.inp{flex:1 1 132px;min-width:132px}
 .inp:focus{border-color:var(--gold);outline:none}
 textarea.inp{min-height:110px;resize:vertical;line-height:1.8}
+/* Setup's key inputs (#apiKey/#rhKey/#oaKey) carry placeholders longer than
+   the field — without this they were silently hard-clipped mid-character
+   with no ellipsis to signal there's more text than shown */
+#apiKey,#rhKey,#oaKey{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 select.inp{padding:9px 10px}
 .btn{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:var(--r-sm);color:var(--cream);padding:var(--sp-2) var(--sp-4);font-size:var(--fs-base);font-weight:700}
 .btn:hover{border-color:var(--line)}
@@ -101,6 +105,11 @@ select.inp{padding:9px 10px}
 .chip{border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--cream);padding:6px 13px;font-size:var(--fs-sm);font-weight:700}
 .chip:hover{border-color:var(--gold)}
 .chip.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
+/* Retouch Studio's One-Tap/Sliders toggle + preset/strength chips were
+   28px tall — under the ~36-40px touch-target minimum. Scoped to this page
+   only so the many other .chip uses elsewhere (favorites, prompt history,
+   add-on toggles) keep their current density. */
+#pgRetouch .chip{min-height:38px;box-sizing:border-box;display:inline-flex;align-items:center}
 .subh{font-size:var(--fs-xs);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:var(--sp-3) 0 2px}
 .subh:first-child{margin-top:0}
 .subh b{color:var(--gold-hi)}
@@ -163,10 +172,19 @@ body{padding-bottom:76px}
    (Create: Freeform/Studio/Retouch/Text→Img/Video/VidUp, Library:
    Reference/Gallery) — flows with the page content rather than fixed,
    so it doesn't compete with the primary bottom nav for screen space */
-.subtabbar{display:none;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:var(--sp-3) 0}
+.subtabbar{display:none;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:var(--sp-3) 0;position:relative}
 .subtabbar::-webkit-scrollbar{display:none}
 .subtabbar.on{display:flex}
-.subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
+/* edge fade cues: no native scrollbar and no other affordance means a pill
+   cut off at an edge used to read as a broken layout instead of "swipe for
+   more" — these fade whichever edge currently has more content, toggled by
+   updateSubtabFade() on scroll (see renderSubtabs) */
+.subtabbar:before,.subtabbar:after{content:"";position:absolute;top:0;bottom:0;width:28px;pointer-events:none;z-index:2;opacity:0;transition:opacity .15s ease}
+.subtabbar:before{left:0;background:linear-gradient(to right,var(--ink),transparent)}
+.subtabbar:after{right:0;background:linear-gradient(to left,var(--ink),transparent)}
+.subtabbar.fade-l:before{opacity:1}
+.subtabbar.fade-r:after{opacity:1}
+.subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;min-height:38px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
 .subtab.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
 .toast{position:fixed;left:16px;right:16px;bottom:86px;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 .toast.on{display:block}
@@ -214,6 +232,10 @@ textarea.wiz-prompt{min-height:220px}
 
 /* compact workflow mini-cards */
 .wfgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+/* odd-count categories (e.g. Face & Portrait 7, Replace Mix 5) would
+   otherwise leave a dangling empty cell next to the last card — span it
+   across both columns instead (see the wfgrid-render loop) */
+.wfgrid .wf-span2{grid-column:1/-1}
 .wfmini{border:1px solid var(--line-soft);border-radius:11px;background:var(--panel-2);padding:10px;text-align:left;color:var(--cream);display:flex;flex-direction:column;gap:4px}
 .wfmini:hover{border-color:var(--gold)}
 .wfmini img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:center 12%;border-radius:8px}
@@ -1159,6 +1181,14 @@ function pageMeta(id){
 }
 var curPage="pgWf";
 var lastPageOfGroup={};
+function updateSubtabFade(){
+  var host=$("subtabbar");
+  if(!host || host.className.indexOf(" on")<0) return;
+  var atStart = host.scrollLeft<=1;
+  var atEnd = host.scrollLeft + host.clientWidth >= host.scrollWidth-1;
+  host.classList.toggle("fade-l", !atStart);
+  host.classList.toggle("fade-r", !atEnd);
+}
 function renderSubtabs(grp, activeId){
   var host=$("subtabbar");
   if(!host) return;
@@ -1175,6 +1205,8 @@ function renderSubtabs(grp, activeId){
     if(pid===activeId) activeBtn=b;
   });
   host.className="subtabbar on";
+  host.onscroll = updateSubtabFade;
+  updateSubtabFade();
   /* Create's 6 sub-tabs are wider than a phone screen — bring the active
      one into view so switching here (e.g. from the key-setup banner)
      doesn't leave it scrolled off-screen with no visual cue */
@@ -3212,6 +3244,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       gd.appendChild(m);
       wfIndex.push({ el:m, grp:g, q:(w.title+" "+(w.summary||"")+" "+w.id).toLowerCase() });
     });
+    if(c.items.length%2===1 && gd.lastElementChild) gd.lastElementChild.classList.add("wf-span2");
     g.b.appendChild(gd);
     wfHost.appendChild(g.g);
   });
@@ -3989,7 +4022,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.20.26";
+var APP_VER="4.20.27";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -4149,9 +4182,17 @@ function friendlyError(e){
 $("btnGen").onclick = async function(){
   var provider = ($("selProvider") && $("selProvider").value) || "gemini";
   var rhActive = provider==="runninghub" ? rhActiveModelCfg() : null;
-  if(provider==="gemini" && !state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); toast(t("st_needkey"),"err"); return; }
-  if(provider==="runninghub" && (!state.rhKey || !rhActive)){ switchPage("pgHome"); var m=L9({my:"RunningHub key/model setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key/model isn't set up yet — configure it in Setup",shn:"RunningHub key/model ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key/model n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key/model — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key/model — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key/model — cấu hình trong Setup",id:"RunningHub key/model belum disiapkan — atur di Setup",ms:"RunningHub key/model belum disediakan — konfigurasi dalam Setup"}); setSt("stRhKey",m,"err"); toast(m,"err"); return; }
-  if(provider==="openai" && !state.oaKey){ switchPage("pgHome"); var mo=L9({my:"OpenAI key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"OpenAI key isn't set up yet — add it in Setup",shn:"OpenAI key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"OpenAI key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า OpenAI key — เพิ่มใน Setup",zh:"尚未设置 OpenAI key — 请在 Setup 中添加",vi:"Chưa thiết lập OpenAI key — thêm trong Setup",id:"OpenAI key belum disiapkan — tambahkan di Setup",ms:"OpenAI key belum disediakan — tambah dalam Setup"}); setSt("stOaKey",mo,"err"); toast(mo,"err"); return; }
+  /* No toast() on these three redirect-to-Setup checks: switchPage+setSt
+     already puts a correctly-scoped inline error right under the relevant
+     key field (#stKey / #stRhKey / #stOaKey). toast() is position:fixed at
+     the bottom of the screen — on the Setup page that spot lands on top of
+     whichever key card happens to be scrolled there, which is misleading
+     when it's a *different* provider's key card (e.g. a missing Gemini key
+     rendering its toast over the unrelated OpenAI card). The inline message
+     alone is sufficient. */
+  if(provider==="gemini" && !state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); return; }
+  if(provider==="runninghub" && (!state.rhKey || !rhActive)){ switchPage("pgHome"); var m=L9({my:"RunningHub key/model setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key/model isn't set up yet — configure it in Setup",shn:"RunningHub key/model ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key/model n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key/model — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key/model — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key/model — cấu hình trong Setup",id:"RunningHub key/model belum disiapkan — atur di Setup",ms:"RunningHub key/model belum disediakan — konfigurasi dalam Setup"}); setSt("stRhKey",m,"err"); return; }
+  if(provider==="openai" && !state.oaKey){ switchPage("pgHome"); var mo=L9({my:"OpenAI key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"OpenAI key isn't set up yet — add it in Setup",shn:"OpenAI key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"OpenAI key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า OpenAI key — เพิ่มใน Setup",zh:"尚未设置 OpenAI key — 请在 Setup 中添加",vi:"Chưa thiết lập OpenAI key — thêm trong Setup",id:"OpenAI key belum disiapkan — tambahkan di Setup",ms:"OpenAI key belum disediakan — tambah dalam Setup"}); setSt("stOaKey",mo,"err"); return; }
   var text=$("prompt").value.trim();
   if(!text && !state.refs.some(Boolean)){ setSt("stGen",t("st_needany"),"err"); return; }
   var btn=$("btnGen"); btn.disabled=true; $("spin").className="spin on"; setSt("stGen","");
