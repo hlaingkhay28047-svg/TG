@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-20-21";
+var CACHE = "hnk-web-studio-v4-20-22";
 var OFFLINE_URL = "./index.html";
 
 self.addEventListener("install", function (e) {
