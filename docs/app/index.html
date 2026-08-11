@@ -9,6 +9,7 @@
 <link rel="icon" href="lib/favicon-48.png" sizes="48x48">
 <link rel="icon" href="lib/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="lib/apple-touch-icon.png">
+<link rel="preload" as="image" href="lib/banners/banner-golden-temple.jpg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HNK Studio">
@@ -68,10 +69,19 @@ input,textarea,select{font-family:inherit}
 .hero-fx i:nth-child(5){left:86%;top:80%;animation-duration:8.9s;animation-delay:2.5s;transform:scale(.8)}
 .hero-fx i:nth-child(6){left:42%;top:92%;animation-duration:8s;animation-delay:4.6s;transform:scale(.7)}
 @keyframes heroSpark{0%{opacity:0;transform:translateY(0) scale(.6)}12%{opacity:.9}60%{opacity:.55}100%{opacity:0;transform:translateY(-130px) scale(1)}}
-.hero-strip h1 em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:heroShine 5s ease-in-out infinite}
+.hero-strip h1 em,.page-hero .ph-head em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:heroShine 5s ease-in-out infinite}
 @keyframes heroShine{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
-@media (prefers-reduced-motion: reduce){.hero-art img,.hero-art:before,.hero-fx i,.hero-strip h1 em,.lib-grid img{animation:none!important}}
+@media (prefers-reduced-motion: reduce){.hero-art img,.hero-art:before,.hero-fx i,.hero-strip h1 em,.page-hero .ph-head em,.lib-grid img{animation:none!important}}
 .hero-mini .hero-art img{opacity:.5}
+/* ---- page-hero: compact per-page banner band — same visual language as .hero-art
+   (cover image + dark legibility scrim + gold kicker + one-line benefit headline).
+   Text is real HTML overlay (selectable, i18n via t()) — never baked into images. ---- */
+.page-hero{position:relative;min-height:126px;margin:var(--sp-3) 0 var(--sp-3);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;padding:12px 16px;border:1px solid var(--line-soft)}
+.page-hero>img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}
+.page-hero:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(11,13,20,.22) 0%,rgba(11,13,20,.45) 46%,rgba(11,13,20,.9) 100%)}
+.page-hero .ph-kick{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 6px rgba(0,0,0,.85)}
+.page-hero .ph-head{position:relative;z-index:2;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 8px rgba(0,0,0,.9)}
+@media (min-width:768px){.page-hero{min-height:172px;padding:16px 20px 14px}}
 .kick{font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
 h1{font-size:var(--fs-xl);font-weight:800;line-height:1.3;margin:var(--sp-1) 0 var(--sp-1)}
 h1 em{font-style:normal;color:var(--gold-hi)}
@@ -438,7 +448,7 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 
 <div class="page on" id="pgWf">
   <header class="hero-strip">
-  <div class="hero-art"><img src="lib/wf/hero-banner2.jpg" alt=""></div>
+  <div class="hero-art"><img src="lib/banners/banner-golden-temple.jpg" alt="" style="object-position:83% 27%"></div>
   <div class="hero-fx"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="kick">No Install · Panel Data · Gemini AI</div>
   <h1 id="heroH1">Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ</h1>
@@ -462,6 +472,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgWf -->
 
 <div class="page" id="pgHome">
+  <header class="page-hero"><img src="lib/banners/banner-archer.jpg" alt="" loading="lazy" decoding="async" style="object-position:85% 20%">
+    <div class="ph-kick">Setup</div>
+    <p class="ph-head" id="phHome">တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်</p>
+  </header>
   <section class="card" id="cardKey">
     <h2>GEMINI API KEY</h2>
     <div class="row">
@@ -563,6 +577,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgHome -->
 
 <div class="page" id="pgLib">
+  <header class="page-hero"><img src="lib/banners/banner-train-station.jpg" alt="" loading="lazy" decoding="async" style="object-position:66% 50%">
+    <div class="ph-kick">Reference Library</div>
+    <p class="ph-head" id="phLib">Look ၃၆၆ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်</p>
+  </header>
   <section class="card">
     <h2 id="refsH2"></h2>
     <div class="refs" id="refs"></div>
@@ -601,6 +619,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgLib -->
 
 <div class="page" id="pgStudio">
+  <header class="page-hero"><img src="lib/banners/hero-mermaid.jpg" alt="" loading="lazy" decoding="async" style="object-position:20% 45%">
+    <div class="ph-kick">One-Tap Studio</div>
+    <p class="ph-head" id="phStudio">တစ်ချက်နှိပ်ရုံနဲ့ <em>Studio အဆင့်</em> ပရော်ဖက်ရှင်နယ် look</p>
+  </header>
   <section class="card">
     <h2>🛠 STUDIO TOOLS</h2>
     <p class="mut">Scene Builder · Retouch Pro · Add-ons</p>
@@ -615,6 +637,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgStudio -->
 
 <div class="page" id="pgRetouch">
+  <header class="page-hero"><img src="lib/banners/banner-flower-gown.jpg" alt="" loading="lazy" decoding="async" style="object-position:72% 25%">
+    <div class="ph-kick">Retouch Pro</div>
+    <p class="ph-head" id="phRetouch">မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်</p>
+  </header>
   <section class="card">
     <h2 id="rsH2">💎 RETOUCH STUDIO</h2>
     <p class="mut" id="rsIntro"></p>
@@ -680,6 +706,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgRetouch -->
 
 <div class="page" id="pgCreate">
+  <header class="page-hero"><img src="lib/banners/banner-flower-portrait.jpg" alt="" loading="lazy" decoding="async" style="object-position:77% 38%">
+    <div class="ph-kick">Freeform Create</div>
+    <p class="ph-head" id="phCreate">စိတ်ကူးထဲက မြင်ကွင်းတိုင်းကို <em>လွတ်လပ်စွာ</em> ဖန်တီးပါ</p>
+  </header>
   <section class="card">
     <h2>PROMPT</h2>
     <div class="refstrip" id="refStrip"></div>
@@ -759,6 +789,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   </div><!-- /pgCreate -->
 
 <div class="page" id="pgVideo">
+  <header class="page-hero"><img src="lib/banners/banner-naga.jpg" alt="" loading="lazy" decoding="async" style="object-position:58% 45%">
+    <div class="ph-kick">Image to Video</div>
+    <p class="ph-head" id="phVideo">ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်</p>
+  </header>
   <section class="card">
     <h2>🎬 VIDEO — IMAGE TO VIDEO</h2>
     <p class="mut" id="vidIntro"></p>
@@ -805,6 +839,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgVideo -->
 
 <div class="page" id="pgVideoUp">
+  <header class="page-hero"><img src="lib/banners/banner-superhero.jpg" alt="" loading="lazy" decoding="async" style="object-position:72% 10%">
+    <div class="ph-kick">Video Upscale</div>
+    <p class="ph-head" id="phVideoUp">ဗီဒီယိုအရည်အသွေး <em>နှစ်ဆမြှင့်</em> — ပိုကြည် ပိုပြတ်သား</p>
+  </header>
   <section class="card">
     <h2>🚀 VIDEO UPSCALE</h2>
     <p class="mut" id="vuIntro"></p>
@@ -847,6 +885,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgVideoUp -->
 
 <div class="page" id="pgText2Img">
+  <header class="page-hero"><img src="lib/banners/banner-coral-fairy.jpg" alt="" loading="lazy" decoding="async" style="object-position:80% 20%">
+    <div class="ph-kick">Text to Image</div>
+    <p class="ph-head" id="phT2i">စာသားတစ်ကြောင်းကနေ <em>ပရော်ဖက်ရှင်နယ်ပုံ</em> ဖြစ်လာမယ်</p>
+  </header>
   <section class="card">
     <h2>📝 TEXT TO IMAGE</h2>
     <p class="mut" id="t2iIntro"></p>
@@ -889,6 +931,10 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 </div><!-- /pgText2Img -->
 
 <div class="page" id="pgGallery">
+  <header class="page-hero"><img src="lib/banners/banner-fairy-forest.jpg" alt="" loading="lazy" decoding="async" style="object-position:48% 35%">
+    <div class="ph-kick">My Gallery</div>
+    <p class="ph-head" id="phGallery">ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား</p>
+  </header>
   <section class="card">
     <h2>🗂 MY GALLERY</h2>
     <p class="mut" id="galNote">ထုတ်ပြီးသမျှ ရလဒ်တွေ ဒီမှာ အလိုအလျောက် စုသိမ်းထားတယ် (ဖုန်းထဲမှာပဲ) — reload လုပ်လည်း မပျောက်ဘူး။</p>
@@ -1106,6 +1152,25 @@ Object.keys(TR_L10).forEach(function(k){ var t=TR[k]; if(t){ Object.keys(TR_L10[
    staying Myanmar even under English UI */
 var TR_WFSEARCH={"wf_search_ph":{my:"Workflow ရှာရန် — veil, retouch, relight…",en:"Search Workflow — veil, retouch, relight…",shn:"သွၵ်ႈႁႃ Workflow — veil, retouch, relight…",kac:"Workflow tam u — veil, retouch, relight…",th:"ค้นหา Workflow — veil, retouch, relight…",zh:"搜索 Workflow — veil、retouch、relight…",vi:"Tìm Workflow — veil, retouch, relight…",id:"Cari Workflow — veil, retouch, relight…",ms:"Cari Workflow — veil, retouch, relight…"}};
 Object.keys(TR_WFSEARCH).forEach(function(k){ TR[k]=TR_WFSEARCH[k]; });
+/* page-hero banner headlines (one per page) — the English kicker above each
+   headline is brand styling (like .kick) and stays English in every language;
+   the headline itself is benefit copy. my + en provided; t() already falls
+   back to en for shn/kac/th/zh/vi/id/ms, same as any other key without an
+   explicit entry. One gold <em> keyword per headline (heroShine treatment). */
+var TR_PH={
+  ph_create:{my:'စိတ်ကူးထဲက မြင်ကွင်းတိုင်းကို <em>လွတ်လပ်စွာ</em> ဖန်တီးပါ',en:'Bring every scene you imagine to life — <em>your way</em>'},
+  ph_studio:{my:'တစ်ချက်နှိပ်ရုံနဲ့ <em>Studio အဆင့်</em> ပရော်ဖက်ရှင်နယ် look',en:'One tap to a <em>studio-grade</em> professional look'},
+  ph_retouch:{my:'မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်',en:'Flawless retouching that <em>stays natural</em>'},
+  ph_t2i:{my:'စာသားတစ်ကြောင်းကနေ <em>ပရော်ဖက်ရှင်နယ်ပုံ</em> ဖြစ်လာမယ်',en:'One line of text becomes a <em>professional image</em>'},
+  ph_video:{my:'ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်',en:'Your photos <em>come alive</em> in motion'},
+  ph_videoup:{my:'ဗီဒီယိုအရည်အသွေး <em>နှစ်ဆမြှင့်</em> — ပိုကြည် ပိုပြတ်သား',en:'<em>Double</em> your video quality — sharper, cleaner'},
+  ph_lib:{my:'Look ၃၆၆ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်',en:'366 curated looks — <em>pick one</em> and start instantly'},
+  ph_gallery:{my:'ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား',en:'Every creation you make, <em>saved right here</em>'},
+  ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'}
+};
+Object.keys(TR_PH).forEach(function(k){ TR[k]=TR_PH[k]; });
+/* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
+var PH_MAP=[["phCreate","ph_create"],["phStudio","ph_studio"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"]];
 function L9(o){ return o[LANG]!==undefined ? o[LANG] : (o.en!==undefined ? o.en : o.my); }
 
 function t(k){ var e=TR[k]; return e ? (e[LANG]!==undefined ? e[LANG] : (e.en!==undefined ? e.en : e.my)) : k; }
@@ -1115,6 +1180,7 @@ function applyLang(){
   document.documentElement.lang=LANG;
   $("heroH1").innerHTML=t("hero_h1");
   $("heroLede").textContent=t("hero_lede");
+  PH_MAP.forEach(function(p){ var el=$(p[0]); if(el) el.innerHTML=t(p[1]); });
   $("keyNote").innerHTML=t("key_note");
   $("btnShowKey").textContent=t("btn_show");
   $("btnSaveKey").textContent=t("btn_savekey");
@@ -4149,7 +4215,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.21.0";
+var APP_VER="4.22.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
