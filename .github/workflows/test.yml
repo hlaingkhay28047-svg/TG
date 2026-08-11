@@ -82,3 +82,6 @@ jobs:
 
       - name: Verify Master BG FG Replace Smart Workflow
         run: node test/verify_master_bgfg_workflow.js
+
+      - name: Run v4.27.0 Home (pgDash) + IA re-architecture sweep (mocked)
+        run: node test/sweep_dash.js

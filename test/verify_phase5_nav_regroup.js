@@ -1,8 +1,9 @@
-/* Regression test for v4.19.0's UI/UX audit Phase 5: the highest-risk
-   phase — regrouping the flat 10-tab bottom nav into 4 top-level tabs
-   (Workflow / Create / Library / Setup), each holding its related pages
-   as second-level .subtabbar entries (Create: Freeform/Studio/Retouch/
-   Text→Img/Video/VidUp — 6; Library: Reference/Gallery — 2). Every
+/* Regression test for the bottom-nav grouping. Originally written for
+   v4.19.0's Phase 5 (10 flat tabs -> 4 top-level groups); updated for
+   v4.27.0's Home + IA re-architecture, which reshapes the groups to
+   HOME[pgDash] / WORKFLOWS[pgWf] / EDIT[pgCreate,pgStudio,pgRetouch] /
+   MEDIA LAB[pgText2Img,pgVideo,pgVideoUp] / LIBRARY[pgLib,pgGallery] and
+   demotes Setup (pgHome) from the bar to the header gear button. Every
    original page id is unchanged; only how you navigate there changed.
    This test exists specifically to catch the failure mode a nav regroup
    is most likely to introduce: a page silently becoming unreachable.
@@ -10,17 +11,20 @@
 const { chromium } = require("playwright-core");
 const PORT = process.env.PORT || 8931;
 
+// [pageId, expected top-tab label (null = no tab highlights: Setup lives on
+//  the header gear since v4.27.0), expected subtab count (null = no subtabs)]
 const ALL_PAGES = [
-  ["pgWf", "Workflow", null],
-  ["pgCreate", "Create", 6],
-  ["pgStudio", "Create", 6],
-  ["pgRetouch", "Create", 6],
-  ["pgText2Img", "Create", 6],
-  ["pgVideo", "Create", 6],
-  ["pgVideoUp", "Create", 6],
+  ["pgDash", "Home", null],
+  ["pgWf", "Workflows", null],
+  ["pgCreate", "Edit", 3],
+  ["pgStudio", "Edit", 3],
+  ["pgRetouch", "Edit", 3],
+  ["pgText2Img", "Media Lab", 3],
+  ["pgVideo", "Media Lab", 3],
+  ["pgVideoUp", "Media Lab", 3],
   ["pgLib", "Library", 2],
   ["pgGallery", "Library", 2],
-  ["pgHome", "Setup", null]
+  ["pgHome", null, null]
 ];
 
 (async () => {
@@ -34,11 +38,17 @@ const ALL_PAGES = [
 
   const tabbarInfo = await page.evaluate(() => {
     const bar = document.getElementById("tabbar");
-    return { count: bar.children.length, scrollWidth: bar.scrollWidth, clientWidth: bar.clientWidth };
+    return {
+      count: bar.children.length,
+      labels: Array.from(bar.children).map(b => b.textContent),
+      scrollWidth: bar.scrollWidth, clientWidth: bar.clientWidth
+    };
   });
   console.log("Top tabbar:", JSON.stringify(tabbarInfo));
-  const tabbarOk = tabbarInfo.count === 4 && tabbarInfo.scrollWidth <= tabbarInfo.clientWidth + 2;
-  console.log(tabbarOk ? "PASS (exactly 4 top-level tabs, no overflow at 390px)" : "FAIL (top tabbar regression)");
+  const tabbarOk = tabbarInfo.count === 5 &&
+    tabbarInfo.labels.join("|") === "Home|Workflows|Edit|Media Lab|Library" &&
+    tabbarInfo.scrollWidth <= tabbarInfo.clientWidth + 2;
+  console.log(tabbarOk ? "PASS (exactly 5 top-level tabs in HOME/WORKFLOWS/EDIT/MEDIA LAB/LIBRARY order, no overflow at 390px)" : "FAIL (top tabbar regression)");
 
   const results = [];
   for (const [pid, expectTopLabel, expectSubCount] of ALL_PAGES) {
@@ -49,42 +59,64 @@ const ALL_PAGES = [
       const activeTop = Array.from(bar.children).filter(b => b.className.indexOf("on") >= 0);
       const sub = document.getElementById("subtabbar");
       const activeSub = Array.from(sub.children).filter(b => b.className.indexOf("on") >= 0);
+      const gear = document.getElementById("btnGearSetup");
       return {
         pageVisible: pageEl && getComputedStyle(pageEl).display !== "none",
         activeTopCount: activeTop.length,
         activeTopText: activeTop[0] ? activeTop[0].textContent : null,
         subVisible: sub.classList.contains("on"),
         subCount: sub.children.length,
-        activeSubCount: activeSub.length
+        activeSubCount: activeSub.length,
+        gearOn: gear ? gear.className.indexOf("on") >= 0 : false
       };
     }, pid);
     results.push({ pid, expectTopLabel, expectSubCount, ...r });
   }
-  console.log("Full 10-page reachability sweep:", JSON.stringify(results));
+  console.log("Full 11-page reachability sweep:", JSON.stringify(results));
 
   let allOk = true;
   for (const r of results) {
     const wantSub = r.expectSubCount !== null;
-    const ok = r.pageVisible && r.activeTopCount === 1 && r.activeTopText.indexOf(r.expectTopLabel) >= 0 &&
-      (wantSub ? (r.subVisible && r.subCount === r.expectSubCount && r.activeSubCount === 1) : !r.subVisible);
+    let ok;
+    if (r.expectTopLabel === null) {
+      // Setup: page shows, NO bar tab highlights, the header gear does instead
+      ok = r.pageVisible && r.activeTopCount === 0 && !r.subVisible && r.gearOn;
+    } else {
+      ok = r.pageVisible && r.activeTopCount === 1 && r.activeTopText.indexOf(r.expectTopLabel) >= 0 &&
+        (wantSub ? (r.subVisible && r.subCount === r.expectSubCount && r.activeSubCount === 1) : !r.subVisible) &&
+        !r.gearOn;
+    }
     if (!ok) { allOk = false; console.log("MISMATCH for", r.pid, JSON.stringify(r)); }
   }
-  console.log(allOk ? "PASS (all 10 original pages reachable; correct top+sub tab highlighted for each)" : "FAIL (page reachability regression)");
+  console.log(allOk ? "PASS (all 11 pages reachable; correct top+sub tab — or gear, for Setup — highlighted for each)" : "FAIL (page reachability regression)");
 
   // clicking a top-tab returns to the last-visited page within that group,
-  // not always the first — a real usability regression if lost
+  // not always the first — a real usability regression if lost. Exercise it
+  // on BOTH halves of the old Create group split (Media Lab and Edit).
   await page.evaluate(() => switchPage("pgVideo"));
   await page.waitForTimeout(100);
   const stillOnVideo = await page.evaluate(() => {
     const bar = document.getElementById("tabbar");
-    const createBtn = Array.from(bar.children).find(b => b.textContent.indexOf("Create") >= 0);
-    createBtn.click();
+    switchPage("pgDash");
+    const mediaBtn = Array.from(bar.children).find(b => b.textContent.indexOf("Media Lab") >= 0);
+    mediaBtn.click();
     return document.getElementById("pgVideo").className.indexOf("on") >= 0;
   });
-  console.log("Create top-tab click after being on Video returns to Video:", stillOnVideo);
-  console.log(stillOnVideo ? "PASS (last-visited-page-in-group memory works)" : "FAIL (group re-entry regression)");
+  console.log("Media Lab top-tab click after being on Video returns to Video:", stillOnVideo);
+  console.log(stillOnVideo ? "PASS (last-visited-page-in-group memory works for Media Lab)" : "FAIL (group re-entry regression)");
 
-  const overall = tabbarOk && allOk && stillOnVideo;
+  const stillOnStudio = await page.evaluate(() => {
+    const bar = document.getElementById("tabbar");
+    switchPage("pgStudio");
+    switchPage("pgDash");
+    const editBtn = Array.from(bar.children).find(b => b.textContent.indexOf("Edit") >= 0);
+    editBtn.click();
+    return document.getElementById("pgStudio").className.indexOf("on") >= 0;
+  });
+  console.log("Edit top-tab click after being on Studio returns to Studio:", stillOnStudio);
+  console.log(stillOnStudio ? "PASS (last-visited-page-in-group memory works for Edit)" : "FAIL (group re-entry regression)");
+
+  const overall = tabbarOk && allOk && stillOnVideo && stillOnStudio;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

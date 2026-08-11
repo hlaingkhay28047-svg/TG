@@ -49,6 +49,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   await page.evaluate(() => {
     state.key = "TEST_KEY";
     const onb = document.querySelector(".onb"); if (onb) onb.classList.remove("on");
+    // v4.27.0: fresh storage now lands on Home (pgDash) — go to the Workflow
+    // page like a user would, so its lazy-loaded card images actually load
+    switchPage("pgWf");
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
   });
 
