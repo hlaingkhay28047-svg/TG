@@ -1,9 +1,10 @@
-/* Regression test for v4.18.0's UI/UX audit Phase 4: converting Studio's
-   Add-ons wall (8 permanently-expanded subh+chips sections stacked on one
-   page) and Setup's two densest blocks (RunningHub's advanced model
-   config, and the 4-platform install guide) to the same .grp
-   collapsible-accordion component already proven on the Workflow page
-   and Scene Builder/Retouch Pro cards.
+/* Regression test for the .grp accordion convention (Phase 4), updated for
+   v4.23.0's Studio rebuild: pgStudio now hosts the MEITU STUDIO suite
+   (12 .grp groups in #muHost) and the EVOTO PRO suite (11 .grp groups in
+   #evHost), all closed by default, opening on header click to reveal the
+   live-preview controls (.st-ctl slider rows / .chips picks). Setup's
+   accordion checks (RunningHub advanced config + 4-platform guide) are
+   unchanged from the original Phase-4 test.
    Usage: PORT=8931 node test/verify_phase4_accordion.js   (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
 const PORT = process.env.PORT || 8931;
@@ -17,28 +18,33 @@ const PORT = process.env.PORT || 8931;
   await page.waitForTimeout(800);
   await page.evaluate(() => { const o = document.querySelector(".onb"); if (o) o.classList.remove("on"); });
 
-  // --- Studio Add-ons: exactly 4 .grp groups, all closed by default ---
+  // --- Studio: MEITU 12 + EVOTO 11 .grp groups, every one closed by default ---
   await page.evaluate(() => switchPage("pgStudio"));
   await page.waitForTimeout(200);
-  const addonGroups = await page.evaluate(() => {
-    const host = document.getElementById("addonHost");
-    return Array.from(host.querySelectorAll(":scope > .grp")).map(g => ({
+  const suiteGroups = await page.evaluate(() => {
+    const grab = id => Array.from(document.querySelectorAll("#" + id + " > .grp")).map(g => ({
       open: g.classList.contains("open"),
       bodyVisible: getComputedStyle(g.querySelector(".grp-b")).display !== "none"
     }));
+    return { mu: grab("muHost"), ev: grab("evHost") };
   });
-  console.log("Studio addonHost groups:", JSON.stringify(addonGroups));
-  const addonsOk = addonGroups.length === 4 && addonGroups.every(g => !g.open && !g.bodyVisible);
-  console.log(addonsOk ? "PASS (4 add-on groups, all closed by default)" : "FAIL (add-on accordion structure regression)");
+  console.log("Studio suite groups:", "mu=" + suiteGroups.mu.length, "ev=" + suiteGroups.ev.length);
+  const addonsOk = suiteGroups.mu.length === 12 && suiteGroups.ev.length === 11 &&
+    suiteGroups.mu.concat(suiteGroups.ev).every(g => !g.open && !g.bodyVisible);
+  console.log(addonsOk ? "PASS (12 Meitu + 11 Evoto groups, all closed by default)" : "FAIL (Studio suite accordion structure regression)");
 
   const clickResult = await page.evaluate(() => {
-    const g = document.querySelector("#addonHost > .grp");
+    const g = document.querySelector("#muHost > .grp");
     g.querySelector(".grp-h").click();
-    return { open: g.classList.contains("open"), bodyVisible: getComputedStyle(g.querySelector(".grp-b")).display !== "none", hasChips: !!g.querySelector(".chips") };
+    return {
+      open: g.classList.contains("open"),
+      bodyVisible: getComputedStyle(g.querySelector(".grp-b")).display !== "none",
+      hasControls: !!(g.querySelector(".st-ctl") || g.querySelector(".chips"))
+    };
   });
-  console.log("First add-on group after click:", JSON.stringify(clickResult));
-  const clickOk = clickResult.open && clickResult.bodyVisible && clickResult.hasChips;
-  console.log(clickOk ? "PASS (clicking header opens group + reveals chips)" : "FAIL (accordion click regression)");
+  console.log("First Meitu group after click:", JSON.stringify(clickResult));
+  const clickOk = clickResult.open && clickResult.bodyVisible && clickResult.hasControls;
+  console.log(clickOk ? "PASS (clicking header opens group + reveals live controls)" : "FAIL (accordion click regression)");
 
   // --- Setup: RunningHub advanced config + 4 platform groups, all closed by default ---
   await page.evaluate(() => switchPage("pgHome"));

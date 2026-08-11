@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>HNK Web Studio — One-Tap AI Studio</title>
-<meta name="description" content="Browser ထဲမှာ One-Tap Workflow 128 + Visual Library 366 + Smart Workflow 115 + Retouch Pro 50 — HNK Create Studio Web App">
+<meta name="description" content="Browser ထဲမှာ One-Tap Workflow + Visual Library 366 + Smart Workflow 115 + Meitu Studio 50 · Evoto Pro 42 — HNK Create Studio Web App">
 <meta name="theme-color" content="#0b0d14">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="lib/favicon-48.png" sizes="48x48">
@@ -16,7 +16,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="HNK Create Studio">
 <meta property="og:title" content="HNK Web Studio — One-Tap AI Studio">
-<meta property="og:description" content="128 One-Tap Workflows · Visual Library 366 · Smart Workflow 115 · Retouch Pro 50 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
+<meta property="og:description" content="One-Tap Workflows · Visual Library 366 · Smart Workflow 115 · Meitu Studio 50 · Evoto Pro 42 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
 <meta property="og:url" content="https://hlaingkhay28047-svg.github.io/TG/app/">
 <meta property="og:image" content="https://hlaingkhay28047-svg.github.io/TG/app/og-app.jpg">
 <meta property="og:image:width" content="1200">
@@ -441,6 +441,25 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   .wiz-x:hover,.ref .x:hover{border-color:var(--gold)}
   .wfmini .fav:hover{color:var(--gold-hi)}
 }
+
+/* ---- pgStudio v5: Meitu Studio + Evoto Pro live-preview controls ---- */
+.st-ctl{display:flex;align-items:center;gap:var(--sp-2);min-height:38px;flex-wrap:wrap}
+.st-ctl label{font-size:var(--fs-xs);color:var(--cream);flex:0 0 34%;min-width:96px}
+.rng{flex:1;accent-color:var(--gold);min-height:44px;min-width:110px}
+.st-val{font-size:var(--fs-2xs);color:var(--muted);min-width:34px;text-align:right}
+.st-color{width:52px;min-height:38px;padding:2px;margin-top:var(--sp-2)}
+.pcard{flex:0 0 76px;cursor:pointer;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel-2);padding:0;overflow:hidden}
+.pcard canvas{width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;display:block}
+.pcard span{display:block;font-size:var(--fs-2xs);text-align:center;padding:3px 2px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.prow{display:flex;gap:var(--sp-2);overflow-x:auto;padding-bottom:var(--sp-1)}
+/* sticky above the fixed bottom tab bar (76px + safe area, same offset the toast uses) */
+.st-genbar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-2) var(--sp-3);margin:var(--sp-4) 0}
+.st-genbar .st-x{margin-left:6px;color:var(--muted)}
+#stStage{margin-top:var(--sp-3)}
+#stCanvas{display:block;max-width:100%;max-height:48vh;margin:0 auto;border-radius:var(--r-md);background:#000}
+#stTarget .chips{margin-top:var(--sp-2)}
+@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 var(--sp-4)}}
 </style>
 
 <nav class="nav"><div class="wrap nav-in">
@@ -466,8 +485,8 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
     <div><b id="stTapCount">128</b><span>One-Tap Workflows</span></div>
     <div><b>366</b><span>Visual Library</span></div>
     <div><b id="stWfCount">115</b><span>Smart Workflow</span></div>
-    <div><b>50</b><span>Retouch Pro</span></div>
-    <div><b>39</b><span>Camera Chips</span></div>
+    <div><b id="stMeituCount">50</b><span>Meitu Features</span></div>
+    <div><b id="stEvotoCount">42</b><span>Evoto Pro</span></div>
   </div>
   </header>
 
@@ -633,16 +652,55 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
     <p class="ph-head" id="phStudio">တစ်ချက်နှိပ်ရုံနဲ့ <em>Studio အဆင့်</em> ပရော်ဖက်ရှင်နယ် look</p>
   </header>
   <section class="card">
-    <h2>🛠 STUDIO TOOLS</h2>
-    <p class="mut">Scene Builder · Retouch Pro · Add-ons</p>
-    <div id="oneTapHost"></div>
+    <h2>📸 PHOTO</h2>
+    <p class="mut" id="stPhotoNote"></p>
+    <div id="stPicker"></div>
+    <div id="stStage" style="display:none"><canvas id="stCanvas"></canvas></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="stHold">◉ Before</button>
+      <button class="btn" id="stReset">↺ Reset</button>
+    </div>
+    <div id="stTarget"></div>
   </section>
 
   <section class="card">
-    <h2 id="addonsH2"></h2>
-    <div id="addonHost"></div>
-    <div class="addons" id="addonSummary"></div>
+    <h2>💄 MEITU STUDIO</h2>
+    <p class="mut" id="muNote"></p>
+    <div class="prow" id="muPresetRow"></div>
+    <div id="muHost"></div>
   </section>
+
+  <section class="card">
+    <h2>🎯 EVOTO PRO</h2>
+    <p class="mut" id="evNote"></p>
+    <div class="prow" id="evPresetRow"></div>
+    <div id="evHost"></div>
+  </section>
+
+  <section class="card result-box" id="stResultBox">
+    <h2 id="stResultH2"></h2>
+    <div class="cmp" id="stCmp">
+      <img id="stCmpAfter" alt="after">
+      <div class="cmp-top" id="stCmpTop"><img id="stCmpBefore" alt="before"></div>
+      <div class="cmp-line" id="stCmpLine"></div>
+    </div>
+    <input type="range" id="stCmpRange" min="0" max="100" value="50" style="width:100%;margin-top:8px;accent-color:var(--gold)">
+    <div class="row" style="margin-top:10px">
+      <a class="btn btn-gold grow" id="btnStDl" download="hnk-studio.jpg" style="text-align:center">⬇ Download</a>
+      <button class="btn" id="btnStToRef"></button>
+    </div>
+  </section>
+
+  <div class="st-genbar" id="stGenBar">
+    <div class="mut" id="stPendCount"></div>
+    <div class="chips" id="stPendChips"></div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn btn-gold grow gen" id="btnStGen">⚡ GENERATE</button>
+      <button class="chip" id="stHd" style="display:none">HD Finish</button>
+    </div>
+    <div class="spin" id="stSpin"></div>
+    <div class="status" id="stStatus"></div>
+  </div>
 </div><!-- /pgStudio -->
 
 <div class="page" id="pgRetouch">
@@ -1099,7 +1157,7 @@ var LANG = "my";
 try { LANG = localStorage.getItem("hnk_ws_lang") || "my"; } catch(e){}
 var TR = {
   hero_h1: { my: 'Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ', en: 'The panel\'s <em>One-Taps</em>, now in your browser' },
-  hero_lede: { my: 'Plugin ရဲ့ တကယ့် prompt data အစစ်ကို web ထဲ တိုက်ရိုက်ထည့်ထား — Preset · Wedding Suite · Lighting · Retouch Pro · Camera အကုန်။', en: 'The plugin\'s real prompt data, ported straight to the web — Presets · Wedding Suite · Lighting · Retouch Pro · Camera, all of it.' },
+  hero_lede: { my: 'Plugin ရဲ့ တကယ့် prompt data အစစ်ကို web ထဲ တိုက်ရိုက်ထည့်ထား — Preset · Wedding Suite · Lighting · Meitu Studio · Evoto Pro အကုန်။', en: 'The plugin\'s real prompt data, ported straight to the web — Presets · Wedding Suite · Lighting · Meitu Studio · Evoto Pro, all of it.' },
   key_note: { my: 'Key က ဒီ browser ရဲ့ localStorage ထဲမှာပဲ ရှိတယ် — ဘယ် server ကိုမှ မပို့ပါ။ <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">အခမဲ့ key ယူရန် →</a>', en: 'Your key stays in this browser\'s localStorage — it is never sent to any server. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Get a free key →</a>' },
   btn_show: { my: 'ပြ', en: 'Show' },
   btn_savekey: { my: 'သိမ်း + စစ်', en: 'Save + Test' },
@@ -1148,7 +1206,7 @@ var TR = {
   wiz_gennote: { my: 'GENERATE နှိပ်ရင် Create page ကို ကူးပြီး တန်းထုတ်ပေးမယ် — ရလဒ်ကို အဲ့မှာ မြင်ရမယ်', en: 'GENERATE jumps to the Create page and runs immediately — you\'ll see the result there.' },
   unit: { my: ' ခု', en: '' }
 };
-var TR_X = {"hero_h1": {"shn": "One-Tap ၶွင် Photoshop panel ႁွတ်ႈမႃး ၼႂ်း browser ယဝ်ႉ", "kac": "Photoshop panel a One-Tap ni gaw browser hta du sai", "th": "One-Tap จากแผง Photoshop มาอยู่ในเบราว์เซอร์แล้ว", "zh": "Photoshop 面板的 One-Tap 功能，现已进入浏览器", "vi": "One-Tap của bảng Photoshop nay đã có trên trình duyệt", "id": "One-Tap dari panel Photoshop kini hadir di browser", "ms": "One-Tap panel Photoshop kini di pelayar anda"}, "hero_lede": {"shn": "ၶေႃႈမုၼ်း prompt တႄႉတႄႉ ၶွင် plugin — Preset · Wedding · Lighting · Retouch · Camera တင်းသဵင်ႈ", "kac": "Plugin a prompt data teng — Preset · Wedding · Lighting · Retouch · Camera yawng nga ai", "th": "ข้อมูล prompt จริงของปลั๊กอิน — Preset · Wedding Suite · Lighting · Retouch Pro · Camera ครบทั้งหมด", "zh": "插件的真实 prompt 数据直接移植到网页 — Preset·婚纱套件·灯光·精修·相机，一应俱全", "vi": "Dữ liệu prompt thật của plugin — Preset · Wedding Suite · Lighting · Retouch Pro · Camera, đầy đủ tất cả", "id": "Data prompt asli dari plugin — Preset · Wedding Suite · Lighting · Retouch Pro · Camera, semuanya", "ms": "Data prompt sebenar plugin — Preset · Wedding Suite · Lighting · Retouch Pro · Camera, semuanya"}, "key_note": {"shn": "Key ဝႆႉၼႂ်း browser ၼႆႉၵူၺ်း — ဢမ်ႇသူင်ႇထိုင် server လႂ်။ <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">ဢဝ် key လၢႆ →</a>", "kac": "Key gaw ndai browser hta sha nga ai — server de n shagun ai. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Key manu n jaw ai la u →</a>", "th": "คีย์เก็บใน localStorage ของเบราว์เซอร์นี้เท่านั้น — ไม่ส่งไปเซิร์ฟเวอร์ใด <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">รับคีย์ฟรี →</a>", "zh": "密钥只保存在本浏览器的 localStorage 中，绝不发送到任何服务器。<a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">免费获取密钥 →</a>", "vi": "Khóa chỉ lưu trong localStorage của trình duyệt này — không gửi tới máy chủ nào. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Lấy khóa miễn phí →</a>", "id": "Kunci hanya disimpan di localStorage browser ini — tidak dikirim ke server mana pun. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Dapatkan kunci gratis →</a>", "ms": "Kunci hanya disimpan dalam localStorage pelayar ini — tidak dihantar ke mana-mana pelayan. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Dapatkan kunci percuma →</a>"}, "btn_show": {"shn": "ၼႄ", "kac": "Madun", "th": "แสดง", "zh": "显示", "vi": "Hiện", "id": "Lihat", "ms": "Papar"}, "btn_savekey": {"shn": "သိမ်း + ၸၢမ်း", "kac": "Da nna chyam u", "th": "บันทึก + ทดสอบ", "zh": "保存并测试", "vi": "Lưu + Kiểm tra", "id": "Simpan + Uji", "ms": "Simpan + Uji"}, "key_ph": {"shn": "AIza… (aistudio.google.com/apikey — ဢဝ်လၢႆ)", "kac": "AIza… (aistudio.google.com/apikey — manu n jaw ai)", "th": "AIza… (ฟรีที่ aistudio.google.com/apikey)", "zh": "AIza…（aistudio.google.com/apikey 免费获取）", "vi": "AIza… (miễn phí tại aistudio.google.com/apikey)", "id": "AIza… (gratis di aistudio.google.com/apikey)", "ms": "AIza… (percuma di aistudio.google.com/apikey)"}, "refs_h2": {"shn": "ၶႅပ်းႁၢင်ႈ (IMAGE 1 = တူဝ်ထိင်)", "kac": "Sumla ni (IMAGE 1 = madung)", "th": "รูปภาพ (IMAGE 1 = บุคคลหลัก)", "zh": "图片（IMAGE 1 = 主体）", "vi": "Ảnh (IMAGE 1 = chủ thể chính)", "id": "Gambar (IMAGE 1 = subjek utama)", "ms": "Imej (IMAGE 1 = subjek utama)"}, "refs_note": {"shn": "One-Tap ၵမ်ႈၼမ် လူဝ်ႇ IMAGE 1 · preset reference လူဝ်ႇ IMAGE 2 ထႅင်ႈ", "kac": "One-Tap law malawng gaw IMAGE 1 ra ai · reference preset ni gaw IMAGE 2 mung ra ai", "th": "One-Tap ส่วนใหญ่ต้องมี IMAGE 1 · พรีเซ็ตอ้างอิงต้องมี IMAGE 2 ด้วย", "zh": "多数 One-Tap 需要 IMAGE 1 · 参考类预设还需要 IMAGE 2", "vi": "Hầu hết One-Tap cần IMAGE 1 · preset tham chiếu cần thêm IMAGE 2", "id": "Sebagian besar One-Tap butuh IMAGE 1 · preset referensi juga butuh IMAGE 2", "ms": "Kebanyakan One-Tap perlukan IMAGE 1 · preset rujukan perlukan IMAGE 2 juga"}, "lib_search_ph": {"shn": "သွၵ်ႈႁႃ — wedding, child, lighting…", "kac": "Tam u — wedding, child, lighting…", "th": "ค้นหา — wedding, child, lighting…", "zh": "搜索 — wedding、child、lighting…", "vi": "Tìm — wedding, child, lighting…", "id": "Cari — wedding, child, lighting…", "ms": "Cari — wedding, child, lighting…"}, "lib_all": {"shn": "တင်းသဵင်ႈ", "kac": "Yawng", "th": "ทั้งหมด", "zh": "全部", "vi": "Tất cả", "id": "Semua", "ms": "Semua"}, "lib_more": {"shn": "ၼႄထႅင်ႈ", "kac": "Grau madun", "th": "ดูเพิ่ม", "zh": "加载更多", "vi": "Xem thêm", "id": "Muat lagi", "ms": "Muat lagi"}, "lib_img1": {"shn": "ႁဵတ်း IMAGE 1", "kac": "IMAGE 1 hku lang", "th": "ใช้เป็น IMAGE 1", "zh": "设为 IMAGE 1", "vi": "Dùng làm IMAGE 1", "id": "Jadikan IMAGE 1", "ms": "Jadikan IMAGE 1"}, "lib_img2": {"shn": "ႁဵတ်း IMAGE 2 (Reference)", "kac": "IMAGE 2 (Reference) hku lang", "th": "ใช้เป็น IMAGE 2 (อ้างอิง)", "zh": "设为 IMAGE 2（参考）", "vi": "Dùng làm IMAGE 2 (tham chiếu)", "id": "Jadikan IMAGE 2 (Referensi)", "ms": "Jadikan IMAGE 2 (Rujukan)"}, "addons_h2": {"shn": "Add-ons (သႂ်ႇၸွမ်း Generate ၵူႈပွၵ်ႈ)", "kac": "Add-ons (Generate shagu hte lawm ai)", "th": "Add-ons (ผสมทุกครั้งที่ Generate)", "zh": "附加项（每次生成时自动混入）", "vi": "Add-ons (trộn vào mỗi lần Generate)", "id": "Add-ons (dicampur setiap Generate)", "ms": "Add-ons (dicampur setiap Generate)"}, "sub_chains": {"shn": "Style Chains — လိူၵ်ႈဝႆႉၸိူဝ်းၼၼ်ႉ blend", "kac": "Style Chains — lata da ai ni blend", "th": "Style Chains — ผสมทุกอันที่เลือก", "zh": "风格链 — 选中的全部融合", "vi": "Style Chains — hòa trộn mọi lựa chọn", "id": "Style Chains — padukan semua pilihan", "ms": "Style Chains — gabung semua pilihan"}, "sub_cleanup": {"shn": "Cleanup — ႁဵတ်းၸွမ်း Generate ၵူႈပွၵ်ႈ", "kac": "Cleanup — Generate shagu hte galaw ai", "th": "Cleanup — ทำงานพร้อม Generate ทุกครั้ง", "zh": "清理 — 每次生成时执行", "vi": "Cleanup — chạy cùng mỗi lần Generate", "id": "Cleanup — jalan bersama setiap Generate", "ms": "Cleanup — berjalan dengan setiap Generate"}, "sub_mix": {"shn": "Replace Mix — လူဝ်ႇ IMAGE 2", "kac": "Replace Mix — IMAGE 2 ra ai", "th": "Replace Mix — ต้องมี IMAGE 2", "zh": "选择性替换 — 需要 IMAGE 2", "vi": "Replace Mix — cần IMAGE 2", "id": "Replace Mix — perlu IMAGE 2", "ms": "Replace Mix — perlukan IMAGE 2"}, "prompt_ph": {"shn": "ၼဵၵ်း One-Tap သေ prompt တေမႃးတီႈၼႆႈ — တႅမ်ႈႁင်းၵူၺ်းၵေႃႈလႆႈ…", "kac": "One-Tap dip yang prompt ndai kaw du na — nang nan ka mung mai ai…", "th": "แตะ One-Tap แล้ว prompt จะมาที่นี่ — พิมพ์เองก็ได้…", "zh": "点按任意 One-Tap，prompt 会出现在这里 — 也可以自己输入…", "vi": "Chạm One-Tap và prompt sẽ hiện ở đây — hoặc tự viết…", "id": "Ketuk One-Tap dan prompt muncul di sini — atau tulis sendiri…", "ms": "Ketik One-Tap dan prompt muncul di sini — atau tulis sendiri…"}, "ph_head": {"shn": "🕘 Prompt မိုၼ်း — ⭐ သိမ်းဝႆႉတႃႇသေႇ", "kac": "🕘 Prompt labau — ⭐ galoi da", "th": "🕘 ประวัติ Prompt — ⭐ เก็บถาวร", "zh": "🕘 Prompt 历史 — ⭐ 永久收藏", "vi": "🕘 Lịch sử prompt — ⭐ lưu vĩnh viễn", "id": "🕘 Riwayat prompt — ⭐ simpan permanen", "ms": "🕘 Sejarah prompt — ⭐ simpan kekal"}, "result_h2": {"shn": "ၽွၼ်းလႆႈ", "kac": "Lachyum", "th": "ผลลัพธ์", "zh": "结果", "vi": "Kết quả", "id": "Hasil", "ms": "Hasil"}, "to_ref": {"shn": "↺ ႁဵတ်း IMAGE 1", "kac": "↺ IMAGE 1 hku lang", "th": "↺ ใช้เป็น IMAGE 1", "zh": "↺ 设为 IMAGE 1", "vi": "↺ Dùng làm IMAGE 1", "id": "↺ Jadikan IMAGE 1", "ms": "↺ Jadikan IMAGE 1"}, "spin_gen": {"shn": "တိုၵ်ႉႁဵတ်းယူႇ — ပႂ်ႉ 20-60 ဝိၼၢထီး…", "kac": "Galaw nga ai — 20-60 second la u…", "th": "กำลังสร้าง — รอ 20-60 วินาที…", "zh": "正在生成 — 请等待 20-60 秒…", "vi": "Đang tạo — chờ 20-60 giây…", "id": "Sedang membuat — tunggu 20-60 detik…", "ms": "Sedang menjana — tunggu 20-60 saat…"}, "spin_tr": {"shn": "ပိၼ်ႇ prompt ပဵၼ် English…", "kac": "Prompt hpe English de gale nga…", "th": "กำลังแปล prompt เป็นภาษาอังกฤษ…", "zh": "正在把 prompt 翻译成英文…", "vi": "Đang dịch prompt sang tiếng Anh…", "id": "Menerjemahkan prompt ke Inggris…", "ms": "Menterjemah prompt ke Inggeris…"}, "st_done": {"shn": "ယဝ်ႉယဝ်ႈ ✓", "kac": "Ngut sai ✓", "th": "เสร็จแล้ว ✓", "zh": "完成 ✓", "vi": "Xong ✓", "id": "Selesai ✓", "ms": "Siap ✓"}, "st_needkey": {"shn": "သႂ်ႇ API key ဢွၼ်တၢင်း", "kac": "API key shawng bang u", "th": "กรุณาใส่ API key ก่อน", "zh": "请先填写 API key", "vi": "Hãy thêm API key trước", "id": "Masukkan API key dulu", "ms": "Masukkan API key dahulu"}, "st_needany": {"shn": "သႂ်ႇ prompt ဢမ်ႇၼၼ် ၶႅပ်းႁၢင်ႈ", "kac": "Prompt (sh) sumla langai bang u", "th": "ใส่ prompt หรือรูปภาพก่อน", "zh": "请先添加 prompt 或图片", "vi": "Thêm prompt hoặc ảnh trước", "id": "Tambahkan prompt atau gambar dulu", "ms": "Tambah prompt atau imej dahulu"}, "tap_ready": {"shn": "Prompt ႁွတ်ႈယဝ်ႉ ✓ — ၼဵၵ်း Generate လႆႈယဝ်ႉ", "kac": "Prompt du sai ✓ — Generate dip mai sai", "th": "Prompt พร้อมแล้ว ✓ — กด Generate ได้เลย", "zh": "Prompt 已就绪 ✓ — 可以点击生成了", "vi": "Prompt đã sẵn sàng ✓ — bấm Generate được rồi", "id": "Prompt siap ✓ — silakan tekan Generate", "ms": "Prompt sedia ✓ — sila tekan Generate"}, "gal_note": {"shn": "ၽွၼ်းလႆႈတင်းသဵင်ႈ သိမ်းဝႆႉတီႈၼႆႈ (ၼႂ်းၶိူင်ႈၼႆႉၵူၺ်း) — reload ၵေႃႈ ဢမ်ႇႁၢႆ", "kac": "Lachyum yawng ndai kaw da ai (ndai jak hta sha) — reload tim n mat ai", "th": "ผลลัพธ์ทุกภาพถูกเก็บที่นี่อัตโนมัติ (ในเครื่องนี้) — รีโหลดก็ไม่หาย", "zh": "所有生成结果自动保存在这里（仅本设备）— 刷新也不会丢失", "vi": "Mọi kết quả tự lưu ở đây (chỉ trên máy này) — tải lại vẫn còn", "id": "Semua hasil tersimpan otomatis di sini (di perangkat ini) — reload tidak hilang", "ms": "Semua hasil disimpan automatik di sini (pada peranti ini) — reload tidak hilang"}, "gal_empty": {"shn": "ပႆႇမီးၽွၼ်းလႆႈ — Generate ယဝ်ႉ တေမႃးၼႄတီႈၼႆႈ", "kac": "Lachyum rai n nga shi ai — Generate ngut yang ndai kaw du na", "th": "ยังไม่มีผลลัพธ์ — หลัง Generate จะมาแสดงที่นี่", "zh": "暂无结果 — 生成后会显示在这里", "vi": "Chưa có kết quả — sau khi Generate sẽ hiện ở đây", "id": "Belum ada hasil — setelah Generate akan muncul di sini", "ms": "Belum ada hasil — selepas Generate akan muncul di sini"}, "gal_del": {"shn": "🗑 မွတ်ႇ", "kac": "🗑 Shamat", "th": "🗑 ลบ", "zh": "🗑 删除", "vi": "🗑 Xóa", "id": "🗑 Hapus", "ms": "🗑 Padam"}, "wiz_start": {"shn": "တႄႇ →", "kac": "Hpang →", "th": "เริ่ม →", "zh": "开始 →", "vi": "Bắt đầu →", "id": "Mulai →", "ms": "Mula →"}, "wiz_next": {"shn": "သိုပ်ႇ →", "kac": "Matut →", "th": "ถัดไป →", "zh": "下一步 →", "vi": "Tiếp →", "id": "Lanjut →", "ms": "Seterusnya →"}, "wiz_back": {"shn": "← ဝၢႆႇလင်", "kac": "← Nhtang", "th": "← ย้อนกลับ", "zh": "← 返回", "vi": "← Quay lại", "id": "← Kembali", "ms": "← Kembali"}, "wiz_req": {"shn": "လူဝ်ႇတႄႉတႄႉ", "kac": "Ra nan ra ai", "th": "จำเป็น", "zh": "必需", "vi": "Bắt buộc", "id": "Wajib", "ms": "Wajib"}, "wiz_opt": {"shn": "Optional — ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ", "kac": "Optional — n bang tim mai ai", "th": "ไม่บังคับ", "zh": "可选", "vi": "Tùy chọn", "id": "Opsional", "ms": "Pilihan"}, "wiz_pick": {"shn": "📁 လိူၵ်ႈ", "kac": "📁 Lata", "th": "📁 เลือก", "zh": "📁 选择", "vi": "📁 Chọn", "id": "📁 Pilih", "ms": "📁 Pilih"}, "wiz_clear": {"shn": "✕ မွတ်ႇ", "kac": "✕ Shamat", "th": "✕ ลบ", "zh": "✕ 清除", "vi": "✕ Xóa", "id": "✕ Hapus", "ms": "✕ Padam"}, "wiz_imgnote": {"shn": "သႂ်ႇၶႅပ်းႁၢင်ႈတွၼ်ႈတႃႇ workflow ၼႆႉ — လိူၵ်ႈဝႆႉတီႈ Library ၵေႃႈလႆႈ", "kac": "Ndai workflow a matu sumla bang u — Library kaw lata da yang mung mai ai", "th": "เพิ่มรูปสำหรับเวิร์กโฟลว์นี้ — เลือกจาก Library ไว้ก่อนก็ได้", "zh": "为此工作流添加图片 — 也可提前在图库中选好", "vi": "Thêm ảnh cho workflow này — có thể chọn sẵn từ Library", "id": "Tambahkan gambar untuk workflow ini — bisa pilih dulu dari Library", "ms": "Tambah imej untuk aliran kerja ini — boleh pilih dahulu dari Library"}, "wiz_reqwarn": {"shn": "⚠ ၶႅပ်းႁၢင်ႈ ဢၼ်လူဝ်ႇ ပႆႇတဵမ် — သိုပ်ႇဢမ်ႇလႆႈ", "kac": "⚠ Ra ai sumla n hpring shi — matut n mai ai", "th": "⚠ รูปที่จำเป็นยังไม่ครบ — ไปต่อไม่ได้", "zh": "⚠ 必需图片未补齐 — 无法继续", "vi": "⚠ Thiếu ảnh bắt buộc — chưa thể tiếp tục", "id": "⚠ Gambar wajib belum lengkap — belum bisa lanjut", "ms": "⚠ Imej wajib belum lengkap — tidak boleh teruskan"}, "wiz_promptnote": {"shn": "Prompt ၶွင် workflow သႂ်ႇဝႆႉယဝ်ႉ — ၶႂ်ႈထႅမ်သင် တႅမ်ႈလႆႈတီႈၼိူဝ်", "kac": "Workflow a prompt bang da sai — ra ai hpe ntsa kaw ka bang u", "th": "Prompt ของเวิร์กโฟลว์ถูกใส่ไว้แล้ว — เพิ่มรายละเอียดที่ต้องการด้านบนได้", "zh": "工作流的受保护 prompt 已填好 — 想补充什么写在最上方即可", "vi": "Prompt của workflow đã điền sẵn — thêm chi tiết bạn muốn ở đầu", "id": "Prompt workflow sudah terisi — tambahkan detail di bagian atas", "ms": "Prompt aliran kerja sudah diisi — tambah butiran di bahagian atas"}, "wiz_ready": {"shn": "ႁၢင်ႈႁႅၼ်းယဝ်ႉ ✓", "kac": "Yawng jin sai ✓", "th": "พร้อมแล้ว ✓", "zh": "一切就绪 ✓", "vi": "Mọi thứ đã sẵn sàng ✓", "id": "Semua siap ✓", "ms": "Semua sedia ✓"}, "wiz_gennote": {"shn": "ၼဵၵ်း GENERATE — ၵႂႃႇၼႃႈ Create သေ ႁဵတ်းၵမ်းလဵဝ်၊ ၽွၼ်းလႆႈ တေႁၼ်တီႈၼၼ်ႈ", "kac": "GENERATE dip yang Create de sa nna kalang ta galaw na — lachyum dai kaw mu na", "th": "กด GENERATE จะไปหน้า Create และสร้างทันที — ผลลัพธ์ดูที่นั่น", "zh": "点击 GENERATE 将跳到 Create 页并立即生成 — 结果在那里查看", "vi": "Bấm GENERATE sẽ chuyển sang trang Create và chạy ngay — xem kết quả ở đó", "id": "Tekan GENERATE untuk pindah ke halaman Create dan langsung membuat — hasil di sana", "ms": "Tekan GENERATE untuk ke halaman Create dan terus menjana — hasil di sana"}, "unit": {"shn": "", "kac": "", "th": "", "zh": " 个", "vi": "", "id": "", "ms": ""}, "onetap_note": {"shn": "— panel data တႄႉ", "kac": "— panel data teng", "th": "— ข้อมูลจริงจากแผง", "zh": "— 面板真实数据", "vi": "— dữ liệu thật của bảng", "id": "— data asli panel", "ms": "— data sebenar panel"}};
+var TR_X = {"hero_h1": {"shn": "One-Tap ၶွင် Photoshop panel ႁွတ်ႈမႃး ၼႂ်း browser ယဝ်ႉ", "kac": "Photoshop panel a One-Tap ni gaw browser hta du sai", "th": "One-Tap จากแผง Photoshop มาอยู่ในเบราว์เซอร์แล้ว", "zh": "Photoshop 面板的 One-Tap 功能，现已进入浏览器", "vi": "One-Tap của bảng Photoshop nay đã có trên trình duyệt", "id": "One-Tap dari panel Photoshop kini hadir di browser", "ms": "One-Tap panel Photoshop kini di pelayar anda"}, "hero_lede": {"shn": "ၶေႃႈမုၼ်း prompt တႄႉတႄႉ ၶွင် plugin — Preset · Wedding · Lighting · Meitu · Evoto တင်းသဵင်ႈ", "kac": "Plugin a prompt data teng — Preset · Wedding · Lighting · Meitu · Evoto yawng nga ai", "th": "ข้อมูล prompt จริงของปลั๊กอิน — Preset · Wedding Suite · Lighting · Meitu Studio · Evoto Pro ครบทั้งหมด", "zh": "插件的真实 prompt 数据直接移植到网页 — Preset·婚纱套件·灯光·Meitu·Evoto，一应俱全", "vi": "Dữ liệu prompt thật của plugin — Preset · Wedding Suite · Lighting · Meitu Studio · Evoto Pro, đầy đủ tất cả", "id": "Data prompt asli dari plugin — Preset · Wedding Suite · Lighting · Meitu Studio · Evoto Pro, semuanya", "ms": "Data prompt sebenar plugin — Preset · Wedding Suite · Lighting · Meitu Studio · Evoto Pro, semuanya"}, "key_note": {"shn": "Key ဝႆႉၼႂ်း browser ၼႆႉၵူၺ်း — ဢမ်ႇသူင်ႇထိုင် server လႂ်။ <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">ဢဝ် key လၢႆ →</a>", "kac": "Key gaw ndai browser hta sha nga ai — server de n shagun ai. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Key manu n jaw ai la u →</a>", "th": "คีย์เก็บใน localStorage ของเบราว์เซอร์นี้เท่านั้น — ไม่ส่งไปเซิร์ฟเวอร์ใด <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">รับคีย์ฟรี →</a>", "zh": "密钥只保存在本浏览器的 localStorage 中，绝不发送到任何服务器。<a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">免费获取密钥 →</a>", "vi": "Khóa chỉ lưu trong localStorage của trình duyệt này — không gửi tới máy chủ nào. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Lấy khóa miễn phí →</a>", "id": "Kunci hanya disimpan di localStorage browser ini — tidak dikirim ke server mana pun. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Dapatkan kunci gratis →</a>", "ms": "Kunci hanya disimpan dalam localStorage pelayar ini — tidak dihantar ke mana-mana pelayan. <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" rel=\"noopener\">Dapatkan kunci percuma →</a>"}, "btn_show": {"shn": "ၼႄ", "kac": "Madun", "th": "แสดง", "zh": "显示", "vi": "Hiện", "id": "Lihat", "ms": "Papar"}, "btn_savekey": {"shn": "သိမ်း + ၸၢမ်း", "kac": "Da nna chyam u", "th": "บันทึก + ทดสอบ", "zh": "保存并测试", "vi": "Lưu + Kiểm tra", "id": "Simpan + Uji", "ms": "Simpan + Uji"}, "key_ph": {"shn": "AIza… (aistudio.google.com/apikey — ဢဝ်လၢႆ)", "kac": "AIza… (aistudio.google.com/apikey — manu n jaw ai)", "th": "AIza… (ฟรีที่ aistudio.google.com/apikey)", "zh": "AIza…（aistudio.google.com/apikey 免费获取）", "vi": "AIza… (miễn phí tại aistudio.google.com/apikey)", "id": "AIza… (gratis di aistudio.google.com/apikey)", "ms": "AIza… (percuma di aistudio.google.com/apikey)"}, "refs_h2": {"shn": "ၶႅပ်းႁၢင်ႈ (IMAGE 1 = တူဝ်ထိင်)", "kac": "Sumla ni (IMAGE 1 = madung)", "th": "รูปภาพ (IMAGE 1 = บุคคลหลัก)", "zh": "图片（IMAGE 1 = 主体）", "vi": "Ảnh (IMAGE 1 = chủ thể chính)", "id": "Gambar (IMAGE 1 = subjek utama)", "ms": "Imej (IMAGE 1 = subjek utama)"}, "refs_note": {"shn": "One-Tap ၵမ်ႈၼမ် လူဝ်ႇ IMAGE 1 · preset reference လူဝ်ႇ IMAGE 2 ထႅင်ႈ", "kac": "One-Tap law malawng gaw IMAGE 1 ra ai · reference preset ni gaw IMAGE 2 mung ra ai", "th": "One-Tap ส่วนใหญ่ต้องมี IMAGE 1 · พรีเซ็ตอ้างอิงต้องมี IMAGE 2 ด้วย", "zh": "多数 One-Tap 需要 IMAGE 1 · 参考类预设还需要 IMAGE 2", "vi": "Hầu hết One-Tap cần IMAGE 1 · preset tham chiếu cần thêm IMAGE 2", "id": "Sebagian besar One-Tap butuh IMAGE 1 · preset referensi juga butuh IMAGE 2", "ms": "Kebanyakan One-Tap perlukan IMAGE 1 · preset rujukan perlukan IMAGE 2 juga"}, "lib_search_ph": {"shn": "သွၵ်ႈႁႃ — wedding, child, lighting…", "kac": "Tam u — wedding, child, lighting…", "th": "ค้นหา — wedding, child, lighting…", "zh": "搜索 — wedding、child、lighting…", "vi": "Tìm — wedding, child, lighting…", "id": "Cari — wedding, child, lighting…", "ms": "Cari — wedding, child, lighting…"}, "lib_all": {"shn": "တင်းသဵင်ႈ", "kac": "Yawng", "th": "ทั้งหมด", "zh": "全部", "vi": "Tất cả", "id": "Semua", "ms": "Semua"}, "lib_more": {"shn": "ၼႄထႅင်ႈ", "kac": "Grau madun", "th": "ดูเพิ่ม", "zh": "加载更多", "vi": "Xem thêm", "id": "Muat lagi", "ms": "Muat lagi"}, "lib_img1": {"shn": "ႁဵတ်း IMAGE 1", "kac": "IMAGE 1 hku lang", "th": "ใช้เป็น IMAGE 1", "zh": "设为 IMAGE 1", "vi": "Dùng làm IMAGE 1", "id": "Jadikan IMAGE 1", "ms": "Jadikan IMAGE 1"}, "lib_img2": {"shn": "ႁဵတ်း IMAGE 2 (Reference)", "kac": "IMAGE 2 (Reference) hku lang", "th": "ใช้เป็น IMAGE 2 (อ้างอิง)", "zh": "设为 IMAGE 2（参考）", "vi": "Dùng làm IMAGE 2 (tham chiếu)", "id": "Jadikan IMAGE 2 (Referensi)", "ms": "Jadikan IMAGE 2 (Rujukan)"}, "addons_h2": {"shn": "Add-ons (သႂ်ႇၸွမ်း Generate ၵူႈပွၵ်ႈ)", "kac": "Add-ons (Generate shagu hte lawm ai)", "th": "Add-ons (ผสมทุกครั้งที่ Generate)", "zh": "附加项（每次生成时自动混入）", "vi": "Add-ons (trộn vào mỗi lần Generate)", "id": "Add-ons (dicampur setiap Generate)", "ms": "Add-ons (dicampur setiap Generate)"}, "sub_chains": {"shn": "Style Chains — လိူၵ်ႈဝႆႉၸိူဝ်းၼၼ်ႉ blend", "kac": "Style Chains — lata da ai ni blend", "th": "Style Chains — ผสมทุกอันที่เลือก", "zh": "风格链 — 选中的全部融合", "vi": "Style Chains — hòa trộn mọi lựa chọn", "id": "Style Chains — padukan semua pilihan", "ms": "Style Chains — gabung semua pilihan"}, "sub_cleanup": {"shn": "Cleanup — ႁဵတ်းၸွမ်း Generate ၵူႈပွၵ်ႈ", "kac": "Cleanup — Generate shagu hte galaw ai", "th": "Cleanup — ทำงานพร้อม Generate ทุกครั้ง", "zh": "清理 — 每次生成时执行", "vi": "Cleanup — chạy cùng mỗi lần Generate", "id": "Cleanup — jalan bersama setiap Generate", "ms": "Cleanup — berjalan dengan setiap Generate"}, "sub_mix": {"shn": "Replace Mix — လူဝ်ႇ IMAGE 2", "kac": "Replace Mix — IMAGE 2 ra ai", "th": "Replace Mix — ต้องมี IMAGE 2", "zh": "选择性替换 — 需要 IMAGE 2", "vi": "Replace Mix — cần IMAGE 2", "id": "Replace Mix — perlu IMAGE 2", "ms": "Replace Mix — perlukan IMAGE 2"}, "prompt_ph": {"shn": "ၼဵၵ်း One-Tap သေ prompt တေမႃးတီႈၼႆႈ — တႅမ်ႈႁင်းၵူၺ်းၵေႃႈလႆႈ…", "kac": "One-Tap dip yang prompt ndai kaw du na — nang nan ka mung mai ai…", "th": "แตะ One-Tap แล้ว prompt จะมาที่นี่ — พิมพ์เองก็ได้…", "zh": "点按任意 One-Tap，prompt 会出现在这里 — 也可以自己输入…", "vi": "Chạm One-Tap và prompt sẽ hiện ở đây — hoặc tự viết…", "id": "Ketuk One-Tap dan prompt muncul di sini — atau tulis sendiri…", "ms": "Ketik One-Tap dan prompt muncul di sini — atau tulis sendiri…"}, "ph_head": {"shn": "🕘 Prompt မိုၼ်း — ⭐ သိမ်းဝႆႉတႃႇသေႇ", "kac": "🕘 Prompt labau — ⭐ galoi da", "th": "🕘 ประวัติ Prompt — ⭐ เก็บถาวร", "zh": "🕘 Prompt 历史 — ⭐ 永久收藏", "vi": "🕘 Lịch sử prompt — ⭐ lưu vĩnh viễn", "id": "🕘 Riwayat prompt — ⭐ simpan permanen", "ms": "🕘 Sejarah prompt — ⭐ simpan kekal"}, "result_h2": {"shn": "ၽွၼ်းလႆႈ", "kac": "Lachyum", "th": "ผลลัพธ์", "zh": "结果", "vi": "Kết quả", "id": "Hasil", "ms": "Hasil"}, "to_ref": {"shn": "↺ ႁဵတ်း IMAGE 1", "kac": "↺ IMAGE 1 hku lang", "th": "↺ ใช้เป็น IMAGE 1", "zh": "↺ 设为 IMAGE 1", "vi": "↺ Dùng làm IMAGE 1", "id": "↺ Jadikan IMAGE 1", "ms": "↺ Jadikan IMAGE 1"}, "spin_gen": {"shn": "တိုၵ်ႉႁဵတ်းယူႇ — ပႂ်ႉ 20-60 ဝိၼၢထီး…", "kac": "Galaw nga ai — 20-60 second la u…", "th": "กำลังสร้าง — รอ 20-60 วินาที…", "zh": "正在生成 — 请等待 20-60 秒…", "vi": "Đang tạo — chờ 20-60 giây…", "id": "Sedang membuat — tunggu 20-60 detik…", "ms": "Sedang menjana — tunggu 20-60 saat…"}, "spin_tr": {"shn": "ပိၼ်ႇ prompt ပဵၼ် English…", "kac": "Prompt hpe English de gale nga…", "th": "กำลังแปล prompt เป็นภาษาอังกฤษ…", "zh": "正在把 prompt 翻译成英文…", "vi": "Đang dịch prompt sang tiếng Anh…", "id": "Menerjemahkan prompt ke Inggris…", "ms": "Menterjemah prompt ke Inggeris…"}, "st_done": {"shn": "ယဝ်ႉယဝ်ႈ ✓", "kac": "Ngut sai ✓", "th": "เสร็จแล้ว ✓", "zh": "完成 ✓", "vi": "Xong ✓", "id": "Selesai ✓", "ms": "Siap ✓"}, "st_needkey": {"shn": "သႂ်ႇ API key ဢွၼ်တၢင်း", "kac": "API key shawng bang u", "th": "กรุณาใส่ API key ก่อน", "zh": "请先填写 API key", "vi": "Hãy thêm API key trước", "id": "Masukkan API key dulu", "ms": "Masukkan API key dahulu"}, "st_needany": {"shn": "သႂ်ႇ prompt ဢမ်ႇၼၼ် ၶႅပ်းႁၢင်ႈ", "kac": "Prompt (sh) sumla langai bang u", "th": "ใส่ prompt หรือรูปภาพก่อน", "zh": "请先添加 prompt 或图片", "vi": "Thêm prompt hoặc ảnh trước", "id": "Tambahkan prompt atau gambar dulu", "ms": "Tambah prompt atau imej dahulu"}, "tap_ready": {"shn": "Prompt ႁွတ်ႈယဝ်ႉ ✓ — ၼဵၵ်း Generate လႆႈယဝ်ႉ", "kac": "Prompt du sai ✓ — Generate dip mai sai", "th": "Prompt พร้อมแล้ว ✓ — กด Generate ได้เลย", "zh": "Prompt 已就绪 ✓ — 可以点击生成了", "vi": "Prompt đã sẵn sàng ✓ — bấm Generate được rồi", "id": "Prompt siap ✓ — silakan tekan Generate", "ms": "Prompt sedia ✓ — sila tekan Generate"}, "gal_note": {"shn": "ၽွၼ်းလႆႈတင်းသဵင်ႈ သိမ်းဝႆႉတီႈၼႆႈ (ၼႂ်းၶိူင်ႈၼႆႉၵူၺ်း) — reload ၵေႃႈ ဢမ်ႇႁၢႆ", "kac": "Lachyum yawng ndai kaw da ai (ndai jak hta sha) — reload tim n mat ai", "th": "ผลลัพธ์ทุกภาพถูกเก็บที่นี่อัตโนมัติ (ในเครื่องนี้) — รีโหลดก็ไม่หาย", "zh": "所有生成结果自动保存在这里（仅本设备）— 刷新也不会丢失", "vi": "Mọi kết quả tự lưu ở đây (chỉ trên máy này) — tải lại vẫn còn", "id": "Semua hasil tersimpan otomatis di sini (di perangkat ini) — reload tidak hilang", "ms": "Semua hasil disimpan automatik di sini (pada peranti ini) — reload tidak hilang"}, "gal_empty": {"shn": "ပႆႇမီးၽွၼ်းလႆႈ — Generate ယဝ်ႉ တေမႃးၼႄတီႈၼႆႈ", "kac": "Lachyum rai n nga shi ai — Generate ngut yang ndai kaw du na", "th": "ยังไม่มีผลลัพธ์ — หลัง Generate จะมาแสดงที่นี่", "zh": "暂无结果 — 生成后会显示在这里", "vi": "Chưa có kết quả — sau khi Generate sẽ hiện ở đây", "id": "Belum ada hasil — setelah Generate akan muncul di sini", "ms": "Belum ada hasil — selepas Generate akan muncul di sini"}, "gal_del": {"shn": "🗑 မွတ်ႇ", "kac": "🗑 Shamat", "th": "🗑 ลบ", "zh": "🗑 删除", "vi": "🗑 Xóa", "id": "🗑 Hapus", "ms": "🗑 Padam"}, "wiz_start": {"shn": "တႄႇ →", "kac": "Hpang →", "th": "เริ่ม →", "zh": "开始 →", "vi": "Bắt đầu →", "id": "Mulai →", "ms": "Mula →"}, "wiz_next": {"shn": "သိုပ်ႇ →", "kac": "Matut →", "th": "ถัดไป →", "zh": "下一步 →", "vi": "Tiếp →", "id": "Lanjut →", "ms": "Seterusnya →"}, "wiz_back": {"shn": "← ဝၢႆႇလင်", "kac": "← Nhtang", "th": "← ย้อนกลับ", "zh": "← 返回", "vi": "← Quay lại", "id": "← Kembali", "ms": "← Kembali"}, "wiz_req": {"shn": "လူဝ်ႇတႄႉတႄႉ", "kac": "Ra nan ra ai", "th": "จำเป็น", "zh": "必需", "vi": "Bắt buộc", "id": "Wajib", "ms": "Wajib"}, "wiz_opt": {"shn": "Optional — ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ", "kac": "Optional — n bang tim mai ai", "th": "ไม่บังคับ", "zh": "可选", "vi": "Tùy chọn", "id": "Opsional", "ms": "Pilihan"}, "wiz_pick": {"shn": "📁 လိူၵ်ႈ", "kac": "📁 Lata", "th": "📁 เลือก", "zh": "📁 选择", "vi": "📁 Chọn", "id": "📁 Pilih", "ms": "📁 Pilih"}, "wiz_clear": {"shn": "✕ မွတ်ႇ", "kac": "✕ Shamat", "th": "✕ ลบ", "zh": "✕ 清除", "vi": "✕ Xóa", "id": "✕ Hapus", "ms": "✕ Padam"}, "wiz_imgnote": {"shn": "သႂ်ႇၶႅပ်းႁၢင်ႈတွၼ်ႈတႃႇ workflow ၼႆႉ — လိူၵ်ႈဝႆႉတီႈ Library ၵေႃႈလႆႈ", "kac": "Ndai workflow a matu sumla bang u — Library kaw lata da yang mung mai ai", "th": "เพิ่มรูปสำหรับเวิร์กโฟลว์นี้ — เลือกจาก Library ไว้ก่อนก็ได้", "zh": "为此工作流添加图片 — 也可提前在图库中选好", "vi": "Thêm ảnh cho workflow này — có thể chọn sẵn từ Library", "id": "Tambahkan gambar untuk workflow ini — bisa pilih dulu dari Library", "ms": "Tambah imej untuk aliran kerja ini — boleh pilih dahulu dari Library"}, "wiz_reqwarn": {"shn": "⚠ ၶႅပ်းႁၢင်ႈ ဢၼ်လူဝ်ႇ ပႆႇတဵမ် — သိုပ်ႇဢမ်ႇလႆႈ", "kac": "⚠ Ra ai sumla n hpring shi — matut n mai ai", "th": "⚠ รูปที่จำเป็นยังไม่ครบ — ไปต่อไม่ได้", "zh": "⚠ 必需图片未补齐 — 无法继续", "vi": "⚠ Thiếu ảnh bắt buộc — chưa thể tiếp tục", "id": "⚠ Gambar wajib belum lengkap — belum bisa lanjut", "ms": "⚠ Imej wajib belum lengkap — tidak boleh teruskan"}, "wiz_promptnote": {"shn": "Prompt ၶွင် workflow သႂ်ႇဝႆႉယဝ်ႉ — ၶႂ်ႈထႅမ်သင် တႅမ်ႈလႆႈတီႈၼိူဝ်", "kac": "Workflow a prompt bang da sai — ra ai hpe ntsa kaw ka bang u", "th": "Prompt ของเวิร์กโฟลว์ถูกใส่ไว้แล้ว — เพิ่มรายละเอียดที่ต้องการด้านบนได้", "zh": "工作流的受保护 prompt 已填好 — 想补充什么写在最上方即可", "vi": "Prompt của workflow đã điền sẵn — thêm chi tiết bạn muốn ở đầu", "id": "Prompt workflow sudah terisi — tambahkan detail di bagian atas", "ms": "Prompt aliran kerja sudah diisi — tambah butiran di bahagian atas"}, "wiz_ready": {"shn": "ႁၢင်ႈႁႅၼ်းယဝ်ႉ ✓", "kac": "Yawng jin sai ✓", "th": "พร้อมแล้ว ✓", "zh": "一切就绪 ✓", "vi": "Mọi thứ đã sẵn sàng ✓", "id": "Semua siap ✓", "ms": "Semua sedia ✓"}, "wiz_gennote": {"shn": "ၼဵၵ်း GENERATE — ၵႂႃႇၼႃႈ Create သေ ႁဵတ်းၵမ်းလဵဝ်၊ ၽွၼ်းလႆႈ တေႁၼ်တီႈၼၼ်ႈ", "kac": "GENERATE dip yang Create de sa nna kalang ta galaw na — lachyum dai kaw mu na", "th": "กด GENERATE จะไปหน้า Create และสร้างทันที — ผลลัพธ์ดูที่นั่น", "zh": "点击 GENERATE 将跳到 Create 页并立即生成 — 结果在那里查看", "vi": "Bấm GENERATE sẽ chuyển sang trang Create và chạy ngay — xem kết quả ở đó", "id": "Tekan GENERATE untuk pindah ke halaman Create dan langsung membuat — hasil di sana", "ms": "Tekan GENERATE untuk ke halaman Create dan terus menjana — hasil di sana"}, "unit": {"shn": "", "kac": "", "th": "", "zh": " 个", "vi": "", "id": "", "ms": ""}, "onetap_note": {"shn": "— panel data တႄႉ", "kac": "— panel data teng", "th": "— ข้อมูลจริงจากแผง", "zh": "— 面板真实数据", "vi": "— dữ liệu thật của bảng", "id": "— data asli panel", "ms": "— data sebenar panel"}};
 var TR_NEW = {"banner_key": {"my": "🔑 API key မထည့်ရသေးပါ — ဒီမှာနှိပ်ပြီး Setup မှာ ထည့်ပါ (တစ်ခါထည့်ရုံပဲ)", "en": "🔑 No API key yet — tap here to add it in Setup (one time only)", "shn": "🔑 ပႆႇသႂ်ႇ API key — ၼဵၵ်းတီႈၼႆႈသေ သႂ်ႇတီႈ Setup", "kac": "🔑 API key rai n bang shi — ndai dip nna Setup hta bang u", "th": "🔑 ยังไม่มี API key — แตะที่นี่เพื่อใส่ใน Setup (ครั้งเดียว)", "zh": "🔑 尚未填写 API key — 点此前往 Setup 填写（仅需一次）", "vi": "🔑 Chưa có API key — chạm vào đây để thêm trong Setup (chỉ một lần)", "id": "🔑 Belum ada API key — ketuk di sini untuk mengisi di Setup (sekali saja)", "ms": "🔑 Belum ada API key — ketik di sini untuk isi di Setup (sekali sahaja)"}, "share_h2": {"my": "မိတ်ဆွေတွေကို ဝေမျှရန်", "en": "Share with friends", "shn": "ၽႄႈပၼ်ဢူၺ်းၵေႃႉ", "kac": "Manang ni hpe garan u", "th": "แชร์ให้เพื่อน", "zh": "分享给朋友", "vi": "Chia sẻ với bạn bè", "id": "Bagikan ke teman", "ms": "Kongsi dengan rakan"}, "share_p": {"my": "Link ကို Messenger / Telegram / Viber ဘယ်မှာပို့ပို့ — HNK logo နဲ့ preview card လှလှလေး ပေါ်ပြီး နှိပ်လိုက်တာနဲ့ ဒီ app ထဲ တန်းရောက်မယ်။", "en": "Paste the link anywhere — Messenger, Telegram, Viber — a beautiful HNK preview card appears, and one tap opens this app.", "shn": "သူင်ႇ link တီႈလႂ်ၵေႃႈလႆႈ — preview card ႁၢင်ႈလီ တေဢွၵ်ႇမႃး၊ ၼဵၵ်းၺႃး ၶဝ်ႈ app ၵမ်းလဵဝ်", "kac": "Link hpe gara kaw tim shagun u — preview card tsawm ai pru na, dip yang app hta shang na", "th": "วางลิงก์ที่ไหนก็ได้ — จะขึ้นการ์ดพรีวิวสวย ๆ แตะแล้วเข้าแอปทันที", "zh": "把链接粘贴到任何地方 — 会显示精美的预览卡片，点一下即可打开应用", "vi": "Dán link ở bất cứ đâu — thẻ xem trước đẹp sẽ hiện ra, chạm là mở app", "id": "Tempel tautan di mana saja — kartu pratinjau cantik muncul, sekali ketuk langsung buka", "ms": "Tampal pautan di mana-mana — kad pratonton cantik muncul, satu ketikan terus buka"}, "share_btn": {"my": "📤 Share Link", "en": "📤 Share Link", "shn": "📤 ၽႄႈ Link", "kac": "📤 Link garan", "th": "📤 แชร์ลิงก์", "zh": "📤 分享链接", "vi": "📤 Chia sẻ link", "id": "📤 Bagikan tautan", "ms": "📤 Kongsi pautan"}, "copy_btn": {"my": "🔗 Link ကူးယူ", "en": "🔗 Copy Link", "shn": "🔗 ၶူတ်ႉ Link", "kac": "🔗 Link copy", "th": "🔗 คัดลอกลิงก์", "zh": "🔗 复制链接", "vi": "🔗 Sao chép link", "id": "🔗 Salin tautan", "ms": "🔗 Salin pautan"}, "st_key_saved": {"my": "Key သိမ်းထားပြီးသား ✓", "en": "Key already saved ✓", "shn": "သိမ်းဝႆႉ Key ယဝ်ႉ ✓", "kac": "Key da nga sai ✓", "th": "บันทึกคีย์ไว้แล้ว ✓", "zh": "密钥已保存 ✓", "vi": "Khóa đã được lưu ✓", "id": "Key sudah tersimpan ✓", "ms": "Key sudah disimpan ✓"}, "st_key_checking": {"my": "စစ်နေသည်…", "en": "Checking…", "shn": "တိုၵ်ႉတွပ်ႇထၢမ်ယူႇ…", "kac": "Yu chyam nga ai…", "th": "กำลังตรวจสอบ…", "zh": "正在检查…", "vi": "Đang kiểm tra…", "id": "Memeriksa…", "ms": "Menyemak…"}, "st_key_valid": {"my": "Key မှန်ပါတယ် — သိမ်းပြီး ✓", "en": "Key is valid — saved ✓", "shn": "Key ၸိုဝ်ႈလီ — သိမ်းယဝ်ႉ ✓", "kac": "Key teng ai — da sai ✓", "th": "คีย์ถูกต้อง — บันทึกแล้ว ✓", "zh": "密钥有效 — 已保存 ✓", "vi": "Khóa hợp lệ — đã lưu ✓", "id": "Key valid — tersimpan ✓", "ms": "Key sah — disimpan ✓"}, "st_key_invalid": {"my": "Key မမှန်ပါ — ပြန်စစ်ပါ", "en": "Key invalid — please recheck", "shn": "Key ဢမ်ႇၸႂ်ႈ — ၶိုၼ်းတွပ်ႇထၢမ်တူၺ်း", "kac": "Key n teng ai — bai yu chyam u", "th": "คีย์ไม่ถูกต้อง — กรุณาตรวจสอบอีกครั้ง", "zh": "密钥无效 — 请重新检查", "vi": "Khóa không hợp lệ — vui lòng kiểm tra lại", "id": "Key tidak valid — periksa lagi", "ms": "Key tidak sah — sila semak semula"}, "st_key_savedstatus": {"my": "သိမ်းပြီး (status {S})", "en": "Saved (status {S})", "shn": "သိမ်းယဝ်ႉ (status {S})", "kac": "Da sai (status {S})", "th": "บันทึกแล้ว (status {S})", "zh": "已保存 (status {S})", "vi": "Đã lưu (status {S})", "id": "Tersimpan (status {S})", "ms": "Disimpan (status {S})"}, "st_key_noconn": {"my": "ချိတ်ဆက်မရ — internet စစ်ပါ", "en": "Couldn't connect — check your internet", "shn": "ၽိတ်းၽၢတ်ႇဢမ်ႇလႆႈ — တွပ်ႇထၢမ် internet တူၺ်း", "kac": "N grau connect — internet yu chyam u", "th": "เชื่อมต่อไม่ได้ — ตรวจสอบอินเทอร์เน็ต", "zh": "无法连接 — 请检查网络", "vi": "Không thể kết nối — kiểm tra internet", "id": "Tidak dapat terhubung — periksa internet Anda", "ms": "Tidak dapat berhubung — semak internet anda"}, "st_share_copied": {"my": "Link ကူးပြီး ✓ — ကြိုက်တဲ့နေရာ paste လုပ်ပို့ပါ", "en": "Link copied ✓ — paste it wherever you like", "shn": "ၶူတ်ႉ Link ယဝ်ႉ ✓ — paste တီႈလႂ်ၵေႃႈလႆႈ", "kac": "Link copy sai ✓ — gara kaw mi paste bang u", "th": "คัดลอกลิงก์แล้ว ✓ — วางที่ไหนก็ได้ตามใจ", "zh": "链接已复制 ✓ — 可粘贴到任何地方", "vi": "Đã sao chép link ✓ — dán ở bất cứ đâu bạn muốn", "id": "Tautan disalin ✓ — tempel di mana saja", "ms": "Pautan disalin ✓ — tampal di mana-mana"}};
 Object.keys(TR_X).forEach(function(k){ if(TR[k]) Object.keys(TR_X[k]).forEach(function(l){ TR[k][l]=TR_X[k][l]; }); });
 Object.keys(TR_NEW).forEach(function(k){ TR[k]=TR_NEW[k]; });
@@ -1168,7 +1226,7 @@ Object.keys(TR_WFSEARCH).forEach(function(k){ TR[k]=TR_WFSEARCH[k]; });
    explicit entry. One gold <em> keyword per headline (heroShine treatment). */
 var TR_PH={
   ph_create:{my:'စိတ်ကူးထဲက မြင်ကွင်းတိုင်းကို <em>လွတ်လပ်စွာ</em> ဖန်တီးပါ',en:'Bring every scene you imagine to life — <em>your way</em>'},
-  ph_studio:{my:'တစ်ချက်နှိပ်ရုံနဲ့ <em>Studio အဆင့်</em> ပရော်ဖက်ရှင်နယ် look',en:'One tap to a <em>studio-grade</em> professional look'},
+  ph_studio:{my:'Meitu နှင့် Evoto အပြည့်အစုံ — လိုက်ပြသည့် <em>Live Preview</em> ဖြင့်',en:'Full Meitu × Evoto suites with instant <em>live preview</em>'},
   ph_retouch:{my:'မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်',en:'Flawless retouching that <em>stays natural</em>'},
   ph_t2i:{my:'စာသားတစ်ကြောင်းကနေ <em>ပရော်ဖက်ရှင်နယ်ပုံ</em> ဖြစ်လာမယ်',en:'One line of text becomes a <em>professional image</em>'},
   ph_video:{my:'ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်',en:'Your photos <em>come alive</em> in motion'},
@@ -1201,7 +1259,6 @@ function applyLang(){
   $("libToImg1").textContent=t("lib_img1");
   $("libToImg2").textContent=t("lib_img2");
   $("libMore").textContent=t("lib_more");
-  $("addonsH2").textContent=t("addons_h2");
   $("prompt").placeholder=t("prompt_ph");
   $("phHead").textContent=t("ph_head");
   $("resultH2").textContent=t("result_h2");
@@ -1275,8 +1332,6 @@ var LW = JSON.parse(document.getElementById("hnkLibWf").textContent);
 
 var state = {
   key: "", rhKey: "", oaKey: "", refs: [null,null,null], pickSlot: 0, result: null, hist: [], histSel: -1,
-  chains: {}, clean: {}, rmix: {},
-  cam: { body:null, mm:null, f:null, film:null, bokeh:null },
   rt: {}, rtStrength: 60,
   vidHist: [], /* session-only — RunningHub result URLs, never persisted (24h-valid, too large for the IndexedDB Gallery) */
   vuFile: null, vuHist: [], /* video upscale: uploaded source file + session-only result URLs, same non-persisted reasoning as vidHist */
@@ -1286,17 +1341,24 @@ var state = {
 try {
   var _sv = JSON.parse(localStorage.getItem(LS_STATE) || "null");
   if (_sv) {
-    ["chains","clean","rmix","cam","rt"].forEach(function(k){ if(_sv[k]) state[k]=_sv[k]; });
+    /* one-time migration (v4.23.0): chains/clean/rmix/cam belonged to the removed
+       Studio Add-ons — deliberately NOT restored, so the next saveState() drops
+       them from storage. rt/rtStrength (pgRetouch) live on unchanged. */
+    if (_sv.rt) state.rt = _sv.rt;
     if (typeof _sv.rtStrength === "number") state.rtStrength = _sv.rtStrength;
     if (typeof _sv.prompt === "string") state.savedPrompt = _sv.prompt;
+    if (_sv.st) state.stSaved = _sv.st; /* consumed tolerantly by the Studio module below */
   }
 } catch(e){}
 function saveState(){
   try {
     localStorage.setItem(LS_STATE, JSON.stringify({
-      chains: state.chains, clean: state.clean, rmix: state.rmix,
-      cam: state.cam, rt: state.rt, rtStrength: state.rtStrength,
-      prompt: document.getElementById("prompt") ? document.getElementById("prompt").value : ""
+      rt: state.rt, rtStrength: state.rtStrength,
+      prompt: document.getElementById("prompt") ? document.getElementById("prompt").value : "",
+      /* Studio live-preview state — everything EXCEPT the photo itself (state.st.img
+         is session-only; base64 photos are too large for localStorage) */
+      st: state.st ? { t1:state.st.t1, t2:state.st.t2, pend:state.st.pend,
+        preset:state.st.preset, target:state.st.target, v:state.st.v } : undefined
     }));
   } catch(e){}
 }
@@ -2381,6 +2443,7 @@ function renderRefStrip(){
 function renderRefs(){
   renderRefStrip();
   renderRsPicker();
+  renderStPicker(); /* Studio's Before slot mirrors slot 0 too (guarded until its module inits) */
   var host=$("refs"); host.innerHTML="";
   state.refs.forEach(function(ref,i){
     var d=el("div","ref"+(ref?" filled":""));
@@ -2495,27 +2558,6 @@ var PROMPT_LIB = [
   ["Product Clean", "product photograph on a clean seamless background, soft gradient light, crisp reflections, commercial studio quality"],
   ["Cyberpunk Night", "cinematic cyberpunk street at night, neon signage, wet reflective ground, moody teal and magenta lighting, volumetric haze"]
 ];
-var I2P_SECTIONS = {
-  bg: "BACKGROUND: every element of the background - walls, sky, landscape, architecture, textures, depth layers and their exact appearance.",
-  fg: "FOREGROUND: any foreground elements - props, plants, fabrics, bokeh objects - their position, distance and blur.",
-  objects: "OBJECTS & PROPS: every visible object with its material, color, condition, position and relative scale.",
-  light: "LIGHTING: every light source, its direction, quality (hard/soft), intensity, shadows, highlights, time of day and atmosphere.",
-  color: "COLOR: the full color palette, grading style, saturation, contrast character and overall mood."
-};
-var I2P_LABELS = { objects: "Objects & Props", light: "Lighting", color: "Color", bg: "Background", fg: "Foreground" };
-var SCENE_ADAPT_ON = "Re-light and color-grade the IMAGE 1 subject so they naturally match the new scene's lighting direction, intensity and color palette.";
-state.i2p = { objects: true, light: true, color: true, bg: true, fg: true };
-function buildExtractPrompt(){
-  var secs=[];
-  for (var k in I2P_SECTIONS){ if(state.i2p[k]) secs.push("- "+I2P_SECTIONS[k]); }
-  if(!secs.length) return "";
-  return "Analyze IMAGE 1 and write ONE exhaustive photographic scene description to be used as an AI image-generation prompt.\n"+
-    "CRITICAL: EXCLUDE every person, human figure, face and body completely - describe the scene as if it were empty of people.\n"+
-    "Describe in rich detail:\n"+secs.join("\n")+
-    "\nAlways also state: location type, time of day, atmosphere, and the camera angle / lens feel of the original photo.\n"+
-    "Output ONLY the scene description in English as flowing prose (no lists, no headings, no explanations, no quotes). Maximum 2500 characters.";
-}
-
 var PRESET_GROUPS = [
   ["Composite / Style", ["fgProps","textLogo","style","fgbglc","hair","access","pose"]],
   ["Subject Replace", ["repSolo","repCouple","repFamily"]],
@@ -2528,8 +2570,6 @@ var byKey = {};
 D.presets.forEach(function(p){ byKey[p.key]=p; });
 
 (function buildOneTap(){
-  var host=$("oneTapHost");
-  var total=0;
 
   /* Smart Workflow — ported from the panel's workflow-registry (compile():
      hiddenPrompt + reference rules + subject locks + negatives).
@@ -2562,7 +2602,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     "retouch": [
       "Add the portrait to retouch as IMAGE 1",
       "Tap Start — a natural retouch prompt loads",
-      "Want more control? Toggle chips in ✨ Retouch Pro (50) — they blend into Generate",
+      "Want more control? Open the Retouch page's Sliders tab (50 sliders) — they blend into Generate",
       "Tap GENERATE — skin/hair/tone improve naturally, identity untouched"
     ],
     "upscale": [
@@ -2672,7 +2712,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     "retouch": [
       "IMAGE 1 မှာ retouch လုပ်ချင်တဲ့ portrait တင်ပါ",
       "“Start” နှိပ်ပါ — natural retouch prompt ရောက်လာမယ်",
-      "ပိုအသေးစိတ်ချင်ရင် ✨ Retouch Pro (50) ထဲက chip တွေ ထပ်ဖွင့်ပါ — Generate မှာ တွဲပေါင်းမယ်",
+      "ပိုအသေးစိတ်ချင်ရင် Retouch စာမျက်နှာက Sliders tab (slider 50) ထဲမှာ ထပ်ဖွင့်ပါ — Generate မှာ တွဲပေါင်းမယ်",
       "GENERATE နှိပ်ပါ — identity မပြောင်းဘဲ skin/hair/tone သဘာဝကျကျ လှသွားမယ်"
     ],
     "upscale": [
@@ -3498,76 +3538,12 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     });
   })();
 
-  var gi = grp("🏞 Scene Builder (Image → Prompt)", "5"+t("unit"), false);
-  gi.b.appendChild(el("div","mut",t("sb_note")));
-  var ichips=el("div","chips");
-  Object.keys(I2P_SECTIONS).forEach(function(k){
-    total++;
-    var c=el("button","chip"+(state.i2p[k]?" on":""), I2P_LABELS[k]);
-    c.title=I2P_SECTIONS[k];
-    c.onclick=function(){ state.i2p[k]=!state.i2p[k]; c.className="chip"+(state.i2p[k]?" on":""); };
-    ichips.appendChild(c);
-  });
-  gi.b.appendChild(ichips);
-  var irow=el("div","row"); irow.style.marginTop="10px";
-  var ibtn=el("button","btn btn-gold",t("sb_btn"));
-  ibtn.onclick=async function(){
-    if(!state.key){ switchPage("pgHome"); setSt("stKey",t("st_needkey"),"err"); toast(t("st_needkey"),"err"); return; }
-    var src = state.refs[1] || state.refs[0];
-    if(!src){ setSt("stGen",L9({my:"Scene ခွဲခြမ်းဖို့ IMAGE 2 (ဒါမှမဟုတ် IMAGE 1) အရင်တင်ပါ",en:"Upload IMAGE 2 (or IMAGE 1) first to analyze the scene",shn:"ၶိုၼ်ႈ IMAGE 2 (ဢမ်ႇၼၼ် IMAGE 1) ဢွၼ်တၢင်း ၸင်ႇၶႅၼ်ႇ Scene",kac:"Scene hpe hpai chyam na IMAGE 2 (nrai IMAGE 1) hpe shawng jaw u",th:"อัปโหลด IMAGE 2 (หรือ IMAGE 1) ก่อนเพื่อวิเคราะห์ฉาก",zh:"请先上传 IMAGE 2（或 IMAGE 1）以分析场景",vi:"Tải lên IMAGE 2 (hoặc IMAGE 1) trước để phân tích cảnh",id:"Unggah IMAGE 2 (atau IMAGE 1) terlebih dahulu untuk menganalisis scene",ms:"Muat naik IMAGE 2 (atau IMAGE 1) dahulu untuk menganalisis adegan"}),"err"); return; }
-    var instr=buildExtractPrompt();
-    if(!instr){ setSt("stGen",L9({my:"အပိုင်း တစ်ခုလောက်တော့ ရွေးပါ",en:"Pick at least one section",shn:"ထၢႆႇပွင်ႈလွင်ႈဢၼ်ၼိုင်ႈဢွၼ်တၢင်း",kac:"Section langai loi loi tawn u",th:"เลือกอย่างน้อยหนึ่งส่วน",zh:"请至少选择一个部分",vi:"Chọn ít nhất một phần",id:"Pilih setidaknya satu bagian",ms:"Pilih sekurang-kurangnya satu bahagian"}),"err"); return; }
-    ibtn.disabled=true; ibtn.textContent=L9({my:"ခွဲခြမ်းနေသည်…",en:"Analyzing…",shn:"ၽၢတ်ႇၽၢႆႇယူႇ…",kac:"Yu chyai nga ai…",th:"กำลังวิเคราะห์…",zh:"分析中…",vi:"Đang phân tích…",id:"Menganalisis…",ms:"Menganalisis…"});
-    try{
-      var out=await geminiText([
-        { text: instr },
-        { text: "IMAGE 1:" },
-        { inline_data: { mime_type: src.mime, data: src.b64 } }
-      ]);
-      if(!out) throw new Error("empty");
-      applyTap(out.slice(0,2500)+"\n\n"+D.guards.sceneFit+"\n"+SCENE_ADAPT_ON+"\n"+D.guards.sceneGuard,
-        L9({my:"Scene Builder · scene ထုတ်ပြီး — IMAGE 1 (subject) နဲ့ Generate နှိပ်ပါ",en:"Scene Builder · scene extracted — add IMAGE 1 (subject) and tap Generate",shn:"Scene Builder · ဢွၵ်ႇ scene ယဝ်ႉ — သႂ်ႇ IMAGE 1 (subject) ၼဵၵ်း Generate",kac:"Scene Builder · scene la sai — IMAGE 1 (subject) jaw nna Generate dip u",th:"Scene Builder · ดึงฉากแล้ว — เพิ่ม IMAGE 1 (subject) แล้วแตะ Generate",zh:"Scene Builder · 场景已提取 — 添加 IMAGE 1（主体）并点击 Generate",vi:"Scene Builder · đã trích xuất cảnh — thêm IMAGE 1 (chủ thể) và bấm Generate",id:"Scene Builder · scene diekstrak — tambahkan IMAGE 1 (subjek) dan ketuk Generate",ms:"Scene Builder · adegan diekstrak — tambah IMAGE 1 (subjek) dan ketik Generate"}));
-      setSt("stGen",L9({my:"Scene prompt ထုတ်ပြီး ✓",en:"Scene prompt extracted ✓",shn:"ဢွၵ်ႇ Scene prompt ယဝ်ႉ ✓",kac:"Scene prompt la sai ✓",th:"ดึง Scene prompt แล้ว ✓",zh:"场景提示词已提取 ✓",vi:"Đã trích xuất Scene prompt ✓",id:"Scene prompt diekstrak ✓",ms:"Scene prompt diekstrak ✓"}),"ok");
-    }catch(e){ setSt("stGen",L9({my:"ခွဲခြမ်းမရ — ",en:"Couldn't analyze — ",shn:"ၽၢတ်ႇဢမ်ႇလႆႈ — ",kac:"Yu chyai n mai ai — ",th:"วิเคราะห์ไม่ได้ — ",zh:"无法分析 — ",vi:"Không thể phân tích — ",id:"Tidak dapat menganalisis — ",ms:"Tidak dapat menganalisis — "})+friendlyError(e),"err"); }
-    ibtn.disabled=false; ibtn.textContent=t("sb_btn");
-  };
-  irow.appendChild(ibtn);
-  gi.b.appendChild(irow);
-  host.appendChild(gi.g);
-
-  var gr = grp("✨ Retouch Pro", D.retouch.sliders.length+t("unit"), false);
-  gr.g.querySelector(".cnt").id = "rtGroupCount";
-  var srow=el("div","row");
-  srow.appendChild(el("span","mut",t("rt_strength")));
-  [30,60,90].forEach(function(v){
-    var b=el("button","chip"+(v===state.rtStrength?" on":""), v+"%");
-    b.onclick=function(){
-      state.rtStrength=v;
-      srow.querySelectorAll(".chip").forEach(function(x){ x.className="chip"+(x.textContent===v+"%"?" on":""); });
-      renderRtChips(); renderAddonSummary(); renderRsPresetGrid(); renderRsStrengthChips();
-    };
-    srow.appendChild(b);
-  });
-  var rtClearBtn=el("button","chip","🗑 "+L9({my:"အားလုံးဖျက်",en:"Clear all",shn:"လၢင်ႉပႅတ်ႈတင်းသဵင်ႈ",kac:"Yawng hkrat kau",th:"ล้างทั้งหมด",zh:"全部清除",vi:"Xóa tất cả",id:"Hapus semua",ms:"Padam semua"}));
-  rtClearBtn.style.marginLeft="auto";
-  rtClearBtn.onclick=function(){
-    D.retouch.sliders.forEach(function(s){ state.rt[s.key]=0; });
-    renderRtChips(); renderAddonSummary(); renderRsSelCount(); renderRsBundleGrid();
-    toast(L9({my:"Retouch ရွေးထားသမျှ ဖျက်လိုက်ပြီ ✓",en:"All retouch selections cleared ✓",shn:"လၢင်ႉပႅတ်ႈ Retouch ဢၼ်လိူၵ်ႈဝႆႉတင်းသဵင်ႈယဝ်ႉ ✓",kac:"Retouch lata da ai yawng hkrat kau sai ✓",th:"ล้างการเลือกรีทัชทั้งหมดแล้ว ✓",zh:"已清除全部精修选择 ✓",vi:"Đã xóa mọi lựa chọn retouch ✓",id:"Semua pilihan retouch dihapus ✓",ms:"Semua pilihan retouch dipadam ✓"}),"ok");
-  };
-  srow.appendChild(rtClearBtn);
-  gr.b.appendChild(srow);
-  var rthost=el("div","chips"); rthost.id="rtChips";
-  gr.b.appendChild(rthost);
-  gr.b.appendChild(el("div","mut",t("rt_note")));
-  host.appendChild(gr.g);
-
-  /* audit parity, data-derived: presets + wedding + relight + cleanup + mix
-     + prompt library + scene builder + chains + staged workflows = 121 */
+  /* audit parity, data-derived: presets + wedding + relight + prompt library
+     + staged workflows + the 16 Studio preset cards */
   var wedTotal = ["trail","veil","gown","petal","extra"].reduce(function(n,k){ return n + (D.wedding[k]||[]).length; }, 0);
-  var tapTotal = D.presets.length + wedTotal + D.lighting.lights.length + D.cleanups.length
-    + D.rmix.length + PROMPT_LIB.length + 5 + D.chains.length
-    + LW.workflows.filter(function(w){ return !w.kind; }).length;
+  var tapTotal = D.presets.length + wedTotal + D.lighting.lights.length
+    + PROMPT_LIB.length + LW.workflows.filter(function(w){ return !w.kind; }).length
+    + 16; /* + the 16 Studio preset cards (Meitu 8 + Evoto 8) */
   $("stTapCount").textContent = String(tapTotal);
 })();
 
@@ -3591,12 +3567,11 @@ var RT_GROUPS = [
   { t: L9({my:"ဝတ်စုံ",en:"Dress / Outfit",shn:"ၶူဝ်းၼုင်ႈ",kac:"Palawng",th:"เสื้อผ้า",zh:"服装",vi:"Trang phục",id:"Busana",ms:"Pakaian"}), keys:["dressSmooth","dressEdge","dressWrinkle","dressTexture","dressFit","dressClean","dressColorPure"] },
   { t: L9({my:"နောက်ခံ",en:"Background",shn:"ပိုၼ်ႉလင်",kac:"Hpang",th:"พื้นหลัง",zh:"背景",vi:"Nền",id:"Latar belakang",ms:"Latar belakang"}), keys:["bgSmooth","bgRecolor"] }
 ];
-/* Retouch Pro's slider chips render into TWO places sharing the same global
-   state.rt/state.rtStrength — the collapsible group on Studio (#rtChips) and
-   the dedicated Retouch Studio page's Sliders tab (#rsChips, may not exist
-   yet on first call order but is always in the DOM once built). Both re-run
-   on every change so they never drift out of sync with each other. */
-var RT_CHIP_HOST_IDS = ["rtChips","rsChips"];
+/* Retouch Pro's 50 slider chips now render in ONE place — the Retouch page's
+   Sliders tab (#rsChips). The Studio copy (#rtChips) left with v4.23.0's
+   Meitu/Evoto rebuild; the host list stays an array so a future second host
+   is one entry away, and renderRtChipsInto is null-safe regardless. */
+var RT_CHIP_HOST_IDS = ["rsChips"];
 function renderRtChipsInto(hostId){
   var host=$(hostId); if(!host) return;
   host.innerHTML="";
@@ -3624,8 +3599,6 @@ function renderRtChipsInto(hostId){
     });
     host.appendChild(row);
   });
-  var cntEl=$("rtGroupCount");
-  if(cntEl) cntEl.textContent = totalOn ? totalOn+"/"+D.retouch.sliders.length+t("unit") : D.retouch.sliders.length+t("unit");
 }
 function renderRtChips(){ RT_CHIP_HOST_IDS.forEach(renderRtChipsInto); }
 renderRtChips();
@@ -3968,6 +3941,1722 @@ renderRsStrengthChips();
 rsSetMode("onetap");
 renderRsPicker();
 
+/* ================= pgStudio v5 — MEITU STUDIO (50) + EVOTO PRO (42) =================
+   Tiered live-preview engine:
+   - Tier 1 (drag loop): element-level CSS filter recompose, one synchronous write
+     per input event, rAF-throttled afterward — pixels are never touched mid-drag.
+   - Tier 2 (settle loop): 120ms after the last input, the full canvas pipeline
+     re-renders a downscaled buffer (<=1280px desktop / <=896px narrow) in <150ms.
+   - Tier 3 (pending-AI queue): controls the canvas can't honestly preview queue an
+     AI fragment chip instantly; GENERATE bakes the canvas edits into the photo,
+     composes one prompt from every queued fragment and rides the app's existing
+     gemini/runninghub/openai dispatcher untouched. */
+var ST = {
+  srcBitmap:null, srcW:0, srcH:0,
+  buf:null, bctx:null, px0:null,
+  maskCache:null, lut:null, lutKey:"",
+  noise:null, thumbCanvas:null,
+  orig:null,
+  holding:false, busy:false,
+  rafPending:false, settleT:null, svT:null,
+  refreshFns:[], feats:{}, grpOf:{}, g1:{}, g2:{},
+  presetSnap:null
+};
+function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0}; }
+function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0}; }
+state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:"all", v:{} };
+(function(){ /* tolerant restore — missing keys keep their defaults; img is never persisted */
+  var s=state.stSaved; delete state.stSaved; if(!s) return;
+  try{
+    if(s.t1) for(var k in state.st.t1) if(typeof s.t1[k]==="number") state.st.t1[k]=s.t1[k];
+    if(s.t2) for(var k2 in state.st.t2) if(s.t2[k2]!==undefined && k2!=="finish") state.st.t2[k2]=+s.t2[k2]||0;
+    if(s.t2 && (s.t2.finish===null||typeof s.t2.finish==="string")) state.st.t2.finish=s.t2.finish;
+    if(Array.isArray(s.pend)) state.st.pend=s.pend.filter(function(p){ return p && p.id; });
+    if(typeof s.preset==="string"||s.preset===null) state.st.preset=s.preset;
+    if(typeof s.target==="string") state.st.target=s.target;
+    if(s.v && typeof s.v==="object") state.st.v=s.v;
+  }catch(e){}
+})();
+var RT_BYKEY={}; D.retouch.sliders.forEach(function(s){ RT_BYKEY[s.key]=s; });
+/* recycled D.retouch lines resolved at an arbitrary strength {v} (not state.rtStrength) */
+function stLine(key,v){ var s=RT_BYKEY[key]; return s ? s.line.replace(/^- /,"").replace(/\b60(?=%)/g,String(Math.abs(v))) : ""; }
+function stLineSigned(key,v){
+  var s=RT_BYKEY[key]; if(!s) return "";
+  var line=(v<0 && s.lineNeg)?s.lineNeg:s.line;
+  return line.replace(/^- /,"").replace(/\b60(?=%)/g,String(Math.abs(v)));
+}
+function svGet(id,def){ var x=state.st.v[id]; return x===undefined?def:x; }
+function svSet(id,val){ state.st.v[id]=val; stSaveSoon(); }
+function stSaveSoon(){ clearTimeout(ST.svT); ST.svT=setTimeout(saveState,500); }
+function stRefreshUI(){ ST.refreshFns.forEach(function(f){ try{ f(); }catch(e){} }); }
+function stClamp(v,a,b){ return v<a?a:v>b?b:v; }
+
+/* ---- effective params = user base + ghost contributions from T3 approximations ---- */
+function stRecomputeGhosts(){
+  var g1={},g2={};
+  Object.keys(ST.feats).forEach(function(id){
+    var f=ST.feats[id]; if(!f.ghost) return;
+    var g=f.ghost(); if(!g) return;
+    if(g.t1) Object.keys(g.t1).forEach(function(k){ g1[k]=(g1[k]||0)+g.t1[k]; });
+    if(g.t2) Object.keys(g.t2).forEach(function(k){ g2[k]=(g2[k]||0)+g.t2[k]; });
+  });
+  ST.g1=g1; ST.g2=g2;
+}
+function stEffT1(){
+  var o={},t1=state.st.t1;
+  for(var k in t1) o[k]=stClamp((t1[k]||0)+(ST.g1[k]||0),-100,k==="bgb"||k==="grn"||k==="vig"?100:100);
+  return o;
+}
+function stEffT2(){
+  var t2=state.st.t2, o={};
+  for(var k in t2) o[k]= (k==="finish") ? t2[k] : (t2[k]||0)+(ST.g2[k]||0);
+  /* Skin Finish offsets (badge values match §1.3: at 50% → matte=deshine40 / dewy=gloss35 / cream=smooth20+white15) */
+  if(o.finish==="matte") o.deshine+=0.8*o.finishV;
+  else if(o.finish==="dewy") o.gloss+=0.7*o.finishV;
+  else if(o.finish==="cream"){ o.smooth+=0.4*o.finishV; o.white+=0.3*o.finishV; }
+  ["smooth","denoise","even","deyellow","white","deshine","teeth","eyeb","radiance"].forEach(function(k2){ o[k2]=stClamp(o[k2],0,100); });
+  o.rosy=stClamp(o.rosy,-100,100); o.gloss=stClamp(o.gloss,-100,100);
+  o.freqHi=stClamp(o.freqHi,-100,100); o.freqLo=stClamp(o.freqLo,-100,100);
+  return o;
+}
+
+/* ---- Tier-1 drag loop: exact CSS-filter composition (§1.2) ---- */
+function stCssFilter(p){
+  var f=[];
+  f.push("brightness("+Math.pow(2,p.exp/100)+")");
+  f.push("brightness("+(1+p.bri/250)+")");
+  f.push("contrast("+(1+p.con/120)+")");
+  f.push("saturate("+Math.max(0,1+p.sat/100+p.vib/180)+")");
+  if(p.wrm>0) f.push("sepia("+(p.wrm/400)+") saturate("+(1+p.wrm/500)+")");
+  else if(p.wrm<0) f.push("hue-rotate("+(p.wrm*0.15)+"deg)");
+  if(p.tnt) f.push("hue-rotate("+(p.tnt*0.25)+"deg)");
+  f.push("brightness("+(1+p.sh*0.0012+p.hi*0.0008)+")");
+  if(p.fad) f.push("contrast("+(1-p.fad/400)+") brightness("+(1+p.fad/600)+")");
+  return f.join(" ");
+}
+function stApplyDragFilter(){ var c=$("stCanvas"); if(c) c.style.filter=stCssFilter(stEffT1()); }
+function stT1Changed(){
+  if(!ST.srcBitmap) return;
+  /* first write is synchronous (a slider must move the photo within the same frame);
+     subsequent writes inside the same frame collapse into one rAF-throttled update */
+  stApplyDragFilter();
+  if(!ST.rafPending){
+    ST.rafPending=true;
+    requestAnimationFrame(function(){ ST.rafPending=false; if(!ST.holding) stApplyDragFilter(); });
+  }
+  stScheduleSettle();
+}
+function stT2Changed(){ if(!ST.srcBitmap) return; stScheduleSettle(); }
+function stScheduleSettle(){ clearTimeout(ST.settleT); ST.settleT=setTimeout(stRenderSettle,120); }
+
+/* ---- pixel pipeline (settle + bake share it) ---- */
+function stComputeLut(p){
+  var key=[p.exp,p.bri,p.con,p.hi,p.sh,p.fad].join(",");
+  if(ST.lutKey===key && ST.lut) return ST.lut;
+  function ss(a,b,x){ x=(x-a)/(b-a); x=x<0?0:x>1?1:x; return x*x*(3-2*x); }
+  var lut=new Uint8ClampedArray(256), g=Math.pow(2,p.exp/100), k=p.fad/100*0.15;
+  for(var x=0;x<256;x++){
+    var v=x*g; v+=p.bri*0.5; v=(v-128)*(1+p.con/100)+128;
+    v+=(p.hi/100)*40*ss(0.5,1,x/255);
+    v+=(p.sh/100)*40*(1-ss(0,0.5,x/255));
+    v=v*(1-k)+k*40;
+    lut[x]=v;
+  }
+  ST.lut=lut; ST.lutKey=key; return lut;
+}
+function stBoxBlurMask(mask,w,h,r){
+  var tmp=new Float32Array(mask.length), out=new Uint8Array(mask.length), span=2*r+1, x,y,acc;
+  for(y=0;y<h;y++){ acc=0;
+    for(x=-r;x<=r;x++) acc+=mask[y*w+stClamp(x,0,w-1)];
+    for(x=0;x<w;x++){ tmp[y*w+x]=acc/span;
+      acc+=mask[y*w+stClamp(x+r+1,0,w-1)]-mask[y*w+stClamp(x-r,0,w-1)]; }
+  }
+  for(x=0;x<w;x++){ acc=0;
+    for(y=-r;y<=r;y++) acc+=tmp[stClamp(y,0,h-1)*w+x];
+    for(y=0;y<h;y++){ out[y*w+x]=acc/span;
+      acc+=tmp[stClamp(y+r+1,0,h-1)*w+x]-tmp[stClamp(y-r,0,h-1)*w+x]; }
+  }
+  return out;
+}
+/* YCbCr skin-tone mask (77<=Cb<=127, 133<=Cr<=173), soft-edged, + bbox as face proxy */
+function stSkinMask(px,w,h){
+  var d=px.data, n=w*h, mask=new Uint8Array(n);
+  var minX=w,minY=h,maxX=0,maxY=0,found=false;
+  for(var i=0,p=0;i<n;i++,p+=4){
+    var R=d[p],G=d[p+1],B=d[p+2];
+    var cb=128-0.168736*R-0.331264*G+0.5*B;
+    var cr=128+0.5*R-0.418688*G-0.081312*B;
+    if(cb>=77&&cb<=127&&cr>=133&&cr<=173){
+      mask[i]=255; var x=i%w,y=(i/w)|0;
+      if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; found=true;
+    }
+  }
+  return { mask:stBoxBlurMask(mask,w,h,2), box:found?{x0:minX,y0:minY,x1:maxX,y1:maxY}:null };
+}
+function stBlurData(srcCanvas,W,H,r){
+  var c=document.createElement("canvas"); c.width=W; c.height=H;
+  var x=c.getContext("2d",{willReadFrequently:true});
+  x.filter="blur("+r+"px)"; x.drawImage(srcCanvas,0,0,W,H);
+  return x.getImageData(0,0,W,H).data;
+}
+function stApplySkin(cv,cx,px,W,H,t2,mi){
+  var d=px.data, mask=mi.mask, n=W*H;
+  var blurS = t2.smooth>0 ? stBlurData(cv,W,H,2+t2.smooth/100*4) : null;
+  var blur1 = t2.denoise>0 ? stBlurData(cv,W,H,1) : null;
+  var blur12 = t2.freqLo>0 ? stBlurData(cv,W,H,12) : null;
+  var meanCb=0,meanCr=0;
+  if(t2.even>0){
+    var cnt=0;
+    for(var j=0,q=0;j<n;j++,q+=4){ if(mask[j]>128){
+      var R0=d[q],G0=d[q+1],B0=d[q+2]; cnt++;
+      meanCb+=128-0.168736*R0-0.331264*G0+0.5*B0;
+      meanCr+=128+0.5*R0-0.418688*G0-0.081312*B0;
+    } }
+    if(cnt){ meanCb/=cnt; meanCr/=cnt; } else { meanCb=128; meanCr=128; }
+  }
+  var whiteAmt=stClamp(t2.white+t2.radiance*0.4,0,100);
+  var box=mi.box, eyY0=0,eyY1=0;
+  if(box){ var bh=box.y1-box.y0; eyY0=box.y0+bh*0.25; eyY1=box.y0+bh*0.45; }
+  for(var i=0,p=0;i<n;i++,p+=4){
+    var m=mask[i]/255;
+    var R=d[p],G=d[p+1],B=d[p+2];
+    var lum=0.299*R+0.587*G+0.114*B;
+    /* global teeth candidates (yellowish bright low-chroma) */
+    if(t2.teeth>0 && lum>140){
+      var mx0=Math.max(R,G,B),mn0=Math.min(R,G,B);
+      if((mx0-mn0)<40 && ((R+G)/2-B)>6){
+        var tv=t2.teeth/100;
+        B+=(G-B)*tv*0.6; var lift=t2.teeth*0.15;
+        R+=lift; G+=lift; B+=lift;
+      }
+    }
+    if(m>0.02){
+      if(blurS){
+        var dl=Math.abs(lum-(0.299*blurS[p]+0.587*blurS[p+1]+0.114*blurS[p+2]));
+        if(dl<=30){ /* edge-preserve: skip high local-contrast pixels */
+          var a=t2.smooth/100*0.85*m;
+          R+= (blurS[p]-R)*a; G+=(blurS[p+1]-G)*a; B+=(blurS[p+2]-B)*a;
+        }
+      }
+      if(blur12){
+        var a12=t2.freqLo/100*0.5*m;
+        R+=(blur12[p]-R)*a12; G+=(blur12[p+1]-G)*a12; B+=(blur12[p+2]-B)*a12;
+      }
+      if(blur1||t2.even>0){
+        var Y=0.299*R+0.587*G+0.114*B;
+        var Cb=128-0.168736*R-0.331264*G+0.5*B;
+        var Cr=128+0.5*R-0.418688*G-0.081312*B;
+        if(blur1){ /* chroma-only denoise */
+          var bR=blur1[p],bG=blur1[p+1],bB=blur1[p+2];
+          var bCb=128-0.168736*bR-0.331264*bG+0.5*bB;
+          var bCr=128+0.5*bR-0.418688*bG-0.081312*bB;
+          var ad=t2.denoise/100*0.5*m;
+          Cb+=(bCb-Cb)*ad; Cr+=(bCr-Cr)*ad;
+        }
+        if(t2.even>0){ var ae=t2.even/100*0.6*m; Cb+=(meanCb-Cb)*ae; Cr+=(meanCr-Cr)*ae; }
+        R=Y+1.402*(Cr-128); G=Y-0.344136*(Cb-128)-0.714136*(Cr-128); B=Y+1.772*(Cb-128);
+      }
+      if(t2.deyellow>0 && ((R+G)/2-B)>12){ B+=(Math.min(R,G)-B)*t2.deyellow/100*0.5*m; }
+      if(whiteAmt>0){ var wv=whiteAmt/100*0.25*m; R+=(255-R)*wv; G+=(255-G)*wv*0.95; B+=(255-B)*wv*1.05; }
+      if(t2.rosy){ R+=t2.rosy*0.2*m; B-=t2.rosy*0.08*m; }
+      var lum2=0.299*R+0.587*G+0.114*B;
+      if(t2.deshine>0 && lum2>200){ var ds=(lum2-200)*(t2.deshine/100)*0.8*m; R-=ds; G-=ds; B-=ds; }
+      if(t2.gloss>0 && lum2>190){ var gl=(lum2-190)*(t2.gloss/100)*0.5*m; R+=gl; G+=gl; B+=gl; }
+      else if(t2.gloss<0 && lum2>200){ var ds2=(lum2-200)*(-t2.gloss/100)*0.8*m; R-=ds2; G-=ds2; B-=ds2; }
+      /* eye-zone approx: rows 25-45%% of the skin bbox */
+      if(t2.eyeb>0 && box){
+        var y=(i/W)|0;
+        if(y>=eyY0&&y<=eyY1){
+          if(lum2<80){ var eb=t2.eyeb*0.25; R+=eb;G+=eb;B+=eb; }
+          else { var mx1=Math.max(R,G,B),mn1=Math.min(R,G,B);
+            if(lum2>180&&(mx1-mn1)<30){ var eb2=t2.eyeb*0.2; R+=eb2;G+=eb2;B+=eb2; } }
+        }
+      }
+    }
+    d[p]=R<0?0:R>255?255:R; d[p+1]=G<0?0:G>255?255:G; d[p+2]=B<0?0:B>255?255:B;
+  }
+  cx.putImageData(px,0,0);
+}
+function stRunPipeline(srcImg,W,H,opts){
+  opts=opts||{};
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  var cx=cv.getContext("2d",{willReadFrequently:true});
+  cx.drawImage(srcImg,0,0,W,H);
+  var t1=stEffT1(), t2=stEffT2();
+  var px=cx.getImageData(0,0,W,H), d=px.data, n=W*H;
+  /* (2)+(3) tonal LUT + color pass */
+  var lut=stComputeLut(t1);
+  var doColor=!!(t1.wrm||t1.tnt||t1.sat||t1.vib);
+  var wr=1+t1.wrm/300, wb=1-t1.wrm/300, tg=1-t1.tnt/300, sk=1+t1.sat/100, vk=t1.vib/100;
+  for(var i=0,p=0;i<n;i++,p+=4){
+    var R=lut[d[p]],G=lut[d[p+1]],B=lut[d[p+2]];
+    if(doColor){
+      R*=wr; B*=wb; G*=tg;
+      var L=0.299*R+0.587*G+0.114*B;
+      if(t1.sat){ R=L+(R-L)*sk; G=L+(G-L)*sk; B=L+(B-L)*sk; }
+      if(vk){
+        var mx=Math.max(R,G,B),mn=Math.min(R,G,B),S=mx>0?(mx-mn)/mx:0,vv=1+vk*(1-S);
+        R=L+(R-L)*vv; G=L+(G-L)*vv; B=L+(B-L)*vv;
+      }
+    }
+    d[p]=R<0?0:R>255?255:R; d[p+1]=G<0?0:G>255?255:G; d[p+2]=B<0?0:B>255?255:B;
+  }
+  cx.putImageData(px,0,0);
+  /* (4) Tier-2 skin ops on the cached (or freshly computed) skin mask */
+  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0);
+  if(needSkin){
+    var mi=opts.maskInfo || stSkinMask(px,W,H);
+    stApplySkin(cv,cx,px,W,H,t2,mi);
+  }
+  /* (5) unsharp sharpen r1.5 + clarity r8 (radiance adds 0.3x clarity; freq-sep High rides here) */
+  var shpA=(t1.shp/100)*0.6 + Math.max(0,t2.freqHi)/100*0.6;
+  var claA=(stClamp(t1.cla + t2.radiance*0.3 + Math.max(0,-t2.freqLo)*0.4,-100,150)/100)*0.4;
+  var softA=Math.max(0,-t2.freqHi)/100*0.6;
+  if(shpA||claA||softA){
+    var base=cx.getImageData(0,0,W,H), bd=base.data;
+    var b1=(shpA||softA)?stBlurData(cv,W,H,1.5):null;
+    var b8=claA?stBlurData(cv,W,H,8):null;
+    for(var i2=0;i2<bd.length;i2+=4){
+      for(var c3=0;c3<3;c3++){
+        var v=bd[i2+c3];
+        if(shpA&&b1) v+= shpA*(v-b1[i2+c3]);
+        if(claA&&b8) v+= claA*(v-b8[i2+c3]);
+        if(softA&&b1) v+=(b1[i2+c3]-v)*softA;
+        bd[i2+c3]=v<0?0:v>255?255:v;
+      }
+    }
+    cx.putImageData(base,0,0);
+  }
+  /* (6) background-blur approximation: blurred frame + sharp subject through a radial alpha mask */
+  if(t1.bgb>0){
+    var sharp=document.createElement("canvas"); sharp.width=W; sharp.height=H;
+    var shx=sharp.getContext("2d");
+    shx.drawImage(cv,0,0);
+    shx.globalCompositeOperation="destination-in";
+    shx.save(); shx.translate(W*0.5,H*0.4); shx.scale(W*0.55,H*0.7);
+    var grad=shx.createRadialGradient(0,0,0,0,0,1);
+    grad.addColorStop(0,"rgba(255,255,255,1)"); grad.addColorStop(0.62,"rgba(255,255,255,1)"); grad.addColorStop(1,"rgba(255,255,255,0)");
+    shx.fillStyle=grad; shx.fillRect(-1,-1,2,2); shx.restore();
+    cx.save(); cx.filter="blur("+(t1.bgb/100*12)+"px)"; cx.drawImage(cv,0,0); cx.restore();
+    cx.drawImage(sharp,0,0);
+  }
+  /* (7) vignette */
+  if(t1.vig>0){
+    var vg=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.72);
+    vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,"+(t1.vig/100*0.55)+")");
+    cx.fillStyle=vg; cx.fillRect(0,0,W,H);
+  }
+  /* (8) grain: pre-generated noise tile, overlay-composited */
+  if(t1.grn>0){
+    if(!ST.noise){
+      var nz=document.createElement("canvas"); nz.width=256; nz.height=256;
+      var nx=nz.getContext("2d"), nd=nx.createImageData(256,256);
+      for(var ni=0;ni<nd.data.length;ni+=4){ var g2=128+(Math.random()*90-45); nd.data[ni]=g2; nd.data[ni+1]=g2; nd.data[ni+2]=g2; nd.data[ni+3]=255; }
+      nx.putImageData(nd,0,0); ST.noise=nz;
+    }
+    cx.save();
+    cx.globalCompositeOperation="overlay"; cx.globalAlpha=t1.grn/100*0.35;
+    cx.fillStyle=cx.createPattern(ST.noise,"repeat"); cx.fillRect(0,0,W,H);
+    cx.restore();
+  }
+  return cv;
+}
+function stRenderSettle(){
+  if(!ST.srcBitmap||ST.holding) return;
+  var W=ST.buf.width,H=ST.buf.height;
+  var t2=stEffT2();
+  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0);
+  if(needSkin&&!ST.maskCache) ST.maskCache=stSkinMask(ST.px0,W,H);
+  var out=stRunPipeline(ST.srcBitmap,W,H,{maskInfo:ST.maskCache});
+  var c=$("stCanvas"), cc=c.getContext("2d");
+  cc.clearRect(0,0,c.width,c.height); cc.drawImage(out,0,0);
+  c.style.filter="";
+}
+function stBake(){
+  if(!ST.srcBitmap) return null;
+  return stRunPipeline(ST.srcBitmap,ST.srcW,ST.srcH,{}).toDataURL("image/jpeg",0.92);
+}
+function stIsDirty(){
+  var d1=stDefT1(),d2=stDefT2(),t1=state.st.t1,t2=state.st.t2,k;
+  for(k in d1) if((t1[k]||0)!==d1[k]) return true;
+  for(k in d2) if(k!=="finish" && (t2[k]||0)!==0) return true;
+  if(t2.finish) return true;
+  for(k in ST.g1) if(ST.g1[k]) return true;
+  for(k in ST.g2) if(ST.g2[k]) return true;
+  return false;
+}
+/* ---- photo load ---- */
+function stBufMax(){ return window.innerWidth<720 ? 896 : 1280; }
+function stBuildBuffer(){
+  var MAX=stBufMax(), s=Math.min(1,MAX/Math.max(ST.srcW,ST.srcH));
+  var bw=Math.max(1,Math.round(ST.srcW*s)), bh=Math.max(1,Math.round(ST.srcH*s));
+  ST.buf=document.createElement("canvas"); ST.buf.width=bw; ST.buf.height=bh;
+  ST.bctx=ST.buf.getContext("2d",{willReadFrequently:true});
+  ST.bctx.drawImage(ST.srcBitmap,0,0,bw,bh);
+  ST.px0=ST.bctx.getImageData(0,0,bw,bh);
+  var c=$("stCanvas"); c.width=bw; c.height=bh;
+}
+function stLoadImage(dataUrl,opts){
+  opts=opts||{};
+  var img=new Image();
+  img.onload=function(){
+    ST.srcBitmap=img; ST.srcW=img.naturalWidth; ST.srcH=img.naturalHeight;
+    var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl);
+    state.st.img = m?{mime:m[1],b64:m[2],w:ST.srcW,h:ST.srcH}:null;
+    ST.orig = state.st.img;
+    if(!opts.fromRef && m){ state.refs[0]={mime:m[1],b64:m[2],label:"studio"}; renderRefs(); }
+    ST.maskCache=null; ST.lutKey="";
+    stBuildBuffer();
+    var stg=$("stStage"); if(stg) stg.style.display="";
+    stRenderSettle(); stApplyDragFilter();
+    stRenderThumbs();
+    if(opts.done) opts.done();
+  };
+  img.src=dataUrl;
+}
+ST.loadImage=stLoadImage;
+function stSyncFromRef(){
+  var r=state.refs[0];
+  if(!r){ ST.srcBitmap=null; state.st.img=null; var stg=$("stStage"); if(stg) stg.style.display="none"; stRenderThumbs(); return; }
+  if(state.st.img && state.st.img.b64===r.b64) return;
+  stLoadImage("data:"+r.mime+";base64,"+r.b64,{fromRef:true});
+}
+
+/* ---- Tier-3 pending-AI queue ---- */
+function stFeat(id,label,keys,calc,ghost){ ST.feats[id]={id:id,label:label,keys:keys||[],calc:calc,ghost:ghost||null}; }
+function stSync(id){
+  var f=ST.feats[id]; if(!f) return;
+  var r=f.calc?f.calc():null;
+  var pend=state.st.pend, e=null,i;
+  for(i=0;i<pend.length;i++) if(pend[i].id===id){ e=pend[i]; break; }
+  if(r){
+    if(e){ e.params=r.params||{}; e.label=f.label; e.frag=r.frag; }
+    else pend.push({id:id,label:f.label,params:r.params||{},frag:r.frag});
+  } else if(e){ pend.splice(pend.indexOf(e),1); }
+  if(f.ghost){ stRecomputeGhosts(); stT1Changed(); stT2Changed(); }
+  stRenderPend(); stSaveSoon();
+}
+function stFeatReset(id){
+  var f=ST.feats[id]; if(!f) return;
+  f.keys.forEach(function(k){ delete state.st.v[k]; });
+  stSync(id); stRefreshUI();
+}
+function stFragOf(e){
+  var f=ST.feats[e.id];
+  if(f&&f.calc){ var r=f.calc(); if(r&&r.frag) return r.frag; }
+  return e.frag||"";
+}
+function stRenderPend(){
+  var host=$("stPendChips"); if(!host) return;
+  host.innerHTML="";
+  var pend=state.st.pend;
+  pend.forEach(function(pe){
+    var c=el("button","chip on");
+    var v=pe.params&&typeof pe.params.v==="number"?Math.abs(pe.params.v):null;
+    c.appendChild(el("span",null,pe.label+(v!==null&&v!==0?" "+v+"%":"")));
+    var x=el("span","st-x","✕");
+    x.setAttribute("aria-label",L9({my:"ဖယ်ရှား",en:"Remove"}));
+    c.appendChild(x);
+    c.onclick=function(ev){
+      if(ev.target===x){ stFeatReset(pe.id); return; }
+      var g=ST.grpOf[pe.id];
+      if(g){ g.className="grp open"; g.scrollIntoView({behavior:"smooth",block:"center"}); }
+    };
+    host.appendChild(c);
+  });
+  var n=pend.length;
+  var cEl=$("stPendCount");
+  if(cEl) cEl.textContent = n
+    ? L9({my:"AI ပြင်ဆင်ချက် "+n+" ခု စောင့်ဆိုင်းနေ — GENERATE နှိပ်ရင် တစ်ခါတည်း အကုန်လုပ်မယ်",en:n+" AI edit"+(n>1?"s":"")+" queued — GENERATE applies them all at once"})
+    : L9({my:"Slider တွေက ပုံပေါ်မှာ ချက်ချင်းမြင်ရ — AI လိုတဲ့အရာတွေက ဒီမှာ စုပြီး GENERATE တစ်ချက်တည်း",en:"Sliders preview instantly on the photo — AI-only edits queue here for one GENERATE"});
+  var btn=$("btnStGen");
+  if(btn) btn.textContent="⚡ GENERATE"+(n?" ("+n+" AI)":"");
+}
+
+/* ---- control factories (all values live in state.st.v / t1 / t2 so presets + reset can refresh the UI) ---- */
+function stCtlRow(label){
+  var row=el("div","st-ctl");
+  var lb=el("label",null,label);
+  row.appendChild(lb);
+  return row;
+}
+function stSlider(o){ /* {id,label,min,max,def,get,set} -> element; registers a UI-refresh fn */
+  var row=stCtlRow(o.label);
+  var inp=document.createElement("input");
+  inp.type="range"; inp.className="rng"; inp.id=o.id;
+  inp.min=String(o.min); inp.max=String(o.max); inp.step="1";
+  var val=el("span","st-val");
+  function fmt(v){ return (o.min<0&&v>0?"+":"")+v+(o.pct===false?"":"%"); }
+  function refresh(){ var v=o.get(); inp.value=String(v); val.textContent=fmt(v); }
+  inp.oninput=function(){ var v=parseInt(inp.value,10)||0; val.textContent=fmt(v); o.set(v); };
+  /* dblclick / keyboard Home = reset this one slider */
+  inp.ondblclick=function(){ inp.value=String(o.def); inp.oninput(); };
+  row.appendChild(inp); row.appendChild(val);
+  ST.refreshFns.push(refresh); refresh();
+  return row;
+}
+function stChips(o){ /* {id,label?,choices:[[val,label]],get,set,allowOff} single-select chips */
+  var wrap=el("div");
+  if(o.label) wrap.appendChild(el("div","subh",o.label));
+  var chips=el("div","chips");
+  function refresh(){
+    var cur=o.get();
+    chips.querySelectorAll(".chip").forEach(function(c,i){ c.className="chip"+(o.choices[i][0]===cur?" on":""); });
+  }
+  o.choices.forEach(function(ch){
+    var c=el("button","chip",ch[1]);
+    if(ch[2]) c.title=ch[2];
+    c.onclick=function(){
+      var cur=o.get();
+      o.set(cur===ch[0]&&o.allowOff!==false?null:ch[0]);
+      refresh();
+    };
+    chips.appendChild(c);
+  });
+  wrap.appendChild(chips);
+  ST.refreshFns.push(refresh); refresh();
+  return wrap;
+}
+function stToggle(o){ /* {id,label,get,set} */
+  var c=el("button","chip",o.label);
+  function refresh(){ c.className="chip"+(o.get()?" on":""); }
+  c.onclick=function(){ o.set(!o.get()); refresh(); };
+  ST.refreshFns.push(refresh); refresh();
+  return c;
+}
+function stColorInp(o){ /* {id,get,set} */
+  var inp=document.createElement("input");
+  inp.type="color"; inp.className="inp st-color"; inp.id=o.id;
+  function refresh(){ inp.value=o.get()||"#d9a441"; }
+  inp.oninput=function(){ o.set(inp.value); };
+  ST.refreshFns.push(refresh); refresh();
+  return inp;
+}
+/* shorthand builders bound to the value store */
+function svSlider(id,label,bidir,featId,max){
+  return stSlider({id:id,label:label,min:bidir?-100:0,max:max||100,def:0,
+    get:function(){ return svGet(id,0); },
+    set:function(v){ svSet(id,v); stSync(featId); }});
+}
+function t1Slider(id,label,k,bidir){
+  return stSlider({id:id,label:label,min:bidir===false?0:-100,max:100,def:0,
+    get:function(){ return state.st.t1[k]||0; },
+    set:function(v){ state.st.t1[k]=v; stT1Changed(); stSaveSoon(); }});
+}
+function t2Slider(id,label,k,bidir){
+  return stSlider({id:id,label:label,min:bidir?-100:0,max:100,def:0,
+    get:function(){ return state.st.t2[k]||0; },
+    set:function(v){ state.st.t2[k]=v; if(k==="smooth"||k==="freqLo") ST.lutKey=ST.lutKey; stT2Changed(); stSaveSoon(); }});
+}
+function svChips(id,label,choices,featId,allowOff){
+  return stChips({id:id,label:label,choices:choices,allowOff:allowOff,
+    get:function(){ return svGet(id,null); },
+    set:function(v){ svSet(id,v); stSync(featId); }});
+}
+function svToggle(id,label,featId){
+  return stToggle({id:id,label:label,
+    get:function(){ return !!svGet(id,false); },
+    set:function(v){ svSet(id,v); stSync(featId); }});
+}
+function svColor(id,featId){
+  return stColorInp({id:id,
+    get:function(){ return svGet(id,null); },
+    set:function(v){ svSet(id,v); stSync(featId); }});
+}
+
+function svMultiChips(id,label,choices,featId){
+  var wrap=el("div");
+  if(label) wrap.appendChild(el("div","subh",label));
+  var chips=el("div","chips");
+  function list(){ var l=svGet(id,null); return Array.isArray(l)?l:[]; }
+  function refresh(){
+    var l=list();
+    chips.querySelectorAll(".chip").forEach(function(c,i){ c.className="chip"+(l.indexOf(choices[i][0])>=0?" on":""); });
+  }
+  choices.forEach(function(ch){
+    var c=el("button","chip",ch[1]);
+    c.onclick=function(){
+      var l=list().slice(), i=l.indexOf(ch[0]);
+      if(i>=0) l.splice(i,1); else l.push(ch[0]);
+      svSet(id,l); stSync(featId); refresh();
+    };
+    chips.appendChild(c);
+  });
+  wrap.appendChild(chips);
+  ST.refreshFns.push(refresh); refresh();
+  return wrap;
+}
+function stSub(txt){ return el("div","subh",txt); }
+function stNote(txt){ return el("p","mut",txt); }
+/* simple {v} helpers for fragments */
+function fv(id){ return Math.abs(svGet(id,0)); }
+function fs(id){ return svGet(id,0); }
+
+/* ================= MEITU STUDIO — 50 features / 12 groups ================= */
+var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
+(function buildMeitu(){
+  var host=$("muHost"); if(!host) return;
+  function G(title,count){ var g=grp(title,count+t("unit"),false); host.appendChild(g.g); var grid=el("div","st-grid"); g.b.appendChild(grid); g.grid=grid; return g; }
+  function reg(g,featIds){ (featIds||[]).forEach(function(id){ ST.grpOf[id]=g.g; }); }
+  function count(n){ ST_MEITU_COUNT+=n; }
+
+  /* MU-1 One-Tap (3) */
+  var g1=G("✨ "+L9({my:"တစ်ချက်နှိပ်",en:"One-Tap"}),3); count(3);
+  g1.grid.appendChild(stSlider({id:"mu_auto",label:L9({my:"အလိုအလျောက် အလှပြင်",en:"Auto Beautify"}),min:0,max:100,def:0,
+    get:function(){ return svGet("mu_auto",0); },
+    set:function(v){ svSet("mu_auto",v); stRecomputeGhosts(); stT1Changed(); }}));
+  stFeat("mu_auto",L9({my:"Auto Beautify",en:"Auto Beautify"}),["mu_auto"],null,function(){
+    var v=svGet("mu_auto",0); if(!v) return null;
+    return { t1:{bri:v*0.2,con:v*0.15,sat:v*0.12}, t2:{smooth:v*0.5,white:v*0.3,even:v*0.3} };
+  });
+  var aiTgl=el("div","st-ctl");
+  aiTgl.appendChild(el("label",null,L9({my:"AI အလိုအလျောက် ရီတပ်ချ်",en:"AI Auto Retouch"})));
+  aiTgl.appendChild(svToggle("mu_ai","AI Retouch","mu_ai"));
+  g1.grid.appendChild(aiTgl);
+  stFeat("mu_ai",L9({my:"AI Retouch",en:"AI Retouch"}),["mu_ai"],function(){
+    if(!svGet("mu_ai",false)) return null;
+    return { params:{}, frag: byKey.meitu.text };
+  });
+  g1.b.appendChild(stSub(L9({my:"ပြင်ဆင်မည့်သူရွေး",en:"Retouch Target"})));
+  g1.b.appendChild(stTargetChips());
+  reg(g1,["mu_auto","mu_ai"]);
+
+  /* MU-2 Skin (6) */
+  var g2=G("🧴 "+L9({my:"အသားအရေ",en:"Skin"}),6); count(6);
+  g2.grid.appendChild(t2Slider("mu_smooth",L9({my:"အသားအရေချောမွေ့",en:"Skin Smoothing"}),"smooth"));
+  g2.grid.appendChild(t2Slider("mu_denoise",L9({my:"— Denoise",en:"— Denoise"}),"denoise"));
+  g2.grid.appendChild(t2Slider("mu_even",L9({my:"အသားရောင်ညီညာ",en:"Even Tone"}),"even"));
+  g2.grid.appendChild(t2Slider("mu_deyellow",L9({my:"— အဝါဖယ်",en:"— De-Yellow"}),"deyellow"));
+  g2.b.appendChild(stSub(L9({my:"အသားအရေအပြီးသတ်",en:"Skin Finish"})));
+  g2.b.appendChild(stChips({id:"mu_finish",choices:[["matte","Matte"],["dewy","Dewy"],["cream","Cream"]],
+    get:function(){ return state.st.t2.finish; },
+    set:function(v){ state.st.t2.finish=v; stT2Changed(); stSaveSoon(); }}));
+  g2.b.appendChild(stSlider({id:"mu_finishV",label:L9({my:"Finish ပမာဏ",en:"Finish amount"}),min:0,max:100,def:0,
+    get:function(){ return state.st.t2.finishV||0; },
+    set:function(v){ state.st.t2.finishV=v; stT2Changed(); stSaveSoon(); }}));
+  g2.grid.appendChild(t2Slider("mu_deshine",L9({my:"မျက်နှာအဆီပြောင်ဖယ်",en:"De-Shine"}),"deshine"));
+  g2.b.appendChild(stSub(L9({my:"အရေးအကြောင်းဖယ်",en:"Wrinkle Removal"})));
+  g2.b.appendChild(svMultiChips("mu_wrinkleZones",null,[["forehead",L9({my:"နဖူး",en:"Forehead"})],["eyes",L9({my:"မျက်လုံးဘေး",en:"Eyes"})],["smile",L9({my:"ပြုံးကြောင်း",en:"Smile"})],["neck",L9({my:"လည်ပင်း",en:"Neck"})]],"mu_wrinkle"));
+  g2.b.appendChild(svSlider("mu_wrinkleV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_wrinkle"));
+  stFeat("mu_wrinkle",L9({my:"အရေးကြောင်းဖယ်",en:"Wrinkles"}),["mu_wrinkleZones","mu_wrinkleV"],function(){
+    var v=fv("mu_wrinkleV"); if(!v) return null;
+    var z=svGet("mu_wrinkleZones",[]); var zs=z.length?z.join(", "):"facial";
+    return { params:{v:v}, frag:"Soften "+zs+" wrinkles by "+v+"% while keeping natural skin creases. "+stLine("wrinkle",v) };
+  });
+  g2.b.appendChild(stSub(L9({my:"မျက်နှာဖောင်းစို",en:"Facial Plumping"})));
+  g2.b.appendChild(svMultiChips("mu_plumpAreas",null,[["temples",L9({my:"နားထင်",en:"Temples"})],["under-eye",L9({my:"မျက်အောက်",en:"Under-eye"})],["cheeks",L9({my:"ပါး",en:"Cheeks"})]],"mu_plump"));
+  g2.b.appendChild(svSlider("mu_plumpV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_plump"));
+  stFeat("mu_plump",L9({my:"မျက်နှာဖောင်းစို",en:"Plumping"}),["mu_plumpAreas","mu_plumpV"],function(){
+    var v=fv("mu_plumpV"); if(!v) return null;
+    var a=svGet("mu_plumpAreas",[]); var as=a.length?a.join(", "):"cheeks";
+    return { params:{v:v}, frag:"Add subtle youthful volume to "+as+" at "+v+"%; no face-shape change." };
+  });
+  reg(g2,["mu_wrinkle","mu_plump"]);
+
+  /* MU-3 Whitening & Tone (3) */
+  var g3=G("🤍 "+L9({my:"အသားဖြူဝင်း",en:"Whitening & Tone"}),3); count(3);
+  g3.grid.appendChild(t2Slider("mu_white",L9({my:"အသားဖြူဝင်း",en:"Whitening"}),"white"));
+  g3.b.appendChild(stSub(L9({my:"အသားရောင်ရွေး",en:"Skin Tone"})));
+  g3.b.appendChild(svChips("mu_skinTone",null,[["fair","Fair"],["porcelain","Porcelain"],["natural","Natural"],["warm","Warm"],["honey-tan","Honey Tan"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_skinToneF"));
+  g3.b.appendChild(svColor("mu_skinToneHex","mu_skinToneF"));
+  g3.b.appendChild(svSlider("mu_skinToneV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_skinToneF"));
+  stFeat("mu_skinToneF",L9({my:"အသားရောင်",en:"Skin Tone"}),["mu_skinTone","mu_skinToneHex","mu_skinToneV"],function(){
+    var v=fv("mu_skinToneV"), tn=svGet("mu_skinTone",null); if(!v||!tn) return null;
+    var name=tn==="custom"?(svGet("mu_skinToneHex",null)||"the chosen custom color"):tn;
+    return { params:{v:v}, frag:"Shift the skin tone toward "+name+" at "+v+"%, keep pores and texture." };
+  },function(){
+    var v=svGet("mu_skinToneV",0), tn=svGet("mu_skinTone",null); if(!v||!tn) return null;
+    var g=Math.min(25,v*0.25);
+    if(tn==="fair"||tn==="porcelain") return { t2:{white:g} };
+    if(tn==="warm"||tn==="honey-tan") return { t2:{rosy:g*0.8}, t1:{wrm:g*0.4} };
+    return null;
+  });
+  g3.grid.appendChild(t2Slider("mu_rosy",L9({my:"ပန်းနုရောင်သွေးအသား",en:"Rosy Complexion"}),"rosy"));
+  reg(g3,["mu_skinToneF"]);
+
+  /* MU-4 Blemish (3) */
+  var g4=G("🩹 "+L9({my:"အမာရွတ်/ဝက်ခြံ",en:"Blemish"}),3); count(3);
+  g4.grid.appendChild(svSlider("mu_acne",L9({my:"ဝက်ခြံ/အမာရွတ်ဖယ်",en:"Acne & Blemish"}),false,"mu_acne"));
+  stFeat("mu_acne",L9({my:"ဝက်ခြံဖယ်",en:"Acne"}),["mu_acne"],function(){
+    var v=fv("mu_acne"); if(!v) return null;
+    return { params:{v:v}, frag:stLine("acne",v)+" "+stLine("spots",v) };
+  });
+  g4.grid.appendChild(svSlider("mu_ueDark",L9({my:"မျက်ကွင်းညိုဖယ်",en:"Dark Circles"}),false,"mu_underEye"));
+  g4.grid.appendChild(svSlider("mu_ueBags",L9({my:"မျက်ရစ်ဖယ်",en:"Eye Bags"}),false,"mu_underEye"));
+  stFeat("mu_underEye",L9({my:"မျက်ကွင်းသန့်",en:"Under-Eye"}),["mu_ueDark","mu_ueBags"],function(){
+    var v1=fv("mu_ueDark"),v2=fv("mu_ueBags"); if(!v1&&!v2) return null;
+    return { params:{v:Math.max(v1,v2)}, frag:"Lighten under-eye dark circles by "+v1+"% and reduce eye bags by "+v2+"%, keep natural lower-lid fullness." };
+  });
+  g4.grid.appendChild(svSlider("mu_smileLines",L9({my:"ပြုံးကြောင်းဖယ်",en:"Smile Lines"}),false,"mu_smileLines"));
+  stFeat("mu_smileLines",L9({my:"ပြုံးကြောင်း",en:"Smile Lines"}),["mu_smileLines"],function(){
+    var v=fv("mu_smileLines"); if(!v) return null;
+    return { params:{v:v}, frag:"Soften nasolabial folds by "+v+"%." };
+  });
+  reg(g4,["mu_acne","mu_underEye","mu_smileLines"]);
+
+  /* MU-5 Face Reshape (7) */
+  var g5=G("🪞 "+L9({my:"မျက်နှာပုံသွင်း",en:"Face Reshape"}),7); count(7);
+  function simpleFeat(id,slId,label,frag){ stFeat(id,label,[slId],function(){ var v=fs(slId); if(!v) return null; return { params:{v:v}, frag:frag(v) }; }); }
+  g5.grid.appendChild(svSlider("mu_faceSlim",L9({my:"မျက်နှာသွယ်",en:"Face Slim"}),true,"mu_faceSlim"));
+  simpleFeat("mu_faceSlim","mu_faceSlim",L9({my:"မျက်နှာသွယ်",en:"Face Slim"}),function(v){ return stLineSigned("faceSlim",v); });
+  g5.grid.appendChild(svSlider("mu_vjaw",L9({my:"မေးရိုး V ပုံ",en:"V-Shape & Jaw"}),true,"mu_vjaw"));
+  simpleFeat("mu_vjaw","mu_vjaw",L9({my:"မေးရိုး V",en:"V-Jaw"}),function(v){ return stLineSigned("jaw",v)+(v>0?" Sculpt a soft V-line.":""); });
+  g5.grid.appendChild(svSlider("mu_chin",L9({my:"မေးစေ့",en:"Chin"}),true,"mu_chin"));
+  simpleFeat("mu_chin","mu_chin",L9({my:"မေးစေ့",en:"Chin"}),function(v){ return stLineSigned("chin",v); });
+  g5.grid.appendChild(svSlider("mu_cheekbone",L9({my:"ပါးရိုး",en:"Cheekbone"}),true,"mu_cheek"));
+  g5.grid.appendChild(svSlider("mu_temples",L9({my:"နားထင်",en:"Temples"}),true,"mu_cheek"));
+  stFeat("mu_cheek",L9({my:"ပါးရိုး/နားထင်",en:"Cheek/Temples"}),["mu_cheekbone","mu_temples"],function(){
+    var v1=fs("mu_cheekbone"),v2=fs("mu_temples"); if(!v1&&!v2) return null;
+    var L=[];
+    if(v1) L.push((v1>0?"Narrow":"Widen")+" the cheekbones by "+Math.abs(v1)+"%");
+    if(v2) L.push((v2>0?"fill":"narrow")+" the temples by "+Math.abs(v2)+"%");
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:L.join("; ")+"." };
+  });
+  g5.grid.appendChild(svSlider("mu_forehead",L9({my:"နဖူး",en:"Forehead"}),true,"mu_fore"));
+  g5.grid.appendChild(svSlider("mu_philtrum",L9({my:"နှုတ်ခမ်းမြောင်း",en:"Philtrum"}),true,"mu_fore"));
+  stFeat("mu_fore",L9({my:"နဖူး/Philtrum",en:"Forehead/Philtrum"}),["mu_forehead","mu_philtrum"],function(){
+    var v1=fs("mu_forehead"),v2=fs("mu_philtrum"); if(!v1&&!v2) return null;
+    var L=[];
+    if(v1) L.push("Adjust the forehead height by "+v1+"%");
+    if(v2) L.push((v2>0?"shorten":"lengthen")+" the philtrum by "+Math.abs(v2)+"%");
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:L.join("; ")+"." };
+  });
+  g5.grid.appendChild(svSlider("mu_smallHead",L9({my:"ဦးခေါင်းအချိုးညှိ",en:"Small Head"}),false,"mu_smallHead"));
+  simpleFeat("mu_smallHead","mu_smallHead",L9({my:"ဦးခေါင်းအချိုး",en:"Small Head"}),function(v){ return "Reduce the head size by "+v+"% for a better head-to-body proportion; keep the background intact."; });
+  g5.b.appendChild(stSub(L9({my:"AI မျက်နှာအမူအရာ",en:"AI Expression"})));
+  g5.b.appendChild(svChips("mu_expression",null,[["a soft closed-mouth smile",L9({my:"ပြုံးနု",en:"Soft smile"})],["an open natural smile",L9({my:"ပြုံးပွင့်",en:"Open smile"})],["naturally opened eyes",L9({my:"မျက်လုံးဖွင့်",en:"Open eyes"})],["a calm neutral expression",L9({my:"သာမန်",en:"Neutral"})]],"mu_expr"));
+  stFeat("mu_expr",L9({my:"အမူအရာ",en:"Expression"}),["mu_expression"],function(){
+    var e=svGet("mu_expression",null); if(!e) return null;
+    return { params:{}, frag:"Change the expression to "+e+"; identity preserved." };
+  });
+  reg(g5,["mu_faceSlim","mu_vjaw","mu_chin","mu_cheek","mu_fore","mu_smallHead","mu_expr"]);
+
+  /* MU-6 Eyes (4) */
+  var g6=G("👁 "+L9({my:"မျက်လုံး",en:"Eyes"}),4); count(4);
+  g6.grid.appendChild(svSlider("mu_eyeSize",L9({my:"မျက်လုံးချဲ့",en:"Eye Enlarge"}),true,"mu_eye"));
+  g6.grid.appendChild(svSlider("mu_pupil",L9({my:"— သူငယ်အိမ်",en:"— Pupil"}),false,"mu_eye"));
+  stFeat("mu_eye",L9({my:"မျက်လုံးချဲ့",en:"Eye Enlarge"}),["mu_eyeSize","mu_pupil"],function(){
+    var v=fs("mu_eyeSize"),v2=fv("mu_pupil"); if(!v&&!v2) return null;
+    var f=v?stLineSigned("eyeSize",v):"";
+    if(v2) f+=(f?" ":"")+"Enlarge the iris by "+v2+"% (subtle doll-eye).";
+    return { params:{v:Math.max(Math.abs(v),v2)}, frag:f };
+  });
+  g6.grid.appendChild(t2Slider("mu_eyeBright",L9({my:"မျက်လုံးတောက်ပ",en:"Eye Brighten"}),"eyeb"));
+  g6.grid.appendChild(svSlider("mu_aegyo",L9({my:"မျက်အောက်ဖောင်း",en:"Aegyo-sal"}),false,"mu_aegyo"));
+  simpleFeat("mu_aegyo","mu_aegyo",L9({my:"Aegyo-sal",en:"Aegyo-sal"}),function(v){ return "Add a subtle aegyo-sal under-eye highlight at "+v+"%."; });
+  g6.grid.appendChild(svSlider("mu_browThick",L9({my:"မျက်ခုံးထူ",en:"Brow Thickness"}),true,"mu_brow"));
+  g6.grid.appendChild(svSlider("mu_browTilt",L9({my:"မျက်ခုံးစောင်း",en:"Brow Tilt"}),true,"mu_brow"));
+  stFeat("mu_brow",L9({my:"မျက်ခုံး",en:"Brows"}),["mu_browThick","mu_browTilt"],function(){
+    var v1=fs("mu_browThick"),v2=fs("mu_browTilt"); if(!v1&&!v2) return null;
+    var f=v1?stLine("brow",Math.abs(v1)):"";
+    if(v2) f+=(f?" ":"")+"Adjust the brow tilt by "+v2+"%.";
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:f };
+  });
+  reg(g6,["mu_eye","mu_aegyo","mu_brow"]);
+
+  /* MU-7 Nose (2) */
+  var g7=G("👃 "+L9({my:"နှာခေါင်း",en:"Nose"}),2); count(2);
+  g7.grid.appendChild(svSlider("mu_noseSize",L9({my:"နှာခေါင်းသေးသွယ်",en:"Nose Size & Wings"}),true,"mu_nose"));
+  stFeat("mu_nose",L9({my:"နှာခေါင်း",en:"Nose"}),["mu_noseSize"],function(){
+    var v=fs("mu_noseSize"); if(!v) return null;
+    return { params:{v:v}, frag:stLineSigned("noseSize",-v)+(v>0?" Narrow the nostril wings.":"") };
+  });
+  g7.grid.appendChild(svSlider("mu_bridge",L9({my:"နှာတံ",en:"Bridge"}),true,"mu_noseBt"));
+  g7.grid.appendChild(svSlider("mu_tip",L9({my:"နှာဖျား",en:"Tip"}),true,"mu_noseBt"));
+  stFeat("mu_noseBt",L9({my:"နှာတံ/နှာဖျား",en:"Bridge & Tip"}),["mu_bridge","mu_tip"],function(){
+    var v1=fs("mu_bridge"),v2=fs("mu_tip"); if(!v1&&!v2) return null;
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:"Refine the nose bridge by "+v1+"% and the tip by "+v2+"% with natural 3D shading, no cartoon look." };
+  });
+  reg(g7,["mu_nose","mu_noseBt"]);
+
+  /* MU-8 Lips & Teeth (3) */
+  var g8=G("👄 "+L9({my:"နှုတ်ခမ်းနှင့်သွား",en:"Lips & Teeth"}),3); count(3);
+  g8.b.appendChild(stSub(L9({my:"နှုတ်ခမ်းအရောင်",en:"Lip Color"})));
+  g8.b.appendChild(svChips("mu_lipHex",null,[["#c94f5e","Rose"],["#b03a48","Berry"],["#e07a6a","Coral"],["#a52a3a","Wine"],["#d96c8a","Pink"],["#c96a4a","Terracotta"],["#8c2f39","Maroon"],["#e0938c","Nude"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_lipColor"));
+  g8.b.appendChild(svColor("mu_lipCustom","mu_lipColor"));
+  g8.b.appendChild(svChips("mu_lipFinish",null,[["matte","Matte"],["gloss","Gloss"],["velvet","Velvet"]],"mu_lipColor"));
+  g8.b.appendChild(svSlider("mu_lipColorV",L9({my:"ပမာဏ",en:"Opacity"}),false,"mu_lipColor"));
+  stFeat("mu_lipColor",L9({my:"နှုတ်ခမ်းအရောင်",en:"Lip Color"}),["mu_lipHex","mu_lipCustom","mu_lipFinish","mu_lipColorV"],function(){
+    var v=fv("mu_lipColorV"), hx=svGet("mu_lipHex",null); if(!v||!hx) return null;
+    if(hx==="custom") hx=svGet("mu_lipCustom",null)||"#c94f5e";
+    var fin=svGet("mu_lipFinish",null)||"natural";
+    return { params:{v:v}, frag:"Recolor the lips to "+hx+" with a "+fin+" finish at "+v+"% opacity, soft gradient edge." };
+  });
+  g8.grid.appendChild(svSlider("mu_lipPlump",L9({my:"နှုတ်ခမ်းဖောင်း",en:"Lip Plump"}),true,"mu_lipShape"));
+  g8.grid.appendChild(svSlider("mu_smileCorners",L9({my:"ပြုံးထောင့်မ",en:"Smile Corners"}),false,"mu_lipShape"));
+  stFeat("mu_lipShape",L9({my:"နှုတ်ခမ်းပုံ",en:"Lip Shape"}),["mu_lipPlump","mu_smileCorners"],function(){
+    var v1=fs("mu_lipPlump"),v2=fv("mu_smileCorners"); if(!v1&&!v2) return null;
+    var f=v1?stLineSigned("lipFull",v1):"";
+    if(v2) f+=(f?" ":"")+"Lift the mouth corners into a subtle smile at "+v2+"%.";
+    return { params:{v:Math.max(Math.abs(v1),v2)}, frag:f };
+  });
+  g8.grid.appendChild(t2Slider("mu_teeth",L9({my:"သွားဖြူ",en:"Teeth Whiten"}),"teeth"));
+  var fixRow=el("div","st-ctl");
+  fixRow.appendChild(el("label",null,L9({my:"သွားညှိ/ပြင်",en:"Teeth Fix"})));
+  fixRow.appendChild(svToggle("mu_teethFix",L9({my:"ပြင်မယ်",en:"Fix"}),"mu_teethFix"));
+  g8.grid.appendChild(fixRow);
+  stFeat("mu_teethFix",L9({my:"သွားညှိ",en:"Teeth Fix"}),["mu_teethFix"],function(){
+    if(!svGet("mu_teethFix",false)) return null;
+    return { params:{}, frag:"Straighten and repair crooked or chipped teeth naturally." };
+  });
+  reg(g8,["mu_lipColor","mu_lipShape","mu_teethFix"]);
+
+  /* MU-9 Makeup (4) */
+  var g9=G("💄 "+L9({my:"မိတ်ကပ်",en:"Makeup"}),4); count(4);
+  g9.b.appendChild(stSub(L9({my:"မိတ်ကပ်အစုံ",en:"Full Makeup Look"})));
+  g9.b.appendChild(svChips("mu_makeupStyle",null,[["Natural","Natural"],["Korean","Korean"],["Douyin","Douyin"],["Western","Western"],["Myanmar bridal","Myanmar Bridal"]],"mu_makeup"));
+  g9.b.appendChild(svSlider("mu_makeupV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_makeup"));
+  stFeat("mu_makeup",L9({my:"မိတ်ကပ်",en:"Makeup"}),["mu_makeupStyle","mu_makeupV"],function(){
+    var v=fv("mu_makeupV"), s=svGet("mu_makeupStyle",null); if(!v||!s) return null;
+    return { params:{v:v}, frag:"Apply a complete "+s+" makeup look at "+v+"% intensity: foundation, brows, eyes, blush, lips; photorealistic." };
+  });
+  g9.b.appendChild(stSub(L9({my:"ပါးနီ",en:"Blush"})));
+  g9.b.appendChild(svChips("mu_blushColor",null,[["soft pink",L9({my:"ပန်းနု",en:"Pink"})],["peach",L9({my:"မက်မွန်",en:"Peach"})],["coral",L9({my:"သန္တာ",en:"Coral"})],["rose",L9({my:"နှင်းဆီ",en:"Rose"})],["apricot",L9({my:"တရုတ်စကား",en:"Apricot"})]],"mu_blush"));
+  g9.b.appendChild(svSlider("mu_blushV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_blush"));
+  stFeat("mu_blush",L9({my:"ပါးနီ",en:"Blush"}),["mu_blushColor","mu_blushV"],function(){
+    var v=fv("mu_blushV"), c=svGet("mu_blushColor",null); if(!v||!c) return null;
+    return { params:{v:v}, frag:"Apply "+c+" blush on the cheeks at "+v+"%." };
+  });
+  g9.b.appendChild(stSub(L9({my:"မျက်လုံးမိတ်ကပ်",en:"Eye Makeup Set"})));
+  g9.b.appendChild(svChips("mu_emShadow",L9({my:"Shadow",en:"Shadow"}),[["soft brown","Brown"],["pink champagne","Pink"],["smoky grey","Smoky"],["gold shimmer","Gold"]],"mu_eyeMakeup"));
+  g9.b.appendChild(svChips("mu_emLiner",L9({my:"Liner",en:"Liner"}),[["thin natural","Thin"],["winged","Winged"],["soft smudged","Smudged"]],"mu_eyeMakeup"));
+  g9.b.appendChild(svChips("mu_emLash",L9({my:"Lash",en:"Lash"}),[["natural","Natural"],["volume","Volume"],["doll","Doll"]],"mu_eyeMakeup"));
+  g9.b.appendChild(svChips("mu_emContact",L9({my:"Contacts",en:"Contacts"}),[["natural brown","Brown"],["grey","Grey"],["hazel","Hazel"],["blue","Blue"],["green","Green"]],"mu_eyeMakeup"));
+  g9.b.appendChild(svSlider("mu_eyeMakeupV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_eyeMakeup"));
+  stFeat("mu_eyeMakeup",L9({my:"မျက်လုံးမိတ်ကပ်",en:"Eye Makeup"}),["mu_emShadow","mu_emLiner","mu_emLash","mu_emContact","mu_eyeMakeupV"],function(){
+    var v=fv("mu_eyeMakeupV"); if(!v) return null;
+    var L=[];
+    var sh=svGet("mu_emShadow",null); if(sh) L.push(sh+" eyeshadow");
+    var ln=svGet("mu_emLiner",null); if(ln) L.push(ln+" eyeliner");
+    var ls=svGet("mu_emLash",null); if(ls) L.push(ls+" lashes");
+    var ct=svGet("mu_emContact",null); if(ct) L.push(ct+" contact lenses");
+    if(!L.length) return null;
+    return { params:{v:v}, frag:"Apply eye makeup at "+v+"%: "+L.join(", ")+"." };
+  });
+  g9.grid.appendChild(svSlider("mu_contour",L9({my:"ရှိတ်ဒိုး/ဟိုက်လိုက်",en:"Contour & Highlight"}),false,"mu_contour"));
+  stFeat("mu_contour",L9({my:"Contour",en:"Contour"}),["mu_contour"],function(){
+    var v=fv("mu_contour"); if(!v) return null;
+    return { params:{v:v}, frag:"Add soft contour shading and highlight for dimensional features at "+v+"%." };
+  },function(){ var v=svGet("mu_contour",0); return v?{t1:{cla:v*0.2}}:null; });
+  reg(g9,["mu_makeup","mu_blush","mu_eyeMakeup","mu_contour"]);
+
+  /* MU-10 Hair (4) */
+  var g10=G("💇 "+L9({my:"ဆံပင်",en:"Hair"}),4); count(4);
+  g10.b.appendChild(stSub(L9({my:"ဆံပင်အရောင်",en:"Hair Color"})));
+  g10.b.appendChild(svChips("mu_hairColor",null,[["jet black",L9({my:"အနက်",en:"Black"})],["dark brown",L9({my:"ညိုရင့်",en:"Dark Brown"})],["chestnut","Chestnut"],["burgundy","Burgundy"],["golden brown","Gold Brown"],["ash brown","Ash"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_hairCol"));
+  g10.b.appendChild(svColor("mu_hairHex","mu_hairCol"));
+  g10.b.appendChild(svSlider("mu_hairColorV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_hairCol"));
+  stFeat("mu_hairCol",L9({my:"ဆံပင်အရောင်",en:"Hair Color"}),["mu_hairColor","mu_hairHex","mu_hairColorV"],function(){
+    var v=fv("mu_hairColorV"), c=svGet("mu_hairColor",null); if(!v||!c) return null;
+    if(c==="custom") c=svGet("mu_hairHex",null)||"dark brown";
+    return { params:{v:v}, frag:"Dye the hair "+c+" at "+v+"% intensity; keep strand texture and the natural hairline." };
+  });
+  g10.grid.appendChild(svSlider("mu_hairFill",L9({my:"ဆံစဖြည့်",en:"Hairline Fill"}),false,"mu_hairFV"));
+  g10.grid.appendChild(svSlider("mu_hairVolume",L9({my:"ဆံပင်ထူ",en:"Volume"}),false,"mu_hairFV"));
+  stFeat("mu_hairFV",L9({my:"ဆံပင်ဖြည့်/ထူ",en:"Hair Fill/Volume"}),["mu_hairFill","mu_hairVolume"],function(){
+    var v1=fv("mu_hairFill"),v2=fv("mu_hairVolume"); if(!v1&&!v2) return null;
+    var L=[]; if(v1) L.push(stLine("hairFill",v1)); if(v2) L.push(stLine("hairVolume",v2));
+    return { params:{v:Math.max(v1,v2)}, frag:L.join(" ") };
+  });
+  g10.b.appendChild(stSub(L9({my:"ရှေ့ဆံ",en:"Bangs"})));
+  g10.b.appendChild(svChips("mu_bangs",null,[["see-through","See-through"],["full","Full"],["side-swept","Side"],["curtain","Curtain"]],"mu_bangsF"));
+  stFeat("mu_bangsF",L9({my:"ရှေ့ဆံ",en:"Bangs"}),["mu_bangs"],function(){
+    var s=svGet("mu_bangs",null); if(!s) return null;
+    return { params:{}, frag:"Add natural "+s+" bangs matching the hair color and lighting." };
+  });
+  g10.grid.appendChild(svSlider("mu_flyaway",L9({my:"ဆံပင်လွင့်သပ်ရပ်",en:"Flyaway Tidy"}),false,"mu_flyaway"));
+  stFeat("mu_flyaway",L9({my:"ဆံပင်လွင့်",en:"Flyaway"}),["mu_flyaway"],function(){
+    var v=fv("mu_flyaway"); if(!v) return null;
+    return { params:{v:v}, frag:stLine("hairStray",v) };
+  });
+  reg(g10,["mu_hairCol","mu_hairFV","mu_bangsF","mu_flyaway"]);
+
+  /* MU-11 Body (5) */
+  var g11=G("🏃 "+L9({my:"ခန္ဓာကိုယ်",en:"Body"}),5); count(5);
+  g11.b.appendChild(stSub(L9({my:"AI ခန္ဓာကိုယ်ညှိ",en:"AI Body Tune"})));
+  g11.b.appendChild(svChips("mu_bodyGoal",null,[["slimmer",L9({my:"ပိန်သွယ်",en:"Slim"})],["curvier",L9({my:"လုံးရွေ",en:"Curvy"})],["more athletic",L9({my:"ကြံ့ခိုင်",en:"Athletic"})],["taller",L9({my:"ရှည်မြင့်",en:"Taller"})]],"mu_bodyTune"));
+  g11.b.appendChild(svSlider("mu_bodyTuneV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_bodyTune"));
+  stFeat("mu_bodyTune",L9({my:"ခန္ဓာကိုယ်ညှိ",en:"Body Tune"}),["mu_bodyGoal","mu_bodyTuneV"],function(){
+    var v=fv("mu_bodyTuneV"), g=svGet("mu_bodyGoal",null); if(!v||!g) return null;
+    return { params:{v:v}, frag:"Retune the body toward "+g+" at "+v+"%; lock the background, no scene warp." };
+  });
+  g11.grid.appendChild(svSlider("mu_waist",L9({my:"ခါး",en:"Waist"}),true,"mu_waistBelly"));
+  g11.grid.appendChild(svSlider("mu_belly",L9({my:"ဗိုက်",en:"Belly"}),false,"mu_waistBelly"));
+  stFeat("mu_waistBelly",L9({my:"ခါး/ဗိုက်",en:"Waist & Belly"}),["mu_waist","mu_belly"],function(){
+    var v1=fs("mu_waist"),v2=fv("mu_belly"); if(!v1&&!v2) return null;
+    var L=[]; if(v1) L.push(stLineSigned("waist",v1)); if(v2) L.push(stLine("bodySlim",v2));
+    return { params:{v:Math.max(Math.abs(v1),v2)}, frag:L.join(" ") };
+  });
+  g11.grid.appendChild(svSlider("mu_legsSlim",L9({my:"ခြေထောက်သွယ်",en:"Legs Slim"}),false,"mu_legs"));
+  g11.grid.appendChild(svSlider("mu_legLen",L9({my:"ခြေထောက်ရှည်",en:"Leg Lengthen"}),false,"mu_legs"));
+  stFeat("mu_legs",L9({my:"ခြေထောက်",en:"Legs"}),["mu_legsSlim","mu_legLen"],function(){
+    var v1=fv("mu_legsSlim"),v2=fv("mu_legLen"); if(!v1&&!v2) return null;
+    var L=[]; if(v1) L.push("Slim the thighs and calves by "+v1+"%.");
+    if(v2) L.push(stLine("legLen",v2));
+    return { params:{v:Math.max(v1,v2)}, frag:L.join(" ") };
+  });
+  g11.grid.appendChild(svSlider("mu_neck",L9({my:"လည်ပင်း",en:"Neck"}),true,"mu_neckSh"));
+  g11.grid.appendChild(svSlider("mu_shoulder",L9({my:"ပခုံး",en:"Shoulders"}),true,"mu_neckSh"));
+  stFeat("mu_neckSh",L9({my:"လည်ပင်း/ပခုံး",en:"Neck & Shoulders"}),["mu_neck","mu_shoulder"],function(){
+    var v1=fs("mu_neck"),v2=fs("mu_shoulder"); if(!v1&&!v2) return null;
+    var L=[];
+    if(v1) L.push(v1>0?"Lengthen and slim the neck by "+v1+"%.":"Shorten the neck slightly by "+(-v1)+"%.");
+    if(v2) L.push(stLineSigned("shoulder",v2)+(v2>0?" Clean right-angle shoulder line.":""));
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:L.join(" ") };
+  });
+  g11.grid.appendChild(svSlider("mu_armSlim",L9({my:"လက်မောင်းသွယ်",en:"Slim Arms"}),true,"mu_armSlim"));
+  stFeat("mu_armSlim",L9({my:"လက်မောင်း",en:"Arms"}),["mu_armSlim"],function(){
+    var v=fs("mu_armSlim"); if(!v) return null;
+    return { params:{v:v}, frag:stLineSigned("armSlim",v) };
+  });
+  reg(g11,["mu_bodyTune","mu_waistBelly","mu_legs","mu_neckSh","mu_armSlim"]);
+
+  /* MU-12 Filters & Light (6) */
+  var g12=G("🎨 "+L9({my:"ဖစ်လ်တာနှင့်အလင်း",en:"Filters & Light"}),6); count(6);
+  var ST_FILTERS={
+    film:{lbl:"Film",t1:{wrm:8,fad:12,grn:15,con:-4}},
+    ccd:{lbl:"CCD",t1:{con:12,sat:14,wrm:6,grn:25,vig:18}},
+    japan:{lbl:"Japan Fresh",t1:{bri:10,sat:-6,tnt:-4,fad:8}},
+    cine:{lbl:"Cinematic",t1:{con:14,sat:-8,tnt:6,vig:14}},
+    golden:{lbl:"Golden Hour",t1:{wrm:20,exp:6,vig:8}},
+    porcelain:{lbl:"Cool Porcelain",t1:{wrm:-12,bri:8,con:4}},
+    peach:{lbl:"Peach",t1:{wrm:10,sat:8},t2:{rosy:15}},
+    forest:{lbl:"Forest",t1:{tnt:-10,sat:10,con:6}},
+    mono:{lbl:"Mono",t1:{sat:-100,con:12}},
+    soft:{lbl:"Soft Light",t1:{exp:8,fad:10}},
+    vivid:{lbl:"Vivid",t1:{sat:22,con:10,cla:10}},
+    night:{lbl:"Night",t1:{exp:10,sh:25,wrm:-6,grn:10}}
+  };
+  ST.filters=ST_FILTERS;
+  g12.b.appendChild(stSub(L9({my:"ဖစ်လ်တာစုစည်း",en:"Filter Library"})));
+  g12.b.appendChild(svChips("mu_filter",null,Object.keys(ST_FILTERS).map(function(k){ return [k,ST_FILTERS[k].lbl]; }),"mu_filterF"));
+  g12.b.appendChild(stSlider({id:"mu_filterV",label:L9({my:"ပမာဏ",en:"Intensity"}),min:0,max:100,def:100,
+    get:function(){ return svGet("mu_filterV",100); },
+    set:function(v){ svSet("mu_filterV",v); stSync("mu_filterF"); }}));
+  stFeat("mu_filterF",L9({my:"ဖစ်လ်တာ",en:"Filter"}),["mu_filter","mu_filterV"],null,function(){
+    var k=svGet("mu_filter",null); if(!k||!ST_FILTERS[k]) return null;
+    var s=svGet("mu_filterV",100)/100, def=ST_FILTERS[k], out={t1:{},t2:{}};
+    if(def.t1) Object.keys(def.t1).forEach(function(p){ out.t1[p]=def.t1[p]*s; });
+    if(def.t2) Object.keys(def.t2).forEach(function(p){ out.t2[p]=def.t2[p]*s; });
+    return out;
+  });
+  g12.b.appendChild(stSub(L9({my:"အသေးစိတ်ညှိ",en:"Fine Adjust"})));
+  var adj=el("div","st-grid");
+  adj.appendChild(t1Slider("mu_exp",L9({my:"Exposure",en:"Exposure"}),"exp"));
+  adj.appendChild(t1Slider("mu_bri",L9({my:"Brightness",en:"Brightness"}),"bri"));
+  adj.appendChild(t1Slider("mu_con",L9({my:"Contrast",en:"Contrast"}),"con"));
+  adj.appendChild(t1Slider("mu_sat",L9({my:"Saturation",en:"Saturation"}),"sat"));
+  adj.appendChild(t1Slider("mu_vib",L9({my:"Vibrance",en:"Vibrance"}),"vib"));
+  adj.appendChild(t1Slider("mu_wrm",L9({my:"Warmth",en:"Warmth"}),"wrm"));
+  adj.appendChild(t1Slider("mu_tnt",L9({my:"Tint",en:"Tint"}),"tnt"));
+  adj.appendChild(t1Slider("mu_hi",L9({my:"Highlights",en:"Highlights"}),"hi"));
+  adj.appendChild(t1Slider("mu_sh",L9({my:"Shadows",en:"Shadows"}),"sh"));
+  g12.b.appendChild(adj);
+  g12.b.appendChild(stSub(L9({my:"ဖလင်အက်ဖက်",en:"Film FX"})));
+  var fx=el("div","st-grid");
+  fx.appendChild(t1Slider("mu_grn",L9({my:"Grain",en:"Grain"}),"grn",false));
+  fx.appendChild(t1Slider("mu_vig",L9({my:"Vignette",en:"Vignette"}),"vig",false));
+  fx.appendChild(t1Slider("mu_fad",L9({my:"Fade",en:"Fade"}),"fad",false));
+  g12.b.appendChild(fx);
+  g12.b.appendChild(stSub(L9({my:"AI ဖလက်ရှ်",en:"AI Flash"})));
+  var flashRow=el("div","st-ctl");
+  flashRow.appendChild(el("label",null,L9({my:"AI Flash",en:"AI Flash"})));
+  flashRow.appendChild(svToggle("mu_flashOn",L9({my:"ဖွင့်",en:"On"}),"mu_flash"));
+  g12.b.appendChild(flashRow);
+  g12.b.appendChild(svSlider("mu_flashV",L9({my:"ပမာဏ",en:"Strength"}),false,"mu_flash"));
+  stFeat("mu_flash",L9({my:"AI Flash",en:"AI Flash"}),["mu_flashOn","mu_flashV"],function(){
+    var on=svGet("mu_flashOn",false), v=fv("mu_flashV")||60; if(!on) return null;
+    return { params:{v:v}, frag:"Simulate a stylish direct on-camera flash at "+v+"%: crisp bright subject, natural falloff, rescued exposure." };
+  },function(){
+    var on=svGet("mu_flashOn",false), v=svGet("mu_flashV",0)||60; if(!on) return null;
+    return { t1:{bri:v*0.15,con:v*0.1} };
+  });
+  g12.b.appendChild(stSub(L9({my:"အလင်းပြန်ထည့်",en:"Portrait Relight"})));
+  g12.b.appendChild(svChips("mu_relight",null,[["soft left key","Left"],["soft right key","Right"],["rim","Rim"],["butterfly","Butterfly"],["golden-hour","Golden"]],"mu_relightF"));
+  g12.b.appendChild(svSlider("mu_relightV",L9({my:"ပမာဏ",en:"Strength"}),false,"mu_relightF"));
+  stFeat("mu_relightF",L9({my:"Relight",en:"Relight"}),["mu_relight","mu_relightV"],function(){
+    var v=fv("mu_relightV"), s=svGet("mu_relight",null); if(!v||!s) return null;
+    return { params:{v:v}, frag:"Relight the subject with "+s+" studio light at "+v+"% strength; realistic shadows." };
+  });
+  g12.b.appendChild(stSub(L9({my:"နောက်ခံဝါး",en:"Background Blur"})));
+  g12.b.appendChild(svSlider("mu_bgblur",L9({my:"နောက်ခံဝါး",en:"BG Blur"}),false,"mu_bgblurF"));
+  stFeat("mu_bgblurF",L9({my:"နောက်ခံဝါး",en:"BG Blur"}),["mu_bgblur"],function(){
+    var v=fv("mu_bgblur"); if(!v) return null;
+    return { params:{v:v}, frag:"Apply depth-aware background bokeh at "+v+"%; subject tack sharp, natural depth falloff." };
+  },function(){ var v=svGet("mu_bgblur",0); return v?{t1:{bgb:v}}:null; });
+  g12.b.appendChild(stSub(L9({my:"နောက်ခံလဲ",en:"Background Replace"})));
+  g12.b.appendChild(svChips("mu_bgScene",null,[["clean studio grey","Studio"],["lush garden","Garden"],["sunset beach","Beach"],["golden pagoda","Pagoda"],["church interior","Church"],["city night bokeh","City Night"]],"mu_bgRep"));
+  var bgFree=document.createElement("input");
+  bgFree.className="inp"; bgFree.id="mu_bgFree"; bgFree.placeholder=L9({my:"(သို့) စိတ်ကြိုက် scene ရေးပါ…",en:"…or describe a custom scene"});
+  bgFree.oninput=function(){ svSet("mu_bgFree",bgFree.value); stSync("mu_bgRep"); };
+  ST.refreshFns.push(function(){ bgFree.value=svGet("mu_bgFree","")||""; });
+  g12.b.appendChild(bgFree);
+  var clutRow=el("div","st-ctl");
+  clutRow.appendChild(el("label",null,L9({my:"နောက်ခံအမှိုက်ဖယ်",en:"Clutter Erase"})));
+  clutRow.appendChild(svToggle("mu_clutter",L9({my:"ဖွင့်",en:"On"}),"mu_bgRep"));
+  g12.b.appendChild(clutRow);
+  stFeat("mu_bgRep",L9({my:"နောက်ခံလဲ",en:"BG Replace"}),["mu_bgScene","mu_bgFree","mu_clutter"],function(){
+    var s=svGet("mu_bgScene",null), fr=(svGet("mu_bgFree","")||"").trim(), cl=svGet("mu_clutter",false);
+    if(!s&&!fr&&!cl) return null;
+    var L=[];
+    if(s||fr) L.push("Replace the background with "+(fr||s)+"; match perspective, light direction and color temperature.");
+    if(cl) L.push("Remove distracting background clutter (wires, trash, passersby).");
+    return { params:{}, frag:L.join(" ") };
+  });
+  reg(g12,["mu_filterF","mu_flash","mu_relightF","mu_bgblurF","mu_bgRep"]);
+})();
+
+/* ================= EVOTO PRO — 42 features / 11 groups ================= */
+(function buildEvoto(){
+  var host=$("evHost"); if(!host) return;
+  function G(title,count){ var g=grp(title,count+t("unit"),false); host.appendChild(g.g); var grid=el("div","st-grid"); g.b.appendChild(grid); g.grid=grid; return g; }
+  function reg(g,featIds){ (featIds||[]).forEach(function(id){ ST.grpOf[id]=g.g; }); }
+  function count(n){ ST_EVOTO_COUNT+=n; }
+  function feat1(id,slId,label,frag){ stFeat(id,label,[slId],function(){ var v=fs(slId); if(!v) return null; return { params:{v:v}, frag:frag(v) }; }); }
+
+  /* EV-1 Blemish Removal (6) */
+  var e1=G("🩹 "+L9({my:"အမာရွတ်ဖယ်ရှား",en:"Blemish Removal"}),6); count(6);
+  e1.grid.appendChild(svSlider("ev_blemish",L9({my:"တင်းတိပ်/ဝက်ခြံ (Master)",en:"Freckle & Acne (Master)"}),false,"ev_blem"));
+  e1.grid.appendChild(svSlider("ev_freckle",L9({my:"— တင်းတိပ်",en:"— Freckle"}),false,"ev_blem"));
+  e1.grid.appendChild(svSlider("ev_acne",L9({my:"— ဝက်ခြံ",en:"— Acne"}),false,"ev_blem"));
+  var moleRow=el("div","st-ctl");
+  moleRow.appendChild(el("label",null,L9({my:"— မှဲ့ဖယ်",en:"— Remove moles"})));
+  moleRow.appendChild(svToggle("ev_mole",L9({my:"ဖွင့်",en:"On"}),"ev_blem"));
+  e1.grid.appendChild(moleRow);
+  stFeat("ev_blem",L9({my:"တင်းတိပ်/ဝက်ခြံ",en:"Freckle & Acne"}),["ev_blemish","ev_freckle","ev_acne","ev_mole"],function(){
+    var m=fv("ev_blemish"); if(!m) return null; /* Evoto behavior: subs act only when master > 0 */
+    var v1=fv("ev_freckle")||m, v2=fv("ev_acne")||m, mole=svGet("ev_mole",false);
+    return { params:{v:m}, frag:stLine("acne",v2)+" "+stLine("spots",m)+" Remove freckles at "+v1+"%"+(mole?", remove facial moles":"")+" — dodge-and-burn style, preserve skin texture, protect any beard." };
+  });
+  e1.grid.appendChild(t2Slider("ev_deshine",L9({my:"မျက်နှာပြောင်လက်လျှော့",en:"Reduce Face Shine"}),"deshine"));
+  e1.grid.appendChild(svSlider("ev_ueDark",L9({my:"မျက်ကွင်းညို",en:"Dark Circles"}),false,"ev_underEye"));
+  e1.grid.appendChild(svSlider("ev_ueBags",L9({my:"မျက်ရစ်",en:"Eye Bags"}),false,"ev_underEye"));
+  e1.grid.appendChild(stSlider({id:"ev_ueLid",label:L9({my:"— Lid ကာကွယ်",en:"— Lid protection"}),min:0,max:100,def:100,
+    get:function(){ return svGet("ev_ueLid",100); },
+    set:function(v){ svSet("ev_ueLid",v); stSync("ev_underEye"); }}));
+  stFeat("ev_underEye",L9({my:"မျက်အောက်ပြင်",en:"Under-Eye Repair"}),["ev_ueDark","ev_ueBags","ev_ueLid"],function(){
+    var v1=fv("ev_ueDark"),v2=fv("ev_ueBags"); if(!v1&&!v2) return null;
+    var v3=svGet("ev_ueLid",100);
+    return { params:{v:Math.max(v1,v2)}, frag:"Lighten dark circles by "+v1+"% and remove eye bags by "+v2+"% while preserving natural lower-eyelid fullness ("+v3+"% protection)." };
+  });
+  e1.grid.appendChild(svSlider("ev_glare",L9({my:"မျက်မှန်အလင်းပြန်ဖယ်",en:"Glasses Glare"}),false,"ev_glare"));
+  feat1("ev_glare","ev_glare",L9({my:"မျက်မှန်အလင်းပြန်",en:"Glasses Glare"}),function(v){ return "Remove reflections and glare from eyeglass lenses at "+v+"%; keep the lenses transparent and the eyes visible."; });
+  e1.grid.appendChild(svSlider("ev_nostril",L9({my:"နှာခေါင်းသန့်",en:"Nostril Cleanup"}),false,"ev_nlClean"));
+  e1.grid.appendChild(svSlider("ev_lipClean",L9({my:"နှုတ်ခမ်းသန့်",en:"Lip Cleanup"}),false,"ev_nlClean"));
+  stFeat("ev_nlClean",L9({my:"နှာ/နှုတ်ခမ်းသန့်",en:"Nostril & Lip"}),["ev_nostril","ev_lipClean"],function(){
+    var v1=fv("ev_nostril"),v2=fv("ev_lipClean"); if(!v1&&!v2) return null;
+    return { params:{v:Math.max(v1,v2)}, frag:"Clean the nostril area at "+v1+"%; repair dry cracked lips and smooth lip flakes at "+v2+"%." };
+  });
+  e1.grid.appendChild(svSlider("ev_dblChin",L9({my:"မေးနှစ်ထပ်လျှော့",en:"Double Chin"}),false,"ev_dblChin"));
+  feat1("ev_dblChin","ev_dblChin",L9({my:"မေးနှစ်ထပ်",en:"Double Chin"}),function(v){ return "Reduce the double chin by "+v+"% with subtle reshaping and shadow blending; realistic."; });
+  reg(e1,["ev_blem","ev_underEye","ev_glare","ev_nlClean","ev_dblChin"]);
+
+  /* EV-2 Wrinkles (3) */
+  var e2=G("〰 "+L9({my:"အရေးအကြောင်း",en:"Wrinkles"}),3); count(3);
+  e2.grid.appendChild(svSlider("ev_wForehead",L9({my:"နဖူးကြောင်း",en:"Forehead Lines"}),false,"ev_wFore"));
+  e2.grid.appendChild(svSlider("ev_wFrown",L9({my:"မျက်မှောင်ကြောင်း",en:"Frown '11' Lines"}),false,"ev_wFore"));
+  stFeat("ev_wFore",L9({my:"နဖူးကြောင်း",en:"Forehead Lines"}),["ev_wForehead","ev_wFrown"],function(){
+    var v1=fv("ev_wForehead"),v2=fv("ev_wFrown"); if(!v1&&!v2) return null;
+    return { params:{v:Math.max(v1,v2)}, frag:"Remove horizontal forehead lines at "+v1+"% and glabellar '11' frown lines at "+v2+"%." };
+  });
+  var ZONES=[["ev_wEye",L9({my:"မျက်ဘေး",en:"Eye"}),"crow's-feet eye lines"],["ev_wSmile",L9({my:"ပြုံးကြောင်း",en:"Smile"}),"nasolabial smile lines"],["ev_wMarionette",L9({my:"Marionette",en:"Marionette"}),"marionette lines"],["ev_wPerioral",L9({my:"ပါးစပ်ဘေး",en:"Perioral"}),"perioral mouth lines"]];
+  ZONES.forEach(function(z){ e2.grid.appendChild(svSlider(z[0],z[1],false,"ev_wFace")); });
+  stFeat("ev_wFace",L9({my:"မျက်နှာအရေးကြောင်း",en:"Face Lines"}),ZONES.map(function(z){return z[0];}),function(){
+    var L=[],mx=0;
+    ZONES.forEach(function(z){ var v=fv(z[0]); if(v){ L.push(z[2]+" "+v+"%"); if(v>mx)mx=v; } });
+    if(!L.length) return null;
+    return { params:{v:mx}, frag:"Soften "+L.join(", ")+" while keeping natural expression." };
+  });
+  e2.grid.appendChild(svSlider("ev_wNeck",L9({my:"လည်ပင်းအရေးကြောင်း",en:"Neck Wrinkles"}),false,"ev_wNeck"));
+  feat1("ev_wNeck","ev_wNeck",L9({my:"လည်ပင်းကြောင်း",en:"Neck Wrinkles"}),function(v){ return "Smooth neck lines and creases by "+v+"%."; });
+  reg(e2,["ev_wFore","ev_wFace","ev_wNeck"]);
+
+  /* EV-3 Skin Retouching (5) */
+  var e3=G("🫧 "+L9({my:"အသားအရေရီတပ်ချ်",en:"Skin Retouching"}),5); count(5);
+  e3.grid.appendChild(stSlider({id:"ev_evenDB",label:L9({my:"Dodge & Burn ညီညာ",en:"Even Dodge & Burn"}),min:0,max:100,def:0,
+    get:function(){ return svGet("ev_evenDB",0); },
+    set:function(v){ svSet("ev_evenDB",v); stSync("ev_evenDBF"); }}));
+  stFeat("ev_evenDBF",L9({my:"Dodge & Burn",en:"Dodge & Burn"}),["ev_evenDB"],function(){
+    var v=fv("ev_evenDB"); if(!v) return null;
+    return { params:{v:v}, frag:"Even the facial tones with dodge and burn at "+v+"%, clean natural complexion." };
+  },function(){ var v=svGet("ev_evenDB",0); return v?{t2:{even:v},t1:{cla:v*0.3}}:null; });
+  e3.grid.appendChild(stSlider({id:"ev_texSmooth",label:L9({my:"Texture ထိန်းချောမွေ့",en:"Textured Smoothing"}),min:0,max:100,def:0,
+    get:function(){ return svGet("ev_texSmooth",0); },
+    set:function(v){ svSet("ev_texSmooth",v); stSync("ev_texSmoothF"); }}));
+  stFeat("ev_texSmoothF",L9({my:"Textured Smoothing",en:"Textured Smoothing"}),["ev_texSmooth"],function(){
+    var v=fv("ev_texSmooth"); if(!v) return null;
+    return { params:{v:v}, frag:"Texture-preserving skin smoothing at "+v+"% — pores and fine texture stay visible." };
+  },function(){ var v=svGet("ev_texSmooth",0); return v?{t2:{smooth:v*0.7,freqHi:v*0.2}}:null; });
+  e3.grid.appendChild(t2Slider("ev_freqHi",L9({my:"Freq-Sep High",en:"Freq-Sep High"}),"freqHi",true));
+  e3.grid.appendChild(t2Slider("ev_freqLo",L9({my:"Freq-Sep Low",en:"Freq-Sep Low"}),"freqLo",true));
+  stFeat("ev_freqSep",L9({my:"Freq Separation",en:"Freq Separation"}),[],function(){
+    var v1=state.st.t2.freqHi||0, v2=state.st.t2.freqLo||0; if(!v1&&!v2) return null;
+    var L=[];
+    if(v1) L.push((v1>0?"sharpen":"soften")+" the skin texture "+Math.abs(v1)+"%");
+    if(v2) L.push((v2>0?"smooth":"enhance")+" the tonal structure "+Math.abs(v2)+"%");
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:"Frequency-separation retouch: "+L.join(", ")+"." };
+  });
+  e3.b.appendChild(stSub(L9({my:"အသားအရေ Texture & Finish",en:"Skin Texture & Finish"})));
+  e3.b.appendChild(stChips({id:"ev_finish",choices:[["matte","Matte"],["satin","Satin"],["dewy","Dewy"]],
+    get:function(){ var f=state.st.t2.finish; return f==="cream"?"satin":f; },
+    set:function(v){ state.st.t2.finish=v==="satin"?"cream":v; stT2Changed(); stSaveSoon(); }}));
+  e3.b.appendChild(t2Slider("ev_gloss",L9({my:"Glossiness",en:"Glossiness"}),"gloss",true));
+  var texGrid=el("div","st-grid");
+  texGrid.appendChild(stSlider({id:"ev_finishV",label:L9({my:"Finish ပမာဏ",en:"Finish amount"}),min:0,max:100,def:0,
+    get:function(){ return state.st.t2.finishV||0; },
+    set:function(v){ state.st.t2.finishV=v; stT2Changed(); stSaveSoon(); }}));
+  texGrid.appendChild(t1Slider("ev_clarity",L9({my:"Clarity",en:"Clarity"}),"cla"));
+  e3.b.appendChild(texGrid);
+  e3.grid.appendChild(svSlider("ev_bodyEven",L9({my:"ကိုယ်အသားညီ",en:"Body Even"}),false,"ev_bodySkin"));
+  e3.grid.appendChild(svSlider("ev_bodySoften",L9({my:"ကိုယ်အသားချော",en:"Body Soften"}),false,"ev_bodySkin"));
+  e3.grid.appendChild(svSlider("ev_bodyBlemish",L9({my:"ကိုယ်အမာရွတ်",en:"Body Blemish"}),false,"ev_bodySkin"));
+  stFeat("ev_bodySkin",L9({my:"ကိုယ်ခန္ဓာအသားအရေ",en:"Body Skin"}),["ev_bodyEven","ev_bodySoften","ev_bodyBlemish"],function(){
+    var v1=fv("ev_bodyEven"),v2=fv("ev_bodySoften"),v3=fv("ev_bodyBlemish"); if(!v1&&!v2&&!v3) return null;
+    var L=[]; if(v2) L.push(stLine("bodySmooth",v2)); if(v1) L.push(stLine("bodyTone",v1)); if(v3) L.push(stLine("bodyBlemish",v3));
+    return { params:{v:Math.max(v1,v2,v3)}, frag:L.join(" ") };
+  });
+  reg(e3,["ev_evenDBF","ev_texSmoothF","ev_freqSep","ev_bodySkin"]);
+
+  /* EV-4 Skin Tone (4) */
+  var e4=G("🎨 "+L9({my:"အသားရောင်",en:"Skin Tone"}),4); count(4);
+  e4.grid.appendChild(t2Slider("ev_unifyFace",L9({my:"မျက်နှာရောင်ညီညာ",en:"Unify Complexion"}),"even"));
+  e4.grid.appendChild(svSlider("ev_unifyBody",L9({my:"ကိုယ်ရောင်ညီ",en:"Unify Body"}),false,"ev_unifyB"));
+  var tanRow=el("div","st-ctl");
+  tanRow.appendChild(el("label",null,L9({my:"နေလောင်ကွက်ဖယ်",en:"Tan Lines"})));
+  tanRow.appendChild(svToggle("ev_tanLines",L9({my:"Enhanced",en:"Enhanced"}),"ev_unifyB"));
+  e4.grid.appendChild(tanRow);
+  stFeat("ev_unifyB",L9({my:"ကိုယ်ရောင်ညီ",en:"Unify Body"}),["ev_unifyBody","ev_tanLines"],function(){
+    var v=fv("ev_unifyBody"), tn=svGet("ev_tanLines",false); if(!v&&!tn) return null;
+    return { params:{v:v||40}, frag:"Unify the body skin tone with the face at "+(v||40)+"%"+(tn?"; remove tan lines and strap marks (enhanced)":"")+"." };
+  });
+  e4.b.appendChild(stSub(L9({my:"အသားရောင်ရွေး",en:"Select Skin Tone"})));
+  e4.b.appendChild(svChips("ev_tone",null,[["ivory","Ivory"],["porcelain","Porcelain"],["fair","Fair"],["natural beige","Beige"],["warm gold","Warm Gold"],["olive","Olive"],["honey","Honey"],["deep bronze","Bronze"]],"ev_toneF"));
+  var toneGrid=el("div","st-grid");
+  toneGrid.appendChild(svSlider("ev_toneTemp",L9({my:"— Temperature",en:"— Temperature"}),true,"ev_toneF"));
+  toneGrid.appendChild(svSlider("ev_toneTint",L9({my:"— Redness",en:"— Redness"}),true,"ev_toneF"));
+  toneGrid.appendChild(svSlider("ev_toneV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_toneF"));
+  e4.b.appendChild(toneGrid);
+  stFeat("ev_toneF",L9({my:"အသားရောင်",en:"Skin Tone"}),["ev_tone","ev_toneTemp","ev_toneTint","ev_toneV"],function(){
+    var v=fv("ev_toneV"), tn=svGet("ev_tone",null); if(!v||!tn) return null;
+    return { params:{v:v}, frag:"Shift the skin toward "+tn+", temperature "+fs("ev_toneTemp")+", redness "+fs("ev_toneTint")+", at "+v+"%; harmonize lips and features." };
+  },function(){
+    var v=svGet("ev_toneV",0), tn=svGet("ev_tone",null); if(!v||!tn) return null;
+    var g=Math.min(25,v*0.25);
+    if(tn==="ivory"||tn==="porcelain"||tn==="fair") return { t2:{white:g} };
+    return { t2:{rosy:g*0.6}, t1:{wrm:g*0.5} };
+  });
+  var radGrid=el("div","st-grid");
+  radGrid.appendChild(t2Slider("ev_radiance",L9({my:"တောက်ပ",en:"Radiance"}),"radiance"));
+  radGrid.appendChild(t2Slider("ev_rosy",L9({my:"ပန်းနု",en:"Rosy"}),"rosy",true));
+  e4.b.appendChild(radGrid);
+  reg(e4,["ev_unifyB","ev_toneF"]);
+
+  /* EV-5 Facial Reshape (8) */
+  var e5=G("📐 "+L9({my:"မျက်နှာပုံသွင်း",en:"Facial Reshape"}),8); count(8);
+  e5.grid.appendChild(svSlider("ev_poseUD",L9({my:"ခေါင်း အပေါ်/အောက်",en:"Head Up/Down"}),true,"ev_pose"));
+  e5.grid.appendChild(svSlider("ev_poseLR",L9({my:"ခေါင်း ဘယ်/ညာ",en:"Head Left/Right"}),true,"ev_pose"));
+  e5.grid.appendChild(svSlider("ev_poseTilt",L9({my:"ခေါင်းစောင်း",en:"Head Tilt"}),true,"ev_pose"));
+  var symRow=el("div","st-ctl");
+  symRow.appendChild(el("label",null,L9({my:"Symmetry",en:"Symmetry"})));
+  symRow.appendChild(svToggle("ev_symFace",L9({my:"မျက်နှာ",en:"Face"}),"ev_pose"));
+  symRow.appendChild(svToggle("ev_symBody",L9({my:"ကိုယ်",en:"Body"}),"ev_pose"));
+  e5.grid.appendChild(symRow);
+  stFeat("ev_pose",L9({my:"ခေါင်းအနေအထား",en:"Pose & Symmetry"}),["ev_poseUD","ev_poseLR","ev_poseTilt","ev_symFace","ev_symBody"],function(){
+    var ud=fs("ev_poseUD"),lr=fs("ev_poseLR"),tl=fs("ev_poseTilt"),sf=svGet("ev_symFace",false),sb=svGet("ev_symBody",false);
+    if(!ud&&!lr&&!tl&&!sf&&!sb) return null;
+    var L=[];
+    if(ud) L.push("rotate the head "+(ud>0?"up":"down")+" by "+Math.abs(ud)+"%");
+    if(lr) L.push("turn the head "+(lr>0?"right":"left")+" by "+Math.abs(lr)+"%");
+    if(tl) L.push("straighten the head tilt by "+Math.abs(tl)+"%");
+    if(sf||sb) L.push("AI-balance facial"+(sb?" and upper-body":"")+" symmetry at 40%");
+    return { params:{v:Math.max(Math.abs(ud),Math.abs(lr),Math.abs(tl))||40}, frag:"Adjust the head pose naturally: "+L.join(", ")+"; identity preserved." };
+  });
+  e5.grid.appendChild(svSlider("ev_faceSlim",L9({my:"မျက်နှာသွယ်",en:"Face Slim"}),true,"ev_faceSet"));
+  e5.grid.appendChild(svSlider("ev_faceWidth",L9({my:"မျက်နှာအကျယ်",en:"Face Width"}),true,"ev_faceSet"));
+  e5.grid.appendChild(svSlider("ev_faceSize",L9({my:"မျက်နှာအရွယ်",en:"Face Size"}),true,"ev_faceSet"));
+  stFeat("ev_faceSet",L9({my:"မျက်နှာအရွယ်",en:"Face Slim/Size"}),["ev_faceSlim","ev_faceWidth","ev_faceSize"],function(){
+    var v1=fs("ev_faceSlim"),v2=fs("ev_faceWidth"),v3=fs("ev_faceSize"); if(!v1&&!v2&&!v3) return null;
+    var L=[]; if(v1) L.push(stLineSigned("faceSlim",v1));
+    if(v2) L.push("Adjust the face width by "+v2+"%.");
+    if(v3) L.push("Adjust the overall face size by "+v3+"%.");
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2),Math.abs(v3))}, frag:L.join(" ") };
+  });
+  e5.grid.appendChild(svSlider("ev_vshape",L9({my:"V-Shape",en:"V-Shape"}),true,"ev_jawSet"));
+  e5.grid.appendChild(svSlider("ev_jawline",L9({my:"မေးရိုးလိုင်း",en:"Jawline"}),true,"ev_jawSet"));
+  e5.grid.appendChild(svSlider("ev_taperChin",L9({my:"မေးစေ့ချွန်",en:"Taper Chin"}),true,"ev_jawSet"));
+  e5.grid.appendChild(svSlider("ev_chinLen",L9({my:"မေးစေ့အရှည်",en:"Chin Length"}),true,"ev_jawSet"));
+  stFeat("ev_jawSet",L9({my:"မေးရိုး",en:"V-Shape & Jaw"}),["ev_vshape","ev_jawline","ev_taperChin","ev_chinLen"],function(){
+    var a=fs("ev_vshape"),b=fs("ev_jawline"),c=fs("ev_taperChin"),d=fs("ev_chinLen");
+    if(!a&&!b&&!c&&!d) return null;
+    var L=[];
+    if(a) L.push("sculpt a "+(a>0?"softer V-line":"squarer jaw base")+" at "+Math.abs(a)+"%");
+    if(b) L.push(stLineSigned("jaw",b));
+    if(c) L.push((c>0?"taper":"round")+" the chin "+Math.abs(c)+"%");
+    if(d) L.push(stLineSigned("chin",d));
+    return { params:{v:Math.max(Math.abs(a),Math.abs(b),Math.abs(c),Math.abs(d))}, frag:L.join("; ")+"." };
+  });
+  e5.grid.appendChild(svSlider("ev_hairline",L9({my:"ဆံစ",en:"Hairline"}),true,"ev_foreSet"));
+  e5.grid.appendChild(svSlider("ev_foreH",L9({my:"နဖူးအမြင့်",en:"Forehead Height"}),true,"ev_foreSet"));
+  stFeat("ev_foreSet",L9({my:"နဖူး/ဆံစ",en:"Forehead & Hairline"}),["ev_hairline","ev_foreH"],function(){
+    var v1=fs("ev_hairline"),v2=fs("ev_foreH"); if(!v1&&!v2) return null;
+    var L=[];
+    if(v1) L.push((v1>0?"raise":"lower")+" the hairline "+Math.abs(v1)+"%");
+    if(v2) L.push("forehead height "+v2+"%");
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:"Adjust: "+L.join("; ")+"." };
+  });
+  function enumSet(id,label,my,subs,extra){
+    subs.forEach(function(s){ e5.grid.appendChild(svSlider(s[0],s[1],true,id)); });
+    stFeat(id,L9({my:my,en:label}),subs.map(function(s){return s[0];}),function(){
+      var L=[],mx=0;
+      subs.forEach(function(s){ var v=fs(s[0]); if(v){ L.push(s[2]+" "+v+"%"); if(Math.abs(v)>mx)mx=Math.abs(v); } });
+      if(!L.length) return null;
+      var pre=extra?extra(mx):"";
+      return { params:{v:mx}, frag:(pre?pre+" ":"")+"Adjust precisely: "+L.join(", ")+"; keep it subtle and photorealistic." };
+    });
+  }
+  enumSet("ev_browSet","Eyebrow Set","မျက်ခုံးအစုံ",[["ev_bwThick",L9({my:"မျက်ခုံးထူ",en:"Brow Thickness"}),"brow thickness"],["ev_bwDist",L9({my:"အကွာအဝေး",en:"Brow Distance"}),"brow distance"],["ev_bwTilt",L9({my:"စောင်း",en:"Brow Tilt"}),"brow tilt"],["ev_bwArch",L9({my:"ကွေး",en:"Brow Arch"}),"brow arch"],["ev_bwPos",L9({my:"အနေအထား",en:"Brow Position"}),"brow vertical position"]],
+    function(mx){ return stLine("brow",mx); });
+  enumSet("ev_eyeSet","Eye Shape Set","မျက်လုံးပုံ",[["ev_eyFull",L9({my:"မျက်လုံးအရွယ်",en:"Eye Size"}),"overall eye size"],["ev_eyBall",L9({my:"မျက်ဆံ",en:"Eyeball"}),"eyeball size"],["ev_eyH",L9({my:"အမြင့်",en:"Eye Height"}),"eye height"],["ev_eyW",L9({my:"အကျယ်",en:"Eye Width"}),"eye width"],["ev_eyDist",L9({my:"အကွာအဝေး",en:"Eye Distance"}),"eye distance"],["ev_eyTilt",L9({my:"စောင်း",en:"Eye Tilt"}),"eye tilt"],["ev_eyPos",L9({my:"အနေအထား",en:"Eye Position"}),"eye vertical position"]],
+    function(mx){ return stLine("eyeSize",mx); });
+  enumSet("ev_noseSet","Nose Set","နှာခေါင်းအစုံ",[["ev_nsSize",L9({my:"အရွယ်",en:"Nose Size"}),"nose size"],["ev_nsLen",L9({my:"အရှည်",en:"Nose Length"}),"nose length"],["ev_nsBridge",L9({my:"နှာတံ",en:"Bridge"}),"bridge height"],["ev_nsWidth",L9({my:"အကျယ်",en:"Width"}),"nose width"],["ev_nsTip",L9({my:"နှာဖျား",en:"Tip"}),"tip refinement"],["ev_nsHoriz",L9({my:"ရွှေ့",en:"Horizontal"}),"horizontal alignment"]],
+    function(mx){ return stLine("noseSize",mx); });
+  enumSet("ev_mouthSet","Mouth Set","ပါးစပ်အစုံ",[["ev_moSize",L9({my:"အရွယ်",en:"Mouth Size"}),"mouth size"],["ev_moM",L9({my:"M-Lip",en:"M-Lip"}),"M-shaped upper lip definition"],["ev_moTilt",L9({my:"စောင်း",en:"Mouth Tilt"}),"mouth tilt"],["ev_moUpper",L9({my:"အပေါ်နှုတ်ခမ်း",en:"Upper Lip"}),"upper lip thickness"],["ev_moLower",L9({my:"အောက်နှုတ်ခမ်း",en:"Lower Lip"}),"lower lip thickness"]],
+    function(mx){ return stLine("lipFull",mx); });
+  reg(e5,["ev_pose","ev_faceSet","ev_jawSet","ev_foreSet","ev_browSet","ev_eyeSet","ev_noseSet","ev_mouthSet"]);
+
+  /* EV-6 Expression (1) */
+  var e6=G("🙂 "+L9({my:"အမူအရာ",en:"Expression"}),1); count(1);
+  e6.grid.appendChild(svSlider("ev_smileLift",L9({my:"ပြုံးအနည်းငယ်",en:"Gentle Smile"}),false,"ev_expr"));
+  e6.b.appendChild(svChips("ev_smileLevel",L9({my:"Smile Level",en:"Smile Level"}),[["1","1"],["2","2"],["3","3"],["4","4"],["5","5"]],"ev_expr"));
+  e6.b.appendChild(svChips("ev_neutralLevel",L9({my:"Neutral Level",en:"Neutral Level"}),[["1","1"],["2","2"],["3","3"]],"ev_expr"));
+  stFeat("ev_expr",L9({my:"အမူအရာ",en:"Expression"}),["ev_smileLift","ev_smileLevel","ev_neutralLevel"],function(){
+    var v=fv("ev_smileLift"), sl=svGet("ev_smileLevel",null), nl=svGet("ev_neutralLevel",null);
+    if(!v&&!sl&&!nl) return null;
+    var L=[];
+    if(v) L.push("Lift the mouth corners by "+v+"%.");
+    if(sl) L.push("Generate a natural level-"+sl+" smile.");
+    if(nl) L.push("Generate a natural neutral closed-mouth expression (level "+nl+").");
+    return { params:{v:v||0}, frag:L.join(" ")+" Identity preserved." };
+  });
+  reg(e6,["ev_expr"]);
+
+  /* EV-7 Teeth (2) */
+  var e7=G("🦷 "+L9({my:"သွား",en:"Teeth"}),2); count(2);
+  e7.grid.appendChild(t2Slider("ev_teethB",L9({my:"သွားဖြူတောက်ပ",en:"Teeth Brightness"}),"teeth"));
+  e7.grid.appendChild(svSlider("ev_teethD",L9({my:"— Desaturation",en:"— Desaturation"}),false,"ev_teethW"));
+  stFeat("ev_teethW",L9({my:"သွားဖြူ",en:"Teeth Whitening"}),["ev_teethD"],function(){
+    var v1=state.st.t2.teeth||0, v2=fv("ev_teethD"); if(!v2) return null;
+    return { params:{v:Math.max(v1,v2)}, frag:stLine("teeth",Math.max(v1,v2))+" Desaturate yellow tooth staining by "+v2+"%." };
+  });
+  e7.grid.appendChild(svSlider("ev_teethFlaws",L9({my:"သွားချို့ယွင်းဖယ်",en:"Teeth Flaws"}),false,"ev_teethR"));
+  var tr1=el("div","st-ctl");
+  tr1.appendChild(el("label",null,L9({my:"အနားပြင်",en:"Edge Fix"})));
+  tr1.appendChild(svToggle("ev_teethEdge",L9({my:"ဖွင့်",en:"On"}),"ev_teethR"));
+  tr1.appendChild(svToggle("ev_prettyTeeth","Pretty Teeth","ev_teethR"));
+  e7.grid.appendChild(tr1);
+  e7.b.appendChild(svChips("ev_alignLevel",L9({my:"Align Level",en:"Align Level"}),[["1","1"],["2","2"],["3","3"],["4","4"],["5","5"]],"ev_teethR"));
+  stFeat("ev_teethR",L9({my:"သွားပြင်/ညှိ",en:"Teeth Repair"}),["ev_teethFlaws","ev_teethEdge","ev_alignLevel","ev_prettyTeeth"],function(){
+    var v=fv("ev_teethFlaws"), eg=svGet("ev_teethEdge",false), al=svGet("ev_alignLevel",null), pt=svGet("ev_prettyTeeth",false);
+    if(!v&&!eg&&!al&&!pt) return null;
+    var L=[];
+    if(v) L.push("Remove braces, stains and gaps from the teeth at "+v+"%.");
+    if(eg) L.push("Fill chipped tooth edges.");
+    if(al) L.push("Straighten the teeth (level "+al+").");
+    if(pt) L.push("Generate a complete natural set of teeth.");
+    return { params:{v:v||0}, frag:L.join(" ") };
+  });
+  reg(e7,["ev_teethW","ev_teethR"]);
+
+  /* EV-8 Eyes (4) */
+  var e8=G("👁 "+L9({my:"မျက်လုံး",en:"Eyes"}),4); count(4);
+  e8.grid.appendChild(t2Slider("ev_eyeMaster",L9({my:"မျက်လုံးအလင်း",en:"Eye Brightness"}),"eyeb"));
+  var ebGrid=el("div","st-grid");
+  [["ev_ebIris",L9({my:"— Iris",en:"— Iris"}),80],["ev_ebWhites",L9({my:"— Whites",en:"— Whites"}),80],["ev_ebRefl",L9({my:"— Reflection",en:"— Reflection"}),40],["ev_ebFlare",L9({my:"— Flare",en:"— Flare"}),0]].forEach(function(s){
+    ebGrid.appendChild(stSlider({id:s[0],label:s[1],min:0,max:100,def:s[2],
+      get:function(){ return svGet(s[0],s[2]); },
+      set:function(v){ svSet(s[0],v); stSync("ev_eyeBr"); }}));
+  });
+  e8.b.appendChild(ebGrid);
+  e8.b.appendChild(svChips("ev_catchStyle",L9({my:"Catchlight",en:"Catchlight"}),[["round softbox","Round"],["window","Window"],["ring-light","Ring"],["starburst","Star"],["umbrella","Umbrella"],["natural sky","Sky"]],"ev_eyeBr"));
+  e8.b.appendChild(svSlider("ev_catchV",L9({my:"Catchlight ပမာဏ",en:"Catchlight amount"}),false,"ev_eyeBr"));
+  stFeat("ev_eyeBr",L9({my:"မျက်လုံးအလင်း",en:"Eye Brightness"}),["ev_ebIris","ev_ebWhites","ev_ebRefl","ev_ebFlare","ev_catchStyle","ev_catchV"],function(){
+    var m=state.st.t2.eyeb||0, cs=svGet("ev_catchStyle",null), cv=fv("ev_catchV");
+    if(!m&&!(cs&&cv)) return null;
+    var L=[];
+    if(m) L.push(stLine("eyeWhite",m)+" Brighten the iris at "+svGet("ev_ebIris",80)+"%, whites at "+svGet("ev_ebWhites",80)+"%, keep reflections at "+svGet("ev_ebRefl",40)+"%, remove lens flare above "+svGet("ev_ebFlare",0)+"%.");
+    if(cs&&cv) L.push("Add a "+cs+" catchlight reflection at "+cv+"%.");
+    return { params:{v:m||cv}, frag:L.join(" ") };
+  });
+  e8.grid.appendChild(svSlider("ev_redVein",L9({my:"သွေးကြောနီဖယ်",en:"Red Veins"}),false,"ev_eyeClean"));
+  e8.grid.appendChild(svSlider("ev_whiteCleanse",L9({my:"မျက်ဖြူသန့်",en:"White Cleanse"}),false,"ev_eyeClean"));
+  var rer=el("div","st-ctl");
+  rer.appendChild(el("label",null,L9({my:"Red-Eye ပြင်",en:"Red-Eye Fix"})));
+  rer.appendChild(svToggle("ev_redEye",L9({my:"ဖွင့်",en:"On"}),"ev_eyeClean"));
+  e8.grid.appendChild(rer);
+  stFeat("ev_eyeClean",L9({my:"မျက်လုံးသန့်",en:"Eye Cleanup"}),["ev_redVein","ev_whiteCleanse","ev_redEye"],function(){
+    var v1=fv("ev_redVein"),v2=fv("ev_whiteCleanse"),re=svGet("ev_redEye",false);
+    if(!v1&&!v2&&!re) return null;
+    return { params:{v:Math.max(v1,v2)}, frag:"Remove red veins from the eye whites at "+v1+"%, cleanse sclera color cast at "+v2+"%"+(re?"; fix flash red-eye":"")+"." };
+  });
+  var oer=el("div","st-ctl");
+  oer.appendChild(el("label",null,L9({my:"AI မျက်လုံးဖွင့်/အကြည့်",en:"AI Open Eyes & Gaze"})));
+  oer.appendChild(svToggle("ev_openEyes",L9({my:"မျက်လုံးဖွင့်",en:"Open eyes"}),"ev_gaze"));
+  oer.appendChild(svToggle("ev_gazeFix",L9({my:"အကြည့်ပြင်",en:"Gaze to camera"}),"ev_gaze"));
+  e8.grid.appendChild(oer);
+  stFeat("ev_gaze",L9({my:"မျက်လုံးဖွင့်/အကြည့်",en:"Open Eyes/Gaze"}),["ev_openEyes","ev_gazeFix"],function(){
+    var oe=svGet("ev_openEyes",false), gf=svGet("ev_gazeFix",false); if(!oe&&!gf) return null;
+    var L=[];
+    if(oe) L.push("Open the closed or blinking eyes naturally.");
+    if(gf) L.push("Redirect the gaze toward the camera.");
+    return { params:{}, frag:L.join(" ") };
+  });
+  e8.b.appendChild(svChips("ev_eyeColor",L9({my:"မျက်ဆံအရောင်",en:"Eye Color"}),[["natural brown","Brown"],["dark grey","Grey"],["hazel","Hazel"],["amber","Amber"],["blue","Blue"],["green","Green"],["violet","Violet"],["jet black","Black"]],"ev_eyeCol"));
+  e8.b.appendChild(svSlider("ev_eyeColorV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_eyeCol"));
+  stFeat("ev_eyeCol",L9({my:"မျက်ဆံအရောင်",en:"Eye Color"}),["ev_eyeColor","ev_eyeColorV"],function(){
+    var v=fv("ev_eyeColorV"), c=svGet("ev_eyeColor",null); if(!v||!c) return null;
+    return { params:{v:v}, frag:"Change the iris color to "+c+" at "+v+"%; keep the catchlights and pupil." };
+  });
+  reg(e8,["ev_eyeBr","ev_eyeClean","ev_gaze","ev_eyeCol"]);
+
+  /* EV-9 Makeup (3) */
+  var e9=G("💋 "+L9({my:"မိတ်ကပ်",en:"Makeup"}),3); count(3);
+  e9.b.appendChild(svChips("ev_mkLook",L9({my:"Makeup Suite",en:"Makeup Suite"}),[["Natural Pro","Natural Pro"],["Editorial","Editorial"],["Glam","Glam"],["Bridal","Bridal"]],"ev_mkSuite"));
+  e9.b.appendChild(svSlider("ev_mkV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_mkSuite"));
+  stFeat("ev_mkSuite",L9({my:"မိတ်ကပ်ပရို",en:"Makeup Suite"}),["ev_mkLook","ev_mkV"],function(){
+    var v=fv("ev_mkV"), s=svGet("ev_mkLook",null); if(!v||!s) return null;
+    return { params:{v:v}, frag:"Apply the "+s+" professional makeup look at "+v+"%, replacing any patchy original makeup." };
+  });
+  var enh=el("div","st-grid");
+  enh.appendChild(svSlider("ev_enhBrow",L9({my:"မူရင်း Brow",en:"Orig. Brow"}),true,"ev_mkEnh"));
+  enh.appendChild(svSlider("ev_enhEye",L9({my:"မူရင်း Eye",en:"Orig. Eye"}),true,"ev_mkEnh"));
+  enh.appendChild(svSlider("ev_enhLip",L9({my:"မူရင်း Lip",en:"Orig. Lip"}),true,"ev_mkEnh"));
+  e9.b.appendChild(stSub(L9({my:"မူရင်းမိတ်ကပ်မြှင့်",en:"Enhance Original Makeup"})));
+  e9.b.appendChild(enh);
+  stFeat("ev_mkEnh",L9({my:"မူရင်းမိတ်ကပ်",en:"Enhance Makeup"}),["ev_enhBrow","ev_enhEye","ev_enhLip"],function(){
+    var L=[],mx=0;
+    [["ev_enhBrow","brow"],["ev_enhEye","eye"],["ev_enhLip","lip"]].forEach(function(p){
+      var v=fs(p[0]); if(v){ L.push((v>0?"Boost":"Reduce")+" the existing "+p[1]+" makeup by "+Math.abs(v)+"% without changing its style."); if(Math.abs(v)>mx)mx=Math.abs(v); }
+    });
+    if(!L.length) return null;
+    return { params:{v:mx}, frag:L.join(" ") };
+  });
+  e9.b.appendChild(stSub(L9({my:"မိတ်ကပ်စတိုင်များ",en:"Makeup Styles"})));
+  e9.b.appendChild(svChips("ev_msLip",L9({my:"Lipstick",en:"Lipstick"}),[["classic red","Red"],["rose pink","Rose"],["nude beige","Nude"],["coral","Coral"],["berry","Berry"],["mauve","Mauve"],["peach","Peach"],["deep wine","Wine"]],"ev_mkStyles"));
+  e9.b.appendChild(svChips("ev_msBlush",L9({my:"Blush",en:"Blush"}),[["soft pink","Pink"],["peach","Peach"],["coral","Coral"],["rose","Rose"],["apricot","Apricot"],["berry","Berry"]],"ev_mkStyles"));
+  e9.b.appendChild(svChips("ev_msContour",L9({my:"Contour",en:"Contour"}),[["soft","Soft"],["defined","Defined"],["editorial","Editorial"],["natural","Natural"]],"ev_mkStyles"));
+  e9.b.appendChild(svChips("ev_msFreckle",L9({my:"Freckle Decor",en:"Freckle Decor"}),[["light sun-kissed","Light"],["scattered","Scattered"],["bold","Bold"]],"ev_mkStyles"));
+  e9.b.appendChild(svSlider("ev_msV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_mkStyles"));
+  stFeat("ev_mkStyles",L9({my:"မိတ်ကပ်စတိုင်",en:"Makeup Styles"}),["ev_msLip","ev_msBlush","ev_msContour","ev_msFreckle","ev_msV"],function(){
+    var v=fv("ev_msV"); if(!v) return null;
+    var L=[];
+    var a=svGet("ev_msLip",null); if(a) L.push(a+" lipstick");
+    var b=svGet("ev_msBlush",null); if(b) L.push(b+" blush");
+    var c=svGet("ev_msContour",null); if(c) L.push(c+" face contour");
+    var d=svGet("ev_msFreckle",null); if(d) L.push(d+" decorative freckles");
+    if(!L.length) return null;
+    return { params:{v:v}, frag:"Apply makeup styling at "+v+"%: "+L.join(", ")+"." };
+  });
+  reg(e9,["ev_mkSuite","ev_mkEnh","ev_mkStyles"]);
+
+  /* EV-10 Hair (4) */
+  var e10=G("💇 "+L9({my:"ဆံပင်",en:"Hair"}),4); count(4);
+  e10.grid.appendChild(svSlider("ev_hairPart",L9({my:"ခေါင်းခွဲလိုင်းဖြည့်",en:"Part-Line Fill"}),false,"ev_hairFill"));
+  e10.grid.appendChild(svSlider("ev_hairTop",L9({my:"အပေါ်ထူ",en:"Top Volume"}),false,"ev_hairFill"));
+  e10.grid.appendChild(svSlider("ev_hairSide",L9({my:"ဘေးထူ",en:"Side Volume"}),false,"ev_hairFill"));
+  stFeat("ev_hairFill",L9({my:"ဆံပင်ဖြည့်/ဖောင်း",en:"Hair Fill & Volume"}),["ev_hairPart","ev_hairTop","ev_hairSide"],function(){
+    var v1=fv("ev_hairPart"),v2=fv("ev_hairTop"),v3=fv("ev_hairSide"); if(!v1&&!v2&&!v3) return null;
+    var L=[];
+    if(v1) L.push(stLine("hairFill",v1)+" Fill the part line at "+v1+"%.");
+    if(v2||v3) L.push(stLine("hairVolume",Math.max(v2,v3))+(v2?" Top volume "+v2+"%.":"")+(v3?" Side volume "+v3+"%.":""));
+    return { params:{v:Math.max(v1,v2,v3)}, frag:L.join(" ") };
+  });
+  e10.grid.appendChild(svSlider("ev_strayIn",L9({my:"မျက်နှာပေါ်ဆံလွင့်",en:"Strays (face/body)"}),false,"ev_stray"));
+  e10.grid.appendChild(svSlider("ev_strayOut",L9({my:"နောက်ခံထဲဆံလွင့်",en:"Strays (background)"}),false,"ev_stray"));
+  stFeat("ev_stray",L9({my:"ဆံပင်လွင့်",en:"Stray Hairs"}),["ev_strayIn","ev_strayOut"],function(){
+    var v1=fv("ev_strayIn"),v2=fv("ev_strayOut"); if(!v1&&!v2) return null;
+    var L=[];
+    if(v1) L.push(stLine("hairStray",v1)+" Focus on strays over the face and body at "+v1+"%.");
+    if(v2) L.push("Remove stray hairs extending into the background at "+v2+"%.");
+    return { params:{v:Math.max(v1,v2)}, frag:L.join(" ") };
+  });
+  e10.grid.appendChild(svSlider("ev_hairSmooth",L9({my:"ဆံပင်ချော",en:"Smooth Hair"}),false,"ev_hairShine"));
+  e10.grid.appendChild(svSlider("ev_hairFrizz",L9({my:"— Frizz",en:"— Frizz"}),false,"ev_hairShine"));
+  e10.grid.appendChild(svSlider("ev_hairShine",L9({my:"ဆံပင်တောက်",en:"Shine"}),false,"ev_hairShine"));
+  stFeat("ev_hairShine",L9({my:"ဆံပင်ချော/တောက်",en:"Smooth Hair & Shine"}),["ev_hairSmooth","ev_hairFrizz","ev_hairShine"],function(){
+    var v1=fv("ev_hairSmooth"),v2=fv("ev_hairFrizz"),v3=fv("ev_hairShine");
+    if(v1&&!v2){ v2=100; } /* Evoto behavior: smoothing auto-sets frizz control to 100 */
+    if(!v1&&!v2&&!v3) return null;
+    var L=[];
+    if(v1) L.push(stLine("hairSmooth",v1));
+    if(v2) L.push("Tame frizz at "+v2+"%.");
+    if(v3) L.push(stLine("hairShine",v3));
+    return { params:{v:Math.max(v1,v2,v3)}, frag:L.join(" ") };
+  });
+  e10.b.appendChild(svChips("ev_hairCol",L9({my:"ဆံပင်ရောင်",en:"Hair Color"}),[["jet black","Black"],["dark brown","Dark Brown"],["chestnut","Chestnut"],["burgundy","Burgundy"],["ash brown","Ash"],["honey blonde","Honey"]],"ev_hairColF"));
+  var hcGrid=el("div","st-grid");
+  hcGrid.appendChild(svSlider("ev_hairColV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_hairColF"));
+  hcGrid.appendChild(svSlider("ev_whiteHair",L9({my:"ဆံဖြူမည်း",en:"Blacken White Hair"}),false,"ev_hairColF"));
+  e10.b.appendChild(hcGrid);
+  stFeat("ev_hairColF",L9({my:"ဆံပင်ရောင်",en:"Hair Color"}),["ev_hairCol","ev_hairColV","ev_whiteHair"],function(){
+    var c=svGet("ev_hairCol",null), v=fv("ev_hairColV"), w=fv("ev_whiteHair");
+    if(!(c&&v)&&!w) return null;
+    var L=[];
+    if(c&&v) L.push("Recolor the hair to "+c+", deepen and unify patchy areas at "+v+"%.");
+    if(w) L.push("Darken only the white and grey strands at "+w+"%.");
+    return { params:{v:v||w}, frag:L.join(" ") };
+  });
+  reg(e10,["ev_hairFill","ev_stray","ev_hairShine","ev_hairColF"]);
+
+  /* EV-11 Hands & Body (2) */
+  var e11=G("🤲 "+L9({my:"လက်နှင့်ကိုယ်",en:"Hands & Body"}),2); count(2);
+  e11.grid.appendChild(svSlider("ev_handEven",L9({my:"လက်အသားညီ",en:"Hand Skin"}),false,"ev_hands"));
+  e11.grid.appendChild(svSlider("ev_handVeins",L9({my:"လက်သွေးကြော",en:"Veins"}),false,"ev_hands"));
+  e11.grid.appendChild(svSlider("ev_handShape",L9({my:"လက်ပုံပြင်",en:"Reshape"}),false,"ev_hands"));
+  stFeat("ev_hands",L9({my:"လက်ပြင်",en:"Hands Retouch"}),["ev_handEven","ev_handVeins","ev_handShape"],function(){
+    var v1=fv("ev_handEven"),v2=fv("ev_handVeins"),v3=fv("ev_handShape"); if(!v1&&!v2&&!v3) return null;
+    var L=[];
+    if(v1||v2) L.push("Smooth the hand skin at "+v1+"%, soften prominent veins at "+v2+"%.");
+    if(v3) L.push(stLine("fingers",v3));
+    return { params:{v:Math.max(v1,v2,v3)}, frag:L.join(" ") };
+  });
+  e11.grid.appendChild(svSlider("ev_armpit",L9({my:"ချိုင်းသန့်",en:"Armpit"}),false,"ev_bodyRef"));
+  e11.grid.appendChild(svSlider("ev_stretch",L9({my:"အသားကြောင်းဖယ်",en:"Stretch Marks"}),false,"ev_bodyRef"));
+  stFeat("ev_bodyRef",L9({my:"ခန္ဓာသန့်စင်",en:"Body Refinement"}),["ev_armpit","ev_stretch"],function(){
+    var v1=fv("ev_armpit"),v2=fv("ev_stretch"); if(!v1&&!v2) return null;
+    return { params:{v:Math.max(v1,v2)}, frag:"Smooth the underarm area at "+v1+"%; remove stretch marks at "+v2+"%." };
+  });
+  reg(e11,["ev_hands","ev_bodyRef"]);
+})();
+
+/* hidden recycled-preset feature used by the Natural Pro EVOTO card */
+stFeat("ev_evoto",L9({my:"Evoto Style",en:"Evoto Style"}),["ev_evoto"],function(){
+  var v=svGet("ev_evoto",0); if(!v) return null;
+  return { params:{v:v}, frag: byKey.evoto.text.replace(/\b60(?=%)/g,String(v)) };
+});
+
+/* ---- retouch-target chips (PHOTO card + MU-1, single shared state) ---- */
+function stTargetChips(){
+  var chips=el("div","chips");
+  var TG=[["all",L9({my:"အားလုံး",en:"All"})],["bride",L9({my:"သတို့သမီး",en:"Bride"})],["groom",L9({my:"သတို့သား",en:"Groom"})],["left",L9({my:"ဘယ်ဘက်လူ",en:"Left"})],["right",L9({my:"ညာဘက်လူ",en:"Right"})]];
+  function refresh(){ chips.querySelectorAll(".chip").forEach(function(c,i){ c.className="chip"+(TG[i][0]===state.st.target?" on":""); }); }
+  TG.forEach(function(tg){
+    var c=el("button","chip",tg[1]);
+    c.onclick=function(){ state.st.target=tg[0]; stRefreshUI(); stSaveSoon(); };
+    chips.appendChild(c);
+  });
+  ST.refreshFns.push(refresh); refresh();
+  return chips;
+}
+function stTargetPhrase(){
+  return { all:"every person", bride:"the bride only", groom:"the groom only",
+    left:"the person on the left only", right:"the person on the right only" }[state.st.target]||"every person";
+}
+
+/* ---- preset cards (§5) ---- */
+var ST_PRESETS_MU=[
+  {key:"muNatural",my:"သဘာဝ",en:"Natural",t1:{bri:6,con:4,sat:5,wrm:4},t2:{smooth:25,white:10,even:20}},
+  {key:"muFirstLove",my:"ပထမအချစ်",en:"First Love",t1:{bri:10,con:-4,sat:8,wrm:8,fad:12},t2:{smooth:35,white:20,rosy:25},sv:{mu_makeupStyle:"Natural",mu_makeupV:30},feats:["mu_makeup"]},
+  {key:"muGoddess",my:"နတ်သမီး",en:"Goddess",t1:{bri:8,con:8,sat:6},t2:{smooth:50,white:30,even:35,deshine:30},sv:{mu_eyeSize:20,mu_faceSlim:20,mu_makeupStyle:"Natural",mu_makeupV:40},feats:["mu_eye","mu_faceSlim","mu_makeup"]},
+  {key:"muPorcelain",my:"ကြွေအသား",en:"Porcelain",t1:{bri:12,con:6,sat:-5,wrm:-8},t2:{smooth:65,white:45,even:50,finish:"matte",finishV:50}},
+  {key:"muHoney",my:"ပျားရည်",en:"Honey",t1:{wrm:18,sat:12,con:6},t2:{smooth:30,rosy:20},sv:{mu_skinTone:"honey-tan",mu_skinToneV:40},feats:["mu_skinToneF"]},
+  {key:"muDouyin",my:"Douyin",en:"Douyin",t1:{con:15,sat:18,cla:15,vig:10},t2:{smooth:45,white:25},sv:{mu_makeupStyle:"Douyin",mu_makeupV:50,mu_eyeSize:15},feats:["mu_makeup","mu_eye"]},
+  {key:"muCream",my:"ခရင်မ်အသား",en:"Cream",t1:{bri:14,fad:15,wrm:10,sat:-4},t2:{smooth:55,white:35,finish:"cream",finishV:45}},
+  {key:"muCCD",my:"CCD ဖလင်",en:"CCD Film",t1:{con:12,sat:14,wrm:6,grn:25,vig:18}}
+];
+var ST_PRESETS_EV=[
+  {key:"evNaturalPro",my:"Natural Pro",en:"Natural Pro",t1:{bri:4,con:4},t2:{even:30},sv:{ev_evoto:40},feats:["ev_evoto"]},
+  {key:"evEditorial",my:"Editorial",en:"Editorial",t1:{con:12,cla:20,sat:-6},t2:{even:45,gloss:-10},sv:{ev_evenDB:50,ev_blemish:60},feats:["ev_evenDBF","ev_blem"]},
+  {key:"evSoftFilm",my:"Soft Film",en:"Soft Film",t1:{fad:18,grn:15,wrm:8,con:-6,sat:-8},t2:{smooth:30}},
+  {key:"evCommercial",my:"Clean Commercial",en:"Clean Commercial",t1:{bri:8,con:8,sat:4,shp:20},t2:{even:50},sv:{ev_blemish:60,ev_strayIn:50},feats:["ev_blem","ev_stray"]},
+  {key:"evWedding",my:"မင်္ဂလာနွေး",en:"Warm Wedding",t1:{wrm:14,bri:8,sat:8,vig:8},t2:{radiance:30,rosy:15},sv:{ev_unifyBody:40},feats:["ev_unifyB"]},
+  {key:"evMatte",my:"Matte Studio",en:"Matte Studio",t1:{con:6,fad:10,sat:-4},t2:{gloss:-40,deshine:40,finish:"matte",finishV:40}},
+  {key:"evAiry",my:"Bright & Airy",en:"Bright & Airy",t1:{exp:10,bri:10,sh:20,sat:6,wrm:4},t2:{radiance:35}},
+  {key:"evBW",my:"Classic B&W",en:"Classic B&W",t1:{sat:-100,con:14,grn:12,vig:12},t2:{even:30}}
+];
+function stSnapshot(){ return JSON.parse(JSON.stringify({t1:state.st.t1,t2:state.st.t2,v:state.st.v,pend:state.st.pend})); }
+function stApplyPreset(p){
+  if(ST.busy) return;
+  if(state.st.preset===p.key){
+    /* tap again = restore the exact pre-preset snapshot (params + queue) */
+    if(ST.presetSnap){
+      state.st.t1=ST.presetSnap.t1; state.st.t2=ST.presetSnap.t2;
+      state.st.v=ST.presetSnap.v; state.st.pend=ST.presetSnap.pend;
+    }
+    state.st.preset=null; ST.presetSnap=null;
+  } else {
+    ST.presetSnap=stSnapshot();
+    if(p.t1) for(var k in p.t1) state.st.t1[k]=p.t1[k];
+    if(p.t2) for(var k2 in p.t2) state.st.t2[k2]=p.t2[k2];
+    if(p.sv) for(var k3 in p.sv) state.st.v[k3]=p.sv[k3];
+    state.st.preset=p.key;
+    (p.feats||[]).forEach(stSync);
+  }
+  stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
+  stT1Changed(); stT2Changed();
+  saveState();
+}
+function stPresetT1Full(p){ var o=stDefT1(); if(p.t1) for(var k in p.t1) o[k]=p.t1[k]; return o; }
+function stRenderThumbs(){
+  if(ST.srcBitmap){
+    var tw=76,th=96,c=document.createElement("canvas"); c.width=tw; c.height=th;
+    var cx=c.getContext("2d");
+    var sw=ST.srcW,sh=ST.srcH,tr=tw/th,cw,ch;
+    if(sw/sh>tr){ ch=sh; cw=sh*tr; } else { cw=sw; ch=sw/tr; }
+    cx.drawImage(ST.srcBitmap,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,tw,th);
+    ST.thumbCanvas=c;
+  } else ST.thumbCanvas=null;
+  stRenderPresetCards();
+}
+function stRenderPresetCards(){
+  [["muPresetRow",ST_PRESETS_MU],["evPresetRow",ST_PRESETS_EV]].forEach(function(pair){
+    var host=$(pair[0]); if(!host) return;
+    host.innerHTML="";
+    pair[1].forEach(function(p){
+      var b=el("button","pcard"+(state.st.preset===p.key?" on":""));
+      var cv=document.createElement("canvas"); cv.width=76; cv.height=96;
+      var cx=cv.getContext("2d");
+      if(ST.thumbCanvas){
+        /* live self-photo thumbnail through the preset's own Tier-1 filter (+ smoothing hint) */
+        cx.filter=stCssFilter(stPresetT1Full(p));
+        cx.drawImage(ST.thumbCanvas,0,0);
+        cx.filter="none";
+        if(p.t2&&p.t2.smooth>=30){ cx.globalAlpha=0.4; cx.filter="blur(0.6px)"; cx.drawImage(ST.thumbCanvas,0,0); cx.filter="none"; cx.globalAlpha=1; }
+      } else {
+        var gd=cx.createLinearGradient(0,0,0,96);
+        gd.addColorStop(0,"#2b2312"); gd.addColorStop(1,"#131826");
+        cx.fillStyle=gd; cx.fillRect(0,0,76,96);
+        cx.fillStyle="rgba(217,164,65,.75)"; cx.font="24px serif"; cx.textAlign="center"; cx.fillText("✦",38,54);
+      }
+      b.appendChild(cv);
+      b.appendChild(el("span",null,L9({my:p.my,en:p.en})));
+      b.title=L9({my:p.my,en:p.en});
+      b.onclick=function(){ stApplyPreset(p); };
+      host.appendChild(b);
+    });
+  });
+}
+
+/* ---- PHOTO picker (Before slot, proxies the shared #filePick, slot 0) ---- */
+function renderStPicker(){
+  if(!state.st) return;
+  var host=$("stPicker"); if(!host) return;
+  host.innerHTML="";
+  var ref=state.refs[0];
+  var d=el("div","ref"+(ref?" filled":""));
+  if(ref){
+    var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
+    var x=el("button","x","✕");
+    x.setAttribute("aria-label",t("lb_remove_image"));
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.imgRoles=null; renderRefs(); };
+    d.appendChild(x);
+  } else {
+    var a=el("button","add","+");
+    a.title=RS_NEED_PHOTO;
+    a.onclick=function(){ state.pickSlot=0; $("filePick").click(); };
+    d.appendChild(a);
+  }
+  d.appendChild(el("span","tag",L9({my:"မူရင်း",en:"Before"})));
+  host.appendChild(d);
+  stSyncFromRef();
+}
+
+/* ---- Before (hold) + Reset ---- */
+(function(){
+  var b=$("stHold"); if(!b) return;
+  function down(e){
+    if(!ST.srcBitmap) return;
+    ST.holding=true;
+    try{ b.setPointerCapture(e.pointerId); }catch(err){}
+    var c=$("stCanvas"); c.style.filter="";
+    var cc=c.getContext("2d");
+    cc.clearRect(0,0,c.width,c.height);
+    cc.drawImage(ST.srcBitmap,0,0,c.width,c.height);
+  }
+  function up(){
+    if(!ST.holding) return;
+    ST.holding=false;
+    stRenderSettle(); stApplyDragFilter(); $("stCanvas").style.filter="";
+    stRenderSettle();
+  }
+  b.addEventListener("pointerdown",down);
+  b.addEventListener("pointerup",up);
+  b.addEventListener("pointercancel",up);
+})();
+$("stReset").onclick=function(){
+  state.st.t1=stDefT1(); state.st.t2=stDefT2();
+  state.st.pend=[]; state.st.preset=null; state.st.v={};
+  ST.presetSnap=null; ST.lutKey="";
+  stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
+  if(ST.srcBitmap){ stApplyDragFilter(); stRenderSettle(); }
+  saveState();
+  toast(L9({my:"Studio ချိန်ညှိချက်အားလုံး ပြန်စလိုက်ပြီ ✓",en:"All Studio adjustments reset ✓"}),"ok");
+};
+
+/* ---- Tier-2 states also emit proper AI fragments at GENERATE (§1.3) ---- */
+function stT2Fragments(){
+  var b=state.st.t2, L=[];
+  if(b.smooth) L.push(stLine("smooth",b.smooth));
+  if(b.denoise) L.push("Reduce fine noise and chroma speckle at "+b.denoise+"%.");
+  if(b.even||b.deyellow) L.push("Even out patchy skin tone"+(b.even?" at "+b.even+"%":"")+(b.deyellow?" and remove yellow/sallow cast at "+b.deyellow+"%":"")+".");
+  if(b.white) L.push(stLine("tone",b.white));
+  if(b.rosy>0) L.push("Add a rosy healthy flush to the cheeks at "+b.rosy+"%.");
+  else if(b.rosy<0) L.push("Reduce excess redness in the skin at "+(-b.rosy)+"%.");
+  if(b.deshine) L.push("Remove oily shine from the forehead, nose and cheeks at "+b.deshine+"%.");
+  if(b.gloss>0) L.push("Add a healthy glossy sheen to the skin at "+b.gloss+"%.");
+  else if(b.gloss<0) L.push("Matte down glossy skin highlights at "+(-b.gloss)+"%.");
+  if(b.teeth) L.push(stLine("teeth",b.teeth));
+  if(b.eyeb) L.push(stLine("eyeWhite",b.eyeb)+" Brighten the eyes naturally at "+b.eyeb+"%.");
+  if(b.radiance) L.push("Add luminous radiance to the skin at "+b.radiance+"%.");
+  if(b.finish&&b.finishV) L.push("Give the skin a "+(b.finish==="cream"?"cream":b.finish)+" finish at "+b.finishV+"%, natural micro-texture preserved.");
+  return L;
+}
+function stComposePrompt(){
+  var frags=stT2Fragments();
+  state.st.pend.forEach(function(e){ var f=stFragOf(e); if(f) frags.push(f); });
+  return "PORTRAIT RETOUCH TASK on IMAGE 1 ("+stTargetPhrase()+").\n"+
+    "Apply ONLY the following edits at the stated strengths. Keep identity, pose,\n"+
+    "clothing and background unchanged unless an edit explicitly says otherwise:\n"+
+    frags.map(function(f){ return "- "+f; }).join("\n")+
+    "\nPhoto-realistic professional result. Do not beautify beyond the listed edits.";
+}
+
+/* ---- result compare (.cmp pattern) ---- */
+function stCmpLayout(){
+  var pct=parseInt($("stCmpRange").value,10);
+  $("stCmpTop").style.width=pct+"%";
+  $("stCmpLine").style.left=pct+"%";
+  $("stCmpBefore").style.width=$("stCmp").clientWidth+"px";
+}
+function stShowResult(out){
+  if(!out) return;
+  $("stResultBox").className="card result-box on";
+  var src="data:"+out.mime+";base64,"+out.b64;
+  $("stCmpAfter").src=src;
+  $("btnStDl").href=src;
+  var before=ST.orig||state.st.img;
+  if(before) $("stCmpBefore").src="data:"+before.mime+";base64,"+before.b64;
+  stCmpLayout();
+  $("stResultBox").scrollIntoView({behavior:"smooth"});
+}
+$("stCmpRange").oninput=stCmpLayout;
+(function(){
+  var box=$("stCmp"), dragging=false;
+  function apply(clientX){
+    var r=box.getBoundingClientRect();
+    var pct=Math.round(Math.max(0,Math.min(100,((clientX-r.left)/r.width)*100)));
+    $("stCmpRange").value=pct; stCmpLayout();
+  }
+  box.addEventListener("pointerdown",function(e){ dragging=true; try{ box.setPointerCapture(e.pointerId); }catch(err){} apply(e.clientX); });
+  box.addEventListener("pointermove",function(e){ if(dragging) apply(e.clientX); });
+  box.addEventListener("pointerup",function(){ dragging=false; });
+  box.addEventListener("pointercancel",function(){ dragging=false; });
+})();
+$("btnStToRef").onclick=function(){
+  var out=state.hist[state.histSel]||state.result; if(!out) return;
+  stLoadImage("data:"+out.mime+";base64,"+out.b64);
+  setSt("stStatus",L9({my:"ရလဒ်ကို မူရင်းပုံအဖြစ် ထည့်ပြီး ✓ — ဆက်ပြင်လို့ရပြီ",en:"Result set as the working photo ✓ — keep editing"}),"ok");
+};
+
+/* ---- GENERATE: local commit (zero network) or Tier-3 AI via the shared dispatcher ---- */
+var stBusy=false;
+function stSetBusy(b,label){
+  stBusy=b; ST.busy=b;
+  var btn=$("btnStGen"); if(btn) btn.disabled=b;
+  var sp=$("stSpin"); if(sp){ sp.className="spin"+(b?" on":""); if(label) sp.textContent=label; }
+  document.querySelectorAll("#muPresetRow .pcard, #evPresetRow .pcard").forEach(function(c){ c.disabled=b; });
+}
+$("btnStGen").onclick=async function(){
+  if(stBusy) return;
+  if(!ST.srcBitmap){ setSt("stStatus",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
+  var hasPend=state.st.pend.length>0;
+  if(!hasPend){
+    if(!stIsDirty()){
+      setSt("stStatus",L9({my:"ချိန်ညှိချက် တစ်ခုလောက် အရင်ပြင်ပါ",en:"Adjust something first"}),"err");
+      return;
+    }
+    /* local commit — the canvas pipeline at original resolution, no network at all */
+    stSetBusy(true,L9({my:"Render လုပ်နေသည်…",en:"Rendering…"}));
+    await new Promise(function(r){ setTimeout(r,30); });
+    try{
+      var url=stBake();
+      var m=/^data:([^;]+);base64,(.*)$/.exec(url);
+      var out={mime:m[1],b64:m[2]};
+      state.hist.unshift(out); while(state.hist.length>8) state.hist.pop();
+      state.result=out; state.histSel=0;
+      galleryAdd(out,"studio local edit");
+      stShowResult(out);
+      setSt("stStatus",t("st_done"),"ok");
+    }catch(e){ setSt("stStatus",friendlyError(e),"err"); }
+    stSetBusy(false);
+    return;
+  }
+  /* Tier-3: bake the live-preview edits into the photo, then ride the shared dispatcher */
+  stSetBusy(true,t("spin_gen"));
+  var savedR0=state.refs[0], savedR1=state.refs[1], savedR2=state.refs[2];
+  var savedPrompt=$("prompt").value;
+  var beforeFirst=state.hist[0];
+  try{
+    var baked=stBake();
+    var mb=/^data:([^;]+);base64,(.*)$/.exec(baked);
+    state.refs[0]={mime:mb[1],b64:mb[2],label:"studio"};
+    state.refs[1]=null; state.refs[2]=null; /* Studio is single-photo — leftover refs must not ride along */
+    state.imgRoles=null;
+    $("prompt").value=stComposePrompt();
+    await $("btnGen").onclick();
+  }catch(e){ setSt("stStatus",friendlyError(e),"err"); }
+  finally{
+    state.refs[0]=ST.orig?{mime:ST.orig.mime,b64:ST.orig.b64,label:"studio"}:savedR0;
+    state.refs[1]=savedR1; state.refs[2]=savedR2;
+    $("prompt").value=savedPrompt;
+  }
+  var srcSt=$("stGen");
+  setSt("stStatus", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
+  var ok=state.hist[0]!==beforeFirst;
+  if(ok){
+    /* optional HD Finish through the already-shipped RunningHub upscale adapter */
+    if(svGet("st_hd",false) && rhIsConfigured("upscale-pro") && state.rhKey){
+      try{
+        stSetBusy(true,"HD Finish…");
+        var res=state.hist[0];
+        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], $("selSize").value, function(){});
+        if(outs && outs[0]){
+          state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
+          state.result=outs[0]; state.histSel=0;
+          galleryAdd(outs[0],"studio hd finish");
+        }
+      }catch(e2){ toast("HD Finish: "+friendlyError(e2),"err"); }
+    }
+    stShowResult(state.hist[0]);
+  }
+  stSetBusy(false);
+};
+
+/* ---- static labels + statline + first render ---- */
+$("stPhotoNote").textContent=L9({my:"ပုံတစ်ပုံတင်ပြီး slider ရွှေ့ရင် ပုံပေါ်မှာ ချက်ချင်းမြင်ရမယ် — AI လိုတဲ့ ပြင်ဆင်ချက်တွေက GENERATE တစ်ချက်တည်းနဲ့ အကုန်ထွက်မယ်",en:"Add one photo — sliders preview instantly on it; AI-only edits run together in a single GENERATE"});
+$("muNote").textContent=L9({my:"Feature ၅၀ · One-tap look များ + တိုက်ရိုက် Live slider",en:"50 features · one-tap looks + live sliders"});
+$("evNote").textContent=L9({my:"Pro feature ၄၂ · Studio အဆင့် ရီတပ်ချ်",en:"42 pro features · studio-grade retouch"});
+$("stHold").textContent="◉ "+L9({my:"မူရင်း (ဖိထား)",en:"Before (hold)"});
+$("stReset").textContent="↺ Reset";
+$("stResultH2").textContent=L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After"});
+$("btnStToRef").textContent=L9({my:"↺ ဆက်ပြင်မယ်",en:"↺ Keep editing"});
+(function(){
+  var hd=$("stHd"); if(!hd) return;
+  if(!rhIsConfigured("upscale-pro")){ hd.style.display="none"; return; }
+  hd.style.display="";
+  function refresh(){ hd.className="chip"+(svGet("st_hd",false)?" on":""); }
+  hd.textContent="HD Finish";
+  hd.onclick=function(){ svSet("st_hd",!svGet("st_hd",false)); refresh(); };
+  ST.refreshFns.push(refresh); refresh();
+})();
+var _smc=$("stMeituCount"); if(_smc) _smc.textContent=String(ST_MEITU_COUNT);
+var _sec=$("stEvotoCount"); if(_sec) _sec.textContent=String(ST_EVOTO_COUNT);
+var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
+stRecomputeGhosts();
+stRefreshUI();
+stRenderPend();
+renderStPicker();
+stRenderThumbs();
+
 /* ---------- visual library (366) ---------- */
 var lib = { filter: "featured", search: "", shown: 0, page: 24, list: [], sel: null };
 function libFiltered(){
@@ -4056,157 +5745,39 @@ $("libMore").onclick=function(){ renderLibGrid(false); };
 renderLibFilters();
 renderLibGrid(true);
 
-/* ---------- add-ons (chains / cleanup toggles / rmix toggles / camera) ---------- */
-function toggleChips(host, items, stateObj, getKey, getLabel, getTitle){
-  var chips=el("div","chips");
-  items.forEach(function(it){
-    var k=getKey(it);
-    var c=el("button","chip"+(stateObj[k]?" on":""), getLabel(it));
-    if(getTitle) c.title=getTitle(it)||"";
-    c.onclick=function(){
-      stateObj[k]=!stateObj[k];
-      c.className="chip"+(stateObj[k]?" on":"");
-      renderAddonSummary();
-    };
-    chips.appendChild(c);
-  });
-  host.appendChild(chips);
-}
-function cleanupChips(host, items, stateObj, getKey, getLabel, getTitle){
-  var chips=el("div","chips");
-  items.forEach(function(it){
-    var k=getKey(it);
-    var c=el("button","chip"+(stateObj[k]?" on":""), getLabel(it));
-    if(getTitle) c.title=getTitle(it)||"";
-    c.onclick=function(){
-      if(k==="full"){
-        var turningOn=!stateObj.full;
-        items.forEach(function(x){ stateObj[getKey(x)]=false; });
-        stateObj.full=turningOn;
-      } else {
-        stateObj[k]=!stateObj[k];
-        if(stateObj[k]) stateObj.full=false;
-      }
-      chips.querySelectorAll(".chip").forEach(function(x,idx){ x.className="chip"+(stateObj[getKey(items[idx])]?" on":""); });
-      renderAddonSummary();
-    };
-    chips.appendChild(c);
-  });
-  host.appendChild(chips);
-}
-function pickChips(host, items, obj, prop, descFn){
-  var chips=el("div","chips");
-  items.forEach(function(it){
-    var label=it[0], val=it[1];
-    var c=el("button","chip"+(obj[prop]===val?" on":""), label==="off"?"–":label);
-    if (descFn && label!=="off") { var d=descFn(it); if(d) c.title=d; }
-    c.onclick=function(){
-      obj[prop]=val;
-      chips.querySelectorAll(".chip").forEach(function(x,idx){ x.className="chip"+(items[idx][1]===val?" on":""); });
-      renderAddonSummary();
-    };
-    chips.appendChild(c);
-  });
-  host.appendChild(chips);
-}
-(function buildAddons(){
-  /* each optional add-on category used to be a flat subh+chips wall,
-     always fully expanded — 9 stacked sections on one page, most of them
-     skippable per the camera intro text below. Collapsing each into its
-     own closed-by-default .grp accordion (same component Workflow/Scene
-     Builder/Retouch Pro already use) cuts the default height dramatically
-     while keeping every option one tap away. */
-  var host=$("addonHost");
 
-  var gc=grp(t("sub_chains"), D.chains.length+t("unit"), false);
-  toggleChips(gc.b, D.chains, state.chains, function(c){return c.key;}, function(c){return c.label;}, function(c){return c.text;});
-  host.appendChild(gc.g);
-
-  var gcl=grp(t("sub_cleanup"), D.cleanups.length+t("unit"), false);
-  cleanupChips(gcl.b, D.cleanups, state.clean, function(c){return c.key;}, function(c){return c.label||c.key;}, function(c){return c.text.slice(0,120);});
-  host.appendChild(gcl.g);
-
-  var gm=grp(t("sub_mix"), D.rmix.length+t("unit"), false);
-  toggleChips(gm.b, D.rmix, state.rmix, function(m){return m.key;}, function(m){return m.label||m.key;}, function(m){return m.text;});
-  host.appendChild(gm.g);
-
-  var gcam=grp("📷 CAMERA PRO", "5"+t("unit"), false);
-  gcam.b.appendChild(el("div","mut",L9({my:"Camera Body → Bokeh အထိက Optional — ဓာတ်ပုံ style ကို ပိုပီပီပြင်ပြင်ဖြစ်စေချင်ရင်ပဲ ရွေးပါ၊ နှိပ်ပြီးကြည့်ရင် ရှင်းလင်းချက် ပေါ်လာမယ် — မသေချာရင် ချန်ထားလည်း ရတယ်",en:"Camera Body → Bokeh are all optional - pick them only if you want a specific photographic look; hover/tap a chip to see what it does, or skip this whole section entirely",shn:"Camera Body → Bokeh ပဵၼ် optional တင်းသဵင်ႈ — ဢဝ်ၵူၺ်းယဝ်ႉ ႁႂ်ႈလႆႈ style ၶိုၵ်ႉၶႅမ်ႉ၊ ဢမ်ႇမၢၼ်ႇၵေႃႈ ဝၢင်းဝႆႉလႆႈ",kac:"Camera Body → Bokeh yawng gaw optional re - style ra ai hte sha lata u, n chye yang ndai part hpe skip mai ai",th:"Camera Body → Bokeh ทั้งหมดเป็นตัวเลือกเสริม — เลือกเฉพาะเมื่อต้องการลุคเฉพาะ แตะดูคำอธิบายได้ หรือข้ามได้เลยถ้าไม่แน่ใจ",zh:"从 Camera Body 到 Bokeh 全部为可选项 — 只有想要特定摄影风格时才选，点按可查看说明，不确定可整段跳过",vi:"Camera Body → Bokeh đều là tùy chọn - chỉ chọn nếu muốn một phong cách nhiếp ảnh cụ thể, chạm để xem giải thích, hoặc bỏ qua nếu không chắc",id:"Camera Body → Bokeh semuanya opsional - pilih hanya jika ingin gaya foto tertentu, ketuk untuk melihat penjelasan, atau lewati jika tidak yakin",ms:"Camera Body → Bokeh semuanya pilihan - pilih hanya jika mahukan gaya foto tertentu, ketik untuk lihat penjelasan, atau langkau jika tidak pasti"})));
-  gcam.b.appendChild(el("div","subh","CAMERA BODY"));
-  pickChips(gcam.b, D.camera.bodies, state.cam, "body", function(it){ return it[1]; });
-  gcam.b.appendChild(el("div","subh","LENS (MM)"));
-  pickChips(gcam.b, D.camera.mm, state.cam, "mm", function(it){ return it[0]+"mm — "+(D.camera.mmTxt[it[0]]||""); });
-  gcam.b.appendChild(el("div","subh","APERTURE"));
-  pickChips(gcam.b, D.camera.f, state.cam, "f", function(it){ return it[0]+" — "+camFTxt(it[1]); });
-  gcam.b.appendChild(el("div","subh","FILM LOOK"));
-  pickChips(gcam.b, D.camera.films, state.cam, "film", function(it){ return it[1]; });
-  gcam.b.appendChild(el("div","subh","BOKEH"));
-  pickChips(gcam.b, D.camera.bokehs, state.cam, "bokeh", function(it){ return it[1]; });
-  host.appendChild(gcam.g);
-})();
-
-function camFTxt(f){
-  if(f<=1.4) return "razor-thin creamy depth of field, subject isolated";
-  if(f<=2.8) return "shallow depth of field with soft background";
-  if(f<=5.6) return "moderate depth of field, gently soft background";
-  if(f<=8) return "balanced depth, most of the scene in focus";
-  return "deep sharp focus front to back";
-}
-function buildCameraPrompt(){
-  var L=[];
-  if(state.cam.body) L.push("shot on "+state.cam.body);
-  if(state.cam.mm) L.push(state.cam.mm+"mm prime lens ("+(D.camera.mmTxt[state.cam.mm]||"")+")");
-  if(state.cam.f) L.push("aperture f/"+state.cam.f+" ("+camFTxt(state.cam.f)+(state.cam.bokeh?", "+state.cam.bokeh:"")+")");
-  else if(state.cam.bokeh) L.push(state.cam.bokeh);
-  if(state.cam.film) L.push(state.cam.film);
-  if(!L.length) return "";
-  return D.wrap.cameraPrefix + L.join(", ") + D.wrap.cameraSuffix;
-}
-function buildChains(){
-  var L=[];
-  D.chains.forEach(function(c){ if(state.chains[c.key]) L.push("- "+c.label+": "+c.text); });
-  if(!L.length) return "";
-  return D.wrap.chainsHeader+"\n"+L.join("\n");
-}
-function buildCleanup(){
-  var full=D.cleanups.find(function(c){return c.key==="full";});
-  if(full && state.clean.full) return full.text;
-  var L=[];
-  D.cleanups.forEach(function(c){ if(c.key!=="full" && state.clean[c.key]) L.push(c.text); });
-  return L.join("\n");
-}
-function buildMix(){
-  var L=[];
-  D.rmix.forEach(function(m){ if(state.rmix[m.key]) L.push("- "+m.text); });
-  if(!L.length) return "";
-  return D.wrap.rmixHeader+"\n"+L.join("\n")+"\n"+D.wrap.rmixFooter;
-}
+/* The Studio Add-ons (Style Chains / Cleanup / Replace Mix / Camera Pro) left
+   with v4.23.0's Meitu/Evoto rebuild. These four builders keep their exact
+   signatures because the shared $("btnGen") dispatcher still calls them on
+   every generate — they now simply contribute nothing. The state they used
+   to read (chains/clean/rmix/cam) is gone from the state object and is no
+   longer persisted, so stale selections from an old build can't silently
+   ride into new prompts either. */
+function buildCameraPrompt(){ return ""; }
+function buildChains(){ return ""; }
+function buildCleanup(){ return ""; }
+function buildMix(){ return ""; }
 function buildRetouch(){
   var L=[];
   D.retouch.sliders.forEach(function(s){ if(state.rt[s.key]) L.push(rtLine(s)); });
   if(!L.length) return "";
   return (D.retouch.header||"PROFESSIONAL RETOUCH INSTRUCTIONS (studio quality, photorealistic):")+"\n"+L.join("\n");
 }
+/* #addonSummary died with the Studio Add-ons card — only the pgCreate mirror
+   (#addonSummaryCreate) remains, summarizing the one add-on that still blends
+   into every Generate: the Retouch Pro slider selections (pgRetouch). */
 function renderAddonSummary(){
-  var bits=[];
-  var n=D.chains.filter(function(c){return state.chains[c.key];}).length;
-  if(n) bits.push("Chains "+n);
-  n=D.cleanups.filter(function(c){return state.clean[c.key];}).length;
-  if(n) bits.push("Cleanup "+n);
-  n=D.rmix.filter(function(m){return state.rmix[m.key];}).length;
-  if(n) bits.push("Mix "+n);
-  if(buildCameraPrompt()) bits.push("Camera ✓");
-  n=D.retouch.sliders.filter(function(s){return state.rt[s.key];}).length;
-  if(n) bits.push("Retouch "+n+" ("+state.rtStrength+"%)");
-  var html = bits.length ? t("addon_on").replace("{B}","<b>"+bits.join(" · ")+"</b>") : t("addon_off");
-  $("addonSummary").innerHTML = html;
+  var n=D.retouch.sliders.filter(function(s){return state.rt[s.key];}).length;
+  var html = n
+    ? t("addon_on").replace("{B}","<b>Retouch "+n+" ("+state.rtStrength+"%)</b>")
+    : t("addon_off");
   var acHost=$("addonSummaryCreate");
-  if(acHost) acHost.innerHTML = html + (bits.length ? " · <u>"+L9({my:"Studio မှာ ပြင်ရန်",en:"edit in Studio",shn:"မႄးတီႈ Studio",kac:"Studio kaw galaw",th:"แก้ไขใน Studio",zh:"在Studio中编辑",vi:"chỉnh sửa trong Studio",id:"edit di Studio",ms:"edit dalam Studio"})+"</u>" : "");
+  if(acHost) acHost.innerHTML = html + (n ? " · <u>"+L9({my:"Retouch မှာ ပြင်ရန်",en:"edit in Retouch",shn:"မႄးတီႈ Retouch",kac:"Retouch kaw galaw",th:"แก้ไขใน Retouch",zh:"在Retouch中编辑",vi:"chỉnh sửa trong Retouch",id:"edit di Retouch",ms:"edit dalam Retouch"})+"</u>" : "");
   saveState();
 }
 renderAddonSummary();
 var _acHost=$("addonSummaryCreate");
-if(_acHost) _acHost.onclick=function(){ switchPage("pgStudio"); };
+if(_acHost) _acHost.onclick=function(){ switchPage("pgRetouch"); };
 
 /* restore last prompt + keep saving as the user types */
 if (state.savedPrompt && !$("prompt").value) $("prompt").value = state.savedPrompt;
@@ -4224,7 +5795,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.22.2";
+var APP_VER="4.23.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

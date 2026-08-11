@@ -136,13 +136,16 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   });
   report("sliders tab blocks generate with nothing selected", /[Ss]lider/.test(sliderGuardResult.statusText), JSON.stringify(sliderGuardResult));
 
-  // 5) sliders tab + Studio's Retouch Pro group stay in sync, and generating carries the retouch block
+  // 5) a slider chip toggles the shared state.rt entry (the single source of
+  // truth every generate reads), and generating carries the retouch block.
+  // (#rtChips — the old Studio mirror host — left with v4.23.0's Meitu/Evoto
+  // rebuild, so the state entry itself is now the cross-page contract.)
   const sliderSyncResult = await page.evaluate(async () => {
     rsSetMode("sliders");
     const rsChip = document.querySelectorAll("#rsChips .chip")[0];
-    const label = rsChip.textContent;
     rsChip.click(); // turn on the first slider from the Sliders tab
-    const studioHasSameOn = Array.from(document.querySelectorAll("#rtChips .chip")).some(c => c.textContent === label && c.className.indexOf("on") >= 0);
+    const firstKey = D.retouch.sliders.filter(s => state.rt[s.key]).map(s => s.key)[0];
+    const stateHasIt = !!firstKey && state.rt[firstKey] === 1;
     window.__reqs = []; window.__callN = 0;
     document.getElementById("btnRsGen").onclick();
     for (let w = 0; w < 100 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 30));
@@ -152,9 +155,10 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     for (let w = 0; w < 100 && document.getElementById("btnRsGen").disabled; w++) await new Promise(r => setTimeout(r, 30));
     // clean up: turn the slider back off so later checks start fresh
     document.querySelectorAll("#rsChips .chip")[0].click();
-    return { studioHasSameOn, hasRetouchBlock: /RETOUCH/i.test(txt) };
+    const stateCleared = !!firstKey && !state.rt[firstKey];
+    return { stateHasIt, stateCleared, hasRetouchBlock: /RETOUCH/i.test(txt) };
   });
-  report("Sliders tab syncs with Studio's Retouch Pro group and its selection reaches the prompt", sliderSyncResult.studioHasSameOn && sliderSyncResult.hasRetouchBlock, JSON.stringify(sliderSyncResult));
+  report("a slider chip toggles shared state.rt and its selection reaches the prompt as a retouch block", sliderSyncResult.stateHasIt && sliderSyncResult.stateCleared && sliderSyncResult.hasRetouchBlock, JSON.stringify(sliderSyncResult));
 
   // 6) a Quick Bundle chip turns on every slider in it and updates the count
   const bundleResult = await page.evaluate(() => {

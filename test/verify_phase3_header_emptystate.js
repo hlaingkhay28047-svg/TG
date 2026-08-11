@@ -31,17 +31,24 @@ const PORT = process.env.PORT || 8931;
   console.log("h2 elements still containing an inline-span subtitle:", badHeaders);
   console.log(badHeaders === 0 ? "PASS (no inline-span subtitles left in any h2, aside from the intentional (optional) badges)" : "FAIL (inline-span subtitle regression)");
 
-  // --- Studio Tools header: title + separate .mut subtitle ---
+  // --- Studio headers (v4.23.0 Meitu/Evoto rebuild): each card keeps the
+  // h2-title + separate .mut-subtitle pattern ---
   await page.evaluate(() => switchPage("pgStudio"));
   await page.waitForTimeout(200);
-  const studio = await page.evaluate(() => {
-    const h2 = document.querySelector("#pgStudio h2");
-    const sub = h2 ? h2.nextElementSibling : null;
-    return { h2Text: h2 && h2.textContent.trim(), subIsMut: sub && sub.classList.contains("mut"), subText: sub && sub.textContent.trim() };
-  });
-  console.log("Studio header:", JSON.stringify(studio));
-  const studioOk = studio.h2Text === "🛠 STUDIO TOOLS" && studio.subIsMut && studio.subText.length > 0;
-  console.log(studioOk ? "PASS (Studio header uses h2 + separate .mut subtitle)" : "FAIL (Studio header structure)");
+  const studio = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#pgStudio .card > h2")).slice(0, 3).map(h2 => {
+      const sub = h2.nextElementSibling;
+      return {
+        h2Text: h2.textContent.trim(),
+        subIsMut: !!(sub && sub.classList.contains("mut")),
+        subFilled: !!(sub && sub.textContent.trim().length > 0)
+      };
+    }));
+  console.log("Studio headers:", JSON.stringify(studio));
+  const wantH2 = ["📸 PHOTO", "💄 MEITU STUDIO", "🎯 EVOTO PRO"];
+  const studioOk = studio.length === 3 &&
+    studio.every((s, i) => s.h2Text === wantH2[i] && s.subIsMut && s.subFilled);
+  console.log(studioOk ? "PASS (PHOTO / MEITU STUDIO / EVOTO PRO headers each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
 
   // --- Gallery empty-state: shown by default (icon + message + CTA), the reference pattern ---
   await page.evaluate(() => switchPage("pgGallery"));
