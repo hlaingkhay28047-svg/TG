@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>HNK Create Studio — မြန်မာ Studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို | AI Photo Studio for Myanmar</title>
-<meta name="description" content="Portrait · Wedding · Graduation — ဖုန်းထဲမှာ Web Studio (v4.27.0 · install မလို · အခမဲ့)၊ Photoshop ထဲမှာ Pro Panel (v6.9.0 · 1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။ AI photo studio for Myanmar wedding &amp; portrait studios — free web app plus a professional Photoshop panel.">
+<meta name="description" content="Portrait · Wedding · Graduation — ဖုန်းထဲမှာ Web Studio (v4.27.1 · install မလို · အခမဲ့)၊ Photoshop ထဲမှာ Pro Panel (v6.9.0 · 1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။ AI photo studio for Myanmar wedding &amp; portrait studios — free web app plus a professional Photoshop panel.">
 <link rel="canonical" href="https://hlaingkhay28047-svg.github.io/TG/">
 <link rel="icon" href="assets/site/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="assets/site/apple-touch-icon.png">
@@ -13,18 +13,18 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="HNK Create Studio">
 <meta property="og:title" content="HNK Create Studio — မြန်မာ Studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို">
-<meta property="og:description" content="ဖုန်းထဲမှာ Web Studio v4.27.0 (အခမဲ့ · install မလို)၊ Photoshop ထဲမှာ Pro Panel v6.9.0 (1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။">
+<meta property="og:description" content="ဖုန်းထဲမှာ Web Studio v4.27.1 (အခမဲ့ · install မလို)၊ Photoshop ထဲမှာ Pro Panel v6.9.0 (1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။">
 <meta property="og:url" content="https://hlaingkhay28047-svg.github.io/TG/">
 <meta property="og:image" content="https://hlaingkhay28047-svg.github.io/TG/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HNK Create Studio — AI ဓာတ်ပုံစတူဒီယို">
-<meta name="twitter:description" content="Web Studio v4.27.0 (အခမဲ့) + Photoshop Panel v6.9.0 — မြန်မာ wedding/portrait studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို။">
+<meta name="twitter:description" content="Web Studio v4.27.1 (အခမဲ့) + Photoshop Panel v6.9.0 — မြန်မာ wedding/portrait studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို။">
 <meta name="twitter:image" content="https://hlaingkhay28047-svg.github.io/TG/og-image.jpg">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
-{"@type":"WebApplication","name":"HNK Web Studio","applicationCategory":"DesignApplication","operatingSystem":"Any (browser, PWA)","softwareVersion":"4.27.0","inLanguage":["my","en","shn","kac","th","zh","vi","id","ms"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://hlaingkhay28047-svg.github.io/TG/app/"},
+{"@type":"WebApplication","name":"HNK Web Studio","applicationCategory":"DesignApplication","operatingSystem":"Any (browser, PWA)","softwareVersion":"4.27.1","inLanguage":["my","en","shn","kac","th","zh","vi","id","ms"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://hlaingkhay28047-svg.github.io/TG/app/"},
 {"@type":"SoftwareApplication","name":"HNK Photoshop Ai Panel","applicationCategory":"DesignApplication","operatingSystem":"Windows, macOS (Adobe Photoshop 24.2+)","softwareVersion":"6.9.0","downloadUrl":"https://hlaingkhay28047-svg.github.io/TG/download/HNK_Ai_Panel_v6.1.1.ccx","url":"https://hlaingkhay28047-svg.github.io/TG/#panel"}]}
 </script>
 <style>
@@ -82,14 +82,13 @@ h1,h2,h3{font-weight:700;line-height:1.6}
    Mobile: image on top (face fully visible, nothing over it), text below on black.
    Desktop (>=768px): classic overlay — text left, face right, diagonal scrim. */
 .hero{position:relative;display:flex;flex-direction:column;overflow:hidden}
-.hero>img{display:block;width:100%;height:54svh;min-height:300px;object-fit:cover;object-position:47% 30%}
-.hero:after{content:"";position:absolute;left:0;right:0;top:calc(54svh - 90px);height:90px;z-index:1;pointer-events:none;
-  background:linear-gradient(180deg,rgba(0,0,0,0) 0%,var(--ink) 100%)}
+/* mobile: the FULL artwork, untouched — natural 2:1 aspect, zero crop; text below on black */
+.hero>img{display:block;width:100%;height:auto}
 .hero .wrap{position:relative;z-index:2;padding-top:var(--sp-4);padding-bottom:var(--sp-6);width:100%}
 @media (min-width:768px){
   .hero{min-height:88svh;justify-content:flex-end}
-  .hero>img{position:absolute;inset:0;height:100%;min-height:0;object-position:50% 24%;z-index:0}
-  .hero:after{inset:0;top:auto;height:100%;
+  .hero>img{position:absolute;inset:0;height:100%;min-height:0;object-fit:cover;object-position:50% 24%;z-index:0}
+  .hero:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
     background:linear-gradient(102deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.6) 38%,rgba(0,0,0,.12) 66%,rgba(0,0,0,0) 100%),
                linear-gradient(180deg,rgba(0,0,0,.06) 0%,rgba(0,0,0,.12) 42%,var(--ink) 100%)}
   .hero .wrap{padding-bottom:var(--sp-7)}
@@ -235,7 +234,7 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
       <a class="btn btn-dim" href="#panel"><svg class="ic ic-s"><use href="#i-download"/></svg>Photoshop Panel ရယူမယ် (27MB)</a>
     </div>
     <div class="badges">
-      <span class="badge"><i></i>Web Studio v4.27.0</span>
+      <span class="badge"><i></i>Web Studio v4.27.1</span>
       <span class="badge"><i></i>Panel v6.9.0</span>
       <span class="badge"><i></i>updated 2026-08-11</span>
     </div>
@@ -271,9 +270,9 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
   <!-- comparison duo -->
   <div class="duo">
     <div class="duo-card">
-      <div class="shot"><img loading="lazy" src="assets/site/shot-home.jpg" alt="HNK Web Studio v4.27.0 — Home စာမျက်နှာ screenshot"></div>
+      <div class="shot"><img loading="lazy" src="assets/site/shot-home.jpg" alt="HNK Web Studio v4.27.1 — Home စာမျက်နှာ screenshot"></div>
       <div class="body">
-        <h3><svg class="ic"><use href="#i-phone"/></svg>Web Studio <span class="en">v4.27.0</span></h3>
+        <h3><svg class="ic"><use href="#i-phone"/></svg>Web Studio <span class="en">v4.27.1</span></h3>
         <ul>
           <li><svg class="ic"><use href="#i-check"/></svg>ဖုန်း/browser မှာတင် — install မလို၊ အခမဲ့</li>
           <li><svg class="ic"><use href="#i-check"/></svg>One-Tap 123 · Visual Library 366 · Smart Workflow 116</li>
@@ -324,7 +323,7 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 <!-- ============ S4 WEB STUDIO DEEP-DIVE ============ -->
 <section id="webstudio">
   <div class="sec-head">
-    <h2><span class="kick lat">WEB STUDIO v4.27.0</span>Browser ထဲမှာတင် — studio တစ်ခုလုံး</h2>
+    <h2><span class="kick lat">WEB STUDIO v4.27.1</span>Browser ထဲမှာတင် — studio တစ်ခုလုံး</h2>
     <div style="display:flex;gap:8px">
       <button class="chev" id="cvPrev" aria-label="နောက်သို့"><svg class="ic ic-r180"><use href="#i-caret"/></svg></button>
       <button class="chev" id="cvNext" aria-label="ရှေ့သို့"><svg class="ic"><use href="#i-caret"/></svg></button>
@@ -441,7 +440,7 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 <footer class="foot">
   <div class="wrap">
     <div class="badges">
-      <span class="badge"><i></i>Web Studio v4.27.0</span>
+      <span class="badge"><i></i>Web Studio v4.27.1</span>
       <span class="badge"><i></i>Panel v6.9.0</span>
       <span class="badge"><i></i>1,064 tests green</span>
       <span class="badge"><i></i>updated 2026-08-11</span>
