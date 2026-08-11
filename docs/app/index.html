@@ -445,21 +445,100 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 /* ---- pgStudio v5: Meitu Studio + Evoto Pro live-preview controls ---- */
 .st-ctl{display:flex;align-items:center;gap:var(--sp-2);min-height:38px;flex-wrap:wrap}
 .st-ctl label{font-size:var(--fs-xs);color:var(--cream);flex:0 0 34%;min-width:96px}
+@media(min-width:390px){.st-ctl label{flex:0 0 40%}}
+.st-ctl.sub label{padding-left:10px;color:var(--muted)}
+.st-ctl.hit{box-shadow:inset 2px 0 0 var(--gold)}
 .rng{flex:1;accent-color:var(--gold);min-height:44px;min-width:110px}
-.st-val{font-size:var(--fs-2xs);color:var(--muted);min-width:34px;text-align:right}
+input.rng::-webkit-slider-thumb{width:22px;height:22px}
+.st-val{font-size:var(--fs-xs);color:var(--muted);min-width:40px;text-align:right;background:none;border:none;padding:0;font-variant-numeric:tabular-nums;cursor:pointer;position:relative}
+/* visual size stays compact; expanded pseudo hit-area meets the 44px touch rule */
+.st-val:after{content:"";position:absolute;left:-10px;right:-10px;top:-15px;bottom:-15px}
+.st-val.on{color:var(--gold);font-weight:700}
 .st-color{width:52px;min-height:38px;padding:2px;margin-top:var(--sp-2)}
+.grp-h .dot{display:none;margin-left:6px;min-width:18px;height:18px;line-height:18px;text-align:center;background:var(--gold);color:#1a1408;border-radius:9px;font-size:var(--fs-2xs);font-weight:800;padding:0 4px}
+.grp-h .dot.on{display:inline-block}
+.grp.hide{display:none}
 .pcard{flex:0 0 76px;cursor:pointer;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel-2);padding:0;overflow:hidden}
 .pcard canvas{width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;display:block}
 .pcard span{display:block;font-size:var(--fs-2xs);text-align:center;padding:3px 2px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard{position:relative}
 .pcard.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
-.prow{display:flex;gap:var(--sp-2);overflow-x:auto;padding-bottom:var(--sp-1)}
+.pcard.on::before{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:#1a1408;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:2}
+.pcard .x{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:12px;z-index:2}
+.prow{display:flex;gap:var(--sp-2);overflow-x:auto;padding-bottom:var(--sp-1);scrollbar-width:none}
+.prow::-webkit-scrollbar{display:none}
+.prowwrap{position:relative}
+.prowwrap:after{content:"";position:absolute;top:0;right:0;bottom:6px;width:26px;background:linear-gradient(to left,var(--panel),transparent);pointer-events:none}
 /* sticky above the fixed bottom tab bar (76px + safe area, same offset the toast uses) */
 .st-genbar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-2) var(--sp-3);margin:var(--sp-4) 0}
 .st-genbar .st-x{margin-left:6px;color:var(--muted)}
-#stStage{margin-top:var(--sp-3)}
-#stCanvas{display:block;max-width:100%;max-height:48vh;margin:0 auto;border-radius:var(--r-md);background:#000}
+#stPendCount{font-size:var(--fs-2xs);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stPendChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-top:4px}
+#stPendChips::-webkit-scrollbar{display:none}
+#stPendChips:empty{display:none}
+#stPendChips .chip{flex:0 0 auto;white-space:nowrap;min-height:36px;padding:4px 10px}
+/* gen-bar diet (MUST #2): compact one-line rows, empty status collapses */
+#stGenBar .gen{width:auto;flex:1;min-width:138px;margin-top:0;padding:9px 12px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stGenBar .row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+#stGenBar .row::-webkit-scrollbar{display:none}
+#stGenBar .row .chip{flex:0 0 auto;font-size:var(--fs-2xs);padding:4px 9px}
+#stGenBar .status{margin-top:4px;font-size:var(--fs-xs);min-height:0}
+#stGenBar .status:empty{display:none}
+.st-genbar{padding:5px var(--sp-3) 6px}
+#stHdNote{font-size:var(--fs-2xs);color:var(--muted);margin-top:2px;display:none}
+#stHdNote.on{display:block}
+@keyframes chipin{from{transform:scale(.85);opacity:0}}
+#stPendChips .chip.newchip{animation:chipin .18s ease}
+#btnStGen.bump{animation:chipin .18s ease}
+@media (prefers-reduced-motion: reduce){#stPendChips .chip.newchip,#btnStGen.bump,#stStage{animation:none!important;transition:none!important}}
+/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
+#stStage{position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:6;background:var(--ink);padding:4px 0 6px;margin-top:var(--sp-3);box-shadow:0 10px 18px -12px rgba(0,0,0,.6)}
+#stCanvas{display:block;max-width:100%;max-height:30vh;margin:0 auto;border-radius:var(--r-md);background:#000;border:1px solid var(--line-soft)}
+@media(min-width:768px){#stCanvas{max-height:36vh}}
+#stStage.mini #stCanvas{max-height:96px;margin:0 0 0 auto;width:auto}
+.st-ov{position:absolute;z-index:3;min-height:38px;padding:4px 10px;font-size:var(--fs-2xs);opacity:.95}
+#stSplit{top:10px;left:6px}
+#stStageMin{top:10px;right:6px}
+#stStageFlip{top:10px;left:50%;transform:translateX(-50%)}
+#stHold{bottom:12px;left:6px}
+#stReset{bottom:12px;right:6px}
+#stStage.mini .st-ov{display:none}
+#stStage.mini #stStageMin{display:inline-flex}
+#stHist{position:absolute;top:54px;right:8px;width:220px;max-width:60%;height:48px;background:var(--panel);opacity:.85;border-radius:6px;z-index:2;display:none;border:1px solid var(--line-soft)}
+#stHist.on{display:block}
+.st-split-line{position:absolute;top:10px;bottom:12px;width:2px;background:var(--gold);z-index:2;display:none}
+.st-split-line::after{content:"⇔";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:var(--gold);color:#1a1408;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+#stStage.split .st-split-line{display:block}
+/* suite navigation (MUST #4/#5) */
+#stJumpBar{position:sticky;top:calc(54px + env(safe-area-inset-top) + var(--stageH,0px));z-index:5;background:var(--ink);padding:2px 0 4px}
+#stJumpTop{display:flex;gap:6px;align-items:center;margin-top:4px}
+#stJumpTop .chips{margin-top:0;flex-wrap:nowrap}
+#stJumpBar .chip{min-height:40px}
+#stStageMin{min-width:44px;justify-content:center}
+#stSearch{flex:1;min-width:80px;min-height:38px;padding:6px 10px;font-size:var(--fs-xs)}
+#stGroupChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+#stGroupChips::-webkit-scrollbar{display:none}
+#stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:4px 11px;font-size:var(--fs-2xs)}
+/* empty-state dropzone (MUST #9) */
+#stPicker .ref.stbig{width:100%;min-height:120px;height:auto}
+#stPicker .ref.stbig .add{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-sm);gap:6px;min-height:120px;color:var(--cream)}
+.st-refx{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2)}
+.st-refx .ref{width:56px;height:56px;flex:0 0 56px}
 #stTarget .chips{margin-top:var(--sp-2)}
-@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 var(--sp-4)}}
+@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}
+#pgStudio .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(64px + env(safe-area-inset-top) + var(--stageH,0px) + 92px)}
+/* single-column: the column wrappers must not become sticky containing blocks —
+   display:contents lifts the stage/jump bar into the full page flow so they stick page-long */
+#stColL,#stColR{display:contents}
+/* desktop two-pane (SHOULD #10) */
+@media(min-width:1024px){
+  #pgStudio .st-cols{display:grid;grid-template-columns:minmax(340px,42%) 1fr;gap:var(--sp-4);align-items:start}
+  #stColL{display:block;position:sticky;top:70px}
+  #stColR{display:block}
+  #stColL #stStage{position:relative;top:0;box-shadow:none}
+  #stJumpBar{position:static}
+  #stCanvas{max-height:calc(100vh - 260px)}
+}
 </style>
 
 <nav class="nav"><div class="wrap nav-in">
@@ -651,29 +730,58 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
     <div class="ph-kick">One-Tap Studio</div>
     <p class="ph-head" id="phStudio">တစ်ချက်နှိပ်ရုံနဲ့ <em>Studio အဆင့်</em> ပရော်ဖက်ရှင်နယ် look</p>
   </header>
+  <div class="st-cols">
+  <div id="stColL">
   <section class="card">
     <h2>📸 PHOTO</h2>
     <p class="mut" id="stPhotoNote"></p>
     <div id="stPicker"></div>
-    <div id="stStage" style="display:none"><canvas id="stCanvas"></canvas></div>
-    <div class="row" style="margin-top:8px">
-      <button class="btn" id="stHold">◉ Before</button>
-      <button class="btn" id="stReset">↺ Reset</button>
-    </div>
     <div id="stTarget"></div>
   </section>
 
-  <section class="card">
+  <div id="stStage" style="display:none">
+    <canvas id="stCanvas"></canvas>
+    <canvas id="stHist" width="220" height="48"></canvas>
+    <div class="st-split-line" id="stSplitLine"></div>
+    <button class="chip st-ov" id="stSplit">A|B</button>
+    <button class="chip st-ov" id="stStageMin">▭</button>
+    <button class="chip st-ov" id="stStageFlip" style="display:none"></button>
+    <button class="chip st-ov" id="stHold">◉ Before</button>
+    <button class="chip st-ov" id="stReset">↺ Reset</button>
+  </div>
+
+  <div id="stJumpBar">
+    <div id="stJumpTop">
+      <div class="chips" id="stSuiteTabs"></div>
+      <input class="inp" id="stSearch">
+    </div>
+    <div class="chips" id="stGroupChips"></div>
+  </div>
+
+  <section class="card" id="stRecipeCard">
+    <h2>💾 MY RECIPES</h2>
+    <p class="mut" id="stRecipeNote"></p>
+    <div class="prowwrap"><div class="prow" id="stRecipeRow"></div></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="stSaveRecipe"></button>
+    </div>
+  </section>
+  </div><!-- /stColL -->
+
+  <div id="stColR">
+  <section class="card" id="stMuCard">
     <h2>💄 MEITU STUDIO</h2>
     <p class="mut" id="muNote"></p>
-    <div class="prow" id="muPresetRow"></div>
+    <div class="subh" id="muPresetSub"></div>
+    <div class="prowwrap"><div class="prow" id="muPresetRow"></div></div>
     <div id="muHost"></div>
   </section>
 
-  <section class="card">
+  <section class="card" id="stEvCard">
     <h2>🎯 EVOTO PRO</h2>
     <p class="mut" id="evNote"></p>
-    <div class="prow" id="evPresetRow"></div>
+    <div class="subh" id="evPresetSub"></div>
+    <div class="prowwrap"><div class="prow" id="evPresetRow"></div></div>
     <div id="evHost"></div>
   </section>
 
@@ -696,11 +804,15 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
     <div class="chips" id="stPendChips"></div>
     <div class="row" style="margin-top:6px">
       <button class="btn btn-gold grow gen" id="btnStGen">⚡ GENERATE</button>
+      <button class="chip" id="stClearAi" style="display:none"></button>
       <button class="chip" id="stHd" style="display:none">HD Finish</button>
     </div>
+    <div id="stHdNote"></div>
     <div class="spin" id="stSpin"></div>
     <div class="status" id="stStatus"></div>
   </div>
+  </div><!-- /stColR -->
+  </div><!-- /st-cols -->
 </div><!-- /pgStudio -->
 
 <div class="page" id="pgRetouch">
@@ -1358,7 +1470,7 @@ function saveState(){
       /* Studio live-preview state — everything EXCEPT the photo itself (state.st.img
          is session-only; base64 photos are too large for localStorage) */
       st: state.st ? { t1:state.st.t1, t2:state.st.t2, pend:state.st.pend,
-        preset:state.st.preset, target:state.st.target, v:state.st.v } : undefined
+        preset:state.st.preset, target:state.st.target, v:state.st.v, geo:state.st.geo } : undefined
     }));
   } catch(e){}
 }
@@ -2497,6 +2609,15 @@ $("filePick").onchange = function(){
     downscale(String(rd.result), function(dataUrl){
       var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
       if(m){
+        if(state.pickSlot==="stx"){ /* Studio reference-transfer slot (M8/M20) — session-only */
+          state.pickSlot=0;
+          if(state.st){
+            state.st.refX={mime:m[1],b64:m[2]};
+            if(typeof stRefreshUI==="function"){ stRefreshUI(); stRenderPend(); }
+            toast(L9({my:"Reference ပုံ ထည့်ပြီး ✓",en:"Reference image added ✓"}),"ok");
+          }
+          return;
+        }
         state.refs[state.pickSlot]={mime:m[1],b64:m[2],label:f.name};
         state.imgRoles=null; /* roles are re-derived by the wizard at generate time */
         renderRefs();
@@ -2522,6 +2643,7 @@ function grp(title, count, open){
   var h=el("button","grp-h");
   h.appendChild(el("span","car","▶"));
   h.appendChild(el("span",null,title));
+  h.appendChild(el("span","dot","")); /* per-group active-edit badge (Studio); display:none elsewhere */
   h.appendChild(el("span","cnt",count));
   h.onclick=function(){ g.className = g.className.indexOf("open")>=0 ? "grp" : "grp open"; };
   var b=el("div","grp-b");
@@ -3956,15 +4078,20 @@ var ST = {
   buf:null, bctx:null, px0:null,
   maskCache:null, lut:null, lutKey:"",
   noise:null, thumbCanvas:null,
-  orig:null,
+  orig:null, geoCache:null,
   holding:false, busy:false,
-  rafPending:false, settleT:null, svT:null,
+  rafPending:false, settleT:null, svT:null, uiT:null,
   refreshFns:[], feats:{}, grpOf:{}, g1:{}, g2:{},
+  groups:[], rowMap:{}, searchIdx:[],
+  split:{on:false,pct:50}, stageResult:null, showingResult:false,
   presetSnap:null
 };
-function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0}; }
-function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0}; }
-state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:"all", v:{} };
+/* sv keys that feed the settle pipeline (dirty checks + settle "need" checks) */
+ST.pipeSv=["st_hsl_","st_curve_","st_grade_","st_bw","st_leak","st_geo","st_wbAuto","st_bgEnh","st_frame"];
+function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0,wht:0,blk:0,dhz:0,glow:0}; }
+function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0,gdn:0,nrL:0,nrC:0}; }
+function stDefGeo(){ return {rot:0,flipH:false,flipV:false,straighten:0,crop:null}; }
+state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:"all", v:{}, geo:stDefGeo(), refX:null };
 (function(){ /* tolerant restore — missing keys keep their defaults; img is never persisted */
   var s=state.stSaved; delete state.stSaved; if(!s) return;
   try{
@@ -3975,6 +4102,14 @@ state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:
     if(typeof s.preset==="string"||s.preset===null) state.st.preset=s.preset;
     if(typeof s.target==="string") state.st.target=s.target;
     if(s.v && typeof s.v==="object") state.st.v=s.v;
+    if(s.geo && typeof s.geo==="object"){ /* v4.23.x+: geometry — unknown keys stay ignored */
+      var g=state.st.geo;
+      if(typeof s.geo.rot==="number") g.rot=((s.geo.rot|0)%4+4)%4;
+      if(typeof s.geo.flipH==="boolean") g.flipH=s.geo.flipH;
+      if(typeof s.geo.flipV==="boolean") g.flipV=s.geo.flipV;
+      if(typeof s.geo.straighten==="number") g.straighten=stClamp(s.geo.straighten,-45,45);
+      if(typeof s.geo.crop==="string"||s.geo.crop===null) g.crop=s.geo.crop;
+    }
   }catch(e){}
 })();
 var RT_BYKEY={}; D.retouch.sliders.forEach(function(s){ RT_BYKEY[s.key]=s; });
@@ -4014,7 +4149,7 @@ function stEffT2(){
   if(o.finish==="matte") o.deshine+=0.8*o.finishV;
   else if(o.finish==="dewy") o.gloss+=0.7*o.finishV;
   else if(o.finish==="cream"){ o.smooth+=0.4*o.finishV; o.white+=0.3*o.finishV; }
-  ["smooth","denoise","even","deyellow","white","deshine","teeth","eyeb","radiance"].forEach(function(k2){ o[k2]=stClamp(o[k2],0,100); });
+  ["smooth","denoise","even","deyellow","white","deshine","teeth","eyeb","radiance","gdn","nrL","nrC"].forEach(function(k2){ o[k2]=stClamp(o[k2]||0,0,100); });
   o.rosy=stClamp(o.rosy,-100,100); o.gloss=stClamp(o.gloss,-100,100);
   o.freqHi=stClamp(o.freqHi,-100,100); o.freqLo=stClamp(o.freqLo,-100,100);
   return o;
@@ -4032,11 +4167,26 @@ function stCssFilter(p){
   if(p.tnt) f.push("hue-rotate("+(p.tnt*0.25)+"deg)");
   f.push("brightness("+(1+p.sh*0.0012+p.hi*0.0008)+")");
   if(p.fad) f.push("contrast("+(1-p.fad/400)+") brightness("+(1+p.fad/600)+")");
+  if(p.glow) f.push("brightness("+(1+p.glow*0.0008)+")"); /* Vibe Glow T1 ghost — real screen-blend at settle */
+  if(p.wht||p.blk) f.push("contrast("+(1+((p.wht||0)-(p.blk||0))/600)+")"); /* Whites/Blacks T1 approx */
   return f.join(" ");
 }
-function stApplyDragFilter(){ var c=$("stCanvas"); if(c) c.style.filter=stCssFilter(stEffT1()); }
+function stApplyDragFilter(){ var c=$("stCanvas"); if(c) c.style.filter=ST.split.on?"":stCssFilter(stEffT1()); }
+/* empty-state guard (MUST #9): first interaction without a photo nudges toward the picker */
+var _stNudgeT=0;
+function stNeedPhotoNudge(){
+  if(ST.srcBitmap) return;
+  var now=Date.now(); if(now-_stNudgeT<8000) return;
+  _stNudgeT=now;
+  toast(RS_NEED_PHOTO,"err");
+  var pk=$("stPicker");
+  if(pk&&pk.scrollIntoView){ try{ pk.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }
+}
 function stT1Changed(){
-  if(!ST.srcBitmap) return;
+  if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; }
+  if(ST.split.on){ /* SHOULD #11: while A|B split is on, settle-path renders both halves */
+    stScheduleSettle(); return;
+  }
   /* first write is synchronous (a slider must move the photo within the same frame);
      subsequent writes inside the same frame collapse into one rAF-throttled update */
   stApplyDragFilter();
@@ -4046,20 +4196,45 @@ function stT1Changed(){
   }
   stScheduleSettle();
 }
-function stT2Changed(){ if(!ST.srcBitmap) return; stScheduleSettle(); }
-function stScheduleSettle(){ clearTimeout(ST.settleT); ST.settleT=setTimeout(stRenderSettle,120); }
+function stT2Changed(){ if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; } stScheduleSettle(); }
+/* pipeline-affecting sv controls (HSL / curve / grading / B&W / leak / WB / bg-enhance / frame) */
+function stPipeChanged(){
+  if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; }
+  stScheduleSettle();
+}
+function stScheduleSettle(){ clearTimeout(ST.settleT); ST.settleT=setTimeout(stRenderSettle,120); stUiSoon(); }
+/* debounced light UI refresh (gen-bar summary, button label, dirty badges) */
+function stUiSoon(){ clearTimeout(ST.uiT); ST.uiT=setTimeout(function(){ stRenderPend(); },140); }
 
 /* ---- pixel pipeline (settle + bake share it) ---- */
+/* parametric-curve values (E11) live in sv so recipes/persistence pick them up */
+function stCurveVals(){
+  return { hl:svGet("st_curve_hl",0)||0, lt:svGet("st_curve_lt",0)||0,
+           dk:svGet("st_curve_dk",0)||0, sh:svGet("st_curve_sh",0)||0 };
+}
 function stComputeLut(p){
-  var key=[p.exp,p.bri,p.con,p.hi,p.sh,p.fad].join(",");
+  var cv=stCurveVals();
+  var key=[p.exp,p.bri,p.con,p.hi,p.sh,p.fad,p.wht||0,p.blk||0,p.dhz||0,cv.hl,cv.lt,cv.dk,cv.sh].join(",");
   if(ST.lutKey===key && ST.lut) return ST.lut;
   function ss(a,b,x){ x=(x-a)/(b-a); x=x<0?0:x>1?1:x; return x*x*(3-2*x); }
   var lut=new Uint8ClampedArray(256), g=Math.pow(2,p.exp/100), k=p.fad/100*0.15;
+  var dz=(p.dhz||0)/100;
   for(var x=0;x<256;x++){
+    var t=x/255;
     var v=x*g; v+=p.bri*0.5; v=(v-128)*(1+p.con/100)+128;
-    v+=(p.hi/100)*40*ss(0.5,1,x/255);
-    v+=(p.sh/100)*40*(1-ss(0,0.5,x/255));
+    v+=(p.hi/100)*40*ss(0.5,1,t);
+    v+=(p.sh/100)*40*(1-ss(0,0.5,t));
     v=v*(1-k)+k*40;
+    /* whites & blacks (E9) */
+    if(p.wht) v*=1+p.wht/100*0.25*ss(0.6,1,t);
+    if(p.blk) v+=p.blk*0.4*(1-ss(0,0.35,t));
+    /* dehaze (E10) — positive deepens blacks + boosts contrast; negative softens */
+    if(dz) v=(v-dz*18)*(1+dz*0.35);
+    /* parametric curve (E11) */
+    if(cv.hl) v+=(cv.hl/100)*40*ss(0.62,1,t);
+    if(cv.lt) v+=(cv.lt/100)*30*ss(0.35,0.75,t)*(1-ss(0.8,1,t));
+    if(cv.dk) v+=(cv.dk/100)*30*ss(0.1,0.5,t)*(1-ss(0.55,0.9,t));
+    if(cv.sh) v+=(cv.sh/100)*40*(1-ss(0,0.4,t));
     lut[x]=v;
   }
   ST.lut=lut; ST.lutKey=key; return lut;
@@ -4177,23 +4352,168 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
   }
   cx.putImageData(px,0,0);
 }
+/* ---- pipeline sv params (HSL / grading / B&W / WB / leak / frame / bg-enhance) ---- */
+function stHexRgb(hx){
+  if(typeof hx!=="string"||hx[0]!=="#"||hx.length<7) return null;
+  var r=parseInt(hx.slice(1,3),16), g=parseInt(hx.slice(3,5),16), b=parseInt(hx.slice(5,7),16);
+  if(isNaN(r)||isNaN(g)||isNaN(b)) return null;
+  return {r:r,g:g,b:b};
+}
+var ST_HSL_BANDS=[["r",0],["o",30],["y",60],["g",120],["a",180],["b",240],["p",280],["m",320]];
+function stPipeVals(){
+  var pv={};
+  var hsl=[], anyH=false;
+  ST_HSL_BANDS.forEach(function(bd){
+    var h=svGet("st_hsl_"+bd[0]+"_h",0)||0, s=svGet("st_hsl_"+bd[0]+"_s",0)||0, l=svGet("st_hsl_"+bd[0]+"_l",0)||0;
+    if(h||s||l) anyH=true;
+    hsl.push({c:bd[1],h:h,s:s,l:l});
+  });
+  pv.hsl=hsl; pv.anyHsl=anyH;
+  var zones=[];
+  var muAmt=svGet("st_grade_muAmt",0)||0, muBal=svGet("st_grade_muBal",0)||0;
+  if(muAmt>0){
+    var s1=stHexRgb(svGet("st_grade_muSh",null)); if(s1) zones.push({t:s1,k:muAmt,z:"sh",bal:muBal});
+    var h1=stHexRgb(svGet("st_grade_muHi",null)); if(h1) zones.push({t:h1,k:muAmt,z:"hi",bal:muBal});
+  }
+  var evBal=svGet("st_grade_evBal",0)||0;
+  var e1=stHexRgb(svGet("st_grade_evSh",null)); if(e1) zones.push({t:e1,k:45,z:"sh",bal:evBal});
+  var e2=stHexRgb(svGet("st_grade_evMid",null)); if(e2) zones.push({t:e2,k:45,z:"mid",bal:evBal});
+  var e3=stHexRgb(svGet("st_grade_evHi",null)); if(e3) zones.push({t:e3,k:45,z:"hi",bal:evBal});
+  pv.gradeZones=zones; pv.gradeSat=svGet("st_grade_evSat",0)||0;
+  pv.anyGrade=zones.length>0||!!pv.gradeSat;
+  pv.bwOn=!!svGet("st_bw",false);
+  pv.bwR=svGet("st_bw_r",0)||0; pv.bwG=svGet("st_bw_g",0)||0; pv.bwB=svGet("st_bw_b",0)||0;
+  pv.anyHGB=pv.anyHsl||pv.anyGrade||pv.bwOn;
+  pv.wbOn=!!svGet("st_wbAuto",false);
+  pv.wbGr=stClamp(svGet("st_wbGr",1)||1,0.8,1.25); pv.wbGb=stClamp(svGet("st_wbGb",1)||1,0.8,1.25);
+  pv.bgEnh=svGet("st_bgEnh",0)||0;
+  pv.leak=svGet("st_leak",null); pv.leakV=svGet("st_leakV",0)||0;
+  pv.frame=svGet("st_frame",null); pv.frameW=svGet("st_frameW",40)||0;
+  return pv;
+}
+function stPipeDirty(){
+  var v=state.st.v;
+  for(var k in v){
+    if(!v[k]) continue;
+    if(k==="st_wbGr"||k==="st_wbGb"||k==="st_hslBand"||k==="st_histOn"||k==="st_frameW") continue;
+    if(k==="st_leakV"&&!v.st_leak) continue;
+    for(var i=0;i<ST.pipeSv.length;i++) if(k.indexOf(ST.pipeSv[i])===0) return true;
+  }
+  return false;
+}
+/* ---- geometry stage (M21-M23): crop / rotate / flip / straighten, applied before everything ---- */
+function stGeoActive(){ var g=state.st.geo; return !!(g&&(g.rot||g.flipH||g.flipV||g.straighten||g.crop)); }
+function stRatioVal(r){ var m=/^(\d+):(\d+)$/.exec(r||""); return m?(+m[1])/(+m[2]):0; }
+function stApplyGeo(src){
+  var g=state.st.geo, sw=src.width||src.naturalWidth, sh=src.height||src.naturalHeight;
+  var ratio=stRatioVal(g.crop), cw=sw, ch=sh;
+  if(ratio>0){ if(sw/sh>ratio){ cw=Math.max(1,Math.round(sh*ratio)); ch=sh; } else { cw=sw; ch=Math.max(1,Math.round(sw/ratio)); } }
+  var out=document.createElement("canvas"); out.width=cw; out.height=ch;
+  out.getContext("2d").drawImage(src,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,cw,ch);
+  if(g.rot){
+    var rw=(g.rot%2)?out.height:out.width, rh=(g.rot%2)?out.width:out.height;
+    var c2=document.createElement("canvas"); c2.width=rw; c2.height=rh;
+    var x2=c2.getContext("2d");
+    x2.translate(rw/2,rh/2); x2.rotate(g.rot*Math.PI/2); x2.drawImage(out,-out.width/2,-out.height/2);
+    out=c2;
+  }
+  if(g.flipH||g.flipV){
+    var c3=document.createElement("canvas"); c3.width=out.width; c3.height=out.height;
+    var x3=c3.getContext("2d");
+    x3.translate(g.flipH?out.width:0, g.flipV?out.height:0);
+    x3.scale(g.flipH?-1:1, g.flipV?-1:1);
+    x3.drawImage(out,0,0);
+    out=c3;
+  }
+  if(g.straighten){
+    var th=g.straighten*Math.PI/180, w=out.width, h=out.height;
+    var ct=Math.abs(Math.cos(th)), sn=Math.abs(Math.sin(th));
+    var s=Math.max(ct+(w/h)*sn, ct+(h/w)*sn); /* auto-zoom hides the rotated corners */
+    var c4=document.createElement("canvas"); c4.width=w; c4.height=h;
+    var x4=c4.getContext("2d");
+    x4.translate(w/2,h/2); x4.rotate(th); x4.scale(s,s); x4.drawImage(out,-w/2,-h/2);
+    out=c4;
+  }
+  return out;
+}
+function stGeoSource(){
+  if(!ST.srcBitmap) return null;
+  if(!stGeoActive()) return ST.srcBitmap;
+  if(!ST.geoCache) ST.geoCache=stApplyGeo(ST.srcBitmap);
+  return ST.geoCache;
+}
+function stGeoDims(){
+  var s=stGeoSource(); if(!s) return {w:0,h:0};
+  return { w:s.width||s.naturalWidth, h:s.height||s.naturalHeight };
+}
+function stGeoChanged(){ /* T2 op — settle latency acceptable; mask + px0 invalidated, buffer rebuilt */
+  ST.geoCache=null; ST.maskCache=null; ST.px0=null;
+  if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); stSaveSoon(); return; }
+  stBuildBuffer();
+  stRenderSettle(); stApplyDragFilter();
+  stUiSoon(); stSaveSoon();
+}
+/* ---- light-leak overlay presets (M4) ---- */
+function stDrawLeak(cx,W,H,style,amt){
+  var g;
+  cx.save();
+  cx.globalCompositeOperation="screen"; cx.globalAlpha=stClamp(amt/100,0,1);
+  if(style==="warm"){
+    g=cx.createRadialGradient(W*0.9,H*0.1,0,W*0.9,H*0.1,W*0.7);
+    g.addColorStop(0,"rgba(255,140,60,.55)"); g.addColorStop(1,"rgba(255,140,60,0)");
+  } else if(style==="streak"){
+    g=cx.createLinearGradient(0,H*0.15,W,H*0.55);
+    g.addColorStop(0,"rgba(255,190,80,0)"); g.addColorStop(0.42,"rgba(255,190,80,0)");
+    g.addColorStop(0.5,"rgba(255,200,90,.5)"); g.addColorStop(0.58,"rgba(255,190,80,0)");
+    g.addColorStop(1,"rgba(255,190,80,0)");
+  } else if(style==="prism"){
+    g=cx.createLinearGradient(W*0.55,0,W,H*0.6);
+    g.addColorStop(0,"rgba(255,80,80,0)"); g.addColorStop(0.3,"rgba(255,90,90,.28)");
+    g.addColorStop(0.5,"rgba(120,255,140,.24)"); g.addColorStop(0.7,"rgba(110,140,255,.28)");
+    g.addColorStop(1,"rgba(110,140,255,0)");
+  } else { /* flare */
+    g=cx.createRadialGradient(W*0.65,H*0.35,0,W*0.65,H*0.35,Math.max(W,H)*0.5);
+    g.addColorStop(0,"rgba(255,245,225,.5)"); g.addColorStop(0.4,"rgba(255,235,205,.22)"); g.addColorStop(1,"rgba(255,235,205,0)");
+  }
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);
+  cx.restore();
+}
+/* ---- frame & border (M24), drawn after the grain stage ---- */
+function stDrawFrame(cx,W,H,style,wv){
+  var base=Math.max(2,Math.round(Math.min(W,H)*(0.012+(wv||0)/100*0.05)));
+  cx.save();
+  if(style==="thin"||style==="thick"){
+    var bw=style==="thin"?Math.max(2,Math.round(base*0.6)):Math.round(base*1.7);
+    cx.strokeStyle="#fff"; cx.lineWidth=bw*2; cx.strokeRect(0,0,W,H);
+  } else if(style==="polaroid"){
+    var b=Math.round(base*1.2), bot=Math.max(b,Math.round(H*0.14));
+    cx.fillStyle="#fff";
+    cx.fillRect(0,0,W,b); cx.fillRect(0,0,b,H); cx.fillRect(W-b,0,b,H); cx.fillRect(0,H-bot,W,bot);
+  } else if(style==="gold"){
+    cx.strokeStyle="#d9a441"; cx.lineWidth=base*2; cx.strokeRect(0,0,W,H);
+    cx.strokeStyle="#8a6420"; cx.lineWidth=Math.max(1,Math.round(base*0.35));
+    cx.strokeRect(base+1,base+1,W-2*base-2,H-2*base-2);
+  }
+  cx.restore();
+}
 function stRunPipeline(srcImg,W,H,opts){
   opts=opts||{};
   var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
   var cx=cv.getContext("2d",{willReadFrequently:true});
   cx.drawImage(srcImg,0,0,W,H);
-  var t1=stEffT1(), t2=stEffT2();
+  var t1=stEffT1(), t2=stEffT2(), pv=stPipeVals();
   var px=cx.getImageData(0,0,W,H), d=px.data, n=W*H;
-  /* (2)+(3) tonal LUT + color pass */
+  /* (2)+(3) tonal LUT + color pass (+ gray-world WB gains + dehaze saturation) */
   var lut=stComputeLut(t1);
-  var doColor=!!(t1.wrm||t1.tnt||t1.sat||t1.vib);
-  var wr=1+t1.wrm/300, wb=1-t1.wrm/300, tg=1-t1.tnt/300, sk=1+t1.sat/100, vk=t1.vib/100;
+  var doColor=!!(t1.wrm||t1.tnt||t1.sat||t1.vib||t1.dhz>0||pv.wbOn);
+  var sk=(1+t1.sat/100)*(t1.dhz>0?(1+t1.dhz/100*0.15):1);
+  var wr=(1+t1.wrm/300)*(pv.wbOn?pv.wbGr:1), wb=(1-t1.wrm/300)*(pv.wbOn?pv.wbGb:1), tg=1-t1.tnt/300, vk=t1.vib/100;
   for(var i=0,p=0;i<n;i++,p+=4){
     var R=lut[d[p]],G=lut[d[p+1]],B=lut[d[p+2]];
     if(doColor){
       R*=wr; B*=wb; G*=tg;
       var L=0.299*R+0.587*G+0.114*B;
-      if(t1.sat){ R=L+(R-L)*sk; G=L+(G-L)*sk; B=L+(B-L)*sk; }
+      if(sk!==1){ R=L+(R-L)*sk; G=L+(G-L)*sk; B=L+(B-L)*sk; }
       if(vk){
         var mx=Math.max(R,G,B),mn=Math.min(R,G,B),S=mx>0?(mx-mn)/mx:0,vv=1+vk*(1-S);
         R=L+(R-L)*vv; G=L+(G-L)*vv; B=L+(B-L)*vv;
@@ -4202,6 +4522,106 @@ function stRunPipeline(srcImg,W,H,opts){
     d[p]=R<0?0:R>255?255:R; d[p+1]=G<0?0:G>255?255:G; d[p+2]=B<0?0:B>255?255:B;
   }
   cx.putImageData(px,0,0);
+  /* (3b) HSL / split-tone+grading / B&W — one combined per-pixel loop, entirely skipped at zero */
+  if(pv.anyHGB){
+    px=cx.getImageData(0,0,W,H); d=px.data;
+    function ss2(a,b,x){ x=(x-a)/(b-a); x=x<0?0:x>1?1:x; return x*x*(3-2*x); }
+    /* precompute per-zone weight LUTs over luma t (256 steps) */
+    var zoneW=pv.gradeZones.map(function(z){
+      var w=new Float32Array(256);
+      for(var xx=0;xx<256;xx++){
+        var tt=xx/255, b0=z.bal*0.002;
+        if(z.z==="sh") w[xx]=1-ss2(0.25+b0,0.75+b0,tt);
+        else if(z.z==="hi") w[xx]=ss2(0.25+b0,0.75+b0,tt);
+        else w[xx]=ss2(0.2,0.5,tt)*(1-ss2(0.5,0.8,tt));
+      }
+      return w;
+    });
+    var bands=pv.hsl.filter(function(bd){ return bd.h||bd.s||bd.l; });
+    var gSat=1+pv.gradeSat/200;
+    var bwWr=0.30+pv.bwR/300, bwWg=0.59+pv.bwG/300, bwWb=0.11+pv.bwB/300;
+    var bwSum=bwWr+bwWg+bwWb; if(Math.abs(bwSum)<0.05) bwSum=0.05;
+    for(var i3=0,p3=0;i3<n;i3++,p3+=4){
+      var R3=d[p3],G3=d[p3+1],B3=d[p3+2];
+      if(pv.anyHsl){
+        var r0=R3/255,g0=G3/255,b0=B3/255;
+        var mx3=Math.max(r0,g0,b0),mn3=Math.min(r0,g0,b0),dl=mx3-mn3;
+        var Lh=(mx3+mn3)/2;
+        var Sh=dl===0?0:dl/(1-Math.abs(2*Lh-1));
+        var Hh=0;
+        if(dl!==0){
+          if(mx3===r0) Hh=60*(((g0-b0)/dl)%6);
+          else if(mx3===g0) Hh=60*((b0-r0)/dl+2);
+          else Hh=60*((r0-g0)/dl+4);
+          if(Hh<0) Hh+=360;
+        }
+        var dH=0,sM=1,lM=1,touched=false;
+        for(var bi=0;bi<bands.length;bi++){
+          var bd2=bands[bi];
+          var dd=Math.abs(Hh-bd2.c); if(dd>180) dd=360-dd;
+          if(dd<40){
+            var w2=1-dd/40; touched=true;
+            dH+=w2*bd2.h*0.30; sM+=w2*bd2.s/100; lM+=w2*bd2.l/200;
+          }
+        }
+        if(touched){
+          var H2=(Hh+dH)%360; if(H2<0) H2+=360;
+          var S2=stClamp(Sh*sM,0,1), L2=stClamp(Lh*lM,0,1);
+          var C=(1-Math.abs(2*L2-1))*S2;
+          var X=C*(1-Math.abs((H2/60)%2-1));
+          var m0=L2-C/2, rr=0,gg=0,bb=0;
+          if(H2<60){ rr=C; gg=X; } else if(H2<120){ rr=X; gg=C; }
+          else if(H2<180){ gg=C; bb=X; } else if(H2<240){ gg=X; bb=C; }
+          else if(H2<300){ rr=X; bb=C; } else { rr=C; bb=X; }
+          R3=(rr+m0)*255; G3=(gg+m0)*255; B3=(bb+m0)*255;
+        }
+      }
+      if(pv.anyGrade){
+        var lum3=0.299*R3+0.587*G3+0.114*B3;
+        var li=lum3<0?0:lum3>255?255:lum3|0;
+        for(var zi=0;zi<pv.gradeZones.length;zi++){
+          var z2=pv.gradeZones[zi], wz=zoneW[zi][li]*(z2.k/100);
+          if(wz>0.002){
+            R3+=(z2.t.r-128)*wz; G3+=(z2.t.g-128)*wz; B3+=(z2.t.b-128)*wz;
+          }
+        }
+        if(gSat!==1){
+          var Lg=0.299*R3+0.587*G3+0.114*B3;
+          R3=Lg+(R3-Lg)*gSat; G3=Lg+(G3-Lg)*gSat; B3=Lg+(B3-Lg)*gSat;
+        }
+      }
+      if(pv.bwOn){
+        var Lb=(bwWr*R3+bwWg*G3+bwWb*B3)/bwSum;
+        R3=Lb; G3=Lb; B3=Lb;
+      }
+      d[p3]=R3<0?0:R3>255?255:R3; d[p3+1]=G3<0?0:G3>255?255:G3; d[p3+2]=B3<0?0:B3>255?255:B3;
+    }
+    cx.putImageData(px,0,0);
+  }
+  /* (3c) global denoise (M29 + E16 Luma/Color NR) — unmasked, edge-preserving on luma */
+  var nrC=stClamp((t2.gdn||0)*0.5+(t2.nrC||0)*0.6,0,100), nrLm=stClamp((t2.gdn||0)*0.25+(t2.nrL||0)*0.5,0,100);
+  if(nrC>0||nrLm>0){
+    var nb1=stBlurData(cv,W,H,1);
+    px=cx.getImageData(0,0,W,H); d=px.data;
+    var aC=nrC/100, aL=nrLm/100;
+    for(var i4=0,p4=0;i4<n;i4++,p4+=4){
+      var R4=d[p4],G4=d[p4+1],B4=d[p4+2];
+      var Y4=0.299*R4+0.587*G4+0.114*B4;
+      var Cb4=128-0.168736*R4-0.331264*G4+0.5*B4;
+      var Cr4=128+0.5*R4-0.418688*G4-0.081312*B4;
+      var bR4=nb1[p4],bG4=nb1[p4+1],bB4=nb1[p4+2];
+      var bY4=0.299*bR4+0.587*bG4+0.114*bB4;
+      if(aC>0){
+        var bCb4=128-0.168736*bR4-0.331264*bG4+0.5*bB4;
+        var bCr4=128+0.5*bR4-0.418688*bG4-0.081312*bB4;
+        Cb4+=(bCb4-Cb4)*aC; Cr4+=(bCr4-Cr4)*aC;
+      }
+      if(aL>0 && Math.abs(Y4-bY4)<12) Y4+=(bY4-Y4)*aL; /* edge-preserve: skip strong edges */
+      R4=Y4+1.402*(Cr4-128); G4=Y4-0.344136*(Cb4-128)-0.714136*(Cr4-128); B4=Y4+1.772*(Cb4-128);
+      d[p4]=R4<0?0:R4>255?255:R4; d[p4+1]=G4<0?0:G4>255?255:G4; d[p4+2]=B4<0?0:B4>255?255:B4;
+    }
+    cx.putImageData(px,0,0);
+  }
   /* (4) Tier-2 skin ops on the cached (or freshly computed) skin mask */
   var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0);
   if(needSkin){
@@ -4227,8 +4647,9 @@ function stRunPipeline(srcImg,W,H,opts){
     }
     cx.putImageData(base,0,0);
   }
-  /* (6) background-blur approximation: blurred frame + sharp subject through a radial alpha mask */
-  if(t1.bgb>0){
+  /* (6) background-blur approximation: blurred frame + sharp subject through a radial alpha mask
+         (+ E23 background enhance: sat/contrast boost outside the same inverse subject mask) */
+  if(t1.bgb>0||pv.bgEnh>0){
     var sharp=document.createElement("canvas"); sharp.width=W; sharp.height=H;
     var shx=sharp.getContext("2d");
     shx.drawImage(cv,0,0);
@@ -4237,9 +4658,31 @@ function stRunPipeline(srcImg,W,H,opts){
     var grad=shx.createRadialGradient(0,0,0,0,0,1);
     grad.addColorStop(0,"rgba(255,255,255,1)"); grad.addColorStop(0.62,"rgba(255,255,255,1)"); grad.addColorStop(1,"rgba(255,255,255,0)");
     shx.fillStyle=grad; shx.fillRect(-1,-1,2,2); shx.restore();
-    cx.save(); cx.filter="blur("+(t1.bgb/100*12)+"px)"; cx.drawImage(cv,0,0); cx.restore();
+    if(t1.bgb>0){ cx.save(); cx.filter="blur("+(t1.bgb/100*12)+"px)"; cx.drawImage(cv,0,0); cx.restore(); }
+    if(pv.bgEnh>0){
+      var bpx=cx.getImageData(0,0,W,H), bd5=bpx.data;
+      var bsk=1+pv.bgEnh/100*0.3, bck=1+pv.bgEnh/100*0.15;
+      for(var p5=0;p5<bd5.length;p5+=4){
+        var R5=bd5[p5],G5=bd5[p5+1],B5=bd5[p5+2];
+        var L5=0.299*R5+0.587*G5+0.114*B5;
+        R5=L5+(R5-L5)*bsk; G5=L5+(G5-L5)*bsk; B5=L5+(B5-L5)*bsk;
+        R5=(R5-128)*bck+128; G5=(G5-128)*bck+128; B5=(B5-128)*bck+128;
+        bd5[p5]=R5<0?0:R5>255?255:R5; bd5[p5+1]=G5<0?0:G5>255?255:G5; bd5[p5+2]=B5<0?0:B5>255?255:B5;
+      }
+      cx.putImageData(bpx,0,0);
+    }
     cx.drawImage(sharp,0,0);
   }
+  /* (6b) Vibe Glow (M3): blurred copy screen-blended over the frame */
+  if(t1.glow>0){
+    var gcv=document.createElement("canvas"); gcv.width=W; gcv.height=H;
+    var gcx=gcv.getContext("2d");
+    gcx.filter="blur("+(8+t1.glow*0.1)+"px)"; gcx.drawImage(cv,0,0);
+    cx.save(); cx.globalCompositeOperation="screen"; cx.globalAlpha=t1.glow/100*0.45;
+    cx.drawImage(gcv,0,0); cx.restore();
+  }
+  /* (6c) light leak (M4) */
+  if(pv.leak&&pv.leakV>0) stDrawLeak(cx,W,H,pv.leak,pv.leakV);
   /* (7) vignette */
   if(t1.vig>0){
     var vg=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.72);
@@ -4259,22 +4702,64 @@ function stRunPipeline(srcImg,W,H,opts){
     cx.fillStyle=cx.createPattern(ST.noise,"repeat"); cx.fillRect(0,0,W,H);
     cx.restore();
   }
+  /* (9) frame & border (M24) — after the grain stage */
+  if(pv.frame) stDrawFrame(cx,W,H,pv.frame,pv.frameW);
   return cv;
 }
 function stRenderSettle(){
   if(!ST.srcBitmap||ST.holding) return;
+  ST.showingResult=false;
   var W=ST.buf.width,H=ST.buf.height;
   var t2=stEffT2();
   var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0);
   if(needSkin&&!ST.maskCache) ST.maskCache=stSkinMask(ST.px0,W,H);
-  var out=stRunPipeline(ST.srcBitmap,W,H,{maskInfo:ST.maskCache});
+  var out=stRunPipeline(stGeoSource(),W,H,{maskInfo:ST.maskCache});
   var c=$("stCanvas"), cc=c.getContext("2d");
   cc.clearRect(0,0,c.width,c.height); cc.drawImage(out,0,0);
+  /* SHOULD #11: A|B split — untouched source clipped left of the divider */
+  if(ST.split.on){
+    var src=stGeoSource();
+    var cwp=Math.round(c.width*ST.split.pct/100);
+    if(cwp>0){
+      cc.save(); cc.beginPath(); cc.rect(0,0,cwp,c.height); cc.clip();
+      cc.drawImage(src,0,0,c.width,c.height); cc.restore();
+    }
+    if(ST._splitLayout) ST._splitLayout();
+  }
   c.style.filter="";
+  stDrawHistogram(out);
+  var fl=$("stStageFlip");
+  if(fl&&ST.stageResult) fl.textContent=L9({my:"ရလဒ်ပြ",en:"Show result"});
+}
+/* E17: 128-bin luma histogram overlay, drawn on settle when enabled */
+function stDrawHistogram(srcCv){
+  var hc=$("stHist"); if(!hc) return;
+  var on=!!svGet("st_histOn",false);
+  hc.className=on?"on":"";
+  if(!on||!srcCv) return;
+  try{
+    var sc=document.createElement("canvas"); sc.width=128; sc.height=64;
+    var sx=sc.getContext("2d",{willReadFrequently:true});
+    sx.drawImage(srcCv,0,0,128,64);
+    var dd=sx.getImageData(0,0,128,64).data, bins=new Float32Array(128), mx=0;
+    for(var p=0;p<dd.length;p+=4){
+      var L=(0.299*dd[p]+0.587*dd[p+1]+0.114*dd[p+2])/2|0;
+      bins[L>127?127:L]++;
+    }
+    for(var b=0;b<128;b++) if(bins[b]>mx) mx=bins[b];
+    var hx=hc.getContext("2d");
+    hx.clearRect(0,0,220,48);
+    hx.fillStyle="rgba(217,164,65,.9)";
+    for(var b2=0;b2<128;b2++){
+      var h=mx?Math.round(bins[b2]/mx*44):0;
+      hx.fillRect(b2*1.71,48-h,1.4,h);
+    }
+  }catch(e){}
 }
 function stBake(){
   if(!ST.srcBitmap) return null;
-  return stRunPipeline(ST.srcBitmap,ST.srcW,ST.srcH,{}).toDataURL("image/jpeg",0.92);
+  var gd=stGeoDims();
+  return stRunPipeline(stGeoSource(),gd.w,gd.h,{}).toDataURL("image/jpeg",0.92);
 }
 function stIsDirty(){
   var d1=stDefT1(),d2=stDefT2(),t1=state.st.t1,t2=state.st.t2,k;
@@ -4283,16 +4768,19 @@ function stIsDirty(){
   if(t2.finish) return true;
   for(k in ST.g1) if(ST.g1[k]) return true;
   for(k in ST.g2) if(ST.g2[k]) return true;
+  if(stGeoActive()) return true;
+  if(stPipeDirty()) return true;
   return false;
 }
 /* ---- photo load ---- */
 function stBufMax(){ return window.innerWidth<720 ? 896 : 1280; }
 function stBuildBuffer(){
-  var MAX=stBufMax(), s=Math.min(1,MAX/Math.max(ST.srcW,ST.srcH));
-  var bw=Math.max(1,Math.round(ST.srcW*s)), bh=Math.max(1,Math.round(ST.srcH*s));
+  var src=stGeoSource(), gw=src.width||src.naturalWidth, gh=src.height||src.naturalHeight;
+  var MAX=stBufMax(), s=Math.min(1,MAX/Math.max(gw,gh));
+  var bw=Math.max(1,Math.round(gw*s)), bh=Math.max(1,Math.round(gh*s));
   ST.buf=document.createElement("canvas"); ST.buf.width=bw; ST.buf.height=bh;
   ST.bctx=ST.buf.getContext("2d",{willReadFrequently:true});
-  ST.bctx.drawImage(ST.srcBitmap,0,0,bw,bh);
+  ST.bctx.drawImage(src,0,0,bw,bh);
   ST.px0=ST.bctx.getImageData(0,0,bw,bh);
   var c=$("stCanvas"); c.width=bw; c.height=bh;
 }
@@ -4305,11 +4793,17 @@ function stLoadImage(dataUrl,opts){
     state.st.img = m?{mime:m[1],b64:m[2],w:ST.srcW,h:ST.srcH}:null;
     ST.orig = state.st.img;
     if(!opts.fromRef && m){ state.refs[0]={mime:m[1],b64:m[2],label:"studio"}; renderRefs(); }
-    ST.maskCache=null; ST.lutKey="";
+    ST.maskCache=null; ST.lutKey=""; ST.geoCache=null;
+    ST.stageResult=null; ST.showingResult=false;
+    var fl=$("stStageFlip"); if(fl) fl.style.display="none";
     stBuildBuffer();
+    if(svGet("st_wbAuto",false)) stComputeWb();
     var stg=$("stStage"); if(stg) stg.style.display="";
+    var pg=$("pgStudio"); if(pg) pg.classList.remove("nostage");
+    if(ST._stageHUpd) ST._stageHUpd();
     stRenderSettle(); stApplyDragFilter();
     stRenderThumbs();
+    stUiSoon();
     if(opts.done) opts.done();
   };
   img.src=dataUrl;
@@ -4317,16 +4811,87 @@ function stLoadImage(dataUrl,opts){
 ST.loadImage=stLoadImage;
 function stSyncFromRef(){
   var r=state.refs[0];
-  if(!r){ ST.srcBitmap=null; state.st.img=null; var stg=$("stStage"); if(stg) stg.style.display="none"; stRenderThumbs(); return; }
+  if(!r){
+    ST.srcBitmap=null; state.st.img=null; ST.geoCache=null;
+    var stg=$("stStage"); if(stg) stg.style.display="none";
+    var pg=$("pgStudio"); if(pg) pg.classList.add("nostage");
+    if(ST._stageHUpd) ST._stageHUpd();
+    stRenderThumbs(); stUiSoon(); return;
+  }
   if(state.st.img && state.st.img.b64===r.b64) return;
   stLoadImage("data:"+r.mime+";base64,"+r.b64,{fromRef:true});
 }
+/* gray-world auto white balance (M19/E7): mean channel gains from the untouched buffer */
+function stComputeWb(){
+  if(!ST.px0) return;
+  var d=ST.px0.data, sr=0,sg=0,sb=0,c=0;
+  for(var p=0;p<d.length;p+=16){ sr+=d[p]; sg+=d[p+1]; sb+=d[p+2]; c++; }
+  if(!c) return;
+  var mr=sr/c, mg=sg/c, mb=sb/c;
+  svSet("st_wbGr",stClamp(mg/Math.max(1,mr),0.8,1.25));
+  svSet("st_wbGb",stClamp(mg/Math.max(1,mb),0.8,1.25));
+  ST._wbMeans={r:mr,b:mb};
+}
+/* M17 — AI Skin Analysis: zero-network diagnosis from ST.px0 + the skin mask, applied to t2 */
+function stSkinAnalyze(){
+  if(!ST.srcBitmap){ stNeedPhotoNudge(); return; }
+  if(!ST.px0) return;
+  var W=ST.buf.width, H=ST.buf.height;
+  if(!ST.maskCache) ST.maskCache=stSkinMask(ST.px0,W,H);
+  var mi=ST.maskCache, mask=mi.mask, d=ST.px0.data, n=W*H;
+  var cnt=0,sumL=0,shine=0,sumCb=0,sumCr=0,sumSq=0;
+  for(var i=0,p=0;i<n;i++,p+=4){
+    if(mask[i]>128){
+      var R=d[p],G=d[p+1],B=d[p+2],L=0.299*R+0.587*G+0.114*B;
+      cnt++; sumL+=L; if(L>200) shine++;
+      var cb=128-0.168736*R-0.331264*G+0.5*B, cr=128+0.5*R-0.418688*G-0.081312*B;
+      sumCb+=cb; sumCr+=cr; sumSq+=cb*cb+cr*cr;
+    }
+  }
+  if(!cnt){ toast(L9({my:"ဒီပုံမှာ အသားအရေ မတွေ့ပါ",en:"No skin detected in this photo"}),"err"); return; }
+  var meanL=sumL/cnt, shinePct=shine/cnt*100;
+  var mCb=sumCb/cnt, mCr=sumCr/cnt;
+  var chromaSpread=Math.sqrt(Math.max(0,sumSq/cnt-(mCb*mCb+mCr*mCr)));
+  /* local 8×8-block luma variance → smoothing / denoise need */
+  var bs=8, bw=(W/bs)|0, bh=(H/bs)|0, varSum=0, blocks=0;
+  for(var by=0;by<bh;by++) for(var bx=0;bx<bw;bx++){
+    var s=0,s2=0,c2=0;
+    for(var y=by*bs;y<(by+1)*bs;y++) for(var x=bx*bs;x<(bx+1)*bs;x++){
+      var ii=y*W+x; if(mask[ii]<=128) continue;
+      var pp=ii*4, L2=0.299*d[pp]+0.587*d[pp+1]+0.114*d[pp+2];
+      s+=L2; s2+=L2*L2; c2++;
+    }
+    if(c2>32){ var mm=s/c2; varSum+=Math.max(0,s2/c2-mm*mm); blocks++; }
+  }
+  var locSd=blocks?Math.sqrt(varSum/blocks):0;
+  var sug={
+    white:stClamp(Math.round((150-meanL)*0.8),0,45),
+    bri:stClamp(Math.round((140-meanL)*0.4),0,25),
+    deshine:stClamp(Math.round(shinePct*4),0,60),
+    smooth:stClamp(Math.round(locSd*4),0,65),
+    denoise:stClamp(Math.round(locSd*2),0,40),
+    even:stClamp(Math.round(chromaSpread*2.5),0,55)
+  };
+  ST.presetSnap=stSnapshot(); state.st.preset=null; /* snapshot first — ↺ restores */
+  if(sug.white) state.st.t2.white=Math.max(state.st.t2.white||0,sug.white);
+  if(sug.bri) state.st.t1.bri=Math.max(state.st.t1.bri||0,sug.bri);
+  if(sug.deshine) state.st.t2.deshine=Math.max(state.st.t2.deshine||0,sug.deshine);
+  if(sug.smooth) state.st.t2.smooth=Math.max(state.st.t2.smooth||0,sug.smooth);
+  if(sug.denoise) state.st.t2.denoise=Math.max(state.st.t2.denoise||0,sug.denoise);
+  if(sug.even) state.st.t2.even=Math.max(state.st.t2.even||0,sug.even);
+  stRefreshUI(); stRenderPend(); stT1Changed(); stT2Changed(); stSaveSoon();
+  toast(L9({my:"AI စစ်ဆေးပြီး ✓ — smooth "+sug.smooth+" · white "+sug.white+" · deshine "+sug.deshine+" · even "+sug.even,
+            en:"AI analysis applied ✓ — smooth "+sug.smooth+" · white "+sug.white+" · deshine "+sug.deshine+" · even "+sug.even}),"ok");
+}
 
 /* ---- Tier-3 pending-AI queue ---- */
-function stFeat(id,label,keys,calc,ghost){ ST.feats[id]={id:id,label:label,keys:keys||[],calc:calc,ghost:ghost||null}; }
+function stFeat(id,label,keys,calc,ghost,opts){
+  ST.feats[id]={id:id,label:label,keys:keys||[],calc:calc,ghost:ghost||null,usesRef:!!(opts&&opts.usesRef)};
+}
 function stSync(id){
   var f=ST.feats[id]; if(!f) return;
   var r=f.calc?f.calc():null;
+  if(r&&!ST.srcBitmap) stNeedPhotoNudge();
   var pend=state.st.pend, e=null,i;
   for(i=0;i<pend.length;i++) if(pend[i].id===id){ e=pend[i]; break; }
   if(r){
@@ -4346,12 +4911,61 @@ function stFragOf(e){
   if(f&&f.calc){ var r=f.calc(); if(r&&r.frag) return r.frag; }
   return e.frag||"";
 }
+/* one-line "◉ n live · ⚡ n AI" summary — live = non-default t1/t2 keys + active pipeline sv features */
+function stLiveCount(){
+  var n=0,k,d1=stDefT1(),d2=stDefT2();
+  for(k in d1) if((state.st.t1[k]||0)!==d1[k]) n++;
+  for(k in d2){ if(k==="finish") continue; if((state.st.t2[k]||0)!==0) n++; }
+  if(state.st.t2.finish&&state.st.t2.finishV) n++;
+  var pv=stPipeVals();
+  if(pv.wbOn) n++;
+  if(pv.anyHsl) n++;
+  var cv=stCurveVals(); if(cv.hl||cv.lt||cv.dk||cv.sh) n++;
+  if(pv.gradeZones.length||pv.gradeSat) n++;
+  if(pv.bwOn) n++;
+  if(pv.leak&&pv.leakV>0) n++;
+  if(pv.frame) n++;
+  if(pv.bgEnh>0) n++;
+  var g=state.st.geo;
+  if(g){ if(g.crop) n++; if(g.rot||g.flipH||g.flipV) n++; if(g.straighten) n++; }
+  return n;
+}
+function stFeatActive(f){
+  try{
+    if(f.calc&&f.calc()) return true;
+    if(f.ghost&&f.ghost()) return true;
+  }catch(e){}
+  return false;
+}
+/* per-group dirty badges (MUST #6) */
+function stRefreshDots(){
+  if(!ST.groups.length) return;
+  ST.groups.forEach(function(g){ g._n=0; });
+  Object.keys(ST.feats).forEach(function(id){
+    var gEl=ST.grpOf[id]; if(!gEl||gEl._stG===undefined) return;
+    if(stFeatActive(ST.feats[id])) ST.groups[gEl._stG]._n++;
+  });
+  ST.groups.forEach(function(g){
+    var seen={}, inps=g.el.querySelectorAll("input.rng");
+    for(var i=0;i<inps.length;i++){
+      var m=ST.rowMap[inps[i].id]; if(!m) continue;
+      var kk=m.kind+":"+m.k; if(seen[kk]) continue; seen[kk]=1;
+      var cur=m.kind==="t1"?(state.st.t1[m.k]||0):(state.st.t2[m.k]||0);
+      if(cur!==0) g._n++;
+    }
+    (g.chk||[]).forEach(function(fn){ try{ if(fn()) g._n++; }catch(e){} });
+    var dot=g.el.querySelector(".grp-h .dot");
+    if(dot){ dot.textContent=String(g._n); dot.className="dot"+(g._n?" on":""); }
+    if(g.jumpChip) g.jumpChip.classList.toggle("on",g._n>0);
+  });
+}
 function stRenderPend(){
   var host=$("stPendChips"); if(!host) return;
+  var prevIds=ST._pendIds||[];
   host.innerHTML="";
   var pend=state.st.pend;
   pend.forEach(function(pe){
-    var c=el("button","chip on");
+    var c=el("button","chip on"+(prevIds.indexOf(pe.id)<0?" newchip":""));
     var v=pe.params&&typeof pe.params.v==="number"?Math.abs(pe.params.v):null;
     c.appendChild(el("span",null,pe.label+(v!==null&&v!==0?" "+v+"%":"")));
     var x=el("span","st-x","✕");
@@ -4364,19 +4978,37 @@ function stRenderPend(){
     };
     host.appendChild(c);
   });
-  var n=pend.length;
+  ST._pendIds=pend.map(function(p){ return p.id; });
+  var n=pend.length, live=stLiveCount();
   var cEl=$("stPendCount");
-  if(cEl) cEl.textContent = n
-    ? L9({my:"AI ပြင်ဆင်ချက် "+n+" ခု စောင့်ဆိုင်းနေ — GENERATE နှိပ်ရင် တစ်ခါတည်း အကုန်လုပ်မယ်",en:n+" AI edit"+(n>1?"s":"")+" queued — GENERATE applies them all at once"})
+  if(cEl) cEl.textContent = (n||live)
+    ? L9({my:"◉ တိုက်ရိုက် "+live+" · ⚡ AI "+n,en:"◉ "+live+" live · ⚡ "+n+" AI"})
     : L9({my:"Slider တွေက ပုံပေါ်မှာ ချက်ချင်းမြင်ရ — AI လိုတဲ့အရာတွေက ဒီမှာ စုပြီး GENERATE တစ်ချက်တည်း",en:"Sliders preview instantly on the photo — AI-only edits queue here for one GENERATE"});
+  var clr=$("stClearAi");
+  if(clr) clr.style.display=n?"":"none";
   var btn=$("btnStGen");
-  if(btn) btn.textContent="⚡ GENERATE"+(n?" ("+n+" AI)":"");
+  if(btn){
+    var lbl=n ? "⚡ GENERATE ("+n+" AI)"
+      : ((live>0||stIsDirty()) ? "✓ APPLY ("+L9({my:"စက်တွင်း render",en:"local render"})+")" : "⚡ GENERATE");
+    if(btn.textContent!==lbl){
+      btn.textContent=lbl;
+      if(n){ btn.classList.remove("bump"); void btn.offsetWidth; btn.classList.add("bump"); }
+    }
+  }
+  var hdn=$("stHdNote");
+  if(hdn){
+    hdn.textContent=L9({my:"HD Finish: RunningHub upscale ပါမယ်",en:"HD Finish: a RunningHub upscale runs after generate"});
+    var hdEl=$("stHd");
+    hdn.className=(svGet("st_hd",false)&&hdEl&&hdEl.style.display!=="none")?"on":"";
+  }
+  stRefreshDots();
 }
 
 /* ---- control factories (all values live in state.st.v / t1 / t2 so presets + reset can refresh the UI) ---- */
 function stCtlRow(label){
-  var row=el("div","st-ctl");
-  var lb=el("label",null,label);
+  var sub=typeof label==="string"&&label.indexOf("— ")===0;
+  var row=el("div","st-ctl"+(sub?" sub":""));
+  var lb=el("label",null,sub?label.slice(2):label);
   row.appendChild(lb);
   return row;
 }
@@ -4385,12 +5017,22 @@ function stSlider(o){ /* {id,label,min,max,def,get,set} -> element; registers a 
   var inp=document.createElement("input");
   inp.type="range"; inp.className="rng"; inp.id=o.id;
   inp.min=String(o.min); inp.max=String(o.max); inp.step="1";
-  var val=el("span","st-val");
+  var val=el("button","st-val");
+  val.type="button";
+  val.title=L9({my:"နှိပ်ရင် ဒီ slider ပြန်စမယ်",en:"Tap to reset this slider"});
   function fmt(v){ return (o.min<0&&v>0?"+":"")+v+(o.pct===false?"":"%"); }
-  function refresh(){ var v=o.get(); inp.value=String(v); val.textContent=fmt(v); }
-  inp.oninput=function(){ var v=parseInt(inp.value,10)||0; val.textContent=fmt(v); o.set(v); };
-  /* dblclick / keyboard Home = reset this one slider */
+  function refresh(){
+    var v=o.get(); inp.value=String(v); val.textContent=fmt(v);
+    val.className="st-val"+(v!==o.def?" on":"");
+  }
+  inp.oninput=function(){
+    var v=parseInt(inp.value,10)||0;
+    val.textContent=fmt(v); val.className="st-val"+(v!==o.def?" on":"");
+    o.set(v);
+  };
+  /* dblclick / value-tap = reset this one slider (MUST #8) */
   inp.ondblclick=function(){ inp.value=String(o.def); inp.oninput(); };
+  val.onclick=function(){ inp.ondblclick(); };
   row.appendChild(inp); row.appendChild(val);
   ST.refreshFns.push(refresh); refresh();
   return row;
@@ -4399,6 +5041,7 @@ function stChips(o){ /* {id,label?,choices:[[val,label]],get,set,allowOff} singl
   var wrap=el("div");
   if(o.label) wrap.appendChild(el("div","subh",o.label));
   var chips=el("div","chips");
+  if(o.id) chips.id=o.id; /* addressable for tests + search */
   function refresh(){
     var cur=o.get();
     chips.querySelectorAll(".chip").forEach(function(c,i){ c.className="chip"+(o.choices[i][0]===cur?" on":""); });
@@ -4419,6 +5062,7 @@ function stChips(o){ /* {id,label?,choices:[[val,label]],get,set,allowOff} singl
 }
 function stToggle(o){ /* {id,label,get,set} */
   var c=el("button","chip",o.label);
+  if(o.id) c.id=o.id;
   function refresh(){ c.className="chip"+(o.get()?" on":""); }
   c.onclick=function(){ o.set(!o.get()); refresh(); };
   ST.refreshFns.push(refresh); refresh();
@@ -4439,14 +5083,64 @@ function svSlider(id,label,bidir,featId,max){
     set:function(v){ svSet(id,v); stSync(featId); }});
 }
 function t1Slider(id,label,k,bidir){
+  ST.rowMap[id]={kind:"t1",k:k};
   return stSlider({id:id,label:label,min:bidir===false?0:-100,max:100,def:0,
     get:function(){ return state.st.t1[k]||0; },
     set:function(v){ state.st.t1[k]=v; stT1Changed(); stSaveSoon(); }});
 }
 function t2Slider(id,label,k,bidir){
+  ST.rowMap[id]={kind:"t2",k:k};
   return stSlider({id:id,label:label,min:bidir?-100:0,max:100,def:0,
     get:function(){ return state.st.t2[k]||0; },
     set:function(v){ state.st.t2[k]=v; if(k==="smooth"||k==="freqLo") ST.lutKey=ST.lutKey; stT2Changed(); stSaveSoon(); }});
+}
+/* pipeline-sv controls (HSL / curve / grading / B&W / leak / frame / WB / bg-enhance) */
+function pipeSlider(id,label,bidir,min,max){
+  return stSlider({id:id,label:label,min:bidir?-100:(min||0),max:max||100,def:0,
+    get:function(){ return svGet(id,0); },
+    set:function(v){ svSet(id,v); stPipeChanged(); }});
+}
+function pipeChips(id,label,choices){
+  return stChips({id:id,label:label,choices:choices,
+    get:function(){ return svGet(id,null); },
+    set:function(v){ svSet(id,v); stPipeChanged(); }});
+}
+function pipeToggle(id,label,onSet){
+  return stToggle({id:id,label:label,
+    get:function(){ return !!svGet(id,false); },
+    set:function(v){ svSet(id,v); if(onSet) onSet(v); stPipeChanged(); }});
+}
+function pipeColor(id){
+  return stColorInp({id:id,
+    get:function(){ return svGet(id,null); },
+    set:function(v){ svSet(id,v); stPipeChanged(); }});
+}
+/* small reference-photo picker (M8/M20/E-transfer): fills state.st.refX via the shared #filePick */
+function stRefXPicker(){
+  var wrap=el("div","st-refx");
+  var box=el("div","ref");
+  function refresh(){
+    box.innerHTML="";
+    box.className="ref"+(state.st.refX?" filled":"");
+    if(state.st.refX){
+      var im=document.createElement("img");
+      im.src="data:"+state.st.refX.mime+";base64,"+state.st.refX.b64; im.alt="reference";
+      box.appendChild(im);
+      var x=el("button","x","✕");
+      x.setAttribute("aria-label",t("lb_remove_image"));
+      x.onclick=function(ev){ ev.stopPropagation(); state.st.refX=null; stRefreshUI(); stRenderPend(); };
+      box.appendChild(x);
+    } else {
+      var a=el("button","add","+");
+      a.title=L9({my:"Reference ပုံထည့်ပါ",en:"Add a reference photo"});
+      a.onclick=function(){ state.pickSlot="stx"; $("filePick").click(); };
+      box.appendChild(a);
+    }
+  }
+  ST.refreshFns.push(refresh); refresh();
+  wrap.appendChild(box);
+  wrap.appendChild(el("span","mut",L9({my:"Reference ပုံ (IMAGE 2 — စတိုင်/အရောင်ကူးယူရန်သာ)",en:"Reference photo (IMAGE 2 — style/color source only)"})));
+  return wrap;
 }
 function svChips(id,label,choices,featId,allowOff){
   return stChips({id:id,label:label,choices:choices,allowOff:allowOff,
@@ -4496,12 +5190,19 @@ function fs(id){ return svGet(id,0); }
 var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
 (function buildMeitu(){
   var host=$("muHost"); if(!host) return;
-  function G(title,count){ var g=grp(title,count+t("unit"),false); host.appendChild(g.g); var grid=el("div","st-grid"); g.b.appendChild(grid); g.grid=grid; return g; }
+  function G(title,count,kw){
+    var g=grp(title,count+t("unit"),false); host.appendChild(g.g);
+    var grid=el("div","st-grid"); g.b.appendChild(grid); g.grid=grid;
+    g.g._stG=ST.groups.length;
+    ST.groups.push({el:g.g,title:title,host:"mu",kw:kw||"",chk:[]});
+    return g;
+  }
   function reg(g,featIds){ (featIds||[]).forEach(function(id){ ST.grpOf[id]=g.g; }); }
+  function regChk(g,fn){ ST.groups[g.g._stG].chk.push(fn); }
   function count(n){ ST_MEITU_COUNT+=n; }
 
-  /* MU-1 One-Tap (3) */
-  var g1=G("✨ "+L9({my:"တစ်ချက်နှိပ်",en:"One-Tap"}),3); count(3);
+  /* MU-1 One-Tap (4) */
+  var g1=G("✨ "+L9({my:"တစ်ချက်နှိပ်",en:"One-Tap"}),4,"one tap auto beautify ai retouch target skin analysis analyze"); count(4);
   g1.grid.appendChild(stSlider({id:"mu_auto",label:L9({my:"အလိုအလျောက် အလှပြင်",en:"Auto Beautify"}),min:0,max:100,def:0,
     get:function(){ return svGet("mu_auto",0); },
     set:function(v){ svSet("mu_auto",v); stRecomputeGhosts(); stT1Changed(); }}));
@@ -4517,12 +5218,20 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     if(!svGet("mu_ai",false)) return null;
     return { params:{}, frag: byKey.meitu.text };
   });
+  /* M17 — AI Skin Analysis: zero-network, reads ST.px0 + the skin mask, applies t2 suggestions */
+  var anlRow=el("div","st-ctl");
+  anlRow.appendChild(el("label",null,L9({my:"AI အသားအရေစစ်ဆေး",en:"AI Skin Analysis"})));
+  var anlBtn=el("button","chip",L9({my:"🔬 စစ်ဆေးမယ်",en:"🔬 Analyze"}));
+  anlBtn.id="mu_skinAnalyze";
+  anlBtn.onclick=function(){ stSkinAnalyze(); };
+  anlRow.appendChild(anlBtn);
+  g1.grid.appendChild(anlRow);
   g1.b.appendChild(stSub(L9({my:"ပြင်ဆင်မည့်သူရွေး",en:"Retouch Target"})));
   g1.b.appendChild(stTargetChips());
   reg(g1,["mu_auto","mu_ai"]);
 
   /* MU-2 Skin (6) */
-  var g2=G("🧴 "+L9({my:"အသားအရေ",en:"Skin"}),6); count(6);
+  var g2=G("🧴 "+L9({my:"အသားအရေ",en:"Skin"}),6,"skin smoothing denoise even tone deyellow finish matte dewy cream deshine wrinkle plump"); count(6);
   g2.grid.appendChild(t2Slider("mu_smooth",L9({my:"အသားအရေချောမွေ့",en:"Skin Smoothing"}),"smooth"));
   g2.grid.appendChild(t2Slider("mu_denoise",L9({my:"— Denoise",en:"— Denoise"}),"denoise"));
   g2.grid.appendChild(t2Slider("mu_even",L9({my:"အသားရောင်ညီညာ",en:"Even Tone"}),"even"));
@@ -4554,7 +5263,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(g2,["mu_wrinkle","mu_plump"]);
 
   /* MU-3 Whitening & Tone (3) */
-  var g3=G("🤍 "+L9({my:"အသားဖြူဝင်း",en:"Whitening & Tone"}),3); count(3);
+  var g3=G("🤍 "+L9({my:"အသားဖြူဝင်း",en:"Whitening & Tone"}),3,"whitening skin tone fair porcelain natural warm honey tan rosy complexion"); count(3);
   g3.grid.appendChild(t2Slider("mu_white",L9({my:"အသားဖြူဝင်း",en:"Whitening"}),"white"));
   g3.b.appendChild(stSub(L9({my:"အသားရောင်ရွေး",en:"Skin Tone"})));
   g3.b.appendChild(svChips("mu_skinTone",null,[["fair","Fair"],["porcelain","Porcelain"],["natural","Natural"],["warm","Warm"],["honey-tan","Honey Tan"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_skinToneF"));
@@ -4575,7 +5284,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(g3,["mu_skinToneF"]);
 
   /* MU-4 Blemish (3) */
-  var g4=G("🩹 "+L9({my:"အမာရွတ်/ဝက်ခြံ",en:"Blemish"}),3); count(3);
+  var g4=G("🩹 "+L9({my:"အမာရွတ်/ဝက်ခြံ",en:"Blemish"}),3,"blemish acne spots dark circles eye bags smile lines"); count(3);
   g4.grid.appendChild(svSlider("mu_acne",L9({my:"ဝက်ခြံ/အမာရွတ်ဖယ်",en:"Acne & Blemish"}),false,"mu_acne"));
   stFeat("mu_acne",L9({my:"ဝက်ခြံဖယ်",en:"Acne"}),["mu_acne"],function(){
     var v=fv("mu_acne"); if(!v) return null;
@@ -4595,7 +5304,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(g4,["mu_acne","mu_underEye","mu_smileLines"]);
 
   /* MU-5 Face Reshape (7) */
-  var g5=G("🪞 "+L9({my:"မျက်နှာပုံသွင်း",en:"Face Reshape"}),7); count(7);
+  var g5=G("🪞 "+L9({my:"မျက်နှာပုံသွင်း",en:"Face Reshape"}),9,"face slim v jaw chin cheekbone temples forehead philtrum small head expression crown height skull 3d dimension"); count(9);
   function simpleFeat(id,slId,label,frag){ stFeat(id,label,[slId],function(){ var v=fs(slId); if(!v) return null; return { params:{v:v}, frag:frag(v) }; }); }
   g5.grid.appendChild(svSlider("mu_faceSlim",L9({my:"မျက်နှာသွယ်",en:"Face Slim"}),true,"mu_faceSlim"));
   simpleFeat("mu_faceSlim","mu_faceSlim",L9({my:"မျက်နှာသွယ်",en:"Face Slim"}),function(v){ return stLineSigned("faceSlim",v); });
@@ -4629,10 +5338,19 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     var e=svGet("mu_expression",null); if(!e) return null;
     return { params:{}, frag:"Change the expression to "+e+"; identity preserved." };
   });
-  reg(g5,["mu_faceSlim","mu_vjaw","mu_chin","mu_cheek","mu_fore","mu_smallHead","mu_expr"]);
+  /* M9 — Crown Height */
+  g5.grid.appendChild(svSlider("mu_crown",L9({my:"ဦးထိပ်မြင့်",en:"Crown Height"}),false,"mu_crownF"));
+  simpleFeat("mu_crownF","mu_crown",L9({my:"ဦးထိပ်မြင့်",en:"Crown Height"}),function(v){ return "Raise the crown/skull top by "+Math.abs(v)+"% for a taller head line (高颅顶); hair stays natural."; });
+  /* M12 — 3D Face Dimension */
+  g5.grid.appendChild(svSlider("mu_face3d",L9({my:"3D မျက်နှာထုထည်",en:"3D Face Dimension"}),false,"mu_face3dF"));
+  stFeat("mu_face3dF",L9({my:"3D ထုထည်",en:"3D Dimension"}),["mu_face3d"],function(){
+    var v=fv("mu_face3d"); if(!v) return null;
+    return { params:{v:v}, frag:"Add unified 3D dimension: soft shading and highlights on brows, nose, cheekbones and chin at "+v+"%." };
+  },function(){ var v=svGet("mu_face3d",0); return v?{t1:{cla:v*0.25}}:null; });
+  reg(g5,["mu_faceSlim","mu_vjaw","mu_chin","mu_cheek","mu_fore","mu_smallHead","mu_expr","mu_crownF","mu_face3dF"]);
 
   /* MU-6 Eyes (4) */
-  var g6=G("👁 "+L9({my:"မျက်လုံး",en:"Eyes"}),4); count(4);
+  var g6=G("👁 "+L9({my:"မျက်လုံး",en:"Eyes"}),4,"eye enlarge pupil brighten aegyo brow thickness tilt"); count(4);
   g6.grid.appendChild(svSlider("mu_eyeSize",L9({my:"မျက်လုံးချဲ့",en:"Eye Enlarge"}),true,"mu_eye"));
   g6.grid.appendChild(svSlider("mu_pupil",L9({my:"— သူငယ်အိမ်",en:"— Pupil"}),false,"mu_eye"));
   stFeat("mu_eye",L9({my:"မျက်လုံးချဲ့",en:"Eye Enlarge"}),["mu_eyeSize","mu_pupil"],function(){
@@ -4655,7 +5373,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(g6,["mu_eye","mu_aegyo","mu_brow"]);
 
   /* MU-7 Nose (2) */
-  var g7=G("👃 "+L9({my:"နှာခေါင်း",en:"Nose"}),2); count(2);
+  var g7=G("👃 "+L9({my:"နှာခေါင်း",en:"Nose"}),3,"nose size wings bridge tip length root sanken"); count(3);
   g7.grid.appendChild(svSlider("mu_noseSize",L9({my:"နှာခေါင်းသေးသွယ်",en:"Nose Size & Wings"}),true,"mu_nose"));
   stFeat("mu_nose",L9({my:"နှာခေါင်း",en:"Nose"}),["mu_noseSize"],function(){
     var v=fs("mu_noseSize"); if(!v) return null;
@@ -4667,10 +5385,17 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     var v1=fs("mu_bridge"),v2=fs("mu_tip"); if(!v1&&!v2) return null;
     return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:"Refine the nose bridge by "+v1+"% and the tip by "+v2+"% with natural 3D shading, no cartoon look." };
   });
-  reg(g7,["mu_nose","mu_noseBt"]);
+  /* M11 — Nose Length & Root */
+  g7.grid.appendChild(svSlider("mu_noseLen",L9({my:"နှာတံအရှည်",en:"Nose Length"}),true,"mu_noseLR"));
+  g7.grid.appendChild(svSlider("mu_noseRoot",L9({my:"နှာအမြစ် (sanken)",en:"Nose Root"}),true,"mu_noseLR"));
+  stFeat("mu_noseLR",L9({my:"နှာတံအရှည်/အမြစ်",en:"Nose Length & Root"}),["mu_noseLen","mu_noseRoot"],function(){
+    var v1=fs("mu_noseLen"),v2=fs("mu_noseRoot"); if(!v1&&!v2) return null;
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:"Adjust nose length by "+v1+"%; deepen the nose root (sanken) by "+v2+"% with natural 3D shading." };
+  });
+  reg(g7,["mu_nose","mu_noseBt","mu_noseLR"]);
 
   /* MU-8 Lips & Teeth (3) */
-  var g8=G("👄 "+L9({my:"နှုတ်ခမ်းနှင့်သွား",en:"Lips & Teeth"}),3); count(3);
+  var g8=G("👄 "+L9({my:"နှုတ်ခမ်းနှင့်သွား",en:"Lips & Teeth"}),4,"lips teeth lip color plump smile corners whiten teeth fix mouth size position"); count(4);
   g8.b.appendChild(stSub(L9({my:"နှုတ်ခမ်းအရောင်",en:"Lip Color"})));
   g8.b.appendChild(svChips("mu_lipHex",null,[["#c94f5e","Rose"],["#b03a48","Berry"],["#e07a6a","Coral"],["#a52a3a","Wine"],["#d96c8a","Pink"],["#c96a4a","Terracotta"],["#8c2f39","Maroon"],["#e0938c","Nude"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_lipColor"));
   g8.b.appendChild(svColor("mu_lipCustom","mu_lipColor"));
@@ -4699,10 +5424,20 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     if(!svGet("mu_teethFix",false)) return null;
     return { params:{}, frag:"Straighten and repair crooked or chipped teeth naturally." };
   });
-  reg(g8,["mu_lipColor","mu_lipShape","mu_teethFix"]);
+  /* M10 — Mouth Size & Position */
+  g8.grid.appendChild(svSlider("mu_mouthSize",L9({my:"ပါးစပ်အရွယ်",en:"Mouth Size"}),true,"mu_mouthPos"));
+  g8.grid.appendChild(svSlider("mu_mouthMove",L9({my:"ပါးစပ်နေရာ",en:"Mouth Position"}),true,"mu_mouthPos"));
+  stFeat("mu_mouthPos",L9({my:"ပါးစပ်အရွယ်/နေရာ",en:"Mouth Size & Position"}),["mu_mouthSize","mu_mouthMove"],function(){
+    var v1=fs("mu_mouthSize"),v2=fs("mu_mouthMove"); if(!v1&&!v2) return null;
+    var L=[];
+    if(v1) L.push("Resize the mouth by "+v1+"%");
+    if(v2) L.push("move the mouth "+(v2>0?"up":"down")+" by "+Math.abs(v2)+"%");
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:L.join("; ")+"; keep natural lip anatomy." };
+  });
+  reg(g8,["mu_lipColor","mu_lipShape","mu_teethFix","mu_mouthPos"]);
 
   /* MU-9 Makeup (4) */
-  var g9=G("💄 "+L9({my:"မိတ်ကပ်",en:"Makeup"}),4); count(4);
+  var g9=G("💄 "+L9({my:"မိတ်ကပ်",en:"Makeup"}),8,"makeup blush eyeshadow liner lash contacts contour foundation highlighter strobing brow makeup transfer reference"); count(8);
   g9.b.appendChild(stSub(L9({my:"မိတ်ကပ်အစုံ",en:"Full Makeup Look"})));
   g9.b.appendChild(svChips("mu_makeupStyle",null,[["Natural","Natural"],["Korean","Korean"],["Douyin","Douyin"],["Western","Western"],["Myanmar bridal","Myanmar Bridal"]],"mu_makeup"));
   g9.b.appendChild(svSlider("mu_makeupV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_makeup"));
@@ -4738,10 +5473,48 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     var v=fv("mu_contour"); if(!v) return null;
     return { params:{v:v}, frag:"Add soft contour shading and highlight for dimensional features at "+v+"%." };
   },function(){ var v=svGet("mu_contour",0); return v?{t1:{cla:v*0.2}}:null; });
-  reg(g9,["mu_makeup","mu_blush","mu_eyeMakeup","mu_contour"]);
+  /* M5 — Brow Makeup */
+  g9.b.appendChild(stSub(L9({my:"မျက်ခုံးမိတ်ကပ်",en:"Brow Makeup"})));
+  g9.b.appendChild(svChips("mu_browStyle",null,[["straight",L9({my:"ဖြောင့်",en:"Straight"})],["arched",L9({my:"ကွေး",en:"Arched"})],["fluffy",L9({my:"နူးညံ့",en:"Fluffy"})],["soft-shade",L9({my:"ရိပ်နု",en:"Soft-shade"})]],"mu_browMk"));
+  g9.b.appendChild(svChips("mu_browColor",null,[["black",L9({my:"အနက်",en:"Black"})],["dark brown",L9({my:"ညိုရင့်",en:"Dark Brown"})],["ash",L9({my:"ပြာမှုန်",en:"Ash"})],["taupe","Taupe"]],"mu_browMk"));
+  g9.b.appendChild(svSlider("mu_browMkV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_browMk"));
+  stFeat("mu_browMk",L9({my:"မျက်ခုံးမိတ်ကပ်",en:"Brow Makeup"}),["mu_browStyle","mu_browColor","mu_browMkV"],function(){
+    var v=fv("mu_browMkV"), s=svGet("mu_browStyle",null); if(!v||!s) return null;
+    var c=svGet("mu_browColor",null)||"dark brown";
+    return { params:{v:v}, frag:"Apply "+s+" eyebrow makeup in "+c+" at "+v+"%; keep natural brow hairs visible." };
+  });
+  /* M6 — Foundation */
+  g9.b.appendChild(stSub(L9({my:"Foundation / အသားပြင်ညီမိတ်ကပ်",en:"Foundation"})));
+  g9.b.appendChild(svChips("mu_foundShade",null,[["light",L9({my:"ဖြူနု",en:"Light"})],["natural",L9({my:"သဘာဝ",en:"Natural"})],["warm",L9({my:"နွေး",en:"Warm"})],["tan",L9({my:"ရင့်",en:"Tan"})]],"mu_found"));
+  g9.b.appendChild(svSlider("mu_foundV",L9({my:"Coverage",en:"Coverage"}),false,"mu_found"));
+  stFeat("mu_found",L9({my:"Foundation",en:"Foundation"}),["mu_foundShade","mu_foundV"],function(){
+    var v=fv("mu_foundV"), sh=svGet("mu_foundShade",null); if(!v||!sh) return null;
+    return { params:{v:v}, frag:"Apply "+sh+" foundation at "+v+"% coverage, even complexion, no mask-like look." };
+  },function(){
+    var v=svGet("mu_foundV",0), sh=svGet("mu_foundShade",null); if(!v||!sh) return null;
+    return { t2:{even:v*0.3, white:(sh==="light")?v*0.2:0} };
+  });
+  /* M7 — Highlighter & Strobing */
+  g9.b.appendChild(stSub(L9({my:"ဟိုက်လိုက်တောက်ပ",en:"Highlighter & Strobing"})));
+  g9.b.appendChild(svMultiChips("mu_hlZones",null,[["cheekbones",L9({my:"ပါးရိုး",en:"Cheekbones"})],["nose bridge",L9({my:"နှာတံ",en:"Nose bridge"})],["cupid's bow",L9({my:"နှုတ်ခမ်းထိပ်",en:"Cupid's bow"})],["brow bone",L9({my:"မျက်ခုံးရိုး",en:"Brow bone"})]],"mu_highlighter"));
+  g9.b.appendChild(svSlider("mu_hlV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_highlighter"));
+  stFeat("mu_highlighter",L9({my:"ဟိုက်လိုက်",en:"Highlighter"}),["mu_hlZones","mu_hlV"],function(){
+    var v=fv("mu_hlV"); if(!v) return null;
+    var z=svGet("mu_hlZones",[]); var zs=(z&&z.length)?z.join(", "):"cheekbones and nose bridge";
+    return { params:{v:v}, frag:"Add luminous highlighter on "+zs+" at "+v+"%, PBR-like glow." };
+  },function(){ var v=svGet("mu_hlV",0); return v?{t1:{cla:v*0.15}}:null; });
+  /* M8 — Makeup Transfer (← Reference photo) */
+  g9.b.appendChild(stSub(L9({my:"မိတ်ကပ်ကူးယူ (Ref)",en:"Makeup Transfer (← Ref)"})));
+  g9.b.appendChild(stRefXPicker());
+  g9.b.appendChild(svSlider("mu_mkTransferV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_mkTransfer"));
+  stFeat("mu_mkTransfer",L9({my:"မိတ်ကပ်ကူးယူ",en:"Makeup Transfer"}),["mu_mkTransferV"],function(){
+    var v=fv("mu_mkTransferV"); if(!v||!state.st.refX) return null;
+    return { params:{v:v}, frag:"Copy the complete makeup look from IMAGE 2 onto the IMAGE 1 face at "+v+"% intensity; keep IMAGE 1 identity, ignore everything else in IMAGE 2." };
+  },null,{usesRef:true});
+  reg(g9,["mu_makeup","mu_blush","mu_eyeMakeup","mu_contour","mu_browMk","mu_found","mu_highlighter","mu_mkTransfer"]);
 
   /* MU-10 Hair (4) */
-  var g10=G("💇 "+L9({my:"ဆံပင်",en:"Hair"}),4); count(4);
+  var g10=G("💇 "+L9({my:"ဆံပင်",en:"Hair"}),5,"hair color hairline fill volume bangs flyaway hairstyle ponytail bob curls"); count(5);
   g10.b.appendChild(stSub(L9({my:"ဆံပင်အရောင်",en:"Hair Color"})));
   g10.b.appendChild(svChips("mu_hairColor",null,[["jet black",L9({my:"အနက်",en:"Black"})],["dark brown",L9({my:"ညိုရင့်",en:"Dark Brown"})],["chestnut","Chestnut"],["burgundy","Burgundy"],["golden brown","Gold Brown"],["ash brown","Ash"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_hairCol"));
   g10.b.appendChild(svColor("mu_hairHex","mu_hairCol"));
@@ -4769,10 +5542,17 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     var v=fv("mu_flyaway"); if(!v) return null;
     return { params:{v:v}, frag:stLine("hairStray",v) };
   });
-  reg(g10,["mu_hairCol","mu_hairFV","mu_bangsF","mu_flyaway"]);
+  /* M16 — AI Hairstyle */
+  g10.b.appendChild(stSub(L9({my:"AI ဆံပင်ပုံစံ",en:"AI Hairstyle"})));
+  g10.b.appendChild(svChips("mu_hairstyle",null,[["long soft waves",L9({my:"လှိုင်းရှည်",en:"Long waves"})],["chin-length bob",L9({my:"Bob",en:"Bob"})],["high ponytail",L9({my:"နောက်စည်းမြင့်",en:"High ponytail"})],["elegant low bun",L9({my:"ဆံထုံး",en:"Elegant bun"})],["short crop",L9({my:"အတို",en:"Short crop"})],["soft curls",L9({my:"ကော့နု",en:"Soft curls"})]],"mu_hairstyleF"));
+  stFeat("mu_hairstyleF",L9({my:"AI ဆံပင်ပုံစံ",en:"AI Hairstyle"}),["mu_hairstyle"],function(){
+    var s=svGet("mu_hairstyle",null); if(!s) return null;
+    return { params:{}, frag:"Change the hairstyle to "+s+"; keep the face, hair color and lighting; realistic hairline." };
+  });
+  reg(g10,["mu_hairCol","mu_hairFV","mu_bangsF","mu_flyaway","mu_hairstyleF"]);
 
   /* MU-11 Body (5) */
-  var g11=G("🏃 "+L9({my:"ခန္ဓာကိုယ်",en:"Body"}),5); count(5);
+  var g11=G("🏃 "+L9({my:"ခန္ဓာကိုယ်",en:"Body"}),8,"body waist belly legs neck shoulders arms chest hips bust abs muscle body whitening"); count(8);
   g11.b.appendChild(stSub(L9({my:"AI ခန္ဓာကိုယ်ညှိ",en:"AI Body Tune"})));
   g11.b.appendChild(svChips("mu_bodyGoal",null,[["slimmer",L9({my:"ပိန်သွယ်",en:"Slim"})],["curvier",L9({my:"လုံးရွေ",en:"Curvy"})],["more athletic",L9({my:"ကြံ့ခိုင်",en:"Athletic"})],["taller",L9({my:"ရှည်မြင့်",en:"Taller"})]],"mu_bodyTune"));
   g11.b.appendChild(svSlider("mu_bodyTuneV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_bodyTune"));
@@ -4809,10 +5589,27 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     var v=fs("mu_armSlim"); if(!v) return null;
     return { params:{v:v}, frag:stLineSigned("armSlim",v) };
   });
-  reg(g11,["mu_bodyTune","mu_waistBelly","mu_legs","mu_neckSh","mu_armSlim"]);
+  /* M13 — Chest & Hips (recycled D.retouch lines) */
+  g11.grid.appendChild(svSlider("mu_bust",L9({my:"ရင်အုပ်",en:"Chest"}),true,"mu_chestHip"));
+  g11.grid.appendChild(svSlider("mu_hip",L9({my:"တင်ပါး",en:"Hips"}),true,"mu_chestHip"));
+  stFeat("mu_chestHip",L9({my:"ရင်အုပ်/တင်ပါး",en:"Chest & Hips"}),["mu_bust","mu_hip"],function(){
+    var v1=fs("mu_bust"),v2=fs("mu_hip"); if(!v1&&!v2) return null;
+    var L=[]; if(v1) L.push(stLineSigned("bust",v1)); if(v2) L.push(stLineSigned("hip",v2));
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:L.join(" ") };
+  });
+  /* M14 — Abs & Muscle Lines */
+  g11.grid.appendChild(svSlider("mu_abs",L9({my:"ကြွက်သား/ဗိုက်ကွက်",en:"Abs & Muscle"}),false,"mu_absF"));
+  simpleFeat("mu_absF","mu_abs",L9({my:"ကြွက်သား",en:"Abs & Muscle"}),function(v){ return "Overlay realistic subtle muscle definition / ab lines at "+Math.abs(v)+"%; match skin lighting."; });
+  /* M15 — Body Whitening (skin mask already covers body skin → t2 ghost) */
+  g11.grid.appendChild(svSlider("mu_bodyWhite",L9({my:"ကိုယ်အသားဖြူ",en:"Body Whitening"}),false,"mu_bodyWhiteF"));
+  stFeat("mu_bodyWhiteF",L9({my:"ကိုယ်အသားဖြူ",en:"Body Whitening"}),["mu_bodyWhite"],function(){
+    var v=fv("mu_bodyWhite"); if(!v) return null;
+    return { params:{v:v}, frag:"Brighten the neck and body skin to match the face at "+v+"%." };
+  },function(){ var v=svGet("mu_bodyWhite",0); return v?{t2:{white:v*0.3}}:null; });
+  reg(g11,["mu_bodyTune","mu_waistBelly","mu_legs","mu_neckSh","mu_armSlim","mu_chestHip","mu_absF","mu_bodyWhiteF"]);
 
   /* MU-12 Filters & Light (6) */
-  var g12=G("🎨 "+L9({my:"ဖစ်လ်တာနှင့်အလင်း",en:"Filters & Light"}),6); count(6);
+  var g12=G("🎨 "+L9({my:"ဖစ်လ်တာနှင့်အလင်း",en:"Filters & Light"}),10,"filter exposure brightness contrast saturation vibrance warmth tint highlights shadows sharpen clarity grain vignette fade glow light leak flash relight background blur replace"); count(10);
   var ST_FILTERS={
     film:{lbl:"Film",t1:{wrm:8,fad:12,grn:15,con:-4}},
     ccd:{lbl:"CCD",t1:{con:12,sat:14,wrm:6,grn:25,vig:18}},
@@ -4851,13 +5648,21 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   adj.appendChild(t1Slider("mu_tnt",L9({my:"Tint",en:"Tint"}),"tnt"));
   adj.appendChild(t1Slider("mu_hi",L9({my:"Highlights",en:"Highlights"}),"hi"));
   adj.appendChild(t1Slider("mu_sh",L9({my:"Shadows",en:"Shadows"}),"sh"));
+  adj.appendChild(t1Slider("mu_shp",L9({my:"ချွန်ထက်မှု",en:"Sharpen"}),"shp",false)); /* M1 */
+  adj.appendChild(t1Slider("mu_cla",L9({my:"ကြည်လင်ပြတ်သား",en:"Clarity"}),"cla"));    /* M2 */
   g12.b.appendChild(adj);
   g12.b.appendChild(stSub(L9({my:"ဖလင်အက်ဖက်",en:"Film FX"})));
   var fx=el("div","st-grid");
   fx.appendChild(t1Slider("mu_grn",L9({my:"Grain",en:"Grain"}),"grn",false));
   fx.appendChild(t1Slider("mu_vig",L9({my:"Vignette",en:"Vignette"}),"vig",false));
   fx.appendChild(t1Slider("mu_fad",L9({my:"Fade",en:"Fade"}),"fad",false));
+  fx.appendChild(t1Slider("mu_glow",L9({my:"နူးညံ့အလင်းရောင်",en:"Vibe Glow"}),"glow",false)); /* M3 */
   g12.b.appendChild(fx);
+  /* M4 — Light Leak (settle overlay, pipeline sv) */
+  g12.b.appendChild(stSub(L9({my:"အလင်းယိုအက်ဖက်",en:"Light Leak"})));
+  g12.b.appendChild(pipeChips("st_leak",null,[["warm",L9({my:"ထောင့်နွေး",en:"Warm corner"})],["streak",L9({my:"ရွှေရောင်လိုင်း",en:"Golden streak"})],["prism","Prism"],["flare",L9({my:"Flare နု",en:"Soft flare"})]]));
+  g12.b.appendChild(pipeSlider("st_leakV",L9({my:"ပမာဏ",en:"Amount"}),false));
+  regChk(g12,function(){ return svGet("st_leak",null)&&svGet("st_leakV",0)>0; });
   g12.b.appendChild(stSub(L9({my:"AI ဖလက်ရှ်",en:"AI Flash"})));
   var flashRow=el("div","st-ctl");
   flashRow.appendChild(el("label",null,L9({my:"AI Flash",en:"AI Flash"})));
@@ -4904,18 +5709,129 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     return { params:{}, frag:L.join(" ") };
   });
   reg(g12,["mu_filterF","mu_flash","mu_relightF","mu_bgblurF","mu_bgRep"]);
+
+  /* MU-13 🎛 Color Pro (3) */
+  var g13=G("🎛 "+L9({my:"ရောင်စုံပရို",en:"Color Pro"}),3,"split toning shadow highlight tint white balance auto wb color match reference film tone"); count(3);
+  /* M18 — Split Toning */
+  g13.b.appendChild(stSub(L9({my:"Split Toning / အရိပ်-အလင်းရောင်ခြယ်",en:"Split Toning"})));
+  var sptRow=el("div","st-ctl");
+  sptRow.appendChild(el("label",null,L9({my:"အရိပ်ရောင် / အလင်းရောင်",en:"Shadow / Highlight tint"})));
+  sptRow.appendChild(pipeColor("st_grade_muSh"));
+  sptRow.appendChild(pipeColor("st_grade_muHi"));
+  g13.b.appendChild(sptRow);
+  g13.b.appendChild(pipeSlider("st_grade_muBal",L9({my:"Balance",en:"Balance"}),true));
+  g13.b.appendChild(pipeSlider("st_grade_muAmt",L9({my:"ပမာဏ",en:"Amount"}),false));
+  regChk(g13,function(){
+    return svGet("st_grade_muAmt",0)>0&&(svGet("st_grade_muSh",null)||svGet("st_grade_muHi",null));
+  });
+  /* M19 — AI White Balance (gray-world) */
+  var wbRow=el("div","st-ctl");
+  wbRow.appendChild(el("label",null,L9({my:"AI White Balance",en:"AI White Balance"})));
+  wbRow.appendChild(stToggle({id:"st_wbAuto",label:L9({my:"အလိုအလျောက်",en:"Auto"}),
+    get:function(){ return !!svGet("st_wbAuto",false); },
+    set:function(v){ svSet("st_wbAuto",v); if(v) stComputeWb(); stSync("st_wbAutoF"); stPipeChanged(); }}));
+  g13.b.appendChild(wbRow);
+  stFeat("st_wbAutoF",L9({my:"AI WB",en:"AI White Balance"}),["st_wbAuto","st_wbGr","st_wbGb"],null,function(){
+    if(!svGet("st_wbAuto",false)) return null;
+    var m=ST._wbMeans; if(!m) return null;
+    return { t1:{ wrm: stClamp(-(m.r-m.b)*0.4,-40,40) } }; /* instant T1 ghost — exact gains land at settle */
+  });
+  /* M20 — AI Filter: Color Match from reference */
+  g13.b.appendChild(stSub(L9({my:"AI Filter — ရောင်စဉ်ကူးယူ (Ref)",en:"AI Filter — Color Match (← Ref)"})));
+  g13.b.appendChild(stRefXPicker());
+  g13.b.appendChild(svSlider("mu_colorMatchV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_colorMatch"));
+  stFeat("mu_colorMatch",L9({my:"ရောင်စဉ်ကူးယူ",en:"Color Match"}),["mu_colorMatchV"],function(){
+    var v=fv("mu_colorMatchV"); if(!v||!state.st.refX) return null;
+    return { params:{v:v}, frag:"Transfer the color grade / film tone of IMAGE 2 onto IMAGE 1 at "+v+"% (white balance, tonal curve, palette); change colors only, never content." };
+  },null,{usesRef:true});
+  reg(g13,["st_wbAutoF","mu_colorMatch"]);
+
+  /* MU-14 🖼 Composition & Frames (5) */
+  var g14=G("🖼 "+L9({my:"ဖွဲ့စည်းပုံနှင့်ဘောင်",en:"Composition & Frames"}),5,"crop ratio rotate flip mirror straighten level frame border polaroid gold expand outpaint"); count(5);
+  /* M21 — Crop Ratio (geometry) */
+  g14.b.appendChild(stSub(L9({my:"Crop အချိုး",en:"Crop Ratio"})));
+  g14.b.appendChild(stChips({id:"stGeoCropChips",choices:[["1:1","1:1"],["4:5","4:5"],["3:4","3:4"],["2:3","2:3"],["16:9","16:9"]],
+    get:function(){ return state.st.geo.crop; },
+    set:function(v){ state.st.geo.crop=v; stGeoChanged(); }}));
+  regChk(g14,function(){ return !!state.st.geo.crop; });
+  /* M22 — Rotate & Flip (geometry) */
+  var rotRow=el("div","st-ctl");
+  rotRow.appendChild(el("label",null,L9({my:"လှည့်/ပြောင်းပြန်",en:"Rotate & Flip"})));
+  var rotB=el("button","chip","⟳ 90°"); rotB.id="stGeoRot";
+  rotB.onclick=function(){ state.st.geo.rot=(state.st.geo.rot+1)%4; stGeoChanged(); };
+  var flipHB=el("button","chip","⇋ H"); flipHB.id="stGeoFlipH";
+  flipHB.onclick=function(){ state.st.geo.flipH=!state.st.geo.flipH; flipHB.classList.toggle("on",state.st.geo.flipH); stGeoChanged(); };
+  var flipVB=el("button","chip","⇵ V"); flipVB.id="stGeoFlipV";
+  flipVB.onclick=function(){ state.st.geo.flipV=!state.st.geo.flipV; flipVB.classList.toggle("on",state.st.geo.flipV); stGeoChanged(); };
+  ST.refreshFns.push(function(){
+    flipHB.classList.toggle("on",!!state.st.geo.flipH);
+    flipVB.classList.toggle("on",!!state.st.geo.flipV);
+    rotB.classList.toggle("on",!!state.st.geo.rot);
+  });
+  rotRow.appendChild(rotB); rotRow.appendChild(flipHB); rotRow.appendChild(flipVB);
+  g14.b.appendChild(rotRow);
+  regChk(g14,function(){ var g=state.st.geo; return !!(g.rot||g.flipH||g.flipV); });
+  /* M23 — Straighten (geometry, auto-zoom) */
+  g14.b.appendChild(stSlider({id:"st_geoStr",label:L9({my:"ရေပြင်ညီညှိ",en:"Straighten"})+" (°)",min:-45,max:45,def:0,pct:false,
+    get:function(){ return state.st.geo.straighten||0; },
+    set:function(v){ state.st.geo.straighten=stClamp(v,-45,45); stGeoChanged(); }}));
+  regChk(g14,function(){ return !!state.st.geo.straighten; });
+  /* M24 — Frame & Border (settle overlay) */
+  g14.b.appendChild(stSub(L9({my:"ဘောင်",en:"Frame & Border"})));
+  g14.b.appendChild(pipeChips("st_frame",null,[["thin",L9({my:"အဖြူပါး",en:"Thin white"})],["thick",L9({my:"အဖြူထူ",en:"Thick white"})],["polaroid","Polaroid"],["gold",L9({my:"ရွှေရောင်",en:"Gold"})]]));
+  g14.b.appendChild(pipeSlider("st_frameW",L9({my:"အထူ",en:"Width"}),false));
+  regChk(g14,function(){ return !!svGet("st_frame",null); });
+  /* M25 — AI Expand (outpaint) */
+  g14.b.appendChild(stSub(L9({my:"AI ချဲ့ထွင်",en:"AI Expand"})));
+  g14.b.appendChild(svChips("mu_expand",null,[["1:1 square",L9({my:"စတုရန်း 1:1",en:"Square 1:1"})],["4:5 portrait",L9({my:"ဒေါင်လိုက် 4:5",en:"Portrait 4:5"})],["16:9 wide",L9({my:"အလျားလိုက် 16:9",en:"Wide 16:9"})]],"mu_expandF"));
+  stFeat("mu_expandF",L9({my:"AI ချဲ့ထွင်",en:"AI Expand"}),["mu_expand"],function(){
+    var r=svGet("mu_expand",null); if(!r) return null;
+    return { params:{}, frag:"Generatively expand the image canvas to a "+r+" aspect ratio, extending the scene naturally on all needed sides; keep the subject unchanged." };
+  });
+  reg(g14,["mu_expandF"]);
+
+  /* MU-15 🧠 Enhance & Restore (4) */
+  var g15=G("🧠 "+L9({my:"ပြန်လည်ပြုပြင်",en:"Enhance & Restore"}),4,"hd restore deblur unblur denoise noise colorize old photo repair quality"); count(4);
+  var hdrRow=el("div","st-ctl");
+  hdrRow.appendChild(el("label",null,L9({my:"HD ပြန်ပြင်",en:"HD Restore"})));
+  hdrRow.appendChild(svToggle("mu_hdRestore",L9({my:"ဖွင့်",en:"On"}),"mu_hdRestoreF"));
+  g15.grid.appendChild(hdrRow);
+  stFeat("mu_hdRestoreF",L9({my:"HD ပြန်ပြင်",en:"HD Restore"}),["mu_hdRestore"],function(){
+    if(!svGet("mu_hdRestore",false)) return null;
+    return { params:{}, frag:"Restore and enhance photo quality: deblur, denoise, recover facial detail and fabric texture; no identity change." };
+  });
+  g15.grid.appendChild(svSlider("mu_unblur",L9({my:"AI ဝါးမှုပြေ",en:"AI Unblur"}),false,"mu_unblurF"));
+  simpleFeat("mu_unblurF","mu_unblur",L9({my:"AI ဝါးမှုပြေ",en:"AI Unblur"}),function(v){ return "Remove motion blur and soft focus at "+Math.abs(v)+"%, especially on faces; crisp natural detail."; });
+  var colRow=el("div","st-ctl");
+  colRow.appendChild(el("label",null,L9({my:"ဓာတ်ပုံဟောင်းအရောင်ခြယ်",en:"Old Photo Colorize"})));
+  colRow.appendChild(svToggle("mu_colorize",L9({my:"ဖွင့်",en:"On"}),"mu_colorizeF"));
+  g15.grid.appendChild(colRow);
+  stFeat("mu_colorizeF",L9({my:"အရောင်ခြယ်",en:"Colorize"}),["mu_colorize"],function(){
+    if(!svGet("mu_colorize",false)) return null;
+    return { params:{}, frag:"Colorize this old/faded photo with realistic period-accurate colors; repair fading and yellow cast." };
+  });
+  /* M29 — Global Denoise (T2, unmasked) */
+  g15.grid.appendChild(t2Slider("mu_gdenoise",L9({my:"နှိုက်နှိုက်ချွတ် Noise ဖယ်",en:"Global Denoise"}),"gdn"));
+  reg(g15,["mu_hdRestoreF","mu_unblurF","mu_colorizeF"]);
 })();
 
 /* ================= EVOTO PRO — 42 features / 11 groups ================= */
 (function buildEvoto(){
   var host=$("evHost"); if(!host) return;
-  function G(title,count){ var g=grp(title,count+t("unit"),false); host.appendChild(g.g); var grid=el("div","st-grid"); g.b.appendChild(grid); g.grid=grid; return g; }
+  function G(title,count,kw){
+    var g=grp(title,count+t("unit"),false); host.appendChild(g.g);
+    var grid=el("div","st-grid"); g.b.appendChild(grid); g.grid=grid;
+    g.g._stG=ST.groups.length;
+    ST.groups.push({el:g.g,title:title,host:"ev",kw:kw||"",chk:[]});
+    return g;
+  }
   function reg(g,featIds){ (featIds||[]).forEach(function(id){ ST.grpOf[id]=g.g; }); }
+  function regChk(g,fn){ ST.groups[g.g._stG].chk.push(fn); }
   function count(n){ ST_EVOTO_COUNT+=n; }
   function feat1(id,slId,label,frag){ stFeat(id,label,[slId],function(){ var v=fs(slId); if(!v) return null; return { params:{v:v}, frag:frag(v) }; }); }
 
   /* EV-1 Blemish Removal (6) */
-  var e1=G("🩹 "+L9({my:"အမာရွတ်ဖယ်ရှား",en:"Blemish Removal"}),6); count(6);
+  var e1=G("🩹 "+L9({my:"အမာရွတ်ဖယ်ရှား",en:"Blemish Removal"}),8,"blemish freckle acne mole shine dark circles eye bags glasses glare nostril lip cleanup double chin tattoo removal eyelid tape"); count(8);
   e1.grid.appendChild(svSlider("ev_blemish",L9({my:"တင်းတိပ်/ဝက်ခြံ (Master)",en:"Freckle & Acne (Master)"}),false,"ev_blem"));
   e1.grid.appendChild(svSlider("ev_freckle",L9({my:"— တင်းတိပ်",en:"— Freckle"}),false,"ev_blem"));
   e1.grid.appendChild(svSlider("ev_acne",L9({my:"— ဝက်ခြံ",en:"— Acne"}),false,"ev_blem"));
@@ -4949,10 +5865,30 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   });
   e1.grid.appendChild(svSlider("ev_dblChin",L9({my:"မေးနှစ်ထပ်လျှော့",en:"Double Chin"}),false,"ev_dblChin"));
   feat1("ev_dblChin","ev_dblChin",L9({my:"မေးနှစ်ထပ်",en:"Double Chin"}),function(v){ return "Reduce the double chin by "+v+"% with subtle reshaping and shadow blending; realistic."; });
-  reg(e1,["ev_blem","ev_underEye","ev_glare","ev_nlClean","ev_dblChin"]);
+  /* E1 — Tattoo Removal */
+  var tatRow=el("div","st-ctl");
+  tatRow.appendChild(el("label",null,L9({my:"ဆေးမင်ကြောင်ဖယ်",en:"Tattoo Removal"})));
+  tatRow.appendChild(svToggle("ev_tattooOn",L9({my:"ဖွင့်",en:"On"}),"ev_tattoo"));
+  e1.grid.appendChild(tatRow);
+  e1.grid.appendChild(svSlider("ev_tattooV",L9({my:"— ပမာဏ",en:"— Amount"}),false,"ev_tattoo"));
+  stFeat("ev_tattoo",L9({my:"ဆေးမင်ကြောင်ဖယ်",en:"Tattoo Removal"}),["ev_tattooOn","ev_tattooV"],function(){
+    if(!svGet("ev_tattooOn",false)) return null;
+    var v=fv("ev_tattooV")||100;
+    return { params:{v:v}, frag:"Remove visible tattoos at "+v+"%, rebuilding natural skin texture." };
+  });
+  /* E2 — Eyelid Tape Removal */
+  var tapeRow=el("div","st-ctl");
+  tapeRow.appendChild(el("label",null,L9({my:"မျက်ခမ်းတိပ်ဖယ်",en:"Eyelid Tape Removal"})));
+  tapeRow.appendChild(svToggle("ev_lidTape",L9({my:"ဖွင့်",en:"On"}),"ev_lidTapeF"));
+  e1.grid.appendChild(tapeRow);
+  stFeat("ev_lidTapeF",L9({my:"မျက်ခမ်းတိပ်ဖယ်",en:"Eyelid Tape"}),["ev_lidTape"],function(){
+    if(!svGet("ev_lidTape",false)) return null;
+    return { params:{}, frag:"Remove visible double-eyelid tape/glue marks; keep the natural eyelid crease." };
+  });
+  reg(e1,["ev_blem","ev_underEye","ev_glare","ev_nlClean","ev_dblChin","ev_tattoo","ev_lidTapeF"]);
 
   /* EV-2 Wrinkles (3) */
-  var e2=G("〰 "+L9({my:"အရေးအကြောင်း",en:"Wrinkles"}),3); count(3);
+  var e2=G("〰 "+L9({my:"အရေးအကြောင်း",en:"Wrinkles"}),3,"wrinkles forehead frown crow smile marionette perioral neck lines"); count(3);
   e2.grid.appendChild(svSlider("ev_wForehead",L9({my:"နဖူးကြောင်း",en:"Forehead Lines"}),false,"ev_wFore"));
   e2.grid.appendChild(svSlider("ev_wFrown",L9({my:"မျက်မှောင်ကြောင်း",en:"Frown '11' Lines"}),false,"ev_wFore"));
   stFeat("ev_wFore",L9({my:"နဖူးကြောင်း",en:"Forehead Lines"}),["ev_wForehead","ev_wFrown"],function(){
@@ -4972,7 +5908,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e2,["ev_wFore","ev_wFace","ev_wNeck"]);
 
   /* EV-3 Skin Retouching (5) */
-  var e3=G("🫧 "+L9({my:"အသားအရေရီတပ်ချ်",en:"Skin Retouching"}),5); count(5);
+  var e3=G("🫧 "+L9({my:"အသားအရေရီတပ်ချ်",en:"Skin Retouching"}),6,"skin dodge burn sculpt texture smoothing frequency separation finish gloss clarity body"); count(6);
   e3.grid.appendChild(stSlider({id:"ev_evenDB",label:L9({my:"Dodge & Burn ညီညာ",en:"Even Dodge & Burn"}),min:0,max:100,def:0,
     get:function(){ return svGet("ev_evenDB",0); },
     set:function(v){ svSet("ev_evenDB",v); stSync("ev_evenDBF"); }}));
@@ -5015,10 +5951,16 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     var L=[]; if(v2) L.push(stLine("bodySmooth",v2)); if(v1) L.push(stLine("bodyTone",v1)); if(v3) L.push(stLine("bodyBlemish",v3));
     return { params:{v:Math.max(v1,v2,v3)}, frag:L.join(" ") };
   });
-  reg(e3,["ev_evenDBF","ev_texSmoothF","ev_freqSep","ev_bodySkin"]);
+  /* E3 — Sculpt Dodge & Burn */
+  e3.grid.appendChild(svSlider("ev_sculptDB",L9({my:"Sculpt Dodge & Burn",en:"Sculpt Dodge & Burn"}),false,"ev_sculptDBF"));
+  stFeat("ev_sculptDBF",L9({my:"Sculpt D&B",en:"Sculpt Dodge & Burn"}),["ev_sculptDB"],function(){
+    var v=fv("ev_sculptDB"); if(!v) return null;
+    return { params:{v:v}, frag:"Sculpt the face with dodge & burn at "+v+"%: brighten highlights, deepen structural shadows." };
+  },function(){ var v=svGet("ev_sculptDB",0); return v?{t1:{cla:v*0.35,con:v*0.08}}:null; });
+  reg(e3,["ev_evenDBF","ev_texSmoothF","ev_freqSep","ev_bodySkin","ev_sculptDBF"]);
 
   /* EV-4 Skin Tone (4) */
-  var e4=G("🎨 "+L9({my:"အသားရောင်",en:"Skin Tone"}),4); count(4);
+  var e4=G("🎨 "+L9({my:"အသားရောင်",en:"Skin Tone"}),4,"skin tone unify complexion body tan lines temperature redness radiance rosy"); count(4);
   e4.grid.appendChild(t2Slider("ev_unifyFace",L9({my:"မျက်နှာရောင်ညီညာ",en:"Unify Complexion"}),"even"));
   e4.grid.appendChild(svSlider("ev_unifyBody",L9({my:"ကိုယ်ရောင်ညီ",en:"Unify Body"}),false,"ev_unifyB"));
   var tanRow=el("div","st-ctl");
@@ -5052,7 +5994,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e4,["ev_unifyB","ev_toneF"]);
 
   /* EV-5 Facial Reshape (8) */
-  var e5=G("📐 "+L9({my:"မျက်နှာပုံသွင်း",en:"Facial Reshape"}),8); count(8);
+  var e5=G("📐 "+L9({my:"မျက်နှာပုံသွင်း",en:"Facial Reshape"}),8,"reshape pose symmetry face slim width size v-shape jawline chin hairline forehead brow eye nose mouth"); count(8);
   e5.grid.appendChild(svSlider("ev_poseUD",L9({my:"ခေါင်း အပေါ်/အောက်",en:"Head Up/Down"}),true,"ev_pose"));
   e5.grid.appendChild(svSlider("ev_poseLR",L9({my:"ခေါင်း ဘယ်/ညာ",en:"Head Left/Right"}),true,"ev_pose"));
   e5.grid.appendChild(svSlider("ev_poseTilt",L9({my:"ခေါင်းစောင်း",en:"Head Tilt"}),true,"ev_pose"));
@@ -5125,7 +6067,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e5,["ev_pose","ev_faceSet","ev_jawSet","ev_foreSet","ev_browSet","ev_eyeSet","ev_noseSet","ev_mouthSet"]);
 
   /* EV-6 Expression (1) */
-  var e6=G("🙂 "+L9({my:"အမူအရာ",en:"Expression"}),1); count(1);
+  var e6=G("🙂 "+L9({my:"အမူအရာ",en:"Expression"}),1,"expression smile neutral level"); count(1);
   e6.grid.appendChild(svSlider("ev_smileLift",L9({my:"ပြုံးအနည်းငယ်",en:"Gentle Smile"}),false,"ev_expr"));
   e6.b.appendChild(svChips("ev_smileLevel",L9({my:"Smile Level",en:"Smile Level"}),[["1","1"],["2","2"],["3","3"],["4","4"],["5","5"]],"ev_expr"));
   e6.b.appendChild(svChips("ev_neutralLevel",L9({my:"Neutral Level",en:"Neutral Level"}),[["1","1"],["2","2"],["3","3"]],"ev_expr"));
@@ -5141,7 +6083,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e6,["ev_expr"]);
 
   /* EV-7 Teeth (2) */
-  var e7=G("🦷 "+L9({my:"သွား",en:"Teeth"}),2); count(2);
+  var e7=G("🦷 "+L9({my:"သွား",en:"Teeth"}),2,"teeth whitening brightness desaturation repair align braces pretty teeth"); count(2);
   e7.grid.appendChild(t2Slider("ev_teethB",L9({my:"သွားဖြူတောက်ပ",en:"Teeth Brightness"}),"teeth"));
   e7.grid.appendChild(svSlider("ev_teethD",L9({my:"— Desaturation",en:"— Desaturation"}),false,"ev_teethW"));
   stFeat("ev_teethW",L9({my:"သွားဖြူ",en:"Teeth Whitening"}),["ev_teethD"],function(){
@@ -5168,7 +6110,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e7,["ev_teethW","ev_teethR"]);
 
   /* EV-8 Eyes (4) */
-  var e8=G("👁 "+L9({my:"မျက်လုံး",en:"Eyes"}),4); count(4);
+  var e8=G("👁 "+L9({my:"မျက်လုံး",en:"Eyes"}),5,"eyes brightness iris whites reflection catchlight red veins red-eye open gaze eye color symmetry level balance"); count(5);
   e8.grid.appendChild(t2Slider("ev_eyeMaster",L9({my:"မျက်လုံးအလင်း",en:"Eye Brightness"}),"eyeb"));
   var ebGrid=el("div","st-grid");
   [["ev_ebIris",L9({my:"— Iris",en:"— Iris"}),80],["ev_ebWhites",L9({my:"— Whites",en:"— Whites"}),80],["ev_ebRefl",L9({my:"— Reflection",en:"— Reflection"}),40],["ev_ebFlare",L9({my:"— Flare",en:"— Flare"}),0]].forEach(function(s){
@@ -5216,10 +6158,23 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     var v=fv("ev_eyeColorV"), c=svGet("ev_eyeColor",null); if(!v||!c) return null;
     return { params:{v:v}, frag:"Change the iris color to "+c+" at "+v+"%; keep the catchlights and pupil." };
   });
-  reg(e8,["ev_eyeBr","ev_eyeClean","ev_gaze","ev_eyeCol"]);
+  /* E4 — Eye Symmetry */
+  var symEyeRow=el("div","st-ctl");
+  symEyeRow.appendChild(el("label",null,L9({my:"မျက်လုံးညီညာ",en:"Eye Symmetry"})));
+  symEyeRow.appendChild(svToggle("ev_eyeLevel",L9({my:"Level ညှိ",en:"Eye Level"}),"ev_eyeSym"));
+  symEyeRow.appendChild(svToggle("ev_eyeBalance",L9({my:"အရွယ်ညှိ",en:"Eye Balance"}),"ev_eyeSym"));
+  e8.grid.appendChild(symEyeRow);
+  stFeat("ev_eyeSym",L9({my:"မျက်လုံးညီညာ",en:"Eye Symmetry"}),["ev_eyeLevel","ev_eyeBalance"],function(){
+    var lv=svGet("ev_eyeLevel",false), bl=svGet("ev_eyeBalance",false); if(!lv&&!bl) return null;
+    var L=[];
+    if(lv) L.push("align horizontal eye level");
+    if(bl) L.push("match the eye sizes using the larger eye as reference");
+    return { params:{}, frag:"Balance the two eyes: "+L.join("; ")+"; subtle, identity preserved." };
+  });
+  reg(e8,["ev_eyeBr","ev_eyeClean","ev_gaze","ev_eyeCol","ev_eyeSym"]);
 
   /* EV-9 Makeup (3) */
-  var e9=G("💋 "+L9({my:"မိတ်ကပ်",en:"Makeup"}),3); count(3);
+  var e9=G("💋 "+L9({my:"မိတ်ကပ်",en:"Makeup"}),5,"makeup suite enhance lipstick blush contour freckle decor eye makeup styles brow shadow liner lash highlighter contour"); count(5);
   e9.b.appendChild(svChips("ev_mkLook",L9({my:"Makeup Suite",en:"Makeup Suite"}),[["Natural Pro","Natural Pro"],["Editorial","Editorial"],["Glam","Glam"],["Bridal","Bridal"]],"ev_mkSuite"));
   e9.b.appendChild(svSlider("ev_mkV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_mkSuite"));
   stFeat("ev_mkSuite",L9({my:"မိတ်ကပ်ပရို",en:"Makeup Suite"}),["ev_mkLook","ev_mkV"],function(){
@@ -5256,10 +6211,34 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     if(!L.length) return null;
     return { params:{v:v}, frag:"Apply makeup styling at "+v+"%: "+L.join(", ")+"." };
   });
-  reg(e9,["ev_mkSuite","ev_mkEnh","ev_mkStyles"]);
+  /* E5 — Eye Makeup Styles (mirror of mu_eyeMakeup's builder) */
+  e9.b.appendChild(stSub(L9({my:"မျက်လုံးမိတ်ကပ်စတိုင်",en:"Eye Makeup Styles"})));
+  e9.b.appendChild(svChips("ev_eyeMkBrow",L9({my:"Brow",en:"Brow"}),[["straight","Straight"],["arched","Arched"],["fluffy","Fluffy"],["feathered","Feathered"]],"ev_eyeMk"));
+  e9.b.appendChild(svChips("ev_eyeMkShadow",L9({my:"Shadow",en:"Shadow"}),[["daily brown","Brown"],["rose","Rose"],["smoky","Smoky"],["champagne","Champagne"]],"ev_eyeMk"));
+  e9.b.appendChild(svChips("ev_eyeMkLiner",L9({my:"Liner",en:"Liner"}),[["thin","Thin"],["winged","Winged"],["smudged","Smudged"]],"ev_eyeMk"));
+  e9.b.appendChild(svChips("ev_eyeMkLash",L9({my:"Lash",en:"Lash"}),[["natural","Natural"],["volume","Volume"],["curl","Curl"]],"ev_eyeMk"));
+  e9.b.appendChild(svSlider("ev_eyeMkV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_eyeMk"));
+  stFeat("ev_eyeMk",L9({my:"မျက်လုံးမိတ်ကပ်",en:"Eye Makeup Styles"}),["ev_eyeMkBrow","ev_eyeMkShadow","ev_eyeMkLiner","ev_eyeMkLash","ev_eyeMkV"],function(){
+    var v=fv("ev_eyeMkV"); if(!v) return null;
+    var picked=[];
+    var a=svGet("ev_eyeMkBrow",null); if(a) picked.push(a+" brows");
+    var b=svGet("ev_eyeMkShadow",null); if(b) picked.push(b+" eyeshadow");
+    var c=svGet("ev_eyeMkLiner",null); if(c) picked.push(c+" eyeliner");
+    var d=svGet("ev_eyeMkLash",null); if(d) picked.push(d+" lashes");
+    if(!picked.length) return null;
+    return { params:{v:v}, frag:"Apply eye makeup styling at "+v+"%: "+picked.join(", ")+"." };
+  });
+  /* E6 — Highlighter & Contour */
+  e9.grid.appendChild(svSlider("ev_hlV",L9({my:"Highlighter",en:"Highlighter"}),false,"ev_hlct"));
+  e9.grid.appendChild(svSlider("ev_ctV",L9({my:"Contour",en:"Contour"}),false,"ev_hlct"));
+  stFeat("ev_hlct",L9({my:"တောက်ပ-ရိပ်ထည့်",en:"Highlighter & Contour"}),["ev_hlV","ev_ctV"],function(){
+    var v1=fv("ev_hlV"),v2=fv("ev_ctV"); if(!v1&&!v2) return null;
+    return { params:{v:Math.max(v1,v2)}, frag:"Add highlighter at "+v1+"% and contour shading at "+v2+"% for dimension." };
+  },function(){ var v1=svGet("ev_hlV",0),v2=svGet("ev_ctV",0); return (v1||v2)?{t1:{cla:(v1+v2)*0.12}}:null; });
+  reg(e9,["ev_mkSuite","ev_mkEnh","ev_mkStyles","ev_eyeMk","ev_hlct"]);
 
   /* EV-10 Hair (4) */
-  var e10=G("💇 "+L9({my:"ဆံပင်",en:"Hair"}),4); count(4);
+  var e10=G("💇 "+L9({my:"ဆံပင်",en:"Hair"}),4,"hair part fill volume strays smooth frizz shine hair color white hair"); count(4);
   e10.grid.appendChild(svSlider("ev_hairPart",L9({my:"ခေါင်းခွဲလိုင်းဖြည့်",en:"Part-Line Fill"}),false,"ev_hairFill"));
   e10.grid.appendChild(svSlider("ev_hairTop",L9({my:"အပေါ်ထူ",en:"Top Volume"}),false,"ev_hairFill"));
   e10.grid.appendChild(svSlider("ev_hairSide",L9({my:"ဘေးထူ",en:"Side Volume"}),false,"ev_hairFill"));
@@ -5308,7 +6287,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e10,["ev_hairFill","ev_stray","ev_hairShine","ev_hairColF"]);
 
   /* EV-11 Hands & Body (2) */
-  var e11=G("🤲 "+L9({my:"လက်နှင့်ကိုယ်",en:"Hands & Body"}),2); count(2);
+  var e11=G("🤲 "+L9({my:"လက်နှင့်ကိုယ်",en:"Hands & Body"}),2,"hands veins reshape armpit stretch marks"); count(2);
   e11.grid.appendChild(svSlider("ev_handEven",L9({my:"လက်အသားညီ",en:"Hand Skin"}),false,"ev_hands"));
   e11.grid.appendChild(svSlider("ev_handVeins",L9({my:"လက်သွေးကြော",en:"Veins"}),false,"ev_hands"));
   e11.grid.appendChild(svSlider("ev_handShape",L9({my:"လက်ပုံပြင်",en:"Reshape"}),false,"ev_hands"));
@@ -5326,6 +6305,329 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     return { params:{v:Math.max(v1,v2)}, frag:"Smooth the underarm area at "+v1+"%; remove stretch marks at "+v2+"%." };
   });
   reg(e11,["ev_hands","ev_bodyRef"]);
+
+  /* EV-12 🎚 Color Pro (11) */
+  var e12=G("🎚 "+L9({my:"ရောင်ပြင်ပရို",en:"Color Pro"}),11,"white balance wb temp tint tone exposure contrast brightness highlights shadows whites blacks dehaze parametric curve hsl hue saturation luminance color grading bw black white mix camera simulation sharpen noise reduction histogram"); count(11);
+  /* E7 — AI WB + Temp/Tint (shared engine + t1 keys with MU-12; two-way sync via ST.refreshFns) */
+  var wbRow2=el("div","st-ctl");
+  wbRow2.appendChild(el("label",null,L9({my:"AI White Balance",en:"AI White Balance"})));
+  wbRow2.appendChild(stToggle({id:"ev_wbAuto",label:L9({my:"အလိုအလျောက်",en:"Auto"}),
+    get:function(){ return !!svGet("st_wbAuto",false); },
+    set:function(v){ svSet("st_wbAuto",v); if(v) stComputeWb(); stSync("st_wbAutoF"); stPipeChanged(); }}));
+  e12.grid.appendChild(wbRow2);
+  e12.grid.appendChild(t1Slider("ev_wrm",L9({my:"Temperature",en:"Temperature"}),"wrm"));
+  e12.grid.appendChild(t1Slider("ev_tnt",L9({my:"Tint",en:"Tint"}),"tnt"));
+  /* E8 — Tone Pro: shared t1 keys, zero new engine work */
+  e12.b.appendChild(stSub(L9({my:"Tone Pro",en:"Tone Pro"})));
+  var toneGrid2=el("div","st-grid");
+  toneGrid2.appendChild(t1Slider("ev_exp",L9({my:"Exposure",en:"Exposure"}),"exp"));
+  toneGrid2.appendChild(t1Slider("ev_con",L9({my:"Contrast",en:"Contrast"}),"con"));
+  toneGrid2.appendChild(t1Slider("ev_bri",L9({my:"Brightness",en:"Brightness"}),"bri"));
+  toneGrid2.appendChild(t1Slider("ev_hi",L9({my:"Highlights",en:"Highlights"}),"hi"));
+  toneGrid2.appendChild(t1Slider("ev_sh",L9({my:"Shadows",en:"Shadows"}),"sh"));
+  /* E9 — Whites & Blacks (LUT + T1 contrast approx) */
+  toneGrid2.appendChild(t1Slider("ev_wht",L9({my:"Whites",en:"Whites"}),"wht"));
+  toneGrid2.appendChild(t1Slider("ev_blk",L9({my:"Blacks",en:"Blacks"}),"blk"));
+  /* E10 — Dehaze */
+  toneGrid2.appendChild(t1Slider("ev_dhz",L9({my:"မြူဖယ် (Dehaze)",en:"Dehaze"}),"dhz"));
+  e12.b.appendChild(toneGrid2);
+  /* E11 — Parametric Curve */
+  e12.b.appendChild(stSub(L9({my:"Parametric Curve",en:"Parametric Curve"})));
+  var curveGrid=el("div","st-grid");
+  curveGrid.appendChild(pipeSlider("st_curve_hl",L9({my:"Highlights",en:"Highlights"}),true));
+  curveGrid.appendChild(pipeSlider("st_curve_lt",L9({my:"Lights",en:"Lights"}),true));
+  curveGrid.appendChild(pipeSlider("st_curve_dk",L9({my:"Darks",en:"Darks"}),true));
+  curveGrid.appendChild(pipeSlider("st_curve_sh",L9({my:"Shadows",en:"Shadows"}),true));
+  e12.b.appendChild(curveGrid);
+  regChk(e12,function(){ var c=stCurveVals(); return !!(c.hl||c.lt||c.dk||c.sh); });
+  /* E12 — HSL (8 bands) */
+  e12.b.appendChild(stSub(L9({my:"HSL (ရောင် ၈ မျိုး)",en:"HSL (8 colors)"})));
+  function hslKey(sfx){ return "st_hsl_"+svGet("st_hslBand","r")+"_"+sfx; }
+  e12.b.appendChild(stChips({id:"ev_hslBand",allowOff:false,
+    choices:[["r","R"],["o","O"],["y","Y"],["g","G"],["a","Aqua"],["b","B"],["p","P"],["m","M"]],
+    get:function(){ return svGet("st_hslBand","r"); },
+    set:function(v){ svSet("st_hslBand",v||"r"); stRefreshUI(); }}));
+  var hslGrid=el("div","st-grid");
+  hslGrid.appendChild(stSlider({id:"ev_hslH",label:L9({my:"Hue",en:"Hue"}),min:-100,max:100,def:0,
+    get:function(){ return svGet(hslKey("h"),0); },
+    set:function(v){ svSet(hslKey("h"),v); stPipeChanged(); }}));
+  hslGrid.appendChild(stSlider({id:"ev_hslS",label:L9({my:"Saturation",en:"Saturation"}),min:-100,max:100,def:0,
+    get:function(){ return svGet(hslKey("s"),0); },
+    set:function(v){ svSet(hslKey("s"),v); stPipeChanged(); }}));
+  hslGrid.appendChild(stSlider({id:"ev_hslL",label:L9({my:"Luminance",en:"Luminance"}),min:-100,max:100,def:0,
+    get:function(){ return svGet(hslKey("l"),0); },
+    set:function(v){ svSet(hslKey("l"),v); stPipeChanged(); }}));
+  e12.b.appendChild(hslGrid);
+  regChk(e12,function(){
+    for(var i=0;i<ST_HSL_BANDS.length;i++){ var b=ST_HSL_BANDS[i][0];
+      if(svGet("st_hsl_"+b+"_h",0)||svGet("st_hsl_"+b+"_s",0)||svGet("st_hsl_"+b+"_l",0)) return true; }
+    return false;
+  });
+  /* E13 — Color Grading (Shadows/Midtones/Highlights) — superset of M18's split-tone pass */
+  e12.b.appendChild(stSub(L9({my:"ရောင်အလွှာခြယ် (Color Grading)",en:"Color Grading"})));
+  var cgRow=el("div","st-ctl");
+  cgRow.appendChild(el("label",null,L9({my:"Shadows · Mid · Highlights",en:"Shadows · Mid · Highlights"})));
+  cgRow.appendChild(pipeColor("st_grade_evSh"));
+  cgRow.appendChild(pipeColor("st_grade_evMid"));
+  cgRow.appendChild(pipeColor("st_grade_evHi"));
+  e12.b.appendChild(cgRow);
+  var cgGrid=el("div","st-grid");
+  cgGrid.appendChild(pipeSlider("st_grade_evSat",L9({my:"Saturation",en:"Saturation"}),true));
+  cgGrid.appendChild(pipeSlider("st_grade_evBal",L9({my:"Balance",en:"Balance"}),true));
+  e12.b.appendChild(cgGrid);
+  regChk(e12,function(){
+    return !!(svGet("st_grade_evSh",null)||svGet("st_grade_evMid",null)||svGet("st_grade_evHi",null)||svGet("st_grade_evSat",0));
+  });
+  /* E14 — B&W Profile + Mix (disables sat/vib while on) */
+  var bwRow=el("div","st-ctl");
+  bwRow.appendChild(el("label",null,L9({my:"B&W Profile",en:"B&W Profile"})));
+  bwRow.appendChild(pipeToggle("st_bw",L9({my:"ဖွင့်",en:"On"}),function(){ stRefreshUI(); }));
+  e12.b.appendChild(bwRow);
+  var bwGrid=el("div","st-grid");
+  bwGrid.appendChild(pipeSlider("st_bw_r",L9({my:"— Red",en:"— Red"}),true));
+  bwGrid.appendChild(pipeSlider("st_bw_g",L9({my:"— Green",en:"— Green"}),true));
+  bwGrid.appendChild(pipeSlider("st_bw_b",L9({my:"— Blue",en:"— Blue"}),true));
+  e12.b.appendChild(bwGrid);
+  ST.refreshFns.push(function(){
+    var on=!!svGet("st_bw",false);
+    ["mu_sat","mu_vib"].forEach(function(id2){ var s2=$(id2); if(s2) s2.disabled=on; });
+  });
+  regChk(e12,function(){ return !!svGet("st_bw",false); });
+  /* E15 — Camera Simulation (pure T1 ghost presets, like ST_FILTERS) */
+  e12.b.appendChild(svChips("ev_camSim",L9({my:"ကင်မရာအတု",en:"Camera Simulation"}),[["classicneg","Classic Neg"],["chrome","Chrome"],["portraitfilm","Portrait Film"],["cinema","Cinema"]],"ev_camSimF"));
+  var EV_CAMSIM={
+    classicneg:{con:10,sat:-12,wrm:6,grn:12},
+    chrome:{con:8,sat:-20,tnt:-4,fad:6},
+    portraitfilm:{wrm:8,fad:10,sat:-4,grn:8},
+    cinema:{con:14,sat:-10,tnt:6,vig:12}
+  };
+  stFeat("ev_camSimF",L9({my:"ကင်မရာအတု",en:"Camera Sim"}),["ev_camSim"],null,function(){
+    var k=svGet("ev_camSim",null); if(!k||!EV_CAMSIM[k]) return null;
+    return { t1:EV_CAMSIM[k] };
+  });
+  /* E16 — Sharpen & Noise Reduction */
+  e12.b.appendChild(stSub(L9({my:"Sharpen & Noise Reduction",en:"Sharpen & Noise Reduction"})));
+  var nrGrid=el("div","st-grid");
+  nrGrid.appendChild(t1Slider("ev_shp",L9({my:"Sharpen",en:"Sharpen"}),"shp",false));
+  nrGrid.appendChild(t2Slider("ev_nrL",L9({my:"Luma NR",en:"Luma NR"}),"nrL"));
+  nrGrid.appendChild(t2Slider("ev_nrC",L9({my:"Color NR",en:"Color NR"}),"nrC"));
+  e12.b.appendChild(nrGrid);
+  /* E17 — Histogram overlay on the stage */
+  var histRow=el("div","st-ctl");
+  histRow.appendChild(el("label",null,L9({my:"ဟစ်စတိုဂရမ်",en:"Histogram"})));
+  histRow.appendChild(stToggle({id:"st_histOn",label:L9({my:"ပြမယ်",en:"Show"}),
+    get:function(){ return !!svGet("st_histOn",false); },
+    set:function(v){ svSet("st_histOn",v); if(ST.srcBitmap) stRenderSettle(); else stDrawHistogram(null); }}));
+  e12.b.appendChild(histRow);
+  reg(e12,["st_wbAutoF","ev_camSimF"]);
+
+  /* EV-13 🏞 Backdrop, Sky & Blur (7) */
+  var e13=G("🏞 "+L9({my:"နောက်ခံ၊ ကောင်းကင်နှင့် Blur",en:"Backdrop, Sky & Blur"}),7,"backdrop background changer shadow control sky replacement water reflection lens blur bokeh background enhance clean unify lighting"); count(7);
+  /* E18 — Backdrop Changer */
+  e13.b.appendChild(stSub(L9({my:"နောက်ခံလဲ",en:"Backdrop Changer"})));
+  e13.b.appendChild(svChips("ev_bdScene",null,[["clean studio grey","Studio grey"],["gradient beige","Beige"],["olive drape","Olive drape"],["window daylight","Window light"],["outdoor bokeh","Outdoor bokeh"]],"ev_backdrop"));
+  var bdcRow=el("div","st-ctl");
+  bdcRow.appendChild(el("label",null,L9({my:"အရောင်တစ်သား",en:"Solid color"})));
+  bdcRow.appendChild(svColor("ev_bdColor","ev_backdrop"));
+  e13.b.appendChild(bdcRow);
+  var bdFree=document.createElement("input");
+  bdFree.className="inp"; bdFree.id="ev_bdText";
+  bdFree.placeholder=L9({my:"(သို့) စိတ်ကြိုက် backdrop ရေးပါ…",en:"…or describe a custom backdrop"});
+  bdFree.oninput=function(){ svSet("ev_bdText",bdFree.value); stSync("ev_backdrop"); };
+  ST.refreshFns.push(function(){ bdFree.value=svGet("ev_bdText","")||""; });
+  e13.b.appendChild(bdFree);
+  /* E19 — Shadow Control (rider: only emits with an active backdrop change) */
+  e13.b.appendChild(stSub(L9({my:"အရိပ်ထိန်း",en:"Shadow Control"})));
+  e13.b.appendChild(svChips("ev_bdShadow",null,[["retain",L9({my:"မူရင်းအရိပ်ထား",en:"Retain original"})],["soft",L9({my:"အရိပ်နု",en:"Soft"})],["hard drop",L9({my:"အရိပ်ရင့်",en:"Hard drop"})]],"ev_backdrop"));
+  stFeat("ev_backdrop",L9({my:"နောက်ခံလဲ",en:"Backdrop"}),["ev_bdScene","ev_bdColor","ev_bdText","ev_bdShadow"],function(){
+    var sc=svGet("ev_bdScene",null), col=svGet("ev_bdColor",null), txt=(svGet("ev_bdText","")||"").trim();
+    if(!sc&&!col&&!txt) return null; /* E19 alone emits nothing */
+    var desc=txt||(sc?sc:("a clean solid "+col+" studio backdrop"));
+    var f="Replace the background with "+desc+"; clean cutout including hair edges, match light direction and temperature.";
+    var sh=svGet("ev_bdShadow",null);
+    if(sh==="retain") f+=" Retain the subject's original shadow.";
+    else if(sh) f+=" Add a "+sh+" shadow consistent with the new backdrop.";
+    return { params:{}, frag:f };
+  });
+  /* E20/E21 — Sky Replacement + Water Reflection rider */
+  e13.b.appendChild(stSub(L9({my:"ကောင်းကင်လဲ",en:"Sky Replacement"})));
+  e13.b.appendChild(svChips("ev_sky",null,[["clear blue","Clear blue"],["sunset glow","Sunset"],["dramatic storm","Storm"],["pastel dusk","Pastel dusk"],["starry night","Starry night"]],"ev_skyRep"));
+  e13.b.appendChild(svSlider("ev_skyHarm",L9({my:"အလင်းလိုက်ညှိ",en:"Harmonize"}),false,"ev_skyRep"));
+  var wrRow=el("div","st-ctl");
+  wrRow.appendChild(el("label",null,L9({my:"ရေပြင်ရောင်ပြန်",en:"Water Reflection"})));
+  wrRow.appendChild(svToggle("ev_skyWater",L9({my:"ဖွင့်",en:"On"}),"ev_skyRep"));
+  e13.b.appendChild(wrRow);
+  stFeat("ev_skyRep",L9({my:"ကောင်းကင်လဲ",en:"Sky Replace"}),["ev_sky","ev_skyHarm","ev_skyWater"],function(){
+    var sk=svGet("ev_sky",null); if(!sk) return null; /* E21 alone emits nothing */
+    var v=fv("ev_skyHarm")||50;
+    var f="Replace the sky with a "+sk+" sky; blend edges through trees/hair, and harmonize scene lighting with the new sky at "+v+"%.";
+    if(svGet("ev_skyWater",false)) f+=" If water is present, reflect the new sky in it naturally.";
+    return { params:{v:v}, frag:f };
+  });
+  /* E22 — Lens Blur (T1 ghost previews via the existing radial bg-blur) */
+  e13.grid.appendChild(svSlider("ev_lensBlur",L9({my:"Lens Blur / မှန်ဘီလူးဝါး",en:"Lens Blur"}),false,"ev_lensBlurF"));
+  stFeat("ev_lensBlurF",L9({my:"Lens Blur",en:"Lens Blur"}),["ev_lensBlur"],function(){
+    var v=fv("ev_lensBlur"); if(!v) return null;
+    return { params:{v:v}, frag:"Apply realistic lens bokeh at "+v+"%: optical depth falloff, clean subject edges, creamy specular highlights." };
+  },function(){ var v=svGet("ev_lensBlur",0); return v?{t1:{bgb:v}}:null; });
+  /* E23 — Background Enhance (T2 pipeline outside the subject mask + AI frag) */
+  e13.grid.appendChild(stSlider({id:"st_bgEnh",label:L9({my:"နောက်ခံအရောင်မြှင့်",en:"Background Enhance"}),min:0,max:100,def:0,
+    get:function(){ return svGet("st_bgEnh",0); },
+    set:function(v){ svSet("st_bgEnh",v); stSync("ev_bgEnh"); stPipeChanged(); }}));
+  stFeat("ev_bgEnh",L9({my:"နောက်ခံမြှင့်",en:"BG Enhance"}),["st_bgEnh"],function(){
+    var v=fv("st_bgEnh"); if(!v) return null;
+    return { params:{v:v}, frag:"Boost background saturation/contrast only, at "+v+"%." };
+  });
+  /* E24 — Clean Backdrop & Unify Lighting */
+  e13.grid.appendChild(svSlider("ev_bdClean",L9({my:"Backdrop သန့်စင်",en:"Clean Backdrop"}),false,"ev_bdCleanF"));
+  var blRow=el("div","st-ctl");
+  blRow.appendChild(el("label",null,L9({my:"အလင်းညီညာ",en:"Unify Lighting"})));
+  blRow.appendChild(svToggle("ev_bdLight",L9({my:"ဖွင့်",en:"On"}),"ev_bdCleanF"));
+  e13.grid.appendChild(blRow);
+  stFeat("ev_bdCleanF",L9({my:"Backdrop သန့်",en:"Clean Backdrop"}),["ev_bdClean","ev_bdLight"],function(){
+    var v=fv("ev_bdClean"), li=svGet("ev_bdLight",false); if(!v&&!li) return null;
+    var L=[];
+    if(v) L.push("Clean the studio backdrop: remove blemishes, creases and banding at "+v+"%.");
+    if(li) L.push("Even out the backdrop lighting gradient.");
+    return { params:{v:v||40}, frag:L.join(" ") };
+  });
+  reg(e13,["ev_backdrop","ev_skyRep","ev_lensBlurF","ev_bgEnh","ev_bdCleanF"]);
+
+  /* EV-14 🧹 AI Removal (4) */
+  var e14=G("🧹 "+L9({my:"AI ဖယ်ရှားရေး",en:"AI Removal"}),4,"remove describe passerby photobomber glare reflections old photo restoration scratches colorize"); count(4);
+  /* E25 — Describe & Remove */
+  e14.b.appendChild(stSub(L9({my:"ဖော်ပြပြီးဖယ်",en:"Describe & Remove"})));
+  var rmInp=document.createElement("input");
+  rmInp.className="inp"; rmInp.id="ev_removeText";
+  rmInp.placeholder=L9({my:"ဖယ်ချင်တာ ရေးပါ… (ဥပမာ - နောက်ခံက ကား)",en:"Describe what to remove… (e.g. the car behind)"});
+  rmInp.oninput=function(){ svSet("ev_removeText",rmInp.value); stSync("ev_remove"); };
+  ST.refreshFns.push(function(){ rmInp.value=svGet("ev_removeText","")||""; });
+  e14.b.appendChild(rmInp);
+  stFeat("ev_remove",L9({my:"ဖော်ပြပြီးဖယ်",en:"Describe & Remove"}),["ev_removeText"],function(){
+    var txt=(svGet("ev_removeText","")||"").trim(); if(!txt) return null;
+    return { params:{}, frag:"Remove this from the photo: "+txt+". Fill the area naturally with matching background." };
+  });
+  /* E26 — Passerby Removal */
+  var pbRow=el("div","st-ctl");
+  pbRow.appendChild(el("label",null,L9({my:"လမ်းသွားလမ်းလာဖယ်",en:"Passerby Removal"})));
+  pbRow.appendChild(svToggle("ev_passerby",L9({my:"ဖွင့်",en:"On"}),"ev_passerbyF"));
+  e14.grid.appendChild(pbRow);
+  stFeat("ev_passerbyF",L9({my:"လမ်းသွားဖယ်",en:"Passerby Removal"}),["ev_passerby"],function(){
+    if(!svGet("ev_passerby",false)) return null;
+    return { params:{}, frag:"Remove background passersby and photobombers; keep only the main subject(s)." };
+  });
+  /* E27 — Strong Glare Removal */
+  var sgRow=el("div","st-ctl");
+  sgRow.appendChild(el("label",null,L9({my:"မျက်မှန်ပြင်းထန်အလင်းပြန်",en:"Strong Glare Removal"})));
+  sgRow.appendChild(svToggle("ev_glareStrong",L9({my:"ဖွင့်",en:"On"}),"ev_glareStrongF"));
+  e14.grid.appendChild(sgRow);
+  stFeat("ev_glareStrongF",L9({my:"အလင်းပြန်ပြင်း",en:"Strong Glare"}),["ev_glareStrong"],function(){
+    if(!svGet("ev_glareStrong",false)) return null;
+    return { params:{}, frag:"Completely remove strong glasses glare and lens reflections, reconstructing the eyes behind the lenses." };
+  });
+  /* E28 — Old Photo Restoration (+ colorize sub-toggle) */
+  var opRow=el("div","st-ctl");
+  opRow.appendChild(el("label",null,L9({my:"ဓာတ်ပုံဟောင်းပြုပြင်",en:"Old Photo Restoration"})));
+  opRow.appendChild(svToggle("ev_oldRestore",L9({my:"ပြုပြင်",en:"Restore"}),"ev_oldPhoto"));
+  opRow.appendChild(svToggle("ev_oldColorize",L9({my:"— အရောင်ခြယ်",en:"— Colorize"}),"ev_oldPhoto"));
+  e14.grid.appendChild(opRow);
+  stFeat("ev_oldPhoto",L9({my:"ဓာတ်ပုံဟောင်း",en:"Old Photo"}),["ev_oldRestore","ev_oldColorize"],function(){
+    var on=svGet("ev_oldRestore",false); if(!on) return null;
+    var col=svGet("ev_oldColorize",false);
+    return { params:{}, frag:"Restore this damaged/old photo: repair scratches, tears and fading"+(col?", and colorize it realistically":"")+"." };
+  });
+  reg(e14,["ev_remove","ev_passerbyF","ev_glareStrongF","ev_oldPhoto"]);
+
+  /* EV-15 👗 Clothing (4) */
+  var e15=G("👗 "+L9({my:"အဝတ်အစားပြင်",en:"Clothing"}),4,"clothing dress wrinkle crease fold blemish lint dust color changer garment edge smoothing"); count(4);
+  /* E29 — De-wrinkle Clothing (master + fine/coarse, Evoto semantics: subs act when master > 0) */
+  e15.grid.appendChild(svSlider("ev_dressWrinkle",L9({my:"အဝတ်အရေးကြောင်း (Master)",en:"De-wrinkle (Master)"}),false,"ev_dressW"));
+  e15.grid.appendChild(svSlider("ev_dwFine",L9({my:"— အကြောင်းသေး",en:"— Fine creases"}),false,"ev_dressW"));
+  e15.grid.appendChild(svSlider("ev_dwCoarse",L9({my:"— အခေါက်ကြီး",en:"— Coarse folds"}),false,"ev_dressW"));
+  stFeat("ev_dressW",L9({my:"အဝတ်အရေးကြောင်းဖယ်",en:"De-wrinkle Clothing"}),["ev_dressWrinkle","ev_dwFine","ev_dwCoarse"],function(){
+    var m=fv("ev_dressWrinkle"); if(!m) return null;
+    var f=fv("ev_dwFine")||m, c=fv("ev_dwCoarse")||m;
+    return { params:{v:m}, frag:stLine("dressWrinkle",m)+" Remove fine creases at "+f+"% and coarse folds/shadow unevenness at "+c+"%, preserving the 3D garment structure." };
+  });
+  /* E30 — De-blemish Clothing */
+  e15.grid.appendChild(svSlider("ev_dressClean",L9({my:"အဝတ်အညစ်အကြေးဖယ်",en:"De-blemish Clothing"}),false,"ev_dressC"));
+  stFeat("ev_dressC",L9({my:"အဝတ်သန့်",en:"Clothing Blemish"}),["ev_dressClean"],function(){
+    var v=fv("ev_dressClean"); if(!v) return null;
+    return { params:{v:v}, frag:stLine("dressClean",v) };
+  });
+  /* E31 — Clothes Color Changer */
+  e15.b.appendChild(stSub(L9({my:"အဝတ်အရောင်လဲ",en:"Clothes Color Changer"})));
+  var dcRow=el("div","st-ctl");
+  dcRow.appendChild(el("label",null,L9({my:"အရောင်ရွေး",en:"Pick color"})));
+  dcRow.appendChild(svColor("ev_dressHex","ev_dressCol"));
+  e15.b.appendChild(dcRow);
+  var dcInp=document.createElement("input");
+  dcInp.className="inp"; dcInp.id="ev_dressItem";
+  dcInp.placeholder=L9({my:"ဘယ်အဝတ်လဲ… (ဥပမာ - dress, jacket)",en:"Which garment… (e.g. dress, jacket)"});
+  dcInp.oninput=function(){ svSet("ev_dressItem",dcInp.value); stSync("ev_dressCol"); };
+  ST.refreshFns.push(function(){ dcInp.value=svGet("ev_dressItem","")||""; });
+  e15.b.appendChild(dcInp);
+  e15.b.appendChild(svSlider("ev_dressColV",L9({my:"ပမာဏ",en:"Amount"}),false,"ev_dressCol"));
+  stFeat("ev_dressCol",L9({my:"အဝတ်အရောင်လဲ",en:"Clothes Color"}),["ev_dressHex","ev_dressItem","ev_dressColV"],function(){
+    var v=fv("ev_dressColV"), hx=svGet("ev_dressHex",null); if(!v||!hx) return null;
+    var garment=(svGet("ev_dressItem","")||"").trim()||"outfit";
+    return { params:{v:v}, frag:"Recolor the "+garment+" to "+hx+" at "+v+"%; keep fabric texture, folds and shading. "+stLine("dressColorPure",v) };
+  });
+  /* E32 — Clothing Edge Smoothing */
+  var deRow=el("div","st-ctl");
+  deRow.appendChild(el("label",null,L9({my:"အနားသတ်ချော",en:"Edge Smoothing"})));
+  deRow.appendChild(svToggle("ev_dressEdge",L9({my:"ဖွင့်",en:"On"}),"ev_dressEdgeF"));
+  e15.grid.appendChild(deRow);
+  stFeat("ev_dressEdgeF",L9({my:"အနားသတ်ချော",en:"Clothing Edge"}),["ev_dressEdge"],function(){
+    if(!svGet("ev_dressEdge",false)) return null;
+    return { params:{}, frag:stLine("dressEdge",60)+" Smooth wrinkled clothing edges and silhouette lines." };
+  });
+  reg(e15,["ev_dressW","ev_dressC","ev_dressCol","ev_dressEdgeF"]);
+
+  /* EV-16 🧍 Full Body Pro (5) */
+  var e16=G("🧍 "+L9({my:"တစ်ကိုယ်လုံးပြုပြင်",en:"Full Body Pro"}),5,"full body reshape slim fill height torso upper body head size chest waist hips clavicle collarbone proportions"); count(5);
+  /* E33 — AI Reshape (master) */
+  e16.grid.appendChild(svSlider("ev_reshapeAll",L9({my:"AI Reshape (Master)",en:"AI Reshape (Master)"}),true,"ev_reshapeAllF"));
+  stFeat("ev_reshapeAllF",L9({my:"AI Reshape",en:"AI Reshape"}),["ev_reshapeAll"],function(){
+    var v=fs("ev_reshapeAll"); if(!v) return null;
+    return { params:{v:v}, frag:"AI full-body reshape: "+(v>0?"slim":"fill")+" the whole figure by "+Math.abs(v)+"% with 3D-skeleton-consistent proportions; background locked." };
+  });
+  /* E34 — Height & Torso */
+  e16.grid.appendChild(svSlider("ev_height",L9({my:"အရပ်",en:"Height"}),true,"ev_heightTorso"));
+  e16.grid.appendChild(svSlider("ev_torso",L9({my:"အပေါ်ပိုင်းအရှည်",en:"Upper-body Length"}),true,"ev_heightTorso"));
+  stFeat("ev_heightTorso",L9({my:"အရပ်နှင့်အချိုး",en:"Height & Torso"}),["ev_height","ev_torso"],function(){
+    var v1=fs("ev_height"),v2=fs("ev_torso"); if(!v1&&!v2) return null;
+    var L=[];
+    if(v1>0) L.push(stLine("legLen",v1));
+    else if(v1<0) L.push("Reduce the apparent height naturally by "+(-v1)+"%.");
+    if(v2) L.push("Adjust the upper-body length by "+v2+"% for golden-ratio proportions.");
+    return { params:{v:Math.max(Math.abs(v1),Math.abs(v2))}, frag:L.join(" ") };
+  });
+  /* E35 — Head Size */
+  e16.grid.appendChild(svSlider("ev_headSize",L9({my:"ဦးခေါင်းအရွယ်",en:"Head Size"}),true,"ev_headSizeF"));
+  stFeat("ev_headSizeF",L9({my:"ဦးခေါင်းအရွယ်",en:"Head Size"}),["ev_headSize"],function(){
+    var v=fs("ev_headSize"); if(!v) return null;
+    return { params:{v:v}, frag:"Resize the head (including hair) by "+v+"% for head-to-body balance; background intact." };
+  });
+  /* E36 — Chest·Waist·Hips set (recycled signed retouch lines, joined like enumSet) */
+  e16.grid.appendChild(svSlider("ev_bust",L9({my:"ရင်",en:"Chest"}),true,"ev_cwh"));
+  e16.grid.appendChild(svSlider("ev_waist",L9({my:"ခါး",en:"Waist"}),true,"ev_cwh"));
+  e16.grid.appendChild(svSlider("ev_hip",L9({my:"တင်",en:"Hips"}),true,"ev_cwh"));
+  stFeat("ev_cwh",L9({my:"ရင်/ခါး/တင်",en:"Chest·Waist·Hips"}),["ev_bust","ev_waist","ev_hip"],function(){
+    var L=[],mx=0;
+    [["bust","ev_bust"],["waist","ev_waist"],["hip","ev_hip"]].forEach(function(pp){
+      var v=fs(pp[1]); if(v){ L.push(stLineSigned(pp[0],v)); if(Math.abs(v)>mx) mx=Math.abs(v); }
+    });
+    if(!L.length) return null;
+    return { params:{v:mx}, frag:L.join(" ") };
+  });
+  /* E37 — Clavicle Enhancement */
+  e16.grid.appendChild(svSlider("ev_clavicle",L9({my:"ညှပ်ရိုးပေါ်လွင်",en:"Clavicle Enhance"}),false,"ev_clavicleF"));
+  stFeat("ev_clavicleF",L9({my:"ညှပ်ရိုး",en:"Clavicle"}),["ev_clavicle"],function(){
+    var v=fv("ev_clavicle"); if(!v) return null;
+    return { params:{v:v}, frag:"Enhance collarbone definition subtly at "+v+"%; natural shadowing." };
+  });
+  reg(e16,["ev_reshapeAllF","ev_heightTorso","ev_headSizeF","ev_cwh","ev_clavicleF"]);
 })();
 
 /* hidden recycled-preset feature used by the Natural Pro EVOTO card */
@@ -5390,6 +6692,13 @@ function stApplyPreset(p){
     if(p.sv) for(var k3 in p.sv) state.st.v[k3]=p.sv[k3];
     state.st.preset=p.key;
     (p.feats||[]).forEach(stSync);
+    try{
+      if(!localStorage.getItem("hnk_st_preset_hint")){
+        localStorage.setItem("hnk_st_preset_hint","1");
+        toast(L9({my:"ထပ်တစ်ချက်နှိပ်ရင် မူလအတိုင်းပြန်ဖြစ်မယ်",en:"Tap the card again to restore the previous look"}));
+      }
+    }catch(e){}
+    if(navigator.vibrate&&window.innerWidth<720){ try{ navigator.vibrate(8); }catch(e2){} }
   }
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   stT1Changed(); stT2Changed();
@@ -5434,6 +6743,7 @@ function stRenderPresetCards(){
       host.appendChild(b);
     });
   });
+  stRenderRecipes(); /* MY RECIPES thumbnails share the same live self-photo treatment */
 }
 
 /* ---- PHOTO picker (Before slot, proxies the shared #filePick, slot 0) ---- */
@@ -5442,7 +6752,7 @@ function renderStPicker(){
   var host=$("stPicker"); if(!host) return;
   host.innerHTML="";
   var ref=state.refs[0];
-  var d=el("div","ref"+(ref?" filled":""));
+  var d=el("div","ref"+(ref?" filled":" stbig"));
   if(ref){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x","✕");
@@ -5450,13 +6760,17 @@ function renderStPicker(){
     x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.imgRoles=null; renderRefs(); };
     d.appendChild(x);
   } else {
-    var a=el("button","add","+");
+    /* MUST #9: large dropzone empty-state — dead controls stay hidden until a photo exists */
+    var a=el("button","add");
+    a.appendChild(el("span",null,"📸"));
+    a.appendChild(el("span",null,L9({my:"ပုံထည့်ပါ — Live preview စတင်ရန်",en:"Add a photo to start the live preview"})));
     a.title=RS_NEED_PHOTO;
     a.onclick=function(){ state.pickSlot=0; $("filePick").click(); };
     d.appendChild(a);
   }
   d.appendChild(el("span","tag",L9({my:"မူရင်း",en:"Before"})));
   host.appendChild(d);
+  var tg=$("stTarget"); if(tg) tg.style.display=ref?"":"none";
   stSyncFromRef();
 }
 
@@ -5470,11 +6784,13 @@ function renderStPicker(){
     var c=$("stCanvas"); c.style.filter="";
     var cc=c.getContext("2d");
     cc.clearRect(0,0,c.width,c.height);
-    cc.drawImage(ST.srcBitmap,0,0,c.width,c.height);
+    cc.drawImage(stGeoSource(),0,0,c.width,c.height);
   }
   function up(){
     if(!ST.holding) return;
+    var wasResult=ST.showingResult&&ST.stageResult;
     ST.holding=false;
+    if(wasResult){ stStageDrawResult(); return; } /* release restores whatever was showing */
     stRenderSettle(); stApplyDragFilter(); $("stCanvas").style.filter="";
     stRenderSettle();
   }
@@ -5483,11 +6799,16 @@ function renderStPicker(){
   b.addEventListener("pointercancel",up);
 })();
 $("stReset").onclick=function(){
+  var hadGeo=stGeoActive();
   state.st.t1=stDefT1(); state.st.t2=stDefT2();
   state.st.pend=[]; state.st.preset=null; state.st.v={};
+  state.st.geo=stDefGeo(); ST.geoCache=null;
   ST.presetSnap=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
-  if(ST.srcBitmap){ stApplyDragFilter(); stRenderSettle(); }
+  if(ST.srcBitmap){
+    if(hadGeo){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); }
+    stApplyDragFilter(); stRenderSettle();
+  }
   saveState();
   toast(L9({my:"Studio ချိန်ညှိချက်အားလုံး ပြန်စလိုက်ပြီ ✓",en:"All Studio adjustments reset ✓"}),"ok");
 };
@@ -5510,6 +6831,15 @@ function stT2Fragments(){
   if(b.finish&&b.finishV) L.push("Give the skin a "+(b.finish==="cream"?"cream":b.finish)+" finish at "+b.finishV+"%, natural micro-texture preserved.");
   return L;
 }
+/* opt-in reference-transfer path: at least one queued feature declares usesRef AND a ref photo exists */
+function stUsesRefActive(){
+  if(!state.st.refX) return false;
+  for(var i=0;i<state.st.pend.length;i++){
+    var f=ST.feats[state.st.pend[i].id];
+    if(f&&f.usesRef) return true;
+  }
+  return false;
+}
 function stComposePrompt(){
   var frags=stT2Fragments();
   state.st.pend.forEach(function(e){ var f=stFragOf(e); if(f) frags.push(f); });
@@ -5517,6 +6847,7 @@ function stComposePrompt(){
     "Apply ONLY the following edits at the stated strengths. Keep identity, pose,\n"+
     "clothing and background unchanged unless an edit explicitly says otherwise:\n"+
     frags.map(function(f){ return "- "+f; }).join("\n")+
+    (stUsesRefActive()?"\nIMAGE 2 = style/makeup/color reference ONLY — never return it.":"")+
     "\nPhoto-realistic professional result. Do not beautify beyond the listed edits.";
 }
 
@@ -5536,7 +6867,30 @@ function stShowResult(out){
   var before=ST.orig||state.st.img;
   if(before) $("stCmpBefore").src="data:"+before.mime+";base64,"+before.b64;
   stCmpLayout();
+  /* SHOULD #15: the sticky stage also swaps to the fresh result so photo context is never lost */
+  ST.stageResult=out;
+  stStageDrawResult();
   $("stResultBox").scrollIntoView({behavior:"smooth"});
+}
+/* draw the latest result onto the sticky stage; the flip chip toggles result ⇄ live preview */
+function stStageDrawResult(){
+  var out=ST.stageResult, c=$("stCanvas");
+  if(!out||!c) return;
+  var src="data:"+out.mime+";base64,"+out.b64;
+  function draw(){
+    if(!ST.stageResult) return;
+    var cc=c.getContext("2d");
+    c.style.filter="";
+    cc.clearRect(0,0,c.width,c.height);
+    cc.drawImage(ST._resImg,0,0,c.width,c.height);
+    ST.showingResult=true;
+    var f=$("stStageFlip");
+    if(f){ f.style.display=""; f.textContent=L9({my:"↩ မူရင်းပြ",en:"↩ Show live"}); }
+  }
+  if(ST._resImg&&ST._resImg.__src===src){ draw(); return; }
+  var im=new Image(); im.__src=src;
+  im.onload=function(){ ST._resImg=im; draw(); };
+  im.src=src;
 }
 $("stCmpRange").oninput=stCmpLayout;
 (function(){
@@ -5599,14 +6953,19 @@ $("btnStGen").onclick=async function(){
     var baked=stBake();
     var mb=/^data:([^;]+);base64,(.*)$/.exec(baked);
     state.refs[0]={mime:mb[1],b64:mb[2],label:"studio"};
-    state.refs[1]=null; state.refs[2]=null; /* Studio is single-photo — leftover refs must not ride along */
-    state.imgRoles=null;
+    /* Studio is single-photo — leftover refs must not ride along. The one exception is the
+       opt-in usesRef transfer path (M8/M20): state.st.refX rides as IMAGE 2, reference-only. */
+    var useRef=stUsesRefActive();
+    state.refs[1]=useRef?{mime:state.st.refX.mime,b64:state.st.refX.b64,label:"style ref"}:null;
+    state.refs[2]=null;
+    state.imgRoles=useRef?[null,"style/makeup/color reference ONLY — never return this image"]:null;
     $("prompt").value=stComposePrompt();
     await $("btnGen").onclick();
   }catch(e){ setSt("stStatus",friendlyError(e),"err"); }
   finally{
     state.refs[0]=ST.orig?{mime:ST.orig.mime,b64:ST.orig.b64,label:"studio"}:savedR0;
     state.refs[1]=savedR1; state.refs[2]=savedR2;
+    state.imgRoles=null;
     $("prompt").value=savedPrompt;
   }
   var srcSt=$("stGen");
@@ -5631,26 +6990,227 @@ $("btnStGen").onclick=async function(){
   stSetBusy(false);
 };
 
+/* ---- MY RECIPES (Evoto presets/batch heritage): snapshot → localStorage → one-tap re-apply ---- */
+var ST_RECIPE_LS="hnk_st_recipes";
+function stRecipes(){ try{ var a=JSON.parse(localStorage.getItem(ST_RECIPE_LS)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function stRecipesSave(a){ try{ localStorage.setItem(ST_RECIPE_LS,JSON.stringify(a.slice(0,12))); }catch(e){} }
+function stSaveRecipe(){
+  var a=stRecipes();
+  a.unshift({ name:"Look "+(a.length+1),
+    t1:JSON.parse(JSON.stringify(state.st.t1)), t2:JSON.parse(JSON.stringify(state.st.t2)),
+    v:JSON.parse(JSON.stringify(state.st.v)), pend:JSON.parse(JSON.stringify(state.st.pend)) });
+  if(a.length>12) a.length=12; /* cap 12 */
+  stRecipesSave(a);
+  stRenderRecipes();
+  toast(L9({my:"Recipe သိမ်းပြီး ✓ — နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးလို့ရပြီ",en:"Recipe saved ✓ — reapply it on any photo with one tap"}),"ok");
+}
+function stApplyRecipe(idx){
+  if(ST.busy) return;
+  var a=stRecipes(), r=a[idx]; if(!r) return;
+  var key="rc_"+idx;
+  if(state.st.preset===key){ /* tap again = restore the exact pre-recipe snapshot */
+    if(ST.presetSnap){
+      state.st.t1=ST.presetSnap.t1; state.st.t2=ST.presetSnap.t2;
+      state.st.v=ST.presetSnap.v; state.st.pend=ST.presetSnap.pend;
+    }
+    state.st.preset=null; ST.presetSnap=null;
+  } else {
+    ST.presetSnap=stSnapshot();
+    var d1=stDefT1(); for(var k in d1) state.st.t1[k]=(r.t1&&typeof r.t1[k]==="number")?r.t1[k]:d1[k];
+    var d2=stDefT2(); for(var k2 in d2) state.st.t2[k2]=(k2==="finish")?((r.t2&&(r.t2.finish===null||typeof r.t2.finish==="string"))?r.t2.finish:null):((r.t2&&+r.t2[k2])||0);
+    state.st.v=r.v?JSON.parse(JSON.stringify(r.v)):{};
+    state.st.pend=(r.pend||[]).filter(function(p){ return p&&p.id; });
+    state.st.preset=key;
+  }
+  ST.lutKey="";
+  stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
+  stT1Changed(); stT2Changed();
+  saveState();
+}
+function stRenderRecipes(){
+  var host=$("stRecipeRow"); if(!host) return;
+  host.innerHTML="";
+  var a=stRecipes();
+  if(!a.length){
+    host.appendChild(el("p","mut",L9({my:"သိမ်းထားတဲ့ recipe မရှိသေး — ချိန်ညှိပြီး 💾 နှိပ်ပါ",en:"No saved recipes yet — adjust something, then tap 💾 Save"})));
+    return;
+  }
+  a.forEach(function(r,idx){
+    var b=el("div","pcard"+(state.st.preset==="rc_"+idx?" on":""));
+    b.tabIndex=0; b.setAttribute("role","button");
+    var cv=document.createElement("canvas"); cv.width=76; cv.height=96;
+    var cx=cv.getContext("2d");
+    if(ST.thumbCanvas){
+      var full=stDefT1();
+      if(r.t1) for(var k in full) if(typeof r.t1[k]==="number") full[k]=r.t1[k];
+      cx.filter=stCssFilter(full); cx.drawImage(ST.thumbCanvas,0,0); cx.filter="none";
+    } else {
+      var gd=cx.createLinearGradient(0,0,0,96);
+      gd.addColorStop(0,"#20261b"); gd.addColorStop(1,"#131826");
+      cx.fillStyle=gd; cx.fillRect(0,0,76,96);
+      cx.fillStyle="rgba(217,164,65,.8)"; cx.font="20px serif"; cx.textAlign="center"; cx.fillText("💾",38,54);
+    }
+    b.appendChild(cv);
+    b.appendChild(el("span",null,r.name||("Look "+(idx+1))));
+    function del(){
+      var a2=stRecipes(); a2.splice(idx,1); stRecipesSave(a2);
+      if(state.st.preset==="rc_"+idx){ state.st.preset=null; ST.presetSnap=null; }
+      stRenderRecipes();
+    }
+    var x=el("button","x","✕");
+    x.setAttribute("aria-label",L9({my:"ဖျက်",en:"Delete"}));
+    x.onclick=function(ev){ ev.stopPropagation(); del(); };
+    b.appendChild(x);
+    var lpT=null, lpFired=false; /* long-press = delete */
+    b.addEventListener("pointerdown",function(){ lpFired=false; lpT=setTimeout(function(){ lpFired=true; del(); },650); });
+    b.addEventListener("pointerup",function(){ clearTimeout(lpT); });
+    b.addEventListener("pointerleave",function(){ clearTimeout(lpT); });
+    b.onclick=function(ev){
+      if(ev.target===x||lpFired){ lpFired=false; return; }
+      stApplyRecipe(idx);
+      if(navigator.vibrate&&window.innerWidth<720){ try{ navigator.vibrate(8); }catch(e){} }
+    };
+    b.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); stApplyRecipe(idx); } };
+    host.appendChild(b);
+  });
+}
+
 /* ---- static labels + statline + first render ---- */
 $("stPhotoNote").textContent=L9({my:"ပုံတစ်ပုံတင်ပြီး slider ရွှေ့ရင် ပုံပေါ်မှာ ချက်ချင်းမြင်ရမယ် — AI လိုတဲ့ ပြင်ဆင်ချက်တွေက GENERATE တစ်ချက်တည်းနဲ့ အကုန်ထွက်မယ်",en:"Add one photo — sliders preview instantly on it; AI-only edits run together in a single GENERATE"});
-$("muNote").textContent=L9({my:"Feature ၅၀ · One-tap look များ + တိုက်ရိုက် Live slider",en:"50 features · one-tap looks + live sliders"});
-$("evNote").textContent=L9({my:"Pro feature ၄၂ · Studio အဆင့် ရီတပ်ချ်",en:"42 pro features · studio-grade retouch"});
+$("muNote").textContent=L9({my:"Feature "+ST_MEITU_COUNT+" ခု · One-tap look များ + တိုက်ရိုက် Live slider",en:ST_MEITU_COUNT+" features · one-tap looks + live sliders"});
+$("evNote").textContent=L9({my:"Pro feature "+ST_EVOTO_COUNT+" ခု · Studio အဆင့် ရီတပ်ချ်",en:ST_EVOTO_COUNT+" pro features · studio-grade retouch"});
 $("stHold").textContent="◉ "+L9({my:"မူရင်း (ဖိထား)",en:"Before (hold)"});
 $("stReset").textContent="↺ Reset";
 $("stResultH2").textContent=L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After"});
 $("btnStToRef").textContent=L9({my:"↺ ဆက်ပြင်မယ်",en:"↺ Keep editing"});
+$("stRecipeNote").textContent=L9({my:"အခုချိန်ညှိထားတာတွေကို recipe အဖြစ်သိမ်းပြီး နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးပါ",en:"Save the current adjustments as a recipe and reapply them on the next photo in one tap"});
+$("stSaveRecipe").textContent="💾 "+L9({my:"Recipe သိမ်းမယ်",en:"Save recipe"});
+$("stSaveRecipe").onclick=stSaveRecipe;
+$("muPresetSub").textContent=L9({my:"One-tap look များ — ထပ်နှိပ်ရင် ပြန်ဖြုတ်မယ်",en:"One-tap looks — tap again to undo"});
+$("evPresetSub").textContent=L9({my:"One-tap look များ — ထပ်နှိပ်ရင် ပြန်ဖြုတ်မယ်",en:"One-tap looks — tap again to undo"});
+$("stClearAi").textContent="✕ "+L9({my:"AI အားလုံးဖျက်",en:"Clear AI"});
+$("stClearAi").onclick=function(){
+  state.st.pend.slice().forEach(function(p){ stFeatReset(p.id); });
+  toast(L9({my:"AI ပြင်ဆင်ချက်များ ဖယ်ပြီး ✓",en:"AI edits cleared ✓"}),"ok");
+};
 (function(){
   var hd=$("stHd"); if(!hd) return;
   if(!rhIsConfigured("upscale-pro")){ hd.style.display="none"; return; }
   hd.style.display="";
+  hd.title=L9({my:"GENERATE ပြီးတိုင်း RunningHub upscale-pro နဲ့ HD တင်ပေးမယ်",en:"After every GENERATE, upscale the result via RunningHub upscale-pro"});
   function refresh(){ hd.className="chip"+(svGet("st_hd",false)?" on":""); }
   hd.textContent="HD Finish";
-  hd.onclick=function(){ svSet("st_hd",!svGet("st_hd",false)); refresh(); };
+  hd.onclick=function(){
+    var on=!svGet("st_hd",false);
+    svSet("st_hd",on); refresh(); stRenderPend();
+    try{
+      if(on&&!localStorage.getItem("hnk_st_hd_hint")){
+        localStorage.setItem("hnk_st_hd_hint","1");
+        toast(L9({my:"HD Finish — GENERATE ရလဒ်ကို RunningHub နဲ့ upscale လုပ်ပေးမယ်",en:"HD Finish — the GENERATE result gets a RunningHub upscale pass"}));
+      }
+    }catch(e){}
+  };
   ST.refreshFns.push(refresh); refresh();
 })();
 var _smc=$("stMeituCount"); if(_smc) _smc.textContent=String(ST_MEITU_COUNT);
 var _sec=$("stEvotoCount"); if(_sec) _sec.textContent=String(ST_EVOTO_COUNT);
 var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
+
+/* ---- sticky stage chrome: minimize, A|B split, result flip, height CSS var ---- */
+(function(){
+  var stg=$("stStage"), pg=$("pgStudio");
+  if(!stg||!pg) return;
+  function upd(){ pg.style.setProperty("--stageH",(stg.style.display==="none"?0:stg.offsetHeight)+"px"); }
+  ST._stageHUpd=upd;
+  if(window.ResizeObserver){ try{ new ResizeObserver(upd).observe(stg); }catch(e){} }
+  window.addEventListener("resize",upd);
+  upd();
+  if(!ST.srcBitmap) pg.classList.add("nostage");
+  var mn=$("stStageMin");
+  mn.textContent="▭";
+  mn.title=L9({my:"Stage ချုံ့/ချဲ့",en:"Minimize / expand the stage"});
+  mn.onclick=function(){ stg.classList.toggle("mini"); mn.classList.toggle("on",stg.classList.contains("mini")); upd(); };
+  var fl=$("stStageFlip");
+  fl.onclick=function(){
+    if(!ST.stageResult) return;
+    if(ST.showingResult){ stRenderSettle(); stApplyDragFilter(); }
+    else stStageDrawResult();
+  };
+  /* A|B split (SHOULD #11) */
+  var sp=$("stSplit"), line=$("stSplitLine");
+  function layout(){
+    var c=$("stCanvas");
+    var r=c.getBoundingClientRect(), sr=stg.getBoundingClientRect();
+    line.style.left=(r.left-sr.left+r.width*ST.split.pct/100)+"px";
+  }
+  ST._splitLayout=layout;
+  sp.textContent="A|B";
+  sp.title=L9({my:"မူရင်း | ပြင်ပြီး နှိုင်းယှဉ်",en:"Compare original | edited"});
+  sp.onclick=function(){
+    ST.split.on=!ST.split.on;
+    stg.classList.toggle("split",ST.split.on);
+    sp.classList.toggle("on",ST.split.on);
+    if(ST.srcBitmap){ stRenderSettle(); stApplyDragFilter(); }
+    if(ST.split.on) layout();
+  };
+  var dragging=false, rafP=false;
+  stg.addEventListener("pointerdown",function(e){
+    if(!ST.split.on) return;
+    if(e.target.classList&&e.target.classList.contains("chip")) return;
+    dragging=true;
+    try{ stg.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  stg.addEventListener("pointermove",function(e){
+    if(!dragging||!ST.split.on) return;
+    var c=$("stCanvas"), r=c.getBoundingClientRect();
+    if(r.width<2) return;
+    ST.split.pct=stClamp(Math.round((e.clientX-r.left)/r.width*100),0,100);
+    layout();
+    if(!rafP){ rafP=true; requestAnimationFrame(function(){ rafP=false; stRenderSettle(); }); }
+  });
+  stg.addEventListener("pointerup",function(){ dragging=false; });
+  stg.addEventListener("pointercancel",function(){ dragging=false; });
+})();
+
+/* ---- suite navigation: jump bar tabs + group chip strip + feature search (MUST #4/#5) ---- */
+(function(){
+  var tabs=$("stSuiteTabs"); if(!tabs) return;
+  function tab(txt,cardId){
+    var c=el("button","chip",txt);
+    c.onclick=function(){ var card=$(cardId); if(card) card.scrollIntoView({behavior:"smooth",block:"start"}); };
+    tabs.appendChild(c);
+  }
+  tab("💄 MEITU · "+ST_MEITU_COUNT,"stMuCard");
+  tab("🎯 EVOTO · "+ST_EVOTO_COUNT,"stEvCard");
+  var strip=$("stGroupChips");
+  ST.groups.forEach(function(g){
+    var c=el("button","chip",g.title);
+    c.onclick=function(){ g.el.classList.remove("hide"); g.el.className="grp open"; g.el.scrollIntoView({block:"start"}); };
+    g.jumpChip=c;
+    strip.appendChild(c);
+  });
+  /* feature search — Burmese (rendered text) + English (per-group keywords) both indexed */
+  var inp=$("stSearch");
+  inp.placeholder=L9({my:"🔍 Feature ရှာ…",en:"🔍 Search features…"});
+  ST.searchIdx=ST.groups.map(function(g){
+    return { g:g, text:(g.el.textContent+" "+(g.kw||"")).toLowerCase() };
+  });
+  function applySearch(){
+    var q=inp.value.trim().toLowerCase();
+    ST.searchIdx.forEach(function(e2){
+      var hit=!q||e2.text.indexOf(q)>=0;
+      if(hit&&q) e2.g.el.className="grp open"; /* matching groups auto-open */
+      e2.g.el.classList.toggle("hide",!hit);
+      var rows=e2.g.el.querySelectorAll(".st-ctl");
+      for(var i=0;i<rows.length;i++){
+        rows[i].classList.toggle("hit",!!(q&&hit&&rows[i].textContent.toLowerCase().indexOf(q)>=0));
+      }
+    });
+  }
+  var sT=null;
+  inp.oninput=function(){ clearTimeout(sT); sT=setTimeout(applySearch,120); };
+})();
+
 stRecomputeGhosts();
 stRefreshUI();
 stRenderPend();
@@ -5795,7 +7355,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.23.0";
+var APP_VER="4.24.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
