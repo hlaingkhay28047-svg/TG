@@ -307,6 +307,280 @@ const PORT = process.env.PORT || 8931;
   report("empty-state: stage hidden, dropzone shown, slider input toasts the need-photo nudge with no pageerror",
     nudge.stageHidden && nudge.dropzone && nudge.toastOn && pageErrors === 0, JSON.stringify(nudge));
 
+  /* ================= v4.27.1 — always-visible preview + comfort (#15-#22) ================= */
+
+  // 15) guarantee sweep (§2.2): canvas >=120px AND controls window >=130px at every depth on
+  //     320/360/390 portrait, with the slider under the finger hit-testing as itself (not btnStGen).
+  //     #14 removed the photo — reload a portrait fixture through the public API first.
+  await page.evaluate(async () => {
+    const c = document.createElement("canvas"); c.width = 512; c.height = 640;
+    const x = c.getContext("2d");
+    const d = x.createImageData(512, 640);
+    for (let i = 0; i < d.data.length; i += 4) {
+      const n = () => Math.random() * 60 - 30;
+      d.data[i] = 224 + n(); d.data[i + 1] = 172 + n(); d.data[i + 2] = 140 + n(); d.data[i + 3] = 255;
+    }
+    x.putImageData(d, 0, 0);
+    window.__fixture2 = c.toDataURL("image/png");
+    await new Promise(res => { ST.loadImage(window.__fixture2, { done: res }); });
+    document.getElementById("stReset").click();
+    document.querySelectorAll("#muHost .grp, #evHost .grp").forEach(g => { g.className = "grp open"; });
+  });
+  const g15 = { ok: true, hits: 0, log: [] };
+  for (const vp of [[320, 568], [360, 740], [390, 844]]) {
+    await page.setViewportSize({ width: vp[0], height: vp[1] });
+    await page.waitForTimeout(320);
+    let vpHits = 0;
+    for (const f of [0.25, 0.5, 0.75, 0.95]) {
+      await page.evaluate(fr => {
+        const se = document.scrollingElement;
+        se.scrollTop = fr * (se.scrollHeight - window.innerHeight);
+      }, f);
+      await page.waitForTimeout(260);
+      const m = await page.evaluate(() => {
+        const nav = document.querySelector(".nav").getBoundingClientRect();
+        const cr = document.getElementById("stCanvas").getBoundingClientRect();
+        const jb = document.getElementById("stJumpBar").getBoundingClientRect();
+        const gb = document.getElementById("stGenBar").getBoundingClientRect();
+        const visH = Math.min(cr.bottom, window.innerHeight) - Math.max(cr.top, nav.bottom);
+        let rngTried = 0, hitOk = true, hit = "";
+        for (const r of document.querySelectorAll("#pgStudio .rng")) {
+          const rr = r.getBoundingClientRect();
+          if (rr.height < 2) continue;
+          if (rr.top >= jb.bottom + 2 && rr.bottom <= gb.top - 2) {
+            rngTried = 1;
+            const el = document.elementFromPoint(rr.left + rr.width / 2, rr.top + rr.height / 2);
+            hitOk = el === r;
+            hit = el ? (el.id || el.className || el.tagName) : "null";
+            break;
+          }
+        }
+        return { visH: Math.round(visH * 10) / 10, win: Math.round(gb.top - jb.bottom), rngTried, hitOk, hit: String(hit).slice(0, 24) };
+      });
+      if (!(m.visH >= 119.5 && m.win >= 130)) { g15.ok = false; g15.log.push(vp.join("x") + "@" + f + " " + JSON.stringify(m)); }
+      if (m.rngTried) { vpHits++; if (!m.hitOk) { g15.ok = false; g15.log.push(vp.join("x") + "@" + f + " hit=" + m.hit); } }
+    }
+    // deterministic hit-test: park a mid-list slider in the middle of the controls window
+    // (fractional depths can legitimately land on chips-only groups)
+    const t = await page.evaluate(async () => {
+      const rngs = Array.from(document.querySelectorAll("#pgStudio .rng")).filter(r => r.getBoundingClientRect().height > 2);
+      const r = rngs[Math.floor(rngs.length / 2)];
+      const jb = document.getElementById("stJumpBar").getBoundingClientRect();
+      const gb = document.getElementById("stGenBar").getBoundingClientRect();
+      const rr = r.getBoundingClientRect();
+      document.scrollingElement.scrollTop += rr.top + rr.height / 2 - (jb.bottom + gb.top) / 2;
+      await new Promise(res => setTimeout(res, 260));
+      const rr2 = r.getBoundingClientRect();
+      const jb2 = document.getElementById("stJumpBar").getBoundingClientRect();
+      const gb2 = document.getElementById("stGenBar").getBoundingClientRect();
+      const inside = rr2.top >= jb2.bottom + 2 && rr2.bottom <= gb2.top - 2;
+      const el = document.elementFromPoint(rr2.left + rr2.width / 2, rr2.top + rr2.height / 2);
+      return { inside, hitOk: el === r, hit: el ? (el.id || el.tagName) : "null", id: r.id };
+    });
+    if (!(t.inside && t.hitOk)) { g15.ok = false; g15.log.push(vp.join("x") + " targeted " + JSON.stringify(t)); }
+    else vpHits++;
+    g15.hits += vpHits;
+  }
+  report("v4.27.1 guarantee: canvas >=120px + controls window >=130px + slider hit-test, 320/360/390 x 4 depths",
+    g15.ok, g15.log.length ? g15.log.join(" | ") : g15.hits + " slider hit-tests passed");
+
+  // 16) compact transition + scroll compensation (no layout jump) at 390x844
+  const trans = await page.evaluate(async () => {
+    const stg = document.getElementById("stStage");
+    const se = document.scrollingElement;
+    se.scrollTop = 0;
+    await new Promise(r => setTimeout(r, 300));
+    const fullH = document.getElementById("stCanvas").getBoundingClientRect().height;
+    const natTop = stg.getBoundingClientRect().top + window.scrollY;
+    se.scrollTop = natTop + 30; // just below the +40 enter threshold — still full
+    await new Promise(r => setTimeout(r, 260));
+    const stillFull = !stg.classList.contains("compact");
+    const grp = document.querySelectorAll("#evHost .grp")[3];
+    const h1 = grp.getBoundingClientRect().top;
+    se.scrollTop += 40; // cross the threshold -> auto compact + compensation
+    await new Promise(r => setTimeout(r, 300));
+    const compact = stg.classList.contains("compact");
+    const drift = grp.getBoundingClientRect().top - (h1 - 40);
+    const compactH = document.getElementById("stCanvas").getBoundingClientRect().height;
+    se.scrollTop = 0; // back to top -> full again
+    await new Promise(r => setTimeout(r, 300));
+    return {
+      stillFull, compact, drift: Math.round(drift * 10) / 10, compactH,
+      backFull: !stg.classList.contains("compact"),
+      fullH, fullH2: document.getElementById("stCanvas").getBoundingClientRect().height
+    };
+  });
+  report("compact transition: engages past stageTop+40 (canvas 160±2), no-jump |drift|<=4px, full again at top (253±2)",
+    trans.stillFull && trans.compact && Math.abs(trans.drift) <= 4 &&
+    Math.abs(trans.compactH - 160) <= 2 && trans.backFull && Math.abs(trans.fullH2 - 253) <= 2,
+    JSON.stringify(trans));
+
+  // 17) zoom loupe: CSS-transform only (toDataURL invariant), dblclick = 100% (buffer px : css px), split exclusivity
+  await page.setViewportSize({ width: 420, height: 1000 });
+  await page.waitForTimeout(320);
+  const zoom = await page.evaluate(async () => {
+    document.scrollingElement.scrollTop = 0;
+    await new Promise(r => setTimeout(r, 250));
+    const c = document.getElementById("stCanvas"), wrap = document.getElementById("stZoomWrap");
+    const ind = document.getElementById("stZoomInd");
+    const pre = c.toDataURL();
+    ST.zoomTo(2);
+    const t2 = getComputedStyle(c).transform;
+    const indVis = ind && ind.style.display !== "none" && ind.classList.contains("on");
+    const samePixels = c.toDataURL() === pre;
+    ST.zoomReset();
+    const tReset = getComputedStyle(c).transform;
+    const indHidden = ind.style.display === "none";
+    const wr = wrap.getBoundingClientRect();
+    wrap.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, clientX: wr.left + wr.width / 2, clientY: wr.top + wr.height / 2 }));
+    const native = c.width / c.clientWidth;
+    const dblS = ST.ui.zoom.s;
+    wrap.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, clientX: wr.left + 10, clientY: wr.top + 10 }));
+    const dblBack = ST.ui.zoom.s;
+    ST.zoomTo(2);
+    document.getElementById("stSplit").click(); // entering split must reset zoom
+    const splitOn = ST.split.on, sAfterSplit = ST.ui.zoom.s;
+    document.getElementById("stSplit").click();
+    return { t2, indVis, samePixels, tReset, indHidden, native, dblS, dblBack, splitOn, sAfterSplit };
+  });
+  report("zoom: scale-2 matrix + indicator, toDataURL identical, dblclick toggles fit/100%, split entry resets zoom",
+    /^matrix\(2,/.test(zoom.t2) && zoom.indVis && zoom.samePixels && zoom.tReset === "none" && zoom.indHidden &&
+    Math.abs(zoom.dblS - zoom.native) <= 0.01 && zoom.dblBack === 1 && zoom.splitOn && zoom.sAfterSplit === 1,
+    JSON.stringify({ t2: zoom.t2.slice(0, 22), dblS: zoom.dblS, native: Math.round(zoom.native * 100) / 100, sAfterSplit: zoom.sAfterSplit }));
+
+  // 18) stage preference memory (hnk_st_ui): pin compact -> survives reload; two more taps cycle back to auto
+  const pin = await page.evaluate(() => {
+    document.getElementById("stStageMin").click(); // auto -> compact (pinned)
+    let ls = {};
+    try { ls = JSON.parse(localStorage.getItem("hnk_st_ui") || "{}"); } catch (e) {}
+    return { mode: ls.mode, compactNow: document.getElementById("stStage").classList.contains("compact") };
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1000);
+  const pinBack = await page.evaluate(async () => {
+    switchPage("pgStudio");
+    const c = document.createElement("canvas"); c.width = 512; c.height = 640;
+    const x = c.getContext("2d");
+    const d = x.createImageData(512, 640);
+    for (let i = 0; i < d.data.length; i += 4) { // noisy skin fixture again — #21's hold-swap needs pixel differences
+      const n = () => Math.random() * 60 - 30;
+      d.data[i] = 224 + n(); d.data[i + 1] = 172 + n(); d.data[i + 2] = 140 + n(); d.data[i + 3] = 255;
+    }
+    x.putImageData(d, 0, 0);
+    await new Promise(res => { ST.loadImage(c.toDataURL("image/png"), { done: res }); });
+    const restored = document.getElementById("stStage").classList.contains("compact");
+    document.getElementById("stStageMin").click(); // compact -> mini
+    const mini = document.getElementById("stStage").classList.contains("mini");
+    document.getElementById("stStageMin").click(); // mini -> auto
+    let ls = {};
+    try { ls = JSON.parse(localStorage.getItem("hnk_st_ui") || "{}"); } catch (e) {}
+    const stg = document.getElementById("stStage");
+    return { restored, mini, mode: ls.mode, autoFull: !stg.classList.contains("compact") && !stg.classList.contains("mini") };
+  });
+  report("preference memory: compact pin persists in hnk_st_ui across reload; cycle compact->mini->auto",
+    pin.mode === "compact" && pin.compactNow && pinBack.restored && pinBack.mini && pinBack.mode === "auto" && pinBack.autoFull,
+    JSON.stringify({ pin, pinBack }));
+
+  // 19) landscape PiP: 740x360 -> fixed thumbnail >=96px, --stageH collapses to 0, slim bars keep >=120px window
+  await page.setViewportSize({ width: 740, height: 360 });
+  await page.waitForTimeout(350);
+  const pip = await page.evaluate(async () => {
+    document.querySelectorAll("#muHost .grp, #evHost .grp").forEach(g => { g.className = "grp open"; });
+    const se = document.scrollingElement;
+    se.scrollTop = 0.6 * (se.scrollHeight - window.innerHeight);
+    await new Promise(r => setTimeout(r, 300));
+    const stg = document.getElementById("stStage");
+    const cr = document.getElementById("stCanvas").getBoundingClientRect();
+    const jb = document.getElementById("stJumpBar").getBoundingClientRect();
+    const gb = document.getElementById("stGenBar").getBoundingClientRect();
+    const visH = Math.min(cr.bottom, window.innerHeight) - Math.max(cr.top, 0);
+    return {
+      pip: stg.classList.contains("pip"),
+      fixed: getComputedStyle(stg).position === "fixed",
+      visH: Math.round(visH),
+      stageH: getComputedStyle(document.getElementById("pgStudio")).getPropertyValue("--stageH").trim(),
+      jumpH: Math.round(jb.height),
+      win: Math.round(gb.top - jb.bottom)
+    };
+  });
+  await page.setViewportSize({ width: 420, height: 1000 });
+  await page.waitForTimeout(350);
+  const pipGone = await page.evaluate(() => !document.getElementById("stStage").classList.contains("pip"));
+  report("landscape PiP: fixed stage, canvas >=96px, --stageH 0px, jump bar <=50px, window >=120px; released on portrait",
+    pip.pip && pip.fixed && pip.visH >= 96 && pip.stageH === "0px" && pip.jumpH <= 50 && pip.win >= 120 && pipGone,
+    JSON.stringify(pip));
+
+  // 20) zero horizontal overflow with compact/PiP chrome active
+  const g20 = { ok: true, log: [] };
+  for (const vp of [[320, 568], [360, 740], [740, 360]]) {
+    await page.setViewportSize({ width: vp[0], height: vp[1] });
+    await page.waitForTimeout(300);
+    const m = await page.evaluate(async () => {
+      const se = document.scrollingElement;
+      se.scrollTop = 0.5 * (se.scrollHeight - window.innerHeight);
+      await new Promise(r => setTimeout(r, 250));
+      return { sw: se.scrollWidth, iw: window.innerWidth };
+    });
+    if (m.sw !== m.iw) { g20.ok = false; g20.log.push(vp.join("x") + ": " + m.sw + "!=" + m.iw); }
+  }
+  await page.setViewportSize({ width: 420, height: 1000 });
+  await page.waitForTimeout(300);
+  report("no horizontal overflow at 320/360 compact and 740x360 PiP", g20.ok, g20.log.join(" | "));
+
+  // 21) Before-hold + A|B stay reachable (44px, on-screen) in deep-scrolled compact; hold still swaps pixels
+  const hold21 = await page.evaluate(async () => {
+    const se = document.scrollingElement;
+    se.scrollTop = 0;
+    await new Promise(r => setTimeout(r, 250));
+    const sm = document.getElementById("mu_smooth");
+    sm.value = "70"; sm.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 400)); // settle
+    se.scrollTop = 2500;
+    await new Promise(r => setTimeout(r, 200));
+    se.scrollTop = 2501; // second scroll event — the engine flips on scroll, not on a timer
+    await new Promise(r => setTimeout(r, 250));
+    const stg = document.getElementById("stStage");
+    const y25 = window.scrollY, cls25 = stg.className, mode25 = ST.ui.mode, nat25 = ST._natTop;
+    const hb = document.getElementById("stHold").getBoundingClientRect();
+    const sb = document.getElementById("stSplit").getBoundingClientRect();
+    const inVp = r => r.top >= 0 && r.bottom <= window.innerHeight && r.left >= 0 && r.right <= window.innerWidth;
+    const c = document.getElementById("stCanvas");
+    const edited = c.toDataURL();
+    const btn = document.getElementById("stHold");
+    btn.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 7 }));
+    await new Promise(r => setTimeout(r, 120));
+    const held = c.toDataURL();
+    btn.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 7 }));
+    await new Promise(r => setTimeout(r, 300));
+    const released = c.toDataURL();
+    se.scrollTop = 0;
+    document.getElementById("stReset").click();
+    await new Promise(r => setTimeout(r, 250));
+    return {
+      compact: cls25.indexOf("compact") >= 0, cls: cls25, mode: mode25, natTop: nat25, y: y25,
+      holdMin: Math.round(Math.min(hb.width, hb.height)), splitMin: Math.round(Math.min(sb.width, sb.height)),
+      holdIn: inVp(hb), splitIn: inVp(sb),
+      swapped: held !== edited, restored: released === edited
+    };
+  });
+  report("compact chip rail: Hold + A|B >=44px and fully on-screen deep-scrolled; hold swaps to source and back",
+    hold21.compact && hold21.holdMin >= 44 && hold21.splitMin >= 44 && hold21.holdIn && hold21.splitIn &&
+    hold21.swapped && hold21.restored, JSON.stringify(hold21));
+
+  // 22) compatibility canary — check #10 verbatim: deep-scrolled canvas still intersects the viewport
+  const sticky22 = await page.evaluate(async () => {
+    document.getElementById("stReset").click();
+    document.querySelectorAll("#muHost .grp")[4].className = "grp open";
+    document.querySelectorAll("#evHost .grp")[4].className = "grp open";
+    document.scrollingElement.scrollTop = 2500;
+    await new Promise(r => setTimeout(r, 300));
+    const r2 = document.getElementById("stCanvas").getBoundingClientRect();
+    const visible = r2.height > 0 && r2.bottom > 0 && r2.top < window.innerHeight;
+    document.scrollingElement.scrollTop = 0;
+    return { visible, top: r2.top, scrollY: 2500 };
+  });
+  report("canary (#10 verbatim): canvas intersects the viewport while scrolled 2500px deep", sticky22.visible, JSON.stringify(sticky22));
+
   console.log("\n" + (allOk ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(allOk ? 0 : 1);
