@@ -135,10 +135,6 @@ const PORT = process.env.PORT || 8931;
   report("Before-hold shows raw pixels (filter cleared) and release restores the edited frame",
     hold.heldDiffers && hold.filterCleared && hold.restored, JSON.stringify(hold));
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/main
   async function runGenerate(page) {
     return page.evaluate(async () => {
       window.__reqs = [];
@@ -286,11 +282,6 @@ const PORT = process.env.PORT || 8931;
     recipes.present && recipes.smBefore === "0" && recipes.applied === "44" &&
     recipes.afterDelete === 0 && recipes.lsEmpty, JSON.stringify(recipes));
 
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/main
->>>>>>> origin/main
   console.log("\n" + (allOk ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(allOk ? 0 : 1);
