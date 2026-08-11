@@ -79,23 +79,59 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .nav b{font-size:var(--fs-sm);letter-spacing:.14em;font-weight:700}
 .nav .btn{margin-left:auto;padding:8px 16px;font-size:var(--fs-sm)}
 /* ---- S1 hero ----
-   Mobile: image on top (face fully visible, nothing over it), text below on black.
+   Mobile: FULL uncropped 2:1 artwork with kick + tagline on its dark corners
+   (never over the face at center) and live gold-dust, text block below on black.
    Desktop (>=768px): classic overlay — text left, face right, diagonal scrim. */
 .hero{position:relative;display:flex;flex-direction:column;overflow:hidden}
-/* mobile: the FULL artwork, untouched — natural 2:1 aspect, zero crop; text below on black */
-.hero>img{display:block;width:100%;height:auto}
+.hmedia{position:relative}
+.hmedia img{display:block;width:100%;height:auto}
+/* on-image text: top-left + bottom-left sit on dark forest/moss, face is center-right */
+.hm-kick{position:absolute;top:10px;left:14px;z-index:3;font-size:10.5px;font-weight:700;color:var(--gold-hi);text-shadow:0 1px 4px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.6)}
+.hm-tag{position:absolute;left:14px;bottom:8px;z-index:3;font-size:var(--fs-xs);font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.7)}
+/* live gold fairy-dust — pure CSS, transform/opacity only */
+.fx{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none}
+.fx i{position:absolute;bottom:-8px;width:5px;height:5px;border-radius:50%;
+  background:radial-gradient(circle,#fff3c4 0%,#f4d488 45%,rgba(217,164,65,0) 72%);
+  opacity:0;animation:fxRise 7s linear infinite}
+.fx i:nth-child(1){left:6%;animation-duration:6.2s;animation-delay:0s;width:4px;height:4px}
+.fx i:nth-child(2){left:14%;animation-duration:8.1s;animation-delay:1.7s}
+.fx i:nth-child(3){left:22%;animation-duration:5.6s;animation-delay:3.1s;width:3px;height:3px}
+.fx i:nth-child(4){left:30%;animation-duration:7.4s;animation-delay:.9s}
+.fx i:nth-child(5){left:38%;animation-duration:6.8s;animation-delay:2.4s;width:6px;height:6px}
+.fx i:nth-child(6){left:46%;animation-duration:9s;animation-delay:4.2s;width:3px;height:3px}
+.fx i:nth-child(7){left:54%;animation-duration:6s;animation-delay:1.2s}
+.fx i:nth-child(8){left:61%;animation-duration:7.8s;animation-delay:3.8s;width:4px;height:4px}
+.fx i:nth-child(9){left:68%;animation-duration:5.9s;animation-delay:.4s;width:6px;height:6px}
+.fx i:nth-child(10){left:75%;animation-duration:8.4s;animation-delay:2.9s}
+.fx i:nth-child(11){left:82%;animation-duration:6.5s;animation-delay:1.9s;width:3px;height:3px}
+.fx i:nth-child(12){left:88%;animation-duration:7.1s;animation-delay:4.6s}
+.fx i:nth-child(13){left:94%;animation-duration:6.3s;animation-delay:.7s;width:4px;height:4px}
+.fx i:nth-child(14){left:50%;animation-duration:9.6s;animation-delay:5.3s;width:5px;height:5px}
+@keyframes fxRise{
+  0%{transform:translate3d(0,0,0) scale(.55);opacity:0}
+  10%{opacity:.95}
+  55%{transform:translate3d(9px,-130px,0) scale(1);opacity:.6}
+  100%{transform:translate3d(-7px,-250px,0) scale(1.2);opacity:0}}
+@media (prefers-reduced-motion:reduce){.fx{display:none}}
 .hero .wrap{position:relative;z-index:2;padding-top:var(--sp-4);padding-bottom:var(--sp-6);width:100%}
+.hero .wrap .kick{display:none}
 @media (min-width:768px){
   .hero{min-height:88svh;justify-content:flex-end}
-  .hero>img{position:absolute;inset:0;height:100%;min-height:0;object-fit:cover;object-position:50% 24%;z-index:0}
+  .hmedia{position:absolute;inset:0;z-index:0}
+  .hmedia img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 24%}
+  .hm-kick,.hm-tag{display:none}
+  .hero .wrap .kick{display:block}
   .hero:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
     background:linear-gradient(102deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.6) 38%,rgba(0,0,0,.12) 66%,rgba(0,0,0,0) 100%),
                linear-gradient(180deg,rgba(0,0,0,.06) 0%,rgba(0,0,0,.12) 42%,var(--ink) 100%)}
+  .fx{z-index:2}
   .hero .wrap{padding-bottom:var(--sp-7)}
 }
 .hero .kick{color:var(--gold);font-size:var(--fs-xs);font-weight:700;margin-bottom:var(--sp-2)}
-.hero h1{font-size:var(--fs-3xl);line-height:1.55;max-width:22ch;text-shadow:0 1px 4px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,.75)}
-.hero h1 em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 3px rgba(0,0,0,.95)) drop-shadow(0 3px 14px rgba(0,0,0,.8))}
+.hero h1{font-size:var(--fs-3xl);line-height:1.55;max-width:22ch;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,.75)}
+/* bright, professional gold — solid colour with a soft glow (the old dark
+   gradient clip read muddy on phones) */
+.hero h1 em{font-style:normal;color:var(--gold-hi);text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 22px rgba(244,212,136,.45)}
 .hero .lede{color:var(--muted);font-size:var(--fs-md);max-width:42ch;margin:var(--sp-3) 0 var(--sp-5);text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .hero .ctas{display:flex;flex-direction:column;gap:10px;align-items:flex-start;margin-bottom:var(--sp-5)}
 .hero .badges{margin-bottom:2px}
@@ -224,7 +260,12 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 
 <!-- ============ S1 HERO ============ -->
 <header class="hero" id="top">
-  <img src="assets/site/hero-fairy.jpg" alt="HNK banner — တောရိပ်ထဲ အိပ်စက်နေတဲ့ နတ်သမီး fantasy portrait" fetchpriority="high">
+  <div class="hmedia">
+    <img src="assets/site/hero-fairy.jpg" alt="HNK banner — တောရိပ်ထဲ အိပ်စက်နေတဲ့ နတ်သမီး fantasy portrait" fetchpriority="high">
+    <div class="fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="hm-kick lat" aria-hidden="true">HNK CREATE STUDIO · MYANMAR</div>
+    <div class="hm-tag" aria-hidden="true">မျက်နှာ မပြောင်းဘဲ — အားလုံး ပြောင်းမယ်</div>
+  </div>
   <div class="wrap">
     <div class="kick lat">HNK CREATE STUDIO · MYANMAR</div>
     <h1>မြန်မာ Studio တွေအတွက် <em>AI ဓာတ်ပုံစတူဒီယို</em></h1>
