@@ -490,27 +490,44 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 @keyframes chipin{from{transform:scale(.85);opacity:0}}
 #stPendChips .chip.newchip{animation:chipin .18s ease}
 #btnStGen.bump{animation:chipin .18s ease}
-@media (prefers-reduced-motion: reduce){#stPendChips .chip.newchip,#btnStGen.bump,#stStage{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion: reduce){#stPendChips .chip.newchip,#btnStGen.bump,#stStage,#stCanvas{animation:none!important;transition:none!important}}
 /* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
-#stStage{position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:6;background:var(--ink);padding:4px 0 6px;margin-top:var(--sp-3);box-shadow:0 10px 18px -12px rgba(0,0,0,.6)}
-#stCanvas{display:block;max-width:100%;max-height:30vh;margin:0 auto;border-radius:var(--r-md);background:#000;border:1px solid var(--line-soft)}
+#pgStudio{overflow-anchor:none}
+#stStage{position:sticky;top:calc(var(--navH,54px) + env(safe-area-inset-top));z-index:6;background:var(--ink);padding:4px 0 6px;margin-top:var(--sp-3);box-shadow:0 10px 18px -12px rgba(0,0,0,.6)}
+#stZoomWrap{position:relative;overflow:hidden;width:fit-content;max-width:100%;margin:0 auto;border-radius:var(--r-md)}
+#stCanvas{display:block;max-width:100%;max-height:30vh;margin:0 auto;border-radius:var(--r-md);background:#000;border:1px solid var(--line-soft);transition:max-height .18s ease}
+#stStage.nofx #stCanvas{transition:none}
 @media(min-width:768px){#stCanvas{max-height:36vh}}
-#stStage.mini #stCanvas{max-height:96px;margin:0 0 0 auto;width:auto}
+/* v4.27.1 adaptive stage: compact band (guaranteed >=120px canvas) + mini keep the chip rail reachable */
+#stStage.compact,#stStage.mini{display:flex;align-items:center;gap:8px;padding:4px 0}
+#stStage.compact #stZoomWrap,#stStage.mini #stZoomWrap{margin:0;flex:0 0 auto}
+#stStage.compact #stCanvas{max-height:var(--stCompactH,140px);margin:0}
+#stStage.mini #stCanvas{max-height:96px;margin:0;width:auto}
+.st-rail{display:flex;flex-wrap:wrap;gap:6px;align-content:center;flex:1;min-width:0}
+#stStage:not(.compact):not(.mini) .st-rail{display:contents}
 .st-ov{position:absolute;z-index:3;min-height:38px;padding:4px 10px;font-size:var(--fs-2xs);opacity:.95}
 #stSplit{top:10px;left:6px}
 #stStageMin{top:10px;right:6px}
 #stStageFlip{top:10px;left:50%;transform:translateX(-50%)}
 #stHold{bottom:12px;left:6px}
 #stReset{bottom:12px;right:6px}
-#stStage.mini .st-ov{display:none}
-#stStage.mini #stStageMin{display:inline-flex}
+#stZoomInd{bottom:12px;left:50%;transform:translateX(-50%)}
+#stStage.compact .st-ov,#stStage.mini .st-ov{position:static;min-height:44px;min-width:44px;top:auto;left:auto;right:auto;bottom:auto;transform:none;justify-content:center}
+/* PiP: floating corner thumbnail for landscape phones / keyboard-open (leaves the sticky flow; --stageH reports 0) */
+#stStage.pip{position:fixed;right:10px;left:auto;bottom:auto;top:calc(var(--navH,54px) + env(safe-area-inset-top) + 8px);width:min(30vw,200px);z-index:7;padding:0;margin:0;border-radius:var(--r-md);box-shadow:0 6px 18px rgba(0,0,0,.55)}
+#stStage.pip #stZoomWrap{margin:0 auto}
+#stStage.pip #stCanvas{max-height:40vh;width:auto;max-width:100%;margin:0 auto}
+#stStage.pip .st-ov{display:none}
+#stStage.pip #stStageMin{display:inline-flex;position:absolute;top:2px;right:2px;min-height:38px;min-width:38px}
 #stHist{position:absolute;top:54px;right:8px;width:220px;max-width:60%;height:48px;background:var(--panel);opacity:.85;border-radius:6px;z-index:2;display:none;border:1px solid var(--line-soft)}
 #stHist.on{display:block}
+#stStage.compact #stHist{width:110px;height:28px;top:auto;bottom:4px;right:4px;max-width:40%}
+#stStage.mini #stHist,#stStage.pip #stHist{display:none}
 .st-split-line{position:absolute;top:10px;bottom:12px;width:2px;background:var(--gold);z-index:2;display:none}
 .st-split-line::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16'/%3E%3C/svg%3E") center/13px 13px no-repeat}
 #stStage.split .st-split-line{display:block}
 /* suite navigation (MUST #4/#5) */
-#stJumpBar{position:sticky;top:calc(54px + env(safe-area-inset-top) + var(--stageH,0px));z-index:5;background:var(--ink);padding:2px 0 4px}
+#stJumpBar{position:sticky;top:calc(var(--navH,54px) + env(safe-area-inset-top) + var(--stageH,0px));z-index:5;background:var(--ink);padding:2px 0 4px}
 #stJumpTop{display:flex;gap:6px;align-items:center;margin-top:4px}
 #stJumpTop .chips{margin-top:0;flex-wrap:nowrap}
 #stJumpBar .chip{min-height:40px}
@@ -519,6 +536,32 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stGroupChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 #stGroupChips::-webkit-scrollbar{display:none}
 #stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:4px 11px;font-size:var(--fs-2xs)}
+/* v4.27.1 jump-bar diet: compact drops the two-row top (suite tabs + search) to one 44-50px chip row;
+   #stSearch stays in the DOM (search still fully functional) — the #stSearchTgl chip swaps it back in */
+#stSearchTgl{display:none}
+#pgStudio.stcompact #stJumpTop{display:none}
+#pgStudio.stcompact #stSearchTgl{display:inline-flex;min-width:44px;min-height:44px;justify-content:center;position:sticky;left:0;z-index:1;background:var(--ink)}
+#pgStudio.stcompact #stGroupChips{margin-top:2px}
+#pgStudio.stcompact #stJumpBar.searchopen #stJumpTop{display:flex;margin-top:2px}
+#pgStudio.stcompact #stJumpBar.searchopen #stSuiteTabs{display:none}
+#pgStudio.stcompact #stJumpBar.searchopen #stGroupChips{display:none}
+#pgStudio.stcompact #stJumpBar.searchopen #stSearch{min-height:44px}
+/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
+#pgStudio.stcompact #stGenBar:not(.haspend) #stPendCount{display:none}
+/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
+#pgStudio.stslim .st-genbar{padding:3px var(--sp-3) 4px;margin:var(--sp-2) 0;bottom:calc(70px + env(safe-area-inset-bottom))}
+/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
+   :has() is progressive enhancement — without it the window merely shrinks by ~25px */
+body:has(#pgStudio.on.stslim) .nav-in{padding-top:calc(3px + env(safe-area-inset-top));padding-bottom:3px}
+body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-size:14px!important;min-height:44px!important} /* #selLang carries inline sizing */
+#pgStudio.stslim #stPendCount{display:none}
+#pgStudio.stslim #stGenBar .gen{padding:7px 12px}
+#pgStudio.stslim #stGenBar .row{margin-top:2px!important} /* row carries an inline margin-top:6px */
+#pgStudio.stslim #stJumpBar{padding:1px 0 2px}
+#pgStudio.stslim #stGroupChips{margin-top:0}
+/* comfort: keyboard nudge discoverability + roomier sliders on 320-class phones */
+.rng:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media(max-width:359px){.st-ctl label{flex:1 0 100%;min-width:0}.rng{min-width:150px}}
 /* empty-state dropzone (MUST #9) */
 #stPicker .ref.stbig,#rsPicker .ref.stbig{width:100%;min-height:120px;height:auto}
 #stPicker .ref.stbig .add,#rsPicker .ref.stbig .add{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-sm);gap:6px;min-height:120px;color:var(--cream)}
@@ -526,18 +569,22 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .st-refx .ref{width:56px;height:56px;flex:0 0 56px}
 #stTarget .chips{margin-top:var(--sp-2)}
 @media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}
-#pgStudio .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(64px + env(safe-area-inset-top) + var(--stageH,0px) + 92px)}
+#pgStudio .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(var(--navH,54px) + 10px + env(safe-area-inset-top) + var(--stageH,0px) + var(--jumpH,92px))}
+/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
+#pgStudio .grp,#pgStudio .st-ctl{scroll-margin-bottom:calc(150px + env(safe-area-inset-bottom))}
 /* single-column: the column wrappers must not become sticky containing blocks —
    display:contents lifts the stage/jump bar into the full page flow so they stick page-long */
 #stColL,#stColR{display:contents}
-/* desktop two-pane (SHOULD #10) */
+/* desktop two-pane (SHOULD #10) — v4.27.1: preview first, column scrolls internally so the photo is never clipped */
 @media(min-width:1024px){
   #pgStudio .st-cols{display:grid;grid-template-columns:minmax(340px,42%) 1fr;gap:var(--sp-4);align-items:start}
-  #stColL{display:block;position:sticky;top:70px}
+  #stColL{display:flex;flex-direction:column;position:sticky;top:70px;max-height:calc(100vh - 70px);overflow-y:auto;overscroll-behavior:contain}
   #stColR{display:block}
-  #stColL #stStage{position:relative;top:0;box-shadow:none}
+  #stColL #stStage{position:relative;top:0;box-shadow:none;order:-2}
+  #stColL #stJumpBar{order:-1} /* suite nav directly under the preview; PHOTO card + recipes scroll below */
   #stJumpBar{position:static}
   #stCanvas{max-height:calc(100vh - 260px)}
+  #stColL #stCanvas{max-height:calc(100vh - 330px)}
 }
 /* ---- V2 Retouch (pgRetouch hero) ---- */
 .v2-range{width:100%;min-height:44px;accent-color:var(--gold)}
@@ -1077,14 +1124,16 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   </section>
 
   <div id="stStage" style="display:none">
-    <canvas id="stCanvas"></canvas>
+    <div id="stZoomWrap"><canvas id="stCanvas"></canvas></div>
     <canvas id="stHist" width="220" height="48"></canvas>
     <div class="st-split-line" id="stSplitLine"></div>
-    <button class="chip st-ov" id="stSplit">A|B</button>
-    <button class="chip st-ov" id="stStageMin" aria-label="Minimize preview"><svg class="ic-s ic-r90" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></button>
-    <button class="chip st-ov" id="stStageFlip" style="display:none"></button>
-    <button class="chip st-ov" id="stHold"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg> Before</button>
-    <button class="chip st-ov" id="stReset"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-restore"/></svg> Reset</button>
+    <div class="st-rail" id="stRail">
+      <button class="chip st-ov" id="stSplit">A|B</button>
+      <button class="chip st-ov" id="stStageMin" aria-label="Minimize preview"><svg class="ic-s ic-r90" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></button>
+      <button class="chip st-ov" id="stStageFlip" style="display:none"></button>
+      <button class="chip st-ov" id="stHold"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg> Before</button>
+      <button class="chip st-ov" id="stReset"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-restore"/></svg> Reset</button>
+    </div>
   </div>
 
   <div id="stJumpBar">
@@ -1092,7 +1141,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <div class="chips" id="stSuiteTabs"></div>
       <input class="inp" id="stSearch">
     </div>
-    <div class="chips" id="stGroupChips"></div>
+    <div class="chips" id="stGroupChips"><button class="chip" id="stSearchTgl"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-search"/></svg></button></div>
   </div>
 
   <section class="card" id="stRecipeCard">
@@ -4886,8 +4935,20 @@ var ST = {
   refreshFns:[], feats:{}, grpOf:{}, g1:{}, g2:{},
   groups:[], rowMap:{}, searchIdx:[],
   split:{on:false,pct:50}, stageResult:null, showingResult:false,
-  presetSnap:null
+  presetSnap:null,
+  /* v4.27.1 stage UI prefs — mode/pipCorner persist in hnk_st_ui (NOT state.st.v: stReset
+     wipes that and Reset must never change the stage size); zoom is session-only */
+  ui:{mode:"auto",pipCorner:"tr",zoom:{s:1,x:0,y:0}}
 };
+var ST_UI_LS="hnk_st_ui"; /* same house pattern as ST_RECIPE_LS */
+(function(){
+  try{
+    var u=JSON.parse(localStorage.getItem(ST_UI_LS)||"{}");
+    if(u.mode==="compact"||u.mode==="mini"||u.mode==="auto") ST.ui.mode=u.mode;
+    if(/^(tl|tr|bl|br)$/.test(String(u.pipCorner))) ST.ui.pipCorner=u.pipCorner;
+  }catch(e){}
+})();
+function stUiSave(){ try{ localStorage.setItem(ST_UI_LS,JSON.stringify({mode:ST.ui.mode,pipCorner:ST.ui.pipCorner})); }catch(e){} }
 /* sv keys that feed the settle pipeline (dirty checks + settle "need" checks) */
 ST.pipeSv=["st_hsl_","st_curve_","st_grade_","st_bw","st_leak","st_geo","st_wbAuto","st_bgEnh","st_frame"];
 function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0,wht:0,blk:0,dhz:0,glow:0}; }
@@ -5585,6 +5646,7 @@ function stBuildBuffer(){
   ST.bctx.drawImage(src,0,0,bw,bh);
   ST.px0=ST.bctx.getImageData(0,0,bw,bh);
   var c=$("stCanvas"); c.width=bw; c.height=bh;
+  if(ST.zoomReset) ST.zoomReset(); /* buffer dims changed (load/crop/rotate) — stale pan bounds */
 }
 function stLoadImage(dataUrl,opts){
   opts=opts||{};
@@ -5784,6 +5846,7 @@ function stRenderPend(){
   var n=pend.length, live=stLiveCount();
   var cEl=$("stPendCount");
   if(cEl){ if(n||live){ cEl.innerHTML=icn("i-eye")+" "+escH(L9({my:"တိုက်ရိုက် "+live,en:live+" live"}))+" · "+icn("i-bolt")+" "+escH(L9({my:"AI "+n,en:n+" AI"})); } else cEl.textContent = L9({my:"Slider တွေက ပုံပေါ်မှာ ချက်ချင်းမြင်ရ — AI လိုတဲ့အရာတွေက ဒီမှာ စုပြီး GENERATE တစ်ချက်တည်း",en:"Sliders preview instantly on the photo — AI-only edits queue here for one GENERATE"}); }
+  var gbEl=$("stGenBar"); if(gbEl) gbEl.classList.toggle("haspend",!!(n||live)); /* gen-bar diet: explainer collapses in compact when queue is empty */
   var clr=$("stClearAi");
   if(clr) clr.style.display=n?"":"none";
   var btn=$("btnStGen");
@@ -7921,20 +7984,165 @@ var _smc=$("stMeituCount"); if(_smc) _smc.textContent=String(ST_MEITU_COUNT);
 var _sec=$("stEvotoCount"); if(_sec) _sec.textContent=String(ST_EVOTO_COUNT);
 var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
 
-/* ---- sticky stage chrome: minimize, A|B split, result flip, height CSS var ---- */
+/* ---- sticky stage chrome: adaptive 3-state stage + PiP (v4.27.1), minimize cycle, A|B split, result flip, height CSS vars ---- */
 (function(){
   var stg=$("stStage"), pg=$("pgStudio");
   if(!stg||!pg) return;
-  function upd(){ pg.style.setProperty("--stageH",(stg.style.display==="none"?0:stg.offsetHeight)+"px"); }
-  ST._stageHUpd=upd;
+  var navEl=document.querySelector(".nav");
+  function navH(){ return (navEl&&navEl.offsetHeight)||54; }
+  function upd(){
+    pg.style.setProperty("--navH",navH()+"px");
+    var jb=$("stJumpBar"); if(jb) pg.style.setProperty("--jumpH",jb.offsetHeight+"px");
+    pg.style.setProperty("--stCompactH",Math.round(stClamp(window.innerHeight*0.19,120,200))+"px");
+    var off=stg.style.display==="none"||stg.classList.contains("pip");
+    pg.style.setProperty("--stageH",(off?0:stg.offsetHeight)+"px");
+  }
+  /* ---- adaptive engine: auto(full<->compact by scroll) / compact-pinned / mini, PiP forced by env ---- */
+  var natTop=null, autoCompact=false, forcedKb=false, pipFree=false, cur="";
+  function stuck(){ return stg.getBoundingClientRect().top<=navH()+2; }
+  function natTopUpd(){ /* natural top is only trustworthy while un-stuck and docked */
+    if(stg.style.display==="none"||stg.classList.contains("pip")) return;
+    var r=stg.getBoundingClientRect();
+    if(r.top>navH()+2){ natTop=r.top+(window.scrollY||0); ST._natTop=natTop; }
+  }
+  function landscapePhone(){ return window.innerWidth<1024&&window.innerHeight<520&&window.innerWidth>window.innerHeight; }
+  function kbSync(){
+    var vv=window.visualViewport;
+    if(vv&&window.innerHeight){
+      var ratio=vv.height/window.innerHeight;
+      if(ratio<0.7) forcedKb=true; else if(ratio>=0.85) forcedKb=false;
+    } else forcedKb=false;
+    if(!landscapePhone()&&!forcedKb) pipFree=false; /* re-arm the PiP release once conditions clear */
+  }
+  function desired(){
+    if(stg.style.display==="none") return "";
+    if(window.innerWidth>=1024) return ""; /* desktop two-pane never compacts (column scrolls internally) */
+    if((landscapePhone()||forcedKb)&&!pipFree) return "pip";
+    if(ST.ui.mode==="mini") return "mini";
+    if(ST.ui.mode==="compact") return "compact";
+    return autoCompact?"compact":"";
+  }
+  function pipPlace(){
+    var c=ST.ui.pipCorner||"tr";
+    stg.style.left=stg.style.right=stg.style.top=stg.style.bottom="";
+    if(c.charAt(1)==="l") stg.style.left="10px"; else stg.style.right="10px";
+    if(c.charAt(0)==="b") stg.style.bottom="calc(84px + env(safe-area-inset-bottom))";
+    else stg.style.top="calc("+navH()+"px + env(safe-area-inset-top) + 8px)";
+  }
+  function apply(){
+    var d=desired();
+    if(d===cur){ upd(); return; }
+    var engaged=d!=="pip"&&cur!=="pip"&&stuck()&&(window.scrollY||0)>0;
+    if(engaged) stg.classList.add("nofx"); /* transition off so the height delta is measurable this frame */
+    var jbEl=$("stJumpBar"); /* the jump-bar diet shifts flow too — compensate stage + jump bar together */
+    function stackH(){ return stg.offsetHeight+(jbEl?jbEl.offsetHeight:0); }
+    var hBefore=engaged?stackH():0;
+    stg.classList.toggle("compact",d==="compact");
+    stg.classList.toggle("mini",d==="mini");
+    stg.classList.toggle("pip",d==="pip");
+    pg.classList.toggle("stcompact",d==="compact"||d==="mini"||d==="pip");
+    pg.classList.toggle("stslim",d==="pip");
+    if(d==="pip") pipPlace(); else stg.style.left=stg.style.right=stg.style.top=stg.style.bottom="";
+    if(engaged){ /* scroll compensation — content under the stage must not jump (§2.1) */
+      var delta=stackH()-hBefore;
+      if(delta<0&&natTop!=null){ /* never compensate below the exit band (prevents flip-flop on tall viewports) */
+        var y=window.scrollY||0, minY=Math.max(0,natTop-110);
+        if(y+delta<minY) delta=Math.min(0,minY-y);
+      }
+      if(delta) window.scrollBy(0,delta);
+      setTimeout(function(){ stg.classList.remove("nofx"); },40);
+    }
+    cur=d;
+    upd();
+  }
+  ST._stageModeApply=apply;
+  ST._stageHUpd=function(){ natTop=null; natTopUpd(); apply(); }; /* photo load / removal hook (stLoadImage, stSyncFromRef) */
+  /* group-chip spotlight (§4.7): mark the group under the jump bar, keep its chip scrolled into view */
+  var chipT=0;
+  function chipSpot(){
+    var now=Date.now(); if(now-chipT<160) return; chipT=now;
+    var jb=$("stJumpBar"), strip=$("stGroupChips");
+    if(!jb||!strip||!ST.groups.length) return;
+    var line=jb.getBoundingClientRect().bottom+8, act=null;
+    for(var i=0;i<ST.groups.length;i++){
+      var g=ST.groups[i]; if(!g.el||g.el.classList.contains("hide")) continue;
+      var r=g.el.getBoundingClientRect();
+      if(r.top<=line&&r.bottom>line){ act=g; break; }
+    }
+    var c=act&&act.jumpChip;
+    if(ST._chipOn!==c){
+      if(ST._chipOn) ST._chipOn.classList.remove("on");
+      ST._chipOn=c||null;
+      if(c){
+        c.classList.add("on");
+        var sr=strip.getBoundingClientRect(), cr=c.getBoundingClientRect();
+        if(cr.left<sr.left+52) strip.scrollLeft+=cr.left-sr.left-52;
+        else if(cr.right>sr.right-8) strip.scrollLeft+=cr.right-sr.right+8;
+      }
+    }
+  }
+  var sRaf=false;
+  window.addEventListener("scroll",function(){
+    if(sRaf) return; sRaf=true;
+    requestAnimationFrame(function(){
+      sRaf=false;
+      if(!pg.classList.contains("on")||stg.style.display==="none") return;
+      natTopUpd();
+      if(ST.ui.mode==="auto"&&window.innerWidth<1024&&natTop!=null){
+        var y=window.scrollY||0;
+        if(!autoCompact&&y>natTop+40){ autoCompact=true; apply(); }
+        else if(autoCompact&&y<Math.max(0,natTop-120)){ autoCompact=false; apply(); }
+      }
+      chipSpot();
+    });
+  },{passive:true});
   if(window.ResizeObserver){ try{ new ResizeObserver(upd).observe(stg); }catch(e){} }
-  window.addEventListener("resize",upd);
-  upd();
+  window.addEventListener("resize",function(){ natTop=null; kbSync(); apply(); natTopUpd(); });
+  if(window.visualViewport) window.visualViewport.addEventListener("resize",function(){ kbSync(); apply(); });
   if(!ST.srcBitmap) pg.classList.add("nostage");
+  /* PiP drag — single pointer moves the thumbnail, release snaps + persists the corner */
+  var pd=null;
+  stg.addEventListener("pointerdown",function(e){
+    if(!stg.classList.contains("pip")||ST.split.on||ST.ui.zoom.s>1) return;
+    if(e.target.closest&&e.target.closest(".chip")) return;
+    pd={id:e.pointerId,x:e.clientX,y:e.clientY,r:stg.getBoundingClientRect(),moved:false};
+    try{ stg.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  stg.addEventListener("pointermove",function(e){
+    if(!pd||e.pointerId!==pd.id) return;
+    var dx=e.clientX-pd.x, dy=e.clientY-pd.y;
+    if(Math.abs(dx)+Math.abs(dy)>6) pd.moved=true;
+    if(!pd.moved) return;
+    stg.style.right="auto"; stg.style.bottom="auto";
+    stg.style.left=(pd.r.left+dx)+"px"; stg.style.top=(pd.r.top+dy)+"px";
+  });
+  function pdUp(e){
+    if(!pd||(e&&e.pointerId!==pd.id)) return;
+    if(pd.moved){
+      var r=stg.getBoundingClientRect();
+      ST.ui.pipCorner=(r.top+r.height/2<window.innerHeight/2?"t":"b")+(r.left+r.width/2<window.innerWidth/2?"l":"r");
+      stUiSave(); pipPlace();
+    }
+    pd=null;
+  }
+  stg.addEventListener("pointerup",pdUp);
+  stg.addEventListener("pointercancel",pdUp);
   var mn=$("stStageMin");
   mn.innerHTML=icn("i-caret","ic-s ic-r90");
-  mn.title=L9({my:"Stage ချုံ့/ချဲ့",en:"Minimize / expand the stage"});
-  mn.onclick=function(){ stg.classList.toggle("mini"); mn.classList.toggle("on",stg.classList.contains("mini")); upd(); };
+  function mnSync(){
+    var m=ST.ui.mode;
+    mn.classList.toggle("on",m!=="auto");
+    var t=L9(m==="auto"?{my:"Preview: အလိုအလျောက် — နှိပ်ရင် အသေးချုံ့ထားမယ်",en:"Preview: auto — tap to pin compact"}
+      :m==="compact"?{my:"Preview: ချုံ့ထား — နှိပ်ရင် mini",en:"Preview: compact — tap for mini"}
+      :{my:"Preview: mini — နှိပ်ရင် အလိုအလျောက်ပြန်",en:"Preview: mini — tap for auto"});
+    mn.title=t; mn.setAttribute("aria-label",t);
+  }
+  mn.onclick=function(){
+    if(stg.classList.contains("pip")){ pipFree=true; apply(); return; } /* expand out of forced PiP */
+    ST.ui.mode=ST.ui.mode==="auto"?"compact":ST.ui.mode==="compact"?"mini":"auto";
+    stUiSave(); mnSync(); apply();
+  };
+  mnSync(); upd(); natTopUpd(); apply();
   var fl=$("stStageFlip");
   fl.onclick=function(){
     if(!ST.stageResult) return;
@@ -7952,6 +8160,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   sp.textContent="A|B";
   sp.title=L9({my:"မူရင်း | ပြင်ပြီး နှိုင်းယှဉ်",en:"Compare original | edited"});
   sp.onclick=function(){
+    if(ST.zoomReset) ST.zoomReset(); /* split and zoom are mutually exclusive (§3.1) */
     ST.split.on=!ST.split.on;
     stg.classList.toggle("split",ST.split.on);
     sp.classList.toggle("on",ST.split.on);
@@ -7975,6 +8184,101 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   });
   stg.addEventListener("pointerup",function(){ dragging=false; });
   stg.addEventListener("pointercancel",function(){ dragging=false; });
+})();
+
+/* ---- preview zoom loupe (§3.1): pinch / double-tap 100% / ctrl-wheel — CSS transform only, the
+   settle buffer + toDataURL stay untouched; 100% = one buffer pixel per CSS pixel ---- */
+(function(){
+  var wrap=$("stZoomWrap"), c=$("stCanvas");
+  if(!wrap||!c) return;
+  var Z=ST.ui.zoom;
+  var ind=el("button","chip st-ov");
+  ind.id="stZoomInd"; ind.style.display="none";
+  var it=L9({my:"Zoom ပြန်ဖျက် (နှစ်ချက်နှိပ်ရင် 100%)",en:"Reset zoom (double-tap for 100%)"});
+  ind.title=it; ind.setAttribute("aria-label",it);
+  var rail=$("stRail"); if(rail) rail.appendChild(ind);
+  function cssW(){ return c.clientWidth||1; }
+  function cssH(){ return c.clientHeight||1; }
+  function nativeS(){ return Math.max(1.01,(c.width||1)/cssW()); }
+  function apply(){
+    var w=cssW(),h=cssH();
+    Z.x=stClamp(Z.x,Math.min(0,w-w*Z.s),0);
+    Z.y=stClamp(Z.y,Math.min(0,h-h*Z.s),0);
+    if(Z.s<=1.001){
+      Z.s=1; Z.x=0; Z.y=0;
+      c.style.transform=""; c.style.transformOrigin=""; wrap.style.touchAction="";
+      ind.style.display="none"; ind.classList.remove("on");
+    }else{
+      c.style.transformOrigin="0 0";
+      c.style.transform="translate("+Z.x+"px,"+Z.y+"px) scale("+Z.s+")";
+      wrap.style.touchAction="none"; /* while zoomed the wrap owns the gestures; page scroll returns at s=1 */
+      ind.style.display=""; ind.classList.add("on");
+      var pct=Z.s/nativeS();
+      ind.textContent=(pct>0.97&&pct<1.03)?"100%":"×"+(Math.round(Z.s*10)/10);
+    }
+  }
+  function zoomReset(){ Z.s=1; Z.x=0; Z.y=0; apply(); }
+  function zoomTo(s,cx,cy){ /* cx,cy in wrap-local CSS px; defaults to center */
+    if(ST.split.on){ var sp=$("stSplit"); if(sp&&sp.onclick) sp.onclick(); } /* zoom exits split first (§3.1) */
+    var w=cssW(),h=cssH();
+    if(cx==null) cx=w/2; if(cy==null) cy=h/2;
+    var s0=Z.s||1, s1=stClamp(s,1,nativeS());
+    Z.x=cx-(cx-Z.x)*(s1/s0); Z.y=cy-(cy-Z.y)*(s1/s0); Z.s=s1;
+    apply();
+  }
+  ST.zoomReset=zoomReset; ST.zoomTo=zoomTo;
+  ind.onclick=function(){ zoomReset(); };
+  var pts={}, g=null;
+  wrap.addEventListener("pointerdown",function(e){
+    if(!ST.srcBitmap) return;
+    pts[e.pointerId]={x:e.clientX,y:e.clientY};
+    var ids=Object.keys(pts);
+    if(ids.length===2){
+      if(ST.split.on){ var sp=$("stSplit"); if(sp&&sp.onclick) sp.onclick(); }
+      var a=pts[ids[0]], b=pts[ids[1]], wr=wrap.getBoundingClientRect();
+      var mx=(a.x+b.x)/2-wr.left, my=(a.y+b.y)/2-wr.top;
+      g={mode:"pinch",d0:Math.hypot(a.x-b.x,a.y-b.y)||1,s0:Z.s,lx:(mx-Z.x)/Z.s,ly:(my-Z.y)/Z.s};
+      try{ wrap.setPointerCapture(e.pointerId); }catch(err){}
+    }else if(ids.length===1&&Z.s>1){
+      g={mode:"pan",px:e.clientX,py:e.clientY,x0:Z.x,y0:Z.y};
+      try{ wrap.setPointerCapture(e.pointerId); }catch(err){}
+    }
+  });
+  wrap.addEventListener("pointermove",function(e){
+    if(!pts[e.pointerId]) return;
+    pts[e.pointerId]={x:e.clientX,y:e.clientY};
+    if(!g) return;
+    var ids=Object.keys(pts);
+    if(g.mode==="pinch"&&ids.length>=2){
+      var a=pts[ids[0]], b=pts[ids[1]], wr=wrap.getBoundingClientRect();
+      var mx=(a.x+b.x)/2-wr.left, my=(a.y+b.y)/2-wr.top;
+      Z.s=stClamp(g.s0*(Math.hypot(a.x-b.x,a.y-b.y)||1)/g.d0,1,nativeS());
+      Z.x=mx-g.lx*Z.s; Z.y=my-g.ly*Z.s; /* focal point stays put */
+      apply();
+    }else if(g.mode==="pan"){
+      Z.x=g.x0+(e.clientX-g.px); Z.y=g.y0+(e.clientY-g.py);
+      apply();
+    }
+  });
+  function done(e){
+    delete pts[e.pointerId];
+    var n=Object.keys(pts).length;
+    if(!n||(g&&g.mode==="pinch"&&n<2)) g=null;
+  }
+  wrap.addEventListener("pointerup",done);
+  wrap.addEventListener("pointercancel",done);
+  wrap.addEventListener("dblclick",function(e){
+    if(!ST.srcBitmap) return;
+    var wr=wrap.getBoundingClientRect();
+    if(Z.s>1.01) zoomReset();
+    else zoomTo(nativeS(),e.clientX-wr.left,e.clientY-wr.top);
+  });
+  wrap.addEventListener("wheel",function(e){
+    if(!e.ctrlKey||!ST.srcBitmap) return;
+    e.preventDefault();
+    var wr=wrap.getBoundingClientRect();
+    zoomTo(Z.s*(e.deltaY<0?1.15:0.87),e.clientX-wr.left,e.clientY-wr.top);
+  },{passive:false});
 })();
 
 /* ---- suite navigation: jump bar tabs + group chip strip + feature search (MUST #4/#5) ---- */
@@ -8014,6 +8318,14 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   }
   var sT=null;
   inp.oninput=function(){ clearTimeout(sT); sT=setTimeout(applySearch,120); };
+  /* compact jump-bar: the search collapses to a 44px chip; tapping swaps the row back to the input (§4.1) */
+  var tgl=$("stSearchTgl"), jb=$("stJumpBar");
+  if(tgl&&jb){
+    tgl.innerHTML=icn("i-search");
+    tgl.title=inp.placeholder; tgl.setAttribute("aria-label",inp.placeholder);
+    tgl.onclick=function(){ jb.classList.add("searchopen"); try{ inp.focus(); }catch(e){} };
+    inp.addEventListener("blur",function(){ if(!inp.value.trim()) jb.classList.remove("searchopen"); });
+  }
 })();
 
 stRecomputeGhosts();
@@ -8271,7 +8583,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.27.0";
+var APP_VER="4.27.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
