@@ -4460,9 +4460,9 @@ function stNeedPhotoNudge(){
   if(ST.srcBitmap) return;
   var now=Date.now(); if(now-_stNudgeT<8000) return;
   _stNudgeT=now;
+  /* toast only — never scroll-hijack while the user is exploring sliders
+     (the GENERATE bar doubles as an always-visible "add photo" button) */
   toast(RS_NEED_PHOTO,"err");
-  var pk=$("stPicker");
-  if(pk&&pk.scrollIntoView){ try{ pk.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }
 }
 function stT1Changed(){
   if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; }
@@ -5268,8 +5268,10 @@ function stRenderPend(){
   if(clr) clr.style.display=n?"":"none";
   var btn=$("btnStGen");
   if(btn){
-    var lblKey=n ? "g"+n : ((live>0||stIsDirty()) ? "a" : "g0");
-    var lbl=n ? icn("i-bolt")+" GENERATE ("+n+" AI)"
+    var noPhoto=!ST.srcBitmap;
+    var lblKey=noPhoto ? "p" : (n ? "g"+n : ((live>0||stIsDirty()) ? "a" : "g0"));
+    var lbl=noPhoto ? icn("i-camera")+" "+escH(L9({my:"ပုံထည့်ပါ — Live preview စမယ်",en:"Add a photo to start"}))
+      : n ? icn("i-bolt")+" GENERATE ("+n+" AI)"
       : ((live>0||stIsDirty()) ? icn("i-check")+" APPLY ("+escH(L9({my:"စက်တွင်း render",en:"local render"}))+")" : icn("i-bolt")+" GENERATE");
     if(btn.dataset.lbl!==lblKey){
       btn.dataset.lbl=lblKey; btn.innerHTML=lbl;
@@ -7202,7 +7204,9 @@ function stSetBusy(b,label){
 }
 $("btnStGen").onclick=async function(){
   if(stBusy) return;
-  if(!ST.srcBitmap){ setSt("stStatus",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
+  /* no photo yet: the gen bar doubles as the always-visible photo picker
+     (replaces the old scroll-to-top nudge that yanked the page around) */
+  if(!ST.srcBitmap){ state.pickSlot=0; $("filePick").click(); return; }
   var hasPend=state.st.pend.length>0;
   if(!hasPend){
     if(!stIsDirty()){
@@ -7636,7 +7640,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.25.0";
+var APP_VER="4.25.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
