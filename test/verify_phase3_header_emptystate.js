@@ -45,7 +45,7 @@ const PORT = process.env.PORT || 8931;
       };
     }));
   console.log("Studio headers:", JSON.stringify(studio));
-  const wantH2 = ["📸 PHOTO", "💾 MY RECIPES", "💄 MEITU STUDIO", "🎯 EVOTO PRO"]; // MY RECIPES card added by the pgStudio v2 upgrade
+  const wantH2 = ["PHOTO", "MY RECIPES", "MEITU STUDIO", "EVOTO PRO"]; // MY RECIPES card added by the pgStudio v2 upgrade; v4.25 icon system renders the h2 glyph as inline SVG (no text)
   const studioOk = studio.length === 4 &&
     studio.every((s, i) => s.h2Text === wantH2[i] && s.subIsMut && s.subFilled);
   console.log(studioOk ? "PASS (PHOTO / MY RECIPES / MEITU STUDIO / EVOTO PRO headers each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
