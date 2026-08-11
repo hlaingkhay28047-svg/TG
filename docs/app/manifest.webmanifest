@@ -1,14 +1,25 @@
 {
+  "id": "./",
   "name": "HNK Web Studio",
   "short_name": "HNK Studio",
   "description": "One-Tap AI Studio — HNK Create Studio web app",
+  "lang": "my",
+  "dir": "ltr",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["photo", "productivity"],
   "background_color": "#0b0d14",
   "theme_color": "#0b0d14",
   "icons": [
+    { "src": "lib/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "lib/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "lib/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "lib/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Create", "url": "./?page=pgCreate", "icons": [{ "src": "lib/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Workflow", "url": "./?page=pgWf", "icons": [{ "src": "lib/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Library", "url": "./?page=pgLib", "icons": [{ "src": "lib/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
   ]
 }
