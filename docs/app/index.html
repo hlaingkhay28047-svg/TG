@@ -2366,6 +2366,12 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       "Tap Start — the prompt removes the scene's people and inserts your subject",
       "Tap GENERATE — your subject lands in the scene with matched light and perspective"
     ],
+    "master-bgfg-replace": [
+      "Add your photo (subject) as IMAGE 1",
+      "Add the target scene as IMAGE 2 — it should have another person in it, standing where you want your subject to appear",
+      "Tap Start — the prompt removes IMAGE 2's person, rebuilds the hidden background and foreground, then inserts your exact subject in their place",
+      "Tap GENERATE — your subject lands in that exact spot with identity, pose, outfit and lighting locked from IMAGE 1; IMAGE 2 only supplies the scene"
+    ],
     "subject-face": [
       "Add the base image (body/scene to keep) as IMAGE 1",
       "Add the face/subject reference as IMAGE 2",
@@ -2469,6 +2475,12 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       "IMAGE 2 မှာ scene reference ပုံ တင်ပါ — Library 366 ထဲက ရွေးရင် အလွယ်ဆုံး၊ mood/အရောင် ထပ်ကူညီစေချင်ရင် Style Reference ပုံကို IMAGE 3 အဖြစ် ထပ်တင်နိုင်ပါတယ် (မတင်လည်းရ)",
       "“Start” နှိပ်ပါ — scene ထဲက လူတွေဖယ်ပြီး ကိုယ့်လူထည့်မယ့် prompt ရောက်လာမယ်",
       "GENERATE နှိပ်ပါ — ကိုယ့် subject က scene ရဲ့ အလင်း/perspective နဲ့ ကိုက်ညီစွာ ဝင်သွားမယ်"
+    ],
+    "master-bgfg-replace": [
+      "IMAGE 1 မှာ ကိုယ့်ဓာတ်ပုံ (subject) တင်ပါ",
+      "IMAGE 2 မှာ ဖြစ်ချင်တဲ့ scene ပုံ တင်ပါ — အဲဒီထဲမှာ တခြားလူတစ်ယောက် ရပ်နေတဲ့ နေရာက ကိုယ့် subject ကို အစားထိုးထည့်ပေးမှာပါ",
+      "“Start” နှိပ်ပါ — IMAGE 2 ထဲက လူကို ဖယ်ပြီး နောက်ခံ/ရှေ့ခံကို ပြန်ပြင်ဆင်ကာ အဲဒီနေရာမှာ ကိုယ့် subject ကို အစားထိုးထည့်မယ့် prompt ရောက်လာမယ်",
+      "GENERATE နှိပ်ပါ — identity၊ pose၊ အဝတ်အစား၊ အလင်းရောင် အားလုံး IMAGE 1 အတိုင်း အတိအကျ ကျန်ပြီး ကိုယ့် subject က အဲဒီနေရာမှာ တကယ်ရိုက်ထားသလို ဝင်လာမယ်; IMAGE 2 ကတော့ scene ကိုပဲ ပေးမှာပါ"
     ],
     "subject-face": [
       "IMAGE 1 မှာ base ပုံ (ခန္ဓာကိုယ်/scene ထားချင်တဲ့ပုံ) တင်ပါ",
@@ -4028,7 +4040,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.20.30";
+var APP_VER="4.20.31";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
