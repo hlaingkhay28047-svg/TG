@@ -18,7 +18,11 @@ const PORT = process.env.PORT || 8931;
   await page.waitForTimeout(800);
   await page.evaluate(() => { const o = document.querySelector(".onb"); if (o) o.classList.remove("on"); });
 
+<<<<<<< HEAD
   // --- Studio: MEITU 15 + EVOTO 16 .grp groups (pgStudio v2 upgrade), every one closed by default ---
+=======
+  // --- Studio: MEITU 12 + EVOTO 11 .grp groups, every one closed by default ---
+>>>>>>> origin/main
   await page.evaluate(() => switchPage("pgStudio"));
   await page.waitForTimeout(200);
   const suiteGroups = await page.evaluate(() => {
@@ -29,9 +33,15 @@ const PORT = process.env.PORT || 8931;
     return { mu: grab("muHost"), ev: grab("evHost") };
   });
   console.log("Studio suite groups:", "mu=" + suiteGroups.mu.length, "ev=" + suiteGroups.ev.length);
+<<<<<<< HEAD
   const addonsOk = suiteGroups.mu.length === 15 && suiteGroups.ev.length === 16 &&
     suiteGroups.mu.concat(suiteGroups.ev).every(g => !g.open && !g.bodyVisible);
   console.log(addonsOk ? "PASS (15 Meitu + 16 Evoto groups, all closed by default)" : "FAIL (Studio suite accordion structure regression)");
+=======
+  const addonsOk = suiteGroups.mu.length === 12 && suiteGroups.ev.length === 11 &&
+    suiteGroups.mu.concat(suiteGroups.ev).every(g => !g.open && !g.bodyVisible);
+  console.log(addonsOk ? "PASS (12 Meitu + 11 Evoto groups, all closed by default)" : "FAIL (Studio suite accordion structure regression)");
+>>>>>>> origin/main
 
   const clickResult = await page.evaluate(() => {
     const g = document.querySelector("#muHost > .grp");
