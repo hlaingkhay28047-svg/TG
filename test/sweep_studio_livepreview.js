@@ -137,7 +137,6 @@ const PORT = process.env.PORT || 8931;
   report("a pending chip's remove control clears the queue entry and resets its slider",
     chipX.chipsAfterSet === 1 && chipX.chipsAfterX === 0 && chipX.sliderAfterX === "0", JSON.stringify(chipX));
 
-<<<<<<< HEAD
   // 6) cross-suite shared-key sync: ev_exp drives t1.exp + same-tick filter; mu_exp mirrors after stRefreshUI
   const shared = await page.evaluate(() => {
     document.getElementById("stReset").click();
@@ -308,8 +307,6 @@ const PORT = process.env.PORT || 8931;
   report("empty-state: stage hidden, dropzone shown, slider input toasts the need-photo nudge with no pageerror",
     nudge.stageHidden && nudge.dropzone && nudge.toastOn && pageErrors === 0, JSON.stringify(nudge));
 
-=======
->>>>>>> origin/main
   console.log("\n" + (allOk ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(allOk ? 0 : 1);
