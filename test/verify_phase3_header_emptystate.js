@@ -36,11 +36,7 @@ const PORT = process.env.PORT || 8931;
   await page.evaluate(() => switchPage("pgStudio"));
   await page.waitForTimeout(200);
   const studio = await page.evaluate(() =>
-<<<<<<< HEAD
     Array.from(document.querySelectorAll("#pgStudio .card > h2")).slice(0, 4).map(h2 => {
-=======
-    Array.from(document.querySelectorAll("#pgStudio .card > h2")).slice(0, 3).map(h2 => {
->>>>>>> origin/main
       const sub = h2.nextElementSibling;
       return {
         h2Text: h2.textContent.trim(),
@@ -49,17 +45,10 @@ const PORT = process.env.PORT || 8931;
       };
     }));
   console.log("Studio headers:", JSON.stringify(studio));
-<<<<<<< HEAD
   const wantH2 = ["📸 PHOTO", "💾 MY RECIPES", "💄 MEITU STUDIO", "🎯 EVOTO PRO"]; // MY RECIPES card added by the pgStudio v2 upgrade
   const studioOk = studio.length === 4 &&
     studio.every((s, i) => s.h2Text === wantH2[i] && s.subIsMut && s.subFilled);
   console.log(studioOk ? "PASS (PHOTO / MY RECIPES / MEITU STUDIO / EVOTO PRO headers each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
-=======
-  const wantH2 = ["📸 PHOTO", "💄 MEITU STUDIO", "🎯 EVOTO PRO"];
-  const studioOk = studio.length === 3 &&
-    studio.every((s, i) => s.h2Text === wantH2[i] && s.subIsMut && s.subFilled);
-  console.log(studioOk ? "PASS (PHOTO / MEITU STUDIO / EVOTO PRO headers each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
->>>>>>> origin/main
 
   // --- Gallery empty-state: shown by default (icon + message + CTA), the reference pattern ---
   await page.evaluate(() => switchPage("pgGallery"));
