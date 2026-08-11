@@ -520,8 +520,8 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stGroupChips::-webkit-scrollbar{display:none}
 #stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:4px 11px;font-size:var(--fs-2xs)}
 /* empty-state dropzone (MUST #9) */
-#stPicker .ref.stbig{width:100%;min-height:120px;height:auto}
-#stPicker .ref.stbig .add{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-sm);gap:6px;min-height:120px;color:var(--cream)}
+#stPicker .ref.stbig,#rsPicker .ref.stbig{width:100%;min-height:120px;height:auto}
+#stPicker .ref.stbig .add,#rsPicker .ref.stbig .add{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-sm);gap:6px;min-height:120px;color:var(--cream)}
 .st-refx{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2)}
 .st-refx .ref{width:56px;height:56px;flex:0 0 56px}
 #stTarget .chips{margin-top:var(--sp-2)}
@@ -539,6 +539,12 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
   #stJumpBar{position:static}
   #stCanvas{max-height:calc(100vh - 260px)}
 }
+/* ---- V2 Retouch (pgRetouch hero) ---- */
+.v2-range{width:100%;min-height:44px;accent-color:var(--gold)}
+#v2Hero .subh{margin-top:var(--sp-3)}
+.v2-busy{pointer-events:none;opacity:.55}
+.chip.v2-sw{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border-radius:50%}
+.chip.v2-sw.on{outline:2px solid var(--gold);outline-offset:2px}
 /* ---- inline icon system (replaces emoji iconography) ---- */
 svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
@@ -1084,12 +1090,50 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <p class="ph-head" id="phRetouch">မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်</p>
   </header>
   <section class="card">
-    <h2 id="rsH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-gem"/></svg>RETOUCH STUDIO</h2>
+    <h2 id="rsH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-gem"/></svg>V2 RETOUCH</h2>
     <p class="mut" id="rsIntro"></p>
     <div id="rsPicker"></div>
+    <div id="v2Hero">
+      <div class="row"><span class="subh" id="v2LbStrength"></span><b id="v2StrengthVal"></b></div>
+      <input type="range" class="v2-range" id="v2Strength" min="0" max="100" step="5" value="60">
+      <div class="chips" id="v2Dots"></div>
+      <div class="subh" id="v2LbMode"></div><div class="chips" id="v2ModeChips"></div>
+      <div class="subh" id="v2LbQuality"></div><div class="chips" id="v2QualityChips"></div>
+      <p class="mut" id="v2HdHint" style="display:none"></p>
+      <div class="grp" id="v2GrpAdvanced">
+        <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg> <span id="v2LbAdvanced"></span></span></button>
+        <div class="grp-b">
+          <div class="row"><span class="mut" id="v2LbBalance"></span><b id="v2BalanceVal"></b></div>
+          <input type="range" class="v2-range" id="v2Balance" min="-50" max="50" step="5" value="0">
+          <div class="row"><span class="mut" id="v2LbBlemish"></span><b id="v2BlemishVal"></b></div>
+          <input type="range" class="v2-range" id="v2Blemish" min="0" max="100" step="5" value="60">
+          <div class="row"><span class="mut" id="v2LbDeshine"></span><b id="v2DeshineVal"></b></div>
+          <input type="range" class="v2-range" id="v2Deshine" min="0" max="100" step="5" value="0">
+          <div class="subh" id="v2LbTone"></div><div class="chips" id="v2ToneChips"></div>
+          <div id="v2ToneStrengthWrap" style="display:none">
+            <div class="row"><span class="mut" id="v2LbToneStrength"></span><b id="v2ToneStrengthVal"></b></div>
+            <input type="range" class="v2-range" id="v2ToneStrength" min="0" max="100" step="2" value="42">
+          </div>
+          <div class="subh" id="v2LbHair"></div><div class="chips" id="v2HairChips"></div>
+          <div class="subh" id="v2LbOutfit"></div><div class="chips" id="v2OutfitChips"></div>
+          <div class="subh" id="v2LbPreview"></div>
+          <pre id="v2PromptPreview" class="mut" style="white-space:pre-wrap;font-size:var(--fs-2xs);max-height:180px;overflow:auto"></pre>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-gold grow gen" id="btnV2Start"></button>
+      </div>
+      <div class="spin" id="v2Spin"></div>
+      <div class="status" id="stV2Gen"></div>
+      <div class="mut" id="v2Log" style="font-family:ui-monospace,monospace;font-size:var(--fs-2xs)"></div>
+      <button class="btn" id="btnV2Retry" style="display:none;margin-top:8px"></button>
+    </div>
   </section>
 
   <section class="card">
+    <div class="grp" id="rsGrpManual">
+    <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-tools"/></svg> <span id="v2LbManual"></span></span></button>
+    <div class="grp-b">
     <div class="row" id="rsModeTabs">
       <button class="chip on" id="rsTabOnetap"></button>
       <button class="chip" id="rsTabSliders"></button>
@@ -1116,6 +1160,8 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <div class="chips" id="rsBundleGrid"></div>
       <div id="rsChips" style="margin-top:10px"></div>
     </div>
+    </div><!-- /.grp-b -->
+    </div><!-- /rsGrpManual -->
   </section>
 
   <section class="card" id="rsGenCard">
@@ -1141,6 +1187,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="row" style="margin-top:10px">
       <a class="btn btn-gold grow" id="btnRsDl" download="hnk-retouch.png" style="text-align:center"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> Download</a>
       <button class="btn" id="btnRsToRef"></button>
+      <button class="btn btn-gold" id="btnV2Next"></button>
     </div>
     <div class="subh" style="margin-top:12px" id="rsHistH"></div>
     <div class="hist" id="rsHist"></div>
@@ -1738,12 +1785,14 @@ try {
     if (typeof _sv.rtStrength === "number") state.rtStrength = _sv.rtStrength;
     if (typeof _sv.prompt === "string") state.savedPrompt = _sv.prompt;
     if (_sv.st) state.stSaved = _sv.st; /* consumed tolerantly by the Studio module below */
+    if (_sv.v2) state.v2Saved = _sv.v2; /* consumed tolerantly by the V2 Retouch module below (same pattern as stSaved) */
   }
 } catch(e){}
 function saveState(){
   try {
     localStorage.setItem(LS_STATE, JSON.stringify({
       rt: state.rt, rtStrength: state.rtStrength,
+      v2: state.v2, /* V2 Retouch hero settings — tiny plain-number/string object, never any base64 */
       prompt: document.getElementById("prompt") ? document.getElementById("prompt").value : "",
       /* Studio live-preview state — everything EXCEPT the photo itself (state.st.img
          is session-only; base64 photos are too large for localStorage) */
@@ -2834,6 +2883,7 @@ function renderRefs(){
   renderRefStrip();
   renderRsPicker();
   renderStPicker(); /* Studio's Before slot mirrors slot 0 too (guarded until its module inits) */
+  renderV2Hero(); /* V2 hero mirrors slot 0 + next-photo auto-start */
   var host=$("refs"); host.innerHTML="";
   state.refs.forEach(function(ref,i){
     var d=el("div","ref"+(ref?" filled":""));
@@ -2909,7 +2959,7 @@ $("filePick").onchange = function(){
 /* static (non-JS-built) accordions wire up the same open/close toggle
    the grp() builder below uses, so a hand-written .grp/.grp-h/.grp-b
    block (like Setup's Platform Guide) behaves identically to a built one */
-["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced"].forEach(function(id){
+["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced"].forEach(function(id){
   var g=$(id); if(!g) return;
   var h=g.querySelector(".grp-h");
   h.onclick=function(){ g.className = g.className.indexOf("open")>=0 ? "grp" : "grp open"; };
@@ -4022,11 +4072,17 @@ var RS_NEW_PRESETS = [
     label: L9({my:"Glam Beauty",en:"Glam Beauty",shn:"Glam Beauty",kac:"Glam Beauty",th:"Glam Beauty",zh:"魅力美妆",vi:"Glam Beauty",id:"Glam Beauty",ms:"Glam Beauty"}),
     text: function(n){ return "Glamorous studio beauty retouch on IMAGE 1 at "+n+"% strength: flawless porcelain-smooth skin with a luminous highlight on cheekbones and nose bridge, enhanced lash and lip definition, whitened brightened eyes, glossy voluminous hair, soft studio-light color grade. Preserve the person's identity and natural facial proportions — a polished glam finish, not a face swap."; } }
 ];
+/* Preset rename layer (blueprint §3.4, one-release transitional subtitles):
+   labels change in JS only — the #hnkData JSON is NEVER edited (app-fatality
+   hazard + plugin parity). The old name rides along as `was` so the chip
+   title can carry a "(was: …)" prefix for one release. */
+var RS_RENAMES={ evoto:{label:"Studio Clean", was:"Evoto Style"}, meitu:{label:"Soft Glam", was:"Meitu Style"} };
 function rsPresetByKey(key){
   var local = RS_NEW_PRESETS.filter(function(p){ return p.key===key; })[0];
   if(local) return local;
   var dp = D.presets.filter(function(p){ return p.key===key; })[0];
-  if(dp) return { key:dp.key, icon:"i-sparkle", label:dp.label, text:function(n){ return dp.text.replace(/\b60(?=%)/g, String(n)); } };
+  var rn = RS_RENAMES[key];
+  if(dp) return { key:dp.key, icon:"i-sparkle", label:(rn?rn.label:dp.label), was:(rn?rn.was:undefined), text:function(n){ return dp.text.replace(/\b60(?=%)/g, String(n)); } };
   return null;
 }
 function rsPresetLabel(key){ var p=rsPresetByKey(key); return p ? p.label : key; }
@@ -4060,7 +4116,7 @@ function renderRsPicker(){
   var host=$("rsPicker"); if(!host) return;
   host.innerHTML="";
   var ref=state.refs[0];
-  var d=el("div","ref"+(ref?" filled":""));
+  var d=el("div","ref"+(ref?" filled":" stbig"));
   if(ref){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x"); x.innerHTML=icn("i-close");
@@ -4068,7 +4124,10 @@ function renderRsPicker(){
     x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.imgRoles=null; renderRefs(); };
     d.appendChild(x);
   } else {
-    var a=el("button","add","+");
+    /* V2 hero empty-state: same big dropzone treatment as Studio's stPicker */
+    var a=el("button","add");
+    var cam=el("span"); cam.innerHTML=icn("i-camera","ic-xl"); a.appendChild(cam);
+    a.appendChild(el("span",null,L9({my:"ပုံထည့်ပါ — V2 Retouch စတင်ရန်",en:"Add a photo to start V2 Retouch"})));
     a.title = RS_NEED_PHOTO;
     a.onclick=function(){ state.pickSlot=0; $("filePick").click(); };
     d.appendChild(a);
@@ -4083,7 +4142,7 @@ function renderRsPresetGrid(){
   RS_ONETAP_KEYS.forEach(function(key){
     var p=rsPresetByKey(key); if(!p) return;
     var c=el("button","chip"+(key===rsLastPresetKey?" on":"")); c.innerHTML=(p.icon?icn(p.icon)+" ":"")+escH(p.label);
-    c.title = p.text(state.rtStrength);
+    c.title = (p.was ? L9({my:"(ယခင် "+p.was+") ",en:"(was: "+p.was+") "}) : "") + p.text(state.rtStrength);
     c.disabled=rsBusy; // a rebuild (e.g. re-highlighting the last-used preset) must not un-disable mid-generation
     c.onclick=function(){ rsRunOnetap(key); };
     host.appendChild(c);
@@ -4322,7 +4381,7 @@ $("btnRsToRef").onclick=function(){
 })();
 
 /* static labels + first render */
-$("rsIntro").textContent = L9({my:"မူရင်းပုံတစ်ပုံ တင်ပြီး — One-tap preset (ဒါမှမဟုတ်) Slider သုံးပြီး ပရော်ဖက်ရှင်နယ် skin retouch ရလဒ် ရယူပါ",en:"Upload one photo, then use a One-tap preset or fine-tune with Sliders for a professional skin-retouch result",shn:"ၶိုၼ်ႈၶႅပ်းႁၢင်ႈၼိုင်ႈဢၼ်သေ ၸႂ်ႉ One-tap preset / Slider ႁဵတ်းၽွၼ်း retouch ၸၼ်ႉသုင်",kac:"Sumla langai jaw let na One-tap preset shingnrai Slider hte professional skin-retouch lachyum hpe la u",th:"อัปโหลดรูปหนึ่งรูป แล้วใช้ One-tap preset หรือปรับ Slider เพื่อผลลัพธ์รีทัชผิวระดับมืออาชีพ",zh:"上传一张照片，然后使用一键预设或微调滑块，获得专业级皮肤精修效果",vi:"Tải lên một ảnh, sau đó dùng preset một chạm hoặc tinh chỉnh Slider để có kết quả retouch da chuyên nghiệp",id:"Unggah satu foto, lalu gunakan preset sekali ketuk atau sesuaikan Slider untuk hasil retouch kulit profesional",ms:"Muat naik satu foto, kemudian guna preset sekali ketik atau laraskan Slider untuk hasil retouch kulit profesional"});
+$("rsIntro").textContent = L9({my:"ဓာတ်ပုံတင် → ပြင်းအားရွေး → V2 RETOUCH နှိပ်ရုံ — အသားအရေကို သဘာဝအတိုင်း ပြန်ဆေးပေးပြီး မျက်နှာပုံစံ၊ မိတ်ကပ်၊ ဆံပင်၊ နောက်ခံ လုံးဝ မပြောင်းပါ",en:"Add a photo → pick a strength → tap V2 RETOUCH. Skin texture is re-rendered naturally — face, makeup, hair and background never change"});
 $("rsTabOnetap").innerHTML = icn("i-bolt")+" "+escH(L9({my:"One-Tap",en:"One-Tap",shn:"One-Tap",kac:"One-Tap",th:"One-Tap",zh:"一键",vi:"One-Tap",id:"One-Tap",ms:"One-Tap"}));
 $("rsTabSliders").innerHTML = icn("i-sliders")+" "+escH(L9({my:"Sliders",en:"Sliders",shn:"Sliders",kac:"Sliders",th:"Sliders",zh:"滑块",vi:"Sliders",id:"Slider",ms:"Slider"}));
 $("rsOnetapNote").textContent = L9({my:"Preset တစ်ခု နှိပ်လိုက်ရင် ချက်ချင်း retouch ထုတ်ပေးပါလိမ့်မယ် (Sliders tab ကရွေးထားတာတွေရှိရင် ပေါင်းပြီး ထည့်ပေးပါမယ်)",en:"Tap a preset to retouch instantly (anything picked in the Sliders tab is layered on top automatically)",shn:"ၼဵၵ်း preset ဢွၼ်ၼိုင်ႈ ၽွင်ႈၶိုၼ်း ၶၢင်းၶၢင်း (Sliders tab ဢၼ်လိူၵ်ႈဝႆႉ ၸွမ်းတေၸူမ်းၸွႆႈ)",kac:"Preset langai dip u nna gaw hprawng ai hte retouch pru wa na re (Sliders tab kaw tawn da ai ni mung shakap jaw sana)",th:"แตะ preset เพื่อรีทัชทันที (สิ่งที่เลือกในแท็บ Sliders จะถูกซ้อนเพิ่มให้อัตโนมัติ)",zh:"点按预设即可立即精修（Sliders 标签中已选的项会自动叠加）",vi:"Chạm vào preset để retouch ngay lập tức (mọi thứ đã chọn ở tab Sliders sẽ tự động được thêm vào)",id:"Ketuk preset untuk retouch instan (apa pun yang dipilih di tab Slider akan otomatis ditambahkan)",ms:"Ketik preset untuk retouch serta-merta (apa-apa yang dipilih dalam tab Slider akan ditambah secara automatik)"});
@@ -4344,6 +4403,297 @@ renderRsSelCount();
 renderRsStrengthChips();
 rsSetMode("onetap");
 renderRsPicker();
+
+/* ================= HNK V2 RETOUCH (pgRetouch hero) =================
+   DP-panel-simple on top (photo → strength → mode → quality → START),
+   Always-Studio-deep underneath (Advanced accordion → prompt fragments).
+   Rides the shared $("btnGen") dispatcher via v2DoGenerate() — provider
+   selection, cross-provider auto-fallback, history and Gallery come free.
+   Engine mapping is prompt-conditioned (strength % + tier vocabulary in the
+   task text — the app's established retouch pattern), Gemini-primary with
+   the RunningHub Upscale Pro HD-finish pass mirroring Studio's HD Finish.
+   If the user switches #selProvider to runninghub, the same finalPrompt
+   routes through rhActiveModelCfg() (nano-banana-2 = the Fast analog,
+   seedream-v4-5 = the Quality analog); the Gemini select forcing below
+   simply doesn't steer RH — the tier still shapes prompt + selSize, and
+   the HD finish pass still runs. No second routing table. */
+var V2_DEF={ strength:60, mode:"both", quality:"fast", balance:0, blemish:60,
+             deshine:0, tone:"off", toneStrength:42, hair:"off", outfit:"off" };
+state.v2=JSON.parse(JSON.stringify(V2_DEF));
+if(state.v2Saved){ /* tolerant restore — same pattern as state.stSaved */
+  try{ state.v2=Object.assign(JSON.parse(JSON.stringify(V2_DEF)), state.v2Saved); }catch(e){}
+  delete state.v2Saved;
+}
+state.v2Armed=false; state.v2BatchN=0; /* session-only (next-photo auto-start + batch counter) */
+
+var V2_DOTS=[
+  {v:30, label:{my:"ညင်သာ",en:"Subtle"}},
+  {v:60, label:{my:"သဘာဝ",en:"Natural"}},
+  {v:80, label:{my:"ပြင်း",en:"Strong"}},
+  {v:100,label:{my:"အပြည့်",en:"Max"}}
+];
+var V2_MODES=[
+  {key:"rt",  id:"v2ModeRt",  icon:"i-face",    label:{my:"AI အသားအရေပြင်",en:"AI Skin Retouch"}},
+  {key:"col", id:"v2ModeCol", icon:"i-palette", label:{my:"အသားရောင်ပြင်",en:"Skin Color Fix"}},
+  {key:"both",id:"v2ModeBoth",icon:"i-gem",     label:{my:"နှစ်မျိုးလုံး",en:"Both"}}
+];
+var V2_QUALITY=[
+  {key:"fast",    icon:"i-bolt",   label:{my:"Fast (~၃၀ စက္ကန့်)",en:"Fast (~30s)"}},
+  {key:"quality", icon:"i-star",   label:{my:"Quality (~၁-၂ မိနစ်)",en:"Quality (~1–2 min)"}},
+  {key:"hd",      icon:"i-rocket", label:{my:"HD (Upscale ပါ)",en:"HD (+upscale)"}}
+];
+/* The 8 swatch hexes below are DATA (skin-tone targets sampled from the
+   studied Always-Studio panel), not theme colors — exempt from the
+   tokens-only CSS rule, which is why they live inline on the chips. */
+var V2_TONES=[
+  {hex:"#E7D9DE", label:{my:"ပန်းနုဖြူ",en:"Fair Rosy"}},
+  {hex:"#E5D1D5", label:{my:"နှင်းဆီနု",en:"Pale Rose"}},
+  {hex:"#D3DAE4", label:{my:"ကြွေဖြူ",en:"Porcelain Ivory"}},
+  {hex:"#D7CAB4", label:{my:"နွေးဖြူ",en:"Warm Beige"}},
+  {hex:"#A98975", label:{my:"လက်ဖက်နု",en:"Medium Tan"}},
+  {hex:"#A67558", label:{my:"ကာရမယ်",en:"Warm Caramel"}},
+  {hex:"#815C48", label:{my:"အညို",en:"Medium Brown"}},
+  {hex:"#6E482B", label:{my:"အညိုရင့်",en:"Deep Brown"}}
+];
+var V2_LEVELS=[
+  {key:"off",   label:{my:"မလုပ်",en:"Off"}},
+  {key:"soft",  label:{my:"ညင်သာ",en:"Soft"}},
+  {key:"strong",label:{my:"ပြင်း",en:"Strong"}}
+];
+
+function v2Tier(n){ return n<=35?"subtle":n<=65?"natural":n<=85?"strong":"maximum"; }
+/* Prompt composer — the two studies distilled. No TASK GUARD of its own:
+   $("btnGen") appends the canonical D.guards.core+textBan to every request.
+   Composed in English (all engines are English-prompted). ≈700–1100 chars —
+   under seedream's 2000 promptMax; rhTruncatePrompt guards the RH path. */
+function v2BuildPrompt(){
+  var v=state.v2, n=v.strength, tier=v2Tier(n);
+  var TIER_LINE={
+    subtle:"Barely-detectable pass: the result must still read as an un-retouched photo.",
+    natural:"Clean studio-natural finish.",
+    strong:"Polished beauty-editorial finish.",
+    maximum:"Flawless porcelain magazine finish — still photographic, never CGI."
+  };
+  var out=[];
+  out.push("One-shot professional wedding-portrait skin retouch of IMAGE 1 — "+tier+" strength ("+n+"%).\n"+TIER_LINE[tier]);
+  if(v.mode==="rt"||v.mode==="both"){
+    var tx="SKIN TEXTURE — re-render, never blur: remove blemishes, acne marks and dust-like spots at "+v.blemish+"% aggressiveness"+(v.blemish<50?", keep signature moles and beauty marks":"")+". Re-render skin texture the way a high-end frequency-separation retouch would — smooth tonal transitions, but realistic pore-level micro-texture and a fine film-like grain must stay visible at 100% zoom. Never gaussian-blurred, waxy or plastic skin.";
+    if(v.deshine>0) tx+="\nRemove oily shine and sweat specular dots at "+v.deshine+"% — merge hard micro-highlights into one soft continuous glow.";
+    tx+="\nClean and even the lip gloss; teeth slightly cleaner and brighter.";
+    out.push(tx);
+  }
+  if(v.mode==="col"||v.mode==="both"){
+    var cx="SKIN COLOR — skin regions only: even out blotchy, reddish and dull gray patches; remove any orange/yellow color cast completely.";
+    if(v.tone==="off"){
+      cx+="\nDo not change the overall complexion or brightness — even out only.";
+    } else {
+      var sw=V2_TONES.filter(function(s){ return s.hex===v.tone; })[0];
+      if(sw) cx+="\nShift the complexion gently toward "+sw.label.en+" (hex "+sw.hex+") at "+v.toneStrength+"%, evenly across face, neck and chest. Refine, never change the person's natural skin tone identity.";
+    }
+    out.push(cx);
+  }
+  var ex=[];
+  if(v.balance<0) ex.push("TEXTURE BIAS: preserve "+Math.abs(v.balance)+"% more of the original pore detail — err on the side of visible real skin.");
+  if(v.balance>0) ex.push("SMOOTHING BIAS: allow "+v.balance+"% deeper smoothing on the low-frequency tone, texture still re-imposed on top.");
+  if(v.hair!=="off") ex.push("HAIR: tame flyaway and baby hairs "+(v.hair==="soft"?"lightly, keeping a natural hairline":"thoroughly, for a clean editorial hairline")+" at 35% — keep strand detail, never blur the hair mass.");
+  if(v.outfit!=="off") ex.push("OUTFIT: give fabric and jewelry a subtle clarity-and-sheen polish at "+(v.outfit==="soft"?"35%":"60%")+" — no color or design change.");
+  if(ex.length) out.push(ex.join("\n"));
+  out.push("PRESERVE EXACTLY: face geometry and identity, expression, eye and brow shape, the makeup design (clean it, never redesign it), hairstyle and hair volume, accessories, clothing, background pixels, framing and crop. No liquify, no reshaping, no added or removed objects.");
+  return out.join("\n\n");
+}
+
+/* Busy lock — shares the SAME rsBusy flag as the Manual layer so a V2 run
+   and a Manual run can never race two concurrent $("btnGen").onclick()
+   calls. Deliberately without rsSyncGenControls's gen-card-visibility side
+   effect. DP: settings visibly frozen during a run (.v2-busy). */
+var v2SpinT=null, v2SpinT0=0;
+function v2SetBusy(b, label){
+  rsBusy=b;
+  var hero=$("v2Hero"); if(hero) hero.classList.toggle("v2-busy", !!b);
+  $("btnV2Start").disabled=b;
+  var sp=$("v2Spin");
+  sp.className="spin"+(b?" on":"");
+  if(b){
+    $("btnV2Retry").style.display="none";
+    var base=label||t("spin_gen");
+    sp.textContent=base;
+    v2SpinT0=Date.now();
+    clearInterval(v2SpinT);
+    /* elapsed seconds only — honest, no fake per-step progress */
+    v2SpinT=setInterval(function(){ sp.textContent=base+" · "+Math.round((Date.now()-v2SpinT0)/1000)+"s"; },1000);
+  } else {
+    clearInterval(v2SpinT); v2SpinT=null; sp.textContent="";
+  }
+  document.querySelectorAll("#rsPresetGrid .chip, #rsBundleGrid .chip, #rsRerunChips .chip").forEach(function(c){ c.disabled=b; });
+}
+/* DP timestamped mono log line — persistent proof of the last run */
+function v2Log(msg){
+  var d=new Date(); function p(x){ return (x<10?"0":"")+x; }
+  var host=$("v2Log"); if(host) host.textContent="["+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"] "+msg;
+}
+function v2Sync(){
+  state.v2Armed=false; /* any manual settings change disarms next-photo auto-start */
+  saveState();
+  renderV2Hero();
+}
+
+/* Hero renderer — a hoisted function declaration: renderRefs() calls it on
+   the very first paint, before this module's statements have run, so it
+   guards on state.v2 (same tolerance renderStPicker uses for state.st). */
+function renderV2Hero(){
+  var v=state.v2; if(!v || !$("v2Hero")) return;
+  $("v2Strength").value=v.strength;
+  $("v2StrengthVal").textContent=v.strength+"%";
+  var dots=$("v2Dots"); dots.innerHTML="";
+  V2_DOTS.forEach(function(dd){
+    var b=el("button","chip"+(v.strength===dd.v?" on":""), L9(dd.label));
+    b.onclick=function(){ state.v2.strength=dd.v; v2Sync(); };
+    dots.appendChild(b);
+  });
+  var modes=$("v2ModeChips"); modes.innerHTML="";
+  V2_MODES.forEach(function(m){
+    var b=el("button","chip"+(v.mode===m.key?" on":""));
+    b.id=m.id;
+    b.innerHTML=icn(m.icon)+" "+escH(L9(m.label));
+    b.onclick=function(){ state.v2.mode=m.key; v2Sync(); };
+    modes.appendChild(b);
+  });
+  var hdOk=!!(state.rhKey && rhIsConfigured("upscale-pro"));
+  var qs=$("v2QualityChips"); qs.innerHTML="";
+  V2_QUALITY.forEach(function(q){
+    var b=el("button","chip"+(v.quality===q.key?" on":""));
+    b.innerHTML=icn(q.icon)+" "+escH(L9(q.label));
+    if(q.key==="hd" && !hdOk) b.disabled=true;
+    b.onclick=function(){ state.v2.quality=q.key; v2Sync(); };
+    qs.appendChild(b);
+  });
+  $("v2HdHint").style.display = hdOk ? "none" : "";
+  $("v2Balance").value=v.balance;
+  $("v2BalanceVal").textContent=(v.balance>0?"+":"")+v.balance;
+  $("v2Blemish").value=v.blemish; $("v2BlemishVal").textContent=v.blemish+"%";
+  $("v2Deshine").value=v.deshine; $("v2DeshineVal").textContent=v.deshine+"%";
+  var tones=$("v2ToneChips"); tones.innerHTML="";
+  var offB=el("button","chip"+(v.tone==="off"?" on":""), L9({my:"မပြောင်း",en:"Off"}));
+  offB.onclick=function(){ state.v2.tone="off"; v2Sync(); };
+  tones.appendChild(offB);
+  V2_TONES.forEach(function(swd){
+    var b=el("button","chip v2-sw"+(v.tone===swd.hex?" on":""));
+    b.style.background=swd.hex; /* data value, not a theme color (see V2_TONES) */
+    b.setAttribute("aria-label",L9(swd.label));
+    b.title=L9(swd.label);
+    b.onclick=function(){ state.v2.tone=swd.hex; v2Sync(); };
+    tones.appendChild(b);
+  });
+  $("v2ToneStrengthWrap").style.display = v.tone==="off" ? "none" : "";
+  $("v2ToneStrength").value=v.toneStrength;
+  $("v2ToneStrengthVal").textContent=v.toneStrength+"%";
+  [["v2HairChips","hair"],["v2OutfitChips","outfit"]].forEach(function(pair){
+    var host=$(pair[0]); if(!host) return;
+    host.innerHTML="";
+    V2_LEVELS.forEach(function(lv){
+      var b=el("button","chip"+(v[pair[1]]===lv.key?" on":""), L9(lv.label));
+      b.onclick=function(){ state.v2[pair[1]]=lv.key; v2Sync(); };
+      host.appendChild(b);
+    });
+  });
+  $("v2PromptPreview").textContent=v2BuildPrompt(); /* preview honesty: exactly what the run sends */
+  /* next-photo auto-start: armed by #btnV2Next, consumed on the first pick */
+  if(state.v2Armed && state.refs[0] && !rsBusy){ state.v2Armed=false; $("btnV2Start").onclick(); }
+}
+
+/* Modeled on rsDoGenerate, extended: forces the tier's engine settings on
+   the shared selects for just this run and restores them in finally. */
+async function v2DoGenerate(promptText){
+  var s=$("selModel"), q=$("selQual"), r=$("selRatio"), c=$("selCount"), z=$("selSize");
+  var sv={m:s.value,q:q.value,r:r.value,c:c.value,z:z.value};
+  var savedPrompt=$("prompt").value, saved1=state.refs[1], saved2=state.refs[2];
+  var tier=state.v2.quality;
+  s.value = tier==="fast" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
+  q.value = tier==="fast" ? "" : "high";
+  z.value = tier==="fast" ? "" : "2K";
+  r.value=""; /* never append an "Output aspect ratio" line — original framing is sacred in a retouch */
+  c.value="1"; /* deterministic batch counter + cost honesty */
+  $("prompt").value=promptText; state.imgRoles=null;
+  state.refs[1]=null; state.refs[2]=null; /* single-photo tool — same leak guard as rsDoGenerate */
+  var beforeFirst=state.hist[0]; /* identity check, never length (8-cap) */
+  try{ await $("btnGen").onclick(); }
+  finally{
+    state.refs[1]=saved1; state.refs[2]=saved2;
+    s.value=sv.m; q.value=sv.q; r.value=sv.r; c.value=sv.c; z.value=sv.z;
+    $("prompt").value=savedPrompt; /* rsDoGenerate leaves the prompt; V2 restores it — Freeform stays untouched */
+  }
+  var st=$("stGen");
+  setSt("stV2Gen", st?st.textContent:"", st&&st.className.indexOf("err")>=0?"err":"ok");
+  return state.hist[0]!==beforeFirst;
+}
+
+$("btnV2Start").onclick=async function(){
+  /* gen-bar-as-photo-picker (v4.25.1): an empty tap opens the picker instead of erroring */
+  if(!state.refs[0]){ state.pickSlot=0; $("filePick").click(); return; }
+  if(rsBusy) return;
+  v2SetBusy(true);
+  rsLastPresetKey=null; /* V2 runs aren't preset runs — hides #rsRerunRow; V2's strength dots are its re-run affordance */
+  var ok=false;
+  try{
+    ok=await v2DoGenerate(v2BuildPrompt());
+    if(ok && state.v2.quality==="hd" && state.rhKey && rhIsConfigured("upscale-pro")){
+      /* HD Finish — mirrors Studio's pass: failures toast only and never destroy the base result */
+      try{
+        v2SetBusy(true,"HD Finish…");
+        var res=state.hist[0];
+        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], "", function(){});
+        if(outs && outs[0]){
+          state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
+          state.result=outs[0]; state.histSel=0;
+          galleryAdd(outs[0],"v2 retouch hd finish");
+        }
+      }catch(e2){ toast("HD Finish: "+friendlyError(e2),"err"); }
+    }
+    if(ok){
+      state.v2BatchN++;
+      v2Log(L9({my:"ပုံ #"+state.v2BatchN+" ပြီးပါပြီ",en:"Photo #"+state.v2BatchN+" done"}));
+      rsShowResult();
+    } else {
+      $("btnV2Retry").style.display="";
+    }
+  } finally { v2SetBusy(false); }
+};
+$("btnV2Retry").onclick=function(){
+  if(rsBusy) return;
+  this.style.display="none";
+  $("btnV2Start").onclick(); /* same settings, same guards */
+};
+/* Next photo (DP "Chạy Hàng Loạt", web-file-access-honest): settings are
+   simply never touched, so all of state.v2 carries over; the auto-start
+   hook at the end of renderV2Hero() fires after the successful pick. */
+$("btnV2Next").onclick=function(){ if(rsBusy) return; state.v2Armed=true; state.pickSlot=0; $("filePick").click(); };
+
+/* static labels (L9: my + en, falls back en for the other 7 langs) */
+$("v2LbStrength").textContent=L9({my:"ပြင်းအား",en:"Strength"});
+$("v2LbMode").textContent=L9({my:"ပြင်မယ့်အမျိုးအစား",en:"Mode"});
+$("v2LbQuality").textContent=L9({my:"အမြန် / အရည်အသွေး",en:"Speed / Quality"});
+$("v2HdHint").textContent=L9({my:"HD အတွက် RunningHub key (Upscale Pro) လိုပါတယ် — Setup မှာ ထည့်ပါ",en:"HD needs your RunningHub key (Upscale Pro) — add it in Setup"});
+setIcnText($("btnV2Start"),"i-gem",L9({my:"V2 RETOUCH — စပြင်မယ်",en:"V2 RETOUCH"}));
+$("v2LbAdvanced").textContent=L9({my:"Advanced — အသေးစိတ်ချိန်ညှိ",en:"Advanced fine-tune"});
+$("v2LbBalance").textContent=L9({my:"ချောမွေ့မှု နှင့် အသားအရေ ဟန်ချက်",en:"Smoothing vs texture balance"});
+$("v2LbBlemish").textContent=L9({my:"အမာရွတ် / ဝက်ခြံ ဖယ်ရှားအား",en:"Blemish removal level"});
+$("v2LbDeshine").textContent=L9({my:"အဆီပြန် / ချွေးပြန် လျှော့ချ",en:"De-shine (oil & sweat)"});
+$("v2LbTone").textContent=L9({my:"ပစ်မှတ် အသားရောင်",en:"Target skin tone"});
+$("v2LbToneStrength").textContent=L9({my:"အရောင် ပြင်းအား",en:"Tone strength"});
+$("v2LbHair").textContent=L9({my:"ဆံပင် ချောမွေ့",en:"Hair smoothing"});
+$("v2LbOutfit").textContent=L9({my:"ဝတ်စုံ တောက်ပြောင်",en:"Outfit polish"});
+$("v2LbPreview").textContent=L9({my:"Prompt အစမ်းကြည့်",en:"Prompt preview"});
+$("v2LbManual").textContent=L9({my:"Manual — One-Tap / Sliders",en:"Manual — One-Tap & Sliders"});
+setIcnText($("btnV2Retry"),"i-retry",t("retry"));
+setIcnText($("btnV2Next"),"i-camera",L9({my:"နောက်တစ်ပုံ — Setting အတိုင်း",en:"Next photo — same settings"}));
+
+/* control wiring (ranges are static markup; chips are JS-rendered above) */
+$("v2Strength").oninput=function(){ state.v2.strength=parseInt(this.value,10)||0; v2Sync(); };
+$("v2Balance").oninput=function(){ state.v2.balance=parseInt(this.value,10)||0; v2Sync(); };
+$("v2Blemish").oninput=function(){ state.v2.blemish=parseInt(this.value,10)||0; v2Sync(); };
+$("v2Deshine").oninput=function(){ state.v2.deshine=parseInt(this.value,10)||0; v2Sync(); };
+$("v2ToneStrength").oninput=function(){ state.v2.toneStrength=parseInt(this.value,10)||0; v2Sync(); };
+renderV2Hero();
 
 /* ================= pgStudio v5 — MEITU STUDIO (50) + EVOTO PRO (42) =================
    Tiered live-preview engine:
@@ -7640,7 +7990,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.25.1";
+var APP_VER="4.26.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
