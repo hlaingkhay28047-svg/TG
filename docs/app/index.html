@@ -199,9 +199,12 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
    cut off at an edge used to read as a broken layout instead of "swipe for
    more" — these fade whichever edge currently has more content, toggled by
    updateSubtabFade() on scroll (see renderSubtabs) */
-.subtabbar:before,.subtabbar:after{content:"";position:absolute;top:0;bottom:0;width:28px;pointer-events:none;z-index:2;opacity:0;transition:opacity .15s ease}
-.subtabbar:before{left:0;background:linear-gradient(to right,var(--ink),transparent)}
-.subtabbar:after{right:0;background:linear-gradient(to left,var(--ink),transparent)}
+/* scroll-edge fades must be position:sticky flex items — absolute overlays
+   inside a scroll container travel with the content and end up smeared
+   across whichever chip sits at that content offset once the bar scrolls */
+.subtabbar:before,.subtabbar:after{content:"";position:sticky;flex:0 0 28px;width:28px;align-self:stretch;pointer-events:none;z-index:2;opacity:0;transition:opacity .15s ease}
+.subtabbar:before{left:0;margin-right:-34px;background:linear-gradient(to right,var(--ink),transparent)}
+.subtabbar:after{right:0;margin-left:-34px;background:linear-gradient(to left,var(--ink),transparent)}
 .subtabbar.fade-l:before{opacity:1}
 .subtabbar.fade-r:after{opacity:1}
 .subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
@@ -4221,7 +4224,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.22.1";
+var APP_VER="4.22.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
