@@ -55,11 +55,17 @@ input,textarea,select{font-family:inherit}
 
 .hero-strip{position:relative;padding:26px 0 6px;overflow:hidden;border-radius:0 0 18px 18px}
 .hero-art{position:absolute;top:0;left:-16px;right:-16px;bottom:0;z-index:-1;overflow:hidden}
-.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:.62;will-change:transform,filter;animation:heroKB 22s ease-in-out infinite alternate}
+.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:.88;will-change:transform,filter;animation:heroKB 22s ease-in-out infinite alternate}
 @keyframes heroKB{from{transform:scale(1)}to{transform:scale(1.09) translateX(-1.2%);filter:brightness(1.07) saturate(1.08)}}
 .hero-art:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:radial-gradient(55% 65% at 66% 26%,rgba(255,214,130,.22),transparent 70%);mix-blend-mode:screen;animation:heroGlow 7s ease-in-out infinite alternate}
 @keyframes heroGlow{from{opacity:.3}to{opacity:1}}
-.hero-art:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;background:linear-gradient(180deg,rgba(11,13,20,.5) 0%,rgba(11,13,20,.78) 55%,var(--ink) 100%)}
+/* two scrims: diagonal left-dark keeps the text zone readable while the
+   right side stays clear so the hero subject's face is actually visible;
+   the vertical fade anchors the statline and blends into the page */
+.hero-art:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;background:linear-gradient(102deg,rgba(11,13,20,.9) 0%,rgba(11,13,20,.66) 40%,rgba(11,13,20,.22) 66%,rgba(11,13,20,.06) 100%),linear-gradient(180deg,rgba(11,13,20,.12) 0%,rgba(11,13,20,.2) 42%,var(--ink) 100%)}
+.hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:76%;text-shadow:0 2px 12px rgba(0,0,0,.85)}
+.hero-strip .statline{text-shadow:0 1px 8px rgba(0,0,0,.8)}
+@media (min-width:768px){.hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:62%}}
 .hero-fx{position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;pointer-events:none;overflow:hidden}
 .hero-fx i{position:absolute;display:block;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle,#ffe9ae 0%,rgba(233,185,73,.85) 55%,transparent 72%);box-shadow:0 0 12px 2px rgba(233,185,73,.5);opacity:0;animation:heroSpark 8s linear infinite}
 .hero-fx i:nth-child(1){left:10%;top:80%;animation-duration:8.4s;animation-delay:0s;transform:scale(.7)}
@@ -4215,7 +4221,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.22.0";
+var APP_VER="4.22.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
