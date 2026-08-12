@@ -10568,12 +10568,23 @@ async function accJson(r){ try { return await r.json(); } catch(e){ return null;
 
 function accSaveSession(j){
   if (!j || !j.access_token) return false;
+  /* Two different body shapes reach here. /auth/v1/token answers with a SESSION
+     envelope ({access_token, refresh_token, user:{id,email}}). PUT /auth/v1/user
+     answers with a USER object — id/email at the TOP level, no `user` key — and
+     §2.6 tells us to save that one too when it carries a rotated access_token.
+     Reading only j.user.id there blanks uid/email; accBoot()'s `sess.uid` guard
+     then refuses to restore the session on the next cold start, which is a
+     silent logout immediately after a password change. Same for a rotate that
+     omits refresh_token: dropping it kills the session at the next 401. Take
+     whichever shape is present, and never downgrade what we already hold. */
+  var prev = acc.sess || {};
+  var u = j.user || null;
   acc.sess = {
     access:  j.access_token,
-    refresh: j.refresh_token,
+    refresh: j.refresh_token || prev.refresh,
     exp:     j.expires_at || (Math.floor(Date.now()/1000) + (j.expires_in || 3600)),
-    uid:     j.user && j.user.id,
-    email:   j.user && j.user.email
+    uid:     (u && u.id)    || j.id    || prev.uid,
+    email:   (u && u.email) || j.email || prev.email
   };
   accLSSet(ACC_LS_SESS, acc.sess);
   return true;
@@ -10983,7 +10994,14 @@ function accPayValidate(){
 
 /* ---------------- §4.5 upload ---------------- */
 async function accUploadProof(blob, kind){
-  var uid  = acc.sess.uid;
+  var uid  = String((acc.sess && acc.sess.uid) || "");
+  /* This is the ONE place in the layer that puts a variable into a URL PATH
+     segment (every other call uses encodeURIComponent in a query value), and
+     §4.5 makes "the object path starts with the user's id" load-bearing. A uid
+     that is not a plain id — say a restored-from-localStorage "../../avatars" —
+     would be normalised by the URL parser and walk the POST clean out of the
+     payment-proofs bucket. Validate the shape, then encode both segments. */
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(uid)){ var bad = new Error("bad-uid"); bad.status = 0; throw bad; }
   var ext  = (blob.type === "image/png") ? "png" : "jpg";
   var name = kind + "-" + Date.now() + "." + ext;
   var path = uid + "/" + name;                       /* what goes in screenshot_path */
@@ -10991,7 +11009,8 @@ async function accUploadProof(blob, kind){
   var fd = new FormData();
   fd.append("file", blob, name);
 
-  var r = await accFetch("/storage/v1/object/payment-proofs/" + path, {
+  var r = await accFetch("/storage/v1/object/payment-proofs/" +
+                         encodeURIComponent(uid) + "/" + encodeURIComponent(name), {
     method: "POST",
     headers: { "x-upsert": "true" },                 /* NO Content-Type — the browser sets the boundary */
     body: fd
@@ -11433,13 +11452,23 @@ function accWire(){
   $("btnPayRefresh").onclick = function(){ accPollOnce(); };
   $("btnPayAgain").onclick = function(){ acc.pending = null; accRenderPay(); };
   /* the gear already routes to Setup (switchPage("pgHome")); v4.30 adds the
-     account affordance to it — see the header note in the stylesheet */
+     account affordance to it — see the header note in the stylesheet.
+
+     LOGGED OUT THE GEAR IS LEFT EXACTLY AS IT WAS (spec §1.2 fallback: "the
+     gear then routes to Setup as it already does"). It is the ONLY route to
+     #cardKey, and onb_1 tells first-run users to tap it to enter their Gemini
+     key. Calling accOpenGrp() here scrolls #cardAccount to the top of the
+     viewport, which pushed the key input from y=279 to below the fold on every
+     320x568 / 360x640 / 375x667 phone — measured. That degrades the free path
+     (§7.1) and contradicts §1.2's own "a logged-out user can still scroll
+     straight past it". Logged IN the state dot is what invites the tap, so
+     there the gear does reveal the plan. */
   var gear = $("btnGearSetup");
   if (gear){
     var prev = gear.onclick;
     gear.onclick = function(){
       if (prev) prev.call(this);
-      try { accOpenGrp(acc.sess ? "accGrpPlan" : "accGrpAuth"); } catch(e){}
+      if (acc.sess){ try { accOpenGrp("accGrpPlan"); } catch(e){} }
     };
   }
   document.addEventListener("visibilitychange", function(){
