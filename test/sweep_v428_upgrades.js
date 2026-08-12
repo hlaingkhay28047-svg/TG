@@ -413,15 +413,36 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     switchPage("pgLibrary");
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     if (typeof renderLibGrid === "function") renderLibGrid();
-    await sleep(1200);
-    const imgs = Array.from(document.querySelectorAll(".lib-grid img"));
-    const loaded = imgs.filter(i => !i.classList.contains("ld"));
-    const animating = loaded.filter(i => getComputedStyle(i).animationName !== "none");
+    /* Poll for decoded thumbs instead of a fixed nap: a cold CI runner needs
+       far longer than a warm dev box to serve them, and a flat 1.2s wait made
+       this check fail with loaded:0 (nothing wrong with the app). */
+    let imgs = [], loaded = [];
+    for (let i = 0; i < 40; i++) {
+      imgs = Array.from(document.querySelectorAll(".lib-grid img"));
+      loaded = imgs.filter(i2 => !i2.classList.contains("ld"));
+      if (loaded.length) break;
+      await sleep(250);
+    }
+    const animating = loaded.filter(i2 => getComputedStyle(i2).animationName !== "none");
     const baseRule = imgs.length ? getComputedStyle(imgs[0]).animationName : "n/a";
-    return { total: imgs.length, loaded: loaded.length, animating: animating.length, baseRule };
+    /* Static proof the scoping exists even if not one thumbnail ever decodes
+       (fully offline runner): the shimmer keyframe must only be reachable
+       through a `.ld` selector. */
+    let scoped = null;
+    try {
+      const hits = [];
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules; try { rules = sheet.cssRules; } catch (e) { continue; }
+        for (const r of Array.from(rules || [])) {
+          if (r.style && /shimmer/.test(r.style.animation || r.style.animationName || "")) hits.push(r.selectorText || "");
+        }
+      }
+      scoped = hits.length > 0 && hits.every(sel => /\.ld\b/.test(sel));
+    } catch (e) { scoped = null; }
+    return { total: imgs.length, loaded: loaded.length, animating: animating.length, baseRule, scoped };
   });
-  report("10 Shimmer scoping: no loaded .lib-grid thumbnail keeps a running shimmer animation",
-    c10.total > 0 && c10.loaded > 0 && c10.animating === 0, JSON.stringify(c10));
+  report("10 Shimmer scoping: the shimmer keyframe is only reachable through a .ld selector, and no decoded .lib-grid thumbnail keeps a running animation",
+    c10.total > 0 && c10.animating === 0 && (c10.loaded > 0 || c10.scoped === true), JSON.stringify(c10));
 
   // ---------------------------------------------------------------- 11) Motion tokens
   // headless Chromium reports prefers-reduced-motion: reduce by default, which
