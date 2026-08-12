@@ -508,6 +508,8 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .grp.hide{display:none}
 .pcard{flex:0 0 76px;cursor:pointer;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel-2);padding:0;overflow:hidden}
 .pcard canvas{width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;display:block}
+.pcard img,.pcard .ph{width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;display:block;object-fit:cover}
+.pcard .ph{background:linear-gradient(140deg,var(--panel-2),var(--panel))}
 .pcard span{display:block;font-size:var(--fs-2xs);text-align:center;padding:3px 2px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pcard{position:relative}
 .pcard.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
@@ -517,6 +519,32 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .prow::-webkit-scrollbar{display:none}
 .prowwrap{position:relative}
 .prowwrap:after{content:"";position:absolute;top:0;right:0;bottom:6px;width:26px;background:linear-gradient(to left,var(--panel),transparent);pointer-events:none}
+/* ---- Path Retouch (pgPath) — batch look grid, status badges, sheet ----
+   Tokens only. auto-fill/minmax means the grid reflows down to 320px
+   without a horizontal scrollbar; every tap target is >=44px. */
+.pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:var(--sp-2);margin-top:var(--sp-3)}
+.pt-th{position:relative;padding:0;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel-2);overflow:hidden;min-height:44px;display:block;width:100%;text-align:left;cursor:pointer}
+.pt-th img{display:block;width:100%;aspect-ratio:2/3;object-fit:cover}
+.pt-th .nm{display:block;font-size:var(--fs-2xs);color:var(--muted);padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-th.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.pt-badge{position:absolute;top:4px;right:4px;min-width:22px;height:22px;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-size:var(--fs-2xs);font-weight:800;background:rgba(11,13,20,.82);border:1px solid var(--line-soft);color:var(--muted)}
+.pt-badge.done{background:var(--gold);border-color:var(--gold);color:#1a1408}
+.pt-badge.error{background:var(--panel-2);border-color:var(--err);color:var(--err)}
+.pt-badge.running{border-color:var(--gold);color:var(--gold)}
+.pt-badge.running::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold);animation:ptpulse 1s ease-in-out infinite}
+@keyframes ptpulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.pt-idx{position:absolute;top:4px;left:4px;min-width:20px;height:20px;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-size:var(--fs-2xs);font-weight:800;background:rgba(11,13,20,.7);color:var(--cream)}
+.pt-empty{border:1px dashed var(--line);border-radius:var(--r-md);background:var(--panel-2);color:var(--muted);width:100%;min-height:96px;padding:var(--sp-4);font-size:var(--fs-base);font-weight:700;text-align:center;margin-top:var(--sp-3)}
+.pt-log{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-2xs);color:var(--muted);max-height:120px;overflow-y:auto;white-space:pre-wrap;margin-top:var(--sp-2)}
+/* honest "this control has no free preview" marker (spec §6) */
+.pt-ai{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:0 6px;height:16px;border-radius:var(--r-pill);background:var(--panel-2);border:1px solid var(--line);color:var(--gold-hi);font-size:var(--fs-2xs);font-weight:800;letter-spacing:.06em;vertical-align:1px}
+/* per-photo sheet — same full-screen overlay contract as .wiz */
+.pt-sheet{position:fixed;top:0;left:0;right:0;bottom:0;z-index:68;background:var(--ink);display:none;overflow-y:auto;overscroll-behavior:contain}
+.pt-sheet.on{display:block;animation:wizfade var(--dur-2) var(--ease-out)}
+.pt-sheet.on .pt-sheet-in{animation:wizin var(--dur-3) var(--ease-out)}
+.pt-sheet-in{max-width:640px;margin:0 auto;padding:14px 16px 40px}
+.pt-sheet-in img.pt-big{display:block;width:100%;border-radius:var(--r-md);border:1px solid var(--line-soft)}
+@media (prefers-reduced-motion: reduce){.pt-badge.running::after,.pt-sheet.on,.pt-sheet.on .pt-sheet-in{animation:none!important}}
 /* sticky above the fixed bottom tab bar (76px + safe area, same offset the toast uses) */
 .st-genbar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-2) var(--sp-3);margin:var(--sp-4) 0}
 .st-genbar .st-x{margin-left:6px;color:var(--muted)}
@@ -754,6 +782,13 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <rect x="3.5" y="7" width="13.5" height="13.5" rx="2"/>
     <path d="M7 7V5.5a2 2 0 0 1 2-2h9.5a2 2 0 0 1 2 2V15a2 2 0 0 1-2 2H17"/>
     <path d="m3.5 16.8 3.4-3.4 3 3 2.3-2.3 4.8 4.9"/>
+  </symbol>
+  <!-- symbol #67 (v4.28.x, Path Retouch): a photo STACK - the sprite had no
+       batch/multi-photo glyph and i-gallery is already the Gallery tab. -->
+  <symbol id="i-stack" viewBox="0 0 24 24">
+    <rect x="7" y="3" width="14" height="14" rx="2"/>
+    <path d="M17 21H5a2 2 0 0 1-2-2V7"/>
+    <path d="m7 12 3-3 4 4 3-2 4 3"/>
   </symbol>
   <symbol id="i-gear" viewBox="0 0 24 24">
     <circle cx="12" cy="12" r="3.1"/>
@@ -1151,6 +1186,11 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="refs" id="refs"></div>
     <div class="mut" style="margin-top:8px" id="refsNote"></div>
     <input type="file" id="filePick" accept="image/png,image/jpeg,image/webp" hidden>
+    <!-- Path Retouch owns its own multi-pick input: adding multiple to the
+         shared #filePick above would break every single-slot page. -->
+    <input type="file" id="ptFilePick" accept="image/png,image/jpeg,image/webp" multiple hidden>
+    <!-- Path Retouch reference-backdrop slot (single, optional) -->
+    <input type="file" id="ptRefPick" accept="image/png,image/jpeg,image/webp" hidden>
   </section>
 
   <section class="card">
@@ -1582,6 +1622,124 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   </section>
 </div><!-- /pgVideoUp -->
 
+<!-- ================= PATH RETOUCH (pgPath) — batch looks =================
+     Retouch's batch sibling: many photos, ONE look, instant free on-device
+     preview on every thumbnail, then an optional sequential AI pass.
+     Photos live in PT.photos (session-only) and are never persisted. -->
+<div class="page" id="pgPath">
+  <header class="page-hero"><img src="lib/banners/banner-flower-gown.jpg" alt="" loading="lazy" decoding="async" style="object-position:28% 32%">
+    <div class="ph-kick">BATCH LOOKS</div>
+    <p class="ph-head" id="phPath">ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ <em>တစ်ပြိုင်နက်</em> ပြင်မယ်</p>
+  </header>
+
+  <section class="card">
+    <h2 id="ptH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-stack"/></svg>PATH RETOUCH</h2>
+    <p class="mut" id="ptIntro"></p>
+    <p class="mut" id="ptFreeNote"></p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-gold grow" id="btnPtAdd"></button>
+      <button class="btn" id="btnPtClear"></button>
+    </div>
+    <div class="mut" id="ptCount" style="margin-top:8px"></div>
+    <button class="pt-empty" id="ptEmpty"></button>
+    <div class="pt-grid" id="ptGrid"></div>
+  </section>
+
+  <section class="card">
+    <h2 id="ptLookH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-palette"/></svg>LOOK</h2>
+    <p class="mut" id="ptLookNote"></p>
+    <div class="prowwrap"><div class="prow" id="ptLookRail"></div></div>
+    <div class="subh" id="ptLbTier"></div>
+    <div class="chips" id="ptTierChips"></div>
+    <p class="mut" id="ptHdHint" style="display:none"></p>
+
+    <div class="grp" id="ptGrpFx">
+      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg> <span id="ptLbFx"></span></span></button>
+      <div class="grp-b">
+        <p class="mut" id="ptFxNote"></p>
+        <div class="subh" id="ptLbBlur"></div><div class="chips" id="ptBlurChips"></div>
+        <div class="subh" id="ptLbFg"></div><div class="chips" id="ptFgChips"></div>
+        <div class="subh" id="ptLbFrame"></div><div class="chips" id="ptFrameChips"></div>
+        <p class="mut" id="ptFrameNote"></p>
+        <div class="subh" id="ptLbExtras"></div><div class="chips" id="ptToggleChips"></div>
+        <div class="subh" id="ptLbRef"></div>
+        <p class="mut" id="ptRefNote"></p>
+        <div class="row">
+          <button class="btn" id="btnPtRef"></button>
+          <button class="btn" id="btnPtRefClear" style="display:none"></button>
+        </div>
+        <img id="ptRefThumb" alt="" style="display:none;width:96px;height:120px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line-soft);margin-top:8px">
+        <div class="subh" id="ptLbCustom"></div>
+        <textarea class="inp" id="ptCustom" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="grp" id="ptGrpPrompt">
+      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-doc"/></svg> <span id="ptLbPrompt"></span></span></button>
+      <div class="grp-b">
+        <pre id="ptPromptPreview" class="mut" style="white-space:pre-wrap;font-size:var(--fs-2xs);max-height:200px;overflow:auto"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="ptRunCard">
+    <button class="btn btn-gold gen" id="btnPtRun"></button>
+    <div class="row" style="align-items:center">
+      <div class="spin" id="ptSpin" style="flex:1"></div>
+      <button class="btn" id="btnPtStop" style="display:none;margin-top:10px"></button>
+    </div>
+    <p class="mut" id="ptStopNote" style="display:none"></p>
+    <div class="status" id="stPtGen"></div>
+    <div class="pt-log" id="ptLog"></div>
+  </section>
+
+  <section class="card" id="ptOutCard">
+    <h2 id="ptOutH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-download"/></svg>SAVE</h2>
+    <p class="mut" id="ptOutNote"></p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-gold grow" id="btnPtZipAll"></button>
+      <button class="btn" id="btnPtDlSeq"></button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn grow" id="btnPtBake"></button>
+    </div>
+  </section>
+
+  <!-- per-photo sheet: override look, hold-to-peek original, compare, retry, save -->
+  <div class="pt-sheet" id="ptSheet" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="pt-sheet-in">
+      <div class="row" style="justify-content:space-between">
+        <b id="ptSheetName" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b>
+        <button class="btn" id="btnPtSheetClose"></button>
+      </div>
+      <div class="status" id="ptSheetSt"></div>
+      <div id="ptSheetSingle"><img class="pt-big" id="ptSheetImg" alt=""></div>
+      <div id="ptSheetCmpWrap" style="display:none">
+        <div class="cmp" id="ptCmp">
+          <img id="ptCmpAfter" alt="after">
+          <div class="cmp-top" id="ptCmpTop"><img id="ptCmpBefore" alt="before"></div>
+          <div class="cmp-line" id="ptCmpLine"></div>
+        </div>
+        <input type="range" id="ptCmpRange" min="0" max="100" value="50" style="width:100%;margin-top:8px;accent-color:var(--gold)">
+        <div class="row" style="justify-content:space-between"><span class="mut" id="ptCmpBeforeLbl"></span><span class="mut" id="ptCmpAfterLbl"></span></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-gold grow" id="btnPtOrig"></button>
+      </div>
+      <div class="subh" id="ptSheetLookLb"></div>
+      <div class="prowwrap"><div class="prow" id="ptSheetRail"></div></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnPtRetryOne" style="display:none"></button>
+        <a class="btn btn-gold grow" id="btnPtSaveOne" download="hnk-path.jpg" style="text-align:center;display:none"></a>
+        <button class="btn" id="btnPtGalOne" style="display:none"></button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn grow" id="btnPtRemoveOne"></button>
+      </div>
+    </div>
+  </div>
+</div><!-- /pgPath -->
+
 <div class="page" id="pgText2Img">
   <header class="page-hero"><img src="lib/banners/banner-coral-fairy.jpg" alt="" loading="lazy" decoding="async" style="object-position:80% 20%">
     <div class="ph-kick">Text to Image</div>
@@ -1879,7 +2037,8 @@ var TR_PH={
   ph_videoup:{my:'ဗီဒီယိုအရည်အသွေး <em>နှစ်ဆမြှင့်</em> — ပိုကြည် ပိုပြတ်သား',en:'<em>Double</em> your video quality — sharper, cleaner'},
   ph_lib:{my:'Look ၃၆၆ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်',en:'366 curated looks — <em>pick one</em> and start instantly'},
   ph_gallery:{my:'ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား',en:'Every creation you make, <em>saved right here</em>'},
-  ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'}
+  ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'},
+  ph_path:{my:'ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ <em>တစ်ပြိုင်နက်</em> ပြင်မယ်',en:'One look, applied to your whole album — <em>all at once</em>'}
 };
 Object.keys(TR_PH).forEach(function(k){ TR[k]=TR_PH[k]; });
 /* v4.28: complete the last 14 my/en-only TR keys in all 7 secondary languages
@@ -1899,6 +2058,7 @@ var TR_L14={
   ph_videoup:{shn:'ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း <em>သွင်ပုၼ်ႈ</em> — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်',kac:'Video a atsam hpe <em>lahkawng lang</em> jat u — grau san, grau seng ai',th:'ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น',zh:'视频画质<em>翻倍</em> — 更锐利、更干净',vi:'<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn',id:'<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih',ms:'<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih'},
   ph_lib:{shn:'Look 366 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်',kac:'Lata da ai look 366 — <em>langai lata la</em> nna kalang ta hpang u',th:'366 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที',zh:'366 款精选风格 — <em>选一款</em>立即开始',vi:'366 phong cách tuyển chọn — <em>chọn một</em> và bắt đầu ngay',id:'366 gaya pilihan — <em>pilih satu</em> dan mulai seketika',ms:'366 gaya pilihan — <em>pilih satu</em> dan mula serta-merta'},
   ph_gallery:{shn:'ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ <em>သိမ်းဝႆႉတီႈၼႆႈ</em>',kac:'Na galaw da ai shagu, <em>ndai kaw makoi da ai</em>',th:'ทุกผลงานที่คุณสร้าง <em>บันทึกไว้ที่นี่</em>',zh:'你的每一件作品，<em>都保存在这里</em>',vi:'Mọi tác phẩm bạn tạo, <em>được lưu ngay tại đây</em>',id:'Setiap karya yang Anda buat, <em>tersimpan di sini</em>',ms:'Setiap hasil ciptaan anda, <em>disimpan di sini</em>'},
+  ph_path:{shn:'Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>',kac:'Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>',th:'ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>',zh:'一个风格，套用整本相册 — <em>一次全部完成</em>',vi:'Một look, áp cho cả album — <em>tất cả cùng lúc</em>',id:'Satu look untuk seluruh album — <em>sekaligus</em>',ms:'Satu look untuk seluruh album — <em>serentak</em>'},
   ph_home:{shn:'Setup ပွၵ်ႈလဵဝ် — <em>ၶႂ်ႈၸႂ်ႉမိူဝ်ႈလႂ်ၵေႃႈ ႁၢင်ႈႁႅၼ်းဝႆႉယဝ်ႉ</em>',kac:'Kalang sha setup galaw u — <em>galoi raitim hkyen da sai</em>',th:'ตั้งค่าครั้งเดียว — <em>พร้อมใช้ทุกเมื่อ</em>',zh:'设置一次 — <em>随时待命</em>',vi:'Thiết lập một lần — <em>sẵn sàng bất cứ lúc nào</em>',id:'Atur sekali — <em>siap kapan saja</em>',ms:'Sedia sekali sahaja — <em>sedia bila-bila masa</em>'}
 };
 Object.keys(TR_L14).forEach(function(k){ var t7=TR_L14[k]; TR[k]=TR[k]||{}; Object.keys(t7).forEach(function(lg){ TR[k][lg]=t7[lg]; }); });
@@ -1922,8 +2082,69 @@ var TR_V428={
   eta_hd:{my:"HD — ၂-၃ မိနစ်ခန့် စောင့်ပါ…",en:"HD — allow 2-3 minutes…",shn:"HD — ပႂ်ႉမွၵ်ႈ 2-3 မိၼိတ်ႉ…",kac:"HD — minute 2-3 daram la u…",th:"HD — รอประมาณ 2-3 นาที…",zh:"HD — 约需 2-3 分钟…",vi:"HD — chờ khoảng 2-3 phút…",id:"HD — sekitar 2-3 menit…",ms:"HD — kira-kira 2-3 minit…"}
 };
 Object.keys(TR_V428).forEach(function(k){ TR[k]=TR_V428[k]; });
+/* Path Retouch (v4.28.x wave) — every user-facing string ships in all nine
+   languages from day one, Burmese-first, same contract as TR_V428 above.
+   shn/kac follow the file's established vocabulary (တင်းသဵင်ႈ / yawng = "all",
+   ၶႅပ်းႁၢင်ႈ / sumla = "photo") and are flagged for native review in the PR. */
+var TR_PATH={
+  pt_intro:{my:"ပုံ ၃၀ အထိ တစ်ခါတည်းထည့် → Look တစ်ခုရွေး → ပုံတိုင်းပေါ်မှာ ချက်ချင်းမြင်ရမယ် → AI နဲ့ တစ်ပုံချင်း Run",en:"Add up to 30 photos → pick one look → see it instantly on every photo → run the AI pass photo by photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈထိုင် 30 → လိူၵ်ႈ Look ဢၼ်ၼိုင်ႈ → ႁၼ်ၵမ်းလဵဝ်ၵူႈၶႅပ်း → ႁဵတ်း AI တီႈလဵဝ်ၸိုင်ႈ",kac:"Sumla 30 du hkra bang u → Look langai lata u → sumla shagu hta kalang ta mu u → AI hpe langai hpang langai galaw u",th:"เพิ่มรูปได้ถึง 30 รูป → เลือกลุคเดียว → เห็นผลทันทีบนทุกรูป → รัน AI ทีละรูป",zh:"最多添加 30 张照片 → 选一个风格 → 每张照片即时预览 → 逐张运行 AI",vi:"Thêm tối đa 30 ảnh → chọn một look → xem ngay trên mọi ảnh → chạy AI từng ảnh",id:"Tambahkan hingga 30 foto → pilih satu look → lihat langsung di semua foto → jalankan AI satu per satu",ms:"Tambah sehingga 30 foto → pilih satu look → lihat serta-merta pada semua foto → jalankan AI satu demi satu"},
+  pt_free_note:{my:"Preview က အခမဲ့ — AI run မှ key သုံးမယ်",en:"Preview is free — AI run uses your key",shn:"Preview လၢႆ — AI ၸႂ်ႉ key",kac:"Preview gaw free — AI gaw key lang ai",th:"พรีวิวฟรี — รัน AI ใช้คีย์ของคุณ",zh:"预览免费 — AI 运行才用密钥",vi:"Xem trước miễn phí — chạy AI mới dùng key",id:"Pratinjau gratis — AI pakai key Anda",ms:"Pratonton percuma — AI guna key anda"},
+  pt_add:{my:"ပုံတွေထည့်မယ်",en:"Add photos",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูป",zh:"添加照片",vi:"Thêm ảnh",id:"Tambah foto",ms:"Tambah foto"},
+  pt_clear:{my:"အားလုံးဖျက်",en:"Clear all",shn:"လၢင်ႉပႅတ်ႈတင်းသဵင်ႈ",kac:"Yawng hkrat kau",th:"ล้างทั้งหมด",zh:"全部清除",vi:"Xóa tất cả",id:"Hapus semua",ms:"Padam semua"},
+  pt_empty:{my:"ဒီနေရာကို နှိပ်ပြီး ပုံတွေ ရွေးထည့်ပါ (၃၀ ထိ)",en:"Tap here to pick your photos (up to 30)",shn:"ၼဵၵ်းတီႈၼႆႈသေ လိူၵ်ႈသႂ်ႇၶႅပ်းႁၢင်ႈ (ထိုင် 30)",kac:"Ndai kaw dip nna sumla lata bang u (30 du hkra)",th:"แตะที่นี่เพื่อเลือกรูป (สูงสุด 30 รูป)",zh:"点这里选择照片（最多 30 张）",vi:"Chạm vào đây để chọn ảnh (tối đa 30)",id:"Ketuk di sini untuk memilih foto (maksimal 30)",ms:"Ketik di sini untuk pilih foto (sehingga 30)"},
+  pt_look:{my:"Look ရွေးပါ",en:"Choose a look",shn:"လိူၵ်ႈ Look",kac:"Look lata u",th:"เลือกลุค",zh:"选择风格",vi:"Chọn look",id:"Pilih look",ms:"Pilih look"},
+  pt_look_note:{my:"Look ရွေးလိုက်တာနဲ့ ပုံတိုင်းပေါ်မှာ ချက်ချင်းပေါ်မယ် — အခမဲ့၊ ဖုန်းထဲမှာတင် တွက်တာ။ AI run လုပ်မှ တကယ့်အလင်း/အရိပ်ကို ပြန်ဆွဲပေးမယ်",en:"Picking a look previews it on every photo instantly — free, on your phone. The AI pass then re-renders the real light and shadow.",shn:"လိူၵ်ႈ Look ယဝ်ႉ တေႁၼ်ၵမ်းလဵဝ်ၵူႈၶႅပ်း — လၢႆ၊ ၼႂ်းၾူၼ်းၵူၺ်း။ AI ၸင်ႇတေမႄးလႅင်း/ငဝ်းတႄႉ",kac:"Look lata yang sumla shagu hta kalang ta mu ai — free, na a phone hta sha. AI gaw nsen hte nhkun hpe bai galaw ya na",th:"เลือกลุคแล้วเห็นผลบนทุกรูปทันที — ฟรี ประมวลผลบนเครื่องคุณ ส่วน AI จะเรนเดอร์แสงเงาจริงให้",zh:"选定风格后每张照片立即预览 — 免费，在你手机上完成。AI 通道才会重新渲染真实的光影。",vi:"Chọn look là xem ngay trên mọi ảnh — miễn phí, xử lý ngay trên máy. Lượt AI mới dựng lại ánh sáng và bóng đổ thật.",id:"Memilih look langsung tampil di semua foto — gratis, diproses di perangkat Anda. Lalu AI merender ulang cahaya dan bayangan asli.",ms:"Memilih look terus dipaparkan pada semua foto — percuma, diproses pada peranti anda. Laluan AI kemudian menghasilkan semula cahaya dan bayang sebenar."},
+  pt_tier:{my:"အမြန် / အရည်အသွေး",en:"Speed / Quality",shn:"ၽႂ်း / ၼမ်ႉၸၼ်ႉ",kac:"Lawan / Atsam",th:"ความเร็ว / คุณภาพ",zh:"速度 / 质量",vi:"Tốc độ / Chất lượng",id:"Kecepatan / Kualitas",ms:"Kelajuan / Kualiti"},
+  pt_fx:{my:"Effects — အပိုထည့်စရာ",en:"Effects",shn:"Effects — ဢၼ်သႂ်ႇထႅမ်",kac:"Effects — bang jat ai",th:"เอฟเฟกต์",zh:"效果",vi:"Hiệu ứng",id:"Efek",ms:"Kesan"},
+  pt_fx_note:{my:"ဒီအောက်က setting တွေက AI run မှာပဲ အလုပ်လုပ်တယ် — အခမဲ့ preview မှာ မပေါ်ပါ (AI တံဆိပ်နဲ့ ပြထားတယ်)",en:"Everything below only takes effect in the AI pass — the free preview cannot show it (marked with the AI badge).",shn:"လွင်ႈတႂ်ႈၼႆႉ ႁဵတ်းၵၢၼ်တီႈ AI ၵူၺ်း — preview လၢႆ ဢမ်ႇပေႃးၼႄလႆႈ (မီးတံၶိပ်ႈ AI)",kac:"Ndai npu na ni gaw AI hta sha byin ai — free preview gaw n madun lu ai (AI badge hte matsun da ai)",th:"ทุกอย่างด้านล่างมีผลเฉพาะตอนรัน AI — พรีวิวฟรีแสดงไม่ได้ (มีป้าย AI กำกับ)",zh:"以下选项仅在 AI 通道生效 — 免费预览无法呈现（已用 AI 标记）",vi:"Mọi mục bên dưới chỉ có tác dụng ở lượt AI — bản xem trước miễn phí không thể hiện (đã gắn nhãn AI).",id:"Semua di bawah ini hanya berlaku pada proses AI — pratinjau gratis tidak bisa menampilkannya (ditandai badge AI).",ms:"Semua di bawah hanya berkesan pada laluan AI — pratonton percuma tidak dapat menunjukkannya (ditanda dengan lencana AI)."},
+  pt_blur:{my:"နောက်ခံ ဝါး (Lens Blur)",en:"Lens blur",shn:"ႁဵတ်းလင်မူဝ်း (Lens Blur)",kac:"Hpang lam hpe manyen (Lens blur)",th:"ละลายหลัง (Lens blur)",zh:"背景虚化（镜头模糊）",vi:"Xóa phông (lens blur)",id:"Blur latar (lens blur)",ms:"Kabur latar (lens blur)"},
+  pt_fg:{my:"ရှေ့ခံ (Foreground)",en:"Foreground layer",shn:"ၽၢႆႇၼႃႈ (Foreground)",kac:"Shawng lam (foreground)",th:"ฉากหน้า (foreground)",zh:"前景层",vi:"Lớp tiền cảnh",id:"Lapisan depan",ms:"Lapisan hadapan"},
+  pt_frame:{my:"ရိုက်ကွက် ပြန်ချိန်",en:"Reframe",shn:"မႄးၸတ်းၵၢၼ်ႉထၢႆႇ",kac:"Framing bai jahkrat",th:"จัดองค์ประกอบใหม่",zh:"重新构图",vi:"Bố cục lại",id:"Bingkai ulang",ms:"Bingkai semula"},
+  pt_frame_note:{my:"သတိ — AI က ရိုက်ကွက်ပြောင်းရင် crop ရွေ့နိုင်တယ်။ တိကျတဲ့ crop လိုရင် နောက်မှ editor နဲ့ ဖြတ်ပါ",en:"Note — AI recomposition can shift the crop. For an exact crop, do it in an editor afterward.",shn:"ၾၢင်ႉ — AI လႅၵ်ႈၵၢၼ်ႉထၢႆႇ ၸၢင်ႈလႅၵ်ႈ crop။ ၶႂ်ႈလႆႈ crop တႅတ်ႈ ၸႂ်ႉ editor ဝၢႆးလင်",kac:"Matsun — AI framing galai yang crop shai mai ai. Crop teng ra yang hpang de editor hte galaw u.",th:"หมายเหตุ — การจัดองค์ประกอบด้วย AI อาจทำให้ครอปเลื่อน ถ้าต้องการครอปเป๊ะให้ไปตัดในโปรแกรมแต่งภาพภายหลัง",zh:"注意 — AI 重新构图可能改变裁切。需要精确裁切请事后用编辑器处理。",vi:"Lưu ý — AI bố cục lại có thể làm lệch khung cắt. Cần cắt chính xác thì hãy làm trong trình chỉnh sửa sau.",id:"Catatan — komposisi ulang AI bisa menggeser crop. Untuk crop presisi, lakukan di editor setelahnya.",ms:"Nota — komposisi semula AI boleh menganjak krop. Untuk krop tepat, lakukan dalam editor selepasnya."},
+  pt_extras:{my:"အပိုချိန်ညှိမှုများ",en:"Extras",shn:"လွင်ႈမႄးထႅမ်",kac:"Bungli jat ai ni",th:"ตัวเลือกเสริม",zh:"附加选项",vi:"Tùy chọn thêm",id:"Tambahan",ms:"Tambahan"},
+  pt_ref:{my:"နောက်ခံ ကိုးကားပုံ",en:"Reference backdrop",shn:"ၶႅပ်းႁၢင်ႈဢိင်ဢၢင်ႈ ပိုၼ်ႉလင်",kac:"Hpang lam matsun sumla",th:"ภาพอ้างอิงฉากหลัง",zh:"参考背景图",vi:"Ảnh nền tham chiếu",id:"Foto latar acuan",ms:"Foto latar rujukan"},
+  pt_ref_note:{my:"ပုံတစ်ပုံထည့်ရင် အဲ့ဒီနေရာ/နောက်ခံကိုပဲ ယူမယ် — ထဲက လူတွေကို ဖယ်ထုတ်ပြီး မင်းရဲ့ လူတွေ အတိုင်း ကျန်မယ်",en:"Add one photo and only its location and backdrop are used — any person in it is removed, your people stay exactly as they are.",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈဢၼ်ၼိုင်ႈ တေဢဝ်တီႈယူႇ/ပိုၼ်ႉလင်ၵူၺ်း — ၵူၼ်းၼႂ်းၼၼ်ႉ ဢဝ်ဢွၵ်ႇ၊ ၵူၼ်းၸဝ်ႈၵဝ်ႇ ၵိုတ်းဝႆႉမိူၼ်ၵဝ်ႇ",kac:"Sumla langai bang yang shara hte hpang lam sha la na — dai kaw na masha ni hpe shamat kau na, nang a masha ni gaw maren sha nga na",th:"เพิ่มรูปหนึ่งใบ ระบบจะใช้เฉพาะสถานที่และฉากหลัง — คนในรูปนั้นจะถูกลบออก คนของคุณคงเดิมทุกอย่าง",zh:"添加一张照片，只取它的场地与背景 — 其中的人物会被移除，你的人物完全保持不变。",vi:"Thêm một ảnh và chỉ lấy bối cảnh, phông nền của nó — người trong ảnh đó bị loại bỏ, người của bạn giữ nguyên.",id:"Tambahkan satu foto, hanya lokasi dan latarnya yang dipakai — orang di dalamnya dihapus, orang Anda tetap sama persis.",ms:"Tambah satu foto, hanya lokasi dan latarnya digunakan — orang di dalamnya dibuang, orang anda kekal sama."},
+  pt_ref_pick:{my:"နောက်ခံပုံ ရွေးမယ်",en:"Pick backdrop photo",shn:"လိူၵ်ႈၶႅပ်းႁၢင်ႈပိုၼ်ႉလင်",kac:"Hpang lam sumla lata u",th:"เลือกรูปฉากหลัง",zh:"选择背景图",vi:"Chọn ảnh nền",id:"Pilih foto latar",ms:"Pilih foto latar"},
+  pt_ref_clear:{my:"နောက်ခံပုံ ဖယ်",en:"Remove backdrop",shn:"ဢဝ်ၶႅပ်းႁၢင်ႈပိုၼ်ႉလင်ဢွၵ်ႇ",kac:"Hpang lam sumla shamat",th:"เอารูปฉากหลังออก",zh:"移除背景图",vi:"Bỏ ảnh nền",id:"Hapus foto latar",ms:"Buang foto latar"},
+  pt_custom:{my:"Prompt ထပ်ထည့်ရန်",en:"Extra prompt",shn:"သႂ်ႇ Prompt ထႅမ်",kac:"Prompt jat bang u",th:"prompt เพิ่มเติม",zh:"追加 prompt",vi:"Prompt thêm",id:"Prompt tambahan",ms:"Prompt tambahan"},
+  pt_custom_ph:{my:"ဥပမာ — ဆံပင်ကို လေတိုက်နေသလို လှုပ်ပေးပါ…",en:"e.g. add a gentle breeze lifting the hair…",shn:"တူဝ်ယၢင်ႇ — ႁႂ်ႈလူမ်းပတ်ႉၶူၼ်ႁူဝ်ဢိတ်းဢွတ်း…",kac:"Zawn — kara hpe nbung hte shamu ya u…",th:"เช่น เพิ่มลมอ่อนพัดผมให้พลิ้ว…",zh:"例如 — 加一点微风吹起发丝…",vi:"ví dụ — thêm làn gió nhẹ thổi tóc bay…",id:"mis. tambahkan angin lembut yang menerbangkan rambut…",ms:"cth. tambah angin lembut yang menerbangkan rambut…"},
+  pt_prompt:{my:"Prompt အစမ်းကြည့်",en:"Prompt preview",shn:"တူၺ်း Prompt ဢွၼ်တၢင်း",kac:"Prompt hpe shawng yu u",th:"ดูตัวอย่าง prompt",zh:"Prompt 预览",vi:"Xem trước prompt",id:"Pratinjau prompt",ms:"Pratonton prompt"},
+  pt_run:{my:"PATH — အားလုံး Run မယ်",en:"PATH — run all",shn:"PATH — ႁဵတ်းတင်းသဵင်ႈ",kac:"PATH — yawng galaw",th:"PATH — รันทั้งหมด",zh:"PATH — 全部运行",vi:"PATH — chạy tất cả",id:"PATH — jalankan semua",ms:"PATH — jalankan semua"},
+  pt_stop:{my:"ရပ်မယ်",en:"Stop",shn:"ၵိုတ်း",kac:"Hkring u",th:"หยุด",zh:"停止",vi:"Dừng",id:"Berhenti",ms:"Berhenti"},
+  pt_stop_note:{my:"Stop နှိပ်ရင် လက်ရှိတောင်းဆိုနေတဲ့ပုံကို ချက်ချင်းရပ်ပြီး ပြီးသွားပြီးသား ပုံတွေ ကျန်ပါမယ်",en:"Stop cancels the request in flight; every photo already finished is kept.",shn:"ၼဵၵ်း Stop တေၵိုတ်းဢၼ်တိုၵ်ႉတုၵ်းယွၼ်းၼၼ်ႉၵမ်းလဵဝ် — ဢၼ်ယဝ်ႉၵႂႃႇ ၵိုတ်းဝႆႉ",kac:"Stop gaw ya galaw nga ai hpe kalang ta jahkring kau na; ngut sai sumla ni gaw makoi da na",th:"กด Stop จะยกเลิกคำขอที่กำลังทำอยู่ทันที รูปที่เสร็จแล้วยังอยู่ครบ",zh:"Stop 会立即取消进行中的请求；已完成的照片全部保留。",vi:"Stop hủy ngay yêu cầu đang chạy; mọi ảnh đã xong đều được giữ lại.",id:"Stop membatalkan permintaan yang sedang berjalan; semua foto yang sudah selesai tetap tersimpan.",ms:"Stop membatalkan permintaan yang sedang berjalan; setiap foto yang sudah siap dikekalkan."},
+  pt_stopped:{my:"ရပ်လိုက်ပြီ — ပြီးသွားပြီးသား ပုံတွေ ကျန်ပါတယ်",en:"Stopped — finished photos are kept",shn:"ၵိုတ်းယဝ်ႉ — ၶႅပ်းႁၢင်ႈဢၼ်ယဝ်ႉ ၵိုတ်းဝႆႉ",kac:"Hkring sai — ngut sai sumla ni makoi da ai",th:"หยุดแล้ว — รูปที่เสร็จแล้วยังอยู่",zh:"已停止 — 已完成的照片保留",vi:"Đã dừng — ảnh đã xong được giữ lại",id:"Dihentikan — foto yang selesai tetap tersimpan",ms:"Dihentikan — foto yang siap dikekalkan"},
+  pt_zip:{my:"ZIP နဲ့ အားလုံးသိမ်း",en:"Download all (ZIP)",shn:"ဢဝ်တင်းသဵင်ႈ (ZIP)",kac:"Yawng la u (ZIP)",th:"ดาวน์โหลดทั้งหมด (ZIP)",zh:"全部下载 (ZIP)",vi:"Tải tất cả (ZIP)",id:"Unduh semua (ZIP)",ms:"Muat turun semua (ZIP)"},
+  pt_dlseq:{my:"တစ်ပုံချင်း ဒေါင်းမယ် (iPhone)",en:"Download one by one (iPhone)",shn:"ဢဝ်တီႈလဵဝ်ၸိုင်ႈ (iPhone)",kac:"Langai hpang langai la u (iPhone)",th:"ดาวน์โหลดทีละรูป (iPhone)",zh:"逐张下载（iPhone）",vi:"Tải từng ảnh (iPhone)",id:"Unduh satu per satu (iPhone)",ms:"Muat turun satu demi satu (iPhone)"},
+  pt_bake:{my:"အခမဲ့ — Look ထည့်ပြီး ZIP သိမ်း (AI မသုံး)",en:"Free — ZIP the graded copies (no AI)",shn:"လၢႆ — သႂ်ႇ Look သေ ZIP (ဢမ်ႇၸႂ်ႉ AI)",kac:"Free — Look bang nna ZIP la u (AI n lang)",th:"ฟรี — ZIP ไฟล์ที่ปรับสีแล้ว (ไม่ใช้ AI)",zh:"免费 — 打包调色后的副本 (不用 AI)",vi:"Miễn phí — ZIP bản đã chỉnh màu (không dùng AI)",id:"Gratis — ZIP salinan hasil gradasi (tanpa AI)",ms:"Percuma — ZIP salinan bergred (tanpa AI)"},
+  pt_out_note:{my:"AI ရလဒ်တွေက Gallery ထဲ အလိုအလျောက် ရောက်နေပါပြီ",en:"Every AI result is already saved to your Gallery",shn:"ၽွၼ်းလႆႈ AI ၵူႈဢၼ် သိမ်းၼႂ်း Gallery ဝႆႉယဝ်ႉ",kac:"AI lachyum shagu Gallery kaw makoi da sai",th:"ผลลัพธ์ AI ทุกภาพถูกบันทึกใน Gallery แล้ว",zh:"每个 AI 结果都已自动保存到 Gallery",vi:"Mọi kết quả AI đã được lưu vào Gallery",id:"Setiap hasil AI sudah tersimpan di Gallery",ms:"Setiap hasil AI sudah disimpan dalam Gallery"},
+  pt_orig:{my:"မူရင်း (ဖိကြည့်)",en:"Original (hold)",shn:"မိူဝ်ႈဢွၼ် (ၼဵၵ်းဝႆႉ)",kac:"Shawng (dip da u)",th:"ต้นฉบับ (กดค้าง)",zh:"原图（按住）",vi:"Gốc (giữ để xem)",id:"Asli (tahan)",ms:"Asal (tahan)"},
+  pt_retry:{my:"ဒီပုံ ပြန်စမ်းမယ်",en:"Retry this photo",shn:"ၸၢမ်းၶိုၼ်းၶႅပ်းၼႆႉ",kac:"Ndai sumla bai chyam u",th:"ลองรูปนี้ใหม่",zh:"重试这张",vi:"Thử lại ảnh này",id:"Coba lagi foto ini",ms:"Cuba lagi foto ini"},
+  pt_save:{my:"ဒီပုံ သိမ်းမယ်",en:"Save this photo",shn:"သိမ်းၶႅပ်းၼႆႉ",kac:"Ndai sumla makoi u",th:"บันทึกรูปนี้",zh:"保存这张",vi:"Lưu ảnh này",id:"Simpan foto ini",ms:"Simpan foto ini"},
+  pt_gal:{my:"Gallery ထဲ ထပ်သိမ်း",en:"Save to Gallery",shn:"သိမ်းသႂ်ႇ Gallery",kac:"Gallery kaw makoi u",th:"บันทึกลง Gallery",zh:"保存到 Gallery",vi:"Lưu vào Gallery",id:"Simpan ke Gallery",ms:"Simpan ke Gallery"},
+  pt_remove:{my:"ဒီပုံ ဖယ်ထုတ်မယ်",en:"Remove from batch",shn:"ဢဝ်ဢွၵ်ႇပႅတ်ႈ",kac:"Batch kaw na shamat",th:"เอาออกจากชุด",zh:"从批次移除",vi:"Bỏ khỏi lô",id:"Keluarkan dari batch",ms:"Buang dari kelompok"},
+  pt_close:{my:"ပိတ်မယ်",en:"Close",shn:"ပိၵ်ႉ",kac:"Pat u",th:"ปิด",zh:"关闭",vi:"Đóng",id:"Tutup",ms:"Tutup"},
+  pt_use_album:{my:"Album look အတိုင်း",en:"Use album look",shn:"ၸွမ်း Album look",kac:"Album look maren sha",th:"ใช้ลุคของอัลบั้ม",zh:"使用相册风格",vi:"Dùng look của album",id:"Pakai look album",ms:"Guna look album"},
+  pt_sheet_look:{my:"ဒီပုံအတွက်ပဲ Look ပြောင်းရန်",en:"Look for this photo only",shn:"လႅၵ်ႈ Look တွၼ်ႈတႃႇၶႅပ်းၼႆႉၵူၺ်း",kac:"Ndai sumla a matu sha Look",th:"ลุคเฉพาะรูปนี้",zh:"仅这张照片的风格",vi:"Look riêng cho ảnh này",id:"Look khusus foto ini",ms:"Look khusus foto ini"},
+  pt_before:{my:"မူရင်း",en:"Before",shn:"မိူဝ်ႈဢွၼ်",kac:"Shawng",th:"ก่อน",zh:"处理前",vi:"Trước",id:"Sebelum",ms:"Sebelum"},
+  pt_after:{my:"ပြီးသွားတဲ့ပုံ",en:"After",shn:"ဝၢႆးလင်",kac:"Hpang",th:"หลัง",zh:"处理后",vi:"Sau",id:"Sesudah",ms:"Selepas"},
+  pt_n:{my:"{N} ပုံ",en:"{N} photos",shn:"{N} ၶႅပ်း",kac:"Sumla {N}",th:"{N} รูป",zh:"{N} 张",vi:"{N} ảnh",id:"{N} foto",ms:"{N} foto"},
+  pt_done_n:{my:"{N} ပုံ ပြီးပါပြီ",en:"{N} photos done",shn:"ယဝ်ႉ {N} ၶႅပ်း",kac:"Sumla {N} ngut sai",th:"เสร็จ {N} รูป",zh:"完成 {N} 张",vi:"Xong {N} ảnh",id:"{N} foto selesai",ms:"{N} foto siap"},
+  pt_err_n:{my:"{N} ပုံ error — ပြန်စမ်းနိုင်",en:"{N} failed — tap to retry",shn:"{N} ဢမ်ႇပဵၼ် — ၸၢမ်းၶိုၼ်း",kac:"{N} n byin — bai chyam u",th:"{N} ล้มเหลว — แตะเพื่อลองใหม่",zh:"{N} 张失败 — 点按重试",vi:"{N} lỗi — chạm để thử lại",id:"{N} gagal — ketuk untuk ulang",ms:"{N} gagal — ketik untuk cuba lagi"},
+  pt_cap:{my:"တစ်ခါလျှင် ပုံ ၃၀ အထိသာ ထည့်နိုင်ပါတယ်",en:"Up to 30 photos per batch",shn:"ပွၵ်ႈၼိုင်ႈ သႂ်ႇလႆႈထိုင် 30 ၶႅပ်းၵူၺ်း",kac:"Batch langai hta sumla 30 du hkra sha",th:"ใส่ได้สูงสุด 30 รูปต่อชุด",zh:"每批最多 30 张照片",vi:"Tối đa 30 ảnh mỗi lô",id:"Maksimal 30 foto per batch",ms:"Maksimum 30 foto setiap kelompok"},
+  pt_need_photos:{my:"ပုံတွေ အရင်ထည့်ပါ",en:"Add some photos first",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈဢွၼ်တၢင်း",kac:"Sumla ni shawng bang u",th:"เพิ่มรูปก่อน",zh:"请先添加照片",vi:"Hãy thêm ảnh trước",id:"Tambahkan foto dulu",ms:"Tambah foto dahulu"},
+  pt_prog:{my:"ပုံ {N}/{M}",en:"Photo {N}/{M}",shn:"ၶႅပ်းႁၢင်ႈ {N}/{M}",kac:"Sumla {N}/{M}",th:"รูปที่ {N}/{M}",zh:"第 {N}/{M} 张",vi:"Ảnh {N}/{M}",id:"Foto {N}/{M}",ms:"Foto {N}/{M}"},
+  pt_sum:{my:"PATH ပြီးပါပြီ — {N}/{M} အောင်မြင်",en:"PATH finished — {N}/{M} succeeded",shn:"PATH ယဝ်ႉ — {N}/{M} ဢွင်ႇမၢၼ်",kac:"PATH ngut sai — {N}/{M} awng ai",th:"PATH เสร็จสิ้น — สำเร็จ {N}/{M}",zh:"PATH 完成 — 成功 {N}/{M}",vi:"PATH hoàn tất — {N}/{M} thành công",id:"PATH selesai — {N}/{M} berhasil",ms:"PATH selesai — {N}/{M} berjaya"},
+  pt_photo_done:{my:"ပုံ {N}/{M} ပြီးပါပြီ",en:"Photo {N}/{M} done",shn:"ၶႅပ်းႁၢင်ႈ {N}/{M} ယဝ်ႉ",kac:"Sumla {N}/{M} ngut sai",th:"รูปที่ {N}/{M} เสร็จแล้ว",zh:"第 {N}/{M} 张完成",vi:"Ảnh {N}/{M} xong",id:"Foto {N}/{M} selesai",ms:"Foto {N}/{M} siap"},
+  pt_photo_err:{my:"ပုံ {N}/{M} မအောင်မြင်ပါ — ဆက်လုပ်နေသည်",en:"Photo {N}/{M} failed — continuing",shn:"ၶႅပ်းႁၢင်ႈ {N}/{M} ဢမ်ႇဢွင်ႇ — သိုပ်ႇႁဵတ်းယူႇ",kac:"Sumla {N}/{M} n awng ai — matut galaw nga ai",th:"รูปที่ {N}/{M} ไม่สำเร็จ — ทำต่อ",zh:"第 {N}/{M} 张失败 — 继续",vi:"Ảnh {N}/{M} thất bại — tiếp tục",id:"Foto {N}/{M} gagal — lanjut",ms:"Foto {N}/{M} gagal — diteruskan"},
+  pt_no_result:{my:"သိမ်းစရာ ရလဒ် မရှိသေးပါ",en:"No results to save yet",shn:"ပႆႇမီးၽွၼ်းလႆႈတႃႇသိမ်း",kac:"Makoi na lachyum n nga shi ai",th:"ยังไม่มีผลลัพธ์ให้บันทึก",zh:"暂无可保存的结果",vi:"Chưa có kết quả để lưu",id:"Belum ada hasil untuk disimpan",ms:"Belum ada hasil untuk disimpan"},
+  pt_zip_ok:{my:"ZIP ဖိုင် {N} ပုံ ထုတ်ပြီးပါပြီ",en:"ZIP with {N} photos is ready",shn:"ႁဵတ်း ZIP {N} ၶႅပ်း ယဝ်ႉ",kac:"Sumla {N} rawng ai ZIP hkyen sai",th:"ไฟล์ ZIP {N} รูปพร้อมแล้ว",zh:"包含 {N} 张照片的 ZIP 已就绪",vi:"ZIP với {N} ảnh đã sẵn sàng",id:"ZIP berisi {N} foto siap",ms:"ZIP dengan {N} foto sudah sedia"},
+  pt_baking:{my:"Look ထည့်နေသည်…",en:"Baking the look…",shn:"သႂ်ႇ Look ယူႇ…",kac:"Look bang nga ai…",th:"กำลังใส่ลุค…",zh:"正在合成风格…",vi:"Đang áp look…",id:"Menerapkan look…",ms:"Menerapkan look…"},
+  pt_saved_gal:{my:"Gallery ထဲ သိမ်းပြီးပါပြီ",en:"Saved to Gallery",shn:"သိမ်းသႂ်ႇ Gallery ယဝ်ႉ",kac:"Gallery kaw makoi sai",th:"บันทึกลง Gallery แล้ว",zh:"已保存到 Gallery",vi:"Đã lưu vào Gallery",id:"Tersimpan ke Gallery",ms:"Disimpan ke Gallery"},
+  pt_off:{my:"မလုပ်",en:"Off",shn:"ဢမ်ႇႁဵတ်း",kac:"N galaw",th:"ปิด",zh:"关闭",vi:"Tắt",id:"Mati",ms:"Mati"}
+};
+Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
-var PH_MAP=[["phCreate","ph_create"],["phStudio","ph_studio"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"]];
+var PH_MAP=[["phCreate","ph_create"],["phStudio","ph_studio"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
 function L9(o){ return o[LANG]!==undefined ? o[LANG] : (o.en!==undefined ? o.en : o.my); }
 
 function t(k){ var e=TR[k]; return e ? (e[LANG]!==undefined ? e[LANG] : (e.en!==undefined ? e.en : e.my)) : k; }
@@ -2038,6 +2259,7 @@ try {
     if (typeof _sv.prompt === "string") state.savedPrompt = _sv.prompt;
     if (_sv.st) state.stSaved = _sv.st; /* consumed tolerantly by the Studio module below */
     if (_sv.v2) state.v2Saved = _sv.v2; /* consumed tolerantly by the V2 Retouch module below (same pattern as stSaved) */
+    if (_sv.pt) state.ptSaved = _sv.pt; /* Path Retouch look/tier/fx — settings only, never photos (same pattern) */
   }
 } catch(e){}
 function saveState(){
@@ -2045,6 +2267,9 @@ function saveState(){
     localStorage.setItem(LS_STATE, JSON.stringify({
       rt: state.rt, rtStrength: state.rtStrength,
       v2: state.v2, /* V2 Retouch hero settings — tiny plain-number/string object, never any base64 */
+      /* Path Retouch: look/tier/fx/custom only. PT.photos, their previews and
+         every AI result are session-only and deliberately absent here. */
+      pt: state.pt ? { look:state.pt.look, tier:state.pt.tier, fx:state.pt.fx, custom:state.pt.custom } : undefined,
       prompt: document.getElementById("prompt") ? document.getElementById("prompt").value : "",
       /* Studio live-preview state — everything EXCEPT the photo itself (state.st.img
          is session-only; base64 photos are too large for localStorage) */
@@ -2093,6 +2318,7 @@ var PAGES=[
   ["pgCreate","i-pen","Freeform"],
   ["pgStudio","i-bolt","Studio"],
   ["pgRetouch","i-gem","Retouch"],
+  ["pgPath","i-stack","Path"],
   ["pgText2Img","i-doc","Text→Img"],
   ["pgVideo","i-clapper","Video"],
   ["pgVideoUp","i-rocket","VidUp"],
@@ -2112,7 +2338,7 @@ var PAGES=[
 var TOPGROUPS=[
   { id:"grpDash", ic:"i-home", label:"Home", pages:["pgDash"] },
   { id:"grpWf", ic:"i-brain", label:"Workflows", pages:["pgWf"] },
-  { id:"grpEdit", ic:"i-sparkle", label:"Edit", pages:["pgCreate","pgStudio","pgRetouch"] },
+  { id:"grpEdit", ic:"i-sparkle", label:"Edit", pages:["pgCreate","pgStudio","pgRetouch","pgPath"] },
   { id:"grpMedia", ic:"i-clapper", label:"Media Lab", pages:["pgText2Img","pgVideo","pgVideoUp"] },
   { id:"grpLib", ic:"i-frame", label:"Library", pages:["pgLib","pgGallery"] }
 ];
@@ -3333,7 +3559,7 @@ $("filePick").onchange = function(){
 /* static (non-JS-built) accordions wire up the same open/close toggle
    the grp() builder below uses, so a hand-written .grp/.grp-h/.grp-b
    block (like Setup's Platform Guide) behaves identically to a built one */
-["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced","genGrpAdvanced"].forEach(function(id){
+["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced","genGrpAdvanced","ptGrpFx","ptGrpPrompt"].forEach(function(id){
   var g=$(id); if(!g) return;
   var h=g.querySelector(".grp-h");
   h.onclick=function(){ g.className = g.className.indexOf("open")>=0 ? "grp" : "grp open"; };
