@@ -5621,7 +5621,12 @@ function renderV2Hero(){
     var b=el("button","chip"+(v.quality===q.key?" on":""));
     b.innerHTML=icn(q.icon)+" "+escH(L9(q.label));
     if(q.key==="hd" && !hdOk) b.disabled=true;
-    b.onclick=function(){ state.v2.quality=q.key; v2Sync(); };
+    b.onclick=function(){
+      /* HD is the paid tier — ask before the user commits to it, not after
+         the base generate has already been paid for. */
+      if(q.key==="hd" && !gate("hd_finish")) return;
+      state.v2.quality=q.key; v2Sync();
+    };
     qs.appendChild(b);
   });
   $("v2HdHint").style.display = hdOk ? "none" : "";
@@ -5705,7 +5710,7 @@ function v2EtaLabel(){
    Shared by the single-photo run and the v4.28 batch loop. */
 async function v2RunOne(){
   var ok=await v2DoGenerate(v2BuildPrompt());
-  if(ok && !rsStop && state.v2.quality==="hd" && state.rhKey && rhIsConfigured("upscale-pro")){
+  if(ok && !rsStop && state.v2.quality==="hd" && gateAllows("hd_finish") && state.rhKey && rhIsConfigured("upscale-pro")){
     /* HD Finish — mirrors Studio's pass: failures toast only and never destroy the base result */
     var hdAbort=null;
     try{
@@ -6169,7 +6174,10 @@ function ptRenderChips(){
     var b=el("button","chip"+(state.pt.tier===q.key?" on":""));
     b.innerHTML=icn(q.icon)+" "+escH(L9(q.label));
     if(q.key==="hd" && !hdOk) b.disabled=true;
-    b.onclick=function(){ state.pt.tier=q.key; ptSync(); };
+    b.onclick=function(){
+      if(q.key==="hd" && !gate("hd_finish")) return;
+      state.pt.tier=q.key; ptSync();
+    };
     ts.appendChild(b);
   });
   $("ptHdHint").style.display = hdOk ? "none" : "";
@@ -6328,6 +6336,7 @@ async function ptDoGenerateOne(photo){
 /* HD tier finish — mirrors Studio/V2: a failure toasts and keeps the base
    result, it never destroys a good photo. */
 async function ptHdFinish(){
+  if(!gateAllows("hd_finish")) return;
   if(!(state.rhKey && rhIsConfigured("upscale-pro"))) return;
   var hdAbort=null;
   try{
@@ -6693,8 +6702,11 @@ $("btnPtRefClear").onclick=function(){ PT.ref=null; ptSync(); };
 $("ptCustom").oninput=function(){ state.pt.custom=this.value.slice(0,1200); ptSync(); };
 $("btnPtRun").onclick=function(){ return ptRunAll(null); };
 $("btnPtStop").onclick=ptStopRun;
-$("btnPtZipAll").onclick=ptZipAll;
-$("btnPtDlSeq").onclick=ptDlSeq;
+/* path_export gates the bulk delivery of the AI RESULTS only. btnPtBake
+   exports the free canvas grades — nothing was spent producing those, so
+   locking them would be charging for the customer's own local work. */
+$("btnPtZipAll").onclick=function(){ if(!gate("path_export")) return; ptZipAll(); };
+$("btnPtDlSeq").onclick=function(){ if(!gate("path_export")) return; ptDlSeq(); };
 $("btnPtBake").onclick=ptBakeAll;
 $("btnPtSheetClose").onclick=ptCloseSheet;
 $("ptCmpRange").oninput=ptCmpLayout;
@@ -9613,12 +9625,31 @@ function stSetBusy(b,label){
   var sp=$("stSpin"); if(sp){ sp.className="spin"+(b?" on":""); if(label) sp.textContent=label; }
   document.querySelectorAll("#muPresetRow .pcard, #evPresetRow .pcard").forEach(function(c){ c.disabled=b; });
 }
+/* Which suite does a queued AI feature belong to? Every group registers its
+   host ("mu" | "ev") when it is built, and ST.grpOf maps a feature id to its
+   group element, so the queue can be attributed without a second table that
+   would drift as features are added. */
+function stSuiteOf(featId){
+  var gEl=ST.grpOf[featId]; if(!gEl) return null;
+  var g=ST.groups[gEl._stG];
+  return g ? g.host : null;
+}
 $("btnStGen").onclick=async function(){
   if(stBusy) return;
   /* no photo yet: the gen bar doubles as the always-visible photo picker
      (replaces the old scroll-to-top nudge that yanked the page around) */
   if(!ST.srcBitmap){ state.pickSlot=0; $("filePick").click(); return; }
   var hasPend=state.st.pend.length>0;
+  /* Gate the AI SPEND, not the sliders. Meitu/Evoto Tier-1 and Tier-2 edits
+     render locally for free and stay free; what a suite gate locks is sending
+     that suite's queued AI features to a model. Checked before the dispatcher
+     so nothing is charged and then refused. */
+  if(hasPend){
+    var suites={};
+    state.st.pend.forEach(function(pe){ var h=stSuiteOf(pe.id); if(h) suites[h]=1; });
+    if(suites.mu && !gate("studio_meitu")) return;
+    if(suites.ev && !gate("studio_evoto")) return;
+  }
   if(!hasPend){
     if(!stIsDirty()){
       setSt("stStatus",L9({my:"ချိန်ညှိချက် တစ်ခုလောက် အရင်ပြင်ပါ",en:"Adjust something first"}),"err");
@@ -9669,7 +9700,7 @@ $("btnStGen").onclick=async function(){
   var ok=state.hist[0]!==beforeFirst;
   if(ok){
     /* optional HD Finish through the already-shipped RunningHub upscale adapter */
-    if(svGet("st_hd",false) && rhIsConfigured("upscale-pro") && state.rhKey){
+    if(svGet("st_hd",false) && gateAllows("hd_finish") && rhIsConfigured("upscale-pro") && state.rhKey){
       try{
         stSetBusy(true,t("hd_finish")+"…");
         var res=state.hist[0];
@@ -9798,6 +9829,7 @@ $("stClearAi").onclick=function(){
   hd.textContent=t("hd_finish");
   hd.onclick=function(){
     var on=!svGet("st_hd",false);
+    if(on && !gate("hd_finish")) return;   /* only turning it ON is gated */
     svSet("st_hd",on); refresh(); stRenderPend();
     try{
       if(on&&!localStorage.getItem("hnk_st_hd_hint")){
@@ -10489,31 +10521,43 @@ var acc = { sess:null, profile:null, settings:null, devices:[], requests:[],
    Every gate ships FALSE. Nothing is locked. No existing user
    loses access on upgrade day.
 
-   TO LOCK A FEATURE: flip its value to true — BUT ONLY for a key
-   marked [wired] below. A [wired] key already has its
-   `if(!gate("<key>")) return;` guard sitting at the top of the
-   feature's entry handler, so flipping the value is genuinely the
-   whole change. A [NOT wired] key is config with no call site: the
-   value is read by nothing, and flipping it locks NOTHING while
-   looking exactly like it did. §6.3 lists those as candidate call
-   sites for "whoever wires them" and deliberately leaves the choice
-   of entry point open (Meitu/Evoto are preset keys spread across the
-   one-tap list, RS_ONETAP_KEYS and stFeat, not one suite-open
-   handler; hdFinishSize() is called from three generate paths rather
-   than the HD toggle; Path Retouch has no distinct export button).
-   Picking those sites is a product decision, not a mechanical one —
-   so they are named here rather than guessed at.
-   ADD THE GUARD FIRST, THEN FLIP THE VALUE.
+   TO LOCK A FEATURE: flip its value to true. All eight keys are
+   [wired] — each has a real guard at the entry point named beside
+   it — so flipping the value is genuinely the whole change.
+
+   Two rules the guards follow, so a gate never punishes the wrong
+   thing:
+
+   1. Gate the SPEND, not the sliders. Every Tier-1/Tier-2 edit in
+      Studio and Path renders locally at no cost and stays free even
+      when its suite is locked; what a suite gate stops is sending
+      that suite's queued AI features to a model. Likewise Path's
+      free canvas-grade export is never gated — nothing was spent
+      producing it.
+   2. Ask at the choice, skip at the run. gate() shows the paywall
+      where the user picks a paid option (the HD tier, the export).
+      gateAllows() is the same question with no sheet, used inside
+      the run itself — a preference saved before a gate was flipped
+      quietly skips the extra pass rather than interrupting a job
+      the user already started with an upsell.
+
+   sweep_account check 19 asserts every key here has a matching
+   gate()/gateAllows() call site, so this list cannot go back to
+   claiming a guard that does not exist.
    ============================================================ */
 var PREMIUM_GATES = {
   v2_retouch:    false,   /* [wired]     V2 Retouch generate handler (pgRetouch)   */
-  studio_meitu:  false,   /* [NOT wired] Studio -> Meitu preset suite              */
-  studio_evoto:  false,   /* [NOT wired] Studio -> Evoto preset suite              */
+  studio_meitu:  false,   /* [wired]     Studio GENERATE, when the AI queue holds  */
+                          /*             a Meitu feature (sliders stay free)       */
+  studio_evoto:  false,   /* [wired]     Studio GENERATE, when the AI queue holds  */
+                          /*             an Evoto feature (sliders stay free)      */
   video:         false,   /* [wired]     Video render + Video Upscale render       */
   text2img:      false,   /* [wired]     Text -> Image generate handler            */
-  hd_finish:     false,   /* [NOT wired] HD Finish pass (the 2K-forcing step)      */
+  hd_finish:     false,   /* [wired]     the 3 HD tier selectors, plus a silent    */
+                          /*             skip in each of the 3 HD passes           */
   batch:         false,   /* [wired]     Batch / multi-photo queue start           */
-  path_export:   false    /* [NOT wired] Path export / .path output                */
+  path_export:   false    /* [wired]     Path bulk delivery of AI results (ZIP +   */
+                          /*             sequential); the free bake stays open     */
 };
 
 /* ---------------- storage helpers (never throw) ---------------- */
@@ -11216,10 +11260,17 @@ function isPremium(){
    date parse, no network, no paywall construction. The free path costs one
    object lookup and one comparison. */
 function gate(key){
-  if (PREMIUM_GATES[key] !== true) return true;
-  if (isPremium()) return true;
+  if (gateAllows(key)) return true;
   showPaywall(key);
   return false;
+}
+/* The same question without the sheet. Used at EXECUTION points, where a
+   paywall would be the wrong thing: the user already committed to a run, and
+   a stale saved preference (HD left on from before a gate was flipped) should
+   quietly skip the extra pass rather than interrupt with an upsell. */
+function gateAllows(key){
+  if (PREMIUM_GATES[key] !== true) return true;
+  return isPremium();
 }
 function showPaywall(key){
   var w = $("wizPay"), b = $("wizPayIn");
@@ -11684,7 +11735,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.30.1";
+var APP_VER="4.31.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
