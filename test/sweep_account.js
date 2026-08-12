@@ -191,6 +191,30 @@ const SB_FIX = {
     c1ProfInsert === 0 && /confirmation link/i.test(c1ui.st) && c1ui.loggedOut && !c1ui.sess,
     JSON.stringify({ profileInserts: c1ProfInsert, st: c1ui.st, loggedOut: c1ui.loggedOut }));
 
+  /* 1b) the §2.2 "already registered" branch. Guard, not decoration: the panel
+     auto-switches to the login sub-form, and accShowForm() ends with
+     setSt("stAcc",""), so writing acc_exists BEFORE the switch wipes it in the
+     same tick — the user watched the sign-up form vanish with no explanation
+     at all. Reordering the two statements makes this FAIL. */
+  await boot({ signup: { msg: "User already registered" }, signupStatus: 400 });
+  await page.evaluate(() => { accShowForm("signup"); });
+  await page.fill("#accName", "Hla Hla");
+  await page.fill("#accEmail2", "taken@example.com");
+  await page.fill("#accPass2", "hunter2secret");
+  await page.click("#btnAccSignup");
+  await page.waitForTimeout(300);
+  const c1b = await page.evaluate(() => ({
+    st: (document.getElementById("stAcc").textContent || "").trim(),
+    onLogin: document.getElementById("accFormLogin").style.display !== "none" &&
+             document.getElementById("accFormSignup").style.display === "none",
+    prefilled: document.getElementById("accEmail").value,
+    pass2: document.getElementById("accPass2").value
+  }));
+  report("1b signup -> already registered: acc_exists is actually VISIBLE alongside the auto-switch to the login sub-form (accShowForm clears #stAcc, so the message must be written after it), the email is prefilled, and the typed password is not left behind in the hidden sign-up field",
+    /already exists/i.test(c1b.st) && c1b.onLogin &&
+    c1b.prefilled === "taken@example.com" && c1b.pass2 === "",
+    JSON.stringify(c1b));
+
   // ---------------------------------------------------------------- 2) login
   await boot({ login: SB_FIX.token, profile: SB_FIX.profileFree, devices: [], devicesPost: { id: "d9" } });
   await page.fill("#accEmail", "hla@example.com");
