@@ -10477,18 +10477,32 @@ var acc = { sess:null, profile:null, settings:null, devices:[], requests:[],
    v4.30 PREMIUM GATES — OWNER DECISION PENDING
    Every gate ships FALSE. Nothing is locked. No existing user
    loses access on upgrade day.
-   TO LOCK A FEATURE: change exactly one value below to true.
-   That is the whole change — no other edit is required anywhere.
+
+   TO LOCK A FEATURE: flip its value to true — BUT ONLY for a key
+   marked [wired] below. A [wired] key already has its
+   `if(!gate("<key>")) return;` guard sitting at the top of the
+   feature's entry handler, so flipping the value is genuinely the
+   whole change. A [NOT wired] key is config with no call site: the
+   value is read by nothing, and flipping it locks NOTHING while
+   looking exactly like it did. §6.3 lists those as candidate call
+   sites for "whoever wires them" and deliberately leaves the choice
+   of entry point open (Meitu/Evoto are preset keys spread across the
+   one-tap list, RS_ONETAP_KEYS and stFeat, not one suite-open
+   handler; hdFinishSize() is called from three generate paths rather
+   than the HD toggle; Path Retouch has no distinct export button).
+   Picking those sites is a product decision, not a mechanical one —
+   so they are named here rather than guessed at.
+   ADD THE GUARD FIRST, THEN FLIP THE VALUE.
    ============================================================ */
 var PREMIUM_GATES = {
-  v2_retouch:    false,   /* V2 Retouch page (pgRetouch), the 50-slider suite      */
-  studio_meitu:  false,   /* Studio -> Meitu preset suite                          */
-  studio_evoto:  false,   /* Studio -> Evoto preset suite                          */
-  video:         false,   /* Video (pgVideo) + Video Upscale (pgVideoUp)           */
-  text2img:      false,   /* Text -> Image (pgText2Img)                            */
-  hd_finish:     false,   /* HD Finish pass (the 2K-forcing finishing step)        */
-  batch:         false,   /* Batch / multi-photo queue                             */
-  path_export:   false    /* Path export / .path output                            */
+  v2_retouch:    false,   /* [wired]     V2 Retouch generate handler (pgRetouch)   */
+  studio_meitu:  false,   /* [NOT wired] Studio -> Meitu preset suite              */
+  studio_evoto:  false,   /* [NOT wired] Studio -> Evoto preset suite              */
+  video:         false,   /* [wired]     Video render + Video Upscale render       */
+  text2img:      false,   /* [wired]     Text -> Image generate handler            */
+  hd_finish:     false,   /* [NOT wired] HD Finish pass (the 2K-forcing step)      */
+  batch:         false,   /* [wired]     Batch / multi-photo queue start           */
+  path_export:   false    /* [NOT wired] Path export / .path output                */
 };
 
 /* ---------------- storage helpers (never throw) ---------------- */
@@ -10594,6 +10608,11 @@ function accSaveSession(j){
 }
 
 function accSignOutLocal(reason){
+  /* Idempotent. Three reads awaiting the same coalesced refresh all receive
+     "dead" and each runs this teardown, which meant three renders and three
+     toasts for one expiry. The teardown itself was always safe to repeat; the
+     user-visible half was not. */
+  if (!acc.sess) return;
   acc.sess = null; acc.profile = null; acc.devices = []; acc.requests = []; acc.pending = null;
   accLSDel(ACC_LS_SESS); accLSDel(ACC_LS_PROF);
   /* ACC_LS_DEV survives on purpose — logging out then back in on the same
@@ -10657,7 +10676,10 @@ async function accSignup(){
     if (!r.ok){
       var msg = accFriendly(r.status, j);
       setSt("stAcc", msg, "err");
-      if (msg === t("acc_exists")){ accShowForm("login"); $("accEmail").value = em; }
+      if (msg === t("acc_exists")){
+        accShowForm("login"); $("accEmail").value = em;
+        $("accPass2").value = "";   /* do not leave the typed password sitting in a now-hidden field */
+      }
       return;
     }
     /* Two possible 200 shapes. No access_token means email confirmation is ON
@@ -10798,6 +10820,17 @@ async function accLoadRequests(){
        localStorage key, so it survives a reload for free */
     var p = acc.requests.filter(function(x){ return x && x.status === "pending"; })[0];
     if (p) acc.pending = p;
+    else if (acc.pending && acc.pending.id){
+      /* ...and when there is no longer a pending row, reconcile the one we are
+         holding instead of leaving it forever. Opening #accGrpReq collapses
+         #accGrpBuy, so accLoadRequests() can run without accPollOnce() ever
+         firing: the list would render "Approved" while the buy panel still
+         showed "Waiting for admin approval" off a stale in-memory object.
+         A rejected row is deliberately KEPT (refreshed, so the admin note is
+         current) — that is what renders the note plus "Submit again". */
+      var cur = acc.requests.filter(function(x){ return x && x.id === acc.pending.id; })[0];
+      if (cur) acc.pending = (cur.status === "approved") ? null : cur;
+    }
     accRenderRequests(); accRenderPay();
     return { ok:true };
   } catch(e){ acc.online = false; accSetInline("stReq", t("acc_offline")); return { ok:false, offline:true }; }
@@ -11100,8 +11133,14 @@ function accPollTick(){
   if (!acc.pending || !acc.pending.id || acc.pending.status !== "pending"){ accPollStop(); return; }
   if (_accPollN >= 45){ accPollStop(); return; }
   if (curPage !== "pgHome"){ accPollStop(); return; }
+  /* hidden tab: keep the timer, it is the same panel and visibilitychange
+     fires accPollOnce() the moment the user comes back */
   if (document.visibilityState !== "visible") return;
-  var g = $("accGrpBuy"); if (!g || g.className.indexOf("open") < 0) return;
+  /* collapsed panel: STOP, symmetrical with accOnGrpOpen("accGrpBuy") ->
+     accPollStart(). Returning early here neither polled nor advanced _accPollN,
+     so the 45-poll cap could never trip and the setInterval outlived its panel
+     for as long as the user stayed on pgHome. */
+  var g = $("accGrpBuy"); if (!g || g.className.indexOf("open") < 0){ accPollStop(); return; }
   _accPollN++;
   if (_accPollN >= 5 && _accPollMs !== 60000){
     clearInterval(_accPoll); _accPollMs = 60000; _accPoll = setInterval(accPollTick, _accPollMs);
@@ -11286,10 +11325,29 @@ function accRenderPlan(){
 function accChipRender(){
   var g = $("btnGearSetup"); if (!g) return;
   g.classList.remove("acc-in","acc-pro","acc-soon");
-  if (!acc.sess) return;                       /* logged out: no dot at all */
-  if (!isPremium()){ g.classList.add("acc-in"); return; }   /* hollow gold ring */
-  var d = planDaysLeft(acc.profile);
-  g.classList.add(d <= 7 ? "acc-soon" : "acc-pro");
+  /* The state dot is pure colour. With the §1.2 fallback shipped (no separate
+     #btnAccChip) it is the ONLY header signal that a plan expires within seven
+     days, and colour alone reaches neither a screen reader nor a colour-blind
+     user. So carry the same state in the accessible name — appended to the
+     button's original label, never replacing it, because that label is the
+     only thing telling anyone this is the route to Setup and their API keys.
+     `title` is then set to the identical string: previously accApplyLang()
+     overwrote it with a bare "Account" while aria-label still read
+     "Setup — API keys & settings", so a sighted hover and assistive tech
+     announced two different names for one control. */
+  if (g.getAttribute("data-lbl0") == null) g.setAttribute("data-lbl0", g.getAttribute("aria-label") || "");
+  var base = g.getAttribute("data-lbl0") || "", extra = "";
+  if (acc.sess){
+    if (!isPremium()){ g.classList.add("acc-in"); extra = t("acc_chip"); }   /* hollow gold ring */
+    else {
+      var d = planDaysLeft(acc.profile);
+      g.classList.add(d <= 7 ? "acc-soon" : "acc-pro");
+      extra = (d <= 7 ? t("acc_plan_soon") : t("acc_plan_active")).replace("{N}", String(d));
+    }
+  }
+  var lbl = base + (extra ? " · " + extra : "");
+  g.setAttribute("aria-label", lbl);
+  if (extra) g.setAttribute("title", lbl); else g.removeAttribute("title");
 }
 
 function accRenderDevices(){
@@ -11449,8 +11507,8 @@ function accApplyLang(){
   setIcnText($("btnPayAgain"),  "i-gem",    t("pay_submit"));
   $("payPendingP").textContent = t("pay_pending_p");
 
-  $("btnGearSetup").setAttribute("title", t("acc_chip"));
-
+  /* the gear's title/aria-label pair is owned by accChipRender() (called just
+     below), so hover text and accessible name can never drift apart */
   try { if (acc) { accRender(); accRenderPay(); accRenderDevices(); accRenderRequests(); accChipRender(); } } catch(e){}
 }
 
@@ -11514,7 +11572,19 @@ function accWire(){
   });
   window.addEventListener("online", function(){
     acc.online = true;
-    try { if (acc.sess){ accLoadProfile(); accRegisterDevice(); } accPollOnce(); accRender(); } catch(e){}
+    try {
+      if (acc.sess){
+        accLoadProfile();
+        /* the login and boot call sites both act on {limit:true}; this one
+           discarded it, so a registration that failed offline and finally
+           reached the server here rejected silently and the user saw the
+           dev_limit copy only on the NEXT cold boot (§5.4 wants it inline,
+           at the moment it happens) */
+        accRegisterDevice().then(function(d){ if (d && d.limit) accShowDeviceLimit(); })
+                           .catch(function(){});
+      }
+      accPollOnce(); accRender();
+    } catch(e){}
   });
   window.addEventListener("offline", function(){ acc.online = false; try { accRender(); } catch(e){} });
   window.addEventListener("pagehide", function(){ accPollStop(); });
