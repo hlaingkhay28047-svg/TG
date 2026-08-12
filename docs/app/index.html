@@ -37,6 +37,11 @@
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px;
   --r-sm:9px; --r-md:12px; --r-lg:14px; --r-pill:999px;
   --fs-2xs:10px; --fs-xs:11px; --fs-sm:12px; --fs-base:13px; --fs-md:14px; --fs-xl:clamp(24px,5vw,34px);
+  /* v4.28 motion tokens — every animation/transition in the app draws from
+     these three durations + two easings (transform/opacity only, entrance-
+     biased). New motion must reach for a token, never a hand-picked ms. */
+  --dur-1:120ms; --dur-2:180ms; --dur-3:240ms;
+  --ease-out:cubic-bezier(.2,.7,.3,1); --ease-pop:cubic-bezier(.34,1.4,.44,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--ink);color:var(--cream);font-family:"Segoe UI","Myanmar Text","Noto Sans Myanmar","Pyidaungsu",system-ui,sans-serif;font-size:15px;line-height:1.7}
@@ -55,8 +60,8 @@ input,textarea,select{font-family:inherit}
 
 .hero-strip{position:relative;padding:26px 0 6px;overflow:hidden;border-radius:0 0 18px 18px}
 .hero-art{position:absolute;top:0;left:-16px;right:-16px;bottom:0;z-index:-1;overflow:hidden}
-.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:.92;will-change:transform,filter;animation:heroKB 22s ease-in-out infinite alternate}
-@keyframes heroKB{from{transform:scale(1)}to{transform:scale(1.09) translateX(-1.2%);filter:brightness(1.07) saturate(1.08)}}
+.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:.92;will-change:transform;animation:heroKB 22s ease-in-out infinite alternate}
+@keyframes heroKB{from{transform:scale(1)}to{transform:scale(1.09) translateX(-1.2%)}}
 .hero-art:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:radial-gradient(55% 65% at 66% 26%,rgba(255,214,130,.22),transparent 70%);mix-blend-mode:screen;animation:heroGlow 7s ease-in-out infinite alternate}
 @keyframes heroGlow{from{opacity:.3}to{opacity:1}}
 /* two scrims: diagonal left-dark keeps the text zone readable while the
@@ -106,8 +111,16 @@ h1 em{font-style:normal;color:var(--gold-hi)}
    class selector regardless of source order, so a plain "select" min-width
    here was silently overridden, letting 3 dropdowns squeeze onto one row
    and clip their labels ("Model: A…", "Ratio: Au…") on a phone screen. */
-#genOpts select.inp,#vidOpts select.inp,#vuOpts select.inp,#t2iOpts select.inp{flex:1 1 150px;min-width:150px}
+#vuOpts select.inp{flex:1 1 150px;min-width:150px}
+/* v4.28: Create/T2I/Video option rows are tidy 2-col grids (single column on
+   320-class phones so select text never hard-clips) — a hidden select
+   (upscale-kind narrowing, gated Size) collapses its grid cell entirely */
+#genOpts,#genOptsAdv,#vidOpts,#t2iOpts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#genOpts select.inp,#genOptsAdv select.inp,#vidOpts select.inp,#t2iOpts select.inp{width:100%;min-width:0}
+@media(max-width:359px){#genOpts,#genOptsAdv,#vidOpts,#t2iOpts{grid-template-columns:1fr}}
 .inp:focus{border-color:var(--gold);outline:none}
+/* v4.28: one global keyboard-focus ring (replaces the per-widget .rng rule) */
+:where(button,a,select,input,textarea,[tabindex]):focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 textarea.inp{min-height:110px;resize:vertical;line-height:1.8}
 /* Setup's key inputs (#apiKey/#rhKey/#oaKey) carry placeholders longer than
    the field — without this they were silently hard-clipped mid-character
@@ -159,15 +172,25 @@ select.inp{padding:9px 10px}
 .ref.filled .x{display:block}
 .ref .tag{position:absolute;left:4px;bottom:4px;background:rgba(11,13,20,.8);border-radius:6px;padding:1px 7px;font-size:10px;color:var(--gold-hi);font-weight:800}
 
-#genOpts .inp,#vidOpts .inp,#vuOpts .inp,#t2iOpts .inp{flex:1 1 30%;min-width:30%}
+#vuOpts .inp{flex:1 1 30%;min-width:30%}
 .gen{width:100%;margin-top:12px;padding:15px;font-size:16px;border-radius:12px}
 .spin{display:none;margin-top:10px;color:var(--gold-hi);font-size:13px}
-.spin.on{display:block}
+/* v4.28: honest waiting — gold spinner ring beside the elapsed-seconds ticker,
+   and a soft "working" glow on the disabled GENERATE button */
+.spin.on{display:flex;align-items:center;gap:8px}
+.spin.on::before{content:"";flex:none;width:14px;height:14px;border-radius:50%;border:2px solid rgba(217,164,65,.25);border-top-color:var(--gold);animation:spinring .8s linear infinite}
+@keyframes spinring{to{transform:rotate(360deg)}}
+.gen.working{opacity:1;box-shadow:0 0 0 1px rgba(217,164,65,.4),0 4px 22px -8px rgba(217,164,65,.5)}
 .addons{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
 .addons b{color:var(--gold-hi)}
 
 .result-box{display:none;margin-top:4px}
-.result-box.on{display:block}
+/* v4.28: result reveal — fade-rise + one-shot gold glow pulse on the frame
+   (single-element box-shadow, compositor-cheap; covers stResultBox/rsResultBox
+   too since they share these classes) */
+.result-box.on{display:block;animation:pagein var(--dur-3) var(--ease-out)}
+.result-box.on .result-img{animation:resultglow .9s var(--ease-out)}
+@keyframes resultglow{0%{box-shadow:0 0 0 1px rgba(217,164,65,.55),0 0 26px -4px rgba(217,164,65,.55)}100%{box-shadow:0 0 0 0 rgba(217,164,65,0)}}
 .result-img{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#050b10}
 .hist{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .hist img{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line-soft);cursor:pointer}
@@ -181,13 +204,22 @@ select.inp{padding:9px 10px}
 /* ---- paged web-view layout ---- */
 body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .page{display:none}
-.page.on{display:block}
+/* v4.28: gentle fade-rise on every page/tab switch. transform never moves
+   offsetTop, so the Studio stage engine's stageNaturalTop math (recomputed
+   on page switch) is unaffected — keep this transform/opacity only. */
+.page.on{display:block;animation:pagein var(--dur-3) var(--ease-out)}
+@keyframes pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:rgba(11,13,20,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom)}
 .tabbar::-webkit-scrollbar{display:none}
 .tabb{flex:1 0 auto;min-width:58px;background:none;border:none;color:var(--muted);padding:9px 4px 10px;font-size:10.5px;font-weight:800;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}
 .tabb .ic{font-size:19px;line-height:1}
 .tabb.on{color:var(--gold-hi)}
 .tabb.on .ic{transform:translateY(-1px)}
+/* v4.28: active-tab gold pill — pops in behind the icon (scale .6→1 + fade) */
+.tabb{position:relative}
+.tabb::before{content:"";position:absolute;top:5px;left:50%;width:46px;height:28px;margin-left:-23px;border-radius:var(--r-pill);background:rgba(217,164,65,.16);opacity:0;transform:scale(.6);transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-pop);pointer-events:none}
+.tabb.on::before{opacity:1;transform:scale(1)}
+.tabb .ic,.tabb span{position:relative}
 /* second-level tabs for a top-level group with more than one page
    (Create: Freeform/Studio/Retouch/Text→Img/Video/VidUp, Library:
    Reference/Gallery) — flows with the page content rather than fixed,
@@ -209,13 +241,18 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .subtabbar.fade-r:after{opacity:1}
 .subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
 .subtab.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
-.toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5)}
-.toast.on{display:block}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(8px);pointer-events:none;transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out),visibility 0s linear var(--dur-2)}
+.toast.on{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition-delay:0s}
 .toast.ok{color:var(--ok)} .toast.err{color:var(--err)}
 
 /* ---- smart workflow wizard ---- */
 .wiz{position:fixed;top:0;left:0;right:0;bottom:0;z-index:70;background:var(--ink);display:none;overflow-y:auto;overscroll-behavior:contain}
-.wiz.on{display:block}
+.wiz.on{display:block;animation:wizfade var(--dur-2) var(--ease-out)}
+/* v4.28: wizard enters with a backdrop fade + card rise (entrance only —
+   closeWizard() stays instant) */
+.wiz.on .wiz-in{animation:wizin var(--dur-3) var(--ease-out)}
+@keyframes wizfade{from{opacity:0}to{opacity:1}}
+@keyframes wizin{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 .wiz-in{max-width:640px;margin:0 auto;padding:14px 16px 40px}
 .wiz-top{display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--ink);padding:calc(10px + env(safe-area-inset-top)) 0 10px;z-index:2;border-bottom:1px solid var(--line-soft)}
 .wiz-top .ttl{font-size:15px;font-weight:800}
@@ -298,12 +335,13 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .hero-mini{padding:14px 0 2px}
 .grp.open .grp-b{animation:fadein .18s ease}
 @keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
-.lib-grid img{background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--panel-2) 60%);background-size:200% 100%;animation:shimmer 1.2s linear infinite}
+/* v4.28: shimmer only while a thumb is actually loading (.ld, removed on
+   load/error) — 400+ settled thumbnails no longer repaint forever */
+.lib-grid img.ld{background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--panel-2) 60%);background-size:200% 100%;animation:shimmer 1.2s linear infinite}
 @keyframes shimmer{to{background-position:-200% 0}}
-.toast.on{animation:toastin .22s ease}
-@keyframes toastin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .onb{position:fixed;top:0;left:0;right:0;bottom:0;z-index:80;background:rgba(11,13,20,.96);display:none;overflow-y:auto;overscroll-behavior:contain;padding-top:env(safe-area-inset-top)}
-.onb.on{display:flex;align-items:center;justify-content:center}
+.onb.on{display:flex;align-items:center;justify-content:center;animation:wizfade var(--dur-2) var(--ease-out)}
+.onb.on .onb-card{animation:wizin var(--dur-3) var(--ease-out)}
 .onb-card{max-width:420px;margin:20px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
 .onb-card h3{font-size:17px;margin-bottom:12px}
 .onb-step{display:flex;gap:10px;margin:12px 0;font-size:13px;line-height:1.7}
@@ -363,7 +401,7 @@ html,body{overscroll-behavior-y:none}
   /* at 16px, "Provider: Gemini" needs ~170px inside a select — below that
      the option text hard-clips, so force the generate-row selects to wrap
      to comfortable rows instead of squeezing two clipped ones per row */
-  #genOpts select.inp,#vidOpts select.inp,#vuOpts select.inp,#t2iOpts select.inp,.wizrow .inp{flex-basis:170px;min-width:170px}
+  #vuOpts select.inp,.wizrow .inp{flex-basis:170px;min-width:170px}
 }
 /* proper touch feedback: kill the default blue tap flash + accidental
    long-press text selection on controls, and give pressed states that
@@ -559,8 +597,8 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 #pgStudio.stslim #stGenBar .row{margin-top:2px!important} /* row carries an inline margin-top:6px */
 #pgStudio.stslim #stJumpBar{padding:1px 0 2px}
 #pgStudio.stslim #stGroupChips{margin-top:0}
-/* comfort: keyboard nudge discoverability + roomier sliders on 320-class phones */
-.rng:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* comfort: roomier sliders on 320-class phones (keyboard-nudge focus ring now
+   comes from the global :focus-visible rule near .inp:focus) */
 @media(max-width:359px){.st-ctl label{flex:1 0 100%;min-width:0}.rng{min-width:150px}}
 /* empty-state dropzone (MUST #9) */
 #stPicker .ref.stbig,#rsPicker .ref.stbig{width:100%;min-height:120px;height:auto}
@@ -590,7 +628,13 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 .v2-range{width:100%;min-height:44px;accent-color:var(--gold)}
 #v2Hero .subh{margin-top:var(--sp-3)}
 .v2-busy{pointer-events:none;opacity:.55}
-.chip.v2-sw{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border-radius:50%}
+/* v4.28: the Stop escape hatch stays live (and fully visible) inside the
+   frozen busy region */
+.v2-busy #btnV2Stop{pointer-events:auto;opacity:1}
+.chip.v2-sw{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border-radius:50%;position:relative}
+/* v4.28: 34px stays the visual dot, but the hit area extends to 44px
+   (same ::after technique as .refstrip .rsx) */
+.chip.v2-sw::after{content:"";position:absolute;inset:-5px}
 .chip.v2-sw.on{outline:2px solid var(--gold);outline-offset:2px}
 /* ---- v4.27.0 Home (pgDash) + header gear + wizard result step ---- */
 .nav-gear{width:44px;height:44px;min-width:44px;min-height:44px;flex:none;background:none;border:none;color:var(--cream);display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);margin-left:auto}
@@ -611,7 +655,7 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 .dash-card .bdg svg{width:18px;height:18px}
 .dash-card .lbl{font-weight:800;font-size:14.5px;margin-top:8px;line-height:1.75}
 .dash-card .sub{font-size:var(--fs-xs);color:var(--muted);line-height:1.5}
-.dash-card:active .art{transform:scale(.97);transition:transform 120ms}
+.dash-card:active .art{transform:scale(.97)}
 @media (prefers-reduced-motion: reduce){.dash-card:active .art{transform:none}}
 .dash-strip{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;margin:var(--sp-2) 0}
 .dash-strip img{width:96px;height:128px;object-fit:cover;border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
@@ -636,6 +680,18 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 .ic-car{width:12px;height:12px;display:block;vertical-align:0}
 .ic-r90{transform:rotate(90deg)}
 .ic-r180{transform:rotate(180deg)}
+/* v4.28 unified press/hover transitions — the interactive surfaces animate
+   transform + color-family properties only (never layout). .dash-card .art
+   carries the transition permanently so the :active scale eases back on
+   release instead of snapping (the old transition lived inside :active). */
+.btn,.chip,.subtab,.wfmini,.pcard,.dash-card .art{transition:transform var(--dur-1) var(--ease-out),border-color var(--dur-1) ease,background-color var(--dur-2) ease,color var(--dur-2) ease,opacity var(--dur-2) ease}
+.tabb{transition:color var(--dur-2) ease}
+.btn:not(:disabled):active,.chip:active,.subtab:active,.wfmini:active,.pcard:active{transform:scale(.97)}
+@media (prefers-reduced-motion: reduce){.btn:active,.chip:active,.subtab:active,.wfmini:active,.pcard:active{transform:none}}
+/* v4.28 motion-system catch-all: one guard for every surface the motion wave
+   animates (the Studio stage/canvas keeps its own dedicated guard above —
+   do not fold it in here). */
+@media (prefers-reduced-motion: reduce){.page.on,.toast,.wiz.on,.onb.on,.wiz.on .wiz-in,.onb.on .onb-card,.result-box.on,.result-box.on .result-img,.tabb::before,.grp.open .grp-b,.spin.on::before,.gen.working,.btn,.chip,.subtab,.wfmini,.pcard,.tabb,.dash-card .art{animation:none!important;transition:none!important}}
 </style>
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -1239,8 +1295,12 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn btn-gold grow gen" id="btnV2Start"></button>
+        <button class="btn" id="btnV2Batch"></button>
       </div>
-      <div class="spin" id="v2Spin"></div>
+      <div class="row" style="align-items:center">
+        <div class="spin" id="v2Spin" style="flex:1"></div>
+        <button class="btn" id="btnV2Stop" style="display:none;margin-top:10px"></button>
+      </div>
       <div class="status" id="stV2Gen"></div>
       <div class="mut" id="v2Log" style="font-family:ui-monospace,monospace;font-size:var(--fs-2xs)"></div>
       <button class="btn" id="btnV2Retry" style="display:none;margin-top:8px"></button>
@@ -1283,7 +1343,10 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 
   <section class="card" id="rsGenCard">
     <button class="btn btn-gold gen" id="btnRsGen"></button>
-    <div class="spin" id="rsSpin"></div>
+    <div class="row" style="align-items:center">
+      <div class="spin" id="rsSpin" style="flex:1"></div>
+      <button class="btn" id="btnRsStop" style="display:none;margin-top:10px"></button>
+    </div>
     <div class="status" id="stRsGen"></div>
     <button class="btn" id="btnRsRetry" style="display:none;margin-top:8px"></button>
   </section>
@@ -1320,6 +1383,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <h2>PROMPT</h2>
     <div class="refstrip" id="refStrip"></div>
     <textarea class="inp" id="prompt" placeholder="One-Tap နှိပ်ရင် ဒီမှာ prompt အလိုအလျောက် ရောက်လာမယ် — ကိုယ်တိုင်လည်း English/မြန်မာလို ရေးလို့ရတယ်…"></textarea>
+    <div class="mut" id="genTrHint" style="display:none;margin-top:4px"></div>
     <div class="mut" id="tapNote" style="margin-top:6px"></div>
     <div id="promptHistWrap" style="display:none">
       <div class="subh" id="phHead"></div>
@@ -1343,21 +1407,30 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <option>1:1</option><option>3:4</option><option>4:3</option><option>4:5</option>
         <option>9:16</option><option>16:9</option><option>2:3</option><option>3:2</option>
       </select>
-      <select class="inp" id="selCount">
-        <option value="1">×1</option>
-        <option value="2">×2</option>
-        <option value="4">×4</option>
-      </select>
-      <select class="inp" id="selSize">
-        <option value="">Size: Auto</option>
-        <option value="1K">1K</option>
-        <option value="2K">2K (Pro)</option>
-        <option value="4K">4K (Pro)</option>
-      </select>
-      <select class="inp" id="selQual">
-        <option value="">Quality: Std</option>
-        <option value="high">High Detail</option>
-      </select>
+    </div>
+    <!-- v4.28: Count/Size/Quality demoted behind Advanced so the default view
+         is Provider + Model + Ratio + GENERATE inside one viewport -->
+    <div class="grp" id="genGrpAdvanced">
+      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg> <span id="genAdvLbl">Advanced</span></span></button>
+      <div class="grp-b">
+        <div class="row" id="genOptsAdv">
+          <select class="inp" id="selCount">
+            <option value="1">×1</option>
+            <option value="2">×2</option>
+            <option value="4">×4</option>
+          </select>
+          <select class="inp" id="selSize">
+            <option value="">Size: Auto</option>
+            <option value="1K">1K</option>
+            <option value="2K">2K (Pro)</option>
+            <option value="4K">4K (Pro)</option>
+          </select>
+          <select class="inp" id="selQual">
+            <option value="">Quality: Std</option>
+            <option value="high">High Detail</option>
+          </select>
+        </div>
+      </div>
     </div>
     <label class="mut" id="fallbackRow" style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer">
       <input type="checkbox" id="chkFallback" checked style="width:auto">
@@ -1408,6 +1481,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   <section class="card">
     <h2>PROMPT</h2>
     <textarea class="inp" id="vidPrompt" placeholder="…"></textarea>
+    <div class="mut" id="vidTrHint" style="display:none;margin-top:4px"></div>
     <div class="mut" id="vidPromptCount" style="margin-top:4px;text-align:right;font-size:11px"></div>
   </section>
 
@@ -1503,6 +1577,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   <section class="card">
     <h2>PROMPT</h2>
     <textarea class="inp" id="t2iPrompt" placeholder="…"></textarea>
+    <div class="mut" id="t2iTrHint" style="display:none;margin-top:4px"></div>
     <div class="mut" id="t2iPromptCount" style="margin-top:4px;text-align:right;font-size:11px"></div>
   </section>
 
@@ -1703,7 +1778,7 @@ var RH_MODELS = [
    cycle), closer in shape to the Gemini call it sits next to. */
 var OA_LS_KEY = "hnk_oa_apikey";
 var OA_BASE = "https://api.openai.com/v1";
-var OA_MODEL = "gpt-image-1";
+var OA_MODEL = "gpt-image-2";
 var LS_STATE = "hnk_web_studio_v2_state";
 
 /* ---------- language (my/en) — toggle reloads so every builder re-reads t() ---------- */
@@ -1763,9 +1838,9 @@ var TR_X = {"hero_h1": {"shn": "One-Tap ၶွင် Photoshop panel ႁွတ�
 var TR_NEW = {"banner_key": {"my": "🔑 API key မထည့်ရသေးပါ — ဒီမှာနှိပ်ပြီး Setup မှာ ထည့်ပါ (တစ်ခါထည့်ရုံပဲ)", "en": "🔑 No API key yet — tap here to add it in Setup (one time only)", "shn": "🔑 ပႆႇသႂ်ႇ API key — ၼဵၵ်းတီႈၼႆႈသေ သႂ်ႇတီႈ Setup", "kac": "🔑 API key rai n bang shi — ndai dip nna Setup hta bang u", "th": "🔑 ยังไม่มี API key — แตะที่นี่เพื่อใส่ใน Setup (ครั้งเดียว)", "zh": "🔑 尚未填写 API key — 点此前往 Setup 填写（仅需一次）", "vi": "🔑 Chưa có API key — chạm vào đây để thêm trong Setup (chỉ một lần)", "id": "🔑 Belum ada API key — ketuk di sini untuk mengisi di Setup (sekali saja)", "ms": "🔑 Belum ada API key — ketik di sini untuk isi di Setup (sekali sahaja)"}, "share_h2": {"my": "မိတ်ဆွေတွေကို ဝေမျှရန်", "en": "Share with friends", "shn": "ၽႄႈပၼ်ဢူၺ်းၵေႃႉ", "kac": "Manang ni hpe garan u", "th": "แชร์ให้เพื่อน", "zh": "分享给朋友", "vi": "Chia sẻ với bạn bè", "id": "Bagikan ke teman", "ms": "Kongsi dengan rakan"}, "share_p": {"my": "Link ကို Messenger / Telegram / Viber ဘယ်မှာပို့ပို့ — HNK logo နဲ့ preview card လှလှလေး ပေါ်ပြီး နှိပ်လိုက်တာနဲ့ ဒီ app ထဲ တန်းရောက်မယ်။", "en": "Paste the link anywhere — Messenger, Telegram, Viber — a beautiful HNK preview card appears, and one tap opens this app.", "shn": "သူင်ႇ link တီႈလႂ်ၵေႃႈလႆႈ — preview card ႁၢင်ႈလီ တေဢွၵ်ႇမႃး၊ ၼဵၵ်းၺႃး ၶဝ်ႈ app ၵမ်းလဵဝ်", "kac": "Link hpe gara kaw tim shagun u — preview card tsawm ai pru na, dip yang app hta shang na", "th": "วางลิงก์ที่ไหนก็ได้ — จะขึ้นการ์ดพรีวิวสวย ๆ แตะแล้วเข้าแอปทันที", "zh": "把链接粘贴到任何地方 — 会显示精美的预览卡片，点一下即可打开应用", "vi": "Dán link ở bất cứ đâu — thẻ xem trước đẹp sẽ hiện ra, chạm là mở app", "id": "Tempel tautan di mana saja — kartu pratinjau cantik muncul, sekali ketuk langsung buka", "ms": "Tampal pautan di mana-mana — kad pratonton cantik muncul, satu ketikan terus buka"}, "share_btn": {"my": "📤 Share Link", "en": "📤 Share Link", "shn": "📤 ၽႄႈ Link", "kac": "📤 Link garan", "th": "📤 แชร์ลิงก์", "zh": "📤 分享链接", "vi": "📤 Chia sẻ link", "id": "📤 Bagikan tautan", "ms": "📤 Kongsi pautan"}, "copy_btn": {"my": "🔗 Link ကူးယူ", "en": "🔗 Copy Link", "shn": "🔗 ၶူတ်ႉ Link", "kac": "🔗 Link copy", "th": "🔗 คัดลอกลิงก์", "zh": "🔗 复制链接", "vi": "🔗 Sao chép link", "id": "🔗 Salin tautan", "ms": "🔗 Salin pautan"}, "st_key_saved": {"my": "Key သိမ်းထားပြီးသား ✓", "en": "Key already saved ✓", "shn": "သိမ်းဝႆႉ Key ယဝ်ႉ ✓", "kac": "Key da nga sai ✓", "th": "บันทึกคีย์ไว้แล้ว ✓", "zh": "密钥已保存 ✓", "vi": "Khóa đã được lưu ✓", "id": "Key sudah tersimpan ✓", "ms": "Key sudah disimpan ✓"}, "st_key_checking": {"my": "စစ်နေသည်…", "en": "Checking…", "shn": "တိုၵ်ႉတွပ်ႇထၢမ်ယူႇ…", "kac": "Yu chyam nga ai…", "th": "กำลังตรวจสอบ…", "zh": "正在检查…", "vi": "Đang kiểm tra…", "id": "Memeriksa…", "ms": "Menyemak…"}, "st_key_valid": {"my": "Key မှန်ပါတယ် — သိမ်းပြီး ✓", "en": "Key is valid — saved ✓", "shn": "Key ၸိုဝ်ႈလီ — သိမ်းယဝ်ႉ ✓", "kac": "Key teng ai — da sai ✓", "th": "คีย์ถูกต้อง — บันทึกแล้ว ✓", "zh": "密钥有效 — 已保存 ✓", "vi": "Khóa hợp lệ — đã lưu ✓", "id": "Key valid — tersimpan ✓", "ms": "Key sah — disimpan ✓"}, "st_key_invalid": {"my": "Key မမှန်ပါ — ပြန်စစ်ပါ", "en": "Key invalid — please recheck", "shn": "Key ဢမ်ႇၸႂ်ႈ — ၶိုၼ်းတွပ်ႇထၢမ်တူၺ်း", "kac": "Key n teng ai — bai yu chyam u", "th": "คีย์ไม่ถูกต้อง — กรุณาตรวจสอบอีกครั้ง", "zh": "密钥无效 — 请重新检查", "vi": "Khóa không hợp lệ — vui lòng kiểm tra lại", "id": "Key tidak valid — periksa lagi", "ms": "Key tidak sah — sila semak semula"}, "st_key_savedstatus": {"my": "သိမ်းပြီး (status {S})", "en": "Saved (status {S})", "shn": "သိမ်းယဝ်ႉ (status {S})", "kac": "Da sai (status {S})", "th": "บันทึกแล้ว (status {S})", "zh": "已保存 (status {S})", "vi": "Đã lưu (status {S})", "id": "Tersimpan (status {S})", "ms": "Disimpan (status {S})"}, "st_key_noconn": {"my": "ချိတ်ဆက်မရ — internet စစ်ပါ", "en": "Couldn't connect — check your internet", "shn": "ၽိတ်းၽၢတ်ႇဢမ်ႇလႆႈ — တွပ်ႇထၢမ် internet တူၺ်း", "kac": "N grau connect — internet yu chyam u", "th": "เชื่อมต่อไม่ได้ — ตรวจสอบอินเทอร์เน็ต", "zh": "无法连接 — 请检查网络", "vi": "Không thể kết nối — kiểm tra internet", "id": "Tidak dapat terhubung — periksa internet Anda", "ms": "Tidak dapat berhubung — semak internet anda"}, "st_share_copied": {"my": "Link ကူးပြီး ✓ — ကြိုက်တဲ့နေရာ paste လုပ်ပို့ပါ", "en": "Link copied ✓ — paste it wherever you like", "shn": "ၶူတ်ႉ Link ယဝ်ႉ ✓ — paste တီႈလႂ်ၵေႃႈလႆႈ", "kac": "Link copy sai ✓ — gara kaw mi paste bang u", "th": "คัดลอกลิงก์แล้ว ✓ — วางที่ไหนก็ได้ตามใจ", "zh": "链接已复制 ✓ — 可粘贴到任何地方", "vi": "Đã sao chép link ✓ — dán ở bất cứ đâu bạn muốn", "id": "Tautan disalin ✓ — tempel di mana saja", "ms": "Pautan disalin ✓ — tampal di mana-mana"}};
 Object.keys(TR_X).forEach(function(k){ if(TR[k]) Object.keys(TR_X[k]).forEach(function(l){ TR[k][l]=TR_X[k][l]; }); });
 Object.keys(TR_NEW).forEach(function(k){ TR[k]=TR_NEW[k]; });
-var TR_MORE={"lb_src": {"my": "Ref ပုံ", "en": "SOURCE", "shn": "Ref ႁၢင်ႈ", "kac": "Source", "th": "ต้นทาง", "zh": "来源", "vi": "NGUỒN", "id": "SUMBER", "ms": "SUMBER"}, "lb_res": {"my": "ရလဒ်", "en": "RESULT", "shn": "ၽွၼ်းလႆႈ", "kac": "Lachyum", "th": "ผลลัพธ์", "zh": "结果", "vi": "KẾT QUẢ", "id": "HASIL", "ms": "HASIL"}, "lb_before": {"my": "မူရင်း", "en": "BEFORE", "shn": "မိူဝ်ႈဢွၼ်", "kac": "Shawng", "th": "ก่อน", "zh": "之前", "vi": "TRƯỚC", "id": "SEBELUM", "ms": "SEBELUM"}, "lb_after": {"my": "ပြင်ပြီး", "en": "AFTER", "shn": "ဝၢႆးလင်", "kac": "Hpang", "th": "หลัง", "zh": "之后", "vi": "SAU", "id": "SESUDAH", "ms": "SELEPAS"}, "wf_note": {"my": "Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · Web version က Gemini engine နဲ့ အလုပ်လုပ်တယ်", "en": "Tap any card to open its wizard — Guide → Images → Generate · web version runs on the Gemini engine"}, "sb_note": {"my": "IMAGE 2 (scene ဓာတ်ပုံ) ကို AI နဲ့ ခွဲခြမ်းပြီး scene prompt အသေးစိတ် ထုတ်ယူတယ် — ရွေးထားတဲ့ အပိုင်းတွေကိုပဲ ဖော်ပြမယ်", "en": "Analyzes IMAGE 2 (a scene photo) with AI and extracts a detailed scene prompt — only the ticked aspects are described"}, "sb_btn": {"my": "🪄 Scene ထုတ်ယူ → Prompt", "en": "🪄 Extract Scene → Prompt"}, "rt_strength": {"my": "အားပြင်း:", "en": "Strength:"}, "rt_note": {"my": "Chip တွေက toggle — ဖွင့်ထားသမျှ Generate မှာ Retouch block အဖြစ် ပေါင်းသွားမယ် (Add-ons summary မှာ ပြ)", "en": "Chips are toggles — everything enabled blends into Generate as a retouch block (shown in the Add-ons summary)"}, "addon_on": {"my": "ဖွင့်ထား: {B} — Generate မှာ အလိုအလျောက် ပေါင်းမယ်", "en": "Active: {B} — blends automatically into Generate"}, "addon_off": {"my": "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်", "en": "Nothing enabled — that’s fine too"}, "retry": {"my": "🔄 ပြန်စမ်းမယ်", "en": "🔄 Retry"}, "chain_h": {"my": "➡ ရလဒ်ကို ဆက်ပြင်မယ်", "en": "➡ Continue editing this result"}, "opt_flash": {"my": "Flash (မြန်)", "en": "Flash (fast)"}, "opt_pro": {"my": "Pro (အရည်အသွေး)", "en": "Pro (quality)"}, "plat_h2": {"my": "ဘယ်စက်မှာမဆို သုံးလို့ရတယ်", "en": "Works on every device"}, "plat_p1": {"my": "Chrome နဲ့ဖွင့် → menu (⋮) → “Add to Home screen” / “Install app” → app icon နဲ့ တစ်ချက်နှိပ်ဖွင့်လို့ရပြီ။", "en": "Open in Chrome → menu (⋮) → “Add to Home screen” / “Install app” → launch from an app icon."}, "plat_p2": {"my": "Safari နဲ့ဖွင့် → Share (⬆︎) ခလုတ် → “Add to Home Screen” → home screen မှာ HNK icon ပေါ်လာမယ်။", "en": "Open in Safari → Share (⬆︎) → “Add to Home Screen” → the HNK icon appears on your home screen."}, "plat_p3": {"my": "Chrome / Edge မှာ address bar ညာဘက်က install (⊕) icon နှိပ်ရင် desktop app လို သီးသန့် window နဲ့ ပွင့်မယ်။", "en": "In Chrome / Edge, click the install (⊕) icon in the address bar to run it as a desktop app."}, "plat_p4": {"my": "CCX ဖိုင် download → double-click → Creative Cloud က install ပေးမယ် → Photoshop ထဲ Plugins → HNK Ai Panel။ RunningHub Enterprise engine · Layer တိုက်ရိုက်ထည့် · Retouch slider 50 အပြည့် — panel မှာသာ ရတယ်။", "en": "Download the CCX → double-click → Creative Cloud installs it → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · direct layer placement · full 50-slider retouch — panel only."}, "plat_ps": {"my": "🎨 Photoshop (Windows / Mac) — အင်္ဂါရပ် အပြည့်ဆုံး", "en": "🎨 Photoshop (Windows / Mac) — fullest feature set"}, "site_link": {"my": "Website ကြည့်ရန်", "en": "View website"}, "onb_h": {"my": "👋 HNK Web Studio မှ ကြိုဆိုပါတယ်", "en": "👋 Welcome to HNK Web Studio"}, "onb_1": {"my": "အပေါ်ဘား ညာဘက်က gear ခလုတ်ကို နှိပ်ပြီး Setup မှာ Gemini API key ထည့်ပါ — aistudio.google.com/apikey မှာ အခမဲ့ရ၊ တစ်ခါထည့်ရုံပဲ", "en": "Tap the gear button in the top bar to open Setup and add your Gemini API key — free at aistudio.google.com/apikey, one time only"}, "onb_2": {"my": "Library ဒါမှမဟုတ် ဖုန်းထဲက ကိုယ့်ပုံကို IMAGE 1 အဖြစ် ရွေးပါ", "en": "Pick your photo as IMAGE 1 — from the Library or your phone"}, "onb_3": {"my": "Workflow ထဲက ကြိုက်တဲ့ card နှိပ်ပြီး wizard အတိုင်း Generate — ပြီးပြီ!", "en": "Tap any Workflow card and follow the wizard to Generate — done!"}, "onb_key": {"my": "🔑 Key အရင်ထည့်မယ်", "en": "🔑 Add key first"}, "onb_skip": {"my": "စကြည့်မယ် →", "en": "Explore first →"}};
+var TR_MORE={"lb_src": {"my": "Ref ပုံ", "en": "SOURCE", "shn": "Ref ႁၢင်ႈ", "kac": "Source", "th": "ต้นทาง", "zh": "来源", "vi": "NGUỒN", "id": "SUMBER", "ms": "SUMBER"}, "lb_res": {"my": "ရလဒ်", "en": "RESULT", "shn": "ၽွၼ်းလႆႈ", "kac": "Lachyum", "th": "ผลลัพธ์", "zh": "结果", "vi": "KẾT QUẢ", "id": "HASIL", "ms": "HASIL"}, "lb_before": {"my": "မူရင်း", "en": "BEFORE", "shn": "မိူဝ်ႈဢွၼ်", "kac": "Shawng", "th": "ก่อน", "zh": "之前", "vi": "TRƯỚC", "id": "SEBELUM", "ms": "SEBELUM"}, "lb_after": {"my": "ပြင်ပြီး", "en": "AFTER", "shn": "ဝၢႆးလင်", "kac": "Hpang", "th": "หลัง", "zh": "之后", "vi": "SAU", "id": "SESUDAH", "ms": "SELEPAS"}, "wf_note": {"my": "Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · သင် setup လုပ်ထားတဲ့ AI engine (Gemini · RunningHub · OpenAI) နဲ့ အလုပ်လုပ်တယ်", "en": "Tap any card to open its wizard — Guide → Images → Generate · runs on your configured AI engines (Gemini · RunningHub · OpenAI)"}, "sb_note": {"my": "IMAGE 2 (scene ဓာတ်ပုံ) ကို AI နဲ့ ခွဲခြမ်းပြီး scene prompt အသေးစိတ် ထုတ်ယူတယ် — ရွေးထားတဲ့ အပိုင်းတွေကိုပဲ ဖော်ပြမယ်", "en": "Analyzes IMAGE 2 (a scene photo) with AI and extracts a detailed scene prompt — only the ticked aspects are described"}, "sb_btn": {"my": "🪄 Scene ထုတ်ယူ → Prompt", "en": "🪄 Extract Scene → Prompt"}, "rt_strength": {"my": "အားပြင်း:", "en": "Strength:"}, "rt_note": {"my": "Chip တွေက toggle — ဖွင့်ထားသမျှ Generate မှာ Retouch block အဖြစ် ပေါင်းသွားမယ် (Add-ons summary မှာ ပြ)", "en": "Chips are toggles — everything enabled blends into Generate as a retouch block (shown in the Add-ons summary)"}, "addon_on": {"my": "ဖွင့်ထား: {B} — Generate မှာ အလိုအလျောက် ပေါင်းမယ်", "en": "Active: {B} — blends automatically into Generate"}, "addon_off": {"my": "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်", "en": "Nothing enabled — that’s fine too"}, "retry": {"my": "🔄 ပြန်စမ်းမယ်", "en": "🔄 Retry"}, "chain_h": {"my": "➡ ရလဒ်ကို ဆက်ပြင်မယ်", "en": "➡ Continue editing this result"}, "opt_flash": {"my": "Flash (မြန်)", "en": "Flash (fast)"}, "opt_pro": {"my": "Pro (အရည်အသွေး)", "en": "Pro (quality)"}, "plat_h2": {"my": "ဘယ်စက်မှာမဆို သုံးလို့ရတယ်", "en": "Works on every device"}, "plat_p1": {"my": "Chrome နဲ့ဖွင့် → menu (⋮) → “Add to Home screen” / “Install app” → app icon နဲ့ တစ်ချက်နှိပ်ဖွင့်လို့ရပြီ။", "en": "Open in Chrome → menu (⋮) → “Add to Home screen” / “Install app” → launch from an app icon."}, "plat_p2": {"my": "Safari နဲ့ဖွင့် → Share (⬆︎) ခလုတ် → “Add to Home Screen” → home screen မှာ HNK icon ပေါ်လာမယ်။", "en": "Open in Safari → Share (⬆︎) → “Add to Home Screen” → the HNK icon appears on your home screen."}, "plat_p3": {"my": "Chrome / Edge မှာ address bar ညာဘက်က install (⊕) icon နှိပ်ရင် desktop app လို သီးသန့် window နဲ့ ပွင့်မယ်။", "en": "In Chrome / Edge, click the install (⊕) icon in the address bar to run it as a desktop app."}, "plat_p4": {"my": "CCX ဖိုင် download → double-click → Creative Cloud က install ပေးမယ် → Photoshop ထဲ Plugins → HNK Ai Panel။ RunningHub Enterprise engine · Layer တိုက်ရိုက်ထည့် · Retouch slider 50 အပြည့် — panel မှာသာ ရတယ်။", "en": "Download the CCX → double-click → Creative Cloud installs it → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · direct layer placement · full 50-slider retouch — panel only."}, "plat_ps": {"my": "🎨 Photoshop (Windows / Mac) — အင်္ဂါရပ် အပြည့်ဆုံး", "en": "🎨 Photoshop (Windows / Mac) — fullest feature set"}, "site_link": {"my": "Website ကြည့်ရန်", "en": "View website"}, "onb_h": {"my": "👋 HNK Web Studio မှ ကြိုဆိုပါတယ်", "en": "👋 Welcome to HNK Web Studio"}, "onb_1": {"my": "အပေါ်ဘား ညာဘက်က gear ခလုတ်ကို နှိပ်ပြီး Setup မှာ Gemini API key ထည့်ပါ — aistudio.google.com/apikey မှာ အခမဲ့ရ၊ တစ်ခါထည့်ရုံပဲ", "en": "Tap the gear button in the top bar to open Setup and add your Gemini API key — free at aistudio.google.com/apikey, one time only"}, "onb_2": {"my": "Library ဒါမှမဟုတ် ဖုန်းထဲက ကိုယ့်ပုံကို IMAGE 1 အဖြစ် ရွေးပါ", "en": "Pick your photo as IMAGE 1 — from the Library or your phone"}, "onb_3": {"my": "Workflow ထဲက ကြိုက်တဲ့ card နှိပ်ပြီး wizard အတိုင်း Generate — ပြီးပြီ!", "en": "Tap any Workflow card and follow the wizard to Generate — done!"}, "onb_key": {"my": "🔑 Key အရင်ထည့်မယ်", "en": "🔑 Add key first"}, "onb_skip": {"my": "စကြည့်မယ် →", "en": "Explore first →"}};
 Object.keys(TR_MORE).forEach(function(k){ TR[k]=TR_MORE[k]; });
-var TR_L10={"wf_note":{shn:"ၼဵၵ်း card ဢၼ်လႂ်သေဢမ်ႇဝႃႈ wizard တေပိုတ်ႇ — Guide → Images → Generate · web version ႁဵတ်းၵၢၼ်လူၺ်ႈ Gemini engine",kac:"Card langai mi dip yang wizard hpaw na — Guide → Images → Generate · web version gaw Gemini engine hte galaw ai",th:"แตะการ์ดใดก็ได้เพื่อเปิด wizard — Guide → Images → Generate · เวอร์ชันเว็บทำงานบน Gemini engine",zh:"点击任意卡片即可打开向导 — Guide → Images → Generate · 网页版由 Gemini engine 驱动",vi:"Chạm vào card bất kỳ để mở wizard — Guide → Images → Generate · bản web chạy trên engine Gemini",id:"Ketuk kartu mana pun untuk membuka wizard-nya — Guide → Images → Generate · versi web berjalan dengan engine Gemini",ms:"Ketik mana-mana kad untuk membuka wizard — Guide → Images → Generate · versi web berjalan pada enjin Gemini"},"sb_note":{shn:"ဢဝ် AI ထတ်းသၢင် IMAGE 2 (ၶႅပ်းႁၢင်ႈ scene) သေ ထုတ်ႇဢွၵ်ႇ scene prompt ႁူဝ်ယွႆႈ — တေၼႄပၼ် ၶေႃႈဢၼ်မၢႆလိူၵ်ႈဝႆႉၵူၺ်း",kac:"IMAGE 2 (scene sumla) hpe AI hte sawn maram nna scene prompt atsawm shaw la ai — matsing da ai lam ni hpe sha tsun dan na",th:"วิเคราะห์ IMAGE 2 (ภาพ scene) ด้วย AI แล้วสกัด scene prompt แบบละเอียด — อธิบายเฉพาะหัวข้อที่ติ๊กไว้เท่านั้น",zh:"用 AI 分析 IMAGE 2 (scene 照片) 并提取详细的 scene prompt — 只描述已勾选的方面",vi:"Phân tích IMAGE 2 (ảnh scene) bằng AI và trích xuất scene prompt chi tiết — chỉ mô tả các khía cạnh đã tick",id:"Menganalisis IMAGE 2 (foto scene) dengan AI dan mengekstrak scene prompt terperinci — hanya aspek yang dicentang yang dideskripsikan",ms:"Menganalisis IMAGE 2 (foto scene) dengan AI dan mengekstrak prompt scene terperinci — hanya aspek yang ditanda akan diterangkan"},"sb_btn":{shn:"🪄 ထုတ်ႇ Scene → Prompt",kac:"🪄 Scene shaw la → Prompt",th:"🪄 สกัด Scene → Prompt",zh:"🪄 提取 Scene → Prompt",vi:"🪄 Trích xuất Scene → Prompt",id:"🪄 Ekstrak Scene → Prompt",ms:"🪄 Ekstrak Scene → Prompt"},"rt_strength":{shn:"ႁႅင်း:",kac:"N-gun:",th:"ความเข้ม:",zh:"强度:",vi:"Cường độ:",id:"Kekuatan:",ms:"Kekuatan:"},"rt_note":{shn:"Chip ၶဝ်ပဵၼ် toggle — ဢၼ်ပိုတ်ႇဝႆႉတင်းသဵင်ႈ တေလေႃးၶဝ်ႈၼႂ်း Generate ပဵၼ် Retouch block (ၼႄဝႆႉတီႈ Add-ons summary)",kac:"Chip ni gaw toggle re — hpaw da ai yawng Generate kaw retouch block hku lawm na (Add-ons summary kaw madun ai)",th:"Chip เป็นปุ่ม toggle — ทุกอย่างที่เปิดไว้จะรวมเข้ากับ Generate เป็นบล็อกรีทัช (แสดงในสรุป Add-ons)",zh:"Chip 均为开关 — 已启用的内容会作为精修块融入 Generate (显示在 Add-ons 摘要中)",vi:"Chip là các toggle — mọi thứ đang bật sẽ gộp vào Generate thành một khối retouch (hiển thị trong phần Add-ons)",id:"Chip berfungsi sebagai toggle — semua yang aktif menyatu ke Generate sebagai blok retouch (tampil di ringkasan Add-ons)",ms:"Chip ialah togol — semua yang diaktifkan digabungkan ke dalam Generate sebagai blok retouch (dipaparkan dalam ringkasan Add-ons)"},"addon_on":{shn:"ပိုတ်ႇဝႆႉ: {B} — တေလေႃးၶဝ်ႈ Generate ႁင်းၵူၺ်း",kac:"Hpaw da ai: {B} — Generate kaw shi hkrai lawm na",th:"เปิดใช้: {B} — จะรวมเข้ากับ Generate โดยอัตโนมัติ",zh:"已启用: {B} — 会自动融入 Generate",vi:"Đang bật: {B} — tự động gộp vào Generate",id:"Aktif: {B} — otomatis menyatu ke Generate",ms:"Aktif: {B} — digabungkan secara automatik ke dalam Generate"},"addon_off":{shn:"ပႆႇပိုတ်ႇသင် — ဢမ်ႇပိုတ်ႇၵေႃႈလႆႈယူႇ",kac:"Hpa n hpaw shi ai — n hpaw yang mung mai ai",th:"ยังไม่ได้เปิดอะไรเลย — ไม่เปิดก็ได้เช่นกัน",zh:"尚未启用任何项 — 不启用也没关系",vi:"Chưa bật gì cả — không bật cũng được",id:"Belum ada yang aktif — itu juga tidak apa-apa",ms:"Tiada yang diaktifkan — tidak mengapa juga"},"retry":{shn:"🔄 ၸၢမ်းတူၺ်းၶိုၼ်း",kac:"🔄 Bai chyam yu",th:"🔄 ลองใหม่",zh:"🔄 重试",vi:"🔄 Thử lại",id:"🔄 Coba lagi",ms:"🔄 Cuba semula"},"chain_h":{shn:"➡ သိုပ်ႇမႄးထတ်း ၽွၼ်းလႆႈၼႆႉ",kac:"➡ Ndai pru sumla hpe matut galaw",th:"➡ แก้ไขผลลัพธ์นี้ต่อ",zh:"➡ 继续编辑此结果",vi:"➡ Tiếp tục chỉnh sửa kết quả này",id:"➡ Lanjutkan mengedit hasil ini",ms:"➡ Terus sunting hasil ini"},"opt_flash":{shn:"Flash (ဝႆး)",kac:"Flash (lawan)",th:"Flash (เร็ว)",zh:"Flash (快速)",vi:"Flash (nhanh)",id:"Flash (cepat)",ms:"Flash (pantas)"},"opt_pro":{shn:"Pro (ၼမ်ႉၸၼ်ႉ)",kac:"Pro (atsawm dik)",th:"Pro (คุณภาพ)",zh:"Pro (高质量)",vi:"Pro (chất lượng)",id:"Pro (kualitas)",ms:"Pro (kualiti)"},"plat_h2":{shn:"ၸႂ်ႉလႆႈၼိူဝ်ၶိူင်ႈၵူႈဢၼ်",kac:"Jak shagu hta lang mai ai",th:"ใช้งานได้ทุกอุปกรณ์",zh:"任何设备都能用",vi:"Dùng được trên mọi thiết bị",id:"Berfungsi di semua perangkat",ms:"Berfungsi pada setiap peranti"},"plat_p1":{shn:"ပိုတ်ႇလူၺ်ႈ Chrome → menu (⋮) → “Add to Home screen” / “Install app” → ၼဵၵ်း app icon သေ ပိုတ်ႇလႆႈၵမ်းလဵဝ်။",kac:"Chrome hte hpaw u → menu (⋮) → “Add to Home screen” / “Install app” → app icon kaw na hpaw mai sai.",th:"เปิดใน Chrome → เมนู (⋮) → “Add to Home screen” / “Install app” → เปิดใช้จากไอคอนแอปได้เลย.",zh:"用 Chrome 打开 → 菜单 (⋮) → “Add to Home screen” / “Install app” → 之后即可从 app 图标启动。",vi:"Mở bằng Chrome → menu (⋮) → “Add to Home screen” / “Install app” → khởi chạy từ icon ứng dụng.",id:"Buka di Chrome → menu (⋮) → “Add to Home screen” / “Install app” → luncurkan dari ikon aplikasi.",ms:"Buka dalam Chrome → menu (⋮) → “Add to Home screen” / “Install app” → lancarkan dari ikon app."},"plat_p2":{shn:"ပိုတ်ႇလူၺ်ႈ Safari → ၼဵၵ်း Share (⬆︎) → “Add to Home Screen” → HNK icon တေဢွၵ်ႇမႃးၼိူဝ် home screen မႂ်း။",kac:"Safari hte hpaw u → Share (⬆︎) → “Add to Home Screen” → na a home screen kaw HNK icon pru wa na.",th:"เปิดใน Safari → Share (⬆︎) → “Add to Home Screen” → ไอคอน HNK จะปรากฏบนหน้าจอโฮมของคุณ.",zh:"用 Safari 打开 → Share (⬆︎) → “Add to Home Screen” → HNK 图标就会出现在主屏幕上。",vi:"Mở bằng Safari → Share (⬆︎) → “Add to Home Screen” → icon HNK xuất hiện trên màn hình chính.",id:"Buka di Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul di home screen Anda.",ms:"Buka dalam Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul pada skrin utama anda."},"plat_p3":{shn:"ၼႂ်း Chrome / Edge ၼဵၵ်း install (⊕) icon ၽၢႆႇၶႂႃ address bar သေ ပိုတ်ႇလႆႈမိူၼ် desktop app ၼႂ်း window ႁင်းၶေႃ။",kac:"Chrome / Edge hta address bar na install (⊕) icon dip yang desktop app zawn window langai hte hpaw na.",th:"ใน Chrome / Edge คลิกไอคอน install (⊕) ในแถบที่อยู่เพื่อใช้งานเป็นแอปเดสก์ท็อป.",zh:"在 Chrome / Edge 中，点击地址栏右侧的 install (⊕) 图标，即可作为桌面 app 运行。",vi:"Trong Chrome / Edge, bấm icon install (⊕) trên thanh địa chỉ để chạy như ứng dụng desktop.",id:"Di Chrome / Edge, klik ikon install (⊕) di address bar untuk menjalankannya sebagai aplikasi desktop.",ms:"Dalam Chrome / Edge, klik ikon install (⊕) pada bar alamat untuk menjalankannya sebagai app desktop."},"plat_p4":{shn:"Download ၾၢႆႇ CCX → double-click → Creative Cloud တေ install ပၼ် → ၼႂ်း Photoshop → Plugins → HNK Ai Panel။ RunningHub Enterprise engine · သႂ်ႇ Layer ၵမ်းသိုဝ်ႈ · Retouch slider 50 တဵမ်တဵမ် — လႆႈတီႈ panel ၵူၺ်း။",kac:"CCX download la → double-click → Creative Cloud install ya na → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · layer kaw direct bang · retouch slider 50 hpring tsup — panel kaw sha lu ai.",th:"ดาวน์โหลด CCX → ดับเบิลคลิก → Creative Cloud จะติดตั้งให้ → Photoshop → Plugins → HNK Ai Panel. เอนจิน RunningHub Enterprise · วาง layer ตรงเข้าไฟล์ · รีทัชครบ 50 slider — มีเฉพาะใน panel.",zh:"下载 CCX → 双击 → Creative Cloud 自动安装 → Photoshop → Plugins → HNK Ai Panel。RunningHub Enterprise engine · 图层直接置入 · 完整 50 滑杆精修 — 仅 panel 提供。",vi:"Tải file CCX → double-click → Creative Cloud sẽ cài đặt → Photoshop → Plugins → HNK Ai Panel. Engine RunningHub Enterprise · đặt layer trực tiếp · đủ 50 slider retouch — chỉ có trên panel.",id:"Download CCX → klik dua kali → Creative Cloud menginstalnya → Photoshop → Plugins → HNK Ai Panel. Engine RunningHub Enterprise · penempatan layer langsung · retouch 50 slider penuh — hanya di panel.",ms:"Muat turun CCX → klik dua kali → Creative Cloud memasangnya → Photoshop → Plugins → HNK Ai Panel. Enjin RunningHub Enterprise · peletakan layer terus · retouch 50-slider penuh — panel sahaja."},"plat_ps":{shn:"🎨 Photoshop (Windows / Mac) — feature တဵမ်ထူၼ်ႈသုတ်း",kac:"🎨 Photoshop (Windows / Mac) — feature hpring tsup dik",th:"🎨 Photoshop (Windows / Mac) — ฟีเจอร์ครบที่สุด",zh:"🎨 Photoshop (Windows / Mac) — 功能最全",vi:"🎨 Photoshop (Windows / Mac) — bộ tính năng đầy đủ nhất",id:"🎨 Photoshop (Windows / Mac) — fitur paling lengkap",ms:"🎨 Photoshop (Windows / Mac) — set ciri paling lengkap"},"site_link":{shn:"တူၺ်း Website",kac:"Website yu u",th:"ดูเว็บไซต์",zh:"查看网站",vi:"Xem website",id:"Lihat website",ms:"Lihat laman web"},"onb_h":{shn:"👋 ႁပ်ႉတွၼ်ႈထိုင် HNK Web Studio",kac:"👋 HNK Web Studio de hkap tau ga ai",th:"👋 ยินดีต้อนรับสู่ HNK Web Studio",zh:"👋 欢迎使用 HNK Web Studio",vi:"👋 Chào mừng đến với HNK Web Studio",id:"👋 Selamat datang di HNK Web Studio",ms:"👋 Selamat datang ke HNK Web Studio"},"onb_1":{shn:"ၼဵၵ်းပုမ်ႇ gear ၽၢႆႇၶႂႃ header သေ ပိုတ်ႇ Setup ယဝ်ႉ သႂ်ႇ Gemini API key — လႆႈလၢႆလၢႆ တီႈ aistudio.google.com/apikey၊ သႂ်ႇၵမ်းလဵဝ်ၵူၺ်း",kac:"Header lahta maga na gear button dip nna Setup hpaw nna na a Gemini API key bang u — aistudio.google.com/apikey kaw free lu la, kalang sha ra ai",th:"แตะปุ่ม gear ที่แถบด้านบนเพื่อเปิด Setup แล้วเพิ่ม Gemini API key — รับฟรีที่ aistudio.google.com/apikey ทำครั้งเดียวเท่านั้น",zh:"点按顶栏右侧的 gear（齿轮）按钮打开 Setup，添加你的 Gemini API key — 在 aistudio.google.com/apikey 免费获取，只需一次",vi:"Chạm nút gear ở thanh trên cùng để mở Setup và thêm Gemini API key — miễn phí tại aistudio.google.com/apikey, chỉ cần một lần",id:"Ketuk tombol gear di bilah atas untuk membuka Setup dan tambahkan Gemini API key Anda — gratis di aistudio.google.com/apikey, cukup sekali saja",ms:"Ketik butang gear di bar atas untuk membuka Setup dan tambah Gemini API key anda — percuma di aistudio.google.com/apikey, sekali sahaja"},"onb_2":{shn:"လိူၵ်ႈၶႅပ်းႁၢင်ႈမႂ်း ပဵၼ် IMAGE 1 — တီႈ Library ဢမ်ႇၼၼ် ၼႂ်းၾူၼ်းမႂ်း",kac:"Na a sumla hpe IMAGE 1 hku lata u — Library kaw na shing nrai na a phone kaw na",th:"เลือกภาพของคุณเป็น IMAGE 1 — จาก Library หรือจากมือถือของคุณ",zh:"选择你的照片作为 IMAGE 1 — 从 Library 或手机中选取",vi:"Chọn ảnh của bạn làm IMAGE 1 — từ Library hoặc điện thoại",id:"Pilih foto Anda sebagai IMAGE 1 — dari Library atau ponsel Anda",ms:"Pilih foto anda sebagai IMAGE 1 — dari Library atau telefon anda"},"onb_3":{shn:"ၼဵၵ်း card Workflow ဢၼ်လႂ်ၵေႃႈလႆႈ ႁဵတ်းၸွမ်း wizard သေ Generate — ယဝ်ႉယဝ်ႈ!",kac:"Workflow card langai mi dip nna wizard hte maren Generate u — ngut sai!",th:"แตะการ์ด Workflow ใดก็ได้ แล้วทำตาม wizard จนถึง Generate — เสร็จเลย!",zh:"点击任意 Workflow 卡片，按向导操作并 Generate — 完成！",vi:"Chạm vào card Workflow bất kỳ và làm theo wizard để Generate — xong!",id:"Ketuk kartu Workflow mana pun dan ikuti wizard hingga Generate — selesai!",ms:"Ketik mana-mana kad Workflow dan ikut wizard untuk Generate — siap!"},"onb_key":{shn:"🔑 သႂ်ႇ Key ဢွၼ်တၢင်း",kac:"🔑 Key shawng bang na",th:"🔑 เพิ่ม key ก่อน",zh:"🔑 先添加 key",vi:"🔑 Thêm key trước",id:"🔑 Tambah key dulu",ms:"🔑 Tambah key dahulu"},"onb_skip":{shn:"ၸၢမ်းတူၺ်းဢွၼ်တၢင်း →",kac:"Shawng yu chyam na →",th:"สำรวจก่อน →",zh:"先逛逛 →",vi:"Khám phá trước →",id:"Jelajahi dulu →",ms:"Teroka dahulu →"}};
+var TR_L10={"wf_note":{shn:"ၼဵၵ်း card ဢၼ်လႂ်သေဢမ်ႇဝႃႈ wizard တေပိုတ်ႇ — Guide → Images → Generate · ႁဵတ်းၵၢၼ်လူၺ်ႈ AI engine ဢၼ်ၸဝ်ႈၵဝ်ႇ setup ဝႆႉ (Gemini · RunningHub · OpenAI)",kac:"Card langai mi dip yang wizard hpaw na — Guide → Images → Generate · nang setup da ai AI engine (Gemini · RunningHub · OpenAI) hte galaw ai",th:"แตะการ์ดใดก็ได้เพื่อเปิด wizard — Guide → Images → Generate · ทำงานบน AI engine ที่คุณตั้งค่าไว้ (Gemini · RunningHub · OpenAI)",zh:"点击任意卡片即可打开向导 — Guide → Images → Generate · 由你配置的 AI engine 驱动（Gemini · RunningHub · OpenAI）",vi:"Chạm vào card bất kỳ để mở wizard — Guide → Images → Generate · chạy trên engine AI bạn đã cấu hình (Gemini · RunningHub · OpenAI)",id:"Ketuk kartu mana pun untuk membuka wizard-nya — Guide → Images → Generate · berjalan dengan engine AI yang Anda konfigurasi (Gemini · RunningHub · OpenAI)",ms:"Ketik mana-mana kad untuk membuka wizard — Guide → Images → Generate · berjalan pada enjin AI yang anda konfigurasikan (Gemini · RunningHub · OpenAI)"},"sb_note":{shn:"ဢဝ် AI ထတ်းသၢင် IMAGE 2 (ၶႅပ်းႁၢင်ႈ scene) သေ ထုတ်ႇဢွၵ်ႇ scene prompt ႁူဝ်ယွႆႈ — တေၼႄပၼ် ၶေႃႈဢၼ်မၢႆလိူၵ်ႈဝႆႉၵူၺ်း",kac:"IMAGE 2 (scene sumla) hpe AI hte sawn maram nna scene prompt atsawm shaw la ai — matsing da ai lam ni hpe sha tsun dan na",th:"วิเคราะห์ IMAGE 2 (ภาพ scene) ด้วย AI แล้วสกัด scene prompt แบบละเอียด — อธิบายเฉพาะหัวข้อที่ติ๊กไว้เท่านั้น",zh:"用 AI 分析 IMAGE 2 (scene 照片) 并提取详细的 scene prompt — 只描述已勾选的方面",vi:"Phân tích IMAGE 2 (ảnh scene) bằng AI và trích xuất scene prompt chi tiết — chỉ mô tả các khía cạnh đã tick",id:"Menganalisis IMAGE 2 (foto scene) dengan AI dan mengekstrak scene prompt terperinci — hanya aspek yang dicentang yang dideskripsikan",ms:"Menganalisis IMAGE 2 (foto scene) dengan AI dan mengekstrak prompt scene terperinci — hanya aspek yang ditanda akan diterangkan"},"sb_btn":{shn:"🪄 ထုတ်ႇ Scene → Prompt",kac:"🪄 Scene shaw la → Prompt",th:"🪄 สกัด Scene → Prompt",zh:"🪄 提取 Scene → Prompt",vi:"🪄 Trích xuất Scene → Prompt",id:"🪄 Ekstrak Scene → Prompt",ms:"🪄 Ekstrak Scene → Prompt"},"rt_strength":{shn:"ႁႅင်း:",kac:"N-gun:",th:"ความเข้ม:",zh:"强度:",vi:"Cường độ:",id:"Kekuatan:",ms:"Kekuatan:"},"rt_note":{shn:"Chip ၶဝ်ပဵၼ် toggle — ဢၼ်ပိုတ်ႇဝႆႉတင်းသဵင်ႈ တေလေႃးၶဝ်ႈၼႂ်း Generate ပဵၼ် Retouch block (ၼႄဝႆႉတီႈ Add-ons summary)",kac:"Chip ni gaw toggle re — hpaw da ai yawng Generate kaw retouch block hku lawm na (Add-ons summary kaw madun ai)",th:"Chip เป็นปุ่ม toggle — ทุกอย่างที่เปิดไว้จะรวมเข้ากับ Generate เป็นบล็อกรีทัช (แสดงในสรุป Add-ons)",zh:"Chip 均为开关 — 已启用的内容会作为精修块融入 Generate (显示在 Add-ons 摘要中)",vi:"Chip là các toggle — mọi thứ đang bật sẽ gộp vào Generate thành một khối retouch (hiển thị trong phần Add-ons)",id:"Chip berfungsi sebagai toggle — semua yang aktif menyatu ke Generate sebagai blok retouch (tampil di ringkasan Add-ons)",ms:"Chip ialah togol — semua yang diaktifkan digabungkan ke dalam Generate sebagai blok retouch (dipaparkan dalam ringkasan Add-ons)"},"addon_on":{shn:"ပိုတ်ႇဝႆႉ: {B} — တေလေႃးၶဝ်ႈ Generate ႁင်းၵူၺ်း",kac:"Hpaw da ai: {B} — Generate kaw shi hkrai lawm na",th:"เปิดใช้: {B} — จะรวมเข้ากับ Generate โดยอัตโนมัติ",zh:"已启用: {B} — 会自动融入 Generate",vi:"Đang bật: {B} — tự động gộp vào Generate",id:"Aktif: {B} — otomatis menyatu ke Generate",ms:"Aktif: {B} — digabungkan secara automatik ke dalam Generate"},"addon_off":{shn:"ပႆႇပိုတ်ႇသင် — ဢမ်ႇပိုတ်ႇၵေႃႈလႆႈယူႇ",kac:"Hpa n hpaw shi ai — n hpaw yang mung mai ai",th:"ยังไม่ได้เปิดอะไรเลย — ไม่เปิดก็ได้เช่นกัน",zh:"尚未启用任何项 — 不启用也没关系",vi:"Chưa bật gì cả — không bật cũng được",id:"Belum ada yang aktif — itu juga tidak apa-apa",ms:"Tiada yang diaktifkan — tidak mengapa juga"},"retry":{shn:"🔄 ၸၢမ်းတူၺ်းၶိုၼ်း",kac:"🔄 Bai chyam yu",th:"🔄 ลองใหม่",zh:"🔄 重试",vi:"🔄 Thử lại",id:"🔄 Coba lagi",ms:"🔄 Cuba semula"},"chain_h":{shn:"➡ သိုပ်ႇမႄးထတ်း ၽွၼ်းလႆႈၼႆႉ",kac:"➡ Ndai pru sumla hpe matut galaw",th:"➡ แก้ไขผลลัพธ์นี้ต่อ",zh:"➡ 继续编辑此结果",vi:"➡ Tiếp tục chỉnh sửa kết quả này",id:"➡ Lanjutkan mengedit hasil ini",ms:"➡ Terus sunting hasil ini"},"opt_flash":{shn:"Flash (ဝႆး)",kac:"Flash (lawan)",th:"Flash (เร็ว)",zh:"Flash (快速)",vi:"Flash (nhanh)",id:"Flash (cepat)",ms:"Flash (pantas)"},"opt_pro":{shn:"Pro (ၼမ်ႉၸၼ်ႉ)",kac:"Pro (atsawm dik)",th:"Pro (คุณภาพ)",zh:"Pro (高质量)",vi:"Pro (chất lượng)",id:"Pro (kualitas)",ms:"Pro (kualiti)"},"plat_h2":{shn:"ၸႂ်ႉလႆႈၼိူဝ်ၶိူင်ႈၵူႈဢၼ်",kac:"Jak shagu hta lang mai ai",th:"ใช้งานได้ทุกอุปกรณ์",zh:"任何设备都能用",vi:"Dùng được trên mọi thiết bị",id:"Berfungsi di semua perangkat",ms:"Berfungsi pada setiap peranti"},"plat_p1":{shn:"ပိုတ်ႇလူၺ်ႈ Chrome → menu (⋮) → “Add to Home screen” / “Install app” → ၼဵၵ်း app icon သေ ပိုတ်ႇလႆႈၵမ်းလဵဝ်။",kac:"Chrome hte hpaw u → menu (⋮) → “Add to Home screen” / “Install app” → app icon kaw na hpaw mai sai.",th:"เปิดใน Chrome → เมนู (⋮) → “Add to Home screen” / “Install app” → เปิดใช้จากไอคอนแอปได้เลย.",zh:"用 Chrome 打开 → 菜单 (⋮) → “Add to Home screen” / “Install app” → 之后即可从 app 图标启动。",vi:"Mở bằng Chrome → menu (⋮) → “Add to Home screen” / “Install app” → khởi chạy từ icon ứng dụng.",id:"Buka di Chrome → menu (⋮) → “Add to Home screen” / “Install app” → luncurkan dari ikon aplikasi.",ms:"Buka dalam Chrome → menu (⋮) → “Add to Home screen” / “Install app” → lancarkan dari ikon app."},"plat_p2":{shn:"ပိုတ်ႇလူၺ်ႈ Safari → ၼဵၵ်း Share (⬆︎) → “Add to Home Screen” → HNK icon တေဢွၵ်ႇမႃးၼိူဝ် home screen မႂ်း။",kac:"Safari hte hpaw u → Share (⬆︎) → “Add to Home Screen” → na a home screen kaw HNK icon pru wa na.",th:"เปิดใน Safari → Share (⬆︎) → “Add to Home Screen” → ไอคอน HNK จะปรากฏบนหน้าจอโฮมของคุณ.",zh:"用 Safari 打开 → Share (⬆︎) → “Add to Home Screen” → HNK 图标就会出现在主屏幕上。",vi:"Mở bằng Safari → Share (⬆︎) → “Add to Home Screen” → icon HNK xuất hiện trên màn hình chính.",id:"Buka di Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul di home screen Anda.",ms:"Buka dalam Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul pada skrin utama anda."},"plat_p3":{shn:"ၼႂ်း Chrome / Edge ၼဵၵ်း install (⊕) icon ၽၢႆႇၶႂႃ address bar သေ ပိုတ်ႇလႆႈမိူၼ် desktop app ၼႂ်း window ႁင်းၶေႃ။",kac:"Chrome / Edge hta address bar na install (⊕) icon dip yang desktop app zawn window langai hte hpaw na.",th:"ใน Chrome / Edge คลิกไอคอน install (⊕) ในแถบที่อยู่เพื่อใช้งานเป็นแอปเดสก์ท็อป.",zh:"在 Chrome / Edge 中，点击地址栏右侧的 install (⊕) 图标，即可作为桌面 app 运行。",vi:"Trong Chrome / Edge, bấm icon install (⊕) trên thanh địa chỉ để chạy như ứng dụng desktop.",id:"Di Chrome / Edge, klik ikon install (⊕) di address bar untuk menjalankannya sebagai aplikasi desktop.",ms:"Dalam Chrome / Edge, klik ikon install (⊕) pada bar alamat untuk menjalankannya sebagai app desktop."},"plat_p4":{shn:"Download ၾၢႆႇ CCX → double-click → Creative Cloud တေ install ပၼ် → ၼႂ်း Photoshop → Plugins → HNK Ai Panel။ RunningHub Enterprise engine · သႂ်ႇ Layer ၵမ်းသိုဝ်ႈ · Retouch slider 50 တဵမ်တဵမ် — လႆႈတီႈ panel ၵူၺ်း။",kac:"CCX download la → double-click → Creative Cloud install ya na → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · layer kaw direct bang · retouch slider 50 hpring tsup — panel kaw sha lu ai.",th:"ดาวน์โหลด CCX → ดับเบิลคลิก → Creative Cloud จะติดตั้งให้ → Photoshop → Plugins → HNK Ai Panel. เอนจิน RunningHub Enterprise · วาง layer ตรงเข้าไฟล์ · รีทัชครบ 50 slider — มีเฉพาะใน panel.",zh:"下载 CCX → 双击 → Creative Cloud 自动安装 → Photoshop → Plugins → HNK Ai Panel。RunningHub Enterprise engine · 图层直接置入 · 完整 50 滑杆精修 — 仅 panel 提供。",vi:"Tải file CCX → double-click → Creative Cloud sẽ cài đặt → Photoshop → Plugins → HNK Ai Panel. Engine RunningHub Enterprise · đặt layer trực tiếp · đủ 50 slider retouch — chỉ có trên panel.",id:"Download CCX → klik dua kali → Creative Cloud menginstalnya → Photoshop → Plugins → HNK Ai Panel. Engine RunningHub Enterprise · penempatan layer langsung · retouch 50 slider penuh — hanya di panel.",ms:"Muat turun CCX → klik dua kali → Creative Cloud memasangnya → Photoshop → Plugins → HNK Ai Panel. Enjin RunningHub Enterprise · peletakan layer terus · retouch 50-slider penuh — panel sahaja."},"plat_ps":{shn:"🎨 Photoshop (Windows / Mac) — feature တဵမ်ထူၼ်ႈသုတ်း",kac:"🎨 Photoshop (Windows / Mac) — feature hpring tsup dik",th:"🎨 Photoshop (Windows / Mac) — ฟีเจอร์ครบที่สุด",zh:"🎨 Photoshop (Windows / Mac) — 功能最全",vi:"🎨 Photoshop (Windows / Mac) — bộ tính năng đầy đủ nhất",id:"🎨 Photoshop (Windows / Mac) — fitur paling lengkap",ms:"🎨 Photoshop (Windows / Mac) — set ciri paling lengkap"},"site_link":{shn:"တူၺ်း Website",kac:"Website yu u",th:"ดูเว็บไซต์",zh:"查看网站",vi:"Xem website",id:"Lihat website",ms:"Lihat laman web"},"onb_h":{shn:"👋 ႁပ်ႉတွၼ်ႈထိုင် HNK Web Studio",kac:"👋 HNK Web Studio de hkap tau ga ai",th:"👋 ยินดีต้อนรับสู่ HNK Web Studio",zh:"👋 欢迎使用 HNK Web Studio",vi:"👋 Chào mừng đến với HNK Web Studio",id:"👋 Selamat datang di HNK Web Studio",ms:"👋 Selamat datang ke HNK Web Studio"},"onb_1":{shn:"ၼဵၵ်းပုမ်ႇ gear ၽၢႆႇၶႂႃ header သေ ပိုတ်ႇ Setup ယဝ်ႉ သႂ်ႇ Gemini API key — လႆႈလၢႆလၢႆ တီႈ aistudio.google.com/apikey၊ သႂ်ႇၵမ်းလဵဝ်ၵူၺ်း",kac:"Header lahta maga na gear button dip nna Setup hpaw nna na a Gemini API key bang u — aistudio.google.com/apikey kaw free lu la, kalang sha ra ai",th:"แตะปุ่ม gear ที่แถบด้านบนเพื่อเปิด Setup แล้วเพิ่ม Gemini API key — รับฟรีที่ aistudio.google.com/apikey ทำครั้งเดียวเท่านั้น",zh:"点按顶栏右侧的 gear（齿轮）按钮打开 Setup，添加你的 Gemini API key — 在 aistudio.google.com/apikey 免费获取，只需一次",vi:"Chạm nút gear ở thanh trên cùng để mở Setup và thêm Gemini API key — miễn phí tại aistudio.google.com/apikey, chỉ cần một lần",id:"Ketuk tombol gear di bilah atas untuk membuka Setup dan tambahkan Gemini API key Anda — gratis di aistudio.google.com/apikey, cukup sekali saja",ms:"Ketik butang gear di bar atas untuk membuka Setup dan tambah Gemini API key anda — percuma di aistudio.google.com/apikey, sekali sahaja"},"onb_2":{shn:"လိူၵ်ႈၶႅပ်းႁၢင်ႈမႂ်း ပဵၼ် IMAGE 1 — တီႈ Library ဢမ်ႇၼၼ် ၼႂ်းၾူၼ်းမႂ်း",kac:"Na a sumla hpe IMAGE 1 hku lata u — Library kaw na shing nrai na a phone kaw na",th:"เลือกภาพของคุณเป็น IMAGE 1 — จาก Library หรือจากมือถือของคุณ",zh:"选择你的照片作为 IMAGE 1 — 从 Library 或手机中选取",vi:"Chọn ảnh của bạn làm IMAGE 1 — từ Library hoặc điện thoại",id:"Pilih foto Anda sebagai IMAGE 1 — dari Library atau ponsel Anda",ms:"Pilih foto anda sebagai IMAGE 1 — dari Library atau telefon anda"},"onb_3":{shn:"ၼဵၵ်း card Workflow ဢၼ်လႂ်ၵေႃႈလႆႈ ႁဵတ်းၸွမ်း wizard သေ Generate — ယဝ်ႉယဝ်ႈ!",kac:"Workflow card langai mi dip nna wizard hte maren Generate u — ngut sai!",th:"แตะการ์ด Workflow ใดก็ได้ แล้วทำตาม wizard จนถึง Generate — เสร็จเลย!",zh:"点击任意 Workflow 卡片，按向导操作并 Generate — 完成！",vi:"Chạm vào card Workflow bất kỳ và làm theo wizard để Generate — xong!",id:"Ketuk kartu Workflow mana pun dan ikuti wizard hingga Generate — selesai!",ms:"Ketik mana-mana kad Workflow dan ikut wizard untuk Generate — siap!"},"onb_key":{shn:"🔑 သႂ်ႇ Key ဢွၼ်တၢင်း",kac:"🔑 Key shawng bang na",th:"🔑 เพิ่ม key ก่อน",zh:"🔑 先添加 key",vi:"🔑 Thêm key trước",id:"🔑 Tambah key dulu",ms:"🔑 Tambah key dahulu"},"onb_skip":{shn:"ၸၢမ်းတူၺ်းဢွၼ်တၢင်း →",kac:"Shawng yu chyam na →",th:"สำรวจก่อน →",zh:"先逛逛 →",vi:"Khám phá trước →",id:"Jelajahi dulu →",ms:"Teroka dahulu →"}};
 Object.keys(TR_L10).forEach(function(k){ var t=TR[k]; if(t){ Object.keys(TR_L10[k]).forEach(function(L){ t[L]=TR_L10[k][L]; }); } });
 /* wf_search_ph: the Workflow-page search box's placeholder — previously
    hardcoded Myanmar-only in the markup, so it never changed with #selLang,
@@ -1789,6 +1864,46 @@ var TR_PH={
   ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'}
 };
 Object.keys(TR_PH).forEach(function(k){ TR[k]=TR_PH[k]; });
+/* v4.28: complete the last 14 my/en-only TR keys in all 7 secondary languages
+   (merged per-language on top of the existing my/en entries — TR missing-key
+   count is now 0 for every language). shn/kac flagged for native review. */
+var TR_L14={
+  wiz_generate:{shn:"⚡ GENERATE",kac:"⚡ GENERATE",th:"⚡ GENERATE",zh:"⚡ GENERATE",vi:"⚡ GENERATE",id:"⚡ GENERATE",ms:"⚡ GENERATE"},
+  lb_remove_image:{shn:"ဢဝ်ၶႅပ်းႁၢင်ႈဢွၵ်ႇ",kac:"Sumla shamat kau",th:"ลบรูปภาพ",zh:"移除图片",vi:"Xóa ảnh",id:"Hapus gambar",ms:"Buang imej"},
+  lb_close:{shn:"ပိၵ်ႉ",kac:"Pat u",th:"ปิด",zh:"关闭",vi:"Đóng",id:"Tutup",ms:"Tutup"},
+  lb_favorite:{shn:"ဢၼ်လႆႈၸႂ်",kac:"Ra sharawng ai",th:"รายการโปรด",zh:"收藏",vi:"Yêu thích",id:"Favorit",ms:"Kegemaran"},
+  btn_cancel:{shn:"✕ ၵိုတ်း",kac:"✕ Hkring",th:"✕ ยกเลิก",zh:"✕ 取消",vi:"✕ Hủy",id:"✕ Batal",ms:"✕ Batal"},
+  ph_create:{shn:'ႁဵတ်းႁႂ်ႈမူႇၶႅပ်းဢၼ်ၼႂ်းၸႂ်ၸဝ်ႈၵဝ်ႇ ပဵၼ်တႄႉမႃး — <em>ၸွမ်းၸႂ်ၸဝ်ႈၵဝ်ႇ</em>',kac:'Na myit hta mu ai lam shagu hpe asak jaw u — <em>na a lam hku</em>',th:'เนรมิตทุกฉากที่คุณจินตนาการ — <em>ในแบบของคุณ</em>',zh:'把你想象的每个场景变为现实 — <em>随心所欲</em>',vi:'Biến mọi khung cảnh bạn tưởng tượng thành hiện thực — <em>theo cách của bạn</em>',id:'Wujudkan setiap adegan yang Anda bayangkan — <em>dengan cara Anda</em>',ms:'Hidupkan setiap adegan yang anda bayangkan — <em>mengikut cara anda</em>'},
+  ph_studio:{shn:'ၸုမ်ႇ Meitu × Evoto တဵမ်ထူၼ်ႈ ပႃး <em>live preview</em> ၵမ်းလဵဝ်',kac:'Meitu × Evoto suite hkum ai hte <em>live preview</em> lawan wan',th:'ครบชุด Meitu × Evoto พร้อม<em>พรีวิวสด</em>ทันใจ',zh:'完整的 Meitu × Evoto 套件，<em>实时预览</em>即时呈现',vi:'Trọn bộ Meitu × Evoto với <em>xem trước trực tiếp</em> tức thì',id:'Suite lengkap Meitu × Evoto dengan <em>pratinjau langsung</em> instan',ms:'Suite penuh Meitu × Evoto dengan <em>pratonton langsung</em> serta-merta'},
+  ph_retouch:{shn:'မႄးၶႅပ်းႁၢင်ႈႁႂ်ႈႁၢင်ႈလီ သေ <em>တိုၵ်ႉပဵၼ်သၽႃႇဝ</em>',kac:'<em>Sha-sha re nga ai</em> tsawm htap ai retouch',th:'รีทัชไร้ที่ติแต่<em>ยังดูเป็นธรรมชาติ</em>',zh:'无瑕精修，<em>依然自然</em>',vi:'Chỉnh sửa hoàn hảo mà <em>vẫn tự nhiên</em>',id:'Retouch sempurna yang <em>tetap alami</em>',ms:'Sentuhan sempurna yang <em>kekal semula jadi</em>'},
+  ph_t2i:{shn:'လိၵ်ႈထႅဝ်လဵဝ် လႅၵ်ႈပဵၼ် <em>ၶႅပ်းႁၢင်ႈၸၼ်ႉၶိုၵ်ႉ</em>',kac:'Laika hteng langai sha <em>professional sumla</em> byin wa ai',th:'ข้อความบรรทัดเดียวกลายเป็น<em>ภาพระดับมืออาชีพ</em>',zh:'一行文字变成<em>专业级图像</em>',vi:'Một dòng chữ trở thành <em>bức ảnh chuyên nghiệp</em>',id:'Satu baris teks menjadi <em>gambar profesional</em>',ms:'Satu baris teks menjadi <em>imej profesional</em>'},
+  ph_video:{shn:'ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် <em>မီးသၢႆၸႂ်မႃး</em>',kac:'Na a sumla ni shamu shamawt hte <em>asak rawng wa</em> ai',th:'ภาพถ่ายของคุณ<em>มีชีวิต</em>ด้วยการเคลื่อนไหว',zh:'让你的照片在动态中<em>活起来</em>',vi:'Ảnh của bạn <em>sống động</em> trong chuyển động',id:'Foto Anda <em>menjadi hidup</em> dalam gerakan',ms:'Foto anda <em>hidup</em> dalam gerakan'},
+  ph_videoup:{shn:'ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း <em>သွင်ပုၼ်ႈ</em> — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်',kac:'Video a atsam hpe <em>lahkawng lang</em> jat u — grau san, grau seng ai',th:'ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น',zh:'视频画质<em>翻倍</em> — 更锐利、更干净',vi:'<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn',id:'<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih',ms:'<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih'},
+  ph_lib:{shn:'Look 366 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်',kac:'Lata da ai look 366 — <em>langai lata la</em> nna kalang ta hpang u',th:'366 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที',zh:'366 款精选风格 — <em>选一款</em>立即开始',vi:'366 phong cách tuyển chọn — <em>chọn một</em> và bắt đầu ngay',id:'366 gaya pilihan — <em>pilih satu</em> dan mulai seketika',ms:'366 gaya pilihan — <em>pilih satu</em> dan mula serta-merta'},
+  ph_gallery:{shn:'ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ <em>သိမ်းဝႆႉတီႈၼႆႈ</em>',kac:'Na galaw da ai shagu, <em>ndai kaw makoi da ai</em>',th:'ทุกผลงานที่คุณสร้าง <em>บันทึกไว้ที่นี่</em>',zh:'你的每一件作品，<em>都保存在这里</em>',vi:'Mọi tác phẩm bạn tạo, <em>được lưu ngay tại đây</em>',id:'Setiap karya yang Anda buat, <em>tersimpan di sini</em>',ms:'Setiap hasil ciptaan anda, <em>disimpan di sini</em>'},
+  ph_home:{shn:'Setup ပွၵ်ႈလဵဝ် — <em>ၶႂ်ႈၸႂ်ႉမိူဝ်ႈလႂ်ၵေႃႈ ႁၢင်ႈႁႅၼ်းဝႆႉယဝ်ႉ</em>',kac:'Kalang sha setup galaw u — <em>galoi raitim hkyen da sai</em>',th:'ตั้งค่าครั้งเดียว — <em>พร้อมใช้ทุกเมื่อ</em>',zh:'设置一次 — <em>随时待命</em>',vi:'Thiết lập một lần — <em>sẵn sàng bất cứ lúc nào</em>',id:'Atur sekali — <em>siap kapan saja</em>',ms:'Sedia sekali sahaja — <em>sedia bila-bila masa</em>'}
+};
+Object.keys(TR_L14).forEach(function(k){ var t7=TR_L14[k]; TR[k]=TR[k]||{}; Object.keys(t7).forEach(function(lg){ TR[k][lg]=t7[lg]; }); });
+/* v4.28 keys — strings introduced by this wave ship all 9 languages from day
+   one (no new my/en-only debt). shn/kac flagged for native review post-merge. */
+var TR_V428={
+  hd_finish:{my:"HD အချောသတ်",en:"HD Finish",shn:"မႄးလိုမ်း HD",kac:"HD hte jahkum",th:"เก็บงาน HD",zh:"HD 精修收尾",vi:"Hoàn thiện HD",id:"Penyempurnaan HD",ms:"Kemasan HD"},
+  tr_hint:{my:"ဒီ model အတွက် English prompt က ပိုကောင်းပါတယ် — Setup မှာ Gemini key ထည့်ရင် မြန်မာလိုရေးတာကို အလိုအလျောက် ဘာသာပြန်ပေးမယ်",en:"English prompt recommended for this model — add a Gemini key in Setup for auto-translate",shn:"တွၼ်ႈတႃႇ model ၼႆႉ prompt English လီလိူဝ် — သႂ်ႇ Gemini key ၾၢႆႇ Setup သေ တေပိၼ်ႇၽႃႇသႃႇပၼ်ႁင်းၵူၺ်း",kac:"Ndai model a matu English prompt grau kaja ai — Setup kaw Gemini key bang yang Myen ga hpe shi hkrai galai ya na",th:"แนะนำให้ใช้ prompt ภาษาอังกฤษกับโมเดลนี้ — เพิ่ม Gemini key ใน Setup เพื่อแปลอัตโนมัติ",zh:"此模型建议使用英文 prompt — 在 Setup 中添加 Gemini key 即可自动翻译",vi:"Nên dùng prompt tiếng Anh cho model này — thêm Gemini key trong Setup để tự động dịch",id:"Prompt bahasa Inggris disarankan untuk model ini — tambahkan Gemini key di Setup untuk terjemahan otomatis",ms:"Prompt bahasa Inggeris disyorkan untuk model ini — tambah Gemini key di Setup untuk terjemahan automatik"},
+  btn_download:{my:"ဒေါင်းလုဒ်",en:"Download",shn:"ဢဝ်လူင်း",kac:"Download la",th:"ดาวน์โหลด",zh:"下载",vi:"Tải xuống",id:"Unduh",ms:"Muat turun"},
+  gen_adv:{my:"Advanced — အသေးစိတ် ရွေးချယ်မှု",en:"Advanced",shn:"Advanced — လွင်ႈလိူၵ်ႈႁူဝ်ယွႆႈ",kac:"Advanced — lata lam ni",th:"ขั้นสูง",zh:"高级选项",vi:"Nâng cao",id:"Lanjutan",ms:"Lanjutan"},
+  rs_restore_orig:{my:"မူရင်း ပြန်ယူ",en:"Restore original",shn:"ဢဝ်ၶိုၼ်း မူႇလ",kac:"Shawng sumla bai la",th:"กู้คืนรูปต้นฉบับ",zh:"恢复原图",vi:"Khôi phục ảnh gốc",id:"Pulihkan foto asli",ms:"Pulihkan foto asal"},
+  rs_restore_done:{my:"မူရင်းပုံ ပြန်ထည့်ပြီး ✓",en:"Original photo restored ✓",shn:"ဢဝ်ၶိုၼ်းၶႅပ်းႁၢင်ႈ မူႇလ ယဝ်ႉ ✓",kac:"Shawng sumla bai bang ngut sai ✓",th:"กู้คืนรูปต้นฉบับแล้ว ✓",zh:"已恢复原图 ✓",vi:"Đã khôi phục ảnh gốc ✓",id:"Foto asli dipulihkan ✓",ms:"Foto asal dipulihkan ✓"},
+  rs_stop:{my:"ရပ်မယ်",en:"Stop",shn:"ၵိုတ်း",kac:"Hkring u",th:"หยุด",zh:"停止",vi:"Dừng",id:"Berhenti",ms:"Berhenti"},
+  rs_stopped:{my:"ရပ်လိုက်ပြီ — ရလဒ်မသိမ်းပါ",en:"Stopped — the in-flight result was discarded",shn:"ၵိုတ်းယဝ်ႉ — ၽွၼ်းလႆႈဢၼ်တိုၵ်ႉမႃးၼၼ်ႉ ဢမ်ႇသိမ်း",kac:"Hkring sai — du wa ai result hpe n makoi ai",th:"หยุดแล้ว — ผลลัพธ์ที่ค้างอยู่ถูกยกเลิก",zh:"已停止 — 进行中的结果已丢弃",vi:"Đã dừng — kết quả đang xử lý bị hủy",id:"Dihentikan — hasil yang sedang berjalan dibuang",ms:"Dihentikan — hasil yang sedang diproses dibuang"},
+  rs_batch:{my:"Batch — ပုံအများ",en:"Batch — multiple photos",shn:"Batch — ၶႅပ်းႁၢင်ႈလၢႆလၢႆ",kac:"Batch — sumla law law",th:"Batch — หลายรูป",zh:"Batch — 多张照片",vi:"Batch — nhiều ảnh",id:"Batch — banyak foto",ms:"Batch — banyak foto"},
+  rs_batch_prog:{my:"ပုံ {N}/{M} ပြီးပါပြီ",en:"Photo {N}/{M} done",shn:"ၶႅပ်းႁၢင်ႈ {N}/{M} ယဝ်ႉ",kac:"Sumla {N}/{M} ngut sai",th:"รูปที่ {N}/{M} เสร็จแล้ว",zh:"第 {N}/{M} 张完成",vi:"Ảnh {N}/{M} xong",id:"Foto {N}/{M} selesai",ms:"Foto {N}/{M} siap"},
+  rs_batch_sum:{my:"Batch ပြီးပါပြီ — {N}/{M} အောင်မြင်",en:"Batch finished — {N}/{M} succeeded",shn:"Batch ယဝ်ႉ — {N}/{M} ဢွင်ႇမၢၼ်",kac:"Batch ngut sai — {N}/{M} awng ai",th:"Batch เสร็จสิ้น — สำเร็จ {N}/{M}",zh:"Batch 完成 — 成功 {N}/{M}",vi:"Batch hoàn tất — {N}/{M} thành công",id:"Batch selesai — {N}/{M} berhasil",ms:"Batch selesai — {N}/{M} berjaya"},
+  rs_batch_stop:{my:"Batch ရပ်လိုက်ပြီ — ပြီးသား ရလဒ်တွေ ကျန်ပါမယ်",en:"Batch stopped — finished results are kept",shn:"Batch ၵိုတ်းယဝ်ႉ — ၽွၼ်းလႆႈဢၼ်ယဝ်ႉၼၼ်ႉ တိုၵ်ႉၵိုၵ်းဝႆႉ",kac:"Batch hkring sai — ngut sai result ni hpe makoi da ai",th:"หยุด Batch แล้ว — ผลลัพธ์ที่เสร็จแล้วยังอยู่",zh:"Batch 已停止 — 已完成的结果保留",vi:"Đã dừng batch — kết quả đã xong được giữ lại",id:"Batch dihentikan — hasil yang selesai tetap tersimpan",ms:"Batch dihentikan — hasil yang siap dikekalkan"},
+  eta_fast:{my:"Fast — ခန့်မှန်း စက္ကန့် ၃၀ ခန့်…",en:"Fast — about 30 seconds…",shn:"Fast — မွၵ်ႈ 30 ၸႅၵ်ႉၵၼ်ႉ…",kac:"Fast — hkying 30 daram…",th:"Fast — ประมาณ 30 วินาที…",zh:"Fast — 约 30 秒…",vi:"Fast — khoảng 30 giây…",id:"Fast — sekitar 30 detik…",ms:"Fast — kira-kira 30 saat…"},
+  eta_quality:{my:"Quality — ၁-၂ မိနစ်ခန့် စောင့်ပါ…",en:"Quality — allow 1-2 minutes…",shn:"Quality — ပႂ်ႉမွၵ်ႈ 1-2 မိၼိတ်ႉ…",kac:"Quality — minute 1-2 daram la u…",th:"Quality — รอประมาณ 1-2 นาที…",zh:"Quality — 约需 1-2 分钟…",vi:"Quality — chờ khoảng 1-2 phút…",id:"Quality — sekitar 1-2 menit…",ms:"Quality — kira-kira 1-2 minit…"},
+  eta_hd:{my:"HD — ၂-၃ မိနစ်ခန့် စောင့်ပါ…",en:"HD — allow 2-3 minutes…",shn:"HD — ပႂ်ႉမွၵ်ႈ 2-3 မိၼိတ်ႉ…",kac:"HD — minute 2-3 daram la u…",th:"HD — รอประมาณ 2-3 นาที…",zh:"HD — 约需 2-3 分钟…",vi:"HD — chờ khoảng 2-3 phút…",id:"HD — sekitar 2-3 menit…",ms:"HD — kira-kira 2-3 minit…"}
+};
+Object.keys(TR_V428).forEach(function(k){ TR[k]=TR_V428[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
 var PH_MAP=[["phCreate","ph_create"],["phStudio","ph_studio"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"]];
 function L9(o){ return o[LANG]!==undefined ? o[LANG] : (o.en!==undefined ? o.en : o.my); }
@@ -2103,6 +2218,7 @@ function renderGallery(){
         im.loading="lazy";
         im.alt=(it.prompt||"").slice(0,80)||"gallery result";
         im.className = galSel && galSel.id===it.id ? "sel" : "";
+        im.classList.add("ld"); im.onload=im.onerror=function(){ im.classList.remove("ld"); };
         makePickable(im, function(){
           galSel=it;
           var src="data:"+it.mime+";base64,"+it.b64;
@@ -2126,6 +2242,7 @@ function renderGallery(){
 }
 $("galToImg1").onclick=function(){
   if(!galSel) return;
+  state.cmpBase=null; state.rsOrig=null; /* manual IMAGE 1 pick — compare baselines reset (v4.28) */
   state.refs[0]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
   state.imgRoles=null;
   renderRefs();
@@ -2166,6 +2283,30 @@ try{
   }
 }catch(e){}
 function hasMyanmar(s){ return /[က-႟]/.test(s); }
+/* v4.28: shared Burmese→English prompt auto-translate for EVERY provider path
+   (Freeform dispatcher incl. RunningHub/OpenAI, Text→Image, Video). Flux/
+   Qwen/Seedream/Wan and gpt-image-2 follow English prompts far more reliably
+   than Burmese; with a Gemini key present the prompt is translated exactly
+   like the Gemini path always did. Without a key the raw prompt still sends
+   (user choice, informed) — updateTrHint shows the inline hint instead of
+   silently degrading. A translate failure falls back to the raw prompt. */
+async function translateIfMyanmar(text, spinEl){
+  if(!(text && hasMyanmar(text) && state.key)) return text;
+  if(spinEl) spinEl.textContent=t("spin_tr");
+  try{
+    var tr=await geminiText("Translate this Burmese image-generation prompt to natural, detailed English. Return ONLY the translation:\n\n"+text);
+    return tr || text;
+  }catch(e){ return text; }
+}
+/* show/hide the "English prompt recommended…" hint under a prompt box; returns
+   true when the hint is showing (Burmese prompt + no Gemini key to translate) */
+function updateTrHint(hintId, text){
+  var h=$(hintId); if(!h) return false;
+  var need = !!(text && hasMyanmar(text) && !state.key);
+  if(need) h.textContent=t("tr_hint");
+  h.style.display = need ? "" : "none";
+  return need;
+}
 function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
 
 /* ---------- key ---------- */
@@ -2183,8 +2324,17 @@ $("btnSaveKey").onclick = async function(){
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ contents:[{parts:[{text:"ping"}]}] })
     });
-    if (r.status===400 || r.ok) { state.key=k; try{localStorage.setItem(LS_KEY,k);}catch(e){} setSt("stKey",t("st_key_valid"),"ok"); }
+    /* v4.28 G1: HTTP 400 is NOT "valid" — Google returns 400 with
+       API_KEY_INVALID for malformed keys. Only r.ok proves the key works;
+       a 400 whose body blames the key is rejected like 401/403. */
+    if (r.ok) { state.key=k; try{localStorage.setItem(LS_KEY,k);}catch(e){} setSt("stKey",t("st_key_valid"),"ok"); }
     else if (r.status===403||r.status===401) setSt("stKey",t("st_key_invalid"),"err");
+    else if (r.status===400) {
+      var bad=false;
+      try{ var bj=await r.json(); var bs=JSON.stringify(bj&&bj.error||bj||""); bad=/API_KEY_INVALID|API key/i.test(bs); }catch(e){ bad=false; }
+      if (bad) setSt("stKey",t("st_key_invalid"),"err");
+      else { state.key=k; try{localStorage.setItem(LS_KEY,k);}catch(e){} setSt("stKey",t("st_key_savedstatus").replace("{S}",r.status),"ok"); }
+    }
     else { state.key=k; try{localStorage.setItem(LS_KEY,k);}catch(e){} setSt("stKey",t("st_key_savedstatus").replace("{S}",r.status),"ok"); }
     updateKeyBanner();
     if(state.key===k) pendingOffer();
@@ -2365,7 +2515,12 @@ async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolut
   else if(imageParam==="imageUrl") body.imageUrl = imageUrls[0]||"";
   else body.imageUrls = imageUrls;
   if(cfg.kind==="seedream"){
-    body.resolution = resolution || "1k";
+    /* v4.28: seedream-v4.5's resolution enum starts at 2k — "1k" is out of
+       enum and gets rejected. Clamp the default (and any stale 1k pick) up
+       to 2k for the v4.5 endpoint only; v4 keeps its 1k default. */
+    var sd = resolution || "1k";
+    if(sd==="1k" && (cfg.id==="seedream-v4-5" || String(apiPath||"").indexOf("v4.5")>=0)) sd="2k";
+    body.resolution = sd;
     body.sequentialImageGeneration = "disabled";
     body.maxImages = 1;
   } else if(cfg.kind==="imagine"){
@@ -2557,11 +2712,22 @@ async function rhGenerateUpscaleTransparent(apiKey, apiPath, refDataUrls, sizeSe
    history is session-only (same in-memory pattern as state.hist already
    uses, just without the Gallery persistence step). */
 var RH_VIDEO_TIMEOUT_MS = 600000; /* video renders run far longer than images */
+/* v4.28 W2: single source of truth for the size tier an HD Finish pass sends
+   to RunningHub upscale-pro. Studio follows the Create card's Size select;
+   V2 Retouch's HD quality tier forces a 2K finish (it used to pass "" =
+   bare 2x scale, out of step with its own "HD" promise). */
+function hdFinishSize(forced){
+  if(forced) return forced;
+  var s=$("selSize"); return (s && s.value) || "";
+}
 var RH_VIDEO_MODELS = [
   { id:"rh-video-g-off", label:"RH Video G", apiPath:"rhart-video-g-official/image-to-video",
     imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false,
     resolutions:["720p","480p"], durations:["6","10"], aspect:false, promptMax:800 },
-  { id:"gemini-omni-video", label:"Gemini Omni Flash (Video)", apiPath:"gemini-omni-flash/image-to-video",
+  /* v4.28 W1: relabeled — this endpoint runs on RunningHub, NOT on the user's
+     Gemini key (the old "Gemini …" label misattributed it). id stays
+     gemini-omni-video for stored-config compatibility. */
+  { id:"gemini-omni-video", label:"Omni Flash Video (RunningHub)", apiPath:"gemini-omni-flash/image-to-video",
     imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:true,
     resolutions:["720p","1080p","4k"], durations:["4","6","8","10"], aspect:true, promptMax:2048 }
 ];
@@ -2744,7 +2910,7 @@ function rhFriendly(e){
 try { state.rhKey = localStorage.getItem(RH_LS_KEY) || ""; } catch(e){}
 if (state.rhKey) { $("rhKey").value = state.rhKey; }
 $("rhOptTag").textContent = L9({my:"(ချန်ထားလို့ရ)",en:"(optional)",shn:"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)",kac:"(n ra ai)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"});
-$("rhIntro").textContent = L9({my:"RunningHub Enterprise-Shared key ကို paste ပြီး Save & Verify နှိပ်ရုံပါပဲ — Nano Banana 2 က key ချက်ချင်း အလိုအလျောက် အသုံးပြုလို့ရပါပြီ (webappId/node id ထည့်စရာမလိုပါ)။ Model တခြားများ ဆက်ချိတ်ချင်ရင် endpoint path ကို RunningHub API docs ကနေ ကူးထည့်ရုံပါပဲ — browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ၊ ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Paste your RunningHub Enterprise-Shared key and tap Save & Verify — Nano Banana 2 works instantly with just the key (no webappId/node id needed). To add other models, paste the endpoint path from RunningHub's API docs. Everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.",shn:"RunningHub Enterprise-Shared key ၾၢႆႇ Photoshop plugin ၸႂ်ႉၽွင်းၶၢဝ်းၶၢဝ်း ၸၢမ်းၸႂ်ႉတီႈၼႆႈလႆႈ",kac:"RunningHub Enterprise-Shared key hpe paste nna Save & Verify dip u — Nano Banana 2 gaw key sha hte galoi mung galaw mai ai",th:"วางคีย์ RunningHub Enterprise-Shared แล้วกด Save & Verify — Nano Banana 2 ใช้งานได้ทันทีด้วย key เท่านั้น",zh:"粘贴 RunningHub Enterprise-Shared key 并点击 Save & Verify — Nano Banana 2 只需 key 即可立即使用",vi:"Dán RunningHub Enterprise-Shared key và bấm Save & Verify — Nano Banana 2 hoạt động ngay chỉ với key",id:"Tempel RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 langsung berfungsi hanya dengan key",ms:"Tampal RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 terus berfungsi hanya dengan key"});
+$("rhIntro").textContent = L9({my:"RunningHub Enterprise-Shared key ကို paste ပြီး Save & Verify နှိပ်ရုံပါပဲ — Nano Banana 2 က key ချက်ချင်း အလိုအလျောက် အသုံးပြုလို့ရပါပြီ (webappId/node id ထည့်စရာမလိုပါ)။ Model တခြားများ ဆက်ချိတ်ချင်ရင် endpoint path ကို RunningHub API docs ကနေ ကူးထည့်ရုံပါပဲ — browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ၊ ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Paste your RunningHub Enterprise-Shared key and tap Save & Verify — Nano Banana 2 works instantly with just the key (no webappId/node id needed). To add other models, paste the endpoint path from RunningHub's API docs. Everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.",shn:"Paste RunningHub Enterprise-Shared key သေ ၼဵၵ်း Save & Verify ၵူၺ်း — Nano Banana 2 ၸႂ်ႉလႆႈၵမ်းလဵဝ်လူၺ်ႈ key ဢၼ်လဵဝ် (ဢမ်ႇလူဝ်ႇ webappId/node id)။ ၶႂ်ႈသႂ်ႇ model တၢင်ႇဢၼ်ၼႆ ၶႅတ်ႉ endpoint path တီႈ RunningHub API docs သေမႃးပလၢတ်ႈ။ ၵူႈလွင်ႈသိမ်းဝႆႉၼႂ်း localStorage ၶွင် browser ၼႆႉၵူၺ်း — သူင်ႇၵမ်းသိုဝ်ႈထိုင် RunningHub၊ ဢမ်ႇလတ်းၽၢၼ်ႇ server လႂ်သေဢၼ်။",kac:"Na a RunningHub Enterprise-Shared key hpe paste nna Save & Verify dip u — Nano Banana 2 gaw key sha hte kalang ta galaw mai ai (webappId/node id n ra ai). Kaga model bang mayu yang RunningHub API docs kaw na endpoint path hpe copy paste u. Yawng gaw ndai browser a localStorage hta sha rawng nga ai — RunningHub de ding hkra shagun ai, server langai mi hku mung n lai ai.",th:"วางคีย์ RunningHub Enterprise-Shared แล้วกด Save & Verify — Nano Banana 2 ใช้งานได้ทันทีด้วย key อย่างเดียว (ไม่ต้องใส่ webappId/node id) หากต้องการเพิ่มโมเดลอื่น ให้คัดลอก endpoint path จากเอกสาร API ของ RunningHub มาวาง ทุกอย่างเก็บอยู่ใน localStorage ของเบราว์เซอร์นี้และส่งตรงถึง RunningHub เท่านั้น ไม่ผ่านเซิร์ฟเวอร์ใด ๆ",zh:"粘贴 RunningHub Enterprise-Shared key 并点击 Save & Verify — Nano Banana 2 只需 key 即可立即使用（无需 webappId/node id）。要接入其他模型，从 RunningHub API 文档复制 endpoint path 粘贴即可。一切只保存在本浏览器的 localStorage 中，并直接发送给 RunningHub，绝不经过任何服务器。",vi:"Dán RunningHub Enterprise-Shared key và bấm Save & Verify — Nano Banana 2 hoạt động ngay chỉ với key (không cần webappId/node id). Muốn thêm model khác, dán endpoint path từ tài liệu API của RunningHub. Mọi thứ chỉ nằm trong localStorage của trình duyệt này và gửi thẳng tới RunningHub, không bao giờ qua máy chủ nào.",id:"Tempel RunningHub Enterprise-Shared key lalu tekan Save & Verify — Nano Banana 2 langsung berfungsi hanya dengan key (tanpa webappId/node id). Untuk menambah model lain, tempel endpoint path dari dokumen API RunningHub. Semuanya hanya tersimpan di localStorage browser ini dan dikirim langsung ke RunningHub, tidak pernah lewat server mana pun.",ms:"Tampal RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 terus berfungsi hanya dengan key (tiada webappId/node id diperlukan). Untuk menambah model lain, tampal laluan endpoint dari dokumen API RunningHub. Semuanya kekal dalam localStorage pelayar ini dan dihantar terus ke RunningHub, tidak melalui mana-mana pelayan."});
 $("btnShowRhKey").innerHTML = icn("i-eye");
 $("btnShowRhKey").setAttribute("aria-label", t("btn_show"));
 $("btnSaveRhKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
@@ -2765,7 +2931,7 @@ $("btnSaveRhKey").onclick = async function(){
 };
 
 RH_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label+(m.apiPath?" ✓":""); $("rhModelSel").appendChild(o); });
-$("rhSampleNote").textContent = L9({my:"Endpoint path ကို RunningHub API docs (model page ရဲ့ \"Endpoint:\" line) ကနေ copy ပြီး ဒီမှာ paste ပါ — ✓ ပါတဲ့ model တွေက built-in ဖြစ်လို့ ဘာမှ ဖြည့်စရာမလိုပါ။",en:"Copy the endpoint path from RunningHub's API docs (the \"Endpoint:\" line on the model's page) and paste it here — models marked ✓ already have a built-in default, nothing to fill in.",shn:"Endpoint path ကို RunningHub API docs ၵႂႃႇ copy ဢဝ်",kac:"Endpoint path hpe RunningHub API docs kaw na copy la u",th:"คัดลอก endpoint path จากเอกสาร API ของ RunningHub มาวางที่นี่",zh:"从 RunningHub API 文档复制端点路径粘贴到这里",vi:"Sao chép endpoint path từ tài liệu API của RunningHub và dán vào đây",id:"Salin endpoint path dari dokumen API RunningHub dan tempel di sini",ms:"Salin laluan endpoint dari dokumen API RunningHub dan tampal di sini"});
+$("rhSampleNote").textContent = L9({my:"Endpoint path ကို RunningHub API docs (model page ရဲ့ \"Endpoint:\" line) ကနေ copy ပြီး ဒီမှာ paste ပါ — ✓ ပါတဲ့ model တွေက built-in ဖြစ်လို့ ဘာမှ ဖြည့်စရာမလိုပါ။",en:"Copy the endpoint path from RunningHub's API docs (the \"Endpoint:\" line on the model's page) and paste it here — models marked ✓ already have a built-in default, nothing to fill in.",shn:"ၶႅတ်ႉ endpoint path တီႈ RunningHub API docs (ထႅဝ် \"Endpoint:\" ၼိူဝ်ၼႃႈ model) သေ ပလၢတ်ႈတီႈၼႆႈ — model ဢၼ်မီး ✓ ၼၼ်ႉ မီး built-in ဝႆႉယဝ်ႉ ဢမ်ႇလူဝ်ႇတႅမ်ႈသင်ထႅင်ႈ။",kac:"RunningHub API docs (model page a \"Endpoint:\" hteng) kaw na endpoint path hpe copy nna ndai kaw paste u — ✓ lawm ai model ni gaw built-in nga sai majaw hpa n ra ai.",th:"คัดลอก endpoint path จากเอกสาร API ของ RunningHub (บรรทัด \"Endpoint:\" บนหน้าโมเดล) มาวางที่นี่ — โมเดลที่มี ✓ มีค่าเริ่มต้นในตัวแล้ว ไม่ต้องกรอกอะไรเพิ่ม",zh:"从 RunningHub API 文档（模型页面的 \"Endpoint:\" 一行）复制端点路径粘贴到这里 — 带 ✓ 的模型已有内置默认值，无需填写。",vi:"Sao chép endpoint path từ tài liệu API của RunningHub (dòng \"Endpoint:\" trên trang model) và dán vào đây — model có dấu ✓ đã có sẵn mặc định, không cần điền gì.",id:"Salin endpoint path dari dokumen API RunningHub (baris \"Endpoint:\" di halaman model) dan tempel di sini — model bertanda ✓ sudah punya bawaan, tidak perlu diisi.",ms:"Salin laluan endpoint dari dokumen API RunningHub (baris \"Endpoint:\" pada halaman model) dan tampal di sini — model bertanda ✓ sudah ada lalai terbina, tiada apa perlu diisi."});
 $("btnRhSaveModel").textContent = L9({my:"ဒီ Model ကို Save",en:"Save this model",shn:"Save Model ၼႆႉ",kac:"Ndai model hpe Save",th:"บันทึกโมเดลนี้",zh:"保存该模型",vi:"Lưu model này",id:"Simpan model ini",ms:"Simpan model ini"});
 
 function rhLoadFormFor(id){
@@ -2866,8 +3032,33 @@ function updateGenOptsForRHKind(){
   $("selCount").style.display = isUpscaleKind ? "none" : "";
   if(isUpscaleKind) $("selCount").value = "1";
   if(!isUpscaleKind) rhNarrowRatioOptionsFor(active);
+  updateGeminiSizeGate();
+}
+/* v4.28: the 2K/4K Size tiers are honored only by gemini-3-pro-image-preview.
+   Grey them out whenever the request would resolve to Flash, and say so on
+   the Auto option ("1K — Flash"), so the user is never promised a tier the
+   model silently drops. Auto resolves exactly like $("btnGen") does: with
+   any reference image present it goes to Flash, otherwise Pro. RunningHub
+   keeps the full list — it maps Size onto its own resolution enums. */
+function updateGeminiSizeGate(){
+  var sel=$("selSize"); if(!sel) return;
+  var o2=sel.querySelector('option[value="2K"]'), o4=sel.querySelector('option[value="4K"]'), oa=sel.querySelector('option[value=""]');
+  if($("selProvider").value!=="gemini"){
+    if(o2) o2.disabled=false;
+    if(o4) o4.disabled=false;
+    if(oa) oa.textContent="Size: Auto";
+    return;
+  }
+  var m=$("selModel").value;
+  var resolved = m==="auto" ? (state.refs.some(Boolean) ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview") : m;
+  var pro = resolved==="gemini-3-pro-image-preview";
+  if(o2) o2.disabled=!pro;
+  if(o4) o4.disabled=!pro;
+  if(oa) oa.textContent = pro ? "Size: Auto" : "Size: Auto (1K — Flash)";
+  if(!pro && (sel.value==="2K"||sel.value==="4K")) sel.value="";
 }
 $("selProvider").onchange = updateGenOptsForRHKind;
+$("selModel").onchange = updateGeminiSizeGate;
 $("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
 rhLoadFormFor($("rhModelSel").value);
 rhRenderConfiguredList();
@@ -2920,7 +3111,11 @@ async function oaVerifyKey(apiKey){
 /* One generation: images/edits when refs are supplied (multipart, image[]
    repeated per RunningHub-style multi-file upload), else images/generations
    (JSON, text-only). Both return the same {data:[{b64_json}]} shape. */
-async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio){
+async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio, quality, signal){
+  /* v4.28: request shape is unchanged for gpt-image-2 — model/prompt/size
+     (+ image[] on edits). quality (low/medium/high) is the only optional
+     extra, sent solely when the user picked High Detail; there is NO
+     resolution field on either endpoint. */
   var size = oaSizeFromRatio(ratio);
   var r;
   if(refDataUrls && refDataUrls.length){
@@ -2928,12 +3123,15 @@ async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio){
     fd.append("model", OA_MODEL);
     fd.append("prompt", promptText);
     fd.append("size", size);
+    if(quality==="high") fd.append("quality","high");
     refDataUrls.forEach(function(du, i){ fd.append("image[]", rhDataUrlToBlob(du), "hnk_"+i+".png"); });
-    r=await fetch(oaUrl("/images/edits"), { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd });
+    r=await fetch(oaUrl("/images/edits"), { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd, signal:signal });
   } else {
+    var oaBody={ model:OA_MODEL, prompt:promptText, size:size };
+    if(quality==="high") oaBody.quality="high";
     r=await fetch(oaUrl("/images/generations"), { method:"POST",
       headers:{"Authorization":"Bearer "+apiKey, "Content-Type":"application/json"},
-      body: JSON.stringify({ model:OA_MODEL, prompt:promptText, size:size }) });
+      body: JSON.stringify(oaBody), signal:signal });
   }
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("openai-failed"); e.status=r.status; e.body=j; throw e; }
@@ -2947,7 +3145,7 @@ function oaFriendly(e){
   var code=((e && e.body && e.body.error && e.body.error.code) || "").toLowerCase();
   if(status===401) return L9({my:"OpenAI key မှားနေပါတယ် — Setup မှာ ပြန်စစ်ပါ",en:"OpenAI key is invalid — recheck it in Setup",shn:"OpenAI key ၽိတ်းယူႇ — ၾၢႆႇ Setup ၵႂႃႇပွင်ႇတူၺ်း",kac:"OpenAI key n teng ai — Setup kaw bai yu chyam u",th:"OpenAI key ไม่ถูกต้อง — ตรวจสอบใน Setup",zh:"OpenAI key 无效 — 请在 Setup 中重新检查",vi:"OpenAI key không hợp lệ — kiểm tra lại trong Setup",id:"OpenAI key tidak valid — periksa lagi di Setup",ms:"OpenAI key tidak sah — semak semula dalam Setup"});
   if(status===429 || code==="insufficient_quota") return L9({my:"OpenAI credit/quota မလုံလောက်ပါ — account ကို top up လုပ်ပါ",en:"Not enough OpenAI credits/quota — top up your account",shn:"OpenAI credit ဢမ်ႇပဵင်း — top up ဢေႃးၶွင်ႉၸဝ်ႈၵဝ်ႇ",kac:"OpenAI credit n law ai — na account hpe top up galaw u",th:"เครดิต/โควตา OpenAI ไม่พอ — เติมเงินในบัญชี",zh:"OpenAI 额度不足 — 请为账户充值",vi:"Không đủ credit/quota OpenAI — nạp thêm cho tài khoản",id:"Kredit/kuota OpenAI tidak cukup — top up akun Anda",ms:"Kredit/kuota OpenAI tidak mencukupi — top up akaun anda"});
-  if(status===400 && (msg.indexOf("safety")>=0 || msg.indexOf("policy")>=0 || code.indexOf("content_policy")>=0)) return L9({my:"OpenAI safety policy က ပိတ်လိုက်ပါတယ် — prompt (သို့) ပုံ ပြောင်းကြည့်ပါ",en:"Blocked by OpenAI's safety policy — try a different photo or reword the prompt",shn:"OpenAI safety policy ႁႄႉပႅတ်ႈယဝ်ႉ",kac:"OpenAI safety policy pat kau ai",th:"ถูกบล็อกโดยนโยบายความปลอดภัยของ OpenAI",zh:"被 OpenAI 安全政策拦截 — 请更换照片或改写 prompt",vi:"Bị chặn bởi chính sách an toàn của OpenAI",id:"Diblokir oleh kebijakan keamanan OpenAI",ms:"Disekat oleh dasar keselamatan OpenAI"});
+  if(status===400 && (msg.indexOf("safety")>=0 || msg.indexOf("policy")>=0 || code.indexOf("content_policy")>=0)) return L9({my:"OpenAI safety policy က ပိတ်လိုက်ပါတယ် — prompt (သို့) ပုံ ပြောင်းကြည့်ပါ",en:"Blocked by OpenAI's safety policy — try a different photo or reword the prompt",shn:"OpenAI safety policy ႁႄႉပႅတ်ႈယဝ်ႉ — ၸၢမ်းလႅၵ်ႈၶႅပ်းႁၢင်ႈ ဢမ်ႇၼၼ် မႄးတႅမ်ႈ prompt တူၺ်း",kac:"OpenAI safety policy pat kau ai — sumla kaga langai hte chyam u (n rai yang) prompt hpe bai ka u",th:"ถูกบล็อกโดยนโยบายความปลอดภัยของ OpenAI — ลองเปลี่ยนรูปหรือเขียน prompt ใหม่",zh:"被 OpenAI 安全政策拦截 — 请更换照片或改写 prompt",vi:"Bị chặn bởi chính sách an toàn của OpenAI — thử ảnh khác hoặc viết lại prompt",id:"Diblokir oleh kebijakan keamanan OpenAI — coba foto lain atau tulis ulang prompt",ms:"Disekat oleh dasar keselamatan OpenAI — cuba foto lain atau tulis semula prompt"});
   return L9({my:"OpenAI error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"OpenAI error — try again ("+(status||"?")+")",shn:"OpenAI error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"OpenAI error — bai chyam u ("+(status||"?")+")",th:"OpenAI error — ลองใหม่ ("+(status||"?")+")",zh:"OpenAI 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi OpenAI — thử lại ("+(status||"?")+")",id:"Error OpenAI — coba lagi ("+(status||"?")+")",ms:"Ralat OpenAI — cuba lagi ("+(status||"?")+")"});
 }
 function renderOaProviderOption(){
@@ -2965,7 +3163,14 @@ function renderOaProviderOption(){
 try { state.oaKey = localStorage.getItem(OA_LS_KEY) || ""; } catch(e){}
 if (state.oaKey) { $("oaKey").value = state.oaKey; }
 $("oaOptTag").textContent = L9({my:"(ချန်ထားလို့ရ)",en:"(optional)",shn:"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)",kac:"(n ra ai)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"});
-$("oaIntro").textContent = L9({my:"OpenAI ကိုယ်ပိုင် API key (sk-…) ထည့်ရင် gpt-image-1 နဲ့လည်း ဒီ Smart Workflow card 115 ခုလုံးကို ထုတ်လို့ရပါတယ် — key ကို browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ — ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Add your own OpenAI API key (sk-…) to generate any of the 115 Smart Workflow cards through gpt-image-1 too — the key stays in this browser's localStorage and is sent straight to OpenAI, never through any server.",shn:"သႂ်ႇ OpenAI API key ၸဝ်ႈၵဝ်ႇ (sk-…) ႁႂ်ႈၸႂ်ႉ gpt-image-1 ၸၢမ်းလႆႈ",kac:"Nang a OpenAI API key (sk-…) hpe bang u",th:"เพิ่ม API key ของคุณเอง (sk-…) เพื่อใช้ gpt-image-1",zh:"添加你自己的 OpenAI API key（sk-…）即可用 gpt-image-1 生成",vi:"Thêm API key OpenAI của riêng bạn (sk-…) để dùng gpt-image-1",id:"Tambahkan API key OpenAI Anda sendiri (sk-…) untuk memakai gpt-image-1",ms:"Tambah API key OpenAI anda sendiri (sk-…) untuk guna gpt-image-1"});
+/* v4.28: gpt-image-2 + the Smart Workflow count interpolated from the same
+   source the statline uses (window._setOaIntro rerun once workflows render),
+   so the number can never drift again */
+window._setOaIntro=function(n){
+  var el=$("oaIntro"); if(!el) return;
+  el.textContent = L9({my:"OpenAI ကိုယ်ပိုင် API key (sk-…) ထည့်ရင် gpt-image-2 နဲ့လည်း ဒီ Smart Workflow card {N} ခုလုံးကို ထုတ်လို့ရပါတယ် — key ကို browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ — ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။",en:"Add your own OpenAI API key (sk-…) to generate any of the {N} Smart Workflow cards through gpt-image-2 too — the key stays in this browser's localStorage and is sent straight to OpenAI, never through any server.",shn:"သႂ်ႇ OpenAI API key ၸဝ်ႈၵဝ်ႇ (sk-…) သေ ထုတ်ႇ Smart Workflow card {N} ဢၼ်လူၺ်ႈ gpt-image-2 ၵေႃႈလႆႈ — key သိမ်းဝႆႉၼႂ်း localStorage ၶွင် browser ၼႆႉၵူၺ်း၊ သူင်ႇၵမ်းသိုဝ်ႈထိုင် OpenAI ဢမ်ႇလတ်းၽၢၼ်ႇ server လႂ်။",kac:"Na a OpenAI API key (sk-…) hpe bang yang gpt-image-2 hte mung Smart Workflow card {N} yawng hpe shaw mai ai — key gaw ndai browser a localStorage hta sha rawng nna OpenAI de ding hkra shagun ai, server langai mi hku n lai ai.",th:"เพิ่ม OpenAI API key ของคุณเอง (sk-…) เพื่อสร้างการ์ด Smart Workflow ทั้ง {N} ใบผ่าน gpt-image-2 ได้ด้วย — key เก็บอยู่ใน localStorage ของเบราว์เซอร์นี้และส่งตรงถึง OpenAI เท่านั้น ไม่ผ่านเซิร์ฟเวอร์ใด ๆ",zh:"添加你自己的 OpenAI API key（sk-…）即可通过 gpt-image-2 生成全部 {N} 张 Smart Workflow 卡片 — key 只保存在本浏览器的 localStorage 中，直接发送给 OpenAI，绝不经过任何服务器。",vi:"Thêm API key OpenAI của riêng bạn (sk-…) để tạo bất kỳ card nào trong {N} Smart Workflow qua gpt-image-2 — key chỉ nằm trong localStorage của trình duyệt này và gửi thẳng tới OpenAI, không bao giờ qua máy chủ nào.",id:"Tambahkan API key OpenAI Anda sendiri (sk-…) untuk membuat semua {N} kartu Smart Workflow lewat gpt-image-2 — key hanya tersimpan di localStorage browser ini dan dikirim langsung ke OpenAI, tidak pernah lewat server mana pun.",ms:"Tambah API key OpenAI anda sendiri (sk-…) untuk menjana kesemua {N} kad Smart Workflow melalui gpt-image-2 — key kekal dalam localStorage pelayar ini dan dihantar terus ke OpenAI, tidak melalui mana-mana pelayan."}).replace("{N}",String(n));
+};
+window._setOaIntro(116);
 $("btnShowOaKey").innerHTML = icn("i-eye");
 $("btnShowOaKey").setAttribute("aria-label", t("btn_show"));
 $("btnSaveOaKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
@@ -3027,6 +3232,7 @@ function renderRefs(){
   renderRsPicker();
   renderStPicker(); /* Studio's Before slot mirrors slot 0 too (guarded until its module inits) */
   renderV2Hero(); /* V2 hero mirrors slot 0 + next-photo auto-start */
+  updateGeminiSizeGate(); /* Auto-model resolution flips Flash/Pro with refs (v4.28 size gating) */
   var host=$("refs"); host.innerHTML="";
   state.refs.forEach(function(ref,i){
     var d=el("div","ref"+(ref?" filled":""));
@@ -3064,7 +3270,13 @@ function downscale(dataUrl, cb){
   img.src=dataUrl;
 }
 $("filePick").onchange = function(){
-  var f=this.files && this.files[0]; this.value="";
+  /* v4.28 batch: a Batch-armed pick hands the whole FileList to the V2 batch
+     runner; the single-pick contract (multiple=false) is restored either way */
+  var files=this.files ? Array.prototype.slice.call(this.files) : [];
+  var wasBatch=rsBatchArmed;
+  rsBatchArmed=false; this.multiple=false;
+  var f=files[0]; this.value="";
+  if(wasBatch){ if(files.length) rsRunBatch(files); return; }
   if(!f) return;
   /* accept="image/..." is only a UI hint — some browsers/OSes still let a
      user pick a non-image file through it (same gap already guarded for
@@ -3085,10 +3297,11 @@ $("filePick").onchange = function(){
           if(state.st){
             state.st.refX={mime:m[1],b64:m[2]};
             if(typeof stRefreshUI==="function"){ stRefreshUI(); stRenderPend(); }
-            toast(L9({my:"Reference ပုံ ထည့်ပြီး ✓",en:"Reference image added ✓"}),"ok");
+            toast(L9({my:"Reference ပုံ ထည့်ပြီး ✓",en:"Reference image added ✓",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ Reference ယဝ်ႉ ✓",kac:"Reference sumla bang ngut sai ✓",th:"เพิ่มรูปอ้างอิงแล้ว ✓",zh:"参考图已添加 ✓",vi:"Đã thêm ảnh tham chiếu ✓",id:"Gambar referensi ditambahkan ✓",ms:"Imej rujukan ditambah ✓"}),"ok");
           }
           return;
         }
+        if(state.pickSlot===0){ state.cmpBase=null; state.rsOrig=null; } /* fresh photo — compare baselines reset (v4.28) */
         state.refs[state.pickSlot]={mime:m[1],b64:m[2],label:f.name};
         state.imgRoles=null; /* roles are re-derived by the wizard at generate time */
         renderRefs();
@@ -3102,11 +3315,12 @@ $("filePick").onchange = function(){
 /* static (non-JS-built) accordions wire up the same open/close toggle
    the grp() builder below uses, so a hand-written .grp/.grp-h/.grp-b
    block (like Setup's Platform Guide) behaves identically to a built one */
-["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced"].forEach(function(id){
+["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced","genGrpAdvanced"].forEach(function(id){
   var g=$(id); if(!g) return;
   var h=g.querySelector(".grp-h");
   h.onclick=function(){ g.className = g.className.indexOf("open")>=0 ? "grp" : "grp open"; };
 });
+var _gal=$("genAdvLbl"); if(_gal) _gal.textContent=t("gen_adv");
 
 /* ---------- one-tap studio ---------- */
 function grp(title, count, open, icon){
@@ -3493,7 +3707,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       /* repeat-run fast path: every required input is already in place (e.g.
          re-running a workflow on the same photo) — one tap jumps to Generate */
       var fast=el("button","btn wiz-fast");
-      setIcnText(fast,"i-bolt",L9({my:"ပုံတွေ အသင့်ရှိပြီးသား — Generate ကို တန်းသွားမယ်",en:"Inputs already set — skip to Generate"}));
+      setIcnText(fast,"i-bolt",L9({my:"ပုံတွေ အသင့်ရှိပြီးသား — Generate ကို တန်းသွားမယ်",en:"Inputs already set — skip to Generate",shn:"ၶႅပ်းႁၢင်ႈမီးဝႆႉယဝ်ႉ — ၵႂႃႇတီႈ Generate ၵမ်းလဵဝ်",kac:"Sumla ni hkyen da sai — Generate de kalang ta sa u",th:"ภาพพร้อมแล้ว — ข้ามไป Generate ได้เลย",zh:"素材已就绪 — 直接跳到 Generate",vi:"Ảnh đã sẵn sàng — chuyển thẳng tới Generate",id:"Gambar sudah siap — langsung ke Generate",ms:"Imej sudah sedia — terus ke Generate"}));
       fast.onclick=function(){ wiz.step=3; renderWiz(); $("wiz").scrollTop=0; };
       body.appendChild(fast);
     }
@@ -3552,19 +3766,45 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     if (wiz.step===3){
       var n=state.refs.filter(Boolean).length;
       body.appendChild(el("p",null,t("wiz_ready")));
-      /* generate options inside the wizard — mirrors + syncs the Create selects */
+      /* generate options inside the wizard — mirrors + syncs the Create selects.
+         v4.28: a clone change fires the MAIN select's handler (provider/model
+         narrowing, upscale-kind hiding, Gemini size gating) and then rebuilds
+         this row from the now-narrowed/hidden main selects, so the wizard can
+         never drift out of sync with the main card. */
       var row=el("div","wizrow");
-      [["selProvider"],["selModel"],["selRatio"],["selCount"],["selSize"],["selQual"]].forEach(function(pair){
-        var mainSel=$(pair[0]);
-        var c=mainSel.cloneNode(true);
-        c.id="wiz_"+pair[0];
-        c.className="inp";
-        c.value=mainSel.value;
-        c.onchange=function(){ mainSel.value=c.value; saveState && saveState(); };
-        row.appendChild(c);
-      });
+      var buildWizGenRow=function(){
+        row.innerHTML="";
+        [["selProvider"],["selModel"],["selRatio"],["selCount"],["selSize"],["selQual"]].forEach(function(pair){
+          var mainSel=$(pair[0]);
+          var c=mainSel.cloneNode(true);
+          c.id="wiz_"+pair[0];
+          c.className="inp";
+          c.value=mainSel.value;
+          if(mainSel.style.display==="none") c.style.display="none";
+          if(mainSel.disabled) c.disabled=true;
+          c.onchange=function(){
+            mainSel.value=c.value;
+            if(mainSel.onchange) mainSel.onchange();
+            saveState && saveState();
+            buildWizGenRow();
+            if(wiz._footUpd) wiz._footUpd();
+          };
+          row.appendChild(c);
+        });
+      };
+      /* v4.28 C1: the footer names the engine that will actually run — not a
+         hardcoded "Gemini" — and re-renders when the provider clone changes */
+      var wfoot=el("p","mut","");
+      var wfootUpd=function(){
+        var engMap={gemini:"Gemini",runninghub:"RunningHub",openai:"OpenAI"};
+        var eng=engMap[$("selProvider").value]||"Gemini";
+        wfoot.textContent=L9({my:"ပုံ ",en:"Images: ",shn:"ၶႅပ်းႁၢင်ႈ ",kac:"Sumla: ",th:"ภาพ: ",zh:"图片: ",vi:"Ảnh: ",id:"Gambar: ",ms:"Imej: "})+n+" · prompt "+wiz.prompt.length+L9({my:" လုံး · {E} engine · guard ပါပြီးသား",en:" chars · {E} engine · guards included",shn:" တူဝ် · {E} engine · ပႃး guard ယဝ်ႉ",kac:" chars · {E} engine · guard ni lawm sai",th:" ตัวอักษร · {E} engine · มี guard รวมให้แล้ว",zh:" 字符 · {E} engine · 已含防护",vi:" ký tự · engine {E} · đã kèm guard",id:" karakter · engine {E} · guard disertakan",ms:" aksara · enjin {E} · guard disertakan"}).replace("{E}",eng);
+      };
+      wiz._footUpd=wfootUpd;
+      buildWizGenRow();
       body.appendChild(row);
-      body.appendChild(el("p","mut",L9({my:"ပုံ ",en:"Images: ",shn:"ၶႅပ်းႁၢင်ႈ ",kac:"Sumla: ",th:"ภาพ: ",zh:"图片: ",vi:"Ảnh: ",id:"Gambar: ",ms:"Imej: "})+n+" · prompt "+wiz.prompt.length+L9({my:" လုံး · Gemini engine · guard ပါပြီးသား",en:" chars · Gemini engine · guards included",shn:" တူဝ် · Gemini engine · ပႃး guard ယဝ်ႉ",kac:" chars · Gemini engine · guard ni lawm sai",th:" ตัวอักษร · Gemini engine · มี guard รวมให้แล้ว",zh:" 字符 · Gemini engine · 已含防护",vi:" ký tự · engine Gemini · đã kèm guard",id:" karakter · Gemini engine · guard disertakan",ms:" aksara · enjin Gemini · guard disertakan"})));
+      wfootUpd();
+      body.appendChild(wfoot);
       var advH=el("button","wizadv-h"); advH.innerHTML=icn("i-gear")+" Advanced — "+escH(L9({my:"prompt ပြင်ချင်ရင် (မပြင်လည်းရ)",en:"edit the prompt (optional)",shn:"သင်ၶႂ်ႈမႄး prompt (ဢမ်ႇမႄးၵေႃႈလႆႈ)",kac:"prompt hpe galai mai ai (n galai yang mung mai)",th:"แก้ไข prompt (ไม่บังคับ)",zh:"编辑 prompt (可选)",vi:"chỉnh sửa prompt (không bắt buộc)",id:"edit prompt (opsional)",ms:"sunting prompt (pilihan)"}));
       var advB=el("div","wizadv-b");
       advB.appendChild(el("p","mut",t("wiz_promptnote")));
@@ -3577,30 +3817,30 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     if (wiz.step===4){
       if (wiz.busy){
         var bs=el("div","spin on"); bs.textContent=t("spin_gen"); body.appendChild(bs);
-        body.appendChild(el("p","mut",L9({my:"ထုတ်နေပါပြီ — ရလဒ်က ဒီမှာပဲ ပေါ်လာမယ်",en:"Generating — the result will appear right here"})));
+        body.appendChild(el("p","mut",L9({my:"ထုတ်နေပါပြီ — ရလဒ်က ဒီမှာပဲ ပေါ်လာမယ်",en:"Generating — the result will appear right here",shn:"တိုၵ်ႉထုတ်ႇယူႇ — ၽွၼ်းလႆႈတေဢွၵ်ႇမႃးတီႈၼႆႈ",kac:"Shaw nga ai — result gaw ndai kaw sha pru wa na",th:"กำลังสร้าง — ผลลัพธ์จะแสดงตรงนี้",zh:"生成中 — 结果会直接显示在这里",vi:"Đang tạo — kết quả sẽ hiện ngay tại đây",id:"Sedang membuat — hasil akan muncul di sini",ms:"Sedang menjana — hasil akan muncul di sini"})));
       } else if (wiz.result){
         var rsrc="data:"+wiz.result.mime+";base64,"+wiz.result.b64;
         var rim=document.createElement("img"); rim.className="wiz-visual wiz-result"; rim.src=rsrc; rim.alt=w.title+" — result";
         body.appendChild(rim);
-        body.appendChild(el("p","mut",L9({my:"Gallery ထဲ အလိုအလျောက် သိမ်းပြီးပါပြီ ✓",en:"Saved to your Gallery automatically ✓"})));
+        body.appendChild(el("p","mut",L9({my:"Gallery ထဲ အလိုအလျောက် သိမ်းပြီးပါပြီ ✓",en:"Saved to your Gallery automatically ✓",shn:"သိမ်းၶဝ်ႈၼႂ်း Gallery ႁင်းၵူၺ်းယဝ်ႉ ✓",kac:"Gallery hta shi hkrai makoi da sai ✓",th:"บันทึกลง Gallery ให้อัตโนมัติแล้ว ✓",zh:"已自动保存到 Gallery ✓",vi:"Đã tự động lưu vào Gallery ✓",id:"Otomatis tersimpan ke Gallery ✓",ms:"Disimpan ke Gallery secara automatik ✓"})));
         var acts=el("div","wiz-acts");
         var dl=document.createElement("a"); dl.className="btn btn-gold"; dl.href=rsrc; dl.download="hnk-result.png";
-        setIcnText(dl,"i-download",L9({my:"Download",en:"Download"}));
+        setIcnText(dl,"i-download",t("btn_download"));
         acts.appendChild(dl);
-        var sv=el("button","btn"); setIcnText(sv,"i-save",L9({my:"Save ✓ — Gallery ဖွင့်မယ်",en:"Saved ✓ — open Gallery"}));
+        var sv=el("button","btn"); setIcnText(sv,"i-save",L9({my:"Save ✓ — Gallery ဖွင့်မယ်",en:"Saved ✓ — open Gallery",shn:"သိမ်းယဝ်ႉ ✓ — ပိုတ်ႇ Gallery",kac:"Makoi sai ✓ — Gallery hpaw u",th:"บันทึกแล้ว ✓ — เปิด Gallery",zh:"已保存 ✓ — 打开 Gallery",vi:"Đã lưu ✓ — mở Gallery",id:"Tersimpan ✓ — buka Gallery",ms:"Disimpan ✓ — buka Gallery"}));
         sv.onclick=function(){ closeWizard(); switchPage("pgGallery"); };
         acts.appendChild(sv);
-        var ra=el("button","btn"); setIcnText(ra,"i-retry",L9({my:"ထပ်ထုတ်မယ်",en:"Run again"}));
+        var ra=el("button","btn"); setIcnText(ra,"i-retry",L9({my:"ထပ်ထုတ်မယ်",en:"Run again",shn:"ထုတ်ႇထႅင်ႈ",kac:"Bai shaw u",th:"สร้างอีกครั้ง",zh:"再生成一次",vi:"Chạy lại",id:"Jalankan lagi",ms:"Jana lagi"}));
         ra.onclick=function(){ runWizGenerate(); };
         acts.appendChild(ra);
-        var oe=el("button","btn"); setIcnText(oe,"i-pen",L9({my:"Edit မှာ ဖွင့်မယ်",en:"Open in Edit"}));
+        var oe=el("button","btn"); setIcnText(oe,"i-pen",L9({my:"Edit မှာ ဖွင့်မယ်",en:"Open in Edit",shn:"ပိုတ်ႇတီႈ Edit",kac:"Edit kaw hpaw u",th:"เปิดใน Edit",zh:"在 Edit 中打开",vi:"Mở trong Edit",id:"Buka di Edit",ms:"Buka dalam Edit"}));
         oe.onclick=function(){ closeWizard(); switchPage("pgCreate"); if(typeof showResult==="function") showResult(); };
         acts.appendChild(oe);
         body.appendChild(acts);
       } else {
-        var ew=el("p","mut"); setIcnText(ew,"i-warn", wiz.error || L9({my:"ပုံမထွက်လာပါ — ပြန်စမ်းကြည့်ပါ",en:"No image came back — try again"}));
+        var ew=el("p","mut"); setIcnText(ew,"i-warn", wiz.error || L9({my:"ပုံမထွက်လာပါ — ပြန်စမ်းကြည့်ပါ",en:"No image came back — try again",shn:"ၶႅပ်းႁၢင်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Sumla n pru wa ai — bai chyam yu u",th:"ไม่มีภาพออกมา — ลองอีกครั้ง",zh:"没有生成图片 — 请重试",vi:"Không có ảnh trả về — thử lại",id:"Tidak ada gambar — coba lagi",ms:"Tiada imej — cuba lagi"}));
         body.appendChild(ew);
-        var ra2=el("button","btn btn-gold wiz-fast"); setIcnText(ra2,"i-retry",L9({my:"ပြန်စမ်းမယ်",en:"Try again"}));
+        var ra2=el("button","btn btn-gold wiz-fast"); setIcnText(ra2,"i-retry",L9({my:"ပြန်စမ်းမယ်",en:"Try again",shn:"ၸၢမ်းၶိုၼ်း",kac:"Bai chyam u",th:"ลองอีกครั้ง",zh:"重试",vi:"Thử lại",id:"Coba lagi",ms:"Cuba lagi"}));
         ra2.onclick=function(){ runWizGenerate(); };
         body.appendChild(ra2);
       }
@@ -3622,7 +3862,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       gen.onclick=function(){ runWizGenerate(); };
       nav.appendChild(gen);
     } else if (!wiz.busy){
-      var done=el("button","btn btn-gold"); setIcnText(done,"i-check",L9({my:"ပြီးပါပြီ",en:"Done"}));
+      var done=el("button","btn btn-gold"); setIcnText(done,"i-check",L9({my:"ပြီးပါပြီ",en:"Done",shn:"ယဝ်ႉယဝ်ႈ",kac:"Ngut sai",th:"เสร็จสิ้น",zh:"完成",vi:"Xong",id:"Selesai",ms:"Selesai"}));
       done.onclick=closeWizard;
       nav.appendChild(done);
     }
@@ -4158,6 +4398,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   renderFavRecent();
   $("wfPageH2").innerHTML = icn("i-brain","ic-h2")+escH("SMART WORKFLOW — " + wfTotal + t("unit"));
   var _swc=$("stWfCount"); if(_swc) _swc.textContent=String(wfTotal);
+  if(window._setOaIntro) window._setOaIntro(wfTotal); /* oaIntro names the same count (v4.28) */
   var wfEmpty=el("div","empty-state","");
   wfEmpty.id="wfEmpty";
   var wfEmptyIcon=el("div","ic"); wfEmptyIcon.innerHTML=icn("i-search","ic-xl");
@@ -4340,19 +4581,31 @@ function renderRsPicker(){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x"); x.innerHTML=icn("i-close");
     x.setAttribute("aria-label",t("lb_remove_image"));
-    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.imgRoles=null; renderRefs(); };
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; renderRefs(); };
     d.appendChild(x);
   } else {
     /* V2 hero empty-state: same big dropzone treatment as Studio's stPicker */
     var a=el("button","add");
     var cam=el("span"); cam.innerHTML=icn("i-camera","ic-xl"); a.appendChild(cam);
-    a.appendChild(el("span",null,L9({my:"ပုံထည့်ပါ — V2 Retouch စတင်ရန်",en:"Add a photo to start V2 Retouch"})));
+    a.appendChild(el("span",null,L9({my:"ပုံထည့်ပါ — V2 Retouch စတင်ရန်",en:"Add a photo to start V2 Retouch",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ — တႄႇ V2 Retouch",kac:"Sumla bang u — V2 Retouch hpang na matu",th:"เพิ่มรูปเพื่อเริ่ม V2 Retouch",zh:"添加照片以开始 V2 Retouch",vi:"Thêm ảnh để bắt đầu V2 Retouch",id:"Tambahkan foto untuk memulai V2 Retouch",ms:"Tambah foto untuk mula V2 Retouch"})));
     a.title = RS_NEED_PHOTO;
     a.onclick=function(){ state.pickSlot=0; $("filePick").click(); };
     d.appendChild(a);
   }
   d.appendChild(el("span","tag", L9({my:"မူရင်း",en:"Before",shn:"မူႇလ",kac:"Shawng",th:"ก่อน",zh:"之前",vi:"Trước",id:"Sebelum",ms:"Sebelum"})));
   host.appendChild(d);
+  /* v4.28: after To-Ref replaced IMAGE 1 with a result, offer the true
+     original back (non-destructive chains) */
+  if(state.rsOrig){
+    var rc=el("button","chip"); rc.id="rsRestoreOrig";
+    rc.innerHTML=icn("i-restore")+" "+escH(t("rs_restore_orig"));
+    rc.onclick=function(){
+      state.refs[0]=state.rsOrig; state.rsOrig=null; state.imgRoles=null;
+      renderRefs();
+      toast(t("rs_restore_done"),"ok");
+    };
+    host.appendChild(rc);
+  }
 }
 
 function renderRsPresetGrid(){
@@ -4361,7 +4614,7 @@ function renderRsPresetGrid(){
   RS_ONETAP_KEYS.forEach(function(key){
     var p=rsPresetByKey(key); if(!p) return;
     var c=el("button","chip"+(key===rsLastPresetKey?" on":"")); c.innerHTML=(p.icon?icn(p.icon)+" ":"")+escH(p.label);
-    c.title = (p.was ? L9({my:"(ယခင် "+p.was+") ",en:"(was: "+p.was+") "}) : "") + p.text(state.rtStrength);
+    c.title = (p.was ? L9({my:"(ယခင် "+p.was+") ",en:"(was: "+p.was+") ",shn:"(မိူဝ်ႈဢွၼ် "+p.was+") ",kac:"(moi na "+p.was+") ",th:"(เดิม: "+p.was+") ",zh:"(原为 "+p.was+") ",vi:"(trước: "+p.was+") ",id:"(sebelumnya: "+p.was+") ",ms:"(dahulu: "+p.was+") "}) : "") + p.text(state.rtStrength);
     c.disabled=rsBusy; // a rebuild (e.g. re-highlighting the last-used preset) must not un-disable mid-generation
     c.onclick=function(){ rsRunOnetap(key); };
     host.appendChild(c);
@@ -4448,10 +4701,18 @@ $("rsClearAll").onclick=function(){
    inputs (prompt text + IMAGE 1) instead of duplicating that ~150-line
    dispatcher. state.hist growing tells us it actually produced a result. */
 var rsBusy=false;
+/* v4.28: cooperative Stop flag for V2/Retouch runs (checked after the shared
+   dispatcher await + between batch photos) — armed by btnV2Stop/btnRsStop,
+   cleared at every user-initiated run start */
+var rsStop=false;
+/* v4.28: one-shot arm for the multi-photo Batch pick on the shared #filePick */
+var rsBatchArmed=false;
 function rsSyncGenControls(busy){
   rsBusy=busy;
   $("btnRsGen").disabled=busy;
+  $("btnRsGen").classList.toggle("working",!!busy);
   $("rsSpin").className="spin"+(busy?" on":"");
+  var rstp=$("btnRsStop"); if(rstp){ rstp.style.display=busy?"":"none"; if(busy) setIcnText(rstp,"i-close",t("rs_stop")); }
   $("btnRsRetry").style.display="none";
   /* one-tap presets and bundle chips stay visible while a generation is in
      flight (so the user can still switch tabs to look around) — but
@@ -4484,6 +4745,12 @@ async function rsDoGenerate(promptText){
   } finally {
     state.refs[1]=savedExtra1; state.refs[2]=savedExtra2;
   }
+  /* v4.28 Stop: a response that lands after Stop is discarded, never rendered */
+  if(rsStop){
+    if(state.hist[0]!==beforeFirst){ state.hist.shift(); state.result=state.hist[0]||null; state.histSel=0; }
+    setSt("stRsGen", t("rs_stopped"), "err");
+    return false;
+  }
   var srcSt=$("stGen");
   setSt("stRsGen", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
   return state.hist[0]!==beforeFirst;
@@ -4492,6 +4759,7 @@ async function rsRunOnetap(key){
   if(rsBusy) return;
   if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
   rsLastPresetKey=key;
+  rsStop=false;
   renderRsPresetGrid();
   rsSyncGenControls(true);
   var ok=await rsDoGenerate(rsPresetText(key, state.rtStrength));
@@ -4504,6 +4772,7 @@ $("btnRsGen").onclick=async function(){
   if(!hasSlider){ setSt("stRsGen", L9({my:"Slider အနည်းဆုံး တစ်ခု ရွေးပါ",en:"Pick at least one slider",shn:"ထၢႆႇ slider ဢၼ်ၼိုင်ႈဢွၼ်တၢင်း",kac:"Slider langai loi loi tawn u",th:"เลือกอย่างน้อยหนึ่ง slider",zh:"请至少选择一个滑块",vi:"Chọn ít nhất một slider",id:"Pilih setidaknya satu slider",ms:"Pilih sekurang-kurangnya satu slider"}), "err"); return; }
   if(!state.refs[0]){ setSt("stRsGen",RS_NEED_PHOTO,"err"); toast(RS_NEED_PHOTO,"err"); return; }
   rsLastPresetKey=null; // this result comes from sliders, not a preset — no "re-run at strength" quick action for it
+  rsStop=false;
   rsSyncGenControls(true);
   var ok=await rsDoGenerate("");
   rsSyncGenControls(false);
@@ -4512,6 +4781,7 @@ $("btnRsGen").onclick=async function(){
 $("btnRsRetry").onclick=async function(){
   if(rsBusy) return;
   this.style.display="none";
+  rsStop=false;
   rsSyncGenControls(true);
   var beforeFirst=state.hist[0]; // see rsDoGenerate's comment: length alone misreports success once history is at its 8-item cap
   await $("btnGen").onclick();
@@ -4554,7 +4824,15 @@ function rsShowResult(){
   var src="data:"+out.mime+";base64,"+out.b64;
   $("rsCmpAfter").src=src;
   $("btnRsDl").href=src;
-  if(state.refs[0]) $("rsCmpBefore").src="data:"+state.refs[0].mime+";base64,"+state.refs[0].b64;
+  /* v4.28: unique download names — date + running photo number, so batch
+     results (and re-downloads across sessions) never overwrite each other */
+  var dld=new Date();
+  var dp=function(x){ return (x<10?"0":"")+x; };
+  $("btnRsDl").download="hnk-retouch-"+dld.getFullYear()+dp(dld.getMonth()+1)+dp(dld.getDate())+"-"+(state.v2BatchN||state.histSel+1)+".png";
+  /* v4.28: Before prefers the chain's true original (rsOrig) so chained
+     retouches always compare against the photo the user actually uploaded */
+  var rsBase=state.rsOrig||state.refs[0];
+  if(rsBase) $("rsCmpBefore").src="data:"+rsBase.mime+";base64,"+rsBase.b64;
   rsCmpLayout();
   renderRsRerunChips();
   var h=$("rsHist"); h.innerHTML="";
@@ -4572,6 +4850,10 @@ $("rsCmpRange").oninput=rsCmpLayout;
 window.addEventListener("resize",function(){ if($("rsResultBox").className.indexOf(" on")>=0) rsCmpLayout(); });
 $("btnRsToRef").onclick=function(){
   var out=state.hist[state.histSel]||state.result; if(!out) return;
+  /* v4.28: stash the true original (session-only, never persisted — refs are
+     never saved by saveState and neither is this) before overwriting IMAGE 1,
+     so Before/After and the restore chip keep the real photo across chains */
+  state.rsOrig = state.rsOrig || state.refs[0];
   state.refs[0]={mime:out.mime,b64:out.b64,label:"result"};
   state.imgRoles=null;
   renderRefs();
@@ -4600,14 +4882,14 @@ $("btnRsToRef").onclick=function(){
 })();
 
 /* static labels + first render */
-$("rsIntro").textContent = L9({my:"ဓာတ်ပုံတင် → ပြင်းအားရွေး → V2 RETOUCH နှိပ်ရုံ — အသားအရေကို သဘာဝအတိုင်း ပြန်ဆေးပေးပြီး မျက်နှာပုံစံ၊ မိတ်ကပ်၊ ဆံပင်၊ နောက်ခံ လုံးဝ မပြောင်းပါ",en:"Add a photo → pick a strength → tap V2 RETOUCH. Skin texture is re-rendered naturally — face, makeup, hair and background never change"});
+$("rsIntro").textContent = L9({my:"ဓာတ်ပုံတင် → ပြင်းအားရွေး → V2 RETOUCH နှိပ်ရုံ — အသားအရေကို သဘာဝအတိုင်း ပြန်ဆေးပေးပြီး မျက်နှာပုံစံ၊ မိတ်ကပ်၊ ဆံပင်၊ နောက်ခံ လုံးဝ မပြောင်းပါ။",en:"Add a photo → pick a strength → tap V2 RETOUCH. Skin texture is re-rendered naturally; face shape, makeup, hair and background never change.",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ → လိူၵ်ႈႁႅင်း → ၼဵၵ်း V2 RETOUCH — ၽိဝ်ၼိူဝ်ႉမႄးပၼ်ၸွမ်းသၽႃႇဝ၊ ႁၢင်ႈၼႃႈ၊ မိတ်ႉၵပ်ႉ၊ ၶူၼ်ႁူဝ်လႄႈပိုၼ်ႉလင် ဢမ်ႇလႅၵ်ႈလၢႆႈသေဢိတ်း။",kac:"Sumla bang u → n-gun lata u → V2 RETOUCH dip u — hpyi hpe sha-sha re hku bai mai la ai; myi man hkrang, makeup, kara hte hpang lam gaw galoi mung n galai ai.",th:"เพิ่มรูป → เลือกความเข้ม → กด V2 RETOUCH — ผิวถูกปรับใหม่อย่างเป็นธรรมชาติ ส่วนรูปหน้า เมคอัพ ผม และพื้นหลังไม่เปลี่ยนเลย",zh:"添加照片 → 选择强度 → 点 V2 RETOUCH — 肤质自然重塑；脸型、妆容、头发和背景绝不改变。",vi:"Thêm ảnh → chọn cường độ → bấm V2 RETOUCH — da được tái tạo tự nhiên; dáng mặt, trang điểm, tóc và nền không bao giờ thay đổi.",id:"Tambahkan foto → pilih kekuatan → ketuk V2 RETOUCH — tekstur kulit diperbarui secara alami; bentuk wajah, riasan, rambut, dan latar tidak pernah berubah.",ms:"Tambah foto → pilih kekuatan → ketik V2 RETOUCH — tekstur kulit diperbaharui secara semula jadi; bentuk muka, solekan, rambut dan latar tidak berubah."});
 $("rsTabOnetap").innerHTML = icn("i-bolt")+" "+escH(L9({my:"One-Tap",en:"One-Tap",shn:"One-Tap",kac:"One-Tap",th:"One-Tap",zh:"一键",vi:"One-Tap",id:"One-Tap",ms:"One-Tap"}));
 $("rsTabSliders").innerHTML = icn("i-sliders")+" "+escH(L9({my:"Sliders",en:"Sliders",shn:"Sliders",kac:"Sliders",th:"Sliders",zh:"滑块",vi:"Sliders",id:"Slider",ms:"Slider"}));
 $("rsOnetapNote").textContent = L9({my:"Preset တစ်ခု နှိပ်လိုက်ရင် ချက်ချင်း retouch ထုတ်ပေးပါလိမ့်မယ် (Sliders tab ကရွေးထားတာတွေရှိရင် ပေါင်းပြီး ထည့်ပေးပါမယ်)",en:"Tap a preset to retouch instantly (anything picked in the Sliders tab is layered on top automatically)",shn:"ၼဵၵ်း preset ဢွၼ်ၼိုင်ႈ ၽွင်ႈၶိုၼ်း ၶၢင်းၶၢင်း (Sliders tab ဢၼ်လိူၵ်ႈဝႆႉ ၸွမ်းတေၸူမ်းၸွႆႈ)",kac:"Preset langai dip u nna gaw hprawng ai hte retouch pru wa na re (Sliders tab kaw tawn da ai ni mung shakap jaw sana)",th:"แตะ preset เพื่อรีทัชทันที (สิ่งที่เลือกในแท็บ Sliders จะถูกซ้อนเพิ่มให้อัตโนมัติ)",zh:"点按预设即可立即精修（Sliders 标签中已选的项会自动叠加）",vi:"Chạm vào preset để retouch ngay lập tức (mọi thứ đã chọn ở tab Sliders sẽ tự động được thêm vào)",id:"Ketuk preset untuk retouch instan (apa pun yang dipilih di tab Slider akan otomatis ditambahkan)",ms:"Ketik preset untuk retouch serta-merta (apa-apa yang dipilih dalam tab Slider akan ditambah secara automatik)"});
 $("rsOnetapStrengthLbl").textContent = t("rt_strength");
 $("rsStrengthLbl").textContent = t("rt_strength");
 $("rsClearAll").innerHTML = icn("i-trash")+" "+escH(L9({my:"အားလုံးဖျက်",en:"Clear all",shn:"လၢင်ႉပႅတ်ႈတင်းသဵင်ႈ",kac:"Yawng hkrat kau",th:"ล้างทั้งหมด",zh:"全部清除",vi:"Xóa tất cả",id:"Hapus semua",ms:"Padam semua"}));
-$("rsBundlesH").innerHTML = icn("i-tools")+" Quick Bundles";
+$("rsBundlesH").innerHTML = icn("i-tools")+" "+escH(L9({my:"Quick Bundles — အစုလိုက်",en:"Quick Bundles",shn:"Quick Bundles — မူႇလိူၵ်ႈဝႆး",kac:"Quick Bundles — hpawng hte",th:"ชุดรวมด่วน (Quick Bundles)",zh:"快捷组合 (Quick Bundles)",vi:"Gói nhanh (Quick Bundles)",id:"Paket cepat (Quick Bundles)",ms:"Gabungan pantas (Quick Bundles)"}));
 $("rsBundlesNote").textContent = L9({my:"အသုံးများသော slider အစုတွေကို တစ်ချက်တည်း ဖွင့်ပါ — ပြီးရင် အောက်မှာ တစ်ခုချင်း ချိန်ညှိနိုင်တယ်",en:"Turn on a common combo of sliders in one tap — fine-tune individual ones below afterward",shn:"ပိုတ်ႁိပ်ႈ slider ဢၼ်ၸႂ်ႉၵေႃႇတူင်ႇတင်းၼမ် တၢင်းတီႈလဵဝ် — ၶိုၼ်းၶႅၼ်ႇတီႈလုၵ်ႉၼိုင်ႈလႂ်ၼိုင်ႈလႂ် ၽၢႆႇတႂ်ႈ",kac:"Slider law law hpe langai hte hpaw jaw u — ndai npu kaw langai hpring galai chyam mai ai",th:"เปิดชุด slider ที่ใช้บ่อยในแตะเดียว — ปรับแต่ละตัวด้านล่างได้ภายหลัง",zh:"一键开启常用滑块组合 — 之后仍可在下方逐个微调",vi:"Bật một tổ hợp slider phổ biến chỉ bằng một chạm — tinh chỉnh từng cái bên dưới sau đó",id:"Aktifkan kombinasi slider umum sekali ketuk — sesuaikan satu per satu di bawah setelahnya",ms:"Hidupkan kombinasi slider biasa dengan satu ketikan — laraskan satu per satu di bawah selepas itu"});
 setIcnText($("btnRsRetry"),"i-retry",t("retry"));
 $("rsResultH2").textContent = L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After",shn:"ၽွၼ်း — မူႇလ vs ယဝ်ႉ",kac:"Lachyum — Shawng hte Ngut",th:"ผลลัพธ์ — ก่อนกับหลัง",zh:"结果 — 前后对比",vi:"Kết quả — Trước và Sau",id:"Hasil — Sebelum vs Sesudah",ms:"Hasil — Sebelum lwn Selepas"});
@@ -4646,38 +4928,39 @@ if(state.v2Saved){ /* tolerant restore — same pattern as state.stSaved */
 state.v2Armed=false; state.v2BatchN=0; /* session-only (next-photo auto-start + batch counter) */
 
 var V2_DOTS=[
-  {v:30, label:{my:"ညင်သာ",en:"Subtle"}},
-  {v:60, label:{my:"သဘာဝ",en:"Natural"}},
-  {v:80, label:{my:"ပြင်း",en:"Strong"}},
-  {v:100,label:{my:"အပြည့်",en:"Max"}}
+  {v:30, label:{my:"ညင်သာ",en:"Subtle",shn:"ဢူၼ်ႈဢူၼ်ႈ",kac:"Zim zim",th:"อ่อนโยน",zh:"轻微",vi:"Nhẹ",id:"Halus",ms:"Halus"}},
+  {v:60, label:{my:"သဘာဝ",en:"Natural",shn:"သၽႃႇဝ",kac:"Sha-sha",th:"ธรรมชาติ",zh:"自然",vi:"Tự nhiên",id:"Alami",ms:"Semula jadi"}},
+  {v:80, label:{my:"ပြင်း",en:"Strong",shn:"ႁႅင်း",kac:"Ja ai",th:"เข้ม",zh:"较强",vi:"Mạnh",id:"Kuat",ms:"Kuat"}},
+  {v:100,label:{my:"အပြည့်",en:"Max",shn:"တဵမ်ထူၼ်ႈ",kac:"Hkum ai",th:"สูงสุด",zh:"最强",vi:"Tối đa",id:"Maks",ms:"Maks"}}
 ];
 var V2_MODES=[
-  {key:"rt",  id:"v2ModeRt",  icon:"i-face",    label:{my:"AI အသားအရေပြင်",en:"AI Skin Retouch"}},
-  {key:"col", id:"v2ModeCol", icon:"i-palette", label:{my:"အသားရောင်ပြင်",en:"Skin Color Fix"}},
-  {key:"both",id:"v2ModeBoth",icon:"i-gem",     label:{my:"နှစ်မျိုးလုံး",en:"Both"}}
+  {key:"rt",  id:"v2ModeRt",  icon:"i-face",    label:{my:"AI အသားအရေပြင်",en:"AI Skin Retouch",shn:"AI မႄးၽိဝ်ၼိူဝ်ႉ",kac:"AI hpyi retouch",th:"AI รีทัชผิว",zh:"AI 皮肤精修",vi:"AI sửa da",id:"Retouch kulit AI",ms:"Retouch kulit AI"}},
+  {key:"col", id:"v2ModeCol", icon:"i-palette", label:{my:"အသားရောင်ပြင်",en:"Skin Color Fix",shn:"မႄးသီၽိဝ်ၼိူဝ်ႉ",kac:"Hpyi n̄sam jaw ai",th:"แก้สีผิว",zh:"肤色修正",vi:"Chỉnh màu da",id:"Perbaikan warna kulit",ms:"Pembetulan warna kulit"}},
+  {key:"both",id:"v2ModeBoth",icon:"i-gem",     label:{my:"နှစ်မျိုးလုံး",en:"Both",shn:"တင်းသွင်ဢၼ်",kac:"Lahkawng yawng",th:"ทั้งสองอย่าง",zh:"两者",vi:"Cả hai",id:"Keduanya",ms:"Kedua-duanya"}}
 ];
 var V2_QUALITY=[
-  {key:"fast",    icon:"i-bolt",   label:{my:"Fast (~၃၀ စက္ကန့်)",en:"Fast (~30s)"}},
-  {key:"quality", icon:"i-star",   label:{my:"Quality (~၁-၂ မိနစ်)",en:"Quality (~1–2 min)"}},
-  {key:"hd",      icon:"i-rocket", label:{my:"HD (Upscale ပါ)",en:"HD (+upscale)"}}
+  {key:"fast",    icon:"i-bolt",   label:{my:"Fast (~၃၀ စက္ကန့်)",en:"Fast (~30s)",shn:"Fast (~30 ၸႅၵ်ႉ)",kac:"Fast (~30s)",th:"Fast (~30 วิ)",zh:"Fast（约 30 秒）",vi:"Fast (~30 giây)",id:"Fast (~30 dtk)",ms:"Fast (~30 saat)"}},
+  {key:"quality", icon:"i-star",   label:{my:"Quality (~၁-၂ မိနစ်)",en:"Quality (~1–2 min)",shn:"Quality (~1–2 မိၼိတ်ႉ)",kac:"Quality (~1–2 min)",th:"Quality (~1–2 นาที)",zh:"Quality（约 1–2 分钟）",vi:"Quality (~1–2 phút)",id:"Quality (~1–2 mnt)",ms:"Quality (~1–2 minit)"}},
+  {key:"hd",      icon:"i-rocket", label:{my:"HD (Upscale ပါ)",en:"HD (+upscale)",shn:"HD (+upscale)",kac:"HD (+upscale)",th:"HD (+อัปสเกล)",zh:"HD（含放大）",vi:"HD (+upscale)",id:"HD (+upscale)",ms:"HD (+upscale)"}}
 ];
 /* The 8 swatch hexes below are DATA (skin-tone targets sampled from the
    studied Always-Studio panel), not theme colors — exempt from the
    tokens-only CSS rule, which is why they live inline on the chips. */
+var V2_LB_TONE={my:"ပစ်မှတ် အသားရောင်",en:"Target skin tone",shn:"သီၽိဝ်ၼိူဝ်ႉ ဢၼ်ယိူင်းဢၢၼ်း",kac:"Myit da ai hpyi n̄sam",th:"โทนสีผิวเป้าหมาย",zh:"目标肤色",vi:"Tông da mục tiêu",id:"Warna kulit target",ms:"Warna kulit sasaran"};
 var V2_TONES=[
-  {hex:"#E7D9DE", label:{my:"ပန်းနုဖြူ",en:"Fair Rosy"}},
-  {hex:"#E5D1D5", label:{my:"နှင်းဆီနု",en:"Pale Rose"}},
-  {hex:"#D3DAE4", label:{my:"ကြွေဖြူ",en:"Porcelain Ivory"}},
-  {hex:"#D7CAB4", label:{my:"နွေးဖြူ",en:"Warm Beige"}},
-  {hex:"#A98975", label:{my:"လက်ဖက်နု",en:"Medium Tan"}},
-  {hex:"#A67558", label:{my:"ကာရမယ်",en:"Warm Caramel"}},
-  {hex:"#815C48", label:{my:"အညို",en:"Medium Brown"}},
-  {hex:"#6E482B", label:{my:"အညိုရင့်",en:"Deep Brown"}}
+  {hex:"#E7D9DE", label:{my:"ပန်းနုဖြူ",en:"Fair Rosy",shn:"ၽိူၵ်ႇသီၵုလၢပ်ႈ",kac:"Hpraw tsawm nsam",th:"ขาวอมชมพู",zh:"白皙粉嫩",vi:"Trắng hồng",id:"Putih merona",ms:"Putih kemerahan"}},
+  {hex:"#E5D1D5", label:{my:"နှင်းဆီနု",en:"Pale Rose",shn:"သီၵုလၢပ်ႈဢူၼ်ႈ",kac:"Rose nsam lasi",th:"ชมพูอ่อน",zh:"浅玫瑰",vi:"Hồng nhạt",id:"Mawar pucat",ms:"Mawar pucat"}},
+  {hex:"#D3DAE4", label:{my:"ကြွေဖြူ",en:"Porcelain Ivory",shn:"ၽိူၵ်ႇမုၵ်ႉ",kac:"Porcelain hpraw",th:"ขาวงาช้าง",zh:"瓷白",vi:"Trắng sứ",id:"Putih porselen",ms:"Putih porselin"}},
+  {hex:"#D7CAB4", label:{my:"နွေးဖြူ",en:"Warm Beige",shn:"သီၵၢၼ်ႇဢုၼ်ႇ",kac:"Beige lum ai",th:"เบจอบอุ่น",zh:"暖米色",vi:"Be ấm",id:"Krem hangat",ms:"Kuning air hangat"}},
+  {hex:"#A98975", label:{my:"လက်ဖက်နု",en:"Medium Tan",shn:"သီလိူင်ၵၢင်",kac:"Tan lapran",th:"แทนกลาง",zh:"中等小麦色",vi:"Rám trung bình",id:"Sawo sedang",ms:"Sawo sederhana"}},
+  {hex:"#A67558", label:{my:"ကာရမယ်",en:"Warm Caramel",shn:"ၶႄႇရမႄႇဢုၼ်ႇ",kac:"Caramel lum ai",th:"คาราเมลอบอุ่น",zh:"暖焦糖",vi:"Caramel ấm",id:"Karamel hangat",ms:"Karamel hangat"}},
+  {hex:"#815C48", label:{my:"အညို",en:"Medium Brown",shn:"သီၼမ်ႉတဝ်ႈၵၢင်",kac:"Brown lapran",th:"น้ำตาลกลาง",zh:"中棕色",vi:"Nâu vừa",id:"Cokelat sedang",ms:"Coklat sederhana"}},
+  {hex:"#6E482B", label:{my:"အညိုရင့်",en:"Deep Brown",shn:"သီၼမ်ႉတဝ်ႈၶႅမ်ႉ",kac:"Brown sung ai",th:"น้ำตาลเข้ม",zh:"深棕色",vi:"Nâu đậm",id:"Cokelat tua",ms:"Coklat gelap"}}
 ];
 var V2_LEVELS=[
-  {key:"off",   label:{my:"မလုပ်",en:"Off"}},
-  {key:"soft",  label:{my:"ညင်သာ",en:"Soft"}},
-  {key:"strong",label:{my:"ပြင်း",en:"Strong"}}
+  {key:"off",   label:{my:"မလုပ်",en:"Off",shn:"ဢမ်ႇႁဵတ်း",kac:"N galaw",th:"ปิด",zh:"关闭",vi:"Tắt",id:"Mati",ms:"Mati"}},
+  {key:"soft",  label:{my:"ညင်သာ",en:"Soft",shn:"ဢူၼ်ႈဢူၼ်ႈ",kac:"Zim zim",th:"อ่อน",zh:"柔和",vi:"Nhẹ",id:"Lembut",ms:"Lembut"}},
+  {key:"strong",label:{my:"ပြင်း",en:"Strong",shn:"ႁႅင်း",kac:"Ja ai",th:"เข้ม",zh:"强",vi:"Mạnh",id:"Kuat",ms:"Kuat"}}
 ];
 
 function v2Tier(n){ return n<=35?"subtle":n<=65?"natural":n<=85?"strong":"maximum"; }
@@ -4730,8 +5013,11 @@ function v2SetBusy(b, label){
   rsBusy=b;
   var hero=$("v2Hero"); if(hero) hero.classList.toggle("v2-busy", !!b);
   $("btnV2Start").disabled=b;
+  $("btnV2Start").classList.toggle("working",!!b);
   var sp=$("v2Spin");
   sp.className="spin"+(b?" on":"");
+  var vstp=$("btnV2Stop"); if(vstp){ vstp.style.display=b?"":"none"; if(b) setIcnText(vstp,"i-close",t("rs_stop")); }
+  var vbat=$("btnV2Batch"); if(vbat) vbat.disabled=b;
   if(b){
     $("btnV2Retry").style.display="none";
     var base=label||t("spin_gen");
@@ -4792,17 +5078,22 @@ function renderV2Hero(){
   $("v2Blemish").value=v.blemish; $("v2BlemishVal").textContent=v.blemish+"%";
   $("v2Deshine").value=v.deshine; $("v2DeshineVal").textContent=v.deshine+"%";
   var tones=$("v2ToneChips"); tones.innerHTML="";
-  var offB=el("button","chip"+(v.tone==="off"?" on":""), L9({my:"မပြောင်း",en:"Off"}));
+  var offB=el("button","chip"+(v.tone==="off"?" on":""), L9({my:"မပြောင်း",en:"Off",shn:"ဢမ်ႇလႅၵ်ႈ",kac:"N galai",th:"ปิด",zh:"关闭",vi:"Tắt",id:"Mati",ms:"Mati"}));
   offB.onclick=function(){ state.v2.tone="off"; v2Sync(); };
   tones.appendChild(offB);
+  var selToneName="";
   V2_TONES.forEach(function(swd){
     var b=el("button","chip v2-sw"+(v.tone===swd.hex?" on":""));
+    if(v.tone===swd.hex) selToneName=L9(swd.label);
     b.style.background=swd.hex; /* data value, not a theme color (see V2_TONES) */
     b.setAttribute("aria-label",L9(swd.label));
     b.title=L9(swd.label);
     b.onclick=function(){ state.v2.tone=swd.hex; v2Sync(); };
     tones.appendChild(b);
   });
+  /* v4.28: the picked swatch's NAME rides on the section label — a bare
+     colored dot alone never told the user what they had selected */
+  $("v2LbTone").textContent=L9(V2_LB_TONE)+(selToneName?" — "+selToneName:"");
   $("v2ToneStrengthWrap").style.display = v.tone==="off" ? "none" : "";
   $("v2ToneStrength").value=v.toneStrength;
   $("v2ToneStrengthVal").textContent=v.toneStrength+"%";
@@ -4841,38 +5132,60 @@ async function v2DoGenerate(promptText){
     s.value=sv.m; q.value=sv.q; r.value=sv.r; c.value=sv.c; z.value=sv.z;
     $("prompt").value=savedPrompt; /* rsDoGenerate leaves the prompt; V2 restores it — Freeform stays untouched */
   }
+  /* v4.28 Stop: a response that lands after Stop is discarded, never rendered */
+  if(rsStop){
+    if(state.hist[0]!==beforeFirst){ state.hist.shift(); state.result=state.hist[0]||null; state.histSel=0; }
+    setSt("stV2Gen", t("rs_stopped"), "err");
+    return false;
+  }
   var st=$("stGen");
   setSt("stV2Gen", st?st.textContent:"", st&&st.className.indexOf("err")>=0?"err":"ok");
   return state.hist[0]!==beforeFirst;
 }
 
+/* v4.28: tier-honest busy label — Fast ~30s / Quality 1-2 min / HD 2-3 min
+   (the elapsed-seconds ticker in v2SetBusy stays) */
+function v2EtaLabel(){
+  var tier=state.v2.quality;
+  return tier==="fast" ? t("eta_fast") : tier==="hd" ? t("eta_hd") : t("eta_quality");
+}
+/* one V2 pass over the CURRENT IMAGE 1: generate + optional HD Finish.
+   Shared by the single-photo run and the v4.28 batch loop. */
+async function v2RunOne(){
+  var ok=await v2DoGenerate(v2BuildPrompt());
+  if(ok && !rsStop && state.v2.quality==="hd" && state.rhKey && rhIsConfigured("upscale-pro")){
+    /* HD Finish — mirrors Studio's pass: failures toast only and never destroy the base result */
+    var hdAbort=null;
+    try{
+      v2SetBusy(true,t("hd_finish")+"…");
+      hdAbort=new AbortController(); state.genAbort=hdAbort;
+      var res=state.hist[0];
+      var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], hdFinishSize("2K"), function(){}, hdAbort.signal);
+      if(outs && outs[0] && !rsStop){
+        state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
+        state.result=outs[0]; state.histSel=0;
+        galleryAdd(outs[0],"v2 retouch hd finish");
+      }
+    }catch(e2){ if(!rsStop) toast(t("hd_finish")+": "+friendlyError(e2),"err"); }
+    finally{ if(hdAbort && state.genAbort===hdAbort) state.genAbort=null; }
+  }
+  return ok && !rsStop;
+}
 $("btnV2Start").onclick=async function(){
   /* gen-bar-as-photo-picker (v4.25.1): an empty tap opens the picker instead of erroring */
   if(!state.refs[0]){ state.pickSlot=0; $("filePick").click(); return; }
   if(rsBusy) return;
-  v2SetBusy(true);
+  rsStop=false;
+  v2SetBusy(true, v2EtaLabel());
   rsLastPresetKey=null; /* V2 runs aren't preset runs — hides #rsRerunRow; V2's strength dots are its re-run affordance */
   var ok=false;
   try{
-    ok=await v2DoGenerate(v2BuildPrompt());
-    if(ok && state.v2.quality==="hd" && state.rhKey && rhIsConfigured("upscale-pro")){
-      /* HD Finish — mirrors Studio's pass: failures toast only and never destroy the base result */
-      try{
-        v2SetBusy(true,"HD Finish…");
-        var res=state.hist[0];
-        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], "", function(){});
-        if(outs && outs[0]){
-          state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
-          state.result=outs[0]; state.histSel=0;
-          galleryAdd(outs[0],"v2 retouch hd finish");
-        }
-      }catch(e2){ toast("HD Finish: "+friendlyError(e2),"err"); }
-    }
+    ok=await v2RunOne();
     if(ok){
       state.v2BatchN++;
-      v2Log(L9({my:"ပုံ #"+state.v2BatchN+" ပြီးပါပြီ",en:"Photo #"+state.v2BatchN+" done"}));
+      v2Log(L9({my:"ပုံ #"+state.v2BatchN+" ပြီးပါပြီ",en:"Photo #"+state.v2BatchN+" done",shn:"ၶႅပ်းႁၢင်ႈ #"+state.v2BatchN+" ယဝ်ႉ",kac:"Sumla #"+state.v2BatchN+" ngut sai",th:"รูปที่ #"+state.v2BatchN+" เสร็จแล้ว",zh:"第 #"+state.v2BatchN+" 张完成",vi:"Ảnh #"+state.v2BatchN+" xong",id:"Foto #"+state.v2BatchN+" selesai",ms:"Foto #"+state.v2BatchN+" siap"}));
       rsShowResult();
-    } else {
+    } else if(!rsStop){
       $("btnV2Retry").style.display="";
     }
   } finally { v2SetBusy(false); }
@@ -4887,24 +5200,114 @@ $("btnV2Retry").onclick=function(){
    hook at the end of renderV2Hero() fires after the successful pick. */
 $("btnV2Next").onclick=function(){ if(rsBusy) return; state.v2Armed=true; state.pickSlot=0; $("filePick").click(); };
 
+/* ---- v4.28 Stop (escape hatch) ---- */
+function rsDoStop(){
+  if(!rsBusy) return;
+  rsStop=true;
+  if(state.genAbort){ try{ state.genAbort.abort(); }catch(e){} }
+  /* release the UI immediately — the in-flight dispatcher unwinds on its
+     aborted fetch and its late result (if any) is discarded by the rsStop
+     checks in v2DoGenerate/rsDoGenerate */
+  v2SetBusy(false);
+  rsSyncGenControls(false);
+  setSt("stV2Gen", t("rs_stopped"), "err");
+  setSt("stRsGen", t("rs_stopped"), "err");
+  v2Log(t("rs_stopped"));
+}
+$("btnV2Stop").onclick=rsDoStop;
+$("btnRsStop").onclick=rsDoStop;
+
+/* ---- v4.28 true batch mode (multi-photo pick → sequential V2 passes) ---- */
+function rsLoadFileToSlot0(f){
+  return new Promise(function(res){
+    var looksImage=(f.type && f.type.toLowerCase().indexOf("image/")===0) || /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(f.name||"");
+    if(!looksImage) return res(false);
+    var rd=new FileReader();
+    rd.onerror=function(){ res(false); };
+    rd.onload=function(){
+      downscale(String(rd.result), function(dataUrl){
+        var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if(!m) return res(false);
+        state.cmpBase=null; state.rsOrig=null; /* each batch photo is a fresh original */
+        state.refs[0]={mime:m[1],b64:m[2],label:f.name};
+        state.imgRoles=null;
+        renderRefs();
+        res(true);
+      });
+    };
+    rd.readAsDataURL(f);
+  });
+}
+async function rsRunBatch(files){
+  if(rsBusy || !files.length) return;
+  rsStop=false;
+  rsLastPresetKey=null;
+  var total=files.length, okN=0;
+  v2SetBusy(true, v2EtaLabel()+" · 1/"+total);
+  try{
+    for(var i=0;i<total;i++){
+      if(rsStop) break; /* Stop between photos abandons the queue, keeps finished results */
+      v2SetBusy(true, v2EtaLabel()+" · "+(i+1)+"/"+total);
+      var loaded=await rsLoadFileToSlot0(files[i]);
+      if(rsStop) break;
+      if(!loaded){
+        v2Log(L9({my:"ဖိုင် "+(i+1)+"/"+total+" — ပုံဖိုင် မဟုတ်ပါ (ကျော်လိုက်ပြီ)",en:"File "+(i+1)+"/"+total+" — not an image (skipped)",shn:"ၾၢႆႇ "+(i+1)+"/"+total+" — ဢမ်ႇၸႂ်ႈၶႅပ်းႁၢင်ႈ (ၶၢမ်ႈပႅတ်ႈ)",kac:"File "+(i+1)+"/"+total+" — sumla n re (lai kau sai)",th:"ไฟล์ "+(i+1)+"/"+total+" — ไม่ใช่รูปภาพ (ข้าม)",zh:"文件 "+(i+1)+"/"+total+" — 不是图片（已跳过）",vi:"Tệp "+(i+1)+"/"+total+" — không phải ảnh (bỏ qua)",id:"Berkas "+(i+1)+"/"+total+" — bukan gambar (dilewati)",ms:"Fail "+(i+1)+"/"+total+" — bukan imej (dilangkau)"}));
+        continue;
+      }
+      var ok=false;
+      try{ ok=await v2RunOne(); }catch(e){ ok=false; }
+      if(rsStop) break;
+      if(ok){
+        okN++; state.v2BatchN++;
+        v2Log(t("rs_batch_prog").replace("{N}",String(i+1)).replace("{M}",String(total)));
+        rsShowResult(); /* every finished photo lands in hist + Gallery, same as a single run */
+      } else {
+        /* continue-on-error: one bad photo must not sink the queue */
+        v2Log(L9({my:"ပုံ "+(i+1)+"/"+total+" မအောင်မြင်ပါ — ဆက်လုပ်နေသည်",en:"Photo "+(i+1)+"/"+total+" failed — continuing",shn:"ၶႅပ်းႁၢင်ႈ "+(i+1)+"/"+total+" ဢမ်ႇဢွင်ႇ — သိုပ်ႇႁဵတ်းယူႇ",kac:"Sumla "+(i+1)+"/"+total+" n awng ai — matut galaw nga ai",th:"รูปที่ "+(i+1)+"/"+total+" ไม่สำเร็จ — ทำต่อ",zh:"第 "+(i+1)+"/"+total+" 张失败 — 继续",vi:"Ảnh "+(i+1)+"/"+total+" thất bại — tiếp tục",id:"Foto "+(i+1)+"/"+total+" gagal — lanjut",ms:"Foto "+(i+1)+"/"+total+" gagal — diteruskan"}));
+      }
+    }
+  } finally {
+    v2SetBusy(false);
+    if(rsStop){
+      v2Log(t("rs_batch_stop"));
+      setSt("stV2Gen", t("rs_batch_stop"), "err");
+    } else {
+      v2Log(t("rs_batch_sum").replace("{N}",String(okN)).replace("{M}",String(total)));
+      setSt("stV2Gen", t("rs_batch_sum").replace("{N}",String(okN)).replace("{M}",String(total)), okN?"ok":"err");
+    }
+  }
+}
+$("btnV2Batch").onclick=function(){
+  if(rsBusy) return;
+  var fp=$("filePick");
+  state.pickSlot=0;
+  rsBatchArmed=true;
+  fp.multiple=true; /* one pick only — restored in onchange and on dialog cancel */
+  fp.click();
+};
+/* dialog dismissed without files: restore the single-pick contract */
+$("filePick").addEventListener("cancel",function(){ this.multiple=false; rsBatchArmed=false; });
+
 /* static labels (L9: my + en, falls back en for the other 7 langs) */
-$("v2LbStrength").textContent=L9({my:"ပြင်းအား",en:"Strength"});
-$("v2LbMode").textContent=L9({my:"ပြင်မယ့်အမျိုးအစား",en:"Mode"});
-$("v2LbQuality").textContent=L9({my:"အမြန် / အရည်အသွေး",en:"Speed / Quality"});
-$("v2HdHint").textContent=L9({my:"HD အတွက် RunningHub key (Upscale Pro) လိုပါတယ် — Setup မှာ ထည့်ပါ",en:"HD needs your RunningHub key (Upscale Pro) — add it in Setup"});
-setIcnText($("btnV2Start"),"i-gem",L9({my:"V2 RETOUCH — စပြင်မယ်",en:"V2 RETOUCH"}));
-$("v2LbAdvanced").textContent=L9({my:"Advanced — အသေးစိတ်ချိန်ညှိ",en:"Advanced fine-tune"});
-$("v2LbBalance").textContent=L9({my:"ချောမွေ့မှု နှင့် အသားအရေ ဟန်ချက်",en:"Smoothing vs texture balance"});
-$("v2LbBlemish").textContent=L9({my:"အမာရွတ် / ဝက်ခြံ ဖယ်ရှားအား",en:"Blemish removal level"});
-$("v2LbDeshine").textContent=L9({my:"အဆီပြန် / ချွေးပြန် လျှော့ချ",en:"De-shine (oil & sweat)"});
-$("v2LbTone").textContent=L9({my:"ပစ်မှတ် အသားရောင်",en:"Target skin tone"});
-$("v2LbToneStrength").textContent=L9({my:"အရောင် ပြင်းအား",en:"Tone strength"});
-$("v2LbHair").textContent=L9({my:"ဆံပင် ချောမွေ့",en:"Hair smoothing"});
-$("v2LbOutfit").textContent=L9({my:"ဝတ်စုံ တောက်ပြောင်",en:"Outfit polish"});
-$("v2LbPreview").textContent=L9({my:"Prompt အစမ်းကြည့်",en:"Prompt preview"});
-$("v2LbManual").textContent=L9({my:"Manual — One-Tap / Sliders",en:"Manual — One-Tap & Sliders"});
+$("v2LbStrength").textContent=L9({my:"ပြင်းအား",en:"Strength",shn:"ႁႅင်း",kac:"N-gun",th:"ความเข้ม",zh:"强度",vi:"Cường độ",id:"Kekuatan",ms:"Kekuatan"});
+$("v2LbMode").textContent=L9({my:"ပြင်မယ့်အမျိုးအစား",en:"Mode",shn:"လၢႆးမႄး",kac:"Mode",th:"โหมด",zh:"模式",vi:"Chế độ",id:"Mode",ms:"Mod"});
+$("v2LbQuality").textContent=L9({my:"အမြန် / အရည်အသွေး",en:"Speed / Quality",shn:"ၽႂ်း / ၼမ်ႉၸၼ်ႉ",kac:"Lawan / Atsam",th:"ความเร็ว / คุณภาพ",zh:"速度 / 质量",vi:"Tốc độ / Chất lượng",id:"Kecepatan / Kualitas",ms:"Kelajuan / Kualiti"});
+$("v2HdHint").textContent=L9({my:"HD အတွက် RunningHub key (Upscale Pro) လိုပါတယ် — Setup မှာ ထည့်ပါ",en:"HD needs your RunningHub key (Upscale Pro) — add it in Setup",shn:"တွၼ်ႈတႃႇ HD လူဝ်ႇ RunningHub key (Upscale Pro) — သႂ်ႇတီႈ Setup",kac:"HD a matu RunningHub key (Upscale Pro) ra ai — Setup kaw bang u",th:"HD ต้องใช้ RunningHub key (Upscale Pro) — เพิ่มใน Setup",zh:"HD 需要你的 RunningHub key（Upscale Pro）— 在 Setup 中添加",vi:"HD cần RunningHub key (Upscale Pro) — thêm trong Setup",id:"HD butuh RunningHub key (Upscale Pro) — tambahkan di Setup",ms:"HD perlukan RunningHub key (Upscale Pro) — tambah di Setup"});
+setIcnText($("btnV2Start"),"i-gem",L9({my:"V2 RETOUCH — စပြင်မယ်",en:"V2 RETOUCH",shn:"V2 RETOUCH — တႄႇမႄး",kac:"V2 RETOUCH — hpang u",th:"V2 RETOUCH — เริ่มรีทัช",zh:"V2 RETOUCH — 开始修图",vi:"V2 RETOUCH — bắt đầu",id:"V2 RETOUCH — mulai",ms:"V2 RETOUCH — mula"}));
+setIcnText($("btnV2Batch"),"i-gallery",t("rs_batch"));
+setIcnText($("btnRsDl"),"i-download",t("btn_download"));
+$("v2LbAdvanced").textContent=L9({my:"Advanced — အသေးစိတ်ချိန်ညှိ",en:"Advanced fine-tune",shn:"Advanced — မႄးႁူဝ်ယွႆႈ",kac:"Advanced — atsawm hkyak hkyak",th:"ขั้นสูง — ปรับละเอียด",zh:"高级 — 精细调节",vi:"Nâng cao — tinh chỉnh",id:"Lanjutan — penyetelan halus",ms:"Lanjutan — penalaan halus"});
+$("v2LbBalance").textContent=L9({my:"ချောမွေ့မှု နှင့် အသားအရေ ဟန်ချက်",en:"Smoothing vs texture balance",shn:"ၸမ်ႉလိူင်ႉ လႄႈ ၽိဝ်ၼိူဝ်ႉ ၽဵင်ႇပဵင်း",kac:"Manu hte hpyi texture a shai lam",th:"สมดุลระหว่างความเนียนกับพื้นผิว",zh:"磨皮与质感平衡",vi:"Cân bằng mịn da và kết cấu",id:"Keseimbangan halus vs tekstur",ms:"Imbangan licin vs tekstur"});
+$("v2LbBlemish").textContent=L9({my:"အမာရွတ် / ဝက်ခြံ ဖယ်ရှားအား",en:"Blemish removal level",shn:"ႁႅင်းၽဵဝ်ႈ ႁွႆးၸဵပ်း/သိဝ်",kac:"Ahpre asin shamat ai n-gun",th:"ระดับการลบตำหนิ/สิว",zh:"祛痘祛瑕强度",vi:"Mức xóa khuyết điểm/mụn",id:"Tingkat penghapusan noda/jerawat",ms:"Tahap buang cela/jerawat"});
+$("v2LbDeshine").textContent=L9({my:"အဆီပြန် / ချွေးပြန် လျှော့ချ",en:"De-shine (oil & sweat)",shn:"လူတ်းယွမ်း မၼ်း/ႁိူဝ်ႇ လိူင်ႈ",kac:"Sau hte salat kabaw ai hpe shayawm u",th:"ลดความมัน (น้ำมันและเหงื่อ)",zh:"去油光（油光与汗光）",vi:"Giảm bóng dầu (dầu và mồ hôi)",id:"Kurangi kilap (minyak & keringat)",ms:"Kurangkan kilat (minyak & peluh)"});
+$("v2LbTone").textContent=L9(V2_LB_TONE);
+$("v2LbToneStrength").textContent=L9({my:"အရောင် ပြင်းအား",en:"Tone strength",shn:"ႁႅင်းသီ",kac:"N̄sam n-gun",th:"ความเข้มของโทนสี",zh:"色调强度",vi:"Cường độ tông màu",id:"Kekuatan warna",ms:"Kekuatan warna"});
+$("v2LbHair").textContent=L9({my:"ဆံပင် ချောမွေ့",en:"Hair smoothing",shn:"ၶူၼ်ႁူဝ် ၸမ်ႉလိူင်ႉ",kac:"Kara hpe manu hkra galaw",th:"จัดผมให้เรียบ",zh:"头发顺滑",vi:"Làm mượt tóc",id:"Penghalusan rambut",ms:"Pelicinan rambut"});
+$("v2LbOutfit").textContent=L9({my:"ဝတ်စုံ တောက်ပြောင်",en:"Outfit polish",shn:"ၶူဝ်းၼုင်ႈ မႄးလိုမ်း",kac:"Bu hpun hpe atsawm shakya",th:"ปรับชุดให้เนี้ยบ",zh:"服装精修",vi:"Làm đẹp trang phục",id:"Perapian busana",ms:"Kemasan pakaian"});
+$("v2LbPreview").textContent=L9({my:"Prompt အစမ်းကြည့်",en:"Prompt preview",shn:"တူၺ်း Prompt ဢွၼ်တၢင်း",kac:"Prompt hpe shawng yu u",th:"ดูตัวอย่าง prompt",zh:"Prompt 预览",vi:"Xem trước prompt",id:"Pratinjau prompt",ms:"Pratonton prompt"});
+$("v2LbManual").textContent=L9({my:"Manual — One-Tap / Sliders",en:"Manual — One-Tap & Sliders",shn:"Manual — One-Tap / Sliders",kac:"Manual — One-Tap hte Sliders",th:"Manual — One-Tap และ Sliders",zh:"手动 — 一键与滑块",vi:"Thủ công — One-Tap & Sliders",id:"Manual — One-Tap & Slider",ms:"Manual — One-Tap & Slider"});
 setIcnText($("btnV2Retry"),"i-retry",t("retry"));
-setIcnText($("btnV2Next"),"i-camera",L9({my:"နောက်တစ်ပုံ — Setting အတိုင်း",en:"Next photo — same settings"}));
+setIcnText($("btnV2Next"),"i-camera",L9({my:"နောက်တစ်ပုံ — Setting အတိုင်း",en:"Next photo — same settings",shn:"ၶႅပ်းႁၢင်ႈထႅင်ႈဢၼ် — setting မိူၼ်ၵဝ်ႇ",kac:"Hpang na sumla — setting maren sha",th:"รูปถัดไป — ตั้งค่าเดิม",zh:"下一张 — 设置不变",vi:"Ảnh tiếp theo — giữ nguyên cài đặt",id:"Foto berikutnya — pengaturan sama",ms:"Foto seterusnya — tetapan sama"}));
 
 /* control wiring (ranges are static markup; chips are JS-rendered above) */
 $("v2Strength").oninput=function(){ state.v2.strength=parseInt(this.value,10)||0; v2Sync(); };
@@ -7623,7 +8026,7 @@ function renderStPicker(){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x"); x.innerHTML=icn("i-close");
     x.setAttribute("aria-label",t("lb_remove_image"));
-    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.imgRoles=null; renderRefs(); };
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; renderRefs(); };
     d.appendChild(x);
   } else {
     /* MUST #9: large dropzone empty-state — dead controls stay hidden until a photo exists */
@@ -7781,7 +8184,7 @@ $("btnStToRef").onclick=function(){
 var stBusy=false;
 function stSetBusy(b,label){
   stBusy=b; ST.busy=b;
-  var btn=$("btnStGen"); if(btn) btn.disabled=b;
+  var btn=$("btnStGen"); if(btn){ btn.disabled=b; btn.classList.toggle("working",!!b); }
   var sp=$("stSpin"); if(sp){ sp.className="spin"+(b?" on":""); if(label) sp.textContent=label; }
   document.querySelectorAll("#muPresetRow .pcard, #evPresetRow .pcard").forEach(function(c){ c.disabled=b; });
 }
@@ -7843,15 +8246,15 @@ $("btnStGen").onclick=async function(){
     /* optional HD Finish through the already-shipped RunningHub upscale adapter */
     if(svGet("st_hd",false) && rhIsConfigured("upscale-pro") && state.rhKey){
       try{
-        stSetBusy(true,"HD Finish…");
+        stSetBusy(true,t("hd_finish")+"…");
         var res=state.hist[0];
-        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], $("selSize").value, function(){});
+        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], hdFinishSize(), function(){});
         if(outs && outs[0]){
           state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
           state.result=outs[0]; state.histSel=0;
           galleryAdd(outs[0],"studio hd finish");
         }
-      }catch(e2){ toast("HD Finish: "+friendlyError(e2),"err"); }
+      }catch(e2){ toast(t("hd_finish")+": "+friendlyError(e2),"err"); }
     }
     stShowResult(state.hist[0]);
   }
@@ -7967,7 +8370,7 @@ $("stClearAi").onclick=function(){
   hd.style.display="";
   hd.title=L9({my:"GENERATE ပြီးတိုင်း RunningHub upscale-pro နဲ့ HD တင်ပေးမယ်",en:"After every GENERATE, upscale the result via RunningHub upscale-pro"});
   function refresh(){ hd.className="chip"+(svGet("st_hd",false)?" on":""); }
-  hd.textContent="HD Finish";
+  hd.textContent=t("hd_finish");
   hd.onclick=function(){
     var on=!svGet("st_hd",false);
     svSet("st_hd",on); refresh(); stRenderPend();
@@ -8132,9 +8535,9 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   function mnSync(){
     var m=ST.ui.mode;
     mn.classList.toggle("on",m!=="auto");
-    var t=L9(m==="auto"?{my:"Preview: အလိုအလျောက် — နှိပ်ရင် အသေးချုံ့ထားမယ်",en:"Preview: auto — tap to pin compact"}
-      :m==="compact"?{my:"Preview: ချုံ့ထား — နှိပ်ရင် mini",en:"Preview: compact — tap for mini"}
-      :{my:"Preview: mini — နှိပ်ရင် အလိုအလျောက်ပြန်",en:"Preview: mini — tap for auto"});
+    var t=L9(m==="auto"?{my:"Preview: အလိုအလျောက် — နှိပ်ရင် အသေးချုံ့ထားမယ်",en:"Preview: auto — tap to pin compact",shn:"Preview: ႁင်းၵူၺ်း — ၼဵၵ်းသေ ၶမ်ဝႆႉဢၼ်လဵၵ်ႉ",kac:"Preview: auto — dip yang compact hku pin u",th:"Preview: อัตโนมัติ — แตะเพื่อตรึงแบบย่อ",zh:"Preview: 自动 — 点按固定紧凑视图",vi:"Preview: tự động — chạm để ghim chế độ gọn",id:"Preview: otomatis — ketuk untuk sematkan ringkas",ms:"Preview: auto — ketik untuk pin padat"}
+      :m==="compact"?{my:"Preview: ချုံ့ထား — နှိပ်ရင် mini",en:"Preview: compact — tap for mini",shn:"Preview: ဢၼ်လဵၵ်ႉ — ၼဵၵ်းသေပဵၼ် mini",kac:"Preview: compact — dip yang mini",th:"Preview: แบบย่อ — แตะเพื่อ mini",zh:"Preview: 紧凑 — 点按切换 mini",vi:"Preview: gọn — chạm để chuyển mini",id:"Preview: ringkas — ketuk untuk mini",ms:"Preview: padat — ketik untuk mini"}
+      :{my:"Preview: mini — နှိပ်ရင် အလိုအလျောက်ပြန်",en:"Preview: mini — tap for auto",shn:"Preview: mini — ၼဵၵ်းသေပွၵ်ႈၶိုၼ်း ႁင်းၵူၺ်း",kac:"Preview: mini — dip yang auto de bai wa",th:"Preview: mini — แตะเพื่อกลับอัตโนมัติ",zh:"Preview: mini — 点按恢复自动",vi:"Preview: mini — chạm để về tự động",id:"Preview: mini — ketuk untuk kembali otomatis",ms:"Preview: mini — ketik untuk kembali auto"});
     mn.title=t; mn.setAttribute("aria-label",t);
   }
   mn.onclick=function(){
@@ -8158,7 +8561,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   }
   ST._splitLayout=layout;
   sp.textContent="A|B";
-  sp.title=L9({my:"မူရင်း | ပြင်ပြီး နှိုင်းယှဉ်",en:"Compare original | edited"});
+  sp.title=L9({my:"မူရင်း | ပြင်ပြီး နှိုင်းယှဉ်",en:"Compare original | edited",shn:"ၼိူင်းတူၺ်း မူႇလ | မႄးယဝ်ႉ",kac:"Shawng | galai ngut hpe shai yu u",th:"เทียบต้นฉบับ | ที่แก้แล้ว",zh:"对比原图 | 修改后",vi:"So sánh gốc | đã sửa",id:"Bandingkan asli | hasil edit",ms:"Banding asal | disunting"});
   sp.onclick=function(){
     if(ST.zoomReset) ST.zoomReset(); /* split and zoom are mutually exclusive (§3.1) */
     ST.split.on=!ST.split.on;
@@ -8194,7 +8597,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   var Z=ST.ui.zoom;
   var ind=el("button","chip st-ov");
   ind.id="stZoomInd"; ind.style.display="none";
-  var it=L9({my:"Zoom ပြန်ဖျက် (နှစ်ချက်နှိပ်ရင် 100%)",en:"Reset zoom (double-tap for 100%)"});
+  var it=L9({my:"Zoom ပြန်ဖျက် (နှစ်ချက်နှိပ်ရင် 100%)",en:"Reset zoom (double-tap for 100%)",shn:"လူတ်း zoom ၶိုၼ်း (ၼဵၵ်းသွင်ၵမ်း 100%)",kac:"Zoom bai reset u (lahkawng lang dip yang 100%)",th:"รีเซ็ตซูม (แตะสองครั้งเพื่อ 100%)",zh:"重置缩放（双击 100%）",vi:"Đặt lại zoom (chạm đôi để 100%)",id:"Reset zoom (ketuk dua kali untuk 100%)",ms:"Set semula zum (ketik dua kali untuk 100%)"});
   ind.title=it; ind.setAttribute("aria-label",it);
   var rail=$("stRail"); if(rail) rail.appendChild(ind);
   function cssW(){ return c.clientWidth||1; }
@@ -8369,6 +8772,8 @@ function renderLibGrid(reset){
       var im=document.createElement("img");
       im.src="lib/ui/"+it.id+".jpg"; im.loading="lazy"; im.alt=it.t; im.title=it.t;
       im.className = lib.sel===it.id ? "sel" : "";
+      /* shimmer only while loading (v4.28): .ld dropped on settle */
+      im.classList.add("ld"); im.onload=im.onerror=function(){ im.classList.remove("ld"); };
       makePickable(im, function(){ libSelect(it, im); });
       host.appendChild(im);
     })(lib.list[i]);
@@ -8406,6 +8811,7 @@ async function libToSlot(slot, btn){
       rd.onload=function(){ res(String(rd.result).split(",")[1]); };
       rd.onerror=rej; rd.readAsDataURL(bl);
     });
+    if(slot===0){ state.cmpBase=null; state.rsOrig=null; } /* manual IMAGE 1 pick — compare baselines reset (v4.28) */
     state.refs[slot]={mime:"image/jpeg", b64:b64, label:it.t};
     state.imgRoles=null;
     renderRefs();
@@ -8428,13 +8834,13 @@ renderLibGrid(true);
    interim per the blueprint's asset plan; no new image files. */
 var DASH_CARDS=[
   { pg:"pgRetouch", ic:"i-gem", img:"lib/banners/banner-flower-portrait.jpg", pos:"50% 18%",
-    lbl:{my:"အသားအရေပြင်မယ်",en:"Retouch"}, alt:"Retouch" },
+    lbl:{my:"အသားအရေပြင်မယ်",en:"Retouch",shn:"မႄးၽိဝ်ၼိူဝ်ႉ",kac:"Retouch",th:"รีทัช",zh:"修图",vi:"Sửa ảnh",id:"Retouch",ms:"Retouch"}, alt:"Retouch" },
   { pg:"pgWf", ic:"i-brain", img:"lib/banners/banner-golden-temple.jpg", pos:"83% 27%",
-    lbl:{my:"နောက်ခံ·ဝတ်စုံပြောင်းမယ်",en:"Change Scene"}, alt:"Change Scene", bg:true },
+    lbl:{my:"နောက်ခံ·ဝတ်စုံပြောင်းမယ်",en:"Change Scene",shn:"လႅၵ်ႈပိုၼ်ႉလင်·ၶူဝ်းၼုင်ႈ",kac:"Scene galai u",th:"เปลี่ยนฉาก",zh:"更换场景",vi:"Đổi bối cảnh",id:"Ganti latar",ms:"Tukar latar"}, alt:"Change Scene", bg:true },
   { pg:"pgCreate", ic:"i-pen", img:"lib/banners/banner-fairy-forest.jpg", pos:"50% 22%",
-    lbl:{my:"စကားနဲ့ပြင်မယ်",en:"Describe an Edit"}, alt:"Describe an Edit" },
+    lbl:{my:"စကားနဲ့ပြင်မယ်",en:"Describe an Edit",shn:"လၢတ်ႈသေမႄး",kac:"Ga hte tsun nna galai u",th:"บอกสิ่งที่จะแก้",zh:"用文字描述修改",vi:"Mô tả chỉnh sửa",id:"Jelaskan editan",ms:"Terangkan suntingan"}, alt:"Describe an Edit" },
   { pg:"MEDIA", ic:"i-clapper", img:"lib/banners/banner-train-station.jpg", pos:"50% 30%",
-    lbl:{my:"ဗီဒီယို·Text→Image",en:"Media Lab"}, alt:"Media Lab" }
+    lbl:{my:"ဗီဒီယို·Text→Image",en:"Media Lab",shn:"ဝီးတီးဢူဝ်း·Text→Image",kac:"Media Lab",th:"มีเดียแล็บ",zh:"媒体实验室",vi:"Media Lab",id:"Media Lab",ms:"Media Lab"}, alt:"Media Lab" }
 ];
 function dashRoute(c){
   if(c.pg==="MEDIA"){ switchPage(lastPageOfGroup.grpMedia || "pgText2Img"); return; }
@@ -8473,7 +8879,7 @@ function renderDashStatic(){
     grid.appendChild(b);
   });
   /* Library teaser: real Featured thumbnails, horizontally scrollable */
-  $("dashLibH2").textContent=L9({my:"Library ထဲက Look များ",en:"Looks from the Library"});
+  $("dashLibH2").textContent=L9({my:"Library ထဲက Look များ",en:"Looks from the Library",shn:"Look ၼႂ်း Library",kac:"Library kaw na look ni",th:"ลุคจาก Library",zh:"来自 Library 的风格",vi:"Các look từ Library",id:"Gaya dari Library",ms:"Gaya dari Library"});
   var strip=$("dashLibStrip");
   (LW.featured||[]).slice(0,10).forEach(function(fid){
     var it=null;
@@ -8489,12 +8895,12 @@ function renderDashStatic(){
     });
     strip.appendChild(im2);
   });
-  setIcnText($("dashLibMore"),"i-arrow",L9({my:"နောက်ထပ်ကြည့်မယ်",en:"View More"}),{after:true});
+  setIcnText($("dashLibMore"),"i-arrow",L9({my:"နောက်ထပ်ကြည့်မယ်",en:"View More",shn:"တူၺ်းထႅင်ႈ",kac:"Grau yu u",th:"ดูเพิ่มเติม",zh:"查看更多",vi:"Xem thêm",id:"Lihat lainnya",ms:"Lihat lagi"}),{after:true});
   $("dashLibMore").onclick=function(){ switchPage("pgLib"); };
   /* promo band: Photoshop-panel cross-sell (blueprint C14) */
   $("dashPromoH2").textContent="Photoshop Panel";
-  $("dashPromoP").textContent=L9({my:"Photoshop ထဲမှာလည်း — Layer + Mask နဲ့ ပြန်လာမယ်၊ မူရင်းပုံ မပျက်ဘူး။",en:"Also in Photoshop — results come back as Layer + Mask, your original stays untouched."});
-  setIcnText($("dashPromoGo"),"i-external",L9({my:"Panel ရယူမယ်",en:"Get the Panel"}));
+  $("dashPromoP").textContent=L9({my:"Photoshop ထဲမှာလည်း — Layer + Mask နဲ့ ပြန်လာမယ်၊ မူရင်းပုံ မပျက်ဘူး။",en:"Also in Photoshop — results come back as Layer + Mask, your original stays untouched.",shn:"ၼႂ်း Photoshop ၵေႃႈ — ၽွၼ်းလႆႈပွၵ်ႈမႃးပဵၼ် Layer + Mask၊ ၶႅပ်းႁၢင်ႈမူႇလဢမ်ႇလု။",kac:"Photoshop hta mung — result gaw Layer + Mask hku bai wa ai, na a shawng sumla n hten ai.",th:"ใน Photoshop ก็ได้ — ผลลัพธ์กลับมาเป็น Layer + Mask ต้นฉบับไม่ถูกแตะต้อง",zh:"Photoshop 中同样可用 — 结果以 Layer + Mask 返回，原图不受影响。",vi:"Cũng có trong Photoshop — kết quả trả về dạng Layer + Mask, ảnh gốc không bị ảnh hưởng.",id:"Juga di Photoshop — hasil kembali sebagai Layer + Mask, foto asli tetap utuh.",ms:"Juga dalam Photoshop — hasil kembali sebagai Layer + Mask, foto asal kekal."});
+  setIcnText($("dashPromoGo"),"i-external",L9({my:"Panel ရယူမယ်",en:"Get the Panel",shn:"ဢဝ် Panel",kac:"Panel la u",th:"รับ Panel",zh:"获取 Panel",vi:"Tải Panel",id:"Dapatkan Panel",ms:"Dapatkan Panel"}));
 }
 function renderDashCont(){
   var card=$("dashCont");
@@ -8503,17 +8909,17 @@ function renderDashCont(){
   var hasHist=!!state.hist.length;
   if(!hasHist && !recents.length){ card.style.display="none"; return; }
   card.style.display="";
-  $("dashContH2").textContent=L9({my:"ဆက်လုပ်မယ်",en:"Continue"});
+  $("dashContH2").textContent=L9({my:"ဆက်လုပ်မယ်",en:"Continue",shn:"သိုပ်ႇႁဵတ်း",kac:"Matut galaw u",th:"ทำต่อ",zh:"继续",vi:"Tiếp tục",id:"Lanjutkan",ms:"Teruskan"});
   var row=$("dashContRow"); row.innerHTML="";
   if(hasHist){
     var out=state.hist[0];
     var th=document.createElement("img");
     th.className="dash-cont-thumb";
     th.src="data:"+out.mime+";base64,"+out.b64;
-    th.alt=L9({my:"နောက်ဆုံးရလဒ်",en:"Latest result"});
+    th.alt=L9({my:"နောက်ဆုံးရလဒ်",en:"Latest result",shn:"ၽွၼ်းလႆႈလိုၼ်းသုတ်း",kac:"Hpang jahtum result",th:"ผลลัพธ์ล่าสุด",zh:"最新结果",vi:"Kết quả mới nhất",id:"Hasil terbaru",ms:"Hasil terkini"});
     row.appendChild(th);
     var go=el("button","btn btn-gold grow");
-    setIcnText(go,"i-arrow",L9({my:"ဆက်လုပ်မယ်",en:"Continue editing"}),{after:true});
+    setIcnText(go,"i-arrow",L9({my:"ဆက်လုပ်မယ်",en:"Continue editing",shn:"သိုပ်ႇမႄးထႅင်ႈ",kac:"Matut galai u",th:"แก้ไขต่อ",zh:"继续编辑",vi:"Tiếp tục chỉnh sửa",id:"Lanjut mengedit",ms:"Terus menyunting"}),{after:true});
     go.onclick=function(){ switchPage("pgCreate"); if(typeof showResult==="function") showResult(); };
     row.appendChild(go);
   }
@@ -8686,9 +9092,9 @@ function pendingOffer(){
   var o=pendingGet();
   if(!o || o.page==="pgHome" || !PAGES.some(function(p){ return p[0]===o.page; })){ host.style.display="none"; return; }
   host.style.display="";
-  toast(L9({my:"Key သိမ်းပြီးပြီ — ရပ်ထားတဲ့နေရာကနေ ဆက်လုပ်လို့ရပြီ",en:"Key saved — you can continue where you left off"}),"ok");
+  toast(L9({my:"Key သိမ်းပြီးပြီ — ရပ်ထားတဲ့နေရာကနေ ဆက်လုပ်လို့ရပြီ",en:"Key saved — you can continue where you left off",shn:"သိမ်း key ယဝ်ႉ — သိုပ်ႇႁဵတ်းတီႈဢၼ်ၵိုတ်းဝႆႉၼၼ်ႉလႆႈယဝ်ႉ",kac:"Key makoi sai — hkring da ai shara kaw na matut galaw mai sai",th:"บันทึก key แล้ว — ทำต่อจากจุดที่ค้างไว้ได้เลย",zh:"Key 已保存 — 可以从上次停下的地方继续了",vi:"Đã lưu key — bạn có thể tiếp tục từ chỗ đang dở",id:"Key tersimpan — Anda bisa lanjut dari tempat terakhir",ms:"Key disimpan — anda boleh sambung dari tempat terakhir"}),"ok");
 }
-setIcnText($("pendingGo"),"i-arrow",L9({my:"ရပ်ထားတဲ့နေရာကနေ ဆက်လုပ်မယ်",en:"Continue where you left off"}),{after:true});
+setIcnText($("pendingGo"),"i-arrow",L9({my:"ရပ်ထားတဲ့နေရာကနေ ဆက်လုပ်မယ်",en:"Continue where you left off",shn:"သိုပ်ႇႁဵတ်းတီႈဢၼ်ၵိုတ်းဝႆႉ",kac:"Hkring da ai shara kaw na matut galaw u",th:"ทำต่อจากจุดที่ค้างไว้",zh:"从上次停下的地方继续",vi:"Tiếp tục từ chỗ đang dở",id:"Lanjutkan dari tempat terakhir",ms:"Sambung dari tempat terakhir"}),{after:true});
 $("pendingGo").onclick=function(){
   var o=pendingGet(); pendingClear(); this.style.display="none";
   if(!o) return;
@@ -8799,14 +9205,16 @@ $("btnGen").onclick = async function(){
   if(provider==="openai" && !state.oaKey){ pendingCapture(); switchPage("pgHome"); var mo=L9({my:"OpenAI key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"OpenAI key isn't set up yet — add it in Setup",shn:"OpenAI key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"OpenAI key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า OpenAI key — เพิ่มใน Setup",zh:"尚未设置 OpenAI key — 请在 Setup 中添加",vi:"Chưa thiết lập OpenAI key — thêm trong Setup",id:"OpenAI key belum disiapkan — tambahkan di Setup",ms:"OpenAI key belum disediakan — tambah dalam Setup"}); setSt("stOaKey",mo,"err"); return; }
   var text=$("prompt").value.trim();
   if(!text && !state.refs.some(Boolean)){ setSt("stGen",t("st_needany"),"err"); return; }
-  var btn=$("btnGen"); btn.disabled=true; $("spin").className="spin on"; setSt("stGen","");
+  updateTrHint("genTrHint", text);
+  var btn=$("btnGen"); btn.disabled=true; btn.classList.add("working"); $("spin").className="spin on"; setSt("stGen","");
+  /* v4.28: one AbortController per dispatch — V2/RS Stop (and anything else)
+     can kill the in-flight provider calls instead of waiting them out */
+  var genAbort=new AbortController(); state.genAbort=genAbort;
   $("btnRetry").style.display="none";
   try{
-    if(text && hasMyanmar(text) && state.key){
-      $("spin").textContent=t("spin_tr");
-      var tr=await geminiText("Translate this Burmese image-generation prompt to natural, detailed English. Return ONLY the translation:\n\n"+text);
-      if(tr) text=tr;
-    }
+    /* shared translate gate (v4.28) — covers the RunningHub/OpenAI provider
+       paths of this dispatcher, not just Gemini */
+    text = await translateIfMyanmar(text, $("spin"));
     $("spin").textContent=t("spin_gen");
     var parts=[];
     var refs=state.refs.filter(Boolean);
@@ -8834,6 +9242,15 @@ $("btnGen").onclick = async function(){
     var count=parseInt($("selCount").value,10)||1;
     var refDataUrls = refs.map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
     var rhActiveForFallback = rhActiveModelCfg();
+    /* v4.28 F1: a promptless upscale endpoint must never serve as a CROSS-
+       PROVIDER fallback — it would silently discard the user's prompt and
+       return a same-looking photo. When RunningHub is not the selected
+       provider, substitute the first configured prompt-capable RH model, or
+       drop RH from the fallback pool entirely. */
+    if(provider!=="runninghub" && rhActiveForFallback && /^upscale/.test(rhActiveForFallback.kind||"")){
+      var rhPromptCapable = RH_MODELS.filter(function(m){ return rhIsConfigured(m.id) && !/^upscale/.test(rhEffectiveKind(m.id)||""); })[0];
+      rhActiveForFallback = rhPromptCapable ? rhModelCfgOut(rhPromptCapable.id) : null;
+    }
     var sizeSel=$("selSize").value;
     var PROVIDER_LABEL = { gemini:"Gemini", runninghub:"RunningHub", openai:"OpenAI" };
     /* Build a call function for every CONFIGURED provider (not just the
@@ -8854,7 +9271,7 @@ $("btnGen").onclick = async function(){
       };
       var callModel = function(m){
         return fetch(API_BASE+"/models/"+m+":generateContent?key="+encodeURIComponent(state.key),{
-          method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(makeBody(m))})
+          method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(makeBody(m)),signal:genAbort.signal})
           .then(function(r){ return r.json().catch(function(){return null;}).then(function(j){ return {r:r,j:j}; }); })
           .then(function(x){
             if(!x.r.ok) return { err: friendly(x.r.status,x.j), code:x.r.status };
@@ -8898,10 +9315,10 @@ $("btnGen").onclick = async function(){
       providerFns.runninghub = function(){
         var onTick = function(elapsed){ $("spin").textContent = t("spin_gen")+" · "+Math.round(elapsed/1000)+"s"; };
         var call = rhActiveForFallback.kind==="upscale"
-          ? rhGenerateUpscale(state.rhKey, rhActiveForFallback.apiPath, refDataUrls, sizeSel, onTick)
+          ? rhGenerateUpscale(state.rhKey, rhActiveForFallback.apiPath, refDataUrls, sizeSel, onTick, genAbort.signal)
           : rhActiveForFallback.kind==="upscale-transparent"
-          ? rhGenerateUpscaleTransparent(state.rhKey, rhActiveForFallback.apiPath, refDataUrls, sizeSel, onTick)
-          : rhGenerateOne(state.rhKey, rhActiveForFallback.apiPath, finalPrompt, ratio, refDataUrls, rhV2Resolution(sizeSel), rhActiveForFallback, onTick);
+          ? rhGenerateUpscaleTransparent(state.rhKey, rhActiveForFallback.apiPath, refDataUrls, sizeSel, onTick, genAbort.signal)
+          : rhGenerateOne(state.rhKey, rhActiveForFallback.apiPath, finalPrompt, ratio, refDataUrls, rhV2Resolution(sizeSel), rhActiveForFallback, onTick, genAbort.signal);
         return call.then(function(outs){
           return outs[0] ? { out: outs[0] } : { err: rhFriendly({code:"failed"}) };
         }).catch(function(e){ return { err: rhFriendly(e) }; });
@@ -8909,10 +9326,10 @@ $("btnGen").onclick = async function(){
     }
     if(state.oaKey){
       /* OpenAI path: same finalPrompt + reference images as Gemini/RunningHub,
-         routed to gpt-image-1 via the user's own key — single request, no
+         routed to gpt-image-2 via the user's own key — single request, no
          upload/poll cycle needed. */
       providerFns.openai = function(){
-        return oaGenerateOne(state.oaKey, finalPrompt, refDataUrls, ratio)
+        return oaGenerateOne(state.oaKey, finalPrompt, refDataUrls, ratio, $("selQual").value, genAbort.signal)
           .then(function(outs){ return outs[0] ? { out: outs[0] } : { err: oaFriendly({status:0}) }; })
           .catch(function(e){ return { err: oaFriendly(e) }; });
       };
@@ -8971,10 +9388,15 @@ $("btnGen").onclick = async function(){
     state.histSel=0;
     outs.forEach(function(o){ galleryAdd(o, finalPrompt.slice(0,160)); });
     pushPromptHistory($("prompt").value.trim());
+    /* v4.28: remember the photo this chain STARTED from (session-only, never
+       persisted) so Before/After stays truthful across To-Ref chained edits.
+       Reset only by a manual IMAGE 1 pick (filePick slot 0 / Gallery / Library). */
+    if(!state.cmpBase && state.refs[0]) state.cmpBase=state.refs[0];
     showResult();
     setSt("stGen", t("st_done")+" ("+outs.length+"/"+count+")","ok");
   }catch(e){ setSt("stGen",(e&&e.message)||String(e),"err"); $("btnRetry").style.display=""; }
-  btn.disabled=false; $("spin").className="spin"; $("spin").textContent=t("spin_gen");
+  if(state.genAbort===genAbort) state.genAbort=null;
+  btn.disabled=false; btn.classList.remove("working"); $("spin").className="spin"; $("spin").textContent=t("spin_gen");
 };
 
 $("btnRetry").onclick=function(){ this.style.display="none"; $("btnGen").onclick(); };
@@ -9016,9 +9438,12 @@ function cmpLayout(){
 }
 function refreshCmp(){
   var out=state.hist[state.histSel]||state.result;
-  if(!out || !state.refs[0]) return;
+  /* v4.28: prefer the chain's true original (cmpBase) over refs[0], which
+     To-Ref/workflow chaining overwrites with intermediate results */
+  var base=state.cmpBase||state.refs[0];
+  if(!out || !base) return;
   $("cmpAfter").src="data:"+out.mime+";base64,"+out.b64;
-  $("cmpBefore").src="data:"+state.refs[0].mime+";base64,"+state.refs[0].b64;
+  $("cmpBefore").src="data:"+base.mime+";base64,"+base.b64;
   cmpLayout();
 }
 $("btnCmp").onclick=function(){
@@ -9131,12 +9556,16 @@ $("btnVidGen").onclick = async function(){
   if(!text){ setSt("stVidGen", L9({my:"Prompt ရေးပါ — ဗီဒီယိုထဲမှာ ဘာဖြစ်စေချင်လဲ ဖော်ပြပါ",en:"Write a prompt describing what should happen in the video",shn:"တႅမ်ႈ prompt ဝႃႈသင်တေပဵၼ်",kac:"Video kata n gara hku byin na tsun dan prompt ka jaw u",th:"เขียน prompt อธิบายสิ่งที่จะเกิดขึ้นในวิดีโอ",zh:"请写一个 prompt 描述视频中应该发生的事情",vi:"Viết prompt mô tả điều sẽ xảy ra trong video",id:"Tulis prompt yang menjelaskan apa yang terjadi di video",ms:"Tulis prompt yang menerangkan apa yang berlaku dalam video"}), "err"); return; }
   var refDataUrls=refs.slice(0,m.maxImages).map(function(r){ return "data:"+r.mime+";base64,"+r.b64; });
   var resolution=$("selVidRes").value, duration=$("selVidDur").value, aspectRatio=m.aspect?$("selVidAspect").value:"";
-  var btn=this; btn.disabled=true; $("vidSpin").className="spin on"; setSt("stVidGen","");
+  updateTrHint("vidTrHint", text);
+  var btn=this; btn.disabled=true; btn.classList.add("working"); $("vidSpin").className="spin on"; setSt("stVidGen","");
   $("btnVidRetry").style.display="none";
   var spinBase=$("vidSpin").textContent;
   var abort=new AbortController(); state.vidAbort=abort;
   setIcnText($("btnVidCancel"),"i-close",t("btn_cancel")); $("btnVidCancel").style.display="";
   try{
+    /* v4.28: Burmese prompts auto-translate on this provider too (needs a Gemini key) */
+    text = await translateIfMyanmar(text, $("vidSpin"));
+    $("vidSpin").textContent=spinBase;
     var outs=await rhGenerateVideo(state.rhKey, m.apiPath, text, refDataUrls, resolution, duration, aspectRatio, m.imageParam, function(elapsed){
       $("vidSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
     }, abort.signal);
@@ -9156,7 +9585,7 @@ $("btnVidGen").onclick = async function(){
   }
   state.vidAbort=null;
   $("btnVidCancel").style.display="none";
-  btn.disabled=false; $("vidSpin").className="spin"; $("vidSpin").textContent=spinBase;
+  btn.disabled=false; btn.classList.remove("working"); $("vidSpin").className="spin"; $("vidSpin").textContent=spinBase;
 };
 $("btnVidCancel").onclick=function(){ if(state.vidAbort) state.vidAbort.abort(); };
 $("btnVidRetry").onclick=function(){ this.style.display="none"; $("btnVidGen").onclick(); };
@@ -9248,7 +9677,7 @@ $("btnVuGen").onclick = async function(){
   if(!state.vuFile){ setSt("stVuGen", rhFriendly({code:"no-video"}), "err"); return; }
   var targetResolution=$("selVuRes").value;
   var videoDataUrl="data:"+state.vuFile.mime+";base64,"+state.vuFile.b64;
-  var btn=this; btn.disabled=true; $("vuSpin").className="spin on"; setSt("stVuGen","");
+  var btn=this; btn.disabled=true; btn.classList.add("working"); $("vuSpin").className="spin on"; setSt("stVuGen","");
   $("btnVuRetry").style.display="none";
   var spinBase=$("vuSpin").textContent;
   var abort=new AbortController(); state.vuAbort=abort;
@@ -9273,7 +9702,7 @@ $("btnVuGen").onclick = async function(){
   }
   state.vuAbort=null;
   $("btnVuCancel").style.display="none";
-  btn.disabled=false; $("vuSpin").className="spin"; $("vuSpin").textContent=spinBase;
+  btn.disabled=false; btn.classList.remove("working"); $("vuSpin").className="spin"; $("vuSpin").textContent=spinBase;
 };
 $("btnVuCancel").onclick=function(){ if(state.vuAbort) state.vuAbort.abort(); };
 $("btnVuRetry").onclick=function(){ this.style.display="none"; $("btnVuGen").onclick(); };
@@ -9367,12 +9796,16 @@ $("btnT2IGen").onclick = async function(){
   var text=$("t2iPrompt").value.trim();
   if(!text){ setSt("stT2IGen", L9({my:"Prompt ရေးပါ — ဘယ်လို ပုံမျိုး လိုချင်လဲ ဖော်ပြပါ",en:"Write a prompt describing the image you want",shn:"တႅမ်ႈ prompt",kac:"Prompt ka jaw u",th:"เขียน prompt อธิบายภาพที่ต้องการ",zh:"请写一个 prompt 描述想要的图片",vi:"Viết prompt mô tả ảnh bạn muốn",id:"Tulis prompt yang menjelaskan gambar yang diinginkan",ms:"Tulis prompt yang menerangkan imej yang dikehendaki"}), "err"); return; }
   var ratio=$("selT2IRatio").value, sizeSel=$("selT2IRes").value;
-  var btn=this; btn.disabled=true; $("t2iSpin").className="spin on"; setSt("stT2IGen","");
+  updateTrHint("t2iTrHint", text);
+  var btn=this; btn.disabled=true; btn.classList.add("working"); $("t2iSpin").className="spin on"; setSt("stT2IGen","");
   $("btnT2IRetry").style.display="none";
   var spinBase=$("t2iSpin").textContent;
   var abort=new AbortController(); state.t2iAbort=abort;
   setIcnText($("btnT2ICancel"),"i-close",t("btn_cancel")); $("btnT2ICancel").style.display="";
   try{
+    /* v4.28: Burmese prompts auto-translate on this provider too (needs a Gemini key) */
+    text = await translateIfMyanmar(text, $("t2iSpin"));
+    $("t2iSpin").textContent=spinBase;
     var outs=await rhGenerateT2I(state.rhKey, m, text, ratio, sizeSel, function(elapsed){
       $("t2iSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
     }, abort.signal);
@@ -9393,7 +9826,7 @@ $("btnT2IGen").onclick = async function(){
   }
   state.t2iAbort=null;
   $("btnT2ICancel").style.display="none";
-  btn.disabled=false; $("t2iSpin").className="spin"; $("t2iSpin").textContent=spinBase;
+  btn.disabled=false; btn.classList.remove("working"); $("t2iSpin").className="spin"; $("t2iSpin").textContent=spinBase;
 };
 $("btnT2ICancel").onclick=function(){ if(state.t2iAbort) state.t2iAbort.abort(); };
 $("btnT2IRetry").onclick=function(){ this.style.display="none"; $("btnT2IGen").onclick(); };

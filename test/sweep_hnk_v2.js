@@ -222,7 +222,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     JSON.stringify(advResult));
 
   // 6) HD finish: after the Gemini success, one topazlabs submit at
-  // scale 2x; the RH-downloaded output replaces the front of history
+  // v4.28 W2: the HD tier now forces the 2K finish size (scale 4x) through the
+  // shared hdFinishSize() helper — 2x was out of step with the "HD" promise
   const hdResult = await page.evaluate(async (b64) => {
     state.rhKey = "TEST_RH_KEY";
     renderV2Hero(); // gate re-evaluated on every render — chip enables now
@@ -239,16 +240,16 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       gemCount: window.__reqs.length,
       rhSubmits: window.__rhReqs.length,
       urlTopaz: String(sub.url || "").indexOf("topazlabs/image-upscale-standard-v2") >= 0,
-      scale2x: sub.body && sub.body.scale === "2x",
+      scale4x: sub.body && sub.body.scale === "4x", // hdFinishSize("2K") → rhScaleFromSize → 4x
       imageUrlSent: sub.body && typeof sub.body.imageUrl === "string" && sub.body.imageUrl.length > 0,
       histIsRhOut: state.hist[0] && state.hist[0].b64 === b64,        // the mocked download round-trips to the tiny PNG
       histNotGemini: state.hist[0] && state.hist[0].b64 !== "GEMOUTHD",
       baseStillInHist: !!state.hist[1] && state.hist[1].b64 === "GEMOUTHD" // base result preserved beneath, never destroyed
     };
   }, B64);
-  report("HD tier: enabled chip + topazlabs 2x submit; RH output lands over the preserved base",
+  report("HD tier: enabled chip + topazlabs 2K-finish (4x) submit; RH output lands over the preserved base",
     hdResult.wasEnabled && hdResult.hintHidden && hdResult.gemCount === 1 && hdResult.rhSubmits === 1
-    && hdResult.urlTopaz && hdResult.scale2x && hdResult.imageUrlSent
+    && hdResult.urlTopaz && hdResult.scale4x && hdResult.imageUrlSent
     && hdResult.histIsRhOut && hdResult.histNotGemini && hdResult.baseStillInHist,
     JSON.stringify(hdResult));
 
