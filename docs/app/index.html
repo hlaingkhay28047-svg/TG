@@ -11298,7 +11298,17 @@ function accRenderDevices(){
   var list = acc.devices || [];
   var mx = (acc.profile && acc.profile.allowed_devices != null) ? acc.profile.allowed_devices : "";
   var cnt = $("devCount");
-  if (cnt) cnt.textContent = t("dev_count").replace("{N}", String(list.length)).replace("{M}", String(mx));
+  /* dev_count is "{N} of {M} devices used". Logged out — and in the window
+     before the profile lands — there is no allowed_devices, and substituting
+     "" left the sentence with a hole the user reads as a bug ("0 of  devices
+     used", and worse in my/shn where the numeral sits mid-clause). Show the
+     line only once BOTH numbers are known; dev_none already carries the
+     empty state on its own. */
+  var cntKnown = !!(acc.sess && acc.profile && acc.profile.allowed_devices != null);
+  if (cnt){
+    cnt.textContent = cntKnown ? t("dev_count").replace("{N}", String(list.length)).replace("{M}", String(mx)) : "";
+    cnt.style.display = cntKnown ? "" : "none";
+  }
   var empty = $("devEmpty");
   if (empty){ empty.textContent = t("dev_none"); empty.style.display = list.length ? "none" : ""; }
   var me = deviceId();

@@ -466,13 +466,21 @@ const SB_FIX = {
                sess: !!localStorage.getItem("hnk_acc_sess_v1"),
                offlineTxt: (document.getElementById("accPlanOffline").textContent || "").trim(),
                offlineShown: document.getElementById("accPlanOffline").style.display !== "none",
+               /* the account layer must not shout at anyone on boot. setSt()
+                  toasts whenever its target is off-screen, so a passive state
+                  written into a collapsed accordion (#stPay lives inside the
+                  collapsed accGrpBuy) used to surface as a red error toast on
+                  every cold start. The toast lasts 2.6s and we are ~0.9s in. */
+               bootToast: (document.getElementById("toast").className.indexOf("on") >= 0)
+                          ? document.getElementById("toast").textContent : "",
                signedIn: document.getElementById("accIn").style.display !== "none" };
     });
-    report("12 offline never blocks: with EVERY Supabase fetch throwing, the app still boots to its restored page, switchPage keeps working, the plan card reads from cache and shows acc_offline, isPremium() stays true for a paying user, the session is NOT cleared, and nothing throws",
+    report("12 offline never blocks: with EVERY Supabase fetch throwing, the app still boots to its restored page, switchPage keeps working, the plan card reads from cache and shows acc_offline, isPremium() stays true for a paying user, the session is NOT cleared, nothing throws, and no unsolicited error toast is raised at boot",
       errs.length === errsBefore && c12.restored === "pgLib" && c12.moved && c12.premium === true &&
-      c12.sess && c12.signedIn && c12.offlineShown && /Offline/i.test(c12.offlineTxt),
+      c12.sess && c12.signedIn && c12.offlineShown && /Offline/i.test(c12.offlineTxt) &&
+      c12.bootToast === "",
       JSON.stringify({ newErrors: errs.length - errsBefore, restored: c12.restored, premium: c12.premium,
-                       sessKept: c12.sess, offline: c12.offlineTxt }));
+                       sessKept: c12.sess, offline: c12.offlineTxt, bootToast: c12.bootToast }));
   }
 
   // ---------------------------------------------------------------- 13) SW leaves Supabase alone
