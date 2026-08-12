@@ -10807,7 +10807,15 @@ function accRandomId(){
     var a = new Uint8Array(16); crypto.getRandomValues(a);
     return Array.prototype.map.call(a, function(x){ return ("0" + x.toString(16)).slice(-2); }).join("");
   } catch(e){}
-  return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  /* base-16, NOT base-36. deviceId() below only accepts /^[0-9a-f-]{8,64}$/i,
+     so a base-36 id (it can contain g-z) fails that guard on the very next
+     read: deviceId() would mint and persist a DIFFERENT id on every single
+     call. accRegisterDevice() would then POST a new device_id on every boot
+     and every `online` event until the limit is hit, and the "This device"
+     pill could never match because accRenderDevices() calls deviceId() again.
+     Only reachable when `crypto` is absent entirely (very old / non-secure
+     WebViews), which is exactly where nobody would notice it in testing. */
+  return "d" + Date.now().toString(16) + Math.random().toString(16).slice(2, 10);
 }
 /* A random UUID in localStorage, NOT a browser fingerprint. Canvas/WebGL/font
    fingerprints are not stable (a browser or GPU-driver update silently mints a
@@ -10902,6 +10910,11 @@ function accParseSettings(rows){
   rows.forEach(function(x){ if (x && x.key != null) out[x.key] = x.value; });
   return Object.keys(out).length ? out : null;
 }
+/* true only once a settings fetch has actually been made AND failed. Without
+   it "we have not asked yet" and "we asked and it broke" render identically,
+   so the buy panel opened on a slow connection showed a red error for the
+   whole 15s the request was still in flight. */
+var accPriceFailed = false;
 async function accLoadSettings(){
   if (!acc.settings){
     var cached = accLSGet(ACC_LS_SET);
@@ -10912,13 +10925,14 @@ async function accLoadSettings(){
        key/value branch (one row = one setting). A small cap keeps both shapes
        parseable; the table is a handful of rows either way. */
     var r = await accFetch("/rest/v1/app_settings?select=*&limit=50", { method: "GET" }, { anon: true });
-    if (!r.ok) return { ok:false };
+    if (!r.ok){ accPriceFailed = true; accRenderPay(); return { ok:false }; }
     var s = accParseSettings(await accJson(r));
     if (s){ acc.settings = s; accLSSet(ACC_LS_SET, s); }
+    accPriceFailed = !s;
     acc.online = true;
     accRenderPay();
     return { ok: !!s };
-  } catch(e){ acc.online = false; accRenderPay(); return { ok:false, offline:true }; }
+  } catch(e){ accPriceFailed = true; acc.online = false; accRenderPay(); return { ok:false, offline:true }; }
 }
 function accPrice(key){
   var s = acc.settings; if (!s) return "";
@@ -10986,9 +11000,19 @@ function accTxnOk(){ return /^[0-9]{6}$/.test($("payTxn").value); }
 function accPayValidate(){
   var ok = !!accPayKind && accTxnOk() && !!accPayBlob && !!acc.settings && !!acc.sess;
   var b = $("btnPaySubmit"); if (b) b.disabled = !ok;
-  if (!acc.settings) setSt("stPay", t("pay_price_na"), "err");
-  else if (accTxnOk() && !accPayBlob) setSt("stPay", t("pay_shot_need"));
-  else setSt("stPay", "");
+  /* INLINE, never setSt(). accPayValidate() runs from accRenderPay(), which
+     accBoot() and every applyLang() call — long before anyone opens the buy
+     panel, and for logged-out users who never will. setSt() toasts whenever
+     its target is off-screen (#stPay lives inside the collapsed accGrpBuy),
+     so routing this passive "no prices loaded yet" state through it fired a
+     red error toast at every cold start and again on every language switch,
+     with zero network attempted. That is exactly the §7.1 "no account failure
+     may degrade the free experience" line. The message belongs in the panel
+     the price is missing from; #btnPayRetry next to it is the recovery. */
+  if (!acc.settings && accPriceFailed) accSetInline("stPay", t("pay_price_na"), "err");
+  else if (!acc.settings) accSetInline("stPay", "");
+  else if (accTxnOk() && !accPayBlob) accSetInline("stPay", t("pay_shot_need"));
+  else accSetInline("stPay", "");
   return ok;
 }
 
@@ -11343,7 +11367,8 @@ function accRenderPay(){
   /* Burmese free text from the DB, may contain line breaks.
      #payInstr{white-space:pre-wrap} preserves them without ever parsing it. */
   $("payInstr").textContent = s ? String(s.payment_instructions_my || "") : "";
-  var retry = $("btnPayRetry"); if (retry) retry.style.display = s ? "none" : "";
+  /* Retry appears with its error, not before it — see accPriceFailed. */
+  var retry = $("btnPayRetry"); if (retry) retry.style.display = (!s && accPriceFailed) ? "" : "none";
 
   if (pend){
     var r = acc.pending;
