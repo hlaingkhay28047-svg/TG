@@ -10675,11 +10675,16 @@ async function accSignup(){
     var j = await accJson(r);
     if (!r.ok){
       var msg = accFriendly(r.status, j);
-      setSt("stAcc", msg, "err");
       if (msg === t("acc_exists")){
         accShowForm("login"); $("accEmail").value = em;
         $("accPass2").value = "";   /* do not leave the typed password sitting in a now-hidden field */
       }
+      /* AFTER the switch, never before: accShowForm() ends with setSt("stAcc","")
+         to clear whatever the other sub-form left behind, so writing the message
+         first meant it was wiped in the same tick. §2.2 wants acc_exists shown
+         WITH the auto-switch; without it the sign-up form just vanishes and the
+         user is looking at a login form nobody explained. */
+      setSt("stAcc", msg, "err");
       return;
     }
     /* Two possible 200 shapes. No access_token means email confirmation is ON
