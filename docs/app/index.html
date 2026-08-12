@@ -1142,6 +1142,17 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
        what you were doing" round-trip keeps top priority when it is active.
        Deliberately NOT a TOPGROUPS/PAGES entry — v4.27.0 demoted Setup out of
        the tab bar precisely so the bar would stop overflowing a real phone. -->
+  <section class="card" id="cardKey">
+    <h2>GEMINI API KEY</h2>
+    <div class="row">
+      <input class="inp grow" id="apiKey" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="AIza… (aistudio.google.com/apikey မှာ အခမဲ့ရ)">
+      <button class="btn" id="btnShowKey"></button>
+      <button class="btn btn-gold" id="btnSaveKey"></button>
+    </div>
+    <div class="mut" style="margin-top:8px" id="keyNote"></div>
+    <div class="status" id="stKey"></div>
+  </section>
+
   <section class="card" id="cardAccount">
     <!-- the title is set by setIcnText() rather than an inline <span>, per the
          v4.15 header pattern that verify_phase3_header_emptystate.js pins -->
@@ -1278,17 +1289,6 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <div class="status" id="stReq"></div>
       </div>
     </div>
-  </section>
-
-  <section class="card" id="cardKey">
-    <h2>GEMINI API KEY</h2>
-    <div class="row">
-      <input class="inp grow" id="apiKey" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="AIza… (aistudio.google.com/apikey မှာ အခမဲ့ရ)">
-      <button class="btn" id="btnShowKey"></button>
-      <button class="btn btn-gold" id="btnSaveKey"></button>
-    </div>
-    <div class="mut" style="margin-top:8px" id="keyNote"></div>
-    <div class="status" id="stKey"></div>
   </section>
 
   <section class="card" id="cardRh">
@@ -11223,6 +11223,21 @@ function showPaywall(key){
 
   var body = el("div","wiz-body");
   var p = el("p","mut"); p.textContent = t("gate_p"); body.appendChild(p);
+  /* Name the feature. "This needs Premium" with no subject leaves the user
+     guessing which tap they just lost, and the answer has to survive nine
+     languages — so read the gated page's own H2 out of the DOM rather than
+     minting nine more strings that can drift away from the page title. A
+     gate with no page of its own simply omits the line. */
+  var GATE_PAGE = { v2_retouch:"pgRetouch", batch:"pgRetouch", studio_meitu:"pgStudio",
+                    studio_evoto:"pgStudio", video:"pgVideo", text2img:"pgText2Img",
+                    path_export:"pgPath" };
+  var host = GATE_PAGE[key] && $(GATE_PAGE[key]);
+  var h2 = host && host.querySelector("h2");
+  var nm = h2 && (h2.textContent || "").trim();
+  if (nm){
+    var f = el("p"); f.style.fontWeight = "800"; f.style.marginTop = "6px";
+    f.textContent = nm; body.appendChild(f);
+  }
   var nav = el("div","wiz-nav");
   var go = el("button","btn btn-gold");
   if (acc.sess) setIcnText(go, "i-gem", t("gate_buy"));
@@ -11374,7 +11389,10 @@ function accRenderDevices(){
   }
   var empty = $("devEmpty");
   if (empty){ empty.textContent = t("dev_none"); empty.style.display = list.length ? "none" : ""; }
-  var me = deviceId();
+  /* deviceId() PERSISTS on first call, so only ask for it when there is a
+     session to bind it to — otherwise every visitor who never signs in gets
+     an id written to their storage for nothing. */
+  var me = acc.sess ? deviceId() : null;
   list.forEach(function(row){
     var lbl = String((row && row.label) || "");
     var li = el("li");
@@ -11631,7 +11649,10 @@ function accBoot(){
       }
     } catch(e){}
     try { await accLoadProfile(); } catch(e){}
-    try { await accLoadRequests(); } catch(e){}
+    /* requests are NOT fetched here. accOnGrpOpen("accGrpReq") already loads
+       them the moment that accordion is opened (§2.8 step 3 says lazily), and
+       a cold start on a Myanmar mobile connection should spend its first
+       round-trips on the profile the plan card actually needs. */
     try {
       var d = await accRegisterDevice();
       if (d && d.limit) accShowDeviceLimit();
