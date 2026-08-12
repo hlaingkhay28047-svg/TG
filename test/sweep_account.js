@@ -511,11 +511,20 @@ const SB_FIX = {
   {
     const swSrc = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "sw.js"), "utf8");
     const fetchIdx = swSrc.indexOf('addEventListener("fetch"');
+    /* Pin the cache name to APP_VER rather than to one release literal: the
+       bug worth catching is "CACHE went out of lockstep with the shipped
+       version", not "CACHE is not this exact string" — which goes stale on
+       the next patch release and fails a correct build. */
+    const appHtml = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
+    const verM = appHtml.match(/var APP_VER\s*=\s*"([\d.]+)"/);
+    const wantCache = verM && ("hnk-web-studio-v" + verM[1].replace(/\./g, "-"));
+    const swCacheOk = !!wantCache && swSrc.indexOf('var CACHE = "' + wantCache + '"') >= 0;
+
     const head = swSrc.slice(fetchIdx, fetchIdx + 400);
     report("13 SW leaves Supabase alone: the fetch handler still bails out on any cross-origin request before it can reach a cache, so no auth / REST / storage response carrying a bearer token is ever stored",
       fetchIdx > 0 && head.indexOf("url.origin !== location.origin") >= 0 && /\|\|\s*url\.origin\s*!==\s*location\.origin\s*\)\s*return;/.test(head) &&
-      swSrc.indexOf("hnk-web-studio-v4-30-0") >= 0,
-      JSON.stringify({ guard: /url\.origin !== location\.origin\) return;/.test(head), cacheBumped: swSrc.indexOf("hnk-web-studio-v4-30-0") >= 0 }));
+      swCacheOk,
+      JSON.stringify({ guard: /url\.origin !== location\.origin\) return;/.test(head), cacheBumped: swCacheOk, want: wantCache }));
   }
 
   // ---------------------------------------------------------------- 16) i18n zero-miss
