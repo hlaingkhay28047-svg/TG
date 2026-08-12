@@ -166,7 +166,7 @@ select.inp{padding:9px 10px}
 .empty-state .btn{margin-top:var(--sp-4)}
 
 .grp{border:1px solid var(--line-soft);border-radius:var(--r-md);margin:var(--sp-3) 0;overflow:hidden}
-.grp-h{display:flex;align-items:center;gap:var(--sp-2);width:100%;background:var(--panel-2);border:none;color:var(--cream);padding:14px;font-size:var(--fs-base);font-weight:800;text-align:left}
+.grp-h{display:flex;align-items:center;gap:var(--sp-2);width:100%;min-height:44px;background:var(--panel-2);border:none;color:var(--cream);padding:14px;font-size:var(--fs-base);font-weight:800;text-align:left}
 .grp-h .car{color:var(--gold);transition:transform .15s;font-size:var(--fs-xs)}
 .grp.open .grp-h .car{transform:rotate(90deg)}
 .grp-h .cnt{margin-left:auto;font-size:var(--fs-xs);color:var(--muted);font-weight:700}
@@ -5586,6 +5586,7 @@ function ptT1(o){
   if(o) for(var k in o) d[k]=o[k];
   return d;
 }
+var PT_SAMPLE="lib/banners/banner-flower-portrait.jpg";
 var PT_LOOKS={}, PT_ORDER=[];
 [
   { id:"pt_foliage", star:true,
@@ -5798,17 +5799,24 @@ function ptRenderRailInto(hostId, selId, onPick, withClear){
     cb.onclick=function(){ onPick(null); };
     host.appendChild(cb);
   }
-  var src=PT.photos.length ? PT.photos[0].srcDataUrl : null;
+  /* Before any photo is ingested the rail previewed each look by filtering an
+     empty gradient, which shows the user nothing — twelve identical dark
+     tiles. Fall back to a bundled portrait so every look is legible on first
+     open, then swap to the customer's own first photo the moment one lands. */
+  var src=PT.photos.length ? PT.photos[0].srcDataUrl : PT_SAMPLE;
   PT_ORDER.forEach(function(id){
     var look=PT_LOOKS[id];
     var c=el("button","pcard"+(selId===id?" on":""));
-    if(src){
-      var im=document.createElement("img"); im.src=src; im.alt="";
-      im.style.filter=stCssFilter(look.t1);
-      c.appendChild(im);
-    } else {
-      var d=el("div","ph"); d.style.filter=stCssFilter(look.t1); c.appendChild(d);
-    }
+    var im=document.createElement("img"); im.src=src; im.alt="";
+    im.style.filter=stCssFilter(look.t1);
+    /* the sample is a 2:1 banner with the subject on the right — bias the
+       crop onto her face so the tiles read as a portrait, not as wallpaper */
+    if(!PT.photos.length) im.style.objectPosition="78% 26%";
+    im.onerror=function(){
+      var d=el("div","ph"); d.style.filter=stCssFilter(look.t1);
+      if(im.parentNode) im.parentNode.replaceChild(d,im);
+    };
+    c.appendChild(im);
     c.appendChild(el("span",null,L9(look.name)));
     c.title=L9(look.name);
     c.onclick=function(){ onPick(id); };
