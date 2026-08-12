@@ -581,6 +581,48 @@ const PORT = process.env.PORT || 8931;
   });
   report("canary (#10 verbatim): canvas intersects the viewport while scrolled 2500px deep", sticky22.visible, JSON.stringify(sticky22));
 
+  // 23) v4.28 §10.1 — EXIT-direction scroll compensation. Scrolling slowly back
+  // UP past natTop-120 re-expands the compact stage; the ~127px it regains used
+  // to shove the content below it down, because the old compensation gate
+  // required stuck(), which is never true at the exit threshold. Measure a
+  // marker element's viewport position across the flip: it must barely move,
+  // and the correction must not bounce the scroll back into the enter band.
+  // The measurement is scroll-invariant: a marker below the stage in flow must
+  // move by exactly the STEP the test itself scrolled, not by step + stage growth.
+  const STEP23 = 20;
+  const exit23 = await page.evaluate(async (STEP) => {
+    const se = document.scrollingElement, stg = document.getElementById("stStage");
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    se.scrollTop = 0; await sleep(300);
+    const nat = ST._natTop;
+    if (nat == null) return { skip: "no natTop" };
+    se.scrollTop = Math.round(nat + 260); await sleep(120);
+    se.scrollTop = Math.round(nat + 261); await sleep(320);   // enter band -> compact
+    if (!stg.classList.contains("compact")) return { skip: "did not enter compact", cls: stg.className };
+    // crawl up to just ABOVE the exit threshold (natTop-120) while still compact
+    for (let y = Math.round(nat + 261); y > Math.round(nat - 110); y -= 40) { se.scrollTop = y; await sleep(30); }
+    se.scrollTop = Math.round(nat - 110); await sleep(300);
+    const stillCompact = stg.classList.contains("compact");
+    // a plain, non-sticky card below the stage in normal flow
+    const marker = document.getElementById("stRecipeCard");
+    const before = marker.getBoundingClientRect().top, yBefore = window.scrollY;
+    se.scrollTop = Math.round(nat - 110 - STEP);              // ONE step across the exit threshold
+    await sleep(360);
+    const after = marker.getBoundingClientRect().top, yAfter = window.scrollY;
+    se.scrollTop = 0; await sleep(200);
+    return {
+      natTop: Math.round(nat), yBefore, yAfter, stillCompact,
+      shift: Math.round(after - before),
+      expanded: !stg.classList.contains("compact"),
+      reentered: yAfter > nat + 40
+    };
+  }, STEP23);
+  report("§10.1 exit-flip: crossing natTop-120 upward re-expands the stage while content below stays put (shift == the test's own scroll step)",
+    !exit23.skip && exit23.stillCompact && exit23.expanded && !exit23.reentered
+    && Math.abs(exit23.shift - STEP23) <= 15,
+    JSON.stringify(exit23));
+  await page.evaluate(() => { document.scrollingElement.scrollTop = 0; });
+
   console.log("\n" + (allOk ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(allOk ? 0 : 1);
