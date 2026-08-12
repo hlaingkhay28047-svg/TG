@@ -616,10 +616,15 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   const navLogo = html.match(/<img class="nav-logo" src="data:image\/(\w+);base64,([A-Za-z0-9+/=]+)"/);
   const iconsOk = iconRows.every(r => r.ok);
   const keptOriginal = !!navLogo && navLogo[1] === "jpeg";
-  const cacheOk = !!cacheMatch && cacheMatch[1] !== "hnk-web-studio-v4-27-1" && /v4-28/.test(cacheMatch[1]);
-  report("15 Icons: every PWA icon serves a 200 PNG at its declared size, the nav still inlines the ORIGINAL mark (owner kept the existing logo — spec \u00a711), and the SW cache version moved off v4-27-1",
+  /* Pin the SW cache name to APP_VER instead of to one release number: a
+     stale cache key is the bug this guards (icons/shell never refresh), and
+     that is exactly "CACHE is out of lockstep with the shipped version". */
+  const appVerMatch = html.match(/var APP_VER\s*=\s*"([\d.]+)"/);
+  const wantCache = appVerMatch && "hnk-web-studio-v" + appVerMatch[1].replace(/\./g, "-");
+  const cacheOk = !!cacheMatch && !!wantCache && cacheMatch[1] === wantCache;
+  report("15 Icons: every PWA icon serves a 200 PNG at its declared size, the nav still inlines the ORIGINAL mark (owner kept the existing logo — spec \u00a711), and the SW cache version is in lockstep with APP_VER",
     iconsOk && keptOriginal && cacheOk,
-    JSON.stringify({ icons: iconRows, navLogoMime: navLogo && navLogo[1], cache: cacheMatch && cacheMatch[1] }));
+    JSON.stringify({ icons: iconRows, navLogoMime: navLogo && navLogo[1], cache: cacheMatch && cacheMatch[1], want: wantCache }));
 
   // 15b) the marketing site ships the same mark as the product.
   // Read from disk, not over HTTP: the test server is rooted at docs/app, so

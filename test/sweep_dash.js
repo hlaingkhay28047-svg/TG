@@ -44,7 +44,10 @@ function check(ok, label, detail) {
     const cards = Array.from(document.querySelectorAll("#dashGrid .dash-card"));
     return {
       count: cards.length,
-      allHaveArt: cards.every(c => c.querySelector(".art img") && c.querySelector(".art img").getAttribute("src").indexOf("lib/banners/") === 0),
+      /* v4.29: the four Home cards moved off the generic banner pool onto
+         purpose-shot art in lib/dash/. Accept either home so the assertion
+         proves "every card carries library art", not one folder name. */
+      allHaveArt: cards.every(c => c.querySelector(".art img") && /^lib\/(banners|dash)\//.test(c.querySelector(".art img").getAttribute("src"))),
       allHaveBadge: cards.every(c => c.querySelector(".bdg use")),
       allHaveLabel: cards.every(c => (c.querySelector(".lbl") || {}).textContent),
       labels: cards.map(c => c.querySelector(".lbl").textContent)
