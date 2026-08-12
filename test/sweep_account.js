@@ -654,6 +654,77 @@ const SB_FIX = {
   report("18 zero console errors: no console error and no uncaught pageerror was emitted anywhere across the whole sweep, including every failure path exercised above",
     errs.length === 0, errs.length ? JSON.stringify(errs.slice(0, 6)) : "clean");
 
+  // ---------------------------------------------------------------- 19) every gate is really wired
+  // The comment above PREMIUM_GATES tells the owner that flipping a value is
+  // the whole change. That promise is only true while every key has a real
+  // call site — a key with none locks NOTHING while looking identical to one
+  // that works. Assert it from the source, and prove each newly wired gate
+  // actually blocks by flipping it live.
+  const appSrc = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
+  const gateKeys = await page.evaluate(() => Object.keys(PREMIUM_GATES));
+  const unwired = gateKeys.filter(k => {
+    const calls = (appSrc.match(new RegExp('gate(?:Allows)?\\("' + k + '"\\)', "g")) || []).length;
+    return calls === 0;
+  });
+
+  const c19 = await page.evaluate(() => {
+    const $ = id => document.getElementById(id);
+    const on = () => $("wizPay").className.indexOf("on") >= 0;
+    const shut = () => { $("wizPay").className = "wiz"; };
+    const o = {};
+    /* earlier checks leave a Premium profile behind, and a Premium account is
+       exactly who a gate must NOT stop — clear it so we are testing the lock
+       rather than the entitlement */
+    acc.profile = null; acc.sess = null;
+
+    // hd_finish blocks the tier choice, and skips silently mid-run
+    PREMIUM_GATES.hd_finish = true;
+    switchPage("pgPath");
+    const hd = Array.from(document.querySelectorAll("#ptTierChips .chip")).find(c => /HD/i.test(c.textContent));
+    const tier0 = state.pt.tier;
+    if (hd) { hd.disabled = false; hd.click(); }
+    o.hdBlocks = on() && state.pt.tier === tier0;
+    shut();
+    o.hdSilentAtRun = gateAllows("hd_finish") === false && !on();
+    PREMIUM_GATES.hd_finish = false;
+    o.hdOpensAgain = gateAllows("hd_finish") === true;
+
+    // path_export blocks bulk AI delivery but never the free bake
+    PREMIUM_GATES.path_export = true;
+    $("btnPtZipAll").click(); o.exportBlocks = on(); shut();
+    $("btnPtBake").click();   o.freeBakeOpen = !on(); shut();
+    PREMIUM_GATES.path_export = false;
+
+    // studio suites are attributed per queued feature, not per page
+    switchPage("pgStudio");
+    const muEl = ST.groups.filter(g => g.host === "mu")[0].el;
+    const evEl = ST.groups.filter(g => g.host === "ev")[0].el;
+    const muId = Object.keys(ST.grpOf).find(k => ST.grpOf[k] === muEl);
+    const evId = Object.keys(ST.grpOf).find(k => ST.grpOf[k] === evEl);
+    o.attribution = stSuiteOf(muId) === "mu" && stSuiteOf(evId) === "ev";
+    ST.srcBitmap = ST.srcBitmap || { width: 10, height: 10 };
+
+    PREMIUM_GATES.studio_meitu = true;
+    state.st.pend = [{ id: muId, label: "x", params: {} }];
+    $("btnStGen").click(); o.meituBlocks = on(); shut();
+    PREMIUM_GATES.studio_meitu = false;
+
+    PREMIUM_GATES.studio_evoto = true;
+    state.st.pend = [{ id: evId, label: "x", params: {} }];
+    $("btnStGen").click(); o.evotoBlocks = on(); shut();
+    // the other suite's work must still go through
+    state.st.pend = [{ id: muId, label: "x", params: {} }];
+    $("btnStGen").click(); o.evotoLockLeavesMeituAlone = !on(); shut();
+    PREMIUM_GATES.studio_evoto = false;
+    state.st.pend = [];
+
+    o.allOffAfter = Object.values(PREMIUM_GATES).every(v => v === false);
+    return o;
+  });
+  report("19 every PREMIUM_GATES key has a real call site, each newly wired gate actually blocks its own feature, HD skips silently mid-run instead of interrupting with a paywall, Path's free canvas bake is never gated, and locking one Studio suite leaves the other one working",
+    unwired.length === 0 && Object.values(c19).every(v => v === true),
+    JSON.stringify({ unwired, ...c19 }));
+
   await browser.close();
   console.log(allOk ? "\nPASS" : "\nFAIL");
   process.exit(allOk ? 0 : 1);
