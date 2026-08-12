@@ -1,9 +1,11 @@
 /* Regression test for the bottom-nav grouping. Originally written for
    v4.19.0's Phase 5 (10 flat tabs -> 4 top-level groups); updated for
    v4.27.0's Home + IA re-architecture, which reshapes the groups to
-   HOME[pgDash] / WORKFLOWS[pgWf] / EDIT[pgCreate,pgStudio,pgRetouch] /
+   HOME[pgDash] / WORKFLOWS[pgWf] / EDIT[pgCreate,pgStudio,pgRetouch,pgPath] /
    MEDIA LAB[pgText2Img,pgVideo,pgVideoUp] / LIBRARY[pgLib,pgGallery] and
-   demotes Setup (pgHome) from the bar to the header gear button. Every
+   demotes Setup (pgHome) from the bar to the header gear button. The Edit
+   group gained a 4th page in the v4.28.x wave (pgPath — Path Retouch, the
+   batch-look sibling of Retouch). Every
    original page id is unchanged; only how you navigate there changed.
    This test exists specifically to catch the failure mode a nav regroup
    is most likely to introduce: a page silently becoming unreachable.
@@ -16,9 +18,10 @@ const PORT = process.env.PORT || 8931;
 const ALL_PAGES = [
   ["pgDash", "Home", null],
   ["pgWf", "Workflows", null],
-  ["pgCreate", "Edit", 3],
-  ["pgStudio", "Edit", 3],
-  ["pgRetouch", "Edit", 3],
+  ["pgCreate", "Edit", 4],
+  ["pgStudio", "Edit", 4],
+  ["pgRetouch", "Edit", 4],
+  ["pgPath", "Edit", 4],
   ["pgText2Img", "Media Lab", 3],
   ["pgVideo", "Media Lab", 3],
   ["pgVideoUp", "Media Lab", 3],
