@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>HNK Create Studio — မြန်မာ Studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို | AI Photo Studio for Myanmar</title>
-<meta name="description" content="Portrait · Wedding · Graduation — ဖုန်းထဲမှာ Web Studio (v4.27.1 · install မလို · အခမဲ့)၊ Photoshop ထဲမှာ Pro Panel (v6.9.0 · 1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။ AI photo studio for Myanmar wedding &amp; portrait studios — free web app plus a professional Photoshop panel.">
+<meta name="description" content="Portrait · Wedding · Graduation — ဖုန်းထဲမှာ Web Studio (v4.28.0 · install မလို · အခမဲ့)၊ Photoshop ထဲမှာ Pro Panel (v6.9.0 · 1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။ AI photo studio for Myanmar wedding &amp; portrait studios — free web app plus a professional Photoshop panel.">
 <link rel="canonical" href="https://hlaingkhay28047-svg.github.io/TG/">
 <link rel="icon" href="assets/site/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="assets/site/apple-touch-icon.png">
@@ -13,18 +13,18 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="HNK Create Studio">
 <meta property="og:title" content="HNK Create Studio — မြန်မာ Studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို">
-<meta property="og:description" content="ဖုန်းထဲမှာ Web Studio v4.27.1 (အခမဲ့ · install မလို)၊ Photoshop ထဲမှာ Pro Panel v6.9.0 (1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။">
+<meta property="og:description" content="ဖုန်းထဲမှာ Web Studio v4.28.0 (အခမဲ့ · install မလို)၊ Photoshop ထဲမှာ Pro Panel v6.9.0 (1,064 tests)။ Visual Library 366 · Smart Workflow 116 · ၉ ဘာသာ။">
 <meta property="og:url" content="https://hlaingkhay28047-svg.github.io/TG/">
 <meta property="og:image" content="https://hlaingkhay28047-svg.github.io/TG/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HNK Create Studio — AI ဓာတ်ပုံစတူဒီယို">
-<meta name="twitter:description" content="Web Studio v4.27.1 (အခမဲ့) + Photoshop Panel v6.9.0 — မြန်မာ wedding/portrait studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို။">
+<meta name="twitter:description" content="Web Studio v4.28.0 (အခမဲ့) + Photoshop Panel v6.9.0 — မြန်မာ wedding/portrait studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို။">
 <meta name="twitter:image" content="https://hlaingkhay28047-svg.github.io/TG/og-image.jpg">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
-{"@type":"WebApplication","name":"HNK Web Studio","applicationCategory":"DesignApplication","operatingSystem":"Any (browser, PWA)","softwareVersion":"4.27.1","inLanguage":["my","en","shn","kac","th","zh","vi","id","ms"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://hlaingkhay28047-svg.github.io/TG/app/"},
+{"@type":"WebApplication","name":"HNK Web Studio","applicationCategory":"DesignApplication","operatingSystem":"Any (browser, PWA)","softwareVersion":"4.28.0","inLanguage":["my","en","shn","kac","th","zh","vi","id","ms"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://hlaingkhay28047-svg.github.io/TG/app/"},
 {"@type":"SoftwareApplication","name":"HNK Photoshop Ai Panel","applicationCategory":"DesignApplication","operatingSystem":"Windows, macOS (Adobe Photoshop 24.2+)","softwareVersion":"6.9.0","downloadUrl":"https://hlaingkhay28047-svg.github.io/TG/download/HNK_Ai_Panel_v6.1.1.ccx","url":"https://hlaingkhay28047-svg.github.io/TG/#panel"}]}
 </script>
 <style>
@@ -39,9 +39,16 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
+/* Font stack: Myanmar first (Burmese + Shan share the Myanmar block and the
+   page's Latin look), then Thai, then CJK-Simplified, then a broad Latin tail
+   that covers Vietnamese diacritics. Every family is a real system/web-safe
+   face on at least one of Windows / macOS / Android / Linux. */
 body{
   background:var(--ink); color:var(--cream);
-  font:400 var(--fs-md)/1.75 "Noto Sans Myanmar","Padauk","Myanmar Text","Segoe UI",system-ui,sans-serif;
+  font:400 var(--fs-md)/1.75 "Noto Sans Myanmar","Padauk","Myanmar Text",
+       "Noto Sans Thai","Leelawadee UI","Thonburi","Loma","Tahoma",
+       "Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei","WenQuanYi Zen Hei",
+       "Segoe UI",Roboto,"Helvetica Neue","DejaVu Sans",Arial,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased; overflow-x:hidden;
 }
 img{display:block;max-width:100%}
@@ -53,8 +60,11 @@ section{margin:var(--sp-8) 0}
 .ic-s{width:18px;height:18px}
 .ic-r180{transform:rotate(180deg)}
 h1,h2,h3{font-weight:700;line-height:1.6}
-/* Latin-only tracking helper — never letter-space Burmese */
+/* Latin-only tracking helper — never letter-space Burmese/Shan/Thai/CJK.
+   .nolat is applied by the i18n runtime whenever a translated string is
+   non-ASCII, so a tracked Latin eyebrow degrades safely in every language. */
 .lat{letter-spacing:.14em}
+.nolat{letter-spacing:normal}
 /* ---- section header canon ---- */
 .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-5)}
 .sec-head h2{font-size:var(--fs-2xl);color:var(--cream)}
@@ -74,10 +84,32 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .badge{display:inline-flex;align-items:center;gap:7px;background:rgba(16,16,20,.72);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:var(--r-pill);padding:5px 13px;font-size:var(--fs-xs);color:var(--cream);font-weight:600}
 .badge i{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:none}
 /* ---- nav ---- */
-.nav{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:10px var(--sp-4);}
-.nav img{width:30px;height:30px;border-radius:8px}
-.nav b{font-size:var(--fs-sm);letter-spacing:.14em;font-weight:700}
-.nav .btn{margin-left:auto;padding:8px 16px;font-size:var(--fs-sm)}
+.nav{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:10px var(--sp-4);flex-wrap:nowrap}
+.nav img{width:30px;height:30px;border-radius:8px;flex:none}
+.nav b{font-size:var(--fs-sm);letter-spacing:.14em;font-weight:700;white-space:nowrap;flex:none}
+.nav .btn{padding:8px 16px;font-size:var(--fs-sm);white-space:nowrap;flex:none}
+.nav .nav-short{display:none}
+/* ---- language picker (Noir-Gold, 44px target) ---- */
+.langsel{position:relative;display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 8px 0 11px;
+  margin-left:auto;flex:none;border:1px solid var(--line-gold);border-radius:var(--r-pill);
+  background:var(--pill);color:var(--gold-hi)}
+.langsel>.ic{width:16px;height:16px;color:var(--gold)}
+.langsel select{appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  background:transparent;border:0;outline:none;cursor:pointer;
+  color:var(--cream);font-family:inherit;font-size:var(--fs-xs);font-weight:600;line-height:44px;
+  height:44px;width:80px;padding:0 20px 0 0;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.langsel select:focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px;border-radius:var(--r-pill)}
+.langsel select option{background:var(--panel);color:var(--cream);font-weight:600}
+.langsel:after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;
+  border-right:1.7px solid var(--muted);border-bottom:1.7px solid var(--muted);
+  transform:translateY(-72%) rotate(45deg);pointer-events:none}
+@media (max-width:639px){
+  .nav .nav-full{display:none}
+  .nav .nav-short{display:inline}
+  .langsel{padding-left:9px;gap:4px}
+  .langsel select{width:88px}
+}
+@media (max-width:339px){.nav b{display:none}}
 /* ---- S1 hero ----
    Mobile: FULL uncropped 2:1 artwork with kick + tagline on its dark corners
    (never over the face at center) and live gold-dust, text block below on black.
@@ -86,8 +118,8 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .hmedia{position:relative}
 .hmedia img{display:block;width:100%;height:auto}
 /* on-image text: top-left + bottom-left sit on dark forest/moss, face is center-right */
-.hm-kick{position:absolute;top:10px;left:14px;z-index:3;font-size:10.5px;font-weight:700;color:var(--gold-hi);text-shadow:0 1px 4px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.6)}
-.hm-tag{position:absolute;left:14px;bottom:8px;z-index:3;font-size:var(--fs-xs);font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.7)}
+.hm-kick{position:absolute;top:10px;left:14px;right:14px;z-index:3;font-size:10.5px;font-weight:700;color:var(--gold-hi);text-shadow:0 1px 4px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.6)}
+.hm-tag{position:absolute;left:14px;right:14px;bottom:8px;z-index:3;font-size:var(--fs-xs);font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.7)}
 /* live gold fairy-dust — pure CSS, transform/opacity only */
 .fx{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none}
 .fx i{position:absolute;bottom:-8px;width:5px;height:5px;border-radius:50%;
@@ -134,25 +166,26 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .hero h1 em{font-style:normal;color:var(--gold-hi);text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 22px rgba(244,212,136,.45)}
 .hero .lede{color:var(--muted);font-size:var(--fs-md);max-width:42ch;margin:var(--sp-3) 0 var(--sp-5);text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .hero .ctas{display:flex;flex-direction:column;gap:10px;align-items:flex-start;margin-bottom:var(--sp-5)}
+.hero .ctas .btn{max-width:100%}
 .hero .badges{margin-bottom:2px}
 @media (min-width:768px){
   .hero h1{font-size:40px}
-  .hero .ctas{flex-direction:row;align-items:center}
+  .hero .ctas{flex-direction:row;align-items:center;flex-wrap:wrap}
 }
 /* ---- S2 feature grid ---- */
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4) var(--sp-3)}
-.fcard{display:block}
+.fcard{display:block;min-width:0}
 .fcard .art{position:relative;border-radius:var(--r-xl);overflow:hidden;aspect-ratio:4/3;background:var(--panel)}
 .fcard .art img{width:100%;height:100%;object-fit:cover;transition:transform .25s}
 .fcard:active .art img{transform:scale(1.04)}
 .fcard .glyph{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:var(--r-md);background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;color:var(--cream)}
 .fcard .glyph .ic{width:18px;height:18px}
-.fcard .lbl{text-align:center;font-size:var(--fs-lg);font-weight:700;margin-top:10px;line-height:1.6}
+.fcard .lbl{text-align:center;font-size:var(--fs-lg);font-weight:700;margin-top:10px;line-height:1.6;overflow-wrap:anywhere}
 .fcard .lbl small{display:block;font-weight:500;font-size:var(--fs-2xs);color:var(--muted);letter-spacing:.1em}
 @media (min-width:900px){.fgrid{grid-template-columns:repeat(4,1fr)}}
 /* ---- comparison duo ---- */
 .duo{display:grid;gap:var(--sp-4);margin-top:var(--sp-7)}
-.duo-card{background:var(--panel);border-radius:var(--r-xl);overflow:hidden}
+.duo-card{background:var(--panel);border-radius:var(--r-xl);overflow:hidden;min-width:0}
 .duo-card .shot{aspect-ratio:16/11;overflow:hidden;background:var(--panel-2)}
 .duo-card .shot img{width:100%;height:100%;object-fit:cover;object-position:top}
 .duo-card .body{padding:var(--sp-5)}
@@ -161,6 +194,7 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .duo-card ul{list-style:none;margin:var(--sp-3) 0 var(--sp-4)}
 .duo-card li{display:flex;gap:10px;align-items:flex-start;color:var(--muted);font-size:var(--fs-sm);padding:4px 0}
 .duo-card li .ic{width:16px;height:16px;color:var(--gold);margin-top:5px}
+.duo-card li span{min-width:0;overflow-wrap:anywhere}
 @media (min-width:768px){.duo{grid-template-columns:1fr 1fr}}
 /* ---- S3 proof masonry ---- */
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 var(--sp-5)}
@@ -180,10 +214,12 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .slide p b{color:var(--cream);display:block;font-size:var(--fs-md)}
 .pwa-note{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border-radius:var(--r-lg);padding:var(--sp-4);margin-top:var(--sp-5);color:var(--muted);font-size:var(--fs-sm)}
 .pwa-note .ic{color:var(--gold);margin-top:4px}
+.pwa-note b{color:var(--cream)}
 /* ---- promo band ---- */
 .promo{background:#0a0a0c;border-radius:var(--r-xl);padding:var(--sp-7) var(--sp-5);text-align:center}
 .promo h2{font-size:var(--fs-2xl);line-height:1.6}
-.promo h2 span{display:block;background:linear-gradient(115deg,#f7e2a6,#e9b949 45%,#f9ecc4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.promo h2 span{display:block}
+.promo h2 span.gold{background:linear-gradient(115deg,#f7e2a6,#e9b949 45%,#f9ecc4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .promo img{margin:var(--sp-5) auto;max-width:420px;width:82%}
 /* ---- S5 panel ---- */
 .panelwrap{display:grid;gap:var(--sp-6)}
@@ -194,6 +230,7 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .steps{list-style:none;counter-reset:st;margin:var(--sp-4) 0 var(--sp-5)}
 .steps li{counter-increment:st;display:flex;gap:14px;align-items:flex-start;padding:10px 0;color:var(--muted);font-size:var(--fs-sm)}
 .steps li:before{content:counter(st);flex:none;width:30px;height:30px;border-radius:50%;background:var(--pill);color:var(--gold-hi);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:var(--fs-sm)}
+.steps li span{min-width:0;overflow-wrap:anywhere}
 .steps b{color:var(--cream)}
 .dl-note{font-size:var(--fs-2xs);color:var(--muted);margin-top:8px}
 @media (min-width:900px){.panelwrap{grid-template-columns:320px 1fr;align-items:start}}
@@ -208,7 +245,9 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 @media (min-width:900px){.engines{grid-template-columns:repeat(3,1fr)}}
 .keybox{background:var(--panel);border-radius:var(--r-lg);padding:var(--sp-5);margin-top:var(--sp-5);font-size:var(--fs-sm);color:var(--muted)}
 .keybox h3{color:var(--cream);font-size:var(--fs-md);display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.keybox h3 span{min-width:0}
 .keybox .ic{color:var(--gold)}
+.keybox p b{color:var(--cream)}
 /* ---- S7 FAQ / contact / footer ---- */
 .faq details{border-bottom:1px solid var(--line);padding:var(--sp-3) 0}
 .faq summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:700;font-size:var(--fs-md)}
@@ -254,8 +293,22 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 <!-- ============ NAV ============ -->
 <nav class="nav">
   <img src="assets/site/favicon-48.png" alt="HNK logo" width="30" height="30">
-  <b class="lat">HNK CREATE STUDIO</b>
-  <a class="btn btn-gold" href="app/">App ဖွင့်မယ်</a>
+  <b class="lat"><span class="nav-full">HNK CREATE STUDIO</span><span class="nav-short">HNK</span></b>
+  <label class="langsel">
+    <svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg>
+    <select id="langSel" aria-label="ဘာသာစကား" data-i18n-aria="lang.aria">
+      <option value="my">မြန်မာ</option>
+      <option value="en">English</option>
+      <option value="shn">တႆး</option>
+      <option value="kac">Jinghpaw</option>
+      <option value="th">ไทย</option>
+      <option value="zh">中文</option>
+      <option value="vi">Tiếng Việt</option>
+      <option value="id">Indonesia</option>
+      <option value="ms">Melayu</option>
+    </select>
+  </label>
+  <a class="btn btn-gold" href="app/"><span data-i18n="nav.cta">App ဖွင့်မယ်</span></a>
 </nav>
 
 <!-- ============ S1 HERO ============ -->
@@ -263,21 +316,21 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
   <div class="hmedia">
     <img src="assets/site/hero-fairy.jpg" alt="HNK banner — တောရိပ်ထဲ အိပ်စက်နေတဲ့ နတ်သမီး fantasy portrait" fetchpriority="high">
     <div class="fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="hm-kick lat" aria-hidden="true">HNK CREATE STUDIO · MYANMAR</div>
-    <div class="hm-tag" aria-hidden="true">မျက်နှာ မပြောင်းဘဲ — အားလုံး ပြောင်းမယ်</div>
+    <div class="hm-kick lat" aria-hidden="true" data-i18n="hero.kick">HNK CREATE STUDIO · MYANMAR</div>
+    <div class="hm-tag" aria-hidden="true" data-i18n="hero.hmtag">မျက်နှာ မပြောင်းဘဲ — အားလုံး ပြောင်းမယ်</div>
   </div>
   <div class="wrap">
-    <div class="kick lat">HNK CREATE STUDIO · MYANMAR</div>
-    <h1>မြန်မာ Studio တွေအတွက် <em>AI ဓာတ်ပုံစတူဒီယို</em></h1>
-    <p class="lede">Portrait · Wedding · Graduation — ဖုန်းထဲမှာ Web Studio၊ Photoshop ထဲမှာ Pro Panel။ မျက်နှာမပြောင်းဘဲ နောက်ခံ၊ ဝတ်စုံ၊ အလင်းရောင် အကုန်ပြောင်းမယ်။</p>
+    <div class="kick lat" data-i18n="hero.kick">HNK CREATE STUDIO · MYANMAR</div>
+    <h1 data-i18n-html="hero.h1">မြန်မာ Studio တွေအတွက် <em>AI ဓာတ်ပုံစတူဒီယို</em></h1>
+    <p class="lede" data-i18n="hero.lede">Portrait · Wedding · Graduation — ဖုန်းထဲမှာ Web Studio၊ Photoshop ထဲမှာ Pro Panel။ မျက်နှာမပြောင်းဘဲ နောက်ခံ၊ ဝတ်စုံ၊ အလင်းရောင် အကုန်ပြောင်းမယ်။</p>
     <div class="ctas">
-      <a class="btn btn-gold" href="app/"><svg class="ic ic-s"><use href="#i-bolt"/></svg>Web Studio စမ်းမယ် — အခမဲ့ · Install မလို</a>
-      <a class="btn btn-dim" href="#panel"><svg class="ic ic-s"><use href="#i-download"/></svg>Photoshop Panel ရယူမယ် (27MB)</a>
+      <a class="btn btn-gold" href="app/"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span data-i18n="hero.cta1">Web Studio စမ်းမယ် — အခမဲ့ · Install မလို</span></a>
+      <a class="btn btn-dim" href="#panel"><svg class="ic ic-s"><use href="#i-download"/></svg><span data-i18n="hero.cta2">Photoshop Panel ရယူမယ် (27MB)</span></a>
     </div>
     <div class="badges">
-      <span class="badge"><i></i>Web Studio v4.27.1</span>
-      <span class="badge"><i></i>Panel v6.9.0</span>
-      <span class="badge"><i></i>updated 2026-08-11</span>
+      <span class="badge"><i></i><span data-i18n="badge.ws">Web Studio v4.28.0</span></span>
+      <span class="badge"><i></i><span data-i18n="badge.panel">Panel v6.9.0</span></span>
+      <span class="badge"><i></i><span data-i18n="badge.updated">updated 2026-08-11</span></span>
     </div>
   </div>
 </header>
@@ -287,40 +340,40 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 <!-- ============ S2 FEATURE GRID ============ -->
 <section id="features">
   <div class="sec-head">
-    <h2><span class="kick lat">ONE STUDIO · FOUR DOORS</span>ဒီနေ့ ဘာလုပ်ချင်လဲ</h2>
+    <h2><span class="kick lat" data-i18n="s2.kick">ONE STUDIO · FOUR DOORS</span><span data-i18n="s2.h2">ဒီနေ့ ဘာလုပ်ချင်လဲ</span></h2>
   </div>
   <div class="fgrid">
     <a class="fcard" href="app/?page=pgRetouch">
       <div class="art"><img loading="lazy" src="assets/site/feat-retouch.jpg" alt="Retouch — မျက်နှာအသားအရေ ပြင်ထားတဲ့ ဥပမာ" style="object-position:50% 18%"><span class="glyph"><svg class="ic"><use href="#i-gem"/></svg></span></div>
-      <div class="lbl">အသားအရေပြင်မယ်<small class="lat">RETOUCH</small></div>
+      <div class="lbl"><span data-i18n="f1.lbl">အသားအရေပြင်မယ်</span><small class="lat" data-i18n="f1.sub">RETOUCH</small></div>
     </a>
     <a class="fcard" href="app/?page=pgWf">
       <div class="art"><img loading="lazy" src="assets/site/feat-scene.jpg" alt="Change Scene — ရွှေရောင်ဘုရား နောက်ခံ" style="object-position:83% 27%"><span class="glyph"><svg class="ic"><use href="#i-brain"/></svg></span></div>
-      <div class="lbl">နောက်ခံ·ဝတ်စုံပြောင်းမယ်<small class="lat">CHANGE SCENE</small></div>
+      <div class="lbl"><span data-i18n="f2.lbl">နောက်ခံ·ဝတ်စုံပြောင်းမယ်</span><small class="lat" data-i18n="f2.sub">CHANGE SCENE</small></div>
     </a>
     <a class="fcard" href="app/?page=pgCreate">
       <div class="art"><img loading="lazy" src="assets/site/feat-create.jpg" alt="Describe an Edit — တောရိပ်နောက်ခံ fairy banner" style="object-position:50% 22%"><span class="glyph"><svg class="ic"><use href="#i-pen"/></svg></span></div>
-      <div class="lbl">စကားနဲ့ပြင်မယ်<small class="lat">DESCRIBE AN EDIT</small></div>
+      <div class="lbl"><span data-i18n="f3.lbl">စကားနဲ့ပြင်မယ်</span><small class="lat" data-i18n="f3.sub">DESCRIBE AN EDIT</small></div>
     </a>
     <a class="fcard" href="app/?page=pgText2Img">
       <div class="art"><img loading="lazy" src="assets/site/feat-media.jpg" alt="Media Lab — ဘူတာရုံနောက်ခံ banner" style="object-position:50% 30%"><span class="glyph"><svg class="ic"><use href="#i-clapper"/></svg></span></div>
-      <div class="lbl">ဗီဒီယို · Text→Image<small class="lat">MEDIA LAB</small></div>
+      <div class="lbl"><span data-i18n="f4.lbl">ဗီဒီယို · Text→Image</span><small class="lat" data-i18n="f4.sub">MEDIA LAB</small></div>
     </a>
   </div>
 
   <!-- comparison duo -->
   <div class="duo">
     <div class="duo-card">
-      <div class="shot"><img loading="lazy" src="assets/site/shot-home.jpg" alt="HNK Web Studio v4.27.1 — Home စာမျက်နှာ screenshot"></div>
+      <div class="shot"><img loading="lazy" src="assets/site/shot-home.jpg" alt="HNK Web Studio v4.28.0 — Home စာမျက်နှာ screenshot"></div>
       <div class="body">
-        <h3><svg class="ic"><use href="#i-phone"/></svg>Web Studio <span class="en">v4.27.1</span></h3>
+        <h3><svg class="ic"><use href="#i-phone"/></svg>Web Studio <span class="en">v4.28.0</span></h3>
         <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg>ဖုန်း/browser မှာတင် — install မလို၊ အခမဲ့</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>One-Tap 123 · Visual Library 366 · Smart Workflow 116</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Video · Text→Image · Meitu 79 · Evoto Pro 79</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>ဘာသာစကား ၉ မျိုး — မြန်မာ အရင်</li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo1.li1">ဖုန်း/browser မှာတင် — install မလို၊ အခမဲ့</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo1.li2">One-Tap 123 · Visual Library 366 · Smart Workflow 116</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo1.li3">Video · Text→Image · Meitu 79 · Evoto Pro 79</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo1.li4">ဘာသာစကား ၉ မျိုး — မြန်မာ အရင်</span></li>
         </ul>
-        <a class="btn btn-gold" href="app/">Web Studio ဖွင့်မယ်<svg class="ic ic-s"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-gold" href="app/"><span data-i18n="duo1.cta">Web Studio ဖွင့်မယ်</span><svg class="ic ic-s"><use href="#i-arrow"/></svg></a>
       </div>
     </div>
     <div class="duo-card">
@@ -328,12 +381,12 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
       <div class="body">
         <h3><svg class="ic"><use href="#i-laptop"/></svg>Photoshop Panel <span class="en">v6.9.0</span></h3>
         <ul>
-          <li><svg class="ic"><use href="#i-check"/></svg>Layer အပြည့် — mask + group နဲ့ ပြန်လာမယ်</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Smart Workflow ၉ ခု · Batch လုပ်လို့ရ</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>မူရင်းပုံ ဘယ်တော့မှ မပျက်ဘူး (non-destructive)</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Automated test 1,064 ခု အစိမ်းရောင်</li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo2.li1">Layer အပြည့် — mask + group နဲ့ ပြန်လာမယ်</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo2.li2">Smart Workflow ၉ ခု · Batch လုပ်လို့ရ</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo2.li3">မူရင်းပုံ ဘယ်တော့မှ မပျက်ဘူး (non-destructive)</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-i18n="duo2.li4">Automated test 1,064 ခု အစိမ်းရောင်</span></li>
         </ul>
-        <a class="btn btn-dim" href="#panel">Panel အကြောင်း ကြည့်မယ်<svg class="ic ic-s"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-dim" href="#panel"><span data-i18n="duo2.cta">Panel အကြောင်း ကြည့်မယ်</span><svg class="ic ic-s"><use href="#i-arrow"/></svg></a>
       </div>
     </div>
   </div>
@@ -342,11 +395,11 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 <!-- ============ S3 PROOF MASONRY ============ -->
 <section id="proof">
   <div class="sec-head">
-    <h2><span class="kick lat">REAL RESULTS · REAL WORKFLOWS</span>မပြောင်းတာက မျက်နှာ — ပြောင်းတာက အားလုံး</h2>
+    <h2><span class="kick lat" data-i18n="s3.kick">REAL RESULTS · REAL WORKFLOWS</span><span data-i18n="s3.h2">မပြောင်းတာက မျက်နှာ — ပြောင်းတာက အားလုံး</span></h2>
   </div>
-  <p class="sec-sub">အောက်ကပုံတွေအားလုံးက app ထဲက Smart Workflow တွေရဲ့ တကယ့် BEFORE→AFTER card တွေပါ — နှိပ်ပြီး အကြီးကြည့်ပါ။</p>
+  <p class="sec-sub" data-i18n="s3.sub">အောက်ကပုံတွေအားလုံးက app ထဲက Smart Workflow တွေရဲ့ တကယ့် BEFORE→AFTER card တွေပါ — နှိပ်ပြီး အကြီးကြည့်ပါ။</p>
   <div class="chips">
-    <span class="chip">Nano Banana</span><span class="chip">GPT Image</span><span class="chip">RunningHub Enterprise</span><span class="chip lat">IDENTITY LOCK</span>
+    <span class="chip" data-i18n="chip.1">Nano Banana</span><span class="chip" data-i18n="chip.2">GPT Image</span><span class="chip" data-i18n="chip.3">RunningHub Enterprise</span><span class="chip lat" data-i18n="chip.4">IDENTITY LOCK</span>
   </div>
   <div class="masonry" id="masonry">
     <a href="assets/site/proof-master-bgfg-replace.jpg"><img loading="lazy" src="assets/site/proof-master-bgfg-replace.jpg" alt="Master BG FG Replace — IMAGE1 + IMAGE2 → RESULT"></a>
@@ -358,66 +411,66 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
     <a href="assets/site/proof-wed-veil-2.jpg"><img loading="lazy" src="assets/site/proof-wed-veil-2.jpg" alt="Wedding Veil — ဇာပုဝါ ထည့်ခြင်း"></a>
     <a href="assets/site/proof-pr-scnMyanmar.jpg"><img loading="lazy" src="assets/site/proof-pr-scnMyanmar.jpg" alt="Myanmar Scene — မြန်မာ့နောက်ခံ scene"></a>
   </div>
-  <p class="cap">ပုံများအားလုံး — HNK workflow တွေနဲ့ တကယ်ထုတ်ထားတဲ့ audited card တွေ (8-pass verification)။ Stock/mockup မဟုတ်ပါ။</p>
+  <p class="cap" data-i18n="s3.cap">ပုံများအားလုံး — HNK workflow တွေနဲ့ တကယ်ထုတ်ထားတဲ့ audited card တွေ (8-pass verification)။ Stock/mockup မဟုတ်ပါ။</p>
 </section>
 
 <!-- ============ S4 WEB STUDIO DEEP-DIVE ============ -->
 <section id="webstudio">
   <div class="sec-head">
-    <h2><span class="kick lat">WEB STUDIO v4.27.1</span>Browser ထဲမှာတင် — studio တစ်ခုလုံး</h2>
+    <h2><span class="kick lat" data-i18n="s4.kick">WEB STUDIO v4.28.0</span><span data-i18n="s4.h2">Browser ထဲမှာတင် — studio တစ်ခုလုံး</span></h2>
     <div style="display:flex;gap:8px">
-      <button class="chev" id="cvPrev" aria-label="နောက်သို့"><svg class="ic ic-r180"><use href="#i-caret"/></svg></button>
-      <button class="chev" id="cvNext" aria-label="ရှေ့သို့"><svg class="ic"><use href="#i-caret"/></svg></button>
+      <button class="chev" id="cvPrev" aria-label="နောက်သို့" data-i18n-aria="aria.prev"><svg class="ic ic-r180"><use href="#i-caret"/></svg></button>
+      <button class="chev" id="cvNext" aria-label="ရှေ့သို့" data-i18n-aria="aria.next"><svg class="ic"><use href="#i-caret"/></svg></button>
     </div>
   </div>
   <div class="carousel" id="cv">
-    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-home.jpg" alt="Home — 2×2 feature grid + Library strip"></div><p><b>Home</b>လုပ်ချင်တာ လေးခုထဲက တစ်ချက်နှိပ်ရွေး</p></div>
-    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-retouch.jpg" alt="Retouch Pro — V2 Retouch one-tap"></div><p><b>Retouch Pro</b>V2 Retouch — ဓာတ်ပုံတင်၊ တစ်ချက်နှိပ်၊ ပြီး</p></div>
-    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-library.jpg" alt="Reference Library — 366 looks"></div><p><b>Library</b>Look ၃၆၆ ခု — ကြိုက်တာရွေး၊ ကိုယ့်ပုံနဲ့ တန်းသုံး</p></div>
-    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-create.jpg" alt="Freeform Create — စကားနဲ့ပြင်မယ်"></div><p><b>Freeform</b>ပြင်ချင်တာ စကားနဲ့ရေး — AI က လုပ်ပေးမယ်</p></div>
-    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-studio.jpg" alt="One-Tap Studio — Meitu + Evoto suites"></div><p><b>Studio</b>Meitu ၇၉ · Evoto ၇၉ — slider နဲ့ live preview</p></div>
+    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-home.jpg" alt="Home — 2×2 feature grid + Library strip"></div><p><b data-i18n="slide1.t">Home</b><span data-i18n="slide1.d">လုပ်ချင်တာ လေးခုထဲက တစ်ချက်နှိပ်ရွေး</span></p></div>
+    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-retouch.jpg" alt="Retouch Pro — V2 Retouch one-tap"></div><p><b data-i18n="slide2.t">Retouch Pro</b><span data-i18n="slide2.d">V2 Retouch — ဓာတ်ပုံတင်၊ တစ်ချက်နှိပ်၊ ပြီး</span></p></div>
+    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-library.jpg" alt="Reference Library — 366 looks"></div><p><b data-i18n="slide3.t">Library</b><span data-i18n="slide3.d">Look ၃၆၆ ခု — ကြိုက်တာရွေး၊ ကိုယ့်ပုံနဲ့ တန်းသုံး</span></p></div>
+    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-create.jpg" alt="Freeform Create — စကားနဲ့ပြင်မယ်"></div><p><b data-i18n="slide4.t">Freeform</b><span data-i18n="slide4.d">ပြင်ချင်တာ စကားနဲ့ရေး — AI က လုပ်ပေးမယ်</span></p></div>
+    <div class="slide"><div class="ph"><img loading="lazy" src="assets/site/shot-studio.jpg" alt="One-Tap Studio — Meitu + Evoto suites"></div><p><b data-i18n="slide5.t">Studio</b><span data-i18n="slide5.d">Meitu ၇၉ · Evoto ၇၉ — slider နဲ့ live preview</span></p></div>
   </div>
   <div class="pwa-note">
     <svg class="ic"><use href="#i-phone"/></svg>
-    <span><b style="color:var(--cream)">PWA:</b> Home screen ထည့်ထားရင် app လိုပဲ သုံးလို့ရတယ် — offline ဖွင့်လို့ရ၊ ကိုယ့် gallery ကိုယ့်ဖုန်းထဲမှာပဲ သိမ်းတယ်။</span>
+    <span><b data-i18n="pwa.label">PWA:</b> <span data-i18n="pwa.text">Home screen ထည့်ထားရင် app လိုပဲ သုံးလို့ရတယ် — offline ဖွင့်လို့ရ၊ ကိုယ့် gallery ကိုယ့်ဖုန်းထဲမှာပဲ သိမ်းတယ်။</span></span>
   </div>
-  <p style="margin-top:20px"><a class="btn btn-gold" href="app/"><svg class="ic ic-s"><use href="#i-bolt"/></svg>Web Studio စမ်းမယ် — အခမဲ့</a></p>
+  <p style="margin-top:20px"><a class="btn btn-gold" href="app/"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span data-i18n="s4.cta">Web Studio စမ်းမယ် — အခမဲ့</span></a></p>
 </section>
 
 <!-- ============ PROMO BAND ============ -->
 <section>
   <div class="promo">
-    <h2>Photoshop ထဲမှာလည်း<span>Layer + Mask နဲ့ ပြန်လာမယ်</span></h2>
+    <h2><span data-i18n="promo.a">Photoshop ထဲမှာလည်း</span><span class="gold" data-i18n="promo.b">Layer + Mask နဲ့ ပြန်လာမယ်</span></h2>
     <img loading="lazy" src="assets/site/promo-icons.jpg" alt="HNK panel — layer, wand, bolt dimensional icons">
-    <a class="btn btn-dim" href="#panel">Panel ကြည့်မယ်<svg class="ic ic-s"><use href="#i-arrow"/></svg></a>
+    <a class="btn btn-dim" href="#panel"><span data-i18n="promo.cta">Panel ကြည့်မယ်</span><svg class="ic ic-s"><use href="#i-arrow"/></svg></a>
   </div>
 </section>
 
 <!-- ============ S5 PANEL DEEP-DIVE ============ -->
 <section id="panel">
   <div class="sec-head">
-    <h2><span class="kick lat">PHOTOSHOP AI PANEL v6.9.0</span>Layer + Mask နဲ့ ပြန်လာမယ် — မူရင်းပုံ မပျက်ဘူး</h2>
+    <h2><span class="kick lat" data-i18n="s5.kick">PHOTOSHOP AI PANEL v6.9.0</span><span data-i18n="s5.h2">Layer + Mask နဲ့ ပြန်လာမယ် — မူရင်းပုံ မပျက်ဘူး</span></h2>
   </div>
-  <p class="sec-sub">AI result တိုင်း masked layer group အဖြစ် ရောက်လာတယ် — ကြိုက်သလို ပြန်ဖျက်၊ ပြန်ညှိ၊ ပြန်ရောနိုင်တယ်။ Photoshop 24.2+ (Windows/macOS)။</p>
+  <p class="sec-sub" data-i18n="s5.sub">AI result တိုင်း masked layer group အဖြစ် ရောက်လာတယ် — ကြိုက်သလို ပြန်ဖျက်၊ ပြန်ညှိ၊ ပြန်ရောနိုင်တယ်။ Photoshop 24.2+ (Windows/macOS)။</p>
   <div class="panelwrap">
     <div class="panel-shot"><img loading="lazy" src="assets/site/panel-wf-detail.jpg" alt="HNK Panel — Master BG FG Replace workflow detail screenshot"></div>
     <div>
-      <h3 style="font-size:var(--fs-lg)">Smart Workflow ၉ ခု</h3>
+      <h3 style="font-size:var(--fs-lg)" data-i18n="s5.wfTitle">Smart Workflow ၉ ခု</h3>
       <div class="wf-list">
-        <span><svg class="ic"><use href="#i-star-fill"/></svg>Master BG FG Replace</span>
-        <span>BG Replace</span><span>Reference Transfer</span><span>Subject / Face</span>
-        <span>AI Retouch</span><span>AI Upscale</span><span>Object Edit</span>
-        <span>Water Edit</span><span>Text / Logo</span>
+        <span><svg class="ic"><use href="#i-star-fill"/></svg><span data-i18n="wf.1">Master BG FG Replace</span></span>
+        <span data-i18n="wf.2">BG Replace</span><span data-i18n="wf.3">Reference Transfer</span><span data-i18n="wf.4">Subject / Face</span>
+        <span data-i18n="wf.5">AI Retouch</span><span data-i18n="wf.6">AI Upscale</span><span data-i18n="wf.7">Object Edit</span>
+        <span data-i18n="wf.8">Water Edit</span><span data-i18n="wf.9">Text / Logo</span>
       </div>
-      <h3 style="font-size:var(--fs-lg)">Install — ၂ မိနစ်</h3>
+      <h3 style="font-size:var(--fs-lg)" data-i18n="s5.instTitle">Install — ၂ မိနစ်</h3>
       <ol class="steps">
-        <li><span><b>ccx ဖိုင် download</b> — အောက်က ခလုတ်နဲ့ ရယူပါ</span></li>
-        <li><span><b>Double-click</b> — Creative Cloud က panel ကို အလိုအလျောက် ထည့်ပေးမယ်</span></li>
-        <li><span><b>Photoshop ပြန်ဖွင့်ပါ</b> — Plugins ▸ HNK Photoshop Ai Panel</span></li>
-        <li><span><b>API key တစ်ခါထည့်ပါ</b> — Setup tab မှာ (Gemini အခမဲ့ tier ရလို့ရတယ်)</span></li>
+        <li><span data-i18n-html="step.1"><b>ccx ဖိုင် download</b> — အောက်က ခလုတ်နဲ့ ရယူပါ</span></li>
+        <li><span data-i18n-html="step.2"><b>Double-click</b> — Creative Cloud က panel ကို အလိုအလျောက် ထည့်ပေးမယ်</span></li>
+        <li><span data-i18n-html="step.3"><b>Photoshop ပြန်ဖွင့်ပါ</b> — Plugins ▸ HNK Photoshop Ai Panel</span></li>
+        <li><span data-i18n-html="step.4"><b>API key တစ်ခါထည့်ပါ</b> — Setup tab မှာ (Gemini အခမဲ့ tier ရလို့ရတယ်)</span></li>
       </ol>
-      <a class="btn btn-gold" href="download/HNK_Ai_Panel_v6.1.1.ccx" download><svg class="ic ic-s"><use href="#i-download"/></svg>Panel ccx v6.1.1 ရယူမယ် (27MB)</a>
-      <p class="dl-note">လက်ရှိ download build — v6.1.1 · Panel codebase — v6.9.0 (1,064 tests) · v6.9.0 ccx ကို နောက် release မှာ တင်ပေးမယ်။</p>
+      <a class="btn btn-gold" href="download/HNK_Ai_Panel_v6.1.1.ccx" download><svg class="ic ic-s"><use href="#i-download"/></svg><span data-i18n="s5.dl">Panel ccx v6.1.1 ရယူမယ် (27MB)</span></a>
+      <p class="dl-note" data-i18n="s5.dlnote">လက်ရှိ download build — v6.1.1 · Panel codebase — v6.9.0 (1,064 tests) · v6.9.0 ccx ကို နောက် release မှာ တင်ပေးမယ်။</p>
     </div>
   </div>
 </section>
@@ -425,54 +478,54 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 <!-- ============ S6 ENGINES & COST ============ -->
 <section id="engines">
   <div class="sec-head">
-    <h2><span class="kick lat">ENGINES · HONEST COSTS</span>ဘယ် AI engine တွေ သုံးထားလဲ</h2>
+    <h2><span class="kick lat" data-i18n="s6.kick">ENGINES · HONEST COSTS</span><span data-i18n="s6.h2">ဘယ် AI engine တွေ သုံးထားလဲ</span></h2>
   </div>
   <div class="engines">
     <div class="ecard">
       <img loading="lazy" src="assets/site/engine-gemini.jpg" alt="Gemini engine artwork">
-      <span class="tag lat">FREE TIER ရှိ</span>
-      <div class="body"><h3>Gemini <span class="en">Nano Banana</span></h3><p>စကားနဲ့ပြင်တာ၊ One-Tap workflow အများစုရဲ့ default engine — အခမဲ့ key နဲ့ စလို့ရတယ်။</p></div>
+      <span class="tag lat" data-i18n="e1.tag">FREE TIER ရှိ</span>
+      <div class="body"><h3>Gemini <span class="en">Nano Banana</span></h3><p data-i18n="e1.desc">စကားနဲ့ပြင်တာ၊ One-Tap workflow အများစုရဲ့ default engine — အခမဲ့ key နဲ့ စလို့ရတယ်။</p></div>
     </div>
     <div class="ecard">
       <img loading="lazy" src="assets/site/engine-rh.jpg" alt="RunningHub engine artwork">
-      <span class="tag lat">ENTERPRISE KEY</span>
-      <div class="body"><h3>RunningHub</h3><p>Smart Workflow · V2 Retouch · Video · Upscale — credit စနစ်၊ သုံးသလောက်ပဲ ကျတယ်။</p></div>
+      <span class="tag lat" data-i18n="e2.tag">ENTERPRISE KEY</span>
+      <div class="body"><h3>RunningHub</h3><p data-i18n="e2.desc">Smart Workflow · V2 Retouch · Video · Upscale — credit စနစ်၊ သုံးသလောက်ပဲ ကျတယ်။</p></div>
     </div>
     <div class="ecard">
       <img loading="lazy" src="assets/site/engine-openai.jpg" alt="OpenAI engine artwork">
-      <span class="tag lat">OPTIONAL</span>
-      <div class="body"><h3>OpenAI <span class="en">GPT Image</span></h3><p>Alternative engine — ကိုယ့် OpenAI key ရှိရင် ချိတ်ပြီး သုံးလို့ရတယ်။</p></div>
+      <span class="tag lat" data-i18n="e3.tag">OPTIONAL</span>
+      <div class="body"><h3>OpenAI <span class="en">GPT Image</span></h3><p data-i18n="e3.desc">Alternative engine — ကိုယ့် OpenAI key ရှိရင် ချိတ်ပြီး သုံးလို့ရတယ်။</p></div>
     </div>
   </div>
   <div class="keybox">
-    <h3><svg class="ic"><use href="#i-key"/></svg>Key ဘယ်လိုရမလဲ — ရိုးရိုးသားသား ရှင်းပြမယ်</h3>
-    <p>HNK က subscription မကောက်ပါ — AI engine တွေကို ကိုယ့် key နဲ့ တိုက်ရိုက်ချိတ်တာပါ။ <b style="color:var(--cream)">Gemini</b> key ကို aistudio.google.com/apikey မှာ အခမဲ့ရတယ် (နေ့စဉ် အခမဲ့ quota ပါ — စမ်းသုံးဖို့ လုံလောက်တယ်)။ <b style="color:var(--cream)">RunningHub</b> က credit စနစ် — ပုံတစ်ပုံကို ခန့်မှန်း US$0.01–0.05 လောက်၊ video ဆို ပိုကျတယ်; အကြမ်းဖျင်း — တစ်လ studio သုံး ပုံရာချီ ထုတ်ရင်တောင် ဒေါ်လာ အနည်းငယ်ပဲ ကျပါတယ်။ <b style="color:var(--cream)">OpenAI</b> က ပုံအလိုက် ကျသင့်တယ် — မထည့်လည်း app အပြည့် သုံးလို့ရတယ်။ Key တွေက ကိုယ့် browser/panel ထဲမှာပဲ သိမ်းတယ် — ဘယ် server ကိုမှ မပို့ပါ။</p>
+    <h3><svg class="ic"><use href="#i-key"/></svg><span data-i18n="key.title">Key ဘယ်လိုရမလဲ — ရိုးရိုးသားသား ရှင်းပြမယ်</span></h3>
+    <p data-i18n-html="key.body">HNK က subscription မကောက်ပါ — AI engine တွေကို ကိုယ့် key နဲ့ တိုက်ရိုက်ချိတ်တာပါ။ <b>Gemini</b> key ကို aistudio.google.com/apikey မှာ အခမဲ့ရတယ် (နေ့စဉ် အခမဲ့ quota ပါ — စမ်းသုံးဖို့ လုံလောက်တယ်)။ <b>RunningHub</b> က credit စနစ် — ပုံတစ်ပုံကို ခန့်မှန်း US$0.01–0.05 လောက်၊ video ဆို ပိုကျတယ်; အကြမ်းဖျင်း — တစ်လ studio သုံး ပုံရာချီ ထုတ်ရင်တောင် ဒေါ်လာ အနည်းငယ်ပဲ ကျပါတယ်။ <b>OpenAI</b> က ပုံအလိုက် ကျသင့်တယ် — မထည့်လည်း app အပြည့် သုံးလို့ရတယ်။ Key တွေက ကိုယ့် browser/panel ထဲမှာပဲ သိမ်းတယ် — ဘယ် server ကိုမှ မပို့ပါ။</p>
   </div>
 </section>
 
 <!-- ============ S7 FAQ + CONTACT + FOOTER ============ -->
 <section id="faq">
   <div class="sec-head">
-    <h2><span class="kick lat">FAQ</span>မေးလေ့ရှိတာတွေ</h2>
+    <h2><span class="kick lat" data-i18n="s7.kick">FAQ</span><span data-i18n="s7.h2">မေးလေ့ရှိတာတွေ</span></h2>
   </div>
   <div class="faq">
     <details>
-      <summary>ဖုန်းနဲ့ ရလား?<svg class="ic"><use href="#i-caret"/></svg></summary>
-      <p>ရတယ် — Web Studio က ဖုန်း browser အတွက် အရင်ဆုံး ဒီဇိုင်းထုတ်ထားတာ။ Install မလို၊ အခမဲ့။ Home screen ထည့်ထားရင် app တစ်ခုလိုပဲ ဖွင့်လို့ရတယ်။ Photoshop Panel ကတော့ ကွန်ပျူတာ (Windows/macOS) အတွက်ပါ။</p>
+      <summary><span data-i18n="faq1.q">ဖုန်းနဲ့ ရလား?</span><svg class="ic"><use href="#i-caret"/></svg></summary>
+      <p data-i18n="faq1.a">ရတယ် — Web Studio က ဖုန်း browser အတွက် အရင်ဆုံး ဒီဇိုင်းထုတ်ထားတာ။ Install မလို၊ အခမဲ့။ Home screen ထည့်ထားရင် app တစ်ခုလိုပဲ ဖွင့်လို့ရတယ်။ Photoshop Panel ကတော့ ကွန်ပျူတာ (Windows/macOS) အတွက်ပါ။</p>
     </details>
     <details>
-      <summary>Photoshop ဗားရှင်း ဘယ်လောက်လိုလဲ?<svg class="ic"><use href="#i-caret"/></svg></summary>
-      <p>Photoshop 24.2 (2023) နဲ့အထက် — UXP panel စနစ်ကို ထောက်ပံ့တဲ့ ဗားရှင်းတိုင်း ရတယ်။ Creative Cloud ကနေ ccx ဖိုင်ကို double-click တစ်ချက်နဲ့ ထည့်လို့ရတယ်။</p>
+      <summary><span data-i18n="faq2.q">Photoshop ဗားရှင်း ဘယ်လောက်လိုလဲ?</span><svg class="ic"><use href="#i-caret"/></svg></summary>
+      <p data-i18n="faq2.a">Photoshop 24.2 (2023) နဲ့အထက် — UXP panel စနစ်ကို ထောက်ပံ့တဲ့ ဗားရှင်းတိုင်း ရတယ်။ Creative Cloud ကနေ ccx ဖိုင်ကို double-click တစ်ချက်နဲ့ ထည့်လို့ရတယ်။</p>
     </details>
     <details>
-      <summary>API key ဘယ်ကရမလဲ? ပိုက်ဆံကုန်မလား?<svg class="ic"><use href="#i-caret"/></svg></summary>
-      <p>Gemini key ကို aistudio.google.com/apikey မှာ အခမဲ့ရတယ် — စမ်းသုံးဖို့ နေ့စဉ် အခမဲ့ quota လုံလောက်တယ်။ RunningHub နဲ့ OpenAI ကတော့ သုံးသလောက် ကျသင့်တဲ့ စနစ် — အသေးစိတ်ကို အပေါ်က "Engines" အပိုင်းမှာ ရှင်းပြထားတယ်။</p>
+      <summary><span data-i18n="faq3.q">API key ဘယ်ကရမလဲ? ပိုက်ဆံကုန်မလား?</span><svg class="ic"><use href="#i-caret"/></svg></summary>
+      <p data-i18n="faq3.a">Gemini key ကို aistudio.google.com/apikey မှာ အခမဲ့ရတယ် — စမ်းသုံးဖို့ နေ့စဉ် အခမဲ့ quota လုံလောက်တယ်။ RunningHub နဲ့ OpenAI ကတော့ သုံးသလောက် ကျသင့်တဲ့ စနစ် — အသေးစိတ်ကို အပေါ်က “Engines” အပိုင်းမှာ ရှင်းပြထားတယ်။</p>
     </details>
   </div>
   <div class="contact">
-    <a class="btn btn-dim" href="https://t.me/share/url?url=https%3A%2F%2Fhlaingkhay28047-svg.github.io%2FTG%2F&amp;text=HNK%20Create%20Studio" target="_blank" rel="noopener"><svg class="ic ic-s"><use href="#i-link"/></svg>Telegram မှာ ဝေမျှမယ်</a>
-    <a class="btn btn-dim" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fhlaingkhay28047-svg.github.io%2FTG%2F" target="_blank" rel="noopener"><svg class="ic ic-s"><use href="#i-link"/></svg>Facebook မှာ ဝေမျှမယ်</a>
-    <a class="btn btn-dim" href="https://github.com/hlaingkhay28047-svg/HNK-Ai-V1" target="_blank" rel="noopener"><svg class="ic ic-s"><use href="#i-external"/></svg>GitHub</a>
+    <a class="btn btn-dim" href="https://t.me/share/url?url=https%3A%2F%2Fhlaingkhay28047-svg.github.io%2FTG%2F&amp;text=HNK%20Create%20Studio" target="_blank" rel="noopener"><svg class="ic ic-s"><use href="#i-link"/></svg><span data-i18n="contact.tg">Telegram မှာ ဝေမျှမယ်</span></a>
+    <a class="btn btn-dim" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fhlaingkhay28047-svg.github.io%2FTG%2F" target="_blank" rel="noopener"><svg class="ic ic-s"><use href="#i-link"/></svg><span data-i18n="contact.fb">Facebook မှာ ဝေမျှမယ်</span></a>
+    <a class="btn btn-dim" href="https://github.com/hlaingkhay28047-svg/HNK-Ai-V1" target="_blank" rel="noopener"><svg class="ic ic-s"><use href="#i-external"/></svg><span data-i18n="contact.gh">GitHub</span></a>
   </div>
 </section>
 
@@ -481,20 +534,64 @@ dialog#lb p{text-align:center;color:var(--muted);font-size:var(--fs-xs);margin-t
 <footer class="foot">
   <div class="wrap">
     <div class="badges">
-      <span class="badge"><i></i>Web Studio v4.27.1</span>
-      <span class="badge"><i></i>Panel v6.9.0</span>
-      <span class="badge"><i></i>1,064 tests green</span>
-      <span class="badge"><i></i>updated 2026-08-11</span>
+      <span class="badge"><i></i><span data-i18n="badge.ws">Web Studio v4.28.0</span></span>
+      <span class="badge"><i></i><span data-i18n="badge.panel">Panel v6.9.0</span></span>
+      <span class="badge"><i></i><span data-i18n="badge.tests">1,064 tests green</span></span>
+      <span class="badge"><i></i><span data-i18n="badge.updated">updated 2026-08-11</span></span>
     </div>
-    <p>HNK Create Studio — မြန်မာ studio ဓာတ်ပုံဆရာတွေအတွက် တည်ဆောက်ထားတယ်။ Portrait · Wedding · Graduation။</p>
+    <p data-i18n="foot.p1">HNK Create Studio — မြန်မာ studio ဓာတ်ပုံဆရာတွေအတွက် တည်ဆောက်ထားတယ်။ Portrait · Wedding · Graduation။</p>
     <p><a href="app/" style="color:var(--gold-hi)">Web Studio</a> · <a href="#panel" style="color:var(--gold-hi)">Photoshop Panel</a> · <a href="https://github.com/hlaingkhay28047-svg/HNK-Ai-V1" style="color:var(--gold-hi)" target="_blank" rel="noopener">GitHub</a></p>
   </div>
 </footer>
 
-<dialog id="lb" aria-label="ပုံအကြီးချဲ့ကြည့်ရန်">
+<dialog id="lb" aria-label="ပုံအကြီးချဲ့ကြည့်ရန်" data-i18n-aria="lb.aria">
   <img alt="">
-  <p>ပိတ်ရန် — မည်သည့်နေရာမဆို နှိပ်ပါ</p>
+  <p data-i18n="lb.hint">ပိတ်ရန် — မည်သည့်နေရာမဆို နှိပ်ပါ</p>
 </dialog>
+
+<script>
+/* ============================================================
+   HNK landing i18n — 9 languages, Burmese (my) is the default.
+   The HTML above carries the Burmese copy verbatim so the page
+   is fully readable (and indexable) with JavaScript disabled.
+   ============================================================ */
+var I18N = {"page.title": {"my": "HNK Create Studio — မြန်မာ Studio တွေအတွက် AI ဓာတ်ပုံစတူဒီယို | AI Photo Studio for Myanmar","en": "HNK Create Studio — AI Photo Studio for Myanmar Studios","shn": "HNK Create Studio — ႁွင်ႈထၢႆႇႁၢင်ႈ AI တႃႇ Studio မိူင်းမၢၼ်ႈ","kac": "HNK Create Studio — Myen Studio ni a matu AI Sumla Studio","th": "HNK Create Studio — สตูดิโอภาพถ่าย AI สำหรับสตูดิโอเมียนมา","zh": "HNK Create Studio — 为缅甸影楼打造的 AI 照片工作室","vi": "HNK Create Studio — Studio ảnh AI cho các studio Myanmar","id": "HNK Create Studio — Studio Foto AI untuk Studio Myanmar","ms": "HNK Create Studio — Studio Foto AI untuk Studio Myanmar"},"lang.aria": {"my": "ဘာသာစကား","en": "Language","shn": "ၽႃႇသႃႇၵႂၢမ်း","kac": "Ga lata na","th": "ภาษา","zh": "语言","vi": "Ngôn ngữ","id": "Bahasa","ms": "Bahasa"},"nav.cta": {"my": "App ဖွင့်မယ်","en": "Open the App","shn": "ပိုတ်ႇ App","kac": "App hpaw u","th": "เปิดแอป","zh": "打开应用","vi": "Mở ứng dụng","id": "Buka Aplikasi","ms": "Buka Aplikasi"},"hero.kick": {"my": "HNK CREATE STUDIO · MYANMAR","en": "HNK CREATE STUDIO · MYANMAR","shn": "HNK CREATE STUDIO · မိူင်းမၢၼ်ႈ","kac": "HNK CREATE STUDIO · MYEN MUNGDAN","th": "HNK CREATE STUDIO · เมียนมา","zh": "HNK CREATE STUDIO · 缅甸","vi": "HNK CREATE STUDIO · MYANMAR","id": "HNK CREATE STUDIO · MYANMAR","ms": "HNK CREATE STUDIO · MYANMAR"},"hero.hmtag": {"my": "မျက်နှာ မပြောင်းဘဲ — အားလုံး ပြောင်းမယ်","en": "The face stays — everything else changes","shn": "ၼႃႈတႃဢမ်ႇလႅၵ်ႈလၢႆႈ — တင်းသဵင်ႈလႅၵ်ႈလႆႈ","kac": "Myi man gaw n galai — ngam ai yawng galai","th": "ใบหน้าคงเดิม — เปลี่ยนทุกอย่างที่เหลือ","zh": "面容不变 — 其余全部焕新","vi": "Giữ nguyên gương mặt — thay đổi tất cả phần còn lại","id": "Wajah tetap sama — selebihnya berubah","ms": "Wajah kekal sama — selebihnya berubah"},"hero.h1": {"my": "မြန်မာ Studio တွေအတွက် <em>AI ဓာတ်ပုံစတူဒီယို</em>","en": "For Myanmar studios — <em>an AI photo studio</em>","shn": "တႃႇ Studio မိူင်းမၢၼ်ႈ — <em>ႁွင်ႈထၢႆႇႁၢင်ႈ AI</em>","kac": "Myen mungdan na studio ni a matu — <em>AI sumla studio</em>","th": "สำหรับสตูดิโอเมียนมา — <em>สตูดิโอภาพถ่าย AI</em>","zh": "专为缅甸影楼打造的 <em>AI 照片工作室</em>","vi": "Dành cho studio Myanmar — <em>studio ảnh AI</em>","id": "Untuk studio Myanmar — <em>studio foto AI</em>","ms": "Untuk studio Myanmar — <em>studio foto AI</em>"},"hero.lede": {"my": "Portrait · Wedding · Graduation — ဖုန်းထဲမှာ Web Studio၊ Photoshop ထဲမှာ Pro Panel။ မျက်နှာမပြောင်းဘဲ နောက်ခံ၊ ဝတ်စုံ၊ အလင်းရောင် အကုန်ပြောင်းမယ်။","en": "Portrait · Wedding · Graduation — Web Studio on your phone, a Pro Panel inside Photoshop. Keep the face; change the background, the outfit and the light.","shn": "Portrait · Wedding · Graduation — Web Studio ၼႂ်းၾူင်း၊ Pro Panel ၼႂ်း Photoshop။ ၼႃႈတႃဢမ်ႇလႅၵ်ႈ၊ လင်ႁၢင်ႈ၊ သိူဝ်ႈၶူဝ်း လႄႈ ၾႆးလႅင်း လႅၵ်ႈလႆႈတင်းသဵင်ႈ။","kac": "Portrait · Wedding · Graduation — Web Studio gaw na a phone hta, Pro Panel gaw Photoshop kata. Myi man n galai ai sha, hpang shara, palawng hte nhtoi ni yawng galai lu ai.","th": "Portrait · Wedding · Graduation — Web Studio บนมือถือ และ Pro Panel ใน Photoshop คงใบหน้าไว้ แล้วเปลี่ยนฉากหลัง ชุด และแสงได้ทั้งหมด","zh": "Portrait · Wedding · Graduation — 手机上有 Web Studio，Photoshop 里有 Pro Panel。面容保持不变，背景、服装与光线全部可换。","vi": "Portrait · Wedding · Graduation — Web Studio trên điện thoại, Pro Panel trong Photoshop. Giữ nguyên gương mặt; thay phông nền, trang phục và ánh sáng.","id": "Portrait · Wedding · Graduation — Web Studio di ponsel, Pro Panel di dalam Photoshop. Wajah tetap; latar, busana, dan pencahayaan bisa diganti semua.","ms": "Portrait · Wedding · Graduation — Web Studio pada telefon, Pro Panel dalam Photoshop. Wajah kekal; latar, busana dan pencahayaan boleh ditukar semua."},"hero.cta1": {"my": "Web Studio စမ်းမယ် — အခမဲ့ · Install မလို","en": "Try Web Studio — free · no install","shn": "လၢမ်းတူၺ်း Web Studio — ဢမ်ႇသဵင်ႈငိုၼ်း · ဢမ်ႇလူဝ်ႇ Install","kac": "Web Studio chyam yu u — manu n ra ai · install n ra","th": "ลองใช้ Web Studio — ฟรี · ไม่ต้องติดตั้ง","zh": "试用 Web Studio — 免费 · 免安装","vi": "Dùng thử Web Studio — miễn phí · không cần cài đặt","id": "Coba Web Studio — gratis · tanpa instal","ms": "Cuba Web Studio — percuma · tanpa pemasangan"},"hero.cta2": {"my": "Photoshop Panel ရယူမယ် (27MB)","en": "Get the Photoshop Panel (27MB)","shn": "ဢဝ် Photoshop Panel (27MB)","kac": "Photoshop Panel la u (27MB)","th": "ดาวน์โหลด Photoshop Panel (27MB)","zh": "获取 Photoshop Panel（27MB）","vi": "Tải Photoshop Panel (27MB)","id": "Ambil Photoshop Panel (27MB)","ms": "Dapatkan Photoshop Panel (27MB)"},"badge.ws": {"my": "Web Studio v4.28.0","en": "Web Studio v4.28.0","shn": "Web Studio v4.28.0","kac": "Web Studio v4.28.0","th": "Web Studio v4.28.0","zh": "Web Studio v4.28.0","vi": "Web Studio v4.28.0","id": "Web Studio v4.28.0","ms": "Web Studio v4.28.0"},"badge.panel": {"my": "Panel v6.9.0","en": "Panel v6.9.0","shn": "Panel v6.9.0","kac": "Panel v6.9.0","th": "Panel v6.9.0","zh": "Panel v6.9.0","vi": "Panel v6.9.0","id": "Panel v6.9.0","ms": "Panel v6.9.0"},"badge.updated": {"my": "updated 2026-08-11","en": "updated 2026-08-11","shn": "မႄးမႂ်ႇ 2026-08-11","kac": "bai ningnan 2026-08-11","th": "อัปเดต 2026-08-11","zh": "更新于 2026-08-11","vi": "cập nhật 2026-08-11","id": "diperbarui 2026-08-11","ms": "dikemas kini 2026-08-11"},"badge.tests": {"my": "1,064 tests green","en": "1,064 tests green","shn": "1,064 tests ၶဵဝ်","kac": "1,064 tests yawng tsit","th": "ผ่านการทดสอบ 1,064 รายการ","zh": "1,064 项测试全绿","vi": "1,064 kiểm thử đều đạt","id": "1,064 tes lulus semua","ms": "1,064 ujian lulus semua"},"s2.kick": {"my": "ONE STUDIO · FOUR DOORS","en": "ONE STUDIO · FOUR DOORS","shn": "ႁွင်ႈၵၢၼ်လဵဝ် · သီႇတၢင်းၶဝ်ႈ","kac": "STUDIO LANGAI · CHYINGHKA MALI","th": "หนึ่งสตูดิโอ · สี่ทางเข้า","zh": "一个工作室 · 四道门","vi": "MỘT STUDIO · BỐN LỐI VÀO","id": "SATU STUDIO · EMPAT PINTU","ms": "SATU STUDIO · EMPAT PINTU"},"s2.h2": {"my": "ဒီနေ့ ဘာလုပ်ချင်လဲ","en": "What do you want to make today?","shn": "မိူဝ်ႈၼႆႉ ၶႂ်ႈႁဵတ်းသင်?","kac": "Dai ni hpa galaw mayu ai i?","th": "วันนี้อยากทำอะไร","zh": "今天想做什么？","vi": "Hôm nay bạn muốn làm gì?","id": "Mau bikin apa hari ini?","ms": "Mahu buat apa hari ini?"},"f1.lbl": {"my": "အသားအရေပြင်မယ်","en": "Retouch the skin","shn": "မႄးၼႃႈတႃ","kac": "Myi man tsawm shatai","th": "แต่งผิวหน้า","zh": "精修肤质","vi": "Chỉnh sửa da","id": "Perhalus kulit","ms": "Perhalus kulit"},"f1.sub": {"my": "RETOUCH","en": "RETOUCH","shn": "RETOUCH","kac": "RETOUCH","th": "RETOUCH","zh": "RETOUCH","vi": "RETOUCH","id": "RETOUCH","ms": "RETOUCH"},"f2.lbl": {"my": "နောက်ခံ·ဝတ်စုံပြောင်းမယ်","en": "Change scene & outfit","shn": "လႅၵ်ႈလင်ႁၢင်ႈ·သိူဝ်ႈၶူဝ်း","kac": "Hpang shara hte palawng galai","th": "เปลี่ยนฉาก·ชุด","zh": "换背景·换服装","vi": "Đổi cảnh · trang phục","id": "Ganti latar & busana","ms": "Tukar latar & busana"},"f2.sub": {"my": "CHANGE SCENE","en": "CHANGE SCENE","shn": "CHANGE SCENE","kac": "CHANGE SCENE","th": "CHANGE SCENE","zh": "CHANGE SCENE","vi": "CHANGE SCENE","id": "CHANGE SCENE","ms": "CHANGE SCENE"},"f3.lbl": {"my": "စကားနဲ့ပြင်မယ်","en": "Edit by describing","shn": "မႄးလူၺ်ႈၵႂၢမ်း","kac": "Ga hte galai ai","th": "แก้ด้วยคำบอก","zh": "用文字修图","vi": "Sửa bằng lời","id": "Edit lewat kalimat","ms": "Edit dengan ayat"},"f3.sub": {"my": "DESCRIBE AN EDIT","en": "DESCRIBE AN EDIT","shn": "DESCRIBE AN EDIT","kac": "DESCRIBE AN EDIT","th": "DESCRIBE AN EDIT","zh": "DESCRIBE AN EDIT","vi": "DESCRIBE AN EDIT","id": "DESCRIBE AN EDIT","ms": "DESCRIBE AN EDIT"},"f4.lbl": {"my": "ဗီဒီယို · Text→Image","en": "Video · Text→Image","shn": "ဝီႇတီႇဢူဝ် · Text→Image","kac": "Video · Text→Image","th": "วิดีโอ · Text→Image","zh": "视频 · Text→Image","vi": "Video · Text→Image","id": "Video · Text→Image","ms": "Video · Text→Image"},"f4.sub": {"my": "MEDIA LAB","en": "MEDIA LAB","shn": "MEDIA LAB","kac": "MEDIA LAB","th": "MEDIA LAB","zh": "MEDIA LAB","vi": "MEDIA LAB","id": "MEDIA LAB","ms": "MEDIA LAB"},"duo1.li1": {"my": "ဖုန်း/browser မှာတင် — install မလို၊ အခမဲ့","en": "Runs in any phone browser — no install, free","shn": "ၼႂ်းၾူင်း/browser ၵူၺ်း — ဢမ်ႇလူဝ်ႇ install၊ ဢမ်ႇသဵင်ႈငိုၼ်း","kac": "Phone/browser hta sha — install n ra, manu n ra ai","th": "ใช้ในเบราว์เซอร์มือถือได้เลย — ไม่ต้องติดตั้ง ฟรี","zh": "手机浏览器直接用 — 免安装、免费","vi": "Chạy ngay trên trình duyệt điện thoại — không cài đặt, miễn phí","id": "Jalan di browser ponsel — tanpa instal, gratis","ms": "Berjalan dalam pelayar telefon — tanpa pemasangan, percuma"},"duo1.li2": {"my": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","en": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","shn": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","kac": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","th": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","zh": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","vi": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","id": "One-Tap 123 · Visual Library 366 · Smart Workflow 116","ms": "One-Tap 123 · Visual Library 366 · Smart Workflow 116"},"duo1.li3": {"my": "Video · Text→Image · Meitu 79 · Evoto Pro 79","en": "Video · Text→Image · Meitu 79 · Evoto Pro 79","shn": "Video · Text→Image · Meitu 79 · Evoto Pro 79","kac": "Video · Text→Image · Meitu 79 · Evoto Pro 79","th": "Video · Text→Image · Meitu 79 · Evoto Pro 79","zh": "Video · Text→Image · Meitu 79 · Evoto Pro 79","vi": "Video · Text→Image · Meitu 79 · Evoto Pro 79","id": "Video · Text→Image · Meitu 79 · Evoto Pro 79","ms": "Video · Text→Image · Meitu 79 · Evoto Pro 79"},"duo1.li4": {"my": "ဘာသာစကား ၉ မျိုး — မြန်မာ အရင်","en": "9 languages — Burmese first","shn": "ၽႃႇသႃႇၵႂၢမ်း ၉ ဢၼ် — မၢၼ်ႈ ဢွၼ်တၢင်း","kac": "Ga 9 hku — Myen ga shawng","th": "9 ภาษา — ภาษาพม่ามาก่อน","zh": "9 种语言 — 缅甸语优先","vi": "9 ngôn ngữ — tiếng Miến trước","id": "9 bahasa — Burma lebih dulu","ms": "9 bahasa — Burma didahulukan"},"duo1.cta": {"my": "Web Studio ဖွင့်မယ်","en": "Open Web Studio","shn": "ပိုတ်ႇ Web Studio","kac": "Web Studio hpaw u","th": "เปิด Web Studio","zh": "打开 Web Studio","vi": "Mở Web Studio","id": "Buka Web Studio","ms": "Buka Web Studio"},"duo2.li1": {"my": "Layer အပြည့် — mask + group နဲ့ ပြန်လာမယ်","en": "Full layers — results come back as mask + group","shn": "Layer တဵမ်တဵမ် — မႃးပႃး mask + group","kac": "Layer hkum tsup — mask + group hte bai wa ai","th": "เลเยอร์ครบ — ผลลัพธ์กลับมาเป็น mask + group","zh": "完整图层 — 结果带 mask + group 返回","vi": "Đầy đủ layer — kết quả trả về kèm mask + group","id": "Layer lengkap — hasil kembali dengan mask + group","ms": "Layer penuh — hasil kembali dengan mask + group"},"duo2.li2": {"my": "Smart Workflow ၉ ခု · Batch လုပ်လို့ရ","en": "9 Smart Workflows · batch capable","shn": "Smart Workflow ၉ ဢၼ် · ႁဵတ်း Batch လႆႈ","kac": "Smart Workflow 9 hku · Batch galaw lu ai","th": "Smart Workflow 9 ชุด · ทำเป็น batch ได้","zh": "9 套 Smart Workflow · 支持批量","vi": "9 Smart Workflow · chạy batch được","id": "9 Smart Workflow · bisa batch","ms": "9 Smart Workflow · boleh batch"},"duo2.li3": {"my": "မူရင်းပုံ ဘယ်တော့မှ မပျက်ဘူး (non-destructive)","en": "The original is never damaged (non-destructive)","shn": "ႁၢင်ႈပိုၼ်ႉထၢၼ် ဢမ်ႇလူႉသုမ်းသေပွၵ်ႈ (non-destructive)","kac": "Sumla nnan gaw galoi mung n hten (non-destructive)","th": "ไฟล์ต้นฉบับไม่เสียหาย (non-destructive)","zh": "原图永不被破坏（non-destructive）","vi": "Ảnh gốc không bao giờ bị phá (non-destructive)","id": "Foto asli tidak pernah rusak (non-destructive)","ms": "Foto asal tidak pernah rosak (non-destructive)"},"duo2.li4": {"my": "Automated test 1,064 ခု အစိမ်းရောင်","en": "1,064 automated tests, all green","shn": "Automated test 1,064 ဢၼ် ၶဵဝ်တင်းသဵင်ႈ","kac": "Automated test 1,064 yawng tsit","th": "ทดสอบอัตโนมัติ 1,064 รายการ ผ่านทั้งหมด","zh": "1,064 项自动化测试全绿","vi": "1,064 kiểm thử tự động đều xanh","id": "1,064 tes otomatis semuanya hijau","ms": "1,064 ujian automatik semuanya hijau"},"duo2.cta": {"my": "Panel အကြောင်း ကြည့်မယ်","en": "See the Panel","shn": "တူၺ်း Panel","kac": "Panel a lam yu u","th": "ดูรายละเอียด Panel","zh": "查看 Panel","vi": "Xem Panel","id": "Lihat Panel","ms": "Lihat Panel"},"s3.kick": {"my": "REAL RESULTS · REAL WORKFLOWS","en": "REAL RESULTS · REAL WORKFLOWS","shn": "ၽွၼ်းလႆႈတႄႉ · Workflow တႄႉ","kac": "TENG AI AKYU · TENG AI WORKFLOW","th": "ผลงานจริง · เวิร์กโฟลว์จริง","zh": "真实成果 · 真实流程","vi": "KẾT QUẢ THẬT · QUY TRÌNH THẬT","id": "HASIL NYATA · ALUR KERJA NYATA","ms": "HASIL SEBENAR · ALIRAN KERJA SEBENAR"},"s3.h2": {"my": "မပြောင်းတာက မျက်နှာ — ပြောင်းတာက အားလုံး","en": "What stays is the face — what changes is everything else","shn": "ဢၼ်ဢမ်ႇလႅၵ်ႈၼၼ်ႉ ပဵၼ်ၼႃႈတႃ — ဢၼ်လႅၵ်ႈၼၼ်ႉ ပဵၼ်တင်းသဵင်ႈ","kac": "N galai ai gaw myi man — galai ai gaw ngam ai yawng","th": "สิ่งที่คงเดิมคือใบหน้า — สิ่งที่เปลี่ยนคือทุกอย่างที่เหลือ","zh": "不变的是面容 — 改变的是其余一切","vi": "Cái giữ nguyên là gương mặt — cái thay đổi là tất cả phần còn lại","id": "Yang tetap adalah wajah — yang berubah adalah selebihnya","ms": "Yang kekal ialah wajah — yang berubah ialah selebihnya"},"s3.sub": {"my": "အောက်ကပုံတွေအားလုံးက app ထဲက Smart Workflow တွေရဲ့ တကယ့် BEFORE→AFTER card တွေပါ — နှိပ်ပြီး အကြီးကြည့်ပါ။","en": "Every image below is a real BEFORE→AFTER card from the Smart Workflows inside the app — tap to view it large.","shn": "ႁၢင်ႈတင်းသဵင်ႈတီႈတႂ်ႈၼႆႉ ပဵၼ် BEFORE→AFTER card တႄႉတႄႉ ၶွင် Smart Workflow ၼႂ်း app — ၼဵၵ်းတူၺ်းလူင်လူင်လႆႈ။","kac": "Npu na sumla ni yawng gaw app kata na Smart Workflow ni a teng ai BEFORE→AFTER card ni re — kaba ai hku yu na matu dip u.","th": "ภาพทั้งหมดด้านล่างคือการ์ด BEFORE→AFTER จริงจาก Smart Workflow ในแอป — แตะเพื่อดูขนาดใหญ่","zh": "下面每一张都是 app 内 Smart Workflow 的真实 BEFORE→AFTER 卡片 — 点击可看大图。","vi": "Mọi ảnh bên dưới đều là thẻ BEFORE→AFTER thật từ Smart Workflow trong ứng dụng — chạm để xem lớn.","id": "Semua gambar di bawah adalah kartu BEFORE→AFTER asli dari Smart Workflow di dalam app — ketuk untuk memperbesar.","ms": "Semua imej di bawah ialah kad BEFORE→AFTER sebenar daripada Smart Workflow dalam app — ketik untuk lihat besar."},"chip.1": {"my": "Nano Banana","en": "Nano Banana","shn": "Nano Banana","kac": "Nano Banana","th": "Nano Banana","zh": "Nano Banana","vi": "Nano Banana","id": "Nano Banana","ms": "Nano Banana"},"chip.2": {"my": "GPT Image","en": "GPT Image","shn": "GPT Image","kac": "GPT Image","th": "GPT Image","zh": "GPT Image","vi": "GPT Image","id": "GPT Image","ms": "GPT Image"},"chip.3": {"my": "RunningHub Enterprise","en": "RunningHub Enterprise","shn": "RunningHub Enterprise","kac": "RunningHub Enterprise","th": "RunningHub Enterprise","zh": "RunningHub Enterprise","vi": "RunningHub Enterprise","id": "RunningHub Enterprise","ms": "RunningHub Enterprise"},"chip.4": {"my": "IDENTITY LOCK","en": "IDENTITY LOCK","shn": "IDENTITY LOCK","kac": "IDENTITY LOCK","th": "IDENTITY LOCK","zh": "IDENTITY LOCK","vi": "IDENTITY LOCK","id": "IDENTITY LOCK","ms": "IDENTITY LOCK"},"s3.cap": {"my": "ပုံများအားလုံး — HNK workflow တွေနဲ့ တကယ်ထုတ်ထားတဲ့ audited card တွေ (8-pass verification)။ Stock/mockup မဟုတ်ပါ။","en": "Every image is an audited card genuinely produced with HNK workflows (8-pass verification). Not stock, not mockups.","shn": "ႁၢင်ႈတင်းသဵင်ႈ — ဢွၵ်ႇမႃးတႄႉတႄႉလူၺ်ႈ HNK workflow၊ ပဵၼ် audited card (8-pass verification)။ ဢမ်ႇၸႂ်ႈ Stock/mockup။","kac": "Sumla yawng gaw HNK workflow ni hte teng sha shapraw da ai audited card ni re (8-pass verification). Stock/mockup n re.","th": "ภาพทั้งหมดเป็นการ์ดที่ผ่านการตรวจสอบ ผลิตจริงด้วยเวิร์กโฟลว์ HNK (ตรวจ 8 รอบ) ไม่ใช่ภาพสต็อกหรือ mockup","zh": "所有图片均为 HNK workflow 真实产出并经审核的卡片（8-pass verification），非素材图或 mockup。","vi": "Tất cả ảnh đều là thẻ đã kiểm duyệt, được tạo thật bằng workflow HNK (8-pass verification). Không phải ảnh stock hay mockup.","id": "Semua gambar adalah kartu teraudit yang benar-benar dibuat dengan workflow HNK (8-pass verification). Bukan stok atau mockup.","ms": "Semua imej ialah kad teraudit yang benar-benar dihasilkan dengan workflow HNK (8-pass verification). Bukan stok atau mockup."},"s4.kick": {"my": "WEB STUDIO v4.28.0","en": "WEB STUDIO v4.28.0","shn": "WEB STUDIO v4.28.0","kac": "WEB STUDIO v4.28.0","th": "WEB STUDIO v4.28.0","zh": "WEB STUDIO v4.28.0","vi": "WEB STUDIO v4.28.0","id": "WEB STUDIO v4.28.0","ms": "WEB STUDIO v4.28.0"},"s4.h2": {"my": "Browser ထဲမှာတင် — studio တစ်ခုလုံး","en": "A whole studio, right inside the browser","shn": "ၼႂ်း Browser ၵူၺ်း — ႁွင်ႈၵၢၼ်တင်းလုမ်ႈ","kac": "Browser kata sha — studio hkum tsup langai","th": "ทั้งสตูดิโออยู่ในเบราว์เซอร์","zh": "整个工作室，就在浏览器里","vi": "Cả một studio, ngay trong trình duyệt","id": "Satu studio penuh, langsung di browser","ms": "Satu studio penuh, terus dalam pelayar"},"aria.prev": {"my": "နောက်သို့","en": "Previous","shn": "ထွႆၶိုၼ်း","kac": "Nhtang de","th": "ก่อนหน้า","zh": "上一个","vi": "Trước","id": "Sebelumnya","ms": "Sebelumnya"},"aria.next": {"my": "ရှေ့သို့","en": "Next","shn": "ၵႂႃႇၼႃႈ","kac": "Shawng de","th": "ถัดไป","zh": "下一个","vi": "Tiếp","id": "Berikutnya","ms": "Seterusnya"},"slide1.t": {"my": "Home","en": "Home","shn": "Home","kac": "Home","th": "Home","zh": "Home","vi": "Home","id": "Home","ms": "Home"},"slide1.d": {"my": "လုပ်ချင်တာ လေးခုထဲက တစ်ချက်နှိပ်ရွေး","en": "Pick one of four things with a single tap","shn": "ၼဵၵ်းလိူၵ်ႈ ဢၼ်ၶႂ်ႈႁဵတ်း ၼႂ်းသီႇဢၼ်","kac": "Mali kaw na langai hpe dip la u","th": "แตะเลือกหนึ่งในสี่อย่างที่อยากทำ","zh": "四件事，一点即选","vi": "Chạm một lần để chọn một trong bốn việc","id": "Satu ketukan, pilih satu dari empat","ms": "Satu ketikan, pilih satu daripada empat"},"slide2.t": {"my": "Retouch Pro","en": "Retouch Pro","shn": "Retouch Pro","kac": "Retouch Pro","th": "Retouch Pro","zh": "Retouch Pro","vi": "Retouch Pro","id": "Retouch Pro","ms": "Retouch Pro"},"slide2.d": {"my": "V2 Retouch — ဓာတ်ပုံတင်၊ တစ်ချက်နှိပ်၊ ပြီး","en": "V2 Retouch — upload, one tap, done","shn": "V2 Retouch — တၢင်ႇႁၢင်ႈ၊ ၼဵၵ်းၼိုင်ႈၵမ်း၊ ယဝ်ႉ","kac": "V2 Retouch — sumla bang, langai mi dip, ngut sai","th": "V2 Retouch — อัปโหลด แตะครั้งเดียว เสร็จ","zh": "V2 Retouch — 上传、一点、完成","vi": "V2 Retouch — tải ảnh, một chạm, xong","id": "V2 Retouch — unggah, satu ketuk, selesai","ms": "V2 Retouch — muat naik, satu ketikan, siap"},"slide3.t": {"my": "Library","en": "Library","shn": "Library","kac": "Library","th": "Library","zh": "Library","vi": "Library","id": "Library","ms": "Library"},"slide3.d": {"my": "Look ၃၆၆ ခု — ကြိုက်တာရွေး၊ ကိုယ့်ပုံနဲ့ တန်းသုံး","en": "366 looks — pick one and apply it to your own photo","shn": "Look 366 ဢၼ် — လိူၵ်ႈဢၼ်ႁၵ်ႉ၊ ၸႂ်ႉတိုဝ်းၵမ်းလဵဝ်","kac": "Look 366 hku — ra ai hpe lata la nna na a sumla hta jat u","th": "366 ลุค — เลือกที่ชอบ แล้วใช้กับภาพของคุณ","zh": "366 种风格 — 选中即可用在自己的照片上","vi": "366 look — chọn kiểu bạn thích rồi áp lên ảnh của bạn","id": "366 look — pilih yang disuka, langsung pakai di fotomu","ms": "366 look — pilih yang disuka, terus guna pada foto anda"},"slide4.t": {"my": "Freeform","en": "Freeform","shn": "Freeform","kac": "Freeform","th": "Freeform","zh": "Freeform","vi": "Freeform","id": "Freeform","ms": "Freeform"},"slide4.d": {"my": "ပြင်ချင်တာ စကားနဲ့ရေး — AI က လုပ်ပေးမယ်","en": "Write what you want changed — the AI does it","shn": "တႅမ်ႈဝႆႉ ဢၼ်ၶႂ်ႈမႄး — AI ႁဵတ်းပၼ်","kac": "Galai mayu ai lam hpe ka dat u — AI galaw ya na","th": "พิมพ์สิ่งที่อยากแก้ — AI จัดการให้","zh": "把想改的写出来 — AI 帮你完成","vi": "Viết ra điều bạn muốn sửa — AI sẽ làm","id": "Tulis apa yang ingin diubah — AI yang mengerjakan","ms": "Tulis apa yang ingin diubah — AI yang buat"},"slide5.t": {"my": "Studio","en": "Studio","shn": "Studio","kac": "Studio","th": "Studio","zh": "Studio","vi": "Studio","id": "Studio","ms": "Studio"},"slide5.d": {"my": "Meitu ၇၉ · Evoto ၇၉ — slider နဲ့ live preview","en": "Meitu 79 · Evoto 79 — sliders with live preview","shn": "Meitu 79 · Evoto 79 — slider လႄႈ live preview","kac": "Meitu 79 · Evoto 79 — slider hte live preview","th": "Meitu 79 · Evoto 79 — สไลเดอร์พร้อมพรีวิวสด","zh": "Meitu 79 · Evoto 79 — 滑杆实时预览","vi": "Meitu 79 · Evoto 79 — thanh trượt xem trước trực tiếp","id": "Meitu 79 · Evoto 79 — slider dengan pratinjau langsung","ms": "Meitu 79 · Evoto 79 — slider dengan pratonton langsung"},"pwa.label": {"my": "PWA:","en": "PWA:","shn": "PWA:","kac": "PWA:","th": "PWA:","zh": "PWA:","vi": "PWA:","id": "PWA:","ms": "PWA:"},"pwa.text": {"my": "Home screen ထည့်ထားရင် app လိုပဲ သုံးလို့ရတယ် — offline ဖွင့်လို့ရ၊ ကိုယ့် gallery ကိုယ့်ဖုန်းထဲမှာပဲ သိမ်းတယ်။","en": "Add it to the home screen and it works like a native app — it opens offline, and your gallery stays on your own phone.","shn": "သႂ်ႇဝႆႉတီႈ Home screen သေ ၸႂ်ႉလႆႈမိူၼ် app — ပိုတ်ႇလႆႈ offline၊ gallery ၸဝ်ႈၵဝ်ႇ သိမ်းဝႆႉၼႂ်းၾူင်းၸဝ်ႈၵဝ်ႇၵူၺ်း။","kac": "Home screen hta bang da yang app zawn sha lang lu ai — offline hpaw lu ai, na a gallery gaw na a phone kata sha rawng ai.","th": "เพิ่มไว้ที่หน้าจอหลักแล้วใช้ได้เหมือนแอปจริง — เปิดออฟไลน์ได้ และแกลเลอรีของคุณเก็บอยู่ในเครื่องเท่านั้น","zh": "添加到主屏幕即可像原生 app 一样使用 — 可离线打开，图库只保存在你自己的手机里。","vi": "Thêm vào màn hình chính là dùng như một app thật — mở được offline, và thư viện ảnh chỉ nằm trong máy bạn.","id": "Tambahkan ke layar utama, pakainya seperti app asli — bisa dibuka offline, dan galerimu tersimpan di ponsel sendiri.","ms": "Tambah ke skrin utama dan gunakan seperti app sebenar — boleh buka luar talian, dan galeri anda tersimpan dalam telefon anda sahaja."},"s4.cta": {"my": "Web Studio စမ်းမယ် — အခမဲ့","en": "Try Web Studio — free","shn": "လၢမ်းတူၺ်း Web Studio — ဢမ်ႇသဵင်ႈငိုၼ်း","kac": "Web Studio chyam yu u — manu n ra ai","th": "ลองใช้ Web Studio — ฟรี","zh": "试用 Web Studio — 免费","vi": "Dùng thử Web Studio — miễn phí","id": "Coba Web Studio — gratis","ms": "Cuba Web Studio — percuma"},"promo.a": {"my": "Photoshop ထဲမှာလည်း","en": "Inside Photoshop too","shn": "ၼႂ်း Photoshop ၵေႃႈ","kac": "Photoshop kata mung","th": "ใน Photoshop ก็เช่นกัน","zh": "在 Photoshop 里同样","vi": "Ngay trong Photoshop","id": "Di dalam Photoshop juga","ms": "Dalam Photoshop juga"},"promo.b": {"my": "Layer + Mask နဲ့ ပြန်လာမယ်","en": "It comes back as Layer + Mask","shn": "မႃးပႃး Layer + Mask","kac": "Layer + Mask hte bai wa ai","th": "ได้กลับมาเป็น Layer + Mask","zh": "结果带 Layer + Mask 返回","vi": "Trả về kèm Layer + Mask","id": "Kembali dengan Layer + Mask","ms": "Kembali dengan Layer + Mask"},"promo.cta": {"my": "Panel ကြည့်မယ်","en": "View the Panel","shn": "တူၺ်း Panel","kac": "Panel yu u","th": "ดู Panel","zh": "查看 Panel","vi": "Xem Panel","id": "Lihat Panel","ms": "Lihat Panel"},"s5.kick": {"my": "PHOTOSHOP AI PANEL v6.9.0","en": "PHOTOSHOP AI PANEL v6.9.0","shn": "PHOTOSHOP AI PANEL v6.9.0","kac": "PHOTOSHOP AI PANEL v6.9.0","th": "PHOTOSHOP AI PANEL v6.9.0","zh": "PHOTOSHOP AI PANEL v6.9.0","vi": "PHOTOSHOP AI PANEL v6.9.0","id": "PHOTOSHOP AI PANEL v6.9.0","ms": "PHOTOSHOP AI PANEL v6.9.0"},"s5.h2": {"my": "Layer + Mask နဲ့ ပြန်လာမယ် — မူရင်းပုံ မပျက်ဘူး","en": "Comes back as Layer + Mask — the original stays intact","shn": "မႃးပႃး Layer + Mask — ႁၢင်ႈပိုၼ်ႉထၢၼ် ဢမ်ႇလူႉ","kac": "Layer + Mask hte bai wa ai — sumla nnan gaw n hten","th": "กลับมาเป็น Layer + Mask — ต้นฉบับไม่เสียหาย","zh": "带 Layer + Mask 返回 — 原图毫发无损","vi": "Trả về kèm Layer + Mask — ảnh gốc còn nguyên","id": "Kembali sebagai Layer + Mask — file asli tetap utuh","ms": "Kembali sebagai Layer + Mask — fail asal kekal utuh"},"s5.sub": {"my": "AI result တိုင်း masked layer group အဖြစ် ရောက်လာတယ် — ကြိုက်သလို ပြန်ဖျက်၊ ပြန်ညှိ၊ ပြန်ရောနိုင်တယ်။ Photoshop 24.2+ (Windows/macOS)။","en": "Every AI result arrives as a masked layer group — erase it, re-tune it or re-blend it however you like. Photoshop 24.2+ (Windows/macOS).","shn": "AI result ၵူႈဢၼ် မႃးပဵၼ် masked layer group — မွတ်ႇလႆႈ၊ မႄးလႆႈ၊ ႁဵတ်းၶိုၼ်းလႆႈ ၸွမ်းၸႂ်။ Photoshop 24.2+ (Windows/macOS)။","kac": "AI a akyu yawng gaw masked layer group hku du wa ai — ra ai hku bai sut, bai jaw, bai gayau lu ai. Photoshop 24.2+ (Windows/macOS).","th": "ผลลัพธ์ AI ทุกชิ้นมาเป็น masked layer group — ลบ ปรับ หรือผสมใหม่ได้ตามใจ Photoshop 24.2+ (Windows/macOS)","zh": "每个 AI 结果都以 masked layer group 形式返回 — 随时擦除、微调、重新混合。Photoshop 24.2+（Windows/macOS）。","vi": "Mọi kết quả AI đều về dưới dạng masked layer group — xóa, tinh chỉnh hay hòa trộn lại tùy ý. Photoshop 24.2+ (Windows/macOS).","id": "Setiap hasil AI datang sebagai masked layer group — hapus, atur ulang, atau blend lagi sesuka hati. Photoshop 24.2+ (Windows/macOS).","ms": "Setiap hasil AI tiba sebagai masked layer group — padam, laras semula atau adun semula sesuka hati. Photoshop 24.2+ (Windows/macOS)."},"s5.wfTitle": {"my": "Smart Workflow ၉ ခု","en": "9 Smart Workflows","shn": "Smart Workflow ၉ ဢၼ်","kac": "Smart Workflow 9 hku","th": "Smart Workflow 9 ชุด","zh": "9 套 Smart Workflow","vi": "9 Smart Workflow","id": "9 Smart Workflow","ms": "9 Smart Workflow"},"wf.1": {"my": "Master BG FG Replace","en": "Master BG FG Replace","shn": "Master BG FG Replace","kac": "Master BG FG Replace","th": "Master BG FG Replace","zh": "Master BG FG Replace","vi": "Master BG FG Replace","id": "Master BG FG Replace","ms": "Master BG FG Replace"},"wf.2": {"my": "BG Replace","en": "BG Replace","shn": "BG Replace","kac": "BG Replace","th": "BG Replace","zh": "BG Replace","vi": "BG Replace","id": "BG Replace","ms": "BG Replace"},"wf.3": {"my": "Reference Transfer","en": "Reference Transfer","shn": "Reference Transfer","kac": "Reference Transfer","th": "Reference Transfer","zh": "Reference Transfer","vi": "Reference Transfer","id": "Reference Transfer","ms": "Reference Transfer"},"wf.4": {"my": "Subject / Face","en": "Subject / Face","shn": "Subject / Face","kac": "Subject / Face","th": "Subject / Face","zh": "Subject / Face","vi": "Subject / Face","id": "Subject / Face","ms": "Subject / Face"},"wf.5": {"my": "AI Retouch","en": "AI Retouch","shn": "AI Retouch","kac": "AI Retouch","th": "AI Retouch","zh": "AI Retouch","vi": "AI Retouch","id": "AI Retouch","ms": "AI Retouch"},"wf.6": {"my": "AI Upscale","en": "AI Upscale","shn": "AI Upscale","kac": "AI Upscale","th": "AI Upscale","zh": "AI Upscale","vi": "AI Upscale","id": "AI Upscale","ms": "AI Upscale"},"wf.7": {"my": "Object Edit","en": "Object Edit","shn": "Object Edit","kac": "Object Edit","th": "Object Edit","zh": "Object Edit","vi": "Object Edit","id": "Object Edit","ms": "Object Edit"},"wf.8": {"my": "Water Edit","en": "Water Edit","shn": "Water Edit","kac": "Water Edit","th": "Water Edit","zh": "Water Edit","vi": "Water Edit","id": "Water Edit","ms": "Water Edit"},"wf.9": {"my": "Text / Logo","en": "Text / Logo","shn": "Text / Logo","kac": "Text / Logo","th": "Text / Logo","zh": "Text / Logo","vi": "Text / Logo","id": "Text / Logo","ms": "Text / Logo"},"s5.instTitle": {"my": "Install — ၂ မိနစ်","en": "Install — 2 minutes","shn": "Install — ၂ မိၼိတ်ႉ","kac": "Install — minit 2","th": "ติดตั้ง — 2 นาที","zh": "安装 — 2 分钟","vi": "Cài đặt — 2 phút","id": "Instal — 2 menit","ms": "Pemasangan — 2 minit"},"step.1": {"my": "<b>ccx ဖိုင် download</b> — အောက်က ခလုတ်နဲ့ ရယူပါ","en": "<b>Download the ccx file</b> — grab it with the button below","shn": "<b>download ၾၢႆႇ ccx</b> — ဢဝ်တီႈပုမ်ႇတၢင်းတႂ်ႈ","kac": "<b>ccx file hpe download</b> — npu na button hte la u","th": "<b>ดาวน์โหลดไฟล์ ccx</b> — กดปุ่มด้านล่าง","zh": "<b>下载 ccx 文件</b> — 用下方按钮获取","vi": "<b>Tải tệp ccx</b> — lấy bằng nút bên dưới","id": "<b>Unduh berkas ccx</b> — ambil lewat tombol di bawah","ms": "<b>Muat turun fail ccx</b> — ambil dengan butang di bawah"},"step.2": {"my": "<b>Double-click</b> — Creative Cloud က panel ကို အလိုအလျောက် ထည့်ပေးမယ်","en": "<b>Double-click</b> — Creative Cloud installs the panel automatically","shn": "<b>Double-click</b> — Creative Cloud သႂ်ႇပၼ် panel ႁင်းၵူၺ်း","kac": "<b>Double-click</b> — Creative Cloud gaw panel hpe lawan sha bang ya na","th": "<b>ดับเบิลคลิก</b> — Creative Cloud จะติดตั้ง panel ให้อัตโนมัติ","zh": "<b>双击</b> — Creative Cloud 会自动装好面板","vi": "<b>Nhấp đúp</b> — Creative Cloud tự cài panel","id": "<b>Klik dua kali</b> — Creative Cloud memasang panel otomatis","ms": "<b>Klik dua kali</b> — Creative Cloud memasang panel secara automatik"},"step.3": {"my": "<b>Photoshop ပြန်ဖွင့်ပါ</b> — Plugins ▸ HNK Photoshop Ai Panel","en": "<b>Restart Photoshop</b> — Plugins ▸ HNK Photoshop Ai Panel","shn": "<b>ပိုတ်ႇ Photoshop ၶိုၼ်း</b> — Plugins ▸ HNK Photoshop Ai Panel","kac": "<b>Photoshop bai hpaw u</b> — Plugins ▸ HNK Photoshop Ai Panel","th": "<b>เปิด Photoshop ใหม่</b> — Plugins ▸ HNK Photoshop Ai Panel","zh": "<b>重启 Photoshop</b> — Plugins ▸ HNK Photoshop Ai Panel","vi": "<b>Mở lại Photoshop</b> — Plugins ▸ HNK Photoshop Ai Panel","id": "<b>Buka ulang Photoshop</b> — Plugins ▸ HNK Photoshop Ai Panel","ms": "<b>Buka semula Photoshop</b> — Plugins ▸ HNK Photoshop Ai Panel"},"step.4": {"my": "<b>API key တစ်ခါထည့်ပါ</b> — Setup tab မှာ (Gemini အခမဲ့ tier ရလို့ရတယ်)","en": "<b>Add your API key once</b> — in the Setup tab (the Gemini free tier is enough)","shn": "<b>သႂ်ႇ API key ပွၵ်ႈလဵဝ်</b> — တီႈ Setup tab (Gemini free tier ၸႂ်ႉလႆႈ)","kac": "<b>API key hpe langai mi bang u</b> — Setup tab hta (Gemini free tier lang lu ai)","th": "<b>ใส่ API key ครั้งเดียว</b> — ในแท็บ Setup (ใช้ Gemini free tier ได้)","zh": "<b>填一次 API key</b> — 在 Setup 标签页（Gemini 免费额度即可）","vi": "<b>Nhập API key một lần</b> — ở tab Setup (gói Gemini miễn phí là đủ)","id": "<b>Masukkan API key sekali</b> — di tab Setup (tier gratis Gemini sudah cukup)","ms": "<b>Masukkan API key sekali</b> — di tab Setup (tier percuma Gemini sudah cukup)"},"s5.dl": {"my": "Panel ccx v6.1.1 ရယူမယ် (27MB)","en": "Get Panel ccx v6.1.1 (27MB)","shn": "ဢဝ် Panel ccx v6.1.1 (27MB)","kac": "Panel ccx v6.1.1 la u (27MB)","th": "ดาวน์โหลด Panel ccx v6.1.1 (27MB)","zh": "获取 Panel ccx v6.1.1（27MB）","vi": "Tải Panel ccx v6.1.1 (27MB)","id": "Ambil Panel ccx v6.1.1 (27MB)","ms": "Dapatkan Panel ccx v6.1.1 (27MB)"},"s5.dlnote": {"my": "လက်ရှိ download build — v6.1.1 · Panel codebase — v6.9.0 (1,064 tests) · v6.9.0 ccx ကို နောက် release မှာ တင်ပေးမယ်။","en": "Current download build — v6.1.1 · Panel codebase — v6.9.0 (1,064 tests) · the v6.9.0 ccx ships in the next release.","shn": "download build ယၢမ်းလဵဝ် — v6.1.1 · Panel codebase — v6.9.0 (1,064 tests) · ccx v6.9.0 တေတၢင်ႇပၼ်ၼႂ်း release ထႅင်ႈဢၼ်ၼိုင်ႈ။","kac": "Ya na download build — v6.1.1 · Panel codebase — v6.9.0 (1,064 tests) · v6.9.0 ccx gaw hpang na release hta shapraw na.","th": "บิลด์ดาวน์โหลดปัจจุบัน — v6.1.1 · โค้ดเบสของ Panel — v6.9.0 (1,064 tests) · ccx v6.9.0 จะปล่อยในรุ่นถัดไป","zh": "当前下载版本 — v6.1.1 · Panel 代码库 — v6.9.0（1,064 tests）· v6.9.0 的 ccx 将随下个版本发布。","vi": "Bản tải hiện tại — v6.1.1 · Mã nguồn Panel — v6.9.0 (1,064 tests) · bản ccx v6.9.0 sẽ có ở lần phát hành tới.","id": "Build unduhan saat ini — v6.1.1 · Basis kode Panel — v6.9.0 (1,064 tests) · ccx v6.9.0 menyusul di rilis berikutnya.","ms": "Binaan muat turun semasa — v6.1.1 · Pangkalan kod Panel — v6.9.0 (1,064 tests) · ccx v6.9.0 akan menyusul pada keluaran seterusnya."},"s6.kick": {"my": "ENGINES · HONEST COSTS","en": "ENGINES · HONEST COSTS","shn": "ENGINE · ၵႃႈၸႂ်ႉတႄႉတႄႉ","kac": "ENGINE NI · TENG AI MANU","th": "เอนจิน · ต้นทุนตามจริง","zh": "引擎 · 真实成本","vi": "ENGINE · CHI PHÍ THẬT","id": "ENGINE · BIAYA APA ADANYA","ms": "ENGINE · KOS SEBENAR"},"s6.h2": {"my": "ဘယ် AI engine တွေ သုံးထားလဲ","en": "Which AI engines are under the hood","shn": "ၸႂ်ႉ AI engine ဢၼ်လႂ်ၽွင်ႈ","kac": "AI engine hpa ni lang da ai kun","th": "ใช้เอนจิน AI ตัวไหนบ้าง","zh": "用了哪些 AI 引擎","vi": "Dùng những engine AI nào","id": "Engine AI apa saja yang dipakai","ms": "Engine AI apakah yang digunakan"},"e1.tag": {"my": "FREE TIER ရှိ","en": "FREE TIER","shn": "မီး FREE TIER","kac": "FREE TIER LU AI","th": "มี FREE TIER","zh": "有免费额度","vi": "CÓ FREE TIER","id": "ADA FREE TIER","ms": "ADA FREE TIER"},"e1.desc": {"my": "စကားနဲ့ပြင်တာ၊ One-Tap workflow အများစုရဲ့ default engine — အခမဲ့ key နဲ့ စလို့ရတယ်။","en": "The default engine for describe-an-edit and most One-Tap workflows — you can start with a free key.","shn": "ပဵၼ် default engine တႃႇ မႄးလူၺ်ႈၵႂၢမ်း လႄႈ One-Tap workflow ၼမ်ၼမ် — တႄႇလႆႈလူၺ်ႈ key ဢမ်ႇသဵင်ႈငိုၼ်း။","kac": "Ga hte galai ai hte One-Tap workflow law malawng a default engine — manu n ra ai key hte hpang lu ai.","th": "เอนจินหลักของการแก้ด้วยคำบอกและ One-Tap workflow ส่วนใหญ่ — เริ่มด้วยคีย์ฟรีได้","zh": "文字修图与多数 One-Tap workflow 的默认引擎 — 用免费 key 即可上手。","vi": "Engine mặc định cho sửa-bằng-lời và hầu hết One-Tap workflow — bắt đầu bằng key miễn phí.","id": "Engine bawaan untuk edit-lewat-kalimat dan sebagian besar One-Tap workflow — bisa mulai dengan key gratis.","ms": "Engine lalai untuk edit-dengan-ayat dan kebanyakan One-Tap workflow — boleh mula dengan key percuma."},"e2.tag": {"my": "ENTERPRISE KEY","en": "ENTERPRISE KEY","shn": "ENTERPRISE KEY","kac": "ENTERPRISE KEY","th": "ENTERPRISE KEY","zh": "ENTERPRISE KEY","vi": "ENTERPRISE KEY","id": "ENTERPRISE KEY","ms": "ENTERPRISE KEY"},"e2.desc": {"my": "Smart Workflow · V2 Retouch · Video · Upscale — credit စနစ်၊ သုံးသလောက်ပဲ ကျတယ်။","en": "Smart Workflow · V2 Retouch · Video · Upscale — credit based; you pay only for what you use.","shn": "Smart Workflow · V2 Retouch · Video · Upscale — ပဵၼ်ပိူင် credit၊ ၸႂ်ႉၵႃႈႁိုဝ် သဵင်ႈၵႃႈၼၼ်ႉ။","kac": "Smart Workflow · V2 Retouch · Video · Upscale — credit hku re, lang ai daram sha manu jaw ra ai.","th": "Smart Workflow · V2 Retouch · Video · Upscale — ระบบเครดิต จ่ายเท่าที่ใช้จริง","zh": "Smart Workflow · V2 Retouch · Video · Upscale — 按 credit 计费，用多少付多少。","vi": "Smart Workflow · V2 Retouch · Video · Upscale — tính theo credit, dùng bao nhiêu trả bấy nhiêu.","id": "Smart Workflow · V2 Retouch · Video · Upscale — berbasis credit, bayar sesuai pemakaian.","ms": "Smart Workflow · V2 Retouch · Video · Upscale — berasaskan credit, bayar ikut penggunaan."},"e3.tag": {"my": "OPTIONAL","en": "OPTIONAL","shn": "လိူၵ်ႈလႆႈ","kac": "RA YANG SHA","th": "ไม่บังคับ","zh": "可选","vi": "TÙY CHỌN","id": "OPSIONAL","ms": "PILIHAN"},"e3.desc": {"my": "Alternative engine — ကိုယ့် OpenAI key ရှိရင် ချိတ်ပြီး သုံးလို့ရတယ်။","en": "An alternative engine — connect your own OpenAI key and use it.","shn": "engine ထႅင်ႈဢၼ်ၼိုင်ႈ — သင်မီး OpenAI key ၸဝ်ႈၵဝ်ႇ ၵွင်ႉသေၸႂ်ႉလႆႈ။","kac": "Kaga engine langai — nang a OpenAI key nga yang matut nna lang lu ai.","th": "เอนจินทางเลือก — ต่อ OpenAI key ของคุณเองแล้วใช้ได้เลย","zh": "备选引擎 — 有自己的 OpenAI key 就能接上使用。","vi": "Engine thay thế — có key OpenAI riêng là kết nối dùng được.","id": "Engine alternatif — sambungkan key OpenAI milikmu lalu pakai.","ms": "Engine alternatif — sambungkan key OpenAI anda sendiri dan guna."},"key.title": {"my": "Key ဘယ်လိုရမလဲ — ရိုးရိုးသားသား ရှင်းပြမယ်","en": "How to get a key — the honest explanation","shn": "တေလႆႈ key ႁိုဝ် — လၢတ်ႈၸိုဝ်ႈၸိုဝ်ႈၸႂ်ႈၸႂ်ႈ","kac": "Key gara hku la na — teng man ai hku tsun dan ga","th": "จะได้คีย์อย่างไร — อธิบายกันตรง ๆ","zh": "怎么拿到 key — 老实说明","vi": "Lấy key thế nào — nói thật","id": "Cara mendapatkan key — penjelasan jujur","ms": "Cara mendapatkan key — penjelasan jujur"},"key.body": {"my": "HNK က subscription မကောက်ပါ — AI engine တွေကို ကိုယ့် key နဲ့ တိုက်ရိုက်ချိတ်တာပါ။ <b>Gemini</b> key ကို aistudio.google.com/apikey မှာ အခမဲ့ရတယ် (နေ့စဉ် အခမဲ့ quota ပါ — စမ်းသုံးဖို့ လုံလောက်တယ်)။ <b>RunningHub</b> က credit စနစ် — ပုံတစ်ပုံကို ခန့်မှန်း US$0.01–0.05 လောက်၊ video ဆို ပိုကျတယ်; အကြမ်းဖျင်း — တစ်လ studio သုံး ပုံရာချီ ထုတ်ရင်တောင် ဒေါ်လာ အနည်းငယ်ပဲ ကျပါတယ်။ <b>OpenAI</b> က ပုံအလိုက် ကျသင့်တယ် — မထည့်လည်း app အပြည့် သုံးလို့ရတယ်။ Key တွေက ကိုယ့် browser/panel ထဲမှာပဲ သိမ်းတယ် — ဘယ် server ကိုမှ မပို့ပါ။","en": "HNK charges no subscription — you connect the AI engines directly with your own key. A <b>Gemini</b> key is free at aistudio.google.com/apikey (there is a daily free quota — plenty for trying it out). <b>RunningHub</b> is credit based — roughly US$0.01–0.05 per image, more for video; as a rough guide, a studio producing hundreds of images a month still spends only a few dollars. <b>OpenAI</b> bills per image — and the app is fully usable without it. Keys stay inside your own browser/panel — they are never sent to any server.","shn": "HNK ဢမ်ႇၵဵပ်း subscription — ၵွင်ႉ AI engine လူၺ်ႈ key ၸဝ်ႈၵဝ်ႇသိုဝ်ႈသိုဝ်ႈ။ key <b>Gemini</b> လႆႈလၢႆလၢႆတီႈ aistudio.google.com/apikey (မီး quota ဢမ်ႇသဵင်ႈငိုၼ်း ၵူႈဝၼ်း — ၵုမ်ႇထူၼ်ႈတႃႇလၢမ်းတူၺ်း)။ <b>RunningHub</b> ပဵၼ်ပိူင် credit — ႁၢင်ႈၼိုင်ႈမွၵ်ႈ US$0.01–0.05၊ video သမ်ႉၼမ်လိူဝ်; ဝူင်ႈဝိုင်းဝႃႈ — ႁွင်ႈၵၢၼ်ၼိုင်ႈလိူၼ်ဢွၵ်ႇႁၢင်ႈပၢၵ်ႇပၢႆၵေႃႈ သဵင်ႈတေႃႇလႃႇဢေႇဢေႇၵူၺ်း။ <b>OpenAI</b> သဵင်ႈၸွမ်းႁၢင်ႈ — ဢမ်ႇသႂ်ႇၵေႃႈ ၸႂ်ႉ app လႆႈတဵမ်တဵမ်။ key ၶဝ် သိမ်းဝႆႉၼႂ်း browser/panel ၸဝ်ႈၵဝ်ႇၵူၺ်း — ဢမ်ႇသူင်ႇၸူး server လႂ်။","kac": "HNK gaw subscription n la ai — AI engine ni hpe nang a key hte tik hkrak matut ai. <b>Gemini</b> key gaw aistudio.google.com/apikey hta manu n ra ai sha lu ai (shani shagu manu n ra ai quota nga ai — chyam yu na matu ram ai). <b>RunningHub</b> gaw credit hku re — sumla langai hta US$0.01–0.05 daram, video gaw grau law. Hkanhkyen na nga yang, studio langai shata mi hta sumla latsa jan shapraw tim dollar kachyi sha jaw ra ai. <b>OpenAI</b> gaw sumla hku manu la ai — n bang tim app hpe hkum tsup lang lu ai. Key ni gaw nang a browser/panel kata sha rawng ai — server gara de mung n sa ai.","th": "HNK ไม่เก็บค่าสมาชิกรายเดือน — คุณต่อเข้าเอนจิน AI ด้วยคีย์ของคุณเองโดยตรง คีย์ <b>Gemini</b> ขอฟรีได้ที่ aistudio.google.com/apikey (มีโควตาฟรีรายวัน — พอสำหรับทดลองใช้) <b>RunningHub</b> เป็นระบบเครดิต — ราวภาพละ US$0.01–0.05 วิดีโอจะสูงกว่า โดยประมาณแล้ว สตูดิโอที่ผลิตภาพหลักร้อยต่อเดือนก็ยังจ่ายเพียงไม่กี่ดอลลาร์ <b>OpenAI</b> คิดค่าใช้จ่ายตามจำนวนภาพ — ไม่ใส่ก็ใช้แอปได้เต็มรูปแบบ คีย์ทั้งหมดเก็บอยู่ในเบราว์เซอร์/พาเนลของคุณเท่านั้น — ไม่ถูกส่งไปยังเซิร์ฟเวอร์ใด ๆ","zh": "HNK 不收订阅费 — 你用自己的 key 直接连接各个 AI 引擎。<b>Gemini</b> key 可在 aistudio.google.com/apikey 免费申请（每日有免费额度 — 试用完全够）。<b>RunningHub</b> 按 credit 计费 — 每张图约 US$0.01–0.05，视频更高；粗略估算，一家影楼一个月产出数百张图，也只花几美元。<b>OpenAI</b> 按图计费 — 不填也能完整使用本 app。所有 key 只保存在你自己的浏览器/面板里 — 绝不会发送到任何服务器。","vi": "HNK không thu phí thuê bao — bạn nối thẳng tới các engine AI bằng key của chính mình. Key <b>Gemini</b> lấy miễn phí tại aistudio.google.com/apikey (có hạn mức miễn phí mỗi ngày — đủ để dùng thử). <b>RunningHub</b> tính theo credit — khoảng US$0.01–0.05 mỗi ảnh, video cao hơn; ước chừng, một studio làm hàng trăm ảnh mỗi tháng cũng chỉ tốn vài đô la. <b>OpenAI</b> tính theo ảnh — không nhập vẫn dùng đầy đủ ứng dụng. Mọi key chỉ nằm trong browser/panel của bạn — không gửi tới bất kỳ server nào.","id": "HNK tidak menarik biaya langganan — kamu menyambung langsung ke engine AI dengan key milikmu sendiri. Key <b>Gemini</b> gratis di aistudio.google.com/apikey (ada kuota gratis harian — cukup untuk mencoba). <b>RunningHub</b> berbasis credit — sekitar US$0.01–0.05 per gambar, video lebih tinggi; kasarnya, studio yang menghasilkan ratusan gambar sebulan pun hanya keluar beberapa dolar. <b>OpenAI</b> ditagih per gambar — tanpa itu pun app tetap bisa dipakai penuh. Semua key hanya tersimpan di browser/panel milikmu — tidak pernah dikirim ke server mana pun.","ms": "HNK tidak mengenakan yuran langganan — anda menyambung terus ke engine AI dengan key anda sendiri. Key <b>Gemini</b> percuma di aistudio.google.com/apikey (ada kuota percuma harian — cukup untuk mencuba). <b>RunningHub</b> berasaskan credit — kira-kira US$0.01–0.05 sekeping imej, video lebih tinggi; secara kasar, studio yang menghasilkan ratusan imej sebulan pun hanya berbelanja beberapa dolar. <b>OpenAI</b> dikenakan bayaran ikut imej — tanpanya pun app boleh digunakan sepenuhnya. Semua key tersimpan dalam pelayar/panel anda sahaja — tidak pernah dihantar ke mana-mana server."},"s7.kick": {"my": "FAQ","en": "FAQ","shn": "FAQ","kac": "FAQ","th": "FAQ","zh": "FAQ","vi": "FAQ","id": "FAQ","ms": "FAQ"},"s7.h2": {"my": "မေးလေ့ရှိတာတွေ","en": "Frequently asked","shn": "ဢၼ်ထၢမ်ၵၼ်ၼမ်","kac": "Chyoi chyoi san ai lam ni","th": "คำถามที่พบบ่อย","zh": "常见问题","vi": "Câu hỏi thường gặp","id": "Sering ditanyakan","ms": "Kerap ditanya"},"faq1.q": {"my": "ဖုန်းနဲ့ ရလား?","en": "Does it work on a phone?","shn": "ၸႂ်ႉၾူင်းလႆႈႁိုဝ်?","kac": "Phone hte lu galaw ai i?","th": "ใช้กับมือถือได้ไหม","zh": "手机能用吗？","vi": "Dùng trên điện thoại được không?","id": "Bisa dipakai di ponsel?","ms": "Boleh guna pada telefon?"},"faq1.a": {"my": "ရတယ် — Web Studio က ဖုန်း browser အတွက် အရင်ဆုံး ဒီဇိုင်းထုတ်ထားတာ။ Install မလို၊ အခမဲ့။ Home screen ထည့်ထားရင် app တစ်ခုလိုပဲ ဖွင့်လို့ရတယ်။ Photoshop Panel ကတော့ ကွန်ပျူတာ (Windows/macOS) အတွက်ပါ။","en": "Yes — Web Studio is designed phone-browser first. No install, free. Add it to the home screen and it opens just like an app. The Photoshop Panel is for the desktop (Windows/macOS).","shn": "လႆႈယူႇ — Web Studio ၼႆႉ ႁဵတ်းဢွၵ်ႇတႃႇ browser ၾူင်းဢွၼ်တၢင်းသုတ်း။ ဢမ်ႇလူဝ်ႇ install၊ ဢမ်ႇသဵင်ႈငိုၼ်း။ သႂ်ႇဝႆႉတီႈ Home screen သေ ပိုတ်ႇလႆႈမိူၼ် app။ Photoshop Panel သမ်ႉ ပဵၼ်တႃႇ ၶွမ်ႇပိဝ်ႇတႃႇ (Windows/macOS)။","kac": "Lu ai — Web Studio gaw phone browser hpe shawng lawm na hku galaw da ai. Install n ra, manu n ra ai. Home screen hta bang da yang app zawn sha hpaw lu ai. Photoshop Panel gaw computer (Windows/macOS) a matu re.","th": "ได้ — Web Studio ออกแบบมาเพื่อเบราว์เซอร์บนมือถือเป็นหลัก ไม่ต้องติดตั้ง ฟรี เพิ่มไว้ที่หน้าจอหลักก็เปิดได้เหมือนแอป ส่วน Photoshop Panel ใช้บนคอมพิวเตอร์ (Windows/macOS)","zh": "可以 — Web Studio 以手机浏览器优先设计，免安装、免费。添加到主屏幕就能像 app 一样打开。Photoshop Panel 则是给电脑用的（Windows/macOS）。","vi": "Được — Web Studio được thiết kế ưu tiên trình duyệt điện thoại. Không cài đặt, miễn phí. Thêm vào màn hình chính là mở như một app. Photoshop Panel thì dành cho máy tính (Windows/macOS).","id": "Bisa — Web Studio dirancang mengutamakan browser ponsel. Tanpa instal, gratis. Tambahkan ke layar utama, terbuka persis seperti app. Photoshop Panel untuk komputer (Windows/macOS).","ms": "Boleh — Web Studio direka mengutamakan pelayar telefon. Tanpa pemasangan, percuma. Tambah ke skrin utama, ia dibuka seperti app. Photoshop Panel pula untuk komputer (Windows/macOS)."},"faq2.q": {"my": "Photoshop ဗားရှင်း ဘယ်လောက်လိုလဲ?","en": "Which Photoshop version do I need?","shn": "လူဝ်ႇ Photoshop ဝေႃးသျိၼ်း ဢၼ်လႂ်?","kac": "Photoshop version gara ram ra ai kun?","th": "ต้องใช้ Photoshop เวอร์ชันไหน","zh": "需要哪个 Photoshop 版本？","vi": "Cần Photoshop phiên bản nào?","id": "Butuh Photoshop versi berapa?","ms": "Perlu Photoshop versi mana?"},"faq2.a": {"my": "Photoshop 24.2 (2023) နဲ့အထက် — UXP panel စနစ်ကို ထောက်ပံ့တဲ့ ဗားရှင်းတိုင်း ရတယ်။ Creative Cloud ကနေ ccx ဖိုင်ကို double-click တစ်ချက်နဲ့ ထည့်လို့ရတယ်။","en": "Photoshop 24.2 (2023) or newer — any version that supports UXP panels. Install the ccx file with a single double-click through Creative Cloud.","shn": "Photoshop 24.2 (2023) ၶိုၼ်ႈၼိူဝ် — ဝေႃးသျိၼ်းလႂ်ၵေႃႈ ဢၼ်ႁပ်ႉ UXP panel လႆႈ။ ၸႂ်ႉ Creative Cloud သေ double-click ၾၢႆႇ ccx ၵမ်းလဵဝ်ၵေႃႈ သႂ်ႇလႆႈယဝ်ႉ။","kac": "Photoshop 24.2 (2023) hte ntsa — UXP panel hpe hkam la lu ai version yawng byin ai. Creative Cloud hku nna ccx file hpe double-click langai mi hte bang lu ai.","th": "Photoshop 24.2 (2023) ขึ้นไป — เวอร์ชันใดก็ได้ที่รองรับ UXP panel ติดตั้งไฟล์ ccx ด้วยการดับเบิลคลิกผ่าน Creative Cloud","zh": "Photoshop 24.2（2023）及以上 — 任何支持 UXP panel 的版本都行。通过 Creative Cloud 双击 ccx 文件即可安装。","vi": "Photoshop 24.2 (2023) trở lên — bất kỳ phiên bản nào hỗ trợ UXP panel. Nhấp đúp tệp ccx qua Creative Cloud là cài xong.","id": "Photoshop 24.2 (2023) ke atas — versi apa pun yang mendukung UXP panel. Pasang berkas ccx cukup dengan klik dua kali lewat Creative Cloud.","ms": "Photoshop 24.2 (2023) ke atas — mana-mana versi yang menyokong UXP panel. Pasang fail ccx dengan klik dua kali melalui Creative Cloud."},"faq3.q": {"my": "API key ဘယ်ကရမလဲ? ပိုက်ဆံကုန်မလား?","en": "Where do I get an API key? Does it cost money?","shn": "API key ဢဝ်တီႈလႂ်? သဵင်ႈငိုၼ်းႁိုဝ်?","kac": "API key gara kaw la na? Manu jaw ra ai i?","th": "ขอ API key ได้จากไหน มีค่าใช้จ่ายไหม","zh": "API key 从哪里拿？要花钱吗？","vi": "Lấy API key ở đâu? Có tốn tiền không?","id": "Di mana ambil API key? Apakah berbayar?","ms": "Di mana hendak dapatkan API key? Berbayarkah?"},"faq3.a": {"my": "Gemini key ကို aistudio.google.com/apikey မှာ အခမဲ့ရတယ် — စမ်းသုံးဖို့ နေ့စဉ် အခမဲ့ quota လုံလောက်တယ်။ RunningHub နဲ့ OpenAI ကတော့ သုံးသလောက် ကျသင့်တဲ့ စနစ် — အသေးစိတ်ကို အပေါ်က “Engines” အပိုင်းမှာ ရှင်းပြထားတယ်။","en": "A Gemini key is free at aistudio.google.com/apikey — the daily free quota is plenty for trying it out. RunningHub and OpenAI are pay-as-you-go — the “Engines” section above explains the details.","shn": "key Gemini လႆႈလၢႆလၢႆတီႈ aistudio.google.com/apikey — quota ဢမ်ႇသဵင်ႈငိုၼ်း ၵူႈဝၼ်းၼၼ်ႉ ၵုမ်ႇထူၼ်ႈတႃႇလၢမ်းတူၺ်း။ RunningHub လႄႈ OpenAI သမ်ႉ ပဵၼ်ပိူင် ၸႂ်ႉၵႃႈႁိုဝ်သဵင်ႈၵႃႈၼၼ်ႉ — ႁူဝ်ယွႆႈမၼ်း ႁဝ်းလၢတ်ႈဝႆႉတီႈပိုၼ်ႉ “Engines” တၢင်းၼိူဝ်ၼၼ်ႉ။","kac": "Gemini key gaw aistudio.google.com/apikey hta manu n ra ai sha lu ai — shani shagu na manu n ra ai quota gaw chyam yu na matu ram ai. RunningHub hte OpenAI gaw lang ai daram sha manu jaw ai hku re — a lam gaw ntsa na “Engines” daw hta tsun dan da ai.","th": "คีย์ Gemini ขอฟรีได้ที่ aistudio.google.com/apikey — โควตาฟรีรายวันพอสำหรับทดลองใช้ ส่วน RunningHub และ OpenAI คิดเงินตามการใช้จริง — รายละเอียดอธิบายไว้ในหัวข้อ “Engines” ด้านบน","zh": "Gemini key 可在 aistudio.google.com/apikey 免费申请 — 每日免费额度足够试用。RunningHub 和 OpenAI 则是按用量计费 — 细节在上面的 “Engines” 一节已经说明。","vi": "Key Gemini lấy miễn phí tại aistudio.google.com/apikey — hạn mức miễn phí mỗi ngày là đủ để dùng thử. RunningHub và OpenAI tính theo mức dùng — chi tiết đã nói ở mục “Engines” phía trên.","id": "Key Gemini gratis di aistudio.google.com/apikey — kuota gratis hariannya cukup untuk mencoba. RunningHub dan OpenAI berbayar sesuai pemakaian — detailnya dijelaskan di bagian “Engines” di atas.","ms": "Key Gemini percuma di aistudio.google.com/apikey — kuota percuma hariannya cukup untuk mencuba. RunningHub dan OpenAI dikenakan bayaran ikut penggunaan — perinciannya dijelaskan dalam bahagian “Engines” di atas."},"contact.tg": {"my": "Telegram မှာ ဝေမျှမယ်","en": "Share on Telegram","shn": "မႅင်ႇၼႄတီႈ Telegram","kac": "Telegram hta garan u","th": "แชร์ทาง Telegram","zh": "分享到 Telegram","vi": "Chia sẻ qua Telegram","id": "Bagikan lewat Telegram","ms": "Kongsi di Telegram"},"contact.fb": {"my": "Facebook မှာ ဝေမျှမယ်","en": "Share on Facebook","shn": "မႅင်ႇၼႄတီႈ Facebook","kac": "Facebook hta garan u","th": "แชร์ทาง Facebook","zh": "分享到 Facebook","vi": "Chia sẻ qua Facebook","id": "Bagikan lewat Facebook","ms": "Kongsi di Facebook"},"contact.gh": {"my": "GitHub","en": "GitHub","shn": "GitHub","kac": "GitHub","th": "GitHub","zh": "GitHub","vi": "GitHub","id": "GitHub","ms": "GitHub"},"foot.p1": {"my": "HNK Create Studio — မြန်မာ studio ဓာတ်ပုံဆရာတွေအတွက် တည်ဆောက်ထားတယ်။ Portrait · Wedding · Graduation။","en": "HNK Create Studio — built for Myanmar studio photographers. Portrait · Wedding · Graduation.","shn": "HNK Create Studio — ႁဵတ်းဢွၵ်ႇတႃႇ ၽူႈထၢႆႇႁၢင်ႈ studio မိူင်းမၢၼ်ႈ။ Portrait · Wedding · Graduation။","kac": "HNK Create Studio — Myen mungdan na studio sumla galaw ai ni a matu galaw da ai. Portrait · Wedding · Graduation.","th": "HNK Create Studio — สร้างขึ้นเพื่อช่างภาพสตูดิโอในเมียนมา Portrait · Wedding · Graduation","zh": "HNK Create Studio — 为缅甸影楼摄影师打造。Portrait · Wedding · Graduation。","vi": "HNK Create Studio — dựng cho các thợ ảnh studio Myanmar. Portrait · Wedding · Graduation.","id": "HNK Create Studio — dibuat untuk fotografer studio Myanmar. Portrait · Wedding · Graduation.","ms": "HNK Create Studio — dibina untuk jurugambar studio Myanmar. Portrait · Wedding · Graduation."},"lb.aria": {"my": "ပုံအကြီးချဲ့ကြည့်ရန်","en": "Enlarged image view","shn": "တူၺ်းႁၢင်ႈယႂ်ႇ","kac": "Sumla kaba yu ai","th": "ดูภาพขยาย","zh": "放大查看图片","vi": "Xem ảnh phóng to","id": "Tampilan gambar diperbesar","ms": "Paparan imej dibesarkan"},"lb.hint": {"my": "ပိတ်ရန် — မည်သည့်နေရာမဆို နှိပ်ပါ","en": "Tap anywhere to close","shn": "ၼဵၵ်းတီႈလႂ်ၵေႃႈလႆႈ တႃႇပိၵ်ႉ","kac": "Pat na matu gara shara mung dip u","th": "แตะที่ใดก็ได้เพื่อปิด","zh": "点击任意处关闭","vi": "Chạm bất kỳ đâu để đóng","id": "Ketuk di mana saja untuk menutup","ms": "Ketik di mana-mana untuk tutup"}};
+(function(){
+  var LANGS=['my','en','shn','kac','th','zh','vi','id','ms'], DEF='my', KEY='hnk_site_lang';
+  var sel=document.getElementById('langSel');
+
+  function pick(rec,l){ return (rec && rec[l]!=null) ? rec[l] : (rec ? rec[DEF] : null); }
+  /* A tracked Latin eyebrow (.lat) must never letter-space Burmese, Shan,
+     Thai or CJK — flag any non-ASCII value so .nolat wins. */
+  function track(el,txt){
+    if(/[^\u0000-\u007F]/.test(txt)) el.classList.add('nolat'); else el.classList.remove('nolat');
+  }
+  function apply(l){
+    if(LANGS.indexOf(l)<0) l=DEF;
+    var i,els,el,rec,txt;
+    els=document.querySelectorAll('[data-i18n]');
+    for(i=0;i<els.length;i++){ el=els[i]; rec=I18N[el.getAttribute('data-i18n')]; if(!rec) continue;
+      txt=pick(rec,l); if(txt==null) continue; el.textContent=txt; track(el,txt); }
+    els=document.querySelectorAll('[data-i18n-html]');
+    for(i=0;i<els.length;i++){ el=els[i]; rec=I18N[el.getAttribute('data-i18n-html')]; if(!rec) continue;
+      txt=pick(rec,l); if(txt==null) continue; el.innerHTML=txt; track(el,txt); }
+    els=document.querySelectorAll('[data-i18n-aria]');
+    for(i=0;i<els.length;i++){ el=els[i]; rec=I18N[el.getAttribute('data-i18n-aria')]; if(!rec) continue;
+      txt=pick(rec,l); if(txt==null) continue; el.setAttribute('aria-label',txt); }
+    rec=I18N['page.title']; if(rec){ txt=pick(rec,l); if(txt) document.title=txt; }
+    document.documentElement.lang=l;
+    document.documentElement.setAttribute('data-lang',l);
+    if(sel && sel.value!==l) sel.value=l;
+    try{ localStorage.setItem(KEY,l); }catch(e){}
+  }
+
+  var saved=DEF;
+  try{ saved=localStorage.getItem(KEY)||DEF; }catch(e){}
+  apply(saved);
+  if(sel) sel.addEventListener('change',function(){ apply(sel.value); });
+  window.hnkSetLang=apply;
+})();
+</script>
 
 <script>
 (function(){
