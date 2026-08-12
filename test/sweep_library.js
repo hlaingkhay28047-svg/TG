@@ -43,14 +43,31 @@ function check(ok, label, detail) {
       libTotal: (document.getElementById("libTotal") || {}).textContent,
       stLib: (document.getElementById("stLibCount") || {}).textContent,
       collSum: sum,
-      /* a literal that drifted would show up as stale prose anywhere on the page */
-      staleProse: (document.body.innerText.match(/\b366\b/g) || []).length
+      /* Prose counts drifted twice before this check existed, so rather than
+         chasing one stale literal it reads every phrase that claims a library
+         size — in all nine languages, Burmese numerals included — and asserts
+         each one equals the shipped item count. A future wave that forgets to
+         update the copy fails here without anyone editing this test. */
+      staleProse: (function(){
+        var MY = "\u1040\u1041\u1042\u1043\u1044\u1045\u1046\u1047\u1048\u1049";
+        var txt = document.body.innerText + " " +
+          Array.from(document.querySelectorAll("meta[name=description],meta[property='og:description']"))
+            .map(function(m){ return m.content; }).join(" ");
+        var west = txt.replace(new RegExp("[" + MY + "]", "g"), function(d){ return String(MY.indexOf(d)); });
+        var pats = [/Visual Library\s+(\d+)/g, /Library\s+(\d+)/g, /(\d+)\s*-?\s*image Library/g,
+                    /Look\s+(\d+)/g, /(\d+)\s+curated looks/g, /(\d+)\s+look/gi];
+        var bad = [];
+        pats.forEach(function(re){
+          var m; while ((m = re.exec(west))) if (m[1] !== String(LW.items.length)) bad.push(m[0].trim());
+        });
+        return bad;
+      })()
     };
   });
   check(String(counts.items) === String(counts.libTotal) &&
         String(counts.items) === String(counts.stLib) &&
-        counts.collSum === counts.items && counts.staleProse === 0,
-    "every library count is runtime (header, Home statline, collection sums) and no stale 366 prose survives",
+        counts.collSum === counts.items && counts.staleProse.length === 0,
+    "every library count is runtime, and every phrase claiming a library size — nine languages, Burmese numerals included — matches the shipped count",
     counts);
 
   /* ---- 2) the set row hides on Featured, shows on a collection ---- */
