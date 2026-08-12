@@ -103,3 +103,6 @@ jobs:
 
       - name: Run Visual Library set-browse sweep (mocked)
         run: node test/sweep_library.js
+
+      - name: Run Studio control-honesty sweep (mocked)
+        run: node test/sweep_studio_fixes.js
