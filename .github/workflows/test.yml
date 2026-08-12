@@ -97,3 +97,6 @@ jobs:
 
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
+
+      - name: Run v4.30.0 Accounts + Premium sweep (mocked)
+        run: node test/sweep_account.js
