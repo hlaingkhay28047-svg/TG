@@ -85,3 +85,12 @@ jobs:
 
       - name: Run v4.27.0 Home (pgDash) + IA re-architecture sweep (mocked)
         run: node test/sweep_dash.js
+
+      - name: Run Studio generate sweep (mocked)
+        run: node test/sweep_studio_generate.js
+
+      - name: Run Studio tiered live-preview + sticky-stage sweep (mocked)
+        run: node test/sweep_studio_livepreview.js
+
+      - name: Run v4.28.0 Pro Surfaces + Identity sweep (mocked)
+        run: node test/sweep_v428_upgrades.js

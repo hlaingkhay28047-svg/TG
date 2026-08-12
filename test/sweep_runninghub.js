@@ -262,6 +262,55 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && seedreamResult.body.aspectRatio === undefined && seedreamResult.body.width === undefined && seedreamResult.body.height === undefined;
   console.log(seedreamOk ? "PASS (seedream resolution + sequential/maxImages defaults)" : ("FAIL (seedream): " + JSON.stringify(seedreamResult)));
 
+  // v4.28 §4.3 — seedream-v4-5 clamp. The v4.5 endpoint's resolution enum
+  // starts at 2k: "1k" is out-of-enum and the API rejects it. Since the app's
+  // DEFAULT Size is the empty/auto option (which every other seedream maps to
+  // "1k"), v4.5 must be clamped up to "2k" instead of sending the invalid
+  // value. Run at the default Size, not an explicit one — that is the path
+  // that used to break.
+  const sd45Result = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "seedream-v4-5"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selRatio").value = "16:9";
+    document.getElementById("selSize").value = "";      // DEFAULT size — the regression path
+    document.getElementById("prompt").value = "test seedream v4.5 prompt";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/seedream-v4.5/image-to-image") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body, st: document.getElementById("stGen").textContent };
+  }, B64);
+  console.log("seedream v4.5 submit body:", JSON.stringify(sd45Result.body));
+  const sd45Ok = sd45Result.ok && sd45Result.body
+    && sd45Result.body.resolution === "2k" && sd45Result.body.resolution !== "1k"
+    && Array.isArray(sd45Result.body.imageUrls);
+  console.log(sd45Ok ? 'PASS (seedream-v4-5 clamps the default Size up to "2k", never sends out-of-enum "1k")'
+    : ("FAIL (seedream v4.5 clamp): " + JSON.stringify(sd45Result)));
+
+  // The clamp must be scoped to v4.5 — plain seedream-v4 still honours "1k".
+  const sd40Result = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "seedream-v4"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selSize").value = "";
+    document.getElementById("prompt").value = "test seedream v4 default size";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/seedream-v4/image-to-image") >= 0) || {}).body || null;
+    return { body: body };
+  }, B64);
+  const sd40Ok = !!sd40Result.body && sd40Result.body.resolution === "1k";
+  console.log(sd40Ok ? 'PASS (clamp is scoped to v4.5 — seedream-v4 still sends "1k" at default Size)'
+    : ("FAIL (clamp over-reach): " + JSON.stringify(sd40Result)));
+
   // RH Imagine Image Quality (edit): activate it, pick "4K" (this endpoint's
   // resolution enum is 1k/2k ONLY) and a valid ratio, and inspect the actual
   // request body — must clamp resolution down to "2k" (never send an invalid
@@ -406,7 +455,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const noImgOk = /image|ပုံ/i.test(noImgMsg) && noImgMsg.indexOf("(?)") < 0;
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
-  const overall = result === "OK" && qwenOk && upOk && seedreamOk && imagineOk && zimageOk && zimageValidOk
+  const overall = result === "OK" && qwenOk && upOk && seedreamOk && sd45Ok && sd40Ok && imagineOk && zimageOk && zimageValidOk
     && upTransparentOk && upTransparentNoImgOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();

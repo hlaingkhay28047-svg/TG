@@ -23,9 +23,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
 
   await page.addInitScript(`
     window.__t2iBodies = [];
+    window.__trCalls = [];   // v4.28 §3.1: Burmese -> English translator hops
     const realFetch = window.fetch;
     window.fetch = function(url, opts){
       var u = String(url);
+      if (u.indexOf(":generateContent") >= 0) {
+        try { window.__trCalls.push(JSON.parse(opts.body)); } catch(e) { window.__trCalls.push(null); }
+        return Promise.resolve(new Response(JSON.stringify({candidates:[{content:{parts:[{text:"TRANSLATED_ENGLISH_PROMPT"}]}}]}), {status:200}));
+      }
       if (u.indexOf("mock.runninghub.test") >= 0) {
         var bin = atob("${B64}");
         var bytes = new Uint8Array(bin.length);
@@ -137,7 +142,57 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const imagineOk = imagine.ok && imagine.body && imagine.body.numImages === "1" && imagine.body.resolution === "2k";
   console.log(imagineOk ? "PASS (imagine size honored + numImages)" : ("FAIL (imagine): " + JSON.stringify(imagine)));
 
-  const overall = fluxOk && qwenOk && imagineOk;
+  // ---- v4.28 §3.1: Burmese prompts auto-translate on EVERY provider ----
+  // Before v4.28 the translator gate only ran on the Gemini/Create path, so a
+  // Burmese prompt typed on Text-to-Image was shipped raw to Flux/Qwen/Seedream
+  // (models with no Burmese comprehension) and silently produced garbage.
+  const MY = "ရွှေရောင် နေဝင်ချိန်မှာ တောင်တန်းတွေ";
+  const trWithKey = await page.evaluate(async (args) => {
+    var [MY] = args;
+    state.key = "TEST_GEMINI_KEY";
+    window.__trCalls.length = 0;
+    return null;
+  }, [MY]).then(() => runModel("flux-2-dev", "1:1", "1K", MY, "f-2-dev/text-to-image"));
+  const trCalls = await page.evaluate(() => window.__trCalls.length);
+  const hintWithKey = await page.evaluate(() => {
+    var h = document.getElementById("t2iTrHint");
+    return !!h && h.style.display !== "none";
+  });
+  console.log("translated t2i body prompt:", JSON.stringify(trWithKey.body && trWithKey.body.prompt));
+  const trOk = trWithKey.ok && trWithKey.body && trCalls === 1
+    && trWithKey.body.prompt.indexOf("TRANSLATED_ENGLISH_PROMPT") >= 0
+    && trWithKey.body.prompt.indexOf(MY) < 0 && !hintWithKey;
+  console.log(trOk ? "PASS (Burmese t2i prompt is translated before it reaches RunningHub; no hint while a key can translate)"
+    : ("FAIL (t2i translate gate): " + JSON.stringify({ trCalls, hintWithKey, prompt: trWithKey.body && trWithKey.body.prompt })));
+
+  // Without a Gemini key there is nothing to translate WITH — the app must say
+  // so inline instead of silently shipping Burmese, and must still send the
+  // raw prompt (informed user choice, not a hard block).
+  const noKey = await page.evaluate(() => { state.key = ""; window.__trCalls.length = 0; })
+    .then(() => runModel("flux-2-dev", "1:1", "1K", MY, "f-2-dev/text-to-image"));
+  const noKeyState = await page.evaluate(() => {
+    var h = document.getElementById("t2iTrHint");
+    return { visible: !!h && h.style.display !== "none", text: h ? h.textContent : "", calls: window.__trCalls.length };
+  });
+  console.log("no-key hint:", JSON.stringify(noKeyState));
+  const noKeyOk = noKey.ok && noKey.body && noKeyState.visible && noKeyState.text.length > 0
+    && noKeyState.calls === 0 && noKey.body.prompt.indexOf(MY) >= 0;
+  console.log(noKeyOk ? "PASS (no key: inline hint is shown and the raw prompt still sends)"
+    : ("FAIL (t2i no-key hint): " + JSON.stringify({ noKeyState, prompt: noKey.body && noKey.body.prompt })));
+
+  // An English prompt must never take the translator hop or raise the hint.
+  const enOnly = await page.evaluate(() => { state.key = "TEST_GEMINI_KEY"; window.__trCalls.length = 0; })
+    .then(() => runModel("flux-2-dev", "1:1", "1K", "a lighthouse at dawn", "f-2-dev/text-to-image"));
+  const enState = await page.evaluate(() => ({
+    calls: window.__trCalls.length,
+    hint: document.getElementById("t2iTrHint").style.display !== "none"
+  }));
+  const enOk = enOnly.ok && enState.calls === 0 && !enState.hint
+    && enOnly.body.prompt.indexOf("a lighthouse at dawn") >= 0;
+  console.log(enOk ? "PASS (English prompt skips the translator and the hint entirely)"
+    : ("FAIL (t2i english passthrough): " + JSON.stringify(enState)));
+
+  const overall = fluxOk && qwenOk && imagineOk && trOk && noKeyOk && enOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);
