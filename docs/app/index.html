@@ -254,6 +254,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(8px);pointer-events:none;transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out),visibility 0s linear var(--dur-2)}
 .toast.on{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition-delay:0s}
 .toast.ok{color:var(--ok)} .toast.err{color:var(--err)}
+.toast-act{margin-left:12px;min-height:32px;padding:4px 12px;border:1px solid var(--gold);border-radius:8px;background:transparent;color:var(--gold);font:inherit;font-weight:600;cursor:pointer}
 
 /* ---- smart workflow wizard ---- */
 .wiz{position:fixed;top:0;left:0;right:0;bottom:0;z-index:70;background:var(--ink);display:none;overflow-y:auto;overscroll-behavior:contain}
@@ -503,6 +504,11 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .st-val:after{content:"";position:absolute;left:-10px;right:-10px;top:-15px;bottom:-15px}
 .st-val.on{color:var(--gold);font-weight:700}
 .st-color{width:52px;min-height:38px;padding:2px;margin-top:var(--sp-2)}
+/* A colour <input> has no "empty" rendering — it always paints some swatch. So
+   an untouched picker used to look exactly like a deliberately chosen colour,
+   and for the grade zones (where unset means "zone off") that made a dead
+   control indistinguishable from a live one. Unset now reads as unset. */
+.st-color.unset{opacity:.5;outline:1px dashed var(--muted);outline-offset:1px}
 .grp-h .dot{display:none;margin-left:6px;min-width:18px;height:18px;line-height:18px;text-align:center;background:var(--gold);color:#1a1408;border-radius:9px;font-size:var(--fs-2xs);font-weight:800;padding:0 4px}
 .grp-h .dot.on{display:inline-block}
 .grp.hide{display:none}
@@ -1114,8 +1120,8 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div><b id="stTapCount">128</b><span>One-Tap Workflows</span></div>
     <div><b id="stLibCount">408</b><span>Visual Library</span></div>
     <div><b id="stWfCount">115</b><span>Smart Workflow</span></div>
-    <div><b id="stMeituCount">50</b><span>Meitu Features</span></div>
-    <div><b id="stEvotoCount">42</b><span>Evoto Pro</span></div>
+    <div><b id="stMeituCount"></b><span>Meitu Controls</span></div>
+    <div><b id="stEvotoCount"></b><span>Evoto Pro</span></div>
   </div>
   <section class="card dash-promo" id="dashPromo">
     <h2 id="dashPromoH2"></h2>
@@ -2617,11 +2623,22 @@ var _toastT=null;
    overwritten by the next routine toast() call from anywhere else in the
    app — without it, almost nobody ever saw the update notice. */
 var _toastSticky=false;
-function toast(msg, cls){
+function toast(msg, cls, action){
   var t=$("toast"); if(!t) return;
   if (_toastSticky) return;
+  /* textContent replaces children, so a previous toast's action button can
+     never survive into this one. */
   t.textContent=msg; t.className="toast on"+(cls?" "+cls:"");
-  clearTimeout(_toastT); _toastT=setTimeout(function(){ t.className="toast"; }, 2600);
+  /* An action turns the toast from a receipt into a way back. Only used where
+     a single tap is otherwise irreversible, and it holds longer so the offer
+     is actually readable. */
+  if(action){
+    var b=document.createElement("button");
+    b.type="button"; b.className="toast-act"; b.textContent=action.label;
+    b.onclick=function(){ t.className="toast"; clearTimeout(_toastT); action.fn(); };
+    t.appendChild(b);
+  }
+  clearTimeout(_toastT); _toastT=setTimeout(function(){ t.className="toast"; }, action?7000:2600);
 }
 function setSt(id, msg, cls){
   var el=$(id); if(!el) return;
@@ -6797,6 +6814,7 @@ var ST = {
   groups:[], rowMap:{}, searchIdx:[],
   split:{on:false,pct:50}, stageResult:null, showingResult:false,
   presetSnap:null,
+  undoSnap:null,
   /* v4.27.1 stage UI prefs — mode/pipCorner persist in hnk_st_ui (NOT state.st.v: stReset
      wipes that and Reset must never change the stage size); zoom is session-only */
   ui:{mode:"auto",pipCorner:"tr",zoom:{s:1,x:0,y:0}}
@@ -7100,9 +7118,12 @@ function stPipeVals(){
     var h1=stHexRgb(svGet("st_grade_muHi",null)); if(h1) zones.push({t:h1,k:muAmt,z:"hi",bal:muBal});
   }
   var evBal=svGet("st_grade_evBal",0)||0;
-  var e1=stHexRgb(svGet("st_grade_evSh",null)); if(e1) zones.push({t:e1,k:45,z:"sh",bal:evBal});
-  var e2=stHexRgb(svGet("st_grade_evMid",null)); if(e2) zones.push({t:e2,k:45,z:"mid",bal:evBal});
-  var e3=stHexRgb(svGet("st_grade_evHi",null)); if(e3) zones.push({t:e3,k:45,z:"hi",bal:evBal});
+  /* 45 stays the default so saved recipes and persisted state render exactly as
+     before; what changes is that it is now reachable. */
+  var evAmt=svGet("st_grade_evAmt",45);
+  var e1=stHexRgb(svGet("st_grade_evSh",null)); if(e1) zones.push({t:e1,k:evAmt,z:"sh",bal:evBal});
+  var e2=stHexRgb(svGet("st_grade_evMid",null)); if(e2) zones.push({t:e2,k:evAmt,z:"mid",bal:evBal});
+  var e3=stHexRgb(svGet("st_grade_evHi",null)); if(e3) zones.push({t:e3,k:evAmt,z:"hi",bal:evBal});
   pv.gradeZones=zones; pv.gradeSat=svGet("st_grade_evSat",0)||0;
   pv.anyGrade=zones.length>0||!!pv.gradeSat;
   pv.bwOn=!!svGet("st_bw",false);
@@ -7746,20 +7767,31 @@ function stSlider(o){ /* {id,label,min,max,def,get,set} -> element; registers a 
   inp.min=String(o.min); inp.max=String(o.max); inp.step="1";
   var val=el("button","st-val");
   val.type="button";
-  val.title=L9({my:"နှိပ်ရင် ဒီ slider ပြန်စမယ်",en:"Tap to reset this slider"});
+  val.title=L9({my:"နှိပ်ရင် မဆွဲခင်အတိုင်း ပြန်ရမယ် · နောက်တစ်ချက်နှိပ်ရင် မူလတန်ဖိုး",
+    en:"Tap to undo the last drag · tap again for the default"});
   function fmt(v){ return (o.min<0&&v>0?"+":"")+v+(o.pct===false?"":"%"); }
   function refresh(){
     var v=o.get(); inp.value=String(v); val.textContent=fmt(v);
     val.className="st-val"+(v!==o.def?" on":"");
   }
+  /* the value this slider held before the drag now in progress */
+  var prev=null;
+  inp.addEventListener("pointerdown",function(){ prev=o.get(); });
   inp.oninput=function(){
     var v=parseInt(inp.value,10)||0;
     val.textContent=fmt(v); val.className="st-val"+(v!==o.def?" on":"");
     o.set(v);
   };
-  /* dblclick / value-tap = reset this one slider (MUST #8) */
-  inp.ondblclick=function(){ inp.value=String(o.def); inp.oninput(); };
-  val.onclick=function(){ inp.ondblclick(); };
+  /* dblclick = straight to the default (MUST #8) */
+  inp.ondblclick=function(){ inp.value=String(o.def); prev=null; inp.oninput(); };
+  /* The readout used to jump straight to the default, which threw away a good
+     value along with a bad drag — the only per-control recovery there was. It
+     now steps back one drag first, and only then to the default. */
+  val.onclick=function(){
+    var cur=o.get();
+    if(prev!==null&&prev!==cur){ inp.value=String(prev); prev=null; inp.oninput(); return; }
+    inp.ondblclick();
+  };
   row.appendChild(inp); row.appendChild(val);
   ST.refreshFns.push(refresh); refresh();
   return row;
@@ -7795,11 +7827,22 @@ function stToggle(o){ /* {id,label,get,set} */
   ST.refreshFns.push(refresh); refresh();
   return c;
 }
-function stColorInp(o){ /* {id,get,set} */
+function stColorInp(o){ /* {id,get,set,dflt} */
   var inp=document.createElement("input");
   inp.type="color"; inp.className="inp st-color"; inp.id=o.id;
-  function refresh(){ inp.value=o.get()||"#d9a441"; }
-  inp.oninput=function(){ o.set(inp.value); };
+  /* Show the colour the render would actually use, not the brand gold: an
+     unset picker showing #d9a441 told the user amber was chosen when the
+     feature was either off or about to apply something else entirely. */
+  function refresh(){
+    var v=o.get();
+    inp.value=v||o.dflt||"#808080";
+    inp.classList.toggle("unset",!v);
+    inp.title=v||L9({my:"မရွေးရသေး",en:"not set"});
+  }
+  inp.oninput=function(){ o.set(inp.value); refresh(); };
+  /* Confirming the swatch already on screen fires change but not input, and
+     without this that tap stored nothing — the control looked dead. */
+  inp.onchange=function(){ o.set(inp.value); refresh(); };
   ST.refreshFns.push(refresh); refresh();
   return inp;
 }
@@ -7807,7 +7850,7 @@ function stColorInp(o){ /* {id,get,set} */
 function svSlider(id,label,bidir,featId,max){
   return stSlider({id:id,label:label,min:bidir?-100:0,max:max||100,def:0,
     get:function(){ return svGet(id,0); },
-    set:function(v){ svSet(id,v); stSync(featId); }});
+    set:function(v){ svSet(id,v); if(v&&stSeedParent(id)) stRefreshUI(); stSync(featId); }});
 }
 function t1Slider(id,label,k,bidir){
   ST.rowMap[id]={kind:"t1",k:k};
@@ -7822,10 +7865,13 @@ function t2Slider(id,label,k,bidir){
     set:function(v){ state.st.t2[k]=v; if(k==="smooth"||k==="freqLo") ST.lutKey=ST.lutKey; stT2Changed(); stSaveSoon(); }});
 }
 /* pipeline-sv controls (HSL / curve / grading / B&W / leak / frame / WB / bg-enhance) */
-function pipeSlider(id,label,bidir,min,max){
-  return stSlider({id:id,label:label,min:bidir?-100:(min||0),max:max||100,def:0,
-    get:function(){ return svGet(id,0); },
-    set:function(v){ svSet(id,v); stPipeChanged(); }});
+function pipeSlider(id,label,bidir,min,max,def){
+  /* `def` is both the reset-tap target and the unset read, so a control whose
+     renderer starts somewhere other than 0 can say so instead of lying. */
+  var d=def||0;
+  return stSlider({id:id,label:label,min:bidir?-100:(min||0),max:max||100,def:d,
+    get:function(){ return svGet(id,d); },
+    set:function(v){ svSet(id,v); if(v&&stSeedParent(id)) stRefreshUI(); stPipeChanged(); }});
 }
 function pipeChips(id,label,choices){
   return stChips({id:id,label:label,choices:choices,
@@ -7837,8 +7883,8 @@ function pipeToggle(id,label,onSet){
     get:function(){ return !!svGet(id,false); },
     set:function(v){ svSet(id,v); if(onSet) onSet(v); stPipeChanged(); }});
 }
-function pipeColor(id){
-  return stColorInp({id:id,
+function pipeColor(id,dflt){
+  return stColorInp({id:id,dflt:dflt,
     get:function(){ return svGet(id,null); },
     set:function(v){ svSet(id,v); stPipeChanged(); }});
 }
@@ -7882,6 +7928,35 @@ function stRefXPicker(){
    did exactly this inline for mu_flash (||60) and ev_tattoo (||100); this
    generalises it rather than repeating it 41 times. */
 var ST_SEED_AMT=60;
+/* The same trap one level down. These sliders are children of a master that
+   ships at 0, and their calc() bails out while it stays there — so dragging
+   "— Freckle" turned its readout gold, queued nothing, moved no pixel and left
+   the group's dirty dot at 0. Twelve sliders behaved that way; the user was
+   told an edit had landed when none had.
+
+   Cure as above: move the parent so the child becomes real, and let the parent
+   visibly move so the jump explains itself. A parent the user has already set
+   is never overwritten. `pick` is for chip parents (choose the first style);
+   `t2` is for the one parent that lives in the canvas params. */
+var ST_SEED_PARENT={
+  ev_freckle:{k:"ev_blemish"},   ev_acne:{k:"ev_blemish"},
+  ev_dwFine:{k:"ev_dressWrinkle"}, ev_dwCoarse:{k:"ev_dressWrinkle"},
+  ev_ebIris:{t2:"eyeb"}, ev_ebWhites:{t2:"eyeb"},
+  ev_ebRefl:{t2:"eyeb"}, ev_ebFlare:{t2:"eyeb"},
+  ev_ueLid:{k:"ev_ueDark"},
+  st_leakV:{k:"st_leak",pick:"warm"},
+  st_frameW:{k:"st_frame",pick:"thin"}
+};
+function stSeedParent(childId){
+  var p=ST_SEED_PARENT[childId]; if(!p) return false;
+  if(p.t2){
+    if(state.st.t2[p.t2]) return false;
+    state.st.t2[p.t2]=ST_SEED_AMT; return true;
+  }
+  if(svGet(p.k,null)) return false;
+  svSet(p.k,p.pick||ST_SEED_AMT);
+  return true;
+}
 function stSeedAmount(featId,pickedId){
   var f=ST.feats[featId]; if(!f||!f.keys) return false;
   for(var i=0;i<f.keys.length;i++){
@@ -7903,8 +7978,8 @@ function svToggle(id,label,featId){
     get:function(){ return !!svGet(id,false); },
     set:function(v){ svSet(id,v); stSync(featId); }});
 }
-function svColor(id,featId){
-  return stColorInp({id:id,
+function svColor(id,featId,dflt){
+  return stColorInp({id:id,dflt:dflt,
     get:function(){ return svGet(id,null); },
     set:function(v){ svSet(id,v); stSync(featId); }});
 }
@@ -8159,7 +8234,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   var g8=G("i-lips",L9({my:"နှုတ်ခမ်းနှင့်သွား",en:"Lips & Teeth"}),4,"lips teeth lip color plump smile corners whiten teeth fix mouth size position"); count(4);
   g8.b.appendChild(stSub(L9({my:"နှုတ်ခမ်းအရောင်",en:"Lip Color"})));
   g8.b.appendChild(svChips("mu_lipHex",null,[["#c94f5e","Rose"],["#b03a48","Berry"],["#e07a6a","Coral"],["#a52a3a","Wine"],["#d96c8a","Pink"],["#c96a4a","Terracotta"],["#8c2f39","Maroon"],["#e0938c","Nude"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_lipColor"));
-  g8.b.appendChild(svColor("mu_lipCustom","mu_lipColor"));
+  g8.b.appendChild(svColor("mu_lipCustom","mu_lipColor","#c94f5e"));
   g8.b.appendChild(svChips("mu_lipFinish",null,[["matte","Matte"],["gloss","Gloss"],["velvet","Velvet"]],"mu_lipColor"));
   g8.b.appendChild(svSlider("mu_lipColorV",L9({my:"ပမာဏ",en:"Opacity"}),false,"mu_lipColor"));
   stFeat("mu_lipColor",L9({my:"နှုတ်ခမ်းအရောင်",en:"Lip Color"}),["mu_lipHex","mu_lipCustom","mu_lipFinish","mu_lipColorV"],function(){
@@ -8278,7 +8353,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   var g10=G("i-hair",L9({my:"ဆံပင်",en:"Hair"}),5,"hair color hairline fill volume bangs flyaway hairstyle ponytail bob curls"); count(5);
   g10.b.appendChild(stSub(L9({my:"ဆံပင်အရောင်",en:"Hair Color"})));
   g10.b.appendChild(svChips("mu_hairColor",null,[["jet black",L9({my:"အနက်",en:"Black"})],["dark brown",L9({my:"ညိုရင့်",en:"Dark Brown"})],["chestnut","Chestnut"],["burgundy","Burgundy"],["golden brown","Gold Brown"],["ash brown","Ash"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_hairCol"));
-  g10.b.appendChild(svColor("mu_hairHex","mu_hairCol"));
+  g10.b.appendChild(svColor("mu_hairHex","mu_hairCol","#3b2417"));
   g10.b.appendChild(svSlider("mu_hairColorV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_hairCol"));
   stFeat("mu_hairCol",L9({my:"ဆံပင်အရောင်",en:"Hair Color"}),["mu_hairColor","mu_hairHex","mu_hairColorV"],function(){
     var v=fv("mu_hairColorV"), c=svGet("mu_hairColor",null); if(!v||!c) return null;
@@ -8540,7 +8615,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   /* M24 — Frame & Border (settle overlay) */
   g14.b.appendChild(stSub(L9({my:"ဘောင်",en:"Frame & Border"})));
   g14.b.appendChild(pipeChips("st_frame",null,[["thin",L9({my:"အဖြူပါး",en:"Thin white"})],["thick",L9({my:"အဖြူထူ",en:"Thick white"})],["polaroid","Polaroid"],["gold",L9({my:"ရွှေရောင်",en:"Gold"})]]));
-  g14.b.appendChild(pipeSlider("st_frameW",L9({my:"အထူ",en:"Width"}),false));
+  g14.b.appendChild(pipeSlider("st_frameW",L9({my:"အထူ",en:"Width"}),false,0,100,40));
   regChk(g14,function(){ return !!svGet("st_frame",null); });
   /* M25 — AI Expand (outpaint) */
   g14.b.appendChild(stSub(L9({my:"AI ချဲ့ထွင်",en:"AI Expand"})));
@@ -8610,7 +8685,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   e1.grid.appendChild(svSlider("ev_ueBags",L9({my:"မျက်ရစ်",en:"Eye Bags"}),false,"ev_underEye"));
   e1.grid.appendChild(stSlider({id:"ev_ueLid",label:L9({my:"— Lid ကာကွယ်",en:"— Lid protection"}),min:0,max:100,def:100,
     get:function(){ return svGet("ev_ueLid",100); },
-    set:function(v){ svSet("ev_ueLid",v); stSync("ev_underEye"); }}));
+    set:function(v){ svSet("ev_ueLid",v); if(v!==100&&stSeedParent("ev_ueLid")) stRefreshUI(); stSync("ev_underEye"); }}));
   stFeat("ev_underEye",L9({my:"မျက်အောက်ပြင်",en:"Under-Eye Repair"}),["ev_ueDark","ev_ueBags","ev_ueLid"],function(){
     var v1=fv("ev_ueDark"),v2=fv("ev_ueBags"); if(!v1&&!v2) return null;
     var v3=svGet("ev_ueLid",100);
@@ -8880,7 +8955,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   [["ev_ebIris",L9({my:"— Iris",en:"— Iris"}),80],["ev_ebWhites",L9({my:"— Whites",en:"— Whites"}),80],["ev_ebRefl",L9({my:"— Reflection",en:"— Reflection"}),40],["ev_ebFlare",L9({my:"— Flare",en:"— Flare"}),0]].forEach(function(s){
     ebGrid.appendChild(stSlider({id:s[0],label:s[1],min:0,max:100,def:s[2],
       get:function(){ return svGet(s[0],s[2]); },
-      set:function(v){ svSet(s[0],v); stSync("ev_eyeBr"); }}));
+      set:function(v){ svSet(s[0],v); if(stSeedParent(s[0])) stRefreshUI(); stSync("ev_eyeBr"); }}));
   });
   e8.b.appendChild(ebGrid);
   e8.b.appendChild(svChips("ev_catchStyle",L9({my:"Catchlight",en:"Catchlight"}),[["round softbox","Round"],["window","Window"],["ring-light","Ring"],["starburst","Star"],["umbrella","Umbrella"],["natural sky","Sky"]],"ev_eyeBr"));
@@ -9136,6 +9211,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   cgRow.appendChild(pipeColor("st_grade_evHi"));
   e12.b.appendChild(cgRow);
   var cgGrid=el("div","st-grid");
+  cgGrid.appendChild(pipeSlider("st_grade_evAmt",L9({my:"ပမာဏ",en:"Amount"}),false,0,100,45));
   cgGrid.appendChild(pipeSlider("st_grade_evSat",L9({my:"Saturation",en:"Saturation"}),true));
   cgGrid.appendChild(pipeSlider("st_grade_evBal",L9({my:"Balance",en:"Balance"}),true));
   e12.b.appendChild(cgGrid);
@@ -9450,7 +9526,10 @@ function stApplyPreset(p){
     }
     state.st.preset=null; ST.presetSnap=null;
   } else {
-    ST.presetSnap=stSnapshot();
+    /* Only snapshot when stepping in from the user's OWN state. Overwriting it
+       while a preset is live made "tap again" return to preset A instead of to
+       the hand-built look, which is the thing worth getting back to. */
+    if(!state.st.preset||!ST.presetSnap) ST.presetSnap=stSnapshot();
     if(p.t1) for(var k in p.t1) state.st.t1[k]=p.t1[k];
     if(p.t2) for(var k2 in p.t2) state.st.t2[k2]=p.t2[k2];
     if(p.sv) for(var k3 in p.sv) state.st.v[k3]=p.sv[k3];
@@ -9592,10 +9671,35 @@ function renderStPicker(){
   b.addEventListener("pointerup",up);
   b.addEventListener("pointercancel",up);
 })();
+/* Reset threw away every slider, chip and queued edit on one tap, with no
+   confirmation and nothing to return to — it even nulled the single snapshot
+   the app keeps. The state is already cheap to serialise, so keep one. */
+function stFullSnap(){
+  return JSON.parse(JSON.stringify({t1:state.st.t1,t2:state.st.t2,v:state.st.v,
+    pend:state.st.pend,geo:state.st.geo,target:state.st.target,preset:state.st.preset}));
+}
+function stUndoReset(){
+  var u=ST.undoSnap; if(!u) return;
+  var hadGeo=stGeoActive();
+  state.st.t1=u.t1; state.st.t2=u.t2; state.st.v=u.v; state.st.pend=u.pend;
+  state.st.geo=u.geo; state.st.target=u.target; state.st.preset=u.preset;
+  ST.undoSnap=null; ST.geoCache=null; ST.lutKey="";
+  stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
+  if(ST.srcBitmap){
+    if(hadGeo||stGeoActive()){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); }
+    stApplyDragFilter(); stRenderSettle();
+  }
+  saveState();
+  toast(L9({my:"ပြန်စလိုက်တာကို ရုပ်သိမ်းပြီ ✓",en:"Reset undone ✓"}),"ok");
+}
 $("stReset").onclick=function(){
+  ST.undoSnap=stFullSnap();
   var hadGeo=stGeoActive();
   state.st.t1=stDefT1(); state.st.t2=stDefT2();
   state.st.pend=[]; state.st.preset=null; state.st.v={};
+  /* Reset said "all adjustments reset" while leaving Bride/Groom armed, so the
+     next GENERATE silently retouched one person only. */
+  state.st.target="all";
   state.st.geo=stDefGeo(); ST.geoCache=null;
   ST.presetSnap=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
@@ -9604,7 +9708,8 @@ $("stReset").onclick=function(){
     stApplyDragFilter(); stRenderSettle();
   }
   saveState();
-  toast(L9({my:"Studio ချိန်ညှိချက်အားလုံး ပြန်စလိုက်ပြီ ✓",en:"All Studio adjustments reset ✓"}),"ok");
+  toast(L9({my:"Studio ချိန်ညှိချက်အားလုံး ပြန်စလိုက်ပြီ ✓",en:"All Studio adjustments reset ✓"}),"ok",
+    {label:L9({my:"ပြန်ယူမယ်",en:"Undo"}),fn:stUndoReset});
 };
 
 /* ---- Tier-2 states also emit proper AI fragments at GENERATE (§1.3) ---- */
@@ -9830,7 +9935,7 @@ function stApplyRecipe(idx){
     }
     state.st.preset=null; ST.presetSnap=null;
   } else {
-    ST.presetSnap=stSnapshot();
+    if(!state.st.preset||!ST.presetSnap) ST.presetSnap=stSnapshot();
     var d1=stDefT1(); for(var k in d1) state.st.t1[k]=(r.t1&&typeof r.t1[k]==="number")?r.t1[k]:d1[k];
     var d2=stDefT2(); for(var k2 in d2) state.st.t2[k2]=(k2==="finish")?((r.t2&&(r.t2.finish===null||typeof r.t2.finish==="string"))?r.t2.finish:null):((r.t2&&+r.t2[k2])||0);
     state.st.v=r.v?JSON.parse(JSON.stringify(r.v)):{};
@@ -9890,10 +9995,28 @@ function stRenderRecipes(){
   });
 }
 
+/* The suite badges used to be 31 hand-typed integers summed at runtime: the
+   number was self-consistent with its own literals and true of nothing else.
+   Both suites read 79, which was coincidence — Evoto carries roughly 40% more
+   controls than Meitu. Count what is actually on the page, so the badge can
+   never drift from the product again. */
+function stCountControls(gEl){
+  var b=gEl.querySelector(".grp-b")||gEl;
+  return b.querySelectorAll('input[type="range"]').length
+       + b.querySelectorAll(".chips").length
+       + b.querySelectorAll('input[type="color"]').length;
+}
+ST_MEITU_COUNT=0; ST_EVOTO_COUNT=0;
+ST.groups.forEach(function(g){
+  var n=stCountControls(g.el);
+  var c=g.el.querySelector(".cnt"); if(c) c.textContent=n+t("unit");
+  if(g.host==="ev") ST_EVOTO_COUNT+=n; else ST_MEITU_COUNT+=n;
+});
+
 /* ---- static labels + statline + first render ---- */
 $("stPhotoNote").textContent=L9({my:"ပုံတစ်ပုံတင်ပြီး slider ရွှေ့ရင် ပုံပေါ်မှာ ချက်ချင်းမြင်ရမယ် — AI လိုတဲ့ ပြင်ဆင်ချက်တွေက GENERATE တစ်ချက်တည်းနဲ့ အကုန်ထွက်မယ်",en:"Add one photo — sliders preview instantly on it; AI-only edits run together in a single GENERATE"});
-$("muNote").textContent=L9({my:"Feature "+ST_MEITU_COUNT+" ခု · One-tap look များ + တိုက်ရိုက် Live slider",en:ST_MEITU_COUNT+" features · one-tap looks + live sliders"});
-$("evNote").textContent=L9({my:"Pro feature "+ST_EVOTO_COUNT+" ခု · Studio အဆင့် ရီတပ်ချ်",en:ST_EVOTO_COUNT+" pro features · studio-grade retouch"});
+$("muNote").textContent=L9({my:"ချိန်ညှိချက် "+ST_MEITU_COUNT+" ခု · One-tap look များ + တိုက်ရိုက် Live slider",en:ST_MEITU_COUNT+" controls · one-tap looks + live sliders"});
+$("evNote").textContent=L9({my:"Pro ချိန်ညှိချက် "+ST_EVOTO_COUNT+" ခု · Studio အဆင့် ရီတပ်ချ်",en:ST_EVOTO_COUNT+" pro controls · studio-grade retouch"});
 $("stHold").innerHTML=icn("i-eye")+" "+escH(L9({my:"မူရင်း (ဖိထား)",en:"Before (hold)"}));
 $("stReset").innerHTML=icn("i-restore")+" Reset";
 $("stResultH2").textContent=L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After"});
@@ -11903,7 +12026,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.33.0";
+var APP_VER="4.34.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
