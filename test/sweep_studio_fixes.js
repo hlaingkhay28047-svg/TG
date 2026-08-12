@@ -215,6 +215,42 @@ function check(ok, label, detail) {
   check(snap.skipped || (snap.eye === 42 && snap.preset === null),
     "tapping a preset twice returns to the user's own look, not to the previous preset", snap);
 
+  /* ---- 10) denoise says so when it cannot act ---- */
+  const noise = await page.evaluate(async () => {
+    const load = async url => new Promise(res => stLoadImage(url, { done: res }));
+    const toUrl = async src => {
+      const r = await fetch(src); const b = await r.blob();
+      return new Promise(res => { const f = new FileReader(); f.onload = () => res(f.result); f.readAsDataURL(b); });
+    };
+    const notes = () => Array.from(document.querySelectorAll("#pgStudio p.mut"))
+      .filter(n => /no visible noise|မြင်သာတဲ့ noise/i.test(n.textContent) &&
+                   getComputedStyle(n).display !== "none").length;
+    const grainStillAPattern = () => { state.st.t1 = stDefT1(); state.st.t1.grn = 60;
+      stRenderSettle(); return !(ST.noise instanceof HTMLCanvasElement) ? false : true; };
+
+    await load(await toUrl("lib/st-sample.jpg"));
+    await new Promise(r => setTimeout(r, 500));
+    const clean = { metric: +ST.chromaNoise.toFixed(3), notes: notes() };
+
+    /* same photo, chroma noise injected — the sliders now have work to do */
+    const im = new Image();
+    await new Promise(res => { im.onload = res; im.src = ST.srcBitmap.src; });
+    const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    const x = c.getContext("2d"); x.drawImage(im, 0, 0);
+    const px = x.getImageData(0, 0, c.width, c.height), d = px.data;
+    for (let i = 0; i < d.length; i += 4) { const n = Math.random() * 60 - 30;
+      d[i] = Math.max(0, Math.min(255, d[i] + n)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] - n)); }
+    x.putImageData(px, 0, 0);
+    await load(c.toDataURL("image/png"));
+    await new Promise(r => setTimeout(r, 500));
+    const noisy = { metric: +ST.chromaNoise.toFixed(3), notes: notes() };
+    return { clean, noisy, grain: grainStillAPattern() };
+  });
+  check(noise.clean.metric < 0.5 && noise.clean.notes === 2 &&
+        noise.noisy.metric > 2 && noise.noisy.notes === 0 && noise.grain,
+    "denoise tells the user when the photo has no noise to remove, and stays quiet when it does — without clobbering the grain tile",
+    noise);
+
   await browser.close();
   console.log(failures ? `\n${failures} FAILED` : "\nALL PASS");
   process.exit(failures ? 1 : 0);

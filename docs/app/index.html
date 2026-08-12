@@ -7019,7 +7019,11 @@ function stBlurData(srcCanvas,W,H,r){
 function stApplySkin(cv,cx,px,W,H,t2,mi){
   var d=px.data, mask=mi.mask, n=W*H;
   var blurS = t2.smooth>0 ? stBlurData(cv,W,H,2+t2.smooth/100*4) : null;
-  var blur1 = t2.denoise>0 ? stBlurData(cv,W,H,1) : null;
+  /* The radius was pinned at 1px while the strength above it capped at 0.5, so
+     at 100% this blended halfway toward a copy that already matched the image:
+     mean delta 0.016 on the app's own sample, invisible. Smoothing right above
+     it has always scaled its radius; this now does too. */
+  var blur1 = t2.denoise>0 ? stBlurData(cv,W,H,1+t2.denoise/100*3) : null;
   var blur12 = t2.freqLo>0 ? stBlurData(cv,W,H,12) : null;
   var meanCb=0,meanCr=0;
   if(t2.even>0){
@@ -7067,7 +7071,7 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
           var bR=blur1[p],bG=blur1[p+1],bB=blur1[p+2];
           var bCb=128-0.168736*bR-0.331264*bG+0.5*bB;
           var bCr=128+0.5*bR-0.418688*bG-0.081312*bB;
-          var ad=t2.denoise/100*0.5*m;
+          var ad=t2.denoise/100*0.7*m;
           Cb+=(bCb-Cb)*ad; Cr+=(bCr-Cr)*ad;
         }
         if(t2.even>0){ var ae=t2.even/100*0.6*m; Cb+=(meanCb-Cb)*ae; Cr+=(meanCr-Cr)*ae; }
@@ -7346,7 +7350,10 @@ function stRunPipeline(srcImg,W,H,opts){
   /* (3c) global denoise (M29 + E16 Luma/Color NR) — unmasked, edge-preserving on luma */
   var nrC=stClamp((t2.gdn||0)*0.5+(t2.nrC||0)*0.6,0,100), nrLm=stClamp((t2.gdn||0)*0.25+(t2.nrL||0)*0.5,0,100);
   if(nrC>0||nrLm>0){
-    var nb1=stBlurData(cv,W,H,1);
+    /* same story as the skin path: a fixed 1px reference blur cannot clear the
+       perceptibility floor on a photo the app has already downscaled into its
+       preview buffer. Scale with whichever channel is driving. */
+    var nb1=stBlurData(cv,W,H,1+Math.max(nrC,nrLm)/100*3);
     px=cx.getImageData(0,0,W,H); d=px.data;
     var aC=nrC/100, aL=nrLm/100;
     for(var i4=0,p4=0;i4<n;i4++,p4+=4){
@@ -7519,6 +7526,41 @@ function stIsDirty(){
 }
 /* ---- photo load ---- */
 function stBufMax(){ return window.innerWidth<720 ? 896 : 1280; }
+/* Both denoise controls are chroma-only blends toward a blurred copy, so on a
+   photo whose chroma already matches its own blur they are a no-op — which is
+   every clean JPEG the app downscales into its preview buffer. They are not
+   unwired (they move plenty of pixels on genuinely noisy input), they simply
+   cannot act, and dragging them told the user nothing. This measures whether
+   there is anything to act on: mean |Cb - mean(Cb of the four neighbours)|,
+   which reads 0.11-0.15 on clean photos and 2.5-8.0 on noisy ones. Sampled on
+   a 3px lattice, since it runs on every buffer build. */
+function stChromaNoise(){
+  var px=ST.px0; if(!px) return 0;
+  var d=px.data, w=px.width, h=px.height, s=0, n=0, rw=w*4;
+  function cb(p){ return 128-0.168736*d[p]-0.331264*d[p+1]+0.5*d[p+2]; }
+  for(var y=1;y<h-1;y+=3){
+    for(var x=1;x<w-1;x+=3){
+      var p=(y*w+x)*4;
+      s+=Math.abs(cb(p)-(cb(p-4)+cb(p+4)+cb(p-rw)+cb(p+rw))/4); n++;
+    }
+  }
+  return n?s/n:0;
+}
+var ST_NOISE_FLOOR=0.5;
+/* A note that only appears when the sliders beside it cannot do anything. */
+ST.noiseNotes=[];
+function stNoiseNote(){
+  var p=el("p","mut");
+  function refresh(){
+    var quiet=ST.srcBitmap&&(ST.chromaNoise||0)<ST_NOISE_FLOOR;
+    p.style.display=quiet?"":"none";
+    if(quiet) p.textContent=L9({
+      my:"ဒီပုံမှာ မြင်သာတဲ့ noise မရှိပါ — Denoise က ပြင်စရာ မရှိပါ",
+      en:"No visible noise in this photo — denoise has nothing to work on"});
+  }
+  ST.refreshFns.push(refresh); ST.noiseNotes.push(refresh); refresh();
+  return p;
+}
 function stBuildBuffer(){
   var src=stGeoSource(), gw=src.width||src.naturalWidth, gh=src.height||src.naturalHeight;
   var MAX=stBufMax(), s=Math.min(1,MAX/Math.max(gw,gh));
@@ -7527,6 +7569,10 @@ function stBuildBuffer(){
   ST.bctx=ST.buf.getContext("2d",{willReadFrequently:true});
   ST.bctx.drawImage(src,0,0,bw,bh);
   ST.px0=ST.bctx.getImageData(0,0,bw,bh);
+  ST.chromaNoise=stChromaNoise();
+  /* refreshed here rather than waiting on the debounced UI pass: the note is
+     about the photo that was just loaded, so it has to land with it */
+  (ST.noiseNotes||[]).forEach(function(f){ f(); });
   var c=$("stCanvas"); c.width=bw; c.height=bh;
   if(ST.zoomReset) ST.zoomReset(); /* buffer dims changed (load/crop/rotate) — stale pan bounds */
 }
@@ -8066,6 +8112,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   g2.grid.appendChild(t2Slider("mu_denoise",L9({my:"— Denoise",en:"— Denoise"}),"denoise"));
   g2.grid.appendChild(t2Slider("mu_even",L9({my:"အသားရောင်ညီညာ",en:"Even Tone"}),"even"));
   g2.grid.appendChild(t2Slider("mu_deyellow",L9({my:"— အဝါဖယ်",en:"— De-Yellow"}),"deyellow"));
+  g2.b.appendChild(stNoiseNote());
   g2.b.appendChild(stSub(L9({my:"အသားအရေအပြီးသတ်",en:"Skin Finish"})));
   g2.b.appendChild(stChips({id:"mu_finish",choices:[["matte","Matte"],["dewy","Dewy"],["cream","Cream"]],
     get:function(){ return state.st.t2.finish; },
@@ -9252,6 +9299,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   nrGrid.appendChild(t2Slider("ev_nrL",L9({my:"Luma NR",en:"Luma NR"}),"nrL"));
   nrGrid.appendChild(t2Slider("ev_nrC",L9({my:"Color NR",en:"Color NR"}),"nrC"));
   e12.b.appendChild(nrGrid);
+  e12.b.appendChild(stNoiseNote());
   /* E17 — Histogram overlay on the stage */
   var histRow=el("div","st-ctl");
   histRow.appendChild(el("label",null,L9({my:"ဟစ်စတိုဂရမ်",en:"Histogram"})));
@@ -12026,7 +12074,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.34.0";
+var APP_VER="4.34.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
