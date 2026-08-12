@@ -496,19 +496,50 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     const el = document.querySelector(".toast");
     const base = getComputedStyle(el);
     const idle = { display: base.display, opacity: base.opacity, visibility: base.visibility, trans: base.transitionDuration };
+
+    /* Poll to the settled value instead of sampling one fixed instant. The
+       claim under test is "it fades in, and it fades out without ever being
+       yanked from the layout" — not how fast. A flat sleep shorter than the
+       180ms transition catches a loaded CI runner mid-fade and fails a
+       perfectly correct toast (seen at opacity 0.718). */
+    const settle = async (want) => {
+      let last = null;
+      for (let i = 0; i < 120; i++) {                        // up to ~2.4s
+        const cs = getComputedStyle(el);
+        last = { display: cs.display, opacity: cs.opacity, cls: el.className, inDom: document.body.contains(el) };
+        const o = parseFloat(cs.opacity);
+        if (want === 1 ? o >= 0.999 : o <= 0.001) break;
+        await sleep(20);
+      }
+      return last;
+    };
+
     toast("v4.28 toast probe", "ok");
-    await sleep(60);
-    const onCs = getComputedStyle(el);
-    const on = { display: onCs.display, opacity: onCs.opacity, cls: el.className };
+    const on = await settle(1);
     el.className = "toast";                                  // dismiss the way the timer does
-    await sleep(30);
-    const offCs = getComputedStyle(el);
-    const off = { display: offCs.display, opacity: offCs.opacity, inDom: document.body.contains(el) };
+    const off = await settle(0);
     return { idle, on, off };
   });
+
+  /* Timing-independent backbone: whatever the runner's frame budget, the
+     stylesheet must never dismiss the toast by removing it from the layout. */
+  const c12css = await page.evaluate(() => {
+    const hits = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules; try { rules = sheet.cssRules; } catch (e) { continue; }
+      for (const r of Array.from(rules || [])) {
+        if (r.selectorText && /(^|,)\s*\.toast\b/.test(r.selectorText)
+            && /display\s*:\s*none/i.test(r.cssText)) hits.push(r.selectorText);
+      }
+    }
+    return { displayNoneRules: hits };
+  });
   report("12 Toast: the element is always in the DOM and transitions its opacity in and out — never a display:none flip",
-    c12.idle.display !== "none" && c12.idle.trans !== "0s" && c12.on.opacity === "1"
-    && c12.off.display !== "none" && c12.off.inDom, JSON.stringify(c12));
+    c12.idle.display !== "none" && c12.idle.trans !== "0s"
+    && parseFloat(c12.on.opacity) >= 0.999
+    && c12.off.display !== "none" && c12.off.inDom
+    && parseFloat(c12.off.opacity) <= 0.001
+    && c12css.displayNoneRules.length === 0, JSON.stringify(Object.assign({}, c12, c12css)));
 
   // ---------------------------------------------------------------- 14) genOpts grid
   // (run before the 320px pass so the viewport reset order stays house-style)
