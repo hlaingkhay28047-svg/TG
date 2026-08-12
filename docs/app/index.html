@@ -750,7 +750,10 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 .dash-card{background:none;border:none;padding:0;text-align:center;color:var(--cream);cursor:pointer;min-height:44px}
 .dash-card .art{position:relative;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/3;border:1px solid var(--line-soft);background:var(--panel)}
 .dash-card .art img{width:100%;height:100%;object-fit:cover;display:block}
-.dash-card .bdg{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:var(--r-sm);background:rgba(11,13,20,.55);display:flex;align-items:center;justify-content:center;color:var(--cream)}
+/* Badge sits top-LEFT, not top-right: every one of the four Home card
+   photos places its subject right of centre, so a right-hand badge landed
+   squarely on her face. The left corner is background in all four. */
+.dash-card .bdg{position:absolute;top:8px;left:8px;width:32px;height:32px;border-radius:var(--r-sm);background:rgba(11,13,20,.55);display:flex;align-items:center;justify-content:center;color:var(--cream)}
 .dash-card .bdg svg{width:18px;height:18px}
 /* v4.28: the four Home cards are a grid — a label that wraps to two lines while
    its neighbour stays on one used to shove that card's caption out of line.
