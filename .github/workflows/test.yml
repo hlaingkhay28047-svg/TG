@@ -100,3 +100,6 @@ jobs:
 
       - name: Run v4.30.0 Accounts + Premium sweep (mocked)
         run: node test/sweep_account.js
+
+      - name: Run Visual Library set-browse sweep (mocked)
+        run: node test/sweep_library.js
