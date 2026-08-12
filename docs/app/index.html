@@ -547,7 +547,13 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .pt-sheet-in img.pt-big{display:block;width:100%;border-radius:var(--r-md);border:1px solid var(--line-soft)}
 @media (prefers-reduced-motion: reduce){.pt-badge.running::after,.pt-sheet.on,.pt-sheet.on .pt-sheet-in{animation:none!important}}
 /* sticky above the fixed bottom tab bar (76px + safe area, same offset the toast uses) */
-.st-genbar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-2) var(--sp-3);margin:var(--sp-4) 0}
+/* z-index 8, above #stStage (6) and #stJumpBar (5). The command strip was
+   BELOW the sticky preview: at the default scroll position on a 390px phone
+   elementFromPoint at the GENERATE button's centre returned #stCanvas, so
+   the button — and the pending-AI chips that are the only feedback the
+   AI-only controls produce — were painted over exactly when a user first
+   looks at the page. */
+.st-genbar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:8;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-2) var(--sp-3);margin:var(--sp-4) 0}
 .st-genbar .st-x{margin-left:6px;color:var(--muted)}
 #stPendCount{font-size:var(--fs-2xs);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #stPendChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-top:4px}
@@ -7857,10 +7863,34 @@ function stRefXPicker(){
   wrap.appendChild(el("span","mut",L9({my:"Reference ပုံ (IMAGE 2 — စတိုင်/အရောင်ကူးယူရန်သာ)",en:"Reference photo (IMAGE 2 — style/color source only)"})));
   return wrap;
 }
+/* Picking a style used to do NOTHING. Every one of these features needs BOTH
+   a selection and a non-zero Amount, and the Amount ships at 0 with nothing to
+   seed it — so the chip turned gold, no edit was queued, no pixel moved and no
+   message appeared. Measured before this change: 41 of the 51 chip rows in the
+   two suites behaved that way, including Makeup style, Brow style, Hair colour
+   and every Evoto eye-makeup row.
+
+   Seeding on first selection is the honest fix: the Amount slider visibly
+   moves, so the tap explains itself and the user can dial it back or to zero.
+   An amount the user has already set is never overwritten. The file already
+   did exactly this inline for mu_flash (||60) and ev_tattoo (||100); this
+   generalises it rather than repeating it 41 times. */
+var ST_SEED_AMT=60;
+function stSeedAmount(featId,pickedId){
+  var f=ST.feats[featId]; if(!f||!f.keys) return false;
+  for(var i=0;i<f.keys.length;i++){
+    var k=f.keys[i];
+    if(k===pickedId||!/V$/.test(k)) continue;
+    if(svGet(k,0)) return false;        /* the user owns this value — leave it */
+    svSet(k,ST_SEED_AMT);
+    return true;
+  }
+  return false;
+}
 function svChips(id,label,choices,featId,allowOff){
   return stChips({id:id,label:label,choices:choices,allowOff:allowOff,
     get:function(){ return svGet(id,null); },
-    set:function(v){ svSet(id,v); stSync(featId); }});
+    set:function(v){ svSet(id,v); if(v&&stSeedAmount(featId,id)) stRefreshUI(); stSync(featId); }});
 }
 function svToggle(id,label,featId){
   return stToggle({id:id,label:label,
@@ -7876,7 +7906,7 @@ function svColor(id,featId){
 function svMultiChips(id,label,choices,featId){
   var wrap=el("div");
   if(label) wrap.appendChild(el("div","subh",label));
-  var chips=el("div","chips");
+  var chips=el("div","chips"); chips.id=id;   /* the other 47 chip rows carry one */
   function list(){ var l=svGet(id,null); return Array.isArray(l)?l:[]; }
   function refresh(){
     var l=list();
@@ -7887,7 +7917,11 @@ function svMultiChips(id,label,choices,featId){
     c.onclick=function(){
       var l=list().slice(), i=l.indexOf(ch[0]);
       if(i>=0) l.splice(i,1); else l.push(ch[0]);
-      svSet(id,l); stSync(featId); refresh();
+      svSet(id,l);
+      /* same seeding rule as svChips — a zone picked with its Amount at 0 was
+         inert. Only on the way IN; emptying the list must not seed anything. */
+      if(l.length&&stSeedAmount(featId,id)) stRefreshUI();
+      stSync(featId); refresh();
     };
     chips.appendChild(c);
   });
@@ -7954,7 +7988,13 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   g2.b.appendChild(stSub(L9({my:"အသားအရေအပြီးသတ်",en:"Skin Finish"})));
   g2.b.appendChild(stChips({id:"mu_finish",choices:[["matte","Matte"],["dewy","Dewy"],["cream","Cream"]],
     get:function(){ return state.st.t2.finish; },
-    set:function(v){ state.st.t2.finish=v; stT2Changed(); stSaveSoon(); }}));
+    set:function(v){
+      state.st.t2.finish=v;
+      /* same rule as the style chips: a finish picked with its amount still at
+         0 rendered nothing. Seed it so the tap shows, never overwrite a value
+         the user has already dialled. */
+      if(v && !(state.st.t2.finishV||0)){ state.st.t2.finishV=ST_SEED_AMT; stRefreshUI(); }
+      stT2Changed(); stSaveSoon(); }}));
   g2.b.appendChild(stSlider({id:"mu_finishV",label:L9({my:"Finish ပမာဏ",en:"Finish amount"}),min:0,max:100,def:0,
     get:function(){ return state.st.t2.finishV||0; },
     set:function(v){ state.st.t2.finishV=v; stT2Changed(); stSaveSoon(); }}));
@@ -8650,7 +8690,10 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   e3.b.appendChild(stSub(L9({my:"အသားအရေ Texture & Finish",en:"Skin Texture & Finish"})));
   e3.b.appendChild(stChips({id:"ev_finish",choices:[["matte","Matte"],["satin","Satin"],["dewy","Dewy"]],
     get:function(){ var f=state.st.t2.finish; return f==="cream"?"satin":f; },
-    set:function(v){ state.st.t2.finish=v==="satin"?"cream":v; stT2Changed(); stSaveSoon(); }}));
+    set:function(v){
+      state.st.t2.finish=v==="satin"?"cream":v;
+      if(v && !(state.st.t2.finishV||0)){ state.st.t2.finishV=ST_SEED_AMT; stRefreshUI(); }
+      stT2Changed(); stSaveSoon(); }}));
   e3.b.appendChild(t2Slider("ev_gloss",L9({my:"Glossiness",en:"Glossiness"}),"gloss",true));
   var texGrid=el("div","st-grid");
   texGrid.appendChild(stSlider({id:"ev_finishV",label:L9({my:"Finish ပမာဏ",en:"Finish amount"}),min:0,max:100,def:0,
@@ -9420,17 +9463,47 @@ function stApplyPreset(p){
   saveState();
 }
 function stPresetT1Full(p){ var o=stDefT1(); if(p.t1) for(var k in p.t1) o[k]=p.t1[k]; return o; }
+/* A neutral, un-retouched beauty headshot that seeds every preset thumbnail
+   BEFORE the customer has picked a photo. Without it stRenderPresetCards()
+   fell through to a flat gradient, so all sixteen one-tap presets — the whole
+   point of the page — rendered as identical empty tiles carrying nothing but
+   their name. The shot is deliberately bare-skinned, makeup-free and neutrally
+   white-balanced so each preset's own grade reads clearly against it. */
+var ST_SAMPLE="lib/st-sample.jpg";
+function stThumbFrom(src, sw, sh){
+  var tw=76,th=96,c=document.createElement("canvas"); c.width=tw; c.height=th;
+  var cx=c.getContext("2d");
+  var tr=tw/th,cw,ch;
+  if(sw/sh>tr){ ch=sh; cw=sh*tr; } else { cw=sw; ch=sw/tr; }
+  cx.drawImage(src,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,tw,th);
+  return c;
+}
 function stRenderThumbs(){
   if(ST.srcBitmap){
-    var tw=76,th=96,c=document.createElement("canvas"); c.width=tw; c.height=th;
-    var cx=c.getContext("2d");
-    var sw=ST.srcW,sh=ST.srcH,tr=tw/th,cw,ch;
-    if(sw/sh>tr){ ch=sh; cw=sh*tr; } else { cw=sw; ch=sw/tr; }
-    cx.drawImage(ST.srcBitmap,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,tw,th);
+    ST.thumbCanvas=stThumbFrom(ST.srcBitmap,ST.srcW,ST.srcH);
+  } else if(ST.sampleBitmap){
+    /* Crop the sample tight on the face. A whole head-and-shoulders inside a
+       76x96 tile leaves so little skin that a preset's grade is barely
+       readable; filling the tile with the face is what makes sixteen presets
+       distinguishable at a glance. Uses the sample's known framing — a real
+       customer photo keeps the safe centre crop above. */
+    var sb=ST.sampleBitmap, w=sb.naturalWidth, h=sb.naturalHeight;
+    var cw=w*0.62, ch=cw*(96/76), cx0=(w-cw)/2, cy0=h*0.13;
+    if(cy0+ch>h) cy0=Math.max(0,h-ch);
+    var c=document.createElement("canvas"); c.width=76; c.height=96;
+    c.getContext("2d").drawImage(sb,cx0,cy0,cw,ch,0,0,76,96);
     ST.thumbCanvas=c;
   } else ST.thumbCanvas=null;
   stRenderPresetCards();
 }
+(function stLoadSample(){
+  try{
+    var im=new Image();
+    im.onload=function(){ ST.sampleBitmap=im; if(!ST.srcBitmap) stRenderThumbs(); };
+    im.onerror=function(){};              /* missing asset -> the old gradient, never a crash */
+    im.src=ST_SAMPLE;
+  }catch(e){}
+})();
 function stRenderPresetCards(){
   [["muPresetRow",ST_PRESETS_MU],["evPresetRow",ST_PRESETS_EV]].forEach(function(pair){
     var host=$(pair[0]); if(!host) return;
@@ -11796,7 +11869,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.31.2";
+var APP_VER="4.32.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
