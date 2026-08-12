@@ -1077,6 +1077,16 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 
 <main class="wrap">
 
+<!-- The "you have no API key yet" prompt lives HERE, above the page stack,
+     not inside a page. It used to sit inside #pgWf, which was fine while a
+     fresh install landed on Workflows — but v4.27.0 moved the landing page to
+     Home, and the banner went with the page: measured at 65px on pgWf and 0px
+     on the other eleven. A keyless first-run user saw no key prompt anywhere
+     after dismissing onboarding. As a sibling of the pages it shows on all of
+     them; updateKeyBanner() and its click handler both resolve by id, so
+     nothing else changes. -->
+<div class="keybanner" id="keyBanner"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-key"/></svg> API key မထည့်ရသေးပါ — ဒီမှာနှိပ်ပြီး Setup မှာ ထည့်ပါ (တစ်ခါထည့်ရုံပဲ)</div>
+
 <nav class="subtabbar" id="subtabbar"></nav>
 
 <div class="page" id="pgDash">
@@ -1119,7 +1129,6 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   <p class="lede" id="heroLede"></p>
   </header>
 
-  <div class="keybanner" id="keyBanner"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-key"/></svg> API key မထည့်ရသေးပါ — ဒီမှာနှိပ်ပြီး Setup မှာ ထည့်ပါ (တစ်ခါထည့်ရုံပဲ)</div>
   <section class="card">
     <h2 id="wfPageH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-brain"/></svg>SMART WORKFLOW</h2>
     <div class="row"><input class="inp grow" id="wfSearch" type="search" enterkeyhint="search" autocapitalize="none" autocorrect="off" placeholder="Workflow ရှာရန် — veil, retouch, relight…"></div>
@@ -2323,7 +2332,7 @@ var TR_V430={
   acc_pass_changed:{my:"စကားဝှက် ပြောင်းပြီးပါပြီ ✓",en:"Password changed ✓",shn:"လႅၵ်ႈၶေႃႈလပ်ႉယဝ်ႉ ✓",kac:"Password galai ngut sai ✓",th:"เปลี่ยนรหัสผ่านแล้ว ✓",zh:"密码已更改 ✓",vi:"Đã đổi mật khẩu ✓",id:"Kata sandi diubah ✓",ms:"Kata laluan telah ditukar ✓"},
   acc_change_pass_h:{my:"စကားဝှက် ပြောင်းရန်",en:"Change password",shn:"လႅၵ်ႈၶေႃႈလပ်ႉ",kac:"Password galai",th:"เปลี่ยนรหัสผ่าน",zh:"更改密码",vi:"Đổi mật khẩu",id:"Ubah kata sandi",ms:"Tukar kata laluan"},
   acc_member_since:{my:"အဖွဲ့ဝင် ဖြစ်သည့်နေ့ — {D}",en:"Member since {D}",shn:"ပဵၼ်လုၵ်ႈၸုမ်းမႃး — {D}",kac:"Amyu masha byin ai shani — {D}",th:"เป็นสมาชิกตั้งแต่ {D}",zh:"注册于 {D}",vi:"Thành viên từ {D}",id:"Anggota sejak {D}",ms:"Ahli sejak {D}"},
-  acc_plan_h:{my:"အသုံးပြုခွင့် အခြေအနေ",en:"PLAN",shn:"ငဝ်းလၢႆးၸႂ်ႉတိုဝ်း",kac:"PLAN",th:"แพ็กเกจ",zh:"套餐状态",vi:"GÓI",id:"PAKET",ms:"PELAN"},
+  acc_plan_h:{my:"အသုံးပြုခွင့် အခြေအနေ",en:"PLAN",shn:"ငဝ်းလၢႆးၸႂ်ႉတိုဝ်း",kac:"PACKAGE",th:"แพ็กเกจ",zh:"套餐状态",vi:"GÓI",id:"PAKET",ms:"PELAN"},
   acc_plan_free:{my:"အခမဲ့ — Premium မဝယ်ရသေးပါ",en:"Free — no Premium yet",shn:"လၢႆလၢႆ — ပႆႇလႆႈသိုဝ်ႉ Premium",kac:"Free — Premium n mari shi ai",th:"ฟรี — ยังไม่มี Premium",zh:"免费版 — 尚未购买 Premium",vi:"Miễn phí — chưa có Premium",id:"Gratis — belum ada Premium",ms:"Percuma — belum ada Premium"},
   acc_plan_active:{my:"Premium သုံးနေဆဲ — {N} ရက် ကျန်ပါသေးတယ်",en:"Premium active — {N} days left",shn:"Premium ၸႂ်ႉယူႇ — ၵိုတ်း {N} ဝၼ်း",kac:"Premium galaw nga ai — {N} ya ngam ai",th:"Premium ใช้งานอยู่ — เหลือ {N} วัน",zh:"Premium 使用中 — 剩余 {N} 天",vi:"Premium đang hoạt động — còn {N} ngày",id:"Premium aktif — sisa {N} hari",ms:"Premium aktif — tinggal {N} hari"},
   acc_plan_soon:{my:"Premium သက်တမ်း {N} ရက်အတွင်း ကုန်ပါတော့မယ် — ကြိုတင် သက်တမ်းတိုးထားပါ",en:"Premium expires in {N} days — renew now",shn:"Premium တေမူတ်းၼႂ်း {N} ဝၼ်း — တေႃႇသိုပ်ႇဝႆႉၵွၼ်ႇ",kac:"Premium gaw {N} ya hta htum na — ya matut la u",th:"Premium จะหมดอายุใน {N} วัน — ต่ออายุตอนนี้",zh:"Premium 将在 {N} 天后到期 — 请提前续费",vi:"Premium hết hạn sau {N} ngày — gia hạn ngay",id:"Premium berakhir dalam {N} hari — perpanjang sekarang",ms:"Premium tamat dalam {N} hari — perbaharui sekarang"},
@@ -5184,7 +5193,7 @@ function renderRsBundleGrid(){
     c.onclick=function(){
       validKeys.forEach(function(k){ state.rt[k]=1; });
       renderRtChips(); renderRsBundleGrid(); renderRsSelCount(); renderAddonSummary();
-      toast(L9({my:bundle.label+" ✓ — slider "+validKeys.length+" ခု ဖွင့်ပေးလိုက်ပြီ",en:bundle.label+" ✓ — "+validKeys.length+" sliders turned on",shn:bundle.label+" ✓ — ပိုတ်ႁိပ်ႈ slider "+validKeys.length+" ဢၼ်",kac:bundle.label+" ✓ — slider "+validKeys.length+" hpaw kau sai",th:bundle.label+" ✓ — เปิด slider "+validKeys.length+" ตัวแล้ว",zh:bundle.label+" ✓ — 已开启 "+validKeys.length+" 个滑块",vi:bundle.label+" ✓ — đã bật "+validKeys.length+" slider",id:bundle.label+" ✓ — "+validKeys.length+" slider diaktifkan",ms:bundle.label+" ✓ — "+validKeys.length+" slider dihidupkan"}),"ok");
+      toast(L9({my:bundle.label+" ✓ — slider "+validKeys.length+" ခု ဖွင့်ပေးလိုက်ပြီ",en:bundle.label+" ✓ — "+validKeys.length+" sliders turned on",shn:bundle.label+" ✓ — ပိုတ်ႇ slider "+validKeys.length+" ဢၼ်",kac:bundle.label+" ✓ — slider "+validKeys.length+" hpaw kau sai",th:bundle.label+" ✓ — เปิด slider "+validKeys.length+" ตัวแล้ว",zh:bundle.label+" ✓ — 已开启 "+validKeys.length+" 个滑块",vi:bundle.label+" ✓ — đã bật "+validKeys.length+" slider",id:bundle.label+" ✓ — "+validKeys.length+" slider diaktifkan",ms:bundle.label+" ✓ — "+validKeys.length+" slider dihidupkan"}),"ok");
     };
     host.appendChild(c);
   });
@@ -5442,7 +5451,7 @@ $("rsOnetapStrengthLbl").textContent = t("rt_strength");
 $("rsStrengthLbl").textContent = t("rt_strength");
 $("rsClearAll").innerHTML = icn("i-trash")+" "+escH(L9({my:"အားလုံးဖျက်",en:"Clear all",shn:"လၢင်ႉပႅတ်ႈတင်းသဵင်ႈ",kac:"Yawng hkrat kau",th:"ล้างทั้งหมด",zh:"全部清除",vi:"Xóa tất cả",id:"Hapus semua",ms:"Padam semua"}));
 $("rsBundlesH").innerHTML = icn("i-tools")+" "+escH(L9({my:"Quick Bundles — အစုလိုက်",en:"Quick Bundles",shn:"Quick Bundles — မူႇလိူၵ်ႈဝႆး",kac:"Quick Bundles — hpawng hte",th:"ชุดรวมด่วน (Quick Bundles)",zh:"快捷组合 (Quick Bundles)",vi:"Gói nhanh (Quick Bundles)",id:"Paket cepat (Quick Bundles)",ms:"Gabungan pantas (Quick Bundles)"}));
-$("rsBundlesNote").textContent = L9({my:"အသုံးများသော slider အစုတွေကို တစ်ချက်တည်း ဖွင့်ပါ — ပြီးရင် အောက်မှာ တစ်ခုချင်း ချိန်ညှိနိုင်တယ်",en:"Turn on a common combo of sliders in one tap — fine-tune individual ones below afterward",shn:"ပိုတ်ႁိပ်ႈ slider ဢၼ်ၸႂ်ႉၵေႃႇတူင်ႇတင်းၼမ် တၢင်းတီႈလဵဝ် — ၶိုၼ်းၶႅၼ်ႇတီႈလုၵ်ႉၼိုင်ႈလႂ်ၼိုင်ႈလႂ် ၽၢႆႇတႂ်ႈ",kac:"Slider law law hpe langai hte hpaw jaw u — ndai npu kaw langai hpring galai chyam mai ai",th:"เปิดชุด slider ที่ใช้บ่อยในแตะเดียว — ปรับแต่ละตัวด้านล่างได้ภายหลัง",zh:"一键开启常用滑块组合 — 之后仍可在下方逐个微调",vi:"Bật một tổ hợp slider phổ biến chỉ bằng một chạm — tinh chỉnh từng cái bên dưới sau đó",id:"Aktifkan kombinasi slider umum sekali ketuk — sesuaikan satu per satu di bawah setelahnya",ms:"Hidupkan kombinasi slider biasa dengan satu ketikan — laraskan satu per satu di bawah selepas itu"});
+$("rsBundlesNote").textContent = L9({my:"အသုံးများသော slider အစုတွေကို တစ်ချက်တည်း ဖွင့်ပါ — ပြီးရင် အောက်မှာ တစ်ခုချင်း ချိန်ညှိနိုင်တယ်",en:"Turn on a common combo of sliders in one tap — fine-tune individual ones below afterward",shn:"ပိုတ်ႇ slider ဢၼ်ၸႂ်ႉၵေႃႇတူင်ႇတင်းၼမ် တၢင်းတီႈလဵဝ် — ၶိုၼ်းၶႅၼ်ႇတီႈလုၵ်ႉၼိုင်ႈလႂ်ၼိုင်ႈလႂ် ၽၢႆႇတႂ်ႈ",kac:"Slider law law hpe langai hte hpaw jaw u — ndai npu kaw langai hpring galai chyam mai ai",th:"เปิดชุด slider ที่ใช้บ่อยในแตะเดียว — ปรับแต่ละตัวด้านล่างได้ภายหลัง",zh:"一键开启常用滑块组合 — 之后仍可在下方逐个微调",vi:"Bật một tổ hợp slider phổ biến chỉ bằng một chạm — tinh chỉnh từng cái bên dưới sau đó",id:"Aktifkan kombinasi slider umum sekali ketuk — sesuaikan satu per satu di bawah setelahnya",ms:"Hidupkan kombinasi slider biasa dengan satu ketikan — laraskan satu per satu di bawah selepas itu"});
 setIcnText($("btnRsRetry"),"i-retry",t("retry"));
 $("rsResultH2").textContent = L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After",shn:"ၽွၼ်း — မူႇလ vs ယဝ်ႉ",kac:"Lachyum — Shawng hte Ngut",th:"ผลลัพธ์ — ก่อนกับหลัง",zh:"结果 — 前后对比",vi:"Kết quả — Trước và Sau",id:"Hasil — Sebelum vs Sesudah",ms:"Hasil — Sebelum lwn Selepas"});
 $("rsRerunLbl").textContent = L9({my:"အခြား strength နဲ့ ပြန်စမ်းမယ်",en:"Try again at a different strength",shn:"ၸၢမ်းၶိုၼ်း ၸႂ်ႉ strength ထႅင်ႈဢၼ်ၼိုင်ႈ",kac:"Strength kaga langai hte bai chyam u",th:"ลองใหม่ที่ strength อื่น",zh:"以不同强度重试",vi:"Thử lại với cường độ khác",id:"Coba lagi dengan kekuatan berbeda",ms:"Cuba lagi dengan kekuatan berbeza"});
@@ -10982,6 +10991,15 @@ function accShowDeviceLimit(){
   var dt = $("devLimitTxt"); if (dt){ dt.textContent = msg; dt.style.display = ""; }
   var da = $("devLimitAct"); if (da) da.style.display = "";
 }
+/* The counterpart. Freeing a slot used to leave "Device limit reached — remove
+   an old device from the list below" sitting above an empty list, telling the
+   user to do the thing they just did. */
+function accHideDeviceLimit(){
+  accSetInline("stAccDev", "");
+  var box = $("accDevLimit"); if (box) box.style.display = "none";
+  var dt = $("devLimitTxt"); if (dt) dt.style.display = "none";
+  var da = $("devLimitAct"); if (da) da.style.display = "none";
+}
 async function accRemoveDevice(row){
   if (!row || !row.id) return;
   if (!confirm(t("dev_remove_confirm"))) return;
@@ -10990,6 +11008,8 @@ async function accRemoveDevice(row){
       { method: "DELETE", headers: { "Prefer": "return=minimal" } });
     if (!r.ok){ accSetInline("stDev", t("acc_unreachable"), "err"); return; }
     acc.devices = acc.devices.filter(function(x){ return x !== row; });
+    accSetInline("stDev", "");      /* a retry after a failure must not keep the red line */
+    accHideDeviceLimit();
     accRenderDevices();
     toast(t("dev_removed"), "ok");
   } catch(e){ accSetInline("stDev", friendlyError(e), "err"); }
@@ -11086,7 +11106,19 @@ async function accPickShot(file){
   try {
     if (accPayPrevUrl) URL.revokeObjectURL(accPayPrevUrl);
     accPayPrevUrl = URL.createObjectURL(b);
-    var im = $("payShotPrev"); im.src = accPayPrevUrl; im.style.display = "";
+    var im = $("payShotPrev");
+    /* accDownscale() correctly hands back the ORIGINAL file when the browser
+       cannot decode it (HEIC off an iPhone is the common case). The preview
+       then renders as a 2px-tall dead image and the panel looks pixel-identical
+       to "no screenshot attached" — so the customer re-picks, or gives up, on a
+       file that was in fact accepted. Name the file on the button instead. */
+    im.onerror = function(){
+      im.style.display = "none";
+      setIcnText($("btnPayShot"), "i-camera",
+        t("pay_shot_pick") + " \u00b7 " + String((file && file.name) || "").slice(0, 28));
+    };
+    im.onload = function(){ im.style.display = ""; };
+    im.src = accPayPrevUrl; im.style.display = "";
   } catch(e){}
   accPayValidate();
 }
@@ -11122,7 +11154,12 @@ async function accUploadProof(blob, kind){
      would be normalised by the URL parser and walk the POST clean out of the
      payment-proofs bucket. Validate the shape, then encode both segments. */
   if (!/^[A-Za-z0-9_-]{8,64}$/.test(uid)){ var bad = new Error("bad-uid"); bad.status = 0; throw bad; }
-  var ext  = (blob.type === "image/png") ? "png" : "jpg";
+  /* Derive the extension from what the blob ACTUALLY is. The downscale path
+     returns image/jpeg, but its fallbacks return the original file untouched —
+     so a HEIC was being stored as .jpg, and that wrong name is what lands in
+     screenshot_path for the admin to open. */
+  var sub = String(blob.type || "").split("/")[1] || "";
+  var ext = (sub === "jpeg" || sub === "") ? "jpg" : (/^[a-z0-9]{2,5}$/.test(sub) ? sub : "jpg");
   var name = kind + "-" + Date.now() + "." + ext;
   var path = uid + "/" + name;                       /* what goes in screenshot_path */
 
@@ -11207,14 +11244,17 @@ function accPollTick(){
   }
   accPollOnce();
 }
+/* Returns {ok} so the manual "Check status" button can say something when the
+   check fails. The timer ignores the result; a human pressing a button must
+   not be answered with silence. */
 async function accPollOnce(){
-  if (!acc.pending || !acc.pending.id || !acc.sess) return;
+  if (!acc.pending || !acc.pending.id || !acc.sess) return { ok:false };
   try {
     var r = await accFetch("/rest/v1/payment_requests?select=*&id=eq." + encodeURIComponent(acc.pending.id), { method: "GET" });
-    if (!r.ok) return;
+    if (!r.ok) return { ok:false };
     var rows = await accJson(r);
     var row = Array.isArray(rows) ? rows[0] : rows;
-    if (!row) return;
+    if (!row) return { ok:false };
     acc.pending = row;
     if (row.status === "approved"){
       accPollStop();
@@ -11232,7 +11272,8 @@ async function accPollOnce(){
       accRenderPay();
       try { accLoadRequests(); } catch(e){}
     }
-  } catch(e){ acc.online = false; }
+    return { ok:true };
+  } catch(e){ acc.online = false; return { ok:false, offline:true }; }
 }
 
 /* ---------------- §6 gating ---------------- */
@@ -11465,11 +11506,19 @@ function accRenderDevices(){
     nm.textContent = lbl.slice(0, 40);          /* DB text — textContent only */
     nm.title = lbl.slice(0, 40);
     li.appendChild(nm);
-    if (row && row.device_id === me){ var pill = el("span","dv-me"); pill.textContent = t("dev_this"); li.appendChild(pill); }
-    var rm = el("button","btn");
-    setIcnText(rm, "i-trash", t("dev_remove"));
-    rm.onclick = function(){ accRemoveDevice(row); };
-    li.appendChild(rm);
+    var isMe = !!(row && row.device_id === me);
+    if (isMe){ var pill = el("span","dv-me"); pill.textContent = t("dev_this"); li.appendChild(pill); }
+    /* No Remove on your own row. dev_remove_confirm promises "it will have to
+       log in again", and for THIS browser that is a lie: the session survives,
+       the id survives in localStorage, and the next boot silently re-registers
+       it. The row a user actually needs to drop is another device, and that one
+       still offers the button. */
+    if (!isMe){
+      var rm = el("button","btn");
+      setIcnText(rm, "i-trash", t("dev_remove"));
+      rm.onclick = function(){ accRemoveDevice(row); };
+      li.appendChild(rm);
+    }
     ul.appendChild(li);
   });
 }
@@ -11630,7 +11679,19 @@ function accWire(){
   };
   $("btnPaySubmit").onclick = function(){ accSubmitPayment(); };
   $("btnPayRetry").onclick  = function(){ accLoadSettings(); };
-  $("btnPayRefresh").onclick = function(){ accPollOnce(); };
+  /* #stPayPend has sat in the markup unwritten since the wave shipped, so a
+     failed status check produced nothing at all — no text, no toast, on a 500,
+     on a dead network, on an empty reply. accSetInline, not setSt: this node
+     lives inside the collapsible buy accordion and setSt() toasts when its
+     target is off-screen. Reuses existing keys, so the 75-key pin holds. */
+  $("btnPayRefresh").onclick = function(){
+    var b = this;
+    accBusy(b, true); accSetInline("stPayPend", "");
+    accPollOnce().then(function(r){
+      accBusy(b, false);
+      if (!r || !r.ok) accSetInline("stPayPend", t(r && r.offline ? "acc_offline" : "acc_unreachable"), "err");
+    });
+  };
   $("btnPayAgain").onclick = function(){ acc.pending = null; accRenderPay(); };
   /* the gear already routes to Setup (switchPage("pgHome")); v4.30 adds the
      account affordance to it — see the header note in the stylesheet.
@@ -11735,7 +11796,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.31.0";
+var APP_VER="4.31.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

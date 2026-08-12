@@ -270,6 +270,29 @@ function check(ok, label, detail) {
   check(cont.shown && cont.thumbIsResult && cont.chips >= 1 && cont.hist > 0,
     "Continue row appears after a mocked generate: state.hist[0] thumb + recent-workflow chips", cont);
 
+  /* ---- keyless first-run user must actually SEE the key prompt ----
+     v4.27.0 moved the landing page from Workflows to Home, and #keyBanner was
+     markup-level a child of #pgWf — so it went from "the first thing a keyless
+     user sees" to 0px on eleven of twelve pages, silently, with no test
+     watching. It is now a sibling of the page stack. This asserts both halves:
+     visible everywhere without a key, gone once a key is saved. */
+  const kb = await page.evaluate(pgs => {
+    try { localStorage.removeItem("hnk_web_studio_key"); } catch (e) {}
+    state.key = ""; updateKeyBanner();
+    const el = document.getElementById("keyBanner");
+    const noKey = {};
+    pgs.forEach(id => { switchPage(id); noKey[id] = el.offsetHeight; });
+    state.key = "AIza-test-key-value-placeholder"; updateKeyBanner();
+    switchPage("pgDash");
+    const withKey = el.offsetHeight;
+    state.key = ""; updateKeyBanner();
+    return { noKey, withKey, pages: pgs.length };
+  }, ["pgDash","pgWf","pgCreate","pgStudio","pgRetouch","pgPath","pgText2Img","pgVideo","pgVideoUp","pgLib","pgGal","pgHome"]);
+  const kbHidden = Object.keys(kb.noKey).filter(k => !(kb.noKey[k] > 0));
+  check(kbHidden.length === 0 && kb.withKey === 0,
+    "key banner: a user with no API key sees the prompt on EVERY page (not just Workflows), and it disappears once a key is saved",
+    JSON.stringify({ pagesMissingBanner: kbHidden, withKey: kb.withKey, pages: kb.pages }));
+
   await page.close();
   await browser.close();
   console.log("\n" + (failures ? "FAIL (" + failures + " failure(s))" : "PASS"));
