@@ -550,6 +550,8 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .pt-idx{position:absolute;top:4px;left:4px;min-width:20px;height:20px;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-size:var(--fs-2xs);font-weight:800;background:rgba(11,13,20,.7);color:var(--cream)}
 .pt-empty{border:1px dashed var(--line);border-radius:var(--r-md);background:var(--panel-2);color:var(--muted);width:100%;min-height:96px;padding:var(--sp-4);font-size:var(--fs-base);font-weight:700;text-align:center;margin-top:var(--sp-3)}
 .pt-log{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-2xs);color:var(--muted);max-height:120px;overflow-y:auto;white-space:pre-wrap;margin-top:var(--sp-2)}
+.fab-top{position:fixed;right:14px;bottom:76px;z-index:49;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(11,13,20,.92);color:var(--gold-hi);font-size:18px;font-weight:800;display:none;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.fab-top.on{display:flex}
 .pt-prog{height:6px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:4px;overflow:hidden;margin-top:8px}
 .pt-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e9b949,#f7e2a6);transition:width .3s ease}
 /* honest "this control has no free preview" marker (spec §6) */
@@ -1602,7 +1604,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <button class="btn" id="btnV2Stop" style="display:none;margin-top:10px"></button>
       </div>
       <div class="status" id="stV2Gen"></div>
-      <div class="mut" id="v2Log" style="font-family:ui-monospace,monospace;font-size:var(--fs-2xs)"></div>
+      <div class="mut" id="v2Log" style="font-family:ui-monospace,monospace;font-size:var(--fs-2xs);max-height:110px;overflow-y:auto;white-space:pre-wrap"></div>
       <button class="btn" id="btnV2Retry" style="display:none;margin-top:8px"></button>
     </div>
   </section>
@@ -1685,6 +1687,10 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <textarea class="inp" id="prompt" placeholder="One-Tap နှိပ်ရင် ဒီမှာ prompt အလိုအလျောက် ရောက်လာမယ် — ကိုယ်တိုင်လည်း English/မြန်မာလို ရေးလို့ရတယ်…"></textarea>
     <div class="mut" id="genTrHint" style="display:none;margin-top:4px"></div>
     <div class="mut" id="tapNote" style="margin-top:6px"></div>
+    <div class="row" style="margin-top:6px">
+      <button class="chip" id="btnRefsClear"></button>
+      <button class="chip" id="btnPromptCopy"></button>
+    </div>
     <div id="promptHistWrap" style="display:none">
       <div class="subh" id="phHead"></div>
       <div id="promptHist"></div>
@@ -2042,6 +2048,11 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   <section class="card">
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-gallery"/></svg>MY GALLERY</h2>
     <p class="mut" id="galNote">ထုတ်ပြီးသမျှ ရလဒ်တွေ ဒီမှာ အလိုအလျောက် စုသိမ်းထားတယ် (ဖုန်းထဲမှာပဲ) — reload လုပ်လည်း မပျောက်ဘူး။</p>
+    <div class="row" id="galBulkBar" style="margin-bottom:8px">
+      <button class="chip" id="galSelMode"></button>
+      <button class="btn" id="galZipSel" style="display:none"></button>
+      <button class="btn" id="galDelSel" style="display:none"></button>
+    </div>
     <div class="lib-pick" id="galPick">
       <img id="galPickImg" alt="">
       <div class="grow">
@@ -2080,6 +2091,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 </div></div>
 <nav class="tabbar" id="tabbar"></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<button class="fab-top" id="btnTop" aria-label="back to top">↑</button>
 <div class="wiz" id="wiz" role="dialog" aria-modal="true"><div class="wiz-in" id="wizIn"></div></div>
 <!-- v4.30 paywall sheet — a sibling of #wiz so it reuses the same z-index:70
      full-screen overlay and its overscroll containment. With every
@@ -2792,6 +2804,19 @@ document.addEventListener("keydown", function(ev){
   var sheet=$("ptSheet");
   if(sheet && sheet.className.indexOf("on")>=0 && typeof ptCloseSheet==="function") ptCloseSheet();
 });
+/* jump-to-top FAB — the Library is 26 "load more" taps deep at full depth */
+(function(){
+  var b=$("btnTop"); if(!b) return;
+  var ticking=false;
+  window.addEventListener("scroll", function(){
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(function(){
+      b.classList.toggle("on", window.scrollY>1200);
+      ticking=false;
+    });
+  }, {passive:true});
+  b.onclick=function(){ window.scrollTo({top:0, behavior:"smooth"}); };
+})();
 
 /* ---------- gallery (IndexedDB — results survive reloads) ---------- */
 var _idb=null;
@@ -2831,32 +2856,60 @@ function galleryDel(id, cb){
   });
 }
 var galSel=null;
+/* v4.38: select-mode — tap tiles to build a set, then ZIP or delete them all */
+var galMulti={ on:false, ids:{} };
+function galMultiCount(){ var n=0,k; for(k in galMulti.ids) n++; return n; }
+function galBulkRefresh(){
+  var n=galMultiCount();
+  var z=$("galZipSel"), dl=$("galDelSel"), m=$("galSelMode");
+  if(m){
+    m.className="chip"+(galMulti.on?" on":"");
+    setIcnText(m,"i-stack",L9({my:galMulti.on?"ရွေးနေသည် — ပိတ်မယ်":"အများရွေးမယ်",en:galMulti.on?"Selecting — done":"Select multiple",shn:galMulti.on?"တိုၵ်ႉလိူၵ်ႈ — သေယဝ်ႉ":"လိူၵ်ႈလၢႆဢၼ်",kac:galMulti.on?"Lata nga — ngut sai":"Law law lata u",th:galMulti.on?"กำลังเลือก — เสร็จ":"เลือกหลายรูป",zh:galMulti.on?"选择中 — 完成":"多选",vi:galMulti.on?"Đang chọn — xong":"Chọn nhiều",id:galMulti.on?"Memilih — selesai":"Pilih banyak",ms:galMulti.on?"Memilih — selesai":"Pilih banyak"}));
+  }
+  if(z){ z.style.display=galMulti.on&&n?"":"none"; setIcnText(z,"i-download","ZIP ("+n+")"); }
+  if(dl){ dl.style.display=galMulti.on&&n?"":"none"; setIcnText(dl,"i-trash",t("pt_remove")+" ("+n+")"); }
+}
 function renderGallery(){
   galDb().then(function(d){
     d.transaction("gal").objectStore("gal").getAll().onsuccess=function(e){
       var items=(e.target.result||[]).reverse();
+      window._galItems=items;
       var grid=$("galGrid"); grid.innerHTML="";
       $("galEmpty").classList.toggle("on",!items.length);
       if(galSel && !items.some(function(it){ return it.id===galSel.id; })) galSel=null;
       if(!galSel){ $("galPick").className="lib-pick"; }
+      galBulkRefresh();
       if(!items.length){ return; }
       items.forEach(function(it){
         var im=document.createElement("img");
         im.src="data:"+it.mime+";base64,"+it.b64;
-        im.loading="lazy";
+        im.loading="lazy"; im.decoding="async";
         im.alt=(it.prompt||"").slice(0,80)||"gallery result";
-        im.className = galSel && galSel.id===it.id ? "sel" : "";
+        im.className = (galMulti.on&&galMulti.ids[it.id]) || (galSel&&galSel.id===it.id) ? "sel" : "";
         im.classList.add("ld"); im.onload=im.onerror=function(){ im.classList.remove("ld"); };
         makePickable(im, function(){
+          if(galMulti.on){
+            if(galMulti.ids[it.id]) delete galMulti.ids[it.id]; else galMulti.ids[it.id]=1;
+            im.classList.toggle("sel", !!galMulti.ids[it.id]);
+            galBulkRefresh();
+            return;
+          }
           galSel=it;
           var src="data:"+it.mime+";base64,"+it.b64;
           $("galPick").className="lib-pick on";
           $("galPickImg").src=src;
           $("galDl").href=src;
-          $("galPickInfo").textContent=(it.prompt||"").slice(0,90);
+          $("galDl").setAttribute("download","hnk-gallery-"+ptStamp()+"-"+it.id+(it.mime==="image/png"?".png":".jpg"));
+          /* the record has carried a timestamp since day one — show it,
+             plus an honest approximate file size */
+          var kb=Math.round(it.b64.length*3/4/1024);
+          var dt=new Date(it.ts||Date.now());
+          function p2(x){ return (x<10?"0":"")+x; }
+          $("galPickInfo").textContent=(it.prompt?(it.prompt||"").slice(0,90)+" · ":"")+
+            dt.getFullYear()+"-"+p2(dt.getMonth()+1)+"-"+p2(dt.getDate())+" "+p2(dt.getHours())+":"+p2(dt.getMinutes())+" · ~"+kb+" KB";
           var g=grid.querySelectorAll("img");
-          for(var i=0;i<g.length;i++) g[i].className="";
-          im.className="sel";
+          for(var i=0;i<g.length;i++) g[i].classList.remove("sel");
+          im.classList.add("sel");
         });
         grid.appendChild(im);
       });
@@ -2878,7 +2931,39 @@ $("galToImg1").onclick=function(){
 };
 $("galDel").onclick=function(){
   if(!galSel) return;
-  galleryDel(galSel.id, function(){ galSel=null; renderGallery(); });
+  var kept=galSel;   /* deletion gets the same undo toast the rest of the app has */
+  galleryDel(kept.id, function(){
+    galSel=null; renderGallery();
+    toast(L9({my:"ပုံ ဖျက်လိုက်ပါပြီ",en:"Photo deleted",shn:"မွတ်ႇယဝ်ႉ",kac:"Sumla shamat sai",th:"ลบรูปแล้ว",zh:"已删除照片",vi:"Đã xóa ảnh",id:"Foto dihapus",ms:"Foto dipadam"}),"ok",
+      {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
+       fn:function(){ galDb().then(function(d){ d.transaction("gal","readwrite").objectStore("gal").put(kept).onsuccess=function(){ renderGallery(); }; }); }});
+  });
+};
+$("galSelMode").onclick=function(){
+  galMulti.on=!galMulti.on; galMulti.ids={};
+  if(galMulti.on){ galSel=null; $("galPick").className="lib-pick"; }
+  renderGallery();
+};
+$("galZipSel").onclick=function(){
+  var items=(window._galItems||[]).filter(function(it){ return galMulti.ids[it.id]; });
+  if(!items.length) return;
+  var entries=items.map(function(it,i){
+    return { name:"hnk-gal-"+ptStamp()+"-"+(i+1)+(it.mime==="image/png"?".png":".jpg"), u8:ptB64ToU8(it.b64) };
+  });
+  ptSaveBlob(new Blob([ptZip(entries)],{type:"application/zip"}), "hnk-gallery-"+ptStamp()+".zip");
+};
+$("galDelSel").onclick=function(){
+  var ids=Object.keys(galMulti.ids).map(Number);
+  if(!ids.length) return;
+  var kept=(window._galItems||[]).filter(function(it){ return galMulti.ids[it.id]; });
+  var left=ids.length;
+  ids.forEach(function(id){ galleryDel(id, function(){ if(!--left){ galMulti.ids={}; renderGallery(); } }); });
+  toast(L9({my:"ပုံ "+ids.length+" ပုံ ဖျက်လိုက်ပါပြီ",en:ids.length+" photos deleted",shn:"မွတ်ႇ "+ids.length+" ဢၼ်ယဝ်ႉ",kac:"Sumla "+ids.length+" shamat sai",th:"ลบ "+ids.length+" รูปแล้ว",zh:"已删除 "+ids.length+" 张照片",vi:"Đã xóa "+ids.length+" ảnh",id:ids.length+" foto dihapus",ms:ids.length+" foto dipadam"}),"ok",
+    {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
+     fn:function(){ galDb().then(function(d){
+       var st=d.transaction("gal","readwrite").objectStore("gal"); var n=kept.length;
+       kept.forEach(function(it){ st.put(it).onsuccess=function(){ if(!--n) renderGallery(); }; });
+     }); }});
 };
 $("galEmptyGo").onclick=function(){ switchPage("pgWf"); };
 (function buildTabbar(){
@@ -5445,7 +5530,13 @@ $("btnRsRetry").onclick=async function(){
   rsStop=false;
   rsSyncGenControls(true);
   var beforeFirst=state.hist[0]; // see rsDoGenerate's comment: length alone misreports success once history is at its 8-item cap
-  await $("btnGen").onclick();
+  /* rsDoGenerate blanks refs[1]/[2] for the run — the retry must too, or a
+     stray reference left by Create/Studio rides along that the original
+     run never sent */
+  var sr1=state.refs[1], sr2=state.refs[2];
+  state.refs[1]=null; state.refs[2]=null;
+  try{ await $("btnGen").onclick(); }
+  finally{ state.refs[1]=sr1; state.refs[2]=sr2; }
   var srcSt=$("stGen");
   setSt("stRsGen", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
   rsSyncGenControls(false);
@@ -5692,10 +5783,14 @@ function v2SetBusy(b, label){
   }
   document.querySelectorAll("#rsPresetGrid .chip, #rsBundleGrid .chip, #rsRerunChips .chip").forEach(function(c){ c.disabled=b; });
 }
-/* DP timestamped mono log line — persistent proof of the last run */
+/* DP timestamped mono log — scrollback instead of a single self-overwriting
+   line, so batch progress stays readable (capped at 30 lines) */
+var _v2LogLines=[];
 function v2Log(msg){
   var d=new Date(); function p(x){ return (x<10?"0":"")+x; }
-  var host=$("v2Log"); if(host) host.textContent="["+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"] "+msg;
+  _v2LogLines.push("["+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"] "+msg);
+  while(_v2LogLines.length>30) _v2LogLines.shift();
+  var host=$("v2Log"); if(host){ host.textContent=_v2LogLines.join("\n"); host.scrollTop=host.scrollHeight; }
 }
 function v2Sync(){
   state.v2Armed=false; /* any manual settings change disarms next-photo auto-start */
@@ -10836,15 +10931,26 @@ async function libToSlot(slot, btn){
     state.refs[slot]={mime:"image/jpeg", b64:b64, label:it.t};
     state.imgRoles=null;
     renderRefs();
-    setSt("stGen",L9({my:"Library · ",en:"Library · ",shn:"Library · ",kac:"Library · ",th:"Library · ",zh:"Library · ",vi:"Library · ",id:"Library · ",ms:"Library · "})+it.t+" → IMAGE "+(slot+1)+" ✓","ok");
+    /* toast, not #stGen: that status node lives on pgCreate, which is hidden
+       while you are standing in the Library — errors were invisible here */
+    toast(L9({my:"Library · ",en:"Library · ",shn:"Library · ",kac:"Library · ",th:"Library · ",zh:"Library · ",vi:"Library · ",id:"Library · ",ms:"Library · "})+it.t+" → IMAGE "+(slot+1)+" ✓","ok");
     $("refs").scrollIntoView({behavior:"smooth", block:"center"});
-  }catch(e){ setSt("stGen",L9({my:"Library ပုံ မယူနိုင်ပါ — internet စစ်ပါ",en:"Couldn't load this Library image — check your internet",shn:"ဢဝ်ဢမ်ႇလႆႈၶႅပ်းႁၢင်ႈ Library — တွပ်ႇထၢမ် internet",kac:"Library sumla n mai la ai — internet yu chyam u",th:"โหลดรูป Library ไม่ได้ — ตรวจสอบอินเทอร์เน็ต",zh:"无法加载此 Library 图片 — 请检查网络",vi:"Không thể tải ảnh Library này — kiểm tra kết nối internet",id:"Tidak dapat memuat gambar Library ini — periksa internet Anda",ms:"Tidak dapat memuat imej Library ini — semak internet anda"}),"err"); }
+  }catch(e){ toast(L9({my:"Library ပုံ မယူနိုင်ပါ — internet စစ်ပါ",en:"Couldn't load this Library image — check your internet",shn:"ဢဝ်ဢမ်ႇလႆႈၶႅပ်းႁၢင်ႈ Library — တွပ်ႇထၢမ် internet",kac:"Library sumla n mai la ai — internet yu chyam u",th:"โหลดรูป Library ไม่ได้ — ตรวจสอบอินเทอร์เน็ต",zh:"无法加载此 Library 图片 — 请检查网络",vi:"Không thể tải ảnh Library này — kiểm tra kết nối internet",id:"Tidak dapat memuat gambar Library ini — periksa internet Anda",ms:"Tidak dapat memuat imej Library ini — semak internet anda"}),"err"); }
   btn.disabled=false;
   btn.textContent=origTxt;
 }
 $("libToImg1").onclick=function(){ libToSlot(0, this); };
 $("libToImg2").onclick=function(){ libToSlot(1, this); };
-$("libSearch").oninput=function(){ lib.search=this.value; renderLibFilters(); renderLibGroups(); renderLibGrid(true); };
+/* debounced like Studio's search (120ms) — a Burmese IME keystroke used to
+   trigger two full 607-item passes plus a grid teardown, synchronously.
+   Clearing stays instant so the escape hatch feels immediate. */
+var _libT=null;
+$("libSearch").oninput=function(){
+  var v=this.value;
+  clearTimeout(_libT);
+  if(v===""){ lib.search=""; renderLibFilters(); renderLibGroups(); renderLibGrid(true); return; }
+  _libT=setTimeout(function(){ lib.search=v; renderLibFilters(); renderLibGroups(); renderLibGrid(true); },120);
+};
 $("libMore").onclick=function(){ renderLibGrid(false); };
 if($("libTotal")) $("libTotal").textContent=LW.items.length;
 renderLibFilters();
@@ -12321,7 +12427,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.37.1";
+var APP_VER="4.38.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -12740,12 +12846,38 @@ $("btnGen").onclick = async function(){
 
 $("btnRetry").onclick=function(){ this.style.display="none"; $("btnGen").onclick(); };
 
+/* v4.38 Freeform quick chips: clear all three refs in one tap (with undo),
+   and copy the prompt text for reuse elsewhere */
+(function(){
+  var bc=$("btnRefsClear"), bp=$("btnPromptCopy");
+  if(bc){
+    setIcnText(bc,"i-trash",L9({my:"ပုံအားလုံး ဖယ်မယ်",en:"Clear all images",shn:"လၢင်ႉၶႅပ်းႁၢင်ႈတင်းမူတ်း",kac:"Sumla yawng hpe sausan u",th:"ล้างรูปทั้งหมด",zh:"清除所有图片",vi:"Xóa tất cả ảnh",id:"Hapus semua gambar",ms:"Kosongkan semua imej"}));
+    bc.onclick=function(){
+      if(!state.refs.some(Boolean)) return;
+      var kept=state.refs.slice();
+      state.refs=[null,null,null]; state.imgRoles=null; renderRefs();
+      toast(L9({my:"ပုံ ၃ ကွက်လုံး ရှင်းလိုက်ပါပြီ",en:"All image slots cleared",shn:"လၢင်ႉၶႅပ်းႁၢင်ႈတင်းမူတ်းယဝ်ႉ",kac:"Sumla slot yawng sausan sai",th:"ล้างช่องรูปทั้งหมดแล้ว",zh:"已清除所有图片槽",vi:"Đã xóa tất cả ô ảnh",id:"Semua slot gambar dihapus",ms:"Semua slot imej dikosongkan"}),"ok",
+        {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
+         fn:function(){ state.refs=kept; renderRefs(); }});
+    };
+  }
+  if(bp){
+    setIcnText(bp,"i-doc",L9({my:"Prompt ကူးမယ်",en:"Copy prompt",shn:"ၶူတ်ႉ prompt",kac:"Prompt hpe kaw u",th:"คัดลอก prompt",zh:"复制 prompt",vi:"Sao chép prompt",id:"Salin prompt",ms:"Salin prompt"}));
+    bp.onclick=function(){
+      var v=$("prompt").value.trim(); if(!v) return;
+      try{ navigator.clipboard.writeText(v).then(function(){ toast("✓","ok"); }); }
+      catch(e){ toast(L9({my:"ကူး၍မရပါ — စာကို ကိုယ်တိုင်ရွေးပြီး ကူးပါ",en:"Couldn't copy — select the text manually",shn:"ၶူတ်ႉဢမ်ႇလႆႈ",kac:"N mai kaw ai",th:"คัดลอกไม่ได้",zh:"无法复制",vi:"Không thể sao chép",id:"Tidak dapat menyalin",ms:"Tidak dapat menyalin"}),"err"); }
+    };
+  }
+})();
+
 function showResult(){
   var out=state.hist[state.histSel]||state.result; if(!out) return;
   $("resultBox").className="card result-box on";
   var src="data:"+out.mime+";base64,"+out.b64;
   $("resultImg").src=src;
   $("btnDl").href=src;
+  $("btnDl").setAttribute("download","hnk-create-"+ptStamp()+"-"+(state.histSel+1)+(out.mime==="image/png"?".png":".jpg"));
   var h=$("hist"); h.innerHTML="";
   state.hist.forEach(function(e,i){
     var im=document.createElement("img");
@@ -12830,10 +12962,13 @@ function updateVidPromptCount(){
 }
 function updateVidModelUI(){
   var m=vidModelDef();
-  var res=$("selVidRes"); res.innerHTML="";
+  /* switching model must not silently reset the user's res/dur picks */
+  var res=$("selVidRes"), keepR=res.value; res.innerHTML="";
   m.resolutions.forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent="Res: "+r; res.appendChild(o); });
-  var dur=$("selVidDur"); dur.innerHTML="";
+  if(keepR && m.resolutions.indexOf(keepR)>=0) res.value=keepR;
+  var dur=$("selVidDur"), keepD=dur.value; dur.innerHTML="";
   m.durations.forEach(function(d){ var o=document.createElement("option"); o.value=d; o.textContent=d+"s"; dur.appendChild(o); });
+  if(keepD && m.durations.map(String).indexOf(String(keepD))>=0) dur.value=keepD;
   $("selVidAspect").style.display = m.aspect ? "" : "none";
   $("vidPrompt").setAttribute("maxlength", m.promptMax);
   updateVidPromptCount();
@@ -12906,8 +13041,8 @@ $("btnVidGen").onclick = async function(){
     /* v4.28: Burmese prompts auto-translate on this provider too (needs a Gemini key) */
     text = await translateIfMyanmar(text, $("vidSpin"));
     $("vidSpin").textContent=spinBase;
-    var outs=await rhGenerateVideo(state.rhKey, m.apiPath, text, refDataUrls, resolution, duration, aspectRatio, m.imageParam, function(elapsed){
-      $("vidSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
+    var outs=await rhGenerateVideo(state.rhKey, m.apiPath, text, refDataUrls, resolution, duration, aspectRatio, m.imageParam, function(elapsed, status){
+      $("vidSpin").textContent=spinBase+(status?" · "+status:"")+" · "+Math.round(elapsed/1000)+"s";
     }, abort.signal);
     if(!outs.length){
       setSt("stVidGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
@@ -12928,13 +13063,13 @@ $("btnVidGen").onclick = async function(){
   btn.disabled=false; btn.classList.remove("working"); $("vidSpin").className="spin"; $("vidSpin").textContent=spinBase;
 };
 $("btnVidCancel").onclick=function(){ if(state.vidAbort) state.vidAbort.abort(); };
-$("btnVidRetry").onclick=function(){ this.style.display="none"; $("btnVidGen").onclick(); };
+$("btnVidRetry").onclick=function(){ if($("btnVidGen").disabled) return; this.style.display="none"; $("btnVidGen").onclick(); };
 $("btnVidDl").onclick=async function(){
   var out=state.vidHist[state.vidHistSel]; if(!out) return;
   var btn=this; if(btn.disabled) return; btn.disabled=true; setIcnText(btn,"i-download",VID_DL_BUSY);
   try{
     var blobUrl=await rhVideoDownloadBlobUrl(out.url);
-    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-web-studio-video.mp4";
+    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-video-"+(out.resolution||"")+"-"+ptStamp()+".mp4";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);
   } catch(e){
@@ -13024,8 +13159,8 @@ $("btnVuGen").onclick = async function(){
   var abort=new AbortController(); state.vuAbort=abort;
   setIcnText($("btnVuCancel"),"i-close",t("btn_cancel")); $("btnVuCancel").style.display="";
   try{
-    var outs=await rhGenerateVideoUpscale(state.rhKey, videoDataUrl, targetResolution, function(elapsed){
-      $("vuSpin").textContent=spinBase+" · "+Math.round(elapsed/1000)+"s";
+    var outs=await rhGenerateVideoUpscale(state.rhKey, videoDataUrl, targetResolution, function(elapsed, status){
+      $("vuSpin").textContent=spinBase+(status?" · "+status:"")+" · "+Math.round(elapsed/1000)+"s";
     }, abort.signal);
     if(!outs.length){
       setSt("stVuGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
@@ -13046,13 +13181,13 @@ $("btnVuGen").onclick = async function(){
   btn.disabled=false; btn.classList.remove("working"); $("vuSpin").className="spin"; $("vuSpin").textContent=spinBase;
 };
 $("btnVuCancel").onclick=function(){ if(state.vuAbort) state.vuAbort.abort(); };
-$("btnVuRetry").onclick=function(){ this.style.display="none"; $("btnVuGen").onclick(); };
+$("btnVuRetry").onclick=function(){ if($("btnVuGen").disabled) return; this.style.display="none"; $("btnVuGen").onclick(); };
 $("btnVuDl").onclick=async function(){
   var out=state.vuHist[state.vuHistSel]; if(!out) return;
   var btn=this; if(btn.disabled) return; btn.disabled=true; setIcnText(btn,"i-download",VID_DL_BUSY);
   try{
     var blobUrl=await rhVideoDownloadBlobUrl(out.url);
-    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-web-studio-video-upscaled.mp4";
+    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-video-upscaled-"+(out.resolution||"")+"-"+ptStamp()+".mp4";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);
   } catch(e){
@@ -13076,9 +13211,10 @@ function updateT2IModelUI(){
   var ratioList = m.ratios || (m.sizeField ? Object.keys(RH_QWEN3_T2I_SIZE_MAP) : null);
   $("selT2IRatio").style.display = ratioList ? "" : "none";
   if(ratioList){
-    var sel=$("selT2IRatio"); sel.innerHTML="";
+    var sel=$("selT2IRatio"), keepRa=sel.value; sel.innerHTML="";
     var auto=document.createElement("option"); auto.value=""; auto.textContent="Ratio: Auto"; sel.appendChild(auto);
     ratioList.forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent=r; sel.appendChild(o); });
+    if(keepRa && ratioList.indexOf(keepRa)>=0) sel.value=keepRa;
   }
   /* Only offer the size tiers a model actually honors — flux-2-dev and
      youchuan-v81 have neither resolutionField nor sizeField and would
@@ -13089,9 +13225,10 @@ function updateT2IModelUI(){
   var sizeTiers = m.resolutionField ? (m.resolutionEnum || ["1k","2k","4k"]) : (m.sizeField ? ["1k","2k"] : null);
   $("selT2IRes").style.display = sizeTiers ? "" : "none";
   if(sizeTiers){
-    var rs=$("selT2IRes"); rs.innerHTML="";
+    var rs=$("selT2IRes"), keepSz=rs.value; rs.innerHTML="";
     var autoR=document.createElement("option"); autoR.value=""; autoR.textContent="Size: Auto"; rs.appendChild(autoR);
     sizeTiers.forEach(function(t){ var o=document.createElement("option"); o.value=t.toUpperCase(); o.textContent=t.toUpperCase(); rs.appendChild(o); });
+    if(keepSz && sizeTiers.some(function(t){ return t.toUpperCase()===keepSz; })) rs.value=keepSz;
   }
   $("t2iPrompt").setAttribute("maxlength", m.promptMax||20000);
   updateT2IPromptCount();
@@ -13100,6 +13237,33 @@ RH_T2I_MODELS.forEach(function(m){ var o=document.createElement("option"); o.val
 $("selT2IModel").onchange = updateT2IModelUI;
 $("t2iPrompt").addEventListener("input", updateT2IPromptCount);
 updateT2IModelUI();
+
+/* ---- Media Lab preferences (v4.38): the three pages reset every setting on
+   reload because none of them ride saveState. A tiny separate blob restores
+   the last model/res/duration/aspect/ratio/size picks. ---- */
+var ML_LS="hnk_ws_medialab";
+function mlSave(){
+  try{ localStorage.setItem(ML_LS, JSON.stringify({
+    vm:$("selVidModel").value, vr:$("selVidRes").value, vd:$("selVidDur").value, va:$("selVidAspect").value,
+    ur:$("selVuRes").value, tm:$("selT2IModel").value, tr:$("selT2IRatio").value, ts:$("selT2IRes").value })); }catch(e){}
+}
+(function mlApply(){
+  var p; try{ p=JSON.parse(localStorage.getItem(ML_LS)||"{}"); }catch(e){ p={}; }
+  function set(id,v){
+    var s=$(id); if(!v||!s) return;
+    for(var i=0;i<s.options.length;i++) if(s.options[i].value===v){ s.value=v; return; }
+  }
+  set("selVidModel",p.vm); updateVidModelUI();
+  set("selVidRes",p.vr); set("selVidDur",p.vd); set("selVidAspect",p.va);
+  set("selVuRes",p.ur);
+  set("selT2IModel",p.tm); updateT2IModelUI();
+  set("selT2IRatio",p.tr); set("selT2IRes",p.ts);
+  ["selVidModel","selVidRes","selVidDur","selVidAspect","selVuRes","selT2IModel","selT2IRatio","selT2IRes"]
+    .forEach(function(id){ var s=$(id); if(s) s.addEventListener("change", mlSave); });
+})();
+/* Ctrl/Cmd+Enter fires the run — same affordance the key box already has */
+$("vidPrompt").addEventListener("keydown", function(ev){ if((ev.ctrlKey||ev.metaKey)&&ev.key==="Enter") $("btnVidGen").click(); });
+$("t2iPrompt").addEventListener("keydown", function(ev){ if((ev.ctrlKey||ev.metaKey)&&ev.key==="Enter") $("btnT2IGen").click(); });
 
 $("t2iIntro").textContent = L9({my:"Prompt တစ်ခုတည်းနဲ့ ပုံအသစ် ထုတ်ပေးမယ် — reference ပုံ မလိုပါ။ RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Generate a brand-new image from just a text prompt — no reference photo needed. Needs your RunningHub Enterprise key.",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈမႂ်ႇတီႈ prompt ၵူၺ်း — ဢမ်ႇလူဝ်ႇ reference ၶႅပ်းႁၢင်ႈ",kac:"Prompt sha hte lam de sumla nngai galaw ai — reference sumla n ra ai",th:"สร้างภาพใหม่จากข้อความอย่างเดียว — ไม่ต้องใช้รูปอ้างอิง",zh:"仅凭文字提示词生成全新图片 — 不需要参考图片",vi:"Tạo ảnh hoàn toàn mới chỉ từ một prompt văn bản — không cần ảnh tham chiếu",id:"Buat gambar baru hanya dari prompt teks — tidak perlu foto referensi",ms:"Jana imej baharu hanya daripada prompt teks — tidak perlu foto rujukan"});
 $("t2iPrompt").placeholder = L9({my:"ဘယ်လို ပုံမျိုး လိုချင်လဲ ဖော်ပြပါ — ဥပမာ: a photorealistic portrait of a woman in a red dress standing in a garden at golden hour…",en:"Describe the image you want — e.g. a photorealistic portrait of a woman in a red dress standing in a garden at golden hour…",shn:"တႅမ်ႈဝႃႈလွင်ႈၶႅပ်းႁၢင်ႈဢၼ်လူဝ်ႇ",kac:"Sumla n gara hku ra ai ni tsun dan u",th:"อธิบายภาพที่ต้องการ",zh:"描述你想要的图片",vi:"Mô tả bức ảnh bạn muốn",id:"Jelaskan gambar yang Anda inginkan",ms:"Terangkan imej yang anda mahu"});
