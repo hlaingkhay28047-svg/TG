@@ -745,6 +745,9 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 /* v4.28: the Stop escape hatch stays live (and fully visible) inside the
    frozen busy region */
 .v2-busy #btnV2Stop{pointer-events:auto;opacity:1}
+/* the 44px touch-target promise must not depend on font metrics: line-height
+   rounding rendered 43.9998px on some machines */
+#btnV2Stop{min-height:44px}
 .chip.v2-sw{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border-radius:50%;position:relative}
 /* v4.28: 34px stays the visual dot, but the hit area extends to 44px
    (same ::after technique as .refstrip .rsx) */
