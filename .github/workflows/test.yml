@@ -101,6 +101,9 @@ jobs:
       - name: Run v4.42.0 Studio mega-wave sweep (mocked)
         run: node test/sweep_v442_upgrades.js
 
+      - name: Run v4.43.0 language-upgrade sweep (mocked)
+        run: node test/sweep_v443_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
