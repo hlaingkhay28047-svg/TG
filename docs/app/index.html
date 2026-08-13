@@ -9,7 +9,7 @@
 <link rel="icon" href="lib/favicon-48.png" sizes="48x48">
 <link rel="icon" href="lib/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="lib/apple-touch-icon.png">
-<link rel="preload" as="image" href="lib/banners/banner-golden-temple-b.jpg">
+<link rel="preload" as="image" href="lib/banners/banner-golden-temple.jpg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HNK Studio">
@@ -60,14 +60,14 @@ input,textarea,select{font-family:inherit}
 
 .hero-strip{position:relative;padding:26px 0 6px;overflow:hidden;border-radius:0 0 18px 18px}
 .hero-art{position:absolute;top:0;left:-16px;right:-16px;bottom:0;z-index:-1;overflow:hidden}
-.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:1;will-change:transform;animation:heroKB 22s ease-in-out infinite alternate}
+.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:.92;will-change:transform;animation:heroKB 22s ease-in-out infinite alternate}
 @keyframes heroKB{from{transform:scale(1)}to{transform:scale(1.09) translateX(-1.2%)}}
-.hero-art:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:radial-gradient(55% 65% at 78% 28%,rgba(255,214,130,.26),transparent 70%);mix-blend-mode:screen;animation:heroGlow 7s ease-in-out infinite alternate}
+.hero-art:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:radial-gradient(55% 65% at 66% 26%,rgba(255,214,130,.22),transparent 70%);mix-blend-mode:screen;animation:heroGlow 7s ease-in-out infinite alternate}
 @keyframes heroGlow{from{opacity:.3}to{opacity:1}}
 /* two scrims: diagonal left-dark keeps the text zone readable while the
    right side stays clear so the hero subject's face is actually visible;
    the vertical fade anchors the statline and blends into the page */
-.hero-art:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;background:linear-gradient(102deg,rgba(11,13,20,.82) 0%,rgba(11,13,20,.5) 38%,rgba(11,13,20,.05) 62%,rgba(11,13,20,0) 100%),linear-gradient(180deg,rgba(11,13,20,.02) 0%,rgba(11,13,20,.06) 55%,var(--ink) 100%)}
+.hero-art:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;background:linear-gradient(102deg,rgba(11,13,20,.88) 0%,rgba(11,13,20,.6) 38%,rgba(11,13,20,.12) 66%,rgba(11,13,20,0) 100%),linear-gradient(180deg,rgba(11,13,20,.06) 0%,rgba(11,13,20,.12) 42%,var(--ink) 100%)}
 .hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:76%;text-shadow:0 1px 4px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,.75)}
 .hero-strip .statline{text-shadow:0 1px 3px rgba(0,0,0,.9),0 2px 10px rgba(0,0,0,.7)}
 @media (min-width:768px){.hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:62%}}
@@ -1137,7 +1137,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   <!-- v4.27.0: Home (pgDash) now owns routing + the inventory statline, so this
        hero ships permanently in its compact kick-line form (hero-mini) -->
   <header class="hero-strip hero-mini">
-  <div class="hero-art"><img src="lib/banners/banner-golden-temple-b.jpg" alt="" style="object-position:83% 27%"></div>
+  <div class="hero-art"><img src="lib/banners/banner-golden-temple.jpg" alt="" style="object-position:83% 27%"></div>
   <div class="hero-fx"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="kick">No Install · Panel Data · Gemini AI</div>
   <h1 id="heroH1">Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ</h1>
@@ -12096,7 +12096,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.35.3";
+var APP_VER="4.35.4";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
