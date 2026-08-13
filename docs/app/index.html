@@ -252,7 +252,10 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
 .subtab.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(8px);pointer-events:none;transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out),visibility 0s linear var(--dur-2)}
-.toast.on{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition-delay:0s}
+.toast.on{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+/* the toast body stays click-through so it never traps a slider drag beneath it;
+   only the update banner (.tap taps to reload) and an action button take taps */
+.toast.on.tap,.toast.on .toast-act{pointer-events:auto}
 .toast.ok{color:var(--ok)} .toast.err{color:var(--err)}
 .toast-act{margin-left:12px;min-height:32px;padding:4px 12px;border:1px solid var(--gold);border-radius:8px;background:transparent;color:var(--gold);font:inherit;font-weight:600;cursor:pointer}
 
@@ -2663,7 +2666,9 @@ function toast(msg, cls, action){
      an error raised in those 20s used to vanish */
   if (_toastSticky){ if(_toastQ.length<4) _toastQ.push([msg,cls,action]); return; }
   /* textContent replaces children, so a previous toast's action button can
-     never survive into this one. */
+     never survive into this one. The update banner's whole-body reload handler
+     must not survive either — a routine toast tapped after it would reload. */
+  t.onclick=null; t.style.cursor="";
   t.textContent=msg; t.className="toast on"+(cls?" "+cls:"");
   /* An action turns the toast from a receipt into a way back. Only used where
      a single tap is otherwise irreversible, and it holds longer so the offer
@@ -7127,7 +7132,7 @@ function stUiSave(){ try{ localStorage.setItem(ST_UI_LS,JSON.stringify({mode:ST.
 /* sv keys that feed the settle pipeline (dirty checks + settle "need" checks) */
 ST.pipeSv=["st_hsl_","st_curve_","st_grade_","st_bw","st_leak","st_geo","st_wbAuto","st_bgEnh","st_frame"];
 function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0,wht:0,blk:0,dhz:0,glow:0}; }
-function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0,gdn:0,nrL:0,nrC:0}; }
+function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0,gdn:0,nrL:0,nrC:0,hairShine:0,hairDeep:0,lipV:0,blushV:0,eyeDef:0}; }
 function stDefGeo(){ return {rot:0,flipH:false,flipV:false,straighten:0,crop:null}; }
 state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:"all", v:{}, geo:stDefGeo(), refX:null };
 (function(){ /* tolerant restore — missing keys keep their defaults; img is never persisted */
@@ -7187,7 +7192,7 @@ function stEffT2(){
   if(o.finish==="matte") o.deshine+=0.8*o.finishV;
   else if(o.finish==="dewy") o.gloss+=0.7*o.finishV;
   else if(o.finish==="cream"){ o.smooth+=0.4*o.finishV; o.white+=0.3*o.finishV; }
-  ["smooth","denoise","even","deyellow","white","deshine","teeth","eyeb","radiance","gdn","nrL","nrC"].forEach(function(k2){ o[k2]=stClamp(o[k2]||0,0,100); });
+  ["smooth","denoise","even","deyellow","white","deshine","teeth","eyeb","radiance","gdn","nrL","nrC","hairShine","hairDeep","lipV","blushV","eyeDef"].forEach(function(k2){ o[k2]=stClamp(o[k2]||0,0,100); });
   o.rosy=stClamp(o.rosy,-100,100); o.gloss=stClamp(o.gloss,-100,100);
   o.freqHi=stClamp(o.freqHi,-100,100); o.freqLo=stClamp(o.freqLo,-100,100);
   return o;
@@ -7312,6 +7317,73 @@ function stBlurData(srcCanvas,W,H,r){
   x.filter="blur("+r+"px)"; x.drawImage(srcCanvas,0,0,W,H);
   return x.getImageData(0,0,W,H).data;
 }
+/* v4.40 — real facial zones from the pixels themselves.
+   Eyes: non-skin dark clusters in the upper half of the skin bbox, split
+   left/right of its centre. Mouth: the strong-red (high Cr) cluster in the
+   lower third. Teeth whitening and eye brightening then act inside these
+   ellipses instead of full-width bands — the difference between "the teeth
+   got whiter" and "everything yellow in that row got whiter". Returns null
+   when a face can't be read; callers fall back to the old heuristics. */
+function stFaceZones(px,W,H,mi){
+  var box=mi&&mi.box; if(!box) return null;
+  var bw=box.x1-box.x0, bh=box.y1-box.y0;
+  if(bw<24||bh<24) return null;
+  var d=px.data, mask=mi.mask;
+  var ex=[],ey=[],exR=[],eyR=[],mx=[],my=[];
+  var cxb=box.x0+bw/2;
+  var y0e=box.y0+bh*0.18, y1e=box.y0+bh*0.55;
+  var y0m=box.y0+bh*0.58, y1m=box.y0+bh*0.95;
+  for(var y=Math.max(0,box.y0|0); y<=Math.min(H-1,box.y1|0); y++){
+    for(var x=Math.max(0,box.x0|0); x<=Math.min(W-1,box.x1|0); x++){
+      var i=y*W+x, p=i*4;
+      var R=d[p],G=d[p+1],B=d[p+2];
+      var lum=0.299*R+0.587*G+0.114*B;
+      /* an eye is a DARK spot ENCLOSED BY SKIN — the enclosure test is what
+         separates pupils from dark background noise hugging the face edge.
+         No not-skin requirement on the pixel itself: dark brown irises sit
+         inside the skin chroma range and would exclude themselves. */
+      if(y>=y0e&&y<=y1e&&lum<75){
+        var xl=y*W+Math.max(0,x-6), xr=y*W+Math.min(W-1,x+6);
+        if(mask[xl]>128&&mask[xr]>128){
+          /* isolation test: an eye is a SMALL dark blob — a probe ring that is
+             also mostly dark means this pixel belongs to the hair mass (dark
+             hair passes the skin chroma test and would otherwise flood the
+             candidate pool and drag the centroids off the pupils) */
+          var darkN=0;
+          [[x-8,y],[x+8,y],[x,y-5],[x,y+5]].forEach(function(pt){
+            var px2=Math.max(0,Math.min(W-1,pt[0])), py2=Math.max(0,Math.min(H-1,pt[1]));
+            var pp=(py2*W+px2)*4;
+            if(0.299*d[pp]+0.587*d[pp+1]+0.114*d[pp+2]<75) darkN++;
+          });
+          if(darkN<3){
+            if(x<cxb){ ex.push(x); ey.push(y); } else { exR.push(x); eyR.push(y); }
+          }
+        }
+      }
+      if(y>=y0m&&y<=y1m){
+        var cr=128+0.5*R-0.418688*G-0.081312*B;
+        var cb=128-0.168736*R-0.331264*G+0.5*B;
+        if(cr>=146&&(cr-cb)>26){ mx.push(x); my.push(y); }
+      }
+    }
+  }
+  function med(a){ if(!a.length) return 0; a.sort(function(u,v){return u-v;}); return a[a.length>>1]; }
+  var zones={eyes:null,mouth:null};
+  if(ex.length>=6&&exR.length>=6){
+    zones.eyes=[
+      {cx:med(ex),cy:med(ey),rx:bw*0.15,ry:bh*0.09},
+      {cx:med(exR),cy:med(eyR),rx:bw*0.15,ry:bh*0.09}];
+  }
+  if(mx.length>=8){
+    zones.mouth={cx:med(mx),cy:med(my),rx:Math.max(bw*0.22,10),ry:Math.max(bh*0.10,6)};
+  }
+  return (zones.eyes||zones.mouth)?zones:null;
+}
+function stInEllipse(x,y,z,scale){
+  var s=scale||1;
+  var dx=(x-z.cx)/(z.rx*s), dy=(y-z.cy)/(z.ry*s);
+  return dx*dx+dy*dy<=1;
+}
 function stApplySkin(cv,cx,px,W,H,t2,mi){
   var d=px.data, mask=mi.mask, n=W*H;
   var blurS = t2.smooth>0 ? stBlurData(cv,W,H,2+t2.smooth/100*4) : null;
@@ -7320,7 +7392,36 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
      mean delta 0.016 on the app's own sample, invisible. Smoothing right above
      it has always scaled its radius; this now does too. */
   var blur1 = t2.denoise>0 ? stBlurData(cv,W,H,1+t2.denoise/100*3) : null;
-  var blur12 = t2.freqLo>0 ? stBlurData(cv,W,H,12) : null;
+  /* v4.40 — TRUE frequency separation. The old freqLo blended the whole
+     pixel toward a 12px blur, which flattens the very texture the technique
+     exists to protect. Real FS: low band = blur(6), high band = pixel - low.
+     Evening applies a low-band-only correction (lowB - lowA), so pores and
+     micro-texture ride through untouched; freqHi scales the high band
+     itself, skin-limited, instead of a global unsharp pass. */
+  var fsLo = (t2.freqLo>0||t2.freqHi||t2.hairShine>0||t2.eyeDef>0) ? stBlurData(cv,W,H,6) : null;
+  var fsLoB = t2.freqLo>0 ? stBlurData(cv,W,H,6+t2.freqLo/100*16) : null;
+  var zones = (t2.teeth>0||t2.eyeb>0||t2.lipV>0||t2.blushV>0||t2.eyeDef>0) ? stFaceZones(px,W,H,mi) : null;
+  /* v4.40 — the app now KNOWS hair, cheeks, lips as regions of its own:
+     hair = dark non-skin in the halo above/around the face box; cheeks are
+     placed from the eye/mouth geometry the zones already carry. */
+  var hairB=null, faceInner=null;
+  if((t2.hairShine>0||t2.hairDeep>0)&&mi.box){
+    var bwH=mi.box.x1-mi.box.x0, bhH=mi.box.y1-mi.box.y0;
+    hairB={x0:mi.box.x0-bwH*0.35, x1:mi.box.x1+bwH*0.35, y0:mi.box.y0-bhH*0.5, y1:mi.box.y0+bhH*0.8};
+    /* protect the facial features: hair work never enters the inner face
+       ellipse (dark hair passes the skin chroma test, so the mask alone
+       cannot make this distinction) */
+    faceInner={cx:(mi.box.x0+mi.box.x1)/2, cy:(mi.box.y0+mi.box.y1)/2, rx:bwH/2*0.62, ry:bhH/2*0.62};
+  }
+  var cheeks=null;
+  if(t2.blushV>0&&zones&&zones.eyes&&zones.mouth&&mi.box){
+    var bwC=mi.box.x1-mi.box.x0, bhC=mi.box.y1-mi.box.y0;
+    cheeks=[
+      {cx:zones.eyes[0].cx, cy:(zones.eyes[0].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09},
+      {cx:zones.eyes[1].cx, cy:(zones.eyes[1].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09}];
+  }
+  var lipC=stHexRgb(svGet("mu_lipLocHex",null))||{r:192,g:72,b:88};
+  var blushC=stHexRgb(svGet("mu_blushLocHex",null))||{r:232,g:138,b:154};
   var meanCb=0,meanCr=0;
   if(t2.even>0){
     var cnt=0;
@@ -7338,13 +7439,20 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
     var m=mask[i]/255;
     var R=d[p],G=d[p+1],B=d[p+2];
     var lum=0.299*R+0.587*G+0.114*B;
-    /* global teeth candidates (yellowish bright low-chroma) */
-    if(t2.teeth>0 && lum>140){
-      var mx0=Math.max(R,G,B),mn0=Math.min(R,G,B);
-      if((mx0-mn0)<40 && ((R+G)/2-B)>6){
-        var tv=t2.teeth/100;
-        B+=(G-B)*tv*0.6; var lift=t2.teeth*0.15;
-        R+=lift; G+=lift; B+=lift;
+    var xPix=i%W, yPix=(i/W)|0;
+    /* teeth: inside the detected mouth when a face reads, the honest global
+       heuristic when it doesn't. Zone-limited whitening can afford a lower
+       luma floor — real teeth in shade get caught, the wall doesn't. */
+    if(t2.teeth>0){
+      var inMouth=zones&&zones.mouth ? stInEllipse(xPix,yPix,zones.mouth,1.15) : null;
+      var tOk = inMouth===null ? lum>140 : (inMouth && lum>105);
+      if(tOk){
+        var mx0=Math.max(R,G,B),mn0=Math.min(R,G,B);
+        if((mx0-mn0)<(inMouth?55:40) && ((R+G)/2-B)>(inMouth?2:6)){
+          var tv=t2.teeth/100;
+          B+=(G-B)*tv*0.6; var lift=t2.teeth*0.15;
+          R+=lift; G+=lift; B+=lift;
+        }
       }
     }
     if(m>0.02){
@@ -7355,9 +7463,15 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
           R+= (blurS[p]-R)*a; G+=(blurS[p+1]-G)*a; B+=(blurS[p+2]-B)*a;
         }
       }
-      if(blur12){
-        var a12=t2.freqLo/100*0.5*m;
-        R+=(blur12[p]-R)*a12; G+=(blur12[p+1]-G)*a12; B+=(blur12[p+2]-B)*a12;
+      if(fsLoB){
+        /* low-band-only correction: texture (pixel - low) is untouched */
+        var aLo=t2.freqLo/100*0.85*m;
+        R+=(fsLoB[p]-fsLo[p])*aLo; G+=(fsLoB[p+1]-fsLo[p+1])*aLo; B+=(fsLoB[p+2]-fsLo[p+2])*aLo;
+      }
+      if(fsLo&&t2.freqHi){
+        /* high-band gain: + crisper pores, − softer pores, never a global unsharp */
+        var kHi=t2.freqHi/100*0.55*m;
+        R+=(R-fsLo[p])*kHi; G+=(G-fsLo[p+1])*kHi; B+=(B-fsLo[p+2])*kHi;
       }
       if(blur1||t2.even>0){
         var Y=0.299*R+0.587*G+0.114*B;
@@ -7380,14 +7494,61 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
       if(t2.deshine>0 && lum2>200){ var ds=(lum2-200)*(t2.deshine/100)*0.8*m; R-=ds; G-=ds; B-=ds; }
       if(t2.gloss>0 && lum2>190){ var gl=(lum2-190)*(t2.gloss/100)*0.5*m; R+=gl; G+=gl; B+=gl; }
       else if(t2.gloss<0 && lum2>200){ var ds2=(lum2-200)*(-t2.gloss/100)*0.8*m; R-=ds2; G-=ds2; B-=ds2; }
-      /* eye-zone approx: rows 25-45%% of the skin bbox */
-      if(t2.eyeb>0 && box){
-        var y=(i/W)|0;
-        if(y>=eyY0&&y<=eyY1){
-          if(lum2<80){ var eb=t2.eyeb*0.25; R+=eb;G+=eb;B+=eb; }
-          else { var mx1=Math.max(R,G,B),mn1=Math.min(R,G,B);
-            if(lum2>180&&(mx1-mn1)<30){ var eb2=t2.eyeb*0.2; R+=eb2;G+=eb2;B+=eb2; } }
+    }
+    /* hair: dark non-skin inside the face halo — strand micro-contrast for
+       gloss, gentle warm-preserving deepening for depth. Real pixels, no AI. */
+    if(hairB&&xPix>=hairB.x0&&xPix<=hairB.x1&&yPix>=hairB.y0&&yPix<=hairB.y1&&!(faceInner&&stInEllipse(xPix,yPix,faceInner,1))){
+      var lumH=0.299*R+0.587*G+0.114*B;
+      if(lumH<135){
+        if(t2.hairShine>0&&fsLo){
+          var kS=t2.hairShine/100*0.7;
+          R+=(R-fsLo[p])*kS; G+=(G-fsLo[p+1])*kS; B+=(B-fsLo[p+2])*kS;
         }
+        if(t2.hairDeep>0){
+          var kD=t2.hairDeep/100;
+          R*=1-kD*0.18; G*=1-kD*0.18; B*=1-kD*0.14;
+        }
+      }
+    }
+    /* local makeup — luma-preserving tints inside the DETECTED zones only:
+       lips take the chosen colour re-lit to each pixel's own brightness,
+       blush sits on the geometric cheeks, eye definition is a high-band
+       boost confined to the eye ellipses. */
+    if(zones){
+      if(t2.lipV>0&&zones.mouth&&stInEllipse(xPix,yPix,zones.mouth,1.05)){
+        var crL=128+0.5*R-0.418688*G-0.081312*B;
+        if(crL>138){ /* lip pixels, not teeth */
+          var aL=t2.lipV/100*0.55;
+          var lumL=0.299*R+0.587*G+0.114*B, lumLT=0.299*lipC.r+0.587*lipC.g+0.114*lipC.b;
+          R+=((lipC.r-lumLT+lumL)-R)*aL; G+=((lipC.g-lumLT+lumL)-G)*aL; B+=((lipC.b-lumLT+lumL)-B)*aL;
+        }
+      }
+      if(cheeks&&m>0.3&&(stInEllipse(xPix,yPix,cheeks[0],1)||stInEllipse(xPix,yPix,cheeks[1],1))){
+        var aB=t2.blushV/100*0.25;
+        var lumB2=0.299*R+0.587*G+0.114*B, lumBT=0.299*blushC.r+0.587*blushC.g+0.114*blushC.b;
+        R+=((blushC.r-lumBT+lumB2)-R)*aB; G+=((blushC.g-lumBT+lumB2)-G)*aB; B+=((blushC.b-lumBT+lumB2)-B)*aB;
+      }
+      if(t2.eyeDef>0&&zones.eyes&&fsLo&&(stInEllipse(xPix,yPix,zones.eyes[0],1.6)||stInEllipse(xPix,yPix,zones.eyes[1],1.6))){
+        var kE=t2.eyeDef/100*0.6;
+        R+=(R-fsLo[p])*kE; G+=(G-fsLo[p+1])*kE; B+=(B-fsLo[p+2])*kE;
+      }
+    }
+    /* eyes: outside the skin gate on purpose — pupils and sclera are exactly
+       the pixels the skin mask rejects. Inside the detected eye ellipses when
+       a face reads (iris lift + sclera whitening); the old skin-gated bbox
+       band when it doesn't. */
+    if(t2.eyeb>0){
+      var lumE=0.299*R+0.587*G+0.114*B;
+      var inEye = zones&&zones.eyes
+        ? (stInEllipse(xPix,yPix,zones.eyes[0],1.35)||stInEllipse(xPix,yPix,zones.eyes[1],1.35))
+        : (box && m>0.02 && yPix>=eyY0 && yPix<=eyY1);
+      if(inEye){
+        if(lumE<(zones&&zones.eyes?95:80)){ var eb=t2.eyeb*0.25; R+=eb;G+=eb;B+=eb; }
+        else { var mx1=Math.max(R,G,B),mn1=Math.min(R,G,B);
+          if(lumE>(zones&&zones.eyes?150:180)&&(mx1-mn1)<(zones&&zones.eyes?45:30)){
+            var eb2=t2.eyeb*0.2; R+=eb2;G+=eb2;B+=eb2;
+            if(zones&&zones.eyes){ B+=(mx1-B)*t2.eyeb/100*0.3; } /* de-yellow the sclera */
+          } }
       }
     }
     d[p]=R<0?0:R>255?255:R; d[p+1]=G<0?0:G>255?255:G; d[p+2]=B<0?0:B>255?255:B;
@@ -7671,15 +7832,18 @@ function stRunPipeline(srcImg,W,H,opts){
     cx.putImageData(px,0,0);
   }
   /* (4) Tier-2 skin ops on the cached (or freshly computed) skin mask */
-  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0);
+  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef);
   if(needSkin){
     var mi=opts.maskInfo || stSkinMask(px,W,H);
     stApplySkin(cv,cx,px,W,H,t2,mi);
   }
-  /* (5) unsharp sharpen r1.5 + clarity r8 (radiance adds 0.3x clarity; freq-sep High rides here) */
-  var shpA=(t1.shp/100)*0.6 + Math.max(0,t2.freqHi)/100*0.6;
+  /* (5) unsharp sharpen r1.5 + clarity r8 (radiance adds 0.3x clarity).
+     v4.40: freq-sep High no longer rides the GLOBAL unsharp — it scales the
+     high band inside the skin mask in stApplySkin, which is what the
+     technique actually is. */
+  var shpA=(t1.shp/100)*0.6;
   var claA=(stClamp(t1.cla + t2.radiance*0.3 + Math.max(0,-t2.freqLo)*0.4,-100,150)/100)*0.4;
-  var softA=Math.max(0,-t2.freqHi)/100*0.6;
+  var softA=0;
   if(shpA||claA||softA){
     var base=cx.getImageData(0,0,W,H), bd=base.data;
     var b1=(shpA||softA)?stBlurData(cv,W,H,1.5):null;
@@ -7759,7 +7923,7 @@ function stRenderSettle(){
   ST.showingResult=false;
   var W=ST.buf.width,H=ST.buf.height;
   var t2=stEffT2();
-  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0);
+  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef);
   if(needSkin&&!ST.maskCache) ST.maskCache=stSkinMask(ST.px0,W,H);
   var out=stRunPipeline(stGeoSource(),W,H,{maskInfo:ST.maskCache});
   var c=$("stCanvas"), cc=c.getContext("2d");
@@ -8656,7 +8820,27 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(g8,["mu_lipColor","mu_lipShape","mu_teethFix","mu_mouthPos"]);
 
   /* MU-9 Makeup (4) */
-  var g9=G("i-makeup",L9({my:"မိတ်ကပ်",en:"Makeup"}),8,"makeup blush eyeshadow liner lash contacts contour foundation highlighter strobing brow makeup transfer reference"); count(8);
+  var g9=G("i-makeup",L9({my:"မိတ်ကပ်",en:"Makeup"}),8,"makeup blush eyeshadow liner lash contacts contour foundation highlighter strobing brow makeup transfer reference live lip blush eye definition local"); count(8);
+  /* v4.40 — LIVE makeup: real pixels in the real preview, no AI queue.
+     Lips take the chosen colour re-lit to each pixel's own brightness inside
+     the detected mouth; blush sits on cheeks placed from the eye/mouth
+     geometry; eye definition crisps the detected eye ellipses. */
+  g9.b.appendChild(stSub(L9({my:"တိုက်ရိုက်မိတ်ကပ် (AI မလို — ချက်ချင်းမြင်ရ)",en:"Live Makeup (no AI — instant)"})));
+  var lipRow=el("div","st-ctl");
+  lipRow.appendChild(el("label",null,L9({my:"နှုတ်ခမ်းရောင်",en:"Lip colour"})));
+  lipRow.appendChild(stColorInp({id:"mu_lipLocHex",dflt:"#c04858",
+    get:function(){ return svGet("mu_lipLocHex",null); },
+    set:function(v){ svSet("mu_lipLocHex",v); stT2Changed(); }}));
+  g9.b.appendChild(lipRow);
+  g9.b.appendChild(t2Slider("mu_lipLoc",L9({my:"နှုတ်ခမ်းဆိုးဆေး",en:"Lip Tint"}),"lipV",false));
+  var blRow=el("div","st-ctl");
+  blRow.appendChild(el("label",null,L9({my:"ပါးချုံရောင်",en:"Blush colour"})));
+  blRow.appendChild(stColorInp({id:"mu_blushLocHex",dflt:"#e88a9a",
+    get:function(){ return svGet("mu_blushLocHex",null); },
+    set:function(v){ svSet("mu_blushLocHex",v); stT2Changed(); }}));
+  g9.b.appendChild(blRow);
+  g9.b.appendChild(t2Slider("mu_blushLoc",L9({my:"ပါးချုံနီ",en:"Blush"}),"blushV",false));
+  g9.b.appendChild(t2Slider("mu_eyeDef",L9({my:"မျက်လုံးထင်ရှား",en:"Eye Definition"}),"eyeDef",false));
   g9.b.appendChild(stSub(L9({my:"မိတ်ကပ်အစုံ",en:"Full Makeup Look"})));
   g9.b.appendChild(svChips("mu_makeupStyle",null,[["Natural","Natural"],["Korean","Korean"],["Douyin","Douyin"],["Western","Western"],["Myanmar bridal","Myanmar Bridal"]],"mu_makeup"));
   g9.b.appendChild(svSlider("mu_makeupV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_makeup"));
@@ -9460,7 +9644,13 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e9,["ev_mkSuite","ev_mkEnh","ev_mkStyles","ev_eyeMk","ev_hlct"]);
 
   /* EV-10 Hair (4) */
-  var e10=G("i-hair",L9({my:"ဆံပင်",en:"Hair"}),4,"hair part fill volume strays smooth frizz shine hair color white hair"); count(4);
+  var e10=G("i-hair",L9({my:"ဆံပင်",en:"Hair"}),4,"hair part fill volume strays smooth frizz shine hair color white hair gloss depth live local"); count(4);
+  /* v4.40 — LIVE hair: the pass detects the dark hair halo around the face
+     and works those pixels directly — gloss = strand micro-contrast, depth =
+     warm-preserving deepening. No AI queue. */
+  e10.b.appendChild(stSub(L9({my:"တိုက်ရိုက်ဆံပင် (AI မလို — ချက်ချင်းမြင်ရ)",en:"Live Hair (no AI — instant)"})));
+  e10.b.appendChild(t2Slider("ev_hairGloss",L9({my:"ဆံပင်တောက်ပြောင်",en:"Hair Gloss"}),"hairShine",false));
+  e10.b.appendChild(t2Slider("ev_hairDeep",L9({my:"ဆံပင်အရောင်နက်",en:"Hair Depth"}),"hairDeep",false));
   e10.grid.appendChild(svSlider("ev_hairPart",L9({my:"ခေါင်းခွဲလိုင်းဖြည့်",en:"Part-Line Fill"}),false,"ev_hairFill"));
   e10.grid.appendChild(svSlider("ev_hairTop",L9({my:"အပေါ်ထူ",en:"Top Volume"}),false,"ev_hairFill"));
   e10.grid.appendChild(svSlider("ev_hairSide",L9({my:"ဘေးထူ",en:"Side Volume"}),false,"ev_hairFill"));
@@ -12541,7 +12731,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.39.0";
+var APP_VER="4.40.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -12563,7 +12753,7 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
   if (v && v.v && verNewer(v.v, APP_VER)){
     var t=$("toast");
     t.innerHTML=icn("i-bell")+" "+escH(stripIcn(L9({my:"🔔 Version အသစ် ("+v.v+") ထွက်ပြီ — ဒီစာကို နှိပ်ပြီး refresh လုပ်ပါ",en:"🔔 A new version ("+v.v+") is out — tap this to refresh",shn:"🔔 Version မႂ်ႇ ("+v.v+") ဢွၵ်ႇယဝ်ႉ — ၼဵၵ်းသေ refresh",kac:"🔔 Version namsan ("+v.v+") pru wa sai — ndai hpe dip nna refresh galaw u",th:"🔔 มีเวอร์ชันใหม่ ("+v.v+") ออกแล้ว — แตะที่นี่เพื่อรีเฟรช",zh:"🔔 有新版本 ("+v.v+") 发布 — 点按此处刷新",vi:"🔔 Đã có phiên bản mới ("+v.v+") — chạm vào đây để làm mới",id:"🔔 Versi baru ("+v.v+") telah rilis — ketuk untuk memuat ulang",ms:"🔔 Versi baharu ("+v.v+") telah dikeluarkan — ketik untuk muat semula"})));
-    t.className="toast on ok";
+    t.className="toast on ok tap";
     t.style.cursor="pointer";
     t.onclick=function(){ location.reload(); };
     clearTimeout(_toastT); _toastSticky=true;
