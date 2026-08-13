@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hlaingkhay28047-svg.github.io/TG/sitemap.xml

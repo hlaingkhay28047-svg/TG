@@ -147,6 +147,31 @@ select.inp{padding:9px 10px}
 .status.ok{color:var(--ok)} .status.err{color:var(--err)}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--sp-2)}
+/* v4.41: ratio pickers render as shape chips — the little box IS the aspect
+   ratio (wide box = landscape, tall box = portrait), so a non-engineer can
+   pick by shape instead of decoding "9:16" */
+.ratio-rail{display:flex;gap:6px;margin-top:var(--sp-2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+.ratio-rail::-webkit-scrollbar{display:none}
+.rchip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:46px;min-height:54px;padding:7px 9px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;color:var(--muted);font:inherit;font-size:10.5px;cursor:pointer}
+.rchip i{display:block;border:1.6px solid currentColor;border-radius:3px;opacity:.85}
+.rchip.auto i{border-style:dashed}
+.rchip.on{border-color:var(--gold);color:var(--gold-hi);background:rgba(217,164,65,.10)}
+.rr-native{display:none}
+/* v4.41: the Library's 33-chip group wall becomes two horizontal rails */
+#libFilters,#libGroups{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+#libFilters::-webkit-scrollbar,#libGroups::-webkit-scrollbar{display:none}
+#libFilters .chip,#libGroups .chip{flex:0 0 auto;white-space:nowrap}
+/* v4.41: full-screen look viewer (library + gallery share it) */
+#lookZoom{position:fixed;inset:0;z-index:70;background:rgba(8,10,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;overscroll-behavior:contain}
+#lookZoom.on{display:flex}
+#lzImg{max-width:100vw;max-height:84vh;object-fit:contain;touch-action:pinch-zoom}
+#lzCap{margin-top:10px;padding:0 16px;text-align:center;color:var(--cream);font-size:12.5px;max-width:520px}
+#lzX{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);color:var(--cream);font-size:18px;cursor:pointer}
+.lz-nav{position:absolute;top:50%;transform:translateY(-50%);min-width:44px;min-height:56px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(19,24,38,.8);color:var(--gold-hi);font-size:20px;cursor:pointer}
+#lzPrev{left:8px} #lzNext{right:8px}
+/* v4.41: photo-count pill on workflow cards */
+.wfmini{position:relative}
+.wf-need{position:absolute;top:8px;left:8px;z-index:2;pointer-events:none;background:rgba(11,13,20,.78);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:10px;color:var(--cream)}
 /* min-height:38px keeps every chip at/near the touch-target minimum — was
    originally scoped to #pgRetouch only, now global (Library filters, prompt
    history, add-ons, saved-model chips were still 28px tall) */
@@ -705,7 +730,7 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 .nav-gear{width:44px;height:44px;min-width:44px;min-height:44px;flex:none;background:none;border:none;color:var(--cream);display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);margin-left:auto}
 .nav-gear.on{color:var(--gold-hi)}
 .nav-gear svg{width:22px;height:22px}
-.nav-in #selLang{margin-left:0}
+.nav-in #selLang{margin-left:0;max-width:112px}
 /* the gear takes 44px out of the header row — keep the wordmark on one line
    by dropping the version tag (still shown in Setup + footer) and, at the
    narrowest widths, the logo mark, instead of letting the brand stack */
@@ -772,6 +797,11 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 #cardAccount .acc-actions{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-3)}
 #cardAccount .acc-actions .btn{flex:1 1 140px}
 #wizPay .wiz-body .btn{min-height:44px}
+.dash-greet{margin:var(--sp-3) 0 0;padding:14px 16px;background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--line-soft);border-radius:var(--r-lg)}
+.dash-greet .hi{font-size:17px;font-weight:700;color:var(--cream)}
+.dash-greet .sub{margin-top:4px;font-size:12px;color:var(--muted)}
+.dash-greet .pill{display:inline-block;margin-top:8px;padding:3px 10px;border:1px solid var(--gold);border-radius:999px;color:var(--gold-hi);font-size:11px}
+.chip img.chip-th{width:22px;height:22px;border-radius:5px;object-fit:cover;margin-right:4px;vertical-align:-6px}
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4) var(--sp-3);margin:var(--sp-4) 0}
 .dash-card{background:none;border:none;padding:0;text-align:center;color:var(--cream);cursor:pointer;min-height:44px}
 .dash-card .art{position:relative;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/3;border:1px solid var(--line-soft);background:var(--panel)}
@@ -1116,6 +1146,9 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 <nav class="subtabbar" id="subtabbar"></nav>
 
 <div class="page" id="pgDash">
+  <!-- v4.41: the first screen greets the owner by name/time-of-day instead of
+       opening cold — plan state rides along when an account is signed in -->
+  <section class="dash-greet" id="dashGreet"></section>
   <section class="card" id="dashCont" style="display:none">
     <h2 id="dashContH2"></h2>
     <div class="row" id="dashContRow"></div>
@@ -1171,6 +1204,12 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   <!-- no-key round trip (v4.27.0): appears after a key is saved while a
        pending generate intent is stored — returns to the stored page+context -->
   <button class="btn btn-gold" id="pendingGo" style="display:none;width:100%;margin:4px 0 10px"></button>
+  <!-- v4.41: engine-readiness strip — the whole 2,600px page summarized in one
+       card: each row is the live state of one engine/account, tap jumps to it -->
+  <section class="card" id="cardSetupStatus">
+    <h2 id="setupStatusH2"></h2>
+    <div id="setupStatusRows"></div>
+  </section>
   <!-- v4.30 Accounts + Premium (spec §1.2 / §3). Sits above #cardKey on
        purpose: an account gets the user their PLAN, #cardKey gets them their
        ENGINE. It sits AFTER #pendingGo so the "you saved a key, go back to
@@ -1340,7 +1379,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
          touched again — collapsed by default so the key field (the
          actual required step) isn't buried under it on first visit -->
     <div class="grp" id="rhGrpAdvanced">
-      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-gear"/></svg> Model Config (Advanced)</span></button>
+      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="rhAdvT"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-gear"/></svg> Model Config (Advanced)</span></button>
       <div class="grp-b">
         <div class="row">
           <select class="inp grow" id="rhModelSel"></select>
@@ -1377,6 +1416,20 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="status" id="stOaKey"></div>
   </section>
 
+  <!-- v4.41: everything lives in this one browser (localStorage + IndexedDB) —
+       one lost phone used to mean losing every recipe, favorite and key.
+       Backup exports the whole set as one JSON file; Restore reads it back. -->
+  <section class="card" id="cardData">
+    <h2 id="dataH2"></h2>
+    <div class="mut" id="dataStore"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn grow" id="btnExportData"></button>
+      <button class="btn grow" id="btnImportData"></button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    </div>
+    <div class="status" id="stData"></div>
+  </section>
+
   <section class="card">
     <h2 id="platH2"></h2>
     <!-- a user only needs their own platform's install steps, not all 4 at
@@ -1400,7 +1453,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     </div>
     <div class="row" style="margin-top:10px">
       <a class="btn grow" href="../" style="text-align:center" id="siteLink"></a>
-      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.1.1.ccx" download style="text-align:center">CCX Download (v6.1.1)</a>
+      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.10.0.ccx" download style="text-align:center">CCX Download (v6.10.0)</a>
     </div>
   </section>
 
@@ -1412,6 +1465,20 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <button class="btn grow" id="btnCopyLink"></button>
     </div>
     <div class="status" id="stShare"></div>
+  </section>
+
+  <!-- v4.41: version + manual update check. The boot check is a one-shot 20s
+       toast that's easy to miss — this card lets the owner pull an update on
+       demand (and hard-reset the app caches when a phone is stuck on an old
+       build, the single most common support question). -->
+  <section class="card" id="cardAbout">
+    <h2 id="aboutH2"></h2>
+    <div class="acc-kv"><span class="k">Version</span><span class="v" id="aboutVer"></span></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-gold grow" id="btnCheckUpdate"></button>
+      <button class="btn grow" id="btnHardRefresh"></button>
+    </div>
+    <div class="status" id="stAbout"></div>
   </section>
 </div><!-- /pgHome -->
 
@@ -1451,6 +1518,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <div class="row" style="margin-top:8px">
           <button class="btn" id="libToImg1"></button>
           <button class="btn btn-gold" id="libToImg2"></button>
+          <button class="btn" id="libFav" aria-pressed="false"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-star"/></svg></button>
         </div>
       </div>
     </div>
@@ -1759,6 +1827,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="result-img"><img id="resultImg" alt="result"></div>
     <div class="row" style="margin-top:10px">
       <a class="btn btn-gold grow" id="btnDl" download="hnk-web-studio.png" style="text-align:center"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> Download</a>
+      <button class="btn" id="btnShareRes"></button>
       <button class="btn" id="btnToRef"></button>
       <button class="btn" id="btnCmp"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-compare"/></svg> Before/After</button>
     </div>
@@ -2065,6 +2134,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <div class="row" style="margin-top:8px">
           <a class="btn btn-gold" id="galDl" download="hnk-result.png"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> Download</a>
           <button class="btn" id="galToImg1"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-restore"/></svg> IMAGE 1</button>
+          <button class="btn" id="galToImg2"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-restore"/></svg> IMAGE 2</button>
           <button class="btn" id="galDel"></button>
         </div>
       </div>
@@ -2141,7 +2211,10 @@ var RH_BASE = "https://www.runninghub.ai";
    Enterprise-Shared key + the runninghub.ai API docs (2026-08). */
 var RH_V2_BASE = "https://www.runninghub.ai/openapi/v2";
 var RH_V2_PATHS = { upload:"/media/upload/binary", query:"/query" };
-var RH_POLL_MS = 2500, RH_TIMEOUT_MS = 180000;
+/* v4.41: 180s lost real jobs — Seedream 4k, Wan long-side and Topaz 6x runs
+   can pass 3 minutes on a busy queue, and on timeout the taskId was thrown
+   away, so a job finishing at t+200s was paid for and never seen. */
+var RH_POLL_MS = 2500, RH_TIMEOUT_MS = 300000;
 /* Every entry below with a non-empty apiPath was confirmed against RunningHub's
    own live API docs for that exact endpoint (request params, required fields)
    — nothing here is guessed. RunningHub's Standard-API catalog names (its own
@@ -2502,9 +2575,36 @@ var TR_PATH={
 Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
 var PH_MAP=[["phCreate","ph_create"],["phStudio","ph_studio"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
-function L9(o){ return o[LANG]!==undefined ? o[LANG] : (o.en!==undefined ? o.en : o.my); }
+/* v4.41: the language list grows past the nine fully-translated ones.
+   Every new code renders through a sensible fallback instead of hallucinated
+   text: Myanmar ethnic languages fall back to BURMESE (their readers read
+   Burmese far more often than English), Tai Lue falls back to Shan, and the
+   Indian languages fall back to English. When native text packs arrive they
+   slot into the same L9 objects key by key. */
+/* Burmese-term aliases shared by the Workflow and Library searches — the
+   left side is what the owner types, the right side is what the English
+   index actually contains */
+var HNK_MY_ALIAS=[["ဆံပင်","hair"],["နောက်ခံ","background"],["မိတ်ကပ်","makeup"],["ဝတ်စုံ","dress outfit gown"],
+  ["အလင်း","light lighting relight"],["မျက်နှာ","face"],["မင်္ဂလာ","wedding"],["ပန်း","flower floral"],
+  ["သတို့သမီး","bride wedding"],["ကလေး","child baby"],["ဓာတ်ပုံဟောင်း","restore vintage"],
+  ["အသားအရေ","skin retouch"],["ရေ","water"],["ကောင်းကင်","sky"],["လိုဂို","logo text"],["ပုံတူ","pose"],
+  ["မွေးနေ့","birthday"],["ဘွဲ့","graduation"],["ရိုးရာ","traditional heritage"],["စတူဒီယို","studio"]];
+var LANG_FB={kyu:"my",ksw:"my",cnh:"my",mnw:"my",rki:"my",ahk:"my",lhu:"my",lis:"my",blk:"my",pll:"my",khb:"shn",
+             hi:"en",bn:"en",ta:"en",te:"en",mr:"en",gu:"en",kn:"en",ml:"en",pa:"en",ur:"en"};
+function L9(o){
+  if(o[LANG]!==undefined) return o[LANG];
+  var fb=LANG_FB[LANG];
+  if(fb && o[fb]!==undefined) return o[fb];
+  return o.en!==undefined ? o.en : o.my;
+}
 
-function t(k){ var e=TR[k]; return e ? (e[LANG]!==undefined ? e[LANG] : (e.en!==undefined ? e.en : e.my)) : k; }
+function t(k){
+  var e=TR[k]; if(!e) return k;
+  if(e[LANG]!==undefined) return e[LANG];
+  var fb=LANG_FB[LANG];
+  if(fb && e[fb]!==undefined) return e[fb];
+  return e.en!==undefined ? e.en : e.my;
+}
 function applyLang(){
   /* language hint for screen readers / translate / Myanmar-script font
      heuristics — LANG codes (my/en/shn/kac/th/zh/vi/id/ms) are valid BCP47 */
@@ -2533,12 +2633,25 @@ function applyLang(){
   setIcnText($("galDel"),"i-trash",t("gal_del"));
   $("spin").textContent=t("spin_gen");
   var LANGS=[["my","မြန်မာ"],["en","English"],["shn","တႆး"],["kac","Jinghpaw"],["th","ไทย"],["zh","中文"],["vi","Tiếng Việt"],["id","Indonesia"],["ms","Melayu"]];
+  /* v4.41: Myanmar ethnic languages (Burmese-fallback UI until native text
+     packs land) and the Indian family (English-fallback UI) */
+  var LANGS_MM=[["mnw","မန်"],["rki","ရခိုင်"],["ksw","ကညီ (ကရင်)"],["kyu","ကယား"],["cnh","ချင်း (Laiholh)"],
+    ["blk","ပအိုဝ်"],["pll","တအာင်း (ပလောင်)"],["khb","တႆးလိုဝ်ႉ (ရှစ်ဆောင်ပန်းနား)"],["ahk","အာခါ (Akha)"],["lhu","လားဟူ (Lahu)"],["lis","လီဆူ (Lisu)"]];
+  var LANGS_IN=[["hi","हिन्दी"],["bn","বাংলা"],["ta","தமிழ்"],["te","తెలుగు"],["mr","मराठी"],
+    ["gu","ગુજરાતી"],["kn","ಕನ್ನಡ"],["ml","മലയാളം"],["pa","ਪੰਜਾਬੀ"],["ur","اردو"]];
   var sel=$("selLang"); sel.innerHTML="";
-  LANGS.forEach(function(p){
-    var o=document.createElement("option"); o.value=p[0]; o.textContent=p[1];
-    if(p[0]===LANG) o.selected=true;
-    sel.appendChild(o);
-  });
+  function addLangOpts(host,list){
+    list.forEach(function(p){
+      var o=document.createElement("option"); o.value=p[0]; o.textContent=p[1];
+      if(p[0]===LANG) o.selected=true;
+      host.appendChild(o);
+    });
+  }
+  addLangOpts(sel, LANGS);
+  var ogMM=document.createElement("optgroup"); ogMM.label="— မြန်မာတိုင်းရင်းသား —";
+  addLangOpts(ogMM, LANGS_MM); sel.appendChild(ogMM);
+  var ogIN=document.createElement("optgroup"); ogIN.label="— India —";
+  addLangOpts(ogIN, LANGS_IN); sel.appendChild(ogIN);
   sel.onchange=function(){
     /* switching language reloads the page (every t()/L9() call needs a fresh
        LANG) — state.refs (uploaded images) are never persisted (base64 data
@@ -2794,6 +2907,7 @@ function switchPage(id, fromPop){
   try{ localStorage.setItem("hnk_web_studio_page", id); }catch(e){}
   if (id==="pgGallery" && typeof renderGallery==="function") renderGallery();
   if (id==="pgDash" && typeof renderDash==="function") renderDash();
+  if (id==="pgHome" && typeof renderSetupStatus==="function"){ renderSetupStatus(); if(typeof refreshDataStore==="function") refreshDataStore(); }
 }
 window.addEventListener("popstate", function(ev){
   /* back closes the topmost overlay first, then walks pages */
@@ -2839,7 +2953,9 @@ function galDb(){
 function galleryAdd(out, promptSnippet){
   galDb().then(function(d){
     var tx=d.transaction("gal","readwrite"), st=tx.objectStore("gal");
-    st.add({ mime:out.mime, b64:out.b64, prompt:promptSnippet||"", ts:Date.now() });
+    /* v4.41: provenance rides along when the dispatcher tagged it (which
+       engine · model made this) — older records simply lack the field */
+    st.add({ mime:out.mime, b64:out.b64, prompt:promptSnippet||"", ts:Date.now(), prov:(out&&out._prov)||"" });
     /* keep newest 60 */
     st.count().onsuccess=function(e){
       var n=e.target.result;
@@ -2875,6 +2991,29 @@ function galBulkRefresh(){
   }
   if(z){ z.style.display=galMulti.on&&n?"":"none"; setIcnText(z,"i-download","ZIP ("+n+")"); }
   if(dl){ dl.style.display=galMulti.on&&n?"":"none"; setIcnText(dl,"i-trash",t("pt_remove")+" ("+n+")"); }
+  /* v4.41: one tap selects the lot — export-everything day */
+  var sa=$("galSelAll");
+  if(galMulti.on){
+    if(!sa && m){
+      sa=el("button","chip"); sa.id="galSelAll";
+      m.parentNode.insertBefore(sa, m.nextSibling);
+      sa.onclick=function(){
+        var all=window._galItems||[];
+        var every=all.length && all.every(function(it){ return galMulti.ids[it.id]; });
+        galMulti.ids={};
+        if(!every) all.forEach(function(it){ galMulti.ids[it.id]=1; });
+        renderGallery();
+      };
+    }
+    if(sa){
+      sa.style.display="";
+      var all2=window._galItems||[];
+      var every2=all2.length && all2.every(function(it){ return galMulti.ids[it.id]; });
+      setIcnText(sa,"i-check",every2
+        ? L9({my:"အားလုံးဖြုတ်",en:"Clear all",shn:"ထွၼ်တင်းမူတ်း",kac:"Yawng raw u",th:"ยกเลิกทั้งหมด",zh:"取消全选",vi:"Bỏ chọn hết",id:"Hapus semua",ms:"Kosongkan semua"})
+        : L9({my:"အားလုံးရွေး",en:"Select all",shn:"လိူၵ်ႈတင်းမူတ်း",kac:"Yawng lata u",th:"เลือกทั้งหมด",zh:"全选",vi:"Chọn tất cả",id:"Pilih semua",ms:"Pilih semua"}));
+    }
+  } else if(sa) sa.style.display="none";
 }
 function renderGallery(){
   galDb().then(function(d){
@@ -2886,6 +3025,13 @@ function renderGallery(){
       if(galSel && !items.some(function(it){ return it.id===galSel.id; })) galSel=null;
       if(!galSel){ $("galPick").className="lib-pick"; }
       galBulkRefresh();
+      /* v4.41: the 60-item cap silently drops the oldest work — say where
+         the meter stands instead of promising "everything survives" */
+      var gn=$("galNote");
+      if(gn){
+        if(gn.dataset.base===undefined) gn.dataset.base=gn.textContent;
+        gn.textContent=gn.dataset.base+" · "+items.length+" / 60";
+      }
       if(!items.length){ return; }
       items.forEach(function(it){
         var im=document.createElement("img");
@@ -2912,7 +3058,10 @@ function renderGallery(){
           var kb=Math.round(it.b64.length*3/4/1024);
           var dt=new Date(it.ts||Date.now());
           function p2(x){ return (x<10?"0":"")+x; }
-          $("galPickInfo").textContent=(it.prompt?(it.prompt||"").slice(0,90)+" · ":"")+
+          var dstamp=dt.getFullYear()+p2(dt.getMonth()+1)+p2(dt.getDate())+"-"+p2(dt.getHours())+p2(dt.getMinutes());
+          /* v4.41: the file is named by when it was CREATED, not downloaded */
+          $("galDl").setAttribute("download","hnk-"+dstamp+"-"+it.id+(it.mime==="image/png"?".png":".jpg"));
+          $("galPickInfo").textContent=(it.prov?it.prov+" · ":"")+(it.prompt?(it.prompt||"").slice(0,90)+" · ":"")+
             dt.getFullYear()+"-"+p2(dt.getMonth()+1)+"-"+p2(dt.getDate())+" "+p2(dt.getHours())+":"+p2(dt.getMinutes())+" · ~"+kb+" KB";
           var g=grid.querySelectorAll("img");
           for(var i=0;i<g.length;i++) g[i].classList.remove("sel");
@@ -2936,6 +3085,24 @@ $("galToImg1").onclick=function(){
   renderRefs();
   toast(L9({my:"Gallery ပုံ → IMAGE 1 ✓",en:"Gallery image → IMAGE 1 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 1 ✓",kac:"Gallery sumla → IMAGE 1 ✓",th:"รูป Gallery → IMAGE 1 ✓",zh:"Gallery 图片 → IMAGE 1 ✓",vi:"Ảnh Gallery → IMAGE 1 ✓",id:"Gambar Gallery → IMAGE 1 ✓",ms:"Imej Gallery → IMAGE 1 ✓"}),"ok");
 };
+/* v4.41: reference presets need the OLD result as IMAGE 2 just as often */
+if($("galToImg2")) $("galToImg2").onclick=function(){
+  if(!galSel) return;
+  state.refs[1]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
+  state.imgRoles=null;
+  renderRefs();
+  toast(L9({my:"Gallery ပုံ → IMAGE 2 ✓",en:"Gallery image → IMAGE 2 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 2 ✓",kac:"Gallery sumla → IMAGE 2 ✓",th:"รูป Gallery → IMAGE 2 ✓",zh:"Gallery 图片 → IMAGE 2 ✓",vi:"Ảnh Gallery → IMAGE 2 ✓",id:"Gambar Gallery → IMAGE 2 ✓",ms:"Imej Gallery → IMAGE 2 ✓"}),"ok");
+};
+/* v4.41: the gallery shares the full-screen viewer */
+if($("galPickImg")){
+  $("galPickImg").style.cursor="zoom-in";
+  $("galPickImg").onclick=function(){
+    var items=window._galItems||[]; if(!items.length) return;
+    var list=items.map(function(x){ return { src:"data:"+x.mime+";base64,"+x.b64, cap:(x.prov?x.prov+" · ":"")+(x.prompt||"").slice(0,60) }; });
+    var idx=galSel?items.findIndex(function(x){ return x.id===galSel.id; }):0;
+    lookZoomOpen(list, Math.max(0,idx));
+  };
+}
 $("galDel").onclick=function(){
   if(!galSel) return;
   var kept=galSel;   /* deletion gets the same undo toast the rest of the app has */
@@ -3031,7 +3198,10 @@ function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.classNa
 
 /* ---------- key ---------- */
 try { state.key = localStorage.getItem(LS_KEY) || ""; } catch(e){}
-if (state.key) { $("apiKey").value = state.key; setSt("stKey",t("st_key_saved"),"ok"); }
+/* boot: write the saved-state INLINE only — setSt() mirrors any off-screen
+   status into a toast, which fired a pointless "key saved ✓" toast on every
+   launch (pgHome is hidden at boot) */
+if (state.key) { $("apiKey").value = state.key; var _sk0=$("stKey"); if(_sk0){ _sk0.textContent=t("st_key_saved"); _sk0.className="status ok"; } }
 $("btnShowKey").onclick = function(){ var k=$("apiKey"); k.type = k.type==="password"?"text":"password"; };
 $("btnSaveKey").onclick = async function(){
   var k = $("apiKey").value.trim();
@@ -3157,7 +3327,10 @@ function rhV2Resolution(sizeSel){
 }
 async function rhV2Upload(apiKey, dataUrl, idx){
   var fd=new FormData();
-  fd.append("file", rhDataUrlToBlob(dataUrl), "hnk_"+(idx||0)+".png");
+  /* v4.41: name the file by what it actually is — the downscaler emits JPEG,
+     and a .png name misrepresents the format to RunningHub's accept-list */
+  var upExt = /^data:image\/jpe?g/i.test(dataUrl) ? "jpg" : /^data:image\/webp/i.test(dataUrl) ? "webp" : "png";
+  fd.append("file", rhDataUrlToBlob(dataUrl), "hnk_"+(idx||0)+"."+upExt);
   var r=await fetch(RH_V2_BASE+RH_V2_PATHS.upload, { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd });
   if(!r.ok){ var e=new Error("upload-failed"); e.status=r.status; throw e; }
   var j=await r.json().catch(function(){return null;});
@@ -3441,19 +3614,22 @@ function hdFinishSize(forced){
   var s=$("selSize"); return (s && s.value) || "";
 }
 var RH_VIDEO_MODELS = [
-  { id:"rh-video-g-off", label:"RH Video G", apiPath:"rhart-video-g-official/image-to-video",
+  { id:"rh-video-g-off", label:"RH Video G — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video",
     imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false,
     resolutions:["720p","480p"], durations:["6","10"], aspect:false, promptMax:800 },
   /* v4.28 W1: relabeled — this endpoint runs on RunningHub, NOT on the user's
      Gemini key (the old "Gemini …" label misattributed it). id stays
      gemini-omni-video for stored-config compatibility. */
-  { id:"gemini-omni-video", label:"Omni Flash Video (RunningHub)", apiPath:"gemini-omni-flash/image-to-video",
+  { id:"gemini-omni-video", label:"Omni Flash (RunningHub) — up to 4K", apiPath:"gemini-omni-flash/image-to-video",
     imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:true,
     resolutions:["720p","1080p","4k"], durations:["4","6","8","10"], aspect:true, promptMax:2048 }
 ];
 function rhVideoModelDef(id){ return RH_VIDEO_MODELS.find(function(m){ return m.id===id; }) || null; }
-async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam){
-  var body={ prompt: promptText||"" };
+async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax){
+  /* v4.41: the textarea's maxlength never clipped pre-existing text after a
+     model switch (Omni 2048 → RH Video G 800), so an over-limit prompt used
+     to reach the endpoint verbatim and fail opaquely — clip at submit too */
+  var body={ prompt: promptMax ? String(promptText||"").slice(0, promptMax) : (promptText||"") };
   imageUrls = imageUrls||[];
   if(imageParam==="imageUrl") body.imageUrl = imageUrls[0]||"";
   else body.imageUrls = imageUrls;
@@ -3465,9 +3641,9 @@ async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolutio
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick, signal){
+async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick, signal, promptMax){
   var imageUrls = imageDataUrls.length ? await rhV2UploadAll(apiKey, imageDataUrls) : [];
-  var taskId = await rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam);
+  var taskId = await rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax);
   var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
@@ -3537,19 +3713,19 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
    {mime,b64} images (small, unlike video), so they reuse the same Gallery/
    IndexedDB persistence as every other image result. */
 var RH_T2I_MODELS = [
-  { id:"flux-2-dev", label:"Flux 2 Dev", apiPath:"rhart-image/f-2-dev/text-to-image",
+  { id:"flux-2-dev", label:"Flux 2 Dev — Standard (fast)", apiPath:"rhart-image/f-2-dev/text-to-image",
     ratios:["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired:true,
     extra:{ outputFormat:"png" } },
-  { id:"nano-banana-pro-t2i", label:"Nano Banana Pro (Text-to-Image)", apiPath:"rhart-image-n-pro-official/text-to-image",
+  { id:"nano-banana-pro-t2i", label:"Nano Banana Pro — Best Quality", apiPath:"rhart-image-n-pro-official/text-to-image",
     ratios:["1:1","3:2","2:3","3:4","4:3","4:5","5:4","9:16","16:9","21:9"],
     resolutionField:"resolution", promptMax:20000 },
-  { id:"rh-imagine-quality", label:"RH Imagine Image Quality", apiPath:"rhart-imagine-image-quality/text-to-image",
+  { id:"rh-imagine-quality", label:"RH Imagine — Sharp & Clean", apiPath:"rhart-imagine-image-quality/text-to-image",
     ratios:["1:1","16:9","9:16","4:3","3:4","3:2","2:3"],
     resolutionField:"resolution", resolutionEnum:["1k","2k"], numImagesField:"numImages",
     promptMax:4000, extra:{ outputFormat:"png" } },
-  { id:"qwen-image-3-pro-t2i", label:"Qwen Image 3.0 Pro (Text-to-Image)", apiPath:"alibaba/qwen-image-3.0-pro/text-to-image",
+  { id:"qwen-image-3-pro-t2i", label:"Qwen 3.0 Pro — Asia Looks", apiPath:"alibaba/qwen-image-3.0-pro/text-to-image",
     sizeField:"size", promptMax:2048 },
-  { id:"youchuan-v81", label:"Midjourney v8.1 (RunningHub)", apiPath:"youchuan/text-to-image-v81",
+  { id:"youchuan-v81", label:"Midjourney v8.1 — Artistic", apiPath:"youchuan/text-to-image-v81",
     ratios:["1:1","4:3","3:2","16:9","3:4","2:3","9:16"], promptMax:8192, extra:{ hd:true } }
 ];
 function rhT2IModelDef(id){ return RH_T2I_MODELS.find(function(m){ return m.id===id; }) || null; }
@@ -3623,7 +3799,16 @@ function rhFriendly(e){
   if(code==="no-video") return L9({my:"အရင် ဗီဒီယို ဖိုင် တစ်ခု ရွေးပါ",en:"Pick a video file first",shn:"ထၢႆႇဝီဒီရူဝ်ႈဢွၼ်တၢင်း",kac:"Video langai n tawn shangun u",th:"เลือกไฟล์วิดีโอก่อน",zh:"请先选择一个视频文件",vi:"Hãy chọn một tệp video trước",id:"Pilih file video terlebih dahulu",ms:"Pilih fail video dahulu"});
   if(code==="cancelled") return L9({my:"ရပ်လိုက်ပါပြီ",en:"Cancelled",shn:"ၵိုတ်းယဝ်ႉ",kac:"Hkum tawn kau sai",th:"ยกเลิกแล้ว",zh:"已取消",vi:"Đã hủy",id:"Dibatalkan",ms:"Dibatalkan"});
   if(code==="failed") return L9({my:"RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"The RunningHub task failed — try a different prompt/photo",shn:"RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",kac:"RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",th:"งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",zh:"RunningHub 任务失败 — 请更换 prompt 或图片",vi:"Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",id:"Tugas RunningHub gagal — coba prompt/foto lain",ms:"Tugas RunningHub gagal — cuba prompt/foto lain"});
-  return L9({my:"RunningHub error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"RunningHub error — try again ("+(status||"?")+")",shn:"RunningHub error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"RunningHub error — bai chyam u ("+(status||"?")+")",th:"RunningHub error — ลองใหม่ ("+(status||"?")+")",zh:"RunningHub 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi RunningHub — thử lại ("+(status||"?")+")",id:"Error RunningHub — coba lagi ("+(status||"?")+")",ms:"Ralat RunningHub — cuba lagi ("+(status||"?")+")"});
+  if(status===429) return L9({my:"RunningHub မှာ လူများနေပါတယ် — ခဏနေ ပြန်စမ်းပါ",en:"RunningHub is busy — wait a moment and try again",shn:"RunningHub ၵိုၼ်းယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၸၢမ်းၶိုၼ်း",kac:"RunningHub masha law nga ai — jahkring la nna bai chyam u",th:"RunningHub กำลังคับคั่ง — รอสักครู่แล้วลองใหม่",zh:"RunningHub 正忙 — 稍等片刻后重试",vi:"RunningHub đang bận — đợi chút rồi thử lại",id:"RunningHub sedang sibuk — tunggu sebentar lalu coba lagi",ms:"RunningHub sibuk — tunggu sebentar dan cuba lagi"});
+  /* v4.41: an HTTP-200 error payload used to collapse into "error (200)" —
+     surface what the server actually said (bad param, offline node, wrong
+     endpoint path) so a hand-pasted apiPath is debuggable from the phone */
+  var bodyMsg="";
+  try{
+    var bb=e && e.body;
+    if(bb) bodyMsg=String(bb.msg||bb.message||(bb.error&&(bb.error.message||bb.error))||bb.code||"").slice(0,120);
+  }catch(x){}
+  return L9({my:"RunningHub error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"RunningHub error — try again ("+(status||"?")+")",shn:"RunningHub error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"RunningHub error — bai chyam u ("+(status||"?")+")",th:"RunningHub error — ลองใหม่ ("+(status||"?")+")",zh:"RunningHub 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi RunningHub — thử lại ("+(status||"?")+")",id:"Error RunningHub — coba lagi ("+(status||"?")+")",ms:"Ralat RunningHub — cuba lagi ("+(status||"?")+")"})+(bodyMsg?" · "+bodyMsg:"");
 }
 
 /* ---- Setup UI wiring ---- */
@@ -3709,7 +3894,9 @@ function rhNarrowRatioOptionsFor(active){
     var cur=sel.value;
     sel.innerHTML="";
     RH_ZIMAGE_RATIO_ENUM.forEach(function(r){ var o=document.createElement("option"); o.textContent=r; sel.appendChild(o); });
-    sel.value = RH_ZIMAGE_RATIO_ENUM.indexOf(cur)>=0 ? cur : RH_ZIMAGE_RATIO_ENUM[0];
+    /* v4.41: default "1:1", matching rhV2Submit's own invalid-ratio fallback —
+       the UI default and the submit-side coercion used to disagree (3:2 vs 1:1) */
+    sel.value = RH_ZIMAGE_RATIO_ENUM.indexOf(cur)>=0 ? cur : "1:1";
     return;
   }
   if(active && active.sizeParam){
@@ -3752,8 +3939,54 @@ function updateGenOptsForRHKind(){
   $("selCount").style.display = isUpscaleKind ? "none" : "";
   if(isUpscaleKind) $("selCount").value = "1";
   if(!isUpscaleKind) rhNarrowRatioOptionsFor(active);
+  /* v4.41 control honesty: Size is never read by OpenAI (gpt-image-2 picks
+     its own size from the ratio) nor by Z-Image (no resolution field) —
+     hide it rather than accept-and-ignore. Upscale-kind keeps it: there it
+     IS the scale picker. */
+  var sizeDead = provider==="openai" || (active && active.kind==="zimage");
+  $("selSize").style.display = sizeDead ? "none" : "";
+  /* v4.41 engine honesty: the Flash/Pro dropdown is a GEMINI control — with
+     another provider selected it was a false control ("Model: Auto" shown
+     while a saved RH model ran). Hide it and name what will actually run. */
+  var mSel=$("selModel");
+  mSel.style.display = provider==="gemini" ? "" : "none";
+  var eng=$("genEngine");
+  if(!eng){
+    eng=document.createElement("button");
+    eng.id="genEngine"; eng.type="button"; eng.className="acc-lnk";
+    eng.style.cssText="display:block;margin:6px 0 0;text-align:left";
+    var row=$("genOpts");
+    row.parentNode.insertBefore(eng, row.nextSibling);
+    eng.onclick=function(){ switchPage("pgHome"); if(typeof setupJump==="function") setupJump("cardRh"); };
+  }
+  if(provider==="runninghub"){
+    eng.style.display="";
+    eng.textContent=L9({my:"Model: ",en:"Model: ",shn:"Model: ",kac:"Model: ",th:"Model: ",zh:"模型：",vi:"Model: ",id:"Model: ",ms:"Model: "})+((active&&active.id&&(rhModelDef(active.id)||{}).label)||active&&active.id||"?")+L9({my:" — Setup မှာပြောင်းနိုင်",en:" — change in Setup",shn:" — လႅၵ်ႈလႆႈတီႈ Setup",kac:" — Setup kaw galai u",th:" — เปลี่ยนได้ใน Setup",zh:" — 可在 Setup 更改",vi:" — đổi trong Setup",id:" — ubah di Setup",ms:" — tukar di Setup"});
+  } else if(provider==="openai"){
+    eng.style.display="";
+    eng.textContent="Model: gpt-image-2";
+  } else eng.style.display="none";
+  /* v4.41: say what the tap will cost in time, per engine × count */
+  var eta=$("genEta");
+  if(!eta){
+    eta=document.createElement("div");
+    eta.id="genEta"; eta.className="mut"; eta.style.marginTop="6px";
+    $("btnGen").parentNode.insertBefore(eta, $("btnGen"));
+  }
+  var n=parseInt($("selCount").value,10)||1;
+  var range = provider==="runninghub" ? [60,180] : provider==="openai" ? [20,60] : [20,60];
+  var lo=range[0], hi=range[1]*(n>1?n:1);
+  var mm=function(s){ return s>=120 ? Math.round(s/60)+L9({my:" မိနစ်",en:" min",shn:" မိၼိတ်ႉ",kac:" minit",th:" นาที",zh:" 分钟",vi:" phút",id:" mnt",ms:" min"}) : s+"s"; };
+  eta.textContent="≈ "+mm(lo)+"–"+mm(hi)
+    +(provider==="runninghub"?L9({my:" · RH credit သုံးမယ်",en:" · uses RH credits",shn:" · ၸႂ်ႉ RH credit",kac:" · RH credit lang na",th:" · ใช้เครดิต RH",zh:" · 消耗 RH 额度",vi:" · dùng credit RH",id:" · pakai kredit RH",ms:" · guna kredit RH"})
+    : provider==="openai"?L9({my:" · ပုံတစ်ပုံချင်း ကျသင့်မယ်",en:" · paid per image",shn:" · ပၼ်ၵႃႈၶၼ်တေႃႇၶႅပ်း",kac:" · sumla langai mi jahpu ra",th:" · จ่ายต่อภาพ",zh:" · 按张计费",vi:" · trả phí mỗi ảnh",id:" · bayar per gambar",ms:" · bayar setiap imej"})
+    : L9({my:" · Gemini အခမဲ့ quota",en:" · free Gemini quota",shn:" · Gemini quota လၢႆ",kac:" · Gemini quota manu n jaw ai",th:" · โควตาฟรี Gemini",zh:" · Gemini 免费额度",vi:" · hạn mức miễn phí Gemini",id:" · kuota gratis Gemini",ms:" · kuota percuma Gemini"}));
+  /* provider-aware GENERATE microcopy — the tap itself names the engine */
+  var pName = provider==="runninghub" ? "RunningHub" : provider==="openai" ? "OpenAI" : "Gemini";
+  $("btnGen").innerHTML='<svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg> GENERATE — '+pName;
   updateGeminiSizeGate();
 }
+$("selCount") && ($("selCount").addEventListener("change", function(){ if(typeof updateGenOptsForRHKind==="function") updateGenOptsForRHKind(); }));
 /* v4.28: the 2K/4K Size tiers are honored only by gemini-3-pro-image-preview.
    Grey them out whenever the request would resolve to Flash, and say so on
    the Auto option ("1K — Flash"), so the user is never promised a tier the
@@ -3777,9 +4010,54 @@ function updateGeminiSizeGate(){
   if(oa) oa.textContent = pro ? "Size: Auto" : "Size: Auto (1K — Flash)";
   if(!pro && (sel.value==="2K"||sel.value==="4K")) sel.value="";
 }
+/* ---------- v4.41: visual ratio chips ----------
+   The native <select>s stay the single source of truth — every generate path
+   reads them and three different narrowing functions rewrite their options —
+   so the rail only mirrors options → chips and writes taps back. Model swaps
+   (childList), upscale-kind hiding (style attribute) and persisted restores
+   (change events) all flow through the observer untouched. */
+function ratioRailAttach(selId){
+  var sel=$(selId); if(!sel || sel._rail) return;
+  var rail=document.createElement("div");
+  rail.className="ratio-rail"; rail.id=selId+"Rail";
+  var row=sel.closest(".row")||sel;
+  row.parentNode.insertBefore(rail, row.nextSibling);
+  sel.classList.add("rr-native");
+  function render(){
+    rail.style.display = sel.style.display==="none" ? "none" : "";
+    rail.innerHTML="";
+    Array.prototype.forEach.call(sel.options, function(o){
+      if(o.disabled) return;
+      var v=o.value, m=/^(\d+):(\d+)$/.exec(v);
+      var b=document.createElement("button");
+      b.type="button";
+      b.className="rchip"+(m?"":" auto")+(v===sel.value?" on":"");
+      var i=document.createElement("i");
+      var MX=20, w=15, h=15;
+      if(m){
+        var rw=+m[1], rh=+m[2];
+        if(rw>=rh){ w=MX; h=Math.max(7,Math.round(MX*rh/rw)); }
+        else { h=MX; w=Math.max(7,Math.round(MX*rw/rh)); }
+      }
+      i.style.width=w+"px"; i.style.height=h+"px";
+      b.appendChild(i);
+      b.appendChild(el("span","",v||"Auto"));
+      b.onclick=function(){
+        sel.value=v;
+        sel.dispatchEvent(new Event("change",{bubbles:true}));
+      };
+      rail.appendChild(b);
+    });
+  }
+  new MutationObserver(render).observe(sel,{childList:true,attributes:true,attributeFilter:["style"]});
+  sel.addEventListener("change",render);
+  sel._rail=rail; render();
+}
+
 $("selProvider").onchange = updateGenOptsForRHKind;
 $("selModel").onchange = updateGeminiSizeGate;
 $("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
+ratioRailAttach("selRatio"); ratioRailAttach("selT2IRatio"); ratioRailAttach("selVidAspect");
 rhLoadFormFor($("rhModelSel").value);
 rhRenderConfiguredList();
 renderRhProviderOption();
@@ -3825,6 +4103,9 @@ async function oaVerifyKey(apiKey){
   try {
     var r=await fetch(oaUrl("/models"), { headers:{"Authorization":"Bearer "+apiKey} });
     if(r.status===401) return {ok:false, code:"invalid-key"};
+    /* v4.41: a 429 on /models means the key AUTHENTICATED and merely hit a
+       rate limit — reporting "network error" sent users hunting the wrong bug */
+    if(r.status===429) return {ok:true, code:""};
     return {ok:r.ok, code:r.ok?"":"unknown"};
   } catch(e){ return {ok:false, code:"network"}; }
 }
@@ -4432,9 +4713,14 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     var body=el("div","wiz-body");
     if (wiz.step===1 && wizReqOk()){
       /* repeat-run fast path: every required input is already in place (e.g.
-         re-running a workflow on the same photo) — one tap jumps to Generate */
+         re-running a workflow on the same photo) — one tap jumps to Generate.
+         v4.41: photo-less workflows (Prompt Ideas) used to claim "images are
+         loaded" — they get an honest label instead. */
       var fast=el("button","btn wiz-fast");
-      setIcnText(fast,"i-bolt",L9({my:"ပုံတွေ အသင့်ရှိပြီးသား — Generate ကို တန်းသွားမယ်",en:"Inputs already set — skip to Generate",shn:"ၶႅပ်းႁၢင်ႈမီးဝႆႉယဝ်ႉ — ၵႂႃႇတီႈ Generate ၵမ်းလဵဝ်",kac:"Sumla ni hkyen da sai — Generate de kalang ta sa u",th:"ภาพพร้อมแล้ว — ข้ามไป Generate ได้เลย",zh:"素材已就绪 — 直接跳到 Generate",vi:"Ảnh đã sẵn sàng — chuyển thẳng tới Generate",id:"Gambar sudah siap — langsung ke Generate",ms:"Imej sudah sedia — terus ke Generate"}));
+      var noIn = wizInputs(w).length===0;
+      setIcnText(fast,"i-bolt", noIn
+        ? L9({my:"Prompt အသင့်ပါပြီ — Generate ကို တန်းသွားမယ်",en:"Prompt is ready — skip to Generate",shn:"Prompt ႁၢင်ႈႁႅၼ်းယဝ်ႉ — ၵႂႃႇတီႈ Generate ၵမ်းလဵဝ်",kac:"Prompt jin sai — Generate de kalang ta sa u",th:"Prompt พร้อมแล้ว — ข้ามไป Generate ได้เลย",zh:"Prompt 已就绪 — 直接跳到 Generate",vi:"Prompt đã sẵn sàng — chuyển thẳng tới Generate",id:"Prompt siap — langsung ke Generate",ms:"Prompt sedia — terus ke Generate"})
+        : L9({my:"ပုံတွေ အသင့်ရှိပြီးသား — Generate ကို တန်းသွားမယ်",en:"Inputs already set — skip to Generate",shn:"ၶႅပ်းႁၢင်ႈမီးဝႆႉယဝ်ႉ — ၵႂႃႇတီႈ Generate ၵမ်းလဵဝ်",kac:"Sumla ni hkyen da sai — Generate de kalang ta sa u",th:"ภาพพร้อมแล้ว — ข้ามไป Generate ได้เลย",zh:"素材已就绪 — 直接跳到 Generate",vi:"Ảnh đã sẵn sàng — chuyển thẳng tới Generate",id:"Gambar sudah siap — langsung ke Generate",ms:"Imej sudah sedia — terus ke Generate"}));
       fast.onclick=function(){ wiz.step=3; renderWiz(); $("wiz").scrollTop=0; };
       body.appendChild(fast);
     }
@@ -4455,7 +4741,23 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       }
       else if (w.visual){ var im=document.createElement("img"); im.className="wiz-visual"; im.src=fullSrc(visSrc(w)); im.alt=w.title; body.appendChild(im); }
       body.appendChild(el("div","s",w.summary)).style.margin="10px 0 2px";
-      body.appendChild(el("p","mut",w.explanation));
+      /* v4.41: this used to dump 200 chars of the raw English prompt — noise
+         to a Burmese owner. The localized summary above already explains the
+         card; the real prompt hides behind a tap for the curious. */
+      if(w.prompt && w.prompt.length>40){
+        var pvg=el("div","grp");
+        var pvh=el("button","grp-h");
+        pvh.innerHTML='<span class="car">'+icn("i-caret","ic-car")+'</span><span>'
+          +escH(L9({my:"Prompt အပြည့် ကြည့်မယ်",en:"View full prompt",shn:"တူၺ်း prompt တင်းမူတ်း",kac:"Prompt yawng yu u",th:"ดู prompt ฉบับเต็ม",zh:"查看完整 prompt",vi:"Xem prompt đầy đủ",id:"Lihat prompt lengkap",ms:"Lihat prompt penuh"}))
+          +' · '+w.prompt.length+'</span>';
+        pvh.onclick=function(){ pvg.className = pvg.className.indexOf("open")>=0 ? "grp" : "grp open"; };
+        var pvb=el("div","grp-b");
+        var pvp=el("p","mut", w.prompt);
+        pvp.style.whiteSpace="pre-wrap"; pvp.style.fontSize="11px"; pvp.style.wordBreak="break-word";
+        pvb.appendChild(pvp);
+        pvg.appendChild(pvh); pvg.appendChild(pvb);
+        body.appendChild(pvg);
+      } else body.appendChild(el("p","mut",w.explanation));
       stepsFor(w).forEach(function(s,i){
         var row=el("div","wf-step");
         row.appendChild(el("span","n",String(i+1)));
@@ -4866,7 +5168,12 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     l.unshift(id); l=l.slice(0,6);
     try{ localStorage.setItem("hnk_ws_wf_recent", JSON.stringify(l)); }catch(e){}
   }
-  function L9(o){ return o[LANG]!==undefined ? o[LANG] : (o.en!==undefined ? o.en : o.my); }
+  function L9(o){
+    if(o[LANG]!==undefined) return o[LANG];
+    var fb=LANG_FB[LANG];
+    if(fb && o[fb]!==undefined) return o[fb];
+    return o.en!==undefined ? o.en : o.my;
+  }
   function visSrc(w){ return w.visual.indexOf("/")>=0 ? w.visual : "lib/wf/"+w.visual; }
   function fullSrc(src){
     var m=src.match(/(user-ref-\d+)\.jpg$/);
@@ -5073,26 +5380,66 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   var wfById={}, wfIndex=[];
   function renderFavRecent(){
     var host=$("wfFavHost"); host.innerHTML="";
+    var any=false;
     [[favList(),"i-star-fill",L9({my:"အကြိုက်ဆုံးများ",en:"Favorites",shn:"ဢၼ်လႆႈၸႂ်",kac:"Ra dik ai ni",th:"รายการโปรด",zh:"收藏",vi:"Yêu thích",id:"Favorit",ms:"Kegemaran"})],[recentList(),"i-clock",L9({my:"မကြာခင်သုံးခဲ့",en:"Recent",shn:"ဢၼ်ၸႂ်ႉလိုၼ်းသုတ်း",kac:"Ya sha lang ai",th:"ล่าสุด",zh:"最近",vi:"Gần đây",id:"Terbaru",ms:"Terkini"})]].forEach(function(pair){
       var ids=pair[0].filter(function(id){return wfById[id];});
       if(!ids.length) return;
+      any=true;
       var sh=el("div","subh"); sh.innerHTML=icn(pair[1])+" "+escH(pair[2]); host.appendChild(sh);
       var chips=el("div","chips");
       ids.forEach(function(id){
         var w=wfById[id];
-        var c=el("button","chip",w.title);
+        var c=el("button","chip");
+        /* v4.41: the chip carries the card's real art so the shelf is visual */
+        if(w.cardImg){
+          var im=document.createElement("img");
+          im.className="chip-th"; im.src=w.cardImg; im.alt=""; im.loading="lazy"; im.decoding="async";
+          im.onerror=function(){ im.remove(); };
+          c.appendChild(im);
+        }
+        c.appendChild(document.createTextNode(w.title));
         c.onclick=function(){ openWizard(w); };
         chips.appendChild(c);
       });
       host.appendChild(chips);
     });
+    /* v4.41: the ★ feature was invisible until first use — say it exists */
+    if(!any){
+      host.appendChild(el("div","mut", L9({my:"ကတ်ပေါ်က ★ ကို နှိပ်ပြီး အကြိုက်ဆုံး workflow တွေ ဒီမှာ စုထားနိုင်တယ်",en:"Tap ★ on a card to pin your favorite workflows here",shn:"ၼဵၵ်း ★ ၼိူဝ်ၵၢတ်ႈသေ သိမ်း workflow ဢၼ်လႆႈၸႂ်တီႈၼႆႈ",kac:"Card ntsa na ★ hpe dip nna ra ai workflow ni ndai kaw da u",th:"แตะ ★ บนการ์ดเพื่อปักหมุดเวิร์กโฟลว์โปรดไว้ที่นี่",zh:"点按卡片上的 ★ 把常用工作流固定在这里",vi:"Chạm ★ trên thẻ để ghim workflow yêu thích tại đây",id:"Ketuk ★ pada kartu untuk menyematkan workflow favorit di sini",ms:"Ketik ★ pada kad untuk semat aliran kerja kegemaran di sini"})));
+    }
   }
   var wfCats=deriveWorkflowCats(), wfTotal=0;
+  var wfJumpTargets=[];
   wfCats.forEach(function(c){
     wfTotal += c.items.length;
     var g=grp(c.t, c.items.length+t("unit"), !!c.open, c.ic);
+    wfJumpTargets.push({t:c.t, n:c.items.length, g:g.g});
     if(c.desc) g.b.appendChild(el("p","mut",c.desc));
+    /* v4.41: a 40-card category (Wedding Suite) gets sub-group chips from the
+       until-now-dead wedGroup field, so the wall becomes 5 scannable shelves */
+    var wgs={};
+    c.items.forEach(function(w){ if(w.wedGroup) wgs[w.wedGroup]=(wgs[w.wedGroup]||0)+1; });
+    var wgKeys=Object.keys(wgs);
     var gd=el("div","wfgrid");
+    if(wgKeys.length>1){
+      var wgNames={trail:"Flower Trail",veil:"Veil",gown:"Gown Train",petal:"Petal Rain",extra:"Extra"};
+      var wrow=el("div","chips");
+      function wgApply(key,btn){
+        Array.prototype.forEach.call(wrow.children,function(ch){ ch.className="chip"+(ch===btn?" on":""); });
+        Array.prototype.forEach.call(gd.children,function(card){
+          card.style.display=(!key || card.dataset.wg===key) ? "" : "none";
+        });
+      }
+      var allBtn=el("button","chip on", t("lib_all")+" ("+c.items.length+")");
+      allBtn.onclick=function(){ wgApply("",allBtn); };
+      wrow.appendChild(allBtn);
+      wgKeys.forEach(function(k){
+        var bb=el("button","chip",(wgNames[k]||k)+" ("+wgs[k]+")");
+        bb.onclick=function(){ wgApply(k,bb); };
+        wrow.appendChild(bb);
+      });
+      g.b.appendChild(wrow);
+    }
     c.items.forEach(function(w){
       wfById[w.id]=w;
       var m=el("button","wfmini");
@@ -5111,18 +5458,43 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         renderFavRecent();
       };
       m.appendChild(fav);
+      /* v4.41: the one fact worth knowing before the tap — how many photos */
+      var nReq=(w.req||[]).length;
+      m.appendChild(el("span","wf-need", nReq===0
+        ? L9({my:"ပုံမလို",en:"No photo",shn:"ဢမ်ႇလူဝ်ႇၶႅပ်း",kac:"Sumla n ra",th:"ไม่ต้องใช้รูป",zh:"无需照片",vi:"Không cần ảnh",id:"Tanpa foto",ms:"Tanpa foto"})
+        : nReq===1 ? L9({my:"၁ ပုံ",en:"1 photo",shn:"1 ၶႅပ်း",kac:"Sumla 1",th:"1 รูป",zh:"1 张",vi:"1 ảnh",id:"1 foto",ms:"1 foto"})
+        : L9({my:"၂ ပုံ + Ref",en:"2 photos",shn:"2 ၶႅပ်း",kac:"Sumla 2",th:"2 รูป",zh:"2 张",vi:"2 ảnh",id:"2 foto",ms:"2 foto"})));
       m.appendChild(el("div","t",w.title));
       if(w.summary) m.appendChild(el("div","s",w.summary));
-      var go=el("div","go"); go.innerHTML=icn("i-caret")+" Wizard"; m.appendChild(go);
+      var go=el("div","go"); go.innerHTML=icn("i-caret")+" "+escH(L9({my:"ဖွင့်မယ်",en:"Wizard",shn:"ပိုတ်ႇ",kac:"Hpaw u",th:"เปิด",zh:"打开",vi:"Mở",id:"Buka",ms:"Buka"})); m.appendChild(go);
       m.onclick=function(){ openWizard(w); };
+      m.dataset.wg=w.wedGroup||"";
       gd.appendChild(m);
-      wfIndex.push({ el:m, grp:g, q:(w.title+" "+(w.summary||"")+" "+w.id).toLowerCase() });
+      /* v4.41: the index also carries the category title and sub-group so a
+         search like "wedding veil" or a category word alone finds its cards */
+      wfIndex.push({ el:m, grp:g, q:(w.title+" "+(w.summary||"")+" "+w.id+" "+c.t+" "+(w.wedGroup||"")).toLowerCase() });
     });
     if(c.items.length%2===1 && gd.lastElementChild) gd.lastElementChild.classList.add("wf-span2");
     g.b.appendChild(gd);
     wfHost.appendChild(g.g);
   });
   renderFavRecent();
+  /* v4.41: category quick-jump rail — 116 cards across 9 groups need a map.
+     Tap = open that group and bring it to the top of the view. */
+  (function(){
+    var rail=el("div","chips"); rail.id="wfJump";
+    rail.style.cssText="flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px";
+    wfJumpTargets.forEach(function(tg){
+      var b=el("button","chip", tg.t+" "+tg.n);
+      b.onclick=function(){
+        if(tg.g.className.indexOf("open")<0) tg.g.className="grp open";
+        tg.g.scrollIntoView({behavior:"smooth", block:"start"});
+      };
+      rail.appendChild(b);
+    });
+    var favHost=$("wfFavHost");
+    favHost.parentNode.insertBefore(rail, favHost);
+  })();
   $("wfPageH2").innerHTML = icn("i-brain","ic-h2")+escH("SMART WORKFLOW — " + wfTotal + t("unit"));
   var _swc=$("stWfCount"); if(_swc) _swc.textContent=String(wfTotal);
   if(window._setOaIntro) window._setOaIntro(wfTotal); /* oaIntro names the same count (v4.28) */
@@ -5140,19 +5512,40 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
 
   /* live search across all workflows — debounced like Studio's (120ms).
      Clearing used to force-close every group the user had opened by hand;
-     the open set is snapshotted on the first keystroke and restored. */
+     the open set is snapshotted on the first keystroke and restored.
+     v4.41: (a) Burmese/common-term aliases expand the query so "ဆံပင်" finds
+     hair workflows; (b) multi-word queries are token-AND instead of one
+     substring, so word order stops mattering; (c) a live result count. */
+  var WF_ALIAS=HNK_MY_ALIAS;
+  function wfExpandQuery(q){
+    var out=q;
+    WF_ALIAS.forEach(function(p){ if(q.indexOf(p[0])>=0) out+=" "+p[1]; });
+    return out;
+  }
   var _wfT=null, _wfOpenSnap=null;
+  var wfCountLine=el("div","mut"); wfCountLine.id="wfCount"; wfCountLine.style.display="none";
+  $("wfSearch").parentNode.parentNode.insertBefore(wfCountLine, $("wfSearch").parentNode.nextSibling);
   $("wfSearch").oninput=function(){
     var self=this;
     clearTimeout(_wfT);
     _wfT=setTimeout(function(){
     var q=self.value.trim().toLowerCase();
-    var anyMatch=false;
+    var toks=q?wfExpandQuery(q).split(/\s+/).filter(Boolean):[];
+    var anyMatch=false, nHits=0;
     wfIndex.forEach(function(it){
-      var hit=!q || it.q.indexOf(q)>=0;
+      /* a card hits when EVERY plain query token matches, OR any alias token
+         does — aliases are alternatives for the Burmese word, not additions */
+      var hit=!q;
+      if(q){
+        var plain=q.split(/\s+/).filter(Boolean);
+        hit=plain.every(function(tk){ return it.q.indexOf(tk)>=0; })
+          || toks.some(function(tk){ return plain.indexOf(tk)<0 && it.q.indexOf(tk)>=0; });
+      }
       it.el.style.display=hit?"":"none";
-      if(hit) anyMatch=true;
+      if(hit){ anyMatch=true; nHits++; }
     });
+    wfCountLine.style.display=q?"":"none";
+    if(q) wfCountLine.textContent=L9({my:nHits+" ခု တွေ့သည်",en:nHits+" found",shn:"ႁၼ် "+nHits+" ဢၼ်",kac:nHits+" mu ai",th:"พบ "+nHits+" รายการ",zh:"找到 "+nHits+" 个",vi:"Tìm thấy "+nHits,id:nHits+" ditemukan",ms:nHits+" dijumpai"});
     var grps=wfHost.querySelectorAll(".grp");
     if(q && !_wfOpenSnap){
       _wfOpenSnap=[];
@@ -5189,6 +5582,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
      state.refs, so the user's inputs survive the Setup detour untouched */
   window._openWizardById=function(id){ var w=wfById[id]; if(w) openWizard(w); };
   window._wfTitleById=function(id){ var w=wfById[id]; return w ? w.title : null; };
+  window._wfCardImgById=function(id){ var w=wfById[id]; return (w && w.cardImg) || null; };
   /* result → continue-editing chain */
   window.openWorkflowById=function(id){
     var w=wfById[id]; if(!w) return;
@@ -11133,24 +11527,45 @@ stRenderThumbs();
 
 /* ---------- visual library (607) ---------- */
 var lib = { filter: "featured", group: "", search: "", shown: 0, page: 24, list: [], sel: null };
+function libFavList(){ try{ return JSON.parse(localStorage.getItem("hnk_ws_lib_favs")||"[]"); }catch(e){ return []; } }
+function libFavSave(l){ try{ localStorage.setItem("hnk_ws_lib_favs", JSON.stringify(l)); }catch(e){} }
 function libInColl(it){
+  if (lib.filter === "favs") return libFavList().indexOf(it.id)>=0;
   if (lib.filter === "all" || lib.filter === "featured") return true;
   var cs = Array.isArray(it.c) ? it.c : [it.c];
   return cs.indexOf(lib.filter) >= 0;
 }
 function libFiltered(){
   var q = lib.search.trim().toLowerCase();
+  /* v4.41: token-AND matching (word order stops mattering) plus the shared
+     Burmese alias map, so "ဆံပင်" finds hair looks and "wedding couple" ===
+     "couple wedding" */
+  var toks = q ? q.split(/\s+/).filter(Boolean) : [];
+  var aliasToks=[];
+  if(q){
+    HNK_MY_ALIAS.forEach(function(pr){
+      if(q.indexOf(pr[0])>=0) aliasToks=aliasToks.concat(pr[1].split(" "));
+    });
+  }
   return LW.items.filter(function(it){
     if (lib.filter === "featured" && LW.featured.indexOf(it.id) < 0 && !q) return false;
     if (!libInColl(it)) return false;
     if (lib.group && it.g !== lib.group) return false;
-    if (q && it.q.indexOf(q) < 0) return false;
+    if (q){
+      var hit=toks.every(function(tk){ return it.q.indexOf(tk)>=0; })
+        || (aliasToks.length && aliasToks.some(function(tk){ return it.q.indexOf(tk)>=0; }));
+      if(!hit) return false;
+    }
     return true;
   });
 }
 function renderLibFilters(){
   var host=$("libFilters"); host.innerHTML="";
-  var opts=[["featured","i-star-fill","Featured"],["all",t("lib_all")+" ("+LW.items.length+")"]];
+  var opts=[["featured","i-star-fill",L9({my:"လက်ရွေးစင်",en:"Featured",shn:"လိူၵ်ႈဝႆႉ",kac:"Lata da ai",th:"แนะนำ",zh:"精选",vi:"Nổi bật",id:"Unggulan",ms:"Pilihan"})],["all",t("lib_all")+" ("+LW.items.length+")"]];
+  /* v4.41: the owner's own working set — a ★ My Looks filter, shown once
+     anything has been starred */
+  var favN=libFavList().length;
+  if(favN) opts.push(["favs","i-star-fill",L9({my:"ကြိုက်တာများ",en:"My Looks",shn:"ဢၼ်လႆႈၸႂ်",kac:"Ra ai ni",th:"ที่ชอบ",zh:"我的收藏",vi:"Yêu thích",id:"Favorit",ms:"Kegemaran"})+" ("+favN+")"]);
   Object.keys(LW.collections).forEach(function(c){ opts.push([c, c+" ("+LW.collections[c]+")"]); });
   var featuredBypassed = lib.filter==="featured" && lib.search.trim();
   opts.forEach(function(o){
@@ -11159,6 +11574,8 @@ function renderLibFilters(){
     b.onclick=function(){ lib.filter=o[0]; lib.group=""; lib.shown=0; renderLibFilters(); renderLibGroups(); renderLibGrid(true); };
     host.appendChild(b);
   });
+  var onc=host.querySelector(".chip.on");
+  if(onc && onc.scrollIntoView) onc.scrollIntoView({inline:"nearest", block:"nearest"});
 }
 /* Sets inside the current collection, largest first. "Featured" is a
    hand-picked list rather than a slice of the data, so it gets no set row. */
@@ -11182,6 +11599,8 @@ function renderLibGroups(){
     b.onclick=function(){ lib.group=o[0]; lib.shown=0; renderLibGroups(); renderLibGrid(true); };
     host.appendChild(b);
   });
+  var onc2=host.querySelector(".chip.on");
+  if(onc2 && onc2.scrollIntoView) onc2.scrollIntoView({inline:"nearest", block:"nearest"});
 }
 function renderLibGrid(reset){
   var host=$("libGrid");
@@ -11216,6 +11635,69 @@ function libSelect(it, imEl){
   $("libPickImg").src="lib/full/"+it.id+".jpg";
   $("libPickTitle").textContent=it.t;
   $("libPickSub").textContent=(it.tm||it.f||"")+(it.g?" · "+it.g:"");
+  var fv=$("libFav");
+  if(fv){
+    var isFav=libFavList().indexOf(it.id)>=0;
+    fv.innerHTML=icn(isFav?"i-star-fill":"i-star","ic-s");
+    fv.setAttribute("aria-pressed", isFav?"true":"false");
+  }
+}
+/* v4.41: ★ on the selected look — the daily working set of a real studio */
+if($("libFav")) $("libFav").onclick=function(){
+  var it=lib.selItem; if(!it) return;
+  var l=libFavList(), i=l.indexOf(it.id);
+  if(i>=0) l.splice(i,1); else l.unshift(it.id);
+  libFavSave(l);
+  if(lib.filter==="favs"){ lib.shown=0; renderLibGrid(true); }
+  renderLibFilters();
+  libSelect(it, $("libGrid").querySelector("img.sel"));
+};
+/* v4.41: full-screen look viewer — the product promise is "pick a look you
+   like", which needs more than a 96x120 stamp. Shared by Library + Gallery. */
+var LZ={list:[], i:0};
+function lzEnsure(){
+  if($("lookZoom")) return;
+  var d=document.createElement("div"); d.id="lookZoom";
+  d.innerHTML='<img id="lzImg" alt=""><div id="lzCap"></div>'
+    +'<button id="lzX" aria-label="Close">✕</button>'
+    +'<button class="lz-nav" id="lzPrev" aria-label="Previous">‹</button>'
+    +'<button class="lz-nav" id="lzNext" aria-label="Next">›</button>';
+  document.body.appendChild(d);
+  $("lzX").onclick=function(){ d.className=""; };
+  d.onclick=function(ev){ if(ev.target===d || ev.target.id==="lzImg") d.className=""; };
+  function step(dir){
+    if(!LZ.list.length) return;
+    LZ.i=(LZ.i+dir+LZ.list.length)%LZ.list.length;
+    $("lzImg").src=LZ.list[LZ.i].src;
+    $("lzCap").textContent=LZ.list[LZ.i].cap||"";
+  }
+  $("lzPrev").onclick=function(ev){ ev.stopPropagation(); step(-1); };
+  $("lzNext").onclick=function(ev){ ev.stopPropagation(); step(1); };
+  var tx0=null;
+  d.addEventListener("touchstart",function(ev){ tx0=ev.touches[0].clientX; },{passive:true});
+  d.addEventListener("touchend",function(ev){
+    if(tx0===null) return;
+    var dx=ev.changedTouches[0].clientX-tx0; tx0=null;
+    if(Math.abs(dx)>48) step(dx<0?1:-1);
+  },{passive:true});
+}
+function lookZoomOpen(list, idx){
+  lzEnsure();
+  LZ.list=list; LZ.i=idx||0;
+  $("lzImg").src=list[LZ.i].src;
+  $("lzCap").textContent=list[LZ.i].cap||"";
+  var nav=list.length>1?"":"none";
+  $("lzPrev").style.display=nav; $("lzNext").style.display=nav;
+  $("lookZoom").className="on";
+}
+if($("libPickImg")){
+  $("libPickImg").style.cursor="zoom-in";
+  $("libPickImg").onclick=function(){
+    if(!lib.selItem) return;
+    var list=lib.list.map(function(x){ return { src:"lib/full/"+x.id+".jpg", cap:x.t }; });
+    var idx=lib.list.findIndex(function(x){ return x.id===lib.selItem.id; });
+    lookZoomOpen(list, Math.max(0,idx));
+  };
 }
 async function libToSlot(slot, btn){
   var it=lib.selItem; if(!it) return;
@@ -11273,7 +11755,15 @@ var DASH_CARDS=[
   { pg:"pgCreate", ic:"i-pen", img:"lib/dash/describe.jpg", pos:"50% 50%",
     lbl:{my:"စကားနဲ့ပြင်မယ်",en:"Describe an Edit",shn:"လၢတ်ႈသေမႄး",kac:"Ga hte tsun nna galai u",th:"บอกสิ่งที่จะแก้",zh:"用文字描述修改",vi:"Mô tả chỉnh sửa",id:"Jelaskan editan",ms:"Terangkan suntingan"}, alt:"Describe an Edit" },
   { pg:"MEDIA", ic:"i-clapper", img:"lib/dash/medialab.jpg", pos:"50% 50%",
-    lbl:{my:"ဗီဒီယို·Text→Image",en:"Media Lab",shn:"ဝီးတီးဢူဝ်း·Text→Image",kac:"Media Lab",th:"มีเดียแล็บ",zh:"媒体实验室",vi:"Media Lab",id:"Media Lab",ms:"Media Lab"}, alt:"Media Lab" }
+    lbl:{my:"ဗီဒီယို·Text→Image",en:"Media Lab",shn:"ဝီးတီးဢူဝ်း·Text→Image",kac:"Media Lab",th:"มีเดียแล็บ",zh:"媒体实验室",vi:"Media Lab",id:"Media Lab",ms:"Media Lab"}, alt:"Media Lab" },
+  /* v4.41: the studio's daily money flow — 50-100-photo batch retouch — and
+     the delivery end (Gallery) get first-screen cards instead of living as
+     buried subtabs. Appended AFTER the original four so index-based routing
+     (incl. the Media Lab last-page memory at [3]) is untouched. */
+  { pg:"pgPath", ic:"i-stack", img:"lib/dash/path.jpg", pos:"50% 50%",
+    lbl:{my:"အစုလိုက် ပြင်မယ်",en:"Batch Retouch",shn:"မႄးလၢႆလၢႆၶႅပ်း",kac:"Sumla law law retouch",th:"รีทัชเป็นชุด",zh:"批量修图",vi:"Sửa hàng loạt",id:"Retouch massal",ms:"Retouch pukal"}, alt:"Path Batch Retouch" },
+  { pg:"pgGallery", ic:"i-gallery", img:"lib/dash/gallery.jpg", pos:"50% 50%",
+    lbl:{my:"ရလဒ်တွေ ကြည့်မယ်",en:"My Gallery",shn:"တူၺ်းၽွၼ်းလႆႈ",kac:"Lachyum ni yu u",th:"แกลเลอรีของฉัน",zh:"我的图库",vi:"Bộ sưu tập",id:"Galeri saya",ms:"Galeri saya"}, alt:"My Gallery" }
 ];
 function dashRoute(c){
   if(c.pg==="MEDIA"){ switchPage(lastPageOfGroup.grpMedia || "pgText2Img"); return; }
@@ -11307,7 +11797,10 @@ function renderDashStatic(){
     var bdg=el("div","bdg"); bdg.innerHTML=icn(c.ic,"ic-m"); art.appendChild(bdg);
     b.appendChild(art);
     b.appendChild(el("div","lbl",L9(c.lbl)));
-    b.appendChild(el("div","sub", LANG==="my" ? c.lbl.en : c.lbl.my));
+    /* the sub-line is a translation aid: Burmese users get the English term,
+       everyone else gets English too (not Burmese, which they can't read) —
+       except English users, who get the Burmese as local flavor */
+    b.appendChild(el("div","sub", LANG==="en" ? c.lbl.my : c.lbl.en));
     b.onclick=function(){ dashRoute(c); };
     grid.appendChild(b);
   });
@@ -11330,7 +11823,24 @@ function renderDashStatic(){
   });
   setIcnText($("dashLibMore"),"i-arrow",L9({my:"နောက်ထပ်ကြည့်မယ်",en:"View More",shn:"တူၺ်းထႅင်ႈ",kac:"Grau yu u",th:"ดูเพิ่มเติม",zh:"查看更多",vi:"Xem thêm",id:"Lihat lainnya",ms:"Lihat lagi"}),{after:true});
   $("dashLibMore").onclick=function(){ switchPage("pgLib"); };
-  /* promo band: Photoshop-panel cross-sell (blueprint C14) */
+  /* promo band: Photoshop-panel cross-sell (blueprint C14).
+     v4.41: dismissible — a phone-only owner shouldn't carry a desktop ad
+     in the bottom slot forever. */
+  try{
+    if(localStorage.getItem("hnk_ws_promo_hide")==="1") $("dashPromo").style.display="none";
+    else if(!$("dashPromoX")){
+      var px=el("button","chip","✕");
+      px.id="dashPromoX";
+      px.setAttribute("aria-label","Dismiss");
+      px.style.cssText="position:absolute;top:10px;right:10px;min-height:32px;padding:2px 10px";
+      $("dashPromo").style.position="relative";
+      px.onclick=function(){
+        try{ localStorage.setItem("hnk_ws_promo_hide","1"); }catch(e){}
+        $("dashPromo").style.display="none";
+      };
+      $("dashPromo").appendChild(px);
+    }
+  }catch(e){}
   $("dashPromoH2").textContent="Photoshop Panel";
   $("dashPromoP").textContent=L9({my:"Photoshop ထဲမှာလည်း — Layer + Mask နဲ့ ပြန်လာမယ်၊ မူရင်းပုံ မပျက်ဘူး။",en:"Also in Photoshop — results come back as Layer + Mask, your original stays untouched.",shn:"ၼႂ်း Photoshop ၵေႃႈ — ၽွၼ်းလႆႈပွၵ်ႈမႃးပဵၼ် Layer + Mask၊ ၶႅပ်းႁၢင်ႈမူႇလဢမ်ႇလု။",kac:"Photoshop hta mung — result gaw Layer + Mask hku bai wa ai, na a shawng sumla n hten ai.",th:"ใน Photoshop ก็ได้ — ผลลัพธ์กลับมาเป็น Layer + Mask ต้นฉบับไม่ถูกแตะต้อง",zh:"Photoshop 中同样可用 — 结果以 Layer + Mask 返回，原图不受影响。",vi:"Cũng có trong Photoshop — kết quả trả về dạng Layer + Mask, ảnh gốc không bị ảnh hưởng.",id:"Juga di Photoshop — hasil kembali sebagai Layer + Mask, foto asli tetap utuh.",ms:"Juga dalam Photoshop — hasil kembali sebagai Layer + Mask, foto asal kekal."});
   setIcnText($("dashPromoGo"),"i-external",L9({my:"Panel ရယူမယ်",en:"Get the Panel",shn:"ဢဝ် Panel",kac:"Panel la u",th:"รับ Panel",zh:"获取 Panel",vi:"Tải Panel",id:"Dapatkan Panel",ms:"Dapatkan Panel"}));
@@ -11340,9 +11850,36 @@ function renderDashCont(){
   var recents=[];
   try{ recents=JSON.parse(localStorage.getItem("hnk_ws_wf_recent")||"[]"); }catch(e){}
   var hasHist=!!state.hist.length;
-  if(!hasHist && !recents.length){ card.style.display="none"; return; }
+  var CONT=L9({my:"ဆက်လုပ်မယ်",en:"Continue",shn:"သိုပ်ႇႁဵတ်း",kac:"Matut galaw u",th:"ทำต่อ",zh:"继续",vi:"Tiếp tục",id:"Lanjutkan",ms:"Teruskan"});
+  if(!hasHist && !recents.length){
+    card.style.display="none";
+    /* v4.41: session history dies with the tab, so this row used to vanish on
+       every relaunch — fall back to the newest Gallery result (IndexedDB
+       survives reloads) and route the button to the Gallery instead */
+    try{
+      galDb().then(function(d){
+        d.transaction("gal").objectStore("gal").getAll().onsuccess=function(e){
+          var items=e.target.result||[];
+          if(!items.length || curPage!=="pgDash" || state.hist.length) return;
+          var it=items[items.length-1];
+          card.style.display="";
+          $("dashContH2").textContent=CONT;
+          var row2=$("dashContRow"); row2.innerHTML="";
+          var th2=document.createElement("img");
+          th2.className="dash-cont-thumb";
+          th2.src="data:"+it.mime+";base64,"+it.b64; th2.alt="";
+          row2.appendChild(th2);
+          var go2=el("button","btn btn-gold grow");
+          setIcnText(go2,"i-gallery",L9({my:"Gallery ဖွင့်မယ်",en:"Open Gallery",shn:"ပိုတ်ႇ Gallery",kac:"Gallery hpaw u",th:"เปิดแกลเลอรี",zh:"打开图库",vi:"Mở bộ sưu tập",id:"Buka galeri",ms:"Buka galeri"}),{after:true});
+          go2.onclick=function(){ switchPage("pgGallery"); };
+          row2.appendChild(go2);
+        };
+      }).catch(function(){});
+    }catch(e){}
+    return;
+  }
   card.style.display="";
-  $("dashContH2").textContent=L9({my:"ဆက်လုပ်မယ်",en:"Continue",shn:"သိုပ်ႇႁဵတ်း",kac:"Matut galaw u",th:"ทำต่อ",zh:"继续",vi:"Tiếp tục",id:"Lanjutkan",ms:"Teruskan"});
+  $("dashContH2").textContent=CONT;
   var row=$("dashContRow"); row.innerHTML="";
   if(hasHist){
     var out=state.hist[0];
@@ -11361,13 +11898,48 @@ function renderDashCont(){
     var title=window._wfTitleById ? window._wfTitleById(id) : null;
     if(!title) return;
     var c=el("button","chip");
-    c.innerHTML=icn("i-restore")+" "+escH(stripIcn(title).slice(0,28));
+    /* v4.41: recents carry the workflow's real card art, not a generic icon */
+    var art=window._wfCardImgById ? window._wfCardImgById(id) : null;
+    if(art){
+      var im=document.createElement("img");
+      im.className="chip-th"; im.src=art; im.alt=""; im.loading="lazy"; im.decoding="async";
+      im.onerror=function(){ im.remove(); };
+      c.appendChild(im);
+    } else c.innerHTML=icn("i-restore")+" ";
+    c.appendChild(document.createTextNode(stripIcn(title).slice(0,28)));
     c.onclick=function(){ if(window._openWizardById) window._openWizardById(id); };
     chips.appendChild(c);
   });
 }
+/* v4.41: the first screen knows who you are and what time it is */
+function renderDashGreet(){
+  var host=$("dashGreet"); if(!host) return;
+  var h=new Date().getHours();
+  var g = h<11 ? {my:"မင်္ဂလာနံနက်ခင်းပါ",en:"Good morning",shn:"မႂ်ႇသုင်ၵၢင်ၼႂ်ၶႃႈ",kac:"Jahpawt manap kaja u ga",th:"สวัสดีตอนเช้า",zh:"早上好",vi:"Chào buổi sáng",id:"Selamat pagi",ms:"Selamat pagi"}
+       : h<16 ? {my:"မင်္ဂလာနေ့လယ်ခင်းပါ",en:"Good afternoon",shn:"မႂ်ႇသုင်ဝၢႆးဝၼ်းၶႃႈ",kac:"Shani kaang kaja u ga",th:"สวัสดีตอนบ่าย",zh:"下午好",vi:"Chào buổi chiều",id:"Selamat siang",ms:"Selamat tengah hari"}
+       : {my:"မင်္ဂလာညနေခင်းပါ",en:"Good evening",shn:"မႂ်ႇသုင်ၵၢင်ၶမ်ႈၶႃႈ",kac:"Shana maga kaja u ga",th:"สวัสดีตอนเย็น",zh:"晚上好",vi:"Chào buổi tối",id:"Selamat malam",ms:"Selamat petang"};
+  var name="";
+  try{
+    if(acc && acc.sess){
+      name=(acc.profile && acc.profile.name) ? String(acc.profile.name) : String(acc.sess.email||"").split("@")[0];
+    }
+  }catch(e){}
+  var dt="";
+  try{
+    var loc = LANG==="my" ? "my-MM" : LANG==="zh" ? "zh-CN" : LANG;
+    dt=new Intl.DateTimeFormat(loc,{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+  }catch(e){ dt=new Date().toISOString().slice(0,10); }
+  host.innerHTML="";
+  host.appendChild(el("div","hi", L9(g)+(name?" — "+name.slice(0,24):"")));
+  if(dt) host.appendChild(el("div","sub",dt));
+  try{
+    if(acc && acc.sess && acc.profile && typeof accPlanLineText==="function")
+      host.appendChild(el("span","pill", accPlanLineText()));
+  }catch(e){}
+}
 function renderDash(){
   renderDashStatic();
+  renderDashGreet();
   renderDashCont();
 }
 renderDash();
@@ -12072,7 +12644,10 @@ function accPayValidate(){
      with zero network attempted. That is exactly the §7.1 "no account failure
      may degrade the free experience" line. The message belongs in the panel
      the price is missing from; #btnPayRetry next to it is the recovery. */
-  if (!acc.settings && accPriceFailed) accSetInline("stPay", t("pay_price_na"), "err");
+  /* v4.41: logged-out was a silent dead-end — every control interactive, the
+     submit disabled forever, and nothing saying why. Say it, inline. */
+  if (!acc.sess) accSetInline("stPay", L9({my:"အကောင့်ဝင်ပြီးမှ ဝယ်လို့ရပါမယ် — အပေါ်က Account ကနေ ဝင်ပါ",en:"Log in first to buy — use the Account section above",shn:"ၶဝ်ႈ account ဢွၼ်တၢင်းၸင်ႇသိုဝ်ႉလႆႈ — ၸႂ်ႉ Account ၽၢႆႇၼိူဝ်",kac:"Mari na matu account shawng shang u — ntsa na Account hpe lang u",th:"ต้องเข้าสู่ระบบก่อนซื้อ — ใช้ส่วน Account ด้านบน",zh:"请先登录再购买 — 使用上方的 Account 区域",vi:"Hãy đăng nhập trước khi mua — dùng mục Account phía trên",id:"Masuk dulu untuk membeli — gunakan bagian Account di atas",ms:"Log masuk dahulu untuk membeli — guna bahagian Account di atas"}));
+  else if (!acc.settings && accPriceFailed) accSetInline("stPay", t("pay_price_na"), "err");
   else if (!acc.settings) accSetInline("stPay", "");
   else if (accTxnOk() && !accPayBlob) accSetInline("stPay", t("pay_shot_need"));
   else accSetInline("stPay", "");
@@ -12506,7 +13081,9 @@ function accRenderPay(){
   var s = acc.settings;
   /* Burmese free text from the DB, may contain line breaks.
      #payInstr{white-space:pre-wrap} preserves them without ever parsing it. */
-  $("payInstr").textContent = s ? String(s.payment_instructions_my || "") : "";
+  /* v4.41: mid-payment instructions follow the user's language when the DB
+     row carries a per-language column, falling back to the Burmese original */
+  $("payInstr").textContent = s ? String(s["payment_instructions_"+LANG] || s.payment_instructions_my || "") : "";
   /* Retry appears with its error, not before it — see accPriceFailed. */
   var retry = $("btnPayRetry"); if (retry) retry.style.display = (!s && accPriceFailed) ? "" : "none";
 
@@ -12731,7 +13308,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.40.0";
+var APP_VER="4.41.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -12769,7 +13346,209 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
   }
 }).catch(function(){});
 
-/* ---------- prompt history + favorites ---------- */
+/* ---------- v4.41 Setup upgrades: readiness strip, backup, updates ---------- */
+
+/* every localStorage key the app owns — the export whitelist AND the reset
+   scope. IndexedDB (gallery) is deliberately excluded from backup: base64
+   photos would make the file enormous; the Gallery ZIP button covers those. */
+var HNK_LS_KEYS=["hnk_web_studio_key","hnk_rh_apikey","hnk_rh_config","hnk_oa_apikey",
+  "hnk_web_studio_v2_state","hnk_st_recipes","hnk_st_ui","hnk_ws_prompts","hnk_ws_wf_favs",
+  "hnk_ws_wf_recent","hnk_ws_medialab","hnk_ws_lang","hnk_provider_fallback",
+  "hnk_ws_onboarded","hnk_ws_seen","hnk_ws_promo_hide","hnk_ws_pending_intent"];
+
+function setupJump(cardId){
+  var c=$(cardId); if(!c) return;
+  c.scrollIntoView({behavior:"smooth", block:"start"});
+}
+function renderSetupStatus(){
+  var host=$("setupStatusRows"); if(!host) return;
+  $("setupStatusH2").innerHTML=icn("i-bolt","ic-h2")+escH(L9({my:"အသင့်ဖြစ်မှု အခြေအနေ",en:"READINESS",shn:"ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း",kac:"Jin ai lam",th:"สถานะความพร้อม",zh:"就绪状态",vi:"Trạng thái sẵn sàng",id:"Status kesiapan",ms:"Status kesediaan"}));
+  host.innerHTML="";
+  var okT=L9({my:"အသင့် ✓",en:"Ready ✓",shn:"ႁၢင်ႈႁႅၼ်းယဝ်ႉ ✓",kac:"Jin sai ✓",th:"พร้อม ✓",zh:"就绪 ✓",vi:"Sẵn sàng ✓",id:"Siap ✓",ms:"Sedia ✓"});
+  var noT=L9({my:"မထည့်ရသေး",en:"Not set",shn:"ပႆႇသႂ်ႇ",kac:"Rai n bang shi",th:"ยังไม่ตั้งค่า",zh:"未设置",vi:"Chưa đặt",id:"Belum diatur",ms:"Belum ditetapkan"});
+  var rows=[
+    ["Gemini AI", !!state.key, "cardKey", ""],
+    ["RunningHub", !!(state.rhKey&&rhAnyConfigured()), "cardRh",
+      (function(){ var c=rhCfg(); if(!state.rhKey||!c.activeModel) return "";
+        var d=rhModelDef(c.activeModel); return d? d.label : ""; })()],
+    ["OpenAI", !!state.oaKey, "cardOa", ""],
+    [L9({my:"အကောင့်",en:"Account",shn:"Account",kac:"Account",th:"บัญชี",zh:"账号",vi:"Tài khoản",id:"Akun",ms:"Akaun"}),
+      !!(acc&&acc.sess), "cardAccount",
+      (acc&&acc.sess&&acc.profile) ? stripIcn(accPlanLineText()) : "",
+      L9({my:"မဝင်ရသေး",en:"Logged out",shn:"ပႆႇၶဝ်ႈ",kac:"Rai n shang shi",th:"ยังไม่เข้าสู่ระบบ",zh:"未登录",vi:"Chưa đăng nhập",id:"Belum masuk",ms:"Belum log masuk"})]
+  ];
+  rows.forEach(function(r){
+    var b=el("button","acc-kv"); b.style.width="100%"; b.style.cursor="pointer";
+    b.style.background="none"; b.style.border="0"; b.style.font="inherit"; b.style.textAlign="left";
+    var k=el("span","k",r[0]);
+    var v=el("span","v"); v.textContent=(r[3]?r[3]+" · ":"")+(r[1]?okT:(r[4]||noT));
+    v.style.color=r[1] ? "var(--gold-hi)" : "var(--muted)";
+    b.appendChild(k); b.appendChild(v);
+    b.onclick=function(){ setupJump(r[2]); };
+    host.appendChild(b);
+  });
+}
+/* the plan line accRender writes into #accPlanLine, re-usable as plain text */
+function accPlanLineText(){
+  var p=acc.profile;
+  if(!p || p.plan_status!=="active") return t("acc_plan_free").split(" — ")[0];
+  var days=planDaysLeft(p);
+  if(days<=0) return t("acc_plan_expired").split(" — ")[0];
+  return "Premium · "+accNum(days)+L9({my:" ရက်",en:"d",shn:" ဝၼ်း",kac:" ya",th:" วัน",zh:" 天",vi:" ngày",id:" hari",ms:" hari"});
+}
+
+/* ---- Backup & Restore ---- */
+function wireDataCard(){
+  if(!$("cardData")) return;
+  $("dataH2").innerHTML=icn("i-stack","ic-h2")+escH(L9({my:"DATA သိမ်းဆည်းမှု",en:"DATA & BACKUP",shn:"DATA လႄႈ BACKUP",kac:"DATA hte BACKUP",th:"ข้อมูลและสำรอง",zh:"数据与备份",vi:"Dữ liệu & sao lưu",id:"Data & cadangan",ms:"Data & sandaran"}));
+  setIcnText($("btnExportData"),"i-download",L9({my:"Backup ထုတ်မယ်",en:"Export backup",shn:"ဢွၵ်ႇ backup",kac:"Backup shapraw u",th:"ส่งออกสำรอง",zh:"导出备份",vi:"Xuất bản sao lưu",id:"Ekspor cadangan",ms:"Eksport sandaran"}));
+  setIcnText($("btnImportData"),"i-restore",L9({my:"Backup ပြန်သွင်းမယ်",en:"Restore backup",shn:"သႂ်ႇၶိုၼ်း backup",kac:"Backup bai bang u",th:"กู้คืนสำรอง",zh:"恢复备份",vi:"Khôi phục sao lưu",id:"Pulihkan cadangan",ms:"Pulihkan sandaran"}));
+  refreshDataStore();
+  $("btnExportData").onclick=function(){
+    var data={};
+    HNK_LS_KEYS.forEach(function(k){
+      var v=null; try{ v=localStorage.getItem(k); }catch(e){}
+      if(v!==null) data[k]=v;
+    });
+    var out={ hnk_backup:1, app:"hnk-web-studio", ver:APP_VER, ts:new Date().toISOString(), data:data };
+    var blob=new Blob([JSON.stringify(out)],{type:"application/json"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="hnk-backup-"+out.ts.slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    setSt("stData", L9({my:"Backup ဖိုင် ထုတ်ပြီးပါပြီ ✓ — ဖိုင်ကို လုံခြုံတဲ့နေရာမှာ သိမ်းထားပါ",en:"Backup exported ✓ — keep the file somewhere safe",shn:"ဢွၵ်ႇ backup ယဝ်ႉ ✓",kac:"Backup shapraw ngut sai ✓",th:"ส่งออกสำรองแล้ว ✓",zh:"备份已导出 ✓",vi:"Đã xuất bản sao lưu ✓",id:"Cadangan diekspor ✓",ms:"Sandaran dieksport ✓"}),"ok");
+  };
+  $("btnImportData").onclick=function(){ $("importFile").click(); };
+  $("importFile").onchange=function(){
+    var f=this.files && this.files[0]; this.value="";
+    if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      var o=null;
+      try{ o=JSON.parse(String(rd.result)); }catch(e){}
+      if(!o || o.hnk_backup!==1 || !o.data || typeof o.data!=="object"){
+        setSt("stData", L9({my:"ဒီဖိုင်က HNK backup ဖိုင် မဟုတ်ပါ",en:"That file is not an HNK backup",shn:"ၾၢႆႇၼႆႉ ဢမ်ႇၸႂ်ႈ HNK backup",kac:"Ndai file gaw HNK backup n re",th:"ไฟล์นี้ไม่ใช่สำรองของ HNK",zh:"该文件不是 HNK 备份",vi:"Tệp này không phải bản sao lưu HNK",id:"File itu bukan cadangan HNK",ms:"Fail itu bukan sandaran HNK"}),"err");
+        return;
+      }
+      var n=0;
+      HNK_LS_KEYS.forEach(function(k){ if(typeof o.data[k]==="string") n++; });
+      if(!n){ setSt("stData", L9({my:"ဖိုင်ထဲမှာ ပြန်သွင်းစရာ မတွေ့ပါ",en:"Nothing restorable in that file",shn:"ဢမ်ႇမီးသင်တႃႇသႂ်ႇၶိုၼ်း",kac:"Bai bang na n nga ai",th:"ไม่มีอะไรให้กู้คืน",zh:"文件中没有可恢复内容",vi:"Không có gì để khôi phục",id:"Tidak ada yang bisa dipulihkan",ms:"Tiada apa untuk dipulihkan"}),"err"); return; }
+      if(!confirm(L9({my:"Backup ထဲက setting "+n+" ခုကို ဒီ browser ထဲ ထည့်မယ် — လက်ရှိတန်ဖိုးတွေ အစားထိုးခံရမယ်။ ဆက်မလား?",en:"Restore "+n+" settings from the backup? Current values will be replaced.",shn:"သႂ်ႇၶိုၼ်း setting "+n+" ဢၼ်? ဢၼ်မီးယူႇတေထုၵ်ႇတႅၼ်း",kac:"Backup na setting "+n+" hpe bai bang na? Ya na ni hpe galai kau na",th:"กู้คืน "+n+" การตั้งค่า? ค่าปัจจุบันจะถูกแทนที่",zh:"恢复 "+n+" 项设置？当前值将被替换",vi:"Khôi phục "+n+" cài đặt? Giá trị hiện tại sẽ bị thay thế",id:"Pulihkan "+n+" pengaturan? Nilai saat ini akan diganti",ms:"Pulihkan "+n+" tetapan? Nilai semasa akan diganti"}))) return;
+      HNK_LS_KEYS.forEach(function(k){
+        if(typeof o.data[k]==="string"){ try{ localStorage.setItem(k, o.data[k]); }catch(e){} }
+      });
+      /* restored state only takes effect through the normal boot path */
+      location.reload();
+    };
+    rd.readAsText(f);
+  };
+}
+function refreshDataStore(){
+  var elx=$("dataStore"); if(!elx) return;
+  var bytes=0;
+  HNK_LS_KEYS.forEach(function(k){ try{ var v=localStorage.getItem(k); if(v) bytes+=v.length; }catch(e){} });
+  var line=L9({my:"Setting စုစုပေါင်း",en:"Settings total",shn:"Setting တင်းမူတ်း",kac:"Setting yawng",th:"การตั้งค่ารวม",zh:"设置总量",vi:"Tổng cài đặt",id:"Total pengaturan",ms:"Jumlah tetapan"})+": "+(bytes>1048576 ? (bytes/1048576).toFixed(1)+" MB" : Math.max(1,Math.round(bytes/1024))+" KB");
+  elx.textContent=line;
+  try{
+    galDb().then(function(d){
+      d.transaction("gal").objectStore("gal").count().onsuccess=function(e){
+        var extra=" · Gallery: "+e.target.result+L9({my:" ပုံ",en:" photos",shn:" ၶႅပ်း",kac:" sumla",th:" รูป",zh:" 张",vi:" ảnh",id:" foto",ms:" foto"});
+        if(navigator.storage && navigator.storage.estimate){
+          navigator.storage.estimate().then(function(est){
+            var used=est.usage||0;
+            elx.textContent=line+extra+" · "+L9({my:"browser သိုလှောင်မှု",en:"browser storage",shn:"သိုၵ်းၶေႃႈမုၼ်း browser",kac:"browser storage",th:"พื้นที่เบราว์เซอร์",zh:"浏览器存储",vi:"bộ nhớ trình duyệt",id:"penyimpanan browser",ms:"storan pelayar"})+": "+(used/1048576).toFixed(1)+" MB";
+          }).catch(function(){ elx.textContent=line+extra; });
+        } else elx.textContent=line+extra;
+      };
+    }).catch(function(){});
+  }catch(e){}
+}
+
+/* ---- About & Updates ---- */
+function wireAboutCard(){
+  if(!$("cardAbout")) return;
+  $("aboutH2").innerHTML=icn("i-bell","ic-h2")+escH(L9({my:"APP နဲ့ UPDATE",en:"APP & UPDATES",shn:"APP လႄႈ UPDATE",kac:"APP hte UPDATE",th:"แอปและอัปเดต",zh:"应用与更新",vi:"Ứng dụng & cập nhật",id:"Aplikasi & pembaruan",ms:"Aplikasi & kemas kini"}));
+  $("aboutVer").textContent="v"+APP_VER;
+  setIcnText($("btnCheckUpdate"),"i-bell",L9({my:"Update စစ်မယ်",en:"Check for updates",shn:"ၶူၼ်ႉတူၺ်း update",kac:"Update sagawn u",th:"ตรวจหาอัปเดต",zh:"检查更新",vi:"Kiểm tra cập nhật",id:"Periksa pembaruan",ms:"Semak kemas kini"}));
+  setIcnText($("btnHardRefresh"),"i-restore",L9({my:"Cache ရှင်း + ပြန်စမယ်",en:"Clear cache + restart",shn:"လၢင်ႉ cache + တႄႇၶိုၼ်း",kac:"Cache sausan nna bai hpang u",th:"ล้างแคช + เริ่มใหม่",zh:"清缓存并重启",vi:"Xóa cache + khởi động lại",id:"Bersihkan cache + mulai ulang",ms:"Kosongkan cache + mula semula"}));
+  $("btnCheckUpdate").onclick=function(){
+    var btn=this; if(btn.disabled) return; btn.disabled=true;
+    setSt("stAbout", L9({my:"စစ်နေသည်…",en:"Checking…",shn:"တိုၵ်ႉၶူၼ်ႉ…",kac:"Sagawn nga…",th:"กำลังตรวจ…",zh:"检查中…",vi:"Đang kiểm tra…",id:"Memeriksa…",ms:"Menyemak…"}));
+    fetch("version.json",{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
+      btn.disabled=false;
+      if(v && v.v && verNewer(v.v, APP_VER)){
+        setSt("stAbout", L9({my:"Version အသစ် v"+v.v+" ရှိတယ် — ဆွဲယူနေသည်…",en:"New version v"+v.v+" found — updating…",shn:"မီး version မႂ်ႇ v"+v.v+" — တိုၵ်ႉၸၼ်…",kac:"Version namsan v"+v.v+" nga ai — la nga…",th:"พบเวอร์ชันใหม่ v"+v.v+" — กำลังอัปเดต…",zh:"发现新版本 v"+v.v+" — 正在更新…",vi:"Có phiên bản mới v"+v.v+" — đang cập nhật…",id:"Versi baru v"+v.v+" ditemukan — memperbarui…",ms:"Versi baharu v"+v.v+" dijumpai — mengemas kini…"}),"ok");
+        hnkAppRefresh(false);
+      } else {
+        setSt("stAbout", L9({my:"နောက်ဆုံး version ဖြစ်နေပါပြီ ✓ (v"+APP_VER+")",en:"You are up to date ✓ (v"+APP_VER+")",shn:"ပဵၼ် version လိုၼ်းသုတ်းယဝ်ႉ ✓",kac:"Version hpang jahtum rai sai ✓",th:"เป็นเวอร์ชันล่าสุดแล้ว ✓",zh:"已是最新版本 ✓",vi:"Bạn đang dùng bản mới nhất ✓",id:"Sudah versi terbaru ✓",ms:"Sudah versi terkini ✓"}),"ok");
+      }
+    }).catch(function(){
+      btn.disabled=false;
+      setSt("stAbout", t("st_key_noconn"), "err");
+    });
+  };
+  $("btnHardRefresh").onclick=function(){
+    if(!confirm(L9({my:"App cache အကုန်ရှင်းပြီး ပြန်စမယ် — Library ပုံတွေ ပြန်ဆွဲယူရမှာမို့ နည်းနည်းကြာနိုင်တယ်။ ဆက်မလား?",en:"Clear ALL app caches and restart? Library images will re-download, which can take a moment.",shn:"လၢင်ႉ cache တင်းမူတ်းသေ တႄႇၶိုၼ်း?",kac:"Cache yawng sausan nna bai hpang na?",th:"ล้างแคชทั้งหมดแล้วเริ่มใหม่?",zh:"清除全部缓存并重启？",vi:"Xóa toàn bộ cache và khởi động lại?",id:"Bersihkan semua cache dan mulai ulang?",ms:"Kosongkan semua cache dan mula semula?"}))) return;
+    hnkAppRefresh(true);
+  };
+}
+/* shared refresh path: drop the app caches (and with hard=true the Library
+   image cache too), let the SW re-install, and reload. This is the in-app
+   answer to "phone still shows the old version". */
+function hnkAppRefresh(hard){
+  var done=function(){ location.reload(); };
+  var p=[];
+  try{
+    if(window.caches && caches.keys){
+      p.push(caches.keys().then(function(ks){
+        return Promise.all(ks.filter(function(k){ return hard || k.indexOf("hnk-lib")!==0; })
+          .map(function(k){ return caches.delete(k); }));
+      }));
+    }
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+      p.push(navigator.serviceWorker.getRegistrations().then(function(rs){
+        return Promise.all(rs.map(function(r){ return r.unregister(); }));
+      }));
+    }
+  }catch(e){}
+  Promise.all(p).then(done).catch(done);
+}
+
+/* ---- key hygiene: a Remove link per saved key ---- */
+function wireKeyRemove(lnkHost, inputId, lsKey, stId, after){
+  var host=$(lnkHost); if(!host || $(lnkHost+"Del")) return;
+  var a=el("button","acc-lnk", L9({my:"Key ဖျက်မယ်",en:"Remove key",shn:"မွတ်ႇ key",kac:"Key shamat u",th:"ลบคีย์",zh:"移除密钥",vi:"Xóa khóa",id:"Hapus kunci",ms:"Buang kunci"}));
+  a.id=lnkHost+"Del";
+  a.style.display = $(inputId).value ? "" : "none";
+  a.onclick=function(){
+    if(!confirm(L9({my:"ဒီ key ကို browser ထဲက ဖျက်မယ် — သေချာလား?",en:"Remove this key from the browser?",shn:"မွတ်ႇ key ၼႆႉ?",kac:"Ndai key hpe shamat na?",th:"ลบคีย์นี้?",zh:"移除此密钥？",vi:"Xóa khóa này?",id:"Hapus kunci ini?",ms:"Buang kunci ini?"}))) return;
+    try{ localStorage.removeItem(lsKey); }catch(e){}
+    $(inputId).value="";
+    var st=$(stId); if(st){ st.textContent=""; st.className="status"; }
+    a.style.display="none";
+    after();
+    renderSetupStatus();
+  };
+  host.parentNode.insertBefore(a, host.nextSibling);
+  return a;
+}
+function wireSetupV441(){
+  wireDataCard(); wireAboutCard();
+  wireKeyRemove("stKey","apiKey",LS_KEY,"stKey",function(){ state.key=""; updateKeyBanner(); });
+  wireKeyRemove("stRhKey","rhKey",RH_LS_KEY,"stRhKey",function(){ state.rhKey=""; renderRhProviderOption(); });
+  wireKeyRemove("stOaKey","oaKey",OA_LS_KEY,"stOaKey",function(){ state.oaKey=""; renderOaProviderOption(); });
+  /* i18n the two hardcoded RunningHub bits (advanced header + quality opts) */
+  var adv=$("rhAdvT");
+  if(adv) adv.innerHTML=icn("i-gear")+" "+escH(L9({my:"Model ချိန်ညှိမှု (Advanced)",en:"Model Config (Advanced)",shn:"Model Config (Advanced)",kac:"Model Config (Advanced)",th:"ตั้งค่าโมเดล (ขั้นสูง)",zh:"模型配置（高级）",vi:"Cấu hình model (Nâng cao)",id:"Konfigurasi model (Lanjutan)",ms:"Konfigurasi model (Lanjutan)"}));
+  var q=$("rhQuality");
+  if(q && q.options.length===4){
+    var qNone=L9({my:"quality: မထည့် (default)",en:"quality: none (default)",shn:"quality: ဢမ်ႇသႂ်ႇ (default)",kac:"quality: n bang (default)",th:"quality: ไม่ใส่ (ค่าเริ่มต้น)",zh:"quality: 不设置（默认）",vi:"quality: không đặt (mặc định)",id:"quality: tidak diatur (default)",ms:"quality: tiada (lalai)"});
+    q.options[0].textContent=qNone;
+  }
+  renderSetupStatus();
+}
+wireSetupV441();
 var LS_PH="hnk_ws_prompts";
 function phLoad(){ try{ return JSON.parse(localStorage.getItem(LS_PH)||"[]"); }catch(e){ return []; } }
 function phSave(list){ try{ localStorage.setItem(LS_PH, JSON.stringify(list)); }catch(e){} }
@@ -13091,15 +13870,26 @@ $("btnGen").onclick = async function(){
     var tryOrder = [provider].concat(["gemini","runninghub","openai"].filter(function(p){ return p!==provider; }));
     if(!fallbackOn) tryOrder = [provider];
     tryOrder = tryOrder.filter(function(p){ return providerFns[p]; });
+    var attemptErrs=[];
     function oneCall(){
       var i=0;
       function attempt(){
         var p=tryOrder[i];
         return providerFns[p]().then(function(x){
           if(x.out){
+            /* v4.41 provenance: the result remembers which engine made it —
+               rendered under the result and stored with the Gallery record */
+            x.out._prov = p==="runninghub"
+              ? "RunningHub · "+(((rhActiveForFallback||{}).id && (rhModelDef(rhActiveForFallback.id)||{}).label) || "")
+              : p==="openai" ? "OpenAI · gpt-image-2"
+              : "Gemini · "+(model||"auto");
+            if(x.out._prov.slice(-3)===" · ") x.out._prov=x.out._prov.slice(0,-3);
             if(i>0) toast(L9({my:"X ကနေ generate မအောင်မြင်လို့ Y နဲ့ ပြောင်းထုတ်ပေးလိုက်ပြီ ✓",en:"X failed — switched to Y ✓",shn:"X ဢမ်ႇသေၽွင်ႈ — လႅၵ်ႈၸႂ်ႉ Y ယဝ်ႉ ✓",kac:"X n byin ai — Y de galai kau sai ✓",th:"X ล้มเหลว — สลับไปใช้ Y แล้ว ✓",zh:"X 失败 — 已切换到 Y ✓",vi:"X thất bại — đã chuyển sang Y ✓",id:"X gagal — beralih ke Y ✓",ms:"X gagal — bertukar ke Y ✓"}).replace("X",PROVIDER_LABEL[tryOrder[0]]).replace("Y",PROVIDER_LABEL[p]), "ok");
             return x;
           }
+          /* v4.41: keep every attempt's story — a total failure used to report
+             only the FIRST error, hiding what the fallback chain hit */
+          if(x.err && attemptErrs.length<6) attemptErrs.push(PROVIDER_LABEL[p]+": "+String(x.err).slice(0,140));
           i++;
           if(i<tryOrder.length) return attempt();
           return x;
@@ -13129,6 +13919,10 @@ $("btnGen").onclick = async function(){
     var outs=rets.filter(function(x){return x.out;}).map(function(x){return x.out;});
     if(!outs.length){
       var firstErr=(rets.find(function(x){return x.err;})||{}).err;
+      /* v4.41: when several engines were tried, name each one's failure —
+         "Gemini: quota over · RunningHub: not set up" beats a lone first error */
+      var uniqErrs=attemptErrs.filter(function(v,ix){ return attemptErrs.indexOf(v)===ix; });
+      if(uniqErrs.length>1) firstErr=uniqErrs.join("  ·  ");
       throw new Error(firstErr || L9({my:"ပုံမထွက်လာပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"No image came back — try changing the prompt and retry",shn:"ဢမ်ႇမီးၶႅပ်းႁၢင်ႈဢွၵ်ႇမႃး — ၸၢမ်းလႅၵ်ႈ prompt ၶိုၼ်းၸၢမ်း",kac:"Sumla n pru wa ai — prompt hpe galai nna bai chyam u",th:"ไม่มีรูปออกมา — ลองเปลี่ยน prompt แล้วลองใหม่",zh:"没有生成图片 — 请更改 prompt 后重试",vi:"Không có ảnh trả về — thử thay đổi prompt rồi thử lại",id:"Tidak ada gambar yang dihasilkan — coba ubah prompt dan coba lagi",ms:"Tiada imej dihasilkan — cuba tukar prompt dan cuba lagi"}));
     }
     for(var oi=outs.length-1;oi>=0;oi--){ state.hist.unshift(outs[oi]); }
@@ -13149,6 +13943,50 @@ $("btnGen").onclick = async function(){
 };
 
 $("btnRetry").onclick=function(){ this.style.display="none"; $("btnGen").onclick(); };
+
+/* v4.41: phone-native share — a studio delivers finished photos through chat
+   apps (Messenger/Viber/Telegram), not through the Downloads folder */
+(function(){
+  var sb=$("btnShareRes"); if(!sb) return;
+  if(!navigator.share){ sb.style.display="none"; return; }
+  setIcnText(sb,"i-external",L9({my:"Share",en:"Share",shn:"Share",kac:"Share",th:"แชร์",zh:"分享",vi:"Chia sẻ",id:"Bagikan",ms:"Kongsi"}));
+  sb.onclick=async function(){
+    var out=state.hist[state.histSel]||state.result; if(!out) return;
+    try{
+      var blob=rhDataUrlToBlob("data:"+out.mime+";base64,"+out.b64);
+      var file=new File([blob], "hnk-result"+(out.mime==="image/png"?".png":".jpg"), {type:out.mime});
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file]});
+      else await navigator.share({title:"HNK Web Studio"});
+    }catch(e){ /* user cancelled the sheet — not an error */ }
+  };
+})();
+
+/* v4.41: the Create generate settings persist across reloads, exactly like
+   Media Lab's already do (hnk_ws_medialab) — the owner's house style
+   (provider + ratio + count + size) survives the daily phone relaunch */
+(function(){
+  var K="hnk_ws_create";
+  var ids=["selProvider","selModel","selRatio","selCount","selSize","selQual"];
+  function save(){
+    try{
+      var o={}; ids.forEach(function(id){ o[id]=$(id).value; });
+      localStorage.setItem(K, JSON.stringify(o));
+    }catch(e){}
+  }
+  try{
+    var o=JSON.parse(localStorage.getItem(K)||"{}");
+    ids.forEach(function(id){
+      var v=o[id]; if(v===undefined) return;
+      var sel=$(id);
+      /* only restore a value the select can actually hold right now — a saved
+         "runninghub" without its key configured must not stick */
+      if(Array.prototype.some.call(sel.options,function(op){ return op.value===v; })) sel.value=v;
+    });
+  }catch(e){}
+  ids.forEach(function(id){ $(id).addEventListener("change", save); });
+  updateGenOptsForRHKind();
+  $("selRatio").dispatchEvent(new Event("change"));
+})();
 
 /* v4.38 Freeform quick chips: clear all three refs in one tap (with undo),
    and copy the prompt text for reuse elsewhere */
@@ -13182,6 +14020,17 @@ function showResult(){
   $("resultImg").src=src;
   $("btnDl").href=src;
   $("btnDl").setAttribute("download","hnk-create-"+ptStamp()+"-"+(state.histSel+1)+(out.mime==="image/png"?".png":".jpg"));
+  /* v4.41: the answer to "which engine ACTUALLY ran?" stays on the result
+     instead of living only in a 2.6s fallback toast */
+  var pv=$("resProv");
+  if(!pv){
+    pv=document.createElement("div");
+    pv.id="resProv"; pv.className="mut"; pv.style.marginTop="6px";
+    var rh2=$("resultH2");
+    rh2.parentNode.insertBefore(pv, rh2.nextSibling);
+  }
+  pv.textContent=out._prov||"";
+  pv.style.display=out._prov?"":"none";
   var h=$("hist"); h.innerHTML="";
   state.hist.forEach(function(e,i){
     var im=document.createElement("img");
@@ -13347,7 +14196,7 @@ $("btnVidGen").onclick = async function(){
     $("vidSpin").textContent=spinBase;
     var outs=await rhGenerateVideo(state.rhKey, m.apiPath, text, refDataUrls, resolution, duration, aspectRatio, m.imageParam, function(elapsed, status){
       $("vidSpin").textContent=spinBase+(status?" · "+status:"")+" · "+Math.round(elapsed/1000)+"s";
-    }, abort.signal);
+    }, abort.signal, m.promptMax);
     if(!outs.length){
       setSt("stVidGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
       $("btnVidRetry").style.display="";
@@ -13562,6 +14411,9 @@ function mlSave(){
   set("selVuRes",p.ur);
   set("selT2IModel",p.tm); updateT2IModelUI();
   set("selT2IRatio",p.tr); set("selT2IRes",p.ts);
+  /* v4.41: the ratio chip rails mirror on events — nudge them after the
+     silent .value restores above so the active chip matches the value */
+  ["selT2IRatio","selVidAspect"].forEach(function(id){ var s=$(id); if(s&&s._rail) s.dispatchEvent(new Event("change")); });
   ["selVidModel","selVidRes","selVidDur","selVidAspect","selVuRes","selT2IModel","selT2IRatio","selT2IRes"]
     .forEach(function(id){ var s=$(id); if(s) s.addEventListener("change", mlSave); });
 })();

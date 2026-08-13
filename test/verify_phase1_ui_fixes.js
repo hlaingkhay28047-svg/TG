@@ -44,11 +44,15 @@ const PORT = process.env.PORT || 8931;
   await page.evaluate(() => switchPage("pgCreate"));
   await page.waitForTimeout(300);
   const selectInfo = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll("#genOpts select.inp")).map(s => ({
-      id: s.id,
-      offsetWidth: s.offsetWidth,
-      scrollWidth: s.scrollWidth
-    }));
+    /* v4.41: .rr-native selects are intentionally hidden — their UI is the
+       ratio chip rail; the width guarantee applies to the visible dropdowns */
+    return Array.from(document.querySelectorAll("#genOpts select.inp"))
+      .filter(s => !s.classList.contains("rr-native") && s.style.display !== "none")
+      .map(s => ({
+        id: s.id,
+        offsetWidth: s.offsetWidth,
+        scrollWidth: s.scrollWidth
+      }));
   });
   console.log("genOpts selects:", JSON.stringify(selectInfo));
   const selectsOk = selectInfo.length > 0 && selectInfo.every(s => s.offsetWidth >= 130 && s.scrollWidth <= s.offsetWidth + 2);
