@@ -206,6 +206,9 @@ select.inp{padding:9px 10px}
 .ref .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:13px;display:none}
 .ref.filled .x{display:block}
 .ref .tag{position:absolute;left:4px;bottom:4px;background:rgba(11,13,20,.8);border-radius:6px;padding:1px 7px;font-size:10px;color:var(--gold-hi);font-weight:800}
+/* v4.45 — editable role chip on each filled ref slot */
+.ref .refrole{position:absolute;right:4px;bottom:4px;max-width:calc(100% - 8px);padding:1px 7px;font-size:9.5px;line-height:1.6;min-height:0;background:rgba(11,13,20,.85);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;z-index:2}
+.ref .refrole.on{border-color:var(--gold);color:var(--gold-hi)}
 
 #vuOpts .inp{flex:1 1 30%;min-width:30%}
 .gen{width:100%;margin-top:12px;padding:15px;font-size:16px;border-radius:12px}
@@ -556,6 +559,13 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .pcard.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .pcard.on::before{content:"";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4.5 12.5 5 5L19.5 7'/%3E%3C/svg%3E") center/12px 12px no-repeat;z-index:2}
 .pcard .x{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:12px;z-index:2}
+.pcard .pin{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--gold);font-size:12px;z-index:2}
+/* v4.45 — 880 style-pack browser grid (Studio Meitu/Evoto Style Looks groups) */
+.st880-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;max-height:46vh;overflow-y:auto;margin-top:8px;padding-right:2px}
+.st880-grid .pcard{flex:none;width:auto}
+.st880-grid .pcard img{width:100%;height:112px;object-fit:cover;object-position:50% 18%;display:block}
+.st880-grid .pcard span{display:block;font-size:10.5px;line-height:1.3;padding:4px 5px;white-space:normal;word-break:break-word}
+.st880-grid .pcard.on{outline:2px solid var(--gold)}
 .prow{display:flex;gap:var(--sp-2);overflow-x:auto;padding-bottom:var(--sp-1);scrollbar-width:none}
 .prow::-webkit-scrollbar{display:none}
 .prowwrap{position:relative}
@@ -1624,6 +1634,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <a class="btn btn-gold grow" id="btnStDl" download="hnk-studio.jpg" style="text-align:center"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> Download</a>
       <button class="btn" id="btnStToRef"></button>
     </div>
+    <div class="row" id="handoffStudio" style="margin-top:8px"></div>
   </section>
 
   <!-- normal flow, NOT inside the sticky gen bar: anything added there
@@ -1657,6 +1668,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <p class="mut" id="rsIntro"></p>
     <div id="rsPicker"></div>
     <div id="v2Hero">
+      <div class="chips" id="v2PresetRow"></div>
       <div class="row"><span class="subh" id="v2LbStrength"></span><b id="v2StrengthVal"></b></div>
       <input type="range" class="v2-range" id="v2Strength" min="0" max="100" step="5" value="60">
       <div class="chips" id="v2Dots"></div>
@@ -1760,6 +1772,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <button class="btn" id="btnRsToRef"></button>
       <button class="btn btn-gold" id="btnV2Next"></button>
     </div>
+    <div class="row" id="handoffRetouch" style="margin-top:8px"></div>
     <div class="subh" style="margin-top:12px" id="rsHistH"></div>
     <div class="hist" id="rsHist"></div>
   </section>
@@ -1849,6 +1862,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <button class="btn" id="btnToRef"></button>
       <button class="btn" id="btnCmp"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-compare"/></svg> Before/After</button>
     </div>
+    <div class="row" id="handoffCreate" style="margin-top:8px"></div>
     <div class="subh" style="margin-top:12px" id="chainH"></div>
     <div class="chainrow" id="chainRow"></div>
     <div id="cmpWrap" style="display:none;margin-top:12px">
@@ -1989,6 +2003,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <h2 id="ptLookH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-palette"/></svg>LOOK</h2>
     <p class="mut" id="ptLookNote"></p>
     <div class="prowwrap"><div class="prow" id="ptLookRail"></div></div>
+    <div class="subh" id="ptLbStrength"></div><div class="chips" id="ptStrengthChips"></div>
     <button class="chip" id="btnPtFromStudio" style="margin-top:6px"></button>
     <div class="subh" id="ptLbTier"></div>
     <div class="chips" id="ptTierChips"></div>
@@ -2080,6 +2095,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <button class="btn" id="btnPtRunOne" style="display:none"></button>
         <a class="btn btn-gold grow" id="btnPtSaveOne" download="hnk-path.jpg" style="text-align:center;display:none"></a>
         <button class="btn" id="btnPtGalOne" style="display:none"></button>
+        <button class="btn" id="btnPtRetouchOne" style="display:none"></button>
       </div>
       <div class="row" style="margin-top:8px">
         <button class="btn" id="btnPtUpOne" aria-label="move earlier">↑</button>
@@ -2790,6 +2806,7 @@ try {
     if (typeof _sv.prompt === "string") state.savedPrompt = _sv.prompt;
     if (_sv.st) state.stSaved = _sv.st; /* consumed tolerantly by the Studio module below */
     if (_sv.v2) state.v2Saved = _sv.v2; /* consumed tolerantly by the V2 Retouch module below (same pattern as stSaved) */
+    if (Array.isArray(_sv.v2Presets)) state.v2PresetsSaved = _sv.v2Presets; /* v4.45 named V2 house presets */
     if (_sv.pt) state.ptSaved = _sv.pt; /* Path Retouch look/tier/fx — settings only, never photos (same pattern) */
   }
 } catch(e){}
@@ -2798,9 +2815,10 @@ function saveState(){
     localStorage.setItem(LS_STATE, JSON.stringify({
       rt: state.rt, rtStrength: state.rtStrength,
       v2: state.v2, /* V2 Retouch hero settings — tiny plain-number/string object, never any base64 */
+      v2Presets: state.v2Presets, /* named house presets over the same object */
       /* Path Retouch: look/tier/fx/custom only. PT.photos, their previews and
          every AI result are session-only and deliberately absent here. */
-      pt: state.pt ? { look:state.pt.look, tier:state.pt.tier, fx:state.pt.fx, custom:state.pt.custom, customLook:state.pt.customLook } : undefined,
+      pt: state.pt ? { look:state.pt.look, tier:state.pt.tier, strength:state.pt.strength, fx:state.pt.fx, custom:state.pt.custom, customLook:state.pt.customLook } : undefined,
       prompt: document.getElementById("prompt") ? document.getElementById("prompt").value : "",
       /* Studio live-preview state — everything EXCEPT the photo itself (state.st.img
          is session-only; base64 photos are too large for localStorage) */
@@ -3143,8 +3161,10 @@ function renderGallery(){
 }
 $("galToImg1").onclick=function(){
   if(!galSel) return;
-  state.cmpBase=null; state.rsOrig=null; /* manual IMAGE 1 pick — compare baselines reset (v4.28) */
-  state.refs[0]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
+  /* v4.45 — a source-sheet request wins over the default slot, once */
+  var gs=typeof state.galTargetSlot==="number"?state.galTargetSlot:0; state.galTargetSlot=null;
+  if(gs===0){ state.cmpBase=null; state.rsOrig=null; } /* manual IMAGE 1 pick — compare baselines reset (v4.28) */
+  state.refs[gs]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
   state.imgRoles=null;
   renderRefs();
   toast(L9({my:"Gallery ပုံ → IMAGE 1 ✓",en:"Gallery image → IMAGE 1 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 1 ✓",kac:"Gallery sumla → IMAGE 1 ✓",th:"รูป Gallery → IMAGE 1 ✓",zh:"Gallery 图片 → IMAGE 1 ✓",vi:"Ảnh Gallery → IMAGE 1 ✓",id:"Gambar Gallery → IMAGE 1 ✓",ms:"Imej Gallery → IMAGE 1 ✓"}),"ok");
@@ -3152,7 +3172,8 @@ $("galToImg1").onclick=function(){
 /* v4.41: reference presets need the OLD result as IMAGE 2 just as often */
 if($("galToImg2")) $("galToImg2").onclick=function(){
   if(!galSel) return;
-  state.refs[1]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
+  var gs2=typeof state.galTargetSlot==="number"?state.galTargetSlot:1; state.galTargetSlot=null;
+  state.refs[gs2]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
   state.imgRoles=null;
   renderRefs();
   toast(L9({my:"Gallery ပုံ → IMAGE 2 ✓",en:"Gallery image → IMAGE 2 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 2 ✓",kac:"Gallery sumla → IMAGE 2 ✓",th:"รูป Gallery → IMAGE 2 ✓",zh:"Gallery 图片 → IMAGE 2 ✓",vi:"Ảnh Gallery → IMAGE 2 ✓",id:"Gambar Gallery → IMAGE 2 ✓",ms:"Imej Gallery → IMAGE 2 ✓"}),"ok");
@@ -4292,6 +4313,61 @@ function renderRefStrip(){
     host.appendChild(el("div","note", L9({my:"Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်",en:"Images used by Generate — tap to change",shn:"ၶႅပ်းႁၢင်ႈဢၼ် Generate တေၸႂ်ႉ — ၼဵၵ်းသေ လႅၵ်ႈလႆႈ",kac:"Generate hta lang na sumla ni — dip nna galai mai ai",th:"ภาพที่ Generate จะใช้ — แตะเพื่อเปลี่ยน",zh:"Generate 使用的图片 — 点按可更换",vi:"Ảnh sẽ dùng cho Generate — chạm để thay đổi",id:"Gambar yang dipakai Generate — ketuk untuk mengganti",ms:"Imej yang digunakan oleh Generate — ketik untuk tukar"})));
   });
 }
+/* v4.45 — editable IMAGE roles: what each photo MEANS to the model, cycled on
+   a chip instead of buried in an implicit default. The silent trap this
+   kills: a groom in slot 2 labeled "REFERENCE ONLY (not identity)". */
+var REF_ROLES=[
+  { k:"subject", sent:"MAIN SUBJECT (keep this person's identity exactly)",
+    label:{my:"Subject",en:"Subject"} },
+  { k:"style", sent:"REFERENCE ONLY (style/scene, not identity)",
+    label:{my:"Style ref",en:"Style ref"} },
+  { k:"person", sent:"SECOND PERSON — include this person in the result and keep their identity exactly",
+    label:{my:"လူ (identity ထိန်း)",en:"Person — keep identity"} }
+];
+function refRoleIdx(i){
+  var cur=state.imgRoles&&state.imgRoles[i];
+  if(!cur) return i===0?0:1; /* the exact defaults the dispatcher uses */
+  for(var r=0;r<REF_ROLES.length;r++) if(REF_ROLES[r].sent===cur) return r;
+  return -1; /* a wizard's bespoke sentence — shown as-is, cycling replaces it */
+}
+/* v4.45 — in-place ref source sheet: an empty slot offers Upload / Library /
+   Gallery / Last result instead of assuming the photo lives on this phone. */
+function refSrcSheet(slot){
+  var old=$("refSrcSheet"); if(old) old.remove();
+  var bd=el("div"); bd.id="refSrcSheet";
+  bd.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;display:flex;align-items:flex-end;justify-content:center";
+  var card=el("div","card");
+  card.style.cssText="width:min(480px,96vw);margin:0 0 max(12px,env(safe-area-inset-bottom));border-radius:14px";
+  card.appendChild(el("div","subh","IMAGE "+(slot+1)+" — "+L9({my:"ဘယ်ကယူမလဲ",en:"Where from?"})));
+  function opt(icon,label,fn){
+    var b=el("button","btn"); b.style.cssText="display:flex;width:100%;margin-top:8px;text-align:left";
+    b.innerHTML=icn(icon)+" "+escH(label);
+    b.onclick=function(){ bd.remove(); fn(); };
+    card.appendChild(b);
+  }
+  opt("i-folder",L9({my:"ဖုန်းထဲက ပုံတင်မယ်",en:"Upload from this device"}),function(){
+    state.pickSlot=slot; $("filePick").click();
+  });
+  opt("i-books",L9({my:"Library look ထဲက ယူမယ်",en:"Pick a Library look"}),function(){
+    state.libTargetSlot=slot; switchPage("pgLib");
+    toast(L9({my:"ပုံရွေးပြီး IMAGE ခလုတ်နှိပ်ပါ — IMAGE "+(slot+1)+" ထဲ ဝင်ပါမယ်",en:"Pick an image, then tap an IMAGE button — it fills IMAGE "+(slot+1)}),"ok");
+  });
+  opt("i-gallery",L9({my:"Gallery ရလဒ်ထဲက ယူမယ်",en:"Pick a Gallery result"}),function(){
+    state.galTargetSlot=slot; switchPage("pgGallery");
+    toast(L9({my:"ရလဒ်ရွေးပြီး IMAGE ခလုတ်နှိပ်ပါ — IMAGE "+(slot+1)+" ထဲ ဝင်ပါမယ်",en:"Pick a result, then tap an IMAGE button — it fills IMAGE "+(slot+1)}),"ok");
+  });
+  var last=state.hist[state.histSel]||state.result;
+  if(last) opt("i-restore",L9({my:"နောက်ဆုံးရလဒ်ကို သုံးမယ်",en:"Use the last result"}),function(){
+    if(slot===0){ state.cmpBase=null; state.rsOrig=null; }
+    state.refs[slot]={mime:last.mime,b64:last.b64,label:"result"};
+    state.imgRoles=null;
+    renderRefs();
+    toast(L9({my:"ရလဒ် → IMAGE "+(slot+1)+" ✓",en:"Result → IMAGE "+(slot+1)+" ✓"}),"ok");
+  });
+  bd.onclick=function(ev){ if(ev.target===bd) bd.remove(); };
+  bd.appendChild(card);
+  document.body.appendChild(bd);
+}
 function renderRefs(){
   renderRefStrip();
   renderRsPicker();
@@ -4307,10 +4383,23 @@ function renderRefs(){
       x.setAttribute("aria-label",t("lb_remove_image"));
       x.onclick=function(){ state.refs[i]=null; state.imgRoles=null; renderRefs(); };
       d.appendChild(x);
+      var ri=refRoleIdx(i);
+      var rb=el("button","chip refrole"+(ri!==(i===0?0:1)?" on":""),
+        ri>=0?L9(REF_ROLES[ri].label):L9({my:"Wizard role",en:"Wizard role"}));
+      rb.title=L9({my:"ဒီပုံရဲ့ အခန်းကဏ္ဍ — နှိပ်ပြီး ပြောင်းပါ",en:"This photo's role — tap to cycle"});
+      rb.onclick=function(ev){
+        ev.stopPropagation();
+        var next=REF_ROLES[(ri+1+REF_ROLES.length)%REF_ROLES.length];
+        if(!state.imgRoles) state.imgRoles=state.refs.map(function(_,s){ return REF_ROLES[s===0?0:1].sent; });
+        state.imgRoles[i]=next.sent;
+        state.imgRolesFromWiz=false;
+        renderRefs();
+      };
+      d.appendChild(rb);
     } else {
       var a=el("button","add","+");
       a.title = i===0?"IMAGE 1 — ပင်မ Subject":"IMAGE "+(i+1)+" — Reference";
-      a.onclick=function(){ state.pickSlot=i; $("filePick").click(); };
+      a.onclick=function(){ refSrcSheet(i); };
       d.appendChild(a);
     }
     d.appendChild(el("span","tag","IMG "+(i+1)));
@@ -4775,6 +4864,7 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     var inputs=wizInputs(w);
     for(var ri=inputs.length; ri<state.refs.length; ri++) state.refs[ri]=null;
     state.imgRoles=inputs.map(function(x){ return x.label; });
+    state.imgRolesFromWiz=true;
     renderRefs();
     $("prompt").value=wiz.prompt;
     $("tapNote").textContent=w.title+" · Smart Workflow";
@@ -6098,6 +6188,8 @@ function rsShowResult(){
   var rsSrcLabel=(state.rsOrig&&state.rsOrig.label)||(state.refs[0]&&state.refs[0].label)||null;
   if(rsSrcLabel==="studio"||rsSrcLabel==="gallery"||rsSrcLabel==="result") rsSrcLabel=null;
   $("btnRsDl").download=dlName("retouch",out.mime,(state.v2BatchN||state.histSel+1),rsSrcLabel);
+  if(wmOn()) wmStampDataUrl(src, out.mime, 92, function(du){ $("btnRsDl").href=du; });
+  stHandoffRow("handoffRetouch", out.mime, out.b64, dlName("retouch",out.mime,(state.v2BatchN||state.histSel+1),rsSrcLabel), "retouch");
   /* v4.28: Before prefers the chain's true original (rsOrig) so chained
      retouches always compare against the photo the user actually uploaded */
   var rsBase=state.rsOrig||state.refs[0];
@@ -6211,6 +6303,32 @@ if(state.v2Saved){ /* tolerant restore — same pattern as state.stSaved */
   delete state.v2Saved;
 }
 state.v2Armed=false; state.v2BatchN=0; /* session-only (next-photo auto-start + batch counter) */
+/* v4.45 — named house presets over the whole 10-parameter hero
+   ("Bride 60", "Groom 80", "Grandma 30"): one tap restores every setting. */
+state.v2Presets=[];
+if(state.v2PresetsSaved){
+  try{
+    state.v2Presets=state.v2PresetsSaved.filter(function(p){
+      return p && typeof p.name==="string" && p.v && typeof p.v==="object";
+    }).slice(0,8).map(function(p){
+      return { name:String(p.name).slice(0,24), v:Object.assign(JSON.parse(JSON.stringify(V2_DEF)), p.v) };
+    });
+  }catch(e){}
+  delete state.v2PresetsSaved;
+}
+function v2SavePreset(){
+  var nm=window.prompt(L9({my:"Preset နာမည် (ဥပမာ — Bride 60)",en:"Preset name (e.g. Bride 60)"}),"");
+  if(nm===null) return;
+  nm=String(nm).slice(0,24).trim(); if(!nm) return;
+  state.v2Presets=state.v2Presets.filter(function(p){ return p.name!==nm; });
+  state.v2Presets.unshift({ name:nm, v:JSON.parse(JSON.stringify(state.v2)) });
+  if(state.v2Presets.length>8){
+    state.v2Presets.length=8;
+    toast(L9({my:"Preset ၈ ခုပြည့်လို့ အဟောင်းဆုံးကို ဖယ်လိုက်ပါပြီ",en:"Preset list full — removed the oldest"}),"ok");
+  }
+  saveState(); renderV2Hero();
+  toast(L9({my:"'"+nm+"' preset သိမ်းပြီး ✓",en:"Preset '"+nm+"' saved ✓"}),"ok");
+}
 
 var V2_DOTS=[
   {v:30, label:{my:"ညင်သာ",en:"Subtle",shn:"ဢူၼ်ႈဢူၼ်ႈ",kac:"Zim zim",th:"อ่อนโยน",zh:"轻微",vi:"Nhẹ",id:"Halus",ms:"Halus"}},
@@ -6336,6 +6454,31 @@ function v2Sync(){
    guards on state.v2 (same tolerance renderStPicker uses for state.st). */
 function renderV2Hero(){
   var v=state.v2; if(!v || !$("v2Hero")) return;
+  /* v4.45 — house preset chips: tap = restore all 10 params, ✕ = delete */
+  var pr=$("v2PresetRow");
+  if(pr){
+    pr.innerHTML="";
+    (state.v2Presets||[]).forEach(function(p,i){
+      var same=JSON.stringify(p.v)===JSON.stringify(state.v2);
+      var b=el("button","chip"+(same?" on":""));
+      b.innerHTML=icn("i-star-fill")+" "+escH(p.name)+' <span class="x-inline" aria-hidden="true">✕</span>';
+      b.onclick=function(ev){
+        var xEl=ev.target.closest?ev.target.closest(".x-inline"):null;
+        if(xEl){
+          state.v2Presets.splice(i,1); saveState(); renderV2Hero();
+          return;
+        }
+        state.v2=Object.assign(JSON.parse(JSON.stringify(V2_DEF)), JSON.parse(JSON.stringify(p.v)));
+        v2Sync();
+        toast(L9({my:"'"+p.name+"' preset တင်ပြီး ✓",en:"Preset '"+p.name+"' loaded ✓"}),"ok");
+      };
+      pr.appendChild(b);
+    });
+    var sv2=el("button","chip");
+    sv2.innerHTML=icn("i-save")+" "+escH(L9({my:"Preset သိမ်းမယ်",en:"Save preset"}));
+    sv2.onclick=v2SavePreset;
+    pr.appendChild(sv2);
+  }
   $("v2Strength").value=v.strength;
   $("v2StrengthVal").textContent=v.strength+"%";
   var dots=$("v2Dots"); dots.innerHTML="";
@@ -6775,7 +6918,7 @@ var PT_TIERS=[
 
 /* ---- runtime (session-only) + persisted settings ---- */
 var PT={ photos:[], busy:false, stop:false, ref:null, seq:0, spinT:null, spinT0:0, sheetIdx:-1, logLines:[], durs:[] };
-var PT_DEF={ look:"pt_foliage", tier:"fast", fx:{blur:"off",fg:"off",sync:false,proLight:true,frame:"off"}, custom:"" };
+var PT_DEF={ look:"pt_foliage", tier:"fast", strength:100, fx:{blur:"off",fg:"off",sync:false,proLight:true,frame:"off"}, custom:"" };
 state.pt=JSON.parse(JSON.stringify(PT_DEF));
 /* "My Grade" — the Studio colour grade reused as a batch look. The t1 param
    vocabulary is identical (stCssFilter reads both), so registering it into
@@ -6800,6 +6943,23 @@ function ptRegisterCustomLook(cl){
     ai:"Apply this exact photographic colour grade to the whole photo: "+ptT1Desc(cl.t1)+". Keep the subject, pose and composition identical." };
   if(PT_ORDER.indexOf("pt_custom")<0) PT_ORDER.unshift("pt_custom");
 }
+/* v4.45 — ONE recipe store for both pages: every Studio recipe (hnk_st_recipes)
+   is registered as a Path look, so the rail, the free bake and the prompt
+   composer all read the same 12 slots Studio renders. The key is a literal
+   because this runs during startup, before the Studio block's var assignments. */
+function ptRecipeStore(){ try{ var a=JSON.parse(localStorage.getItem("hnk_st_recipes")||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function ptRegisterRecipeLooks(){
+  var a=ptRecipeStore();
+  Object.keys(PT_LOOKS).forEach(function(k){ if(k.indexOf("pt_rc_")===0 && +k.slice(6)>=a.length) delete PT_LOOKS[k]; });
+  a.forEach(function(r,idx){
+    var id="pt_rc_"+idx, nm=r.name||("Look "+(idx+1));
+    PT_LOOKS[id]={ id:id, t1:ptT1(r.t1||{}), recipe:{t1:r.t1||{},t2:r.t2||{},v:r.v||{}}, overlay:null, vig:0,
+      name:{my:nm,en:nm},
+      hint:{my:"Studio Recipe — Studio မှာ ပြင်ပြီး ပြန်သိမ်းနိုင်ပါတယ်",en:"A Studio recipe — retune and re-save it in Studio"},
+      ai:"Apply this exact photographic colour grade to the whole photo: "+ptT1Desc(r.t1||{})+". Keep the subject, pose and composition identical." };
+  });
+  return a.length;
+}
 (function(){ /* tolerant restore — same contract as state.stSaved / state.v2Saved */
   var s=state.ptSaved; delete state.ptSaved; if(!s) return;
   try{
@@ -6809,8 +6969,10 @@ function ptRegisterCustomLook(cl){
         state.pt.customLook.recipe=s.customLook.recipe;
       ptRegisterCustomLook(state.pt.customLook);
     }
+    ptRegisterRecipeLooks(); /* "pt_rc_N" saved looks must exist before the check */
     if(typeof s.look==="string" && PT_LOOKS[s.look]) state.pt.look=s.look;
     if(s.tier==="fast"||s.tier==="quality"||s.tier==="hd") state.pt.tier=s.tier;
+    if(typeof s.strength==="number"&&s.strength>=25&&s.strength<=150) state.pt.strength=s.strength;
     if(typeof s.custom==="string") state.pt.custom=s.custom.slice(0,1200);
     if(s.fx && typeof s.fx==="object"){
       ["blur","fg","frame"].forEach(function(k){
@@ -6826,6 +6988,23 @@ function ptLookOf(photo){
   var id=(photo && photo.lookOverride) || state.pt.look;
   return PT_LOOKS[id] || PT_LOOKS[PT_DEF.look];
 }
+/* v4.45 — look strength: one dial scales the whole grade (50% = half the
+   look, 125% = pushed). The free preview, the free bake AND the AI prompt
+   all read it, so what you see is what every path delivers. */
+function ptStrength(){ var s=+(state.pt.strength||100); return (s>=25&&s<=150)?s:100; }
+function ptScaledT1(look){
+  var f=ptStrength()/100;
+  if(f===1) return look.t1;
+  var o={}; for(var k in look.t1) o[k]=Math.round(look.t1[k]*f);
+  return o;
+}
+function ptStrengthWord(){
+  var s=ptStrength();
+  return s<=60?"apply the look subtly, at reduced intensity"
+       : s<90?"apply the look gently, below full strength"
+       : s<=110?"apply the look at its natural strength"
+       : "apply the look boldly, pushed past its natural strength";
+}
 /* Prompt composer — no TASK GUARD of its own: $("btnGen") appends the
    canonical D.guards.core + textBan to every request (the V2 precedent).
    Whatever this returns is exactly what #ptPromptPreview shows. */
@@ -6833,6 +7012,7 @@ function ptBuildPrompt(photo){
   var look=ptLookOf(photo), fx=state.pt.fx, out=[];
   out.push("Professional batch wedding-photo relight/regrade of IMAGE 1 — apply the '"+look.name.en+"' look.");
   out.push(look.ai);
+  if(ptStrength()!==100) out.push("Strength "+ptStrength()+"% — "+ptStrengthWord()+".");
   if(fx.blur!=="off") out.push(PT_FX.blur.frag(fx.blur));
   if(fx.fg!=="off") out.push(PT_FX.fg.frag(fx.fg));
   if(fx.frame!=="off") out.push(PT_FX.frame.frag(fx.frame));
@@ -6873,7 +7053,7 @@ function ptFilterFor(photo){
   /* a finished AI result is shown as the model returned it — never
      double-graded with the CSS recipe that only described the request */
   if(photo.status==="done" && photo.outB64) return "";
-  return stCssFilter(ptLookOf(photo).t1);
+  return stCssFilter(ptScaledT1(ptLookOf(photo)));
 }
 function ptRenderGrid(){
   var host=$("ptGrid"); if(!host) return;
@@ -6924,7 +7104,9 @@ function ptRenderRailInto(hostId, selId, onPick, withClear){
      (chips only; the big preview and the bake use the honest values) and
      draws each look's overlay wash + vignette so the tiles actually differ. */
   function chipT1(t1){ var o={}; for(var k in t1) o[k]=Math.round(t1[k]*1.8); return ptT1(o); }
-  PT_ORDER.forEach(function(id){
+  ptRegisterRecipeLooks(); /* Studio saves land in the rail without a reload */
+  var railIds=PT_ORDER.concat(Object.keys(PT_LOOKS).filter(function(k){ return k.indexOf("pt_rc_")===0; }));
+  railIds.forEach(function(id){
     var look=PT_LOOKS[id];
     var c=el("button","pcard"+(selId===id?" on":""));
     var wr=el("div","pth");
@@ -6984,6 +7166,16 @@ function ptRenderChips(){
       var b=el("button","chip"+(cur===o.v?" on":""), L9(o.label));
       b.onclick=function(){ set(o.v); };
       host.appendChild(b);
+    });
+  }
+  /* v4.45 — look strength dial (50/75/100/125) */
+  var sh=$("ptStrengthChips");
+  if(sh){
+    sh.innerHTML="";
+    [50,75,100,125].forEach(function(s){
+      var b=el("button","chip"+(ptStrength()===s?" on":""), s+"%");
+      b.onclick=function(){ state.pt.strength=s; ptSync(); };
+      sh.appendChild(b);
     });
   }
   var fx=state.pt.fx;
@@ -7069,6 +7261,46 @@ function ptIngestDataUrls(list){
   if(dups) toast(L9({my:"ထပ်နေတဲ့ပုံ "+dups+" ပုံ ကျော်လိုက်ပါပြီ",en:dups+" duplicate photo"+(dups>1?"s":"")+" skipped",shn:"ၶႅပ်းႁၢင်ႈသမ်ႉၶိုၼ်း "+dups+" ဢၼ် လတ်းၶၢမ်ႈ",kac:"Bung ai sumla "+dups+" hpe lai kau sai",th:"ข้ามรูปซ้ำ "+dups+" รูป",zh:"已跳过 "+dups+" 张重复照片",vi:"Đã bỏ qua "+dups+" ảnh trùng",id:dups+" foto duplikat dilewati",ms:dups+" foto pendua dilangkau"}),"ok");
   ptSync();
   return added;
+}
+/* v4.45 — the standard result hand-off row: any Edit result continues on any
+   other Edit page. One function, four call sites (Create/Studio/Retouch
+   results + Path sheet), so "where does this go next" always looks and
+   behaves the same. */
+var HANDOFF_L={
+  retouch:{my:"ဒီပုံကို Retouch လုပ်မယ်",en:"Retouch this",shn:"Retouch ႁဵတ်းဢၼ်ၼႆႉ",kac:"Ndai hpe retouch galaw u",th:"รีทัชรูปนี้",zh:"修饰这张",vi:"Retouch ảnh này",id:"Retouch foto ini",ms:"Retouch foto ini"},
+  studio:{my:"Studio ထဲ ဖွင့်မယ်",en:"Open in Studio",shn:"ပိုတ်ႇတီႈ Studio",kac:"Studio hku hpaw u",th:"เปิดใน Studio",zh:"在 Studio 中打开",vi:"Mở trong Studio",id:"Buka di Studio",ms:"Buka dalam Studio"},
+  path:{my:"Path batch ထဲ ထည့်မယ်",en:"Add to Path batch",shn:"သႂ်ႇၶဝ်ႈ Path batch",kac:"Path batch de bang u",th:"เพิ่มเข้าชุด Path",zh:"添加到 Path 批处理",vi:"Thêm vào lô Path",id:"Tambah ke batch Path",ms:"Tambah ke kumpulan Path"}
+};
+function stHandoffRow(hostId, mime, b64, name, skip){
+  var host=$(hostId); if(!host) return;
+  host.innerHTML="";
+  if(!mime || !b64) return;
+  var dataUrl="data:"+mime+";base64,"+b64;
+  function chip(icon, label, fn){
+    var b=el("button","chip"); b.innerHTML=icn(icon)+" "+escH(label); b.onclick=fn; host.appendChild(b);
+  }
+  if(skip!=="retouch") chip("i-bandage", L9(HANDOFF_L.retouch), function(){
+    state.refs[0]={mime:mime,b64:b64,label:name||"result"};
+    state.imgRoles=null; switchPage("pgRetouch");
+  });
+  if(skip!=="studio") chip("i-palette", L9(HANDOFF_L.studio), function(){
+    switchPage("pgStudio"); stLoadImage(dataUrl);
+  });
+  if(skip!=="path") chip("i-stack", L9(HANDOFF_L.path), function(){
+    ptIngestDataUrls([{name:name||("result-"+ptStamp()), dataUrl:dataUrl}]);
+    switchPage("pgPath");
+  });
+  /* Share everywhere — the same watermark-aware file share Create has */
+  if(navigator.share) chip("i-external", L9({my:"Share",en:"Share",shn:"Share",kac:"Share",th:"แชร์",zh:"分享",vi:"Chia sẻ",id:"Bagikan",ms:"Kongsi"}), function(){
+    wmStampDataUrl(dataUrl, mime, 92, function(du){
+      try{
+        var blob=rhDataUrlToBlob(du);
+        var file=new File([blob], (name||"hnk-result")+(mime==="image/png"?".png":".jpg"), {type:mime});
+        if(navigator.canShare && navigator.canShare({files:[file]})) navigator.share({files:[file]}).catch(function(){});
+        else navigator.share({title:"HNK Web Studio"}).catch(function(){});
+      }catch(e){}
+    });
+  });
 }
 function ptIngestFiles(files){
   var list=Array.prototype.slice.call(files||[]);
@@ -7327,13 +7559,24 @@ function stApplyRecipeTo(img, recipe, maxDim){
 }
 function ptBake(photo, cb){
   var look=ptLookOf(photo);
-  /* custom Studio look with a full recipe → real Studio pipeline (grade +
-     makeup/skin + HSL zones), not the CSS-filter approximation */
-  if(look.id==="pt_custom" && look.recipe){
+  /* any look carrying a full Studio recipe (My Grade or a pt_rc_ store slot)
+     → real Studio pipeline (grade + makeup/skin + HSL zones), not the
+     CSS-filter approximation */
+  if(look.recipe){
     var imgR=new Image();
     imgR.onerror=function(){ cb(photo.srcDataUrl); };
     imgR.onload=function(){
-      try{ cb(stApplyRecipeTo(imgR, look.recipe, 1600).toDataURL("image/jpeg",0.92)); }
+      try{
+        /* strength scales the recipe's grade half (t1); makeup/skin keys ride unscaled */
+        var recR=look.recipe, fR=ptStrength()/100;
+        if(fR!==1){
+          recR={t1:{},t2:look.recipe.t2,v:look.recipe.v};
+          for(var kR in (look.recipe.t1||{})) recR.t1[kR]=Math.round(look.recipe.t1[kR]*fR);
+        }
+        var cnvR=stApplyRecipeTo(imgR, recR, 1600);
+        var finR=function(){ try{ cb(cnvR.toDataURL("image/jpeg",0.92)); }catch(e2){ cb(photo.srcDataUrl); } };
+        if(wmOn()) wmStamp(cnvR,finR); else finR();
+      }
       catch(e){ cb(photo.srcDataUrl); }
     };
     imgR.src=photo.srcDataUrl;
@@ -7342,11 +7585,13 @@ function ptBake(photo, cb){
   var img=new Image();
   img.onerror=function(){ cb(photo.srcDataUrl); };
   img.onload=function(){
+    var fS=ptStrength()/100;
     var c=document.createElement("canvas"); c.width=img.width; c.height=img.height;
     var x=c.getContext("2d");
-    try{ x.filter=stCssFilter(look.t1); }catch(e){}
+    try{ x.filter=stCssFilter(ptScaledT1(look)); }catch(e){}
     x.drawImage(img,0,0); x.filter="none";
     var ov=look.overlay;
+    if(ov){ ov=Object.assign({},ov,{alpha:(ov.alpha||0)*fS}); }
     if(ov){
       var a=(ov.angleDeg||0)*Math.PI/180, L=Math.max(c.width,c.height);
       var cx=c.width/2, cy=c.height/2;
@@ -7362,7 +7607,7 @@ function ptBake(photo, cb){
       var rOut=Math.max(c.width,c.height)*0.75;
       var vg=x.createRadialGradient(c.width/2,c.height/2,rOut*0.7, c.width/2,c.height/2,rOut);
       vg.addColorStop(0,"rgba(0,0,0,0)");
-      vg.addColorStop(1,"rgba(0,0,0,"+(look.vig/100*0.45)+")");
+      vg.addColorStop(1,"rgba(0,0,0,"+(look.vig*fS/100*0.45)+")");
       x.globalCompositeOperation="multiply";
       x.fillStyle=vg; x.fillRect(0,0,c.width,c.height);
       x.globalCompositeOperation="source-over";
@@ -7382,7 +7627,8 @@ function ptBake(photo, cb){
       x.fillStyle=pat; x.fillRect(0,0,c.width,c.height);
       x.globalAlpha=1; x.globalCompositeOperation="source-over";
     }
-    try{ cb(c.toDataURL("image/jpeg",0.92)); }catch(e){ cb(photo.srcDataUrl); }
+    var fin=function(){ try{ cb(c.toDataURL("image/jpeg",0.92)); }catch(e){ cb(photo.srcDataUrl); } };
+    if(wmOn()) wmStamp(c,fin); else fin();
   };
   img.src=photo.srcDataUrl;
 }
@@ -7564,8 +7810,24 @@ function ptRenderSheet(){
     sv.style.display="";
     sv.href="data:"+(p.outMime||"image/png")+";base64,"+p.outB64;
     sv.download="path-"+ptSafeName(p.name).replace(/\.[a-z0-9]+$/i,"")+"."+((p.outMime==="image/png")?"png":"jpg");
+    if(wmOn()) wmStampDataUrl(sv.href, p.outMime||"image/png", 92, function(du){ sv.href=du; });
   } else { sv.style.display="none"; sv.removeAttribute("href"); }
   $("btnPtGalOne").style.display=isDone?"":"none";
+  var rto=$("btnPtRetouchOne");
+  if(rto){
+    rto.style.display=isDone?"":"none";
+    if(!rto._wired){
+      rto._wired=true;
+      setIcnText(rto,"i-bandage",L9(HANDOFF_L.retouch));
+      rto.onclick=function(){
+        var ph=PT.photos[PT.sheetIdx]; if(!ph||!ph.outB64) return;
+        state.refs[0]={mime:ph.outMime||"image/png",b64:ph.outB64,label:ph.name||"result"};
+        state.imgRoles=null;
+        ptCloseSheet();
+        switchPage("pgRetouch");
+      };
+    }
+  }
   ptRenderRailInto("ptSheetRail", p.lookOverride, function(id){
     p.lookOverride=id;
     ptRenderGrid(); ptRenderSheet();
@@ -7589,6 +7851,7 @@ var PT_AI_PILL='<span class="pt-ai">AI</span>';
 });
 $("ptFrameNote").textContent=t("pt_frame_note");
 $("ptRefNote").textContent=t("pt_ref_note");
+$("ptLbStrength").textContent=L9({my:"Look ပြင်းအား",en:"Look strength",shn:"ႁႅင်း Look",kac:"Look n-gun",th:"ความเข้มของลุค",zh:"风格强度",vi:"Cường độ look",id:"Kekuatan look",ms:"Kekuatan gaya"});
 setIcnText($("btnPtRef"),"i-frame",t("pt_ref_pick"));
 setIcnText($("btnPtRefClear"),"i-close",t("pt_ref_clear"));
 $("ptCustom").placeholder=t("pt_custom_ph");
@@ -7686,15 +7949,12 @@ $("btnPtDownOne").onclick=function(){ ptMoveOne(1); };
       toast(L9({my:"Studio မှာ look အရင်ချိန်ပါ — အားလုံး 0 ဖြစ်နေပါတယ်",en:"Tune a look in Studio first — everything is at 0",shn:"ႁဵတ်း look တီႈ Studio ဢွၼ်တၢင်း",kac:"Studio kaw look shawng galaw u",th:"ปรับลุคใน Studio ก่อน — ทุกค่าเป็น 0",zh:"请先在 Studio 调好效果 — 当前全为 0",vi:"Hãy chỉnh look trong Studio trước — tất cả đang là 0",id:"Atur look di Studio dulu — semuanya 0",ms:"Laraskan gaya di Studio dahulu — semuanya 0"}),"err");
       return;
     }
-    var vc={}; if(stv.v) for(k in stv.v){ if(k.indexOf("st_hsl_")===0||k.indexOf("st_grade_")===0||k==="mu_lipLocHex"||k==="mu_blushLocHex") vc[k]=stv.v[k]; }
-    state.pt.customLook={
-      t1:JSON.parse(JSON.stringify(t1)),
-      recipe:{ t1:JSON.parse(JSON.stringify(t1)), t2:JSON.parse(JSON.stringify(t2)), v:vc }
-    };
-    ptRegisterCustomLook(state.pt.customLook);
-    state.pt.look="pt_custom";
+    /* v4.45 — delegate to the SHARED recipe store: the same save Studio's 💾
+       makes, so both pages read one list. The newest recipe is slot 0. */
+    if(!stSaveRecipe()) return;
+    ptRegisterRecipeLooks();
+    state.pt.look="pt_rc_0";
     ptSync();
-    toast(L9({my:"“ကိုယ်ပိုင် Grade” look အဖြစ် အပြည့်သိမ်းပြီးပါပြီ — makeup နဲ့ skin ပါ ပါဝင်ပါတယ်",en:"Saved the full look as “My Grade” — makeup and skin included",shn:"သိမ်းပဵၼ် “Grade သုၼ်ႇတူဝ်” တဵမ်တဵမ်ယဝ်ႉ",kac:"“Nang a grade” hku nna yawng makoi ngut sai",th:"บันทึกลุคเต็มเป็น “เกรดของฉัน” แล้ว — รวมเมคอัพและผิว",zh:"已完整保存为“我的调色”— 含美妆与美肤",vi:"Đã lưu toàn bộ look thành “Grade của tôi” — gồm makeup và da",id:"Look lengkap tersimpan sebagai “Grade Saya” — termasuk makeup dan kulit",ms:"Gaya penuh disimpan sebagai “Gred Saya” — termasuk solekan dan kulit"}),"ok");
   };
 })();
 $("btnPtStop").onclick=ptStopRun;
@@ -7842,7 +8102,7 @@ function stUiSave(){ try{ localStorage.setItem(ST_UI_LS,JSON.stringify({mode:ST.
 ST.pipeSv=["st_hsl_","st_curve_","st_grade_","st_bw","st_leak","st_geo","st_wbAuto","st_bgEnh","st_frame"];
 function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0,wht:0,blk:0,dhz:0,glow:0}; }
 function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0,gdn:0,nrL:0,nrC:0,hairShine:0,hairDeep:0,lipV:0,blushV:0,eyeDef:0}; }
-function stDefGeo(){ return {rot:0,flipH:false,flipV:false,straighten:0,crop:null}; }
+function stDefGeo(){ return {rot:0,flipH:false,flipV:false,straighten:0,crop:null,ox:0.5,oy:0.5}; }
 state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:"all", v:{}, geo:stDefGeo(), refX:null };
 (function(){ /* tolerant restore — missing keys keep their defaults; img is never persisted */
   var s=state.stSaved; delete state.stSaved; if(!s) return;
@@ -7861,6 +8121,8 @@ state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:
       if(typeof s.geo.flipV==="boolean") g.flipV=s.geo.flipV;
       if(typeof s.geo.straighten==="number") g.straighten=stClamp(s.geo.straighten,-45,45);
       if(typeof s.geo.crop==="string"||s.geo.crop===null) g.crop=s.geo.crop;
+      if(typeof s.geo.ox==="number") g.ox=stClamp(s.geo.ox,0,1);
+      if(typeof s.geo.oy==="number") g.oy=stClamp(s.geo.oy,0,1);
     }
   }catch(e){}
 })();
@@ -8334,7 +8596,11 @@ function stApplyGeo(src){
   var ratio=stRatioVal(g.crop), cw=sw, ch=sh;
   if(ratio>0){ if(sw/sh>ratio){ cw=Math.max(1,Math.round(sh*ratio)); ch=sh; } else { cw=sw; ch=Math.max(1,Math.round(sw/ratio)); } }
   var out=document.createElement("canvas"); out.width=cw; out.height=ch;
-  out.getContext("2d").drawImage(src,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,cw,ch);
+  /* v4.45 — the crop window is repositionable: ox/oy (0-1) place it, 0.5 =
+     the old center behavior. A groom on the left third stays in frame. */
+  var gx=(typeof g.ox==="number")?stClamp(g.ox,0,1):0.5;
+  var gy=(typeof g.oy==="number")?stClamp(g.oy,0,1):0.5;
+  out.getContext("2d").drawImage(src,(sw-cw)*gx,(sh-ch)*gy,cw,ch,0,0,cw,ch);
   if(g.rot){
     var rw=(g.rot%2)?out.height:out.width, rh=(g.rot%2)?out.width:out.height;
     var c2=document.createElement("canvas"); c2.width=rw; c2.height=rh;
@@ -8929,6 +9195,16 @@ function stLoadImage(dataUrl,opts){
     var fl=$("stStageFlip"); if(fl) fl.style.display="none";
     stBuildBuffer();
     if(svGet("st_wbAuto",false)) stComputeWb();
+    /* v4.45 — pinned house recipe auto-applies to a FRESH photo only: a
+       mid-edit session (stIsDirty) is the user's work, never clobbered */
+    var pin=stPinnedRecipeIdx();
+    if(pin>=0 && !stIsDirty() && !ST.busy){
+      stUndoTick();
+      stApplyRecipe(pin);
+      var pr=stRecipes()[pin];
+      toast(L9({my:"House recipe '"+((pr&&pr.name)||"")+"' အလိုအလျောက် သုံးထားပါတယ်",en:"House recipe '"+((pr&&pr.name)||"")+"' applied automatically"}),"ok",
+        {label:L9({my:"ပြန်ဖြုတ်မယ်",en:"Undo"}),fn:stUndo});
+    }
     var stg=$("stStage"); if(stg) stg.style.display="";
     var pg=$("pgStudio"); if(pg) pg.classList.remove("nostage");
     if(ST._stageHUpd) ST._stageHUpd();
@@ -10122,6 +10398,40 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   g14.b.appendChild(stChips({id:"stGeoCropChips",choices:[["1:1","1:1"],["4:5","4:5"],["3:4","3:4"],["2:3","2:3"],["16:9","16:9"]],
     get:function(){ return state.st.geo.crop; },
     set:function(v){ state.st.geo.crop=v; stGeoChanged(); }}));
+  /* v4.45 — repositionable crop window: 9 anchor points instead of center-only,
+     the live stage repaints instantly so the framing is directly visible */
+  (function(){
+    var posSub=stSub(L9({my:"Crop တည်နေရာ",en:"Crop position"}));
+    var wrap=el("div","chips"); wrap.id="stGeoPosChips";
+    var POS=[["tl","↖"],["t","↑"],["tr","↗"],["l","←"],["c","·"],["r","→"],["bl","↙"],["b","↓"],["br","↘"]];
+    var MAP={tl:[0,0],t:[0.5,0],tr:[1,0],l:[0,0.5],c:[0.5,0.5],r:[1,0.5],bl:[0,1],b:[0.5,1],br:[1,1]};
+    function cur(){
+      var g=state.st.geo, best="c", bd=9;
+      Object.keys(MAP).forEach(function(k){
+        var d=Math.abs(MAP[k][0]-(g.ox===undefined?0.5:g.ox))+Math.abs(MAP[k][1]-(g.oy===undefined?0.5:g.oy));
+        if(d<bd){ bd=d; best=k; }
+      });
+      return best;
+    }
+    function paint(){
+      var on=!!state.st.geo.crop;
+      posSub.style.display=on?"":"none";
+      wrap.style.display=on?"":"none";
+      var c=cur();
+      wrap.querySelectorAll(".chip").forEach(function(b,i){ b.className="chip"+(POS[i][0]===c?" on":""); });
+    }
+    POS.forEach(function(p){
+      var b=el("button","chip",p[1]);
+      b.setAttribute("aria-label","crop "+p[0]);
+      b.onclick=function(){
+        state.st.geo.ox=MAP[p[0]][0]; state.st.geo.oy=MAP[p[0]][1];
+        stGeoChanged(); paint();
+      };
+      wrap.appendChild(b);
+    });
+    ST.refreshFns.push(paint); paint();
+    g14.b.appendChild(posSub); g14.b.appendChild(wrap);
+  })();
   regChk(g14,function(){ return !!state.st.geo.crop; });
   /* M22 — Rotate & Flip (geometry) */
   var rotRow=el("div","st-ctl");
@@ -11113,6 +11423,177 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e16,["ev_reshapeAllF","ev_heightTorso","ev_headSizeF","ev_cwh","ev_clavicleF"]);
 })();
 
+/* ================= v4.45 — HNK 880 STYLE REFERENCE PACK ================= */
+/* The owner's 880 individual 4x6 style references (14 categories), integrated
+   into both suites as browsable look pickers. Picking a style rides the
+   existing M8/M20 usesRef path: the style JPEG becomes IMAGE 2
+   (reference-only) and the pack's per-style instruction is the queued AI
+   edit — identity, pose, outfit and scene stay locked to IMAGE 1.
+   Catalog (lib/styles880/catalog.json, ~0.8MB) and thumbnails load only when
+   a Style Looks group is first opened. */
+var ST880={ list:null, map:null, loading:false, refreshers:[] };
+ST880.CAT_L={
+  makeup_look:{my:"မိတ်ကပ် Look",en:"Makeup Look"},
+  skin_type:{my:"အသားအရေ Texture",en:"Skin Texture"},
+  hair_reference:{my:"ဆံပင်အရောင်/Texture",en:"Hair Color/Texture"},
+  skin_color:{my:"အသားအရောင် Grade",en:"Skin Color Grade"},
+  eyebrow:{my:"မျက်ခုံး",en:"Eyebrow"},
+  eyelash:{my:"မျက်တောင်",en:"Eyelash"},
+  eye_lash_combo:{my:"မျက်လုံး+မျက်တောင် စုံ",en:"Eye + Lash Combo"},
+  blush:{my:"ပါးနီ",en:"Blush"},
+  face_contour:{my:"Face Contour",en:"Face Contour"},
+  lipstick:{my:"နှုတ်ခမ်းနီ",en:"Lipstick"},
+  contact_lens:{my:"မျက်ကပ်မှန်",en:"Contact Lens"},
+  eyeliner:{my:"Eyeliner",en:"Eyeliner"},
+  face_highlight:{my:"Face Highlight",en:"Face Highlight"},
+  hairstyle:{my:"ဆံပင်ပုံစံ",en:"Hairstyle"}
+};
+ST880.CAT_N={makeup_look:50,skin_type:50,hair_reference:50,skin_color:20,eyebrow:30,eyelash:30,eye_lash_combo:50,blush:50,face_contour:50,lipstick:100,contact_lens:100,eyeliner:100,face_highlight:100,hairstyle:100};
+ST880.CAT_DIR={makeup_look:"01_makeup_look",skin_type:"02_skin_type",hair_reference:"03_hair_reference",skin_color:"04_skin_color",eyebrow:"05_eyebrow",eyelash:"06_eyelash",eye_lash_combo:"07_eye_lash_combo",blush:"08_blush",face_contour:"09_face_contour",lipstick:"10_lipstick",contact_lens:"11_contact_lens",eyeliner:"12_eyeliner",face_highlight:"13_face_highlight",hairstyle:"14_hairstyle"};
+function st880Load(cb){
+  if(ST880.list){ if(cb) cb(); return; }
+  if(ST880.loading) return;
+  ST880.loading=true;
+  fetch("lib/styles880/catalog.json").then(function(r){ return r.json(); }).then(function(a){
+    ST880.list=a; ST880.map={};
+    a.forEach(function(r){ ST880.map[r.id]=r; });
+    ST880.loading=false;
+    if(cb) cb();
+  }).catch(function(){
+    ST880.loading=false;
+    toast(L9({my:"Style catalog ဖတ်လို့မရပါ — ချိတ်ဆက်မှု စစ်ပါ",en:"Could not load the style catalog — check the connection"}),"err");
+  });
+}
+function st880Name(rec){ return (LANG==="my"&&rec.mm)?rec.mm:rec.en; }
+function st880Refresh(){ ST880.refreshers.forEach(function(f){ try{ f(); }catch(e){} }); }
+function st880Clear(){
+  svSet("st_style880",null);
+  state.st.refX=null;
+  stSync("st_style880"); stRefreshUI(); stRenderPend(); st880Refresh();
+}
+function st880Pick(rec){
+  var sel=svGet("st_style880",null);
+  if(sel && sel.id===rec.id){ st880Clear(); return; } /* tap again = off */
+  fetch("lib/styles880/"+rec.img).then(function(r){ return r.blob(); }).then(function(bl){
+    var rd=new FileReader();
+    rd.onload=function(){
+      var m=/^data:([^;]+);base64,(.*)$/.exec(String(rd.result)); if(!m) return;
+      state.st.refX={mime:m[1],b64:m[2]};
+      svSet("st_style880",{id:rec.id,mode:svGet("st_style880Mode","face")});
+      stSync("st_style880");
+      stRefreshUI(); stRenderPend(); st880Refresh();
+      if(!ST.srcBitmap) stNeedPhotoNudge();
+      else toast(L9({my:"Style ရွေးပြီး ✓ — GENERATE နှိပ်ရင် ဒီ look ကို သင့်ပုံပေါ် တင်ပေးပါမယ်",en:"Style queued ✓ — GENERATE applies this look to your photo"}),"ok");
+    };
+    rd.readAsDataURL(bl);
+  }).catch(function(){
+    toast(L9({my:"Style ပုံ ဖတ်လို့မရပါ",en:"Could not load the style image"}),"err");
+  });
+}
+/* the one queued edit both suites share — a single style at a time, exactly
+   like the pack's one-style-per-job contract */
+stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"}),["st_style880"],function(){
+  var sel=svGet("st_style880",null);
+  if(!sel||!sel.id||!state.st.refX) return null;
+  var r=ST880.map&&ST880.map[sel.id]; if(!r) return null;
+  var ins=(sel.mode==="body"&&r.bi)?r.bi:r.fi;
+  return { params:{id:sel.id},
+    frag:"Style "+r.id+" — "+r.en+": "+ins+" Apply at about "+(r.s||40)+"% strength. Use IMAGE 2 only for this named style feature — never copy its pose, face structure, body, clothing, lighting or background. No identity drift, no face or body reshaping, no plastic skin; keep real pores, fine texture and natural asymmetry." };
+},null,{usesRef:true});
+(function build880Groups(){
+  var SUITES=[
+    { hostId:"muHost", suite:"mu",
+      cats:["makeup_look","lipstick","blush","eyeliner","eyelash","eye_lash_combo","eyebrow","contact_lens","face_contour","face_highlight"] },
+    { hostId:"evHost", suite:"ev",
+      cats:["skin_type","skin_color","hair_reference","hairstyle"] }
+  ];
+  SUITES.forEach(function(sd){
+    var host=$(sd.hostId); if(!host) return;
+    var total=sd.cats.reduce(function(n,c){ return n+ST880.CAT_N[c]; },0);
+    var title=L9({my:"Style Looks — "+total+" ပုံ Pack",en:"Style Looks — "+total+" pack"});
+    var g=grp(title,"…",false,"i-gem");
+    host.appendChild(g.g);
+    g.g._stG=ST.groups.length;
+    ST.groups.push({el:g.g,icon:"i-gem",title:stripIcn(title),host:sd.suite,
+      kw:"style look reference pack 880 makeup lipstick blush eyeliner lash brow lens contour highlight skin hair hairstyle "+sd.cats.join(" "),
+      chk:[function(){ var s=svGet("st_style880",null); return !!(s&&s.id&&state.st.refX); }]});
+    if(sd.suite==="mu") ST.grpOf["st_style880"]=g.g; /* dirty dot + pend chip home */
+    var cur=sd.cats[0];
+    var catRow=el("div","chips"); g.b.appendChild(catRow);
+    var modeRow=el("div","chips"); modeRow.style.marginTop="6px"; g.b.appendChild(modeRow);
+    var selNote=el("p","mut"); g.b.appendChild(selNote);
+    var grid=el("div","st880-grid"); g.b.appendChild(grid);
+    g.b.appendChild(el("p","mut",L9({
+      my:"တစ်ကြိမ်လျှင် style တစ်မျိုး — style ပုံက IMAGE 2 (reference-only) အဖြစ် ပါသွားပြီး သင့်ပုံရဲ့ မျက်နှာ/ကိုယ်ဟန်/အဝတ်အစား မပြောင်းပါ။ GENERATE နှိပ်မှ AI က အလုပ်လုပ်ပါတယ်",
+      en:"One style at a time — the style image rides as IMAGE 2 (reference-only); your photo's face, pose and outfit stay locked. The AI runs when you press GENERATE"})));
+    function renderCats(){
+      catRow.innerHTML="";
+      sd.cats.forEach(function(c){
+        var b=el("button","chip"+(cur===c?" on":""),L9(ST880.CAT_L[c])+" ("+ST880.CAT_N[c]+")");
+        b.onclick=function(){ cur=c; renderCats(); renderGrid(); };
+        catRow.appendChild(b);
+      });
+    }
+    function renderMode(){
+      modeRow.innerHTML="";
+      var m=svGet("st_style880Mode","face");
+      [["face",L9({my:"Face mode (မျက်နှာပုံ)",en:"Face mode"})],["body",L9({my:"Body mode (ကိုယ်လုံးပုံ)",en:"Body mode"})]].forEach(function(pr){
+        var b=el("button","chip"+(m===pr[0]?" on":""),pr[1]);
+        b.onclick=function(){
+          svSet("st_style880Mode",pr[0]);
+          var sel=svGet("st_style880",null);
+          if(sel){ sel.mode=pr[0]; svSet("st_style880",sel); stSync("st_style880"); }
+          st880Refresh();
+        };
+        modeRow.appendChild(b);
+      });
+    }
+    function renderGrid(){
+      grid.innerHTML="";
+      if(!ST880.list){
+        grid.appendChild(el("p","mut",ST880.loading
+          ? L9({my:"Catalog ဖတ်နေပါတယ်…",en:"Loading the catalog…"})
+          : L9({my:"ဖွင့်ရင် catalog ကို ဆွဲယူပါမယ်",en:"The catalog loads when you open this group"})));
+        return;
+      }
+      var sel=(state.st.refX&&svGet("st_style880",null))||null;
+      ST880.list.forEach(function(rec){
+        if(rec.cat!==cur) return;
+        var c=el("button","pcard"+(sel&&sel.id===rec.id?" on":""));
+        var im=document.createElement("img");
+        im.loading="lazy"; im.decoding="async"; im.alt="";
+        im.src="lib/styles880/"+rec.img;
+        c.appendChild(im);
+        c.appendChild(el("span",null,st880Name(rec)));
+        c.title=rec.id+" · "+rec.en;
+        c.onclick=function(){ st880Pick(rec); };
+        grid.appendChild(c);
+      });
+    }
+    function renderSel(){
+      var sel=(state.st.refX&&svGet("st_style880",null))||null;
+      var r=sel&&ST880.map&&ST880.map[sel.id];
+      selNote.innerHTML="";
+      if(r){
+        selNote.appendChild(document.createTextNode(L9({my:"ရွေးထားတာ — ",en:"Selected — "})+r.id+" · "+st880Name(r)+" "));
+        var x=el("button","chip",L9({my:"ဖြုတ်မယ်",en:"Clear"}));
+        x.onclick=st880Clear;
+        selNote.appendChild(x);
+      }
+    }
+    ST880.refreshers.push(function(){ renderGrid(); renderSel(); });
+    renderCats(); renderMode(); renderGrid(); renderSel();
+    /* lazy catalog fetch on first open */
+    var hd=g.g.querySelector(".grp-h");
+    if(hd) hd.addEventListener("click",function(){
+      if(g.g.className.indexOf("open")>=0 && !ST880.list) st880Load(st880Refresh);
+    });
+    /* badge obeys the group-badge law: what stCountControls counts is what shows */
+    var cnt=g.g.querySelector(".cnt");
+    if(cnt) cnt.textContent=String(stCountControls(g.g))+t("unit");
+  });
+})();
+
 /* hidden recycled-preset feature used by the Natural Pro EVOTO card */
 stFeat("ev_evoto",L9({my:"Evoto Style",en:"Evoto Style"}),["ev_evoto"],function(){
   var v=svGet("ev_evoto",0); if(!v) return null;
@@ -11137,6 +11618,47 @@ function stTargetPhrase(){
     left:"the person on the left only", right:"the person on the right only" }[state.st.target]||"every person";
 }
 
+/* ---- v4.45 watermark core: one logo, stamped on delivery everywhere ---- */
+var WM_LOGO_LS="hnk_wm_logo";
+function wmGetLogo(){ try{ return localStorage.getItem(WM_LOGO_LS)||null; }catch(e){ return null; } }
+function wmOn(){ return !!(svGet("st_wm_on",false) && wmGetLogo()); }
+function wmStamp(canvas, cb){
+  var du=wmGetLogo(); if(!du){ if(cb) cb(); return; }
+  var im=new Image();
+  im.onload=function(){
+    try{
+      var w=Math.max(48,Math.round(canvas.width*(svGet("st_wm_size",13)/100)));
+      var h=Math.max(1,Math.round(w*im.height/Math.max(1,im.width)));
+      var m=Math.round(canvas.width*0.025);
+      var pos=svGet("st_wm_pos","br");
+      var x=pos.indexOf("l")>=0 ? m : canvas.width-w-m;
+      var y=pos.indexOf("t")>=0 ? m : canvas.height-h-m;
+      var cx=canvas.getContext("2d");
+      cx.save(); cx.globalAlpha=(svGet("st_wm_alpha",85))/100;
+      cx.drawImage(im,x,y,w,h); cx.restore();
+    }catch(e){}
+    if(cb) cb();
+  };
+  im.onerror=function(){ if(cb) cb(); };
+  im.src=du;
+}
+/* decode → stamp → re-encode with the ORIGINAL mime; falls back to the clean
+   source on any failure so a broken logo can never block a delivery */
+function wmStampDataUrl(src, mime, q, cb){
+  if(!wmOn()){ cb(src); return; }
+  var im=new Image();
+  im.onload=function(){
+    var c=document.createElement("canvas");
+    c.width=im.naturalWidth; c.height=im.naturalHeight;
+    c.getContext("2d").drawImage(im,0,0);
+    wmStamp(c,function(){
+      try{ cb(c.toDataURL(mime||"image/jpeg",(q||92)/100)); }catch(e){ cb(src); }
+    });
+  };
+  im.onerror=function(){ cb(src); };
+  im.src=src;
+}
+
 /* ---- export settings (v4.36): format / quality / long edge for stBake ----
    Not pipe keys on purpose: changing them must not mark the canvas dirty. */
 (function(){
@@ -11154,6 +11676,63 @@ function stTargetPhrase(){
     choices:[[0,L9({my:"မူလအရွယ်",en:"Full size",shn:"တဵမ်တူဝ်",kac:"Kaba hkum",th:"ขนาดเต็ม",zh:"原尺寸",vi:"Kích thước gốc",id:"Ukuran penuh",ms:"Saiz penuh"})],[2048,"2048px"],[1280,"1280px"]],
     get:function(){ return svGet("st_exp_size",0); },
     set:function(v){ svSet("st_exp_size",v||0); }}));
+  /* v4.45 — studio watermark/logo: stamped at DELIVERY TIME only (downloads,
+     shares, 2-up) so stored masters and the Gallery stay clean. Settings sit
+     outside ST.pipeSv on purpose: changing them never dirties the canvas. */
+  host.appendChild(el("div","subh",L9({my:"Watermark / Logo",en:"Watermark / Logo"})));
+  var wmRow=el("div","row");
+  var wmTgl=el("button","chip"+(svGet("st_wm_on",false)?" on":"")); wmTgl.id="stWmTgl";
+  function wmTglPaint(){
+    wmTgl.className="chip"+(svGet("st_wm_on",false)?" on":"");
+    wmTgl.innerHTML=icn(svGet("st_wm_on",false)?"i-check":"i-close")+" "+escH(L9({my:"Logo တံဆိပ်ထု",en:"Stamp logo"}));
+  }
+  wmTglPaint();
+  wmTgl.onclick=function(){
+    if(!wmGetLogo() && !svGet("st_wm_on",false)){
+      toast(L9({my:"Logo ပုံ အရင်ထည့်ပါ",en:"Add a logo image first"}),"err"); return;
+    }
+    svSet("st_wm_on",!svGet("st_wm_on",false)); wmTglPaint();
+  };
+  wmRow.appendChild(wmTgl);
+  var wmPick=el("button","chip"); wmPick.id="stWmPick";
+  setIcnText(wmPick,"i-folder",L9({my:"Logo ပုံရွေး",en:"Pick logo"}));
+  var wmInput=document.createElement("input");
+  wmInput.type="file"; wmInput.accept="image/*"; wmInput.style.display="none";
+  wmInput.onchange=function(){
+    var f=wmInput.files&&wmInput.files[0]; wmInput.value=""; if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      var im=new Image();
+      im.onload=function(){
+        var sc=Math.min(1,512/Math.max(im.width,im.height));
+        var c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(im.width*sc)); c.height=Math.max(1,Math.round(im.height*sc));
+        c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+        try{ localStorage.setItem(WM_LOGO_LS,c.toDataURL("image/png")); }catch(e){}
+        svSet("st_wm_on",true); wmTglPaint();
+        toast(L9({my:"Logo သိမ်းပြီး ✓ — download/share တိုင်းမှာ တံဆိပ်ထုပေးပါမယ်",en:"Logo saved ✓ — every download/share is stamped"}),"ok");
+      };
+      im.onerror=function(){ toast(unreadableImgMsg(),"err"); };
+      im.src=String(rd.result);
+    };
+    rd.readAsDataURL(f);
+  };
+  wmPick.onclick=function(){ wmInput.click(); };
+  wmRow.appendChild(wmPick); wmRow.appendChild(wmInput);
+  host.appendChild(wmRow);
+  host.appendChild(stChips({id:"st_wm_pos_ui",allowOff:false,
+    choices:[["br",L9({my:"ညာအောက်",en:"Bottom-right"})],["bl",L9({my:"ဘယ်အောက်",en:"Bottom-left"})],["tr",L9({my:"ညာပေါ်",en:"Top-right"})],["tl",L9({my:"ဘယ်ပေါ်",en:"Top-left"})]],
+    get:function(){ return svGet("st_wm_pos","br"); },
+    set:function(v){ svSet("st_wm_pos",v||"br"); }}));
+  host.appendChild(stChips({id:"st_wm_size_ui",allowOff:false,
+    choices:[[10,L9({my:"သေး",en:"Small"})],[13,L9({my:"လတ်",en:"Medium"})],[18,L9({my:"ကြီး",en:"Large"})]],
+    get:function(){ return svGet("st_wm_size",13); },
+    set:function(v){ svSet("st_wm_size",v||13); }}));
+  host.appendChild(stChips({id:"st_wm_alpha_ui",allowOff:false,
+    choices:[[60,"60%"],[85,"85%"],[100,"100%"]],
+    get:function(){ return svGet("st_wm_alpha",85); },
+    set:function(v){ svSet("st_wm_alpha",v||85); }}));
+  host.appendChild(el("p","mut",L9({my:"Delivery မှာပဲ တံဆိပ်ထုပါတယ် — Gallery ထဲ သိမ်းထားတဲ့ master တွေ အမြဲသန့်ပါတယ်",en:"Stamped on delivery only — the masters stored in the Gallery always stay clean"})));
   /* v4.42: the client-approval deliverable — original and edit side by side */
   var b2up=el("button","btn"); b2up.id="stExp2Up"; b2up.style.marginTop="8px";
   setIcnText(b2up,"i-compare",L9({my:"Before/After ၂ ကွက်တွဲ ထုတ်မယ်",en:"Export Before/After 2-up",shn:"ဢွၵ်ႇ Before/After ၂ ၶွၵ်ႈ",kac:"Before/After 2-up shapraw u",th:"ส่งออกภาพเทียบ Before/After",zh:"导出前后对比图",vi:"Xuất ảnh so sánh Before/After",id:"Ekspor 2-up Before/After",ms:"Eksport 2-up Before/After"}));
@@ -11499,11 +12078,14 @@ function stExport2Up(){
   cc.fillText("AFTER", w+gap+w/2, h-bh/2);
   var q=(svGet("st_exp_q",92)||92)/100;
   var a=document.createElement("a");
-  a.href=c.toDataURL("image/jpeg",q);
-  a.download="hnk-before-after-"+ptStamp()+".jpg";
-  a.style.display="none";
-  document.body.appendChild(a); a.click();
-  setTimeout(function(){ document.body.removeChild(a); },400);
+  function fire2Up(){
+    a.href=c.toDataURL("image/jpeg",q);
+    a.download="hnk-before-after-"+ptStamp()+".jpg";
+    a.style.display="none";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); },400);
+  }
+  if(wmOn()) wmStamp(c, fire2Up); else fire2Up();
   toast(L9({my:"Before/After ပုံ ထုတ်ပြီးပါပြီ ✓",en:"Before/After exported ✓",shn:"ဢွၵ်ႇ Before/After ယဝ်ႉ ✓",kac:"Before/After shapraw ngut sai ✓",th:"ส่งออก Before/After แล้ว ✓",zh:"已导出对比图 ✓",vi:"Đã xuất Before/After ✓",id:"Before/After diekspor ✓",ms:"Before/After dieksport ✓"}),"ok");
 }
 /* ---------- v4.42: show the detected face zones — trust through visibility ---------- */
@@ -11834,6 +12416,10 @@ function stShowResult(out){
   var ext = out.mime==="image/png" ? "png" : out.mime==="image/webp" ? "webp" : "jpg";
   var d=new Date(), p2=function(x){ return (x<10?"0":"")+x; };
   $("btnStDl").download="hnk-studio-"+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+"-"+p2(d.getHours())+p2(d.getMinutes())+"."+ext;
+  /* v4.45 — branded delivery: only the download link carries the stamp; the
+     result on screen and the Gallery master stay clean */
+  if(wmOn()) wmStampDataUrl(src, out.mime, svGet("st_exp_q",92), function(du){ $("btnStDl").href=du; });
+  stHandoffRow("handoffStudio", out.mime, out.b64, "hnk-studio", "studio");
   var before=ST.orig||state.st.img;
   if(before) $("stCmpBefore").src="data:"+before.mime+";base64,"+before.b64;
   stCmpLayout();
@@ -12007,13 +12593,45 @@ function stRecipes(){ try{ var a=JSON.parse(localStorage.getItem(ST_RECIPE_LS)||
 function stRecipesSave(a){ try{ localStorage.setItem(ST_RECIPE_LS,JSON.stringify(a.slice(0,12))); }catch(e){} }
 function stSaveRecipe(){
   var a=stRecipes();
-  a.unshift({ name:"Look "+(a.length+1),
+  /* v4.45 — name it at save time ("Bride warm", "Grandma soft"), not "Look 4"
+     renamed later; a stable id survives reordering so the pin can follow it */
+  var def="Look "+(a.length+1);
+  var nm=window.prompt(L9({my:"Recipe နာမည် (ဥပမာ — Bride warm)",en:"Recipe name (e.g. Bride warm)"}), def);
+  if(nm===null) return false;
+  a.unshift({ id:Date.now(), name:String(nm).slice(0,24)||def,
     t1:JSON.parse(JSON.stringify(state.st.t1)), t2:JSON.parse(JSON.stringify(state.st.t2)),
     v:JSON.parse(JSON.stringify(state.st.v)), pend:JSON.parse(JSON.stringify(state.st.pend)) });
-  if(a.length>12) a.length=12; /* cap 12 */
+  var trimmed=a.length>12;
+  if(trimmed) a.length=12; /* cap 12 */
   stRecipesSave(a);
   stRenderRecipes();
-  toast(L9({my:"Recipe သိမ်းပြီး ✓ — နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးလို့ရပြီ",en:"Recipe saved ✓ — reapply it on any photo with one tap"}),"ok");
+  toast(L9({my:"Recipe သိမ်းပြီး ✓ — နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးလို့ရပြီ",en:"Recipe saved ✓ — reapply it on any photo with one tap"})
+    +(trimmed?" — "+L9({my:"၁၂ ခုပြည့်လို့ အဟောင်းဆုံးကို ဖယ်လိုက်ပါပြီ",en:"list was full, removed the oldest"}):""),"ok");
+  return true;
+}
+/* v4.45 — pinned "house recipe": auto-applies to every fresh photo. Pinned by
+   stable id (not index) so new saves shifting the list never move the pin. */
+var ST_DEF_RECIPE_LS="hnk_st_defRecipe";
+function stPinnedRecipeIdx(){
+  var pid=+(localStorage.getItem(ST_DEF_RECIPE_LS)||0); if(!pid) return -1;
+  var a=stRecipes();
+  for(var i=0;i<a.length;i++) if(a[i].id===pid) return i;
+  return -1;
+}
+function stPinRecipe(idx){
+  var a=stRecipes(); if(!a[idx]) return;
+  var changed=false;
+  a.forEach(function(r,i){ if(!r.id){ r.id=Date.now()+i; changed=true; } });
+  if(changed) stRecipesSave(a);
+  var cur=+(localStorage.getItem(ST_DEF_RECIPE_LS)||0);
+  if(cur===a[idx].id){
+    try{ localStorage.removeItem(ST_DEF_RECIPE_LS); }catch(e){}
+    toast(L9({my:"House recipe ဖြုတ်လိုက်ပါပြီ",en:"House recipe unpinned"}),"ok");
+  } else {
+    try{ localStorage.setItem(ST_DEF_RECIPE_LS,String(a[idx].id)); }catch(e){}
+    toast(L9({my:"⭐ House recipe သတ်မှတ်ပြီး — ပုံအသစ်တိုင်းမှာ အလိုအလျောက် သုံးပေးပါမယ်",en:"⭐ Pinned as the house recipe — it auto-applies to every new photo"}),"ok");
+  }
+  stRenderRecipes();
 }
 function stApplyRecipe(idx){
   if(ST.busy) return;
@@ -12080,6 +12698,13 @@ function stRenderRecipes(){
     x.setAttribute("aria-label",L9({my:"ဖျက်",en:"Delete"}));
     x.onclick=function(ev){ ev.stopPropagation(); del(); };
     b.appendChild(x);
+    /* v4.45 — pin star: this recipe becomes the house default for new photos */
+    var pinned=stPinnedRecipeIdx()===idx;
+    var st=el("button","pin"); st.innerHTML=icn(pinned?"i-star-fill":"i-star");
+    st.setAttribute("aria-label",L9({my:"House recipe အဖြစ် သတ်မှတ်",en:"Pin as house recipe"}));
+    st.title=L9({my:"ပုံအသစ်တိုင်းမှာ အလိုအလျောက်သုံးမယ့် house recipe",en:"Auto-applies to every new photo"});
+    st.onclick=function(ev){ ev.stopPropagation(); stPinRecipe(idx); };
+    b.appendChild(st);
     var lpT=null, lpFired=false; /* long-press = delete */
     b.addEventListener("pointerdown",function(){ lpFired=false; lpT=setTimeout(function(){ lpFired=true; del(); },650); });
     b.addEventListener("pointerup",function(){ clearTimeout(lpT); });
@@ -12785,8 +13410,16 @@ async function libToSlot(slot, btn){
   btn.disabled=false;
   btn.textContent=origTxt;
 }
-$("libToImg1").onclick=function(){ libToSlot(0, this); };
-$("libToImg2").onclick=function(){ libToSlot(1, this); };
+/* v4.45 — a source-sheet request ("fill IMAGE 3") wins over the button's
+   default slot, once, then the buttons behave as labeled again */
+$("libToImg1").onclick=function(){
+  var s=typeof state.libTargetSlot==="number"?state.libTargetSlot:0; state.libTargetSlot=null;
+  libToSlot(s, this);
+};
+$("libToImg2").onclick=function(){
+  var s=typeof state.libTargetSlot==="number"?state.libTargetSlot:1; state.libTargetSlot=null;
+  libToSlot(s, this);
+};
 /* debounced like Studio's search (120ms) — a Burmese IME keystroke used to
    trigger two full 607-item passes plus a grid teardown, synchronously.
    Clearing stays instant so the escape hatch feels immediate. */
@@ -13041,7 +13674,9 @@ if(_acHost) _acHost.onclick=function(){ switchPage("pgRetouch"); };
 /* restore last prompt + keep saving as the user types */
 if (state.savedPrompt && !$("prompt").value) $("prompt").value = state.savedPrompt;
 $("prompt").addEventListener("input", function(){
-  state.imgRoles=null; /* manual prompt edits invalidate wizard role labels */
+  /* v4.45 — manual prompt edits invalidate only WIZARD-derived role labels;
+     roles the user set by hand on the ref strip survive typing */
+  if(state.imgRolesFromWiz){ state.imgRoles=null; state.imgRolesFromWiz=false; }
   clearTimeout(state._pt); state._pt = setTimeout(saveState, 600);
 });
 
@@ -14368,7 +15003,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.44.1";
+var APP_VER="4.45.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -14612,13 +15247,25 @@ wireSetupV441();
 var LS_PH="hnk_ws_prompts";
 function phLoad(){ try{ return JSON.parse(localStorage.getItem(LS_PH)||"[]"); }catch(e){ return []; } }
 function phSave(list){ try{ localStorage.setItem(LS_PH, JSON.stringify(list)); }catch(e){} }
+/* v4.45 — job-preset snapshot: the generate settings that rode with this
+   prompt (same ids the hnk_ws_create persistence IIFE watches) + the Retouch
+   add-on state, so a starred prompt can re-run the FULL house setup */
+function phSnapSettings(){
+  var o={};
+  ["selProvider","selModel","selRatio","selCount","selSize","selQual"].forEach(function(id){
+    var s=$(id); if(s) o[id]=s.value;
+  });
+  o.rt=JSON.parse(JSON.stringify(state.rt||{}));
+  o.rtStrength=state.rtStrength;
+  return o;
+}
 function pushPromptHistory(p){
   if(!p || p.length<4) return;
   /* v4.44 — re-generating with a starred prompt must not unstar it: the
-     dedupe below removes the old entry, so its star has to ride along */
+     dedupe below removes the old entry, so its star (and name) ride along */
   var old=phLoad().find(function(it){ return it.p===p; });
   var list=phLoad().filter(function(it){ return it.p!==p; });
-  list.unshift({ p:p, star:!!(old&&old.star) });
+  list.unshift({ p:p, star:!!(old&&old.star), name:(old&&old.name)||undefined, snap:phSnapSettings() });
   /* unstarred entries cap at 20; starred ones are kept far longer (a
      deliberate "never lose what I starred" promise) but still capped at 60
      — every other history array in the app has a ceiling, and an unbounded
@@ -14644,11 +15291,43 @@ function renderPromptHist(){
       var f=l.find(function(x){return x.p===it.p;});
       if(f){ f.star=!f.star; phSave(l); renderPromptHist(); }
     };
-    var b=el("button","chip", it.p.slice(0,52)+(it.p.length>52?"…":""));
+    var b=el("button","chip", (it.name?("⭐ "+it.name):it.p.slice(0,52)+(it.p.length>52?"…":"")));
     b.style.overflow="hidden"; b.style.textOverflow="ellipsis"; b.style.whiteSpace="nowrap"; b.style.maxWidth="100%";
     b.title=it.p.slice(0,400);
     b.onclick=function(){ $("prompt").value=it.p; saveState(); };
     row.appendChild(star); row.appendChild(b);
+    /* v4.45 — starred prompts are JOB PRESETS: name them, and re-run the whole
+       setup (prompt + provider/model/ratio/count/size/quality + add-ons) in one tap */
+    if(it.star){
+      var nmB=el("button","chip"); nmB.innerHTML=icn("i-pen"); nmB.style.flexShrink="0";
+      nmB.setAttribute("aria-label",L9({my:"Preset နာမည်ပေး",en:"Name this preset"}));
+      nmB.onclick=function(){
+        var nn=window.prompt(L9({my:"Job preset နာမည် (ဥပမာ — Bride အပြင်ချက်)",en:"Job preset name (e.g. Bride finish)"}), it.name||"");
+        if(nn===null) return;
+        var l=phLoad(), f=l.find(function(x){return x.p===it.p;});
+        if(f){ f.name=String(nn).slice(0,24)||undefined; phSave(l); renderPromptHist(); }
+      };
+      row.appendChild(nmB);
+      var runB=el("button","chip"); runB.innerHTML=icn("i-bolt"); runB.style.flexShrink="0";
+      runB.setAttribute("aria-label",L9({my:"ဒီ setup အတိုင်း ချက်ချင်း run မယ်",en:"Run this full setup now"}));
+      runB.onclick=function(){
+        var sn=it.snap||{};
+        ["selProvider","selModel","selRatio","selCount","selSize","selQual"].forEach(function(id){
+          var sel=$(id), v=sn[id];
+          if(!sel||v===undefined) return;
+          /* only restore a value the select can hold right now (key-gated engines) */
+          if(Array.prototype.some.call(sel.options,function(op){ return op.value===v; })){
+            sel.value=v; sel.dispatchEvent(new Event("change"));
+          }
+        });
+        if(sn.rt && typeof sn.rt==="object") state.rt=JSON.parse(JSON.stringify(sn.rt));
+        if(typeof sn.rtStrength==="number") state.rtStrength=sn.rtStrength;
+        if(typeof renderAddonSummary==="function") renderAddonSummary();
+        $("prompt").value=it.p; saveState();
+        $("btnGen").onclick();
+      };
+      row.appendChild(runB);
+    }
     host.appendChild(row);
   });
 }
@@ -15031,8 +15710,11 @@ $("btnRetry").onclick=function(){ this.style.display="none"; $("btnGen").onclick
   sb.onclick=async function(){
     var out=state.hist[state.histSel]||state.result; if(!out) return;
     try{
-      var blob=rhDataUrlToBlob("data:"+out.mime+";base64,"+out.b64);
-      var file=new File([blob], "hnk-result"+(out.mime==="image/png"?".png":".jpg"), {type:out.mime});
+      var src="data:"+out.mime+";base64,"+out.b64;
+      /* v4.45 — shared files carry the studio stamp too (delivery path) */
+      var du=await new Promise(function(res){ wmStampDataUrl(src, out.mime, 92, res); });
+      var blob=rhDataUrlToBlob(du);
+      var file=new File([blob], dlName("create",out.mime,state.histSel+1), {type:out.mime});
       if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file]});
       else await navigator.share({title:"HNK Web Studio"});
     }catch(e){ /* user cancelled the sheet — not an error */ }
@@ -15129,6 +15811,8 @@ function showResult(){
   }
   $("btnDl").href=src;
   $("btnDl").setAttribute("download","hnk-create-"+ptStamp()+"-"+(state.histSel+1)+(out.mime==="image/png"?".png":".jpg"));
+  if(wmOn()) wmStampDataUrl(src, out.mime, 92, function(du){ $("btnDl").href=du; });
+  stHandoffRow("handoffCreate", out.mime, out.b64, "hnk-create-"+ptStamp());
   /* v4.41: the answer to "which engine ACTUALLY ran?" stays on the result
      instead of living only in a 2.6s fallback toast */
   var pv=$("resProv");
