@@ -324,6 +324,9 @@ const PORT = process.env.PORT || 8931;
     window.__fixture2 = c.toDataURL("image/png");
     await new Promise(res => { ST.loadImage(window.__fixture2, { done: res }); });
     document.getElementById("stReset").click();
+    /* stReset's own Undo toast holds 7s; the sweep is a layout guarantee, so
+       dismiss it (the toast contract itself is pinned by check #15t below) */
+    document.getElementById("toast").className = "toast";
     document.querySelectorAll("#muHost .grp, #evHost .grp").forEach(g => { g.className = "grp open"; });
   });
   const g15 = { ok: true, hits: 0, log: [] };
@@ -383,6 +386,28 @@ const PORT = process.env.PORT || 8931;
   }
   report("v4.27.1 guarantee: canvas >=120px + controls window >=130px + slider hit-test, 320/360/390 x 4 depths",
     g15.ok, g15.log.length ? g15.log.join(" | ") : g15.hits + " slider hit-tests passed");
+
+  // 15t) the toast band never traps a drag: a routine toast is click-through
+  //      (elementFromPoint passes to the control beneath), while the update
+  //      banner (.tap) and an action button remain tappable.
+  const tt = await page.evaluate(() => {
+    const t = document.getElementById("toast");
+    toast("hit-test probe", "ok");
+    const plain = getComputedStyle(t).pointerEvents;
+    const r = t.getBoundingClientRect();
+    const under = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    const passesThrough = under !== t;
+    toast("with action", "ok", { label: "Undo", fn: function () {} });
+    const act = t.querySelector(".toast-act");
+    const actPe = act ? getComputedStyle(act).pointerEvents : "missing";
+    t.className = "toast on ok tap";                       // the update banner's classes
+    const bannerPe = getComputedStyle(t).pointerEvents;
+    t.className = "toast";
+    return { plain, passesThrough, actPe, bannerPe };
+  });
+  report("toast band is click-through (plain toast pe:none, under-element wins) while the action button and update banner stay tappable",
+    tt.plain === "none" && tt.passesThrough && tt.actPe === "auto" && tt.bannerPe === "auto",
+    JSON.stringify(tt));
 
   // 16) compact transition + scroll compensation (no layout jump) at 390x844
   const trans = await page.evaluate(async () => {

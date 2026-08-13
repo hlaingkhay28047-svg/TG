@@ -252,7 +252,10 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
 .subtab.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(8px);pointer-events:none;transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out),visibility 0s linear var(--dur-2)}
-.toast.on{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition-delay:0s}
+.toast.on{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+/* the toast body stays click-through so it never traps a slider drag beneath it;
+   only the update banner (.tap taps to reload) and an action button take taps */
+.toast.on.tap,.toast.on .toast-act{pointer-events:auto}
 .toast.ok{color:var(--ok)} .toast.err{color:var(--err)}
 .toast-act{margin-left:12px;min-height:32px;padding:4px 12px;border:1px solid var(--gold);border-radius:8px;background:transparent;color:var(--gold);font:inherit;font-weight:600;cursor:pointer}
 
@@ -2663,7 +2666,9 @@ function toast(msg, cls, action){
      an error raised in those 20s used to vanish */
   if (_toastSticky){ if(_toastQ.length<4) _toastQ.push([msg,cls,action]); return; }
   /* textContent replaces children, so a previous toast's action button can
-     never survive into this one. */
+     never survive into this one. The update banner's whole-body reload handler
+     must not survive either — a routine toast tapped after it would reload. */
+  t.onclick=null; t.style.cursor="";
   t.textContent=msg; t.className="toast on"+(cls?" "+cls:"");
   /* An action turns the toast from a receipt into a way back. Only used where
      a single tap is otherwise irreversible, and it holds longer so the offer
@@ -12748,7 +12753,7 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
   if (v && v.v && verNewer(v.v, APP_VER)){
     var t=$("toast");
     t.innerHTML=icn("i-bell")+" "+escH(stripIcn(L9({my:"🔔 Version အသစ် ("+v.v+") ထွက်ပြီ — ဒီစာကို နှိပ်ပြီး refresh လုပ်ပါ",en:"🔔 A new version ("+v.v+") is out — tap this to refresh",shn:"🔔 Version မႂ်ႇ ("+v.v+") ဢွၵ်ႇယဝ်ႉ — ၼဵၵ်းသေ refresh",kac:"🔔 Version namsan ("+v.v+") pru wa sai — ndai hpe dip nna refresh galaw u",th:"🔔 มีเวอร์ชันใหม่ ("+v.v+") ออกแล้ว — แตะที่นี่เพื่อรีเฟรช",zh:"🔔 有新版本 ("+v.v+") 发布 — 点按此处刷新",vi:"🔔 Đã có phiên bản mới ("+v.v+") — chạm vào đây để làm mới",id:"🔔 Versi baru ("+v.v+") telah rilis — ketuk untuk memuat ulang",ms:"🔔 Versi baharu ("+v.v+") telah dikeluarkan — ketik untuk muat semula"})));
-    t.className="toast on ok";
+    t.className="toast on ok tap";
     t.style.cursor="pointer";
     t.onclick=function(){ location.reload(); };
     clearTimeout(_toastT); _toastSticky=true;
