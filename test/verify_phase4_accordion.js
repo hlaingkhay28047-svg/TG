@@ -29,9 +29,10 @@ const PORT = process.env.PORT || 8931;
     return { mu: grab("muHost"), ev: grab("evHost") };
   });
   console.log("Studio suite groups:", "mu=" + suiteGroups.mu.length, "ev=" + suiteGroups.ev.length);
-  const addonsOk = suiteGroups.mu.length === 15 && suiteGroups.ev.length === 16 &&
+  /* v4.42 added the Meitu "Heal & Brush (local)" group → 16 */
+  const addonsOk = suiteGroups.mu.length === 16 && suiteGroups.ev.length === 16 &&
     suiteGroups.mu.concat(suiteGroups.ev).every(g => !g.open && !g.bodyVisible);
-  console.log(addonsOk ? "PASS (15 Meitu + 16 Evoto groups, all closed by default)" : "FAIL (Studio suite accordion structure regression)");
+  console.log(addonsOk ? "PASS (16 Meitu + 16 Evoto groups, all closed by default)" : "FAIL (Studio suite accordion structure regression)");
 
   const clickResult = await page.evaluate(() => {
     const g = document.querySelector("#muHost > .grp");

@@ -639,6 +639,10 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stStageFlip{top:10px;left:50%;transform:translateX(-50%)}
 #stHold{bottom:12px;left:6px}
 #stReset{bottom:12px;right:6px}
+#stUndoB{bottom:12px;left:50%;transform:translateX(-104%)}
+#stRedoB{bottom:12px;left:50%;transform:translateX(6%)}
+#stUndoB:disabled,#stRedoB:disabled{opacity:.35}
+#stStage.compact #stUndoB,#stStage.compact #stRedoB,#stStage.mini #stUndoB,#stStage.mini #stRedoB{display:none}
 #stZoomInd{bottom:12px;left:50%;transform:translateX(-50%)}
 #stStage.compact .st-ov,#stStage.mini .st-ov{position:static;min-height:44px;min-width:44px;top:auto;left:auto;right:auto;bottom:auto;transform:none;justify-content:center}
 /* PiP: floating corner thumbnail for landscape phones / keyboard-open (leaves the sticky flow; --stageH reports 0) */
@@ -6632,7 +6636,11 @@ function ptT1Desc(t1){
 }
 function ptRegisterCustomLook(cl){
   if(!cl || !cl.t1) return;
-  PT_LOOKS.pt_custom={ id:"pt_custom", t1:ptT1(cl.t1), overlay:null, vig:0,
+  /* v4.42 — cl.recipe carries the FULL Studio state (t1 grade + t2 makeup/skin
+     + HSL/zone v-keys); when present, ptBake runs the real pixel pipeline
+     instead of the CSS-filter approximation. cl.t1 alone stays valid so looks
+     saved by older versions keep working. */
+  PT_LOOKS.pt_custom={ id:"pt_custom", t1:ptT1(cl.t1), recipe:(cl.recipe&&cl.recipe.t1)?cl.recipe:null, overlay:null, vig:0,
     name:{my:"ကိုယ်ပိုင် Grade",en:"My Grade",shn:"Grade သုၼ်ႇတူဝ်",kac:"Nang a grade",th:"เกรดของฉัน",zh:"我的调色",vi:"Grade của tôi",id:"Grade Saya",ms:"Gred Saya"},
     hint:{my:"Studio ထဲက သိမ်းထားတဲ့ colour grade — Studio မှာ ပြင်ပြီး ဒီခလုတ်နဲ့ ပြန်သိမ်းနိုင်",en:"The colour grade saved from Studio — retune there and save again"},
     ai:"Apply this exact photographic colour grade to the whole photo: "+ptT1Desc(cl.t1)+". Keep the subject, pose and composition identical." };
@@ -6643,6 +6651,8 @@ function ptRegisterCustomLook(cl){
   try{
     if(s.customLook && s.customLook.t1 && typeof s.customLook.t1==="object"){
       state.pt.customLook={t1:s.customLook.t1};
+      if(s.customLook.recipe && typeof s.customLook.recipe==="object" && s.customLook.recipe.t1)
+        state.pt.customLook.recipe=s.customLook.recipe;
       ptRegisterCustomLook(state.pt.customLook);
     }
     if(typeof s.look==="string" && PT_LOOKS[s.look]) state.pt.look=s.look;
@@ -7116,8 +7126,40 @@ function ptHexA(hex, a){
   var n=parseInt(h,16);
   return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
 }
+/* v4.42 — run the FULL Studio pixel pipeline over an arbitrary image with a
+   saved recipe, without disturbing the live Studio session: t1/t2/v are
+   temp-swapped (preset ghosts + brush mask zeroed — strokes are photo-specific)
+   and restored in finally, so a mid-batch error can never corrupt Studio. */
+function stApplyRecipeTo(img, recipe, maxDim){
+  var W=img.width||img.naturalWidth, H=img.height||img.naturalHeight;
+  var sc=Math.min(1,(maxDim||1600)/Math.max(W,H));
+  var w=Math.max(1,Math.round(W*sc)), h=Math.max(1,Math.round(H*sc));
+  var sv={t1:state.st.t1, t2:state.st.t2, v:state.st.v, g1:ST.g1, g2:ST.g2, um:ST.userMask, umc:ST.userMaskCanvas};
+  try{
+    state.st.t1=Object.assign(stDefT1(), recipe.t1||{});
+    state.st.t2=Object.assign(stDefT2(), recipe.t2||{});
+    state.st.v=Object.assign({}, recipe.v||{});
+    ST.g1={}; ST.g2={}; ST.userMask=null; ST.userMaskCanvas=null;
+    return stRunPipeline(img, w, h, {});
+  } finally {
+    state.st.t1=sv.t1; state.st.t2=sv.t2; state.st.v=sv.v;
+    ST.g1=sv.g1; ST.g2=sv.g2; ST.userMask=sv.um; ST.userMaskCanvas=sv.umc;
+  }
+}
 function ptBake(photo, cb){
   var look=ptLookOf(photo);
+  /* custom Studio look with a full recipe → real Studio pipeline (grade +
+     makeup/skin + HSL zones), not the CSS-filter approximation */
+  if(look.id==="pt_custom" && look.recipe){
+    var imgR=new Image();
+    imgR.onerror=function(){ cb(photo.srcDataUrl); };
+    imgR.onload=function(){
+      try{ cb(stApplyRecipeTo(imgR, look.recipe, 1600).toDataURL("image/jpeg",0.92)); }
+      catch(e){ cb(photo.srcDataUrl); }
+    };
+    imgR.src=photo.srcDataUrl;
+    return;
+  }
   var img=new Image();
   img.onerror=function(){ cb(photo.srcDataUrl); };
   img.onload=function(){
@@ -7419,19 +7461,32 @@ $("btnPtUpOne").onclick=function(){ ptMoveOne(-1); };
 $("btnPtDownOne").onclick=function(){ ptMoveOne(1); };
 (function(){
   var b=$("btnPtFromStudio"); if(!b) return;
-  b.innerHTML=icn("i-palette")+" "+escH(L9({my:"Studio grade ကို Look အဖြစ်သိမ်းမယ်",en:"Save Studio grade as a look",shn:"သိမ်း Studio grade ပဵၼ် Look",kac:"Studio grade hpe Look hku nna makoi u",th:"บันทึกเกรดจาก Studio เป็นลุค",zh:"把 Studio 调色存为风格",vi:"Lưu grade từ Studio thành look",id:"Simpan grade Studio sebagai look",ms:"Simpan gred Studio sebagai gaya"}));
+  b.innerHTML=icn("i-palette")+" "+escH(L9({my:"Studio look အပြည့်ကို Look အဖြစ်သိမ်းမယ်",en:"Save full Studio look",shn:"သိမ်း Studio look တဵမ်တဵမ် ပဵၼ် Look",kac:"Studio look yawng hpe Look hku nna makoi u",th:"บันทึกลุคเต็มจาก Studio",zh:"把 Studio 完整效果存为风格",vi:"Lưu toàn bộ look từ Studio",id:"Simpan look Studio lengkap",ms:"Simpan gaya Studio penuh"}));
   b.onclick=function(){
-    var t1=state.st&&state.st.t1, any=false, k;
-    if(t1) for(k in t1){ if(t1[k]){ any=true; break; } }
+    /* v4.42 — the saved look is the FULL recipe: t1 grade + t2 makeup/skin +
+       the HSL/zone-grade v-keys. Makeup-only looks (t1 all 0) now count too. */
+    var stv=state.st||{}, t1=stv.t1||{}, t2=stv.t2||{}, any=false, k;
+    for(k in t1){ if(t1[k]){ any=true; break; } }
     if(!any){
-      toast(L9({my:"Studio မှာ colour grade အရင်ချိန်ပါ — အားလုံး 0 ဖြစ်နေပါတယ်",en:"Tune a grade in Studio first — everything is at 0",shn:"ႁဵတ်း grade တီႈ Studio ဢွၼ်တၢင်း",kac:"Studio kaw grade shawng galaw u",th:"ปรับเกรดใน Studio ก่อน — ทุกค่าเป็น 0",zh:"请先在 Studio 调好色 — 当前全为 0",vi:"Hãy chỉnh grade trong Studio trước — tất cả đang là 0",id:"Atur grade di Studio dulu — semuanya 0",ms:"Laraskan gred di Studio dahulu — semuanya 0"}),"err");
+      var d2=stDefT2();
+      for(k in t2){
+        if(k==="finish" ? (t2[k]&&t2[k]!==d2[k]) : (t2[k]||0)!==(d2[k]||0)){ any=true; break; }
+      }
+    }
+    if(!any&&stv.v){ for(k in stv.v){ if((k.indexOf("st_hsl_")===0||k.indexOf("st_grade_")===0)&&stv.v[k]){ any=true; break; } } }
+    if(!any){
+      toast(L9({my:"Studio မှာ look အရင်ချိန်ပါ — အားလုံး 0 ဖြစ်နေပါတယ်",en:"Tune a look in Studio first — everything is at 0",shn:"ႁဵတ်း look တီႈ Studio ဢွၼ်တၢင်း",kac:"Studio kaw look shawng galaw u",th:"ปรับลุคใน Studio ก่อน — ทุกค่าเป็น 0",zh:"请先在 Studio 调好效果 — 当前全为 0",vi:"Hãy chỉnh look trong Studio trước — tất cả đang là 0",id:"Atur look di Studio dulu — semuanya 0",ms:"Laraskan gaya di Studio dahulu — semuanya 0"}),"err");
       return;
     }
-    state.pt.customLook={t1:JSON.parse(JSON.stringify(t1))};
+    var vc={}; if(stv.v) for(k in stv.v){ if(k.indexOf("st_hsl_")===0||k.indexOf("st_grade_")===0||k==="mu_lipLocHex"||k==="mu_blushLocHex") vc[k]=stv.v[k]; }
+    state.pt.customLook={
+      t1:JSON.parse(JSON.stringify(t1)),
+      recipe:{ t1:JSON.parse(JSON.stringify(t1)), t2:JSON.parse(JSON.stringify(t2)), v:vc }
+    };
     ptRegisterCustomLook(state.pt.customLook);
     state.pt.look="pt_custom";
     ptSync();
-    toast(L9({my:"“ကိုယ်ပိုင် Grade” look အဖြစ် သိမ်းပြီးပါပြီ",en:"Saved as the “My Grade” look",shn:"သိမ်းပဵၼ် “Grade သုၼ်ႇတူဝ်” ယဝ်ႉ",kac:"“Nang a grade” hku nna makoi ngut sai",th:"บันทึกเป็นลุค “เกรดของฉัน” แล้ว",zh:"已保存为“我的调色”风格",vi:"Đã lưu thành look “Grade của tôi”",id:"Tersimpan sebagai look “Grade Saya”",ms:"Disimpan sebagai gaya “Gred Saya”"}),"ok");
+    toast(L9({my:"“ကိုယ်ပိုင် Grade” look အဖြစ် အပြည့်သိမ်းပြီးပါပြီ — makeup နဲ့ skin ပါ ပါဝင်ပါတယ်",en:"Saved the full look as “My Grade” — makeup and skin included",shn:"သိမ်းပဵၼ် “Grade သုၼ်ႇတူဝ်” တဵမ်တဵမ်ယဝ်ႉ",kac:"“Nang a grade” hku nna yawng makoi ngut sai",th:"บันทึกลุคเต็มเป็น “เกรดของฉัน” แล้ว — รวมเมคอัพและผิว",zh:"已完整保存为“我的调色”— 含美妆与美肤",vi:"Đã lưu toàn bộ look thành “Grade của tôi” — gồm makeup và da",id:"Look lengkap tersimpan sebagai “Grade Saya” — termasuk makeup dan kulit",ms:"Gaya penuh disimpan sebagai “Gred Saya” — termasuk solekan dan kulit"}),"ok");
   };
 })();
 $("btnPtStop").onclick=ptStopRun;
@@ -7621,6 +7676,7 @@ function stNeedPhotoNudge(){
 }
 function stT1Changed(){
   if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; }
+  if(typeof stUndoTick==="function") stUndoTick();
   if(ST.split.on){ /* SHOULD #11: while A|B split is on, settle-path renders both halves */
     stScheduleSettle(); return;
   }
@@ -7633,10 +7689,11 @@ function stT1Changed(){
   }
   stScheduleSettle();
 }
-function stT2Changed(){ if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; } stScheduleSettle(); }
+function stT2Changed(){ if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; } if(typeof stUndoTick==="function") stUndoTick(); stScheduleSettle(); }
 /* pipeline-affecting sv controls (HSL / curve / grading / B&W / leak / WB / bg-enhance / frame) */
 function stPipeChanged(){
   if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; }
+  if(typeof stUndoTick==="function") stUndoTick();
   stScheduleSettle();
 }
 function stScheduleSettle(){ clearTimeout(ST.settleT); ST.settleT=setTimeout(stRenderSettle,120); stUiSoon(); }
@@ -7649,10 +7706,13 @@ function stCurveVals(){
   return { hl:svGet("st_curve_hl",0)||0, lt:svGet("st_curve_lt",0)||0,
            dk:svGet("st_curve_dk",0)||0, sh:svGet("st_curve_sh",0)||0 };
 }
-function stComputeLut(p){
-  var cv=stCurveVals();
+function stComputeLut(p,cvIn){
+  /* cvIn: pre-resolved curve values so the render worker never touches svGet;
+     the LUT cache lives on ST on the main thread, on the function in a worker */
+  var cv=cvIn||stCurveVals();
+  var host=(typeof ST!=="undefined")?ST:stComputeLut;
   var key=[p.exp,p.bri,p.con,p.hi,p.sh,p.fad,p.wht||0,p.blk||0,p.dhz||0,cv.hl,cv.lt,cv.dk,cv.sh].join(",");
-  if(ST.lutKey===key && ST.lut) return ST.lut;
+  if(host.lutKey===key && host.lut) return host.lut;
   function ss(a,b,x){ x=(x-a)/(b-a); x=x<0?0:x>1?1:x; return x*x*(3-2*x); }
   var lut=new Uint8ClampedArray(256), g=Math.pow(2,p.exp/100), k=p.fad/100*0.15;
   var dz=(p.dhz||0)/100;
@@ -7674,7 +7734,7 @@ function stComputeLut(p){
     if(cv.sh) v+=(cv.sh/100)*40*(1-ss(0,0.4,t));
     lut[x]=v;
   }
-  ST.lut=lut; ST.lutKey=key; return lut;
+  host.lut=lut; host.lutKey=key; return lut;
 }
 function stBoxBlurMask(mask,w,h,r){
   var tmp=new Float32Array(mask.length), out=new Uint8Array(mask.length), span=2*r+1, x,y,acc;
@@ -7778,7 +7838,7 @@ function stInEllipse(x,y,z,scale){
   var dx=(x-z.cx)/(z.rx*s), dy=(y-z.cy)/(z.ry*s);
   return dx*dx+dy*dy<=1;
 }
-function stApplySkin(cv,cx,px,W,H,t2,mi){
+function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv){
   var d=px.data, mask=mi.mask, n=W*H;
   var blurS = t2.smooth>0 ? stBlurData(cv,W,H,2+t2.smooth/100*4) : null;
   /* The radius was pinned at 1px while the strength above it capped at 0.5, so
@@ -7814,8 +7874,10 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
       {cx:zones.eyes[0].cx, cy:(zones.eyes[0].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09},
       {cx:zones.eyes[1].cx, cy:(zones.eyes[1].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09}];
   }
-  var lipC=stHexRgb(svGet("mu_lipLocHex",null))||{r:192,g:72,b:88};
-  var blushC=stHexRgb(svGet("mu_blushLocHex",null))||{r:232,g:138,b:154};
+  /* colours arrive resolved on t2 (stRunPipeline / worker message) — this
+     function must not touch svGet so it can run inside the render worker */
+  var lipC=t2.lipC||{r:192,g:72,b:88};
+  var blushC=t2.blushC||{r:232,g:138,b:154};
   var meanCb=0,meanCr=0;
   if(t2.even>0){
     var cnt=0;
@@ -7831,6 +7893,9 @@ function stApplySkin(cv,cx,px,W,H,t2,mi){
   if(box){ var bh=box.y1-box.y0; eyY0=box.y0+bh*0.25; eyY1=box.y0+bh*0.45; }
   for(var i=0,p=0;i<n;i++,p+=4){
     var m=mask[i]/255;
+    /* v4.42 — local brush mask: "in" edits only painted pixels, "out"
+       protects them; the auto skin mask still bounds where work can land */
+    if(um){ var uf=um[i]/255; if(umInv) uf=1-uf; m*=uf; }
     var R=d[p],G=d[p+1],B=d[p+2];
     var lum=0.299*R+0.587*G+0.114*B;
     var xPix=i%W, yPix=(i/W)|0;
@@ -8096,15 +8161,35 @@ function stDrawFrame(cx,W,H,style,wv){
   }
   cx.restore();
 }
+/* grain tile — cached on ST on the main thread, on the function itself in the
+   render worker (which has no ST) */
+function stNoiseTile(){
+  var host=(typeof ST!=="undefined")?ST:stNoiseTile;
+  if(!host.noise){
+    var nz=document.createElement("canvas"); nz.width=256; nz.height=256;
+    var nx=nz.getContext("2d"), nd=nx.createImageData(256,256);
+    for(var ni=0;ni<nd.data.length;ni+=4){ var g2=128+(Math.random()*90-45); nd.data[ni]=g2; nd.data[ni+1]=g2; nd.data[ni+2]=g2; nd.data[ni+3]=255; }
+    nx.putImageData(nd,0,0); host.noise=nz;
+  }
+  return host.noise;
+}
 function stRunPipeline(srcImg,W,H,opts){
   opts=opts||{};
   var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
   var cx=cv.getContext("2d",{willReadFrequently:true});
   cx.drawImage(srcImg,0,0,W,H);
-  var t1=stEffT1(), t2=stEffT2(), pv=stPipeVals();
+  /* v4.42 — every state read has an opts override so the whole pipeline can
+     run inside a Web Worker (which has no state/ST/svGet): t1/t2/pv/curve
+     arrive pre-resolved in the render message. Main-thread calls pass none
+     of these and resolve exactly as before. */
+  var t1=opts.t1||stEffT1(), t2=opts.t2||stEffT2(), pv=opts.pv||stPipeVals();
+  if(!opts.t2){
+    t2.lipC=stHexRgb(svGet("mu_lipLocHex",null));
+    t2.blushC=stHexRgb(svGet("mu_blushLocHex",null));
+  }
   var px=cx.getImageData(0,0,W,H), d=px.data, n=W*H;
   /* (2)+(3) tonal LUT + color pass (+ gray-world WB gains + dehaze saturation) */
-  var lut=stComputeLut(t1);
+  var lut=stComputeLut(t1,opts.curve);
   var doColor=!!(t1.wrm||t1.tnt||t1.sat||t1.vib||t1.dhz>0||pv.wbOn);
   var sk=(1+t1.sat/100)*(t1.dhz>0?(1+t1.dhz/100*0.15):1);
   var wr=(1+t1.wrm/300)*(pv.wbOn?pv.wbGr:1), wb=(1-t1.wrm/300)*(pv.wbOn?pv.wbGb:1), tg=1-t1.tnt/300, vk=t1.vib/100;
@@ -8229,7 +8314,21 @@ function stRunPipeline(srcImg,W,H,opts){
   var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef);
   if(needSkin){
     var mi=opts.maskInfo || stSkinMask(px,W,H);
-    stApplySkin(cv,cx,px,W,H,t2,mi);
+    /* v4.42 — painted brush mask rides every render size (live buffer,
+       export, thumbs): the buffer-space strokes are rescaled to this W×H */
+    var um=opts.um||null, umInv=!!opts.umInv;
+    if(opts.um===undefined && typeof ST!=="undefined" && ST.userMask && ST.userMaskCanvas && svGet("st_brushMode",null)){
+      try{
+        var umc=document.createElement("canvas"); umc.width=W; umc.height=H;
+        var umx=umc.getContext("2d",{willReadFrequently:true});
+        umx.drawImage(ST.userMaskCanvas,0,0,W,H);
+        var umd=umx.getImageData(0,0,W,H).data;
+        um=new Uint8ClampedArray(W*H);
+        for(var ui=0;ui<um.length;ui++) um[ui]=umd[ui*4+3];
+        umInv = svGet("st_brushMode","in")==="out";
+      }catch(_eUm){ um=null; }
+    }
+    stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv);
   }
   /* (5) unsharp sharpen r1.5 + clarity r8 (radiance adds 0.3x clarity).
      v4.40: freq-sep High no longer rides the GLOBAL unsharp — it scales the
@@ -8297,15 +8396,9 @@ function stRunPipeline(srcImg,W,H,opts){
   }
   /* (8) grain: pre-generated noise tile, overlay-composited */
   if(t1.grn>0){
-    if(!ST.noise){
-      var nz=document.createElement("canvas"); nz.width=256; nz.height=256;
-      var nx=nz.getContext("2d"), nd=nx.createImageData(256,256);
-      for(var ni=0;ni<nd.data.length;ni+=4){ var g2=128+(Math.random()*90-45); nd.data[ni]=g2; nd.data[ni+1]=g2; nd.data[ni+2]=g2; nd.data[ni+3]=255; }
-      nx.putImageData(nd,0,0); ST.noise=nz;
-    }
     cx.save();
     cx.globalCompositeOperation="overlay"; cx.globalAlpha=t1.grn/100*0.35;
-    cx.fillStyle=cx.createPattern(ST.noise,"repeat"); cx.fillRect(0,0,W,H);
+    cx.fillStyle=cx.createPattern(stNoiseTile(),"repeat"); cx.fillRect(0,0,W,H);
     cx.restore();
   }
   /* (9) frame & border (M24) — after the grain stage */
@@ -8319,7 +8412,15 @@ function stRenderSettle(){
   var t2=stEffT2();
   var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef);
   if(needSkin&&!ST.maskCache) ST.maskCache=stSkinMask(ST.px0,W,H);
+  /* v4.42 — big buffers settle on the render worker so slider drags never
+     jank the UI thread; small buffers (phones, tests) keep the sync path */
+  if(W*H>700000 && stWorkerOk() && stWorkerRender(W,H)) return;
   var out=stRunPipeline(stGeoSource(),W,H,{maskInfo:ST.maskCache});
+  stPresentSettle(out);
+}
+/* shared presentation step for the sync + worker settle paths.
+   out: canvas (sync) or ImageBitmap (worker) */
+function stPresentSettle(out){
   var c=$("stCanvas"), cc=c.getContext("2d");
   cc.clearRect(0,0,c.width,c.height); cc.drawImage(out,0,0);
   /* SHOULD #11: A|B split — untouched source clipped left of the divider */
@@ -8334,8 +8435,81 @@ function stRenderSettle(){
   }
   c.style.filter="";
   stDrawHistogram(out);
+  if(out&&out.close){ try{ out.close(); }catch(_e){} }
   var fl=$("stStageFlip");
   if(fl&&ST.stageResult) fl.textContent=L9({my:"ရလဒ်ပြ",en:"Show result"});
+}
+/* ---------- v4.42: render worker — the full pixel pipeline off the UI thread ---------- */
+var STW={w:null,ready:false,dead:false,busy:false,queued:false,id:0,cb:{}};
+function stWorkerOk(){
+  return !STW.dead && typeof OffscreenCanvas!=="undefined" && typeof Worker!=="undefined" && typeof createImageBitmap!=="undefined";
+}
+function stWorkerKill(){
+  try{ if(STW.w) STW.w.terminate(); }catch(e){}
+  STW.w=null; STW.ready=false; STW.dead=true; STW.busy=false; STW.queued=false; STW.cb={};
+}
+function stWorker(){
+  if(STW.w||STW.dead) return STW.w;
+  try{
+    /* the worker is built from the LIVE sources of the pipeline family, so it
+       can never drift from the sync path. Guarded fallbacks (opts.t1||stEffT1()
+       etc.) are never evaluated there — every message carries resolved params. */
+    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinMask,stBlurData,stFaceZones,stInEllipse,stApplySkin,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
+    var src='var document={createElement:function(){return new OffscreenCanvas(1,1);}};\n'
+      + fns.map(function(f){ return f.toString(); }).join("\n")
+      + '\nvar _pc=new OffscreenCanvas(4,4).getContext("2d");var FILTER_OK=false;'
+      + '\ntry{_pc.filter="blur(2px)";FILTER_OK=(_pc.filter==="blur(2px)");}catch(e){}'
+      + '\nself.postMessage({ready:true,filterOk:FILTER_OK});'
+      + '\nself.onmessage=function(e){var m=e.data;try{'
+      + 'var cv=stRunPipeline(m.bmp,m.W,m.H,{t1:m.t1,t2:m.t2,pv:m.pv,curve:m.curve,um:m.um,umInv:m.umInv,maskInfo:m.mi});'
+      + 'try{if(m.bmp&&m.bmp.close)m.bmp.close();}catch(e2){}'
+      + 'var out=cv.transferToImageBitmap();'
+      + 'self.postMessage({id:m.id,bmp:out},[out]);'
+      + '}catch(err){self.postMessage({id:m.id,err:String(err&&err.message||err)});}};';
+    STW.w=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})));
+    STW.w.onmessage=function(e){
+      var d=e.data;
+      if(d.ready){
+        /* no ctx.filter in workers (old Safari) → results would differ → sync only */
+        if(!d.filterOk) stWorkerKill(); else STW.ready=true;
+        return;
+      }
+      var cb=STW.cb[d.id]; delete STW.cb[d.id];
+      STW.busy=false;
+      if(cb) cb(d.err?null:d.bmp);
+      if(STW.queued){ STW.queued=false; stRenderSettle(); }
+    };
+    STW.w.onerror=function(){ stWorkerKill(); stRenderSettle(); };
+  }catch(e){ STW.dead=true; }
+  return STW.w;
+}
+function stWorkerRender(W,H){
+  /* until the capability probe returns, render sync — never race a frame
+     against a worker that might get killed for lacking ctx.filter */
+  var w=stWorker(); if(!w||STW.dead||!STW.ready) return false;
+  if(STW.busy){ STW.queued=true; return true; } /* coalesce: latest state re-renders when the in-flight frame lands */
+  STW.busy=true;
+  var id=++STW.id;
+  var t2=stEffT2();
+  t2.lipC=stHexRgb(svGet("mu_lipLocHex",null));
+  t2.blushC=stHexRgb(svGet("mu_blushLocHex",null));
+  var um=null, umInv=false;
+  if(ST.userMask && ST.userMask.length===W*H && svGet("st_brushMode",null)){
+    um=ST.userMask; umInv=svGet("st_brushMode","in")==="out";
+  }
+  var msg={id:id, W:W, H:H, t1:stEffT1(), t2:t2, pv:stPipeVals(), curve:stCurveVals(), um:um, umInv:umInv, mi:ST.maskCache};
+  STW.cb[id]=function(bmp){
+    if(!bmp){ stWorkerKill(); stRenderSettle(); return; } /* worker render failed → permanent sync fallback */
+    if(!ST.srcBitmap||ST.holding||ST.showingResult||id!==STW.id){ try{ bmp.close(); }catch(e){} return; }
+    stPresentSettle(bmp);
+  };
+  createImageBitmap(stGeoSource()).then(function(bmp){
+    msg.bmp=bmp;
+    w.postMessage(msg,[bmp]);
+  }).catch(function(){
+    delete STW.cb[id]; STW.busy=false; stWorkerKill(); stRenderSettle();
+  });
+  return true;
 }
 /* E17: 128-bin luma histogram overlay, drawn on settle when enabled */
 function stDrawHistogram(srcCv){
@@ -8972,7 +9146,16 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   function count(n){ ST_MEITU_COUNT+=n; }
 
   /* MU-1 One-Tap (4) */
-  var g1=G("i-sparkle",L9({my:"တစ်ချက်နှိပ်",en:"One-Tap"}),4,"one tap auto beautify ai retouch target skin analysis analyze"); count(4);
+  var g1=G("i-sparkle",L9({my:"တစ်ချက်နှိပ်",en:"One-Tap"}),4,"one tap auto beautify ai retouch target skin analysis analyze auto enhance histogram"); count(4);
+  /* v4.42: histogram-driven Auto — writes visible t1 slider values, no magic */
+  (function(){
+    var row=el("div","row");
+    var b=el("button","btn btn-gold grow"); b.id="stAutoBtn";
+    setIcnText(b,"i-bolt",L9({my:"Auto ချိန်မယ် (အလင်း+အရောင်)",en:"Auto adjust (light + colour)",shn:"Auto (လႅင်း+သီ)",kac:"Auto (nhtoi+nsam)",th:"ปรับอัตโนมัติ (แสง+สี)",zh:"自动调整（光线+色彩）",vi:"Tự chỉnh (sáng + màu)",id:"Auto (cahaya + warna)",ms:"Auto (cahaya + warna)"}));
+    b.onclick=stAutoEnhance;
+    row.appendChild(b);
+    g1.b.appendChild(row);
+  })();
   g1.grid.appendChild(stSlider({id:"mu_auto",label:L9({my:"အလိုအလျောက် အလှပြင်",en:"Auto Beautify"}),min:0,max:100,def:0,
     get:function(){ return svGet("mu_auto",0); },
     set:function(v){ svSet("mu_auto",v); stRecomputeGhosts(); stT1Changed(); }}));
@@ -9214,12 +9397,20 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(g8,["mu_lipColor","mu_lipShape","mu_teethFix","mu_mouthPos"]);
 
   /* MU-9 Makeup (4) */
-  var g9=G("i-makeup",L9({my:"မိတ်ကပ်",en:"Makeup"}),8,"makeup blush eyeshadow liner lash contacts contour foundation highlighter strobing brow makeup transfer reference live lip blush eye definition local"); count(8);
+  var g9=G("i-makeup",L9({my:"မိတ်ကပ်",en:"Makeup"}),9,"makeup blush eyeshadow liner lash contacts contour foundation highlighter strobing brow makeup transfer reference live lip blush eye definition local bundle looks"); count(9);
   /* v4.40 — LIVE makeup: real pixels in the real preview, no AI queue.
      Lips take the chosen colour re-lit to each pixel's own brightness inside
      the detected mouth; blush sits on cheeks placed from the eye/mouth
      geometry; eye definition crisps the detected eye ellipses. */
   g9.b.appendChild(stSub(L9({my:"တိုက်ရိုက်မိတ်ကပ် (AI မလို — ချက်ချင်းမြင်ရ)",en:"Live Makeup (no AI — instant)"})));
+  /* v4.42: show what the engine actually detected — dashed ellipses over the
+     eyes/lips plus the skin box, for ~3 seconds */
+  (function(){
+    var zb=el("button","chip"); zb.id="stZonesBtn";
+    setIcnText(zb,"i-search",L9({my:"Zone တွေ ပြကြည့်မယ် (မျက်လုံး/နှုတ်ခမ်း)",en:"Show detected zones (eyes/lips)",shn:"ၼႄ zone (မၢၵ်ႇတႃ/သူပ်း)",kac:"Zone ni madun u",th:"แสดงโซนที่ตรวจพบ",zh:"显示检测区域",vi:"Hiện vùng đã phát hiện",id:"Tampilkan zona terdeteksi",ms:"Tunjuk zon dikesan"}));
+    zb.onclick=stShowZones;
+    g9.b.appendChild(zb);
+  })();
   var lipRow=el("div","st-ctl");
   lipRow.appendChild(el("label",null,L9({my:"နှုတ်ခမ်းရောင်",en:"Lip colour"})));
   lipRow.appendChild(stColorInp({id:"mu_lipLocHex",dflt:"#c04858",
@@ -9235,6 +9426,34 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   g9.b.appendChild(blRow);
   g9.b.appendChild(t2Slider("mu_blushLoc",L9({my:"ပါးချုံနီ",en:"Blush"}),"blushV",false));
   g9.b.appendChild(t2Slider("mu_eyeDef",L9({my:"မျက်လုံးထင်ရှား",en:"Eye Definition"}),"eyeDef",false));
+  /* v4.42: one-tap LIVE makeup looks — bundles of the real pixel keys above
+     (lip tint, blush, eye definition, hair gloss, teeth, eye brighten).
+     Everything lands on visible sliders and stays hand-tunable; tapping the
+     active chip again clears exactly the keys the bundle wrote. */
+  var MU_BUNDLES={
+    natural:{lip:"#c05a5f",lipV:26,blush:"#e8a08f",blushV:16,eyeDef:18,hairShine:10,hairDeep:0,teeth:12,eyeb:10},
+    korean:{lip:"#e2726f",lipV:36,blush:"#f2a6a6",blushV:26,eyeDef:20,hairShine:26,hairDeep:0,teeth:15,eyeb:15},
+    douyin:{lip:"#d94b52",lipV:48,blush:"#ef8f9c",blushV:34,eyeDef:34,hairShine:20,hairDeep:15,teeth:20,eyeb:22},
+    bridal:{lip:"#b8454e",lipV:40,blush:"#e59a8c",blushV:24,eyeDef:26,hairShine:18,hairDeep:10,teeth:25,eyeb:18},
+    evening:{lip:"#8e2f42",lipV:46,blush:"#d98380",blushV:20,eyeDef:38,hairShine:24,hairDeep:22,teeth:18,eyeb:20}
+  };
+  g9.b.appendChild(stSub(L9({my:"တိုက်ရိုက်မိတ်ကပ် အစုံလိုက် (Local)",en:"Live Makeup Looks (local, instant)"})));
+  g9.b.appendChild(stChips({id:"mu_bundle",
+    choices:[["natural",L9({my:"သဘာဝ",en:"Natural"})],["korean","Korean Glass"],["douyin","Douyin"],
+             ["bridal",L9({my:"သတို့သမီး",en:"Bridal"})],["evening",L9({my:"ညပွဲ",en:"Evening"})]],
+    get:function(){ return svGet("mu_bundle",null); },
+    set:function(v){
+      svSet("mu_bundle",v);
+      var b=v&&MU_BUNDLES[v];
+      svSet("mu_lipLocHex",b?b.lip:null);
+      svSet("mu_blushLocHex",b?b.blush:null);
+      var t2=state.st.t2;
+      t2.lipV=b?b.lipV:0; t2.blushV=b?b.blushV:0; t2.eyeDef=b?b.eyeDef:0;
+      t2.hairShine=b?b.hairShine:0; t2.hairDeep=b?b.hairDeep:0;
+      t2.teeth=b?Math.max(t2.teeth,b.teeth):t2.teeth&&!b?0:t2.teeth;
+      t2.eyeb=b?Math.max(t2.eyeb,b.eyeb):t2.eyeb&&!b?0:t2.eyeb;
+      stRefreshUI(); stT2Changed(); stSaveSoon();
+    }}));
   g9.b.appendChild(stSub(L9({my:"မိတ်ကပ်အစုံ",en:"Full Makeup Look"})));
   g9.b.appendChild(svChips("mu_makeupStyle",null,[["Natural","Natural"],["Korean","Korean"],["Douyin","Douyin"],["Western","Western"],["Myanmar bridal","Myanmar Bridal"]],"mu_makeup"));
   g9.b.appendChild(svSlider("mu_makeupV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_makeup"));
@@ -9309,6 +9528,57 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     return { params:{v:v}, frag:"Copy the complete makeup look from IMAGE 2 onto the IMAGE 1 face at "+v+"% intensity; keep IMAGE 1 identity, ignore everything else in IMAGE 2." };
   },null,{usesRef:true});
   reg(g9,["mu_makeup","mu_blush","mu_eyeMakeup","mu_contour","mu_browMk","mu_found","mu_highlighter","mu_mkTransfer"]);
+
+  /* MU-9b — v4.42 Heal & Brush: finger-local pixel tools, no AI.
+     Heal patches a tapped spot from its own surrounding skin (low-frequency
+     shift, texture preserved). The brush paints a strength mask that gates
+     every skin-pass op to (or away from) the painted area. */
+  var g9b=G("i-brush",L9({my:"လက်ညှိုးပြင် (Heal & Brush)",en:"Heal & Brush (local)"}),3,"heal spot blemish remove patch brush mask local area select paint erase"); count(3);
+  g9b.b.appendChild(el("p","mut",L9({my:"AI မလိုပါ — pixel အစစ်ပေါ်မှာ တိုက်ရိုက်ပြင်တာပါ",en:"No AI — these edit the real pixels directly"})));
+  var healRow=el("div","row");
+  var healBtn=el("button","chip"); healBtn.id="stHealBtn";
+  setIcnText(healBtn,"i-close",L9({my:"အစက်ဖျက်မယ် — ပုံပေါ်နှိပ်ပါ",en:"Heal spots — tap the photo",shn:"မွတ်ႇပႅတ်ႈ — ၼဵၵ်းၼိူဝ်ၶႅပ်း",kac:"Spot shamat — sumla kaw dip u",th:"ลบจุด — แตะบนรูป",zh:"祛斑 — 点按照片",vi:"Xóa đốm — chạm vào ảnh",id:"Hapus noda — ketuk foto",ms:"Buang bintik — ketik foto"}));
+  healBtn.onclick=function(){
+    ST.healOn=!ST.healOn;
+    if(ST.healOn){ ST.brushArmed=false; var bb=$("stBrushBtn"); if(bb) bb.classList.remove("on"); }
+    healBtn.classList.toggle("on",ST.healOn);
+    if(ST.healOn) toast(L9({my:"ဖျက်ချင်တဲ့ အစက်/ဝက်ခြံကို ပုံပေါ်မှာ နှိပ်ပါ",en:"Tap the spot you want removed",shn:"ၼဵၵ်းမွတ်ႇဢၼ်ၶႂ်ႈပႅတ်ႈ",kac:"Shamat mayu ai spot hpe dip u",th:"แตะจุดที่ต้องการลบ",zh:"点按要移除的斑点",vi:"Chạm vào đốm cần xóa",id:"Ketuk noda yang ingin dihapus",ms:"Ketik bintik yang mahu dibuang"}),"ok");
+  };
+  healRow.appendChild(healBtn);
+  g9b.b.appendChild(healRow);
+  g9b.b.appendChild(stSlider({id:"st_healR",label:L9({my:"Heal အကျယ်",en:"Heal size"}),min:1,max:6,def:2,
+    get:function(){ return svGet("st_healR",2); },
+    set:function(v){ svSet("st_healR",v); }}));
+  g9b.b.appendChild(stSub(L9({my:"Brush — နေရာရွေးပြီးမှ ပြင်",en:"Brush — limit edits to an area"})));
+  var brushRow=el("div","row");
+  var brushBtn=el("button","chip"); brushBtn.id="stBrushBtn";
+  setIcnText(brushBtn,"i-brush",L9({my:"Brush ဆွဲမယ်",en:"Paint area",shn:"ထၢႆႉပိုၼ်ႉတီႈ",kac:"Shara hpe paint u",th:"ระบายพื้นที่",zh:"涂抹区域",vi:"Tô vùng",id:"Cat area",ms:"Cat kawasan"}));
+  brushBtn.onclick=function(){
+    ST.brushArmed=!ST.brushArmed;
+    if(ST.brushArmed){ ST.healOn=false; healBtn.classList.remove("on"); }
+    brushBtn.classList.toggle("on",ST.brushArmed);
+    if(ST.brushArmed){
+      if(!svGet("st_brushMode",null)){ svSet("st_brushMode","in"); stRefreshUI(); }
+      toast(L9({my:"ပြင်ချင်တဲ့နေရာကို လက်နဲ့ဆွဲပါ — ပြီးရင် Brush ကို ပြန်နှိပ်ပိတ်ပါ",en:"Paint over the area, then tap Brush again to finish",shn:"ထၢႆႉပိုၼ်ႉတီႈသေ ၼဵၵ်း Brush ထႅင်ႈ",kac:"Shara hpe paint nna Brush bai dip u",th:"ระบายบริเวณนั้น แล้วแตะ Brush อีกครั้ง",zh:"涂抹该区域，再次点按 Brush 完成",vi:"Tô vùng đó rồi chạm Brush lần nữa",id:"Cat area itu lalu ketuk Brush lagi",ms:"Cat kawasan itu, ketik Brush semula"}),"ok");
+    } else if(ST.srcBitmap) stRenderSettle();
+  };
+  var brushClear=el("button","chip");
+  setIcnText(brushClear,"i-trash",L9({my:"ဖျက်မယ်",en:"Clear",shn:"လၢင်ႉ",kac:"Sausan",th:"ล้าง",zh:"清除",vi:"Xóa",id:"Hapus",ms:"Kosongkan"}));
+  brushClear.onclick=function(){
+    ST.userMaskCanvas=null; ST.userMask=null;
+    if(ST.srcBitmap) stRenderSettle();
+  };
+  brushRow.appendChild(brushBtn); brushRow.appendChild(brushClear);
+  g9b.b.appendChild(brushRow);
+  g9b.b.appendChild(stChips({id:"st_brushMode",
+    choices:[["in",L9({my:"ဆွဲထားတဲ့နေရာပဲ ပြင်",en:"Edit painted area only"})],["out",L9({my:"ဆွဲထားတာချန်ပြီး ပြင်",en:"Protect painted area"})]],
+    get:function(){ return svGet("st_brushMode",null); },
+    set:function(v){ svSet("st_brushMode",v); if(ST.srcBitmap) stRenderSettle(); }}));
+  g9b.b.appendChild(stSlider({id:"st_brushR",label:L9({my:"Brush အကျယ်",en:"Brush size"}),min:3,max:14,def:7,
+    get:function(){ return svGet("st_brushR",7); },
+    set:function(v){ svSet("st_brushR",v); }}));
+  g9b.b.appendChild(el("p","mut",L9({my:"Brush mask က အသားအရေ effect တွေ (ချော/တောက်/freq စတာ) ကိုပဲ ကန့်သတ်ပါတယ်",en:"The mask gates the skin-pass effects (smooth, glow, freq...)"})));
+  regChk(g9b,function(){ return !!(ST.userMask&&svGet("st_brushMode",null)); });
 
   /* MU-10 Hair (4) */
   var g10=G("i-hair",L9({my:"ဆံပင်",en:"Hair"}),5,"hair color hairline fill volume bangs flyaway hairstyle ponytail bob curls"); count(5);
@@ -10113,7 +10383,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   reg(e11,["ev_hands","ev_bodyRef"]);
 
   /* EV-12 Color Pro (11) */
-  var e12=G("i-sliders",L9({my:"ရောင်ပြင်ပရို",en:"Color Pro"}),11,"white balance wb temp tint tone exposure contrast brightness highlights shadows whites blacks dehaze parametric curve hsl hue saturation luminance color grading bw black white mix camera simulation sharpen noise reduction histogram"); count(11);
+  var e12=G("i-sliders",L9({my:"ရောင်ပြင်ပရို",en:"Color Pro"}),10,"white balance wb temp tint tone exposure contrast brightness highlights shadows whites blacks dehaze parametric curve hsl hue saturation luminance color grading bw black white mix camera simulation sharpen noise reduction histogram grade preset cards"); count(10);
   /* E7 — AI WB + Temp/Tint (shared engine + t1 keys with MU-12; two-way sync via ST.refreshFns) */
   var wbRow2=el("div","st-ctl");
   wbRow2.appendChild(el("label",null,L9({my:"AI White Balance",en:"AI White Balance"})));
@@ -10226,16 +10496,65 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     silver:{sh:"#4a5560",mid:null,hi:"#e8eef2",amt:45,sat:-20,bal:0},
     olive:{sh:"#2e3a24",mid:null,hi:"#e9e2c8",amt:45,sat:-5,bal:5}
   };
-  e12.b.appendChild(stChips({id:"st_gradePreset",
-    choices:[["tealorange","Teal-Orange"],["bronze","Bronze"],["peach","Peach"],["pastel","Pastel"],["silver","Silver"],["olive","Olive"]],
-    get:function(){ return svGet("st_gradePreset",null); },
-    set:function(v){
-      svSet("st_gradePreset",v);
-      var g=v&&ST_GRADES[v];
-      svSet("st_grade_evSh",g?g.sh:null); svSet("st_grade_evMid",g?g.mid:null); svSet("st_grade_evHi",g?g.hi:null);
-      svSet("st_grade_evAmt",g?g.amt:45); svSet("st_grade_evSat",g?g.sat:0); svSet("st_grade_evBal",g?g.bal:0);
-      stRefreshUI(); stPipeChanged();
-    }}));
+  /* v4.42: the six grade presets render as CARDS with the grade genuinely
+     computed on the loaded photo's own thumbnail through the real pipeline —
+     picking a colour treatment by seeing it, not by reading its name. */
+  var gradeCardWrap=el("div","prowwrap");
+  var gradeCardRow=el("div","prow"); gradeCardRow.id="stGradeCards";
+  gradeCardWrap.appendChild(gradeCardRow);
+  e12.b.appendChild(gradeCardWrap);
+  function stPickGrade(v){
+    svSet("st_gradePreset",v);
+    var g=v&&ST_GRADES[v];
+    svSet("st_grade_evSh",g?g.sh:null); svSet("st_grade_evMid",g?g.mid:null); svSet("st_grade_evHi",g?g.hi:null);
+    svSet("st_grade_evAmt",g?g.amt:45); svSet("st_grade_evSat",g?g.sat:0); svSet("st_grade_evBal",g?g.bal:0);
+    stRefreshUI(); stPipeChanged(); stRenderGradeCards();
+  }
+  var ST_GRADE_LABELS={tealorange:"Teal-Orange",bronze:"Bronze",peach:"Peach",pastel:"Pastel",silver:"Silver",olive:"Olive"};
+  window.stRenderGradeCards=function(){
+    var host=$("stGradeCards"); if(!host) return;
+    host.innerHTML="";
+    var cur=svGet("st_gradePreset",null);
+    Object.keys(ST_GRADES).forEach(function(k){
+      var g=ST_GRADES[k];
+      var b=el("button","pcard"+(cur===k?" on":""));
+      var cv=document.createElement("canvas"); cv.width=76; cv.height=96;
+      var cx2=cv.getContext("2d");
+      if(ST.thumbCanvas){
+        /* real pipeline on the 76x96 self-photo thumb with ONLY the grade
+           keys overridden — what tapping the card will actually do */
+        var keepV=state.st.v;
+        var vv={}; for(var kk in keepV) vv[kk]=keepV[kk];
+        vv.st_gradePreset=k; vv.st_grade_evSh=g.sh; vv.st_grade_evMid=g.mid; vv.st_grade_evHi=g.hi;
+        vv.st_grade_evAmt=g.amt; vv.st_grade_evSat=g.sat; vv.st_grade_evBal=g.bal;
+        state.st.v=vv;
+        var out=null;
+        try{ out=stRunPipeline(ST.thumbCanvas,76,96,{}); }catch(e){}
+        state.st.v=keepV;
+        if(out) cx2.drawImage(out,0,0);
+      } else {
+        /* no photo yet: swatch strip from the grade's own colours */
+        var gd2=cx2.createLinearGradient(0,0,0,96);
+        gd2.addColorStop(0, g.hi||"#f4d488");
+        if(g.mid) gd2.addColorStop(0.5, g.mid);
+        gd2.addColorStop(1, g.sh||"#131826");
+        cx2.fillStyle=gd2; cx2.fillRect(0,0,76,96);
+      }
+      b.appendChild(cv);
+      b.appendChild(el("span",null,ST_GRADE_LABELS[k]));
+      b.onclick=function(){ stPickGrade(cur===k?null:k); };
+      host.appendChild(b);
+    });
+  };
+  stRenderGradeCards();
+  ST.refreshFns.push(function(){
+    /* keep the on-state in sync when recipes/undo overwrite the sv keys */
+    var host=$("stGradeCards"); if(!host) return;
+    var cur=svGet("st_gradePreset",null), i=0;
+    Object.keys(ST_GRADES).forEach(function(k){
+      var card=host.children[i++]; if(card) card.className="pcard"+(cur===k?" on":"");
+    });
+  });
   regChk(e12,function(){
     return !!(svGet("st_grade_evSh",null)||svGet("st_grade_evMid",null)||svGet("st_grade_evHi",null)||svGet("st_grade_evSat",0));
   });
@@ -10533,6 +10852,11 @@ function stTargetPhrase(){
     choices:[[0,L9({my:"မူလအရွယ်",en:"Full size",shn:"တဵမ်တူဝ်",kac:"Kaba hkum",th:"ขนาดเต็ม",zh:"原尺寸",vi:"Kích thước gốc",id:"Ukuran penuh",ms:"Saiz penuh"})],[2048,"2048px"],[1280,"1280px"]],
     get:function(){ return svGet("st_exp_size",0); },
     set:function(v){ svSet("st_exp_size",v||0); }}));
+  /* v4.42: the client-approval deliverable — original and edit side by side */
+  var b2up=el("button","btn"); b2up.id="stExp2Up"; b2up.style.marginTop="8px";
+  setIcnText(b2up,"i-compare",L9({my:"Before/After ၂ ကွက်တွဲ ထုတ်မယ်",en:"Export Before/After 2-up",shn:"ဢွၵ်ႇ Before/After ၂ ၶွၵ်ႈ",kac:"Before/After 2-up shapraw u",th:"ส่งออกภาพเทียบ Before/After",zh:"导出前后对比图",vi:"Xuất ảnh so sánh Before/After",id:"Ekspor 2-up Before/After",ms:"Eksport 2-up Before/After"}));
+  b2up.onclick=stExport2Up;
+  host.appendChild(b2up);
 })();
 
 /* ---- preset cards (§5) ---- */
@@ -10733,6 +11057,333 @@ function stUndoReset(){
   saveState();
   toast(L9({my:"ပြန်စလိုက်တာကို ရုပ်သိမ်းပြီ ✓",en:"Reset undone ✓"}),"ok");
 }
+/* ---------- v4.42: multi-step undo/redo ----------
+   Gesture-grouped: changes inside a 900ms window collapse into one step.
+   The stack holds the SETTLED state from before each gesture, captured by a
+   trailing timer, so undo always lands on something the user actually saw. */
+ST.undoStack=[]; ST.redoStack=[]; ST.undoBase=null;
+function stUndoBtns(){
+  var u=$("stUndoB"), r=$("stRedoB");
+  if(u) u.disabled=!ST.undoStack.length;
+  if(r) r.disabled=!ST.redoStack.length;
+}
+function stUndoTick(){
+  var now=Date.now();
+  if(!ST._undoT || now-ST._undoT>900){
+    if(ST.undoBase){
+      ST.undoStack.push(ST.undoBase);
+      if(ST.undoStack.length>25) ST.undoStack.shift();
+      ST.redoStack=[];
+    }
+  }
+  ST._undoT=now;
+  clearTimeout(ST._undoCap);
+  ST._undoCap=setTimeout(function(){ ST.undoBase=stFullSnap(); stUndoBtns(); },900);
+}
+function stApplySnap(sn){
+  var geoChanged=JSON.stringify(state.st.geo)!==JSON.stringify(sn.geo);
+  state.st.t1=sn.t1; state.st.t2=sn.t2; state.st.v=sn.v; state.st.pend=sn.pend;
+  state.st.geo=sn.geo; state.st.target=sn.target; state.st.preset=sn.preset;
+  ST.geoCache=null; ST.lutKey="";
+  stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
+  if(ST.srcBitmap){
+    if(geoChanged){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); }
+    stApplyDragFilter(); stRenderSettle();
+  }
+  saveState();
+}
+function stUndo(){
+  if(!ST.undoStack.length) return;
+  ST.redoStack.push(stFullSnap());
+  stApplySnap(ST.undoStack.pop());
+  ST.undoBase=stFullSnap(); ST._undoT=0;
+  stUndoBtns();
+}
+function stRedo(){
+  if(!ST.redoStack.length) return;
+  ST.undoStack.push(stFullSnap());
+  stApplySnap(ST.redoStack.pop());
+  ST.undoBase=stFullSnap(); ST._undoT=0;
+  stUndoBtns();
+}
+/* ---------- v4.42: one-tap Auto — histogram-derived corrections ----------
+   Honest and transparent: it just writes the same t1 sliders the user sees,
+   nothing hidden. Gray-world white balance + luma percentiles for exposure,
+   whites, blacks and contrast; every value is deliberately conservative. */
+function stAutoEnhance(){
+  if(!ST.px0){ stT1Changed(); return; }
+  stUndoTick();
+  var d=ST.px0.data, n=d.length/4;
+  var rS=0,gS=0,bS=0, cnt=0;
+  var hist=new Float64Array(256);
+  for(var i=0;i<n;i+=2){
+    var p=i*4, R=d[p],G=d[p+1],B=d[p+2];
+    rS+=R; gS+=G; bS+=B; cnt++;
+    var L=(0.299*R+0.587*G+0.114*B)|0;
+    hist[L>255?255:L]++;
+  }
+  function pct(q){
+    var need=cnt*q, acc=0;
+    for(var x=0;x<256;x++){ acc+=hist[x]; if(acc>=need) return x; }
+    return 255;
+  }
+  var p1=pct(0.01), p50=pct(0.5), p99=pct(0.995);
+  var rA=rS/cnt, gA=gS/cnt, bA=bS/cnt;
+  var t1=state.st.t1;
+  /* white balance: push warm/tint toward gray-world, gently */
+  t1.wrm=stClamp(Math.round((bA-rA)*0.55), -30, 30);
+  t1.tnt=stClamp(Math.round(((rA+bA)/2-gA)*0.7), -25, 25);
+  /* exposure: mid-tone toward 118 (t1.exp is stops*100: filter 2^(exp/100)) */
+  if(p50>4) t1.exp=stClamp(Math.round(Math.log(118/p50)/Math.log(2)*100*0.7), -45, 45);
+  /* whites / blacks: stretch toward the ends when the histogram doesn't reach */
+  t1.wht=stClamp(Math.round(Math.max(0,235-p99)*0.7), 0, 30);
+  t1.blk=stClamp(Math.round(Math.max(0,p1-12)*0.7), 0, 30);
+  /* contrast: only when the photo is genuinely flat */
+  var span=p99-p1;
+  t1.con=span<185 ? stClamp(Math.round((200-span)*0.3), 0, 18) : t1.con;
+  stRefreshUI(); stApplyDragFilter(); stScheduleSettle(); stSaveSoon();
+  toast(L9({my:"Auto ချိန်ပြီးပြီ ✓ — slider တွေမှာ တန်ဖိုးတွေ မြင်ရပါမယ်",en:"Auto adjusted ✓ — see the values on the sliders",shn:"Auto ယဝ်ႉ ✓",kac:"Auto ngut sai ✓",th:"ปรับอัตโนมัติแล้ว ✓",zh:"已自动调整 ✓",vi:"Đã tự động chỉnh ✓",id:"Otomatis disesuaikan ✓",ms:"Auto dilaraskan ✓"}),"ok",
+    {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),fn:stUndo});
+}
+/* ---------- v4.42: BEFORE | AFTER 2-up export — the client-approval JPEG ---------- */
+function stExport2Up(){
+  if(!ST.srcBitmap){ stT2Changed(); return; }
+  var gd=stGeoDims();
+  var out=stRunPipeline(stGeoSource(),gd.w,gd.h,{});
+  var lim=svGet("st_exp_size",0)||2048;
+  var sc=Math.min(1, lim/Math.max(gd.w,gd.h));
+  var w=Math.max(1,Math.round(gd.w*sc)), h=Math.max(1,Math.round(gd.h*sc));
+  var gap=Math.max(4,Math.round(w*0.015));
+  var c=document.createElement("canvas"); c.width=w*2+gap; c.height=h;
+  var cc=c.getContext("2d");
+  cc.fillStyle="#0b0d14"; cc.fillRect(0,0,c.width,c.height);
+  cc.drawImage(stGeoSource(),0,0,w,h);
+  cc.drawImage(out,w+gap,0,w,h);
+  var bh=Math.max(22,Math.round(h*0.045));
+  cc.fillStyle="rgba(11,13,20,.72)";
+  cc.fillRect(0,h-bh,w,bh); cc.fillRect(w+gap,h-bh,w,bh);
+  cc.fillStyle="#f3efe6";
+  cc.font="600 "+Math.round(bh*0.5)+"px sans-serif";
+  cc.textAlign="center"; cc.textBaseline="middle";
+  cc.fillText("BEFORE", w/2, h-bh/2);
+  cc.fillStyle="#f4d488";
+  cc.fillText("AFTER", w+gap+w/2, h-bh/2);
+  var q=(svGet("st_exp_q",92)||92)/100;
+  var a=document.createElement("a");
+  a.href=c.toDataURL("image/jpeg",q);
+  a.download="hnk-before-after-"+ptStamp()+".jpg";
+  a.style.display="none";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); },400);
+  toast(L9({my:"Before/After ပုံ ထုတ်ပြီးပါပြီ ✓",en:"Before/After exported ✓",shn:"ဢွၵ်ႇ Before/After ယဝ်ႉ ✓",kac:"Before/After shapraw ngut sai ✓",th:"ส่งออก Before/After แล้ว ✓",zh:"已导出对比图 ✓",vi:"Đã xuất Before/After ✓",id:"Before/After diekspor ✓",ms:"Before/After dieksport ✓"}),"ok");
+}
+/* ---------- v4.42: show the detected face zones — trust through visibility ---------- */
+function stShowZones(){
+  if(!ST.px0){ stT2Changed(); return; }
+  var W=ST.px0.width,H=ST.px0.height;
+  if(!ST.maskCache) ST.maskCache=stSkinMask(ST.px0,W,H);
+  var z=stFaceZones(ST.px0,W,H,ST.maskCache);
+  stRenderSettle();
+  var c=$("stCanvas"), cc=c.getContext("2d");
+  function ell(zz,color,label){
+    if(!zz) return;
+    cc.save();
+    cc.strokeStyle=color; cc.lineWidth=Math.max(1.5,W/300); cc.setLineDash([6,4]);
+    cc.beginPath(); cc.ellipse(zz.cx,zz.cy,zz.rx,zz.ry,0,0,Math.PI*2); cc.stroke();
+    cc.setLineDash([]);
+    cc.fillStyle=color; cc.font="600 "+Math.max(9,W/40)+"px sans-serif"; cc.textAlign="center";
+    cc.fillText(label, zz.cx, zz.cy-zz.ry-4);
+    cc.restore();
+  }
+  var box=ST.maskCache&&ST.maskCache.box;
+  if(box){
+    cc.save(); cc.strokeStyle="rgba(217,164,65,.8)"; cc.lineWidth=Math.max(1.5,W/300);
+    cc.setLineDash([10,6]);
+    cc.strokeRect(box.x0,box.y0,box.x1-box.x0,box.y1-box.y0);
+    cc.restore();
+  }
+  if(z&&z.eyes){ ell(z.eyes[0],"rgba(120,190,255,.95)","EYE"); ell(z.eyes[1],"rgba(120,190,255,.95)","EYE"); }
+  if(z&&z.mouth) ell(z.mouth,"rgba(255,120,140,.95)","LIPS");
+  if(!z) toast(L9({my:"မျက်နှာ zone ရှာမတွေ့ပါ — ပုံသေးရင်/မှောင်ရင် ဖြစ်တတ်ပါတယ်",en:"No face zones detected in this photo",shn:"ဢမ်ႇႁၼ် zone ၼႃႈ",kac:"Myi man zone n mu ai",th:"ไม่พบโซนใบหน้า",zh:"未检测到面部区域",vi:"Không phát hiện vùng mặt",id:"Zona wajah tidak terdeteksi",ms:"Zon muka tidak dikesan"}),"err");
+  clearTimeout(ST._zoneT);
+  ST._zoneT=setTimeout(function(){ if(ST.srcBitmap) stRenderSettle(); },2800);
+}
+/* ---------- v4.42: spot heal — patch from the spot's own surroundings ----------
+   Low-frequency shift only: the region's average moves toward an inverse-
+   distance blend of a sampling ring OUTSIDE the spot, while each pixel keeps
+   its own deviation from the local mean — texture survives, the blemish's
+   discolouration goes. Destructive on the working buffer, with an Undo that
+   restores the exact patch bytes. */
+function stHealAt(bx,by){
+  var px=ST.px0; if(!px) return;
+  var W=px.width,H=px.height,d=px.data;
+  var r=Math.max(4,Math.round(Math.min(W,H)*(svGet("st_healR",2)/100)));
+  var x0=Math.max(0,bx-r), x1=Math.min(W-1,bx+r), y0=Math.max(0,by-r), y1=Math.min(H-1,by+r);
+  /* undo patch */
+  var pw=x1-x0+1, ph=y1-y0+1;
+  var patch=new Uint8ClampedArray(pw*ph*4);
+  for(var yy=y0;yy<=y1;yy++){
+    var src=(yy*W+x0)*4, dst=((yy-y0)*pw)*4;
+    patch.set(d.subarray(src,src+pw*4),dst);
+  }
+  /* ring samples just outside the radius */
+  var ring=[], RS=r*1.45;
+  for(var a=0;a<12;a++){
+    var an=a*Math.PI/6;
+    var sx=Math.max(0,Math.min(W-1,Math.round(bx+Math.cos(an)*RS)));
+    var sy=Math.max(0,Math.min(H-1,Math.round(by+Math.sin(an)*RS)));
+    var sp=(sy*W+sx)*4;
+    ring.push({x:sx,y:sy,r:d[sp],g:d[sp+1],b:d[sp+2]});
+  }
+  /* local low-frequency layer: a small box blur of the patch. Healing writes
+     ring-color + (pixel - localBlur), so a flat blemish (pixel ≈ its own blur)
+     is replaced outright while noise/texture deviations ride through. A flat
+     patch MEAN can't do this — the blemish drags the mean and half-survives. */
+  var rb=Math.max(2,Math.round(r/3));
+  var lo=new Float32Array(pw*ph*3);
+  for(var yL=y0;yL<=y1;yL++) for(var xL=x0;xL<=x1;xL++){
+    var aR=0,aG=0,aB=0,aN=0;
+    var wy0=Math.max(y0,yL-rb), wy1=Math.min(y1,yL+rb), wx0=Math.max(x0,xL-rb), wx1=Math.min(x1,xL+rb);
+    for(var wy=wy0;wy<=wy1;wy++){ var base=(wy*W+wx0)*4;
+      for(var wx=wx0;wx<=wx1;wx++,base+=4){ aR+=d[base]; aG+=d[base+1]; aB+=d[base+2]; aN++; }
+    }
+    var li=((yL-y0)*pw+(xL-x0))*3;
+    lo[li]=aR/aN; lo[li+1]=aG/aN; lo[li+2]=aB/aN;
+  }
+  for(var y3=y0;y3<=y1;y3++) for(var x3=x0;x3<=x1;x3++){
+    var dx=x3-bx, dy=y3-by, dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>r) continue;
+    /* inverse-distance blend of the ring at THIS pixel keeps gradients */
+    var tw=0,tR=0,tG=0,tB=0;
+    for(var ri=0;ri<ring.length;ri++){
+      var rg=ring[ri];
+      var dd=Math.max(1,(x3-rg.x)*(x3-rg.x)+(y3-rg.y)*(y3-rg.y));
+      var w2=1/dd;
+      tw+=w2; tR+=rg.r*w2; tG+=rg.g*w2; tB+=rg.b*w2;
+    }
+    tR/=tw; tG/=tw; tB/=tw;
+    /* full strength across the inner 60% of the tap, then a smoothstep fade —
+       fading from dead center would leave a spot the size of the tap half-healed */
+    var t=dist/r, te=t<=0.6?0:(t-0.6)/0.4, fall=1-te*te*(3-2*te);
+    var p=(y3*W+x3)*4;
+    var pl=((y3-y0)*pw+(x3-x0))*3;
+    var nR=d[p]  +(tR-lo[pl])  *fall, nG=d[p+1]+(tG-lo[pl+1])*fall, nB=d[p+2]+(tB-lo[pl+2])*fall;
+    d[p]  =nR<0?0:Math.min(255,nR);
+    d[p+1]=nG<0?0:Math.min(255,nG);
+    d[p+2]=nB<0?0:Math.min(255,nB);
+  }
+  ST.maskCache=null;
+  stRenderSettle();
+  toast(L9({my:"အစက် ဖျက်ပြီးပါပြီ ✓",en:"Spot healed ✓",shn:"မွတ်ႇယဝ်ႉ ✓",kac:"Spot shamat sai ✓",th:"ลบจุดแล้ว ✓",zh:"已祛除 ✓",vi:"Đã xóa đốm ✓",id:"Noda dihapus ✓",ms:"Bintik dibuang ✓"}),"ok",
+    {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
+     fn:function(){
+       var d2=ST.px0&&ST.px0.data; if(!d2) return;
+       for(var yy2=y0;yy2<=y1;yy2++){
+         var dst2=(yy2*W+x0)*4, src2=((yy2-y0)*pw)*4;
+         d2.set(patch.subarray(src2,src2+pw*4),dst2);
+       }
+       ST.maskCache=null; stRenderSettle();
+     }});
+}
+/* ---------- v4.42: brush mask — screen taps/drags → buffer-space strength mask ---------- */
+function stBrushCanvas(){
+  var W=ST.buf?ST.buf.width:0, H=ST.buf?ST.buf.height:0;
+  if(!W) return null;
+  if(!ST.userMaskCanvas||ST.userMaskCanvas.width!==W||ST.userMaskCanvas.height!==H){
+    ST.userMaskCanvas=document.createElement("canvas");
+    ST.userMaskCanvas.width=W; ST.userMaskCanvas.height=H;
+  }
+  return ST.userMaskCanvas;
+}
+function stBrushRefresh(){
+  var mc=ST.userMaskCanvas; if(!mc){ ST.userMask=null; return; }
+  var mx=mc.getContext("2d",{willReadFrequently:true});
+  var dd=mx.getImageData(0,0,mc.width,mc.height).data;
+  var um=new Uint8ClampedArray(mc.width*mc.height);
+  var any=false;
+  for(var i=0;i<um.length;i++){ um[i]=dd[i*4+3]; if(um[i]) any=true; }
+  ST.userMask=any?um:null;
+}
+/* brush overlay: translucent gold wash over painted pixels while armed */
+function stBrushOverlay(){
+  if(!ST.brushArmed||!ST.userMaskCanvas) return;
+  var c=$("stCanvas"), cc=c.getContext("2d");
+  cc.save(); cc.globalAlpha=0.35;
+  cc.fillStyle="#d9a441";
+  cc.globalCompositeOperation="source-over";
+  var tmp=document.createElement("canvas"); tmp.width=c.width; tmp.height=c.height;
+  var tx=tmp.getContext("2d");
+  tx.fillStyle="#d9a441"; tx.fillRect(0,0,tmp.width,tmp.height);
+  tx.globalCompositeOperation="destination-in";
+  tx.drawImage(ST.userMaskCanvas,0,0);
+  cc.drawImage(tmp,0,0);
+  cc.restore();
+}
+(function(){
+  var c=$("stCanvas"); if(!c) return;
+  function toBuf(ev){
+    var r=c.getBoundingClientRect();
+    return { x:Math.max(0,Math.min(c.width-1,Math.round((ev.clientX-r.left)*c.width/r.width))),
+             y:Math.max(0,Math.min(c.height-1,Math.round((ev.clientY-r.top)*c.height/r.height))) };
+  }
+  c.addEventListener("pointerdown",function(ev){
+    if(ST.healOn&&ST.srcBitmap){
+      ev.stopPropagation(); ev.preventDefault();
+      var pt=toBuf(ev);
+      stHealAt(pt.x,pt.y);
+      return;
+    }
+    if(ST.brushArmed&&ST.srcBitmap){
+      ev.stopPropagation(); ev.preventDefault();
+      ST._brushDown=true;
+      try{ c.setPointerCapture(ev.pointerId); }catch(e){}
+      var mc=stBrushCanvas(); if(!mc) return;
+      var mx=mc.getContext("2d");
+      var pt2=toBuf(ev);
+      var r2=Math.max(4,Math.round(Math.min(mc.width,mc.height)*(svGet("st_brushR",7)/100)));
+      mx.globalCompositeOperation="source-over";
+      mx.fillStyle="rgba(255,255,255,1)";
+      mx.beginPath(); mx.arc(pt2.x,pt2.y,r2,0,Math.PI*2); mx.fill();
+      ST._brushLast=pt2;
+      stBrushOverlayLive();
+    }
+  }, true);
+  c.addEventListener("pointermove",function(ev){
+    if(!ST._brushDown||!ST.brushArmed) return;
+    var mc=ST.userMaskCanvas; if(!mc) return;
+    var mx=mc.getContext("2d");
+    var pt=toBuf(ev);
+    var r2=Math.max(4,Math.round(Math.min(mc.width,mc.height)*(svGet("st_brushR",7)/100)));
+    mx.strokeStyle="rgba(255,255,255,1)"; mx.lineCap="round"; mx.lineWidth=r2*2;
+    mx.beginPath();
+    mx.moveTo(ST._brushLast?ST._brushLast.x:pt.x, ST._brushLast?ST._brushLast.y:pt.y);
+    mx.lineTo(pt.x,pt.y); mx.stroke();
+    ST._brushLast=pt;
+    stBrushOverlayLive();
+  });
+  function up(){
+    if(!ST._brushDown) return;
+    ST._brushDown=false; ST._brushLast=null;
+    stBrushRefresh();
+    stRenderSettle();
+    stBrushOverlay();
+  }
+  c.addEventListener("pointerup",up);
+  c.addEventListener("pointercancel",up);
+  /* throttled live overlay while dragging */
+  window.stBrushOverlayLive=function(){
+    if(ST._brushRaf) return;
+    ST._brushRaf=true;
+    requestAnimationFrame(function(){
+      ST._brushRaf=false;
+      if(!ST.srcBitmap) return;
+      var cc=c.getContext("2d");
+      cc.clearRect(0,0,c.width,c.height);
+      cc.drawImage(ST.buf,0,0);
+      stBrushOverlay();
+    });
+  };
+})();
 $("stReset").onclick=function(){
   ST.undoSnap=stFullSnap();
   var hadGeo=stGeoActive();
@@ -11073,6 +11724,21 @@ $("muNote").textContent=L9({my:"ချိန်ညှိချက် "+ST_MEITU_
 $("evNote").textContent=L9({my:"Pro ချိန်ညှိချက် "+ST_EVOTO_COUNT+" ခု · Studio အဆင့် ရီတပ်ချ်",en:ST_EVOTO_COUNT+" pro controls · studio-grade retouch"});
 $("stHold").innerHTML=icn("i-eye")+" "+escH(L9({my:"မူရင်း (ဖိထား)",en:"Before (hold)"}));
 $("stReset").innerHTML=icn("i-restore")+" Reset";
+/* v4.42: gesture-grouped undo/redo as stage overlay chips (bottom-centre —
+   the only free corner-slot; hidden in compact/mini/pip so the calibrated
+   compact chip rail and PiP layouts stay byte-identical) */
+(function(){
+  var stage=$("stSplit") && $("stSplit").parentNode; if(!stage) return;
+  function mk(id,ic,label,fn){
+    var b=el("button","chip st-ov"); b.id=id; b.disabled=true;
+    b.innerHTML=icn(ic); b.setAttribute("aria-label",label); b.title=label;
+    b.onclick=fn;
+    return b;
+  }
+  stage.appendChild(mk("stUndoB","i-restore",L9({my:"နောက်ပြန်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),stUndo));
+  stage.appendChild(mk("stRedoB","i-retry",L9({my:"ရှေ့ပြန်",en:"Redo",shn:"ႁဵတ်းၶိုၼ်း",kac:"Bai galaw",th:"ทำซ้ำ",zh:"重做",vi:"Làm lại",id:"Ulangi",ms:"Buat semula"}),stRedo));
+  setTimeout(function(){ ST.undoBase=stFullSnap(); stUndoBtns(); },400);
+})();
 $("stResultH2").textContent=L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After"});
 setIcnText($("btnStToRef"),"i-restore",L9({my:"ဆက်ပြင်မယ်",en:"Keep editing"}));
 $("stRecipeNote").textContent=L9({my:"အခုချိန်ညှိထားတာတွေကို recipe အဖြစ်သိမ်းပြီး နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးပါ",en:"Save the current adjustments as a recipe and reapply them on the next photo in one tap"});
@@ -13308,7 +13974,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.41.0";
+var APP_VER="4.42.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
