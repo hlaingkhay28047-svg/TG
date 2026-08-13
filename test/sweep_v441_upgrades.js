@@ -11,7 +11,7 @@
       providers), provider-aware button, ETA line, settings persistence,
       result provenance
    7. i18n: 30-language picker with my/en fallback resolution */
-const { chromium } = require("playwright");
+const { chromium } = require("playwright-core");
 const BASE = "http://localhost:8931/index.html";
 const PNG1 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
