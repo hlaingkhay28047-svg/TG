@@ -516,6 +516,9 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .pcard canvas{width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;display:block}
 .pcard img,.pcard .ph{width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;display:block;object-fit:cover}
 .pcard .ph{background:linear-gradient(140deg,var(--panel-2),var(--panel))}
+.pth{position:relative;width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;overflow:hidden}
+.pth img{width:100%;height:100%;object-fit:cover;display:block}
+.pth i,.pth b{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
 .pcard span{display:block;font-size:var(--fs-2xs);text-align:center;padding:3px 2px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pcard{position:relative}
 .pcard.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
@@ -6158,19 +6161,38 @@ function ptRenderRailInto(hostId, selId, onPick, withClear){
      tiles. Fall back to a bundled portrait so every look is legible on first
      open, then swap to the customer's own first photo the moment one lands. */
   var src=PT.photos.length ? PT.photos[0].srcDataUrl : PT_SAMPLE;
+  /* At 76px the raw T1 grade is nearly invisible — twelve near-identical
+     tiles made picking a look meaningless. The rail exaggerates the grade
+     (chips only; the big preview and the bake use the honest values) and
+     draws each look's overlay wash + vignette so the tiles actually differ. */
+  function chipT1(t1){ var o={}; for(var k in t1) o[k]=Math.round(t1[k]*1.8); return ptT1(o); }
   PT_ORDER.forEach(function(id){
     var look=PT_LOOKS[id];
     var c=el("button","pcard"+(selId===id?" on":""));
+    var wr=el("div","pth");
     var im=document.createElement("img"); im.src=src; im.alt="";
-    im.style.filter=stCssFilter(look.t1);
+    im.style.filter=stCssFilter(chipT1(look.t1));
     /* the sample is a 2:1 banner with the subject on the right — bias the
        crop onto her face so the tiles read as a portrait, not as wallpaper */
     if(!PT.photos.length) im.style.objectPosition="78% 26%";
     im.onerror=function(){
-      var d=el("div","ph"); d.style.filter=stCssFilter(look.t1);
+      var d=el("div","ph"); d.style.filter=stCssFilter(chipT1(look.t1));
       if(im.parentNode) im.parentNode.replaceChild(d,im);
     };
-    c.appendChild(im);
+    wr.appendChild(im);
+    if(look.overlay){
+      var ov=document.createElement("i");
+      ov.style.background="linear-gradient("+look.overlay.angleDeg+"deg,"+look.overlay.color+" 0%,transparent "+Math.round(look.overlay.stop*100)+"%)";
+      ov.style.opacity=String(Math.min(1,look.overlay.alpha*2));
+      ov.style.mixBlendMode=look.overlay.blend==="screen"?"screen":"soft-light";
+      wr.appendChild(ov);
+    }
+    if(look.vig){
+      var vg=document.createElement("b");
+      vg.style.boxShadow="inset 0 0 "+Math.round(look.vig*1.8)+"px "+Math.round(look.vig*0.7)+"px rgba(0,0,0,.55)";
+      wr.appendChild(vg);
+    }
+    c.appendChild(wr);
     c.appendChild(el("span",null,L9(look.name)));
     c.title=L9(look.name);
     c.onclick=function(){ onPick(id); };
@@ -12074,7 +12096,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.35.1";
+var APP_VER="4.35.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
