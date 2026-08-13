@@ -98,6 +98,9 @@ jobs:
       - name: Run v4.41.0 upgrade-wave sweep (mocked)
         run: node test/sweep_v441_upgrades.js
 
+      - name: Run v4.42.0 Studio mega-wave sweep (mocked)
+        run: node test/sweep_v442_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
