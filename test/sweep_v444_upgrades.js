@@ -182,6 +182,78 @@ function report(name, ok, detail) {
   });
   report("2) V2 carryover chip + honest preview (include/exclude)", v2.chip && v2.previewIncludes && v2.previewExcludes && v2.inclFlag, v2);
 
+  /* ================= v4.44.1 — Wave 2 daily-driver ergonomics ================= */
+
+  /* ---- W2a) Path sheet: n/N label, prev/next, run-one, scrub box ---- */
+  const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  const w2path = await page.evaluate(async (B64) => {
+    switchPage("pgPath");
+    await new Promise(r => setTimeout(r, 250));
+    PT.photos = [
+      { name: "a.jpg", srcDataUrl: "data:image/png;base64," + B64, status: "queued" },
+      { name: "b.jpg", srcDataUrl: "data:image/png;base64," + B64, status: "queued" }
+    ];
+    ptOpenSheet(0);
+    const out = {
+      label: document.getElementById("ptSheetName").textContent,
+      runOne: document.getElementById("btnPtRunOne").style.display !== "none",
+      prevDisabled: document.getElementById("btnPtPrev").disabled
+    };
+    document.getElementById("btnPtNext").onclick();
+    out.stepped = PT.sheetIdx === 1;
+    ptCloseSheet();
+    PT.photos = []; ptSync();
+    return out;
+  }, B64);
+  report("W2a) Path sheet: position label, prev/next, single-photo run", /1 \/ 2/.test(w2path.label) && w2path.runOne && w2path.prevDisabled && w2path.stepped, w2path);
+
+  /* ---- W2b) Create: multi-take ZIP + full-screen zoom; Retouch zoom chip ---- */
+  const w2res = await page.evaluate(async (B64) => {
+    switchPage("pgCreate");
+    await new Promise(r => setTimeout(r, 250));
+    state.hist = [{ mime: "image/png", b64: B64 }, { mime: "image/png", b64: B64 }];
+    state.histSel = 0; state.result = state.hist[0];
+    showResult();
+    const out = {
+      zip: document.getElementById("btnDlAll").style.display !== "none",
+      zoomCursor: document.getElementById("resultImg").style.cursor === "zoom-in"
+    };
+    document.getElementById("resultImg").click();
+    await new Promise(r => setTimeout(r, 200));
+    out.lz = document.getElementById("lookZoom") && document.getElementById("lookZoom").className === "on";
+    if (out.lz) document.getElementById("lookZoom").click();
+    switchPage("pgRetouch");
+    await new Promise(r => setTimeout(r, 250));
+    state.refs[0] = { mime: "image/png", b64: B64, label: "x.png" };
+    rsShowResult();
+    out.rsZoom = !!document.getElementById("rsZoomBtn") && document.getElementById("rsZoomBtn").textContent.length > 0;
+    state.hist = []; state.result = null; state.refs[0] = null;
+    return out;
+  }, B64);
+  report("W2b) Create ZIP-all + zoom viewer; Retouch zoom chip", w2res.zip && w2res.zoomCursor && w2res.lz && w2res.rsZoom, w2res);
+
+  /* ---- W2c) shared intake + desktop keyboard + WB eyedropper wiring ---- */
+  const w2st = await page.evaluate(async () => {
+    const out = { acceptFn: typeof acceptImageFile === "function" };
+    switchPage("pgStudio");
+    await new Promise(r => setTimeout(r, 250));
+    out.wbBtn = !!document.getElementById("stWbPickBtn");
+    // keyboard undo against the still-loaded Wave-1 fixture
+    document.getElementById("mu_bri").value = "22";
+    document.getElementById("mu_bri").dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 1100));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true }));
+    await new Promise(r => setTimeout(r, 300));
+    out.kbUndo = state.st.t1.bri === 0;
+    return out;
+  });
+  report("W2c) acceptImageFile shared intake, WB chip, Ctrl+Z undo", w2st.acceptFn && w2st.wbBtn && w2st.kbUndo, w2st);
+
+  /* ---- W2d) source pins: paste/drop wiring + coarse-pointer chip rule ---- */
+  report("W2d) paste/drag-drop handlers + 44px coarse-pointer chips in source",
+    src.indexOf('document.addEventListener("paste"') >= 0 && src.indexOf('addEventListener("drop"') >= 0
+    && src.indexOf("pointer: coarse") >= 0 && src.indexOf('$("ptCmp")') >= 0 && src.indexOf('box.setPointerCapture') >= 0, {});
+
   await browser.close();
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   process.exit(failures === 0 ? 0 : 1);
