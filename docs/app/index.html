@@ -2594,7 +2594,34 @@ var HNK_MY_ALIAS=[["ဆံပင်","hair"],["နောက်ခံ","backgroun
   ["အသားအရေ","skin retouch"],["ရေ","water"],["ကောင်းကင်","sky"],["လိုဂို","logo text"],["ပုံတူ","pose"],
   ["မွေးနေ့","birthday"],["ဘွဲ့","graduation"],["ရိုးရာ","traditional heritage"],["စတူဒီယို","studio"]];
 var LANG_FB={kyu:"my",ksw:"my",cnh:"my",mnw:"my",rki:"my",ahk:"my",lhu:"my",lis:"my",blk:"my",pll:"my",khb:"shn",
-             hi:"en",bn:"en",ta:"en",te:"en",mr:"en",gu:"en",kn:"en",ml:"en",pa:"en",ur:"en"};
+             hi:"en",bn:"en",ta:"en",te:"en",mr:"en",gu:"en",kn:"en",ml:"en",pa:"en",ur:"en",
+             /* v4.43 Asia set — Lao reads Thai far more easily than English,
+                the rest fall back to English until their packs grow */
+             ne:"en",lo:"th",km:"en",ja:"en",ko:"en"};
+/* v4.43 — native STARTER PACKS: the highest-visibility short UI strings in
+   each fallback language's own script. t() consults these before the
+   fallback chain, so a Hindi user sees हिन्दी chrome even though long-form
+   text still arrives in English. Keys not present here fall through to
+   LANG_FB exactly as before. Myanmar ethnic languages stay on the Burmese
+   fallback — no native pack is shipped until reviewed text lands, rather
+   than machine-guessed writing in low-resource scripts. */
+var TR_L={
+hi:{btn_show:"दिखाएँ",btn_savekey:"सहेजें + परखें",lib_all:"सभी",lib_more:"और देखें",lib_img1:"IMAGE 1 बनाएँ",lib_img2:"IMAGE 2 (संदर्भ) बनाएँ",result_h2:"परिणाम",gal_del:"🗑 हटाएँ",wiz_start:"शुरू करें →",wiz_next:"आगे →",wiz_back:"← पीछे",wiz_req:"आवश्यक",wiz_opt:"वैकल्पिक",wiz_pick:"📁 चुनें",wiz_clear:"✕ हटाएँ",wiz_ready:"सब तैयार ✓",st_done:"हो गया ✓",st_needkey:"पहले API key डालें",spin_gen:"बना रहे हैं — 20-60 सेकंड रुकें…"},
+bn:{btn_show:"দেখান",btn_savekey:"সংরক্ষণ + পরীক্ষা",lib_all:"সব",lib_more:"আরও দেখুন",lib_img1:"IMAGE 1 করুন",lib_img2:"IMAGE 2 (রেফারেন্স) করুন",result_h2:"ফলাফল",gal_del:"🗑 মুছুন",wiz_start:"শুরু করুন →",wiz_next:"পরবর্তী →",wiz_back:"← পিছনে",wiz_req:"আবশ্যক",wiz_opt:"ঐচ্ছিক",wiz_pick:"📁 বাছুন",wiz_clear:"✕ মুছুন",wiz_ready:"সব প্রস্তুত ✓",st_done:"হয়ে গেছে ✓",st_needkey:"আগে API key দিন",spin_gen:"তৈরি হচ্ছে — 20-60 সেকেন্ড অপেক্ষা করুন…"},
+ta:{btn_show:"காட்டு",btn_savekey:"சேமி + சோதி",lib_all:"அனைத்தும்",lib_more:"மேலும் காண்க",lib_img1:"IMAGE 1 ஆக்கு",lib_img2:"IMAGE 2 (குறிப்பு) ஆக்கு",result_h2:"முடிவு",gal_del:"🗑 நீக்கு",wiz_start:"தொடங்கு →",wiz_next:"அடுத்து →",wiz_back:"← பின்",wiz_req:"தேவை",wiz_opt:"விருப்பம்",wiz_pick:"📁 தேர்வு",wiz_clear:"✕ அழி",wiz_ready:"எல்லாம் தயார் ✓",st_done:"முடிந்தது ✓",st_needkey:"முதலில் API key சேர்க்கவும்",spin_gen:"உருவாக்குகிறது — 20-60 வினாடி காத்திருக்கவும்…"},
+te:{btn_show:"చూపించు",btn_savekey:"సేవ్ + పరీక్ష",lib_all:"అన్నీ",lib_more:"మరిన్ని చూడండి",lib_img1:"IMAGE 1 గా వాడు",lib_img2:"IMAGE 2 (రిఫరెన్స్) గా వాడు",result_h2:"ఫలితం",gal_del:"🗑 తొలగించు",wiz_start:"ప్రారంభించు →",wiz_next:"తర్వాత →",wiz_back:"← వెనక్కి",wiz_req:"తప్పనిసరి",wiz_opt:"ఐచ్ఛికం",wiz_pick:"📁 ఎంచుకో",wiz_clear:"✕ తొలగించు",wiz_ready:"అంతా సిద్ధం ✓",st_done:"పూర్తయింది ✓",st_needkey:"ముందుగా API key ఇవ్వండి",spin_gen:"తయారవుతోంది — 20-60 సెకన్లు వేచి ఉండండి…"},
+mr:{btn_show:"दाखवा",btn_savekey:"जतन + तपासा",lib_all:"सर्व",lib_more:"आणखी पहा",lib_img1:"IMAGE 1 करा",lib_img2:"IMAGE 2 (संदर्भ) करा",result_h2:"निकाल",gal_del:"🗑 हटवा",wiz_start:"सुरू करा →",wiz_next:"पुढे →",wiz_back:"← मागे",wiz_req:"आवश्यक",wiz_opt:"ऐच्छिक",wiz_pick:"📁 निवडा",wiz_clear:"✕ काढा",wiz_ready:"सर्व तयार ✓",st_done:"झाले ✓",st_needkey:"आधी API key टाका",spin_gen:"तयार होत आहे — 20-60 सेकंद थांबा…"},
+gu:{btn_show:"બતાવો",btn_savekey:"સાચવો + ચકાસો",lib_all:"બધા",lib_more:"વધુ જુઓ",lib_img1:"IMAGE 1 બનાવો",lib_img2:"IMAGE 2 (સંદર્ભ) બનાવો",result_h2:"પરિણામ",gal_del:"🗑 કાઢી નાખો",wiz_start:"શરૂ કરો →",wiz_next:"આગળ →",wiz_back:"← પાછળ",wiz_req:"જરૂરી",wiz_opt:"વૈકલ્પિક",wiz_pick:"📁 પસંદ કરો",wiz_clear:"✕ સાફ કરો",wiz_ready:"બધું તૈયાર ✓",st_done:"થઈ ગયું ✓",st_needkey:"પહેલા API key નાખો",spin_gen:"બની રહ્યું છે — 20-60 સેકન્ડ રાહ જુઓ…"},
+kn:{btn_show:"ತೋರಿಸಿ",btn_savekey:"ಉಳಿಸಿ + ಪರೀಕ್ಷಿಸಿ",lib_all:"ಎಲ್ಲಾ",lib_more:"ಇನ್ನಷ್ಟು ನೋಡಿ",lib_img1:"IMAGE 1 ಮಾಡಿ",lib_img2:"IMAGE 2 (ಉಲ್ಲೇಖ) ಮಾಡಿ",result_h2:"ಫಲಿತಾಂಶ",gal_del:"🗑 ಅಳಿಸಿ",wiz_start:"ಪ್ರಾರಂಭಿಸಿ →",wiz_next:"ಮುಂದೆ →",wiz_back:"← ಹಿಂದೆ",wiz_req:"ಅಗತ್ಯ",wiz_opt:"ಐಚ್ಛಿಕ",wiz_pick:"📁 ಆಯ್ಕೆ",wiz_clear:"✕ ಅಳಿಸಿ",wiz_ready:"ಎಲ್ಲವೂ ಸಿದ್ಧ ✓",st_done:"ಮುಗಿದಿದೆ ✓",st_needkey:"ಮೊದಲು API key ಹಾಕಿ",spin_gen:"ರಚಿಸಲಾಗುತ್ತಿದೆ — 20-60 ಸೆಕೆಂಡ್ ಕಾಯಿರಿ…"},
+ml:{btn_show:"കാണിക്കുക",btn_savekey:"സേവ് + പരിശോധിക്കുക",lib_all:"എല്ലാം",lib_more:"കൂടുതൽ കാണുക",lib_img1:"IMAGE 1 ആക്കുക",lib_img2:"IMAGE 2 (റഫറൻസ്) ആക്കുക",result_h2:"ഫലം",gal_del:"🗑 നീക്കം ചെയ്യുക",wiz_start:"തുടങ്ങുക →",wiz_next:"അടുത്തത് →",wiz_back:"← പിന്നോട്ട്",wiz_req:"നിർബന്ധം",wiz_opt:"ഓപ്ഷണൽ",wiz_pick:"📁 തിരഞ്ഞെടുക്കുക",wiz_clear:"✕ മായ്ക്കുക",wiz_ready:"എല്ലാം തയ്യാർ ✓",st_done:"കഴിഞ്ഞു ✓",st_needkey:"ആദ്യം API key ചേർക്കുക",spin_gen:"സൃഷ്ടിക്കുന്നു — 20-60 സെക്കൻഡ് കാത്തിരിക്കുക…"},
+pa:{btn_show:"ਦਿਖਾਓ",btn_savekey:"ਸੰਭਾਲੋ + ਪਰਖੋ",lib_all:"ਸਾਰੇ",lib_more:"ਹੋਰ ਵੇਖੋ",lib_img1:"IMAGE 1 ਬਣਾਓ",lib_img2:"IMAGE 2 (ਹਵਾਲਾ) ਬਣਾਓ",result_h2:"ਨਤੀਜਾ",gal_del:"🗑 ਹਟਾਓ",wiz_start:"ਸ਼ੁਰੂ ਕਰੋ →",wiz_next:"ਅੱਗੇ →",wiz_back:"← ਪਿੱਛੇ",wiz_req:"ਲਾਜ਼ਮੀ",wiz_opt:"ਵਿਕਲਪਿਕ",wiz_pick:"📁 ਚੁਣੋ",wiz_clear:"✕ ਹਟਾਓ",wiz_ready:"ਸਭ ਤਿਆਰ ✓",st_done:"ਹੋ ਗਿਆ ✓",st_needkey:"ਪਹਿਲਾਂ API key ਪਾਓ",spin_gen:"ਬਣ ਰਿਹਾ ਹੈ — 20-60 ਸਕਿੰਟ ਉਡੀਕੋ…"},
+ur:{btn_show:"دکھائیں",btn_savekey:"محفوظ + جانچیں",lib_all:"سب",lib_more:"مزید دیکھیں",lib_img1:"IMAGE 1 بنائیں",lib_img2:"IMAGE 2 (حوالہ) بنائیں",result_h2:"نتیجہ",gal_del:"🗑 حذف کریں",wiz_start:"شروع کریں →",wiz_next:"اگلا →",wiz_back:"← پیچھے",wiz_req:"لازمی",wiz_opt:"اختیاری",wiz_pick:"📁 منتخب کریں",wiz_clear:"✕ صاف کریں",wiz_ready:"سب تیار ✓",st_done:"ہو گیا ✓",st_needkey:"پہلے API key ڈالیں",spin_gen:"بن رہا ہے — 20-60 سیکنڈ انتظار کریں…"},
+ne:{btn_show:"देखाउनुहोस्",btn_savekey:"सेभ + जाँच",lib_all:"सबै",lib_more:"थप हेर्नुहोस्",lib_img1:"IMAGE 1 बनाउनुहोस्",lib_img2:"IMAGE 2 (सन्दर्भ) बनाउनुहोस्",result_h2:"नतिजा",gal_del:"🗑 हटाउनुहोस्",wiz_start:"सुरु गर्नुहोस् →",wiz_next:"अर्को →",wiz_back:"← पछाडि",wiz_req:"अनिवार्य",wiz_opt:"वैकल्पिक",wiz_pick:"📁 छान्नुहोस्",wiz_clear:"✕ हटाउनुहोस्",wiz_ready:"सबै तयार ✓",st_done:"भयो ✓",st_needkey:"पहिले API key राख्नुहोस्",spin_gen:"बनाउँदै — 20-60 सेकेन्ड पर्खनुहोस्…"},
+lo:{btn_show:"ສະແດງ",btn_savekey:"ບັນທຶກ + ທົດສອບ",lib_all:"ທັງໝົດ",lib_more:"ເບິ່ງເພີ່ມ",lib_img1:"ໃຊ້ເປັນ IMAGE 1",lib_img2:"ໃຊ້ເປັນ IMAGE 2 (ອ້າງອີງ)",result_h2:"ຜົນລັບ",gal_del:"🗑 ລຶບ",wiz_start:"ເລີ່ມ →",wiz_next:"ຕໍ່ໄປ →",wiz_back:"← ກັບຄືນ",wiz_req:"ຈຳເປັນ",wiz_opt:"ບໍ່ບັງຄັບ",wiz_pick:"📁 ເລືອກ",wiz_clear:"✕ ລຶບ",wiz_ready:"ພ້ອມແລ້ວ ✓",st_done:"ສຳເລັດ ✓",st_needkey:"ກະລຸນາໃສ່ API key ກ່ອນ",spin_gen:"ກຳລັງສ້າງ — ລໍຖ້າ 20-60 ວິນາທີ…"},
+km:{btn_show:"បង្ហាញ",btn_savekey:"រក្សាទុក + សាកល្បង",lib_all:"ទាំងអស់",lib_more:"មើលបន្ថែម",lib_img1:"ប្រើជា IMAGE 1",lib_img2:"ប្រើជា IMAGE 2 (ឯកសារយោង)",result_h2:"លទ្ធផល",gal_del:"🗑 លុប",wiz_start:"ចាប់ផ្តើម →",wiz_next:"បន្ទាប់ →",wiz_back:"← ថយក្រោយ",wiz_req:"ចាំបាច់",wiz_opt:"ជាជម្រើស",wiz_pick:"📁 ជ្រើសរើស",wiz_clear:"✕ លុប",wiz_ready:"រួចរាល់ ✓",st_done:"រួចរាល់ហើយ ✓",st_needkey:"សូមបញ្ចូល API key ជាមុន",spin_gen:"កំពុងបង្កើត — រង់ចាំ 20-60 វិនាទី…"},
+ja:{btn_show:"表示",btn_savekey:"保存 + テスト",lib_all:"すべて",lib_more:"もっと見る",lib_img1:"IMAGE 1 にする",lib_img2:"IMAGE 2（参照）にする",result_h2:"結果",gal_del:"🗑 削除",wiz_start:"開始 →",wiz_next:"次へ →",wiz_back:"← 戻る",wiz_req:"必須",wiz_opt:"任意",wiz_pick:"📁 選択",wiz_clear:"✕ クリア",wiz_ready:"準備完了 ✓",st_done:"完了 ✓",st_needkey:"先に API key を入力してください",spin_gen:"生成中 — 20〜60秒お待ちください…"},
+ko:{btn_show:"보기",btn_savekey:"저장 + 테스트",lib_all:"전체",lib_more:"더 보기",lib_img1:"IMAGE 1로 사용",lib_img2:"IMAGE 2(참조)로 사용",result_h2:"결과",gal_del:"🗑 삭제",wiz_start:"시작 →",wiz_next:"다음 →",wiz_back:"← 뒤로",wiz_req:"필수",wiz_opt:"선택",wiz_pick:"📁 선택",wiz_clear:"✕ 지우기",wiz_ready:"준비 완료 ✓",st_done:"완료 ✓",st_needkey:"먼저 API key를 입력하세요",spin_gen:"생성 중 — 20~60초 기다려주세요…"}
+};
 function L9(o){
   if(o[LANG]!==undefined) return o[LANG];
   var fb=LANG_FB[LANG];
@@ -2604,6 +2631,8 @@ function L9(o){
 
 function t(k){
   var e=TR[k]; if(!e) return k;
+  /* v4.43 — native starter pack wins over the fallback chain */
+  var nx=TR_L[LANG]; if(nx && nx[k]!==undefined) return nx[k];
   if(e[LANG]!==undefined) return e[LANG];
   var fb=LANG_FB[LANG];
   if(fb && e[fb]!==undefined) return e[fb];
@@ -2643,6 +2672,8 @@ function applyLang(){
     ["blk","ပအိုဝ်"],["pll","တအာင်း (ပလောင်)"],["khb","တႆးလိုဝ်ႉ (ရှစ်ဆောင်ပန်းနား)"],["ahk","အာခါ (Akha)"],["lhu","လားဟူ (Lahu)"],["lis","လီဆူ (Lisu)"]];
   var LANGS_IN=[["hi","हिन्दी"],["bn","বাংলা"],["ta","தமிழ்"],["te","తెలుగు"],["mr","मराठी"],
     ["gu","ગુજરાતી"],["kn","ಕನ್ನಡ"],["ml","മലയാളം"],["pa","ਪੰਜਾਬੀ"],["ur","اردو"]];
+  /* v4.43: neighbours + wedding-client languages, all with native starter packs */
+  var LANGS_AS=[["ne","नेपाली"],["lo","ລາວ"],["km","ខ្មែរ"],["ja","日本語"],["ko","한국어"]];
   var sel=$("selLang"); sel.innerHTML="";
   function addLangOpts(host,list){
     list.forEach(function(p){
@@ -2656,6 +2687,8 @@ function applyLang(){
   addLangOpts(ogMM, LANGS_MM); sel.appendChild(ogMM);
   var ogIN=document.createElement("optgroup"); ogIN.label="— India —";
   addLangOpts(ogIN, LANGS_IN); sel.appendChild(ogIN);
+  var ogAS=document.createElement("optgroup"); ogAS.label="— Asia —";
+  addLangOpts(ogAS, LANGS_AS); sel.appendChild(ogAS);
   sel.onchange=function(){
     /* switching language reloads the page (every t()/L9() call needs a fresh
        LANG) — state.refs (uploaded images) are never persisted (base64 data
@@ -13974,7 +14007,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.42.0";
+var APP_VER="4.43.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
