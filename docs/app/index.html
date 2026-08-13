@@ -1504,6 +1504,8 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="prowwrap"><div class="prow" id="stRecipeRow"></div></div>
     <div class="row" style="margin-top:8px">
       <button class="btn" id="stSaveRecipe"></button>
+      <button class="chip" id="stRecipeExport"></button>
+      <button class="chip" id="stRecipeImport"></button>
     </div>
   </section>
   </div><!-- /stColL -->
@@ -7788,13 +7790,29 @@ function stDrawHistogram(srcCv){
     var sx=sc.getContext("2d",{willReadFrequently:true});
     sx.drawImage(srcCv,0,0,128,64);
     var dd=sx.getImageData(0,0,128,64).data, bins=new Float32Array(128), mx=0;
+    var rb=new Float32Array(128), gb=new Float32Array(128), bb=new Float32Array(128), cmx=0;
     for(var p=0;p<dd.length;p+=4){
       var L=(0.299*dd[p]+0.587*dd[p+1]+0.114*dd[p+2])/2|0;
       bins[L>127?127:L]++;
+      rb[dd[p]>>1]++; gb[dd[p+1]>>1]++; bb[dd[p+2]>>1]++;
     }
-    for(var b=0;b<128;b++) if(bins[b]>mx) mx=bins[b];
+    for(var b=0;b<128;b++){
+      if(bins[b]>mx) mx=bins[b];
+      if(rb[b]>cmx) cmx=rb[b]; if(gb[b]>cmx) cmx=gb[b]; if(bb[b]>cmx) cmx=bb[b];
+    }
     var hx=hc.getContext("2d");
     hx.clearRect(0,0,220,48);
+    /* per-channel histograms behind the luma one — screen-blended so overlaps
+       read as colour mixes, the way every pro histogram does it */
+    hx.globalCompositeOperation="screen";
+    [[rb,"rgba(235,80,70,.55)"],[gb,"rgba(90,200,110,.55)"],[bb,"rgba(90,140,255,.55)"]].forEach(function(ch){
+      hx.fillStyle=ch[1];
+      for(var c2=0;c2<128;c2++){
+        var chH=cmx?Math.round(ch[0][c2]/cmx*44):0;
+        if(chH) hx.fillRect(c2*1.71,48-chH,1.4,chH);
+      }
+    });
+    hx.globalCompositeOperation="source-over";
     hx.fillStyle="rgba(217,164,65,.9)";
     for(var b2=0;b2<128;b2++){
       var h=mx?Math.round(bins[b2]/mx*44):0;
@@ -9551,6 +9569,40 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     choices:[["r","R"],["o","O"],["y","Y"],["g","G"],["a","Aqua"],["b","B"],["p","P"],["m","M"]],
     get:function(){ return svGet("st_hslBand","r"); },
     set:function(v){ svSet("st_hslBand",v||"r"); stRefreshUI(); }}));
+  /* v4.39 eyedropper: tap the photo, land on the right HSL band — guessing
+     which of 8 letters owns a dress colour was the hard part of this panel */
+  var hslPickB=el("button","chip");
+  hslPickB.id="ev_hslPick";
+  setIcnText(hslPickB,"i-search",L9({my:"ပုံပေါ်နှိပ်ပြီး ရောင်ရွေးမယ်",en:"Pick colour from the photo",shn:"ၼဵၵ်းၼိူဝ်ၶႅပ်းႁၢင်ႈသေ လိူၵ်ႈသီ",kac:"Sumla kaw dip nna nsam lata u",th:"แตะบนรูปเพื่อเลือกสี",zh:"点击照片选取颜色",vi:"Chạm vào ảnh để chọn màu",id:"Ketuk foto untuk memilih warna",ms:"Ketik foto untuk pilih warna"}));
+  hslPickB.onclick=function(){
+    if(!ST.srcBitmap){ toast(L9({my:"ပုံအရင်တင်ပါ",en:"Load a photo first",shn:"တၢင်ႇၶႅပ်းႁၢင်ႈဢွၼ်တၢင်း",kac:"Sumla shawng bang u",th:"ใส่รูปก่อน",zh:"请先载入照片",vi:"Hãy tải ảnh trước",id:"Muat foto dulu",ms:"Muat foto dahulu"}),"err"); return; }
+    ST.hslPick=!ST.hslPick;
+    hslPickB.classList.toggle("on",ST.hslPick);
+    if(ST.hslPick) toast(L9({my:"ချိန်ချင်တဲ့အရောင်ကို ပုံပေါ်မှာ နှိပ်ပါ",en:"Now tap that colour on the photo",shn:"ၼဵၵ်းသီၼၼ်ႉၼိူဝ်ၶႅပ်းႁၢင်ႈ",kac:"Nsam dai hpe sumla kaw dip u",th:"แตะสีนั้นบนรูป",zh:"在照片上点按该颜色",vi:"Chạm màu đó trên ảnh",id:"Ketuk warna itu di foto",ms:"Ketik warna itu pada foto"}),"ok");
+  };
+  e12.b.appendChild(hslPickB);
+  $("stCanvas").addEventListener("pointerdown",function(ev){
+    if(!ST.hslPick) return;
+    ev.stopPropagation(); ev.preventDefault();
+    ST.hslPick=false; hslPickB.classList.remove("on");
+    var c=this, r=c.getBoundingClientRect();
+    var x=Math.max(0,Math.min(c.width-1,Math.round((ev.clientX-r.left)*c.width/r.width)));
+    var y=Math.max(0,Math.min(c.height-1,Math.round((ev.clientY-r.top)*c.height/r.height)));
+    var d; try{ d=c.getContext("2d").getImageData(x,y,1,1).data; }catch(e){ return; }
+    var R=d[0]/255,G=d[1]/255,B=d[2]/255,mxv=Math.max(R,G,B),mnv=Math.min(R,G,B),H=0;
+    if(mxv!==mnv){
+      var df=mxv-mnv;
+      H = mxv===R ? ((G-B)/df)%6 : mxv===G ? (B-R)/df+2 : (R-G)/df+4;
+      H=Math.round(H*60); if(H<0) H+=360;
+    }
+    var best="r",bd=361;
+    ST_HSL_BANDS.forEach(function(b2){
+      var diff=Math.abs(H-b2[1]); if(diff>180) diff=360-diff;
+      if(diff<bd){ bd=diff; best=b2[0]; }
+    });
+    svSet("st_hslBand",best); stRefreshUI();
+    toast("HSL → "+({r:"Red",o:"Orange",y:"Yellow",g:"Green",a:"Aqua",b:"Blue",p:"Purple",m:"Magenta"})[best],"ok");
+  }, true);
   var hslGrid=el("div","st-grid");
   hslGrid.appendChild(stSlider({id:"ev_hslH",label:L9({my:"Hue",en:"Hue"}),min:-100,max:100,def:0,
     get:function(){ return svGet(hslKey("h"),0); },
@@ -9580,6 +9632,26 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   cgGrid.appendChild(pipeSlider("st_grade_evSat",L9({my:"Saturation",en:"Saturation"}),true));
   cgGrid.appendChild(pipeSlider("st_grade_evBal",L9({my:"Balance",en:"Balance"}),true));
   e12.b.appendChild(cgGrid);
+  /* v4.39: named grade starting points — each writes the same st_grade_ev*
+     keys the colour wells above expose, so everything stays hand-tunable */
+  var ST_GRADES={
+    tealorange:{sh:"#0f4a5a",mid:null,hi:"#ffb46a",amt:55,sat:10,bal:0},
+    bronze:{sh:"#3a2a18",mid:"#8a6a3a",hi:"#f2d7a0",amt:50,sat:0,bal:10},
+    peach:{sh:"#6a3a4a",mid:null,hi:"#ffd2b0",amt:45,sat:8,bal:15},
+    pastel:{sh:"#7a86b8",mid:null,hi:"#f6e8d8",amt:40,sat:-10,bal:0},
+    silver:{sh:"#4a5560",mid:null,hi:"#e8eef2",amt:45,sat:-20,bal:0},
+    olive:{sh:"#2e3a24",mid:null,hi:"#e9e2c8",amt:45,sat:-5,bal:5}
+  };
+  e12.b.appendChild(stChips({id:"st_gradePreset",
+    choices:[["tealorange","Teal-Orange"],["bronze","Bronze"],["peach","Peach"],["pastel","Pastel"],["silver","Silver"],["olive","Olive"]],
+    get:function(){ return svGet("st_gradePreset",null); },
+    set:function(v){
+      svSet("st_gradePreset",v);
+      var g=v&&ST_GRADES[v];
+      svSet("st_grade_evSh",g?g.sh:null); svSet("st_grade_evMid",g?g.mid:null); svSet("st_grade_evHi",g?g.hi:null);
+      svSet("st_grade_evAmt",g?g.amt:45); svSet("st_grade_evSat",g?g.sat:0); svSet("st_grade_evBal",g?g.bal:0);
+      stRefreshUI(); stPipeChanged();
+    }}));
   regChk(e12,function(){
     return !!(svGet("st_grade_evSh",null)||svGet("st_grade_evMid",null)||svGet("st_grade_evHi",null)||svGet("st_grade_evSat",0));
   });
@@ -10361,7 +10433,15 @@ function stRenderRecipes(){
       cx.strokeStyle="rgba(217,164,65,.8)"; cx.lineWidth=1.8; cx.lineJoin=cx.lineCap="round"; cx.save(); cx.translate(28,34); cx.scale(0.833,0.833); try{ cx.stroke(new Path2D("M6 4h10l4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z")); cx.stroke(new Path2D("M8 4v4.5h7V4M8 20v-5.5h8V20")); }catch(e){} cx.restore();
     }
     b.appendChild(cv);
-    b.appendChild(el("span",null,r.name||("Look "+(idx+1))));
+    var nm=el("span",null,r.name||("Look "+(idx+1)));
+    nm.title=L9({my:"နာမည်ပြောင်းရန် နှိပ်ပါ",en:"Tap to rename"});
+    nm.onclick=function(ev){
+      ev.stopPropagation();
+      var nn=window.prompt(L9({my:"Recipe နာမည်",en:"Recipe name"}), r.name||"");
+      if(nn===null) return;
+      var a2=stRecipes(); if(a2[idx]){ a2[idx].name=String(nn).slice(0,24)||a2[idx].name; stRecipesSave(a2); stRenderRecipes(); }
+    };
+    b.appendChild(nm);
     function del(){
       var a2=stRecipes(); a2.splice(idx,1); stRecipesSave(a2);
       if(state.st.preset==="rc_"+idx){ state.st.preset=null; ST.presetSnap=null; }
@@ -10414,6 +10494,40 @@ setIcnText($("btnStToRef"),"i-restore",L9({my:"ဆက်ပြင်မယ်",e
 $("stRecipeNote").textContent=L9({my:"အခုချိန်ညှိထားတာတွေကို recipe အဖြစ်သိမ်းပြီး နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးပါ",en:"Save the current adjustments as a recipe and reapply them on the next photo in one tap"});
 $("stSaveRecipe").innerHTML=icn("i-save")+" "+escH(L9({my:"Recipe သိမ်းမယ်",en:"Save recipe"}));
 $("stSaveRecipe").onclick=stSaveRecipe;
+/* v4.39: recipes travel between devices as JSON via the clipboard */
+setIcnText($("stRecipeExport"),"i-doc",L9({my:"ကူးထုတ်",en:"Export",shn:"ဢွၵ်ႇ",kac:"Shapraw",th:"ส่งออก",zh:"导出",vi:"Xuất",id:"Ekspor",ms:"Eksport"}));
+$("stRecipeExport").onclick=function(){
+  var a=stRecipes();
+  if(!a.length){ toast(L9({my:"သိမ်းထားတဲ့ recipe မရှိသေးပါ",en:"No saved recipes yet",shn:"ပႆႇမီး recipe",kac:"Recipe n nga shi ai",th:"ยังไม่มีสูตรที่บันทึก",zh:"还没有已保存的配方",vi:"Chưa có công thức nào",id:"Belum ada resep tersimpan",ms:"Belum ada resipi tersimpan"}),"err"); return; }
+  try{
+    navigator.clipboard.writeText(JSON.stringify({hnk_recipes:a})).then(function(){
+      toast(L9({my:"Recipe "+a.length+" ခုကို clipboard ထဲ ကူးပြီးပါပြီ — တခြားစက်မှာ Import နှိပ်ပြီး paste လုပ်ပါ",en:"Copied "+a.length+" recipes to the clipboard — tap Import on the other device",shn:"ၶူတ်ႉ recipe "+a.length+" ဢၼ်ယဝ်ႉ",kac:"Recipe "+a.length+" hpe kaw sai",th:"คัดลอก "+a.length+" สูตรแล้ว",zh:"已复制 "+a.length+" 个配方",vi:"Đã sao chép "+a.length+" công thức",id:a.length+" resep disalin",ms:a.length+" resipi disalin"}),"ok");
+    });
+  }catch(e){ toast("copy failed","err"); }
+};
+setIcnText($("stRecipeImport"),"i-restore",L9({my:"ထည့်သွင်း",en:"Import",shn:"ၶဝ်ႈ",kac:"Bang",th:"นำเข้า",zh:"导入",vi:"Nhập",id:"Impor",ms:"Import"}));
+$("stRecipeImport").onclick=function(){
+  function ingest(txt){
+    var d; try{ d=JSON.parse(txt); }catch(e){ d=null; }
+    var list=d&&Array.isArray(d.hnk_recipes)?d.hnk_recipes:null;
+    if(!list||!list.length){ toast(L9({my:"Clipboard ထဲမှာ recipe JSON မတွေ့ပါ — Export ကနေကူးထားတာကို paste လုပ်ပါ",en:"No recipe JSON on the clipboard — copy with Export first",shn:"ဢမ်ႇႁၼ် recipe JSON",kac:"Recipe JSON n mu ai",th:"ไม่พบ JSON สูตร",zh:"剪贴板中没有配方 JSON",vi:"Không có JSON công thức",id:"Tidak ada JSON resep",ms:"Tiada JSON resipi"}),"err"); return; }
+    var cur=stRecipes(), have={}; cur.forEach(function(r){ have[JSON.stringify(r.t1)+"|"+r.name]=1; });
+    var added=0;
+    list.forEach(function(r){
+      if(!r||typeof r!=="object"||!r.t1) return;
+      var k=JSON.stringify(r.t1)+"|"+r.name;
+      if(have[k]) return;
+      cur.push({ name:String(r.name||"Look").slice(0,24), t1:r.t1||{}, t2:r.t2||{}, v:r.v||{}, pend:Array.isArray(r.pend)?r.pend:[] });
+      have[k]=1; added++;
+    });
+    stRecipesSave(cur); stRenderRecipes();
+    toast(L9({my:"Recipe "+added+" ခု ထည့်ပြီးပါပြီ",en:added+" recipes imported",shn:"ၶဝ်ႈ recipe "+added+" ဢၼ်ယဝ်ႉ",kac:"Recipe "+added+" bang sai",th:"นำเข้า "+added+" สูตรแล้ว",zh:"已导入 "+added+" 个配方",vi:"Đã nhập "+added+" công thức",id:added+" resep diimpor",ms:added+" resipi diimport"}), added?"ok":"err");
+  }
+  try{ navigator.clipboard.readText().then(ingest, function(){
+    var txt=window.prompt("Paste recipe JSON:"); if(txt) ingest(txt);
+  }); }
+  catch(e){ var txt=window.prompt("Paste recipe JSON:"); if(txt) ingest(txt); }
+};
 $("muPresetSub").textContent=L9({my:"One-tap look များ — ထပ်နှိပ်ရင် ပြန်ဖြုတ်မယ်",en:"One-tap looks — tap again to undo"});
 $("evPresetSub").textContent=L9({my:"One-tap look များ — ထပ်နှိပ်ရင် ပြန်ဖြုတ်မယ်",en:"One-tap looks — tap again to undo"});
 $("stClearAi").innerHTML=icn("i-close")+" "+escH(L9({my:"AI အားလုံးဖျက်",en:"Clear AI"}));
@@ -12427,7 +12541,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.38.0";
+var APP_VER="4.39.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
