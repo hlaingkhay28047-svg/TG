@@ -90,7 +90,23 @@ function report(name, ok, detail) {
     const vj = await (await fetch("version.json")).json();
     return { app: APP_VER, json: vj.v };
   });
-  report("4) version lockstep 4.43.0", ver.app === "4.43.0" && ver.json === "4.43.0", ver);
+  report("4) version lockstep 4.43.1", ver.app === "4.43.1" && ver.json === "4.43.1", ver);
+
+  /* ---- 5) marketing site mirrors the 35-language set (file-based — the
+     site root isn't served in CI, docs/app is) ---- */
+  const fs = require("fs"), path = require("path");
+  const site = fs.readFileSync(path.resolve(__dirname, "..", "docs", "index.html"), "utf8");
+  const siteOk = {
+    optgroups: (site.match(/<optgroup/g) || []).length === 3,
+    options: (site.match(/<option value="/g) || []).length === 35,
+    fb: site.indexOf("var SITE_FB=") >= 0 && site.indexOf("lo:'th'") >= 0,
+    packs: site.indexOf("var SITE_L=") >= 0 &&
+      ["hi:", "bn:", "ta:", "te:", "mr:", "gu:", "kn:", "ml:", "pa:", "ur:", "ne:", "lo:", "km:", "ja:", "ko:"]
+        .every(c => site.indexOf(c + "{'nav.cta'") >= 0),
+    keyThreaded: site.indexOf("pick(rec,l,k)") >= 0
+  };
+  report("5) site: 35-language picker, SITE_FB/SITE_L, key-threaded pick()",
+    siteOk.optgroups && siteOk.options && siteOk.fb && siteOk.packs && siteOk.keyThreaded, siteOk);
 
   await browser.close();
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
