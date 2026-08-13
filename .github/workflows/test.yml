@@ -104,6 +104,9 @@ jobs:
       - name: Run v4.43.0 language-upgrade sweep (mocked)
         run: node test/sweep_v443_upgrades.js
 
+      - name: Run v4.44.0 Edit-pages Wave 1 sweep (mocked)
+        run: node test/sweep_v444_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
