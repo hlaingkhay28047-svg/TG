@@ -6242,6 +6242,8 @@ function ptRenderGrid(){
 /* look rail — .pcard mini previews of photo #1 (or a neutral placeholder)
    with each look's CSS filter applied. An <img> (not a canvas) so the
    preview works on every browser, filter support included. */
+/* looks that ship professional chip art under lib/wf/lookchips/ */
+var PT_CHIP_ART={pt_foliage:1,pt_golden:1,pt_window:1,pt_overcast:1,pt_sunset:1,pt_rain:1,pt_mist:1,pt_cine:1,pt_porcelain:1,pt_forest:1,pt_noir:1,pt_mono:1};
 function ptRenderRailInto(hostId, selId, onPick, withClear){
   var host=$(hostId); if(!host) return;
   host.innerHTML="";
@@ -6266,24 +6268,36 @@ function ptRenderRailInto(hostId, selId, onPick, withClear){
     var look=PT_LOOKS[id];
     var c=el("button","pcard"+(selId===id?" on":""));
     var wr=el("div","pth");
-    var im=document.createElement("img"); im.src=src; im.alt="";
-    im.style.filter=stCssFilter(chipT1(look.t1));
-    /* the sample is a 2:1 banner with the subject on the right — bias the
-       crop onto her face so the tiles read as a portrait, not as wallpaper */
-    if(!PT.photos.length) im.style.objectPosition="78% 26%";
-    im.onerror=function(){
-      var d=el("div","ph"); d.style.filter=stCssFilter(chipT1(look.t1));
-      if(im.parentNode) im.parentNode.replaceChild(d,im);
-    };
+    var im=document.createElement("img"); im.alt="";
+    /* The 12 built-in looks carry professional chip art (one locked model,
+       lighting/grade the only variable — the owner's Look Chip pack), which
+       reads far better at 76px than any CSS approximation. The filtered
+       preview stays as the fallback and as the renderer for "My Grade". */
+    var pro=PT_CHIP_ART[id];
+    function filteredPreview(){
+      im.src=src;
+      im.style.filter=stCssFilter(chipT1(look.t1));
+      /* the sample is a 2:1 banner with the subject on the right — bias the
+         crop onto her face so the tiles read as a portrait, not wallpaper */
+      if(!PT.photos.length) im.style.objectPosition="78% 26%";
+      im.onerror=function(){
+        var d=el("div","ph"); d.style.filter=stCssFilter(chipT1(look.t1));
+        if(im.parentNode) im.parentNode.replaceChild(d,im);
+      };
+    }
+    if(pro){
+      im.src="lib/wf/lookchips/"+id+".jpg";
+      im.onerror=function(){ im.onerror=null; filteredPreview(); };
+    } else filteredPreview();
     wr.appendChild(im);
-    if(look.overlay){
+    if(!pro && look.overlay){
       var ov=document.createElement("i");
       ov.style.background="linear-gradient("+look.overlay.angleDeg+"deg,"+look.overlay.color+" 0%,transparent "+Math.round(look.overlay.stop*100)+"%)";
       ov.style.opacity=String(Math.min(1,look.overlay.alpha*2));
       ov.style.mixBlendMode=look.overlay.blend==="screen"?"screen":"soft-light";
       wr.appendChild(ov);
     }
-    if(look.vig){
+    if(!pro && look.vig){
       var vg=document.createElement("b");
       vg.style.boxShadow="inset 0 0 "+Math.round(look.vig*1.8)+"px "+Math.round(look.vig*0.7)+"px rgba(0,0,0,.55)";
       wr.appendChild(vg);
@@ -12307,7 +12321,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.37.0";
+var APP_VER="4.37.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
