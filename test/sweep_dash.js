@@ -53,11 +53,11 @@ function check(ok, label, detail) {
       labels: cards.map(c => c.querySelector(".lbl").textContent)
     };
   });
-  check(grid.count === 4 && grid.allHaveArt && grid.allHaveBadge && grid.allHaveLabel,
-    "2×2 feature grid: 4 cards, banner art + sprite badge + label each", grid);
+  check(grid.count === 6 && grid.allHaveArt && grid.allHaveBadge && grid.allHaveLabel,
+    "feature grid: 6 cards (v4.41 adds Path batch + Gallery), banner art + sprite badge + label each", grid);
 
   const routes = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 6; i++) {
     const r = await page.evaluate((idx) => {
       switchPage("pgDash");
       document.querySelectorAll("#dashGrid .dash-card")[idx].click();
@@ -65,8 +65,8 @@ function check(ok, label, detail) {
     }, i);
     routes.push(r);
   }
-  check(JSON.stringify(routes) === JSON.stringify(["pgRetouch", "pgWf", "pgCreate", "pgText2Img"]),
-    "grid cards route to pgRetouch / pgWf / pgCreate / Media Lab (pgText2Img default)", routes);
+  check(JSON.stringify(routes) === JSON.stringify(["pgRetouch", "pgWf", "pgCreate", "pgText2Img", "pgPath", "pgGallery"]),
+    "grid cards route to pgRetouch / pgWf / pgCreate / Media Lab (pgText2Img default) / pgPath / pgGallery", routes);
 
   /* Media Lab card honors last-page-of-group memory */
   const mediaMem = await page.evaluate(() => {
