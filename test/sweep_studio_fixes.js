@@ -48,11 +48,13 @@ function check(ok, label, detail) {
     }));
     return { out, gold: out.filter(o => o.value === "#d9a441").length, total: out.length };
   });
-  check(colours.total === 10 && colours.gold === 0 &&
+  check(colours.total === 12 && colours.gold === 0 &&
         colours.out.every(o => o.stored === null && o.unset) &&
         colours.out.find(o => o.id === "mu_lipCustom").value === "#c94f5e" &&
-        colours.out.find(o => o.id === "mu_hairHex").value === "#3b2417",
-    "all 10 unset colour pickers read as unset, and the two with a real render default show that colour",
+        colours.out.find(o => o.id === "mu_hairHex").value === "#3b2417" &&
+        colours.out.find(o => o.id === "mu_lipLocHex").value === "#c04858" &&
+        colours.out.find(o => o.id === "mu_blushLocHex").value === "#e88a9a",
+    "all 12 unset colour pickers read as unset, and the four with a real render default show that colour",
     colours);
 
   /* re-confirming the swatch already on screen must commit it (change, not input) */
@@ -250,6 +252,76 @@ function check(ok, label, detail) {
         noise.noisy.metric > 2 && noise.noisy.notes === 0 && noise.grain,
     "denoise tells the user when the photo has no noise to remove, and stays quiet when it does — without clobbering the grain tile",
     noise);
+
+  /* v4.40 — the real-pixel-engine guarantees: true frequency separation
+     (texture survives), and zone-limited teeth/eye edits (a detected face
+     confines the whitening to the mouth and the brightening to the eyes). */
+  const engine = await page.evaluate(async () => {
+    switchPage("pgStudio");
+    window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
+    const c = document.createElement("canvas"); c.width = 96; c.height = 120;
+    const x = c.getContext("2d");
+    x.fillStyle = "#5a6a4a"; x.fillRect(0, 0, 96, 120);
+    x.fillStyle = "#e2ab8a"; x.beginPath(); x.ellipse(48, 58, 30, 42, 0, 0, 7); x.fill();
+    const im0 = x.getImageData(0, 0, 96, 120);
+    for (let i = 0; i < im0.data.length; i += 4) { const n = (Math.random() * 24 - 12);
+      im0.data[i] += n; im0.data[i + 1] += n; im0.data[i + 2] += n; }
+    x.putImageData(im0, 0, 0);
+    x.fillStyle = "#241a14"; x.beginPath(); x.ellipse(36, 44, 5, 3, 0, 0, 7); x.fill();
+    x.beginPath(); x.ellipse(60, 44, 5, 3, 0, 0, 7); x.fill();
+    x.fillStyle = "#b2453f"; x.beginPath(); x.ellipse(48, 82, 11, 6, 0, 0, 7); x.fill();
+    x.fillStyle = "#ded8be"; x.fillRect(42, 80, 12, 4);
+    x.fillStyle = "#c8b830"; x.fillRect(4, 4, 14, 14);
+    await new Promise(r => ST.loadImage(c.toDataURL("image/png"), { done: r }));
+    const cc = () => document.getElementById("stCanvas").getContext("2d");
+    function fineVar(x0, y0, x1, y1) {
+      const im = cc().getImageData(0, 0, 96, 120); let s = 0, n = 0;
+      for (let y = y0; y < y1; y++) for (let xx = x0; xx < x1 - 1; xx++) {
+        const p = (y * 96 + xx) * 4, q = p + 4;
+        const l1 = 0.299 * im.data[p] + 0.587 * im.data[p + 1] + 0.114 * im.data[p + 2];
+        const l2 = 0.299 * im.data[q] + 0.587 * im.data[q + 1] + 0.114 * im.data[q + 2];
+        s += (l1 - l2) * (l1 - l2); n++;
+      }
+      return s / n;
+    }
+    function meanRegion(x0, y0, x1, y1) {
+      const im = cc().getImageData(0, 0, 96, 120); let s = 0, n = 0;
+      for (let y = y0; y < y1; y++) for (let xx = x0; xx < x1; xx++) {
+        const p = (y * 96 + xx) * 4;
+        s += 0.299 * im.data[p] + 0.587 * im.data[p + 1] + 0.114 * im.data[p + 2]; n++;
+      }
+      return s / n;
+    }
+    async function withT2(k, v) {
+      document.getElementById("stReset").click();
+      await new Promise(r => setTimeout(r, 350));
+      state.st.t2[k] = v; stT2Changed();
+      await new Promise(r => setTimeout(r, 450));
+    }
+    document.getElementById("stReset").click();
+    await new Promise(r => setTimeout(r, 350));
+    const baseVar = fineVar(40, 58, 58, 70);
+    const bgBase = meanRegion(4, 4, 18, 18);
+    const eyeBase = meanRegion(33, 42, 39, 46);
+    await withT2("freqLo", 80); const flVar = fineVar(40, 58, 58, 70);
+    await withT2("smooth", 80); const smVar = fineVar(40, 58, 58, 70);
+    await withT2("teeth", 90);
+    const teethAfter = meanRegion(43, 80, 53, 84), bgAfterTeeth = meanRegion(4, 4, 18, 18);
+    await withT2("eyeb", 90); const eyeAfter = meanRegion(33, 42, 39, 46);
+    document.getElementById("stReset").click();
+    await new Promise(r => setTimeout(r, 300));
+    const teethBase = meanRegion(43, 80, 53, 84);
+    return { baseVar, flVar, smVar, teethBase, teethAfter, bgBase, bgAfterTeeth, eyeBase, eyeAfter };
+  });
+  check(engine.flVar > engine.baseVar * 0.8 && engine.smVar < engine.baseVar * 0.4,
+    "frequency separation preserves fine texture that plain smoothing destroys",
+    { baseVar: +engine.baseVar.toFixed(1), flVar: +engine.flVar.toFixed(1), smVar: +engine.smVar.toFixed(1) });
+  check(engine.teethAfter > engine.teethBase + 2 && Math.abs(engine.bgAfterTeeth - engine.bgBase) < 1.5,
+    "teeth whitening lands inside the detected mouth and leaves the yellow background patch alone",
+    { teethBase: +engine.teethBase.toFixed(1), teethAfter: +engine.teethAfter.toFixed(1), bgDelta: +(engine.bgAfterTeeth - engine.bgBase).toFixed(2) });
+  check(engine.eyeAfter > engine.eyeBase + 10,
+    "eye brighten reaches the actual pupils the skin mask excludes",
+    { eyeBase: +engine.eyeBase.toFixed(1), eyeAfter: +engine.eyeAfter.toFixed(1) });
 
   await browser.close();
   console.log(failures ? `\n${failures} FAILED` : "\nALL PASS");
