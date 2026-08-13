@@ -564,6 +564,11 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    Tokens only. auto-fill/minmax means the grid reflows down to 320px
    without a horizontal scrollbar; every tap target is >=44px. */
 #pgPath .chip{min-height:44px}
+/* v4.44.1 — one finger-size rule for EVERY Edit-page chip on touch screens
+   (pgPath had it alone; Studio's dense group chips were 34px on phones) */
+@media (pointer: coarse){
+  #pgCreate .chip,#pgStudio .chip,#pgRetouch .chip,#pgPath .chip{min-height:44px}
+}
 .pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:var(--sp-2);margin-top:var(--sp-3)}
 .pt-th{position:relative;padding:0;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel-2);overflow:hidden;min-height:44px;display:block;width:100%;text-align:left;cursor:pointer}
 .pt-th img{display:block;width:100%;aspect-ratio:2/3;object-fit:cover}
@@ -602,6 +607,8 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 /* v4.44 — while a Path batch runs, the run card (progress + Stop) sticks to
    the same shelf the Studio gen bar uses, so a long scroll never hides it */
 #ptRunCard.pt-sticky{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:8}
+/* v4.44.1 — desktop drag-over highlight for the two drop targets */
+.droptgt{outline:2px dashed var(--gold);outline-offset:4px;border-radius:var(--r-lg)}
 .st-genbar .st-x{margin-left:6px;color:var(--muted)}
 #stPendCount{font-size:var(--fs-2xs);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #stPendChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-top:4px}
@@ -1743,7 +1750,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <div class="cmp-line" id="rsCmpLine"></div>
     </div>
     <input type="range" id="rsCmpRange" min="0" max="100" value="50" style="width:100%;margin-top:8px;accent-color:var(--gold)">
-    <div class="row" style="justify-content:space-between"><span class="mut" id="rsCmpBeforeLbl"></span><span class="mut" id="rsCmpAfterLbl"></span></div>
+    <div class="row" style="justify-content:space-between"><span class="mut" id="rsCmpBeforeLbl"></span><button class="chip" id="rsZoomBtn"></button><span class="mut" id="rsCmpAfterLbl"></span></div>
     <div class="row" id="rsRerunRow" style="margin-top:10px;display:none">
       <span class="mut" id="rsRerunLbl"></span>
       <span id="rsRerunChips"></span>
@@ -1837,6 +1844,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="result-img"><img id="resultImg" alt="result"></div>
     <div class="row" style="margin-top:10px">
       <a class="btn btn-gold grow" id="btnDl" download="hnk-web-studio.png" style="text-align:center"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> Download</a>
+      <button class="btn" id="btnDlAll" style="display:none"></button>
       <button class="btn" id="btnShareRes"></button>
       <button class="btn" id="btnToRef"></button>
       <button class="btn" id="btnCmp"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-compare"/></svg> Before/After</button>
@@ -2045,7 +2053,11 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="pt-sheet-in">
       <div class="row" style="justify-content:space-between">
         <b id="ptSheetName" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b>
-        <button class="btn" id="btnPtSheetClose"></button>
+        <div class="row" style="gap:6px;flex:0 0 auto">
+          <button class="btn" id="btnPtPrev" aria-label="previous photo">←</button>
+          <button class="btn" id="btnPtNext" aria-label="next photo">→</button>
+          <button class="btn" id="btnPtSheetClose"></button>
+        </div>
       </div>
       <div class="status" id="ptSheetSt"></div>
       <div id="ptSheetSingle"><img class="pt-big" id="ptSheetImg" alt=""></div>
@@ -2065,6 +2077,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <div class="prowwrap"><div class="prow" id="ptSheetRail"></div></div>
       <div class="row" style="margin-top:12px">
         <button class="btn" id="btnPtRetryOne" style="display:none"></button>
+        <button class="btn" id="btnPtRunOne" style="display:none"></button>
         <a class="btn btn-gold grow" id="btnPtSaveOne" download="hnk-path.jpg" style="text-align:center;display:none"></a>
         <button class="btn" id="btnPtGalOne" style="display:none"></button>
       </div>
@@ -2962,6 +2975,14 @@ window.addEventListener("popstate", function(ev){
   if(pg && $(pg)) switchPage(pg, true);
 });
 document.addEventListener("keydown", function(ev){
+  /* v4.44.1 — arrow keys walk the Path sheet on desktop */
+  if((ev.key==="ArrowLeft"||ev.key==="ArrowRight") && !/INPUT|TEXTAREA|SELECT/.test((ev.target&&ev.target.tagName)||"")){
+    var sh=$("ptSheet");
+    if(sh && sh.className.indexOf("on")>=0 && typeof ptSheetStep==="function"){
+      ptSheetStep(ev.key==="ArrowRight"?1:-1);
+      return;
+    }
+  }
   if(ev.key!=="Escape") return;
   var wiz=document.querySelector(".wiz.on"), wx=wiz&&wiz.querySelector(".wiz-x");
   if(wx){ wx.click(); return; }
@@ -4319,19 +4340,15 @@ function downscale(dataUrl, cb){
 function unreadableImgMsg(){
   return L9({my:"ဒီပုံကို ဖတ်လို့မရပါ — JPEG/PNG အဖြစ် ပြောင်းပြီး ပြန်ပို့ကြည့်ပါ (iPhone ဆိုရင် Settings → Camera → Formats → Most Compatible)",en:"Couldn't read this image — please resend it as JPEG/PNG (on iPhone: Settings → Camera → Formats → Most Compatible)",shn:"ဢမ်ႇၸၢင်ႈလူတ်ႇၶႅပ်းႁၢင်ႈၼႆႉ — သူင်ႇၶိုၼ်းပဵၼ် JPEG/PNG",kac:"Ndai sumla hpe hti n mai ai — JPEG/PNG hku bai shagun yu u",th:"อ่านรูปนี้ไม่ได้ — กรุณาส่งใหม่เป็น JPEG/PNG (iPhone: Settings → Camera → Formats → Most Compatible)",zh:"无法读取此图片 — 请转为 JPEG/PNG 后重新发送（iPhone：设置 → 相机 → 格式 → 兼容性最佳）",vi:"Không đọc được ảnh này — hãy gửi lại dạng JPEG/PNG (iPhone: Cài đặt → Camera → Định dạng → Tương thích nhất)",id:"Tidak bisa membaca gambar ini — kirim ulang sebagai JPEG/PNG (iPhone: Pengaturan → Kamera → Format → Paling Kompatibel)",ms:"Tidak dapat membaca imej ini — hantar semula sebagai JPEG/PNG (iPhone: Tetapan → Kamera → Format → Paling Serasi)"});
 }
-$("filePick").onchange = function(){
-  /* v4.28 batch: a Batch-armed pick hands the whole FileList to the V2 batch
-     runner; the single-pick contract (multiple=false) is restored either way */
-  var files=this.files ? Array.prototype.slice.call(this.files) : [];
-  var wasBatch=rsBatchArmed;
-  rsBatchArmed=false; this.multiple=false;
-  var f=files[0]; this.value="";
-  if(wasBatch){ if(files.length) rsRunBatch(files); return; }
+/* v4.44.1 — one intake path for a picked/pasted/dropped File: the exact body
+   the file picker has always run, factored out so clipboard paste and
+   drag-and-drop share every guard (image sniff, HEIC failure reason,
+   Studio refX slot, cmpBase reset, wizard hook). */
+function acceptImageFile(f, slot){
   if(!f) return;
   /* accept="image/..." is only a UI hint — some browsers/OSes still let a
-     user pick a non-image file through it (same gap already guarded for
-     video uploads below), which would otherwise fail confusingly deep in
-     the generate call instead of here, immediately, with a clear reason. */
+     user pick a non-image file through it, which would otherwise fail
+     confusingly deep in the generate call instead of here, with a reason. */
   var looksImage = (f.type && f.type.toLowerCase().indexOf("image/")===0) || /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(f.name||"");
   if(!looksImage){
     toast(L9({my:"ပုံဖိုင်ပဲ ရပါတယ် — ရွေးထားတဲ့ ဖိုင်က ပုံ မဟုတ်ပုံရပါတယ်",en:"Images only — the file you picked doesn't look like an image",shn:"ၶႅပ်းႁၢင်ႈၵူၺ်း လႆႈ — ဢၼ်ထၢႆႇဝႆႉၼၼ်ႉ ဢမ်ႇပဵၼ်ၶႅပ်းႁၢင်ႈ",kac:"Sumla sha ra ai — tawn da ai file gaw sumla n rai ai zawn nga ai",th:"ใช้ได้เฉพาะรูปภาพ — ไฟล์ที่เลือกดูเหมือนไม่ใช่รูปภาพ",zh:"仅支持图片 — 所选文件看起来不是图片",vi:"Chỉ nhận ảnh — tệp bạn chọn có vẻ không phải là ảnh",id:"Hanya gambar — file yang dipilih tampaknya bukan gambar",ms:"Hanya imej — fail yang dipilih nampaknya bukan imej"}), "err");
@@ -4343,7 +4360,7 @@ $("filePick").onchange = function(){
       if(!dataUrl){ toast(unreadableImgMsg(),"err"); return; }
       var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
       if(m){
-        if(state.pickSlot==="stx"){ /* Studio reference-transfer slot (M8/M20) — session-only */
+        if(slot==="stx"){ /* Studio reference-transfer slot (M8/M20) — session-only */
           state.pickSlot=0;
           if(state.st){
             state.st.refX={mime:m[1],b64:m[2]};
@@ -4352,8 +4369,8 @@ $("filePick").onchange = function(){
           }
           return;
         }
-        if(state.pickSlot===0){ state.cmpBase=null; state.rsOrig=null; } /* fresh photo — compare baselines reset (v4.28) */
-        state.refs[state.pickSlot]={mime:m[1],b64:m[2],label:f.name};
+        if(slot===0){ state.cmpBase=null; state.rsOrig=null; } /* fresh photo — compare baselines reset (v4.28) */
+        state.refs[slot]={mime:m[1],b64:m[2],label:f.name};
         state.imgRoles=null; /* roles are re-derived by the wizard at generate time */
         renderRefs();
         if (window._wizOnPick) window._wizOnPick();
@@ -4361,7 +4378,47 @@ $("filePick").onchange = function(){
     });
   };
   rd.readAsDataURL(f);
+}
+$("filePick").onchange = function(){
+  /* v4.28 batch: a Batch-armed pick hands the whole FileList to the V2 batch
+     runner; the single-pick contract (multiple=false) is restored either way */
+  var files=this.files ? Array.prototype.slice.call(this.files) : [];
+  var wasBatch=rsBatchArmed;
+  rsBatchArmed=false; this.multiple=false;
+  var f=files[0]; this.value="";
+  if(wasBatch){ if(files.length) rsRunBatch(files); return; }
+  acceptImageFile(f, state.pickSlot);
 };
+/* v4.44.1 — desktop ingest parity: the studio's photos arrive through chat
+   apps and folder windows, so paste and drag-in must work like every
+   commercial tool. Paste: Create fills the first empty ref slot; Path adds
+   to the batch. Drop: the refs strip and the whole Path page are targets. */
+(function(){
+  function firstEmptySlot(){ return state.refs[0]?(state.refs[1]?(state.refs[2]?0:2):1):0; }
+  document.addEventListener("paste",function(ev){
+    var files=(ev.clipboardData&&ev.clipboardData.files)?Array.prototype.slice.call(ev.clipboardData.files):[];
+    if(!files.length) return;
+    if(curPage==="pgCreate"){ ev.preventDefault(); acceptImageFile(files[0], firstEmptySlot()); }
+    else if(curPage==="pgPath" && !PT.busy){ ev.preventDefault(); ptIngestFiles(files); }
+  });
+  function wireDrop(elm, handler){
+    if(!elm) return;
+    elm.addEventListener("dragover",function(ev){ ev.preventDefault(); elm.classList.add("droptgt"); });
+    elm.addEventListener("dragleave",function(){ elm.classList.remove("droptgt"); });
+    elm.addEventListener("drop",function(ev){
+      ev.preventDefault(); elm.classList.remove("droptgt");
+      var files=(ev.dataTransfer&&ev.dataTransfer.files)?Array.prototype.slice.call(ev.dataTransfer.files):[];
+      if(files.length) handler(files);
+    });
+  }
+  wireDrop($("refs"), function(files){
+    var slot=firstEmptySlot();
+    files.slice(0,3).forEach(function(f,i){ acceptImageFile(f, Math.min(slot+i,2)); });
+  });
+  wireDrop($("pgPath"), function(files){ if(!PT.busy) ptIngestFiles(files); });
+  var pr=$("prompt");
+  if(pr) pr.addEventListener("keydown", function(ev){ if((ev.ctrlKey||ev.metaKey)&&ev.key==="Enter") $("btnGen").click(); });
+})();
 
 /* static (non-JS-built) accordions wire up the same open/close toggle
    the grp() builder below uses, so a hand-written .grp/.grp-h/.grp-b
@@ -6045,6 +6102,22 @@ function rsShowResult(){
      retouches always compare against the photo the user actually uploaded */
   var rsBase=state.rsOrig||state.refs[0];
   if(rsBase) $("rsCmpBefore").src="data:"+rsBase.mime+";base64,"+rsBase.b64;
+  /* v4.44.1 — full pinch-zoom QC via a dedicated chip: a tap ON the compare
+     is already the scrub gesture, so zoom gets its own button. Before/After
+     ride the shared viewer as a two-image swipe. */
+  var rz=$("rsZoomBtn");
+  if(rz && !rz._lzWired){
+    rz._lzWired=true;
+    setIcnText(rz,"i-eye",L9({my:"ချဲ့ကြည့်",en:"Zoom",shn:"ယႂ်ႇတူၺ်း",kac:"Kaba yu",th:"ซูม",zh:"放大",vi:"Phóng to",id:"Perbesar",ms:"Zum"}));
+    rz.onclick=function(){
+      var o2=state.hist[state.histSel]||state.result; if(!o2) return;
+      var b2=state.rsOrig||state.refs[0];
+      var list=[];
+      if(b2) list.push({src:"data:"+b2.mime+";base64,"+b2.b64, cap:"Before"});
+      list.push({src:"data:"+o2.mime+";base64,"+o2.b64, cap:"After"});
+      lookZoomOpen(list, list.length-1);
+    };
+  }
   rsCmpLayout();
   renderRsRerunChips();
   var h=$("rsHist"); h.innerHTML="";
@@ -7460,7 +7533,11 @@ function ptCmpLayout(){
 function ptRenderSheet(){
   var p=PT.photos[PT.sheetIdx];
   if(!p){ ptCloseSheet(); return; }
-  $("ptSheetName").textContent=p.name;
+  /* v4.44.1 — position in the batch + prev/next state */
+  $("ptSheetName").textContent=(PT.sheetIdx+1)+" / "+PT.photos.length+" · "+p.name;
+  var pv=$("btnPtPrev"), nx=$("btnPtNext");
+  if(pv) pv.disabled=PT.sheetIdx<=0;
+  if(nx) nx.disabled=PT.sheetIdx>=PT.photos.length-1;
   var big=$("ptSheetImg");
   var isDone=p.status==="done"&&!!p.outB64;
   big.src=isDone ? ("data:"+(p.outMime||"image/png")+";base64,"+p.outB64) : p.srcDataUrl;
@@ -7473,6 +7550,15 @@ function ptRenderSheet(){
   }
   setSt("ptSheetSt", p.status==="error" ? (p.err||t("pt_err_n").replace("{N}","1")) : "", p.status==="error"?"err":"ok");
   $("btnPtRetryOne").style.display = p.status==="error" ? "" : "none";
+  /* v4.44.1 — test-drive the look on THIS photo before paying for the whole
+     batch (and re-run any single photo after a look change) */
+  var r1=$("btnPtRunOne");
+  if(r1){
+    r1.style.display = (!PT.busy && p.status!=="error") ? "" : "none";
+    setIcnText(r1,"i-bolt", isDone
+      ? L9({my:"ဒီပုံ ပြန် run မယ်",en:"Re-run this photo",shn:"Run ၶိုၼ်းၶႅပ်းၼႆႉ",kac:"Ndai sumla bai run u",th:"รันรูปนี้ใหม่",zh:"重跑这张",vi:"Chạy lại ảnh này",id:"Jalankan ulang foto ini",ms:"Jalankan semula foto ini"})
+      : L9({my:"ဒီတစ်ပုံပဲ AI စမ်းမယ်",en:"Run AI on this photo only",shn:"ၸၢမ်း AI ၶႅပ်းလဵဝ်",kac:"Ndai sumla langai sha AI chyam u",th:"ลองรัน AI เฉพาะรูปนี้",zh:"仅此一张试跑 AI",vi:"Chạy AI riêng ảnh này",id:"Coba AI di foto ini saja",ms:"Cuba AI pada foto ini sahaja"}));
+  }
   var sv=$("btnPtSaveOne");
   if(isDone){
     sv.style.display="";
@@ -7620,11 +7706,58 @@ $("btnPtDlSeq").onclick=function(){ if(!gate("path_export")) return; ptDlSeq(); 
 $("btnPtBake").onclick=ptBakeAll;
 $("btnPtSheetClose").onclick=ptCloseSheet;
 $("ptCmpRange").oninput=ptCmpLayout;
+/* v4.44.1 — drag-scrub parity: Create/Retouch/Studio compares all scrub by
+   touch; Path's was range-only. Same pointer-capture pattern. */
+(function(){
+  var box=$("ptCmp"); if(!box) return;
+  var dragging=false;
+  function apply(clientX){
+    var r=box.getBoundingClientRect();
+    var pct=Math.round(Math.max(0,Math.min(100,((clientX-r.left)/r.width)*100)));
+    $("ptCmpRange").value=pct;
+    ptCmpLayout();
+  }
+  box.addEventListener("pointerdown",function(e){
+    dragging=true;
+    try{ box.setPointerCapture(e.pointerId); }catch(err){}
+    apply(e.clientX);
+  });
+  box.addEventListener("pointermove",function(e){ if(dragging) apply(e.clientX); });
+  box.addEventListener("pointerup",function(){ dragging=false; });
+  box.addEventListener("pointercancel",function(){ dragging=false; });
+})();
 $("btnPtRetryOne").onclick=function(){
   var p=PT.photos[PT.sheetIdx]; if(!p||PT.busy) return;
   p.status="queued"; p.err=""; ptRenderGrid(); ptRenderSheet();
   ptRunAll(p);
 };
+/* v4.44.1 — single-photo test-drive/re-run: same runner as retry, but also
+   clears a previous result so the replacement lands cleanly */
+$("btnPtRunOne").onclick=function(){
+  var p=PT.photos[PT.sheetIdx]; if(!p||PT.busy) return;
+  p.status="queued"; p.err=""; p.outB64=null; p.outMime=null;
+  ptRenderGrid(); ptRenderSheet();
+  ptRunAll(p);
+};
+/* v4.44.1 — prev/next through the batch without closing the sheet */
+function ptSheetStep(d){
+  if(PT.sheetIdx<0) return;
+  var j=PT.sheetIdx+d;
+  if(j<0||j>=PT.photos.length) return;
+  PT.sheetIdx=j; ptRenderSheet();
+}
+$("btnPtPrev").onclick=function(){ ptSheetStep(-1); };
+$("btnPtNext").onclick=function(){ ptSheetStep(1); };
+(function(){
+  var img=$("ptSheetImg"); if(!img) return;
+  var sx=null;
+  img.addEventListener("pointerdown",function(ev){ sx=ev.clientX; },{passive:true});
+  img.addEventListener("pointerup",function(ev){
+    if(sx===null) return;
+    var dx=ev.clientX-sx; sx=null;
+    if(Math.abs(dx)>44) ptSheetStep(dx<0?1:-1);
+  },{passive:true});
+})();
 $("btnPtGalOne").onclick=function(){
   var p=PT.photos[PT.sheetIdx]; if(!p||!p.outB64) return;
   /* v4.44 — every AI result was already galleryAdd'ed by the shared
@@ -9691,7 +9824,8 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   setIcnText(healBtn,"i-close",L9({my:"အစက်ဖျက်မယ် — ပုံပေါ်နှိပ်ပါ",en:"Heal spots — tap the photo",shn:"မွတ်ႇပႅတ်ႈ — ၼဵၵ်းၼိူဝ်ၶႅပ်း",kac:"Spot shamat — sumla kaw dip u",th:"ลบจุด — แตะบนรูป",zh:"祛斑 — 点按照片",vi:"Xóa đốm — chạm vào ảnh",id:"Hapus noda — ketuk foto",ms:"Buang bintik — ketik foto"}));
   healBtn.onclick=function(){
     ST.healOn=!ST.healOn;
-    if(ST.healOn){ ST.brushArmed=false; var bb=$("stBrushBtn"); if(bb) bb.classList.remove("on"); }
+    if(ST.healOn){ ST.brushArmed=false; var bb=$("stBrushBtn"); if(bb) bb.classList.remove("on");
+      ST.wbPickOn=false; var wp1=$("stWbPickBtn"); if(wp1) wp1.classList.remove("on"); }
     healBtn.classList.toggle("on",ST.healOn);
     if(ST.healOn) toast(L9({my:"ဖျက်ချင်တဲ့ အစက်/ဝက်ခြံကို ပုံပေါ်မှာ နှိပ်ပါ",en:"Tap the spot you want removed",shn:"ၼဵၵ်းမွတ်ႇဢၼ်ၶႂ်ႈပႅတ်ႈ",kac:"Shamat mayu ai spot hpe dip u",th:"แตะจุดที่ต้องการลบ",zh:"点按要移除的斑点",vi:"Chạm vào đốm cần xóa",id:"Ketuk noda yang ingin dihapus",ms:"Ketik bintik yang mahu dibuang"}),"ok");
   };
@@ -9706,7 +9840,8 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   setIcnText(brushBtn,"i-brush",L9({my:"Brush ဆွဲမယ်",en:"Paint area",shn:"ထၢႆႉပိုၼ်ႉတီႈ",kac:"Shara hpe paint u",th:"ระบายพื้นที่",zh:"涂抹区域",vi:"Tô vùng",id:"Cat area",ms:"Cat kawasan"}));
   brushBtn.onclick=function(){
     ST.brushArmed=!ST.brushArmed;
-    if(ST.brushArmed){ ST.healOn=false; healBtn.classList.remove("on"); }
+    if(ST.brushArmed){ ST.healOn=false; healBtn.classList.remove("on");
+      ST.wbPickOn=false; var wp2=$("stWbPickBtn"); if(wp2) wp2.classList.remove("on"); }
     brushBtn.classList.toggle("on",ST.brushArmed);
     if(ST.brushArmed){
       if(!svGet("st_brushMode",null)){ svSet("st_brushMode","in"); stRefreshUI(); }
@@ -9948,6 +10083,22 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   wbRow.appendChild(stToggle({id:"st_wbAuto",label:L9({my:"အလိုအလျောက်",en:"Auto"}),
     get:function(){ return !!svGet("st_wbAuto",false); },
     set:function(v){ svSet("st_wbAuto",v); if(v) stComputeWb(); stSync("st_wbAutoF"); stPipeChanged(); }}));
+  /* v4.44.1 — tap-to-neutral eyedropper: the white gown IS a gray card. Arms
+     like the heal/brush chips (mutually exclusive); the canvas tap lands in
+     the pointerdown ladder. */
+  var wbPick=el("button","chip"); wbPick.id="stWbPickBtn";
+  wbPick.innerHTML=icn("i-drop")+" "+escH(L9({my:"အဖြူတို့ WB",en:"Tap-white WB",shn:"တွတ်ႇသီၶၢဝ် WB",kac:"Ahpraw dip WB",th:"จิ้มสีขาว WB",zh:"点白校色",vi:"Chạm trắng WB",id:"Ketuk putih WB",ms:"Ketik putih WB"}));
+  wbPick.onclick=function(){
+    ST.wbPickOn=!ST.wbPickOn;
+    if(ST.wbPickOn){
+      ST.healOn=false; ST.brushArmed=false;
+      var hb=$("stHealBtn"); if(hb) hb.classList.remove("on");
+      var bb=$("stBrushBtn"); if(bb) bb.classList.remove("on");
+      toast(L9({my:"ပုံထဲက အဖြူ/မီးခိုးရောင် နေရာကို တို့ပါ",en:"Tap a white or gray area in the photo",shn:"တွတ်ႇတီႈသီၶၢဝ်/သီၵမ်ႇ ၼႂ်းၶႅပ်းႁၢင်ႈ",kac:"Sumla hta ahpraw (sh) amut shara hpe dip u",th:"แตะบริเวณสีขาวหรือเทาในรูป",zh:"点按照片中的白色或灰色区域",vi:"Chạm vào vùng trắng/xám trong ảnh",id:"Ketuk area putih/abu di foto",ms:"Ketik kawasan putih/kelabu dalam foto"}),"");
+    }
+    wbPick.classList.toggle("on",ST.wbPickOn);
+  };
+  wbRow.appendChild(wbPick);
   g13.b.appendChild(wbRow);
   stFeat("st_wbAutoF",L9({my:"AI WB",en:"AI White Balance"}),["st_wbAuto","st_wbGr","st_wbGb"],null,function(){
     if(!svGet("st_wbAuto",false)) return null;
@@ -11186,6 +11337,28 @@ function renderStPicker(){
   b.addEventListener("pointerdown",down);
   b.addEventListener("pointerup",up);
   b.addEventListener("pointercancel",up);
+  /* v4.44.1 — published so the keyboard "B" hold shares the exact closures
+     (a keyboard event has no pointerId; down() tolerates that) */
+  ST.holdDown=function(){ down({}); };
+  ST.holdUp=up;
+})();
+/* v4.44.1 — desktop keyboard for the Studio daily loop. Gated to pgStudio
+   with no input/textarea/select focused (protects search fields):
+   Ctrl/Cmd+Z undo · Ctrl+Shift+Z / Ctrl+Y redo · hold B = Before ·
+   Ctrl/Cmd+Enter = GENERATE. */
+(function(){
+  function typing(ev){ return /INPUT|TEXTAREA|SELECT/.test((ev.target&&ev.target.tagName)||""); }
+  document.addEventListener("keydown",function(ev){
+    if(curPage!=="pgStudio"||typing(ev)) return;
+    var mod=ev.ctrlKey||ev.metaKey;
+    if(mod && !ev.shiftKey && (ev.key==="z"||ev.key==="Z")){ ev.preventDefault(); stUndo(); }
+    else if(mod && (ev.key==="y"||ev.key==="Y"||(ev.shiftKey&&(ev.key==="z"||ev.key==="Z")))){ ev.preventDefault(); stRedo(); }
+    else if(mod && ev.key==="Enter"){ ev.preventDefault(); if(!stBusy) $("btnStGen").click(); }
+    else if((ev.key==="b"||ev.key==="B") && !mod && !ev.repeat && ST.holdDown){ ev.preventDefault(); ST.holdDown(); }
+  });
+  document.addEventListener("keyup",function(ev){
+    if((ev.key==="b"||ev.key==="B") && ST.holdUp) ST.holdUp();
+  });
 })();
 /* Reset threw away every slider, chip and queued edit on one tap, with no
    confirmation and nothing to return to — it even nulled the single snapshot
@@ -11503,6 +11676,31 @@ function stBrushOverlay(){
              y:Math.max(0,Math.min(c.height-1,Math.round((ev.clientY-r.top)*c.height/r.height))) };
   }
   c.addEventListener("pointerdown",function(ev){
+    if(ST.wbPickOn&&ST.srcBitmap&&ST.px0){
+      /* v4.44.1 — tap-to-neutral WB: average a 5x5 patch at the tap, then set
+         the exact gray-world gains stComputeWb would (same formula + clamps),
+         flip st_wbAuto on so the pipeline picks them up, and disarm. */
+      ev.stopPropagation(); ev.preventDefault();
+      var ptW=toBuf(ev), W5=ST.px0.width, H5=ST.px0.height, d5=ST.px0.data;
+      var sr5=0,sg5=0,sb5=0,c5=0;
+      for(var wy5=Math.max(0,ptW.y-2);wy5<=Math.min(H5-1,ptW.y+2);wy5++)
+        for(var wx5=Math.max(0,ptW.x-2);wx5<=Math.min(W5-1,ptW.x+2);wx5++){
+          var p5=(wy5*W5+wx5)*4; sr5+=d5[p5]; sg5+=d5[p5+1]; sb5+=d5[p5+2]; c5++;
+        }
+      if(c5){
+        var mr5=sr5/c5, mg5=sg5/c5, mb5=sb5/c5;
+        stUndoTick();
+        svSet("st_wbGr",stClamp(mg5/Math.max(1,mr5),0.8,1.25));
+        svSet("st_wbGb",stClamp(mg5/Math.max(1,mb5),0.8,1.25));
+        svSet("st_wbAuto",true);
+        ST._wbMeans={r:mr5,b:mb5};
+        stRefreshUI(); stPipeChanged();
+        toast(L9({my:"White balance ချိန်ပြီးပါပြီ ✓",en:"White balance set from your tap ✓",shn:"တင်ႉ White balance ယဝ်ႉ ✓",kac:"White balance jaw ngut sai ✓",th:"ตั้ง White balance แล้ว ✓",zh:"已按点按处校色 ✓",vi:"Đã đặt cân bằng trắng ✓",id:"White balance diatur ✓",ms:"White balance ditetapkan ✓"}),"ok");
+      }
+      ST.wbPickOn=false;
+      var wpb=$("stWbPickBtn"); if(wpb) wpb.classList.remove("on");
+      return;
+    }
     if(ST.healOn&&ST.srcBitmap){
       ev.stopPropagation(); ev.preventDefault();
       var pt=toBuf(ev);
@@ -11931,8 +12129,8 @@ $("stReset").innerHTML=icn("i-restore")+" Reset";
     b.onclick=fn;
     return b;
   }
-  stage.appendChild(mk("stUndoB","i-restore",L9({my:"နောက်ပြန်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),stUndo));
-  stage.appendChild(mk("stRedoB","i-retry",L9({my:"ရှေ့ပြန်",en:"Redo",shn:"ႁဵတ်းၶိုၼ်း",kac:"Bai galaw",th:"ทำซ้ำ",zh:"重做",vi:"Làm lại",id:"Ulangi",ms:"Buat semula"}),stRedo));
+  stage.appendChild(mk("stUndoB","i-restore",L9({my:"နောက်ပြန်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"})+" (Ctrl+Z)",stUndo));
+  stage.appendChild(mk("stRedoB","i-retry",L9({my:"ရှေ့ပြန်",en:"Redo",shn:"ႁဵတ်းၶိုၼ်း",kac:"Bai galaw",th:"ทำซ้ำ",zh:"重做",vi:"Làm lại",id:"Ulangi",ms:"Buat semula"})+" (Ctrl+Y)",stRedo));
   setTimeout(function(){ ST.undoBase=stFullSnap(); stUndoBtns(); },400);
 })();
 $("stResultH2").textContent=L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After"});
@@ -14170,7 +14368,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.44.0";
+var APP_VER="4.44.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -14898,6 +15096,37 @@ function showResult(){
   $("resultBox").className="card result-box on";
   var src="data:"+out.mime+";base64,"+out.b64;
   $("resultImg").src=src;
+  /* v4.44.1 — pinch-zoom QC on the result: the shared full-screen viewer
+     (Library/Gallery's) opens over the whole take history, so x2/x4 runs are
+     swipeable at full size before a single download */
+  /* v4.44.1 — multi-take runs (x2/x4) get a one-tap ZIP of every take,
+     riding the Path page's dependency-free stored-entry ZIP writer */
+  var za=$("btnDlAll");
+  if(za){
+    za.style.display = state.hist.length>1 ? "" : "none";
+    if(!za._wired){
+      za._wired=true;
+      za.onclick=function(){
+        var takes=state.hist; if(takes.length<2) return;
+        ptSaveBlob(ptZip(takes.map(function(e,i){
+          return { name: dlName("create", e.mime, i+1), u8: ptB64ToU8(e.b64) };
+        })), "hnk-create-"+ptStamp()+".zip");
+      };
+    }
+    setIcnText(za,"i-download","ZIP ("+state.hist.length+")");
+  }
+  var ri=$("resultImg");
+  if(ri && !ri._lzWired){
+    ri._lzWired=true;
+    ri.style.cursor="zoom-in";
+    makePickable(ri, function(){
+      var take=state.hist.length?state.hist:(state.result?[state.result]:[]);
+      if(!take.length) return;
+      lookZoomOpen(take.map(function(e,i){
+        return { src:"data:"+e.mime+";base64,"+e.b64, cap:(e._prov||"")+" · "+(i+1)+"/"+take.length };
+      }), Math.min(state.histSel, take.length-1));
+    });
+  }
   $("btnDl").href=src;
   $("btnDl").setAttribute("download","hnk-create-"+ptStamp()+"-"+(state.histSel+1)+(out.mime==="image/png"?".png":".jpg"));
   /* v4.41: the answer to "which engine ACTUALLY ran?" stays on the result
