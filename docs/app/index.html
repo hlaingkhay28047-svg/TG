@@ -599,6 +599,9 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    AI-only controls produce — were painted over exactly when a user first
    looks at the page. */
 .st-genbar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:8;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-2) var(--sp-3);margin:var(--sp-4) 0}
+/* v4.44 — while a Path batch runs, the run card (progress + Stop) sticks to
+   the same shelf the Studio gen bar uses, so a long scroll never hides it */
+#ptRunCard.pt-sticky{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:8}
 .st-genbar .st-x{margin-left:6px;color:var(--muted)}
 #stPendCount{font-size:var(--fs-2xs);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #stPendChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-top:4px}
@@ -1495,7 +1498,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <h2 id="refsH2"></h2>
     <div class="refs" id="refs"></div>
     <div class="mut" style="margin-top:8px" id="refsNote"></div>
-    <input type="file" id="filePick" accept="image/png,image/jpeg,image/webp" hidden>
+    <input type="file" id="filePick" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" hidden>
     <!-- Path Retouch owns its own multi-pick input: adding multiple to the
          shared #filePick above would break every single-slot page. -->
     <input type="file" id="ptFilePick" accept="image/png,image/jpeg,image/webp" multiple hidden>
@@ -1625,6 +1628,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="chips" id="stPendChips"></div>
     <div class="row" style="margin-top:6px">
       <button class="btn btn-gold grow gen" id="btnStGen"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg> GENERATE</button>
+      <button class="chip" id="btnStStop" style="display:none"></button>
       <button class="chip" id="stClearAi" style="display:none"></button>
       <button class="chip" id="stHd" style="display:none">HD Finish</button>
     </div>
@@ -1669,6 +1673,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
           <div class="subh" id="v2LbHair"></div><div class="chips" id="v2HairChips"></div>
           <div class="subh" id="v2LbOutfit"></div><div class="chips" id="v2OutfitChips"></div>
           <div class="subh" id="v2LbPreview"></div>
+          <div class="chips" id="v2RtCarry"></div>
           <pre id="v2PromptPreview" class="mut" style="white-space:pre-wrap;font-size:var(--fs-2xs);max-height:180px;overflow:auto"></pre>
         </div>
       </div>
@@ -1822,6 +1827,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="addons" id="addonSummaryCreate" style="cursor:pointer"></div>
     <button class="btn btn-gold gen" id="btnGen"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg> GENERATE</button>
     <div class="spin" id="spin">တိုက်ရိုက် ထုတ်နေပါတယ် — စက္ကန့် ၂၀-၆၀ လောက် စောင့်ပါ…</div>
+    <button class="btn" id="btnGenStop" style="display:none;margin-top:8px"></button>
     <div class="status" id="stGen"></div>
     <button class="btn" id="btnRetry" style="display:none;margin-top:8px"></button>
   </section>
@@ -4304,8 +4310,14 @@ function downscale(dataUrl, cb){
     c.getContext("2d").drawImage(img,0,0,c.width,c.height);
     try { cb(c.toDataURL("image/jpeg",0.9)); } catch(e){ cb(dataUrl); }
   };
-  img.onerror=function(){ cb(dataUrl); };
+  /* v4.44 — an undecodable file (iPhone HEIC on browsers without a decoder,
+     truncated download) used to pass through and fail silently much later;
+     callers now receive null and can say WHY immediately */
+  img.onerror=function(){ cb(null); };
   img.src=dataUrl;
+}
+function unreadableImgMsg(){
+  return L9({my:"ဒီပုံကို ဖတ်လို့မရပါ — JPEG/PNG အဖြစ် ပြောင်းပြီး ပြန်ပို့ကြည့်ပါ (iPhone ဆိုရင် Settings → Camera → Formats → Most Compatible)",en:"Couldn't read this image — please resend it as JPEG/PNG (on iPhone: Settings → Camera → Formats → Most Compatible)",shn:"ဢမ်ႇၸၢင်ႈလူတ်ႇၶႅပ်းႁၢင်ႈၼႆႉ — သူင်ႇၶိုၼ်းပဵၼ် JPEG/PNG",kac:"Ndai sumla hpe hti n mai ai — JPEG/PNG hku bai shagun yu u",th:"อ่านรูปนี้ไม่ได้ — กรุณาส่งใหม่เป็น JPEG/PNG (iPhone: Settings → Camera → Formats → Most Compatible)",zh:"无法读取此图片 — 请转为 JPEG/PNG 后重新发送（iPhone：设置 → 相机 → 格式 → 兼容性最佳）",vi:"Không đọc được ảnh này — hãy gửi lại dạng JPEG/PNG (iPhone: Cài đặt → Camera → Định dạng → Tương thích nhất)",id:"Tidak bisa membaca gambar ini — kirim ulang sebagai JPEG/PNG (iPhone: Pengaturan → Kamera → Format → Paling Kompatibel)",ms:"Tidak dapat membaca imej ini — hantar semula sebagai JPEG/PNG (iPhone: Tetapan → Kamera → Format → Paling Serasi)"});
 }
 $("filePick").onchange = function(){
   /* v4.28 batch: a Batch-armed pick hands the whole FileList to the V2 batch
@@ -4328,6 +4340,7 @@ $("filePick").onchange = function(){
   var rd=new FileReader();
   rd.onload=function(){
     downscale(String(rd.result), function(dataUrl){
+      if(!dataUrl){ toast(unreadableImgMsg(),"err"); return; }
       var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
       if(m){
         if(state.pickSlot==="stx"){ /* Studio reference-transfer slot (M8/M20) — session-only */
@@ -5876,9 +5889,16 @@ function renderRsStrengthChips(){
   });
 }
 $("rsClearAll").onclick=function(){
-  D.retouch.sliders.forEach(function(s){ state.rt[s.key]=0; });
+  /* v4.44 — a hand-tuned 10-slider setup deserves the standard Undo offer */
+  var keptRt={};
+  D.retouch.sliders.forEach(function(s){ keptRt[s.key]=state.rt[s.key]; state.rt[s.key]=0; });
   renderRtChips(); renderAddonSummary(); renderRsSelCount(); renderRsBundleGrid();
-  toast(L9({my:"Retouch ရွေးထားသမျှ ဖျက်လိုက်ပြီ ✓",en:"All retouch selections cleared ✓",shn:"လၢင်ႉပႅတ်ႈ Retouch ဢၼ်လိူၵ်ႈဝႆႉတင်းသဵင်ႈယဝ်ႉ ✓",kac:"Retouch lata da ai yawng hkrat kau sai ✓",th:"ล้างการเลือกรีทัชทั้งหมดแล้ว ✓",zh:"已清除全部精修选择 ✓",vi:"Đã xóa mọi lựa chọn retouch ✓",id:"Semua pilihan retouch dihapus ✓",ms:"Semua pilihan retouch dipadam ✓"}),"ok");
+  toast(L9({my:"Retouch ရွေးထားသမျှ ဖျက်လိုက်ပြီ ✓",en:"All retouch selections cleared ✓",shn:"လၢင်ႉပႅတ်ႈ Retouch ဢၼ်လိူၵ်ႈဝႆႉတင်းသဵင်ႈယဝ်ႉ ✓",kac:"Retouch lata da ai yawng hkrat kau sai ✓",th:"ล้างการเลือกรีทัชทั้งหมดแล้ว ✓",zh:"已清除全部精修选择 ✓",vi:"Đã xóa mọi lựa chọn retouch ✓",id:"Semua pilihan retouch dihapus ✓",ms:"Semua pilihan retouch dipadam ✓"}),"ok",
+    {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
+     fn:function(){
+       D.retouch.sliders.forEach(function(s){ if(keptRt[s.key]!==undefined) state.rt[s.key]=keptRt[s.key]; });
+       renderRtChips(); renderAddonSummary(); renderRsSelCount(); renderRsBundleGrid();
+     }});
 };
 
 /* generate: steer the shared $("btnGen") provider/fallback dispatcher's
@@ -6015,10 +6035,12 @@ function rsShowResult(){
   $("rsCmpAfter").src=src;
   $("btnRsDl").href=src;
   /* v4.28: unique download names — date + running photo number, so batch
-     results (and re-downloads across sessions) never overwrite each other */
-  var dld=new Date();
-  var dp=function(x){ return (x<10?"0":"")+x; };
-  $("btnRsDl").download="hnk-retouch-"+dld.getFullYear()+dp(dld.getMonth()+1)+dp(dld.getDate())+"-"+(state.v2BatchN||state.histSel+1)+".png";
+     results (and re-downloads across sessions) never overwrite each other.
+     v4.44: mime-correct extension (was a hardcoded .png over JPEG bytes) and
+     the client's original filename when we know it. */
+  var rsSrcLabel=(state.rsOrig&&state.rsOrig.label)||(state.refs[0]&&state.refs[0].label)||null;
+  if(rsSrcLabel==="studio"||rsSrcLabel==="gallery"||rsSrcLabel==="result") rsSrcLabel=null;
+  $("btnRsDl").download=dlName("retouch",out.mime,(state.v2BatchN||state.histSel+1),rsSrcLabel);
   /* v4.28: Before prefers the chain's true original (rsOrig) so chained
      retouches always compare against the photo the user actually uploaded */
   var rsBase=state.rsOrig||state.refs[0];
@@ -6305,7 +6327,23 @@ function renderV2Hero(){
       host.appendChild(b);
     });
   });
-  $("v2PromptPreview").textContent=v2BuildPrompt(); /* preview honesty: exactly what the run sends */
+  /* v4.44 — the Manual page's sliders ride into every generate through the
+     shared dispatcher, V2 runs included; that was invisible here. Surface it
+     as a toggle chip and make the preview show EXACTLY what the run sends. */
+  var rtN=D.retouch.sliders.filter(function(sl){ return state.rt[sl.key]; }).length;
+  var carry=$("v2RtCarry");
+  if(carry){
+    carry.innerHTML="";
+    if(rtN){
+      if(state.v2.inclRt===undefined) state.v2.inclRt=true;
+      var cb=el("button","chip"+(state.v2.inclRt?" on":""));
+      cb.innerHTML=icn("i-sliders")+" "+escH(L9({my:"Manual slider "+rtN+" ခု "+(state.v2.inclRt?"ပါမယ်":"မပါဘူး"),en:(state.v2.inclRt?"Including ":"Excluding ")+rtN+" manual slider"+(rtN>1?"s":""),shn:"Manual slider "+rtN+" "+(state.v2.inclRt?"ပႃး":"ဢမ်ႇပႃး"),kac:"Manual slider "+rtN+" "+(state.v2.inclRt?"lawm ai":"n lawm ai"),th:(state.v2.inclRt?"รวม":"ไม่รวม")+" manual slider "+rtN+" ตัว",zh:(state.v2.inclRt?"包含":"不含")+rtN+"个手动滑杆",vi:(state.v2.inclRt?"Gồm ":"Bỏ ")+rtN+" thanh chỉnh tay",id:(state.v2.inclRt?"Termasuk ":"Tanpa ")+rtN+" slider manual",ms:(state.v2.inclRt?"Termasuk ":"Tanpa ")+rtN+" slider manual"}));
+      cb.onclick=function(){ state.v2.inclRt=!state.v2.inclRt; v2Sync(); };
+      carry.appendChild(cb);
+    }
+  }
+  var rtBlock=(rtN && state.v2.inclRt!==false) ? buildRetouch() : "";
+  $("v2PromptPreview").textContent=v2BuildPrompt()+(rtBlock?"\n\n"+rtBlock:""); /* preview honesty: exactly what the run sends */
   /* next-photo auto-start: armed by #btnV2Next, consumed on the first pick */
   if(state.v2Armed && state.refs[0] && !rsBusy){ state.v2Armed=false; $("btnV2Start").onclick(); }
 }
@@ -6324,12 +6362,21 @@ async function v2DoGenerate(promptText){
   c.value="1"; /* deterministic batch counter + cost honesty */
   $("prompt").value=promptText; state.imgRoles=null;
   state.refs[1]=null; state.refs[2]=null; /* single-photo tool — same leak guard as rsDoGenerate */
+  /* v4.44 — honor the hero's "exclude manual sliders" choice for just this
+     run: blank state.rt around the dispatcher (same save/force/restore
+     pattern as the selects above) */
+  var keptRt=null;
+  if(state.v2.inclRt===false){
+    keptRt={};
+    D.retouch.sliders.forEach(function(sl){ keptRt[sl.key]=state.rt[sl.key]; state.rt[sl.key]=0; });
+  }
   var beforeFirst=state.hist[0]; /* identity check, never length (8-cap) */
   try{ await $("btnGen").onclick(); }
   finally{
     state.refs[1]=saved1; state.refs[2]=saved2;
     s.value=sv.m; q.value=sv.q; r.value=sv.r; c.value=sv.c; z.value=sv.z;
     $("prompt").value=savedPrompt; /* rsDoGenerate leaves the prompt; V2 restores it — Freeform stays untouched */
+    if(keptRt) D.retouch.sliders.forEach(function(sl){ if(keptRt[sl.key]!==undefined) state.rt[sl.key]=keptRt[sl.key]; });
   }
   /* v4.28 Stop: a response that lands after Stop is discarded, never rendered */
   if(rsStop){
@@ -6426,6 +6473,7 @@ function rsLoadFileToSlot0(f){
     rd.onerror=function(){ res(false); };
     rd.onload=function(){
       downscale(String(rd.result), function(dataUrl){
+        if(!dataUrl) return res(false);
         var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
         if(!m) return res(false);
         state.cmpBase=null; state.rsOrig=null; /* each batch photo is a fresh original */
@@ -7012,7 +7060,31 @@ function ptSetBusy(b, label){
      a finished run silently makes HD tappable and the user gets a Quality
      result labelled HD. ptRenderChips() re-applies the real gate. */
   if(!b) ptRenderChips();
+  /* v4.44 — a 50-photo AI batch takes many minutes on a phone: hold a screen
+     Wake Lock for the whole run (fail-silent where unsupported), re-acquire
+     when the tab comes back to the foreground, release on un-busy. */
+  if(b){
+    if(navigator.wakeLock && !PT.wake){
+      navigator.wakeLock.request("screen").then(function(wl){ PT.wake=wl; }).catch(function(){});
+    }
+  } else if(PT.wake){
+    try{ PT.wake.release(); }catch(e){}
+    PT.wake=null;
+  }
+  /* the run card carries the live progress — keep it on screen while busy */
+  var rc=$("ptRunCard"); if(rc) rc.classList.toggle("pt-sticky",!!b);
 }
+document.addEventListener("visibilitychange",function(){
+  if(!document.hidden && PT.busy && navigator.wakeLock && !PT.wake){
+    navigator.wakeLock.request("screen").then(function(wl){ PT.wake=wl; }).catch(function(){});
+  }
+  if(document.hidden) PT.wake=null; /* the OS auto-releases on hide */
+});
+/* PT.photos is deliberately session-only (too heavy to persist) — leaving
+   mid-run silently discards the batch AND any un-downloaded results */
+window.addEventListener("beforeunload",function(e){
+  if(PT.busy){ e.preventDefault(); e.returnValue=""; }
+});
 function ptEta(){
   var tier=state.pt.tier;
   return tier==="fast" ? t("eta_fast") : tier==="hd" ? t("eta_hd") : t("eta_quality");
@@ -7173,7 +7245,8 @@ function stApplyRecipeTo(img, recipe, maxDim){
     state.st.t2=Object.assign(stDefT2(), recipe.t2||{});
     state.st.v=Object.assign({}, recipe.v||{});
     ST.g1={}; ST.g2={}; ST.userMask=null; ST.userMaskCanvas=null;
-    return stRunPipeline(img, w, h, {});
+    /* heals are taps on the CURRENT Studio photo — never on a batch photo */
+    return stRunPipeline(img, w, h, {heals:[]});
   } finally {
     state.st.t1=sv.t1; state.st.t2=sv.t2; state.st.v=sv.v;
     ST.g1=sv.g1; ST.g2=sv.g2; ST.userMask=sv.um; ST.userMaskCanvas=sv.umc;
@@ -7295,6 +7368,14 @@ function ptB64ToU8(b64){
   return u;
 }
 function ptSafeName(s){ return String(s||"photo").replace(/[\\/:*?"<>|]+/g,"-").replace(/\s+/g," ").slice(0,64); }
+/* v4.44 — one download-name rule for every result page: the extension comes
+   from the REAL mime (a JPEG must never download as .png), and a known source
+   filename beats the generic prefix so batch deliveries keep client names. */
+function dlName(prefix, mime, seq, base){
+  var stem = base ? ptSafeName(base).replace(/\.[a-z0-9]+$/i,"")+"-"+prefix
+                  : "hnk-"+prefix+"-"+ptStamp();
+  return stem+(seq?("-"+seq):"")+(mime==="image/png"?".png":mime==="image/webp"?".webp":".jpg");
+}
 function ptStamp(){
   var d=new Date(); function p2(x){ return (x<10?"0":"")+x; }
   return ""+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate());
@@ -7454,9 +7535,16 @@ $("ptFilePick").onchange=function(){
 };
 $("btnPtClear").onclick=function(){
   if(PT.busy) return;
+  if(!PT.photos.length) return;
+  /* v4.44 — clearing a 50-photo batch (with un-downloaded results) gets the
+     same Undo contract every other destructive tap in the app has */
+  var kept=PT.photos, keptLog=PT.logLines, keptLogTxt=$("ptLog").textContent;
   PT.photos=[]; PT.logLines=[]; PT.sheetIdx=-1;
   $("ptLog").textContent=""; setSt("stPtGen","");
   ptCloseSheet(); ptSync();
+  toast(L9({my:"ဓာတ်ပုံ "+kept.length+" ပုံ ဖယ်လိုက်ပါပြီ",en:"Removed "+kept.length+" photos",shn:"ဢဝ်ဢွၵ်ႇ ၶႅပ်းႁၢင်ႈ "+kept.length,kac:"Sumla "+kept.length+" hkrat kau sai",th:"ลบ "+kept.length+" รูปแล้ว",zh:"已移除 "+kept.length+" 张",vi:"Đã xóa "+kept.length+" ảnh",id:"Menghapus "+kept.length+" foto",ms:"Membuang "+kept.length+" foto"}),"ok",
+    {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
+     fn:function(){ PT.photos=kept; PT.logLines=keptLog; $("ptLog").textContent=keptLogTxt; ptSync(); }});
 };
 $("btnPtRef").onclick=function(){ $("ptRefPick").click(); };
 $("ptRefPick").onchange=function(){
@@ -7466,6 +7554,7 @@ $("ptRefPick").onchange=function(){
   var rd=new FileReader();
   rd.onload=function(){
     downscale(String(rd.result), function(du){
+      if(!du){ toast(unreadableImgMsg(),"err"); return; }
       var m=du.match(/^data:([^;]+);base64,(.+)$/);
       if(m){ PT.ref={mime:m[1],b64:m[2],label:f.name}; ptSync(); }
     });
@@ -7538,14 +7627,19 @@ $("btnPtRetryOne").onclick=function(){
 };
 $("btnPtGalOne").onclick=function(){
   var p=PT.photos[PT.sheetIdx]; if(!p||!p.outB64) return;
-  galleryAdd({mime:p.outMime||"image/png", b64:p.outB64}, "path "+ptLookOf(p).id);
-  toast(t("pt_saved_gal"),"ok");
+  /* v4.44 — every AI result was already galleryAdd'ed by the shared
+     dispatcher the moment it landed (see the run loop's note); re-adding
+     here created silent duplicate Gallery records. Be honest instead. */
+  toast(L9({my:"Gallery ထဲ ရောက်ပြီးသားပါ ✓",en:"Already in the Gallery ✓",shn:"မီးၼႂ်း Gallery ယဝ်ႉ ✓",kac:"Gallery hta du nga sai ✓",th:"อยู่ใน Gallery แล้ว ✓",zh:"已在 Gallery 中 ✓",vi:"Đã có trong Gallery ✓",id:"Sudah ada di Gallery ✓",ms:"Sudah ada dalam Gallery ✓"}),"ok");
 };
 $("btnPtRemoveOne").onclick=function(){
   if(PT.busy) return;
   var i=PT.sheetIdx; if(i<0) return;
-  PT.photos.splice(i,1);
+  var removed=PT.photos.splice(i,1)[0];
   ptCloseSheet(); ptSync();
+  toast(L9({my:"ဖယ်လိုက်ပါပြီ",en:"Removed",shn:"ဢဝ်ဢွၵ်ႇယဝ်ႉ",kac:"Hkrat kau sai",th:"ลบแล้ว",zh:"已移除",vi:"Đã xóa",id:"Dihapus",ms:"Dibuang"}),"ok",
+    {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
+     fn:function(){ PT.photos.splice(Math.min(i,PT.photos.length),0,removed); ptSync(); }});
 };
 /* hold-to-peek the untouched original — the studied tool's single best idea */
 (function(){
@@ -8145,6 +8239,13 @@ function stGeoDims(){
   return { w:s.width||s.naturalWidth, h:s.height||s.naturalHeight };
 }
 function stGeoChanged(){ /* T2 op — settle latency acceptable; mask + px0 invalidated, buffer rebuilt */
+  /* heal taps are normalized to the CURRENT buffer frame — crop/rotate moves
+     that frame, so surviving ops would land on the wrong pixels. Clear, and
+     say so when any existed. */
+  if(ST.heals&&ST.heals.length){
+    ST.heals=[];
+    toast(L9({my:"Crop/rotate ကြောင့် အစက်ဖျက်ထားတာတွေ ပြန်စလိုက်ပါပြီ",en:"Heal taps were reset by the crop/rotate",shn:"Crop/rotate ႁဵတ်းႁႂ်ႈ heal ၶိုၼ်းတႄႇ",kac:"Crop/rotate a majaw heal ni bai hpang sai",th:"การครอบตัด/หมุนได้ล้างจุดที่ลบไว้",zh:"裁剪/旋转已重置祛斑点",vi:"Cắt/xoay đã đặt lại các điểm đã xóa",id:"Crop/rotate mengatur ulang titik heal",ms:"Crop/rotate menetapkan semula titik heal"}),"");
+  }
   ST.geoCache=null; ST.maskCache=null; ST.px0=null;
   if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); stSaveSoon(); return; }
   stBuildBuffer();
@@ -8221,6 +8322,16 @@ function stRunPipeline(srcImg,W,H,opts){
     t2.blushC=stHexRgb(svGet("mu_blushLocHex",null));
   }
   var px=cx.getImageData(0,0,W,H), d=px.data, n=W*H;
+  /* (1b) v4.44 — replay heal taps at THIS render size, before any tonal work,
+     so spot fixes reach preview, exports and bakes alike (normalized op list;
+     the worker receives it via opts.heals) */
+  var heals=opts.heals!==undefined?opts.heals:((typeof ST!=="undefined"&&ST.heals&&ST.heals.length)?ST.heals:null);
+  if(heals&&heals.length){
+    for(var hI=0;hI<heals.length;hI++){
+      var hOp=heals[hI];
+      stHealApply(px,W,H,Math.round(hOp.u*W),Math.round(hOp.v*H),Math.max(2,Math.round(hOp.ur*Math.min(W,H))));
+    }
+  }
   /* (2)+(3) tonal LUT + color pass (+ gray-world WB gains + dehaze saturation) */
   var lut=stComputeLut(t1,opts.curve);
   var doColor=!!(t1.wrm||t1.tnt||t1.sat||t1.vib||t1.dhz>0||pv.wbOn);
@@ -8487,14 +8598,14 @@ function stWorker(){
     /* the worker is built from the LIVE sources of the pipeline family, so it
        can never drift from the sync path. Guarded fallbacks (opts.t1||stEffT1()
        etc.) are never evaluated there — every message carries resolved params. */
-    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinMask,stBlurData,stFaceZones,stInEllipse,stApplySkin,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
+    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinMask,stBlurData,stFaceZones,stInEllipse,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
     var src='var document={createElement:function(){return new OffscreenCanvas(1,1);}};\n'
       + fns.map(function(f){ return f.toString(); }).join("\n")
       + '\nvar _pc=new OffscreenCanvas(4,4).getContext("2d");var FILTER_OK=false;'
       + '\ntry{_pc.filter="blur(2px)";FILTER_OK=(_pc.filter==="blur(2px)");}catch(e){}'
       + '\nself.postMessage({ready:true,filterOk:FILTER_OK});'
       + '\nself.onmessage=function(e){var m=e.data;try{'
-      + 'var cv=stRunPipeline(m.bmp,m.W,m.H,{t1:m.t1,t2:m.t2,pv:m.pv,curve:m.curve,um:m.um,umInv:m.umInv,maskInfo:m.mi});'
+      + 'var cv=stRunPipeline(m.bmp,m.W,m.H,{t1:m.t1,t2:m.t2,pv:m.pv,curve:m.curve,um:m.um,umInv:m.umInv,heals:m.heals,maskInfo:m.mi});'
       + 'try{if(m.bmp&&m.bmp.close)m.bmp.close();}catch(e2){}'
       + 'var out=cv.transferToImageBitmap();'
       + 'self.postMessage({id:m.id,bmp:out},[out]);'
@@ -8530,7 +8641,8 @@ function stWorkerRender(W,H){
   if(ST.userMask && ST.userMask.length===W*H && svGet("st_brushMode",null)){
     um=ST.userMask; umInv=svGet("st_brushMode","in")==="out";
   }
-  var msg={id:id, W:W, H:H, t1:stEffT1(), t2:t2, pv:stPipeVals(), curve:stCurveVals(), um:um, umInv:umInv, mi:ST.maskCache};
+  var msg={id:id, W:W, H:H, t1:stEffT1(), t2:t2, pv:stPipeVals(), curve:stCurveVals(), um:um, umInv:umInv,
+           heals:(ST.heals&&ST.heals.length)?ST.heals:null, mi:ST.maskCache};
   STW.cb[id]=function(bmp){
     if(!bmp){ stWorkerKill(); stRenderSettle(); return; } /* worker render failed → permanent sync fallback */
     if(!ST.srcBitmap||ST.holding||ST.showingResult||id!==STW.id){ try{ bmp.close(); }catch(e){} return; }
@@ -8679,6 +8791,7 @@ function stLoadImage(dataUrl,opts){
     ST.orig = state.st.img;
     if(!opts.fromRef && m){ state.refs[0]={mime:m[1],b64:m[2],label:"studio"}; renderRefs(); }
     ST.maskCache=null; ST.lutKey=""; ST.geoCache=null;
+    ST.heals=[]; /* v4.44: heal taps belong to the previous photo */
     ST.stageResult=null; ST.showingResult=false;
     var fl=$("stStageFlip"); if(fl) fl.style.display="none";
     stBuildBuffer();
@@ -8689,6 +8802,11 @@ function stLoadImage(dataUrl,opts){
     stRenderSettle(); stApplyDragFilter();
     stRenderThumbs();
     stUiSoon();
+    if(opts.done) opts.done();
+  };
+  /* v4.44 — a bad data URL used to leave the stage silently un-updated */
+  img.onerror=function(){
+    toast(unreadableImgMsg(),"err");
     if(opts.done) opts.done();
   };
   img.src=dataUrl;
@@ -11074,7 +11192,8 @@ function renderStPicker(){
    the app keeps. The state is already cheap to serialise, so keep one. */
 function stFullSnap(){
   return JSON.parse(JSON.stringify({t1:state.st.t1,t2:state.st.t2,v:state.st.v,
-    pend:state.st.pend,geo:state.st.geo,target:state.st.target,preset:state.st.preset}));
+    pend:state.st.pend,geo:state.st.geo,target:state.st.target,preset:state.st.preset,
+    heals:ST.heals||[]}));
 }
 function stUndoReset(){
   var u=ST.undoSnap; if(!u) return;
@@ -11115,12 +11234,16 @@ function stUndoTick(){
 }
 function stApplySnap(sn){
   var geoChanged=JSON.stringify(state.st.geo)!==JSON.stringify(sn.geo);
+  /* v4.44: snapshots carry the heal-op list, so multi-step undo/redo also
+     walks heal taps (older snapshots without .heals leave heals untouched) */
+  var healsChanged=sn.heals!==undefined && JSON.stringify(ST.heals||[])!==JSON.stringify(sn.heals||[]);
   state.st.t1=sn.t1; state.st.t2=sn.t2; state.st.v=sn.v; state.st.pend=sn.pend;
   state.st.geo=sn.geo; state.st.target=sn.target; state.st.preset=sn.preset;
+  if(healsChanged) ST.heals=(sn.heals||[]).slice();
   ST.geoCache=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   if(ST.srcBitmap){
-    if(geoChanged){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); }
+    if(geoChanged||healsChanged){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); stHealReplayPx0(); }
     stApplyDragFilter(); stRenderSettle();
   }
   saveState();
@@ -11247,18 +11370,14 @@ function stShowZones(){
    its own deviation from the local mean — texture survives, the blemish's
    discolouration goes. Destructive on the working buffer, with an Undo that
    restores the exact patch bytes. */
-function stHealAt(bx,by){
-  var px=ST.px0; if(!px) return;
-  var W=px.width,H=px.height,d=px.data;
-  var r=Math.max(4,Math.round(Math.min(W,H)*(svGet("st_healR",2)/100)));
+/* Pure heal core — operates on any ImageData at any size, no ST/svGet, so the
+   SAME function runs on px0, inside stRunPipeline at every render size, and
+   inside the render worker. */
+function stHealApply(px,W,H,bx,by,r){
+  var d=px.data;
   var x0=Math.max(0,bx-r), x1=Math.min(W-1,bx+r), y0=Math.max(0,by-r), y1=Math.min(H-1,by+r);
-  /* undo patch */
   var pw=x1-x0+1, ph=y1-y0+1;
-  var patch=new Uint8ClampedArray(pw*ph*4);
-  for(var yy=y0;yy<=y1;yy++){
-    var src=(yy*W+x0)*4, dst=((yy-y0)*pw)*4;
-    patch.set(d.subarray(src,src+pw*4),dst);
-  }
+  if(pw<2||ph<2) return;
   /* ring samples just outside the radius */
   var ring=[], RS=r*1.45;
   for(var a=0;a<12;a++){
@@ -11305,18 +11424,42 @@ function stHealAt(bx,by){
     d[p+1]=nG<0?0:Math.min(255,nG);
     d[p+2]=nB<0?0:Math.min(255,nB);
   }
+}
+/* v4.44 — heal taps are recorded as NORMALIZED ops (u,v,ur in 0..1) and
+   replayed inside stRunPipeline at every render size, so a healed spot lands
+   in the settle preview, full-res export, 2-up and AI bake alike. v4.42
+   healed only ST.px0 — the skin-mask snapshot — and never reached the screen.
+   ST.px0 is still healed here to keep the mask consistent with the pixels. */
+function stHealAt(bx,by){
+  var px=ST.px0; if(!px) return;
+  var W=px.width,H=px.height;
+  var r=Math.max(4,Math.round(Math.min(W,H)*(svGet("st_healR",2)/100)));
+  stUndoTick();
+  ST.heals=ST.heals||[];
+  ST.heals.push({u:bx/W, v:by/H, ur:r/Math.min(W,H)});
+  stHealApply(px,W,H,bx,by,r);
   ST.maskCache=null;
   stRenderSettle();
   toast(L9({my:"အစက် ဖျက်ပြီးပါပြီ ✓",en:"Spot healed ✓",shn:"မွတ်ႇယဝ်ႉ ✓",kac:"Spot shamat sai ✓",th:"ลบจุดแล้ว ✓",zh:"已祛除 ✓",vi:"Đã xóa đốm ✓",id:"Noda dihapus ✓",ms:"Bintik dibuang ✓"}),"ok",
     {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
-     fn:function(){
-       var d2=ST.px0&&ST.px0.data; if(!d2) return;
-       for(var yy2=y0;yy2<=y1;yy2++){
-         var dst2=(yy2*W+x0)*4, src2=((yy2-y0)*pw)*4;
-         d2.set(patch.subarray(src2,src2+pw*4),dst2);
-       }
-       ST.maskCache=null; stRenderSettle();
-     }});
+     fn:stHealUndoLast});
+}
+function stHealUndoLast(){
+  if(!ST.heals||!ST.heals.length||!ST.srcBitmap) return;
+  ST.heals.pop();
+  /* rebuild the unhealed snapshot, then replay the remaining taps */
+  ST.maskCache=null; ST.px0=null;
+  stBuildBuffer();
+  stHealReplayPx0();
+  stRenderSettle();
+}
+function stHealReplayPx0(){
+  var px=ST.px0; if(!px||!ST.heals||!ST.heals.length) return;
+  var W=px.width,H=px.height;
+  for(var i=0;i<ST.heals.length;i++){
+    var h=ST.heals[i];
+    stHealApply(px,W,H,Math.round(h.u*W),Math.round(h.v*H),Math.max(2,Math.round(h.ur*Math.min(W,H))));
+  }
 }
 /* ---------- v4.42: brush mask — screen taps/drags → buffer-space strength mask ---------- */
 function stBrushCanvas(){
@@ -11546,6 +11689,10 @@ function stSetBusy(b,label){
   stBusy=b; ST.busy=b;
   var btn=$("btnStGen"); if(btn){ btn.disabled=b; btn.classList.toggle("working",!!b); }
   var sp=$("stSpin"); if(sp){ sp.className="spin"+(b?" on":""); if(label) sp.textContent=label; }
+  /* v4.44 — busy-off always hides the Stop chip; the abortable call sites
+     (Tier-3 dispatch, HD Finish) show it themselves once their controller
+     exists. The free 30ms local render never shows it — nothing to stop. */
+  var stp=$("btnStStop"); if(stp && !b) stp.style.display="none";
   document.querySelectorAll("#muPresetRow .pcard, #evPresetRow .pcard").forEach(function(c){ c.disabled=b; });
 }
 /* Which suite does a queued AI feature belong to? Every group registers its
@@ -11596,6 +11743,7 @@ $("btnStGen").onclick=async function(){
   }
   /* Tier-3: bake the live-preview edits into the photo, then ride the shared dispatcher */
   stSetBusy(true,t("spin_gen"));
+  var stStopB=$("btnStStop"); if(stStopB) stStopB.style.display="";
   var savedR0=state.refs[0], savedR1=state.refs[1], savedR2=state.refs[2];
   var savedPrompt=$("prompt").value;
   var beforeFirst=state.hist[0];
@@ -11624,21 +11772,36 @@ $("btnStGen").onclick=async function(){
   if(ok){
     /* optional HD Finish through the already-shipped RunningHub upscale adapter */
     if(svGet("st_hd",false) && gateAllows("hd_finish") && rhIsConfigured("upscale-pro") && state.rhKey){
+      var hdAbortSt=null;
       try{
         stSetBusy(true,t("hd_finish")+"…");
+        /* v4.44 — HD Finish was the one Studio network call without an abort
+           path; give it a controller so the Stop chip covers it too */
+        hdAbortSt=new AbortController(); state.genAbort=hdAbortSt;
+        if(stStopB) stStopB.style.display="";
         var res=state.hist[0];
-        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], hdFinishSize(), function(){});
+        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], hdFinishSize(), function(){}, hdAbortSt.signal);
         if(outs && outs[0]){
           state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
           state.result=outs[0]; state.histSel=0;
           galleryAdd(outs[0],"studio hd finish");
         }
-      }catch(e2){ toast(t("hd_finish")+": "+friendlyError(e2),"err"); }
+      }catch(e2){
+        if(!(hdAbortSt&&hdAbortSt.signal.aborted)) toast(t("hd_finish")+": "+friendlyError(e2),"err");
+      }
+      finally{ if(hdAbortSt && state.genAbort===hdAbortSt) state.genAbort=null; }
     }
     stShowResult(state.hist[0]);
   }
   stSetBusy(false);
 };
+/* v4.44 — Studio Stop chip: aborts whichever controller is in flight
+   (shared dispatcher run or HD Finish) */
+(function(){
+  var sb=$("btnStStop"); if(!sb) return;
+  setIcnText(sb,"i-close",L9({my:"ရပ်မယ်",en:"Stop",shn:"ၵိုတ်း",kac:"Hkring u",th:"หยุด",zh:"停止",vi:"Dừng",id:"Berhenti",ms:"Berhenti"}));
+  sb.onclick=function(){ if(state.genAbort){ try{ state.genAbort.abort(); }catch(e){} } };
+})();
 
 /* ---- MY RECIPES (Evoto presets/batch heritage): snapshot → localStorage → one-tap re-apply ---- */
 var ST_RECIPE_LS="hnk_st_recipes";
@@ -14007,7 +14170,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.43.1";
+var APP_VER="4.44.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -14253,8 +14416,11 @@ function phLoad(){ try{ return JSON.parse(localStorage.getItem(LS_PH)||"[]"); }c
 function phSave(list){ try{ localStorage.setItem(LS_PH, JSON.stringify(list)); }catch(e){} }
 function pushPromptHistory(p){
   if(!p || p.length<4) return;
+  /* v4.44 — re-generating with a starred prompt must not unstar it: the
+     dedupe below removes the old entry, so its star has to ride along */
+  var old=phLoad().find(function(it){ return it.p===p; });
   var list=phLoad().filter(function(it){ return it.p!==p; });
-  list.unshift({ p:p, star:false });
+  list.unshift({ p:p, star:!!(old&&old.star) });
   /* unstarred entries cap at 20; starred ones are kept far longer (a
      deliberate "never lose what I starred" promise) but still capped at 60
      — every other history array in the app has a ceiling, and an unbounded
@@ -14438,6 +14604,7 @@ $("btnGen").onclick = async function(){
      can kill the in-flight provider calls instead of waiting them out */
   var genAbort=new AbortController(); state.genAbort=genAbort;
   $("btnRetry").style.display="none";
+  var stopB=$("btnGenStop"); if(stopB) stopB.style.display="";
   try{
     /* shared translate gate (v4.28) — covers the RunningHub/OpenAI provider
        paths of this dispatcher, not just Gemini */
@@ -14636,12 +14803,26 @@ $("btnGen").onclick = async function(){
     if(!state.cmpBase && state.refs[0]) state.cmpBase=state.refs[0];
     showResult();
     setSt("stGen", t("st_done")+" ("+outs.length+"/"+count+")","ok");
-  }catch(e){ setSt("stGen",(e&&e.message)||String(e),"err"); $("btnRetry").style.display=""; }
+  }catch(e){
+    /* v4.44 — a user-tapped Stop is not an error worth a raw exception string */
+    var wasStopped=genAbort.signal.aborted||/abort/i.test(((e&&e.name)||"")+" "+((e&&e.message)||""));
+    setSt("stGen", wasStopped?L9({my:"ရပ်လိုက်ပါပြီ",en:"Stopped",shn:"ၵိုတ်းယဝ်ႉ",kac:"Hkring sai",th:"หยุดแล้ว",zh:"已停止",vi:"Đã dừng",id:"Dihentikan",ms:"Dihentikan"}):((e&&e.message)||String(e)),"err");
+    $("btnRetry").style.display="";
+  }
   if(state.genAbort===genAbort) state.genAbort=null;
+  if(stopB) stopB.style.display="none";
   btn.disabled=false; btn.classList.remove("working"); $("spin").className="spin"; $("spin").textContent=t("spin_gen");
 };
 
 $("btnRetry").onclick=function(){ this.style.display="none"; $("btnGen").onclick(); };
+/* v4.44 — Stop for the Freeform run. The per-dispatch AbortController has
+   existed since v4.28 and every provider call carries its signal; this is
+   the missing button (same core as rsDoStop). */
+(function(){
+  var sb=$("btnGenStop"); if(!sb) return;
+  setIcnText(sb,"i-close",L9({my:"ရပ်မယ်",en:"Stop",shn:"ၵိုတ်း",kac:"Hkring u",th:"หยุด",zh:"停止",vi:"Dừng",id:"Berhenti",ms:"Berhenti"}));
+  sb.onclick=function(){ if(state.genAbort){ try{ state.genAbort.abort(); }catch(e){} } };
+})();
 
 /* v4.41: phone-native share — a studio delivers finished photos through chat
    apps (Messenger/Viber/Telegram), not through the Downloads folder */
@@ -15133,6 +15314,8 @@ function showT2IResult(){
   var src="data:"+out.mime+";base64,"+out.b64;
   $("t2iResultImg").src=src;
   $("btnT2IDl").href=src;
+  /* v4.44 — the static HTML default said .png regardless of the real bytes */
+  $("btnT2IDl").setAttribute("download",dlName("t2i",out.mime,state.t2iHistSel+1));
   var h=$("t2iHist"); h.innerHTML="";
   state.t2iHist.forEach(function(e,i){
     var im=document.createElement("img");

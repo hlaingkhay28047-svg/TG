@@ -241,8 +241,11 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   }, B64);
   // 3 files -> exactly 3 requests; a Stop after the first lets at most one more start
   const c4reqOk = c4.batch1Reqs === 3 && c4.hist1 === 3 && c4.afterStopReqs <= 2 && c4.afterStopKept >= 1;
+  /* v4.44: dlName() keeps the client's source filename as the stem and derives
+     the extension from the real mime — "a-retouch-1.png" for a batch file a.png,
+     falling back to "hnk-retouch-<stamp>-N.<ext>" when no source name is known */
   report("4 Batch: 3 files run sequentially into history/Gallery with 3/3 progress and unique download names; Stop abandons the queue keeping finished results; filePick.multiple restored",
-    c4.uniqueNames === 3 && c4.names.every(n => /^hnk-retouch-\d{8}-\d+\.png$/.test(n))
+    c4.uniqueNames === 3 && c4.names.every(n => /-retouch-\d+\.(png|jpg)$/.test(n))
     && c4.galDelta >= 3 && /3\/3|3 \/ 3/.test(c4.log3) && c4reqOk && c4.multipleRestored,
     JSON.stringify(c4));
 
