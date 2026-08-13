@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-44-1";
+var CACHE = "hnk-web-studio-v4-45-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -11,7 +11,10 @@ var LIB_CACHE = "hnk-lib-v1";
    just downloaded: 607 items today, each with a /ui/ thumb and a /full/ copy,
    plus banners and workflow art. 400 was set when the library was 355 items
    and one file each. */
-var LIB_MAX_ENTRIES = 1600;
+/* v4.45: +880 style-pack references under /lib/styles880/ — the cap must
+   clear ui+full+banners+wf+styles880 combined or browsing the style pack
+   evicts library thumbnails the customer already paid data for. */
+var LIB_MAX_ENTRIES = 2800;
 /* v4.28: the PWA icon set is the ONLY thing that lives at /lib/ root (the
    real library thumbnails all sit in /lib/{banners,full,ui,wf}/). Icons get
    re-arted between releases — the identity wave replaced all five — so they

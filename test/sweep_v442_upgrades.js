@@ -235,10 +235,14 @@ function report(name, ok, detail) {
     document.getElementById("stReset").click();
     await new Promise(r => setTimeout(r, 450));
     state.st.t1.wrm = 40; state.st.t2.smooth = 90;
+    /* v4.45 — the bridge now saves into the SHARED recipe store (named at
+       save time), and the rail selects the new pt_rc_0 slot */
+    window.prompt = () => "Bridge Test";
     document.getElementById("btnPtFromStudio").click();
     out.look = state.pt.look;
-    out.recipe = !!(PT_LOOKS.pt_custom && PT_LOOKS.pt_custom.recipe);
-    out.recipeSmooth = out.recipe ? PT_LOOKS.pt_custom.recipe.t2.smooth : null;
+    out.recipe = !!(PT_LOOKS[state.pt.look] && PT_LOOKS[state.pt.look].recipe);
+    out.recipeSmooth = out.recipe ? PT_LOOKS[state.pt.look].recipe.t2.smooth : null;
+    out.inStore = (JSON.parse(localStorage.getItem("hnk_st_recipes") || "[]")[0] || {}).name === "Bridge Test";
     /* bake a noisy photo through the recipe: real smoothing must cut noise */
     const W = 200, H = 200;
     const c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -266,7 +270,7 @@ function report(name, ok, detail) {
     state.st.t1.wrm = 0; state.st.t2.smooth = 0;
     return out;
   });
-  report("8) Path bakes the FULL Studio recipe", bridge.look === "pt_custom" && bridge.recipe && bridge.recipeSmooth === 90 && bridge.bakedNoise < bridge.srcNoise * 0.6, bridge);
+  report("8) Path bakes the FULL Studio recipe", bridge.look === "pt_rc_0" && bridge.recipe && bridge.inStore && bridge.recipeSmooth === 90 && bridge.bakedNoise < bridge.srcNoise * 0.6, bridge);
 
   /* ---- 9a) small buffers never touch the worker ---- */
   const gate = await page.evaluate(async () => {

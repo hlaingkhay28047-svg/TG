@@ -261,6 +261,7 @@ const PORT = process.env.PORT || 8931;
     localStorage.removeItem("hnk_st_recipes");
     const sm = document.getElementById("mu_smooth");
     sm.value = "44"; sm.dispatchEvent(new Event("input", { bubbles: true }));
+    window.prompt = () => "Look 1"; /* v4.45: recipes are named at save time */
     document.getElementById("stSaveRecipe").click();
   });
   await page.reload({ waitUntil: "domcontentloaded" });
