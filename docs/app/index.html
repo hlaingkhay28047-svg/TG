@@ -9475,6 +9475,17 @@ var ST_UI_LS="hnk_st_ui"; /* same house pattern as ST_RECIPE_LS */
 function stUiSave(){ try{ localStorage.setItem(ST_UI_LS,JSON.stringify({mode:ST.ui.mode,pipCorner:ST.ui.pipCorner})); }catch(e){} }
 /* sv keys that feed the settle pipeline (dirty checks + settle "need" checks) */
 ST.pipeSv=["st_hsl_","st_curve_","st_grade_","st_bw","st_leak","st_geo","st_wbAuto","st_bgEnh","st_frame"];
+/* v4.71 — tile geometry lives up here, ahead of every renderer that uses it.
+   These were introduced in v4.70 beside the look shelves, which sit far down
+   the file; the grade-swatch row is built during page construction and read
+   ST_TILE_H before that line had executed, so the first render threw a
+   non-finite gradient. Declared once, before any caller. */
+var ST_TILE_W=76, ST_TILE_H=96;
+function stTileDPR(){
+  var d=Math.round(Number(window.devicePixelRatio)||1);
+  return Math.max(1, Math.min(3, d||1));
+}
+
 function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0,wht:0,blk:0,dhz:0,glow:0}; }
 function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0,gdn:0,nrL:0,nrC:0,hairShine:0,hairDeep:0,lipV:0,blushV:0,eyeDef:0}; }
 function stDefGeo(){ return {rot:0,flipH:false,flipV:false,straighten:0,crop:null,ox:0.5,oy:0.5}; }
@@ -10401,20 +10412,37 @@ function stRunPipeline(srcImg,W,H,opts){
      render size, exactly the way heal taps already do (hOp.ur*min(W,H)).
      RS is 1 at the preview size by construction, so the preview is unchanged
      to the bit; only larger renders move, and they move toward matching it.
-     FLOORED AT 1 deliberately. stRunPipeline also renders the 76x96 preset
-     swatches and any source photo smaller than the reference; an unfloored
-     ratio would shrink a swatch's radii to a few percent and erase the very
-     look the swatch exists to show. The defect being fixed is only ever that
-     a LARGER render under-applies, so this scales up and never down.
-
      THE REFERENCE IS 1280, NOT 1536. 1536 is the INTAKE cap in downscale() —
      the size of ST.srcBitmap. Nothing ever renders at it. The on-screen
      buffer is stBufMax() = 1280 on desktop / 896 on a phone (stBuildBuffer),
      and that is the size these radii were actually tuned against, so 1280 is
      what makes a desktop preview bit-identical and an export proportional to
      it. A literal is used rather than calling stBufMax() because this
-     function is serialized into a Web Worker, where window does not exist. */
-  var RS = Math.max(1, Math.max(W,H)/1280);
+     function is serialized into a Web Worker, where window does not exist.
+
+     v4.71 — THE FLOOR WAS LYING TO EVERY PHONE, AND REMOVING IT WAS WRONG.
+     stBufMax() is 1280 on desktop but 896 ON A PHONE, so the phone's own
+     preview buffer was caught by this floor: it rendered radii tuned for 1280
+     onto an 896 frame, where they cover 43% more of the picture. Measured on a
+     3000px source, preview strength against delivered strength: denoise 2.17x,
+     sharpen 1.76x, clarity 1.48x, smoothing 1.34x, grain 1.33x. The studio
+     approved a preview and received a visibly weaker file — the exact defect
+     v4.55 set out to fix, still live on the device these studios actually use.
+     Desktop measured 1.00x throughout, which is why it survived.
+
+     Simply deleting the floor fixed the phone and broke everything small:
+     three suites went red because a sub-1280 render had its radii scaled below
+     a pixel and the effect vanished outright. The floor was never the bug.
+
+     THE DEFAULT IS UNCHANGED FROM v4.55, floor included, so every caller that
+     renders at its own delivery size behaves exactly as before. The preview is
+     the only render that is deliberately NOT its delivery size, so it is the
+     only one that has to say so: stPreviewRS() hands it the delivery's scale
+     multiplied by how much smaller the buffer is, which lands its radii on the
+     same fraction of the frame the exported file will get. The swatches pass
+     opts.rs for the opposite reason — they exist to SHOW a look rather than to
+     predict a file, so they hold the reference regardless of their size. */
+  var RS = (typeof opts.rs === "number" && opts.rs > 0) ? opts.rs : Math.max(1, Math.max(W,H)/1280);
   var px=cx.getImageData(0,0,W,H), d=px.data, n=W*H;
   /* (1b) v4.44 — replay heal taps at THIS render size, before any tonal work,
      so spot fixes reach preview, exports and bakes alike (normalized op list;
@@ -10651,6 +10679,30 @@ function stRunPipeline(srcImg,W,H,opts){
   if(pv.frame) stDrawFrame(cx,W,H,pv.frame,pv.frameW);
   return cv;
 }
+/* v4.71 — the preview's own render scale, so the frame on screen carries every
+   radius at the same fraction of the picture the DELIVERED file will.
+
+   The preview buffer is capped (stBufMax: 1280 desktop, 896 phone) while the
+   export runs at the camera's own resolution, so the two are almost never the
+   same size. stRunPipeline's default derives RS from whatever size it is asked
+   to render, which is right for a file and wrong for a preview OF that file:
+   at 896 against a 3000px delivery it over-applied by up to 2.17x.
+
+   So the preview asks for the DELIVERY's scale, reduced by exactly how much
+   smaller it is. radius/frame then matches on both sides by construction.
+   Falls back to the plain default when the delivery source is unknown, and
+   keeps the same floor so a small photo — where preview and delivery are the
+   same size anyway — is left exactly as it was. */
+function stPreviewRS(W,H){
+  var d=0;
+  try{
+    var src=stExportSource();
+    if(src) d=Math.max(src.width||src.naturalWidth||0, src.height||src.naturalHeight||0);
+  }catch(e){}
+  var here=Math.max(W,H);
+  if(!d||!here) return Math.max(1, here/1280);
+  return Math.max(1, d/1280) * (here/d);
+}
 function stRenderSettle(){
   if(!ST.srcBitmap||ST.holding) return;
   ST.showingResult=false;
@@ -10661,7 +10713,7 @@ function stRenderSettle(){
   /* v4.42 — big buffers settle on the render worker so slider drags never
      jank the UI thread; small buffers (phones, tests) keep the sync path */
   if(W*H>700000 && stWorkerOk() && stWorkerRender(W,H)) return;
-  var out=stRunPipeline(stGeoSource(),W,H,{maskInfo:ST.maskCache});
+  var out=stRunPipeline(stGeoSource(),W,H,{maskInfo:ST.maskCache,rs:stPreviewRS(W,H)});
   stPresentSettle(out);
 }
 /* shared presentation step for the sync + worker settle paths.
@@ -10710,7 +10762,7 @@ function stWorker(){
       + '\ntry{_pc.filter="blur(2px)";FILTER_OK=(_pc.filter==="blur(2px)");}catch(e){}'
       + '\nself.postMessage({ready:true,filterOk:FILTER_OK});'
       + '\nself.onmessage=function(e){var m=e.data;try{'
-      + 'var cv=stRunPipeline(m.bmp,m.W,m.H,{t1:m.t1,t2:m.t2,pv:m.pv,curve:m.curve,um:m.um,umInv:m.umInv,heals:m.heals,maskInfo:m.mi});'
+      + 'var cv=stRunPipeline(m.bmp,m.W,m.H,{rs:m.rs,t1:m.t1,t2:m.t2,pv:m.pv,curve:m.curve,um:m.um,umInv:m.umInv,heals:m.heals,maskInfo:m.mi});'
       + 'try{if(m.bmp&&m.bmp.close)m.bmp.close();}catch(e2){}'
       + 'var out=cv.transferToImageBitmap();'
       + 'self.postMessage({id:m.id,bmp:out},[out]);'
@@ -10746,7 +10798,7 @@ function stWorkerRender(W,H){
   if(ST.userMask && ST.userMask.length===W*H && svGet("st_brushMode",null)){
     um=ST.userMask; umInv=svGet("st_brushMode","in")==="out";
   }
-  var msg={id:id, W:W, H:H, t1:stEffT1(), t2:t2, pv:stPipeVals(), curve:stCurveVals(), um:um, umInv:umInv,
+  var msg={id:id, W:W, H:H, rs:stPreviewRS(W,H), t1:stEffT1(), t2:t2, pv:stPipeVals(), curve:stCurveVals(), um:um, umInv:umInv,
            heals:(ST.heals&&ST.heals.length)?ST.heals:null, mi:ST.maskCache};
   STW.cb[id]=function(bmp){
     if(!bmp){ stWorkerKill(); stRenderSettle(); return; } /* worker render failed → permanent sync fallback */
@@ -12921,27 +12973,39 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
     Object.keys(ST_GRADES).forEach(function(k){
       var g=ST_GRADES[k];
       var b=el("button","pcard"+(cur===k?" on":""));
-      var cv=document.createElement("canvas"); cv.width=76; cv.height=96;
+      /* v4.71 — the grade swatches are the third row of tiles that was still
+         painting 76x96 on a 3x phone; v4.70 fixed the two look shelves and
+         missed this one. Same treatment: more pixels, identical CSS box. */
+      var gdpr=stTileDPR(), GW=ST_TILE_W*gdpr, GH=ST_TILE_H*gdpr;
+      var cv=document.createElement("canvas"); cv.width=GW; cv.height=GH;
+      cv.style.width=ST_TILE_W+"px"; cv.style.height=ST_TILE_H+"px";
       var cx2=cv.getContext("2d");
       if(ST.thumbCanvas){
-        /* real pipeline on the 76x96 self-photo thumb with ONLY the grade
-           keys overridden — what tapping the card will actually do */
+        /* real pipeline on the self-photo thumb with ONLY the grade keys
+           overridden — what tapping the card will actually do */
         var keepV=state.st.v;
         var vv={}; for(var kk in keepV) vv[kk]=keepV[kk];
         vv.st_gradePreset=k; vv.st_grade_evSh=g.sh; vv.st_grade_evMid=g.mid; vv.st_grade_evHi=g.hi;
         vv.st_grade_evAmt=g.amt; vv.st_grade_evSat=g.sat; vv.st_grade_evBal=g.bal;
         state.st.v=vv;
         var out=null;
-        try{ out=stRunPipeline(ST.thumbCanvas,76,96,{}); }catch(e){}
+        /* rs is pinned to the swatch's own upscale rather than left to the
+           1280 ratio: a swatch exists to SHOW a look, not to predict a file,
+           so its radii must stay the same fraction of the tile they were at
+           76x96. Without this the extra pixels would quietly weaken every
+           grade to a third of its strength. */
+        try{ out=stRunPipeline(ST.thumbCanvas,GW,GH,{rs:gdpr}); }catch(e){}
         state.st.v=keepV;
-        if(out) cx2.drawImage(out,0,0);
+        if(out) cx2.drawImage(out,0,0,GW,GH);
       } else {
         /* no photo yet: swatch strip from the grade's own colours */
-        var gd2=cx2.createLinearGradient(0,0,0,96);
+        cx2.save(); cx2.scale(gdpr,gdpr);
+        var gd2=cx2.createLinearGradient(0,0,0,ST_TILE_H);
         gd2.addColorStop(0, g.hi||"#f4d488");
         if(g.mid) gd2.addColorStop(0.5, g.mid);
         gd2.addColorStop(1, g.sh||"#131826");
-        cx2.fillStyle=gd2; cx2.fillRect(0,0,76,96);
+        cx2.fillStyle=gd2; cx2.fillRect(0,0,ST_TILE_W,ST_TILE_H);
+        cx2.restore();
       }
       b.appendChild(cv);
       b.appendChild(el("span",null,ST_GRADE_LABELS[k]));
@@ -13842,11 +13906,6 @@ var ST_SAMPLE="lib/st-sample.jpg";
    purpose: the dither has to run in real pixels or it just gets blocky again at
    a higher resolution. Capped at 3 because past that the tile costs more to
    paint than the eye can collect. */
-var ST_TILE_W=76, ST_TILE_H=96;
-function stTileDPR(){
-  var d=Math.round(Number(window.devicePixelRatio)||1);
-  return Math.max(1, Math.min(3, d||1));
-}
 function stThumbFrom(src, sw, sh){
   var dpr=stTileDPR();
   var tw=ST_TILE_W*dpr, th=ST_TILE_H*dpr;
@@ -17537,7 +17596,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.70.0";
+var APP_VER="4.71.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -185,6 +185,9 @@ jobs:
       - name: Run v4.70.0 look-tile pixel-density sweep (DPR 1/2/3)
         run: node test/sweep_v470_upgrades.js
 
+      - name: Run v4.71.0 preview-vs-delivery scale sweep (phone buffer)
+        run: node test/sweep_v471_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
