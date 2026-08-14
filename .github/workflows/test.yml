@@ -137,6 +137,9 @@ jobs:
       - name: Run v4.54.0 framing-lock sweep (mocked)
         run: node test/sweep_v454_upgrades.js
 
+      - name: Run v4.55.0 scale-invariance sweep (mocked)
+        run: node test/sweep_v455_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
