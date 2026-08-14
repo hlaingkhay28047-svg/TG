@@ -11718,7 +11718,33 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
    edit — identity, pose, outfit and scene stay locked to IMAGE 1.
    Catalog (lib/styles880/catalog.json, ~0.8MB) and thumbnails load only when
    a Style Looks group is first opened. */
-var ST880={ list:null, map:null, loading:false, refreshers:[] };
+var ST880={ list:null, map:null, contract:null, loading:false, refreshers:[] };
+/* v4.48 — combo rules: one pick per category, composable across categories.
+   A full makeup_look already defines lips/cheeks/eyes, so it excludes the
+   component categories (and vice versa); lash ⟂ lash-combo; hair-color ⟂
+   hairstyle would fight over the same strands. */
+var ST880_COMPONENT=["lipstick","blush","eyeliner","eyelash","eye_lash_combo","eyebrow","contact_lens","face_contour","face_highlight"];
+var ST880_EXCL=[["eyelash","eye_lash_combo"],["hair_reference","hairstyle"]];
+function st880Sel(){
+  var s=svGet("st_style880",null);
+  var mode=svGet("st_style880Mode","face");
+  if(!s) return {sel:{},mode:mode};
+  if(s.id && !s.sel){ /* pre-v4.48 single-pick shape — migrate on read */
+    var r=ST880.map&&ST880.map[s.id], o={};
+    if(r) o[r.cat]=s.id;
+    return {sel:o,mode:s.mode||mode};
+  }
+  return {sel:s.sel||{},mode:s.mode||mode};
+}
+function st880Count(){ var n=0,k,s=st880Sel().sel; for(k in s) n++; return n; }
+function st880Favs(){ try{ var a=JSON.parse(localStorage.getItem("hnk_st880_favs")||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function st880Recent(){ try{ var a=JSON.parse(localStorage.getItem("hnk_st880_recent")||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function st880FavToggle(id){
+  var a=st880Favs(), i=a.indexOf(id);
+  if(i>=0) a.splice(i,1); else a.unshift(id);
+  try{ localStorage.setItem("hnk_st880_favs",JSON.stringify(a.slice(0,60))); }catch(e){}
+  st880Refresh();
+}
 ST880.CAT_L={
   makeup_look:{my:"မိတ်ကပ် Look",en:"Makeup Look"},
   skin_type:{my:"အသားအရေ Texture",en:"Skin Texture"},
@@ -11741,6 +11767,11 @@ function st880Load(cb){
   if(ST880.list){ if(cb) cb(); return; }
   if(ST880.loading) return;
   ST880.loading=true;
+  /* v4.48 — the contract file carries the pack's own guard text (universal
+     negative + reference role + per-category preserve rules); failure is
+     tolerated because the frag has honest fallbacks */
+  fetch("lib/styles880/contract.json").then(function(r){ return r.json(); })
+    .then(function(k){ ST880.contract=k; }).catch(function(){});
   fetch("lib/styles880/catalog.json").then(function(r){ return r.json(); }).then(function(a){
     ST880.list=a; ST880.map={};
     a.forEach(function(r){ ST880.map[r.id]=r; });
@@ -11758,34 +11789,111 @@ function st880Clear(){
   state.st.refX=null;
   stSync("st_style880"); stRefreshUI(); stRenderPend(); st880Refresh();
 }
-function st880Pick(rec){
-  var sel=svGet("st_style880",null);
-  if(sel && sel.id===rec.id){ st880Clear(); return; } /* tap again = off */
-  fetch("lib/styles880/"+rec.img).then(function(r){ return r.blob(); }).then(function(bl){
-    var rd=new FileReader();
-    rd.onload=function(){
-      var m=/^data:([^;]+);base64,(.*)$/.exec(String(rd.result)); if(!m) return;
-      state.st.refX={mime:m[1],b64:m[2]};
-      svSet("st_style880",{id:rec.id,mode:svGet("st_style880Mode","face")});
-      stSync("st_style880");
-      stRefreshUI(); stRenderPend(); st880Refresh();
-      if(!ST.srcBitmap) stNeedPhotoNudge();
-      else toast(L9({my:"Style ရွေးပြီး ✓ — GENERATE နှိပ်ရင် ဒီ look ကို သင့်ပုံပေါ် တင်ပေးပါမယ်",en:"Style queued ✓ — GENERATE applies this look to your photo"}),"ok");
-    };
-    rd.readAsDataURL(bl);
-  }).catch(function(){
-    toast(L9({my:"Style ပုံ ဖတ်လို့မရပါ",en:"Could not load the style image"}),"err");
+/* v4.48 — labeled reference sheet: 2+ picked styles ride as ONE canvas grid
+   (each crop's ID printed under it) so the model can be told exactly which
+   crop demonstrates which feature. A single pick stays the raw pack JPEG. */
+function st880BuildSheet(recs, cb){
+  var loaded=0, imgs=new Array(recs.length);
+  recs.forEach(function(r,i){
+    var im=new Image();
+    im.onload=function(){ imgs[i]=im; if(++loaded===recs.length) draw(); };
+    im.onerror=function(){ imgs[i]=null; if(++loaded===recs.length) draw(); };
+    im.src="lib/styles880/"+r.img;
   });
+  function draw(){
+    var CW=512, CH=640, LB=44, cols=Math.min(2,recs.length), rows=Math.ceil(recs.length/cols);
+    var c=document.createElement("canvas"); c.width=cols*CW; c.height=rows*(CH+LB);
+    var x=c.getContext("2d");
+    x.fillStyle="#101319"; x.fillRect(0,0,c.width,c.height);
+    recs.forEach(function(r,i){
+      var im=imgs[i]; if(!im) return;
+      var cx0=(i%cols)*CW, cy0=Math.floor(i/cols)*(CH+LB);
+      var iw=im.naturalWidth, ih=im.naturalHeight, tr=CW/CH, sw=iw, sh=ih;
+      if(iw/ih>tr) sw=ih*tr; else sh=iw/tr;
+      x.drawImage(im,(iw-sw)/2,(ih-sh)/2,sw,sh,cx0,cy0,CW,CH);
+      x.fillStyle="rgba(11,13,20,.9)"; x.fillRect(cx0,cy0+CH,CW,LB);
+      x.fillStyle="#f4d488"; x.font="700 24px sans-serif"; x.textAlign="left"; x.textBaseline="middle";
+      x.fillText(r.id, cx0+12, cy0+CH+LB/2);
+    });
+    cb(c.toDataURL("image/jpeg",0.9));
+  }
 }
-/* the one queued edit both suites share — a single style at a time, exactly
-   like the pack's one-style-per-job contract */
+function st880ApplyRef(sel){
+  var recs=Object.keys(sel).map(function(c){ return ST880.map&&ST880.map[sel[c]]; }).filter(Boolean);
+  if(!recs.length){ st880Clear(); return; }
+  function land(dataUrl){
+    var m=/^data:([^;]+);base64,(.*)$/.exec(String(dataUrl)); if(!m) return;
+    state.st.refX={mime:m[1],b64:m[2]};
+    svSet("st_style880",{sel:sel,mode:svGet("st_style880Mode","face")});
+    stSync("st_style880");
+    stRefreshUI(); stRenderPend(); st880Refresh();
+    if(!ST.srcBitmap) stNeedPhotoNudge();
+    else toast(recs.length>1
+      ? L9({my:"Style "+recs.length+" မျိုး တွဲပြီး ✓ — GENERATE နှိပ်ရင် တစ်ခါတည်း တင်ပေးပါမယ်",en:recs.length+" styles combined ✓ — GENERATE applies them together"})
+      : L9({my:"Style ရွေးပြီး ✓ — GENERATE နှိပ်ရင် ဒီ look ကို သင့်ပုံပေါ် တင်ပေးပါမယ်",en:"Style queued ✓ — GENERATE applies this look to your photo"}),"ok");
+  }
+  if(recs.length===1){
+    fetch("lib/styles880/"+recs[0].img).then(function(r){ return r.blob(); }).then(function(bl){
+      var rd=new FileReader();
+      rd.onload=function(){ land(String(rd.result)); };
+      rd.readAsDataURL(bl);
+    }).catch(function(){
+      toast(L9({my:"Style ပုံ ဖတ်လို့မရပါ",en:"Could not load the style image"}),"err");
+    });
+  } else {
+    st880BuildSheet(recs, land);
+  }
+}
+function st880Pick(rec){
+  var cur=st880Sel(), sel={}, k;
+  for(k in cur.sel) sel[k]=cur.sel[k];
+  if(sel[rec.cat]===rec.id){ /* tap again = remove this category's pick */
+    delete sel[rec.cat];
+    var left=0; for(k in sel) left++;
+    if(!left){ st880Clear(); return; }
+    st880ApplyRef(sel); return;
+  }
+  var cleared=0;
+  if(rec.cat==="makeup_look"){ ST880_COMPONENT.forEach(function(c){ if(sel[c]){ cleared++; delete sel[c]; } }); }
+  else if(ST880_COMPONENT.indexOf(rec.cat)>=0 && sel.makeup_look){ cleared++; delete sel.makeup_look; }
+  ST880_EXCL.forEach(function(pr){
+    var other = rec.cat===pr[0]?pr[1] : rec.cat===pr[1]?pr[0] : null;
+    if(other && sel[other]){ cleared++; delete sel[other]; }
+  });
+  sel[rec.cat]=rec.id;
+  if(cleared) toast(L9({my:"တွဲလို့မရတဲ့ ရွေးချယ်မှု "+cleared+" ခု ဖယ်ပြီး ဒီ style ထည့်ပါပြီ",en:"Removed "+cleared+" conflicting pick"+(cleared>1?"s":"")+" and added this style"}),"ok");
+  var rc=st880Recent();
+  rc=[rec.id].concat(rc.filter(function(x){ return x!==rec.id; })).slice(0,12);
+  try{ localStorage.setItem("hnk_st880_recent",JSON.stringify(rc)); }catch(e){}
+  st880ApplyRef(sel);
+}
+/* the one queued edit both suites share. v4.48 — composes ANY number of
+   category picks into a single coherent makeover, using the pack's own
+   contract text: per-style instruction + recommended strength (scaled by the
+   user's strength chip), the reference-role sentence, the per-category
+   preserve rules and the universal negative list. */
 stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"}),["st_style880"],function(){
-  var sel=svGet("st_style880",null);
-  if(!sel||!sel.id||!state.st.refX) return null;
-  var r=ST880.map&&ST880.map[sel.id]; if(!r) return null;
-  var ins=(sel.mode==="body"&&r.bi)?r.bi:r.fi;
-  return { params:{id:sel.id},
-    frag:"Style "+r.id+" — "+r.en+": "+ins+" Apply at about "+(r.s||40)+"% strength. Use IMAGE 2 only for this named style feature — never copy its pose, face structure, body, clothing, lighting or background. No identity drift, no face or body reshaping, no plastic skin; keep real pores, fine texture and natural asymmetry." };
+  var st=st880Sel(), cats=Object.keys(st.sel);
+  if(!cats.length||!state.st.refX) return null;
+  var recs=cats.map(function(c){ return ST880.map&&ST880.map[st.sel[c]]; }).filter(Boolean);
+  if(!recs.length) return null;
+  var strKey=svGet("st_style880Str","rec");
+  var mul = strKey==="soft"?0.7 : strKey==="strong"?1.3 : 1;
+  var K=ST880.contract||{};
+  var lines=[];
+  if(recs.length>1) lines.push("IMAGE 2 is a labeled reference sheet with "+recs.length+" style crops; each crop's ID is printed under it. Apply EVERY listed style to its own feature region only, blended together as one coherent professional makeover:");
+  recs.forEach(function(r){
+    var ins=(st.mode==="body"&&r.bi)?r.bi:r.fi;
+    var pct=Math.max(10,Math.min(100,Math.round((r.s||40)*mul)));
+    lines.push((recs.length>1?("["+r.id+"] "):("Style "+r.id+" — "+r.en+": "))+ins+" Apply at about "+pct+"% strength.");
+  });
+  lines.push("Use IMAGE 2 only for the named style feature"+(recs.length>1?"s":"")+" — never copy its pose, face structure, body, clothing, lighting or background.");
+  if(K.rr) lines.push(K.rr);
+  var pc=recs[0].cat;
+  if(K.cats&&K.cats[pc]&&K.cats[pc].pr) lines.push("PRESERVE: "+K.cats[pc].pr);
+  else lines.push("No identity drift, no face or body reshaping, no plastic skin; keep real pores, fine texture and natural asymmetry.");
+  if(K.neg) lines.push("NEVER produce: "+K.neg+".");
+  return { params:{ids:recs.map(function(r){ return r.id; }),str:strKey}, frag:lines.join("\n") };
 },null,{usesRef:true});
 (function build880Groups(){
   var SUITES=[
@@ -11805,18 +11913,42 @@ stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"})
       kw:"style look reference pack 880 makeup lipstick blush eyeliner lash brow lens contour highlight skin hair hairstyle "+sd.cats.join(" "),
       chk:[function(){ var s=svGet("st_style880",null); return !!(s&&s.id&&state.st.refX); }]});
     if(sd.suite==="mu") ST.grpOf["st_style880"]=g.g; /* dirty dot + pend chip home */
-    var cur=sd.cats[0];
-    var catRow=el("div","chips"); g.b.appendChild(catRow);
+    var cur=sd.cats[0], query="";
+    /* v4.48 — search across every category of this suite (name my/en, id and
+       the pack's attribute text: family, finish, palette, occasion, designs) */
+    var search=document.createElement("input");
+    search.type="text"; search.className="inp";
+    search.placeholder=L9({my:"Style ရှာမယ် — ဥပမာ douyin, dewy, peach, red lip…",en:"Search styles — e.g. douyin, dewy, peach, red lip…"});
+    search.oninput=function(){ query=this.value.trim().toLowerCase(); renderCats(); renderGrid(); };
+    g.b.appendChild(search);
+    var catRow=el("div","chips"); catRow.style.marginTop="6px"; g.b.appendChild(catRow);
     var modeRow=el("div","chips"); modeRow.style.marginTop="6px"; g.b.appendChild(modeRow);
+    var strRow=el("div","chips"); strRow.style.marginTop="6px"; g.b.appendChild(strRow);
     var selNote=el("p","mut"); g.b.appendChild(selNote);
     var grid=el("div","st880-grid"); g.b.appendChild(grid);
     g.b.appendChild(el("p","mut",L9({
-      my:"တစ်ကြိမ်လျှင် style တစ်မျိုး — style ပုံက IMAGE 2 (reference-only) အဖြစ် ပါသွားပြီး သင့်ပုံရဲ့ မျက်နှာ/ကိုယ်ဟန်/အဝတ်အစား မပြောင်းပါ။ GENERATE နှိပ်မှ AI က အလုပ်လုပ်ပါတယ်",
-      en:"One style at a time — the style image rides as IMAGE 2 (reference-only); your photo's face, pose and outfit stay locked. The AI runs when you press GENERATE"})));
+      my:"Category တစ်ခုစီက တစ်မျိုးစီ ရွေးပြီး တွဲလို့ရပါတယ် (ဥပမာ — နှုတ်ခမ်းနီ + မျက်ခုံး + ပါးနီ) — ရွေးထားတာတွေက IMAGE 2 (reference-only) sheet အဖြစ် တစ်ပေါင်းတည်း ပါသွားပြီး သင့်ပုံရဲ့ မျက်နှာ/ကိုယ်ဟန်/အဝတ်အစား မပြောင်းပါ။ GENERATE နှိပ်မှ AI က အလုပ်လုပ်ပါတယ်",
+      en:"Pick one style per category and combine them (e.g. lipstick + brows + blush) — your picks ride together as one labeled IMAGE 2 reference sheet; your photo's face, pose and outfit stay locked. The AI runs when you press GENERATE"})));
+    function matches(rec){
+      if(!query) return true;
+      var hay=(rec.en+" "+(rec.mm||"")+" "+rec.id+" "+(rec.q||"")).toLowerCase();
+      return query.split(/\s+/).every(function(w){ return hay.indexOf(w)>=0; });
+    }
     function renderCats(){
       catRow.innerHTML="";
+      var st=st880Sel();
+      var favN=st880Favs().length, rcN=st880Recent().length;
+      var extra=[];
+      if(favN) extra.push(["__fav","⭐ "+L9({my:"အကြိုက်",en:"Favorites"})+" ("+favN+")"]);
+      if(rcN) extra.push(["__recent","🕘 "+L9({my:"မကြာသေးမီ",en:"Recent"})+" ("+rcN+")"]);
+      extra.forEach(function(pr){
+        var b=el("button","chip"+(cur===pr[0]?" on":""),pr[1]);
+        b.onclick=function(){ cur=pr[0]; renderCats(); renderGrid(); };
+        catRow.appendChild(b);
+      });
       sd.cats.forEach(function(c){
-        var b=el("button","chip"+(cur===c?" on":""),L9(ST880.CAT_L[c])+" ("+ST880.CAT_N[c]+")");
+        var mark=st.sel[c]?"✓ ":"";
+        var b=el("button","chip"+(cur===c?" on":""),mark+L9(ST880.CAT_L[c])+" ("+ST880.CAT_N[c]+")");
         b.onclick=function(){ cur=c; renderCats(); renderGrid(); };
         catRow.appendChild(b);
       });
@@ -11835,6 +11967,31 @@ stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"})
         modeRow.appendChild(b);
       });
     }
+    /* v4.48 — strength override over the pack's per-style recommendation */
+    function renderStr(){
+      strRow.innerHTML="";
+      var k=svGet("st_style880Str","rec");
+      [["soft",L9({my:"ပိုနုမယ် (70%)",en:"Softer (70%)"})],
+       ["rec",L9({my:"Pack အကြံပြုအတိုင်း",en:"Recommended"})],
+       ["strong",L9({my:"ပိုပြင်းမယ် (130%)",en:"Stronger (130%)"})]].forEach(function(pr){
+        var b=el("button","chip"+(k===pr[0]?" on":""),pr[1]);
+        b.onclick=function(){ svSet("st_style880Str",pr[0]); stSync("st_style880"); st880Refresh(); };
+        strRow.appendChild(b);
+      });
+    }
+    function listFor(){
+      if(cur==="__fav"){
+        var fv=st880Favs();
+        return fv.map(function(id){ return ST880.map[id]; }).filter(function(r){ return r&&matches(r); });
+      }
+      if(cur==="__recent"){
+        return st880Recent().map(function(id){ return ST880.map[id]; }).filter(function(r){ return r&&matches(r); });
+      }
+      if(query){ /* a live query searches the WHOLE suite, category badges on */
+        return ST880.list.filter(function(r){ return sd.cats.indexOf(r.cat)>=0 && matches(r); }).slice(0,120);
+      }
+      return ST880.list.filter(function(r){ return r.cat===cur; });
+    }
     function renderGrid(){
       grid.innerHTML="";
       if(!ST880.list){
@@ -11843,33 +12000,54 @@ stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"})
           : L9({my:"ဖွင့်ရင် catalog ကို ဆွဲယူပါမယ်",en:"The catalog loads when you open this group"})));
         return;
       }
-      var sel=(state.st.refX&&svGet("st_style880",null))||null;
-      ST880.list.forEach(function(rec){
-        if(rec.cat!==cur) return;
-        var c=el("button","pcard"+(sel&&sel.id===rec.id?" on":""));
+      var st=st880Sel(), favs=st880Favs();
+      var rows=listFor();
+      if(!rows.length){
+        grid.appendChild(el("p","mut",L9({my:"ရှာလို့ မတွေ့ပါ",en:"No styles match"})));
+        return;
+      }
+      rows.forEach(function(rec){
+        var on=state.st.refX && st.sel[rec.cat]===rec.id;
+        /* a div with role=button (recipe-card precedent): the star is a real
+           <button> inside, and buttons cannot legally nest */
+        var c=el("div","pcard"+(on?" on":""));
+        c.tabIndex=0; c.setAttribute("role","button");
         var im=document.createElement("img");
         im.loading="lazy"; im.decoding="async"; im.alt="";
         im.src="lib/styles880/"+rec.img;
         c.appendChild(im);
-        c.appendChild(el("span",null,st880Name(rec)));
-        c.title=rec.id+" · "+rec.en;
-        c.onclick=function(){ st880Pick(rec); };
+        var label=st880Name(rec)+(query||cur==="__fav"||cur==="__recent" ? " · "+L9(ST880.CAT_L[rec.cat]) : "");
+        c.appendChild(el("span",null,label));
+        c.title=rec.id+" · "+rec.en+" · "+(rec.s||40)+"%";
+        var fb=el("button","pin");
+        fb.innerHTML=icn(favs.indexOf(rec.id)>=0?"i-star-fill":"i-star");
+        fb.setAttribute("aria-label",L9({my:"အကြိုက်",en:"Favorite"}));
+        fb.onclick=function(ev){ ev.stopPropagation(); st880FavToggle(rec.id); };
+        c.appendChild(fb);
+        c.onclick=function(ev){ if(ev.target===fb||fb.contains(ev.target)) return; st880Pick(rec); };
+        c.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); st880Pick(rec); } };
         grid.appendChild(c);
       });
     }
     function renderSel(){
-      var sel=(state.st.refX&&svGet("st_style880",null))||null;
-      var r=sel&&ST880.map&&ST880.map[sel.id];
+      var st=st880Sel();
+      var cats=state.st.refX?Object.keys(st.sel):[];
       selNote.innerHTML="";
-      if(r){
-        selNote.appendChild(document.createTextNode(L9({my:"ရွေးထားတာ — ",en:"Selected — "})+r.id+" · "+st880Name(r)+" "));
-        var x=el("button","chip",L9({my:"ဖြုတ်မယ်",en:"Clear"}));
-        x.onclick=st880Clear;
+      if(!cats.length) return;
+      selNote.appendChild(document.createTextNode(L9({my:"ရွေးထားတာ "+cats.length+" မျိုး — ",en:"Selected "+cats.length+" — "})));
+      cats.forEach(function(c){
+        var r=ST880.map&&ST880.map[st.sel[c]]; if(!r) return;
+        var x=el("button","chip","✕ "+st880Name(r).slice(0,22));
+        x.title=r.id;
+        x.onclick=function(){ st880Pick(r); }; /* same-id pick = remove */
         selNote.appendChild(x);
-      }
+      });
+      var all=el("button","chip",L9({my:"အကုန်ဖြုတ်",en:"Clear all"}));
+      all.onclick=st880Clear;
+      selNote.appendChild(all);
     }
-    ST880.refreshers.push(function(){ renderGrid(); renderSel(); });
-    renderCats(); renderMode(); renderGrid(); renderSel();
+    ST880.refreshers.push(function(){ renderCats(); renderGrid(); renderSel(); });
+    renderCats(); renderMode(); renderStr(); renderGrid(); renderSel();
     /* lazy catalog fetch on first open */
     var hd=g.g.querySelector(".grp-h");
     if(hd) hd.addEventListener("click",function(){
@@ -15291,7 +15469,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.47.0";
+var APP_VER="4.48.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
