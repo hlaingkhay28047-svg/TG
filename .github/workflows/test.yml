@@ -110,6 +110,9 @@ jobs:
       - name: Run v4.45.0 Wave 3 + 880 style pack sweep (mocked)
         run: node test/sweep_v445_upgrades.js
 
+      - name: Run v4.46.0 Wave 4a batch-scale sweep (mocked)
+        run: node test/sweep_v446_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

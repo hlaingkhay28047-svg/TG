@@ -745,6 +745,9 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 /* v4.28: the Stop escape hatch stays live (and fully visible) inside the
    frozen busy region */
 .v2-busy #btnV2Stop{pointer-events:auto;opacity:1}
+/* the 44px touch-target promise must not depend on font metrics: line-height
+   rounding rendered 43.9998px on some machines */
+#btnV2Stop{min-height:44px}
 .chip.v2-sw{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border-radius:50%;position:relative}
 /* v4.28: 34px stays the visual dot, but the hit area extends to 44px
    (same ::after technique as .refstrip .rsx) */
@@ -1995,6 +1998,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <button class="btn" id="btnPtClear"></button>
     </div>
     <div class="mut" id="ptCount" style="margin-top:8px"></div>
+    <div class="row" id="ptMultiBar" style="margin-top:6px"></div>
     <button class="pt-empty" id="ptEmpty"></button>
     <div class="pt-grid" id="ptGrid"></div>
   </section>
@@ -2061,6 +2065,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <button class="btn btn-gold gen" id="btnPtZipAll"></button>
     <button class="btn gen" id="btnPtDlSeq" style="margin-top:8px"></button>
     <button class="btn gen" id="btnPtBake" style="margin-top:8px"></button>
+    <button class="btn gen" id="btnPtSheetAll" style="margin-top:8px"></button>
   </section>
 
   <!-- per-photo sheet: override look, hold-to-peek original, compare, retry, save -->
@@ -3163,6 +3168,7 @@ $("galToImg1").onclick=function(){
   if(!galSel) return;
   /* v4.45 — a source-sheet request wins over the default slot, once */
   var gs=typeof state.galTargetSlot==="number"?state.galTargetSlot:0; state.galTargetSlot=null;
+  refsClobberGuard(gs); /* v4.46 — replacing another page's result offers Undo */
   if(gs===0){ state.cmpBase=null; state.rsOrig=null; } /* manual IMAGE 1 pick — compare baselines reset (v4.28) */
   state.refs[gs]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
   state.imgRoles=null;
@@ -4330,6 +4336,21 @@ function refRoleIdx(i){
   for(var r=0;r<REF_ROLES.length;r++) if(REF_ROLES[r].sent===cur) return r;
   return -1; /* a wizard's bespoke sentence — shown as-is, cycling replaces it */
 }
+/* v4.46 — cross-page working-set guard: replacing an IMAGE 1 that carries
+   another page's result ('result'/'gallery'/'studio' label) offers Undo,
+   so a stray pick can't silently destroy the photo being worked on. */
+function refsClobberGuard(slot){
+  if(slot!==0) return;
+  var cur=state.refs[0]; if(!cur) return;
+  if(cur.label!=="result"&&cur.label!=="gallery"&&cur.label!=="studio") return;
+  var keep={mime:cur.mime,b64:cur.b64,label:cur.label};
+  var keepCmp=state.cmpBase, keepOrig=state.rsOrig;
+  setTimeout(function(){ /* after the replacement lands, offer the way back */
+    toast(L9({my:"IMAGE 1 ထဲက အရင်ရလဒ်ကို အစားထိုးလိုက်ပါပြီ",en:"Replaced the result that was in IMAGE 1"}),"",
+      { label:L9({my:"ပြန်ယူမယ်",en:"Undo"}),
+        fn:function(){ state.refs[0]=keep; state.cmpBase=keepCmp; state.rsOrig=keepOrig; renderRefs(); } });
+  },50);
+}
 /* v4.45 — in-place ref source sheet: an empty slot offers Upload / Library /
    Gallery / Last result instead of assuming the photo lives on this phone. */
 function refSrcSheet(slot){
@@ -4409,10 +4430,12 @@ function renderRefs(){
 renderRefs();
 /* auto-downscale big phone photos to 1536px (same cap as the panel) —
    uploads get 5-10x smaller and faster, and quota lasts longer */
-function downscale(dataUrl, cb){
+/* v4.46 — the cap is a parameter now: pages that BOUGHT resolution (Retouch
+   quality tiers) pass a higher max; every existing caller stays at 1536. */
+function downscale(dataUrl, cb, max){
   var img=new Image();
   img.onload=function(){
-    var MAX=1536, w=img.width, h=img.height;
+    var MAX=max||1536, w=img.width, h=img.height;
     if(Math.max(w,h)<=MAX){ cb(dataUrl); return; }
     var s=MAX/Math.max(w,h);
     var c=document.createElement("canvas");
@@ -4445,6 +4468,9 @@ function acceptImageFile(f, slot){
   }
   var rd=new FileReader();
   rd.onload=function(){
+    /* v4.46 — slot 0 on the Retouch flow rides a higher cap when a paid
+       quality tier is selected: 2K/HD runs deserve 2048px input, not 1536 */
+    var cap = (slot===0 && state.v2 && state.v2.quality && state.v2.quality!=="fast") ? 2048 : undefined;
     downscale(String(rd.result), function(dataUrl){
       if(!dataUrl){ toast(unreadableImgMsg(),"err"); return; }
       var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -4458,13 +4484,14 @@ function acceptImageFile(f, slot){
           }
           return;
         }
+        refsClobberGuard(slot); /* v4.46 — replacing another page's result offers Undo */
         if(slot===0){ state.cmpBase=null; state.rsOrig=null; } /* fresh photo — compare baselines reset (v4.28) */
         state.refs[slot]={mime:m[1],b64:m[2],label:f.name};
         state.imgRoles=null; /* roles are re-derived by the wizard at generate time */
         renderRefs();
         if (window._wizOnPick) window._wizOnPick();
       }
-    });
+    }, cap);
   };
   rd.readAsDataURL(f);
 }
@@ -6688,6 +6715,8 @@ function rsLoadFileToSlot0(f){
     var rd=new FileReader();
     rd.onerror=function(){ res(false); };
     rd.onload=function(){
+      /* v4.46 — paid quality tiers deserve 2048px input (see acceptImageFile) */
+      var cap=(state.v2&&state.v2.quality&&state.v2.quality!=="fast")?2048:undefined;
       downscale(String(rd.result), function(dataUrl){
         if(!dataUrl) return res(false);
         var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -6697,10 +6726,63 @@ function rsLoadFileToSlot0(f){
         state.imgRoles=null;
         renderRefs();
         res(true);
-      });
+      }, cap);
     };
     rd.readAsDataURL(f);
   });
+}
+/* v4.46 — the batch RESULTS TRAY: the 8-slot hist used to silently eat any
+   batch past 8 photos; every outcome now lands here (session-only), with a
+   one-tap ZIP of everything and a retry that reuses the retained Files. */
+var rsBatchResults=[];
+function rsRenderBatchTray(){
+  var log=$("v2Log"); if(!log) return;
+  var host=$("rsBatchTray");
+  if(!host){
+    host=el("div"); host.id="rsBatchTray"; host.style.marginTop="8px";
+    log.parentNode.insertBefore(host, log.nextSibling);
+  }
+  host.innerHTML="";
+  if(!rsBatchResults.length) return;
+  var okOnes=rsBatchResults.filter(function(r){ return r.ok; });
+  var badOnes=rsBatchResults.filter(function(r){ return !r.ok; });
+  var strip=el("div","hist");
+  rsBatchResults.forEach(function(rr){
+    if(rr.ok){
+      var im=document.createElement("img");
+      im.src="data:"+rr.mime+";base64,"+rr.b64; im.alt=rr.name;
+      im.title=rr.name;
+      strip.appendChild(im);
+    } else {
+      var bad=el("span","chip","✕ "+rr.name.slice(0,14));
+      bad.style.opacity="0.7";
+      strip.appendChild(bad);
+    }
+  });
+  host.appendChild(strip);
+  var row=el("div","row"); row.style.marginTop="6px";
+  if(okOnes.length>1){
+    var z=el("button","btn");
+    setIcnText(z,"i-download","ZIP ("+okOnes.length+")");
+    z.onclick=function(){
+      ptSaveBlob(ptZip(okOnes.map(function(rr,i){
+        return { name: dlName("retouch", rr.mime, i+1, rr.name), u8: ptB64ToU8(rr.b64) };
+      })), "hnk-retouch-batch-"+ptStamp()+".zip");
+    };
+    row.appendChild(z);
+  }
+  if(badOnes.length){
+    var rt=el("button","btn");
+    setIcnText(rt,"i-retry",t("pt_retry")+" ("+badOnes.length+")");
+    rt.onclick=function(){
+      var fl=badOnes.map(function(rr){ return rr.file; }).filter(Boolean);
+      rsBatchResults=rsBatchResults.filter(function(rr){ return rr.ok; });
+      rsRenderBatchTray();
+      if(fl.length) rsRunBatch(fl);
+    };
+    row.appendChild(rt);
+  }
+  host.appendChild(row);
 }
 async function rsRunBatch(files){
   if(rsBusy || !files.length) return;
@@ -6723,9 +6805,15 @@ async function rsRunBatch(files){
       if(rsStop) break;
       if(ok){
         okN++; state.v2BatchN++;
+        /* v4.46 — the tray keeps EVERY result, not just the last 8 in hist */
+        var fresh=state.hist[0];
+        if(fresh) rsBatchResults.push({name:files[i].name,ok:true,mime:fresh.mime,b64:fresh.b64,file:files[i]});
+        rsRenderBatchTray();
         v2Log(t("rs_batch_prog").replace("{N}",String(i+1)).replace("{M}",String(total)));
         rsShowResult(); /* every finished photo lands in hist + Gallery, same as a single run */
       } else {
+        rsBatchResults.push({name:files[i].name,ok:false,file:files[i]});
+        rsRenderBatchTray();
         /* continue-on-error: one bad photo must not sink the queue */
         v2Log(L9({my:"ပုံ "+(i+1)+"/"+total+" မအောင်မြင်ပါ — ဆက်လုပ်နေသည်",en:"Photo "+(i+1)+"/"+total+" failed — continuing",shn:"ၶႅပ်းႁၢင်ႈ "+(i+1)+"/"+total+" ဢမ်ႇဢွင်ႇ — သိုပ်ႇႁဵတ်းယူႇ",kac:"Sumla "+(i+1)+"/"+total+" n awng ai — matut galaw nga ai",th:"รูปที่ "+(i+1)+"/"+total+" ไม่สำเร็จ — ทำต่อ",zh:"第 "+(i+1)+"/"+total+" 张失败 — 继续",vi:"Ảnh "+(i+1)+"/"+total+" thất bại — tiếp tục",id:"Foto "+(i+1)+"/"+total+" gagal — lanjut",ms:"Foto "+(i+1)+"/"+total+" gagal — diteruskan"}));
       }
@@ -7074,10 +7162,77 @@ function ptRenderGrid(){
     badge.title=p.status;
     b.appendChild(badge);
     var nm=el("span","nm",p.name); b.appendChild(nm);
-    b.onclick=function(){ ptOpenSheet(i); };
+    /* v4.46 — multi-select mode: taps toggle membership instead of opening
+       the sheet (the Gallery's galMulti pattern) */
+    if(ptMulti.on){
+      if(ptMulti.ids[p.id]) b.classList.add("on");
+      b.onclick=function(){
+        if(ptMulti.ids[p.id]) delete ptMulti.ids[p.id]; else ptMulti.ids[p.id]=1;
+        ptRenderGrid();
+      };
+    } else {
+      b.onclick=function(){ ptOpenSheet(i); };
+    }
     host.appendChild(b);
   });
+  ptRenderMultiBar();
   ptRenderCount();
+}
+/* ---- v4.46 batch multi-select: run / ZIP / remove / apply-look on a subset ---- */
+var ptMulti={ on:false, ids:{} };
+function ptMultiSel(){ return PT.photos.filter(function(p){ return ptMulti.ids[p.id]; }); }
+function ptRenderMultiBar(){
+  var host=$("ptMultiBar"); if(!host) return;
+  host.innerHTML="";
+  if(!PT.photos.length){ ptMulti.on=false; ptMulti.ids={}; return; }
+  var n=ptMultiSel().length;
+  var tg=el("button","chip"+(ptMulti.on?" on":""));
+  setIcnText(tg,"i-stack",L9({my:ptMulti.on?"ရွေးနေသည် — ပိတ်မယ် ("+n+")":"အများရွေးမယ်",en:ptMulti.on?"Selecting — done ("+n+")":"Select multiple"}));
+  tg.onclick=function(){
+    ptMulti.on=!ptMulti.on;
+    if(!ptMulti.on) ptMulti.ids={};
+    ptRenderGrid();
+  };
+  host.appendChild(tg);
+  if(!ptMulti.on || !n) return;
+  var run=el("button","chip");
+  setIcnText(run,"i-bolt",L9({my:"ရွေးထားတာ Run",en:"Run selected"})+" ("+n+")");
+  run.onclick=function(){ if(!PT.busy) ptRunAll(ptMultiSel()); };
+  host.appendChild(run);
+  var doneSel=ptMultiSel().filter(function(p){ return p.status==="done"&&p.outB64; });
+  if(doneSel.length){
+    var z=el("button","chip");
+    setIcnText(z,"i-download","ZIP ("+doneSel.length+")");
+    z.onclick=function(){
+      if(!gate("path_export")) return;
+      ptSaveBlob(ptZip(doneSel.map(function(p,i){
+        var ext=(p.outMime==="image/png")?"png":"jpg";
+        return { name:"path-"+(i+1<10?"0":"")+(i+1)+"-"+ptSafeName(p.name).replace(/\.[a-z0-9]+$/i,"")+"."+ext, u8:ptB64ToU8(p.outB64) };
+      })), "hnk-path-sel-"+ptStamp()+".zip");
+    };
+    host.appendChild(z);
+  }
+  var rm=el("button","chip");
+  setIcnText(rm,"i-close",L9({my:"ဖယ်မယ်",en:"Remove"})+" ("+n+")");
+  rm.onclick=function(){
+    if(PT.busy) return;
+    var removed=ptMultiSel();
+    PT.photos=PT.photos.filter(function(p){ return !ptMulti.ids[p.id]; });
+    ptMulti.ids={};
+    ptSync();
+    toast(L9({my:removed.length+" ပုံ ဖယ်လိုက်ပါပြီ",en:"Removed "+removed.length+" photo"+(removed.length>1?"s":"")}),"ok",
+      { label:L9({my:"ပြန်ယူမယ်",en:"Undo"}),
+        fn:function(){ PT.photos=PT.photos.concat(removed); ptSync(); } });
+  };
+  host.appendChild(rm);
+  var lk=el("button","chip");
+  setIcnText(lk,"i-palette",L9({my:"လက်ရှိ look တပ်မယ်",en:"Apply current look"}));
+  lk.onclick=function(){
+    ptMultiSel().forEach(function(p){ p.lookOverride=state.pt.look; });
+    ptRenderGrid();
+    toast(L9({my:"ရွေးထားတဲ့ပုံတွေမှာ look တပ်ပြီး ✓",en:"Look applied to the selected photos ✓"}),"ok");
+  };
+  host.appendChild(lk);
 }
 /* look rail — .pcard mini previews of photo #1 (or a neutral placeholder)
    with each look's CSS filter applied. An <img> (not a canvas) so the
@@ -7483,6 +7638,7 @@ async function ptRunAll(only){
       ptRenderGrid();
       ptSetBusy(true, ptEtaLive(total-i)+" · "+(i+1)+"/"+total);
       var ok=false, _t0=Date.now();
+      var preHist=state.hist.slice(0); /* v4.46 — see restore below */
       try{ ok=await ptDoGenerateOne(photo); }
       catch(e){ ok=false; photo.err=friendlyError(e); }
       if(ok) PT.durs.push((Date.now()-_t0)/1000);
@@ -7492,6 +7648,10 @@ async function ptRunAll(only){
         var out=state.hist[0];
         photo.outB64=out.b64; photo.outMime=out.mime;
         photo.status="done"; okN++;
+        /* v4.46 — restore the pre-run history: this result is archived in
+           PT.photos AND the Gallery, and a 30-photo batch used to evict every
+           Create/Retouch result still being compared through the 8-cap */
+        state.hist=preHist; state.result=state.hist[0]||null; state.histSel=0;
         /* NOTE: no galleryAdd() here — the shared dispatcher already saved
            this result to the Gallery, and a second add would duplicate it. */
         ptLog(t("pt_photo_done").replace("{N}",String(i+1)).replace("{M}",String(total))+" — "+photo.name);
@@ -7740,6 +7900,85 @@ function ptDlSeq(){
   });
 }
 /* the genuinely free path: bake every photo's look on a canvas and zip it */
+/* v4.46 — CONTACT SHEET: the client-proofing deliverable ("send the bride a
+   numbered sheet, she replies 3, 7, 12"). AI result when done, free bake
+   otherwise; 3 columns of 2:3 cells, index + filename under each, date
+   header; chunked to <=4096px-tall pages for mobile canvas limits. */
+function ptContactSheet(){
+  if(!PT.photos.length){ toast(t("pt_need_photos"),"err"); return; }
+  var hasAi=PT.photos.some(function(p){ return p.status==="done"&&p.outB64; });
+  if(hasAi && !gate("path_export")) return;
+  toast(L9({my:"Contact sheet ဆောက်နေပါတယ်…",en:"Building the contact sheet…"}),"");
+  var COLS=3, CW=480, CH=720, PAD=16, LBL=34, HDR=56;
+  var rowH=CH+LBL+PAD;
+  var maxRowsPerPage=Math.max(1,Math.floor((4096-HDR-PAD)/rowH));
+  var srcs=new Array(PT.photos.length), pending=PT.photos.length;
+  PT.photos.forEach(function(p,i){
+    function take(du){ srcs[i]=du; if(!--pending) build(); }
+    if(p.status==="done"&&p.outB64) take("data:"+(p.outMime||"image/png")+";base64,"+p.outB64);
+    else ptBake(p, take);
+  });
+  function build(){
+    var totalRows=Math.ceil(PT.photos.length/COLS);
+    var pages=Math.ceil(totalRows/maxRowsPerPage);
+    var pageIdx=0;
+    function onePage(){
+      if(pageIdx>=pages){
+        toast(L9({my:"Contact sheet "+pages+" မျက်နှာ ထုတ်ပြီး ✓",en:"Contact sheet exported ("+pages+" page"+(pages>1?"s":"")+") ✓"}),"ok");
+        return;
+      }
+      var r0=pageIdx*maxRowsPerPage;
+      var rows=Math.min(maxRowsPerPage, totalRows-r0);
+      var W=COLS*(CW+PAD)+PAD, H=HDR+rows*rowH+PAD;
+      var c=document.createElement("canvas"); c.width=W; c.height=H;
+      var x=c.getContext("2d");
+      x.fillStyle="#101319"; x.fillRect(0,0,W,H);
+      x.fillStyle="#f4d488"; x.font="700 26px sans-serif"; x.textBaseline="middle";
+      x.textAlign="left";
+      x.fillText("HNK · "+ptStamp()+"  ·  "+PT.photos.length+" photos"+(pages>1?("  ·  "+(pageIdx+1)+"/"+pages):""), PAD, HDR/2);
+      var loaded=0, cells=[];
+      for(var rI=0;rI<rows;rI++) for(var cI=0;cI<COLS;cI++){
+        var n=(r0+rI)*COLS+cI;
+        if(n<PT.photos.length) cells.push({n:n,rI:rI,cI:cI});
+      }
+      var done=0;
+      cells.forEach(function(cell){
+        var im=new Image();
+        function fin(){ if(++done===cells.length) flush(); }
+        im.onload=function(){
+          var cx0=PAD+cell.cI*(CW+PAD), cy0=HDR+cell.rI*rowH;
+          var iw=im.naturalWidth, ih=im.naturalHeight, tr=CW/CH, sw2=iw, sh2=ih;
+          if(iw/ih>tr){ sw2=ih*tr; } else { sh2=iw/tr; }
+          x.drawImage(im,(iw-sw2)/2,(ih-sh2)/2,sw2,sh2,cx0,cy0,CW,CH);
+          x.fillStyle="rgba(11,13,20,.82)"; x.fillRect(cx0,cy0+CH,CW,LBL);
+          x.fillStyle="#f3efe6"; x.font="600 18px sans-serif"; x.textAlign="left";
+          x.fillText("#"+(cell.n+1)+"  "+ptSafeName(PT.photos[cell.n].name).slice(0,30), cx0+8, cy0+CH+LBL/2);
+          fin();
+        };
+        im.onerror=fin;
+        im.src=srcs[cell.n]||PT.photos[cell.n].srcDataUrl;
+      });
+      function flush(){
+        function save(){
+          c.toBlob(function(bl){
+            if(bl){
+              var url=URL.createObjectURL(bl);
+              var a=document.createElement("a");
+              a.href=url; a.download="hnk-contact-sheet-"+ptStamp()+(pages>1?("-p"+(pageIdx+1)):"")+".jpg";
+              a.style.display="none";
+              document.body.appendChild(a); a.click();
+              setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },1500);
+            }
+            pageIdx++; onePage();
+          },"image/jpeg",0.88);
+        }
+        if(wmOn()) wmStamp(c,save); else save();
+      }
+      if(!cells.length){ pageIdx++; onePage(); }
+    }
+    onePage();
+  }
+}
 function ptBakeAll(){
   if(!PT.photos.length){ toast(t("pt_need_photos"),"err"); return; }
   toast(t("pt_baking"));
@@ -7860,6 +8099,7 @@ $("ptLbPrompt").textContent=t("pt_prompt");
 $("ptStopNote").textContent=t("pt_stop_note");
 $("ptOutNote").textContent=t("pt_out_note");
 setIcnText($("btnPtZipAll"),"i-download",t("pt_zip"));
+setIcnText($("btnPtSheetAll"),"i-frame",L9({my:"Contact sheet ထုတ်မယ် (နံပါတ်တပ် ပြိုက်စစ်ရွက်)",en:"Export contact sheet (numbered proof)",shn:"ဢွၵ်ႇ contact sheet (မၢႆၼပ်ႉ)",kac:"Contact sheet shapraw u (namba lawm)",th:"ส่งออก contact sheet (มีหมายเลข)",zh:"导出联系表（带编号）",vi:"Xuất contact sheet (đánh số)",id:"Ekspor contact sheet (bernomor)",ms:"Eksport contact sheet (bernombor)"}));
 setIcnText($("btnPtDlSeq"),"i-download",t("pt_dlseq"));
 setIcnText($("btnPtBake"),"i-palette",t("pt_bake"));
 setIcnText($("btnPtSheetClose"),"i-close",t("pt_close"));
@@ -7962,6 +8202,9 @@ $("btnPtStop").onclick=ptStopRun;
    exports the free canvas grades — nothing was spent producing those, so
    locking them would be charging for the customer's own local work. */
 $("btnPtZipAll").onclick=function(){ if(!gate("path_export")) return; ptZipAll(); };
+/* contact sheet gates itself only when it contains AI results (free-bake
+   sheets are the customer's own local work, same rule as btnPtBake) */
+$("btnPtSheetAll").onclick=ptContactSheet;
 $("btnPtDlSeq").onclick=function(){ if(!gate("path_export")) return; ptDlSeq(); };
 $("btnPtBake").onclick=ptBakeAll;
 $("btnPtSheetClose").onclick=ptCloseSheet;
@@ -13398,6 +13641,7 @@ async function libToSlot(slot, btn){
       rd.onload=function(){ res(String(rd.result).split(",")[1]); };
       rd.onerror=rej; rd.readAsDataURL(bl);
     });
+    refsClobberGuard(slot); /* v4.46 — replacing another page's result offers Undo */
     if(slot===0){ state.cmpBase=null; state.rsOrig=null; } /* manual IMAGE 1 pick — compare baselines reset (v4.28) */
     state.refs[slot]={mime:"image/jpeg", b64:b64, label:it.t};
     state.imgRoles=null;
@@ -15003,7 +15247,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.45.0";
+var APP_VER="4.46.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
