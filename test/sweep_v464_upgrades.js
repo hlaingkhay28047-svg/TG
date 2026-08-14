@@ -204,8 +204,14 @@ report("E) the new set is no heavier than the one it replaced (phone data budget
     WS.every(w => at(w).needInVisual > 100 && at(w).needOutside === 0),
     WS.map(w => w + ":in=" + at(w).needInVisual + " out=" + at(w).needOutside).join(" "));
 
-  report("G) all 116 cards are built, and the open group actually paints its own",
-    WS.every(w => at(w).nCardsTotal === 116 && at(w).nCards > 0 && at(w).nMeasured > 0),
+  /* This asked for exactly 116 workflow cards and went red the moment a 117th
+     workflow shipped — the same mistake the page-count assertion made two waves
+     earlier. The pack is 116 IMAGES, which assertion B already pins on disk;
+     the number of WORKFLOWS is free to grow and pinning it just punishes the
+     next feature. What matters here is that the grid is fully built and the
+     open group actually painted cards this sweep could measure. */
+  report("G) the grid is fully built and the open group paints measurable cards",
+    WS.every(w => at(w).nCardsTotal >= 116 && at(w).nCards > 0 && at(w).nMeasured > 0),
     WS.map(w => w + ":total=" + at(w).nCardsTotal + " visible=" + at(w).nCards +
       " measured=" + at(w).nMeasured).join(" | "));
 
