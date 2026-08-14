@@ -6973,7 +6973,7 @@ function renderRsPicker(){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x"); x.innerHTML=icn("i-close");
     x.setAttribute("aria-label",t("lb_remove_image"));
-    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; renderRefs(); };
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; stDropFull(); renderRefs(); };
     d.appendChild(x);
   } else {
     /* V2 hero empty-state: same big dropzone treatment as Studio's stPicker */
@@ -8585,6 +8585,10 @@ function ptSetBusy(b, label){
   $("btnPtRun").classList.toggle("working",!!b);
   $("btnPtAdd").disabled=!!b;
   $("btnPtClear").disabled=!!b;
+  /* v4.75 — BAKE belongs in this list too. It was the one long-running button
+     left tappable during a run, so an AI batch and a local bake could fight
+     over the same album. */
+  $("btnPtBake").disabled=!!b;
   var stp=$("btnPtStop");
   stp.style.display=b?"":"none";
   $("ptStopNote").style.display=b?"":"none";
@@ -9090,29 +9094,48 @@ function ptContactSheet(){
   }
 }
 function ptBakeAll(){
+  /* v4.75 — BAKE takes the same lock every other long job takes. Measured
+     before this line existed: two taps on the button ran two full chains over
+     the same album — 12 bakes for 6 photos, two ZIPs saved, twice the canvas
+     memory on the device least able to spare it. And because PT.busy stayed
+     false for the whole bake, three things that exist precisely for long jobs
+     never engaged: the beforeunload guard (close the tab mid-bake and the
+     batch is gone silently), the screen Wake Lock, and the disabling of Add /
+     Clear / Run. Sharing rsBusy also stops a bake and an AI run overlapping. */
+  if(rsBusy||PT.busy) return;
   if(!PT.photos.length){ toast(t("pt_need_photos"),"err"); return; }
-  toast(t("pt_baking"));
+  PT.stop=false; rsStop=false;
   /* v4.51 — ONE photo at a time. The old forEach allocated a full-resolution
      canvas per photo simultaneously, which is exactly what runs iOS Safari
      out of canvas memory on a real 60-100 shot album; sequential baking keeps
      one canvas alive at a time and reports progress as it goes. */
   var entries=[], i=0, total=PT.photos.length, ungraded=0;
+  ptSetBusy(true, t("pt_baking"));
   ptProgress(0,total);
+  function finish(){
+    ptProgress(0,0);
+    ptSetBusy(false);
+    var list=entries.filter(Boolean);
+    if(!list.length){ toast(PT.stop?t("pt_stopped"):t("pt_no_result"),"err"); return; }
+    /* A stopped bake still delivers the photos it finished — they are real
+       work — but the filename says so, because a partial batch that looks
+       like a complete one is the kind of thing discovered at the client's
+       house rather than here. */
+    var part=PT.stop&&list.length<total;
+    ptSaveBlob(ptZip(list), "hnk-path-look-"+ptStamp()+(part?"-partial":"")+".zip");
+    toast(t("pt_zip_ok").replace("{N}",String(list.length)), part?"err":"ok");
+    /* v4.55 — a photo whose grade failed still goes into the ZIP, because a
+       missing file would be worse, but it goes in NAMED as the original and
+       the studio is told how many. Silently shipping un-graded originals
+       inside a folder called "graded copies" is the version of this that
+       gets discovered at the client's house. */
+    if(ungraded) toast(t("pt_bake_ungraded").replace("{N}",String(ungraded)),"err");
+  }
   function next(){
-    if(i>=total){
-      ptProgress(0,0);
-      var list=entries.filter(Boolean);
-      if(!list.length){ toast(t("pt_no_result"),"err"); return; }
-      ptSaveBlob(ptZip(list), "hnk-path-look-"+ptStamp()+".zip");
-      toast(t("pt_zip_ok").replace("{N}",String(list.length)),"ok");
-      /* v4.55 — a photo whose grade failed still goes into the ZIP, because a
-         missing file would be worse, but it goes in NAMED as the original and
-         the studio is told how many. Silently shipping un-graded originals
-         inside a folder called "graded copies" is the version of this that
-         gets discovered at the client's house. */
-      if(ungraded) toast(t("pt_bake_ungraded").replace("{N}",String(ungraded)),"err");
-      return;
-    }
+    /* Stop is only reachable now that the bake marks the app busy, so the
+       loop has to honour it — a Stop button that does nothing is worse than
+       no Stop button. */
+    if(PT.stop||i>=total){ finish(); return; }
     var p=PT.photos[i], n=i;
     ptBake(p, function(du, ok){
       var m=String(du).match(/^data:([^;]+);base64,(.+)$/);
@@ -10359,6 +10382,16 @@ function stExportDims(){
    own header and quantization table and is byte-identical across photos, so
    keying on it matched everything. ptDupKey already worked this way. */
 function stFullKey(b64){ return String(b64||"").length+":"+String(b64||"").slice(-64); }
+/* v4.75 — release the retained original.
+
+   state.stFull holds the customer's photo at its ORIGINAL size (up to 34MB of
+   base64) so Studio can deliver a real full-resolution export. It is set only
+   for slot 0 and a new photo replaces it, so it never piles up — but nothing
+   ever let go of it either. Remove the photo and those bytes stayed resident
+   for the rest of the session, on a phone, for a photo the app can no longer
+   even reach. It is session-only and never written to storage, so this is
+   memory hygiene rather than a leak of the customer's data. */
+function stDropFull(){ state.stFull=null; }
 function stLoadFullSource(du){
   ST.fullBitmap=null; ST.geoCacheFull=null;
   if(!du) return;
@@ -10864,6 +10897,14 @@ function stWorkerRender(W,H){
   var w=stWorker(); if(!w||STW.dead||!STW.ready) return false;
   if(STW.busy){ STW.queued=true; return true; } /* coalesce: latest state re-renders when the in-flight frame lands */
   STW.busy=true;
+  /* v4.75 — the generation counter is minted HERE, after the busy check, and
+     that is load-bearing rather than incidental: because a second render can
+     never start while one is in flight, STW.id cannot move between this line
+     and the callback below. The callback's `id!==STW.id` test therefore never
+     fires today. It is kept because it states the invariant the coalescing
+     relies on — if the busy guard above is ever relaxed, that test is what
+     stops a stale frame from overwriting a newer one — and sweep_v475 pins
+     the invariant so removing the guard cannot pass silently. */
   var id=++STW.id;
   var t2=stEffT2();
   t2.lipC=stHexRgb(svGet("mu_lipLocHex",null));
@@ -14178,7 +14219,7 @@ function renderStPicker(){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x"); x.innerHTML=icn("i-close");
     x.setAttribute("aria-label",t("lb_remove_image"));
-    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; renderRefs(); };
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; stDropFull(); renderRefs(); };
     d.appendChild(x);
   } else {
     /* MUST #9: large dropzone empty-state — dead controls stay hidden until a photo exists */
@@ -14915,6 +14956,15 @@ $("btnStGen").onclick=async function(){
   }
   /* Tier-3: bake the live-preview edits into the photo, then ride the shared dispatcher */
   stSetBusy(true,t("spin_gen"));
+  /* v4.75 — let the spinner actually paint before the bake blocks the thread.
+     stBake() is fully synchronous and, measured on a 24MP photo carrying a
+     heavy recipe (sharpen + clarity + grain + vignette + background blur +
+     dehaze + the five Tier-2 skin controls), takes 8.9s and adds 379MB to the
+     heap on desktop — considerably worse on a phone. Without this yield the
+     browser never gets a frame between setting the label and freezing, so the
+     studio sees a dead tab rather than "working". The local-commit path above
+     already did this; the AI path did not. */
+  await new Promise(function(r){ setTimeout(r,30); });
   var stStopB=$("btnStStop"); if(stStopB) stStopB.style.display="";
   var savedR0=state.refs[0], savedR1=state.refs[1], savedR2=state.refs[2];
   var savedPrompt=$("prompt").value;
@@ -17731,7 +17781,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.74.0";
+var APP_VER="4.75.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -18497,10 +18547,14 @@ $("btnRetry").onclick=function(){ this.style.display="none"; $("btnGen").onclick
     bc.onclick=function(){
       if(!state.refs.some(Boolean)) return;
       var kept=state.refs.slice();
-      state.refs=[null,null,null]; state.imgRoles=null; renderRefs();
+      /* v4.75 — the retained original goes with them, but Undo has to bring it
+         back: restoring slot 0 without it would leave the photo on screen and
+         silently downgrade its export to the downscaled copy. */
+      var keptFull=state.stFull;
+      state.refs=[null,null,null]; state.imgRoles=null; stDropFull(); renderRefs();
       toast(L9({my:"ပုံ ၃ ကွက်လုံး ရှင်းလိုက်ပါပြီ",en:"All image slots cleared",shn:"လၢင်ႉၶႅပ်းႁၢင်ႈတင်းမူတ်းယဝ်ႉ",kac:"Sumla slot yawng sausan sai",th:"ล้างช่องรูปทั้งหมดแล้ว",zh:"已清除所有图片槽",vi:"Đã xóa tất cả ô ảnh",id:"Semua slot gambar dihapus",ms:"Semua slot imej dikosongkan"}),"ok",
         {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
-         fn:function(){ state.refs=kept; renderRefs(); }});
+         fn:function(){ state.refs=kept; state.stFull=keptFull; renderRefs(); }});
     };
   }
   if(bp){

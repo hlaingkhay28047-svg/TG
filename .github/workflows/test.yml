@@ -197,6 +197,9 @@ jobs:
       - name: Run v4.74.0 result-proportion sweep (no stage distortion)
         run: node test/sweep_v474_upgrades.js
 
+      - name: Run v4.75.0 long-local-job sweep (bake lock, retained original, export yield)
+        run: node test/sweep_v475_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
