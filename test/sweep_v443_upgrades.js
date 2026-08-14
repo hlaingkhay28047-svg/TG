@@ -70,7 +70,12 @@ function report(name, ok, detail) {
   /* ---- 3) fallback layering for keys outside the packs ---- */
   const fb = await page.evaluate(() => {
     const keep = LANG;
-    LANG = "hi"; const hiLong = t("gal_note");   // not in pack -> English
+    /* v4.50: hi/bn/ta/te now carry the FULL dictionary, so they answer
+       natively where they used to fall through — the fall-through layer is
+       proven with a language the translation wave has not reached yet (ur,
+       still a starter pack only) */
+    LANG = "hi"; const hiLong = t("gal_note");   // full dict -> native Hindi
+    LANG = "ur"; const urLong = t("gal_note");   // starter only -> English
     LANG = "en"; const enLong = t("gal_note");
     LANG = "lo"; const loLong = t("gal_note");   // not in pack -> Thai
     LANG = "th"; const thLong = t("gal_note");
@@ -78,19 +83,21 @@ function report(name, ok, detail) {
     LANG = "my"; const myShort = t("btn_show");
     LANG = keep;
     return {
-      hiFallsToEn: hiLong === enLong,
+      hiIsNative: hiLong !== enLong && /[\u0900-\u097F]/.test(hiLong),
+      urFallsToEn: urLong === enLong,
       loFallsToTh: loLong === thLong && thLong !== enLong,
       kyuFallsToMy: kyuShort === myShort
     };
   });
-  report("3) unpacked keys fall through: hi->en, lo->th, kyu->my", fb.hiFallsToEn && fb.loFallsToTh && fb.kyuFallsToMy, fb);
+  report("3) full dicts answer natively (hi), unpacked still fall through: ur->en, lo->th, kyu->my",
+    fb.hiIsNative && fb.urFallsToEn && fb.loFallsToTh && fb.kyuFallsToMy, fb);
 
   /* ---- 4) version lockstep ---- */
   const ver = await page.evaluate(async () => {
     const vj = await (await fetch("version.json")).json();
     return { app: APP_VER, json: vj.v };
   });
-  report("4) version lockstep 4.49.0", ver.app === "4.49.0" && ver.json === "4.49.0", ver);
+  report("4) version lockstep 4.50.0", ver.app === "4.50.0" && ver.json === "4.50.0", ver);
 
   /* ---- 5) marketing site mirrors the 35-language set (file-based — the
      site root isn't served in CI, docs/app is) ---- */
@@ -100,9 +107,14 @@ function report(name, ok, detail) {
     optgroups: (site.match(/<optgroup/g) || []).length === 3,
     options: (site.match(/<option value="/g) || []).length === 35,
     fb: site.indexOf("var SITE_FB=") >= 0 && site.indexOf("lo:'th'") >= 0,
+    /* v4.50: the packs grew from starter subsets into full dictionaries for
+       the languages the translation wave completed, so the pin checks that
+       every language block exists and still defines the CTA, not that the
+       CTA happens to be its first key */
     packs: site.indexOf("var SITE_L=") >= 0 &&
-      ["hi:", "bn:", "ta:", "te:", "mr:", "gu:", "kn:", "ml:", "pa:", "ur:", "ne:", "lo:", "km:", "ja:", "ko:"]
-        .every(c => site.indexOf(c + "{'nav.cta'") >= 0),
+      ["hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa", "ur", "ne", "lo", "km", "ja", "ko"]
+        .every(c => new RegExp("\\n" + c + ":\\{").test(site)) &&
+      (site.match(/"nav\.cta":/g) || []).length >= 15,
     keyThreaded: site.indexOf("pick(rec,l,k)") >= 0
   };
   report("5) site: 35-language picker, SITE_FB/SITE_L, key-threaded pick()",
