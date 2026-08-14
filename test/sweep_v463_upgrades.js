@@ -82,9 +82,16 @@ const WIDTHS = [320, 360, 390, 414];
       out.trackH = +N.height.toFixed(2);
       out.valW = +V.width.toFixed(2);
       /* the readout's 44px rule is met by its ::after hit area, not its box */
+      /* measure the real painted hit area, not an arithmetic guess from the
+         inset values — the first version of this computed height+top+bottom
+         and so inherited the font's text height, which made the assertion
+         pass at 44 locally and fail at 43 on a runner with different fonts.
+         That was a real defect in the CSS, not a flaky test: the tap target
+         genuinely depended on which fonts the device had. */
       out.valHit = (function () {
         const cs = getComputedStyle(vl, "::after");
-        return Math.abs(parseFloat(cs.top || "0")) + Math.abs(parseFloat(cs.bottom || "0")) + V.height;
+        const h = parseFloat(cs.height || "0");
+        return h > 0 ? h : (Math.abs(parseFloat(cs.top || "0")) + Math.abs(parseFloat(cs.bottom || "0")) + V.height);
       })();
       out.sameLine = Math.abs(L.top - V.top) < 4;
       out.trackBelow = N.top >= L.bottom - 1;

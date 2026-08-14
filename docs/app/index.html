@@ -568,6 +568,12 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
     border-bottom:1px solid rgba(255,255,255,.05)}
   #pgStudio .st-ctl.st-slider label{flex:1 1 auto;min-width:0}
   #pgStudio .st-ctl.st-slider .st-val{flex:0 0 44px;min-width:44px}
+  /* The base .st-val hit area is `top:-15px;bottom:-15px` — height + 30px,
+     where the height is whatever the font gives the text. That is 44px with
+     Noto Sans Myanmar loaded and 43px on a runner without it, i.e. the touch
+     target silently depends on which fonts the device has. Pin it to a real
+     44px box centred on the readout instead: font-independent by construction. */
+  #pgStudio .st-ctl.st-slider .st-val:after{top:50%;bottom:auto;height:44px;transform:translateY(-50%)}
   #pgStudio .st-ctl.st-slider .rng{flex:1 0 100%;order:1;min-width:0;min-height:44px;
     touch-action:pan-y;margin-top:2px}
 }
