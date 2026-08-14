@@ -3394,6 +3394,16 @@ function rhActiveModelCfg(){
   var found=RH_MODELS.find(function(m){ return rhIsConfigured(m.id); });
   return found ? rhModelCfgOut(found.id) : null;
 }
+/* v4.49 — the one line every RH surface can show: which model a RunningHub
+   run will ACTUALLY use right now (Create dispatcher, V2 tiers, Path batch
+   all resolve through rhActiveModelCfg at dispatch time). */
+function rhEngineLabel(){
+  var sp=$("selProvider");
+  if(!sp || sp.value!=="runninghub") return "";
+  var a=rhActiveModelCfg(); if(!a) return "";
+  var d=rhModelDef(a.id)||{};
+  return "RunningHub · "+(d.label||a.id);
+}
 
 function rhDataUrlToBlob(dataUrl){
   var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
@@ -4023,6 +4033,45 @@ function rhNarrowRatioOptionsFor(active){
     if(stillValid) sel.value=cur3;
   }
 }
+/* v4.49 — the Model dropdown does double duty: Gemini options normally,
+   the CONFIGURED RunningHub models when that provider is active. Picking
+   one here writes the same rhCfg().activeModel that Setup's chip list
+   writes, so the two surfaces always agree. */
+var _selModelGeminiHtml=null, _geminiModelShadow="auto";
+/* While the RH list occupies the dropdown, the Gemini model choice lives in
+   the shadow — every Gemini read/write goes through these two, so the
+   engine-forcing paths (V2 tiers, Path batch) and the cross-provider
+   fallback keep working with RunningHub selected. */
+function rhModelListIsRH(){
+  var sel=$("selModel");
+  return !!(sel && _selModelGeminiHtml!==null && sel.innerHTML!==_selModelGeminiHtml);
+}
+function genGeminiModel(){
+  return rhModelListIsRH() ? (_geminiModelShadow||"auto") : (($("selModel")||{}).value||"auto");
+}
+function genSetGeminiModel(v){
+  if(rhModelListIsRH()){ _geminiModelShadow=v; return; }
+  $("selModel").value=v;
+}
+function rhRestoreGeminiModel(sel){
+  if(_selModelGeminiHtml===null || sel.innerHTML===_selModelGeminiHtml) return;
+  sel.innerHTML=_selModelGeminiHtml;
+  var ok=Array.prototype.some.call(sel.options,function(o){ return o.value===_geminiModelShadow; });
+  sel.value = ok ? _geminiModelShadow : "auto";
+}
+function rhFillModelSelect(sel, active){
+  if(_selModelGeminiHtml===null) _selModelGeminiHtml=sel.innerHTML;
+  if(!rhModelListIsRH()) _geminiModelShadow=sel.value||"auto"; /* remember the Gemini pick */
+  var models=RH_MODELS.filter(function(m){ return rhIsConfigured(m.id); });
+  sel.innerHTML="";
+  models.forEach(function(m){
+    var o=document.createElement("option");
+    var kindTag = m.kind==="upscale"||m.kind==="upscale-transparent" ? " · Upscale" : "";
+    o.value=m.id; o.textContent="Model: "+m.label+kindTag;
+    sel.appendChild(o);
+  });
+  if(active && active.id && Array.prototype.some.call(sel.options,function(o){ return o.value===active.id; })) sel.value=active.id;
+}
 function updateGenOptsForRHKind(){
   var provider = $("selProvider").value;
   var isUpscaleKind = false;
@@ -4043,10 +4092,22 @@ function updateGenOptsForRHKind(){
   var sizeDead = provider==="openai" || (active && active.kind==="zimage");
   $("selSize").style.display = sizeDead ? "none" : "";
   /* v4.41 engine honesty: the Flash/Pro dropdown is a GEMINI control — with
-     another provider selected it was a false control ("Model: Auto" shown
-     while a saved RH model ran). Hide it and name what will actually run. */
+     another provider selected it was a false control. v4.49 goes further:
+     with RunningHub selected, the SAME dropdown becomes a real RH model
+     picker — its options are the configured RH models and choosing one
+     writes rhCfg().activeModel, the single source of truth Setup's chips
+     write, so Setup and Generate can never disagree. */
   var mSel=$("selModel");
-  mSel.style.display = provider==="gemini" ? "" : "none";
+  if(provider==="runninghub"){
+    rhFillModelSelect(mSel, active);
+    mSel.style.display="";
+  } else if(provider==="openai"){
+    rhRestoreGeminiModel(mSel);
+    mSel.style.display="none";
+  } else {
+    rhRestoreGeminiModel(mSel);
+    mSel.style.display="";
+  }
   var eng=$("genEngine");
   if(!eng){
     eng=document.createElement("button");
@@ -4058,7 +4119,8 @@ function updateGenOptsForRHKind(){
   }
   if(provider==="runninghub"){
     eng.style.display="";
-    eng.textContent=L9({my:"Model: ",en:"Model: ",shn:"Model: ",kac:"Model: ",th:"Model: ",zh:"模型：",vi:"Model: ",id:"Model: ",ms:"Model: "})+((active&&active.id&&(rhModelDef(active.id)||{}).label)||active&&active.id||"?")+L9({my:" — Setup မှာပြောင်းနိုင်",en:" — change in Setup",shn:" — လႅၵ်ႈလႆႈတီႈ Setup",kac:" — Setup kaw galai u",th:" — เปลี่ยนได้ใน Setup",zh:" — 可在 Setup 更改",vi:" — đổi trong Setup",id:" — ubah di Setup",ms:" — tukar di Setup"});
+    /* the dropdown above IS the model picker now — this link manages the list */
+    eng.textContent=L9({my:"Model စာရင်း/api စီမံရန် — Setup ဖွင့်မယ်",en:"Manage models/api — open Setup",shn:"ၸတ်းၵၢၼ် model — ပိုတ်ႇ Setup",kac:"Model ni hpe up hkang — Setup hpaw u",th:"จัดการโมเดล — เปิด Setup",zh:"管理模型 — 打开 Setup",vi:"Quản lý model — mở Setup",id:"Kelola model — buka Setup",ms:"Urus model — buka Setup"});
   } else if(provider==="openai"){
     eng.style.display="";
     eng.textContent="Model: gpt-image-2";
@@ -4099,7 +4161,7 @@ function updateGeminiSizeGate(){
     if(oa) oa.textContent="Size: Auto";
     return;
   }
-  var m=$("selModel").value;
+  var m=genGeminiModel();
   var resolved = m==="auto" ? (state.refs.some(Boolean) ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview") : m;
   var pro = resolved==="gemini-3-pro-image-preview";
   if(o2) o2.disabled=!pro;
@@ -4152,7 +4214,23 @@ function ratioRailAttach(selId){
 }
 
 $("selProvider").onchange = updateGenOptsForRHKind;
-$("selModel").onchange = updateGeminiSizeGate;
+$("selModel").onchange = function(){
+  /* v4.49 — with RunningHub active this dropdown WRITES the shared
+     activeModel, so the pick is real for every RH surface (Create, V2,
+     Path, Studio HD) and Setup's chip list mirrors it instantly */
+  if($("selProvider").value==="runninghub"){
+    var id=this.value;
+    if(rhIsConfigured(id)){
+      var cc=rhCfg(); cc.activeModel=id; rhSaveCfg(cc);
+      if(typeof rhRenderConfiguredList==="function") rhRenderConfiguredList();
+      updateGenOptsForRHKind();
+      var d=rhModelDef(id)||{};
+      toast(L9({my:"RunningHub model → "+(d.label||id)+" ✓ — ဒီ model နဲ့ generate လုပ်ပါမယ်",en:"RunningHub model → "+(d.label||id)+" ✓ — generates will use this model"}),"ok");
+    }
+    return;
+  }
+  updateGeminiSizeGate();
+};
 $("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
 ratioRailAttach("selRatio"); ratioRailAttach("selT2IRatio"); ratioRailAttach("selVidAspect");
 rhLoadFormFor($("rhModelSel").value);
@@ -6556,6 +6634,17 @@ function renderV2Hero(){
     qs.appendChild(b);
   });
   $("v2HdHint").style.display = hdOk ? "none" : "";
+  /* v4.49 — when the app-wide provider is RunningHub, name the model a V2 run
+     will ACTUALLY use (the tier chips shape prompt + size only, never the RH
+     model — that was invisible here) */
+  var ven=$("v2EngineNote");
+  if(!ven){
+    ven=el("p","mut"); ven.id="v2EngineNote";
+    qs.parentNode.insertBefore(ven, qs.nextSibling);
+  }
+  var vl=rhEngineLabel();
+  ven.style.display=vl?"":"none";
+  if(vl) ven.textContent="Engine: "+vl+L9({my:" — model ကို Generate/Setup မှာ ပြောင်းနိုင်ပါတယ်",en:" — change the model in Generate/Setup"});
   $("v2Balance").value=v.balance;
   $("v2BalanceVal").textContent=(v.balance>0?"+":"")+v.balance;
   $("v2Blemish").value=v.blemish; $("v2BlemishVal").textContent=v.blemish+"%";
@@ -6634,10 +6723,10 @@ function renderV2Hero(){
    the shared selects for just this run and restores them in finally. */
 async function v2DoGenerate(promptText){
   var s=$("selModel"), q=$("selQual"), r=$("selRatio"), c=$("selCount"), z=$("selSize");
-  var sv={m:s.value,q:q.value,r:r.value,c:c.value,z:z.value};
+  var sv={m:genGeminiModel(),q:q.value,r:r.value,c:c.value,z:z.value};
   var savedPrompt=$("prompt").value, saved1=state.refs[1], saved2=state.refs[2];
   var tier=state.v2.quality;
-  s.value = tier==="fast" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
+  genSetGeminiModel(tier==="fast" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview");
   q.value = tier==="fast" ? "" : "high";
   z.value = tier==="fast" ? "" : "2K";
   r.value=""; /* never append an "Output aspect ratio" line — original framing is sacred in a retouch */
@@ -6656,7 +6745,7 @@ async function v2DoGenerate(promptText){
   try{ await $("btnGen").onclick(); }
   finally{
     state.refs[1]=saved1; state.refs[2]=saved2;
-    s.value=sv.m; q.value=sv.q; r.value=sv.r; c.value=sv.c; z.value=sv.z;
+    genSetGeminiModel(sv.m); q.value=sv.q; r.value=sv.r; c.value=sv.c; z.value=sv.z;
     $("prompt").value=savedPrompt; /* rsDoGenerate leaves the prompt; V2 restores it — Freeform stays untouched */
     if(keptRt) D.retouch.sliders.forEach(function(sl){ if(keptRt[sl.key]!==undefined) state.rt[sl.key]=keptRt[sl.key]; });
   }
@@ -7402,6 +7491,15 @@ function ptRenderChips(){
     ts.appendChild(b);
   });
   $("ptHdHint").style.display = hdOk ? "none" : "";
+  /* v4.49 — same engine honesty as V2: name the RH model a batch run uses */
+  var pen=$("ptEngineNote");
+  if(!pen){
+    pen=el("p","mut"); pen.id="ptEngineNote";
+    ts.parentNode.insertBefore(pen, ts.nextSibling);
+  }
+  var pl=rhEngineLabel();
+  pen.style.display=pl?"":"none";
+  if(pl) pen.textContent="Engine: "+pl+L9({my:" — model ကို Generate/Setup မှာ ပြောင်းနိုင်ပါတယ်",en:" — change the model in Generate/Setup"});
   $("btnPtRefClear").style.display = PT.ref ? "" : "none";
   var rt=$("ptRefThumb");
   if(PT.ref){ rt.src="data:"+PT.ref.mime+";base64,"+PT.ref.b64; rt.style.display=""; }
@@ -7599,11 +7697,11 @@ function ptEta(){
    borrowed control back in finally — Freeform must look untouched afterward. */
 async function ptDoGenerateOne(photo){
   var s=$("selModel"), q=$("selQual"), r=$("selRatio"), c=$("selCount"), z=$("selSize");
-  var sv={m:s.value,q:q.value,r:r.value,c:c.value,z:z.value};
+  var sv={m:genGeminiModel(),q:q.value,r:r.value,c:c.value,z:z.value};
   var savedPrompt=$("prompt").value;
   var sr=[state.refs[0],state.refs[1],state.refs[2]], savedRoles=state.imgRoles;
   var tier=state.pt.tier;
-  s.value = tier==="fast" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
+  genSetGeminiModel(tier==="fast" ? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview");
   q.value = tier==="fast" ? "" : "high";
   z.value = tier==="fast" ? "" : "2K";
   r.value=""; /* original framing is sacred in a batch look pass */
@@ -7619,7 +7717,7 @@ async function ptDoGenerateOne(photo){
   finally{
     state.refs[0]=sr[0]; state.refs[1]=sr[1]; state.refs[2]=sr[2];
     state.imgRoles=savedRoles;
-    s.value=sv.m; q.value=sv.q; r.value=sv.r; c.value=sv.c; z.value=sv.z;
+    genSetGeminiModel(sv.m); q.value=sv.q; r.value=sv.r; c.value=sv.c; z.value=sv.z;
     $("prompt").value=savedPrompt;
   }
   if(PT.stop){
@@ -11718,7 +11816,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
    edit — identity, pose, outfit and scene stay locked to IMAGE 1.
    Catalog (lib/styles880/catalog.json, ~0.8MB) and thumbnails load only when
    a Style Looks group is first opened. */
-var ST880={ list:null, map:null, contract:null, loading:false, refreshers:[] };
+var ST880={ list:null, map:null, contract:null, loading:false, refreshers:[], applyToken:0, pending:null };
 /* v4.48 — combo rules: one pick per category, composable across categories.
    A full makeup_look already defines lips/cheeks/eyes, so it excludes the
    component categories (and vice versa); lash ⟂ lash-combo; hair-color ⟂
@@ -11785,6 +11883,7 @@ function st880Load(cb){
 function st880Name(rec){ return (LANG==="my"&&rec.mm)?rec.mm:rec.en; }
 function st880Refresh(){ ST880.refreshers.forEach(function(f){ try{ f(); }catch(e){} }); }
 function st880Clear(){
+  ST880.applyToken++; ST880.pending=null; /* an in-flight apply must not resurrect this */
   svSet("st_style880",null);
   state.st.refX=null;
   stSync("st_style880"); stRefreshUI(); stRenderPend(); st880Refresh();
@@ -11801,6 +11900,12 @@ function st880BuildSheet(recs, cb){
     im.src="lib/styles880/"+r.img;
   });
   function draw(){
+    /* every crop failed to decode — committing the empty dark canvas as
+       IMAGE 2 would send the model a black rectangle and say nothing */
+    if(!imgs.some(Boolean)){
+      toast(L9({my:"Style ပုံတွေ ဖတ်လို့မရပါ — ချိတ်ဆက်မှု စစ်ပါ",en:"Could not load the style images — check the connection"}),"err");
+      return;
+    }
     var CW=512, CH=640, LB=44, cols=Math.min(2,recs.length), rows=Math.ceil(recs.length/cols);
     var c=document.createElement("canvas"); c.width=cols*CW; c.height=rows*(CH+LB);
     var x=c.getContext("2d");
@@ -11821,7 +11926,15 @@ function st880BuildSheet(recs, cb){
 function st880ApplyRef(sel){
   var recs=Object.keys(sel).map(function(c){ return ST880.map&&ST880.map[sel[c]]; }).filter(Boolean);
   if(!recs.length){ st880Clear(); return; }
+  /* v4.49 — the commit only happens after an async image load, so a second
+     tap (or Clear all) during that window used to lose a pick, let the
+     slower network response win, or resurrect a cleared selection. One
+     token per apply: a landing that is no longer the newest is dropped. */
+  var token = ++ST880.applyToken;
+  ST880.pending = sel; /* so the next tap merges onto what is in flight */
   function land(dataUrl){
+    if(token!==ST880.applyToken) return; /* superseded — drop silently */
+    ST880.pending=null;
     var m=/^data:([^;]+);base64,(.*)$/.exec(String(dataUrl)); if(!m) return;
     state.st.refX={mime:m[1],b64:m[2]};
     svSet("st_style880",{sel:sel,mode:svGet("st_style880Mode","face")});
@@ -11845,8 +11958,10 @@ function st880ApplyRef(sel){
   }
 }
 function st880Pick(rec){
-  var cur=st880Sel(), sel={}, k;
-  for(k in cur.sel) sel[k]=cur.sel[k];
+  /* merge onto the apply still in flight (if any) so a fast second tap adds
+     to the combo instead of dropping the first pick */
+  var cur=st880Sel(), base=ST880.pending||cur.sel, sel={}, k;
+  for(k in base) sel[k]=base[k];
   if(sel[rec.cat]===rec.id){ /* tap again = remove this category's pick */
     delete sel[rec.cat];
     var left=0; for(k in sel) left++;
@@ -11911,7 +12026,10 @@ stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"})
     g.g._stG=ST.groups.length;
     ST.groups.push({el:g.g,icon:"i-gem",title:stripIcn(title),host:sd.suite,
       kw:"style look reference pack 880 makeup lipstick blush eyeliner lash brow lens contour highlight skin hair hairstyle "+sd.cats.join(" "),
-      chk:[function(){ var s=svGet("st_style880",null); return !!(s&&s.id&&state.st.refX); }]});
+      /* v4.49 — count the CURRENT selection shape: the legacy s.id test was
+         permanently false under v4.48's {sel:{cat:id}} commit, so the Evoto
+         suite's group never lit its dirty dot for a hair/skin style pick */
+      chk:[function(){ return !!(st880Count() && state.st.refX); }]});
     if(sd.suite==="mu") ST.grpOf["st_style880"]=g.g; /* dirty dot + pend chip home */
     var cur=sd.cats[0], query="";
     /* v4.48 — search across every category of this suite (name my/en, id and
@@ -15469,7 +15587,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.48.0";
+var APP_VER="4.49.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -15996,7 +16114,7 @@ $("btnGen").onclick = async function(){
     var providerFns = {};
     if(state.key){
       parts.push({text:finalPrompt});
-      var model=$("selModel").value;
+      var model=genGeminiModel();
       if(model==="auto") model = refs.length? "gemini-2.5-flash-image" : "gemini-3-pro-image-preview";
       var makeBody = function(m){
         var gc={ responseModalities:["TEXT","IMAGE"] };

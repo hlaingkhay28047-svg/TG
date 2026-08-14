@@ -119,6 +119,9 @@ jobs:
       - name: Run v4.48.0 880-pack combo-composer sweep (mocked)
         run: node test/sweep_v448_upgrades.js
 
+      - name: Run v4.49.0 RH model-routing honesty sweep (mocked)
+        run: node test/sweep_v449_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
