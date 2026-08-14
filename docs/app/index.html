@@ -796,6 +796,22 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 .acc-kv{display:flex;gap:var(--sp-3);align-items:baseline;margin-top:var(--sp-2);font-size:var(--fs-md)}
 .acc-kv .k{color:var(--muted);flex:0 0 auto;min-width:96px}
 .acc-kv .v{color:var(--cream);word-break:break-word;min-width:0}
+/* v4.58 money strip — the base .statline is a 3-up inventory of static counts
+   in 17px gold. These are amounts that change while you work, so they get a
+   tabular font (a column of prices that does not line up is unreadable) and
+   they wrap on a phone rather than squeezing "0.0125 USD" into a third of
+   390px. The ledger rows reuse .acc-kv but let the label take the width, since
+   a model name is longer than an account label. */
+.money-stat{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px}
+.money-stat b{font-size:15px;font-variant-numeric:tabular-nums;word-break:break-word}
+#moneyRuns .acc-kv,#moneyByModel .acc-kv{margin-top:6px;font-size:var(--fs-sm)}
+#moneyRuns .acc-kv .k,#moneyByModel .acc-kv .k{flex:1 1 auto;min-width:0}
+#moneyRuns .acc-kv .v,#moneyByModel .acc-kv .v{flex:0 0 auto;font-variant-numeric:tabular-nums}
+/* the pre-flight quote sits inside the sticky gen bar, so it must not be able
+   to add a line: one row, ellipsised, no wrap */
+#stGenCost{display:block;font-size:var(--fs-sm);color:var(--muted);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stGenCost.free{color:var(--gold-hi)}
 .acc-sub{margin-top:var(--sp-4);padding-top:var(--sp-3);border-top:1px solid var(--line-soft)}
 .acc-sub .subh{font-size:var(--fs-base);font-weight:800;color:var(--cream);margin-bottom:var(--sp-2)}
 .acc-plan-line{display:flex;gap:var(--sp-2);align-items:flex-start;font-size:var(--fs-md);font-weight:700}
@@ -1189,6 +1205,18 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <p class="mut" id="dashJobsNote"></p>
     <div id="dashJobsList"></div>
   </section>
+  <!-- v4.58: today's spend on the first screen. Hidden until there is at
+       least one booked run or a balance reading, so a studio that never
+       touches RunningHub never sees an empty money card. -->
+  <section class="card" id="dashMoney" style="display:none">
+    <h2 id="dashMoneyH2"></h2>
+    <div class="statline money-stat">
+      <div><b id="dashMoneyBal">—</b><span id="dashMoneyBalL"></span></div>
+      <div><b id="dashMoneyToday">—</b><span id="dashMoneyTodayL"></span></div>
+      <div><b id="dashMoneyRuns">—</b><span id="dashMoneyRunsL"></span></div>
+    </div>
+    <div class="mut" id="dashMoneyNote"></div>
+  </section>
   <section class="dash-grid" id="dashGrid"></section>
   <section class="card">
     <h2 id="dashLibH2"></h2>
@@ -1440,6 +1468,41 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     </div>
   </section>
 
+  <!-- v4.58: the money. Balance and queue come from RunningHub; the ledger
+       below them is written from the amount RunningHub actually charged for
+       each finished job, not from a price list this file guessed at. -->
+  <section class="card" id="cardMoney">
+    <h2 id="moneyH2"></h2>
+    <p class="mut" id="moneyIntro"></p>
+    <div class="statline money-stat">
+      <div><b id="moneyBal">—</b><span id="moneyBalL"></span></div>
+      <div><b id="moneyToday">—</b><span id="moneyTodayL"></span></div>
+      <div><b id="moneyMonth">—</b><span id="moneyMonthL"></span></div>
+    </div>
+    <div class="mut" id="moneyMeta"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn btn-gold grow" id="btnMoneyRefresh"></button>
+    </div>
+    <div class="status" id="stMoney"></div>
+
+    <!-- v4.59: one block per vendor. RunningHub reports a price per job;
+         Google and OpenAI report none to an API key, so those show an exact
+         run count plus an optional rate the owner types in themselves. -->
+    <div id="moneyProv"></div>
+
+    <div class="grp" id="moneyGrpRuns">
+      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="moneyRunsT"></span></button>
+      <div class="grp-b">
+        <div class="mut" id="moneyByModel"></div>
+        <div id="moneyRuns"></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="btnMoneyCsv"></button>
+          <button class="btn" id="btnMoneyClear"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="card" id="cardOa">
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-bot"/></svg>OPENAI (GPT IMAGE) <span class="mut" style="letter-spacing:0" id="oaOptTag"></span></h2>
     <p class="mut" id="oaIntro"></p>
@@ -1663,6 +1726,9 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <button class="chip" id="stHd" style="display:none">HD Finish</button>
     </div>
     <div id="stHdNote"></div>
+    <!-- v4.58: what this GENERATE will cost, quoted by RunningHub against the
+         exact body the submit would send — before the money is spent -->
+    <div id="stGenCost"></div>
     <div class="spin" id="stSpin"></div>
     <div class="status" id="stStatus"></div>
   </div>
@@ -2639,9 +2705,43 @@ var TR_PATH={
      never "lost". */
   job_h:{my:"မရသေးတဲ့ RunningHub job {N} ခု",en:"{N} RunningHub job(s) not collected yet",shn:"RunningHub job {N} ဢၼ် ပႆႇလႆႈႁပ်ႉ",kac:"RunningHub job {N} n la shi ai",th:"งาน RunningHub {N} รายการที่ยังไม่ได้รับผล",zh:"{N} 个 RunningHub 任务尚未取回",vi:"{N} tác vụ RunningHub chưa nhận kết quả",id:"{N} pekerjaan RunningHub belum diambil",ms:"{N} kerja RunningHub belum diambil"},
   job_note:{my:"RunningHub က submit လုပ်တာနဲ့ ငွေဖြတ်တာမို့ ဒီ job တွေက ပေးပြီးသားပါ — app ပိတ်သွားလို့ ရလဒ် မယူဖြစ်တာပါ။ ရလဒ် ရပြီးသားဆိုရင် Gallery ထဲ အလိုအလျောက် ဝင်သွားပါမယ်။",en:"RunningHub charges at submit, so these are already paid for — the app just closed before the result came back. Anything finished drops into your Gallery automatically.",shn:"RunningHub ၼႆႉ ၸႂ်ႉငိုၼ်းတီႈ submit ၼၼ်ႉယဝ်ႉ — ၽွၼ်းလႆႈ တေၶဝ်ႈ Gallery ႁင်းၵူၺ်း",kac:"RunningHub gaw submit hta gumhpraw la ai majaw ndai ni gaw jaw ngut sai — ah kyu gaw Gallery kaw shang wa na",th:"RunningHub คิดเงินตอนส่งงาน งานเหล่านี้จึงจ่ายไปแล้ว — แอปแค่ปิดก่อนผลจะกลับมา ผลที่เสร็จแล้วจะเข้าแกลเลอรีอัตโนมัติ",zh:"RunningHub 在提交时计费，这些任务的费用已经支付 — 只是应用在结果返回前关闭了。已完成的结果会自动进入图库。",vi:"RunningHub tính phí khi gửi, nên các tác vụ này đã được trả tiền — ứng dụng chỉ đóng trước khi có kết quả. Kết quả đã xong sẽ tự vào Thư viện.",id:"RunningHub menagih saat submit, jadi ini sudah dibayar — aplikasi hanya tertutup sebelum hasilnya kembali. Hasil yang selesai masuk ke Galeri otomatis.",ms:"RunningHub mengecaj semasa submit, jadi ini sudah dibayar — apl cuma ditutup sebelum hasil kembali. Hasil yang siap masuk ke Galeri secara automatik."},
+  /* ---- v4.58: cost, balance and the spend book ---- */
+  money_h:{my:"ကုန်ကျစရိတ်နှင့် လက်ကျန်ငွေ",en:"COST & BALANCE",shn:"ၵႃႈၸႂ်ႉၸၢႆႇ လႄႈ ငိုၼ်းလိူဝ်",kac:"Manu hte ngun ngam",th:"ค่าใช้จ่ายและยอดคงเหลือ",zh:"花费与余额",vi:"CHI PHÍ & SỐ DƯ",id:"BIAYA & SALDO",ms:"KOS & BAKI"},
+  money_intro:{my:"GENERATE တစ်ခါလုပ်တိုင်း RunningHub က ဖြတ်တဲ့ ငွေအမှန်ကို မှတ်ထားပါတယ် — ခန့်မှန်းချက် မဟုတ်ပါ။ လက်ကျန်ငွေကတော့ RunningHub အကောင့်ကနေ တိုက်ရိုက် ဆွဲယူတာပါ။",en:"Every GENERATE is booked at the amount RunningHub actually charged — not an estimate. The balance is read straight from your RunningHub account.",shn:"GENERATE ၵူႈပွၵ်ႈ RunningHub ဢဝ်ငိုၼ်းၵႃႈႁိုဝ် မၢႆဝႆႉတႄႉတႄႉ — ဢမ်ႇၸႂ်ႈလၢမ်း",kac:"GENERATE langai mi hpe RunningHub la ai gumhpraw teng teng hpe mahkrum da ai — myit yu ai n re",th:"ทุกครั้งที่ GENERATE จะบันทึกยอดที่ RunningHub เก็บจริง ไม่ใช่ค่าประมาณ ยอดคงเหลืออ่านจากบัญชี RunningHub โดยตรง",zh:"每次 GENERATE 都按 RunningHub 实际扣费记账，不是估算。余额直接从你的 RunningHub 账户读取。",vi:"Mỗi lần GENERATE được ghi sổ theo số tiền RunningHub thực sự thu — không phải ước tính. Số dư đọc thẳng từ tài khoản RunningHub.",id:"Setiap GENERATE dicatat sebesar yang benar-benar ditagih RunningHub — bukan perkiraan. Saldo dibaca langsung dari akun RunningHub Anda.",ms:"Setiap GENERATE direkod pada jumlah yang RunningHub benar-benar caj — bukan anggaran. Baki dibaca terus daripada akaun RunningHub anda."},
+  money_bal:{my:"လက်ကျန်",en:"Balance",shn:"ငိုၼ်းလိူဝ်",kac:"Ngam ai",th:"คงเหลือ",zh:"余额",vi:"Số dư",id:"Saldo",ms:"Baki"},
+  money_today:{my:"ဒီနေ့ ကုန်",en:"Spent today",shn:"မိူဝ်ႈၼႆႉ ၸႂ်ႉ",kac:"Dai ni jaw ai",th:"ใช้วันนี้",zh:"今日花费",vi:"Chi hôm nay",id:"Terpakai hari ini",ms:"Belanja hari ini"},
+  money_month:{my:"ဒီလ ကုန်",en:"Spent this month",shn:"လိူၼ်ၼႆႉ ၸႂ်ႉ",kac:"Dai shata jaw ai",th:"ใช้เดือนนี้",zh:"本月花费",vi:"Chi tháng này",id:"Terpakai bulan ini",ms:"Belanja bulan ini"},
+  money_runs:{my:"GENERATE အကြိမ်",en:"Generates",shn:"GENERATE ပွၵ်ႈ",kac:"Generate lang",th:"จำนวนครั้ง",zh:"生成次数",vi:"Lượt tạo",id:"Jumlah generate",ms:"Bilangan generate"},
+  money_refresh:{my:"လက်ကျန်ငွေ စစ်မယ်",en:"Check balance",shn:"တူၺ်းငိုၼ်းလိူဝ်",kac:"Ngun ngam yu na",th:"ตรวจยอดคงเหลือ",zh:"查询余额",vi:"Kiểm tra số dư",id:"Cek saldo",ms:"Semak baki"},
+  money_runs_t:{my:"GENERATE တစ်ခုချင်းစီရဲ့ ကုန်ကျစရိတ်",en:"What each GENERATE cost",shn:"GENERATE ၽႂ်မၼ်း ၵႃႈႁိုဝ်",kac:"Generate langai hpra manu",th:"ค่าใช้จ่ายของแต่ละครั้ง",zh:"每次生成的花费",vi:"Chi phí từng lần tạo",id:"Biaya tiap generate",ms:"Kos setiap generate"},
+  money_never:{my:"မစစ်ရသေးပါ",en:"never checked",shn:"ပႆႇလႆႈတူၺ်း",kac:"n yu shi ai",th:"ยังไม่เคยตรวจ",zh:"尚未查询",vi:"chưa kiểm tra",id:"belum dicek",ms:"belum disemak"},
+  money_checked:{my:"နောက်ဆုံးစစ်ချိန် — {T}",en:"last checked {T}",shn:"တူၺ်းလိုၼ်းသုတ်း — {T}",kac:"hpang jahtum yu ai {T}",th:"ตรวจล่าสุด {T}",zh:"最近查询 {T}",vi:"kiểm tra lần cuối {T}",id:"terakhir dicek {T}",ms:"disemak {T}"},
+  money_queue:{my:"အလုပ်လုပ်နေဆဲ {R} · စောင့်နေ {Q} · တစ်ပြိုင်နက် {L}",en:"{R} running · {Q} queued · limit {L}",shn:"ႁဵတ်းယူႇ {R} · ပႂ်ႉ {Q} · ႁူမ်ႈ {L}",kac:"{R} galaw nga · {Q} la nga · limit {L}",th:"กำลังทำ {R} · รอคิว {Q} · จำกัด {L}",zh:"运行中 {R} · 排队 {Q} · 并发上限 {L}",vi:"{R} đang chạy · {Q} chờ · giới hạn {L}",id:"{R} berjalan · {Q} antre · batas {L}",ms:"{R} berjalan · {Q} beratur · had {L}"},
+  money_fail:{my:"လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — RunningHub က browser ကနေ တိုက်ရိုက်မေးတာကို ပိတ်ထားနိုင်ပါတယ်။ အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။",en:"Could not read the balance — RunningHub may block this call from a browser. The ledger below is still exact.",shn:"ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — RunningHub ဢမ်ႇပၼ်ထၢမ်တီႈ browser။ မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ",kac:"Ngun ngam n la lu — RunningHub gaw browser kaw na san ai hpe pat na re. Npu na mahkrum gaw teng nga ai",th:"อ่านยอดคงเหลือไม่ได้ — RunningHub อาจบล็อกการเรียกจากเบราว์เซอร์ แต่บันทึกด้านล่างยังแม่นยำ",zh:"无法读取余额 — RunningHub 可能禁止浏览器直接调用。下方的账本仍然准确。",vi:"Không đọc được số dư — RunningHub có thể chặn gọi từ trình duyệt. Sổ chi bên dưới vẫn chính xác.",id:"Saldo tidak terbaca — RunningHub mungkin memblokir panggilan dari browser. Buku di bawah tetap akurat.",ms:"Baki tidak dapat dibaca — RunningHub mungkin menyekat panggilan dari pelayar. Lejar di bawah tetap tepat."},
+  money_nokey:{my:"RunningHub key ထည့်ပြီးမှ လက်ကျန်ငွေ စစ်လို့ရပါမယ်။",en:"Save a RunningHub key first, then the balance can be read.",shn:"သႂ်ႇ RunningHub key ဢွၼ်တၢင်း ၸင်ႇတူၺ်းငိုၼ်းလိူဝ်လႆႈ",kac:"RunningHub key bang ngut jang ngun ngam yu lu na",th:"บันทึกคีย์ RunningHub ก่อน จึงจะอ่านยอดคงเหลือได้",zh:"先保存 RunningHub 密钥，才能查询余额。",vi:"Lưu khóa RunningHub trước thì mới đọc được số dư.",id:"Simpan kunci RunningHub dulu, baru saldo bisa dibaca.",ms:"Simpan kunci RunningHub dahulu, barulah baki boleh dibaca."},
+  money_empty:{my:"RunningHub GENERATE မလုပ်ရသေးပါ — တစ်ခါလုပ်တာနဲ့ ဒီမှာ ကုန်ကျစရိတ် ပေါ်လာပါမယ်။",en:"No RunningHub GENERATE yet — the first one will show its cost here.",shn:"ပႆႇလႆႈ GENERATE — ပွၵ်ႈဢွၼ်တၢင်း တေပေႃႇတီႈၼႆႈ",kac:"GENERATE n galaw shi ai — langai galaw jang ndai kaw pru na",th:"ยังไม่มี GENERATE — ครั้งแรกจะแสดงค่าใช้จ่ายที่นี่",zh:"还没有 RunningHub 生成 — 第一次的花费会显示在这里。",vi:"Chưa có lần GENERATE nào — lần đầu sẽ hiện chi phí ở đây.",id:"Belum ada GENERATE — yang pertama akan tampil biayanya di sini.",ms:"Belum ada GENERATE — yang pertama akan papar kosnya di sini."},
+  money_unknown:{my:"ကုန်ကျစရိတ် မပြပါ",en:"cost not reported",shn:"ဢမ်ႇပွင်ႇၵႃႈ",kac:"manu n tsun ai",th:"ไม่ได้แจ้งค่าใช้จ่าย",zh:"未报告费用",vi:"không báo chi phí",id:"biaya tidak dilaporkan",ms:"kos tidak dilaporkan"},
+  money_trim:{my:"အဟောင်း {N} ခုကို စာရင်းချုပ်ထဲ ပေါင်းထားပါတယ်",en:"{N} older runs folded into the lifetime total",shn:"ဢၼ်ၵဝ်ႇ {N} ႁူမ်ႈဝႆႉၼႂ်းသဵၼ်ႈ",kac:"{N} ba ai ni gaw lifetime hta bang da sai",th:"รวมงานเก่า {N} รายการไว้ในยอดสะสมแล้ว",zh:"较早的 {N} 次已并入累计总额",vi:"{N} lượt cũ đã gộp vào tổng tích lũy",id:"{N} run lama digabung ke total seumur hidup",ms:"{N} larian lama digabung ke jumlah keseluruhan"},
+  money_all_short:{my:"စုစုပေါင်း ကုန်ကျ",en:"Total charged",shn:"ႁူမ်ႈၸႂ်ႉ",kac:"yawng jaw ai",th:"รวมที่เก็บจริง",zh:"实际扣费合计",vi:"Tổng đã tính phí",id:"Total ditagih",ms:"Jumlah dicaj"},
+  money_unrep:{my:"အထဲက {N} ကြိမ်အတွက် RunningHub က ကုန်ကျစရိတ် မပြခဲ့ပါ",en:"{N} of these were run without RunningHub reporting a cost",shn:"ၼႂ်း {N} ပွၵ်ႈ RunningHub ဢမ်ႇပွင်ႇၵႃႈ",kac:"{N} lang gaw RunningHub manu n tsun ai",th:"ในจำนวนนี้ {N} ครั้ง RunningHub ไม่ได้แจ้งค่าใช้จ่าย",zh:"其中 {N} 次 RunningHub 未报告费用",vi:"{N} lượt trong số này RunningHub không báo chi phí",id:"{N} di antaranya tidak dilaporkan biayanya oleh RunningHub",ms:"{N} daripadanya tidak dilaporkan kosnya oleh RunningHub"},
+  money_norate:{my:"{V} က API key အတွက် လက်ကျန်ငွေရော တစ်ကြိမ်စာ ကုန်ကျစရိတ်ရော ထုတ်မပြပါ — ဒါကြောင့် အကြိမ်ရေကိုပဲ တိတိကျကျ ရေတွက်ထားပါတယ်။ တစ်ကြိမ်စာ နှုန်းကို ကိုယ့် dashboard မှာကြည့်ပြီး အောက်မှာ ထည့်ထားရင် စုစုပေါင်းကို တွက်ပေးပါမယ်။",en:"{V} publishes no balance and no per-call charge to an API key — only a dashboard. So the run count here is exact and the money is not. Read your rate off that dashboard once and enter it below.",shn:"{V} ဢမ်ႇပၼ်ႁူႉငိုၼ်းလိူဝ်လႄႈ ၵႃႈပွၵ်ႈၼိုင်ႈတီႈ API key — ၵွပ်ႈၼႆ ၼပ်ႉပွၵ်ႈၵူၺ်း။ သႂ်ႇၵႃႈပွၵ်ႈၼိုင်ႈတီႈတႂ်ႈၼႆႉလႆႈ",kac:"{V} gaw API key hpe ngun ngam hte manu n tsun ai — lang hkum sha teng ai. Na rate hpe npu kaw bang u",th:"{V} ไม่เปิดเผยยอดคงเหลือหรือค่าใช้จ่ายต่อครั้งให้ API key — มีแต่แดชบอร์ด ดังนั้นจำนวนครั้งที่นี่แม่นยำ แต่จำนวนเงินไม่ ใส่อัตราต่อครั้งของคุณด้านล่าง",zh:"{V} 不向 API key 提供余额或单次费用 — 只有控制台。所以这里的次数是准确的，金额不是。请在下方填入你自己的单次费率。",vi:"{V} không công bố số dư hay chi phí mỗi lần cho API key — chỉ có bảng điều khiển. Nên số lượt ở đây là chính xác, còn số tiền thì không. Hãy nhập đơn giá của bạn bên dưới.",id:"{V} tidak menerbitkan saldo atau biaya per panggilan untuk API key — hanya dasbor. Jadi jumlah run di sini akurat, nominalnya tidak. Masukkan tarif Anda di bawah.",ms:"{V} tidak menerbitkan baki atau kos setiap panggilan untuk API key — hanya papan pemuka. Jadi bilangan larian di sini tepat, jumlahnya tidak. Masukkan kadar anda di bawah."},
+  money_rate_ph:{my:"တစ်ကြိမ်စာ နှုန်း (ဥပမာ 0.04)",en:"Your rate per run (e.g. 0.04)",shn:"ၵႃႈပွၵ်ႈၼိုင်ႈ (ဥပမႃ 0.04)",kac:"Lang mi a rate (0.04 zawn)",th:"อัตราต่อครั้งของคุณ (เช่น 0.04)",zh:"你的单次费率（例如 0.04）",vi:"Đơn giá mỗi lượt (vd 0.04)",id:"Tarif Anda per run (mis. 0.04)",ms:"Kadar anda setiap larian (cth 0.04)"},
+  money_est:{my:"ကိုယ့်နှုန်းနဲ့ တွက်ချက်ချက်",en:"At your rate",shn:"ၸွမ်းၵႃႈၸဝ်ႈၵဝ်ႇ",kac:"Na rate hte",th:"ตามอัตราของคุณ",zh:"按你的费率",vi:"Theo đơn giá của bạn",id:"Menurut tarif Anda",ms:"Mengikut kadar anda"},
+  money_bymodel:{my:"Model အလိုက်",en:"By model",shn:"ၸွမ်း Model",kac:"Model hte maren",th:"ตามโมเดล",zh:"按模型",vi:"Theo model",id:"Per model",ms:"Ikut model"},
+  money_recent:{my:"နောက်ဆုံး {N} ကြိမ်",en:"Last {N} runs",shn:"{N} ပွၵ်ႈလိုၼ်းသုတ်း",kac:"hpang jahtum {N} lang",th:"{N} ครั้งล่าสุด",zh:"最近 {N} 次",vi:"{N} lượt gần nhất",id:"{N} run terakhir",ms:"{N} larian terakhir"},
+  money_more:{my:"နောက်ထပ် {N} ကြိမ် — CSV မှာ အကုန်ပါပါတယ်",en:"{N} more — the CSV has every row",shn:"ထႅင်ႈ {N} ပွၵ်ႈ — CSV မီးၵူႈဢၼ်",kac:"{N} lang ngam — CSV hta yawng nga ai",th:"อีก {N} ครั้ง — ไฟล์ CSV มีครบทุกแถว",zh:"还有 {N} 次 — CSV 包含全部记录",vi:"còn {N} lượt — tệp CSV có đủ mọi dòng",id:"{N} lagi — CSV memuat semua baris",ms:"{N} lagi — CSV mengandungi semua baris"},
+  money_csv:{my:"CSV ထုတ်မယ်",en:"Export CSV",shn:"ဢွၵ်ႇ CSV",kac:"CSV shapraw",th:"ส่งออก CSV",zh:"导出 CSV",vi:"Xuất CSV",id:"Ekspor CSV",ms:"Eksport CSV"},
+  money_clear:{my:"မှတ်တမ်း ရှင်းမယ်",en:"Clear ledger",shn:"လၢင်ႉမၢႆတွင်း",kac:"Mahkrum kasin",th:"ล้างบันทึก",zh:"清空账本",vi:"Xóa sổ chi",id:"Hapus buku",ms:"Kosongkan lejar"},
+  money_cleared:{my:"မှတ်တမ်း ရှင်းပြီးပါပြီ",en:"Ledger cleared",shn:"လၢင်ႉမၢႆတွင်းယဝ်ႉ",kac:"Mahkrum kasin ngut sai",th:"ล้างบันทึกแล้ว",zh:"账本已清空",vi:"Đã xóa sổ chi",id:"Buku dihapus",ms:"Lejar dikosongkan"},
+  money_all:{my:"စုစုပေါင်း {N} ကြိမ် · {C}",en:"{N} runs all time · {C}",shn:"ႁူမ်ႈ {N} ပွၵ်ႈ · {C}",kac:"yawng {N} lang · {C}",th:"ทั้งหมด {N} ครั้ง · {C}",zh:"累计 {N} 次 · {C}",vi:"tổng {N} lượt · {C}",id:"total {N} run · {C}",ms:"jumlah {N} larian · {C}"},
+  cost_ran:{my:"ဒီ GENERATE က {C} ကုန်သွားပါတယ်",en:"That GENERATE cost {C}",shn:"GENERATE ၼႆႉ ၸႂ်ႉ {C}",kac:"Ndai GENERATE gaw {C} jaw sai",th:"GENERATE นี้ใช้ไป {C}",zh:"这次生成花费 {C}",vi:"Lần tạo này tốn {C}",id:"GENERATE itu memakan {C}",ms:"GENERATE itu memakan {C}"},
+  cost_quote:{my:"≈ {C}",en:"≈ {C}",shn:"≈ {C}",kac:"≈ {C}",th:"≈ {C}",zh:"≈ {C}",vi:"≈ {C}",id:"≈ {C}",ms:"≈ {C}"},
+  cost_free:{my:"အခမဲ့ (နောက်ထပ် {N} ကြိမ်)",en:"free ({N} left)",shn:"လၢႆလၢႆ ({N} ထႅင်ႈ)",kac:"manu n ra ({N} ngam)",th:"ฟรี (เหลือ {N} ครั้ง)",zh:"免费（还剩 {N} 次）",vi:"miễn phí (còn {N})",id:"gratis (sisa {N})",ms:"percuma (baki {N})"},
+  cost_free_any:{my:"အခမဲ့",en:"free",shn:"လၢႆလၢႆ",kac:"manu n ra",th:"ฟรี",zh:"免费",vi:"miễn phí",id:"gratis",ms:"percuma"},
   job_kind_image:{my:"ပုံ",en:"Photo",shn:"ၶႅပ်းႁၢင်ႈ",kac:"Sumla",th:"รูป",zh:"图片",vi:"Ảnh",id:"Foto",ms:"Foto"},
   job_kind_video:{my:"ဗီဒီယို",en:"Video",shn:"ဝီဒီရူဝ်ႈ",kac:"Video",th:"วิดีโอ",zh:"视频",vi:"Video",id:"Video",ms:"Video"},
   job_age_min:{my:"{N} မိနစ်က",en:"{N} min ago",shn:"{N} မိၼိတ်ႉ ပူၼ်ႉမႃး",kac:"{N} minute yang",th:"{N} นาทีที่แล้ว",zh:"{N} 分钟前",vi:"{N} phút trước",id:"{N} mnt lalu",ms:"{N} min lalu"},
+  job_age_now:{my:"ခုနလေးတင်",en:"just now",shn:"မိူဝ်ႈလဵဝ်",kac:"ya sha",th:"เมื่อครู่",zh:"刚刚",vi:"vừa xong",id:"barusan",ms:"sebentar tadi"},
   job_age_hr:{my:"{N} နာရီက",en:"{N} h ago",shn:"{N} ၸူဝ်ႈမူင်း ပူၼ်ႉမႃး",kac:"{N} ten yang",th:"{N} ชม.ที่แล้ว",zh:"{N} 小时前",vi:"{N} giờ trước",id:"{N} jam lalu",ms:"{N} jam lalu"},
   job_check:{my:"ရလဒ် သွားယူ",en:"Collect result",shn:"ၵႂႃႇဢဝ်ၽွၼ်းလႆႈ",kac:"Ah kyu la u",th:"รับผลลัพธ์",zh:"取回结果",vi:"Lấy kết quả",id:"Ambil hasil",ms:"Ambil hasil"},
   job_discard:{my:"စာရင်းက ဖယ်",en:"Remove",shn:"ဢဝ်ဢွၵ်ႇ",kac:"Shale kau u",th:"เอาออก",zh:"移除",vi:"Bỏ khỏi danh sách",id:"Hapus",ms:"Buang"},
@@ -2835,6 +2935,9 @@ function applyLang(){
      layer's own vars are initialised, so it sets static text only and lets
      accBoot() do the state-dependent render a moment later. */
   try { accApplyLang(); } catch(e){}
+  /* v4.58 — same defensiveness: renderSpend reads state.rhKey and the ledger,
+     neither of which exists on the first applyLang() pass */
+  try { if(typeof renderSpend==="function") renderSpend(); } catch(e){}
 }
 applyLang();
 var D = JSON.parse(document.getElementById("hnkData").textContent);
@@ -3731,7 +3834,18 @@ function rhTruncatePrompt(promptText, maxLen){
   if(guardPart.length>=maxLen) return guardPart.slice(0,maxLen);
   return s.slice(0,gi).slice(0, maxLen-guardPart.length) + guardPart;
 }
+/* v4.58 — the request body is built by its own function so the price quote
+   can be taken against the EXACT payload the submit would send. A quote for a
+   different body is a quote for a different job: resolution, aspect ratio and
+   quality all move the price. */
 async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
+  var body=rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg);
+  var r=await fetch(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  return j.taskId;
+}
+function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
   var cfg = modelCfg || {};
   var body={ prompt: rhTruncatePrompt(promptText, cfg.promptMax) };
   imageUrls = imageUrls||[];
@@ -3767,16 +3881,146 @@ async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolut
     var r2=rhV2Ratio(ratio); if(r2) body.aspectRatio=r2;
   }
   if(cfg.quality) body.quality=cfg.quality;
-  var r=await fetch(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  return body;
 }
 async function rhV2Query(apiKey, taskId, signal){
   var r=await fetch(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:taskId}), signal:signal });
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("query-failed"); e.status=r.status; e.body=j; throw e; }
   return j||{};
+}
+
+/* ---------- v4.58: what a GENERATE costs, and what is left ----------
+   Three separate questions, and RunningHub answers all three. Until now the
+   studio asked none of them: the owner ran eighty photos a night against a
+   prepaid balance they could only see by opening runninghub.ai in another tab,
+   and the app's own "1 GENERATE" language implied every run cost the same when
+   Topaz 6x and Z-Image Turbo are not remotely the same money.
+
+   1. BEFORE — POST /openapi/v2/price-preview/<apiPath> with the SAME body the
+      real call would send. Returns estimatedPrice + currency + a human
+      priceText, and (the part that matters on a free tier) isFreeThisCall and
+      remainingFreeLimitCount.
+   2. AFTER  — the /query response the poller already fetches every 2.5s
+      carries `usage` {consumeMoney, consumeCoins, taskCostTime,
+      thirdPartyConsumeMoney} plus a `taskUsageList` for jobs that fan out into
+      sub-tasks. This app has been throwing that away since v4.9. It is not an
+      estimate: it is the amount RunningHub actually took.
+   3. BALANCE — POST /uc/openapi/accountStatus returns remainMoney, remainCoins,
+      currency, apiType and currentTaskCounts.
+
+   Envelope: openapi/v2 answers this app FLAT (rhV2Submit reads j.taskId, not
+   j.data.taskId), while /uc/ paths are the older {code,msg,data} shape. Every
+   reader below goes through rhUnwrap so a host that changes its mind about
+   which envelope it uses cannot silently zero the studio's books. */
+function rhUnwrap(j){
+  if(!j || typeof j!=="object") return {};
+  /* {code:0,data:{...}} — only treat `data` as the payload when there is a
+     code field, or a legitimately flat response with its own `data` key would
+     be gutted */
+  if(("code" in j) && j.data && typeof j.data==="object") return j.data;
+  return j;
+}
+function rhNum(v){ var n=parseFloat(v); return isFinite(n)?n:0; }
+/* One usage record -> {money, coins, secs}. Absent is not zero-with-confidence:
+   `has` says whether RunningHub actually reported a number, so the ledger can
+   show "cost not reported" rather than a confident 0.00 that hides real spend. */
+function rhUsageOne(u){
+  if(!u || typeof u!=="object") return null;
+  var hasM = u.consumeMoney!==undefined && u.consumeMoney!==null;
+  var hasC = u.consumeCoins!==undefined && u.consumeCoins!==null;
+  var hasT = u.thirdPartyConsumeMoney!==undefined && u.thirdPartyConsumeMoney!==null;
+  if(!hasM && !hasC && !hasT) return null;
+  return {
+    money: rhNum(u.consumeMoney) + rhNum(u.thirdPartyConsumeMoney),
+    coins: rhNum(u.consumeCoins),
+    secs:  rhNum(u.taskCostTime),
+    has:   true
+  };
+}
+/* A parent job plus its sub-tasks. taskUsageList rows carry the parent's own
+   row too on some endpoints, so the parent is only added when the list does
+   not already contain it — otherwise a two-image job books itself twice. */
+function rhUsageOf(j){
+  var d=rhUnwrap(j);
+  var list=Array.isArray(d.taskUsageList)?d.taskUsageList:[];
+  var out={money:0, coins:0, secs:0, has:false, parts:0};
+  var seen={}, selfId=String(d.taskId||"");
+  list.forEach(function(rec){
+    if(!rec) return;
+    var id=String(rec.taskId||"");
+    if(id && seen[id]) return;
+    if(id) seen[id]=1;
+    var u=rhUsageOne(rec.usage);
+    if(!u) return;
+    out.money+=u.money; out.coins+=u.coins; out.secs=Math.max(out.secs,u.secs);
+    out.has=true; out.parts++;
+  });
+  var own=rhUsageOne(d.usage);
+  if(own && !(selfId && seen[selfId])){
+    out.money+=own.money; out.coins+=own.coins; out.secs=Math.max(out.secs,own.secs);
+    out.has=true; out.parts++;
+  }
+  return out;
+}
+/* Remaining balance. Deliberately NOT thrown on failure by the callers: a
+   studio must be able to keep working when a balance read is blocked. */
+async function rhAccountStatus(apiKey, signal){
+  var r=await fetch(RH_BASE+"/uc/openapi/accountStatus", {
+    method:"POST", headers:rhV2Headers(apiKey),
+    body:JSON.stringify({apiKey:apiKey}), signal:signal });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok){ var e=new Error("account-failed"); e.status=r.status; e.body=j; throw e; }
+  if(j && ("code" in j) && Number(j.code)!==0){
+    var e2=new Error("account-rejected"); e2.code=j.code; e2.msg=j.msg||j.message; throw e2;
+  }
+  var d=rhUnwrap(j);
+  if(d.currency) RH_LAST_CUR=String(d.currency);
+  return {
+    money:   d.remainMoney!==undefined && d.remainMoney!==null ? rhNum(d.remainMoney) : null,
+    coins:   d.remainCoins!==undefined && d.remainCoins!==null ? rhNum(d.remainCoins) : null,
+    currency:String(d.currency||""),
+    apiType: String(d.apiType||""),
+    running: rhNum(d.currentTaskCounts),
+    ts:      Date.now()
+  };
+}
+async function rhQueueStatus(apiKey, signal){
+  var r=await fetch(RH_V2_BASE+"/queue/status", { method:"GET", headers:rhV2Headers(apiKey), signal:signal });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok){ var e=new Error("queue-failed"); e.status=r.status; e.body=j; throw e; }
+  var d=rhUnwrap(j);
+  return {
+    keyType: String(d.apiKeyType||""),
+    limit:   rhNum(d.concurrentLimit),
+    running: rhNum(d.runningCount),
+    queued:  rhNum(d.queuedCount),
+    total:   rhNum(d.totalCurrentTasks)
+  };
+}
+/* Quote a call before it is made. `body` must be the body the real submit
+   would send — anything else quotes a different job. */
+async function rhPricePreview(apiKey, apiPath, body, signal){
+  var p=String(apiPath||"").replace(/^\/+/,"");
+  if(!p) throw new Error("no-path");
+  var r=await fetch(RH_V2_BASE+"/price-preview/"+p, {
+    method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body||{}), signal:signal });
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok){ var e=new Error("price-failed"); e.status=r.status; e.body=j; throw e; }
+  var d=rhUnwrap(j);
+  if(d.errorCode){ var e2=new Error("price-rejected"); e2.code=d.errorCode; e2.msg=d.errorMessage; throw e2; }
+  if(d.currency) RH_LAST_CUR=String(d.currency);
+  return {
+    price:    rhNum(d.estimatedPrice),
+    currency: String(d.currency||""),
+    text:     String(d.priceText||d.priceTextEn||""),
+    free:     !!d.freeLimit,
+    freeNow:  !!d.isFreeThisCall,
+    freeLeft: d.remainingFreeLimitCount===undefined||d.remainingFreeLimitCount===null
+                ? null : Math.round(rhNum(d.remainingFreeLimitCount)),
+    freeCap:  d.freeLimitCount===undefined||d.freeLimitCount===null
+                ? null : Math.round(rhNum(d.freeLimitCount))
+  };
 }
 /* signal (optional AbortSignal) lets the caller cancel an in-flight
    generation — RunningHub video jobs can run up to RH_VIDEO_TIMEOUT_MS
@@ -3856,16 +4100,179 @@ function rhJobClose(taskId){
    come back for, so the id is struck off. A timeout or a dropped connection is
    NOT terminal: the job is still running on RunningHub's side and still paid
    for, so the id survives for the next session to claim. */
+/* ---------- v4.58: the spend ledger ----------
+   The job registry above is a claims list and expires after 12h, which is
+   right for "is anything still owed to me" and wrong for "what did I spend
+   last month". This is a separate, permanent book: one row per finished job,
+   carrying the amount RunningHub actually charged.
+
+   Deliberately no TTL. A studio's accounts do not expire, and the row is ~120
+   bytes — 400 of them is under 50KB, well inside localStorage. Rows are
+   trimmed by COUNT only, oldest first, and the running totals of everything
+   ever trimmed are kept in a separate all-time accumulator so the lifetime
+   figure stays true after the 401st job. */
+var RH_SPEND_LS="hnk_ws_spend", RH_SPEND_MAX=400;
+/* v4.59 — the owner's own unit rates for vendors that publish no price to an
+   API key. Google and OpenAI both refuse: there is no endpoint that returns a
+   remaining balance or a per-call charge for an API key, only a dashboard a
+   human logs into. So the app counts the runs exactly — that part is certain —
+   and lets the owner type the rate they read off that dashboard once.
+
+   The result is labelled as THEIR figure, never as a price this file knew.
+   Nothing here is a guessed default: an unset rate shows a run count and says
+   so, which is the truth. */
+var RH_RATE_LS="hnk_ws_rates";
+function spendRatesLoad(){
+  try{ var o=JSON.parse(localStorage.getItem(RH_RATE_LS)||"{}"); return (o&&typeof o==="object")?o:{}; }
+  catch(e){ return {}; }
+}
+function spendRatesSave(o){ try{ localStorage.setItem(RH_RATE_LS, JSON.stringify(o)); }catch(e){} }
+/* most specific first: a rate set for "gemini-3-pro-image-preview" beats the
+   vendor-wide "gemini" rate */
+function spendRate(prov, model){
+  var o=spendRatesLoad();
+  var m=model && o[prov+":"+model];
+  if(m>0) return Number(m);
+  var p=o[prov];
+  return p>0 ? Number(p) : 0;
+}
+function spendRateSet(prov, model, v){
+  var o=spendRatesLoad(), k=model?(prov+":"+model):prov;
+  if(v>0) o[k]=Number(v); else delete o[k];
+  spendRatesSave(o);
+  if(typeof renderSpend==="function") renderSpend();
+}
+/* Book one generate from a vendor that reports no cost. Same ledger, same
+   rollups — the run count is exact even when the money is not knowable. */
+var _spendSeq=0;
+function spendNoteRun(prov, model, kind){
+  spendAdd(prov+"-"+Date.now()+"-"+(++_spendSeq),
+    {kind:kind||"image", label:String(model||prov), prov:prov}, null);
+}
+function spendLoad(){
+  var o=null;
+  try{ o=JSON.parse(localStorage.getItem(RH_SPEND_LS)||"null"); }catch(e){ o=null; }
+  if(!o || typeof o!=="object") o={};
+  return {
+    rows: Array.isArray(o.rows)?o.rows:[],
+    /* everything trimmed off the front, so lifetime totals survive the cap */
+    old: (o.old && typeof o.old==="object") ? o.old : {n:0, money:0, coins:0},
+    cur: String(o.cur||"")
+  };
+}
+function spendSave(b){
+  try{ localStorage.setItem(RH_SPEND_LS, JSON.stringify(b)); }catch(e){}
+}
+/* One finished job. `u` is an rhUsageOf result; when RunningHub reported no
+   numbers the row is still written with has:0 — a run whose cost is unknown
+   must be visible as unknown, never quietly counted as free. */
+function spendAdd(taskId, meta, u){
+  var b=spendLoad();
+  if(b.rows.some(function(r){ return r.id===String(taskId); })) return;   /* idempotent */
+  b.rows.push({
+    id:   String(taskId||""),
+    ts:   Date.now(),
+    k:    (meta&&meta.kind)||"image",
+    m:    String((meta&&meta.label)||"").slice(0,60),
+    /* v4.59 — which vendor. Absent means RunningHub: every row written before
+       this release came from rhPollTracked, so the default keeps old books
+       readable rather than re-labelling them "unknown". */
+    p:    (meta&&meta.prov)||"rh",
+    money:u&&u.has?+(u.money.toFixed(6)):0,
+    coins:u&&u.has?+(u.coins.toFixed(4)):0,
+    secs: u?Math.round(u.secs):0,
+    has:  u&&u.has?1:0
+  });
+  if(u && u.has && !b.cur && RH_LAST_CUR) b.cur=RH_LAST_CUR;
+  while(b.rows.length>RH_SPEND_MAX){
+    var drop=b.rows.shift();
+    b.old.n++; b.old.money+=drop.money||0; b.old.coins+=drop.coins||0;
+  }
+  spendSave(b);
+  if(typeof renderSpend==="function") renderSpend();
+}
+/* The currency RunningHub last named. The per-task usage payload does not
+   carry one, so it is learned from the balance/quote calls and only ever used
+   as a LABEL — no conversion is done anywhere in this file. */
+var RH_LAST_CUR="";
+function spendRollup(){
+  var b=spendLoad(), now=Date.now(), day=86400000;
+  var d0=new Date(); d0.setHours(0,0,0,0); var todayStart=d0.getTime();
+  var mo=new Date(); mo.setDate(1); mo.setHours(0,0,0,0); var monthStart=mo.getTime();
+  function z(){ return {n:0, money:0, coins:0, secs:0, unknown:0}; }
+  var out={ today:z(), week:z(), month:z(), all:z(), byModel:{}, byProv:{},
+            rows:b.rows.slice().reverse(), cur:b.cur||RH_LAST_CUR };
+  b.rows.forEach(function(r){
+    function put(a){ a.n++; a.money+=r.money||0; a.coins+=r.coins||0; a.secs+=r.secs||0; if(!r.has) a.unknown++; }
+    put(out.all);
+    if(r.ts>=todayStart) put(out.today);
+    if(r.ts>=now-7*day) put(out.week);
+    if(r.ts>=monthStart) put(out.month);
+    var k=r.m||"?";
+    if(!out.byModel[k]) out.byModel[k]=z();
+    put(out.byModel[k]);
+    /* v4.59 — and by vendor, which is a different question: RunningHub reports
+       a price per job, Google and OpenAI report none to an API key at all, so
+       the two cannot be shown in one column without implying the second is
+       free. */
+    var pv=r.p||"rh";
+    if(!out.byProv[pv]) out.byProv[pv]=z();
+    put(out.byProv[pv]);
+    /* the owner's own rate for a vendor that publishes no price */
+    var rate=spendRate(pv, r.m);
+    if(!r.has && rate>0){ out.byProv[pv].est=(out.byProv[pv].est||0)+rate; }
+  });
+  /* lifetime includes what the cap threw away */
+  out.all.n+=b.old.n||0; out.all.money+=b.old.money||0; out.all.coins+=b.old.coins||0;
+  out.trimmed=b.old.n||0;
+  return out;
+}
+function spendClear(){
+  spendSave({rows:[], old:{n:0,money:0,coins:0}, cur:""});
+  if(typeof renderSpend==="function") renderSpend();
+}
+
 async function rhPollTracked(apiKey, taskId, meta, onTick, timeoutMs, signal){
   rhJobOpen(taskId, meta);
   try{
     var final=await rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs, signal);
     rhJobClose(taskId);
+    /* book it. Every paid surface in this app funnels through here, so this
+       one line is what makes the ledger complete rather than a Studio-only
+       feature — and it must never be able to fail the generation that just
+       succeeded, hence the try. */
+    try{ rhBookSpend(taskId, meta, final); }catch(e){}
     return final;
   }catch(e){
     if(e && (e.code==="failed" || e.code==="cancelled")) rhJobClose(taskId);
     throw e;
   }
+}
+/* Write the row and tell the operator, once, what that run cost. The toast is
+   the whole point: "1 GENERATE" was never a price. */
+function rhBookSpend(taskId, meta, finalJson){
+  var u=rhUsageOf(finalJson);
+  spendAdd(taskId, meta, u);
+  if(!u.has) return;
+  if(typeof toast!=="function") return;
+  var cur=(spendLoad().cur||RH_LAST_CUR||"");
+  var bits=[];
+  if(u.money>0) bits.push(fmtMoney(u.money, cur));
+  if(u.coins>0) bits.push(Math.round(u.coins)+" RH");
+  if(!bits.length) return;
+  toast(t("cost_ran").replace("{C}", bits.join(" · ")));
+}
+/* Two decimals is right for a month's total and wrong for one run: a lot of
+   these endpoints charge fractions of a cent, and 0.0125 rounded to "0.01"
+   understates the run by a fifth. Under 0.1 keep four decimals and strip the
+   trailing zeros so 0.05 does not render as "0.0500"; at or above 0.1 use the
+   ordinary two. */
+function fmtMoney(v, cur){
+  var n=Number(v)||0, s;
+  if(n===0) s="0";
+  else if(n<0.1) s=n.toFixed(4).replace(/0+$/,"").replace(/\.$/,"");
+  else s=n.toFixed(2);
+  return cur ? (s+" "+cur) : s;
 }
 /* Ask RunningHub what became of a job we never saw finish. Returns
    "recovered" (results are now in the Gallery / video history), "running"
@@ -4255,6 +4662,21 @@ $("btnSaveRhKey").onclick = async function(){
   } catch(e){ setSt("stRhKey", L9({my:"Network error — ပြန်စမ်းပါ",en:"Network error — try again",shn:"Network error — ၸၢမ်းၶိုၼ်း",kac:"Network error — bai chyam u",th:"Network error — ลองใหม่",zh:"网络错误 — 请重试",vi:"Lỗi mạng — thử lại",id:"Error jaringan — coba lagi",ms:"Ralat rangkaian — cuba lagi"}), "err"); }
   btn.disabled=false;
   renderRhProviderOption();
+  /* v4.58 — a freshly saved key is exactly when the owner wants to see what
+     is left in the account, and it costs one request */
+  if(state.rhKey && typeof moneyRefresh==="function") moneyRefresh();
+};
+
+/* v4.58 — the money card */
+$("btnMoneyRefresh").onclick=function(){ moneyRefresh(); };
+$("btnMoneyCsv").onclick=function(){ moneyCsv(); };
+$("btnMoneyClear").onclick=function(){
+  /* the ledger is the only record of what was spent — a stray tap must not
+     erase a month, so this confirms through the same toast-action pattern
+     Reset uses rather than deleting on the first press */
+  toast(t("money_clear")+"?", "err", { label:t("money_clear"), fn:function(){
+    spendClear(); toast(t("money_cleared"),"ok");
+  }});
 };
 
 RH_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label+(m.apiPath?" ✓":""); $("rhModelSel").appendChild(o); });
@@ -4628,6 +5050,12 @@ async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio, quality, si
   if(!r.ok){ var e=new Error("openai-failed"); e.status=r.status; e.body=j; throw e; }
   var b64 = j && j.data && j.data[0] && j.data[0].b64_json;
   if(!b64){ var e2=new Error("openai-empty"); e2.status=200; throw e2; }
+  /* v4.59 — book the run. OpenAI publishes no remaining-balance endpoint for
+     an API key (the old /dashboard/billing route needs a browser session, not
+     a key), so only the COUNT is knowable — and it is exact. The size and
+     quality tier go in the label, because those are what move the price on
+     the dashboard the owner will read it off. */
+  try{ spendNoteRun("openai", OA_MODEL+" "+size+(quality==="high"?" high":""), "image"); }catch(e3){}
   return [{ mime:"image/png", b64: b64 }];
 }
 function oaFriendly(e){
@@ -10529,6 +10957,76 @@ function stRenderPend(){
     hdn.className=(svGet("st_hd",false)&&hdEl&&hdEl.style.display!=="none")?"on":"";
   }
   stRefreshDots();
+  stQuoteCost();
+}
+
+/* ---- v4.58: quote the GENERATE before it is paid for ----
+   The button has said "GENERATE (3 AI)" since v4.34, which is a count of
+   fragments, not a price — and Topaz 6x and Z-Image Turbo are not the same
+   money. This asks RunningHub what THIS call costs, against the same body
+   rhV2Submit would send.
+
+   Three rules keep it cheap and honest:
+   - Only when there is something to pay for. No pending AI fragment means no
+     RunningHub call at all, so no quote and no request.
+   - Cached per (model, ratio, resolution). Those are the three fields that
+     move the price; the prompt and the photo do not, so retouching for an
+     hour costs one quote.
+   - Never blocks and never fails loudly. A quote that cannot be fetched
+     leaves the line empty — the pre-existing behaviour — rather than putting
+     a scary error inside the sticky bar.
+
+   The cache stores a MISS as well as a hit. Without that, an endpoint whose
+   price-preview is unsupported or CORS-blocked would be re-requested on every
+   single stRenderPend — which fires on every slider move — and the honesty
+   feature would turn into a request storm against the owner's own account. */
+var ST_QUOTE={hits:{}, seq:0, t:null};
+function stQuoteCost(){
+  var line=$("stGenCost"); if(!line) return;
+  var n=(state.st&&state.st.pend)?state.st.pend.length:0;
+  var a=(n && state.rhKey) ? rhActiveModelCfg() : null;
+  /* only the kinds that actually go through rhV2Body can be quoted from it.
+     An upscale model submits a different body (rhV2SubmitUpscale), and a
+     quote taken against the wrong body is worse than no quote at all. */
+  if(!a || !a.apiPath || a.kind==="upscale" || a.kind==="upscale-transparent"){
+    line.textContent=""; line.className=""; return;
+  }
+  /* v4.54 blanks #selRatio for the duration of a Studio run so the framing
+     lock holds, so the quote uses "" here too — the same value the submit
+     will carry. #selSize goes through rhV2Resolution exactly as the
+     dispatcher does. */
+  var ratio=($("selRatio")||{}).value||"", res=rhV2Resolution(($("selSize")||{}).value);
+  var key=a.id+"|"+ratio+"|"+res;
+  if(ST_QUOTE.hits.hasOwnProperty(key)){ stQuotePaint(ST_QUOTE.hits[key]); return; }
+  clearTimeout(ST_QUOTE.t);
+  var my=++ST_QUOTE.seq;
+  ST_QUOTE.t=setTimeout(async function(){
+    var q=null;
+    try{
+      /* a placeholder URL: price-preview reads the SHAPE of the body, and
+         uploading the real photo just to be quoted would cost a round trip on
+         every slider move */
+      var body=rhV2Body(a.apiPath, ["https://example.invalid/q.jpg"], "quote", ratio, res, a);
+      q=await rhPricePreview(state.rhKey, a.apiPath, body, null);
+    }catch(e){ q=null; }
+    ST_QUOTE.hits[key]=q;                 /* remember the miss too */
+    if(my!==ST_QUOTE.seq) return;         /* a later request already owns the line */
+    stQuotePaint(q);
+  }, 500);
+}
+function stQuotePaint(q){
+  var line=$("stGenCost"); if(!line) return;
+  if(!q){ line.textContent=""; line.className=""; return; }
+  if(q.freeNow){
+    line.textContent = q.freeLeft!==null
+      ? t("cost_free").replace("{N}",String(q.freeLeft))
+      : t("cost_free_any");
+    line.className="free";
+    return;
+  }
+  if(!(q.price>0)){ line.textContent=q.text||""; line.className=""; return; }
+  line.textContent=t("cost_quote").replace("{C}", fmtMoney(q.price, q.currency||RH_LAST_CUR));
+  line.className="";
 }
 
 /* ---- control factories (all values live in state.st.v / t1 / t2 so presets + reset can refresh the UI) ---- */
@@ -12763,7 +13261,9 @@ stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"})
     /* v4.48 — search across every category of this suite (name my/en, id and
        the pack's attribute text: family, finish, palette, occasion, designs) */
     var search=document.createElement("input");
-    search.type="text"; search.className="inp";
+    /* .st-find marks a finder rather than a control, so the group badge does
+       not claim this box as one of the pack's adjustments (stCountControls) */
+    search.type="text"; search.className="inp st-find";
     search.placeholder=L9({my:"Style ရှာမယ် — ဥပမာ douyin, dewy, peach, red lip…",en:"Search styles — e.g. douyin, dewy, peach, red lip…"});
     search.oninput=function(){ query=this.value.trim().toLowerCase(); renderCats(); renderGrid(); };
     g.b.appendChild(search);
@@ -14134,11 +14634,31 @@ function stRenderRecipes(){
    Both suites read 79, which was coincidence — Evoto carries roughly 40% more
    controls than Meitu. Count what is actually on the page, so the badge can
    never drift from the product again. */
+/* v4.57 — and then it undercounted anyway, because it only knew three shapes.
+   A .chip built by stToggle/svToggle is returned bare, not inside a .chips
+   row, so it was invisible to the count: measured, 40 of them across the two
+   suites. EV-14 AI Removal is built entirely from four bare toggles plus a
+   prompt field and therefore printed "0 ခု" on a group with five working
+   controls; MU-1 One-Tap printed 2 with 4 on screen. The prompt fields
+   (mu_bgFree, ev_bdText, ev_removeText, ev_dressItem) feed the render exactly
+   as a slider does and were missed for being <input type=text>.
+
+   Two rules that matter for the selectors below:
+   - `.chip:not(.chips .chip)` and NOT `.st-ctl > .chip` — bare chips are
+     appended to three different parents (.st-ctl, .row, and .grp-b itself:
+     stZonesBtn, the heal/brush/erase tools, ev_hslPick). Anchoring on the
+     parent would have missed five of them.
+   - `:not([type="color"])` because stColorInp sets className="inp st-color",
+     so a plain input.inp would double-count all 12 pickers; and `:not(.st-find)`
+     because the two 880-pack search boxes filter a list rather than change the
+     photo — a finder is not a control. */
 function stCountControls(gEl){
   var b=gEl.querySelector(".grp-b")||gEl;
   return b.querySelectorAll('input[type="range"]').length
        + b.querySelectorAll(".chips").length
-       + b.querySelectorAll('input[type="color"]').length;
+       + b.querySelectorAll('input[type="color"]').length
+       + b.querySelectorAll(".chip:not(.chips .chip)").length
+       + b.querySelectorAll('input.inp:not([type="color"]):not(.st-find)').length;
 }
 ST_MEITU_COUNT=0; ST_EVOTO_COUNT=0;
 ST.groups.forEach(function(g){
@@ -15089,11 +15609,232 @@ function renderDashJobs(){
     list.appendChild(row);
   });
 }
+/* ---------- v4.58: rendering the money ----------
+   Two surfaces off one rollup: a three-number strip on Home for the glance,
+   and the full book on Setup for the question "where did last month go". */
+var RH_BAL_LS="hnk_ws_rh_bal";
+function balLoad(){
+  try{ var o=JSON.parse(localStorage.getItem(RH_BAL_LS)||"null"); return (o&&typeof o==="object")?o:null; }
+  catch(e){ return null; }
+}
+function balSave(b){ try{ localStorage.setItem(RH_BAL_LS, JSON.stringify(b)); }catch(e){} }
+function agoText(ts){
+  if(!ts) return t("money_never");
+  var m=Math.round((Date.now()-ts)/60000);
+  if(m<1) return t("job_age_now");
+  if(m<60) return t("job_age_min").replace("{N}",String(m));
+  return t("job_age_hr").replace("{N}",String(Math.round(m/60)));
+}
+/* One balance string for both cards. Coins and money are different units and
+   an account may report either, both, or neither — never invent one from the
+   other, and never print 0 for "not reported".
+
+   `big` asks for the headline form: money alone. Measured at 390px, the joined
+   form "42.18 USD · 8436 RH" wraps to two lines inside a 110px statline cell
+   and drops its own caption below the neighbouring two, so the strip stops
+   reading as a row. The coin figure keeps its place on the meta line, which
+   has the width for it. */
+function balText(b, big){
+  if(!b) return "—";
+  var money = (b.money!==null && b.money!==undefined) ? fmtMoney(b.money, b.currency||"") : "";
+  var coins = (b.coins!==null && b.coins!==undefined) ? Math.round(b.coins)+" RH" : "";
+  if(big) return money || coins || "—";
+  return [money, coins].filter(Boolean).join(" · ") || "—";
+}
+function renderDashMoney(){
+  var box=$("dashMoney"); if(!box) return;
+  var r=spendRollup(), b=balLoad();
+  if(!r.all.n && !b){ box.style.display="none"; return; }
+  box.style.display="";
+  setIcnText($("dashMoneyH2"),"i-bolt",t("money_h"));
+  $("dashMoneyBalL").textContent=t("money_bal");
+  $("dashMoneyTodayL").textContent=t("money_today");
+  $("dashMoneyRunsL").textContent=t("money_runs");
+  $("dashMoneyBal").textContent=balText(b, true);
+  $("dashMoneyToday").textContent=r.today.n?fmtMoney(r.today.money, r.cur):"—";
+  $("dashMoneyRuns").textContent=String(r.today.n);
+  $("dashMoneyNote").textContent = b
+    ? [balText(b), t("money_checked").replace("{T}",agoText(b.ts))].join(" · ")
+    : t("money_all").replace("{N}",String(r.all.n)).replace("{C}",fmtMoney(r.all.money,r.cur));
+}
+function renderSpend(){
+  renderDashMoney();
+  var card=$("cardMoney"); if(!card) return;
+  var r=spendRollup(), b=balLoad();
+  setIcnText($("moneyH2"),"i-bolt",t("money_h"));
+  $("moneyIntro").textContent=t("money_intro");
+  $("moneyBalL").textContent=t("money_bal");
+  $("moneyTodayL").textContent=t("money_today");
+  $("moneyMonthL").textContent=t("money_month");
+  $("moneyBal").textContent=balText(b, true);
+  $("moneyToday").textContent=r.today.n?fmtMoney(r.today.money, r.cur):"—";
+  $("moneyMonth").textContent=r.month.n?fmtMoney(r.month.money, r.cur):"—";
+  $("btnMoneyRefresh").textContent=t("money_refresh");
+  $("btnMoneyCsv").textContent=t("money_csv");
+  $("btnMoneyClear").textContent=t("money_clear");
+  setIcnText($("moneyRunsT"),"i-stack",t("money_runs_t"));
+
+  var meta=[];
+  /* the headline cell shows money alone so the strip stays a row; the coin
+     figure lands here, where there is width for it */
+  if(b && b.coins!==null && b.coins!==undefined && b.money!==null && b.money!==undefined) meta.push(balText(b));
+  meta.push(b?t("money_checked").replace("{T}",agoText(b.ts)):t("money_never"));
+  if(b && b.queue) meta.push(t("money_queue")
+    .replace("{R}",String(b.queue.running)).replace("{Q}",String(b.queue.queued))
+    .replace("{L}",String(b.queue.limit||"—")));
+  if(b && b.apiType) meta.push(b.apiType);
+  meta.push(t("money_all").replace("{N}",String(r.all.n)).replace("{C}",fmtMoney(r.all.money,r.cur)));
+  if(r.trimmed) meta.push(t("money_trim").replace("{N}",String(r.trimmed)));
+  $("moneyMeta").textContent=meta.join(" · ");
+
+  renderSpendProv(r);
+
+  /* per-model, most expensive first — the answer to "which model is eating
+     the month", which a flat list of eighty runs never gives you. Both blocks
+     carry their own .subh: without one they read as a single list where the
+     first five rows happen to have no dates. */
+  var bm=$("moneyByModel"); bm.innerHTML="";
+  var keys=Object.keys(r.byModel).sort(function(a,c){ return r.byModel[c].money-r.byModel[a].money; });
+  if(keys.length){
+    bm.appendChild(el("div","subh",t("money_bymodel")));
+    keys.slice(0,8).forEach(function(k){
+      var a=r.byModel[k];
+      var row=el("div","acc-kv");
+      row.appendChild(el("span","k",k));
+      row.appendChild(el("span","v",a.n+"× · "+fmtMoney(a.money,r.cur)));
+      bm.appendChild(row);
+    });
+  }
+
+  var host=$("moneyRuns"); host.innerHTML="";
+  if(!r.rows.length){ host.appendChild(el("p","mut",t("money_empty"))); return; }
+  /* 20, not 40: the group opens inside the page, and a nested scroller on
+     touch is worse than a shorter list. The CSV holds every row. */
+  var SHOW=20, shown=r.rows.slice(0,SHOW);
+  host.appendChild(el("div","subh",t("money_recent").replace("{N}",String(shown.length))));
+  shown.forEach(function(row){
+    var d=new Date(row.ts);
+    var line=el("div","acc-kv");
+    var pad=function(n){ return (n<10?"0":"")+n; };
+    line.appendChild(el("span","k",pad(d.getMonth()+1)+"/"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+"  "+(row.m||"—")));
+    var cost = !row.has ? t("money_unknown")
+      : [ row.money>0?fmtMoney(row.money,r.cur):"", row.coins>0?Math.round(row.coins)+" RH":"" ]
+          .filter(Boolean).join(" · ") || t("cost_free_any");
+    line.appendChild(el("span","v",cost));
+    host.appendChild(line);
+  });
+  if(r.rows.length>SHOW) host.appendChild(el("p","mut",t("money_more").replace("{N}",String(r.rows.length-SHOW))));
+}
+/* v4.59 — one block per vendor.
+
+   The three providers this app can generate through are not comparable, and
+   pretending they are would be the same dishonesty this release exists to end:
+
+   - RunningHub reports the exact amount it charged for every job, and a
+     remaining balance. Real money, no guessing.
+   - Google publishes NO per-call charge and NO balance for an API key. There
+     is no endpoint. Only a dashboard a human signs into.
+   - OpenAI is the same: the old /dashboard/billing/credit_grants route needs a
+     browser session, not an API key.
+
+   So for the latter two the app states what it actually knows — an exact count
+   of runs — and offers one field: the rate the owner reads off that dashboard
+   once. The result is then labelled as THEIR rate, never as a price this file
+   knew. No default is shipped, because a plausible-looking default would be
+   indistinguishable from a real one on screen. */
+var PROV_NAME={ rh:"RunningHub", gemini:"Google Gemini", openai:"OpenAI" };
+function renderSpendProv(r){
+  var host=$("moneyProv"); if(!host) return;
+  host.innerHTML="";
+  var keys=Object.keys(r.byProv);
+  if(keys.length<1) return;
+  /* RunningHub first regardless of volume — it is the only one carrying real
+     money, and burying it under a busier free-tier vendor buries the answer */
+  keys.sort(function(a,b){
+    if(a==="rh") return -1;
+    if(b==="rh") return 1;
+    return (r.byProv[b].n)-(r.byProv[a].n);
+  });
+  keys.forEach(function(p){
+    var a=r.byProv[p], reports=(p==="rh");
+    var box=el("div","acc-sub");
+    box.appendChild(el("div","subh",PROV_NAME[p]||p));
+    var kv=el("div","acc-kv");
+    kv.appendChild(el("span","k",t("money_runs")));
+    kv.appendChild(el("span","v",String(a.n)));
+    box.appendChild(kv);
+    if(reports){
+      var kv2=el("div","acc-kv");
+      kv2.appendChild(el("span","k",t("money_all_short")));
+      kv2.appendChild(el("span","v",fmtMoney(a.money, r.cur)));
+      box.appendChild(kv2);
+      if(a.unknown) box.appendChild(el("p","mut",
+        t("money_unrep").replace("{N}",String(a.unknown))));
+    } else {
+      box.appendChild(el("p","mut",t("money_norate").replace("{V}",PROV_NAME[p]||p)));
+      var rate=spendRate(p,null);
+      var row=el("div","row"); row.style.marginTop="6px";
+      var inp=document.createElement("input");
+      inp.type="number"; inp.className="inp grow"; inp.step="0.0001"; inp.min="0";
+      inp.value=rate>0?String(rate):"";
+      inp.placeholder=t("money_rate_ph");
+      inp.setAttribute("aria-label", t("money_rate_ph"));
+      inp.onchange=function(){ spendRateSet(p, null, parseFloat(inp.value)||0); };
+      row.appendChild(inp);
+      box.appendChild(row);
+      if(rate>0){
+        var kv3=el("div","acc-kv");
+        kv3.appendChild(el("span","k",t("money_est")));
+        kv3.appendChild(el("span","v",fmtMoney(a.n*rate, r.cur)));
+        box.appendChild(kv3);
+      }
+    }
+    host.appendChild(box);
+  });
+}
+
+/* Read the balance + queue. Never throws at the caller: a studio must keep
+   working when this is blocked, and the ledger is independent of it. */
+async function moneyRefresh(){
+  var st=$("stMoney");
+  if(!state.rhKey){ if(st){ st.textContent=t("money_nokey"); st.className="status err"; } return false; }
+  var btn=$("btnMoneyRefresh"); if(btn) btn.disabled=true;
+  if(st){ st.textContent=""; st.className="status"; }
+  var ok=false;
+  try{
+    var a=await rhAccountStatus(state.rhKey, null);
+    var q=null;
+    try{ q=await rhQueueStatus(state.rhKey, null); }catch(e){}
+    balSave({ money:a.money, coins:a.coins, currency:a.currency, apiType:a.apiType, ts:a.ts, queue:q });
+    ok=true;
+  }catch(e){
+    if(st){ st.textContent=t("money_fail"); st.className="status err"; }
+  }
+  if(btn) btn.disabled=false;
+  renderSpend();
+  return ok;
+}
+function moneyCsv(){
+  var r=spendRollup();
+  var lines=["when,model,kind,money,coins,seconds,reported,currency"];
+  r.rows.slice().reverse().forEach(function(x){
+    lines.push([ new Date(x.ts).toISOString(), '"'+String(x.m||"").replace(/"/g,'""')+'"',
+      x.k||"", x.money||0, x.coins||0, x.secs||0, x.has?"yes":"no", r.cur||"" ].join(","));
+  });
+  var blob=new Blob([lines.join("\n")], {type:"text/csv"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="hnk-runninghub-spend.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
 function renderDash(){
   renderDashStatic();
   renderDashGreet();
   renderDashCont();
   renderDashJobs();
+  renderDashMoney();
 }
 renderDash();
 /* One quiet sweep on boot: anything that finished while the tab was gone lands
@@ -15111,6 +15852,18 @@ renderDash();
     if(got) toast(t("job_recovered").replace("{N}",String(got)),"ok");
     renderDashJobs();
   }, 1500);
+})();
+/* v4.58 — paint the book from storage immediately, then refresh the balance
+   once per session if the last reading is over an hour old. Not on every boot:
+   the balance moves when a job runs, and rhBookSpend already repaints. */
+renderSpend();
+(function rhBalBootRead(){
+  setTimeout(function(){
+    if(!state.rhKey) return;
+    var b=balLoad();
+    if(b && (Date.now()-(b.ts||0))<3600000) return;
+    moneyRefresh();
+  }, 2600);
 })();
 
 
@@ -16479,7 +17232,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.56.0";
+var APP_VER="4.59.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -17025,7 +17778,15 @@ $("btnGen").onclick = async function(){
             var cparts=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].content&&x.j.candidates[0].content.parts||[];
             for(var i=0;i<cparts.length;i++){
               var d=cparts[i].inline_data||cparts[i].inlineData;
-              if(d&&d.data) return { out:{mime:d.mime_type||d.mimeType||"image/png", b64:d.data} };
+              if(d&&d.data){
+                /* v4.59 — book the run. Google publishes no per-call charge and
+                   no balance to an API key, so only the COUNT is knowable here
+                   — and the count is exact. Booked on the image, not on the
+                   request, so a safety block or a 503 is not charged to the
+                   owner's tally. */
+                try{ spendNoteRun("gemini", m, "image"); }catch(e2){}
+                return { out:{mime:d.mime_type||d.mimeType||"image/png", b64:d.data} };
+              }
             }
             /* HTTP 200 but no image part — surface the real reason instead of a generic message */
             var fin=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].finishReason||"";

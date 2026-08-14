@@ -140,20 +140,23 @@ function check(ok, label, detail) {
 
   /* ---- 6) suite badges are counted, not typed ---- */
   const badges = await page.evaluate(() => {
-    const measure = host => ST.groups.filter(g => (g.host === "ev") === (host === "ev"))
-      .reduce((a, g) => {
-        const b = g.el.querySelector(".grp-b") || g.el;
-        return a + b.querySelectorAll('input[type="range"]').length
-                 + b.querySelectorAll(".chips").length
-                 + b.querySelectorAll('input[type="color"]').length;
-      }, 0);
-    const groupsAgree = ST.groups.every(g => {
+    /* deliberately RE-IMPLEMENTED rather than calling stCountControls: the
+       point of this check is that the badge law and the app agree, and a test
+       that calls the same function can only ever agree with itself. Keep these
+       five selectors byte-identical to stCountControls when it changes.
+       v4.57 added the last two — bare chips and prompt fields. */
+    const count = g => {
       const b = g.el.querySelector(".grp-b") || g.el;
-      const n = b.querySelectorAll('input[type="range"]').length
-              + b.querySelectorAll(".chips").length
-              + b.querySelectorAll('input[type="color"]').length;
-      return (g.el.querySelector(".cnt") || {}).textContent === n + t("unit");
-    });
+      return b.querySelectorAll('input[type="range"]').length
+           + b.querySelectorAll(".chips").length
+           + b.querySelectorAll('input[type="color"]').length
+           + b.querySelectorAll(".chip:not(.chips .chip)").length
+           + b.querySelectorAll('input.inp:not([type="color"]):not(.st-find)').length;
+    };
+    const measure = host => ST.groups.filter(g => (g.host === "ev") === (host === "ev"))
+      .reduce((a, g) => a + count(g), 0);
+    const groupsAgree = ST.groups.every(g =>
+      (g.el.querySelector(".cnt") || {}).textContent === count(g) + t("unit"));
     return {
       mu: document.getElementById("stMeituCount").textContent,
       ev: document.getElementById("stEvotoCount").textContent,
