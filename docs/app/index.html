@@ -1591,6 +1591,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       <button class="chip st-ov" id="stSplit">A|B</button>
       <button class="chip st-ov" id="stStageMin" aria-label="Minimize preview"><svg class="ic-s ic-r90" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></button>
       <button class="chip st-ov" id="stStageFlip" style="display:none"></button>
+      <button class="chip st-ov" id="stZones"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-target"/></svg></button>
       <button class="chip st-ov" id="stHold"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg> Before</button>
       <button class="chip st-ov" id="stReset"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-restore"/></svg> Reset</button>
     </div>
@@ -2658,6 +2659,12 @@ var TR_PATH={
   gal_kept_on:{my:"ဒီပုံကို ★ ထားပြီး — နေရာလွတ်ဖို့ ဘယ်တော့မှ မဖျက်တော့ပါ",en:"Starred — this result will never be removed to make room",shn:"မီး ★ ယဝ်ႉ — တေဢမ်ႇမွတ်ႇသေပွၵ်ႈ",kac:"★ tawn sai — shara lu na matu galoi mung n shamat sana",th:"ติดดาวแล้ว — จะไม่ถูกลบเพื่อให้มีที่ว่าง",zh:"已加星 — 不会为腾出空间而移除",vi:"Đã gắn sao — sẽ không bị xóa để lấy chỗ",id:"Diberi bintang — tidak akan dihapus untuk memberi ruang",ms:"Diberi bintang — tidak akan dibuang untuk beri ruang"},
   gal_kept_off:{my:"★ ဖြုတ်လိုက်ပါပြီ — Gallery ပြည့်ရင် ဒီပုံ ဖယ်ခံရနိုင်ပါတယ်",en:"Star removed — this result can be replaced when the Gallery fills up",shn:"ထွၼ် ★ ယဝ်ႉ — မိူဝ်ႈ Gallery တဵမ် ၸၢင်ႈထုၵ်ႇဢဝ်ဢွၵ်ႇ",kac:"★ raw kau sai — Gallery hpring yang shale kau na mai ai",th:"เอาดาวออกแล้ว — อาจถูกแทนที่เมื่อแกลเลอรีเต็ม",zh:"已取消加星 — 图库满时可能被替换",vi:"Đã bỏ sao — có thể bị thay thế khi Thư viện đầy",id:"Bintang dihapus — bisa tergantikan saat Galeri penuh",ms:"Bintang dibuang — boleh diganti apabila Galeri penuh"},
   gal_read_fail:{my:"ဒီပုံရဲ့ မူရင်းဖိုင်ကို ဖတ်၍ မရပါ",en:"Couldn't read this result's full file",shn:"လူတ်ႇဢမ်ႇလႆႈ ၾၢႆႇတဵမ်ၶွင်ၶႅပ်းၼႆႉ",kac:"Ndai ah kyu a file hpe n mai hti ai",th:"อ่านไฟล์เต็มของรูปนี้ไม่ได้",zh:"无法读取该结果的完整文件",vi:"Không đọc được tệp gốc của kết quả này",id:"Tidak dapat membaca berkas penuh hasil ini",ms:"Tidak dapat membaca fail penuh hasil ini"},
+  /* v4.56 — the detected-face overlay */
+  st_zones_on:{my:"ရှာတွေ့တဲ့ မျက်နှာအပိုင်းတွေကို ပြနေပါပြီ — မှားနေရင် ဒီမှာ မြင်ရပါမယ်",en:"Showing the detected face regions — a mis-read face is visible here",shn:"ၼႄတီႈလႆႈႁၼ်ၼႃႈ — ၽိတ်းၸိုင် တေႁၼ်တီႈၼႆႈ",kac:"Myit tam la ai myiman ginwang ni madun nga ai",th:"กำลังแสดงบริเวณใบหน้าที่ตรวจพบ — ถ้าอ่านผิดจะเห็นตรงนี้",zh:"正在显示检测到的面部区域 — 识别错误在这里能看到",vi:"Đang hiển thị các vùng khuôn mặt đã nhận diện — nhận sai sẽ thấy ngay ở đây",id:"Menampilkan area wajah yang terdeteksi — salah baca terlihat di sini",ms:"Memaparkan kawasan wajah yang dikesan — salah baca kelihatan di sini"},
+  st_zones_off:{my:"မျက်နှာအပိုင်း ပြတာ ပိတ်လိုက်ပါပြီ",en:"Face regions hidden",shn:"ပိၵ်ႉၼႄတီႈၼႃႈယဝ်ႉ",kac:"Myiman ginwang madun ai hpe gasan sai",th:"ซ่อนบริเวณใบหน้าแล้ว",zh:"已隐藏面部区域",vi:"Đã ẩn các vùng khuôn mặt",id:"Area wajah disembunyikan",ms:"Kawasan wajah disembunyikan"},
+  st_zones_high:{my:"မျက်နှာ ရှာတွေ့ပြီး — မျက်လုံးနှင့် ပါးစပ် အတည်ပြုပြီး",en:"Face found — eyes and mouth both confirmed",shn:"ႁၼ်ၼႃႈယဝ်ႉ — တႃလႄႈသူပ်း မၢၼ်ႇမႅၼ်ႈ",kac:"Myiman mu sai — myi hte ningup lahkawng yen teng sai",th:"พบใบหน้าแล้ว — ยืนยันทั้งตาและปาก",zh:"已找到人脸 — 眼睛与嘴部均已确认",vi:"Đã tìm thấy khuôn mặt — xác nhận cả mắt và miệng",id:"Wajah ditemukan — mata dan mulut terkonfirmasi",ms:"Wajah dijumpai — mata dan mulut disahkan"},
+  st_zones_low:{my:"မျက်နှာကို ခန့်မှန်းထားတာပါ — ပါးစပ် အတည်မပြုနိုင်သေးလို့ အနေအထား စစ်ပါ",en:"Face estimated — the mouth wasn't confirmed, so check the placement",shn:"ၶၢတ်ႈလၢမ်းၼႃႈဝႆႉ — သူပ်းပႆႇမၢၼ်ႇ၊ တွပ်ႇတူၺ်း",kac:"Myiman hpe shadu da ai — ningup n teng ai majaw yu chyam u",th:"ประมาณตำแหน่งใบหน้า — ยังไม่ยืนยันปาก โปรดตรวจสอบ",zh:"人脸为估算结果 — 嘴部未确认，请检查位置",vi:"Khuôn mặt là ước lượng — chưa xác nhận miệng, hãy kiểm tra vị trí",id:"Wajah diperkirakan — mulut belum terkonfirmasi, periksa posisinya",ms:"Wajah dianggarkan — mulut belum disahkan, semak kedudukannya"},
+  st_zones_none:{my:"ဒီပုံမှာ မျက်နှာ ရှာမတွေ့ပါ — မျက်နှာအလိုက် ချိန်ညှိချက်တွေ အလုပ်မလုပ်ပါ",en:"No face found in this photo — the face-specific controls will not act",shn:"ဢမ်ႇႁၼ်ၼႃႈၼႂ်းၶႅပ်းၼႆႉ",kac:"Ndai sumla kaw myiman n mu ai",th:"ไม่พบใบหน้าในรูปนี้ — ตัวควบคุมเฉพาะใบหน้าจะไม่ทำงาน",zh:"此照片未检测到人脸 — 面部专用控件不会生效",vi:"Không tìm thấy khuôn mặt trong ảnh này — các điều khiển dành cho mặt sẽ không hoạt động",id:"Tidak ada wajah terdeteksi — kontrol khusus wajah tidak akan bekerja",ms:"Tiada wajah dikesan — kawalan khusus wajah tidak akan bertindak"},
   gal_zip_partial:{my:"ပုံ {N} ပုံကို ဖတ်၍ မရလို့ ZIP ထဲ မပါပါ",en:"{N} result(s) couldn't be read and are missing from the ZIP",shn:"{N} ဢၼ် လူတ်ႇဢမ်ႇလႆႈ — ဢမ်ႇပႃးၼႂ်း ZIP",kac:"{N} hpe n mai hti ai majaw ZIP kaw n rawng ai",th:"อ่าน {N} รายการไม่ได้ จึงไม่อยู่ใน ZIP",zh:"{N} 个结果无法读取，未包含在 ZIP 中",vi:"{N} kết quả không đọc được và thiếu trong ZIP",id:"{N} hasil tidak dapat dibaca dan tidak ada di ZIP",ms:"{N} hasil tidak dapat dibaca dan tiada dalam ZIP"}
 };
 Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
@@ -9066,6 +9073,167 @@ function stBlurData(srcCanvas,W,H,r){
   x.filter="blur("+r+"px)"; x.drawImage(srcCanvas,0,0,W,H);
   return x.getImageData(0,0,W,H).data;
 }
+/* ---------- v4.56: real head isolation ----------
+   Everything below used to hang off stSkinMask's bounding box, which is the
+   box around EVERY skin pixel in the frame — face, neck, shoulders, arms,
+   chest. On a head-and-shoulders portrait that box runs from the forehead to
+   the collarbone, so stFaceZones' "mouth band" (58-95% of the box) sits on
+   the chest. Measured on a 600x800 test portrait: the mouth was detected 317
+   pixels below the real mouth, which means lip colour, blush and teeth
+   whitening were all landing on the subject's chest. Almost every wedding
+   photo shows more than a head, so this was the normal case, not an edge one.
+
+   This finds the HEAD: skin rows widen through the cheeks, pinch at the neck,
+   then flare again at the shoulders. The pinch is the cut. */
+function stHeadBox(mask,w,h){
+  var rows=new Int32Array(h), y, x, c, base;
+  for(y=0;y<h;y++){ c=0; base=y*w; for(x=0;x<w;x++) if(mask[base+x]>128) c++; rows[y]=c; }
+  var minRun=Math.max(3, Math.round(w*0.015));
+  var top=-1;
+  for(y=0;y<h;y++){ if(rows[y]>=minRun){ top=y; break; } }
+  if(top<0) return null;
+  var scanEnd=h-1;
+  /* smooth away single-row noise before looking for shape */
+  var sm=new Int32Array(h), k=Math.max(1,Math.round(h*0.004)), a2, b2, t2, cnt2;
+  for(y=0;y<h;y++){
+    a2=Math.max(0,y-k); b2=Math.min(h-1,y+k); t2=0; cnt2=0;
+    for(var yy=a2;yy<=b2;yy++){ t2+=rows[yy]; cnt2++; }
+    sm[y]=Math.round(t2/cnt2);
+  }
+  /* THE FIRST PEAK, not the global one. Shoulders are wider than any head, so
+     a global maximum lands on the torso and the "neck" is never found — which
+     is exactly the bug this function exists to fix. Walk down from the top of
+     the skin: the head widens to the cheekbones, pinches at the neck, then the
+     shoulders flare. Take the first peak, then the pinch after it. */
+  var runMax=0, peakY=top;
+  for(y=top;y<=scanEnd;y++){
+    if(sm[y]>runMax){ runMax=sm[y]; peakY=y; }
+    /* a real head has been seen and the profile has fallen off its peak */
+    if(runMax>=minRun*2 && sm[y]<=runMax*0.72) break;
+  }
+  var maxW=runMax, maxY=peakY;
+  /* descend into the pinch; stop when it flares back out (shoulders) or the
+     skin simply ends (a headshot with no body in frame) */
+  var neck=-1, neckW=maxW, lastY=maxY, sawFlare=false;
+  for(y=maxY+1;y<=scanEnd;y++){
+    if(sm[y]<minRun){ break; }
+    lastY=y;
+    if(sm[y]<=neckW){ neckW=sm[y]; neck=y; sawFlare=false; }
+    else if(neck>=0 && sm[y]>neckW*1.5){ sawFlare=true; break; }
+  }
+  /* Only cut at the pinch if the SHOULDERS actually flare back out below it.
+     A head photographed on its own tapers to the chin, and that taper looks
+     exactly like a neck to a width profile — cutting there sliced the chin and
+     the mouth off the head box, which put teeth whitening above the teeth. A
+     neck is only a neck when a body follows it. */
+  var bottom = (sawFlare && neck>=0 && neckW < maxW*0.85) ? neck : lastY;
+  if(bottom<=top) bottom=Math.min(scanEnd, top+Math.max(8,Math.round(h*0.1)));
+  /* horizontal extent measured only across the rows we kept */
+  var x0=w, x1=0, any=false;
+  for(y=top;y<=bottom;y++){
+    base=y*w;
+    for(x=0;x<w;x++) if(mask[base+x]>128){ if(x<x0)x0=x; if(x>x1)x1=x; any=true; }
+  }
+  if(!any) return null;
+  return { x0:x0, y0:top, x1:x1, y1:bottom, neckY:(neck>=0?neck:bottom), cheekY:maxY };
+}
+
+/* ---------- v4.56: a canonical face frame ----------
+   Two eye centres and the mouth centre fix a face completely: origin, scale
+   (interocular distance) and roll. Facial proportions are regular enough
+   against that frame to place the features a retoucher actually asks for —
+   brows, lashes, lids, nose bridge and tip, nostrils, ears, lips, teeth,
+   philtrum, chin, jaw, cheeks, forehead, temples — without a landmark model,
+   which this app cannot ship (no build step, no external assets, works
+   offline). Every region is returned as an ellipse in the same {cx,cy,rx,ry}
+   shape stInEllipse already understands, plus a `rot` the caller may ignore.
+
+   This is a geometric model, not a neural one: it is dependable for zoning a
+   retouch on a broadly front-facing portrait and degrades on extreme poses,
+   which is why stFaceZones reports a confidence and the overlay exists. */
+function stFaceFrame(eyeL,eyeR,mouth,head){
+  if(!eyeL||!eyeR) return null;
+  var dx=eyeR.cx-eyeL.cx, dy=eyeR.cy-eyeL.cy;
+  var iod=Math.sqrt(dx*dx+dy*dy);
+  if(iod<6) return null;
+  var rot=Math.atan2(dy,dx);
+  var mx=(eyeL.cx+eyeR.cx)/2, my=(eyeL.cy+eyeR.cy)/2;
+  /* vertical unit: eye line to mouth is ~1.1 IOD on a typical adult face; use
+     the measured distance when the mouth was actually found, else the ratio */
+  var e2m = mouth ? Math.sqrt(Math.pow(mouth.cx-mx,2)+Math.pow(mouth.cy-my,2)) : iod*1.1;
+  if(e2m<iod*0.6) e2m=iod*0.6;
+  if(e2m>iod*1.8) e2m=iod*1.8;
+  /* down vector = perpendicular to the eye line, pointing toward the mouth */
+  var ux=Math.cos(rot), uy=Math.sin(rot);      /* along the eye line, L->R */
+  var dxn=-uy, dyn=ux;                          /* rotated +90deg = "down" */
+  if(mouth && ((mouth.cx-mx)*dxn+(mouth.cy-my)*dyn)<0){ dxn=-dxn; dyn=-dyn; }
+  function P(a,b){ return { cx:mx+ux*(a*iod)+dxn*(b*e2m), cy:my+uy*(a*iod)+dyn*(b*e2m) }; }
+  function E(a,b,rx,ry){ var p=P(a,b); return { cx:p.cx, cy:p.cy, rx:Math.max(2,rx*iod), ry:Math.max(2,ry*iod), rot:rot }; }
+  return { iod:iod, e2m:e2m, rot:rot, cx:mx, cy:my, P:P, E:E, head:head||null };
+}
+
+/* Named regions, all proportional to the frame. The ratios are ordinary
+   anatomical ones (interocular distance is ~1 eye width, the nose base sits
+   ~0.45 of the eye-to-mouth span, ears span the brow-to-nose-base band). */
+function stFaceRegions(F){
+  if(!F) return null;
+  var E=F.E, R={};
+  R.eyeL      = E(-0.5, 0,     0.24, 0.13);
+  R.eyeR      = E( 0.5, 0,     0.24, 0.13);
+  R.lidL      = E(-0.5,-0.10,  0.24, 0.09);
+  R.lidR      = E( 0.5,-0.10,  0.24, 0.09);
+  R.lashL     = E(-0.5,-0.15,  0.26, 0.06);
+  R.lashR     = E( 0.5,-0.15,  0.26, 0.06);
+  R.browL     = E(-0.52,-0.30, 0.30, 0.09);
+  R.browR     = E( 0.52,-0.30, 0.30, 0.09);
+  R.noseBridge= E( 0,   0.16,  0.13, 0.22);
+  R.noseTip   = E( 0,   0.45,  0.17, 0.11);
+  R.nostrilL  = E(-0.16,0.46,  0.07, 0.06);
+  R.nostrilR  = E( 0.16,0.46,  0.07, 0.06);
+  R.philtrum  = E( 0,   0.72,  0.08, 0.10);
+  R.lipUpper  = E( 0,   0.92,  0.34, 0.09);
+  R.lipLower  = E( 0,   1.08,  0.34, 0.11);
+  R.mouth     = E( 0,   1.00,  0.36, 0.18);
+  R.teeth     = E( 0,   1.00,  0.28, 0.09);
+  R.chin      = E( 0,   1.42,  0.30, 0.18);
+  R.jawL      = E(-0.70,1.15,  0.26, 0.28);
+  R.jawR      = E( 0.70,1.15,  0.26, 0.28);
+  R.cheekL    = E(-0.62,0.42,  0.30, 0.26);
+  R.cheekR    = E( 0.62,0.42,  0.30, 0.26);
+  /* Ears and temples sit ON THE SILHOUETTE, so their offset belongs to the
+     head's real half-width, not to a multiple of the interocular distance —
+     a wide-set face pushed a fixed 1.15*IOD clean off the head and drew the
+     ears in the background. Measured from the head box when we have one. */
+  var halfW = F.head ? Math.max(F.iod*0.6, (F.head.x1-F.head.x0)/2) : F.iod*1.0;
+  var earA = Math.min(1.15, Math.max(0.70, (halfW - F.iod*0.16) / F.iod));
+  R.templeL   = E(-earA*0.82,-0.28, 0.20, 0.22);
+  R.templeR   = E( earA*0.82,-0.28, 0.20, 0.22);
+  R.earL      = E(-earA, 0.28, 0.16, 0.34);
+  R.earR      = E( earA, 0.28, 0.16, 0.34);
+  R.forehead  = E( 0,  -0.72,  0.80, 0.32);
+  R.hairline  = E( 0,  -1.05,  0.85, 0.20);
+  R.faceOval  = E( 0,   0.45,  1.05, 1.30);
+  /* No facial region may be centred outside the head. A region whose anchor
+     lands in the background is worse than no region at all: a control called
+     "ear" would then act on the backdrop. */
+  if(F.head){
+    var hx0=F.head.x0, hx1=F.head.x1, hy0=F.head.y0, hy1=F.head.y1;
+    for(var rk in R){
+      var rr=R[rk];
+      if(!rr) continue;
+      if(rr.cx<hx0) rr.cx=hx0; else if(rr.cx>hx1) rr.cx=hx1;
+      if(rr.cy<hy0) rr.cy=hy0; else if(rr.cy>hy1) rr.cy=hy1;
+    }
+  }
+  /* body, only meaningful when a head box gave us a neck line */
+  if(F.head && F.head.neckY){
+    var hw=(F.head.x1-F.head.x0)||F.iod*2;
+    R.neck      = { cx:F.head.x0+hw/2, cy:F.head.neckY+hw*0.18, rx:hw*0.34, ry:hw*0.30, rot:0 };
+    R.shoulders = { cx:F.head.x0+hw/2, cy:F.head.neckY+hw*0.85, rx:hw*1.55, ry:hw*0.60, rot:0 };
+    R.chest     = { cx:F.head.x0+hw/2, cy:F.head.neckY+hw*1.30, rx:hw*1.10, ry:hw*0.75, rot:0 };
+  }
+  return R;
+}
 /* v4.40 — real facial zones from the pixels themselves.
    Eyes: non-skin dark clusters in the upper half of the skin bbox, split
    left/right of its centre. Mouth: the strong-red (high Cr) cluster in the
@@ -9074,7 +9242,13 @@ function stBlurData(srcCanvas,W,H,r){
    got whiter" and "everything yellow in that row got whiter". Returns null
    when a face can't be read; callers fall back to the old heuristics. */
 function stFaceZones(px,W,H,mi){
-  var box=mi&&mi.box; if(!box) return null;
+  /* v4.56 — the head, not every skin pixel in the frame. mi.box spans the
+     whole subject including neck, shoulders, arms and chest, so deriving the
+     eye and mouth bands from it aimed them at the torso on any photo that is
+     not a tight headshot. stHeadBox pinches at the neck. */
+  var box=(mi&&mi.mask) ? stHeadBox(mi.mask,W,H) : null;
+  if(!box) box=mi&&mi.box;
+  if(!box) return null;
   var bw=box.x1-box.x0, bh=box.y1-box.y0;
   if(bw<24||bh<24) return null;
   /* v4.55 — the eye/mouth probes below step a FIXED number of pixels away
@@ -9142,7 +9316,26 @@ function stFaceZones(px,W,H,mi){
   if(mx.length>=8*GATE){
     zones.mouth={cx:med(mx),cy:med(my),rx:Math.max(bw*0.22,10),ry:Math.max(bh*0.10,6)};
   }
-  return (zones.eyes||zones.mouth)?zones:null;
+  if(!zones.eyes&&!zones.mouth) return null;
+  /* v4.56 — everything above finds only two eyes and a mouth. Fit a frame to
+     them and derive the rest of the face from it, so a control that says
+     "eyebrow" or "nostril" or "ear" has somewhere real to act. The legacy
+     zones.eyes / zones.mouth shape is preserved untouched: every existing
+     caller keeps working and simply gains zones.r alongside. */
+  zones.head=box;
+  if(zones.eyes){
+    var F=stFaceFrame(zones.eyes[0],zones.eyes[1],zones.mouth,box);
+    if(F){
+      zones.frame=F;
+      zones.r=stFaceRegions(F);
+      /* confidence: a face read from two eyes AND a mouth whose spacing is
+         anatomically plausible is trustworthy; one read from eyes alone is a
+         guess and says so. */
+      var plaus = zones.mouth ? (F.e2m>F.iod*0.7 && F.e2m<F.iod*1.6) : false;
+      zones.conf = zones.mouth ? (plaus?"high":"low") : "low";
+    }
+  }
+  return zones;
 }
 function stInEllipse(x,y,z,scale){
   var s=scale||1;
@@ -9175,20 +9368,36 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs){
      hair = dark non-skin in the halo above/around the face box; cheeks are
      placed from the eye/mouth geometry the zones already carry. */
   var hairB=null, faceInner=null;
-  if((t2.hairShine>0||t2.hairDeep>0)&&mi.box){
-    var bwH=mi.box.x1-mi.box.x0, bhH=mi.box.y1-mi.box.y0;
-    hairB={x0:mi.box.x0-bwH*0.35, x1:mi.box.x1+bwH*0.35, y0:mi.box.y0-bhH*0.5, y1:mi.box.y0+bhH*0.8};
+  if((t2.hairShine>0||t2.hairDeep>0)&&hbox){
+    var bwH=hbox.x1-hbox.x0, bhH=hbox.y1-hbox.y0;
+    hairB={x0:hbox.x0-bwH*0.35, x1:hbox.x1+bwH*0.35, y0:hbox.y0-bhH*0.5, y1:hbox.y0+bhH*0.8};
     /* protect the facial features: hair work never enters the inner face
        ellipse (dark hair passes the skin chroma test, so the mask alone
        cannot make this distinction) */
-    faceInner={cx:(mi.box.x0+mi.box.x1)/2, cy:(mi.box.y0+mi.box.y1)/2, rx:bwH/2*0.62, ry:bhH/2*0.62};
+    faceInner={cx:(hbox.x0+hbox.x1)/2, cy:(hbox.y0+hbox.y1)/2, rx:bwH/2*0.62, ry:bhH/2*0.62};
   }
+  /* v4.56 — ONE head box for every face-relative band below. Each of these
+     used to derive its geometry from mi.box, the box around every skin pixel
+     in the frame, so on a half-body portrait the hair band covered the dress
+     and the eye-bag band sat on the collarbone. */
+  var hbox = (zones&&zones.head) ? zones.head
+           : ((mi&&mi.mask) ? stHeadBox(mi.mask,W,H) : null);
+  if(!hbox) hbox = mi&&mi.box;
   var cheeks=null;
-  if(t2.blushV>0&&zones&&zones.eyes&&zones.mouth&&mi.box){
-    var bwC=mi.box.x1-mi.box.x0, bhC=mi.box.y1-mi.box.y0;
-    cheeks=[
-      {cx:zones.eyes[0].cx, cy:(zones.eyes[0].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09},
-      {cx:zones.eyes[1].cx, cy:(zones.eyes[1].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09}];
+  if(t2.blushV>0&&zones){
+    if(zones.r&&zones.r.cheekL&&zones.r.cheekR){
+      /* v4.56 — the real cheeks from the fitted face model. The old fallback
+         below guessed the centre as the midpoint between eye and mouth and,
+         worse, sized the ellipse from mi.box — the box around EVERY skin
+         pixel — so on a half-body portrait the "cheek" was as wide as the
+         subject's shoulders and blush washed across the whole frame. */
+      cheeks=[zones.r.cheekL, zones.r.cheekR];
+    } else if(zones.eyes&&zones.mouth&&zones.head){
+      var bwC=zones.head.x1-zones.head.x0, bhC=zones.head.y1-zones.head.y0;
+      cheeks=[
+        {cx:zones.eyes[0].cx, cy:(zones.eyes[0].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09},
+        {cx:zones.eyes[1].cx, cy:(zones.eyes[1].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09}];
+    }
   }
   /* colours arrive resolved on t2 (stRunPipeline / worker message) — this
      function must not touch svGet so it can run inside the render worker */
@@ -9205,7 +9414,8 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs){
     if(cnt){ meanCb/=cnt; meanCr/=cnt; } else { meanCb=128; meanCr=128; }
   }
   var whiteAmt=stClamp(t2.white+t2.radiance*0.4,0,100);
-  var box=mi.box, eyY0=0,eyY1=0;
+  /* v4.56: eye bags sit under the eyes, so this band belongs to the HEAD */
+  var box=hbox, eyY0=0,eyY1=0;
   if(box){ var bh=box.y1-box.y0; eyY0=box.y0+bh*0.25; eyY1=box.y0+bh*0.45; }
   for(var i=0,p=0;i<n;i++,p+=4){
     var m=mask[i]/255;
@@ -9290,7 +9500,13 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs){
        blush sits on the geometric cheeks, eye definition is a high-band
        boost confined to the eye ellipses. */
     if(zones){
-      if(t2.lipV>0&&zones.mouth&&stInEllipse(xPix,yPix,zones.mouth,1.05)){
+      /* v4.56 — lips are the two lip bands, not the whole mouth ellipse: the
+         ellipse also contains the teeth and the skin just past the corners,
+         so lip colour used to bleed onto both. */
+      var inLip = zones.r
+        ? (stInEllipse(xPix,yPix,zones.r.lipUpper,1.0)||stInEllipse(xPix,yPix,zones.r.lipLower,1.0))
+        : (zones.mouth?stInEllipse(xPix,yPix,zones.mouth,1.05):null);
+      if(t2.lipV>0&&inLip){
         var crL=128+0.5*R-0.418688*G-0.081312*B;
         if(crL>138){ /* lip pixels, not teeth */
           var aL=t2.lipV/100*0.55;
@@ -9865,6 +10081,9 @@ function stPresentSettle(out){
     if(ST._splitLayout) ST._splitLayout();
   }
   c.style.filter="";
+  /* v4.56 — the detected-zone overlay rides on top of the settled frame, so it
+     always reflects the buffer the pipeline just rendered */
+  try{ stDrawZones(cc,c.width,c.height); }catch(_z){}
   stDrawHistogram(out);
   if(out&&out.close){ try{ out.close(); }catch(_e){} }
   var fl=$("stStageFlip");
@@ -9885,7 +10104,7 @@ function stWorker(){
     /* the worker is built from the LIVE sources of the pipeline family, so it
        can never drift from the sync path. Guarded fallbacks (opts.t1||stEffT1()
        etc.) are never evaluated there — every message carries resolved params. */
-    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinMask,stBlurData,stFaceZones,stInEllipse,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
+    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinMask,stBlurData,stHeadBox,stFaceFrame,stFaceRegions,stFaceZones,stInEllipse,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
     var src='var document={createElement:function(){return new OffscreenCanvas(1,1);}};\n'
       + fns.map(function(f){ return f.toString(); }).join("\n")
       + '\nvar _pc=new OffscreenCanvas(4,4).getContext("2d");var FILTER_OK=false;'
@@ -13511,6 +13730,54 @@ function stComposePrompt(){
     "\nPhoto-realistic professional result. Do not beautify beyond the listed edits.";
 }
 
+/* ---------- v4.56: show what was actually detected ----------
+   Face zoning used to be invisible: teeth whitening either worked or quietly
+   whitened a shoulder, and the operator had no way to tell which. This draws
+   the regions the pipeline is really using straight onto the stage, so a
+   mis-read face is something you SEE before you spend a generate on it. */
+function stZonesOn(){ return !!ST.showZones; }
+function stDrawZones(cx,W,H){
+  if(!ST.showZones||!ST.px0) return;
+  var mi=ST.maskCache||stSkinMask(ST.px0,W,H);
+  var z=stFaceZones(ST.px0,W,H,mi);
+  cx.save();
+  if(!z||!z.r){
+    cx.fillStyle="rgba(0,0,0,.55)"; cx.fillRect(0,H-30,W,30);
+    cx.fillStyle="#ff9a9a"; cx.font="13px system-ui,sans-serif"; cx.textAlign="center";
+    cx.fillText(t("st_zones_none"),W/2,H-11);
+    cx.restore(); return;
+  }
+  var pal=[["eyeL","#4fc3f7"],["eyeR","#4fc3f7"],["browL","#ffd54f"],["browR","#ffd54f"],
+           ["lashL","#b39ddb"],["lashR","#b39ddb"],["noseBridge","#81c784"],["noseTip","#66bb6a"],
+           ["nostrilL","#a5d6a7"],["nostrilR","#a5d6a7"],["lipUpper","#ef5350"],["lipLower","#ef5350"],
+           ["teeth","#ffffff"],["earL","#ffb74d"],["earR","#ffb74d"],["chin","#90a4ae"],
+           ["cheekL","#f48fb1"],["cheekR","#f48fb1"],["forehead","#ce93d8"],
+           ["templeL","#80cbc4"],["templeR","#80cbc4"]];
+  cx.lineWidth=Math.max(1,Math.round(Math.max(W,H)/500));
+  pal.forEach(function(pr){
+    var r=z.r[pr[0]]; if(!r) return;
+    cx.strokeStyle=pr[1]; cx.globalAlpha=.9;
+    cx.beginPath(); cx.ellipse(r.cx,r.cy,r.rx,r.ry,r.rot||0,0,Math.PI*2); cx.stroke();
+  });
+  if(z.head){
+    cx.globalAlpha=.75; cx.strokeStyle="#ffffff"; cx.setLineDash([6,5]);
+    cx.strokeRect(z.head.x0,z.head.y0,z.head.x1-z.head.x0,z.head.y1-z.head.y0);
+    cx.setLineDash([]);
+  }
+  cx.globalAlpha=1;
+  cx.fillStyle="rgba(0,0,0,.55)"; cx.fillRect(0,H-30,W,30);
+  cx.fillStyle=(z.conf==="high")?"#9ae6b4":"#ffd166";
+  cx.font="13px system-ui,sans-serif"; cx.textAlign="center";
+  cx.fillText(t(z.conf==="high"?"st_zones_high":"st_zones_low"),W/2,H-11);
+  cx.restore();
+}
+if($("stZones")) $("stZones").onclick=function(){
+  ST.showZones=!ST.showZones;
+  this.className="chip st-ov"+(ST.showZones?" on":"");
+  this.setAttribute("aria-pressed",ST.showZones?"true":"false");
+  toast(t(ST.showZones?"st_zones_on":"st_zones_off"),"ok");
+  stRenderSettle();
+};
 /* ---- result compare (.cmp pattern) ---- */
 function stCmpLayout(){
   var pct=parseInt($("stCmpRange").value,10);
@@ -16212,7 +16479,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.55.0";
+var APP_VER="4.56.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
