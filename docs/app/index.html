@@ -2193,6 +2193,8 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
           <a class="btn btn-gold" id="galDl" download="hnk-result.png"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> Download</a>
           <button class="btn" id="galToImg1"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-restore"/></svg> IMAGE 1</button>
           <button class="btn" id="galToImg2"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-restore"/></svg> IMAGE 2</button>
+          <!-- v4.53: a starred result is never evicted to make room -->
+          <button class="btn" id="galKeep"></button>
           <button class="btn" id="galDel"></button>
         </div>
       </div>
@@ -2644,7 +2646,17 @@ var TR_PATH={
   job_running:{my:"RunningHub မှာ ဆက်လုပ်နေဆဲပါ — ခဏနေ ပြန်စစ်ကြည့်ပါ",en:"Still running on RunningHub — check again in a moment",shn:"တိုၵ်ႉႁဵတ်းယူႇတီႈ RunningHub — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၵူတ်ႇထတ်းၶိုၼ်း",kac:"RunningHub kaw galaw nga ai — jahkring rai bai yu u",th:"ยังทำงานอยู่บน RunningHub — ลองเช็กอีกครั้งในอีกสักครู่",zh:"RunningHub 仍在处理 — 请稍后再查看",vi:"Vẫn đang chạy trên RunningHub — kiểm tra lại sau ít phút",id:"Masih berjalan di RunningHub — periksa lagi sebentar",ms:"Masih berjalan di RunningHub — semak semula sebentar lagi"},
   job_failed:{my:"ဒီ job က RunningHub ဘက်မှာ မအောင်မြင်ခဲ့ပါ — စာရင်းက ဖယ်လိုက်ပါပြီ",en:"This job failed on RunningHub — removed from the list",shn:"Job ၼႆႉ ဢမ်ႇပဵၼ်တီႈ RunningHub — ဢဝ်ဢွၵ်ႇယဝ်ႉ",kac:"Ndai job gaw RunningHub kaw n awng ai — shale kau sai",th:"งานนี้ล้มเหลวที่ RunningHub — เอาออกจากรายการแล้ว",zh:"该任务在 RunningHub 端失败 — 已从列表移除",vi:"Tác vụ này thất bại ở RunningHub — đã bỏ khỏi danh sách",id:"Pekerjaan ini gagal di RunningHub — dihapus dari daftar",ms:"Kerja ini gagal di RunningHub — dibuang daripada senarai"},
   job_error:{my:"RunningHub ကို မဆက်သွယ်နိုင်သေးပါ — အင်တာနက် စစ်ပြီး ပြန်စမ်းပါ",en:"Couldn't reach RunningHub — check your connection and try again",shn:"ၵပ်းသိုပ်ႇ RunningHub ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း internet သေ ၸၢမ်းၶိုၼ်း",kac:"RunningHub hte n mai hkrum ai — internet yu nna bai chyam u",th:"ติดต่อ RunningHub ไม่ได้ — ตรวจสอบการเชื่อมต่อแล้วลองใหม่",zh:"无法连接 RunningHub — 请检查网络后重试",vi:"Không kết nối được RunningHub — kiểm tra mạng rồi thử lại",id:"Tidak dapat menghubungi RunningHub — periksa koneksi lalu coba lagi",ms:"Tidak dapat menghubungi RunningHub — semak sambungan dan cuba lagi"},
-  job_needkey:{my:"RunningHub key ကို Setup မှာ အရင်ထည့်ပါ",en:"Add your RunningHub key in Setup first",shn:"သႂ်ႇ RunningHub key တီႈ Setup ဢွၼ်တၢင်း",kac:"RunningHub key hpe Setup kaw shawng bang u",th:"เพิ่มคีย์ RunningHub ใน Setup ก่อน",zh:"请先在 Setup 中添加 RunningHub key",vi:"Thêm key RunningHub trong Setup trước",id:"Tambahkan key RunningHub di Setup dulu",ms:"Tambah kunci RunningHub di Setup dahulu"}
+  job_needkey:{my:"RunningHub key ကို Setup မှာ အရင်ထည့်ပါ",en:"Add your RunningHub key in Setup first",shn:"သႂ်ႇ RunningHub key တီႈ Setup ဢွၼ်တၢင်း",kac:"RunningHub key hpe Setup kaw shawng bang u",th:"เพิ่มคีย์ RunningHub ใน Setup ก่อน",zh:"请先在 Setup 中添加 RunningHub key",vi:"Thêm key RunningHub trong Setup trước",id:"Tambahkan key RunningHub di Setup dulu",ms:"Tambah kunci RunningHub di Setup dahulu"},
+  /* v4.53 — the Gallery is the studio's archive, so it has to say when it is
+     about to stop being one. */
+  gal_near_full:{my:"Gallery နီးပါး ပြည့်နေပါပြီ ({N}/{M}) — အရေးကြီးတဲ့ ပုံတွေကို download လုပ်ထားပါ၊ ဒါမှမဟုတ် ★ နှိပ်ပြီး သိမ်းထားပါ",en:"Gallery is nearly full ({N}/{M}) — download the ones you need, or star them to protect them",shn:"Gallery ၸမ်တဵမ်ယဝ်ႉ ({N}/{M}) — download ဢမ်ႇၼၼ် ဢဝ် ★ ႁၵ်ႉသႃဝႆႉ",kac:"Gallery hpring hkyen sai ({N}/{M}) — download la u, n re yang ★ hte makawp u",th:"แกลเลอรีเกือบเต็ม ({N}/{M}) — ดาวน์โหลดรูปที่ต้องการ หรือกด ★ เพื่อปกป้องไว้",zh:"图库快满了（{N}/{M}）— 请下载需要的照片，或用 ★ 保护它们",vi:"Thư viện gần đầy ({N}/{M}) — tải về những ảnh cần, hoặc gắn sao ★ để bảo vệ",id:"Galeri hampir penuh ({N}/{M}) — unduh yang Anda butuhkan, atau beri ★ untuk melindunginya",ms:"Galeri hampir penuh ({N}/{M}) — muat turun yang diperlukan, atau beri ★ untuk melindunginya"},
+  gal_evicted:{my:"နေရာလွတ်ဖို့ အဟောင်းဆုံး ပုံ {N} ပုံကို ဖယ်လိုက်ပါပြီ — ★ ထားတဲ့ ပုံတွေကို ဘယ်တော့မှ မဖျက်ပါ",en:"Removed the {N} oldest result(s) to make room — starred results are never removed",shn:"ဢဝ်ဢွၵ်ႇၶႅပ်းၵဝ်ႇသုတ်း {N} ဢၼ် ႁႂ်ႈမီးတီႈလိူဝ် — ဢၼ်မီး ★ ဢမ်ႇမွတ်ႇ",kac:"Shara lu na matu dingla dik ai {N} shale kau sai — ★ tawn ai ni gaw galoi mung n shamat ai",th:"ลบผลลัพธ์เก่าสุด {N} รายการเพื่อให้มีที่ว่าง — รายการที่ติดดาวจะไม่ถูกลบ",zh:"为腾出空间已移除最旧的 {N} 个结果 — 加星的结果永不移除",vi:"Đã xóa {N} kết quả cũ nhất để lấy chỗ — kết quả có sao không bao giờ bị xóa",id:"Menghapus {N} hasil terlama untuk memberi ruang — hasil berbintang tidak pernah dihapus",ms:"Membuang {N} hasil terlama untuk beri ruang — hasil berbintang tidak pernah dibuang"},
+  gal_keep:{my:"★ သိမ်းထား",en:"★ Protect",shn:"★ ႁၵ်ႉသႃ",kac:"★ Makawp",th:"★ ปกป้อง",zh:"★ 保护",vi:"★ Bảo vệ",id:"★ Lindungi",ms:"★ Lindungi"},
+  gal_kept:{my:"★ သိမ်းထားပြီး",en:"★ Protected",shn:"★ ႁၵ်ႉသႃဝႆႉ",kac:"★ Makawp da sai",th:"★ ปกป้องแล้ว",zh:"★ 已保护",vi:"★ Đã bảo vệ",id:"★ Dilindungi",ms:"★ Dilindungi"},
+  gal_kept_on:{my:"ဒီပုံကို ★ ထားပြီး — နေရာလွတ်ဖို့ ဘယ်တော့မှ မဖျက်တော့ပါ",en:"Starred — this result will never be removed to make room",shn:"မီး ★ ယဝ်ႉ — တေဢမ်ႇမွတ်ႇသေပွၵ်ႈ",kac:"★ tawn sai — shara lu na matu galoi mung n shamat sana",th:"ติดดาวแล้ว — จะไม่ถูกลบเพื่อให้มีที่ว่าง",zh:"已加星 — 不会为腾出空间而移除",vi:"Đã gắn sao — sẽ không bị xóa để lấy chỗ",id:"Diberi bintang — tidak akan dihapus untuk memberi ruang",ms:"Diberi bintang — tidak akan dibuang untuk beri ruang"},
+  gal_kept_off:{my:"★ ဖြုတ်လိုက်ပါပြီ — Gallery ပြည့်ရင် ဒီပုံ ဖယ်ခံရနိုင်ပါတယ်",en:"Star removed — this result can be replaced when the Gallery fills up",shn:"ထွၼ် ★ ယဝ်ႉ — မိူဝ်ႈ Gallery တဵမ် ၸၢင်ႈထုၵ်ႇဢဝ်ဢွၵ်ႇ",kac:"★ raw kau sai — Gallery hpring yang shale kau na mai ai",th:"เอาดาวออกแล้ว — อาจถูกแทนที่เมื่อแกลเลอรีเต็ม",zh:"已取消加星 — 图库满时可能被替换",vi:"Đã bỏ sao — có thể bị thay thế khi Thư viện đầy",id:"Bintang dihapus — bisa tergantikan saat Galeri penuh",ms:"Bintang dibuang — boleh diganti apabila Galeri penuh"},
+  gal_read_fail:{my:"ဒီပုံရဲ့ မူရင်းဖိုင်ကို ဖတ်၍ မရပါ",en:"Couldn't read this result's full file",shn:"လူတ်ႇဢမ်ႇလႆႈ ၾၢႆႇတဵမ်ၶွင်ၶႅပ်းၼႆႉ",kac:"Ndai ah kyu a file hpe n mai hti ai",th:"อ่านไฟล์เต็มของรูปนี้ไม่ได้",zh:"无法读取该结果的完整文件",vi:"Không đọc được tệp gốc của kết quả này",id:"Tidak dapat membaca berkas penuh hasil ini",ms:"Tidak dapat membaca fail penuh hasil ini"},
+  gal_zip_partial:{my:"ပုံ {N} ပုံကို ဖတ်၍ မရလို့ ZIP ထဲ မပါပါ",en:"{N} result(s) couldn't be read and are missing from the ZIP",shn:"{N} ဢၼ် လူတ်ႇဢမ်ႇလႆႈ — ဢမ်ႇပႃးၼႂ်း ZIP",kac:"{N} hpe n mai hti ai majaw ZIP kaw n rawng ai",th:"อ่าน {N} รายการไม่ได้ จึงไม่อยู่ใน ZIP",zh:"{N} 个结果无法读取，未包含在 ZIP 中",vi:"{N} kết quả không đọc được và thiếu trong ZIP",id:"{N} hasil tidak dapat dibaca dan tidak ada di ZIP",ms:"{N} hasil tidak dapat dibaca dan tiada dalam ZIP"}
 };
 Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
@@ -3067,26 +3079,92 @@ function galDb(){
     r.onerror=function(){ rej(r.error); };
   });
 }
+/* ---------- gallery thumbnails (v4.53) ----------
+   The grid is an 84px tile grid, but every tile used to carry the FULL
+   delivered plate as a data: URI — and Studio bakes at the source photo's own
+   resolution, so sixty records is easily hundreds of megabytes of base64 plus
+   sixty decoded bitmaps. That is what kills the tab on a phone. A small JPEG
+   thumb is stored beside the plate at write time and is the only thing the
+   grid ever touches; the full bytes are read back by id, on demand, only when
+   something actually needs them (open, download, ZIP, use as IMAGE 1/2). */
+var GAL_THUMB_EDGE=320, GAL_MAX=60, GAL_WARN_AT=48;
+function galMakeThumb(mime, b64){
+  return new Promise(function(res){
+    try{
+      var img=new Image();
+      img.onload=function(){
+        try{
+          var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+          if(!w||!h) return res("");
+          var s=Math.min(1, GAL_THUMB_EDGE/Math.max(w,h));
+          var cv=document.createElement("canvas");
+          cv.width=Math.max(1,Math.round(w*s)); cv.height=Math.max(1,Math.round(h*s));
+          cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+          var du=cv.toDataURL("image/jpeg",0.72);
+          res((du.split(",")[1])||"");
+        }catch(e){ res(""); }
+      };
+      img.onerror=function(){ res(""); };
+      img.src="data:"+mime+";base64,"+b64;
+    }catch(e){ res(""); }
+  });
+}
+/* Read one record's full bytes back. Everything that needs real pixels goes
+   through here, so the grid never has to hold them. */
+function galFull(id){
+  return galDb().then(function(d){
+    return new Promise(function(res,rej){
+      var rq=d.transaction("gal").objectStore("gal").get(id);
+      rq.onsuccess=function(){ res(rq.result||null); };
+      rq.onerror=function(){ rej(rq.error); };
+    });
+  });
+}
+function galSaveFailed(){
+  toast(L9({my:"ရလဒ်ကို Gallery ထဲ မသိမ်းနိုင်ခဲ့ပါ — browser storage ပြည့်နေပါပြီ။ ဒီပုံကို ကိုယ်တိုင် download လုပ်ထားပါ",en:"Couldn't save this result to Gallery — your browser storage is full. Download this photo yourself.",shn:"သိမ်းဢမ်ႇလႆႈၼႂ်း Gallery — browser storage တဵမ်ယဝ်ႉ။ ႁင်းၵူၺ်း download ဝႆႉ",kac:"Gallery kaw n da lu ai — browser storage hpring sai. Nang hkrai download la u",th:"บันทึกผลลัพธ์ลง Gallery ไม่ได้ — พื้นที่เบราว์เซอร์เต็ม กรุณาดาวน์โหลดรูปนี้เอง",zh:"无法保存到 Gallery — 浏览器存储已满，请自行下载这张照片",vi:"Không lưu được vào Thư viện — bộ nhớ trình duyệt đã đầy. Hãy tự tải ảnh này về.",id:"Tidak dapat menyimpan ke Galeri — penyimpanan browser penuh. Unduh foto ini sendiri.",ms:"Tidak dapat simpan ke Galeri — storan pelayar penuh. Muat turun foto ini sendiri."}),"err");
+}
+/* Returns a promise so a caller that must not lie ("saved automatically") can
+   wait and say otherwise. Existing fire-and-forget callers are unaffected. */
 function galleryAdd(out, promptSnippet){
-  galDb().then(function(d){
+  return galMakeThumb(out.mime, out.b64).then(function(thumb){
+   return galDb().then(function(d){
+    return new Promise(function(resolve){
     var tx=d.transaction("gal","readwrite"), st=tx.objectStore("gal");
+    var failed=false;
+    function fail(){ if(failed) return; failed=true; galSaveFailed(); resolve(false); }
     /* v4.41: provenance rides along when the dispatcher tagged it (which
-       engine · model made this) — older records simply lack the field */
-    st.add({ mime:out.mime, b64:out.b64, prompt:promptSnippet||"", ts:Date.now(), prov:(out&&out._prov)||"" });
-    /* keep newest 60 */
+       engine · model made this) — older records simply lack the field
+       v4.53: thumb + keep. A quota error used to abort the transaction in
+       silence while every string on screen promised the result was safe. */
+    var rq=st.add({ mime:out.mime, b64:out.b64, thumb:thumb, prompt:promptSnippet||"", ts:Date.now(), prov:(out&&out._prov)||"", keep:0 });
+    rq.onerror=fail;
+    tx.onabort=fail; tx.onerror=fail;
+    tx.oncomplete=function(){ if(!failed) resolve(true); };
+    /* keep the newest GAL_MAX, but never silently. Starred records are the
+       studio's own "do not delete" mark and are skipped entirely. */
     st.count().onsuccess=function(e){
       var n=e.target.result;
-      if(n>60){
-        var toDrop=n-60;
+      if(n>=GAL_WARN_AT && n<=GAL_MAX) galNearFull(n);
+      if(n>GAL_MAX){
+        var toDrop=n-GAL_MAX, dropped=0;
         st.openCursor().onsuccess=function(ev){
           var c=ev.target.result;
-          if(c && toDrop>0){ c.delete(); toDrop--; c.continue(); }
+          if(c && toDrop>0){
+            if(!c.value || !c.value.keep){ c.delete(); toDrop--; dropped++; }
+            c.continue();
+          } else if(!c && dropped){ galEvicted(dropped); }
         };
       }
     };
-  }).catch(function(){
-    toast(L9({my:"ရလဒ်ကို Gallery ထဲ မသိမ်းနိုင်ခဲ့ပါ — browser storage ပြည့်နေခြင်း/ပိတ်ထားခြင်း ဖြစ်နိုင်တယ်",en:"Couldn't save this result to Gallery — your browser storage may be full or blocked",shn:"သိမ်းဢမ်ႇလႆႈၽွၼ်းလႆႈၼႆႉၼႂ်း Gallery — browser storage ပွင်ႇတဵမ်/ပိၵ်ႉဝႆႉ ၸၢင်ႈပဵၼ်လႆႈ",kac:"Lachyum ndai hpe Gallery kaw n da lu ai — browser storage hpring nga ai/gasan da ai mung mai ai",th:"บันทึกผลลัพธ์นี้ลง Gallery ไม่ได้ — พื้นที่จัดเก็บของเบราว์เซอร์อาจเต็มหรือถูกบล็อก",zh:"无法把此结果保存到 Gallery — 浏览器存储可能已满或被阻止",vi:"Không thể lưu kết quả này vào Gallery — bộ nhớ trình duyệt có thể đầy hoặc bị chặn",id:"Tidak dapat menyimpan hasil ini ke Gallery — penyimpanan browser mungkin penuh atau diblokir",ms:"Tidak dapat simpan hasil ini ke Gallery — storan pelayar mungkin penuh atau disekat"}),"err");
-  });
+    });
+   });
+  }).catch(function(){ galSaveFailed(); return false; });
+}
+function galNearFull(n){
+  toast(t("gal_near_full").replace("{N}",String(n)).replace("{M}",String(GAL_MAX)),"err");
+}
+function galEvicted(n){
+  toast(t("gal_evicted").replace("{N}",String(n)),"err");
 }
 function galleryDel(id, cb){
   galDb().then(function(d){
@@ -3132,11 +3210,58 @@ function galBulkRefresh(){
     }
   } else if(sa) sa.style.display="none";
 }
+/* Walk the store with a cursor and keep only what the grid needs. The full
+   b64 is deliberately dropped on the floor here — retaining sixty plates is
+   what made opening this tab a memory event. `bytes` preserves the honest
+   size readout the pick card has always shown. Records written before v4.53
+   have no thumb; they fall back to their own plate and get one written on the
+   next pass, so an existing gallery upgrades itself without a migration. */
+function galReadIndex(d){
+  return new Promise(function(res){
+    var out=[], legacy=[];
+    var rq=d.transaction("gal").objectStore("gal").openCursor();
+    rq.onsuccess=function(ev){
+      var c=ev.target.result;
+      if(!c){ res({items:out.reverse(), legacy:legacy}); return; }
+      var v=c.value||{};
+      if(!v.thumb && v.b64) legacy.push(v.id);
+      out.push({ id:v.id, mime:v.mime, thumb:v.thumb||"", legacyB64:v.thumb?"":(v.b64||""),
+                 prompt:v.prompt||"", ts:v.ts||0, prov:v.prov||"", keep:v.keep?1:0,
+                 bytes:(v.b64||"").length });
+      c.continue();
+    };
+    rq.onerror=function(){ res({items:[], legacy:[]}); };
+  });
+}
+/* One-time, bounded backfill so a gallery that predates thumbnails stops
+   paying the full-plate cost after a few visits rather than never. */
+function galBackfillThumbs(ids){
+  if(!ids || !ids.length) return;
+  var batch=ids.slice(0,6);
+  galDb().then(async function(d){
+    var did=0;
+    for(var i=0;i<batch.length;i++){
+      var rec=await galFull(batch[i]).catch(function(){ return null; });
+      if(!rec || !rec.b64 || rec.thumb) continue;
+      var th=await galMakeThumb(rec.mime, rec.b64);
+      if(!th) continue;
+      rec.thumb=th;
+      await new Promise(function(r){
+        var tx=d.transaction("gal","readwrite");
+        tx.objectStore("gal").put(rec).onsuccess=function(){ r(); };
+        tx.onabort=function(){ r(); }; tx.onerror=function(){ r(); };
+      });
+      did++;
+    }
+    if(did) renderGallery();
+  }).catch(function(){});
+}
 function renderGallery(){
   galDb().then(function(d){
-    d.transaction("gal").objectStore("gal").getAll().onsuccess=function(e){
-      var items=(e.target.result||[]).reverse();
+    galReadIndex(d).then(function(idx){
+      var items=idx.items;
       window._galItems=items;
+      setTimeout(function(){ galBackfillThumbs(idx.legacy); }, 400);
       var grid=$("galGrid"); grid.innerHTML="";
       $("galEmpty").classList.toggle("on",!items.length);
       if(galSel && !items.some(function(it){ return it.id===galSel.id; })) galSel=null;
@@ -3152,7 +3277,8 @@ function renderGallery(){
       if(!items.length){ return; }
       items.forEach(function(it){
         var im=document.createElement("img");
-        im.src="data:"+it.mime+";base64,"+it.b64;
+        im.src=it.thumb ? "data:image/jpeg;base64,"+it.thumb
+                     : "data:"+it.mime+";base64,"+it.legacyB64;
         im.loading="lazy"; im.decoding="async";
         im.alt=(it.prompt||"").slice(0,80)||"gallery result";
         im.className = (galMulti.on&&galMulti.ids[it.id]) || (galSel&&galSel.id===it.id) ? "sel" : "";
@@ -3165,14 +3291,23 @@ function renderGallery(){
             return;
           }
           galSel=it;
-          var src="data:"+it.mime+";base64,"+it.b64;
+          var src=it.thumb ? "data:image/jpeg;base64,"+it.thumb
+                           : "data:"+it.mime+";base64,"+it.legacyB64;
           $("galPick").className="lib-pick on";
           $("galPickImg").src=src;
           $("galDl").href=src;
+          /* the tile only ever held a thumb — swap in the real plate for the
+             preview and the download the moment it is read back */
+          galFull(it.id).then(function(rec){
+            if(!rec || !rec.b64 || !galSel || galSel.id!==it.id) return;
+            var fullSrc="data:"+rec.mime+";base64,"+rec.b64;
+            $("galPickImg").src=fullSrc;
+            $("galDl").href=fullSrc;
+          }).catch(function(){});
           $("galDl").setAttribute("download","hnk-gallery-"+ptStamp()+"-"+it.id+(it.mime==="image/png"?".png":".jpg"));
           /* the record has carried a timestamp since day one — show it,
              plus an honest approximate file size */
-          var kb=Math.round(it.b64.length*3/4/1024);
+          var kb=Math.round((it.bytes||0)*3/4/1024);
           var dt=new Date(it.ts||Date.now());
           function p2(x){ return (x<10?"0":"")+x; }
           var dstamp=dt.getFullYear()+p2(dt.getMonth()+1)+p2(dt.getDate())+"-"+p2(dt.getHours())+p2(dt.getMinutes());
@@ -3180,13 +3315,14 @@ function renderGallery(){
           $("galDl").setAttribute("download","hnk-"+dstamp+"-"+it.id+(it.mime==="image/png"?".png":".jpg"));
           $("galPickInfo").textContent=(it.prov?it.prov+" · ":"")+(it.prompt?(it.prompt||"").slice(0,90)+" · ":"")+
             dt.getFullYear()+"-"+p2(dt.getMonth()+1)+"-"+p2(dt.getDate())+" "+p2(dt.getHours())+":"+p2(dt.getMinutes())+" · ~"+kb+" KB";
+          galKeepSync();
           var g=grid.querySelectorAll("img");
           for(var i=0;i<g.length;i++) g[i].classList.remove("sel");
           im.classList.add("sel");
         });
         grid.appendChild(im);
       });
-    };
+    });
   }).catch(function(){
     $("galGrid").innerHTML="";
     $("galPick").className="lib-pick";
@@ -3200,30 +3336,76 @@ $("galToImg1").onclick=function(){
   var gs=typeof state.galTargetSlot==="number"?state.galTargetSlot:0; state.galTargetSlot=null;
   refsClobberGuard(gs); /* v4.46 — replacing another page's result offers Undo */
   if(gs===0){ state.cmpBase=null; state.rsOrig=null; } /* manual IMAGE 1 pick — compare baselines reset (v4.28) */
-  state.refs[gs]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
-  state.imgRoles=null;
-  renderRefs();
-  toast(L9({my:"Gallery ပုံ → IMAGE 1 ✓",en:"Gallery image → IMAGE 1 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 1 ✓",kac:"Gallery sumla → IMAGE 1 ✓",th:"รูป Gallery → IMAGE 1 ✓",zh:"Gallery 图片 → IMAGE 1 ✓",vi:"Ảnh Gallery → IMAGE 1 ✓",id:"Gambar Gallery → IMAGE 1 ✓",ms:"Imej Gallery → IMAGE 1 ✓"}),"ok");
+  var pick1=galSel;
+  /* v4.53: the tile carries a thumb, so the real plate is read back first.
+     The confirmation waits for that read — announcing success before the
+     slot is actually filled is the same lie this release removes. */
+  galFull(pick1.id).then(function(rec){
+    if(!rec || !rec.b64){ toast(t("gal_read_fail"),"err"); return; }
+    state.refs[gs]={mime:rec.mime,b64:rec.b64,label:"gallery"};
+    state.imgRoles=null;
+    renderRefs();
+    toast(L9({my:"Gallery ပုံ → IMAGE 1 ✓",en:"Gallery image → IMAGE 1 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 1 ✓",kac:"Gallery sumla → IMAGE 1 ✓",th:"รูป Gallery → IMAGE 1 ✓",zh:"Gallery 图片 → IMAGE 1 ✓",vi:"Ảnh Gallery → IMAGE 1 ✓",id:"Gambar Gallery → IMAGE 1 ✓",ms:"Imej Gallery → IMAGE 1 ✓"}),"ok");
+  }).catch(function(){ toast(t("gal_read_fail"),"err"); });
 };
 /* v4.41: reference presets need the OLD result as IMAGE 2 just as often */
 if($("galToImg2")) $("galToImg2").onclick=function(){
   if(!galSel) return;
   var gs2=typeof state.galTargetSlot==="number"?state.galTargetSlot:1; state.galTargetSlot=null;
-  state.refs[gs2]={mime:galSel.mime,b64:galSel.b64,label:"gallery"};
-  state.imgRoles=null;
-  renderRefs();
-  toast(L9({my:"Gallery ပုံ → IMAGE 2 ✓",en:"Gallery image → IMAGE 2 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 2 ✓",kac:"Gallery sumla → IMAGE 2 ✓",th:"รูป Gallery → IMAGE 2 ✓",zh:"Gallery 图片 → IMAGE 2 ✓",vi:"Ảnh Gallery → IMAGE 2 ✓",id:"Gambar Gallery → IMAGE 2 ✓",ms:"Imej Gallery → IMAGE 2 ✓"}),"ok");
+  var pick2=galSel;
+  /* v4.53: the tile carries a thumb, so the real plate is read back first.
+     The confirmation waits for that read — announcing success before the
+     slot is actually filled is the same lie this release removes. */
+  galFull(pick2.id).then(function(rec){
+    if(!rec || !rec.b64){ toast(t("gal_read_fail"),"err"); return; }
+    state.refs[gs2]={mime:rec.mime,b64:rec.b64,label:"gallery"};
+    state.imgRoles=null;
+    renderRefs();
+    toast(L9({my:"Gallery ပုံ → IMAGE 2 ✓",en:"Gallery image → IMAGE 2 ✓",shn:"ၶႅပ်းႁၢင်ႈ Gallery → IMAGE 2 ✓",kac:"Gallery sumla → IMAGE 2 ✓",th:"รูป Gallery → IMAGE 2 ✓",zh:"Gallery 图片 → IMAGE 2 ✓",vi:"Ảnh Gallery → IMAGE 2 ✓",id:"Gambar Gallery → IMAGE 2 ✓",ms:"Imej Gallery → IMAGE 2 ✓"}),"ok");
+  }).catch(function(){ toast(t("gal_read_fail"),"err"); });
 };
 /* v4.41: the gallery shares the full-screen viewer */
 if($("galPickImg")){
   $("galPickImg").style.cursor="zoom-in";
   $("galPickImg").onclick=function(){
     var items=window._galItems||[]; if(!items.length) return;
-    var list=items.map(function(x){ return { src:"data:"+x.mime+";base64,"+x.b64, cap:(x.prov?x.prov+" · ":"")+(x.prompt||"").slice(0,60) }; });
+    var list=items.map(function(x){
+      return { src:x.thumb ? "data:image/jpeg;base64,"+x.thumb : "data:"+x.mime+";base64,"+x.legacyB64,
+               cap:(x.prov?x.prov+" · ":"")+(x.prompt||"").slice(0,60) };
+    });
     var idx=galSel?items.findIndex(function(x){ return x.id===galSel.id; }):0;
     lookZoomOpen(list, Math.max(0,idx));
   };
 }
+/* v4.53 — starring a result exempts it from the newest-N eviction. This is the
+   only protection a studio has against tomorrow's shoot quietly consuming
+   yesterday's delivered album. */
+function galKeepSync(){
+  var b=$("galKeep"); if(!b) return;
+  var on=!!(galSel && galSel.keep);
+  b.className="btn"+(on?" btn-gold":"");
+  setIcnText(b,"i-star", on ? t("gal_kept") : t("gal_keep"));
+}
+if($("galKeep")) $("galKeep").onclick=function(){
+  if(!galSel) return;
+  var id=galSel.id, want=galSel.keep?0:1;
+  galDb().then(function(d){
+    var tx=d.transaction("gal","readwrite"), st=tx.objectStore("gal");
+    var rq=st.get(id);
+    rq.onsuccess=function(){
+      var rec=rq.result; if(!rec) return;
+      rec.keep=want;
+      st.put(rec).onsuccess=function(){
+        if(galSel && galSel.id===id) galSel.keep=want;
+        var row=(window._galItems||[]).filter(function(x){ return x.id===id; })[0];
+        if(row) row.keep=want;
+        galKeepSync();
+        toast(want?t("gal_kept_on"):t("gal_kept_off"),"ok");
+      };
+    };
+    tx.onabort=function(){ toast(t("gal_read_fail"),"err"); };
+  }).catch(function(){ toast(t("gal_read_fail"),"err"); });
+};
 $("galDel").onclick=function(){
   if(!galSel) return;
   var kept=galSel;   /* deletion gets the same undo toast the rest of the app has */
@@ -3242,10 +3424,20 @@ $("galSelMode").onclick=function(){
 $("galZipSel").onclick=function(){
   var items=(window._galItems||[]).filter(function(it){ return galMulti.ids[it.id]; });
   if(!items.length) return;
-  var entries=items.map(function(it,i){
-    return { name:"hnk-gal-"+ptStamp()+"-"+(i+1)+(it.mime==="image/png"?".png":".jpg"), u8:ptB64ToU8(it.b64) };
-  });
-  ptSaveBlob(new Blob([ptZip(entries)],{type:"application/zip"}), "hnk-gallery-"+ptStamp()+".zip");
+  /* v4.53: the grid holds thumbs only, so a ZIP has to read the real plates
+     back by id — a partial ZIP would hand the studio downscaled previews
+     while calling them their delivered work. */
+  (async function(){
+    var entries=[], missed=0;
+    for(var i=0;i<items.length;i++){
+      var rec=await galFull(items[i].id).catch(function(){ return null; });
+      if(!rec || !rec.b64){ missed++; continue; }
+      entries.push({ name:"hnk-gal-"+ptStamp()+"-"+(entries.length+1)+(rec.mime==="image/png"?".png":".jpg"), u8:ptB64ToU8(rec.b64) });
+    }
+    if(!entries.length){ toast(t("gal_read_fail"),"err"); return; }
+    if(missed) toast(t("gal_zip_partial").replace("{N}",String(missed)),"err");
+    ptSaveBlob(new Blob([ptZip(entries)],{type:"application/zip"}), "hnk-gallery-"+ptStamp()+".zip");
+  })();
 };
 $("galDelSel").onclick=function(){
   var ids=Object.keys(galMulti.ids).map(Number);
@@ -4688,8 +4880,15 @@ function acceptImageFile(f, slot){
           /* v4.51 — keep the ORIGINAL bytes for the session so Studio can
              deliver real full-resolution exports; keyed to the downscaled
              copy so a stale original can never attach to another photo.
-             Session-only: never saved, never uploaded. */
-          state.stFull = String(rd.result).length < 34e6 ? {key:m[2].slice(0,64), du:String(rd.result)} : null;
+             Session-only: never saved, never uploaded.
+             v4.53.1 — the key was the FIRST 64 base64 chars, which for a
+             canvas-encoded JPEG is the SOI + JFIF header + quantization table:
+             bytes fixed by the encoder, identical for every photo the app has
+             ever downscaled. It matched everything, so a stale original could
+             attach to a different photo and the export delivered the WRONG
+             CLIENT'S PHOTO at full resolution. Keyed on content now, the way
+             ptDupKey already did it. */
+          state.stFull = String(rd.result).length < 34e6 ? {key:stFullKey(m[2]), du:String(rd.result)} : null;
         }
         state.refs[slot]={mime:m[1],b64:m[2],label:f.name};
         state.imgRoles=null; /* roles are re-derived by the wizard at generate time */
@@ -9187,12 +9386,28 @@ function stExportDims(){
   return {w:w,h:h};
 }
 /* decode the retained original in the background, capped for device memory */
+/* v4.53.1 — a real fingerprint of the downscaled copy: length plus the TAIL,
+   which is entropy-coded image data. The head of a canvas JPEG is the encoder's
+   own header and quantization table and is byte-identical across photos, so
+   keying on it matched everything. ptDupKey already worked this way. */
+function stFullKey(b64){ return String(b64||"").length+":"+String(b64||"").slice(-64); }
 function stLoadFullSource(du){
   ST.fullBitmap=null; ST.geoCacheFull=null;
   if(!du) return;
   var img=new Image();
   img.onload=function(){
     var cap=stExportCap(), w=img.naturalWidth, h=img.naturalHeight;
+    /* Second line of defence behind the key: the retained original and the
+       preview on stage must describe the same picture. Delivering someone
+       else's photo is the worst thing this app could do, so a shape mismatch
+       refuses the attachment and the export falls back to the preview — which
+       the export note then reports honestly. */
+    if(ST.srcW && ST.srcH && w && h){
+      var ar=w/h, arPrev=ST.srcW/ST.srcH;
+      if(Math.abs(ar-arPrev)/arPrev > 0.02){ ST.fullBitmap=null; ST.geoCacheFull=null;
+        if(typeof stRenderExportNote==="function") stRenderExportNote();
+        return; }
+    }
     if(Math.max(w,h)<=cap){ ST.fullBitmap=img; }
     else {
       var sc=cap/Math.max(w,h);
@@ -9770,7 +9985,7 @@ function stLoadImage(dataUrl,opts){
     ST.heals=[]; /* v4.44: heal taps belong to the previous photo */
     /* v4.51 — attach the retained original when it belongs to THIS photo */
     ST.fullBitmap=null; ST.geoCacheFull=null;
-    if(m && state.stFull && state.stFull.key===m[2].slice(0,64)) stLoadFullSource(state.stFull.du);
+    if(m && state.stFull && state.stFull.key===stFullKey(m[2])) stLoadFullSource(state.stFull.du);
     ST.stageResult=null; ST.showingResult=false;
     var fl=$("stStageFlip"); if(fl) fl.style.display="none";
     stBuildBuffer();
@@ -9804,7 +10019,7 @@ ST.loadImage=stLoadImage;
 function stSyncFromRef(){
   var r=state.refs[0];
   if(!r){
-    ST.srcBitmap=null; state.st.img=null; ST.geoCache=null;
+    ST.srcBitmap=null; state.st.img=null; ST.geoCache=null; ST.geoCacheFull=null; ST.fullBitmap=null;
     var stg=$("stStage"); if(stg) stg.style.display="none";
     var pg=$("pgStudio"); if(pg) pg.classList.add("nostage");
     if(ST._stageHUpd) ST._stageHUpd();
@@ -12746,7 +12961,7 @@ function stUndoReset(){
   var hadGeo=stGeoActive();
   state.st.t1=u.t1; state.st.t2=u.t2; state.st.v=u.v; state.st.pend=u.pend;
   state.st.geo=u.geo; state.st.target=u.target; state.st.preset=u.preset;
-  ST.undoSnap=null; ST.geoCache=null; ST.lutKey="";
+  ST.undoSnap=null; ST.geoCache=null; ST.geoCacheFull=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   if(ST.srcBitmap){
     if(hadGeo||stGeoActive()){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); }
@@ -12786,7 +13001,7 @@ function stApplySnap(sn){
   state.st.t1=sn.t1; state.st.t2=sn.t2; state.st.v=sn.v; state.st.pend=sn.pend;
   state.st.geo=sn.geo; state.st.target=sn.target; state.st.preset=sn.preset;
   if(healsChanged) ST.heals=(sn.heals||[]).slice();
-  ST.geoCache=null; ST.lutKey="";
+  ST.geoCache=null; ST.geoCacheFull=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   if(ST.srcBitmap){
     if(geoChanged||healsChanged){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); stHealReplayPx0(); }
@@ -13144,7 +13359,7 @@ $("stReset").onclick=function(){
   /* Reset said "all adjustments reset" while leaving Bride/Groom armed, so the
      next GENERATE silently retouched one person only. */
   state.st.target="all";
-  state.st.geo=stDefGeo(); ST.geoCache=null;
+  state.st.geo=stDefGeo(); ST.geoCache=null; ST.geoCacheFull=null;
   ST.presetSnap=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   if(ST.srcBitmap){
@@ -14365,16 +14580,21 @@ function renderDashCont(){
        survives reloads) and route the button to the Gallery instead */
     try{
       galDb().then(function(d){
-        d.transaction("gal").objectStore("gal").getAll().onsuccess=function(e){
-          var items=e.target.result||[];
-          if(!items.length || curPage!=="pgDash" || state.hist.length) return;
-          var it=items[items.length-1];
+        /* v4.53: this runs on every app start and only ever needed the newest
+           record — getAll() was pulling every stored plate into memory to show
+           one 48px thumbnail. A reverse cursor reads exactly one. */
+        d.transaction("gal").objectStore("gal").openCursor(null,"prev").onsuccess=function(e){
+          var c=e.target.result;
+          if(!c || curPage!=="pgDash" || state.hist.length) return;
+          var it=c.value||{};
           card.style.display="";
           $("dashContH2").textContent=CONT;
           var row2=$("dashContRow"); row2.innerHTML="";
           var th2=document.createElement("img");
           th2.className="dash-cont-thumb";
-          th2.src="data:"+it.mime+";base64,"+it.b64; th2.alt="";
+          th2.src=it.thumb ? "data:image/jpeg;base64,"+it.thumb
+                           : "data:"+it.mime+";base64,"+it.b64;
+          th2.alt="";
           row2.appendChild(th2);
           var go2=el("button","btn btn-gold grow");
           setIcnText(go2,"i-gallery",L9({my:"Gallery ဖွင့်မယ်",en:"Open Gallery",shn:"ပိုတ်ႇ Gallery",kac:"Gallery hpaw u",th:"เปิดแกลเลอรี",zh:"打开图库",vi:"Mở bộ sưu tập",id:"Buka galeri",ms:"Buka galeri"}),{after:true});
@@ -15877,7 +16097,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.52.0";
+var APP_VER="4.53.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -16546,7 +16766,11 @@ $("btnGen").onclick = async function(){
     while(state.hist.length>8) state.hist.pop();
     state.result=outs[0];
     state.histSel=0;
-    outs.forEach(function(o){ galleryAdd(o, finalPrompt.slice(0,160)); });
+    /* v4.53: wait for the archive write. Path Retouch's own summary tells the
+       studio "every AI result is already saved in your gallery" and is what
+       stops them ZIPping a finished batch — so the run must not report a photo
+       done before its record has actually landed. */
+    for(var gi=0; gi<outs.length; gi++) await galleryAdd(outs[gi], finalPrompt.slice(0,160));
     pushPromptHistory($("prompt").value.trim());
     /* v4.28: remember the photo this chain STARTED from (session-only, never
        persisted) so Before/After stays truthful across To-Ref chained edits.

@@ -61,7 +61,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     const rawDu = big.toDataURL("image/jpeg", 0.92);
     const prev = await new Promise(res => downscale(rawDu, res));
     const m = prev.match(/^data:([^;]+);base64,(.+)$/);
-    state.stFull = { key: m[2].slice(0, 64), du: rawDu };
+    /* v4.53.1: the retained original is keyed on a real content fingerprint
+       (length + tail), not the encoder-fixed JPEG header */
+    state.stFull = { key: stFullKey(m[2]), du: rawDu };
     await new Promise(res => ST.loadImage(prev, { done: res }));
     await new Promise(r2 => setTimeout(r2, 1200));
     const dimOf = du => new Promise(res => { const i = new Image(); i.onload = () => res({ w: i.width, h: i.height }); i.src = du; });
@@ -126,6 +128,35 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     await new Promise(r2 => setTimeout(r2, 1200));
     out.G_tick = /\d+s$/.test(document.getElementById("stSpin").textContent);
     stSetBusy(false);
+
+    /* I) The retained original must only ever attach to ITS OWN photo.
+       v4.51 keyed it on the first 64 base64 chars, which for a canvas JPEG is
+       the encoder's header + quantization table — identical for every photo the
+       app downscales. A stale original therefore matched everything, and the
+       export delivered the WRONG CLIENT'S PHOTO at full resolution. */
+    function mkJpeg(w, h, fill){
+      var cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      var cx=cv.getContext("2d"); cx.fillStyle=fill; cx.fillRect(0,0,w,h);
+      cx.fillStyle="#000"; cx.fillRect(w*0.2,h*0.2,w*0.3,h*0.3);
+      return cv.toDataURL("image/jpeg",0.9);
+    }
+    var duA=mkJpeg(1200,900,"#c9a227"), duB=mkJpeg(1200,900,"#2277cc");
+    var bA=duA.split(",")[1], bB=duB.split(",")[1];
+    out.I_headCollides = bA.slice(0,64)===bB.slice(0,64);   /* the old key: same for both */
+    out.I_keyDiffers   = stFullKey(bA)!==stFullKey(bB);      /* the new key: distinct */
+
+    /* end to end: photo A is retained, photo B is loaded, nothing attaches */
+    state.stFull={ key:stFullKey(bA), du:duA };
+    await new Promise(function(res){ ST.loadImage(duB,{done:res}); });
+    await new Promise(function(r2){ setTimeout(r2,500); });
+    out.I_noCrossAttach = !ST.fullBitmap;
+
+    /* J) the full-size geometry cache dies wherever the preview's does, so an
+       Undo can't leave the export baking the previous crop */
+    var src=[stUndoReset, stApplySnap].map(String).join("\n")+String($("stReset").onclick||"");
+    out.J_invalidated = (src.match(/geoCacheFull/g)||[]).length >= 3;
+
+    state.stFull=null;
     return out;
   }, B64);
 
@@ -141,6 +172,10 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   report("G) Studio's busy line ticks elapsed seconds", r.G_tick, r);
   report("H) every language states the cap by placeholder, never a baked-in number",
     r.H_bad.length === 0, r.H_bad);
+  report("I) the retained original attaches only to its own photo (content key, not the JPEG header)",
+    r.I_headCollides && r.I_keyDiffers && r.I_noCrossAttach, r);
+  report("J) the full-size geometry cache is invalidated wherever the preview's is",
+    r.J_invalidated, r);
   await page.close();
 
   /* ---- desktop viewport: the cap is 100 there ---- */

@@ -174,8 +174,12 @@ function report(name, ok, detail) {
     document.querySelectorAll("#galGrid img")[0].click();
     out.prov = document.getElementById("galPickInfo").textContent.indexOf("RunningHub · NB2") >= 0;
     out.dlName = /^hnk-\d{8}-\d{4}-/.test(document.getElementById("galDl").getAttribute("download"));
+    /* v4.53: the tile holds a thumb, so IMAGE 2 reads the real plate back from
+       IndexedDB before filling the slot — the fill is a tick later than it used
+       to be, and that read is exactly what the pin is now proving. */
     document.getElementById("galToImg2").click();
-    out.img2 = !!state.refs[1];
+    await new Promise(r => setTimeout(r, 400));
+    out.img2 = !!(state.refs[1] && state.refs[1].b64);
     document.getElementById("galSelMode").click();
     await new Promise(r => setTimeout(r, 500));
     const sa = document.getElementById("galSelAll");
