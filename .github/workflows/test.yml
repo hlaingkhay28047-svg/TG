@@ -134,6 +134,9 @@ jobs:
       - name: Run v4.53.0 Gallery-archive sweep (mocked)
         run: node test/sweep_v453_upgrades.js
 
+      - name: Run v4.54.0 framing-lock sweep (mocked)
+        run: node test/sweep_v454_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

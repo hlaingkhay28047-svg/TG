@@ -5303,9 +5303,18 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     var token=wiz.token;
     wiz.step=4; wiz.busy=true; wiz.result=null; wiz.error="";
     renderWiz(); $("wiz").scrollTop=0;
+    /* v4.54 — the wizard is a modal: #selRatio is not visible or reachable from
+       inside it, so any value there is a leftover from an earlier Create-page
+       run. The dispatcher would still append "Output aspect ratio: X" and
+       reframe a workflow the user never asked to reframe. Every workflow's own
+       prompt already states the framing it wants, so the stale global is
+       blanked for the run and restored after. */
+    var wzR=$("selRatio"), wzSavedRatio=wzR.value;
+    wzR.value="";
     /* identity check, never length — state.hist caps at 8 (see rsDoGenerate) */
     var beforeFirst=state.hist[0];
     try{ await $("btnGen").onclick(); }catch(e){}
+    finally{ wzR.value=wzSavedRatio; }
     /* wizard was closed or re-opened for another workflow meanwhile — this
        run's result already lives on the Create page + Gallery, stop here */
     if(token!==wiz.token || $("wiz").className.indexOf("on")<0) return;
@@ -13404,6 +13413,9 @@ function stComposePrompt(){
   return "PORTRAIT RETOUCH TASK on IMAGE 1 ("+stTargetPhrase()+").\n"+
     "Apply ONLY the following edits at the stated strengths. Keep identity, pose,\n"+
     "clothing and background unchanged unless an edit explicitly says otherwise:\n"+
+    "FRAMING LOCK: return the photo at IMAGE 1's exact aspect ratio, crop, camera\n"+
+    "angle and subject scale. Never zoom, pan, re-centre, extend the canvas or\n"+
+    "change the shape of the frame — this is a retouch, not a recompose.\n"+
     frags.map(function(f){ return "- "+f; }).join("\n")+
     (stUsesRefActive()?"\nIMAGE 2 = style/makeup/color reference ONLY — never return it.":"")+
     "\nPhoto-realistic professional result. Do not beautify beyond the listed edits.";
@@ -13558,6 +13570,18 @@ $("btnStGen").onclick=async function(){
   var stStopB=$("btnStStop"); if(stStopB) stStopB.style.display="";
   var savedR0=state.refs[0], savedR1=state.refs[1], savedR2=state.refs[2];
   var savedPrompt=$("prompt").value;
+  /* v4.54 — Studio rides the shared dispatcher, which appends "Output aspect
+     ratio: X" whenever #selRatio is set. Studio never touched that select, so
+     whatever the Create page was last set to silently reframed a retouch: a
+     3:2 wedding photo came back as 9:16 with the subject re-cropped, and the
+     before/after slider compared two different shapes. V2 Retouch and Path
+     Retouch have always blanked it ("original framing is sacred in a
+     retouch") — Studio was the one surface that did not. Count is forced to 1
+     for the same reason it is there: a leftover x4 quietly charges four
+     times for one retouch. */
+  var stR=$("selRatio"), stC=$("selCount");
+  var stSavedRatio=stR.value, stSavedCount=stC.value;
+  stR.value=""; stC.value="1";
   var beforeFirst=state.hist[0];
   try{
     var baked=stBake();
@@ -13577,6 +13601,7 @@ $("btnStGen").onclick=async function(){
     state.refs[1]=savedR1; state.refs[2]=savedR2;
     state.imgRoles=null;
     $("prompt").value=savedPrompt;
+    stR.value=stSavedRatio; stC.value=stSavedCount;
   }
   var srcSt=$("stGen");
   setSt("stStatus", srcSt?srcSt.textContent:"", srcSt&&srcSt.className.indexOf("err")>=0?"err":"ok");
@@ -16097,7 +16122,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.53.0";
+var APP_VER="4.54.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
