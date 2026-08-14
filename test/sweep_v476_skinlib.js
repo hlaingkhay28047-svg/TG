@@ -13,7 +13,8 @@
    tone with exposure. The label is the more honest key.
 
    Pinned contracts:
-   A) All 23 plates exist at both sizes, and the ids are the ones claimed.
+   A) All 23 plates exist at both sizes, uncropped — fixed height, width
+      following the source aspect, which is what every other plate does.
    B) They sit in the Exact Skin collection, which is where a skin pack
       belongs — not in Reference, where they landed on the first attempt.
    C) THE EXCLUSION HOLDS. No shipped plate title carries a Deep / Rich /
@@ -56,7 +57,13 @@ function jpegSize(buf) {
 const odd = [];
 let bytes = 0;
 IDS.forEach(id => {
-  [["full", 512, 640], ["ui", 144, 180]].forEach(([sub, w, h]) => {
+  /* The library's convention is a FIXED HEIGHT with the width following the
+     source aspect — 640 tall in full, 180 tall in ui — so a plate is never
+     cropped. The first cut of this import center-cropped 2:3 sources into
+     512x640 and silently cut 17% off the bottom of all 23; the makeup plates
+     next door, from the same 1024x1536 shape, are 427x640. These sources are
+     2:3, so 427x640 and 120x180 are the shapes that keep the whole frame. */
+  [["full", 427, 640], ["ui", 120, 180]].forEach(([sub, w, h]) => {
     const p = path.join(APP, "lib", sub, id + ".jpg");
     if (!fs.existsSync(p)) { odd.push("missing " + sub + "/" + id); return; }
     bytes += fs.statSync(p).size;
@@ -64,7 +71,7 @@ IDS.forEach(id => {
     if (!d || d.w !== w || d.h !== h) odd.push(sub + "/" + id + "=" + (d ? d.w + "x" + d.h : "unreadable"));
   });
 });
-report("A) all 23 plates exist at 512x640 and 144x180",
+report("A) all 23 plates keep the source aspect at the library's fixed heights",
   odd.length === 0, { odd: odd.slice(0, 5), kb: Math.round(bytes / 1000) });
 
 /* The tone words the owner asked to leave out, checked against the SHIPPED
