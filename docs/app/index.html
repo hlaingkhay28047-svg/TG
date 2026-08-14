@@ -14793,7 +14793,23 @@ function stStageDrawResult(){
     var cc=c.getContext("2d");
     c.style.filter="";
     cc.clearRect(0,0,c.width,c.height);
-    cc.drawImage(ST._resImg,0,0,c.width,c.height);
+    /* v4.74 — THE RESULT KEEPS ITS OWN PROPORTIONS. This drew the result
+       stretched to fill a canvas sized for the SOURCE photo's aspect. Every
+       generator returns its own shape — 1024x1536 is the portrait ChatGPT and
+       most edit models emit — so a 3:2 original came back as a 2:3 result and
+       was squashed to fit. Measured with a perfect circle rendered into a
+       1024x1536 result on an 1800x1200 source: it arrived on the stage as a
+       2.27:1 ELLIPSE. Faces came out stretched, and the studio was approving a
+       shape the downloaded file never had — the file itself was always fine,
+       only the stage lied. Contain-fit inside the canvas keeps the result's own
+       ratio; the letterbox is honest about the two not matching. */
+    var riw=ST._resImg.naturalWidth||ST._resImg.width, rih=ST._resImg.naturalHeight||ST._resImg.height;
+    if(riw&&rih){
+      var rsc=Math.min(c.width/riw, c.height/rih), rdw=riw*rsc, rdh=rih*rsc;
+      cc.drawImage(ST._resImg,(c.width-rdw)/2,(c.height-rdh)/2,rdw,rdh);
+    } else {
+      cc.drawImage(ST._resImg,0,0,c.width,c.height);
+    }
     ST.showingResult=true;
     var f=$("stStageFlip");
     if(f){ f.style.display=""; setIcnText(f,"i-restore",L9({my:"မူရင်းပြ",en:"Show live"})); }
@@ -17715,7 +17731,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.73.0";
+var APP_VER="4.74.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
