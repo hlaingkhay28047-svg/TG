@@ -2630,6 +2630,8 @@ var TR_PATH={
   pt_zip_ok:{my:"ZIP ဖိုင် {N} ပုံ ထုတ်ပြီးပါပြီ",en:"ZIP with {N} photos is ready",shn:"ႁဵတ်း ZIP {N} ၶႅပ်း ယဝ်ႉ",kac:"Sumla {N} rawng ai ZIP hkyen sai",th:"ไฟล์ ZIP {N} รูปพร้อมแล้ว",zh:"包含 {N} 张照片的 ZIP 已就绪",vi:"ZIP với {N} ảnh đã sẵn sàng",id:"ZIP berisi {N} foto siap",ms:"ZIP dengan {N} foto sudah sedia"},
   pt_baking:{my:"Look ထည့်နေသည်…",en:"Baking the look…",shn:"သႂ်ႇ Look ယူႇ…",kac:"Look bang nga ai…",th:"กำลังใส่ลุค…",zh:"正在合成风格…",vi:"Đang áp look…",id:"Menerapkan look…",ms:"Menerapkan look…"},
   pt_saved_gal:{my:"Gallery ထဲ သိမ်းပြီးပါပြီ",en:"Saved to Gallery",shn:"သိမ်းသႂ်ႇ Gallery ယဝ်ႉ",kac:"Gallery kaw makoi sai",th:"บันทึกลง Gallery แล้ว",zh:"已保存到 Gallery",vi:"Đã lưu vào Gallery",id:"Tersimpan ke Gallery",ms:"Disimpan ke Gallery"},
+  /* v4.55 — a bake that failed still ships the photo, but says so */
+  pt_bake_ungraded:{my:"ပုံ {N} ပုံမှာ Look မတင်နိုင်ခဲ့လို့ မူရင်းအတိုင်း ZIP ထဲ ပါသွားပါတယ် — ဖိုင်နာမည်မှာ ORIGINAL-not-graded လို့ ရေးထားပါတယ်",en:"{N} photo(s) could not be graded and went into the ZIP as the untouched original — their filenames say ORIGINAL-not-graded",shn:"{N} ၶႅပ်း တၢင်း Look ဢမ်ႇလႆႈ — ၶဝ်ႈ ZIP ပဵၼ်ၶွင်ႁင်းၵဝ်ႇ (ၸိုဝ်ႈၾၢႆႇ ORIGINAL-not-graded)",kac:"Sumla {N} hpe Look n bang lu ai — ZIP kaw shawng na zawn shang wa sai (mying hta ORIGINAL-not-graded)",th:"{N} รูปเกรดไม่สำเร็จ จึงเข้าไปใน ZIP เป็นไฟล์ต้นฉบับ — ชื่อไฟล์ระบุ ORIGINAL-not-graded",zh:"{N} 张照片未能套用风格，以未处理的原图放入 ZIP — 文件名标注 ORIGINAL-not-graded",vi:"{N} ảnh không áp được look nên vào ZIP ở dạng ảnh gốc — tên tệp ghi ORIGINAL-not-graded",id:"{N} foto gagal digrade dan masuk ZIP sebagai aslinya — namanya bertanda ORIGINAL-not-graded",ms:"{N} foto gagal digred dan masuk ZIP sebagai asal — namanya bertanda ORIGINAL-not-graded"},
   pt_off:{my:"မလုပ်",en:"Off",shn:"ဢမ်ႇႁဵတ်း",kac:"N galaw",th:"ปิด",zh:"关闭",vi:"Tắt",id:"Mati",ms:"Mati"},
   /* v4.52 — unfinished RunningHub jobs. RunningHub bills at submit, so these
      rows stand for money already spent; the wording says "not yet collected",
@@ -8196,6 +8198,11 @@ function stApplyRecipeTo(img, recipe, maxDim){
     ST.g1=sv.g1; ST.g2=sv.g2; ST.userMask=sv.um; ST.userMaskCanvas=sv.umc;
   }
 }
+/* cb(dataUrl, ok) — v4.55: `ok` is false when the grade could not be applied
+   and the ORIGINAL is being handed back. Every failure path below used to call
+   cb with the untouched original through the same channel as a success, so the
+   ZIP the studio downloads as "graded copies" could quietly contain un-graded
+   originals with no way to tell which. Callers now know. */
 function ptBake(photo, cb){
   var look=ptLookOf(photo);
   /* any look carrying a full Studio recipe (My Grade or a pt_rc_ store slot)
@@ -8203,7 +8210,7 @@ function ptBake(photo, cb){
      CSS-filter approximation */
   if(look.recipe){
     var imgR=new Image();
-    imgR.onerror=function(){ cb(photo.srcDataUrl); };
+    imgR.onerror=function(){ cb(photo.srcDataUrl,false); };
     imgR.onload=function(){
       try{
         /* strength scales the recipe's grade half (t1); makeup/skin keys ride unscaled */
@@ -8213,21 +8220,28 @@ function ptBake(photo, cb){
           for(var kR in (look.recipe.t1||{})) recR.t1[kR]=Math.round(look.recipe.t1[kR]*fR);
         }
         var cnvR=stApplyRecipeTo(imgR, recR, 1600);
-        var finR=function(){ try{ cb(cnvR.toDataURL("image/jpeg",0.92)); }catch(e2){ cb(photo.srcDataUrl); } };
+        var finR=function(){ try{ cb(cnvR.toDataURL("image/jpeg",0.92),true); }catch(e2){ cb(photo.srcDataUrl,false); } };
         if(wmOn()) wmStamp(cnvR,finR); else finR();
       }
-      catch(e){ cb(photo.srcDataUrl); }
+      catch(e){ cb(photo.srcDataUrl,false); }
     };
     imgR.src=photo.srcDataUrl;
     return;
   }
   var img=new Image();
-  img.onerror=function(){ cb(photo.srcDataUrl); };
+  img.onerror=function(){ cb(photo.srcDataUrl,false); };
   img.onload=function(){
     var fS=ptStrength()/100;
     var c=document.createElement("canvas"); c.width=img.width; c.height=img.height;
     var x=c.getContext("2d");
-    try{ x.filter=stCssFilter(ptScaledT1(look)); }catch(e){}
+    /* v4.55 — the ENTIRE grade on this path is one ctx.filter assignment. A
+       browser that does not support canvas filters accepts the assignment and
+       silently ignores it (the render worker probes for exactly this case),
+       so every photo came out untouched while the batch reported success.
+       Read the property back: if it did not stick, the grade did not happen. */
+    var wantF="";
+    try{ wantF=stCssFilter(ptScaledT1(look))||""; x.filter=wantF; }catch(e){}
+    var filterTook = !wantF || wantF==="none" || x.filter===wantF;
     x.drawImage(img,0,0); x.filter="none";
     var ov=look.overlay;
     if(ov){ ov=Object.assign({},ov,{alpha:(ov.alpha||0)*fS}); }
@@ -8266,7 +8280,7 @@ function ptBake(photo, cb){
       x.fillStyle=pat; x.fillRect(0,0,c.width,c.height);
       x.globalAlpha=1; x.globalCompositeOperation="source-over";
     }
-    var fin=function(){ try{ cb(c.toDataURL("image/jpeg",0.92)); }catch(e){ cb(photo.srcDataUrl); } };
+    var fin=function(){ try{ cb(c.toDataURL("image/jpeg",0.92),filterTook); }catch(e){ cb(photo.srcDataUrl,false); } };
     if(wmOn()) wmStamp(c,fin); else fin();
   };
   img.src=photo.srcDataUrl;
@@ -8392,9 +8406,18 @@ function ptContactSheet(){
   var rowH=CH+LBL+PAD;
   var maxRowsPerPage=Math.max(1,Math.floor((4096-HDR-PAD)/rowH));
   var srcs=new Array(PT.photos.length), pending=PT.photos.length;
+  /* v4.55 — the sheet is the client-proofing deliverable. A photo whose grade
+     failed still gets a cell (a hole would be worse), but the cell is marked
+     and the studio is told the count, so nobody sends a bride a proof sheet
+     with three silently ungraded frames in it. */
+  var sheetUngraded={}, sheetUngradedN=0;
   PT.photos.forEach(function(p,i){
-    function take(du){ srcs[i]=du; if(!--pending) build(); }
-    if(p.status==="done"&&p.outB64) take("data:"+(p.outMime||"image/png")+";base64,"+p.outB64);
+    function take(du, ok){
+      srcs[i]=du;
+      if(ok===false){ sheetUngraded[i]=1; sheetUngradedN++; }
+      if(!--pending) build();
+    }
+    if(p.status==="done"&&p.outB64) take("data:"+(p.outMime||"image/png")+";base64,"+p.outB64, true);
     else ptBake(p, take);
   });
   function build(){
@@ -8404,6 +8427,7 @@ function ptContactSheet(){
     function onePage(){
       if(pageIdx>=pages){
         toast(L9({my:"Contact sheet "+pages+" မျက်နှာ ထုတ်ပြီး ✓",en:"Contact sheet exported ("+pages+" page"+(pages>1?"s":"")+") ✓"}),"ok");
+        if(sheetUngradedN) toast(t("pt_bake_ungraded").replace("{N}",String(sheetUngradedN)),"err");
         return;
       }
       var r0=pageIdx*maxRowsPerPage;
@@ -8431,7 +8455,8 @@ function ptContactSheet(){
           x.drawImage(im,(iw-sw2)/2,(ih-sh2)/2,sw2,sh2,cx0,cy0,CW,CH);
           x.fillStyle="rgba(11,13,20,.82)"; x.fillRect(cx0,cy0+CH,CW,LBL);
           x.fillStyle="#f3efe6"; x.font="600 18px sans-serif"; x.textAlign="left";
-          x.fillText("#"+(cell.n+1)+"  "+ptSafeName(PT.photos[cell.n].name).slice(0,30), cx0+8, cy0+CH+LBL/2);
+          x.fillText("#"+(cell.n+1)+"  "+ptSafeName(PT.photos[cell.n].name).slice(0,30)
+            + (sheetUngraded[cell.n] ? "  (NOT GRADED)" : ""), cx0+8, cy0+CH+LBL/2);
           fin();
         };
         im.onerror=fin;
@@ -8465,7 +8490,7 @@ function ptBakeAll(){
      canvas per photo simultaneously, which is exactly what runs iOS Safari
      out of canvas memory on a real 60-100 shot album; sequential baking keeps
      one canvas alive at a time and reports progress as it goes. */
-  var entries=[], i=0, total=PT.photos.length;
+  var entries=[], i=0, total=PT.photos.length, ungraded=0;
   ptProgress(0,total);
   function next(){
     if(i>=total){
@@ -8474,12 +8499,21 @@ function ptBakeAll(){
       if(!list.length){ toast(t("pt_no_result"),"err"); return; }
       ptSaveBlob(ptZip(list), "hnk-path-look-"+ptStamp()+".zip");
       toast(t("pt_zip_ok").replace("{N}",String(list.length)),"ok");
+      /* v4.55 — a photo whose grade failed still goes into the ZIP, because a
+         missing file would be worse, but it goes in NAMED as the original and
+         the studio is told how many. Silently shipping un-graded originals
+         inside a folder called "graded copies" is the version of this that
+         gets discovered at the client's house. */
+      if(ungraded) toast(t("pt_bake_ungraded").replace("{N}",String(ungraded)),"err");
       return;
     }
     var p=PT.photos[i], n=i;
-    ptBake(p, function(du){
+    ptBake(p, function(du, ok){
       var m=String(du).match(/^data:([^;]+);base64,(.+)$/);
-      entries.push(m ? { name:"path-"+(n+1<10?"0":"")+(n+1)+"-"+ptSafeName(p.name).replace(/\.[a-z0-9]+$/i,"")+".jpg", u8:ptB64ToU8(m[2]) } : null);
+      if(ok===false) ungraded++;
+      var stem="path-"+(n+1<10?"0":"")+(n+1)+"-"+ptSafeName(p.name).replace(/\.[a-z0-9]+$/i,"");
+      if(ok===false) stem+="-ORIGINAL-not-graded";
+      entries.push(m ? { name:stem+".jpg", u8:ptB64ToU8(m[2]) } : null);
       i++; ptProgress(i,total);
       /* yield to the event loop so the canvas from this photo is collectable
          and the progress line actually paints */
@@ -9008,7 +9042,11 @@ function stBoxBlurMask(mask,w,h,r){
   return out;
 }
 /* YCbCr skin-tone mask (77<=Cb<=127, 133<=Cr<=173), soft-edged, + bbox as face proxy */
+/* v4.55: the mask feather is the width of the band where skin work fades
+   out. Absolute, it was a hard ~5x sharper edge at export than in the
+   preview, which is exactly where a smoothing boundary becomes visible. */
 function stSkinMask(px,w,h){
+  var mrs = Math.max(1, Math.max(w,h)/1280);
   var d=px.data, n=w*h, mask=new Uint8Array(n);
   var minX=w,minY=h,maxX=0,maxY=0,found=false;
   for(var i=0,p=0;i<n;i++,p+=4){
@@ -9020,7 +9058,7 @@ function stSkinMask(px,w,h){
       if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; found=true;
     }
   }
-  return { mask:stBoxBlurMask(mask,w,h,2), box:found?{x0:minX,y0:minY,x1:maxX,y1:maxY}:null };
+  return { mask:stBoxBlurMask(mask,w,h,Math.max(2,Math.round(2*mrs))), box:found?{x0:minX,y0:minY,x1:maxX,y1:maxY}:null };
 }
 function stBlurData(srcCanvas,W,H,r){
   var c=document.createElement("canvas"); c.width=W; c.height=H;
@@ -9039,6 +9077,22 @@ function stFaceZones(px,W,H,mi){
   var box=mi&&mi.box; if(!box) return null;
   var bw=box.x1-box.x0, bh=box.y1-box.y0;
   if(bw<24||bh<24) return null;
+  /* v4.55 — the eye/mouth probes below step a FIXED number of pixels away
+     from the candidate. Those offsets were chosen against the 1536px preview,
+     where they cross a meaningful part of a face; at a 6144px export the same
+     step lands inside the very feature it is supposed to be testing against,
+     so the skin-enclosure and dark-isolation tests degenerate into comparing
+     a pixel with its neighbour and the zones land somewhere else than the
+     preview showed. FS is 1 at preview size, so preview behaviour is
+     unchanged. The bw/bh<24 floor is a sanity guard, not a feature probe, and
+     is deliberately left absolute. */
+  var FS = Math.max(1, Math.round(Math.max(W,H)/1280));
+  var P6=6*FS, P8=8*FS, P5=5*FS;
+  /* The candidate GATES below count pixels, and a pixel count over a face
+     grows with AREA, so they scale by FS squared. Leaving them absolute while
+     the probes scale would let a zone read at export size and not in the
+     preview — the same mismatch this release exists to remove. */
+  var GATE=FS*FS;
   var d=px.data, mask=mi.mask;
   var ex=[],ey=[],exR=[],eyR=[],mx=[],my=[];
   var cxb=box.x0+bw/2;
@@ -9054,14 +9108,14 @@ function stFaceZones(px,W,H,mi){
          No not-skin requirement on the pixel itself: dark brown irises sit
          inside the skin chroma range and would exclude themselves. */
       if(y>=y0e&&y<=y1e&&lum<75){
-        var xl=y*W+Math.max(0,x-6), xr=y*W+Math.min(W-1,x+6);
+        var xl=y*W+Math.max(0,x-P6), xr=y*W+Math.min(W-1,x+P6);
         if(mask[xl]>128&&mask[xr]>128){
           /* isolation test: an eye is a SMALL dark blob — a probe ring that is
              also mostly dark means this pixel belongs to the hair mass (dark
              hair passes the skin chroma test and would otherwise flood the
              candidate pool and drag the centroids off the pupils) */
           var darkN=0;
-          [[x-8,y],[x+8,y],[x,y-5],[x,y+5]].forEach(function(pt){
+          [[x-P8,y],[x+P8,y],[x,y-P5],[x,y+P5]].forEach(function(pt){
             var px2=Math.max(0,Math.min(W-1,pt[0])), py2=Math.max(0,Math.min(H-1,pt[1]));
             var pp=(py2*W+px2)*4;
             if(0.299*d[pp]+0.587*d[pp+1]+0.114*d[pp+2]<75) darkN++;
@@ -9080,12 +9134,12 @@ function stFaceZones(px,W,H,mi){
   }
   function med(a){ if(!a.length) return 0; a.sort(function(u,v){return u-v;}); return a[a.length>>1]; }
   var zones={eyes:null,mouth:null};
-  if(ex.length>=6&&exR.length>=6){
+  if(ex.length>=6*GATE&&exR.length>=6*GATE){
     zones.eyes=[
       {cx:med(ex),cy:med(ey),rx:bw*0.15,ry:bh*0.09},
       {cx:med(exR),cy:med(eyR),rx:bw*0.15,ry:bh*0.09}];
   }
-  if(mx.length>=8){
+  if(mx.length>=8*GATE){
     zones.mouth={cx:med(mx),cy:med(my),rx:Math.max(bw*0.22,10),ry:Math.max(bh*0.10,6)};
   }
   return (zones.eyes||zones.mouth)?zones:null;
@@ -9095,22 +9149,27 @@ function stInEllipse(x,y,z,scale){
   var dx=(x-z.cx)/(z.rx*s), dy=(y-z.cy)/(z.ry*s);
   return dx*dx+dy*dy<=1;
 }
-function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv){
+/* rs (v4.55): the render-size scale factor from stRunPipeline. Tier-2 skin
+   radii are absolute pixel counts like the tier-1 ones, and scaling clarity
+   and sharpen WITHOUT scaling the smoothing they are meant to balance would
+   deliver harder pores than either the preview or the previous release. */
+function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs){
+  rs = rs || 1;
   var d=px.data, mask=mi.mask, n=W*H;
-  var blurS = t2.smooth>0 ? stBlurData(cv,W,H,2+t2.smooth/100*4) : null;
+  var blurS = t2.smooth>0 ? stBlurData(cv,W,H,(2+t2.smooth/100*4)*rs) : null;
   /* The radius was pinned at 1px while the strength above it capped at 0.5, so
      at 100% this blended halfway toward a copy that already matched the image:
      mean delta 0.016 on the app's own sample, invisible. Smoothing right above
      it has always scaled its radius; this now does too. */
-  var blur1 = t2.denoise>0 ? stBlurData(cv,W,H,1+t2.denoise/100*3) : null;
+  var blur1 = t2.denoise>0 ? stBlurData(cv,W,H,(1+t2.denoise/100*3)*rs) : null;
   /* v4.40 — TRUE frequency separation. The old freqLo blended the whole
      pixel toward a 12px blur, which flattens the very texture the technique
      exists to protect. Real FS: low band = blur(6), high band = pixel - low.
      Evening applies a low-band-only correction (lowB - lowA), so pores and
      micro-texture ride through untouched; freqHi scales the high band
      itself, skin-limited, instead of a global unsharp pass. */
-  var fsLo = (t2.freqLo>0||t2.freqHi||t2.hairShine>0||t2.eyeDef>0) ? stBlurData(cv,W,H,6) : null;
-  var fsLoB = t2.freqLo>0 ? stBlurData(cv,W,H,6+t2.freqLo/100*16) : null;
+  var fsLo = (t2.freqLo>0||t2.freqHi||t2.hairShine>0||t2.eyeDef>0) ? stBlurData(cv,W,H,6*rs) : null;
+  var fsLoB = t2.freqLo>0 ? stBlurData(cv,W,H,(6+t2.freqLo/100*16)*rs) : null;
   var zones = (t2.teeth>0||t2.eyeb>0||t2.lipV>0||t2.blushV>0||t2.eyeDef>0) ? stFaceZones(px,W,H,mi) : null;
   /* v4.40 — the app now KNOWS hair, cheeks, lips as regions of its own:
      hair = dark non-skin in the halo above/around the face box; cheeks are
@@ -9518,6 +9577,29 @@ function stRunPipeline(srcImg,W,H,opts){
     t2.lipC=stHexRgb(svGet("mu_lipLocHex",null));
     t2.blushC=stHexRgb(svGet("mu_blushLocHex",null));
   }
+  /* v4.55 — SCALE INVARIANCE. Every blur/glow/denoise radius below was tuned
+     against the 1536px preview buffer. An absolute pixel count covers half as
+     much of a face at 3000px and a quarter at 6144px, so once v4.51 started
+     exporting real full-resolution files the DELIVERED photo came out visibly
+     weaker than the preview the studio had approved — clarity, glow,
+     background blur and denoise all under-applied. Radii now scale with the
+     render size, exactly the way heal taps already do (hOp.ur*min(W,H)).
+     RS is 1 at the preview size by construction, so the preview is unchanged
+     to the bit; only larger renders move, and they move toward matching it.
+     FLOORED AT 1 deliberately. stRunPipeline also renders the 76x96 preset
+     swatches and any source photo smaller than the reference; an unfloored
+     ratio would shrink a swatch's radii to a few percent and erase the very
+     look the swatch exists to show. The defect being fixed is only ever that
+     a LARGER render under-applies, so this scales up and never down.
+
+     THE REFERENCE IS 1280, NOT 1536. 1536 is the INTAKE cap in downscale() —
+     the size of ST.srcBitmap. Nothing ever renders at it. The on-screen
+     buffer is stBufMax() = 1280 on desktop / 896 on a phone (stBuildBuffer),
+     and that is the size these radii were actually tuned against, so 1280 is
+     what makes a desktop preview bit-identical and an export proportional to
+     it. A literal is used rather than calling stBufMax() because this
+     function is serialized into a Web Worker, where window does not exist. */
+  var RS = Math.max(1, Math.max(W,H)/1280);
   var px=cx.getImageData(0,0,W,H), d=px.data, n=W*H;
   /* (1b) v4.44 — replay heal taps at THIS render size, before any tonal work,
      so spot fixes reach preview, exports and bakes alike (normalized op list;
@@ -9630,7 +9712,7 @@ function stRunPipeline(srcImg,W,H,opts){
     /* same story as the skin path: a fixed 1px reference blur cannot clear the
        perceptibility floor on a photo the app has already downscaled into its
        preview buffer. Scale with whichever channel is driving. */
-    var nb1=stBlurData(cv,W,H,1+Math.max(nrC,nrLm)/100*3);
+    var nb1=stBlurData(cv,W,H,(1+Math.max(nrC,nrLm)/100*3)*RS);
     px=cx.getImageData(0,0,W,H); d=px.data;
     var aC=nrC/100, aL=nrLm/100;
     for(var i4=0,p4=0;i4<n;i4++,p4+=4){
@@ -9669,7 +9751,7 @@ function stRunPipeline(srcImg,W,H,opts){
         umInv = svGet("st_brushMode","in")==="out";
       }catch(_eUm){ um=null; }
     }
-    stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv);
+    stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,RS);
   }
   /* (5) unsharp sharpen r1.5 + clarity r8 (radiance adds 0.3x clarity).
      v4.40: freq-sep High no longer rides the GLOBAL unsharp — it scales the
@@ -9680,8 +9762,8 @@ function stRunPipeline(srcImg,W,H,opts){
   var softA=0;
   if(shpA||claA||softA){
     var base=cx.getImageData(0,0,W,H), bd=base.data;
-    var b1=(shpA||softA)?stBlurData(cv,W,H,1.5):null;
-    var b8=claA?stBlurData(cv,W,H,8):null;
+    var b1=(shpA||softA)?stBlurData(cv,W,H,1.5*RS):null;
+    var b8=claA?stBlurData(cv,W,H,8*RS):null;
     for(var i2=0;i2<bd.length;i2+=4){
       for(var c3=0;c3<3;c3++){
         var v=bd[i2+c3];
@@ -9704,7 +9786,7 @@ function stRunPipeline(srcImg,W,H,opts){
     var grad=shx.createRadialGradient(0,0,0,0,0,1);
     grad.addColorStop(0,"rgba(255,255,255,1)"); grad.addColorStop(0.62,"rgba(255,255,255,1)"); grad.addColorStop(1,"rgba(255,255,255,0)");
     shx.fillStyle=grad; shx.fillRect(-1,-1,2,2); shx.restore();
-    if(t1.bgb>0){ cx.save(); cx.filter="blur("+(t1.bgb/100*12)+"px)"; cx.drawImage(cv,0,0); cx.restore(); }
+    if(t1.bgb>0){ cx.save(); cx.filter="blur("+(t1.bgb/100*12*RS)+"px)"; cx.drawImage(cv,0,0); cx.restore(); }
     if(pv.bgEnh>0){
       var bpx=cx.getImageData(0,0,W,H), bd5=bpx.data;
       var bsk=1+pv.bgEnh/100*0.3, bck=1+pv.bgEnh/100*0.15;
@@ -9723,7 +9805,7 @@ function stRunPipeline(srcImg,W,H,opts){
   if(t1.glow>0){
     var gcv=document.createElement("canvas"); gcv.width=W; gcv.height=H;
     var gcx=gcv.getContext("2d");
-    gcx.filter="blur("+(8+t1.glow*0.1)+"px)"; gcx.drawImage(cv,0,0);
+    gcx.filter="blur("+((8+t1.glow*0.1)*RS)+"px)"; gcx.drawImage(cv,0,0);
     cx.save(); cx.globalCompositeOperation="screen"; cx.globalAlpha=t1.glow/100*0.45;
     cx.drawImage(gcv,0,0); cx.restore();
   }
@@ -9739,7 +9821,15 @@ function stRunPipeline(srcImg,W,H,opts){
   if(t1.grn>0){
     cx.save();
     cx.globalCompositeOperation="overlay"; cx.globalAlpha=t1.grn/100*0.35;
-    cx.fillStyle=cx.createPattern(stNoiseTile(),"repeat"); cx.fillRect(0,0,W,H);
+    /* v4.55 — the noise tile is a fixed 256px bitmap, so at a 6144px export the
+       grain came out ~5x finer than the film look the studio approved. The
+       pattern is scaled by RS so a grain speck keeps its size relative to the
+       photo; the fill rect is divided by the same factor to still cover. */
+    var gpat=cx.createPattern(stNoiseTile(),"repeat");
+    if(gpat && gpat.setTransform && typeof DOMMatrix!=="undefined"){
+      try{ gpat.setTransform(new DOMMatrix([RS,0,0,RS,0,0])); }catch(e){}
+    }
+    cx.fillStyle=gpat; cx.fillRect(0,0,W,H);
     cx.restore();
   }
   /* (9) frame & border (M24) — after the grain stage */
@@ -16122,7 +16212,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.54.0";
+var APP_VER="4.55.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
