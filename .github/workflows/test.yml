@@ -128,6 +128,9 @@ jobs:
       - name: Run v4.51.0 full-res delivery + album-scale sweep (mocked)
         run: node test/sweep_v451_upgrades.js
 
+      - name: Run v4.52.0 RunningHub job-recovery sweep (mocked)
+        run: node test/sweep_v452_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

@@ -1181,6 +1181,14 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="row" id="dashContRow"></div>
     <div class="chips" id="dashContChips"></div>
   </section>
+  <!-- v4.52: RunningHub charges at submit, so a job the app never saw finish
+       is money already spent. Any id still on the books surfaces here with a
+       way to claim its result. -->
+  <section class="card" id="dashJobs" style="display:none">
+    <h2 id="dashJobsH2"></h2>
+    <p class="mut" id="dashJobsNote"></p>
+    <div id="dashJobsList"></div>
+  </section>
   <section class="dash-grid" id="dashGrid"></section>
   <section class="card">
     <h2 id="dashLibH2"></h2>
@@ -2620,7 +2628,23 @@ var TR_PATH={
   pt_zip_ok:{my:"ZIP ဖိုင် {N} ပုံ ထုတ်ပြီးပါပြီ",en:"ZIP with {N} photos is ready",shn:"ႁဵတ်း ZIP {N} ၶႅပ်း ယဝ်ႉ",kac:"Sumla {N} rawng ai ZIP hkyen sai",th:"ไฟล์ ZIP {N} รูปพร้อมแล้ว",zh:"包含 {N} 张照片的 ZIP 已就绪",vi:"ZIP với {N} ảnh đã sẵn sàng",id:"ZIP berisi {N} foto siap",ms:"ZIP dengan {N} foto sudah sedia"},
   pt_baking:{my:"Look ထည့်နေသည်…",en:"Baking the look…",shn:"သႂ်ႇ Look ယူႇ…",kac:"Look bang nga ai…",th:"กำลังใส่ลุค…",zh:"正在合成风格…",vi:"Đang áp look…",id:"Menerapkan look…",ms:"Menerapkan look…"},
   pt_saved_gal:{my:"Gallery ထဲ သိမ်းပြီးပါပြီ",en:"Saved to Gallery",shn:"သိမ်းသႂ်ႇ Gallery ယဝ်ႉ",kac:"Gallery kaw makoi sai",th:"บันทึกลง Gallery แล้ว",zh:"已保存到 Gallery",vi:"Đã lưu vào Gallery",id:"Tersimpan ke Gallery",ms:"Disimpan ke Gallery"},
-  pt_off:{my:"မလုပ်",en:"Off",shn:"ဢမ်ႇႁဵတ်း",kac:"N galaw",th:"ปิด",zh:"关闭",vi:"Tắt",id:"Mati",ms:"Mati"}
+  pt_off:{my:"မလုပ်",en:"Off",shn:"ဢမ်ႇႁဵတ်း",kac:"N galaw",th:"ปิด",zh:"关闭",vi:"Tắt",id:"Mati",ms:"Mati"},
+  /* v4.52 — unfinished RunningHub jobs. RunningHub bills at submit, so these
+     rows stand for money already spent; the wording says "not yet collected",
+     never "lost". */
+  job_h:{my:"မရသေးတဲ့ RunningHub job {N} ခု",en:"{N} RunningHub job(s) not collected yet",shn:"RunningHub job {N} ဢၼ် ပႆႇလႆႈႁပ်ႉ",kac:"RunningHub job {N} n la shi ai",th:"งาน RunningHub {N} รายการที่ยังไม่ได้รับผล",zh:"{N} 个 RunningHub 任务尚未取回",vi:"{N} tác vụ RunningHub chưa nhận kết quả",id:"{N} pekerjaan RunningHub belum diambil",ms:"{N} kerja RunningHub belum diambil"},
+  job_note:{my:"RunningHub က submit လုပ်တာနဲ့ ငွေဖြတ်တာမို့ ဒီ job တွေက ပေးပြီးသားပါ — app ပိတ်သွားလို့ ရလဒ် မယူဖြစ်တာပါ။ ရလဒ် ရပြီးသားဆိုရင် Gallery ထဲ အလိုအလျောက် ဝင်သွားပါမယ်။",en:"RunningHub charges at submit, so these are already paid for — the app just closed before the result came back. Anything finished drops into your Gallery automatically.",shn:"RunningHub ၼႆႉ ၸႂ်ႉငိုၼ်းတီႈ submit ၼၼ်ႉယဝ်ႉ — ၽွၼ်းလႆႈ တေၶဝ်ႈ Gallery ႁင်းၵူၺ်း",kac:"RunningHub gaw submit hta gumhpraw la ai majaw ndai ni gaw jaw ngut sai — ah kyu gaw Gallery kaw shang wa na",th:"RunningHub คิดเงินตอนส่งงาน งานเหล่านี้จึงจ่ายไปแล้ว — แอปแค่ปิดก่อนผลจะกลับมา ผลที่เสร็จแล้วจะเข้าแกลเลอรีอัตโนมัติ",zh:"RunningHub 在提交时计费，这些任务的费用已经支付 — 只是应用在结果返回前关闭了。已完成的结果会自动进入图库。",vi:"RunningHub tính phí khi gửi, nên các tác vụ này đã được trả tiền — ứng dụng chỉ đóng trước khi có kết quả. Kết quả đã xong sẽ tự vào Thư viện.",id:"RunningHub menagih saat submit, jadi ini sudah dibayar — aplikasi hanya tertutup sebelum hasilnya kembali. Hasil yang selesai masuk ke Galeri otomatis.",ms:"RunningHub mengecaj semasa submit, jadi ini sudah dibayar — apl cuma ditutup sebelum hasil kembali. Hasil yang siap masuk ke Galeri secara automatik."},
+  job_kind_image:{my:"ပုံ",en:"Photo",shn:"ၶႅပ်းႁၢင်ႈ",kac:"Sumla",th:"รูป",zh:"图片",vi:"Ảnh",id:"Foto",ms:"Foto"},
+  job_kind_video:{my:"ဗီဒီယို",en:"Video",shn:"ဝီဒီရူဝ်ႈ",kac:"Video",th:"วิดีโอ",zh:"视频",vi:"Video",id:"Video",ms:"Video"},
+  job_age_min:{my:"{N} မိနစ်က",en:"{N} min ago",shn:"{N} မိၼိတ်ႉ ပူၼ်ႉမႃး",kac:"{N} minute yang",th:"{N} นาทีที่แล้ว",zh:"{N} 分钟前",vi:"{N} phút trước",id:"{N} mnt lalu",ms:"{N} min lalu"},
+  job_age_hr:{my:"{N} နာရီက",en:"{N} h ago",shn:"{N} ၸူဝ်ႈမူင်း ပူၼ်ႉမႃး",kac:"{N} ten yang",th:"{N} ชม.ที่แล้ว",zh:"{N} 小时前",vi:"{N} giờ trước",id:"{N} jam lalu",ms:"{N} jam lalu"},
+  job_check:{my:"ရလဒ် သွားယူ",en:"Collect result",shn:"ၵႂႃႇဢဝ်ၽွၼ်းလႆႈ",kac:"Ah kyu la u",th:"รับผลลัพธ์",zh:"取回结果",vi:"Lấy kết quả",id:"Ambil hasil",ms:"Ambil hasil"},
+  job_discard:{my:"စာရင်းက ဖယ်",en:"Remove",shn:"ဢဝ်ဢွၵ်ႇ",kac:"Shale kau u",th:"เอาออก",zh:"移除",vi:"Bỏ khỏi danh sách",id:"Hapus",ms:"Buang"},
+  job_recovered:{my:"ရလဒ် {N} ခု ပြန်ရပြီး Gallery ထဲ ရောက်သွားပါပြီ ✓",en:"Collected {N} result(s) into your Gallery ✓",shn:"ဢဝ်ၽွၼ်းလႆႈ {N} ဢၼ် ၶဝ်ႈ Gallery ယဝ်ႉ ✓",kac:"Ah kyu {N} hpe Gallery kaw bang ngut sai ✓",th:"รับผลลัพธ์ {N} รายการเข้าแกลเลอรีแล้ว ✓",zh:"已取回 {N} 个结果到图库 ✓",vi:"Đã lấy {N} kết quả vào Thư viện ✓",id:"{N} hasil masuk ke Galeri ✓",ms:"{N} hasil dimasukkan ke Galeri ✓"},
+  job_running:{my:"RunningHub မှာ ဆက်လုပ်နေဆဲပါ — ခဏနေ ပြန်စစ်ကြည့်ပါ",en:"Still running on RunningHub — check again in a moment",shn:"တိုၵ်ႉႁဵတ်းယူႇတီႈ RunningHub — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၵူတ်ႇထတ်းၶိုၼ်း",kac:"RunningHub kaw galaw nga ai — jahkring rai bai yu u",th:"ยังทำงานอยู่บน RunningHub — ลองเช็กอีกครั้งในอีกสักครู่",zh:"RunningHub 仍在处理 — 请稍后再查看",vi:"Vẫn đang chạy trên RunningHub — kiểm tra lại sau ít phút",id:"Masih berjalan di RunningHub — periksa lagi sebentar",ms:"Masih berjalan di RunningHub — semak semula sebentar lagi"},
+  job_failed:{my:"ဒီ job က RunningHub ဘက်မှာ မအောင်မြင်ခဲ့ပါ — စာရင်းက ဖယ်လိုက်ပါပြီ",en:"This job failed on RunningHub — removed from the list",shn:"Job ၼႆႉ ဢမ်ႇပဵၼ်တီႈ RunningHub — ဢဝ်ဢွၵ်ႇယဝ်ႉ",kac:"Ndai job gaw RunningHub kaw n awng ai — shale kau sai",th:"งานนี้ล้มเหลวที่ RunningHub — เอาออกจากรายการแล้ว",zh:"该任务在 RunningHub 端失败 — 已从列表移除",vi:"Tác vụ này thất bại ở RunningHub — đã bỏ khỏi danh sách",id:"Pekerjaan ini gagal di RunningHub — dihapus dari daftar",ms:"Kerja ini gagal di RunningHub — dibuang daripada senarai"},
+  job_error:{my:"RunningHub ကို မဆက်သွယ်နိုင်သေးပါ — အင်တာနက် စစ်ပြီး ပြန်စမ်းပါ",en:"Couldn't reach RunningHub — check your connection and try again",shn:"ၵပ်းသိုပ်ႇ RunningHub ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း internet သေ ၸၢမ်းၶိုၼ်း",kac:"RunningHub hte n mai hkrum ai — internet yu nna bai chyam u",th:"ติดต่อ RunningHub ไม่ได้ — ตรวจสอบการเชื่อมต่อแล้วลองใหม่",zh:"无法连接 RunningHub — 请检查网络后重试",vi:"Không kết nối được RunningHub — kiểm tra mạng rồi thử lại",id:"Tidak dapat menghubungi RunningHub — periksa koneksi lalu coba lagi",ms:"Tidak dapat menghubungi RunningHub — semak sambungan dan cuba lagi"},
+  job_needkey:{my:"RunningHub key ကို Setup မှာ အရင်ထည့်ပါ",en:"Add your RunningHub key in Setup first",shn:"သႂ်ႇ RunningHub key တီႈ Setup ဢွၼ်တၢင်း",kac:"RunningHub key hpe Setup kaw shawng bang u",th:"เพิ่มคีย์ RunningHub ใน Setup ก่อน",zh:"请先在 Setup 中添加 RunningHub key",vi:"Thêm key RunningHub trong Setup trước",id:"Tambahkan key RunningHub di Setup dulu",ms:"Tambah kunci RunningHub di Setup dahulu"}
 };
 Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
@@ -3584,6 +3608,96 @@ async function rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs, signal){
     await new Promise(function(res){ setTimeout(res, RH_POLL_MS); });
   }
 }
+/* ---------- in-flight job registry (v4.52) ----------
+   Every rhGenerate* below is submit -> poll -> download, and until now the
+   taskId lived only in a local variable. RunningHub charges at SUBMIT, so a
+   reload, a crash, or iOS Safari discarding a backgrounded tab during a
+   10-minute video render threw away a job the studio had already paid for —
+   with no id left to ask about it. The id now goes to localStorage the moment
+   it exists and is only struck off when the job reaches a terminal state.
+
+   Kept deliberately small: taskId, what kind of output to expect, a label and
+   a prompt snippet so the row means something to a human, and a timestamp.
+   No image data — this must never be the reason a save fails. */
+var RH_JOBS_LS="hnk_ws_rh_jobs";
+/* RunningHub result URLs stay valid ~24h; 12h is a generous claim window that
+   still keeps a stale id from haunting Home forever. */
+var RH_JOB_TTL=12*3600*1000, RH_JOBS_MAX=20;
+function rhJobsLoad(){
+  var a=[];
+  try{ a=JSON.parse(localStorage.getItem(RH_JOBS_LS)||"[]"); }catch(e){ a=[]; }
+  if(!Array.isArray(a)) a=[];
+  var now=Date.now();
+  return a.filter(function(j){ return j && j.taskId && (now-(j.ts||0))<RH_JOB_TTL; });
+}
+function rhJobsSave(list){
+  try{ localStorage.setItem(RH_JOBS_LS, JSON.stringify(list.slice(0,RH_JOBS_MAX))); }catch(e){}
+}
+function rhJobOpen(taskId, meta){
+  if(!taskId) return;
+  var l=rhJobsLoad().filter(function(j){ return j.taskId!==taskId; });
+  l.unshift({
+    taskId:String(taskId),
+    kind:(meta&&meta.kind)||"image",
+    label:(meta&&meta.label)||"",
+    prompt:String((meta&&meta.prompt)||"").slice(0,120),
+    ts:Date.now()
+  });
+  rhJobsSave(l);
+  if(typeof renderDashJobs==="function") renderDashJobs();
+}
+function rhJobClose(taskId){
+  rhJobsSave(rhJobsLoad().filter(function(j){ return j.taskId!==taskId; }));
+  if(typeof renderDashJobs==="function") renderDashJobs();
+}
+/* Poll a submitted job with its id on the books. SUCCESS, a RunningHub-side
+   FAILED and a deliberate cancel are all terminal — there is nothing left to
+   come back for, so the id is struck off. A timeout or a dropped connection is
+   NOT terminal: the job is still running on RunningHub's side and still paid
+   for, so the id survives for the next session to claim. */
+async function rhPollTracked(apiKey, taskId, meta, onTick, timeoutMs, signal){
+  rhJobOpen(taskId, meta);
+  try{
+    var final=await rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs, signal);
+    rhJobClose(taskId);
+    return final;
+  }catch(e){
+    if(e && (e.code==="failed" || e.code==="cancelled")) rhJobClose(taskId);
+    throw e;
+  }
+}
+/* Ask RunningHub what became of a job we never saw finish. Returns
+   "recovered" (results are now in the Gallery / video history), "running"
+   (still working — leave it on the books), "failed", or "error". */
+async function rhJobClaim(job){
+  if(!job || !job.taskId) return {state:"error"};
+  if(!state.rhKey) return {state:"error"};
+  var j;
+  try{ j=await rhV2Query(state.rhKey, job.taskId, null); }
+  catch(e){ return {state:"error", err:e}; }
+  var s=String(j.status||"").toUpperCase();
+  if(s==="FAILED"){ rhJobClose(job.taskId); return {state:"failed"}; }
+  if(s!=="SUCCESS") return {state:"running"};
+  var results=(j&&j.results)||[], n=0;
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    if(job.kind==="video"){
+      state.vidHist.unshift({ url:results[i].url, prompt:job.prompt||"", resolution:"", duration:"", ts:job.ts||Date.now() });
+      while(state.vidHist.length>6) state.vidHist.pop();
+      n++;
+    } else {
+      try{
+        var du=await rhDownloadAsDataUrl(results[i].url);
+        var m=/^data:([^;]+);base64,(.*)$/.exec(du||"");
+        if(m){ galleryAdd({mime:m[1], b64:m[2]}, job.prompt||"recovered job"); n++; }
+      }catch(e2){ /* the result exists but this device couldn't fetch it — keep
+                     the id so another attempt is still possible */ }
+    }
+  }
+  if(!n) return {state:"running"};
+  rhJobClose(job.taskId);
+  return {state:"recovered", n:n};
+}
 async function rhDownloadAsDataUrl(url){
   var r=await fetch(url, {headers:{"Accept":"image/*"}});
   if(!r.ok){ var e=new Error("download-failed"); e.status=r.status; throw e; }
@@ -3615,7 +3729,7 @@ async function rhGenerateOne(apiKey, apiPath, promptText, ratio, refDataUrls, re
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
   var imageUrls = refDataUrls.length ? await rhV2UploadAll(apiKey, refDataUrls) : [];
   var taskId = await rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, modelCfg);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
+  var final = await rhPollTracked(apiKey, taskId, {kind:"image", label:apiPath, prompt:promptText}, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -3648,7 +3762,7 @@ async function rhGenerateUpscale(apiKey, apiPath, refDataUrls, sizeSel, onTick, 
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
   var imageUrls = await rhV2UploadAll(apiKey, [refDataUrls[0]]);
   var taskId = await rhV2SubmitUpscale(apiKey, apiPath, imageUrls[0], rhScaleFromSize(sizeSel));
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
+  var final = await rhPollTracked(apiKey, taskId, {kind:"image", label:apiPath, prompt:"upscale "+rhScaleFromSize(sizeSel)}, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -3691,7 +3805,7 @@ async function rhGenerateUpscaleTransparent(apiKey, apiPath, refDataUrls, sizeSe
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
   var imageUrls = await rhV2UploadAll(apiKey, [refDataUrls[0]]);
   var taskId = await rhV2SubmitUpscaleTransparent(apiKey, apiPath, imageUrls[0], sizeSel);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
+  var final = await rhPollTracked(apiKey, taskId, {kind:"image", label:apiPath, prompt:"upscale transparent "+(sizeSel||"auto")}, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -3751,7 +3865,7 @@ async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolutio
 async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick, signal, promptMax){
   var imageUrls = imageDataUrls.length ? await rhV2UploadAll(apiKey, imageDataUrls) : [];
   var taskId = await rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS, signal);
+  var final = await rhPollTracked(apiKey, taskId, {kind:"video", label:apiPath, prompt:promptText}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -3799,7 +3913,7 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
   if(!videoDataUrl){ var e0=new Error("no-video"); e0.code="no-video"; throw e0; }
   var videoUrl = await rhV2UploadVideo(apiKey, videoDataUrl);
   var taskId = await rhV2SubmitVideoUpscale(apiKey, videoUrl, targetResolution);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, RH_VIDEO_TIMEOUT_MS, signal);
+  var final = await rhPollTracked(apiKey, taskId, {kind:"video", label:RH_VU_APIPATH, prompt:"video upscale "+(targetResolution||"")}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -3878,7 +3992,7 @@ async function rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel){
 }
 async function rhGenerateT2I(apiKey, model, promptText, ratio, sizeSel, onTick, signal){
   var taskId = await rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel);
-  var final = await rhV2PollUntilDone(apiKey, taskId, onTick, null, signal);
+  var final = await rhPollTracked(apiKey, taskId, {kind:"image", label:(model&&model.label)||(model&&model.id)||"text-to-image", prompt:promptText}, onTick, null, signal);
   var results = (final && final.results) || [];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -14330,12 +14444,72 @@ function renderDashGreet(){
       host.appendChild(el("span","pill", accPlanLineText()));
   }catch(e){}
 }
+/* v4.52 — jobs RunningHub is still holding, or finished while the app was
+   away. The card only exists when there is something to claim; a studio with
+   no interrupted work never sees it. */
+function rhJobAge(ts){
+  var mins=Math.max(0, Math.round((Date.now()-(ts||0))/60000));
+  return mins<60 ? t("job_age_min").replace("{N}",String(mins))
+                 : t("job_age_hr").replace("{N}",String(Math.round(mins/60)));
+}
+function renderDashJobs(){
+  var box=$("dashJobs"); if(!box) return;
+  var jobs=rhJobsLoad();
+  if(!jobs.length){ box.style.display="none"; return; }
+  box.style.display="";
+  $("dashJobsH2").textContent=t("job_h").replace("{N}",String(jobs.length));
+  $("dashJobsNote").textContent=t("job_note");
+  var list=$("dashJobsList"); list.innerHTML="";
+  jobs.forEach(function(job){
+    var row=el("div","row");
+    var txt=el("div","");
+    txt.appendChild(el("b","",(job.kind==="video"?t("job_kind_video"):t("job_kind_image"))+" · "+rhJobAge(job.ts)));
+    if(job.prompt) txt.appendChild(el("p","mut",job.prompt));
+    row.appendChild(txt);
+    var check=el("button","btn"); check.id="btnJobCheck_"+job.taskId;
+    setIcnText(check,"i-rocket",t("job_check"));
+    check.onclick=async function(){
+      if(!state.rhKey){ toast(t("job_needkey"),"err"); return; }
+      check.disabled=true;
+      var r=await rhJobClaim(job);
+      check.disabled=false;
+      if(r.state==="recovered") toast(t("job_recovered").replace("{N}",String(r.n)),"ok");
+      else if(r.state==="running") toast(t("job_running"),"ok");
+      else if(r.state==="failed") toast(t("job_failed"),"err");
+      else toast(t("job_error"),"err");
+      renderDashJobs();
+    };
+    row.appendChild(check);
+    var drop=el("button","btn ghost");
+    setIcnText(drop,"i-close",t("job_discard"));
+    drop.onclick=function(){ rhJobClose(job.taskId); };
+    row.appendChild(drop);
+    list.appendChild(row);
+  });
+}
 function renderDash(){
   renderDashStatic();
   renderDashGreet();
   renderDashCont();
+  renderDashJobs();
 }
 renderDash();
+/* One quiet sweep on boot: anything that finished while the tab was gone lands
+   in the Gallery by itself, so the common case needs no tap at all. Jobs still
+   running stay listed. Runs only with a key configured — without one there is
+   nothing to ask. */
+(function rhJobsBootSweep(){
+  setTimeout(async function(){
+    if(!state.rhKey) return;
+    var jobs=rhJobsLoad(), got=0;
+    for(var i=0;i<jobs.length;i++){
+      var r=await rhJobClaim(jobs[i]);
+      if(r && r.state==="recovered") got+=r.n;
+    }
+    if(got) toast(t("job_recovered").replace("{N}",String(got)),"ok");
+    renderDashJobs();
+  }, 1500);
+})();
 
 
 /* The Studio Add-ons (Style Chains / Cleanup / Replace Mix / Camera Pro) left
@@ -15703,7 +15877,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.51.0";
+var APP_VER="4.52.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
