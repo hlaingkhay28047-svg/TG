@@ -12763,7 +12763,9 @@ stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"})
     /* v4.48 — search across every category of this suite (name my/en, id and
        the pack's attribute text: family, finish, palette, occasion, designs) */
     var search=document.createElement("input");
-    search.type="text"; search.className="inp";
+    /* .st-find marks a finder rather than a control, so the group badge does
+       not claim this box as one of the pack's adjustments (stCountControls) */
+    search.type="text"; search.className="inp st-find";
     search.placeholder=L9({my:"Style ရှာမယ် — ဥပမာ douyin, dewy, peach, red lip…",en:"Search styles — e.g. douyin, dewy, peach, red lip…"});
     search.oninput=function(){ query=this.value.trim().toLowerCase(); renderCats(); renderGrid(); };
     g.b.appendChild(search);
@@ -14134,11 +14136,31 @@ function stRenderRecipes(){
    Both suites read 79, which was coincidence — Evoto carries roughly 40% more
    controls than Meitu. Count what is actually on the page, so the badge can
    never drift from the product again. */
+/* v4.57 — and then it undercounted anyway, because it only knew three shapes.
+   A .chip built by stToggle/svToggle is returned bare, not inside a .chips
+   row, so it was invisible to the count: measured, 40 of them across the two
+   suites. EV-14 AI Removal is built entirely from four bare toggles plus a
+   prompt field and therefore printed "0 ခု" on a group with five working
+   controls; MU-1 One-Tap printed 2 with 4 on screen. The prompt fields
+   (mu_bgFree, ev_bdText, ev_removeText, ev_dressItem) feed the render exactly
+   as a slider does and were missed for being <input type=text>.
+
+   Two rules that matter for the selectors below:
+   - `.chip:not(.chips .chip)` and NOT `.st-ctl > .chip` — bare chips are
+     appended to three different parents (.st-ctl, .row, and .grp-b itself:
+     stZonesBtn, the heal/brush/erase tools, ev_hslPick). Anchoring on the
+     parent would have missed five of them.
+   - `:not([type="color"])` because stColorInp sets className="inp st-color",
+     so a plain input.inp would double-count all 12 pickers; and `:not(.st-find)`
+     because the two 880-pack search boxes filter a list rather than change the
+     photo — a finder is not a control. */
 function stCountControls(gEl){
   var b=gEl.querySelector(".grp-b")||gEl;
   return b.querySelectorAll('input[type="range"]').length
        + b.querySelectorAll(".chips").length
-       + b.querySelectorAll('input[type="color"]').length;
+       + b.querySelectorAll('input[type="color"]').length
+       + b.querySelectorAll(".chip:not(.chips .chip)").length
+       + b.querySelectorAll('input.inp:not([type="color"]):not(.st-find)').length;
 }
 ST_MEITU_COUNT=0; ST_EVOTO_COUNT=0;
 ST.groups.forEach(function(g){
@@ -16479,7 +16501,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.56.0";
+var APP_VER="4.57.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

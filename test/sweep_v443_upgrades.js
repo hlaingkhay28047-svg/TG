@@ -97,7 +97,7 @@ function report(name, ok, detail) {
     const vj = await (await fetch("version.json")).json();
     return { app: APP_VER, json: vj.v };
   });
-  report("4) version lockstep 4.56.0", ver.app === "4.56.0" && ver.json === "4.56.0", ver);
+  report("4) version lockstep 4.57.0", ver.app === "4.57.0" && ver.json === "4.57.0", ver);
 
   /* ---- 5) marketing site mirrors the 35-language set (file-based — the
      site root isn't served in CI, docs/app is) ---- */
