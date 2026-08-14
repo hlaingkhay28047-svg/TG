@@ -44,11 +44,22 @@ const sw = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "sw.js"), "
 
 report("D) LIB_CACHE keeps its name — the fix must not be a 52MB cache wipe",
   /var LIB_CACHE = "hnk-lib-v1"/.test(sw));
-report("E) the app-shell cache still carries the app version",
-  /var CACHE = "hnk-web-studio-v4-68-0"/.test(sw));
-report("D2) a purge tag and pattern are declared, and the purge runs on activate",
-  /var LIB_PURGE_TAG =/.test(sw) && /var LIB_PURGE_RE =/.test(sw) &&
-  /\.then\(purgeReplacedLibArt\)/.test(sw));
+
+/* The app-shell cache has to CARRY the version, which is a different claim
+   from carrying one particular number. Pinning the literal is how two earlier
+   assertions in this repo went red on releases that had broken nothing —
+   sweep_v443 already owns the version-lockstep check, so this one asks only
+   that the shell cache tracks the app version, and that it agrees with
+   version.json rather than drifting behind it. */
+const shellCache = (sw.match(/var CACHE = "hnk-web-studio-v(\d+)-(\d+)-(\d+)"/) || []).slice(1);
+const verJson = JSON.parse(fs.readFileSync(
+  path.join(__dirname, "..", "docs", "app", "version.json"), "utf8")).v;
+report("E) the app-shell cache carries the app version, and it matches version.json",
+  shellCache.length === 3 && shellCache.join(".") === verJson,
+  { shellCache: shellCache.join("."), versionJson: verJson });
+
+report("D2) purge entries are declared as a list, and the purge runs on activate",
+  /var LIB_PURGES = \[/.test(sw) && /\.then\(purgeReplacedLibArt\)/.test(sw));
 
 (async () => {
   /* A service worker needs a secure context; 127.0.0.1 counts as one. */
