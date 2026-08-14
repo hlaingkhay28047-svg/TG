@@ -65,29 +65,18 @@ report("E) one render in flight: the coalescing guard still precedes the generat
   wrStart >= 0 && busyAt >= 0 && mintAt >= 0 && busyAt < mintAt,
   { hasFn: wrStart >= 0, busyAt, mintAt });
 
-/* ---- F) both bake callers yield before they block ---- */
-/* Comments out first. The v4.75 comment explaining this very fix says
-   "stBake()" twice, and counting those as call sites is the same trap that
-   once made three plugin assertions pass on their own prose. */
-const code = src.replace(/\/\*[\s\S]*?\*\//g, " ");
-const bakeCalls = [...code.matchAll(/stBake\(\)/g)]
-  .map(m => m.index)
-  .filter(i => !/function\s+$/.test(code.slice(Math.max(0, i - 12), i)));
-/* Structural, not proximity-based. A window of N characters before the call
-   reaches back past the OTHER call site and finds its yield, which is how the
-   first draft of this assertion passed against the very code it was meant to
-   fail on. Pair each stBake with the stSetBusy that most recently precedes it,
-   and require the yield strictly between those two points. */
-const busyMarks = [...code.matchAll(/stSetBusy\(true/g)].map(m => m.index);
-const YIELD = /await new Promise\(function\(r\)\{ setTimeout\(r,30\); \}\);/;
-const yieldsBefore = bakeCalls.filter(i => {
-  const owner = busyMarks.filter(b => b < i).pop();
-  if (owner === undefined) return false;
-  return YIELD.test(code.slice(owner, i));
-});
-report("F) every stBake caller sets busy and yields a frame before blocking",
-  bakeCalls.length >= 2 && yieldsBefore.length === bakeCalls.length,
-  { callSites: bakeCalls.length, guarded: yieldsBefore.length });
+/* ---- F) the studio never faces a dead tab while an export runs ---- */
+/* This was a source check that counted stBake() call sites and required a
+   stSetBusy + 30ms yield before each. v4.78 moved the export onto the worker,
+   the call sites became stBakeAsync(), and the assertion failed while the
+   contract it cares about was still perfectly held — the fifth time in this
+   codebase that an assertion pinned an implementation instead of a behaviour.
+
+   It is now measured at runtime, through the real button, so it survives any
+   further refactor: start a local commit on a dirty photo and require that the
+   busy spinner is showing AND the main thread has painted frames before the
+   export finishes. Whether that is achieved by a yield, a worker or something
+   later invented is not this test's business. */
 
 report("A0) BAKE is in the list of controls a run disables",
   /\$\("btnPtBake"\)\.disabled=!!b;/.test(src));
@@ -204,6 +193,52 @@ report("A0) BAKE is in the list of controls a run disables",
   report("D2) Undo after Clear-all restores it, so undo cannot downgrade the export",
     mem.afterClear === false && mem.afterUndo === true,
     { afterClear: mem.afterClear, afterUndo: mem.afterUndo });
+
+  /* ---- F) the studio never faces a dead tab while an export runs ---- */
+  const live = await page.evaluate(async () => {
+    function photo(w, h) {
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const x = c.getContext("2d");
+      const g = x.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, "#e8c9a8"); g.addColorStop(1, "#3a2a22");
+      x.fillStyle = g; x.fillRect(0, 0, w, h);
+      x.fillStyle = "#d9a884";
+      x.beginPath(); x.ellipse(w * 0.5, h * 0.42, w * 0.26, h * 0.3, 0, 0, Math.PI * 2); x.fill();
+      for (let i = 0; i < 3000; i++) {
+        x.fillStyle = "hsl(" + (i % 360) + ",45%," + (30 + (i % 45)) + "%)";
+        x.fillRect((i * 131) % w, (i * 79) % h, 6, 6);
+      }
+      return c;
+    }
+    const du = photo(2400, 1600).toDataURL("image/jpeg", 0.94);
+    await new Promise(r => ST.loadImage(du, { done: r }));
+    await new Promise(r => setTimeout(r, 1200));
+    /* Attach the full-resolution original. Without this the export runs on the
+       PREVIEW buffer, which this suite's 390px phone context caps at 896px —
+       a render so small it finishes in a few frames and measures nothing. A
+       real export is the delivery-size one. */
+    stLoadFullSource(du);
+    await new Promise(r => setTimeout(r, 1800));
+    /* a recipe heavy enough that the export is not instantaneous */
+    state.st.t1 = Object.assign(stDefT1(), { bri: 10, con: 16, shp: 55, cla: 50, grn: 30, vig: 40, bgb: 45, dhz: 35 });
+    state.st.t2 = Object.assign(stDefT2(), { smooth: 65, even: 55, radiance: 50, finish: 1 });
+    stRenderSettle();
+    await new Promise(r => setTimeout(r, 1200));
+
+    let frames = 0, stop = false, busySeen = false;
+    (function tick() { if (stop) return; frames++; if (stBusy) busySeen = true; requestAnimationFrame(tick); })();
+
+    /* the REAL button, on the free local-commit path (no pending AI steps) */
+    state.st.pend = [];
+    const p = document.getElementById("btnStGen").onclick();
+    await p;
+    await new Promise(r => setTimeout(r, 0));
+    stop = true;
+    return { frames, busySeen, gotResult: !!(state.hist && state.hist[0]) };
+  });
+
+  report("F) an export keeps the tab alive: the busy spinner shows and frames paint while it runs",
+    live.busySeen === true && live.frames >= 20 && live.gotResult === true, live);
 
   report("no page errors", errs.length === 0, errs);
 

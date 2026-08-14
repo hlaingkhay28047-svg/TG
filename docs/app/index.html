@@ -10491,7 +10491,32 @@ function stNoiseTile(){
   if(!host.noise){
     var nz=document.createElement("canvas"); nz.width=256; nz.height=256;
     var nx=nz.getContext("2d"), nd=nx.createImageData(256,256);
-    for(var ni=0;ni<nd.data.length;ni+=4){ var g2=128+(Math.random()*90-45); nd.data[ni]=g2; nd.data[ni+1]=g2; nd.data[ni+2]=g2; nd.data[ni+3]=255; }
+    /* v4.78 — the tile is SEEDED, not random.
+
+       It used Math.random(), and this function is serialized into the render
+       worker, so the main thread and the worker each minted their own tile and
+       cached it separately (host is ST on the main thread, the function object
+       inside the worker). The consequence was live already: the preview of a
+       big photo renders on the worker while stBake renders the export
+       synchronously on the main thread, so the grain the studio approved and
+       the grain in the delivered file were never the same pattern. Measured by
+       rendering one photo both ways with grain at 45 — 89% of channels
+       differed, up to 14 levels — while all 23 other controls, the skin mask
+       and the heals came back bit-identical.
+
+       Two tiles of the same amplitude look alike to a person, so nobody was
+       ever going to file this. It matters because it was the ONLY thing
+       standing between the two render paths, and a deterministic tile is what
+       lets the full-resolution export move onto the worker with a proof rather
+       than a hope. mulberry32, fixed seed, identical in both contexts. */
+    var seed=0x9E3779B9;
+    function rnd(){
+      seed|=0; seed=(seed+0x6D2B79F5)|0;
+      var t=Math.imul(seed^(seed>>>15),1|seed);
+      t=(t+Math.imul(t^(t>>>7),61|t))^t;
+      return ((t^(t>>>14))>>>0)/4294967296;
+    }
+    for(var ni=0;ni<nd.data.length;ni+=4){ var g2=128+(rnd()*90-45); nd.data[ni]=g2; nd.data[ni+1]=g2; nd.data[ni+2]=g2; nd.data[ni+3]=255; }
     nx.putImageData(nd,0,0); host.noise=nz;
   }
   return host.noise;
@@ -10848,13 +10873,13 @@ function stPresentSettle(out){
   if(fl&&ST.stageResult) fl.textContent=L9({my:"ရလဒ်ပြ",en:"Show result"});
 }
 /* ---------- v4.42: render worker — the full pixel pipeline off the UI thread ---------- */
-var STW={w:null,ready:false,dead:false,busy:false,queued:false,id:0,cb:{}};
+var STW={w:null,ready:false,dead:false,busy:false,queued:false,id:0,cb:{},exp:{}};
 function stWorkerOk(){
   return !STW.dead && typeof OffscreenCanvas!=="undefined" && typeof Worker!=="undefined" && typeof createImageBitmap!=="undefined";
 }
 function stWorkerKill(){
   try{ if(STW.w) STW.w.terminate(); }catch(e){}
-  STW.w=null; STW.ready=false; STW.dead=true; STW.busy=false; STW.queued=false; STW.cb={};
+  STW.w=null; STW.ready=false; STW.dead=true; STW.busy=false; STW.queued=false; STW.cb={}; STW.exp={};
 }
 function stWorker(){
   if(STW.w||STW.dead) return STW.w;
@@ -10883,9 +10908,17 @@ function stWorker(){
         return;
       }
       var cb=STW.cb[d.id]; delete STW.cb[d.id];
-      STW.busy=false;
-      if(cb) cb(d.err?null:d.bmp);
-      if(STW.queued){ STW.queued=false; stRenderSettle(); }
+      /* v4.78 — an EXPORT reply must not clear the preview's bookkeeping.
+         Both kinds of render share this worker and this callback map, but only
+         a preview frame owns STW.busy / STW.queued; clearing them on an export
+         reply would release the coalescing lock a live drag is holding and
+         fire its queued settle early. */
+      var wasExport=!!STW.exp[d.id]; delete STW.exp[d.id];
+      if(!wasExport){
+        STW.busy=false;
+        if(cb) cb(d.err?null:d.bmp);
+        if(STW.queued){ STW.queued=false; stRenderSettle(); }
+      } else if(cb) cb(d.err?null:d.bmp);
     };
     STW.w.onerror=function(){ stWorkerKill(); stRenderSettle(); };
   }catch(e){ STW.dead=true; }
@@ -10981,7 +11014,57 @@ function stBake(){
   var gw=src.width||src.naturalWidth, gh=src.height||src.naturalHeight;
   var cv=stRunPipeline(src,gw,gh,{});
   /* v4.36 export settings — format / quality / long edge, chosen next to
-     GENERATE. PNG ignores the quality arg by spec; that's fine. */
+     GENERATE. PNG ignores the quality arg by spec; that's fine.
+     v4.78 — the size-limit + encode tail lives in stBakeEncode so the sync
+     path here and the worker path in stBakeAsync cannot drift apart. */
+  return stBakeEncode(cv);
+}
+/* v4.78 — the full-resolution export renders on the worker.
+
+   stBake() is synchronous. Measured on this machine with a heavy recipe:
+
+     3000x2000   render 3344ms   encode  281ms
+     6000x4000   render 14155ms  encode 1082ms
+
+   93% of that is the pipeline, and every millisecond of it froze the tab —
+   no repaint, no spinner, and on iOS a long enough block invites the watchdog.
+   The pipeline has been worker-ready since v4.42 (every state read has an opts
+   override) and the worker is built from the live sources, so the only thing
+   that ever differed was the grain tile, which v4.78 seeded. With that fixed,
+   a 2400x1600 render carrying the full Tier-1 + Tier-2 recipe, heals and a
+   brush mask comes back from the worker with 0 of 11,520,000 channels
+   differing from the sync path.
+
+   The encode stays on the main thread: it is 7% of the cost and moving it
+   would mean a second protocol (convertToBlob) for very little.
+
+   Any failure — no worker, an old Safari without ctx.filter, a thrown render —
+   falls back to the synchronous path, so the export never depends on this. */
+function stExportParams(W,H){
+  var t2=stEffT2();
+  t2.lipC=stHexRgb(svGet("mu_lipLocHex",null));
+  t2.blushC=stHexRgb(svGet("mu_blushLocHex",null));
+  var um=null, umInv=false;
+  if(ST.userMask && ST.userMaskCanvas && svGet("st_brushMode",null)){
+    try{
+      var umc=document.createElement("canvas"); umc.width=W; umc.height=H;
+      var umx=umc.getContext("2d",{willReadFrequently:true});
+      umx.drawImage(ST.userMaskCanvas,0,0,W,H);
+      var umd=umx.getImageData(0,0,W,H).data;
+      um=new Uint8ClampedArray(W*H);
+      for(var ui=0;ui<um.length;ui++) um[ui]=umd[ui*4+3];
+      umInv=svGet("st_brushMode","in")==="out";
+    }catch(e){ um=null; umInv=false; }
+  }
+  return { W:W, H:H, t1:stEffT1(), t2:t2, pv:stPipeVals(), curve:stCurveVals(),
+           um:um, umInv:umInv,
+           heals:(ST.heals&&ST.heals.length)?ST.heals:null,
+           /* NO maskInfo. ST.maskCache is preview-scale; the export must let
+              the worker build the skin mask at the delivery size, which is
+              exactly what the sync path does when opts.maskInfo is absent. */
+           mi:null };
+}
+function stBakeEncode(cv){
   var fmt=svGet("st_exp_fmt","jpg"), q=svGet("st_exp_q",92), lim=svGet("st_exp_size",0);
   if(lim && Math.max(cv.width,cv.height)>lim){
     var sc=lim/Math.max(cv.width,cv.height);
@@ -10992,6 +11075,63 @@ function stBake(){
   }
   var mime = fmt==="png" ? "image/png" : fmt==="webp" ? "image/webp" : "image/jpeg";
   return cv.toDataURL(mime, (q||92)/100);
+}
+function stBakeAsync(){
+  return new Promise(function(resolve){
+    function sync(){ try{ resolve(stBake()); }catch(e){ resolve(null); } }
+    if(!ST.srcBitmap) return resolve(null);
+    var w;
+    try{ w=stWorker(); }catch(e){ w=null; }
+    if(!w||STW.dead) return sync();
+    /* STW.ready only flips when the worker's capability probe answers, and on a
+       PHONE nothing warms it: stBufMax() is 896 there, small enough that the
+       live preview always renders synchronously, so stWorkerRender never runs
+       and the worker is booted for the first time by this very call. Bailing
+       to sync on !ready therefore sent every phone export straight back down
+       the blocking path — the exact device this change exists for. Measured
+       before this wait: 2 frames painted during a 2s export, against a 62fps
+       baseline. Wait briefly for the probe instead; it answers in a few ms. */
+    if(!STW.ready){
+      var waited=0;
+      var poll=setInterval(function(){
+        waited+=16;
+        if(STW.ready){ clearInterval(poll); go(); }
+        else if(STW.dead||waited>1500){ clearInterval(poll); sync(); }
+      },16);
+      return;
+    }
+    go();
+    function go(){
+    var src, W, H;
+    try{
+      src=stExportSource();
+      W=src.width||src.naturalWidth; H=src.height||src.naturalHeight;
+      if(!W||!H) return sync();
+    }catch(e){ return sync(); }
+    var msg;
+    try{ msg=stExportParams(W,H); }catch(e){ return sync(); }
+    var id=++STW.id;
+    STW.exp[id]=1;                         /* not a preview frame — see onmessage */
+    var settled=false;
+    STW.cb[id]=function(bmp){
+      if(settled) return; settled=true;
+      if(!bmp) return sync();
+      try{
+        var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+        cv.getContext("2d").drawImage(bmp,0,0);
+        try{ bmp.close(); }catch(e2){}
+        resolve(stBakeEncode(cv));
+      }catch(e){ sync(); }
+    };
+    createImageBitmap(src).then(function(bmp){
+      msg.id=id; msg.bmp=bmp;
+      w.postMessage(msg,[bmp]);
+    }).catch(function(){
+      delete STW.cb[id]; delete STW.exp[id];
+      if(!settled){ settled=true; sync(); }
+    });
+    }
+  });
 }
 function stIsDirty(){
   var d1=stDefT1(),d2=stDefT2(),t1=state.st.t1,t2=state.st.t2,k;
@@ -14942,7 +15082,7 @@ $("btnStGen").onclick=async function(){
     stSetBusy(true,L9({my:"Render လုပ်နေသည်…",en:"Rendering…"}));
     await new Promise(function(r){ setTimeout(r,30); });
     try{
-      var url=stBake();
+      var url=await stBakeAsync();
       var m=/^data:([^;]+);base64,(.*)$/.exec(url);
       var out={mime:m[1],b64:m[2]};
       state.hist.unshift(out); while(state.hist.length>8) state.hist.pop();
@@ -14982,7 +15122,7 @@ $("btnStGen").onclick=async function(){
   stR.value=""; stC.value="1";
   var beforeFirst=state.hist[0];
   try{
-    var baked=stBake();
+    var baked=await stBakeAsync();
     var mb=/^data:([^;]+);base64,(.*)$/.exec(baked);
     state.refs[0]={mime:mb[1],b64:mb[2],label:"studio"};
     /* Studio is single-photo — leftover refs must not ride along. The one exception is the
@@ -17781,7 +17921,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.77.0";
+var APP_VER="4.78.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
