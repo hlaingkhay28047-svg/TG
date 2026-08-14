@@ -113,6 +113,9 @@ jobs:
       - name: Run v4.46.0 Wave 4a batch-scale sweep (mocked)
         run: node test/sweep_v446_upgrades.js
 
+      - name: Run v4.47.0 Retouch mouth-lock + body sweep (mocked)
+        run: node test/sweep_v447_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
