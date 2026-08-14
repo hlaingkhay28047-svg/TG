@@ -70,27 +70,33 @@ function report(name, ok, detail) {
   /* ---- 3) fallback layering for keys outside the packs ---- */
   const fb = await page.evaluate(() => {
     const keep = LANG;
-    /* v4.50: hi/bn/ta/te now carry the FULL dictionary, so they answer
-       natively where they used to fall through — the fall-through layer is
-       proven with a language the translation wave has not reached yet (ur,
-       still a starter pack only) */
-    LANG = "hi"; const hiLong = t("gal_note");   // full dict -> native Hindi
-    LANG = "ur"; const urLong = t("gal_note");   // starter only -> English
+    /* The fall-through layer has to be demonstrated with a language that
+       genuinely has no pack. This used ur (falling to English) and lo (falling
+       to Thai), which only held while those two were starter packs — v4.77
+       gave both a full dictionary, so the assertion failed for the right thing
+       happening. Same mistake as sweep_v461's assertion C: it pinned a state
+       rather than a contract.
+
+       Kayah (kyu) is the honest probe: an ethnic-language code with no pack of
+       its own and an explicit LANG_FB entry to Burmese, and no plan to give it
+       one. The packed languages are now checked for what they should do —
+       answer natively, each in its own script. */
+    LANG = "hi"; const hiLong = t("gal_note");    // full dict -> native Hindi
+    LANG = "ur"; const urLong = t("gal_note");    // v4.77 -> native Urdu
+    LANG = "lo"; const loLong = t("gal_note");    // v4.77 -> native Lao
     LANG = "en"; const enLong = t("gal_note");
-    LANG = "lo"; const loLong = t("gal_note");   // not in pack -> Thai
-    LANG = "th"; const thLong = t("gal_note");
-    LANG = "kyu"; const kyuShort = t("btn_show"); // ethnic: still Burmese, no pack
+    LANG = "kyu"; const kyuShort = t("btn_show"); // no pack at all -> Burmese
     LANG = "my"; const myShort = t("btn_show");
     LANG = keep;
     return {
-      hiIsNative: hiLong !== enLong && /[\u0900-\u097F]/.test(hiLong),
-      urFallsToEn: urLong === enLong,
-      loFallsToTh: loLong === thLong && thLong !== enLong,
+      hiIsNative: hiLong !== enLong && /[ऀ-ॿ]/.test(hiLong),
+      urIsNative: urLong !== enLong && /[؀-ۿ]/.test(urLong),
+      loIsNative: loLong !== enLong && /[຀-໿]/.test(loLong),
       kyuFallsToMy: kyuShort === myShort
     };
   });
-  report("3) full dicts answer natively (hi), unpacked still fall through: ur->en, lo->th, kyu->my",
-    fb.hiIsNative && fb.urFallsToEn && fb.loFallsToTh && fb.kyuFallsToMy, fb);
+  report("3) every packed language answers in its own script (hi, ur, lo); an unpacked one still falls through (kyu->my)",
+    fb.hiIsNative && fb.urIsNative && fb.loIsNative && fb.kyuFallsToMy, fb);
 
   /* ---- 4) version lockstep ---- */
   const ver = await page.evaluate(async () => {
