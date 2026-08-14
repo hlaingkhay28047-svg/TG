@@ -203,6 +203,9 @@ jobs:
       - name: Run v4.76.0 Exact-Skin library sweep (23 plates, excluded tier stays out)
         run: node test/sweep_v476_skinlib.js
 
+      - name: Run v4.77.0 i18n slice-3 sweep (six languages leave starter packs)
+        run: node test/sweep_v477_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

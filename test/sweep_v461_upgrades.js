@@ -24,8 +24,12 @@
    B) No pack contains a key the app does not have. A key TR has never heard of
       is either a website string or a typo, and both are dead weight that no
       amount of testing will otherwise surface.
-   C) The nine full packs really are full, and the starter packs really are
-      starters — so a half-integrated language cannot masquerade as done.
+   C) Every pack really is full. This assertion used to read "the nine full
+      packs are full and the six starters are still starters", which pinned a
+      STATE rather than a contract: when ur/ne/lo/km/ja/ko were finished in
+      v4.77 it failed for the right thing happening. The contract worth
+      keeping is that no pack is partial — a half-integrated language must not
+      be able to masquerade as done, in either direction.
    D) The parameterised keys actually render with a number substituted, in
       every full language, at the device cap the app computed.
 
@@ -38,8 +42,10 @@ function report(name, ok, detail) {
   if (!ok) failures++;
 }
 
-const FULL = ["hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa"];
-const STARTER = ["ur", "ne", "lo", "km", "ja", "ko"];
+const FULL = ["hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa",
+              /* v4.77 — these six left their 19-key starter packs behind */
+              "ur", "ne", "lo", "km", "ja", "ko"];
+const STARTER = [];
 
 (async () => {
   const browser = await chromium.launch();
@@ -122,7 +128,7 @@ const STARTER = ["ur", "ne", "lo", "km", "ja", "ko"];
     r.A_bad.length === 0, r.A_bad.slice(0, 12));
   report("B) no pack carries a key the app does not have",
     r.B_orphans.length === 0, r.B_orphans.slice(0, 12));
-  report("C) the nine full packs are full and the six starters are still starters",
+  report("C) every language pack is complete — none is partial",
     r.C_fullShort.length === 0 && r.C_starterGrew.length === 0 && r.C_unknown.length === 0,
     { short: r.C_fullShort, grew: r.C_starterGrew, unknown: r.C_unknown, counts: r.C_counts });
   report("C) no pack contains a blank string, which would beat the fallback chain",
