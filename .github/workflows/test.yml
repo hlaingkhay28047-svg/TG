@@ -179,6 +179,9 @@ jobs:
       - name: Run v4.68.0 service-worker stale-art purge sweep (real SW)
         run: node test/sweep_v468_upgrades.js
 
+      - name: Run v4.69.0 stale-/lib/ class-closure sweep (real SW)
+        run: node test/sweep_v469_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

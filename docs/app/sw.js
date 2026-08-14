@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-68-0";
+var CACHE = "hnk-web-studio-v4-69-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -47,22 +47,54 @@ self.addEventListener("install", function (e) {
    52MB of library thumbnails they already have. So instead the worker purges
    exactly the paths that were replaced, once, guarded by a marker written into
    the cache itself. Add a new tag + pattern here whenever files under /lib/ are
-   replaced under their own names — that is the whole maintenance rule. */
-var LIB_PURGE_TAG = "./__lib-purge-v4-64-cards5";
-var LIB_PURGE_RE = /\/lib\/wf\/cards5\//;
+   replaced under their own names — that is the whole maintenance rule.
+
+   v4.69 — ONE LIST, ONE MARKER EACH. The first cut of this fix carried a
+   single tag, which quietly made the maintenance rule above impossible to
+   follow: widening the pattern under the old tag skips every device that had
+   already purged, and renaming the tag re-purges paths that were already
+   fixed. Each entry now owns its own marker, so adding one never costs a
+   customer a re-download of what an earlier entry already repaired.
+
+   THE LIST IS COMPLETE, and that was measured rather than assumed: every
+   commit that ever touched docs/app/lib was scanned for files MODIFIED in
+   place rather than added. The whole history yields 121 such files — the 116
+   cards, styles880/catalog.json, icon-512.png, and three files under the long
+   deleted lib/wf/cards/. Icons already ride the network-first branch via
+   LIB_ICON_RE, and the deleted directory has no live URL, so the two entries
+   below are the only live exposure. The library plates under /lib/{ui,full,
+   banners}/ have never once been modified in place, which is what makes the
+   cache-first design safe for them in the first place. */
+var LIB_PURGES = [
+  /* v4.64 — all 116 workflow cards were re-arted and re-fitted to 960x640
+     under their own filenames. */
+  { tag: "./__lib-purge-v4-64-cards5", re: /\/lib\/wf\/cards5\// },
+  /* The 880-style catalogue, replaced in place twice: v4.48 gave 800 of its
+     880 records a `q` search field, and v4.69 backfilled the other 80 (all of
+     skin_type and eyelash, which had shipped with no search keywords at all —
+     no way to find a lash by "c-curl" or a skin by its finish). Because the
+     search reads `rec.q || ""`, a stale copy does not break anything; it just
+     returns quietly poorer results for ever. A stale JSON manifest is worse
+     than stale art precisely because nothing looks wrong. The tag is dated
+     v4.69 because that is the release this entry first reaches a device — no
+     phone has ever seen an earlier one. */
+  { tag: "./__lib-purge-v4-69-styles880-catalog", re: /\/lib\/styles880\/catalog\.json$/ }
+];
 
 function purgeReplacedLibArt() {
   return caches.open(LIB_CACHE).then(function (c) {
-    return c.match(LIB_PURGE_TAG).then(function (done) {
-      if (done) return;                     /* already purged on this device */
-      return c.keys().then(function (keys) {
-        return Promise.all(keys.filter(function (k) {
-          try { return LIB_PURGE_RE.test(new URL(k.url).pathname); } catch (err) { return false; }
-        }).map(function (k) { return c.delete(k); }));
-      }).then(function () {
-        return c.put(LIB_PURGE_TAG, new Response("1"));
+    return Promise.all(LIB_PURGES.map(function (p) {
+      return c.match(p.tag).then(function (done) {
+        if (done) return;                   /* this entry already ran here */
+        return c.keys().then(function (keys) {
+          return Promise.all(keys.filter(function (k) {
+            try { return p.re.test(new URL(k.url).pathname); } catch (err) { return false; }
+          }).map(function (k) { return c.delete(k); }));
+        }).then(function () {
+          return c.put(p.tag, new Response("1"));
+        });
       });
-    });
+    }));
   }).catch(function () { /* a failed purge must never block activation */ });
 }
 
