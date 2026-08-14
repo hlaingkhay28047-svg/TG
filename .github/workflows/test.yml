@@ -146,6 +146,9 @@ jobs:
       - name: Run v4.57.0 badge-honesty sweep (mocked)
         run: node test/sweep_v457_upgrades.js
 
+      - name: Run v4.58.0 cost/balance/ledger sweep (mocked)
+        run: node test/sweep_v458_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
