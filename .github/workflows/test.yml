@@ -152,6 +152,9 @@ jobs:
       - name: Run v4.59.0 per-vendor ledger sweep (mocked)
         run: node test/sweep_v459_upgrades.js
 
+      - name: Run v4.60.0 wizard/search honesty sweep (mocked)
+        run: node test/sweep_v460_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
