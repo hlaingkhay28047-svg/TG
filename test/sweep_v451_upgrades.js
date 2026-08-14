@@ -22,6 +22,9 @@
       states the real number instead of a hardcoded 30.
    F) ptBakeAll bakes sequentially and still emits exactly one ZIP.
    G) Studio's busy line carries the elapsed-seconds ticker.
+   H) Every language quotes the cap through the {N} placeholder. Raising the
+      cap while a translated string still reads "30" would hand a Hindi or
+      Bengali studio the wrong limit — the same class of lie as (C).
 
    Usage: PORT=8931 node test/sweep_v451_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
@@ -92,6 +95,22 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     out.E_cap = PT_MAX;
     out.E_msg = t("pt_cap").replace("{N}", String(PT_MAX));
     out.E_msgHasCap = out.E_msg.indexOf(String(PT_MAX)) >= 0 && out.E_msg.indexOf("{N}") < 0;
+    /* H) EVERY language must carry the placeholder, not a baked-in number.
+       Raising the cap while a translated string still reads "30" would tell a
+       Hindi or Bengali studio the wrong limit — the exact defect this release
+       claims to have removed. The three strings that quote the cap are
+       pt_cap (the toast), pt_intro (the page lede) and pt_empty (the picker). */
+    out.H_bad = [];
+    ["pt_cap", "pt_intro", "pt_empty"].forEach(function (k) {
+      Object.keys(TR_L).forEach(function (lang) {
+        var v = TR_L[lang] && TR_L[lang][k];
+        if (typeof v === "string" && v.indexOf("{N}") < 0) out.H_bad.push(lang + "." + k);
+      });
+      Object.keys(TR[k] || {}).forEach(function (lang) {
+        var v = TR[k][lang];
+        if (typeof v === "string" && v.indexOf("{N}") < 0) out.H_bad.push(lang + "." + k);
+      });
+    });
     PT.photos = [1, 2, 3, 4].map((n, i) => ({ id: "b" + i, name: "p" + n + ".jpg", srcDataUrl: "data:image/png;base64," + B64, status: "queued" }));
     let zips = 0, zipBytes = 0;
     const realSave = window.ptSaveBlob;
@@ -120,6 +139,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   report("E) batch cap follows the device and the toast states it", r.E_cap === 60 && r.E_msgHasCap, r);
   report("F) ptBakeAll bakes sequentially into exactly one ZIP", r.F_zips === 1 && r.F_bytes > 0, r);
   report("G) Studio's busy line ticks elapsed seconds", r.G_tick, r);
+  report("H) every language states the cap by placeholder, never a baked-in number",
+    r.H_bad.length === 0, r.H_bad);
   await page.close();
 
   /* ---- desktop viewport: the cap is 100 there ---- */
