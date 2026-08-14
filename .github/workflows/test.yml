@@ -140,6 +140,9 @@ jobs:
       - name: Run v4.55.0 scale-invariance sweep (mocked)
         run: node test/sweep_v455_upgrades.js
 
+      - name: Run v4.56.0 face-detection sweep (mocked)
+        run: node test/sweep_v456_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
