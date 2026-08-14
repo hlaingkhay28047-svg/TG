@@ -206,6 +206,9 @@ jobs:
       - name: Run v4.77.0 i18n slice-3 sweep (six languages leave starter packs)
         run: node test/sweep_v477_upgrades.js
 
+      - name: Run v4.78.0 worker-export sweep (identical bytes, thread stays alive)
+        run: node test/sweep_v478_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
