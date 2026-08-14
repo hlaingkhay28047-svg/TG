@@ -145,6 +145,10 @@ select.inp{padding:9px 10px}
 .mut{font-size:var(--fs-sm);color:var(--muted)}
 .status{min-height:20px;font-size:var(--fs-base);margin-top:var(--sp-2)}
 .status.ok{color:var(--ok)} .status.err{color:var(--err)}
+/* v4.60 — a .mut line that is telling the operator something will NOT happen.
+   Muted grey is the wrong weight for "your prompt is about to be discarded" on
+   the last screen before a paid run. */
+.mut.warn{color:var(--err)}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--sp-2)}
 /* v4.41: ratio pickers render as shape chips — the little box IS the aspect
@@ -2705,6 +2709,9 @@ var TR_PATH={
      never "lost". */
   job_h:{my:"မရသေးတဲ့ RunningHub job {N} ခု",en:"{N} RunningHub job(s) not collected yet",shn:"RunningHub job {N} ဢၼ် ပႆႇလႆႈႁပ်ႉ",kac:"RunningHub job {N} n la shi ai",th:"งาน RunningHub {N} รายการที่ยังไม่ได้รับผล",zh:"{N} 个 RunningHub 任务尚未取回",vi:"{N} tác vụ RunningHub chưa nhận kết quả",id:"{N} pekerjaan RunningHub belum diambil",ms:"{N} kerja RunningHub belum diambil"},
   job_note:{my:"RunningHub က submit လုပ်တာနဲ့ ငွေဖြတ်တာမို့ ဒီ job တွေက ပေးပြီးသားပါ — app ပိတ်သွားလို့ ရလဒ် မယူဖြစ်တာပါ။ ရလဒ် ရပြီးသားဆိုရင် Gallery ထဲ အလိုအလျောက် ဝင်သွားပါမယ်။",en:"RunningHub charges at submit, so these are already paid for — the app just closed before the result came back. Anything finished drops into your Gallery automatically.",shn:"RunningHub ၼႆႉ ၸႂ်ႉငိုၼ်းတီႈ submit ၼၼ်ႉယဝ်ႉ — ၽွၼ်းလႆႈ တေၶဝ်ႈ Gallery ႁင်းၵူၺ်း",kac:"RunningHub gaw submit hta gumhpraw la ai majaw ndai ni gaw jaw ngut sai — ah kyu gaw Gallery kaw shang wa na",th:"RunningHub คิดเงินตอนส่งงาน งานเหล่านี้จึงจ่ายไปแล้ว — แอปแค่ปิดก่อนผลจะกลับมา ผลที่เสร็จแล้วจะเข้าแกลเลอรีอัตโนมัติ",zh:"RunningHub 在提交时计费，这些任务的费用已经支付 — 只是应用在结果返回前关闭了。已完成的结果会自动进入图库。",vi:"RunningHub tính phí khi gửi, nên các tác vụ này đã được trả tiền — ứng dụng chỉ đóng trước khi có kết quả. Kết quả đã xong sẽ tự vào Thư viện.",id:"RunningHub menagih saat submit, jadi ini sudah dibayar — aplikasi hanya tertutup sebelum hasilnya kembali. Hasil yang selesai masuk ke Galeri otomatis.",ms:"RunningHub mengecaj semasa submit, jadi ini sudah dibayar — apl cuma ditutup sebelum hasil kembali. Hasil yang siap masuk ke Galeri secara automatik."},
+  /* ---- v4.60: the wizard's last screen tells the truth ---- */
+  wiz_drop:{my:"(ထည့်ထားတဲ့ {N} ပုံကို ဒီ workflow က မသုံးပါ)",en:"({N} loaded photo(s) will not be used by this workflow)",shn:"({N} ၶႅပ်း workflow ၼႆႉ ဢမ်ႇၸႂ်ႉ)",kac:"({N} sumla ndai workflow n lang ai)",th:"(อีก {N} รูปที่ใส่ไว้ เวิร์กโฟลว์นี้จะไม่ใช้)",zh:"（已加载的 {N} 张不会被此工作流使用）",vi:"({N} ảnh đã tải sẽ không được workflow này dùng)",id:"({N} foto yang dimuat tidak dipakai workflow ini)",ms:"({N} foto yang dimuat tidak digunakan aliran kerja ini)"},
+  wiz_noprompt:{my:"⚠ {M} က upscale သီးသန့်ဖြစ်လို့ ဒီ workflow ရဲ့ prompt ကို လုံးဝ မသုံးပါ — ပုံကြီးချဲ့ရုံပဲ လုပ်ပါမယ်။ Workflow အလုပ်လုပ်စေချင်ရင် Setup မှာ upscale မဟုတ်တဲ့ model တစ်ခု ရွေးပါ။",en:"⚠ {M} is an upscale-only endpoint — it cannot take a prompt, so this workflow's prompt will be discarded and you will get an enlargement only. Pick a non-upscale model in Setup to run the workflow.",shn:"⚠ {M} ၼႆႉ upscale ၵူၺ်း — prompt ဢမ်ႇၸႂ်ႉလႆႈ။ လိူၵ်ႈ model တၢင်ႇဢၼ်တီႈ Setup",kac:"⚠ {M} gaw upscale hkrai re — prompt n lang lu ai. Setup kaw upscale n re ai model lata u",th:"⚠ {M} เป็น endpoint สำหรับ upscale เท่านั้น — รับ prompt ไม่ได้ prompt ของเวิร์กโฟลว์นี้จะถูกทิ้ง เลือกโมเดลอื่นใน Setup เพื่อให้เวิร์กโฟลว์ทำงาน",zh:"⚠ {M} 是纯放大接口 — 不接受 prompt，本工作流的 prompt 会被丢弃，只会得到放大结果。请在 Setup 中选择非放大模型。",vi:"⚠ {M} là endpoint chỉ để upscale — không nhận prompt, nên prompt của workflow này sẽ bị bỏ và bạn chỉ nhận được ảnh phóng to. Hãy chọn model không phải upscale trong Setup.",id:"⚠ {M} adalah endpoint khusus upscale — tidak menerima prompt, jadi prompt workflow ini akan dibuang dan Anda hanya mendapat pembesaran. Pilih model non-upscale di Setup.",ms:"⚠ {M} ialah endpoint upscale sahaja — tidak menerima prompt, jadi prompt aliran kerja ini akan dibuang dan anda hanya dapat pembesaran. Pilih model bukan upscale dalam Setup."},
   /* ---- v4.58: cost, balance and the spend book ---- */
   money_h:{my:"ကုန်ကျစရိတ်နှင့် လက်ကျန်ငွေ",en:"COST & BALANCE",shn:"ၵႃႈၸႂ်ႉၸၢႆႇ လႄႈ ငိုၼ်းလိူဝ်",kac:"Manu hte ngun ngam",th:"ค่าใช้จ่ายและยอดคงเหลือ",zh:"花费与余额",vi:"CHI PHÍ & SỐ DƯ",id:"BIAYA & SALDO",ms:"KOS & BAKI"},
   money_intro:{my:"GENERATE တစ်ခါလုပ်တိုင်း RunningHub က ဖြတ်တဲ့ ငွေအမှန်ကို မှတ်ထားပါတယ် — ခန့်မှန်းချက် မဟုတ်ပါ။ လက်ကျန်ငွေကတော့ RunningHub အကောင့်ကနေ တိုက်ရိုက် ဆွဲယူတာပါ။",en:"Every GENERATE is booked at the amount RunningHub actually charged — not an estimate. The balance is read straight from your RunningHub account.",shn:"GENERATE ၵူႈပွၵ်ႈ RunningHub ဢဝ်ငိုၼ်းၵႃႈႁိုဝ် မၢႆဝႆႉတႄႉတႄႉ — ဢမ်ႇၸႂ်ႈလၢမ်း",kac:"GENERATE langai mi hpe RunningHub la ai gumhpraw teng teng hpe mahkrum da ai — myit yu ai n re",th:"ทุกครั้งที่ GENERATE จะบันทึกยอดที่ RunningHub เก็บจริง ไม่ใช่ค่าประมาณ ยอดคงเหลืออ่านจากบัญชี RunningHub โดยตรง",zh:"每次 GENERATE 都按 RunningHub 实际扣费记账，不是估算。余额直接从你的 RunningHub 账户读取。",vi:"Mỗi lần GENERATE được ghi sổ theo số tiền RunningHub thực sự thu — không phải ước tính. Số dư đọc thẳng từ tài khoản RunningHub.",id:"Setiap GENERATE dicatat sebesar yang benar-benar ditagih RunningHub — bukan perkiraan. Saldo dibaca langsung dari akun RunningHub Anda.",ms:"Setiap GENERATE direkod pada jumlah yang RunningHub benar-benar caj — bukan anggaran. Baki dibaca terus daripada akaun RunningHub anda."},
@@ -5867,7 +5874,15 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       if(!wizReqOk()){ var rw=el("div","mut"); setIcnText(rw,"i-warn",t("wiz_reqwarn")); body.appendChild(rw); }
     }
     if (wiz.step===3){
-      var n=state.refs.filter(Boolean).length;
+      /* v4.60 — count the photos that will actually be SENT, not the photos
+         that happen to be loaded. runWizGenerate nulls every slot past the
+         workflow's own input count before dispatching:
+             for(var ri=inputs.length; ri<state.refs.length; ri++) state.refs[ri]=null;
+         so a 2-input workflow with 3 photos loaded used to promise "Images: 3"
+         on the last screen before the money is spent and then send 2. */
+      var wizNIn=wizInputs(w).length;
+      var n=state.refs.slice(0,wizNIn).filter(Boolean).length;
+      var nDrop=state.refs.filter(Boolean).length-n;
       body.appendChild(el("p",null,t("wiz_ready")));
       /* generate options inside the wizard — mirrors + syncs the Create selects.
          v4.28: a clone change fires the MAIN select's handler (provider/model
@@ -5901,7 +5916,29 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       var wfootUpd=function(){
         var engMap={gemini:"Gemini",runninghub:"RunningHub",openai:"OpenAI"};
         var eng=engMap[$("selProvider").value]||"Gemini";
-        wfoot.textContent=L9({my:"ပုံ ",en:"Images: ",shn:"ၶႅပ်းႁၢင်ႈ ",kac:"Sumla: ",th:"ภาพ: ",zh:"图片: ",vi:"Ảnh: ",id:"Gambar: ",ms:"Imej: "})+n+" · prompt "+wiz.prompt.length+L9({my:" လုံး · {E} engine · guard ပါပြီးသား",en:" chars · {E} engine · guards included",shn:" တူဝ် · {E} engine · ပႃး guard ယဝ်ႉ",kac:" chars · {E} engine · guard ni lawm sai",th:" ตัวอักษร · {E} engine · มี guard รวมให้แล้ว",zh:" 字符 · {E} engine · 已含防护",vi:" ký tự · engine {E} · đã kèm guard",id:" karakter · engine {E} · guard disertakan",ms:" aksara · enjin {E} · guard disertakan"}).replace("{E}",eng);
+        /* v4.60 — an upscale endpoint CANNOT take a prompt. rhV2SubmitUpscale's
+           body is {imageUrl, scale} and nothing else, and the dispatcher routes
+           kind==="upscale"/"upscale-transparent" there without a prompt
+           argument at all. This footer used to read "prompt 1847 chars ·
+           RunningHub engine · guards included" while every one of those
+           characters was discarded — the workflow the operator chose simply did
+           not happen, and they paid for an upscale instead. Say so here, on the
+           last screen before the money is spent, and say which model. */
+        var rhUp=null;
+        if($("selProvider").value==="runninghub"){
+          var ac=rhActiveModelCfg();
+          if(ac && (ac.kind==="upscale" || ac.kind==="upscale-transparent")) rhUp=ac;
+        }
+        var head=L9({my:"ပုံ ",en:"Images: ",shn:"ၶႅပ်းႁၢင်ႈ ",kac:"Sumla: ",th:"ภาพ: ",zh:"图片: ",vi:"Ảnh: ",id:"Gambar: ",ms:"Imej: "})+n;
+        if(nDrop>0) head += " " + t("wiz_drop").replace("{N}",String(nDrop));
+        if(rhUp){
+          var d=rhModelDef(rhUp.id)||{};
+          wfoot.textContent=head+" · "+t("wiz_noprompt").replace("{M}",(d.label||rhUp.id));
+          wfoot.className="mut warn";
+        }else{
+          wfoot.textContent=head+" · prompt "+wiz.prompt.length+L9({my:" လုံး · {E} engine · guard ပါပြီးသား",en:" chars · {E} engine · guards included",shn:" တူဝ် · {E} engine · ပႃး guard ယဝ်ႉ",kac:" chars · {E} engine · guard ni lawm sai",th:" ตัวอักษร · {E} engine · มี guard รวมให้แล้ว",zh:" 字符 · {E} engine · 已含防护",vi:" ký tự · engine {E} · đã kèm guard",id:" karakter · engine {E} · guard disertakan",ms:" aksara · enjin {E} · guard disertakan"}).replace("{E}",eng);
+          wfoot.className="mut";
+        }
       };
       wiz._footUpd=wfootUpd;
       buildWizGenRow();
@@ -6599,10 +6636,15 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   var _wfT=null, _wfOpenSnap=null;
   var wfCountLine=el("div","mut"); wfCountLine.id="wfCount"; wfCountLine.style.display="none";
   $("wfSearch").parentNode.parentNode.insertBefore(wfCountLine, $("wfSearch").parentNode.nextSibling);
-  $("wfSearch").oninput=function(){
-    var self=this;
-    clearTimeout(_wfT);
-    _wfT=setTimeout(function(){
+  /* v4.60 — the filter is its own function so Enter can FLUSH it.
+     It used to live inline inside a 120ms setTimeout while onkeydown's Enter
+     read `it.el.style.display` synchronously — so the list Enter picked from
+     was the PREVIOUS query's. Type "veil", hit Enter inside 120ms, and the
+     wizard opens whatever matched "vei" (or, on the first search of a session,
+     the very first card in the page). On a phone keyboard with an
+     enterkeyhint="search" key, that race is the normal path, not an edge. */
+  function wfApplyFilter(){
+    var self=$("wfSearch");
     var q=self.value.trim().toLowerCase();
     var toks=q?wfExpandQuery(q).split(/\s+/).filter(Boolean):[];
     var anyMatch=false, nHits=0;
@@ -6641,11 +6683,17 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
     }
     if(!q) _wfOpenSnap=null;
     wfEmpty.classList.toggle("on", !!(q && !anyMatch));
-    },120);
+  }
+  $("wfSearch").oninput=function(){
+    clearTimeout(_wfT);
+    _wfT=setTimeout(wfApplyFilter,120);
   };
   $("wfSearch").onkeydown=function(ev){
-    if(ev.key==="Escape"){ this.value=""; this.oninput.call(this); }
+    if(ev.key==="Escape"){ this.value=""; clearTimeout(_wfT); wfApplyFilter(); }
     else if(ev.key==="Enter"){
+      /* flush the pending debounce FIRST — otherwise this picks from the
+         previous query's result set */
+      clearTimeout(_wfT); wfApplyFilter();
       var first=wfIndex.filter(function(it){ return it.el.style.display!=="none"; })[0];
       if(first) first.el.onclick();
     }
@@ -17232,7 +17280,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.59.0";
+var APP_VER="4.60.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
