@@ -158,6 +158,12 @@ jobs:
       - name: Run v4.61.0 language-pack integrity sweep (mocked)
         run: node test/sweep_v461_upgrades.js
 
+      - name: Run v4.62.0 look-shelf separation sweep (mocked)
+        run: node test/sweep_v462_upgrades.js
+
+      - name: Run v4.63.0 touch-slider ergonomics sweep (mocked, real touch page)
+        run: node test/sweep_v463_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
