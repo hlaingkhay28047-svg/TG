@@ -14082,6 +14082,46 @@ function stTileFx(cx, t1, w, h){
   }
 }
 
+/* ---------- v4.72: baked look previews for the empty state ----------
+   Before a customer has picked a photo, every look tile was the neutral sample
+   run through the app's OWN approximation of that look — and that approximation
+   cannot render three of the nineteen Tier-1 controls at all (sharpen,
+   background blur, dehaze), so the shelf undersold itself on first open.
+
+   These sixteen are photographs of what each look actually produces, shot from
+   the same base sample so the whole row is one woman in one frame. They are
+   used ONLY while state.refs / ST.srcBitmap is empty: the moment a customer
+   loads their own photo the live computed tile takes over, because their own
+   face is worth more than any stock demonstration.
+
+   256x384 each, 181KB for the set, down from the 10.1MB the generator returned
+   — the tile is 228x288 device pixels at DPR 3 and never larger. */
+var ST_LOOK_ART = {};
+var ST_LOOK_RAF = 0;
+function stLookArt(key){
+  var e=ST_LOOK_ART[key];
+  if(e && e.nodeName) return e;      /* decoded and ready */
+  if(e) return null;                 /* already loading, or known missing */
+  ST_LOOK_ART[key]="loading";
+  var im=new Image();
+  im.onload=function(){
+    ST_LOOK_ART[key]=im;
+    /* one coalesced repaint for the whole row rather than sixteen */
+    if(!ST_LOOK_RAF) ST_LOOK_RAF=requestAnimationFrame(function(){ ST_LOOK_RAF=0; stRenderPresetCards(); });
+  };
+  im.onerror=function(){ ST_LOOK_ART[key]="missing"; };  /* falls back to the computed tile */
+  im.src="lib/looks/look-"+key+".jpg";
+  return null;
+}
+/* cover-fill, biased upward: the art is 2:3 inside a 4:5 tile, so the crop eats
+   height, and a centred crop takes it off the chin and the crown equally. The
+   face sits high in these frames, so the excess comes mostly off the bottom. */
+function stDrawLookArt(cx, im, W, H){
+  var iw=im.naturalWidth||im.width, ih=im.naturalHeight||im.height;
+  if(!iw||!ih) return;
+  var sc=Math.max(W/iw, H/ih), dw=iw*sc, dh=ih*sc;
+  cx.drawImage(im, (W-dw)/2, -(dh-H)*0.22, dw, dh);
+}
 function stRenderPresetCards(){
   [["muPresetRow",ST_PRESETS_MU],["evPresetRow",ST_PRESETS_EV]].forEach(function(pair){
     var host=$(pair[0]); if(!host) return;
@@ -14092,7 +14132,12 @@ function stRenderPresetCards(){
       var cv=document.createElement("canvas"); cv.width=CW; cv.height=CH;
       cv.style.width=ST_TILE_W+"px"; cv.style.height=ST_TILE_H+"px";
       var cx=cv.getContext("2d");
-      if(ST.thumbCanvas){
+      /* a real photograph of the look, but only until the customer's own photo
+         arrives — after that the live tile shows THEIR face instead */
+      var art = ST.srcBitmap ? null : stLookArt(p.key);
+      if(art){
+        stDrawLookArt(cx, art, CW, CH);
+      } else if(ST.thumbCanvas){
         /* live self-photo thumbnail through the preset's own Tier-1 filter (+ smoothing hint) */
         cx.filter=stCssFilter(stPresetT1Full(p));
         cx.drawImage(ST.thumbCanvas,0,0,CW,CH);
@@ -17670,7 +17715,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.72.0";
+var APP_VER="4.73.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
