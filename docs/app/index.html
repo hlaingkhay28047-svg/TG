@@ -4880,8 +4880,15 @@ function acceptImageFile(f, slot){
           /* v4.51 — keep the ORIGINAL bytes for the session so Studio can
              deliver real full-resolution exports; keyed to the downscaled
              copy so a stale original can never attach to another photo.
-             Session-only: never saved, never uploaded. */
-          state.stFull = String(rd.result).length < 34e6 ? {key:m[2].slice(0,64), du:String(rd.result)} : null;
+             Session-only: never saved, never uploaded.
+             v4.53.1 — the key was the FIRST 64 base64 chars, which for a
+             canvas-encoded JPEG is the SOI + JFIF header + quantization table:
+             bytes fixed by the encoder, identical for every photo the app has
+             ever downscaled. It matched everything, so a stale original could
+             attach to a different photo and the export delivered the WRONG
+             CLIENT'S PHOTO at full resolution. Keyed on content now, the way
+             ptDupKey already did it. */
+          state.stFull = String(rd.result).length < 34e6 ? {key:stFullKey(m[2]), du:String(rd.result)} : null;
         }
         state.refs[slot]={mime:m[1],b64:m[2],label:f.name};
         state.imgRoles=null; /* roles are re-derived by the wizard at generate time */
@@ -9379,12 +9386,28 @@ function stExportDims(){
   return {w:w,h:h};
 }
 /* decode the retained original in the background, capped for device memory */
+/* v4.53.1 — a real fingerprint of the downscaled copy: length plus the TAIL,
+   which is entropy-coded image data. The head of a canvas JPEG is the encoder's
+   own header and quantization table and is byte-identical across photos, so
+   keying on it matched everything. ptDupKey already worked this way. */
+function stFullKey(b64){ return String(b64||"").length+":"+String(b64||"").slice(-64); }
 function stLoadFullSource(du){
   ST.fullBitmap=null; ST.geoCacheFull=null;
   if(!du) return;
   var img=new Image();
   img.onload=function(){
     var cap=stExportCap(), w=img.naturalWidth, h=img.naturalHeight;
+    /* Second line of defence behind the key: the retained original and the
+       preview on stage must describe the same picture. Delivering someone
+       else's photo is the worst thing this app could do, so a shape mismatch
+       refuses the attachment and the export falls back to the preview — which
+       the export note then reports honestly. */
+    if(ST.srcW && ST.srcH && w && h){
+      var ar=w/h, arPrev=ST.srcW/ST.srcH;
+      if(Math.abs(ar-arPrev)/arPrev > 0.02){ ST.fullBitmap=null; ST.geoCacheFull=null;
+        if(typeof stRenderExportNote==="function") stRenderExportNote();
+        return; }
+    }
     if(Math.max(w,h)<=cap){ ST.fullBitmap=img; }
     else {
       var sc=cap/Math.max(w,h);
@@ -9962,7 +9985,7 @@ function stLoadImage(dataUrl,opts){
     ST.heals=[]; /* v4.44: heal taps belong to the previous photo */
     /* v4.51 — attach the retained original when it belongs to THIS photo */
     ST.fullBitmap=null; ST.geoCacheFull=null;
-    if(m && state.stFull && state.stFull.key===m[2].slice(0,64)) stLoadFullSource(state.stFull.du);
+    if(m && state.stFull && state.stFull.key===stFullKey(m[2])) stLoadFullSource(state.stFull.du);
     ST.stageResult=null; ST.showingResult=false;
     var fl=$("stStageFlip"); if(fl) fl.style.display="none";
     stBuildBuffer();
@@ -9996,7 +10019,7 @@ ST.loadImage=stLoadImage;
 function stSyncFromRef(){
   var r=state.refs[0];
   if(!r){
-    ST.srcBitmap=null; state.st.img=null; ST.geoCache=null;
+    ST.srcBitmap=null; state.st.img=null; ST.geoCache=null; ST.geoCacheFull=null; ST.fullBitmap=null;
     var stg=$("stStage"); if(stg) stg.style.display="none";
     var pg=$("pgStudio"); if(pg) pg.classList.add("nostage");
     if(ST._stageHUpd) ST._stageHUpd();
@@ -12938,7 +12961,7 @@ function stUndoReset(){
   var hadGeo=stGeoActive();
   state.st.t1=u.t1; state.st.t2=u.t2; state.st.v=u.v; state.st.pend=u.pend;
   state.st.geo=u.geo; state.st.target=u.target; state.st.preset=u.preset;
-  ST.undoSnap=null; ST.geoCache=null; ST.lutKey="";
+  ST.undoSnap=null; ST.geoCache=null; ST.geoCacheFull=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   if(ST.srcBitmap){
     if(hadGeo||stGeoActive()){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); }
@@ -12978,7 +13001,7 @@ function stApplySnap(sn){
   state.st.t1=sn.t1; state.st.t2=sn.t2; state.st.v=sn.v; state.st.pend=sn.pend;
   state.st.geo=sn.geo; state.st.target=sn.target; state.st.preset=sn.preset;
   if(healsChanged) ST.heals=(sn.heals||[]).slice();
-  ST.geoCache=null; ST.lutKey="";
+  ST.geoCache=null; ST.geoCacheFull=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   if(ST.srcBitmap){
     if(geoChanged||healsChanged){ ST.maskCache=null; ST.px0=null; stBuildBuffer(); stHealReplayPx0(); }
@@ -13336,7 +13359,7 @@ $("stReset").onclick=function(){
   /* Reset said "all adjustments reset" while leaving Bride/Groom armed, so the
      next GENERATE silently retouched one person only. */
   state.st.target="all";
-  state.st.geo=stDefGeo(); ST.geoCache=null;
+  state.st.geo=stDefGeo(); ST.geoCache=null; ST.geoCacheFull=null;
   ST.presetSnap=null; ST.lutKey="";
   stRecomputeGhosts(); stRefreshUI(); stRenderPend(); stRenderPresetCards();
   if(ST.srcBitmap){
