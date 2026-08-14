@@ -9595,16 +9595,90 @@ function stT1Changed(){
     ST.rafPending=true;
     requestAnimationFrame(function(){ ST.rafPending=false; if(!ST.holding) stApplyDragFilter(); });
   }
+  if(stNeedsProxy()) stProxySoon();
   stScheduleSettle();
 }
-function stT2Changed(){ if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; } if(typeof stUndoTick==="function") stUndoTick(); stScheduleSettle(); }
+function stT2Changed(){ if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; } if(typeof stUndoTick==="function") stUndoTick(); stProxySoon(); stScheduleSettle(); }
 /* pipeline-affecting sv controls (HSL / curve / grading / B&W / leak / WB / bg-enhance / frame) */
 function stPipeChanged(){
   if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; }
   if(typeof stUndoTick==="function") stUndoTick();
+  /* HSL, curve, grading, B&W, leak, WB, bg-enhance and frame are all pipeline
+     work with no CSS equivalent whatsoever, so this handler had exactly the
+     same silence stT2Changed did */
+  stProxySoon();
   stScheduleSettle();
 }
 function stScheduleSettle(){ clearTimeout(ST.settleT); ST.settleT=setTimeout(stRenderSettle,120); stUiSoon(); }
+
+/* ---------- v4.72: THE LIVE PREVIEW IS ACTUALLY LIVE ----------
+
+   MEASURED, on a real photo, which controls moved the canvas WHILE a slider was
+   being dragged and which sat frozen until the finger came off:
+
+     moves during the drag   exp bri con sat vib wrm tnt hi sh fad wht blk glow
+     frozen until release    cla grn vig dhz  ·  smooth even white rosy radiance
+
+   Two causes, both structural. stCssFilter can only emit thirteen of the
+   nineteen Tier-1 keys, so clarity, grain, vignette and dehaze have nothing to
+   paint with mid-drag; and stT2Changed never had an instant path at all, so
+   every skin control went straight to the debounced settle. That settle is
+   debounced with clearTimeout on EVERY input, so a slow continuous drag resets
+   it forever and the picture simply never updates. Dragging Vignette — one of
+   the strongest effects in the app, measured at 11.86 mean levels — moved
+   nothing at all until release.
+
+   So the drag now paints a PROXY: the real pipeline at a small size, upscaled
+   into the canvas. Not an approximation of the effect, the effect itself, just
+   coarser. Measured cost of the full pipeline with a heavy recipe: 74ms at the
+   preview buffer, 34ms at 384px, 11ms at 256px. 320 sits inside a frame budget
+   with room for a phone that is slower than this machine.
+
+   IT IS ONLY USED WHEN IT BUYS SOMETHING. A recipe made purely of the thirteen
+   CSS-representable keys already updates instantly AND stays sharp, so taking
+   a soft proxy there would be a downgrade. stNeedsProxy asks whether anything
+   in the current recipe is invisible to stCssFilter, and only then does the
+   drag go coarse-but-honest. The 120ms settle still lands the sharp frame. */
+var ST_PROXY_LONG = 320;
+/* the six Tier-1 keys stCssFilter cannot emit — see its body: it writes
+   brightness/contrast/saturate/sepia/hue-rotate only */
+var ST_CSS_BLIND = ["shp","cla","grn","vig","bgb","dhz"];
+function stNeedsProxy(){
+  try{
+    var t1=stEffT1(), i;
+    for(i=0;i<ST_CSS_BLIND.length;i++) if(t1[ST_CSS_BLIND[i]]) return true;
+    var t2=stEffT2();
+    for(var k in t2){
+      if(k==="finish"){ if(t2[k]) return true; continue; }
+      if(typeof t2[k]==="number" && t2[k]) return true;
+    }
+    return stPipeDirty();
+  }catch(e){ return false; }
+}
+function stProxyPaint(){
+  ST.proxyRaf=0;
+  /* the split path renders both halves through the settle, the hold button is
+     showing the untouched source, and a shown result is not the edit at all —
+     none of the three wants a proxy landing on top of it */
+  if(!ST.srcBitmap||ST.holding||ST.showingResult||ST.split.on||!ST.buf) return;
+  var c=$("stCanvas"); if(!c) return;
+  var bw=ST.buf.width, bh=ST.buf.height;
+  if(bh<=ST_PROXY_LONG) return;          /* already small — the settle is cheap enough */
+  var H=ST_PROXY_LONG, W=Math.max(1,Math.round(H*bw/bh));
+  var out;
+  try{ out=stRunPipeline(stGeoSource(),W,H,{rs:stPreviewRS(W,H)}); }catch(e){ return; }
+  var cc=c.getContext("2d");
+  cc.clearRect(0,0,c.width,c.height);
+  cc.imageSmoothingEnabled=true; cc.imageSmoothingQuality="high";
+  cc.drawImage(out,0,0,c.width,c.height);
+  /* the proxy already contains the grade; leaving the drag filter on top would
+     apply the Tier-1 keys a second time */
+  c.style.filter="";
+}
+function stProxySoon(){
+  if(ST.proxyRaf) return;
+  ST.proxyRaf=requestAnimationFrame(stProxyPaint);
+}
 /* debounced light UI refresh (gen-bar summary, button label, dirty badges) */
 function stUiSoon(){ clearTimeout(ST.uiT); ST.uiT=setTimeout(function(){ stRenderPend(); },140); }
 
@@ -14008,6 +14082,46 @@ function stTileFx(cx, t1, w, h){
   }
 }
 
+/* ---------- v4.72: baked look previews for the empty state ----------
+   Before a customer has picked a photo, every look tile was the neutral sample
+   run through the app's OWN approximation of that look — and that approximation
+   cannot render three of the nineteen Tier-1 controls at all (sharpen,
+   background blur, dehaze), so the shelf undersold itself on first open.
+
+   These sixteen are photographs of what each look actually produces, shot from
+   the same base sample so the whole row is one woman in one frame. They are
+   used ONLY while state.refs / ST.srcBitmap is empty: the moment a customer
+   loads their own photo the live computed tile takes over, because their own
+   face is worth more than any stock demonstration.
+
+   256x384 each, 181KB for the set, down from the 10.1MB the generator returned
+   — the tile is 228x288 device pixels at DPR 3 and never larger. */
+var ST_LOOK_ART = {};
+var ST_LOOK_RAF = 0;
+function stLookArt(key){
+  var e=ST_LOOK_ART[key];
+  if(e && e.nodeName) return e;      /* decoded and ready */
+  if(e) return null;                 /* already loading, or known missing */
+  ST_LOOK_ART[key]="loading";
+  var im=new Image();
+  im.onload=function(){
+    ST_LOOK_ART[key]=im;
+    /* one coalesced repaint for the whole row rather than sixteen */
+    if(!ST_LOOK_RAF) ST_LOOK_RAF=requestAnimationFrame(function(){ ST_LOOK_RAF=0; stRenderPresetCards(); });
+  };
+  im.onerror=function(){ ST_LOOK_ART[key]="missing"; };  /* falls back to the computed tile */
+  im.src="lib/looks/look-"+key+".jpg";
+  return null;
+}
+/* cover-fill, biased upward: the art is 2:3 inside a 4:5 tile, so the crop eats
+   height, and a centred crop takes it off the chin and the crown equally. The
+   face sits high in these frames, so the excess comes mostly off the bottom. */
+function stDrawLookArt(cx, im, W, H){
+  var iw=im.naturalWidth||im.width, ih=im.naturalHeight||im.height;
+  if(!iw||!ih) return;
+  var sc=Math.max(W/iw, H/ih), dw=iw*sc, dh=ih*sc;
+  cx.drawImage(im, (W-dw)/2, -(dh-H)*0.22, dw, dh);
+}
 function stRenderPresetCards(){
   [["muPresetRow",ST_PRESETS_MU],["evPresetRow",ST_PRESETS_EV]].forEach(function(pair){
     var host=$(pair[0]); if(!host) return;
@@ -14018,7 +14132,12 @@ function stRenderPresetCards(){
       var cv=document.createElement("canvas"); cv.width=CW; cv.height=CH;
       cv.style.width=ST_TILE_W+"px"; cv.style.height=ST_TILE_H+"px";
       var cx=cv.getContext("2d");
-      if(ST.thumbCanvas){
+      /* a real photograph of the look, but only until the customer's own photo
+         arrives — after that the live tile shows THEIR face instead */
+      var art = ST.srcBitmap ? null : stLookArt(p.key);
+      if(art){
+        stDrawLookArt(cx, art, CW, CH);
+      } else if(ST.thumbCanvas){
         /* live self-photo thumbnail through the preset's own Tier-1 filter (+ smoothing hint) */
         cx.filter=stCssFilter(stPresetT1Full(p));
         cx.drawImage(ST.thumbCanvas,0,0,CW,CH);
@@ -14674,7 +14793,23 @@ function stStageDrawResult(){
     var cc=c.getContext("2d");
     c.style.filter="";
     cc.clearRect(0,0,c.width,c.height);
-    cc.drawImage(ST._resImg,0,0,c.width,c.height);
+    /* v4.74 — THE RESULT KEEPS ITS OWN PROPORTIONS. This drew the result
+       stretched to fill a canvas sized for the SOURCE photo's aspect. Every
+       generator returns its own shape — 1024x1536 is the portrait ChatGPT and
+       most edit models emit — so a 3:2 original came back as a 2:3 result and
+       was squashed to fit. Measured with a perfect circle rendered into a
+       1024x1536 result on an 1800x1200 source: it arrived on the stage as a
+       2.27:1 ELLIPSE. Faces came out stretched, and the studio was approving a
+       shape the downloaded file never had — the file itself was always fine,
+       only the stage lied. Contain-fit inside the canvas keeps the result's own
+       ratio; the letterbox is honest about the two not matching. */
+    var riw=ST._resImg.naturalWidth||ST._resImg.width, rih=ST._resImg.naturalHeight||ST._resImg.height;
+    if(riw&&rih){
+      var rsc=Math.min(c.width/riw, c.height/rih), rdw=riw*rsc, rdh=rih*rsc;
+      cc.drawImage(ST._resImg,(c.width-rdw)/2,(c.height-rdh)/2,rdw,rdh);
+    } else {
+      cc.drawImage(ST._resImg,0,0,c.width,c.height);
+    }
     ST.showingResult=true;
     var f=$("stStageFlip");
     if(f){ f.style.display=""; setIcnText(f,"i-restore",L9({my:"မူရင်းပြ",en:"Show live"})); }
@@ -17596,7 +17731,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.71.0";
+var APP_VER="4.74.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

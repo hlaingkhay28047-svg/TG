@@ -86,9 +86,15 @@ const libFiles = walk(path.join(APP, "lib"), []);
 /* Re-create the declared patterns here rather than eval'ing sw.js: this file
    is asserting what the worker declares, so it has to state it independently
    or it is only checking sw.js against itself. */
+const SAMPLE_TAG = "./__lib-purge-v4-73-st-sample";
 const DECLARED = [
   { tag: CARDS_TAG, re: /\/lib\/wf\/cards5\// },
-  { tag: CAT_TAG, re: /\/lib\/styles880\/catalog\.json$/ }
+  { tag: CAT_TAG, re: /\/lib\/styles880\/catalog\.json$/ },
+  /* v4.73 — the Studio base sample, replaced under its own name when the
+     commissioned look pack landed. This list is deliberately restated here
+     rather than read out of sw.js: the point of D0 is that a new entry cannot
+     be added to the worker without a human also stating it here. */
+  { tag: SAMPLE_TAG, re: /\/lib\/st-sample\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",

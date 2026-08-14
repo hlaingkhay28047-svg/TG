@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-71-0";
+var CACHE = "hnk-web-studio-v4-74-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -78,7 +78,13 @@ var LIB_PURGES = [
      than stale art precisely because nothing looks wrong. The tag is dated
      v4.69 because that is the release this entry first reaches a device — no
      phone has ever seen an earlier one. */
-  { tag: "./__lib-purge-v4-69-styles880-catalog", re: /\/lib\/styles880\/catalog\.json$/ }
+  { tag: "./__lib-purge-v4-69-styles880-catalog", re: /\/lib\/styles880\/catalog\.json$/ },
+  /* v4.73 — the Studio's base sample photograph was replaced under its own
+     name. Every look tile is graded FROM it before a customer loads a photo, so
+     a device still holding the old one shows the whole shelf built on the wrong
+     face. The sixteen new look previews live at fresh paths under /lib/looks/
+     and need no entry: a cache miss fetches them normally. */
+  { tag: "./__lib-purge-v4-73-st-sample", re: /\/lib\/st-sample\.jpg$/ }
 ];
 
 function purgeReplacedLibArt() {

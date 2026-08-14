@@ -188,6 +188,15 @@ jobs:
       - name: Run v4.71.0 preview-vs-delivery scale sweep (phone buffer)
         run: node test/sweep_v471_upgrades.js
 
+      - name: Run v4.72.0 live-preview drag-response sweep
+        run: node test/sweep_v472_upgrades.js
+
+      - name: Run v4.73.0 baked look-preview sweep (empty state + switch)
+        run: node test/sweep_v473_upgrades.js
+
+      - name: Run v4.74.0 result-proportion sweep (no stage distortion)
+        run: node test/sweep_v474_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
