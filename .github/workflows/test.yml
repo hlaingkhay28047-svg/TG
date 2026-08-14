@@ -173,6 +173,9 @@ jobs:
       - name: Run v4.66.0 Makeup-Creation library sweep (30 new plates)
         run: node test/sweep_v466_upgrades.js
 
+      - name: Run v4.67.0 sketch-role + multi-reference sweep (mocked)
+        run: node test/sweep_v467_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
