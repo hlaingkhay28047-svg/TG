@@ -167,6 +167,9 @@ jobs:
       - name: Run v4.64.0 workflow-card fit sweep (116-card pack, 3:2 art)
         run: node test/sweep_v464_upgrades.js
 
+      - name: Run v4.65.0 Studio text-fit sweep (mocked)
+        run: node test/sweep_v465_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

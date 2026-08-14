@@ -604,7 +604,13 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .pth{position:relative;width:76px;height:96px;border-radius:var(--r-md) var(--r-md) 0 0;overflow:hidden}
 .pth img{width:100%;height:100%;object-fit:cover;display:block}
 .pth i,.pth b{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
-.pcard span{display:block;font-size:var(--fs-2xs);text-align:center;padding:3px 2px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v4.65: a preset's NAME is the only thing telling one 76px tile from the next,
+   and nowrap in a 74px content box clipped every name past ~12 characters —
+   "Clean Commercial" needed 95px and got 74. Two lines instead: the tile keeps
+   its width, and the shelf keeps its meaning. */
+.pcard span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  font-size:var(--fs-2xs);text-align:center;padding:3px 2px;color:var(--muted);
+  white-space:normal;overflow:hidden;line-height:1.25;min-height:2.5em}
 .pcard{position:relative}
 .pcard.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .pcard.on::before{content:"";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4.5 12.5 5 5L19.5 7'/%3E%3C/svg%3E") center/12px 12px no-repeat;z-index:2}
@@ -681,7 +687,18 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 /* v4.44.1 — desktop drag-over highlight for the two drop targets */
 .droptgt{outline:2px dashed var(--gold);outline-offset:4px;border-radius:var(--r-lg)}
 .st-genbar .st-x{margin-left:6px;color:var(--muted)}
-#stPendCount{font-size:var(--fs-2xs);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v4.65: this line does double duty — when work is queued it shows two short
+   counts, but when nothing is queued it carries the sentence that explains what
+   the whole page IS ("sliders preview instantly, AI edits queue for one
+   GENERATE"). nowrap was right for the counts and wrong for the sentence:
+   measured at 426px of text against 262-356px of room, so on EVERY phone width
+   the explanation was cut mid-word. It wraps now. Three lines, not two: the
+   Burmese sentence measures 90 characters and needs exactly 3 at every phone
+   width from 320 to 414 — a two-line clamp still cut it. The clamp stays so a
+   longer translation can never push the GENERATE button off-screen, and the
+   line only appears at all when nothing is queued. */
+#stPendCount{font-size:var(--fs-2xs);margin:0;white-space:normal;overflow:hidden;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-height:1.4}
 #stPendChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-top:4px}
 #stPendChips::-webkit-scrollbar{display:none}
 #stPendChips:empty{display:none}
@@ -17467,7 +17484,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.64.0";
+var APP_VER="4.65.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
