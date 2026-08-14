@@ -691,6 +691,13 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stSearch{flex:1;min-width:80px;min-height:38px;padding:6px 10px;font-size:var(--fs-xs)}
 #stGroupChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 #stGroupChips::-webkit-scrollbar{display:none}
+/* v4.62 — two meanings, two treatments, so neither can erase the other.
+   .edited = this group has controls off their default (stRefreshDots).
+   .here   = this is the group you are scrolled to (chipSpot).
+   A chip can be both, and they must still read as both. */
+#stGroupChips .chip.edited{border-color:var(--gold);color:var(--gold-hi)}
+#stGroupChips .chip.here{background:var(--gold);color:#1a1408;border-color:var(--gold)}
+#stGroupChips .chip.here.edited{box-shadow:inset 0 -3px 0 var(--gold-hi)}
 #stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:4px 11px;font-size:var(--fs-2xs)}
 /* v4.27.1 jump-bar diet: compact drops the two-row top (suite tabs + search) to one 44-50px chip row;
    #stSearch stays in the DOM (search still fully functional) — the #stSearchTgl chip swaps it back in */
@@ -10976,7 +10983,11 @@ function stRefreshDots(){
     (g.chk||[]).forEach(function(fn){ try{ if(fn()) g._n++; }catch(e){} });
     var dot=g.el.querySelector(".grp-h .dot");
     if(dot){ dot.textContent=String(g._n); dot.className="dot"+(g._n?" on":""); }
-    if(g.jumpChip) g.jumpChip.classList.toggle("on",g._n>0);
+    /* v4.62 — "has edits", NOT "you are here". These were the same class until
+       now: chipSpot (15030+) also wrote .on to mean "this is the group you are
+       scrolled to", so scrolling ERASED the dirty marker on every other chip
+       and painted a clean group as edited. Two meanings, two classes. */
+    if(g.jumpChip) g.jumpChip.classList.toggle("edited",g._n>0);
   });
 }
 function stRenderPend(){
@@ -13638,20 +13649,38 @@ function wmStampDataUrl(src, mime, q, cb){
 var ST_PRESETS_MU=[
   {key:"muNatural",my:"သဘာဝ",en:"Natural",t1:{bri:6,con:4,sat:5,wrm:4},t2:{smooth:25,white:10,even:20}},
   {key:"muFirstLove",my:"ပထမအချစ်",en:"First Love",t1:{bri:10,con:-4,sat:8,wrm:8,fad:12},t2:{smooth:35,white:20,rosy:25},sv:{mu_makeupStyle:"Natural",mu_makeupV:30},feats:["mu_makeup"]},
-  {key:"muGoddess",my:"နတ်သမီး",en:"Goddess",t1:{bri:8,con:8,sat:6},t2:{smooth:50,white:30,even:35,deshine:30},sv:{mu_eyeSize:20,mu_faceSlim:20,mu_makeupStyle:"Natural",mu_makeupV:40},feats:["mu_eye","mu_faceSlim","mu_makeup"]},
-  {key:"muPorcelain",my:"ကြွေအသား",en:"Porcelain",t1:{bri:12,con:6,sat:-5,wrm:-8},t2:{smooth:65,white:45,even:50,finish:"matte",finishV:50}},
+  /* v4.62 — Goddess and Clean Commercial were authored as the same recipe:
+     {bri:8,con:8,sat:6} against {bri:8,con:8,sat:4,shp:20}, and shp is not
+     rendered anywhere. Measured 0.3423/255 apart, a third of the JPEG noise
+     floor — the same picture twice, on the shelf, under two different names.
+     Goddess is the SOFT GLAM one, so it goes warm and glowing; Commercial is
+     the crisp one (below) and goes cool and clean. Keys unchanged, feats
+     unchanged — only the look. */
+  {key:"muGoddess",my:"နတ်သမီး",en:"Goddess",t1:{bri:10,con:14,sat:10,wrm:10,glow:22},t2:{smooth:50,white:30,even:35,deshine:30},sv:{mu_eyeSize:20,mu_faceSlim:20,mu_makeupStyle:"Natural",mu_makeupV:40},feats:["mu_eye","mu_faceSlim","mu_makeup"]},
+  {key:"muPorcelain",my:"ကြွေအသား",en:"Porcelain",t1:{bri:16,con:8,sat:-14,wrm:-16,wht:12},t2:{smooth:65,white:45,even:50,finish:"matte",finishV:50}},
   {key:"muHoney",my:"ပျားရည်",en:"Honey",t1:{wrm:18,sat:12,con:6},t2:{smooth:30,rosy:20},sv:{mu_skinTone:"honey-tan",mu_skinToneV:40},feats:["mu_skinToneF"]},
   {key:"muDouyin",my:"Douyin",en:"Douyin",t1:{con:15,sat:18,cla:15,vig:10},t2:{smooth:45,white:25},sv:{mu_makeupStyle:"Douyin",mu_makeupV:50,mu_eyeSize:15},feats:["mu_makeup","mu_eye"]},
   {key:"muCream",my:"ခရင်မ်အသား",en:"Cream",t1:{bri:14,fad:15,wrm:10,sat:-4},t2:{smooth:55,white:35,finish:"cream",finishV:45}},
   {key:"muCCD",my:"CCD ဖလင်",en:"CCD Film",t1:{con:12,sat:14,wrm:6,grn:25,vig:18}}
 ];
 var ST_PRESETS_EV=[
-  {key:"evNaturalPro",my:"Natural Pro",en:"Natural Pro",t1:{bri:4,con:4},t2:{even:30},sv:{ev_evoto:40},feats:["ev_evoto"]},
+  /* v4.62 — Natural Pro vs Matte Studio measured 1.0140/255, exactly ON the
+     noise floor, and Natural Pro vs muNatural 1.4364. "Natural Pro" is the
+     clean-but-not-flat one: a little clarity and a touch of colour is what
+     separates it from a raw frame and from the Meitu Natural beside it. */
+  {key:"evNaturalPro",my:"Natural Pro",en:"Natural Pro",t1:{bri:4,con:6,cla:14,sat:4},t2:{even:30},sv:{ev_evoto:40},feats:["ev_evoto"]},
   {key:"evEditorial",my:"Editorial",en:"Editorial",t1:{con:12,cla:20,sat:-6},t2:{even:45,gloss:-10},sv:{ev_evenDB:50,ev_blemish:60},feats:["ev_evenDBF","ev_blem"]},
   {key:"evSoftFilm",my:"Soft Film",en:"Soft Film",t1:{fad:18,grn:15,wrm:8,con:-6,sat:-8},t2:{smooth:30}},
-  {key:"evCommercial",my:"Clean Commercial",en:"Clean Commercial",t1:{bri:8,con:8,sat:4,shp:20},t2:{even:50},sv:{ev_blemish:60,ev_strayIn:50},feats:["ev_blem","ev_stray"]},
+  /* v4.62 — the other half of the Goddess collision. Commercial is the crisp,
+     neutral, catalogue-clean one: clarity and white point do the work, and it
+     stays cool where Goddess goes warm. shp:20 is kept because the RENDER uses
+     it even though the tile cannot show it. */
+  {key:"evCommercial",my:"Clean Commercial",en:"Clean Commercial",t1:{bri:8,con:12,sat:2,cla:24,wht:10,wrm:-4,shp:20},t2:{even:50},sv:{ev_blemish:60,ev_strayIn:50},feats:["ev_blem","ev_stray"]},
   {key:"evWedding",my:"မင်္ဂလာနွေး",en:"Warm Wedding",t1:{wrm:14,bri:8,sat:8,vig:8},t2:{radiance:30,rosy:15},sv:{ev_unifyBody:40},feats:["ev_unifyB"]},
-  {key:"evMatte",my:"Matte Studio",en:"Matte Studio",t1:{con:6,fad:10,sat:-4},t2:{gloss:-40,deshine:40,finish:"matte",finishV:40}},
+  /* v4.62 — the other half of that pair, and the weakest tile on the shelf at
+     1.9356/255 against an untouched frame. Matte should read MATTE: lifted
+     blacks and a real film fade, not a 6% contrast nudge. */
+  {key:"evMatte",my:"Matte Studio",en:"Matte Studio",t1:{con:8,fad:24,blk:12,sat:-8},t2:{gloss:-40,deshine:40,finish:"matte",finishV:40}},
   {key:"evAiry",my:"Bright & Airy",en:"Bright & Airy",t1:{exp:10,bri:10,sh:20,sat:6,wrm:4},t2:{radiance:35}},
   {key:"evBW",my:"Classic B&W",en:"Classic B&W",t1:{sat:-100,con:14,grn:12,vig:12},t2:{even:30}}
 ];
@@ -13729,6 +13758,71 @@ function stRenderThumbs(){
     im.src=ST_SAMPLE;
   }catch(e){}
 })();
+/* ---- v4.62: the three keys the tile renderer silently drops ----
+   stCssFilter emits 13 of the 19 t1 keys and drops shp, cla, grn, vig, bgb and
+   dhz. Measured against lib/st-sample.jpg through the app's own tile path, that
+   is not a cosmetic gap — it is why two looks render as the same picture:
+
+     muGoddess   vs evCommercial  0.3423 / 255   (JPEG noise floor is ~1.0)
+     evNaturalPro vs evMatte      1.0140 / 255
+     muDouyin    vs muCCD         1.2878 / 255
+
+   Douyin and CCD Film differ ENTIRELY in cla, grn and vig — every one of them
+   dropped — so the two tiles were a third of a noise floor apart while the
+   recipes behind them are nothing alike.
+
+   Three of the six are drawable on a canvas, and this draws them. stCssFilter
+   itself is NOT touched: sweep_path.js:162-181 asserts its exact output string
+   on #ptGrid, so changing it would break Path's contract for a Studio problem.
+
+   shp is deliberately not drawn. At 76x96 a sharpen is below the resolution of
+   the tile, and faking it would be the overstatement this release exists to
+   remove. bgb and dhz need a subject mask the tile does not have. */
+function stTileFx(cx, t1, w, h){
+  if(!t1) return;
+  var vig=Number(t1.vig)||0, grn=Number(t1.grn)||0, cla=Number(t1.cla)||0;
+  /* clarity = local contrast. An overlay-composited copy of what is already on
+     the canvas raises midtone separation the same way clarity does, and costs
+     one drawImage. */
+  if(cla>0){
+    try{
+      cx.save();
+      cx.globalCompositeOperation="overlay";
+      cx.globalAlpha=Math.min(0.42, cla/100*0.9);
+      cx.drawImage(cx.canvas,0,0,w,h);
+      cx.restore();
+    }catch(e){}
+  }
+  if(vig>0){
+    var g=cx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.28, w/2,h/2,Math.max(w,h)*0.72);
+    g.addColorStop(0,"rgba(0,0,0,0)");
+    g.addColorStop(1,"rgba(0,0,0,"+Math.min(0.62, vig/100*1.9).toFixed(3)+")");
+    cx.save(); cx.fillStyle=g; cx.fillRect(0,0,w,h); cx.restore();
+  }
+  if(grn>0){
+    /* a deterministic dither rather than Math.random: a tile that re-renders on
+       every slider move must not shimmer, and a test must be able to measure
+       the same delta twice. */
+    var a=Math.min(0.30, grn/100*0.85);
+    cx.save();
+    cx.globalAlpha=a;
+    cx.fillStyle="#ffffff";
+    for(var y=0;y<h;y+=2){
+      for(var x=(y>>1)%2;x<w;x+=3){
+        if(((x*7+y*13)%5)<2) cx.fillRect(x,y,1,1);
+      }
+    }
+    cx.globalCompositeOperation="multiply";
+    cx.fillStyle="#000000";
+    for(var y2=1;y2<h;y2+=2){
+      for(var x2=(y2>>1)%3;x2<w;x2+=3){
+        if(((x2*11+y2*5)%5)<2) cx.fillRect(x2,y2,1,1);
+      }
+    }
+    cx.restore();
+  }
+}
+
 function stRenderPresetCards(){
   [["muPresetRow",ST_PRESETS_MU],["evPresetRow",ST_PRESETS_EV]].forEach(function(pair){
     var host=$(pair[0]); if(!host) return;
@@ -13743,6 +13837,7 @@ function stRenderPresetCards(){
         cx.drawImage(ST.thumbCanvas,0,0);
         cx.filter="none";
         if(p.t2&&p.t2.smooth>=30){ cx.globalAlpha=0.4; cx.filter="blur(0.6px)"; cx.drawImage(ST.thumbCanvas,0,0); cx.filter="none"; cx.globalAlpha=1; }
+        stTileFx(cx, stPresetT1Full(p), 76, 96);
       } else {
         var gd=cx.createLinearGradient(0,0,0,96);
         gd.addColorStop(0,"#2b2312"); gd.addColorStop(1,"#131826");
@@ -14944,10 +15039,14 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     }
     var c=act&&act.jumpChip;
     if(ST._chipOn!==c){
-      if(ST._chipOn) ST._chipOn.classList.remove("on");
+      /* v4.62 — .here means "you are scrolled to this group". It used to be
+         .on, which stRefreshDots (10979) also owns for "this group has edits",
+         so the two fought: every scroll wiped the edit markers and lit an
+         unedited chip as though it were adjusted. */
+      if(ST._chipOn) ST._chipOn.classList.remove("here");
       ST._chipOn=c||null;
       if(c){
-        c.classList.add("on");
+        c.classList.add("here");
         var sr=strip.getBoundingClientRect(), cr=c.getBoundingClientRect();
         if(cr.left<sr.left+52) strip.scrollLeft+=cr.left-sr.left-52;
         else if(cr.right>sr.right-8) strip.scrollLeft+=cr.right-sr.right+8;
@@ -17299,7 +17398,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.61.0";
+var APP_VER="4.62.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
