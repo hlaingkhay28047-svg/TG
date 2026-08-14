@@ -1485,6 +1485,11 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     </div>
     <div class="status" id="stMoney"></div>
 
+    <!-- v4.59: one block per vendor. RunningHub reports a price per job;
+         Google and OpenAI report none to an API key, so those show an exact
+         run count plus an optional rate the owner types in themselves. -->
+    <div id="moneyProv"></div>
+
     <div class="grp" id="moneyGrpRuns">
       <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="moneyRunsT"></span></button>
       <div class="grp-b">
@@ -2717,6 +2722,11 @@ var TR_PATH={
   money_empty:{my:"RunningHub GENERATE မလုပ်ရသေးပါ — တစ်ခါလုပ်တာနဲ့ ဒီမှာ ကုန်ကျစရိတ် ပေါ်လာပါမယ်။",en:"No RunningHub GENERATE yet — the first one will show its cost here.",shn:"ပႆႇလႆႈ GENERATE — ပွၵ်ႈဢွၼ်တၢင်း တေပေႃႇတီႈၼႆႈ",kac:"GENERATE n galaw shi ai — langai galaw jang ndai kaw pru na",th:"ยังไม่มี GENERATE — ครั้งแรกจะแสดงค่าใช้จ่ายที่นี่",zh:"还没有 RunningHub 生成 — 第一次的花费会显示在这里。",vi:"Chưa có lần GENERATE nào — lần đầu sẽ hiện chi phí ở đây.",id:"Belum ada GENERATE — yang pertama akan tampil biayanya di sini.",ms:"Belum ada GENERATE — yang pertama akan papar kosnya di sini."},
   money_unknown:{my:"ကုန်ကျစရိတ် မပြပါ",en:"cost not reported",shn:"ဢမ်ႇပွင်ႇၵႃႈ",kac:"manu n tsun ai",th:"ไม่ได้แจ้งค่าใช้จ่าย",zh:"未报告费用",vi:"không báo chi phí",id:"biaya tidak dilaporkan",ms:"kos tidak dilaporkan"},
   money_trim:{my:"အဟောင်း {N} ခုကို စာရင်းချုပ်ထဲ ပေါင်းထားပါတယ်",en:"{N} older runs folded into the lifetime total",shn:"ဢၼ်ၵဝ်ႇ {N} ႁူမ်ႈဝႆႉၼႂ်းသဵၼ်ႈ",kac:"{N} ba ai ni gaw lifetime hta bang da sai",th:"รวมงานเก่า {N} รายการไว้ในยอดสะสมแล้ว",zh:"较早的 {N} 次已并入累计总额",vi:"{N} lượt cũ đã gộp vào tổng tích lũy",id:"{N} run lama digabung ke total seumur hidup",ms:"{N} larian lama digabung ke jumlah keseluruhan"},
+  money_all_short:{my:"စုစုပေါင်း ကုန်ကျ",en:"Total charged",shn:"ႁူမ်ႈၸႂ်ႉ",kac:"yawng jaw ai",th:"รวมที่เก็บจริง",zh:"实际扣费合计",vi:"Tổng đã tính phí",id:"Total ditagih",ms:"Jumlah dicaj"},
+  money_unrep:{my:"အထဲက {N} ကြိမ်အတွက် RunningHub က ကုန်ကျစရိတ် မပြခဲ့ပါ",en:"{N} of these were run without RunningHub reporting a cost",shn:"ၼႂ်း {N} ပွၵ်ႈ RunningHub ဢမ်ႇပွင်ႇၵႃႈ",kac:"{N} lang gaw RunningHub manu n tsun ai",th:"ในจำนวนนี้ {N} ครั้ง RunningHub ไม่ได้แจ้งค่าใช้จ่าย",zh:"其中 {N} 次 RunningHub 未报告费用",vi:"{N} lượt trong số này RunningHub không báo chi phí",id:"{N} di antaranya tidak dilaporkan biayanya oleh RunningHub",ms:"{N} daripadanya tidak dilaporkan kosnya oleh RunningHub"},
+  money_norate:{my:"{V} က API key အတွက် လက်ကျန်ငွေရော တစ်ကြိမ်စာ ကုန်ကျစရိတ်ရော ထုတ်မပြပါ — ဒါကြောင့် အကြိမ်ရေကိုပဲ တိတိကျကျ ရေတွက်ထားပါတယ်။ တစ်ကြိမ်စာ နှုန်းကို ကိုယ့် dashboard မှာကြည့်ပြီး အောက်မှာ ထည့်ထားရင် စုစုပေါင်းကို တွက်ပေးပါမယ်။",en:"{V} publishes no balance and no per-call charge to an API key — only a dashboard. So the run count here is exact and the money is not. Read your rate off that dashboard once and enter it below.",shn:"{V} ဢမ်ႇပၼ်ႁူႉငိုၼ်းလိူဝ်လႄႈ ၵႃႈပွၵ်ႈၼိုင်ႈတီႈ API key — ၵွပ်ႈၼႆ ၼပ်ႉပွၵ်ႈၵူၺ်း။ သႂ်ႇၵႃႈပွၵ်ႈၼိုင်ႈတီႈတႂ်ႈၼႆႉလႆႈ",kac:"{V} gaw API key hpe ngun ngam hte manu n tsun ai — lang hkum sha teng ai. Na rate hpe npu kaw bang u",th:"{V} ไม่เปิดเผยยอดคงเหลือหรือค่าใช้จ่ายต่อครั้งให้ API key — มีแต่แดชบอร์ด ดังนั้นจำนวนครั้งที่นี่แม่นยำ แต่จำนวนเงินไม่ ใส่อัตราต่อครั้งของคุณด้านล่าง",zh:"{V} 不向 API key 提供余额或单次费用 — 只有控制台。所以这里的次数是准确的，金额不是。请在下方填入你自己的单次费率。",vi:"{V} không công bố số dư hay chi phí mỗi lần cho API key — chỉ có bảng điều khiển. Nên số lượt ở đây là chính xác, còn số tiền thì không. Hãy nhập đơn giá của bạn bên dưới.",id:"{V} tidak menerbitkan saldo atau biaya per panggilan untuk API key — hanya dasbor. Jadi jumlah run di sini akurat, nominalnya tidak. Masukkan tarif Anda di bawah.",ms:"{V} tidak menerbitkan baki atau kos setiap panggilan untuk API key — hanya papan pemuka. Jadi bilangan larian di sini tepat, jumlahnya tidak. Masukkan kadar anda di bawah."},
+  money_rate_ph:{my:"တစ်ကြိမ်စာ နှုန်း (ဥပမာ 0.04)",en:"Your rate per run (e.g. 0.04)",shn:"ၵႃႈပွၵ်ႈၼိုင်ႈ (ဥပမႃ 0.04)",kac:"Lang mi a rate (0.04 zawn)",th:"อัตราต่อครั้งของคุณ (เช่น 0.04)",zh:"你的单次费率（例如 0.04）",vi:"Đơn giá mỗi lượt (vd 0.04)",id:"Tarif Anda per run (mis. 0.04)",ms:"Kadar anda setiap larian (cth 0.04)"},
+  money_est:{my:"ကိုယ့်နှုန်းနဲ့ တွက်ချက်ချက်",en:"At your rate",shn:"ၸွမ်းၵႃႈၸဝ်ႈၵဝ်ႇ",kac:"Na rate hte",th:"ตามอัตราของคุณ",zh:"按你的费率",vi:"Theo đơn giá của bạn",id:"Menurut tarif Anda",ms:"Mengikut kadar anda"},
   money_bymodel:{my:"Model အလိုက်",en:"By model",shn:"ၸွမ်း Model",kac:"Model hte maren",th:"ตามโมเดล",zh:"按模型",vi:"Theo model",id:"Per model",ms:"Ikut model"},
   money_recent:{my:"နောက်ဆုံး {N} ကြိမ်",en:"Last {N} runs",shn:"{N} ပွၵ်ႈလိုၼ်းသုတ်း",kac:"hpang jahtum {N} lang",th:"{N} ครั้งล่าสุด",zh:"最近 {N} 次",vi:"{N} lượt gần nhất",id:"{N} run terakhir",ms:"{N} larian terakhir"},
   money_more:{my:"နောက်ထပ် {N} ကြိမ် — CSV မှာ အကုန်ပါပါတယ်",en:"{N} more — the CSV has every row",shn:"ထႅင်ႈ {N} ပွၵ်ႈ — CSV မီးၵူႈဢၼ်",kac:"{N} lang ngam — CSV hta yawng nga ai",th:"อีก {N} ครั้ง — ไฟล์ CSV มีครบทุกแถว",zh:"还有 {N} 次 — CSV 包含全部记录",vi:"còn {N} lượt — tệp CSV có đủ mọi dòng",id:"{N} lagi — CSV memuat semua baris",ms:"{N} lagi — CSV mengandungi semua baris"},
@@ -4102,6 +4112,43 @@ function rhJobClose(taskId){
    ever trimmed are kept in a separate all-time accumulator so the lifetime
    figure stays true after the 401st job. */
 var RH_SPEND_LS="hnk_ws_spend", RH_SPEND_MAX=400;
+/* v4.59 — the owner's own unit rates for vendors that publish no price to an
+   API key. Google and OpenAI both refuse: there is no endpoint that returns a
+   remaining balance or a per-call charge for an API key, only a dashboard a
+   human logs into. So the app counts the runs exactly — that part is certain —
+   and lets the owner type the rate they read off that dashboard once.
+
+   The result is labelled as THEIR figure, never as a price this file knew.
+   Nothing here is a guessed default: an unset rate shows a run count and says
+   so, which is the truth. */
+var RH_RATE_LS="hnk_ws_rates";
+function spendRatesLoad(){
+  try{ var o=JSON.parse(localStorage.getItem(RH_RATE_LS)||"{}"); return (o&&typeof o==="object")?o:{}; }
+  catch(e){ return {}; }
+}
+function spendRatesSave(o){ try{ localStorage.setItem(RH_RATE_LS, JSON.stringify(o)); }catch(e){} }
+/* most specific first: a rate set for "gemini-3-pro-image-preview" beats the
+   vendor-wide "gemini" rate */
+function spendRate(prov, model){
+  var o=spendRatesLoad();
+  var m=model && o[prov+":"+model];
+  if(m>0) return Number(m);
+  var p=o[prov];
+  return p>0 ? Number(p) : 0;
+}
+function spendRateSet(prov, model, v){
+  var o=spendRatesLoad(), k=model?(prov+":"+model):prov;
+  if(v>0) o[k]=Number(v); else delete o[k];
+  spendRatesSave(o);
+  if(typeof renderSpend==="function") renderSpend();
+}
+/* Book one generate from a vendor that reports no cost. Same ledger, same
+   rollups — the run count is exact even when the money is not knowable. */
+var _spendSeq=0;
+function spendNoteRun(prov, model, kind){
+  spendAdd(prov+"-"+Date.now()+"-"+(++_spendSeq),
+    {kind:kind||"image", label:String(model||prov), prov:prov}, null);
+}
 function spendLoad(){
   var o=null;
   try{ o=JSON.parse(localStorage.getItem(RH_SPEND_LS)||"null"); }catch(e){ o=null; }
@@ -4127,6 +4174,10 @@ function spendAdd(taskId, meta, u){
     ts:   Date.now(),
     k:    (meta&&meta.kind)||"image",
     m:    String((meta&&meta.label)||"").slice(0,60),
+    /* v4.59 — which vendor. Absent means RunningHub: every row written before
+       this release came from rhPollTracked, so the default keeps old books
+       readable rather than re-labelling them "unknown". */
+    p:    (meta&&meta.prov)||"rh",
     money:u&&u.has?+(u.money.toFixed(6)):0,
     coins:u&&u.has?+(u.coins.toFixed(4)):0,
     secs: u?Math.round(u.secs):0,
@@ -4149,7 +4200,8 @@ function spendRollup(){
   var d0=new Date(); d0.setHours(0,0,0,0); var todayStart=d0.getTime();
   var mo=new Date(); mo.setDate(1); mo.setHours(0,0,0,0); var monthStart=mo.getTime();
   function z(){ return {n:0, money:0, coins:0, secs:0, unknown:0}; }
-  var out={ today:z(), week:z(), month:z(), all:z(), byModel:{}, rows:b.rows.slice().reverse(), cur:b.cur||RH_LAST_CUR };
+  var out={ today:z(), week:z(), month:z(), all:z(), byModel:{}, byProv:{},
+            rows:b.rows.slice().reverse(), cur:b.cur||RH_LAST_CUR };
   b.rows.forEach(function(r){
     function put(a){ a.n++; a.money+=r.money||0; a.coins+=r.coins||0; a.secs+=r.secs||0; if(!r.has) a.unknown++; }
     put(out.all);
@@ -4159,6 +4211,16 @@ function spendRollup(){
     var k=r.m||"?";
     if(!out.byModel[k]) out.byModel[k]=z();
     put(out.byModel[k]);
+    /* v4.59 — and by vendor, which is a different question: RunningHub reports
+       a price per job, Google and OpenAI report none to an API key at all, so
+       the two cannot be shown in one column without implying the second is
+       free. */
+    var pv=r.p||"rh";
+    if(!out.byProv[pv]) out.byProv[pv]=z();
+    put(out.byProv[pv]);
+    /* the owner's own rate for a vendor that publishes no price */
+    var rate=spendRate(pv, r.m);
+    if(!r.has && rate>0){ out.byProv[pv].est=(out.byProv[pv].est||0)+rate; }
   });
   /* lifetime includes what the cap threw away */
   out.all.n+=b.old.n||0; out.all.money+=b.old.money||0; out.all.coins+=b.old.coins||0;
@@ -4988,6 +5050,12 @@ async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio, quality, si
   if(!r.ok){ var e=new Error("openai-failed"); e.status=r.status; e.body=j; throw e; }
   var b64 = j && j.data && j.data[0] && j.data[0].b64_json;
   if(!b64){ var e2=new Error("openai-empty"); e2.status=200; throw e2; }
+  /* v4.59 — book the run. OpenAI publishes no remaining-balance endpoint for
+     an API key (the old /dashboard/billing route needs a browser session, not
+     a key), so only the COUNT is knowable — and it is exact. The size and
+     quality tier go in the label, because those are what move the price on
+     the dashboard the owner will read it off. */
+  try{ spendNoteRun("openai", OA_MODEL+" "+size+(quality==="high"?" high":""), "image"); }catch(e3){}
   return [{ mime:"image/png", b64: b64 }];
 }
 function oaFriendly(e){
@@ -15619,6 +15687,8 @@ function renderSpend(){
   if(r.trimmed) meta.push(t("money_trim").replace("{N}",String(r.trimmed)));
   $("moneyMeta").textContent=meta.join(" · ");
 
+  renderSpendProv(r);
+
   /* per-model, most expensive first — the answer to "which model is eating
      the month", which a flat list of eighty runs never gives you. Both blocks
      carry their own .subh: without one they read as a single list where the
@@ -15655,6 +15725,74 @@ function renderSpend(){
   });
   if(r.rows.length>SHOW) host.appendChild(el("p","mut",t("money_more").replace("{N}",String(r.rows.length-SHOW))));
 }
+/* v4.59 — one block per vendor.
+
+   The three providers this app can generate through are not comparable, and
+   pretending they are would be the same dishonesty this release exists to end:
+
+   - RunningHub reports the exact amount it charged for every job, and a
+     remaining balance. Real money, no guessing.
+   - Google publishes NO per-call charge and NO balance for an API key. There
+     is no endpoint. Only a dashboard a human signs into.
+   - OpenAI is the same: the old /dashboard/billing/credit_grants route needs a
+     browser session, not an API key.
+
+   So for the latter two the app states what it actually knows — an exact count
+   of runs — and offers one field: the rate the owner reads off that dashboard
+   once. The result is then labelled as THEIR rate, never as a price this file
+   knew. No default is shipped, because a plausible-looking default would be
+   indistinguishable from a real one on screen. */
+var PROV_NAME={ rh:"RunningHub", gemini:"Google Gemini", openai:"OpenAI" };
+function renderSpendProv(r){
+  var host=$("moneyProv"); if(!host) return;
+  host.innerHTML="";
+  var keys=Object.keys(r.byProv);
+  if(keys.length<1) return;
+  /* RunningHub first regardless of volume — it is the only one carrying real
+     money, and burying it under a busier free-tier vendor buries the answer */
+  keys.sort(function(a,b){
+    if(a==="rh") return -1;
+    if(b==="rh") return 1;
+    return (r.byProv[b].n)-(r.byProv[a].n);
+  });
+  keys.forEach(function(p){
+    var a=r.byProv[p], reports=(p==="rh");
+    var box=el("div","acc-sub");
+    box.appendChild(el("div","subh",PROV_NAME[p]||p));
+    var kv=el("div","acc-kv");
+    kv.appendChild(el("span","k",t("money_runs")));
+    kv.appendChild(el("span","v",String(a.n)));
+    box.appendChild(kv);
+    if(reports){
+      var kv2=el("div","acc-kv");
+      kv2.appendChild(el("span","k",t("money_all_short")));
+      kv2.appendChild(el("span","v",fmtMoney(a.money, r.cur)));
+      box.appendChild(kv2);
+      if(a.unknown) box.appendChild(el("p","mut",
+        t("money_unrep").replace("{N}",String(a.unknown))));
+    } else {
+      box.appendChild(el("p","mut",t("money_norate").replace("{V}",PROV_NAME[p]||p)));
+      var rate=spendRate(p,null);
+      var row=el("div","row"); row.style.marginTop="6px";
+      var inp=document.createElement("input");
+      inp.type="number"; inp.className="inp grow"; inp.step="0.0001"; inp.min="0";
+      inp.value=rate>0?String(rate):"";
+      inp.placeholder=t("money_rate_ph");
+      inp.setAttribute("aria-label", t("money_rate_ph"));
+      inp.onchange=function(){ spendRateSet(p, null, parseFloat(inp.value)||0); };
+      row.appendChild(inp);
+      box.appendChild(row);
+      if(rate>0){
+        var kv3=el("div","acc-kv");
+        kv3.appendChild(el("span","k",t("money_est")));
+        kv3.appendChild(el("span","v",fmtMoney(a.n*rate, r.cur)));
+        box.appendChild(kv3);
+      }
+    }
+    host.appendChild(box);
+  });
+}
+
 /* Read the balance + queue. Never throws at the caller: a studio must keep
    working when this is blocked, and the ledger is independent of it. */
 async function moneyRefresh(){
@@ -17094,7 +17232,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.58.0";
+var APP_VER="4.59.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -17640,7 +17778,15 @@ $("btnGen").onclick = async function(){
             var cparts=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].content&&x.j.candidates[0].content.parts||[];
             for(var i=0;i<cparts.length;i++){
               var d=cparts[i].inline_data||cparts[i].inlineData;
-              if(d&&d.data) return { out:{mime:d.mime_type||d.mimeType||"image/png", b64:d.data} };
+              if(d&&d.data){
+                /* v4.59 — book the run. Google publishes no per-call charge and
+                   no balance to an API key, so only the COUNT is knowable here
+                   — and the count is exact. Booked on the image, not on the
+                   request, so a safety block or a 503 is not charged to the
+                   owner's tally. */
+                try{ spendNoteRun("gemini", m, "image"); }catch(e2){}
+                return { out:{mime:d.mime_type||d.mimeType||"image/png", b64:d.data} };
+              }
             }
             /* HTTP 200 but no image part — surface the real reason instead of a generic message */
             var fin=x.j&&x.j.candidates&&x.j.candidates[0]&&x.j.candidates[0].finishReason||"";
