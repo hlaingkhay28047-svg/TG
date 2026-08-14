@@ -2717,6 +2717,9 @@ var TR_PATH={
   money_empty:{my:"RunningHub GENERATE မလုပ်ရသေးပါ — တစ်ခါလုပ်တာနဲ့ ဒီမှာ ကုန်ကျစရိတ် ပေါ်လာပါမယ်။",en:"No RunningHub GENERATE yet — the first one will show its cost here.",shn:"ပႆႇလႆႈ GENERATE — ပွၵ်ႈဢွၼ်တၢင်း တေပေႃႇတီႈၼႆႈ",kac:"GENERATE n galaw shi ai — langai galaw jang ndai kaw pru na",th:"ยังไม่มี GENERATE — ครั้งแรกจะแสดงค่าใช้จ่ายที่นี่",zh:"还没有 RunningHub 生成 — 第一次的花费会显示在这里。",vi:"Chưa có lần GENERATE nào — lần đầu sẽ hiện chi phí ở đây.",id:"Belum ada GENERATE — yang pertama akan tampil biayanya di sini.",ms:"Belum ada GENERATE — yang pertama akan papar kosnya di sini."},
   money_unknown:{my:"ကုန်ကျစရိတ် မပြပါ",en:"cost not reported",shn:"ဢမ်ႇပွင်ႇၵႃႈ",kac:"manu n tsun ai",th:"ไม่ได้แจ้งค่าใช้จ่าย",zh:"未报告费用",vi:"không báo chi phí",id:"biaya tidak dilaporkan",ms:"kos tidak dilaporkan"},
   money_trim:{my:"အဟောင်း {N} ခုကို စာရင်းချုပ်ထဲ ပေါင်းထားပါတယ်",en:"{N} older runs folded into the lifetime total",shn:"ဢၼ်ၵဝ်ႇ {N} ႁူမ်ႈဝႆႉၼႂ်းသဵၼ်ႈ",kac:"{N} ba ai ni gaw lifetime hta bang da sai",th:"รวมงานเก่า {N} รายการไว้ในยอดสะสมแล้ว",zh:"较早的 {N} 次已并入累计总额",vi:"{N} lượt cũ đã gộp vào tổng tích lũy",id:"{N} run lama digabung ke total seumur hidup",ms:"{N} larian lama digabung ke jumlah keseluruhan"},
+  money_bymodel:{my:"Model အလိုက်",en:"By model",shn:"ၸွမ်း Model",kac:"Model hte maren",th:"ตามโมเดล",zh:"按模型",vi:"Theo model",id:"Per model",ms:"Ikut model"},
+  money_recent:{my:"နောက်ဆုံး {N} ကြိမ်",en:"Last {N} runs",shn:"{N} ပွၵ်ႈလိုၼ်းသုတ်း",kac:"hpang jahtum {N} lang",th:"{N} ครั้งล่าสุด",zh:"最近 {N} 次",vi:"{N} lượt gần nhất",id:"{N} run terakhir",ms:"{N} larian terakhir"},
+  money_more:{my:"နောက်ထပ် {N} ကြိမ် — CSV မှာ အကုန်ပါပါတယ်",en:"{N} more — the CSV has every row",shn:"ထႅင်ႈ {N} ပွၵ်ႈ — CSV မီးၵူႈဢၼ်",kac:"{N} lang ngam — CSV hta yawng nga ai",th:"อีก {N} ครั้ง — ไฟล์ CSV มีครบทุกแถว",zh:"还有 {N} 次 — CSV 包含全部记录",vi:"còn {N} lượt — tệp CSV có đủ mọi dòng",id:"{N} lagi — CSV memuat semua baris",ms:"{N} lagi — CSV mengandungi semua baris"},
   money_csv:{my:"CSV ထုတ်မယ်",en:"Export CSV",shn:"ဢွၵ်ႇ CSV",kac:"CSV shapraw",th:"ส่งออก CSV",zh:"导出 CSV",vi:"Xuất CSV",id:"Ekspor CSV",ms:"Eksport CSV"},
   money_clear:{my:"မှတ်တမ်း ရှင်းမယ်",en:"Clear ledger",shn:"လၢင်ႉမၢႆတွင်း",kac:"Mahkrum kasin",th:"ล้างบันทึก",zh:"清空账本",vi:"Xóa sổ chi",id:"Hapus buku",ms:"Kosongkan lejar"},
   money_cleared:{my:"မှတ်တမ်း ရှင်းပြီးပါပြီ",en:"Ledger cleared",shn:"လၢင်ႉမၢႆတွင်းယဝ်ႉ",kac:"Mahkrum kasin ngut sai",th:"ล้างบันทึกแล้ว",zh:"账本已清空",vi:"Đã xóa sổ chi",id:"Buku dihapus",ms:"Lejar dikosongkan"},
@@ -15556,13 +15559,19 @@ function agoText(ts){
 }
 /* One balance string for both cards. Coins and money are different units and
    an account may report either, both, or neither — never invent one from the
-   other, and never print 0 for "not reported". */
-function balText(b){
+   other, and never print 0 for "not reported".
+
+   `big` asks for the headline form: money alone. Measured at 390px, the joined
+   form "42.18 USD · 8436 RH" wraps to two lines inside a 110px statline cell
+   and drops its own caption below the neighbouring two, so the strip stops
+   reading as a row. The coin figure keeps its place on the meta line, which
+   has the width for it. */
+function balText(b, big){
   if(!b) return "—";
-  var bits=[];
-  if(b.money!==null && b.money!==undefined) bits.push(fmtMoney(b.money, b.currency||""));
-  if(b.coins!==null && b.coins!==undefined) bits.push(Math.round(b.coins)+" RH");
-  return bits.length?bits.join(" · "):"—";
+  var money = (b.money!==null && b.money!==undefined) ? fmtMoney(b.money, b.currency||"") : "";
+  var coins = (b.coins!==null && b.coins!==undefined) ? Math.round(b.coins)+" RH" : "";
+  if(big) return money || coins || "—";
+  return [money, coins].filter(Boolean).join(" · ") || "—";
 }
 function renderDashMoney(){
   var box=$("dashMoney"); if(!box) return;
@@ -15573,10 +15582,11 @@ function renderDashMoney(){
   $("dashMoneyBalL").textContent=t("money_bal");
   $("dashMoneyTodayL").textContent=t("money_today");
   $("dashMoneyRunsL").textContent=t("money_runs");
-  $("dashMoneyBal").textContent=balText(b);
+  $("dashMoneyBal").textContent=balText(b, true);
   $("dashMoneyToday").textContent=r.today.n?fmtMoney(r.today.money, r.cur):"—";
   $("dashMoneyRuns").textContent=String(r.today.n);
-  $("dashMoneyNote").textContent = b ? t("money_checked").replace("{T}",agoText(b.ts))
+  $("dashMoneyNote").textContent = b
+    ? [balText(b), t("money_checked").replace("{T}",agoText(b.ts))].join(" · ")
     : t("money_all").replace("{N}",String(r.all.n)).replace("{C}",fmtMoney(r.all.money,r.cur));
 }
 function renderSpend(){
@@ -15588,7 +15598,7 @@ function renderSpend(){
   $("moneyBalL").textContent=t("money_bal");
   $("moneyTodayL").textContent=t("money_today");
   $("moneyMonthL").textContent=t("money_month");
-  $("moneyBal").textContent=balText(b);
+  $("moneyBal").textContent=balText(b, true);
   $("moneyToday").textContent=r.today.n?fmtMoney(r.today.money, r.cur):"—";
   $("moneyMonth").textContent=r.month.n?fmtMoney(r.month.money, r.cur):"—";
   $("btnMoneyRefresh").textContent=t("money_refresh");
@@ -15597,6 +15607,9 @@ function renderSpend(){
   setIcnText($("moneyRunsT"),"i-stack",t("money_runs_t"));
 
   var meta=[];
+  /* the headline cell shows money alone so the strip stays a row; the coin
+     figure lands here, where there is width for it */
+  if(b && b.coins!==null && b.coins!==undefined && b.money!==null && b.money!==undefined) meta.push(balText(b));
   meta.push(b?t("money_checked").replace("{T}",agoText(b.ts)):t("money_never"));
   if(b && b.queue) meta.push(t("money_queue")
     .replace("{R}",String(b.queue.running)).replace("{Q}",String(b.queue.queued))
@@ -15607,20 +15620,29 @@ function renderSpend(){
   $("moneyMeta").textContent=meta.join(" · ");
 
   /* per-model, most expensive first — the answer to "which model is eating
-     the month", which a flat list of eighty runs never gives you */
+     the month", which a flat list of eighty runs never gives you. Both blocks
+     carry their own .subh: without one they read as a single list where the
+     first five rows happen to have no dates. */
   var bm=$("moneyByModel"); bm.innerHTML="";
   var keys=Object.keys(r.byModel).sort(function(a,c){ return r.byModel[c].money-r.byModel[a].money; });
-  keys.slice(0,8).forEach(function(k){
-    var a=r.byModel[k];
-    var row=el("div","acc-kv");
-    row.appendChild(el("span","k",k));
-    row.appendChild(el("span","v",a.n+"× · "+fmtMoney(a.money,r.cur)));
-    bm.appendChild(row);
-  });
+  if(keys.length){
+    bm.appendChild(el("div","subh",t("money_bymodel")));
+    keys.slice(0,8).forEach(function(k){
+      var a=r.byModel[k];
+      var row=el("div","acc-kv");
+      row.appendChild(el("span","k",k));
+      row.appendChild(el("span","v",a.n+"× · "+fmtMoney(a.money,r.cur)));
+      bm.appendChild(row);
+    });
+  }
 
   var host=$("moneyRuns"); host.innerHTML="";
   if(!r.rows.length){ host.appendChild(el("p","mut",t("money_empty"))); return; }
-  r.rows.slice(0,40).forEach(function(row){
+  /* 20, not 40: the group opens inside the page, and a nested scroller on
+     touch is worse than a shorter list. The CSV holds every row. */
+  var SHOW=20, shown=r.rows.slice(0,SHOW);
+  host.appendChild(el("div","subh",t("money_recent").replace("{N}",String(shown.length))));
+  shown.forEach(function(row){
     var d=new Date(row.ts);
     var line=el("div","acc-kv");
     var pad=function(n){ return (n<10?"0":"")+n; };
@@ -15631,6 +15653,7 @@ function renderSpend(){
     line.appendChild(el("span","v",cost));
     host.appendChild(line);
   });
+  if(r.rows.length>SHOW) host.appendChild(el("p","mut",t("money_more").replace("{N}",String(r.rows.length-SHOW))));
 }
 /* Read the balance + queue. Never throws at the caller: a studio must keep
    working when this is blocked, and the ledger is independent of it. */

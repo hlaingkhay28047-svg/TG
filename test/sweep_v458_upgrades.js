@@ -147,14 +147,18 @@ const near = (a, b) => Math.abs(a - b) < 1e-6;
       { money: 12.5, coins: 880, currency: "USD", apiType: "SHARED", ts: Date.now(), queue: { running: 1, queued: 2, limit: 5 } }));
     renderSpend();
     out.G_bal = (document.getElementById("moneyBal") || {}).textContent;
+    out.G_meta = (document.getElementById("moneyMeta") || {}).textContent;
     out.G_today = (document.getElementById("moneyToday") || {}).textContent;
     out.G_runs = document.querySelectorAll("#moneyRuns .acc-kv").length;
+    out.G_subh = document.querySelectorAll("#moneyRuns .subh, #moneyByModel .subh").length;
     out.G_byModel = document.querySelectorAll("#moneyByModel .acc-kv").length;
     out.G_dash = getComputedStyle(document.getElementById("dashMoney")).display !== "none";
     out.G_unknownShown = document.getElementById("moneyRuns").textContent.indexOf(t("money_unknown")) >= 0;
     out.G_queueShown = document.getElementById("moneyMeta").textContent.indexOf("5") >= 0;
     /* coins alone must not become money, and money alone must not become coins */
     out.G_coinsOnly = balText({ coins: 880, money: null, currency: "" });
+    /* money-only accounts still get a headline, coins-only accounts fall back to coins */
+    out.G_bigCoins = balText({ coins: 880, money: null, currency: "" }, true);
     out.G_moneyOnly = balText({ coins: null, money: 3, currency: "USD" });
     out.G_neither = balText({ coins: null, money: null });
 
@@ -163,7 +167,7 @@ const near = (a, b) => Math.abs(a - b) < 1e-6;
     const KEYS = ["money_h", "money_intro", "money_bal", "money_today", "money_month", "money_runs",
       "money_refresh", "money_runs_t", "money_never", "money_checked", "money_queue", "money_fail",
       "money_nokey", "money_empty", "money_unknown", "money_trim", "money_csv", "money_clear",
-      "money_cleared", "money_all", "cost_ran", "cost_quote", "cost_free", "cost_free_any", "job_age_now"];
+      "money_cleared", "money_all", "money_bymodel", "money_recent", "money_more", "cost_ran", "cost_quote", "cost_free", "cost_free_any", "job_age_now"];
     out.G_missing = [];
     KEYS.forEach(k => LANGS.forEach(l => {
       const v = TR[k] && TR[k][l];
@@ -212,15 +216,18 @@ const near = (a, b) => Math.abs(a - b) < 1e-6;
     r.F_paintPrice.indexOf("0.20") >= 0 && r.F_paintNull === "" &&
     r.F_paintFree.indexOf("7") >= 0 && r.F_paintFreeCls === "free",
     { price: r.F_paintPrice, cleared: r.F_paintNull, free: r.F_paintFree, cls: r.F_paintFreeCls });
+  /* the headline cell carries money alone — measured at 390px, the joined
+     "42.18 USD · 8436 RH" wraps and drops its caption below the neighbouring
+     two, so the statline stops reading as a row. Coins keep the meta line. */
   report("G) the balance renders without inventing one unit from the other",
-    r.G_bal.indexOf("12.50 USD") >= 0 && r.G_bal.indexOf("880 RH") >= 0 &&
+    r.G_bal === "12.50 USD" && r.G_meta.indexOf("880 RH") >= 0 &&
     r.G_coinsOnly === "880 RH" && r.G_moneyOnly === "3.00 USD" && r.G_neither === "—",
-    { bal: r.G_bal, coinsOnly: r.G_coinsOnly, moneyOnly: r.G_moneyOnly, neither: r.G_neither });
+    { bal: r.G_bal, meta: r.G_meta, coinsOnly: r.G_coinsOnly, moneyOnly: r.G_moneyOnly, neither: r.G_neither });
   report("G) both cards render the book, the queue and the unknown row",
     r.G_today === "0.35" && r.G_runs === 3 && r.G_byModel === 2 && r.G_dash &&
-    r.G_unknownShown && r.G_queueShown,
+    r.G_unknownShown && r.G_queueShown && r.G_subh === 2 && r.G_bigCoins === "880 RH",
     { today: r.G_today, runs: r.G_runs, byModel: r.G_byModel, dash: r.G_dash,
-      unknown: r.G_unknownShown, queue: r.G_queueShown });
+      unknown: r.G_unknownShown, queue: r.G_queueShown, subheads: r.G_subh, bigCoins: r.G_bigCoins });
   report("G) every new string exists in all nine languages",
     r.G_missing.length === 0, r.G_missing);
   report("G) the quote line exists and stays silent with nothing pending",
