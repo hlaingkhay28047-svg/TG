@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-66-0";
+var CACHE = "hnk-web-studio-v4-68-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -34,11 +34,43 @@ self.addEventListener("install", function (e) {
   );
 });
 
+/* v4.68 — THE STALE-ART BUG, and why it is not fixed by bumping LIB_CACHE.
+   Everything under /lib/ is served cache-first and NEVER revalidated: the
+   fetch handler returns `hit` and stops. That is deliberate and right for
+   thumbnails a customer paid mobile data for. But it means a file REPLACED
+   under its own name is invisible to a returning customer for ever, and in
+   v4.64 all 116 workflow cards were replaced under their own names. Anyone who
+   had opened the Workflow page before that release kept seeing the OLD 840x630
+   art, on a phone, with no way to clear it.
+
+   Renaming LIB_CACHE would fix it by making every customer re-download up to
+   52MB of library thumbnails they already have. So instead the worker purges
+   exactly the paths that were replaced, once, guarded by a marker written into
+   the cache itself. Add a new tag + pattern here whenever files under /lib/ are
+   replaced under their own names — that is the whole maintenance rule. */
+var LIB_PURGE_TAG = "./__lib-purge-v4-64-cards5";
+var LIB_PURGE_RE = /\/lib\/wf\/cards5\//;
+
+function purgeReplacedLibArt() {
+  return caches.open(LIB_CACHE).then(function (c) {
+    return c.match(LIB_PURGE_TAG).then(function (done) {
+      if (done) return;                     /* already purged on this device */
+      return c.keys().then(function (keys) {
+        return Promise.all(keys.filter(function (k) {
+          try { return LIB_PURGE_RE.test(new URL(k.url).pathname); } catch (err) { return false; }
+        }).map(function (k) { return c.delete(k); }));
+      }).then(function () {
+        return c.put(LIB_PURGE_TAG, new Response("1"));
+      });
+    });
+  }).catch(function () { /* a failed purge must never block activation */ });
+}
+
 self.addEventListener("activate", function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== LIB_CACHE; }).map(function (k) { return caches.delete(k); }));
-    }).then(function () { return self.clients.claim(); })
+    }).then(purgeReplacedLibArt).then(function () { return self.clients.claim(); })
   );
 });
 
