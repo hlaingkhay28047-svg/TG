@@ -125,6 +125,9 @@ jobs:
       - name: Run v4.50.0 full-dictionary i18n sweep (mocked)
         run: node test/sweep_v450_upgrades.js
 
+      - name: Run v4.51.0 full-res delivery + album-scale sweep (mocked)
+        run: node test/sweep_v451_upgrades.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

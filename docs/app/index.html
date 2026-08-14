@@ -2610,7 +2610,7 @@ var TR_PATH={
   pt_n:{my:"{N} ပုံ",en:"{N} photos",shn:"{N} ၶႅပ်း",kac:"Sumla {N}",th:"{N} รูป",zh:"{N} 张",vi:"{N} ảnh",id:"{N} foto",ms:"{N} foto"},
   pt_done_n:{my:"{N} ပုံ ပြီးပါပြီ",en:"{N} photos done",shn:"ယဝ်ႉ {N} ၶႅပ်း",kac:"Sumla {N} ngut sai",th:"เสร็จ {N} รูป",zh:"完成 {N} 张",vi:"Xong {N} ảnh",id:"{N} foto selesai",ms:"{N} foto siap"},
   pt_err_n:{my:"{N} ပုံ error — ပြန်စမ်းနိုင်",en:"{N} failed — tap to retry",shn:"{N} ဢမ်ႇပဵၼ် — ၸၢမ်းၶိုၼ်း",kac:"{N} n byin — bai chyam u",th:"{N} ล้มเหลว — แตะเพื่อลองใหม่",zh:"{N} 张失败 — 点按重试",vi:"{N} lỗi — chạm để thử lại",id:"{N} gagal — ketuk untuk ulang",ms:"{N} gagal — ketik untuk cuba lagi"},
-  pt_cap:{my:"တစ်ခါလျှင် ပုံ ၃၀ အထိသာ ထည့်နိုင်ပါတယ်",en:"Up to 30 photos per batch",shn:"ပွၵ်ႈၼိုင်ႈ သႂ်ႇလႆႈထိုင် 30 ၶႅပ်းၵူၺ်း",kac:"Batch langai hta sumla 30 du hkra sha",th:"ใส่ได้สูงสุด 30 รูปต่อชุด",zh:"每批最多 30 张照片",vi:"Tối đa 30 ảnh mỗi lô",id:"Maksimal 30 foto per batch",ms:"Maksimum 30 foto setiap kelompok"},
+  pt_cap:{my:"တစ်ခါလျှင် ပုံ {N} အထိသာ ထည့်နိုင်ပါတယ်",en:"Up to {N} photos per batch",shn:"ပွၵ်ႈၼိုင်ႈ သႂ်ႇလႆႈထိုင် {N} ၶႅပ်းၵူၺ်း",kac:"Batch langai hta sumla {N} du hkra sha",th:"ใส่ได้สูงสุด {N} รูปต่อชุด",zh:"每批最多 {N} 张照片",vi:"Tối đa {N} ảnh mỗi lô",id:"Maksimal {N} foto per batch",ms:"Maksimum {N} foto setiap kelompok"},
   pt_need_photos:{my:"ပုံတွေ အရင်ထည့်ပါ",en:"Add some photos first",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈဢွၼ်တၢင်း",kac:"Sumla ni shawng bang u",th:"เพิ่มรูปก่อน",zh:"请先添加照片",vi:"Hãy thêm ảnh trước",id:"Tambahkan foto dulu",ms:"Tambah foto dahulu"},
   pt_prog:{my:"ပုံ {N}/{M}",en:"Photo {N}/{M}",shn:"ၶႅပ်းႁၢင်ႈ {N}/{M}",kac:"Sumla {N}/{M}",th:"รูปที่ {N}/{M}",zh:"第 {N}/{M} 张",vi:"Ảnh {N}/{M}",id:"Foto {N}/{M}",ms:"Foto {N}/{M}"},
   pt_sum:{my:"PATH ပြီးပါပြီ — {N}/{M} အောင်မြင်",en:"PATH finished — {N}/{M} succeeded",shn:"PATH ယဝ်ႉ — {N}/{M} ဢွင်ႇမၢၼ်",kac:"PATH ngut sai — {N}/{M} awng ai",th:"PATH เสร็จสิ้น — สำเร็จ {N}/{M}",zh:"PATH 完成 — 成功 {N}/{M}",vi:"PATH hoàn tất — {N}/{M} thành công",id:"PATH selesai — {N}/{M} berhasil",ms:"PATH selesai — {N}/{M} berjaya"},
@@ -4569,7 +4569,14 @@ function acceptImageFile(f, slot){
           return;
         }
         refsClobberGuard(slot); /* v4.46 — replacing another page's result offers Undo */
-        if(slot===0){ state.cmpBase=null; state.rsOrig=null; } /* fresh photo — compare baselines reset (v4.28) */
+        if(slot===0){
+          state.cmpBase=null; state.rsOrig=null; /* fresh photo — compare baselines reset (v4.28) */
+          /* v4.51 — keep the ORIGINAL bytes for the session so Studio can
+             deliver real full-resolution exports; keyed to the downscaled
+             copy so a stale original can never attach to another photo.
+             Session-only: never saved, never uploaded. */
+          state.stFull = String(rd.result).length < 34e6 ? {key:m[2].slice(0,64), du:String(rd.result)} : null;
+        }
         state.refs[slot]={mime:m[1],b64:m[2],label:f.name};
         state.imgRoles=null; /* roles are re-derived by the wizard at generate time */
         renderRefs();
@@ -7021,7 +7028,15 @@ renderV2Hero();
    the UI — the page never promises a preview it cannot draw (spec §6).
    PT.photos is session-only and is never written to localStorage or IDB;
    only look/tier/fx/custom persist (see saveState). */
-var PT_MAX=30;
+/* v4.51 — real album sizes. The 30-photo ceiling predates sequential baking
+   and the Blob-free grid; with those in place the cap follows the device:
+   60 on a phone, 100 on a desktop (and stays at 60 when the browser reports
+   little memory, rather than promising a batch it will die inside). */
+var PT_MAX=(function(){
+  var mem=(typeof navigator!=="undefined" && navigator.deviceMemory)||0;
+  if(mem && mem<=4) return 60;
+  return (typeof window!=="undefined" && window.innerWidth>=720) ? 100 : 60;
+})();
 /* stCssFilter() reads every key, so a look's recipe is normalised to a full
    T1 object up front — PT_LOOKS.<id>.t1 is then safe to hand straight to it. */
 function ptT1(o){
@@ -7554,7 +7569,7 @@ function ptIngestDataUrls(list){
     });
     added++;
   }
-  if(capped) toast(t("pt_cap"),"err");
+  if(capped) toast(t("pt_cap").replace("{N}",String(PT_MAX)),"err");
   if(dups) toast(L9({my:"ထပ်နေတဲ့ပုံ "+dups+" ပုံ ကျော်လိုက်ပါပြီ",en:dups+" duplicate photo"+(dups>1?"s":"")+" skipped",shn:"ၶႅပ်းႁၢင်ႈသမ်ႉၶိုၼ်း "+dups+" ဢၼ် လတ်းၶၢမ်ႈ",kac:"Bung ai sumla "+dups+" hpe lai kau sai",th:"ข้ามรูปซ้ำ "+dups+" รูป",zh:"已跳过 "+dups+" 张重复照片",vi:"Đã bỏ qua "+dups+" ảnh trùng",id:dups+" foto duplikat dilewati",ms:dups+" foto pendua dilangkau"}),"ok");
   ptSync();
   return added;
@@ -7603,8 +7618,8 @@ function ptIngestFiles(files){
   var list=Array.prototype.slice.call(files||[]);
   if(!list.length) return;
   var room=PT_MAX-PT.photos.length;
-  if(room<=0){ toast(t("pt_cap"),"err"); return; }
-  if(list.length>room){ toast(t("pt_cap"),"err"); list=list.slice(0,room); }
+  if(room<=0){ toast(t("pt_cap").replace("{N}",String(PT_MAX)),"err"); return; }
+  if(list.length>room){ toast(t("pt_cap").replace("{N}",String(PT_MAX)),"err"); list=list.slice(0,room); }
   var pending=list.length, out=new Array(list.length);
   list.forEach(function(f,i){
     var looksImage=(f.type && f.type.toLowerCase().indexOf("image/")===0) || /\.(png|jpe?g|webp)$/i.test(f.name||"");
@@ -8124,19 +8139,32 @@ function ptContactSheet(){
 function ptBakeAll(){
   if(!PT.photos.length){ toast(t("pt_need_photos"),"err"); return; }
   toast(t("pt_baking"));
-  var entries=new Array(PT.photos.length), pending=PT.photos.length;
-  PT.photos.forEach(function(p,i){
+  /* v4.51 — ONE photo at a time. The old forEach allocated a full-resolution
+     canvas per photo simultaneously, which is exactly what runs iOS Safari
+     out of canvas memory on a real 60-100 shot album; sequential baking keeps
+     one canvas alive at a time and reports progress as it goes. */
+  var entries=[], i=0, total=PT.photos.length;
+  ptProgress(0,total);
+  function next(){
+    if(i>=total){
+      ptProgress(0,0);
+      var list=entries.filter(Boolean);
+      if(!list.length){ toast(t("pt_no_result"),"err"); return; }
+      ptSaveBlob(ptZip(list), "hnk-path-look-"+ptStamp()+".zip");
+      toast(t("pt_zip_ok").replace("{N}",String(list.length)),"ok");
+      return;
+    }
+    var p=PT.photos[i], n=i;
     ptBake(p, function(du){
       var m=String(du).match(/^data:([^;]+);base64,(.+)$/);
-      entries[i]= m ? { name:"path-"+(i+1<10?"0":"")+(i+1)+"-"+ptSafeName(p.name).replace(/\.[a-z0-9]+$/i,"")+".jpg", u8:ptB64ToU8(m[2]) } : null;
-      if(!--pending){
-        var list=entries.filter(Boolean);
-        if(!list.length){ toast(t("pt_no_result"),"err"); return; }
-        ptSaveBlob(ptZip(list), "hnk-path-look-"+ptStamp()+".zip");
-        toast(t("pt_zip_ok").replace("{N}",String(list.length)),"ok");
-      }
+      entries.push(m ? { name:"path-"+(n+1<10?"0":"")+(n+1)+"-"+ptSafeName(p.name).replace(/\.[a-z0-9]+$/i,"")+".jpg", u8:ptB64ToU8(m[2]) } : null);
+      i++; ptProgress(i,total);
+      /* yield to the event loop so the canvas from this photo is collectable
+         and the progress line actually paints */
+      setTimeout(next,0);
     });
-  });
+  }
+  next();
 }
 
 /* ---- per-photo sheet ---- */
@@ -9018,6 +9046,53 @@ function stGeoSource(){
   if(!ST.geoCache) ST.geoCache=stApplyGeo(ST.srcBitmap);
   return ST.geoCache;
 }
+/* v4.51 — DELIVERY source. Everything on screen runs on the downscaled
+   preview bitmap (1536 long edge, or 2048 on a paid Retouch tier), which is
+   right for interactivity and wrong for the file the studio hands a client:
+   "Full size" was silently that same ceiling. When the original picked file
+   is still in this session, it is decoded in the background and every export
+   path bakes from IT instead — same pipeline, same geometry ratios, real
+   pixels. Falls back to the preview source whenever the decode is missing,
+   so nothing can ever break; the size chips print what will really come out. */
+function stExportCap(){ return /iPad|iPhone|iPod/.test(navigator.userAgent||"") ? 4096 : 6144; }
+function stExportSource(){
+  var full=ST.fullBitmap;
+  if(!full) return stGeoSource();
+  if(!stGeoActive()) return full;
+  if(!ST.geoCacheFull) ST.geoCacheFull=stApplyGeo(full);
+  return ST.geoCacheFull;
+}
+function stExportDims(){
+  var s=stExportSource(); if(!s) return {w:0,h:0};
+  var w=s.width||s.naturalWidth, h=s.height||s.naturalHeight;
+  var lim=svGet("st_exp_size",0);
+  if(lim && Math.max(w,h)>lim){
+    var sc=lim/Math.max(w,h);
+    w=Math.max(1,Math.round(w*sc)); h=Math.max(1,Math.round(h*sc));
+  }
+  return {w:w,h:h};
+}
+/* decode the retained original in the background, capped for device memory */
+function stLoadFullSource(du){
+  ST.fullBitmap=null; ST.geoCacheFull=null;
+  if(!du) return;
+  var img=new Image();
+  img.onload=function(){
+    var cap=stExportCap(), w=img.naturalWidth, h=img.naturalHeight;
+    if(Math.max(w,h)<=cap){ ST.fullBitmap=img; }
+    else {
+      var sc=cap/Math.max(w,h);
+      var c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(w*sc)); c.height=Math.max(1,Math.round(h*sc));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      ST.fullBitmap=c;
+    }
+    ST.geoCacheFull=null;
+    if(typeof stRenderExportNote==="function") stRenderExportNote();
+  };
+  img.onerror=function(){ ST.fullBitmap=null; };
+  img.src=du;
+}
 function stGeoDims(){
   var s=stGeoSource(); if(!s) return {w:0,h:0};
   return { w:s.width||s.naturalWidth, h:s.height||s.naturalHeight };
@@ -9030,7 +9105,7 @@ function stGeoChanged(){ /* T2 op — settle latency acceptable; mask + px0 inva
     ST.heals=[];
     toast(L9({my:"Crop/rotate ကြောင့် အစက်ဖျက်ထားတာတွေ ပြန်စလိုက်ပါပြီ",en:"Heal taps were reset by the crop/rotate",shn:"Crop/rotate ႁဵတ်းႁႂ်ႈ heal ၶိုၼ်းတႄႇ",kac:"Crop/rotate a majaw heal ni bai hpang sai",th:"การครอบตัด/หมุนได้ล้างจุดที่ลบไว้",zh:"裁剪/旋转已重置祛斑点",vi:"Cắt/xoay đã đặt lại các điểm đã xóa",id:"Crop/rotate mengatur ulang titik heal",ms:"Crop/rotate menetapkan semula titik heal"}),"");
   }
-  ST.geoCache=null; ST.maskCache=null; ST.px0=null;
+  ST.geoCache=null; ST.geoCacheFull=null; ST.maskCache=null; ST.px0=null;
   if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); stSaveSoon(); return; }
   stBuildBuffer();
   stRenderSettle(); stApplyDragFilter();
@@ -9487,8 +9562,11 @@ function stDrawHistogram(srcCv){
 }
 function stBake(){
   if(!ST.srcBitmap) return null;
-  var gd=stGeoDims();
-  var cv=stRunPipeline(stGeoSource(),gd.w,gd.h,{});
+  /* v4.51 — bake from the delivery source (the retained original when its
+     decode landed), not the preview buffer */
+  var src=stExportSource();
+  var gw=src.width||src.naturalWidth, gh=src.height||src.naturalHeight;
+  var cv=stRunPipeline(src,gw,gh,{});
   /* v4.36 export settings — format / quality / long edge, chosen next to
      GENERATE. PNG ignores the quality arg by spec; that's fine. */
   var fmt=svGet("st_exp_fmt","jpg"), q=svGet("st_exp_q",92), lim=svGet("st_exp_size",0);
@@ -9576,6 +9654,9 @@ function stLoadImage(dataUrl,opts){
     if(!opts.fromRef && m){ state.refs[0]={mime:m[1],b64:m[2],label:"studio"}; renderRefs(); }
     ST.maskCache=null; ST.lutKey=""; ST.geoCache=null;
     ST.heals=[]; /* v4.44: heal taps belong to the previous photo */
+    /* v4.51 — attach the retained original when it belongs to THIS photo */
+    ST.fullBitmap=null; ST.geoCacheFull=null;
+    if(m && state.stFull && state.stFull.key===m[2].slice(0,64)) stLoadFullSource(state.stFull.du);
     ST.stageResult=null; ST.showingResult=false;
     var fl=$("stStageFlip"); if(fl) fl.style.display="none";
     stBuildBuffer();
@@ -12258,7 +12339,23 @@ function wmStampDataUrl(src, mime, q, cb){
   host.appendChild(stChips({id:"st_exp_size_ui",allowOff:false,
     choices:[[0,L9({my:"မူလအရွယ်",en:"Full size",shn:"တဵမ်တူဝ်",kac:"Kaba hkum",th:"ขนาดเต็ม",zh:"原尺寸",vi:"Kích thước gốc",id:"Ukuran penuh",ms:"Saiz penuh"})],[2048,"2048px"],[1280,"1280px"]],
     get:function(){ return svGet("st_exp_size",0); },
-    set:function(v){ svSet("st_exp_size",v||0); }}));
+    set:function(v){ svSet("st_exp_size",v||0); if(typeof stRenderExportNote==="function") stRenderExportNote(); }}));
+  /* v4.51 export honesty: print the pixels the next download will really
+     have, and say plainly when they come from the preview copy rather than
+     the original file (a re-picked photo after a reload has no original). */
+  (function(){
+    var note=el("p","mut"); note.id="stExpNote"; host.appendChild(note);
+    window.stRenderExportNote=function(){
+      var n=$("stExpNote"); if(!n) return;
+      if(!ST.srcBitmap){ n.textContent=""; return; }
+      var d=stExportDims();
+      var fromFull=!!ST.fullBitmap;
+      n.textContent = d.w+" × "+d.h+" px" + (fromFull
+        ? L9({my:" — မူရင်းဖိုင်ရဲ့ pixel အစစ်",en:" — real pixels from your original file",shn:" — pixel တႄႉတီႈၾၢႆႇတူဝ်ႈ",kac:"— original file kaw na pixel teng",th:" — พิกเซลจริงจากไฟล์ต้นฉบับ",zh:" — 来自原始文件的真实像素",vi:" — pixel thật từ tệp gốc",id:" — piksel asli dari file asal",ms:" — piksel sebenar dari fail asal"})
+        : L9({my:" — preview copy မှ (မူရင်းဖိုင် ဒီ session မှာ မရှိ)",en:" — from the preview copy (the original isn't in this session)",th:" — จากสำเนาพรีวิว",zh:" — 来自预览副本",vi:" — từ bản xem trước",id:" — dari salinan pratinjau",ms:" — daripada salinan pratonton"}));
+    };
+    ST.refreshFns.push(window.stRenderExportNote);
+  })();
   /* v4.45 — studio watermark/logo: stamped at DELIVERY TIME only (downloads,
      shares, 2-up) so stored masters and the Gallery stay clean. Settings sit
      outside ST.pipeSv on purpose: changing them never dirties the canvas. */
@@ -12639,8 +12736,10 @@ function stAutoEnhance(){
 /* ---------- v4.42: BEFORE | AFTER 2-up export — the client-approval JPEG ---------- */
 function stExport2Up(){
   if(!ST.srcBitmap){ stT2Changed(); return; }
-  var gd=stGeoDims();
-  var out=stRunPipeline(stGeoSource(),gd.w,gd.h,{});
+  /* v4.51 — the client-approval JPEG rides the same delivery source */
+  var esrc=stExportSource();
+  var gd={w:esrc.width||esrc.naturalWidth, h:esrc.height||esrc.naturalHeight};
+  var out=stRunPipeline(esrc,gd.w,gd.h,{});
   var lim=svGet("st_exp_size",0)||2048;
   var sc=Math.min(1, lim/Math.max(gd.w,gd.h));
   var w=Math.max(1,Math.round(gd.w*sc)), h=Math.max(1,Math.round(gd.h*sc));
@@ -12648,7 +12747,7 @@ function stExport2Up(){
   var c=document.createElement("canvas"); c.width=w*2+gap; c.height=h;
   var cc=c.getContext("2d");
   cc.fillStyle="#0b0d14"; cc.fillRect(0,0,c.width,c.height);
-  cc.drawImage(stGeoSource(),0,0,w,h);
+  cc.drawImage(esrc,0,0,w,h);
   cc.drawImage(out,w+gap,0,w,h);
   var bh=Math.max(22,Math.round(h*0.045));
   cc.fillStyle="rgba(11,13,20,.72)";
@@ -13052,10 +13151,27 @@ $("btnStToRef").onclick=function(){
 
 /* ---- GENERATE: local commit (zero network) or Tier-3 AI via the shared dispatcher ---- */
 var stBusy=false;
+var stSpinT=null, stSpinT0=0;
 function stSetBusy(b,label){
   stBusy=b; ST.busy=b;
   var btn=$("btnStGen"); if(btn){ btn.disabled=b; btn.classList.toggle("working",!!b); }
-  var sp=$("stSpin"); if(sp){ sp.className="spin"+(b?" on":""); if(label) sp.textContent=label; }
+  var sp=$("stSpin");
+  if(sp){
+    sp.className="spin"+(b?" on":"");
+    if(label) sp.textContent=label;
+    /* v4.51 — elapsed seconds, the same honest ticker V2/Path/Create already
+       run: a 1-2 minute Studio AI pass used to sit behind a frozen label with
+       no sign it was still alive */
+    clearInterval(stSpinT); stSpinT=null;
+    if(b){
+      var base=label||sp.textContent||"";
+      stSpinT0=Date.now();
+      stSpinT=setInterval(function(){
+        var el2=$("stSpin"); if(!el2||el2.className.indexOf("on")<0){ clearInterval(stSpinT); stSpinT=null; return; }
+        el2.textContent=base+" · "+Math.round((Date.now()-stSpinT0)/1000)+"s";
+      },1000);
+    }
+  }
   /* v4.44 — busy-off always hides the Stop chip; the abortable call sites
      (Tier-3 dispatch, HD Finish) show it themselves once their controller
      exists. The free 30ms local render never shows it — nothing to stop. */
@@ -15587,7 +15703,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.50.0";
+var APP_VER="4.51.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
