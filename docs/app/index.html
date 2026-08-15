@@ -2059,6 +2059,25 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="refstrip" id="vidRefStrip"></div>
   </section>
 
+  <!-- v4.80.0: pgVideo had a bare textarea and nothing else. Every other
+       generating page in the app opens with one-tap work — the Workflow grid,
+       the Retouch presets, the Path looks — so the one page that asks the user
+       to invent a shot description from scratch was the odd one out. -->
+  <section class="card">
+    <!-- literal title + a .mut line below, per the phase-3 header pattern:
+         an h2 carries no inline <span> subtitle, and the translated prose
+         lives in #vidWfIntro. verify_phase3_header_emptystate.js enforces it
+         and caught the first draft of this section doing it the other way. -->
+    <h2 id="vidWfH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-brain"/></svg>VIDEO WORKFLOW</h2>
+    <p class="mut" id="vidWfIntro"></p>
+    <div class="chips" id="vidWfRow"></div>
+    <div id="vidWfOpts" style="display:none">
+      <div class="subh" id="vidWfCityH"></div>
+      <div class="chips" id="vidWfCityRow"></div>
+    </div>
+    <p class="mut" id="vidWfHint" style="margin-top:8px"></p>
+  </section>
+
   <section class="card">
     <h2>PROMPT</h2>
     <textarea class="inp" id="vidPrompt" placeholder="…"></textarea>
@@ -17924,7 +17943,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.79.0";
+var APP_VER="4.80.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -18869,6 +18888,129 @@ RH_VIDEO_MODELS.forEach(function(m){ var o=document.createElement("option"); o.v
 $("selVidModel").onchange = updateVidModelUI;
 $("vidPrompt").addEventListener("input", updateVidPromptCount);
 updateVidModelUI();
+
+/* ---------- v4.80.0 Video workflows (pgVideo) ----------
+   Studied frame by frame from the reference clip the owner sent: 360x640,
+   13.3s, 30fps. A woman walks left-to-right across a pure white cyclorama; a
+   giant vertical boarding pass slides in from the right and parks in the
+   centre; she crosses BEHIND it and is revealed inside the card already
+   re-costumed for the printed destination, then walks out the far edge. The
+   clip cycles four cities (Bangkok, Seoul, Dali, Tokyo) that way.
+
+   One honest limit is designed in rather than papered over: the longest clip
+   either registered model will return is 10s, and the reference spends ~3.3s
+   per city. Four cities in one generation is not a thing that exists. So a
+   run produces ONE destination, the hint says to run it per city and join
+   them, and the city row makes that a two-tap loop instead of a rewrite.
+
+   The composer targets Omni Flash specifically — it is the only registered
+   video model with aspect control (the shot is 9:16 or it is nothing) and a
+   2048-char prompt ceiling; RH Video G's 800 would clip this mid-sentence,
+   and rhV2SubmitVideo clips at submit, so the failure would be silent. */
+var VID_CITIES=[
+  { k:"bangkok", en:"Bangkok",   loc:"曼谷",
+    my:"ဘန်ကောက်",
+    fit:"a pale blush-pink chiffon sundress, a woven straw sun hat, tan leather sandals, a small shoulder bag with sunglasses hooked on the strap, an ice cream in one hand" },
+  { k:"seoul",   en:"Seoul",     loc:"서울",
+    my:"ဆိုးလ်",
+    fit:"a blue and white striped knit top, a soft dotted midi skirt, a small red shoulder bag and red flat shoes" },
+  { k:"tokyo",   en:"Tokyo",     loc:"東京",
+    my:"တိုကျို",
+    fit:"a crisp white blouse, a pleated black midi skirt, a slim black shoulder bag and black mary-jane shoes" },
+  { k:"dali",    en:"Dali",      loc:"大理",
+    my:"တာလီ",
+    fit:"a layered beige tiered boho dress, a large slouchy suede shoulder bag and brown suede boots" },
+  { k:"yangon",  en:"Yangon",    loc:"ရန်ကုန်",
+    my:"ရန်ကုန်",
+    fit:"a Myanmar htamein longyi in a finely woven pattern with a fitted lace aingyi blouse, a light shawl over one shoulder and low heeled slippers" },
+  { k:"bagan",   en:"Bagan",     loc:"ပုဂံ",
+    my:"ပုဂံ",
+    fit:"a flowing terracotta linen dress with a wide-brimmed sun hat, a woven shoulder bag and flat sandals" },
+  { k:"singapore",en:"Singapore",loc:"新加坡",
+    my:"စင်္ကာပူ",
+    fit:"a tailored cream linen shirt-dress with a slim belt, white sneakers and a structured tote bag" },
+  { k:"hanoi",   en:"Hanoi",     loc:"Hà Nội",
+    my:"ဟနွိုင်း",
+    fit:"a white ao dai over soft wide trousers, a conical straw hat carried in one hand and flat sandals" }
+];
+var vidWfCity = VID_CITIES[0].k;
+var vidWfActive = null;
+
+function vidCityDef(k){
+  for(var i=0;i<VID_CITIES.length;i++) if(VID_CITIES[i].k===k) return VID_CITIES[i];
+  return VID_CITIES[0];
+}
+
+var VID_WF=[
+  { key:"boardingPass", icon:"i-clapper", cities:true,
+    label:L9({my:"လေယာဉ်လက်မှတ် ခရီးသွား",en:"Boarding Pass Travel",shn:"ၶႅပ်းၶိုၼ်ႈႁိူဝ်းမိၼ် ဢႅဝ်ႇလႄႇ",kac:"Boarding Pass Bu Hkawm",th:"บอร์ดดิ้งพาสท่องเที่ยว",zh:"登机牌旅行",vi:"Vé máy bay du lịch",id:"Boarding Pass Travel",ms:"Boarding Pass Travel"}),
+    /* 1080p because the pass carries printed type — at 720p the FROM/TO
+       fields turn to mush and the whole gag is the type being readable */
+    setup:{ model:"gemini-omni-video", res:"1080p", dur:"10", aspect:"9:16" },
+    text:function(c){
+      return "Full-body cinematic fashion-transition video, vertical 9:16 format, on a pure seamless white studio background with a soft contact shadow under the feet. "
+       + "The woman from the reference photo walks steadily from left to right across the empty white frame in a natural relaxed walk cycle, arms swinging, filmed at eye level with a locked-off camera. She starts in casual travel clothes with a small backpack. "
+       + "About one third in, a very large airline BOARDING PASS slides in from the right edge and settles upright in the centre, filling most of the frame height like a tall vertical panel. It is a clean modern pass: pale card stock, a coloured stub down the right side reading TAOAGOU AIRLINES beside a small aeroplane glyph, a barcode top and bottom, and printed fields NAME, FLT, GATE, SEAT, TIME, FROM, TO, CLS, BAGGAGE. The destination "
+       + c.en.toUpperCase() + " is set large across the card in outlined display type with " + c.loc + " above it, and the FROM field reads YANGON. "
+       + "The pass behaves as a portal. As she reaches its left edge she passes BEHIND the card and is revealed inside it already transformed, now dressed head to toe in " + c.fit + ". She keeps walking at the same speed inside the boarding-pass frame and exits its right edge. "
+       + "Her face, bone structure, hair and identity stay exactly as the reference photo from the first frame to the last. One continuous take, smooth steady motion, no cuts, no camera shake. The only text in the shot is the printing on the boarding pass itself. Clean commercial e-commerce lookbook finish.";
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ (တစ်ကိုယ်လုံး၊ မတ်တပ် သို့ လမ်းလျှောက်) တင်ပါ။ မြို့တစ်မြို့ကို ၁၀ စက္ကန့် တစ်ခုစီ ထုတ်ပြီး နောက်ပိုင်း ဆက်ချိတ်ပါ။",en:"Load 1 full-body photo (standing or mid-stride). One 10s clip per city — generate each, then join them.",shn:"တၢင်ႇၶႅပ်းႁၢင်ႈ 1 ဢၼ် (တူဝ်တဵမ်)။ မိူင်းၼိုင်ႈ 10 ၸႅၵ်ႉ ၼိုင်ႈဢၼ်။",kac:"Sumla 1 (hkum ting) bang u. Mare langai 10s langai galaw nna hkan matut u.",th:"ใส่รูปเต็มตัว 1 รูป — 1 คลิป 10 วิ ต่อ 1 เมือง แล้วนำมาต่อกัน",zh:"上传 1 张全身照 — 每座城市一段 10 秒，生成后再拼接",vi:"Tải 1 ảnh toàn thân — mỗi thành phố một clip 10 giây, tạo xong rồi ghép lại",id:"Unggah 1 foto seluruh badan — satu klip 10 detik per kota, lalu gabungkan",ms:"Muat naik 1 foto seluruh badan — satu klip 10 saat setiap bandar, kemudian gabungkan"}) }
+];
+function vidWfByKey(k){ for(var i=0;i<VID_WF.length;i++) if(VID_WF[i].key===k) return VID_WF[i]; return null; }
+
+function vidWfApply(w){
+  vidWfActive=w.key;
+  var s=w.setup||{};
+  /* model first: updateVidModelUI() rebuilds the res/dur option lists, so a
+     value written before the switch would be wiped by the rebuild */
+  if(s.model){ $("selVidModel").value=s.model; updateVidModelUI(); }
+  if(s.res)    $("selVidRes").value=s.res;
+  if(s.dur)    $("selVidDur").value=String(s.dur);
+  if(s.aspect) $("selVidAspect").value=s.aspect;
+  $("vidPrompt").value = w.text(vidCityDef(vidWfCity));
+  updateVidPromptCount();
+  renderVidWf();
+  var m=vidModelDef();
+  if($("vidPrompt").value.length > m.promptMax){
+    /* rhV2SubmitVideo clips silently at submit — say so here instead */
+    toast(L9({my:"Prompt ရှည်လွန်းလို့ ဒီ model နဲ့ ဖြတ်တောက်ခံရမယ်",en:"Prompt is longer than this model accepts and would be clipped"}),"err");
+  }
+  toast(stripIcn(w.label)+" ✓","ok");
+}
+
+function renderVidWf(){
+  var host=$("vidWfRow"); if(!host) return;
+  host.innerHTML="";
+  VID_WF.forEach(function(w){
+    var c=el("button","chip"+(vidWfActive===w.key?" on":""));
+    c.innerHTML=(w.icon?icn(w.icon)+" ":"")+escH(stripIcn(w.label));
+    c.onclick=function(){ vidWfApply(w); };
+    host.appendChild(c);
+  });
+  var w=vidWfActive?vidWfByKey(vidWfActive):null;
+  $("vidWfOpts").style.display = (w && w.cities) ? "" : "none";
+  $("vidWfHint").textContent = w ? stripIcn(w.hint) : VID_WF_INTRO_HINT;
+  var crow=$("vidWfCityRow"); crow.innerHTML="";
+  if(w && w.cities){
+    VID_CITIES.forEach(function(ct){
+      var b=el("button","chip"+(vidWfCity===ct.k?" on":""), (LANG==="my"?ct.my:ct.en)+" · "+ct.loc);
+      b.onclick=function(){
+        vidWfCity=ct.k;
+        /* re-compose rather than string-patch: the city appears in three
+           different places in the prompt (headline, local script, outfit) */
+        var cur=vidWfByKey(vidWfActive);
+        if(cur){ $("vidPrompt").value=cur.text(ct); updateVidPromptCount(); }
+        renderVidWf();
+      };
+      crow.appendChild(b);
+    });
+  }
+}
+$("vidWfIntro").textContent = L9({my:"တစ်ချက်နှိပ်ရုံနဲ့ prompt၊ model၊ အရွယ်အစား၊ ကြာချိန် အကုန် ချိန်ပေးမယ်။",en:"One tap fills the prompt and sets the model, size and duration for you.",shn:"ဢိုတ်းၼိုင်ႈ — prompt လႄႈ model, ႁၢင်ႈ, ၶၢဝ်းယၢမ်း တင်းသဵင်ႈ။",kac:"Langai mi hkan — prompt, model, hkum hte ten yawng jaw ya ai.",th:"แตะครั้งเดียว เติม prompt และตั้งค่าโมเดล ขนาด ระยะเวลาให้เลย",zh:"一键填入 prompt 并设置模型、尺寸与时长",vi:"Một chạm điền prompt và đặt model, kích thước, thời lượng",id:"Sekali tap mengisi prompt dan mengatur model, ukuran, durasi",ms:"Satu ketikan mengisi prompt dan menetapkan model, saiz, tempoh"});
+$("vidWfCityH").textContent = L9({my:"ခရီးစဉ် ရွေးပါ",en:"Destination",shn:"လိူၵ်ႈမိူင်း",kac:"Sa na shara",th:"จุดหมายปลายทาง",zh:"目的地",vi:"Điểm đến",id:"Tujuan",ms:"Destinasi"});
+var VID_WF_INTRO_HINT = L9({my:"Workflow တစ်ခု ရွေးပါ — ဒါမှမဟုတ် အောက်မှာ ကိုယ်တိုင် ရေးပါ။",en:"Pick a workflow — or write your own prompt below.",shn:"လိူၵ်ႈ workflow ဢၼ်ၼိုင်ႈ — ဢမ်ႇၼၼ် တႅမ်ႈႁင်းၵူၺ်း။",kac:"Workflow langai lata u — nrai npu de nang tsun u.",th:"เลือก workflow — หรือเขียน prompt เองด้านล่าง",zh:"选择一个 workflow — 或在下方自行输入",vi:"Chọn một workflow — hoặc tự viết prompt bên dưới",id:"Pilih workflow — atau tulis prompt sendiri di bawah",ms:"Pilih workflow — atau tulis prompt sendiri di bawah"});
+renderVidWf();
 
 $("vidIntro").textContent = L9({my:"ရှိပြီးသား ပုံကနေ ရွေ့လျားနေတဲ့ ဗီဒီယို ဆောက်ပေးမယ် — RunningHub Enterprise key လိုအပ်ပါတယ် (Gemini/OpenAI နဲ့ မရသေးပါ)။",en:"Turn an existing photo into a moving video — needs your RunningHub Enterprise key (not available via Gemini/OpenAI yet).",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈပဵၼ်ဝီဒီရူဝ်ႈ — လူဝ်ႇ RunningHub Enterprise key",kac:"Nga ai sumla hpe video ni hku galai ai — RunningHub Enterprise key ra ai",th:"เปลี่ยนรูปที่มีอยู่ให้เป็นวิดีโอเคลื่อนไหว — ต้องมี RunningHub Enterprise key",zh:"把现有照片变成动态视频 — 需要你的 RunningHub Enterprise key",vi:"Biến ảnh có sẵn thành video chuyển động — cần key RunningHub Enterprise",id:"Ubah foto yang ada menjadi video bergerak — perlu RunningHub Enterprise key",ms:"Tukar foto sedia ada kepada video bergerak — perlukan RunningHub Enterprise key"});
 $("vidPrompt").placeholder = L9({my:"ဗီဒီယိုထဲမှာ ဘာဖြစ်စေချင်လဲ ရေးပါ — ဥပမာ: subject slowly turns and smiles, camera slowly pushes in…",en:"Describe what should happen in the video — e.g. subject slowly turns and smiles, camera slowly pushes in…",shn:"တႅမ်ႈဝႃႈသင်တေပဵၼ်ၼႂ်းဝီဒီရူဝ်ႈ",kac:"Video kata gaw n gara hku byin na ni tsun dan u",th:"อธิบายว่าจะเกิดอะไรขึ้นในวิดีโอ",zh:"描述视频中应该发生的事情",vi:"Mô tả điều sẽ xảy ra trong video",id:"Jelaskan apa yang harus terjadi di video",ms:"Terangkan apa yang patut berlaku dalam video"});
