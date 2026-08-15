@@ -264,9 +264,19 @@ report("F) the shared RELIGHT guard still applies to all twelve",
     shipped.every(x => x.wired && x.loaded && x.w === 960 && x.h === 640),
     shipped);
 
-  report("G7) NO_CARD_JPG is empty again, per its own maintenance rule",
-    /var NO_CARD_JPG=\[\];/.test(src),
-    { line: (src.match(/var NO_CARD_JPG=\[[^\]]*\];/) || [])[0] });
+  /* v4.88 — THIS ASSERTION WAS WRONG AND ITS OWN BATTERY CAUGHT IT. It read
+     "NO_CARD_JPG is empty", which passed in v4.86 and then failed the moment
+     v4.88 added two workflows that legitimately ship before their card art —
+     the exact purpose the list exists for. An assertion that fails when the
+     product gains a feature is testing the wrong thing; the ninth instance of
+     that mistake in this repo. The contract is that THESE FOUR ids are off the
+     list, because their photographs landed. What else is on it is not this
+     suite's business. */
+  const noCard = (src.match(/var NO_CARD_JPG=\[([^\]]*)\];/) || [])[1] || "";
+  const stillSuppressed = ["lg-winSoftL", "lg-sunShaft", "lg-winHard", "lg-winWide"]
+    .filter(k => noCard.indexOf(k) >= 0);
+  report("G7) the four window ids are off NO_CARD_JPG, per its maintenance rule",
+    stillSuppressed.length === 0, { stillSuppressed: stillSuppressed, list: noCard });
 
   report("H) no page errors", errs.length === 0, errs);
 
