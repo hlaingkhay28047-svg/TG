@@ -164,7 +164,14 @@ select.inp{padding:9px 10px}
 /* v4.41: the Library's 33-chip group wall becomes two horizontal rails */
 #libFilters,#libGroups{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
 #libFilters::-webkit-scrollbar,#libGroups::-webkit-scrollbar{display:none}
-#libFilters .chip,#libGroups .chip{flex:0 0 auto;white-space:nowrap}
+/* v4.92 adds #wfJump to this list — measured, and it had exactly the bug this
+   rule exists to prevent. #wfJump is built as a nowrap overflow-x:auto rail,
+   but its chips kept the default flex-shrink of 1, so instead of scrolling
+   they SQUASHED: "Background & Scene 14" wrapped to three lines and the pill,
+   at border-radius:999px, ballooned into a 118px-tall ellipse. Every chip in
+   a horizontal rail has to be flex:0 0 auto — the rail scrolls, the chip does
+   not shrink. */
+#libFilters .chip,#libGroups .chip,#wfJump .chip{flex:0 0 auto;white-space:nowrap}
 /* v4.41: full-screen look viewer (library + gallery share it) */
 #lookZoom{position:fixed;inset:0;z-index:70;background:rgba(8,10,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;overscroll-behavior:contain}
 #lookZoom.on{display:flex}
@@ -337,7 +344,27 @@ textarea.wiz-prompt{min-height:220px}
 .wizrow .inp{flex:1 1 150px;min-width:150px}
 
 /* compact workflow mini-cards */
-.wfgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+/* v4.92 — minmax(0,1fr), NOT 1fr. This was measured, and it is the single
+   defect behind the owner's screenshot of a Workflow page whose right-hand
+   card column was sliced off down the middle.
+   `1fr` is shorthand for minmax(auto,1fr): the track FLOOR is min-content, so
+   a track can never be narrower than the widest unbreakable run of text in
+   it. Burmese has no inter-word spaces, and several summaries glue tokens
+   together with punctuation the line-breaker will not break at — the worst,
+   "အရောင်+အလင်း+မိတ်ကပ်+retouch style", measured 249.2px of min-content on
+   its own. The two tracks therefore refused to shrink, the grid grew to
+   426px inside a 412px phone, and .grp{overflow:hidden} clipped whatever
+   crossed the edge: the entire right column of every category.
+   The knock-on was the untidiness he could see even where nothing was cut —
+   because the columns were unequal (155px vs 213px), the 3:2 thumbnails in
+   one row rendered 90.1px and 127.3px tall, so the titles beside each other
+   never lined up.
+   Measured on pgWf, counting only elements no ancestor scroller accounts for:
+   56 clipped at 412 and 91 at both 390 and 360 before, 0 at all three after;
+   thumbnail heights 90.1/127.3 before, a flat 88 after. Worth knowing for next
+   time: "does the document scroll sideways" stayed GREEN throughout, because
+   .grp{overflow:hidden} swallowed the overflow rather than propagating it. */
+.wfgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px}
 /* odd-count categories (e.g. Face & Portrait 7, Replace Mix 5) would
    otherwise leave a dangling empty cell next to the last card — span it
    across both columns instead (see the wfgrid-render loop) */
@@ -375,8 +402,15 @@ textarea.wiz-prompt{min-height:220px}
 .wfv img.svgv{object-position:center;object-fit:cover}
 img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .wfv .arw{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;width:22px;height:22px;border-radius:50%;background:var(--gold);color:#1a1408;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 8px rgba(217,164,65,.9)}
-.wfmini .t{font-size:12.5px;font-weight:800;line-height:1.45}
-.wfmini .s{font-size:11.5px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* v4.92 — the other half of the minmax(0,1fr) fix above. Letting the track
+   shrink past min-content is only safe if the text inside can break there;
+   otherwise the long run stops being clipped by .grp and starts being clipped
+   by the card, which is no better. overflow-wrap:anywhere gives the browser
+   permission to break inside those glued runs as a last resort — it changes
+   nothing for text that already has somewhere to break, which is nearly all
+   of it. */
+.wfmini .t{font-size:12.5px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
+.wfmini .s{font-size:11.5px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800}
 
 /* v3.0 UX */
@@ -532,7 +566,9 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   .wrap{max-width:980px}
   /* prose only — .grp-b holds the wfgrid/chip groups and must stay full width */
   .lede,.mut{max-width:72ch}
-  .wfgrid{grid-template-columns:repeat(3,1fr)}
+  /* v4.92: same minmax(0,…) floor as the phone rule above — a desktop column
+     is wider, but the min-content trap scales with the text, not the screen */
+  .wfgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .wfgrid .wf-span2{grid-column:auto}
 }
 /* pointer-only hover feedback for the interactives that had none */
@@ -6197,6 +6233,9 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       access:{my:"IMAGE 2 က လက်ဝတ်ရတနာတွေ ကူးထည့် — နားကပ်၊ ဆွဲကြိုး၊ လက်ကောက်",en:"Copy the jewelry from IMAGE 2 — earrings, necklace, bracelets",shn:"ဢဝ်ၶူဝ်းၶမ်းၶူဝ်းငိုၼ်း IMAGE 2 မႃးသႂ်ႇ — ဢၼ်သႂ်ႇႁူ၊ သၢႆၶေႃး၊ ဢၼ်သႂ်ႇမိုဝ်း",kac:"IMAGE 2 na ja rai ni hpe copy la — earrings, necklace, bracelets",th:"คัดลอกเครื่องประดับจาก IMAGE 2 — ต่างหู สร้อยคอ กำไล",zh:"复制 IMAGE 2 的首饰 — 耳环、项链、手链",vi:"Sao chép trang sức từ IMAGE 2 — bông tai, dây chuyền, vòng tay",id:"Salin perhiasan dari IMAGE 2 — anting, kalung, gelang",ms:"Salin barang kemas dari IMAGE 2 — anting-anting, rantai, gelang"},
       pose:{my:"IMAGE 2 ရဲ့ body pose အတိုင်း ပြန် pose ချပေး — identity မပျက်",en:"Re-pose your subject to match IMAGE 2 — identity kept",shn:"မႄးလၢႆႈ pose တူဝ်ၵူၼ်းမႂ်း ႁႂ်ႈမိူၼ် IMAGE 2 — identity ဝႆႉမိူၼ်ၵဝ်ႇ",kac:"Na a masha hpe IMAGE 2 na pose hte maren bai pose shatai — identity raw nga",th:"จัดท่าโพสบุคคลของคุณใหม่ให้ตรงกับ IMAGE 2 — คงเอกลักษณ์ไว้",zh:"让人物重摆出 IMAGE 2 的姿势 — 身份特征不变",vi:"Tạo lại dáng cho chủ thể theo IMAGE 2 — giữ nguyên nhận diện",id:"Ubah pose subjek Anda mengikuti IMAGE 2 — identitas tetap",ms:"Ubah pose subjek anda mengikut IMAGE 2 — identiti dikekalkan"},
       style:{my:"IMAGE 2 ရဲ့ ဓာတ်ပုံ style တစ်ခုလုံး ကူးယူ — အရောင်၊ အလင်း၊ mood",en:"Transfer IMAGE 2's whole photographic style — color, light, mood",shn:"ဢဝ် style ၶႅပ်းႁၢင်ႈ IMAGE 2 တင်းသဵင်ႈ — သီ၊ လႅင်း၊ mood",kac:"IMAGE 2 na sumla style ting hpe copy la — nsam, nhtoi, mood",th:"ถ่ายทอดสไตล์ภาพถ่ายทั้งหมดของ IMAGE 2 — สี แสง อารมณ์",zh:"迁移 IMAGE 2 的整体摄影风格 — 色彩、光线、氛围",vi:"Chuyển toàn bộ phong cách nhiếp ảnh của IMAGE 2 — màu sắc, ánh sáng, mood",id:"Pindahkan seluruh gaya fotografi IMAGE 2 — warna, cahaya, mood",ms:"Pindahkan keseluruhan gaya fotografi IMAGE 2 — warna, cahaya, mood"},
+      /* v4.92 — sketchPose was the one preset out of 35 with no PR_SUM row, so
+         presetWf fell back to the raw English p.summary for it alone. */
+      sketchPose:{my:"လိုချင်တဲ့ pose နဲ့ frame ကို ကြမ်းကြမ်းဆွဲပြ — အဲဒီအတိုင်း အတိအကျ ပြန်ထုတ်",en:"Sketch the pose and framing you want — it is rebuilt exactly that way",shn:"ဝၢတ်ႈ pose တင်း frame ဢၼ်ၶႂ်ႈလႆႈ — သၢင်ႈၶိုၼ်းၸွမ်းၼၼ်ႉ တိၵ်းတိၵ်း",kac:"Ra ai pose hte frame hpe kabung sumla galaw — dai hte maren jaw jaw bai daw",th:"ร่างท่าโพสและการจัดเฟรมที่ต้องการ — สร้างภาพตามนั้นเป๊ะ",zh:"手绘你想要的姿势与构图 — 按草图精确重建",vi:"Phác thảo dáng và bố cục bạn muốn — dựng lại đúng như vậy",id:"Sketsa pose dan framing yang Anda mau — dibangun persis seperti itu",ms:"Lakar pose dan framing yang anda mahu — dibina tepat sebegitu"},
       restore:{my:"ပုံဟောင်း/ပျက်နေတဲ့ပုံကို museum-quality ပြန်ပြုပြင်",en:"Restore old or damaged photos to archival quality",shn:"မႄးၶိုၼ်းၶႅပ်းႁၢင်ႈၵဝ်ႇ/ဢၼ်လူႉ ႁႂ်ႈပဵၼ် museum-quality",kac:"Moi na shing nrai hten ai sumla hpe archival quality hkra bai gram la",th:"ฟื้นฟูภาพเก่าหรือภาพชำรุดให้ได้คุณภาพระดับงานอนุรักษ์",zh:"把老旧或破损照片修复至馆藏级画质",vi:"Phục hồi ảnh cũ hoặc hư hỏng đạt chất lượng lưu trữ",id:"Pulihkan foto lama atau rusak ke kualitas arsip",ms:"Pulihkan foto lama atau rosak ke kualiti arkib"},
       repSolo:{my:"IMAGE 2 scene ထဲကို မင်းရဲ့လူ အစားထိုးဝင် — မျက်နှာ identity အတိုင်း",en:"Put your person into IMAGE 2's scene, replacing its person",shn:"ဢဝ်ၵူၼ်းမႂ်း ၶဝ်ႈတႅၼ်းတီႈၵူၼ်း ၼႂ်း scene IMAGE 2 — ၼႃႈ identity မိူၼ်ၵဝ်ႇ",kac:"Na a masha hpe IMAGE 2 na scene kaw bang — dai na masha hpe galai kau",th:"นำบุคคลของคุณเข้าไปใน scene ของ IMAGE 2 แทนที่คนเดิม",zh:"把你的人物放入 IMAGE 2 的 scene，替换其中的人物",vi:"Đưa người của bạn vào scene của IMAGE 2, thay thế người trong đó",id:"Masukkan orang Anda ke scene IMAGE 2, menggantikan orangnya",ms:"Letakkan orang anda dalam scene IMAGE 2, menggantikan orangnya"},
       repCouple:{my:"IMAGE 2 scene ထဲကို မင်းရဲ့စုံတွဲ အစားထိုး — မျက်နှာနှစ်ယောက်စလုံး အတိုင်း",en:"Put your couple into IMAGE 2's scene, replacing its couple",shn:"ဢဝ်ၵူႈမႂ်းသွင်ၵေႃႉ ၶဝ်ႈတႅၼ်း ၼႂ်း scene IMAGE 2 — ၼႃႈတင်းသွင်ၵေႃႉ မိူၼ်ၵဝ်ႇ",kac:"Na a yan lahkawng hpe IMAGE 2 na scene kaw bang — dai na yan hpe galai kau",th:"นำคู่รักของคุณเข้าไปใน scene ของ IMAGE 2 แทนที่คู่เดิม",zh:"把你的情侣放入 IMAGE 2 的 scene，替换其中的情侣",vi:"Đưa cặp đôi của bạn vào scene của IMAGE 2, thay thế cặp đôi trong đó",id:"Masukkan pasangan Anda ke scene IMAGE 2, menggantikan pasangannya",ms:"Letakkan pasangan anda dalam scene IMAGE 2, menggantikan pasangannya"},
@@ -6259,6 +6298,11 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
       "editorial-caption":{my:"Magazine ပုံစံ caption ထည့် — မျက်နှာ လုံးဝမဖုံး",en:"Adds a magazine-style title overlay — never covers the face",shn:"သႂ်ႇတူဝ်လိၵ်ႈ caption ပိူင် magazine — ဢမ်ႇမူၵ်ႈၼႃႈ",kac:"Magazine style caption bang — myi man n magap",th:"เพิ่มแคปชันสไตล์นิตยสาร — ไม่บังใบหน้าเด็ดขาด",zh:"添加杂志风格标题 — 绝不遮挡面部",vi:"Thêm chú thích kiểu tạp chí — không bao giờ che mặt",id:"Tambahkan caption gaya majalah — tak pernah menutupi wajah",ms:"Tambah caption gaya majalah — tidak menutup wajah"},
       "couple-compose":{my:"လူတစ်ယောက်စီပုံ ၂ပုံကို တွဲပုံတစ်ပုံအဖြစ် ပေါင်းစပ် — identity ၂ခုစလုံး တည်တံ့",en:"Combines two solo photos into one couple portrait — both identities kept",shn:"ႁွမ်း ၶႅပ်းႁၢင်ႈၵူၼ်းလဵဝ် 2 ႁၢင်ႈ ပဵၼ်ၶႅပ်းႁၢင်ႈၵူၼ်းၶူး — identity 2 ဢၼ် တိူဝ်ႉတိုၵ်ႉ",kac:"Masha langai hte langai a sumla 2 hpe couple sumla langai byin hkra hkum — identity 2 raw nga",th:"รวมภาพเดี่ยว 2 ภาพเป็นภาพคู่เดียว — คงตัวตนทั้งสองคน",zh:"将两张单人照合成一张情侣合照 — 双方身份保留",vi:"Kết hợp hai ảnh đơn thành một ảnh đôi — giữ nguyên cả hai danh tính",id:"Gabungkan dua foto solo jadi satu foto pasangan — kedua identitas tetap",ms:"Gabungkan dua foto solo menjadi satu foto pasangan — kedua identiti kekal"},
       "magazine-cover":{my:"Fashion magazine masthead ခေါင်းစီး ရဲရဲထည့် — အောက်က ဓာတ်ပုံ လုံးဝမပြောင်း",en:"Bold fashion-magazine masthead cover — photo untouched below it",shn:"သႂ်ႇ masthead မဵတ်ႉၸၢႆးၽိုၼ်ဢွၵ်ႇ ႁၢင်ႈလီ — ၶႅပ်းႁၢင်ႈဢမ်ႇလႅၵ်ႈ",kac:"Fashion magazine masthead hpe grai bang — sumla n galai",th:"เพิ่มหัวนิตยสารแฟชั่นตัวหนา — ภาพด้านล่างไม่เปลี่ยน",zh:"添加大胆的时尚杂志刊头 — 下方照片保持不变",vi:"Thêm tiêu đề tạp chí thời trang đậm — ảnh bên dưới không đổi",id:"Tambahkan masthead majalah fashion tebal — foto di bawahnya tetap",ms:"Tambah masthead majalah fesyen tebal — foto di bawahnya kekal"},
+      /* v4.92 — these two shipped in v4.88 with their prompts finished but with
+         no ST_SUM row, so in a Burmese UI their cards were the only two in the
+         Face and Background groups still subtitled in English. */
+      "scene-fit-pro":{my:"လူက နေရာ တစ်လက်မမှ မရွေ့ — IMAGE 2 ရဲ့ scene ကို သူ့ပတ်လည်မှာ ပြန်တည်ဆောက်",en:"Your subject never moves — IMAGE 2's scene is rebuilt around it",shn:"ၵူၼ်း ဢမ်ႇၶၢႆႉတီႈ — ဢဝ် scene IMAGE 2 သၢင်ႈၶိုၼ်း ႁွပ်ႈမၼ်း",kac:"Masha gara de mung n htawt — IMAGE 2 na scene hpe shi a makau kaw bai daw",th:"ตัวแบบไม่ขยับแม้แต่นิดเดียว — สร้างฉากจาก IMAGE 2 ใหม่รอบตัวแบบ",zh:"主体分毫不动 — 用 IMAGE 2 的场景在其四周重建",vi:"Chủ thể không hề dịch chuyển — dựng lại cảnh của IMAGE 2 quanh chủ thể",id:"Subjek sama sekali tidak bergeser — scene IMAGE 2 dibangun ulang mengelilinginya",ms:"Subjek langsung tidak beralih — scene IMAGE 2 dibina semula mengelilinginya"},
+      "master-pro-retouch":{my:"Studio finish တစ်ခုလုံး တစ်ချက်တည်း — အသား၊ ဆံပင်၊ ဂါဝန်၊ လက်၊ နောက်ခံရှင်းလင်းရေး",en:"The whole studio finish in one tap — skin, hair, gown, hands, set cleanup",shn:"Studio finish တင်းသဵင်ႈ ၼဵၵ်းပွၵ်ႈလဵဝ် — ၽိဝ်ၼိူဝ်ႉ၊ ၶူၼ်ႁူဝ်၊ gown၊ မိုဝ်း၊ ႁဵတ်းပိုၼ်ႉလင်မူတ်းသႂ်",kac:"Studio finish yawng hpe kalang mi hte — hpyi, kara, gown, lata hte shara san seng",th:"งานรีทัชสตูดิโอครบชุดในแตะเดียว — ผิว ผม ชุด มือ และเก็บกวาดฉาก",zh:"一键完成整套影棚精修 — 皮肤、头发、礼服、双手与场景清理",vi:"Trọn bộ hoàn thiện studio trong một chạm — da, tóc, váy, tay và dọn phông",id:"Seluruh finishing studio dalam satu ketuk — kulit, rambut, gaun, tangan, bersihkan set",ms:"Seluruh kemasan studio dalam satu ketikan — kulit, rambut, gaun, tangan, kemas set"},
       "silhouette-romance":{my:"နောက်ခံနံရံမှာ အချစ်ရဲ့ရိပ်လှလှ ထည့် — subject မထိ",en:"Adds a romantic partner shadow on the backdrop — subject untouched",shn:"သႂ်ႇငဝ်ႈရိပ်ၵေႃႉႁၵ်ႉၼိူဝ်ၽၢၼ်ႇ — subject ဢမ်ႇတိူဝ်ႉ",kac:"Hpang de kaw manam a hkum shada bang — subject n hkrit",th:"เพิ่มเงาคู่รักโรแมนติกบนฉากหลัง — ไม่แตะต้องตัวแบบ",zh:"在背景墙上添加浪漫的伴侣剪影 — 不改动主体",vi:"Thêm bóng người yêu lãng mạn trên phông nền — giữ nguyên chủ thể",id:"Tambahkan bayangan romantis pasangan di latar — subjek tak tersentuh",ms:"Tambah bayang romantis pasangan di latar — subjek tidak disentuh"}
     };
     var staged={}; LW.workflows.forEach(function(w){ if(!w.kind) staged[w.id]=w; });
@@ -6392,10 +6436,27 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
           prompt:D.wrap.rmixHeader+"\n- "+m.text+"\n"+D.wrap.rmixFooter, negative:"" };
       })});
     var PL_KW=[["studio"],["golden","sunset"],["airy","soft"],["glam"],["black"],["field","bridal"],["minimal","white"],["neon","night"]];
+    /* v4.92 — the Prompt Ideas cards were the last eight in the deck still
+       subtitled in English while the app ran in Burmese. Their summary was
+       `prompt.slice(0,80)+"…"`, i.e. the raw English prompt with its tail cut
+       off mid-word, which read as untranslated UI next to 115 cards that say
+       in Burmese what they do. The prompt itself is not lost — it is still the
+       card's `explanation` and its `prompt`, both shown in the wizard. This is
+       purely the one-line description, indexed to match PROMPT_LIB. */
+    var PL_SUM=[
+      {my:"Studio ထဲ octabox အလင်းနူးညံ့နဲ့ ရိုက်ထားသလို portrait — နောက်ခံ မီးခိုးရောင် ရှင်းရှင်း",en:"Studio portrait with a big soft octabox key and a clean grey backdrop",shn:"ၶႅပ်းႁၢင်ႈၵူၼ်းၼႂ်း studio — လႅင်း octabox ၼိမ်ၼွၼ်း တင်း ပိုၼ်ႉလင်မူတ်းသႂ်",kac:"Studio kaw na portrait — octabox nhtoi hkyet ai hte backdrop san seng",th:"ภาพบุคคลในสตูดิโอ — ไฟหลักออกตาบ็อกซ์นุ่ม ฉากหลังเทาสะอาด",zh:"影棚人像 — 柔和八角柔光箱主光，干净灰色背景",vi:"Chân dung studio — đèn chính octabox mềm, phông xám sạch",id:"Potret studio — key light octabox lembut, latar abu-abu bersih",ms:"Potret studio — cahaya utama octabox lembut, latar kelabu bersih"},
+      {my:"နေဝင်ချိန် နွေးထွေးတဲ့ နောက်ကျောအလင်းနဲ့ ပြင်ပ portrait — bokeh နူးညံ့",en:"Outdoor portrait in warm golden-hour backlight with creamy bokeh",shn:"ၶႅပ်းႁၢင်ႈၵူၼ်းၼွၵ်ႈႁိူၼ်း ယၢမ်းလႅတ်ႇတူၵ်း — လႅင်းလင်ႁိုၼ်ႉ တင်း bokeh ၼိမ်",kac:"Jan shang ten na shinggan portrait — hpang de na nhtoi hkyeng hte bokeh hkyet",th:"ภาพบุคคลกลางแจ้งช่วงโกลเดนอาวร์ — แสงย้อนอุ่น โบเก้นุ่มละมุน",zh:"黄金时刻户外人像 — 温暖逆光，奶油般虚化",vi:"Chân dung ngoài trời giờ vàng — ngược sáng ấm, bokeh mượt",id:"Potret luar ruang saat golden hour — backlight hangat, bokeh lembut",ms:"Potret luar ketika golden hour — cahaya belakang hangat, bokeh lembut"},
+      {my:"ဗီယက်နမ်စတိုင် နူးညံ့ပျော့ပျောင်းတဲ့ pastel beauty portrait",en:"Soft airy Vietnamese-style beauty portrait in pastel tones",shn:"ၶႅပ်းႁၢင်ႈႁၢင်ႈလီ ပိူင်ဝႅတ်ႇၼၢမ်း — သီ pastel ၼိမ်ၼွၼ်း",kac:"Vietnam hku tsawm ai portrait — pastel arung hkyet ai",th:"ภาพบิวตี้นุ่มโปร่งสไตล์เวียดนาม — โทนพาสเทล",zh:"越南风格柔美人像 — 通透粉彩色调",vi:"Chân dung beauty mềm mại kiểu Việt — tông pastel",id:"Potret beauty lembut gaya Vietnam — nuansa pastel",ms:"Potret beauty lembut gaya Vietnam — nada pastel"},
+      {my:"Douyin စတိုင် တောက်ပပြောင်လက်တဲ့ glam portrait — အလင်း ညီညာ",en:"Douyin-style glam portrait — glossy skin, bright even light",shn:"ၶႅပ်းႁၢင်ႈ glam ပိူင် Douyin — ၽိဝ်ၼိူဝ်ႉပိူင်း လႅင်းၽဵင်ႇ",kac:"Douyin hku glam portrait — hpyi kabrim, nhtoi bung tsawm",th:"ภาพกลามสไตล์โต่วอิน — ผิวฉ่ำวาว แสงสว่างสม่ำเสมอ",zh:"抖音风格美颜人像 — 光泽肌肤，明亮均匀光线",vi:"Chân dung glam kiểu Douyin — da bóng khỏe, ánh sáng đều",id:"Potret glam gaya Douyin — kulit glossy, cahaya rata terang",ms:"Potret glam gaya Douyin — kulit berkilat, cahaya terang sekata"},
+      {my:"အနက်အဖြူ high-fashion editorial — Rembrandt အလင်း ပြင်းပြင်း",en:"High-fashion black and white editorial with dramatic Rembrandt light",shn:"Editorial သီလမ်-ၽိူၵ်ႇ high-fashion — လႅင်း Rembrandt ႁၢဝ်ႈႁႅင်း",kac:"High-fashion nsam chyang-hpraw editorial — Rembrandt nhtoi ja ai",th:"ภาพเอดิทอเรียลขาวดำไฮแฟชั่น — แสงแรมบรันด์เข้ม",zh:"高级时装黑白大片 — 强烈伦勃朗光",vi:"Ảnh editorial đen trắng high-fashion — ánh sáng Rembrandt mạnh",id:"Editorial hitam-putih high-fashion — cahaya Rembrandt dramatis",ms:"Editorial hitam-putih high-fashion — cahaya Rembrandt dramatik"},
+      {my:"နေဝင်ချိန် စိမ်းလန်းတဲ့ကွင်းထဲ ဂါဝန်ဖြူနဲ့ သတို့သမီး — ဝေလံ လေထဲလွင့်",en:"Bride in a white gown in a green field at sunset, veil in the wind",shn:"ၵူၼ်းယိင်းၼုင်ႈ gown ၽိူၵ်ႇ ၼႂ်းၼႃးၶဵဝ် ယၢမ်းလႅတ်ႇတူၵ်း — ၽႃႈၶိူင်ႈပိဝ်ၸွမ်းလူမ်း",kac:"Gown ahpraw hpun ai numsha, tsit ai hkauna kaw, jan shang ten — veil nbung hte pyen",th:"เจ้าสาวชุดขาวกลางทุ่งเขียวยามพระอาทิตย์ตก — ผ้าคลุมพลิ้วตามลม",zh:"夕阳下绿野中的白纱新娘 — 头纱随风飘扬",vi:"Cô dâu váy trắng giữa cánh đồng xanh lúc hoàng hôn — voan bay trong gió",id:"Pengantin bergaun putih di padang hijau saat matahari terbenam — veil melambai",ms:"Pengantin bergaun putih di padang hijau ketika matahari terbenam — veil berkibar"},
+      {my:"ကုန်ပစ္စည်း ဓာတ်ပုံ — နောက်ခံ သန့်ရှင်းပြီး အလင်း ညင်သာ",en:"Product shot on a clean seamless background with soft gradient light",shn:"ၶႅပ်းႁၢင်ႈၶူဝ်းၶွင် — ပိုၼ်ႉလင်မူတ်းသႂ် လႅင်းၼိမ်",kac:"Rai a sumla — backdrop san seng, nhtoi hkyet ai",th:"ภาพสินค้า — พื้นหลังเรียบสะอาด แสงไล่เฉดนุ่ม",zh:"产品摄影 — 干净无缝背景，柔和渐变光",vi:"Ảnh sản phẩm — nền liền mạch sạch, ánh sáng chuyển dịu",id:"Foto produk — latar seamless bersih, cahaya gradasi lembut",ms:"Foto produk — latar seamless bersih, cahaya gradasi lembut"},
+      {my:"ညဘက် cyberpunk လမ်း — neon မီးနဲ့ စိုစွတ်တဲ့ မြေပြင်",en:"Cinematic cyberpunk street at night — neon signage, wet reflective ground",shn:"သဵၼ်ႈတၢင်း cyberpunk ၵၢင်ၶမ်ႈ — ပၢႆႉ neon တင်း လိၼ်ပဵင်းယဵပ်ႇၼမ်ႉ",kac:"Shana de cyberpunk lam — neon shingma hte hka hpring ai ga",th:"ถนนไซเบอร์พังก์ยามค่ำ — ป้ายนีออน พื้นเปียกสะท้อนแสง",zh:"夜晚的赛博朋克街道 — 霓虹招牌，湿润反光地面",vi:"Phố cyberpunk về đêm — biển neon, mặt đường ướt phản chiếu",id:"Jalanan cyberpunk malam hari — papan neon, aspal basah memantul",ms:"Jalan cyberpunk waktu malam — papan neon, jalan basah memantul"}
+    ];
     cats.push({ t:"Prompt Ideas", ic:"i-doc",
       desc: L9({"my": "ပုံမလိုဘဲ prompt တည်းနဲ့ ထုတ်လို့ရတဲ့ professional prompt ၈ မျိုး", "en": "Eight professional text-to-image prompts — no photo required", "shn": "Prompt 8 — ဢမ်ႇလူဝ်ႇၶႅပ်းႁၢင်ႈ", "kac": "Prompt 8 — sumla n ra ai", "th": "พร้อมพ์มืออาชีพ 8 แบบ — ไม่ต้องใช้รูป", "zh": "八个专业文生图 prompt — 无需照片", "vi": "Tám prompt chuyên nghiệp — không cần ảnh", "id": "Delapan prompt profesional — tanpa foto", "ms": "Lapan prompt profesional — tanpa foto"}),
       items: PROMPT_LIB.map(function(p,i){
-        return { id:"pl-"+i, title:p[0], summary:p[1].slice(0,80)+"…", explanation:p[1],
+        return { id:"pl-"+i, title:p[0], summary: PL_SUM[i] ? L9(PL_SUM[i]) : (p[1].slice(0,80)+"…"), explanation:p[1],
           visual:findVis(PL_KW[i]||[]), req:[], opt:["Style / Subject Photo (optional)"], prompt:p[1], negative:"" };
       })});
     /* per-operation "look": before/after filter pair + badge, so the sample
@@ -18072,7 +18133,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.91.0";
+var APP_VER="4.92.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
