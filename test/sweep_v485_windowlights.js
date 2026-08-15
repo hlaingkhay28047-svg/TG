@@ -243,6 +243,31 @@ report("F) the shared RELIGHT guard still applies to all twelve",
   report("G5) no request 404s while the relight shelf renders",
     lib404.length === 0, lib404.slice(0, 6));
 
+  /* v4.86 — the four card photographs landed, so NO_CARD_JPG went back to
+     empty and the cards now point at real files. G6 pins the pair: the list is
+     empty AND all four photographs load. Asserting only "the list is empty"
+     would pass with the files missing (and G5 would then catch the 404s);
+     asserting only "the files exist" would pass with the ids still suppressed
+     and the SVG showing instead. Both together are the actual contract. */
+  const shipped = await page.evaluate(() => {
+    const grps = [...document.querySelectorAll("#wfHost .grp")];
+    const g = grps.find(x => /Studio Relight/i.test((x.querySelector(".grp-h") || x).textContent));
+    const want = ["lg-winSoftL", "lg-sunShaft", "lg-winHard", "lg-winWide"];
+    return want.map(k => {
+      const im = [...g.querySelectorAll(".wfmini img")]
+        .find(i => (i.getAttribute("src") || "").indexOf(k + ".jpg") >= 0);
+      return { k: k, wired: !!im, loaded: !!(im && im.complete && im.naturalWidth > 0),
+        w: im ? im.naturalWidth : 0, h: im ? im.naturalHeight : 0 };
+    });
+  });
+  report("G6) the four window cards are wired to real photographs that load",
+    shipped.every(x => x.wired && x.loaded && x.w === 960 && x.h === 640),
+    shipped);
+
+  report("G7) NO_CARD_JPG is empty again, per its own maintenance rule",
+    /var NO_CARD_JPG=\[\];/.test(src),
+    { line: (src.match(/var NO_CARD_JPG=\[[^\]]*\];/) || [])[0] });
+
   report("H) no page errors", errs.length === 0, errs);
 
   console.log("      (read from four before/after references the owner supplied: soft bars " +
