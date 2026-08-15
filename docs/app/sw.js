@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-82-0";
+var CACHE = "hnk-web-studio-v4-83-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -14,7 +14,17 @@ var LIB_CACHE = "hnk-lib-v1";
 /* v4.45: +880 style-pack references under /lib/styles880/ — the cap must
    clear ui+full+banners+wf+styles880 combined or browsing the style pack
    evicts library thumbnails the customer already paid data for. */
-var LIB_MAX_ENTRIES = 2800;
+/* v4.83 — COUNTED, not estimated. /lib/ now holds 3819 files: 1311 in ui,
+   1311 in full, 880 in styles880, 269 in wf, plus banners/dash/looks/vid/root.
+   The cap stood at 2800 while the library alone passed it, which means a
+   studio browsing far enough evicts the thumbnails it downloaded earlier in
+   the same session and re-fetches them on the way back — the exact failure
+   this cap was written to prevent, arrived at by the library growing past it.
+   4200 clears the whole tree with room for one more wave. It bounds the entry
+   COUNT, not bytes; the browser's own origin quota is the real size ceiling
+   and it evicts the whole cache rather than trimming, which is why an
+   explicit cap exists at all. */
+var LIB_MAX_ENTRIES = 4200;
 /* v4.28: the PWA icon set is the ONLY thing that lives at /lib/ root (the
    real library thumbnails all sit in /lib/{banners,full,ui,wf}/). Icons get
    re-arted between releases — the identity wave replaced all five — so they
@@ -92,7 +102,22 @@ var LIB_PURGES = [
      cards5 folder matters — that folder is 12MB, and a studio on mobile data
      should not re-download 116 cards to receive 2. */
   { tag: "./__lib-purge-v4-79-cards5-refresh", re: /\/lib\/wf\/cards5\/(mx-light|pl-5)\.jpg$/ },
-  { tag: "./__lib-purge-v4-79-dash-scene", re: /\/lib\/dash\/scene\.jpg$/ }
+  { tag: "./__lib-purge-v4-79-dash-scene", re: /\/lib\/dash\/scene\.jpg$/ },
+  /* v4.83 — three separate replacements, three separate markers.
+
+     The six video cards shipped one release ago built from repurposed Library
+     plates (the image keys were out of credit); these are the real ones, drawn
+     for the job. /lib/vid/ is entirely this feature's, so the folder pattern
+     is exact rather than lazy.
+
+     The twelve Path look chips and one Library plate carried the feather-in-
+     the-mouth motif the owner asked to be rid of. lookchips is 12 files and
+     ~1MB, so the folder is fine; user-ref-413 is named individually because
+     /lib/full and /lib/ui hold 1311 plates each and re-fetching 2622 files to
+     deliver 2 would cost a studio on mobile data real money. */
+  { tag: "./__lib-purge-v4-83-vid-cards", re: /\/lib\/vid\// },
+  { tag: "./__lib-purge-v4-83-lookchips", re: /\/lib\/wf\/lookchips\// },
+  { tag: "./__lib-purge-v4-83-ref413", re: /\/lib\/(full|ui)\/user-ref-413\.jpg$/ }
 ];
 
 function purgeReplacedLibArt() {
