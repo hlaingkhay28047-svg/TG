@@ -218,6 +218,9 @@ jobs:
       - name: Run v4.84.0 boot-payload sweep (a launch pays only for the page it opens)
         run: node test/sweep_v484_bootbytes.js
 
+      - name: Run v4.85.0 window-relight sweep (4 new lighting workflows)
+        run: node test/sweep_v485_windowlights.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
