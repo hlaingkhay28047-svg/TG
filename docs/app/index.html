@@ -18069,7 +18069,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.86.0";
+var APP_VER="4.87.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -19073,10 +19073,22 @@ function vidCityDef(k){
   return VID_CITIES[0];
 }
 
-/* Every prompt below closes on the same two sentences. Identity is the one
+/* Every prompt below closes on the same sentences. Identity is the one
    instruction an image-to-video model drops first, and a stray caption burned
    into a delivered clip is unfixable, so both are stated in every workflow
-   rather than assumed once at the top. */
+   rather than assumed once at the top.
+
+   v4.87 — SPLIT, because the single clause contradicted its own callers. It
+   asserted "the dress, the light and the setting stay as they are" and was
+   appended to Boarding Pass, whose entire job is to change her outfit as she
+   passes through the card. A prompt that asks for a wardrobe change and then
+   forbids one in the next sentence is a prompt the model resolves by coin
+   flip. VID_ID carries only what is true of EVERY workflow — identity, one
+   take, no captions. VID_HOLD adds the freeze for the workflows that really
+   do hold the scene still, and the transformation workflows use VID_ID alone.
+   Found while adding the five video workflows below, all of which transform
+   the scene and would have inherited the same contradiction. */
+var VID_ID = " Her face, bone structure, hair, makeup and identity stay exactly as the reference photograph from the first frame to the last. One continuous take, smooth steady motion, no camera shake, no text or captions anywhere in the frame beyond any lettering this shot explicitly calls for.";
 var VID_KEEP = " Her face, bone structure, hair, makeup and identity stay exactly as the reference photograph from the first frame to the last, and the dress, the light and the setting stay as they are. One continuous take, smooth steady motion, no cuts, no camera shake, no text or captions anywhere in the frame.";
 
 /* Omni Flash is not a taste call. It is the only registered video model with
@@ -19095,7 +19107,7 @@ var VID_WF=[
        + "About one third in, a very large airline BOARDING PASS slides in from the right edge and settles upright in the centre, filling most of the frame height like a tall vertical panel. It is a clean modern pass: pale card stock, a coloured stub down the right side beside a small aeroplane glyph, a barcode top and bottom, and printed fields NAME, FLT, GATE, SEAT, TIME, FROM, TO, CLS. The destination "
        + c.en.toUpperCase() + " is set large across the card in outlined display type with " + c.loc + " above it, and the FROM field reads YANGON. "
        + "The pass behaves as a portal. As she reaches its left edge she passes BEHIND the card and is revealed inside it already transformed, now dressed head to toe in " + c.fit + ". She keeps walking at the same speed inside the boarding-pass frame and exits its right edge."
-       + VID_KEEP + " The only lettering in the shot is the printing on the boarding pass itself. Clean commercial e-commerce lookbook finish.";
+       + VID_ID + " The only lettering in the shot is the printing on the boarding pass itself. Clean commercial e-commerce lookbook finish.";
     },
     hint:L9({my:"ပုံ ၁ ပုံ (တစ်ကိုယ်လုံး၊ မတ်တပ် သို့ လမ်းလျှောက်) တင်ပါ။ မြို့တစ်မြို့ကို ၁၀ စက္ကန့် တစ်ခုစီ ထုတ်ပြီး နောက်ပိုင်း ဆက်ချိတ်ပါ။",en:"Load 1 full-body photo (standing or mid-stride). One 10s clip per city — generate each, then join them.",shn:"တၢင်ႇၶႅပ်းႁၢင်ႈ 1 ဢၼ် (တူဝ်တဵမ်)။ မိူင်းၼိုင်ႈ 10 ၸႅၵ်ႉ ၼိုင်ႈဢၼ်။",kac:"Sumla 1 (hkum ting) bang u. Mare langai 10s langai galaw nna hkan matut u.",th:"ใส่รูปเต็มตัว 1 รูป — 1 คลิป 10 วิ ต่อ 1 เมือง แล้วนำมาต่อกัน",zh:"上传 1 张全身照 — 每座城市一段 10 秒，生成后再拼接",vi:"Tải 1 ảnh toàn thân — mỗi thành phố một clip 10 giây, tạo xong rồi ghép lại",id:"Unggah 1 foto seluruh badan — satu klip 10 detik per kota, lalu gabungkan",ms:"Muat naik 1 foto seluruh badan — satu klip 10 saat setiap bandar, kemudian gabungkan"}) },
 
@@ -19150,6 +19162,82 @@ var VID_WF=[
        + VID_KEEP;
     },
     hint:L9({my:"ပုံ ၁ ပုံ — စုံတွဲ နှစ်ယောက်လုံး မျက်နှာ ကြည်လင်စွာ ပါရမယ်။",en:"1 photo — both faces clearly visible in the frame.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၼႃႈသွင်ၵေႃႉၸႅင်ႈလီ",kac:"Sumla 1 — masha lahkawng a myi man tsawm hkra mu ra ai",th:"1 รูป — เห็นหน้าทั้งสองคนชัด",zh:"1 张照片 — 两人的脸都要清晰",vi:"1 ảnh — thấy rõ khuôn mặt cả hai",id:"1 foto — kedua wajah terlihat jelas",ms:"1 foto — kedua-dua wajah jelas kelihatan"}) }
+,
+
+  /* ---- v4.87: five workflows, one per clip the owner sent ----
+     Every one was read off the decoded frames. They all TRANSFORM the scene,
+     so they close on VID_ID (identity + one take + no stray captions) rather
+     than VID_KEEP, whose "the setting stays as it is" would fight the effect.
+     Card art is three real frames from each clip, so the card cannot promise
+     a different shot than the workflow delivers. */
+
+  { key:"tinyPlanet", art:"lib/vid/vw-tinyPlanet.jpg", setup:VID_SETUP_V,
+    label:L9({my:"မြို့ကို လုံးလေးဖြစ်အောင် (၃၆၀ Tiny Planet)",en:"Tiny Planet Skyline",shn:"မိူင်းပဵၼ်လုၵ်ႈမူၼ်း (360)",kac:"Mare hpe hkumdin byin (360)",th:"เมืองม้วนเป็นดาวเคราะห์จิ๋ว (360)",zh:"小行星城市 360",vi:"Hành tinh nhỏ 360",id:"Tiny Planet 360",ms:"Tiny Planet 360"}),
+    summary:L9({my:"မြင်မတ်ကင်မရာ အပေါ်တက် — မြို့တစ်မြို့လုံး လုံးလေးဖြစ်ပြီး ပြန်ဖြန့်",en:"The camera lifts away and the whole city curls into a little planet, then unfurls",shn:"ၵွင်ႈထၢႆႇၶိုၼ်ႈ — မိူင်းမူၼ်းပဵၼ်လုၵ်ႈ သေ ၽႄႈၶိုၼ်း",kac:"Camera lung wa nna mare yawng hkumdin byin nna bai hpaw wa ai",th:"กล้องลอยขึ้น เมืองทั้งเมืองม้วนเป็นดาวจิ๋ว แล้วคลี่ออก",zh:"镜头升起，整座城市卷成小行星再展开",vi:"Máy quay bay lên, cả thành phố cuộn thành hành tinh nhỏ rồi mở ra",id:"Kamera naik, seluruh kota menggulung jadi planet kecil lalu terbuka",ms:"Kamera naik, seluruh bandar bergulung jadi planet kecil lalu terbuka"}),
+    text:function(){
+      return "Vertical 9:16 video shot on a 360 camera held overhead on a long invisible selfie pole, in the little-planet look. "
+       + "The person from the reference photograph stands alone in the middle of a wide open city plaza, filling the centre of the frame, head tilted back and looking straight up into the lens the whole time, arms out to the sides. The extreme fisheye of the 360 lens bows the paving and the horizon into a circle around her. "
+       + "The pole rises steadily and the world reprojects with it: the plaza, the trees, the river and the whole skyline of glass towers curl inward until the city has become a small round planet floating in the middle of the frame with her standing on top of it, tiny at its pole, a bright cyan sky and a hard sun flare filling the space around the sphere. "
+       + "The projection then inverts and the same towers unfold outward into a rabbit-hole tunnel, their facades running from the frame edges down toward a vanishing point behind her, so she appears to hover at the mouth of a canyon of skyscrapers. "
+       + "Through all of it she is locked dead centre and upright, unchanged in size, and she raises both hands into a small heart shape above her head and then a peace sign, calm and unhurried. Bright midday sun, clean cyan sky, crisp glass and concrete, the shadow of the pole visible on the ground below her at the start."
+       + VID_ID;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — အပေါ်ကို မော့ကြည့်နေတဲ့ မျက်နှာ ပါရင် အကောင်းဆုံး။",en:"1 photo — best when the face is looking slightly up toward the camera.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ငိူင်ႉၼႃႈၶိုၼ်ႈၼိူဝ် ၸင်ႇလီ",kac:"Sumla 1 — myi man lung de yu yang grau kaja",th:"1 รูป — ได้ผลดีเมื่อหน้าเงยขึ้นเล็กน้อย",zh:"1 张照片 — 脸略微仰起效果最好",vi:"1 ảnh — đẹp nhất khi mặt hơi ngước lên",id:"1 foto — paling bagus bila wajah sedikit mendongak",ms:"1 foto — terbaik bila wajah sedikit mendongak"}) },
+
+  { key:"bottleLook", art:"lib/vid/vw-bottleLook.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ပုလင်းပုံ ဝတ်စုံပြ (အစိမ်း ကြော်ငြာ)",en:"Bottle Cut-Out Lookbook",shn:"လုၵ်ႈၶုၺ်ႈ ၼႄၶူဝ်း (ၶဵဝ်)",kac:"Bottle hkum lookbook (tsit)",th:"ลุคบุ๊กทรงขวด (โฆษณาเขียว)",zh:"瓶型剪影穿搭（绿色广告）",vi:"Lookbook khung chai (quảng cáo xanh)",id:"Lookbook Siluet Botol (hijau)",ms:"Lookbook Siluet Botol (hijau)"}),
+    summary:L9({my:"အစိမ်းနောက်ခံပေါ် ပုလင်းပုံ အဖြူထဲမှာ ဝတ်စုံလဲပြ — ပစ္စည်းတွေ လေထဲပျံ",en:"Outfit changes inside a giant white bottle cut-out on flat green, props floating around her",shn:"ၼိူဝ်ပိုၼ်ႉၶဵဝ် ၼႂ်းလုၵ်ႈၶုၺ်ႈၶၢဝ် လႅၵ်ႈၶူဝ်း — ၶူဝ်းၶွင်ပိဝ်",kac:"Tsit hpang kaw bottle hpraw hta palawng galai — arung ni pyen ai",th:"เปลี่ยนลุคในซิลูเอทขวดสีขาวบนพื้นเขียว พร็อพลอยรอบตัว",zh:"绿底白色瓶型剪影里换装，道具漂浮环绕",vi:"Đổi đồ trong khung chai trắng trên nền xanh, đạo cụ bay quanh",id:"Ganti outfit dalam siluet botol putih di latar hijau, properti melayang",ms:"Tukar pakaian dalam silueт botol putih di latar hijau, prop melayang"}),
+    text:function(){
+      return "Vertical 9:16 commercial fashion video on a completely flat, saturated grass-green background. "
+       + "A tall white silhouette in the exact shape of a soda bottle — narrow neck and cap at the top, shoulders, straight body — stands in the centre of the frame like a window cut out of the green, and the person from the reference photograph is inside it, lit bright and clean against the white so she reads as a cut-out sticker. "
+       + "She holds a slim green glass bottle of soda and takes an easy sip, then the shot snaps forward through a series of styled beats: on each beat her outfit changes to a different head-to-toe green-and-white look — a knit tee with a visor, a cropped shirt with a wrap skirt, dungarees, a striped set with knee socks — and she lands in a new relaxed pose inside the bottle shape, mid-stride, mid-jump or leaning. "
+       + "Around her, small props float and rotate slowly against the green in a loose ring, all in the same green-and-white palette: a compact camera, headphones, a bucket hat, sunglasses, sneakers, a mesh tote, a striped towel. Bold flat green Chinese characters sit large in the corners of the green field behind the bottle, and the word BOOM runs across the background in wide green letters. "
+       + "Punchy commercial timing, hard clean edges, even shadowless studio light on her, high-saturation colour."
+       + VID_ID;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — တစ်ကိုယ်လုံး၊ နောက်ခံ ရှင်းရှင်း အကောင်းဆုံး။",en:"1 photo — full body, a plain background works best.",shn:"ၶႅပ်းႁၢင်ႈ 1 — တူဝ်တဵမ်၊ လင်မိူၼ်ႁၢင်ႈလွင်ႈ",kac:"Sumla 1 — hkum ting, hpang san seng ai grau kaja",th:"1 รูป — เต็มตัว พื้นหลังเรียบดีที่สุด",zh:"1 张全身照 — 背景越简洁越好",vi:"1 ảnh toàn thân — nền trơn là tốt nhất",id:"1 foto seluruh badan — latar polos paling bagus",ms:"1 foto seluruh badan — latar polos paling bagus"}) },
+
+  { key:"phonePortal", art:"lib/vid/vw-phonePortal.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ဖုန်းထဲ ဝင်သွား (ရထားတွဲ)",en:"Phone Portal Subway",shn:"ၶဝ်ႈၼႂ်းၾူင်း (ရူတ်ႉၾႆး)",kac:"Phone hta shang wa (mari sanit)",th:"ทะลุเข้าไปในมือถือ (รถไฟใต้ดิน)",zh:"走进手机（地铁车厢）",vi:"Bước vào điện thoại (tàu điện)",id:"Masuk ke Dalam Ponsel (kereta)",ms:"Masuk ke Dalam Telefon (kereta)"}),
+    summary:L9({my:"ရထားတွဲထဲ ဖုန်းကြီးပေါ်လာ — သူမ ဖုန်းထဲရောက်ပြီး လက်က မျက်နှာပြင်ကနေ ထွက်လာ",en:"A giant phone appears in the carriage, she ends up inside the screen and a hand pushes back out of it",shn:"ၼႂ်းရူတ်ႉ ၾူင်းလူင်ဢွၵ်ႇမႃး — မၼ်းၼၢင်းၶဝ်ႈၼႂ်း သေ မိုဝ်းဢွၵ်ႇမႃး",kac:"Sanit hta phone kaba pru wa — shi phone hta shang nna lata pru wa ai",th:"มือถือยักษ์โผล่ในตู้รถไฟ เธอเข้าไปอยู่ในจอ แล้วมือทะลุออกมา",zh:"车厢里出现巨型手机，她进入屏幕，手再从屏幕伸出",vi:"Điện thoại khổng lồ xuất hiện trong toa, cô vào trong màn hình rồi bàn tay thò ra",id:"Ponsel raksasa muncul di gerbong, dia masuk ke layar lalu tangan menembus keluar",ms:"Telefon gergasi muncul dalam gerabak, dia masuk ke skrin lalu tangan menembusi keluar"}),
+    text:function(){
+      return "Vertical 9:16 cinematic video inside a modern metro carriage, shot down the centre aisle with a wide lens so the grab poles and the row of seats run away to a vanishing point. "
+       + "It opens bright and clean: the person from the reference photograph, in a soft pink lounge set, dances loosely down the empty aisle, turning and reaching, filmed in one continuous move that follows her. "
+       + "A giant smartphone — a slim titanium body with a triple camera island, easily as tall as she is — swings into the carriage and tumbles slowly end over end through the air past her, and as it does the carriage light drops away to a deep moody blue-black. "
+       + "The phone settles upright in the centre of the aisle and its screen lights up, and she is now INSIDE the screen, standing in a sleek black bodysuit and looking out through the glass at the camera. She lifts one hand and presses it against the inside of the display. "
+       + "The hand comes THROUGH: it pushes out of the glowing screen into the real carriage in forced perspective, palm wide open and fingers splayed enormous toward the lens while her small figure stays visible behind the glass. "
+       + "The clip closes on a bright white space filled with floating oversized phone-interface pieces — a large digital clock reading 42:42, toggle switches, a compass browser icon, a share button, signal bars, a rounded blue stepper — drifting slowly around her as she stands among them in the black bodysuit. "
+       + "Cool cinematic grade, real hand-held weight in the opening, hard specular highlights on the phone body."
+       + VID_ID;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — တစ်ကိုယ်လုံး၊ မတ်တပ်ပုံ အကောင်းဆုံး။",en:"1 photo — full body, standing, works best.",shn:"ၶႅပ်းႁၢင်ႈ 1 — တူဝ်တဵမ် ၸုၵ်းယူႇ",kac:"Sumla 1 — hkum ting, tsap nga ai",th:"1 รูป — เต็มตัว ท่ายืน ดีที่สุด",zh:"1 张全身站姿照效果最好",vi:"1 ảnh toàn thân, tư thế đứng là tốt nhất",id:"1 foto seluruh badan, berdiri, paling bagus",ms:"1 foto seluruh badan, berdiri, paling bagus"}) },
+
+  { key:"cnyTiger", art:"lib/vid/vw-cnyTiger.jpg", setup:VID_SETUP_V,
+    label:L9({my:"နှစ်သစ်ကူး ကျားပိုစတာ",en:"New Year Tiger Poster",shn:"ပီႇမႂ်ႇ ပိုတ်ႇသတႃႇသိူဝ်",kac:"Ningnan Sharaw Poster",th:"โปสเตอร์เสือตรุษจีน",zh:"新春虎年海报",vi:"Poster hổ Tết",id:"Poster Macan Tahun Baru",ms:"Poster Harimau Tahun Baru"}),
+    summary:L9({my:"နှစ်သစ်ကူး စာလိပ်ရေးနေရာက အနီရောင် ကျားပိုစတာ အဖြစ် ပြောင်း",en:"Writing red New Year couplets turns into a red poster with a tiger rising behind her",shn:"တႅမ်ႈလိၵ်ႈပီႇမႂ်ႇ သေ ပဵၼ်ပိုတ်ႇသတႃႇလႅင် မီးသိူဝ်",kac:"Ningnan laika ka nna sharaw hte hkyeng poster byin wa ai",th:"เขียนคำอวยพรแดง แล้วกลายเป็นโปสเตอร์แดงมีเสืออยู่ข้างหลัง",zh:"写春联转场成红底虎年海报",vi:"Viết câu đối đỏ rồi hóa thành poster đỏ có hổ phía sau",id:"Menulis kaligrafi merah lalu jadi poster merah dengan macan",ms:"Menulis kaligrafi merah lalu jadi poster merah dengan harimau"}),
+    text:function(){
+      return "Vertical 9:16 video in two acts, one continuous camera locked off at chest height on a table top. "
+       + "ACT ONE, quiet and real: the person from the reference photograph sits at a wooden table in a dim old courtyard corridor, stone columns falling away out of focus behind her in cool grey-green light. She wears a heavy checked padded jacket over a high pale collar, her dark hair cut in a blunt fringe. Long strips of bright red couplet paper are laid out in front of her and she works on them calmly, smoothing a strip flat, setting it straight, her eyes down on her hands, unhurried. "
+       + "THE TURN: on a beat the whole frame floods to a deep saturated festival red. "
+       + "ACT TWO, graphic and bold: she is now in a red-and-white traditional New Year outfit with a red collar wrap and red tassels tied into her hair, hands resting on the same red couplets, looking straight down the lens with a small confident smile. The head and shoulders of a large tiger rise directly behind her, its face just above and behind her head, striped orange fur and pale whiskers catching the light. Four huge black Chinese calligraphy characters sit in the four corners of the red field around them, and small white sparkles drift through the air. "
+       + "Rich lacquer red, deep blacks in the calligraphy, warm rim light on her hair and on the tiger's fur. The lettering in the shot is the New Year calligraphy and the couplets themselves."
+       + VID_ID;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ခါးအထက် မျက်နှာ ကြည်လင်စွာ ပါရမယ်။",en:"1 photo — waist up, face clearly visible.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ၶိုၼ်ႈၼိူဝ်ဢႅဝ်၊ ႁၼ်ၼႃႈၸႅင်ႈ",kac:"Sumla 1 — n-gup ntsa, myi man mu ra ai",th:"1 รูป — ครึ่งตัวบน เห็นหน้าชัด",zh:"1 张照片 — 半身，面部清晰",vi:"1 ảnh — nửa người trên, thấy rõ mặt",id:"1 foto — separuh badan, wajah jelas",ms:"1 foto — separuh badan, wajah jelas"}) },
+
+  { key:"specSheet", art:"lib/vid/vw-specSheet.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ဝတ်စုံ Spec Sheet (Look ၄ မျိုး)",en:"Model Spec-Sheet Lookbook",shn:"Spec Sheet ၶူဝ်းၼုင်ႈ (Look 4)",kac:"Palawng spec sheet (Look 4)",th:"ลุคบุ๊กสเปกชีต (4 ลุค)",zh:"模特参数表穿搭（4 套）",vi:"Lookbook bảng thông số (4 look)",id:"Lookbook Spec Sheet (4 look)",ms:"Lookbook Spec Sheet (4 look)"}),
+    summary:L9({my:"အတိုင်းအတာ မှတ်စုတွေနဲ့ ရှေ့/ဘေး/နောက် သုံးမြင်ကွင်း — Look တစ်ခုပြီး တစ်ခု",en:"Front, side and back in one row with measurement callouts — one styled Look after another",shn:"ၼႃႈ/ၶၢင်ႈ/လင် သၢမ်ၽၢႆႇ မီးၶေႃႈမၢႆ — Look ဢၼ်ၼိုင်ႈသေဢၼ်ၼိုင်ႈ",kac:"Shawng/makau/hpang masum, shingra masat hte — Look langai hpang langai",th:"หน้า ข้าง หลัง เรียงแถวพร้อมตัวเลขสัดส่วน — ทีละลุค",zh:"正面、侧面、背面三视图配尺寸标注 — 一套接一套",vi:"Trước, ngang, sau cùng hàng kèm số đo — từng look một",id:"Depan, samping, belakang satu baris dengan ukuran — look demi look",ms:"Depan, sisi, belakang satu baris dengan ukuran — look demi look"}),
+    text:function(){
+      return "Vertical 9:16 fashion lookbook video on a clean off-white paper studio backdrop, shot flat and straight on with a locked-off camera and even shadowless light. "
+       + "It opens on the person from the reference photograph standing alone in plain white tee and black shorts with white socks and flat shoes, and thin technical annotation lines draw themselves onto the frame around her like a garment spec sheet — slim rules with small serif labels reading Shoulders, Bust, Waist, Hips, Height, Arm Length, Thigh Length, Leg Length, Shoes, a weight in kilograms and a Unit: cm note in the corner. "
+       + "The frame then divides into a row of three of her side by side, the same person in the same outfit seen FRONT, SIDE and BACK, standing evenly spaced and perfectly aligned on the same baseline. "
+       + "From there the shot steps through four styled Looks, each holding the same three-up front/side/back row: a black knit and wide cropped trousers with a slouched leather tote, a striped raglan over floral shorts with a blue beanie and white sneakers, denim dungarees over a striped tee with a white cap, a mesh tote and red high-tops, and a long dark raglan over striped over-the-knee socks and platform shoes. "
+       + "A small clean label reading Look 1, Look 2, Look 3 and Look 4 sits low on the left of the frame for each, with a short row of flat colour swatch chips beside it drawn from that outfit, and fine measurement rules stay along the edges throughout. "
+       + "Neutral true colour, crisp fabric texture, catalogue-clean finish. The only lettering is the spec-sheet annotation and the Look labels."
+       + VID_ID;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — တစ်ကိုယ်လုံး၊ ရှေ့တည့်တည့် မတ်တပ်ပုံ အကောင်းဆုံး။",en:"1 photo — full body, standing straight to camera works best.",shn:"ၶႅပ်းႁၢင်ႈ 1 — တူဝ်တဵမ်၊ ၸုၵ်းၼႃႈတေႃႇ",kac:"Sumla 1 — hkum ting, shawng de tsap ai",th:"1 รูป — เต็มตัว ยืนตรงหน้ากล้อง ดีที่สุด",zh:"1 张全身照 — 正面站立效果最好",vi:"1 ảnh toàn thân — đứng thẳng hướng máy là tốt nhất",id:"1 foto seluruh badan — berdiri lurus ke kamera",ms:"1 foto seluruh badan — berdiri lurus ke kamera"}) }
 ];
 function vidWfByKey(k){ for(var i=0;i<VID_WF.length;i++) if(VID_WF[i].key===k) return VID_WF[i]; return null; }
 
