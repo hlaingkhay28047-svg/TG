@@ -6279,12 +6279,16 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
        as a mechanism: a workflow id may ship before its card photo is drawn,
        and requesting a 404 on every render is worse than knowing it is absent. */
     /* v4.85 — and here is that mechanism earning its keep. The four window
-       relights ship the moment their prompts are right; their card
-       photographs have to be generated from the owner's four reference
-       frames and are not drawn yet. Listed here, each card paints its own
+       relights shipped the moment their prompts were right; their card
+       photographs had to be generated from the owner's four reference frames
+       and were not drawn yet. Listed here, each card painted its own
        generated SVG immediately instead of waiting out a certain 404 on a
        phone. Remove an id the moment lib/wf/cards5/<id>.jpg lands. */
-    var NO_CARD_JPG=["lg-winSoftL","lg-sunShaft","lg-winHard","lg-winWide"];
+    /* v4.86 — all four landed, so the list is empty again, exactly as the rule
+       above says. They are NEW filenames that no device has ever been served,
+       so a cache miss fetches them normally and they need no LIB_PURGES entry;
+       that list is only for files replaced under a name already in the wild. */
+    var NO_CARD_JPG=[];
 
     var cats=[];
     var mm=LANG!=="en";
@@ -18065,7 +18069,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.85.0";
+var APP_VER="4.86.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
