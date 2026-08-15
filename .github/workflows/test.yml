@@ -215,6 +215,9 @@ jobs:
       - name: Run v4.82.0 age-library sweep (440 plates, and the count in every language)
         run: node test/sweep_v482_agelib.js
 
+      - name: Run v4.84.0 boot-payload sweep (a launch pays only for the page it opens)
+        run: node test/sweep_v484_bootbytes.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
