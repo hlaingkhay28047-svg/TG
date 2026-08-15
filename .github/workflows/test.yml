@@ -233,6 +233,9 @@ jobs:
       - name: Run v4.93.0 Cinematic Poster + 13 card images sweep
         run: node test/sweep_v493_cineposter.js
 
+      - name: Run v4.94.0 makeup-look fast-cut video sweep (10 clips, shot tiling)
+        run: node test/sweep_v494_makeupcut.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

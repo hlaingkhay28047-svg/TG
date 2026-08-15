@@ -71,9 +71,19 @@ const NEW = ["tinyPlanet", "bottleLook", "phonePortal", "cnyTiger", "specSheet",
   "makeupSwipe", "trafficType", "bossFight", "getReady", "wonderland",
   "receiptLook", "sparkNight", "stageIdol"];
 const OLD = ["boardingPass", "dressSpin", "veilWind", "portraitLive", "pushIn", "couplePose"];
+/* v4.94 — the ten makeup-look workflows. They are held in their own list, not
+   folded into NEW, for one reason: E2 asks whether each prompt is a different
+   FILM, and ten prompts about applying makeup to one face legitimately share
+   more vocabulary than ten prompts about a boarding pass, a metro carriage and
+   a boxing ring. Their own similarity bar is asserted in sweep_v494, against
+   each other, where the comparison means something. What they DO belong in is
+   TRANSFORM (they change the face) and EVERY (they owe the ten-second budget
+   like everything else on the shelf). */
+const MK = ["mkGlassSkin", "mkGemTear", "mkDouyinRed", "mkGlossPop", "mkPorcelain",
+  "mkPinkBridal", "mkDollBlush", "mkSculptBrush", "mkEyeMacro", "mkNoirSlip"];
 /* The workflows that TRANSFORM the scene, and so must not carry the freeze
    clause. boardingPass belongs here: it changes her outfit. */
-const TRANSFORM = NEW.concat(["boardingPass"]);
+const TRANSFORM = NEW.concat(["boardingPass"]).concat(MK);
 const HOLD = ["dressSpin", "veilWind", "portraitLive", "pushIn", "couplePose"];
 
 /* Distinguishing nouns, one set per clip, taken from what is actually on
@@ -100,9 +110,10 @@ const SIGNATURE = {
 /* ---- A ---- */
 const block = src.slice(src.indexOf("var VID_WF=["), src.indexOf("function vidWfByKey"));
 const keys = (block.match(/key:"([a-zA-Z]+)"/g) || []).map(k => k.slice(5, -1));
-report("A) all thirteen new video workflows exist and the six originals are intact",
+report("A) all twenty-three added workflows exist and the six originals are intact",
   NEW.every(k => keys.indexOf(k) >= 0) && OLD.every(k => keys.indexOf(k) >= 0) &&
-  keys.length === 19 && new Set(keys).size === 19,
+  MK.every(k => keys.indexOf(k) >= 0) &&
+  keys.length === 29 && new Set(keys).size === 29,
   { keys: keys });
 
 /* ---- C + D) the split, in the source ---- */
@@ -184,7 +195,7 @@ report("C) VID_ID exists and carries no setting-freeze claim",
      every prompt fits ten seconds; measured, it was 13 of 19, because the six
      that shipped before this batch never stated the budget. Asserting it of
      NEW only would have kept answering the wrong question. */
-  const EVERY = NEW.concat(OLD);
+  const EVERY = NEW.concat(OLD).concat(MK);
   EVERY.forEach(k => {
     const t = byKey[k].text;
     if (!/\bTen seconds\b/i.test(t)) noBudget.push(k);
@@ -199,7 +210,7 @@ report("C) VID_ID exists and carries no setting-freeze claim",
     const bad = secs.filter(p => p[1] > 10 || p[0] >= p[1]).concat(at.filter(x => x > 10).map(x => [x, x]));
     if (bad.length) overrun.push({ k: k, secs: secs, at: at });
   });
-  report("T) all nineteen prompts state the ten-second budget",
+  report("T) all twenty-nine prompts state the ten-second budget",
     noBudget.length === 0, { missing: noBudget });
   report("T2) every beat it names lands inside those ten seconds",
     overrun.length === 0, overrun);
@@ -270,8 +281,8 @@ report("C) VID_ID exists and carries no setting-freeze claim",
       s: (c.querySelector(".s") || {}).textContent || "",
       img: (c.querySelector("img") || {}).getAttribute ? c.querySelector("img").getAttribute("src") : null
     })));
-  report("G) all nineteen video cards render with a label, a summary and art",
-    cards.length === 19 &&
+  report("G) all twenty-nine video cards render with a label, a summary and art",
+    cards.length === 29 &&
     cards.every(c => c.t.length > 2 && c.s.length > 5 && c.img && /^lib\/vid\//.test(c.img)),
     { n: cards.length, bad: cards.filter(c => !(c.t && c.s && c.img)).length });
 

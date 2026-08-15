@@ -18134,7 +18134,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.93.0";
+var APP_VER="4.94.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -19156,6 +19156,21 @@ function vidCityDef(k){
 var VID_ID = " Her face, bone structure, hair, makeup and identity stay exactly as the reference photograph from the first frame to the last. One continuous take, smooth steady motion, no camera shake, no text or captions anywhere in the frame beyond any lettering this shot explicitly calls for.";
 var VID_KEEP = " Her face, bone structure, hair, makeup and identity stay exactly as the reference photograph from the first frame to the last, and the dress, the light and the setting stay as they are. One continuous take, smooth steady motion, no cuts, no camera shake, no text or captions anywhere in the frame.";
 
+/* v4.94 — and a THIRD tail, for the same reason the second one exists.
+   The owner sent ten makeup-look clips and asked for workflows that cut fast,
+   the way those clips do. Both existing tails forbid exactly that: VID_KEEP
+   says "no cuts" outright, and VID_ID says "one continuous take". Appending
+   either to a prompt whose whole body is a six-shot cut list is the same
+   coin-flip contradiction that was found in v4.87 — a request in the body,
+   its refusal in the tail. VID_CUT keeps the one clause that is true of every
+   workflow in this shelf (identity is locked) and replaces the continuity
+   clause with its opposite: cut hard, hold each shot still, change across the
+   cut rather than by morphing inside a shot. The makeup-only sentence is the
+   other half of the lock — on a beauty edit the model's temptation is to
+   "improve" the face between shots, and that is the one change that would
+   make the clip useless to a studio. */
+var VID_CUT = " Her face, bone structure and identity stay exactly as the reference photograph in every shot — the makeup is the only thing that changes on her, and it changes only where the shot says so. Cut hard on the beat: every shot is locked off and holds still, the change happens across the cut and never as a slow morph inside a shot, and no shot dissolves into the next. Real cosmetic texture — powder sits, cream moves, gloss stays wet, and no text or captions anywhere in the frame.";
+
 /* Omni Flash is not a taste call. It is the only registered video model with
    aspect control (these are vertical shots) and a 2048-char prompt ceiling;
    RH Video G is aspect:false with promptMax 800, and rhV2SubmitVideo clips at
@@ -19413,7 +19428,178 @@ var VID_WF=[
        + "Concert lighting with strong coloured rims and lens flares, high energy."
        + VID_ID;
     },
-    hint:L9({my:"ပုံ ၁ ပုံ — မျက်နှာ ကြည်လင်စွာ ပါတဲ့ ခါးအထက် သို့ တစ်ကိုယ်လုံး။",en:"1 photo — waist up or full body with the face clear.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၼႃႈၸႅင်ႈ",kac:"Sumla 1 — myi man mu ai",th:"1 รูป — ครึ่งตัวหรือเต็มตัว เห็นหน้าชัด",zh:"1 张半身或全身照，面部清晰",vi:"1 ảnh nửa người hoặc toàn thân, rõ mặt",id:"1 foto separuh atau seluruh badan, wajah jelas",ms:"1 foto separuh atau seluruh badan, wajah jelas"}) }
+    hint:L9({my:"ပုံ ၁ ပုံ — မျက်နှာ ကြည်လင်စွာ ပါတဲ့ ခါးအထက် သို့ တစ်ကိုယ်လုံး။",en:"1 photo — waist up or full body with the face clear.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၼႃႈၸႅင်ႈ",kac:"Sumla 1 — myi man mu ai",th:"1 รูป — ครึ่งตัวหรือเต็มตัว เห็นหน้าชัด",zh:"1 张半身或全身照，面部清晰",vi:"1 ảnh nửa người hoặc toàn thân, rõ mặt",id:"1 foto separuh atau seluruh badan, wajah jelas",ms:"1 foto separuh atau seluruh badan, wajah jelas"}) },
+
+  /* v4.94 — ten makeup-look workflows, read off ten clips the owner sent with
+     the brief "fast, sharp, cut like these, professional". Every clip was
+     decoded frame by frame (Chromium here has no H.264, so imageio_ffmpeg
+     again) and the LOOK in each was identified before a word was written: the
+     glass skin under a chandelier, the crystal tears, the oxblood lip, and so
+     on. The prompts are cut lists, not descriptions — four to six locked-off
+     shots with their in and out points, because that is what "edit cut" means
+     and because a beat sheet is the part of the prompt that survives the
+     model's truncation. They close on VID_CUT, never VID_ID or VID_KEEP; see
+     the note above the constant. Card art is two real frames of each clip,
+     cropped away from the burnt-in platform watermark. */
+
+  { key:"mkGlassSkin", art:"lib/vid/vw-mkGlassSkin.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ဖန်သားအလား အသားအရေ (Douyin)",en:"Douyin Glass Skin",shn:"ၽိဝ်ၼိူဝ်ႉမိူၼ်ၵႅဝ်ႈ (Douyin)",kac:"Hkyen zawn hpyi (Douyin)",th:"ผิวกระจกสไตล์โต่วอิน",zh:"抖音玻璃肌",vi:"Da glass skin Douyin",id:"Glass Skin Douyin",ms:"Glass Skin Douyin"}),
+    summary:L9({my:"အသားအရေ စိုပြေတောက်ပ + ငွေရောင် လက်ဝတ်ရတနာ မျက်ခွံ — ဖြတ်တောက်မြန်",en:"Wet reflective skin and silver glitter lids, cut fast under a chandelier",shn:"ၽိဝ်ၼိူဝ်ႉၸိုမ်း လႄႈ တႃႇငိုၼ်း — တတ်းဝႆး",kac:"Hpyi tsawm nna gumhpraw glitter myi — lawan ai cut",th:"ผิวฉ่ำสะท้อนแสงกับเปลือกตากลิตเตอร์เงิน ตัดเร็ว",zh:"水光肌配银色闪粉眼妆，快切剪辑",vi:"Da căng bóng và mắt nhũ bạc, cắt nhanh",id:"Kulit basah memantul dan kelopak glitter perak, potongan cepat",ms:"Kulit basah memantul dan kelopak glitter perak, potongan pantas"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 Douyin beauty edit, six shots, hard cut on every beat, no dissolves. "
+       + "Throughout: the person from the reference photograph under a crystal chandelier, hair swept into a high ponytail, wearing a mirror-sequin bodice that throws shards of light. "
+       + "SHOT 1 (0-1.5s): tight on the bare cheek, skin matte and unlit. "
+       + "SHOT 2 (1.5-3s): a fingertip presses a pearl-white cream along the cheekbone and the surface turns wet and reflective. "
+       + "SHOT 3 (3-4.5s): macro on one closed lid as silver-white glitter is packed on with a flat brush and catches a hard specular ping. "
+       + "SHOT 4 (4.5-6.5s): eyes open straight to lens, tiny star and diamond decals set along the outer eye, glossy nude-brown lip, the whole face lacquered. "
+       + "SHOT 5 (6.5-8.5s): she tips her chin and the chandelier drags moving light across the sequins. "
+       + "SHOT 6 (8.5-10s): locked hero frame, dead centre, chin level, holding still. "
+       + "Cool white key with a warm chandelier fill, extreme specular highlights on skin, crisp sequin sparkle, clean commercial grade."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — မျက်နှာ ကြည်လင်ပြီး ရှေ့တည့်တည့်ကြည့်ထားတဲ့ပုံ။",en:"1 photo — face clear and looking toward the camera.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၼႃႈၸႅင်ႈ",kac:"Sumla 1 — myi man tsawm hkra mu ai",th:"1 รูป — เห็นหน้าชัด มองกล้อง",zh:"1 张正面清晰的照片",vi:"1 ảnh — rõ mặt, nhìn về ống kính",id:"1 foto — wajah jelas menghadap kamera",ms:"1 foto — wajah jelas menghadap kamera"}) },
+
+  { key:"mkGemTear", art:"lib/vid/vw-mkGemTear.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ကျောက်မျက် မျက်ရည်",en:"Crystal Tear Gems",shn:"ၼမ်ႉတႃႇ ၵႅဝ်ႈ",kac:"Lung seng myi prwi",th:"หยดน้ำตาคริสตัล",zh:"水晶泪钻",vi:"Giọt lệ pha lê",id:"Air Mata Kristal",ms:"Air Mata Kristal"}),
+    summary:L9({my:"မျက်လုံးအောက်က ကျောက်မျက်တွေ မျက်ရည်လို စီထား — ငွေရောင် ဖက်ရှင်",en:"Rhinestones set under the eye like a frozen tear, silver runway finish",shn:"ႁိၼ်ၵႅဝ်ႈတႂ်ႈတႃႇ မိူၼ်ၼမ်ႉတႃႇ — သီငိုၼ်း",kac:"Myi npu kaw lung seng myi prwi zawn — gumhpraw fashion",th:"คริสตัลใต้ตาเหมือนหยดน้ำตา ลุครันเวย์สีเงิน",zh:"眼下水钻如凝结的泪，银色秀场妆",vi:"Đá đính dưới mắt như giọt lệ đông, tông bạc sàn diễn",id:"Kristal di bawah mata seperti air mata beku, nuansa perak",ms:"Kristal di bawah mata seperti air mata beku, nada perak"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 fashion-week beauty film, five shots, cut hard on the beat. "
+       + "Throughout: the person from the reference photograph with her hair drawn into a tall sculpted knot dusted with silver spray, against a soft studio grey. "
+       + "SHOT 1 (0-2s): three-quarter profile, skin clean, a hand entering frame to pin the knot. "
+       + "SHOT 2 (2-4s): macro on the under-eye as tweezers set the first clear rhinestone against the skin. "
+       + "SHOT 3 (4-6s): a line of graduated crystals now runs from the inner corner down the cheek like a frozen tear, silver-grey shadow smoked across the socket. "
+       + "SHOT 4 (6-8s): she looks down and the stones catch the key one after another as the lashes lower. "
+       + "SHOT 5 (8-10s): square to camera, a beaded ivory bodice on her shoulders, wet-glitter lip, holding the hero pose. "
+       + "Silver and pearl palette, high-contrast beauty key, real refraction inside every stone."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — မျက်နှာနဲ့ မျက်လုံးအောက် ကြည်လင်စွာ မြင်ရတဲ့ပုံ။",en:"1 photo — the face and the under-eye area clearly visible.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၼႃႈလႄႈတႂ်ႈတႃႇၸႅင်ႈ",kac:"Sumla 1 — myi man hte myi npu mu ai",th:"1 รูป — เห็นหน้าและใต้ตาชัด",zh:"1 张照片 — 面部与眼下清晰",vi:"1 ảnh — rõ mặt và vùng dưới mắt",id:"1 foto — wajah dan area bawah mata terlihat jelas",ms:"1 foto — wajah dan kawasan bawah mata jelas"}) },
+
+  { key:"mkDouyinRed", art:"lib/vid/vw-mkDouyinRed.jpg", setup:VID_SETUP_V,
+    label:L9({my:"နှုတ်ခမ်းနီ ရင့်ရင့် (တရုတ်)",en:"Deep Red Lip · Douyin",shn:"သီပၢၵ်ႇလႅင်ၶဵမ်",kac:"Ncup ahkyeng katsi",th:"ปากแดงเข้มสไตล์จีน",zh:"抖音正红唇",vi:"Môi đỏ trầm Douyin",id:"Bibir Merah Pekat Douyin",ms:"Bibir Merah Pekat Douyin"}),
+    summary:L9({my:"မတ်ခမ်းနီ ရင့်ရင့် + အနက် eyeliner — နှင်းဆီပွင့်နဲ့ ကျောက်စိမ်းလက်ကောက်",en:"Matte oxblood lip and a sharp wing, with rose petals and a jade bangle",shn:"သီပၢၵ်ႇလႅင်ၶဵမ် လႄႈ တႃႇလမ် — မွၵ်ႇလႄႈၵွင်ႈယူၺ်",kac:"Ncup ahkyeng katsi hte myi tsawm — nampan hte jade",th:"ปากแดงเข้มแมตต์กับอายไลเนอร์คม กลีบกุหลาบและกำไลหยก",zh:"哑光正红唇配利落眼线，玫瑰花瓣与玉镯",vi:"Môi đỏ lì và mắt kẻ sắc, cánh hồng và vòng ngọc",id:"Bibir merah matte dan eyeliner tajam, kelopak mawar dan gelang giok",ms:"Bibir merah matte dan eyeliner tajam, kelopak mawar dan gelang jed"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 Chinese-social beauty cut, five shots, hard cuts throughout. "
+       + "Throughout: the person from the reference photograph in a cream sleeveless top, a jade bangle on her wrist, dark red rose petals scattered at the edge of frame. "
+       + "SHOT 1 (0-2s): close on the mouth, bare, as an oxblood lipstick is drawn on in two strokes and blotted flat. "
+       + "SHOT 2 (2-4s): eyes only, a fine black wing pulled out past the outer corner and a warm brown wash blended above it. "
+       + "SHOT 3 (4-6s): full face to lens, wispy fringe strands falling loose over the brow, the matte red now the only colour in the picture. "
+       + "SHOT 4 (6-8s): she lifts a hand to her jaw so the jade and her long pale nails come into frame beside the red. "
+       + "SHOT 5 (8-10s): she turns a few degrees with a rose held near her cheek, petals almost touching the lip. "
+       + "Warm ivory background, one soft key, deep saturated red against neutral skin, film-clean grade."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — နှုတ်ခမ်း ကြည်လင်စွာ ပါတဲ့ မျက်နှာပုံ။",en:"1 photo — a face shot with the mouth clearly visible.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်သီပၢၵ်ႇၸႅင်ႈ",kac:"Sumla 1 — ncup mu ai",th:"1 รูป — เห็นริมฝีปากชัด",zh:"1 张照片 — 唇部清晰",vi:"1 ảnh — thấy rõ đôi môi",id:"1 foto — bibir terlihat jelas",ms:"1 foto — bibir jelas kelihatan"}) },
+
+  { key:"mkGlossPop", art:"lib/vid/vw-mkGlossPop.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ကြေးရောင် တောက်ပ + Gloss",en:"Bronze Glow & Gloss",shn:"သီတွင်း လႄႈ Gloss",kac:"Bronze htoi hte gloss",th:"ผิวบรอนซ์ฉ่ำกับลิปกลอส",zh:"古铜光泽与唇釉",vi:"Da nâu ánh và son bóng",id:"Kilau Bronze & Gloss",ms:"Kilau Bronze & Gloss"}),
+    summary:L9({my:"ကြေးရောင် ပါးရိုး + နှုတ်ခမ်း တောက်ပြောင် — ကြော်ငြာဆန်ဆန်",en:"Terracotta cheekbones and a mirror-wet lip, commercial finish",shn:"ၵႅမ်ႈသီတွင်း လႄႈ သီပၢၵ်ႇပိူင်း",kac:"Bronze pyi hte ncup tsawm",th:"โหนกแก้วสีดินเผาและปากฉ่ำเงา สไตล์โฆษณา",zh:"陶土色颧骨与镜面唇釉，广告质感",vi:"Gò má nâu đất và môi bóng gương, chất quảng cáo",id:"Tulang pipi terakota dan bibir basah, nuansa iklan",ms:"Tulang pipi terakota dan bibir basah, gaya iklan"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 glossy commercial beauty spot, four shots, snapping between them. "
+       + "Throughout: the person from the reference photograph, brown waves swept back off the face, large pearl-cluster earrings, lit against a bright white wall. "
+       + "SHOT 1 (0-2.5s): half-face macro, terracotta bronzer swept along the cheekbone with a fan brush until the skin reads sunlit. "
+       + "SHOT 2 (2.5-5s): a liquid-gloss wand comes in from below and paints the lower lip, the surface going wet and mirror-bright, one thread of gloss lifting as the wand leaves. "
+       + "SHOT 3 (5-7.5s): eyes to camera, warm smoky brown packed into the socket, honey highlight down the nose bridge and across the top of the cheek. "
+       + "SHOT 4 (7.5-10s): she settles into the hero frame, lips slightly parted, the pearls swinging once and stopping. "
+       + "Bright airy key, warm bronze-and-honey palette, heavy wet specular on the lip, glossy magazine finish."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ခါးအထက် သို့ မျက်နှာအနီးကပ်ပုံ။",en:"1 photo — waist up or a close face shot.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ၶိုၼ်ႈၼိူဝ်ဢႅဝ်",kac:"Sumla 1 — n-gup ntsa",th:"1 รูป — ครึ่งตัวบนหรือใบหน้าใกล้",zh:"1 张半身或面部特写",vi:"1 ảnh nửa người hoặc cận mặt",id:"1 foto separuh badan atau close-up wajah",ms:"1 foto separuh badan atau close-up wajah"}) },
+
+  { key:"mkPorcelain", art:"lib/vid/vw-mkPorcelain.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ကြွေထည် အသားအရေ (အအေး)",en:"Cold Porcelain",shn:"ၽိဝ်ၼိူဝ်ႉမိူၼ်ထူၺ်",kac:"Katsi ai porcelain",th:"ผิวพอร์ซเลนโทนเย็น",zh:"冷调瓷肌",vi:"Da sứ tông lạnh",id:"Porselen Dingin",ms:"Porselin Sejuk"}),
+    summary:L9({my:"အအေးဓာတ် ဖြူဖွေးတဲ့ အသားအရေ + နံရံပေါ်က အရိပ်ထင်ရှား",en:"Cool flat porcelain skin against a hard shadow on a green-grey wall",shn:"ၽိဝ်ၼိူဝ်ႉၶၢဝ်ၶႅမ် လႄႈ ငဝ်းၼိူဝ်ၽႃ",kac:"Katsi ai hpraw hpyi hte shingnip",th:"ผิวพอร์ซเลนเรียบโทนเย็น กับเงาคมบนผนังเขียวเทา",zh:"冷调平滑瓷肌，配灰绿墙上的硬影",vi:"Da sứ phẳng tông lạnh trên nền tường xám xanh có bóng gắt",id:"Kulit porselen datar dingin dengan bayangan tajam di dinding",ms:"Kulit porselin rata sejuk dengan bayang tajam di dinding"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 editorial beauty study, four shots, cut clean between them. "
+       + "Throughout: the person from the reference photograph against a grey-green painted wall, dark hair slicked flat to the skull, one oversized pearl at the ear, a single hard source throwing a crisp shadow of her profile onto the wall behind. "
+       + "SHOT 1 (0-2.5s): profile to the left, the shadow edge razor sharp beside her. "
+       + "SHOT 2 (2.5-5s): macro on the cheek as a cool porcelain base is pressed in and the skin flattens to an even matte with no warmth in it at all. "
+       + "SHOT 3 (5-7.5s): three-quarter turn, a muted rosewood stain patted into the centre of the lip and blurred outward, brows brushed straight up. "
+       + "SHOT 4 (7.5-10s): she faces the lens square, chin level, expression neutral, the pearl carrying the one highlight in the frame. "
+       + "Cold desaturated grade, single hard key, deep controlled shadow, sculptural and still."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — နောက်ခံ ရှင်းရှင်း၊ မျက်နှာ ကြည်လင်တဲ့ပုံ။",en:"1 photo — plain background, face clearly visible.",shn:"ၶႅပ်းႁၢင်ႈ 1 — လင်ႁၢင်ႈမူတ်း",kac:"Sumla 1 — hpang de san seng ai",th:"1 รูป — ฉากหลังเรียบ เห็นหน้าชัด",zh:"1 张照片 — 背景干净，面部清晰",vi:"1 ảnh — nền trơn, rõ mặt",id:"1 foto — latar polos, wajah jelas",ms:"1 foto — latar kosong, wajah jelas"}) },
+
+  { key:"mkPinkBridal", art:"lib/vid/vw-mkPinkBridal.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ပန်းရောင်နူးညံ့ မင်္ဂလာမိတ်ကပ်",en:"Soft Pink Bridal",shn:"မိတ်ႇၵၢပ်ႈသီလႅင်ဢွၼ်ႇ",kac:"Pink hpring num hkungran",th:"เมกอัพเจ้าสาวชมพูนุ่ม",zh:"柔粉新娘妆",vi:"Trang điểm cô dâu hồng dịu",id:"Pengantin Pink Lembut",ms:"Pengantin Pink Lembut"}),
+    summary:L9({my:"ပါးရေးပန်းရောင် + ပန်းရောင် gloss — မင်္ဂလာဆောင် မိတ်ကပ် အဆင့်ဆင့်",en:"Pink blush and rose gloss, the bridal look built step by step",shn:"ၵႅမ်ႈသီလႅင် လႄႈ gloss — မိတ်ႇၵၢပ်ႈႁဵတ်းလွႆးလွႆး",kac:"Pink pyi hte gloss — hkungran makeup lakang lakang",th:"ปัดแก้มชมพูและกลอสโรส สร้างลุคเจ้าสาวทีละขั้น",zh:"粉色腮红与玫瑰唇釉，一步步完成新娘妆",vi:"Má hồng và son bóng hồng, dựng look cô dâu từng bước",id:"Perona pink dan gloss mawar, look pengantin bertahap",ms:"Perona pink dan gloss mawar, look pengantin berperingkat"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 bridal-makeup reel, five shots, quick cuts on the beat. "
+       + "Throughout: the person from the reference photograph in a white lace corset, long chestnut waves brushed over one shoulder, in front of a cream drape. "
+       + "SHOT 1 (0-2s): an open blush palette is held beside her face and a full brush is loaded from the pale pink pan. "
+       + "SHOT 2 (2-4s): the brush sweeps that pink high across the cheek and out toward the temple in two passes. "
+       + "SHOT 3 (4-6s): macro on the eye, a pink-champagne shimmer patted onto the centre of the lid, the lower lash line softened with the same tone. "
+       + "SHOT 4 (6-8s): a rose gloss is pressed onto the lips and they press together once. "
+       + "SHOT 5 (8-10s): she lifts her chin to the lens for the finished bridal frame, the waves falling back into place. "
+       + "Soft diffused window key, warm ivory and rose palette, delicate and clean, wedding-magazine finish."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ခါးအထက်၊ ဆံပင် မြင်ရရင် ပိုကောင်း။",en:"1 photo — waist up, better when the hair is visible.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၶူၼ်ႁူဝ်ၸင်ႇလီ",kac:"Sumla 1 — kara mu yang grau kaja",th:"1 รูป — ครึ่งตัวบน เห็นผมยิ่งดี",zh:"1 张半身照，露出头发更好",vi:"1 ảnh nửa người, thấy tóc thì tốt hơn",id:"1 foto separuh badan, lebih bagus bila rambut terlihat",ms:"1 foto separuh badan, lebih baik bila rambut kelihatan"}) },
+
+  { key:"mkDollBlush", art:"lib/vid/vw-mkDollBlush.jpg", setup:VID_SETUP_V,
+    label:L9({my:"အရုပ်ပုံစံ ပါးရဲရဲ",en:"Doll Blush",shn:"ၵႅမ်ႈလႅင် မိူၼ်တုၵ်ႉတႃ",kac:"Doll zawn pyi ahkyeng",th:"ปัดแก้มสไตล์ตุ๊กตา",zh:"娃娃感重腮红",vi:"Má hồng búp bê",id:"Blush Boneka",ms:"Blush Patung"}),
+    summary:L9({my:"နှာခေါင်းဖြတ်ပြီး မျက်လုံးအောက် ပန်းရောင်ရဲရဲ — ပုလဲကြိုးနဲ့",en:"Heavy pink across the nose and under both eyes, pearl chains in the hair",shn:"သီလႅင်ႁၢဝ်ႈ ၼိူဝ်လင်ႁူဝ်ၶိူင်ႇ — မီးသၢႆမုၵ်ႈ",kac:"Ladi hte myi npu kaw pink kaba — pearl chain",th:"ชมพูเข้มพาดจมูกและใต้ตา พร้อมสร้อยไข่มุกบนผม",zh:"浓粉横扫鼻梁与眼下，发间缀珍珠链",vi:"Hồng đậm vắt qua mũi và dưới mắt, dây ngọc trên tóc",id:"Pink pekat melintang hidung dan bawah mata, rantai mutiara",ms:"Pink pekat melintang hidung dan bawah mata, rantai mutiara"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 doll-makeup edit, six fast shots. "
+       + "Throughout: the person from the reference photograph with strands of pearl chain draped across the top of her hair and a red ribbon flower tied at her throat. "
+       + "SHOT 1 (0-1.5s): macro on the bare nose bridge. "
+       + "SHOT 2 (1.5-3s): a small tapered brush stipples strong rose pink straight across the bridge of the nose and out under both eyes in one wide band. "
+       + "SHOT 3 (3-4.5s): the same pink is carried up onto the lid and the brow bone so the whole eye area flushes. "
+       + "SHOT 4 (4.5-6.5s): tight on the eyes, lower lashes drawn in one at a time, the flush now heavy enough to read as a doll. "
+       + "SHOT 5 (6.5-8.5s): a sheer red gloss on a full round lip shape. "
+       + "SHOT 6 (8.5-10s): she looks up into the lens wide-eyed and holds, the pearls swaying to a stop. "
+       + "Warm pink-dominant grade, soft frontal key, high-flush finish."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — မျက်နှာ အနီးကပ်၊ ရှေ့တည့်တည့်။",en:"1 photo — a close face shot, facing forward.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ၼႃႈတေႃႇ ၸမ်ၸမ်",kac:"Sumla 1 — myi man ni hkra shawng de",th:"1 รูป — ใบหน้าใกล้ หันตรง",zh:"1 张正面面部特写",vi:"1 ảnh cận mặt, chính diện",id:"1 foto close-up wajah menghadap depan",ms:"1 foto close-up wajah menghadap depan"}) },
+
+  { key:"mkSculptBrush", art:"lib/vid/vw-mkSculptBrush.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ပါးရိုးဖော် + အရောင်ကူး",en:"Sculpt & Gradient",shn:"ႁဵတ်းလုပ်ႇၵႅမ်ႈ လႄႈ လၢႆးသီ",kac:"Pyi nra shakya hte gradient",th:"เก็บโครงหน้าและไล่สี",zh:"修容与渐层腮红",vi:"Tạo khối và má tán chuyển",id:"Sculpt & Gradasi",ms:"Sculpt & Gradasi"}),
+    summary:L9({my:"ပါးရိုးအောက် တစ်ချက်ဆွဲ ပြီး အနားမပေါ်အောင် ဖျော့သွား",en:"One clean line of shade under the cheekbone, faded out to no visible edge",shn:"လၢႆးမိုတ်ႈတႂ်ႈလုပ်ႇၵႅမ်ႈ သေ ႁဵတ်းႁႂ်ႈဢမ်ႇႁၼ်ႁိမ်း",kac:"Pyi nra npu kaw shingnip langai, htum ai shara nmu",th:"ลากเงาใต้โหนกแก้วหนึ่งเส้นแล้วเกลี่ยจนไร้ขอบ",zh:"颧骨下一道阴影，晕开到看不见边界",vi:"Một đường tối dưới gò má, tán đến khi không còn viền",id:"Satu garis bayangan di bawah tulang pipi, dibaurkan tanpa tepi",ms:"Satu garis bayang bawah tulang pipi, dibaur tanpa tepi"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 technique-led beauty cut, four shots, hard cut each time. "
+       + "Throughout: the person from the reference photograph on a plain warm-grey backdrop, hair scraped back into a low bun, one small round stud at the ear. "
+       + "SHOT 1 (0-2.5s): three-quarter profile, a wide angled brush laid flat under the cheekbone and drawn back toward the ear, carving one clean line of shade. "
+       + "SHOT 2 (2.5-5s): the brush lifts to the top of the cheek and lays a coral flush that fades outward with no visible edge anywhere. "
+       + "SHOT 3 (5-7.5s): macro on the eye, a warm brown pencil smudged into the lash roots and pulled slightly long, nothing above the crease. "
+       + "SHOT 4 (7.5-10s): she turns square to the lens and the sculpting reads as bone rather than as makeup. "
+       + "Neutral grey-and-coral palette, big soft key from the front, matte-to-glow skin, quiet technical polish."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ဘေးတိုက်လေး လှည့်ထားတဲ့ မျက်နှာပုံ အကောင်းဆုံး။",en:"1 photo — a slightly angled face shot works best.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ဝိင်ႇၶွင်ႈၼိုင်ႈၸင်ႇလီ",kac:"Sumla 1 — kachyi mi wai da ai gaw grau kaja",th:"1 รูป — หน้าเอียงเล็กน้อยดีที่สุด",zh:"1 张略侧脸的照片效果最好",vi:"1 ảnh mặt hơi nghiêng là tốt nhất",id:"1 foto wajah sedikit menyamping paling bagus",ms:"1 foto wajah sedikit menyerong paling baik"}) },
+
+  { key:"mkEyeMacro", art:"lib/vid/vw-mkEyeMacro.jpg", setup:VID_SETUP_V,
+    label:L9({my:"မျက်ခွံ အနီးကပ် (ရွှေလက်မှုန့်)",en:"Glitter Eye Macro",shn:"တႃႇၸမ်ၸမ် (ၶမ်းလိုၵ်ႉ)",kac:"Myi ni hkra macro (ja glitter)",th:"มาโครดวงตากลิตเตอร์",zh:"眼妆微距·金闪",vi:"Macro mắt nhũ kim",id:"Makro Mata Glitter",ms:"Makro Mata Glitter"}),
+    summary:L9({my:"မျက်လုံးတစ်လုံးတည်း ဖရိမ်အပြည့် — ခရမ်းရောင်နဲ့ ရွှေရောင် လက်မှုန့်",en:"One eye filling the frame — plum shadow and copper-gold glitter",shn:"တႃႇလုၵ်ႈလဵဝ်တဵမ်ႁၢင်ႈ — သီမူင်ႈလႄႈၶမ်း",kac:"Myi langai sha frame hpring — plum hte ja glitter",th:"ดวงตาเดียวเต็มเฟรม เงาม่วงพลัมกับกลิตเตอร์ทองแดง",zh:"单眼满屏 — 梅子色眼影与铜金闪粉",vi:"Một mắt đầy khung — mắt mận và nhũ đồng vàng",id:"Satu mata memenuhi frame — plum dan glitter tembaga",ms:"Satu mata memenuhi bingkai — plum dan glitter tembaga"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 eye-makeup macro film, five shots, cut tight. "
+       + "Throughout: the person from the reference photograph shot almost entirely in extreme close-up, one eye filling the frame. "
+       + "SHOT 1 (0-2s): the bare lid, lashes long and separated, skin readable in fine detail. "
+       + "SHOT 2 (2-4s): a plum-mauve shadow is pressed into the outer socket with a small dome brush and pulled up toward the tail of the brow. "
+       + "SHOT 3 (4-6s): a flat brush tamps copper-gold glitter across the mobile lid and into the inner corner, individual flecks firing as she blinks. "
+       + "SHOT 4 (6-8s): the lower lash line is smoked with the same plum and a fine dark liner is set inside the waterline. "
+       + "SHOT 5 (8-10s): one pull back to the whole face, hair slicked, both eyes matching, holding the finished look. "
+       + "Warm skin tones against plum and copper, hard macro key, real glitter refraction, shallow focus riding the lashes."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — မျက်လုံး ကြည်လင်ပြီး focus ဝင်တဲ့ပုံ။",en:"1 photo — eyes sharp and in focus.",shn:"ၶႅပ်းႁၢင်ႈ 1 — တႃႇၸႅင်ႈလီ",kac:"Sumla 1 — myi san seng ai",th:"1 รูป — ดวงตาคมชัด",zh:"1 张眼部清晰对焦的照片",vi:"1 ảnh — mắt nét và đúng nét",id:"1 foto — mata tajam dan fokus",ms:"1 foto — mata tajam dan fokus"}) },
+
+  { key:"mkNoirSlip", art:"lib/vid/vw-mkNoirSlip.jpg", setup:VID_SETUP_V,
+    label:L9({my:"အနက်ရောင် ဆင်မြန်း (Noir)",en:"Black Slip Noir",shn:"ၶူဝ်းလမ် (Noir)",kac:"Nsam palawng (Noir)",th:"ลุคดำนัวร์",zh:"黑色吊带·冷调",vi:"Đen tuyền Noir",id:"Noir Slip Hitam",ms:"Noir Slip Hitam"}),
+    summary:L9({my:"အနက်ရောင် ဝတ်စုံ + စိန်လည်ဆွဲ — မီးအေးအေးနဲ့ ရိုးရှင်းခမ်းနား",en:"A black square-neck slip and a diamond line necklace, quiet and expensive",shn:"ၶူဝ်းလမ် လႄႈ သၢႆၶေႃးၽိင်း — ငၢႆႈလႄႈလီ",kac:"Nsam palawng hte seng nhpye — zim nna manu dan",th:"เดรสคอเหลี่ยมสีดำกับสร้อยเพชรเส้นเล็ก เรียบหรู",zh:"黑色方领吊带配细钻项链，安静而高级",vi:"Váy hai dây cổ vuông đen và vòng kim cương mảnh, sang lặng",id:"Slip hitam kerah kotak dan kalung berlian tipis, tenang dan mewah",ms:"Slip hitam kolar kotak dan rantai berlian nipis, tenang dan mewah"}),
+    text:function(){
+      return "Ten seconds, vertical 9:16 noir beauty edit, five locked shots, straight cuts between them. "
+       + "Throughout: the person from the reference photograph against a rough cream plaster wall, hair pulled into a low centre-parted bun, a slim diamond line necklace at the collarbone, a black square-neck slip on the shoulders. "
+       + "SHOT 1 (0-2s): shoulders square, bare skin, one palm resting along the jaw, the plaster texture readable behind her. "
+       + "SHOT 2 (2-4s): macro across the upper lash line as a felt-tip liner extends far past the outer corner and flicks upward at the very tip. "
+       + "SHOT 3 (4-6s): the mouth in profile, a cool mauve-brown stain worked into the centre and feathered outward until it sits flat and velvety. "
+       + "SHOT 4 (6-8s): she releases the hand and rolls the near shoulder forward so every stone in the necklace fires in sequence. "
+       + "SHOT 5 (8-10s): a held final frame, eyes level to the lens, nothing in motion except the light travelling over the diamonds. "
+       + "Warm neutral grade with deep falloff into shadow, one soft source from camera left, black and cream only, restrained luxury finish."
+       + VID_CUT;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ပခုံးထိ မြင်ရတဲ့ ခါးအထက်ပုံ။",en:"1 photo — waist up with the shoulders in frame.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၸိူဝ်ႉမႃႇ",kac:"Sumla 1 — sinlum du hkra mu ai",th:"1 รูป — ครึ่งตัวบน เห็นไหล่",zh:"1 张半身照，含肩部",vi:"1 ảnh nửa người, thấy vai",id:"1 foto separuh badan dengan bahu terlihat",ms:"1 foto separuh badan dengan bahu kelihatan"}) }
 ];
 function vidWfByKey(k){ for(var i=0;i<VID_WF.length;i++) if(VID_WF[i].key===k) return VID_WF[i]; return null; }
 
