@@ -8374,7 +8374,16 @@ function ptRenderRailInto(hostId, selId, onPick, withClear){
     var look=PT_LOOKS[id];
     var c=el("button","pcard"+(selId===id?" on":""));
     var wr=el("div","pth");
-    var im=document.createElement("img"); im.alt="";
+    /* v4.84 — MEASURED, and the measurement corrected the diagnosis. A first
+       launch on the Workflows page fetched 1.51MB of images, and 206KB of that
+       was these twelve chips, on a page the customer had not opened. They were
+       the ONLY images in the app missing loading="lazy" — the six Home tiles
+       and every Library thumbnail already carry it, and that is why they cost
+       nothing at boot: Chrome does defer a lazy <img> inside a display:none
+       page. So this is not a new mechanism, it is the one line the look rail
+       was missing. 12 fewer requests and 206KB less on every launch, on a
+       mobile-data plan, for a page that may never be opened. */
+    var im=document.createElement("img"); im.alt=""; im.loading="lazy"; im.decoding="async";
     /* The 12 built-in looks carry professional chip art (one locked model,
        lighting/grade the only variable — the owner's Look Chip pack), which
        reads far better at 76px than any CSS approximation. The filtered
@@ -14221,14 +14230,21 @@ function stRenderThumbs(){
   } else ST.thumbCanvas=null;
   stRenderPresetCards();
 }
-(function stLoadSample(){
+/* v4.84 — was an IIFE. It is now called from stArtWake(), when the look shelf
+   first comes on screen, for the reason spelt out above stLookArt: this is a
+   scripted Image, so nothing but an explicit gate can defer it. _stSampleAsked
+   keeps it to one fetch however often the shelf enters and leaves view. */
+var _stSampleAsked=false;
+function stLoadSample(){
+  if(_stSampleAsked) return;
+  _stSampleAsked=true;
   try{
     var im=new Image();
     im.onload=function(){ ST.sampleBitmap=im; if(!ST.srcBitmap) stRenderThumbs(); };
     im.onerror=function(){};              /* missing asset -> the old gradient, never a crash */
     im.src=ST_SAMPLE;
   }catch(e){}
-})();
+}
 /* ---- v4.62: the three keys the tile renderer silently drops ----
    stCssFilter emits 13 of the 19 t1 keys and drops shp, cla, grn, vig, bgb and
    dhz. Measured against lib/st-sample.jpg through the app's own tile path, that
@@ -14310,7 +14326,63 @@ function stTileFx(cx, t1, w, h){
    — the tile is 228x288 device pixels at DPR 3 and never larger. */
 var ST_LOOK_ART = {};
 var ST_LOOK_RAF = 0;
+/* v4.84 — the look shelf and its base sample are 257KB (17 files) fetched on
+   every launch for a page the customer has not opened. They cannot carry
+   loading="lazy" the way the Home tiles and Library thumbnails do, because
+   they are not <img> elements in the document at all: the shelf paints into a
+   <canvas>, so the art arrives through `new Image()`, and a scripted Image
+   fetches the instant its src is set no matter where the page is.
+
+   So the deferral has to be explicit, and WHAT TRIGGERS IT WAS THE WHOLE
+   DESIGN QUESTION. The first cut woke on switchPage("pgStudio"), and the
+   battery rejected it: sweep_v470 and sweep_v473 show the Studio page by
+   setting .on on the element directly, so the art never woke and both suites
+   failed. That was worth listening to rather than editing around. A gate tied
+   to one navigation function is a gate that anything else in the app — a deep
+   link, a restore, a future page host — can walk straight past, and the
+   failure mode is silent: computed tiles where photographs belong.
+
+   An IntersectionObserver on the PAGE cannot be bypassed: pgStudio is
+   display:none until it is shown, by any route at all, and the moment it gains
+   a box the art is asked for.
+
+   The observed element is the page and not the preset row, and that was also
+   measured rather than guessed. Watching the row works, but the row sits
+   1110px down a 4395px page: a customer would open Studio, see computed tiles,
+   and watch them turn into photographs a second later when they scrolled. The
+   saving being bought here is "do not pay for a page you never open", not "do
+   not pay for a section you have not scrolled to yet" — the second one costs
+   the customer a visible swap on the one screen this art exists to sell.
+
+   Until the page opens, stLookArt() reports "no art yet", which is the
+   fallback the shelf was always built around, and each photograph still lands
+   through the same coalesced requestAnimationFrame. Nothing the customer sees
+   on the Studio page changes; it is only no longer paid for by people who
+   never go there. */
+var _stArtOn=false;
+function stArtWake(){
+  if(_stArtOn) return;
+  _stArtOn=true;
+  stLoadSample();
+  stRenderPresetCards();
+}
+(function stArtWatch(){
+  function arm(){
+    var pg=$("pgStudio");
+    /* No IntersectionObserver (or no page) must never mean no art — fall back
+       to the pre-v4.84 behaviour of loading it, rather than to a blank shelf.
+       A deferral that can fail closed is worse than the bytes it saves. */
+    if(!pg || typeof IntersectionObserver!=="function"){ stArtWake(); return; }
+    var io=new IntersectionObserver(function(es){
+      for(var i=0;i<es.length;i++) if(es[i].isIntersecting){ io.disconnect(); stArtWake(); return; }
+    });
+    io.observe(pg);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",arm);
+  else arm();
+})();
 function stLookArt(key){
+  if(!_stArtOn) return null;         /* not on the Studio page yet — computed tile */
   var e=ST_LOOK_ART[key];
   if(e && e.nodeName) return e;      /* decoded and ready */
   if(e) return null;                 /* already loading, or known missing */
@@ -17966,7 +18038,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.83.0";
+var APP_VER="4.84.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
