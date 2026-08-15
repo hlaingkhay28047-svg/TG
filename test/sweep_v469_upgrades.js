@@ -99,7 +99,14 @@ const DECLARED = [
      Targeted by filename: cards5 is 13MB and re-purging the folder to deliver
      two files would cost a studio on mobile data the other 114. */
   { tag: "./__lib-purge-v4-79-cards5-refresh", re: /\/lib\/wf\/cards5\/(mx-light|pl-5)\.jpg$/ },
-  { tag: "./__lib-purge-v4-79-dash-scene", re: /\/lib\/dash\/scene\.jpg$/ }
+  { tag: "./__lib-purge-v4-79-dash-scene", re: /\/lib\/dash\/scene\.jpg$/ },
+  /* v4.83 — the six real video cards, the twelve Path look chips and the one
+     Library plate that carried the feather-in-the-mouth motif. Three markers,
+     because one marker fires once: folding them together would mean a device
+     that took the first replacement never receives the other two. */
+  { tag: "./__lib-purge-v4-83-vid-cards", re: /\/lib\/vid\// },
+  { tag: "./__lib-purge-v4-83-lookchips", re: /\/lib\/wf\/lookchips\// },
+  { tag: "./__lib-purge-v4-83-ref413", re: /\/lib\/(full|ui)\/user-ref-413\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
