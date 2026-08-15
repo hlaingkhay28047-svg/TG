@@ -64,7 +64,12 @@ function report(name, ok, detail) {
 const APP = path.join(__dirname, "..", "docs", "app");
 const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
 
-const NEW = ["tinyPlanet", "bottleLook", "phonePortal", "cnyTiger", "specSheet"];
+/* v4.89 — the owner's second batch. He sent nine clips; the first was the
+   Boarding Pass concept already shipped, so eight were added and that one was
+   reported instead. A duplicate card is worse than no card. */
+const NEW = ["tinyPlanet", "bottleLook", "phonePortal", "cnyTiger", "specSheet",
+  "makeupSwipe", "trafficType", "bossFight", "getReady", "wonderland",
+  "receiptLook", "sparkNight", "stageIdol"];
 const OLD = ["boardingPass", "dressSpin", "veilWind", "portraitLive", "pushIn", "couplePose"];
 /* The workflows that TRANSFORM the scene, and so must not carry the freeze
    clause. boardingPass belongs here: it changes her outfit. */
@@ -79,15 +84,23 @@ const SIGNATURE = {
   bottleLook: ["bottle", "green", "outfit changes"],
   phonePortal: ["metro", "smartphone", "screen"],
   cnyTiger: ["couplet", "tiger", "red"],
-  specSheet: ["spec sheet", "Look 1", "front, side and back".split(",")[0]]
+  specSheet: ["spec sheet", "Look 1", "front, side and back".split(",")[0]],
+  makeupSwipe: ["mirror", "beauty app", "heart"],
+  trafficType: ["WALK", "STOP", "traffic signal"],
+  bossFight: ["boxing", "health bar", "fog"],
+  getReady: ["07:10", "wardrobe", "skincare"],
+  wonderland: ["lolita", "chequerboard", "playing cards"],
+  receiptLook: ["receipt", "CLOSED", "OPEN"],
+  sparkNight: ["sparkler", "bokeh", "night"],
+  stageIdol: ["filter", "stage", "microphone"]
 };
 
 /* ---- A ---- */
 const block = src.slice(src.indexOf("var VID_WF=["), src.indexOf("function vidWfByKey"));
 const keys = (block.match(/key:"([a-zA-Z]+)"/g) || []).map(k => k.slice(5, -1));
-report("A) all five new video workflows exist and the six originals are intact",
+report("A) all thirteen new video workflows exist and the six originals are intact",
   NEW.every(k => keys.indexOf(k) >= 0) && OLD.every(k => keys.indexOf(k) >= 0) &&
-  keys.length === 11 && new Set(keys).size === 11,
+  keys.length === 19 && new Set(keys).size === 19,
   { keys: keys });
 
 /* ---- C + D) the split, in the source ---- */
@@ -169,8 +182,8 @@ report("C) VID_ID exists and carries no setting-freeze claim",
       let inter = 0; A.forEach(w => { if (B.has(w)) inter++; });
       pairs.push({ a: NEW[i], b: NEW[j], j: +(inter / (A.size + B.size - inter)).toFixed(2) });
     }
-  report("E2) the five are five different films, not one prompt renamed",
-    pairs.every(p => p.j < 0.45), pairs);
+  report("E2) every pair is a different film, not one prompt renamed",
+    pairs.every(p => p.j < 0.45), pairs.filter(p => p.j >= 0.40));
 
   /* ---- F) the card art, on disk and decoded ---- */
   const onDisk = NEW.map(k => {
@@ -205,8 +218,8 @@ report("C) VID_ID exists and carries no setting-freeze claim",
       s: (c.querySelector(".s") || {}).textContent || "",
       img: (c.querySelector("img") || {}).getAttribute ? c.querySelector("img").getAttribute("src") : null
     })));
-  report("G) all eleven video cards render with a label, a summary and art",
-    cards.length === 11 &&
+  report("G) all nineteen video cards render with a label, a summary and art",
+    cards.length === 19 &&
     cards.every(c => c.t.length > 2 && c.s.length > 5 && c.img && /^lib\/vid\//.test(c.img)),
     { n: cards.length, bad: cards.filter(c => !(c.t && c.s && c.img)).length });
 
@@ -216,7 +229,7 @@ report("C) VID_ID exists and carries no setting-freeze claim",
 
   report("H) no page errors", errs.length === 0, errs);
 
-  console.log("      (five clips decoded with imageio_ffmpeg — Chromium here has no H.264 — " +
+  console.log("      (thirteen clips decoded with imageio_ffmpeg — Chromium here has no H.264 — " +
     "and each card is three real frames of its own film)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
