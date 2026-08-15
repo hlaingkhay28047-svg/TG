@@ -221,6 +221,9 @@ jobs:
       - name: Run v4.85.0 window-relight sweep (4 new lighting workflows)
         run: node test/sweep_v485_windowlights.js
 
+      - name: Run v4.87.0 video-workflow sweep (5 clips, prompt ceiling, card art)
+        run: node test/sweep_v487_videowf.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
