@@ -80,7 +80,7 @@ const HOLD = ["dressSpin", "veilWind", "portraitLive", "pushIn", "couplePose"];
    screen. Stated here rather than derived from the prompt, so this fails if a
    prompt is ever swapped onto the wrong key. */
 const SIGNATURE = {
-  tinyPlanet: ["360", "planet", "selfie pole", "skyline"],
+  tinyPlanet: ["360", "planet", "pole", "skyline"],
   bottleLook: ["bottle", "green", "outfit changes"],
   phonePortal: ["metro", "smartphone", "screen"],
   cnyTiger: ["couplet", "tiger", "red"],
@@ -88,7 +88,9 @@ const SIGNATURE = {
   makeupSwipe: ["mirror", "beauty app", "heart"],
   trafficType: ["WALK", "STOP", "traffic signal"],
   bossFight: ["boxing", "health bar", "fog"],
-  getReady: ["07:10", "wardrobe", "skincare"],
+  /* the skincare beat was cut to fit ten seconds; the cushion sponge,
+     the lip tint and the brush are what remain */
+  getReady: ["07:10", "wardrobe", "cushion"],
   wonderland: ["lolita", "chequerboard", "playing cards"],
   receiptLook: ["receipt", "CLOSED", "OPEN"],
   sparkNight: ["sparkler", "bokeh", "night"],
@@ -163,6 +165,56 @@ report("C) VID_ID exists and carries no setting-freeze claim",
     byKey[k].text.indexOf("identity stay exactly as the reference photograph") < 0);
   report("D2) every transforming workflow still locks identity",
     noId.length === 0, { missing: noId });
+
+  /* ---- T) THE TEN-SECOND BUDGET ----
+     VID_SETUP_V pins dur:"10" and gemini-omni-video's durations enum tops out
+     there, so ten seconds is a hard ceiling, not a default. The source clips
+     the owner sent run 8.0s to 32.5s, and the first cut of these prompts
+     described more action than ten seconds can hold — bossFight was 3.2x over,
+     with a wake-up, a glove-up, a monster fight, a costume change and an end
+     card. A model given more beats than fit does not choose the good ones; it
+     rushes all of them. Every prompt now opens with an explicit beat sheet in
+     seconds, which is also the part that survives truncation.
+
+     Asserted structurally rather than by counting words: the prompt must name
+     the ten-second budget, and every second it mentions must fall inside it. */
+  const overrun = [];
+  const noBudget = [];
+  /* v4.90.1 — ALL NINETEEN, not just the new ones. The owner asked whether
+     every prompt fits ten seconds; measured, it was 13 of 19, because the six
+     that shipped before this batch never stated the budget. Asserting it of
+     NEW only would have kept answering the wrong question. */
+  const EVERY = NEW.concat(OLD);
+  EVERY.forEach(k => {
+    const t = byKey[k].text;
+    if (!/\bTen seconds\b/i.test(t)) noBudget.push(k);
+    const secs = (t.match(/\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)s\)/g) || [])
+      .map(m => m.match(/\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)s\)/).slice(1).map(Number));
+    const at = (t.match(/at (\d+(?:\.\d+)?)s\b/g) || []).map(m => +m.match(/(\d+(?:\.\d+)?)/)[1]);
+    /* A prompt fills its ten seconds in one of two legitimate ways: a numbered
+       beat sheet, or one sustained action stated as spanning the whole clip.
+       dressSpin is a single 360 turn, veilWind is a veil moving, portraitLive
+       is a blink and a breath — beats would be an invention. Requiring beats of
+       those would be testing a house style, not the contract. */
+    const bad = secs.filter(p => p[1] > 10 || p[0] >= p[1]).concat(at.filter(x => x > 10).map(x => [x, x]));
+    if (bad.length) overrun.push({ k: k, secs: secs, at: at });
+  });
+  report("T) all nineteen prompts state the ten-second budget",
+    noBudget.length === 0, { missing: noBudget });
+  report("T2) every beat it names lands inside those ten seconds",
+    overrun.length === 0, overrun);
+
+  const SPANS = /across (the full |those )?ten seconds|for the whole ten seconds|for the whole duration|across the whole clip/i;
+  const last = EVERY.map(k => {
+    const t = byKey[k].text;
+    const secs = (t.match(/\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)s\)/g) || [])
+      .map(m => +m.match(/-(\d+(?:\.\d+)?)s\)/)[1]);
+    const end = secs.length ? Math.max.apply(null, secs) : 0;
+    const ok = secs.length ? (end >= 9 && end <= 10) : SPANS.test(t);
+    return { k: k, end: end, beats: secs.length, ok: ok };
+  }).filter(x => !x.ok);
+  report("T3) each one fills its ten seconds — a beat sheet reaching 10s, or one action stated as spanning the clip",
+    last.length === 0, last);
 
   /* ---- E) each prompt describes its own clip, and they are not clones ---- */
   const sigMiss = NEW.map(k => ({
