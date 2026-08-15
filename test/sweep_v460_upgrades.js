@@ -47,7 +47,10 @@ function report(name, ok, detail) {
     /* seed a different query so the "previous result set" is genuinely different */
     s.value = "veil"; s.oninput.call(s);
     await new Promise(r => setTimeout(r, 200));
-    const afterVeil = Array.from(document.querySelectorAll(".wfmini"))
+    /* v4.81 — scoped to #wfHost: pgVideo renders its own .wfmini cards now,
+       and they are never touched by the workflow search, so a document-wide
+       selector would count six cards this assertion has no business seeing. */
+    const afterVeil = Array.from(document.querySelectorAll("#wfHost .wfmini"))
       .filter(e => e.style.display !== "none").length;
 
     /* now type a query with a KNOWN different first hit and press Enter
@@ -60,7 +63,7 @@ function report(name, ok, detail) {
     s.onkeydown({ key: "Enter" });
     const wizOn = document.getElementById("wiz").className.indexOf("on") >= 0;
     /* the visible set at the moment Enter ran must already be "upscale"'s */
-    const visNow = Array.from(document.querySelectorAll(".wfmini"))
+    const visNow = Array.from(document.querySelectorAll("#wfHost .wfmini"))
       .filter(e => e.style.display !== "none");
     out.afterVeil = afterVeil;
     out.visAtEnter = visNow.length;

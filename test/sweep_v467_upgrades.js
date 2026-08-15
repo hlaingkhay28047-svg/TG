@@ -161,7 +161,11 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
       document.querySelectorAll(".page").forEach(x => x.classList.remove("on"));
       document.getElementById("pgWf").classList.add("on");
       await new Promise(r => setTimeout(r, 1100));
-      const titles = Array.from(document.querySelectorAll(".wfmini"))
+      /* v4.81 — scoped to #wfHost. pgVideo now renders .wfmini cards of its
+         own, and a bare document-wide selector would quietly start counting
+         them: this assertion is about the WORKFLOW GRID, and a count that
+         drifts with an unrelated page is measuring the wrong thing. */
+      const titles = Array.from(document.querySelectorAll("#wfHost .wfmini"))
         .map(c => (c.querySelector(".t") || {}).textContent || "");
       out.cards = titles.length;
       out.inGrid = titles.some(t => /Sketch Pose|ပုံကြမ်းနဲ့/.test(t));

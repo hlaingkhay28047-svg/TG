@@ -72,6 +72,18 @@ const src = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.htm
     const row = $("vidWfRow");
     out.chips = row.children.length;
     out.labels = Array.from(row.children).map(c => c.textContent.trim());
+    /* v4.81 — these are Smart Workflow CARDS now, the same component pgWf
+       uses, not a chip row. Read the parts a card is made of. */
+    out.card = {
+      host: row.className,
+      minis: row.querySelectorAll("button.wfmini").length,
+      visuals: row.querySelectorAll(".wfv").length,
+      arts: Array.from(row.querySelectorAll("img.svgv")).map(i => i.getAttribute("src")),
+      titles: Array.from(row.querySelectorAll(".t")).map(e => e.textContent.trim()),
+      summaries: Array.from(row.querySelectorAll(".s")).map(e => e.textContent.trim()),
+      needs: Array.from(row.querySelectorAll(".wf-need")).map(e => e.textContent.trim()),
+      gos: Array.from(row.querySelectorAll(".go")).length
+    };
     out.optsHiddenBeforePick = $("vidWfOpts").style.display === "none";
     out.promptEmptyBefore = $("vidPrompt").value.length === 0;
 
@@ -90,6 +102,15 @@ const src = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.htm
     const m = rhVideoModelDef($("selVidModel").value);
     out.promptMax = m.promptMax;
     out.modelHasAspect = m.aspect === true;
+    /* every workflow, not only the one with destinations: the identity
+       clause is shared by all six and each must actually carry it */
+    out.perWf = VID_WF.map(w => {
+      const t = w.cities ? w.text(VID_CITIES[0]) : w.text();
+      return { k: w.key, len: t.length, fits: t.length <= m.promptMax,
+               keepsIdentity: /identity stay exactly as the reference photograph/.test(t),
+               noCaptions: /no text or captions anywhere in the frame/.test(t),
+               art: w.art };
+    });
     out.perCity = VID_CITIES.map(c => {
       const t = VID_WF[0].text(c);
       return {
@@ -98,7 +119,7 @@ const src = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.htm
         fits: t.length <= m.promptMax,
         placeholder: /\{[A-Za-z_]+\}/.test(t),
         namesCity: t.indexOf(c.en.toUpperCase()) >= 0 && t.indexOf(c.loc) >= 0,
-        keepsIdentity: /face, bone structure, hair and identity stay exactly as the reference photo/.test(t)
+        keepsIdentity: /identity stay exactly as the reference photograph/.test(t)
       };
     });
 
@@ -150,10 +171,22 @@ const src = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.htm
     });
   }
 
-  report("A) the boarding-pass workflow renders as a chip and its destination row is gated on picking it",
-    r.chips >= 1 && r.optsHiddenBeforePick === true && r.optsShownAfterPick === true && r.cityChips === 8,
-    { chips: r.chips, labels: r.labels, cities: r.cityChips,
+  report("A) the workflows render as Smart Workflow CARDS and the destination row is gated on picking one",
+    r.chips >= 6 && r.optsHiddenBeforePick === true && r.optsShownAfterPick === true && r.cityChips === 8,
+    { cards: r.chips, labels: r.labels, cities: r.cityChips,
       hiddenBefore: r.optsHiddenBeforePick, shownAfter: r.optsShownAfterPick });
+
+  /* A2) the whole point of this release: it is the pgWf card component, not a
+     chip row wearing a new class. Every part a card is made of has to be
+     there, or it reads as a broken card rather than a deliberate one. */
+  const c = r.card;
+  report("A2) each card is the pgWf component — .wfgrid > button.wfmini > .wfv > img.svgv, with title, summary, photo-count and CTA",
+    c.host === "wfgrid" && c.minis === r.chips && c.visuals === c.minis &&
+    c.arts.length === c.minis && c.arts.every(s => /^lib\/vid\/vw-[A-Za-z]+\.jpg$/.test(s)) &&
+    c.titles.length === c.minis && c.titles.every(t => t.length > 0) &&
+    c.summaries.length === c.minis && c.summaries.every(t => t.length > 0) &&
+    c.needs.length === c.minis && c.gos === c.minis,
+    c);
 
   report("B) one tap sets the prompt AND the model, resolution, duration and aspect",
     r.promptEmptyBefore === true && r.setup.model === "gemini-omni-video" &&
@@ -180,9 +213,21 @@ const src = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.htm
   report("F) no destination leaves an unsubstituted placeholder, and each names its city in both scripts",
     ph.length === 0 && noName.length === 0, { placeholders: ph, unnamed: noName });
 
-  const noId = r.perCity.filter(c => !c.keepsIdentity).map(c => c.k);
-  report("G) every destination pins the reference face — the instruction a video model drops first",
-    noId.length === 0, { missing: noId });
+  const noId = r.perCity.filter(c => !c.keepsIdentity).map(c => c.k)
+    .concat(r.perWf.filter(w => !w.keepsIdentity).map(w => w.k));
+  const noCap = r.perWf.filter(w => !w.noCaptions).map(w => w.k);
+  report("G) every workflow AND every destination pins the reference face and bans burnt-in captions",
+    noId.length === 0 && noCap.length === 0,
+    { identityMissing: noId, captionsUnbanned: noCap });
+
+  /* G2) a card whose photograph 404s is the one failure mode that makes the
+     shelf look broken rather than empty, and nothing else in the suite would
+     notice — the img just collapses. Checked on disk, per workflow. */
+  const fsMod = require("fs"), pathMod = require("path");
+  const missingArt = r.perWf.filter(w =>
+    !fsMod.existsSync(pathMod.join(__dirname, "..", "docs", "app", w.art))).map(w => w.k);
+  report("G2) every card's photograph exists on disk — no card ships a guaranteed 404",
+    missingArt.length === 0, { missing: missingArt });
 
   const FIELDS = ["h2", "intro", "cityH", "chip", "hint", "firstCity"];
   const empty = [];

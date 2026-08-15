@@ -344,6 +344,12 @@ textarea.wiz-prompt{min-height:220px}
 .wfgrid .wf-span2{grid-column:1/-1}
 .wfmini{border:1px solid var(--line-soft);border-radius:11px;background:var(--panel-2);padding:10px;text-align:left;color:var(--cream);display:flex;flex-direction:column;gap:4px}
 @media(hover:hover){.wfmini:hover{border-color:var(--gold)}}
+/* v4.81: a video card STAYS selected after the tap, where a pgWf card hands
+   off to the wizard and forgets. Inset ring rather than a thicker border so
+   the card does not shift its neighbours in the grid when it turns on. */
+.wfmini.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+/* the card survives its photograph going missing: no art, no empty box */
+.wfv-noart{background:linear-gradient(160deg,#20261b,#131826);aspect-ratio:3/2;border-radius:8px}
 /* v4.64: the card art is 3:2. It used to be 840x630 (4:3) and fitted this box
    exactly; the commissioned pack is 1536x1024. Left at 4/3 with object-fit:cover
    the box ate 5.56% off EACH side — measured, not guessed — which cut the card's
@@ -2070,7 +2076,10 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
          and caught the first draft of this section doing it the other way. -->
     <h2 id="vidWfH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-brain"/></svg>VIDEO WORKFLOW</h2>
     <p class="mut" id="vidWfIntro"></p>
-    <div class="chips" id="vidWfRow"></div>
+    <!-- v4.81.0: .wfgrid + button.wfmini — the same component the 117 pgWf
+         cards use, not a chip row. A chip asks the owner to already know what
+         "Boarding Pass Travel" looks like; a card shows him. -->
+    <div class="wfgrid" id="vidWfRow"></div>
     <div id="vidWfOpts" style="display:none">
       <div class="subh" id="vidWfCityH"></div>
       <div class="chips" id="vidWfCityRow"></div>
@@ -17943,7 +17952,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.80.0";
+var APP_VER="4.81.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -18889,24 +18898,30 @@ $("selVidModel").onchange = updateVidModelUI;
 $("vidPrompt").addEventListener("input", updateVidPromptCount);
 updateVidModelUI();
 
-/* ---------- v4.80.0 Video workflows (pgVideo) ----------
-   Studied frame by frame from the reference clip the owner sent: 360x640,
-   13.3s, 30fps. A woman walks left-to-right across a pure white cyclorama; a
-   giant vertical boarding pass slides in from the right and parks in the
-   centre; she crosses BEHIND it and is revealed inside the card already
-   re-costumed for the printed destination, then walks out the far edge. The
-   clip cycles four cities (Bangkok, Seoul, Dali, Tokyo) that way.
+/* ---------- v4.81.0 Video Smart Workflow cards (pgVideo) ----------
+   v4.80.0 shipped these as text chips. They are workflows, and every other
+   workflow in this app is a CARD — a photograph of the result, a title, a
+   one-line summary and a "what happens next" affordance. A chip row asked the
+   owner to already know what "Boarding Pass Travel" looks like; a card shows
+   him. Same markup and the same .wfgrid/.wfmini classes as the 117 cards on
+   pgWf, so the two shelves read as one product.
+
+   The flagship was studied frame by frame from the reference clip the owner
+   sent (360x640, 13.33s, 30fps, h264): a woman walks left-to-right across a
+   white cyclorama, a giant vertical boarding pass slides in from the right and
+   parks in the centre, she crosses BEHIND it and is revealed inside the card
+   already re-costumed for the printed destination, then walks out the far edge.
 
    One honest limit is designed in rather than papered over: the longest clip
-   either registered model will return is 10s, and the reference spends ~3.3s
-   per city. Four cities in one generation is not a thing that exists. So a
-   run produces ONE destination, the hint says to run it per city and join
-   them, and the city row makes that a two-tap loop instead of a rewrite.
+   either registered model returns is 10s and the reference spends ~3.3s per
+   city, so four cities in one generation is not a thing that exists. A run
+   produces ONE destination; the destination row makes the rest a two-tap loop.
 
-   The composer targets Omni Flash specifically — it is the only registered
-   video model with aspect control (the shot is 9:16 or it is nothing) and a
-   2048-char prompt ceiling; RH Video G's 800 would clip this mid-sentence,
-   and rhV2SubmitVideo clips at submit, so the failure would be silent. */
+   The card art is generated from the studio's own reference model, NOT cut
+   from the reference clip's frames — that footage carries an airline-style
+   brand mark and a model who is not this studio's, and shipping stills of it
+   as product art would put someone else's likeness and brand in the owner's
+   app. */
 var VID_CITIES=[
   { k:"bangkok", en:"Bangkok",   loc:"曼谷",
     my:"ဘန်ကောက်",
@@ -18941,21 +18956,83 @@ function vidCityDef(k){
   return VID_CITIES[0];
 }
 
+/* Every prompt below closes on the same two sentences. Identity is the one
+   instruction an image-to-video model drops first, and a stray caption burned
+   into a delivered clip is unfixable, so both are stated in every workflow
+   rather than assumed once at the top. */
+var VID_KEEP = " Her face, bone structure, hair, makeup and identity stay exactly as the reference photograph from the first frame to the last, and the dress, the light and the setting stay as they are. One continuous take, smooth steady motion, no cuts, no camera shake, no text or captions anywhere in the frame.";
+
+/* Omni Flash is not a taste call. It is the only registered video model with
+   aspect control (these are vertical shots) and a 2048-char prompt ceiling;
+   RH Video G is aspect:false with promptMax 800, and rhV2SubmitVideo clips at
+   submit, so that pairing would fail silently with a prompt cut mid-sentence. */
+var VID_SETUP_V = { model:"gemini-omni-video", res:"1080p", dur:"10", aspect:"9:16" };
+
 var VID_WF=[
-  { key:"boardingPass", icon:"i-clapper", cities:true,
+  { key:"boardingPass", art:"lib/vid/vw-boardingPass.jpg", cities:true, setup:VID_SETUP_V,
     label:L9({my:"လေယာဉ်လက်မှတ် ခရီးသွား",en:"Boarding Pass Travel",shn:"ၶႅပ်းၶိုၼ်ႈႁိူဝ်းမိၼ် ဢႅဝ်ႇလႄႇ",kac:"Boarding Pass Bu Hkawm",th:"บอร์ดดิ้งพาสท่องเที่ยว",zh:"登机牌旅行",vi:"Vé máy bay du lịch",id:"Boarding Pass Travel",ms:"Boarding Pass Travel"}),
-    /* 1080p because the pass carries printed type — at 720p the FROM/TO
-       fields turn to mush and the whole gag is the type being readable */
-    setup:{ model:"gemini-omni-video", res:"1080p", dur:"10", aspect:"9:16" },
+    summary:L9({my:"လမ်းလျှောက်ရင်း လေယာဉ်လက်မှတ်ကြီးကို ဖြတ်ဝင် — ထွက်လာတော့ အဲဒီမြို့ရဲ့ ဝတ်စုံ",en:"She walks through a giant boarding pass and comes out dressed for that city",shn:"ယၢင်ႈၶဝ်ႈၼႂ်းၶႅပ်းၶိုၼ်ႈႁိူဝ်းမိၼ် — ဢွၵ်ႇမႃးၸွမ်းၶူဝ်းမိူင်းၼၼ်ႉ",kac:"Boarding pass kaba hpe lai nna dai mare a palawng hte pru wa ai",th:"เดินผ่านบอร์ดดิ้งพาสยักษ์ แล้วออกมาในชุดของเมืองนั้น",zh:"穿过巨大的登机牌，走出来就是那座城市的穿搭",vi:"Bước qua tấm vé khổng lồ và bước ra trong trang phục của thành phố đó",id:"Berjalan menembus boarding pass raksasa dan keluar dengan busana kota itu",ms:"Berjalan menembusi boarding pass gergasi dan keluar dengan busana bandar itu"}),
     text:function(c){
       return "Full-body cinematic fashion-transition video, vertical 9:16 format, on a pure seamless white studio background with a soft contact shadow under the feet. "
        + "The woman from the reference photo walks steadily from left to right across the empty white frame in a natural relaxed walk cycle, arms swinging, filmed at eye level with a locked-off camera. She starts in casual travel clothes with a small backpack. "
-       + "About one third in, a very large airline BOARDING PASS slides in from the right edge and settles upright in the centre, filling most of the frame height like a tall vertical panel. It is a clean modern pass: pale card stock, a coloured stub down the right side reading TAOAGOU AIRLINES beside a small aeroplane glyph, a barcode top and bottom, and printed fields NAME, FLT, GATE, SEAT, TIME, FROM, TO, CLS, BAGGAGE. The destination "
+       + "About one third in, a very large airline BOARDING PASS slides in from the right edge and settles upright in the centre, filling most of the frame height like a tall vertical panel. It is a clean modern pass: pale card stock, a coloured stub down the right side beside a small aeroplane glyph, a barcode top and bottom, and printed fields NAME, FLT, GATE, SEAT, TIME, FROM, TO, CLS. The destination "
        + c.en.toUpperCase() + " is set large across the card in outlined display type with " + c.loc + " above it, and the FROM field reads YANGON. "
-       + "The pass behaves as a portal. As she reaches its left edge she passes BEHIND the card and is revealed inside it already transformed, now dressed head to toe in " + c.fit + ". She keeps walking at the same speed inside the boarding-pass frame and exits its right edge. "
-       + "Her face, bone structure, hair and identity stay exactly as the reference photo from the first frame to the last. One continuous take, smooth steady motion, no cuts, no camera shake. The only text in the shot is the printing on the boarding pass itself. Clean commercial e-commerce lookbook finish.";
+       + "The pass behaves as a portal. As she reaches its left edge she passes BEHIND the card and is revealed inside it already transformed, now dressed head to toe in " + c.fit + ". She keeps walking at the same speed inside the boarding-pass frame and exits its right edge."
+       + VID_KEEP + " The only lettering in the shot is the printing on the boarding pass itself. Clean commercial e-commerce lookbook finish.";
     },
-    hint:L9({my:"ပုံ ၁ ပုံ (တစ်ကိုယ်လုံး၊ မတ်တပ် သို့ လမ်းလျှောက်) တင်ပါ။ မြို့တစ်မြို့ကို ၁၀ စက္ကန့် တစ်ခုစီ ထုတ်ပြီး နောက်ပိုင်း ဆက်ချိတ်ပါ။",en:"Load 1 full-body photo (standing or mid-stride). One 10s clip per city — generate each, then join them.",shn:"တၢင်ႇၶႅပ်းႁၢင်ႈ 1 ဢၼ် (တူဝ်တဵမ်)။ မိူင်းၼိုင်ႈ 10 ၸႅၵ်ႉ ၼိုင်ႈဢၼ်။",kac:"Sumla 1 (hkum ting) bang u. Mare langai 10s langai galaw nna hkan matut u.",th:"ใส่รูปเต็มตัว 1 รูป — 1 คลิป 10 วิ ต่อ 1 เมือง แล้วนำมาต่อกัน",zh:"上传 1 张全身照 — 每座城市一段 10 秒，生成后再拼接",vi:"Tải 1 ảnh toàn thân — mỗi thành phố một clip 10 giây, tạo xong rồi ghép lại",id:"Unggah 1 foto seluruh badan — satu klip 10 detik per kota, lalu gabungkan",ms:"Muat naik 1 foto seluruh badan — satu klip 10 saat setiap bandar, kemudian gabungkan"}) }
+    hint:L9({my:"ပုံ ၁ ပုံ (တစ်ကိုယ်လုံး၊ မတ်တပ် သို့ လမ်းလျှောက်) တင်ပါ။ မြို့တစ်မြို့ကို ၁၀ စက္ကန့် တစ်ခုစီ ထုတ်ပြီး နောက်ပိုင်း ဆက်ချိတ်ပါ။",en:"Load 1 full-body photo (standing or mid-stride). One 10s clip per city — generate each, then join them.",shn:"တၢင်ႇၶႅပ်းႁၢင်ႈ 1 ဢၼ် (တူဝ်တဵမ်)။ မိူင်းၼိုင်ႈ 10 ၸႅၵ်ႉ ၼိုင်ႈဢၼ်။",kac:"Sumla 1 (hkum ting) bang u. Mare langai 10s langai galaw nna hkan matut u.",th:"ใส่รูปเต็มตัว 1 รูป — 1 คลิป 10 วิ ต่อ 1 เมือง แล้วนำมาต่อกัน",zh:"上传 1 张全身照 — 每座城市一段 10 秒，生成后再拼接",vi:"Tải 1 ảnh toàn thân — mỗi thành phố một clip 10 giây, tạo xong rồi ghép lại",id:"Unggah 1 foto seluruh badan — satu klip 10 detik per kota, lalu gabungkan",ms:"Muat naik 1 foto seluruh badan — satu klip 10 saat setiap bandar, kemudian gabungkan"}) },
+
+  { key:"dressSpin", art:"lib/vid/vw-dressSpin.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ဝတ်စုံ လှည့်ပြ",en:"Dress Spin",shn:"ဝိင်ႇၼႄၶူဝ်းၼုင်ႈ",kac:"Palawng Wai Madun",th:"หมุนโชว์ชุด",zh:"婚纱旋转",vi:"Xoay váy",id:"Putaran Gaun",ms:"Putaran Gaun"}),
+    summary:L9({my:"သတို့သမီး တစ်ပတ်လှည့် — စကတ်က ဝိုင်းပြီး ဖြန့်တက်လာမယ်",en:"The bride turns once and the skirt flares out in a full circle",shn:"ဝိင်ႇၼိုင်ႈပွၵ်ႈ — သွင်ႇၶူဝ်းၽႄႈဢွၵ်ႇ",kac:"Numsha langai mi wai nna palawng krung hkra pru wa ai",th:"เจ้าสาวหมุนหนึ่งรอบ กระโปรงบานเป็นวงกลม",zh:"新娘转一圈，裙摆完整绽开",vi:"Cô dâu xoay một vòng, chân váy bung tròn",id:"Pengantin berputar sekali, rok mengembang penuh",ms:"Pengantin berpusing sekali, skirt mengembang penuh"}),
+    text:function(){
+      return "Cinematic vertical 9:16 video built from the reference photograph. The bride turns smoothly on the spot through one continuous 360-degree twirl. Her ball-gown skirt lifts and flares outward with the turn, the tulle layers separating and then settling back down, the hem sweeping through the light. Her upper body stays tall and controlled, her head follows a beat behind the turn the way a trained dancer's does, and she comes to rest facing the camera exactly as she began. The camera is locked off at chest height. Real human speed — one unhurried revolution across the clip, with natural fabric weight and a little motion blur only at the fastest edge of the hem."
+       + VID_KEEP;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — တစ်ကိုယ်လုံး၊ စကတ် အောက်ခြေအထိ ပါရမယ်။",en:"1 photo — full length, the whole skirt inside the frame.",shn:"ၶႅပ်းႁၢင်ႈ 1 — တူဝ်တဵမ်၊ ႁၢင်ႈၶူဝ်းတင်းသဵင်ႈ",kac:"Sumla 1 — hkum ting, palawng ningpawt du hkra",th:"1 รูป — เต็มตัว เห็นกระโปรงทั้งชุด",zh:"1 张全身照 — 裙摆完整入镜",vi:"1 ảnh toàn thân — trọn chân váy trong khung",id:"1 foto seluruh badan — seluruh rok masuk frame",ms:"1 foto seluruh badan — seluruh skirt dalam bingkai"}) },
+
+  { key:"veilWind", art:"lib/vid/vw-veilWind.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ဝတ်ရုံ လေထဲ လွင့်",en:"Veil in the Wind",shn:"ၽႃႈၶလုမ်ႇ လူမ်းပတ်ႉ",kac:"Veil Nbung Hta",th:"ผ้าคลุมพลิ้วลม",zh:"头纱随风",vi:"Voan bay trong gió",id:"Kerudung Tertiup Angin",ms:"Tudung Ditiup Angin"}),
+    summary:L9({my:"ဝတ်ရုံနဲ့ ဆံပင်ပဲ လှုပ်မယ် — သူမက ငြိမ်ငြိမ်",en:"Only the veil and hair move — she stays perfectly still",shn:"ၽႃႈလႄႈၶူၼ်ႁူဝ်ၵူၺ်းလူင်ႉ — မၼ်းၼၢင်းယူႇၼိမ်",kac:"Veil hte kara sha shamu ai — shi gaw zim sha",th:"ขยับแค่ผ้าคลุมกับผม — ตัวเธอนิ่ง",zh:"只有头纱与发丝在动，人保持静止",vi:"Chỉ voan và tóc chuyển động — cô ấy đứng yên",id:"Hanya kerudung dan rambut yang bergerak — dia diam",ms:"Hanya tudung dan rambut bergerak — dia diam"}),
+    text:function(){
+      return "Cinematic vertical 9:16 video built from the reference photograph. A steady warm breeze lifts her cathedral veil so the tulle rises and streams sideways in slow layered waves, translucent where the backlight passes through it, and a few loose strands of hair lift and fall with it. She herself stays still — chin lifted, shoulders settled, eyes calm — so the veil, the hair and the light moving through them are the only motion in the shot. The camera drifts a few centimetres to one side across the whole clip for a touch of parallax, nothing more. Golden-hour backlight, gentle lens flare at the edge, dust motes catching the sun."
+       + VID_KEEP;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ဝတ်ရုံ (သို့) ဆံပင် ရှည်ရှည် မြင်ရတဲ့ပုံ အကောင်းဆုံး။",en:"1 photo — works best when a veil or long hair is clearly visible.",shn:"ၶႅပ်းႁၢင်ႈ 1 — မီးၽႃႈၶလုမ်ႇ ဢမ်ႇၼၼ် ၶူၼ်ႁူဝ်ယၢဝ်း",kac:"Sumla 1 — veil nrai kara galu mu ai gaw grau kaja",th:"1 รูป — ได้ผลดีที่สุดเมื่อเห็นผ้าคลุมหรือผมยาวชัด",zh:"1 张照片 — 头纱或长发清晰时效果最好",vi:"1 ảnh — đẹp nhất khi thấy rõ voan hoặc tóc dài",id:"1 foto — paling bagus bila kerudung atau rambut panjang terlihat",ms:"1 foto — terbaik bila tudung atau rambut panjang jelas"}) },
+
+  { key:"portraitLive", art:"lib/vid/vw-portraitLive.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ပုံတူ အသက်ဝင်",en:"Portrait Comes Alive",shn:"ၶႅပ်းႁၢင်ႈပဵၼ်တူဝ်",kac:"Sumla Asak Rawng",th:"ภาพนิ่งมีชีวิต",zh:"照片活起来",vi:"Ảnh sống dậy",id:"Potret Hidup",ms:"Potret Hidup"}),
+    summary:L9({my:"မျက်တောင်ခတ်၊ အသက်ရှူ၊ ပြုံးလိုက် — အနည်းငယ်ပဲ လှုပ်မယ်",en:"A blink, a breath, the start of a smile — the smallest possible motion",shn:"ဢဝ်တႃႇလိပ်း၊ ထူၺ်ႈၸႂ်၊ ယုမ်ႉ — လူင်ႉဢေႇဢေႇ",kac:"Myi dip, nsa la, mani hpang — kachyi sha shamu ai",th:"กะพริบตา หายใจ เริ่มยิ้ม — ขยับน้อยที่สุด",zh:"眨眼、呼吸、笑意初起 — 最克制的动态",vi:"Chớp mắt, hít thở, chớm cười — chuyển động tối thiểu",id:"Berkedip, bernapas, mulai tersenyum — gerak seminimal mungkin",ms:"Berkelip, bernafas, mula senyum — gerakan seminimum mungkin"}),
+    text:function(){
+      return "Cinematic vertical 9:16 video built from the reference photograph, holding a single quiet close portrait. The still frame comes to life with the smallest motion that reads as alive: her chest rises and falls once with a slow breath, she blinks twice at natural unhurried intervals, the corner of her mouth lifts into the very beginning of a smile and settles again, her eyes stay on the camera throughout, and one loose strand of hair moves a little. Nothing else changes — the framing, the light, the background and her pose are held exactly. No head turn, no zoom, no drift. The restraint is the point: it should read as a photograph that simply happens to be breathing."
+       + VID_KEEP;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — မျက်နှာ ကြည်လင်စွာ မြင်ရတဲ့ portrait။",en:"1 photo — a portrait with the face clearly visible and in focus.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၼႃႈၸႅင်ႈလီ",kac:"Sumla 1 — myi man tsawm hkra mu ai",th:"1 รูป — ภาพบุคคลที่เห็นหน้าชัด",zh:"1 张照片 — 面部清晰的人像",vi:"1 ảnh — chân dung thấy rõ khuôn mặt",id:"1 foto — potret dengan wajah terlihat jelas",ms:"1 foto — potret dengan wajah jelas"}) },
+
+  { key:"pushIn", art:"lib/vid/vw-pushIn.jpg", setup:VID_SETUP_V,
+    label:L9({my:"ကင်မရာ တဖြည်းဖြည်း ချဉ်းကပ်",en:"Cinematic Push-In",shn:"ၵွင်ႈထၢႆႇ ၸမ်ၶဝ်ႈ",kac:"Camera Ni Wa",th:"กล้องดันเข้าหา",zh:"电影感推近",vi:"Máy quay đẩy tới",id:"Push-In Sinematik",ms:"Push-In Sinematik"}),
+    summary:L9({my:"အဝေးကနေ တဖြည်းဖြည်း နီးလာတဲ့ ရုပ်ရှင်ဆန်တဲ့ ရွေ့လျားမှု",en:"One slow continuous dolly move from wide to close",shn:"လူင်ႉၸမ်ၶဝ်ႈ ဢွၼ်ႇလူႉလူႉ",kac:"Galu kaw nna zim zim ni wa ai",th:"ดอลลี่เข้าอย่างช้าและต่อเนื่อง",zh:"由远及近的一镜推进",vi:"Một cú dolly chậm từ xa vào gần",id:"Satu gerakan dolly lambat dari lebar ke dekat",ms:"Satu gerakan dolly perlahan dari luas ke dekat"}),
+    text:function(){
+      return "Cinematic vertical 9:16 video built from the reference photograph. The camera pushes slowly and continuously toward her in one unbroken dolly move, starting on the wide frame of the photograph and finishing on a medium frame at roughly chest height. The perspective compresses the way a real lens does as it closes — foreground elements drift out past the edges of the frame, the background flattens and softens, the depth of field grows shallower and settles on her eyes. The move is even from the first frame to the last with no acceleration, no stop and no shake. She stays still apart from a slow breath and one natural blink."
+       + VID_KEEP;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ဘေးဘက် နေရာလွတ် ကျယ်ကျယ် ပါတဲ့ပုံ အကောင်းဆုံး။",en:"1 photo — works best with room around the subject to push into.",shn:"ၶႅပ်းႁၢင်ႈ 1 — မီးတီႈလွတ်ႈႁိမ်းႁွမ်း ၸင်ႇလီ",kac:"Sumla 1 — makau kaw shara nga yang grau kaja",th:"1 รูป — ได้ผลดีเมื่อมีพื้นที่รอบตัวแบบ",zh:"1 张照片 — 主体周围留白越多越好",vi:"1 ảnh — tốt nhất khi quanh chủ thể còn khoảng trống",id:"1 foto — paling bagus bila ada ruang di sekitar subjek",ms:"1 foto — terbaik bila ada ruang sekeliling subjek"}) },
+
+  /* v4.81 — this shipped as "Couple Walk-Away" against a card showing a
+     couple posed FACING the camera. The card audits this repo has already run
+     (concept accuracy, then BEFORE/AFTER pose consistency) both exist because
+     a card that promises a different shot than the workflow delivers is worse
+     than no card. The Library has no walking-away couple plate, so the
+     WORKFLOW moved to match the photograph rather than the other way round —
+     and subtle motion on a posed couple is the more useful clip anyway. */
+  { key:"couplePose", art:"lib/vid/vw-couplePose.jpg", setup:VID_SETUP_V,
+    label:L9({my:"စုံတွဲ ပုံတူ အသက်ဝင်",en:"Couple Portrait Motion",shn:"ၶႅပ်းႁၢင်ႈၵူႈၶူႈ ပဵၼ်တူဝ်",kac:"Num la lahkawng a sumla asak rawng",th:"ภาพคู่รักมีชีวิต",zh:"双人合影动起来",vi:"Ảnh đôi chuyển động",id:"Potret Pasangan Bergerak",ms:"Potret Pasangan Bergerak"}),
+    summary:L9({my:"စုံတွဲပုံကို အသက်သွင်း — အသက်ရှူ၊ မျက်လုံးချင်းဆုံ၊ ပြုံးလိုက်",en:"A posed couple photo starts breathing, glancing and smiling",shn:"ၶႅပ်းႁၢင်ႈၵူႈၶူႈ ပဵၼ်တူဝ် — ထူၺ်ႈၸႂ်၊ တူၺ်းၵၼ်၊ ယုမ်ႉ",kac:"Num la lahkawng a sumla nsa la, yu hkat, mani wa ai",th:"ภาพคู่ที่โพสไว้เริ่มหายใจ มองกัน และยิ้ม",zh:"合影开始呼吸、对视、微笑",vi:"Ảnh đôi bắt đầu thở, nhìn nhau và mỉm cười",id:"Foto pasangan mulai bernapas, saling menatap, tersenyum",ms:"Foto pasangan mula bernafas, berpandangan, tersenyum"}),
+    text:function(){
+      return "Cinematic vertical 9:16 video built from the reference photograph of the couple, holding their pose exactly. The still frame comes to life with small, believable motion: both of them breathe, he turns his head a few degrees toward her and settles, she blinks and the corner of her mouth lifts into a real smile, her shoulder relaxes a little against him, and a loose strand of her hair moves. His hand stays where it is. Neither of them changes position, steps, or turns away — the framing, the light, the flowers and the background are held exactly as photographed. The camera does not move. The restraint is the point: it should read as the photograph they already love, quietly breathing."
+       + VID_KEEP;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — စုံတွဲ နှစ်ယောက်လုံး မျက်နှာ ကြည်လင်စွာ ပါရမယ်။",en:"1 photo — both faces clearly visible in the frame.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၼႃႈသွင်ၵေႃႉၸႅင်ႈလီ",kac:"Sumla 1 — masha lahkawng a myi man tsawm hkra mu ra ai",th:"1 รูป — เห็นหน้าทั้งสองคนชัด",zh:"1 张照片 — 两人的脸都要清晰",vi:"1 ảnh — thấy rõ khuôn mặt cả hai",id:"1 foto — kedua wajah terlihat jelas",ms:"1 foto — kedua-dua wajah jelas kelihatan"}) }
 ];
 function vidWfByKey(k){ for(var i=0;i<VID_WF.length;i++) if(VID_WF[i].key===k) return VID_WF[i]; return null; }
 
@@ -18968,7 +19045,7 @@ function vidWfApply(w){
   if(s.res)    $("selVidRes").value=s.res;
   if(s.dur)    $("selVidDur").value=String(s.dur);
   if(s.aspect) $("selVidAspect").value=s.aspect;
-  $("vidPrompt").value = w.text(vidCityDef(vidWfCity));
+  $("vidPrompt").value = w.cities ? w.text(vidCityDef(vidWfCity)) : w.text();
   updateVidPromptCount();
   renderVidWf();
   var m=vidModelDef();
@@ -18979,15 +19056,40 @@ function vidWfApply(w){
   toast(stripIcn(w.label)+" ✓","ok");
 }
 
+/* Same DOM as pgWf's grid — button.wfmini > div.wfv > img.svgv, then .t, .s
+   and .go — so the two shelves are one component with one stylesheet. The
+   only addition is .on, because a video card stays selected after the tap
+   where a pgWf card hands off to the wizard and forgets. */
+function vidWfCard(w){
+  var m=el("button","wfmini"+(vidWfActive===w.key?" on":""));
+  var v=el("div","wfv");
+  var im=document.createElement("img");
+  im.className="svgv"; im.src=w.art; im.alt=stripIcn(w.label);
+  im.loading="lazy"; im.decoding="async";
+  /* the card must survive its photograph going missing — the art is the
+     nicety, the workflow is the product */
+  im.onerror=function(){ im.onerror=null; v.classList.add("wfv-noart"); im.remove(); };
+  v.appendChild(im);
+  v.appendChild(el("span","wf-need", L9({my:"၁ ပုံ",en:"1 photo",shn:"1 ၶႅပ်း",kac:"Sumla 1",th:"1 รูป",zh:"1 张",vi:"1 ảnh",id:"1 foto",ms:"1 foto"})));
+  m.appendChild(v);
+  m.appendChild(el("div","t", stripIcn(w.label)));
+  m.appendChild(el("div","s", stripIcn(w.summary)));
+  var go=el("div","go");
+  go.innerHTML=icn("i-caret")+" "+escH(vidWfActive===w.key
+    ? L9({my:"ရွေးပြီး",en:"Selected",shn:"လိူၵ်ႈယဝ်ႉ",kac:"Lata da sai",th:"เลือกแล้ว",zh:"已选择",vi:"Đã chọn",id:"Terpilih",ms:"Dipilih"})
+    : L9({my:"သုံးမယ်",en:"Use this",shn:"ၸႂ်ႉဢၼ်ၼႆႉ",kac:"Ndai lang u",th:"ใช้อันนี้",zh:"使用",vi:"Dùng cái này",id:"Pakai ini",ms:"Guna ini"}));
+  m.appendChild(go);
+  m.onclick=function(){ vidWfApply(w); };
+  return m;
+}
+
 function renderVidWf(){
   var host=$("vidWfRow"); if(!host) return;
   host.innerHTML="";
-  VID_WF.forEach(function(w){
-    var c=el("button","chip"+(vidWfActive===w.key?" on":""));
-    c.innerHTML=(w.icon?icn(w.icon)+" ":"")+escH(stripIcn(w.label));
-    c.onclick=function(){ vidWfApply(w); };
-    host.appendChild(c);
-  });
+  VID_WF.forEach(function(w){ host.appendChild(vidWfCard(w)); });
+  /* odd card count leaves a hole in a 2-column grid — span the last one, the
+     same trick the pgWf grid uses */
+  if(VID_WF.length%2===1 && host.lastElementChild) host.lastElementChild.classList.add("wf-span2");
   var w=vidWfActive?vidWfByKey(vidWfActive):null;
   $("vidWfOpts").style.display = (w && w.cities) ? "" : "none";
   $("vidWfHint").textContent = w ? stripIcn(w.hint) : VID_WF_INTRO_HINT;
@@ -19000,16 +19102,16 @@ function renderVidWf(){
         /* re-compose rather than string-patch: the city appears in three
            different places in the prompt (headline, local script, outfit) */
         var cur=vidWfByKey(vidWfActive);
-        if(cur){ $("vidPrompt").value=cur.text(ct); updateVidPromptCount(); }
+        if(cur && cur.cities){ $("vidPrompt").value=cur.text(ct); updateVidPromptCount(); }
         renderVidWf();
       };
       crow.appendChild(b);
     });
   }
 }
-$("vidWfIntro").textContent = L9({my:"တစ်ချက်နှိပ်ရုံနဲ့ prompt၊ model၊ အရွယ်အစား၊ ကြာချိန် အကုန် ချိန်ပေးမယ်။",en:"One tap fills the prompt and sets the model, size and duration for you.",shn:"ဢိုတ်းၼိုင်ႈ — prompt လႄႈ model, ႁၢင်ႈ, ၶၢဝ်းယၢမ်း တင်းသဵင်ႈ။",kac:"Langai mi hkan — prompt, model, hkum hte ten yawng jaw ya ai.",th:"แตะครั้งเดียว เติม prompt และตั้งค่าโมเดล ขนาด ระยะเวลาให้เลย",zh:"一键填入 prompt 并设置模型、尺寸与时长",vi:"Một chạm điền prompt và đặt model, kích thước, thời lượng",id:"Sekali tap mengisi prompt dan mengatur model, ukuran, durasi",ms:"Satu ketikan mengisi prompt dan menetapkan model, saiz, tempoh"});
+$("vidWfIntro").textContent = L9({my:"ကတ်တစ်ချက်နှိပ်ရုံနဲ့ prompt၊ model၊ အရွယ်အစား၊ ကြာချိန် အကုန် ချိန်ပေးမယ်။",en:"One tap on a card fills the prompt and sets the model, size and duration for you.",shn:"ၼဵၵ်းၵၢတ်ႈဢၼ်ၼိုင်ႈ — prompt လႄႈ model, ႁၢင်ႈ, ၶၢဝ်းယၢမ်း တင်းသဵင်ႈ။",kac:"Card langai mi hkan — prompt, model, hkum hte ten yawng jaw ya ai.",th:"แตะการ์ดครั้งเดียว เติม prompt และตั้งค่าโมเดล ขนาด ระยะเวลาให้เลย",zh:"点一下卡片即可填入 prompt 并设置模型、尺寸与时长",vi:"Một chạm vào thẻ sẽ điền prompt và đặt model, kích thước, thời lượng",id:"Sekali tap kartu mengisi prompt dan mengatur model, ukuran, durasi",ms:"Satu ketikan pada kad mengisi prompt dan menetapkan model, saiz, tempoh"});
 $("vidWfCityH").textContent = L9({my:"ခရီးစဉ် ရွေးပါ",en:"Destination",shn:"လိူၵ်ႈမိူင်း",kac:"Sa na shara",th:"จุดหมายปลายทาง",zh:"目的地",vi:"Điểm đến",id:"Tujuan",ms:"Destinasi"});
-var VID_WF_INTRO_HINT = L9({my:"Workflow တစ်ခု ရွေးပါ — ဒါမှမဟုတ် အောက်မှာ ကိုယ်တိုင် ရေးပါ။",en:"Pick a workflow — or write your own prompt below.",shn:"လိူၵ်ႈ workflow ဢၼ်ၼိုင်ႈ — ဢမ်ႇၼၼ် တႅမ်ႈႁင်းၵူၺ်း။",kac:"Workflow langai lata u — nrai npu de nang tsun u.",th:"เลือก workflow — หรือเขียน prompt เองด้านล่าง",zh:"选择一个 workflow — 或在下方自行输入",vi:"Chọn một workflow — hoặc tự viết prompt bên dưới",id:"Pilih workflow — atau tulis prompt sendiri di bawah",ms:"Pilih workflow — atau tulis prompt sendiri di bawah"});
+var VID_WF_INTRO_HINT = L9({my:"ကတ်တစ်ခု ရွေးပါ — ဒါမှမဟုတ် အောက်မှာ ကိုယ်တိုင် ရေးပါ။",en:"Pick a card — or write your own prompt below.",shn:"လိူၵ်ႈၵၢတ်ႈဢၼ်ၼိုင်ႈ — ဢမ်ႇၼၼ် တႅမ်ႈႁင်းၵူၺ်း။",kac:"Card langai lata u — nrai npu de nang tsun u.",th:"เลือกการ์ดสักใบ — หรือเขียน prompt เองด้านล่าง",zh:"选择一张卡片 — 或在下方自行输入",vi:"Chọn một thẻ — hoặc tự viết prompt bên dưới",id:"Pilih kartu — atau tulis prompt sendiri di bawah",ms:"Pilih kad — atau tulis prompt sendiri di bawah"});
 renderVidWf();
 
 $("vidIntro").textContent = L9({my:"ရှိပြီးသား ပုံကနေ ရွေ့လျားနေတဲ့ ဗီဒီယို ဆောက်ပေးမယ် — RunningHub Enterprise key လိုအပ်ပါတယ် (Gemini/OpenAI နဲ့ မရသေးပါ)။",en:"Turn an existing photo into a moving video — needs your RunningHub Enterprise key (not available via Gemini/OpenAI yet).",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈပဵၼ်ဝီဒီရူဝ်ႈ — လူဝ်ႇ RunningHub Enterprise key",kac:"Nga ai sumla hpe video ni hku galai ai — RunningHub Enterprise key ra ai",th:"เปลี่ยนรูปที่มีอยู่ให้เป็นวิดีโอเคลื่อนไหว — ต้องมี RunningHub Enterprise key",zh:"把现有照片变成动态视频 — 需要你的 RunningHub Enterprise key",vi:"Biến ảnh có sẵn thành video chuyển động — cần key RunningHub Enterprise",id:"Ubah foto yang ada menjadi video bergerak — perlu RunningHub Enterprise key",ms:"Tukar foto sedia ada kepada video bergerak — perlukan RunningHub Enterprise key"});
