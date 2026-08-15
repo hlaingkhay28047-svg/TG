@@ -106,7 +106,13 @@ const DECLARED = [
      that took the first replacement never receives the other two. */
   { tag: "./__lib-purge-v4-83-vid-cards", re: /\/lib\/vid\// },
   { tag: "./__lib-purge-v4-83-lookchips", re: /\/lib\/wf\/lookchips\// },
-  { tag: "./__lib-purge-v4-83-ref413", re: /\/lib\/(full|ui)\/user-ref-413\.jpg$/ }
+  { tag: "./__lib-purge-v4-83-ref413", re: /\/lib\/(full|ui)\/user-ref-413\.jpg$/ },
+  /* v4.91 — the twelve Portrait Light Study plates re-shot onto their own ids,
+     and the Newborn card redrawn baby-only. The 500 new snoot plates are NOT
+     here and must not be: they are ids no device has ever held, so a cache miss
+     fetches them normally. */
+  { tag: "./__lib-purge-v4-91-lightstudy12", re: /\/lib\/(full|ui)\/user-ref-13(0\d|1[01])\.jpg$/ },
+  { tag: "./__lib-purge-v4-91-newborn-card", re: /\/lib\/wf\/cards5\/pr-scnNewborn\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
@@ -214,8 +220,9 @@ report("E) all 880 catalogue records carry the `q` search field",
 
   console.log("      (history scan: 121 files under docs/app/lib were ever modified in " +
     "place — 116 cards, styles880/catalog.json, icon-512.png and 3 under the deleted " +
-    "lib/wf/cards/; the /lib/{ui,full,banners}/ plates are add-only, which is what " +
-    "makes cache-first safe for them)");
+    "lib/wf/cards/. v4.91 ended the add-only run for /lib/{full,ui}: the twelve " +
+    "Portrait Light Study plates were re-shot onto their own ids and carry a purge " +
+    "entry, which is exactly the rule working rather than an exception to it)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();

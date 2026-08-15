@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-89-0";
+var CACHE = "hnk-web-studio-v4-91-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -14,17 +14,18 @@ var LIB_CACHE = "hnk-lib-v1";
 /* v4.45: +880 style-pack references under /lib/styles880/ — the cap must
    clear ui+full+banners+wf+styles880 combined or browsing the style pack
    evicts library thumbnails the customer already paid data for. */
-/* v4.83 — COUNTED, not estimated. /lib/ now holds 3819 files: 1311 in ui,
-   1311 in full, 880 in styles880, 269 in wf, plus banners/dash/looks/vid/root.
-   The cap stood at 2800 while the library alone passed it, which means a
-   studio browsing far enough evicts the thumbnails it downloaded earlier in
-   the same session and re-fetches them on the way back — the exact failure
-   this cap was written to prevent, arrived at by the library growing past it.
-   4200 clears the whole tree with room for one more wave. It bounds the entry
-   COUNT, not bytes; the browser's own origin quota is the real size ceiling
-   and it evicts the whole cache rather than trimming, which is why an
+/* v4.91 — COUNTED AGAIN, and the cap had been outgrown AGAIN. /lib/ now holds
+   4836 files: 1811 in ui, 1811 in full, 882 in styles880, 273 in wf, plus
+   banners/dash/looks/vid/root. The 500 snoot plates added 1000 files in one
+   wave and pushed the tree past the 4200 set in v4.83, which means a studio
+   browsing far enough evicts thumbnails it downloaded earlier in the same
+   session and re-fetches them on the way back — the exact failure this cap
+   exists to prevent, reached the same way as last time, by the library growing.
+   6000 clears the whole tree with room for another wave of this size. It bounds
+   the entry COUNT, not bytes; the browser's own origin quota is the real size
+   ceiling and it evicts the whole cache rather than trimming, which is why an
    explicit cap exists at all. */
-var LIB_MAX_ENTRIES = 4200;
+var LIB_MAX_ENTRIES = 6000;
 /* v4.28: the PWA icon set is the ONLY thing that lives at /lib/ root (the
    real library thumbnails all sit in /lib/{banners,full,ui,wf}/). Icons get
    re-arted between releases — the identity wave replaced all five — so they
@@ -74,7 +75,11 @@ self.addEventListener("install", function (e) {
    LIB_ICON_RE, and the deleted directory has no live URL, so the two entries
    below are the only live exposure. The library plates under /lib/{ui,full,
    banners}/ have never once been modified in place, which is what makes the
-   cache-first design safe for them in the first place. */
+   cache-first design safe for them in the first place.
+
+   v4.91 — that add-only run has now ended, and the v4.91 entry below is what
+   ends it cleanly: twelve plates under /lib/{full,ui}/ were re-shot onto their
+   own ids. The rule did not change; it simply applies to them now. */
 var LIB_PURGES = [
   /* v4.64 — all 116 workflow cards were re-arted and re-fitted to 960x640
      under their own filenames. */
@@ -117,7 +122,25 @@ var LIB_PURGES = [
      deliver 2 would cost a studio on mobile data real money. */
   { tag: "./__lib-purge-v4-83-vid-cards", re: /\/lib\/vid\// },
   { tag: "./__lib-purge-v4-83-lookchips", re: /\/lib\/wf\/lookchips\// },
-  { tag: "./__lib-purge-v4-83-ref413", re: /\/lib\/(full|ui)\/user-ref-413\.jpg$/ }
+  { tag: "./__lib-purge-v4-83-ref413", re: /\/lib\/(full|ui)\/user-ref-413\.jpg$/ },
+  /* v4.91 — two replacements in this wave, and one non-replacement worth
+     naming so nobody adds an entry for it later.
+
+     The twelve Portrait Light Study plates were re-shot to the fairer, softer
+     skin the owner asked for and land on the SAME ids, user-ref-1300 to 1311.
+     Targeted by that exact range rather than by /lib/full/ as a whole: the
+     library is now 1811 plates in each of two sizes, and re-fetching 3622
+     files to deliver 24 would cost a studio on mobile data real money.
+
+     The Newborn scene card was redrawn baby-only, replacing pr-scnNewborn.jpg
+     under its own name. cards5 is 13MB, so it is named individually too.
+
+     The 500 new snoot plates are user-ref-1312 upward — ids no device has ever
+     been served — so a cache miss fetches them normally and they need NO entry
+     here. This list is only ever for files replaced under a name already in
+     the wild. */
+  { tag: "./__lib-purge-v4-91-lightstudy12", re: /\/lib\/(full|ui)\/user-ref-13(0\d|1[01])\.jpg$/ },
+  { tag: "./__lib-purge-v4-91-newborn-card", re: /\/lib\/wf\/cards5\/pr-scnNewborn\.jpg$/ }
 ];
 
 function purgeReplacedLibArt() {
