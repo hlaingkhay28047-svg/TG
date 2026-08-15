@@ -112,7 +112,16 @@ const DECLARED = [
      here and must not be: they are ids no device has ever held, so a cache miss
      fetches them normally. */
   { tag: "./__lib-purge-v4-91-lightstudy12", re: /\/lib\/(full|ui)\/user-ref-13(0\d|1[01])\.jpg$/ },
-  { tag: "./__lib-purge-v4-91-newborn-card", re: /\/lib\/wf\/cards5\/pr-scnNewborn\.jpg$/ }
+  { tag: "./__lib-purge-v4-91-newborn-card", re: /\/lib\/wf\/cards5\/pr-scnNewborn\.jpg$/ },
+  /* v4.93 — eleven of the owner's thirteen returned card images replace art
+     already in the wild: the ten that carried the feather at the mouth, plus
+     Wedding Field re-shot for proportion. The other two, scene-fit-pro and
+     master-pro-retouch, are names no device has ever been served — those
+     workflows shipped in v4.88 with no card at all — so they are deliberately
+     NOT in this regex. Adding them would charge every user a re-fetch to
+     deliver a file they never held. */
+  { tag: "./__lib-purge-v4-93-cards13",
+    re: /\/lib\/wf\/cards5\/(film-grade|lg-bglight|lg-hair|text-logo|upscale|white-balance-fix|mx-bg|mx-color|mx-fg|mx-object|pl-5)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",

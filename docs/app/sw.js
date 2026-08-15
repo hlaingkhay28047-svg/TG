@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-92-0";
+var CACHE = "hnk-web-studio-v4-93-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -140,7 +140,20 @@ var LIB_PURGES = [
      here. This list is only ever for files replaced under a name already in
      the wild. */
   { tag: "./__lib-purge-v4-91-lightstudy12", re: /\/lib\/(full|ui)\/user-ref-13(0\d|1[01])\.jpg$/ },
-  { tag: "./__lib-purge-v4-91-newborn-card", re: /\/lib\/wf\/cards5\/pr-scnNewborn\.jpg$/ }
+  { tag: "./__lib-purge-v4-91-newborn-card", re: /\/lib\/wf\/cards5\/pr-scnNewborn\.jpg$/ },
+  /* v4.93 — the owner's thirteen returned card images.
+
+     ELEVEN of them replace art already in the wild under its own name: the ten
+     cards that carried the feather at the mouth, plus the Wedding Field card
+     re-shot for proportion. /lib/ is cache-first and never revalidated, so
+     without this marker every existing install keeps the old art forever.
+
+     The other TWO — scene-fit-pro and master-pro-retouch — are filenames no
+     device has ever been served, because those workflows shipped in v4.88
+     with no card at all. A cache miss fetches them normally. They are
+     deliberately absent from this regex; adding them would cost every user a
+     re-fetch to deliver a file they never had. */
+  { tag: "./__lib-purge-v4-93-cards13", re: new RegExp("/lib/wf/cards5/(film-grade|lg-bglight|lg-hair|text-logo|upscale|white-balance-fix|mx-bg|mx-color|mx-fg|mx-object|pl-5)\\.jpg$") }
 ];
 
 function purgeReplacedLibArt() {
