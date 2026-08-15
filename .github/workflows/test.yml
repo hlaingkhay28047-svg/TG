@@ -209,6 +209,9 @@ jobs:
       - name: Run v4.78.0 worker-export sweep (identical bytes, thread stays alive)
         run: node test/sweep_v478_upgrades.js
 
+      - name: Run v4.80.0 video-workflow sweep (boarding pass, 8 destinations)
+        run: node test/sweep_v480_video_wf.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
