@@ -84,8 +84,16 @@ files.forEach(f => {
   if (!d || d.w !== 960 || d.h !== 640) odd.push(f + "=" + k);
 });
 
-report("B) all 116 cards present, every one 960x640 (3:2)",
-  files.length === 116 && odd.length === 0,
+/* v4.79 — the count is a FLOOR, not an equality. This asserted exactly 116 and
+   went red the moment a 117th card image shipped (pr-sketchPose, whose photo
+   v4.67 promised and this wave delivered) — the identical mistake assertion G
+   below already records making, one level down: G pinned the number of
+   WORKFLOWS, this pinned the number of IMAGES. What the contract actually
+   cares about is that no card is missing and none is a stray size; the pack
+   growing is the product improving, and a test that punishes that is testing
+   the wrong thing. */
+report("B) every workflow card is present and 960x640 (3:2), and the pack may grow",
+  files.length >= 116 && odd.length === 0,
   { count: files.length, dims, odd: odd.slice(0, 6) });
 
 /* The set this replaced was 116 files totalling 13.8 MB. Shipping the pack at

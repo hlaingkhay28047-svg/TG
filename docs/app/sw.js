@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-78-0";
+var CACHE = "hnk-web-studio-v4-79-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -84,7 +84,15 @@ var LIB_PURGES = [
      a device still holding the old one shows the whole shelf built on the wrong
      face. The sixteen new look previews live at fresh paths under /lib/looks/
      and need no entry: a cache miss fetches them normally. */
-  { tag: "./__lib-purge-v4-73-st-sample", re: /\/lib\/st-sample\.jpg$/ }
+  { tag: "./__lib-purge-v4-73-st-sample", re: /\/lib\/st-sample\.jpg$/ },
+  /* v4.79 — two workflow cards and the Scene banner were redrawn and replaced
+     under their own names. The v4.64 cards5 entry cannot be reused: it has
+     already run on every device, so its marker is set and it would never fire
+     again. Targeting the two files by name rather than re-purging the whole
+     cards5 folder matters — that folder is 12MB, and a studio on mobile data
+     should not re-download 116 cards to receive 2. */
+  { tag: "./__lib-purge-v4-79-cards5-refresh", re: /\/lib\/wf\/cards5\/(mx-light|pl-5)\.jpg$/ },
+  { tag: "./__lib-purge-v4-79-dash-scene", re: /\/lib\/dash\/scene\.jpg$/ }
 ];
 
 function purgeReplacedLibArt() {
