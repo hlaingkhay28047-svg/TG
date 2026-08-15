@@ -212,6 +212,9 @@ jobs:
       - name: Run v4.80.0 video-workflow sweep (boarding pass, 8 destinations)
         run: node test/sweep_v480_video_wf.js
 
+      - name: Run v4.82.0 age-library sweep (440 plates, and the count in every language)
+        run: node test/sweep_v482_agelib.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
