@@ -227,6 +227,9 @@ jobs:
       - name: Run v4.88.0 Scene Fit Pro + Master Pro Retouch sweep (prompt-length constraint)
         run: node test/sweep_v488_twowf.js
 
+      - name: Run v4.92.0 grid-fit sweep (clipped columns, chip rail, card translations)
+        run: node test/sweep_v492_gridfit.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
