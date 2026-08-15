@@ -40,7 +40,9 @@
       optional scene.
    F) It refuses to treat anything drawn as an extra person — the count lock.
    G) A workflow shipping without card art is declared in NO_CARD_JPG, so the
-      grid draws its icon instead of waiting out a guaranteed 404.
+      grid draws its icon instead of waiting out a guaranteed 404 — measured
+      on the wire in both directions (G1 nothing 404s, G2 nothing is declared
+      whose photo actually exists), so it holds with the list empty or full.
 
    Usage: PORT=8931 node test/sweep_v467_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
@@ -75,6 +77,9 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
   const browser = await chromium.launch();
   const pageErrors = [];
   const byWidth = {};
+  /* G) watches the WIRE, not a literal. See the rewrite note above assertion G. */
+  const art404 = [];
+  const artOK = new Set();
 
   for (const w of [320, 390]) {
     const ctx = await browser.newContext({
@@ -82,6 +87,12 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
     });
     const page = await ctx.newPage();
     page.on("pageerror", e => pageErrors.push(w + "px " + String(e).slice(0, 160)));
+    page.on("response", r => {
+      const u = r.url();
+      if (!/\/lib\/wf\/cards5\/[^/]+\.jpg$/.test(u)) return;
+      const f = u.split("/").pop();
+      if (r.status() === 404) art404.push(w + "px " + f); else if (r.status() < 400) artOK.add(f);
+    });
     await page.addInitScript(() => {
       localStorage.setItem("hnk_ws_onboarded", "1");
       localStorage.setItem("hnk_ws_seen", "1");
@@ -154,6 +165,19 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
         .map(c => (c.querySelector(".t") || {}).textContent || "");
       out.cards = titles.length;
       out.inGrid = titles.some(t => /Sketch Pose|ပုံကြမ်းနဲ့/.test(t));
+
+      /* G) every card's art has to actually be REQUESTED before the response
+         listener can judge it. The grid ships loading="lazy" and the groups
+         start collapsed, so a plain render fetches a couple of screens' worth
+         and the check would pass by never asking. Open every group, force the
+         images eager, and let them settle. */
+      document.querySelectorAll("#wfHost .grp").forEach(g => g.classList.add("open"));
+      await new Promise(r => setTimeout(r, 200));
+      document.querySelectorAll("#wfHost img").forEach(i => {
+        i.loading = "eager";
+        if (i.getAttribute("src")) i.setAttribute("src", i.getAttribute("src"));
+      });
+      await new Promise(r => setTimeout(r, 2600));
       return out;
     });
     await ctx.close();
@@ -188,9 +212,39 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
     WS.every(w => at(w).inGrid === true && at(w).cards >= 117),
     WS.map(w => w + ": cards=" + at(w).cards + " inGrid=" + at(w).inGrid).join(" "));
 
-  /* G) card-less workflows must be declared, or every load eats a 404 first */
-  report("G) a workflow shipped without card art is declared in NO_CARD_JPG",
-    /var NO_CARD_JPG=\[\s*"pr-sketchPose"\s*\]/.test(src));
+  /* G) card-less workflows must be declared, or every load eats a 404 first.
+     v4.79 — this used to read
+         /var NO_CARD_JPG=\[\s*"pr-sketchPose"\s*\]/.test(src)
+     which pinned the LIST'S CONTENTS rather than the promise the list exists
+     to keep. It went red the moment pr-sketchPose.jpg was drawn and the id was
+     correctly removed: the assertion failed BECAUSE the product got better,
+     which means it was measuring the wrong thing. (Same shape as sweep_v464's
+     assertion B and its own assertion G, both already fixed for this reason —
+     that makes this the third time on this pattern, so the fix here is
+     behavioural rather than another cleverer literal.)
+
+     What the declaration actually promises is a two-way invariant, and both
+     halves are now measured instead of described:
+       G1  no card-art request 404s — an undeclared missing photo would, which
+           is the user-visible cost the list exists to prevent;
+       G2  no id sits in the list whose photo DOES exist on disk — a stale
+           entry silently keeps a real, shipped photograph off the grid
+           forever, and nothing else in the suite would notice.
+     Both hold with the list empty, full, or anywhere between. */
+  const declared = (() => {
+    const m = /var NO_CARD_JPG\s*=\s*\[([^\]]*)\]/.exec(src.replace(/\/\*[\s\S]*?\*\//g, ""));
+    return m ? (m[1].match(/"([^"]+)"/g) || []).map(s => s.slice(1, -1)) : null;
+  })();
+  const cardsDir = path.join(__dirname, "..", "docs", "app", "lib", "wf", "cards5");
+  const stale = (declared || []).filter(id => fs.existsSync(path.join(cardsDir, id + ".jpg")));
+
+  report("G1) the workflow grid never requests card art that 404s",
+    art404.length === 0 && artOK.size >= 117,
+    { missing: art404.slice(0, 8), served: artOK.size });
+
+  report("G2) NO_CARD_JPG declares only ids whose photo is genuinely absent",
+    declared !== null && stale.length === 0,
+    { declared: declared, staleEntriesHidingRealPhotos: stale });
 
   report("no page errors", pageErrors.length === 0, pageErrors);
 

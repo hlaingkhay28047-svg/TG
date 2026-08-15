@@ -94,7 +94,12 @@ const DECLARED = [
      commissioned look pack landed. This list is deliberately restated here
      rather than read out of sw.js: the point of D0 is that a new entry cannot
      be added to the worker without a human also stating it here. */
-  { tag: SAMPLE_TAG, re: /\/lib\/st-sample\.jpg$/ }
+  { tag: SAMPLE_TAG, re: /\/lib\/st-sample\.jpg$/ },
+  /* v4.79 — two cards and the Scene banner, redrawn and replaced in place.
+     Targeted by filename: cards5 is 13MB and re-purging the folder to deliver
+     two files would cost a studio on mobile data the other 114. */
+  { tag: "./__lib-purge-v4-79-cards5-refresh", re: /\/lib\/wf\/cards5\/(mx-light|pl-5)\.jpg$/ },
+  { tag: "./__lib-purge-v4-79-dash-scene", re: /\/lib\/dash\/scene\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
