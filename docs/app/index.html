@@ -124,6 +124,17 @@ h1 em{font-style:normal;color:var(--gold-hi)}
    (Text-to-Image)") that no half-width cell can hold — give them the whole
    row and let the short Res/Duration/Ratio pickers pair up underneath */
 #vidOpts #selVidModel,#t2iOpts #selT2IModel{grid-column:1/-1}
+/* v5.1 — the video model picker. The native <select> is kept as the source of
+   truth but taken out of the layout; #btnVidModelPick is what the customer
+   sees and taps. Three stacked lines — family, name, capability — so nothing
+   has to wrap mid-name the way a 65-option Android dropdown did. */
+#vidOpts #selVidModel{display:none}
+.mdl-btn{grid-column:1/-1;display:block;width:100%;text-align:left;padding:var(--sp-3);min-height:44px;position:relative;padding-right:34px}
+.mdl-btn::after{content:"";position:absolute;right:14px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg)}
+.mdl-btn .mdl-fam{display:block;font-size:var(--fs-2xs);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-hi);line-height:1.5}
+.mdl-btn .mdl-name{display:block;font-size:var(--fs-base);font-weight:800;color:var(--cream);line-height:1.4;overflow-wrap:anywhere}
+.mdl-btn .mdl-spec{display:block;font-size:var(--fs-2xs);color:var(--muted);line-height:1.5}
+.mdl-btn .mdl-spec:empty{display:none}
 @media(max-width:359px){#genOpts,#genOptsAdv,#vidOpts,#t2iOpts{grid-template-columns:1fr}
   /* one per row at 320 means the short pickers get their full type back — but
      the long model names still need the tighter treatment to read whole */
@@ -2203,6 +2214,17 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   <section class="card">
     <h2>GENERATE</h2>
     <div class="row" id="vidOpts">
+      <!-- v5.1 — the model picker is a sheet, not a dropdown. Sixty-five
+           options in a native <select> is an Android list that wraps every
+           label to two ragged lines and cannot be searched. The <select>
+           stays, hidden, as the single source of truth: every reader
+           (vidModelDef, the workflow cards, presets, saveState and every
+           sweep) keeps driving it exactly as before. -->
+      <button class="btn mdl-btn" id="btnVidModelPick" aria-haspopup="dialog">
+        <span class="mdl-fam" id="vidModelFam"></span>
+        <span class="mdl-name" id="vidModelName"></span>
+        <span class="mdl-spec" id="vidModelSpec"></span>
+      </button>
       <select class="inp" id="selVidModel"></select>
       <select class="inp" id="selVidRes"></select>
       <select class="inp" id="selVidDur"></select>
@@ -2213,6 +2235,18 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
       </select>
     </div>
     <div class="mut" id="vidNeedNote" style="margin-top:6px"></div>
+    <!-- v5.1 — the model catalogue, searchable, grouped by family -->
+    <div class="pt-sheet" id="vidModelSheet" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="pt-sheet-in">
+        <div class="row" style="justify-content:space-between">
+          <b id="vidModelSheetTitle" style="min-width:0"></b>
+          <button class="btn" id="btnVidModelClose" style="flex:0 0 auto"></button>
+        </div>
+        <input class="inp" id="vidModelSearch" type="search" autocomplete="off" style="margin-top:8px">
+        <div class="mut" id="vidModelCount" style="margin-top:6px"></div>
+        <div id="vidModelList"></div>
+      </div>
+    </div>
     <button class="btn btn-gold gen" id="btnVidGen"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-clapper"/></svg> GENERATE VIDEO</button>
     <div class="spin" id="vidSpin"></div>
     <button class="btn" id="btnVidCancel" style="display:none;margin-top:8px"></button>
@@ -3525,6 +3559,11 @@ window.addEventListener("popstate", function(ev){
      scroll, with nothing on screen to explain it. */
   var wfs=$("ptWfSheet");
   if(wfs && wfs.className.indexOf("on")>=0 && typeof ptCloseWfSheet==="function"){ ptCloseWfSheet(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
+  /* v5.1 — the video model sheet is the fourth full-screen overlay, and it
+     sets body{overflow:hidden} like the rest. v5.0.1 shipped this bug once
+     already on the workflow picker; it does not get to ship twice. */
+  var vms=$("vidModelSheet");
+  if(vms && vms.className.indexOf("on")>=0 && typeof vidCloseModelSheet==="function"){ vidCloseModelSheet(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
   var pg=ev.state&&ev.state.pg;
   if(pg && $(pg)) switchPage(pg, true);
 });
@@ -20018,8 +20057,78 @@ function updateVidPromptCount(){
   var m=vidModelDef();
   $("vidPromptCount").textContent = $("vidPrompt").value.length+" / "+m.promptMax;
 }
+/* v5.1 — one place each for the three things a model row shows. name/spec are
+   fields on the descriptor; the fallbacks keep this working for any entry that
+   has not been given them yet, and keep the legacy two honest. */
+function vidMName(m){ return (m && m.name) || String((m&&m.label)||(m&&m.id)||"").split("—")[0].trim(); }
+function vidMSpec(m){ return (m && m.spec) || ""; }
+function vidMFam(m){ return (m && m.fam) || "HNK"; }
+/* the tap target: family over name over capability, so a sixty-five item
+   catalogue reads as one line of identity instead of a wrapped slug */
+function vidRenderModelBtn(){
+  var m=vidModelDef(), f=$("vidModelFam"), n=$("vidModelName"), sp=$("vidModelSpec");
+  if(!f||!n||!sp) return;
+  f.textContent=vidMFam(m);
+  n.textContent=vidMName(m);
+  sp.textContent=vidMSpec(m);
+  var b=$("btnVidModelPick");
+  if(b) b.setAttribute("aria-label", vidMFam(m)+" "+vidMName(m));
+}
+function vidOpenModelSheet(){
+  var sh=$("vidModelSheet"); if(!sh) return;
+  sh.className="pt-sheet on";
+  sh.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  vidRenderModelList();
+  var q=$("vidModelSearch"); if(q) q.focus();
+}
+function vidCloseModelSheet(){
+  var sh=$("vidModelSheet"); if(!sh) return;
+  sh.className="pt-sheet";
+  sh.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+}
+function vidRenderModelList(){
+  var host=$("vidModelList"); if(!host) return;
+  host.innerHTML="";
+  var q=(($("vidModelSearch")||{}).value||"").trim().toLowerCase();
+  var cur=$("selVidModel").value;
+  var hits=RH_VIDEO_MODELS.filter(function(m){
+    if(!q) return true;
+    return (vidMFam(m)+" "+vidMName(m)+" "+vidMSpec(m)+" "+m.id+" "+(m.apiPath||"")).toLowerCase().indexOf(q)>=0;
+  });
+  $("vidModelCount").textContent=String(hits.length)+" / "+String(RH_VIDEO_MODELS.length);
+  if(!hits.length){ host.appendChild(el("p","mut",L9(VID_MDL_L.none))); return; }
+  var lastFam="";
+  hits.forEach(function(m){
+    var fam=vidMFam(m);
+    if(fam!==lastFam){ lastFam=fam; host.appendChild(el("div","subh",fam)); }
+    var b=el("button","pt-wfrow"+(m.id===cur?" on":""));
+    var col=el("span");
+    col.appendChild(el("span","wt",vidMName(m)));
+    var sp=vidMSpec(m);
+    if(sp) col.appendChild(el("span","wn",sp));
+    b.appendChild(col);
+    b.onclick=function(){
+      var sel=$("selVidModel");
+      sel.value=m.id;
+      /* the select is the source of truth — go through its own handler so
+         every consumer (res/dur/aspect rebuild, prompt cap, need-note) runs
+         exactly as it did when this was a dropdown */
+      if(typeof sel.onchange==="function") sel.onchange();
+      vidCloseModelSheet();
+    };
+    host.appendChild(b);
+  });
+}
+var VID_MDL_L={
+  title:{my:"Video model ရွေးမယ်",en:"Choose a video model",shn:"လိူၵ်ႈ Video model",kac:"Video model lata u",th:"เลือกโมเดลวิดีโอ",zh:"选择视频模型",vi:"Chọn model video",id:"Pilih model video",ms:"Pilih model video"},
+  search:{my:"Model ရှာမယ် (နာမည်/အမျိုးအစား)",en:"Search models (name or family)",shn:"သွၵ်ႈ model",kac:"Model tam u",th:"ค้นหาโมเดล",zh:"搜索模型",vi:"Tìm model",id:"Cari model",ms:"Cari model"},
+  none:{my:"ဒီစကားလုံးနဲ့ model မတွေ့ပါ",en:"No model matches that",shn:"ဢမ်ႇႁၼ် model",kac:"Model n mu ai",th:"ไม่พบโมเดล",zh:"没有匹配的模型",vi:"Không tìm thấy model",id:"Tidak ada model yang cocok",ms:"Tiada model sepadan"}
+};
 function updateVidModelUI(){
   var m=vidModelDef();
+  vidRenderModelBtn();
   /* switching model must not silently reset the user's res/dur picks */
   /* v4.98 — not every endpoint has every control. Measured across the
      sixty-five: 27 declare no `resolution` parameter at all and 15 declare no
@@ -20069,12 +20178,23 @@ function updateVidModelUI(){
   fams.forEach(function(f){
     var g=document.createElement("optgroup"); g.label=f+" ("+byFam[f].length+")";
     byFam[f].forEach(function(m){
-      var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; g.appendChild(o);
+      var o=document.createElement("option"); o.value=m.id;
+      /* the select is hidden behind the sheet now, but its option text is
+         still what a screen reader and every sweep reads — give it the same
+         clean identity the sheet shows, not the old slug */
+      o.textContent=vidMFam(m)+" — "+vidMName(m)+(vidMSpec(m)?(" · "+vidMSpec(m)):"");
+      g.appendChild(o);
     });
     sel.appendChild(g);
   });
 })();
 $("selVidModel").onchange = updateVidModelUI;
+$("btnVidModelPick").onclick = vidOpenModelSheet;
+$("btnVidModelClose").onclick = vidCloseModelSheet;
+$("vidModelSearch").oninput = function(){ vidRenderModelList(); };
+$("vidModelSheetTitle").textContent = L9(VID_MDL_L.title);
+$("vidModelSearch").placeholder = L9(VID_MDL_L.search);
+setIcnText($("btnVidModelClose"),"i-close",t("pt_close"));
 $("vidPrompt").addEventListener("input", updateVidPromptCount);
 updateVidModelUI();
 
