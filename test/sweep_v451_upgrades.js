@@ -18,8 +18,8 @@
    C) Without a retained original the export falls back to the preview
       source, and the note says so — no silent claim of full resolution.
    D) The export note prints the real outgoing pixel dimensions.
-   E) PT_MAX follows the device (60 phone / 100 desktop) and the cap toast
-      states the real number instead of a hardcoded 30.
+   E) PT_MAX is 100 — v5.0 dropped the screen-width memory proxy that capped a
+      phone at 60 — and the cap toast states the real number, not a hardcoded 30.
    F) ptBakeAll bakes sequentially and still emits exactly one ZIP.
    G) Studio's busy line carries the elapsed-seconds ticker.
    H) Every language quotes the cap through the {N} placeholder. Raising the
@@ -167,7 +167,12 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   report("C) without the original it falls back to the preview and says so",
     r.C_fallback && r.C_noteAdmits, r);
   report("D) the export note prints the real outgoing dimensions", r.D_dims, r.D_note);
-  report("E) batch cap follows the device and the toast states it", r.E_cap === 60 && r.E_msgHasCap, r);
+  /* v5.0 — the cap is 100 on every device that reports more than 2GB (and on
+     every device that reports nothing, which is most phones). The old rule used
+     screen width as a memory proxy and stopped a phone at 60; ingest downscales
+     to 2048px JPEG and the grid lazy-decodes, so the hundred fits. */
+  report("E) the batch cap is the 100 the owner asked for, and the toast states it",
+    r.E_cap === 100 && r.E_msgHasCap, r);
   report("F) ptBakeAll bakes sequentially into exactly one ZIP", r.F_zips === 1 && r.F_bytes > 0, r);
   report("G) Studio's busy line ticks elapsed seconds", r.G_tick, r);
   report("H) every language states the cap by placeholder, never a baked-in number",

@@ -110,11 +110,13 @@ function report(name, ok, detail) {
     // restore for later checks
     localStorage.setItem("hnk_web_studio_key", "AIzaTestKeyValue"); state.key = "AIzaTestKeyValue";
     const payHint = document.getElementById("stPay").textContent.length > 5;
-    return { gemReady, upToDate, ver, exported, delVisible, keyGone, payHint,
+    return { gemReady, upToDate, ver, appVer: APP_VER, exported, delVisible, keyGone, payHint,
       dataLine: document.getElementById("dataStore").textContent.indexOf("KB") >= 0 || document.getElementById("dataStore").textContent.indexOf("MB") >= 0 };
   });
   report("Setup: readiness strip live, manual update check reports current, backup exports a file, key removal works, logged-out pay hint",
-    setup.gemReady && setup.upToDate && /^v4\./.test(setup.ver) && /hnk-backup-/.test(setup.exported || "") && setup.delVisible && setup.keyGone && setup.payHint && setup.dataLine,
+    /* the version LINE must name the build, whatever the build is — pinning
+       this to /^v4\./ made a major bump look like a Setup regression */
+    setup.gemReady && setup.upToDate && setup.ver === "v" + setup.appVer && /^\d+\.\d+\.\d+$/.test(setup.appVer) && /hnk-backup-/.test(setup.exported || "") && setup.delVisible && setup.keyGone && setup.payHint && setup.dataLine,
     setup);
 
   /* ---- 4) Workflow page ---- */
