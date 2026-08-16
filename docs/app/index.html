@@ -617,17 +617,13 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
       is the most expensive mistake this UI can make. The margin and hairline
       below exist to make each row a group, not to decorate. */
 @media (pointer:coarse){#pgStudio .st-ctl.st-slider,#pgMeitu .st-ctl.st-slider,#pgEvoto .st-ctl.st-slider{min-height:0;row-gap:0;padding-bottom:6px;margin-bottom:8px;
-    border-bottom:1px solid rgba(255,255,255,.05)}#pgStudio .st-ctl.st-slider label,#pgMeitu .st-ctl.st-slider label,#pgEvoto .st-ctl.st-slider label{flex:1 1 auto;min-width:0}#pgStudio .st-ctl.st-slider .st-val,#pgMeitu .st-ctl.st-slider .st-val,#pgEvoto .st-ctl.st-slider .st-val{flex:0 0 44px;min-width:44px}/* The base .st-val hit area is `top:-15px;bottom:-15px` — height + 30px,where the height is whatever the font gives the text. That is 44px with
-     Noto Sans Myanmar loaded and 43px on a runner without it,i.e. the touch
+    border-bottom:1px solid rgba(255,255,255,.05)}#pgStudio .st-ctl.st-slider label,#pgMeitu .st-ctl.st-slider label,#pgEvoto .st-ctl.st-slider label{flex:1 1 auto;min-width:0}#pgStudio .st-ctl.st-slider .st-val,#pgMeitu .st-ctl.st-slider .st-val,#pgEvoto .st-ctl.st-slider .st-val{flex:0 0 44px;min-width:44px}
+  /* The base .st-val hit area is `top:-15px;bottom:-15px` — height + 30px,
+     where the height is whatever the font gives the text. That is 44px with
+     Noto Sans Myanmar loaded and 43px on a runner without it, i.e. the touch
      target silently depends on which fonts the device has. Pin it to a real
      44px box centred on the readout instead: font-independent by construction. */
-  #pgStudio .st-ctl.st-slider .st-val:after,i.e. the touch
-     target silently depends on which fonts the device has. Pin it to a real
-     44px box centred on the readout instead: font-independent by construction. */
-  #pgMeitu .st-ctl.st-slider .st-val:after,i.e. the touch
-     target silently depends on which fonts the device has. Pin it to a real
-     44px box centred on the readout instead: font-independent by construction. */
-  #pgEvoto .st-ctl.st-slider .st-val:after{top:50%;bottom:auto;height:44px;transform:translateY(-50%)}#pgStudio .st-ctl.st-slider .rng,#pgMeitu .st-ctl.st-slider .rng,#pgEvoto .st-ctl.st-slider .rng{flex:1 0 100%;order:1;min-width:0;min-height:44px;
+  #pgStudio .st-ctl.st-slider .st-val:after,#pgMeitu .st-ctl.st-slider .st-val:after,#pgEvoto .st-ctl.st-slider .st-val:after{top:50%;bottom:auto;height:44px;transform:translateY(-50%)}#pgStudio .st-ctl.st-slider .rng,#pgMeitu .st-ctl.st-slider .rng,#pgEvoto .st-ctl.st-slider .rng{flex:1 0 100%;order:1;min-width:0;min-height:44px;
     touch-action:pan-y;margin-top:2px}
 }
 .st-color{width:52px;min-height:38px;padding:2px;margin-top:var(--sp-2)}
@@ -757,10 +753,9 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 @keyframes chipin{from{transform:scale(.85);opacity:0}}
 #stPendChips .chip.newchip{animation:chipin .18s ease}
 #btnStGen.bump{animation:chipin .18s ease}
-@media (prefers-reduced-motion: reduce){#stPendChips .chip.newchip,#btnStGen.bump,#stStage,#stCanvas{animation:none!important;transition:none!important}}/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
-#pgStudio,/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
-#pgMeitu,/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
-#pgEvoto{overflow-anchor:none}
+@media (prefers-reduced-motion: reduce){#stPendChips .chip.newchip,#btnStGen.bump,#stStage,#stCanvas{animation:none!important;transition:none!important}}
+/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
+  #pgStudio,#pgMeitu,#pgEvoto{overflow-anchor:none}
 #stStage{position:sticky;top:calc(var(--navH,54px) + env(safe-area-inset-top));z-index:6;background:var(--ink);padding:4px 0 6px;margin-top:var(--sp-3);box-shadow:0 10px 18px -12px rgba(0,0,0,.6)}
 #stZoomWrap{position:relative;overflow:hidden;width:fit-content;max-width:100%;margin:0 auto;border-radius:var(--r-md)}
 #stCanvas{display:block;max-width:100%;max-height:30vh;margin:0 auto;border-radius:var(--r-md);background:#000;border:1px solid var(--line-soft);transition:max-height .18s ease}
@@ -817,25 +812,16 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:4px 11px;font-size:var(--fs-2xs)}
 /* v4.27.1 jump-bar diet: compact drops the two-row top (suite tabs + search) to one 44-50px chip row;
    #stSearch stays in the DOM (search still fully functional) — the #stSearchTgl chip swaps it back in */
-#stSearchTgl{display:none}#pgStudio.stcompact #stJumpTop,#pgMeitu.stcompact #stJumpTop,#pgEvoto.stcompact #stJumpTop{display:none}#pgStudio.stcompact #stSearchTgl,#pgMeitu.stcompact #stSearchTgl,#pgEvoto.stcompact #stSearchTgl{display:inline-flex;min-width:44px;min-height:44px;justify-content:center;position:sticky;left:0;z-index:1;background:var(--ink)}#pgStudio.stcompact #stGroupChips,#pgMeitu.stcompact #stGroupChips,#pgEvoto.stcompact #stGroupChips{margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stJumpTop,#pgMeitu.stcompact #stJumpBar.searchopen #stJumpTop,#pgEvoto.stcompact #stJumpBar.searchopen #stJumpTop{display:flex;margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgMeitu.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgEvoto.stcompact #stJumpBar.searchopen #stSuiteTabs{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stGroupChips,#pgMeitu.stcompact #stJumpBar.searchopen #stGroupChips,#pgEvoto.stcompact #stJumpBar.searchopen #stGroupChips{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stSearch,#pgMeitu.stcompact #stJumpBar.searchopen #stSearch,#pgEvoto.stcompact #stJumpBar.searchopen #stSearch{min-height:44px}/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
-#pgStudio.stcompact #stGenBar:not(.haspend) #stPendCount,/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
-#pgMeitu.stcompact #stGenBar:not(.haspend) #stPendCount,/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
-#pgEvoto.stcompact #stGenBar:not(.haspend) #stPendCount{display:none}/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
-#pgStudio.stslim .st-genbar,/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
-#pgMeitu.stslim .st-genbar,/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
-#pgEvoto.stslim .st-genbar{padding:3px var(--sp-3) 4px;margin:var(--sp-2) 0;bottom:calc(70px + env(safe-area-inset-bottom))}/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
+#stSearchTgl{display:none}#pgStudio.stcompact #stJumpTop,#pgMeitu.stcompact #stJumpTop,#pgEvoto.stcompact #stJumpTop{display:none}#pgStudio.stcompact #stSearchTgl,#pgMeitu.stcompact #stSearchTgl,#pgEvoto.stcompact #stSearchTgl{display:inline-flex;min-width:44px;min-height:44px;justify-content:center;position:sticky;left:0;z-index:1;background:var(--ink)}#pgStudio.stcompact #stGroupChips,#pgMeitu.stcompact #stGroupChips,#pgEvoto.stcompact #stGroupChips{margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stJumpTop,#pgMeitu.stcompact #stJumpBar.searchopen #stJumpTop,#pgEvoto.stcompact #stJumpBar.searchopen #stJumpTop{display:flex;margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgMeitu.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgEvoto.stcompact #stJumpBar.searchopen #stSuiteTabs{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stGroupChips,#pgMeitu.stcompact #stJumpBar.searchopen #stGroupChips,#pgEvoto.stcompact #stJumpBar.searchopen #stGroupChips{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stSearch,#pgMeitu.stcompact #stJumpBar.searchopen #stSearch,#pgEvoto.stcompact #stJumpBar.searchopen #stSearch{min-height:44px}
+/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
+  #pgStudio.stcompact #stGenBar:not(.haspend) #stPendCount,#pgMeitu.stcompact #stGenBar:not(.haspend) #stPendCount,#pgEvoto.stcompact #stGenBar:not(.haspend) #stPendCount{display:none}
+/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
+  #pgStudio.stslim .st-genbar,#pgMeitu.stslim .st-genbar,#pgEvoto.stslim .st-genbar{padding:3px var(--sp-3) 4px;margin:var(--sp-2) 0;bottom:calc(70px + env(safe-area-inset-bottom))}
+/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
    :has() is progressive enhancement — without it the window merely shrinks by ~25px */
-body:has(#pgStudio.on.stslim) .nav-in,/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
-   :has() is progressive enhancement — without it the window merely shrinks by ~25px */
-body:has(#pgMeitu.on.stslim) .nav-in,/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
-   :has() is progressive enhancement — without it the window merely shrinks by ~25px */
-body:has(#pgEvoto.on.stslim) .nav-in{padding-top:calc(3px + env(safe-area-inset-top));padding-bottom:3px}body:has(#pgStudio.on.stslim) .nav-in #selLang,body:has(#pgMeitu.on.stslim) .nav-in #selLang,body:has(#pgEvoto.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-size:14px!important;min-height:44px!important}/* #selLang carries inline sizing */
-#pgStudio.stslim #stPendCount,/* #selLang carries inline sizing */
-#pgMeitu.stslim #stPendCount,/* #selLang carries inline sizing */
-#pgEvoto.stslim #stPendCount{display:none}#pgStudio.stslim #stGenBar .gen,#pgMeitu.stslim #stGenBar .gen,#pgEvoto.stslim #stGenBar .gen{padding:7px 12px}#pgStudio.stslim #stGenBar .row,#pgMeitu.stslim #stGenBar .row,#pgEvoto.stslim #stGenBar .row{margin-top:2px!important}/* row carries an inline margin-top:6px */
-#pgStudio.stslim #stJumpBar,/* row carries an inline margin-top:6px */
-#pgMeitu.stslim #stJumpBar,/* row carries an inline margin-top:6px */
-#pgEvoto.stslim #stJumpBar{padding:1px 0 2px}#pgStudio.stslim #stGroupChips,#pgMeitu.stslim #stGroupChips,#pgEvoto.stslim #stGroupChips{margin-top:0}
+  body:has(#pgStudio.on.stslim) .nav-in,body:has(#pgMeitu.on.stslim) .nav-in,body:has(#pgEvoto.on.stslim) .nav-in{padding-top:calc(3px + env(safe-area-inset-top));padding-bottom:3px}body:has(#pgStudio.on.stslim) .nav-in #selLang,body:has(#pgMeitu.on.stslim) .nav-in #selLang,body:has(#pgEvoto.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-size:14px!important;min-height:44px!important} /* #selLang carries inline sizing */
+  #pgStudio.stslim #stPendCount,#pgMeitu.stslim #stPendCount,#pgEvoto.stslim #stPendCount{display:none}#pgStudio.stslim #stGenBar .gen,#pgMeitu.stslim #stGenBar .gen,#pgEvoto.stslim #stGenBar .gen{padding:7px 12px}#pgStudio.stslim #stGenBar .row,#pgMeitu.stslim #stGenBar .row,#pgEvoto.stslim #stGenBar .row{margin-top:2px!important} /* row carries an inline margin-top:6px */
+  #pgStudio.stslim #stJumpBar,#pgMeitu.stslim #stJumpBar,#pgEvoto.stslim #stJumpBar{padding:1px 0 2px}#pgStudio.stslim #stGroupChips,#pgMeitu.stslim #stGroupChips,#pgEvoto.stslim #stGroupChips{margin-top:0}
 /* comfort: roomier sliders on 320-class phones (keyboard-nudge focus ring now
    comes from the global :focus-visible rule near .inp:focus) */
 @media(max-width:359px){.st-ctl label{flex:1 0 100%;min-width:0}.rng{min-width:150px}}
@@ -845,10 +831,9 @@ body:has(#pgEvoto.on.stslim) .nav-in{padding-top:calc(3px + env(safe-area-inset-
 .st-refx{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2)}
 .st-refx .ref{width:56px;height:56px;flex:0 0 56px}
 #stTarget .chips{margin-top:var(--sp-2)}
-@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}#pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(var(--navH,54px) + 10px + env(safe-area-inset-top) + var(--stageH,0px) + var(--jumpH,92px))}/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
-#pgStudio .grp,/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
-#pgMeitu .grp,/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
-#pgEvoto .grp,#pgStudio .st-ctl,#pgMeitu .st-ctl,#pgEvoto .st-ctl{scroll-margin-bottom:calc(150px + env(safe-area-inset-bottom))}
+@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}#pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(var(--navH,54px) + 10px + env(safe-area-inset-top) + var(--stageH,0px) + var(--jumpH,92px))}
+/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
+  #pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#pgStudio .st-ctl,#pgMeitu .st-ctl,#pgEvoto .st-ctl{scroll-margin-bottom:calc(150px + env(safe-area-inset-bottom))}
 /* single-column: the column wrappers must not become sticky containing blocks —
    display:contents lifts the stage/jump bar into the full page flow so they stick page-long */
 #stColL,#stColR{display:contents}
