@@ -1006,6 +1006,47 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
    animates (the Studio stage/canvas keeps its own dedicated guard above —
    do not fold it in here). */
 @media (prefers-reduced-motion: reduce){.page.on,.toast,.wiz.on,.onb.on,.wiz.on .wiz-in,.onb.on .onb-card,.result-box.on,.result-box.on .result-img,.tabb::before,.grp.open .grp-b,.spin.on::before,.gen.working,.btn,.chip,.subtab,.wfmini,.pcard,.tabb,.dash-card .art{animation:none!important;transition:none!important}}
+
+/* ==== v4.99 — Meitu / Evoto ergonomics, measured on a 390x844 touch phone ====
+
+   FIVE THINGS, ALL COUNTED BEFORE THEY WERE CHANGED.
+
+   1. THE GOLD WORDS IN EVERY HERO WERE THE HARDEST TO READ ON THE PAGE, and the
+      reason is subtle: .ph-head carries a heavy text-shadow, but .ph-head em
+      paints its gradient with -webkit-text-fill-color:transparent. A transparent
+      fill has no glyph to cast a shadow, so the ONE phrase the banner is built
+      to emphasise — "Live Preview" — was the only text on it with no shadow at
+      all, sitting on the brightest part of the photograph. drop-shadow() filters
+      the painted result instead of the glyph, so the gradient keeps its shine
+      and gains the same separation the white text always had.
+
+   2-4. TAP TARGETS. Measured with all seventeen groups open: 34 jump chips at
+      34px, 2 suite tabs at 40px and 50 look-tile pins at 24x24 — 86 targets
+      under the 44px floor this repo has held since v4.63. They are NOT resized:
+      the jump bar is already 94px of a 844px viewport and the pin sits in the
+      corner of a 76px tile, so growing either would cost more than it buys. The
+      hit area is expanded with a centred ::after instead — the same technique
+      v4.63 used on .st-val, which is why 99 readouts measure 24px and are still
+      comfortable to hit. Visual size unchanged, thumb size fixed.
+
+   5. TWO GOLD PRIMARY BUTTONS COMPETED IN THE EMPTY STATE. With no photo the
+      generate bar relabels itself to "Add a photo", which is the same call to
+      action as the dropzone three hundred pixels above it, in the same gold.
+      Two primaries means neither is primary. The bar's copy is now secondary
+      until there is something to generate. */
+.page-hero .ph-head em,.hero-strip h1 em{
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.95)) drop-shadow(0 2px 10px rgba(0,0,0,.7))}
+
+#stGroupChips .chip,#stSuiteTabs .chip{position:relative}
+#stGroupChips .chip:after,#stSuiteTabs .chip:after{content:"";position:absolute;left:0;right:0;
+  top:50%;transform:translateY(-50%);height:44px;z-index:0}
+.pin{position:absolute}
+.pin:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:12px;z-index:0}
+
+/* the empty-state generate button steps back so the dropzone is the one call */
+#stGenBar .gen.is-empty{background:transparent;color:var(--cream);
+  border:1px solid var(--line-soft);box-shadow:none;font-weight:700}
 </style>
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -3343,6 +3384,12 @@ function stMountSuite(pageId){
   stLastSuitePage=pageId;
   try{ localStorage.setItem("hnk_st_suite",pageId); }catch(e){}
   if(typeof stStageSync==="function") setTimeout(stStageSync,0);
+  /* v4.99 — the generate bar moves with the shared block, so it must be
+     re-rendered against the page it just landed on. It only refreshed on its
+     own triggers (a slider move, a queue change), so arriving on a suite page
+     could show the bar still wearing the previous state — including the gold
+     empty-state styling this release just made secondary. */
+  if(typeof stRenderPend==="function") setTimeout(function(){ try{ stRenderPend(); }catch(e){} },0);
 }
 
 function switchPage(id, fromPop){
@@ -11761,6 +11808,8 @@ function stRenderPend(){
        and the long form did not fit it: measured 273px of text in a 230px box,
        so a customer read "Live previ…". The PHOTO card three hundred pixels up
        already carries the full sentence; this one only has to name the action. */
+    /* v4.99: the empty state is not a second primary — see the note in the CSS */
+    if(btn) btn.classList.toggle("is-empty", !!noPhoto);
     var lbl=noPhoto ? icn("i-camera")+" "+escH(L9({my:"ပုံထည့်ပါ",en:"Add a photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูป",zh:"添加照片",vi:"Thêm ảnh",id:"Tambah foto",ms:"Tambah foto"}))
       : n ? icn("i-bolt")+" GENERATE ("+n+" AI)"
       : ((live>0||stIsDirty()) ? icn("i-check")+" APPLY ("+escH(L9({my:"စက်တွင်း render",en:"local render"}))+")" : icn("i-bolt")+" GENERATE");
@@ -18384,7 +18433,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.98.2";
+var APP_VER="4.99.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
