@@ -164,9 +164,15 @@ report("G4) the purge marker covers every replaced name and none of the new ones
     const box = {}; vm.createContext(box);
     vm.runInContext(sw.match(/var LIB_PURGES = \[[\s\S]*?\n\];/)[0] +
       "; globalThis.__P=LIB_PURGES;", box);
-    const last = box.__P[box.__P.length - 1];
-    return REPLACED.every(n => last.re.test("/lib/wf/cards5/" + n + ".jpg")) &&
-      NEW_ART.every(n => !last.re.test("/lib/wf/cards5/" + n + ".jpg"));
+    /* By TAG, not by position. The first cut of this read the LAST entry in
+       the list, which was this release's — until v4.95 appended one for the
+       ten makeup video cards and this assertion started reading a regex about
+       /lib/vid/ and failing. A marker is identified by its tag; where it sits
+       in the array is an accident of release order. */
+    const mine = box.__P.filter(p => p.tag === "./__lib-purge-v4-93-cards13");
+    if (mine.length !== 1) return false;
+    return REPLACED.every(n => mine[0].re.test("/lib/wf/cards5/" + n + ".jpg")) &&
+      NEW_ART.every(n => !mine[0].re.test("/lib/wf/cards5/" + n + ".jpg"));
   })(),
   "a new filename in the purge regex charges every user a re-fetch for a file they never had");
 

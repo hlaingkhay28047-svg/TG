@@ -29,12 +29,16 @@
    D) below requires the shots to tile the clip exactly: start at 0, end at 10,
    and each one begin precisely where the last ended.
 
-   AND THE CARD ART IS THE FOOTAGE, WATERMARK REMOVED. Each card is two real
-   frames of its own clip. The first cut of these images carried the source
-   platform's burnt-in watermark into the owner's product — visible on six of
-   the ten — plus one end-card and one letterboxed segment. The crop window is
-   now inset from the left edge and held to the upper band, which is where
-   those marks live; F2 pins the geometry that keeps them out.
+   THE CARD ART, IN TWO STAGES. v4.94 shipped these ten cards cut from the
+   owner's own clips — two real frames each. Those were honest but they were
+   phone footage of ten DIFFERENT women, which broke the one thing every other
+   card in this deck does: show the studio's own reference model. v4.95
+   replaces all ten with generated three-panel art built to that model, one
+   panel per stage of the sequence the prompt asks for — bare, applying,
+   finished. H4 pins the triptych structure, because a card that came back as
+   a single frame would silently stop advertising that this is a CUT workflow.
+
+   AND THE PURGE MARKER FLIPPED SIDES BETWEEN THOSE TWO RELEASES. See H3.
 
    Usage: PORT=8931 node test/sweep_v494_makeupcut.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
@@ -221,34 +225,87 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
   report("H2) every card image decodes at the deck's 960x640",
     decoded.every(x => x.w === 960 && x.h === 640), decoded.filter(x => x.w !== 960));
 
-  /* These are ten filenames that have never shipped, so this release must add
-     NO purge marker — a brand-new name inside one charges every existing user
-     a re-fetch for a file they never had, the class of bug sweep_v469 holds
-     closed.
+  /* THE MARKER THIS RELEASE ADDS, AND WHY v4.94 WAS RIGHT NOT TO.
 
-     THE FIRST CUT OF THIS ASSERTION WAS WRONG, and the way it was wrong is
-     worth keeping. It asked whether any marker's regex MATCHES the new paths,
-     and failed on all ten — because v4.83 shipped a whole-folder marker,
-     /lib\/vid\//, when the video shelf's first six cards were replaced. But
-     purgeReplacedLibArt() checks `c.match(p.tag)` and returns early if the tag
-     is present (sw.js), so a marker fires exactly once per device, ever. The
-     v4.83 tag was set on every device the moment it ran v4.83; it cannot fire
-     again for a file added in v4.94. A device that has NEVER run v4.83 will
-     fire it once against an empty folder. Matching is therefore not the
-     contract — ADDING one is. */
+     One release ago these ten filenames had never shipped, so v4.94 added no
+     purge marker — a brand-new name inside one charges every user a re-fetch
+     for a file they never had, the class sweep_v469 holds closed. That
+     reasoning expired the moment v4.94 reached Pages. The names are live now,
+     /lib/ is cache-first and never revalidated, and so replacing the art under
+     the same names is invisible for ever without an entry. The marker is
+     therefore REQUIRED here for exactly the reason it was forbidden before.
+
+     AND AN EARLIER CUT OF THIS ASSERTION WAS WRONG IN A WAY WORTH KEEPING.
+     It asked whether any marker's regex MATCHES the new paths, and failed on
+     all ten — because v4.83 shipped a whole-folder marker, /lib\/vid\//, when
+     the video shelf's first six cards were replaced. But purgeReplacedLibArt()
+     checks `c.match(p.tag)` and returns early if the tag is present, so a
+     marker fires exactly once per device, ever. The v4.83 tag was set on every
+     device the moment it ran v4.83 and can never fire again. Matching an old
+     marker is not coverage; a NEW tag is. */
   const sw = fs.readFileSync(path.join(APP, "sw.js"), "utf8");
   const vm = require("vm");
   const box = {}; vm.createContext(box);
   vm.runInContext(sw.match(/var LIB_PURGES = \[[\s\S]*?\n\];/)[0] +
     "; globalThis.__P=LIB_PURGES;", box);
-  const tags = box.__P.map(p => p.tag);
-  report("H3) this release adds no purge marker — all ten filenames are new",
-    tags.filter(t => /v4-94/.test(t)).length === 0 &&
-    tags[tags.length - 1] === "./__lib-purge-v4-93-cards13", tags.slice(-2));
+  const fresh = box.__P.filter(p => /v4-95/.test(p.tag));
+  report("H3) the replaced names are covered by a marker minted THIS release, not an old one",
+    fresh.length === 1 &&
+    MK.every(k => fresh[0].re.test("/lib/vid/vw-" + k + ".jpg")),
+    { tags: box.__P.map(p => p.tag).slice(-2),
+      uncovered: fresh.length ? MK.filter(k => !fresh[0].re.test("/lib/vid/vw-" + k + ".jpg")) : MK });
 
-  report("H3b) the marker that does cover /lib/vid/ fires once per device and is already spent",
-    /if \(done\) return;/.test(sw) &&
-    box.__P.some(p => p.tag === "./__lib-purge-v4-83-vid-cards"));
+  /* The other nineteen cards in /lib/vid/ are untouched by this wave. Purging
+     them would re-download ~2MB on every device to deliver nothing. */
+  const OTHER_VID = fs.readdirSync(path.join(APP, "lib", "vid"))
+    .filter(f => /^vw-.*\.jpg$/.test(f) && MK.indexOf(f.slice(3, -4)) < 0);
+  report("H3b) it covers exactly these ten and none of the other video cards",
+    OTHER_VID.length === 19 &&
+    OTHER_VID.every(f => !fresh[0].re.test("/lib/vid/" + f)),
+    { others: OTHER_VID.length,
+      swept: OTHER_VID.filter(f => fresh.length && fresh[0].re.test("/lib/vid/" + f)) });
+
+  report("H3c) a marker still fires once per device, which is what makes a fresh tag necessary",
+    /if \(done\) return;/.test(sw));
+
+  /* ---- H4) THE ART IS ACTUALLY A THREE-PANEL FILMSTRIP ----
+     These cards advertise a CUT workflow. A single-frame card would still be
+     960x640, still decode, still pass every other assertion here — and would
+     quietly stop saying "this output is edited". Measured rather than trusted:
+     a divider is a column with almost no vertical variance, and one must exist
+     near each third. The floor is set from the data — the quietest column
+     INSIDE a panel measures 34.6 across the ten, the noisiest divider 11.1. */
+  const strip = await page.evaluate(async (keys) => {
+    const out = [];
+    const cv = document.createElement("canvas");
+    cv.width = 960; cv.height = 640;
+    const cx = cv.getContext("2d", { willReadFrequently: true });
+    for (const k of keys) {
+      const im = new Image();
+      await new Promise(r => { im.onload = r; im.onerror = r; im.src = "lib/vid/vw-" + k + ".jpg"; });
+      cx.drawImage(im, 0, 0, 960, 640);
+      const d = cx.getImageData(0, 0, 960, 640).data;
+      const colStd = (x) => {
+        let s = 0, s2 = 0;
+        for (let y = 0; y < 640; y++) {
+          const i = (y * 960 + x) * 4;
+          const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          s += l; s2 += l * l;
+        }
+        return Math.sqrt(Math.max(0, s2 / 640 - (s / 640) * (s / 640)));
+      };
+      const near = (c) => {
+        let best = Infinity;
+        for (let x = c - 14; x <= c + 14; x++) best = Math.min(best, colStd(x));
+        return +best.toFixed(1);
+      };
+      out.push({ k: k, d1: near(320), d2: near(640) });
+    }
+    return out;
+  }, MK);
+  const notStrip = strip.filter(r => r.d1 > 20 || r.d2 > 20);
+  report("H4) every card is a three-panel filmstrip, not one frame",
+    notStrip.length === 0, notStrip.length ? notStrip : strip.slice(0, 2));
 
   /* ---- I) it renders ---- */
   await page.evaluate(() => switchPage("pgVideo"));
@@ -282,7 +339,7 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
   report("I4) no page errors", errs.length === 0, errs);
 
   console.log("      (ten clips decoded with imageio_ffmpeg — Chromium here has no H.264 — " +
-    "and each card is two real frames of its own film, cropped clear of the platform watermark)");
+    "and all ten cards now carry generated three-panel art built to the studio's own model)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();

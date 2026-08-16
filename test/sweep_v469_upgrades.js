@@ -121,7 +121,14 @@ const DECLARED = [
      NOT in this regex. Adding them would charge every user a re-fetch to
      deliver a file they never held. */
   { tag: "./__lib-purge-v4-93-cards13",
-    re: /\/lib\/wf\/cards5\/(film-grade|lg-bglight|lg-hair|text-logo|upscale|white-balance-fix|mx-bg|mx-color|mx-fg|mx-object|pl-5)\.jpg$/ }
+    re: /\/lib\/wf\/cards5\/(film-grade|lg-bglight|lg-hair|text-logo|upscale|white-balance-fix|mx-bg|mx-color|mx-fg|mx-object|pl-5)\.jpg$/ },
+  /* v4.95 — the ten makeup video cards, replaced under names that v4.94 put
+     into the wild one release earlier. v4.94 correctly added NO marker for
+     them, because the names were new then; that is no longer true, and a
+     replacement under a live name in cache-first /lib/ is invisible for ever
+     without an entry here. */
+  { tag: "./__lib-purge-v4-95-mkcards10",
+    re: /\/lib\/vid\/vw-(mkGlassSkin|mkGemTear|mkDouyinRed|mkGlossPop|mkPorcelain|mkPinkBridal|mkDollBlush|mkSculptBrush|mkEyeMacro|mkNoirSlip)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
