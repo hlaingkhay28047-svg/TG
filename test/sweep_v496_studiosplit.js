@@ -256,6 +256,173 @@ report("A2) both sit in the Edit group, beside the other photo pages",
   }).filter(x => x.missing.length);
   report("J2) both hero strings exist in all nine languages", miss.length === 0, miss);
 
+  /* ---- M) THE FOUR THINGS THE SPLIT LEFT BEHIND ----
+     v4.96 moved the DOM but left four things still thinking there was one
+     Studio page. All four were found by audit and all four were measured, not
+     argued: none of them threw, so nothing in the suite noticed. */
+
+  /* M1 — the jump bar carries all 34 groups on a page that holds 17 of them.
+     Before the fix, on either page exactly 17 chips pointed at a card parked in
+     #stDock, and tapping one did nothing at all — scrollIntoView on a node with
+     no box is a no-op. Filtering the strip to 17 would have traded a dead tap
+     for half the features being unreachable; the chip switches page instead. */
+  const crossChip = await page.evaluate(async () => {
+    switchPage("pgMeitu");
+    await new Promise(r => setTimeout(r, 800));
+    const g = (ST.groups || []).find(x => x.host === "ev");
+    if (!g || !g.jumpChip) return { ok: false, why: "no evoto group chip" };
+    g.jumpChip.click();
+    await new Promise(r => setTimeout(r, 700));
+    return { ok: true, landed: curPage, visible: document.getElementById(curPage).contains(g.el) };
+  });
+  report("M1) a jump chip for the other suite takes you there instead of doing nothing",
+    crossChip.ok && crossChip.landed === "pgEvoto" && crossChip.visible === true, crossChip);
+
+  /* M2 — the search index spans both suites but only one is on screen, so a
+     term living entirely in the parked suite looked like a search that found
+     nothing. */
+  const crossSearch = await page.evaluate(async () => {
+    switchPage("pgEvoto");
+    await new Promise(r => setTimeout(r, 800));
+    const g = (ST.groups || []).find(x => x.host === "mu");
+    const term = (g.title || "").trim().toLowerCase().slice(0, 6);
+    const inp = document.getElementById("stSearch");
+    inp.value = term; inp.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 600));
+    const landed = curPage;
+    inp.value = ""; inp.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 400));
+    return { term: term, landed: landed, visible: document.getElementById(landed).contains(g.el) };
+  });
+  report("M2) searching a term that only exists in the parked suite goes to it",
+    crossSearch.landed === "pgMeitu" && crossSearch.visible === true, crossSearch);
+
+  /* M3 — the look-shelf art observer armed on stActivePage() ONCE at load, which
+     is pgMeitu until told otherwise. A studio whose first Studio visit was Evoto
+     watched a page that never appeared: the art never woke and the shelf stayed
+     on computed tiles for the whole session. */
+  const viaEvoto = await (async () => {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const pp = await c.newPage();
+    await pp.addInitScript(() => {
+      localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1");
+    });
+    await pp.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(2500);
+    const r = await pp.evaluate(async () => {
+      switchPage("pgEvoto");
+      await new Promise(r => setTimeout(r, 1500));
+      return { page: curPage, artOn: typeof _stArtOn !== "undefined" ? _stArtOn : null };
+    });
+    await c.close();
+    return r;
+  })();
+  report("M3) entering Studio via Evoto FIRST still wakes the look art",
+    viaEvoto.artOn === true && viaEvoto.page === "pgEvoto", viaEvoto);
+
+  /* M4 — v4.96's own comment claimed stNormalizePage covered "the saved page,
+     the group seed, the deep link and switchPage alike". The deep-link guard
+     tested the RAW id against PAGES, so every bookmarked ?page=pgStudio was
+     silently dropped. H covers the saved page; this covers the link. */
+  const viaLink = await (async () => {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const pp = await c.newPage();
+    await pp.addInitScript(() => {
+      localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1");
+    });
+    await pp.goto(`http://127.0.0.1:${PORT}/index.html?page=pgStudio`, { waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(2500);
+    const r = await pp.evaluate(() => curPage);
+    await c.close();
+    return r;
+  })();
+  report("M4) a bookmarked ?page=pgStudio link still opens a suite",
+    viaLink === "pgMeitu" || viaLink === "pgEvoto", { landed: viaLink });
+
+  /* ---- N) THUMB ERGONOMICS ON THE TWO SUITE PAGES ----
+     Counted with all seventeen groups open: 34 jump chips at 34px, 2 suite tabs
+     at 40px and 50 look-tile pins at 24x24 — 86 targets under the 44px floor
+     this repo has held since v4.63. None of them was RESIZED: the jump bar
+     already takes 94px of an 844px viewport and the pin sits in the corner of a
+     76px tile, so growing either costs more than it buys. The hit area is
+     expanded with a centred ::after, the same technique v4.63 used on .st-val —
+     which is why 99 readouts measure 24px and are still comfortable to hit.
+     This measures the EFFECTIVE hit box, so it cannot be satisfied by making
+     things visually bigger, and cannot be broken by making them visually
+     smaller as long as the hit area survives. */
+  for (const pg of ["pgMeitu", "pgEvoto"]) {
+    const erg = await page.evaluate(async (id) => {
+      switchPage(id);
+      await new Promise(r => setTimeout(r, 900));
+      document.querySelectorAll("#" + id + " .grp-h").forEach(h => h.click());
+      await new Promise(r => setTimeout(r, 700));
+      const hit = e => {
+        const r = e.getBoundingClientRect();
+        const a = getComputedStyle(e, "::after");
+        const ah = parseFloat(a.height);
+        return Math.max(r.height, (a.content !== "none" && !isNaN(ah)) ? ah : 0);
+      };
+      const grab = sel => [...document.querySelectorAll(sel)]
+        .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+      const out = {};
+      [["jumpChips", "#stGroupChips .chip"], ["suiteTabs", "#stSuiteTabs .chip"],
+       ["pins", "#" + id + " .pin"]].forEach(([k, sel]) => {
+        const els = grab(sel);
+        out[k] = { n: els.length, under: els.filter(e => hit(e) < 43.5).length };
+      });
+      return out;
+    }, pg);
+    report("N) " + pg + ": every jump chip, suite tab and pin has a 44px hit area",
+      erg.jumpChips.n > 0 && erg.jumpChips.under === 0 &&
+      erg.suiteTabs.n === 2 && erg.suiteTabs.under === 0 &&
+      erg.pins.n > 0 && erg.pins.under === 0, erg);
+  }
+
+  /* N2 — the gold phrase in a hero paints with -webkit-text-fill-color:transparent,
+     so a text-shadow has no glyph to fall from: the ONE phrase the banner exists
+     to emphasise was the only text on it with no separation from the photograph
+     behind. drop-shadow filters the painted gradient instead. */
+  const heroEm = await page.evaluate(() => {
+    const out = {};
+    ["pgMeitu", "pgEvoto"].forEach(id => {
+      const em = document.querySelector("#" + id + " .ph-head em");
+      out[id] = em ? { fill: getComputedStyle(em).webkitTextFillColor,
+                       filter: getComputedStyle(em).filter } : null;
+    });
+    return out;
+  });
+  report("N2) the gradient-filled hero phrase carries a drop-shadow, since a text-shadow cannot",
+    Object.keys(heroEm).every(k => heroEm[k] && /drop-shadow/.test(heroEm[k].filter)), heroEm);
+
+  /* N3 — with no photo the generate bar wore the same gold as the dropzone and
+     said the same thing. Two primaries means neither is primary. */
+  /* In its OWN context. Assertion F loads a photo to prove the canvas survives
+     the suite switch, so by the time this runs there IS a photo and gold is the
+     correct styling — the first cut of this check asserted the empty state on a
+     page that was no longer empty and failed against a working app. */
+  const twoPrimaries = await (async () => {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const pp = await c.newPage();
+    await pp.addInitScript(() => {
+      localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1");
+    });
+    await pp.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(2500);
+    const r = await pp.evaluate(async () => {
+      switchPage("pgMeitu");
+      await new Promise(r => setTimeout(r, 900));
+      const g = document.getElementById("btnStGen");
+      return { photo: !!(window.ST && ST.srcBitmap), empty: g.classList.contains("is-empty"),
+               bg: getComputedStyle(g).backgroundImage + "|" + getComputedStyle(g).backgroundColor };
+    });
+    await c.close();
+    return r;
+  })();
+  report("N3) with no photo the generate button steps back so the dropzone is the one call",
+    twoPrimaries.photo === false && twoPrimaries.empty === true &&
+    /rgba\(0, 0, 0, 0\)|transparent/.test(twoPrimaries.bg),
+    twoPrimaries);
+
   report("K) no page errors", errs.length === 0, errs);
   report("K2) nothing 404s", bad.length === 0, bad.slice(0, 6));
 

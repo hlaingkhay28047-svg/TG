@@ -426,6 +426,11 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .wfmini .fav{position:absolute;top:0;right:0;background:transparent;border:none;border-radius:7px;min-width:44px;min-height:44px;padding:6px;font-size:12px;color:var(--muted);z-index:2;display:flex;align-items:flex-start;justify-content:flex-end}
 .wfmini .fav>span{background:rgba(11,13,20,.72);border-radius:7px;padding:2px 6px;display:block}
 .wfmini .fav.on{color:var(--gold-hi)}
+/* v5.0 — "run this over the whole shoot". Mirrors .fav on the opposite corner
+   so the two card actions never overlap, and carries the same 44px floor. */
+.wfmini .wfbatch{position:absolute;top:0;left:0;background:transparent;border:none;border-radius:7px;min-width:44px;min-height:44px;padding:6px;font-size:12px;color:var(--muted);z-index:2;display:flex;align-items:flex-start;justify-content:flex-start}
+.wfmini .wfbatch>span{background:rgba(11,13,20,.72);border-radius:7px;padding:2px 6px;display:block;line-height:1}
+.wfmini .wfbatch svg{width:13px;height:13px;vertical-align:-2px}
 /* per-row AI marker in the Studio suites */
 .ai-mark{display:inline-block;margin-left:6px;font-size:8.5px;font-weight:800;letter-spacing:.06em;font-style:normal;color:#1a1408;background:linear-gradient(120deg,#f7e2a6,#e9b949);border-radius:4px;padding:0 4px;vertical-align:1px;line-height:1.5}
 .chainrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
@@ -522,6 +527,7 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
    visuals unchanged, touch targets reach ~40px */
 .refstrip .rsx::after{content:"";position:absolute;inset:-10px}
 .wfmini .fav::after{content:"";position:absolute;inset:-8px}
+.wfmini .wfbatch::after{content:"";position:absolute;inset:-8px}
 .ref .x::after{content:"";position:absolute;inset:-6px}
 .wiz-x{position:relative}
 .wiz-x::after{content:"";position:absolute;inset:-8px}
@@ -709,6 +715,20 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .pt-sheet.on .pt-sheet-in{animation:wizin var(--dur-3) var(--ease-out)}
 .pt-sheet-in{max-width:640px;margin:0 auto;padding:14px 16px 40px}
 .pt-sheet-in img.pt-big{display:block;width:100%;border-radius:var(--r-md);border:1px solid var(--line-soft)}
+/* v5.0 — the chosen Smart Workflow, shown with its own card art so the batch
+   source is recognisable at a glance rather than a bare title string */
+.pt-wfsel{display:flex;gap:var(--sp-3);align-items:flex-start;margin-top:var(--sp-3);padding:var(--sp-3);border:1px solid var(--gold);border-radius:var(--r-md);background:var(--panel-2)}
+.pt-wfsel img{width:84px;flex:0 0 84px;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r-sm);background:var(--panel)}
+.pt-wfsel>div{min-width:0}
+.pt-wfsel b{display:block;font-size:var(--fs-sm);line-height:1.4;overflow-wrap:anywhere}
+.pt-wfsel .mut{font-size:var(--fs-2xs);line-height:1.5;overflow-wrap:anywhere}
+/* picker rows: full-width taps, card art on the left, 44px floor from padding */
+.pt-wfrow{display:flex;gap:var(--sp-3);align-items:center;width:100%;text-align:left;min-height:44px;padding:var(--sp-2);margin-top:var(--sp-2);border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel-2);color:var(--cream)}
+.pt-wfrow.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.pt-wfrow img{width:64px;flex:0 0 64px;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r-sm);background:var(--panel)}
+.pt-wfrow>span{min-width:0;display:block}
+.pt-wfrow .wt{display:block;font-size:var(--fs-xs);font-weight:800;line-height:1.4;overflow-wrap:anywhere}
+.pt-wfrow .wn{display:block;font-size:var(--fs-2xs);color:var(--muted);line-height:1.5}
 @media (prefers-reduced-motion: reduce){.pt-badge.running::after,.pt-sheet.on,.pt-sheet.on .pt-sheet-in{animation:none!important}}
 /* sticky above the fixed bottom tab bar (76px + safe area, same offset the toast uses) */
 /* z-index 8, above #stStage (6) and #stJumpBar (5). The command strip was
@@ -1006,6 +1026,47 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
    animates (the Studio stage/canvas keeps its own dedicated guard above —
    do not fold it in here). */
 @media (prefers-reduced-motion: reduce){.page.on,.toast,.wiz.on,.onb.on,.wiz.on .wiz-in,.onb.on .onb-card,.result-box.on,.result-box.on .result-img,.tabb::before,.grp.open .grp-b,.spin.on::before,.gen.working,.btn,.chip,.subtab,.wfmini,.pcard,.tabb,.dash-card .art{animation:none!important;transition:none!important}}
+
+/* ==== v4.99 — Meitu / Evoto ergonomics, measured on a 390x844 touch phone ====
+
+   FIVE THINGS, ALL COUNTED BEFORE THEY WERE CHANGED.
+
+   1. THE GOLD WORDS IN EVERY HERO WERE THE HARDEST TO READ ON THE PAGE, and the
+      reason is subtle: .ph-head carries a heavy text-shadow, but .ph-head em
+      paints its gradient with -webkit-text-fill-color:transparent. A transparent
+      fill has no glyph to cast a shadow, so the ONE phrase the banner is built
+      to emphasise — "Live Preview" — was the only text on it with no shadow at
+      all, sitting on the brightest part of the photograph. drop-shadow() filters
+      the painted result instead of the glyph, so the gradient keeps its shine
+      and gains the same separation the white text always had.
+
+   2-4. TAP TARGETS. Measured with all seventeen groups open: 34 jump chips at
+      34px, 2 suite tabs at 40px and 50 look-tile pins at 24x24 — 86 targets
+      under the 44px floor this repo has held since v4.63. They are NOT resized:
+      the jump bar is already 94px of a 844px viewport and the pin sits in the
+      corner of a 76px tile, so growing either would cost more than it buys. The
+      hit area is expanded with a centred ::after instead — the same technique
+      v4.63 used on .st-val, which is why 99 readouts measure 24px and are still
+      comfortable to hit. Visual size unchanged, thumb size fixed.
+
+   5. TWO GOLD PRIMARY BUTTONS COMPETED IN THE EMPTY STATE. With no photo the
+      generate bar relabels itself to "Add a photo", which is the same call to
+      action as the dropzone three hundred pixels above it, in the same gold.
+      Two primaries means neither is primary. The bar's copy is now secondary
+      until there is something to generate. */
+.page-hero .ph-head em,.hero-strip h1 em{
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.95)) drop-shadow(0 2px 10px rgba(0,0,0,.7))}
+
+#stGroupChips .chip,#stSuiteTabs .chip{position:relative}
+#stGroupChips .chip:after,#stSuiteTabs .chip:after{content:"";position:absolute;left:0;right:0;
+  top:50%;transform:translateY(-50%);height:44px;z-index:0}
+.pin{position:absolute}
+.pin:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:12px;z-index:0}
+
+/* the empty-state generate button steps back so the dropzone is the one call */
+#stGenBar .gen.is-empty{background:transparent;color:var(--cream);
+  border:1px solid var(--line-soft);box-shadow:none;font-weight:700}
 </style>
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -2244,10 +2305,43 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 
   <section class="card">
     <h2 id="ptLookH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-palette"/></svg>LOOK</h2>
-    <p class="mut" id="ptLookNote"></p>
-    <div class="prowwrap"><div class="prow" id="ptLookRail"></div></div>
-    <div class="subh" id="ptLbStrength"></div><div class="chips" id="ptStrengthChips"></div>
-    <button class="chip" id="btnPtFromStudio" style="margin-top:6px"></button>
+    <!-- v5.0 — what drives the batch: a Studio look, any Smart Workflow, or
+         the Meitu/Evoto tools as they stand. Everything below this switch
+         belongs to exactly one of the three. -->
+    <div class="chips" id="ptSrcChips"></div>
+    <div id="ptStBox" style="display:none">
+      <p class="mut" id="ptStNote"></p>
+      <div class="pt-wfsel" id="ptStSel">
+        <div>
+          <b id="ptStTitle"></b>
+          <div class="mut" id="ptStList"></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn grow" id="btnPtStOpen"></button>
+      </div>
+    </div>
+    <div id="ptWfBox" style="display:none">
+      <p class="mut" id="ptWfNote"></p>
+      <div class="row">
+        <button class="btn btn-gold grow" id="btnPtWfPick"></button>
+        <button class="btn" id="btnPtWfClear" style="display:none"></button>
+      </div>
+      <div class="pt-wfsel" id="ptWfSel" style="display:none">
+        <img id="ptWfSelArt" alt="" loading="lazy" decoding="async">
+        <div>
+          <b id="ptWfSelTitle"></b>
+          <div class="mut" id="ptWfSelSum"></div>
+          <div class="mut" id="ptWfSelNeed"></div>
+        </div>
+      </div>
+    </div>
+    <div id="ptLookBox">
+      <p class="mut" id="ptLookNote"></p>
+      <div class="prowwrap"><div class="prow" id="ptLookRail"></div></div>
+      <div class="subh" id="ptLbStrength"></div><div class="chips" id="ptStrengthChips"></div>
+      <button class="chip" id="btnPtFromStudio" style="margin-top:6px"></button>
+    </div>
     <div class="subh" id="ptLbTier"></div>
     <div class="chips" id="ptTierChips"></div>
     <p class="mut" id="ptHdHint" style="display:none"></p>
@@ -2255,19 +2349,28 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="grp" id="ptGrpFx">
       <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg> <span id="ptLbFx"></span></span></button>
       <div class="grp-b">
-        <p class="mut" id="ptFxNote"></p>
-        <div class="subh" id="ptLbBlur"></div><div class="chips" id="ptBlurChips"></div>
-        <div class="subh" id="ptLbFg"></div><div class="chips" id="ptFgChips"></div>
-        <div class="subh" id="ptLbFrame"></div><div class="chips" id="ptFrameChips"></div>
-        <p class="mut" id="ptFrameNote"></p>
-        <div class="subh" id="ptLbExtras"></div><div class="chips" id="ptToggleChips"></div>
-        <div class="subh" id="ptLbRef"></div>
-        <p class="mut" id="ptRefNote"></p>
-        <div class="row">
-          <button class="btn" id="btnPtRef"></button>
-          <button class="btn" id="btnPtRefClear" style="display:none"></button>
+        <!-- FX fragments are written into the LOOK prompt; a Smart Workflow
+             carries its own complete prompt, so these are hidden in wf mode
+             rather than silently appended to someone else's instructions. -->
+        <div id="ptFxLookOnly">
+          <p class="mut" id="ptFxNote"></p>
+          <div class="subh" id="ptLbBlur"></div><div class="chips" id="ptBlurChips"></div>
+          <div class="subh" id="ptLbFg"></div><div class="chips" id="ptFgChips"></div>
+          <div class="subh" id="ptLbFrame"></div><div class="chips" id="ptFrameChips"></div>
+          <p class="mut" id="ptFrameNote"></p>
+          <div class="subh" id="ptLbExtras"></div><div class="chips" id="ptToggleChips"></div>
         </div>
-        <img id="ptRefThumb" alt="" style="display:none;width:96px;height:120px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line-soft);margin-top:8px">
+        <!-- IMAGE 2. In Studio mode the reference is Studio's OWN style ref,
+             set on the Meitu/Evoto page, so this control steps aside. -->
+        <div id="ptRefBox">
+          <div class="subh" id="ptLbRef"></div>
+          <p class="mut" id="ptRefNote"></p>
+          <div class="row">
+            <button class="btn" id="btnPtRef"></button>
+            <button class="btn" id="btnPtRefClear" style="display:none"></button>
+          </div>
+          <img id="ptRefThumb" alt="" style="display:none;width:96px;height:120px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line-soft);margin-top:8px">
+        </div>
         <div class="subh" id="ptLbCustom"></div>
         <textarea class="inp" id="ptCustom" rows="3"></textarea>
       </div>
@@ -2346,6 +2449,20 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <button class="btn" id="btnPtDownOne" aria-label="move later">↓</button>
         <button class="btn grow" id="btnPtRemoveOne"></button>
       </div>
+    </div>
+  </div>
+
+  <!-- v5.0 — Smart Workflow picker: the whole catalogue, searchable, grouped
+       by the same categories the Workflow page uses. -->
+  <div class="pt-sheet" id="ptWfSheet" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="pt-sheet-in">
+      <div class="row" style="justify-content:space-between">
+        <b id="ptWfSheetTitle" style="min-width:0"></b>
+        <button class="btn" id="btnPtWfSheetClose" style="flex:0 0 auto"></button>
+      </div>
+      <input class="inp" id="ptWfSearch" type="search" autocomplete="off" style="margin-top:8px">
+      <div class="mut" id="ptWfSheetCount" style="margin-top:6px"></div>
+      <div id="ptWfList"></div>
     </div>
   </div>
 </div><!-- /pgPath -->
@@ -3161,7 +3278,7 @@ function saveState(){
       v2Presets: state.v2Presets, /* named house presets over the same object */
       /* Path Retouch: look/tier/fx/custom only. PT.photos, their previews and
          every AI result are session-only and deliberately absent here. */
-      pt: state.pt ? { look:state.pt.look, tier:state.pt.tier, strength:state.pt.strength, fx:state.pt.fx, custom:state.pt.custom, customLook:state.pt.customLook } : undefined,
+      pt: state.pt ? { look:state.pt.look, tier:state.pt.tier, strength:state.pt.strength, fx:state.pt.fx, custom:state.pt.custom, customLook:state.pt.customLook, wf:state.pt.wf } : undefined,
       prompt: document.getElementById("prompt") ? document.getElementById("prompt").value : "",
       /* Studio live-preview state — everything EXCEPT the photo itself (state.st.img
          is session-only; base64 photos are too large for localStorage) */
@@ -3343,6 +3460,12 @@ function stMountSuite(pageId){
   stLastSuitePage=pageId;
   try{ localStorage.setItem("hnk_st_suite",pageId); }catch(e){}
   if(typeof stStageSync==="function") setTimeout(stStageSync,0);
+  /* v4.99 — the generate bar moves with the shared block, so it must be
+     re-rendered against the page it just landed on. It only refreshed on its
+     own triggers (a slider move, a queue change), so arriving on a suite page
+     could show the bar still wearing the previous state — including the gold
+     empty-state styling this release just made secondary. */
+  if(typeof stRenderPend==="function") setTimeout(function(){ try{ stRenderPend(); }catch(e){} },0);
 }
 
 function switchPage(id, fromPop){
@@ -3352,6 +3475,14 @@ function switchPage(id, fromPop){
   id=stNormalizePage(id);
   if(ST_SUITE_PAGE[id]) stMountSuite(id);
   if(typeof stSyncSuiteChips==="function") setTimeout(stSyncSuiteChips,0);
+  /* v5.0 — Path's Studio source mirrors the Meitu/Evoto queue, which the owner
+     edits on another page. Entering Path has to re-read it, or the panel and
+     the prompt preview keep describing whatever the queue held last time —
+     "no tool is set yet" printed over a suite with six tools queued. */
+  if(id==="pgPath" && typeof ptSync==="function" && typeof PT!=="undefined" && !PT.busy
+     && state.pt && state.pt.wf===PT_SRC_STUDIO){
+    setTimeout(function(){ try{ ptSync(); }catch(e){} },0);
+  }
   /* v4.30: a setInterval that outlives its panel is how a static PWA quietly
      burns a user's data plan — the payment poll dies the moment Setup is left */
   if(id!=="pgHome" && typeof accPollStop==="function"){ try{ accPollStop(); }catch(e){} }
@@ -3388,6 +3519,12 @@ window.addEventListener("popstate", function(ev){
   if(wx){ wx.click(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
   var sheet=$("ptSheet");
   if(sheet && sheet.className.indexOf("on")>=0 && typeof ptCloseSheet==="function"){ ptCloseSheet(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
+  /* v5.0 — the workflow picker is the third full-screen overlay and it also
+     sets body{overflow:hidden}. Without this, Android Back hid the sheet with
+     the page and left every page the customer landed on afterwards unable to
+     scroll, with nothing on screen to explain it. */
+  var wfs=$("ptWfSheet");
+  if(wfs && wfs.className.indexOf("on")>=0 && typeof ptCloseWfSheet==="function"){ ptCloseWfSheet(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
   var pg=ev.state&&ev.state.pg;
   if(pg && $(pg)) switchPage(pg, true);
 });
@@ -4683,7 +4820,14 @@ function hdFinishSize(forced){
   var s=$("selSize"); return (s && s.value) || "";
 }
 var RH_VIDEO_MODELS = [
-  { id:"rh-video-g-off", label:"RH Video G — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video",
+  /* v4.98.1 — named for what it actually is. "RH Video G" told a customer
+     nothing: RunningHub's own registry maps this endpoint to
+     xai/grok-imagine/image-to-video-official-stable, so the studio was paying
+     for Grok Imagine without the picker ever saying so. Precedent: v4.28 W1
+     relabelled the neighbouring entry for the mirror-image reason — it claimed
+     "Gemini" while running on RunningHub. The id stays put; a stored config or
+     a shared link that names it must keep working. */
+  { id:"rh-video-g-off", label:"Grok Imagine — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video",
     imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false,
     resolutions:["720p","480p"], durations:["6","10"], aspect:false, promptMax:800 },
   /* v4.28 W1: relabeled — this endpoint runs on RunningHub, NOT on the user's
@@ -4695,6 +4839,18 @@ var RH_VIDEO_MODELS = [
 
   /* v4.98 — the other sixty-three, taken from RunningHub's own published model
      registry rather than typed by hand.
+
+     v4.98.2 — NINE OF THEM DECLARED `duration` REQUIRED AND PUBLISHED NO OPTIONS,
+     and the first cut read the options list to build BOTH the picker and the
+     request. So those nine sent no duration at all, and every run of a Kling
+     v3/o3, a PixVerse c1/v6, a Wan 2.7 Spicy or either Grok channel would have
+     failed at submit with the opaque error this whole descriptor exists to
+     prevent. A required field with an empty enum is not a field with no value;
+     it is a field whose only documented value is its default. Those defaults
+     (5s, or 6s on the two Grok channels) now travel in `extra`. The generic
+     sweep passed because it only checked the extras a model DECLARED — it could
+     not see a requirement the model never recorded. The check now reads
+     RunningHub's registry, not our own copy of it.
 
      THE SHELF WAS TWO MODELS DEEP AND THE PROVIDER OFFERS SIXTY-SEVEN
      image-to-video endpoints. The owner asked for all of them. Sixty-five can
@@ -4719,15 +4875,15 @@ var RH_VIDEO_MODELS = [
   { id:"kling-v2-5-turbo-std", label:"kling-v2.5-turbo-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.5-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
   { id:"kling-v2-6-pro", label:"kling-v2.6-pro \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000, extra:{"sound": "true"} },
   { id:"kling-v2-6-std", label:"kling-v2.6-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-std/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
-  { id:"kling-v3-4k", label:"kling-v3.0-4k", fam:"Kling", apiPath:"kling-v3-4k/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500 },
+  { id:"kling-v3-4k", label:"kling-v3.0-4k", fam:"Kling", apiPath:"kling-v3-4k/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5} },
   { id:"kling-v3-turbo-pro", label:"kling-v3-turbo-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-pro/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
   { id:"kling-v3-turbo-std", label:"kling-v3-turbo-std \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
   { id:"kling-v3-0-pro", label:"kling-v3.0-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
   { id:"kling-v3-0-std", label:"kling-v3.0-std \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
   { id:"kling-video-o1", label:"kling-video-o1 \u2014 10s", fam:"Kling", apiPath:"kling-video-o1/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std"} },
-  { id:"kling-video-o3-4k", label:"kling-video-o3-4k", fam:"Kling", apiPath:"kling-video-o3-4k/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500 },
-  { id:"kling-video-o3-pro", label:"kling-video-o3-pro", fam:"Kling", apiPath:"kling-video-o3-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{"sound": true} },
-  { id:"kling-video-o3-std", label:"kling-video-o3-std", fam:"Kling", apiPath:"kling-video-o3-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{"sound": true} },
+  { id:"kling-video-o3-4k", label:"kling-video-o3-4k", fam:"Kling", apiPath:"kling-video-o3-4k/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5} },
+  { id:"kling-video-o3-pro", label:"kling-video-o3-pro", fam:"Kling", apiPath:"kling-video-o3-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5, "sound": true} },
+  { id:"kling-video-o3-std", label:"kling-video-o3-std", fam:"Kling", apiPath:"kling-video-o3-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5, "sound": true} },
   { id:"minimax-hailuo-02-pro", label:"hailuo-02-i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-02-standard", label:"hailuo-02-i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-standard", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-2-3-fast-pro", label:"hailuo-2.3-fast-pro \u2014 6s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
@@ -4735,11 +4891,11 @@ var RH_VIDEO_MODELS = [
   { id:"minimax-hailuo-2-3-standard", label:"hailuo-2.3 i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/i2v-standard", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-2-3-pro", label:"hailuo-2.3 i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-h3", label:"MiniMax-H3 Image-to-Video (first last frame) \u2014 2K, 15s", fam:"MiniMax", apiPath:"minimax/hailuo-h3/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["2K"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
-  { id:"pixverse-c1", label:"pixverse-c1 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-c1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": true} },
+  { id:"pixverse-c1", label:"pixverse-c1 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-c1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{duration:5, "generateAudioSwitch": true} },
   { id:"pixverse-v5-5", label:"pixverse-v5.5 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.5/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false", "generateMultiClipSwitch": "false"} },
   { id:"pixverse-v5-6", label:"pixverse-v5.6 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false"} },
-  { id:"pixverse-v6", label:"pixverse-v6 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-v6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": true} },
-  { id:"rhart-video-g", label:"xai grok-imagine \u2014 480p", fam:"RHArt Video", apiPath:"rhart-video-g/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:[], aspect:true, aspectParam:"aspectRatio", aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000 },
+  { id:"pixverse-v6", label:"pixverse-v6 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-v6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{duration:5, "generateAudioSwitch": true} },
+  { id:"rhart-video-g", label:"xai grok-imagine \u2014 480p", fam:"RHArt Video", apiPath:"rhart-video-g/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:[], aspect:true, aspectParam:"aspectRatio", aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000, extra:{duration:6} },
   { id:"rhart-video-r-gen4-turbo-official", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2048 },
   { id:"rhart-video-r-gen4-turbo", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"], promptMax:1000 },
   { id:"rhart-video-s-official", label:"sora-2 \u2014 12s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:2048 },
@@ -4754,7 +4910,7 @@ var RH_VIDEO_MODELS = [
   { id:"rhart-video-v3-1-lite", label:"google veo3.1-lite \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-lite/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:20000 },
   { id:"rhart-video-v3-1-pro-official", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
   { id:"rhart-video-v3-1-pro", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000 },
-  { id:"rhart-video-g-official-v1-5", label:"xai grok-imagine-video-v1.5 \u2014 720p", fam:"RHArt Video G", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:2048 },
+  { id:"rhart-video-g-official-v1-5", label:"xai grok-imagine-video-v1.5 \u2014 720p", fam:"RHArt Video G", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:2048, extra:{duration:6} },
   { id:"bytedance-seedance-2-5-token", label:"seedance-2.5 \u2014 4k, 30s", fam:"Seedance", apiPath:"bytedance/seedance-2.5-token/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive"], promptMax:20480 },
   { id:"rhart-video-sparkvideo-2-0-fast", label:"Seedance2.0 Fast Image to Video \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-fast/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
   { id:"rhart-video-sparkvideo-2-0-mini", label:"seedance-2.0-mini \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-mini/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
@@ -4772,7 +4928,7 @@ var RH_VIDEO_MODELS = [
   { id:"alibaba-wan-2-5-preview", label:"wan-2.5-preview \u2014 1080p, 10s", fam:"Wan", apiPath:"alibaba/wan-2.5-preview/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["5", "10"], aspect:false, promptMax:1500 },
   { id:"alibaba-wan-2-6", label:"alibaba wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["5", "10", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single"} },
   { id:"alibaba-wan-2-6-flash", label:"wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video-flash", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single", "enablePromptExpansion": false, "enableAudio": true} },
-  { id:"alibaba-wan-2-7-spicy", label:"wan-2.7-spicy \u2014 1080p", fam:"Wan", apiPath:"alibaba/wan-2.7-spicy/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:false, promptMax:5000 },
+  { id:"alibaba-wan-2-7-spicy", label:"wan-2.7-spicy \u2014 1080p", fam:"Wan", apiPath:"alibaba/wan-2.7-spicy/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:false, promptMax:5000, extra:{duration:5} },
   { id:"alibaba-wan-2-7", label:"wan-2.7 \u2014 1080P, 15s", fam:"Wan", apiPath:"alibaba/wan-2.7/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:5000 },
   { id:"youchuan", label:"midjourney \u2014 720p", fam:"Youchuan", apiPath:"youchuan/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:8192 }
 ];
@@ -5811,6 +5967,12 @@ var PRESET_GROUPS = [
 var byKey = {};
 D.presets.forEach(function(p){ byKey[p.key]=p; });
 
+/* v5.0 — one label for the batch hand-off, worn by the card corner button,
+   the wizard chip and the Path source picker. Declared out here because the
+   workflow IIFE and the Path block both read it and neither contains the
+   other. */
+var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:"Run on many photos",shn:"ႁဵတ်းလူၺ်ႈၶႅပ်းႁၢင်ႈၼမ်",kac:"Sumla law law hte galaw u",th:"ใช้กับรูปหลายรูป",zh:"批量处理多张照片",vi:"Chạy trên nhiều ảnh",id:"Jalankan pada banyak foto",ms:"Jalankan pada banyak foto"};
+
 (function buildOneTap(){
 
   /* Smart Workflow — ported from the panel's workflow-registry (compile():
@@ -6199,6 +6361,16 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         row.appendChild(el("span",null,s));
         body.appendChild(row);
       });
+      /* v5.0 — the wizard runs this card once. The same card over a whole
+         shoot is one tap away, and this is where the user is already reading
+         about it. Photo-less cards have no batch (see _wfBatchList). */
+      if((w.req||[]).length){
+        var bth=el("button","btn");
+        bth.style.marginTop="10px";
+        setIcnText(bth,"i-stack",L9(WF_BATCH_L)+" ("+PT_MAX+")");
+        bth.onclick=function(){ closeWizard(); window._ptUseWorkflow(w.id); };
+        body.appendChild(bth);
+      }
     }
     if (wiz.step===2){
       body.appendChild(el("p","mut",t("wiz_imgnote")));
@@ -6990,6 +7162,17 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
         renderFavRecent();
       };
       m.appendChild(fav);
+      /* v5.0 — the second thing you want from a card you already trust: run it
+         over the whole shoot. Sits opposite the ★ so neither steals the other's
+         corner. Hidden on photo-less cards (nothing to batch over). */
+      if((w.req||[]).length){
+        var bth=el("button","wfbatch");
+        bth.innerHTML="<span>"+icn("i-stack")+"</span>";
+        bth.setAttribute("aria-label",L9(WF_BATCH_L));
+        bth.title=L9(WF_BATCH_L);
+        bth.onclick=function(ev){ ev.stopPropagation(); window._ptUseWorkflow(w.id); };
+        m.appendChild(bth);
+      }
       /* v4.41: the one fact worth knowing before the tap — how many photos
          v4.64: it now rides INSIDE the visual so it can be anchored to the
          visual's bottom edge. Anchoring it in the card's own coordinates was
@@ -7133,6 +7316,37 @@ D.presets.forEach(function(p){ byKey[p.key]=p; });
   window._openWizardById=function(id){ var w=wfById[id]; if(w) openWizard(w); };
   window._wfTitleById=function(id){ var w=wfById[id]; return w ? w.title : null; };
   window._wfCardImgById=function(id){ var w=wfById[id]; return (w && w.cardImg) || null; };
+  /* v5.0 — the batch bridge. Path already owns a working many-photo engine
+     (queue, per-photo status, ETA, stop, ZIP); it was only ever fed Studio
+     looks. These three exports let it be fed a Smart Workflow as well, so
+     there is ONE batch engine in the app, not two.
+     A workflow with no required image is excluded on purpose: Prompt Ideas
+     never read IMAGE 1, so a 100-photo run would spend 100 calls producing
+     100 answers to the same text prompt. */
+  window._wfBatchList=function(){
+    var out=[];
+    wfCats.forEach(function(c){
+      c.items.forEach(function(w){
+        if(!(w.req||[]).length) return;
+        out.push({ id:w.id, title:w.title, cat:c.t, cardImg:w.cardImg||w.svg||null,
+                   reqN:w.req.length, req:w.req.slice(), opt:(w.opt||[]).slice(),
+                   summary:w.summary||"" });
+      });
+    });
+    return out;
+  };
+  window._wfBatchInfo=function(id){
+    var w=wfById[id]; if(!w || !(w.req||[]).length) return null;
+    return { id:w.id, title:w.title, cardImg:w.cardImg||w.svg||null,
+             reqN:w.req.length, req:w.req.slice(), opt:(w.opt||[]).slice(),
+             summary:w.summary||"" };
+  };
+  /* byte-for-byte what openWizard() puts in wiz.prompt — a batch run and a
+     single wizard run must send the same text, or the card art lies */
+  window._wfBatchPrompt=function(id){
+    var w=wfById[id]; if(!w) return null;
+    return w.prompt+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
+  };
   /* result → continue-editing chain */
   window.openWorkflowById=function(id){
     var w=wfById[id]; if(!w) return;
@@ -8264,13 +8478,16 @@ renderV2Hero();
    PT.photos is session-only and is never written to localStorage or IDB;
    only look/tier/fx/custom persist (see saveState). */
 /* v4.51 — real album sizes. The 30-photo ceiling predates sequential baking
-   and the Blob-free grid; with those in place the cap follows the device:
-   60 on a phone, 100 on a desktop (and stays at 60 when the browser reports
-   little memory, rather than promising a batch it will die inside). */
+   and the Blob-free grid; with those in place the cap could follow the device.
+   v5.0 — 100 on the phone too. The 60 was a screen-width proxy for memory
+   that no longer matches what the page actually holds: ingest downscales
+   every photo to 2048px JPEG (~0.5MB as a data URL, ~65MB for a full hundred)
+   and the grid now lazy-decodes, so the hundred the owner asked for fits on
+   a phone. A device that reports 2GB or less still gets 60. */
 var PT_MAX=(function(){
   var mem=(typeof navigator!=="undefined" && navigator.deviceMemory)||0;
-  if(mem && mem<=4) return 60;
-  return (typeof window!=="undefined" && window.innerWidth>=720) ? 100 : 60;
+  if(mem && mem<=2) return 60;
+  return 100;
 })();
 /* stCssFilter() reads every key, so a look's recipe is normalised to a full
    T1 object up front — PT_LOOKS.<id>.t1 is then safe to hand straight to it. */
@@ -8389,7 +8606,10 @@ var PT_TIERS=[
 
 /* ---- runtime (session-only) + persisted settings ---- */
 var PT={ photos:[], busy:false, stop:false, ref:null, seq:0, spinT:null, spinT0:0, sheetIdx:-1, logLines:[], durs:[] };
-var PT_DEF={ look:"pt_foliage", tier:"fast", strength:100, fx:{blur:"off",fg:"off",sync:false,proLight:true,frame:"off"}, custom:"" };
+/* v5.0 — wf is the batch SOURCE, and it carries all three modes: "" means the
+   look rail below drives the run, "@studio" means the Meitu/Evoto suite does,
+   and anything else is a Smart Workflow id whose card prompt drives it. */
+var PT_DEF={ look:"pt_foliage", tier:"fast", strength:100, fx:{blur:"off",fg:"off",sync:false,proLight:true,frame:"off"}, custom:"", wf:"" };
 state.pt=JSON.parse(JSON.stringify(PT_DEF));
 /* "My Grade" — the Studio colour grade reused as a batch look. The t1 param
    vocabulary is identical (stCssFilter reads both), so registering it into
@@ -8445,6 +8665,10 @@ function ptRegisterRecipeLooks(){
     if(s.tier==="fast"||s.tier==="quality"||s.tier==="hd") state.pt.tier=s.tier;
     if(typeof s.strength==="number"&&s.strength>=25&&s.strength<=150) state.pt.strength=s.strength;
     if(typeof s.custom==="string") state.pt.custom=s.custom.slice(0,1200);
+    /* the registry is not built yet at restore time, so the id is only kept
+       here — ptWfActive() re-checks it against the live catalogue on every
+       read and falls back to look mode if the card ever goes away */
+    if(typeof s.wf==="string") state.pt.wf=s.wf.slice(0,60);
     if(s.fx && typeof s.fx==="object"){
       ["blur","fg","frame"].forEach(function(k){
         if(typeof s.fx[k]==="string" && PT_FX[k].opts.some(function(o){ return o.v===s.fx[k]; })) state.pt.fx[k]=s.fx[k];
@@ -8458,6 +8682,119 @@ function ptRegisterRecipeLooks(){
 function ptLookOf(photo){
   var id=(photo && photo.lookOverride) || state.pt.look;
   return PT_LOOKS[id] || PT_LOOKS[PT_DEF.look];
+}
+/* ---- v5.0: Smart Workflow as the batch source ----
+   The single source of truth for "which mode is Path in" is this function.
+   It resolves against the LIVE registry every call, so a saved id for a card
+   that no longer exists silently degrades to look mode instead of sending an
+   empty prompt to 100 photos. */
+function ptWfActive(){
+  var id=state.pt && state.pt.wf;
+  if(!id || id===PT_SRC_STUDIO || typeof window._wfBatchInfo!=="function") return null;
+  return window._wfBatchInfo(id) || null;
+}
+/* The third source: the Meitu/Evoto suite the owner already has open on the
+   Studio page. The "@" prefix cannot collide with a workflow id (every card is
+   bg-replace / pr-* / lg-* / mx-* / wed-* / cl-*), so one field carries all
+   three modes and there is no second flag to fall out of sync with it. */
+var PT_SRC_STUDIO="@studio";
+function ptSrcMode(){
+  if(state.pt && state.pt.wf===PT_SRC_STUDIO) return "studio";
+  return ptWfActive() ? "wf" : "look";
+}
+/* The LOCAL half of a Studio edit — the grade, the skin/makeup keys and the
+   HSL/zone pipeline — is the part stApplyRecipeTo can replay on any photo.
+   Crop, heals and brush masks are taps on ONE photo and are deliberately not
+   part of a batch, so they are not counted here either. */
+function ptStudioLocal(){
+  if(!state.st || !state.st.t1 || !state.st.t2) return false;
+  var d1=stDefT1(), d2=stDefT2(), k;
+  for(k in d1) if((state.st.t1[k]||0)!==d1[k]) return true;
+  for(k in d2){ if(k==="finish") continue; if((state.st.t2[k]||0)!==0) return true; }
+  if(state.st.t2.finish && state.st.t2.finishV) return true;
+  /* the GHOST contributions — Meitu's Filter Library, Auto Beautify, Evoto's
+     Camera Sim — never touch state.st.t1/t2. They live in ST.g1/ST.g2 and are
+     folded in by stEffT1/stEffT2, which is why the Studio page's own preview
+     shows them. Reading only the base keys made a batch silently drop the
+     filter the owner had just watched warm up the photo. */
+  for(k in (ST.g1||{})) if(ST.g1[k]) return true;
+  for(k in (ST.g2||{})) if(ST.g2[k]) return true;
+  try{ return (typeof stPipeDirty==="function") ? !!stPipeDirty() : false; }catch(e){ return false; }
+}
+function ptStudioPend(){ return (state.st && state.st.pend) ? state.st.pend : []; }
+/* Studio's own run bakes the local edits into the photo and THEN sends the AI
+   prompt. A batch that sent only the prompt would deliver something the Studio
+   page never would, so every photo gets the same bake first. */
+/* resolves {du, ok}. ok===false means the grade could NOT be applied and the
+   untouched original is being handed back — the same contract ptBake has had
+   since v4.55, and for the same reason: a batch that silently sends ungraded
+   originals down a Studio prompt looks exactly like one that worked. */
+function ptStudioBake(photo){
+  return new Promise(function(res){
+    if(!ptStudioLocal()) return res({du:photo.srcDataUrl, ok:true});
+    var img=new Image();
+    img.onerror=function(){ res({du:photo.srcDataUrl, ok:false}); };
+    img.onload=function(){
+      try{
+        /* stApplyRecipeTo CLEARS ST.g1/ST.g2 for the call, so the ghosts have
+           to be folded in before it is handed the recipe — otherwise the
+           filter the Studio page baked in is the one thing the batch drops. */
+        var cv=stApplyRecipeTo(img, {t1:stEffT1(), t2:stEffT2(), v:state.st.v}, 2048);
+        res({du:cv.toDataURL("image/jpeg",0.92), ok:true});
+      }catch(e){ res({du:photo.srcDataUrl, ok:false}); }
+    };
+    img.src=photo.srcDataUrl;
+  });
+}
+/* Does the chosen workflow demand a second image? Then PT.ref is not the
+   optional backdrop any more — it is IMAGE 2 and the run cannot start
+   without it. */
+function ptWfNeedsRef(){
+  var wf=ptWfActive();
+  return !!(wf && wf.reqN>=2);
+}
+var PT_BUSY_L={my:"Batch လုပ်နေဆဲပါ — ရပ်ပြီးမှ source ပြောင်းပါ",en:"A batch is running — stop it before changing the source",shn:"Batch ႁဵတ်းယူႇ — ၵိုတ်းသေ လႅၵ်ႈ source",kac:"Batch shakut nga ai — jahkring nna galai u",th:"กำลังรันชุดอยู่ — หยุดก่อนเปลี่ยนแหล่ง",zh:"批处理进行中 — 请先停止再更换来源",vi:"Đang chạy lô — hãy dừng trước khi đổi nguồn",id:"Batch sedang berjalan — hentikan sebelum mengganti sumber",ms:"Kumpulan sedang berjalan — hentikan sebelum menukar sumber"};
+/* Changing the source mid-run would charge the REST of a confirmed queue to
+   something the customer never agreed to: ptRunAll takes consent once, before
+   the loop, but ptDoGenerateOne re-reads the mode on every photo. Every
+   in-page control was already busy-guarded; the guard belongs HERE, because
+   the three new entry points live on OTHER pages and switchPage has no lock. */
+function ptSetWorkflow(id){
+  if(PT.busy){ toast(L9(PT_BUSY_L),"err"); return false; }
+  var was=state.pt.wf||"";
+  state.pt.wf=id||"";
+  if(id) PT.photos.forEach(function(p){ p.lookOverride=null; });
+  ptSync();
+  return true;
+}
+/* A finished photo is finished FOR THE SOURCE THAT MADE IT. Stamping which
+   source produced each result is what lets Run know a re-pointed album has not
+   been through the NEW source, without touching p.status — the first cut of
+   this release re-queued every done photo instead, which quietly orphaned a
+   finished hundred-photo run: ZIP, download-all, the contact sheet and the
+   per-photo compare all filter on status==="done", so tapping a source chip to
+   see what another one looked like made the results undownloadable. */
+function ptSrcKey(){
+  var m=ptSrcMode();
+  return m==="wf" ? ("wf:"+(state.pt.wf||"")) : m;
+}
+function ptPending(){
+  var k=ptSrcKey();
+  return PT.photos.filter(function(p){ return p.status!=="done" || p.doneSrc!==k; });
+}
+/* the hand-off every workflow card and the wizard call */
+window._ptUseWorkflow=function(id){
+  if(typeof window._wfBatchInfo==="function" && !window._wfBatchInfo(id)) return;
+  if(!ptSetWorkflow(id)) return;
+  switchPage("pgPath");
+  var box=$("ptWfBox");
+  if(box) setTimeout(function(){ try{ box.scrollIntoView({block:"center"}); }catch(e){} },60);
+};
+/* The Path wiring's ptSync() runs before state.st exists, so a customer who
+   left Path in Studio mode gets an empty prompt preview and an empty tool list
+   on that first paint. Called once at the end of boot, when the suite is up. */
+function ptBootSyncStudio(){
+  try{ if(state.pt && state.pt.wf===PT_SRC_STUDIO && state.st && state.st.t2) ptSync(); }catch(e){}
 }
 /* v4.45 — look strength: one dial scales the whole grade (50% = half the
    look, 125% = pushed). The free preview, the free bake AND the AI prompt
@@ -8480,6 +8817,35 @@ function ptStrengthWord(){
    canonical D.guards.core + textBan to every request (the V2 precedent).
    Whatever this returns is exactly what #ptPromptPreview shows. */
 function ptBuildPrompt(photo){
+  /* v5.0 — in workflow mode the card's own prompt IS the prompt, byte for
+     byte what the wizard would send. No look fragment, no PT_FX fragment and
+     no ptPreserve(): every workflow already carries its own guards, and
+     bolting a second PRESERVE block onto e.g. a dress-replace would fight it.
+     The only thing Path adds is the user's own extra line. */
+  var mode=ptSrcMode();
+  if(mode==="studio"){
+    /* The Path wiring's own ptSync() runs 55 lines BEFORE state.st is created,
+       and a customer who left Path in Studio mode restores that mode from
+       localStorage — so this branch really is reachable before the Studio
+       module exists. Without this guard stT2Fragments() reads state.st.t2 of
+       undefined, and because this is top-level code in a single <script>,
+       everything after it — state.st itself, the whole Meitu/Evoto module,
+       Video, Text-to-Image, APP_VER, the service worker — never runs. The app
+       boots into a dead shell with nothing on screen to say why.
+       ptBootSyncStudio() below re-syncs once the module is up. */
+    if(!state.st || !state.st.t2 || typeof stComposePrompt!=="function") return "";
+    /* the exact text btnStGen sends, so a batch of a hundred is a hundred
+       repeats of the Studio run the owner just previewed */
+    var sp=stComposePrompt();
+    var scu=(state.pt.custom||"").trim();
+    return scu ? (sp+"\n\n"+scu) : sp;
+  }
+  var wf=ptWfActive();
+  if(wf){
+    var base=(typeof window._wfBatchPrompt==="function" && window._wfBatchPrompt(wf.id)) || "";
+    var wcu=(state.pt.custom||"").trim();
+    return wcu ? (base+"\n\n"+wcu) : base;
+  }
   var look=ptLookOf(photo), fx=state.pt.fx, out=[];
   out.push("Professional batch wedding-photo relight/regrade of IMAGE 1 — apply the '"+look.name.en+"' look.");
   out.push(look.ai);
@@ -8511,7 +8877,8 @@ function ptRenderCount(){
   $("ptOutCard").style.display=c.total?"":"none";
   $("ptRunCard").style.display=c.total?"":"none";
   var run=$("btnPtRun");
-  setIcnText(run,"i-stack",t("pt_run")+" ("+String(c.total-c.done)+")");
+  /* count what THIS source still owes, not what has never been run at all */
+  setIcnText(run,"i-stack",t("pt_run")+" ("+String(ptPending().length)+")");
   var re=$("btnPtRetryErr");
   if(re){
     re.style.display=c.error?"":"none";
@@ -8524,6 +8891,14 @@ function ptFilterFor(photo){
   /* a finished AI result is shown as the model returned it — never
      double-graded with the CSS recipe that only described the request */
   if(photo.status==="done" && photo.outB64) return "";
+  /* v5.0 — neither a Smart Workflow nor the Meitu/Evoto suite has a CSS
+     equivalent, so there is nothing honest to preview. Tinting the thumbnails
+     with whatever look happened to be selected last would promise a grade the
+     run will never apply — and the page says in words, right above the grid,
+     that it cannot preview these modes.
+     This tests the MODE, not ptWfActive(): that returns null for "@studio" too,
+     so guarding on it left Studio mode painting the leftover look. */
+  if(ptSrcMode()!=="look") return "";
   return stCssFilter(ptScaledT1(ptLookOf(photo)));
 }
 function ptRenderGrid(){
@@ -8535,6 +8910,10 @@ function ptRenderGrid(){
     var im=document.createElement("img");
     im.src=(p.status==="done"&&p.outB64) ? ("data:"+(p.outMime||"image/png")+";base64,"+p.outB64) : p.srcDataUrl;
     im.alt="";
+    /* v5.0 — the ceiling is 100 photos on every device now. Each thumbnail
+       carries a full 2048px data URL, and decoding a hundred of those at once
+       is what a phone cannot afford; off-screen rows decode when scrolled to. */
+    im.loading="lazy"; im.decoding="async";
     im.style.filter=ptFilterFor(p);
     b.appendChild(im);
     var idx=el("span","pt-idx",String(i+1)); b.appendChild(idx);
@@ -8608,6 +8987,10 @@ function ptRenderMultiBar(){
         fn:function(){ PT.photos=PT.photos.concat(removed); ptSync(); } });
   };
   host.appendChild(rm);
+  /* v5.0 — look-mode only. In the other two sources this chip changed nothing
+     in the run and still toasted success; a control that cannot act is hidden,
+     never rendered inert (and never rendered lying). */
+  if(ptSrcMode()!=="look") return;
   var lk=el("button","chip");
   setIcnText(lk,"i-palette",L9({my:"လက်ရှိ look တပ်မယ်",en:"Apply current look"}));
   lk.onclick=function(){
@@ -8705,6 +9088,210 @@ function ptRenderRail(){
   var look=PT_LOOKS[state.pt.look];
   $("ptLookNote").textContent = (look && look.hint) ? L9(look.hint) : t("pt_look_note");
 }
+/* ---- v5.0: source switch (Look | Smart Workflow) + the workflow picker ---- */
+/* the "AI" pill is the honesty marker: these controls have no free preview.
+   Declared up here (not in the wiring block) because ptRenderSrc rewrites the
+   reference label on every sync and must never paint an "undefined" pill. */
+var PT_AI_PILL='<span class="pt-ai">AI</span>';
+var PT_SRC_L={
+  look:{my:"Studio Look (အရောင်)",en:"Studio look",shn:"Look Studio (သီ)",kac:"Studio Look (nsam)",th:"ลุค Studio",zh:"Studio 风格",vi:"Look Studio",id:"Look Studio",ms:"Gaya Studio"},
+  wf:{my:"Smart Workflow",en:"Smart Workflow",shn:"Smart Workflow",kac:"Smart Workflow",th:"Smart Workflow",zh:"Smart Workflow",vi:"Smart Workflow",id:"Smart Workflow",ms:"Smart Workflow"},
+  pick:{my:"Workflow ရွေးမယ်",en:"Choose a workflow",shn:"လိူၵ်ႈ Workflow",kac:"Workflow lata u",th:"เลือกเวิร์กโฟลว์",zh:"选择工作流",vi:"Chọn workflow",id:"Pilih workflow",ms:"Pilih aliran kerja"},
+  change:{my:"တခြား Workflow ပြောင်းမယ်",en:"Change workflow",shn:"လႅၵ်ႈ Workflow",kac:"Workflow galai u",th:"เปลี่ยนเวิร์กโฟลว์",zh:"更换工作流",vi:"Đổi workflow",id:"Ganti workflow",ms:"Tukar aliran kerja"},
+  clear:{my:"ဖယ်မယ်",en:"Clear",shn:"လၢင်ႉ",kac:"Sausan u",th:"ล้าง",zh:"清除",vi:"Xóa",id:"Hapus",ms:"Kosongkan"},
+  note:{my:"Smart Workflow တစ်ခုရွေးပြီး ဓာတ်ပုံအားလုံးကို အဲဒီ workflow နဲ့ တစ်ခါတည်း ထုတ်နိုင်ပါတယ်။",en:"Pick one Smart Workflow and every photo in the batch runs through it.",shn:"လိူၵ်ႈ Smart Workflow ဢၼ်ၼိုင်ႈသေ ၶႅပ်းႁၢင်ႈတင်းမူတ်း တေၶဝ်ႈၼႂ်းၼၼ်ႉ",kac:"Smart Workflow langai lata nna sumla yawng hpe dai hku shapraw na",th:"เลือก Smart Workflow หนึ่งรายการ แล้วทุกรูปในชุดจะถูกประมวลผลด้วยเวิร์กโฟลว์นั้น",zh:"选一个 Smart Workflow，批次里的每一张照片都会用它处理。",vi:"Chọn một Smart Workflow và mọi ảnh trong lô sẽ chạy qua nó.",id:"Pilih satu Smart Workflow dan setiap foto dalam batch akan diproses dengannya.",ms:"Pilih satu Smart Workflow dan setiap foto dalam kumpulan akan diproses dengannya."},
+  need1:{my:"ဓာတ်ပုံ ၁ ပုံစီ — IMAGE 1 က batch ထဲက ပုံ",en:"1 photo each — IMAGE 1 is the batch photo",shn:"ၶႅပ်း 1 ၸိုင် — IMAGE 1 ပဵၼ်ၶႅပ်းၼႂ်း batch",kac:"Sumla 1 hpra — IMAGE 1 gaw batch na sumla re",th:"รูปละ 1 — IMAGE 1 คือรูปในชุด",zh:"每张 1 图 — IMAGE 1 就是批次里的照片",vi:"Mỗi ảnh 1 — IMAGE 1 là ảnh trong lô",id:"1 foto tiap kali — IMAGE 1 adalah foto batch",ms:"1 foto setiap satu — IMAGE 1 ialah foto kumpulan"},
+  need2:{my:"IMAGE 2 လိုတယ် — အောက်က Reference မှာ တစ်ပုံတည်း တင်ပါ (ပုံအားလုံးအတွက် အတူတူသုံးမယ်)",en:"Needs IMAGE 2 — add it once under Reference; the whole batch shares it",shn:"လူဝ်ႇ IMAGE 2 — သႂ်ႇတီႈ Reference ပွၵ်ႈလဵဝ်၊ ၸႂ်ႉၽွင်းၵၼ်တင်းမူတ်း",kac:"IMAGE 2 ra ai — Reference kaw kalang mi bang u, yawng hte rau lang na",th:"ต้องมี IMAGE 2 — เพิ่มครั้งเดียวใต้ Reference ทั้งชุดใช้ร่วมกัน",zh:"需要 IMAGE 2 — 在下方 Reference 处添加一次，整批共用",vi:"Cần IMAGE 2 — thêm một lần ở Reference, cả lô dùng chung",id:"Perlu IMAGE 2 — tambahkan sekali di Reference; seluruh batch memakainya",ms:"Perlukan IMAGE 2 — tambah sekali di Reference; seluruh kumpulan berkongsinya"},
+  need2missing:{my:"⚠ IMAGE 2 မထည့်ရသေးဘူး — Reference မှာ ပုံတင်မှ Run လုပ်လို့ရမယ်",en:"⚠ IMAGE 2 is missing — add it under Reference before running",shn:"⚠ ပႆႇမီး IMAGE 2 — သႂ်ႇတီႈ Reference ဢွၼ်တၢင်း",kac:"⚠ IMAGE 2 n nga ai — Reference kaw shawng bang u",th:"⚠ ยังไม่มี IMAGE 2 — เพิ่มใต้ Reference ก่อนรัน",zh:"⚠ 缺少 IMAGE 2 — 请先在 Reference 处添加",vi:"⚠ Thiếu IMAGE 2 — thêm ở Reference trước khi chạy",id:"⚠ IMAGE 2 belum ada — tambahkan di Reference sebelum menjalankan",ms:"⚠ IMAGE 2 tiada — tambah di Reference sebelum menjalankan"},
+  nofree:{my:"Workflow မှာ အခမဲ့ preview မရှိပါ — ရလဒ်က AI run ပြီးမှ ပေါ်မယ်",en:"A workflow has no free preview — results appear after the AI run",shn:"Workflow ဢမ်ႇမီး preview လၢႆ — ႁၼ်လႆႈမိူဝ်ႈ AI ယဝ်ႉ",kac:"Workflow gaw free preview n nga — AI shapraw ngut jang mu na",th:"เวิร์กโฟลว์ไม่มีพรีวิวฟรี — ผลลัพธ์จะเห็นหลังรัน AI",zh:"工作流没有免费预览 — 结果在 AI 运行后出现",vi:"Workflow không có xem trước miễn phí — kết quả hiện sau khi chạy AI",id:"Workflow tidak punya pratinjau gratis — hasil muncul setelah AI berjalan",ms:"Aliran kerja tiada pratonton percuma — hasil muncul selepas larian AI"},
+  search:{my:"Workflow ရှာမယ် (နာမည်/အမျိုးအစား)",en:"Search workflows (name or category)",shn:"သွၵ်ႈ Workflow",kac:"Workflow tam u",th:"ค้นหาเวิร์กโฟลว์",zh:"搜索工作流",vi:"Tìm workflow",id:"Cari workflow",ms:"Cari aliran kerja"},
+  none:{my:"ဒီစကားလုံးနဲ့ workflow မတွေ့ပါ",en:"No workflow matches that",shn:"ဢမ်ႇႁၼ် workflow",kac:"Workflow n mu ai",th:"ไม่พบเวิร์กโฟลว์",zh:"没有匹配的工作流",vi:"Không tìm thấy workflow",id:"Tidak ada workflow yang cocok",ms:"Tiada aliran kerja sepadan"},
+  /* ---- the third source: the Meitu/Evoto suite ---- */
+  studio:{my:"Meitu / Evoto",en:"Meitu / Evoto",shn:"Meitu / Evoto",kac:"Meitu / Evoto",th:"Meitu / Evoto",zh:"Meitu / Evoto",vi:"Meitu / Evoto",id:"Meitu / Evoto",ms:"Meitu / Evoto"},
+  stnote:{my:"Meitu / Evoto pages မှာ ချိန်ထားတဲ့ tools တွေအတိုင်း ဓာတ်ပုံအားလုံးကို လုပ်ပေးမယ် — Studio မှာ တစ်ပုံလုပ်တာနဲ့ အတိအကျ တူတယ်။",en:"Runs the whole batch with exactly the tools you set on the Meitu / Evoto pages — identical to one Studio run, repeated.",shn:"ႁဵတ်းၶႅပ်းႁၢင်ႈတင်းမူတ်း လူၺ်ႈ tools ဢၼ်ႁၢင်ႈႁႅၼ်းဝႆႉတီႈ Meitu / Evoto",kac:"Meitu / Evoto kaw hkyen da ai tools hte sumla yawng hpe galaw na — Studio kaw langai galaw ai hte maren",th:"รันทั้งชุดด้วยเครื่องมือที่ตั้งไว้บนหน้า Meitu / Evoto — เหมือนรัน Studio หนึ่งครั้งซ้ำ ๆ",zh:"用你在 Meitu / Evoto 页面设定的工具处理整批 — 与一次 Studio 运行完全相同。",vi:"Chạy cả lô bằng đúng các công cụ bạn đặt trên trang Meitu / Evoto — giống hệt một lần chạy Studio.",id:"Menjalankan seluruh batch dengan alat yang Anda atur di halaman Meitu / Evoto — persis seperti satu run Studio.",ms:"Menjalankan seluruh kumpulan dengan alat yang anda tetapkan di halaman Meitu / Evoto — sama seperti satu larian Studio."},
+  stready:{my:"AI tool {N} ခု အသင့်ရှိပါတယ်",en:"{N} AI tools queued",shn:"AI tool {N} ဢၼ် ႁၢင်ႈႁႅၼ်းယဝ်ႉ",kac:"AI tool {N} hkyen da sai",th:"เครื่องมือ AI {N} รายการพร้อมแล้ว",zh:"已排入 {N} 项 AI 工具",vi:"{N} công cụ AI đã xếp hàng",id:"{N} alat AI dalam antrean",ms:"{N} alat AI beratur"},
+  stempty:{my:"Meitu / Evoto မှာ tool တစ်ခုမှ မချိန်ရသေးဘူး",en:"No Meitu / Evoto tool is set yet",shn:"ပႆႇလႆႈႁၢင်ႈႁႅၼ်း tool သင်တီႈ Meitu / Evoto",kac:"Meitu / Evoto kaw tool langai mung n hkyen shi ai",th:"ยังไม่ได้ตั้งเครื่องมือ Meitu / Evoto",zh:"尚未设置任何 Meitu / Evoto 工具",vi:"Chưa đặt công cụ Meitu / Evoto nào",id:"Belum ada alat Meitu / Evoto yang diatur",ms:"Belum ada alat Meitu / Evoto ditetapkan"},
+  stlocal:{my:"Grade + အသားအရေ (ပုံတိုင်းမှာ ကြိုပေါင်းပေးမယ်)",en:"Grade + skin (baked into every photo first)",shn:"Grade + ၼင်ႇ (သႂ်ႇၵူႈၶႅပ်းဢွၼ်တၢင်း)",kac:"Grade + hpyi (sumla shagu hta shawng bang na)",th:"เกรด + ผิว (อบลงทุกรูปก่อน)",zh:"调色 + 皮肤（先烘焙进每张照片）",vi:"Grade + da (nướng vào từng ảnh trước)",id:"Grade + kulit (dipanggang ke setiap foto dulu)",ms:"Gred + kulit (dibakar ke setiap foto dahulu)"},
+  stopen:{my:"Meitu / Evoto ဖွင့်ပြီး ချိန်မယ်",en:"Open Meitu / Evoto to set the tools",shn:"ပိုတ်ႇ Meitu / Evoto သေ ႁၢင်ႈႁႅၼ်း",kac:"Meitu / Evoto hpaw nna hkyen u",th:"เปิด Meitu / Evoto เพื่อตั้งเครื่องมือ",zh:"打开 Meitu / Evoto 设置工具",vi:"Mở Meitu / Evoto để đặt công cụ",id:"Buka Meitu / Evoto untuk mengatur alat",ms:"Buka Meitu / Evoto untuk menetapkan alat"},
+  stneed:{my:"⚠ Meitu / Evoto မှာ AI tool အနည်းဆုံး တစ်ခု ချိန်ပြီးမှ Run လုပ်လို့ရမယ်",en:"⚠ Set at least one Meitu / Evoto AI tool before running",shn:"⚠ ႁၢင်ႈႁႅၼ်း AI tool ဢၼ်ၼိုင်ႈဢွၼ်တၢင်း",kac:"⚠ Meitu / Evoto AI tool langai mi shawng hkyen u",th:"⚠ ตั้งเครื่องมือ AI ของ Meitu / Evoto อย่างน้อยหนึ่งรายการก่อนรัน",zh:"⚠ 请先在 Meitu / Evoto 设置至少一项 AI 工具",vi:"⚠ Hãy đặt ít nhất một công cụ AI Meitu / Evoto trước khi chạy",id:"⚠ Atur setidaknya satu alat AI Meitu / Evoto sebelum menjalankan",ms:"⚠ Tetapkan sekurang-kurangnya satu alat AI Meitu / Evoto sebelum menjalankan"},
+  bakefail:{my:"⚠ Grade မတင်နိုင်ခဲ့ — မူရင်းပုံအတိုင်း AI ဆီ ပို့လိုက်ပါတယ်",en:"⚠ The local grade failed — the untouched original was sent to the AI",shn:"⚠ Grade ဢမ်ႇလႆႈ — သူင်ႇၶွင်ႁင်းၵဝ်ႇၵႂႃႇ",kac:"⚠ Grade n lu ai — shawng na sumla hpe sa kau sai",th:"⚠ เกรดในเครื่องล้มเหลว — ส่งภาพต้นฉบับไปให้ AI",zh:"⚠ 本地调色失败 — 已把未处理的原图送去 AI",vi:"⚠ Grade cục bộ thất bại — đã gửi ảnh gốc cho AI",id:"⚠ Grade lokal gagal — foto asli dikirim ke AI",ms:"⚠ Gred setempat gagal — foto asal dihantar ke AI"},
+  hero2a:{my:"ဓာတ်ပုံအားလုံးကို",en:"Your whole album, through",shn:"ၶႅပ်းႁၢင်ႈတင်းမူတ်း",kac:"Sumla yawng hpe",th:"ทั้งอัลบั้มของคุณ ผ่าน",zh:"整本相册，用",vi:"Cả album của bạn, qua",id:"Seluruh album Anda, lewat",ms:"Seluruh album anda, melalui"},
+  hero2b:{my:"နဲ့ တစ်ပြိုင်နက် လုပ်မယ်",en:"— all at once",shn:"ႁဵတ်းပေႃးၵမ်းလဵဝ်",kac:"kalang ta galaw na",th:"— ในครั้งเดียว",zh:"一次全部处理",vi:"— tất cả cùng lúc",id:"— sekaligus",ms:"— serentak"},
+  intro2:{my:"ပုံ {N} အထိ တစ်ခါတည်းထည့် → {S} ရွေး → ပုံအားလုံးကို တစ်ပုံချင်း Run",en:"Add up to {N} photos → pick {S} → run every photo through it, one by one",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈထိုင် {N} → လိူၵ်ႈ {S} → ႁဵတ်းၵူႈၶႅပ်း",kac:"Sumla {N} du hkra bang u → {S} lata u → sumla shagu hpe langai hpang langai galaw u",th:"เพิ่มรูปได้ถึง {N} รูป → เลือก {S} → รันทุกรูปทีละรูป",zh:"最多添加 {N} 张照片 → 选择 {S} → 逐张运行",vi:"Thêm tối đa {N} ảnh → chọn {S} → chạy từng ảnh",id:"Tambahkan hingga {N} foto → pilih {S} → jalankan satu per satu",ms:"Tambah sehingga {N} foto → pilih {S} → jalankan satu demi satu"}
+};
+function ptRenderSrc(){
+  var host=$("ptSrcChips"); if(!host) return;
+  var mode=ptSrcMode(), wf=ptWfActive();
+  host.innerHTML="";
+  [["look",PT_SRC_L.look,"i-palette"],["wf",PT_SRC_L.wf,"i-brain"],["studio",PT_SRC_L.studio,"i-sliders"]].forEach(function(o){
+    var b=el("button","chip"+(o[0]===mode?" on":""));
+    b.disabled=!!PT.busy;
+    b.innerHTML=icn(o[2])+" "+escH(L9(o[1]));
+    b.onclick=function(){
+      if(PT.busy || o[0]===mode) return;
+      if(o[0]==="look"){ ptSetWorkflow(""); return; }
+      if(o[0]==="studio"){ ptSetWorkflow(PT_SRC_STUDIO); return; }
+      /* reaching this chip means the mode is NOT already "wf", so there is no
+         live workflow to restore — a stale id would resolve to nothing and the
+         tap would look broken. Always ask which card. */
+      ptOpenWfSheet();
+    };
+    host.appendChild(b);
+  });
+  $("ptWfBox").style.display  = mode==="wf" ? "" : "none";
+  $("ptStBox").style.display  = mode==="studio" ? "" : "none";
+  $("ptLookBox").style.display= mode==="look" ? "" : "none";
+  var fxOnly=$("ptFxLookOnly"); if(fxOnly) fxOnly.style.display = mode==="look" ? "" : "none";
+  /* Who owns IMAGE 2 in each mode. Studio mode's is Studio's own style
+     reference, set on the Meitu/Evoto page — Path's backdrop picker would be a
+     second, conflicting answer to the same slot. And a workflow that declares
+     only IMAGE 1 has no second slot at all: ptDoGenerateOne now nulls it, so
+     leaving the picker on screen would offer a control whose photo is dropped. */
+  var refBox=$("ptRefBox");
+  if(refBox){
+    var refUsable = mode==="look" || (mode==="wf" && wf && (wf.reqN + wf.opt.length) >= 2);
+    refBox.style.display = refUsable ? "" : "none";
+    /* Wrapping these controls in #ptRefBox made #ptLbRef the first element
+       child of its parent, so `.subh:first-child{margin-top:0}` started
+       winning over `.subh{margin-top:var(--sp-3)}` — measured 0px between the
+       Extras chips and the REFERENCE heading where every sibling heading gets
+       12px, so the reference block read as part of the Extras group. The zero
+       is CORRECT in the other modes, where #ptFxLookOnly is hidden and this
+       really is the first thing in the accordion, so the break is restored on
+       the wrapper only when there is a section above it to break from. */
+    refBox.style.marginTop = (mode==="look") ? "var(--sp-3)" : "";
+  }
+  /* the free bake paints the LOOK's CSS recipe onto the album — there is no
+     such recipe for a workflow, so the button is withdrawn rather than left
+     to silently export un-graded copies */
+  var bake=$("btnPtBake"); if(bake) bake.style.display = mode==="look" ? "" : "none";
+  $("ptWfNote").textContent = L9(PT_SRC_L.note);
+  var pick=$("btnPtWfPick");
+  setIcnText(pick,"i-brain", wf ? L9(PT_SRC_L.change) : L9(PT_SRC_L.pick));
+  $("btnPtWfClear").style.display = wf ? "" : "none";
+  var sel=$("ptWfSel");
+  sel.style.display = wf ? "" : "none";
+  if(wf){
+    var art=$("ptWfSelArt");
+    if(wf.cardImg){ art.src=wf.cardImg; art.style.display=""; }
+    else { art.removeAttribute("src"); art.style.display="none"; }
+    $("ptWfSelTitle").textContent=wf.title;
+    $("ptWfSelSum").textContent=wf.summary||"";
+    var need=$("ptWfSelNeed");
+    if(wf.reqN>=2) need.textContent = PT.ref ? L9(PT_SRC_L.need2) : L9(PT_SRC_L.need2missing);
+    else need.textContent = L9(PT_SRC_L.need1);
+    /* The IMAGE 2 slot lives inside a collapsed accordion, and a workflow that
+       cannot run without it must not hide the only control that satisfies it.
+       Once per SELECTION, though — reopening on every ptSync meant the owner
+       could not collapse it, because typing one character in the custom box
+       sprang it open again on the next keystroke. */
+    var fxg=$("ptGrpFx");
+    if(wf.reqN>=2 && !PT.ref && fxg && ptRenderSrc._opened!==wf.id){
+      ptRenderSrc._opened=wf.id;
+      if(fxg.className.indexOf("open")<0) fxg.className="grp open";
+    }
+  }
+  /* ---- Studio mode: name exactly which suite controls are queued ---- */
+  if(mode==="studio"){
+    var pend=ptStudioPend(), localOn=ptStudioLocal();
+    $("ptStNote").textContent=L9(PT_SRC_L.stnote);
+    $("ptStTitle").textContent = pend.length
+      ? L9(PT_SRC_L.stready).replace("{N}", String(pend.length))
+      : L9(PT_SRC_L.stempty);
+    var bits=pend.map(function(e){ return e.label; });
+    if(localOn) bits.unshift(L9(PT_SRC_L.stlocal));
+    $("ptStList").textContent = bits.length ? bits.join(" · ") : "";
+    setIcnText($("btnPtStOpen"),"i-sliders", L9(PT_SRC_L.stopen));
+  }
+  /* the LOOK heading is now a mode label, not a fixed word */
+  var h2=$("ptLookH2");
+  var headWord = mode==="wf" ? L9(PT_SRC_L.wf) : mode==="studio" ? L9(PT_SRC_L.studio) : "LOOK";
+  if(h2) h2.innerHTML=icn("i-palette","ic-h2")+escH(headWord);
+  var fn=$("ptFreeNote");
+  if(fn) fn.textContent = mode==="look" ? t("pt_free_note") : L9(PT_SRC_L.nofree);
+  /* The hero is the largest, first-read sentence on the page. Left at "one
+     look, applied to your whole album" while the H2 directly under it read
+     "Smart Workflow", the page contradicted itself at a glance. In look mode
+     it stays exactly what the i18n table set (ph_path); in the other two it
+     names the source that is actually driving the run. */
+  var hero=$("phPath");
+  if(hero){
+    /* read the i18n table rather than snapshotting the element: applyLang()
+       rewrites #phPath from ph_path and can run more than once (account boot),
+       so a snapshot could freeze whichever language happened to be up first */
+    if(mode==="look"){ hero.innerHTML=t("ph_path"); }
+    else hero.innerHTML = escH(L9(PT_SRC_L.hero2a)) + " <em>" + escH(headWord) + "</em> " + escH(L9(PT_SRC_L.hero2b));
+  }
+  var kick=document.querySelector("#pgPath .ph-kick");
+  if(kick) kick.textContent = mode==="look" ? "BATCH LOOKS" : (mode==="wf" ? "BATCH WORKFLOW" : "BATCH STUDIO");
+  /* the page's own one-line description promises "pick one look"; in the other
+     two modes that is the wrong sentence about the wrong control */
+  var intro=$("ptIntro");
+  if(intro) intro.textContent = mode==="look"
+    ? t("pt_intro").replace("{N}",String(PT_MAX))
+    : L9(PT_SRC_L.intro2).replace("{N}",String(PT_MAX)).replace("{S}",headWord);
+  /* the reference slot changes meaning in workflow mode: it stops being the
+     optional backdrop and becomes the workflow's own IMAGE 2, so it wears
+     that workflow's label instead of Path's generic one */
+  var rl=$("ptLbRef"), rn=$("ptRefNote");
+  if(rl && rn){
+    if(wf && wf.reqN>=2){
+      rl.innerHTML=escH("IMAGE 2 — "+wf.req[1])+PT_AI_PILL;
+      rn.textContent=L9(PT_SRC_L.need2);
+    } else if(wf && wf.opt.length){
+      rl.innerHTML=escH("IMAGE 2 — "+wf.opt[0])+PT_AI_PILL;
+      rn.textContent=t("pt_ref_note");
+    } else {
+      rl.innerHTML=escH(t("pt_ref"))+PT_AI_PILL;
+      rn.textContent=t("pt_ref_note");
+    }
+  }
+}
+/* ---- the picker sheet ---- */
+function ptOpenWfSheet(){
+  if(PT.busy) return;
+  var sh=$("ptWfSheet"); if(!sh) return;
+  sh.className="pt-sheet on";
+  sh.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  ptRenderWfList();
+  var s=$("ptWfSearch"); if(s) s.focus();
+}
+function ptCloseWfSheet(){
+  var sh=$("ptWfSheet"); if(!sh) return;
+  sh.className="pt-sheet";
+  sh.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+}
+function ptRenderWfList(){
+  var host=$("ptWfList"); if(!host) return;
+  host.innerHTML="";
+  var all=(typeof window._wfBatchList==="function") ? window._wfBatchList() : [];
+  var q=(($("ptWfSearch")||{}).value||"").trim().toLowerCase();
+  var hits=all.filter(function(w){
+    if(!q) return true;
+    return (w.title+" "+w.cat+" "+w.id+" "+w.summary).toLowerCase().indexOf(q)>=0;
+  });
+  $("ptWfSheetCount").textContent=String(hits.length)+" / "+String(all.length);
+  if(!hits.length){ host.appendChild(el("p","mut",L9(PT_SRC_L.none))); return; }
+  var lastCat="";
+  hits.forEach(function(w){
+    if(w.cat!==lastCat){ lastCat=w.cat; host.appendChild(el("div","subh",w.cat)); }
+    var b=el("button","pt-wfrow"+(state.pt.wf===w.id?" on":""));
+    if(w.cardImg){
+      var im=document.createElement("img");
+      im.src=w.cardImg; im.alt=""; im.loading="lazy"; im.decoding="async";
+      im.onerror=function(){ im.remove(); };
+      b.appendChild(im);
+    }
+    var col=el("span");
+    col.appendChild(el("span","wt",w.title));
+    col.appendChild(el("span","wn", w.reqN>=2 ? L9(PT_SRC_L.need2) : L9(PT_SRC_L.need1)));
+    b.appendChild(col);
+    b.onclick=function(){ ptSetWorkflow(w.id); ptCloseWfSheet(); };
+    host.appendChild(b);
+  });
+}
 function ptRenderChips(){
   function chipRow(hostId, fx, cur, set){
     var host=$(hostId); if(!host) return;
@@ -8766,6 +9353,7 @@ function ptRenderChips(){
 }
 function ptSync(){
   saveState();
+  ptRenderSrc();   /* mode first: it decides which of the two halves is live */
   ptRenderRail();
   ptRenderChips();
   ptRenderGrid();
@@ -8809,7 +9397,7 @@ function ptIngestDataUrls(list){
       id:"pt"+(++PT.seq),
       name:String(list[i].name||("photo-"+(PT.photos.length+1))),
       srcDataUrl:list[i].dataUrl,
-      outB64:null, outMime:null, status:"queued", err:"", lookOverride:null
+      outB64:null, outMime:null, status:"queued", err:"", lookOverride:null, doneSrc:null
     });
     added++;
   }
@@ -8919,7 +9507,12 @@ function ptSetBusy(b, label){
   } else {
     clearInterval(PT.spinT); PT.spinT=null; sp.textContent="";
   }
-  document.querySelectorAll("#ptLookRail .pcard, #ptTierChips .chip, #ptBlurChips .chip, #ptFgChips .chip, #ptFrameChips .chip, #ptToggleChips .chip").forEach(function(c){ c.disabled=!!b; });
+  $("btnPtWfPick").disabled=!!b;
+  $("btnPtWfClear").disabled=!!b;
+  $("btnPtStOpen").disabled=!!b;
+  $("btnPtRef").disabled=!!b;
+  $("btnPtRefClear").disabled=!!b;
+  document.querySelectorAll("#ptLookRail .pcard, #ptSrcChips .chip, #ptTierChips .chip, #ptBlurChips .chip, #ptFgChips .chip, #ptFrameChips .chip, #ptToggleChips .chip").forEach(function(c){ c.disabled=!!b; });
   /* un-busying must NOT blanket-enable: the HD tier chip is key-gated and has
      to stay disabled when RunningHub upscale-pro is not configured, otherwise
      a finished run silently makes HD tappable and the user gets a Quality
@@ -8959,6 +9552,26 @@ function ptEta(){
    engine settings on the shared selects for exactly this call, then put every
    borrowed control back in finally — Freeform must look untouched afterward. */
 async function ptDoGenerateOne(photo){
+  /* The mode is read ONCE, here. ptSetWorkflow is busy-guarded so it cannot
+     change under a run, but reading it three times across an await was a
+     latent way for one photo to be Studio-baked and sent with a workflow's
+     prompt — one read makes that impossible by construction. */
+  var mode=ptSrcMode();
+  /* v5.0 — Studio mode bakes the local half of the edit into this photo first,
+     exactly as btnStGen does for its one photo, so the batch and the Studio
+     page deliver the same thing. This runs BEFORE the shared selects are
+     hijacked: it is the one await in this function that is not inside the
+     try/finally, and a rejection here used to unwind leaving #selModel,
+     #selQual, #selSize, #selRatio and #selCount forced — silently, because
+     ptRunAll catches and carries on, so Freeform would quietly bill 2K/high
+     on the customer's next tap. */
+  var srcDu = photo.srcDataUrl;
+  if(mode==="studio"){
+    var bk=await ptStudioBake(photo);
+    srcDu=bk.du;
+    /* say so rather than billing for an ungraded original that looks fine */
+    if(!bk.ok) ptLog(L9(PT_SRC_L.bakefail)+" — "+photo.name);
+  }
   var s=$("selModel"), q=$("selQual"), r=$("selRatio"), c=$("selCount"), z=$("selSize");
   var sv={m:genGeminiModel(),q:q.value,r:r.value,c:c.value,z:z.value};
   var savedPrompt=$("prompt").value;
@@ -8969,11 +9582,30 @@ async function ptDoGenerateOne(photo){
   z.value = tier==="fast" ? "" : "2K";
   r.value=""; /* original framing is sacred in a batch look pass */
   c.value="1"; /* deterministic per-photo count + cost honesty */
-  var m=String(photo.srcDataUrl).match(/^data:([^;]+);base64,(.+)$/);
+  var m=String(srcDu).match(/^data:([^;]+);base64,(.+)$/);
   state.refs[0]= m ? {mime:m[1],b64:m[2],label:photo.name} : null;
   state.refs[1]= PT.ref || null;   /* the optional reference backdrop = IMAGE 2 */
   state.refs[2]= null;
-  state.imgRoles=null;
+  /* v5.0 — in workflow mode the slots carry the workflow's OWN role labels,
+     exactly as runWizGenerate sets them, so the dispatcher writes the same
+     "IMAGE n = <role>" lines a single wizard run would. */
+  var wfRun=(mode==="wf") ? ptWfActive() : null;
+  if(wfRun){
+    /* and the same null-out runWizGenerate does: a workflow that declares one
+       input must not receive a second image. Without this, a backdrop left
+       over from look mode rode along on all hundred calls as an undeclared
+       IMAGE 2 that the card's own prompt never mentions. */
+    var slots=wfRun.reqN + wfRun.opt.length;
+    for(var ri=slots; ri<state.refs.length; ri++) state.refs[ri]=null;
+    state.imgRoles=wfRun.req.concat(wfRun.opt);
+  } else state.imgRoles=null;
+  if(mode==="studio"){
+    /* and in Studio mode IMAGE 2 is Studio's own style reference, on the same
+       terms btnStGen sends it — never Path's backdrop */
+    var stRef = (typeof stUsesRefActive==="function" && stUsesRefActive()) ? state.st.refX : null;
+    state.refs[1]= stRef ? {mime:stRef.mime,b64:stRef.b64,label:"style ref"} : null;
+    state.imgRoles= stRef ? [null,"style/makeup/color reference ONLY — never return this image"] : null;
+  }
   $("prompt").value=ptBuildPrompt(photo);
   var before=state.hist[0]; /* identity check, never length (8-cap) */
   try{ await $("btnGen").onclick(); }
@@ -9024,12 +9656,63 @@ function ptProgress(done,total){
   bar.style.display = total?"":"none";
   i.style.width = total?Math.round(done/total*100)+"%":"0";
 }
+/* v5.0 — one API call per photo, and the customer pays for every one of them.
+   A hundred-photo run is a hundred charges; say the number out loud before
+   spending it, on every entry point into the queue. */
+var PT_COST_ASK=10;
+function ptCostOk(n){
+  if(n<PT_COST_ASK) return true;
+  /* the HD tier chases every result with a RunningHub upscale (ptHdFinish), so
+     the honest number is two calls a photo, not one — quoting 100 for a run
+     that issues 200 is exactly the lie this confirm exists to prevent */
+  var hd = state.pt.tier==="hd" && gateAllows("hd_finish") && state.rhKey && rhIsConfigured("upscale-pro");
+  var calls = hd ? n*2 : n;
+  var wf=ptWfActive();
+  var what=wf ? wf.title
+         : ptSrcMode()==="studio" ? L9(PT_SRC_L.studio)
+         : L9(PT_LOOKS[state.pt.look] ? PT_LOOKS[state.pt.look].name : PT_SRC_L.look);
+  var per = hd ? "2" : "1";
+  return confirm(L9({
+    my:"ဓာတ်ပုံ "+n+" ပုံကို “"+what+"” နဲ့ ထုတ်ပါမယ်။\n\nပုံတစ်ပုံ = API ခေါ်ဆိုမှု "+per+" ကြိမ်"+(hd?" (HD upscale ပါ)":"")+" — စုစုပေါင်း "+calls+" ကြိမ် ကုန်ကျပါမယ်။ ဆက်လုပ်မလား?",
+    en:"About to run "+n+" photos through “"+what+"”.\n\nOne photo = "+per+" API call"+(hd?"s (the HD upscale is the second)":"")+", so this run costs "+calls+" calls. Continue?",
+    shn:"တေႁဵတ်း ၶႅပ်းႁၢင်ႈ "+n+" ဢၼ် လူၺ်ႈ “"+what+"”။\n\nၶႅပ်းၼိုင်ႈ = API "+per+" ပွၵ်ႈ — တင်းမူတ်း "+calls+" ပွၵ်ႈ။ သိုပ်ႇႁဵတ်းႁိုဝ်?",
+    kac:"Sumla "+n+" hpe “"+what+"” hte shapraw na.\n\nSumla langai = API shaga "+per+" — yawng "+calls+" lang re. Matut na i?",
+    th:"กำลังจะประมวลผล "+n+" รูปด้วย “"+what+"”\n\n1 รูป = "+per+" การเรียก API รวม "+calls+" ครั้ง ดำเนินการต่อหรือไม่?",
+    zh:"即将用“"+what+"”处理 "+n+" 张照片。\n\n一张照片 = "+per+" 次 API 调用，本次共 "+calls+" 次。是否继续？",
+    vi:"Sắp chạy "+n+" ảnh qua “"+what+"”.\n\nMột ảnh = "+per+" lần gọi API, tổng cộng "+calls+" lần. Tiếp tục?",
+    id:"Akan memproses "+n+" foto dengan “"+what+"”.\n\nSatu foto = "+per+" panggilan API, total "+calls+" panggilan. Lanjutkan?",
+    ms:"Akan memproses "+n+" foto dengan “"+what+"”.\n\nSatu foto = "+per+" panggilan API, jumlah "+calls+" panggilan. Teruskan?"
+  }));
+}
 async function ptRunAll(only){
   if(rsBusy||PT.busy) return;
   var queue = Array.isArray(only) ? only.slice()
             : only ? [only]
-            : PT.photos.filter(function(p){ return p.status!=="done"; });
+            : ptPending();
   if(!queue.length){ toast(t("pt_need_photos"),"err"); return; }
+  /* a 2-image workflow with no IMAGE 2 would send half a request for every
+     photo in the queue — refuse before the first call, not after the last */
+  if(ptWfNeedsRef() && !PT.ref){
+    toast(L9(PT_SRC_L.need2missing),"err");
+    setSt("stPtGen", L9(PT_SRC_L.need2missing), "err");
+    return;
+  }
+  if(ptSrcMode()==="studio"){
+    /* an empty pend list composes a retouch task with no edits under it —
+       N calls that ask the model to change nothing */
+    if(!ptStudioPend().length){
+      toast(L9(PT_SRC_L.stneed),"err");
+      setSt("stPtGen", L9(PT_SRC_L.stneed), "err");
+      return;
+    }
+    /* the same suite gates btnStGen checks — a batch must not be the way
+       round a locked suite */
+    var suites={};
+    ptStudioPend().forEach(function(pe){ var h=stSuiteOf(pe.id); if(h) suites[h]=1; });
+    if(suites.mu && !gate("studio_meitu")) return;
+    if(suites.ev && !gate("studio_evoto")) return;
+  }
+  if(!ptCostOk(queue.length)) return;
   PT.stop=false; rsStop=false; PT.durs=[];
   var total=queue.length, okN=0;
   ptSetBusy(true, ptEta()+" · 1/"+total);
@@ -9052,7 +9735,7 @@ async function ptRunAll(only){
         if(state.pt.tier==="hd") await ptHdFinish();
         var out=state.hist[0];
         photo.outB64=out.b64; photo.outMime=out.mime;
-        photo.status="done"; okN++;
+        photo.status="done"; photo.doneSrc=ptSrcKey(); okN++;
         /* v4.46 — restore the pre-run history: this result is archived in
            PT.photos AND the Gallery, and a 30-photo batch used to evict every
            Create/Retouch result still being compared through the 8-cap */
@@ -9128,6 +9811,11 @@ function stApplyRecipeTo(img, recipe, maxDim){
    ZIP the studio downloads as "graded copies" could quietly contain un-graded
    originals with no way to tell which. Callers now know. */
 function ptBake(photo, cb){
+  /* v5.0 — the free canvas grade belongs to LOOK mode. In the two new modes
+     the look rail is hidden, so baking state.pt.look into an un-run photo put
+     a grade the batch will never apply onto the numbered contact sheet a
+     studio sends a bride as a proof. Hand back the original untouched. */
+  if(ptSrcMode()!=="look"){ cb(photo.srcDataUrl, true); return; }
   var look=ptLookOf(photo);
   /* any look carrying a full Studio recipe (My Grade or a pt_rc_ store slot)
      → real Studio pipeline (grade + makeup/skin + HSL zones), not the
@@ -9536,10 +10224,23 @@ function ptRenderSheet(){
       };
     }
   }
-  ptRenderRailInto("ptSheetRail", p.lookOverride, function(id){
-    p.lookOverride=id;
-    ptRenderGrid(); ptRenderSheet();
-  }, true);
+  /* v5.0 — a per-photo look override is meaningless while a workflow drives
+     the batch; showing the rail would let a customer set something the run
+     will ignore. Control honesty: hide it, don't render it inert. */
+  var srail=$("ptSheetRail"), swrap=srail?srail.parentNode:null;
+  var lbl=$("ptSheetLookLb");
+  if(ptSrcMode()!=="look"){
+    if(swrap) swrap.style.display="none";
+    if(lbl) lbl.style.display="none";
+    if(srail) srail.innerHTML="";
+  } else {
+    if(swrap) swrap.style.display="";
+    if(lbl) lbl.style.display="";
+    ptRenderRailInto("ptSheetRail", p.lookOverride, function(id){
+      p.lookOverride=id;
+      ptRenderGrid(); ptRenderSheet();
+    }, true);
+  }
 }
 
 /* ================= wiring ================= */
@@ -9552,8 +10253,6 @@ $("ptLbTier").textContent=t("pt_tier");
 $("ptHdHint").textContent=L9({my:"HD အတွက် RunningHub key (Upscale Pro) လိုပါတယ် — Setup မှာ ထည့်ပါ",en:"HD needs your RunningHub key (Upscale Pro) — add it in Setup",shn:"တွၼ်ႈတႃႇ HD လူဝ်ႇ RunningHub key (Upscale Pro) — သႂ်ႇတီႈ Setup",kac:"HD a matu RunningHub key (Upscale Pro) ra ai — Setup kaw bang u",th:"HD ต้องใช้ RunningHub key (Upscale Pro) — เพิ่มใน Setup",zh:"HD 需要你的 RunningHub key（Upscale Pro）— 在 Setup 中添加",vi:"HD cần RunningHub key (Upscale Pro) — thêm trong Setup",id:"HD butuh RunningHub key (Upscale Pro) — tambahkan di Setup",ms:"HD perlukan RunningHub key (Upscale Pro) — tambah di Setup"});
 $("ptLbFx").textContent=t("pt_fx");
 $("ptFxNote").textContent=t("pt_fx_note");
-/* the "AI" pill is the honesty marker: these controls have no free preview */
-var PT_AI_PILL='<span class="pt-ai">AI</span>';
 [["ptLbBlur","pt_blur"],["ptLbFg","pt_fg"],["ptLbFrame","pt_frame"],["ptLbExtras","pt_extras"],["ptLbRef","pt_ref"],["ptLbCustom","pt_custom"]].forEach(function(pr){
   $(pr[0]).innerHTML=escH(t(pr[1]))+PT_AI_PILL;
 });
@@ -9604,7 +10303,21 @@ $("btnPtClear").onclick=function(){
     {label:L9({my:"ပြန်ယူမယ်",en:"Undo",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"}),
      fn:function(){ PT.photos=kept; PT.logLines=keptLog; $("ptLog").textContent=keptLogTxt; ptSync(); }});
 };
-$("btnPtRef").onclick=function(){ $("ptRefPick").click(); };
+/* v5.0 — Smart Workflow source controls */
+$("ptWfSheetTitle").textContent=L9(PT_SRC_L.pick);
+setIcnText($("btnPtWfSheetClose"),"i-close",t("pt_close"));
+$("ptWfSearch").placeholder=L9(PT_SRC_L.search);
+setIcnText($("btnPtWfClear"),"i-close",L9(PT_SRC_L.clear));
+$("btnPtWfPick").onclick=ptOpenWfSheet;
+$("btnPtWfClear").onclick=function(){ if(!PT.busy) ptSetWorkflow(""); };
+$("btnPtWfSheetClose").onclick=ptCloseWfSheet;
+$("ptWfSearch").oninput=function(){ ptRenderWfList(); };
+/* Studio mode has no picker of its own — the tools ARE the Meitu/Evoto page,
+   so this jumps to whichever suite the owner used last (stNormalizePage). */
+$("btnPtStOpen").onclick=function(){ if(!PT.busy) switchPage("pgStudio"); };
+/* v5.0 — IMAGE 2 is checked once, before the loop, so removing or swapping it
+   mid-run would leave the guard protecting only the first photo of the batch. */
+$("btnPtRef").onclick=function(){ if(PT.busy){ toast(L9(PT_BUSY_L),"err"); return; } $("ptRefPick").click(); };
 $("ptRefPick").onchange=function(){
   var f=this.files && this.files[0];
   if(!f){ this.value=""; return; }
@@ -9619,7 +10332,7 @@ $("ptRefPick").onchange=function(){
   };
   rd.readAsDataURL(f);
 };
-$("btnPtRefClear").onclick=function(){ PT.ref=null; ptSync(); };
+$("btnPtRefClear").onclick=function(){ if(PT.busy){ toast(L9(PT_BUSY_L),"err"); return; } PT.ref=null; ptSync(); };
 $("ptCustom").oninput=function(){ state.pt.custom=this.value.slice(0,1200); ptSync(); };
 $("btnPtRun").onclick=function(){ return ptRunAll(null); };
 $("btnPtRetryErr").onclick=function(){
@@ -11734,6 +12447,19 @@ function stRenderPend(){
   var gbEl=$("stGenBar"); if(gbEl) gbEl.classList.toggle("haspend",!!(n||live)); /* gen-bar diet: explainer collapses in compact when queue is empty */
   var clr=$("stClearAi");
   if(clr) clr.style.display=n?"":"none";
+  /* v5.0 — the reverse of Path's Studio source: once a suite has AI edits
+     queued, "run this on the whole shoot" is one tap from where they were
+     tuned. Lives beside Clear so it appears and disappears with the queue. */
+  if(clr){
+    var bth=$("stToBatch");
+    if(!bth){
+      bth=el("button","chip"); bth.id="stToBatch";
+      clr.parentNode.insertBefore(bth, clr.nextSibling);
+      bth.onclick=function(){ if(ptSetWorkflow(PT_SRC_STUDIO)) switchPage("pgPath"); };
+    }
+    bth.style.display=n?"":"none";
+    if(n) setIcnText(bth,"i-stack", L9(WF_BATCH_L)+" ("+PT_MAX+")");
+  }
   var btn=$("btnStGen");
   if(btn){
     var noPhoto=!ST.srcBitmap;
@@ -11742,6 +12468,8 @@ function stRenderPend(){
        and the long form did not fit it: measured 273px of text in a 230px box,
        so a customer read "Live previ…". The PHOTO card three hundred pixels up
        already carries the full sentence; this one only has to name the action. */
+    /* v4.99: the empty state is not a second primary — see the note in the CSS */
+    if(btn) btn.classList.toggle("is-empty", !!noPhoto);
     var lbl=noPhoto ? icn("i-camera")+" "+escH(L9({my:"ပုံထည့်ပါ",en:"Add a photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูป",zh:"添加照片",vi:"Thêm ảnh",id:"Tambah foto",ms:"Tambah foto"}))
       : n ? icn("i-bolt")+" GENERATE ("+n+" AI)"
       : ((live>0||stIsDirty()) ? icn("i-check")+" APPLY ("+escH(L9({my:"စက်တွင်း render",en:"local render"}))+")" : icn("i-bolt")+" GENERATE");
@@ -14620,9 +15348,10 @@ var ST_LOOK_RAF = 0;
    link, a restore, a future page host — can walk straight past, and the
    failure mode is silent: computed tiles where photographs belong.
 
-   An IntersectionObserver on the PAGE cannot be bypassed: pgStudio is
+   An IntersectionObserver on the PAGE cannot be bypassed: a suite page is
    display:none until it is shown, by any route at all, and the moment it gains
-   a box the art is asked for.
+   a box the art is asked for. Since v4.96 there are TWO such pages and both are
+   observed; watching only one was a real defect — see the note in arm().
 
    The observed element is the page and not the preset row, and that was also
    measured rather than guessed. Watching the row works, but the row sits
@@ -14646,15 +15375,22 @@ function stArtWake(){
 }
 (function stArtWatch(){
   function arm(){
-    var pg=stActivePage();
+    /* v4.98.2 — observe BOTH suite pages, not "the active one at load time".
+       This armed on stActivePage(), which is pgMeitu until the customer picks
+       otherwise. A studio whose first Studio visit was Evoto therefore watched
+       a page that never became visible: the observer never fired, stArtWake()
+       never ran, and the look shelf stayed on computed tiles for the whole
+       session. The v4.84 note above is still right that the PAGE is the correct
+       thing to watch — there are simply two of them now. */
+    var pgs=Object.keys(ST_SUITE_PAGE).map(function(k){ return $(k); }).filter(Boolean);
     /* No IntersectionObserver (or no page) must never mean no art — fall back
        to the pre-v4.84 behaviour of loading it, rather than to a blank shelf.
        A deferral that can fail closed is worse than the bytes it saves. */
-    if(!pg || typeof IntersectionObserver!=="function"){ stArtWake(); return; }
+    if(!pgs.length || typeof IntersectionObserver!=="function"){ stArtWake(); return; }
     var io=new IntersectionObserver(function(es){
       for(var i=0;i<es.length;i++) if(es[i].isIntersecting){ io.disconnect(); stArtWake(); return; }
     });
-    io.observe(pg);
+    pgs.forEach(function(pg){ io.observe(pg); });
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",arm);
   else arm();
@@ -16188,9 +16924,21 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   tab("i-target","EVOTO · "+ST_EVOTO_COUNT,"pgEvoto");
   stSyncSuiteChips();
   var strip=$("stGroupChips");
+  /* v4.98.2 — a chip whose group lives on the OTHER suite page now switches
+     there first. Measured on the v4.96 split: the strip carried all 34 groups
+     on both pages, so on either one exactly 17 of them pointed at a card parked
+     in #stDock — scrollIntoView on a detached-from-view node does nothing, and
+     tapping did nothing at all. Filtering the strip down to 17 would have fixed
+     the dead tap by making half the features unreachable from here; switching
+     the page keeps every group one tap away, which is what a jump bar is for. */
+  function stSuitePageOf(g){ return g.host==="ev" ? "pgEvoto" : "pgMeitu"; }
   ST.groups.forEach(function(g){
     var c=el("button","chip"); c.innerHTML=icn(g.icon)+" "+escH(g.title);
-    c.onclick=function(){ g.el.classList.remove("hide"); g.el.className="grp open"; g.el.scrollIntoView({block:"start"}); };
+    c.onclick=function(){
+      var want=stSuitePageOf(g);
+      var go=function(){ g.el.classList.remove("hide"); g.el.className="grp open"; g.el.scrollIntoView({block:"start"}); };
+      if(curPage!==want){ switchPage(want); setTimeout(go,60); } else go();
+    };
     g.jumpChip=c;
     strip.appendChild(c);
   });
@@ -16202,6 +16950,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   });
   function applySearch(){
     var q=inp.value.trim().toLowerCase();
+    var hereHits=0, thereHits=0, therePage=null;
     ST.searchIdx.forEach(function(e2){
       var hit=!q||e2.text.indexOf(q)>=0;
       if(hit&&q) e2.g.el.className="grp open"; /* matching groups auto-open */
@@ -16210,7 +16959,15 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
       for(var i=0;i<rows.length;i++){
         rows[i].classList.toggle("hit",!!(q&&hit&&rows[i].textContent.toLowerCase().indexOf(q)>=0));
       }
+      if(q&&hit){
+        var pg=stSuitePageOf(e2.g);
+        if(pg===curPage) hereHits++; else { thereHits++; therePage=pg; }
+      }
     });
+    /* v4.98.2 — the index spans BOTH suites but only one is on screen, so a
+       term that lives entirely in the parked suite used to look like a search
+       that found nothing. If every match is over there, go over there. */
+    if(q && hereHits===0 && thereHits>0 && therePage) switchPage(therePage);
   }
   var sT=null;
   inp.oninput=function(){ clearTimeout(sT); sT=setTimeout(applySearch,120); };
@@ -18336,7 +19093,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.98.0";
+var APP_VER="5.0.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -18739,7 +19496,13 @@ try {
 /* ?page=pgXxx deep link (used by the manifest shortcuts / jump list) —
    applied after the localStorage restore so an explicit link wins */
 try {
-  var _qp = new URLSearchParams(location.search).get("page");
+  /* v4.98.2 — normalise here too. v4.96 claimed in its own comment that
+     stNormalizePage covered "the saved page, the group seed, the deep link and
+     switchPage alike". It did not cover this one: the guard below tests the RAW
+     id against PAGES, pgStudio is no longer in PAGES, and so every bookmarked
+     ?page=pgStudio and every manifest shortcut pointing at it was silently
+     dropped — the app just opened wherever it would have anyway. */
+  var _qp = stNormalizePage(new URLSearchParams(location.search).get("page"));
   if (_qp && PAGES.some(function(p){ return p[0]===_qp; })) switchPage(_qp);
 } catch(e){}
 
@@ -20277,4 +21040,9 @@ $("btnT2IToRef").onclick=function(){
   renderRefs();
   setSt("stT2IGen", L9({my:"ရလဒ်ကို IMAGE 1 ထဲ ထည့်ပြီး ✓ — Create page က ဆက် edit လို့ရပြီ",en:"Result loaded into IMAGE 1 ✓ — keep editing it on the Create page",shn:"ဢဝ်ၽွၼ်းသႂ်ႇ IMAGE 1 ယဝ်ႉ ✓",kac:"Ah kyu hpe IMAGE 1 kaw jaw sai ✓",th:"ใส่ผลลัพธ์ใน IMAGE 1 แล้ว ✓",zh:"结果已放入 IMAGE 1 ✓",vi:"Đã đưa kết quả vào IMAGE 1 ✓",id:"Hasil dimasukkan ke IMAGE 1 ✓",ms:"Hasil dimasukkan ke IMAGE 1 ✓"}), "ok");
 };
+/* v5.0 — last statement in the file on purpose: Path's Studio source reads the
+   Meitu/Evoto suite, and Path is wired long before that suite exists. This is
+   the one re-sync that gives a returning Studio-mode customer a real prompt
+   preview and a real tool list on the first paint instead of an empty one. */
+ptBootSyncStudio();
 </script>

@@ -242,6 +242,9 @@ jobs:
       - name: Run v4.98.0 video-model sweep (65 endpoints, per-endpoint request shape)
         run: node test/sweep_v498_videomodels.js
 
+      - name: Run v5.0.0 batch-of-100 Smart Workflow sweep (prompt identity, cost honesty)
+        run: node test/sweep_v500_batchwf.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 
