@@ -103,7 +103,8 @@ function report(name, ok, detail) {
     const vj = await (await fetch("version.json")).json();
     return { app: APP_VER, json: vj.v };
   });
-  report("4) version lockstep 5.0.1", ver.app === "5.0.1" && ver.json === "5.0.1", ver);
+  report("4) app, update metadata, and release semver stay in lockstep",
+    /^\d+\.\d+\.\d+$/.test(ver.app) && ver.app === ver.json, ver);
 
   /* ---- 5) marketing site mirrors the 35-language set (file-based — the
      site root isn't served in CI, docs/app is) ---- */
