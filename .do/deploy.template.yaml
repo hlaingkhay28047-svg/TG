@@ -1,0 +1,11 @@
+spec:
+  name: hnk-ai-tools
+  region: sgp
+  static_sites:
+    - name: hnk-web
+      environment_slug: html
+      git:
+        branch: main
+        repo_clone_url: https://github.com/hlaingkhay28047-svg/TG.git
+      source_dir: /docs
+      index_document: index.html
