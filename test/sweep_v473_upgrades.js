@@ -32,6 +32,16 @@
       art deliberately does not.
    F) No page errors.
 
+   v4.96 note: the shelf's page no longer exists. #pgStudio split into #pgMeitu
+   and #pgEvoto, and the shared #stCols block plus the inactive suite card live
+   in the hidden #stDock until stMountSuite() moves them — which is only reached
+   through switchPage(). So the shelf is now reached by navigating to #pgMeitu
+   rather than by dropping `.on` onto a page id that is gone. Every contract and
+   every threshold above is unchanged; B still counts all sixteen photographs
+   from that one visit, because stRenderPresetCards() paints #muPresetRow and
+   #evPresetRow together wherever the two cards happen to be parked. See the
+   comment at the visit.
+
    Usage: PORT=8931 node test/sweep_v473_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
 const fs = require("fs");
@@ -119,9 +129,15 @@ report("E2) the art is a fallback-safe upgrade, not a dependency",
   await page.waitForTimeout(2500);
 
   const out = await page.evaluate(async () => {
-    document.querySelectorAll(".page").forEach(x => x.classList.remove("on"));
-    const pg = document.getElementById("pgStudio") || document.getElementById("pgEdit");
-    if (pg) pg.classList.add("on");
+    /* v4.96 — this used to hand-reveal the shelf by putting `.on` straight on
+       #pgStudio. That page is gone, and hand-revealing #pgMeitu instead shows
+       an EMPTY page: #stCols and #stMuCard only leave the hidden #stDock inside
+       stMountSuite(), which nothing but switchPage() calls. Navigate properly
+       and the Meitu shelf is mounted, on screen, and — because stArtWatch arms
+       its IntersectionObserver on stActivePage(), #pgMeitu on fresh storage —
+       the look art and the base sample are woken by this very visit. */
+    switchPage("pgMeitu");
+    window.scrollTo(0, 0);
     await new Promise(r => setTimeout(r, 2200));
     let n = document.getElementById("muPresetRow");
     while (n && n !== document.body) { if (n.classList && n.classList.contains("grp")) n.classList.add("open"); n = n.parentElement; }

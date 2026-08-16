@@ -3323,7 +3323,16 @@ function stMountSuite(pageId){
   var page=$(pageId), dock=$("stDock"), cols=$("stCols");
   if(!page||!dock||!cols) return;
   var mount=page.querySelector(".st-mount");
-  if(mount && cols.parentNode!==mount) mount.appendChild(cols);
+  if(mount && cols.parentNode!==mount){
+    /* the page losing the stage must lose its stage marks too, or it keeps a
+       stale --stageH and a stcompact class it can no longer justify */
+    Object.keys(ST_SUITE_PAGE).forEach(function(k){
+      var old=$(k); if(!old||old===page) return;
+      old.classList.remove("stcompact"); old.classList.remove("stslim");
+      ["--navH","--jumpH","--stCompactH","--stageH"].forEach(function(v){ old.style.removeProperty(v); });
+    });
+    mount.appendChild(cols);
+  }
   var colR=$("stColR"), keepId=ST_SUITE_PAGE[pageId];
   Object.keys(ST_SUITE_PAGE).forEach(function(k){
     var card=$(ST_SUITE_PAGE[k]); if(!card) return;
@@ -3333,6 +3342,7 @@ function stMountSuite(pageId){
   });
   stLastSuitePage=pageId;
   try{ localStorage.setItem("hnk_st_suite",pageId); }catch(e){}
+  if(typeof stStageSync==="function") setTimeout(stStageSync,0);
 }
 
 function switchPage(id, fromPop){
@@ -15707,16 +15717,26 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
 
 /* ---- sticky stage chrome: adaptive 3-state stage + PiP (v4.27.1), minimize cycle, A|B split, result flip, height CSS vars ---- */
 (function(){
-  var stg=$("stStage"), pg=stActivePage();
-  if(!stg||!pg) return;
+  /* v4.96 — pg() is a CALL, not a captured element. It used to be
+     `var pg=$("pgStudio")`, which was safe while there was exactly one studio
+     page forever. Now the stage MOVES between pgMeitu and pgEvoto, and an
+     element captured at init keeps receiving --navH/--jumpH/--stCompactH/
+     --stageH and the stcompact/stslim classes long after the customer has left
+     that page: measured on the split build, all four variables landed on
+     pgMeitu while the stage was inside pgEvoto, so the sticky offsets were
+     computed against a page nobody was looking at. */
+  var stg=$("stStage");
+  if(!stg) return;
+  function pg(){ return stActivePage(); }
   var navEl=document.querySelector(".nav");
   function navH(){ return (navEl&&navEl.offsetHeight)||54; }
+  window.stStageSync=function(){ try{ upd(); }catch(e){} };
   function upd(){
-    pg.style.setProperty("--navH",navH()+"px");
-    var jb=$("stJumpBar"); if(jb) pg.style.setProperty("--jumpH",jb.offsetHeight+"px");
-    pg.style.setProperty("--stCompactH",Math.round(stClamp(window.innerHeight*0.19,120,200))+"px");
+    pg().style.setProperty("--navH",navH()+"px");
+    var jb=$("stJumpBar"); if(jb) pg().style.setProperty("--jumpH",jb.offsetHeight+"px");
+    pg().style.setProperty("--stCompactH",Math.round(stClamp(window.innerHeight*0.19,120,200))+"px");
     var off=stg.style.display==="none"||stg.classList.contains("pip");
-    pg.style.setProperty("--stageH",(off?0:stg.offsetHeight)+"px");
+    pg().style.setProperty("--stageH",(off?0:stg.offsetHeight)+"px");
   }
   /* ---- adaptive engine: auto(full<->compact by scroll) / compact-pinned / mini, PiP forced by env ---- */
   var natTop=null, autoCompact=false, forcedKb=false, pipFree=false, cur="";
@@ -15789,8 +15809,8 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     stg.classList.toggle("compact",d==="compact");
     stg.classList.toggle("mini",d==="mini");
     stg.classList.toggle("pip",d==="pip");
-    pg.classList.toggle("stcompact",d==="compact"||d==="mini"||d==="pip");
-    pg.classList.toggle("stslim",d==="pip");
+    pg().classList.toggle("stcompact",d==="compact"||d==="mini"||d==="pip");
+    pg().classList.toggle("stslim",d==="pip");
     if(d==="pip") pipPlace(); else stg.style.left=stg.style.right=stg.style.top=stg.style.bottom="";
     if(engaged||exitComp){ /* scroll compensation — content under the stage must not jump (§2.1) */
       var delta=stackH()-hBefore;
@@ -15843,7 +15863,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     if(sRaf) return; sRaf=true;
     requestAnimationFrame(function(){
       sRaf=false;
-      if(!pg.classList.contains("on")||stg.style.display==="none") return;
+      if(!pg().classList.contains("on")||stg.style.display==="none") return;
       natTopUpd();
       if(ST.ui.mode==="auto"&&window.innerWidth<1024&&natTop!=null){
         var y=window.scrollY||0;
@@ -15856,7 +15876,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   if(window.ResizeObserver){ try{ new ResizeObserver(upd).observe(stg); }catch(e){} }
   window.addEventListener("resize",function(){ natTop=null; kbSync(); apply(); natTopUpd(); });
   if(window.visualViewport) window.visualViewport.addEventListener("resize",function(){ kbSync(); apply(); });
-  if(!ST.srcBitmap) pg.classList.add("nostage");
+  if(!ST.srcBitmap) pg().classList.add("nostage");
   /* PiP drag — single pointer moves the thumbnail, release snaps + persists the corner */
   var pd=null;
   stg.addEventListener("pointerdown",function(e){
@@ -18207,7 +18227,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.95.0";
+var APP_VER="4.96.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

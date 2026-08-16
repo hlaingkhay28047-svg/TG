@@ -3,7 +3,7 @@
    report(name, ok, extra) lines, hard exit code, pageerror capture.
 
    Covers, in spec §5 order:
-     1  page renders    switchPage("pgPath"), hero copy, 4 Edit subtabs
+     1  page renders    switchPage("pgPath"), hero copy, 5 Edit subtabs
      2  multi-pick      ptIngestDataUrls seeds N cells, all queued, #ptCount
      3  look -> all     one look writes the SAME css filter on every thumb
      4  prompt honesty  #ptPromptPreview == what the run sends; fx toggles show
@@ -123,8 +123,15 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       lookCount: Object.keys(PT_LOOKS).length
     };
   });
-  report("1 page renders: pgPath is switchable and visible, its hero headline is non-empty, the Edit group now carries 4 subtabs including Path, and the new i-stack sprite symbol exists",
-    r1.on && r1.offsetOk && r1.hero.length > 4 && r1.subtabs.length === 4 && r1.subtabs.some(s => /Path/.test(s)) && r1.inPages && r1.sprite && r1.lookCount === 12,
+  /* v4.96 split the single pgStudio page into pgMeitu + pgEvoto, so the Edit
+     group's roster went from ["pgCreate","pgStudio","pgRetouch","pgPath"] to
+     ["pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath"] — 5 subtabs, not 4.
+     The count is still exact; the two new siblings are named so the number is
+     pinned to that split rather than to an arbitrary total. */
+  report("1 page renders: pgPath is switchable and visible, its hero headline is non-empty, the Edit group now carries 5 subtabs (Meitu and Evoto having replaced the merged Studio page) including Path, and the new i-stack sprite symbol exists",
+    r1.on && r1.offsetOk && r1.hero.length > 4 && r1.subtabs.length === 5 && r1.subtabs.some(s => /Path/.test(s))
+      && r1.subtabs.some(s => /Meitu/.test(s)) && r1.subtabs.some(s => /Evoto/.test(s))
+      && r1.inPages && r1.sprite && r1.lookCount === 12,
     JSON.stringify(r1));
 
   // ---------------------------------------------------------------- 2

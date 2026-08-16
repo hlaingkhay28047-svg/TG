@@ -1,4 +1,13 @@
-/* Regression sweep for pgStudio v5's tiered live-preview engine (v4.23.0):
+/* Regression sweep for the Studio v5 tiered live-preview engine (v4.23.0).
+   v4.96 note: the engine used to live on one #pgStudio page holding both suite
+   cards. It is now split across #pgMeitu and #pgEvoto, with the shared block
+   (PHOTO card, #stCanvas/#stStage, #stJumpBar, #stRecipeCard, #stResultBox,
+   export options, #stGenBar) living once in #stCols and MOVED by appendChild
+   into whichever suite page is active; the inactive suite's card is parked in
+   the hidden #stDock. Anything measured by LAYOUT must therefore be measured on
+   the page that currently owns it — see #13/#15/#16/#19 below. Anything read by
+   plain DOM query (#muHost / #evHost values, chips, dots) still works from
+   either page, because the dock keeps both suites in the document.
    - Tier 1: a slider's input event recomposes the photo's CSS filter in the
      SAME tick (no pixel work in the drag loop)
    - Preset cards: tapping one applies its t1/t2 instantly, queues its Tier-3
@@ -29,6 +38,10 @@ const PORT = process.env.PORT || 8931;
 
   // 0) load a synthetic skin-toned noisy fixture through the public ST.loadImage API
   const loaded = await page.evaluate(async () => {
+    /* v4.96: "pgStudio" is no longer a page — switchPage runs it through
+       stNormalizePage(), which resolves it to the last-used suite. On a fresh
+       browser context hnk_st_suite is unset, so this deterministically mounts
+       #pgMeitu, and keeps the legacy deep-link id under test. */
     switchPage("pgStudio");
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
     const c = document.createElement("canvas"); c.width = 64; c.height = 64;
@@ -282,7 +295,12 @@ const PORT = process.env.PORT || 8931;
     const t1 = state.st.t1;
     return {
       dotOn,
-      dotsAfterReset: document.querySelectorAll("#pgStudio .grp-h .dot.on").length,
+      /* v4.96: the dots used to be counted with "#pgStudio .grp-h .dot.on", which
+         covered both suites because both cards sat on that one page. Only one
+         suite card is mounted now (the other is parked in #stDock), so scoping
+         by page would silently stop counting half of them — and #stDock keeps
+         them queryable, so count by HOST instead. Same set, same threshold. */
+      dotsAfterReset: document.querySelectorAll("#muHost .grp-h .dot.on, #evHost .grp-h .dot.on").length,
       newKeysZero: t1.wht === 0 && t1.blk === 0 && t1.dhz === 0 && t1.glow === 0,
       geoDefault: !state.st.geo.crop && !state.st.geo.rot && !state.st.geo.flipH && !state.st.geo.straighten
     };
@@ -312,6 +330,11 @@ const PORT = process.env.PORT || 8931;
   // 15) guarantee sweep (§2.2): canvas >=120px AND controls window >=130px at every depth on
   //     320/360/390 portrait, with the slider under the finger hit-testing as itself (not btnStGen).
   //     #14 removed the photo — reload a portrait fixture through the public API first.
+  //     v4.96 SPLIT: this used to sweep "#pgStudio .rng", which reached Meitu's 99 sliders and
+  //     Evoto's 153 in one page view. Only one suite card is mounted now — the other is parked
+  //     in #stDock and measures 0x0 — so the sweep runs ONCE PER SUITE PAGE and is reported as
+  //     two checks. Identical thresholds (canvas >=119.5px, window >=130px, exact hit-test) on
+  //     each; nothing was loosened, the same slider population is still covered in total.
   await page.evaluate(async () => {
     const c = document.createElement("canvas"); c.width = 512; c.height = 640;
     const x = c.getContext("2d");
@@ -329,63 +352,82 @@ const PORT = process.env.PORT || 8931;
     document.getElementById("toast").className = "toast";
     document.querySelectorAll("#muHost .grp, #evHost .grp").forEach(g => { g.className = "grp open"; });
   });
-  const g15 = { ok: true, hits: 0, log: [] };
-  for (const vp of [[320, 568], [360, 740], [390, 844]]) {
-    await page.setViewportSize({ width: vp[0], height: vp[1] });
+  const g15 = {};
+  for (const suite of ["pgMeitu", "pgEvoto"]) {
+    // mount this suite: #stCols (stage + jump bar + gen bar) moves into it, its card
+    // comes out of #stDock, and the other suite's card goes back in
+    await page.evaluate(p => { switchPage(p); document.scrollingElement.scrollTop = 0; }, suite);
     await page.waitForTimeout(320);
-    let vpHits = 0;
-    for (const f of [0.25, 0.5, 0.75, 0.95]) {
-      await page.evaluate(fr => {
-        const se = document.scrollingElement;
-        se.scrollTop = fr * (se.scrollHeight - window.innerHeight);
-      }, f);
-      await page.waitForTimeout(260);
-      const m = await page.evaluate(() => {
-        const nav = document.querySelector(".nav").getBoundingClientRect();
-        const cr = document.getElementById("stCanvas").getBoundingClientRect();
+    const g = g15[suite] = { ok: true, hits: 0, log: [] };
+    for (const vp of [[320, 568], [360, 740], [390, 844]]) {
+      await page.setViewportSize({ width: vp[0], height: vp[1] });
+      await page.waitForTimeout(320);
+      let vpHits = 0;
+      for (const f of [0.25, 0.5, 0.75, 0.95]) {
+        await page.evaluate(fr => {
+          const se = document.scrollingElement;
+          se.scrollTop = fr * (se.scrollHeight - window.innerHeight);
+        }, f);
+        await page.waitForTimeout(260);
+        const m = await page.evaluate(p => {
+          const nav = document.querySelector(".nav").getBoundingClientRect();
+          const cr = document.getElementById("stCanvas").getBoundingClientRect();
+          const jb = document.getElementById("stJumpBar").getBoundingClientRect();
+          const gb = document.getElementById("stGenBar").getBoundingClientRect();
+          const visH = Math.min(cr.bottom, window.innerHeight) - Math.max(cr.top, nav.bottom);
+          let rngTried = 0, hitOk = true, hit = "", rngId = "";
+          for (const r of document.querySelectorAll("#" + p + " .rng")) {
+            const rr = r.getBoundingClientRect();
+            if (rr.height < 2) continue;
+            if (rr.top >= jb.bottom + 2 && rr.bottom <= gb.top - 2) {
+              rngTried = 1; rngId = r.id;
+              const el = document.elementFromPoint(rr.left + rr.width / 2, rr.top + rr.height / 2);
+              hitOk = el === r;
+              hit = el ? (el.id || el.className || el.tagName) : "null";
+              break;
+            }
+          }
+          /* overlap>0 means the sticky stage still covers rows the jump bar's own
+             bottom edge declares free — the usual cause of a hit-test miss here */
+          const overlap = Math.round(document.getElementById("stStage").getBoundingClientRect().bottom - jb.bottom);
+          return { visH: Math.round(visH * 10) / 10, win: Math.round(gb.top - jb.bottom), rngTried, hitOk, hit: String(hit).slice(0, 24), rngId, overlap };
+        }, suite);
+        if (!(m.visH >= 119.5 && m.win >= 130)) { g.ok = false; g.log.push(vp.join("x") + "@" + f + " " + JSON.stringify(m)); }
+        if (m.rngTried) { vpHits++; if (!m.hitOk) { g.ok = false; g.log.push(vp.join("x") + "@" + f + " " + m.rngId + " hit=" + m.hit + " stageOverJump=" + m.overlap); } }
+      }
+      // deterministic hit-test: park a mid-list slider in the middle of the controls window
+      // (fractional depths can legitimately land on chips-only groups)
+      const t = await page.evaluate(async p => {
+        const rngs = Array.from(document.querySelectorAll("#" + p + " .rng")).filter(r => r.getBoundingClientRect().height > 2);
+        const r = rngs[Math.floor(rngs.length / 2)];
         const jb = document.getElementById("stJumpBar").getBoundingClientRect();
         const gb = document.getElementById("stGenBar").getBoundingClientRect();
-        const visH = Math.min(cr.bottom, window.innerHeight) - Math.max(cr.top, nav.bottom);
-        let rngTried = 0, hitOk = true, hit = "";
-        for (const r of document.querySelectorAll("#pgStudio .rng")) {
-          const rr = r.getBoundingClientRect();
-          if (rr.height < 2) continue;
-          if (rr.top >= jb.bottom + 2 && rr.bottom <= gb.top - 2) {
-            rngTried = 1;
-            const el = document.elementFromPoint(rr.left + rr.width / 2, rr.top + rr.height / 2);
-            hitOk = el === r;
-            hit = el ? (el.id || el.className || el.tagName) : "null";
-            break;
-          }
-        }
-        return { visH: Math.round(visH * 10) / 10, win: Math.round(gb.top - jb.bottom), rngTried, hitOk, hit: String(hit).slice(0, 24) };
-      });
-      if (!(m.visH >= 119.5 && m.win >= 130)) { g15.ok = false; g15.log.push(vp.join("x") + "@" + f + " " + JSON.stringify(m)); }
-      if (m.rngTried) { vpHits++; if (!m.hitOk) { g15.ok = false; g15.log.push(vp.join("x") + "@" + f + " hit=" + m.hit); } }
+        const rr = r.getBoundingClientRect();
+        document.scrollingElement.scrollTop += rr.top + rr.height / 2 - (jb.bottom + gb.top) / 2;
+        await new Promise(res => setTimeout(res, 260));
+        const rr2 = r.getBoundingClientRect();
+        const jb2 = document.getElementById("stJumpBar").getBoundingClientRect();
+        const gb2 = document.getElementById("stGenBar").getBoundingClientRect();
+        const inside = rr2.top >= jb2.bottom + 2 && rr2.bottom <= gb2.top - 2;
+        const el = document.elementFromPoint(rr2.left + rr2.width / 2, rr2.top + rr2.height / 2);
+        return { inside, hitOk: el === r, hit: el ? (el.id || el.tagName) : "null", id: r.id };
+      }, suite);
+      if (!(t.inside && t.hitOk)) { g.ok = false; g.log.push(vp.join("x") + " targeted " + JSON.stringify(t)); }
+      else vpHits++;
+      g.hits += vpHits;
     }
-    // deterministic hit-test: park a mid-list slider in the middle of the controls window
-    // (fractional depths can legitimately land on chips-only groups)
-    const t = await page.evaluate(async () => {
-      const rngs = Array.from(document.querySelectorAll("#pgStudio .rng")).filter(r => r.getBoundingClientRect().height > 2);
-      const r = rngs[Math.floor(rngs.length / 2)];
-      const jb = document.getElementById("stJumpBar").getBoundingClientRect();
-      const gb = document.getElementById("stGenBar").getBoundingClientRect();
-      const rr = r.getBoundingClientRect();
-      document.scrollingElement.scrollTop += rr.top + rr.height / 2 - (jb.bottom + gb.top) / 2;
-      await new Promise(res => setTimeout(res, 260));
-      const rr2 = r.getBoundingClientRect();
-      const jb2 = document.getElementById("stJumpBar").getBoundingClientRect();
-      const gb2 = document.getElementById("stGenBar").getBoundingClientRect();
-      const inside = rr2.top >= jb2.bottom + 2 && rr2.bottom <= gb2.top - 2;
-      const el = document.elementFromPoint(rr2.left + rr2.width / 2, rr2.top + rr2.height / 2);
-      return { inside, hitOk: el === r, hit: el ? (el.id || el.tagName) : "null", id: r.id };
-    });
-    if (!(t.inside && t.hitOk)) { g15.ok = false; g15.log.push(vp.join("x") + " targeted " + JSON.stringify(t)); }
-    else vpHits++;
-    g15.hits += vpHits;
   }
-  report("v4.27.1 guarantee: canvas >=120px + controls window >=130px + slider hit-test, 320/360/390 x 4 depths",
-    g15.ok, g15.log.length ? g15.log.join(" | ") : g15.hits + " slider hit-tests passed");
+  for (const suite of ["pgMeitu", "pgEvoto"]) {
+    const g = g15[suite];
+    report("v4.27.1 guarantee on #" + suite + ": canvas >=120px + controls window >=130px + slider hit-test, 320/360/390 x 4 depths",
+      g.ok, g.log.length ? g.log.join(" | ") : g.hits + " slider hit-tests passed");
+  }
+  /* #16-#23 measure the SHARED stage chrome (one #stStage, one #stJumpBar, one
+     #stGenBar), not a suite. Park them back on the default suite page so the
+     sweep above cannot leave them running against whichever page happened to be
+     mounted last. Viewport is already 390x844 from the last sweep pass. */
+  await page.evaluate(() => { switchPage("pgMeitu"); document.scrollingElement.scrollTop = 0; });
+  await page.waitForTimeout(320);
 
   // 15t) the toast band never traps a drag: a routine toast is click-through
   //      (elementFromPoint passes to the control beneath), while the update
@@ -420,7 +462,12 @@ const PORT = process.env.PORT || 8931;
     se.scrollTop = natTop + 30; // just below the +40 enter threshold — still full
     await new Promise(r => setTimeout(r, 260));
     const stillFull = !stg.classList.contains("compact");
-    const grp = document.querySelectorAll("#evHost .grp")[3];
+    /* v4.96: the drift marker used to be an #evHost group, which only worked
+       because both suite cards shared the page. #evHost is parked in #stDock
+       whenever Evoto is not the active suite and measures 0x0 there, so the
+       marker has to come from the MOUNTED suite host — same role (a plain,
+       non-sticky block below the stage in normal flow), same 4px tolerance. */
+    const grp = document.querySelectorAll("#muHost .grp")[3];
     const h1 = grp.getBoundingClientRect().top;
     se.scrollTop += 40; // cross the threshold -> auto compact + compensation
     await new Promise(r => setTimeout(r, 300));
@@ -483,7 +530,11 @@ const PORT = process.env.PORT || 8931;
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1000);
   const pinBack = await page.evaluate(async () => {
-    switchPage("pgStudio");
+    /* v4.96: name the suite page outright here. After the reload, "pgStudio"
+       would normalise through hnk_st_suite to whatever #15's sweep mounted
+       last, and #19-#23 below measure the shared stage chrome, so the page
+       under them has to be pinned, not inherited. */
+    switchPage("pgMeitu");
     const c = document.createElement("canvas"); c.width = 512; c.height = 640;
     const x = c.getContext("2d");
     const d = x.createImageData(512, 640);
@@ -523,7 +574,10 @@ const PORT = process.env.PORT || 8931;
       pip: stg.classList.contains("pip"),
       fixed: getComputedStyle(stg).position === "fixed",
       visH: Math.round(visH),
-      stageH: getComputedStyle(document.getElementById("pgStudio")).getPropertyValue("--stageH").trim(),
+      /* v4.96: --stageH is written onto the suite page that currently hosts the
+         stage, not onto a fixed #pgStudio — read it off that page via the app's
+         own stActivePage() accessor. */
+      stageH: getComputedStyle(stActivePage()).getPropertyValue("--stageH").trim(),
       jumpH: Math.round(jb.height),
       win: Math.round(gb.top - jb.bottom)
     };

@@ -162,15 +162,21 @@ report("D) the swatch opt-out exists and the grade cards pass it",
       });
     }
 
-    /* E) the grade swatch row */
-    document.querySelectorAll(".page").forEach(x => x.classList.remove("on"));
-    const pg = document.getElementById("pgStudio") || document.getElementById("pgEdit");
-    if (pg) pg.classList.add("on");
+    /* E) the grade swatch row.
+       v4.96 split Studio into two real pages, #pgMeitu and #pgEvoto, and the
+       grade cards are built by the Evoto host (evHost, inside #stEvCard) — so
+       pgEvoto is the page this assertion is actually about. Hand-toggling .on
+       the way this used to no longer shows anything: the shared #stCols block
+       and the INACTIVE suite card both sit in #stDock, which is class="page"
+       so `.page{display:none}` parks them, and only switchPage() runs
+       stMountSuite() to move them into the live page. Reach the row the way a
+       customer does or every tile in it measures 0x0. */
+    switchPage("pgEvoto");
     await new Promise(r => setTimeout(r, 900));
     try { if (window.stRenderGradeCards) stRenderGradeCards(); } catch (e) { }
     await new Promise(r => setTimeout(r, 300));
     const host = document.getElementById("stGradeCards");
-    /* The Studio page is a stack of accordion groups and the grade row ships
+    /* The Evoto suite card is a stack of accordion groups and the grade row ships
        collapsed, so a rect taken straight away is 0x0 — the element is real,
        it simply has no layout box yet. Measuring that would repeat the mistake
        an earlier sweep in this repo made when it asserted 116 VISIBLE cards on
