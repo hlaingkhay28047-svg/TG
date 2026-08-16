@@ -37,12 +37,22 @@ function check(ok, label, detail) {
   });
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(900);
+  /* v4.96 split the one #pgStudio into #pgMeitu + #pgEvoto. "pgStudio" is no
+     longer a page, but switchPage still accepts it — stNormalizePage resolves
+     it to the last-used suite (pgMeitu on a fresh profile like this one), so
+     this line keeps working AND keeps covering that deep-link path. */
   await page.evaluate(() => switchPage("pgStudio"));
   await page.waitForTimeout(300);
 
   /* ---- 1) unset colour pickers no longer impersonate a chosen gold ---- */
   const colours = await page.evaluate(() => {
-    const out = Array.from(document.querySelectorAll('#pgStudio input[type="color"]')).map(i => ({
+    /* v4.96: scoped to the two suite CARDS, not to a page. The pickers are a
+       DOM/state fact, not a layout one — nothing here is measured — and both
+       cards are always in the document: the active suite's card sits in the
+       active page, the other is parked in #stDock. Scoping by card therefore
+       still sees all 12 (7 Meitu + 5 Evoto) in one pass, so the count stays 12
+       instead of being split into two smaller numbers. */
+    const out = Array.from(document.querySelectorAll('#stMuCard input[type="color"],#stEvCard input[type="color"]')).map(i => ({
       id: i.id, value: i.value, unset: i.classList.contains("unset"),
       stored: svGet(i.id, null)
     }));
@@ -227,7 +237,14 @@ function check(ok, label, detail) {
       const r = await fetch(src); const b = await r.blob();
       return new Promise(res => { const f = new FileReader(); f.onload = () => res(f.result); f.readAsDataURL(b); });
     };
-    const notes = () => Array.from(document.querySelectorAll("#pgStudio p.mut"))
+    /* v4.96: same card-scoping as check 1. There is exactly one stNoiseNote()
+       per suite — Meitu's "Skin" group and Evoto's "Sharpen & Noise Reduction"
+       group — so the total is still 2 and the threshold below is unchanged.
+       The per-note display flag is set on the <p> itself by its refresh(), and
+       a computed display is not rewritten by a display:none ancestor, so a note
+       inside the suite card currently parked in #stDock still reports its own
+       "" / "none" honestly. */
+    const notes = () => Array.from(document.querySelectorAll("#stMuCard p.mut,#stEvCard p.mut"))
       .filter(n => /no visible noise|မြင်သာတဲ့ noise/i.test(n.textContent) &&
                    getComputedStyle(n).display !== "none").length;
     const grainStillAPattern = () => { state.st.t1 = stDefT1(); state.st.t1.grn = 60;
@@ -260,6 +277,9 @@ function check(ok, label, detail) {
      (texture survives), and zone-limited teeth/eye edits (a detected face
      confines the whitening to the mouth and the brightening to the eyes). */
   const engine = await page.evaluate(async () => {
+    /* v4.96: the shared block (#stCanvas, #stStage, #stReset) is MOVED into
+       whichever suite page is active, so this only has to land on a real suite
+       page — "pgStudio" normalises to the last-used one, still pgMeitu here. */
     switchPage("pgStudio");
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
     const c = document.createElement("canvas"); c.width = 96; c.height = 120;

@@ -143,7 +143,14 @@ function check(ok, label, detail) {
     "header gear (44px, labelled) opens Setup; no bar tab claims it", gear);
   await page.close();
 
-  /* ---- 2b) returning user: stored page beats the pgDash default ---- */
+  /* ---- 2b) returning user: stored page beats the pgDash default ----
+     v4.96 retired #pgStudio as a page — it split into #pgMeitu and #pgEvoto and
+     left PAGES entirely. "pgStudio" is still the literal string sitting in every
+     returning customer's hnk_web_studio_page, so it stays the right value to
+     seed here: the restore has to push it through stNormalizePage() and land on
+     a suite page instead of failing the PAGES check and falling back to pgDash.
+     Same contract as before (the saved page wins over the Home default), now
+     measured on the page that id resolves to. */
   page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on("pageerror", e => { console.log("PAGEERROR:", String(e).slice(0, 300)); failures++; });
   await page.addInitScript(() => {
@@ -155,11 +162,28 @@ function check(ok, label, detail) {
   await page.waitForTimeout(800);
   const ret = await page.evaluate(() => ({
     cur: curPage,
-    vis: getComputedStyle(document.getElementById("pgStudio")).display !== "none",
+    vis: getComputedStyle(document.getElementById("pgMeitu")).display !== "none",
+    /* the old page really is gone, so a stale "pgStudio" can only survive by
+       being normalised — not by the element quietly still being there */
+    studioGone: !document.getElementById("pgStudio"),
     seeded: localStorage.getItem("hnk_ws_group_seed_v427") === "1"
   }));
-  check(ret.cur === "pgStudio" && ret.vis && ret.seeded,
-    "returning user's cold-open restore still wins over the Home default (+ one-time group seed ran)", ret);
+  check(ret.cur === "pgMeitu" && ret.vis && ret.studioGone && ret.seeded,
+    "returning user's cold-open restore still wins over the Home default — legacy pgStudio resolves to pgMeitu (+ one-time group seed ran)", ret);
+
+  /* ...and it resolves to the suite they were actually last on, not a constant:
+     with hnk_st_suite remembering Evoto, the same stale "pgStudio" must reopen
+     #pgEvoto. This is the half of stNormalizePage() a hardcoded default passes. */
+  await page.evaluate(() => localStorage.setItem("hnk_st_suite", "pgEvoto"));
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(800);
+  const retEv = await page.evaluate(() => ({
+    cur: curPage,
+    vis: getComputedStyle(document.getElementById("pgEvoto")).display !== "none",
+    stored: localStorage.getItem("hnk_web_studio_page")
+  }));
+  check(retEv.cur === "pgEvoto" && retEv.vis && retEv.stored === "pgEvoto",
+    "legacy pgStudio restore follows the last-used suite (Evoto) and rewrites the saved id to the real page", retEv);
 
   /* ---- 4) deep link ?page=pgHome ---- */
   await page.goto(`http://127.0.0.1:${PORT}/index.html?page=pgHome`, { waitUntil: "domcontentloaded" });
@@ -275,7 +299,12 @@ function check(ok, label, detail) {
      markup-level a child of #pgWf — so it went from "the first thing a keyless
      user sees" to 0px on eleven of twelve pages, silently, with no test
      watching. It is now a sibling of the page stack. This asserts both halves:
-     visible everywhere without a key, gone once a key is saved. */
+     visible everywhere without a key, gone once a key is saved.
+     v4.96: the one Studio page became two real pages, so the walk covers both —
+     the banner must stand on pgMeitu AND pgEvoto, not on "the studio". The
+     Gallery entry also said "pgGal", which is not a page id: switchPage() just
+     hid every page and the banner (a sibling of the stack) measured fine
+     regardless, so pgGallery was never actually covered. Now it is. */
   const kb = await page.evaluate(pgs => {
     try { localStorage.removeItem("hnk_web_studio_key"); } catch (e) {}
     state.key = ""; updateKeyBanner();
@@ -287,7 +316,7 @@ function check(ok, label, detail) {
     const withKey = el.offsetHeight;
     state.key = ""; updateKeyBanner();
     return { noKey, withKey, pages: pgs.length };
-  }, ["pgDash","pgWf","pgCreate","pgStudio","pgRetouch","pgPath","pgText2Img","pgVideo","pgVideoUp","pgLib","pgGal","pgHome"]);
+  }, ["pgDash","pgWf","pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath","pgText2Img","pgVideo","pgVideoUp","pgLib","pgGallery","pgHome"]);
   const kbHidden = Object.keys(kb.noKey).filter(k => !(kb.noKey[k] > 0));
   check(kbHidden.length === 0 && kb.withKey === 0,
     "key banner: a user with no API key sees the prompt on EVERY page (not just Workflows), and it disappears once a key is saved",

@@ -33,22 +33,41 @@ const PORT = process.env.PORT || 8931;
 
   // --- Studio headers (v4.23.0 Meitu/Evoto rebuild): each card keeps the
   // h2-title + separate .mut-subtitle pattern ---
-  await page.evaluate(() => switchPage("pgStudio"));
-  await page.waitForTimeout(200);
-  const studio = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#pgStudio .card > h2")).slice(0, 4).map(h2 => {
+  // v4.96 split the single #pgStudio page into two real pages, #pgMeitu and
+  // #pgEvoto. The shared block (#stCols: PHOTO, MY RECIPES, stage, result box…)
+  // is MOVED by appendChild into whichever suite page is active, and the
+  // INACTIVE suite card is parked in the hidden #stDock. So the two suite
+  // headers can no longer be read in one page view, and the old 4-header sweep
+  // is split into one 3-header sweep per suite page — same per-header
+  // assertions, applied to each. Slicing at 3 stops before #stResultBox, whose
+  // h2 is followed by the .cmp compare widget rather than a .mut subtitle.
+  const readCardHeaders = pageId => page.evaluate(id =>
+    Array.from(document.querySelectorAll("#" + id + " .card > h2")).slice(0, 3).map(h2 => {
       const sub = h2.nextElementSibling;
       return {
         h2Text: h2.textContent.trim(),
         subIsMut: !!(sub && sub.classList.contains("mut")),
         subFilled: !!(sub && sub.textContent.trim().length > 0)
       };
-    }));
-  console.log("Studio headers:", JSON.stringify(studio));
-  const wantH2 = ["PHOTO", "MY RECIPES", "MEITU STUDIO", "EVOTO PRO"]; // MY RECIPES card added by the pgStudio v2 upgrade; v4.25 icon system renders the h2 glyph as inline SVG (no text)
-  const studioOk = studio.length === 4 &&
-    studio.every((s, i) => s.h2Text === wantH2[i] && s.subIsMut && s.subFilled);
-  console.log(studioOk ? "PASS (PHOTO / MY RECIPES / MEITU STUDIO / EVOTO PRO headers each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
+    }), pageId);
+  await page.evaluate(() => switchPage("pgMeitu"));
+  await page.waitForTimeout(200);
+  const meituHdrs = await readCardHeaders("pgMeitu");
+  await page.evaluate(() => switchPage("pgEvoto"));
+  await page.waitForTimeout(200);
+  const evotoHdrs = await readCardHeaders("pgEvoto");
+  console.log("Meitu headers:", JSON.stringify(meituHdrs));
+  console.log("Evoto headers:", JSON.stringify(evotoHdrs));
+  // PHOTO + MY RECIPES ride along in #stCols, so they must hold the pattern on
+  // BOTH suite pages; only the third card differs. (MY RECIPES card added by
+  // the pgStudio v2 upgrade; v4.25 icon system renders the h2 glyph as inline
+  // SVG, so it contributes no text.)
+  const wantMeitu = ["PHOTO", "MY RECIPES", "MEITU STUDIO"];
+  const wantEvoto = ["PHOTO", "MY RECIPES", "EVOTO PRO"];
+  const hdrsOk = (got, want) => got.length === want.length &&
+    got.every((s, i) => s.h2Text === want[i] && s.subIsMut && s.subFilled);
+  const studioOk = hdrsOk(meituHdrs, wantMeitu) && hdrsOk(evotoHdrs, wantEvoto);
+  console.log(studioOk ? "PASS (PHOTO / MY RECIPES / MEITU STUDIO on #pgMeitu and PHOTO / MY RECIPES / EVOTO PRO on #pgEvoto each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
 
   // --- Gallery empty-state: shown by default (icon + message + CTA), the reference pattern ---
   await page.evaluate(() => switchPage("pgGallery"));

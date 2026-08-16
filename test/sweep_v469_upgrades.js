@@ -128,7 +128,11 @@ const DECLARED = [
      replacement under a live name in cache-first /lib/ is invisible for ever
      without an entry here. */
   { tag: "./__lib-purge-v4-95-mkcards10",
-    re: /\/lib\/vid\/vw-(mkGlassSkin|mkGemTear|mkDouyinRed|mkGlossPop|mkPorcelain|mkPinkBridal|mkDollBlush|mkSculptBrush|mkEyeMacro|mkNoirSlip)\.jpg$/ }
+    re: /\/lib\/vid\/vw-(mkGlassSkin|mkGemTear|mkDouyinRed|mkGlossPop|mkPorcelain|mkPinkBridal|mkDollBlush|mkSculptBrush|mkEyeMacro|mkNoirSlip)\.jpg$/ },
+  /* v4.97 — the 500 lighting plates re-shot onto the same ids, 1312-1811.
+     Bounded to that range: /lib/full and /lib/ui hold 1811 plates each. */
+  { tag: "./__lib-purge-v4-97-lighting500",
+    re: /\/lib\/(full|ui)\/user-ref-(13(1[2-9]|[2-9][0-9])|1[4-7][0-9][0-9]|18(0[0-9]|1[01]))\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",

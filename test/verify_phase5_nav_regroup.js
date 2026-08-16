@@ -5,8 +5,12 @@
    MEDIA LAB[pgText2Img,pgVideo,pgVideoUp] / LIBRARY[pgLib,pgGallery] and
    demotes Setup (pgHome) from the bar to the header gear button. The Edit
    group gained a 4th page in the v4.28.x wave (pgPath — Path Retouch, the
-   batch-look sibling of Retouch). Every
-   original page id is unchanged; only how you navigate there changed.
+   batch-look sibling of Retouch), and a 5th in v4.96 when the one Studio
+   page split into two real pages: pgMeitu (#stMuCard) and pgEvoto
+   (#stEvCard). pgStudio is gone from PAGES entirely — it survives only as a
+   legacy id that stNormalizePage() resolves to the last-used suite, which is
+   its own assertion below. Every other original page id is unchanged; only
+   how you navigate there changed.
    This test exists specifically to catch the failure mode a nav regroup
    is most likely to introduce: a page silently becoming unreachable.
    Usage: PORT=8931 node test/verify_phase5_nav_regroup.js   (serve docs/app on $PORT first) */
@@ -15,13 +19,16 @@ const PORT = process.env.PORT || 8931;
 
 // [pageId, expected top-tab label (null = no tab highlights: Setup lives on
 //  the header gear since v4.27.0), expected subtab count (null = no subtabs)]
+// v4.96: the single ["pgStudio","Edit",4] row became two rows — the Meitu and
+// Evoto suites are separate pages now — so every Edit page shows 5 subtabs.
 const ALL_PAGES = [
   ["pgDash", "Home", null],
   ["pgWf", "Workflows", null],
-  ["pgCreate", "Edit", 4],
-  ["pgStudio", "Edit", 4],
-  ["pgRetouch", "Edit", 4],
-  ["pgPath", "Edit", 4],
+  ["pgCreate", "Edit", 5],
+  ["pgMeitu", "Edit", 5],
+  ["pgEvoto", "Edit", 5],
+  ["pgRetouch", "Edit", 5],
+  ["pgPath", "Edit", 5],
   ["pgText2Img", "Media Lab", 3],
   ["pgVideo", "Media Lab", 3],
   ["pgVideoUp", "Media Lab", 3],
@@ -29,6 +36,8 @@ const ALL_PAGES = [
   ["pgGallery", "Library", 2],
   ["pgHome", null, null]
 ];
+// the two halves of the old pgStudio — the legacy id must still land on one
+const ST_SUITE_PAGES = ["pgMeitu", "pgEvoto"];
 
 (async () => {
   const browser = await chromium.launch();
@@ -75,7 +84,7 @@ const ALL_PAGES = [
     }, pid);
     results.push({ pid, expectTopLabel, expectSubCount, ...r });
   }
-  console.log("Full 11-page reachability sweep:", JSON.stringify(results));
+  console.log("Full " + ALL_PAGES.length + "-page reachability sweep:", JSON.stringify(results));
 
   let allOk = true;
   for (const r of results) {
@@ -91,7 +100,42 @@ const ALL_PAGES = [
     }
     if (!ok) { allOk = false; console.log("MISMATCH for", r.pid, JSON.stringify(r)); }
   }
-  console.log(allOk ? "PASS (all 11 pages reachable; correct top+sub tab — or gear, for Setup — highlighted for each)" : "FAIL (page reachability regression)");
+  // page count is derived, not hardcoded — it was already stale at 11 once
+  console.log(allOk ? "PASS (all " + ALL_PAGES.length + " pages reachable; correct top+sub tab — or gear, for Setup — highlighted for each)" : "FAIL (page reachability regression)");
+
+  // v4.96 replaced the old ["pgStudio","Edit",4] sweep row. pgStudio can no
+  // longer be asserted as a page — it isn't one — but the id is still baked
+  // into returning users' saved page and their bookmarks, so the thing that
+  // must not silently become unreachable is now "switchPage('pgStudio')
+  // lands on a live suite page", exactly as strictly as the old row asserted
+  // it landed on pgStudio itself.
+  const legacyStudio = await page.evaluate(() => {
+    switchPage("pgStudio");
+    const bar = document.getElementById("tabbar");
+    const activeTop = Array.from(bar.children).filter(b => b.className.indexOf("on") >= 0);
+    const sub = document.getElementById("subtabbar");
+    const activeSub = Array.from(sub.children).filter(b => b.className.indexOf("on") >= 0);
+    const landed = ["pgMeitu", "pgEvoto"].find(p => {
+      const el = document.getElementById(p);
+      return el && el.className.indexOf("on") >= 0;
+    }) || null;
+    return {
+      landed,
+      studioStillAPage: !!document.getElementById("pgStudio"),
+      pageVisible: landed ? getComputedStyle(document.getElementById(landed)).display !== "none" : false,
+      activeTopCount: activeTop.length,
+      activeTopText: activeTop[0] ? activeTop[0].textContent : null,
+      subVisible: sub.classList.contains("on"),
+      subCount: sub.children.length,
+      activeSubCount: activeSub.length
+    };
+  });
+  console.log("Legacy pgStudio id resolves to:", JSON.stringify(legacyStudio));
+  const legacyOk = ST_SUITE_PAGES.indexOf(legacyStudio.landed) >= 0 && !legacyStudio.studioStillAPage &&
+    legacyStudio.pageVisible && legacyStudio.activeTopCount === 1 &&
+    legacyStudio.activeTopText.indexOf("Edit") >= 0 &&
+    legacyStudio.subVisible && legacyStudio.subCount === 5 && legacyStudio.activeSubCount === 1;
+  console.log(legacyOk ? "PASS (legacy pgStudio deep link still reaches a live suite page under Edit)" : "FAIL (legacy pgStudio id became a dead end)");
 
   // clicking a top-tab returns to the last-visited page within that group,
   // not always the first — a real usability regression if lost. Exercise it
@@ -108,18 +152,26 @@ const ALL_PAGES = [
   console.log("Media Lab top-tab click after being on Video returns to Video:", stillOnVideo);
   console.log(stillOnVideo ? "PASS (last-visited-page-in-group memory works for Media Lab)" : "FAIL (group re-entry regression)");
 
-  const stillOnStudio = await page.evaluate(() => {
-    const bar = document.getElementById("tabbar");
-    switchPage("pgStudio");
-    switchPage("pgDash");
-    const editBtn = Array.from(bar.children).find(b => b.textContent.indexOf("Edit") >= 0);
-    editBtn.click();
-    return document.getElementById("pgStudio").className.indexOf("on") >= 0;
-  });
-  console.log("Edit top-tab click after being on Studio returns to Studio:", stillOnStudio);
-  console.log(stillOnStudio ? "PASS (last-visited-page-in-group memory works for Edit)" : "FAIL (group re-entry regression)");
+  // v4.96: this used to be one check on pgStudio. Split per rule — Studio is
+  // two pages now, and Edit's group memory has to bring you back to the exact
+  // suite you left, not merely "a studio page", so each suite gets the same
+  // check at the same strictness.
+  const stillOnSuite = {};
+  for (const suite of ST_SUITE_PAGES) {
+    stillOnSuite[suite] = await page.evaluate((suite) => {
+      const bar = document.getElementById("tabbar");
+      switchPage(suite);
+      switchPage("pgDash");
+      const editBtn = Array.from(bar.children).find(b => b.textContent.indexOf("Edit") >= 0);
+      editBtn.click();
+      return document.getElementById(suite).className.indexOf("on") >= 0;
+    }, suite);
+    console.log("Edit top-tab click after being on " + suite + " returns to " + suite + ":", stillOnSuite[suite]);
+  }
+  const editMemOk = ST_SUITE_PAGES.every(p => stillOnSuite[p]);
+  console.log(editMemOk ? "PASS (last-visited-page-in-group memory works for Edit, both suites)" : "FAIL (group re-entry regression)");
 
-  const overall = tabbarOk && allOk && stillOnVideo && stillOnStudio;
+  const overall = tabbarOk && allOk && legacyOk && stillOnVideo && editMemOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

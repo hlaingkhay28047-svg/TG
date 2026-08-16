@@ -32,6 +32,13 @@
       one place where more resolution would otherwise mean less effect.
    F) Both shelves still render all 8 tiles, at every DPR, with no page errors.
 
+   v4.96 note: the two shelves no longer share a page. Meitu and Evoto are
+   #pgMeitu and #pgEvoto now, and only the ACTIVE suite's card sits in the shown
+   page — the other one, plus the shared #stCols block, is parked in the hidden
+   #stDock where everything measures 0x0. Every claim above is unchanged and
+   every threshold is unchanged; the shelves are simply measured one page visit
+   each instead of both in one view. See the comment at the visit loop.
+
    Usage: PORT=8931 node test/sweep_v470_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
 const fs = require("fs");
@@ -68,26 +75,43 @@ report("E2) the tile DPR is clamped, so a 4x display cannot quadruple the paint 
     await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2200);
 
-    byDpr[dpr] = await page.evaluate(async () => {
-      const out = { dpr: devicePixelRatio };
-      document.querySelectorAll(".page").forEach(x => x.classList.remove("on"));
-      const pg = document.getElementById("pgStudio") || document.getElementById("pgEdit");
-      if (pg) pg.classList.add("on");
-      await new Promise(r => setTimeout(r, 1400));
+    /* v4.96 — this used to reveal the shelf by hand: `.on` straight onto
+       #pgStudio, both suite cards visible in the one page view. That page is
+       gone, and hand-revealing #pgMeitu shows an EMPTY page: the shared #stCols
+       block and the suite cards only leave #stDock inside stMountSuite(), which
+       is reached through switchPage(). So each shelf is now measured while its
+       own page is the mounted one — same rows, same numbers, two visits.
 
-      const rows = ["muPresetRow", "evPresetRow"];
-      out.rows = rows.map(id => {
-        const h = document.getElementById(id);
-        if (!h) return { id, cards: 0 };
-        const cards = Array.from(h.querySelectorAll(".pcard"));
-        const cv = cards.length ? cards[0].querySelector("canvas") : null;
-        const r = cv ? cv.getBoundingClientRect() : null;
-        return {
-          id, cards: cards.length,
-          backing: cv ? cv.width + "x" + cv.height : null,
-          cssBox: r ? Math.round(r.width) + "x" + Math.round(r.height) : null
-        };
-      });
+       Meitu is visited FIRST on purpose. stArtWatch arms its IntersectionObserver
+       on stActivePage(), which is #pgMeitu on fresh storage, so that visit is
+       what wakes the look art and the sample photo the tiles are painted from.
+       Land on Evoto without it and both shelves stay on the gradient placeholder
+       — smooth by construction, so C and D would be measuring nothing. */
+    const measureRow = id => {
+      const h = document.getElementById(id);
+      if (!h) return { id, cards: 0 };
+      const cards = Array.from(h.querySelectorAll(".pcard"));
+      const cv = cards.length ? cards[0].querySelector("canvas") : null;
+      const r = cv ? cv.getBoundingClientRect() : null;
+      return {
+        id, cards: cards.length,
+        backing: cv ? cv.width + "x" + cv.height : null,
+        cssBox: r ? Math.round(r.width) + "x" + Math.round(r.height) : null
+      };
+    };
+    const showSuite = async pageId => {
+      await page.evaluate(p => { switchPage(p); window.scrollTo(0, 0); }, pageId);
+      await page.waitForTimeout(1400);
+    };
+    await showSuite("pgMeitu");
+    const muRow = await page.evaluate(measureRow, "muPresetRow");
+    await showSuite("pgEvoto");
+    const evRow = await page.evaluate(measureRow, "evPresetRow");
+
+    /* the pixel work below is all Evoto tiles (Soft Film vs Natural Pro), so it
+       runs while #pgEvoto is the mounted page */
+    byDpr[dpr] = await page.evaluate(rows => {
+      const out = { dpr: devicePixelRatio, rows };
 
       /* Find the tiles by their label so this does not silently measure the
          wrong look if the shelf is ever reordered. */
@@ -133,7 +157,7 @@ report("E2) the tile DPR is clamped, so a 4x display cannot quadruple the paint 
         out.grainDelta = +meanAbs(pixels(soft), pixels(clean)).toFixed(3);
       }
       return out;
-    });
+    }, [muRow, evRow]);
     await ctx.close();
   }
 
