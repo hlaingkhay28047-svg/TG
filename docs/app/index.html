@@ -3475,6 +3475,14 @@ function switchPage(id, fromPop){
   id=stNormalizePage(id);
   if(ST_SUITE_PAGE[id]) stMountSuite(id);
   if(typeof stSyncSuiteChips==="function") setTimeout(stSyncSuiteChips,0);
+  /* v5.0 — Path's Studio source mirrors the Meitu/Evoto queue, which the owner
+     edits on another page. Entering Path has to re-read it, or the panel and
+     the prompt preview keep describing whatever the queue held last time —
+     "no tool is set yet" printed over a suite with six tools queued. */
+  if(id==="pgPath" && typeof ptSync==="function" && typeof PT!=="undefined" && !PT.busy
+     && state.pt && state.pt.wf===PT_SRC_STUDIO){
+    setTimeout(function(){ try{ ptSync(); }catch(e){} },0);
+  }
   /* v4.30: a setInterval that outlives its panel is how a static PWA quietly
      burns a user's data plan — the payment poll dies the moment Setup is left */
   if(id!=="pgHome" && typeof accPollStop==="function"){ try{ accPollStop(); }catch(e){} }
@@ -3511,6 +3519,12 @@ window.addEventListener("popstate", function(ev){
   if(wx){ wx.click(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
   var sheet=$("ptSheet");
   if(sheet && sheet.className.indexOf("on")>=0 && typeof ptCloseSheet==="function"){ ptCloseSheet(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
+  /* v5.0 — the workflow picker is the third full-screen overlay and it also
+     sets body{overflow:hidden}. Without this, Android Back hid the sheet with
+     the page and left every page the customer landed on afterwards unable to
+     scroll, with nothing on screen to explain it. */
+  var wfs=$("ptWfSheet");
+  if(wfs && wfs.className.indexOf("on")>=0 && typeof ptCloseWfSheet==="function"){ ptCloseWfSheet(); try{ history.pushState({pg:curPage},""); }catch(e){} return; }
   var pg=ev.state&&ev.state.pg;
   if(pg && $(pg)) switchPage(pg, true);
 });
@@ -8698,22 +8712,36 @@ function ptStudioLocal(){
   for(k in d1) if((state.st.t1[k]||0)!==d1[k]) return true;
   for(k in d2){ if(k==="finish") continue; if((state.st.t2[k]||0)!==0) return true; }
   if(state.st.t2.finish && state.st.t2.finishV) return true;
+  /* the GHOST contributions — Meitu's Filter Library, Auto Beautify, Evoto's
+     Camera Sim — never touch state.st.t1/t2. They live in ST.g1/ST.g2 and are
+     folded in by stEffT1/stEffT2, which is why the Studio page's own preview
+     shows them. Reading only the base keys made a batch silently drop the
+     filter the owner had just watched warm up the photo. */
+  for(k in (ST.g1||{})) if(ST.g1[k]) return true;
+  for(k in (ST.g2||{})) if(ST.g2[k]) return true;
   try{ return (typeof stPipeDirty==="function") ? !!stPipeDirty() : false; }catch(e){ return false; }
 }
 function ptStudioPend(){ return (state.st && state.st.pend) ? state.st.pend : []; }
 /* Studio's own run bakes the local edits into the photo and THEN sends the AI
    prompt. A batch that sent only the prompt would deliver something the Studio
    page never would, so every photo gets the same bake first. */
+/* resolves {du, ok}. ok===false means the grade could NOT be applied and the
+   untouched original is being handed back — the same contract ptBake has had
+   since v4.55, and for the same reason: a batch that silently sends ungraded
+   originals down a Studio prompt looks exactly like one that worked. */
 function ptStudioBake(photo){
   return new Promise(function(res){
-    if(!ptStudioLocal()) return res(photo.srcDataUrl);
+    if(!ptStudioLocal()) return res({du:photo.srcDataUrl, ok:true});
     var img=new Image();
-    img.onerror=function(){ res(photo.srcDataUrl); };
+    img.onerror=function(){ res({du:photo.srcDataUrl, ok:false}); };
     img.onload=function(){
       try{
-        var cv=stApplyRecipeTo(img, {t1:state.st.t1, t2:state.st.t2, v:state.st.v}, 2048);
-        res(cv.toDataURL("image/jpeg",0.92));
-      }catch(e){ res(photo.srcDataUrl); }
+        /* stApplyRecipeTo CLEARS ST.g1/ST.g2 for the call, so the ghosts have
+           to be folded in before it is handed the recipe — otherwise the
+           filter the Studio page baked in is the one thing the batch drops. */
+        var cv=stApplyRecipeTo(img, {t1:stEffT1(), t2:stEffT2(), v:state.st.v}, 2048);
+        res({du:cv.toDataURL("image/jpeg",0.92), ok:true});
+      }catch(e){ res({du:photo.srcDataUrl, ok:false}); }
     };
     img.src=photo.srcDataUrl;
   });
@@ -8725,21 +8753,49 @@ function ptWfNeedsRef(){
   var wf=ptWfActive();
   return !!(wf && wf.reqN>=2);
 }
+var PT_BUSY_L={my:"Batch လုပ်နေဆဲပါ — ရပ်ပြီးမှ source ပြောင်းပါ",en:"A batch is running — stop it before changing the source",shn:"Batch ႁဵတ်းယူႇ — ၵိုတ်းသေ လႅၵ်ႈ source",kac:"Batch shakut nga ai — jahkring nna galai u",th:"กำลังรันชุดอยู่ — หยุดก่อนเปลี่ยนแหล่ง",zh:"批处理进行中 — 请先停止再更换来源",vi:"Đang chạy lô — hãy dừng trước khi đổi nguồn",id:"Batch sedang berjalan — hentikan sebelum mengganti sumber",ms:"Kumpulan sedang berjalan — hentikan sebelum menukar sumber"};
+/* Changing the source mid-run would charge the REST of a confirmed queue to
+   something the customer never agreed to: ptRunAll takes consent once, before
+   the loop, but ptDoGenerateOne re-reads the mode on every photo. Every
+   in-page control was already busy-guarded; the guard belongs HERE, because
+   the three new entry points live on OTHER pages and switchPage has no lock. */
 function ptSetWorkflow(id){
+  if(PT.busy){ toast(L9(PT_BUSY_L),"err"); return false; }
+  var was=state.pt.wf||"";
   state.pt.wf=id||"";
-  /* per-photo look overrides describe a look; they mean nothing to a
-     workflow and would reappear the moment the user switched back */
   if(id) PT.photos.forEach(function(p){ p.lookOverride=null; });
   ptSync();
+  return true;
+}
+/* A finished photo is finished FOR THE SOURCE THAT MADE IT. Stamping which
+   source produced each result is what lets Run know a re-pointed album has not
+   been through the NEW source, without touching p.status — the first cut of
+   this release re-queued every done photo instead, which quietly orphaned a
+   finished hundred-photo run: ZIP, download-all, the contact sheet and the
+   per-photo compare all filter on status==="done", so tapping a source chip to
+   see what another one looked like made the results undownloadable. */
+function ptSrcKey(){
+  var m=ptSrcMode();
+  return m==="wf" ? ("wf:"+(state.pt.wf||"")) : m;
+}
+function ptPending(){
+  var k=ptSrcKey();
+  return PT.photos.filter(function(p){ return p.status!=="done" || p.doneSrc!==k; });
 }
 /* the hand-off every workflow card and the wizard call */
 window._ptUseWorkflow=function(id){
   if(typeof window._wfBatchInfo==="function" && !window._wfBatchInfo(id)) return;
-  ptSetWorkflow(id);
+  if(!ptSetWorkflow(id)) return;
   switchPage("pgPath");
   var box=$("ptWfBox");
   if(box) setTimeout(function(){ try{ box.scrollIntoView({block:"center"}); }catch(e){} },60);
 };
+/* The Path wiring's ptSync() runs before state.st exists, so a customer who
+   left Path in Studio mode gets an empty prompt preview and an empty tool list
+   on that first paint. Called once at the end of boot, when the suite is up. */
+function ptBootSyncStudio(){
+  try{ if(state.pt && state.pt.wf===PT_SRC_STUDIO && state.st && state.st.t2) ptSync(); }catch(e){}
+}
 /* v4.45 — look strength: one dial scales the whole grade (50% = half the
    look, 125% = pushed). The free preview, the free bake AND the AI prompt
    all read it, so what you see is what every path delivers. */
@@ -8768,9 +8824,19 @@ function ptBuildPrompt(photo){
      The only thing Path adds is the user's own extra line. */
   var mode=ptSrcMode();
   if(mode==="studio"){
+    /* The Path wiring's own ptSync() runs 55 lines BEFORE state.st is created,
+       and a customer who left Path in Studio mode restores that mode from
+       localStorage — so this branch really is reachable before the Studio
+       module exists. Without this guard stT2Fragments() reads state.st.t2 of
+       undefined, and because this is top-level code in a single <script>,
+       everything after it — state.st itself, the whole Meitu/Evoto module,
+       Video, Text-to-Image, APP_VER, the service worker — never runs. The app
+       boots into a dead shell with nothing on screen to say why.
+       ptBootSyncStudio() below re-syncs once the module is up. */
+    if(!state.st || !state.st.t2 || typeof stComposePrompt!=="function") return "";
     /* the exact text btnStGen sends, so a batch of a hundred is a hundred
        repeats of the Studio run the owner just previewed */
-    var sp=(typeof stComposePrompt==="function") ? stComposePrompt() : "";
+    var sp=stComposePrompt();
     var scu=(state.pt.custom||"").trim();
     return scu ? (sp+"\n\n"+scu) : sp;
   }
@@ -8811,7 +8877,8 @@ function ptRenderCount(){
   $("ptOutCard").style.display=c.total?"":"none";
   $("ptRunCard").style.display=c.total?"":"none";
   var run=$("btnPtRun");
-  setIcnText(run,"i-stack",t("pt_run")+" ("+String(c.total-c.done)+")");
+  /* count what THIS source still owes, not what has never been run at all */
+  setIcnText(run,"i-stack",t("pt_run")+" ("+String(ptPending().length)+")");
   var re=$("btnPtRetryErr");
   if(re){
     re.style.display=c.error?"":"none";
@@ -8824,10 +8891,14 @@ function ptFilterFor(photo){
   /* a finished AI result is shown as the model returned it — never
      double-graded with the CSS recipe that only described the request */
   if(photo.status==="done" && photo.outB64) return "";
-  /* v5.0 — a Smart Workflow has no CSS equivalent, so there is nothing
-     honest to preview. Tinting the thumbnails with whatever look happened to
-     be selected last would promise a grade the run will never apply. */
-  if(ptWfActive()) return "";
+  /* v5.0 — neither a Smart Workflow nor the Meitu/Evoto suite has a CSS
+     equivalent, so there is nothing honest to preview. Tinting the thumbnails
+     with whatever look happened to be selected last would promise a grade the
+     run will never apply — and the page says in words, right above the grid,
+     that it cannot preview these modes.
+     This tests the MODE, not ptWfActive(): that returns null for "@studio" too,
+     so guarding on it left Studio mode painting the leftover look. */
+  if(ptSrcMode()!=="look") return "";
   return stCssFilter(ptScaledT1(ptLookOf(photo)));
 }
 function ptRenderGrid(){
@@ -8916,6 +8987,10 @@ function ptRenderMultiBar(){
         fn:function(){ PT.photos=PT.photos.concat(removed); ptSync(); } });
   };
   host.appendChild(rm);
+  /* v5.0 — look-mode only. In the other two sources this chip changed nothing
+     in the run and still toasted success; a control that cannot act is hidden,
+     never rendered inert (and never rendered lying). */
+  if(ptSrcMode()!=="look") return;
   var lk=el("button","chip");
   setIcnText(lk,"i-palette",L9({my:"လက်ရှိ look တပ်မယ်",en:"Apply current look"}));
   lk.onclick=function(){
@@ -9019,7 +9094,7 @@ function ptRenderRail(){
    reference label on every sync and must never paint an "undefined" pill. */
 var PT_AI_PILL='<span class="pt-ai">AI</span>';
 var PT_SRC_L={
-  look:{my:"Studio Look",en:"Studio look",shn:"Studio Look",kac:"Studio Look",th:"ลุค Studio",zh:"Studio 风格",vi:"Look Studio",id:"Look Studio",ms:"Gaya Studio"},
+  look:{my:"Studio Look (အရောင်)",en:"Studio look",shn:"Look Studio (သီ)",kac:"Studio Look (nsam)",th:"ลุค Studio",zh:"Studio 风格",vi:"Look Studio",id:"Look Studio",ms:"Gaya Studio"},
   wf:{my:"Smart Workflow",en:"Smart Workflow",shn:"Smart Workflow",kac:"Smart Workflow",th:"Smart Workflow",zh:"Smart Workflow",vi:"Smart Workflow",id:"Smart Workflow",ms:"Smart Workflow"},
   pick:{my:"Workflow ရွေးမယ်",en:"Choose a workflow",shn:"လိူၵ်ႈ Workflow",kac:"Workflow lata u",th:"เลือกเวิร์กโฟลว์",zh:"选择工作流",vi:"Chọn workflow",id:"Pilih workflow",ms:"Pilih aliran kerja"},
   change:{my:"တခြား Workflow ပြောင်းမယ်",en:"Change workflow",shn:"လႅၵ်ႈ Workflow",kac:"Workflow galai u",th:"เปลี่ยนเวิร์กโฟลว์",zh:"更换工作流",vi:"Đổi workflow",id:"Ganti workflow",ms:"Tukar aliran kerja"},
@@ -9039,6 +9114,9 @@ var PT_SRC_L={
   stlocal:{my:"Grade + အသားအရေ (ပုံတိုင်းမှာ ကြိုပေါင်းပေးမယ်)",en:"Grade + skin (baked into every photo first)",shn:"Grade + ၼင်ႇ (သႂ်ႇၵူႈၶႅပ်းဢွၼ်တၢင်း)",kac:"Grade + hpyi (sumla shagu hta shawng bang na)",th:"เกรด + ผิว (อบลงทุกรูปก่อน)",zh:"调色 + 皮肤（先烘焙进每张照片）",vi:"Grade + da (nướng vào từng ảnh trước)",id:"Grade + kulit (dipanggang ke setiap foto dulu)",ms:"Gred + kulit (dibakar ke setiap foto dahulu)"},
   stopen:{my:"Meitu / Evoto ဖွင့်ပြီး ချိန်မယ်",en:"Open Meitu / Evoto to set the tools",shn:"ပိုတ်ႇ Meitu / Evoto သေ ႁၢင်ႈႁႅၼ်း",kac:"Meitu / Evoto hpaw nna hkyen u",th:"เปิด Meitu / Evoto เพื่อตั้งเครื่องมือ",zh:"打开 Meitu / Evoto 设置工具",vi:"Mở Meitu / Evoto để đặt công cụ",id:"Buka Meitu / Evoto untuk mengatur alat",ms:"Buka Meitu / Evoto untuk menetapkan alat"},
   stneed:{my:"⚠ Meitu / Evoto မှာ AI tool အနည်းဆုံး တစ်ခု ချိန်ပြီးမှ Run လုပ်လို့ရမယ်",en:"⚠ Set at least one Meitu / Evoto AI tool before running",shn:"⚠ ႁၢင်ႈႁႅၼ်း AI tool ဢၼ်ၼိုင်ႈဢွၼ်တၢင်း",kac:"⚠ Meitu / Evoto AI tool langai mi shawng hkyen u",th:"⚠ ตั้งเครื่องมือ AI ของ Meitu / Evoto อย่างน้อยหนึ่งรายการก่อนรัน",zh:"⚠ 请先在 Meitu / Evoto 设置至少一项 AI 工具",vi:"⚠ Hãy đặt ít nhất một công cụ AI Meitu / Evoto trước khi chạy",id:"⚠ Atur setidaknya satu alat AI Meitu / Evoto sebelum menjalankan",ms:"⚠ Tetapkan sekurang-kurangnya satu alat AI Meitu / Evoto sebelum menjalankan"},
+  bakefail:{my:"⚠ Grade မတင်နိုင်ခဲ့ — မူရင်းပုံအတိုင်း AI ဆီ ပို့လိုက်ပါတယ်",en:"⚠ The local grade failed — the untouched original was sent to the AI",shn:"⚠ Grade ဢမ်ႇလႆႈ — သူင်ႇၶွင်ႁင်းၵဝ်ႇၵႂႃႇ",kac:"⚠ Grade n lu ai — shawng na sumla hpe sa kau sai",th:"⚠ เกรดในเครื่องล้มเหลว — ส่งภาพต้นฉบับไปให้ AI",zh:"⚠ 本地调色失败 — 已把未处理的原图送去 AI",vi:"⚠ Grade cục bộ thất bại — đã gửi ảnh gốc cho AI",id:"⚠ Grade lokal gagal — foto asli dikirim ke AI",ms:"⚠ Gred setempat gagal — foto asal dihantar ke AI"},
+  hero2a:{my:"ဓာတ်ပုံအားလုံးကို",en:"Your whole album, through",shn:"ၶႅပ်းႁၢင်ႈတင်းမူတ်း",kac:"Sumla yawng hpe",th:"ทั้งอัลบั้มของคุณ ผ่าน",zh:"整本相册，用",vi:"Cả album của bạn, qua",id:"Seluruh album Anda, lewat",ms:"Seluruh album anda, melalui"},
+  hero2b:{my:"နဲ့ တစ်ပြိုင်နက် လုပ်မယ်",en:"— all at once",shn:"ႁဵတ်းပေႃးၵမ်းလဵဝ်",kac:"kalang ta galaw na",th:"— ในครั้งเดียว",zh:"一次全部处理",vi:"— tất cả cùng lúc",id:"— sekaligus",ms:"— serentak"},
   intro2:{my:"ပုံ {N} အထိ တစ်ခါတည်းထည့် → {S} ရွေး → ပုံအားလုံးကို တစ်ပုံချင်း Run",en:"Add up to {N} photos → pick {S} → run every photo through it, one by one",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈထိုင် {N} → လိူၵ်ႈ {S} → ႁဵတ်းၵူႈၶႅပ်း",kac:"Sumla {N} du hkra bang u → {S} lata u → sumla shagu hpe langai hpang langai galaw u",th:"เพิ่มรูปได้ถึง {N} รูป → เลือก {S} → รันทุกรูปทีละรูป",zh:"最多添加 {N} 张照片 → 选择 {S} → 逐张运行",vi:"Thêm tối đa {N} ảnh → chọn {S} → chạy từng ảnh",id:"Tambahkan hingga {N} foto → pilih {S} → jalankan satu per satu",ms:"Tambah sehingga {N} foto → pilih {S} → jalankan satu demi satu"}
 };
 function ptRenderSrc(){
@@ -9064,10 +9142,25 @@ function ptRenderSrc(){
   $("ptStBox").style.display  = mode==="studio" ? "" : "none";
   $("ptLookBox").style.display= mode==="look" ? "" : "none";
   var fxOnly=$("ptFxLookOnly"); if(fxOnly) fxOnly.style.display = mode==="look" ? "" : "none";
-  /* Studio mode's IMAGE 2 is Studio's own style reference, set on the
-     Meitu/Evoto page — Path's backdrop picker would be a second, conflicting
-     answer to the same slot, so it steps aside rather than sitting there inert */
-  var refBox=$("ptRefBox"); if(refBox) refBox.style.display = mode==="studio" ? "none" : "";
+  /* Who owns IMAGE 2 in each mode. Studio mode's is Studio's own style
+     reference, set on the Meitu/Evoto page — Path's backdrop picker would be a
+     second, conflicting answer to the same slot. And a workflow that declares
+     only IMAGE 1 has no second slot at all: ptDoGenerateOne now nulls it, so
+     leaving the picker on screen would offer a control whose photo is dropped. */
+  var refBox=$("ptRefBox");
+  if(refBox){
+    var refUsable = mode==="look" || (mode==="wf" && wf && (wf.reqN + wf.opt.length) >= 2);
+    refBox.style.display = refUsable ? "" : "none";
+    /* Wrapping these controls in #ptRefBox made #ptLbRef the first element
+       child of its parent, so `.subh:first-child{margin-top:0}` started
+       winning over `.subh{margin-top:var(--sp-3)}` — measured 0px between the
+       Extras chips and the REFERENCE heading where every sibling heading gets
+       12px, so the reference block read as part of the Extras group. The zero
+       is CORRECT in the other modes, where #ptFxLookOnly is hidden and this
+       really is the first thing in the accordion, so the break is restored on
+       the wrapper only when there is a section above it to break from. */
+    refBox.style.marginTop = (mode==="look") ? "var(--sp-3)" : "";
+  }
   /* the free bake paints the LOOK's CSS recipe onto the album — there is no
      such recipe for a workflow, so the button is withdrawn rather than left
      to silently export un-graded copies */
@@ -9087,10 +9180,16 @@ function ptRenderSrc(){
     var need=$("ptWfSelNeed");
     if(wf.reqN>=2) need.textContent = PT.ref ? L9(PT_SRC_L.need2) : L9(PT_SRC_L.need2missing);
     else need.textContent = L9(PT_SRC_L.need1);
-    /* the IMAGE 2 slot lives inside a collapsed accordion. A workflow that
-       cannot run without it must not hide the only control that satisfies it. */
+    /* The IMAGE 2 slot lives inside a collapsed accordion, and a workflow that
+       cannot run without it must not hide the only control that satisfies it.
+       Once per SELECTION, though — reopening on every ptSync meant the owner
+       could not collapse it, because typing one character in the custom box
+       sprang it open again on the next keystroke. */
     var fxg=$("ptGrpFx");
-    if(wf.reqN>=2 && !PT.ref && fxg && fxg.className.indexOf("open")<0) fxg.className="grp open";
+    if(wf.reqN>=2 && !PT.ref && fxg && ptRenderSrc._opened!==wf.id){
+      ptRenderSrc._opened=wf.id;
+      if(fxg.className.indexOf("open")<0) fxg.className="grp open";
+    }
   }
   /* ---- Studio mode: name exactly which suite controls are queued ---- */
   if(mode==="studio"){
@@ -9110,6 +9209,21 @@ function ptRenderSrc(){
   if(h2) h2.innerHTML=icn("i-palette","ic-h2")+escH(headWord);
   var fn=$("ptFreeNote");
   if(fn) fn.textContent = mode==="look" ? t("pt_free_note") : L9(PT_SRC_L.nofree);
+  /* The hero is the largest, first-read sentence on the page. Left at "one
+     look, applied to your whole album" while the H2 directly under it read
+     "Smart Workflow", the page contradicted itself at a glance. In look mode
+     it stays exactly what the i18n table set (ph_path); in the other two it
+     names the source that is actually driving the run. */
+  var hero=$("phPath");
+  if(hero){
+    /* read the i18n table rather than snapshotting the element: applyLang()
+       rewrites #phPath from ph_path and can run more than once (account boot),
+       so a snapshot could freeze whichever language happened to be up first */
+    if(mode==="look"){ hero.innerHTML=t("ph_path"); }
+    else hero.innerHTML = escH(L9(PT_SRC_L.hero2a)) + " <em>" + escH(headWord) + "</em> " + escH(L9(PT_SRC_L.hero2b));
+  }
+  var kick=document.querySelector("#pgPath .ph-kick");
+  if(kick) kick.textContent = mode==="look" ? "BATCH LOOKS" : (mode==="wf" ? "BATCH WORKFLOW" : "BATCH STUDIO");
   /* the page's own one-line description promises "pick one look"; in the other
      two modes that is the wrong sentence about the wrong control */
   var intro=$("ptIntro");
@@ -9283,7 +9397,7 @@ function ptIngestDataUrls(list){
       id:"pt"+(++PT.seq),
       name:String(list[i].name||("photo-"+(PT.photos.length+1))),
       srcDataUrl:list[i].dataUrl,
-      outB64:null, outMime:null, status:"queued", err:"", lookOverride:null
+      outB64:null, outMime:null, status:"queued", err:"", lookOverride:null, doneSrc:null
     });
     added++;
   }
@@ -9396,6 +9510,8 @@ function ptSetBusy(b, label){
   $("btnPtWfPick").disabled=!!b;
   $("btnPtWfClear").disabled=!!b;
   $("btnPtStOpen").disabled=!!b;
+  $("btnPtRef").disabled=!!b;
+  $("btnPtRefClear").disabled=!!b;
   document.querySelectorAll("#ptLookRail .pcard, #ptSrcChips .chip, #ptTierChips .chip, #ptBlurChips .chip, #ptFgChips .chip, #ptFrameChips .chip, #ptToggleChips .chip").forEach(function(c){ c.disabled=!!b; });
   /* un-busying must NOT blanket-enable: the HD tier chip is key-gated and has
      to stay disabled when RunningHub upscale-pro is not configured, otherwise
@@ -9436,6 +9552,26 @@ function ptEta(){
    engine settings on the shared selects for exactly this call, then put every
    borrowed control back in finally — Freeform must look untouched afterward. */
 async function ptDoGenerateOne(photo){
+  /* The mode is read ONCE, here. ptSetWorkflow is busy-guarded so it cannot
+     change under a run, but reading it three times across an await was a
+     latent way for one photo to be Studio-baked and sent with a workflow's
+     prompt — one read makes that impossible by construction. */
+  var mode=ptSrcMode();
+  /* v5.0 — Studio mode bakes the local half of the edit into this photo first,
+     exactly as btnStGen does for its one photo, so the batch and the Studio
+     page deliver the same thing. This runs BEFORE the shared selects are
+     hijacked: it is the one await in this function that is not inside the
+     try/finally, and a rejection here used to unwind leaving #selModel,
+     #selQual, #selSize, #selRatio and #selCount forced — silently, because
+     ptRunAll catches and carries on, so Freeform would quietly bill 2K/high
+     on the customer's next tap. */
+  var srcDu = photo.srcDataUrl;
+  if(mode==="studio"){
+    var bk=await ptStudioBake(photo);
+    srcDu=bk.du;
+    /* say so rather than billing for an ungraded original that looks fine */
+    if(!bk.ok) ptLog(L9(PT_SRC_L.bakefail)+" — "+photo.name);
+  }
   var s=$("selModel"), q=$("selQual"), r=$("selRatio"), c=$("selCount"), z=$("selSize");
   var sv={m:genGeminiModel(),q:q.value,r:r.value,c:c.value,z:z.value};
   var savedPrompt=$("prompt").value;
@@ -9446,10 +9582,6 @@ async function ptDoGenerateOne(photo){
   z.value = tier==="fast" ? "" : "2K";
   r.value=""; /* original framing is sacred in a batch look pass */
   c.value="1"; /* deterministic per-photo count + cost honesty */
-  /* v5.0 — Studio mode bakes the local half of the edit into this photo first,
-     exactly as btnStGen does for its one photo, so the batch and the Studio
-     page deliver the same thing. */
-  var srcDu = (ptSrcMode()==="studio") ? await ptStudioBake(photo) : photo.srcDataUrl;
   var m=String(srcDu).match(/^data:([^;]+);base64,(.+)$/);
   state.refs[0]= m ? {mime:m[1],b64:m[2],label:photo.name} : null;
   state.refs[1]= PT.ref || null;   /* the optional reference backdrop = IMAGE 2 */
@@ -9457,9 +9589,17 @@ async function ptDoGenerateOne(photo){
   /* v5.0 — in workflow mode the slots carry the workflow's OWN role labels,
      exactly as runWizGenerate sets them, so the dispatcher writes the same
      "IMAGE n = <role>" lines a single wizard run would. */
-  var wfRun=ptWfActive();
-  state.imgRoles = wfRun ? wfRun.req.concat(wfRun.opt) : null;
-  if(ptSrcMode()==="studio"){
+  var wfRun=(mode==="wf") ? ptWfActive() : null;
+  if(wfRun){
+    /* and the same null-out runWizGenerate does: a workflow that declares one
+       input must not receive a second image. Without this, a backdrop left
+       over from look mode rode along on all hundred calls as an undeclared
+       IMAGE 2 that the card's own prompt never mentions. */
+    var slots=wfRun.reqN + wfRun.opt.length;
+    for(var ri=slots; ri<state.refs.length; ri++) state.refs[ri]=null;
+    state.imgRoles=wfRun.req.concat(wfRun.opt);
+  } else state.imgRoles=null;
+  if(mode==="studio"){
     /* and in Studio mode IMAGE 2 is Studio's own style reference, on the same
        terms btnStGen sends it — never Path's backdrop */
     var stRef = (typeof stUsesRefActive==="function" && stUsesRefActive()) ? state.st.refX : null;
@@ -9522,27 +9662,33 @@ function ptProgress(done,total){
 var PT_COST_ASK=10;
 function ptCostOk(n){
   if(n<PT_COST_ASK) return true;
+  /* the HD tier chases every result with a RunningHub upscale (ptHdFinish), so
+     the honest number is two calls a photo, not one — quoting 100 for a run
+     that issues 200 is exactly the lie this confirm exists to prevent */
+  var hd = state.pt.tier==="hd" && gateAllows("hd_finish") && state.rhKey && rhIsConfigured("upscale-pro");
+  var calls = hd ? n*2 : n;
   var wf=ptWfActive();
   var what=wf ? wf.title
          : ptSrcMode()==="studio" ? L9(PT_SRC_L.studio)
          : L9(PT_LOOKS[state.pt.look] ? PT_LOOKS[state.pt.look].name : PT_SRC_L.look);
+  var per = hd ? "2" : "1";
   return confirm(L9({
-    my:"ဓာတ်ပုံ "+n+" ပုံကို “"+what+"” နဲ့ ထုတ်ပါမယ်။\n\nပုံတစ်ပုံ = API ခေါ်ဆိုမှု တစ်ကြိမ် — စုစုပေါင်း "+n+" ကြိမ် ကုန်ကျပါမယ်။ ဆက်လုပ်မလား?",
-    en:"About to run "+n+" photos through “"+what+"”.\n\nOne photo = one API call, so this run costs "+n+" calls. Continue?",
-    shn:"တေႁဵတ်း ၶႅပ်းႁၢင်ႈ "+n+" ဢၼ် လူၺ်ႈ “"+what+"”။\n\nၶႅပ်းၼိုင်ႈ = API ပွၵ်ႈၼိုင်ႈ — တင်းမူတ်း "+n+" ပွၵ်ႈ။ သိုပ်ႇႁဵတ်းႁိုဝ်?",
-    kac:"Sumla "+n+" hpe “"+what+"” hte shapraw na.\n\nSumla langai = API shaga langai — yawng "+n+" lang re. Matut na i?",
-    th:"กำลังจะประมวลผล "+n+" รูปด้วย “"+what+"”\n\n1 รูป = 1 การเรียก API รวม "+n+" ครั้ง ดำเนินการต่อหรือไม่?",
-    zh:"即将用“"+what+"”处理 "+n+" 张照片。\n\n一张照片 = 一次 API 调用，本次共 "+n+" 次。是否继续？",
-    vi:"Sắp chạy "+n+" ảnh qua “"+what+"”.\n\nMột ảnh = một lần gọi API, tổng cộng "+n+" lần. Tiếp tục?",
-    id:"Akan memproses "+n+" foto dengan “"+what+"”.\n\nSatu foto = satu panggilan API, total "+n+" panggilan. Lanjutkan?",
-    ms:"Akan memproses "+n+" foto dengan “"+what+"”.\n\nSatu foto = satu panggilan API, jumlah "+n+" panggilan. Teruskan?"
+    my:"ဓာတ်ပုံ "+n+" ပုံကို “"+what+"” နဲ့ ထုတ်ပါမယ်။\n\nပုံတစ်ပုံ = API ခေါ်ဆိုမှု "+per+" ကြိမ်"+(hd?" (HD upscale ပါ)":"")+" — စုစုပေါင်း "+calls+" ကြိမ် ကုန်ကျပါမယ်။ ဆက်လုပ်မလား?",
+    en:"About to run "+n+" photos through “"+what+"”.\n\nOne photo = "+per+" API call"+(hd?"s (the HD upscale is the second)":"")+", so this run costs "+calls+" calls. Continue?",
+    shn:"တေႁဵတ်း ၶႅပ်းႁၢင်ႈ "+n+" ဢၼ် လူၺ်ႈ “"+what+"”။\n\nၶႅပ်းၼိုင်ႈ = API "+per+" ပွၵ်ႈ — တင်းမူတ်း "+calls+" ပွၵ်ႈ။ သိုပ်ႇႁဵတ်းႁိုဝ်?",
+    kac:"Sumla "+n+" hpe “"+what+"” hte shapraw na.\n\nSumla langai = API shaga "+per+" — yawng "+calls+" lang re. Matut na i?",
+    th:"กำลังจะประมวลผล "+n+" รูปด้วย “"+what+"”\n\n1 รูป = "+per+" การเรียก API รวม "+calls+" ครั้ง ดำเนินการต่อหรือไม่?",
+    zh:"即将用“"+what+"”处理 "+n+" 张照片。\n\n一张照片 = "+per+" 次 API 调用，本次共 "+calls+" 次。是否继续？",
+    vi:"Sắp chạy "+n+" ảnh qua “"+what+"”.\n\nMột ảnh = "+per+" lần gọi API, tổng cộng "+calls+" lần. Tiếp tục?",
+    id:"Akan memproses "+n+" foto dengan “"+what+"”.\n\nSatu foto = "+per+" panggilan API, total "+calls+" panggilan. Lanjutkan?",
+    ms:"Akan memproses "+n+" foto dengan “"+what+"”.\n\nSatu foto = "+per+" panggilan API, jumlah "+calls+" panggilan. Teruskan?"
   }));
 }
 async function ptRunAll(only){
   if(rsBusy||PT.busy) return;
   var queue = Array.isArray(only) ? only.slice()
             : only ? [only]
-            : PT.photos.filter(function(p){ return p.status!=="done"; });
+            : ptPending();
   if(!queue.length){ toast(t("pt_need_photos"),"err"); return; }
   /* a 2-image workflow with no IMAGE 2 would send half a request for every
      photo in the queue — refuse before the first call, not after the last */
@@ -9589,7 +9735,7 @@ async function ptRunAll(only){
         if(state.pt.tier==="hd") await ptHdFinish();
         var out=state.hist[0];
         photo.outB64=out.b64; photo.outMime=out.mime;
-        photo.status="done"; okN++;
+        photo.status="done"; photo.doneSrc=ptSrcKey(); okN++;
         /* v4.46 — restore the pre-run history: this result is archived in
            PT.photos AND the Gallery, and a 30-photo batch used to evict every
            Create/Retouch result still being compared through the 8-cap */
@@ -9665,6 +9811,11 @@ function stApplyRecipeTo(img, recipe, maxDim){
    ZIP the studio downloads as "graded copies" could quietly contain un-graded
    originals with no way to tell which. Callers now know. */
 function ptBake(photo, cb){
+  /* v5.0 — the free canvas grade belongs to LOOK mode. In the two new modes
+     the look rail is hidden, so baking state.pt.look into an un-run photo put
+     a grade the batch will never apply onto the numbered contact sheet a
+     studio sends a bride as a proof. Hand back the original untouched. */
+  if(ptSrcMode()!=="look"){ cb(photo.srcDataUrl, true); return; }
   var look=ptLookOf(photo);
   /* any look carrying a full Studio recipe (My Grade or a pt_rc_ store slot)
      → real Studio pipeline (grade + makeup/skin + HSL zones), not the
@@ -10078,7 +10229,7 @@ function ptRenderSheet(){
      will ignore. Control honesty: hide it, don't render it inert. */
   var srail=$("ptSheetRail"), swrap=srail?srail.parentNode:null;
   var lbl=$("ptSheetLookLb");
-  if(ptWfActive()){
+  if(ptSrcMode()!=="look"){
     if(swrap) swrap.style.display="none";
     if(lbl) lbl.style.display="none";
     if(srail) srail.innerHTML="";
@@ -10164,7 +10315,9 @@ $("ptWfSearch").oninput=function(){ ptRenderWfList(); };
 /* Studio mode has no picker of its own — the tools ARE the Meitu/Evoto page,
    so this jumps to whichever suite the owner used last (stNormalizePage). */
 $("btnPtStOpen").onclick=function(){ if(!PT.busy) switchPage("pgStudio"); };
-$("btnPtRef").onclick=function(){ $("ptRefPick").click(); };
+/* v5.0 — IMAGE 2 is checked once, before the loop, so removing or swapping it
+   mid-run would leave the guard protecting only the first photo of the batch. */
+$("btnPtRef").onclick=function(){ if(PT.busy){ toast(L9(PT_BUSY_L),"err"); return; } $("ptRefPick").click(); };
 $("ptRefPick").onchange=function(){
   var f=this.files && this.files[0];
   if(!f){ this.value=""; return; }
@@ -10179,7 +10332,7 @@ $("ptRefPick").onchange=function(){
   };
   rd.readAsDataURL(f);
 };
-$("btnPtRefClear").onclick=function(){ PT.ref=null; ptSync(); };
+$("btnPtRefClear").onclick=function(){ if(PT.busy){ toast(L9(PT_BUSY_L),"err"); return; } PT.ref=null; ptSync(); };
 $("ptCustom").oninput=function(){ state.pt.custom=this.value.slice(0,1200); ptSync(); };
 $("btnPtRun").onclick=function(){ return ptRunAll(null); };
 $("btnPtRetryErr").onclick=function(){
@@ -12302,7 +12455,7 @@ function stRenderPend(){
     if(!bth){
       bth=el("button","chip"); bth.id="stToBatch";
       clr.parentNode.insertBefore(bth, clr.nextSibling);
-      bth.onclick=function(){ ptSetWorkflow(PT_SRC_STUDIO); switchPage("pgPath"); };
+      bth.onclick=function(){ if(ptSetWorkflow(PT_SRC_STUDIO)) switchPage("pgPath"); };
     }
     bth.style.display=n?"":"none";
     if(n) setIcnText(bth,"i-stack", L9(WF_BATCH_L)+" ("+PT_MAX+")");
@@ -18940,7 +19093,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.0.0";
+var APP_VER="5.0.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -20887,4 +21040,9 @@ $("btnT2IToRef").onclick=function(){
   renderRefs();
   setSt("stT2IGen", L9({my:"ရလဒ်ကို IMAGE 1 ထဲ ထည့်ပြီး ✓ — Create page က ဆက် edit လို့ရပြီ",en:"Result loaded into IMAGE 1 ✓ — keep editing it on the Create page",shn:"ဢဝ်ၽွၼ်းသႂ်ႇ IMAGE 1 ယဝ်ႉ ✓",kac:"Ah kyu hpe IMAGE 1 kaw jaw sai ✓",th:"ใส่ผลลัพธ์ใน IMAGE 1 แล้ว ✓",zh:"结果已放入 IMAGE 1 ✓",vi:"Đã đưa kết quả vào IMAGE 1 ✓",id:"Hasil dimasukkan ke IMAGE 1 ✓",ms:"Hasil dimasukkan ke IMAGE 1 ✓"}), "ok");
 };
+/* v5.0 — last statement in the file on purpose: Path's Studio source reads the
+   Meitu/Evoto suite, and Path is wired long before that suite exists. This is
+   the one re-sync that gives a returning Studio-mode customer a real prompt
+   preview and a real tool list on the first paint instead of an empty one. */
+ptBootSyncStudio();
 </script>

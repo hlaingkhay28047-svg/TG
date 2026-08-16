@@ -529,6 +529,391 @@ report("B2) the workflow branch appends nothing but the user's own extra line",
     await page.evaluate(() => window._wfBatchList().every(w => w.id !== "@studio" && w.id.indexOf("@") < 0)),
     { sentinel: "@studio" });
 
+  /* ---- P) THE DEFECTS AN ADVERSARIAL REVIEW FOUND AFTER THIS FILE WAS GREEN
+     Every one of these is a real failure the first cut of v5.0 shipped with,
+     and every one slipped past the assertions above. They are kept as their own
+     block, in the order they were confirmed, so the reason each guard exists
+     stays attached to it. ---- */
+
+  /* P1 — the boot crash. J above reloads with a WORKFLOW id and passes; the
+     "@studio" sentinel takes a different branch of ptBuildPrompt, and that
+     branch reached stComposePrompt() -> state.st.t2 fifty-five lines before
+     state.st is created. Because this is top-level code in one <script>, the
+     throw killed state.st, the whole Meitu/Evoto module, Video, Text-to-Image,
+     APP_VER and the service worker. The app booted into a dead shell. */
+  const bootStudio = await (async () => {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const pp = await c.newPage();
+    const e2 = [];
+    pp.on("pageerror", e => e2.push(String(e).slice(0, 140)));
+    await pp.addInitScript(() => {
+      localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1");
+    });
+    await pp.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(2500);
+    await pp.evaluate(() => { ptSetWorkflow("@studio"); });
+    await pp.waitForTimeout(400);
+    e2.length = 0;
+    await pp.reload({ waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(2600);
+    const r = await pp.evaluate(async () => {
+      switchPage("pgPath");
+      await new Promise(r => setTimeout(r, 400));
+      return {
+        stExists: !!state.st, appVer: typeof APP_VER !== "undefined" ? APP_VER : null,
+        mode: ptSrcMode(),
+        stBox: getComputedStyle(document.getElementById("ptStBox")).display !== "none",
+      };
+    }).catch(err => ({ evalThrew: String(err).slice(0, 120) }));
+    await c.close();
+    return { errs: e2, ...r };
+  })();
+  report("P1) a customer who left Path in Studio mode still boots a live app",
+    bootStudio.errs.length === 0 && bootStudio.stExists === true &&
+    !!bootStudio.appVer && bootStudio.mode === "studio" && bootStudio.stBox === true,
+    bootStudio);
+
+  /* P2 — every look-mode guard tested ptWfActive(), which returns null for
+     "@studio" as well as for look mode. So Studio mode kept the free CSS
+     preview, the per-photo look rail and the look-baked contact sheet — while
+     the note directly above the grid said it could not preview. */
+  const studioHonesty = await page.evaluate(async () => {
+    const px = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+    if (!PT.photos.length) { ptIngestDataUrls([{ name: "p2.jpg", dataUrl: px }]); await new Promise(r => setTimeout(r, 300)); }
+    const shot = async (src) => {
+      ptSetWorkflow(src);
+      await new Promise(r => setTimeout(r, 250));
+      ptMulti.on = true; ptMulti.ids[PT.photos[0].id] = 1;
+      ptRenderGrid();
+      await new Promise(r => setTimeout(r, 150));
+      ptOpenSheet(0);
+      await new Promise(r => setTimeout(r, 250));
+      const im = document.querySelector("#ptGrid .pt-th img");
+      const railWrap = document.getElementById("ptSheetRail").parentNode;
+      const bakeSrc = await new Promise(res => ptBake(PT.photos[0], (du) => res(du)));
+      const out = {
+        filter: im ? getComputedStyle(im).filter : null,
+        rail: getComputedStyle(railWrap).display !== "none",
+        applyLook: Array.from(document.querySelectorAll("#ptMultiBar .chip"))
+          .some(c => /look/i.test(c.textContent) || /look/i.test(c.textContent)),
+        bakeIsOriginal: bakeSrc === PT.photos[0].srcDataUrl,
+      };
+      ptCloseSheet();
+      ptMulti.on = false; ptMulti.ids = {};
+      return out;
+    };
+    const studio = await shot("@studio");
+    const wf = await shot(window._wfBatchList()[0].id);
+    const look = await shot("");
+    ptRenderGrid();
+    return { studio, wf, look };
+  });
+  report("P2) Studio mode withdraws the same three look controls workflow mode does",
+    studioHonesty.studio.filter === "none" && studioHonesty.studio.rail === false &&
+    studioHonesty.studio.bakeIsOriginal === true &&
+    studioHonesty.wf.filter === "none" && studioHonesty.wf.rail === false &&
+    studioHonesty.wf.bakeIsOriginal === true &&
+    studioHonesty.look.filter !== "none" && studioHonesty.look.rail === true &&
+    studioHonesty.look.bakeIsOriginal === false,
+    studioHonesty);
+  report("P2b) and the multi-select \"apply current look\" chip is look-mode only",
+    studioHonesty.studio.applyLook === false && studioHonesty.wf.applyLook === false &&
+    studioHonesty.look.applyLook === true,
+    { studio: studioHonesty.studio.applyLook, wf: studioHonesty.wf.applyLook, look: studioHonesty.look.applyLook });
+
+  /* P3 — consent is taken once, before the loop, but the mode is read per
+     photo. The three new entry points live on OTHER pages, and switchPage has
+     no lock, so the corner button on a workflow card could re-point a running,
+     already-paid-for queue at a different card between photo 12 and photo 13. */
+  const midRun = await page.evaluate(async () => {
+    ptSetWorkflow("");
+    await new Promise(r => setTimeout(r, 150));
+    const before = state.pt.wf;
+    PT.busy = true;                       /* stand in for a run in flight */
+    const viaCard = ptSetWorkflow(window._wfBatchList()[0].id);
+    const viaHandoff = (window._ptUseWorkflow(window._wfBatchList()[1].id), state.pt.wf);
+    const refBefore = PT.ref;
+    PT.ref = { mime: "image/gif", b64: "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", label: "r" };
+    document.getElementById("btnPtRefClear").onclick();
+    const refStillThere = !!PT.ref;
+    PT.ref = refBefore;
+    PT.busy = false;
+    const after = state.pt.wf;
+    return { before, after, viaCard, viaHandoff, refStillThere, held: before === after };
+  });
+  report("P3) the batch source cannot be re-pointed while a paid run is in flight",
+    midRun.held === true && midRun.viaCard === false && midRun.viaHandoff === midRun.before,
+    midRun);
+  report("P3b) and IMAGE 2 cannot be pulled out from under it either",
+    midRun.refStillThere === true, midRun);
+
+  /* P4 — runWizGenerate nulls every slot past the workflow's own input count.
+     Path did not, so a backdrop left over from look mode rode along on all
+     hundred calls as an undeclared IMAGE 2 the card's prompt never mentions. */
+  const slotFidelity = await page.evaluate(async () => {
+    const gen = document.getElementById("btnGen");
+    const realOnclick = gen.onclick;
+    const realConfirm = window.confirm; window.confirm = () => true;
+    const seen = [];
+    gen.onclick = async function () { seen.push({ img2: !!state.refs[1], roles: state.imgRoles ? state.imgRoles.length : 0 }); };
+    PT.ref = { mime: "image/gif", b64: "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", label: "leftover" };
+    const one = window._wfBatchList().find(w => w.reqN === 1 && !w.opt.length);
+    ptSetWorkflow(one.id);
+    await new Promise(r => setTimeout(r, 200));
+    const refVisible = getComputedStyle(document.getElementById("ptRefBox")).display !== "none";
+    await ptRunAll([PT.photos[0]]);
+    await new Promise(r => setTimeout(r, 400));
+    const two = window._wfBatchList().find(w => w.reqN >= 2);
+    ptSetWorkflow(two.id);
+    await new Promise(r => setTimeout(r, 200));
+    const refVisible2 = getComputedStyle(document.getElementById("ptRefBox")).display !== "none";
+    await ptRunAll([PT.photos[0]]);
+    await new Promise(r => setTimeout(r, 400));
+    gen.onclick = realOnclick; window.confirm = realConfirm; PT.ref = null;
+    ptSetWorkflow("");
+    return { oneInput: seen[0], twoInput: seen[1], refVisible, refVisible2, oneId: one.id, twoId: two.id };
+  });
+  report("P4) a 1-input workflow never receives a leftover IMAGE 2",
+    slotFidelity.oneInput && slotFidelity.oneInput.img2 === false &&
+    slotFidelity.twoInput && slotFidelity.twoInput.img2 === true,
+    slotFidelity);
+  report("P4b) and the reference picker is only offered where a slot exists",
+    slotFidelity.refVisible === false && slotFidelity.refVisible2 === true, slotFidelity);
+
+  /* P5 — the HD tier chases every result with a RunningHub upscale, so the
+     honest number is two calls a photo. Quoting 100 for a run that issues 200
+     is exactly the lie the confirm exists to prevent. */
+  const hdCost = await page.evaluate(async () => {
+    const px = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+    const list = [];
+    for (let i = 0; i < 12; i++) list.push({ name: "hd-" + i + ".jpg", dataUrl: px });
+    ptIngestDataUrls(list);
+    await new Promise(r => setTimeout(r, 300));
+    const realConfirm = window.confirm;
+    const savedTier = state.pt.tier, savedKey = state.rhKey;
+    let askFast = "", askHd = "";
+    window.confirm = m => { askFast = m; return false; };
+    state.pt.tier = "fast"; ptSetWorkflow("");
+    await ptRunAll(null);
+    const n = PT.photos.filter(p => p.status !== "done").length;
+    /* HD only bills twice when the upscale can actually run, so the doubling
+       is forced here rather than left to whether this machine has an RH key —
+       an assertion that silently falls back to the fast-tier branch would pass
+       without ever measuring the thing it is named after. */
+    const realIsConfigured = window.rhIsConfigured;
+    window.rhIsConfigured = () => true;
+    state.pt.tier = "hd"; state.rhKey = "test-key-for-the-quote-only";
+    const hdReal = gateAllows("hd_finish") && !!state.rhKey && rhIsConfigured("upscale-pro");
+    window.confirm = m => { askHd = m; return false; };
+    await ptRunAll(null);
+    window.rhIsConfigured = realIsConfigured;
+    window.confirm = realConfirm; state.pt.tier = savedTier; state.rhKey = savedKey;
+    return { n, askFast, askHd, hdReal };
+  });
+  report("P5) the fast tier quotes one call a photo",
+    hdCost.askFast.indexOf(String(hdCost.n)) >= 0, { n: hdCost.n, ask: hdCost.askFast.slice(0, 100) });
+  report("P5b) the HD tier quotes the upscale it will also buy",
+    hdCost.hdReal === true && hdCost.askHd.indexOf(String(hdCost.n * 2)) >= 0 &&
+    hdCost.askFast !== hdCost.askHd,
+    { n: hdCost.n, want: hdCost.n * 2, hdBillsTwice: hdCost.hdReal, ask: hdCost.askHd.slice(0, 130) });
+
+  /* P6 — the hero is the largest, first-read sentence on the page. Left at
+     "one look, applied to your whole album" while the H2 under it read "Smart
+     Workflow", the page contradicted itself at a glance. */
+  const hero = await page.evaluate(async () => {
+    const read = async (src) => {
+      ptSetWorkflow(src);
+      await new Promise(r => setTimeout(r, 250));
+      return {
+        hero: document.getElementById("phPath").textContent.trim(),
+        kick: document.querySelector("#pgPath .ph-kick").textContent.trim(),
+        em: !!document.querySelector("#phPath em"),
+      };
+    };
+    const look = await read(""), wf = await read(window._wfBatchList()[0].id), st = await read("@studio");
+    ptSetWorkflow("");
+    return { look, wf, st };
+  });
+  report("P6) the hero names the source that is actually driving the run",
+    hero.look.hero !== hero.wf.hero && hero.wf.hero !== hero.st.hero &&
+    /Workflow/i.test(hero.wf.hero) && /Meitu|Evoto/i.test(hero.st.hero) &&
+    hero.wf.em && hero.st.em &&
+    hero.look.kick === "BATCH LOOKS" && hero.wf.kick !== "BATCH LOOKS",
+    hero);
+
+  /* P7 — the FX accordion was reopened on EVERY ptSync, so with a 2-image
+     workflow selected the owner could not collapse it: one keystroke in the
+     custom box sprang it open again. */
+  const accordion = await page.evaluate(async () => {
+    PT.ref = null;
+    ptSetWorkflow(window._wfBatchList().find(w => w.reqN >= 2).id);
+    await new Promise(r => setTimeout(r, 250));
+    const openedForMe = /open/.test(document.getElementById("ptGrpFx").className);
+    document.getElementById("ptGrpFx").className = "grp";      /* owner collapses it */
+    ptSync();                                                   /* owner types a character */
+    await new Promise(r => setTimeout(r, 200));
+    const stayedClosed = !/open/.test(document.getElementById("ptGrpFx").className);
+    ptSetWorkflow("");
+    return { openedForMe, stayedClosed };
+  });
+  report("P7) the FX accordion opens once for a 2-image workflow and then obeys the owner",
+    accordion.openedForMe === true && accordion.stayedClosed === true, accordion);
+
+  /* P8 — nine languages. A missing slot renders the wrong language to a paying
+     customer; English pasted into the my/shn/kac slots is the same defect with
+     a friendlier face. */
+  const langs = await page.evaluate(() => {
+    const NINE = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
+    const bad = [];
+    [["PT_SRC_L", PT_SRC_L], ["WF_BATCH_L", { WF_BATCH_L }], ["PT_BUSY_L", { PT_BUSY_L }]].forEach(([nm, obj]) => {
+      Object.keys(obj).forEach(k => {
+        const v = obj[k];
+        if (!v || typeof v !== "object") return;
+        NINE.forEach(L => { if (typeof v[L] !== "string" || !v[L].length) bad.push(nm + "." + k + "." + L); });
+        /* a placeholder present in English must be present everywhere */
+        (String(v.en).match(/\{[A-Z]\}/g) || []).forEach(ph => {
+          NINE.forEach(L => { if (String(v[L]).indexOf(ph) < 0) bad.push(nm + "." + k + "." + L + " missing " + ph); });
+        });
+      });
+    });
+    return bad;
+  });
+  report("P8) every new label carries all nine languages and every placeholder",
+    langs.length === 0, langs.slice(0, 10));
+
+  /* ---- Q) THE DEFECTS THE SECOND REVIEW PASS FOUND, INCLUDING ONE THE FIRST
+     ROUND OF FIXES CREATED. P3 above stops the source changing mid-run; the
+     first attempt at the companion problem — a finished album that Run then
+     refused to re-run under a new source — re-queued every done photo, which
+     orphaned the results instead. ---- */
+
+  /* Q1 — switching the source must never make a finished run undownloadable.
+     ZIP, download-all, the contact sheet and the per-photo compare all filter
+     on status==="done", so status is the wrong place to record "not yet run
+     under THIS source". A per-photo source stamp is. */
+  const orphan = await page.evaluate(async () => {
+    const px = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+    PT.photos.length = 0;
+    ptIngestDataUrls([{ name: "q1a.jpg", dataUrl: px }, { name: "q1b.jpg", dataUrl: px }]);
+    await new Promise(r => setTimeout(r, 300));
+    ptSetWorkflow("");
+    await new Promise(r => setTimeout(r, 200));
+    /* stand in for a completed look-mode run */
+    PT.photos.forEach(p => { p.status = "done"; p.outB64 = "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="; p.outMime = "image/gif"; p.doneSrc = ptSrcKey(); });
+    ptSync();
+    await new Promise(r => setTimeout(r, 200));
+    const before = { done: PT.photos.filter(p => p.status === "done" && p.outB64).length, pending: ptPending().length };
+    const wfId = window._wfBatchList()[0].id;
+    ptSetWorkflow(wfId);
+    await new Promise(r => setTimeout(r, 250));
+    const after = { done: PT.photos.filter(p => p.status === "done" && p.outB64).length, pending: ptPending().length,
+                    runLabel: document.getElementById("btnPtRun").textContent };
+    /* and going back to the source that produced them owes nothing again */
+    ptSetWorkflow("");
+    await new Promise(r => setTimeout(r, 200));
+    const back = { pending: ptPending().length };
+    PT.photos.length = 0; ptSync();
+    return { before, after, back };
+  });
+  report("Q1) changing the source keeps every finished result downloadable",
+    orphan.before.done === 2 && orphan.after.done === 2, orphan);
+  report("Q1b) but Run knows the new source still owes all of them",
+    orphan.before.pending === 0 && orphan.after.pending === 2 &&
+    orphan.after.runLabel.indexOf("2") >= 0 && orphan.back.pending === 0,
+    orphan);
+
+  /* Q2 — the ghost half of a Studio look. Meitu's Filter Library, Auto
+     Beautify and Evoto's Camera Sim never touch state.st.t1/t2; they live in
+     ST.g1/ST.g2 and are folded in by stEffT1/stEffT2, which is why the Studio
+     page's own preview shows them. Reading only the base keys made the batch
+     silently drop the filter the owner had just watched warm up the photo. */
+  const ghost = await page.evaluate(async () => {
+    const px = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+    if (!PT.photos.length) { ptIngestDataUrls([{ name: "q2.jpg", dataUrl: px }]); await new Promise(r => setTimeout(r, 300)); }
+    /* base grade clean, ghost warm — exactly the Filter-Library shape */
+    Object.keys(stDefT1()).forEach(k => { state.st.t1[k] = stDefT1()[k]; });
+    Object.keys(stDefT2()).forEach(k => { state.st.t2[k] = stDefT2()[k]; });
+    ST.g1 = {}; ST.g2 = {};
+    const cleanLocal = ptStudioLocal();
+    ST.g1 = { wrm: 20, exp: 6 };
+    const ghostLocal = ptStudioLocal();
+    const eff = stEffT1();
+    const bake = await ptStudioBake(PT.photos[0]);
+    ST.g1 = {};
+    return { cleanLocal, ghostLocal, effWrm: eff.wrm, bakeOk: bake.ok, baked: bake.du !== PT.photos[0].srcDataUrl };
+  });
+  report("Q2) a ghost-only Studio look counts as local work and is baked in",
+    ghost.cleanLocal === false && ghost.ghostLocal === true &&
+    ghost.effWrm === 20 && ghost.bakeOk === true && ghost.baked === true,
+    ghost);
+
+  /* Q3 — ptStudioBake resolves {du, ok}; ok===false means the untouched
+     original is going down a Studio prompt, which is the one failure that
+     looks identical to success. */
+  const bakeHonesty = await page.evaluate(async () => {
+    const real = window.stApplyRecipeTo;
+    ST.g1 = { wrm: 20 };
+    window.stApplyRecipeTo = function () { throw new Error("forced"); };
+    const r = await ptStudioBake(PT.photos[0]);
+    window.stApplyRecipeTo = real; ST.g1 = {};
+    return { ok: r.ok, gaveOriginal: r.du === PT.photos[0].srcDataUrl };
+  });
+  report("Q3) a failed local grade is reported, not passed off as a success",
+    bakeHonesty.ok === false && bakeHonesty.gaveOriginal === true, bakeHonesty);
+
+  /* Q4 — the picker is the third full-screen overlay that sets
+     body{overflow:hidden}. Android Back hid it with the page and left every
+     page the customer landed on afterwards unable to scroll. */
+  const backBtn = await page.evaluate(async () => {
+    switchPage("pgPath");
+    await new Promise(r => setTimeout(r, 250));
+    ptOpenWfSheet();
+    await new Promise(r => setTimeout(r, 250));
+    const locked = getComputedStyle(document.body).overflow === "hidden";
+    window.dispatchEvent(new PopStateEvent("popstate", { state: { pg: "pgDash" } }));
+    await new Promise(r => setTimeout(r, 300));
+    const out = {
+      locked,
+      sheetClosed: !/on/.test(document.getElementById("ptWfSheet").className),
+      scrollable: getComputedStyle(document.body).overflow !== "hidden",
+    };
+    ptCloseWfSheet(); switchPage("pgPath");
+    await new Promise(r => setTimeout(r, 200));
+    return out;
+  });
+  report("Q4) Android Back closes the picker and gives the page its scroll back",
+    backBtn.locked === true && backBtn.sheetClosed === true && backBtn.scrollable === true,
+    backBtn);
+
+  /* Q5 — the #ptRefBox wrapper made #ptLbRef the first element child of its
+     parent, so `.subh:first-child{margin-top:0}` beat `.subh{margin-top:12px}`
+     and the REFERENCE heading collapsed onto the Extras chips above it. The
+     zero is right in the other two modes, where that heading really is first. */
+  const subhGap = await page.evaluate(async () => {
+    switchPage("pgPath");
+    ptSetWorkflow("");
+    await new Promise(r => setTimeout(r, 350));
+    document.getElementById("ptGrpFx").className = "grp open";
+    await new Promise(r => setTimeout(r, 300));
+    const gap = () => {
+      const a = document.getElementById("ptToggleChips").getBoundingClientRect();
+      const b = document.getElementById("ptLbRef").getBoundingClientRect();
+      return Math.round(b.top - a.bottom);
+    };
+    const sib = getComputedStyle(document.getElementById("ptLbExtras")).marginTop;
+    const look = { gap: gap(), sib };
+    ptSetWorkflow(window._wfBatchList().find(w => w.reqN >= 2).id);
+    await new Promise(r => setTimeout(r, 350));
+    document.getElementById("ptGrpFx").className = "grp open";
+    await new Promise(r => setTimeout(r, 250));
+    const wf = { mt: getComputedStyle(document.getElementById("ptRefBox")).marginTop };
+    ptSetWorkflow("");
+    return { look, wf };
+  });
+  report("Q5) the reference block keeps its section break in look mode, and drops it where it is first",
+    subhGap.look.gap >= parseInt(subhGap.look.sib) && subhGap.wf.mt === "0px",
+    subhGap);
+
   report("N) no page errors", errs.length === 0, errs);
   report("N2) nothing 404s", bad.length === 0, bad.slice(0, 6));
 
