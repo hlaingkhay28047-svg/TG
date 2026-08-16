@@ -245,6 +245,9 @@ jobs:
       - name: Run v5.0.0 batch-of-100 Smart Workflow sweep (prompt identity, cost honesty)
         run: node test/sweep_v500_batchwf.js
 
+      - name: Run v5.1.0 video model picker sweep (sheet, names, spec honesty)
+        run: node test/sweep_v510_vidpicker.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

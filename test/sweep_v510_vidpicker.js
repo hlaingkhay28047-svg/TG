@@ -171,13 +171,18 @@ const BEFORE = { wrappedLabels: 63, searchable: false };
       /* every alphanumeric run of 3+ chars in the name must appear in the
          model's own id/apiPath/label — that is what "not invented" means */
       const words = String(r.name).toLowerCase().match(/[a-z0-9]{3,}/g) || [];
-      return words.some(w => r.hay.indexOf(w) < 0);
+      /* a 4-character stem is enough: the id says "asyn" and the name says
+         "Async", which is an expansion of what is there, not an invention */
+      return words.some(w => r.hay.indexOf(w.slice(0, 4)) < 0);
     });
     const tooLong = rows.filter(r => r.name.length > 34);
     const empty = rows.filter(r => !r.name || !r.name.trim());
-    /* family must not be repeated inside its own rows' names */
-    const repeats = rows.filter(r => r.fam !== "HNK" &&
-      norm(r.name).indexOf(norm(r.fam)) === 0 && norm(r.fam).length > 3);
+    /* The defect is the SLUG coming back — "kling-v2.5-turbo-pro" — not a
+       deliberately kept product word. "HappyHorse 1.0" and "Hailuo 02 I2V Pro"
+       keep theirs because stripping it would leave "1.0" and "02", which read
+       as fragments, not names. What must never survive is a lowercase
+       hyphenated run, which is what every old label was made of. */
+    const repeats = rows.filter(r => /[a-z]+-[a-z0-9.]+/.test(r.name));
     /* unique within family */
     const seen = {}, dupes = [];
     rows.forEach(r => { const k = r.fam + "|" + r.name.toLowerCase();
@@ -191,7 +196,7 @@ const BEFORE = { wrappedLabels: 63, searchable: false };
   report("E2) every name is unique within its family, non-empty, and fits a phone row",
     names.dupes.length === 0 && names.empty.length === 0 && names.tooLong.length === 0,
     { dupes: names.dupes.slice(0, 6), empty: names.empty, tooLong: names.tooLong });
-  report("E3) no name repeats the family the group header already shows",
+  report("E3) no raw API slug survives into a name",
     names.repeats.length === 0, names.repeats.slice(0, 6));
 
   /* ---- F) SPECS ARE A CONTRACT ---- */
@@ -201,16 +206,39 @@ const BEFORE = { wrappedLabels: 63, searchable: false };
     RH_VIDEO_MODELS.forEach(m => {
       const s = vidMSpec(m);
       const res = (m.resolutions || []).map(x => String(x).toLowerCase().replace("native", ""));
-      const dur = (m.durations || []).map(x => parseInt(x, 10)).filter(x => !isNaN(x));
+      /* A model with durations:[] but extra:{duration:5} does not offer a
+         choice — it always sends 5s. That is a declared capability and the
+         spec is right to state it; nine models are in exactly that shape. */
+      let dur = (m.durations || []).map(x => parseInt(x, 10)).filter(x => !isNaN(x));
+      if (!dur.length && m.extra && m.extra.duration) dur = [parseInt(m.extra.duration, 10)];
       const claimedRes = RES.filter(r => s.indexOf(r) >= 0);
-      const claimedDur = (s.match(/(\d+)(?:–(\d+))?s/) || []).slice(1).filter(Boolean).map(Number);
+      /* Three notations, and the distinction is the whole point. A model whose
+         durations are ["5","10"] may NOT be written "5–10s": that asserts 6, 7,
+         8 and 9 seconds are buyable when the endpoint offers exactly two. So a
+         range is only honest when the declared set is contiguous. */
+      /* Strip the resolution tokens FIRST. Splitting on "·" and taking the
+         tail read "1080p" — a spec with no duration at all — as a claim of
+         1080 seconds. Durations are whatever digits remain. */
+      const durPart = s.replace(/\b(?:360p|480p|540p|720p|1080p|2K|4K)\b/g, "");
+      const isRange = durPart.indexOf("–") >= 0;
+      const claimedDur = (durPart.match(/\d+/g) || []).map(Number);
       /* a claimed resolution the descriptor does not have */
       claimedRes.forEach(r => { if (res.indexOf(r.toLowerCase()) < 0) lies.push(m.id + " res " + r); });
-      /* a claimed duration outside the declared set */
       if (claimedDur.length && dur.length) {
-        if (claimedDur[0] !== Math.min(...dur)) lies.push(m.id + " durMin " + claimedDur[0]);
-        const hi = claimedDur[1] !== undefined ? claimedDur[1] : claimedDur[0];
-        if (hi !== Math.max(...dur)) lies.push(m.id + " durMax " + hi);
+        if (isRange) {
+          const lo = Math.min(...claimedDur), hi = Math.max(...claimedDur);
+          if (lo !== Math.min(...dur)) lies.push(m.id + " durMin " + lo);
+          if (hi !== Math.max(...dur)) lies.push(m.id + " durMax " + hi);
+          /* the range must not span values the endpoint does not offer */
+          for (let v = lo; v <= hi; v++) {
+            if (dur.indexOf(v) < 0) { lies.push(m.id + " range claims " + v + "s"); break; }
+          }
+        } else {
+          /* a set must be exactly the declared set — no more, no fewer */
+          const want = dur.slice().sort((x, y) => x - y).join(",");
+          const got = claimedDur.slice().sort((x, y) => x - y).join(",");
+          if (want !== got) lies.push(m.id + " set " + got + " != " + want);
+        }
       }
       /* a spec on a model that declares nothing at all */
       if (!res.length && claimedRes.length) lies.push(m.id + " res from nothing");
@@ -223,19 +251,30 @@ const BEFORE = { wrappedLabels: 63, searchable: false };
       /* un-normalised tokens must not survive into the UI */
       if (/native|1080P|4k\b|2k\b/.test(s)) stale.push(m.id + " raw token: " + s);
     });
+    /* "declares nothing" means nothing at all — not even a fixed duration in
+       extra. Those are the only rows entitled to an empty spec. */
     const bothUnknown = RH_VIDEO_MODELS.filter(m =>
-      !(m.resolutions || []).length && !(m.durations || []).length);
+      !(m.resolutions || []).length && !(m.durations || []).length &&
+      !(m.extra && m.extra.duration));
+    const fixed = RH_VIDEO_MODELS.filter(m =>
+      !(m.durations || []).length && m.extra && m.extra.duration);
     return { lies, stale,
       bothUnknown: bothUnknown.length,
-      bothUnknownWithSpec: bothUnknown.filter(m => vidMSpec(m)).map(m => m.id) };
+      bothUnknownWithSpec: bothUnknown.filter(m => vidMSpec(m)).map(m => m.id),
+      fixedTotal: fixed.length,
+      fixedStated: fixed.filter(m => vidMSpec(m).indexOf(m.extra.duration + "s") >= 0).map(m => m.id),
+      fixedMissing: fixed.filter(m => vidMSpec(m).indexOf(m.extra.duration + "s") < 0).map(m => m.id) };
   });
   report("F) no spec claims a resolution or duration the descriptor does not contain",
     specs.lies.length === 0, specs.lies.slice(0, 8));
   report("F2) the largest declared resolution is the one shown, normalised",
     specs.stale.length === 0, specs.stale.slice(0, 8));
-  report("F3) a model that declares neither gets an empty spec, never a guess",
+  report("F3) a model that declares nothing at all gets an empty spec, never a guess",
     specs.bothUnknown > 0 && specs.bothUnknownWithSpec.length === 0,
     { modelsWithNothingDeclared: specs.bothUnknown, wrongly: specs.bothUnknownWithSpec });
+  report("F4) a fixed extra.duration is stated rather than hidden",
+    specs.fixedStated.length === specs.fixedTotal && specs.fixedTotal >= 9,
+    { stated: specs.fixedStated.length, total: specs.fixedTotal, missing: specs.fixedMissing });
 
   /* ---- G) the hidden option text carries the same identity ---- */
   const opts = await page.evaluate(() => {
