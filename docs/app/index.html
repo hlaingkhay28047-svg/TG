@@ -4703,6 +4703,18 @@ var RH_VIDEO_MODELS = [
   /* v4.98 — the other sixty-three, taken from RunningHub's own published model
      registry rather than typed by hand.
 
+     v4.98.2 — NINE OF THEM DECLARED `duration` REQUIRED AND PUBLISHED NO OPTIONS,
+     and the first cut read the options list to build BOTH the picker and the
+     request. So those nine sent no duration at all, and every run of a Kling
+     v3/o3, a PixVerse c1/v6, a Wan 2.7 Spicy or either Grok channel would have
+     failed at submit with the opaque error this whole descriptor exists to
+     prevent. A required field with an empty enum is not a field with no value;
+     it is a field whose only documented value is its default. Those defaults
+     (5s, or 6s on the two Grok channels) now travel in `extra`. The generic
+     sweep passed because it only checked the extras a model DECLARED — it could
+     not see a requirement the model never recorded. The check now reads
+     RunningHub's registry, not our own copy of it.
+
      THE SHELF WAS TWO MODELS DEEP AND THE PROVIDER OFFERS SIXTY-SEVEN
      image-to-video endpoints. The owner asked for all of them. Sixty-five can
      be driven from one photograph and a prompt; the two that cannot are named
@@ -4726,15 +4738,15 @@ var RH_VIDEO_MODELS = [
   { id:"kling-v2-5-turbo-std", label:"kling-v2.5-turbo-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.5-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
   { id:"kling-v2-6-pro", label:"kling-v2.6-pro \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000, extra:{"sound": "true"} },
   { id:"kling-v2-6-std", label:"kling-v2.6-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-std/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
-  { id:"kling-v3-4k", label:"kling-v3.0-4k", fam:"Kling", apiPath:"kling-v3-4k/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500 },
+  { id:"kling-v3-4k", label:"kling-v3.0-4k", fam:"Kling", apiPath:"kling-v3-4k/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5} },
   { id:"kling-v3-turbo-pro", label:"kling-v3-turbo-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-pro/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
   { id:"kling-v3-turbo-std", label:"kling-v3-turbo-std \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
   { id:"kling-v3-0-pro", label:"kling-v3.0-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
   { id:"kling-v3-0-std", label:"kling-v3.0-std \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
   { id:"kling-video-o1", label:"kling-video-o1 \u2014 10s", fam:"Kling", apiPath:"kling-video-o1/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std"} },
-  { id:"kling-video-o3-4k", label:"kling-video-o3-4k", fam:"Kling", apiPath:"kling-video-o3-4k/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500 },
-  { id:"kling-video-o3-pro", label:"kling-video-o3-pro", fam:"Kling", apiPath:"kling-video-o3-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{"sound": true} },
-  { id:"kling-video-o3-std", label:"kling-video-o3-std", fam:"Kling", apiPath:"kling-video-o3-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{"sound": true} },
+  { id:"kling-video-o3-4k", label:"kling-video-o3-4k", fam:"Kling", apiPath:"kling-video-o3-4k/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5} },
+  { id:"kling-video-o3-pro", label:"kling-video-o3-pro", fam:"Kling", apiPath:"kling-video-o3-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5, "sound": true} },
+  { id:"kling-video-o3-std", label:"kling-video-o3-std", fam:"Kling", apiPath:"kling-video-o3-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5, "sound": true} },
   { id:"minimax-hailuo-02-pro", label:"hailuo-02-i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-02-standard", label:"hailuo-02-i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-standard", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-2-3-fast-pro", label:"hailuo-2.3-fast-pro \u2014 6s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
@@ -4742,11 +4754,11 @@ var RH_VIDEO_MODELS = [
   { id:"minimax-hailuo-2-3-standard", label:"hailuo-2.3 i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/i2v-standard", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-2-3-pro", label:"hailuo-2.3 i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   { id:"minimax-hailuo-h3", label:"MiniMax-H3 Image-to-Video (first last frame) \u2014 2K, 15s", fam:"MiniMax", apiPath:"minimax/hailuo-h3/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["2K"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
-  { id:"pixverse-c1", label:"pixverse-c1 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-c1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": true} },
+  { id:"pixverse-c1", label:"pixverse-c1 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-c1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{duration:5, "generateAudioSwitch": true} },
   { id:"pixverse-v5-5", label:"pixverse-v5.5 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.5/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false", "generateMultiClipSwitch": "false"} },
   { id:"pixverse-v5-6", label:"pixverse-v5.6 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false"} },
-  { id:"pixverse-v6", label:"pixverse-v6 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-v6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": true} },
-  { id:"rhart-video-g", label:"xai grok-imagine \u2014 480p", fam:"RHArt Video", apiPath:"rhart-video-g/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:[], aspect:true, aspectParam:"aspectRatio", aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000 },
+  { id:"pixverse-v6", label:"pixverse-v6 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-v6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{duration:5, "generateAudioSwitch": true} },
+  { id:"rhart-video-g", label:"xai grok-imagine \u2014 480p", fam:"RHArt Video", apiPath:"rhart-video-g/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:[], aspect:true, aspectParam:"aspectRatio", aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000, extra:{duration:6} },
   { id:"rhart-video-r-gen4-turbo-official", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2048 },
   { id:"rhart-video-r-gen4-turbo", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"], promptMax:1000 },
   { id:"rhart-video-s-official", label:"sora-2 \u2014 12s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:2048 },
@@ -4761,7 +4773,7 @@ var RH_VIDEO_MODELS = [
   { id:"rhart-video-v3-1-lite", label:"google veo3.1-lite \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-lite/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:20000 },
   { id:"rhart-video-v3-1-pro-official", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
   { id:"rhart-video-v3-1-pro", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000 },
-  { id:"rhart-video-g-official-v1-5", label:"xai grok-imagine-video-v1.5 \u2014 720p", fam:"RHArt Video G", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:2048 },
+  { id:"rhart-video-g-official-v1-5", label:"xai grok-imagine-video-v1.5 \u2014 720p", fam:"RHArt Video G", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:2048, extra:{duration:6} },
   { id:"bytedance-seedance-2-5-token", label:"seedance-2.5 \u2014 4k, 30s", fam:"Seedance", apiPath:"bytedance/seedance-2.5-token/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive"], promptMax:20480 },
   { id:"rhart-video-sparkvideo-2-0-fast", label:"Seedance2.0 Fast Image to Video \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-fast/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
   { id:"rhart-video-sparkvideo-2-0-mini", label:"seedance-2.0-mini \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-mini/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
@@ -4779,7 +4791,7 @@ var RH_VIDEO_MODELS = [
   { id:"alibaba-wan-2-5-preview", label:"wan-2.5-preview \u2014 1080p, 10s", fam:"Wan", apiPath:"alibaba/wan-2.5-preview/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["5", "10"], aspect:false, promptMax:1500 },
   { id:"alibaba-wan-2-6", label:"alibaba wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["5", "10", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single"} },
   { id:"alibaba-wan-2-6-flash", label:"wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video-flash", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single", "enablePromptExpansion": false, "enableAudio": true} },
-  { id:"alibaba-wan-2-7-spicy", label:"wan-2.7-spicy \u2014 1080p", fam:"Wan", apiPath:"alibaba/wan-2.7-spicy/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:false, promptMax:5000 },
+  { id:"alibaba-wan-2-7-spicy", label:"wan-2.7-spicy \u2014 1080p", fam:"Wan", apiPath:"alibaba/wan-2.7-spicy/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:false, promptMax:5000, extra:{duration:5} },
   { id:"alibaba-wan-2-7", label:"wan-2.7 \u2014 1080P, 15s", fam:"Wan", apiPath:"alibaba/wan-2.7/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:5000 },
   { id:"youchuan", label:"midjourney \u2014 720p", fam:"Youchuan", apiPath:"youchuan/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:8192 }
 ];
@@ -14627,9 +14639,10 @@ var ST_LOOK_RAF = 0;
    link, a restore, a future page host — can walk straight past, and the
    failure mode is silent: computed tiles where photographs belong.
 
-   An IntersectionObserver on the PAGE cannot be bypassed: pgStudio is
+   An IntersectionObserver on the PAGE cannot be bypassed: a suite page is
    display:none until it is shown, by any route at all, and the moment it gains
-   a box the art is asked for.
+   a box the art is asked for. Since v4.96 there are TWO such pages and both are
+   observed; watching only one was a real defect — see the note in arm().
 
    The observed element is the page and not the preset row, and that was also
    measured rather than guessed. Watching the row works, but the row sits
@@ -14653,15 +14666,22 @@ function stArtWake(){
 }
 (function stArtWatch(){
   function arm(){
-    var pg=stActivePage();
+    /* v4.98.2 — observe BOTH suite pages, not "the active one at load time".
+       This armed on stActivePage(), which is pgMeitu until the customer picks
+       otherwise. A studio whose first Studio visit was Evoto therefore watched
+       a page that never became visible: the observer never fired, stArtWake()
+       never ran, and the look shelf stayed on computed tiles for the whole
+       session. The v4.84 note above is still right that the PAGE is the correct
+       thing to watch — there are simply two of them now. */
+    var pgs=Object.keys(ST_SUITE_PAGE).map(function(k){ return $(k); }).filter(Boolean);
     /* No IntersectionObserver (or no page) must never mean no art — fall back
        to the pre-v4.84 behaviour of loading it, rather than to a blank shelf.
        A deferral that can fail closed is worse than the bytes it saves. */
-    if(!pg || typeof IntersectionObserver!=="function"){ stArtWake(); return; }
+    if(!pgs.length || typeof IntersectionObserver!=="function"){ stArtWake(); return; }
     var io=new IntersectionObserver(function(es){
       for(var i=0;i<es.length;i++) if(es[i].isIntersecting){ io.disconnect(); stArtWake(); return; }
     });
-    io.observe(pg);
+    pgs.forEach(function(pg){ io.observe(pg); });
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",arm);
   else arm();
@@ -16195,9 +16215,21 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   tab("i-target","EVOTO · "+ST_EVOTO_COUNT,"pgEvoto");
   stSyncSuiteChips();
   var strip=$("stGroupChips");
+  /* v4.98.2 — a chip whose group lives on the OTHER suite page now switches
+     there first. Measured on the v4.96 split: the strip carried all 34 groups
+     on both pages, so on either one exactly 17 of them pointed at a card parked
+     in #stDock — scrollIntoView on a detached-from-view node does nothing, and
+     tapping did nothing at all. Filtering the strip down to 17 would have fixed
+     the dead tap by making half the features unreachable from here; switching
+     the page keeps every group one tap away, which is what a jump bar is for. */
+  function stSuitePageOf(g){ return g.host==="ev" ? "pgEvoto" : "pgMeitu"; }
   ST.groups.forEach(function(g){
     var c=el("button","chip"); c.innerHTML=icn(g.icon)+" "+escH(g.title);
-    c.onclick=function(){ g.el.classList.remove("hide"); g.el.className="grp open"; g.el.scrollIntoView({block:"start"}); };
+    c.onclick=function(){
+      var want=stSuitePageOf(g);
+      var go=function(){ g.el.classList.remove("hide"); g.el.className="grp open"; g.el.scrollIntoView({block:"start"}); };
+      if(curPage!==want){ switchPage(want); setTimeout(go,60); } else go();
+    };
     g.jumpChip=c;
     strip.appendChild(c);
   });
@@ -16209,6 +16241,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   });
   function applySearch(){
     var q=inp.value.trim().toLowerCase();
+    var hereHits=0, thereHits=0, therePage=null;
     ST.searchIdx.forEach(function(e2){
       var hit=!q||e2.text.indexOf(q)>=0;
       if(hit&&q) e2.g.el.className="grp open"; /* matching groups auto-open */
@@ -16217,7 +16250,15 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
       for(var i=0;i<rows.length;i++){
         rows[i].classList.toggle("hit",!!(q&&hit&&rows[i].textContent.toLowerCase().indexOf(q)>=0));
       }
+      if(q&&hit){
+        var pg=stSuitePageOf(e2.g);
+        if(pg===curPage) hereHits++; else { thereHits++; therePage=pg; }
+      }
     });
+    /* v4.98.2 — the index spans BOTH suites but only one is on screen, so a
+       term that lives entirely in the parked suite used to look like a search
+       that found nothing. If every match is over there, go over there. */
+    if(q && hereHits===0 && thereHits>0 && therePage) switchPage(therePage);
   }
   var sT=null;
   inp.oninput=function(){ clearTimeout(sT); sT=setTimeout(applySearch,120); };
@@ -18343,7 +18384,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.98.1";
+var APP_VER="4.98.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -18746,7 +18787,13 @@ try {
 /* ?page=pgXxx deep link (used by the manifest shortcuts / jump list) —
    applied after the localStorage restore so an explicit link wins */
 try {
-  var _qp = new URLSearchParams(location.search).get("page");
+  /* v4.98.2 — normalise here too. v4.96 claimed in its own comment that
+     stNormalizePage covered "the saved page, the group seed, the deep link and
+     switchPage alike". It did not cover this one: the guard below tests the RAW
+     id against PAGES, pgStudio is no longer in PAGES, and so every bookmarked
+     ?page=pgStudio and every manifest shortcut pointing at it was silently
+     dropped — the app just opened wherever it would have anyway. */
+  var _qp = stNormalizePage(new URLSearchParams(location.search).get("page"));
   if (_qp && PAGES.some(function(p){ return p[0]===_qp; })) switchPage(_qp);
 } catch(e){}
 

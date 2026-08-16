@@ -124,6 +124,9 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
     return out;
   });
 
+  const wantByPath = await page.evaluate(() =>
+    RH_VIDEO_MODELS.reduce((a, m) => { a[m.id] = { apiPath: m.apiPath }; return a; }, {}));
+
   const missingImage = bodies.filter(b => !b.ok || !(b.want.imageParam in b.body));
   report("D) every model puts the photo in the field ITS endpoint declares",
     missingImage.length === 0, missingImage.slice(0, 4).map(b => ({ id: b.id, want: b.want.imageParam, got: Object.keys(b.body || {}) })));
@@ -133,6 +136,40 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
   report("D2) every REQUIRED parameter reaches the endpoint — thirty models declare one",
     missingExtra.length === 0,
     missingExtra.slice(0, 4).map(b => ({ id: b.id, missing: Object.keys(b.want.extra).filter(k => !(k in b.body)) })));
+
+  /* D2b — THE ASSERTION D2 COULD NOT MAKE, AND THE BUG THAT PROVED IT.
+     D2 checks the extras a model DECLARES, so it can only catch a descriptor
+     that was built right and then broken. It cannot see a requirement the
+     descriptor never recorded. Nine models declared `duration` REQUIRED with an
+     EMPTY options list; the generator read options to build both the picker and
+     the request, so those nine carried no duration anywhere and every run would
+     have failed at submit — and D2 passed throughout. This checks the request
+     against RunningHub's OWN published contract for each endpoint, which is the
+     only source that knows what is required. */
+  const CONTRACT = {
+    /* endpoint -> fields RunningHub marks required. Transcribed from its
+       published models_registry.json, kept here so the test does not depend on
+       fetching the network. Only the endpoints with a required field that our
+       own descriptor could plausibly miss. */
+    "kling-v3-4k/image-to-video": ["duration"],
+    "kling-video-o3-4k/image-to-video": ["duration"],
+    "kling-video-o3-pro/image-to-video": ["duration"],
+    "kling-video-o3-std/image-to-video": ["duration"],
+    "pixverse-c1/image-to-video": ["duration", "resolution"],
+    "pixverse-v6/image-to-video": ["duration", "resolution"],
+    "rhart-video-g/image-to-video": ["duration", "resolution"],
+    "rhart-video-g-official/image-to-video-v1.5": ["duration", "resolution"],
+    "alibaba/wan-2.7-spicy/image-to-video": ["duration", "resolution"]
+  };
+  const contractMiss = bodies.map(b => {
+    const m = wantByPath[b.id];
+    const need = CONTRACT[m && m.apiPath];
+    if (!need) return null;
+    const missing = need.filter(k => !(k in b.body) || b.body[k] === "" || b.body[k] == null);
+    return missing.length ? { id: b.id, path: m.apiPath, missing: missing } : null;
+  }).filter(Boolean);
+  report("D2b) the nine endpoints with a REQUIRED field and an empty option list still get one",
+    contractMiss.length === 0, contractMiss);
 
   const wrongAspect = bodies.filter(b => b.want.aspectParam &&
     b.want.aspectParam !== "aspectRatio" && ("aspectRatio" in b.body));

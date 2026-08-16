@@ -256,6 +256,89 @@ report("A2) both sit in the Edit group, beside the other photo pages",
   }).filter(x => x.missing.length);
   report("J2) both hero strings exist in all nine languages", miss.length === 0, miss);
 
+  /* ---- M) THE FOUR THINGS THE SPLIT LEFT BEHIND ----
+     v4.96 moved the DOM but left four things still thinking there was one
+     Studio page. All four were found by audit and all four were measured, not
+     argued: none of them threw, so nothing in the suite noticed. */
+
+  /* M1 — the jump bar carries all 34 groups on a page that holds 17 of them.
+     Before the fix, on either page exactly 17 chips pointed at a card parked in
+     #stDock, and tapping one did nothing at all — scrollIntoView on a node with
+     no box is a no-op. Filtering the strip to 17 would have traded a dead tap
+     for half the features being unreachable; the chip switches page instead. */
+  const crossChip = await page.evaluate(async () => {
+    switchPage("pgMeitu");
+    await new Promise(r => setTimeout(r, 800));
+    const g = (ST.groups || []).find(x => x.host === "ev");
+    if (!g || !g.jumpChip) return { ok: false, why: "no evoto group chip" };
+    g.jumpChip.click();
+    await new Promise(r => setTimeout(r, 700));
+    return { ok: true, landed: curPage, visible: document.getElementById(curPage).contains(g.el) };
+  });
+  report("M1) a jump chip for the other suite takes you there instead of doing nothing",
+    crossChip.ok && crossChip.landed === "pgEvoto" && crossChip.visible === true, crossChip);
+
+  /* M2 — the search index spans both suites but only one is on screen, so a
+     term living entirely in the parked suite looked like a search that found
+     nothing. */
+  const crossSearch = await page.evaluate(async () => {
+    switchPage("pgEvoto");
+    await new Promise(r => setTimeout(r, 800));
+    const g = (ST.groups || []).find(x => x.host === "mu");
+    const term = (g.title || "").trim().toLowerCase().slice(0, 6);
+    const inp = document.getElementById("stSearch");
+    inp.value = term; inp.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 600));
+    const landed = curPage;
+    inp.value = ""; inp.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 400));
+    return { term: term, landed: landed, visible: document.getElementById(landed).contains(g.el) };
+  });
+  report("M2) searching a term that only exists in the parked suite goes to it",
+    crossSearch.landed === "pgMeitu" && crossSearch.visible === true, crossSearch);
+
+  /* M3 — the look-shelf art observer armed on stActivePage() ONCE at load, which
+     is pgMeitu until told otherwise. A studio whose first Studio visit was Evoto
+     watched a page that never appeared: the art never woke and the shelf stayed
+     on computed tiles for the whole session. */
+  const viaEvoto = await (async () => {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const pp = await c.newPage();
+    await pp.addInitScript(() => {
+      localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1");
+    });
+    await pp.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(2500);
+    const r = await pp.evaluate(async () => {
+      switchPage("pgEvoto");
+      await new Promise(r => setTimeout(r, 1500));
+      return { page: curPage, artOn: typeof _stArtOn !== "undefined" ? _stArtOn : null };
+    });
+    await c.close();
+    return r;
+  })();
+  report("M3) entering Studio via Evoto FIRST still wakes the look art",
+    viaEvoto.artOn === true && viaEvoto.page === "pgEvoto", viaEvoto);
+
+  /* M4 — v4.96's own comment claimed stNormalizePage covered "the saved page,
+     the group seed, the deep link and switchPage alike". The deep-link guard
+     tested the RAW id against PAGES, so every bookmarked ?page=pgStudio was
+     silently dropped. H covers the saved page; this covers the link. */
+  const viaLink = await (async () => {
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const pp = await c.newPage();
+    await pp.addInitScript(() => {
+      localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1");
+    });
+    await pp.goto(`http://127.0.0.1:${PORT}/index.html?page=pgStudio`, { waitUntil: "domcontentloaded" });
+    await pp.waitForTimeout(2500);
+    const r = await pp.evaluate(() => curPage);
+    await c.close();
+    return r;
+  })();
+  report("M4) a bookmarked ?page=pgStudio link still opens a suite",
+    viaLink === "pgMeitu" || viaLink === "pgEvoto", { landed: viaLink });
+
   report("K) no page errors", errs.length === 0, errs);
   report("K2) nothing 404s", bad.length === 0, bad.slice(0, 6));
 
