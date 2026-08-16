@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-96-0";
+var CACHE = "hnk-web-studio-v4-97-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -170,7 +170,24 @@ var LIB_PURGES = [
      folder marker exists: that tag was set in v4.83 and can never fire again,
      and the folder also holds nineteen cards this wave does not touch. Ten
      names, ten files, ~1.1MB. */
-  { tag: "./__lib-purge-v4-95-mkcards10", re: new RegExp("/lib/vid/vw-(mkGlassSkin|mkGemTear|mkDouyinRed|mkGlossPop|mkPorcelain|mkPinkBridal|mkDollBlush|mkSculptBrush|mkEyeMacro|mkNoirSlip)\\.jpg$") }
+  { tag: "./__lib-purge-v4-95-mkcards10", re: new RegExp("/lib/vid/vw-(mkGlassSkin|mkGemTear|mkDouyinRed|mkGlossPop|mkPorcelain|mkPinkBridal|mkDollBlush|mkSculptBrush|mkEyeMacro|mkNoirSlip)\\.jpg$") },
+  /* v4.97 — the 500 lighting plates, re-shot from scratch onto the SAME ids.
+
+     v4.91 shipped user-ref-1312..1811 as a 100x50 parameter grid of beam
+     shapes and edge qualities. The owner's verdict was that they were
+     meaningless and repetitive, and measurement agreed: every catalogue entry
+     carried a lighting name and nothing else. The replacements are nine real
+     families a studio actually books — birthday by age, night portrait,
+     fashion editorial, prewedding, Chinese wedding, window light, leaf gobo,
+     and snoot both touching and not touching the subject.
+
+     Same ids, new pictures, so this marker is mandatory: /lib/ is cache-first
+     and never revalidated, and without it every device that ever opened the
+     Library keeps the rejected grid for ever. Bounded to 1312-1811 rather than
+     /lib/full|ui/ as a whole — those two folders hold 1811 plates EACH, and
+     re-fetching 3622 files to deliver 1000 would cost a studio on mobile data
+     real money. */
+  { tag: "./__lib-purge-v4-97-lighting500", re: new RegExp("/lib/(full|ui)/user-ref-(13(1[2-9]|[2-9][0-9])|1[4-7][0-9][0-9]|18(0[0-9]|1[01]))\\.jpg$") }
 ];
 
 function purgeReplacedLibArt() {
