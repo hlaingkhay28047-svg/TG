@@ -290,6 +290,24 @@ const BEFORE = { wrappedLabels: 63, searchable: false };
   report("G) every hidden <option> names the same model the sheet does",
     opts.mismatched.length === 0, opts.mismatched.slice(0, 6));
 
+  /* ---- G2) a name may not credit a vendor the model does not run on ----
+     v4.28 §4.5 (W1): gemini-omni-video keeps that id for stored-config
+     compatibility, but it runs on RunningHub, NOT on the customer's Gemini
+     key, so its human-facing name has to say so. The first cut of this
+     release stripped "(RunningHub)" as if it were noise — it is the
+     disclosure, and sweep_video.js caught it. Asserted here too, because
+     this sweep is the one that owns the names now. */
+  const disclosure = await page.evaluate(() => {
+    const m = RH_VIDEO_MODELS.filter(x => x.id === "gemini-omni-video")[0];
+    if (!m) return { missing: true };
+    return { name: vidMName(m),
+             saysRunningHub: /RunningHub/i.test(vidMName(m)),
+             claimsGemini: /^Gemini/i.test(vidMName(m).trim()) };
+  });
+  report("G2) a model named for one vendor but billed by another discloses the real one",
+    !disclosure.missing && disclosure.saysRunningHub && !disclosure.claimsGemini,
+    disclosure);
+
   report("H) no page errors", errs.length === 0, errs);
   report("H2) nothing 404s", bad.length === 0, bad.slice(0, 6));
 
