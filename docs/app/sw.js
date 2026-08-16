@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v4-94-0";
+var CACHE = "hnk-web-studio-v4-95-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -153,7 +153,24 @@ var LIB_PURGES = [
      with no card at all. A cache miss fetches them normally. They are
      deliberately absent from this regex; adding them would cost every user a
      re-fetch to deliver a file they never had. */
-  { tag: "./__lib-purge-v4-93-cards13", re: new RegExp("/lib/wf/cards5/(film-grade|lg-bglight|lg-hair|text-logo|upscale|white-balance-fix|mx-bg|mx-color|mx-fg|mx-object|pl-5)\\.jpg$") }
+  { tag: "./__lib-purge-v4-93-cards13", re: new RegExp("/lib/wf/cards5/(film-grade|lg-bglight|lg-hair|text-logo|upscale|white-balance-fix|mx-bg|mx-color|mx-fg|mx-object|pl-5)\\.jpg$") },
+  /* v4.95 — the ten makeup video cards, replaced under their own names.
+
+     THIS IS THE OPPOSITE CALL FROM ONE RELEASE AGO, AND FOR THE OPPOSITE
+     REASON. v4.94 shipped these ten filenames for the first time, carrying art
+     cut from the owner's own clips, and deliberately added no marker: a
+     brand-new name inside one charges every user a re-fetch for a file they
+     never had. That reasoning expired the moment v4.94 reached Pages. The
+     names are now in the wild, the owner has returned generated art for all
+     ten, and /lib/ is cache-first and never revalidated — so without this
+     entry every device that opened the Video page under v4.94 keeps the
+     footage crops for ever.
+
+     Named individually rather than re-purging /lib/vid/, even though the
+     folder marker exists: that tag was set in v4.83 and can never fire again,
+     and the folder also holds nineteen cards this wave does not touch. Ten
+     names, ten files, ~1.1MB. */
+  { tag: "./__lib-purge-v4-95-mkcards10", re: new RegExp("/lib/vid/vw-(mkGlassSkin|mkGemTear|mkDouyinRed|mkGlossPop|mkPorcelain|mkPinkBridal|mkDollBlush|mkSculptBrush|mkEyeMacro|mkNoirSlip)\\.jpg$") }
 ];
 
 function purgeReplacedLibArt() {
