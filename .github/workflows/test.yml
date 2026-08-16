@@ -239,6 +239,9 @@ jobs:
       - name: Run v4.96.0 Meitu/Evoto page-split sweep (shared stage moves, photo survives)
         run: node test/sweep_v496_studiosplit.js
 
+      - name: Run v4.98.0 video-model sweep (65 endpoints, per-endpoint request shape)
+        run: node test/sweep_v498_videomodels.js
+
       - name: Run Path Retouch batch-look sweep (mocked)
         run: node test/sweep_path.js
 

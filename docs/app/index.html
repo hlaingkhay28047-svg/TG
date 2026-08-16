@@ -4691,28 +4691,137 @@ var RH_VIDEO_MODELS = [
      gemini-omni-video for stored-config compatibility. */
   { id:"gemini-omni-video", label:"Omni Flash (RunningHub) — up to 4K", apiPath:"gemini-omni-flash/image-to-video",
     imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:true,
-    resolutions:["720p","1080p","4k"], durations:["4","6","8","10"], aspect:true, promptMax:2048 }
+    resolutions:["720p","1080p","4k"], durations:["4","6","8","10"], aspect:true, promptMax:2048 },
+
+  /* v4.98 — the other sixty-three, taken from RunningHub's own published model
+     registry rather than typed by hand.
+
+     THE SHELF WAS TWO MODELS DEEP AND THE PROVIDER OFFERS SIXTY-SEVEN
+     image-to-video endpoints. The owner asked for all of them. Sixty-five can
+     be driven from one photograph and a prompt; the two that cannot are named
+     in the note below, because silently dropping an endpoint the owner asked
+     for is worse than saying which and why.
+
+     EACH ENTRY DESCRIBES ITS OWN REQUEST SHAPE, because these endpoints do not
+     share one. Measured across the sixty-seven: the first image arrives as
+     imageUrl (34), firstImageUrl (18), imageUrls (4) or firstFrameUrl (6);
+     nineteen take a LAST frame too; the aspect field is aspectRatio on some and
+     ratio on others; and thirty carry REQUIRED parameters the old adapter never
+     sent at all — sound, bgm, generateAudio, cameraFixed, movementAmplitude,
+     enablePromptExpansion, promptOptimizer, shotType, mode. An entry missing
+     one of those does not fail loudly; it fails at submit with an opaque
+     error. `extra` carries each endpoint's OWN documented default so the
+     request is complete on arrival. */
+  { id:"alibaba-happyhorse-1-0", label:"happyhorse-1.0 \u2014 1080p, 15s", fam:"HappyHorse", apiPath:"alibaba/happyhorse-1.0/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  { id:"alibaba-happyhorse-1-1", label:"happyhorse-1.1 \u2014 1080p, 15s", fam:"HappyHorse", apiPath:"alibaba/happyhorse-1.1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  { id:"higgsfield-dop", label:"higgsfield dop", fam:"Higgsfield", apiPath:"higgsfield/dop/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2048, extra:{"options": "dop-turbo"} },
+  { id:"kling-v2-5-turbo-pro", label:"kling-v2.5-turbo-pro \u2014 10s", fam:"Kling", apiPath:"kling-v2.5-turbo-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
+  { id:"kling-v2-5-turbo-std", label:"kling-v2.5-turbo-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.5-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
+  { id:"kling-v2-6-pro", label:"kling-v2.6-pro \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000, extra:{"sound": "true"} },
+  { id:"kling-v2-6-std", label:"kling-v2.6-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-std/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
+  { id:"kling-v3-4k", label:"kling-v3.0-4k", fam:"Kling", apiPath:"kling-v3-4k/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500 },
+  { id:"kling-v3-turbo-pro", label:"kling-v3-turbo-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-pro/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  { id:"kling-v3-turbo-std", label:"kling-v3-turbo-std \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  { id:"kling-v3-0-pro", label:"kling-v3.0-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
+  { id:"kling-v3-0-std", label:"kling-v3.0-std \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
+  { id:"kling-video-o1", label:"kling-video-o1 \u2014 10s", fam:"Kling", apiPath:"kling-video-o1/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std"} },
+  { id:"kling-video-o3-4k", label:"kling-video-o3-4k", fam:"Kling", apiPath:"kling-video-o3-4k/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500 },
+  { id:"kling-video-o3-pro", label:"kling-video-o3-pro", fam:"Kling", apiPath:"kling-video-o3-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{"sound": true} },
+  { id:"kling-video-o3-std", label:"kling-video-o3-std", fam:"Kling", apiPath:"kling-video-o3-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{"sound": true} },
+  { id:"minimax-hailuo-02-pro", label:"hailuo-02-i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  { id:"minimax-hailuo-02-standard", label:"hailuo-02-i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-standard", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  { id:"minimax-hailuo-2-3-fast-pro", label:"hailuo-2.3-fast-pro \u2014 6s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  { id:"minimax-hailuo-2-3-fast", label:"hailuo-2.3-fast \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  { id:"minimax-hailuo-2-3-standard", label:"hailuo-2.3 i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/i2v-standard", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  { id:"minimax-hailuo-2-3-pro", label:"hailuo-2.3 i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  { id:"minimax-hailuo-h3", label:"MiniMax-H3 Image-to-Video (first last frame) \u2014 2K, 15s", fam:"MiniMax", apiPath:"minimax/hailuo-h3/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["2K"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
+  { id:"pixverse-c1", label:"pixverse-c1 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-c1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": true} },
+  { id:"pixverse-v5-5", label:"pixverse-v5.5 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.5/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false", "generateMultiClipSwitch": "false"} },
+  { id:"pixverse-v5-6", label:"pixverse-v5.6 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false"} },
+  { id:"pixverse-v6", label:"pixverse-v6 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-v6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": true} },
+  { id:"rhart-video-g", label:"xai grok-imagine \u2014 480p", fam:"RHArt Video", apiPath:"rhart-video-g/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:[], aspect:true, aspectParam:"aspectRatio", aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000 },
+  { id:"rhart-video-r-gen4-turbo-official", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2048 },
+  { id:"rhart-video-r-gen4-turbo", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"], promptMax:1000 },
+  { id:"rhart-video-s-official", label:"sora-2 \u2014 12s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:2048 },
+  { id:"rhart-video-s-official-pro", label:"sora-2 \u2014 1080p, 20s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "8", "12", "16", "20"], aspect:false, promptMax:2048 },
+  { id:"rhart-video-s-official-realistic", label:"sora-2 \u2014 12s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video-realistic", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:2048 },
+  { id:"rhart-video-s", label:"sora-2 \u2014 15s", fam:"RHArt Video", apiPath:"rhart-video-s/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspectParam:"aspectRatio", aspects:["9:16", "16:9"], promptMax:4000 },
+  { id:"rhart-video-s-asyn", label:"sora-2 \u2014 15s", fam:"RHArt Video", apiPath:"rhart-video-s/image-to-video-asyn", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspectParam:"aspectRatio", aspects:["9:16", "16:9"], promptMax:4000 },
+  { id:"rhart-video-s-pro-deprecated", label:"sora-2 \u2014 25s", fam:"RHArt Video", apiPath:"rhart-video-s/image-to-video-pro-deprecated", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["15", "25"], aspect:true, aspectParam:"aspectRatio", aspects:["9:16", "16:9"], promptMax:4000 },
+  { id:"rhart-video-v3-1-fast-official", label:"google veo3.1-fast \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-fast-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
+  { id:"rhart-video-v3-1-fast", label:"google veo3.1-fast \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-fast/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000 },
+  { id:"rhart-video-v3-1-lite-official", label:"google veo3.1-lite \u2014 1080p, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-lite-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:20000 },
+  { id:"rhart-video-v3-1-lite", label:"google veo3.1-lite \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-lite/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:20000 },
+  { id:"rhart-video-v3-1-pro-official", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
+  { id:"rhart-video-v3-1-pro", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000 },
+  { id:"rhart-video-g-official-v1-5", label:"xai grok-imagine-video-v1.5 \u2014 720p", fam:"RHArt Video G", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:2048 },
+  { id:"bytedance-seedance-2-5-token", label:"seedance-2.5 \u2014 4k, 30s", fam:"Seedance", apiPath:"bytedance/seedance-2.5-token/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive"], promptMax:20480 },
+  { id:"rhart-video-sparkvideo-2-0-fast", label:"Seedance2.0 Fast Image to Video \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-fast/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  { id:"rhart-video-sparkvideo-2-0-mini", label:"seedance-2.0-mini \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-mini/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  { id:"rhart-video-sparkvideo-2-0", label:"Seedance2.0 Image to Video \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  { id:"seedance-v1-5-pro", label:"seedance-v1.5-pro \u2014 1080p, 12s", fam:"Seedance", apiPath:"seedance-v1.5-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "adaptive"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
+  { id:"seedance-v1-5-pro-fast", label:"seedance-v1.5-pro \u2014 1080p, 12s", fam:"Seedance", apiPath:"seedance-v1.5-pro/image-to-video-fast", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "adaptive"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
+  { id:"skyreels-v4-fast", label:"skyreels-v4 \u2014 1080p", fam:"SkyReels", apiPath:"skyreels-v4/image-to-video-fast", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"promptOptimizer": true} },
+  { id:"skyreels-v4-std", label:"skyreels-v4 \u2014 1080p", fam:"SkyReels", apiPath:"skyreels-v4/image-to-video-std", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"sound": true, "promptOptimizer": true} },
+  { id:"vidu-q2-pro", label:"Vidu \u2014 1080p, 10s", fam:"Vidu", apiPath:"vidu/image-to-video-q2-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  { id:"vidu-q2-pro-fast", label:"Vidu \u2014 1080p, 10s", fam:"Vidu", apiPath:"vidu/image-to-video-q2-pro-fast", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  { id:"vidu-q2-turbo", label:"Vidu \u2014 1080p, 10s", fam:"Vidu", apiPath:"vidu/image-to-video-q2-turbo", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  { id:"vidu-q3-pro", label:"Vidu \u2014 2k, 16s", fam:"Vidu", apiPath:"vidu/image-to-video-q3-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p", "2k"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"audio": true} },
+  { id:"vidu-q3-pro-fast", label:"Vidu \u2014 1080p, 16s", fam:"Vidu", apiPath:"vidu/image-to-video-q3-pro-fast", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:2000 },
+  { id:"vidu-q3-turbo", label:"Vidu \u2014 1080p, 16s", fam:"Vidu", apiPath:"vidu/image-to-video-q3-turbo", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"audio": true} },
+  { id:"alibaba-wan-2-5-preview", label:"wan-2.5-preview \u2014 1080p, 10s", fam:"Wan", apiPath:"alibaba/wan-2.5-preview/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["5", "10"], aspect:false, promptMax:1500 },
+  { id:"alibaba-wan-2-6", label:"alibaba wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["5", "10", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single"} },
+  { id:"alibaba-wan-2-6-flash", label:"wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video-flash", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single", "enablePromptExpansion": false, "enableAudio": true} },
+  { id:"alibaba-wan-2-7-spicy", label:"wan-2.7-spicy \u2014 1080p", fam:"Wan", apiPath:"alibaba/wan-2.7-spicy/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:false, promptMax:5000 },
+  { id:"alibaba-wan-2-7", label:"wan-2.7 \u2014 1080P, 15s", fam:"Wan", apiPath:"alibaba/wan-2.7/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:5000 },
+  { id:"youchuan", label:"midjourney \u2014 720p", fam:"Youchuan", apiPath:"youchuan/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:8192 }
 ];
+/* The two image-to-video endpoints deliberately NOT registered, and why:
+     rhart-video-flux3/image-to-video          requires a `keyframes` structure
+                                               this app has no way to author
+     minimax/hailuo-h3/regeneration-image-to-video
+                                               requires `baseVideoUrl` — it
+                                               regenerates an existing video
+                                               rather than starting from a photo
+   Both would appear in the picker and fail on use. */
 function rhVideoModelDef(id){ return RH_VIDEO_MODELS.find(function(m){ return m.id===id; }) || null; }
-async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax){
+async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax, def){
   /* v4.41: the textarea's maxlength never clipped pre-existing text after a
      model switch (Omni 2048 → RH Video G 800), so an over-limit prompt used
      to reach the endpoint verbatim and fail opaquely — clip at submit too */
   var body={ prompt: promptMax ? String(promptText||"").slice(0, promptMax) : (promptText||"") };
   imageUrls = imageUrls||[];
-  if(imageParam==="imageUrl") body.imageUrl = imageUrls[0]||"";
-  else body.imageUrls = imageUrls;
+  /* v4.98 — the sixty-five endpoints do not share one request shape, so the
+     shape comes from the model's own descriptor rather than from a branch here.
+     The first image is imageUrl on 34 of them, firstImageUrl on 18, imageUrls
+     on 4 and firstFrameUrl on 6; nineteen accept a LAST frame; the aspect field
+     is aspectRatio on some and ratio on others; and thirty declare REQUIRED
+     parameters (sound, bgm, generateAudio, cameraFixed, movementAmplitude,
+     enablePromptExpansion, promptOptimizer, shotType, mode) that this function
+     never used to send — an omission that does not fail loudly, it fails at
+     submit with an opaque error. */
+  def = def || {};
+  var ip = imageParam || def.imageParam || "imageUrls";
+  if(ip==="imageUrls") body.imageUrls = imageUrls;
+  else body[ip] = imageUrls[0]||"";
+  if(def.lastParam && imageUrls.length>1) body[def.lastParam] = imageUrls[1];
   if(resolution) body.resolution = resolution;
   if(duration) body.duration = String(duration);
-  if(aspectRatio) body.aspectRatio = aspectRatio;
+  if(aspectRatio) body[def.aspectParam || "aspectRatio"] = aspectRatio;
+  if(def.extra) Object.keys(def.extra).forEach(function(k){ if(!(k in body)) body[k]=def.extra[k]; });
   var r=await fetch(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) });
   var j=await r.json().catch(function(){return null;});
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
   return j.taskId;
 }
-async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick, signal, promptMax){
+async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick, signal, promptMax, def){
   var imageUrls = imageDataUrls.length ? await rhV2UploadAll(apiKey, imageDataUrls) : [];
-  var taskId = await rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax);
+  /* v4.98 — the descriptor travels with the request. Resolving it here from
+     the apiPath as a fallback means an older caller that has not been updated
+     still sends a complete body rather than one missing required fields. */
+  def = def || (typeof RH_VIDEO_MODELS!=="undefined" &&
+        RH_VIDEO_MODELS.filter(function(m){ return m.apiPath===apiPath; })[0]) || null;
+  var taskId = await rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax, def);
   var final = await rhPollTracked(apiKey, taskId, {kind:"video", label:apiPath, prompt:promptText}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
@@ -18227,7 +18336,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.97.0";
+var APP_VER="4.98.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -19149,13 +19258,29 @@ function updateVidPromptCount(){
 function updateVidModelUI(){
   var m=vidModelDef();
   /* switching model must not silently reset the user's res/dur picks */
+  /* v4.98 — not every endpoint has every control. Measured across the
+     sixty-five: 27 declare no `resolution` parameter at all and 15 declare no
+     `duration`. Rendering an empty dropdown for those is a control that looks
+     available and does nothing — the same dishonesty the v4.34 control wave
+     was about. A control with no options is hidden, exactly like aspect. */
   var res=$("selVidRes"), keepR=res.value; res.innerHTML="";
-  m.resolutions.forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent="Res: "+r; res.appendChild(o); });
-  if(keepR && m.resolutions.indexOf(keepR)>=0) res.value=keepR;
+  (m.resolutions||[]).forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent="Res: "+r; res.appendChild(o); });
+  if(keepR && (m.resolutions||[]).indexOf(keepR)>=0) res.value=keepR;
+  res.style.display = (m.resolutions||[]).length ? "" : "none";
   var dur=$("selVidDur"), keepD=dur.value; dur.innerHTML="";
-  m.durations.forEach(function(d){ var o=document.createElement("option"); o.value=d; o.textContent=d+"s"; dur.appendChild(o); });
-  if(keepD && m.durations.map(String).indexOf(String(keepD))>=0) dur.value=keepD;
-  $("selVidAspect").style.display = m.aspect ? "" : "none";
+  (m.durations||[]).forEach(function(d){ var o=document.createElement("option"); o.value=d; o.textContent=d+"s"; dur.appendChild(o); });
+  if(keepD && (m.durations||[]).map(String).indexOf(String(keepD))>=0) dur.value=keepD;
+  dur.style.display = (m.durations||[]).length ? "" : "none";
+  /* And when a model publishes its OWN aspect list, use it. The static markup
+     offers 16:9/9:16/1:1 to everything, but several endpoints accept only
+     "adaptive" and would reject the rest at submit. */
+  var asp=$("selVidAspect");
+  if(m.aspects && m.aspects.length){
+    var keepA=asp.value; asp.innerHTML="";
+    m.aspects.forEach(function(a){ var o=document.createElement("option"); o.value=a; o.textContent=a; asp.appendChild(o); });
+    if(keepA && m.aspects.indexOf(keepA)>=0) asp.value=keepA;
+  }
+  asp.style.display = m.aspect ? "" : "none";
   $("vidPrompt").setAttribute("maxlength", m.promptMax);
   updateVidPromptCount();
   var needTxt;
@@ -19168,7 +19293,24 @@ function updateVidModelUI(){
   }
   $("vidNeedNote").textContent = needTxt;
 }
-RH_VIDEO_MODELS.forEach(function(m){ var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; $("selVidModel").appendChild(o); });
+/* v4.98 — grouped. Sixty-five options in a flat select is a scroll, not a
+   choice; the two that shipped before keep the top of the list because every
+   stored config and every video workflow card names one of them. */
+(function(){
+  var sel=$("selVidModel"), fams=[], byFam={};
+  RH_VIDEO_MODELS.forEach(function(m){
+    var f=m.fam||"HNK";
+    if(!byFam[f]){ byFam[f]=[]; fams.push(f); }
+    byFam[f].push(m);
+  });
+  fams.forEach(function(f){
+    var g=document.createElement("optgroup"); g.label=f+" ("+byFam[f].length+")";
+    byFam[f].forEach(function(m){
+      var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; g.appendChild(o);
+    });
+    sel.appendChild(g);
+  });
+})();
 $("selVidModel").onchange = updateVidModelUI;
 $("vidPrompt").addEventListener("input", updateVidPromptCount);
 updateVidModelUI();
@@ -19830,7 +19972,7 @@ $("btnVidGen").onclick = async function(){
     $("vidSpin").textContent=spinBase;
     var outs=await rhGenerateVideo(state.rhKey, m.apiPath, text, refDataUrls, resolution, duration, aspectRatio, m.imageParam, function(elapsed, status){
       $("vidSpin").textContent=spinBase+(status?" · "+status:"")+" · "+Math.round(elapsed/1000)+"s";
-    }, abort.signal, m.promptMax);
+    }, abort.signal, m.promptMax, m);
     if(!outs.length){
       setSt("stVidGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
       $("btnVidRetry").style.display="";
