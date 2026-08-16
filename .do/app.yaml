@@ -1,0 +1,11 @@
+name: hnk-ai-tools
+region: sgp
+static_sites:
+  - name: hnk-web
+    environment_slug: html
+    github:
+      repo: hlaingkhay28047-svg/TG
+      branch: main
+      deploy_on_push: true
+    source_dir: /docs
+    index_document: index.html
