@@ -616,18 +616,18 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
       visually to the wrong label. Grabbing the wrong slider at 2am on photo 61
       is the most expensive mistake this UI can make. The margin and hairline
       below exist to make each row a group, not to decorate. */
-@media (pointer:coarse){
-  #pgStudio .st-ctl.st-slider{min-height:0;row-gap:0;padding-bottom:6px;margin-bottom:8px;
-    border-bottom:1px solid rgba(255,255,255,.05)}
-  #pgStudio .st-ctl.st-slider label{flex:1 1 auto;min-width:0}
-  #pgStudio .st-ctl.st-slider .st-val{flex:0 0 44px;min-width:44px}
-  /* The base .st-val hit area is `top:-15px;bottom:-15px` — height + 30px,
-     where the height is whatever the font gives the text. That is 44px with
-     Noto Sans Myanmar loaded and 43px on a runner without it, i.e. the touch
+@media (pointer:coarse){#pgStudio .st-ctl.st-slider,#pgMeitu .st-ctl.st-slider,#pgEvoto .st-ctl.st-slider{min-height:0;row-gap:0;padding-bottom:6px;margin-bottom:8px;
+    border-bottom:1px solid rgba(255,255,255,.05)}#pgStudio .st-ctl.st-slider label,#pgMeitu .st-ctl.st-slider label,#pgEvoto .st-ctl.st-slider label{flex:1 1 auto;min-width:0}#pgStudio .st-ctl.st-slider .st-val,#pgMeitu .st-ctl.st-slider .st-val,#pgEvoto .st-ctl.st-slider .st-val{flex:0 0 44px;min-width:44px}/* The base .st-val hit area is `top:-15px;bottom:-15px` — height + 30px,where the height is whatever the font gives the text. That is 44px with
+     Noto Sans Myanmar loaded and 43px on a runner without it,i.e. the touch
      target silently depends on which fonts the device has. Pin it to a real
      44px box centred on the readout instead: font-independent by construction. */
-  #pgStudio .st-ctl.st-slider .st-val:after{top:50%;bottom:auto;height:44px;transform:translateY(-50%)}
-  #pgStudio .st-ctl.st-slider .rng{flex:1 0 100%;order:1;min-width:0;min-height:44px;
+  #pgStudio .st-ctl.st-slider .st-val:after,i.e. the touch
+     target silently depends on which fonts the device has. Pin it to a real
+     44px box centred on the readout instead: font-independent by construction. */
+  #pgMeitu .st-ctl.st-slider .st-val:after,i.e. the touch
+     target silently depends on which fonts the device has. Pin it to a real
+     44px box centred on the readout instead: font-independent by construction. */
+  #pgEvoto .st-ctl.st-slider .st-val:after{top:50%;bottom:auto;height:44px;transform:translateY(-50%)}#pgStudio .st-ctl.st-slider .rng,#pgMeitu .st-ctl.st-slider .rng,#pgEvoto .st-ctl.st-slider .rng{flex:1 0 100%;order:1;min-width:0;min-height:44px;
     touch-action:pan-y;margin-top:2px}
 }
 .st-color{width:52px;min-height:38px;padding:2px;margin-top:var(--sp-2)}
@@ -685,8 +685,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #pgPath .chip{min-height:44px}
 /* v4.44.1 — one finger-size rule for EVERY Edit-page chip on touch screens
    (pgPath had it alone; Studio's dense group chips were 34px on phones) */
-@media (pointer: coarse){
-  #pgCreate .chip,#pgStudio .chip,#pgRetouch .chip,#pgPath .chip{min-height:44px}
+@media (pointer: coarse){#pgCreate .chip,#pgStudio .chip,#pgMeitu .chip,#pgEvoto .chip,#pgRetouch .chip,#pgPath .chip{min-height:44px}
 }
 .pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:var(--sp-2);margin-top:var(--sp-3)}
 .pt-th{position:relative;padding:0;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel-2);overflow:hidden;min-height:44px;display:block;width:100%;text-align:left;cursor:pointer}
@@ -758,9 +757,10 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 @keyframes chipin{from{transform:scale(.85);opacity:0}}
 #stPendChips .chip.newchip{animation:chipin .18s ease}
 #btnStGen.bump{animation:chipin .18s ease}
-@media (prefers-reduced-motion: reduce){#stPendChips .chip.newchip,#btnStGen.bump,#stStage,#stCanvas{animation:none!important;transition:none!important}}
-/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
-#pgStudio{overflow-anchor:none}
+@media (prefers-reduced-motion: reduce){#stPendChips .chip.newchip,#btnStGen.bump,#stStage,#stCanvas{animation:none!important;transition:none!important}}/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
+#pgStudio,/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
+#pgMeitu,/* sticky live stage (MUST #1) — photo stays visible while deep-scrolled */
+#pgEvoto{overflow-anchor:none}
 #stStage{position:sticky;top:calc(var(--navH,54px) + env(safe-area-inset-top));z-index:6;background:var(--ink);padding:4px 0 6px;margin-top:var(--sp-3);box-shadow:0 10px 18px -12px rgba(0,0,0,.6)}
 #stZoomWrap{position:relative;overflow:hidden;width:fit-content;max-width:100%;margin:0 auto;border-radius:var(--r-md)}
 #stCanvas{display:block;max-width:100%;max-height:30vh;margin:0 auto;border-radius:var(--r-md);background:#000;border:1px solid var(--line-soft);transition:max-height .18s ease}
@@ -817,27 +817,25 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:4px 11px;font-size:var(--fs-2xs)}
 /* v4.27.1 jump-bar diet: compact drops the two-row top (suite tabs + search) to one 44-50px chip row;
    #stSearch stays in the DOM (search still fully functional) — the #stSearchTgl chip swaps it back in */
-#stSearchTgl{display:none}
-#pgStudio.stcompact #stJumpTop{display:none}
-#pgStudio.stcompact #stSearchTgl{display:inline-flex;min-width:44px;min-height:44px;justify-content:center;position:sticky;left:0;z-index:1;background:var(--ink)}
-#pgStudio.stcompact #stGroupChips{margin-top:2px}
-#pgStudio.stcompact #stJumpBar.searchopen #stJumpTop{display:flex;margin-top:2px}
-#pgStudio.stcompact #stJumpBar.searchopen #stSuiteTabs{display:none}
-#pgStudio.stcompact #stJumpBar.searchopen #stGroupChips{display:none}
-#pgStudio.stcompact #stJumpBar.searchopen #stSearch{min-height:44px}
-/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
-#pgStudio.stcompact #stGenBar:not(.haspend) #stPendCount{display:none}
-/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
-#pgStudio.stslim .st-genbar{padding:3px var(--sp-3) 4px;margin:var(--sp-2) 0;bottom:calc(70px + env(safe-area-inset-bottom))}
-/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
+#stSearchTgl{display:none}#pgStudio.stcompact #stJumpTop,#pgMeitu.stcompact #stJumpTop,#pgEvoto.stcompact #stJumpTop{display:none}#pgStudio.stcompact #stSearchTgl,#pgMeitu.stcompact #stSearchTgl,#pgEvoto.stcompact #stSearchTgl{display:inline-flex;min-width:44px;min-height:44px;justify-content:center;position:sticky;left:0;z-index:1;background:var(--ink)}#pgStudio.stcompact #stGroupChips,#pgMeitu.stcompact #stGroupChips,#pgEvoto.stcompact #stGroupChips{margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stJumpTop,#pgMeitu.stcompact #stJumpBar.searchopen #stJumpTop,#pgEvoto.stcompact #stJumpBar.searchopen #stJumpTop{display:flex;margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgMeitu.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgEvoto.stcompact #stJumpBar.searchopen #stSuiteTabs{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stGroupChips,#pgMeitu.stcompact #stJumpBar.searchopen #stGroupChips,#pgEvoto.stcompact #stJumpBar.searchopen #stGroupChips{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stSearch,#pgMeitu.stcompact #stJumpBar.searchopen #stSearch,#pgEvoto.stcompact #stJumpBar.searchopen #stSearch{min-height:44px}/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
+#pgStudio.stcompact #stGenBar:not(.haspend) #stPendCount,/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
+#pgMeitu.stcompact #stGenBar:not(.haspend) #stPendCount,/* gen-bar diet: hide the explainer line while deep-scrolled with an empty queue */
+#pgEvoto.stcompact #stGenBar:not(.haspend) #stPendCount{display:none}/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
+#pgStudio.stslim .st-genbar,/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
+#pgMeitu.stslim .st-genbar,/* slim bars for PiP contexts (landscape phones / keyboard-open) — HD Finish + GENERATE stay reachable */
+#pgEvoto.stslim .st-genbar{padding:3px var(--sp-3) 4px;margin:var(--sp-2) 0;bottom:calc(70px + env(safe-area-inset-bottom))}/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
    :has() is progressive enhancement — without it the window merely shrinks by ~25px */
-body:has(#pgStudio.on.stslim) .nav-in{padding-top:calc(3px + env(safe-area-inset-top));padding-bottom:3px}
-body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-size:14px!important;min-height:44px!important} /* #selLang carries inline sizing */
-#pgStudio.stslim #stPendCount{display:none}
-#pgStudio.stslim #stGenBar .gen{padding:7px 12px}
-#pgStudio.stslim #stGenBar .row{margin-top:2px!important} /* row carries an inline margin-top:6px */
-#pgStudio.stslim #stJumpBar{padding:1px 0 2px}
-#pgStudio.stslim #stGroupChips{margin-top:0}
+body:has(#pgStudio.on.stslim) .nav-in,/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
+   :has() is progressive enhancement — without it the window merely shrinks by ~25px */
+body:has(#pgMeitu.on.stslim) .nav-in,/* while the studio PiP is active the shared nav slims too (lang select stays a 44px target);
+   :has() is progressive enhancement — without it the window merely shrinks by ~25px */
+body:has(#pgEvoto.on.stslim) .nav-in{padding-top:calc(3px + env(safe-area-inset-top));padding-bottom:3px}body:has(#pgStudio.on.stslim) .nav-in #selLang,body:has(#pgMeitu.on.stslim) .nav-in #selLang,body:has(#pgEvoto.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-size:14px!important;min-height:44px!important}/* #selLang carries inline sizing */
+#pgStudio.stslim #stPendCount,/* #selLang carries inline sizing */
+#pgMeitu.stslim #stPendCount,/* #selLang carries inline sizing */
+#pgEvoto.stslim #stPendCount{display:none}#pgStudio.stslim #stGenBar .gen,#pgMeitu.stslim #stGenBar .gen,#pgEvoto.stslim #stGenBar .gen{padding:7px 12px}#pgStudio.stslim #stGenBar .row,#pgMeitu.stslim #stGenBar .row,#pgEvoto.stslim #stGenBar .row{margin-top:2px!important}/* row carries an inline margin-top:6px */
+#pgStudio.stslim #stJumpBar,/* row carries an inline margin-top:6px */
+#pgMeitu.stslim #stJumpBar,/* row carries an inline margin-top:6px */
+#pgEvoto.stslim #stJumpBar{padding:1px 0 2px}#pgStudio.stslim #stGroupChips,#pgMeitu.stslim #stGroupChips,#pgEvoto.stslim #stGroupChips{margin-top:0}
 /* comfort: roomier sliders on 320-class phones (keyboard-nudge focus ring now
    comes from the global :focus-visible rule near .inp:focus) */
 @media(max-width:359px){.st-ctl label{flex:1 0 100%;min-width:0}.rng{min-width:150px}}
@@ -847,16 +845,15 @@ body:has(#pgStudio.on.stslim) .nav-in #selLang{padding:5px 8px!important;font-si
 .st-refx{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2)}
 .st-refx .ref{width:56px;height:56px;flex:0 0 56px}
 #stTarget .chips{margin-top:var(--sp-2)}
-@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}
-#pgStudio .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(var(--navH,54px) + 10px + env(safe-area-inset-top) + var(--stageH,0px) + var(--jumpH,92px))}
-/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
-#pgStudio .grp,#pgStudio .st-ctl{scroll-margin-bottom:calc(150px + env(safe-area-inset-bottom))}
+@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}#pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(var(--navH,54px) + 10px + env(safe-area-inset-top) + var(--stageH,0px) + var(--jumpH,92px))}/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
+#pgStudio .grp,/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
+#pgMeitu .grp,/* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
+#pgEvoto .grp,#pgStudio .st-ctl,#pgMeitu .st-ctl,#pgEvoto .st-ctl{scroll-margin-bottom:calc(150px + env(safe-area-inset-bottom))}
 /* single-column: the column wrappers must not become sticky containing blocks —
    display:contents lifts the stage/jump bar into the full page flow so they stick page-long */
 #stColL,#stColR{display:contents}
 /* desktop two-pane (SHOULD #10) — v4.27.1: preview first, column scrolls internally so the photo is never clipped */
-@media(min-width:1024px){
-  #pgStudio .st-cols{display:grid;grid-template-columns:minmax(340px,42%) 1fr;gap:var(--sp-4);align-items:start}
+@media(min-width:1024px){#pgStudio .st-cols,#pgMeitu .st-cols,#pgEvoto .st-cols{display:grid;grid-template-columns:minmax(340px,42%) 1fr;gap:var(--sp-4);align-items:start}
   #stColL{display:flex;flex-direction:column;position:sticky;top:70px;max-height:calc(100vh - 70px);overflow-y:auto;overscroll-behavior:contain}
   #stColR{display:block}
   #stColL #stStage{position:relative;top:0;box-shadow:none;order:-2}
@@ -1759,12 +1756,39 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   </section>
 </div><!-- /pgLib -->
 
-<div class="page" id="pgStudio">
+<!-- v4.96 — Meitu and Evoto are two REAL pages now.
+
+     They used to be two cards stacked on one #pgStudio: 4395px tall on a 390px
+     phone (5.2 screens), 34 accordions, 253 sliders, and the MEITU/EVOTO chips
+     only called scrollIntoView — they never switched anything and never showed
+     which suite you were in.
+
+     WHAT IS *NOT* DUPLICATED, AND WHY. Everything except the suite card itself
+     is shared: the photo picker, the live-preview canvas, the zoom/split rail,
+     the jump bar, recipes, the result box, export and the generate bar. That
+     block lives once, in #stCols, and is MOVED between the two pages with
+     appendChild — which preserves every listener and the canvas bitmap. Copying
+     the markup instead would duplicate ~40 ids and force the preview engine to
+     re-init, losing the loaded photo on every suite switch. The dock below is
+     class="page" purely so `.page{display:none}` parks it for free. -->
+<div class="page" id="pgMeitu">
   <header class="page-hero"><img src="lib/banners/hero-mermaid.jpg" alt="" loading="lazy" decoding="async" style="object-position:20% 45%">
-    <div class="ph-kick">One-Tap Studio</div>
-    <p class="ph-head" id="phStudio">တစ်ချက်နှိပ်ရုံနဲ့ <em>Studio အဆင့်</em> ပရော်ဖက်ရှင်နယ် look</p>
+    <div class="ph-kick">Meitu Studio</div>
+    <p class="ph-head" id="phMeitu"></p>
   </header>
-  <div class="st-cols">
+  <div class="st-mount"></div>
+</div>
+
+<div class="page" id="pgEvoto">
+  <header class="page-hero"><img src="lib/banners/banner-flower-portrait.jpg" alt="" loading="lazy" decoding="async" style="object-position:50% 30%">
+    <div class="ph-kick">Evoto Pro</div>
+    <p class="ph-head" id="phEvoto"></p>
+  </header>
+  <div class="st-mount"></div>
+</div>
+
+<div class="page" id="stDock">
+  <div class="st-cols" id="stCols">
   <div id="stColL">
   <section class="card">
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-camera"/></svg>PHOTO</h2>
@@ -1860,8 +1884,8 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="status" id="stStatus"></div>
   </div>
   </div><!-- /stColR -->
-  </div><!-- /st-cols -->
-</div><!-- /pgStudio -->
+  </div><!-- /stCols -->
+</div><!-- /stDock -->
 
 <div class="page" id="pgRetouch">
   <header class="page-hero"><img src="lib/banners/banner-flower-gown.jpg" alt="" loading="lazy" decoding="async" style="object-position:72% 25%">
@@ -2650,6 +2674,8 @@ Object.keys(TR_WFSEARCH).forEach(function(k){ TR[k]=TR_WFSEARCH[k]; });
 var TR_PH={
   ph_create:{my:'စိတ်ကူးထဲက မြင်ကွင်းတိုင်းကို <em>လွတ်လပ်စွာ</em> ဖန်တီးပါ',en:'Bring every scene you imagine to life — <em>your way</em>'},
   ph_studio:{my:'Meitu နှင့် Evoto အပြည့်အစုံ — လိုက်ပြသည့် <em>Live Preview</em> ဖြင့်',en:'Full Meitu × Evoto suites with instant <em>live preview</em>'},
+  ph_meitu:{my:'Meitu ပုံစံ ၁၅၈ မျိုး — <em>Live Preview</em> နဲ့ တစ်ချက်ချင်း မြင်ရမယ်',en:'158 Meitu controls, every one of them on <em>live preview</em>'},
+  ph_evoto:{my:'Evoto Pro ၂၁၀ မျိုး — အသားအရေနဲ့ အလင်း <em>အသေးစိတ်</em> ချိန်ညှိ',en:'210 Evoto Pro controls for skin and light, tuned <em>in detail</em>'},
   ph_retouch:{my:'မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်',en:'Flawless retouching that <em>stays natural</em>'},
   ph_t2i:{my:'စာသားတစ်ကြောင်းကနေ <em>ပရော်ဖက်ရှင်နယ်ပုံ</em> ဖြစ်လာမယ်',en:'One line of text becomes a <em>professional image</em>'},
   ph_video:{my:'ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်',en:'Your photos <em>come alive</em> in motion'},
@@ -2672,6 +2698,8 @@ var TR_L14={
   btn_cancel:{shn:"✕ ၵိုတ်း",kac:"✕ Hkring",th:"✕ ยกเลิก",zh:"✕ 取消",vi:"✕ Hủy",id:"✕ Batal",ms:"✕ Batal"},
   ph_create:{shn:'ႁဵတ်းႁႂ်ႈမူႇၶႅပ်းဢၼ်ၼႂ်းၸႂ်ၸဝ်ႈၵဝ်ႇ ပဵၼ်တႄႉမႃး — <em>ၸွမ်းၸႂ်ၸဝ်ႈၵဝ်ႇ</em>',kac:'Na myit hta mu ai lam shagu hpe asak jaw u — <em>na a lam hku</em>',th:'เนรมิตทุกฉากที่คุณจินตนาการ — <em>ในแบบของคุณ</em>',zh:'把你想象的每个场景变为现实 — <em>随心所欲</em>',vi:'Biến mọi khung cảnh bạn tưởng tượng thành hiện thực — <em>theo cách của bạn</em>',id:'Wujudkan setiap adegan yang Anda bayangkan — <em>dengan cara Anda</em>',ms:'Hidupkan setiap adegan yang anda bayangkan — <em>mengikut cara anda</em>'},
   ph_studio:{shn:'ၸုမ်ႇ Meitu × Evoto တဵမ်ထူၼ်ႈ ပႃး <em>live preview</em> ၵမ်းလဵဝ်',kac:'Meitu × Evoto suite hkum ai hte <em>live preview</em> lawan wan',th:'ครบชุด Meitu × Evoto พร้อม<em>พรีวิวสด</em>ทันใจ',zh:'完整的 Meitu × Evoto 套件，<em>实时预览</em>即时呈现',vi:'Trọn bộ Meitu × Evoto với <em>xem trước trực tiếp</em> tức thì',id:'Suite lengkap Meitu × Evoto dengan <em>pratinjau langsung</em> instan',ms:'Suite penuh Meitu × Evoto dengan <em>pratonton langsung</em> serta-merta'},
+  ph_meitu:{shn:'Meitu 158 ဢၼ် — ပႃး <em>live preview</em> ၵူႈဢၼ်',kac:'Meitu 158 hpe — yawng <em>live preview</em> hte',th:'ปรับแต่ง Meitu 158 รายการ พร้อม<em>พรีวิวสด</em>ทุกตัว',zh:'158 项 Meitu 调整，每一项都有<em>实时预览</em>',vi:'158 tùy chỉnh Meitu, tất cả đều có <em>xem trước trực tiếp</em>',id:'158 kontrol Meitu, semuanya dengan <em>pratinjau langsung</em>',ms:'158 kawalan Meitu, semuanya dengan <em>pratonton langsung</em>'},
+  ph_evoto:{shn:'Evoto Pro 210 ဢၼ် — ၽိဝ်ၼိူဝ်ႉလႄႈ ဢၼ်လႅင်း <em>ဢၼ်လဵၵ်ႉ</em>',kac:'Evoto Pro 210 hpe — hpyi hte htoi <em>ginsup</em> galaw',th:'Evoto Pro 210 รายการ ปรับผิวและแสง<em>อย่างละเอียด</em>',zh:'210 项 Evoto Pro 控制，肤质与光线<em>精细</em>调校',vi:'210 tùy chỉnh Evoto Pro cho da và ánh sáng, <em>chi tiết</em>',id:'210 kontrol Evoto Pro untuk kulit dan cahaya, <em>terperinci</em>',ms:'210 kawalan Evoto Pro untuk kulit dan cahaya, <em>terperinci</em>'},
   ph_retouch:{shn:'မႄးၶႅပ်းႁၢင်ႈႁႂ်ႈႁၢင်ႈလီ သေ <em>တိုၵ်ႉပဵၼ်သၽႃႇဝ</em>',kac:'<em>Sha-sha re nga ai</em> tsawm htap ai retouch',th:'รีทัชไร้ที่ติแต่<em>ยังดูเป็นธรรมชาติ</em>',zh:'无瑕精修，<em>依然自然</em>',vi:'Chỉnh sửa hoàn hảo mà <em>vẫn tự nhiên</em>',id:'Retouch sempurna yang <em>tetap alami</em>',ms:'Sentuhan sempurna yang <em>kekal semula jadi</em>'},
   ph_t2i:{shn:'လိၵ်ႈထႅဝ်လဵဝ် လႅၵ်ႈပဵၼ် <em>ၶႅပ်းႁၢင်ႈၸၼ်ႉၶိုၵ်ႉ</em>',kac:'Laika hteng langai sha <em>professional sumla</em> byin wa ai',th:'ข้อความบรรทัดเดียวกลายเป็น<em>ภาพระดับมืออาชีพ</em>',zh:'一行文字变成<em>专业级图像</em>',vi:'Một dòng chữ trở thành <em>bức ảnh chuyên nghiệp</em>',id:'Satu baris teks menjadi <em>gambar profesional</em>',ms:'Satu baris teks menjadi <em>imej profesional</em>'},
   ph_video:{shn:'ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် <em>မီးသၢႆၸႂ်မႃး</em>',kac:'Na a sumla ni shamu shamawt hte <em>asak rawng wa</em> ai',th:'ภาพถ่ายของคุณ<em>มีชีวิต</em>ด้วยการเคลื่อนไหว',zh:'让你的照片在动态中<em>活起来</em>',vi:'Ảnh của bạn <em>sống động</em> trong chuyển động',id:'Foto Anda <em>menjadi hidup</em> dalam gerakan',ms:'Foto anda <em>hidup</em> dalam gerakan'},
@@ -2921,7 +2949,7 @@ var TR_PATH={
 };
 Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
-var PH_MAP=[["phCreate","ph_create"],["phStudio","ph_studio"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
+var PH_MAP=[["phCreate","ph_create"],["phMeitu","ph_meitu"],["phEvoto","ph_evoto"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
 /* v4.41: the language list grows past the nine fully-translated ones.
    Every new code renders through a sensible fallback instead of hallucinated
    text: Myanmar ethnic languages fall back to BURMESE (their readers read
@@ -3210,7 +3238,8 @@ var PAGES=[
   ["pgDash","i-home","Home"],
   ["pgWf","i-brain","Workflow"],
   ["pgCreate","i-pen","Freeform"],
-  ["pgStudio","i-bolt","Studio"],
+  ["pgMeitu","i-makeup","Meitu"],
+  ["pgEvoto","i-target","Evoto"],
   ["pgRetouch","i-gem","Retouch"],
   ["pgPath","i-stack","Path"],
   ["pgText2Img","i-doc","Text→Img"],
@@ -3232,7 +3261,7 @@ var PAGES=[
 var TOPGROUPS=[
   { id:"grpDash", ic:"i-home", label:"Home", pages:["pgDash"] },
   { id:"grpWf", ic:"i-brain", label:"Workflows", pages:["pgWf"] },
-  { id:"grpEdit", ic:"i-sparkle", label:"Edit", pages:["pgCreate","pgStudio","pgRetouch","pgPath"] },
+  { id:"grpEdit", ic:"i-sparkle", label:"Edit", pages:["pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath"] },
   { id:"grpMedia", ic:"i-clapper", label:"Media Lab", pages:["pgText2Img","pgVideo","pgVideoUp"] },
   { id:"grpLib", ic:"i-frame", label:"Library", pages:["pgLib","pgGallery"] }
 ];
@@ -3282,7 +3311,52 @@ function renderSubtabs(grp, activeId){
 /* Returning to a half-scrolled Library or Workflows list used to dump the
    user at the top — remember each page's scroll offset for the session. */
 var scrollMem={};
+/* v4.96 — the shared studio block follows you between Meitu and Evoto.
+
+   MOVED, never copied. appendChild on a node that is already in the document
+   RELOCATES it, keeping every listener and the canvas bitmap intact — which is
+   why a customer can load a photo on Meitu, switch to Evoto and still see it.
+   Rebuilding the markup per page would have duplicated ~40 ids and re-run the
+   preview init, dropping the photo on every switch.
+
+   The inactive suite card is parked in #stDock rather than merely hidden: a
+   display:none card still costs layout on every reflow, and leaving both in
+   the tree is exactly the 34-accordion page this release exists to end. */
+var ST_SUITE_PAGE = { pgMeitu:"stMuCard", pgEvoto:"stEvCard" };
+/* v4.96 — "pgStudio" is still written in three places we do not control: a
+   returning customer's saved page, a manifest shortcut, and any link they
+   bookmarked. Boot validates the stored id against PAGES, so leaving this out
+   sent every existing Studio user to Home and lost their place. Normalise
+   before any of those checks, not after. */
+function stNormalizePage(id){
+  if(id!=="pgStudio") return id;
+  try{ return localStorage.getItem("hnk_st_suite")||"pgMeitu"; }catch(e){ return "pgMeitu"; }
+}
+var stLastSuitePage = "pgMeitu";
+function stActivePage(){ return $(stLastSuitePage) || $("pgMeitu"); }
+function stMountSuite(pageId){
+  var page=$(pageId), dock=$("stDock"), cols=$("stCols");
+  if(!page||!dock||!cols) return;
+  var mount=page.querySelector(".st-mount");
+  if(mount && cols.parentNode!==mount) mount.appendChild(cols);
+  var colR=$("stColR"), keepId=ST_SUITE_PAGE[pageId];
+  Object.keys(ST_SUITE_PAGE).forEach(function(k){
+    var card=$(ST_SUITE_PAGE[k]); if(!card) return;
+    if(ST_SUITE_PAGE[k]===keepId){
+      if(colR && card.parentNode!==colR) colR.insertBefore(card,$("stResultBox"));
+    } else if(card.parentNode!==dock){ dock.appendChild(card); }
+  });
+  stLastSuitePage=pageId;
+  try{ localStorage.setItem("hnk_st_suite",pageId); }catch(e){}
+}
+
 function switchPage(id, fromPop){
+  /* v4.96: every deep link, gate and shortcut that still says "pgStudio" lands
+     on whichever suite the customer used last, instead of a page that no longer
+     exists. Mounting happens BEFORE the page is revealed so nothing flashes. */
+  id=stNormalizePage(id);
+  if(ST_SUITE_PAGE[id]) stMountSuite(id);
+  if(typeof stSyncSuiteChips==="function") setTimeout(stSyncSuiteChips,0);
   /* v4.30: a setInterval that outlives its panel is how a static PWA quietly
      burns a user's data plan — the payment poll dies the moment Setup is left */
   if(id!=="pgHome" && typeof accPollStop==="function"){ try{ accPollStop(); }catch(e){} }
@@ -3761,7 +3835,7 @@ $("btnGearSetup").onclick=function(){ switchPage("pgHome"); };
 try{
   if(!localStorage.getItem("hnk_ws_group_seed_v427")){
     var _seedPg=localStorage.getItem("hnk_web_studio_page");
-    if(_seedPg){ var _sg=findGroup(_seedPg); if(_sg) lastPageOfGroup[_sg.id]=_seedPg; }
+    if(_seedPg){ _seedPg=stNormalizePage(_seedPg); var _sg=findGroup(_seedPg); if(_sg) lastPageOfGroup[_sg.id]=_seedPg; }
     localStorage.setItem("hnk_ws_group_seed_v427","1");
   }
 }catch(e){}
@@ -11361,7 +11435,7 @@ function stLoadImage(dataUrl,opts){
         {label:L9({my:"ပြန်ဖြုတ်မယ်",en:"Undo"}),fn:stUndo});
     }
     var stg=$("stStage"); if(stg) stg.style.display="";
-    var pg=$("pgStudio"); if(pg) pg.classList.remove("nostage");
+    var pg=stActivePage(); if(pg) pg.classList.remove("nostage");
     if(ST._stageHUpd) ST._stageHUpd();
     stRenderSettle(); stApplyDragFilter();
     stRenderThumbs();
@@ -11381,7 +11455,7 @@ function stSyncFromRef(){
   if(!r){
     ST.srcBitmap=null; state.st.img=null; ST.geoCache=null; ST.geoCacheFull=null; ST.fullBitmap=null;
     var stg=$("stStage"); if(stg) stg.style.display="none";
-    var pg=$("pgStudio"); if(pg) pg.classList.add("nostage");
+    var pg=stActivePage(); if(pg) pg.classList.add("nostage");
     if(ST._stageHUpd) ST._stageHUpd();
     stRenderThumbs(); stUiSoon(); return;
   }
@@ -11560,7 +11634,11 @@ function stRenderPend(){
   if(btn){
     var noPhoto=!ST.srcBitmap;
     var lblKey=noPhoto ? "p" : (n ? "g"+n : ((live>0||stIsDirty()) ? "a" : "g0"));
-    var lbl=noPhoto ? icn("i-camera")+" "+escH(L9({my:"ပုံထည့်ပါ — Live preview စမယ်",en:"Add a photo to start"}))
+    /* v4.96 — this label is the sticky generate button wearing the empty state,
+       and the long form did not fit it: measured 273px of text in a 230px box,
+       so a customer read "Live previ…". The PHOTO card three hundred pixels up
+       already carries the full sentence; this one only has to name the action. */
+    var lbl=noPhoto ? icn("i-camera")+" "+escH(L9({my:"ပုံထည့်ပါ",en:"Add a photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูป",zh:"添加照片",vi:"Thêm ảnh",id:"Tambah foto",ms:"Tambah foto"}))
       : n ? icn("i-bolt")+" GENERATE ("+n+" AI)"
       : ((live>0||stIsDirty()) ? icn("i-check")+" APPLY ("+escH(L9({my:"စက်တွင်း render",en:"local render"}))+")" : icn("i-bolt")+" GENERATE");
     if(btn.dataset.lbl!==lblKey){
@@ -14464,7 +14542,7 @@ function stArtWake(){
 }
 (function stArtWatch(){
   function arm(){
-    var pg=$("pgStudio");
+    var pg=stActivePage();
     /* No IntersectionObserver (or no page) must never mean no art — fall back
        to the pre-v4.84 behaviour of loading it, rather than to a blank shelf.
        A deferral that can fail closed is worse than the bytes it saves. */
@@ -14610,7 +14688,7 @@ function renderStPicker(){
 (function(){
   function typing(ev){ return /INPUT|TEXTAREA|SELECT/.test((ev.target&&ev.target.tagName)||""); }
   document.addEventListener("keydown",function(ev){
-    if(curPage!=="pgStudio"||typing(ev)) return;
+    if(!ST_SUITE_PAGE[curPage]||typing(ev)) return;
     var mod=ev.ctrlKey||ev.metaKey;
     if(mod && !ev.shiftKey && (ev.key==="z"||ev.key==="Z")){ ev.preventDefault(); stUndo(); }
     else if(mod && (ev.key==="y"||ev.key==="Y"||(ev.shiftKey&&(ev.key==="z"||ev.key==="Z")))){ ev.preventDefault(); stRedo(); }
@@ -15644,7 +15722,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
 
 /* ---- sticky stage chrome: adaptive 3-state stage + PiP (v4.27.1), minimize cycle, A|B split, result flip, height CSS vars ---- */
 (function(){
-  var stg=$("stStage"), pg=$("pgStudio");
+  var stg=$("stStage"), pg=stActivePage();
   if(!stg||!pg) return;
   var navEl=document.querySelector(".nav");
   function navH(){ return (navEl&&navEl.offsetHeight)||54; }
@@ -15978,13 +16056,23 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
 /* ---- suite navigation: jump bar tabs + group chip strip + feature search (MUST #4/#5) ---- */
 (function(){
   var tabs=$("stSuiteTabs"); if(!tabs) return;
-  function tab(icon,txt,cardId){
+  /* v4.96 — these two used to call scrollIntoView and nothing else: they never
+     switched suite and never showed which one you were in, because both were on
+     the same page. Now they ARE the page switch, and they carry the selected
+     state so the answer to "which suite am I in" is on screen. */
+  var suiteChips=[];
+  function tab(icon,txt,pageId){
     var c=el("button","chip"); c.innerHTML=icn(icon)+" "+escH(txt);
-    c.onclick=function(){ var card=$(cardId); if(card) card.scrollIntoView({behavior:"smooth",block:"start"}); };
-    tabs.appendChild(c);
+    c.dataset.pg=pageId;
+    c.onclick=function(){ if(curPage!==pageId) switchPage(pageId); stSyncSuiteChips(); };
+    tabs.appendChild(c); suiteChips.push(c);
   }
-  tab("i-makeup","MEITU · "+ST_MEITU_COUNT,"stMuCard");
-  tab("i-target","EVOTO · "+ST_EVOTO_COUNT,"stEvCard");
+  window.stSyncSuiteChips=function(){
+    suiteChips.forEach(function(c){ c.className="chip"+(c.dataset.pg===curPage?" on":""); });
+  };
+  tab("i-makeup","MEITU · "+ST_MEITU_COUNT,"pgMeitu");
+  tab("i-target","EVOTO · "+ST_EVOTO_COUNT,"pgEvoto");
+  stSyncSuiteChips();
   var strip=$("stGroupChips");
   ST.groups.forEach(function(g){
     var c=el("button","chip"); c.innerHTML=icn(g.icon)+" "+escH(g.title);
@@ -17667,8 +17755,8 @@ function showPaywall(key){
      languages — so read the gated page's own H2 out of the DOM rather than
      minting nine more strings that can drift away from the page title. A
      gate with no page of its own simply omits the line. */
-  var GATE_PAGE = { v2_retouch:"pgRetouch", batch:"pgRetouch", studio_meitu:"pgStudio",
-                    studio_evoto:"pgStudio", video:"pgVideo", text2img:"pgText2Img",
+  var GATE_PAGE = { v2_retouch:"pgRetouch", batch:"pgRetouch", studio_meitu:"pgMeitu",
+                    studio_evoto:"pgEvoto", video:"pgVideo", text2img:"pgText2Img",
                     path_export:"pgPath" };
   var host = GATE_PAGE[key] && $(GATE_PAGE[key]);
   var h2 = host && host.querySelector("h2");
@@ -18530,7 +18618,7 @@ $("onbKey").onclick=function(){ onbClose(); switchPage("pgHome"); $("cardKey").s
 /* restore last-open page — Home (pgDash) is the default for FRESH storage
    only; a returning user's saved page still wins (v4.27.0 §3.2 contract) */
 try {
-  var _pg = localStorage.getItem("hnk_web_studio_page");
+  var _pg = stNormalizePage(localStorage.getItem("hnk_web_studio_page"));
   if (_pg && PAGES.some(function(p){ return p[0]===_pg; })) switchPage(_pg);
   else switchPage("pgDash");
 } catch(e){}
