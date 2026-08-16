@@ -4683,7 +4683,14 @@ function hdFinishSize(forced){
   var s=$("selSize"); return (s && s.value) || "";
 }
 var RH_VIDEO_MODELS = [
-  { id:"rh-video-g-off", label:"RH Video G — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video",
+  /* v4.98.1 — named for what it actually is. "RH Video G" told a customer
+     nothing: RunningHub's own registry maps this endpoint to
+     xai/grok-imagine/image-to-video-official-stable, so the studio was paying
+     for Grok Imagine without the picker ever saying so. Precedent: v4.28 W1
+     relabelled the neighbouring entry for the mirror-image reason — it claimed
+     "Gemini" while running on RunningHub. The id stays put; a stored config or
+     a shared link that names it must keep working. */
+  { id:"rh-video-g-off", label:"Grok Imagine — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video",
     imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false,
     resolutions:["720p","480p"], durations:["6","10"], aspect:false, promptMax:800 },
   /* v4.28 W1: relabeled — this endpoint runs on RunningHub, NOT on the user's
@@ -18336,7 +18343,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="4.98.0";
+var APP_VER="4.98.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
