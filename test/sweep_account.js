@@ -590,10 +590,12 @@ const SB_FIX = {
   const measure = () => page.evaluate(() => {
     const nav = document.querySelector(".nav-in");
     const name = document.querySelector(".nav-name");
-    const lh = parseFloat(getComputedStyle(name).lineHeight) || parseFloat(getComputedStyle(name).fontSize) * 1.2;
+    const wordmark = document.querySelector(".hnk-wordmark") || name;
+    const wordmarkStyle = getComputedStyle(wordmark);
+    const wordmarkLh = parseFloat(wordmarkStyle.lineHeight) || parseFloat(wordmarkStyle.fontSize) * 1.2;
     return { scrollW: document.scrollingElement.scrollWidth, innerW: window.innerWidth,
              navH: Math.round(nav.getBoundingClientRect().height),
-             nameLines: Math.round(name.getBoundingClientRect().height / lh),
+             wordmarkLines: Math.round(wordmark.getBoundingClientRect().height / wordmarkLh),
              logoW: Math.round(document.querySelector(".nav-logo").getBoundingClientRect().width),
              wizOn: document.getElementById("wizPay").className.indexOf("on") >= 0 };
   });
@@ -604,9 +606,9 @@ const SB_FIX = {
   await page.setViewportSize({ width: 320, height: 800 });
   await page.waitForTimeout(200);
   const m320 = await measure();
-  report("14 320/390 no overflow: with every account accordion expanded AND the paywall forced open, neither width scrolls sideways; the header row does not grow (no wrap) between 390 and 320, the wordmark stays on one line, and the logo mark is still rendered",
+  report("14 320/390 no overflow: with every account accordion expanded AND the paywall forced open, neither width scrolls sideways; the header row does not grow between 390 and 320, the visible HNK wordmark stays on one line, and the logo mark is still rendered",
     m390.scrollW <= m390.innerW + 1 && m320.scrollW <= m320.innerW + 1 &&
-    m390.navH === m320.navH && m390.nameLines === 1 && m320.nameLines === 1 &&
+    m390.navH === m320.navH && m390.wordmarkLines === 1 && m320.wordmarkLines === 1 &&
     m390.logoW > 0 && m320.logoW > 0 && m390.wizOn && m320.wizOn,
     JSON.stringify({ w390: m390, w320: m320 }));
 
