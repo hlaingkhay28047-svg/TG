@@ -16,7 +16,7 @@ jobs:
   deploy:
     name: Keep hnk-ai-tools-3 live on main
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       DO_APP_NAME: hnk-ai-tools-3
       DO_APP_HOST: hnk-ai-tools-3-s4nnu.ondigitalocean.app
@@ -34,7 +34,7 @@ jobs:
           fi
 
       - name: Check out release metadata
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -43,7 +43,7 @@ jobs:
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ env.DO_TOKEN }}
-          version: 1.164.0
+          version: 1.166.0
 
       - name: Resolve existing DigitalOcean app
         if: steps.auth.outputs.available == 'true'
@@ -74,21 +74,28 @@ jobs:
             --wait \
             --format ID,Phase,Updated
 
-      - name: Verify production live release version
+      - name: Verify production live release
         shell: bash
         run: |
           set -euo pipefail
-          EXPECTED="$(jq -r '.v' docs/app/version.json)"
-          LIVE_URL="https://${DO_APP_HOST}/app/version.json?sha=${GITHUB_SHA}"
-          echo "Expecting HNK Web Studio ${EXPECTED} at ${LIVE_URL}"
-          for attempt in $(seq 1 30); do
-            ACTUAL="$(curl -fsS --max-time 10 -H 'Cache-Control: no-cache' "$LIVE_URL" 2>/dev/null | jq -r '.v // empty' 2>/dev/null || true)"
-            if [ "$ACTUAL" = "$EXPECTED" ]; then
-              echo "Verified production live HNK Web Studio ${ACTUAL}."
+          EXPECTED_VERSION="$(jq -r '.v' docs/app/version.json)"
+          EXPECTED_LANDING_SHA="$(sha256sum docs/index.html | awk '{print $1}')"
+          LIVE_FILE="$RUNNER_TEMP/production-index.html"
+          echo "Expecting HNK Web Studio ${EXPECTED_VERSION} and landing ${EXPECTED_LANDING_SHA} on ${DO_APP_HOST}."
+          for attempt in $(seq 1 120); do
+            VERSION_URL="https://${DO_APP_HOST}/app/version.json?sha=${GITHUB_SHA}&attempt=${attempt}"
+            LANDING_URL="https://${DO_APP_HOST}/?sha=${GITHUB_SHA}&attempt=${attempt}"
+            ACTUAL_VERSION="$(curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$VERSION_URL" 2>/dev/null | jq -r '.v // empty' 2>/dev/null || true)"
+            ACTUAL_LANDING_SHA=""
+            if curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$LANDING_URL" -o "$LIVE_FILE" 2>/dev/null; then
+              ACTUAL_LANDING_SHA="$(sha256sum "$LIVE_FILE" | awk '{print $1}')"
+            fi
+            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ]; then
+              echo "Verified production version ${ACTUAL_VERSION} and exact landing content."
               exit 0
             fi
-            echo "Attempt ${attempt}/30: production is '${ACTUAL:-unavailable}', waiting for ${EXPECTED}."
-            sleep 10
+            echo "Attempt ${attempt}/120: version='${ACTUAL_VERSION:-unavailable}', landing='${ACTUAL_LANDING_SHA:-unavailable}'."
+            sleep 15
           done
-          echo "::error::Production did not report version ${EXPECTED}. Ensure hnk-ai-tools-3 is connected to GitHub/main with deploy_on_push enabled, or add a DigitalOcean API token secret for the fallback deploy."
+          echo "::error::Production did not publish version ${EXPECTED_VERSION} with landing SHA-256 ${EXPECTED_LANDING_SHA}. Ensure hnk-ai-tools-3 follows GitHub/main or configure the API-token fallback."
           exit 1

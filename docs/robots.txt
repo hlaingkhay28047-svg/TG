@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://hlaingkhay28047-svg.github.io/TG/sitemap.xml
+Sitemap: https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/sitemap.xml

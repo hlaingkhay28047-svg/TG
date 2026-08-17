@@ -38,9 +38,12 @@ const appSpec = read(".do/app.yaml");
 const deployTemplate = read(".do/deploy.template.yaml");
 const readme = read("README.md");
 const landing = read("docs/index.html");
+const robots = read("docs/robots.txt");
+const sitemap = read("docs/sitemap.xml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
 const releaseDate = "2026-08-17";
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
+const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
 const appVersion = (html.match(/var APP_VER\s*=\s*"([\d.]+)"/) || [])[1] || "";
 const cacheVersion = (sw.match(/var CACHE\s*=\s*"hnk-web-studio-v(\d+)-(\d+)-(\d+)"/) || []).slice(1).join(".");
@@ -117,11 +120,39 @@ check("landing inventory copy matches the shipped web app",
   ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu 158", "Evoto Pro 210", "1,134"].every(value => landing.includes(value)) &&
   !["One-Tap 123", "Visual Library 607", "Smart Workflow 116", "Meitu 79", "Evoto Pro 79", "1,081"].some(value => landing.includes(value)),
   "landing inventory or test-count copy is stale");
+check("public metadata uses the production DigitalOcean origin",
+  landing.includes(`<link rel="canonical" href="${productionBase}/">`) &&
+  landing.includes(`<meta property="og:url" content="${productionBase}/">`) &&
+  landing.includes(`<meta property="og:image" content="${productionBase}/og-image.jpg">`) &&
+  webAppSchema.url === `${productionBase}/app/` &&
+  html.includes(`<link rel="canonical" href="${productionBase}/app/">`) &&
+  html.includes(`<meta property="og:url" content="${productionBase}/app/">`) &&
+  html.includes(`var APP_URL = "${productionBase}/app/";`),
+  "canonical, Open Graph, schema, or app-share URL drifted");
+check("SEO discovery files use the production origin",
+  robots.includes(`Sitemap: ${productionBase}/sitemap.xml`) &&
+  sitemap.includes(`<loc>${productionBase}/</loc>`) &&
+  sitemap.includes(`<loc>${productionBase}/app/</loc>`),
+  "robots.txt or sitemap.xml uses the wrong origin");
+check("retired GitHub Pages and repository URLs are absent",
+  ![landing, html, robots, sitemap].some(value => value.includes("hlaingkhay28047-svg.github.io/TG")) &&
+  !landing.includes("hlaingkhay28047-svg/HNK-Ai-V1") &&
+  landing.includes("https://github.com/hlaingkhay28047-svg/TG") &&
+  landing.includes("https%3A%2F%2Fhnk-ai-tools-3-s4nnu.ondigitalocean.app%2F"),
+  "a canonical, share, or repository link is stale");
+check("web-app metadata inventory matches the shipped UI",
+  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu Studio 158", "Evoto Pro 210"].every(value => html.includes(value)) &&
+  !["Smart Workflow 115", "Meitu Studio 50", "Evoto Pro 42"].some(value => html.includes(value)),
+  "app description or social metadata is stale");
+check("temporary deployment probes are not published",
+  !fs.existsSync(path.join(ROOT, "docs/.auto-live-check")) &&
+  !fs.existsSync(path.join(ROOT, "docs/autolive-verify-20260817-0935.json")),
+  "a staging verification marker would ship to production");
 check("the web app downloads the published Photoshop panel", html.includes(`HNK_Ai_Panel_v${panelVersion}.ccx`) && html.includes(`CCX Download (v${panelVersion})`), `panel ${panelVersion}`);
 check("the published Photoshop panel archive is valid and versioned", panelArtifactOk, panelArtifactDetail);
 
-check("GitHub Actions checkout is pinned to reviewed v6.0.2", checkoutSha === "de0fac2e4500dabe0009e67214ff5f5447ce83dd", checkoutSha || "missing full commit SHA");
-check("GitHub Actions setup-node is pinned to reviewed v6.4.0", setupNodeSha === "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e", setupNodeSha || "missing full commit SHA");
+check("GitHub Actions checkout is pinned to reviewed v7.0.1", checkoutSha === "3d3c42e5aac5ba805825da76410c181273ba90b1", checkoutSha || "missing full commit SHA");
+check("GitHub Actions setup-node is pinned to reviewed v7.0.0", setupNodeSha === "820762786026740c76f36085b0efc47a31fe5020", setupNodeSha || "missing full commit SHA");
 check("CI runs on the current even-numbered Node LTS", nodeMajor === 24, `Node ${nodeMajor || "?"}`);
 check("CI uses a stable Ubuntu 24.04 runner", /runs-on:\s*ubuntu-24\.04/.test(workflow), "runner is not pinned");
 check("CI grants only read access to repository contents", /permissions:\s*\n\s*contents:\s*read/.test(workflow) && !/:\s*write\b/.test(workflow), "missing contents: read or a write permission is present");
