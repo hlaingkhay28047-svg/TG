@@ -56,6 +56,8 @@ github:
   deploy_on_push: true
 ```
 
+The public one-click template intentionally uses a direct public-git source, so it does not auto-deploy later commits. Until an existing app is migrated to authenticated GitHub, manually deploy it from DigitalOcean after each approved branch update.
+
 After that one-time binding, pushes deploy directly from DigitalOcean. If a repository secret named `DIGITALOCEAN_ACCESS_TOKEN`, `DIGITALOCEAN_TOKEN`, or `DO_TOKEN` is later added, the GitHub workflows also have a `doctl` force-rebuild fallback.
 
 No DigitalOcean access token is stored in repository files or logs.
