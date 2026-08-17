@@ -2,46 +2,63 @@
 
 Adobe Photoshop plugin tools and HNK web app.
 
+## Always-live upgrade flow
+
+Every upgrade should have a live DigitalOcean copy automatically:
+
+1. Work on `upgrade-safe-wave`.
+2. Every push to `upgrade-safe-wave` runs GitHub CI and updates DigitalOcean staging `hnk-ai-tools-2`.
+3. Review and test the staging live app while development continues.
+4. Merge the approved upgrade to `main`.
+5. Every push/merge to `main` updates DigitalOcean production `hnk-ai-tools-3` and verifies `/app/version.json` matches the repository release.
+
+This keeps both GitHub and DigitalOcean moving together while still separating unfinished staging code from the production app.
+
 ## DigitalOcean App Platform
 
-This repository is ready for DigitalOcean App Platform deployment.
-
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/hlaingkhay28047-svg/TG/tree/main)
-
-### Deployment settings
-
 - Repository: `hlaingkhay28047-svg/TG`
-- Branch: `main`
-- Resource type: Static Site
-- Source directory: `/docs`
+- Staging branch: `upgrade-safe-wave`
+- Production branch: `main`
+- Static source directory: `/docs`
 - Index document: `index.html`
-- Auto deploy on push: enabled when the app uses the authenticated GitHub source in `.do/app.yaml`
 - Region: Singapore (`sgp`)
+- Staging app: `hnk-ai-tools-2`
+- Staging host: `hnk-ai-tools-2-gibhz.ondigitalocean.app`
+- Production app: `hnk-ai-tools-3`
+- Production host: `hnk-ai-tools-3-s4nnu.ondigitalocean.app`
 
-DigitalOcean configuration files:
+Configuration files:
 
-- `.do/app.yaml` — App Platform spec for GitHub-connected deployment and auto-deploy.
-- `.do/deploy.template.yaml` — one-click Deploy to DigitalOcean template.
+- `.do/staging.app.yaml` — `hnk-ai-tools-2` follows `upgrade-safe-wave` with `deploy_on_push: true`.
+- `.do/app.yaml` — production follows `main` with `deploy_on_push: true`.
+- `.github/workflows/deploy-digitalocean-staging.yml` — staging push workflow, manual API recovery, and live version + exact landing/app-content verification.
+- `.github/workflows/deploy-digitalocean.yml` — production push workflow, manual API recovery, and live version + exact landing/app-content verification.
+- `.github/workflows/verify-digitalocean-deploy.yml` — regression guard for both deployment lanes.
 
-The public website is served from `/docs`, and the web app/PWA is available under `/docs/app` in the repository (served as `/app/` after deployment).
+### One-time DigitalOcean source binding
 
-### Updating an existing DigitalOcean app
+For truly automatic deployments without storing a DigitalOcean API token in GitHub, each existing DigitalOcean app must be connected to the authenticated GitHub source once.
 
-The one-click button uses a public `git` source. That source is correct for a new public deployment, but it requires a manual deploy to pull later commits.
+Staging `hnk-ai-tools-2`:
 
-For production auto-deploy, connect the existing app to authenticated GitHub once:
+```yaml
+github:
+  repo: hlaingkhay28047-svg/TG
+  branch: upgrade-safe-wave
+  deploy_on_push: true
+```
 
-1. Authorize DigitalOcean App Platform to access `hlaingkhay28047-svg/TG`.
-2. Open **App → Settings → App Spec → Edit**.
-3. In the existing `hnk-web` component, replace only its `git:` source block with:
+Production `hnk-ai-tools-3`:
 
-   ```yaml
-   github:
-     repo: hlaingkhay28047-svg/TG
-     branch: main
-     deploy_on_push: true
-   ```
+```yaml
+github:
+  repo: hlaingkhay28047-svg/TG
+  branch: main
+  deploy_on_push: true
+```
 
-4. Preserve the app's generated domains, ingress, alerts, and all other fields, then save the spec.
+The public one-click template intentionally uses a direct public-git source, so it does not auto-deploy later commits. Until an existing app is migrated to authenticated GitHub, manually deploy it from DigitalOcean after each approved branch update.
 
-Until that one-time migration is complete, use **Actions → Deploy** in DigitalOcean after merging a release to `main`.
+After that one-time binding, normal pushes deploy directly from DigitalOcean. Each deploy workflow uses one shared 33-minute deadline across optional manual recovery and live verification, then verifies `/app/version.json` plus the SHA-256 of both live landing and app HTML against the checked-out commit. API force-rebuild is manual-only (`workflow_dispatch` with `force_rebuild: true`) so normal auto-deploys are never duplicated. Manual staging recovery requires `DIGITALOCEAN_STAGING_ACCESS_TOKEN`; manual production recovery requires the separate `DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN`. Before mutation, the workflow verifies the actual DigitalOcean app uses the expected repository and lane branch.
+
+No DigitalOcean access token is stored in repository files or logs.

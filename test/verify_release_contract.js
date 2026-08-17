@@ -38,9 +38,12 @@ const appSpec = read(".do/app.yaml");
 const deployTemplate = read(".do/deploy.template.yaml");
 const readme = read("README.md");
 const landing = read("docs/index.html");
+const robots = read("docs/robots.txt");
+const sitemap = read("docs/sitemap.xml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
 const releaseDate = "2026-08-17";
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
+const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
 const appVersion = (html.match(/var APP_VER\s*=\s*"([\d.]+)"/) || [])[1] || "";
 const cacheVersion = (sw.match(/var CACHE\s*=\s*"hnk-web-studio-v(\d+)-(\d+)-(\d+)"/) || []).slice(1).join(".");
@@ -51,6 +54,7 @@ const advertisedWebVersions = [...landing.matchAll(/\b(?:Web Studio|WEB STUDIO)\
 const jsonLdText = (landing.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/) || [])[1] || "{}";
 const jsonLd = JSON.parse(jsonLdText);
 const webAppSchema = (jsonLd["@graph"] || []).find(item => item["@type"] === "WebApplication") || {};
+const panelSchema = (jsonLd["@graph"] || []).find(item => item["@type"] === "SoftwareApplication") || {};
 const localeStart = landing.indexOf("var I18N =");
 const localeEnd = landing.indexOf("var sel=", localeStart);
 const localeContext = {};
@@ -113,11 +117,74 @@ check("the web app describes the same provider-only API-key flow in every locale
 check("fully translated app locales do not fall back to an English privacy note", appNativePrivacyCodes.every(language => !effectiveAppLocaleValue("key_note", language).includes(englishProviderFlow)), "an English-only notice leaked into localized copy");
 check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
+check("landing inventory copy matches the shipped web app",
+  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu 158", "Evoto Pro 210", "1,134"].every(value => landing.includes(value)) &&
+  !["One-Tap 123", "Visual Library 607", "Smart Workflow 116", "Meitu 79", "Evoto Pro 79", "1,081"].some(value => landing.includes(value)),
+  "landing inventory or test-count copy is stale");
+const encodedProductionHome = encodeURIComponent(productionBase + "/");
+const unexpectedDocsDotfiles = fs.readdirSync(path.join(ROOT, "docs"))
+  .filter(name => name.startsWith(".") && name !== ".nojekyll");
+const unexpectedProbeFiles = fs.readdirSync(path.join(ROOT, "docs"))
+  .filter(name => /(?:auto.?live|deploy-(?:ts|check|verify))/i.test(name));
+
+check("landing canonical and social-image fields use the exact production origin",
+  [
+    `<link rel="canonical" href="${productionBase}/">`,
+    `<meta property="og:url" content="${productionBase}/">`,
+    `<meta property="og:image" content="${productionBase}/og-image.jpg">`,
+    `<meta name="twitter:image" content="${productionBase}/og-image.jpg">`
+  ].every(value => landing.includes(value)),
+  "landing canonical, Open Graph, or Twitter image drifted");
+check("app canonical, social-image, and share fields use the exact production origin",
+  [
+    `<link rel="canonical" href="${productionBase}/app/">`,
+    `<meta property="og:url" content="${productionBase}/app/">`,
+    `<meta property="og:image" content="${productionBase}/app/og-app.jpg">`,
+    `<meta name="twitter:image" content="${productionBase}/app/og-app.jpg">`,
+    `var APP_URL = "${productionBase}/app/";`
+  ].every(value => html.includes(value)),
+  "app canonical, Open Graph, Twitter, or share URL drifted");
+check("structured metadata uses exact production app and download URLs",
+  webAppSchema.url === `${productionBase}/app/` &&
+  panelSchema.url === `${productionBase}/#panel` &&
+  panelSchema.downloadUrl === `${productionBase}/download/HNK_Ai_Panel_v${panelVersion}.ccx`,
+  "JSON-LD app, panel, or download URL drifted");
+check("Telegram and Facebook share the exact production homepage",
+  landing.includes(`https://t.me/share/url?url=${encodedProductionHome}&amp;text=`) &&
+  landing.includes(`https://www.facebook.com/sharer/sharer.php?u=${encodedProductionHome}`),
+  "Telegram or Facebook share target drifted");
+check("SEO discovery files use the production origin",
+  robots.includes(`Sitemap: ${productionBase}/sitemap.xml`) &&
+  sitemap.includes(`<loc>${productionBase}/</loc>`) &&
+  sitemap.includes(`<loc>${productionBase}/app/</loc>`),
+  "robots.txt or sitemap.xml uses the wrong origin");
+check("retired GitHub Pages and repository URLs are absent",
+  ![landing, html, robots, sitemap].some(value => value.includes("hlaingkhay28047-svg.github.io/TG")) &&
+  !landing.includes("hlaingkhay28047-svg/HNK-Ai-V1") &&
+  landing.includes("https://github.com/hlaingkhay28047-svg/TG"),
+  "a canonical, share, or repository link is stale");
+check("both social preview images exist in the published site",
+  fs.existsSync(path.join(ROOT, "docs/og-image.jpg")) &&
+  fs.existsSync(path.join(ROOT, "docs/app/og-app.jpg")),
+  "an Open Graph image is missing");
+check("web-app metadata and initial DOM inventory match the shipped UI",
+  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu Studio 158", "Evoto Pro 210"].every(value => html.includes(value)) &&
+  html.includes('<b id="stTapCount">131</b>') &&
+  html.includes('<b id="stLibCount">1811</b>') &&
+  html.includes('<b id="stWfCount">124</b>') &&
+  !["Smart Workflow 115", "Meitu Studio 50", "Evoto Pro 42", '<b id="stTapCount">128</b>', '<b id="stWfCount">115</b>'].some(value => html.includes(value)),
+  "app metadata or initial inventory is stale");
+check("temporary deployment probes are not published",
+  unexpectedDocsDotfiles.length === 0 && unexpectedProbeFiles.length === 0 &&
+  !fs.existsSync(path.join(ROOT, "docs/.auto-live-check")) &&
+  !fs.existsSync(path.join(ROOT, "docs/.deploy-ts")) &&
+  !fs.existsSync(path.join(ROOT, "docs/autolive-verify-20260817-0935.json")),
+  `unexpected dotfiles: ${unexpectedDocsDotfiles.join(", ") || "none"}; probes: ${unexpectedProbeFiles.join(", ") || "none"}`);
 check("the web app downloads the published Photoshop panel", html.includes(`HNK_Ai_Panel_v${panelVersion}.ccx`) && html.includes(`CCX Download (v${panelVersion})`), `panel ${panelVersion}`);
 check("the published Photoshop panel archive is valid and versioned", panelArtifactOk, panelArtifactDetail);
 
-check("GitHub Actions checkout is pinned to reviewed v6.0.2", checkoutSha === "de0fac2e4500dabe0009e67214ff5f5447ce83dd", checkoutSha || "missing full commit SHA");
-check("GitHub Actions setup-node is pinned to reviewed v6.4.0", setupNodeSha === "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e", setupNodeSha || "missing full commit SHA");
+check("GitHub Actions checkout is pinned to reviewed v7.0.1", checkoutSha === "3d3c42e5aac5ba805825da76410c181273ba90b1", checkoutSha || "missing full commit SHA");
+check("GitHub Actions setup-node is pinned to reviewed v7.0.0", setupNodeSha === "820762786026740c76f36085b0efc47a31fe5020", setupNodeSha || "missing full commit SHA");
 check("CI runs on the current even-numbered Node LTS", nodeMajor === 24, `Node ${nodeMajor || "?"}`);
 check("CI uses a stable Ubuntu 24.04 runner", /runs-on:\s*ubuntu-24\.04/.test(workflow), "runner is not pinned");
 check("CI grants only read access to repository contents", /permissions:\s*\n\s*contents:\s*read/.test(workflow) && !/:\s*write\b/.test(workflow), "missing contents: read or a write permission is present");
