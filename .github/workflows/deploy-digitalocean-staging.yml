@@ -39,6 +39,10 @@ jobs:
             exit 1
           fi
 
+      - name: Record shared deployment deadline
+        shell: bash
+        run: echo "JOB_DEADLINE_EPOCH=$(( $(date +%s) + 1980 ))" >> "$GITHUB_ENV"
+
       - name: Check out upgrade metadata
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,11 +97,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          doctl apps create-deployment "${{ steps.app.outputs.app_id }}" \
+          RECOVERY_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))
+          if [ "$RECOVERY_TIMEOUT_SECONDS" -le 0 ]; then
+            echo "::error::Not enough time remains for manual recovery and live verification."
+            exit 1
+          fi
+          if ! timeout --foreground --signal=TERM "${RECOVERY_TIMEOUT_SECONDS}s" \
+            doctl apps create-deployment "${{ steps.app.outputs.app_id }}" \
             --update-sources \
             --force-rebuild \
             --wait \
-            --format ID,Phase,Updated
+            --format ID,Phase,Updated; then
+            echo "::error::Manual staging recovery did not finish before its bounded deadline."
+            exit 1
+          fi
 
       - name: Staging source contract
         shell: bash
@@ -116,10 +129,10 @@ jobs:
           EXPECTED_APP_SHA="$(sha256sum docs/app/index.html | awk '{print $1}')"
           LANDING_FILE="$RUNNER_TEMP/staging-index.html"
           APP_FILE="$RUNNER_TEMP/staging-app-index.html"
-          DEADLINE=$((SECONDS + 1800))
+          DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"
           attempt=0
           echo "Expecting HNK Web Studio ${EXPECTED_VERSION}, landing ${EXPECTED_LANDING_SHA}, and app ${EXPECTED_APP_SHA} on ${DO_APP_HOST}."
-          while [ "$SECONDS" -lt "$DEADLINE" ]; do
+          while [ "$(date +%s)" -lt "$DEADLINE_EPOCH" ]; do
             attempt=$((attempt + 1))
             VERSION_URL="https://${DO_APP_HOST}/app/version.json?sha=${GITHUB_SHA}&attempt=${attempt}"
             LANDING_URL="https://${DO_APP_HOST}/?sha=${GITHUB_SHA}&attempt=${attempt}"
@@ -140,10 +153,10 @@ jobs:
               exit 0
             fi
             echo "Attempt ${attempt}: version='${ACTUAL_VERSION:-unavailable}', landing='${ACTUAL_LANDING_SHA:-unavailable}', app='${ACTUAL_APP_SHA:-unavailable}'."
-            if [ $((SECONDS + 15)) -ge "$DEADLINE" ]; then
+            if [ $(( $(date +%s) + 15 )) -ge "$DEADLINE_EPOCH" ]; then
               break
             fi
             sleep 15
           done
-          echo "::error::Staging did not publish version ${EXPECTED_VERSION}, landing SHA-256 ${EXPECTED_LANDING_SHA}, and app SHA-256 ${EXPECTED_APP_SHA} within 30 minutes. Check the hnk-ai-tools-2 GitHub source binding."
+          echo "::error::Staging did not publish version ${EXPECTED_VERSION}, landing SHA-256 ${EXPECTED_LANDING_SHA}, and app SHA-256 ${EXPECTED_APP_SHA} before the shared 33-minute job deadline. Check the hnk-ai-tools-2 GitHub source binding."
           exit 1
