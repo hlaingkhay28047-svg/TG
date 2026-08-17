@@ -2709,6 +2709,20 @@ var RH_MODELS = [
 var OA_LS_KEY = "hnk_oa_apikey";
 var OA_BASE = "https://api.openai.com/v1";
 var OA_MODEL = "gpt-image-2";
+/* v5.4 — OpenAI image models are a real picker now, not a hardcoded id.
+   All three share the same /images/generations + /images/edits request
+   shape, so the call sites only swap the model string. */
+var OA_MODELS = [
+  ["gpt-image-2", "GPT Image 2 — best"],
+  ["gpt-image-1", "GPT Image 1"],
+  ["gpt-image-1-mini", "GPT Image 1 Mini — cheapest"]
+];
+var OA_LS_MODEL = "hnk_oa_model";
+function oaModel(){
+  var v = null;
+  try { v = localStorage.getItem(OA_LS_MODEL); } catch(e){}
+  return (v && OA_MODELS.some(function(m){ return m[0]===v; })) ? v : OA_MODEL;
+}
 var LS_STATE = "hnk_web_studio_v2_state";
 
 /* ---------- language (my/en) — toggle reloads so every builder re-reads t() ---------- */
@@ -5324,6 +5338,20 @@ function rhFillModelSelect(sel, active){
   });
   if(active && active.id && Array.prototype.some.call(sel.options,function(o){ return o.value===active.id; })) sel.value=active.id;
 }
+function oaFillModelSelect(sel){
+  /* same dual-duty dropdown pattern as rhFillModelSelect: with OpenAI
+     selected, #selModel lists the OpenAI image models and the pick
+     persists across sessions */
+  if(_selModelGeminiHtml===null) _selModelGeminiHtml=sel.innerHTML;
+  if(!rhModelListIsRH()) _geminiModelShadow=sel.value||"auto";
+  sel.innerHTML="";
+  OA_MODELS.forEach(function(m){
+    var o=document.createElement("option");
+    o.value=m[0]; o.textContent="Model: "+m[1];
+    sel.appendChild(o);
+  });
+  sel.value=oaModel();
+}
 function updateGenOptsForRHKind(){
   var provider = $("selProvider").value;
   var isUpscaleKind = false;
@@ -5354,8 +5382,8 @@ function updateGenOptsForRHKind(){
     rhFillModelSelect(mSel, active);
     mSel.style.display="";
   } else if(provider==="openai"){
-    rhRestoreGeminiModel(mSel);
-    mSel.style.display="none";
+    oaFillModelSelect(mSel);
+    mSel.style.display="";
   } else {
     rhRestoreGeminiModel(mSel);
     mSel.style.display="";
@@ -5481,6 +5509,14 @@ $("selModel").onchange = function(){
     }
     return;
   }
+  if($("selProvider").value==="openai"){
+    var oid=this.value;
+    if(OA_MODELS.some(function(m){ return m[0]===oid; })){
+      try{ localStorage.setItem(OA_LS_MODEL, oid); }catch(e){}
+      toast(L9({my:"OpenAI model → "+oid+" ✓ — ဒီ model နဲ့ generate လုပ်ပါမယ်",en:"OpenAI model → "+oid+" ✓ — generates will use this model"}),"ok");
+    }
+    return;
+  }
   updateGeminiSizeGate();
 };
 $("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
@@ -5548,14 +5584,14 @@ async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio, quality, si
   var r;
   if(refDataUrls && refDataUrls.length){
     var fd=new FormData();
-    fd.append("model", OA_MODEL);
+    fd.append("model", oaModel());
     fd.append("prompt", promptText);
     fd.append("size", size);
     if(quality==="high") fd.append("quality","high");
     refDataUrls.forEach(function(du, i){ fd.append("image[]", rhDataUrlToBlob(du), "hnk_"+i+".png"); });
     r=await fetch(oaUrl("/images/edits"), { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd, signal:signal });
   } else {
-    var oaBody={ model:OA_MODEL, prompt:promptText, size:size };
+    var oaBody={ model:oaModel(), prompt:promptText, size:size };
     if(quality==="high") oaBody.quality="high";
     r=await fetch(oaUrl("/images/generations"), { method:"POST",
       headers:{"Authorization":"Bearer "+apiKey, "Content-Type":"application/json"},
@@ -5570,7 +5606,7 @@ async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio, quality, si
      a key), so only the COUNT is knowable — and it is exact. The size and
      quality tier go in the label, because those are what move the price on
      the dashboard the owner will read it off. */
-  try{ spendNoteRun("openai", OA_MODEL+" "+size+(quality==="high"?" high":""), "image"); }catch(e3){}
+  try{ spendNoteRun("openai", oaModel()+" "+size+(quality==="high"?" high":""), "image"); }catch(e3){}
   return [{ mime:"image/png", b64: b64 }];
 }
 function oaFriendly(e){
