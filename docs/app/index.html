@@ -5907,7 +5907,7 @@ $("filePick").onchange = function(){
 /* static (non-JS-built) accordions wire up the same open/close toggle
    the grp() builder below uses, so a hand-written .grp/.grp-h/.grp-b
    block (like Setup's Platform Guide) behaves identically to a built one */
-["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced","genGrpAdvanced","ptGrpFx","ptGrpPrompt","accGrpAuth","accGrpPlan","accGrpBuy","accGrpDev","accGrpReq"].forEach(function(id){
+["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced","genGrpAdvanced","ptGrpFx","ptGrpPrompt","accGrpAuth","accGrpPlan","accGrpBuy","accGrpDev","accGrpReq","moneyGrpRuns"].forEach(function(id){
   var g=$(id); if(!g) return;
   var h=g.querySelector(".grp-h");
   h.onclick=function(){
@@ -11108,6 +11108,15 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs){
   var fsLo = (t2.freqLo>0||t2.freqHi||t2.hairShine>0||t2.eyeDef>0) ? stBlurData(cv,W,H,6*rs) : null;
   var fsLoB = t2.freqLo>0 ? stBlurData(cv,W,H,(6+t2.freqLo/100*16)*rs) : null;
   var zones = (t2.teeth>0||t2.eyeb>0||t2.lipV>0||t2.blushV>0||t2.eyeDef>0) ? stFaceZones(px,W,H,mi) : null;
+  /* v4.56 — ONE head box for every face-relative band below. Each of these
+     used to derive its geometry from mi.box, the box around every skin pixel
+     in the frame, so on a half-body portrait the hair band covered the dress
+     and the eye-bag band sat on the collarbone. Declared BEFORE the hair
+     block: hoisting left hbox undefined there, so Hair Gloss/Depth never
+     built their band at all. */
+  var hbox = (zones&&zones.head) ? zones.head
+           : ((mi&&mi.mask) ? stHeadBox(mi.mask,W,H) : null);
+  if(!hbox) hbox = mi&&mi.box;
   /* v4.40 — the app now KNOWS hair, cheeks, lips as regions of its own:
      hair = dark non-skin in the halo above/around the face box; cheeks are
      placed from the eye/mouth geometry the zones already carry. */
@@ -11120,13 +11129,6 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs){
        cannot make this distinction) */
     faceInner={cx:(hbox.x0+hbox.x1)/2, cy:(hbox.y0+hbox.y1)/2, rx:bwH/2*0.62, ry:bhH/2*0.62};
   }
-  /* v4.56 — ONE head box for every face-relative band below. Each of these
-     used to derive its geometry from mi.box, the box around every skin pixel
-     in the frame, so on a half-body portrait the hair band covered the dress
-     and the eye-bag band sat on the collarbone. */
-  var hbox = (zones&&zones.head) ? zones.head
-           : ((mi&&mi.mask) ? stHeadBox(mi.mask,W,H) : null);
-  if(!hbox) hbox = mi&&mi.box;
   var cheeks=null;
   if(t2.blushV>0&&zones){
     if(zones.r&&zones.r.cheekL&&zones.r.cheekR){
@@ -12446,7 +12448,15 @@ function stRenderPend(){
     c.onclick=function(ev){
       if(ev.target===x){ stFeatReset(pe.id); return; }
       var g=ST.grpOf[pe.id];
-      if(g){ g.className="grp open"; g.scrollIntoView({behavior:"smooth",block:"center"}); }
+      if(!g) return;
+      /* v4.98.2 jump-chip rule applies here too: a chip whose group is
+         parked in the hidden #stDock (it belongs to the OTHER suite page)
+         must switch pages first — scrollIntoView on a detached card does
+         nothing at all. */
+      var host=stSuiteOf(pe.id);
+      var want=host==="ev"?"pgEvoto":"pgMeitu";
+      var go=function(){ g.className="grp open"; g.scrollIntoView({behavior:"smooth",block:"center"}); };
+      if(g.offsetParent===null && curPage!==want && ST_SUITE_PAGE[want]){ switchPage(want); setTimeout(go,60); } else go();
     };
     host.appendChild(c);
   });
@@ -12670,7 +12680,24 @@ function stColorInp(o){ /* {id,get,set,dflt} */
 function svSlider(id,label,bidir,featId,max){
   return stAiMark(stSlider({id:id,label:label,min:bidir?-100:0,max:max||100,def:0,
     get:function(){ return svGet(id,0); },
-    set:function(v){ svSet(id,v); if(v&&stSeedParent(id)) stRefreshUI(); stSync(featId); }}));
+    set:function(v){
+      svSet(id,v);
+      if(v&&stSeedParent(id,featId)) stRefreshUI();
+      stSync(featId);
+      /* if the edit STILL didn't land (un-seedable parent, e.g. a required
+         reference image), say so once instead of letting the gold readout
+         claim success */
+      if(v){
+        var f=ST.feats[featId];
+        if(f&&!stFeatActive(f)){
+          ST._seedWarned=ST._seedWarned||{};
+          if(!ST._seedWarned[featId]){
+            ST._seedWarned[featId]=1;
+            toast(L9({my:"ဒီ feature စတင်ဖို့ သူ့ရဲ့ style / reference ကို အရင်ရွေးပေးပါ",en:"Pick this feature's style / reference first so the edit can queue"}),"err");
+          }
+        }
+      }
+    }}));
 }
 function t1Slider(id,label,k,bidir){
   ST.rowMap[id]={kind:"t1",k:k};
@@ -12767,15 +12794,36 @@ var ST_SEED_PARENT={
   st_leakV:{k:"st_leak",pick:"warm"},
   st_frameW:{k:"st_frame",pick:"thin"}
 };
-function stSeedParent(childId){
-  var p=ST_SEED_PARENT[childId]; if(!p) return false;
-  if(p.t2){
-    if(state.st.t2[p.t2]) return false;
-    state.st.t2[p.t2]=ST_SEED_AMT; return true;
+function stSeedParent(childId,featId){
+  var p=ST_SEED_PARENT[childId];
+  if(p){
+    if(p.t2){
+      if(state.st.t2[p.t2]) return false;
+      state.st.t2[p.t2]=ST_SEED_AMT; return true;
+    }
+    if(svGet(p.k,null)) return false;
+    svSet(p.k,p.pick||ST_SEED_AMT);
+    return true;
   }
-  if(svGet(p.k,null)) return false;
-  svSet(p.k,p.pick||ST_SEED_AMT);
-  return true;
+  /* generalized slider-first seeding, data-driven from the feature's own
+     keys: dragging an Amount/Intensity slider whose parent style chip or
+     toggle is unset used to queue NOTHING while the readout turned gold —
+     the documented "told an edit had landed when none had" failure, fixed
+     for chip-first (stSeedAmount) but silent in this direction for every
+     unmapped child. Reference parents cannot be seeded and stay excluded. */
+  var f=featId&&ST.feats[featId];
+  if(!f||!f.keys||f.keys.indexOf(childId)<0) return false;
+  var i,k;
+  for(i=0;i<f.keys.length;i++){
+    k=f.keys[i]; if(k===childId) continue;
+    if(svGet(k,null)) return false;            /* a parent is already set */
+  }
+  for(i=0;i<f.keys.length;i++){
+    k=f.keys[i]; if(k===childId) continue;
+    if(ST.chipFirst&&ST.chipFirst[k]!=null){ svSet(k,ST.chipFirst[k]); return true; }
+    if(ST.togBool&&ST.togBool[k]){ svSet(k,true); return true; }
+  }
+  return false;
 }
 function stSeedAmount(featId,pickedId){
   var f=ST.feats[featId]; if(!f||!f.keys) return false;
@@ -12797,11 +12845,15 @@ function stAiMark(node){
   return node;
 }
 function svChips(id,label,choices,featId,allowOff){
+  /* remember each chip row's first choice so a value slider dragged before
+     its parent style can seed it (the slider-first mirror of stSeedAmount) */
+  ST.chipFirst=ST.chipFirst||{}; if(choices&&choices[0]) ST.chipFirst[id]=choices[0][0];
   return stAiMark(stChips({id:id,label:label,choices:choices,allowOff:allowOff,
     get:function(){ return svGet(id,null); },
     set:function(v){ svSet(id,v); if(v&&stSeedAmount(featId,id)) stRefreshUI(); stSync(featId); }}));
 }
 function svToggle(id,label,featId){
+  ST.togBool=ST.togBool||{}; ST.togBool[id]=1;
   return stAiMark(stToggle({id:id,label:label,
     get:function(){ return !!svGet(id,false); },
     set:function(v){ svSet(id,v); stSync(featId); }}));
@@ -21000,6 +21052,24 @@ function showT2IResult(){
 $("btnT2IGen").onclick = async function(){
   if(!gate("text2img")) return;     /* v4.30 §6.3 */
   if(!state.rhKey){
+    /* Text-to-image is NOT RunningHub-only in this app: the Freeform page
+       already generates from a bare prompt on Gemini (no-refs auto-resolves
+       to gemini-3-pro-image-preview) and OpenAI (/images/generations). A
+       Gemini/OpenAI-only user typing here used to be bounced to Setup and
+       told to buy a THIRD key for a capability their key already covers —
+       carry their prompt to Freeform and switch the provider instead. */
+    if(state.key || state.oaKey){
+      var carry=$("t2iPrompt").value.trim();
+      if(carry){ var pv=$("prompt"); if(pv) pv.value=carry; }
+      var selP=$("selProvider");
+      if(selP){
+        selP.value = state.key ? "gemini" : "openai";
+        try{ selP.dispatchEvent(new Event("change")); }catch(e){}
+      }
+      switchPage("pgCreate");
+      toast(L9({my:"RunningHub key မရှိသေးပေမယ့် သင့် "+(state.key?"Gemini":"OpenAI")+" key နဲ့ Freeform မှာ text-to-image ထုတ်လို့ရပါတယ် — prompt ကူးပေးထားပါပြီ",en:"No RunningHub key, but your "+(state.key?"Gemini":"OpenAI")+" key does text-to-image on Freeform — your prompt was carried over"}),"ok");
+      return;
+    }
     pendingCapture();
     switchPage("pgHome");
     var mk=L9({my:"RunningHub key setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ",en:"RunningHub key isn't set up yet — add it in Setup",shn:"RunningHub key ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ",kac:"RunningHub key n setup ai shi — Setup kaw galaw u",th:"ยังไม่ได้ตั้งค่า RunningHub key — ตั้งค่าใน Setup",zh:"尚未设置 RunningHub key — 请在 Setup 中配置",vi:"Chưa thiết lập RunningHub key — cấu hình trong Setup",id:"RunningHub key belum disiapkan — atur di Setup",ms:"RunningHub key belum disediakan — konfigurasi dalam Setup"});
