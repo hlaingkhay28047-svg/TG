@@ -54,6 +54,7 @@ const advertisedWebVersions = [...landing.matchAll(/\b(?:Web Studio|WEB STUDIO)\
 const jsonLdText = (landing.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/) || [])[1] || "{}";
 const jsonLd = JSON.parse(jsonLdText);
 const webAppSchema = (jsonLd["@graph"] || []).find(item => item["@type"] === "WebApplication") || {};
+const panelSchema = (jsonLd["@graph"] || []).find(item => item["@type"] === "SoftwareApplication") || {};
 const localeStart = landing.indexOf("var I18N =");
 const localeEnd = landing.indexOf("var sel=", localeStart);
 const localeContext = {};
@@ -120,15 +121,38 @@ check("landing inventory copy matches the shipped web app",
   ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu 158", "Evoto Pro 210", "1,134"].every(value => landing.includes(value)) &&
   !["One-Tap 123", "Visual Library 607", "Smart Workflow 116", "Meitu 79", "Evoto Pro 79", "1,081"].some(value => landing.includes(value)),
   "landing inventory or test-count copy is stale");
-check("public metadata uses the production DigitalOcean origin",
-  landing.includes(`<link rel="canonical" href="${productionBase}/">`) &&
-  landing.includes(`<meta property="og:url" content="${productionBase}/">`) &&
-  landing.includes(`<meta property="og:image" content="${productionBase}/og-image.jpg">`) &&
+const encodedProductionHome = encodeURIComponent(productionBase + "/");
+const unexpectedDocsDotfiles = fs.readdirSync(path.join(ROOT, "docs"))
+  .filter(name => name.startsWith(".") && name !== ".nojekyll");
+const unexpectedProbeFiles = fs.readdirSync(path.join(ROOT, "docs"))
+  .filter(name => /(?:auto.?live|deploy-(?:ts|check|verify))/i.test(name));
+
+check("landing canonical and social-image fields use the exact production origin",
+  [
+    `<link rel="canonical" href="${productionBase}/">`,
+    `<meta property="og:url" content="${productionBase}/">`,
+    `<meta property="og:image" content="${productionBase}/og-image.jpg">`,
+    `<meta name="twitter:image" content="${productionBase}/og-image.jpg">`
+  ].every(value => landing.includes(value)),
+  "landing canonical, Open Graph, or Twitter image drifted");
+check("app canonical, social-image, and share fields use the exact production origin",
+  [
+    `<link rel="canonical" href="${productionBase}/app/">`,
+    `<meta property="og:url" content="${productionBase}/app/">`,
+    `<meta property="og:image" content="${productionBase}/app/og-app.jpg">`,
+    `<meta name="twitter:image" content="${productionBase}/app/og-app.jpg">`,
+    `var APP_URL = "${productionBase}/app/";`
+  ].every(value => html.includes(value)),
+  "app canonical, Open Graph, Twitter, or share URL drifted");
+check("structured metadata uses exact production app and download URLs",
   webAppSchema.url === `${productionBase}/app/` &&
-  html.includes(`<link rel="canonical" href="${productionBase}/app/">`) &&
-  html.includes(`<meta property="og:url" content="${productionBase}/app/">`) &&
-  html.includes(`var APP_URL = "${productionBase}/app/";`),
-  "canonical, Open Graph, schema, or app-share URL drifted");
+  panelSchema.url === `${productionBase}/#panel` &&
+  panelSchema.downloadUrl === `${productionBase}/download/HNK_Ai_Panel_v${panelVersion}.ccx`,
+  "JSON-LD app, panel, or download URL drifted");
+check("Telegram and Facebook share the exact production homepage",
+  landing.includes(`https://t.me/share/url?url=${encodedProductionHome}&amp;text=`) &&
+  landing.includes(`https://www.facebook.com/sharer/sharer.php?u=${encodedProductionHome}`),
+  "Telegram or Facebook share target drifted");
 check("SEO discovery files use the production origin",
   robots.includes(`Sitemap: ${productionBase}/sitemap.xml`) &&
   sitemap.includes(`<loc>${productionBase}/</loc>`) &&
@@ -137,17 +161,25 @@ check("SEO discovery files use the production origin",
 check("retired GitHub Pages and repository URLs are absent",
   ![landing, html, robots, sitemap].some(value => value.includes("hlaingkhay28047-svg.github.io/TG")) &&
   !landing.includes("hlaingkhay28047-svg/HNK-Ai-V1") &&
-  landing.includes("https://github.com/hlaingkhay28047-svg/TG") &&
-  landing.includes("https%3A%2F%2Fhnk-ai-tools-3-s4nnu.ondigitalocean.app%2F"),
+  landing.includes("https://github.com/hlaingkhay28047-svg/TG"),
   "a canonical, share, or repository link is stale");
-check("web-app metadata inventory matches the shipped UI",
+check("both social preview images exist in the published site",
+  fs.existsSync(path.join(ROOT, "docs/og-image.jpg")) &&
+  fs.existsSync(path.join(ROOT, "docs/app/og-app.jpg")),
+  "an Open Graph image is missing");
+check("web-app metadata and initial DOM inventory match the shipped UI",
   ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu Studio 158", "Evoto Pro 210"].every(value => html.includes(value)) &&
-  !["Smart Workflow 115", "Meitu Studio 50", "Evoto Pro 42"].some(value => html.includes(value)),
-  "app description or social metadata is stale");
+  html.includes('<b id="stTapCount">131</b>') &&
+  html.includes('<b id="stLibCount">1811</b>') &&
+  html.includes('<b id="stWfCount">124</b>') &&
+  !["Smart Workflow 115", "Meitu Studio 50", "Evoto Pro 42", '<b id="stTapCount">128</b>', '<b id="stWfCount">115</b>'].some(value => html.includes(value)),
+  "app metadata or initial inventory is stale");
 check("temporary deployment probes are not published",
+  unexpectedDocsDotfiles.length === 0 && unexpectedProbeFiles.length === 0 &&
   !fs.existsSync(path.join(ROOT, "docs/.auto-live-check")) &&
+  !fs.existsSync(path.join(ROOT, "docs/.deploy-ts")) &&
   !fs.existsSync(path.join(ROOT, "docs/autolive-verify-20260817-0935.json")),
-  "a staging verification marker would ship to production");
+  `unexpected dotfiles: ${unexpectedDocsDotfiles.join(", ") || "none"}; probes: ${unexpectedProbeFiles.join(", ") || "none"}`);
 check("the web app downloads the published Photoshop panel", html.includes(`HNK_Ai_Panel_v${panelVersion}.ccx`) && html.includes(`CCX Download (v${panelVersion})`), `panel ${panelVersion}`);
 check("the published Photoshop panel archive is valid and versioned", panelArtifactOk, panelArtifactDetail);
 
