@@ -16,6 +16,7 @@ jobs:
   deploy:
     name: Force rebuild hnk-ai-tools-3
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     env:
       DO_APP_NAME: hnk-ai-tools-3
       DO_APP_HOST: hnk-ai-tools-3-s4nnu.ondigitalocean.app
@@ -31,6 +32,12 @@ jobs:
           else
             echo "available=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Check out release metadata
+        if: steps.auth.outputs.available == 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Install doctl
         if: steps.auth.outputs.available == 'true'
@@ -68,6 +75,26 @@ jobs:
             --force-rebuild \
             --wait \
             --format ID,Phase,Updated
+
+      - name: Verify live release version
+        if: steps.auth.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED="$(jq -r '.v' docs/app/version.json)"
+          LIVE_URL="https://${DO_APP_HOST}/app/version.json?sha=${GITHUB_SHA}"
+          echo "Expecting HNK Web Studio ${EXPECTED} at ${LIVE_URL}"
+          for attempt in $(seq 1 18); do
+            ACTUAL="$(curl -fsS --max-time 10 -H 'Cache-Control: no-cache' "$LIVE_URL" 2>/dev/null | jq -r '.v // empty' 2>/dev/null || true)"
+            if [ "$ACTUAL" = "$EXPECTED" ]; then
+              echo "Verified live HNK Web Studio ${ACTUAL}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}/18: live version is '${ACTUAL:-unavailable}', waiting for ${EXPECTED}."
+            sleep 5
+          done
+          echo "::error::DigitalOcean deployment completed, but the live app did not report version ${EXPECTED} within the verification window."
+          exit 1
 
       - name: Show live deployment
         if: steps.auth.outputs.available == 'true'
