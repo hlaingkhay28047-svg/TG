@@ -1,6 +1,8 @@
 name: DigitalOcean Production Deploy
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -12,7 +14,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Force rebuild hnk-ai-tools-3
+    name: Keep hnk-ai-tools-3 live on main
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
@@ -26,18 +28,17 @@ jobs:
         run: |
           if [ -z "$DO_TOKEN" ]; then
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::DigitalOcean deploy is ready but waiting for a repository secret named DIGITALOCEAN_ACCESS_TOKEN, DIGITALOCEAN_TOKEN, or DO_TOKEN."
+            echo "::notice::No DigitalOcean API token is stored in GitHub. Production should still auto-deploy when hnk-ai-tools-3 is connected to GitHub/main with deploy_on_push enabled."
           else
             echo "available=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check out release metadata
-        if: steps.auth.outputs.available == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Install doctl
+      - name: Install doctl fallback
         if: steps.auth.outputs.available == 'true'
         uses: digitalocean/action-doctl@v2
         with:
@@ -61,9 +62,8 @@ jobs:
             exit 1
           fi
           echo "app_id=$APP_ID" >> "$GITHUB_OUTPUT"
-          echo "Found DigitalOcean app: $DO_APP_NAME ($APP_ID)"
 
-      - name: Pull latest source, force rebuild, and deploy
+      - name: Force deploy as API fallback
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
@@ -74,36 +74,21 @@ jobs:
             --wait \
             --format ID,Phase,Updated
 
-      - name: Verify live release version
-        if: steps.auth.outputs.available == 'true'
+      - name: Verify production live release version
         shell: bash
         run: |
           set -euo pipefail
           EXPECTED="$(jq -r '.v' docs/app/version.json)"
           LIVE_URL="https://${DO_APP_HOST}/app/version.json?sha=${GITHUB_SHA}"
           echo "Expecting HNK Web Studio ${EXPECTED} at ${LIVE_URL}"
-          for attempt in $(seq 1 18); do
+          for attempt in $(seq 1 30); do
             ACTUAL="$(curl -fsS --max-time 10 -H 'Cache-Control: no-cache' "$LIVE_URL" 2>/dev/null | jq -r '.v // empty' 2>/dev/null || true)"
             if [ "$ACTUAL" = "$EXPECTED" ]; then
-              echo "Verified live HNK Web Studio ${ACTUAL}."
+              echo "Verified production live HNK Web Studio ${ACTUAL}."
               exit 0
             fi
-            echo "Attempt ${attempt}/18: live version is '${ACTUAL:-unavailable}', waiting for ${EXPECTED}."
-            sleep 5
+            echo "Attempt ${attempt}/30: production is '${ACTUAL:-unavailable}', waiting for ${EXPECTED}."
+            sleep 10
           done
-          echo "::error::DigitalOcean deployment completed, but the live app did not report version ${EXPECTED} within the verification window."
+          echo "::error::Production did not report version ${EXPECTED}. Ensure hnk-ai-tools-3 is connected to GitHub/main with deploy_on_push enabled, or add a DigitalOcean API token secret for the fallback deploy."
           exit 1
-
-      - name: Show live deployment
-        if: steps.auth.outputs.available == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          doctl apps get "${{ steps.app.outputs.app_id }}" \
-            --format Spec.Name,DefaultIngress,ActiveDeployment.ID,Updated
-
-      - name: Credential setup required
-        if: steps.auth.outputs.available != 'true'
-        shell: bash
-        run: |
-          echo "GitHub work can finish first. Add DIGITALOCEAN_ACCESS_TOKEN only when you are ready for the final manual production deploy, then run this workflow from Actions."
