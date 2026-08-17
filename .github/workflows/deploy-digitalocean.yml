@@ -1,0 +1,71 @@
+name: DigitalOcean Production Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Force rebuild hnk-ai-tools-3
+    runs-on: ubuntu-24.04
+    env:
+      DO_APP_NAME: hnk-ai-tools-3
+      DO_APP_HOST: hnk-ai-tools-3-s4nnu.ondigitalocean.app
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN || secrets.DIGITALOCEAN_TOKEN || secrets.DO_TOKEN }}
+    steps:
+      - name: Require DigitalOcean token
+        shell: bash
+        run: |
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::No DigitalOcean token secret found. Expected DIGITALOCEAN_ACCESS_TOKEN, DIGITALOCEAN_TOKEN, or DO_TOKEN."
+            exit 1
+          fi
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.164.0
+
+      - name: Resolve existing DigitalOcean app
+        id: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          doctl apps list --output json > "$RUNNER_TEMP/apps.json"
+          APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg host "$DO_APP_HOST" '
+            .[]
+            | select((.spec.name == $name) or (.default_ingress == $host) or (.live_url == ("https://" + $host)))
+            | .id
+          ' "$RUNNER_TEMP/apps.json" | head -n 1)"
+          if [ -z "$APP_ID" ] || [ "$APP_ID" = "null" ]; then
+            echo "::error::DigitalOcean app $DO_APP_NAME ($DO_APP_HOST) was not found in this token's account."
+            exit 1
+          fi
+          echo "app_id=$APP_ID" >> "$GITHUB_OUTPUT"
+          echo "Found DigitalOcean app: $DO_APP_NAME ($APP_ID)"
+
+      - name: Pull latest source, force rebuild, and deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          doctl apps create-deployment "${{ steps.app.outputs.app_id }}" \
+            --update-sources \
+            --force-rebuild \
+            --wait \
+            --format ID,Phase,Updated
+
+      - name: Show live deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          doctl apps get "${{ steps.app.outputs.app_id }}" \
+            --format Spec.Name,DefaultIngress,ActiveDeployment.ID,Updated
