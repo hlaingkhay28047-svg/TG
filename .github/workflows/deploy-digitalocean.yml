@@ -102,14 +102,21 @@ jobs:
             echo "::error::Not enough time remains for manual recovery and live verification."
             exit 1
           fi
-          if ! timeout --foreground --signal=TERM "${RECOVERY_TIMEOUT_SECONDS}s" \
+          if timeout --foreground --signal=TERM --kill-after=10s "${RECOVERY_TIMEOUT_SECONDS}s" \
             doctl apps create-deployment "${{ steps.app.outputs.app_id }}" \
             --update-sources \
             --force-rebuild \
             --wait \
             --format ID,Phase,Updated; then
-            echo "::error::Manual production recovery did not finish before its bounded deadline."
-            exit 1
+            echo "Manual production recovery completed."
+          else
+            RECOVERY_STATUS=$?
+            if [ "$RECOVERY_STATUS" -eq 124 ] || [ "$RECOVERY_STATUS" -eq 137 ]; then
+              echo "::error::Manual production recovery exceeded its bounded deadline (exit ${RECOVERY_STATUS})."
+            else
+              echo "::error::Manual production recovery failed with exit status ${RECOVERY_STATUS}."
+            fi
+            exit "$RECOVERY_STATUS"
           fi
 
       - name: Verify production live release

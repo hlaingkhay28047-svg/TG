@@ -57,7 +57,12 @@ check('both lanes record one shared 33-minute deadline before optional recovery'
 check('manual recovery is bounded and reserves two minutes for live verification',
   [productionWorkflow, stagingWorkflow].every(workflow =>
     workflow.includes('RECOVERY_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))') &&
-    workflow.includes('timeout --foreground --signal=TERM "${RECOVERY_TIMEOUT_SECONDS}s"')));
+    workflow.includes('timeout --foreground --signal=TERM --kill-after=10s "${RECOVERY_TIMEOUT_SECONDS}s"')));
+check('manual recovery escalates stuck processes and preserves diagnostic exit status',
+  [productionWorkflow, stagingWorkflow].every(workflow =>
+    workflow.includes('RECOVERY_STATUS=$?') &&
+    workflow.includes('exceeded its bounded deadline (exit ${RECOVERY_STATUS})') &&
+    workflow.includes('failed with exit status ${RECOVERY_STATUS}')));
 
 check('staging and production credentials are lane-isolated',
   stagingWorkflow.includes('secrets.DIGITALOCEAN_STAGING_ACCESS_TOKEN') &&
