@@ -1,0 +1,78 @@
+name: DigitalOcean Staging Deploy
+
+on:
+  push:
+    branches: [upgrade-safe-wave]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Keep hnk-ai-tools-2 live on upgrade branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DO_APP_NAME: hnk-ai-tools-2
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN || secrets.DIGITALOCEAN_TOKEN || secrets.DO_TOKEN }}
+    steps:
+      - name: Check out upgrade metadata
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Check DigitalOcean token
+        id: auth
+        shell: bash
+        run: |
+          if [ -z "$DO_TOKEN" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No DigitalOcean API token is stored in GitHub. Staging should auto-deploy directly from DigitalOcean when hnk-ai-tools-2 is connected to GitHub/upgrade-safe-wave with deploy_on_push enabled."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install doctl fallback
+        if: steps.auth.outputs.available == 'true'
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.164.0
+
+      - name: Resolve staging app
+        if: steps.auth.outputs.available == 'true'
+        id: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          doctl apps list --output json > "$RUNNER_TEMP/apps.json"
+          APP_ID="$(jq -r --arg name "$DO_APP_NAME" '.[] | select(.spec.name == $name) | .id' "$RUNNER_TEMP/apps.json" | head -n 1)"
+          if [ -z "$APP_ID" ] || [ "$APP_ID" = "null" ]; then
+            echo "::error::DigitalOcean staging app $DO_APP_NAME was not found."
+            exit 1
+          fi
+          echo "app_id=$APP_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Force staging deploy as API fallback
+        if: steps.auth.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          doctl apps create-deployment "${{ steps.app.outputs.app_id }}" \
+            --update-sources \
+            --force-rebuild \
+            --wait \
+            --format ID,Phase,Updated
+
+      - name: Staging source contract
+        shell: bash
+        run: |
+          grep -q 'name: hnk-ai-tools-2' .do/staging.app.yaml
+          grep -q 'branch: upgrade-safe-wave' .do/staging.app.yaml
+          grep -q 'deploy_on_push: true' .do/staging.app.yaml
+          echo "Staging is configured to follow upgrade-safe-wave."
