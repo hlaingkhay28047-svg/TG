@@ -4,7 +4,14 @@ Adobe Photoshop plugin tools and HNK web app.
 
 ## Release order
 
-HNK releases are prepared **GitHub first**. Finish the code, review the pull request, and let the complete test suite pass before touching DigitalOcean. Production deployment is the final step after the GitHub release is ready.
+HNK upgrade work runs in two lanes at the same time without touching production:
+
+1. GitHub development happens on `upgrade-safe-wave`; every change is reviewed by pull-request CI.
+2. DigitalOcean staging uses `hnk-ai-tools-2` and follows the same `upgrade-safe-wave` branch with `deploy_on_push: true`.
+3. Production remains `hnk-ai-tools-3` and is not deployed automatically by the GitHub production workflow.
+4. Only after the upgrade branch is complete and CI is green do we merge to `main` and perform the final production deployment.
+
+This gives a real browser-hosted DigitalOcean copy while GitHub tests run, without exposing unfinished code on the production app.
 
 ## DigitalOcean App Platform
 
@@ -15,43 +22,43 @@ This repository is ready for DigitalOcean App Platform deployment.
 ### Deployment settings
 
 - Repository: `hlaingkhay28047-svg/TG`
-- Branch: `main`
+- Production branch: `main`
+- Upgrade/staging branch: `upgrade-safe-wave`
 - Resource type: Static Site
 - Source directory: `/docs`
 - Index document: `index.html`
-- App spec supports authenticated GitHub auto-deploy, but the production force-deploy workflow itself is manual-only.
 - Region: Singapore (`sgp`)
+- Staging app: `hnk-ai-tools-2`
 - Production app: `hnk-ai-tools-3`
 - Production host: `hnk-ai-tools-3-s4nnu.ondigitalocean.app`
 
 DigitalOcean configuration files:
 
-- `.do/app.yaml` — App Platform spec for a GitHub-connected deployment.
+- `.do/app.yaml` — production GitHub source contract for `main`.
+- `.do/staging.app.yaml` — staging GitHub source contract for `upgrade-safe-wave`, with deploy-on-push enabled.
 - `.do/deploy.template.yaml` — one-click Deploy to DigitalOcean template.
-- `.github/workflows/deploy-digitalocean.yml` — manual production force-rebuild automation for the existing production app.
+- `.github/workflows/deploy-digitalocean.yml` — manual production force-rebuild automation for `hnk-ai-tools-3`.
 
 The public website is served from `/docs`, and the web app/PWA is available under `/docs/app` in the repository (served as `/app/` after deployment).
 
-### Updating the existing DigitalOcean app
+### Staging: GitHub + DigitalOcean together
 
-The one-click button uses a public `git` source. That source is correct for a new public deployment, but it requires a manual deploy to pull later commits.
-
-For an authenticated GitHub source, DigitalOcean can also be configured with:
+Configure `hnk-ai-tools-2` once with the authenticated GitHub source defined in `.do/staging.app.yaml`:
 
 ```yaml
 github:
   repo: hlaingkhay28047-svg/TG
-  branch: main
+  branch: upgrade-safe-wave
   deploy_on_push: true
 ```
 
-Preserve the app's generated domains, ingress, alerts, and all other fields when changing its source settings.
+After that one-time DigitalOcean setup, every push to `upgrade-safe-wave` runs GitHub CI and triggers a staging deployment in parallel. Staging can be tested on phones and browsers while production stays on the last approved release.
 
-For the current GitHub-first release process, do **not** deploy while upgrade work is still in progress. After the release PR is reviewed, all tests pass, and the intended commit is on `main`, use **Actions → Force rebuild and deploy** in DigitalOcean or run the manual GitHub production workflow. This pulls the newest configured source and rebuilds the static site from scratch.
+### Production deployment
 
-### Manual GitHub force-deploy automation
+For production, do not deploy while upgrade work is still in progress. After the release PR is reviewed, all tests pass, and the intended commit is on `main`, use **Actions → Force rebuild and deploy** in DigitalOcean or run the manual GitHub production workflow.
 
-`.github/workflows/deploy-digitalocean.yml` is started only with `workflow_dispatch`; a normal push does not run this production deployment workflow. It is also intentionally inert until the repository has a DigitalOcean API token secret named `DIGITALOCEAN_ACCESS_TOKEN` (the aliases `DIGITALOCEAN_TOKEN` and `DO_TOKEN` are also accepted).
+`.github/workflows/deploy-digitalocean.yml` is started only with `workflow_dispatch`; a normal push does not run this production deployment workflow. It is intentionally inert until the repository has a DigitalOcean API token secret named `DIGITALOCEAN_ACCESS_TOKEN` (the aliases `DIGITALOCEAN_TOKEN` and `DO_TOKEN` are also accepted).
 
 When manually started with credentials present, the workflow:
 
