@@ -113,6 +113,10 @@ check("the web app describes the same provider-only API-key flow in every locale
 check("fully translated app locales do not fall back to an English privacy note", appNativePrivacyCodes.every(language => !effectiveAppLocaleValue("key_note", language).includes(englishProviderFlow)), "an English-only notice leaked into localized copy");
 check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
+check("landing inventory copy matches the shipped web app",
+  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu 158", "Evoto Pro 210", "1,134"].every(value => landing.includes(value)) &&
+  !["One-Tap 123", "Visual Library 607", "Smart Workflow 116", "Meitu 79", "Evoto Pro 79", "1,081"].some(value => landing.includes(value)),
+  "landing inventory or test-count copy is stale");
 check("the web app downloads the published Photoshop panel", html.includes(`HNK_Ai_Panel_v${panelVersion}.ccx`) && html.includes(`CCX Download (v${panelVersion})`), `panel ${panelVersion}`);
 check("the published Photoshop panel archive is valid and versioned", panelArtifactOk, panelArtifactDetail);
 
