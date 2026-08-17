@@ -3,6 +3,8 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const workflow = fs.readFileSync(path.join(root, '.github/workflows/deploy-digitalocean.yml'), 'utf8');
+const productionSpec = fs.readFileSync(path.join(root, '.do/app.yaml'), 'utf8');
+const stagingSpec = fs.readFileSync(path.join(root, '.do/staging.app.yaml'), 'utf8');
 const failures = [];
 
 function check(label, ok) {
@@ -30,9 +32,16 @@ check('live verification is cache-busted by commit SHA', workflow.includes('sha=
 check('live verification retries for propagation', /seq\s+1\s+18/.test(workflow) && /sleep\s+5/.test(workflow));
 check('missing credentials keep deployment deferred safely', workflow.includes('GitHub work can finish first'));
 
+check('production spec remains on main', /branch:\s*main\b/.test(productionSpec));
+check('production spec keeps GitHub autodeploy capability available', /deploy_on_push:\s*true\b/.test(productionSpec));
+check('staging app is hnk-ai-tools-2', /^name:\s*hnk-ai-tools-2\s*$/m.test(stagingSpec));
+check('staging source is the upgrade-safe-wave branch', /branch:\s*upgrade-safe-wave\b/.test(stagingSpec));
+check('staging follows upgrade branch pushes automatically', /deploy_on_push:\s*true\b/.test(stagingSpec));
+check('staging and production both serve docs as the static source', /source_dir:\s*\/docs\b/.test(stagingSpec) && /source_dir:\s*\/docs\b/.test(productionSpec));
+
 if (failures.length) {
   console.error(`\n${failures.length} DigitalOcean deployment contract check(s) failed.`);
   process.exit(1);
 }
 
-console.log('\nDigitalOcean deployment workflow is healthy and manual-only.');
+console.log('\nDigitalOcean production/staging branch contract is healthy.');
