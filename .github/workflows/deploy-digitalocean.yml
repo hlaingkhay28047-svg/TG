@@ -1,8 +1,6 @@
 name: DigitalOcean Production Deploy
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -28,7 +26,7 @@ jobs:
         run: |
           if [ -z "$DO_TOKEN" ]; then
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::DigitalOcean deploy is armed but waiting for a repository secret named DIGITALOCEAN_ACCESS_TOKEN, DIGITALOCEAN_TOKEN, or DO_TOKEN."
+            echo "::warning::DigitalOcean deploy is ready but waiting for a repository secret named DIGITALOCEAN_ACCESS_TOKEN, DIGITALOCEAN_TOKEN, or DO_TOKEN."
           else
             echo "available=true" >> "$GITHUB_OUTPUT"
           fi
@@ -108,4 +106,4 @@ jobs:
         if: steps.auth.outputs.available != 'true'
         shell: bash
         run: |
-          echo "DigitalOcean deployment is ready. Add DIGITALOCEAN_ACCESS_TOKEN as a GitHub Actions repository secret, then push to main or run this workflow manually."
+          echo "GitHub work can finish first. Add DIGITALOCEAN_ACCESS_TOKEN only when you are ready for the final manual production deploy, then run this workflow from Actions."
