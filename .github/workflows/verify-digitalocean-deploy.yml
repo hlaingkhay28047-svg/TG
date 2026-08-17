@@ -4,11 +4,15 @@ on:
   push:
     branches: [main]
     paths:
+      - '.do/app.yaml'
+      - '.do/staging.app.yaml'
       - '.github/workflows/deploy-digitalocean.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
       - 'test/verify_digitalocean_deploy.js'
   pull_request:
     paths:
+      - '.do/app.yaml'
+      - '.do/staging.app.yaml'
       - '.github/workflows/deploy-digitalocean.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
       - 'test/verify_digitalocean_deploy.js'
