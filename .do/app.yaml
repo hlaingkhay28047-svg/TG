@@ -6,6 +6,6 @@ static_sites:
     github:
       repo: hlaingkhay28047-svg/TG
       branch: main
-      deploy_on_push: true
+      deploy_on_push: false
     source_dir: /docs
     index_document: index.html
