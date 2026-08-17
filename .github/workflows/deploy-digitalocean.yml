@@ -21,21 +21,26 @@ jobs:
       DO_APP_HOST: hnk-ai-tools-3-s4nnu.ondigitalocean.app
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN || secrets.DIGITALOCEAN_TOKEN || secrets.DO_TOKEN }}
     steps:
-      - name: Require DigitalOcean token
+      - name: Check DigitalOcean token
+        id: auth
         shell: bash
         run: |
           if [ -z "$DO_TOKEN" ]; then
-            echo "::error::No DigitalOcean token secret found. Expected DIGITALOCEAN_ACCESS_TOKEN, DIGITALOCEAN_TOKEN, or DO_TOKEN."
-            exit 1
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DigitalOcean deploy is armed but waiting for a repository secret named DIGITALOCEAN_ACCESS_TOKEN, DIGITALOCEAN_TOKEN, or DO_TOKEN."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install doctl
+        if: steps.auth.outputs.available == 'true'
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ env.DO_TOKEN }}
           version: 1.164.0
 
       - name: Resolve existing DigitalOcean app
+        if: steps.auth.outputs.available == 'true'
         id: app
         shell: bash
         run: |
@@ -54,6 +59,7 @@ jobs:
           echo "Found DigitalOcean app: $DO_APP_NAME ($APP_ID)"
 
       - name: Pull latest source, force rebuild, and deploy
+        if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -64,8 +70,15 @@ jobs:
             --format ID,Phase,Updated
 
       - name: Show live deployment
+        if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
           set -euo pipefail
           doctl apps get "${{ steps.app.outputs.app_id }}" \
             --format Spec.Name,DefaultIngress,ActiveDeployment.ID,Updated
+
+      - name: Credential setup required
+        if: steps.auth.outputs.available != 'true'
+        shell: bash
+        run: |
+          echo "DigitalOcean deployment is ready. Add DIGITALOCEAN_ACCESS_TOKEN as a GitHub Actions repository secret, then push to main or run this workflow manually."
