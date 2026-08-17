@@ -7,6 +7,7 @@ on:
       - '.do/app.yaml'
       - '.do/staging.app.yaml'
       - '.github/workflows/deploy-digitalocean.yml'
+      - '.github/workflows/deploy-digitalocean-staging.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
       - 'test/verify_digitalocean_deploy.js'
   pull_request:
@@ -14,6 +15,7 @@ on:
       - '.do/app.yaml'
       - '.do/staging.app.yaml'
       - '.github/workflows/deploy-digitalocean.yml'
+      - '.github/workflows/deploy-digitalocean-staging.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
       - 'test/verify_digitalocean_deploy.js'
 
