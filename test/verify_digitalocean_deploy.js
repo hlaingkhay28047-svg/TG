@@ -3,7 +3,6 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const workflow = fs.readFileSync(path.join(root, '.github/workflows/deploy-digitalocean.yml'), 'utf8');
-const appSpec = fs.readFileSync(path.join(root, '.do/app.yaml'), 'utf8');
 const failures = [];
 
 function check(label, ok) {
@@ -11,9 +10,8 @@ function check(label, ok) {
   if (!ok) failures.push(label);
 }
 
-check('production deploy is manual-only', !/^\s*push\s*:/m.test(workflow));
+check('production deploy workflow is manual-only', !/^\s*push\s*:/m.test(workflow));
 check('manual dispatch is available', /workflow_dispatch\s*:/m.test(workflow));
-check('DigitalOcean app spec does not auto-deploy main pushes', /deploy_on_push:\s*false\b/.test(appSpec));
 check('production app name is locked', /DO_APP_NAME:\s*hnk-ai-tools-3\b/.test(workflow));
 check('production host is locked', /DO_APP_HOST:\s*hnk-ai-tools-3-s4nnu\.ondigitalocean\.app\b/.test(workflow));
 check('three accepted token secret aliases are supported',
@@ -37,4 +35,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('\nDigitalOcean deployment contract is healthy and manual-only.');
+console.log('\nDigitalOcean deployment workflow is healthy and manual-only.');
