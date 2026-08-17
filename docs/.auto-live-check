@@ -1,0 +1,3 @@
+auto-live-check: 2026-08-17T08:41:00+06:30
+branch: upgrade-safe-wave
+purpose: harmless deployment trigger for staging auto-deploy verification
