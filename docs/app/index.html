@@ -11521,6 +11521,20 @@ function stFaceZones(px,W,H,mi,lm){
   }
   return zones;
 }
+/* v5.10 — a wedding photograph has two people in it. Every face-zone test
+   below used to read the single largest face, so the groom's lips, teeth and
+   eyes were simply never touched. These take the whole detected set and stop
+   at the first hit — faces do not overlap, and this keeps ONE pixel pass
+   rather than running the pipeline once per person. */
+function stInAny(x,y,list,scale){
+  if(!list) return null;
+  for(var i=0;i<list.length;i++){
+    if(!list[i]) continue;
+    var v=stInEllipse(x,y,list[i],scale);
+    if(v) return v;
+  }
+  return null;
+}
 function stInEllipse(x,y,z,scale){
   var s=scale||1;
   var dx=(x-z.cx)/(z.rx*s), dy=(y-z.cy)/(z.ry*s);
@@ -11569,9 +11583,24 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
        cannot make this distinction) */
     faceInner={cx:(hbox.x0+hbox.x1)/2, cy:(hbox.y0+hbox.y1)/2, rx:bwH/2*0.62, ry:bhH/2*0.62};
   }
+  /* v5.10 — one flat list per feature, gathered across every detected face.
+     zones.all is the full set; a photo read by the geometric fallback has a
+     single entry, so this collapses to the old behaviour exactly. */
+  var faceSet = (zones&&zones.all&&zones.all.length) ? zones.all : (zones?[zones]:[]);
+  var zEyes=[], zLips=[], zMouths=[], zCheeks=[];
+  for(var fi=0; fi<faceSet.length; fi++){
+    var fz=faceSet[fi];
+    if(fz.eyes){ zEyes.push(fz.eyes[0]); zEyes.push(fz.eyes[1]); }
+    if(fz.mouth) zMouths.push(fz.mouth);
+    if(fz.r&&fz.r.lipUpper){ zLips.push(fz.r.lipUpper); zLips.push(fz.r.lipLower); }
+    else if(fz.mouth) zLips.push(fz.mouth);
+    if(fz.r&&fz.r.cheekL){ zCheeks.push(fz.r.cheekL); zCheeks.push(fz.r.cheekR); }
+  }
   var cheeks=null;
   if(t2.blushV>0&&zones){
-    if(zones.r&&zones.r.cheekL&&zones.r.cheekR){
+    if(zCheeks.length){
+      cheeks=zCheeks;
+    } else if(zones.r&&zones.r.cheekL&&zones.r.cheekR){
       /* v4.56 — the real cheeks from the fitted face model. The old fallback
          below guessed the centre as the midpoint between eye and mouth and,
          worse, sized the ellipse from mi.box — the box around EVERY skin
@@ -11615,7 +11644,7 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
        heuristic when it doesn't. Zone-limited whitening can afford a lower
        luma floor — real teeth in shade get caught, the wall doesn't. */
     if(t2.teeth>0){
-      var inMouth=zones&&zones.mouth ? stInEllipse(xPix,yPix,zones.mouth,1.15) : null;
+      var inMouth=zMouths.length ? stInAny(xPix,yPix,zMouths,1.15) : null;
       var tOk = inMouth===null ? lum>140 : (inMouth && lum>105);
       if(tOk){
         var mx0=Math.max(R,G,B),mn0=Math.min(R,G,B);
@@ -11689,8 +11718,7 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
       /* v4.56 — lips are the two lip bands, not the whole mouth ellipse: the
          ellipse also contains the teeth and the skin just past the corners,
          so lip colour used to bleed onto both. */
-      var inLip = zones.r
-        ? (stInEllipse(xPix,yPix,zones.r.lipUpper,1.0)||stInEllipse(xPix,yPix,zones.r.lipLower,1.0))
+      var inLip = zLips.length ? stInAny(xPix,yPix,zLips,1.0)
         : (zones.mouth?stInEllipse(xPix,yPix,zones.mouth,1.05):null);
       if(t2.lipV>0&&inLip){
         var crL=128+0.5*R-0.418688*G-0.081312*B;
@@ -11700,12 +11728,12 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
           R+=((lipC.r-lumLT+lumL)-R)*aL; G+=((lipC.g-lumLT+lumL)-G)*aL; B+=((lipC.b-lumLT+lumL)-B)*aL;
         }
       }
-      if(cheeks&&m>0.3&&(stInEllipse(xPix,yPix,cheeks[0],1)||stInEllipse(xPix,yPix,cheeks[1],1))){
+      if(cheeks&&m>0.3&&stInAny(xPix,yPix,cheeks,1)){
         var aB=t2.blushV/100*0.25;
         var lumB2=0.299*R+0.587*G+0.114*B, lumBT=0.299*blushC.r+0.587*blushC.g+0.114*blushC.b;
         R+=((blushC.r-lumBT+lumB2)-R)*aB; G+=((blushC.g-lumBT+lumB2)-G)*aB; B+=((blushC.b-lumBT+lumB2)-B)*aB;
       }
-      if(t2.eyeDef>0&&zones.eyes&&fsLo&&(stInEllipse(xPix,yPix,zones.eyes[0],1.6)||stInEllipse(xPix,yPix,zones.eyes[1],1.6))){
+      if(t2.eyeDef>0&&zEyes.length&&fsLo&&stInAny(xPix,yPix,zEyes,1.6)){
         var kE=t2.eyeDef/100*0.6;
         R+=(R-fsLo[p])*kE; G+=(G-fsLo[p+1])*kE; B+=(B-fsLo[p+2])*kE;
       }
@@ -11716,15 +11744,15 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
        band when it doesn't. */
     if(t2.eyeb>0){
       var lumE=0.299*R+0.587*G+0.114*B;
-      var inEye = zones&&zones.eyes
-        ? (stInEllipse(xPix,yPix,zones.eyes[0],1.35)||stInEllipse(xPix,yPix,zones.eyes[1],1.35))
+      var inEye = zEyes.length
+        ? stInAny(xPix,yPix,zEyes,1.35)
         : (box && m>0.02 && yPix>=eyY0 && yPix<=eyY1);
       if(inEye){
-        if(lumE<(zones&&zones.eyes?95:80)){ var eb=t2.eyeb*0.25; R+=eb;G+=eb;B+=eb; }
+        if(lumE<(zEyes.length?95:80)){ var eb=t2.eyeb*0.25; R+=eb;G+=eb;B+=eb; }
         else { var mx1=Math.max(R,G,B),mn1=Math.min(R,G,B);
-          if(lumE>(zones&&zones.eyes?150:180)&&(mx1-mn1)<(zones&&zones.eyes?45:30)){
+          if(lumE>(zEyes.length?150:180)&&(mx1-mn1)<(zEyes.length?45:30)){
             var eb2=t2.eyeb*0.2; R+=eb2;G+=eb2;B+=eb2;
-            if(zones&&zones.eyes){ B+=(mx1-B)*t2.eyeb/100*0.3; } /* de-yellow the sclera */
+            if(zEyes.length){ B+=(mx1-B)*t2.eyeb/100*0.3; } /* de-yellow the sclera */
           } }
       }
     }
@@ -12366,7 +12394,7 @@ function stWorker(){
     /* the worker is built from the LIVE sources of the pipeline family, so it
        can never drift from the sync path. Guarded fallbacks (opts.t1||stEffT1()
        etc.) are never evaluated there — every message carries resolved params. */
-    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinWindow,stSkinMask,stBlurData,stHeadBox,stFaceFrame,stFaceRegions,stLmEll,stLmRange,stZonesOneFace,stZonesFromLM,stFaceZones,stInEllipse,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
+    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinWindow,stSkinMask,stBlurData,stHeadBox,stFaceFrame,stFaceRegions,stLmEll,stLmRange,stZonesOneFace,stZonesFromLM,stFaceZones,stInEllipse,stInAny,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
     var src='var document={createElement:function(){return new OffscreenCanvas(1,1);}};\n'
       + fns.map(function(f){ return f.toString(); }).join("\n")
       + '\nvar _pc=new OffscreenCanvas(4,4).getContext("2d");var FILTER_OK=false;'
@@ -12700,10 +12728,16 @@ function stFaceBoot(){
        back to cpu — shipping another megabyte of wasm to silence a probe we
        never use would be the wrong trade. */
     try{ fa.tf.removeBackend("wasm"); }catch(e){}
+    /* v5.10 — WEBGL OR NOTHING, and that is a product decision rather than a
+       convenience. On the cpu backend this net takes 1.5-3 SECONDS per photo
+       and tfjs runs it as one long synchronous burst, which freezes the UI
+       thread for that whole time on exactly the weak hardware least able to
+       afford it. Measured here: it was long enough to break the Retouch
+       Stop button's hit test in sweep_v428. A device with no working WebGL
+       therefore keeps the geometric reader — a rougher preview, but a
+       responsive one — instead of a better preview it cannot afford. */
     return Promise.resolve(fa.tf.setBackend("webgl")).catch(function(){ return false; })
-      .then(function(ok){ return ok===false ? fa.tf.setBackend("cpu") : true; })
-      .catch(function(){ return false; })
-      .then(function(){ return fa.tf.ready(); })
+      .then(function(ok){ if(ok===false) throw new Error("no webgl"); return fa.tf.ready(); })
       .then(function(){
         return Promise.all([
           fa.nets.tinyFaceDetector.loadFromUri("lib/face"),
@@ -12717,6 +12751,14 @@ function stFaceBoot(){
 function stFaceScan(){
   var buf=ST.buf; if(!buf) return;
   var tok=++STFACE.tok;
+  /* deferred to idle on purpose: loading a photo is the busiest moment in the
+     app (buffer build, thumbnails, first settle), and the face is not needed
+     until a face-dependent control is actually touched. */
+  if(window.requestIdleCallback) requestIdleCallback(function(){ stFaceScanNow(buf,tok); },{timeout:3000});
+  else setTimeout(function(){ stFaceScanNow(buf,tok); },400);
+}
+function stFaceScanNow(buf,tok){
+  if(tok!==STFACE.tok||ST.buf!==buf) return;
   stFaceBoot().then(function(fa){
     if(!fa||tok!==STFACE.tok||ST.buf!==buf) return null;
     /* detect on a bounded copy: the net resizes internally anyway, and a

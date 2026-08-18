@@ -99,6 +99,41 @@ const PORT = process.env.PORT || 8931;
   report("a faceless plate reports no face instead of hallucinating one",
     m.scanned && m.faces === 0 && m.zNull, JSON.stringify({ scanned: m.scanned, faces: m.faces, zNull: m.zNull }));
 
+  // 4b) A WEDDING PHOTOGRAPH HAS TWO PEOPLE IN IT. Every face-zone test used
+  //     to read the single largest face, so the groom's lips, teeth and eyes
+  //     were never touched. Both faces must now move.
+  const two = await page.evaluate(async () => {
+    const res = await fetch("lib/full/user-ref-1629.jpg");
+    const bl = await res.blob();
+    const du = await new Promise(x => { const f = new FileReader(); f.onload = () => x(f.result); f.readAsDataURL(bl); });
+    await new Promise(x => { ST.loadImage(du, { done: x }); });
+    for (let i = 0; i < 90; i++) { if (ST.faceLM && ST.faceLM.scanned) break; await new Promise(x => setTimeout(x, 100)); }
+    const W = ST.buf.width, H = ST.buf.height;
+    const mi = stSkinMask(ST.px0, W, H, ST.faceLM);
+    const z = stFaceZones(ST.px0, W, H, mi, ST.faceLM);
+    if (!z || !z.all) return { faces: 0 };
+    const t2 = stDefT2(); t2.lipV = 100; t2.blushV = 100; t2.teeth = 100;
+    t2.lipC = { r: 200, g: 40, b: 70 }; t2.blushC = { r: 230, g: 120, b: 130 };
+    const out = stRunPipeline(stGeoSource(), W, H,
+      { t1: stDefT1(), t2: t2, pv: stPipeVals(), curve: stCurveVals(), maskInfo: mi, lm: ST.faceLM, rs: 1 });
+    const after = out.getContext("2d").getImageData(0, 0, W, H).data, before = ST.px0.data;
+    const delta = e => {
+      let sum = 0, cnt = 0;
+      const x0 = Math.max(0, e.cx - e.rx | 0), x1 = Math.min(W - 1, e.cx + e.rx | 0);
+      const y0 = Math.max(0, e.cy - e.ry | 0), y1 = Math.min(H - 1, e.cy + e.ry | 0);
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const i = (y * W + x) * 4;
+        sum += Math.abs(after[i] - before[i]) + Math.abs(after[i + 1] - before[i + 1]) + Math.abs(after[i + 2] - before[i + 2]);
+        cnt++;
+      }
+      return cnt ? sum / cnt : 0;
+    };
+    return { faces: z.all.length, mouths: z.all.map(f => delta(f.mouth)) };
+  });
+  report("both faces in a two-person photo are retouched, not just the larger one",
+    two.faces === 2 && two.mouths.length === 2 && two.mouths.every(d => d > 8),
+    JSON.stringify({ faces: two.faces, mouthDeltas: (two.mouths || []).map(d => +d.toFixed(1)) }));
+
   // 5) the geometric reader still exists for when the model cannot load
   const fb = await page.evaluate(() => {
     const W = ST.buf.width, H = ST.buf.height;

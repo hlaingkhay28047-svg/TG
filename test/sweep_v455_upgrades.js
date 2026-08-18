@@ -162,7 +162,12 @@ function report(name, ok, detail) {
     out.G_skinRan = skinPrev.length >= 3;
     out.G_skinScaled = out.G_skinRan && skinPrev.length === skinExp.length &&
       skinPrev.every((v, i) => Math.abs(skinExp[i] / v - 2) < 0.05);
-    out.G_signature = String(stApplySkin).indexOf("um,umInv,rs)") >= 0;
+    /* v5.10 — the pin is on rs being THREADED into stApplySkin (which is what
+       makes the skin radii scale), not on rs being the last parameter. The
+       landmark set now follows it, so the closing paren moved. Both are pinned
+       here rather than loosening the check to just "rs". */
+    out.G_signature = String(stApplySkin).indexOf("um,umInv,rs") >= 0 &&
+      String(stApplySkin).indexOf("um,umInv,rs,lm)") >= 0;
 
     /* H) the other absolute-pixel stragglers the same review found */
     out.H_maskFeather = String(stSkinMask).indexOf("mrs") >= 0 &&
