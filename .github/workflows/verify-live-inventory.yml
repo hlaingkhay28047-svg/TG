@@ -1,0 +1,74 @@
+name: Verify Live Inventory
+
+# Byte-exact audit of the DigitalOcean sites against the repository: every
+# file under docs/ must be served, with identical SHA-256, by the lane's
+# live app. The per-deploy workflows verify version.json + the two HTML
+# shells; this one answers "is ANYTHING on DigitalOcean missing or stale
+# compared to GitHub" across all ~4,900 files.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which live site to audit"
+        required: false
+        default: "both"
+        type: choice
+        options: [both, staging, production]
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    name: Compare every docs/ file against the live site
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      STAGING_HOST: hnk-ai-tools-2-gibhz.ondigitalocean.app
+      PRODUCTION_HOST: hnk-ai-tools-3-s4nnu.ondigitalocean.app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Audit live inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${{ inputs.target || 'both' }}"
+          HOSTS=()
+          [ "$TARGET" = "both" ] || [ "$TARGET" = "staging" ] && HOSTS+=("$STAGING_HOST")
+          [ "$TARGET" = "both" ] || [ "$TARGET" = "production" ] && HOSTS+=("$PRODUCTION_HOST")
+
+          cd docs
+          find . -type f | sed 's|^\./||' | sort > "$RUNNER_TEMP/files.txt"
+          TOTAL=$(wc -l < "$RUNNER_TEMP/files.txt")
+          echo "Auditing $TOTAL files against: ${HOSTS[*]}"
+
+          check_one() {
+            # $1=host $2=relative path — prints a line only on mismatch
+            local url="https://$1/$2?sha=$GITHUB_SHA"
+            local want got
+            want=$(sha256sum "$2" | awk '{print $1}')
+            got=$(curl -fsSL --compressed --max-time 60 --retry 2 --retry-delay 2 "$url" 2>/dev/null | sha256sum | awk '{print $1}') || { echo "MISSING  $1/$2"; return 0; }
+            if [ "$want" != "$got" ]; then echo "STALE    $1/$2"; fi
+          }
+          export -f check_one
+          export GITHUB_SHA
+
+          : > "$RUNNER_TEMP/mismatches.txt"
+          for HOST in "${HOSTS[@]}"; do
+            echo "--- $HOST ---"
+            xargs -a "$RUNNER_TEMP/files.txt" -I{} -P 16 bash -c 'check_one "$0" "$1"' "$HOST" {} \
+              >> "$RUNNER_TEMP/mismatches.txt" || true
+          done
+
+          MISS=$(grep -c . "$RUNNER_TEMP/mismatches.txt" || true)
+          if [ "${MISS:-0}" -gt 0 ]; then
+            echo "::error::$MISS file(s) on the live site(s) are missing or differ from the repository:"
+            sort "$RUNNER_TEMP/mismatches.txt" | head -100
+            [ "$MISS" -gt 100 ] && echo "... and $((MISS - 100)) more"
+            exit 1
+          fi
+          echo "Every repository file is served live and byte-identical on: ${HOSTS[*]}"

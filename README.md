@@ -8,9 +8,9 @@ Every upgrade should have a live DigitalOcean copy automatically:
 
 1. Work on `upgrade-safe-wave`.
 2. Every push to `upgrade-safe-wave` runs GitHub CI and updates DigitalOcean staging `hnk-ai-tools-2`.
-3. Review and test the staging live app while development continues.
-4. Merge the approved upgrade to `main`.
-5. Every push/merge to `main` updates DigitalOcean production `hnk-ai-tools-3` and verifies `/app/version.json` matches the repository release.
+3. As soon as the full CI sweep is green, merge to `main` — tested upgrades ship immediately by standing owner approval; the test suite is the release gate.
+4. Every push/merge to `main` updates DigitalOcean production `hnk-ai-tools-3` and verifies `/app/version.json` matches the repository release.
+5. Web app, landing site and Photoshop panel always ship together in one wave.
 
 This keeps both GitHub and DigitalOcean moving together while still separating unfinished staging code from the production app.
 
