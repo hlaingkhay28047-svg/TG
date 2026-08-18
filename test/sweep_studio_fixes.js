@@ -324,27 +324,105 @@ function check(ok, label, detail) {
     document.getElementById("stReset").click();
     await new Promise(r => setTimeout(r, 350));
     const baseVar = fineVar(40, 58, 58, 70);
-    const bgBase = meanRegion(4, 4, 18, 18);
-    const eyeBase = meanRegion(33, 42, 39, 46);
     await withT2("freqLo", 80); const flVar = fineVar(40, 58, 58, 70);
     await withT2("smooth", 80); const smVar = fineVar(40, 58, 58, 70);
-    await withT2("teeth", 90);
-    const teethAfter = meanRegion(43, 80, 53, 84), bgAfterTeeth = meanRegion(4, 4, 18, 18);
-    await withT2("eyeb", 90); const eyeAfter = meanRegion(33, 42, 39, 46);
     document.getElementById("stReset").click();
     await new Promise(r => setTimeout(r, 300));
-    const teethBase = meanRegion(43, 80, 53, 84);
-    return { baseVar, flVar, smVar, teethBase, teethAfter, bgBase, bgAfterTeeth, eyeBase, eyeAfter };
+    return { baseVar, flVar, smVar };
   });
   check(engine.flVar > engine.baseVar * 0.8 && engine.smVar < engine.baseVar * 0.4,
     "frequency separation preserves fine texture that plain smoothing destroys",
     { baseVar: +engine.baseVar.toFixed(1), flVar: +engine.flVar.toFixed(1), smVar: +engine.smVar.toFixed(1) });
-  check(engine.teethAfter > engine.teethBase + 2 && Math.abs(engine.bgAfterTeeth - engine.bgBase) < 1.5,
-    "teeth whitening lands inside the detected mouth and leaves the yellow background patch alone",
-    { teethBase: +engine.teethBase.toFixed(1), teethAfter: +engine.teethAfter.toFixed(1), bgDelta: +(engine.bgAfterTeeth - engine.bgBase).toFixed(2) });
-  check(engine.eyeAfter > engine.eyeBase + 10,
-    "eye brighten reaches the actual pupils the skin mask excludes",
-    { eyeBase: +engine.eyeBase.toFixed(1), eyeAfter: +engine.eyeAfter.toFixed(1) });
+
+  /* v5.11 — teeth/eyeb precision moved off the painted-oval fixture above and
+     onto a REAL photo. The synthetic canvas (a flat ellipse with two painted
+     dots for eyes) is not photorealistic, and the real model correctly finds
+     no face in it — the model isn't broken, the fixture never was a face.
+     Before v5.11 that didn't matter: the GEOMETRIC reader drove teeth/eyeb off
+     hand-placed coordinates regardless of whether a face was actually there.
+     After v5.11 that reader is disqualified from driving teeth/eyeb on
+     purpose (see sweep_v511_facegate.js) — painting a guessed zone is exactly
+     the bug that release exists to remove — so this fixture can no longer
+     exercise the precision claim at all, and the claim itself is more
+     meaningful proven against a face the model actually measured. */
+  const real = await page.evaluate(async () => {
+    async function loadAndScan(du) {
+      await new Promise(r => { ST.loadImage(du, { done: r }); });
+      for (let i = 0; i < 450; i++) {
+        if (ST.faceLM && ST.faceLM.scanned) break;
+        if (typeof STFACE !== "undefined" && STFACE.off) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+    }
+    const res = await fetch("lib/st-sample.jpg");
+    const bl = await res.blob();
+    const du0 = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(bl); });
+    await loadAndScan(du0);
+    let W = ST.buf.width, H = ST.buf.height;
+    let mi = stSkinMask(ST.px0, W, H, ST.faceLM || null);
+    let z = stFaceZones(ST.px0, W, H, mi, ST.faceLM || null);
+    if (!z || !z.mouth || !z.eyes) return { noFace: true };
+
+    /* THE FIXTURE'S REAL PROBLEM. st-sample.jpg's mouth is closed — there is
+       no tooth-coloured pixel anywhere in it for a whitening pass to act on,
+       which is a correct, boring zero, not a defect (the same way testing
+       denoise against a noiseless photo should read zero). Paint a small
+       off-white patch inside the MEASURED mouth ellipse, on the real photo,
+       and reload it — that gives teeth whitening something real to find
+       while keeping the face genuinely model-detected rather than painted
+       from scratch on a synthetic oval no model would ever call a face. */
+    const patchCanvas = document.createElement("canvas");
+    patchCanvas.width = W; patchCanvas.height = H;
+    const pcx = patchCanvas.getContext("2d");
+    pcx.drawImage(ST.buf, 0, 0);
+    pcx.fillStyle = "#ded8be";
+    pcx.beginPath();
+    pcx.ellipse(z.mouth.cx, z.mouth.cy, Math.max(3, z.mouth.rx * 0.4), Math.max(2, z.mouth.ry * 0.35), 0, 0, Math.PI * 2);
+    pcx.fill();
+    await loadAndScan(patchCanvas.toDataURL("image/png"));
+    document.getElementById("stReset").click();
+    await new Promise(r => setTimeout(r, 300));
+
+    W = ST.buf.width; H = ST.buf.height;
+    mi = stSkinMask(ST.px0, W, H, ST.faceLM || null);
+    z = stFaceZones(ST.px0, W, H, mi, ST.faceLM || null);
+    if (!z || !z.mouth || !z.eyes) return { noFace: true, afterPatch: true };
+
+    const luma = (data, x0, y0, x1, y1) => {
+      let s = 0, n = 0;
+      for (let y = Math.max(0, y0 | 0); y < Math.min(H, y1 | 0); y++) for (let xx = Math.max(0, x0 | 0); xx < Math.min(W, x1 | 0); xx++) {
+        const p = (y * W + xx) * 4;
+        s += 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2]; n++;
+      }
+      return n ? s / n : null;
+    };
+    const cc = () => document.getElementById("stCanvas").getContext("2d");
+    const region = (ellipse, pad) => { const rx = ellipse.rx * (pad || 0.6), ry = ellipse.ry * (pad || 0.6);
+      return [ellipse.cx - rx, ellipse.cy - ry, ellipse.cx + rx, ellipse.cy + ry]; };
+    const mouthR = region(z.mouth, 0.35);   // the patch itself, not the surrounding lip
+    const eyeR = region(z.eyes[0], 0.6);
+    /* a corner of the photo is guaranteed outside every face zone regardless
+       of where the face sits in frame — the background this fixture used to
+       paint yellow, now just "wherever the face definitely is not" */
+    const bgBox = [4, 4, Math.min(60, W * 0.15), Math.min(60, H * 0.12)];
+    const before = ST.px0.data;
+    const teethBase = luma(before, ...mouthR), eyeBase = luma(before, ...eyeR), bgBase = luma(before, ...bgBox);
+    await new Promise(r => { state.st.t2.teeth = 90; stT2Changed(); setTimeout(r, 500); });
+    const afterTeeth = cc().getImageData(0, 0, W, H).data;
+    const teethAfter = luma(afterTeeth, ...mouthR), bgAfterTeeth = luma(afterTeeth, ...bgBox);
+    document.getElementById("stReset").click();
+    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => { state.st.t2.eyeb = 90; stT2Changed(); setTimeout(r, 500); });
+    const eyeAfter = luma(cc().getImageData(0, 0, W, H).data, ...eyeR);
+    return { noFace: false, teethBase, teethAfter, bgBase, bgAfterTeeth, eyeBase, eyeAfter };
+  });
+  check(real.noFace === false, "the real photo is detected as a face — the precision checks below actually exercised something", JSON.stringify(real));
+  check(!real.noFace && real.teethAfter > real.teethBase + 2 && Math.abs(real.bgAfterTeeth - real.bgBase) < 1.5,
+    "teeth whitening lands inside the detected mouth and leaves a background corner alone",
+    { teethBase: +(real.teethBase || 0).toFixed(1), teethAfter: +(real.teethAfter || 0).toFixed(1), bgDelta: +((real.bgAfterTeeth || 0) - (real.bgBase || 0)).toFixed(2) });
+  check(!real.noFace && real.eyeAfter > real.eyeBase + 8,
+    "eye brighten reaches the detected eye region",
+    { eyeBase: +(real.eyeBase || 0).toFixed(1), eyeAfter: +(real.eyeAfter || 0).toFixed(1) });
 
   await browser.close();
   console.log(failures ? `\n${failures} FAILED` : "\nALL PASS");

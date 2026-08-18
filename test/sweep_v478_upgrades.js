@@ -118,7 +118,15 @@ report("A1) the sync export and the worker export share one encode tail",
     });
     ST.heals = [{ u: 0.44, v: 0.38, ur: 0.03 }, { u: 0.57, v: 0.46, ur: 0.025 }];
     stRenderSettle();
-    await new Promise(r => setTimeout(r, 1500));
+    /* Wait for THIS preview render to actually land rather than hoping 1500ms
+       is enough: on a loaded CI runner the worker can still be chewing on the
+       2200x1500 heavy-recipe frame past that mark, and test E later asserts
+       against STW.busy/queued directly. If that first render's reply is still
+       in flight when E starts, its eventual (unrelated) arrival flips busy/
+       queued out from under E's own assertion — a test-isolation gap, not a
+       product bug. Polling to idle first removes the whole class of race. */
+    for (let waited = 0; STW.busy && waited < 15000; waited += 50) await new Promise(r => setTimeout(r, 50));
+    await new Promise(r => setTimeout(r, 300));
 
     /* B) identical bytes */
     const syncDU = stBake();
@@ -138,10 +146,26 @@ report("A1) the sync export and the worker export share one encode tail",
     const wk = await framesDuring(() => stBakeAsync());
     const sy = await framesDuring(async () => { stBake(); });
 
-    /* E) an export must not clear a preview's busy/queued bookkeeping */
+    /* E) an export must not clear a preview's busy/queued bookkeeping.
+
+       Drain to a genuinely idle pipeline FIRST, and assert that it got there.
+       Steps B and C above leave a preview frame in flight — measured, not
+       assumed: at this line STW.busy was true with one reply still owed. A
+       PREVIEW reply legitimately clears busy/queued (that is the same branch
+       this check is about, seen from the other side), so staging the state
+       while one is in flight makes E assert on the wrong reply and fail for a
+       reason that has nothing to do with exports. That is the real mechanism
+       behind E's CI-only flakiness; the earlier idle wait (line ~128) cannot
+       cover it, because B and C start fresh frames after it. */
+    for (let waited = 0; waited < 15000; waited += 50) {
+      if (!STW.busy && !STW.queued && Object.keys(STW.cb).length === 0) break;
+      await new Promise(r => setTimeout(r, 50));
+    }
+    await new Promise(r => setTimeout(r, 300));
+    const eIdle = !STW.busy && !STW.queued && Object.keys(STW.cb).length === 0;
     STW.busy = true; STW.queued = true;
     await stBakeAsync();
-    const preserved = STW.busy === true && STW.queued === true;
+    const preserved = eIdle && STW.busy === true && STW.queued === true;
     STW.busy = false; STW.queued = false;
 
     /* D) worker gone → still exports */
