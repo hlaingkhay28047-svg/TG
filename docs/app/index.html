@@ -12737,7 +12737,17 @@ function stFaceBoot(){
        therefore keeps the geometric reader — a rougher preview, but a
        responsive one — instead of a better preview it cannot afford. */
     return Promise.resolve(fa.tf.setBackend("webgl")).catch(function(){ return false; })
-      .then(function(ok){ if(ok===false) throw new Error("no webgl"); return fa.tf.ready(); })
+      .then(function(ok){
+        if(ok!==false) return fa.tf.ready();
+        /* The single exception to webgl-or-nothing, and it is a test harness
+           opt-in the app never sets for itself: a headless CI runner has no
+           GPU, so without this the landmark zoning would go completely
+           untested in CI — silently passing while covering nothing, which is
+           worse than a slow test. Responsiveness is what the rule protects,
+           and a test runner has no user to keep responsive. */
+        if(!window.__ST_FACE_ALLOW_CPU) throw new Error("no webgl");
+        return Promise.resolve(fa.tf.setBackend("cpu")).then(function(){ return fa.tf.ready(); });
+      })
       .then(function(){
         return Promise.all([
           fa.nets.tinyFaceDetector.loadFromUri("lib/face"),

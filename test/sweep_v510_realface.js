@@ -28,6 +28,13 @@ const PORT = process.env.PORT || 8931;
   await page.addInitScript(() => {
     localStorage.setItem("hnk_ws_onboarded", "1");
     localStorage.setItem("hnk_ws_seen", "1");
+    /* CI runners have no GPU. The app refuses the cpu backend on purpose (see
+       stFaceBoot: a cpu pass freezes the UI thread for seconds), but that rule
+       protects RESPONSIVENESS, and a headless runner has no user to keep
+       responsive. Without this opt-in every landmark assertion below would be
+       skipped in CI while still reporting green — covering nothing. The rule
+       itself is pinned separately, below. */
+    window.__ST_FACE_ALLOW_CPU = 1;
   });
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1000);
@@ -142,6 +149,19 @@ const PORT = process.env.PORT || 8931;
     return { got: !!z, real: !!(z && z.real) };
   });
   report("with no landmarks the geometric fallback still answers", fb.got && !fb.real, JSON.stringify(fb));
+
+  // 5b) the opt-in above must remain an OPT-IN: the shipped app refuses the
+  //     cpu backend, because a cpu pass freezes the UI thread for 1.5-3s.
+  const rule = await page.evaluate(() => {
+    const src = String(window.stFaceBoot || "");
+    return {
+      refuses: src.indexOf('throw new Error("no webgl")') >= 0,
+      gated: src.indexOf("__ST_FACE_ALLOW_CPU") >= 0,
+      asksWebgl: src.indexOf('setBackend("webgl")') >= 0
+    };
+  });
+  report("the app itself still refuses the cpu backend (webgl or nothing)",
+    rule.refuses && rule.gated && rule.asksWebgl, JSON.stringify(rule));
 
   // 6) shipping hygiene
   report("no page errors", pageErrors.length === 0, pageErrors.slice(0, 2).join(" | "));
