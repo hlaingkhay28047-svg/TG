@@ -65,8 +65,11 @@ const NEW = Object.keys(SCRIPTS);
 
   const data = await page.evaluate((newLangs) => {
     const langs = Object.keys(TR_L);
-    const full = Object.keys(TR_L.hi || {});
+    /* Baseline is TR itself, not a sibling pack: pack-vs-pack fullness let
+       every pack drift 64 keys behind TR in lockstep while still passing. */
+    const full = Object.keys(TR);
     const counts = {}; langs.forEach(l => counts[l] = Object.keys(TR_L[l]).length);
+    const drift = {}; langs.forEach(l => { const miss = full.filter(k => !(k in TR_L[l])); if (miss.length) drift[l] = miss.length; });
 
     const placeholderMisses = [], markupMisses = [], stillEnglish = [];
     const PH = /\{[A-Za-z0-9_]+\}/g;
@@ -94,7 +97,7 @@ const NEW = Object.keys(SCRIPTS);
 
   const short = Object.keys(data.counts).filter(l => data.counts[l] < data.fullCount);
   report("A) every language in TR_L carries the full key set — no starter packs left",
-    data.fullCount === 244 && short.length === 0,
+    data.fullCount >= 308 && short.length === 0,
     { fullKeySet: data.fullCount, shortLanguages: short.map(l => l + "=" + data.counts[l]) });
 
   report("B) every {N}-style placeholder survives translation",
