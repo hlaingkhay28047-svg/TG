@@ -20,14 +20,15 @@ const checks = [
   ["brand accent line", /\.nav-name::after\s*\{[^}]*linear-gradient\(/s],
   ["reduced-motion support", /prefers-reduced-motion:\s*reduce[^}]*\.hnk-wordmark[^}]*animation:none!important/s],
   ["forced-colors fallback", /forced-colors:active[^}]*\.hnk-wordmark\s*\{[^}]*-webkit-text-fill-color:CanvasText[^}]*animation:none/s],
-  ["small-phone label collapse", /@media\(max-width:479px\)\{[\s\S]{0,300}\.hnk-studio-label\s*\{[^}]*display:none/],
+  ["small-phone label stays visible (compact)", /@media\(max-width:479px\)\{[\s\S]{0,300}\.hnk-studio-label\s*\{[^}]*font-size:8\.5px/],
+  ["type label gold gradient", /\.hnk-studio-label\s*\{[^}]*linear-gradient\([^}]*background-clip:text/s],
   ["small-phone sizing", /@media\(max-width:379px\)[^{]*\{[^}]*\.hnk-wordmark\s*\{[^}]*font-size:/s]
 ];
 
 const siteChecks = [
   [
     "landing-page semantic wordmark markup",
-    /<div class="nav-name lat" role="img" aria-label="HNK Create Studio"><span class="hnk-wordmark" aria-hidden="true">HNK<\/span><span class="hnk-studio-label" aria-hidden="true">CREATE STUDIO<\/span><\/div>/
+    /<div class="nav-name lat" role="img" aria-label="HNK Website"><span class="hnk-wordmark" aria-hidden="true">HNK<\/span><span class="hnk-studio-label" aria-hidden="true">WEBSITE<\/span><\/div>/
   ],
   ["landing-page decorative icon", /<img src="assets\/site\/favicon-48\.png" alt="" aria-hidden="true" width="30" height="30">/],
   ["landing-page stacked premium lockup", /\.nav-name\s*\{[^}]*flex-direction:column[^}]*align-items:flex-start/s],
@@ -37,7 +38,8 @@ const siteChecks = [
   ["landing-page brand accent line", /\.nav-name::after\s*\{[^}]*linear-gradient\(/s],
   ["landing-page reduced-motion support", /prefers-reduced-motion:reduce[^}]*\*\{[^}]*animation:none!important/s],
   ["landing-page forced-colors fallback", /forced-colors:active[^}]*\.hnk-wordmark\s*\{[^}]*-webkit-text-fill-color:CanvasText[^}]*animation:none/s],
-  ["landing-page mobile label collapse", /@media \(max-width:479px\)[^{]*\{[^}]*\.hnk-studio-label\s*\{[^}]*display:none/s],
+  ["landing-page mobile label stays visible (compact)", /\.hnk-studio-label\s*\{[^}]*font-size:8\.5px/s],
+  ["landing-page type label gold gradient", /\.hnk-studio-label\s*\{[^}]*linear-gradient\([^}]*background-clip:text/s],
   ["landing-page small-phone sizing", /@media \(max-width:379px\)\{[\s\S]{0,500}\.hnk-wordmark\s*\{[^}]*font-size:/]
 ];
 

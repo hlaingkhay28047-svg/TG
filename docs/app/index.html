@@ -61,7 +61,8 @@ input,textarea,select{font-family:inherit}
 .nav-name::after{content:"";position:absolute;left:0;bottom:0;width:38px;height:1px;border-radius:999px;background:linear-gradient(90deg,transparent,#fff0bd 24%,var(--gold) 68%,transparent);box-shadow:0 0 6px rgba(233,185,73,.45);opacity:.9}
 .hnk-wordmark{display:inline-block;color:var(--gold-hi);font-family:"Arial Black","Segoe UI Black",Roboto,"Noto Sans",system-ui,sans-serif;font-size:20px;font-weight:900;letter-spacing:.11em;line-height:.9;filter:drop-shadow(0 1px 0 rgba(72,40,5,.85)) drop-shadow(0 0 5px rgba(233,185,73,.24));animation:heroShine 5s ease-in-out infinite}
 @supports ((background-clip:text) or (-webkit-background-clip:text)){.hnk-wordmark{background:linear-gradient(110deg,#fff8dc 0%,#f7d67d 20%,#b77816 42%,#fff0ad 57%,#d39a31 78%,#fff8dc 100%);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}}
-.hnk-studio-label{color:#eadcad;font-size:10px;font-weight:700;letter-spacing:.16em;line-height:1;text-shadow:0 0 8px rgba(233,185,73,.22)}
+.hnk-studio-label{color:#f2e2ae;font-size:10px;font-weight:800;letter-spacing:.22em;line-height:1;text-shadow:0 0 8px rgba(233,185,73,.28)}
+@supports ((background-clip:text) or (-webkit-background-clip:text)){.hnk-studio-label{background:linear-gradient(100deg,#f6e7b8 0%,#d9ad55 45%,#f9eec4 70%,#cfa145 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}}
 .nav-tag{margin-left:auto;font-size:11px;color:var(--muted)}
 
 .hero-strip{position:relative;padding:26px 0 6px;overflow:hidden;border-radius:0 0 18px 18px}
@@ -898,11 +899,11 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    by dropping the version tag (still shown in Setup + footer) and, at the
    narrowest widths, the logo mark, instead of letting the brand stack */
 .nav-name{white-space:nowrap}
-@media(max-width:479px){ .nav-tag{display:none} .nav-in{gap:8px} .hnk-studio-label{display:none} }
+@media(max-width:479px){ .nav-tag{display:none} .nav-in{gap:8px} .hnk-studio-label{font-size:8.5px;letter-spacing:.18em} }
 /* v4.28: the logo is the brand — never drop it. At the narrowest widths it
    shrinks (and the wordmark tightens) instead of disappearing, which is what
    made the mark vanish on 360px phones. */
-@media(max-width:379px){.hnk-wordmark{font-size:17px;letter-spacing:.08em}.nav-name::after{width:30px}}
+@media(max-width:379px){.hnk-wordmark{font-size:17px;letter-spacing:.08em}.hnk-studio-label{font-size:7.5px;letter-spacing:.15em}.nav-name::after{width:30px}}
 @media(max-width:379px){ .nav-logo{width:30px;height:30px;border-radius:8px} .nav-in{gap:6px} .nav-in #selLang{max-width:88px;padding:8px 6px;font-size:12px} .nav-name{font-size:12px;letter-spacing:.02em} }
 @media(max-width:339px){ .nav-name{font-size:11px} .nav-in #selLang{max-width:74px} }
 /* ---- v4.30 Accounts + Premium ----
@@ -1731,7 +1732,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     </div>
     <div class="row" style="margin-top:10px">
       <a class="btn grow" href="../" style="text-align:center" id="siteLink"></a>
-      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.14.0.ccx" download style="text-align:center">CCX Download (v6.14.0)</a>
+      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.15.0.ccx" download style="text-align:center">CCX Download (v6.15.0)</a>
     </div>
   </section>
 
@@ -19191,7 +19192,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.4.0";
+var APP_VER="5.5.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
