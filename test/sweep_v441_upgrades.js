@@ -217,11 +217,12 @@ function report(name, ok, detail) {
     gen.btnGemini && gen.eta && gen.modelShownForGemini && gen.persisted && gen.provLine && gen.share, gen);
 
   /* ---- 7) grouped language picker + fallback resolution ----
-     v4.43 grew the picker to 35 (Asia set: ne/lo/km/ja/ko) in 3 optgroups */
+     v4.43 grew the picker to 35 (Asia set: ne/lo/km/ja/ko) in 3 optgroups;
+     v5.7 added real Tai Le (tdd) + Khamti (kht) dictionaries -> 37 */
   const lang = await page.evaluate(() => {
     const sel = document.getElementById("selLang");
     const values = Array.from(sel.querySelectorAll("option")).map(o => o.value);
-    const need = ["my", "en", "shn", "mnw", "rki", "ksw", "kyu", "cnh", "blk", "pll", "khb", "ahk", "lhu", "lis",
+    const need = ["my", "en", "shn", "mnw", "rki", "ksw", "kyu", "cnh", "blk", "pll", "khb", "tdd", "kht", "ahk", "lhu", "lis",
       "hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa", "ur", "ne", "lo", "km", "ja", "ko"];
     const missing = need.filter(v => values.indexOf(v) < 0);
     // fallback resolution without a reload: swap LANG in-place
@@ -233,8 +234,8 @@ function report(name, ok, detail) {
     LANG = keep;
     return { total: values.length, missing, mn, hin, tl, grouped: sel.querySelectorAll("optgroup").length === 3 };
   });
-  report("languages: 35 codes in a grouped picker; Mon falls back to Burmese, Hindi to English, Tai Lue to Shan",
-    lang.total === 35 && lang.missing.length === 0 && lang.mn === "burmese-text" && lang.hin === "english-text" && lang.tl === "shan-text" && lang.grouped,
+  report("languages: 37 codes in a grouped picker; Mon falls back to Burmese, Hindi to English, Tai Lue to Shan",
+    lang.total === 37 && lang.missing.length === 0 && lang.mn === "burmese-text" && lang.hin === "english-text" && lang.tl === "shan-text" && lang.grouped,
     lang);
 
   await page.close();

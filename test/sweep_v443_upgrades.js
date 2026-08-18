@@ -1,5 +1,5 @@
 /* v4.43 language-upgrade sweep — pins the wave's contracts:
-   1. picker: 35 languages in 3 optgroups (base 9 + Myanmar ethnic 11 +
+   1. picker: 37 languages in 3 optgroups (base 9 + Myanmar ethnic 13 +
       India 10 + Asia 5: ne/lo/km/ja/ko), every code present
    2. native starter packs (TR_L): Indic + Asia languages get their own
       script for the high-visibility short strings — checked in the language's
@@ -28,7 +28,7 @@ function report(name, ok, detail) {
   await page.goto(BASE);
   await page.waitForTimeout(1000);
 
-  /* ---- 1) 35-language picker in 3 groups ---- */
+  /* ---- 1) 37-language picker in 3 groups (v5.7: + Tai Le tdd, Khamti kht) ---- */
   const picker = await page.evaluate(() => {
     const sel = document.getElementById("selLang");
     const values = Array.from(sel.querySelectorAll("option")).map(o => o.value);
@@ -45,7 +45,7 @@ function report(name, ok, detail) {
       endonyms: labels.ne === "नेपाली" && labels.lo === "ລາວ" && labels.km === "ខ្មែរ" && labels.ja === "日本語" && labels.ko === "한국어"
     };
   });
-  report("1) 35 languages, 3 optgroups, Asia endonyms", picker.total === 35 && picker.groups === 3 && picker.asiaMissing.length === 0 && picker.endonyms, picker);
+  report("1) 37 languages, 3 optgroups, Asia endonyms", picker.total === 37 && picker.groups === 3 && picker.asiaMissing.length === 0 && picker.endonyms, picker);
 
   /* ---- 2) native starter packs render in the language's own script ---- */
   const packs = await page.evaluate(() => {
@@ -106,13 +106,13 @@ function report(name, ok, detail) {
   report("4) app, update metadata, and release semver stay in lockstep",
     /^\d+\.\d+\.\d+$/.test(ver.app) && ver.app === ver.json, ver);
 
-  /* ---- 5) marketing site mirrors the 35-language set (file-based — the
+  /* ---- 5) marketing site mirrors the 37-language set (file-based — the
      site root isn't served in CI, docs/app is) ---- */
   const fs = require("fs"), path = require("path");
   const site = fs.readFileSync(path.resolve(__dirname, "..", "docs", "index.html"), "utf8");
   const siteOk = {
     optgroups: (site.match(/<optgroup/g) || []).length === 3,
-    options: (site.match(/<option value="/g) || []).length === 35,
+    options: (site.match(/<option value="/g) || []).length === 37,
     fb: site.indexOf("var SITE_FB=") >= 0 && site.indexOf("lo:'th'") >= 0,
     /* v4.50: the packs grew from starter subsets into full dictionaries for
        the languages the translation wave completed, so the pin checks that
@@ -124,7 +124,7 @@ function report(name, ok, detail) {
       (site.match(/"nav\.cta":/g) || []).length >= 15,
     keyThreaded: site.indexOf("pick(rec,l,k)") >= 0
   };
-  report("5) site: 35-language picker, SITE_FB/SITE_L, key-threaded pick()",
+  report("5) site: 37-language picker, SITE_FB/SITE_L, key-threaded pick()",
     siteOk.optgroups && siteOk.options && siteOk.fb && siteOk.packs && siteOk.keyThreaded, siteOk);
 
   await browser.close();
