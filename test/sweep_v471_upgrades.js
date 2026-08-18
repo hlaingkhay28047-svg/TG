@@ -71,7 +71,7 @@ report("C) the default still carries v4.55's floor, and an explicit opts.rs can 
   /var RS = \(typeof opts\.rs === "number" && opts\.rs > 0\) \? opts\.rs : Math\.max\(1, Math\.max\(W,H\)\/1280\);/.test(src));
 
 report("C2) the settle path and the render worker both carry the preview scale",
-  /stRunPipeline\(stGeoSource\(\),W,H,\{maskInfo:ST\.maskCache,rs:stPreviewRS\(W,H\)\}\)/.test(src) &&
+  /stRunPipeline\(stGeoSource\(\),W,H,\{maskInfo:ST\.maskCache,rs:stPreviewRS\(W,H\),lm:ST\.faceLM\|\|null\}\)/.test(src) &&
   /rs:stPreviewRS\(W,H\), t1:stEffT1\(\)/.test(src) &&
   /stRunPipeline\(m\.bmp,m\.W,m\.H,\{rs:m\.rs,/.test(src));
 

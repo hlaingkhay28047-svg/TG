@@ -268,3 +268,6 @@ jobs:
 
       - name: Run Studio control-honesty sweep (mocked)
         run: node test/sweep_studio_fixes.js
+
+      - name: Run v5.10.0 real-face sweep (landmark zones, adaptive skin mask)
+        run: node test/sweep_v510_realface.js
