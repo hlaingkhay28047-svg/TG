@@ -45,8 +45,8 @@ function report(name, ok, detail) {
 const FULL = ["hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa",
               /* v4.77 — these six left their 19-key starter packs behind */
               "ur", "ne", "lo", "km", "ja", "ko",
-              /* v5.7 — real Tai Le + Khamti dictionaries */
-              "tdd", "kht"];
+              /* v5.7 — real Tai Le + Khamti dictionaries; v5.8 adds Tai Lue */
+              "tdd", "kht", "khb"];
 const STARTER = [];
 
 (async () => {
