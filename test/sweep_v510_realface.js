@@ -17,9 +17,11 @@ const { chromium } = require("playwright-core");
 const PORT = process.env.PORT || 8931;
 
 (async () => {
-  const browser = await chromium.launch({
-    args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
-  });
+  /* Deliberately NO gpu flags. Forcing swiftshader hands tfjs a webgl context
+     that some runners accept and then cannot actually run, which fails in a
+     way that looks identical to "no face in the photo". __ST_FACE_ALLOW_CPU
+     below makes the backend irrelevant to what this sweep measures. */
+  const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 430, height: 1000 } });
   const pageErrors = [];
   const missing = [];
@@ -57,8 +59,12 @@ const PORT = process.env.PORT || 8931;
       const du = await new Promise(x => { const f = new FileReader(); f.onload = () => x(f.result); f.readAsDataURL(bl); });
       await new Promise(x => { ST.loadImage(du, { done: x }); });
       /* the scan is async and deliberately off the critical path */
-      for (let i = 0; i < 80; i++) {
+      /* 45s: model load plus a cpu inference pass on a shared CI runner is
+         far slower than a developer machine, and a short wait here reads as
+         "no face found" rather than "not finished yet". */
+      for (let i = 0; i < 450; i++) {
         if (ST.faceLM && ST.faceLM.scanned) break;
+        if (STFACE && STFACE.off) break;
         await new Promise(x => setTimeout(x, 100));
       }
       await new Promise(x => setTimeout(x, 250));
@@ -78,7 +84,11 @@ const PORT = process.env.PORT || 8931;
         teethInMouth: !!(z && z.r && z.r.teeth && z.mouth &&
           Math.abs(z.r.teeth.cy - z.mouth.cy) < z.mouth.ry &&
           Math.abs(z.r.teeth.cx - z.mouth.cx) < z.mouth.rx),
-        headPctH: (z && z.head) ? 100 * (z.head.y1 - z.head.y0) / H : null
+        headPctH: (z && z.head) ? 100 * (z.head.y1 - z.head.y0) / H : null,
+        /* why, when it did not boot — see stFaceBoot */
+        modelOff: !!(typeof STFACE !== "undefined" && STFACE.off),
+        modelErr: (typeof STFACE !== "undefined" && STFACE.err) || null,
+        backend: (function(){ try { return STFACE.mod.tf.getBackend(); } catch (e) { return null; } })()
       };
     }, rel);
   }
@@ -114,7 +124,7 @@ const PORT = process.env.PORT || 8931;
     const bl = await res.blob();
     const du = await new Promise(x => { const f = new FileReader(); f.onload = () => x(f.result); f.readAsDataURL(bl); });
     await new Promise(x => { ST.loadImage(du, { done: x }); });
-    for (let i = 0; i < 90; i++) { if (ST.faceLM && ST.faceLM.scanned) break; await new Promise(x => setTimeout(x, 100)); }
+    for (let i = 0; i < 450; i++) { if (ST.faceLM && ST.faceLM.scanned) break; if (STFACE && STFACE.off) break; await new Promise(x => setTimeout(x, 100)); }
     const W = ST.buf.width, H = ST.buf.height;
     const mi = stSkinMask(ST.px0, W, H, ST.faceLM);
     const z = stFaceZones(ST.px0, W, H, mi, ST.faceLM);

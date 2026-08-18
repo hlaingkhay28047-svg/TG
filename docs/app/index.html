@@ -12755,7 +12755,12 @@ function stFaceBoot(){
         ]);
       })
       .then(function(){ STFACE.mod=fa; return fa; });
-  }).catch(function(){ STFACE.off=true; return null; });
+  }).catch(function(e){
+    /* keep WHY on the object: a headless CI failure that only says "exit code
+       1" cost several rounds to diagnose, and the reason is always one of
+       these three — no webgl, model files missing, or the import failing. */
+    STFACE.off=true; STFACE.err=String((e&&e.message)||e).slice(0,120); return null;
+  });
   return STFACE.boot;
 }
 function stFaceScan(){
