@@ -2173,6 +2173,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 
   <div class="st-genbar" id="stGenBar">
     <div class="mut" id="stPendCount"></div>
+    <p class="mut" id="stFaceNote" style="display:none"></p>
     <div class="chips" id="stPendChips"></div>
     <div class="row" style="margin-top:6px">
       <button class="btn btn-gold grow gen" id="btnStGen"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg> GENERATE</button>
@@ -10897,7 +10898,10 @@ function stLineSigned(key,v){
 function svGet(id,def){ var x=state.st.v[id]; return x===undefined?def:x; }
 function svSet(id,val){ state.st.v[id]=val; stSaveSoon(); }
 function stSaveSoon(){ clearTimeout(ST.svT); ST.svT=setTimeout(saveState,500); }
-function stRefreshUI(){ ST.refreshFns.forEach(function(f){ try{ f(); }catch(e){} }); }
+function stRefreshUI(){
+  ST.refreshFns.forEach(function(f){ try{ f(); }catch(e){} });
+  try{ stFaceNoteRefresh(); }catch(e){}
+}
 function stClamp(v,a,b){ return v<a?a:v>b?b:v; }
 
 /* ---- effective params = user base + ghost contributions from T3 approximations ---- */
@@ -11586,7 +11590,13 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
   /* v5.10 — one flat list per feature, gathered across every detected face.
      zones.all is the full set; a photo read by the geometric fallback has a
      single entry, so this collapses to the old behaviour exactly. */
-  var faceSet = (zones&&zones.all&&zones.all.length) ? zones.all : (zones?[zones]:[]);
+  /* v5.11 — ONLY A MEASURED FACE DRIVES MAKEUP. zones.real is set solely by
+     stZonesFromLM, so a geometric read (no model, or a photo the model could
+     not resolve) yields an empty set and every pass below simply does not run.
+     That is the whole point: the geometric reader is wrong on most photographs
+     and its failure mode is lip colour on a cheek. Doing nothing is a correct
+     answer; painting the wrong place is not. #stFaceNote says so on screen. */
+  var faceSet = (zones&&zones.real) ? (zones.all&&zones.all.length?zones.all:[zones]) : [];
   var zEyes=[], zLips=[], zMouths=[], zCheeks=[];
   for(var fi=0; fi<faceSet.length; fi++){
     var fz=faceSet[fi];
@@ -11596,24 +11606,20 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
     else if(fz.mouth) zLips.push(fz.mouth);
     if(fz.r&&fz.r.cheekL){ zCheeks.push(fz.r.cheekL); zCheeks.push(fz.r.cheekR); }
   }
-  var cheeks=null;
-  if(t2.blushV>0&&zones){
-    if(zCheeks.length){
-      cheeks=zCheeks;
-    } else if(zones.r&&zones.r.cheekL&&zones.r.cheekR){
-      /* v4.56 — the real cheeks from the fitted face model. The old fallback
-         below guessed the centre as the midpoint between eye and mouth and,
-         worse, sized the ellipse from mi.box — the box around EVERY skin
-         pixel — so on a half-body portrait the "cheek" was as wide as the
-         subject's shoulders and blush washed across the whole frame. */
-      cheeks=[zones.r.cheekL, zones.r.cheekR];
-    } else if(zones.eyes&&zones.mouth&&zones.head){
-      var bwC=zones.head.x1-zones.head.x0, bhC=zones.head.y1-zones.head.y0;
-      cheeks=[
-        {cx:zones.eyes[0].cx, cy:(zones.eyes[0].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09},
-        {cx:zones.eyes[1].cx, cy:(zones.eyes[1].cy+zones.mouth.cy)/2+bhC*0.02, rx:bwC*0.15, ry:bhC*0.09}];
-    }
-  }
+  /* v5.11 — NO GUESSED FALLBACK LEFT. This used to fall through two more
+     branches when zCheeks was empty: the fitted-model cheeks by another
+     name, and — the one that mattered — a guess at the midpoint between the
+     eyes and the mouth, sized off the head box. Both branches read from
+     `zones` directly rather than the trusted, measured-only faceSet/zCheeks,
+     so a geometric-fallback read (no model, or lm=null) still had eyes,
+     mouth and a head box and STILL painted a guessed cheek band — smaller
+     than before v5.10, but not zero, and the same class of bug this release
+     exists to remove. Measured on the app's own sample with lm=null: a
+     32-unit pixel delta from a "no face was measured" state. zCheeks is
+     already gathered only from faces stZonesFromLM actually measured
+     (stApplySkin's faceSet, above), so it is the only source now — empty
+     means no blush, exactly like lips, teeth and eye brightening. */
+  var cheeks = (t2.blushV>0 && zCheeks.length) ? zCheeks : null;
   /* colours arrive resolved on t2 (stRunPipeline / worker message) — this
      function must not touch svGet so it can run inside the render worker */
   var lipC=t2.lipC||{r:192,g:72,b:88};
@@ -11629,9 +11635,6 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
     if(cnt){ meanCb/=cnt; meanCr/=cnt; } else { meanCb=128; meanCr=128; }
   }
   var whiteAmt=stClamp(t2.white+t2.radiance*0.4,0,100);
-  /* v4.56: eye bags sit under the eyes, so this band belongs to the HEAD */
-  var box=hbox, eyY0=0,eyY1=0;
-  if(box){ var bh=box.y1-box.y0; eyY0=box.y0+bh*0.25; eyY1=box.y0+bh*0.45; }
   for(var i=0,p=0;i<n;i++,p+=4){
     var m=mask[i]/255;
     /* v4.42 — local brush mask: "in" edits only painted pixels, "out"
@@ -11645,7 +11648,10 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
        luma floor — real teeth in shade get caught, the wall doesn't. */
     if(t2.teeth>0){
       var inMouth=zMouths.length ? stInAny(xPix,yPix,zMouths,1.15) : null;
-      var tOk = inMouth===null ? lum>140 : (inMouth && lum>105);
+      /* the old no-mouth branch whitened EVERY bright skin pixel in the frame
+         — a gown, a veil, a lit shoulder. Without a measured mouth, teeth
+         whitening now does nothing at all. */
+      var tOk = zMouths.length ? (inMouth && lum>105) : false;
       if(tOk){
         var mx0=Math.max(R,G,B),mn0=Math.min(R,G,B);
         if((mx0-mn0)<(inMouth?55:40) && ((R+G)/2-B)>(inMouth?2:6)){
@@ -11718,8 +11724,9 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
       /* v4.56 — lips are the two lip bands, not the whole mouth ellipse: the
          ellipse also contains the teeth and the skin just past the corners,
          so lip colour used to bleed onto both. */
-      var inLip = zLips.length ? stInAny(xPix,yPix,zLips,1.0)
-        : (zones.mouth?stInEllipse(xPix,yPix,zones.mouth,1.05):null);
+      /* no measured lip band -> no lip colour. The old fallback painted the
+         whole mouth ellipse, which on a mis-read face is a patch of cheek. */
+      var inLip = zLips.length ? stInAny(xPix,yPix,zLips,1.0) : null;
       if(t2.lipV>0&&inLip){
         var crL=128+0.5*R-0.418688*G-0.081312*B;
         if(crL>138){ /* lip pixels, not teeth */
@@ -11744,9 +11751,10 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
        band when it doesn't. */
     if(t2.eyeb>0){
       var lumE=0.299*R+0.587*G+0.114*B;
-      var inEye = zEyes.length
-        ? stInAny(xPix,yPix,zEyes,1.35)
-        : (box && m>0.02 && yPix>=eyY0 && yPix<=eyY1);
+      /* the old fallback was a RECTANGULAR BAND across the head box, and when
+         that box was the whole picture the band was a stripe across the photo.
+         Without measured eyes, eye brightening now does nothing. */
+      var inEye = zEyes.length ? stInAny(xPix,yPix,zEyes,1.35) : false;
       if(inEye){
         if(lumE<(zEyes.length?95:80)){ var eb=t2.eyeb*0.25; R+=eb;G+=eb;B+=eb; }
         else { var mx1=Math.max(R,G,B),mn1=Math.min(R,G,B);
@@ -12688,6 +12696,27 @@ function stNoiseNote(){
   ST.refreshFns.push(refresh); ST.noiseNotes.push(refresh); refresh();
   return p;
 }
+/* v5.11 — say it on screen when the face-dependent controls are switched on
+   and there is no measured face to act on. Silence would look identical to
+   "this slider does nothing", which is the complaint this whole wave started
+   from. Reuses st_zones_none, already translated into all nine languages and
+   already worded for exactly this: "no face found — the face-specific
+   controls will not act". */
+function stFaceGated(){
+  try{
+    if(!ST.srcBitmap) return false;
+    var t2=stEffT2();
+    if(!(t2.teeth>0||t2.eyeb>0||t2.lipV>0||t2.blushV>0||t2.eyeDef>0)) return false;
+    var lm=ST.faceLM;
+    return !(lm&&lm.faces&&lm.faces.length);
+  }catch(e){ return false; }
+}
+function stFaceNoteRefresh(){
+  var p=$("stFaceNote"); if(!p) return;
+  var on=stFaceGated();
+  p.style.display=on?"":"none";
+  if(on) p.textContent=t("st_zones_none");
+}
 function stBuildBuffer(){
   var src=stGeoSource(), gw=src.width||src.naturalWidth, gh=src.height||src.naturalHeight;
   var MAX=stBufMax(), s=Math.min(1,MAX/Math.max(gw,gh));
@@ -12717,96 +12746,111 @@ function stBuildBuffer(){
    backdrop plate), ST.faceLM stays null and stFaceZones falls back to the
    geometric reader that shipped before this. A missing model degrades the
    preview; it never breaks it. */
-var STFACE = { mod:null, boot:null, off:false, tok:0 };
-function stFaceBoot(){
-  if(STFACE.off) return Promise.resolve(null);
-  if(STFACE.boot) return STFACE.boot;
-  STFACE.boot = import("./lib/face/face-api.esm.js").then(function(fa){
-    /* The bundled tfjs registers a wasm backend and we ship no wasm binary, so
-       leaving it registered makes tf.ready() probe for tfjs-backend-wasm-simd
-       .wasm and 404 on every studio load. Drop it, then ask for webgl and fall
-       back to cpu — shipping another megabyte of wasm to silence a probe we
-       never use would be the wrong trade. */
-    try{ fa.tf.removeBackend("wasm"); }catch(e){}
-    /* v5.10 — WEBGL OR NOTHING, and that is a product decision rather than a
-       convenience. On the cpu backend this net takes 1.5-3 SECONDS per photo
-       and tfjs runs it as one long synchronous burst, which freezes the UI
-       thread for that whole time on exactly the weak hardware least able to
-       afford it. Measured here: it was long enough to break the Retouch
-       Stop button's hit test in sweep_v428. A device with no working WebGL
-       therefore keeps the geometric reader — a rougher preview, but a
-       responsive one — instead of a better preview it cannot afford. */
-    return Promise.resolve(fa.tf.setBackend("webgl")).catch(function(){ return false; })
-      .then(function(ok){
-        if(ok!==false) return fa.tf.ready();
-        /* The single exception to webgl-or-nothing, and it is a test harness
-           opt-in the app never sets for itself: a headless CI runner has no
-           GPU, so without this the landmark zoning would go completely
-           untested in CI — silently passing while covering nothing, which is
-           worse than a slow test. Responsiveness is what the rule protects,
-           and a test runner has no user to keep responsive. */
-        if(!window.__ST_FACE_ALLOW_CPU) throw new Error("no webgl");
-        return Promise.resolve(fa.tf.setBackend("cpu")).then(function(){ return fa.tf.ready(); });
-      })
-      .then(function(){
-        return Promise.all([
-          fa.nets.tinyFaceDetector.loadFromUri("lib/face"),
-          fa.nets.faceLandmark68Net.loadFromUri("lib/face")
-        ]);
-      })
-      .then(function(){ STFACE.mod=fa; return fa; });
-  }).catch(function(e){
-    /* keep WHY on the object: a headless CI failure that only says "exit code
-       1" cost several rounds to diagnose, and the reason is always one of
-       these three — no webgl, model files missing, or the import failing. */
-    STFACE.off=true; STFACE.err=String((e&&e.message)||e).slice(0,120); return null;
-  });
-  return STFACE.boot;
+var STFACE = { worker:null, dead:false, off:false, tok:0, cb:{}, msgId:0 };
+/* v5.11 — THE MODEL RUNS ENTIRELY INSIDE lib/face/face-worker.js.
+
+   v5.10 shipped this on the main thread and refused the cpu backend outright,
+   because a synchronous cpu pass blocks the UI thread for roughly a second —
+   measured, that was long enough to break the Retouch Stop button's hit test
+   (sweep_v428). v5.11 then had to allow cpu as a real fallback: the owner
+   photographed what the WEBGL-OR-NOTHING refusal actually cost — without a
+   model the app falls back to the geometric reader, wrong on roughly seven
+   photographs in ten, and it painted lip colour onto a cheek. A wrong retouch
+   is not "rougher" than a slow one; it is unusable, and doing nothing is the
+   correct answer when no face was measured (see stFaceGated/#stFaceNote).
+
+   Allowing cpu back in reopened the exact blocking risk sweep_v428 exists to
+   catch — now for EVERY interaction, not just an explicit generate, since a
+   cpu pass could land mid-drag on any slider. Deferring when the scan STARTS
+   (stFaceBusy, below) cannot fix that once it has started: cpu inference is
+   one long synchronous burst regardless of timing. The only fix that removes
+   the block is removing it from the main thread, so this delegates the whole
+   boot-and-scan sequence to a Worker (mirroring the render pipeline's own
+   stWorker) and the main thread only ever hands over a small ImageBitmap and
+   waits. See face-worker.js for the environment shim face-api needs to run
+   outside a real browser window. */
+function stFaceWorker(){
+  if(STFACE.worker||STFACE.dead) return STFACE.worker;
+  try{
+    STFACE.worker=new Worker("lib/face/face-worker.js",{type:"module"});
+    STFACE.worker.onmessage=function(e){
+      var d=e.data, cb=STFACE.cb[d.id]; delete STFACE.cb[d.id];
+      if(d.backend) STFACE.backend=d.backend;
+      if(cb) cb(d.ok?d:null, d.ok?null:d.error);
+    };
+    STFACE.worker.onerror=function(ev){
+      STFACE.dead=true; STFACE.off=true;
+      STFACE.err=String((ev&&ev.message)||ev||"worker error").slice(0,160);
+      var cbs=STFACE.cb; STFACE.cb={};
+      Object.keys(cbs).forEach(function(id){ cbs[id](null,STFACE.err); });
+    };
+  }catch(e){
+    STFACE.dead=true; STFACE.off=true; STFACE.err=String(e&&e.message||e).slice(0,160);
+  }
+  return STFACE.worker;
+}
+/* Anything the operator is actively watching. Not a UI-freeze concern any
+   more (the worker cannot block the main thread), but a cpu-bound scan still
+   competes for the device's actual CPU time, so it stays a low-priority,
+   deferrable background task rather than something that races a generate. */
+function stFaceBusy(){
+  try{
+    if(ST.busy) return true;
+    if(typeof STW!=="undefined" && STW.busy) return true;
+    if(document.querySelector(".v2-busy")) return true;
+  }catch(e){}
+  return false;
 }
 function stFaceScan(){
   var buf=ST.buf; if(!buf) return;
   var tok=++STFACE.tok;
+  stFaceScanQueue(buf,tok,0);
+}
+function stFaceScanQueue(buf,tok,tries){
+  if(tok!==STFACE.tok||ST.buf!==buf) return;
+  var go=function(){
+    if(tok!==STFACE.tok||ST.buf!==buf) return;
+    if(stFaceBusy()&&tries<40){ stFaceScanQueue(buf,tok,tries+1); return; }
+    stFaceScanNow(buf,tok);
+  };
   /* deferred to idle on purpose: loading a photo is the busiest moment in the
-     app (buffer build, thumbnails, first settle), and the face is not needed
-     until a face-dependent control is actually touched. */
-  if(window.requestIdleCallback) requestIdleCallback(function(){ stFaceScanNow(buf,tok); },{timeout:3000});
-  else setTimeout(function(){ stFaceScanNow(buf,tok); },400);
+     app (buffer build, thumbnails, first settle). */
+  if(window.requestIdleCallback) requestIdleCallback(go,{timeout:3000});
+  else setTimeout(go,400);
 }
 function stFaceScanNow(buf,tok){
   if(tok!==STFACE.tok||ST.buf!==buf) return;
-  stFaceBoot().then(function(fa){
-    if(!fa||tok!==STFACE.tok||ST.buf!==buf) return null;
-    /* detect on a bounded copy: the net resizes internally anyway, and a
-       512px scan costs a fraction of a 1280px buffer. Coordinates come back
-       in scan space and stZonesFromLM scales them to whatever the render is. */
-    var W=buf.width,H=buf.height,S=Math.min(1,512/Math.max(W,H));
-    var sw=Math.max(48,Math.round(W*S)), sh=Math.max(48,Math.round(H*S));
-    var c=document.createElement("canvas"); c.width=sw; c.height=sh;
-    c.getContext("2d").drawImage(buf,0,0,sw,sh);
-    function run(size,score){
-      return fa.detectAllFaces(c,new fa.TinyFaceDetectorOptions({inputSize:size,scoreThreshold:score})).withFaceLandmarks();
-    }
-    /* one fast confident pass, and a slower sensitive one ONLY on a miss —
-       measured on the library, this is what recovers a small or turned face
-       without inventing one on a plate that has no face at all */
-    return run(416,0.3).then(function(r){ return (r&&r.length)?r:run(608,0.2); })
-      .then(function(res){ return {res:res,sw:sw,sh:sh}; });
-  }).then(function(o){
-    if(!o||tok!==STFACE.tok||ST.buf!==buf) return;
-    var faces=(o.res||[]).map(function(d){
-      var b=d.detection.box;
-      return { score:Math.round(d.detection.score*1000)/1000, area:b.width*b.height,
-               pts:d.landmarks.positions.map(function(q){ return [q.x,q.y]; }) };
-    });
-    /* scanned:true is the difference between "there is no face in this
-       photograph" and "we never got to look". A gown on a mannequin, a ring
-       macro or a backdrop plate must NOT fall through to the geometric reader,
-       which is exactly what invents a face on them; a missing model must. */
-    ST.faceLM = { w:o.sw, h:o.sh, faces:faces, scanned:true };
-    /* the skin window is measured off the face, so a new face invalidates it */
-    ST.maskCache=null;
-    stRenderSettle();
-    stUiSoon();
+  var w=stFaceWorker();
+  if(!w){ STFACE.off=true; return; }
+  /* the network resizes internally to its own inputSize regardless of the
+     source, so one bounded scan size serves both backends — only the input
+     COPY cost scales with this, not the inference cost */
+  var W=buf.width,H=buf.height,S=Math.min(1,512/Math.max(W,H));
+  var sw=Math.max(48,Math.round(W*S)), sh=Math.max(48,Math.round(H*S));
+  var c=document.createElement("canvas"); c.width=sw; c.height=sh;
+  c.getContext("2d").drawImage(buf,0,0,sw,sh);
+  var id=++STFACE.msgId;
+  createImageBitmap(c).then(function(bmp){
+    if(tok!==STFACE.tok||ST.buf!==buf){ try{ bmp.close(); }catch(e){} return; }
+    STFACE.cb[id]=function(res,err){
+      if(tok!==STFACE.tok||ST.buf!==buf) return;
+      if(!res){ STFACE.off=true; STFACE.err=err||STFACE.err; return; }
+      var faces=(res.faces||[]).map(function(f){
+        return { score:f.score, area:f.area, pts:f.pts };
+      });
+      /* scanned:true is the difference between "there is no face in this
+         photograph" and "we never got to look". A gown on a mannequin, a ring
+         macro or a backdrop plate must NOT fall through to the geometric
+         reader, which is exactly what invents a face on them; a missing
+         model must. */
+      ST.faceLM = { w:res.w, h:res.h, faces:faces, scanned:true };
+      /* the skin window is measured off the face, so a new face invalidates it */
+      ST.maskCache=null;
+      stRenderSettle();
+      stUiSoon();
+      try{ stFaceNoteRefresh(); }catch(e){}
+    };
+    w.postMessage({ id:id, bitmap:bmp, w:sw, h:sh },[bmp]);
   }).catch(function(){});
 }
 function stLoadImage(dataUrl,opts){
@@ -13008,6 +13052,7 @@ function stRefreshDots(){
   });
 }
 function stRenderPend(){
+  try{ stFaceNoteRefresh(); }catch(e){}
   var host=$("stPendChips"); if(!host) return;
   var prevIds=ST._pendIds||[];
   host.innerHTML="";
@@ -19884,7 +19929,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.10.0";
+var APP_VER="5.11.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -117,7 +117,13 @@ function report(name, ok, detail) {
 
     /* F) blush and lips read the model, not the whole-body box */
     const skinSrc = String(stApplySkin);
-    out.F_blush = skinSrc.indexOf("zones.r.cheekL") >= 0 && skinSrc.indexOf("zones.r.cheekR") >= 0;
+    /* v5.11 — cheeks are gathered per face into zCheeks (a wedding photo has
+       two faces), so the literal moved from "zones.r.cheekL" to "fz.r.cheekL"
+       inside that gather loop. The INTENT this pin protects — cheeks come
+       from the fitted face model, never a whole-body guess — is now enforced
+       even more tightly: v5.11 also deleted the eye/mouth-midpoint fallback
+       this same pin used to tolerate, so blush is measured-face-only. */
+    out.F_blush = skinSrc.indexOf("fz.r.cheekL") >= 0 && skinSrc.indexOf("zCheeks") >= 0;
     /* v5.10 — the lip bands are now gathered per face into one list before
        the pixel loop (a wedding photo has two mouths), so the reference reads
        fz.r.lipUpper rather than zones.r.lipUpper. The INTENT of this pin is
@@ -129,7 +135,12 @@ function report(name, ok, detail) {
        themselves from mi.box */
     out.F_headBox = skinSrc.indexOf("var hbox") >= 0;
     out.F_hair = skinSrc.indexOf("hairB={x0:hbox.x0") >= 0;
-    out.F_bags = skinSrc.indexOf("var box=hbox") >= 0;
+    /* v5.11 — eye brightening no longer has a whole-body-box RECTANGULAR
+       BAND fallback at all (that band is exactly what the old FALLBACK path
+       comment above warned about: sized off hbox, still not gated on a
+       measured face). It now either lands on a measured eye or does nothing,
+       matching lips/teeth/blush. Confirm the band is gone, not just re-based. */
+    out.F_bags = skinSrc.indexOf("eyY0") < 0 && skinSrc.indexOf("stInAny(xPix,yPix,zEyes,1.35)") >= 0;
     out.F_noBodyBox = skinSrc.indexOf("mi.box.x1-mi.box.x0") < 0 &&
       skinSrc.indexOf("cy:(mi.box.y0+mi.box.y1)/2") < 0;
 

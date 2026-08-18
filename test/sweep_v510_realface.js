@@ -19,8 +19,10 @@ const PORT = process.env.PORT || 8931;
 (async () => {
   /* Deliberately NO gpu flags. Forcing swiftshader hands tfjs a webgl context
      that some runners accept and then cannot actually run, which fails in a
-     way that looks identical to "no face in the photo". __ST_FACE_ALLOW_CPU
-     below makes the backend irrelevant to what this sweep measures. */
+     way that looks identical to "no face in the photo". As of v5.11 the app
+     itself falls back to cpu when webgl is unavailable (see sweep_v511 for
+     why that policy reversed), so no test-only opt-in is needed any more —
+     this sweep exercises the SAME path a real no-webgl phone takes. */
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 430, height: 1000 } });
   const pageErrors = [];
@@ -30,13 +32,6 @@ const PORT = process.env.PORT || 8931;
   await page.addInitScript(() => {
     localStorage.setItem("hnk_ws_onboarded", "1");
     localStorage.setItem("hnk_ws_seen", "1");
-    /* CI runners have no GPU. The app refuses the cpu backend on purpose (see
-       stFaceBoot: a cpu pass freezes the UI thread for seconds), but that rule
-       protects RESPONSIVENESS, and a headless runner has no user to keep
-       responsive. Without this opt-in every landmark assertion below would be
-       skipped in CI while still reporting green — covering nothing. The rule
-       itself is pinned separately, below. */
-    window.__ST_FACE_ALLOW_CPU = 1;
   });
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1000);
@@ -85,10 +80,10 @@ const PORT = process.env.PORT || 8931;
           Math.abs(z.r.teeth.cy - z.mouth.cy) < z.mouth.ry &&
           Math.abs(z.r.teeth.cx - z.mouth.cx) < z.mouth.rx),
         headPctH: (z && z.head) ? 100 * (z.head.y1 - z.head.y0) / H : null,
-        /* why, when it did not boot — see stFaceBoot */
+        /* why, when it did not boot — see face-worker.js */
         modelOff: !!(typeof STFACE !== "undefined" && STFACE.off),
         modelErr: (typeof STFACE !== "undefined" && STFACE.err) || null,
-        backend: (function(){ try { return STFACE.mod.tf.getBackend(); } catch (e) { return null; } })()
+        backend: (typeof STFACE !== "undefined" && STFACE.backend) || null
       };
     }, rel);
   }
@@ -160,18 +155,25 @@ const PORT = process.env.PORT || 8931;
   });
   report("with no landmarks the geometric fallback still answers", fb.got && !fb.real, JSON.stringify(fb));
 
-  // 5b) the opt-in above must remain an OPT-IN: the shipped app refuses the
-  //     cpu backend, because a cpu pass freezes the UI thread for 1.5-3s.
-  const rule = await page.evaluate(() => {
-    const src = String(window.stFaceBoot || "");
-    return {
-      refuses: src.indexOf('throw new Error("no webgl")') >= 0,
-      gated: src.indexOf("__ST_FACE_ALLOW_CPU") >= 0,
-      asksWebgl: src.indexOf('setBackend("webgl")') >= 0
-    };
+  // 5b) v5.11 policy check — see sweep_v511_facegate.js for the full story
+  //     (why the model now runs off-thread) and the regression it fixes.
+  //     Fetch the worker source directly: it is not reachable as a page
+  //     global the way the old main-thread stFaceBoot was.
+  const workerSrc = await page.evaluate(async () => {
+    const r = await fetch("lib/face/face-worker.js");
+    return r.ok ? await r.text() : "";
   });
-  report("the app itself still refuses the cpu backend (webgl or nothing)",
-    rule.refuses && rule.gated && rule.asksWebgl, JSON.stringify(rule));
+  report("the worker still asks for webgl before cpu",
+    workerSrc.indexOf('setBackend("webgl")') >= 0 &&
+    workerSrc.indexOf('setBackend("webgl")') < workerSrc.indexOf('setBackend("cpu")'),
+    "backendUsed=" + s.backend);
+  const appSrc = await page.evaluate(async () => {
+    const r = await fetch("index.html");
+    return r.ok ? await r.text() : "";
+  });
+  report("the model runs off the main thread, not inline in index.html",
+    appSrc.indexOf('import("./lib/face/face-api.esm.js")') < 0 &&
+    appSrc.indexOf('new Worker("lib/face/face-worker.js"') >= 0, "");
 
   // 6) shipping hygiene
   report("no page errors", pageErrors.length === 0, pageErrors.slice(0, 2).join(" | "));

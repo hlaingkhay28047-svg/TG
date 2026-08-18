@@ -271,3 +271,6 @@ jobs:
 
       - name: Run v5.10.0 real-face sweep (landmark zones, adaptive skin mask)
         run: node test/sweep_v510_realface.js
+
+      - name: Run v5.11.0 face-gate sweep (cpu fallback, measured-face-only makeup, busy-yield)
+        run: node test/sweep_v511_facegate.js
