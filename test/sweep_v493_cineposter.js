@@ -214,16 +214,25 @@ report("G4) the purge marker covers every replaced name and none of the new ones
   report("H) the card renders on the Workflow page with a Burmese summary",
     !!seen.card && seen.card.burmese === true, seen.card);
 
-  report("H2) exactly one card is still on the generated-icon fallback, and it is this one",
-    seen.svgOnly.length === 1 && seen.svgOnly[0] === "Cinematic Poster", seen.svgOnly);
+  /* v5.12 — three more cards shipped before their own photographs (Nine-Tail
+     Kitsune Fox, Mermaid Transformation, Fairy Wings — see NO_CARD_JPG), the
+     same way Cinematic Poster itself did in v4.93. The INTENT this pin
+     protects is unchanged: NO_CARD_JPG must name exactly the cards that
+     really have no art yet, no more and no fewer — it just now names four,
+     not one. */
+  const EXPECT_SVG_ONLY = ["Cinematic Poster", "Nine-Tail Kitsune Fox", "Mermaid Transformation", "Fairy Wings"];
+  report("H2) exactly the cards with no photograph yet are on the generated-icon fallback",
+    seen.svgOnly.length === EXPECT_SVG_ONLY.length && EXPECT_SVG_ONLY.every(t => seen.svgOnly.indexOf(t) >= 0),
+    seen.svgOnly);
 
-  report("H3) the deck grew by one", seen.total === 124, seen.total);
+  report("H3) the deck is at least the size this wave shipped it at (124 + Cinematic Poster's siblings)",
+    seen.total >= 125, seen.total);
   report("H4) nothing 404s", bad.length === 0, bad.slice(0, 6));
   report("H5) no page errors", errs.length === 0, errs);
 
   console.log("      (the twelve cards that used to sit on the SVG fallback or carry the " +
-    "feather at the mouth now show the owner's own photographs; Cinematic Poster is the " +
-    "only id left on NO_CARD_JPG)");
+    "feather at the mouth now show the owner's own photographs; Cinematic Poster and " +
+    "v5.12's three new fantasy cards are the ids left on NO_CARD_JPG, pending their own art)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();

@@ -118,7 +118,15 @@ report("A1) the sync export and the worker export share one encode tail",
     });
     ST.heals = [{ u: 0.44, v: 0.38, ur: 0.03 }, { u: 0.57, v: 0.46, ur: 0.025 }];
     stRenderSettle();
-    await new Promise(r => setTimeout(r, 1500));
+    /* Wait for THIS preview render to actually land rather than hoping 1500ms
+       is enough: on a loaded CI runner the worker can still be chewing on the
+       2200x1500 heavy-recipe frame past that mark, and test E later asserts
+       against STW.busy/queued directly. If that first render's reply is still
+       in flight when E starts, its eventual (unrelated) arrival flips busy/
+       queued out from under E's own assertion — a test-isolation gap, not a
+       product bug. Polling to idle first removes the whole class of race. */
+    for (let waited = 0; STW.busy && waited < 15000; waited += 50) await new Promise(r => setTimeout(r, 50));
+    await new Promise(r => setTimeout(r, 300));
 
     /* B) identical bytes */
     const syncDU = stBake();
