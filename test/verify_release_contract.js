@@ -118,7 +118,7 @@ check("fully translated app locales do not fall back to an English privacy note"
 check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
 check("landing inventory copy matches the shipped web app",
-  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu 158", "Evoto Pro 210", "907"].every(value => landing.includes(value)) &&
+  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu 162", "Evoto Pro 213", "907"].every(value => landing.includes(value)) &&
   !["One-Tap 123", "Visual Library 607", "Smart Workflow 116", "Meitu 79", "Evoto Pro 79", "1,081", "1,134"].some(value => landing.includes(value)),
   "landing inventory or test-count copy is stale");
 const encodedProductionHome = encodeURIComponent(productionBase + "/");
@@ -168,7 +168,7 @@ check("both social preview images exist in the published site",
   fs.existsSync(path.join(ROOT, "docs/app/og-app.jpg")),
   "an Open Graph image is missing");
 check("web-app metadata and initial DOM inventory match the shipped UI",
-  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu Studio 158", "Evoto Pro 210"].every(value => html.includes(value)) &&
+  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu Studio 162", "Evoto Pro 213"].every(value => html.includes(value)) &&
   html.includes('<b id="stTapCount">131</b>') &&
   html.includes('<b id="stLibCount">1811</b>') &&
   html.includes('<b id="stWfCount">124</b>') &&
