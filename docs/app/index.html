@@ -74,7 +74,7 @@ input,textarea,select{font-family:inherit}
 /* two scrims: diagonal left-dark keeps the text zone readable while the
    right side stays clear so the hero subject's face is actually visible;
    the vertical fade anchors the statline and blends into the page */
-.hero-art:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;background:linear-gradient(102deg,rgba(11,13,20,.88) 0%,rgba(11,13,20,.6) 38%,rgba(11,13,20,.12) 66%,rgba(11,13,20,0) 100%),linear-gradient(180deg,rgba(11,13,20,.06) 0%,rgba(11,13,20,.12) 42%,var(--ink) 100%)}
+.hero-art:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;background:linear-gradient(102deg,rgba(11,13,20,.74) 0%,rgba(11,13,20,.55) 40%,rgba(11,13,20,.12) 70%,rgba(11,13,20,0) 100%),linear-gradient(180deg,rgba(11,13,20,0) 0%,rgba(11,13,20,.06) 52%,rgba(11,13,20,.42) 86%,var(--ink) 100%)}
 .hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:76%;text-shadow:0 1px 4px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,.75)}
 .hero-strip .statline{text-shadow:0 1px 3px rgba(0,0,0,.9),0 2px 10px rgba(0,0,0,.7)}
 @media (min-width:768px){.hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:62%}}
@@ -91,7 +91,12 @@ input,textarea,select{font-family:inherit}
 @keyframes heroShine{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
 @media (prefers-reduced-motion: reduce){.hero-art img,.hero-art:before,.hero-fx i,.hero-strip h1 em,.page-hero .ph-head em,.hnk-wordmark,.lib-grid img{animation:none!important}}
 @media (forced-colors:active){.hnk-wordmark{background:none!important;color:CanvasText;-webkit-text-fill-color:CanvasText;filter:none;animation:none}.hnk-studio-label{color:CanvasText;text-shadow:none}.nav-name::after{background:CanvasText;box-shadow:none}}
-.hero-mini .hero-art img{opacity:.5}
+/* v5.9 — the mini hero used to render its photograph at half opacity, and
+   with the scrim below that put the art under a combined ~0.94 of cover in
+   the headline band: the temple carving, the gold crown and the light burst
+   were all still in the file and none of them reached the screen. The plate
+   is graded dark already, so it carries the type without being dimmed. */
+.hero-mini .hero-art img{opacity:1}
 /* ---- page-hero: compact per-page banner band — same visual language as .hero-art
    (cover image + dark legibility scrim + gold kicker + one-line benefit headline).
    Text is real HTML overlay (selectable, i18n via t()) — never baked into images. ---- */
@@ -978,10 +983,37 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #cardAccount .acc-actions{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-3)}
 #cardAccount .acc-actions .btn{flex:1 1 140px}
 #wizPay .wiz-body .btn{min-height:44px}
-.dash-greet{margin:var(--sp-3) 0 0;padding:14px 16px;background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--line-soft);border-radius:var(--r-lg)}
-.dash-greet .hi{font-size:17px;font-weight:700;color:var(--cream)}
-.dash-greet .sub{margin-top:4px;font-size:12px;color:var(--muted)}
-.dash-greet .pill{display:inline-block;margin-top:8px;padding:3px 10px;border:1px solid var(--gold);border-radius:999px;color:var(--gold-hi);font-size:11px}
+/* v5.9 — the first card of the day is a hero, not a panel. The art follows
+   the clock (see renderDashGreet) and the panel gradient stays underneath as
+   the pre-load state, so the card never flashes empty. */
+.dash-greet{position:relative;margin:var(--sp-3) 0 0;padding:14px 16px;min-height:128px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  background:linear-gradient(135deg,var(--panel-2),var(--panel));
+  /* Vertical 22% rather than centre: all three frames put the face in the
+     top 40% of the plate, and a centred cover crop on a card this wide cuts
+     the forehead off. */
+  background-size:cover;background-position:78% 22%;background-repeat:no-repeat;
+  border:1px solid var(--line-soft);border-radius:var(--r-lg);overflow:hidden}
+@media (min-width:768px){.dash-greet{min-height:168px;padding:16px 20px}}
+/* The scrim is sized from the art rather than guessed, and it is sized ONCE
+   PER FRAME because the frames are not alike. Measured over the text zone
+   (left 55%, bottom 45%): morning 193, afternoon 203, evening 30. Cream type
+   needs its ground under luma ~90 to clear 4.5:1, so the two daylight plates
+   need ~.72 over the wall and the night plate needs half of that — running
+   the daylight value over the evening frame turns a lit purple room into a
+   black rectangle for no legibility gained. It falls away to nothing by the
+   right third so the subject is never touched. */
+.dash-greet::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(97deg,rgba(6,8,14,.78) 0%,rgba(6,8,14,.73) 38%,rgba(6,8,14,.52) 56%,rgba(6,8,14,.14) 76%,rgba(6,8,14,0) 100%)}
+.dash-greet[data-art="evening"]::before{
+  background:linear-gradient(97deg,rgba(6,8,14,.5) 0%,rgba(6,8,14,.42) 32%,rgba(6,8,14,.22) 56%,rgba(6,8,14,0) 80%)}
+.dash-greet>*{position:relative;z-index:2}
+.dash-greet .hi{font-size:18px;font-weight:700;color:var(--cream);letter-spacing:.2px;text-shadow:0 1px 3px rgba(0,0,0,.85),0 2px 14px rgba(0,0,0,.6)}
+@media (min-width:768px){.dash-greet .hi{font-size:22px}}
+.dash-greet .sub{margin-top:4px;font-size:12px;color:#dcd6c9;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+/* The plan pill sits on photographic art now, so it carries its own ground —
+   a gold hairline alone disappears over a lit wall. */
+.dash-greet .pill{display:inline-block;align-self:flex-start;margin-top:8px;padding:3px 10px;border:1px solid var(--gold);border-radius:999px;color:var(--gold-hi);font-size:11px;background:rgba(6,8,14,.55)}
 .chip img.chip-th{width:22px;height:22px;border-radius:5px;object-fit:cover;margin-right:4px;vertical-align:-6px}
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4) var(--sp-3);margin:var(--sp-4) 0}
 .dash-card{background:none;border:none;padding:0;text-align:center;color:var(--cream);cursor:pointer;min-height:44px}
@@ -17896,6 +17928,17 @@ function renderDashGreet(){
   var g = h<11 ? {my:"မင်္ဂလာနံနက်ခင်းပါ",en:"Good morning",shn:"မႂ်ႇသုင်ၵၢင်ၼႂ်ၶႃႈ",kac:"Jahpawt manap kaja u ga",th:"สวัสดีตอนเช้า",zh:"早上好",vi:"Chào buổi sáng",id:"Selamat pagi",ms:"Selamat pagi"}
        : h<16 ? {my:"မင်္ဂလာနေ့လယ်ခင်းပါ",en:"Good afternoon",shn:"မႂ်ႇသုင်ဝၢႆးဝၼ်းၶႃႈ",kac:"Shani kaang kaja u ga",th:"สวัสดีตอนบ่าย",zh:"下午好",vi:"Chào buổi chiều",id:"Selamat siang",ms:"Selamat tengah hari"}
        : {my:"မင်္ဂလာညနေခင်းပါ",en:"Good evening",shn:"မႂ်ႇသုင်ၵၢင်ၶမ်ႈၶႃႈ",kac:"Shana maga kaja u ga",th:"สวัสดีตอนเย็น",zh:"晚上好",vi:"Chào buổi tối",id:"Selamat malam",ms:"Selamat petang"};
+  /* v5.9 — the banner follows the same clock split as the greeting above, so
+     the art and the words always agree. Set as a background rather than an
+     <img> so the card keeps its shape while the file loads. */
+  var art = h<11 ? "morning" : h<16 ? "afternoon" : "evening";
+  if(host.dataset.art!==art){
+    host.dataset.art=art;
+    host.style.backgroundImage='linear-gradient(135deg,var(--panel-2),var(--panel))';
+    var im=new Image();
+    im.onload=function(){ host.style.backgroundImage='url("lib/banners/hero-greet-'+art+'.jpg")'; };
+    im.src="lib/banners/hero-greet-"+art+".jpg";
+  }
   var name="";
   try{
     if(acc && acc.sess){
@@ -19581,7 +19624,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.8.0";
+var APP_VER="5.9.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
