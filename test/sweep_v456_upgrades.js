@@ -118,7 +118,12 @@ function report(name, ok, detail) {
     /* F) blush and lips read the model, not the whole-body box */
     const skinSrc = String(stApplySkin);
     out.F_blush = skinSrc.indexOf("zones.r.cheekL") >= 0 && skinSrc.indexOf("zones.r.cheekR") >= 0;
-    out.F_lips = skinSrc.indexOf("zones.r.lipUpper") >= 0 && skinSrc.indexOf("zones.r.lipLower") >= 0;
+    /* v5.10 — the lip bands are now gathered per face into one list before
+       the pixel loop (a wedding photo has two mouths), so the reference reads
+       fz.r.lipUpper rather than zones.r.lipUpper. The INTENT of this pin is
+       that lips come from the face region model and never from a body-derived
+       box, so it matches the region path itself rather than one variable name. */
+    out.F_lips = skinSrc.indexOf(".r.lipUpper") >= 0 && skinSrc.indexOf(".r.lipLower") >= 0;
     /* every face-relative band now hangs off ONE head box, not the whole-body
        skin box — blush, hair shine and the eye-bag band all used to size
        themselves from mi.box */
