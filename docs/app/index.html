@@ -1195,11 +1195,24 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 
 /* ---- slider row: label + readout on line 1, full-width track on line 2 ---- */
 #stMuCard .st-ctl.st-slider,#stEvCard .st-ctl.st-slider{
-  display:flex;flex-wrap:wrap;align-items:center;gap:7px;min-height:0;
+  /* flex-start, not center: a label that wraps to two lines would otherwise
+     sit lower than its readout, splitting the pair the eye reads as one. A
+     shared line-height keeps the first line of each perfectly level. */
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:7px;min-height:0;
   padding:9px 0 10px;margin:0;border-top:1px solid rgba(243,239,230,.055)}
+#stMuCard .st-ctl.st-slider>label,#stEvCard .st-ctl.st-slider>label,
+#stMuCard .st-ctl.st-slider .st-val,#stEvCard .st-ctl.st-slider .st-val,
+#stMuCard .st-ctl.st-slider .st-q,#stEvCard .st-ctl.st-slider .st-q,
+#stMuCard .st-ctl.st-slider .st-bg,#stEvCard .st-ctl.st-slider .st-bg{line-height:17px}
 #stMuCard .grp-b .st-grid>.st-ctl.st-slider:first-child,#stEvCard .grp-b .st-grid>.st-ctl.st-slider:first-child{border-top:0}
 #stMuCard .st-ctl.st-slider>label,#stEvCard .st-ctl.st-slider>label{
-  flex:1 1 auto;min-width:0;font-size:12.5px;font-weight:600;color:var(--cream);order:1}
+  /* basis 0, not auto: with wrap enabled a label sized to its own content
+     claims the whole line and pushes the readout off it (Burmese offers no
+     space breaks, so that happened at 320px). Basis 0 makes the label take
+     only what is left after the readout and help bubble, and break-anywhere
+     lets it wrap inside that. */
+  flex:1 1 0;min-width:0;font-size:12.5px;font-weight:600;color:var(--cream);order:1;
+  overflow-wrap:anywhere;word-break:break-word}
 #stMuCard .st-ctl.sub>label,#stEvCard .st-ctl.sub>label{padding-left:11px;color:var(--muted);position:relative}
 #stMuCard .st-ctl.sub>label::before,#stEvCard .st-ctl.sub>label::before{content:"";position:absolute;left:2px;top:4px;bottom:4px;
   width:2px;border-radius:2px;background:rgba(217,164,65,.35)}
