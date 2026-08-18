@@ -50,8 +50,12 @@ const APP = path.join(__dirname, "..", "docs", "app");
 const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
 
 /* Measured on the build this release replaced, at 360/390/412. Stated as the
-   thing to beat rather than as a vague "smaller". */
-const BEFORE = { h390: 4395, groups: 34, sliders: 253 };
+   thing to beat rather than as a vague "smaller".
+   `sliders` is the union that must SURVIVE the split — it tracks the suite as
+   controls are added (v5.9 added five: mu_nailV, mu_petFur, mu_petEye,
+   ev_glowV, ev_edgeFringe), so bump it whenever a slider ships, never to
+   paper over one that went missing. */
+const BEFORE = { h390: 4395, groups: 34, sliders: 258 };
 
 /* ---- A) both pages are first-class ---- */
 report("A) pgMeitu and pgEvoto are registered pages and pgStudio is not",
