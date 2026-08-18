@@ -146,10 +146,26 @@ report("A1) the sync export and the worker export share one encode tail",
     const wk = await framesDuring(() => stBakeAsync());
     const sy = await framesDuring(async () => { stBake(); });
 
-    /* E) an export must not clear a preview's busy/queued bookkeeping */
+    /* E) an export must not clear a preview's busy/queued bookkeeping.
+
+       Drain to a genuinely idle pipeline FIRST, and assert that it got there.
+       Steps B and C above leave a preview frame in flight — measured, not
+       assumed: at this line STW.busy was true with one reply still owed. A
+       PREVIEW reply legitimately clears busy/queued (that is the same branch
+       this check is about, seen from the other side), so staging the state
+       while one is in flight makes E assert on the wrong reply and fail for a
+       reason that has nothing to do with exports. That is the real mechanism
+       behind E's CI-only flakiness; the earlier idle wait (line ~128) cannot
+       cover it, because B and C start fresh frames after it. */
+    for (let waited = 0; waited < 15000; waited += 50) {
+      if (!STW.busy && !STW.queued && Object.keys(STW.cb).length === 0) break;
+      await new Promise(r => setTimeout(r, 50));
+    }
+    await new Promise(r => setTimeout(r, 300));
+    const eIdle = !STW.busy && !STW.queued && Object.keys(STW.cb).length === 0;
     STW.busy = true; STW.queued = true;
     await stBakeAsync();
-    const preserved = STW.busy === true && STW.queued === true;
+    const preserved = eIdle && STW.busy === true && STW.queued === true;
     STW.busy = false; STW.queued = false;
 
     /* D) worker gone → still exports */
