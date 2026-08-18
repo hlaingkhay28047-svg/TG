@@ -66,7 +66,7 @@ function report(name, ok, detail) {
 
     state.v2.body = "strong"; renderV2Hero(); p = v2BuildPrompt();
     out.D_body = p.indexOf("BODY SKIN: retouch ALL visible body skin") >= 0 &&
-      p.indexOf("neck, chest, shoulders, arms, hands, back") >= 0 &&
+      p.indexOf("neck, ears, chest, shoulders, underarms, arms, hands, back") >= 0 &&
       p.indexOf("smooth rough elbows") >= 0;
     state.v2.body = "soft"; renderV2Hero();
     out.D_softNoElbows = v2BuildPrompt().indexOf("smooth rough elbows") < 0;
