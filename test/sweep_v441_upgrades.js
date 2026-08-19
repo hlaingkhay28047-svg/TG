@@ -92,7 +92,9 @@ function report(name, ok, detail) {
     switchPage("pgHome");
     await new Promise(r => setTimeout(r, 350));
     const rows = Array.from(document.querySelectorAll("#setupStatusRows .acc-kv"));
-    const gemReady = rows.length === 4 && /✓/.test(rows[0].textContent);
+    /* 4 ready/not-ready rows (Gemini, RunningHub, OpenAI, Account) + 3 pure
+       navigation shortcuts (Money, Data, About — v5.18 UI/UX wave) = 7 */
+    const gemReady = rows.length === 7 && /✓/.test(rows[0].textContent);
     document.getElementById("btnCheckUpdate").click();
     await new Promise(r => setTimeout(r, 900));
     const upToDate = /✓/.test(document.getElementById("stAbout").textContent);
