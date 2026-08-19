@@ -239,10 +239,22 @@ select.inp{padding:9px 10px}
 .spin{display:none;margin-top:10px;color:var(--gold-hi);font-size:13px}
 /* v4.28: honest waiting — gold spinner ring beside the elapsed-seconds ticker,
    and a soft "working" glow on the disabled GENERATE button */
-.spin.on{display:flex;align-items:center;gap:8px}
+.spin.on{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .spin.on::before{content:"";flex:none;width:14px;height:14px;border-radius:50%;border:2px solid rgba(217,164,65,.25);border-top-color:var(--gold);animation:spinring .8s linear infinite}
 @keyframes spinring{to{transform:rotate(360deg)}}
+/* v5.18: an actually-moving progress indicator for the app's own admitted
+   20-60s generate wait, everywhere .spin.on already appears — a generated
+   ::after, not a child node, since several of these elements have their
+   textContent reassigned every second for the elapsed-time ticker and a
+   real child would be wiped out on the next update. */
+.spin.on::after{content:"";flex:0 0 100%;height:3px;border-radius:3px;margin-top:2px;background:linear-gradient(90deg,var(--panel-2) 0%,#e9b949 50%,var(--panel-2) 100%);background-size:250% 100%;animation:spinbar 1.3s ease-in-out infinite}
+@keyframes spinbar{0%{background-position:200% 0}100%{background-position:-100% 0}}
 .gen.working{opacity:1;box-shadow:0 0 0 1px rgba(217,164,65,.4),0 4px 22px -8px rgba(217,164,65,.5)}
+/* Sticky primary GENERATE button on the 5 single-generate pages, matching the
+   sticky bar Studio/Meitu/Evoto already use — ID-scoped, not a blanket .gen
+   rule, since .gen is also used by Path's non-primary export buttons (which
+   must stay in normal flow). */
+#btnRsGen,#btnGen,#btnVidGen,#btnVuGen,#btnT2IGen{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));z-index:8;box-shadow:0 -10px 18px -10px rgba(0,0,0,.4)}
 .addons{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
 .addons b{color:var(--gold-hi)}
 
@@ -422,7 +434,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
    permission to break inside those glued runs as a last resort — it changes
    nothing for text that already has somewhere to break, which is nearly all
    of it. */
-.wfmini .t{font-size:12.5px;font-weight:800;line-height:1.45;overflow-wrap:anywhere}
+.wfmini .t{font-size:12.5px;font-weight:800;line-height:1.45;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
 .wfmini .s{font-size:11.5px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800}
 
@@ -456,7 +468,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 @keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
 /* v4.28: shimmer only while a thumb is actually loading (.ld, removed on
    load/error) — 400+ settled thumbnails no longer repaint forever */
-.lib-grid img.ld{background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--panel-2) 60%);background-size:200% 100%;animation:shimmer 1.2s linear infinite}
+img.ld{background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--panel-2) 60%);background-size:200% 100%;animation:shimmer 1.2s linear infinite}
 @keyframes shimmer{to{background-position:-200% 0}}
 .onb{position:fixed;top:0;left:0;right:0;bottom:0;z-index:80;background:rgba(11,13,20,.96);display:none;overflow-y:auto;overscroll-behavior:contain;padding-top:env(safe-area-inset-top)}
 .onb.on{display:flex;align-items:center;justify-content:center;animation:wizfade var(--dur-2) var(--ease-out)}
@@ -670,7 +682,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
   white-space:normal;overflow:hidden;line-height:1.25;min-height:2.5em}
 .pcard{position:relative}
 .pcard.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
-.pcard.on::before{content:"";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4.5 12.5 5 5L19.5 7'/%3E%3C/svg%3E") center/12px 12px no-repeat;z-index:2}
+.pcard.on::before{content:"";position:absolute;bottom:4px;right:4px;top:auto;width:20px;height:20px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4.5 12.5 5 5L19.5 7'/%3E%3C/svg%3E") center/12px 12px no-repeat;z-index:2}
 .pcard .x{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:12px;z-index:2}
 .pcard .pin{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--gold);font-size:12px;z-index:2}
 /* v4.45 — 880 style-pack browser grid (Studio Meitu/Evoto Style Looks groups) */
@@ -1019,6 +1031,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .dash-card{background:none;border:none;padding:0;text-align:center;color:var(--cream);cursor:pointer;min-height:44px}
 .dash-card .art{position:relative;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/3;border:1px solid var(--line-soft);background:var(--panel)}
 .dash-card .art img{width:100%;height:100%;object-fit:cover;display:block}
+.dash-card .art.dash-noart{background:linear-gradient(160deg,#20261b,#131826)}
 /* Badge sits top-LEFT, not top-right: every one of the four Home card
    photos places its subject right of centre, so a right-hand badge landed
    squarely on her face. The left corner is background in all four. */
@@ -1036,6 +1049,10 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .dash-strip img{width:96px;height:128px;object-fit:cover;border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
 .dash-cont-thumb{width:72px;height:72px;object-fit:cover;border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
 .dash-stat{margin:var(--sp-5) 0 var(--sp-2);text-align:center}
+.dash-stat-link{cursor:pointer;border-radius:var(--r-md);transition:background .2s}
+.dash-stat-link:hover,.dash-stat-link:focus-visible{background:rgba(217,164,65,.1)}
+.dash-stat-link:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
+.dash-stat-link:active{transform:scale(.96)}
 .dash-promo p{font-size:var(--fs-md);line-height:1.75;margin-bottom:var(--sp-3)}
 .dash-promo .btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 @media (min-width:768px){.dash-grid{grid-template-columns:repeat(4,1fr)}}
@@ -1059,14 +1076,14 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
    transform + color-family properties only (never layout). .dash-card .art
    carries the transition permanently so the :active scale eases back on
    release instead of snapping (the old transition lived inside :active). */
-.btn,.chip,.subtab,.wfmini,.pcard,.dash-card .art{transition:transform var(--dur-1) var(--ease-out),border-color var(--dur-1) ease,background-color var(--dur-2) ease,color var(--dur-2) ease,opacity var(--dur-2) ease}
+.btn,.chip,.subtab,.wfmini,.pcard,.dash-card .art,.lib-grid img{transition:transform var(--dur-1) var(--ease-out),border-color var(--dur-1) ease,background-color var(--dur-2) ease,color var(--dur-2) ease,opacity var(--dur-2) ease}
 .tabb{transition:color var(--dur-2) ease}
-.btn:not(:disabled):active,.chip:active,.subtab:active,.wfmini:active,.pcard:active{transform:scale(.97)}
-@media (prefers-reduced-motion: reduce){.btn:active,.chip:active,.subtab:active,.wfmini:active,.pcard:active{transform:none}}
+.btn:not(:disabled):active,.chip:active,.subtab:active,.wfmini:active,.pcard:active,.lib-grid img:active{transform:scale(.97)}
+@media (prefers-reduced-motion: reduce){.btn:active,.chip:active,.subtab:active,.wfmini:active,.pcard:active,.lib-grid img:active{transform:none}}
 /* v4.28 motion-system catch-all: one guard for every surface the motion wave
    animates (the Studio stage/canvas keeps its own dedicated guard above —
    do not fold it in here). */
-@media (prefers-reduced-motion: reduce){.page.on,.toast,.wiz.on,.onb.on,.wiz.on .wiz-in,.onb.on .onb-card,.result-box.on,.result-box.on .result-img,.tabb::before,.grp.open .grp-b,.spin.on::before,.gen.working,.btn,.chip,.subtab,.wfmini,.pcard,.tabb,.dash-card .art{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion: reduce){.page.on,.toast,.wiz.on,.onb.on,.wiz.on .wiz-in,.onb.on .onb-card,.result-box.on,.result-box.on .result-img,.tabb::before,.grp.open .grp-b,.spin.on::before,.spin.on::after,.gen.working,.btn,.chip,.subtab,.wfmini,.pcard,.tabb,.dash-card .art{animation:none!important;transition:none!important}}
 
 /* ==== v4.99 — Meitu / Evoto ergonomics, measured on a 390x844 touch phone ====
 
@@ -7454,8 +7471,10 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   function cardVisual(w){
     if(w.cardImg||w.svg){
       var sv=el("div","wfv");
-      var si=document.createElement("img"); si.src=w.cardImg||w.svg; si.className="svgv"; si.loading="lazy"; si.alt=w.title;
+      var si=document.createElement("img"); si.src=w.cardImg||w.svg; si.className="svgv ld"; si.loading="lazy"; si.alt=w.title;
+      si.onload=function(){ si.classList.remove("ld"); };
       if(w.cardImg&&w.svg) si.onerror=function(){ this.onerror=null; this.src=w.svg; };
+      else si.onerror=function(){ si.classList.remove("ld"); };
       sv.appendChild(si);
       if(w.badge){ var bb=el("span","bdg"); bb.innerHTML=icn(w.badge); sv.appendChild(bb); }
       return sv;
@@ -7463,10 +7482,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     if(!w.visual) return null;
     var v=el("div","wfv");
     var i1=document.createElement("img"); i1.src=visSrc(w); i1.loading="lazy"; i1.alt=w.title;
+    i1.classList.add("ld"); i1.onload=i1.onerror=function(){ i1.classList.remove("ld"); };
     if(w.vis2){
       /* transfer-type: left = source reference, right = result target */
-      i1.className="pl";
-      var ir=document.createElement("img"); ir.src=w.vis2; ir.loading="lazy"; ir.alt=""; ir.className="pr";
+      i1.classList.add("pl");
+      var ir=document.createElement("img"); ir.src=w.vis2; ir.loading="lazy"; ir.alt=""; ir.className="pr ld";
+      ir.onload=ir.onerror=function(){ ir.classList.remove("ld"); };
       v.appendChild(i1); v.appendChild(ir);
       v.appendChild(el("div","dvd"));
       var arw=el("span","arw"); arw.innerHTML=icn("i-arrow"); v.appendChild(arw);
@@ -7478,7 +7499,8 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     if(w.fx){
       i1.style.filter=w.fx.b||"";
       var i2=document.createElement("img"); i2.src=visSrc(w); i2.loading="lazy"; i2.alt="";
-      i2.className="aft"; i2.style.filter=w.fx.a||"";
+      i2.className="aft ld"; i2.style.filter=w.fx.a||"";
+      i2.onload=i2.onerror=function(){ i2.classList.remove("ld"); };
       v.appendChild(i1); v.appendChild(i2);
       v.appendChild(el("div","dvd"));
       v.appendChild(el("span","lb b", t("lb_before")));
@@ -17467,6 +17489,20 @@ $("stClearAi").onclick=function(){
 })();
 var _smc=$("stMeituCount"); if(_smc) _smc.textContent=String(ST_MEITU_COUNT);
 var _sec=$("stEvotoCount"); if(_sec) _sec.textContent=String(ST_EVOTO_COUNT);
+/* Home's Meitu/Evoto stat tiles teased live counts but had no way to reach those
+   pages — wire the tile itself (not just the number) so tapping either count
+   jumps straight to the feature it's counting. Real keyboard/tap affordance
+   (class + role/tabindex + Enter/Space), not just an onclick nobody can see. */
+function _statLink(el, pid){
+  if(!el || !el.parentElement) return;
+  var box=el.parentElement;
+  box.classList.add("dash-stat-link");
+  box.setAttribute("role","button"); box.setAttribute("tabindex","0");
+  box.onclick=function(){ switchPage(pid); };
+  box.onkeydown=function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); switchPage(pid); } };
+}
+_statLink(_smc, "pgMeitu");
+_statLink(_sec, "pgEvoto");
 var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
 
 /* ---- sticky stage chrome: adaptive 3-state stage + PiP (v4.27.1), minimize cycle, A|B split, result flip, height CSS vars ---- */
@@ -18187,6 +18223,7 @@ function renderDashStatic(){
     var art=el("div","art");
     var im=document.createElement("img"); im.src=c.img; im.alt=""; im.loading="lazy"; im.decoding="async";
     im.style.objectPosition=c.pos;
+    im.onerror=function(){ art.classList.add("dash-noart"); im.remove(); };
     art.appendChild(im);
     var bdg=el("div","bdg"); bdg.innerHTML=icn(c.ic,"ic-m"); art.appendChild(bdg);
     b.appendChild(art);
@@ -18226,7 +18263,7 @@ function renderDashStatic(){
       var px=el("button","chip","✕");
       px.id="dashPromoX";
       px.setAttribute("aria-label","Dismiss");
-      px.style.cssText="position:absolute;top:10px;right:10px;min-height:32px;padding:2px 10px";
+      px.style.cssText="position:absolute;top:10px;right:10px;min-height:44px;padding:2px 10px";
       $("dashPromo").style.position="relative";
       px.onclick=function(){
         try{ localStorage.setItem("hnk_ws_promo_hide","1"); }catch(e){}
@@ -20013,7 +20050,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.17.0";
+var APP_VER="5.18.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -20080,14 +20117,22 @@ function renderSetupStatus(){
     [L9({my:"အကောင့်",en:"Account",shn:"Account",kac:"Account",th:"บัญชี",zh:"账号",vi:"Tài khoản",id:"Akun",ms:"Akaun"}),
       !!(acc&&acc.sess), "cardAccount",
       (acc&&acc.sess&&acc.profile) ? stripIcn(accPlanLineText()) : "",
-      L9({my:"မဝင်ရသေး",en:"Logged out",shn:"ပႆႇၶဝ်ႈ",kac:"Rai n shang shi",th:"ยังไม่เข้าสู่ระบบ",zh:"未登录",vi:"Chưa đăng nhập",id:"Belum masuk",ms:"Belum log masuk"})]
+      L9({my:"မဝင်ရသေး",en:"Logged out",shn:"ပႆႇၶဝ်ႈ",kac:"Rai n shang shi",th:"ยังไม่เข้าสู่ระบบ",zh:"未登录",vi:"Chưa đăng nhập",id:"Belum masuk",ms:"Belum log masuk"})],
+    /* pure navigation shortcuts, not ready/not-ready state — r[1]=null branches
+       to a plain "›" below instead of the Ready/Not-set pair. Reuse each card's
+       own already-rendered heading text so this never needs its own i18n copy. */
+    [(($("moneyH2")&&$("moneyH2").textContent)||"").replace(/^\s*/,""), null, "cardMoney"],
+    [(($("dataH2")&&$("dataH2").textContent)||"").replace(/^\s*/,""), null, "cardData"],
+    [(($("aboutH2")&&$("aboutH2").textContent)||"").replace(/^\s*/,""), null, "cardAbout"]
   ];
   rows.forEach(function(r){
+    if(!r[0]) return; // heading not rendered yet — skip rather than show a blank row
     var b=el("button","acc-kv"); b.style.width="100%"; b.style.cursor="pointer";
     b.style.background="none"; b.style.border="0"; b.style.font="inherit"; b.style.textAlign="left";
     var k=el("span","k",r[0]);
-    var v=el("span","v"); v.textContent=(r[3]?r[3]+" · ":"")+(r[1]?okT:(r[4]||noT));
-    v.style.color=r[1] ? "var(--gold-hi)" : "var(--muted)";
+    var v=el("span","v");
+    if(r[1]===null){ v.textContent="›"; v.style.color="var(--muted)"; }
+    else{ v.textContent=(r[3]?r[3]+" · ":"")+(r[1]?okT:(r[4]||noT)); v.style.color=r[1] ? "var(--gold-hi)" : "var(--muted)"; }
     b.appendChild(k); b.appendChild(v);
     b.onclick=function(){ setupJump(r[2]); };
     host.appendChild(b);
