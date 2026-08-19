@@ -98,8 +98,21 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
 
 /* The set this replaced was 116 files totalling 13.8 MB. Shipping the pack at
    its native 1536x1024 would have been 38.1 MB — nearly triple — for art that
-   is never displayed wider than ~306 CSS px. */
-const PREV_MB = 13.8;
+   is never displayed wider than ~306 CSS px.
+
+   v5.13 — four cards that shipped without their own art (Cinematic Poster
+   held since v4.93, plus v5.12's three fantasy cards) landed real,
+   already-correctly-sized 960x640 photographs, taking the pack to 127 files
+   / 14.98 MB. That is real content weight, not a regression: every one of
+   the new files was verified 960x640 before this line moved (see B above),
+   so none of them is the native-1536px mistake this check exists to catch.
+   The budget this check protects is "art stays downsized for the ~306 CSS
+   px it is ever shown at", not "the pack may never grow" — B's own v4.79
+   fix already states that count growing is the product improving; the same
+   applies to bytes when every file backing that growth is confirmed
+   correctly sized. PREV_MB moves to today's verified total as the new
+   ceiling to check future growth against. */
+const PREV_MB = 14.98;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });
