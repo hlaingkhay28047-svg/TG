@@ -119,8 +119,21 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    exactly — rounded up rather than truncated, so the exact byte count sits
    under the ceiling rather than at its display-rounded edge). Same
    reasoning as v5.13: B already confirmed this one file is correctly
-   sized, so the growth is real content, not the native-1536px mistake. */
-const PREV_MB = 15.16;
+   sized, so the growth is real content, not the native-1536px mistake.
+
+   v5.16 — the new Full Look Transfer card shipped with its own verified
+   960x640 photo (cropped from the BG/FG reference wave's giant-floral-
+   installation image), taking the pack to 129 files / 15.32 MB (15.314214
+   exactly — rounded up, same rule as v5.14). B above already confirmed
+   this file is correctly sized, so again this is real content weight, not
+   the native-1536px mistake this check exists to catch.
+
+   v5.17 — two more cards (Regency Birthday, Dress Reference) each shipped
+   their own verified 960x640 photo, taking the pack to 131 files / 15.56 MB
+   (15.552588 exactly — rounded up, same rule as before). B above already
+   confirmed both files are correctly sized, so again this is real content
+   weight, not the native-1536px mistake this check exists to catch. */
+const PREV_MB = 15.56;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });
