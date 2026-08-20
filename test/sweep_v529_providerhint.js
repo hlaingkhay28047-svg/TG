@@ -63,11 +63,23 @@ const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
 
 /* ---- A) source-level contract ---- */
 const hasFn = /function providerLocks\(\)\{/.test(src);
-const guarded = /if\(\/selProvider\$\/\.test\(sel\.id\|\|""\)\)\{\s*var locks=providerLocks\(\);/.test(src);
+/* The guard names both ids explicitly. It was originally an end-anchored
+   /selProvider$/, which covered the wizard's #wiz_selProvider clone only by
+   accident — pinning the explicit form stops that quietly narrowing to one id
+   and silently dropping the hint for wizard users. */
+const guarded = /if\(sel\.id === "selProvider" \|\| sel\.id === "wiz_selProvider"\)\{\s*var locks=providerLocks\(\);/.test(src);
+/* The dim MUST come from a keyframe. .hsl-op runs a both-filled animation that
+   ends at opacity:1, so a plain .hsl-op.lock{opacity:.6} is overridden and
+   measured 1 — the rows looked exactly like real choices. G below measures it,
+   but pin the mechanism too so nobody "simplifies" it back. */
+const dimByKeyframe = /@keyframes hslInLock\{from\{opacity:0;transform:translateY\(-4px\)\}to\{opacity:\.62;transform:none\}\}/.test(src)
+  && /\.hsl-op\.lock\{animation-name:hslInLock\}/.test(src);
 const derived = /RH_MODELS\.filter\(function\(m\)\{ return rhIsConfigured\(m\.id\); \}\)\.length/.test(src)
   && /\(RH_VIDEO_MODELS\?RH_VIDEO_MODELS\.length:0\)/.test(src);
-report("A) providerLocks() exists and openPop renders it for #selProvider only",
+report("A) providerLocks() exists and openPop renders it for both provider pickers",
   hasFn && guarded, { hasFn: hasFn, guarded: guarded });
+report("A3) the dim is a keyframe, not a declaration the entrance animation overrides",
+  dimByKeyframe, { dimByKeyframe: dimByKeyframe });
 report("A2) the unlock count is derived from the real model arrays, not typed",
   derived, { derived: derived });
 
@@ -170,6 +182,71 @@ const readPicker = page => page.evaluate(() => {
     mid.selectable.length === 2 && mid.locked.length === 1 && mid.locked[0].name === "OpenAI",
     { selectable: mid.selectable, locked: mid.locked.map(l => l.name) });
   await p3.close();
+
+  /* ---- G: the dim has to be VISIBLE, not just declared ---- */
+  const p4 = await openPage(browser, {});
+  p4.on("pageerror", e => errs.push(String(e).slice(0, 180)));
+  await readPicker(p4);
+  await p4.waitForTimeout(700);          /* past --dur-2 plus the 180ms max stagger */
+  const dim = await p4.evaluate(() => {
+    const l = document.querySelector(".hsl-pop .hsl-op.lock");
+    const n = document.querySelector(".hsl-pop .hsl-op:not(.lock)");
+    return { lock: getComputedStyle(l).opacity, selectable: getComputedStyle(n).opacity };
+  });
+  report("G) a locked row actually RENDERS dimmed, and a selectable one does not",
+    parseFloat(dim.lock) < 0.8 && parseFloat(dim.selectable) > 0.95, dim);
+  await p4.close();
+
+  /* ---- H: the wizard clone gets the hint, and the tap dismisses the wizard ----
+     The wizard mirrors #selProvider as #wiz_selProvider on its last step, and
+     that step is only reachable once the workflow's image slots are filled —
+     hence the 1x1 PNGs. Driving the real wizard rather than faking one: the
+     dismissal goes through the wizard's own X, so a mock would only be testing
+     the mock. */
+  const PX1 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  const p5 = await openPage(browser, {});
+  p5.on("pageerror", e => errs.push(String(e).slice(0, 180)));
+  const wiz = await p5.evaluate(async px => {
+    state.refs[0] = { mime: "image/png", b64: px };
+    state.refs[1] = { mime: "image/png", b64: px };
+    if (typeof renderRefs === "function") renderRefs();
+    switchPage("pgWf");
+    await new Promise(r => setTimeout(r, 700));
+    const card = document.querySelector("#pgWf .wfmini, #pgWf .pcard");
+    if (!card) return { reachedClone: false, why: "no workflow card" };
+    card.click();
+    await new Promise(r => setTimeout(r, 800));
+    for (let i = 0; i < 5 && !document.getElementById("wiz_selProvider"); i++) {
+      const gold = Array.from(document.querySelectorAll("#wiz button"))
+        .filter(b => /btn-gold/.test(b.className));
+      if (!gold.length) break;
+      gold[gold.length - 1].click();
+      await new Promise(r => setTimeout(r, 550));
+    }
+    const clone = document.getElementById("wiz_selProvider");
+    if (!clone || !clone._hsl) return { reachedClone: false, why: "clone not built" };
+    clone._hsl.btn.click();
+    await new Promise(r => setTimeout(r, 400));
+    const locked = document.querySelectorAll(".hsl-pop .hsl-op.lock").length;
+    const row = document.querySelector(".hsl-pop .hsl-op.lock");
+    if (row) row.click();
+    await new Promise(r => setTimeout(r, 800));
+    return {
+      reachedClone: true, lockedRowsInWizard: locked,
+      wizStillOpen: /(^|\s)on(\s|$)/.test(document.getElementById("wiz").className),
+      bodyOverflow: document.body.style.overflow,
+      page: (document.querySelector(".page.on") || {}).id || "none",
+      popStillOpen: !!document.querySelector(".hsl-pop"),
+    };
+  }, PX1);
+  /* A wizard whose flow changed shape must not turn into a silent pass. */
+  report(wiz.reachedClone
+      ? "H) in the wizard the hint shows, and tapping it dismisses the wizard cleanly"
+      : "H) the wizard's provider clone was not reached — this assertion proved nothing",
+    wiz.reachedClone === true && wiz.lockedRowsInWizard > 0 && wiz.wizStillOpen === false &&
+    wiz.bodyOverflow === "" && wiz.page === "pgHome" && wiz.popStillOpen === false,
+    wiz);
+  await p5.close();
 
   /* ---- F ---- */
   report("F) no page errors", errs.length === 0, errs.slice(0, 5));
