@@ -22514,6 +22514,13 @@ function upgrade(sel){
   btn.setAttribute("aria-haspopup","listbox"); btn.setAttribute("aria-expanded","false");
   wrap.appendChild(btn); wrap.appendChild(sel);
   sel.tabIndex=-1;
+  /* v5.26 a11y — the native select stays in the DOM as the value store but the
+     .hsl-btn above is the real control now. Without this the select is still in
+     the accessibility tree: most are 0x0 and get ignored anyway, but #selLang is
+     99x40 at opacity 0, so a screen reader met an unnamed combobox duplicating
+     the language picker right next to it. tabIndex is -1 on the line above, so
+     this never hides a focusable element. */
+  sel.setAttribute("aria-hidden","true");
   var r={sel:sel,wrap:wrap,btn:btn,val:sel.value};
   sel._hsl=r; reg.push(r);
   btn.addEventListener("click",function(){ openPop(r); });
