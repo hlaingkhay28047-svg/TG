@@ -14,6 +14,37 @@ Every upgrade should have a live DigitalOcean copy automatically:
 
 This keeps both GitHub and DigitalOcean moving together while still separating unfinished staging code from the production app.
 
+## Supabase — accounts, the Premium wall and the admin panel
+
+From web v5.30.0 the app opens on a login wall: no session shows sign-in, a
+signed-in account with no active plan shows the buy flow, and only an active
+plan reaches the studio. A foreground tab re-reads the profile every five
+minutes, so an expiry or an admin approval lands without a manual refresh, and
+a sign-in older than 30 days is asked to log in again. Admins get a payment
+card on Home that approves or rejects each request.
+
+**None of that is a security boundary.** `docs/` is a static site holding the
+anon key, so every request the browser makes can be replayed by hand. The wall
+and the admin card are user interface. What actually stops a customer approving
+their own payment is row-level security, and it lives in `supabase/schema.sql`.
+
+Apply it once — Supabase dashboard → SQL editor → paste → Run (it is
+idempotent) — then grant yourself admin:
+
+```sql
+update public.profiles set is_admin = true where email = 'you@example.com';
+```
+
+The file also carries the two triggers the client deliberately does not do
+itself: approval extends the plan in the database (from the later of now and
+the current expiry, so renewing early adds time instead of losing it), and a
+guard trigger reverts any attempt by a non-admin to write their own
+`plan_status`, `plan_expires_at`, `allowed_devices` or `is_admin`.
+
+Until it is applied, treat the admin panel as a convenience and assume any
+signed-in user could approve themselves. Section 9 of the file is the check
+that proves it took.
+
 ## DigitalOcean App Platform
 
 - Repository: `hlaingkhay28047-svg/TG`

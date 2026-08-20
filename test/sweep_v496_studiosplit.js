@@ -37,6 +37,7 @@
 
    Usage: PORT=8931 node test/sweep_v496_studiosplit.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const fs = require("fs");
 const path = require("path");
 const PORT = process.env.PORT || 8931;
@@ -68,6 +69,9 @@ report("A2) both sit in the Edit group, beside the other photo pages",
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
 
   /* ---- H) the legacy id, from a cold boot ----
      Done first and in its own context: it is about what a RETURNING customer

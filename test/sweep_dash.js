@@ -10,6 +10,7 @@
      8. wizard result step 4: result shown inline, 4 step dots, actions present
    Usage: PORT=8931 node test/sweep_dash.js   (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
@@ -21,6 +22,9 @@ function check(ok, label, detail) {
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
 
   /* ---- 1+2a) FRESH storage: pgDash is the default landing page ---- */
   let page = await browser.newPage({ viewport: { width: 390, height: 844 } });

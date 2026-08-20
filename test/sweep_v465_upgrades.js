@@ -65,6 +65,7 @@
 
    Usage: PORT=8931 node test/sweep_v465_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 let failures = 0;
 function report(name, ok, detail) {
@@ -78,6 +79,9 @@ const SUITES = [["pgMeitu", "Meitu"], ["pgEvoto", "Evoto"]];
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const pageErrors = [];
   const byWidth = {};
 

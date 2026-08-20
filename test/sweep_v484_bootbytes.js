@@ -48,6 +48,7 @@
 
    Usage: PORT=8931 node test/sweep_v484_bootbytes.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const fs = require("fs");
 const path = require("path");
 const PORT = process.env.PORT || 8931;
@@ -106,6 +107,9 @@ const REQ_CEILING = 14;
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
 
   async function session(seedPage, walk) {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });

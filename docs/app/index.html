@@ -1199,6 +1199,40 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 .hsl-pop::-webkit-scrollbar{width:5px}
 .hsl-pop::-webkit-scrollbar-thumb{background:rgba(233,185,73,.3);border-radius:3px}
 .hsl-scrim{position:fixed;inset:0;z-index:81;background:transparent}
+/* ============================================================
+   v5.30 ACCESS WALL — the app is account + Premium only.
+   Deliberately NOT an overlay with its own copy of the login form: accLogin()
+   and accSignup() read #accEmail/#accPass directly, the buy flow owns a dozen
+   more ids, and every one of those strings is already translated. Cloning that
+   would mean two forms to keep in step forever. Instead the wall HIDES
+   everything except the Account card the user already needs, so all of it —
+   login, signup, forgot-password, plan chips, proof upload, pending state — is
+   the same code that has always run.
+   ============================================================ */
+body.wall .tabbar{display:none}
+body.wall .page:not(#pgHome){display:none!important}
+body.wall #pgHome>.card:not(#cardAccount):not(#cardAdmin){display:none}
+body.wall .fab-top{display:none}
+#wallNote{display:none;margin:10px 0 14px}
+body.wall #wallNote{display:block}
+#wallNote .wall-h{display:flex;align-items:center;gap:8px;font-size:var(--fs-lg);font-weight:700;color:var(--gold-hi);margin-bottom:6px}
+#wallNote .wall-p{color:var(--muted);line-height:1.5}
+/* The admin card is spared by the :not() above rather than by a competing
+   display:block, because winning that duel is harder than it looks: the id
+   inside :not(#cardAccount) COUNTS toward specificity, so the hiding rule
+   scores (2 ids, 2 classes) and beats an override written as
+   `body.wall #pgHome>#cardAdmin` (2 ids, 1 class). Measured: the override rule
+   matched, was declared later, and the card still computed display:none.
+   Excluding it at the source has no such trap — and the reason it must be
+   excluded at all is that an admin whose OWN plan lapsed would otherwise be
+   locked out of the panel that approves their own renewal. */
+#admList{list-style:none;display:flex;flex-direction:column;gap:10px}
+#admList li{border:1px solid var(--line-soft);border-radius:12px;padding:10px;background:var(--panel)}
+#admList .rq-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#admList .adm-who{font-size:11px;color:var(--muted);word-break:break-all;margin-top:4px}
+#admList .adm-proof{margin-top:8px;max-width:100%;border-radius:10px;border:1px solid var(--line-soft);display:block}
+#admList .adm-act{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+#admList .adm-note{width:100%;margin-top:8px}
 .hsl-hd{padding:9px 10px 5px;font-size:9.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;line-height:1.5;
   display:flex;align-items:center;gap:8px;color:var(--gold-hi);opacity:.85}
 .hsl-hd.nolat{letter-spacing:0;text-transform:none;font-size:10.5px}
@@ -1767,6 +1801,10 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div class="status" id="stKey"></div>
   </section>
 
+  <div id="wallNote" role="status" aria-live="polite">
+    <div class="wall-h" id="wallH"></div>
+    <div class="wall-p" id="wallP"></div>
+  </div>
   <section class="card" id="cardAccount">
     <!-- the title is set by setIcnText() rather than an inline <span>, per the
          v4.15 header pattern that verify_phase3_header_emptystate.js pins -->
@@ -1903,6 +1941,18 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <div class="status" id="stReq"></div>
       </div>
     </div>
+  </section>
+
+  <section class="card" id="cardAdmin" style="display:none">
+    <h2 id="admH2"></h2>
+    <p class="mut" id="admIntro"></p>
+    <div class="row" style="gap:8px;align-items:center;margin-top:8px">
+      <button class="btn" id="btnAdmReload"></button>
+      <span class="mut" id="admCount"></span>
+    </div>
+    <div class="status" id="stAdm"></div>
+    <ul id="admList"></ul>
+    <div class="mut" id="admEmpty" style="margin-top:8px"></div>
   </section>
 
   <section class="card" id="cardRh">
@@ -19272,12 +19322,19 @@ function accSignOutLocal(reason){
   if (!acc.sess) return;
   acc.sess = null; acc.profile = null; acc.devices = []; acc.requests = []; acc.pending = null;
   accLSDel(ACC_LS_SESS); accLSDel(ACC_LS_PROF);
+  try { localStorage.removeItem(WALL_LS_SINCE); } catch(e){}   /* v5.30 */
   /* ACC_LS_DEV survives on purpose — logging out then back in on the same
      browser must NOT consume a second device slot. */
   accPollStop();
   try { accRender(); accChipRender(); accRenderPay(); } catch(e){}
   if (reason === "expired") toast(t("acc_session_expired"), "err");
   else if (reason !== "quiet") toast(t("acc_signed_out"));
+  /* v5.30 — sign-out is the one transition that can only ever ADD the wall, so
+     it is the one place it must never be forgotten. Guarded because this
+     function is also reachable from accFetch, which runs before the wall is
+     defined on the very first paint. */
+  try { if (typeof appWallApply === "function") appWallApply(); } catch(e){}
+  try { if (typeof admRender === "function"){ adm.rows = []; admRender(); } } catch(e){}
 }
 
 /* ---------------- error mapping (§9 anchor 11) ---------------- */
@@ -19391,6 +19448,11 @@ function accPostLogin(){
     } catch(e){}
     try { await accLoadRequests(); } catch(e){}
     try { accRender(); accChipRender(); accRenderPay(); } catch(e){}
+    /* v5.30 — the profile has just landed, so "checking" can resolve to open
+       or to buy. Without this the wall would sit on "checking" until the next
+       focus event. */
+    try { wallStampLogin(); appWallApply(); } catch(e){}
+    try { admRender(); if (admIsAdmin()) admLoad(); } catch(e){}
   })();
 }
 
@@ -19862,6 +19924,9 @@ async function accPollOnce(){
       accCollapseGrp("accGrpBuy");
       accOpenGrp("accGrpPlan");
       accRenderPay(); accRender(); accChipRender();
+      /* v5.30 — the whole point of the poll: the wall comes DOWN the moment an
+         admin approves, without the customer reloading anything. */
+      try { appWallApply(); } catch(e){}
       try { accLoadRequests(); } catch(e){}
     } else if (row.status === "rejected"){
       accPollStop();
@@ -20208,6 +20273,7 @@ function accApplyLang(){
 
   $("accLoginH").textContent  = t("acc_signin_h");
   $("accSignupH").textContent = t("acc_signup_h");
+  try { admApplyLang(); } catch(e){}   /* v5.30 */
   $("accEmail").placeholder   = t("acc_email");
   $("accPass").placeholder    = t("acc_pass");
   $("accName").placeholder    = t("acc_name");
@@ -20252,6 +20318,8 @@ function accShowForm(which){
 }
 function accWire(){
   if (!$("cardAccount")) return;
+  var abr = $("btnAdmReload");
+  if (abr) abr.onclick = function(){ admLoad(); };      /* v5.30 */
   $("btnAccLogin").onclick  = function(){ accLogin(); };
   $("btnAccSignup").onclick = function(){ accSignup(); };
   $("accToSignup").onclick  = function(){ accShowForm("signup"); };
@@ -20379,12 +20447,249 @@ function accBoot(){
       if (d && d.limit) accShowDeviceLimit();
     } catch(e){}
     try { accRender(); accChipRender(); accRenderPay(); } catch(e){}
+    try { appWallApply(); } catch(e){}          /* v5.30 — boot profile landed */
+    try { admRender(); if (admIsAdmin()) admLoad(); } catch(e){}
   })();
 }
+
+/* ============================================================
+   v5.30 ADMIN PANEL — payment approve / reject.
+   The client has always refused to write status/reviewed_at/reviewed_by/note
+   (see accSubmitPayment): those are the admin's fields. This is the surface
+   that writes them, and NOTHING here is a security boundary — hiding the card
+   stops an honest user seeing it, not a determined one. What makes approval
+   actually admin-only is the RLS policy in supabase/schema.sql, which must be
+   applied in the Supabase dashboard. Without it, any signed-in user can PATCH
+   their own row from a console and approve themselves.
+   ============================================================ */
+function admIsAdmin(){ return !!(acc.profile && acc.profile.is_admin === true); }
+
+function admL(o){ return L9(o); }
+function admApplyLang(){
+  if (!$("cardAdmin")) return;
+  setIcnText($("admH2"), "i-key", admL({my:"Admin — ငွေပေးချေမှု",en:"Admin — payments",shn:"Admin — ငိုၼ်း",kac:"Admin — gumhpraw",th:"แอดมิน — การชำระเงิน",zh:"管理员 — 付款",vi:"Quản trị — thanh toán",id:"Admin — pembayaran",ms:"Admin — pembayaran"}), { cls:"ic-h2" });
+  $("admIntro").textContent = admL({my:"တောင်းဆိုမှုတွေကို စစ်ပြီး အတည်ပြု / ပယ်ဖျက်ပါ။",en:"Review each request and approve or reject it.",shn:"ၵူတ်ႇထတ်းသေ ႁပ်ႉ / ဢမ်ႇႁပ်ႉ",kac:"Jep nna hkap la kun n hkap la kun",th:"ตรวจสอบแล้วอนุมัติหรือปฏิเสธ",zh:"审核后批准或拒绝",vi:"Xem xét rồi duyệt hoặc từ chối",id:"Tinjau lalu setujui atau tolak",ms:"Semak lalu luluskan atau tolak"});
+  setIcnText($("btnAdmReload"), "i-retry", admL({my:"ပြန်ဆွဲမယ်",en:"Reload",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la u",th:"โหลดใหม่",zh:"重新载入",vi:"Tải lại",id:"Muat ulang",ms:"Muat semula"}));
+}
+
+var ADM_APPROVE = { my:"အတည်ပြု", en:"Approve", shn:"ႁပ်ႉ", kac:"Hkap la", th:"อนุมัติ", zh:"批准", vi:"Duyệt", id:"Setujui", ms:"Luluskan" };
+var ADM_REJECT  = { my:"ပယ်ဖျက်", en:"Reject", shn:"ဢမ်ႇႁပ်ႉ", kac:"N hkap la", th:"ปฏิเสธ", zh:"拒绝", vi:"Từ chối", id:"Tolak", ms:"Tolak" };
+var ADM_NOTE_PH = { my:"မှတ်ချက် (ချန်ထားလို့ရ)", en:"Note (optional)", shn:"မၢႆတွင်း", kac:"Matsing", th:"หมายเหตุ", zh:"备注（可选）", vi:"Ghi chú", id:"Catatan", ms:"Nota" };
+
+var adm = { rows: [], busy: false, proofs: {} };
+
+async function admLoad(){
+  if (!acc.sess || !admIsAdmin()) return;
+  setSt("stAdm", "");
+  try {
+    var r = await accFetch("/rest/v1/payment_requests?select=*&order=created_at.desc&limit=100", { method: "GET" });
+    if (!r.ok){ setSt("stAdm", t("acc_unreachable"), "err"); return; }
+    var rows = await accJson(r);
+    adm.rows = Array.isArray(rows) ? rows : [];
+    admRender();
+  } catch(e){ setSt("stAdm", friendlyError(e), "err"); }
+}
+
+/* The proof lives in a private bucket, so an <img src> cannot fetch it — the
+   bearer token has to be on the request. Pull the bytes and hand the element
+   an object URL instead. Cached per path so re-rendering the list after an
+   approval does not re-download every screenshot. */
+async function admProof(imgEl, path){
+  if (!path) return;
+  if (adm.proofs[path]){ imgEl.src = adm.proofs[path]; return; }
+  try {
+    var r = await accFetch("/storage/v1/object/payment-proofs/" + path.split("/").map(encodeURIComponent).join("/"), { method: "GET" });
+    if (!r.ok) return;
+    var b = await r.blob();
+    var u = URL.createObjectURL(b);
+    adm.proofs[path] = u;
+    imgEl.src = u;
+  } catch(e){}
+}
+
+async function admReview(row, status, note, btn){
+  if (adm.busy) return;
+  adm.busy = true; accBusy(btn, true); setSt("stAdm", "");
+  try {
+    /* Only the review fields. plan_expires_at / allowed_devices are extended by
+       the database trigger on approval (see supabase/schema.sql) — writing them
+       here as well would double-extend every plan the trigger already handled. */
+    var body = { status: status, reviewed_at: new Date().toISOString(),
+                 reviewed_by: acc.sess.uid, note: note || null };
+    var r = await accFetch("/rest/v1/payment_requests?id=eq." + encodeURIComponent(row.id), {
+      method: "PATCH", headers: { "Prefer": "return=representation" }, body: JSON.stringify(body)
+    });
+    if (!r.ok){
+      /* 403 here is the RLS policy doing its job on a non-admin, which is the
+         one failure worth naming precisely rather than as a generic error. */
+      setSt("stAdm", (r.status === 401 || r.status === 403)
+        ? admL({my:"ခွင့်ပြုချက် မရှိပါ — Supabase RLS မှာ admin မဟုတ်သေးပါ",en:"Not permitted — this account is not an admin in Supabase RLS",shn:"ဢမ်ႇမီးသုၼ်ႇ — RLS admin ဢမ်ႇၸႂ်ႈ",kac:"Ahkang n nga ai — RLS admin n re",th:"ไม่ได้รับอนุญาต — บัญชีนี้ไม่ใช่แอดมินใน RLS",zh:"没有权限 — 此账号在 RLS 中不是管理员",vi:"Không có quyền — tài khoản này không phải admin trong RLS",id:"Tidak diizinkan — akun ini bukan admin di RLS",ms:"Tidak dibenarkan — akaun ini bukan admin dalam RLS"})
+        : t("acc_unreachable"), "err");
+      return;
+    }
+    await admLoad();
+    setSt("stAdm", t("acc_saved"), "ok");
+  } catch(e){ setSt("stAdm", friendlyError(e), "err"); }
+    finally { adm.busy = false; accBusy(btn, false); }
+}
+
+function admRender(){
+  var card = $("cardAdmin"); if (!card) return;
+  var show = admIsAdmin();
+  card.style.display = show ? "" : "none";
+  if (!show) return;
+  var ul = $("admList"); ul.innerHTML = "";
+  var rows = adm.rows || [];
+  var pend = rows.filter(function(r){ return r && r.status === "pending"; }).length;
+  $("admCount").textContent = admL({my:"စောင့်ဆိုင်းနေ "+pend+" ခု · စုစုပေါင်း "+rows.length,en:pend+" pending · "+rows.length+" total",shn:"မီး "+pend+" · တင်းသဵင်ႈ "+rows.length,kac:pend+" la nga · "+rows.length+" yawng",th:"รอ "+pend+" · ทั้งหมด "+rows.length,zh:"待处理 "+pend+" · 共 "+rows.length,vi:pend+" chờ · "+rows.length+" tổng",id:pend+" menunggu · "+rows.length+" total",ms:pend+" menunggu · "+rows.length+" jumlah"});
+  $("admEmpty").textContent = rows.length ? "" : t("req_none");
+  rows.forEach(function(row){
+    if (!row) return;
+    var li = el("li");
+    var top = el("div","rq-top");
+    var k = el("span"); k.textContent = t(ACC_REQ_KIND[row.kind] || "pay_1m"); top.appendChild(k);
+    var dt = el("span","mut"); dt.textContent = accFmtDate(row.created_at); top.appendChild(dt);
+    var tx = el("span","mut"); tx.textContent = "···" + String(row.txn_last6 || ""); top.appendChild(tx);
+    var st = el("span","chip");
+    if (row.status === "approved"){ st.className = "chip on"; setIcnText(st, "i-check", t("req_approved")); }
+    else if (row.status === "rejected"){ st.className = "chip err"; setIcnText(st, "i-warn", t("req_rejected")); }
+    else { setIcnText(st, "i-clock", t("req_pending")); }
+    top.appendChild(st);
+    li.appendChild(top);
+
+    /* every value below came out of the database — textContent, never innerHTML */
+    var who = el("div","adm-who"); who.textContent = String(row.user_id || ""); li.appendChild(who);
+    if (row.note){ var nt = el("div","mut"); nt.textContent = t("req_note").replace("{T}", String(row.note)); li.appendChild(nt); }
+
+    if (row.screenshot_path){
+      var im = document.createElement("img");
+      im.className = "adm-proof"; im.loading = "lazy"; im.alt = "";
+      im.setAttribute("aria-label", admL({my:"ငွေလွှဲပြေစာ",en:"Payment proof",shn:"ၶႅပ်းငိုၼ်း",kac:"Gumhpraw sumla",th:"สลิปโอนเงิน",zh:"付款凭证",vi:"Biên lai",id:"Bukti transfer",ms:"Resit"}));
+      li.appendChild(im);
+      admProof(im, row.screenshot_path);
+    }
+
+    if (row.status === "pending"){
+      var note = document.createElement("input");
+      note.type = "text"; note.className = "inp adm-note";
+      note.placeholder = admL(ADM_NOTE_PH);
+      note.setAttribute("aria-label", admL(ADM_NOTE_PH));
+      li.appendChild(note);
+      var act = el("div","adm-act");
+      var ok = el("button","btn btn-gold"); setIcnText(ok, "i-check", admL(ADM_APPROVE));
+      ok.onclick = function(){ admReview(row, "approved", note.value.trim(), ok); };
+      var no = el("button","btn"); setIcnText(no, "i-close", admL(ADM_REJECT));
+      no.onclick = function(){ admReview(row, "rejected", note.value.trim(), no); };
+      act.appendChild(ok); act.appendChild(no);
+      li.appendChild(act);
+    }
+    ul.appendChild(li);
+  });
+}
+
+/* ============================================================
+   v5.30 ACCESS WALL — the app requires an account AND an active plan.
+   ============================================================ */
+var WALL_MAXAGE_MS = 30 * 86400000;   /* absolute session age; re-login after */
+var WALL_RECHECK_MS = 5 * 60000;      /* how often a foreground tab revalidates */
+var _wallLast = 0;
+
+/* "" open · "login" no session · "buy" signed in without an active plan ·
+   "checking" signed in, profile not read yet — a distinct state on purpose,
+   because treating unknown as "buy" flashes a payment demand at a paying
+   customer for the length of one round trip. */
+function appWallState(){
+  if (!acc.sess) return "login";
+  if (!acc.profile) return "checking";
+  return isPremium() ? "" : "buy";
+}
+
+function appWallApply(){
+  var st = appWallState();
+  var on = st !== "";
+  document.body.classList.toggle("wall", on);
+  var h = $("wallH"), p = $("wallP");
+  if (h && p){
+    if (st === "login"){
+      h.innerHTML = icn("i-key","ic-h2") + " " + escH(L9({my:"အကောင့်ဝင်ပါ",en:"Sign in to continue",shn:"ၶဝ်ႈ account",kac:"Account hta shang u",th:"เข้าสู่ระบบก่อน",zh:"请先登录",vi:"Đăng nhập để tiếp tục",id:"Masuk dulu",ms:"Log masuk dahulu"}));
+      p.textContent = L9({my:"HNK Web Studio ကို သုံးဖို့ အကောင့်တစ်ခု လိုပါတယ်။ အောက်မှာ ဝင်ပါ — အကောင့်မရှိသေးရင် အသစ်ဖွင့်လို့ရပါတယ်။",en:"HNK Web Studio needs an account. Sign in below — or create one if you do not have it yet.",shn:"HNK Web Studio လူဝ်ႇ account. ၶဝ်ႈတီႈတႂ်ႈ — ဢမ်ႇမီးၸိုင် ႁဵတ်းမႂ်ႇလႆႈ",kac:"HNK Web Studio gaw account ra ai. Npu hta shang u — n nga yang nnan hpaw mai ai",th:"HNK Web Studio ต้องมีบัญชี เข้าสู่ระบบด้านล่าง หรือสมัครใหม่ได้",zh:"HNK Web Studio 需要账号。请在下方登录，或注册一个新账号",vi:"HNK Web Studio cần một tài khoản. Đăng nhập bên dưới, hoặc tạo mới",id:"HNK Web Studio memerlukan akun. Masuk di bawah, atau buat baru",ms:"HNK Web Studio memerlukan akaun. Log masuk di bawah, atau daftar baharu"});
+    } else if (st === "buy"){
+      /* Expired reads differently from never-bought: one is "renew", the other
+         is "start". Telling a lapsed customer they have never paid is insulting
+         and it is also just wrong. */
+      var lapsed = !!(acc.profile && acc.profile.plan_expires_at);
+      h.innerHTML = icn("i-gem","ic-h2") + " " + escH(lapsed
+        ? L9({my:"Premium ကုန်သွားပါပြီ",en:"Your Premium has ended",shn:"Premium မူတ်းယဝ်ႉ",kac:"Premium htum sai",th:"Premium หมดอายุแล้ว",zh:"Premium 已到期",vi:"Premium đã hết hạn",id:"Premium sudah berakhir",ms:"Premium telah tamat"})
+        : L9({my:"Premium လိုအပ်ပါတယ်",en:"Premium required",shn:"လူဝ်ႇ Premium",kac:"Premium ra ai",th:"ต้องมี Premium",zh:"需要 Premium",vi:"Cần Premium",id:"Perlu Premium",ms:"Perlu Premium"}));
+      p.textContent = L9({my:"အောက်မှာ plan ရွေးပြီး ငွေလွှဲပြေစာ တင်ပါ။ Admin အတည်ပြုပြီးတာနဲ့ ချက်ချင်း ပြန်ဖွင့်ပေးပါမယ်။",en:"Pick a plan below and upload your transfer slip. Access opens as soon as an admin approves it.",shn:"လိူၵ်ႈ plan တီႈတႂ်ႈသေ သႂ်ႇၶႅပ်းႁၢင်ႈငိုၼ်း။ Admin ႁပ်ႉယဝ်ႉ ပိုတ်ႇပၼ်ၵမ်းလဵဝ်",kac:"Npu hta plan lata nna gumhpraw sumla bang u. Admin hkap la yang jahpaw na",th:"เลือกแพ็กเกจด้านล่างและอัปโหลดสลิป เมื่อแอดมินอนุมัติจะเปิดให้ทันที",zh:"请在下方选择套餐并上传付款凭证。管理员通过后立即开通",vi:"Chọn gói bên dưới và tải lên biên lai. Mở khoá ngay khi quản trị viên duyệt",id:"Pilih paket di bawah dan unggah bukti transfer. Terbuka begitu admin menyetujui",ms:"Pilih pelan di bawah dan muat naik resit. Dibuka sebaik admin meluluskan"});
+    } else if (st === "checking"){
+      h.innerHTML = icn("i-clock","ic-h2") + " " + escH(L9({my:"အကောင့် စစ်ဆေးနေပါတယ်…",en:"Checking your account…",shn:"ၵူတ်ႇထတ်း account ယူႇ…",kac:"Account jep nga ai…",th:"กำลังตรวจสอบบัญชี…",zh:"正在检查账号…",vi:"Đang kiểm tra tài khoản…",id:"Memeriksa akun…",ms:"Menyemak akaun…"}));
+      p.textContent = "";
+    }
+  }
+  if (on){
+    if (typeof curPage !== "undefined" && curPage !== "pgHome"){
+      try { switchPage("pgHome"); } catch(e){}
+    }
+    try {
+      if (st === "login") accOpenGrp("accGrpAuth");
+      else if (st === "buy"){
+        accOpenGrp("accGrpBuy");
+        /* Sign-out lives inside accGrpAuth, which accBoot collapses as soon as
+           there IS a session. Leaving it collapsed behind a wall strands anyone
+           who signed into the wrong account: the only door out of the wall is
+           the one door the wall just hid. Open it too. */
+        accOpenGrp("accGrpAuth");
+      }
+    } catch(e){}
+  }
+  return st;
+}
+
+/* A session with no age limit is a session that never ends. sess.exp is the
+   ACCESS token's expiry, which refresh keeps pushing forward forever, so it
+   can never answer "how long since this person actually typed a password" —
+   that needs its own stamp. */
+var WALL_LS_SINCE = "hnk_acc_login_at";
+function wallStampLogin(){ try { localStorage.setItem(WALL_LS_SINCE, String(Date.now())); } catch(e){} }
+function wallLoginAge(){
+  var v = null; try { v = localStorage.getItem(WALL_LS_SINCE); } catch(e){}
+  if (!v){ /* pre-v5.30 session: stamp it now rather than logging everyone out */
+    wallStampLogin(); return 0;
+  }
+  var n = parseInt(v, 10);
+  return isNaN(n) ? 0 : (Date.now() - n);
+}
+
+/* Revalidate: re-read the profile so an expiry or an admin approval lands
+   without the customer hunting for a refresh button, and force a re-login once
+   the sign-in is older than WALL_MAXAGE_MS. Never runs while offline — a bad
+   connection must not read as a lapsed plan. */
+async function wallRecheck(force){
+  if (!acc.sess) { appWallApply(); return; }
+  if (wallLoginAge() > WALL_MAXAGE_MS){
+    try { accSignOutLocal("expired"); } catch(e){}
+    appWallApply();
+    return;
+  }
+  if (!acc.online || !navigator.onLine) { appWallApply(); return; }
+  if (!force && Date.now() - _wallLast < WALL_RECHECK_MS) { appWallApply(); return; }
+  _wallLast = Date.now();
+  try { await accLoadProfile(); } catch(e){}
+  try { accRender(); accChipRender(); } catch(e){}
+  appWallApply();
+}
+
+document.addEventListener("visibilitychange", function(){
+  if (document.visibilityState === "visible") wallRecheck(false);
+});
+window.addEventListener("focus", function(){ wallRecheck(false); });
+setInterval(function(){ if (document.visibilityState === "visible") wallRecheck(false); }, WALL_RECHECK_MS);
 
 /* v4.30: fire-and-forget, never awaited by anything on the startup path.
    Placed after applyLang() and the page restore, before SW registration. */
 try { accBoot(); } catch(e){}
+try { appWallApply(); } catch(e){}
 
 if ("serviceWorker" in navigator) {
   try { navigator.serviceWorker.register("sw.js"); } catch(e){}
@@ -20394,7 +20699,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.29.0";
+var APP_VER="5.30.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

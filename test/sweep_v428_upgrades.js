@@ -24,6 +24,7 @@
    reset between them.
    Usage: PORT=8931 node test/sweep_v428_upgrades.js   (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 /* a distinguishable 2nd pixel so "before" and "after" srcs can never collide */
@@ -31,6 +32,9 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on("pageerror", e => console.log("PAGEERROR:", String(e).slice(0, 300)));
 

@@ -16,11 +16,15 @@
    Run against the deployed docs/app/index.html (same pattern as
    test/sweep_workflows.js). Usage: PORT=8931 node test/verify_master_bgfg_workflow.js */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   page.on("pageerror", e => errors.push(String(e)));
