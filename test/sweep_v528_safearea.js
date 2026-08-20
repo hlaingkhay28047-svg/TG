@@ -24,19 +24,25 @@
        --sa-l:env(safe-area-inset-left, 0px); --sa-r:env(safe-area-inset-right, 0px)
 
    — and every site consumes the custom property. A custom property CAN be
-   overridden at runtime, so this file sets --sa-l/--sa-r to a synthetic 44px
-   and measures that each surface actually moves by 44px. That is the whole
-   point of the indirection: it turns "we wrote env() somewhere" into a
-   measurement.
+   overridden at runtime, so this file sets a synthetic inset and measures that
+   each surface actually moves. That is the whole point of the indirection: it
+   turns "we wrote env() somewhere" into a measurement.
 
-   Measured at 844x390 (iPhone-class landscape), inset 0px -> 44px:
+   The two sides are set to DIFFERENT values on purpose. An equal pair makes a
+   left/right swap invisible — the easiest mistake to make in a padding
+   shorthand, whose order is top/right/bottom/left — because every surface still
+   moves by the expected amount while landing on the wrong side. 10 and 50
+   cannot both be right by accident.
 
-                        before        after
-     .wrap padding-left   16 -> 16     16 -> 60
-     .tabbar padding-left  0 ->  0      0 -> 44
-     .toast left          16 -> 16     16 -> 60
-     .fab-top right       14 -> 14     14 -> 58
-     #wiz padding-left     0 ->  0      0 -> 44
+   Measured at 844x390 (iPhone-class landscape), inset 0px -> 10px left /
+   50px right:
+
+                          before          after
+     .wrap padding L/R    16/16 -> 16/16  16/16 -> 26/66
+     .tabbar padding L/R    0/0 ->   0/0    0/0 -> 10/50
+     .toast left/right    16/16 -> 16/16  16/16 -> 26/66
+     .fab-top right          14 ->    14      14 ->    64
+     #wiz padding L/R       0/0 ->   0/0    0/0 -> 10/50
 
    Pinned contracts:
    A) :root defines --sa-l/--sa-r from the left/right env() insets, with a 0px
@@ -45,8 +51,9 @@
       layout is byte-for-byte what it was: 16px on .wrap, 0 on .tabbar, and the
       floaters exactly where they were pinned. This is the no-regression half
       and it is the one that would catch a fix that "helps" by always padding.
-   C) With the insets at 44px, each surface moves by exactly 44px. Every one of
-      these fails on the pre-v5.28 tree, where nothing consumes the property.
+   C) With an asymmetric inset, each SIDE moves by its own amount — 13 measured
+      sides across 6 surfaces. Every one fails on the pre-v5.28 tree, where
+      nothing consumes the property, and a swapped pair fails here too.
    D) Nothing starts scrolling sideways because of the added padding.
    E) No page errors.
 
@@ -96,11 +103,17 @@ report("A2) every edge-pinned surface consumes the named insets",
   await page.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
   await page.waitForTimeout(1200);
 
-  const measure = inset => page.evaluate(px => {
+  /* Deliberately ASYMMETRIC. Setting both insets to the same number makes a
+     left/right swap — the single easiest mistake in a padding shorthand, whose
+     order is top/right/bottom/left — completely invisible: every measurement
+     still moves by the expected amount while landing on the wrong side. 10 and
+     50 cannot both be right by accident. */
+  const L = 10, R = 50;
+  const measure = on => page.evaluate(v => {
     const root = document.documentElement;
-    if (px === null) { root.style.removeProperty("--sa-l"); root.style.removeProperty("--sa-r"); }
-    else { root.style.setProperty("--sa-l", px + "px"); root.style.setProperty("--sa-r", px + "px"); }
-    const n = v => Math.round(parseFloat(v) || 0);
+    if (!v) { root.style.removeProperty("--sa-l"); root.style.removeProperty("--sa-r"); }
+    else { root.style.setProperty("--sa-l", v.l + "px"); root.style.setProperty("--sa-r", v.r + "px"); }
+    const n = x => Math.round(parseFloat(x) || 0);
     const cs = sel => { const el = document.querySelector(sel); return el ? getComputedStyle(el) : null; };
     const wrap = cs(".wrap"), tab = cs(".tabbar"), toast = cs(".toast"),
           fab = cs(".fab-top"), wiz = cs("#wiz"), sheet = cs(".pt-sheet"), onb = cs(".onb");
@@ -110,40 +123,50 @@ report("A2) every edge-pinned surface consumes the named insets",
       tabL: tab ? n(tab.paddingLeft) : -1,
       tabR: tab ? n(tab.paddingRight) : -1,
       toastL: toast ? n(toast.left) : -1,
+      toastR: toast ? n(toast.right) : -1,
       fabR: fab ? n(fab.right) : -1,
       wizL: wiz ? n(wiz.paddingLeft) : -1,
+      wizR: wiz ? n(wiz.paddingRight) : -1,
       sheetL: sheet ? n(sheet.paddingLeft) : -1,
+      sheetR: sheet ? n(sheet.paddingRight) : -1,
       onbL: onb ? n(onb.paddingLeft) : -1,
+      onbR: onb ? n(onb.paddingRight) : -1,
       docScrollW: document.documentElement.scrollWidth,
       docClientW: document.documentElement.clientWidth,
     };
-  }, inset);
+  }, on);
 
-  const base = await measure(0);
-  const notched = await measure(44);
+  const base = await measure({ l: 0, r: 0 });
+  const notched = await measure({ l: L, r: R });
   await measure(null);            /* leave the page as we found it */
 
   /* ---- B) the no-regression half ---- */
   report("B) at a 0px inset the layout is exactly what it was",
     base.wrapL === 16 && base.wrapR === 16 && base.tabL === 0 && base.tabR === 0 &&
-    base.toastL === 16 && base.fabR === 14 && base.wizL === 0 && base.sheetL === 0 && base.onbL === 0,
+    base.toastL === 16 && base.toastR === 16 && base.fabR === 14 &&
+    base.wizL === 0 && base.wizR === 0 && base.sheetL === 0 && base.sheetR === 0 &&
+    base.onbL === 0 && base.onbR === 0,
     base);
 
   /* ---- C) the half that fails on the old tree ---- */
   const SHIFTS = [
-    ["wrap padding-left", base.wrapL, notched.wrapL, 44],
-    ["wrap padding-right", base.wrapR, notched.wrapR, 44],
-    ["tabbar padding-left", base.tabL, notched.tabL, 44],
-    ["tabbar padding-right", base.tabR, notched.tabR, 44],
-    ["toast left", base.toastL, notched.toastL, 44],
-    ["fab-top right", base.fabR, notched.fabR, 44],
-    ["wiz padding-left", base.wizL, notched.wizL, 44],
-    ["pt-sheet padding-left", base.sheetL, notched.sheetL, 44],
-    ["onb padding-left", base.onbL, notched.onbL, 44],
+    ["wrap padding-left", base.wrapL, notched.wrapL, L],
+    ["wrap padding-right", base.wrapR, notched.wrapR, R],
+    ["tabbar padding-left", base.tabL, notched.tabL, L],
+    ["tabbar padding-right", base.tabR, notched.tabR, R],
+    ["toast left", base.toastL, notched.toastL, L],
+    ["toast right", base.toastR, notched.toastR, R],
+    ["fab-top right", base.fabR, notched.fabR, R],
+    ["wiz padding-left", base.wizL, notched.wizL, L],
+    ["wiz padding-right", base.wizR, notched.wizR, R],
+    ["pt-sheet padding-left", base.sheetL, notched.sheetL, L],
+    ["pt-sheet padding-right", base.sheetR, notched.sheetR, R],
+    ["onb padding-left", base.onbL, notched.onbL, L],
+    ["onb padding-right", base.onbR, notched.onbR, R],
   ];
   const wrong = SHIFTS.filter(([, b, a, d]) => a - b !== d)
     .map(([name, b, a, d]) => ({ what: name, from: b, to: a, expected: b + d }));
-  report("C) a 44px inset moves every edge-pinned surface by exactly 44px",
+  report("C) an asymmetric " + L + "/" + R + "px inset moves each side by its OWN amount",
     wrong.length === 0, wrong);
 
   /* ---- D ---- */
@@ -155,7 +178,7 @@ report("A2) every edge-pinned surface consumes the named insets",
   report("E) no page errors", errs.length === 0, errs.slice(0, 5));
 
   console.log("      (on the v5.27.0 tree this same file reports 3 failures: A and A2 find no " +
-    "--sa-l/--sa-r at all, and C measures 0 of 9 surfaces moving — .wrap stays at 16px, " +
+    "--sa-l/--sa-r at all, and C measures 0 of 13 sides moving — .wrap stays at 16px, " +
     ".tabbar at 0, .toast at 16 and .fab-top at 14 no matter how large the inset)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
