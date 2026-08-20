@@ -274,3 +274,6 @@ jobs:
 
       - name: Run v5.11.0 face-gate sweep (cpu fallback, measured-face-only makeup, busy-yield)
         run: node test/sweep_v511_facegate.js
+
+      - name: Run v5.28.0 safe-area sweep (landscape notch insets on every edge-pinned surface)
+        run: node test/sweep_v528_safearea.js
