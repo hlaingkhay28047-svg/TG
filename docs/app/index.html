@@ -1220,6 +1220,19 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
 .hsl-dot{width:6.5px;height:6.5px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 2.5px rgba(126,201,126,.16),0 0 8px rgba(126,201,126,.7)}
 .hsl-ck{flex:0 0 auto;width:16px;height:16px;display:none}
 .hsl-op.sel .hsl-ck{display:inline-flex}
+/* v5.29 — a provider whose key is not set is shown, not omitted: dimmed, with
+   the reason, and it still takes a tap because the tap is what fixes it.
+   The dimming has to come from a KEYFRAME, not a plain declaration: .hsl-op
+   runs `animation:hslIn ... both`, hslIn ends at an explicit opacity:1, and a
+   both-filled animation's retained value beats a normal declaration in the
+   cascade. Written as `.hsl-op.lock{opacity:.6}` it measured 1 — pixel-identical
+   to a real choice, so the row looked selectable and the only thing telling you
+   otherwise was text you had to read. Hover/focus moves the background only,
+   for the same reason. */
+@keyframes hslInLock{from{opacity:0;transform:translateY(-4px)}to{opacity:.62;transform:none}}
+.hsl-op.lock{animation-name:hslInLock}
+.hsl-op.lock .hsl-t{font-weight:500}
+.hsl-op.lock:hover,.hsl-op.lock.act{background:rgba(233,185,73,.1)}
 .hsl-op.sel .hsl-glyph{background:linear-gradient(160deg,var(--gold-hi),var(--gold));color:#1a1408;border-color:transparent}
 /* context sizing — mirrors the layout rules the native selects had */
 #genOpts .hsl,#genOptsAdv .hsl,#vidOpts .hsl,#t2iOpts .hsl{width:100%;min-width:0}
@@ -20381,7 +20394,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.28.0";
+var APP_VER="5.29.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -22443,6 +22456,34 @@ function brandOf(v,label){
   if(/rh[- ]|rhart|imagine/.test(s)) return {ic:"rh",g:"RunningHub"};
   return {ic:"spark",g:""};
 }
+/* v5.29 — RunningHub and OpenAI are appended to #selProvider only once their
+   key is saved (renderRhProviderOption / renderOaProviderOption), so a studio
+   with just a Gemini key opens this picker, sees a single row and is told
+   nothing. The owner himself read that as "the models disappeared" — and he
+   knows the app. From here there is no way to learn that one key away sit the
+   RunningHub video, image and text-to-image catalogues. So list the missing
+   ones too: dimmed, with the reason, the count derived from the real arrays so
+   it can never drift, and a tap that lands on the exact Setup card. */
+function providerLocks(){
+  var out=[];
+  var rhOn=false;
+  try{ rhOn = !!(rhAnyConfigured() && state.rhKey); }catch(e){}
+  if(!rhOn){
+    var n=0;
+    /* Count only what the KEY ALONE unlocks. Two RH_MODELS entries ship with no
+       built-in apiPath and need one pasted per model, so counting all 18 would
+       promise two models the key does not actually buy — the same class of
+       inventory overclaim the release contract already pins on the landing. */
+    try{ n = RH_MODELS.filter(function(m){ return rhIsConfigured(m.id); }).length
+           + (RH_VIDEO_MODELS?RH_VIDEO_MODELS.length:0)
+           + (RH_T2I_MODELS?RH_T2I_MODELS.length:0); }catch(e2){}
+    out.push({v:"runninghub", name:"RunningHub", card:"cardRh", n:n});
+  }
+  var oaOn=false;
+  try{ oaOn = !!state.oaKey; }catch(e3){}
+  if(!oaOn) out.push({v:"openai", name:"OpenAI", card:"cardOa", n:0});
+  return out;
+}
 function iconFor(sel,opt){
   var id=sel.id||"", v=opt?opt.value:"", label=opt?opt.textContent:"";
   if(/selLang$/.test(id)) return glyph(label);
@@ -22566,6 +22607,55 @@ function openPop(r){
       pop.appendChild(row);
     });
   });
+  /* Both ids, spelled out. The wizard mirrors this control as a clone with
+     id "wiz_"+pair[0] (buildWizGenRow), and the hint is wanted there too — a
+     studio picking a provider mid-workflow is exactly who needs to know why
+     RunningHub is absent. It was originally reached by an end-anchored
+     /selProvider$/, which covered the clone only by accident; naming both is
+     the same behaviour stated on purpose. What the accident did NOT handle is
+     the tap: see the wizard dismissal in the click handler below. */
+  if(sel.id === "selProvider" || sel.id === "wiz_selProvider"){
+    var locks=providerLocks();
+    if(locks.length){
+      var lh=document.createElement("div");
+      lh.className="hsl-hd nolat";
+      lh.textContent=L9({my:"Key ထည့်ရင် ရနိုင်တာ",en:"Available once you add a key",shn:"သႂ်ႇ key ယဝ်ႉ တေလႆႈ",kac:"Key bang yang lu na",th:"ใช้ได้เมื่อใส่คีย์",zh:"添加密钥后可用",vi:"Có sau khi thêm key",id:"Tersedia setelah menambah key",ms:"Tersedia selepas tambah key"});
+      pop.appendChild(lh);
+      locks.forEach(function(lk){
+        var lr=document.createElement("div");
+        lr.className="hsl-op lock";
+        /* role=option + aria-disabled, not a bare div: the row IS one of the
+           choices, it just is not choosable yet. Assistive tech says so, and
+           it stays reachable by arrow key — a hint nobody can reach helps
+           nobody. */
+        lr.setAttribute("role","option");
+        lr.setAttribute("aria-selected","false");
+        lr.setAttribute("aria-disabled","true");
+        lr.style.animationDelay=Math.min(ri*14,180)+"ms"; ri++;
+        var why=L9({my:"Key မထည့်ရသေး — Setup မှာ ထည့်ပါ",en:"Key not set — add it in Setup",shn:"ပႆႇသႂ်ႇ key — သႂ်ႇတီႈ Setup",kac:"Key rai n bang shi — Setup hta bang u",th:"ยังไม่ใส่คีย์ — เพิ่มใน Setup",zh:"未设置密钥 — 请在 Setup 中添加",vi:"Chưa có key — thêm trong Setup",id:"Key belum diisi — tambahkan di Setup",ms:"Key belum ditetapkan — tambah di Setup"});
+        if(lk.n) why += " · " + L9({my:"model "+lk.n+" ခု",en:lk.n+" more models",shn:"model "+lk.n+" ဢၼ်",kac:"model "+lk.n+" hpe",th:"อีก "+lk.n+" โมเดล",zh:"另有 "+lk.n+" 个模型",vi:"thêm "+lk.n+" model",id:lk.n+" model lagi",ms:lk.n+" model lagi"});
+        lr.innerHTML=iconFor(sel,{value:lk.v,textContent:lk.name})
+          +'<span class="hsl-m"><span class="hsl-t">'+esc(lk.name)+'</span><span class="hsl-s">'+esc(why)+'</span></span>';
+        lr.addEventListener("click",function(){
+          closePop();
+          /* When this row is tapped inside the wizard, the destination is
+             underneath a position:fixed z-index:70 overlay that also holds
+             body.overflow hidden — so navigating without dismissing it first
+             is an invisible no-op that moves the page behind the user's back.
+             Dismiss through the wizard's own X, which is closeWizard() and
+             unwinds the class, the overflow lock, _wizOnPick/_wizCurrentId and
+             modalClosed("wiz") together. Outside the wizard this is null and
+             nothing changes. */
+          var wx=document.querySelector("#wiz.on .wiz-x");
+          if(wx) try{ wx.click(); }catch(e){}
+          try{ switchPage("pgHome"); }catch(e){}
+          try{ if(typeof setupJump==="function") setupJump(lk.card); }catch(e){}
+        });
+        rows.push(lr);
+        pop.appendChild(lr);
+      });
+    }
+  }
   document.body.appendChild(scrim); document.body.appendChild(pop);
   var rect=r.btn.getBoundingClientRect();
   pop.style.minWidth=Math.max(220,Math.min(rect.width,336))+"px";
