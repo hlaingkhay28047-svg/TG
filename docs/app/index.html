@@ -785,6 +785,11 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stPendChips::-webkit-scrollbar{display:none}
 #stPendChips:empty{display:none}
 #stPendChips .chip{flex:0 0 auto;white-space:nowrap;min-height:36px;padding:4px 10px}
+/* v5.25 — declared after (and same specificity as) the pointer:coarse 44px
+   finger-size rule above, so it silently won every touch device regardless
+   of that rule's intent: these queued-edit chips (with a small nested "✕
+   remove" glyph and no separate hit area) rendered at 36px on real phones. */
+@media (pointer:coarse){#stPendChips .chip{min-height:44px}}
 /* gen-bar diet (MUST #2): compact one-line rows, empty status collapses */
 #stGenBar .gen{width:auto;flex:1;min-width:138px;margin-top:0;padding:9px 12px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #stGenBar .row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
@@ -1996,7 +2001,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     </div>
     <div class="row" style="margin-top:10px">
       <a class="btn grow" href="../" style="text-align:center" id="siteLink"></a>
-      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.20.0.ccx" download style="text-align:center">CCX Download (v6.20.0)</a>
+      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.21.0.ccx" download style="text-align:center">CCX Download (v6.21.0)</a>
     </div>
   </section>
 
@@ -4986,6 +4991,10 @@ async function rhJobClaim(job){
       state.vidHist.unshift({ url:results[i].url, prompt:job.prompt||"", resolution:"", duration:"", ts:job.ts||Date.now() });
       while(state.vidHist.length>6) state.vidHist.pop();
       n++;
+    } else if(job.kind==="video-upscale"){
+      state.vuHist.unshift({ url:results[i].url, resolution:"", ts:job.ts||Date.now() });
+      while(state.vuHist.length>6) state.vuHist.pop();
+      n++;
     } else {
       try{
         var du=await rhDownloadAsDataUrl(results[i].url);
@@ -5345,7 +5354,12 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
   if(!videoDataUrl){ var e0=new Error("no-video"); e0.code="no-video"; throw e0; }
   var videoUrl = await rhV2UploadVideo(apiKey, videoDataUrl, signal);
   var taskId = await rhV2SubmitVideoUpscale(apiKey, videoUrl, targetResolution, signal);
-  var final = await rhPollTracked(apiKey, taskId, {kind:"video", label:RH_VU_APIPATH, prompt:"video upscale "+(targetResolution||"")}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
+  /* v5.25 — was kind:"video", identical to rhGenerateVideo's tag; a job
+     recovered after a tab kill/reload (rhJobClaim) couldn't tell the two
+     apart and always wrote the result into vidHist, so a recovered upscale
+     landed on pgVideo's history strip instead of pgVideoUp's — the user
+     couldn't find it and could end up re-paying for the same upscale. */
+  var final = await rhPollTracked(apiKey, taskId, {kind:"video-upscale", label:RH_VU_APIPATH, prompt:"video upscale "+(targetResolution||"")}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -5451,7 +5465,20 @@ function rhFriendly(e){
   if(code==="no-image") return L9({my:"ဒီ model အတွက် ပုံ တစ်ပုံ ထည့်ပါ — text prompt တစ်ခုတည်းနဲ့ မလုံလောက်ပါ",en:"This model needs an image — a text prompt alone isn't enough",shn:"Model ၼႆႉလူဝ်ႇၶႅပ်းႁၢင်ႈ — prompt ၵူၺ်းဢမ်ႇပဵင်း",kac:"Ndai model gaw sumla ra ai — prompt sha n law ai",th:"โมเดลนี้ต้องการรูปภาพ — พิมพ์ prompt อย่างเดียวไม่พอ",zh:"此模型需要一张图片 — 仅有文字提示词是不够的",vi:"Model này cần một ảnh — chỉ có prompt văn bản là không đủ",id:"Model ini butuh gambar — prompt teks saja tidak cukup",ms:"Model ini memerlukan imej — prompt teks sahaja tidak mencukupi"});
   if(code==="no-video") return L9({my:"အရင် ဗီဒီယို ဖိုင် တစ်ခု ရွေးပါ",en:"Pick a video file first",shn:"ထၢႆႇဝီဒီရူဝ်ႈဢွၼ်တၢင်း",kac:"Video langai n tawn shangun u",th:"เลือกไฟล์วิดีโอก่อน",zh:"请先选择一个视频文件",vi:"Hãy chọn một tệp video trước",id:"Pilih file video terlebih dahulu",ms:"Pilih fail video dahulu"});
   if(code==="cancelled") return L9({my:"ရပ်လိုက်ပါပြီ",en:"Cancelled",shn:"ၵိုတ်းယဝ်ႉ",kac:"Hkum tawn kau sai",th:"ยกเลิกแล้ว",zh:"已取消",vi:"Đã hủy",id:"Dibatalkan",ms:"Dibatalkan"});
-  if(code==="failed") return L9({my:"RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"The RunningHub task failed — try a different prompt/photo",shn:"RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",kac:"RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",th:"งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",zh:"RunningHub 任务失败 — 请更换 prompt 或图片",vi:"Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",id:"Tugas RunningHub gagal — coba prompt/foto lain",ms:"Tugas RunningHub gagal — cuba prompt/foto lain"});
+  if(code==="failed"){
+    /* v5.25 — this used to return a generic message and discard e.body (the
+       full FAILED-job JSON RunningHub returns), so a job rejected for a
+       specific, actionable reason (moderation, a bad reference frame, a
+       dead pipeline node) always read the same "try a different prompt/
+       photo" — the user could burn another paid attempt guessing which
+       part was rejected instead of fixing the actual cause. */
+    var failMsg="";
+    try{
+      var fb=e && e.body;
+      if(fb) failMsg=String(fb.msg||fb.message||(fb.error&&(fb.error.message||fb.error))||fb.failReason||fb.reason||fb.code||"").slice(0,120);
+    }catch(fx){}
+    return L9({my:"RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",en:"The RunningHub task failed — try a different prompt/photo",shn:"RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",kac:"RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",th:"งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",zh:"RunningHub 任务失败 — 请更换 prompt 或图片",vi:"Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",id:"Tugas RunningHub gagal — coba prompt/foto lain",ms:"Tugas RunningHub gagal — cuba prompt/foto lain"})+(failMsg?" · "+failMsg:"");
+  }
   if(status===429) return L9({my:"RunningHub မှာ လူများနေပါတယ် — ခဏနေ ပြန်စမ်းပါ",en:"RunningHub is busy — wait a moment and try again",shn:"RunningHub ၵိုၼ်းယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၸၢမ်းၶိုၼ်း",kac:"RunningHub masha law nga ai — jahkring la nna bai chyam u",th:"RunningHub กำลังคับคั่ง — รอสักครู่แล้วลองใหม่",zh:"RunningHub 正忙 — 稍等片刻后重试",vi:"RunningHub đang bận — đợi chút rồi thử lại",id:"RunningHub sedang sibuk — tunggu sebentar lalu coba lagi",ms:"RunningHub sibuk — tunggu sebentar dan cuba lagi"});
   /* v4.41: an HTTP-200 error payload used to collapse into "error (200)" —
      surface what the server actually said (bad param, offline node, wrong
@@ -6679,7 +6706,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   function openWizard(w){
     recentPush(w.id); renderFavRecent();
     wiz.w=w; wiz.step=1;
-    wiz.token++; wiz.busy=false; wiz.result=null; wiz.error="";
+    wiz.token++; wiz.busy=false; wiz.result=null; wiz.error=""; window._wizBusy=false;
     wiz.prompt=w.prompt+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
     document.body.style.overflow="hidden";
     window._wizOnPick=renderWiz;
@@ -6704,7 +6731,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     $("tapNote").textContent=w.title+" · Smart Workflow";
     saveState();
     var token=wiz.token;
-    wiz.step=4; wiz.busy=true; wiz.result=null; wiz.error="";
+    wiz.step=4; wiz.busy=true; wiz.result=null; wiz.error=""; window._wizBusy=true;
     renderWiz(); $("wiz").scrollTop=0;
     /* v4.54 — the wizard is a modal: #selRatio is not visible or reachable from
        inside it, so any value there is a leftover from an earlier Create-page
@@ -6721,7 +6748,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     /* wizard was closed or re-opened for another workflow meanwhile — this
        run's result already lives on the Create page + Gallery, stop here */
     if(token!==wiz.token || $("wiz").className.indexOf("on")<0) return;
-    wiz.busy=false;
+    wiz.busy=false; window._wizBusy=false;
     if(state.hist[0]!==beforeFirst){
       wiz.result=state.hist[0];
     }else{
@@ -8837,6 +8864,16 @@ function rsRenderBatchTray(){
 }
 async function rsRunBatch(files){
   if(rsBusy || !files.length) return;
+  /* v5.25 — rsBatchResults intentionally keeps EVERY result WITHIN one batch
+     run (see the comment below), but was never reset BETWEEN runs, so a
+     long session running several batches (a studio's normal daily workflow)
+     accumulated every prior run's full-resolution base64 outputs + File
+     refs indefinitely — 100+ photos across a few batches is well over
+     100MB retained for no reason, unlike every other history array in the
+     app (all capped or IndexedDB-backed). Starting each run fresh keeps
+     the per-run "show everything" behavior intact. */
+  rsBatchResults=[];
+  rsRenderBatchTray();
   rsStop=false;
   rsLastPresetKey=null;
   var total=files.length, okN=0;
@@ -10008,7 +10045,13 @@ document.addEventListener("visibilitychange",function(){
 /* PT.photos is deliberately session-only (too heavy to persist) — leaving
    mid-run silently discards the batch AND any un-downloaded results */
 window.addEventListener("beforeunload",function(e){
-  if(PT.busy){ e.preventDefault(); e.returnValue=""; }
+  /* v5.25 — this only ever checked PT.busy (Path batch), so refreshing mid-
+     Smart-Workflow-generate, mid-Studio-bake, or mid-Video/T2I-generate lost
+     the picked photos AND any already-spent paid API call with zero warning.
+     Every in-flight paid/generate path is covered now. */
+  if(PT.busy || window._wizBusy || ST.busy || state.genAbort || state.vidAbort || state.vuAbort || state.t2iAbort){
+    e.preventDefault(); e.returnValue="";
+  }
 });
 function ptEta(){
   var tier=state.pt.tier;
@@ -10634,8 +10677,17 @@ function ptOpenSheet(i){
 }
 function ptCloseSheet(){
   PT.sheetIdx=-1;
-  $("ptSheet").className="pt-sheet";
-  $("ptSheet").setAttribute("aria-hidden","true");
+  /* v5.25 — aria-hidden="true" was being set while focus could still be
+     inside this sheet (its Prev/Next/Close buttons and compare slider are
+     all real focusable elements) — the classic "aria-hidden on a focused
+     element" a11y bug, which screen readers either ignore or start
+     reporting broken/silent navigation from. Blur out first. */
+  var sheetEl=$("ptSheet");
+  if(sheetEl && document.activeElement && sheetEl.contains(document.activeElement)){
+    try{ document.activeElement.blur(); }catch(e){}
+  }
+  sheetEl.className="pt-sheet";
+  sheetEl.setAttribute("aria-hidden","true");
 }
 function ptCmpLayout(){
   var pct=parseInt($("ptCmpRange").value,10);
@@ -16142,11 +16194,22 @@ function stApplyPreset(p){
        while a preset is live made "tap again" return to preset A instead of to
        the hand-built look, which is the thing worth getting back to. */
     if(!state.st.preset||!ST.presetSnap) ST.presetSnap=stSnapshot();
-    if(p.t1) for(var k in p.t1) state.st.t1[k]=p.t1[k];
-    if(p.t2) for(var k2 in p.t2) state.st.t2[k2]=p.t2[k2];
-    if(p.sv) for(var k3 in p.sv) state.st.v[k3]=p.sv[k3];
+    /* v5.25 — this used to only overlay p.t1/p.t2/p.sv's OWN keys onto
+       whatever was already there, so a value a PREVIOUS preset set (or a
+       Tier-3 AI-queue entry a previous preset's feats turned on) survived
+       into a preset that never mentions it — reaching not just the canvas
+       but the composed GENERATE prompt. Full-reset-then-overlay, matching
+       stApplyRecipe's already-correct pattern below. */
+    var pd1=stDefT1(); for(var k in pd1) state.st.t1[k]=(p.t1&&typeof p.t1[k]==="number")?p.t1[k]:pd1[k];
+    var pd2=stDefT2(); for(var k2 in pd2) state.st.t2[k2]=(k2==="finish")?((p.t2&&(p.t2.finish===null||typeof p.t2.finish==="string"))?p.t2.finish:null):((p.t2&&+p.t2[k2])||0);
+    state.st.v=p.sv?JSON.parse(JSON.stringify(p.sv)):{};
     state.st.preset=p.key;
-    (p.feats||[]).forEach(stSync);
+    /* re-sync EVERY known feature (not just this preset's own p.feats) against
+       the freshly-replaced state.st.v — stSync() is idempotent, adding a pend
+       entry only when f.calc() reads live values and removing one when it
+       doesn't, so this correctly clears any feature a PREVIOUS preset queued
+       that the new preset doesn't re-declare. */
+    Object.keys(ST.feats).forEach(stSync);
     try{
       if(!localStorage.getItem("hnk_st_preset_hint")){
         localStorage.setItem("hnk_st_preset_hint","1");
@@ -17274,7 +17337,7 @@ $("btnStGen").onclick=async function(){
 /* ---- MY RECIPES (Evoto presets/batch heritage): snapshot → localStorage → one-tap re-apply ---- */
 var ST_RECIPE_LS="hnk_st_recipes";
 function stRecipes(){ try{ var a=JSON.parse(localStorage.getItem(ST_RECIPE_LS)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-function stRecipesSave(a){ try{ localStorage.setItem(ST_RECIPE_LS,JSON.stringify(a.slice(0,12))); }catch(e){} }
+function stRecipesSave(a){ try{ localStorage.setItem(ST_RECIPE_LS,JSON.stringify(a.slice(0,12))); return true; }catch(e){ return false; } }
 function stSaveRecipe(){
   var a=stRecipes();
   /* v4.45 — name it at save time ("Bride warm", "Grandma soft"), not "Look 4"
@@ -17287,11 +17350,20 @@ function stSaveRecipe(){
     v:JSON.parse(JSON.stringify(state.st.v)), pend:JSON.parse(JSON.stringify(state.st.pend)) });
   var trimmed=a.length>12;
   if(trimmed) a.length=12; /* cap 12 */
-  stRecipesSave(a);
+  var saved=stRecipesSave(a);
   stRenderRecipes();
-  toast(L9({my:"Recipe သိမ်းပြီး ✓ — နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးလို့ရပြီ",en:"Recipe saved ✓ — reapply it on any photo with one tap"})
-    +(trimmed?" — "+L9({my:"၁၂ ခုပြည့်လို့ အဟောင်းဆုံးကို ဖယ်လိုက်ပါပြီ",en:"list was full, removed the oldest"}):""),"ok");
-  return true;
+  /* v5.25 — this used to always toast success, even when stRecipesSave()'s
+     localStorage.setItem() had silently failed (quota exceeded — a real
+     case on mobile Safari private browsing after heavy use). A false
+     "Saved ✓" is worse than no confirmation: the user believes the look is
+     recoverable later and it never was. */
+  if(saved){
+    toast(L9({my:"Recipe သိမ်းပြီး ✓ — နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးလို့ရပြီ",en:"Recipe saved ✓ — reapply it on any photo with one tap"})
+      +(trimmed?" — "+L9({my:"၁၂ ခုပြည့်လို့ အဟောင်းဆုံးကို ဖယ်လိုက်ပါပြီ",en:"list was full, removed the oldest"}):""),"ok");
+  } else {
+    toast(L9({my:"Recipe သိမ်းလို့ မရပါ — device ရဲ့ storage ပြည့်နေချင်နေပါတယ်",en:"Couldn't save the recipe — your device's storage may be full",shn:"ဢမ်ႇၸၢင်ႈသိမ်းလႆႈ — storage ၸဝ်ႈၵဝ်ႇတဵမ်ယူႇၶႃႈ",kac:"Ndai recipe hpe da n mai ai — na device a storage law taw sai zawn re",th:"บันทึกไม่ได้ — พื้นที่เก็บข้อมูลอาจเต็ม",zh:"无法保存 — 设备存储空间可能已满",vi:"Không lưu được — bộ nhớ thiết bị có thể đã đầy",id:"Tidak bisa menyimpan — penyimpanan perangkat mungkin penuh",ms:"Tidak dapat menyimpan — storan peranti mungkin penuh"}),"err");
+  }
+  return saved;
 }
 /* v4.45 — pinned "house recipe": auto-applies to every fresh photo. Pinned by
    stable id (not index) so new saves shifting the list never move the pin. */
@@ -20100,7 +20172,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.24.0";
+var APP_VER="5.25.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -21821,6 +21893,19 @@ $("vuFilePick").onchange = function(){
   var looksMp4 = (f.type && f.type.toLowerCase()==="video/mp4") || /\.mp4$/i.test(f.name||"");
   if(!looksMp4){
     toast(L9({my:"MP4 ဖိုင်ပဲ ရပါတယ် — ရွေးထားတဲ့ ဖိုင်က MP4 မဟုတ်ပုံရပါတယ်",en:"MP4 only — the file you picked doesn't look like an MP4",shn:"လႆႈသမ်ႉ MP4 ၵူၺ်း — ဢၼ်ထၢႆႇဝႆႉၼၼ်ႉ ဢမ်ႇၸႂ်ႈ MP4",kac:"MP4 sha ra ai — tawn ai file gaw MP4 n rai ai zawn re",th:"รับเฉพาะ MP4 — ไฟล์ที่เลือกดูเหมือนจะไม่ใช่ MP4",zh:"仅支持 MP4 — 你选择的文件看起来不是 MP4",vi:"Chỉ hỗ trợ MP4 — tệp bạn chọn có vẻ không phải MP4",id:"Hanya MP4 — file yang dipilih sepertinya bukan MP4",ms:"MP4 sahaja — fail yang dipilih nampaknya bukan MP4"}), "err");
+    return;
+  }
+  /* v5.25 — unlike every photo-pick path, this had no size guard before
+     handing the file to readAsDataURL(), which builds an in-memory base64
+     string ~1.37x the file's bytes. A photo is capped by downscale(); a
+     video can't be client-side downscaled, but an unbounded pick (a phone's
+     native multi-hundred-MB/multi-GB 4K export) can still exhaust tab
+     memory and silently crash/reload, discarding the pending upload with
+     no message. 200MB covers a real short upscale-candidate clip with
+     headroom while rejecting the pathological case up front. */
+  var VU_MAX_BYTES=200*1024*1024;
+  if(f.size>VU_MAX_BYTES){
+    toast(L9({my:"ဗီဒီယိုဖိုင် ကြီးလွန်းပါတယ် (မှာ 200MB အထိပဲ လက်ခံပါတယ်) — ချုံ့ပြီး ပြန်တင်ကြည့်ပါ",en:"That video is too large (200MB max) — trim or compress it and try again",shn:"ဝီးတီးဢူဝ်ႈၼႆႉယႂ်ႇလွင်ႈပိူဝ်ႈ (ထိုင် 200MB ၵူၺ်းလႆႈ) — ယွမ်းသေၸၢမ်းၶိုၼ်း",kac:"Ndai video gaw kaba law ai (200MB grau n mai ai) — hpye nna bai chyam u",th:"วิดีโอนี้ใหญ่เกินไป (สูงสุด 200MB) — ตัดหรือบีบอัดแล้วลองใหม่",zh:"该视频过大（最大 200MB）— 请压缩后重试",vi:"Video này quá lớn (tối đa 200MB) — hãy cắt hoặc nén rồi thử lại",id:"Video ini terlalu besar (maks 200MB) — potong atau kompres lalu coba lagi",ms:"Video ini terlalu besar (maksimum 200MB) — potong atau mampatkan dan cuba lagi"}), "err");
     return;
   }
   var rd=new FileReader();
