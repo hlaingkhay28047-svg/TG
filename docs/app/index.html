@@ -539,6 +539,7 @@ html,body{overscroll-behavior-y:none}
    reuse the existing gold hover language */
 button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.card h2{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 .btn:active{border-color:var(--line);transform:scale(.985)}
+.btn[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-hi)}
 .btn-gold:active{background:var(--gold-hi)}
 .chip:active,.subtab:active{border-color:var(--gold)}
 .wfmini:active,.wf-card:active{border-color:var(--gold)}
@@ -3537,6 +3538,84 @@ function applyLang(){
   /* v4.58 — same defensiveness: renderSpend reads state.rhKey and the ledger,
      neither of which exists on the first applyLang() pass */
   try { if(typeof renderSpend==="function") renderSpend(); } catch(e){}
+  /* v5.26 — a11y: this app had exactly ONE <label> element in 22k lines, so
+     every text/password/search field was named only by its placeholder. A
+     placeholder is not an accessible name: screen readers may skip it, and
+     the Account fields carry no placeholder at all in the HTML (JS sets them
+     a moment later), so those announced nothing whatsoever. Mirroring the
+     placeholder into aria-label at the END of applyLang() names every field
+     in the CURRENT language, re-runs on every language switch, and picks up
+     any field added later without needing a per-input edit. */
+  try { syncInputLabels(); } catch(e){}
+}
+/* ============================================================
+   v5.26 a11y — shared modal focus management.
+   Every full-screen overlay in this app (wizard, onboarding, the two Path
+   sheets) was display-only: opening one never moved focus into it, Tab kept
+   walking the page BEHIND it, and closing one dropped focus to <body> so a
+   keyboard user was thrown back to the top of the page. These two calls fix
+   all of that in one place — modalOpened() on show, modalClosed() on hide.
+   ============================================================ */
+var _modalPrevFocus = {};
+var _modalTrapFn = null;
+var _modalTrapRoot = null;
+
+function _modalFocusables(root){
+  var sel = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),'
+          + 'textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  return Array.prototype.filter.call(root.querySelectorAll(sel), function(el){
+    /* getClientRects beats offsetParent here: these overlays are position:fixed,
+       for which offsetParent is null even when perfectly visible. */
+    return el.getClientRects().length > 0;
+  });
+}
+
+function modalOpened(rootId){
+  var root = $(rootId); if(!root) return;
+  _modalPrevFocus[rootId] = document.activeElement;
+  var list = _modalFocusables(root);
+  var first = root.querySelector(".wiz-x") || list[0];
+  if(first){ try{ first.focus(); }catch(e){} }
+  if(_modalTrapFn) document.removeEventListener("keydown", _modalTrapFn, true);
+  _modalTrapRoot = root;
+  _modalTrapFn = function(e){
+    if(e.key !== "Tab") return;
+    var f = _modalFocusables(_modalTrapRoot);
+    if(!f.length) return;
+    var a = f[0], z = f[f.length-1];
+    if(!_modalTrapRoot.contains(document.activeElement)){ e.preventDefault(); a.focus(); return; }
+    if(e.shiftKey && document.activeElement === a){ e.preventDefault(); z.focus(); }
+    else if(!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
+  };
+  document.addEventListener("keydown", _modalTrapFn, true);
+}
+
+function modalClosed(rootId){
+  if(_modalTrapFn){ document.removeEventListener("keydown", _modalTrapFn, true); _modalTrapFn=null; _modalTrapRoot=null; }
+  var root = $(rootId);
+  /* never leave focus inside a subtree that is about to be aria-hidden */
+  if(root && document.activeElement && root.contains(document.activeElement)){
+    try{ document.activeElement.blur(); }catch(e){}
+  }
+  var prev = _modalPrevFocus[rootId];
+  _modalPrevFocus[rootId] = null;
+  if(prev && prev.getClientRects && document.contains(prev) && prev.getClientRects().length){
+    try{ prev.focus(); }catch(e){}
+  }
+}
+
+/* Give every placeholder-only field a real accessible name. Never overwrites
+   an author-supplied aria-label, so a hand-tuned one always wins. */
+function syncInputLabels(root){
+  var scope = root || document;
+  var nodes = scope.querySelectorAll("input[placeholder], textarea[placeholder]");
+  for (var i=0; i<nodes.length; i++){
+    var el = nodes[i];
+    if (el.getAttribute("aria-label")) continue;
+    if (el.getAttribute("aria-labelledby")) continue;
+    var ph = (el.getAttribute("placeholder")||"").trim();
+    if (ph) el.setAttribute("aria-label", ph);
+  }
 }
 applyLang();
 var D = JSON.parse(document.getElementById("hnkData").textContent);
@@ -3798,7 +3877,10 @@ function switchPage(id, fromPop){
   if(bar){
     var bs=bar.children;
     for(var i=0;i<bs.length;i++){
-      bs[i].className="tabb"+((grp && TOPGROUPS[i].id===grp.id)?" on":"");
+      var on=(grp && TOPGROUPS[i].id===grp.id);
+      bs[i].className="tabb"+(on?" on":"");
+      if(on) bs[i].setAttribute("aria-current","page");
+      else bs[i].removeAttribute("aria-current");
     }
   }
   /* Setup is outside the groups — the header gear is its "active tab" */
@@ -4244,7 +4326,11 @@ $("galEmptyGo").onclick=function(){ switchPage("pgWf"); };
   var bar=$("tabbar");
   TOPGROUPS.forEach(function(g){
     var b=document.createElement("button");
-    b.className="tabb"+(g.pages.indexOf(curPage)>=0?" on":"");
+    var isOn=g.pages.indexOf(curPage)>=0;
+    b.className="tabb"+(isOn?" on":"");
+    /* v5.26 a11y — the active tab was signalled by colour alone, so a screen
+       reader read every tab identically with no hint which page you're on. */
+    if(isOn) b.setAttribute("aria-current","page");
     var ic=document.createElement("span"); ic.className="ic"; ic.innerHTML=icn(g.ic,"ic-tab");
     b.appendChild(ic);
     b.appendChild(document.createTextNode(g.label));
@@ -4302,7 +4388,24 @@ try { state.key = localStorage.getItem(LS_KEY) || ""; } catch(e){}
    status into a toast, which fired a pointless "key saved ✓" toast on every
    launch (pgHome is hidden at boot) */
 if (state.key) { $("apiKey").value = state.key; var _sk0=$("stKey"); if(_sk0){ _sk0.textContent=t("st_key_saved"); _sk0.className="status ok"; } }
-$("btnShowKey").onclick = function(){ var k=$("apiKey"); k.type = k.type==="password"?"text":"password"; };
+/* v5.26 a11y — one shared reveal toggle for the three API-key fields. Each
+   used to only flip input.type, exposing no state at all: a screen-reader
+   user got no confirmation the key had actually revealed, and the icon-only
+   RunningHub/OpenAI buttons announced nothing either way. Modelled as a
+   real toggle button — the name stays the control's purpose ("Show") in
+   every language and aria-pressed carries the state, per the ARIA toggle
+   pattern, so no name-changes-with-state confusion. */
+function wireKeyReveal(btnId, inputId){
+  var b=$(btnId), k=$(inputId);
+  if(!b||!k) return;
+  function paint(){
+    b.setAttribute("aria-pressed", k.type==="text"?"true":"false");
+    if(!b.getAttribute("aria-label")) b.setAttribute("aria-label", t("btn_show"));
+  }
+  b.onclick=function(){ k.type = k.type==="password"?"text":"password"; paint(); };
+  paint();
+}
+wireKeyReveal("btnShowKey","apiKey");
 $("btnSaveKey").onclick = async function(){
   var k = $("apiKey").value.trim();
   if (!k) { setSt("stKey",t("st_needkey"),"err"); return; }
@@ -5499,7 +5602,7 @@ $("rhIntro").textContent = L9({my:"RunningHub Enterprise-Shared key ကို pa
 $("btnShowRhKey").innerHTML = icn("i-eye");
 $("btnShowRhKey").setAttribute("aria-label", t("btn_show"));
 $("btnSaveRhKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
-$("btnShowRhKey").onclick = function(){ var k=$("rhKey"); k.type = k.type==="password"?"text":"password"; };
+wireKeyReveal("btnShowRhKey","rhKey");
 $("btnSaveRhKey").onclick = async function(){
   var k=$("rhKey").value.trim();
   if(!k){ setSt("stRhKey", L9({my:"key ထည့်ပါ",en:"Enter a key",shn:"သႂ်ႇ key",kac:"key jaw u",th:"กรอก key",zh:"请输入 key",vi:"Nhập key",ms:"Masukkan key",id:"Masukkan key"}), "err"); return; }
@@ -5970,7 +6073,7 @@ window._setOaIntro(116);
 $("btnShowOaKey").innerHTML = icn("i-eye");
 $("btnShowOaKey").setAttribute("aria-label", t("btn_show"));
 $("btnSaveOaKey").textContent = L9({my:"Save & Verify",en:"Save & Verify",shn:"Save & Verify",kac:"Save & Verify",th:"บันทึกและยืนยัน",zh:"保存并验证",vi:"Lưu & Xác minh",id:"Simpan & Verifikasi",ms:"Simpan & Sahkan"});
-$("btnShowOaKey").onclick = function(){ var k=$("oaKey"); k.type = k.type==="password"?"text":"password"; };
+wireKeyReveal("btnShowOaKey","oaKey");
 $("btnSaveOaKey").onclick = async function(){
   var k=$("oaKey").value.trim();
   if(!k){ setSt("stOaKey", L9({my:"key ထည့်ပါ",en:"Enter a key",shn:"သႂ်ႇ key",kac:"key jaw u",th:"กรอก key",zh:"请输入 key",vi:"Nhập key",id:"Masukkan key",ms:"Masukkan key"}), "err"); return; }
@@ -6678,7 +6781,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     for (var i=0;i<wiz.w.req.length;i++) if(!state.refs[i]) return false;
     return true;
   }
-  function closeWizard(){ $("wiz").className="wiz"; document.body.style.overflow=""; window._wizOnPick=null; window._wizCurrentId=null; }
+  function closeWizard(){ $("wiz").className="wiz"; document.body.style.overflow=""; window._wizOnPick=null; window._wizCurrentId=null; modalClosed("wiz"); }
   /* generic 1-2-3-4 guide for preset-derived workflows (no hand-written steps) */
   var GS={"wed": {"my": ["IMAGE 1 မှာ wedding ဓာတ်ပုံ (စုံတွဲ/သတို့သမီး) တင်ပါ", "ဒီ one-tap က: {T} — ဂါဝန် design နဲ့ လူတွေ ဘယ်တော့မှ မပြောင်းဘူး", "“Start” နှိပ်ပါ — prompt အစစ် ရောက်လာမယ်၊ ထပ်ဖြည့်ချင်တာ ရေးလို့ရတယ်", "GENERATE နှိပ်ပါ — scene အပိုင်းပဲ ပြောင်းမယ်၊ ကျန်တာ အတိအကျ ကျန်မယ်"], "en": ["Add your wedding photo as IMAGE 1 (couple or bride)", "This one-tap applies: {T} — gown design and people never change", "Tap Start — the exact panel prompt loads; add tweaks if you like", "Tap GENERATE — only the scene element changes, everything else stays"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈ wedding တီႈ IMAGE 1", "One-tap ၼႆႉ: {T} — ဂၢဝ်ႇ design လႄႈ ၵူၼ်း ဢမ်ႇလႅၵ်ႈလၢႆႈ", "ၼဵၵ်း Start — prompt တႄႉ တေမႃး", "ၼဵၵ်း GENERATE — scene ၵူၺ်း လႅၵ်ႈ၊ တၢင်ႇၸိူဝ်း ယူႇမိူၼ်ၵဝ်ႇ"], "kac": ["Wedding sumla hpe IMAGE 1 hta bang u", "Ndai one-tap gaw: {T} — gown design hte masha ni galoi n galai ai", "Start dip u — prompt teng du na", "GENERATE dip u — scene sha galai na, kaga ni raw nga na"], "th": ["ใส่รูปแต่งงานเป็น IMAGE 1 (คู่รักหรือเจ้าสาว)", "One-tap นี้ทำ: {T} — ดีไซน์ชุดและตัวบุคคลไม่เปลี่ยนแน่นอน", "กด Start — prompt จริงจากแผงจะโหลดมา เพิ่มเติมได้", "กด GENERATE — เปลี่ยนเฉพาะส่วนฉาก ที่เหลือคงเดิมทุกพิกเซล"], "zh": ["把婚纱照片添加为 IMAGE 1（情侣或新娘）", "此 One-Tap 执行：{T} — 礼服设计与人物绝不改变", "点 Start — 加载面板的真实 prompt，可自行补充", "点 GENERATE — 只改变场景元素，其余保持原样"], "vi": ["Thêm ảnh cưới làm IMAGE 1 (cặp đôi hoặc cô dâu)", "One-tap này áp dụng: {T} — thiết kế váy và con người không bao giờ đổi", "Bấm Start — prompt thật của bảng sẽ tải vào, có thể chỉnh thêm", "Bấm GENERATE — chỉ phần cảnh thay đổi, mọi thứ khác giữ nguyên"], "id": ["Tambahkan foto pernikahan sebagai IMAGE 1 (pasangan atau pengantin)", "One-tap ini menerapkan: {T} — desain gaun dan orang tidak pernah berubah", "Tekan Start — prompt asli panel dimuat; boleh ditambah", "Tekan GENERATE — hanya elemen scene berubah, sisanya tetap"], "ms": ["Tambah foto perkahwinan sebagai IMAGE 1 (pasangan atau pengantin)", "One-tap ini: {T} — reka bentuk gaun dan orang tidak berubah", "Tekan Start — prompt sebenar panel dimuatkan; boleh tambah", "Tekan GENERATE — hanya elemen scene berubah, yang lain kekal"]}, "lg": {"my": ["IMAGE 1 မှာ အလင်းပြန်ထွန်းချင်တဲ့ပုံ တင်ပါ", "ဒီ card က {L} တစ်လုံးတည်း ထွန်းတာ — studio physics အတိုင်း တိကျ", "“Start” နှိပ်ပါ — relight diagram prompt အပြည့် ရောက်လာမယ်", "GENERATE နှိပ်ပါ — အလင်း/အရိပ်/မျက်လုံး catchlight ပြန်ဆောက်မယ်၊ ကျန်တာ မပြောင်းဘူး"], "en": ["Add the photo to relight as IMAGE 1", "This applies only the {L} — physically accurate studio light", "Tap Start — the full relight diagram prompt loads", "Tap GENERATE — lighting, shadows and catchlights rebuild; nothing else changes"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈတီႈ IMAGE 1", "Card ၼႆႉ ထွၼ်ႈ {L} လုၵ်ႈလဵဝ်", "ၼဵၵ်း Start — relight prompt တဵမ်တဵမ် မႃး", "ၼဵၵ်း GENERATE — လႅင်းလႄႈငဝ်း ၵေႃႇသၢင်ႈမႂ်ႇ"], "kac": ["Relight galaw na sumla hpe IMAGE 1 hta bang u", "Ndai gaw {L} langai sha shakut ai — studio physics hte ding ai", "Start dip u — relight prompt hpring tsup du na", "GENERATE dip u — nhtoi hte shingma ni bai gaw na, kaga n galai"], "th": ["ใส่รูปที่ต้องการจัดแสงใหม่เป็น IMAGE 1", "การ์ดนี้เปิดเฉพาะ {L} — แสงสตูดิโอตามหลักฟิสิกส์", "กด Start — prompt แผนผังจัดแสงเต็มรูปแบบจะโหลดมา", "กด GENERATE — แสง เงา และประกายตาถูกสร้างใหม่ ส่วนอื่นคงเดิม"], "zh": ["把要重新打光的照片添加为 IMAGE 1", "此卡只启用 {L} — 物理精确的棚拍灯光", "点 Start — 完整的布光图 prompt 加载", "点 GENERATE — 重建光线、阴影和眼神光，其余不变"], "vi": ["Thêm ảnh cần đánh sáng lại làm IMAGE 1", "Thẻ này chỉ bật {L} — ánh sáng studio chuẩn vật lý", "Bấm Start — prompt sơ đồ ánh sáng đầy đủ tải vào", "Bấm GENERATE — ánh sáng, bóng và catchlight dựng lại; phần khác giữ nguyên"], "id": ["Tambahkan foto yang mau dipencahayaan ulang sebagai IMAGE 1", "Kartu ini hanya menyalakan {L} — cahaya studio akurat fisika", "Tekan Start — prompt diagram cahaya lengkap dimuat", "Tekan GENERATE — cahaya, bayangan, catchlight dibangun ulang; lainnya tetap"], "ms": ["Tambah foto untuk pencahayaan semula sebagai IMAGE 1", "Kad ini hanya {L} — cahaya studio tepat fizik", "Tekan Start — prompt rajah cahaya penuh dimuatkan", "Tekan GENERATE — cahaya, bayang dan catchlight dibina semula; lain kekal"]}, "mx": {"my": ["IMAGE 1 မှာ ကိုယ့်ပုံ တင်ပါ", "IMAGE 2 မှာ ယူချင်တဲ့ source ပုံ တင်ပါ — {S}", "“Start” နှိပ်ပါ — ရွေးယူမယ့် prompt ရောက်လာမယ်", "GENERATE နှိပ်ပါ — မရွေးထားတဲ့ အပိုင်းတွေ IMAGE 1 အတိုင်း အတိအကျ ကျန်မယ်"], "en": ["Add your photo as IMAGE 1", "Add the source photo as IMAGE 2 — {S}", "Tap Start — the selective-replace prompt loads", "Tap GENERATE — un-ticked aspects stay exactly as IMAGE 1"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇတီႈ IMAGE 1", "သႂ်ႇ source တီႈ IMAGE 2 — {S}", "ၼဵၵ်း Start", "ၼဵၵ်း GENERATE — ဢၼ်ဢမ်ႇလိူၵ်ႈ ယူႇမိူၼ် IMAGE 1"], "kac": ["Nang a sumla hpe IMAGE 1 hta bang u", "Source sumla hpe IMAGE 2 hta bang u — {S}", "Start dip u", "GENERATE dip u — n lata ai ni IMAGE 1 hte maren raw nga na"], "th": ["ใส่รูปของคุณเป็น IMAGE 1", "ใส่รูปต้นทางเป็น IMAGE 2 — {S}", "กด Start — prompt แบบเลือกแทนที่จะโหลดมา", "กด GENERATE — ส่วนที่ไม่เลือกจะเหมือน IMAGE 1 ทุกประการ"], "zh": ["把你的照片添加为 IMAGE 1", "把来源照片添加为 IMAGE 2 — {S}", "点 Start — 选择性替换 prompt 加载", "点 GENERATE — 未勾选的部分与 IMAGE 1 完全一致"], "vi": ["Thêm ảnh của bạn làm IMAGE 1", "Thêm ảnh nguồn làm IMAGE 2 — {S}", "Bấm Start — prompt thay thế chọn lọc tải vào", "Bấm GENERATE — phần không chọn giữ đúng như IMAGE 1"], "id": ["Tambahkan foto Anda sebagai IMAGE 1", "Tambahkan foto sumber sebagai IMAGE 2 — {S}", "Tekan Start — prompt penggantian selektif dimuat", "Tekan GENERATE — bagian yang tidak dipilih tetap seperti IMAGE 1"], "ms": ["Tambah foto anda sebagai IMAGE 1", "Tambah foto sumber sebagai IMAGE 2 — {S}", "Tekan Start — prompt gantian terpilih dimuatkan", "Tekan GENERATE — bahagian tidak dipilih kekal seperti IMAGE 1"]}, "pl": {"my": ["ပုံမလိုဘူး — ဒါက professional text-to-image prompt", "ကိုယ့်လူ identity ထည့်ချင်ရင် IMAGE 1 မှာ ပုံထည့်လို့ရတယ် (optional)", "“Start” နှိပ်ပါ — prompt ရောက်လာမယ်၊ ကြိုက်သလို ပြင်လို့ရတယ်", "GENERATE နှိပ်ပါ — ratio/size ကြိုရွေးရင် လိုချင်တဲ့အတိုင်း အတိအကျရမယ်"], "en": ["No photo needed — this is a professional text-to-image prompt", "Optionally add IMAGE 1 to keep a subject's identity in the scene", "Tap Start — the prompt loads; edit any detail you like", "Tap GENERATE — pick ratio/size first for the exact output you want"], "shn": ["ဢမ်ႇလူဝ်ႇၶႅပ်းႁၢင်ႈ — text-to-image prompt", "ၶႂ်ႈသႂ်ႇတူဝ်ၵဝ်ႇ သႂ်ႇတီႈ IMAGE 1 လႆႈ (optional)", "ၼဵၵ်း Start — prompt မႃး", "ၼဵၵ်း GENERATE"], "kac": ["Sumla n ra ai — ndai gaw text-to-image prompt re", "Nang a masha identity ra yang IMAGE 1 hta sumla bang mai ai (optional)", "Start dip u — prompt du na, ra ai hku lai mai ai", "GENERATE dip u — ratio/size shawng lata yang grau ding ai"], "th": ["ไม่ต้องใช้รูป — นี่คือ prompt แบบ text-to-image ระดับมืออาชีพ", "อยากคงตัวตนของบุคคลก็เพิ่ม IMAGE 1 ได้ (ไม่บังคับ)", "กด Start — prompt โหลดมา แก้ไขได้ตามใจ", "กด GENERATE — เลือก ratio/size ก่อนเพื่อผลลัพธ์ที่ต้องการ"], "zh": ["无需照片 — 这是专业的文生图 prompt", "想保留人物身份可选择添加 IMAGE 1（可选）", "点 Start — prompt 加载，可任意修改", "点 GENERATE — 先选比例/尺寸可得到精确输出"], "vi": ["Không cần ảnh — đây là prompt text-to-image chuyên nghiệp", "Muốn giữ danh tính chủ thể thì thêm IMAGE 1 (tùy chọn)", "Bấm Start — prompt tải vào, chỉnh tùy ý", "Bấm GENERATE — chọn ratio/size trước để có kết quả chính xác"], "id": ["Tidak perlu foto — ini prompt text-to-image profesional", "Ingin identitas subjek tetap? Tambahkan IMAGE 1 (opsional)", "Tekan Start — prompt dimuat, silakan edit", "Tekan GENERATE — pilih ratio/size dulu untuk hasil pas"], "ms": ["Tidak perlu foto — ini prompt text-to-image profesional", "Mahu kekalkan identiti subjek? Tambah IMAGE 1 (pilihan)", "Tekan Start — prompt dimuatkan, boleh edit", "Tekan GENERATE — pilih ratio/size dahulu untuk hasil tepat"]}, "gen": {"my": ["IMAGE 1 မှာ ကိုယ့်ပင်မပုံ တင်ပါ", "{S2}", "“Start” နှိပ်ပါ — prompt အစစ် (guard အပါ) ရောက်လာမယ်", "GENERATE နှိပ်ပါ — ပြောင်းမယ်၊ ကျန်တာ မပြောင်းဘူး"], "en": ["Add your main photo as IMAGE 1", "{S2}", "Tap Start — the panel's real prompt loads (guards included)", "Tap GENERATE — only what the task asks for changes"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈလမ်ႇလွင်ႈတီႈ IMAGE 1", "{S2}", "ၼဵၵ်း Start — prompt တႄႉ (guard ပႃး) မႃး", "ၼဵၵ်း GENERATE — TASK ဝႃႈၼၼ်ႉၵူၺ်း လႅၵ်ႈ"], "kac": ["Nang a madung sumla hpe IMAGE 1 hta bang u", "{S2}", "Start dip u — prompt teng (guard lawm) du na", "GENERATE dip u — tsun ai sha galai na"], "th": ["ใส่รูปหลักของคุณเป็น IMAGE 1", "{S2}", "กด Start — prompt จริงจากแผงจะโหลดมา (มี guard ครบ)", "กด GENERATE — เปลี่ยนเฉพาะที่สั่ง ที่เหลือคงเดิม"], "zh": ["把主照片添加为 IMAGE 1", "{S2}", "点 Start — 面板真实 prompt 加载（含保护指令）", "点 GENERATE — 只改任务要求的部分，其余不变"], "vi": ["Thêm ảnh chính làm IMAGE 1", "{S2}", "Bấm Start — prompt thật của bảng tải vào (kèm guard)", "Bấm GENERATE — chỉ thay đổi phần yêu cầu"], "id": ["Tambahkan foto utama sebagai IMAGE 1", "{S2}", "Tekan Start — prompt asli dimuat (dengan guard)", "Tekan GENERATE — hanya yang diminta yang berubah"], "ms": ["Tambah foto utama sebagai IMAGE 1", "{S2}", "Tekan Start — prompt sebenar dimuatkan (dengan guard)", "Tekan GENERATE — hanya yang diminta berubah"]}, "s2req": {"my": "IMAGE 2 မှာ တင်ပါ — “{R}”", "en": "Add IMAGE 2 — “{R}”", "shn": "သႂ်ႇ IMAGE 2 — “{R}”", "kac": "IMAGE 2 bang u — “{R}”", "th": "ใส่ IMAGE 2 — “{R}”", "zh": "添加 IMAGE 2 — “{R}”", "vi": "Thêm IMAGE 2 — “{R}”", "id": "Tambahkan IMAGE 2 — “{R}”", "ms": "Tambah IMAGE 2 — “{R}”"}, "s2opt": {"my": "IMAGE 2 (မထည့်လည်းရ) — “{R}”", "en": "Optional IMAGE 2 — “{R}”", "shn": "IMAGE 2 (ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ) — “{R}”", "kac": "IMAGE 2 (n bang tim mai ai) — “{R}”", "th": "IMAGE 2 (ไม่บังคับ) — “{R}”", "zh": "IMAGE 2（可选）— “{R}”", "vi": "IMAGE 2 (tùy chọn) — “{R}”", "id": "IMAGE 2 (opsional) — “{R}”", "ms": "IMAGE 2 (pilihan) — “{R}”"}, "s2none": {"my": "IMAGE 1 တစ်ပုံတည်း လိုတယ် — reference မလိုဘူး", "en": "Only IMAGE 1 is needed — no reference required", "shn": "လူဝ်ႇ IMAGE 1 လုၵ်ႈလဵဝ်ၵူၺ်း", "kac": "IMAGE 1 langai sha ra ai", "th": "ใช้แค่ IMAGE 1 — ไม่ต้องมีรูปอ้างอิง", "zh": "只需 IMAGE 1 — 无需参考图", "vi": "Chỉ cần IMAGE 1 — không cần ảnh tham chiếu", "id": "Cukup IMAGE 1 — tanpa referensi", "ms": "Cukup IMAGE 1 — tanpa rujukan"}};
   function gsPick(section){ var g=GS[section]; return g[LANG]||g.en; }
@@ -6714,6 +6817,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     renderWiz();
     $("wiz").className="wiz on";
     $("wiz").scrollTop=0;
+    modalOpened("wiz");   /* v5.26 — after the class flips, so the panel is measurable/focusable */
   }
   /* in-wizard generate (v4.27.0 result step): same inputs the old
      close-and-jump-to-Create flow prepared, but the wizard stays open and
@@ -9759,10 +9863,12 @@ function ptOpenWfSheet(){
   sh.setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
   ptRenderWfList();
-  var s=$("ptWfSearch"); if(s) s.focus();
+  modalOpened("ptWfSheet");
+  var s=$("ptWfSearch"); if(s) s.focus();   /* search field wins the initial focus here */
 }
 function ptCloseWfSheet(){
   var sh=$("ptWfSheet"); if(!sh) return;
+  modalClosed("ptWfSheet");
   sh.className="pt-sheet";
   sh.setAttribute("aria-hidden","true");
   document.body.style.overflow="";
@@ -10674,6 +10780,7 @@ function ptOpenSheet(i){
   $("ptSheet").className="pt-sheet on";
   $("ptSheet").setAttribute("aria-hidden","false");
   ptRenderSheet();
+  modalOpened("ptSheet");   /* after render — the buttons must exist to be focusable */
 }
 function ptCloseSheet(){
   PT.sheetIdx=-1;
@@ -10683,9 +10790,7 @@ function ptCloseSheet(){
      element" a11y bug, which screen readers either ignore or start
      reporting broken/silent navigation from. Blur out first. */
   var sheetEl=$("ptSheet");
-  if(sheetEl && document.activeElement && sheetEl.contains(document.activeElement)){
-    try{ document.activeElement.blur(); }catch(e){}
-  }
+  modalClosed("ptSheet");   /* v5.26 — also releases the Tab trap and restores focus */
   sheetEl.className="pt-sheet";
   sheetEl.setAttribute("aria-hidden","true");
 }
@@ -10830,6 +10935,7 @@ $("btnPtClear").onclick=function(){
 $("ptWfSheetTitle").textContent=L9(PT_SRC_L.pick);
 setIcnText($("btnPtWfSheetClose"),"i-close",t("pt_close"));
 $("ptWfSearch").placeholder=L9(PT_SRC_L.search);
+$("ptWfSearch").setAttribute("aria-label", L9(PT_SRC_L.search)); /* v5.26 a11y — set here too: this placeholder lands after applyLang()'s syncInputLabels() pass */
 setIcnText($("btnPtWfClear"),"i-close",L9(PT_SRC_L.clear));
 $("btnPtWfPick").onclick=ptOpenWfSheet;
 $("btnPtWfClear").onclick=function(){ if(!PT.busy) ptSetWorkflow(""); };
@@ -20172,7 +20278,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.25.0";
+var APP_VER="5.26.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -20554,7 +20660,7 @@ updateKeyBanner();
 
 /* first-run onboarding + compact hero on revisit */
 try {
-  if (!localStorage.getItem("hnk_ws_onboarded")) { $("onb").className="onb on"; document.body.style.overflow="hidden"; }
+  if (!localStorage.getItem("hnk_ws_onboarded")) { $("onb").className="onb on"; document.body.style.overflow="hidden"; modalOpened("onb"); }
   /* A reload triggered by the language switcher (see #selLang's onchange)
      is not a "returning visitor" event — restore whatever hero state was
      showing right before that reload instead of consulting hnk_ws_seen,
@@ -20569,7 +20675,7 @@ try {
   }
   localStorage.setItem("hnk_ws_seen","1");
 } catch(e){}
-function onbClose(){ $("onb").className="onb"; document.body.style.overflow=""; try{ localStorage.setItem("hnk_ws_onboarded","1"); }catch(e){} }
+function onbClose(){ $("onb").className="onb"; document.body.style.overflow=""; modalClosed("onb"); try{ localStorage.setItem("hnk_ws_onboarded","1"); }catch(e){} }
 $("onbSkip").onclick=onbClose;
 $("onbKey").onclick=function(){ onbClose(); switchPage("pgHome"); $("cardKey").scrollIntoView(); };
 

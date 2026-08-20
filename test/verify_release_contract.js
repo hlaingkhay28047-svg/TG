@@ -41,7 +41,7 @@ const landing = read("docs/index.html");
 const robots = read("docs/robots.txt");
 const sitemap = read("docs/sitemap.xml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
-const releaseDate = "2026-08-19";
+const releaseDate = "2026-08-20";
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
 const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
