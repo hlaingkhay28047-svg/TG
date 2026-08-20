@@ -157,14 +157,29 @@ report("A1) the sync export and the worker export share one encode tail",
        reason that has nothing to do with exports. That is the real mechanism
        behind E's CI-only flakiness; the earlier idle wait (line ~128) cannot
        cover it, because B and C start fresh frames after it. */
-    for (let waited = 0; waited < 15000; waited += 50) {
-      if (!STW.busy && !STW.queued && Object.keys(STW.cb).length === 0) break;
-      await new Promise(r => setTimeout(r, 50));
+    /* Drained, settled, and then RE-CHECKED — with up to three attempts. The
+       previous shape drained once, waited 300ms and took whatever it found: a
+       preview frame that started during that settle left eIdle false, and E
+       then failed for a reason that has nothing to do with exports. That is
+       the CI-only failure described above, and it happened again on
+       2026-08-20 (run 32394532509). Re-draining converts "hope the settle was
+       long enough" into "keep draining until it genuinely is". */
+    const idleNow = () => !STW.busy && !STW.queued && Object.keys(STW.cb).length === 0;
+    let eIdle = false;
+    for (let attempt = 0; attempt < 3 && !eIdle; attempt++) {
+      for (let waited = 0; waited < 15000 && !idleNow(); waited += 50) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      await new Promise(r => setTimeout(r, 300));
+      eIdle = idleNow();
     }
-    await new Promise(r => setTimeout(r, 300));
-    const eIdle = !STW.busy && !STW.queued && Object.keys(STW.cb).length === 0;
+    /* Captured so a failure says WHICH half broke. It used to report no detail
+       at all, so the CI log read ":: undefined" and the next reader — this
+       one — had to re-derive the whole mechanism from scratch. */
+    const stateAtStaging = { busy: STW.busy, queued: STW.queued, cbs: Object.keys(STW.cb).length };
     STW.busy = true; STW.queued = true;
     await stBakeAsync();
+    const stateAfterExport = { busy: STW.busy, queued: STW.queued };
     const preserved = eIdle && STW.busy === true && STW.queued === true;
     STW.busy = false; STW.queued = false;
 
@@ -178,6 +193,7 @@ report("A1) the sync export and the worker export share one encode tail",
       workerFrames: wk.ticks, workerMs: wk.ms,
       syncFrames: sy.ticks, syncMs: sy.ms,
       previewStatePreserved: preserved,
+      eIdle: eIdle, stateAtStaging: stateAtStaging, stateAfterExport: stateAfterExport,
       fallbackOk: typeof fb === "string" && fb.indexOf("data:image/") === 0
     };
   });
@@ -196,7 +212,12 @@ report("A1) the sync export and the worker export share one encode tail",
       syncFrames: out.syncFrames, syncMs: out.syncMs });
 
   report("E) an export reply leaves the live preview's coalescing state alone",
-    out.previewStatePreserved === true);
+    out.previewStatePreserved === true,
+    { reachedIdleBeforeStaging: out.eIdle, stateAtStaging: out.stateAtStaging,
+      stateAfterExport: out.stateAfterExport,
+      note: out.eIdle === false
+        ? "the pipeline never drained — this is the test's own isolation, not the export branch"
+        : "the export cleared busy/queued, which is the real defect E guards" });
 
   report("D) with the worker killed the export still returns a real image",
     out.fallbackOk === true);

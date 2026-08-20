@@ -22462,7 +22462,13 @@ function providerLocks(){
   try{ rhOn = !!(rhAnyConfigured() && state.rhKey); }catch(e){}
   if(!rhOn){
     var n=0;
-    try{ n = (RH_MODELS?RH_MODELS.length:0) + (RH_VIDEO_MODELS?RH_VIDEO_MODELS.length:0) + (RH_T2I_MODELS?RH_T2I_MODELS.length:0); }catch(e2){}
+    /* Count only what the KEY ALONE unlocks. Two RH_MODELS entries ship with no
+       built-in apiPath and need one pasted per model, so counting all 18 would
+       promise two models the key does not actually buy — the same class of
+       inventory overclaim the release contract already pins on the landing. */
+    try{ n = RH_MODELS.filter(function(m){ return rhIsConfigured(m.id); }).length
+           + (RH_VIDEO_MODELS?RH_VIDEO_MODELS.length:0)
+           + (RH_T2I_MODELS?RH_T2I_MODELS.length:0); }catch(e2){}
     out.push({v:"runninghub", name:"RunningHub", card:"cardRh", n:n});
   }
   var oaOn=false;

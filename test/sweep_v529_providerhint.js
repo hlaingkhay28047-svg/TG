@@ -64,7 +64,8 @@ const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
 /* ---- A) source-level contract ---- */
 const hasFn = /function providerLocks\(\)\{/.test(src);
 const guarded = /if\(\/selProvider\$\/\.test\(sel\.id\|\|""\)\)\{\s*var locks=providerLocks\(\);/.test(src);
-const derived = /\(RH_MODELS\?RH_MODELS\.length:0\) \+ \(RH_VIDEO_MODELS\?RH_VIDEO_MODELS\.length:0\) \+ \(RH_T2I_MODELS\?RH_T2I_MODELS\.length:0\)/.test(src);
+const derived = /RH_MODELS\.filter\(function\(m\)\{ return rhIsConfigured\(m\.id\); \}\)\.length/.test(src)
+  && /\(RH_VIDEO_MODELS\?RH_VIDEO_MODELS\.length:0\)/.test(src);
 report("A) providerLocks() exists and openPop renders it for #selProvider only",
   hasFn && guarded, { hasFn: hasFn, guarded: guarded });
 report("A2) the unlock count is derived from the real model arrays, not typed",
@@ -97,7 +98,12 @@ const readPicker = page => page.evaluate(() => {
       name: txt(e), why: sub(e), ariaDisabled: e.getAttribute("aria-disabled"), role: e.getAttribute("role"),
     })),
     headers: Array.from(pop.querySelectorAll(".hsl-hd")).map(e => e.textContent.trim()),
-    arrayTotal: (typeof RH_MODELS !== "undefined" ? RH_MODELS.length : 0)
+    /* what a KEY ALONE unlocks — the two RH_MODELS without a built-in apiPath
+       need one pasted per model, so they are not bought by the key */
+    arrayTotal: (typeof RH_MODELS !== "undefined" ? RH_MODELS.filter(function(m){ return rhIsConfigured(m.id); }).length : 0)
+              + (typeof RH_VIDEO_MODELS !== "undefined" ? RH_VIDEO_MODELS.length : 0)
+              + (typeof RH_T2I_MODELS !== "undefined" ? RH_T2I_MODELS.length : 0),
+    rawTotal: (typeof RH_MODELS !== "undefined" ? RH_MODELS.length : 0)
               + (typeof RH_VIDEO_MODELS !== "undefined" ? RH_VIDEO_MODELS.length : 0)
               + (typeof RH_T2I_MODELS !== "undefined" ? RH_T2I_MODELS.length : 0),
   };
@@ -128,9 +134,12 @@ const readPicker = page => page.evaluate(() => {
     only.headers.length >= 1, { headers: only.headers });
 
   const shown = rh ? (rh.why.match(/(\d+)/) || [])[1] : null;
-  report("C) the RunningHub row's count is the live array total",
+  report("C) the RunningHub row counts what a key ALONE unlocks",
     !!shown && Number(shown) === only.arrayTotal && only.arrayTotal > 50,
-    { shownInRow: shown, arrayTotal: only.arrayTotal });
+    { shownInRow: shown, keyAloneUnlocks: only.arrayTotal, rawArrayTotal: only.rawTotal });
+  report("C2) it does not quote the raw array total, which overclaims by the unconfigured models",
+    only.rawTotal > only.arrayTotal && Number(shown) !== only.rawTotal,
+    { shownInRow: shown, keyAloneUnlocks: only.arrayTotal, rawArrayTotal: only.rawTotal });
 
   /* ---- E: the tap is the point of the row ---- */
   await p1.evaluate(() => { document.querySelector(".hsl-op.lock").click(); });
