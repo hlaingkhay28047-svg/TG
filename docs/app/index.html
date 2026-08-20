@@ -15857,7 +15857,11 @@ stFeat("st_style880",L9({my:"Style Look (880 Pack)",en:"Style Look (880 pack)"})
       var st=st880Sel(), favs=st880Favs();
       var rows=listFor();
       if(!rows.length){
-        grid.appendChild(el("p","mut",L9({my:"ရှာလို့ မတွေ့ပါ",en:"No styles match"})));
+        var gEmpty=el("div","empty-state on");
+        var gEmptyIcon=el("div","ic"); gEmptyIcon.innerHTML=icn("i-search","ic-xl");
+        gEmpty.appendChild(gEmptyIcon);
+        gEmpty.appendChild(el("p","mut",L9({my:"ရှာလို့ မတွေ့ပါ",en:"No styles match"})));
+        grid.appendChild(gEmpty);
         return;
       }
       rows.forEach(function(rec){
@@ -17341,7 +17345,12 @@ function stRenderRecipes(){
   host.innerHTML="";
   var a=stRecipes();
   if(!a.length){
-    var rp=el("p","mut"); rp.innerHTML=escH(L9({my:"သိမ်းထားတဲ့ recipe မရှိသေး — ချိန်ညှိပြီး 💾 နှိပ်ပါ",en:"No saved recipes yet — adjust something, then tap 💾 Save"})).replace("💾",icn("i-save")); host.appendChild(rp);
+    var rp=el("div","empty-state on");
+    var rpIcon=el("div","ic"); rpIcon.innerHTML=icn("i-save","ic-xl");
+    rp.appendChild(rpIcon);
+    var rpTxt=el("p","mut"); rpTxt.innerHTML=escH(L9({my:"သိမ်းထားတဲ့ recipe မရှိသေး — ချိန်ညှိပြီး 💾 နှိပ်ပါ",en:"No saved recipes yet — adjust something, then tap 💾 Save"})).replace("💾",icn("i-save"));
+    rp.appendChild(rpTxt);
+    host.appendChild(rp);
     return;
   }
   a.forEach(function(r,idx){
@@ -20091,7 +20100,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.23.0";
+var APP_VER="5.24.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
