@@ -277,3 +277,6 @@ jobs:
 
       - name: Run v5.28.0 safe-area sweep (landscape notch insets on every edge-pinned surface)
         run: node test/sweep_v528_safearea.js
+
+      - name: Run v5.29.0 provider-hint sweep (locked providers explain themselves)
+        run: node test/sweep_v529_providerhint.js
