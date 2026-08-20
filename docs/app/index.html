@@ -539,7 +539,7 @@ html,body{overscroll-behavior-y:none}
    reuse the existing gold hover language */
 button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.card h2{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 .btn:active{border-color:var(--line);transform:scale(.985)}
-.btn[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-hi)}
+#btnShowKey[aria-pressed="true"],#btnShowRhKey[aria-pressed="true"],#btnShowOaKey[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-hi)}
 .btn-gold:active{background:var(--gold-hi)}
 .chip:active,.subtab:active{border-color:var(--gold)}
 .wfmini:active,.wf-card:active{border-color:var(--gold)}
@@ -2227,7 +2227,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
     <div id="v2Hero">
       <div class="chips" id="v2PresetRow"></div>
       <div class="row"><span class="subh" id="v2LbStrength"></span><b id="v2StrengthVal"></b></div>
-      <input type="range" class="v2-range" id="v2Strength" min="0" max="100" step="5" value="60">
+      <input type="range" class="v2-range" aria-labelledby="v2LbStrength" id="v2Strength" min="0" max="100" step="5" value="60">
       <div class="chips" id="v2Dots"></div>
       <div class="subh" id="v2LbMode"></div><div class="chips" id="v2ModeChips"></div>
       <div class="subh" id="v2LbQuality"></div><div class="chips" id="v2QualityChips"></div>
@@ -2236,15 +2236,15 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
         <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg> <span id="v2LbAdvanced"></span></span></button>
         <div class="grp-b">
           <div class="row"><span class="mut" id="v2LbBalance"></span><b id="v2BalanceVal"></b></div>
-          <input type="range" class="v2-range" id="v2Balance" min="-50" max="50" step="5" value="0">
+          <input type="range" class="v2-range" aria-labelledby="v2LbBalance" id="v2Balance" min="-50" max="50" step="5" value="0">
           <div class="row"><span class="mut" id="v2LbBlemish"></span><b id="v2BlemishVal"></b></div>
-          <input type="range" class="v2-range" id="v2Blemish" min="0" max="100" step="5" value="60">
+          <input type="range" class="v2-range" aria-labelledby="v2LbBlemish" id="v2Blemish" min="0" max="100" step="5" value="60">
           <div class="row"><span class="mut" id="v2LbDeshine"></span><b id="v2DeshineVal"></b></div>
-          <input type="range" class="v2-range" id="v2Deshine" min="0" max="100" step="5" value="0">
+          <input type="range" class="v2-range" aria-labelledby="v2LbDeshine" id="v2Deshine" min="0" max="100" step="5" value="0">
           <div class="subh" id="v2LbTone"></div><div class="chips" id="v2ToneChips"></div>
           <div id="v2ToneStrengthWrap" style="display:none">
             <div class="row"><span class="mut" id="v2LbToneStrength"></span><b id="v2ToneStrengthVal"></b></div>
-            <input type="range" class="v2-range" id="v2ToneStrength" min="0" max="100" step="2" value="42">
+            <input type="range" class="v2-range" aria-labelledby="v2LbToneStrength" id="v2ToneStrength" min="0" max="100" step="2" value="42">
           </div>
           <div class="subh" id="v2LbHair"></div><div class="chips" id="v2HairChips"></div>
           <div class="subh" id="v2LbOutfit"></div><div class="chips" id="v2OutfitChips"></div>
@@ -3540,12 +3540,18 @@ function applyLang(){
   try { if(typeof renderSpend==="function") renderSpend(); } catch(e){}
   /* v5.26 — a11y: this app had exactly ONE <label> element in 22k lines, so
      every text/password/search field was named only by its placeholder. A
-     placeholder is not an accessible name: screen readers may skip it, and
-     the Account fields carry no placeholder at all in the HTML (JS sets them
-     a moment later), so those announced nothing whatsoever. Mirroring the
-     placeholder into aria-label at the END of applyLang() names every field
-     in the CURRENT language, re-runs on every language switch, and picks up
-     any field added later without needing a per-input edit. */
+     placeholder is not an accessible name: assistive tech may skip it, and
+     the Account fields carry no placeholder at all in the HTML — accApplyLang()
+     above installs theirs, which is why this call is the LAST statement here.
+     Fields whose placeholder lands even later (the two prompt textareas, the
+     Path custom box) are covered by the second pass at the end of boot. */
+  /* v5.26 a11y — the four before/after wipe sliders are "labelled" only by the
+     two images they reveal, so they announced as a bare "slider" with no hint
+     that dragging is what compares the result. */
+  ["stCmpRange","rsCmpRange","cmpRange","ptCmpRange"].forEach(function(id){
+    var cr=$(id);
+    if(cr) cr.setAttribute("aria-label", L9({my:"မူရင်း / ပြီးဆုံး နှိုင်းယှဉ်ရန် ဆွဲပါ",en:"Drag to compare before and after"}));
+  });
   try { syncInputLabels(); } catch(e){}
 }
 /* ============================================================
@@ -3604,17 +3610,27 @@ function modalClosed(rootId){
   }
 }
 
-/* Give every placeholder-only field a real accessible name. Never overwrites
-   an author-supplied aria-label, so a hand-tuned one always wins. */
+/* Give every placeholder-only field a real accessible name. An author-supplied
+   aria-label always wins; a label THIS function wrote is refreshed on a later
+   pass, because several placeholders are installed after the first pass runs
+   and a stale snapshot would then outrank the real text (aria-label beats
+   placeholder for the accessible name, so getting this wrong is worse than
+   doing nothing). */
 function syncInputLabels(root){
   var scope = root || document;
   var nodes = scope.querySelectorAll("input[placeholder], textarea[placeholder]");
   for (var i=0; i<nodes.length; i++){
     var el = nodes[i];
-    if (el.getAttribute("aria-label")) continue;
     if (el.getAttribute("aria-labelledby")) continue;
+    if (el.getAttribute("aria-label") && el.getAttribute("data-a11y-ph") !== "1") continue;
     var ph = (el.getAttribute("placeholder")||"").trim();
-    if (ph) el.setAttribute("aria-label", ph);
+    /* A placeholder made only of punctuation names nothing. The video and
+       text-to-image prompt boxes ship a literal "…" in the markup until their
+       real localized text arrives near the end of boot; promoting that would
+       name the two biggest fields in the app "ellipsis". */
+    if (ph.replace(/[\s\u2026.\-\u2013\u2014\u00b7\u2022:;,_\/\\|()\[\]{}"'`~!?*+=<>@#$%^&]/g,"").length < 2) continue;
+    el.setAttribute("aria-label", ph);
+    el.setAttribute("data-a11y-ph", "1");
   }
 }
 applyLang();
@@ -13576,6 +13592,12 @@ function stSlider(o){ /* {id,label,min,max,def,get,set} -> element; registers a 
   row.classList.add("st-slider");
   var inp=document.createElement("input");
   inp.type="range"; inp.className="rng"; inp.id=o.id;
+  /* v5.26 a11y — the Meitu/Evoto panels build ~250 range inputs through this
+     one function and none of them carried a name: the visible label lives in
+     a sibling div, so assistive tech announced every one of them as a bare
+     "slider". o.label is already localized, so this names the whole Studio
+     in the current language for the cost of one attribute. */
+  if(typeof o.label==="string" && o.label) inp.setAttribute("aria-label", o.label);
   inp.min=String(o.min); inp.max=String(o.max); inp.step="1";
   var val=el("button","st-val");
   val.type="button";
@@ -13661,9 +13683,12 @@ function stToggle(o){ /* {id,label,get,set} */
   ST.refreshFns.push(refresh); refresh();
   return c;
 }
-function stColorInp(o){ /* {id,get,set,dflt} */
+function stColorInp(o){ /* {id,get,set,dflt,label} */
   var inp=document.createElement("input");
   inp.type="color"; inp.className="inp st-color"; inp.id=o.id;
+  /* v5.26 a11y — swatches sit loose in a group body, not in a labelled row,
+     so unlike stSlider there is no visible text next to them to fall back on. */
+  if(typeof o.label==="string" && o.label) inp.setAttribute("aria-label", o.label);
   /* Show the colour the render would actually use, not the brand gold: an
      unset picker showing #d9a441 told the user amber was chosen when the
      feature was either off or about to apply something else entirely. */
@@ -13734,8 +13759,8 @@ function pipeToggle(id,label,onSet){
     get:function(){ return !!svGet(id,false); },
     set:function(v){ svSet(id,v); if(onSet) onSet(v); stPipeChanged(); }});
 }
-function pipeColor(id,dflt){
-  return stColorInp({id:id,dflt:dflt,
+function pipeColor(id,dflt,label){
+  return stColorInp({id:id,dflt:dflt,label:label,
     get:function(){ return svGet(id,null); },
     set:function(v){ svSet(id,v); stPipeChanged(); }});
 }
@@ -13862,8 +13887,8 @@ function svToggle(id,label,featId){
     get:function(){ return !!svGet(id,false); },
     set:function(v){ svSet(id,v); stSync(featId); }}));
 }
-function svColor(id,featId,dflt){
-  return stColorInp({id:id,dflt:dflt,
+function svColor(id,featId,dflt,label){
+  return stColorInp({id:id,dflt:dflt,label:label,
     get:function(){ return svGet(id,null); },
     set:function(v){ svSet(id,v); stSync(featId); }});
 }
@@ -13998,7 +14023,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   g3.grid.appendChild(t2Slider("mu_white",L9({my:"အသားဖြူဝင်း",en:"Whitening"}),"white"));
   g3.b.appendChild(stSub(L9({my:"အသားရောင်ရွေး",en:"Skin Tone"})));
   g3.b.appendChild(svChips("mu_skinTone",null,[["fair","Fair"],["porcelain","Porcelain"],["natural","Natural"],["warm","Warm"],["honey-tan","Honey Tan"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_skinToneF"));
-  g3.b.appendChild(svColor("mu_skinToneHex","mu_skinToneF"));
+  g3.b.appendChild(svColor("mu_skinToneHex","mu_skinToneF",null,L9({my:"အသားရောင် ရွေးရန်",en:"Skin tone colour"})));
   g3.b.appendChild(svSlider("mu_skinToneV",L9({my:"ပမာဏ",en:"Amount"}),false,"mu_skinToneF"));
   stFeat("mu_skinToneF",L9({my:"အသားရောင်",en:"Skin Tone"}),["mu_skinTone","mu_skinToneHex","mu_skinToneV"],function(){
     var v=fv("mu_skinToneV"), tn=svGet("mu_skinTone",null); if(!v||!tn) return null;
@@ -14129,7 +14154,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   var g8=G("i-lips",L9({my:"နှုတ်ခမ်းနှင့်သွား",en:"Lips & Teeth"}),4,"lips teeth lip color plump smile corners whiten teeth fix mouth size position"); count(4);
   g8.b.appendChild(stSub(L9({my:"နှုတ်ခမ်းအရောင်",en:"Lip Color"})));
   g8.b.appendChild(svChips("mu_lipHex",null,[["#c94f5e","Rose"],["#b03a48","Berry"],["#e07a6a","Coral"],["#a52a3a","Wine"],["#d96c8a","Pink"],["#c96a4a","Terracotta"],["#8c2f39","Maroon"],["#e0938c","Nude"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_lipColor"));
-  g8.b.appendChild(svColor("mu_lipCustom","mu_lipColor","#c94f5e"));
+  g8.b.appendChild(svColor("mu_lipCustom","mu_lipColor","#c94f5e",L9({my:"နှုတ်ခမ်းအရောင် ရွေးရန်",en:"Lip colour"})));
   g8.b.appendChild(svChips("mu_lipFinish",null,[["matte","Matte"],["gloss","Gloss"],["velvet","Velvet"]],"mu_lipColor"));
   g8.b.appendChild(svSlider("mu_lipColorV",L9({my:"ပမာဏ",en:"Opacity"}),false,"mu_lipColor"));
   stFeat("mu_lipColor",L9({my:"နှုတ်ခမ်းအရောင်",en:"Lip Color"}),["mu_lipHex","mu_lipCustom","mu_lipFinish","mu_lipColorV"],function(){
@@ -14184,14 +14209,14 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   })();
   var lipRow=el("div","st-ctl");
   lipRow.appendChild(el("label",null,L9({my:"နှုတ်ခမ်းရောင်",en:"Lip colour"})));
-  lipRow.appendChild(stColorInp({id:"mu_lipLocHex",dflt:"#c04858",
+  lipRow.appendChild(stColorInp({id:"mu_lipLocHex",dflt:"#c04858",label:L9({my:"နှုတ်ခမ်းအရောင် (တိုက်ရိုက်)",en:"Lip colour (live)"}),
     get:function(){ return svGet("mu_lipLocHex",null); },
     set:function(v){ svSet("mu_lipLocHex",v); stT2Changed(); }}));
   g9.b.appendChild(lipRow);
   g9.b.appendChild(t2Slider("mu_lipLoc",L9({my:"နှုတ်ခမ်းဆိုးဆေး",en:"Lip Tint"}),"lipV",false));
   var blRow=el("div","st-ctl");
   blRow.appendChild(el("label",null,L9({my:"ပါးချုံရောင်",en:"Blush colour"})));
-  blRow.appendChild(stColorInp({id:"mu_blushLocHex",dflt:"#e88a9a",
+  blRow.appendChild(stColorInp({id:"mu_blushLocHex",dflt:"#e88a9a",label:L9({my:"ပါးနီအရောင် (တိုက်ရိုက်)",en:"Blush colour (live)"}),
     get:function(){ return svGet("mu_blushLocHex",null); },
     set:function(v){ svSet("mu_blushLocHex",v); stT2Changed(); }}));
   g9.b.appendChild(blRow);
@@ -14372,7 +14397,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   var g10=G("i-hair",L9({my:"ဆံပင်",en:"Hair"}),5,"hair color hairline fill volume bangs flyaway hairstyle ponytail bob curls"); count(5);
   g10.b.appendChild(stSub(L9({my:"ဆံပင်အရောင်",en:"Hair Color"})));
   g10.b.appendChild(svChips("mu_hairColor",null,[["jet black",L9({my:"အနက်",en:"Black"})],["dark brown",L9({my:"ညိုရင့်",en:"Dark Brown"})],["chestnut","Chestnut"],["burgundy","Burgundy"],["golden brown","Gold Brown"],["ash brown","Ash"],["custom",L9({my:"စိတ်ကြိုက်",en:"Custom"})]],"mu_hairCol"));
-  g10.b.appendChild(svColor("mu_hairHex","mu_hairCol","#3b2417"));
+  g10.b.appendChild(svColor("mu_hairHex","mu_hairCol","#3b2417",L9({my:"ဆံပင်အရောင် ရွေးရန်",en:"Hair colour"})));
   g10.b.appendChild(svSlider("mu_hairColorV",L9({my:"ပမာဏ",en:"Intensity"}),false,"mu_hairCol"));
   stFeat("mu_hairCol",L9({my:"ဆံပင်အရောင်",en:"Hair Color"}),["mu_hairColor","mu_hairHex","mu_hairColorV"],function(){
     var v=fv("mu_hairColorV"), c=svGet("mu_hairColor",null); if(!v||!c) return null;
@@ -14571,8 +14596,8 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   g13.b.appendChild(stSub(L9({my:"Split Toning / အရိပ်-အလင်းရောင်ခြယ်",en:"Split Toning"})));
   var sptRow=el("div","st-ctl");
   sptRow.appendChild(el("label",null,L9({my:"အရိပ်ရောင် / အလင်းရောင်",en:"Shadow / Highlight tint"})));
-  sptRow.appendChild(pipeColor("st_grade_muSh"));
-  sptRow.appendChild(pipeColor("st_grade_muHi"));
+  sptRow.appendChild(pipeColor("st_grade_muSh",null,L9({my:"အမှောင်ပိုင်း အရောင်",en:"Shadows colour"})));
+  sptRow.appendChild(pipeColor("st_grade_muHi",null,L9({my:"အလင်းပိုင်း အရောင်",en:"Highlights colour"})));
   g13.b.appendChild(sptRow);
   g13.b.appendChild(pipeSlider("st_grade_muBal",L9({my:"Balance",en:"Balance"}),true));
   g13.b.appendChild(pipeSlider("st_grade_muAmt",L9({my:"ပမာဏ",en:"Amount"}),false));
@@ -15328,9 +15353,9 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   e12.b.appendChild(stSub(L9({my:"ရောင်အလွှာခြယ် (Color Grading)",en:"Color Grading"})));
   var cgRow=el("div","st-ctl");
   cgRow.appendChild(el("label",null,L9({my:"Shadows · Mid · Highlights",en:"Shadows · Mid · Highlights"})));
-  cgRow.appendChild(pipeColor("st_grade_evSh"));
-  cgRow.appendChild(pipeColor("st_grade_evMid"));
-  cgRow.appendChild(pipeColor("st_grade_evHi"));
+  cgRow.appendChild(pipeColor("st_grade_evSh",null,L9({my:"အမှောင်ပိုင်း အရောင်",en:"Shadows colour"})));
+  cgRow.appendChild(pipeColor("st_grade_evMid",null,L9({my:"အလယ်တန်း အရောင်",en:"Midtones colour"})));
+  cgRow.appendChild(pipeColor("st_grade_evHi",null,L9({my:"အလင်းပိုင်း အရောင်",en:"Highlights colour"})));
   e12.b.appendChild(cgRow);
   var cgGrid=el("div","st-grid");
   cgGrid.appendChild(pipeSlider("st_grade_evAmt",L9({my:"ပမာဏ",en:"Amount"}),false,0,100,45));
@@ -15490,7 +15515,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   e13.b.appendChild(svChips("ev_bdScene",null,[["clean studio grey","Studio grey"],["gradient beige","Beige"],["olive drape","Olive drape"],["window daylight","Window light"],["outdoor bokeh","Outdoor bokeh"]],"ev_backdrop"));
   var bdcRow=el("div","st-ctl");
   bdcRow.appendChild(el("label",null,L9({my:"အရောင်တစ်သား",en:"Solid color"})));
-  bdcRow.appendChild(svColor("ev_bdColor","ev_backdrop"));
+  bdcRow.appendChild(svColor("ev_bdColor","ev_backdrop",null,L9({my:"နောက်ခံအရောင် ရွေးရန်",en:"Backdrop colour"})));
   e13.b.appendChild(bdcRow);
   var bdFree=document.createElement("input");
   bdFree.className="inp"; bdFree.id="ev_bdText";
@@ -15629,7 +15654,7 @@ var ST_MEITU_COUNT=0, ST_EVOTO_COUNT=0;
   e15.b.appendChild(stSub(L9({my:"အဝတ်အရောင်လဲ",en:"Clothes Color Changer"})));
   var dcRow=el("div","st-ctl");
   dcRow.appendChild(el("label",null,L9({my:"အရောင်ရွေး",en:"Pick color"})));
-  dcRow.appendChild(svColor("ev_dressHex","ev_dressCol"));
+  dcRow.appendChild(svColor("ev_dressHex","ev_dressCol",null,L9({my:"ဝတ်စုံအရောင် ရွေးရန်",en:"Outfit colour"})));
   e15.b.appendChild(dcRow);
   var dcInp=document.createElement("input");
   dcInp.className="inp"; dcInp.id="ev_dressItem";
@@ -22532,4 +22557,12 @@ scan(document);
    the one re-sync that gives a returning Studio-mode customer a real prompt
    preview and a real tool list on the first paint instead of an empty one. */
 ptBootSyncStudio();
+
+/* v5.26 a11y — second and final naming pass. applyLang() runs exactly once,
+   very early (a language change reloads the page rather than re-rendering),
+   so the placeholders installed by top-level code further down — the Path
+   custom box and the video / text-to-image prompt textareas — were never
+   seen by the first pass. Running once more here, after every one of those
+   assignments, names them from the text that is actually on screen. */
+try { syncInputLabels(); } catch(e){}
 </script>
