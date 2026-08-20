@@ -48,6 +48,7 @@
 const { chromium } = require("playwright-core");
 const fs = require("fs");
 const path = require("path");
+const { SB_URL } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 let failures = 0;
 function report(name, ok, detail) {
@@ -73,9 +74,48 @@ const future = new Date(Date.now() + 20 * 86400000).toISOString();
 const past = new Date(Date.now() - 3 * 86400000).toISOString();
 
 const errs = [];
+
+/* Answer Supabase inside the test instead of letting the request leave the
+   machine. This is not tidiness — without it this file passes or fails
+   depending on whether the runner has internet, and it would fail on CI. The
+   sessions below carry a made-up token; a sandbox with no route to the host
+   makes the fetch THROW, which the app reads as "offline, keep the cached
+   session", so every state resolves as seeded. A GitHub runner reaches the real
+   project, gets a real 401, POSTs the made-up refresh token, gets a real
+   non-2xx, and accSignOutLocal("expired") clears the session — so `open`,
+   `expired` and `never` would all collapse into `login` and four assertions
+   would fail for a reason that has nothing to do with the wall.
+
+   The three modes are the three things the app can actually be told:
+     normal      the profile comes back and says what the test seeded
+     hangProfile the request never settles — which is precisely what
+                 "signed in, profile not read yet" IS, so the `checking`
+                 state is modelled rather than raced
+     offline     the request fails outright, the dropped-connection case E
+                 exists to pin */
+async function armSupabase(page, prof, mode) {
+  await page.route(SB_URL + "/**", route => {
+    const url = route.request().url();
+    const json = body => route.fulfill({ status: 200, contentType: "application/json",
+                                         body: JSON.stringify(body === undefined ? null : body) });
+    if (mode === "offline") return route.abort("internetdisconnected");
+    if (url.indexOf("/auth/v1/token") >= 0) {
+      return json({ access_token: "test.jwt", refresh_token: "test-refresh",
+                    expires_in: 3600, user: { id: "u-test", email: "t@example.com" } });
+    }
+    if (url.indexOf("/rest/v1/profiles") >= 0) {
+      /* deliberately never settled: an in-flight profile read is the state */
+      if (mode === "hangProfile") return;
+      return json(prof);
+    }
+    return json([]);
+  });
+}
+
 async function look(browser, sess, prof, label) {
   const page = await browser.newPage({ viewport: { width: 412, height: 900 } });
   page.on("pageerror", e => errs.push(label + ": " + String(e).slice(0, 160)));
+  await armSupabase(page, prof, prof ? "normal" : "hangProfile");
   await page.addInitScript(({ s, p }) => {
     try {
       localStorage.setItem("hnk_ws_onboarded", "1");
@@ -166,6 +206,8 @@ async function look(browser, sess, prof, label) {
   /* ---- E: offline is not unpaid ---- */
   const offlinePage = await browser.newPage({ viewport: { width: 412, height: 900 } });
   offlinePage.on("pageerror", e => errs.push("offline: " + String(e).slice(0, 160)));
+  /* every Supabase call fails outright — a studio whose connection dropped */
+  await armSupabase(offlinePage, null, "offline");
   await offlinePage.addInitScript(({ s, p }) => {
     try {
       localStorage.setItem("hnk_ws_onboarded", "1");

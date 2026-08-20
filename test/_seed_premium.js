@@ -8,16 +8,38 @@
    sweeps failed exactly that way the first time the wall shipped.
 
    This is a FIXTURE, not a bypass. It seeds the same two localStorage records a
-   real sign-in writes, so the app takes its ordinary signed-in path; nothing in
-   the product knows or cares that a test put them there. Adding a
-   "skip the wall when testing" flag to the app would have been the shortcut,
-   and it would have shipped a way around the wall to production.
+   real sign-in writes and answers Supabase the way a live project would, so the
+   app takes its ordinary signed-in path; nothing in the product knows or cares
+   that a test put them there. Adding a "skip the wall when testing" flag to the
+   app would have been the shortcut, and it would have shipped a way around the
+   wall to production.
+
+   SEEDING localStorage ALONE IS NOT ENOUGH, and the way that failed is worth
+   keeping. The first cut of this file only wrote the two records. It passed
+   every sweep locally and failed in CI, on a test that has nothing to do with
+   accounts, with every element measuring 0px wide. The difference was the
+   network: this sandbox cannot reach the Supabase host at all, so accBoot's
+   profile fetch THREW, which the app correctly reads as "offline, keep the
+   cached session" — the fixture's session survived and the app opened. A GitHub
+   runner has real internet, so the fixture's made-up token reached the real
+   project and came back 401; accRefreshOnce POSTed the made-up refresh token,
+   got a real non-2xx, returned "dead", and accSignOutLocal("expired") cleared
+   the session. Wall on, everything 0px. A fixture whose result depends on
+   whether the runner has internet is not a fixture, so this one now intercepts
+   the Supabase host and answers it itself. The tests no longer care about the
+   network, about the live project's contents, or about it being up at all.
+
+   Interception is at the CONTEXT level via route() rather than a window.fetch
+   shim on purpose. Several of these sweeps install their own fetch shims, and
+   two shims fighting over who wraps whom is a bug that only shows up in one
+   ordering; route() sits underneath all of them and catches XHR and subresource
+   loads a fetch shim would miss.
 
    USE (once per file, right after the browser is launched):
 
        const { withPremium } = require("./_seed_premium.js");
        const browser = await chromium.launch();
-       withPremium(browser);          // every newPage() from here is signed in
+       withPremium(browser);          // every page from here is signed in
 
    withPremium wraps the browser rather than asking each call site to remember,
    because several sweeps open three or four pages and one forgotten call is a
@@ -25,24 +47,37 @@
 
    It wraps BOTH newPage and newContext. Eleven of the twenty sweeps do not call
    browser.newPage() at all — they call browser.newContext({viewport}) and then
-   ctx.newPage(), because they need a device-sized viewport or a deviceScaleFactor.
-   A wrapper that only knew about newPage left every one of those still staring at
-   the wall, which is exactly how sweep_v492_gridfit.js kept failing after the
-   first pass of this fixture. Seeding at the context level also covers pages the
-   sweep never opens itself, such as popups. */
+   ctx.newPage(), because they need a device-sized viewport or a
+   deviceScaleFactor. A wrapper that only knew about newPage left every one of
+   those still staring at the wall, which is exactly how sweep_v492_gridfit.js
+   kept failing after the first pass of this fixture. */
+const fs = require("fs");
+const path = require("path");
+
+/* Read the host out of the app rather than hardcoding it here. If the project
+   is ever moved, a hardcoded copy would silently stop matching and every sweep
+   would go back to making real requests to a host that no longer answers —
+   which is the failure this whole file exists to remove. */
+const APP_HTML = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
+const SB_URL = (APP_HTML.match(/var SB_URL\s*=\s*"([^"]+)"/) || [])[1];
+if (!SB_URL) throw new Error("_seed_premium: could not find SB_URL in docs/app/index.html");
+
+const UID = "u-test-fixture";
+const EMAIL = "fixture@example.com";
 
 /* Far enough out that the fixture does not rot, close enough that it is
-   obviously a fixture. Computed at require time, not hardcoded, so it can
-   never quietly become a date in the past. */
+   obviously a fixture. Computed at call time, not hardcoded, so it can never
+   quietly become a date in the past. */
 function premiumProfile() {
   return {
-    id: "u-test-fixture",
+    id: UID,
     name: "Test Studio",
-    email: "fixture@example.com",
+    email: EMAIL,
     created_at: "2025-01-01T00:00:00Z",
     plan_status: "active",
     plan_expires_at: new Date(Date.now() + 365 * 86400000).toISOString(),
     allowed_devices: 2,
+    is_admin: false,
   };
 }
 
@@ -51,8 +86,8 @@ function premiumSession() {
     access: "test-fixture-access",
     refresh: "test-fixture-refresh",
     exp: Math.floor(Date.now() / 1000) + 3600,
-    uid: "u-test-fixture",
-    email: "fixture@example.com",
+    uid: UID,
+    email: EMAIL,
   };
 }
 
@@ -70,8 +105,51 @@ function seedScript({ sess, prof }) {
   } catch (e) {}
 }
 
+/* The live project's answers, for the handful of endpoints accBoot touches.
+   Everything else on the host gets an empty list rather than an error: an
+   unmocked endpoint must not be able to fail a sweep that is testing something
+   else, and a 401 in particular would sign the fixture out again. */
+function routeSupabase(route) {
+  const req = route.request();
+  const url = req.url();
+  const method = req.method();
+  const json = (body, status) => route.fulfill({
+    status: status || 200,
+    contentType: "application/json",
+    body: JSON.stringify(body === undefined ? null : body),
+  });
+
+  if (url.indexOf("/auth/v1/token") >= 0) {
+    /* a refresh that succeeds — the app rotates its session and stays signed in */
+    return json({
+      access_token: "test-fixture-access",
+      refresh_token: "test-fixture-refresh",
+      expires_in: 3600,
+      user: { id: UID, email: EMAIL },
+    });
+  }
+  if (url.indexOf("/auth/v1/logout") >= 0) return route.fulfill({ status: 204, body: "" });
+  if (url.indexOf("/auth/v1/user") >= 0) return json({ id: UID, email: EMAIL });
+  /* accLoadProfile asks with Accept: application/vnd.pgrst.object+json, so the
+     live project answers with a bare object, not a one-element array */
+  if (url.indexOf("/rest/v1/profiles") >= 0) return json(premiumProfile());
+  if (url.indexOf("/rest/v1/devices") >= 0) {
+    if (method === "POST") return json([{ id: "dev-fixture", user_id: UID }], 201);
+    if (method === "DELETE") return route.fulfill({ status: 204, body: "" });
+    return json([]);
+  }
+  if (url.indexOf("/storage/v1/") >= 0) return json({ Key: "payment-proofs/fixture" });
+  return json([]);
+}
+
 function seedArgs() {
   return { sess: premiumSession(), prof: premiumProfile() };
+}
+
+async function armContext(ctx) {
+  ctx.__hnkPremiumSeeded = true;
+  await ctx.addInitScript(seedScript, seedArgs());
+  await ctx.route(SB_URL + "/**", routeSupabase);
 }
 
 /* Wrap a launched browser so every page it opens is already signed in, however
@@ -79,10 +157,8 @@ function seedArgs() {
    twice is harmless.
 
    browser.newPage() internally creates a throwaway context, so the two wrappers
-   below would both fire for that one call. addInitScript is additive, and
-   running the seed twice writes the same three values twice, so the double is
-   harmless — but it is guarded anyway so the page is not carrying a script it
-   does not need. */
+   below would both fire for that one call; the guard keeps the seed from being
+   installed twice. */
 function withPremium(browser) {
   if (!browser || browser.__hnkPremiumWrapped) return browser;
   browser.__hnkPremiumWrapped = true;
@@ -90,8 +166,7 @@ function withPremium(browser) {
   const origContext = browser.newContext.bind(browser);
   browser.newContext = async function (opts) {
     const ctx = await origContext(opts);
-    ctx.__hnkPremiumSeeded = true;
-    await ctx.addInitScript(seedScript, seedArgs());
+    await armContext(ctx);
     return ctx;
   };
 
@@ -99,13 +174,11 @@ function withPremium(browser) {
   browser.newPage = async function (opts) {
     const page = await origPage(opts);
     const ctx = page.context();
-    if (!ctx || !ctx.__hnkPremiumSeeded) {
-      await page.addInitScript(seedScript, seedArgs());
-    }
+    if (ctx && !ctx.__hnkPremiumSeeded) await armContext(ctx);
     return page;
   };
 
   return browser;
 }
 
-module.exports = { withPremium, seedScript, premiumSession, premiumProfile };
+module.exports = { withPremium, seedScript, premiumSession, premiumProfile, SB_URL, routeSupabase };
