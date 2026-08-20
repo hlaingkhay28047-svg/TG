@@ -597,7 +597,11 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
 /* wizard reads as a modal over the app instead of a mostly-empty page
    (min-height guard: landscape phones keep the fullscreen wizard) */
 @media(min-width:768px) and (min-height:481px){
-  .wiz{background:rgba(5,7,12,.72);backdrop-filter:blur(6px);padding:32px 0}
+  /* v5.28 — shorthand, so it must restate the horizontal insets or it resets
+     them to 0 and undoes the safe-area padding on exactly the wide screens
+     this breakpoint targets (an iPad in landscape is 1024x768: wide enough
+     and tall enough for this rule, and notched). */
+  .wiz{background:rgba(5,7,12,.72);backdrop-filter:blur(6px);padding:32px var(--sa-r) 32px var(--sa-l)}
   .wiz-in{background:var(--ink);border:1px solid var(--line-soft);border-radius:16px;padding:18px 24px 32px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
   .wiz-top{background:var(--ink)}
 }
