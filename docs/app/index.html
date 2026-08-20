@@ -3937,11 +3937,37 @@ function stMountSuite(pageId){
   if(typeof stRenderPend==="function") setTimeout(function(){ try{ stRenderPend(); }catch(e){} },0);
 }
 
+/* v5.30 — the page a walled visitor asked for, kept until they are let in. */
+var _wallWanted = null;
+
 function switchPage(id, fromPop){
   /* v4.96: every deep link, gate and shortcut that still says "pgStudio" lands
      on whichever suite the customer used last, instead of a page that no longer
      exists. Mounting happens BEFORE the page is revealed so nothing flashes. */
   id=stNormalizePage(id);
+  /* v5.30 — THE WALL IS A REDIRECT, not merely a set of hide rules, and this is
+     the only place that can make it one. Landing on any other page while walled
+     renders a completely blank app: `body.wall .page:not(#pgHome)` hides the
+     page that was just switched to, and #pgHome — which no longer carries .on —
+     is hidden by the plain `.page{display:none}`. #wallNote and #cardAccount
+     live inside #pgHome, so the login form the wall exists to show goes
+     invisible with it, and for a signed-out visitor accBoot returns early so
+     nothing re-applies the wall for up to five minutes.
+     Measured on the v5.30.0 tree before this guard: /app/?page=pgWf signed out
+     rendered 0 visible elements below the header.
+     Four callers can do it — the ?page= deep link (the landing site's six
+     feature cards and the manifest's three PWA shortcuts all use it), the
+     saved-page restore, popstate/Back, and appWallApply's own enforcement — so
+     the guard belongs here rather than at each of them, and at the one that has
+     not been written yet. */
+  if (id !== "pgHome" && document.body && document.body.classList.contains("wall")){
+    /* remember the intent so signing in lands them where they were going, not
+       on Home with the thing they clicked nowhere in sight. Not recorded for a
+       Back press: walking history backwards is not a request to go there once
+       the plan is paid. */
+    if (!fromPop) _wallWanted = id;
+    id = "pgHome";
+  }
   if(ST_SUITE_PAGE[id]) stMountSuite(id);
   if(typeof stSyncSuiteChips==="function") setTimeout(stSyncSuiteChips,0);
   /* v5.0 — Path's Studio source mirrors the Meitu/Evoto queue, which the owner
@@ -20625,6 +20651,13 @@ function appWallApply(){
     } else if (st === "checking"){
       h.innerHTML = icn("i-clock","ic-h2") + " " + escH(L9({my:"အကောင့် စစ်ဆေးနေပါတယ်…",en:"Checking your account…",shn:"ၵူတ်ႇထတ်း account ယူႇ…",kac:"Account jep nga ai…",th:"กำลังตรวจสอบบัญชี…",zh:"正在检查账号…",vi:"Đang kiểm tra tài khoản…",id:"Memeriksa akun…",ms:"Menyemak akaun…"}));
       p.textContent = "";
+    }
+  }
+  if (!on && _wallWanted){
+    /* the wall just came down — take them to what they originally asked for */
+    var want = _wallWanted; _wallWanted = null;
+    if (want !== "pgHome" && typeof switchPage === "function"){
+      try { switchPage(want); } catch(e){}
     }
   }
   if (on){

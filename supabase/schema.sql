@@ -133,6 +133,15 @@ create policy devices_all_own_or_admin on public.devices
 -- for the name field. Without this trigger that same policy would also let
 -- them set plan_status='active' and plan_expires_at = 2099. The trigger puts
 -- the plan columns back to what they were unless an admin is doing the update.
+--
+-- INSERT is guarded too, and that half is not theoretical tidiness. Section 3's
+-- insert policy checks only `id = auth.uid()`, so a user whose profile row does
+-- not exist yet could create it with is_admin = true and hand themselves the
+-- approval panel. The app never inserts a profile — it only ever selects one —
+-- but the policy grants the right regardless of what the app chooses to do with
+-- it, and a right the trigger does not bound is a hole whether or not the
+-- shipped client walks through it. On INSERT there is no `old` row to copy
+-- from, so the plan columns are forced to their starting values instead.
 -- ---------------------------------------------------------------------------
 create or replace function public.hnk_guard_profile_plan()
 returns trigger
@@ -142,6 +151,13 @@ set search_path = public
 as $$
 begin
   if public.hnk_is_admin() then
+    return new;
+  end if;
+  if tg_op = 'INSERT' then
+    new.plan_status     := 'none';
+    new.plan_expires_at := null;
+    new.allowed_devices := 2;
+    new.is_admin        := false;
     return new;
   end if;
   new.plan_status     := old.plan_status;
@@ -155,6 +171,11 @@ $$;
 drop trigger if exists hnk_guard_profile_plan on public.profiles;
 create trigger hnk_guard_profile_plan
   before update on public.profiles
+  for each row execute function public.hnk_guard_profile_plan();
+
+drop trigger if exists hnk_guard_profile_insert on public.profiles;
+create trigger hnk_guard_profile_insert
+  before insert on public.profiles
   for each row execute function public.hnk_guard_profile_plan();
 
 -- ---------------------------------------------------------------------------
@@ -247,8 +268,13 @@ create policy proofs_read_own_or_admin on storage.objects
 --   select policyname, cmd from pg_policies where schemaname='public';
 --     -> the policies above
 --
--- And the one that matters, run while signed in as a NON-admin customer:
+-- And the two that matter, run while signed in as a NON-admin customer:
 --
 --   update public.payment_requests set status='approved' where id='<some id>';
 --     -> must affect 0 rows. If it approves anything, this file is not applied.
+--
+--   update public.profiles set is_admin=true, plan_status='active' where id=auth.uid();
+--     -> must report success and change NOTHING. The trigger in section 6 puts
+--        every plan column back. If the row comes back with is_admin true, the
+--        approval panel is standing open to every customer you have.
 -- ---------------------------------------------------------------------------

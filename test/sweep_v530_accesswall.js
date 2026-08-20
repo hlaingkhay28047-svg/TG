@@ -263,12 +263,125 @@ async function look(browser, sess, prof, label) {
     /security definer/.test(sql),
     { found: !!sql, adminOnlyUpdate: /payreq_update_admin_only/.test(sql), trigger: /hnk_apply_payment/.test(sql) });
 
+  /* ---- M/N/O: the wall has to be a REDIRECT, not just a set of hide rules ----
+
+     Found by an adversarial review after this file was already green, which is
+     the point of running one. The wall hides every page but #pgHome. It does
+     NOT stop anything from making another page the active one — and #wallNote
+     and #cardAccount live inside #pgHome, so the moment .on moves off #pgHome
+     the login form the wall exists to show goes invisible with it. The target
+     page is hidden by the wall's !important rule and #pgHome by the plain
+     .page{display:none}: a completely blank app.
+
+     This is not a corner. docs/index.html's six feature cards link to
+     app/?page=pgRetouch and friends, and manifest.webmanifest ships three PWA
+     shortcuts in the same form, so it is the first thing a new customer sees.
+     Measured on the tree before the fix: 0 visible elements below the header.
+     Nothing re-applied the wall for up to five minutes either, because accBoot
+     returns early when there is no session.
+
+     M pins the deep link, N pins Android Back (popstate has the same power to
+     move .on), and O pins the other half of the fix — being sent to Home
+     instead of the page you clicked is only acceptable if signing in then takes
+     you there. */
+  const DEEP = ["pgWf", "pgRetouch", "pgCreate"];
+  const deep = [];
+  for (const target of DEEP) {
+    const dp = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    dp.on("pageerror", e => errs.push("deep:" + target + ": " + String(e).slice(0, 160)));
+    await armSupabase(dp, null, "normal");
+    await dp.addInitScript(() => { try { localStorage.setItem("hnk_ws_onboarded", "1"); } catch (e) {} });
+    await dp.goto("http://127.0.0.1:" + PORT + "/?page=" + target, { waitUntil: "networkidle" });
+    await dp.waitForTimeout(1200);
+    const seen = sel => dp.evaluate(x => {
+      const e = document.querySelector(x);
+      return !!e && getComputedStyle(e).display !== "none" && e.getClientRects().length > 0;
+    }, sel);
+    deep.push({
+      target,
+      page: await dp.evaluate(() => (typeof curPage !== "undefined" ? curPage : "(none)")),
+      wall: await dp.evaluate(() => document.body.classList.contains("wall")),
+      wallNote: await seen("#wallNote"),
+      loginBtn: await seen("#btnAccLogin"),
+      /* the measurement that actually caught it: is ANYTHING on screen? */
+      visibleInMain: await dp.evaluate(() => Array.from(document.querySelectorAll(".page.on *"))
+        .filter(e => getComputedStyle(e).display !== "none" && e.getClientRects().length).length),
+    });
+
+    /* N — Back, from the same page. popstate calls switchPage(pg, true), which
+       before the guard moved .on exactly the way the deep link did. */
+    await dp.evaluate(() => { try { history.pushState({ pg: "pgCreate" }, ""); } catch (e) {} });
+    await dp.goBack().catch(() => {});
+    await dp.waitForTimeout(400);
+    deep[deep.length - 1].afterBack = {
+      page: await dp.evaluate(() => (typeof curPage !== "undefined" ? curPage : "(none)")),
+      loginBtn: await seen("#btnAccLogin"),
+    };
+
+    /* O — the wall comes down. The customer must land on what they clicked. */
+    const landed = await dp.evaluate(t => {
+      try {
+        acc.profile = { id: "u-test", plan_status: "active",
+                        plan_expires_at: new Date(Date.now() + 86400000 * 30).toISOString() };
+        acc.sess = acc.sess || { access: "a", refresh: "r", uid: "u-test", email: "t@example.com",
+                                 exp: Math.floor(Date.now() / 1000) + 3600 };
+        appWallApply();
+      } catch (e) { return "(threw) " + e; }
+      return curPage;
+    }, target);
+    deep[deep.length - 1].afterUnlock = landed;
+    await dp.close();
+  }
+
+  const blank = deep.filter(d => !(d.page === "pgHome" && d.wall === true && d.wallNote &&
+                                   d.loginBtn && d.visibleInMain > 0));
+  report("M) a deep link into a walled app still shows the login form, not a blank page",
+    blank.length === 0, blank);
+
+  const backBroken = deep.filter(d => !(d.afterBack.page === "pgHome" && d.afterBack.loginBtn));
+  report("N) Back behind the wall cannot blank the app either",
+    backBroken.length === 0, deep.map(d => ({ target: d.target, afterBack: d.afterBack })));
+
+  /* Both halves, deliberately: without the redirect the app never left the
+     target page, so "landed on the target" would be trivially true and O would
+     pass on the broken tree while M and N failed. Requiring that it was parked
+     on pgHome FIRST is what makes this assertion able to fail on its own. */
+  const lost = deep.filter(d => !(d.page === "pgHome" && d.afterUnlock === d.target));
+  report("O) once the wall lifts they land on the page they originally asked for",
+    lost.length === 0,
+    deep.map(d => ({ asked: d.target, parkedOn: d.page, landedOn: d.afterUnlock })));
+
+  /* ---- P: the INSERT half of the plan guard ----
+     Section 3's insert policy checks only `id = auth.uid()`, so without a
+     BEFORE INSERT guard a user whose profile row does not exist yet can create
+     it with is_admin = true and hand themselves the approval panel. The shipped
+     client only ever SELECTs from profiles, but the policy grants the right
+     whatever the client chooses to do with it. */
+  report("P) a self-inserted profile cannot arrive pre-approved or pre-admin",
+    /create trigger hnk_guard_profile_insert/.test(sql) &&
+    /before insert on public\.profiles/.test(sql) &&
+    /tg_op = 'INSERT'/.test(sql),
+    { insertTrigger: /hnk_guard_profile_insert/.test(sql), branch: /tg_op = 'INSERT'/.test(sql) });
+
   /* ---- G ---- */
   report("G) no page errors in any state", errs.length === 0, errs.slice(0, 5));
 
-  console.log("      (on the v5.29.0 tree this file reports 7 failures: no login stamp, appWallState " +
-    "absent so every state reads \"(no wall)\", the tab bar and pgDash still on screen for a " +
-    "signed-out visitor, both buy headings empty, and logout unreachable in both unpaid states)");
+  /* Measured, not asserted from memory: docs/app/index.html at c7e519b served on
+     its own port, this file run against it. A/B/D/E/H/I/J fail because none of
+     the wall exists — appWallState is undefined so every state reads
+     "(no wall)", the tab bar and pgDash stay on screen for a signed-out
+     visitor, both buy headings are empty, logout is unreachable in both unpaid
+     states, and the admin card is absent for admin and non-admin alike.
+     M/N/O fail differently and are worth reading: on v5.29.0 the deep link
+     lands on a page that renders perfectly well (322 visible elements on pgWf),
+     because with no wall there is nothing to be blank behind — they fail on the
+     login form not being there, which is the v5.29.0 defect this whole wave
+     exists to fix. F/F2/C/K/L/P/G pass on the old tree: F/F2 because
+     wallLoginAge stamps a missing key rather than trusting one, C because an
+     active plan is supposed to change nothing, and K/L/P because they read
+     supabase/schema.sql out of the repo rather than the running app. */
+  console.log("      (on the v5.29.0 tree at c7e519b this file reports 10 failures: " +
+    "A B D E H I J M N O)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();
