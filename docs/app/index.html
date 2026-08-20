@@ -4429,10 +4429,10 @@ $("btnSaveKey").onclick = async function(){
   btn.disabled=true;
   setSt("stKey",t("st_key_checking"));
   try {
-    var r = await fetch(API_BASE+"/models/"+MODEL_TEXT+":generateContent?key="+encodeURIComponent(k), {
+    var r = await fetchWithTimeout(API_BASE+"/models/"+MODEL_TEXT+":generateContent?key="+encodeURIComponent(k), {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ contents:[{parts:[{text:"ping"}]}] })
-    });
+    }, PROVIDER_VERIFY_TIMEOUT_MS);
     /* v4.28 G1: HTTP 400 is NOT "valid" — Google returns 400 with
        API_KEY_INVALID for malformed keys. Only r.ok proves the key works;
        a 400 whose body blames the key is rejected like 401/403. */
@@ -4549,16 +4549,34 @@ function rhV2Headers(apiKey){ return {"Content-Type":"application/json","Authori
    get a longer ceiling than submit/JSON calls — they move real image bytes,
    often over a studio's mobile connection. */
 var RH_UPLOAD_TIMEOUT_MS = 45000, RH_SUBMIT_TIMEOUT_MS = 30000;
+/* v5.27 — ceilings for the calls v5.20 did not reach. Generation is genuinely
+   slow: a 4K Gemini or OpenAI image can legitimately take well over a minute
+   on a studio's mobile connection, so its ceiling is deliberately generous.
+   A key check or a status poll that has not answered in half a minute is
+   already broken, and a media download sits between the two. */
+var RH_QUERY_TIMEOUT_MS = 25000, PROVIDER_VERIFY_TIMEOUT_MS = 25000,
+    PROVIDER_GEN_TIMEOUT_MS = 180000, MEDIA_DL_TIMEOUT_MS = 120000;
 function fetchWithTimeout(url, opts, ms, callerSignal){
   var ctl = new AbortController();
-  var timer = setTimeout(function(){ ctl.abort(); }, ms);
+  var timedOut = false;
+  var timer = setTimeout(function(){ timedOut = true; ctl.abort(); }, ms);
   var onCallerAbort = function(){ ctl.abort(); };
   if (callerSignal){
     if (callerSignal.aborted) ctl.abort();
     else callerSignal.addEventListener("abort", onCallerAbort);
   }
   var init = Object.assign({}, opts, { signal: ctl.signal });
-  return fetch(url, init).finally(function(){
+  return fetch(url, init).catch(function(err){
+    /* Our ceiling and the user's Stop both surface as the same bare
+       AbortError. The caller's signal is untouched when the timer fires, so
+       that is what tells them apart: re-throw ours with the "timeout" code
+       every friendly-message path already translates, and leave a real user
+       cancel alone for the existing signal.aborted checks to normalize. */
+    if (timedOut && !(callerSignal && callerSignal.aborted)){
+      var te = new Error("timeout"); te.code = "timeout"; throw te;
+    }
+    throw err;
+  }).finally(function(){
     clearTimeout(timer);
     if (callerSignal) callerSignal.removeEventListener("abort", onCallerAbort);
   });
@@ -4701,7 +4719,7 @@ function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
   return body;
 }
 async function rhV2Query(apiKey, taskId, signal){
-  var r=await fetch(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:taskId}), signal:signal });
+  var r=await fetchWithTimeout(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:taskId}) }, RH_QUERY_TIMEOUT_MS, signal);
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("query-failed"); e.status=r.status; e.body=j; throw e; }
   return j||{};
@@ -4783,9 +4801,9 @@ function rhUsageOf(j){
 /* Remaining balance. Deliberately NOT thrown on failure by the callers: a
    studio must be able to keep working when a balance read is blocked. */
 async function rhAccountStatus(apiKey, signal){
-  var r=await fetch(RH_BASE+"/uc/openapi/accountStatus", {
+  var r=await fetchWithTimeout(RH_BASE+"/uc/openapi/accountStatus", {
     method:"POST", headers:rhV2Headers(apiKey),
-    body:JSON.stringify({apiKey:apiKey}), signal:signal });
+    body:JSON.stringify({apiKey:apiKey}) }, RH_QUERY_TIMEOUT_MS, signal);
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("account-failed"); e.status=r.status; e.body=j; throw e; }
   if(j && ("code" in j) && Number(j.code)!==0){
@@ -4803,7 +4821,7 @@ async function rhAccountStatus(apiKey, signal){
   };
 }
 async function rhQueueStatus(apiKey, signal){
-  var r=await fetch(RH_V2_BASE+"/queue/status", { method:"GET", headers:rhV2Headers(apiKey), signal:signal });
+  var r=await fetchWithTimeout(RH_V2_BASE+"/queue/status", { method:"GET", headers:rhV2Headers(apiKey) }, RH_QUERY_TIMEOUT_MS, signal);
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("queue-failed"); e.status=r.status; e.body=j; throw e; }
   var d=rhUnwrap(j);
@@ -4820,8 +4838,8 @@ async function rhQueueStatus(apiKey, signal){
 async function rhPricePreview(apiKey, apiPath, body, signal){
   var p=String(apiPath||"").replace(/^\/+/,"");
   if(!p) throw new Error("no-path");
-  var r=await fetch(RH_V2_BASE+"/price-preview/"+p, {
-    method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body||{}), signal:signal });
+  var r=await fetchWithTimeout(RH_V2_BASE+"/price-preview/"+p, {
+    method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body||{}) }, RH_QUERY_TIMEOUT_MS, signal);
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("price-failed"); e.status=r.status; e.body=j; throw e; }
   var d=rhUnwrap(j);
@@ -4858,6 +4876,16 @@ async function rhV2PollUntilDone(apiKey, taskId, onTick, timeoutMs, signal){
          instead of a scary generic RunningHub error for an action the user
          deliberately took. */
       if(signal && signal.aborted){ var ec3=new Error("cancelled"); ec3.code="cancelled"; throw ec3; }
+      /* v5.27 — rhV2Query now carries a per-request ceiling of its own. A
+         single slow poll must NOT lose the job: RunningHub charges at SUBMIT
+         and the task keeps running server-side regardless, so a timed-out
+         poll is retried and only the overall `limit` below ends the wait.
+         Without this, adding the per-call timeout would have turned a blip
+         into a lost paid render. */
+      if(qe && qe.code==="timeout" && (Date.now()-start) < limit){
+        await new Promise(function(res){ setTimeout(res, RH_POLL_MS); });
+        continue;
+      }
       throw qe;
     }
     var s=String(j.status||"").toUpperCase();
@@ -5128,7 +5156,7 @@ async function rhJobClaim(job){
   return {state:"recovered", n:n};
 }
 async function rhDownloadAsDataUrl(url){
-  var r=await fetch(url, {headers:{"Accept":"image/*"}});
+  var r=await fetchWithTimeout(url, {headers:{"Accept":"image/*"}}, MEDIA_DL_TIMEOUT_MS);
   if(!r.ok){ var e=new Error("download-failed"); e.status=r.status; throw e; }
   var ab=await r.arrayBuffer();
   var ct=(r.headers && r.headers.get && r.headers.get("content-type"))||"image/png";
@@ -5137,7 +5165,7 @@ async function rhDownloadAsDataUrl(url){
 async function rhVerifyKey(apiKey){
   if(!apiKey) return {ok:false, code:"invalid-key"};
   try {
-    var r=await fetch(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:"__hnk_verify__"}) });
+    var r=await fetchWithTimeout(RH_V2_BASE+RH_V2_PATHS.query, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify({taskId:"__hnk_verify__"}) }, PROVIDER_VERIFY_TIMEOUT_MS);
     if(r.status===401||r.status===403) return {ok:false, code:"invalid-key"};
     return {ok:true};
   } catch(e){ return {ok:false, code:"network"}; }
@@ -5571,7 +5599,7 @@ async function rhGenerateT2I(apiKey, model, promptText, ratio, sizeSel, onTick, 
 /* Fetched only when the user actually asks to download — plain <video src>
    playback needs no CORS fetch at all, so this stays an on-demand cost. */
 async function rhVideoDownloadBlobUrl(url){
-  var r=await fetch(url);
+  var r=await fetchWithTimeout(url, {}, MEDIA_DL_TIMEOUT_MS);
   if(!r.ok){ var e=new Error("download-failed"); e.status=r.status; throw e; }
   var blob=await r.blob();
   return URL.createObjectURL(blob);
@@ -6009,7 +6037,7 @@ function oaSizeFromRatio(ratio){
 async function oaVerifyKey(apiKey){
   if(!apiKey) return {ok:false, code:"invalid-key"};
   try {
-    var r=await fetch(oaUrl("/models"), { headers:{"Authorization":"Bearer "+apiKey} });
+    var r=await fetchWithTimeout(oaUrl("/models"), { headers:{"Authorization":"Bearer "+apiKey} }, PROVIDER_VERIFY_TIMEOUT_MS);
     if(r.status===401) return {ok:false, code:"invalid-key"};
     /* v4.41: a 429 on /models means the key AUTHENTICATED and merely hit a
        rate limit — reporting "network error" sent users hunting the wrong bug */
@@ -6034,13 +6062,13 @@ async function oaGenerateOne(apiKey, promptText, refDataUrls, ratio, quality, si
     fd.append("size", size);
     if(quality==="high") fd.append("quality","high");
     refDataUrls.forEach(function(du, i){ fd.append("image[]", rhDataUrlToBlob(du), "hnk_"+i+".png"); });
-    r=await fetch(oaUrl("/images/edits"), { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd, signal:signal });
+    r=await fetchWithTimeout(oaUrl("/images/edits"), { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd }, PROVIDER_GEN_TIMEOUT_MS, signal);
   } else {
     var oaBody={ model:oaModel(), prompt:promptText, size:size };
     if(quality==="high") oaBody.quality="high";
-    r=await fetch(oaUrl("/images/generations"), { method:"POST",
+    r=await fetchWithTimeout(oaUrl("/images/generations"), { method:"POST",
       headers:{"Authorization":"Bearer "+apiKey, "Content-Type":"application/json"},
-      body: JSON.stringify(oaBody), signal:signal });
+      body: JSON.stringify(oaBody) }, PROVIDER_GEN_TIMEOUT_MS, signal);
   }
   var j=await r.json().catch(function(){return null;});
   if(!r.ok){ var e=new Error("openai-failed"); e.status=r.status; e.body=j; throw e; }
@@ -20303,7 +20331,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.26.0";
+var APP_VER="5.27.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -20859,8 +20887,8 @@ $("btnGen").onclick = async function(){
         return { contents:[{parts:parts}], generationConfig:gc };
       };
       var callModel = function(m){
-        return fetch(API_BASE+"/models/"+m+":generateContent?key="+encodeURIComponent(state.key),{
-          method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(makeBody(m)),signal:genAbort.signal})
+        return fetchWithTimeout(API_BASE+"/models/"+m+":generateContent?key="+encodeURIComponent(state.key),{
+          method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(makeBody(m))}, PROVIDER_GEN_TIMEOUT_MS, genAbort.signal)
           .then(function(r){ return r.json().catch(function(){return null;}).then(function(j){ return {r:r,j:j}; }); })
           .then(function(x){
             if(!x.r.ok) return { err: friendly(x.r.status,x.j), code:x.r.status };
