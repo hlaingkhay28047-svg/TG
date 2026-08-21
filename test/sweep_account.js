@@ -362,8 +362,25 @@ const SB_FIX = {
   await page.fill("#accPass", "secret123");
   await page.click("#btnAccLogin");
   await page.waitForTimeout(400);
-  await page.click("#accGrpBuy .grp-h");
-  await page.waitForTimeout(300);
+  /* v5.32.0 — this used to click the accordion header to open the buy group.
+     It no longer may. Before v5.32.0 appWallApply's buy branch called
+     accOpenGrp("accGrpBuy") and then accOpenGrp("accGrpAuth"); accOpenGrp is
+     an EXCLUSIVE accordion whose first act is to collapse every other group,
+     so the second call shut the buy panel again and a customer who had just
+     been told to pay was left staring at a collapsed group. The header click
+     here quietly papered over that: it opened what the wall should have opened
+     itself, so the defect could not fail this test.
+     The fix makes the wall leave the buy group open, which turns the same
+     click into a TOGGLE-CLOSED. So the click is gone and the guarantee is
+     asserted instead — strictly more than this block checked before. */
+  const buyGroupOpen = await page.evaluate(() => {
+    const g = document.getElementById("accGrpBuy");
+    const k = document.getElementById("payKind3m");
+    return { open: !!g && g.className.indexOf("open") >= 0,
+             kindVisible: !!(k && k.getClientRects().length) };
+  });
+  report("9a buy wall: being told to pay leaves the payment group OPEN, so the only path to paying is on screen without hunting for it (pre-v5.32.0 the exclusive accordion re-collapsed it)",
+    buyGroupOpen.open && buyGroupOpen.kindVisible, JSON.stringify(buyGroupOpen));
   await page.click("#payKind3m");
 
   const v9 = {};

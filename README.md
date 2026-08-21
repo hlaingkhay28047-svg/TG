@@ -45,6 +45,28 @@ Until it is applied, treat the admin panel as a convenience and assume any
 signed-in user could approve themselves. Section 9 of the file is the check
 that proves it took.
 
+**Re-run it after web v5.32.0.** That release closed three holes in the file
+itself, so a project still running the older schema is not protected by the
+paragraphs above:
+
+- `app_settings` — the row holding `payment_instructions_my`, i.e. the bank
+  account number every customer wires money to — had no row-level security at
+  all. Supabase's default grants make an RLS-less table not merely readable but
+  *writable*, so one `PATCH` from a browser console could have redirected the
+  studio's revenue. It is now RLS-on with a read-only policy and no write
+  policy of any kind.
+- The device cap was enforced only in the browser. It is now a trigger, raising
+  the same `P0001` the client already knows how to explain.
+- The guard trigger used to run its admin check unconditionally, and
+  `auth.uid()` is NULL in the SQL editor — so the guard blocked the very
+  `update ... set is_admin = true` bootstrap above. It now returns early when
+  there is no authenticated user, which is exactly the SQL-editor case and
+  never a browser one.
+
+The file stays idempotent, so re-running it is safe whatever state the project
+is in. `test/verify_rls_contract.js` proves the schema covers every table the
+client actually fetches, but no test in this repo can prove you have run it.
+
 ## DigitalOcean App Platform
 
 - Repository: `hlaingkhay28047-svg/TG`

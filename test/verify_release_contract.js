@@ -117,10 +117,43 @@ check("the web app describes the same provider-only API-key flow in every locale
 check("fully translated app locales do not fall back to an English privacy note", appNativePrivacyCodes.every(language => !effectiveAppLocaleValue("key_note", language).includes(englishProviderFlow)), "an English-only notice leaked into localized copy");
 check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
+/* Inventory copy is DERIVED, never typed. The literal list that used to live
+   here pinned "One-Tap 131" and passed for seven waves while the app rendered
+   138 — a test can only certify a number it does not itself invent. The app's
+   own statline fallbacks are the reference; verify_landing_counts.js then
+   proves those fallbacks equal what the running app paints, which closes the
+   loop without either file naming a number.
+
+   "Smart Workflow" is ambiguous on this page by design: the web-app column
+   quotes the app's total, the Photoshop column quotes the panel's nine. Both
+   are accepted here and told apart precisely in verify_landing_counts.js. */
+const inventory = {
+  "One-Tap": (html.match(/<b id="stTapCount">(\d+)<\/b>/) || [])[1],
+  "Visual Library": (html.match(/<b id="stLibCount">(\d+)<\/b>/) || [])[1],
+  "Smart Workflow": (html.match(/<b id="stWfCount">(\d+)<\/b>/) || [])[1],
+};
+const panelWorkflowCount = (() => {
+  try {
+    const registry = execFileSync("unzip", ["-p", panelArtifact, "src/workflows/workflow-registry.js"], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+    const block = (registry.match(/var\s+WORKFLOWS\s*=\s*\[([\s\S]*?)\n\];/) || [])[1] || "";
+    return String([...block.matchAll(/\bid:\s*"[^"]+",\s*title:\s*"[^"]+"/g)].length);
+  } catch (error) { return ""; }
+})();
+function staleInventory(source) {
+  const stale = [];
+  for (const [label, want] of Object.entries(inventory)) {
+    if (!want) { stale.push(`${label}: no statline fallback to derive from`); continue; }
+    const found = [...source.matchAll(new RegExp(label.replace(/ /g, "\\s") + "(?: Studio| Pro| Controls)?\\s*(\\d+)", "g"))].map(m => m[1]);
+    if (!found.length) { stale.push(`${label}: never advertised`); continue; }
+    const wrong = [...new Set(found.filter(v => v !== want && !(label === "Smart Workflow" && v === panelWorkflowCount)))];
+    if (wrong.length) stale.push(`${label} ${wrong.join("/")} vs ${want}`);
+  }
+  return stale;
+}
+const landingStale = staleInventory(landing);
 check("landing inventory copy matches the shipped web app",
-  ["One-Tap 131", "Visual Library 1850", "Smart Workflow 131", "Meitu 162", "Evoto Pro 213", "907"].every(value => landing.includes(value)) &&
-  !["One-Tap 123", "Visual Library 607", "Smart Workflow 116", "Meitu 79", "Evoto Pro 79", "1,081", "1,134"].some(value => landing.includes(value)),
-  "landing inventory or test-count copy is stale");
+  landingStale.length === 0 && landing.includes("907") && !["1,081", "1,134"].some(value => landing.includes(value)),
+  landingStale.length ? landingStale.join("; ") : "panel test-count copy is stale");
 const encodedProductionHome = encodeURIComponent(productionBase + "/");
 const unexpectedDocsDotfiles = fs.readdirSync(path.join(ROOT, "docs"))
   .filter(name => name.startsWith(".") && name !== ".nojekyll");
@@ -167,13 +200,14 @@ check("both social preview images exist in the published site",
   fs.existsSync(path.join(ROOT, "docs/og-image.jpg")) &&
   fs.existsSync(path.join(ROOT, "docs/app/og-app.jpg")),
   "an Open Graph image is missing");
+/* Same derivation, turned on the app itself: its three link-preview
+   descriptions must quote the numbers its own statline shows. They did not —
+   all three said One-Tap 131 against a rendered 138, and no <meta> tag is ever
+   re-read by a human. */
+const appStale = staleInventory(html);
 check("web-app metadata and initial DOM inventory match the shipped UI",
-  ["One-Tap 131", "Visual Library 1850", "Smart Workflow 131", "Meitu Studio 162", "Evoto Pro 213"].every(value => html.includes(value)) &&
-  html.includes('<b id="stTapCount">131</b>') &&
-  html.includes('<b id="stLibCount">1850</b>') &&
-  html.includes('<b id="stWfCount">131</b>') &&
-  !["Smart Workflow 115", "Meitu Studio 50", "Evoto Pro 42", '<b id="stTapCount">128</b>', '<b id="stWfCount">115</b>'].some(value => html.includes(value)),
-  "app metadata or initial inventory is stale");
+  appStale.length === 0 && Object.values(inventory).every(Boolean),
+  appStale.length ? appStale.join("; ") : "a statline fallback is missing");
 check("temporary deployment probes are not published",
   unexpectedDocsDotfiles.length === 0 && unexpectedProbeFiles.length === 0 &&
   !fs.existsSync(path.join(ROOT, "docs/.auto-live-check")) &&

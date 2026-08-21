@@ -1,10 +1,31 @@
 <!DOCTYPE html>
 <html lang="my">
 <meta charset="utf-8">
+<!-- SECURITY POLICY. Delivered as a meta tag rather than a response header
+     because DigitalOcean App Platform static sites do not let the app spec set
+     arbitrary response headers; a meta CSP is honoured by every browser and
+     needs no platform support. Two directives CANNOT travel this way and are
+     therefore NOT in force: frame-ancestors (clickjacking) and
+     Strict-Transport-Security. The framebusting guard at the end of this file
+     covers the first as defence in depth; HSTS needs a real header and is
+     documented in README as an owner action.
+
+     'unsafe-inline' is present and it is a real weakening, not an oversight:
+     this document is one file with its entire stylesheet and application in
+     inline <style>/<script> blocks, so a strict policy would have to hash or
+     nonce them, and a hash changes on every release. It is written this way
+     deliberately so what IS bought is unambiguous — object-src 'none' kills
+     plugin embedding, base-uri 'self' kills <base> injection, form-action
+     'self' kills form-based exfiltration, frame-src 'none' kills injected
+     iframes, and default-src 'self' means an injected <script src> pointing at
+     an attacker host is refused even though an injected INLINE script would
+     still run. Externalising the script block is the architecture work that
+     would let this become a strict policy. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>HNK Web Studio — One-Tap AI Studio</title>
 <link rel="canonical" href="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/">
-<meta name="description" content="Browser ထဲမှာ One-Tap 131 + Visual Library 1850 + Smart Workflow 131 + Meitu Studio 162 · Evoto Pro 213 — HNK Create Studio Web App">
+<meta name="description" content="Browser ထဲမှာ One-Tap 138 + Visual Library 1850 + Smart Workflow 131 + Meitu Studio 162 · Evoto Pro 213 — HNK Create Studio Web App">
 <meta name="theme-color" content="#0b0d14">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="lib/favicon-48.png" sizes="48x48">
@@ -17,14 +38,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="HNK Create Studio">
 <meta property="og:title" content="HNK Web Studio — One-Tap AI Studio">
-<meta property="og:description" content="One-Tap 131 · Visual Library 1850 · Smart Workflow 131 · Meitu Studio 162 · Evoto Pro 213 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
+<meta property="og:description" content="One-Tap 138 · Visual Library 1850 · Smart Workflow 131 · Meitu Studio 162 · Evoto Pro 213 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
 <meta property="og:url" content="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/">
 <meta property="og:image" content="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/og-app.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HNK Web Studio — One-Tap AI Studio">
-<meta name="twitter:description" content="One-Tap 131 · Visual Library 1850 · Smart Workflow 131 · Meitu Studio 162 · Evoto Pro 213">
+<meta name="twitter:description" content="One-Tap 138 · Visual Library 1850 · Smart Workflow 131 · Meitu Studio 162 · Evoto Pro 213">
 <meta name="twitter:image" content="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/og-app.jpg">
 <style>
 :root{
@@ -38,7 +59,18 @@
      test/sweep_v528_safearea.js proves the padding actually tracks it. */
   --sa-l:env(safe-area-inset-left, 0px); --sa-r:env(safe-area-inset-right, 0px);
   --ink:#0b0d14; --panel:#131826; --panel-2:#182032;
-  --line:rgba(217,164,65,.28); --line-soft:rgba(243,239,230,.10);
+  --line:rgba(217,164,65,.28); --line-soft:rgba(243,239,230,.38);/* v5.32 — WCAG 2.2 SC 1.4.11 Non-text Contrast (AA, 3:1).
+     At .10 every bordered component in the design system measured
+     1.30:1 against the card it sits on and 1.25:1 against the page —
+     roughly a third of the required ratio — so a text input, a chip, a
+     button and a card were all indistinguishable from their container.
+     On a mid-range Android LCD in daylight, which is the stated
+     deployment condition, a photographer could not see where the API-key
+     field began. One token drives 53 rules, so one edit fixes .inp,
+     .chip, .btn, .btn-ghost, .subtab, .rchip and .card together.
+     .38 was computed, not guessed: composited over --panel it gives
+     3.26:1 and over --ink 3.23:1. The .34 an automated audit suggested
+     actually lands at 2.86:1 and would still have failed. */
   --gold:#d9a441; --gold-hi:#f4d488; --cream:#f3efe6; --muted:#a8a394;
   --err:#ef8080; --ok:#7ec97e;
   /* design tokens: consolidates spacing/type/radius values that had drifted
@@ -150,7 +182,13 @@ h1 em{font-style:normal;color:var(--gold-hi)}
   /* one per row at 320 means the short pickers get their full type back — but
      the long model names still need the tighter treatment to read whole */
   #genOpts select.inp,#genOptsAdv select.inp,#vidOpts select.inp:not(#selVidModel),#t2iOpts select.inp:not(#selT2IModel){padding:10px 12px;font-size:var(--fs-md)}}
-.inp:focus{border-color:var(--gold);outline:none}
+/* v5.32 — WCAG 2.2 SC 2.4.7/2.4.13. `outline:none` here silently outranked
+   the global :focus-visible ring on every text field in the app, including the
+   login email and password. The gold border is kept, but as an ADDITION to the
+   ring rather than a replacement for it: a 1px border-colour change is not a
+   focus indicator, and on these two fields it was the only thing a keyboard
+   user had. */
+.inp:focus{border-color:var(--gold)}
 /* v4.28: one global keyboard-focus ring (replaces the per-widget .rng rule) */
 :where(button,a,select,input,textarea,[tabindex]):focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 textarea.inp{min-height:110px;resize:vertical;line-height:1.8}
@@ -290,7 +328,18 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 /* v4.28: gentle fade-rise on every page/tab switch. transform never moves
    offsetTop, so the Studio stage engine's stageNaturalTop math (recomputed
    on page switch) is unaffected — keep this transform/opacity only. */
-.page.on{display:block;animation:pagein var(--dur-3) var(--ease-out)}
+/* v5.32 — RESERVE THE CONTENT BOX SO WHAT SITS BELOW IT DOES NOT JUMP.
+   #pgWf ships with class="page on" so a page IS visible at first paint, but
+   its cards are built by JS: .wrap measured 226px tall at paint and 823px once
+   the catalogue rendered, dragging the footer and the tab bar with it in a
+   single 0.9382 layout shift at t=454ms on every signed-in launch. That is
+   9.4x the 0.1 "good" Core Web Vitals threshold, and unlike the wall shift it
+   hit PAYING customers every time they opened the app.
+   Reserving roughly one viewport means the cards grow into space already
+   allocated, so nothing below them moves. 130px is the header plus the tab
+   bar; dvh rather than vh so a phone's collapsing URL bar does not re-trigger
+   the very shift this line exists to remove. */
+.page.on{display:block;animation:pagein var(--dur-3) var(--ease-out);min-height:calc(100vh - 130px);min-height:calc(100dvh - 130px)}
 @keyframes pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:rgba(11,13,20,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom);padding-left:var(--sa-l);padding-right:var(--sa-r)}
 .tabbar::-webkit-scrollbar{display:none}
@@ -534,6 +583,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-bottom:9
 html,body{overscroll-behavior-y:none}
 /* horizontal pill-swipes must not chain into browser back/forward gestures */
 .subtabbar,.tabbar{overscroll-behavior-x:contain}
+/* Same reasoning at the other end of the screen: the bar is empty in markup
+   and its buttons are appended by JS, so it measured 1px tall at first paint
+   and 55px after. Reserving the final height keeps it still. */
+.tabbar{min-height:55px}
 /* iOS auto-zooms (and stays zoomed) on focus of any field under 16px —
    scoped to phones/tablets so the desktop density is untouched */
 @media(max-width:768px){
@@ -1162,7 +1215,11 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   -webkit-tap-highlight-color:transparent}
 .hsl-btn:hover{border-color:var(--line)}
 .hsl-btn:active{transform:scale(.98)}
-.hsl-btn:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(233,185,73,.25),inset 0 1px 0 rgba(255,255,255,.06)}
+/* The .25-alpha box-shadow this used to rely on measured about 1.7:1 against
+   the surface — below the 3:1 SC 1.4.11 needs of a focus indicator. Restored to
+   the same 2px gold outline every other control uses, with the inset highlight
+   kept for the pressed look. */
+.hsl-btn:focus-visible{border-color:var(--gold);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .hsl-lab{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .hsl-ctx{font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);line-height:1}
 .hsl-val{font-size:var(--fs-sm);font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1316,7 +1373,10 @@ body.wall #wallNote{display:block}
 .st-sact{order:4;display:inline-flex;gap:2px;flex:0 0 auto}
 .st-sact .sa{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
   color:var(--muted);cursor:pointer;transition:background var(--dur-1) var(--ease-out),color var(--dur-1) var(--ease-out)}
-.st-sact .sa:hover,.st-sact .sa:focus-visible{background:rgba(255,255,255,.07);color:var(--gold-hi);outline:none}
+/* Split apart: the hover treatment is fine, but sharing the selector with
+   :focus-visible meant `outline:none` killed the keyboard ring too. */
+.st-sact .sa:hover{background:rgba(255,255,255,.07);color:var(--gold-hi)}
+.st-sact .sa:focus-visible{background:rgba(255,255,255,.07);color:var(--gold-hi)}
 .st-sact svg{width:14px;height:14px;pointer-events:none}
 
 /* ---- slider row: label + readout on line 1, full-width track on line 2 ---- */
@@ -1418,6 +1478,43 @@ body.wall #wallNote{display:block}
 .st-tgh .st-tgi{width:14px;height:14px;color:var(--gold)}
 
 </style>
+
+<body>
+<script>
+/* v5.32 — THE WALL IS DECIDED BEFORE THE FIRST PAINT.
+   Until now this document had no <body> tag at all; the browser synthesised
+   one, and body.wall could not be set until appWallApply() ran at the end of
+   a 3.2MB parse. Measured consequence: a signed-out visitor got the whole app
+   painted and fully tappable, then watched it collapse to the login card at
+   t=383ms — one layout shift of 0.6374, which is 6.4x the 0.1 "good" Core Web
+   Vitals threshold and 2.5x the 0.25 "poor" boundary. Every first-time visitor
+   saw it, on the acquisition path.
+
+   This runs as the first thing inside <body>, so the class is on the element
+   before any of the document below it is parsed or painted. It mirrors
+   isPremium() exactly — both fields, because the server extends
+   plan_expires_at on approval but never sweeps plan_status back to none — and
+   reads the same two localStorage records accBoot restores from.
+
+   It FAILS CLOSED on purpose: any exception, unparseable JSON or disabled
+   storage leaves the wall up. Showing a paying customer the wall for one
+   frame is a papercut; showing a stranger the whole app is the thing this
+   exists to stop. appWallApply() re-decides from live state moments later and
+   toggles the class either way, so this is a paint-time hint, never the
+   authority. */
+(function(){
+  var walled = true;
+  try {
+    var sess = JSON.parse(localStorage.getItem("hnk_acc_sess_v1") || "null");
+    var prof = JSON.parse(localStorage.getItem("hnk_acc_profile_v1") || "null");
+    if (sess && prof && prof.plan_status === "active" && prof.plan_expires_at) {
+      var exp = Date.parse(prof.plan_expires_at);
+      if (!isNaN(exp) && exp > Date.now()) walled = false;
+    }
+  } catch (e) {}
+  if (walled) document.body.classList.add("wall");
+})();
+</script>
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
   <!-- HNK shared icon sprite — v4.25.0 set: 65 symbols (24×24, stroke 1.8 via CSS, round caps/joins, currentColor).
@@ -1749,7 +1846,7 @@ body.wall #wallNote{display:block}
        written by the same runtime code that populated it in the hero; the
        Visual Library count is now runtime too (stLibCount ← LW.items.length) -->
   <div class="statline dash-stat">
-    <div><b id="stTapCount">131</b><span>One-Tap Workflows</span></div>
+    <div><b id="stTapCount">138</b><span>One-Tap Workflows</span></div>
     <div><b id="stLibCount">1850</b><span>Visual Library</span></div>
     <div><b id="stWfCount">131</b><span>Smart Workflow</span></div>
     <div><b id="stMeituCount"></b><span>Meitu Controls</span></div>
@@ -20639,6 +20736,8 @@ function admRender(){
 var WALL_MAXAGE_MS = 30 * 86400000;   /* absolute session age; re-login after */
 var WALL_RECHECK_MS = 5 * 60000;      /* how often a foreground tab revalidates */
 var _wallLast = 0;
+/* the last state the accordion was steered for — see appWallApply */
+var _wallLastSt = null;
 
 /* "" open · "login" no session · "buy" signed in without an active plan ·
    "checking" signed in, profile not read yet — a distinct state on purpose,
@@ -20685,18 +20784,37 @@ function appWallApply(){
     if (typeof curPage !== "undefined" && curPage !== "pgHome"){
       try { switchPage("pgHome"); } catch(e){}
     }
-    try {
-      if (st === "login") accOpenGrp("accGrpAuth");
-      else if (st === "buy"){
-        accOpenGrp("accGrpBuy");
-        /* Sign-out lives inside accGrpAuth, which accBoot collapses as soon as
-           there IS a session. Leaving it collapsed behind a wall strands anyone
-           who signed into the wrong account: the only door out of the wall is
-           the one door the wall just hid. Open it too. */
-        accOpenGrp("accGrpAuth");
-      }
-    } catch(e){}
+    /* v5.32 — STEER THE ACCORDION ONLY WHEN THE STATE ACTUALLY CHANGES.
+       appWallApply is called from wallRecheck, which is bound to
+       visibilitychange, window focus AND a 5-minute interval — so this block
+       used to re-run on every one of those. accOpenGrp ends in
+       scrollIntoView({block:"start"}), so a walled customer had the page
+       yanked to the top of the Account card every five minutes and every time
+       they came back from another app. Repeating the class and copy writes
+       above is harmless; repeating this is not. */
+    if (st !== _wallLastSt){
+      try {
+        if (st === "login") accOpenGrp("accGrpAuth");
+        else if (st === "buy"){
+          /* ORDER AND EXCLUSIVITY BOTH MATTER, and getting them wrong broke
+             the only path a customer has to pay. accOpenGrp is an EXCLUSIVE
+             accordion: its first act is to collapse every other group in
+             ACC_GRPS, which includes accGrpBuy. Calling it twice therefore
+             closed the payment panel that the first call had just opened, so
+             the wall rendered "Pick a plan below and upload your transfer
+             slip" above a panel that was shut — measured: planChipsVisible
+             false, submitVisible false, on every boot into the buy state.
+             Sign-out still has to be reachable (see the v5.30 note this
+             replaces), so accGrpAuth is expanded DIRECTLY rather than through
+             the exclusive helper, which leaves both open. */
+          accOpenGrp("accGrpBuy");
+          var a = $("accGrpAuth");
+          if (a && a.className.indexOf("hide") < 0) a.className = "grp open";
+        }
+      } catch(e){}
+    }
   }
+  _wallLastSt = st;
   return st;
 }
 
@@ -20774,7 +20892,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.31.0";
+var APP_VER="5.32.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -21208,7 +21326,7 @@ try {
 var APP_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
 $("btnShare").onclick = async function(){
   if (navigator.share) {
-    var shareTapCount = ($("stTapCount") && $("stTapCount").textContent) || "131";
+    var shareTapCount = ($("stTapCount") && $("stTapCount").textContent) || "138";
     try { await navigator.share({ title: "HNK Web Studio", text: "HNK Web Studio — One-Tap AI Studio ("+shareTapCount+" workflows, browser ထဲမှာ တိုက်ရိုက်)", url: APP_URL }); } catch(e){}
   } else {
     try { await navigator.clipboard.writeText(APP_URL); setSt("stShare",t("st_share_copied"),"ok"); } catch(e){ setSt("stShare",APP_URL,"ok"); }

@@ -25,6 +25,9 @@ jobs:
       - name: Verify coordinated release and delivery contract
         run: node test/verify_release_contract.js
 
+      - name: Verify Supabase RLS contract (every client table is protected)
+        run: node test/verify_rls_contract.js
+
       - name: Install Playwright + Chromium
         run: |
           npm install playwright@1.62.1
@@ -289,3 +292,6 @@ jobs:
 
       - name: Run v5.31.0 landing-honesty sweep (no free claim survives the paywall)
         run: node test/sweep_v5310_landing_honesty.js
+
+      - name: Verify landing counts match what the app and the .ccx actually ship
+        run: node test/verify_landing_counts.js

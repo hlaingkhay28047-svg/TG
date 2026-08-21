@@ -12,10 +12,19 @@
 --
 -- HOW TO APPLY. Supabase dashboard -> SQL editor -> paste -> Run. It is
 -- idempotent: safe to run more than once, and safe to run on the live project.
--- Then make yourself an admin (replace the address):
+-- Then make yourself an admin (replace the address). Run this in the SQL
+-- editor, which has no JWT — section 6's guard deliberately steps aside for a
+-- caller with no auth.uid(), because that caller is already the service role
+-- and bypasses RLS anyway. An ordinary signed-in customer running the same
+-- statement gets is_admin silently put back to false, which is the point.
 --
 --     update public.profiles set is_admin = true
 --     where email = 'you@example.com';
+--
+-- Verify it took — if this returns 0 rows or is_admin false, STOP: the admin
+-- panel will render for nobody and no payment can be approved.
+--
+--     select email, is_admin from public.profiles where is_admin;
 --
 -- WHAT THE APP EXPECTS, so this file and the client cannot drift:
 --   profiles          id, name, email, created_at, plan_status, plan_expires_at,
@@ -99,6 +108,14 @@ create policy payreq_insert_own on public.payment_requests
     -- a request always starts pending; a client that tries to insert itself as
     -- approved is refused rather than trusted
     and coalesce(status, 'pending') = 'pending'
+    -- ...and it starts UNREVIEWED. Without these three, a user could insert a
+    -- row that already carries reviewed_at, reviewed_by and a note, which the
+    -- admin list renders verbatim — a forged "already approved by you" entry
+    -- sitting in the approval queue. The status check alone does not stop it,
+    -- because these are separate columns.
+    and reviewed_at is null
+    and reviewed_by is null
+    and note is null
   );
 
 drop policy if exists payreq_select_own_or_admin on public.payment_requests;
@@ -116,6 +133,31 @@ create policy payreq_update_admin_only on public.payment_requests
 -- The audit trail is the point.
 
 -- ---------------------------------------------------------------------------
+-- 4b. app_settings — the prices AND THE BANK ACCOUNT NUMBER
+--
+-- THIS IS THE MOST CONSEQUENTIAL POLICY IN THE FILE and it was missing.
+-- accLoadSettings reads this table with { anon: true } — deliberately, because
+-- the buy screen has to show prices and payment instructions before anyone has
+-- signed in. Supabase's default grants make an unauthenticated table both
+-- readable AND writable, so with no policy here a browser console could PATCH
+-- payment_instructions_my and every customer would wire their money to an
+-- account of the attacker's choosing. The read is meant to be public; the
+-- write never was.
+--
+-- Read is granted to anon AND authenticated. There is deliberately NO insert,
+-- update or delete policy: with RLS enabled and no such policy, every write is
+-- refused for everyone, including admins. The owner edits prices and bank
+-- details in the Supabase dashboard, which uses the service role and bypasses
+-- RLS — so nothing legitimate is lost.
+-- ---------------------------------------------------------------------------
+alter table public.app_settings enable row level security;
+
+drop policy if exists appset_read_all on public.app_settings;
+create policy appset_read_all on public.app_settings
+  for select to anon, authenticated
+  using (true);
+
+-- ---------------------------------------------------------------------------
 -- 5. devices
 -- ---------------------------------------------------------------------------
 alter table public.devices enable row level security;
@@ -125,6 +167,59 @@ create policy devices_all_own_or_admin on public.devices
   for all to authenticated
   using (user_id = auth.uid() or public.hnk_is_admin())
   with check (user_id = auth.uid() or public.hnk_is_admin());
+
+-- ---------------------------------------------------------------------------
+-- 5b. the device cap, enforced where it cannot be edited out
+--
+-- allowed_devices is a PRICED product: extra_device is one of the four SKUs in
+-- payreq_insert_own, and hnk_apply_payment increments allowed_devices when the
+-- admin approves one. Until this trigger existed the cap was enforced nowhere —
+-- profiles.allowed_devices was a number the buy screen displayed and nothing
+-- read. A customer could register twenty devices and never buy a slot.
+--
+-- The client is already built for this and has been since v4.30: accIsDeviceLimit
+-- checks for SQLSTATE P0001 by name, accDevLimitMsg renders dev_limit with the
+-- real allowed_devices substituted, and the rejection deliberately never fails
+-- the login. So raising P0001 here lights up a UI path that has been waiting for
+-- a server that never spoke.
+--
+-- SECURITY DEFINER because the count has to see every row for that user, and the
+-- devices policy in section 5 scopes an ordinary caller to their own rows only —
+-- which, for this purpose, happens to be the same set, but the definer makes the
+-- count independent of any future narrowing of that policy.
+-- ---------------------------------------------------------------------------
+create or replace function public.hnk_guard_device_cap()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  used  integer;
+  cap   integer;
+begin
+  select count(*) into used from public.devices where user_id = new.user_id;
+  select coalesce(allowed_devices, 2) into cap from public.profiles where id = new.user_id;
+  if cap is null then cap := 2; end if;
+  if used >= cap then
+    raise exception 'device limit reached: % of % slots used', used, cap
+      using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists hnk_guard_device_cap on public.devices;
+create trigger hnk_guard_device_cap
+  before insert on public.devices
+  for each row execute function public.hnk_guard_device_cap();
+
+-- Re-registering the SAME browser must never consume a second slot. accBoot
+-- keeps its device id in localStorage across logout precisely so it does not,
+-- and accRegisterDevice is written GET-then-POST to be safe either way — this
+-- index is what makes the second POST a no-op collision instead of a new row.
+create unique index if not exists devices_user_device_uniq
+  on public.devices (user_id, device_id);
 
 -- ---------------------------------------------------------------------------
 -- 6. a user may edit their own name — and nothing else about their plan
@@ -150,6 +245,20 @@ security definer
 set search_path = public
 as $$
 begin
+  -- THE BOOTSTRAP ESCAPE, and without it this file is self-defeating.
+  -- auth.uid() is NULL whenever there is no JWT on the connection, which is
+  -- exactly the Supabase SQL editor, a migration, or anything else running as
+  -- the service role. Those callers already bypass RLS entirely, so refusing
+  -- them here buys nothing — and it cost everything: the very first admin has
+  -- to be created by an UPDATE run in the SQL editor, hnk_is_admin() returned
+  -- false there, and this trigger copied is_admin=false straight back over it.
+  -- The file's own instructions could never work: no admin could ever exist,
+  -- so no payment could ever be approved. An ordinary customer can never reach
+  -- this branch, because the UPDATE policy in section 3 is `to authenticated`
+  -- and an authenticated request always carries a uid.
+  if auth.uid() is null then
+    return new;
+  end if;
   if public.hnk_is_admin() then
     return new;
   end if;
