@@ -20178,11 +20178,26 @@ function accJoined(){
   if (p.plan_status && p.plan_status !== "none") return true;
   return false;
 }
+/* Is the owner actually charging a joining fee? An unset price_join_first
+   means no, and that has to mean no rather than "yes, amount unknown".
+
+   Without this the wave has a revenue-blocking foot-gun. price_join_first is a
+   NEW column, so a project that upgrades and sets price_1m but forgets it
+   would show every new customer a "First purchase" chip with no amount on it,
+   hide the monthly plans behind it, and leave them unable to buy anything at
+   all — a regression from before this feature existed, caused by a column
+   nobody remembered. Treating unconfigured as not-charging keeps the old
+   behaviour exactly until the owner opts in. */
+function accJoinFeeSet(){
+  var n = accPriceN("price_join_first");
+  return n !== null && n > 0;
+}
 /* which chips a given account may actually choose */
 function accKindAllowed(kind){
-  if (kind === "join_first") return !accJoined();
+  if (kind === "join_first") return accJoinFeeSet() && !accJoined();
   if (kind === "extra_device") return true;   /* a device slot is orthogonal */
-  return accJoined();
+  /* the renewals are hidden only while a joining fee is genuinely owed */
+  return accJoined() || !accJoinFeeSet();
 }
 function accKindPriceKey(kind){
   return kind === "join_first" ? "price_join_first"

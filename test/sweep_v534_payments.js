@@ -259,6 +259,33 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   report("B2) a customer who paid BEFORE this column existed is never re-charged the joining fee",
     !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown, c);
 
+  /* ---------- A2) an unconfigured joining fee means no joining fee ----------
+     price_join_first is a new column. A project that upgrades and sets
+     price_1m but forgets it must NOT show every new customer an unpriced
+     "First purchase" chip with the monthly plans hidden behind it — that
+     leaves them unable to buy anything at all, which is worse than the
+     behaviour before the feature existed. Unconfigured means the owner is not
+     charging one, and the old flow continues untouched. */
+  const NO_JOIN_FEE = Object.assign({}, PRICE);
+  delete NO_JOIN_FEE.price_join_first;
+  await boot({ login: session, profile: profile(NEVER), settings: [NO_JOIN_FEE] });
+  await login();
+  c = await chips();
+  report("A2) with no joining fee configured, a new customer sees the ordinary plans and no unpriced chip",
+    !c.find(x => x.id === "payKindJoin").shown &&
+    c.find(x => x.id === "payKind1m").shown &&
+    c.find(x => x.id === "payKind1m").label.indexOf(PRICE.price_1m.toLocaleString("en-US")) >= 0,
+    c);
+
+  /* zero is the same statement as absent — an owner who writes 0 is saying
+     they do not charge one, not that it is free-but-mandatory */
+  await boot({ login: session, profile: profile(NEVER),
+               settings: [Object.assign({}, PRICE, { price_join_first: 0 })] });
+  await login();
+  c = await chips();
+  report("A3) a joining fee of zero is treated the same as none at all",
+    !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown, c);
+
   /* ---------- C2) a per-customer price beats the default ---------- */
   await boot({ login: session, profile: profile({ joined_paid: true, price_1m_override: 9000 }), settings: [PRICE] });
   await login();

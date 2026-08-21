@@ -122,6 +122,14 @@ update public.app_settings set
   payment_qr_url     = 'https://<project>.supabase.co/storage/v1/object/public/<bucket>/kbzpay-qr.jpg';
 ```
 
+`price_join_first` is optional and behaves as you would hope when it is not
+set: **no joining fee configured means no joining fee**, and new customers see
+the ordinary monthly plans exactly as they did before the feature existed. Zero
+means the same thing. That is deliberate — it is a new column, and a project
+that upgrades and sets `price_1m` but forgets this one would otherwise show
+every new customer an unpriced "First purchase" chip with the plans hidden
+behind it, unable to buy anything at all.
+
 **The KBZPay QR is a URL, not a committed file.** It encodes a live bank
 account and this repository is public, so upload the image to a Supabase
 storage bucket and paste its URL above. Changing bank details is then a
