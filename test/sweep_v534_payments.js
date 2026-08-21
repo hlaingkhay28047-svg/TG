@@ -1,0 +1,413 @@
+/* v5.34.0 payments sweep — a payment the owner can actually verify.
+
+   WHAT THE BUY FLOW DID BEFORE. A customer picked a plan chip, read some free
+   text, uploaded a screenshot and typed six digits. Nothing recorded HOW MUCH
+   they had sent, so the admin approving the request had a slip photo and a
+   reference number and no way to tell a 10,000 from a 50,000 without opening
+   the image and reading it. And the queue printed row.user_id — a raw UUID —
+   so the owner could not tell WHO had paid either. Approving was matching a
+   photograph to a string of hex.
+
+   WHAT THE OWNER ASKED FOR, and what each part of it became:
+
+     "tap transfer, choose QR or phone number"    two pay routes, both from
+                                                  app_settings, neither in code
+     "then show the slip back"                    unchanged, it already worked
+     "admin knows who transferred"                name + email, from profiles
+     "check the amount is right"                  amount_mmk, shown against the
+                                                  price that was actually due
+     "only unlocks when admin accepts"            unchanged — approval was
+                                                  already the only path, and
+                                                  this wave does not add another
+     "a monthly fee I can set"                    app_settings default, and a
+                                                  per-customer override that
+                                                  wins over it
+     "500,000 on the first purchase"              a join_first kind, priced
+                                                  from app_settings
+     "some students get the first one free"       an admin-filed GRANT that
+                                                  goes through the same queue
+                                                  and the same trigger
+
+   THE ONE RULE THIS FILE EXISTS TO ENFORCE: no price is ever written in the
+   code. Every number comes from the database, so the assertions below feed
+   made-up prices through the fixture and check the UI quotes THOSE — a test
+   that asserted "500,000" would be pinning a business decision into the repo,
+   which is the same mistake verify_release_contract made with One-Tap 131.
+
+   Pinned contracts:
+   A) Before the joining fee is settled, join_first is the only plan on offer.
+   B) Once it is settled, join_first disappears and the renewals appear.
+   C) The amount due is quoted from app_settings, and a per-customer override
+      beats it.
+   D) The QR route appears only for an https URL; the number route only when a
+      number is set; neither appears when the owner has set neither.
+   E) The amount field is required, accepts a pasted "50,000 MMK", and a
+      mismatch WARNS without blocking — a customer who underpaid must still be
+      able to file, or the mistake never reaches the person who can fix it.
+   F) The insert carries amount_mmk and never carries is_grant.
+   G) The admin queue names the customer and shows sent against due, flagging a
+      mismatch.
+   H) A grant posts is_grant with no money, no reference and no slip.
+   I) The schema forbids from the other side everything the client is trusted
+      not to do here.
+   J) No console error anywhere in the above.
+
+   Usage: PORT=8931 node test/sweep_v534_payments.js  (serve docs/app first) */
+const { chromium } = require("playwright-core");
+const fs = require("fs");
+const path = require("path");
+
+const PORT = process.env.PORT || 8931;
+const URL_ = "http://127.0.0.1:" + PORT + "/index.html";
+const SQL = fs.readFileSync(path.join(__dirname, "..", "supabase", "schema.sql"), "utf8");
+
+const UID = "11111111-2222-3333-4444-555555555555";
+/* deliberately not round numbers, and deliberately not the owner's real ones:
+   if any assertion below could pass against a hardcoded price, these would
+   fail it */
+const PRICE = { price_1m: 37000, price_3m: 91000, price_6m: 155000,
+                price_extra_device: 12000, price_join_first: 480000 };
+
+let failures = 0;
+function report(name, ok, detail) {
+  console.log((ok ? "PASS" : "FAIL") + " — " + name + (ok ? "" : "  :: " + JSON.stringify(detail)));
+  if (!ok) failures++;
+}
+
+/* ---------------- I) the schema half, read straight off disk ---------------- */
+const insertOwn = (SQL.match(/create policy payreq_insert_own[\s\S]*?\);/) || [""])[0];
+report("I1) a customer may file the joining fee but may never mark a row a grant",
+  /join_first/.test(insertOwn) && /is_grant.*=\s*false/s.test(insertOwn),
+  { hasJoin: /join_first/.test(insertOwn), forbidsGrant: /is_grant/.test(insertOwn) });
+
+const insertGrant = (SQL.match(/create policy payreq_insert_admin_grant[\s\S]*?\);/) || [""])[0];
+report("I2) only an admin may file a grant, and only one with no money attached",
+  /hnk_is_admin\(\)/.test(insertGrant) && /is_grant\s*=\s*true/.test(insertGrant) &&
+  /coalesce\(amount_mmk, 0\)\s*=\s*0/.test(insertGrant),
+  { len: insertGrant.length });
+
+const guard = (SQL.match(/create or replace function public\.hnk_guard_profile_plan[\s\S]*?\$\$;/) || [""])[0];
+const guarded = ["joined_paid", "price_1m_override", "price_3m_override", "price_6m_override", "price_join_first_override"];
+const unguarded = guarded.filter(c => !new RegExp("new\\." + c + "\\s*:=\\s*old\\." + c).test(guard));
+report("I3) a customer cannot write their own price or mark themselves joined",
+  unguarded.length === 0, { unguarded });
+
+const applyFn = (SQL.match(/create or replace function public\.hnk_apply_payment[\s\S]*?\$\$;/) || [""])[0];
+report("I4) approving the joining fee is what sets joined_paid, and nothing else does",
+  /join_first/.test(applyFn) && /joined_paid\s*=\s*case when new\.kind = 'join_first'/.test(applyFn),
+  { hasJoin: /join_first/.test(applyFn) });
+
+report("I5) a grant has no reference and no slip, so those columns accept their absence",
+  /alter column txn_last6 drop not null/.test(SQL) &&
+  /alter column screenshot_path drop not null/.test(SQL), {});
+
+/* ---------------- the browser half ---------------- */
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errs = [];
+  page.on("pageerror", e => errs.push("pageerror: " + String(e).slice(0, 200)));
+  page.on("console", m => { if (m.type() === "error") errs.push("console: " + m.text().slice(0, 160)); });
+
+  await page.addInitScript(() => {
+    localStorage.setItem("hnk_ws_onboarded", "1");
+    localStorage.setItem("hnk_ws_seen", "1");
+    localStorage.setItem("hnk_ws_lang", "en");
+  });
+
+  /* the Supabase mock, configured per phase through localStorage so it is in
+     place before accBoot runs */
+  await page.addInitScript(`(function(){
+    window.__sb = [];
+    var cfg = {};
+    try { cfg = JSON.parse(localStorage.getItem("__cfg") || "{}"); } catch(e){}
+    window.__cfg = cfg;
+    function J(o, status){
+      return new Response(JSON.stringify(o === undefined ? null : o),
+        { status: status || 200, headers: { "Content-Type": "application/json" } });
+    }
+    var realFetch = window.fetch;
+    window.fetch = function(url, opts){
+      var u = String(url); opts = opts || {};
+      if (!/\\/auth\\/v1\\/|\\/rest\\/v1\\/|\\/storage\\/v1\\//.test(u)) return realFetch.apply(this, arguments);
+      var isFD = (typeof FormData !== "undefined") && (opts.body instanceof FormData);
+      window.__sb.push({ url: u, method: (opts.method || "GET").toUpperCase(),
+                         body: isFD ? null : (typeof opts.body === "string" ? opts.body : null) });
+      var C = window.__cfg;
+      if (u.indexOf("grant_type=password") >= 0) return Promise.resolve(J(C.login, 200));
+      if (u.indexOf("/auth/v1/logout") >= 0) return Promise.resolve(new Response("", { status: 204 }));
+      if (u.indexOf("/storage/v1/object/") >= 0) return Promise.resolve(J({ Key: "payment-proofs/x" }, 200));
+      if (u.indexOf("/rest/v1/app_settings") >= 0) return Promise.resolve(J(C.settings || [], 200));
+      if (u.indexOf("/rest/v1/devices") >= 0) return Promise.resolve(J([], 200));
+      if (u.indexOf("/rest/v1/profiles") >= 0){
+        /* three different profile reads, and they must not answer each other:
+           the signed-in user's own row, the admin's id=in.() batch, and the
+           grant form's email lookup */
+        if (u.indexOf("email=eq.") >= 0) return Promise.resolve(J(C.byEmail || [], 200));
+        if (u.indexOf("id=in.") >= 0)   return Promise.resolve(J(C.who || [], 200));
+        return Promise.resolve(J(C.profile || null, 200));
+      }
+      if (u.indexOf("/rest/v1/payment_requests") >= 0){
+        if ((opts.method || "GET").toUpperCase() === "POST"){
+          var b = {}; try { b = JSON.parse(opts.body); } catch(e){}
+          window.__inserted = Object.assign({ id: "req-1", status: "pending", created_at: "2026-08-21T00:00:00Z" }, b);
+          return Promise.resolve(J([window.__inserted], 201));
+        }
+        return Promise.resolve(J(C.requests || [], 200));
+      }
+      return Promise.resolve(J([], 200));
+    };
+  })();`);
+
+  async function boot(cfg) {
+    await page.goto(URL_, { waitUntil: "load" });
+    await page.evaluate(c => {
+      localStorage.setItem("__cfg", JSON.stringify(c || {}));
+      ["hnk_acc_sess_v1", "hnk_acc_profile_v1", "hnk_acc_settings_v1"].forEach(k => localStorage.removeItem(k));
+    }, cfg);
+    await page.goto(URL_, { waitUntil: "load" });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => {
+      window.scrollTo = function(){};
+      Element.prototype.scrollIntoView = function(){};
+      switchPage("pgHome");
+    });
+  }
+  const session = { access_token: "A1", refresh_token: "R1", expires_in: 3600, user: { id: UID, email: "hla@example.com" } };
+  function profile(extra) {
+    return Object.assign({ id: UID, name: "Hla Hla", email: "hla@example.com",
+      plan_status: "active", plan_expires_at: "2099-01-01T00:00:00Z",
+      allowed_devices: 2, is_admin: false, joined_paid: false }, extra || {});
+  }
+  async function login() {
+    await page.fill("#accEmail", "hla@example.com");
+    await page.fill("#accPass", "secret123");
+    await page.click("#btnAccLogin");
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { try { accOpenGrp("accGrpBuy"); } catch(e){} });
+    await page.waitForTimeout(250);
+  }
+  const chips = () => page.evaluate(() =>
+    ["payKindJoin", "payKind1m", "payKind3m", "payKind6m", "payKindDev"].map(id => {
+      const e = document.getElementById(id);
+      return { id, shown: !!(e && e.getClientRects().length), label: e ? e.textContent.trim() : null,
+               on: !!(e && e.className.indexOf("on") >= 0) };
+    }));
+
+  /* ---------- A) a genuinely new customer ----------
+     "New" means never paid: no plan, no expiry, joined_paid false. Giving this
+     fixture an active plan would have made it indistinguishable from the
+     upgrade case below, and the first draft of this file did exactly that. */
+  const NEVER = { plan_status: "none", plan_expires_at: null, joined_paid: false };
+  await boot({ login: session, profile: profile(NEVER), settings: [PRICE] });
+  await login();
+  let c = await chips();
+  const joinChip = c.find(x => x.id === "payKindJoin");
+  report("A) before the joining fee is settled, join_first is the only plan on offer",
+    joinChip.shown && joinChip.label.indexOf(PRICE.price_join_first.toLocaleString("en-US")) >= 0 &&
+    !c.find(x => x.id === "payKind1m").shown &&
+    !c.find(x => x.id === "payKind3m").shown &&
+    !c.find(x => x.id === "payKind6m").shown &&
+    c.find(x => x.id === "payKindDev").shown,
+    c);
+
+  let due = await page.evaluate(() => (document.getElementById("payDue").textContent || "").trim());
+  report("C1) the amount due is quoted from app_settings, not from the code",
+    due.indexOf(PRICE.price_join_first.toLocaleString("en-US")) >= 0, { due });
+
+  /* ---------- B) joined ---------- */
+  await boot({ login: session, profile: profile({ joined_paid: true }), settings: [PRICE] });
+  await login();
+  c = await chips();
+  report("B) once it is settled, join_first is gone for good and the renewals appear",
+    !c.find(x => x.id === "payKindJoin").shown &&
+    c.find(x => x.id === "payKind1m").shown &&
+    c.find(x => x.id === "payKind1m").label.indexOf(PRICE.price_1m.toLocaleString("en-US")) >= 0,
+    c);
+
+  /* ---------- B2) THE UPGRADE CASE ----------
+     joined_paid is a new column defaulting to false, so on release morning
+     every existing customer carries joined_paid = false while plainly having
+     paid before. Without this rule they would each be quoted the joining fee
+     again — the most expensive possible way to greet a paying customer, and
+     the exact regression the wider suite caught in this wave.
+
+     An expired plan is used deliberately: the joining fee is paid once, not
+     once per lapse, so someone whose plan ran out last month is renewing, not
+     re-joining. */
+  await boot({ login: session,
+               profile: profile({ joined_paid: false, plan_status: "none",
+                                  plan_expires_at: "2020-01-01T00:00:00Z" }),
+               settings: [PRICE] });
+  await login();
+  c = await chips();
+  report("B2) a customer who paid BEFORE this column existed is never re-charged the joining fee",
+    !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown, c);
+
+  /* ---------- C2) a per-customer price beats the default ---------- */
+  await boot({ login: session, profile: profile({ joined_paid: true, price_1m_override: 9000 }), settings: [PRICE] });
+  await login();
+  const ovr = await page.evaluate(() => ({
+    chip: document.getElementById("payKind1m").textContent.trim(),
+    due: (document.getElementById("payDue").textContent || "").trim(),
+  }));
+  report("C2) a per-customer override beats the app_settings default everywhere it is shown",
+    ovr.chip.indexOf("9,000") >= 0 && ovr.due.indexOf("9,000") >= 0 &&
+    ovr.chip.indexOf(PRICE.price_1m.toLocaleString("en-US")) < 0, ovr);
+
+  /* ---------- D) the two pay routes ---------- */
+  for (const [label, settings, wantQr, wantNum] of [
+    ["both configured", Object.assign({}, PRICE, { payment_qr_url: "https://example.supabase.co/x/qr.jpg", payment_phone: "09688200680" }), true, true],
+    ["number only", Object.assign({}, PRICE, { payment_phone: "09688200680" }), false, true],
+    ["an http:// QR is refused", Object.assign({}, PRICE, { payment_qr_url: "http://insecure.example/qr.jpg" }), false, false],
+    ["neither configured", Object.assign({}, PRICE), false, false],
+  ]) {
+    await boot({ login: session, profile: profile({ joined_paid: true }), settings: [settings] });
+    await login();
+    const r = await page.evaluate(() => {
+      const vis = id => { const e = document.getElementById(id); return !!(e && e.getClientRects().length); };
+      const img = document.getElementById("payQrImg");
+      return { qr: vis("payRouteQr"), num: vis("payRouteNum"), routes: vis("payRoutes"),
+               src: img ? (img.getAttribute("src") || "") : "",
+               number: (document.getElementById("payNum").textContent || "").trim() };
+    });
+    report("D) pay routes — " + label,
+      r.qr === wantQr && r.num === wantNum && r.routes === (wantQr || wantNum) &&
+      (!wantQr ? r.src.indexOf("http://") < 0 : true) &&
+      (wantNum ? r.number === "09688200680" : true), r);
+  }
+
+  /* ---------- E + F) the amount ---------- */
+  await boot({ login: session, profile: profile({ joined_paid: true }), settings: [Object.assign({}, PRICE, { payment_phone: "09688200680" })] });
+  await login();
+  await page.evaluate(() => accPayPick("plan_1m"));
+  await page.waitForTimeout(150);
+
+  const e1 = await page.evaluate(() => ({ disabled: document.getElementById("btnPaySubmit").disabled }));
+  await page.fill("#payTxn", "482913");
+  await page.evaluate(() => {
+    /* the screenshot, without a real file picker */
+    accPayBlob = new Blob(["x"], { type: "image/jpeg" });
+    accPayValidate();
+  });
+  await page.waitForTimeout(120);
+  const e2 = await page.evaluate(() => ({ disabled: document.getElementById("btnPaySubmit").disabled }));
+  report("E1) submit stays disabled until an amount is given, even with a slip and a reference",
+    e1.disabled === true && e2.disabled === true, { before: e1, withSlipAndTxn: e2 });
+
+  await page.fill("#payAmt", "50,000 MMK");
+  await page.waitForTimeout(150);
+  const e3 = await page.evaluate(() => ({
+    value: document.getElementById("payAmt").value,
+    disabled: document.getElementById("btnPaySubmit").disabled,
+    warn: (document.getElementById("payAmtWarn").textContent || "").trim(),
+    warnShown: document.getElementById("payAmtWarn").style.display !== "none",
+  }));
+  report("E2) a pasted \"50,000 MMK\" becomes 50,000 and enables submit",
+    e3.value === "50,000" && e3.disabled === false, e3);
+  report("E3) over-paying warns, naming both the difference and what was due — and does NOT block",
+    e3.warnShown && e3.warn.indexOf("13,000") >= 0 &&
+    e3.warn.indexOf(PRICE.price_1m.toLocaleString("en-US")) >= 0 && e3.disabled === false, e3);
+
+  await page.fill("#payAmt", "1000");
+  await page.waitForTimeout(150);
+  const e4 = await page.evaluate(() => ({
+    warn: (document.getElementById("payAmtWarn").textContent || "").trim(),
+    disabled: document.getElementById("btnPaySubmit").disabled,
+  }));
+  report("E4) under-paying warns too, and still lets the request through to the admin",
+    e4.warn.indexOf("36,000") >= 0 && e4.disabled === false, e4);
+
+  await page.fill("#payAmt", "37000");
+  await page.waitForTimeout(150);
+  const e5 = await page.evaluate(() => ({ warnShown: document.getElementById("payAmtWarn").style.display !== "none" }));
+  report("E5) the exact amount raises no warning at all", e5.warnShown === false, e5);
+
+  await page.click("#btnPaySubmit");
+  await page.waitForTimeout(500);
+  const posted = await page.evaluate(() => {
+    const p = window.__sb.filter(x => x.url.indexOf("/rest/v1/payment_requests") >= 0 && x.method === "POST").pop();
+    return p ? JSON.parse(p.body) : null;
+  });
+  report("F) the insert carries the amount, and never carries is_grant",
+    !!posted && posted.amount_mmk === 37000 && posted.kind === "plan_1m" &&
+    posted.txn_last6 === "482913" && !("is_grant" in posted) &&
+    !("status" in posted) && !("reviewed_at" in posted),
+    { keys: posted && Object.keys(posted).sort(), amount: posted && posted.amount_mmk });
+
+  /* ---------- G) the admin queue ---------- */
+  const OTHER = "99999999-8888-7777-6666-555555555555";
+  await boot({
+    login: session,
+    profile: profile({ joined_paid: true, is_admin: true }),
+    settings: [PRICE],
+    who: [{ id: OTHER, name: "Nang Mo", email: "nang@example.com", price_1m_override: null }],
+    requests: [
+      { id: "r1", user_id: OTHER, kind: "plan_1m", txn_last6: "111111", amount_mmk: 37000,
+        status: "pending", created_at: "2026-08-21T01:00:00Z", is_grant: false },
+      { id: "r2", user_id: OTHER, kind: "plan_1m", txn_last6: "222222", amount_mmk: 10000,
+        status: "pending", created_at: "2026-08-21T02:00:00Z", is_grant: false },
+      { id: "r3", user_id: OTHER, kind: "plan_1m", txn_last6: null, amount_mmk: 0,
+        status: "pending", created_at: "2026-08-21T03:00:00Z", is_grant: true },
+    ],
+  });
+  await login();
+  await page.evaluate(() => admLoad());
+  await page.waitForTimeout(700);
+  const list = await page.evaluate(() => [...document.querySelectorAll("#admList li")].map(li => ({
+    who: (li.querySelector(".adm-who") || {}).textContent || "",
+    uid: (li.querySelector(".adm-uid") || {}).textContent || "",
+    money: (li.querySelector(".adm-money") || {}).textContent || "",
+    cls: (li.querySelector(".adm-money") || {}).className || "",
+  })));
+  report("G1) the queue names the customer instead of printing a UUID",
+    list.length === 3 && list.every(r => r.who.indexOf("Nang Mo") >= 0 && r.who.indexOf("nang@example.com") >= 0) &&
+    list.every(r => r.uid.indexOf("99999999") >= 0),
+    list.map(r => r.who));
+  report("G2) a matching payment reads clean, a short one is flagged with both numbers",
+    /ok/.test(list[0].cls) && list[0].money.indexOf("37,000") >= 0 &&
+    /warn/.test(list[1].cls) && list[1].money.indexOf("10,000") >= 0 &&
+    list[1].money.indexOf("37,000") >= 0 && list[1].money.indexOf("27,000") >= 0,
+    list.map(r => r.cls + " " + r.money));
+  report("G3) a grant is labelled a grant rather than shown as a 0 MMK payment",
+    /grant/.test(list[2].cls) && !/0 MMK/.test(list[2].money), list[2]);
+
+  /* ---------- H) filing a grant ---------- */
+  await page.evaluate(() => { window.__sb.length = 0; });
+  await page.evaluate(() => {
+    localStorage.setItem("__cfg", JSON.stringify(Object.assign(JSON.parse(localStorage.getItem("__cfg")),
+      { byEmail: [{ id: "44444444-0000-0000-0000-000000000000", name: "Sai Noom", email: "student@example.com" }] })));
+    window.__cfg.byEmail = [{ id: "44444444-0000-0000-0000-000000000000", name: "Sai Noom", email: "student@example.com" }];
+  });
+  await page.fill("#admGrantEmail", "student@example.com");
+  await page.selectOption("#admGrantKind", "join_first");
+  await page.click("#btnAdmGrant");
+  await page.waitForTimeout(600);
+  const grant = await page.evaluate(() => {
+    const p = window.__sb.filter(x => x.url.indexOf("/rest/v1/payment_requests") >= 0 && x.method === "POST").pop();
+    return { body: p ? JSON.parse(p.body) : null,
+             st: (document.getElementById("stAdmGrant").textContent || "").trim() };
+  });
+  report("H) a grant posts is_grant with no money, no reference and no slip, for the named student",
+    !!grant.body && grant.body.is_grant === true && grant.body.amount_mmk === 0 &&
+    grant.body.kind === "join_first" &&
+    grant.body.user_id === "44444444-0000-0000-0000-000000000000" &&
+    !("txn_last6" in grant.body) && !("screenshot_path" in grant.body) &&
+    !("status" in grant.body) && grant.st.length > 0,
+    { keys: grant.body && Object.keys(grant.body).sort(), st: grant.st });
+
+  const badEmail = await page.evaluate(async () => {
+    window.__cfg.byEmail = [];
+    document.getElementById("admGrantEmail").value = "nobody@example.com";
+    await admGrant();
+    return (document.getElementById("stAdmGrant").textContent || "").trim();
+  });
+  report("H2) granting to an address with no account says so rather than failing silently",
+    badEmail.length > 0 && /no account/i.test(badEmail), { st: badEmail });
+
+  report("J) none of the above raised a console error", errs.length === 0, errs.slice(0, 4));
+
+  await browser.close();
+  console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
+  process.exit(failures === 0 ? 0 : 1);
+})();

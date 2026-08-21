@@ -304,3 +304,6 @@ jobs:
 
       - name: Run v5.33.0 legal-pages sweep (the privacy policy still describes this code)
         run: node test/sweep_v533_legal.js
+
+      - name: Run v5.34.0 payments sweep (joining fee, per-customer price, amount check, VIP grant)
+        run: node test/sweep_v534_payments.js

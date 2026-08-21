@@ -67,6 +67,81 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## Prices, payments and VIP grants (v5.34.0)
+
+**No price is written anywhere in this repository, and that is deliberate.**
+The buy screen quotes whatever `app_settings` holds, so the owner changes what
+things cost from the Supabase dashboard without a release. `test/sweep_v534_payments.js`
+feeds invented prices through a fixture and checks the UI quotes *those* — an
+assertion naming a real price would pin a business decision into the code, the
+same mistake `verify_release_contract` made with "One-Tap 131".
+
+```sql
+update public.app_settings set
+  price_join_first   = 500000,   -- the one-time first purchase
+  join_first_months  = 1,        -- what that purchase opens
+  price_1m           = 30000,    -- the default monthly rate
+  price_3m           = 85000,
+  price_6m           = 160000,
+  price_extra_device = 15000,
+  payment_phone      = '09688200680',
+  payment_qr_url     = 'https://<project>.supabase.co/storage/v1/object/public/<bucket>/kbzpay-qr.jpg';
+```
+
+**The KBZPay QR is a URL, not a committed file.** It encodes a live bank
+account and this repository is public, so upload the image to a Supabase
+storage bucket and paste its URL above. Changing bank details is then a
+dashboard edit, not a release — and nothing about the account is left in git
+history, which cannot be revoked.
+
+**A different rate for one customer** — this is how a training-course student
+pays less than a studio, with no second price list and no code change:
+
+```sql
+update public.profiles set price_1m_override = 10000 where email = 'student@example.com';
+```
+
+**A free period for a VIP student** is *filed*, not silently written. The admin
+card has a form for it: type the email, pick the period, and it lands in the
+approval queue as a grant with no money attached, which you then approve like
+any payment. Two things follow. The same trigger extends the plan, so a grant
+and a purchase can never drift apart; and "why does this account have Premium?"
+has an answer in the same list as every payment, instead of being an edit
+nobody recorded. Grant `join_first` for a student who has never joined — that
+both opens the period and clears the joining fee, which is what "first one
+free" means.
+
+**What the admin sees on each request**, and none of it was there before:
+the customer's name and email rather than a UUID, the amount they say they
+sent, and the amount that was actually due for *that* customer — flagged in red
+when the two differ. The amount is a claim, not a fact: nothing in the database
+compares it to a price or acts on it. It exists so a 10,000 filed against a
+50,000 plan is visible before approval rather than argued about after it. A
+customer who underpaid can still file, deliberately — otherwise the mistake
+never reaches the person who can resolve it and the money is simply gone.
+
+Approval remains the only thing that grants access. This wave adds a second way
+to *file* a request and no second way to *approve* one.
+
+### One small thing still open: Tai Le and Tai Lue
+
+The ten payment strings this wave added were translated into fifteen languages,
+and Khamti was produced by replaying the Shan→Khamti character map derived from
+the 228 pairs already in the file (it reproduces every one of the 171
+comparable shipped Khamti strings exactly).
+
+**Tai Le (`tdd`) and Tai Lue (`khb`) are not done**, and were deliberately not
+faked. There is no mechanical route from Shan to either — only 6 of the 14
+words needed appear anywhere in those packs — so the twenty missing entries are
+listed by name in `test/sweep_v477_upgrades.js` under `PENDING`, and a second
+assertion proves the app degrades correctly for exactly them: `LANG_FB` sends
+both languages to Shan, so a customer sees real Shan rather than a raw key or a
+blank label. Anything else missing from any pack still fails, and a registry
+entry that is no longer missing fails too, so the list cannot rot.
+
+To close it: a Tai Le / Tai Lue reader translates ten short strings, they go in
+the packs, and the `PENDING` block is deleted.
+
 ## Password reset, and the one setting it needs
 
 Web v5.33.0 moved the reset page onto this origin, at `/reset/`. Before that
