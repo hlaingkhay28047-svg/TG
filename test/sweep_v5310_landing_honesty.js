@@ -187,6 +187,41 @@ report("E2) key.body still explains the bring-your-own-key engines",
   typeof byok === "string" && /your own key/i.test(byok) && /Gemini/.test(byok),
   { head: (byok || "").slice(0, 120) });
 
+/* ---- G) the same lie, inside the app ----
+   The landing page was not the only place. acc_plan_free labelled a
+   signed-in account with no plan as "Free — no Premium yet", and accRender
+   writes it into the plan line on #cardAccount — which, behind the v5.30.0
+   buy wall, is one of only two cards still on screen. So the paywall
+   demanding payment sat directly above a label calling the account free.
+   accPlanLineText() takes .split(" — ")[0] of it for a pill, so the fix had
+   to survive that: the false first segment was DROPPED and each locale's own
+   second segment kept verbatim, which leaves no " — " at all and makes the
+   split return the whole (accurate) string. Nothing was translated. */
+const APP_FREE_WORDS = ["Free", "အခမဲ့", "လၢႆလၢႆ", "ฟรี", "免费", "Miễn phí", "Gratis",
+  "Percuma", "ফ্রি", "મફત", "फ्री", "無料", "ᦟᦻᦟᦻ", "ឥតគិតថ្លៃ", "ಉಚಿತ", "무료", "ຟຣີ",
+  "സൗജന്യം", "मोफत", "निःशुल्क", "ਮੁਫ਼ਤ", "இலவசம்", "ᥘᥣᥭᥘᥣᥭ", "ఉచితం", "فری"];
+const planFree = [];
+{
+  const block = app.match(/acc_plan_free:\{([^}]*)\}/);
+  if (block) {
+    let m; const re = /(\w+):"((?:[^"\\]|\\.)*)"/g;
+    while ((m = re.exec(block[1]))) planFree.push({ lg: m[1], v: m[2] });
+  }
+  let m2; const re2 = /"?acc_plan_free"?:"((?:[^"\\]|\\.)*)"/g;
+  while ((m2 = re2.exec(app))) planFree.push({ lg: "pack", v: m2[1] });
+}
+const stillFree = planFree.filter(e =>
+  APP_FREE_WORDS.some(w => e.v.startsWith(w)) || e.v.includes(" — "));
+report("G) the in-app plan label no longer calls an unpaid account free",
+  planFree.length >= 20 && stillFree.length === 0,
+  { checked: planFree.length, offenders: stillFree.slice(0, 6) });
+
+/* the pill must still be short: accPlanLineText splits on " — " and uses the
+   first half, so a value that grew into a sentence would overflow it */
+const tooLong = planFree.filter(e => e.v.split(" — ")[0].length > 40);
+report("G2) the plan pill stays short enough to render as a pill",
+  tooLong.length === 0, tooLong.slice(0, 4));
+
 /* ---- F ---- */
 const appVer = (app.match(/var APP_VER\s*=\s*"([\d.]+)"/) || [])[1];
 const advertised = [...landing.matchAll(/\b(?:Web Studio|WEB STUDIO)\s+v(\d+\.\d+\.\d+)/g)].map(m => m[1]);
@@ -195,7 +230,7 @@ report("F) landing and app agree on the shipped version",
   webApp && webApp.softwareVersion === appVer,
   { app: appVer, advertised: [...new Set(advertised)], schema: webApp && webApp.softwareVersion });
 
-console.log("      (on the v5.30.1 tree this file reports 4 failures: A finds the free claim " +
+console.log("      (on the v5.30.1 tree this file reports 5 failures: A finds the free claim " +
   "in all 27 locales of hero.cta1/s4.cta/duo1.li1/faq1.a, C finds it in all three social " +
   "descriptions, D finds the price-0 Offer, and E finds key.body still opening with " +
   "\"HNK charges no subscription\")");
