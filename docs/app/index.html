@@ -218,6 +218,15 @@ h1 em{font-style:normal;color:var(--gold-hi)}
 #payAmtWarn{color:var(--err)}
 .about-legal{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .about-legal .btn{flex:1 1 auto;min-height:48px;text-align:center;line-height:26px;text-decoration:none}
+/* v5.35 RTL. Only the handful of rules that hard-code a side need a mirror:
+   everything else is flex or grid and follows dir automatically. The skip link
+   is pinned to the left edge, which in RTL is the wrong corner to appear in. */
+[dir="rtl"] .skip{left:auto;right:8px}
+[dir="rtl"] .statline b{direction:ltr;unicode-bidi:embed}
+/* A price, a version and a device id are Latin/numeric runs inside RTL text.
+   Without an explicit direction the bidi algorithm reorders "30,000 MMK" and
+   "v5.35.0" into something that reads wrong, which is worse than untranslated. */
+[dir="rtl"] .pay-num,[dir="rtl"] .adm-uid,[dir="rtl"] .adm-money,[dir="rtl"] #payDue{direction:ltr;text-align:right}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 .skip{position:absolute;left:8px;top:-64px;z-index:200;padding:12px 16px;min-height:48px;display:flex;align-items:center;border-radius:11px;background:var(--gold);color:#1a1408;font-weight:800;text-decoration:none;transition:top .12s ease-out}
 .skip:focus{top:calc(8px + env(safe-area-inset-top))}
@@ -3688,6 +3697,7 @@ var HNK_MY_ALIAS=[["ဆံပင်","hair"],["နောက်ခံ","backgroun
   ["သတို့သမီး","bride wedding"],["ကလေး","child baby"],["ဓာတ်ပုံဟောင်း","restore vintage"],
   ["အသားအရေ","skin retouch"],["ရေ","water"],["ကောင်းကင်","sky"],["လိုဂို","logo text"],["ပုံတူ","pose"],
   ["မွေးနေ့","birthday"],["ဘွဲ့","graduation"],["ရိုးရာ","traditional heritage"],["စတူဒီယို","studio"]];
+var RTL_LANGS=["ur","ar","he","fa","dv"];   /* v5.35 — only ur ships today */
 var LANG_FB={kyu:"my",ksw:"my",cnh:"my",mnw:"my",rki:"my",ahk:"my",lhu:"my",lis:"my",blk:"my",pll:"my",khb:"shn",tdd:"shn",kht:"shn",
              hi:"en",bn:"en",ta:"en",te:"en",mr:"en",gu:"en",kn:"en",ml:"en",pa:"en",ur:"en",
              /* v4.43 Asia set — Lao reads Thai far more easily than English,
@@ -3822,6 +3832,18 @@ function applyLang(){
   /* language hint for screen readers / translate / Myanmar-script font
      heuristics — LANG codes (my/en/shn/kac/th/zh/vi/id/ms) are valid BCP47 */
   document.documentElement.lang=LANG;
+  /* v5.35 — Urdu is written right to left and the app rendered it left to
+     right, which is not a styling preference: an RTL language laid out LTR
+     puts the start of every sentence where the eye finishes and breaks the
+     reading order of every list and form. It has shipped in the picker since
+     v4.41 that way.
+
+     ur is the only right-to-left language in the set — Arabic, Hebrew, Farsi
+     and Divehi are listed as well because the moment one of them is added the
+     rule must already be right, not discovered again. Setting dir on <html>
+     is what makes the CSS logical properties, the text alignment and the
+     bidi algorithm all agree; there is no per-element work to do. */
+  document.documentElement.dir = RTL_LANGS.indexOf(LANG) >= 0 ? "rtl" : "ltr";
   a11yApplyLang();
   $("heroH1").innerHTML=t("hero_h1");
   $("heroLede").textContent=t("hero_lede");
@@ -21554,7 +21576,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.34.0";
+var APP_VER="5.35.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

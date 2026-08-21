@@ -67,6 +67,40 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## Right-to-left, and sharing a language (v5.35.0)
+
+Urdu has been in the picker since v4.41 and neither surface ever set `dir`, so
+it rendered left to right for thirteen releases. Both now set it from a single
+list of RTL languages — `ur` is the only one shipped, the rest are named so the
+rule is already right the day one of them is added.
+
+Fixing it immediately exposed a second bug: under `dir="rtl"` the landing page
+scrolled sideways. `.sec-head::before`, a decorative glow, hangs 24px past the
+inline start of every section heading; in LTR that is the left edge and
+browsers do not count overflow past it, but flipped it became the trailing edge
+and each section widened the document. `inset-inline-start` fixed it, and
+`test/sweep_v535_rtl_lang.js` measures the page width rather than trusting the
+rule.
+
+`?lang=xx` now opens the landing in that language, so a studio can send a Thai
+client a link that arrives in Thai. The parameter wins over the stored
+preference for that visit; switching writes the URL back; the default language
+leaves it clean.
+
+**No hreflang tags accompany it, deliberately.** hreflang tells a crawler that
+separate documents exist per language and they do not — every `?lang=` URL
+serves byte-identical HTML and the language is applied by script afterwards.
+Claiming 37 alternates would be a false statement about the site's structure,
+and reads as duplication rather than translation. An assertion holds that line
+until the site serves real per-language documents.
+
+`test/sweep_xss.js` drives hostile text through every field a server controls —
+a display name, an admin note, payment instructions, a device label, the QR URL
+— and checks nothing executes AND that the text still renders escaped rather
+than being silently dropped. The app was already safe; nothing was testing that
+it stayed safe, which matters more now that the admin queue renders a
+customer's name to the one account that can approve payments.
+
 ## Prices, payments and VIP grants (v5.34.0)
 
 **No price is written anywhere in this repository, and that is deliberate.**
