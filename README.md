@@ -67,6 +67,38 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## Password reset, and the one setting it needs
+
+Web v5.33.0 moved the reset page onto this origin, at `/reset/`. Before that
+`ACC_RESET_URL` pointed at a third-party preview deployment, which meant the
+recovery token Supabase mails — and a recovery token is, while it lives, the
+account — was delivered to a host outside the product.
+
+**Owner step, once:** add
+
+```
+https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/reset/
+```
+
+under Supabase -> Authentication -> URL Configuration -> Redirect URLs. GoTrue
+silently falls back to the project Site URL for any `redirect_to` that is not
+allow-listed, so a missing entry raises no error: it just quietly sends people
+somewhere else. `test/sweep_v533_reset.js` proves the app asks for that URL and
+that the page handles the token responsibly, but no test here can prove the
+dashboard has it.
+
+## Privacy and terms
+
+`docs/privacy/` and `docs/terms/` are real pages, in Burmese and English, on
+this origin. Both are emitted from one shell by `test/_gen_legal_pages.py` —
+edit that and re-run it rather than editing the two HTML files, which would
+drift. `test/sweep_v533_legal.js` checks the shell is still identical in both
+AND that the policy's factual claims still match the code: no analytics, no
+photo ever uploaded to our servers, a random device id rather than a
+fingerprint, keys and results kept in the browser. Add an analytics snippet or
+an image upload and that sweep goes red, because the policy would have become
+a false statement made to paying customers.
+
 ## DigitalOcean App Platform
 
 - Repository: `hlaingkhay28047-svg/TG`

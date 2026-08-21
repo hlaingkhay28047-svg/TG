@@ -295,3 +295,12 @@ jobs:
 
       - name: Verify landing counts match what the app and the .ccx actually ship
         run: node test/verify_landing_counts.js
+
+      - name: Run v5.33.0 password-reset sweep (the recovery token stays on our origin)
+        run: node test/sweep_v533_reset.js
+
+      - name: Run v5.33.0 accessibility sweep (skip link, dialog names, live status)
+        run: node test/sweep_v533_a11y.js
+
+      - name: Run v5.33.0 legal-pages sweep (the privacy policy still describes this code)
+        run: node test/sweep_v533_legal.js
