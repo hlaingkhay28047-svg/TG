@@ -20,11 +20,15 @@
 
    Usage: PORT=8931 node test/sweep_path.js   (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 420, height: 1000 } });
   const pageErrors = [];
   page.on("pageerror", e => { pageErrors.push(String(e).slice(0, 300)); console.log("PAGEERROR:", String(e).slice(0, 300)); });

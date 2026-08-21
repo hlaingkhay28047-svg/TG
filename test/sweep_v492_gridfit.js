@@ -64,6 +64,7 @@
 
    Usage: PORT=8931 node test/sweep_v492_gridfit.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const fs = require("fs");
 const path = require("path");
 const PORT = process.env.PORT || 8931;
@@ -95,6 +96,9 @@ report("E0) #wfJump chips are declared unshrinkable",
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const VIEWPORTS = [412, 390, 360];
   const results = {};
   const errs = [], bad = [];

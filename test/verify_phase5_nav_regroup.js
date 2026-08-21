@@ -15,6 +15,7 @@
    is most likely to introduce: a page silently becoming unreachable.
    Usage: PORT=8931 node test/verify_phase5_nav_regroup.js   (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 
 // [pageId, expected top-tab label (null = no tab highlights: Setup lives on
@@ -41,6 +42,9 @@ const ST_SUITE_PAGES = ["pgMeitu", "pgEvoto"];
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on("pageerror", e => console.log("PAGEERROR:", String(e).slice(0, 300)));
 

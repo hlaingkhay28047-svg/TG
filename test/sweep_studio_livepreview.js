@@ -17,10 +17,14 @@
      change and skin-smoothing measurably reduces local luma variance
    Usage: PORT=8931 node test/sweep_studio_livepreview.js  (serve docs/app on $PORT first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 420, height: 1000 } });
   page.on("pageerror", e => console.log("PAGEERROR:", String(e).slice(0, 300)));
   await page.addInitScript(() => {

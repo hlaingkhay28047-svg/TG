@@ -12,6 +12,7 @@
       result provenance
    7. i18n: 30-language picker with my/en fallback resolution */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const BASE = "http://localhost:8931/index.html";
 const PNG1 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
@@ -23,6 +24,10 @@ function report(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30: the app is account + Premium only, and the wall now REDIRECTS —
+     switchPage refuses to leave pgHome while it is up, so a suite page never
+     mounts and the controls below do not exist. Sign in first. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 360, height: 740 } });
   await page.addInitScript(() => {
     localStorage.setItem("hnk_ws_onboarded", "1");
@@ -111,10 +116,32 @@ function report(name, ok, detail) {
     const keyGone = !localStorage.getItem("hnk_web_studio_key");
     // restore for later checks
     localStorage.setItem("hnk_web_studio_key", "AIzaTestKeyValue"); state.key = "AIzaTestKeyValue";
-    const payHint = document.getElementById("stPay").textContent.length > 5;
-    return { gemReady, upToDate, ver, appVer: APP_VER, exported, delVisible, keyGone, payHint,
+    return { gemReady, upToDate, ver, appVer: APP_VER, exported, delVisible, keyGone,
       dataLine: document.getElementById("dataStore").textContent.indexOf("KB") >= 0 || document.getElementById("dataStore").textContent.indexOf("MB") >= 0 };
   });
+  /* The pay hint is a SIGNED-OUT string — "sign in before you can buy" — so from
+     v5.30.0 it cannot be read off the same page as everything else here, which
+     has to be signed in for the wall to let it reach a suite page at all. It is
+     measured on its own page rather than dropped: it is the line that tells a
+     visitor why the buy panel is not doing anything, and nothing else pins it.
+     The fixture seeds the session in an init script, so clearing the two keys in
+     a later init script on this page alone is enough to sign it back out. */
+  const outPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await outPage.addInitScript(() => {
+    try {
+      localStorage.setItem("hnk_ws_onboarded", "1");
+      localStorage.removeItem("hnk_acc_sess_v1");
+      localStorage.removeItem("hnk_acc_profile_v1");
+    } catch (e) {}
+  });
+  await outPage.goto(BASE, { waitUntil: "networkidle" });
+  await outPage.waitForTimeout(1200);
+  setup.payHint = await outPage.evaluate(() => {
+    const el = document.getElementById("stPay");
+    return !!el && el.textContent.trim().length > 5;
+  });
+  await outPage.close();
+
   report("Setup: readiness strip live, manual update check reports current, backup exports a file, key removal works, logged-out pay hint",
     /* the version LINE must name the build, whatever the build is — pinning
        this to /^v4\./ made a major bump look like a Setup regression */

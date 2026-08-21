@@ -15,6 +15,7 @@
    8. destructive-action Undo parity (Path clear/remove, Retouch clear-all)
       and btnPtGalOne no longer double-adds to the Gallery */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const BASE = "http://localhost:8931/index.html";
 
 let failures = 0;
@@ -25,6 +26,10 @@ function report(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30: the app is account + Premium only, and the wall now REDIRECTS —
+     switchPage refuses to leave pgHome while it is up, so a suite page never
+     mounts and the controls below do not exist. Sign in first. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.addInitScript(() => {
     localStorage.setItem("hnk_ws_onboarded", "1");

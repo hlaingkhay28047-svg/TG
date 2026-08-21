@@ -280,3 +280,6 @@ jobs:
 
       - name: Run v5.29.0 provider-hint sweep (locked providers explain themselves)
         run: node test/sweep_v529_providerhint.js
+
+      - name: Run v5.30.0 access-wall sweep (account + Premium required to enter)
+        run: node test/sweep_v530_accesswall.js
