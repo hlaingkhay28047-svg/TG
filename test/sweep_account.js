@@ -22,7 +22,7 @@
      13 SW                still refuses to cache a cross-origin (bearer) response
      14 320/390           no overflow with every accordion + the paywall open
      15 44px              every visible account control clears the touch target
-     16 i18n zero-miss    75 keys x 9 languages, placeholders intact, no emoji
+     16 i18n zero-miss    85 keys x 9 languages, placeholders intact, no emoji
      17 no secrets        the anon key ships in code but is never RENDERED
      18 console           zero console errors / pageerrors across the whole sweep
 
@@ -49,8 +49,15 @@ const SB_FIX = {
              user: { id: UID, email: "hla@example.com" } },
   /* confirmation ON: a 200 with no access_token is NOT an error */
   signupNoSession: { id: UID, email: "hla@example.com", confirmation_sent_at: "2026-08-12T00:00:00Z" },
+  /* v5.34 — joined_paid true, and the value is load-bearing rather than
+     incidental. This fixture is a LAPSED customer: they have paid before, so
+     the buy panel offers them renewals, which is what the 9/7/8 block below
+     exercises when it buys three months. A customer who has never paid is
+     offered the one-time joining fee INSTEAD of the renewals — correctly, and
+     that path has its own coverage in sweep_v534_payments.js. Leaving this
+     false made the renewal chips vanish and the block click a hidden button. */
   profileFree: { id: UID, name: "Hla Hla", email: "hla@example.com", created_at: "2025-01-15T00:00:00Z",
-                 plan_status: "none", plan_expires_at: null, allowed_devices: 2 },
+                 plan_status: "none", plan_expires_at: null, allowed_devices: 2, joined_paid: true },
   settings: [{ id: 1, price_1m: 15000, price_3m: 40000, price_6m: 70000, price_extra_device: 10000,
                payment_instructions_my: "KBZPay 09-xxx\nWave 09-yyy" }],
   devices: [{ id:"d1", user_id:UID, device_id:"other-device", label:"Android · Chrome", created_at:"2025-06-01T00:00:00Z" }],
@@ -402,14 +409,30 @@ const SB_FIX = {
   v9.long = await txn("1234567");
   v9.mixed = await txn("4a8b2c");
   v9.good = await txn("482913");
-  report("9 txn validation: non-digits are stripped, >6 clamps to 6, submit is enabled only on exactly 6 digits, and a valid txn with no screenshot attached keeps submit disabled while showing pay_shot_need",
+  /* v5.34 — the amount is now part of the gate, so "enabled on exactly 6
+     digits" is only true once an amount is present. Filling it here rather
+     than relaxing the assertion keeps the txn rules exactly as strict as they
+     were AND records the new requirement: the two v9.*Amt reads below prove
+     the button really is held by the amount and released by it. */
+  v9.noAmt = await page.evaluate(() => ({ disabled: document.getElementById("btnPaySubmit").disabled }));
+  await page.fill("#payAmt", "91000");
+  await page.waitForTimeout(120);
+  v9.withAmt = await page.evaluate(() => ({
+    value: document.getElementById("payAmt").value,
+    disabled: document.getElementById("btnPaySubmit").disabled,
+  }));
+
+  report("9 txn validation: non-digits are stripped, >6 clamps to 6, a valid txn with no screenshot keeps submit disabled showing pay_shot_need, and (v5.34) the amount is required too — six good digits and a slip are not enough on their own",
     v9.noShot.disabled === true && /screenshot/i.test(v9.noShot.st) &&
     v9.short.value === "12345" && v9.short.disabled === true &&
     /exactly 6 digits/i.test(v9.shortBlur.st) &&
-    v9.long.value === "123456" && v9.long.disabled === false &&
+    v9.long.value === "123456" &&
     v9.mixed.value === "482" && v9.mixed.disabled === true &&
-    v9.good.value === "482913" && v9.good.disabled === false,
-    JSON.stringify({ noShotSt: v9.noShot.st, blurSt: v9.shortBlur.st, clamp: v9.long.value, stripped: v9.mixed.value }));
+    v9.good.value === "482913" &&
+    v9.noAmt.disabled === true &&
+    v9.withAmt.value === "91,000" && v9.withAmt.disabled === false,
+    JSON.stringify({ noShotSt: v9.noShot.st, blurSt: v9.shortBlur.st, clamp: v9.long.value,
+                     stripped: v9.mixed.value, heldByAmount: v9.noAmt.disabled, amount: v9.withAmt.value }));
 
   await page.evaluate(() => { window.__sb = []; });
   await page.click("#btnPaySubmit");
@@ -432,12 +455,18 @@ const SB_FIX = {
     pending: (document.getElementById("payPendingH").textContent || "").trim(),
     formHidden: document.getElementById("payForm").style.display === "none"
   }));
-  report("8 buy -> insert: the payment_requests body is exactly {user_id,kind,txn_last6,screenshot_path} matching the uploaded path, with Prefer: return=representation; status / reviewed_at / reviewed_by / note are ABSENT (they are the admin's fields); then the pending card renders",
-    ins.method === "POST" && JSON.stringify(insKeys) === JSON.stringify(["kind","screenshot_path","txn_last6","user_id"]) &&
+  /* v5.34 adds amount_mmk — what the customer says they sent — and the exact
+     key list stays pinned rather than loosened. is_grant is deliberately NOT
+     in it: only an admin filing a free period sends that, and a customer's
+     insert carrying it is exactly the forged-VIP-grant shape the schema's
+     insert policy refuses. status / reviewed_* / note remain the admin's. */
+  report("8 buy -> insert: the payment_requests body is exactly {user_id,kind,txn_last6,amount_mmk,screenshot_path} matching the uploaded path, with Prefer: return=representation; status / reviewed_at / reviewed_by / note / is_grant are ABSENT (they are the admin's fields); then the pending card renders",
+    ins.method === "POST" && JSON.stringify(insKeys) === JSON.stringify(["amount_mmk","kind","screenshot_path","txn_last6","user_id"]) &&
     insBody.kind === "plan_3m" && insBody.txn_last6 === "482913" && insBody.user_id === UID &&
+    insBody.amount_mmk === 91000 &&
     insBody.screenshot_path === upPath && /return=representation/.test(ins.headers.Prefer || "") &&
     /Waiting for admin approval/i.test(c8ui.pending) && c8ui.formHidden,
-    JSON.stringify({ keys: insKeys, path: insBody.screenshot_path, prefer: ins.headers.Prefer, pending: c8ui.pending }));
+    JSON.stringify({ keys: insKeys, amount: insBody.amount_mmk, path: insBody.screenshot_path, prefer: ins.headers.Prefer, pending: c8ui.pending }));
   await page.evaluate(() => { accPollStop(); });
 
   // ---------------------------------------------------------------- 10) device limit
@@ -590,8 +619,8 @@ const SB_FIX = {
     LANG = before;
     return { total: keys.length, missing, emojis, unresolved, badPlace };
   });
-  report("16 i18n zero-miss: TR_V430 holds exactly 75 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, {N}/{M}/{D}/{T} survive every translation, and no value carries an emoji",
-    c16.total === 75 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+  report("16 i18n zero-miss: TR_V430 holds exactly 85 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, {N}/{M}/{D}/{T} survive every translation, and no value carries an emoji",
+    c16.total === 85 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));

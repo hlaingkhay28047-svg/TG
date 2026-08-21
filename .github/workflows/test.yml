@@ -304,3 +304,12 @@ jobs:
 
       - name: Run v5.33.0 legal-pages sweep (the privacy policy still describes this code)
         run: node test/sweep_v533_legal.js
+
+      - name: Run v5.34.0 payments sweep (joining fee, per-customer price, amount check, VIP grant)
+        run: node test/sweep_v534_payments.js
+
+      - name: Run XSS sweep (hostile database text renders as text)
+        run: node test/sweep_xss.js
+
+      - name: Run v5.35.0 RTL + shareable-language sweep (Urdu reads right to left)
+        run: node test/sweep_v535_rtl_lang.js

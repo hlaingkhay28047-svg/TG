@@ -28,12 +28,37 @@
 --
 -- WHAT THE APP EXPECTS, so this file and the client cannot drift:
 --   profiles          id, name, email, created_at, plan_status, plan_expires_at,
---                     allowed_devices, is_admin
+--                     allowed_devices, is_admin,
+--                     joined_paid, price_1m_override, price_3m_override,
+--                     price_6m_override, price_join_first_override      (v5.34)
 --   payment_requests  id, user_id, kind, txn_last6, screenshot_path, status,
---                     reviewed_at, reviewed_by, note, created_at
---   kind              plan_1m | plan_3m | plan_6m | extra_device
+--                     reviewed_at, reviewed_by, note, created_at,
+--                     amount_mmk, is_grant                              (v5.34)
+--   app_settings      price_1m, price_3m, price_6m, price_extra_device,
+--                     payment_instructions_my (+ per-language variants),
+--                     price_join_first, join_first_months,
+--                     payment_qr_url, payment_phone                     (v5.34)
+--   kind              plan_1m | plan_3m | plan_6m | extra_device | join_first
 --   status            pending | approved | rejected
 --   storage bucket    payment-proofs, private, objects at <uid>/<kind>-<ts>.<ext>
+--
+-- WHAT THE OWNER SETS, and none of it is in the code (v5.34):
+--   update public.app_settings set
+--     price_join_first   = 500000,   -- the one-time first purchase
+--     join_first_months  = 1,        -- what that purchase opens
+--     price_1m           = 30000,    -- the default monthly rate
+--     payment_phone      = '09688200680',
+--     payment_qr_url     = 'https://<project>.supabase.co/storage/v1/object/public/<bucket>/kbzpay-qr.jpg';
+--
+--   -- one student on a different monthly rate:
+--   update public.profiles set price_1m_override = 10000 where email = 'student@example.com';
+--
+--   -- a free period for a VIP student is filed as a GRANT, not a database
+--   -- edit, so it is visible in the same queue as every payment. The admin
+--   -- panel has a button for it; this is the same thing by hand:
+--   insert into public.payment_requests (user_id, kind, is_grant, amount_mmk, note)
+--   select id, 'plan_1m', true, 0, 'VIP — training course' from public.profiles
+--    where email = 'student@example.com';
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -43,6 +68,51 @@ alter table public.profiles add column if not exists is_admin boolean not null d
 alter table public.profiles add column if not exists plan_status text not null default 'none';
 alter table public.profiles add column if not exists plan_expires_at timestamptz;
 alter table public.profiles add column if not exists allowed_devices integer not null default 2;
+
+-- v5.34 pricing. Every number lives in the database, never in the client:
+-- the owner sets them in the dashboard and the buy screen quotes whatever is
+-- there. price_*_override is per CUSTOMER and wins over the app_settings
+-- default when set, which is how a training-course student pays a different
+-- monthly rate from a studio without either number appearing in code.
+-- joined_paid records that the one-time joining fee has been settled, so the
+-- buy screen stops quoting it.
+alter table public.profiles add column if not exists joined_paid boolean not null default false;
+alter table public.profiles add column if not exists price_1m_override integer;
+alter table public.profiles add column if not exists price_3m_override integer;
+alter table public.profiles add column if not exists price_6m_override integer;
+alter table public.profiles add column if not exists price_join_first_override integer;
+
+-- BACKFILL, and it is not optional. joined_paid defaults to false, so without
+-- this every customer who has already paid would be quoted the joining fee
+-- again the moment this release lands. An account that has ever had a plan has
+-- already joined: plan_expires_at is written only by hnk_apply_payment, which
+-- runs only on an approved payment. An EXPIRED plan still counts — the joining
+-- fee is paid once, not once per lapse.
+-- Safe to re-run: it only ever sets false to true, for rows that already show
+-- evidence of a payment.
+update public.profiles
+   set joined_paid = true
+ where joined_paid = false
+   and (plan_expires_at is not null or coalesce(plan_status, 'none') <> 'none');
+
+-- v5.34 payment_requests. amount_mmk is WHAT THE CUSTOMER SAYS THEY SENT — it
+-- is a claim, not a fact, and the schema treats it as one: nothing in the
+-- database compares it to a price or acts on it. Its whole job is to be shown
+-- to the admin next to the amount that was actually due, so a 10,000 sent
+-- against a 50,000 plan is visible before approval instead of after.
+-- is_grant marks a row an admin created as a free grant rather than a payment,
+-- so a VIP period is auditable rather than an invisible edit to a profile.
+alter table public.payment_requests add column if not exists amount_mmk integer;
+alter table public.payment_requests add column if not exists is_grant boolean not null default false;
+
+-- A grant has no transfer and no slip, so the two columns that record them
+-- must accept their absence. If the table was created with them NOT NULL — the
+-- shape a payments-only design naturally produces — an admin's first VIP grant
+-- would be refused by the database with a constraint error the admin panel
+-- could only report as "couldn't submit". Dropping NOT NULL is a no-op when
+-- they are already nullable, which keeps this file idempotent.
+alter table public.payment_requests alter column txn_last6 drop not null;
+alter table public.payment_requests alter column screenshot_path drop not null;
 
 -- ---------------------------------------------------------------------------
 -- 2. the admin test
@@ -104,7 +174,14 @@ create policy payreq_insert_own on public.payment_requests
   for insert to authenticated
   with check (
     user_id = auth.uid()
-    and kind in ('plan_1m','plan_3m','plan_6m','extra_device')
+    and kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')
+    -- a customer never marks their own row a grant; that is the admin's word,
+    -- and without this line anyone could file a free VIP period into the queue
+    -- looking exactly like one the owner had authorised
+    and coalesce(is_grant, false) = false
+    -- an amount is optional (older clients do not send one) but a negative or
+    -- absurd one is a typo at best, so it is bounded here rather than trusted
+    and (amount_mmk is null or (amount_mmk >= 0 and amount_mmk <= 100000000))
     -- a request always starts pending; a client that tries to insert itself as
     -- approved is refused rather than trusted
     and coalesce(status, 'pending') = 'pending'
@@ -116,6 +193,22 @@ create policy payreq_insert_own on public.payment_requests
     and reviewed_at is null
     and reviewed_by is null
     and note is null
+  );
+
+-- v5.34 — payreq_insert_own is `user_id = auth.uid()`, so an admin recording a
+-- free period for a student would be refused by their own database. This is the
+-- narrow exception: an admin may insert a row for ANY user, but only one marked
+-- is_grant with no money attached. A grant therefore lands in the same queue,
+-- with the same audit trail, as every payment.
+drop policy if exists payreq_insert_admin_grant on public.payment_requests;
+create policy payreq_insert_admin_grant on public.payment_requests
+  for insert to authenticated
+  with check (
+    public.hnk_is_admin()
+    and is_grant = true
+    and coalesce(amount_mmk, 0) = 0
+    and kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')
+    and coalesce(status, 'pending') = 'pending'
   );
 
 drop policy if exists payreq_select_own_or_admin on public.payment_requests;
@@ -150,6 +243,16 @@ create policy payreq_update_admin_only on public.payment_requests
 -- details in the Supabase dashboard, which uses the service role and bypasses
 -- RLS — so nothing legitimate is lost.
 -- ---------------------------------------------------------------------------
+-- v5.34 — the joining fee and the period it opens. Both are the owner's to
+-- set in the dashboard; nothing in the client or in this file assumes a value.
+alter table public.app_settings add column if not exists price_join_first integer;
+alter table public.app_settings add column if not exists join_first_months integer;
+-- The KBZPay QR the buy screen shows. A URL, not an image: the QR encodes a
+-- live bank account, and a public git repository is a permanent, unrevocable
+-- place to put one. Upload it to a Supabase storage bucket and paste the URL.
+alter table public.app_settings add column if not exists payment_qr_url text;
+alter table public.app_settings add column if not exists payment_phone text;
+
 alter table public.app_settings enable row level security;
 
 drop policy if exists appset_read_all on public.app_settings;
@@ -267,12 +370,28 @@ begin
     new.plan_expires_at := null;
     new.allowed_devices := 2;
     new.is_admin        := false;
+    -- v5.34: a self-inserted row must not arrive already joined, nor carrying
+    -- a price of its own choosing
+    new.joined_paid               := false;
+    new.price_1m_override         := null;
+    new.price_3m_override         := null;
+    new.price_6m_override         := null;
+    new.price_join_first_override := null;
     return new;
   end if;
   new.plan_status     := old.plan_status;
   new.plan_expires_at := old.plan_expires_at;
   new.allowed_devices := old.allowed_devices;
   new.is_admin        := old.is_admin;
+  -- v5.34: joined_paid decides whether the joining fee is still owed and the
+  -- overrides decide what everything costs. A customer who could write either
+  -- could set their own price to zero, which is the same hole as writing
+  -- plan_status directly.
+  new.joined_paid               := old.joined_paid;
+  new.price_1m_override         := old.price_1m_override;
+  new.price_3m_override         := old.price_3m_override;
+  new.price_6m_override         := old.price_6m_override;
+  new.price_join_first_override := old.price_join_first_override;
   return new;
 end;
 $$;
@@ -315,6 +434,12 @@ begin
   if new.kind = 'plan_1m' then months := 1;
   elsif new.kind = 'plan_3m' then months := 3;
   elsif new.kind = 'plan_6m' then months := 6;
+  elsif new.kind = 'join_first' then
+    -- v5.34 — the one-time joining fee also opens the first period, and how
+    -- long that period is belongs to the owner, not to this file. Default 1.
+    select coalesce(nullif(a.join_first_months, 0), 1) into months
+      from public.app_settings a limit 1;
+    months := coalesce(months, 1);
   end if;
 
   if months > 0 then
@@ -322,7 +447,11 @@ begin
       into base from public.profiles p where p.id = new.user_id;
     update public.profiles
        set plan_status     = 'active',
-           plan_expires_at = coalesce(base, now()) + (months || ' months')::interval
+           plan_expires_at = coalesce(base, now()) + (months || ' months')::interval,
+           -- v5.34 — settling the joining fee is what clears it, and nothing
+           -- else does. A plan_1m approval leaves joined_paid alone, so a
+           -- customer cannot buy a cheap month to skip the joining fee.
+           joined_paid     = case when new.kind = 'join_first' then true else joined_paid end
      where id = new.user_id;
   elsif new.kind = 'extra_device' then
     update public.profiles
