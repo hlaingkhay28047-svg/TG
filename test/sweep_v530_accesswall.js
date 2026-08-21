@@ -351,6 +351,75 @@ async function look(browser, sess, prof, label) {
     lost.length === 0,
     deep.map(d => ({ asked: d.target, parkedOn: d.page, landedOn: d.afterUnlock })));
 
+  /* ---- Q/R: the buy panel must be OPEN, and must STAY open ----
+
+     Two defects, one line apart, both shipped in v5.30.0 and both on the only
+     path a customer has to pay:
+
+     Q) accOpenGrp is an EXCLUSIVE accordion — its first act is to collapse
+        every other group in ACC_GRPS, and accGrpBuy is in that list. The wall's
+        buy branch called it twice, so the second call closed the payment panel
+        the first had just opened. The wall rendered "Pick a plan below and
+        upload your transfer slip" directly above a shut panel. Measured before
+        the fix: planChipsVisible false, submitVisible false, on every boot into
+        the buy state. Assertion H already covered the sign-out half of that
+        same block, which is exactly why this went unnoticed — it asserted the
+        door was open and never that the till was.
+
+     R) appWallApply ran the accordion block unconditionally, and wallRecheck
+        calls appWallApply from visibilitychange, window focus AND a 5-minute
+        interval. accOpenGrp ends in scrollIntoView({block:"start"}), so the
+        panel re-collapsed and the page jumped to the top of the Account card
+        every time the customer came back from the OS photo picker or their
+        bank app — mid-payment — and unprompted every five minutes.
+
+     Both are asserted against the visibility of the actual controls, not the
+     class names, because the class is not what a customer can or cannot tap. */
+  {
+    const q = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    q.on("pageerror", e => errs.push("buypanel: " + String(e).slice(0, 160)));
+    const lapsed = { id: "u-test", name: "T", email: "t@example.com", plan_status: "none",
+                     plan_expires_at: new Date(Date.now() - 86400000).toISOString(), allowed_devices: 2 };
+    await armSupabase(q, lapsed, "normal");
+    await q.addInitScript(l => { try {
+      localStorage.setItem("hnk_ws_onboarded", "1");
+      localStorage.setItem("hnk_acc_sess_v1", JSON.stringify({ access: "a", refresh: "r",
+        uid: "u-test", email: "t@example.com", exp: Math.floor(Date.now() / 1000) + 3600 }));
+      localStorage.setItem("hnk_acc_profile_v1", JSON.stringify(l));
+    } catch (e) {} }, lapsed);
+    await q.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
+    await q.waitForTimeout(1400);
+    const look = () => q.evaluate(() => {
+      const vis = id => { const e = document.getElementById(id);
+        return !!(e && e.getClientRects().length && getComputedStyle(e).display !== "none"); };
+      return { state: typeof appWallState === "function" ? appWallState() : "?",
+               chips: vis("payKind3m"), submit: vis("btnPaySubmit"),
+               logout: vis("btnAccLogout"), scrollY: Math.round(window.scrollY) };
+    });
+    const atBoot = await look();
+    report("Q) the buy wall opens the panel it tells the customer to use",
+      atBoot.state === "buy" && atBoot.chips === true && atBoot.submit === true,
+      atBoot);
+    /* sign-out has to survive the reordering — this is assertion H's concern,
+       re-checked here because the fix touches the same two lines */
+    report("Q2) ...without closing the only way back out",
+      atBoot.logout === true, atBoot);
+
+    /* leaving for the photo picker and coming back is a focus event */
+    await q.evaluate(() => window.scrollTo(0, 300));
+    await q.waitForTimeout(150);
+    const before = await look();
+    await q.evaluate(() => { window.dispatchEvent(new Event("focus"));
+                             document.dispatchEvent(new Event("visibilitychange")); });
+    await q.waitForTimeout(700);
+    const after = await look();
+    report("R) coming back from another app does not collapse the payment form",
+      after.chips === before.chips && after.submit === before.submit &&
+      after.chips === true && Math.abs(after.scrollY - before.scrollY) < 40,
+      { before, after });
+    await q.close();
+  }
+
   /* ---- P: the INSERT half of the plan guard ----
      Section 3's insert policy checks only `id = auth.uid()`, so without a
      BEFORE INSERT guard a user whose profile row does not exist yet can create

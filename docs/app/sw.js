@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v5-31-0";
+var CACHE = "hnk-web-studio-v5-32-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -248,16 +248,40 @@ self.addEventListener("fetch", function (e) {
         });
       })
     );
+  } else if (e.request.mode === "navigate") {
+    /* v5.32 — NAVIGATIONS ARE STALE-WHILE-REVALIDATE, NOT NETWORK-FIRST.
+       Every other request below still goes to the network first; this branch
+       is only the app shell, and the shell is the one asset where waiting was
+       indefensible. It is a 3.3MB document, and the target user is a studio on
+       intermittent Myanmar mobile data opening the app several times a day.
+       Network-first meant every one of those launches re-fetched the whole
+       document and BLOCKED on it — the cached copy was only ever a
+       failure fallback, so a slow link cost the full download before anything
+       appeared, and a flaky one cost a timeout first.
+
+       Serving the cached shell immediately and refreshing it in the background
+       is safe here specifically because CACHE is versioned by release
+       (hnk-web-studio-vX-Y-Z) and activate deletes every other cache: a new
+       release can never be served from an old key, so the worst case is one
+       launch on the previous version, which the app's own version check
+       already surfaces as an update toast. */
+    e.respondWith(
+      caches.open(CACHE).then(function (c) {
+        return c.match(OFFLINE_URL).then(function (hit) {
+          var net = fetch(e.request).then(function (res) {
+            if (res && res.ok) c.put(OFFLINE_URL, res.clone());
+            return res;
+          }).catch(function () {
+            return hit || new Response("", { status: 504, statusText: "offline" });
+          });
+          /* cached shell now if we have one; otherwise wait for the network */
+          return hit || net;
+        });
+      })
+    );
   } else {
     e.respondWith(
       fetch(e.request).then(function (res) {
-        /* Keep the offline shell copy fresh: every successful online
-           navigation re-caches index.html, which also self-heals a
-           failed install-time precache. */
-        if (e.request.mode === "navigate" && res && res.ok) {
-          var copy = res.clone();
-          caches.open(CACHE).then(function (c) { return c.put(OFFLINE_URL, copy); }).catch(function () {});
-        }
         return res;
       }).catch(function () {
         return caches.open(CACHE).then(function (c) {
