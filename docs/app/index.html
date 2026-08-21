@@ -2077,7 +2077,14 @@ body.wall #wallNote{display:block}
                than argued about after it. -->
           <div class="acc-sub">
             <div class="subh" id="payAmtH"></div>
-            <input class="inp" id="payAmt" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="9" autocomplete="off" autocapitalize="none" spellcheck="false">
+            <!-- NO maxlength, and that is the fix rather than an oversight. The field
+                 displays the amount with thousands separators, and maxlength counts
+                 those commas: at "1,234,567" the input is already nine characters, so
+                 the browser silently refused the eighth digit. A customer typing
+                 12,345,678 watched it stay 1,234,567 — an order of magnitude wrong, in
+                 a money field, with no message. The digit ceiling belongs in the
+                 handler, which caps at nine ACTUAL digits. -->
+            <input class="inp" id="payAmt" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocapitalize="none" spellcheck="false">
             <div class="mut" id="payAmtWarn" style="margin-top:6px;display:none"></div>
           </div>
 

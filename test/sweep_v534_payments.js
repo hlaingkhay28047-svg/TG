@@ -338,6 +338,28 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   const e5 = await page.evaluate(() => ({ warnShown: document.getElementById("payAmtWarn").style.display !== "none" }));
   report("E5) the exact amount raises no warning at all", e5.warnShown === false, e5);
 
+  /* E6) TYPED, not filled — and the distinction is the whole assertion.
+     page.fill sets the value in one go, which sails past a maxlength; a
+     customer presses one key at a time and does not. The field formats with
+     thousands separators and maxlength counted the commas, so at "1,234,567"
+     the input was already nine characters and the browser silently swallowed
+     the eighth digit. Someone entering 12,345,678 watched it stay 1,234,567 —
+     an order of magnitude wrong, in a money field, with no message, and then
+     submitted as their claimed amount. Every check above passed while that was
+     true, because every one of them used fill. */
+  const typed = {};
+  for (const digits of ["500000", "12345678", "123456789"]) {
+    await page.fill("#payAmt", "");
+    await page.click("#payAmt");
+    for (const ch of digits) await page.type("#payAmt", ch, { delay: 4 });
+    typed[digits] = await page.evaluate(() =>
+      (document.getElementById("payAmt").value || "").replace(/[^0-9]/g, ""));
+  }
+  report("E6) typing a long amount keeps every digit — the separators must not eat the value",
+    Object.keys(typed).every(d => typed[d] === d), typed);
+  await page.fill("#payAmt", "37000");
+  await page.waitForTimeout(120);
+
   await page.click("#btnPaySubmit");
   await page.waitForTimeout(500);
   const posted = await page.evaluate(() => {
