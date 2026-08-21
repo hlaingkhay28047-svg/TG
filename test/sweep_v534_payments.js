@@ -319,6 +319,96 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
       (wantNum ? r.number === "09688200680" : true), r);
   }
 
+  /* ---------- D2) the QR is a scannable square, and a broken one withdraws ----------
+     Two things a person actually holding a phone depends on.
+
+     A QR is square. Sizing it with height:auto meant the box had no reserved
+     height until the bytes arrived, so the panel jumped when they did and — as
+     this was being measured — a QR that never arrived rendered 26px tall under
+     a heading reading "Scan the QR". A customer was being told to scan an
+     empty box.
+
+     The URL is typed by the owner into a database field, which makes it the
+     likeliest thing here to be wrong: a stale object, a bucket never made
+     public, a typo. When the bytes do not arrive the whole route is now
+     withdrawn and the phone number carries the payment instead. */
+  {
+    const QR = "https://example.supabase.co/x/qr.jpg";
+    await boot({ login: session, profile: profile({ joined_paid: true }),
+                 settings: [Object.assign({}, PRICE, { payment_qr_url: QR, payment_phone: "09688200680" })] });
+    await login();
+    await page.waitForTimeout(500);
+    const good = await page.evaluate(() => {
+      const i = document.getElementById("payQrImg");
+      const r = i.getBoundingClientRect();
+      return { w: Math.round(r.width), h: Math.round(r.height),
+               loaded: i.complete && i.naturalWidth > 0,
+               routeShown: document.getElementById("payRouteQr").style.display !== "none" };
+    });
+    report("D2) a QR that loads is a square big enough to scan",
+      good.loaded && good.routeShown && good.h >= 180 && Math.abs(good.w - good.h) <= 2, good);
+
+    /* D2b) the square must be reserved BEFORE the bytes arrive, and this is
+       the assertion that actually distinguishes aspect-ratio from height:auto.
+       Measured with a loaded square image the two are indistinguishable — the
+       first draft of D2 passed either way, which is why it is not the whole
+       check. With the image still in flight, height:auto collapses the box to
+       nothing and the entire buy panel jumps down the moment the QR lands. */
+    await page.unroute("https://example.supabase.co/**");
+    let releaseQr;
+    const held = new Promise(res => { releaseQr = res; });
+    await page.route("https://example.supabase.co/**", async r => {
+      await held;
+      return r.fulfill({ status: 200, contentType: "image/png", body: PNG });
+    });
+    await page.evaluate(() => {
+      document.getElementById("payQrImg").removeAttribute("src");
+      accRenderPay();
+    });
+    await page.waitForTimeout(400);
+    const pending = await page.evaluate(() => {
+      const i = document.getElementById("payQrImg");
+      const r = i.getBoundingClientRect();
+      return { w: Math.round(r.width), h: Math.round(r.height),
+               loaded: i.complete && i.naturalWidth > 0 };
+    });
+    releaseQr();
+    await page.waitForTimeout(400);
+    report("D2b) the square is reserved while the QR is still loading, so the panel does not jump when it lands",
+      pending.loaded === false && pending.h >= 180 && Math.abs(pending.w - pending.h) <= 2, pending);
+
+    /* now make the same URL fail, exactly as a wrong one would */
+    await page.unroute("https://example.supabase.co/**");
+    await page.route("https://example.supabase.co/**", r => r.fulfill({ status: 404, body: "" }));
+    await page.evaluate(() => {
+      const i = document.getElementById("payQrImg");
+      i.removeAttribute("src");          /* force a fresh fetch of the same URL */
+      accRenderPay();
+    });
+    await page.waitForTimeout(700);
+    const bad = await page.evaluate(() => ({
+      qrShown: !!document.getElementById("payRouteQr").getClientRects().length,
+      numShown: !!document.getElementById("payRouteNum").getClientRects().length,
+      number: (document.getElementById("payNum").textContent || "").trim(),
+    }));
+    report("D3) a QR that fails to load withdraws its route, leaving the number to carry the payment",
+      bad.qrShown === false && bad.numShown === true && bad.number === "09688200680", bad);
+
+    /* put the good route back for anything after this block */
+    await page.unroute("https://example.supabase.co/**");
+    await page.route("https://example.supabase.co/**", r =>
+      r.fulfill({ status: 200, contentType: "image/png", body: PNG }));
+
+    /* D3 made a request fail ON PURPOSE, so the 404 it produced is expected
+       output rather than a defect. Exactly the errors that name a failed load
+       are dropped — anything else raised in this block still reaches J, and J
+       stays strict about the rest of the file. Excusing the whole block, or
+       clearing the array, would have hidden a real error raised alongside. */
+    for (let i = errs.length - 1; i >= 0; i--) {
+      if (/Failed to load resource/.test(errs[i]) && /404/.test(errs[i])) errs.splice(i, 1);
+    }
+  }
+
   /* ---------- E + F) the amount ---------- */
   await boot({ login: session, profile: profile({ joined_paid: true }), settings: [Object.assign({}, PRICE, { payment_phone: "09688200680" })] });
   await login();

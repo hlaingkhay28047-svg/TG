@@ -211,7 +211,11 @@ h1 em{font-style:normal;color:var(--gold-hi)}
 .adm-grant-row .btn,.adm-grant-row .inp{min-height:44px;flex:1 1 120px}
 .pay-routes{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0 12px}
 .pay-route{flex:1 1 180px;min-width:0;padding:12px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2)}
-.pay-route img{display:block;width:100%;max-width:220px;height:auto;margin:0 auto;border-radius:10px;background:#fff}
+/* aspect-ratio, not height:auto. A QR is square, and reserving the square
+   before the bytes arrive stops the whole buy panel jumping when they do —
+   the same class of shift this release measured out of the boot path. It
+   also means a QR that never arrives is not silently 26px tall. */
+.pay-route img{display:block;width:100%;max-width:220px;aspect-ratio:1;object-fit:contain;margin:0 auto;border-radius:10px;background:#fff}
 .pay-num{font-size:20px;font-weight:800;letter-spacing:.04em;color:var(--gold-hi);margin:6px 0 10px;word-break:break-all}
 .pay-route .btn{width:100%;min-height:48px}
 #payDue{font-size:16px}
@@ -20821,7 +20825,23 @@ function accRenderPay(){
        nothing is ever parsed as markup */
     var qrOk = /^https:\/\//i.test(qrUrl);
     rq.style.display = qrOk ? "" : "none";
-    if (qrOk && $("payQrImg").getAttribute("src") !== qrUrl) $("payQrImg").src = qrUrl;
+    if (qrOk && $("payQrImg").getAttribute("src") !== qrUrl){
+      /* A URL the owner typed by hand is the likeliest thing here to be wrong —
+         a stale object, a bucket that was never made public, a typo. Left
+         alone that renders as the heading "Scan the QR" above an empty box,
+         which tells a paying customer to scan nothing. If the bytes do not
+         arrive the whole route is withdrawn and the phone number below it
+         carries the payment instead. */
+      $("payQrImg").onerror = function(){
+        var r = $("payRouteQr"); if (r) r.style.display = "none";
+        var host = $("payRoutes"), num = $("payRouteNum");
+        if (host) host.style.display = (num && num.style.display !== "none") ? "" : "none";
+      };
+      $("payQrImg").onload = function(){
+        var r = $("payRouteQr"); if (r) r.style.display = "";
+      };
+      $("payQrImg").src = qrUrl;
+    }
     if (qrOk) $("payQrImg").alt = t("pay_qr_h");
   }
   if (rn){
