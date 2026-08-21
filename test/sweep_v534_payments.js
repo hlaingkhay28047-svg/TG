@@ -105,6 +105,21 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+
+  /* The QR fixture is an https URL because the client refuses anything else,
+     and an https URL is a REAL REQUEST the moment it lands in an <img src>.
+     Left alone, the runner tries to resolve example.supabase.co, fails, and
+     Chromium logs ERR_NAME_NOT_RESOLVED — which assertion J then reports as a
+     console error. It passed here and failed on CI, which is the signature of
+     a fixture that depends on the machine's network rather than on the code.
+     Serving the bytes from the interceptor makes the outcome the same
+     everywhere, which is the only thing a fixture is for. */
+  const PNG = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64");
+  await page.route("https://example.supabase.co/**", route =>
+    route.fulfill({ status: 200, contentType: "image/png", body: PNG }));
+
   const errs = [];
   page.on("pageerror", e => errs.push("pageerror: " + String(e).slice(0, 200)));
   page.on("console", m => { if (m.type() === "error") errs.push("console: " + m.text().slice(0, 160)); });
