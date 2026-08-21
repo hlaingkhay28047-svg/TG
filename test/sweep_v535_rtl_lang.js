@@ -50,6 +50,7 @@ const { chromium } = require("playwright-core");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const seed = require("./_seed_premium.js");
 
 const PORT = process.env.PORT || 8931;
 const SITE_PORT = process.env.SITE_PORT || 8934;
@@ -89,7 +90,13 @@ report("I2) both surfaces name the same right-to-left languages",
   const SITE = "http://127.0.0.1:" + SITE_PORT + "/";
   const APPURL = "http://127.0.0.1:" + PORT + "/";
 
-  const browser = await chromium.launch();
+  /* Premium-seeded, and this is load-bearing rather than convenience. Without a
+     session the access wall hides every card except the account one, so a page
+     sweep against an unseeded app measures thirteen nearly EMPTY pages and
+     reports them all clean — which it did, right up until a deliberately
+     broken element failed to fail it. A layout test has to be looking at the
+     layout. */
+  const browser = seed.withPremium(await chromium.launch());
   const errs = [];
 
   async function open(url, width, lang) {
@@ -150,6 +157,52 @@ report("I2) both surfaces name the same right-to-left languages",
         r.dir === "rtl" && r.scrollW <= r.innerW, r);
       await ctx.close();
     }
+  }
+
+  /* ---------- C2) EVERY page, not just the one that was easy to reach ----------
+     dir is set on <html>, so turning it on turns it on for all thirteen pages
+     at once — Studio, Gallery, the Library grid, the sliders. Measuring the
+     one page the app happens to open on would have been a check of the boot
+     screen, not of the change. The landing needed a fix for exactly this class
+     of bug (a decorative element pinned with a physical `left`), so the app
+     deserved the same measurement rather than the assumption that it was fine. */
+  {
+    const { ctx, page } = await open(APPURL, 390, "ur");
+    await setLang(page, "ur");
+    await page.waitForTimeout(300);
+    const ids = await page.evaluate(() => PAGES.map(x => x[0]));
+    const bad = [];
+    for (const id of ids) {
+      const r = await page.evaluate(async pid => {
+        window.scrollTo = function () {};
+        Element.prototype.scrollIntoView = function () {};
+        switchPage(pid);
+        await new Promise(r => setTimeout(r, 300));
+        const W = document.documentElement.clientWidth;
+        /* content inside a scroller is meant to exceed it; only elements that
+           widen the DOCUMENT are a defect */
+        const scrolls = e => {
+          for (let n = e; n && n !== document.body; n = n.parentElement) {
+            const o = getComputedStyle(n).overflowX;
+            if (o === "auto" || o === "scroll" || o === "hidden") return true;
+          }
+          return false;
+        };
+        const off = [];
+        document.querySelectorAll("#" + pid + " *").forEach(e => {
+          const q = e.getBoundingClientRect();
+          if (q.width && (q.right > W + 0.5 || q.left < -0.5) && !scrolls(e)) {
+            off.push((e.id || e.tagName) + "." + String(e.className).split(" ")[0].slice(0, 20));
+          }
+        });
+        return { id: pid, sw: document.documentElement.scrollWidth, W: window.innerWidth,
+                 off: [...new Set(off)].slice(0, 3) };
+      }, id);
+      if (r.sw > r.W || r.off.length) bad.push(r);
+    }
+    report("C2) all " + ids.length + " app pages hold their width in RTL, and nothing is pinned to the wrong side",
+      ids.length >= 10 && bad.length === 0, bad.slice(0, 4));
+    await ctx.close();
   }
 
   /* ---------- D + E) the pieces that are pinned to a side ---------- */
