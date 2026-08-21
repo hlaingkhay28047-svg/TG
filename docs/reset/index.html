@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- A recovery token arrives in this page's URL. Two things follow from that.
+
+     1) referrer: no-referrer. Without it the token travels in the Referer
+        header of every request the page makes, including the Supabase call
+        it is about to make.
+     2) The token is stripped from the address bar with replaceState the
+        instant it is read, so it does not sit in browser history, in a
+        shoulder-surfed URL bar, or in whatever the user pastes next.
+
+     There is nothing to gain from a permissive CSP here: this page loads no
+     script, style, font or image from anywhere. connect-src names exactly one
+     origin, which is the only host it may talk to. -->
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://vmtwuuybnalefpgvrast.supabase.co; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex,nofollow">
+<title>Set a new password — HNK Create Studio</title>
+<style>
+:root{
+  --ink:#0b0d14; --panel:#131826; --panel-2:#182032;
+  --line:rgba(217,164,65,.28); --line-soft:rgba(243,239,230,.38);
+  --gold:#d9a441; --gold-hi:#f4d488; --cream:#f3efe6; --muted:#a8a394;
+  --err:#ef8080; --ok:#7ec97e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh; min-height:100dvh;
+  background:var(--ink); color:var(--cream);
+  font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Myanmar","Padauk",Roboto,sans-serif;
+  font-size:15px; line-height:1.55;
+  display:flex; align-items:center; justify-content:center;
+  padding:24px 16px calc(24px + env(safe-area-inset-bottom));
+}
+.card{
+  width:100%; max-width:420px;
+  background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  padding:22px 20px 20px;
+}
+.mark{
+  display:inline-block; color:var(--gold-hi);
+  font-family:"Arial Black","Segoe UI Black",Roboto,sans-serif;
+  font-size:20px; font-weight:900; letter-spacing:.11em; line-height:.9;
+}
+.kick{
+  margin:10px 0 2px; font-size:10.5px; font-weight:800; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--gold);
+}
+h1{margin:0 0 14px; font-size:19px; font-weight:800; line-height:1.3}
+label{display:block; margin:0 0 6px; font-size:13px; color:var(--muted)}
+.inp{
+  width:100%; min-height:46px; padding:10px 12px;
+  background:var(--panel-2); color:var(--cream);
+  border:1px solid var(--line-soft); border-radius:11px;
+  font-size:16px; /* 16px so iOS Safari does not zoom the page on focus */
+  font-family:inherit;
+}
+.inp:focus{border-color:var(--gold)}
+:where(button,a,input):focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.btn{
+  width:100%; min-height:48px; margin-top:14px;
+  background:var(--gold); border:1px solid var(--gold); border-radius:11px;
+  color:#1a1408; font-size:15px; font-weight:800; font-family:inherit; cursor:pointer;
+}
+.btn:disabled{opacity:.55; cursor:default}
+.btn-ghost{
+  display:block; margin-top:12px; padding:12px; min-height:48px;
+  background:transparent; border:1px solid var(--line-soft); border-radius:11px;
+  color:var(--gold-hi); font-weight:700; text-align:center; text-decoration:none;
+}
+/* The status line is present from first paint with a reserved height, so
+   writing into it never shifts the button underneath it. */
+.st{min-height:40px; margin-top:12px; font-size:13.5px}
+.st.err{color:var(--err)}
+.st.ok{color:var(--ok)}
+.hide{display:none}
+.hint{margin-top:14px; font-size:12px; color:var(--muted)}
+</style>
+</head>
+<body>
+<main class="card">
+  <span class="mark">HNK</span>
+  <p class="kick" id="kick">CREATE STUDIO</p>
+  <h1 id="h1">Set a new password</h1>
+
+  <form id="form" autocomplete="on" novalidate>
+    <label for="pw" id="lblPw">New password</label>
+    <input class="inp" id="pw" type="password" autocomplete="new-password"
+           autocapitalize="none" spellcheck="false" minlength="6" required>
+    <button class="btn" id="btn" type="submit" disabled>Save new password</button>
+  </form>
+
+  <p class="st" id="st" role="status" aria-live="polite"></p>
+
+  <a class="btn-ghost hide" id="open" href="/app/">Open the app</a>
+  <p class="hint" id="hint"></p>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* Same project, same publishable key as docs/app/index.html. The key is
+   designed to ship in a browser; row-level security is what protects the
+   data, and this page reads nothing anyway. */
+var SB_URL  = "https://vmtwuuybnalefpgvrast.supabase.co";
+var SB_ANON = "sb_publishable_brvtaDa8uJCvlf2P2sTe3A_BZNXhxUJ";
+
+/* ---------------- strings ----------------
+   Every entry below except pw_link_dead and pw_title is COPIED VERBATIM from
+   the TR_V430 table in docs/app/index.html, so the reset page cannot drift
+   into saying something the app never said. The two new ones are built only
+   from words already shipped there:
+
+     shn  လိင်ႉ (link, from acc_forgot_sent) · မူတ်းယဝ်ႉ (expired, from
+          acc_session_expired) · ႁဵတ်း (do) · ၶိုၼ်း (again, from ၶဝ်ႈၶိုၼ်း)
+     kac  ndai (this, from acc_email_bad) · a aten htum sai (expired, from
+          acc_session_expired) · bai … u (do again) · jahkrat (reset, from
+          acc_forgot_sent)
+
+   pw_unreachable is a third case and the cheapest one: it is acc_unreachable
+   with its trailing clause deleted in every language. The app's version ends
+   "-- the app still works as normal", which is true inside the app and false
+   on a page whose only job is this one request. A deletion invents no
+   translation, so all nine languages stay exactly as trustworthy as they were,
+   and sweep_v533_reset.js accepts it only if it is still a PREFIX of the app's
+   string in every one of them.
+
+   No Tai- or Kachin-family sentence here was composed from scratch. */
+var TR = {
+  pw_title:      {my:"စကားဝှက် အသစ် သတ်မှတ်ပါ",en:"Set a new password",shn:"မၵ်းမၼ်ႈၶေႃႈလပ်ႉမႂ်ႇ",kac:"Password namsan hpe jahkrat u",th:"ตั้งรหัสผ่านใหม่",zh:"设置新密码",vi:"Đặt mật khẩu mới",id:"Atur kata sandi baru",ms:"Tetapkan kata laluan baharu"},
+  acc_pass_new:  {my:"စကားဝှက် အသစ်",en:"New password",shn:"ၶေႃႈလပ်ႉမႂ်ႇ",kac:"Password namsan",th:"รหัสผ่านใหม่",zh:"新密码",vi:"Mật khẩu mới",id:"Kata sandi baru",ms:"Kata laluan baharu"},
+  acc_pass_short:{my:"စကားဝှက် အနည်းဆုံး စာလုံး ၆ လုံး လိုပါတယ်",en:"Password must be at least 6 characters",shn:"ၶေႃႈလပ်ႉ တေလႆႈမီးတူဝ်လိၵ်ႈ 6 တူဝ်ၶိုၼ်ႈၼိူဝ်",kac:"Password gaw laika 6 hte grau ra ai",th:"รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",zh:"密码至少需要 6 个字符",vi:"Mật khẩu phải có ít nhất 6 ký tự",id:"Kata sandi minimal 6 karakter",ms:"Kata laluan mesti sekurang-kurangnya 6 aksara"},
+  acc_pass_changed:{my:"စကားဝှက် ပြောင်းပြီးပါပြီ ✓",en:"Password changed ✓",shn:"လႅၵ်ႈၶေႃႈလပ်ႉယဝ်ႉ ✓",kac:"Password galai ngut sai ✓",th:"เปลี่ยนรหัสผ่านแล้ว ✓",zh:"密码已更改 ✓",vi:"Đã đổi mật khẩu ✓",id:"Kata sandi diubah ✓",ms:"Kata laluan telah ditukar ✓"},
+  pw_link_dead:  {my:"ဒီလင့်ခ် သက်တမ်း ကုန်သွားပါပြီ — စကားဝှက် မေ့နေလား? ကနေ အသစ် ထပ်တောင်းပါ",en:"This reset link has expired — ask for a new one from “Forgot your password?”",shn:"လိင်ႉၼႆႉ မူတ်းယဝ်ႉ — ႁဵတ်းၶိုၼ်း",kac:"Ndai link a aten htum sai — bai jahkrat u",th:"ลิงก์นี้หมดอายุแล้ว — ขอลิงก์ใหม่จาก “ลืมรหัสผ่าน?”",zh:"该链接已过期 — 请从“忘记密码？”重新获取",vi:"Liên kết này đã hết hạn — hãy lấy liên kết mới từ “Quên mật khẩu?”",id:"Tautan ini sudah kedaluwarsa — minta yang baru dari “Lupa kata sandi?”",ms:"Pautan ini telah tamat — minta yang baharu dari “Lupa kata laluan?”"},
+  pw_unreachable:{my:"အကောင့် server နဲ့ ချိတ်ဆက်လို့ မရသေးပါ",en:"Can't reach the account service right now",shn:"ၵပ်းသိုပ်ႇ server ဢၶွင်ႉ ဢမ်ႇလႆႈ",kac:"Account server hte n hkrum lu ai",th:"เชื่อมต่อบริการบัญชีไม่ได้ตอนนี้",zh:"暂时连不上账户服务",vi:"Hiện chưa kết nối được dịch vụ tài khoản",id:"Layanan akun belum bisa dihubungi",ms:"Perkhidmatan akaun tidak dapat dihubungi"},
+  nav_cta:       {my:"App ဖွင့်မယ်",en:"Open the App",shn:"ပိုတ်ႇ App",kac:"App hpaw u",th:"เปิดแอป",zh:"打开应用",vi:"Mở ứng dụng",id:"Buka Aplikasi",ms:"Buka Aplikasi"}
+};
+var LANGS = ["my","en","shn","kac","th","zh","vi","id","ms"];
+
+/* The app stores its language under this key, as a plain string. Same origin,
+   so if the customer set Burmese in the app, the reset page opens in Burmese
+   too. The app offers 37 languages and this page carries 9; a stored code
+   outside the nine falls through to the browser guess rather than to a
+   half-translated screen. */
+function pickLang(){
+  try {
+    var v = localStorage.getItem("hnk_ws_lang");
+    if (v && LANGS.indexOf(v) >= 0) return v;
+  } catch(e){}
+  var n = (navigator.language || "en").toLowerCase();
+  if (n.indexOf("my") === 0) return "my";
+  if (n.indexOf("th") === 0) return "th";
+  if (n.indexOf("zh") === 0) return "zh";
+  if (n.indexOf("vi") === 0) return "vi";
+  if (n.indexOf("id") === 0) return "id";
+  if (n.indexOf("ms") === 0) return "ms";
+  return "en";
+}
+var LANG = pickLang();
+function t(k){ var e = TR[k]; return (e && (e[LANG] || e.en)) || k; }
+
+var $ = function(id){ return document.getElementById(id); };
+function setSt(msg, kind){
+  var el = $("st");
+  el.textContent = msg || "";
+  el.className = "st" + (kind ? " " + kind : "");
+}
+
+/* ---------------- read the recovery token, then erase it ----------------
+
+   Supabase hands a recovery back in one of two shapes depending on how the
+   project is configured, and a link that has already been used or has aged
+   out comes back as an error in the same place. All three are read here, and
+   whichever it was, the URL is rewritten before anything else happens. */
+function readRecovery(){
+  var hash = location.hash.replace(/^#/, "");
+  var h = new URLSearchParams(hash);
+  var q = new URLSearchParams(location.search);
+  var out = {
+    accessToken: h.get("access_token") || "",
+    tokenHash:   q.get("token_hash") || q.get("token") || "",
+    type:        h.get("type") || q.get("type") || "",
+    error:       h.get("error_description") || h.get("error") ||
+                 q.get("error_description") || q.get("error") || ""
+  };
+  try { history.replaceState(null, "", location.pathname); } catch(e){}
+  return out;
+}
+var REC = readRecovery();
+
+/* ---------------- Supabase ---------------- */
+function sbHeaders(bearer){
+  return { "apikey": SB_ANON, "Authorization": "Bearer " + (bearer || SB_ANON),
+           "Content-Type": "application/json" };
+}
+async function exchangeTokenHash(tokenHash){
+  var r = await fetch(SB_URL + "/auth/v1/verify", {
+    method: "POST", headers: sbHeaders(),
+    body: JSON.stringify({ type: "recovery", token_hash: tokenHash })
+  });
+  if (!r.ok) return "";
+  var j = await r.json().catch(function(){ return null; });
+  return (j && j.access_token) || "";
+}
+async function setPassword(bearer, password){
+  return fetch(SB_URL + "/auth/v1/user", {
+    method: "PUT", headers: sbHeaders(bearer),
+    body: JSON.stringify({ password: password })
+  });
+}
+/* A recovery session is a full session. It is never persisted here, and it is
+   revoked the moment the password is set, so a link left open in a shared
+   browser's history cannot be replayed into an authenticated session. */
+async function revoke(bearer){
+  try {
+    await fetch(SB_URL + "/auth/v1/logout", { method: "POST", headers: sbHeaders(bearer) });
+  } catch(e){}
+}
+
+/* ---------------- wire up ---------------- */
+document.documentElement.lang = LANG === "shn" || LANG === "kac" ? "my" : LANG;
+$("h1").textContent = t("pw_title");
+$("lblPw").textContent = t("acc_pass_new");
+$("btn").textContent = t("pw_title");
+$("open").textContent = t("nav_cta");
+document.title = t("pw_title") + " — HNK Create Studio";
+
+var TOKEN = REC.accessToken;
+var busy = false;
+
+function fail(msg){
+  setSt(msg, "err");
+  $("form").className = "hide";
+  $("open").className = "btn-ghost";
+}
+
+if (REC.error) {
+  fail(t("pw_link_dead"));
+} else if (!TOKEN && !REC.tokenHash) {
+  /* Somebody opened /reset/ directly. That is not an error worth alarming
+     them about — it is just not a reset. */
+  fail(t("pw_link_dead"));
+} else {
+  $("pw").addEventListener("input", function(){
+    $("btn").disabled = busy || $("pw").value.length < 6;
+  });
+  $("pw").focus();
+}
+
+$("form").addEventListener("submit", async function(e){
+  e.preventDefault();
+  if (busy) return;
+  var pw = $("pw").value;
+  if (pw.length < 6){ setSt(t("acc_pass_short"), "err"); return; }
+
+  busy = true; $("btn").disabled = true; setSt("");
+  try {
+    if (!TOKEN && REC.tokenHash) TOKEN = await exchangeTokenHash(REC.tokenHash);
+    if (!TOKEN){ fail(t("pw_link_dead")); return; }
+
+    var r = await setPassword(TOKEN, pw);
+    if (r.status === 401 || r.status === 403 || r.status === 422){
+      /* 422 is what GoTrue answers when the new password is refused by the
+         project's own policy; 401/403 mean the recovery is spent. Either way
+         the link is the thing to replace. */
+      var j = await r.json().catch(function(){ return null; });
+      var m = j && (j.msg || j.message || j.error_description);
+      fail(m && r.status === 422 ? m : t("pw_link_dead"));
+      return;
+    }
+    if (!r.ok){ setSt(t("pw_unreachable"), "err"); return; }
+
+    await revoke(TOKEN);
+    TOKEN = "";
+    $("pw").value = "";
+    $("form").className = "hide";
+    setSt(t("acc_pass_changed"), "ok");
+    $("open").className = "btn-ghost";
+  } catch(err){
+    setSt(t("pw_unreachable"), "err");
+  } finally {
+    busy = false;
+    if ($("form").className !== "hide") $("btn").disabled = $("pw").value.length < 6;
+  }
+});
+})();
+</script>
+</body>
+</html>
