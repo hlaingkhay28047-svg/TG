@@ -283,3 +283,6 @@ jobs:
 
       - name: Run v5.30.0 access-wall sweep (account + Premium required to enter)
         run: node test/sweep_v530_accesswall.js
+
+      - name: Run v5.30.1 wall-QC sweep (keyBanner/onboarding respect the wall, admin save translates)
+        run: node test/sweep_v5301_wallqc.js

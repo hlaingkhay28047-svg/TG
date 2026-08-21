@@ -1213,6 +1213,17 @@ body.wall .tabbar{display:none}
 body.wall .page:not(#pgHome){display:none!important}
 body.wall #pgHome>.card:not(#cardAccount):not(#cardAdmin){display:none}
 body.wall .fab-top{display:none}
+/* QC follow-up — #keyBanner is a sibling of the .page stack (it lives in
+   <main class="wrap"> before the first page div, so a visitor can add their
+   own key without opening a specific page), which means none of the rules
+   above ever touched it. Every walled visitor with no locally-saved key —
+   virtually everyone on a first visit — saw this gold, clickable-looking
+   banner floating next to the login form; tapping it scrolled toward #cardKey,
+   which the rule two lines up hides, so the tap did nothing. Hidden the same
+   way .fab-top is: at the source, not by teaching updateKeyBanner() about the
+   wall (state.key has nothing to do with login/Premium and should stay that
+   way). */
+body.wall .keybanner{display:none}
 #wallNote{display:none;margin:10px 0 14px}
 body.wall #wallNote{display:block}
 #wallNote .wall-h{display:flex;align-items:center;gap:8px;font-size:var(--fs-lg);font-weight:700;color:var(--gold-hi);margin-bottom:6px}
@@ -20554,7 +20565,16 @@ async function admReview(row, status, note, btn){
       return;
     }
     await admLoad();
-    setSt("stAdm", t("acc_saved"), "ok");
+    /* v5.30 QC — this called t("acc_saved"), a key that was never defined
+       anywhere in TR/TR_NEW/TR_L: every admin, in every language, saw the
+       literal string "acc_saved" instead of a confirmation. admL() is what
+       the 403 branch two lines up already uses for exactly this reason — the
+       admin panel's own strings live outside the main 37-language dictionary,
+       so t() silently returns the raw key on a miss (see t(), which returns
+       k itself when TR[k] is undefined) instead of falling back visibly.
+       Wording matches pt_saved_gal's already-shipped "saved" translations
+       rather than inventing new vocabulary. */
+    setSt("stAdm", admL({my:"သိမ်းပြီးပါပြီ ✓",en:"Saved ✓",shn:"သိမ်းယဝ်ႉ ✓",kac:"Makoi sai ✓",th:"บันทึกแล้ว ✓",zh:"已保存 ✓",vi:"Đã lưu ✓",id:"Tersimpan ✓",ms:"Disimpan ✓"}), "ok");
   } catch(e){ setSt("stAdm", friendlyError(e), "err"); }
     finally { adm.busy = false; accBusy(btn, false); }
 }
@@ -20660,6 +20680,7 @@ function appWallApply(){
       try { switchPage(want); } catch(e){}
     }
   }
+  if (!on) appWallShowOnboardingIfDue();
   if (on){
     if (typeof curPage !== "undefined" && curPage !== "pgHome"){
       try { switchPage("pgHome"); } catch(e){}
@@ -20677,6 +20698,27 @@ function appWallApply(){
     } catch(e){}
   }
   return st;
+}
+
+/* QC follow-up — the boot-time onboarding tour used to show unconditionally,
+   which meant a signed-out first-time visitor saw it stacked on top of the
+   login wall, pointing at a "add your key" card the wall was hiding. The tour
+   is deferred instead: the boot script (search "first-run onboarding") skips
+   it while body.wall is present, and this runs it once the wall actually
+   lifts — called from every "!on" branch above, i.e. every state transition
+   that leaves the app unwalled, not only the very first one. Guarded twice:
+   the localStorage flag (set by onbClose, same as always) so a returning
+   customer never sees it again, and the current class so a second unwalled
+   appWallApply while it is still open does not reopen or re-announce it. */
+function appWallShowOnboardingIfDue(){
+  try {
+    if (localStorage.getItem("hnk_ws_onboarded")) return;
+    var b = $("onb");
+    if (!b || b.className.indexOf(" on") >= 0) return;
+    b.className = "onb on";
+    document.body.style.overflow = "hidden";
+    if (typeof modalOpened === "function") modalOpened("onb");
+  } catch(e){}
 }
 
 /* A session with no age limit is a session that never ends. sess.exp is the
@@ -20732,7 +20774,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.30.0";
+var APP_VER="5.30.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -21114,7 +21156,16 @@ updateKeyBanner();
 
 /* first-run onboarding + compact hero on revisit */
 try {
-  if (!localStorage.getItem("hnk_ws_onboarded")) { $("onb").className="onb on"; document.body.style.overflow="hidden"; modalOpened("onb"); }
+  /* QC follow-up — a walled first-time visitor got this 3-step app tour
+     ("add your key", "pick a photo", "tap a workflow card") stacked in a
+     fixed, near-opaque overlay ON TOP OF the login form the wall had just
+     rendered, and its own "add your key" button pointed at #cardKey — hidden
+     by the wall the same way #keyBanner's did, so the tap was a silent no-op.
+     A tour of features nobody without an account/Premium can reach yet is not
+     useful at that moment. appWallShowOnboardingIfDue() (below, in
+     appWallApply) shows it once instead, right after the wall actually lifts
+     — at which point #cardKey is visible again and the tap works. */
+  if (!localStorage.getItem("hnk_ws_onboarded") && !document.body.classList.contains("wall")) { $("onb").className="onb on"; document.body.style.overflow="hidden"; modalOpened("onb"); }
   /* A reload triggered by the language switcher (see #selLang's onchange)
      is not a "returning visitor" event — restore whatever hero state was
      showing right before that reload instead of consulting hnk_ws_seen,
