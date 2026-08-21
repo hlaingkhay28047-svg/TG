@@ -326,15 +326,34 @@ const SB_FIX = {
                line: (document.getElementById("accPlanLine").textContent || "").trim() };
     };
     return { d30: probe("active", D(24 * 30)), d7: probe("active", D(24 * 7)),
-             h6: probe("active", D(6)), past: probe("active", D(-24)), none: probe("none", null) };
+             h6: probe("active", D(6)), past: probe("active", D(-24)), none: probe("none", null),
+             /* the shipped label itself, so the assertion below compares the
+                rendered line against the string the app actually holds rather
+                than against a copy hardcoded in this file */
+             freeLabel: t("acc_plan_free") };
   }, UID);
-  report("6 days-left math: +30d -> 30 / acc_plan_active, +7d -> 7 / acc_plan_soon, +6h -> 1 NOT 0 (the Math.ceil rule), a passed date with plan_status still \"active\" -> acc_plan_expired and isPremium() false, plan_status none -> acc_plan_free",
+  /* v5.31.0 — the last clause used to be /^Free/i, pinning the no-plan label as
+     "Free — no Premium yet". That was true while there WAS a free tier. Since
+     the v5.30.0 wall there is none: an account with no plan has no access at
+     all, and that label was rendering on #cardAccount, one of the only two
+     cards the buy wall leaves on screen — so the paywall demanding payment sat
+     directly above the word "Free". Asserting the old copy would now pin the
+     defect in place.
+     It asserts two stronger things instead: the line really does render the
+     acc_plan_free string the app ships (compared against t() rather than
+     against a copy typed here, so a wrong key or an empty render still fails),
+     and that string does not call the account free in any of the words the app
+     used for it. */
+  const FREE_WORDS = /^(Free|အခမဲ့|လၢႆလၢႆ|ฟรี|免费|Miễn phí|Gratis|Percuma)/i;
+  report("6 days-left math: +30d -> 30 / acc_plan_active, +7d -> 7 / acc_plan_soon, +6h -> 1 NOT 0 (the Math.ceil rule), a passed date with plan_status still \"active\" -> acc_plan_expired and isPremium() false, plan_status none -> acc_plan_free and it no longer calls the account free",
     c6.d30.days === 30 && /Premium active/i.test(c6.d30.line) && c6.d30.premium === true &&
     c6.d7.days === 7 && /expires in 7 days/i.test(c6.d7.line) &&
     c6.h6.days === 1 &&
     c6.past.days === 0 && /has expired/i.test(c6.past.line) && c6.past.premium === false &&
-    /^Free/i.test(c6.none.line) && c6.none.premium === false,
-    JSON.stringify({ d30: c6.d30.days, d7: c6.d7.days, sixHours: c6.h6.days, pastPremium: c6.past.premium, none: c6.none.line }));
+    typeof c6.freeLabel === "string" && c6.freeLabel.length > 0 &&
+    c6.none.line.indexOf(c6.freeLabel) >= 0 &&
+    !FREE_WORDS.test(c6.freeLabel) && c6.none.premium === false,
+    JSON.stringify({ d30: c6.d30.days, d7: c6.d7.days, sixHours: c6.h6.days, pastPremium: c6.past.premium, none: c6.none.line, label: c6.freeLabel }));
 
   // ------------------------------------------------- 9 / 7 / 8) the buy panel
   await boot({ login: SB_FIX.token, profile: SB_FIX.profileFree, settings: SB_FIX.settings,

@@ -286,3 +286,6 @@ jobs:
 
       - name: Run v5.30.1 wall-QC sweep (keyBanner/onboarding respect the wall, admin save translates)
         run: node test/sweep_v5301_wallqc.js
+
+      - name: Run v5.31.0 landing-honesty sweep (no free claim survives the paywall)
+        run: node test/sweep_v5310_landing_honesty.js
