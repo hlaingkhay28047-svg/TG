@@ -19954,12 +19954,64 @@ async function accForgot(){
     finally { accBusy(btn, false); }
 }
 
+/* Creates the caller's own profiles row and returns it, or null.
+
+   Deliberately sends ONLY the id: every other column is the server's to decide,
+   and hnk_guard_profile_plan overwrites the plan, the cap, is_admin, joined_paid,
+   the four price overrides and the email regardless of what arrives. Sending
+   more would be sending values that are about to be thrown away, and reading as
+   though the client had a say in them. */
+async function accEnsureProfile(){
+  if (!acc.sess || !acc.sess.uid) return null;
+  try {
+    var r = await accFetch("/rest/v1/profiles", {
+      method: "POST",
+      headers: { "Prefer": "return=representation" },
+      body: JSON.stringify({ id: acc.sess.uid })
+    });
+    if (!r.ok) return null;
+    var j = await accJson(r);
+    var row = Array.isArray(j) ? j[0] : j;
+    return (row && typeof row === "object") ? row : null;
+  } catch(e){ return null; }
+}
+
 /* ---------------- reads ---------------- */
 async function accLoadProfile(){
   if (!acc.sess) return { ok:false };
   try {
     var r = await accFetch("/rest/v1/profiles?select=*&id=eq." + encodeURIComponent(acc.sess.uid),
       { method: "GET", headers: { "Accept": "application/vnd.pgrst.object+json" } });
+    /* v5.38.0 — 406 IS NOT AN OUTAGE, IT IS "THERE IS NO ROW".
+
+       This request asks for a single object (Accept: vnd.pgrst.object+json),
+       and PostgREST answers 406 when the result is not exactly one row. That
+       response was being read as a failed read: acc.profile stayed null,
+       appWallState() stayed "checking", and the app sat on "Checking your
+       account…" FOREVER — no retry could ever help, because the row is never
+       going to appear on its own.
+
+       Whose row is missing? Anybody signed up while the trigger that creates
+       profiles rows was absent or broken — and THAT TRIGGER IS NOT IN THIS
+       REPOSITORY. supabase/schema.sql says in its own header that it assumes
+       public.profiles and its signup trigger already exist. So the app's entry
+       path depended on code this project does not ship, and failed silently
+       and permanently when it was missing.
+
+       profiles_insert_self has been in the schema all along, granting exactly
+       this insert (with check (id = auth.uid())) and used by nothing. The
+       guard trigger fills in the plan, the device cap and the email from
+       auth.users, so the row this creates is the same free-tier row the signup
+       trigger would have made. */
+    if (r.status === 406){
+      var made = await accEnsureProfile();
+      if (made){ acc.profile = made; accLSSet(ACC_LS_PROF, made);
+                 acc.online = true; acc.unreach = false;
+                 try { accRender(); accChipRender(); } catch(e){}
+                 return { ok:true, created:true }; }
+      acc.unreach = true; try { accRender(); } catch(e){}
+      return { ok:false, status:406 };
+    }
     if (!r.ok){ acc.unreach = true; try { accRender(); } catch(e){} return { ok:false, status:r.status }; }
     var j = await accJson(r);
     var row = Array.isArray(j) ? j[0] : j;
@@ -20894,7 +20946,15 @@ function accRenderPay(){
   var payNone = $("payNoOffer");
   if (payNone){
     payNone.style.display = offerable ? "none" : "";
-    payNone.textContent = accProfileUnknown() ? t("acc_unreachable") : "";
+    /* v5.38.0 — NOT acc_unreachable. That string ends "the app still works as
+       normal", which is true where it was written (#accPlanOffline, shown when
+       a CACHED profile exists) and false here: this branch is reached only
+       when the profile is unread, which means the access wall is up and the
+       app works not at all. A customer who would have retried was being told
+       nothing was wrong. The wall's own heading already says "Checking your
+       account…", which is accurate — so this says nothing rather than
+       something false, and adds no 38th translation to say it. */
+    payNone.textContent = "";
   }
 
   var s = acc.settings;
@@ -21749,7 +21809,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.37.0";
+var APP_VER="5.38.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -67,6 +67,54 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## Two things the entry path used to get wrong (v5.38.0)
+
+**A missing profiles row was a permanent hang.** `accLoadProfile` asks
+PostgREST for a single object (`Accept: application/vnd.pgrst.object+json`),
+and PostgREST answers **406** when the result is not exactly one row. That was
+read as a failed read: `acc.profile` stayed null, the wall stayed on "Checking
+your account…", and no retry could ever help because the row was never going to
+appear on its own.
+
+Whose row is missing? Anybody who signed up while the trigger that creates
+`profiles` rows was absent or broken — **and that trigger is not in this
+repository.** `supabase/schema.sql` says in its own header that it assumes
+`public.profiles` and its signup trigger already exist. So the app's entry path
+depended on code this project does not ship, and failed silently and
+permanently when it was missing. A 406 now creates the row through
+`profiles_insert_self` — a policy that had been in the schema all along,
+granting exactly this insert, and used by nothing. The insert sends only the
+id; the guard trigger fills in the plan, the cap and the email from
+`auth.users`, so the result is the same free-tier row the signup trigger would
+have made.
+
+**A walled-out customer was told nothing was wrong.** The no-offer notice
+reused `acc_unreachable`, which ends "the app still works as normal" — true
+where that string was written (`#accPlanOffline`, shown when a *cached* profile
+exists) and false where v5.37.0 reused it, because that branch is only reached
+with the profile unread and the wall up. It now says nothing; the wall's own
+"Checking your account…" is the accurate message, and saying nothing beats
+saying something false in 37 languages.
+
+## A gap between what this file claims and what CI does
+
+`CLAUDE.md` says "the tests are the gate". On the pull-request path they are:
+CI runs the full suite and nothing is merged red. **On the `main` push path they
+are not.** `deploy-digitalocean.yml` triggers on `push: branches: [main]` with
+no `needs:` and no `workflow_run` dependency on `test.yml`, so the deploy and
+the suite run in parallel — measured on the v5.37.0 release, production
+concluded success at 07:36:46Z while the Test run was still in progress.
+
+In practice the deployed code is tested, because the PR CI was green before the
+merge. But the guarantee is procedural, not enforced: a direct push to `main`
+ships unverified. Gating the deploy on the suite (`on: workflow_run`) is the
+fix, and it is deliberately **not** made here — it changes the production
+delivery path, `test/verify_digitalocean_deploy.js` and
+`verify_release_contract.js` both pin that contract, and deploy-fast-roll-back-
+on-red is a defensible choice. It is the owner's call. What is not defensible
+is a document claiming a gate that the path does not have, so this paragraph
+exists.
+
 ## What an outage is allowed to do (v5.37.0)
 
 A signal that a service **failed to answer** is not a verdict, and reading it as
