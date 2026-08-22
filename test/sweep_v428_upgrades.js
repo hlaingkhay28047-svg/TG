@@ -296,6 +296,14 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   // ---------------------------------------------------------------- 6) Wizard sync
   const c6 = await page.evaluate(async () => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
+    /* v5.40.0 — start somewhere else first. `class="page on" id="pgWf"` is the
+       STATIC default in the markup, so the landed guard added in v5.39.0 was
+       satisfied whether or not switchPage did anything — it caught the dead
+       `pgWorkflows` id (which left no page on at all) but proved nothing about
+       the live one. */
+    switchPage("pgHome");
+    await new Promise(r => setTimeout(r, 120));
+    const startedOn = (document.querySelector(".page.on") || {}).id || "";
     switchPage("pgWf");
     state.rhKey = "TEST_RH_KEY"; renderRhProviderOption();
     var cfg = rhCfg(); cfg.activeModel = "upscale-pro"; rhSaveCfg(cfg);
@@ -326,10 +334,10 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     cfg.activeModel = "nano-banana-2"; rhSaveCfg(cfg);
     document.getElementById("selProvider").value = "gemini";
     if (document.getElementById("selProvider").onchange) document.getElementById("selProvider").onchange();
-    return { rh, gm, landed: (document.querySelector(".page.on") || {}).id || "" };
+    return { rh, gm, startedOn, landed: (document.querySelector(".page.on") || {}).id || "" };
   });
   report("6 Wizard sync: switching the step-3 provider clone to an upscale-kind RunningHub model hides Ratio/Quality/Count on BOTH the main card and the clones; switching back restores them",
-    !c6.skip && c6.landed === "pgWf" &&
+    !c6.skip && c6.startedOn === "pgHome" && c6.landed === "pgWf" &&
     c6.rh.mainRatio && c6.rh.cloneRatio && c6.rh.mainQual && c6.rh.cloneQual
     && c6.rh.mainCount && c6.rh.cloneCount && !c6.gm.mainRatio && !c6.gm.cloneRatio,
     JSON.stringify(c6));

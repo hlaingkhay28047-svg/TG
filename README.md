@@ -257,10 +257,13 @@ and each section widened the document. `inset-inline-start` fixed it, and
 `test/sweep_v535_rtl_lang.js` measures the page width rather than trusting the
 rule.
 
-`?lang=xx` now opens the landing in that language, so a studio can send a Thai
+`?lang=xx` opens the landing in that language, so a studio can send a Thai
 client a link that arrives in Thai. The parameter wins over the stored
-preference for that visit; switching writes the URL back; the default language
-leaves it clean.
+preference **for that visit and no longer** — see the v5.39.0/v5.40.0 notes
+below for what "a link is not a preference" cost and how the journey was put
+back together. A **pick** writes the URL back and the default language leaves
+it clean; a **link's** parameter is left exactly as it arrived, because since
+v5.39.0 nothing is stored and the parameter is the only carrier.
 
 **No hreflang tags accompany it, deliberately.** hreflang tells a crawler that
 separate documents exist per language and they do not — every `?lang=` URL
@@ -378,6 +381,91 @@ allow-listed, so a missing entry raises no error: it just quietly sends people
 somewhere else. `test/sweep_v533_reset.js` proves the app asks for that URL and
 that the page handles the token responsibly, but no test here can prove the
 dashboard has it.
+
+## What v5.39.0 broke, and how it was caught (v5.40.0)
+
+Two of v5.39.0's own fixes shipped regressions. Both were found by an
+adversarial review of the merged diff, not by the suite — the suite was green
+on all 95 scripts, twice, with both defects in it.
+
+**The wall's copy could not follow the language.** v5.39.0 memoised it so a
+polite live region would stop re-announcing identical text every five minutes,
+and the memo key carried the wall state, connectivity and whether the plan had
+lapsed — but not the language. Switch language without reloading and the
+heading and pay instructions stayed in the old one while the contact links
+beside them changed: half the wall in each language, on the conversion screen.
+
+How reachable it actually was, stated honestly because the first draft of this
+section got it wrong: the app's language picker ends in `location.reload()` and
+`applyLang()` has exactly one call site, so **no customer could reach it
+through the UI as it ships**. It was latent. `LANG` is in the key now and
+`a11yApplyLang()` clears the memo, because a memo that cannot see the language
+is wrong on its face and would become live the day a no-reload switch lands —
+and because the repaint call added with it was throwing a swallowed TypeError
+on every page load (`acc` is not initialised until 15,500 lines after
+`applyLang()` runs). `sweep_v530` W5 is the guard.
+
+**Wrapping the role label removed the only bound on it.** Replacing
+`nowrap`+`ellipsis` with `white-space:normal` stopped the label being cut in
+half — and, with no height cap, made `scrollHeight > clientHeight` unable to
+fire, so `sweep_v467` C2 became a tautology for the second time in two
+releases. A long enough label also grew the pill taller than its 88px tile and
+hung it off the top edge. `max-height:calc(100% - 8px)` restores both
+properties at once: the pill is bounded by its tile, and a label that outgrows
+it is detectable. Measured: a 70-character label now reports
+`scrollHeight 87 > clientHeight 76` and stays inside the tile.
+
+**And the pill fix needed a second pass.** The review that found the two
+regressions above also measured three things wrong with the cap that replaced
+them, all confirmed here: deleting the `max-height` line left `sweep_v467` C2
+green (every shipped label fits, so only a hypothetical long one would have
+tripped it — the rule itself was unasserted); C2 measured Burmese only, so the
+English badge this release edited, the one all 35 non-Burmese locales fall back
+to, sat outside its own check; and because `.chip` is a centred flex box, the
+cap cut the *opening* words off the top rather than the tail — the half
+v5.39.0's own note said an ellipsis must not remove. C2 now asserts the cap
+directly (a deliberate over-long probe must register as overflow), loops
+Burmese and English, and the rule carries `align-items:flex-start`.
+
+The same measurement pass turned up something older: the pill sat on the
+`IMG 1`/`IMG 2` badge — the only thing naming the ordered slot a multi-reference
+ROLE MAP binds against — and covered it completely for both Burmese labels at
+every phone width. It stacks above the badge now.
+
+Two more from the same review:
+
+- The retry button was armed on state alone, but `wallRecheck` returns
+  immediately when `navigator.onLine` is false. On a disconnected phone the
+  only control on the screen was gold, enabled, and completely inert — measured
+  zero requests and zero visible change on tap. The first fix only covered a
+  page that was *already* offline when the wall last painted: the four-second
+  arming timer did not re-test connectivity when it fired, and the window
+  `offline` event never repainted, so a customer whose data dropped inside that
+  window still got the dead button. Both are closed now, and `sweep_v530` W6
+  drives a real `context.setOffline` transition rather than a stubbed flag. The
+  offline copy also stopped borrowing `acc_offline` ("showing your last known
+  status") for the one state defined by having no known status.
+- **The share died at the door.** Removing the write was right — merely opening
+  the site should not reset the language of the paid app — but the app read the
+  language *only* from that key, so `/?lang=th` rendered a fully Thai landing
+  whose own gold button opened the Web Studio in Burmese. Measured across three
+  builds: it worked in v5.38.0, and has been broken since v5.39.0, for 36 of the
+  37 locales. The language rides the outbound `app/` links now and the app
+  applies it for that visit without storing it, so a link stays a link on both
+  surfaces. `sweep_v535` H5/H6, negative-controlled by reverting both halves.
+- Forcing a recheck from the `online` event cost a second, concurrent profile
+  read: the handler already called `accLoadProfile()` four lines later and
+  there is no in-flight dedupe. Measured two identical GETs per reconnect, and
+  for a customer whose `profiles` row does not exist yet, two concurrent
+  INSERTs where v5.38.0's self-heal expects one. Clearing the recheck throttle
+  does the same job with one read. `sweep_v530` W7 counts them.
+- v5.39.0 marked only the `?lang=` branch transient, so the landing's automatic
+  startup call still counted as an explicit choice. A customer using the app in
+  Gujarati who tapped the app's own "visit the site" link had `hnk_ws_lang`
+  rewritten to the landing's default on arrival — the same harm the release set
+  out to fix, on the highest-traffic path. Opening a page is not a choice now;
+  only a press of the picker is. And a shared `/?lang=my` link keeps its
+  parameter, which became its only carrier once nothing was being stored.
 
 ## Five tests that had stopped testing anything (v5.39.0)
 

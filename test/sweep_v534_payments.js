@@ -754,6 +754,59 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     slot.devGrp.indexOf("open") >= 0 && slot.planGrp.indexOf("open") < 0,
     slot);
 
+  /* ---- L) a duplicated app_settings row is named, not absorbed ----
+     app_settings is meant to hold exactly one row. v5.39.0 made the CLIENT
+     deterministic about which row it reads, but it cannot make the client and
+     the approval trigger agree — the trigger picks its own row inside
+     Postgres. With two rows a customer can be quoted one price and granted a
+     period computed from the other. No code can reconcile that; only the owner
+     can delete the extra row, so the admin panel says so out loud. */
+  /* the third row is deliberately NARROW (a key/value row, not a pricing row).
+     Without it wide.length === rows.length and the assertion below cannot tell
+     the two apart — a one-word change to count every row instead of every
+     pricing row would warn a correctly-configured owner and still pass. */
+  const dupSettings = [
+    Object.assign({}, PRICE),
+    Object.assign({}, PRICE, { price_1m: 99000, join_first_months: 6 }),
+    { key: "unrelated", value: "x" },
+  ];
+  await boot({
+    login: session,
+    profile: profile({ joined_paid: true, is_admin: true }),
+    settings: dupSettings,
+    who: [], requests: [],
+  });
+  await login();
+  await page.evaluate(async () => { await accLoadSettings(); await admLoad(); });
+  await page.waitForTimeout(700);
+  const dup = await page.evaluate(() => {
+    const hits = Array.from(document.querySelectorAll("#admList li"))
+      .filter(li => /app_settings/.test(li.textContent || ""));
+    return {
+      count: typeof accSettingsRowCount !== "undefined" ? accSettingsRowCount : -1,
+      warned: hits.length,
+      text: hits.length ? hits[0].textContent : "",
+    };
+  });
+  await boot({
+    login: session,
+    profile: profile({ joined_paid: true, is_admin: true }),
+    settings: [PRICE], who: [], requests: [],
+  });
+  await login();
+  await page.evaluate(async () => { await accLoadSettings(); await admLoad(); });
+  await page.waitForTimeout(700);
+  const single = await page.evaluate(() => ({
+    count: typeof accSettingsRowCount !== "undefined" ? accSettingsRowCount : -1,
+    warned: Array.from(document.querySelectorAll("#admList li"))
+      .filter(li => /app_settings/.test(li.textContent || "")).length,
+  }));
+  /* count is the number of PRICING rows (2), not the number of rows (3) */
+  report("L) two app_settings pricing rows are reported to the admin; one row says nothing",
+    dup.count === 2 && dup.warned === 1 && single.count === 1 && single.warned === 0 &&
+    /\b2\b/.test(dup.text || "") && dupSettings.length === 3,
+    { dup, single });
+
   report("J) none of the above raised a console error", errs.length === 0, errs.slice(0, 4));
 
   await browser.close();

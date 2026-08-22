@@ -333,7 +333,28 @@ select.inp{padding:9px 10px}
    fixture the tile it measured was 0x0 (see the note in that file). Two lines
    fit every label at every width the app supports; one line cannot fit any
    label longer than about ten characters on a 104px tile. */
-.ref .refrole{position:absolute;right:4px;bottom:4px;max-width:calc(100% - 8px);padding:1px 7px;font-size:9.5px;line-height:1.25;min-height:0;background:rgba(11,13,20,.85);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;white-space:normal;text-align:right;z-index:2}
+/* v5.40.0 — WRAPPING WITHOUT A CAP TRADED ONE SILENT FAILURE FOR ANOTHER.
+   v5.39.0 removed nowrap+ellipsis so the label would stop being cut in half.
+   It removed the only bound on the pill with it: with white-space:normal and
+   no height limit, scrollHeight can never exceed clientHeight, so the check
+   that is supposed to catch a hidden label (sweep_v467 C2) became a tautology
+   for the second time in two releases — and a long enough label grew the pill
+   taller than the 88px tile and hung it off the top edge. max-height restores
+   both properties at once: the pill is bounded by its tile, and a label that
+   outgrows it makes scrollHeight > clientHeight, which C2 reads. */
+/* v5.40.0 — two more consequences of wrapping, both measured:
+   ALIGN. The pill is a .chip, and .chip is inline-flex with align-items:center.
+   A centred flex box with overflow:hidden pushes the overflow out BOTH ends, so
+   the cap was cutting the OPENING words off the top — the half v5.39.0's own
+   note said an ellipsis must not remove. flex-start drops the tail instead.
+   STACK. The pill shares the bottom row with .tag, the "IMG 1"/"IMG 2" badge
+   that is the only thing telling the customer which ordered slot a photo
+   occupies — and slot order is what every multi-reference ROLE MAP binds
+   against. Measured at 320px: the two Burmese labels covered the tag 100%
+   (elementFromPoint at the tag's centre returned the pill). The tag is 19px
+   tall at bottom:4px, so the pill starts above it at 27px and its cap comes
+   down to match. */
+.ref .refrole{position:absolute;right:4px;bottom:27px;max-width:calc(100% - 8px);max-height:calc(100% - 31px);align-items:flex-start;padding:1px 7px;font-size:9.5px;line-height:1.25;min-height:0;background:rgba(11,13,20,.85);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;white-space:normal;text-align:right;z-index:2}
 .ref .refrole.on{border-color:var(--gold);color:var(--gold-hi)}
 
 #vuOpts .inp{flex:1 1 30%;min-width:30%}
@@ -3880,6 +3901,23 @@ function a11yApplyLang(){
   if (ch) ch.textContent = L9({my:"ဆက်သွယ်ရန်",en:"Contact",th:"ติดต่อ",zh:"联系我们",vi:"Liên hệ",id:"Kontak",ms:"Hubungi"});
   var wr = $("wallRetry");
   if (wr) wr.textContent = t("acc_retry");
+  /* v5.40.0 — the wall's own heading and paragraph are memoised in
+     appWallApply; clearing the memo is what lets a language change repaint
+     them instead of leaving them in the old language.
+
+     THE GUARD IS NOT DECORATION. applyLang() — this function's only caller —
+     runs once, at the top level, ~15,500 lines before `var acc = {...}` is
+     initialised. So on the boot pass `acc` is hoisted-but-undefined and
+     appWallState()'s first statement, `if (!acc.sess)`, threw a TypeError into
+     an empty catch on every single page load. The wall painted correctly
+     anyway, from accBoot's own appWallApply later on. Checking acc first is
+     what makes this call mean something on the paths where it CAN work — and
+     since the shipping language picker reloads the page, those paths are a
+     future no-reload switch and this file's own tests, not today's UI. */
+  _wallCopyKey = null;
+  try {
+    if (typeof acc !== "undefined" && acc && typeof appWallApply === "function") appWallApply();
+  } catch(e){}
   /* last, on purpose — see wallHelpRender */
   try { wallHelpRender(); } catch(e){}
   var tb = $("tabbar");    if (tb) tb.setAttribute("aria-label", "Sections");
@@ -4133,6 +4171,26 @@ function syncInputLabels(root){
     el.setAttribute("data-a11y-ph", "1");
   }
 }
+/* v5.40.0 — A SHARED LINK'S LANGUAGE, CARRIED ACROSS THE DOOR.
+   ?lang= exists so a studio can send a Thai client a link that arrives in Thai.
+   Until v5.39.0 the landing made that work by WRITING hnk_ws_lang, which was
+   the wrong mechanism — it silently reset the language of anyone who merely
+   opened the site — but removing it ended the journey rather than fixing it:
+   measured on v5.39.0 and on the first cut of v5.40.0, /?lang=th showed a fully
+   Thai landing whose own gold button opened the paid app in Burmese. The
+   language rides the link now, and is applied for THIS VISIT ONLY: nothing here
+   writes storage, so a link stays a link and a preference stays a preference.
+   Placed immediately before applyLang() because TR_L and LANG_FB — what makes
+   a code recognisable — are defined between the LANG declaration and here. */
+try {
+  var _urlLang = (new URLSearchParams(location.search)).get("lang") || "";
+  if (_urlLang && (
+        /^(my|en|shn|kac|th|zh|vi|id|ms)$/.test(_urlLang) ||
+        (typeof TR_L !== "undefined" && TR_L[_urlLang]) ||
+        (typeof LANG_FB !== "undefined" && LANG_FB[_urlLang]))) {
+    LANG = _urlLang;
+  }
+} catch(e){}
 applyLang();
 a11yArmStatusRegions();
 /* An in-page link to a tabindex="-1" target moves focus in every current
@@ -6758,7 +6816,11 @@ var REF_ROLES=[
   { k:"style", sent:"REFERENCE ONLY (style/scene, not identity)",
     label:{my:"Style ref",en:"Style ref"} },
   { k:"person", sent:"SECOND PERSON — include this person in the result and keep their identity exactly",
-    label:{my:"လူ (identity ထိန်း)",en:"Person — keep identity"} },
+    /* v5.40.0 — "Person — keep identity" wrapped to THREE lines in a 76px
+       pill and covered 40% of the reference thumbnail, and it is what all 35
+       non-Burmese locales fall back to. Two lines, same meaning; the full
+       instruction the model actually receives is `sent` above, not this badge. */
+    label:{my:"လူ (identity ထိန်း)",en:"Person — identity"} },
   /* v4.67 — the sketch role. Every other role hands the model APPEARANCE to copy;
      this one hands it GEOMETRY to obey and forbids the appearance, which is the
      whole difficulty. Three failure modes are named explicitly because all three
@@ -20256,6 +20318,22 @@ function accParseSettings(rows){
   var wide = rows.filter(function(x){
     return x && (x.price_1m !== undefined || x.payment_instructions_my !== undefined);
   });
+  /* v5.40.0 — REMEMBER WHEN THERE IS MORE THAN ONE, and tell the owner. The
+     sort below makes the CLIENT deterministic; it cannot make the client and
+     the approval trigger agree, because the trigger picks its own row inside
+     Postgres. With the single row app_settings is meant to hold that is moot.
+     With two, the price a customer is quoted and the period an approved
+     join_first opens can come from different rows — money and entitlement
+     disagreeing, silently. Only the owner can fix that, so only the owner is
+     told: admRender says it out loud at the top of the queue.
+
+     NETWORK-DERIVED ON PURPOSE. This runs only when a settings response has
+     actually been parsed, so a session whose fetch failed shows no warning
+     rather than a stale one — the client genuinely does not know how many rows
+     there are. accLoadSettings fetches on every load even when it has a cached
+     copy, and admLoad awaits it before its second render, so an owner who is
+     online sees the warning on the same paint as the queue. */
+  accSettingsRowCount = wide.length;
   if (wide.length){
     if (wide.length > 1){
       wide.sort(function(a, b){
@@ -20275,6 +20353,10 @@ function accParseSettings(rows){
    so the buy panel opened on a slow connection showed a red error for the
    whole 15s the request was still in flight. */
 var accPriceFailed = false;
+/* how many app_settings rows the server returned that look like the wide
+   pricing row — anything above 1 is an owner misconfiguration the admin panel
+   names out loud (see accParseSettings and admRender) */
+var accSettingsRowCount = 0;
 async function accLoadSettings(){
   if (!acc.settings){
     var cached = accLSGet(ACC_LS_SET);
@@ -21285,6 +21367,18 @@ function accWire(){
   });
   window.addEventListener("online", function(){
     acc.online = true;
+    /* v5.40.0 — clear the recheck throttle so the next focus/visibility tick
+       is not swallowed by WALL_RECHECK_MS.
+
+       IT USED TO CALL wallRecheck(true) HERE, and that was a second profile
+       read: wallRecheck awaits accLoadProfile(), and the branch four lines
+       below already calls accLoadProfile() itself, with no in-flight dedupe
+       between them. Measured on the first cut: two identical
+       GET /rest/v1/profiles leaving in the same tick on every reconnect. On a
+       flaky connection that doubles the account traffic, and for the customer
+       whose profiles row does not exist yet — the one v5.38.0's 406 self-heal
+       was written for — it sends two concurrent INSERTs instead of one. */
+    _wallLast = 0;
     try {
       if (acc.sess){
         /* ...and repaint the wall when it lands. Without this the plan was
@@ -21303,7 +21397,15 @@ function accWire(){
       accPollOnce(); accRender();
     } catch(e){}
   });
-  window.addEventListener("offline", function(){ acc.online = false; try { accRender(); } catch(e){} });
+  window.addEventListener("offline", function(){
+    acc.online = false;
+    try { accRender(); } catch(e){}
+    /* v5.40.0 — and repaint the wall. Without this, losing the connection
+       while the wall is up left the online paragraph ("this should only take a
+       moment… tap the button below") on screen for up to five minutes, next to
+       a retry button that had already stopped being able to do anything. */
+    try { appWallApply(); } catch(e){}
+  });
   window.addEventListener("pagehide", function(){ accPollStop(); });
 }
 
@@ -21639,6 +21741,26 @@ function admRender(){
   var pend = rows.filter(function(r){ return r && r.status === "pending"; }).length;
   $("admCount").textContent = admL({my:"စောင့်ဆိုင်းနေ "+pend+" ခု · စုစုပေါင်း "+rows.length,en:pend+" pending · "+rows.length+" total",shn:"မီး "+pend+" · တင်းသဵင်ႈ "+rows.length,kac:pend+" la nga · "+rows.length+" yawng",th:"รอ "+pend+" · ทั้งหมด "+rows.length,zh:"待处理 "+pend+" · 共 "+rows.length,vi:pend+" chờ · "+rows.length+" tổng",id:pend+" menunggu · "+rows.length+" total",ms:pend+" menunggu · "+rows.length+" jumlah"});
   $("admEmpty").textContent = rows.length ? "" : t("req_none");
+  /* v5.40.0 — app_settings is meant to hold ONE row. If it holds more, the
+     client picks deterministically and the approval trigger picks its own,
+     which can quote one price and open a period from a different row. Nothing
+     in the code can reconcile that; the owner has to delete the extra row. */
+  if (accSettingsRowCount > 1){
+    var warnLi = el("li");
+    warnLi.style.borderColor = "var(--gold)";
+    warnLi.textContent = admL({
+      my:"သတိ — app_settings မှာ အတန်း "+accSettingsRowCount+" တန်း ရှိနေပါတယ်။ တစ်တန်းသာ ရှိရပါမယ် — မလိုတဲ့အတန်းကို Supabase မှာ ဖျက်ပါ။ မဟုတ်ရင် စျေးနှုန်းနဲ့ သက်တမ်းက အတန်းမတူညီရာကနေ လာနိုင်ပါတယ်။",
+      en:"Warning — app_settings holds "+accSettingsRowCount+" rows. It must hold exactly one: delete the extra in Supabase, or a quoted price and an approved plan period can come from different rows.",
+      shn:"app_settings မီး "+accSettingsRowCount+" ထႅဝ် — လူဝ်ႇမီးထႅဝ်လဵဝ်ၵူၺ်း",
+      kac:"app_settings kaw "+accSettingsRowCount+" lang nga ai — langai sha ra ai",
+      th:"คำเตือน — app_settings มี "+accSettingsRowCount+" แถว ต้องมีแถวเดียวเท่านั้น",
+      zh:"警告 — app_settings 有 "+accSettingsRowCount+" 行，必须只有一行",
+      vi:"Cảnh báo — app_settings có "+accSettingsRowCount+" hàng, phải chỉ có một",
+      id:"Peringatan — app_settings punya "+accSettingsRowCount+" baris, harus tepat satu",
+      ms:"Amaran — app_settings ada "+accSettingsRowCount+" baris, mesti tepat satu"
+    });
+    ul.appendChild(warnLi);
+  }
   rows.forEach(function(row){
     if (!row) return;
     var li = el("li");
@@ -21796,7 +21918,11 @@ function wallRetryArm(on){
   _wallRetryT = setTimeout(function(){
     _wallRetryT = 0;
     var el = $("wallRetry");
-    if (el && appWallState() === "checking"){
+    /* navigator.onLine is re-tested HERE, not only where arming was requested:
+       the gap is 4 seconds wide and a phone can lose its data inside it. The
+       "offline" handler repaints too, so the button also disappears on the
+       transition rather than waiting for the next tick. */
+    if (el && appWallState() === "checking" && navigator.onLine){
       el.textContent = t("acc_retry");
       el.className = "btn btn-gold on";
     }
@@ -21841,7 +21967,22 @@ function appWallApply(){
      every visibilitychange, so rewriting the same two strings re-announced the
      whole wall to a screen reader on each of them. The key carries everything
      the copy below actually branches on, so a real change still repaints. */
-  var copyKey = st + "|" + (navigator.onLine ? "1" : "0") +
+  /* v5.40.0 — LANG BELONGS IN THIS KEY. v5.39.0 added this memo to stop a
+     polite live region re-announcing identical copy every five minutes, and
+     the key carried state, connectivity and lapsed-ness but NOT the language.
+     Switch language without reloading and the heading and pay instructions
+     stayed in the old one while the help links beside them changed: measured
+     on the shipped v5.39.0 build, LANG="en" + applyLang() + two appWallApply()
+     calls left #wallH as "အကောင့်ဝင်ပါ" beside a #wallHelp reading "Privacy
+     Policy".
+
+     HOW REACHABLE IT ACTUALLY IS, honestly: the app's own language picker ends
+     in location.reload(), and applyLang() has exactly one call site, so no
+     customer could reach this through the UI as it ships. It was latent, not
+     live — the first draft of this note said otherwise and was wrong. The term
+     stays because a memo that cannot see the language is wrong on its face and
+     would become live the day a no-reload language switch lands. */
+  var copyKey = LANG + "|" + st + "|" + (navigator.onLine ? "1" : "0") +
                 "|" + (acc.profile && acc.profile.plan_expires_at ? "1" : "0");
   if (h && p && copyKey !== _wallCopyKey){
     _wallCopyKey = copyKey;
@@ -21865,16 +22006,29 @@ function appWallApply(){
          that acc_unreachable was the wrong string here ("the app still works
          as normal" is false while the wall is up) — the answer was its own
          sentence plus a way to act on it, not silence. */
+      /* v5.40.0 — the offline branch used to borrow acc_offline, whose text is
+         "Offline — showing your last known status". In THIS state there is no
+         last known status: appWallState() returns "checking" precisely when
+         there is a session and no profile, and the wall is hiding everything.
+         The replacement is the tail of job_error, lifted verbatim in all nine
+         languages rather than composed, so it invents nothing. */
       p.textContent = navigator.onLine
         /* inline, exactly like the login and buy paragraphs above: the two
            siblings were never TR keys either, and a core TR key obliges all
            18 TR_L packs to carry it (sweep_v477 check A) for a sentence the
            other two wall states do not ask them for. */
-        ? L9({my:"ခဏလေး စောင့်ပါ။ ဒီအတိုင်း ရပ်နေရင် အောက်က ခလုတ်ကို နှိပ်ပြီး ပြန်စမ်းပါ — သင့် plan ကို ဘာမှ မထိပါဘူး",en:"This should only take a moment. If it stays here, tap Retry below — nothing has changed on your plan.",shn:"ပႂ်ႉၵမ်းၼိုင်ႈသေ ၸၢမ်းၶိုၼ်း",kac:"Jahkring la nna bai chyam u",th:"อาจใช้เวลาสักครู่ ถ้ายังค้างอยู่ตรงนี้ ให้แตะลองใหม่ด้านล่าง — แผนของคุณไม่มีอะไรเปลี่ยน",zh:"稍等片刻。如果一直停在这里，请点下方的重试 — 你的套餐没有任何变化。",vi:"Việc này chỉ mất một lát. Nếu vẫn dừng ở đây, hãy chạm Thử lại bên dưới — gói của bạn không thay đổi gì.",id:"Ini hanya sebentar. Jika tetap di sini, ketuk Coba lagi di bawah — paket Anda tidak berubah.",ms:"Ini hanya sebentar. Jika masih di sini, ketik Cuba lagi di bawah — pelan anda tidak berubah."})
-        : t("acc_offline");
+        ? L9({my:"ခဏလေး စောင့်ပါ။ ဒီအတိုင်း ရပ်နေရင် အောက်က ခလုတ်ကို နှိပ်ပြီး ပြန်စမ်းပါ — သင့် plan ကို ဘာမှ မထိပါဘူး",en:"This should only take a moment. If it stays here, tap the button below — nothing has changed on your plan.",shn:"ပႂ်ႉၵမ်းၼိုင်ႈသေ ၸၢမ်းၶိုၼ်း",kac:"Jahkring la nna bai chyam u",th:"อาจใช้เวลาสักครู่ ถ้ายังค้างอยู่ตรงนี้ ให้แตะลองใหม่ด้านล่าง — แผนของคุณไม่มีอะไรเปลี่ยน",zh:"稍等片刻。如果一直停在这里，请点下方的重试 — 你的套餐没有任何变化。",vi:"Việc này chỉ mất một lát. Nếu vẫn dừng ở đây, hãy chạm Thử lại bên dưới — gói của bạn không thay đổi gì.",id:"Ini hanya sebentar. Jika tetap di sini, ketuk Coba lagi di bawah — paket Anda tidak berubah.",ms:"Ini hanya sebentar. Jika masih di sini, ketik Cuba lagi di bawah — pelan anda tidak berubah."})
+        : L9({my:"အင်တာနက် စစ်ပြီး ပြန်စမ်းပါ",en:"Check your connection and try again",shn:"ၵူတ်ႇထတ်း internet သေ ၸၢမ်းၶိုၼ်း",kac:"Internet yu nna bai chyam u",th:"ตรวจสอบการเชื่อมต่อแล้วลองใหม่",zh:"请检查网络后重试",vi:"Kiểm tra mạng rồi thử lại",id:"Periksa koneksi lalu coba lagi",ms:"Semak sambungan dan cuba lagi"});
     }
   }
-  wallRetryArm(st === "checking");
+  /* v5.40.0 — AND NOT WHILE OFFLINE. wallRecheck's first gate is
+     `if (!navigator.onLine) return;`, so an armed button on a disconnected
+     phone was gold, enabled, and completely inert: measured zero requests and
+     zero visible change on tap. A control that does nothing is worse than no
+     control, because it is the only thing on the screen. The window "online"
+     handler below now forces a recheck, so reconnecting clears the wall by
+     itself instead of waiting up to five minutes for one. */
+  wallRetryArm(st === "checking" && navigator.onLine);
   /* only when it is not already built — a11yApplyLang rebuilds it on every
      language change, and appWallApply runs on a 5-minute interval */
   var wh = $("wallHelp");
@@ -22008,7 +22162,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.39.0";
+var APP_VER="5.40.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -22054,7 +22208,12 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
 var HNK_LS_KEYS=["hnk_web_studio_key","hnk_rh_apikey","hnk_rh_config","hnk_oa_apikey",
   "hnk_web_studio_v2_state","hnk_st_recipes","hnk_st_ui","hnk_ws_prompts","hnk_ws_wf_favs",
   "hnk_ws_wf_recent","hnk_ws_medialab","hnk_ws_lang","hnk_provider_fallback",
-  "hnk_ws_onboarded","hnk_ws_seen","hnk_ws_promo_hide","hnk_ws_pending_intent"];
+  "hnk_ws_onboarded","hnk_ws_seen","hnk_ws_promo_hide","hnk_ws_pending_intent",
+  /* v5.40.0 — written by /privacy/ and /terms/ rather than by this file, but
+     it is the same origin and the same storage, and the comment above claims
+     this list is EVERY key the app owns. Leaving it out made Reset leave a
+     preference behind and made that claim false. */
+  "hnk_legal_lang"];
 
 function setupJump(cardId){
   var c=$(cardId); if(!c) return;
