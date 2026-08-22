@@ -532,6 +532,47 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     !("status" in posted) && !("reviewed_at" in posted),
     { keys: posted && Object.keys(posted).sort(), amount: posted && posted.amount_mmk });
 
+  /* ---------- F2) nothing on offer means nothing filable (v5.37.0) ----------
+     v5.37.0 made accKindAllowed return false while the profile is unread, so a
+     backend blip could not quote the wrong price. That hid every chip — and
+     accPayKind is initialised to "plan_1m" and survives a render in which
+     nothing was offered, while accSubmitPayment guarded only on sess+settings.
+     A customer who owed the 500,000 joining fee could therefore fill in a
+     reference, an amount and a screenshot and file a MONTHLY payment instead.
+     Hiding the chips made the gate look enforced while leaving it open. */
+  await boot({
+    login: session,
+    profile: null,                       /* the profile read never lands */
+    settings: [PRICE],
+    requests: [],
+  });
+  await login();
+  const noOffer = await page.evaluate(async () => {
+    const chips = ["payKindJoin", "payKind1m", "payKind3m", "payKind6m", "payKindDev"]
+      .filter(id => { const e = document.getElementById(id); return !!(e && e.getClientRects().length); });
+    /* fill the form as completely as a customer can */
+    document.getElementById("payTxn").value = "123456";
+    document.getElementById("payAmt").value = "10000";
+    accPayBlob = new Blob(["x"], { type: "image/png" });
+    try { accPayValidate(); } catch (e) {}
+    const before = window.__sb.filter(x => x.url.indexOf("/rest/v1/payment_requests") >= 0 &&
+                                           x.method === "POST").length;
+    await accSubmitPayment();
+    return {
+      chips,
+      formShown: !!(document.getElementById("payForm") || {}).getClientRects &&
+                 document.getElementById("payForm").getClientRects().length > 0,
+      notice: (document.getElementById("payNoOffer").textContent || "").trim(),
+      submitDisabled: !!document.getElementById("btnPaySubmit").disabled,
+      posted: window.__sb.filter(x => x.url.indexOf("/rest/v1/payment_requests") >= 0 &&
+                                      x.method === "POST").length - before,
+    };
+  });
+  report("F2) with nothing on offer the form is shut, explained, and files nothing",
+    noOffer.chips.length === 0 && !noOffer.formShown && noOffer.notice.length > 0 &&
+    noOffer.submitDisabled && noOffer.posted === 0,
+    noOffer);
+
   /* ---------- G) the admin queue ---------- */
   const OTHER = "99999999-8888-7777-6666-555555555555";
   await boot({

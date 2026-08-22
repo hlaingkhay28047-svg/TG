@@ -465,7 +465,7 @@ async function look(browser, sess, prof, label) {
     "A B D E H I J M N O)");
 
 
-  /* ---- R) a transient outage is not a verdict (v5.37.0) ----
+  /* ---- X) a transient outage is not a verdict (v5.37.0) ----
      accRefreshOnce returned "dead" for ANY non-2xx and both callers treat
      "dead" as a logout: accSignOutLocal deletes the session, the cached
      profile and the login stamp. Measured before the fix: 500, 503 and 429
@@ -474,7 +474,7 @@ async function look(browser, sess, prof, label) {
      form with their offline cache gone. */
   {
     const gp = await browser.newPage({ viewport: { width: 412, height: 900 } });
-    gp.on("pageerror", e => errs.push("R: " + String(e).slice(0, 160)));
+    gp.on("pageerror", e => errs.push("X: " + String(e).slice(0, 160)));
     await armSupabase(gp, { plan_status: "active", plan_expires_at: future }, "tokenBoom");
     await gp.addInitScript(({ s, p }) => {
       try {
@@ -491,14 +491,48 @@ async function look(browser, sess, prof, label) {
     const g = await gp.evaluate(() => ({
       sess: !!localStorage.getItem("hnk_acc_sess_v1"),
       prof: !!localStorage.getItem("hnk_acc_profile_v1"),
-      state: document.body.getAttribute("data-wall") || "",
+      state: (typeof appWallState === "function") ? appWallState() : "(no wall)",
     }));
-    report("R) a 503 from the token endpoint keeps the session and the cached profile",
-      g.sess && g.prof, g);
+    report("X) a 503 from the token endpoint keeps the session and the cached profile",
+      g.sess && g.prof && g.state !== "login", g);
     await gp.close();
+
+    /* ...and the other half of the same rule, which nothing covered: a real
+       credential verdict must STILL end the session. Without this, "return
+       offline for everything" would pass X and leave a revoked token alive
+       forever. 400/401/403/422 are the four the panel's gateRefresh uses, so
+       the two codebases now answer the same response the same way. */
+    for (const st of [400, 401, 403, 422]) {
+      const vp = await browser.newPage({ viewport: { width: 412, height: 900 } });
+      vp.on("pageerror", e => errs.push("X2: " + String(e).slice(0, 160)));
+      await vp.route(SB_URL + "/**", route => {
+        const url = route.request().url();
+        if (url.indexOf("/auth/v1/token") >= 0) {
+          return route.fulfill({ status: st, contentType: "application/json",
+                                 body: JSON.stringify({ error: "boom" }) });
+        }
+        return route.fulfill({ status: 200, contentType: "application/json",
+                               body: JSON.stringify({ plan_status: "active", plan_expires_at: future }) });
+      });
+      await vp.addInitScript(({ s, p }) => {
+        try {
+          localStorage.setItem("hnk_ws_onboarded", "1");
+          localStorage.setItem("hnk_acc_sess_v1", JSON.stringify(
+            Object.assign({}, s, { exp: Math.floor(Date.now() / 1000) - 60 })));
+          localStorage.setItem("hnk_acc_profile_v1", JSON.stringify(p));
+          localStorage.setItem("hnk_acc_login_at", String(Date.now()));
+        } catch (e) {}
+      }, { s: SESS, p: { plan_status: "active", plan_expires_at: future } });
+      await vp.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
+      await vp.waitForTimeout(2000);
+      const v = await vp.evaluate(() => ({ sess: !!localStorage.getItem("hnk_acc_sess_v1") }));
+      report("X2." + st + ") a " + st + " from the token endpoint IS a verdict and ends the session",
+        !v.sess, { status: st, sess: v.sess });
+      await vp.close();
+    }
   }
 
-  /* ---- S) one dropped profile read must not latch the app forever ----
+  /* ---- Y) one dropped profile read must not latch the app forever ----
      wallRecheck used to early-return on `!acc.online`, and acc.online is set
      false by any failed account request and true again only by a successful
      one -- so the retry that would clear it could never run. The decisive
@@ -507,7 +541,7 @@ async function look(browser, sess, prof, label) {
      false: with the old gate it issues none, ever. */
   {
     const hp = await browser.newPage({ viewport: { width: 412, height: 900 } });
-    hp.on("pageerror", e => errs.push("S: " + String(e).slice(0, 160)));
+    hp.on("pageerror", e => errs.push("Y: " + String(e).slice(0, 160)));
     await armSupabase(hp, { plan_status: "active", plan_expires_at: future }, "profileOnce");
     await hp.addInitScript(s => {
       try {
@@ -525,10 +559,10 @@ async function look(browser, sess, prof, label) {
     await hp.evaluate(() => { try { wallRecheck(true); } catch (e) {} });
     await hp.waitForTimeout(1500);
     const after = await hp.evaluate(() => ({
-      state: document.body.getAttribute("data-wall") || "",
+      state: (typeof appWallState === "function") ? appWallState() : "(no wall)",
       walled: document.body.classList.contains("wall"),
     }));
-    report("S) a recheck re-reads the profile even after a failed one, instead of latching",
+    report("Y) a recheck re-reads the profile even after a failed one, instead of latching",
       before.online === false && profileCalls > before.calls &&
       after.state === "" && !after.walled,
       { before, calls: profileCalls, after });

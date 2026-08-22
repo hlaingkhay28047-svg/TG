@@ -2027,6 +2027,9 @@ body.wall #wallNote{display:block}
     <div class="grp" id="accGrpBuy">
       <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="accGrpBuyT"></span></button>
       <div class="grp-b">
+        <!-- v5.37.0 — shown INSTEAD of the form when nothing is on offer. It
+             sits outside #payForm on purpose: the form is what gets hidden. -->
+        <p class="mut" id="payNoOffer" style="display:none"></p>
         <div id="payForm">
           <div class="subh" id="payPickH"></div>
           <div class="chips pay" id="payKinds">
@@ -19719,11 +19722,18 @@ function accRefreshOnce(){
         body: JSON.stringify({ refresh_token: acc.sess && acc.sess.refresh })
       });
       if (!r.ok){
-        if (r.status !== 400 && r.status !== 401) return "offline";
-        var body = await accJson(r);
-        var bs = ""; try { bs = JSON.stringify(body || ""); } catch(e2){}
-        /* an unreadable 400 is not proof of a dead token either */
-        return /invalid_grant|invalid.?refresh|refresh_token|expired/i.test(bs) ? "dead" : "offline";
+        /* STATUS ONLY, and the same four the panel's gateRefresh uses. The
+           first version of this rule also required the body to match
+           /invalid_grant|refresh_token|expired/i -- which meant the two
+           codebases returned OPPOSITE verdicts for the same response (a 400
+           with body {"error":"boom"} is dead to the panel and offline here),
+           each pinned by its own green assertion. It also missed what GoTrue
+           actually sends for a banned user, {"code":403,"error_code":
+           "user_banned","msg":"..."}, so a revoked account kept its session.
+           A body regex over somebody else's error format is a guess; the
+           status line is the contract. */
+        if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 422) return "dead";
+        return "offline";
       }
       accSaveSession(await accJson(r));
       acc.online = true;
@@ -20376,7 +20386,10 @@ function accRenderAmtWarn(){
 
 function accPayValidate(){
   accRenderAmtWarn();
-  var ok = !!accPayKind && accTxnOk() && accAmtOk() && !!accPayBlob && !!acc.settings && !!acc.sess;
+  /* accKindAllowed, not merely "a kind is set": accPayKind is initialised to
+     plan_1m and survives a render in which no chip was offered at all. */
+  var ok = !!accPayKind && accKindAllowed(accPayKind) &&
+           accTxnOk() && accAmtOk() && !!accPayBlob && !!acc.settings && !!acc.sess;
   var b = $("btnPaySubmit"); if (b) b.disabled = !ok;
   /* INLINE, never setSt(). accPayValidate() runs from accRenderPay(), which
      accBoot() and every applyLang() call — long before anyone opens the buy
@@ -20434,6 +20447,10 @@ async function accUploadProof(blob, kind){
 /* ---------------- §4.6 insert ---------------- */
 async function accSubmitPayment(){
   if (!acc.sess || !acc.settings) return;
+  /* the last gate, independent of whatever the buttons are doing. RLS accepts
+     any of the four SKUs from any authenticated user, so "which one may I buy
+     right now" is decided here or nowhere. */
+  if (!accKindAllowed(accPayKind)){ setSt("stPay", t("acc_unreachable"), "err"); return; }
   if (!accTxnOk()){ setSt("stPay", t("pay_txn_bad"), "err"); return; }
   if (!accAmtOk()){ setSt("stPay", t("pay_amt_need"), "err"); $("payAmt").focus(); return; }
   if (!accPayBlob){ setSt("stPay", t("pay_shot_need"), "err"); return; }
@@ -20857,6 +20874,22 @@ function accRenderPay(){
       var b = $(c[0]); if (b && b.style.display !== "none") b.className = "chip" + (c[1] === accPayKind ? " on" : "");
     });
   }
+  /* ...and when NOTHING is on offer, firstAllowed is falsy and the line above
+     does nothing, so accPayKind keeps whatever it held -- "plan_1m" by its own
+     initialiser. Before this, a customer whose profile had not been read (the
+     v5.37.0 accProfileUnknown state) saw an empty chip row and could still
+     fill in a reference, an amount and a screenshot and FILE A MONTHLY
+     PAYMENT, joining fee unpaid and unasked. Hiding the chips made the gate
+     look enforced while leaving it open, which is worse than the wrong price
+     it was meant to fix. The form is now shut, and says why. */
+  var offerable = !!firstAllowed;
+  var payForm = $("payForm");
+  if (payForm) payForm.style.display = offerable ? "" : "none";
+  var payNone = $("payNoOffer");
+  if (payNone){
+    payNone.style.display = offerable ? "none" : "";
+    payNone.textContent = accProfileUnknown() ? t("acc_unreachable") : "";
+  }
 
   var s = acc.settings;
 
@@ -21268,8 +21301,18 @@ async function admLoad(){
        That check is the reason v5.34.0 exists. Fire-and-forget is not enough
        either: settings landing after the render leaves the plain rows on
        screen, because accLoadSettings calls accRenderPay, not admRender. */
-    try { if (!acc.settings) await accLoadSettings(); } catch(e2){}
     admRender();
+    /* Render FIRST, then fill in the price and render again -- the same shape
+       admLoadWho() below uses, and for the same reason. Awaiting the settings
+       before the first render (the v5.37.0 draft) put the whole approval queue
+       behind a request that can stall for the full 15s accFetch timeout on a
+       slow link, so an owner with cleared site data stared at an empty panel
+       while three payments waited. A failed settings load now degrades to the
+       queue without the amount check rather than to no queue at all. */
+    if (!acc.settings){
+      try { await accLoadSettings(); } catch(e2){}
+      admRender();
+    }
     /* v5.34 — render first, then fill in the names. The list used to print
        row.user_id, a raw UUID, which told the owner nothing about who had
        paid: approving meant matching a screenshot to a string of hex. The
