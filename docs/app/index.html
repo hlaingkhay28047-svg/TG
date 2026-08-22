@@ -22133,7 +22133,12 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
 var HNK_LS_KEYS=["hnk_web_studio_key","hnk_rh_apikey","hnk_rh_config","hnk_oa_apikey",
   "hnk_web_studio_v2_state","hnk_st_recipes","hnk_st_ui","hnk_ws_prompts","hnk_ws_wf_favs",
   "hnk_ws_wf_recent","hnk_ws_medialab","hnk_ws_lang","hnk_provider_fallback",
-  "hnk_ws_onboarded","hnk_ws_seen","hnk_ws_promo_hide","hnk_ws_pending_intent"];
+  "hnk_ws_onboarded","hnk_ws_seen","hnk_ws_promo_hide","hnk_ws_pending_intent",
+  /* v5.40.0 — written by /privacy/ and /terms/ rather than by this file, but
+     it is the same origin and the same storage, and the comment above claims
+     this list is EVERY key the app owns. Leaving it out made Reset leave a
+     preference behind and made that claim false. */
+  "hnk_legal_lang"];
 
 function setupJump(cardId){
   var c=$(cardId); if(!c) return;
