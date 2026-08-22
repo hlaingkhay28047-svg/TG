@@ -20325,7 +20325,14 @@ function accParseSettings(rows){
      With two, the price a customer is quoted and the period an approved
      join_first opens can come from different rows — money and entitlement
      disagreeing, silently. Only the owner can fix that, so only the owner is
-     told: admRender says it out loud at the top of the queue. */
+     told: admRender says it out loud at the top of the queue.
+
+     NETWORK-DERIVED ON PURPOSE. This runs only when a settings response has
+     actually been parsed, so a session whose fetch failed shows no warning
+     rather than a stale one — the client genuinely does not know how many rows
+     there are. accLoadSettings fetches on every load even when it has a cached
+     copy, and admLoad awaits it before its second render, so an owner who is
+     online sees the warning on the same paint as the queue. */
   accSettingsRowCount = wide.length;
   if (wide.length){
     if (wide.length > 1){

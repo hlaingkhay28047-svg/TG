@@ -101,11 +101,22 @@ report("A) every table the client fetches has RLS enabled",
    role names may be double-quoted ("anon"). Either one made a policy vanish
    from this parser exactly the way a missing `to` clause did, and a policy the
    parser cannot see is a policy this file does not check. */
+/* v5.40.0 (second pass) — THE `for` CLAUSE IS OPTIONAL TOO, and omitting it is
+   the worst case of the three. Postgres's grammar is
+     CREATE POLICY n ON t [AS ...] [FOR cmd] [TO role] [USING ...] [WITH CHECK ...]
+   and a missing FOR defaults to ALL. So the shortest policy anyone can write —
+     create policy p on public.app_settings using (true);
+   — is FOR ALL TO PUBLIC: every verb, every role, anon included. That is
+   precisely the write this file exists to catch, and it was the one statement
+   the parser could not even see. Both optional clauses now default the way
+   Postgres does. */
 const POLICY_RE =
-  /create\s+policy\s+"?(\w+)"?\s+on\s+public\.(\w+)(?:\s+as\s+(?:permissive|restrictive))?\s+for\s+(\w+)(?:\s+to\s+([\w\s,"]+?))?\s+(using|with)/gi;
+  /create\s+policy\s+"?(\w+)"?\s+on\s+public\.(\w+)(?:\s+as\s+(?:permissive|restrictive))?(?:\s+for\s+(\w+))?(?:\s+to\s+([\w\s,"]+?))?\s+(using|with)/gi;
 function parsePolicies(text) {
   return [...text.matchAll(POLICY_RE)].map(x => ({
-    name: x[1], table: x[2], verb: x[3].toLowerCase(),
+    name: x[1], table: x[2],
+    /* no `for` clause == FOR ALL, per Postgres */
+    verb: (x[3] || "all").toLowerCase(),
     /* no `to` clause == TO PUBLIC, per Postgres */
     roles: (x[4] || "public").split(/[,\s]+/).filter(Boolean)
              .map(r => r.replace(/"/g, "").toLowerCase()).filter(Boolean)
@@ -123,13 +134,17 @@ const rolesInclude = (p, role) => p.roles.includes(role) || p.roles.includes("pu
     { sql: "create policy d on public.t for insert to authenticated with check (true);", roles: ["authenticated"], why: "with check, not using" },
     { sql: "create policy e on public.t as permissive for update using (true);", roles: ["public"], why: "AS PERMISSIVE + no to clause" },
     { sql: "create policy f on public.t as restrictive for select to anon using (true);", roles: ["anon"], why: "AS RESTRICTIVE" },
-    { sql: 'create policy g on public.t for delete to "anon" using (true);', roles: ["anon"], why: "quoted role name" }
+    { sql: 'create policy g on public.t for delete to "anon" using (true);', roles: ["anon"], why: "quoted role name" },
+    { sql: "create policy h on public.t using (true);", roles: ["public"], verb: "all", why: "no FOR and no TO — the shortest policy there is, and the widest" },
+    { sql: "create policy i on public.t to anon using (true);", roles: ["anon"], verb: "all", why: "no FOR, explicit TO" },
+    { sql: "create policy j on public.t as restrictive with check (true);", roles: ["public"], verb: "all", why: "no FOR, WITH CHECK" }
   ];
   const bad = [];
   for (const c of cases) {
     const got = parsePolicies(c.sql);
-    if (got.length !== 1 || got[0].roles.join(",") !== c.roles.join(",")) {
-      bad.push({ why: c.why, got: got.map(g => g.roles) });
+    if (got.length !== 1 || got[0].roles.join(",") !== c.roles.join(",") ||
+        (c.verb && got[0].verb !== c.verb)) {
+      bad.push({ why: c.why, got: got.map(g => ({ roles: g.roles, verb: g.verb })) });
     }
   }
   /* and the checks that consume it must SEE public as anon */

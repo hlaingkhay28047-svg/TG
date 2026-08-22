@@ -904,14 +904,32 @@ async function look(browser, sess, prof, label) {
       /* and it must survive the repaints that run on focus/interval */
       appWallApply(); appWallApply();
       await new Promise(r => setTimeout(r, 200));
-      return { before, after, settled: read() };
+      const settled = read();
+
+      /* THE MEMO KEY, ON ITS OWN. The check above is satisfied by the repaint
+         call in a11yApplyLang alone: it clears _wallCopyKey, so the key could
+         omit the language entirely and this would still pass — which it did,
+         measured, on a build with only the LANG term reverted. So exercise the
+         key directly: change the language WITHOUT clearing the memo, the way
+         any other appWallApply caller would, and require the copy to follow. */
+      LANG = "my"; applyLang();
+      await new Promise(r => setTimeout(r, 200));
+      const backToMy = read();
+      LANG = "en";                 /* no applyLang(), so the memo is NOT cleared */
+      appWallApply();
+      await new Promise(r => setTimeout(r, 150));
+      const keyOnly = read();
+      return { before, after, settled, backToMy, keyOnly };
     });
+    const latin = h => /[A-Za-z]/.test(h) && !/[\u1000-\u109F]/.test(h);
     report("W5) switching language repaints the wall's own copy, not just the links",
       swap.before.head.length > 0 && swap.after.head !== swap.before.head &&
       swap.after.para !== swap.before.para &&
-      swap.settled.head === swap.after.head &&
-      /[A-Za-z]/.test(swap.after.head) && !/[\u1000-\u109F]/.test(swap.after.head),
+      swap.settled.head === swap.after.head && latin(swap.after.head),
       swap);
+    report("W5b) ...and the memo key alone is enough — it carries the language",
+      swap.backToMy.head === swap.before.head && latin(swap.keyOnly.head),
+      { backToMy: swap.backToMy.head, keyOnly: swap.keyOnly.head });
     await lp.close();
   }
 
