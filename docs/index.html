@@ -934,6 +934,23 @@ khb:{"page.title":"HNK Create Studio — ᦷᦣᧂᦏᦻᧈᦣᦴᧇ AI ᦎᦱ�
         history.replaceState(null,"",u.pathname+(u.search||"")+u.hash);
       }
     }catch(e){}
+    /* v5.40.0 — AND CARRY IT ACROSS THE DOOR. v5.39.0 stopped writing
+       hnk_ws_lang for a shared link, which was right — a link is not a
+       preference — but the app read the language ONLY from that key, so the
+       journey died at the button: measured, /?lang=th rendered a fully Thai
+       page whose own gold CTA opened the paid app in Burmese. Every one of the
+       37 locales except Burmese was affected. The language rides the outbound
+       links instead, and the app applies it for that visit without storing it.
+       Rebuilt from the live href each time, so repeated apply() calls are
+       idempotent and ?page= survives. */
+    try{
+      var appLinks=document.querySelectorAll('a[href^="app/"]');
+      for(var q=0;q<appLinks.length;q++){
+        var au=new URL(appLinks[q].getAttribute("href"), location.href);
+        if(l===DEF) au.searchParams.delete("lang"); else au.searchParams.set("lang",l);
+        appLinks[q].setAttribute("href","app/"+(au.search||"")+au.hash);
+      }
+    }catch(e){}
   }
 
   /* v5.35 — ?lang= in the URL, so a language can be SHARED.

@@ -342,7 +342,19 @@ select.inp{padding:9px 10px}
    taller than the 88px tile and hung it off the top edge. max-height restores
    both properties at once: the pill is bounded by its tile, and a label that
    outgrows it makes scrollHeight > clientHeight, which C2 reads. */
-.ref .refrole{position:absolute;right:4px;bottom:4px;max-width:calc(100% - 8px);max-height:calc(100% - 8px);padding:1px 7px;font-size:9.5px;line-height:1.25;min-height:0;background:rgba(11,13,20,.85);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;white-space:normal;text-align:right;z-index:2}
+/* v5.40.0 — two more consequences of wrapping, both measured:
+   ALIGN. The pill is a .chip, and .chip is inline-flex with align-items:center.
+   A centred flex box with overflow:hidden pushes the overflow out BOTH ends, so
+   the cap was cutting the OPENING words off the top — the half v5.39.0's own
+   note said an ellipsis must not remove. flex-start drops the tail instead.
+   STACK. The pill shares the bottom row with .tag, the "IMG 1"/"IMG 2" badge
+   that is the only thing telling the customer which ordered slot a photo
+   occupies — and slot order is what every multi-reference ROLE MAP binds
+   against. Measured at 320px: the two Burmese labels covered the tag 100%
+   (elementFromPoint at the tag's centre returned the pill). The tag is 19px
+   tall at bottom:4px, so the pill starts above it at 27px and its cap comes
+   down to match. */
+.ref .refrole{position:absolute;right:4px;bottom:27px;max-width:calc(100% - 8px);max-height:calc(100% - 31px);align-items:flex-start;padding:1px 7px;font-size:9.5px;line-height:1.25;min-height:0;background:rgba(11,13,20,.85);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;white-space:normal;text-align:right;z-index:2}
 .ref .refrole.on{border-color:var(--gold);color:var(--gold-hi)}
 
 #vuOpts .inp{flex:1 1 30%;min-width:30%}
@@ -3890,9 +3902,22 @@ function a11yApplyLang(){
   var wr = $("wallRetry");
   if (wr) wr.textContent = t("acc_retry");
   /* v5.40.0 — the wall's own heading and paragraph are memoised in
-     appWallApply; clearing the memo here is what makes a language change
-     repaint them at once instead of leaving them in the old language. */
-  try { _wallCopyKey = null; if (typeof appWallApply === "function") appWallApply(); } catch(e){}
+     appWallApply; clearing the memo is what lets a language change repaint
+     them instead of leaving them in the old language.
+
+     THE GUARD IS NOT DECORATION. applyLang() — this function's only caller —
+     runs once, at the top level, ~15,500 lines before `var acc = {...}` is
+     initialised. So on the boot pass `acc` is hoisted-but-undefined and
+     appWallState()'s first statement, `if (!acc.sess)`, threw a TypeError into
+     an empty catch on every single page load. The wall painted correctly
+     anyway, from accBoot's own appWallApply later on. Checking acc first is
+     what makes this call mean something on the paths where it CAN work — and
+     since the shipping language picker reloads the page, those paths are a
+     future no-reload switch and this file's own tests, not today's UI. */
+  _wallCopyKey = null;
+  try {
+    if (typeof acc !== "undefined" && acc && typeof appWallApply === "function") appWallApply();
+  } catch(e){}
   /* last, on purpose — see wallHelpRender */
   try { wallHelpRender(); } catch(e){}
   var tb = $("tabbar");    if (tb) tb.setAttribute("aria-label", "Sections");
@@ -4146,6 +4171,26 @@ function syncInputLabels(root){
     el.setAttribute("data-a11y-ph", "1");
   }
 }
+/* v5.40.0 — A SHARED LINK'S LANGUAGE, CARRIED ACROSS THE DOOR.
+   ?lang= exists so a studio can send a Thai client a link that arrives in Thai.
+   Until v5.39.0 the landing made that work by WRITING hnk_ws_lang, which was
+   the wrong mechanism — it silently reset the language of anyone who merely
+   opened the site — but removing it ended the journey rather than fixing it:
+   measured on v5.39.0 and on the first cut of v5.40.0, /?lang=th showed a fully
+   Thai landing whose own gold button opened the paid app in Burmese. The
+   language rides the link now, and is applied for THIS VISIT ONLY: nothing here
+   writes storage, so a link stays a link and a preference stays a preference.
+   Placed immediately before applyLang() because TR_L and LANG_FB — what makes
+   a code recognisable — are defined between the LANG declaration and here. */
+try {
+  var _urlLang = (new URLSearchParams(location.search)).get("lang") || "";
+  if (_urlLang && (
+        /^(my|en|shn|kac|th|zh|vi|id|ms)$/.test(_urlLang) ||
+        (typeof TR_L !== "undefined" && TR_L[_urlLang]) ||
+        (typeof LANG_FB !== "undefined" && LANG_FB[_urlLang]))) {
+    LANG = _urlLang;
+  }
+} catch(e){}
 applyLang();
 a11yArmStatusRegions();
 /* An in-page link to a tabindex="-1" target moves focus in every current
@@ -21315,11 +21360,18 @@ function accWire(){
   });
   window.addEventListener("online", function(){
     acc.online = true;
-    /* v5.40.0 — force a recheck the moment the connection returns. Without it
-       a customer stuck on "checking" waited for the next focus/visibility
-       event or the five-minute interval, with the retry button (correctly)
-       not armed while offline and so nothing to press. */
-    try { wallRecheck(true); } catch(e){}
+    /* v5.40.0 — clear the recheck throttle so the next focus/visibility tick
+       is not swallowed by WALL_RECHECK_MS.
+
+       IT USED TO CALL wallRecheck(true) HERE, and that was a second profile
+       read: wallRecheck awaits accLoadProfile(), and the branch four lines
+       below already calls accLoadProfile() itself, with no in-flight dedupe
+       between them. Measured on the first cut: two identical
+       GET /rest/v1/profiles leaving in the same tick on every reconnect. On a
+       flaky connection that doubles the account traffic, and for the customer
+       whose profiles row does not exist yet — the one v5.38.0's 406 self-heal
+       was written for — it sends two concurrent INSERTs instead of one. */
+    _wallLast = 0;
     try {
       if (acc.sess){
         /* ...and repaint the wall when it lands. Without this the plan was
@@ -21338,7 +21390,15 @@ function accWire(){
       accPollOnce(); accRender();
     } catch(e){}
   });
-  window.addEventListener("offline", function(){ acc.online = false; try { accRender(); } catch(e){} });
+  window.addEventListener("offline", function(){
+    acc.online = false;
+    try { accRender(); } catch(e){}
+    /* v5.40.0 — and repaint the wall. Without this, losing the connection
+       while the wall is up left the online paragraph ("this should only take a
+       moment… tap the button below") on screen for up to five minutes, next to
+       a retry button that had already stopped being able to do anything. */
+    try { appWallApply(); } catch(e){}
+  });
   window.addEventListener("pagehide", function(){ accPollStop(); });
 }
 
@@ -21851,7 +21911,11 @@ function wallRetryArm(on){
   _wallRetryT = setTimeout(function(){
     _wallRetryT = 0;
     var el = $("wallRetry");
-    if (el && appWallState() === "checking"){
+    /* navigator.onLine is re-tested HERE, not only where arming was requested:
+       the gap is 4 seconds wide and a phone can lose its data inside it. The
+       "offline" handler repaints too, so the button also disappears on the
+       transition rather than waiting for the next tick. */
+    if (el && appWallState() === "checking" && navigator.onLine){
       el.textContent = t("acc_retry");
       el.className = "btn btn-gold on";
     }
@@ -21896,17 +21960,21 @@ function appWallApply(){
      every visibilitychange, so rewriting the same two strings re-announced the
      whole wall to a screen reader on each of them. The key carries everything
      the copy below actually branches on, so a real change still repaints. */
-  /* v5.40.0 — LANG BELONGS IN THIS KEY, and leaving it out froze the wall.
-     v5.39.0 added this memo to stop a polite live region re-announcing
-     identical copy every five minutes. But the key carried state,
-     connectivity and lapsed-ness and NOT the language, and applyLang() never
-     calls appWallApply() — so a customer who switched language behind the
-     paywall kept reading the old language's heading and pay instructions
-     forever, while the help links right beside them switched. Measured on the
-     shipped v5.39.0 build: LANG="en" + applyLang() + two appWallApply() calls
-     left #wallH as "အကောင့်ဝင်ပါ" with #wallHelp reading "Privacy Policy".
-     a11yApplyLang() also clears the memo now, so the repaint is immediate
-     rather than waiting for the next recheck. */
+  /* v5.40.0 — LANG BELONGS IN THIS KEY. v5.39.0 added this memo to stop a
+     polite live region re-announcing identical copy every five minutes, and
+     the key carried state, connectivity and lapsed-ness but NOT the language.
+     Switch language without reloading and the heading and pay instructions
+     stayed in the old one while the help links beside them changed: measured
+     on the shipped v5.39.0 build, LANG="en" + applyLang() + two appWallApply()
+     calls left #wallH as "အကောင့်ဝင်ပါ" beside a #wallHelp reading "Privacy
+     Policy".
+
+     HOW REACHABLE IT ACTUALLY IS, honestly: the app's own language picker ends
+     in location.reload(), and applyLang() has exactly one call site, so no
+     customer could reach this through the UI as it ships. It was latent, not
+     live — the first draft of this note said otherwise and was wrong. The term
+     stays because a memo that cannot see the language is wrong on its face and
+     would become live the day a no-reload language switch lands. */
   var copyKey = LANG + "|" + st + "|" + (navigator.onLine ? "1" : "0") +
                 "|" + (acc.profile && acc.profile.plan_expires_at ? "1" : "0");
   if (h && p && copyKey !== _wallCopyKey){

@@ -749,15 +749,67 @@ async function look(browser, sess, prof, label) {
     await rp.close();
   }
 
+  /* ---- W7: ONE RECONNECT COSTS ONE PROFILE READ ----
+     The first cut of the reconnect fix called wallRecheck(true) from the
+     window "online" handler. wallRecheck awaits accLoadProfile(), and the
+     handler already called accLoadProfile() itself four lines later, with no
+     in-flight dedupe — so every reconnect fired two identical profile GETs in
+     the same tick. On a flaky connection the "online" event repeats, so that
+     is a doubling of account traffic; and for the customer whose profiles row
+     does not exist yet (v5.38.0's 406 self-heal) it is two concurrent INSERTs
+     of the same row rather than one. */
+  {
+    const rc = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    rc.on("pageerror", e => errs.push("reconnect: " + String(e).slice(0, 160)));
+    let gets = 0, posts = 0;
+    await rc.route(SB_URL + "/**", route => {
+      const u = route.request().url(), m = route.request().method();
+      const json = (b, st) => route.fulfill({ status: st || 200, contentType: "application/json", body: JSON.stringify(b) });
+      if (u.indexOf("/rest/v1/profiles") >= 0) {
+        if (m === "GET") { gets++; return route.fulfill({ status: 200, contentType: "application/json", body: "null" }); }
+        if (m === "POST") { posts++; return json([], 201); }
+      }
+      if (u.indexOf("/auth/v1/token") >= 0)
+        return json({ access_token: "test.jwt", refresh_token: "test-refresh", expires_in: 3600,
+                      user: { id: "u-test", email: "t@example.com" } });
+      return json([]);
+    });
+    await rc.addInitScript(s => {
+      try {
+        localStorage.setItem("hnk_ws_onboarded", "1");
+        localStorage.setItem("hnk_acc_sess_v1", JSON.stringify(s));
+        localStorage.setItem("hnk_acc_login_at", String(Date.now()));
+      } catch (e) {}
+    }, SESS);
+    await rc.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "domcontentloaded" });
+    await rc.waitForTimeout(2500);
+    await rc.evaluate(() => window.dispatchEvent(new Event("offline")));
+    await rc.waitForTimeout(300);
+    gets = 0; posts = 0;
+    await rc.evaluate(() => window.dispatchEvent(new Event("online")));
+    await rc.waitForTimeout(1800);
+    report("W7) one reconnect issues exactly one profile read, not two",
+      gets === 1 && posts <= 1, { profileGETs: gets, profilePOSTs: posts });
+    await rc.close();
+  }
+
   /* ---- W6: NO DEAD CONTROL ON A DISCONNECTED PHONE ----
      v5.39.0 armed the retry on state alone. wallRecheck's first gate is
      `if (!navigator.onLine) return;`, so on a phone with no data the button
      was gold, enabled, and completely inert — measured zero requests and zero
      visible change on tap, on a screen with nothing else on it. It also
-     borrowed acc_offline, whose text is "showing your last known status",
-     for the one state that is defined by having no known status. */
+     borrowed acc_offline, whose text is "showing your last known status", for
+     the one state that is defined by having no known status.
+
+     THIS DRIVES A REAL TRANSITION, not a stubbed navigator. The first cut of
+     both the fix and this check only covered a page that was ALREADY offline
+     when appWallApply last ran: the 4s arming timer did not re-test
+     connectivity when it fired, and the window "offline" event never repainted
+     the wall. So a customer whose data dropped inside that window — a lift, a
+     tunnel — still got the dead button the release claims to have removed. */
   {
-    const op = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    const octx = await browser.newContext({ viewport: { width: 412, height: 900 } });
+    const op = await octx.newPage();
     op.on("pageerror", e => errs.push("offline: " + String(e).slice(0, 160)));
     await armSupabase(op, null, "hangProfile");
     await op.addInitScript(s => {
@@ -766,24 +818,57 @@ async function look(browser, sess, prof, label) {
         localStorage.setItem("hnk_acc_sess_v1", JSON.stringify(s));
         localStorage.setItem("hnk_acc_login_at", String(Date.now()));
       } catch (e) {}
-      try { Object.defineProperty(navigator, "onLine", { get: function(){ return false; }, configurable: true }); } catch (e) {}
     }, SESS);
     await op.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "domcontentloaded" });
+    /* armed while still online */
     await op.waitForTimeout(5200);
-    const off = await op.evaluate(() => {
+    const armedOnline = await op.evaluate(() => {
       const b = document.getElementById("wallRetry");
-      return {
-        online: navigator.onLine,
-        state: appWallState(),
-        retryShown: !!b && b.getClientRects().length > 0,
-        para: ((document.getElementById("wallP") || {}).textContent || "").trim(),
-      };
+      return { online: navigator.onLine, state: appWallState(),
+               shown: !!b && b.getClientRects().length > 0 };
     });
-    report("W6) an offline 'checking' wall offers no button it cannot honour, and says something true",
-      off.online === false && off.state === "checking" && off.retryShown === false &&
-      off.para.length > 8 && !/last known status|လိုၼ်းသုတ်း|နောက်ဆုံး သိထားတဲ့/.test(off.para),
-      off);
-    await op.close();
+    /* now lose the connection for real */
+    await octx.setOffline(true);
+    await op.waitForTimeout(900);
+    const afterDrop = await op.evaluate(() => {
+      const b = document.getElementById("wallRetry");
+      return { online: navigator.onLine, state: appWallState(),
+               shown: !!b && b.getClientRects().length > 0,
+               para: ((document.getElementById("wallP") || {}).textContent || "").trim() };
+    });
+    /* and a page that boots offline must never arm it in the first place.
+       navigator.onLine is STUBBED here rather than emulated: Playwright's
+       context.setOffline blocks loopback too, so a genuinely offline context
+       cannot fetch the page under test at all. The transition above is the
+       real one; this is the boot state. */
+    const bctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
+    const bp = await bctx.newPage();
+    bp.on("pageerror", e => errs.push("offline-boot: " + String(e).slice(0, 160)));
+    await armSupabase(bp, null, "hangProfile");
+    await bp.addInitScript(s => {
+      try {
+        localStorage.setItem("hnk_ws_onboarded", "1");
+        localStorage.setItem("hnk_acc_sess_v1", JSON.stringify(s));
+        localStorage.setItem("hnk_acc_login_at", String(Date.now()));
+      } catch (e) {}
+      try { Object.defineProperty(navigator, "onLine", { get: function(){ return false; }, configurable: true }); } catch (e) {}
+    }, SESS);
+    await bp.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "domcontentloaded" });
+    await bp.waitForTimeout(5200);
+    const bootOffline = await bp.evaluate(() => {
+      const b = document.getElementById("wallRetry");
+      return { online: navigator.onLine, state: appWallState(),
+               shown: !!b && b.getClientRects().length > 0,
+               para: ((document.getElementById("wallP") || {}).textContent || "").trim() };
+    });
+    const noStaleStatus = p => p.length > 8 && !/last known status|နောက်ဆုံး သိထားတဲ့/.test(p);
+    report("W6) losing the connection disarms the retry and repaints the copy, and booting offline never arms it",
+      armedOnline.shown === true && armedOnline.state === "checking" &&
+      afterDrop.online === false && afterDrop.shown === false && noStaleStatus(afterDrop.para) &&
+      bootOffline.online === false && bootOffline.shown === false && noStaleStatus(bootOffline.para),
+      { armedOnline, afterDrop, bootOffline });
+    await op.close(); await octx.close();
+    await bp.close(); await bctx.close();
   }
 
   /* ---- W5: THE WALL SPEAKS THE LANGUAGE THE CUSTOMER PICKED ----

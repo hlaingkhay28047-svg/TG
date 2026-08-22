@@ -39,8 +39,14 @@
       reorder "30,000 MMK" inside an RTL sentence.
    F) ?lang= applies a valid code, ignores an unknown one, and beats the stored
       preference for that visit.
-   G) Switching writes the URL, and the default language leaves it clean.
-   H) The choice carries into the app, which reads the same storage key.
+   G) A PICK writes the URL back, and the default language leaves it clean —
+      but a LINK's parameter is left exactly as it arrived (v5.40.0: once a
+      shared language stopped being stored, the parameter became its only
+      carrier, so normalising /?lang=my away broke the share).
+   H) A shared link is shown and never stored, on either key (v5.39.0); an
+      explicit pick still follows the visitor into the app; opening a page is
+      not a choice; and the shared language rides the outbound app links so the
+      journey does not die at the door (v5.40.0).
    I) No hreflang is emitted while every locale serves the same document.
    J) No console error in any of it.
 
@@ -99,14 +105,18 @@ report("I2) both surfaces name the same right-to-left languages",
   const browser = seed.withPremium(await chromium.launch());
   const errs = [];
 
-  async function open(url, width, lang) {
+  async function open(url, width, lang, siteLang) {
     const ctx = await browser.newContext({ viewport: { width, height: 800 } });
-    await ctx.addInitScript(l => {
+    await ctx.addInitScript(seed => {
       try {
         localStorage.setItem("hnk_ws_onboarded", "1");
-        if (l) localStorage.setItem("hnk_ws_lang", l);
+        if (seed.app) localStorage.setItem("hnk_ws_lang", seed.app);
+        /* the landing reads hnk_site_lang, NOT hnk_ws_lang, so a test that
+           seeds only the app key cannot express "what the recipient had
+           stored" — which is how H4 shipped three-quarters tautological */
+        if (seed.site) localStorage.setItem("hnk_site_lang", seed.site);
       } catch (e) {}
-    }, lang || "");
+    }, { app: lang || "", site: siteLang || "" });
     const page = await ctx.newPage();
     page.on("pageerror", e => errs.push(String(e).slice(0, 140)));
     page.on("console", m => { if (m.type() === "error") errs.push(m.text().slice(0, 140)); });
@@ -329,7 +339,10 @@ report("I2) both surfaces name the same right-to-left languages",
      rewritten to "/", and a reload fell back to whatever the RECIPIENT had
      stored. Every other language kept working, which is why it hid. */
   {
-    const { ctx, page } = await open(SITE + "?lang=my", 390, "en");
+    /* the recipient's OWN stored site language must differ from the link's, or
+       the reload falls back to DEF — which is the value being asserted, and the
+       assertion cannot fail */
+    const { ctx, page } = await open(SITE + "?lang=my", 390, "en", "en");
     const first = await page.evaluate(() => ({ lang: document.documentElement.lang, search: location.search }));
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForTimeout(500);
@@ -338,6 +351,47 @@ report("I2) both surfaces name the same right-to-left languages",
       first.lang === "my" && first.search === "?lang=my" &&
       again.lang === "my" && again.search === "?lang=my",
       { first, again });
+    await ctx.close();
+  }
+
+  /* ---- H5) THE SHARE SURVIVES THE DOOR ----
+     ?lang= exists so a studio can send a Thai client a link that arrives in
+     Thai. Until v5.39.0 that worked because the landing WROTE hnk_ws_lang —
+     the wrong mechanism, since merely opening the site then reset the language
+     of the paid app. v5.39.0 removed the write and, with it, the journey:
+     measured on both v5.39.0 and the first cut of v5.40.0, /?lang=th rendered
+     a fully Thai landing whose own gold button opened the app in Burmese, for
+     36 of 37 locales. The language rides the outbound link now and the app
+     applies it for that visit only — so the share works AND nothing is stored. */
+  for (const want of ["th", "ur"]) {
+    const { ctx, page } = await open(SITE + "?lang=" + want, 390);
+    const cta = await page.evaluate(() => {
+      const a = document.querySelector('a[href^="app/"]');
+      return { href: a && a.getAttribute("href"), siteLang: document.documentElement.lang };
+    });
+    await page.click('a[href^="app/"]');
+    await page.waitForTimeout(2200);
+    const app = await page.evaluate(() => ({
+      lang: typeof LANG !== "undefined" ? LANG : "?",
+      dir: document.documentElement.dir,
+      stored: (() => { try { return localStorage.getItem("hnk_ws_lang"); } catch (e) { return "(blocked)"; } })(),
+    }));
+    report("H5) a shared ?lang=" + want + " link opens the APP in " + want + ", and still stores nothing",
+      cta.siteLang === want && /lang=/.test(cta.href || "") &&
+      app.lang === want && app.stored === null &&
+      (want !== "ur" || app.dir === "rtl"),
+      { cta, app });
+    await ctx.close();
+  }
+  {
+    /* and the default language must not put a redundant parameter on the link */
+    const { ctx, page } = await open(SITE, 390);
+    const href = await page.evaluate(() => {
+      const a = document.querySelector('a[href^="app/"]');
+      return a && a.getAttribute("href");
+    });
+    report("H6) the default language leaves the app links clean",
+      href === "app/", { href });
     await ctx.close();
   }
 
