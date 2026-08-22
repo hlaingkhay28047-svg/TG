@@ -471,8 +471,16 @@ begin
   elsif new.kind = 'join_first' then
     -- v5.34 — the one-time joining fee also opens the first period, and how
     -- long that period is belongs to the owner, not to this file. Default 1.
+    -- v5.39.0 — LIMIT without ORDER BY does not pick a row, it picks whatever
+    -- the planner emits first. With the one row this table is meant to hold
+    -- that is moot; with two, the period an approved join_first opens could
+    -- differ from the price the client quoted, which reads its own copy. ctid
+    -- is ordered on rather than a named column because this file only ALTERs
+    -- app_settings (see above) and so cannot promise any particular column
+    -- exists; every table has ctid. Deterministic is the most this can be —
+    -- AGREEING with the client requires app_settings to hold exactly one row.
     select coalesce(nullif(a.join_first_months, 0), 1) into months
-      from public.app_settings a limit 1;
+      from public.app_settings a order by a.ctid limit 1;
     months := coalesce(months, 1);
   end if;
 

@@ -258,7 +258,7 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   // code read `r.status===400 || r.ok` as "valid" and saved the bad key.
   const c5 = await page.evaluate(async () => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-    switchPage("pgSetup");
+    switchPage("pgHome");
     const saved = state.key;
     try { localStorage.removeItem(LS_KEY); } catch (e) {}
     state.key = "";
@@ -274,7 +274,13 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
       msg: document.getElementById("stKey").textContent,
       cls: document.getElementById("stKey").className,
       stateKey: state.key, stored: ls, offers: window.__offers,
-      expected: t("st_key_invalid")
+      expected: t("st_key_invalid"),
+      /* v5.39.0 — this section used to switchPage("pgSetup"), an id that has
+         not existed since the v4.27 nav regroup. switchPage() left NO page
+         displayed and the whole section ran against a blank app. Reporting
+         what actually landed makes a dead id fail here instead of quietly
+         emptying the screen. */
+      landed: (document.querySelector(".page.on") || {}).id || ""
     };
     if (typeof realOffer === "function") window.pendingOffer = realOffer;
     window.__keyStatus = 200;
@@ -283,13 +289,14 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     return out;
   });
   report("5 G1: a 400 + API_KEY_INVALID reply is rejected — st_key_invalid shown, key not saved to state or localStorage, no pending-intent offer",
+    c5.landed === "pgHome" &&
     c5.msg === c5.expected && c5.cls.indexOf("err") >= 0 && !c5.stateKey && !c5.stored && c5.offers === 0,
     JSON.stringify(c5));
 
   // ---------------------------------------------------------------- 6) Wizard sync
   const c6 = await page.evaluate(async () => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-    switchPage("pgWorkflows");
+    switchPage("pgWf");
     state.rhKey = "TEST_RH_KEY"; renderRhProviderOption();
     var cfg = rhCfg(); cfg.activeModel = "upscale-pro"; rhSaveCfg(cfg);
     document.querySelectorAll("#wfHost .grp").forEach(g => g.classList.add("open"));
@@ -319,10 +326,11 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     cfg.activeModel = "nano-banana-2"; rhSaveCfg(cfg);
     document.getElementById("selProvider").value = "gemini";
     if (document.getElementById("selProvider").onchange) document.getElementById("selProvider").onchange();
-    return { rh, gm };
+    return { rh, gm, landed: (document.querySelector(".page.on") || {}).id || "" };
   });
   report("6 Wizard sync: switching the step-3 provider clone to an upscale-kind RunningHub model hides Ratio/Quality/Count on BOTH the main card and the clones; switching back restores them",
-    !c6.skip && c6.rh.mainRatio && c6.rh.cloneRatio && c6.rh.mainQual && c6.rh.cloneQual
+    !c6.skip && c6.landed === "pgWf" &&
+    c6.rh.mainRatio && c6.rh.cloneRatio && c6.rh.mainQual && c6.rh.cloneQual
     && c6.rh.mainCount && c6.rh.cloneCount && !c6.gm.mainRatio && !c6.gm.cloneRatio,
     JSON.stringify(c6));
 

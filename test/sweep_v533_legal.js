@@ -39,6 +39,14 @@
    G) 320px wide: no sideways scroll, every link clears 44px.
    H) The two pages were emitted from one shell — their <style> and <script>
       blocks are byte-identical.
+   I) v5.39.0 — OPENING A LEGAL PAGE DOES NOT RESET THE APP'S LANGUAGE. These
+      pages show two languages; the app ships 37 and reads the same
+      localStorage key. show() used to write that key on every load with the
+      value clamped to my/en, so a Gujarati or Urdu customer who tapped
+      "Privacy Policy" in the About panel found the whole paid Web Studio in
+      English the next time they opened it — and an Urdu customer lost
+      right-to-left with it. The key is read here, never written; an explicit
+      tap on the toggle is remembered under the pages' own key instead.
 
    Usage: node test/sweep_v533_legal.js   (no server needed) */
 const { chromium } = require("playwright-core");
@@ -152,6 +160,35 @@ report("F) both pages are linked from the landing footer and from inside the app
       page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
       await page.goto(ORIGIN + "/" + name + "/", { waitUntil: "load" });
       await page.waitForTimeout(250);
+
+      /* I) — seed a third-party app language and prove the page leaves it
+         alone, both on load and after a real toggle press. gu is deliberate:
+         it is one of the 35 locales these pages cannot show, which is exactly
+         the case that was being silently overwritten. */
+      await page.evaluate(() => { try { localStorage.setItem("hnk_ws_lang", "gu"); } catch (e) {} });
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(200);
+      const langAfterLoad = await page.evaluate(() => {
+        try { return localStorage.getItem("hnk_ws_lang"); } catch (e) { return "(blocked)"; }
+      });
+      await page.click('.langbar button[data-set="en"]');
+      await page.waitForTimeout(150);
+      const langAfterTap = await page.evaluate(() => {
+        try {
+          return { shared: localStorage.getItem("hnk_ws_lang"),
+                   own: localStorage.getItem("hnk_legal_lang") };
+        } catch (e) { return { shared: "(blocked)", own: "(blocked)" }; }
+      });
+      if (width === 390) {
+        report("I) " + name + " never rewrites the app's language, on load or on a toggle press",
+          langAfterLoad === "gu" && langAfterTap.shared === "gu" && langAfterTap.own === "en",
+          { langAfterLoad, langAfterTap });
+      }
+      /* back to a clean slate for the assertions below, which expect the
+         Burmese default to be what opens */
+      await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(200);
 
       const shown = await page.evaluate(() => {
         const secs = [...document.querySelectorAll("[data-lang]")];

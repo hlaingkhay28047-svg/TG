@@ -43,6 +43,14 @@
       pushing sess.exp forward forever, so it can never answer "how long since
       this person typed a password".
    G) No page errors in any state.
+   W) v5.39.0 — THE WALLED DOOR HAS A HANDLE. Every outbound human route in
+      the app lives inside #cardAbout, which the wall hides, so a customer who
+      had paid and was waiting on an admin saw a payment demand above a shut
+      door with the studio's own Telegram and phone numbers display:none on
+      the same page. #wallHelp carries those links in every wall state, and it
+      CLONES them from the About card so a phone number still has one home.
+   W3) The "checking" wall says something and offers a way to act on it. It
+      used to be a heading with an empty paragraph under it and no control.
 
    Usage: PORT=8931 node test/sweep_v530_accesswall.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
@@ -107,6 +115,13 @@ async function armSupabase(page, prof, mode) {
       return route.fulfill({ status: 503, contentType: "application/json",
                              body: JSON.stringify({ error: "service unavailable" }) });
     }
+    /* v5.39.0 — the first profile read never settles, later ones answer. That
+       is the state the retry button exists for: the app is stuck on
+       "checking" and only a NEW request can move it. */
+    if (mode === "hangThenOk" && url.indexOf("/rest/v1/profiles") >= 0) {
+      if (!page.__hangHit) { page.__hangHit = 1; return; }
+      return json(prof);
+    }
     if (mode === "profileOnce" && url.indexOf("/rest/v1/profiles") >= 0) {
       if (!page.__profileHit) { page.__profileHit = 1; return route.abort("connectionreset"); }
       return json(prof);
@@ -157,6 +172,36 @@ async function look(browser, sess, prof, label) {
         return !!e && e.getClientRects().length > 0; })(),
       adminCard: (function(){ var e = document.getElementById("cardAdmin");
         return !!e && getComputedStyle(e).display !== "none"; })(),
+      /* v5.39.0 — the contact + legal routes, as they render behind the wall */
+      help: (function(){
+        var box = document.getElementById("wallHelp");
+        var out = { count: 0, visible: 0, hrefs: [] };
+        if (!box) return out;
+        var a = box.getElementsByTagName("a"), i;
+        out.count = a.length;
+        var docW = document.documentElement.clientWidth, r;
+        out.small = 0; out.outside = 0;
+        for (i = 0; i < a.length; i++){
+          out.hrefs.push(a[i].getAttribute("href") || "");
+          if (a[i].getClientRects().length > 0) out.visible++;
+          r = a[i].getBoundingClientRect();
+          /* a contact route nobody can hit is not a contact route */
+          if (r.height < 44) out.small++;
+          if (r.left < 0 || r.right > docW + 1) out.outside++;
+        }
+        return out;
+      })(),
+      /* ...and the single source they are supposed to be copies of */
+      aboutHrefs: (function(){
+        var ids = ["aboutLegal", "aboutContacts"], out = [], k, i, el, a;
+        for (k = 0; k < ids.length; k++){
+          el = document.getElementById(ids[k]); if (!el) continue;
+          a = el.getElementsByTagName("a");
+          for (i = 0; i < a.length; i++) out.push(a[i].getAttribute("href") || "");
+        }
+        return out;
+      })(),
+      noteP: ((document.getElementById("wallP") || {}).textContent || "").trim(),
       isAdmin: (typeof admIsAdmin === "function") ? admIsAdmin() : "(none)",
     };
   });
@@ -202,6 +247,30 @@ async function look(browser, sess, prof, label) {
   report("D) 'your Premium ended' and 'Premium required' are different messages",
     !!out.expired.head && !!out.never.head && out.expired.head !== out.never.head,
     { expired: out.expired.head, never: out.never.head });
+
+  /* ---- W: the door has a handle ---- */
+  const wantedRoutes = [/^\/privacy\/$/, /^\/terms\/$/, /t\.me\//, /^tel:/];
+  const doorless = walled.filter(k => {
+    const h = out[k].help;
+    if (!h || h.count < 5 || h.visible !== h.count) return true;
+    if (h.small > 0 || h.outside > 0) return true;
+    return wantedRoutes.some(re => !h.hrefs.some(x => re.test(x)));
+  });
+  report("W) every wall state offers privacy, terms, Telegram and a phone number, all rendered",
+    doorless.length === 0,
+    doorless.map(k => ({ state: k, help: out[k].help })));
+
+  const drifted = walled.filter(k => {
+    const a = (out[k].help.hrefs || []).slice().sort().join("|");
+    const b = (out[k].aboutHrefs || []).slice().sort().join("|");
+    return !a || a !== b;
+  });
+  report("W2) the wall's routes are the About card's routes, not a second copy",
+    drifted.length === 0,
+    drifted.map(k => ({ state: k, wall: out[k].help.hrefs, about: out[k].aboutHrefs })));
+
+  report("W3) the 'checking' wall says something under its heading",
+    out.checking.noteP.length > 10, { noteP: out.checking.noteP });
 
   /* ---- H: the way out must stay open ----
      Sign-out lives inside accGrpAuth, which accBoot collapses the moment there
@@ -626,6 +695,58 @@ async function look(browser, sess, prof, label) {
       after.state === "" && !after.walled,
       { before, calls: profileCalls, after });
     await hp.close();
+  }
+
+  /* ---- W4: the retry control, end to end ----
+     Armed on a 4s delay on purpose (a button that flashes on every healthy
+     boot teaches people to ignore it), so this waits past it. The first
+     profile read never settles; the tap issues a second one, which answers,
+     and the wall comes down without a reload. */
+  {
+    const rp = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    rp.on("pageerror", e => errs.push("retry: " + String(e).slice(0, 160)));
+    await armSupabase(rp, { id: "u-test", plan_status: "active", plan_expires_at: future }, "hangThenOk");
+    await rp.addInitScript(s => {
+      try {
+        localStorage.setItem("hnk_ws_onboarded", "1");
+        localStorage.setItem("hnk_acc_sess_v1", JSON.stringify(s));
+        localStorage.setItem("hnk_acc_login_at", String(Date.now()));
+      } catch (e) {}
+      /* Sample the button from INSIDE the page, one second after the document
+         starts. Sampling from the harness after goto() measured wall-clock
+         that included however long networkidle took with a request deliberately
+         left hanging — which is not the clock the 4s arming delay runs on. */
+      try {
+        setTimeout(function(){
+          var b = document.getElementById("wallRetry");
+          window.__retryEarly = !!b && b.getClientRects().length > 0;
+        }, 1000);
+      } catch (e) {}
+    }, SESS);
+    await rp.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "domcontentloaded" });
+    await rp.waitForTimeout(1600);
+    const early = await rp.evaluate(() => {
+      const b = document.getElementById("wallRetry");
+      return { state: appWallState(), shown: window.__retryEarly,
+               nowShown: !!b && b.getClientRects().length > 0 };
+    });
+    await rp.waitForTimeout(4200);
+    const armed = await rp.evaluate(() => {
+      const b = document.getElementById("wallRetry");
+      return { state: appWallState(), shown: !!b && b.getClientRects().length > 0,
+               label: (b && b.textContent || "").trim() };
+    });
+    if (armed.shown) await rp.click("#wallRetry");
+    await rp.waitForTimeout(2000);
+    const done = await rp.evaluate(() => ({
+      state: appWallState(), walled: document.body.classList.contains("wall")
+    }));
+    report("W4) 'checking' arms a retry after a delay, and the tap clears the wall",
+      early.state === "checking" && early.shown === false &&
+      armed.shown === true && armed.label.length > 0 &&
+      done.state === "" && done.walled === false,
+      { early, armed, done });
+    await rp.close();
   }
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));

@@ -49,6 +49,7 @@
 
    Usage: PORT=8931 node test/sweep_v529_providerhint.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const fs = require("fs");
 const path = require("path");
 const PORT = process.env.PORT || 8931;
@@ -121,8 +122,16 @@ const readPicker = page => page.evaluate(() => {
   };
 });
 
+/* v5.39.0 — E AND H WERE BOTH UNFALSIFIABLE. Neither seeded an account, so the
+   access wall pinned the app to pgHome before either tap happened: "lands on
+   the Setup page" was already true, and would have stayed true with the tap
+   handler deleted. The other half of E was `!!document.getElementById("cardRh")`
+   — a node the static HTML ships unconditionally, so it could not detect
+   setupJump failing either. Both now start somewhere else and assert the tap
+   MOVED them, and E records the element setupJump actually scrolled to rather
+   than asking whether a div exists. */
 (async () => {
-  const browser = await chromium.launch();
+  const browser = withPremium(await chromium.launch());
   const errs = [];
 
   /* ---- B + C: the reported case, a Gemini key alone ---- */
@@ -154,15 +163,31 @@ const readPicker = page => page.evaluate(() => {
     { shownInRow: shown, keyAloneUnlocks: only.arrayTotal, rawArrayTotal: only.rawTotal });
 
   /* ---- E: the tap is the point of the row ---- */
+  const before = await p1.evaluate(() => {
+    /* start somewhere the tap has to move us AWAY from, and record what
+       setupJump scrolls to — the real effect, rather than whether a div the
+       HTML always ships happens to exist */
+    if (typeof switchPage === "function") switchPage("pgWf");
+    window.__scrolled = [];
+    const real = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function () {
+      try { window.__scrolled.push(this.id || this.className || "?"); } catch (e) {}
+      return real.apply(this, arguments);
+    };
+    return (document.querySelector(".page.on") || {}).id || "none";
+  });
+  await p1.waitForTimeout(300);
   await p1.evaluate(() => { document.querySelector(".hsl-op.lock").click(); });
   await p1.waitForTimeout(800);
   const nav = await p1.evaluate(() => ({
     page: (document.querySelector(".page.on") || {}).id || "none",
     popOpen: !!document.querySelector(".hsl-pop"),
-    cardRh: !!document.getElementById("cardRh"),
+    scrolled: window.__scrolled || [],
   }));
-  report("E) tapping a locked row closes the picker and lands on the Setup page",
-    nav.page === "pgHome" && !nav.popOpen && nav.cardRh, nav);
+  report("E) tapping a locked row closes the picker, moves to Setup and scrolls to the RunningHub card",
+    before !== "pgHome" && nav.page === "pgHome" && !nav.popOpen &&
+    nav.scrolled.indexOf("cardRh") >= 0,
+    { before, nav });
   await p1.close();
 
   /* ---- D: it must disappear once there is nothing to say ---- */
@@ -212,6 +237,7 @@ const readPicker = page => page.evaluate(() => {
     if (typeof renderRefs === "function") renderRefs();
     switchPage("pgWf");
     await new Promise(r => setTimeout(r, 700));
+    const startedOn = (document.querySelector(".page.on") || {}).id || "none";
     const card = document.querySelector("#pgWf .wfmini, #pgWf .pcard");
     if (!card) return { reachedClone: false, why: "no workflow card" };
     card.click();
@@ -232,7 +258,7 @@ const readPicker = page => page.evaluate(() => {
     if (row) row.click();
     await new Promise(r => setTimeout(r, 800));
     return {
-      reachedClone: true, lockedRowsInWizard: locked,
+      reachedClone: true, lockedRowsInWizard: locked, startedOn,
       wizStillOpen: /(^|\s)on(\s|$)/.test(document.getElementById("wiz").className),
       bodyOverflow: document.body.style.overflow,
       page: (document.querySelector(".page.on") || {}).id || "none",
@@ -243,7 +269,8 @@ const readPicker = page => page.evaluate(() => {
   report(wiz.reachedClone
       ? "H) in the wizard the hint shows, and tapping it dismisses the wizard cleanly"
       : "H) the wizard's provider clone was not reached — this assertion proved nothing",
-    wiz.reachedClone === true && wiz.lockedRowsInWizard > 0 && wiz.wizStillOpen === false &&
+    wiz.reachedClone === true && wiz.startedOn === "pgWf" &&
+    wiz.lockedRowsInWizard > 0 && wiz.wizStillOpen === false &&
     wiz.bodyOverflow === "" && wiz.page === "pgHome" && wiz.popStillOpen === false,
     wiz);
   await p5.close();
