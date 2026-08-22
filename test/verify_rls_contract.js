@@ -218,6 +218,44 @@ for (const fn of Object.keys(defAt)) {
 report("G) no policy or trigger references a function before it is defined",
   tooEarly.length === 0, tooEarly);
 
+/* ---- H) the file can build the database it protects ----
+
+   For eleven releases every statement in schema.sql ALTERed, and nothing
+   CREATEd: the four tables were made by hand in the dashboard when the project
+   was first stood up and that work was never written down. Applying the file to
+   a project without them — a new region, a restored backup, a second
+   environment, or simply the wrong one of two projects in the SQL editor —
+   died on its first statement with
+
+       ERROR: 42P01: relation "public.profiles" does not exist
+
+   and every policy below it, which is the entire point of the file, never ran.
+   The database was left with no tables AND no protection.
+
+   Checks A-G all passed throughout, because each one reads what the file says
+   about tables it assumed into existence. This is the check that reads whether
+   the file can produce them. */
+const created = {};
+for (const m of sql.matchAll(/create\s+table\s+if\s+not\s+exists\s+public\.(\w+)/gi)) {
+  if (!(m[1] in created)) created[m[1]] = m.index;
+}
+const uncreated = [...readTables].filter(t => !(t in created));
+report("H) every table the client fetches is created by this file, not just altered",
+  uncreated.length === 0, { uncreated, created: Object.keys(created) });
+
+/* ---- I) ...and creates it before it touches it ----
+
+   `create table if not exists` placed after the first `alter table` is the same
+   failure with a longer fuse: the ALTER still runs first and still 42P01s. The
+   create has to lead. */
+const late = [];
+for (const t of Object.keys(created)) {
+  const firstTouch = sql.search(new RegExp("alter\\s+table\\s+public\\." + t + "\\b", "i"));
+  if (firstTouch >= 0 && firstTouch < created[t]) late.push({ table: t, alterAt: firstTouch, createAt: created[t] });
+}
+report("I) each table is created before the first statement that alters it",
+  late.length === 0, late);
+
 console.log("      (this file reads the repo only — it proves the schema is complete and " +
   "self-consistent, NOT that the owner has run it in the Supabase dashboard, which no " +
   "test here can do)");
