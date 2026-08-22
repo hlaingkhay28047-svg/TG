@@ -14,8 +14,19 @@
    Pinned contracts:
    A) The overlay ships VISIBLE. Only the "off" class hides it, so a scripting
       fault leaves the panel locked rather than handing it over -- and the app
-      behind it leaves the focus order too, because Tab ignores z-index and a
-      wall you can tab past is a picture of a wall.
+      behind it is display:none while the wall is up, because Tab ignores
+      z-index and a wall you can tab past is a picture of a wall.
+   A4) EVERY CSS PROPERTY THE GATE DECLARES ALREADY APPEARS IN styles.css.
+      The panel runs in Adobe UXP, not a browser, and this test drives
+      Chromium. The first draft of the gate built its wall out of
+      `visibility:hidden` and `pointer-events:none`, positioned it with
+      `inset:0`, and selected with `:not()`, `*` and `[disabled]` -- six
+      constructs the panel's own 37KB stylesheet uses zero times, one of which
+      its header comment names as unsupported outright. Every assertion below
+      passed anyway, because Chromium supports all six. So this check does not
+      ask a browser: it reads the properties out of the gate's <style> and
+      demands each one already be in use somewhere in styles.css, which is
+      37KB of CSS proven in the real renderer by shipping.
    B) No saved session → the login screen, not the panel.
    C) An active plan → the wall comes down, and the header counts the days.
    D) A lapsed plan → locked, with a message that says one payment covers both
@@ -84,6 +95,26 @@ const missing = [...new Set(referenced)].filter(id => !new RegExp(`id="${id}"`).
 report("A3) every id the gate touches exists in index.html", missing.length === 0,
   { missing, checked: [...new Set(referenced)].length });
 
+/* A4) the renderer check. Not a browser question — a question about what this
+   product has already proven works in Adobe UXP by shipping it. */
+const panelCss = fs.readFileSync(path.join(DIR, "styles.css"), "utf8");
+const gateStyle = (indexHtml.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || "";
+const gateBody = gateStyle.replace(/\/\*[\s\S]*?\*\//g, "");
+const gateProps = [...new Set([...gateBody.matchAll(/(?:^|[{;])\s*([a-z-]+)\s*:/g)].map(m => m[1]))];
+const unproven = gateProps.filter(prop => !new RegExp("(?:^|[{;\\s])" + prop + "\\s*:", "m").test(panelCss));
+report("A4) every CSS property the gate declares is one styles.css already ships",
+  gateProps.length > 0 && unproven.length === 0,
+  { unproven, checked: gateProps.length });
+
+/* the selector constructs the panel's own stylesheet never uses */
+const gateSelectors = gateBody.replace(/\{[^}]*\}/g, " ");
+const risky = [[":not(", /:not\(/], ["universal *", /(^|[,\s])\*\s*\{/],
+               ["[attr]", /\[[a-z-]+\]/]]
+  .filter(([, re]) => re.test(gateSelectors) && !re.test(panelCss.replace(/\{[^}]*\}/g, " ")))
+  .map(([name]) => name);
+report("A5) the gate uses no selector construct the panel's own stylesheet avoids",
+  risky.length === 0, { risky });
+
 report("K1) the gate markup offers no way to pay — selling happens on the website",
   !/QR|payment_requests|screenshot|txn_last6/i.test(
     (indexHtml.match(/<div id="hnkGate"[\s\S]*?<\/div>\s*<\/div>/) || [""])[0]), {});
@@ -131,8 +162,13 @@ function initScript(cfg) {
       storage: { localFileSystem: { getDataFolder: function(){ return Promise.resolve(folder); } },
                  formats: { utf8: "utf8" } },
       shell: { openExternal: function(u){ window.__opened = u; return Promise.resolve(); },
-               openPath: function(){ return Promise.resolve(); } },
-      clipboard: { setContent: function(){ return Promise.resolve(); } }
+               openPath: function(){ return Promise.resolve(); } }
+      /* deliberately NO clipboard here. UXP exposes the clipboard as
+         navigator.clipboard, not as a member of the uxp module -- and an
+         earlier version of this shim invented uxp.clipboard, which meant the
+         gate could depend on an API that does not exist and the test would
+         never notice. A fixture that manufactures a platform capability can
+         never catch a dependency on it. */
     };
     var ps = { app: { documents: [] }, core: { executeAsModal: function(){} },
                imaging: {}, action: { batchPlay: function(){ return []; } }, constants: {} };
@@ -155,9 +191,18 @@ function initScript(cfg) {
         { status: s || 200, headers: { "Content-Type": "application/json" } })); };
       if (url.indexOf("panel-version.json") >= 0) return j({ v: window.__cfg.panelVersion });
       if (url.indexOf("grant_type=refresh_token") >= 0) {
-        if (!window.__cfg.refreshOk) return j({ error: "invalid" }, 400);
-        return j({ access_token: "at", refresh_token: "rt2",
-                   user: { id: ${JSON.stringify(UID)}, email: "s@example.com" } });
+        window.__refreshCalls = (window.__refreshCalls || 0) + 1;
+        var n = window.__refreshCalls;
+        var mk = function(){
+          if (window.__cfg.refreshStatus) return j({ error: "boom" }, window.__cfg.refreshStatus);
+          if (!window.__cfg.refreshOk) return j({ error: "invalid" }, 400);
+          var who = (window.__cfg.refreshUsers || [])[n - 1] || window.__cfg.defaultUser;
+          return j({ access_token: "at" + n, refresh_token: "rt" + n,
+                     user: { id: who.id, email: who.email } });
+        };
+        var d = (window.__cfg.refreshDelays || [])[n - 1] || 0;
+        if (!d) return mk();
+        return new Promise(function(res){ setTimeout(function(){ res(mk()); }, d); });
       }
       if (url.indexOf("grant_type=password") >= 0) {
         var b = {}; try { b = JSON.parse((init && init.body) || "{}"); } catch(e){}
@@ -208,7 +253,9 @@ async function run(browser, cfg, after) {
     msg: (document.getElementById("gateLockedMsg").textContent || "").trim(),
     err: (document.getElementById("gateErr").textContent || "").trim(),
     plan: (document.getElementById("brandPlan").textContent || "").trim(),
-    appVis: getComputedStyle(document.getElementById("app")).visibility,
+    appDisplay: getComputedStyle(document.getElementById("app")).display,
+    savedSeenAt: typeof state !== "undefined" ? (state.accSeenAt || 0) : -1,
+    savedRefresh: typeof state !== "undefined" ? (state.accRefresh || "") : "",
     devMsg: t("gate_devlimit"),
     graceMsg: t("gate_grace").replace("{D}", String(gateGraceLeft())),
     status: (document.getElementById("status") || {}).textContent || "",
@@ -226,7 +273,9 @@ async function run(browser, cfg, after) {
   const allErrs = [];
   const allReqs = [];
 
-  const base = { panelVersion: PANEL_VERSION, refreshOk: true, goodPass: "correct-horse" };
+  const UID_B = "22222222-3333-4444-5555-666666666666";
+  const base = { panelVersion: PANEL_VERSION, refreshOk: true, goodPass: "correct-horse",
+                 defaultUser: { id: UID, email: "s@example.com" } };
   const activeProfile = { id: UID, plan_status: "active", plan_expires_at: future(40),
                           allowed_devices: 2, joined_paid: true };
 
@@ -236,7 +285,7 @@ async function run(browser, cfg, after) {
   report("B) with no saved session the panel shows the login screen, not the panel",
     !r.state.hidden && r.state.login && !r.state.locked, r.state);
   report("B2) and the app behind the wall is out of the focus order, not merely covered",
-    r.state.appVis === "hidden", { appVis: r.state.appVis });
+    r.state.appDisplay === "none", { appDisplay: r.state.appDisplay });
 
   /* C) a paying customer */
   r = await run(browser, { ...base, profile: activeProfile,
@@ -245,7 +294,7 @@ async function run(browser, cfg, after) {
   report("C) an active plan takes the wall down and counts the days in the header",
     r.state.hidden && /40/.test(r.state.plan), r.state);
   report("C2) and taking the wall down gives the app back",
-    r.state.appVis === "visible", { appVis: r.state.appVis });
+    r.state.appDisplay !== "none", { appDisplay: r.state.appDisplay });
 
   /* D) lapsed */
   r = await run(browser, { ...base,
@@ -289,16 +338,71 @@ async function run(browser, cfg, after) {
   report("G2) the grace window never outlives the plan's own expiry date",
     !r.state.hidden, r.state);
 
-  /* H) device cap */
+  /* H) device cap — records, never refuses */
   r = await run(browser, { ...base, profile: activeProfile, deviceLimit: true,
     settings: { accRefresh: "rt", accUid: UID } });
   allErrs.push(...r.errs); allReqs.push(...r.state.reqs);
-  /* the panel's default language is Burmese, so an /device/i assertion here
-     would have been an English-only check that passes for the wrong reason --
-     compare against the string the running language actually resolves to */
-  report("H) the device cap locks the panel and names the screen that fixes it",
-    !r.state.hidden && r.state.locked && r.state.err.length > 0 &&
-    r.state.err === r.state.devMsg, r.state);
+  report("H) the device cap records this machine but never locks a paying customer out",
+    r.state.hidden && r.state.appDisplay !== "none", r.state);
+
+  /* O) the auth endpoint failing to answer */
+  r = await run(browser, { ...base, refreshStatus: 503,
+    settings: { accRefresh: "rt", accUid: UID, accProfile: activeProfile,
+                accSeenAt: Date.now() - DAY } });
+  allErrs.push(...r.errs); allReqs.push(...r.state.reqs);
+  report("O1) a 503 from the token endpoint keeps the session and spends grace instead",
+    r.state.hidden && r.state.savedRefresh === "rt", r.state);
+
+  r = await run(browser, { ...base, refreshStatus: 400,
+    settings: { accRefresh: "rt", accUid: UID, accProfile: activeProfile,
+                accSeenAt: Date.now() - DAY } });
+  allErrs.push(...r.errs); allReqs.push(...r.state.reqs);
+  report("O2) a 400 from the token endpoint IS a dead session and clears it",
+    !r.state.hidden && r.state.savedRefresh === "", r.state);
+
+  for (const st of [407, 429, 502, 511]) {
+    r = await run(browser, { ...base, refreshStatus: st,
+      settings: { accRefresh: "rt", accUid: UID, accProfile: activeProfile,
+                  accSeenAt: Date.now() - DAY } });
+    allErrs.push(...r.errs); allReqs.push(...r.state.reqs);
+    report(`O3.${st}) a ${st} is an outage, not a credential verdict`,
+      r.state.hidden && r.state.savedRefresh === "rt", { st, ...r.state });
+  }
+
+  /* Q) a superseded run must not write. Two checks are started back to back
+     with the first refresh deliberately slow; the mock answers them as two
+     DIFFERENT accounts, so whichever one lands on disk is unambiguous. */
+  /* call 1 is gateBoot's own check; calls 2 and 3 are the two started below,
+     and 2 is the slow one. Getting this off by one made the assertion measure
+     the fallback account and report a correct guard as broken. */
+  r = await run(browser, { ...base,
+      refreshDelays: [0, 1500, 0],
+      refreshUsers: [{ id: UID, email: "a@example.com" },
+                     { id: UID, email: "a@example.com" },
+                     { id: UID_B, email: "b@example.com" }],
+      profile: activeProfile,
+      settings: { accRefresh: "rt", accUid: UID } },
+    async (page, st) => {
+      await page.evaluate(() => { gateCheck(); gateCheck(); });
+      await page.waitForTimeout(3200);
+      st.after = await page.evaluate(() => ({
+        uid: state.accUid, email: state.accEmail, run: gateS.run,
+        calls: window.__refreshCalls || 0
+      }));
+    });
+  allErrs.push(...r.errs); allReqs.push(...r.state.reqs);
+  report("Q) the slow superseded run does not restore its own account over the later one",
+    !!r.state.after && r.state.after.calls >= 2 && r.state.after.uid === UID_B &&
+    r.state.after.email === "b@example.com", r.state.after);
+
+  /* P) a refused launch leaves nothing behind to spend offline */
+  r = await run(browser, { ...base,
+    profile: { ...activeProfile, plan_status: "none", plan_expires_at: null },
+    settings: { accRefresh: "rt", accUid: UID, accProfile: activeProfile,
+                accSeenAt: Date.now() - DAY } });
+  allErrs.push(...r.errs); allReqs.push(...r.state.reqs);
+  report("P) a launch that is refused clears the grace stamp rather than renewing it",
+    !r.state.hidden && r.state.savedSeenAt === 0, r.state);
 
   /* I) wrong password */
   r = await run(browser, { ...base, profile: activeProfile, settings: {} },

@@ -41,7 +41,7 @@ const landing = read("docs/index.html");
 const robots = read("docs/robots.txt");
 const sitemap = read("docs/sitemap.xml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
-const releaseDate = "2026-08-21";
+const releaseDate = "2026-08-22";
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
 const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
@@ -126,6 +126,7 @@ try {
     version: (panelMain.match(/const PANEL_VERSION\s*=\s*"([^"]+)"/) || [])[1] || "",
     updateUrl: (panelMain.match(/const PANEL_VERSION_URL\s*=\s*"([^"]+)"/) || [])[1] || "",
     brandVer: (panelIndex.match(/id="brandVer">v([0-9.]+)</) || [])[1] || "",
+    retiredHostHits: (panelMain + panelIndex).split("hlaingkhay28047-svg.github.io").length - 1,
     err: ""
   };
 } catch (error) { panelInternals.err = error.message; }
@@ -228,6 +229,57 @@ check("the panel agrees with itself about which version it is",
 check("the panel's update probe points at the production origin",
   panelInternals.updateUrl === `${productionBase}/download/panel-version.json`,
   panelInternals.updateUrl || "no PANEL_VERSION_URL found");
+/* v5.36.0 — the first version of the check above pulled three named values out
+   of the .ccx and declared the retired host handled. It was not: the panel's
+   mini-browser still led its shortcut row with two links to
+   hlaingkhay28047-svg.github.io, and WEB_ALLOWED still whitelisted it. Naming
+   the places to look is how a check misses the place you did not name, so this
+   one reads the two files whole. */
+check("the retired GitHub Pages host appears nowhere inside the panel",
+  panelInternals.retiredHostHits === 0,
+  `${panelInternals.retiredHostHits} reference(s) in the shipped main.js/index.html`);
+/* v5.36.0 — WHERE THE BUTTONS GO.
+
+   Ninety-five test scripts, and not one of them read an href. This wave found
+   out the hard way: a single unbounded string replace, meant for the panel
+   download button, also hit the hero's "Try Web Studio — no install" CTA and
+   the Web Studio section's CTA, because all three shared a prefix. For one
+   commit the landing page's primary top-of-funnel button, in all 37 languages,
+   started a 35MB Photoshop-plugin download instead of opening the web app. The
+   whole suite stayed green, because every landing assertion in it reads TEXT.
+
+   Neither list below names a URL. The Web-Studio CTAs must resolve to the app,
+   and every download must be the .ccx that panel-version.json currently names —
+   so a version bump that misses a link, or another careless replace, is red
+   here rather than live. */
+const anchors = [...landing.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(m => ({
+  attrs: m[1],
+  href: (m[1].match(/\bhref="([^"]*)"/) || [])[1] || "",
+  download: /\bdownload\b(?![-\w])/.test(m[1]),
+  key: (m[2].match(/data-i18n="([^"]+)"/) || [])[1] || "",
+}));
+const webStudioCtaKeys = ["nav.cta", "hero.cta1", "s4.cta", "duo1.cta"];
+const ctaAnchors = anchors.filter(a => webStudioCtaKeys.includes(a.key));
+const misroutedCtas = ctaAnchors.filter(a => a.href !== "app/" || a.download)
+  .map(a => `${a.key} -> ${a.href}${a.download ? " [download]" : ""}`);
+check("every Web Studio call to action opens the web app",
+  ctaAnchors.length === webStudioCtaKeys.length && misroutedCtas.length === 0,
+  misroutedCtas.length ? misroutedCtas.join("; ")
+    : `found ${ctaAnchors.length} of ${webStudioCtaKeys.length} CTAs`);
+
+const expectedCcx = `download/HNK_Ai_Panel_v${panelVersion}.ccx`;
+const downloads = anchors.filter(a => a.download);
+const wrongDownloads = downloads.filter(a => a.href !== expectedCcx).map(a => `${a.key || "(no key)"} -> ${a.href}`);
+check("every download link on the landing is the published panel archive",
+  downloads.length > 0 && wrongDownloads.length === 0,
+  wrongDownloads.length ? wrongDownloads.join("; ") : `${downloads.length} download link(s), all ${expectedCcx}`);
+
+/* the sticky CTA is cloned in JS, so its destination lives in a string literal
+   rather than in the markup the two checks above can see */
+check("the sticky call to action clone also opens the web app",
+  /a\.href\s*=\s*"app\/"\s*;[\s\S]{0,400}?a\.setAttribute\("data-i18n",\s*"hero\.cta1"\)/.test(landing),
+  "the scripted sticky CTA no longer points at app/");
+
 check("retired GitHub Pages and repository URLs are absent",
   ![landing, html, robots, sitemap].some(value => value.includes("hlaingkhay28047-svg.github.io/TG")) &&
   !landing.includes("hlaingkhay28047-svg/HNK-Ai-V1") &&

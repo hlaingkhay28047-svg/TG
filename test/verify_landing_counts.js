@@ -229,6 +229,19 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
      this reports every locale still quoting the old total. */
   const ciTests = (CI.match(/node test\//g) || []).length;
   const claimKeys = ["badge.tests", "duo2.li4", "s5.dlnote"];
+  /* The two <meta> descriptions are the copy a Messenger or Telegram link
+     preview shows, and they carry the count in raw markup rather than in an
+     i18n record — so the first version of this check, which read only the
+     records, would have gone green on a wave that left both share cards
+     quoting a stale total to everyone who saw the link. */
+  const metaClaims = [...LANDING.matchAll(/<meta[^>]*(?:name="description"|property="og:description"|name="twitter:description")[^>]*content="([^"]*)"/g)]
+    .map(m => m[1]);
+  /* the metas also carry the library, workflow and language totals, which
+     check C already owns — here only the number wearing the word "tests" is
+     this check's business */
+  const metaTestNumbers = [...new Set(metaClaims.flatMap(t =>
+    [...t.matchAll(/(\d+)\s*tests?\b/gi)].map(m => m[1])))];
+
   const claimText = claimKeys.flatMap(k =>
     [...LANDING.matchAll(new RegExp('"' + k.replace(".", "\\.") + '"\\s*:\\s*(\\{[^}]*\\}|"(?:[^"\\\\]|\\\\.)*")', "g"))]
       .map(m => m[1]));
@@ -236,16 +249,19 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
     .replace(/v?\d+\.\d+\.\d+/g, " ")     /* Panel v6.22.0 */
     .replace(/\d+\s*MB/gi, " ");            /* (35MB) */
   const numbers = [...new Set(stripped.match(/\d+/g) || [])];
+
   /* each key appears once in the main dictionary and once per extra locale, so
      the useful assertion is that none of the three is MISSING -- not that there
      are exactly three */
   const foundKeys = claimKeys.filter(k =>
     new RegExp('"' + k.replace(".", "\\.") + '"\\s*:').test(LANDING));
   report("H) every advertised test count equals the number of scripts CI runs",
+    metaTestNumbers.length > 0 && metaTestNumbers.every(n => n === String(ciTests)) &&
     foundKeys.length === claimKeys.length && numbers.length > 0 &&
     numbers.every(n => n === String(ciTests)),
-    { ciTests, found: numbers, records: claimText.length, missingKeys:
-      claimKeys.filter(k => foundKeys.indexOf(k) < 0) });
+    { ciTests, inRecords: numbers, inShareCards: metaTestNumbers,
+      records: claimText.length,
+      missingKeys: claimKeys.filter(k => foundKeys.indexOf(k) < 0) });
 
   /* ---- G) the share sheet ---- */
   const shareFb = (APP.match(/shareTapCount\s*=\s*\([^)]*\)\s*\|\|\s*"(\d+)"/) || [])[1];

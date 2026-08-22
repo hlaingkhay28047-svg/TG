@@ -179,7 +179,7 @@ def page(title_my, title_en, body_my, body_en, other_href, other_label_my, other
 </html>
 """
 
-UPDATED = "2026-08-21"
+UPDATED = "2026-08-22"
 
 # ---------------------------------------------------------------- privacy
 PRIV_MY = """<p>HNK Create Studio က သင့်ရဲ့ ဓာတ်ပုံတွေကို ကျွန်တော်တို့ဆာဗာပေါ် <b>လုံးဝ မတင်ပါဘူး</b>။

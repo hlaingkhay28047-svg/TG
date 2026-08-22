@@ -84,13 +84,18 @@ website quotes them, and the panel only ever says "buy or renew on the website".
 
 Three things the gate does beyond letting people in:
 
-- **Registers the panel as a device.** It writes to the same `devices` table
-  with a "Photoshop panel" label, so the owner can see which machines run it
-  and the `allowed_devices` cap covers both products. Unlike the web app —
-  which deliberately never fails a login on the cap — the panel *does* refuse,
-  because a panel that shrugged at the cap would make one account worth
-  unlimited installs, which is the hole this release closes. The message names
-  the screen that fixes it.
+- **Records the panel as a device.** It writes to the same `devices` table with
+  a "Photoshop panel" label, so the owner can see which machines are running
+  it. It does **not** gate on `allowed_devices`. A draft of this release did,
+  on the reasoning that a panel which shrugged made one account worth unlimited
+  installs — and that was wrong twice over. The web app has never failed a
+  login on the cap, so the panel refusing would punish the same customer
+  differently on two products bought with one payment, while the buy screen
+  this wave added promises in every language that one payment covers both. And
+  `allowed_devices` defaults to 2, which a studio spends on a phone and a
+  desktop browser before Photoshop is even opened. Whether the panel should
+  consume a paid device slot is a pricing decision for the owner to make
+  deliberately, not something to bolt on inside a gate.
 - **Counts the days in the header**, in gold for the last week, so a plan does
   not quietly run out mid-shoot.
 - **Keeps working offline for seven days** after a confirmed check — a studio
@@ -101,8 +106,23 @@ Three things the gate does beyond letting people in:
 gate is client-side JavaScript: somebody willing to open `main.js` in a text
 editor can delete it, exactly as somebody can replay the web app's requests by
 hand. The overlay ships *visible* and JavaScript is what takes it down, so a
-parse error or a thrown exception leaves the panel locked rather than open —
-but that is fail-closed behaviour, not enforcement. What it buys is real and
+thrown exception leaves the panel locked rather than open — but that is
+fail-closed behaviour, not enforcement, and one residual is worth naming: the
+wall hides the app with `display:none` set from JavaScript, so a failure early
+enough that *no* panel script runs would leave the app in the DOM behind an
+opaque cover. That panel would also have no working buttons, which is why the
+trade was taken this way round rather than shipping `.app` hidden and risking a
+permanently blank panel for a paying customer.
+
+**The panel runs in Adobe UXP, not a browser**, and `test/verify_panel_gate.js`
+drives Chromium. That gap ate a whole draft of this gate: it positioned the
+wall with `inset:0`, hid the app with `pointer-events:none` carried on a
+`#hnkGate:not(.off) ~ .app` selector — and `inset`, `:not()` and `~` appear zero
+times in the panel's own 860-line stylesheet, while `pointer-events` is named as
+unsupported both in that stylesheet's header and again in `main.js`. Every
+assertion passed, because Chromium supports all of it. Check A4 now derives the allowed property set from
+`styles.css` itself, so the browser is no longer the authority on what the
+renderer accepts. What it buys is real and
 limited: the honest majority is asked to pay, the owner sees who is running the
 panel, and a lapsed plan stops working by itself instead of needing a
 re-download.
