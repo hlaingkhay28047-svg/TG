@@ -62,6 +62,135 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
+-- 0. the tables themselves
+--
+-- WHY THIS SECTION EXISTS, and why it did not for eleven releases. Everything
+-- below section 1 ALTERs, policies, triggers, indexes. None of it CREATED
+-- anything, because the four tables were made by hand in the dashboard when the
+-- project was first stood up, and that work was never written down. The file
+-- said so in its own header and the app repeated it at accLoadProfile: "the
+-- trigger that creates profiles rows lives in the owner's Supabase project and
+-- NOT in this repository."
+--
+-- That is survivable right up until the day someone applies this file to a
+-- project that does not already have the tables — a new region, a restored
+-- backup, a second environment, or an owner who reached for the SQL editor of
+-- the wrong one of two projects. Then the very first statement in section 1
+-- fails with
+--
+--     ERROR: 42P01: relation "public.profiles" does not exist
+--
+-- and every later section, including every policy that makes this file worth
+-- running, never executes. The database is left with no tables AND no
+-- protection, which is the worst of the two states it could have been in.
+--
+-- So the tables are declared here, from the contract the header already spells
+-- out. `if not exists` means this section is a no-op on the live project: it
+-- cannot alter, reshape or drop a table that is already there, and the columns
+-- an existing table is missing are added by section 1 exactly as before.
+--
+-- WHAT IS DELIBERATELY ABSENT:
+--
+--   * No foreign key from payment_requests.user_id to profiles.id. The admin
+--     queue at admLoadWho fetches names in a SECOND request and says why:
+--     "profiles and payment_requests have no declared foreign key in this
+--     project, so `select=*,profiles(name,email)` 400s". Declaring one here
+--     would make a fresh project behave differently from the live one — the
+--     embed would start working in one and keep 400ing in the other — which is
+--     precisely the drift this file exists to prevent. Both columns reference
+--     auth.users instead, which gives the integrity without changing the shape
+--     PostgREST sees.
+--
+--   * No trigger creating a profiles row on signup. The app stopped depending
+--     on one in v5.38.0: accLoadProfile reads 406 as "there is no row" and
+--     inserts it through profiles_insert_self, with section 6's guard filling
+--     in the plan, the device cap and the email. A signup trigger would now be
+--     a second writer for the same row and is not worth the race.
+-- ---------------------------------------------------------------------------
+
+-- profiles.id IS the auth user's id — section 6 relies on it
+-- ("profiles.id references auth.users.id") when it takes the email from the
+-- identity provider rather than from the payload.
+create table if not exists public.profiles (
+  id         uuid primary key references auth.users (id) on delete cascade,
+  name       text,
+  email      text,
+  created_at timestamptz not null default now()
+);
+
+-- kind and status are checked here as well as in the policies. The policies
+-- bound what `authenticated` may insert; these bound what ANY writer may leave
+-- behind, including the dashboard and a future migration. The lists are the
+-- header's, verbatim.
+create table if not exists public.payment_requests (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null references auth.users (id) on delete cascade,
+  kind            text not null
+                  check (kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')),
+  txn_last6       text,
+  screenshot_path text,
+  status          text not null default 'pending'
+                  check (status in ('pending','approved','rejected')),
+  reviewed_at     timestamptz,
+  reviewed_by     uuid references auth.users (id),
+  note            text,
+  created_at      timestamptz not null default now()
+);
+
+-- The admin queue reads `order=created_at.desc&limit=100` on every open.
+create index if not exists payment_requests_created_idx
+  on public.payment_requests (created_at desc);
+
+-- accPollOnce and the customer's own history both filter by user_id.
+create index if not exists payment_requests_user_idx
+  on public.payment_requests (user_id);
+
+-- app_settings is a SINGLETON in everything but its declaration. hnk_apply_payment
+-- reads `order by a.ctid limit 1` and the client reads its own copy, so a second
+-- row lets an approved join_first open a different period from the one the buy
+-- screen quoted. It is not constrained to one row here because the live table is
+-- not, and a constraint this file cannot apply to production is a promise it
+-- cannot keep; the admin panel warns when it finds more than one instead.
+-- payment_instructions_my is the fallback every language falls back TO; the
+-- per-language columns (payment_instructions_en, _th, ...) are optional, and a
+-- missing one simply comes back undefined and takes the Burmese text.
+create table if not exists public.app_settings (
+  price_1m                integer,
+  price_3m                integer,
+  price_6m                integer,
+  price_extra_device      integer,
+  payment_instructions_my text
+);
+
+-- ...and it starts with exactly one row, because the buy screen reads row one
+-- and an empty table quotes nothing. Every value is deliberately NULL: the
+-- header lists prices as the owner's to set, and a placeholder price is a real
+-- number a real customer could be charged.
+insert into public.app_settings (price_1m)
+select null
+ where not exists (select 1 from public.app_settings);
+
+create table if not exists public.devices (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  device_id  text not null,
+  label      text,
+  created_at timestamptz not null default now()
+);
+
+-- RLS refuses everything by default, but only for roles that can reach the
+-- table at all. Supabase's default privileges usually grant these; stating them
+-- makes a fresh project work without depending on that, and re-granting an
+-- existing privilege is a no-op. app_settings is readable by anon on purpose —
+-- the buy screen quotes prices before anyone signs in — and writable by nobody,
+-- which section 4b explains at length.
+grant usage on schema public to anon, authenticated;
+grant select                         on public.app_settings     to anon, authenticated;
+grant select, insert, update         on public.profiles         to authenticated;
+grant select, insert, update         on public.payment_requests to authenticated;
+grant select, insert, update, delete on public.devices          to authenticated;
+
+-- ---------------------------------------------------------------------------
 -- 1. columns the client reads
 -- ---------------------------------------------------------------------------
 alter table public.profiles add column if not exists is_admin boolean not null default false;
@@ -301,6 +430,23 @@ declare
   used  integer;
   cap   integer;
 begin
+  -- A RE-REGISTRATION IS NOT A NEW DEVICE, and until this branch existed the
+  -- cap said it was. The unique index below was documented as what makes a
+  -- second POST for the same browser "a no-op collision instead of a new row",
+  -- but a BEFORE INSERT trigger runs BEFORE any index is consulted: at the cap,
+  -- re-registering a browser the customer ALREADY owns raised P0001 rather than
+  -- colliding harmlessly. accRegisterDevice falls through to its POST whenever
+  -- the preceding GET is merely `!ok` -- an expired token, a network blip -- so
+  -- a customer at their limit could be shown "remove an old device" for a
+  -- device that was already in the list, and might delete a real one to obey.
+  -- Returning NULL cancels this INSERT silently, which is precisely the no-op
+  -- the index was meant to produce. The index still backstops the race where
+  -- two concurrent inserts both pass this check.
+  if exists (select 1 from public.devices
+              where user_id = new.user_id and device_id = new.device_id) then
+    return null;
+  end if;
+
   select count(*) into used from public.devices where user_id = new.user_id;
   select coalesce(allowed_devices, 2) into cap from public.profiles where id = new.user_id;
   if cap is null then cap := 2; end if;
