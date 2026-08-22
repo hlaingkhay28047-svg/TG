@@ -22,7 +22,7 @@
      13 SW                still refuses to cache a cross-origin (bearer) response
      14 320/390           no overflow with every accordion + the paywall open
      15 44px              every visible account control clears the touch target
-     16 i18n zero-miss    85 keys x 9 languages, placeholders intact, no emoji
+     16 i18n zero-miss    86 keys x 9 languages, placeholders intact, no emoji
      17 no secrets        the anon key ships in code but is never RENDERED
      18 console           zero console errors / pageerrors across the whole sweep
 
@@ -619,8 +619,8 @@ const SB_FIX = {
     LANG = before;
     return { total: keys.length, missing, emojis, unresolved, badPlace };
   });
-  report("16 i18n zero-miss: TR_V430 holds exactly 85 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, {N}/{M}/{D}/{T} survive every translation, and no value carries an emoji",
-    c16.total === 85 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+  report("16 i18n zero-miss: TR_V430 holds exactly 86 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, {N}/{M}/{D}/{T} survive every translation, and no value carries an emoji",
+    c16.total === 86 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));

@@ -67,6 +67,70 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## The Photoshop panel is behind the same account (v6.22.0)
+
+Until v6.22.0 the `.ccx` was the hole in the paywall. The web app had been
+behind a joining fee plus a monthly fee since v5.31.0, and anybody who found
+the download got the whole panel free, forever. From v6.22.0 the panel opens on
+the same login the web app uses, reads the same `profiles` row, and applies the
+same rule the app's `isPremium()` applies — `plan_status = 'active'` **and** a
+`plan_expires_at` still in the future, both fields, because the server extends
+the date on approval but never sweeps the status back when a plan lapses.
+
+**One account opens both products, and one payment buys the pair.** The joining
+fee and the monthly fee are for the web app *and* the panel together, not one
+each. No amount is written into the panel: prices live in `app_settings`, the
+website quotes them, and the panel only ever says "buy or renew on the website".
+
+Three things the gate does beyond letting people in:
+
+- **Records the panel as a device.** It writes to the same `devices` table with
+  a "Photoshop panel" label, so the owner can see which machines are running
+  it. It does **not** gate on `allowed_devices`. A draft of this release did,
+  on the reasoning that a panel which shrugged made one account worth unlimited
+  installs — and that was wrong twice over. The web app has never failed a
+  login on the cap, so the panel refusing would punish the same customer
+  differently on two products bought with one payment, while the buy screen
+  this wave added promises in every language that one payment covers both. And
+  `allowed_devices` defaults to 2, which a studio spends on a phone and a
+  desktop browser before Photoshop is even opened. Whether the panel should
+  consume a paid device slot is a pricing decision for the owner to make
+  deliberately, not something to bolt on inside a gate.
+- **Counts the days in the header**, in gold for the last week, so a plan does
+  not quietly run out mid-shoot.
+- **Keeps working offline for seven days** after a confirmed check — a studio
+  on location has no internet — and never one hour past the expiry date it was
+  confirmed with. Two fences; whichever is reached first stops the car.
+
+**None of that is a security boundary either.** A `.ccx` is a plain zip and the
+gate is client-side JavaScript: somebody willing to open `main.js` in a text
+editor can delete it, exactly as somebody can replay the web app's requests by
+hand. The overlay ships *visible* and JavaScript is what takes it down, so a
+thrown exception leaves the panel locked rather than open — but that is
+fail-closed behaviour, not enforcement, and one residual is worth naming: the
+wall hides the app with `display:none` set from JavaScript, so a failure early
+enough that *no* panel script runs would leave the app in the DOM behind an
+opaque cover. That panel would also have no working buttons, which is why the
+trade was taken this way round rather than shipping `.app` hidden and risking a
+permanently blank panel for a paying customer.
+
+**The panel runs in Adobe UXP, not a browser**, and `test/verify_panel_gate.js`
+drives Chromium. That gap ate a whole draft of this gate: it positioned the
+wall with `inset:0`, hid the app with `pointer-events:none` carried on a
+`#hnkGate:not(.off) ~ .app` selector — and `inset`, `:not()` and `~` appear zero
+times in the panel's own 860-line stylesheet, while `pointer-events` is named as
+unsupported both in that stylesheet's header and again in `main.js`. Every
+assertion passed, because Chromium supports all of it. Check A4 now derives the allowed property set from
+`styles.css` itself, so the browser is no longer the authority on what the
+renderer accepts. What it buys is real and
+limited: the honest majority is asked to pay, the owner sees who is running the
+panel, and a lapsed plan stops working by itself instead of needing a
+re-download.
+
+`test/verify_panel_gate.js` unzips the shipped artifact and drives the real
+`index.html` in a browser behind a UXP shim, so the assertions are about what
+the wall does, not about which words appear in the file.
+
 ## Right-to-left, and sharing a language (v5.35.0)
 
 Urdu has been in the picker since v4.41 and neither surface ever set `dir`, so
