@@ -27,7 +27,8 @@
    C) The tables the app WRITES have a policy for that verb.
    D) app_settings, which is read anonymously, grants select to `anon` — a
       policy scoped only `to authenticated` would lock out the buy screen.
-   E) No table exposed to the client is left writable by anon.
+   E) No table exposed to the client is left writable by anon — counting a
+      policy with no `to` clause, or `to public`, as granting anon.
    F) Every SECURITY DEFINER function pins search_path, the standard
       privilege-escalation guard.
    G) The functions a policy or trigger references are defined before use, so
@@ -77,10 +78,59 @@ const unprotected = [...readTables].filter(t => !rlsOn.has(t));
 report("A) every table the client fetches has RLS enabled",
   unprotected.length === 0, { unprotected, rlsOn: [...rlsOn].sort() });
 
+/* ---- the policy parser ----
+   v5.39.0: THE `to` CLAUSE IS OPTIONAL IN POSTGRES, AND IT WAS MANDATORY HERE.
+   The old expression required `... for <verb> to <roles> using`, so a policy
+   written in the most ordinary form Postgres accepts —
+
+       create policy p on public.app_settings for update using (true);
+
+   — simply did not match, and a policy that does not match is a policy this
+   file never checks. Omitting `to` means TO PUBLIC, which INCLUDES anon, so
+   the shape that vanished from the parser is exactly the shape that would
+   re-open the PATCH this file's header says would have redirected the
+   studio's revenue. The literal role `public` was invisible for the same
+   reason: checks D and E only ever asked whether the list contained "anon".
+
+   So: `to` is now optional and defaults to ['public'], and rolesInclude()
+   treats public as covering every role. selfTest() below parses deliberately
+   bad policy text so these blind spots fail loudly here rather than being
+   rediscovered by the next audit. */
+const POLICY_RE =
+  /create\s+policy\s+"?(\w+)"?\s+on\s+public\.(\w+)\s+for\s+(\w+)(?:\s+to\s+([\w\s,]+?))?\s+(using|with)/gi;
+function parsePolicies(text) {
+  return [...text.matchAll(POLICY_RE)].map(x => ({
+    name: x[1], table: x[2], verb: x[3].toLowerCase(),
+    /* no `to` clause == TO PUBLIC, per Postgres */
+    roles: (x[4] || "public").split(/[,\s]+/).filter(Boolean).map(r => r.toLowerCase())
+  }));
+}
+/* public is every role, logged in or not — anon included */
+const rolesInclude = (p, role) => p.roles.includes(role) || p.roles.includes("public");
+
+/* ---- parser self-test: the blind spots, as fixtures ---- */
+(function selfTest() {
+  const cases = [
+    { sql: "create policy a on public.t for update using (true);", roles: ["public"], why: "no `to` clause means TO PUBLIC" },
+    { sql: "create policy b on public.t for select to public using (true);", roles: ["public"], why: "literal public" },
+    { sql: "create policy c on public.t for select to anon, authenticated using (true);", roles: ["anon", "authenticated"], why: "role list" },
+    { sql: "create policy d on public.t for insert to authenticated with check (true);", roles: ["authenticated"], why: "with check, not using" }
+  ];
+  const bad = [];
+  for (const c of cases) {
+    const got = parsePolicies(c.sql);
+    if (got.length !== 1 || got[0].roles.join(",") !== c.roles.join(",")) {
+      bad.push({ why: c.why, got: got.map(g => g.roles) });
+    }
+  }
+  /* and the checks that consume it must SEE public as anon */
+  if (!rolesInclude({ roles: ["public"] }, "anon")) bad.push({ why: "public must cover anon" });
+  if (rolesInclude({ roles: ["authenticated"] }, "anon")) bad.push({ why: "authenticated must NOT cover anon" });
+  report("0) the policy parser sees the shapes Postgres accepts", bad.length === 0, bad);
+})();
+
 /* ---- B) and at least one policy, or RLS-on means nobody reads ---- */
-const policies = [...sql.matchAll(
-  /create\s+policy\s+(\w+)\s+on\s+public\.(\w+)\s+for\s+(\w+)\s+to\s+([\w\s,]+?)\s+(using|with)/gi
-)].map(x => ({ name: x[1], table: x[2], verb: x[3].toLowerCase(), roles: x[4].split(/[,\s]+/).filter(Boolean) }));
+const policies = parsePolicies(sql);
 
 const noPolicy = [...readTables].filter(t => !policies.some(p => p.table === t));
 report("B) every such table carries at least one policy",
@@ -108,13 +158,13 @@ report("C) the writes the client makes have a matching policy",
 const anonBroken = [];
 for (const t of anonTables) {
   const sel = policies.filter(p => p.table === t && (p.verb === "select" || p.verb === "all"));
-  if (!sel.length || !sel.some(p => p.roles.includes("anon"))) anonBroken.push({ table: t, policies: sel.map(p => p.name + " to " + p.roles.join("+")) });
+  if (!sel.length || !sel.some(p => rolesInclude(p, "anon"))) anonBroken.push({ table: t, policies: sel.map(p => p.name + " to " + p.roles.join("+")) });
 }
 report("D) tables read before login grant select to the anon role",
   anonBroken.length === 0, anonBroken);
 
 /* ---- E) ...and nothing lets anon WRITE ---- */
-const anonWrite = policies.filter(p => p.roles.includes("anon") && p.verb !== "select");
+const anonWrite = policies.filter(p => rolesInclude(p, "anon") && p.verb !== "select");
 report("E) no policy grants anon anything but select",
   anonWrite.length === 0, anonWrite.map(p => p.name + " for " + p.verb));
 

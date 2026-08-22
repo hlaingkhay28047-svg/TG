@@ -379,6 +379,88 @@ somewhere else. `test/sweep_v533_reset.js` proves the app asks for that URL and
 that the page handles the token responsibly, but no test here can prove the
 dashboard has it.
 
+## Five tests that had stopped testing anything (v5.39.0)
+
+The v5.30 access wall changed what an unauthenticated page load looks like:
+the tab bar is `display:none`, every page but Home is hidden, and `switchPage`
+rewrites every target to `pgHome`. Sweeps written before that kept passing, and
+what they were passing on had quietly become nothing:
+
+| file | what it thought it measured | what it actually measured |
+|---|---|---|
+| `verify_tabbar_reachable.js` | 5 tabs fit a 390px phone | a 0×0 bar, so `scrollWidth > clientWidth` was `0 > 0` |
+| `verify_tabbar_reachable.js` | the gear opens Setup | `pgHome` was already the active page before the click |
+| `verify_phase2_design_tokens.js` | radii on five pages | `pgHome`, five times — and a missing element scored a pass |
+| `sweep_v467_upgrades.js` | a role label fits its tile | 0×0 rectangles, so "fits" and "clipped" were constants |
+| `sweep_v529_providerhint.js` | a locked row navigates to Setup | it was on `pgHome` already; deleting the tap handler still passed |
+| `sweep_v428_upgrades.js` | two sections, on `pgSetup` / `pgWorkflows` | neither id has existed since v4.27 — no page was displayed at all |
+
+Each now seeds `test/_seed_premium.js`, starts somewhere the action has to move
+it away from, and carries a guard that turns "not rendered" back into a
+failure rather than a pass. Two of them found real defects the moment they
+could see: `verify_phase2` reported `pgStudio -> pgMeitu` (an id retired by the
+Meitu/Evoto split), and `sweep_v467` reported the reference-role label clipped
+at every phone width in both languages — `လူ (identity ထိန်း)` needs 101px in a
+76px pill, so it had been rendering as `လူ (identity ထိ…` on every phone since
+v4.67. The pill wraps to two lines now, and the check covers height as well as
+width.
+
+Two other guards were narrowed the same way and widened back:
+`verify_rls_contract.js` required a `to <role>` clause that Postgres makes
+optional — a policy in the most ordinary form, `create policy p on
+public.app_settings for update using (true)`, did not match the parser at all,
+so the one shape that would re-open the bank-account row was the one shape the
+guard could not see. And `sweep_v461_upgrades.js` now fails any language pack
+that carries Myanmar script in a language not written in it, which is how the
+Gujarati pack shipped the Burmese counter word `ခု` and rendered Burmese at
+seven counters for every `gu` customer.
+
+## The walled door had a handle missing (v5.39.0)
+
+Every outbound human route in the web app — the privacy policy, the terms,
+Facebook, Telegram, TikTok and both phone numbers — lives in one card,
+`#cardAbout`. The access wall hides every card on Home except the Account card,
+in all three of its states. So a studio that had already transferred by KBZPay,
+uploaded the slip and was waiting on an admin saw a payment demand above a shut
+door, with the studio's own Telegram and phone numbers rendered `display:none`
+on the same page, and no way to open the terms it had just agreed to. Nothing in
+the app linked back to the landing site where the contact row lives.
+
+The wall note now carries those routes itself. It does not repeat them: it
+**clones** the anchors out of the About card at render time, so a changed phone
+number still has exactly one place to change, and the check in
+`sweep_v533_legal.js` that pins the contact routes identical across both legal
+pages, the landing footer and the app keeps working against one source rather
+than two that can drift. `sweep_v530_accesswall.js` W and W2 assert this in
+every wall state, and W2 is what would catch a second copy being introduced.
+
+The `checking` state got the other half. It was a heading with an empty
+paragraph under it and no control at all — a recoverable state that said so
+nowhere. It now says so, and arms a Retry after four seconds (immediately would
+mean a button that flashes on every healthy boot, which teaches people to
+ignore it). W4 drives the whole path: first profile read never settles, wait
+past the delay, tap, wall down, no reload.
+
+## Two pages that were quietly resetting your language (v5.39.0)
+
+`docs/privacy/` and `docs/terms/` show two languages, Burmese and English. They
+also wrote the language they were showing into `hnk_ws_lang` — the key the web
+app reads for **all 37** of its locales. Opening the privacy policy from the
+About panel therefore reset the whole paid app to English on its next launch,
+and an Urdu customer lost right-to-left with it. Nothing looked wrong at the
+time, which is what made it hard to report.
+
+The shared key is now read-only on those pages: it still decides which of the
+two texts opens, which was the wanted behaviour, and an explicit tap on the
+toggle is remembered under the pages' own `hnk_legal_lang`.
+
+The landing page had the same bug wearing different clothes. `?lang=` exists so
+a studio can send a Thai client a link that arrives in Thai, and the comment
+beside it has always promised the parameter wins "for this visit" while "the
+stored value still decides on a bare visit afterwards". It did not: `apply()`
+persisted on every call, so following a shared link silently rewrote both the
+site language and the app's. `apply(l, transient)` is that comment implemented.
+
 ## Privacy and terms
 
 `docs/privacy/` and `docs/terms/` are real pages, in Burmese and English, on

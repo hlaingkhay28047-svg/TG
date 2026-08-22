@@ -722,6 +722,38 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   report("H2) granting to an address with no account says so rather than failing silently",
     badEmail.length > 0 && /no account/i.test(badEmail), { st: badEmail });
 
+  /* ---- K) an approved DEVICE SLOT is not an approved PLAN ----
+     accPollOnce toasted acc_plan_active on any approved row, so a customer
+     with no plan who paid for one extra device slot was congratulated with
+     "Premium active — 0 days left" and dropped on a panel reading "No Premium
+     yet". schema.sql's extra_device branch bumps allowed_devices and
+     deliberately never touches plan_expires_at, so the slot really was
+     granted; only the sentence was wrong. The replacement needs no new
+     translation — pay_extra and req_approved already ship in every locale. */
+  await boot({ login: session, profile: profile({ plan_status: "none", plan_expires_at: null }),
+               requests: [], devices: [] });
+  await login();
+  const slot = await page.evaluate(async () => {
+    const said = [];
+    const realToast = window.toast;
+    window.toast = function (msg, kind) { said.push(String(msg)); };
+    acc.pending = { id: "req-dev", user_id: acc.sess.uid, kind: "extra_device", status: "pending" };
+    window.__cfg.requests = [{ id: "req-dev", user_id: acc.sess.uid, kind: "extra_device",
+                               status: "approved", amount_mmk: 5000 }];
+    await accPollOnce();
+    window.toast = realToast;
+    const cls = id => { const e = document.getElementById(id); return e ? e.className : "(none)"; };
+    return { said, planGrp: cls("accGrpPlan"), devGrp: cls("accGrpDev"),
+             planLabel: (typeof t === "function") ? t("acc_plan_active") : "",
+             extraLabel: (typeof accKindLabel === "function") ? accKindLabel("extra_device") : "" };
+  });
+  report("K) approving an extra device slot names the slot, not a plan the customer never bought",
+    slot.said.length === 1 &&
+    slot.said[0].indexOf(slot.extraLabel) === 0 &&
+    !/0/.test(slot.said[0]) &&
+    slot.devGrp.indexOf("open") >= 0 && slot.planGrp.indexOf("open") < 0,
+    slot);
+
   report("J) none of the above raised a console error", errs.length === 0, errs.slice(0, 4));
 
   await browser.close();

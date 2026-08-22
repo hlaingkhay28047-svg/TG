@@ -231,19 +231,38 @@ states exactly what is stored, and what is never stored at all.</p>
     for (var j=0;j<bs.length;j++){
       bs[j].setAttribute("aria-pressed", String(bs[j].getAttribute("data-set")===l));
     }
-    try { localStorage.setItem("hnk_ws_lang", l); } catch(e){}
   }
-  var start = "my";
-  try {
-    var v = localStorage.getItem("hnk_ws_lang");
-    if (v === "en") start = "en";
-    else if (v && v !== "my") start = (navigator.language||"en").toLowerCase().indexOf("my")===0 ? "my" : "en";
-  } catch(e){}
+  /* v5.39.0 — show() USED TO WRITE hnk_ws_lang, and show(start) runs on every
+     load with start clamped to "my"/"en". So a customer on any of the 35 other
+     app locales who tapped "Privacy Policy" in the About panel had their whole
+     Web Studio silently reset to English on the next launch — an Urdu customer
+     lost right-to-left with it. Nothing looked wrong at the time, which is what
+     made it hard to report. These two pages carry two languages; the app
+     carries 37, and this page is in no position to speak for it. So the shared
+     key is now READ ONLY here (it still decides which of the two texts opens,
+     which is the behaviour that was wanted), and an explicit tap on the toggle
+     is remembered under this page's own key. docs/reset/index.html has always
+     done the read-only half correctly and was the model. */
+  var LEGAL_KEY = "hnk_legal_lang";
+  function pickStart(){
+    try {
+      var mine = localStorage.getItem(LEGAL_KEY);
+      if (mine === "my" || mine === "en") return mine;
+      var v = localStorage.getItem("hnk_ws_lang");
+      if (v === "en") return "en";
+      if (v && v !== "my") return (navigator.language||"en").toLowerCase().indexOf("my")===0 ? "my" : "en";
+    } catch(e){}
+    return "my";
+  }
   var bs = document.querySelectorAll(".langbar button");
   for (var j=0;j<bs.length;j++){
-    bs[j].addEventListener("click", function(){ show(this.getAttribute("data-set")); });
+    bs[j].addEventListener("click", function(){
+      var l = this.getAttribute("data-set");
+      try { localStorage.setItem(LEGAL_KEY, l); } catch(e){}
+      show(l);
+    });
   }
-  show(start);
+  show(pickStart());
 })();
 </script>
 </body>

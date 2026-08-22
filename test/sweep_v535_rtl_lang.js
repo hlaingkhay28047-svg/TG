@@ -242,7 +242,8 @@ report("I2) both surfaces name the same right-to-left languages",
     report("F) " + (q || "(no parameter)") + " opens in " + want,
       r.lang === want && r.search === wantSearch, r);
     if (q === "?lang=ur") report("F2) a shared Urdu link arrives right-to-left", r.dir === "rtl", r);
-    if (q === "?lang=th") report("H) the choice is stored where the app reads it", r.stored === "th", r);
+    /* H moved below — v5.39.0 changed what ?lang= is allowed to do to
+       storage, and "the choice is stored" is no longer the contract. */
     await ctx.close();
   }
 
@@ -252,6 +253,40 @@ report("I2) both surfaces name the same right-to-left languages",
     const r = await page.evaluate(() => document.documentElement.lang);
     report("F3) a shared link wins over the visitor's stored preference for that visit",
       r === "ko", { lang: r });
+    await ctx.close();
+  }
+
+  /* ---- H) ...FOR THAT VISIT, and no longer than that ----
+     v5.39.0. apply() persisted on every call and the ?lang= branch calls it,
+     so opening a colleague's /?lang=th link silently rewrote hnk_site_lang AND
+     hnk_ws_lang — the second of which is what the paid app reads for all 37 of
+     its locales, so the visitor discovered it the next time they opened
+     /app/. The comment beside the feature has always promised the parameter
+     wins "for this visit" and that "the stored value still decides on a bare
+     visit afterwards"; this pins that promise instead of the old behaviour,
+     which pinned the bug. H2 is the other half: a real pick still persists,
+     because there the visitor actually chose. */
+  {
+    const { ctx, page } = await open(SITE + "?lang=th", 390, "ko");
+    const r = await page.evaluate(() => ({
+      lang: document.documentElement.lang,
+      shared: (() => { try { return localStorage.getItem("hnk_ws_lang"); } catch (e) { return null; } })(),
+      site: (() => { try { return localStorage.getItem("hnk_site_lang"); } catch (e) { return null; } })(),
+    }));
+    report("H) a shared ?lang= link is shown but never stored, on either key",
+      r.lang === "th" && r.shared === "ko" && r.site !== "th", r);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open(SITE, 390, "ko");
+    await setLang(page, "th");
+    await page.waitForTimeout(200);
+    const r = await page.evaluate(() => ({
+      shared: (() => { try { return localStorage.getItem("hnk_ws_lang"); } catch (e) { return null; } })(),
+      site: (() => { try { return localStorage.getItem("hnk_site_lang"); } catch (e) { return null; } })(),
+    }));
+    report("H2) an explicit pick from the picker still follows the visitor into the app",
+      r.shared === "th" && r.site === "th", r);
     await ctx.close();
   }
 
