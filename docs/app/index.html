@@ -19694,7 +19694,20 @@ async function accFetch(path, opts, o){
   } finally { clearTimeout(timer); }
 }
 
-/* true | "dead" (a real non-2xx) | "offline" (threw — keep the session) */
+/* true | "dead" (a CREDENTIAL VERDICT) | "offline" (keep the session)
+
+   v5.37.0 — this used to answer "dead" for any non-2xx, and both callers treat
+   "dead" as a logout: accSignOutLocal deletes hnk_acc_sess_v1,
+   hnk_acc_profile_v1 and hnk_acc_login_at. Measured against the token endpoint,
+   500, 503 and 429 produced exactly the same "session expired — sign in again"
+   as a real 400. A paying customer opening the app during a Supabase blip lost
+   their session AND the cached profile the offline path reads, on a phone that
+   may have no way to type the password back in.
+
+   Only 400/401 with a body that names the grant is a verdict. Everything else
+   is the service failing to ANSWER. (The Photoshop panel's gate carried the
+   identical bug and was fixed the same way in v6.22.0 — same signal, same
+   wrong reading, two codebases.) */
 function accRefreshOnce(){
   if (_accRefreshing) return _accRefreshing;                 /* coalesce */
   _accRefreshing = (async function(){
@@ -19705,7 +19718,13 @@ function accRefreshOnce(){
         method: "POST", headers: accHeaders(null, true), signal: ctl.signal,
         body: JSON.stringify({ refresh_token: acc.sess && acc.sess.refresh })
       });
-      if (!r.ok) return "dead";
+      if (!r.ok){
+        if (r.status !== 400 && r.status !== 401) return "offline";
+        var body = await accJson(r);
+        var bs = ""; try { bs = JSON.stringify(body || ""); } catch(e2){}
+        /* an unreadable 400 is not proof of a dead token either */
+        return /invalid_grant|invalid.?refresh|refresh_token|expired/i.test(bs) ? "dead" : "offline";
+      }
       accSaveSession(await accJson(r));
       acc.online = true;
       return true;
@@ -19944,10 +19963,15 @@ async function accLoadProfile(){
 async function accLoadDevices(){
   if (!acc.sess) return { ok:false };
   try {
-    /* RLS already scopes this to the user. Deliberately no user_id=eq. filter:
-       if RLS were ever loosened, a client-side filter would be the only thing
-       standing, and that is the wrong instinct to build in. */
-    var r = await accFetch("/rest/v1/devices?select=*&order=created_at.desc", { method: "GET" });
+    /* The filter here is NOT a security control -- RLS is, and the comment this
+       replaces was right that leaning on a client-side filter for safety is the
+       wrong instinct. It is a SCOPE control, and it is needed for exactly the
+       case the old reasoning did not cover: devices_all_own_or_admin grants an
+       admin every row on purpose, so on the owner's own account "MY DEVICES"
+       listed their customers' machines, each with a Remove button that RLS
+       happily honours. A card headed "mine" has to mean mine. */
+    var r = await accFetch("/rest/v1/devices?select=*&user_id=eq." +
+      encodeURIComponent(acc.sess.uid) + "&order=created_at.desc", { method: "GET" });
     if (!r.ok){ accSetInline("stDev", t("acc_unreachable"), "err"); return { ok:false }; }
     var rows = await accJson(r);
     acc.devices = Array.isArray(rows) ? rows : [];
@@ -19961,7 +19985,14 @@ async function accLoadDevices(){
 async function accLoadRequests(){
   if (!acc.sess) return { ok:false };
   try {
-    var r = await accFetch("/rest/v1/payment_requests?select=*&order=created_at.desc&limit=20", { method: "GET" });
+    /* Scoped to the signed-in user for the same reason as accLoadDevices:
+       payreq_select_own_or_admin returns every row to an admin, so the owner's
+       own "MY PAYMENT REQUESTS" list showed a customer's row -- and worse, the
+       line below adopted that customer's pending request as acc.pending, which
+       replaced the owner's buy panel with "waiting for approval" quoting a
+       stranger's reference and left them unable to file a payment at all. */
+    var r = await accFetch("/rest/v1/payment_requests?select=*&user_id=eq." +
+      encodeURIComponent(acc.sess.uid) + "&order=created_at.desc&limit=20", { method: "GET" });
     if (!r.ok){ accSetInline("stReq", t("acc_unreachable"), "err"); return { ok:false }; }
     var rows = await accJson(r);
     acc.requests = Array.isArray(rows) ? rows : [];
@@ -20171,6 +20202,12 @@ function accPrice(key){
    and the admin catches the other direction anyway. */
 function accJoined(){
   var p = acc.profile;
+  /* Unknown is not "no". With the profile unread -- a 500 on the profiles
+     endpoint, or a first sign-in on a new device during a backend blip -- this
+     returning false made accKindAllowed hide every renewal and offer a
+     returning customer the 500,000 joining fee as their only option, with no
+     retry. accProfileUnknown() lets the buy panel say so instead of quoting
+     the wrong price with confidence. */
   if (!p) return false;
   if (p.joined_paid === true) return true;
   /* THE UPGRADE CASE, and getting it wrong would have been the worst bug in
@@ -20203,7 +20240,13 @@ function accJoinFeeSet(){
   return n !== null && n > 0;
 }
 /* which chips a given account may actually choose */
+/* true when we have not managed to read the profile this session */
+function accProfileUnknown(){ return !acc.profile; }
 function accKindAllowed(kind){
+  /* Offer nothing rather than the wrong thing while the profile is unknown --
+     the buy panel renders accPlanOffline above it, which says the account
+     service could not be reached. */
+  if (accProfileUnknown()) return false;
   if (kind === "join_first") return accJoinFeeSet() && !accJoined();
   if (kind === "extra_device") return true;   /* a device slot is orthogonal */
   /* the renewals are hidden only while a joining fee is genuinely owed */
@@ -20744,7 +20787,17 @@ function accRenderDevices(){
   });
 }
 
-var ACC_REQ_KIND = { plan_1m:"pay_1m", plan_3m:"pay_3m", plan_6m:"pay_6m", extra_device:"pay_extra" };
+/* Every SKU payreq_insert_own accepts. join_first was missing, so a filed
+   500,000 joining fee read "1 month" to the customer in their own record, in
+   their pending card, and to the owner in the approval queue -- in all 37
+   languages. The fallback is deliberately no longer pay_1m: an unknown kind
+   now says so out loud instead of quietly claiming to be the cheapest plan. */
+var ACC_REQ_KIND = { join_first:"pay_join", plan_1m:"pay_1m", plan_3m:"pay_3m",
+                     plan_6m:"pay_6m", extra_device:"pay_extra" };
+function accKindLabel(kind){
+  var key = ACC_REQ_KIND[kind];
+  return key ? t(key) : String(kind || "?");
+}
 function accRenderRequests(){
   var ul = $("reqList"); if (!ul) return;
   ul.innerHTML = "";
@@ -20756,7 +20809,7 @@ function accRenderRequests(){
     var li = el("li");
     var top = el("div","rq-top");
     var k = el("span");
-    k.textContent = t(ACC_REQ_KIND[row.kind] || "pay_1m");
+    k.textContent = accKindLabel(row.kind);
     top.appendChild(k);
     var dt = el("span","mut"); dt.textContent = accFmtDate(row.created_at); top.appendChild(dt);
     var tx = el("span","mut"); tx.textContent = "···" + String(row.txn_last6 || ""); top.appendChild(tx);
@@ -20883,7 +20936,7 @@ function accRenderPay(){
       $("btnPayAgain").style.display = "none";
       $("btnPayRefresh").style.display = "";
     }
-    $("payPendingMeta").textContent = t(ACC_REQ_KIND[r.kind] || "pay_1m") + " · ···" +
+    $("payPendingMeta").textContent = accKindLabel(r.kind) + " · ···" +
       String(r.txn_last6 || "") + " · " + accFmtDate(r.created_at);
   }
   accPayValidate();
@@ -21052,7 +21105,11 @@ function accWire(){
     acc.online = true;
     try {
       if (acc.sess){
-        accLoadProfile();
+        /* ...and repaint the wall when it lands. Without this the plan was
+           re-read and confirmed active while the wall stayed up until whatever
+           focus event happened to come next. */
+        accLoadProfile().then(function(){ try { appWallApply(); } catch(e2){} })
+                        .catch(function(){});
         /* the login and boot call sites both act on {limit:true}; this one
            discarded it, so a registration that failed offline and finally
            reached the server here rejected silently and the user saw the
@@ -21202,6 +21259,16 @@ async function admLoad(){
     if (!r.ok){ setSt("stAdm", t("acc_unreachable"), "err"); return; }
     var rows = await accJson(r);
     adm.rows = Array.isArray(rows) ? rows : [];
+    /* v5.37.0 — AWAITED, and before the render. admDue() opens with
+       `var st = acc.settings; if (!st) return null;`, and acc.settings was only
+       ever loaded by opening the admin's OWN Buy accordion. So on a fresh
+       session -- a phone, or any browser with storage cleared -- the whole
+       amount-vs-due check was silently absent: an underpayment rendered
+       identically to a payment in full, with no warn class and no "due" line.
+       That check is the reason v5.34.0 exists. Fire-and-forget is not enough
+       either: settings landing after the render leaves the plain rows on
+       screen, because accLoadSettings calls accRenderPay, not admRender. */
+    try { if (!acc.settings) await accLoadSettings(); } catch(e2){}
     admRender();
     /* v5.34 — render first, then fill in the names. The list used to print
        row.user_id, a raw UUID, which told the owner nothing about who had
@@ -21384,7 +21451,7 @@ function admRender(){
     if (!row) return;
     var li = el("li");
     var top = el("div","rq-top");
-    var k = el("span"); k.textContent = t(ACC_REQ_KIND[row.kind] || "pay_1m"); top.appendChild(k);
+    var k = el("span"); k.textContent = accKindLabel(row.kind); top.appendChild(k);
     var dt = el("span","mut"); dt.textContent = accFmtDate(row.created_at); top.appendChild(dt);
     var tx = el("span","mut"); tx.textContent = "···" + String(row.txn_last6 || ""); top.appendChild(tx);
     var st = el("span","chip");
@@ -21598,7 +21665,15 @@ async function wallRecheck(force){
     appWallApply();
     return;
   }
-  if (!acc.online || !navigator.onLine) { appWallApply(); return; }
+  /* v5.37.0 — this used to gate on acc.online too, and acc.online is set false
+     by ANY failed account request and set true again only by a successful one.
+     One aborted profile read at boot therefore latched the app on "Checking
+     your account…" with the wall up and no tab bar: the 5-minute interval,
+     the focus handler and visibilitychange all early-returned here, so the
+     retry that would have cleared it could never run. Measured: six focus +
+     visibilitychange cycles, profileCalls stayed at 1, forever, until reload.
+     navigator.onLine alone is the right gate -- let the fetch decide. */
+  if (!navigator.onLine) { appWallApply(); return; }
   if (!force && Date.now() - _wallLast < WALL_RECHECK_MS) { appWallApply(); return; }
   _wallLast = Date.now();
   try { await accLoadProfile(); } catch(e){}
@@ -21625,7 +21700,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.36.0";
+var APP_VER="5.37.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -97,6 +97,20 @@ report("I4) approving the joining fee is what sets joined_paid, and nothing else
   /join_first/.test(applyFn) && /joined_paid\s*=\s*case when new\.kind = 'join_first'/.test(applyFn),
   { hasJoin: /join_first/.test(applyFn) });
 
+/* v5.37.0 — identity. profiles_update_own_or_admin is a whole-row grant and the
+   guard restored every plan and price column while leaving email and name
+   writable, yet three things key on them: the approval queue prints
+   `name · email` as who filed a payment, admGrant looks a student up by typed
+   email, and this project's own instructions hand out admin and per-customer
+   prices with `where email = '...'`. */
+report("I6) a customer cannot rewrite the identity the owner approves payments against",
+  /new\.email\s*:=\s*old\.email/.test(guard) && /new\.name\s*:=\s*old\.name/.test(guard) &&
+  /new\.email\s*:=\s*null/.test(guard) && /new\.name\s*:=\s*null/.test(guard),
+  { restoresEmail: /new\.email\s*:=\s*old\.email/.test(guard),
+    restoresName: /new\.name\s*:=\s*old\.name/.test(guard) });
+report("I7) the database refuses two profiles claiming one address",
+  /create unique index if not exists profiles_email_uniq[\s\S]{0,120}lower\(email\)/.test(SQL), {});
+
 report("I5) a grant has no reference and no slip, so those columns accept their absence",
   /alter column txn_last6 drop not null/.test(SQL) &&
   /alter column screenshot_path drop not null/.test(SQL), {});
@@ -153,7 +167,12 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
       if (u.indexOf("/auth/v1/logout") >= 0) return Promise.resolve(new Response("", { status: 204 }));
       if (u.indexOf("/storage/v1/object/") >= 0) return Promise.resolve(J({ Key: "payment-proofs/x" }, 200));
       if (u.indexOf("/rest/v1/app_settings") >= 0) return Promise.resolve(J(C.settings || [], 200));
-      if (u.indexOf("/rest/v1/devices") >= 0) return Promise.resolve(J([], 200));
+      if (u.indexOf("/rest/v1/devices") >= 0){
+        var drows = C.devices || [];
+        var dm = u.match(/user_id=eq\.([^&]+)/);
+        if (dm) drows = drows.filter(function(x){ return x && x.user_id === decodeURIComponent(dm[1]); });
+        return Promise.resolve(J(drows, 200));
+      }
       if (u.indexOf("/rest/v1/profiles") >= 0){
         /* three different profile reads, and they must not answer each other:
            the signed-in user's own row, the admin's id=in.() batch, and the
@@ -168,7 +187,13 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
           window.__inserted = Object.assign({ id: "req-1", status: "pending", created_at: "2026-08-21T00:00:00Z" }, b);
           return Promise.resolve(J([window.__inserted], 201));
         }
-        return Promise.resolve(J(C.requests || [], 200));
+        /* PostgREST honours user_id=eq.<uid>; so must this, or a client-side
+           scoping fix is untestable — the mock would hand back every row
+           whatever the query said, and the assertion would measure the mock. */
+        var rows = C.requests || [];
+        var m = u.match(/user_id=eq\.([^&]+)/);
+        if (m) rows = rows.filter(function(x){ return x && x.user_id === decodeURIComponent(m[1]); });
+        return Promise.resolve(J(rows, 200));
       }
       return Promise.resolve(J([], 200));
     };
@@ -201,6 +226,16 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     await page.waitForTimeout(500);
     await page.evaluate(() => { try { accOpenGrp("accGrpBuy"); } catch(e){} });
     await page.waitForTimeout(250);
+  }
+  /* login() above opens accGrpBuy, which is the ONLY thing that ever loaded
+     acc.settings — so every admin assertion in this file was measuring a
+     session that had been through the customer buy panel first. A real owner
+     on a phone has not. */
+  async function loginPlain() {
+    await page.fill("#accEmail", "hla@example.com");
+    await page.fill("#accPass", "secret123");
+    await page.click("#btnAccLogin");
+    await page.waitForTimeout(500);
   }
   const chips = () => page.evaluate(() =>
     ["payKindJoin", "payKind1m", "payKind3m", "payKind6m", "payKindDev"].map(id => {
@@ -525,6 +560,79 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     list.map(r => r.cls + " " + r.money));
   report("G3) a grant is labelled a grant rather than shown as a 0 MMK payment",
     /grant/.test(list[2].cls) && !/0 MMK/.test(list[2].money), list[2]);
+
+  /* ---------- G0) the same queue, on a session that never opened Buy ----------
+     The v5.34 amount check lives in admDue(), which opens
+     `var st = acc.settings; if (!st) return null;` — and acc.settings was only
+     ever loaded by opening the admin's OWN buy accordion. Every assertion above
+     passes because login() opens it. An owner reviewing payments on a phone, or
+     after clearing site data, had no amount check at all: the underpayment and
+     the payment in full rendered identically. */
+  await boot({
+    login: session,
+    profile: profile({ joined_paid: true, is_admin: true }),
+    settings: [PRICE],
+    who: [{ id: OTHER, name: "Nang Mo", email: "nang@example.com", price_1m_override: null }],
+    requests: [
+      { id: "r1", user_id: OTHER, kind: "plan_1m", txn_last6: "111111", amount_mmk: 37000,
+        status: "pending", created_at: "2026-08-21T01:00:00Z", is_grant: false },
+      { id: "r2", user_id: OTHER, kind: "plan_1m", txn_last6: "222222", amount_mmk: 10000,
+        status: "pending", created_at: "2026-08-21T02:00:00Z", is_grant: false },
+      { id: "r4", user_id: OTHER, kind: "join_first", txn_last6: "333333", amount_mmk: 480000,
+        status: "pending", created_at: "2026-08-21T04:00:00Z", is_grant: false },
+    ],
+    devices: [{ id: "d-other", user_id: OTHER, device_id: "dev-other", label: "Nang's phone",
+                created_at: "2026-08-20T00:00:00Z" },
+              { id: "d-mine", user_id: UID, device_id: "dev-mine", label: "My laptop",
+                created_at: "2026-08-20T00:00:00Z" }],
+  });
+  await loginPlain();
+  await page.evaluate(() => admLoad());
+  await page.waitForTimeout(900);
+  const fresh = await page.evaluate(() => ({
+    settingsLoaded: !!acc.settings,
+    rows: [...document.querySelectorAll("#admList li")].map(li => ({
+      money: (li.querySelector(".adm-money") || {}).textContent || "",
+      cls: (li.querySelector(".adm-money") || {}).className || "",
+      kind: (li.querySelector(".adm-kind") || li.querySelector("li > div > span") || {}).textContent || "",
+    })),
+  }));
+  report("G0) the amount check works on a session that never opened the Buy panel",
+    fresh.settingsLoaded && fresh.rows.length === 3 &&
+    /warn/.test(fresh.rows[1].cls) && fresh.rows[1].money.indexOf("37,000") >= 0,
+    fresh);
+
+  /* G4) the joining fee is named. ACC_REQ_KIND had no join_first key and fell
+     back to pay_1m, so a filed 480,000 read "1 month" to the customer in their
+     own record and to the owner in this queue, in all 37 languages. */
+  const kindLabels = await page.evaluate(() => ({
+    join: t("pay_join"), month: t("pay_1m"),
+    rendered: [...document.querySelectorAll("#admList li")]
+      .map(li => (li.textContent || "").trim()),
+  }));
+  report("G4) a joining fee is labelled a joining fee, not '1 month'",
+    kindLabels.join !== kindLabels.month &&
+    kindLabels.rendered[2].indexOf(kindLabels.join) >= 0 &&
+    kindLabels.rendered[2].indexOf(kindLabels.month) < 0,
+    kindLabels);
+
+  /* G5) the owner's own customer-facing cards are their own. RLS returns every
+     row to an admin on purpose, and the client used to render all of them: the
+     buy panel adopted a customer's pending request — replacing the owner's own
+     panel with "waiting for approval" quoting a stranger's reference — and MY
+     DEVICES listed customers' machines with a working Remove button. */
+  await page.evaluate(async () => { await accLoadRequests(); await accLoadDevices(); });
+  await page.waitForTimeout(400);
+  const mine = await page.evaluate(() => ({
+    pendingUser: acc.pending ? acc.pending.user_id : null,
+    myRequests: (acc.requests || []).map(r => r.user_id),
+    myDevices: (acc.devices || []).map(d => d.user_id),
+  }));
+  report("G5) the admin's own requests and devices are the admin's own",
+    mine.pendingUser === null &&
+    mine.myRequests.every(u => u === UID) &&
+    mine.myDevices.length === 1 && mine.myDevices[0] === UID,
+    mine);
 
   /* ---------- H) filing a grant ---------- */
   await page.evaluate(() => { window.__sb.length = 0; });
