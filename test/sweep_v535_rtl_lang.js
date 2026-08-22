@@ -303,6 +303,44 @@ report("I2) both surfaces name the same right-to-left languages",
     await ctx.close();
   }
 
+  /* ---- H3) OPENING A PAGE IS NOT A CHOICE ----
+     v5.39.0 marked only the ?lang= branch transient, so the automatic startup
+     apply() still persisted. A customer using the paid app in Gujarati who
+     tapped the app's own "visit the site" link had hnk_ws_lang rewritten to
+     the landing's default on arrival, because they had never used the
+     landing's picker and so had nothing under hnk_site_lang to restore. This
+     is the same harm the wave set out to fix, on the highest-traffic path. */
+  {
+    const { ctx, page } = await open(SITE, 390, "gu");
+    const r = await page.evaluate(() => ({
+      shown: document.documentElement.lang,
+      shared: (() => { try { return localStorage.getItem("hnk_ws_lang"); } catch (e) { return null; } })(),
+      site: (() => { try { return localStorage.getItem("hnk_site_lang"); } catch (e) { return null; } })(),
+    }));
+    report("H3) a bare visit leaves the app's stored language alone",
+      r.shared === "gu" && r.site === null, r);
+    await ctx.close();
+  }
+
+  /* ---- H4) A SHARED LINK IN THE DEFAULT LANGUAGE IS STILL A SHARED LINK ----
+     apply() normalised the address bar by DELETING ?lang= whenever the
+     language was the default. Once v5.39.0 stopped storing a shared language,
+     the parameter became its only carrier — so /?lang=my arrived Burmese, was
+     rewritten to "/", and a reload fell back to whatever the RECIPIENT had
+     stored. Every other language kept working, which is why it hid. */
+  {
+    const { ctx, page } = await open(SITE + "?lang=my", 390, "en");
+    const first = await page.evaluate(() => ({ lang: document.documentElement.lang, search: location.search }));
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForTimeout(500);
+    const again = await page.evaluate(() => ({ lang: document.documentElement.lang, search: location.search }));
+    report("H4) a shared link in the default language survives a reload",
+      first.lang === "my" && first.search === "?lang=my" &&
+      again.lang === "my" && again.search === "?lang=my",
+      { first, again });
+    await ctx.close();
+  }
+
   report("J) no console error or uncaught exception anywhere above",
     errs.length === 0, errs.slice(0, 4));
 

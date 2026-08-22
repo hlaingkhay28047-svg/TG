@@ -754,6 +754,48 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     slot.devGrp.indexOf("open") >= 0 && slot.planGrp.indexOf("open") < 0,
     slot);
 
+  /* ---- L) a duplicated app_settings row is named, not absorbed ----
+     app_settings is meant to hold exactly one row. v5.39.0 made the CLIENT
+     deterministic about which row it reads, but it cannot make the client and
+     the approval trigger agree — the trigger picks its own row inside
+     Postgres. With two rows a customer can be quoted one price and granted a
+     period computed from the other. No code can reconcile that; only the owner
+     can delete the extra row, so the admin panel says so out loud. */
+  const dupSettings = [
+    Object.assign({}, PRICE),
+    Object.assign({}, PRICE, { price_1m: 99000, join_first_months: 6 }),
+  ];
+  await boot({
+    login: session,
+    profile: profile({ joined_paid: true, is_admin: true }),
+    settings: dupSettings,
+    who: [], requests: [],
+  });
+  await login();
+  await page.evaluate(async () => { await accLoadSettings(); await admLoad(); });
+  await page.waitForTimeout(700);
+  const dup = await page.evaluate(() => ({
+    count: typeof accSettingsRowCount !== "undefined" ? accSettingsRowCount : -1,
+    warned: Array.from(document.querySelectorAll("#admList li"))
+      .filter(li => /app_settings/.test(li.textContent || "")).length,
+  }));
+  await boot({
+    login: session,
+    profile: profile({ joined_paid: true, is_admin: true }),
+    settings: [PRICE], who: [], requests: [],
+  });
+  await login();
+  await page.evaluate(async () => { await accLoadSettings(); await admLoad(); });
+  await page.waitForTimeout(700);
+  const single = await page.evaluate(() => ({
+    count: typeof accSettingsRowCount !== "undefined" ? accSettingsRowCount : -1,
+    warned: Array.from(document.querySelectorAll("#admList li"))
+      .filter(li => /app_settings/.test(li.textContent || "")).length,
+  }));
+  report("L) two app_settings rows are reported to the admin; one row says nothing",
+    dup.count === 2 && dup.warned === 1 && single.count === 1 && single.warned === 0,
+    { dup, single });
+
   report("J) none of the above raised a console error", errs.length === 0, errs.slice(0, 4));
 
   await browser.close();

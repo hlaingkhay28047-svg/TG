@@ -749,6 +749,87 @@ async function look(browser, sess, prof, label) {
     await rp.close();
   }
 
+  /* ---- W6: NO DEAD CONTROL ON A DISCONNECTED PHONE ----
+     v5.39.0 armed the retry on state alone. wallRecheck's first gate is
+     `if (!navigator.onLine) return;`, so on a phone with no data the button
+     was gold, enabled, and completely inert — measured zero requests and zero
+     visible change on tap, on a screen with nothing else on it. It also
+     borrowed acc_offline, whose text is "showing your last known status",
+     for the one state that is defined by having no known status. */
+  {
+    const op = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    op.on("pageerror", e => errs.push("offline: " + String(e).slice(0, 160)));
+    await armSupabase(op, null, "hangProfile");
+    await op.addInitScript(s => {
+      try {
+        localStorage.setItem("hnk_ws_onboarded", "1");
+        localStorage.setItem("hnk_acc_sess_v1", JSON.stringify(s));
+        localStorage.setItem("hnk_acc_login_at", String(Date.now()));
+      } catch (e) {}
+      try { Object.defineProperty(navigator, "onLine", { get: function(){ return false; }, configurable: true }); } catch (e) {}
+    }, SESS);
+    await op.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "domcontentloaded" });
+    await op.waitForTimeout(5200);
+    const off = await op.evaluate(() => {
+      const b = document.getElementById("wallRetry");
+      return {
+        online: navigator.onLine,
+        state: appWallState(),
+        retryShown: !!b && b.getClientRects().length > 0,
+        para: ((document.getElementById("wallP") || {}).textContent || "").trim(),
+      };
+    });
+    report("W6) an offline 'checking' wall offers no button it cannot honour, and says something true",
+      off.online === false && off.state === "checking" && off.retryShown === false &&
+      off.para.length > 8 && !/last known status|လိုၼ်းသုတ်း|နောက်ဆုံး သိထားတဲ့/.test(off.para),
+      off);
+    await op.close();
+  }
+
+  /* ---- W5: THE WALL SPEAKS THE LANGUAGE THE CUSTOMER PICKED ----
+     v5.39.0 memoised the wall copy so a polite live region would stop
+     re-announcing identical text every five minutes. The memo key carried
+     state, connectivity and lapsed-ness — and not the language — and
+     applyLang() does not call appWallApply(), so a customer who switched
+     language behind the paywall kept reading the old language's heading and
+     pay instructions permanently, while the help links beside them switched.
+     Measured on the shipped v5.39.0 build. This is the regression guard. */
+  {
+    const lp = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    lp.on("pageerror", e => errs.push("lang: " + String(e).slice(0, 160)));
+    await armSupabase(lp, null, "hangProfile");
+    await lp.addInitScript(() => {
+      try {
+        localStorage.setItem("hnk_ws_onboarded", "1");
+        localStorage.setItem("hnk_ws_lang", "my");
+      } catch (e) {}
+    });
+    await lp.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
+    await lp.waitForTimeout(1200);
+    const swap = await lp.evaluate(async () => {
+      const read = () => ({
+        head: ((document.getElementById("wallH") || {}).textContent || "").trim(),
+        para: ((document.getElementById("wallP") || {}).textContent || "").trim(),
+        help: Array.from(document.querySelectorAll("#wallHelp a")).map(a => a.textContent.trim()).slice(0, 2),
+      });
+      const before = read();
+      LANG = "en"; applyLang();
+      await new Promise(r => setTimeout(r, 300));
+      const after = read();
+      /* and it must survive the repaints that run on focus/interval */
+      appWallApply(); appWallApply();
+      await new Promise(r => setTimeout(r, 200));
+      return { before, after, settled: read() };
+    });
+    report("W5) switching language repaints the wall's own copy, not just the links",
+      swap.before.head.length > 0 && swap.after.head !== swap.before.head &&
+      swap.after.para !== swap.before.para &&
+      swap.settled.head === swap.after.head &&
+      /[A-Za-z]/.test(swap.after.head) && !/[\u1000-\u109F]/.test(swap.after.head),
+      swap);
+    await lp.close();
+  }
+
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();
   process.exit(failures === 0 ? 0 : 1);

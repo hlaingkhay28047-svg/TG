@@ -379,6 +379,50 @@ somewhere else. `test/sweep_v533_reset.js` proves the app asks for that URL and
 that the page handles the token responsibly, but no test here can prove the
 dashboard has it.
 
+## What v5.39.0 broke, and how it was caught (v5.40.0)
+
+Two of v5.39.0's own fixes shipped regressions. Both were found by an
+adversarial review of the merged diff, not by the suite — the suite was green
+on all 95 scripts, twice, with both defects in it.
+
+**The wall froze in the previous language.** v5.39.0 memoised the wall's copy
+so a polite live region would stop re-announcing identical text every five
+minutes. The memo key carried the wall state, connectivity and whether the plan
+had lapsed — and not the language. `applyLang()` does not call
+`appWallApply()`, so a customer who switched language behind the paywall kept
+reading the old language's heading and pay instructions permanently, while the
+contact links added in the same release switched immediately. Half the wall in
+each language, on the conversion screen. `LANG` is in the key now, and
+`a11yApplyLang()` clears the memo so the repaint is immediate.
+`sweep_v530` W5 is the guard.
+
+**Wrapping the role label removed the only bound on it.** Replacing
+`nowrap`+`ellipsis` with `white-space:normal` stopped the label being cut in
+half — and, with no height cap, made `scrollHeight > clientHeight` unable to
+fire, so `sweep_v467` C2 became a tautology for the second time in two
+releases. A long enough label also grew the pill taller than its 88px tile and
+hung it off the top edge. `max-height:calc(100% - 8px)` restores both
+properties at once: the pill is bounded by its tile, and a label that outgrows
+it is detectable. Measured: a 70-character label now reports
+`scrollHeight 87 > clientHeight 76` and stays inside the tile.
+
+Two more from the same review:
+
+- The retry button was armed on state alone, but `wallRecheck` returns
+  immediately when `navigator.onLine` is false. On a disconnected phone the
+  only control on the screen was gold, enabled, and completely inert — measured
+  zero requests and zero visible change on tap. It is not offered offline now,
+  the window `online` event forces a recheck, and the offline copy stopped
+  borrowing `acc_offline` ("showing your last known status") for the one state
+  defined by having no known status.
+- v5.39.0 marked only the `?lang=` branch transient, so the landing's automatic
+  startup call still counted as an explicit choice. A customer using the app in
+  Gujarati who tapped the app's own "visit the site" link had `hnk_ws_lang`
+  rewritten to the landing's default on arrival — the same harm the release set
+  out to fix, on the highest-traffic path. Opening a page is not a choice now;
+  only a press of the picker is. And a shared `/?lang=my` link keeps its
+  parameter, which became its only carrier once nothing was being stored.
+
 ## Five tests that had stopped testing anything (v5.39.0)
 
 The v5.30 access wall changed what an unauthenticated page load looks like:

@@ -96,13 +96,19 @@ report("A) every table the client fetches has RLS enabled",
    treats public as covering every role. selfTest() below parses deliberately
    bad policy text so these blind spots fail loudly here rather than being
    rediscovered by the next audit. */
+/* v5.40.0 — two more optional pieces of the same statement. Postgres also
+   accepts `AS PERMISSIVE` / `AS RESTRICTIVE` between the name and FOR, and
+   role names may be double-quoted ("anon"). Either one made a policy vanish
+   from this parser exactly the way a missing `to` clause did, and a policy the
+   parser cannot see is a policy this file does not check. */
 const POLICY_RE =
-  /create\s+policy\s+"?(\w+)"?\s+on\s+public\.(\w+)\s+for\s+(\w+)(?:\s+to\s+([\w\s,]+?))?\s+(using|with)/gi;
+  /create\s+policy\s+"?(\w+)"?\s+on\s+public\.(\w+)(?:\s+as\s+(?:permissive|restrictive))?\s+for\s+(\w+)(?:\s+to\s+([\w\s,"]+?))?\s+(using|with)/gi;
 function parsePolicies(text) {
   return [...text.matchAll(POLICY_RE)].map(x => ({
     name: x[1], table: x[2], verb: x[3].toLowerCase(),
     /* no `to` clause == TO PUBLIC, per Postgres */
-    roles: (x[4] || "public").split(/[,\s]+/).filter(Boolean).map(r => r.toLowerCase())
+    roles: (x[4] || "public").split(/[,\s]+/).filter(Boolean)
+             .map(r => r.replace(/"/g, "").toLowerCase()).filter(Boolean)
   }));
 }
 /* public is every role, logged in or not — anon included */
@@ -114,7 +120,10 @@ const rolesInclude = (p, role) => p.roles.includes(role) || p.roles.includes("pu
     { sql: "create policy a on public.t for update using (true);", roles: ["public"], why: "no `to` clause means TO PUBLIC" },
     { sql: "create policy b on public.t for select to public using (true);", roles: ["public"], why: "literal public" },
     { sql: "create policy c on public.t for select to anon, authenticated using (true);", roles: ["anon", "authenticated"], why: "role list" },
-    { sql: "create policy d on public.t for insert to authenticated with check (true);", roles: ["authenticated"], why: "with check, not using" }
+    { sql: "create policy d on public.t for insert to authenticated with check (true);", roles: ["authenticated"], why: "with check, not using" },
+    { sql: "create policy e on public.t as permissive for update using (true);", roles: ["public"], why: "AS PERMISSIVE + no to clause" },
+    { sql: "create policy f on public.t as restrictive for select to anon using (true);", roles: ["anon"], why: "AS RESTRICTIVE" },
+    { sql: 'create policy g on public.t for delete to "anon" using (true);', roles: ["anon"], why: "quoted role name" }
   ];
   const bad = [];
   for (const c of cases) {

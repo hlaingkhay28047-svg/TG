@@ -151,6 +151,11 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
       /* the guard: a hidden tile measures 0x0 and then every comparison below
          is between zeroes */
       out.tileRendered = (() => { const r = tile(); return r.width > 0 && r.height > 0; })();
+      /* v5.40.0 — and it must stay INSIDE the tile. v5.39.0 let the pill wrap
+         with no height cap, so a long enough label grew it taller than the
+         88px tile and hung it off the top edge — while both metrics above
+         reported clean, because an uncapped box can never overflow itself. */
+      out.escapes = [];
       for (let i = 0; i < REF_ROLES.length; i++) {
         const q = pill(), tr = tile(), pr = q.getBoundingClientRect();
         seen.push(q.textContent.trim());
@@ -159,6 +164,9 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
            that outgrows the pill would hide a whole line rather than trail an
            ellipsis, and a width-only check would call that clean. */
         clipped.push(q.scrollWidth > q.clientWidth + 1 || q.scrollHeight > q.clientHeight + 1);
+        if (!(pr.top >= tr.top - 1 && pr.bottom <= tr.bottom + 1)) {
+          out.escapes.push(q.textContent.trim().slice(0, 24) + " h=" + Math.round(pr.height) + " tile=" + Math.round(tr.height));
+        }
         q.click();
         await new Promise(r => setTimeout(r, 70));
       }
@@ -221,9 +229,11 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
     WS.map(w => w + ":" + JSON.stringify(at(w).seenLabels)).join(" | "));
 
   report("C2) its label fits the ref tile at phone widths without clipping",
-    WS.every(w => at(w).tileRendered === true && at(w).allFit === true && at(w).anyClipped === false),
+    WS.every(w => at(w).tileRendered === true && at(w).allFit === true &&
+                  at(w).anyClipped === false && (at(w).escapes || []).length === 0),
     WS.map(w => w + ": rendered=" + at(w).tileRendered + " on=" + at(w).refPageShown +
-                " fit=" + at(w).allFit + " clipped=" + at(w).anyClipped).join(" "));
+                " fit=" + at(w).allFit + " clipped=" + at(w).anyClipped +
+                " escapes=" + JSON.stringify(at(w).escapes || [])).join(" "));
 
   report("D) the role sentence keeps all four guarantees — geometry-only, no drawn marks, must be a photo, fixes anatomy",
     WS.every(w => at(w).guarantees && Object.keys(at(w).guarantees).every(k => at(w).guarantees[k])),
