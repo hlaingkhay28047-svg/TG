@@ -20884,7 +20884,13 @@ function accRenderPay(){
      it was meant to fix. The form is now shut, and says why. */
   var offerable = !!firstAllowed;
   var payForm = $("payForm");
-  if (payForm) payForm.style.display = offerable ? "" : "none";
+  /* ONLY EVER HIDES. The line above that reads
+     `$("payForm").style.display = pend ? "none" : ""` owns showing the form,
+     and the first version of this wrote `offerable ? "" : "none"` over it --
+     which un-hid the buy form the moment a payment went pending, so a customer
+     who had just filed one saw "Waiting for admin approval" and a fresh empty
+     form underneath it. sweep_account check 8 caught it. */
+  if (payForm && !offerable) payForm.style.display = "none";
   var payNone = $("payNoOffer");
   if (payNone){
     payNone.style.display = offerable ? "none" : "";
