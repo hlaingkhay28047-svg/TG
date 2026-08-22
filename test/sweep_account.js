@@ -716,6 +716,55 @@ const SB_FIX = {
 
   await page.evaluate(() => { document.getElementById("wizPay").className = "wiz"; });
 
+  // ---------------------------------------------------------------- 20) the password reveal
+  // A password typed on a phone, in a script whose keyboard offers no preview,
+  // with no way to look at it, is how people lock themselves out of an account
+  // they have just created. The three API-key fields have had a reveal since
+  // v4.41; the three ACCOUNT password fields had none. This asserts the
+  // behaviour rather than the markup: the input type really flips, aria-pressed
+  // really follows it (that is what makes the gold border and the screen
+  // reader agree), and the control is a real 44px target on the form that is
+  // actually on screen.
+  const c20 = await page.evaluate(async () => {
+    const out = { rows: [], labelled: 0 };
+    for (const [b, i] of [["btnShowAccPass","accPass"],["btnShowAccPass2","accPass2"],["btnShowAccPassNew","accPassNew"]]) {
+      const btn = document.getElementById(b), inp = document.getElementById(i);
+      if (!btn || !inp) { out.rows.push({ b, missing: true }); continue; }
+      if ((btn.textContent || "").trim().length > 0) out.labelled++;
+      inp.value = "secret123";
+      const start = inp.type;
+      btn.click(); await new Promise(r => setTimeout(r, 40));
+      const shown = { type: inp.type, pressed: btn.getAttribute("aria-pressed") };
+      btn.click(); await new Promise(r => setTimeout(r, 40));
+      const back = { type: inp.type, pressed: btn.getAttribute("aria-pressed") };
+      inp.value = "";
+      out.rows.push({ b, start, shown, back });
+    }
+    /* Measure on the form a signed-out visitor actually sees. By this point in
+       the sweep check 15 has rendered the SIGNED-IN view, which replaces the
+       auth form entirely — so the button is 0x0 unless the session is cleared
+       first. Restored immediately afterwards: checks 18 and 19 run after this
+       one and expect the state check 15 left behind. */
+    const keepS = acc.sess, keepP = acc.profile;
+    acc.sess = null; acc.profile = null;
+    accRender(); accShowForm("login");
+    document.getElementById("accGrpAuth").className = "grp open";
+    await new Promise(r => setTimeout(r, 150));
+    const r = document.getElementById("btnShowAccPass").getBoundingClientRect();
+    out.tap = { w: Math.round(r.width), h: Math.round(r.height) };
+    acc.sess = keepS; acc.profile = keepP;
+    accRender();
+    await new Promise(r => setTimeout(r, 120));
+    return out;
+  });
+  const revealOk = c20.rows.length === 3 && c20.labelled === 3 &&
+    c20.rows.every(x => !x.missing && x.start === "password" &&
+      x.shown.type === "text" && x.shown.pressed === "true" &&
+      x.back.type === "password" && x.back.pressed === "false") &&
+    c20.tap.h >= 44 && c20.tap.w >= 44;
+  report("20 password reveal: all three account password fields carry a labelled show/hide control that really flips input.type, keeps aria-pressed in step with it, and clears a 44px target on the visible form",
+    revealOk, JSON.stringify(c20));
+
   // ---------------------------------------------------------------- 18) console
   await page.waitForTimeout(300);
   report("18 zero console errors: no console error and no uncaught pageerror was emitted anywhere across the whole sweep, including every failure path exercised above",
