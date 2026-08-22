@@ -67,6 +67,69 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## What an outage is allowed to do (v5.37.0)
+
+A signal that a service **failed to answer** is not a verdict, and reading it as
+one cost real customers real access in two places at once:
+
+- `accRefreshOnce` answered `"dead"` for any non-2xx from the token endpoint,
+  and both callers treat `"dead"` as a logout — `accSignOutLocal` deletes the
+  session, the cached profile and the login stamp. Measured: 500, 503 and 429
+  produced exactly the same "session expired — sign in again" as a real 400. A
+  paying customer opening the app during a Supabase blip lost their session and
+  the cached profile the offline path reads, on a phone that may have no way to
+  type the password back in. Only 400/401 with a body naming the grant is a
+  verdict now.
+- `wallRecheck` early-returned on `!acc.online`, and `acc.online` is set false by
+  any failed account request and true again only by a successful one. One
+  dropped profile read at boot therefore latched the app on "Checking your
+  account…", wall up, no tab bar — the five-minute interval, the focus handler
+  and `visibilitychange` all returned at that line, so the retry that would have
+  cleared it could never run. Measured: six focus cycles, one profile request,
+  forever, until reload.
+
+The Photoshop panel's gate shipped the identical bug in v6.22.0 and was fixed
+the same way. Same signal, same wrong reading, two codebases — which is why both
+now say it in a comment rather than only in a commit message.
+
+## The owner's own account is the owner's own (v5.37.0)
+
+`payreq_select_own_or_admin` and `devices_all_own_or_admin` return every row to
+an admin, on purpose. The client rendered all of them into the *customer* cards:
+"MY PAYMENT REQUESTS" listed a customer's row, "MY DEVICES" listed their
+machines with a working Remove button, and the buy panel adopted their pending
+request — so the owner saw "waiting for approval" against a stranger's reference
+and could not file a payment of their own at all. Both loaders are now scoped to
+the signed-in user. That filter is not a security control; RLS is. It is a scope
+control, for the case where RLS is doing exactly what it should.
+
+Three more from the same audit:
+
+- The v5.34 amount-vs-due check was **dead on any fresh admin session**.
+  `admDue()` needs `acc.settings`, and `acc.settings` was only ever loaded by
+  opening the admin's own Buy accordion — so an owner reviewing payments on a
+  phone saw a 10,000 underpayment rendered identically to a 37,000 payment in
+  full. `admLoad()` now awaits the settings before it renders.
+- `ACC_REQ_KIND` had no `join_first` entry and fell back to `pay_1m`, so a filed
+  500,000 joining fee read **"1 month"** to the customer and to the owner, in
+  every language. The fallback now names the unknown kind instead of quietly
+  claiming to be the cheapest plan.
+- `profiles.email` and `profiles.name` were writable by the owning customer
+  while the approval queue printed them as *who filed this payment*, `admGrant`
+  looked students up by them, and this README hands out admin rights with
+  `where email = '...'`. The guard trigger now restores both on update, and a
+  unique index on `lower(email)` means the database refuses a duplicate identity
+  rather than letting `limit=1` pick one arbitrarily.
+
+  On **insert** it takes the address from `auth.users` instead. The first
+  version of that line blanked the column — which quietly rested on an
+  assumption about the trigger that creates a profiles row on signup, and
+  **that trigger lives in your Supabase project, not in this repository**. If it
+  ever ran with a non-null `auth.uid()`, every new customer would have arrived
+  with no email at all, breaking the approval queue and VIP grants for
+  everybody. Reading the identity provider is correct whoever does the insert:
+  a no-op when the trigger is right, an overwrite when the payload is forged.
+
 ## The Photoshop panel is behind the same account (v6.22.0)
 
 Until v6.22.0 the `.ccx` was the hole in the paywall. The web app had been

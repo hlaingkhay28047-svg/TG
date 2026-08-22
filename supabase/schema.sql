@@ -377,6 +377,17 @@ begin
     new.price_3m_override         := null;
     new.price_6m_override         := null;
     new.price_join_first_override := null;
+    -- v5.37: identity, taken from the identity provider rather than from the
+    -- payload. NOT nulled: the trigger that creates a profiles row on signup
+    -- lives in the owner's Supabase project and NOT in this repository, so
+    -- blanking the column here rested on an assumption about code this file
+    -- cannot see -- and if that trigger ever runs with a non-null auth.uid(),
+    -- blanking it would leave every new customer with no email, which is the
+    -- field the approval queue shows as who filed a payment and the field
+    -- admGrant looks students up by. auth.users is the authority; coalesce
+    -- keeps the supplied value only in the impossible case where the lookup
+    -- finds nothing (profiles.id references auth.users.id).
+    new.email := coalesce((select u.email from auth.users u where u.id = new.id), new.email);
     return new;
   end if;
   new.plan_status     := old.plan_status;
@@ -392,9 +403,32 @@ begin
   new.price_3m_override         := old.price_3m_override;
   new.price_6m_override         := old.price_6m_override;
   new.price_join_first_override := old.price_join_first_override;
+  -- v5.37: IDENTITY IS NOT THE CUSTOMER'S TO EDIT. profiles_update_own_or_admin
+  -- is a whole-row grant, this function restored every plan and price column
+  -- and left `email` and `name` writable, and three things key on them:
+  --   * the approval queue prints `name · email` as who filed a payment, so a
+  --     customer could make their row read as somebody else while the owner
+  --     decides whether to accept their money;
+  --   * admGrant looks a student up by typed email with limit=1 and no order,
+  --     so a second row claiming that address decides arbitrarily who gets a
+  --     free VIP period;
+  --   * this file's own instructions, and the README's, hand out admin and
+  --     per-customer prices with `where email = '...'`.
+  -- No shipped code path writes profiles at all -- every client reference is a
+  -- GET -- so nothing legitimate is lost by refusing.
+  new.email := old.email;
+  new.name  := old.name;
   return new;
 end;
 $$;
+
+-- ...and the database refuses a duplicate identity rather than letting a
+-- `limit=1` with no ORDER BY pick one arbitrarily. Case-insensitive because an
+-- owner typing an address into the grant box is not thinking about case.
+-- NOTE: if this raises, two rows already share an address -- reconcile them
+-- before re-running, rather than dropping the index.
+create unique index if not exists profiles_email_uniq
+  on public.profiles (lower(email));
 
 drop trigger if exists hnk_guard_profile_plan on public.profiles;
 create trigger hnk_guard_profile_plan
