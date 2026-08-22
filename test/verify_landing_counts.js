@@ -51,6 +51,11 @@
    F) The nine workflow names the landing lists are the nine the .ccx defines,
       so a panel wave cannot add a workflow the site never mentions.
    G) The app's share-sheet fallback count agrees too.
+   H) The test count the landing advertises equals the number of test scripts
+      CI actually runs. It said "907 tests" in 24 places across all 27 locales
+      and nothing in this repository produced that number, so nothing could
+      ever have told you it had gone stale -- the same failure mode as
+      "One-Tap 131", one file away from the check written to stop it.
 
    Usage: PORT=8931 node test/verify_landing_counts.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
@@ -63,6 +68,7 @@ const PORT = process.env.PORT || 8931;
 const ROOT = path.join(__dirname, "..");
 const APP = fs.readFileSync(path.join(ROOT, "docs", "app", "index.html"), "utf8");
 const LANDING = fs.readFileSync(path.join(ROOT, "docs", "index.html"), "utf8");
+const CI = fs.readFileSync(path.join(ROOT, ".github", "workflows", "test.yml"), "utf8");
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -211,6 +217,35 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
   report("F) the landing lists exactly the workflows the .ccx defines",
     landingWf.length === panelTitles.length && missing.length === 0 && extra.length === 0,
     { landing: landingWf.length, panel: panelTitles.length, missing, extra });
+
+  /* ---- H) the advertised test count, derived from the workflow that runs them ----
+     The claim is spelled 27 different ways -- "907 tests", "テスト907件",
+     "907개 테스트", "ผ่าน 907 เทสต์" -- so matching the WORD "test" in every
+     script would be a list to keep up to date, which is the maintenance trap
+     this whole file exists to avoid. Instead it reads the three i18n records
+     that carry the claim, strips the version numbers and the file size (the
+     only other numbers those strings legitimately contain), and requires every
+     number left standing to be the count of scripts CI runs. Add a sweep and
+     this reports every locale still quoting the old total. */
+  const ciTests = (CI.match(/node test\//g) || []).length;
+  const claimKeys = ["badge.tests", "duo2.li4", "s5.dlnote"];
+  const claimText = claimKeys.flatMap(k =>
+    [...LANDING.matchAll(new RegExp('"' + k.replace(".", "\\.") + '"\\s*:\\s*(\\{[^}]*\\}|"(?:[^"\\\\]|\\\\.)*")', "g"))]
+      .map(m => m[1]));
+  const stripped = toAscii(claimText.join(" "))
+    .replace(/v?\d+\.\d+\.\d+/g, " ")     /* Panel v6.22.0 */
+    .replace(/\d+\s*MB/gi, " ");            /* (35MB) */
+  const numbers = [...new Set(stripped.match(/\d+/g) || [])];
+  /* each key appears once in the main dictionary and once per extra locale, so
+     the useful assertion is that none of the three is MISSING -- not that there
+     are exactly three */
+  const foundKeys = claimKeys.filter(k =>
+    new RegExp('"' + k.replace(".", "\\.") + '"\\s*:').test(LANDING));
+  report("H) every advertised test count equals the number of scripts CI runs",
+    foundKeys.length === claimKeys.length && numbers.length > 0 &&
+    numbers.every(n => n === String(ciTests)),
+    { ciTests, found: numbers, records: claimText.length, missingKeys:
+      claimKeys.filter(k => foundKeys.indexOf(k) < 0) });
 
   /* ---- G) the share sheet ---- */
   const shareFb = (APP.match(/shareTapCount\s*=\s*\([^)]*\)\s*\|\|\s*"(\d+)"/) || [])[1];

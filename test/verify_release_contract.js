@@ -106,6 +106,30 @@ try {
   panelArtifactDetail = error.message;
 }
 
+/* v6.22.0 — this check used to stop at the manifest, and the manifest was the
+   one file inside the .ccx that was right. main.js carried
+   `const PANEL_VERSION = "6.19.0"` while the manifest, panel-version.json and
+   the download filename all said 6.21.0, so the panel's own update probe
+   compared 6.19.0 against the published 6.21.0 and told every customer holding
+   the NEWEST build, on every single launch, that an update was waiting. And
+   the probe pointed at hlaingkhay28047-svg.github.io/TG — the GitHub Pages
+   host this project retired — which the check below has forbidden in the
+   landing page, robots.txt and the sitemap since the DigitalOcean move. It
+   never looked inside the .ccx. Both defects shipped. */
+let panelInternals = { version: "", updateUrl: "", brandVer: "", err: "" };
+try {
+  const panelMain = execFileSync("unzip", ["-p", panelArtifact, "main.js"],
+    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const panelIndex = execFileSync("unzip", ["-p", panelArtifact, "index.html"],
+    { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+  panelInternals = {
+    version: (panelMain.match(/const PANEL_VERSION\s*=\s*"([^"]+)"/) || [])[1] || "",
+    updateUrl: (panelMain.match(/const PANEL_VERSION_URL\s*=\s*"([^"]+)"/) || [])[1] || "",
+    brandVer: (panelIndex.match(/id="brandVer">v([0-9.]+)</) || [])[1] || "",
+    err: ""
+  };
+} catch (error) { panelInternals.err = error.message; }
+
 check("the app release is at least 5.2.0", versionAtLeast(appVersion, "5.2.0"), appVersion || "missing APP_VER");
 check("APP_VER and version.json stay in lockstep", appVersion === versionJson.v, `${appVersion} vs ${versionJson.v}`);
 check("the service-worker shell cache follows the app release", cacheVersion === appVersion, `${cacheVersion} vs ${appVersion}`);
@@ -151,9 +175,16 @@ function staleInventory(source) {
   return stale;
 }
 const landingStale = staleInventory(landing);
+/* v6.22.0 — this line used to read `landing.includes("907")`, four lines under
+   a comment explaining that a test can only certify a number it does not
+   itself invent. Nothing in this repository produced 907, so the assertion
+   proved only that somebody had typed the same number twice. The advertised
+   test count is now derived from the workflow that runs the tests, in
+   verify_landing_counts.js check H, which is where every other derived count
+   already lives. */
 check("landing inventory copy matches the shipped web app",
-  landingStale.length === 0 && landing.includes("907") && !["1,081", "1,134"].some(value => landing.includes(value)),
-  landingStale.length ? landingStale.join("; ") : "panel test-count copy is stale");
+  landingStale.length === 0 && !["1,081", "1,134"].some(value => landing.includes(value)),
+  landingStale.length ? landingStale.join("; ") : "a stale inventory total is published");
 const encodedProductionHome = encodeURIComponent(productionBase + "/");
 const unexpectedDocsDotfiles = fs.readdirSync(path.join(ROOT, "docs"))
   .filter(name => name.startsWith(".") && name !== ".nojekyll");
@@ -191,6 +222,12 @@ check("SEO discovery files use the production origin",
   sitemap.includes(`<loc>${productionBase}/</loc>`) &&
   sitemap.includes(`<loc>${productionBase}/app/</loc>`),
   "robots.txt or sitemap.xml uses the wrong origin");
+check("the panel agrees with itself about which version it is",
+  panelInternals.version === panelVersion && panelInternals.brandVer === panelVersion,
+  `main.js ${panelInternals.version || "?"}, index.html ${panelInternals.brandVer || "?"}, published ${panelVersion}${panelInternals.err ? " :: " + panelInternals.err : ""}`);
+check("the panel's update probe points at the production origin",
+  panelInternals.updateUrl === `${productionBase}/download/panel-version.json`,
+  panelInternals.updateUrl || "no PANEL_VERSION_URL found");
 check("retired GitHub Pages and repository URLs are absent",
   ![landing, html, robots, sitemap].some(value => value.includes("hlaingkhay28047-svg.github.io/TG")) &&
   !landing.includes("hlaingkhay28047-svg/HNK-Ai-V1") &&

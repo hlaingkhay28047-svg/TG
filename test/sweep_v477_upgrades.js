@@ -127,11 +127,20 @@ const NEW = Object.keys(SCRIPTS);
    TO CLOSE THIS: a Tai Le / Tai Lue reader translates the ten keys, they go in
    the packs, and this registry is deleted. Anything else missing from any pack
    still fails A, because the registry is matched exactly. */
+  /* v5.36.0 adds pay_both to the registry. Khamti (kht) is NOT here and never
+     was: it is a strict per-character transliteration of Shan -- 222 shipped
+     pairs, every one the same length, zero ambiguous characters -- so its
+     string is derived from the Shan one by a map proven to reproduce all 222.
+     Tai Le (tdd) and Tai Lue (khb) are different languages in different
+     scripts; only 2% of their strings are even the same length as the Shan,
+     which is why they were registered rather than guessed, and why pay_both
+     joins them. LANG_FB sends both to Shan and A2 below proves what a reader
+     actually sees is real Shan, not a raw key. */
   const PENDING = {
     tdd: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
-          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over"],
+          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both"],
     khb: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
-          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over"],
+          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both"],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

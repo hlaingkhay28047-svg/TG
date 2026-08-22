@@ -313,3 +313,6 @@ jobs:
 
       - name: Run v5.35.0 RTL + shareable-language sweep (Urdu reads right to left)
         run: node test/sweep_v535_rtl_lang.js
+
+      - name: Run v6.22.0 panel gate sweep (the .ccx is behind the same account as the app)
+        run: node test/verify_panel_gate.js
