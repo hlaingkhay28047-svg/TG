@@ -104,10 +104,18 @@ report("I4) approving the joining fee is what sets joined_paid, and nothing else
    email, and this project's own instructions hand out admin and per-customer
    prices with `where email = '...'`. */
 report("I6) a customer cannot rewrite the identity the owner approves payments against",
-  /new\.email\s*:=\s*old\.email/.test(guard) && /new\.name\s*:=\s*old\.name/.test(guard) &&
-  /new\.email\s*:=\s*null/.test(guard) && /new\.name\s*:=\s*null/.test(guard),
+  /new\.email\s*:=\s*old\.email/.test(guard) && /new\.name\s*:=\s*old\.name/.test(guard),
   { restoresEmail: /new\.email\s*:=\s*old\.email/.test(guard),
     restoresName: /new\.name\s*:=\s*old\.name/.test(guard) });
+/* ...and on INSERT it is TAKEN FROM auth.users rather than blanked. The first
+   version of this nulled the column, which rested on an assumption about the
+   signup trigger -- a trigger that lives in the owner's Supabase project and
+   nowhere in this repository. If that trigger ran with a non-null auth.uid(),
+   every new customer would have arrived with no email at all. */
+report("I6b) a self-inserted profile takes its email from auth.users, not from the payload",
+  /new\.email\s*:=\s*coalesce\(\(select[^)]*from auth\.users/i.test(guard) &&
+  !/new\.email\s*:=\s*null/.test(guard),
+  { authoritative: /from auth\.users/i.test(guard) });
 report("I7) the database refuses two profiles claiming one address",
   /create unique index if not exists profiles_email_uniq[\s\S]{0,120}lower\(email\)/.test(SQL), {});
 

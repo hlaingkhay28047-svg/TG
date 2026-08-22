@@ -377,10 +377,17 @@ begin
     new.price_3m_override         := null;
     new.price_6m_override         := null;
     new.price_join_first_override := null;
-    -- v5.37: identity. The signup trigger sets these; a self-inserted row does
-    -- not get to choose them (see the UPDATE branch for why).
-    new.email := null;
-    new.name  := null;
+    -- v5.37: identity, taken from the identity provider rather than from the
+    -- payload. NOT nulled: the trigger that creates a profiles row on signup
+    -- lives in the owner's Supabase project and NOT in this repository, so
+    -- blanking the column here rested on an assumption about code this file
+    -- cannot see -- and if that trigger ever runs with a non-null auth.uid(),
+    -- blanking it would leave every new customer with no email, which is the
+    -- field the approval queue shows as who filed a payment and the field
+    -- admGrant looks students up by. auth.users is the authority; coalesce
+    -- keeps the supplied value only in the impossible case where the lookup
+    -- finds nothing (profiles.id references auth.users.id).
+    new.email := coalesce((select u.email from auth.users u where u.id = new.id), new.email);
     return new;
   end if;
   new.plan_status     := old.plan_status;

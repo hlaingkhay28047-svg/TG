@@ -117,9 +117,18 @@ Three more from the same audit:
 - `profiles.email` and `profiles.name` were writable by the owning customer
   while the approval queue printed them as *who filed this payment*, `admGrant`
   looked students up by them, and this README hands out admin rights with
-  `where email = '...'`. The guard trigger now restores both, and a unique index
-  on `lower(email)` means the database refuses a duplicate identity rather than
-  letting `limit=1` pick one arbitrarily.
+  `where email = '...'`. The guard trigger now restores both on update, and a
+  unique index on `lower(email)` means the database refuses a duplicate identity
+  rather than letting `limit=1` pick one arbitrarily.
+
+  On **insert** it takes the address from `auth.users` instead. The first
+  version of that line blanked the column — which quietly rested on an
+  assumption about the trigger that creates a profiles row on signup, and
+  **that trigger lives in your Supabase project, not in this repository**. If it
+  ever ran with a non-null `auth.uid()`, every new customer would have arrived
+  with no email at all, breaking the approval queue and VIP grants for
+  everybody. Reading the identity provider is correct whoever does the insert:
+  a no-op when the trigger is right, an overwrite when the payload is forged.
 
 ## The Photoshop panel is behind the same account (v6.22.0)
 
