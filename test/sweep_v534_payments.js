@@ -568,8 +568,14 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
                                       x.method === "POST").length - before,
     };
   });
-  report("F2) with nothing on offer the form is shut, explained, and files nothing",
-    noOffer.chips.length === 0 && !noOffer.formShown && noOffer.notice.length > 0 &&
+  /* The notice is deliberately EMPTY. v5.37.0 put t("acc_unreachable") here,
+     which ends "the app still works as normal" — true where that string was
+     written, false here, because this branch is only reached with the access
+     wall up. The wall's own heading is the accurate message. Asserting the
+     notice is empty pins that decision rather than leaving the next author to
+     re-add a reassuring sentence. */
+  report("F2) with nothing on offer the form is shut, files nothing, and claims nothing",
+    noOffer.chips.length === 0 && !noOffer.formShown && noOffer.notice === "" &&
     noOffer.submitDisabled && noOffer.posted === 0,
     noOffer);
 

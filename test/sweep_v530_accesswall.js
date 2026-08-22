@@ -465,6 +465,65 @@ async function look(browser, sess, prof, label) {
     "A B D E H I J M N O)");
 
 
+  /* ---- Z) a signed-in user with no profiles row is not stuck forever ----
+     accLoadProfile asks PostgREST for a single object, so zero rows answers
+     406 — which was read as a failed read, leaving acc.profile null and the
+     app on "Checking your account…" permanently, because the row was never
+     going to appear on its own. Whose row is missing? Anybody who signed up
+     while the trigger that creates profiles rows was absent or broken, and
+     THAT TRIGGER IS NOT IN THIS REPOSITORY: supabase/schema.sql says it
+     assumes the trigger exists. profiles_insert_self grants exactly this
+     insert and had no caller. */
+  {
+    const zp = await browser.newPage({ viewport: { width: 412, height: 900 } });
+    zp.on("pageerror", e => errs.push("Z: " + String(e).slice(0, 160)));
+    let created = null;
+    await zp.route(SB_URL + "/**", route => {
+      const req = route.request(), url = req.url();
+      const json = (b, st) => route.fulfill({ status: st || 200, contentType: "application/json",
+                                              body: JSON.stringify(b) });
+      if (url.indexOf("/auth/v1/token") >= 0) {
+        return json({ access_token: "test.jwt", refresh_token: "test-refresh",
+                      expires_in: 3600, user: { id: "u-test", email: "t@example.com" } });
+      }
+      if (url.indexOf("/rest/v1/profiles") >= 0) {
+        if (req.method() === "POST") {
+          try { created = JSON.parse(req.postData() || "{}"); } catch (e) { created = {}; }
+          /* what the guard trigger would hand back: a free-tier row */
+          return json([{ id: "u-test", email: "t@example.com", plan_status: "none",
+                         plan_expires_at: null, allowed_devices: 2, is_admin: false,
+                         joined_paid: false }], 201);
+        }
+        if (created) {
+          return json({ id: "u-test", email: "t@example.com", plan_status: "none",
+                        plan_expires_at: null, allowed_devices: 2, is_admin: false,
+                        joined_paid: false });
+        }
+        /* the single-object Accept header with no matching row */
+        return json({ code: "PGRST116", message: "0 rows" }, 406);
+      }
+      return json([]);
+    });
+    await zp.addInitScript(s => {
+      try {
+        localStorage.setItem("hnk_ws_onboarded", "1");
+        localStorage.setItem("hnk_acc_sess_v1", JSON.stringify(s));
+        localStorage.setItem("hnk_acc_login_at", String(Date.now()));
+      } catch (e) {}
+    }, SESS);
+    await zp.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
+    await zp.waitForTimeout(2000);
+    const z = await zp.evaluate(() => ({
+      state: (typeof appWallState === "function") ? appWallState() : "(no wall)",
+      hasProfile: !!acc.profile,
+    }));
+    report("Z) a 406 (no profiles row) creates the row instead of hanging on 'checking'",
+      !!created && Object.keys(created).length === 1 && created.id === "u-test" &&
+      z.hasProfile && z.state === "buy",
+      { created, ...z });
+    await zp.close();
+  }
+
   /* ---- X) a transient outage is not a verdict (v5.37.0) ----
      accRefreshOnce returned "dead" for ANY non-2xx and both callers treat
      "dead" as a logout: accSignOutLocal deletes the session, the cached
