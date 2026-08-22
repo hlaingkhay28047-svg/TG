@@ -677,7 +677,13 @@ html,body{overscroll-behavior-y:none}
    reuse the existing gold hover language */
 button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.card h2{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 .btn:active{border-color:var(--line);transform:scale(.985)}
-#btnShowKey[aria-pressed="true"],#btnShowRhKey[aria-pressed="true"],#btnShowOaKey[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-hi)}
+/* v5.41.0 — the account password fields get the reveal the three API-key
+   fields have had since v4.41. A password typed on a phone, in a script whose
+   keyboard offers no preview, with no way to see it, is how people lock
+   themselves out of an account they have just created. Same helper, same
+   button, same word — no new mechanism and no 38th translation. */
+#btnShowKey[aria-pressed="true"],#btnShowRhKey[aria-pressed="true"],#btnShowOaKey[aria-pressed="true"],
+#btnShowAccPass[aria-pressed="true"],#btnShowAccPass2[aria-pressed="true"],#btnShowAccPassNew[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-hi)}
 .btn-gold:active{background:var(--gold-hi)}
 .chip:active,.subtab:active{border-color:var(--gold)}
 .wfmini:active,.wf-card:active{border-color:var(--gold)}
@@ -2036,7 +2042,7 @@ body.wall #wallRetry.on{display:block}
           <div id="accFormLogin">
             <div class="subh" id="accLoginH"></div>
             <div class="row"><input class="inp grow" id="accEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
-            <div class="row"><input class="inp grow" id="accPass" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false"></div>
+            <div class="row"><input class="inp grow" id="accPass" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass" type="button"></button></div>
             <div class="row"><button class="btn btn-gold grow" id="btnAccLogin"></button></div>
             <button class="acc-lnk" id="accToSignup"></button>
             <button class="acc-lnk" id="btnAccForgot"></button>
@@ -2045,7 +2051,7 @@ body.wall #wallRetry.on{display:block}
             <div class="subh" id="accSignupH"></div>
             <div class="row"><input class="inp grow" id="accName" type="text" autocomplete="name"></div>
             <div class="row"><input class="inp grow" id="accEmail2" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
-            <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"></div>
+            <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass2" type="button"></button></div>
             <div class="row"><button class="btn btn-gold grow" id="btnAccSignup"></button></div>
             <button class="acc-lnk" id="accToLogin"></button>
           </div>
@@ -2070,7 +2076,7 @@ body.wall #wallRetry.on{display:block}
 
           <div class="acc-sub">
             <div class="subh" id="accPassH"></div>
-            <div class="row"><input class="inp grow" id="accPassNew" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"></div>
+            <div class="row"><input class="inp grow" id="accPassNew" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPassNew" type="button"></button></div>
             <div class="row"><button class="btn grow" id="btnAccPass"></button></div>
             <div class="status" id="stAccPass"></div>
           </div>
@@ -21225,6 +21231,10 @@ function accApplyLang(){
   $("accEmail2").placeholder  = t("acc_email");
   $("accPass2").placeholder   = t("acc_pass");
   $("accPassNew").placeholder = t("acc_pass_new");
+  /* v5.41.0 — btn_show already ships in every locale for the API-key reveal */
+  $("btnShowAccPass").textContent    = t("btn_show");
+  $("btnShowAccPass2").textContent   = t("btn_show");
+  $("btnShowAccPassNew").textContent = t("btn_show");
   setIcnText($("btnAccLogin"),  "i-key", t("acc_btn_login"));
   setIcnText($("btnAccSignup"), "i-key", t("acc_btn_signup"));
   $("accToSignup").textContent = t("acc_to_signup");
@@ -21275,6 +21285,12 @@ function accWire(){
   if (abr) abr.onclick = function(){ admLoad(); };      /* v5.30 */
   var abg = $("btnAdmGrant");
   if (abg) abg.onclick = function(){ admGrant(); };     /* v5.34 */
+  /* v5.41.0 — reuse wireKeyReveal: it flips input.type and keeps aria-pressed
+     in step, which is what makes the gold border and the screen-reader state
+     agree. Declared far above; function declarations hoist. */
+  wireKeyReveal("btnShowAccPass",    "accPass");
+  wireKeyReveal("btnShowAccPass2",   "accPass2");
+  wireKeyReveal("btnShowAccPassNew", "accPassNew");
   $("btnAccLogin").onclick  = function(){ accLogin(); };
   $("btnAccSignup").onclick = function(){ accSignup(); };
   $("accToSignup").onclick  = function(){ accShowForm("signup"); };
@@ -22162,7 +22178,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.40.0";
+var APP_VER="5.41.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

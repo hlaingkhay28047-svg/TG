@@ -60,6 +60,19 @@ label{display:block; margin:0 0 6px; font-size:13px; color:var(--muted)}
   font-family:inherit;
 }
 .inp:focus{border-color:var(--gold)}
+/* v5.41.0 — a password you cannot see is how people lock themselves out of an
+   account they have just set. Same behaviour as the app's reveal: flip the
+   input type and keep aria-pressed in step so the border and the screen reader
+   agree. 48px tall to match .btn and clear the tap-target floor. */
+.pwrow{display:flex; gap:8px; align-items:stretch}
+.pwrow .inp{flex:1 1 auto; min-width:0}
+.btn-show{
+  flex:0 0 auto; min-height:46px; min-width:56px; padding:0 12px;
+  background:var(--panel-2); color:var(--cream);
+  border:1px solid var(--line-soft); border-radius:11px;
+  font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;
+}
+.btn-show[aria-pressed="true"]{border-color:var(--gold); color:var(--gold-hi)}
 :where(button,a,input):focus-visible{outline:2px solid var(--gold); outline-offset:2px}
 .btn{
   width:100%; min-height:48px; margin-top:14px;
@@ -89,8 +102,11 @@ label{display:block; margin:0 0 6px; font-size:13px; color:var(--muted)}
 
   <form id="form" autocomplete="on" novalidate>
     <label for="pw" id="lblPw">New password</label>
-    <input class="inp" id="pw" type="password" autocomplete="new-password"
-           autocapitalize="none" spellcheck="false" minlength="6" required>
+    <div class="pwrow">
+      <input class="inp" id="pw" type="password" autocomplete="new-password"
+             autocapitalize="none" spellcheck="false" minlength="6" required>
+      <button class="btn-show" id="btnShowPw" type="button" aria-pressed="false"></button>
+    </div>
     <button class="btn" id="btn" type="submit" disabled>Save new password</button>
   </form>
 
@@ -138,6 +154,9 @@ var TR = {
   acc_pass_changed:{my:"စကားဝှက် ပြောင်းပြီးပါပြီ ✓",en:"Password changed ✓",shn:"လႅၵ်ႈၶေႃႈလပ်ႉယဝ်ႉ ✓",kac:"Password galai ngut sai ✓",th:"เปลี่ยนรหัสผ่านแล้ว ✓",zh:"密码已更改 ✓",vi:"Đã đổi mật khẩu ✓",id:"Kata sandi diubah ✓",ms:"Kata laluan telah ditukar ✓"},
   pw_link_dead:  {my:"ဒီလင့်ခ် သက်တမ်း ကုန်သွားပါပြီ — စကားဝှက် မေ့နေလား? ကနေ အသစ် ထပ်တောင်းပါ",en:"This reset link has expired — ask for a new one from “Forgot your password?”",shn:"လိင်ႉၼႆႉ မူတ်းယဝ်ႉ — ႁဵတ်းၶိုၼ်း",kac:"Ndai link a aten htum sai — bai jahkrat u",th:"ลิงก์นี้หมดอายุแล้ว — ขอลิงก์ใหม่จาก “ลืมรหัสผ่าน?”",zh:"该链接已过期 — 请从“忘记密码？”重新获取",vi:"Liên kết này đã hết hạn — hãy lấy liên kết mới từ “Quên mật khẩu?”",id:"Tautan ini sudah kedaluwarsa — minta yang baru dari “Lupa kata sandi?”",ms:"Pautan ini telah tamat — minta yang baharu dari “Lupa kata laluan?”"},
   pw_unreachable:{my:"အကောင့် server နဲ့ ချိတ်ဆက်လို့ မရသေးပါ",en:"Can't reach the account service right now",shn:"ၵပ်းသိုပ်ႇ server ဢၶွင်ႉ ဢမ်ႇလႆႈ",kac:"Account server hte n hkrum lu ai",th:"เชื่อมต่อบริการบัญชีไม่ได้ตอนนี้",zh:"暂时连不上账户服务",vi:"Hiện chưa kết nối được dịch vụ tài khoản",id:"Layanan akun belum bisa dihubungi",ms:"Perkhidmatan akaun tidak dapat dihubungi"},
+  /* v5.41.0 — the same two values the app's own reveal button carries, so the
+     two surfaces say the same word. t() falls through to en for the rest. */
+  btn_show:      {my:"ပြ",en:"Show"},
   nav_cta:       {my:"App ဖွင့်မယ်",en:"Open the App",shn:"ပိုတ်ႇ App",kac:"App hpaw u",th:"เปิดแอป",zh:"打开应用",vi:"Mở ứng dụng",id:"Buka Aplikasi",ms:"Buka Aplikasi"}
 };
 var LANGS = ["my","en","shn","kac","th","zh","vi","id","ms"];
@@ -226,6 +245,13 @@ async function revoke(bearer){
 document.documentElement.lang = LANG === "shn" || LANG === "kac" ? "my" : LANG;
 $("h1").textContent = t("pw_title");
 $("lblPw").textContent = t("acc_pass_new");
+$("btnShowPw").textContent = t("btn_show");
+$("btnShowPw").setAttribute("aria-label", t("btn_show"));
+$("btnShowPw").onclick = function(){
+  var i = $("pw");
+  i.type = i.type === "password" ? "text" : "password";
+  this.setAttribute("aria-pressed", i.type === "text" ? "true" : "false");
+};
 $("btn").textContent = t("pw_title");
 $("open").textContent = t("nav_cta");
 document.title = t("pw_title") + " — HNK Create Studio";

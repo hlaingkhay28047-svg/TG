@@ -33,9 +33,11 @@
    G) A token_hash link is exchanged through /auth/v1/verify first.
    H) A short password never leaves the browser.
    I) referrer=no-referrer, and the CSP's connect-src names exactly one host.
-   J) Every string the page renders in Burmese comes from the app's own
-      TR_V430 table, apart from the two keys documented as new — so the reset
-      page cannot drift into saying something the app never said.
+   J) Every string the page renders comes from the app's own tables, apart from
+      the two keys documented as new — so the reset page cannot drift into
+      saying something the app never said. Matched across every language EITHER
+      side carries, so a key that legitimately ships two languages is compared
+      on two, and a language present on one side alone is a mismatch.
    K) 320px wide, nothing scrolls sideways and every control clears 44px.
 
    Usage: node test/sweep_v533_reset.js   (no server needed) */
@@ -111,11 +113,18 @@ const NEW_KEYS = ["pw_title", "pw_link_dead"];
 const TRIMMED = { pw_unreachable: "acc_unreachable" };
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 
+/* v5.41.0 — ACCEPT EITHER QUOTE STYLE. The app's TR table is mostly double
+   quoted but not entirely (btn_show is `{ my: 'ပြ', en: 'Show' }`), and a
+   single-quoted source entry parsed to an EMPTY object here — so every
+   language came back "missing" and the failure pointed at the reset page
+   rather than at this parser. */
 function entryFrom(body, re) {
   const m = body.match(re);
   if (!m) return null;
   const out = {};
-  for (const p of m[1].matchAll(/"?(\w+)"?\s*:\s*"((?:[^"\\]|\\.)*)"/g)) out[p[1]] = p[2];
+  for (const p of m[1].matchAll(/"?(\w+)"?\s*:\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')/g)) {
+    out[p[1]] = p[2] !== undefined ? p[2] : p[3];
+  }
   return out;
 }
 const resetKeys = [...RESET.matchAll(/^\s{2}(\w+):\s*\{((?:[^{}]|\\.)*)\}/gm)]
@@ -129,14 +138,23 @@ for (const { key, langs } of resetKeys) {
     entryFrom(APP, new RegExp("\\b" + sourceKey + ":\\s*\\{([^{}]*)\\}")) ||
     entryFrom(LANDING, new RegExp('"' + sourceKey.replace(/_/g, "\\.") + '"\\s*:\\s*\\{([^{}]*)\\}'));
   if (!src) { drifted.push({ key, why: "no source entry named " + sourceKey }); continue; }
-  for (const L of LANGS) {
+  /* v5.41.0 — compare the languages BOTH SIDES ACTUALLY CARRY, not a fixed
+     nine. btn_show ships {my,en} in the app and falls through to English for
+     the other seven, on both surfaces; demanding nine would fail a key that has
+     not drifted at all, and drift is what this check is for. The union is the
+     stricter comparison, not the looser one: a language present on one side and
+     absent on the other is now a mismatch, which the old fixed list could not
+     see either. */
+  const present = [...new Set([...LANGS, ...Object.keys(langs), ...Object.keys(src)])]
+    .filter(L => langs[L] != null || src[L] != null);
+  for (const L of present) {
     const mine = langs[L], theirs = src[L];
     if (mine == null || theirs == null) { drifted.push({ key, lang: L, why: "missing" }); continue; }
     const ok = TRIMMED[key] ? theirs.indexOf(mine) === 0 && mine.length > 0 : mine === theirs;
     if (!ok) drifted.push({ key, lang: L, mine: mine.slice(0, 40), theirs: theirs.slice(0, 40) });
   }
 }
-report("J) every reused string matches its shipped source in all nine languages (trimmed ones only by deletion)",
+report("J) every reused string matches its shipped source in every language either side carries (trimmed ones only by deletion)",
   resetKeys.length >= 6 && drifted.length === 0,
   { checked: resetKeys.length, drifted: drifted.slice(0, 6), total: drifted.length });
 

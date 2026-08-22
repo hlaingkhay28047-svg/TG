@@ -382,6 +382,31 @@ somewhere else. `test/sweep_v533_reset.js` proves the app asks for that URL and
 that the page handles the token responsibly, but no test here can prove the
 dashboard has it.
 
+## A password you can look at (v5.41.0)
+
+The three API-key fields have carried a Show/Hide reveal since v4.41. The three
+**account password** fields — sign-in, sign-up, and change-password — had none,
+and neither did `/reset/`. A password typed on a phone, in a script whose
+keyboard offers no preview, with no way to see what you typed, is how people
+lock themselves out of an account they have just created.
+
+Same helper (`wireKeyReveal`), same button, same word: `btn_show` already ships,
+so this adds no new mechanism and no 38th translation. The reveal flips
+`input.type` and keeps `aria-pressed` in step with it, which is what makes the
+gold border and the screen-reader state agree rather than drift. `sweep_account`
+check 20 asserts the behaviour — the type really flips, `aria-pressed` really
+follows, the control clears 44px on the form actually on screen — not the markup.
+
+Two things this turned up in the checks themselves. `sweep_v533_reset` J matched
+reused strings across a fixed list of nine languages, so a source key that
+legitimately ships two (`btn_show` is `{my, en}`, English for the rest, on both
+surfaces) failed as "missing" in seven. It compares the languages **either side
+carries** now, which is the stricter comparison: a language present on one side
+and absent on the other is a mismatch, which the fixed list could not see. And
+its parser only accepted double-quoted values, so a single-quoted source entry —
+which `btn_show` is — parsed to an empty object and blamed the reset page for a
+drift that was really a blind spot here.
+
 ## What v5.39.0 broke, and how it was caught (v5.40.0)
 
 Two of v5.39.0's own fixes shipped regressions. Both were found by an
