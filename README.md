@@ -68,6 +68,109 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## Moving the database to DigitalOcean
+
+The app used Supabase for four things, not one: the PostgreSQL database, the
+PostgREST HTTP API the browser calls, the Auth service, and object storage for
+payment proofs. A DigitalOcean managed database supplies the first. `server/`
+supplies the other three in about a thousand lines, and `.do/app.yaml` runs it
+alongside the static site in the same app.
+
+**Authorisation was not rewritten, deliberately.** Every request opens a
+transaction, sets the role and `request.jwt.claim.sub` from a verified token,
+and lets `supabase/schema.sql` decide the rest — the same policies, the same
+triggers, the same 22 checks in `verify_schema_behaviour.js`. Reimplementing
+"who may approve a payment" in JavaScript is where that kind of bug lives.
+
+`server/sql/platform.sql` creates what the platform used to: `auth.users`,
+`auth.uid()`, `storage.objects`, and the `anon` / `authenticated` roles. It
+applies **before** `supabase/schema.sql`, which needs no edits at all.
+
+### What you have to do, in order
+
+Nothing below can be done from this repository — it needs your DigitalOcean
+account.
+
+1. **Deploy the app.** `.do/app.yaml` already declares the static site, the
+   `hnk-api` service and a managed PostgreSQL database. DigitalOcean creates the
+   database and fills in `DATABASE_URL` itself; there is no connection string to
+   copy anywhere.
+
+2. **Set `JWT_SECRET`** in the DigitalOcean console, as an encrypted secret, to
+   64 random hex characters. Anything that knows this value can mint a token for
+   any account, so it belongs nowhere else — not in this repository, not in a
+   message. Changing it later logs everybody out, which is exactly what you want
+   if it is ever exposed.
+
+3. **Apply the schema**, in this order, against the new database:
+
+   ```
+   server/sql/platform.sql
+   supabase/schema.sql
+   ```
+
+4. **Make yourself an admin**, the same statement as before — it works because
+   the guard trigger steps aside for a caller with no `auth.uid()`:
+
+   ```sql
+   update public.profiles set is_admin = true where email = 'you@example.com';
+   ```
+
+5. **Set prices and payment details** in `app_settings`, exactly as before.
+
+### Two things that do not come across
+
+**Passwords cannot be migrated.** Supabase stores bcrypt; this service stores
+scrypt, and a bcrypt hash simply never verifies — it is not a setting that can
+be flipped. Every account has to set a new password. If the only account is
+yours, that is one signup and this does not matter; if you have customers by
+then, they all need a reset, and step two below has to be working first.
+
+**Password-reset email needs an SMTP server.** Supabase sent those messages.
+Set `SMTP_HOST`, `SMTP_USER` and `SMTP_PASS` as secrets — a Gmail address with
+an app password is enough. Until you do, `recover` still answers 200 (it must
+not reveal which addresses exist) but **no mail is sent**, and a locked-out
+customer needs you to change their password by hand.
+
+### Moving existing rows
+
+Only the four application tables carry anything worth keeping, and none of them
+holds a password. Export from Supabase's SQL editor and import into the new
+database:
+
+```sql
+-- run in Supabase, save the output
+select * from public.app_settings;
+select * from public.profiles;
+select * from public.payment_requests;
+select * from public.devices;
+```
+
+Insert `auth.users` rows first — `profiles.id` references them — leaving
+`encrypted_password` null so the account exists but cannot be signed into until
+its owner sets a password. `profiles_email_uniq` and `users_email_uniq` will
+refuse a duplicate address, which is the point.
+
+Uploaded payment proofs live in Supabase storage rather than in a table. They
+are evidence for payments you have already approved, so they are usually not
+worth moving; if they are, download and re-upload them through the app.
+
+### Cost, plainly
+
+A managed PostgreSQL cluster and a service instance are each billed monthly, on
+top of the static site that is currently free. This is **not** cheaper than
+Supabase Pro — it is comparable or more, and it is more moving parts to run.
+What it buys is that everything is in one account, on one bill, and nothing
+pauses itself after a week of inactivity. Check the current prices in the
+DigitalOcean console before committing; they change.
+
+### Going back
+
+The Supabase project is untouched by any of this. Reverting means restoring the
+previous `SB_URL` in `docs/app/index.html` and removing the `services:` and
+`databases:` blocks from `.do/app.yaml` — the app schema is identical on both
+sides, so nothing else has to change.
+
 ## The Visual Library was mostly thumbnails (panel v6.23.0)
 
 The panel's headline feature advertises 1,801 reference images. 1,446 of them —
