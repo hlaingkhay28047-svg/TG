@@ -103,7 +103,21 @@ const server = http.createServer(async (req, res) => {
     const params = new url.URLSearchParams(parsed.query || "");
     const uid = uidFrom(req);
 
-    if (pathname === "/health") return send(res, 200, { ok: true });
+    /* /health answers without touching the database, so App Platform's health
+       check passes while the schema is still being applied. `schema` is filled
+       in separately and reports how many of the four application tables exist:
+       it is the only way, from outside, to tell a service that booted from a
+       service that booted AND migrated. 4 means ready. */
+    if (pathname === "/health") {
+      let schema = null;
+      try {
+        const { rows } = await require("./lib/db").pool.query(
+          "select count(*)::int as n from pg_tables where schemaname='public' " +
+          "and tablename in ('profiles','payment_requests','app_settings','devices')");
+        schema = rows[0].n;
+      } catch (_) { /* unreachable database is reported as null, not as an outage */ }
+      return send(res, 200, { ok: true, schema: schema, ready: schema === 4 });
+    }
 
     /* ---------------- auth ---------------- */
     if (pathname.startsWith("/auth/v1/")) {
