@@ -19671,21 +19671,24 @@ $("prompt").addEventListener("input", function(){
    file itself produced via icn().
    ========================================================================== */
 
-/* THE API IS SERVED FROM THIS ORIGIN, under /api.
-   .do/app.yaml routes /api to the hnk-api service and everything else to this
-   static site, so there is no hostname to paste in here and keep in step with a
-   deployment, and no cross-origin request to arrange CORS for. Deriving it from
-   location.origin rather than writing it down also means staging and production
-   are the same build.
+/* THE ENDPOINT FLIP IS NOT MADE YET, DELIBERATELY.
+   server/ and .do/app.yaml describe an API on this origin under /api, and the
+   whole migration is tested and ready — but DigitalOcean keeps its own copy of
+   the app spec and the deploy workflow never applies .do/app.yaml. Merging a
+   build that asks for /api would therefore ship it to a production app where
+   nothing serves /api, and every login, signup and access-wall check would 404
+   for every customer.
 
-   SB_ANON is vestigial and deliberately kept. accHeaders sends it as the bearer
-   when nobody is signed in; the service simply fails to verify it and treats
-   the caller as anonymous, which is the correct outcome for the one request
-   that is meant to work signed out (app_settings, so the buy screen can quote
-   prices). It carries no authority now — the old Supabase publishable key is
-   gone rather than left lying in the source. */
-var SB_URL  = location.origin + "/api";
-var SB_ANON = "anon";
+   So this stays on Supabase until the DigitalOcean service and database
+   actually exist. Once they do, the switch is these two lines:
+
+       var SB_URL  = location.origin + "/api";
+       var SB_ANON = "anon";
+
+   The anon key below is publishable by design — RLS on every table is the real
+   boundary. It must never be RENDERED into the DOM (sweep_account check 17). */
+var SB_URL  = "https://vmtwuuybnalefpgvrast.supabase.co";
+var SB_ANON = "sb_publishable_brvtaDa8uJCvlf2P2sTe3A_BZNXhxUJ";
 
 var ACC_LS_SESS = "hnk_acc_sess_v1";     /* {access,refresh,exp,uid,email}   */
 var ACC_LS_PROF = "hnk_acc_profile_v1";  /* last-known profiles row, offline */

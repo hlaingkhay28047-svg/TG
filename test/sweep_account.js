@@ -637,11 +637,7 @@ const SB_FIX = {
     return { jwtInText: txt.indexOf("eyJ") >= 0, anonInText: txt.indexOf(SB_ANON) >= 0,
              anonInAttrs: blob.indexOf(SB_ANON) >= 0,
              tokenInAttrs: blob.indexOf("ACC1") >= 0 || blob.indexOf("eyJ") >= 0,
-             urlInText: txt.indexOf(SB_URL) >= 0, anonLen: SB_ANON.length > 0,
-             /* The endpoint is this origin plus /api. Asserting that, rather
-                than a literal https host, is what the app actually promises —
-                and it keeps the check meaningful on the http test server. */
-             urlOk: SB_URL === location.origin + "/api" };
+             urlInText: txt.indexOf(SB_URL) >= 0, anonLen: SB_ANON.length > 0, urlOk: /^https:\/\//.test(SB_URL) };
   });
   report("17 no secrets in the DOM: the anon key ships in code (that is its design) but is never RENDERED — no JWT prefix and no key material in body text, and no access token leaks into any href / title / value",
     c17.anonLen && c17.urlOk && !c17.jwtInText && !c17.anonInText && !c17.anonInAttrs && !c17.tokenInAttrs,
