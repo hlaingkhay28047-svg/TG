@@ -24,8 +24,58 @@ const { Pool } = require("pg");
 
 const ROLES = new Set(["anon", "authenticated"]);
 
+/* Which connection string to use, and — if none is usable — why not, in words.
+ *
+ * App Platform substitutes ${component.VARIABLE} only when a component by that
+ * exact name exists in the app's OWN spec. When it does not, the text is passed
+ * through unchanged, so the service receives the literal
+ * "${hnk-db.DATABASE_URL}" and pg does not reject it: it parses it into
+ * nonsense and reports `getaddrinfo ENOTFOUND base`, which names neither the
+ * database nor the binding and sends the reader looking for a DNS fault that
+ * does not exist. The same trap through DATABASE_CA_CERT already cost one
+ * rolled-back deploy.
+ *
+ * THE FALLBACK IS NOT A GUESS. A database added from the DigitalOcean console
+ * rather than from this spec is named by the console, and App Platform exposes
+ * its URL under a variable named after THAT component — so the database is
+ * present and reachable while ${hnk-db.DATABASE_URL} sits there as text. One
+ * unambiguous PostgreSQL URL elsewhere in the environment is that database and
+ * nothing else. Two would be a choice, and a service silently choosing which
+ * database holds the payments is worse than one that refuses to start, so two
+ * is reported instead of picked between.
+ */
+function resolveDatabaseUrl() {
+  const direct = process.env.DATABASE_URL || "";
+  const unresolved = direct.match(/\$\{[^}]*\}/);
+  if (direct && !unresolved) return { url: direct, key: "DATABASE_URL", why: null };
+
+  const found = Object.keys(process.env).filter(k =>
+    k !== "DATABASE_URL" && /^postgres(?:ql)?:\/\/\S+$/.test(process.env[k] || ""));
+  if (found.length === 1) return { url: process.env[found[0]], key: found[0], why: null };
+
+  const why = unresolved
+    ? "DATABASE_URL is an unresolved App Platform binding " + unresolved[0] +
+      " — no component with that name exists in this app's spec, so the text was " +
+      "passed through instead of substituted"
+    : "DATABASE_URL is not set on this service";
+  return {
+    url: "", key: null,
+    why: found.length > 1
+      ? why + "; " + found.length + " other PostgreSQL URLs are set (" +
+        found.join(", ") + ") and choosing between them would be a guess"
+      : why,
+  };
+}
+
+const RESOLVED = resolveDatabaseUrl();
+if (RESOLVED.key && RESOLVED.key !== "DATABASE_URL") {
+  console.warn("db: DATABASE_URL is unusable — connecting with " + RESOLVED.key + " instead.");
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  /* undefined, not "", so a local development run still falls back to the
+     PG* environment variables the way psql does. */
+  connectionString: RESOLVED.url || undefined,
   /* DigitalOcean Managed PostgreSQL terminates TLS with its own CA. When a real
      certificate is supplied we verify against it; otherwise we still encrypt.
      Set PGSSLMODE=disable only for a local development database.
@@ -49,6 +99,10 @@ const pool = new Pool({
 });
 
 pool.on("error", err => { console.error("pg pool error:", err.message); });
+
+/* Why the database cannot be reached for a reason /health can state plainly,
+   or null when the configuration is fine. */
+const describeDatabaseUrl = () => RESOLVED.why;
 
 /* Run fn inside one transaction, as `role`, with auth.uid() answering `uid`.
  *
@@ -109,4 +163,4 @@ async function asService(fn) {
   }
 }
 
-module.exports = { pool, asUser, asAnon, asService };
+module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl };

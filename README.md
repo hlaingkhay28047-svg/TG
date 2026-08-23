@@ -117,12 +117,49 @@ account.
    message. Changing it later logs everybody out, which is exactly what you want
    if it is ever exposed.
 
-3. **Apply the schema**, in this order, against the new database:
+3. **Nothing.** The schema used to be applied by hand here, in the order
+   `server/sql/platform.sql` then `supabase/schema.sql`. The service now applies
+   both itself, on every boot, because the only other route to a development
+   database is a `psql` client that is not available on a phone. Both files are
+   idempotent by construction, and `test/verify_schema_behaviour.js` check B
+   proves it by applying them three times in a row.
+
+   Read `/api/health` to see whether it worked. It answers in one of three
+   shapes:
 
    ```
-   server/sql/platform.sql
-   supabase/schema.sql
+   {"ok":true,"schema":4,"ready":true}          the service and the schema are up
+   {"ok":true,"schema":0,"ready":false}         reached the database, schema incomplete
+   {"ok":true,"schema":null,"ready":false,      could not reach the database at all,
+    "error":"…"}                                 and `error` says why
    ```
+
+   `ok` describes the *service*, which is why it stays `true` while the database
+   is unreachable — an exiting container makes App Platform roll back to the
+   previous build, and then nothing about the deployment looks like it happened.
+   `error` is sanitised before it is shown: `/api/health` is public, and a
+   connection failure can carry the connection string.
+
+   The message worth recognising is
+
+   ```
+   DATABASE_URL is an unresolved App Platform binding ${hnk-db.DATABASE_URL}
+   ```
+
+   which means the app has no component *named* `hnk-db`. App Platform passes an
+   unmatched `${…}` through as literal text rather than failing, so the driver
+   receives it as a hostname and would otherwise report `getaddrinfo ENOTFOUND
+   base` — a message about DNS, for a problem that is a name in the spec. Rename
+   the database component to `hnk-db`, or point the binding at whatever it is
+   actually called.
+
+   Mostly you will not see it, because a database added from the console is
+   still *attached*: App Platform exposes its URL under a variable named after
+   that component, so the service finds it and connects anyway, logging which
+   variable it used. It does that only when exactly one PostgreSQL URL is in the
+   environment. Two, and it stops and says so — a service quietly deciding for
+   itself which database holds the payment records is worse than one that does
+   not start.
 
 4. **Make yourself an admin**, the same statement as before — it works because
    the guard trigger steps aside for a caller with no `auth.uid()`:

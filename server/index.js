@@ -115,8 +115,26 @@ const server = http.createServer(async (req, res) => {
           "select count(*)::int as n from pg_tables where schemaname='public' " +
           "and tablename in ('profiles','payment_requests','app_settings','devices')");
         schema = rows[0].n;
-      } catch (_) { /* unreachable database is reported as null, not as an outage */ }
-      return send(res, 200, { ok: true, schema: schema, ready: schema === 4 });
+      } catch (err) {
+        /* An unreachable database is reported as null, not as an outage: the
+           service itself is up. The reason is recorded here as well as at boot,
+           so a database that disappears AFTER a successful migration is named
+           too, not only one that was never reachable. */
+        require("./lib/migrate").setLastError(err && err.message);
+      }
+      const body = { ok: true, schema: schema, ready: schema === 4 };
+      /* Only while something is actually wrong — a stale boot error must not
+         keep accusing a database that has since come back. */
+      if (schema === null) {
+        /* A configuration fault is reported ahead of whatever pg made of it.
+           An unresolved binding reaches the driver as a hostname and comes back
+           as `getaddrinfo ENOTFOUND base`, which sends the reader hunting for a
+           DNS problem; the binding itself is the answer. */
+        const why = require("./lib/db").describeDatabaseUrl() ||
+                    require("./lib/migrate").getLastError();
+        if (why) body.error = why;
+      }
+      return send(res, 200, body);
     }
 
     /* ---------------- auth ---------------- */
@@ -188,7 +206,16 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   if (!process.env.JWT_SECRET) { console.error("FATAL: JWT_SECRET is not set — refusing to start."); process.exit(1); }
-  if (!process.env.DATABASE_URL) { console.error("FATAL: DATABASE_URL is not set — refusing to start."); process.exit(1); }
+  /* A missing DATABASE_URL used to be fatal here. It is not any more, for the
+     same reason an unreachable database is not: exiting makes App Platform roll
+     back to the previous build, which answers /health in the old shape, so the
+     deployment looks like it simply did not happen and the cause is invisible
+     to anyone without the runtime logs. migrate() reports this one through
+     /health instead — nothing is served that needs the database anyway, because
+     every query fails on the same missing configuration.
+     JWT_SECRET above stays fatal: booting without a signing key would mean
+     inventing one per container, which silently logs everyone out on restart
+     and differs between instances. */
   if (!ALLOWED_ORIGIN) console.warn("WARNING: ALLOWED_ORIGIN is unset — CORS will echo the caller's origin. Set it in production.");
   /* The schema is applied before the first request rather than by hand. Both
      files are idempotent — verify_schema_behaviour.js check B applies them
@@ -206,6 +233,7 @@ if (require.main === module) {
        A failure AFTER a file applied is different and still fatal; migrate()
        raises that one only once it has proved the tables are missing. */
     if (err && err.applied === false) {
+      require("./lib/migrate").setLastError(err.message);
       console.error("WARNING: could not reach the database —", err.message);
       console.error("WARNING: booting anyway; /health will report schema:null until this is fixed.");
       return listen();

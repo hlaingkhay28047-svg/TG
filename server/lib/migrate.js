@@ -24,7 +24,7 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { pool } = require("./db");
+const { pool, describeDatabaseUrl } = require("./db");
 
 /* platform.sql sits inside server/ and is always there. supabase/schema.sql
    does not — it belongs to the repository root, and App Platform builds from
@@ -58,6 +58,15 @@ async function migrate() {
     console.error("migrate: WARNING — supabase/schema.sql was not found in this build.");
     console.error("migrate: looked in:\n  " + SCHEMA_CANDIDATES.join("\n  "));
     console.error("migrate: platform.sql will still be applied; the application tables will NOT exist.");
+  }
+
+  /* Checked before connecting, because pg turns an unresolved binding into
+     `getaddrinfo ENOTFOUND base` and that names the wrong problem. */
+  const unusable = describeDatabaseUrl();
+  if (unusable) {
+    const err = new Error(unusable);
+    err.applied = false;
+    throw err;
   }
 
   let client;
@@ -94,4 +103,17 @@ async function migrate() {
   }
 }
 
-module.exports = { migrate };
+/* The last migration failure, sanitised, so /health can report WHY rather than
+   only that something is wrong. Reading DigitalOcean's runtime logs on a phone
+   is a genuine obstacle; a URL is not. Credentials are stripped because a
+   connection error can carry the connection string, and /health is public. */
+let lastError = null;
+function setLastError(msg) {
+  lastError = String(msg || "")
+    .replace(/postgres(?:ql)?:\/\/[^\s]*/gi, "postgres://<redacted>")
+    .replace(/password=\S+/gi, "password=<redacted>")
+    .slice(0, 200);
+}
+const getLastError = () => lastError;
+
+module.exports = { migrate, setLastError, getLastError };
