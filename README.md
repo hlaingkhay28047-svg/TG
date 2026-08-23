@@ -68,6 +68,39 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## The Visual Library was mostly thumbnails (panel v6.23.0)
+
+The panel's headline feature advertises 1,801 reference images. 1,446 of them —
+**80%** — resolved `paths.full` to `assets/user_library_ui/`, the UI card tier,
+median **5.6 KB**. A customer who paid for the panel, opened the library and
+pulled a reference into Photoshop got a thumbnail, and would know it instantly.
+
+The real images were never missing. They were sitting in `docs/app/lib/full`,
+where the web app serves them, and every one of the 1,446 had a same-named file
+waiting: 1,446 of 1,446 matched. Only the panel's copy of the index pointed at
+the wrong tier. The 355 items that did resolve correctly already used
+`assets/user_library/`, so this extends a path proven in production rather than
+introducing one.
+
+`paths.full` now points at the real tier for all 1,801. Thumbnail-tier entries
+fall from 1,446 (80%) to 31 (2%) — the 31 are genuinely small originals — and
+the median jumps from 5.6 KB to **41.8 KB**. `preview` and `thumb` are
+untouched: a card grid *should* load the small tier.
+
+**Why the archive is 88 MB and not 101 MB.** Bundling the full tier unchanged
+produced a 101.3 MiB `.ccx`, and GitHub refuses any file over 100 MiB — the
+push would simply have been rejected, with no LFS configured and no reason to
+believe a static-site host would resolve LFS pointers for a download link. The
+full tier is therefore re-encoded at JPEG quality 82, progressive, and a file is
+only replaced when the result is *smaller* (123 were left alone because
+re-encoding would have grown them).
+
+That number is measured, not guessed. These are 427×640 reference images, not
+high-resolution photographs, and at quality 82 the median PSNR against the
+original is **43.8 dB** with a worst case of 36.4 dB — above the ~40 dB at which
+a re-encode is considered visually identical. The archive lands at 88.0 MiB,
+12 MiB inside the cap, and the landing's advertised size follows in 54 places.
+
 ## The schema could not build the database it protects
 
 Every statement in `supabase/schema.sql` used to `ALTER`; none `CREATE`d. The
