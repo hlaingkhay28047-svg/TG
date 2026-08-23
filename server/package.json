@@ -5,6 +5,10 @@
   "description": "HNK Create Studio API — auth, PostgREST-compatible reads/writes and payment-proof storage over DigitalOcean Managed PostgreSQL.",
   "main": "index.js",
   "engines": { "node": ">=22" },
-  "scripts": { "start": "node index.js" },
+  "scripts": {
+    "//build": "App Platform builds from source_dir. If the repository root came with it, keep a copy of the schema next to platform.sql so migrate.js finds it either way. Never fails the build.",
+    "build": "mkdir -p sql && (cp ../supabase/schema.sql sql/schema.sql 2>/dev/null || true)",
+    "start": "node index.js"
+  },
   "dependencies": { "pg": "8.13.1" }
 }

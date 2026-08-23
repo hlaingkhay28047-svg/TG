@@ -103,7 +103,21 @@ const server = http.createServer(async (req, res) => {
     const params = new url.URLSearchParams(parsed.query || "");
     const uid = uidFrom(req);
 
-    if (pathname === "/health") return send(res, 200, { ok: true });
+    /* /health answers without touching the database, so App Platform's health
+       check passes while the schema is still being applied. `schema` is filled
+       in separately and reports how many of the four application tables exist:
+       it is the only way, from outside, to tell a service that booted from a
+       service that booted AND migrated. 4 means ready. */
+    if (pathname === "/health") {
+      let schema = null;
+      try {
+        const { rows } = await require("./lib/db").pool.query(
+          "select count(*)::int as n from pg_tables where schemaname='public' " +
+          "and tablename in ('profiles','payment_requests','app_settings','devices')");
+        schema = rows[0].n;
+      } catch (_) { /* unreachable database is reported as null, not as an outage */ }
+      return send(res, 200, { ok: true, schema: schema, ready: schema === 4 });
+    }
 
     /* ---------------- auth ---------------- */
     if (pathname.startsWith("/auth/v1/")) {
@@ -176,7 +190,14 @@ if (require.main === module) {
   if (!process.env.JWT_SECRET) { console.error("FATAL: JWT_SECRET is not set — refusing to start."); process.exit(1); }
   if (!process.env.DATABASE_URL) { console.error("FATAL: DATABASE_URL is not set — refusing to start."); process.exit(1); }
   if (!ALLOWED_ORIGIN) console.warn("WARNING: ALLOWED_ORIGIN is unset — CORS will echo the caller's origin. Set it in production.");
-  server.listen(PORT, () => console.log("hnk-api listening on " + PORT));
+  /* The schema is applied before the first request rather than by hand. Both
+     files are idempotent — verify_schema_behaviour.js check B applies them
+     three times and requires app_settings to still hold one row — so this
+     converges on every boot instead of needing a database client the owner
+     does not have. */
+  require("./lib/migrate").migrate()
+    .then(() => server.listen(PORT, () => console.log("hnk-api listening on " + PORT)))
+    .catch(err => { console.error("FATAL: migration failed —", err.message); process.exit(1); });
 }
 
 module.exports = { server };

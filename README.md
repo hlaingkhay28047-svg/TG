@@ -91,10 +91,25 @@ applies **before** `supabase/schema.sql`, which needs no edits at all.
 Nothing below can be done from this repository — it needs your DigitalOcean
 account.
 
-1. **Deploy the app.** `.do/app.yaml` already declares the static site, the
-   `hnk-api` service and a managed PostgreSQL database. DigitalOcean creates the
-   database and fills in `DATABASE_URL` itself; there is no connection string to
-   copy anywhere.
+1. **Deploy the app.** `.do/app.yaml` declares the static site, the `hnk-api`
+   service and a database. DigitalOcean creates the database and fills in
+   `DATABASE_URL` itself; there is no connection string to copy anywhere.
+
+   The database is declared `production: false` — a *development* database,
+   created with the app at no extra cost. `production: true` means something
+   different: it attaches an **already-created** managed cluster and requires
+   `cluster_name`, so a spec with `production: true` and nothing else is
+   rejected with
+
+   ```
+   error validating app spec field "databases.cluster_name":
+   is a required value for production databases
+   ```
+
+   Start on the development database to prove the whole thing works without
+   paying for anything. Before real payments run through it, create a managed
+   PostgreSQL cluster and swap the block for one naming it — a development
+   database is explicitly not meant to hold data you cannot lose.
 
 2. **Set `JWT_SECRET`** in the DigitalOcean console, as an encrypted secret, to
    64 random hex characters. Anything that knows this value can mint a token for
