@@ -155,6 +155,15 @@ account.
    whereas a database that was never reached has applied nothing at all, so
    there is no half-secured schema to protect anyone from.
 
+   **It keeps trying.** A development database is created *with* the app and
+   takes minutes to provision, so a container that boots first cannot reach it —
+   and one attempt used to be all there was. Nothing restarts the container, so
+   the database becoming ready a minute later changed nothing: the service sat
+   at `schema:null` until somebody redeployed by hand. It now retries with
+   backoff, indefinitely, and applies the schema the moment the database
+   appears. A cap would only decide how long the service stays broken after the
+   cause clears.
+
    The message worth recognising is
 
    ```
@@ -188,6 +197,15 @@ account.
    schema to it. If **two** of the spec's own bindings ever resolve at once the
    service stops and says so instead: quietly deciding for itself which database
    holds the payment records is worse than not starting.
+
+   The CA certificate is bound the same way, for the same reason and with the
+   same key-prefix rule. Given a real certificate the database is
+   *authenticated*; without one the traffic is still encrypted but an in-path
+   substitution is not refused — on the connection carrying the payment records.
+   The service declines to trust a value that is not a certificate, which is not
+   fussiness: that literal `${hnk-db.CA_CERT}`, trusted as a CA, failed every
+   handshake and cost a whole deploy to a rollback that reported only *"your
+   container exited with a non-zero exit code"*.
 
    If the component is named neither, re-paste the spec with the right name in
    the binding — App Platform → your app → Settings → App Spec.
