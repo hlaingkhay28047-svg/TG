@@ -6,6 +6,7 @@ const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const productionWorkflow = read('.github/workflows/deploy-digitalocean.yml');
 const stagingWorkflow = read('.github/workflows/deploy-digitalocean-staging.yml');
 const verifyWorkflow = read('.github/workflows/verify-digitalocean-deploy.yml');
+const healthWorkflow = read('.github/workflows/read-production-health.yml');
 const productionSpec = read('.do/app.yaml');
 const stagingSpec = read('.do/staging.app.yaml');
 const failures = [];
@@ -123,6 +124,57 @@ const doubleBound = [
       new RegExp('- key: ' + key + '_[A-Z_]+\\n').test(spec));
   });
 });
+
+/* The production health reading has to be reachable from somewhere with a
+ * network route to the live app. /api/health is the only window into whether
+ * the API reached its database, and a development container behind a network
+ * policy has no way to open it — which is how a five-minute diagnosis became an
+ * afternoon. This workflow is that route, so these checks keep it one. */
+check('production health can be read on demand from Actions',
+  /workflow_dispatch:/.test(healthWorkflow) && /\/api\/health/.test(healthWorkflow));
+
+/* It reports rather than gates, deliberately: a red reading means production is
+ * not ready, which failing this run would not change, and a permanently red
+ * lane teaches people to ignore red lanes. An endpoint that does not answer at
+ * all is the exception — that is the service being down. */
+check('a health reading that is merely not-ready does not fail the run',
+  /::warning::The API is not ready/.test(healthWorkflow) &&
+  /did not answer/.test(healthWorkflow));
+
+/* THE HOST REACHES BASH THROUGH THE ENVIRONMENT, NEVER THROUGH ${{ }}.
+ * A workflow input is attacker-controlled text the moment anyone else can
+ * dispatch it, and ${{ }} inside `run:` is substituted before bash ever sees
+ * the line — so an interpolated input is a shell injection, not a string. */
+function runScriptBlocks(workflow) {
+  /* Read by indentation rather than by regex over the whole file. A regex that
+     scans for `run:` and then for `${{` anywhere after it also matches the two
+     appearing in a comment, which is how the first version of this check failed
+     on a workflow that was already correct. */
+  const lines = workflow.split('\n');
+  const blocks = [];
+  for (let i = 0; i < lines.length; i++) {
+    const opener = /^(\s*)run:\s*[|>]/.exec(lines[i]);
+    if (!opener) continue;
+    const indent = opener[1].length;
+    const body = [];
+    for (let j = i + 1; j < lines.length; j++) {
+      const line = lines[j];
+      if (line.trim() !== '' && line.length - line.trimStart().length <= indent) break;
+      body.push(line);
+    }
+    blocks.push(body.join('\n'));
+  }
+  return blocks;
+}
+const healthScripts = runScriptBlocks(healthWorkflow);
+check('the dispatch input is passed through the environment, not interpolated into the script',
+  /env:\s*\n\s*HOST:\s*\$\{\{\s*inputs\.host\s*\}\}/.test(healthWorkflow) &&
+  healthScripts.length > 0 && healthScripts.every(block => !/\$\{\{/.test(block)));
+
+/* ...and is refused outright unless it looks like a hostname. */
+check('the host is validated before it is used',
+  /\*\[!a-zA-Z0-9\.-\]\*/.test(healthWorkflow) &&
+  /Refusing a host with unexpected characters/.test(healthWorkflow));
 
 if (failures.length) {
   console.error(`\n${failures.length} DigitalOcean deployment contract check(s) failed.`);
