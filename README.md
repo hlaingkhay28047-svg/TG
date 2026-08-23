@@ -117,12 +117,80 @@ account.
    message. Changing it later logs everybody out, which is exactly what you want
    if it is ever exposed.
 
-3. **Apply the schema**, in this order, against the new database:
+3. **Nothing.** The schema used to be applied by hand here, in the order
+   `server/sql/platform.sql` then `supabase/schema.sql`. The service now applies
+   both itself, on every boot, because the only other route to a development
+   database is a `psql` client that is not available on a phone. Both files are
+   idempotent by construction, and `test/verify_schema_behaviour.js` check B
+   proves it by applying them three times in a row.
+
+   Read `/api/health` to see whether it worked. It answers in one of three
+   shapes:
 
    ```
-   server/sql/platform.sql
-   supabase/schema.sql
+   {"ok":true,"schema":4,"ready":true}          the service and the schema are up
+   {"ok":true,"schema":1,"ready":false,         the schema stopped partway through,
+    "error":"…"}                                 and `error` says where
+   {"ok":true,"schema":null,"ready":false,      could not reach the database at all,
+    "error":"…"}                                 and `error` says why
    ```
+
+   `schema` counts how many of the four application tables exist, so `4` is the
+   only ready state and `null` means the database was not reachable at all.
+   `error` appears whenever `ready` is false and disappears again the moment the
+   database answers, so it never accuses one that has since come back. It is
+   sanitised first: `/api/health` is public, and a connection failure can carry
+   the connection string.
+
+   `ok` describes the *service*, which is why it stays `true` throughout. An
+   exiting container makes App Platform roll the deployment back to the previous
+   build, which answers `/health` in its own older shape — so the deploy looks
+   like it never happened and the cause becomes unreachable. Booting and saying
+   so is the only version of this that can be diagnosed from a phone.
+
+   A schema that stopped **partway** is the one case where the service also
+   stops answering: every route except `/health` returns `503
+   schema_incomplete`. Tables may exist there whose row-level security policies
+   never got created, and querying those is worse than answering nothing —
+   whereas a database that was never reached has applied nothing at all, so
+   there is no half-secured schema to protect anyone from.
+
+   The message worth recognising is
+
+   ```
+   DATABASE_URL is an unresolved App Platform binding ${hnk-db.DATABASE_URL}
+   ```
+
+   which means the app has no component *named* `hnk-db`. App Platform passes an
+   unmatched `${…}` through as literal text rather than failing, so the driver
+   receives it as a hostname and would otherwise report `getaddrinfo ENOTFOUND
+   base` — a message about DNS, for a problem that is a name in the spec.
+
+   The usual cause is that the database was added from the console rather than
+   from this file, where the default component name is **`db`**. Both specs
+   therefore bind the URL twice:
+
+   ```yaml
+   - key: DATABASE_URL
+     value: ${hnk-db.DATABASE_URL}
+   - key: DATABASE_URL_IF_COMPONENT_IS_NAMED_DB
+     value: ${db.DATABASE_URL}
+   ```
+
+   Exactly one of those resolves; the other stays as text, which is not a
+   `postgres://` URL and is ignored. The service connects with the one that
+   resolved and logs which variable it came from.
+
+   Only keys beginning `DATABASE_URL` are ever candidates, and that restriction
+   is deliberate. Sweeping the whole environment for anything postgres-shaped
+   would find a leftover credential from somewhere else — the old Supabase
+   database, which is still live throughout a migration — and quietly apply this
+   schema to it. If **two** of the spec's own bindings ever resolve at once the
+   service stops and says so instead: quietly deciding for itself which database
+   holds the payment records is worse than not starting.
+
+   If the component is named neither, re-paste the spec with the right name in
+   the binding — App Platform → your app → Settings → App Spec.
 
 4. **Make yourself an admin**, the same statement as before — it works because
    the guard trigger steps aside for a caller with no `auth.uid()`:

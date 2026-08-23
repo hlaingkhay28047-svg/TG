@@ -89,6 +89,31 @@ check('staging source is upgrade-safe-wave', /branch:\s*upgrade-safe-wave\b/.tes
 check('staging DigitalOcean source auto-deploy is enabled', /deploy_on_push:\s*true\b/.test(stagingSpec));
 check('staging and production both serve docs', /source_dir:\s*\/docs\b/.test(stagingSpec) && /source_dir:\s*\/docs\b/.test(productionSpec));
 
+/* Both specs must bind the database URL under TWO component names.
+ *
+ * App Platform substitutes ${component.VARIABLE} only when a component by that
+ * exact name exists, and passes an unmatched one through as literal text rather
+ * than failing — so an app whose database was added from the console, where the
+ * default component name is `db`, receives the string "${hnk-db.DATABASE_URL}"
+ * and no database at all. The second binding resolves in exactly the case the
+ * first does not, and server/lib/db.js connects with whichever became a real
+ * postgres:// URL (verify_api_service.js H6 through H9 prove that end of it).
+ *
+ * Checked as a pair, because one binding alone is the bug. */
+[['production', productionSpec], ['staging', stagingSpec]].forEach(([lane, spec]) => {
+  const bindings = (spec.match(/value:\s*\$\{[^}]*\.DATABASE_URL\}/g) || [])
+    .map(line => line.replace(/^value:\s*/, ''));
+  const components = bindings.map(b => b.slice(2, b.indexOf('.')));
+  check(`${lane} spec binds DATABASE_URL under both component names`,
+    components.includes('hnk-db') && components.includes('db'));
+  /* ...and they must be separate KEYS. Two values under one key is a spec that
+     overwrites itself, which looks right and delivers only the last one. */
+  check(`${lane} spec gives the second binding its own key`,
+    occurrences(spec, '- key: DATABASE_URL') === 2 &&
+    /- key: DATABASE_URL\n/.test(spec) &&
+    /- key: DATABASE_URL_[A-Z_]+\n/.test(spec));
+});
+
 if (failures.length) {
   console.error(`\n${failures.length} DigitalOcean deployment contract check(s) failed.`);
   process.exit(1);

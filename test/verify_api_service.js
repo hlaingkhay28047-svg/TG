@@ -14,7 +14,7 @@
  *
  * Usage: node test/verify_api_service.js   (needs PostgreSQL; see
  *        verify_schema_behaviour.js for how to start one) */
-const { execFileSync } = require("child_process");
+const { execFileSync, spawn } = require("child_process");
 const path = require("path");
 const crypto = require("crypto");
 
@@ -92,6 +92,14 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     migrated === null && tables === "4", { error: migrated, tables });
 
   await new Promise(r => server.listen(PORT, r));
+
+  /* ---- /health: the only window the owner has into a deployment ---- */
+  {
+    const h = await call("GET", "/health");
+    report("A0) /health on a working database reports ready, with no error to explain",
+      h.status === 200 && h.json && h.json.schema === 4 && h.json.ready === true &&
+      h.json.error === undefined, h.json);
+  }
 
   /* ================= the ordinary journey ================= */
   const cust = { email: "customer@example.test", password: "hunter2hunter" };
@@ -244,6 +252,140 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   await call("POST", "/auth/v1/logout", { token: refreshed.access_token, body: { refresh_token: refreshed.refresh_token } });
   r = await call("POST", "/auth/v1/token?grant_type=refresh_token", { body: { refresh_token: refreshed.refresh_token } });
   report("Z) logout revokes the refresh token server-side", r.status === 400, { status: r.status });
+
+  /* ================= /health when the database is gone =================
+     WHY THIS IS HERE. A DigitalOcean deploy answered
+     {"ok":true,"schema":null,"ready":false} and said nothing at all about why,
+     and reading App Platform's runtime logs from a phone is a genuine
+     obstacle. /health has to name the cause, and must never name it with the
+     password attached — it is a public endpoint. */
+  const mig = require(path.join(ROOT, "server", "lib", "migrate.js"));
+  mig.setLastError("could not connect to postgres://doadmin:AVNS_secret@db.ondigitalocean.com:25060/defaultdb");
+  const redacted = mig.getLastError();
+  report("H1) a connection string in the reason is redacted before /health can show it",
+    !/AVNS_secret/.test(redacted) && !/doadmin/.test(redacted), redacted);
+
+  r = await call("GET", "/health");
+  report("H2) a stale error stops being reported once the database answers again",
+    r.json && r.json.schema === 4 && r.json.error === undefined, r.json);
+  mig.setLastError("");
+
+  /* Booted as child processes, because this one already holds a working pool.
+     Each starts the real server with a broken DATABASE_URL and is asked the
+     same question the owner asks from a phone: what is wrong? */
+  let childPort = PORT;
+  async function bootChild(url, extraEnv) {
+    childPort++;
+    const port = childPort;
+    const child = spawn(process.execPath, [path.join(ROOT, "server", "index.js")], {
+      env: Object.assign({}, process.env,
+        { DATABASE_URL: url, PGSSLMODE: "disable", PORT: String(port) }, extraEnv || {}),
+      stdio: "ignore",
+    });
+    let health = null;
+    for (let i = 0; i < 80 && !health; i++) {
+      try { health = await (await fetch(`http://127.0.0.1:${port}/health`)).json(); }
+      catch (_) { await new Promise(done => setTimeout(done, 250)); }
+    }
+    return { port, health, stop: () => child.kill() };
+  }
+  async function healthWith(url, extraEnv) {
+    const boot = await bootChild(url, extraEnv);
+    boot.stop();
+    return boot.health;
+  }
+
+  const dead = await healthWith("postgres://someone:hunter2pw@127.0.0.1:59999/nope");
+  report("H3) an unreachable database still BOOTS — exiting would make App Platform roll back",
+    !!dead && dead.ok === true && dead.schema === null && dead.ready === false, dead);
+  report("H4) ...and /health names the reason instead of leaving it a mystery",
+    !!dead && /ECONNREFUSED/.test(dead.error || ""), dead);
+  report("H5) ...without the credentials that reason arrived with",
+    !!dead && !!dead.error && !/hunter2pw/.test(JSON.stringify(dead)), dead && dead.error);
+
+  /* The trap this whole section exists for. An App Platform database component
+     named anything other than hnk-db leaves ${hnk-db.DATABASE_URL} unsubstituted,
+     and pg answers `getaddrinfo ENOTFOUND base` — which names neither the
+     database nor the binding. */
+  const unbound = await healthWith("${hnk-db.DATABASE_URL}");
+  report("H6) an unresolved App Platform binding is diagnosed, not handed to pg to garble",
+    !!unbound && /unresolved App Platform binding/.test(unbound.error || "") &&
+    /hnk-db\.DATABASE_URL/.test(unbound.error || ""), unbound);
+
+  const unset = await healthWith("");
+  report("H7) a DATABASE_URL that was never set says exactly that",
+    !!unset && /DATABASE_URL is not set/.test(unset.error || ""), unset);
+
+  /* ...and the same situation is RECOVERED FROM, not merely described. Both .do
+     specs bind the URL twice, under `hnk-db` and under `db`, exactly because
+     only one of them can resolve — so the second key is the one that carries a
+     real URL when the first is text. */
+  const REAL = process.env.DATABASE_URL;
+  const ALT = "DATABASE_URL_IF_COMPONENT_IS_NAMED_DB";
+  const rescued = await healthWith("${hnk-db.DATABASE_URL}", { [ALT]: REAL });
+  report("H8) the binding that DID resolve is found and used, not merely reported",
+    !!rescued && rescued.schema === 4 && rescued.ready === true && rescued.error === undefined, rescued);
+
+  const ambiguous = await healthWith("${hnk-db.DATABASE_URL}",
+    { [ALT]: REAL, DATABASE_URL_THIRD: "postgres://a:b@127.0.0.1:5432/other" });
+  report("H9) two candidates are refused rather than guessed between — the wrong one holds the payments",
+    !!ambiguous && ambiguous.ready === false && /guess/.test(ambiguous.error || ""), ambiguous);
+
+  /* The restriction that makes H8 safe rather than reckless. During a migration
+     the OLD database is still live and its URL may still be sitting in the
+     environment under some unrelated name; sweeping the whole environment for
+     anything postgres-shaped would find it and quietly apply this schema to
+     someone else's database. Only keys this spec controls are candidates. */
+  const strayed = await healthWith("${hnk-db.DATABASE_URL}", { SUPABASE_DB_URL: REAL });
+  report("H9b) a PostgreSQL URL under an unrelated key is NOT adopted — it could be the old database",
+    !!strayed && strayed.ready === false &&
+    /unresolved App Platform binding/.test(strayed.error || ""), strayed);
+
+  /* ============ a schema that failed PARTWAY through ============
+     The other half of the same lesson. A migration that never reached the
+     database has applied nothing and is safe to boot from; one that stopped
+     midway may have left tables whose policies were never created, and
+     answering a query against those is worse than answering nothing. Exiting
+     is worse still — App Platform rolls the deployment back and the reason
+     stops being reachable at all, which is exactly how the previous failure
+     stayed a mystery.
+
+     Reproduced, not simulated: a `profiles` table that already exists with the
+     wrong shape makes `create table if not exists` a no-op and the statements
+     after it fail, with platform.sql already applied. */
+  const PARTIAL = DB + "_partial";
+  psql(`drop database if exists ${PARTIAL}`);
+  psql(`create database ${PARTIAL}`);
+  psql("create table public.profiles (id int)", PARTIAL);
+  const partial = await bootChild(
+    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
+    `@${ENV.PGHOST}:${ENV.PGPORT}/${PARTIAL}`);
+  report("H10) a half-applied schema still boots, so the reason stays readable",
+    !!partial.health && partial.health.ok === true && partial.health.ready === false &&
+    !!partial.health.error, partial.health);
+
+  /* Asked through a helper that survives a child which never came up, so a
+     regression here reports as a FAIL rather than a stack trace that hides the
+     checks after it. */
+  const askPartial = async (p2, init) => {
+    try {
+      const rr = await fetch(`http://127.0.0.1:${partial.port}${p2}`, init);
+      return { status: rr.status, body: await rr.json().catch(() => null) };
+    } catch (err) { return { status: 0, body: null, error: err.message }; }
+  };
+
+  const refused = await askPartial("/auth/v1/token?grant_type=password",
+    { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "someone@example.test", password: "hunter2hunter" }) });
+  report("H11) ...and every route that touches the database answers 503 instead of querying it",
+    refused.status === 503 && !!refused.body && refused.body.error === "schema_incomplete", refused);
+
+  const stillAnswers = await askPartial("/health");
+  report("H12) ...while /health itself keeps answering — it is the only way in",
+    !!stillAnswers.body && stillAnswers.body.ok === true && stillAnswers.body.ready === false,
+    stillAnswers);
+  partial.stop();
+  psql(`drop database if exists ${PARTIAL}`);
 
   server.close();
   await require(path.join(ROOT, "server", "lib", "db")).pool.end();

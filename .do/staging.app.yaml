@@ -36,9 +36,20 @@ services:
       http_path: /health
     envs:
       # Supplied by the managed database below — App Platform substitutes it.
+      #
+      # TWO BINDINGS, ON PURPOSE. App Platform substitutes ${component.VARIABLE}
+      # only when a component by that exact name exists, and leaves an unmatched
+      # one standing as literal text rather than failing. A database added from
+      # the console instead of from this file is named `db` by default, and then
+      # ${hnk-db.DATABASE_URL} never resolves. Whichever of these two matches
+      # becomes a real postgres:// URL; the other stays text, and server/lib/db.js
+      # connects with the one that resolved (test H8 in verify_api_service.js).
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${hnk-db.DATABASE_URL}
+      - key: DATABASE_URL_IF_COMPONENT_IS_NAMED_DB
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
       - key: DATABASE_CA_CERT
         scope: RUN_TIME
         value: ${hnk-db.CA_CERT}
