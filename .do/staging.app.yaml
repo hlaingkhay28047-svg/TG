@@ -1,5 +1,11 @@
 name: hnk-ai-tools-2
 region: sgp
+
+# The API and the site share one app and one origin. /api reaches the service,
+# everything else the static site, so the browser makes same-origin requests:
+# no CORS to arrange, and no API hostname written into docs/app/index.html that
+# could drift from the deployment. App Platform strips the matched prefix, so
+# /api/auth/v1/token arrives at the service as /auth/v1/token.
 static_sites:
   - name: hnk-web
     environment_slug: html
@@ -9,3 +15,62 @@ static_sites:
       deploy_on_push: true
     source_dir: /docs
     index_document: index.html
+    routes:
+      - path: /
+
+services:
+  - name: hnk-api
+    environment_slug: node-js
+    github:
+      repo: hlaingkhay28047-svg/TG
+      branch: upgrade-safe-wave
+      deploy_on_push: true
+    source_dir: /server
+    run_command: node index.js
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    routes:
+      - path: /api
+    health_check:
+      http_path: /health
+    envs:
+      # Supplied by the managed database below — App Platform substitutes it.
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${hnk-db.DATABASE_URL}
+      - key: DATABASE_CA_CERT
+        scope: RUN_TIME
+        value: ${hnk-db.CA_CERT}
+      # Signs access tokens. Set this yourself, in the DigitalOcean console, as
+      # an encrypted secret — never in this file. Rotating it logs everyone out,
+      # which is the correct behaviour if it is ever exposed.
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      # The only address the browser calls from. Leaving it unset makes the
+      # service echo whatever origin asked, which is right for local
+      # development and wrong here.
+      - key: ALLOWED_ORIGIN
+        scope: RUN_TIME
+        value: https://hnk-ai-tools-2-gibhz.ondigitalocean.app
+      - key: APP_ORIGIN
+        scope: RUN_TIME
+        value: https://hnk-ai-tools-2-gibhz.ondigitalocean.app
+      # Password-reset mail. Until these are set no reset message is sent and a
+      # locked-out customer needs their password changed by hand.
+      - key: SMTP_HOST
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_USER
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_PASS
+        scope: RUN_TIME
+        type: SECRET
+
+databases:
+  - name: hnk-db
+    engine: PG
+    version: "16"
+    production: true
