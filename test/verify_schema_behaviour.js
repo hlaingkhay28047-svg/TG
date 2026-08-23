@@ -86,29 +86,11 @@ function asAnon(body, db) {
   return sql("begin; set local role anon; " + body + " commit;", db);
 }
 
-const STUB = `
-do $$ begin
-  if not exists (select 1 from pg_roles where rolname='anon')          then create role anon nologin;          end if;
-  if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
-  if not exists (select 1 from pg_roles where rolname='service_role')  then create role service_role nologin;  end if;
-end $$;
-create schema if not exists auth;
-create schema if not exists storage;
-create table if not exists auth.users (
-  id uuid primary key default gen_random_uuid(), email text,
-  created_at timestamptz not null default now());
-create or replace function auth.uid() returns uuid language sql stable as $$
-  select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid; $$;
-create table if not exists storage.buckets (
-  id text primary key, name text, public boolean not null default false);
-create table if not exists storage.objects (
-  id uuid primary key default gen_random_uuid(),
-  bucket_id text references storage.buckets(id), name text);
-alter table storage.objects enable row level security;
-create or replace function storage.foldername(name text) returns text[]
-  language sql immutable as $$ select string_to_array(name, '/'); $$;
-grant usage on schema public, auth, storage to anon, authenticated, service_role;
-`;
+/* The platform objects supabase/schema.sql leans on. This used to be a stub
+   written here; it is now the REAL file the service ships and the owner
+   applies, so this test proves the shipped platform schema works rather than a
+   hand-written stand-in that could drift from it. */
+const PLATFORM = path.join(ROOT, "server", "sql", "platform.sql");
 
 const OWNER = "11111111-1111-1111-1111-111111111111";
 const CUST  = "22222222-2222-2222-2222-222222222222";
@@ -131,10 +113,9 @@ report("a PostgreSQL server is reachable", true);
 
 sql('drop database if exists "' + DB + '"');
 sql('create database "' + DB + '"');
-const stubPath = path.join(require("os").tmpdir(), "hnk_stub.sql");
-fs.writeFileSync(stubPath, STUB);
-const stubbed = file(stubPath, DB);
-report("the Supabase stand-in (auth, storage, roles) loads", stubbed.ok, stubbed.out.split("\n").slice(0, 3));
+const stubbed = file(PLATFORM, DB);
+report("server/sql/platform.sql loads (auth.users, auth.uid, storage, roles)",
+  stubbed.ok, stubbed.out.split("\n").slice(0, 3));
 
 /* ---- A) it builds a database from nothing ---- */
 const first = file(SCHEMA, DB);
@@ -246,14 +227,29 @@ const healed = sql("select email||'|'||plan_status||'|'||allowed_devices||'|'||i
 report("O) accEnsureProfile's insert of {id} alone yields a complete free-tier row",
   heal.ok && healed === "NewCustomer@Example.com|none|2|false|false", { healed, err: heal.out.split("\n")[0] });
 
-/* ---- P) one address, one account ---- */
-sql("insert into auth.users (id,email) values ('" + TWIN + "','newcustomer@EXAMPLE.com')", DB);
-const twin = asUser(TWIN, "insert into public.profiles (id) values (auth.uid());", DB);
-report("P) a second account claiming the same address in another case is refused",
-  !twin.ok && /profiles_email_uniq/i.test(twin.out), { accepted: twin.ok, err: twin.out.split("\n")[0] });
+/* ---- P) one address, one account, refused at BOTH layers ----
+
+   On Supabase the duplicate first became visible at profiles_email_uniq,
+   because auth.users was the platform's private table. server/sql/platform.sql
+   owns it now and carries users_email_uniq on lower(email), so a second signup
+   for the same address in another letter case is refused a layer EARLIER — the
+   account is never created at all, which is the better place to stop it.
+
+   Both are asserted. The auth-layer index is what a real signup hits; the
+   profiles-layer index still has to exist, because it is what protects admGrant
+   from an arbitrary `limit=1` pick if a row ever reaches profiles by another
+   route (a manual insert, a migration, an import from the old project). */
+const twinUser = sql("insert into auth.users (id,email) values ('" + TWIN + "','newcustomer@EXAMPLE.com')", DB);
+report("P) a second ACCOUNT claiming the same address in another case is refused",
+  !twinUser.ok && /users_email_uniq/i.test(twinUser.out),
+  { accepted: twinUser.ok, err: twinUser.out.split("\n")[0] });
+
+const profIdx = sql("select count(*) from pg_indexes where schemaname='public' " +
+  "and indexname='profiles_email_uniq'", DB).out;
+report("P2) profiles keeps its own duplicate-address index as defence in depth",
+  profIdx === "1", { found: profIdx });
 
 sql('drop database if exists "' + DB + '"');
-try { fs.unlinkSync(stubPath); } catch (e) {}
 
 console.log("      (this file proves the schema ENFORCES what it claims, on a database it " +
   "built from nothing — it still cannot prove the owner has applied it to their project)");
