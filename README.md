@@ -135,6 +135,15 @@ account.
     "error":"…"}                                 and `error` says why
    ```
 
+   No phone required: **Actions → Read production health → Run workflow** prints
+   the same JSON into the run summary, along with a plain reading of what it
+   means. That workflow exists because `/api/health` needs a network route to
+   the live app — the deploy lanes have one and a phone has one, but a
+   development container behind a network policy does not, which is how a
+   five-minute diagnosis became an afternoon. It reports and does not gate:
+   a not-ready reading is worth knowing loudly, but failing the run would not
+   make production any readier.
+
    `schema` counts how many of the four application tables exist, so `4` is the
    only ready state and `null` means the database was not reachable at all.
    `error` appears whenever `ready` is false and disappears again the moment the

@@ -1,0 +1,91 @@
+name: Read production health
+
+# WHY THIS EXISTS. /api/health is the only window into whether the API reached
+# its database, and reading it needs a network route to the live app. The
+# deploy workflows have one; a phone has one; a development container behind a
+# network policy does not. This makes the reading available to anyone with the
+# Actions tab, which is what turned a five-minute diagnosis into an afternoon
+# the first time it mattered.
+#
+# It DIAGNOSES, it does not gate. A red reading here means production is not
+# ready — which is worth knowing loudly — but failing this run would not make it
+# any readier, and a permanently red lane teaches people to ignore red lanes.
+# The one thing treated as a failure is the endpoint not answering at all,
+# because that is the service being down rather than the database being absent.
+
+on:
+  workflow_dispatch:
+    inputs:
+      host:
+        description: "Host to read (defaults to production)"
+        required: false
+        default: hnk-ai-tools-3-s4nnu.ondigitalocean.app
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    name: Read /api/health
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Read /api/health
+        shell: bash
+        # Through the environment, never interpolated into the script: a
+        # workflow input is attacker-controlled text the moment anyone else can
+        # dispatch it, and ${{ }} inside run: is substituted before bash sees it.
+        env:
+          HOST: ${{ inputs.host }}
+        run: |
+          set -uo pipefail
+          case "$HOST" in
+            ""|*[!a-zA-Z0-9.-]*)
+              echo "::error::Refusing a host with unexpected characters: $HOST"
+              exit 1
+              ;;
+          esac
+
+          URL="https://${HOST}/api/health"
+          echo "Reading ${URL}"
+          BODY="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$URL" || true)"
+
+          if [ -z "$BODY" ]; then
+            echo "::error::${URL} did not answer. The service itself is down, not merely unready."
+            {
+              echo "### \`/api/health\` on \`${HOST}\`"
+              echo
+              echo "**No answer.** The service is down — this is not the database being unreachable,"
+              echo "which would still return \`{\"ok\":true,...}\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "$BODY"
+          READY="$(printf '%s' "$BODY" | jq -r '.ready // false' 2>/dev/null || echo false)"
+          SCHEMA="$(printf '%s' "$BODY" | jq -r '.schema // "null"' 2>/dev/null || echo null)"
+          WHY="$(printf '%s' "$BODY" | jq -r '.error // "none reported"' 2>/dev/null || echo "unparseable")"
+
+          {
+            echo "### \`/api/health\` on \`${HOST}\`"
+            echo
+            echo '```json'
+            echo "$BODY"
+            echo '```'
+            echo
+            if [ "$READY" = "true" ]; then
+              echo "**Ready.** All four application tables exist; the API is serving normally."
+            else
+              echo "**Not ready.** \`schema\` is \`${SCHEMA}\` — \`4\` is the only ready state, and"
+              echo "\`null\` means the database was not reachable at all."
+              echo
+              echo "Reason reported: \`${WHY}\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$READY" = "true" ]; then
+            echo "::notice::The API is connected to its database and the schema is applied."
+          else
+            echo "::warning::The API is not ready — ${WHY}"
+          fi
