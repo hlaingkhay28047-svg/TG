@@ -225,6 +225,17 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   var url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
+
+  /* THE API IS NOT AN ASSET, and since it moved to this origin the worker can
+     see it for the first time. While the app talked to a Supabase hostname,
+     every account request was cross-origin and the line above ignored it. Now
+     /api/... is same-origin and would fall through to the network-first branch
+     at the bottom, whose failure path answers from the shell cache — so a
+     momentary outage could serve a CACHED profile, and on a shared phone that
+     is one customer's account answering for another. It also broke three
+     access-wall checks the moment the base URL changed, which is how it was
+     found. Nothing under /api is ever cached or replayed. */
+  if (url.pathname === "/api" || url.pathname.indexOf("/api/") === 0) return;
   var isLib = url.pathname.indexOf("/lib/") >= 0 && !LIB_ICON_RE.test(url.pathname);
   if (isLib) {
     e.respondWith(
