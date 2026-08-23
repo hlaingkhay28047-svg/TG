@@ -12,6 +12,26 @@ jobs:
   sweep:
     name: Workflow sweep (mocked generate)
     runs-on: ubuntu-24.04
+
+    # verify_schema_behaviour.js applies supabase/schema.sql to a real database
+    # and attacks it. It deliberately does not skip when no server is present:
+    # a schema test that quietly passes unreachable proves nothing, and the two
+    # defects it caught (the file could not CREATE the tables it protects; the
+    # device cap counted a re-registration as a new device) were both invisible
+    # to every check that only reads the file.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -27,6 +47,12 @@ jobs:
 
       - name: Verify Supabase RLS contract (every client table is protected)
         run: node test/verify_rls_contract.js
+
+      - name: Install the PostgreSQL client
+        run: sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Verify the schema ENFORCES what it claims (real PostgreSQL)
+        run: node test/verify_schema_behaviour.js
 
       - name: Install Playwright + Chromium
         run: |

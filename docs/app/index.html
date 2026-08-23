@@ -2386,7 +2386,7 @@ body.wall #wallRetry.on{display:block}
     </div>
     <div class="row" style="margin-top:10px">
       <a class="btn grow" href="../" style="text-align:center" id="siteLink"></a>
-      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.22.0.ccx" download style="text-align:center">CCX Download (v6.22.0)</a>
+      <a class="btn btn-gold grow" href="../download/HNK_Ai_Panel_v6.23.0.ccx" download style="text-align:center">CCX Download (v6.23.0)</a>
     </div>
   </section>
 
@@ -20110,10 +20110,14 @@ async function accLoadProfile(){
 
        Whose row is missing? Anybody signed up while the trigger that creates
        profiles rows was absent or broken — and THAT TRIGGER IS NOT IN THIS
-       REPOSITORY. supabase/schema.sql says in its own header that it assumes
-       public.profiles and its signup trigger already exist. So the app's entry
-       path depended on code this project does not ship, and failed silently
-       and permanently when it was missing.
+       REPOSITORY. When this was written supabase/schema.sql did not ship the
+       table either — applying it to a project that lacked one died on its
+       first statement, before a single policy was created. It now creates
+       public.profiles itself, but the signup trigger stays deliberately
+       absent: this path is the one that fills the row, and a second writer for
+       it is not worth the race. So the app's entry path once depended on code
+       this project does not ship, and failed silently and permanently when it
+       was missing.
 
        profiles_insert_self has been in the schema all along, granting exactly
        this insert (with check (id = auth.uid())) and used by nothing. The
@@ -22178,7 +22182,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.41.0";
+var APP_VER="5.42.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
