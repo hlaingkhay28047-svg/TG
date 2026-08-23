@@ -211,10 +211,24 @@ account.
    same key-prefix rule. Given a real certificate the database is
    *authenticated*; without one the traffic is still encrypted but an in-path
    substitution is not refused — on the connection carrying the payment records.
-   The service declines to trust a value that is not a certificate, which is not
-   fussiness: that literal `${hnk-db.CA_CERT}`, trusted as a CA, failed every
-   handshake and cost a whole deploy to a rollback that reported only *"your
-   container exited with a non-zero exit code"*.
+
+   **A certificate is checked by parsing it, not by looking at it.** Testing for
+   the text `BEGIN CERTIFICATE` is not the same test, and the difference took
+   production down for hours: a PEM carried through a layer that escaped its
+   newlines contains that phrase and parses as nothing, so `pg` was handed a
+   trust anchor that could anchor nothing and every handshake was refused as
+
+   ```
+   self-signed certificate in certificate chain
+   ```
+
+   — an error naming the *server's* chain, with nothing to suggest the fault was
+   in our own input. The certificate text is now repaired where it can be
+   (escaped newlines restored, a base64-wrapped PEM decoded) and then actually
+   parsed. Anything that still will not parse is not treated as a CA: the
+   service connects encrypted-but-unverified and `/api/health` reports a `tls`
+   field saying so, rather than refusing to serve a single request on the
+   strength of a string that could never have verified anything.
 
    If the component is named neither, re-paste the spec with the right name in
    the binding — App Platform → your app → Settings → App Spec.

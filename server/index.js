@@ -129,6 +129,12 @@ const server = http.createServer(async (req, res) => {
         require("./lib/migrate").setLastError(err && err.message);
       }
       const body = { ok: true, schema: schema, ready: schema === 4 };
+      /* Reported even when ready. Connecting to the database encrypted but
+         UNVERIFIED because its certificate could not be parsed is precisely the
+         kind of downgrade that is invisible until it matters, and `ready:true`
+         is exactly when nobody would think to look. */
+      const tls = require("./lib/db").getTlsNote();
+      if (tls) body.tls = tls;
       /* Only while something is actually wrong — a stale boot error must not
          keep accusing a database that has since come back. */
       if (!body.ready) {
