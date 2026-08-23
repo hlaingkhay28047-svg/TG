@@ -29,7 +29,8 @@ and the admin card are user interface. What actually stops a customer approving
 their own payment is row-level security, and it lives in `supabase/schema.sql`.
 
 Apply it once — Supabase dashboard → SQL editor → paste → Run (it is
-idempotent) — then grant yourself admin:
+idempotent) — then grant yourself admin. It creates the four tables it
+protects, so it also works on a project that has never held them:
 
 ```sql
 update public.profiles set is_admin = true where email = 'you@example.com';
@@ -67,6 +68,52 @@ The file stays idempotent, so re-running it is safe whatever state the project
 is in. `test/verify_rls_contract.js` proves the schema covers every table the
 client actually fetches, but no test in this repo can prove you have run it.
 
+## The schema could not build the database it protects
+
+Every statement in `supabase/schema.sql` used to `ALTER`; none `CREATE`d. The
+four tables were made by hand in the dashboard when the project was first stood
+up, and that work was never written down — the file said so in its own header,
+and the app repeated it at `accLoadProfile`.
+
+That is survivable right up until the file meets a project without them: a new
+region, a restored backup, a second environment, or the SQL editor of the wrong
+one of two projects. The run then stops on its first statement —
+
+```
+ERROR:  42P01: relation "public.profiles" does not exist
+```
+
+— **before a single policy is created.** The database is left with no tables
+*and* no protection, which is the worse of the two states it could have been
+in, and the error names a missing table rather than the missing `CREATE` that
+actually explains it.
+
+Section 0 now declares `profiles`, `payment_requests`, `app_settings` and
+`devices` from the contract the header already documented, with `if not exists`
+throughout — so it is a no-op on a live project, and section 1 still adds the
+columns an existing table is missing. Two things stay deliberately absent, and
+are commented as such: no foreign key from `payment_requests.user_id` to
+`profiles.id`, because `admLoadWho` fetches names in a second request precisely
+*because* there is none, and declaring one would make a fresh project behave
+differently from the live one; and no signup trigger, because v5.38.0 moved
+that job to `profiles_insert_self`.
+
+**The device cap counted a re-registration as a new device.** The unique index
+on `(user_id, device_id)` was documented as making a second POST for the same
+browser "a no-op collision instead of a new row" — but a `BEFORE INSERT`
+trigger runs *before* any index is consulted. At the cap, re-registering a
+browser the customer already owned raised `P0001`. `accRegisterDevice` falls
+through to its POST whenever the preceding GET is merely `!ok` — an expired
+token, a network blip — so a customer at their limit could be shown "remove an
+old device" for a device already in the list, and might delete a real one to
+obey. The trigger now returns `NULL` for a pair that exists, which is the no-op
+the index was meant to produce; the index still backstops the concurrent case.
+
+`verify_rls_contract.js` gains checks H and I. A–G all passed throughout this,
+because each reads what the file *says* about tables it assumed into existence;
+H reads whether the file can produce them, and I that it does so before
+altering them.
+
 ## Two things the entry path used to get wrong (v5.38.0)
 
 **A missing profiles row was a permanent hang.** `accLoadProfile` asks
@@ -78,10 +125,11 @@ appear on its own.
 
 Whose row is missing? Anybody who signed up while the trigger that creates
 `profiles` rows was absent or broken — **and that trigger is not in this
-repository.** `supabase/schema.sql` says in its own header that it assumes
-`public.profiles` and its signup trigger already exist. So the app's entry path
-depended on code this project does not ship, and failed silently and
-permanently when it was missing. A 406 now creates the row through
+repository.** When this was written `supabase/schema.sql` did not ship the
+table either. So the app's entry path depended on code this project does not
+ship, and failed silently and permanently when it was missing. The file now
+creates `public.profiles` itself (see above); the signup trigger stays
+deliberately absent, because the 406 path below is the one that fills the row. A 406 now creates the row through
 `profiles_insert_self` — a policy that had been in the schema all along,
 granting exactly this insert, and used by nothing. The insert sends only the
 id; the guard trigger fills in the plan, the cap and the email from
