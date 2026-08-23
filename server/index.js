@@ -244,30 +244,70 @@ if (require.main === module) {
      converges on every boot instead of needing a database client the owner
      does not have. */
   const listen = () => server.listen(PORT, () => console.log("hnk-api listening on " + PORT));
-  require("./lib/migrate").migrate().then(listen).catch(err => {
+  const migration = require("./lib/migrate");
+
+  /* KEEP TRYING. A DigitalOcean development database is created WITH the app
+     and takes minutes to provision, so a container that boots first fails once
+     — and one attempt was all there was. Nothing restarts the container, so the
+     database becoming ready a minute later changed nothing: the service sat
+     there reporting schema:null until somebody redeployed it by hand.
+
+     Retrying is safe because both SQL files are idempotent by construction, and
+     that is not an assumption: verify_schema_behaviour.js check B applies them
+     three times in a row and requires app_settings to still hold exactly one
+     row afterwards.
+
+     There is no attempt limit. A cap only decides how long the service stays
+     broken after the cause clears, and a connection attempt a minute costs
+     nothing. */
+  const RETRY_MS = [1000, 2000, 4000, 8000, 15000, 30000, 60000];
+  const sleep = ms => new Promise(done => setTimeout(done, ms));
+  async function keepMigrating(attempt) {
+    await sleep(RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)]);
+    try {
+      await migration.migrate();
+      locked = null;
+      console.log("migrate: succeeded on retry " + (attempt + 1) + "; the service is now serving normally.");
+      return;
+    } catch (err) {
+      migration.setLastError(err && err.message);
+      /* Logged sparsely on purpose: a database that is gone for a day would
+         otherwise write a line a minute into the runtime log the owner has to
+         page through to find anything. */
+      if (attempt < 3 || attempt % 10 === 0) {
+        console.error("migrate: retry " + (attempt + 1) + " failed —", err && err.message);
+      }
+      return keepMigrating(attempt + 1);
+    }
+  }
+
+  migration.migrate().then(listen).catch(err => {
     /* A migration that COULD NOT REACH the database has applied nothing, so
        there is no half-secured schema to protect anyone from — and exiting
        makes App Platform roll back to the previous build, which answers
        /health in the old shape and hides the reason entirely. Boot instead:
        /health then reports schema:null, the log carries the error, and the
        problem is visible rather than disguised as "nothing happened".
-       A failure AFTER a file applied is different and still fatal; migrate()
-       raises that one only once it has proved the tables are missing. */
+
+       A failure AFTER a file started applying is different: the schema may be
+       partly there, so the service must not serve queries. It boots locked —
+       /health tells the truth, every other route answers 503 — because exiting
+       would make the reason unreachable, which is strictly worse than serving
+       nothing while saying why.
+
+       Either way the first attempt is awaited before listening, so /health's
+       very first answer already carries the reason rather than racing it. */
+    migration.setLastError(err && err.message);
     if (err && err.applied === false) {
-      require("./lib/migrate").setLastError(err.message);
-      console.error("WARNING: could not reach the database —", err.message);
-      console.error("WARNING: booting anyway; /health will report schema:null until this is fixed.");
-      return listen();
+      console.error("WARNING: could not reach the database —", err && err.message);
+      console.error("WARNING: booting anyway; /health reports the reason and retries continue.");
+    } else {
+      locked = String((err && err.message) || "migration failed");
+      console.error("FATAL: migration failed —", locked);
+      console.error("FATAL: booting LOCKED; /health reports the reason and every other route answers 503.");
     }
-    /* A failure AFTER a file started applying. The schema may be partly there,
-       so the service must not serve queries — but it must still be possible to
-       find out why, which a rolled-back deployment makes impossible. Boot
-       locked: /health tells the truth, every other route answers 503. */
-    locked = String((err && err.message) || "migration failed");
-    require("./lib/migrate").setLastError(locked);
-    console.error("FATAL: migration failed —", locked);
-    console.error("FATAL: booting LOCKED; /health reports the reason and every other route answers 503.");
-    return listen();
+    listen();
+    keepMigrating(0);
   });
 }
 

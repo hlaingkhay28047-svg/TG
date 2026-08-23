@@ -50,9 +50,18 @@ services:
       - key: DATABASE_URL_IF_COMPONENT_IS_NAMED_DB
         scope: RUN_TIME
         value: ${db.DATABASE_URL}
+      # Bound twice for the same reason DATABASE_URL is. Given a real certificate
+      # the database is AUTHENTICATED, not merely encrypted to; without one an
+      # in-path substitution is not refused, and this connection carries the
+      # payment records. An unresolved binding arrives as literal text, which
+      # server/lib/db.js declines to trust as a CA — that exact string, treated
+      # as a certificate, cost one rolled-back deploy.
       - key: DATABASE_CA_CERT
         scope: RUN_TIME
         value: ${hnk-db.CA_CERT}
+      - key: DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB
+        scope: RUN_TIME
+        value: ${db.CA_CERT}
       # Signs access tokens. Set this yourself, in the DigitalOcean console, as
       # an encrypted secret — never in this file. Rotating it logs everyone out,
       # which is the correct behaviour if it is ever exposed.

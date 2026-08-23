@@ -76,6 +76,36 @@ function resolveDatabaseUrl() {
   };
 }
 
+/* How TLS to the database is configured — and how much of it is verified.
+ *
+ * DigitalOcean Managed PostgreSQL terminates TLS with its own CA. Given a real
+ * certificate the database is AUTHENTICATED, not merely encrypted to; without
+ * one the traffic is still encrypted but an in-path substitution is not
+ * refused, and this connection carries the payment records.
+ *
+ * THE CERTIFICATE IS CHECKED FOR BEING A CERTIFICATE, not merely for being set.
+ * The specs bind this to ${hnk-db.CA_CERT}, and an unresolved binding arrives as
+ * that literal text. Trusting it as a CA with rejectUnauthorized:true failed
+ * every handshake, the pool never connected, migration threw, the container
+ * exited, and App Platform rolled the deploy back reporting only "your
+ * container exited with a non-zero exit code" — a whole deploy lost to a string
+ * that merely looked set.
+ *
+ * Bound twice for the same reason DATABASE_URL is, and read under the same
+ * key-prefix restriction: a certificate elsewhere in the environment — an
+ * outbound proxy's CA, NODE_EXTRA_CA_CERTS — is not this database's trust
+ * anchor, and verifying against the wrong CA refuses every connection, which is
+ * worse than not verifying at all. */
+function resolveSsl() {
+  if (process.env.PGSSLMODE === "disable") return false;
+  for (const key of Object.keys(process.env)) {
+    if (!/^DATABASE_CA_CERT/.test(key)) continue;
+    const value = process.env[key] || "";
+    if (/BEGIN CERTIFICATE/.test(value)) return { ca: value, rejectUnauthorized: true };
+  }
+  return { rejectUnauthorized: false };
+}
+
 const RESOLVED = resolveDatabaseUrl();
 if (RESOLVED.key && RESOLVED.key !== "DATABASE_URL") {
   console.warn("db: DATABASE_URL is unusable — connecting with " + RESOLVED.key + " instead.");
@@ -85,23 +115,7 @@ const pool = new Pool({
   /* undefined, not "", so a local development run still falls back to the
      PG* environment variables the way psql does. */
   connectionString: RESOLVED.url || undefined,
-  /* DigitalOcean Managed PostgreSQL terminates TLS with its own CA. When a real
-     certificate is supplied we verify against it; otherwise we still encrypt.
-     Set PGSSLMODE=disable only for a local development database.
-
-     THE CERTIFICATE IS CHECKED FOR BEING A CERTIFICATE, not merely for being
-     set. .do/app.yaml binds DATABASE_CA_CERT to ${hnk-db.CA_CERT}; a binding
-     that does not resolve — which is the case for a development database — is
-     passed through as the LITERAL text "${hnk-db.CA_CERT}". Treating that as a
-     CA with rejectUnauthorized:true fails every TLS handshake, the pool never
-     connects, and the process exits during migration. App Platform then reports
-     "your container exited with a non-zero exit code" and rolls back, so the
-     old build keeps answering and nothing looks like it changed. */
-  ssl: process.env.PGSSLMODE === "disable"
-    ? false
-    : /BEGIN CERTIFICATE/.test(process.env.DATABASE_CA_CERT || "")
-      ? { ca: process.env.DATABASE_CA_CERT, rejectUnauthorized: true }
-      : { rejectUnauthorized: false },
+  ssl: resolveSsl(),
   max: Number(process.env.PG_POOL_MAX || 10),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
@@ -172,4 +186,4 @@ async function asService(fn) {
   }
 }
 
-module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl };
+module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl };

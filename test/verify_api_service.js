@@ -387,6 +387,76 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   partial.stop();
   psql(`drop database if exists ${PARTIAL}`);
 
+  /* ============ TLS to the database ============
+     Tested against resolveSsl() directly because the pool reads it once, at
+     require time, and its config is otherwise unobservable from outside — but
+     it IS the function that decides, not a copy of the logic. */
+  const { resolveSsl } = require(path.join(ROOT, "server", "lib", "db"));
+  const PEM = "-----BEGIN CERTIFICATE-----\nMIIBfake\n-----END CERTIFICATE-----\n";
+  const sslWith = env => {
+    const saved = {};
+    for (const k of Object.keys(env)) { saved[k] = process.env[k]; process.env[k] = env[k]; }
+    const saveMode = process.env.PGSSLMODE;
+    if (!("PGSSLMODE" in env)) delete process.env.PGSSLMODE;
+    let out;
+    try { out = resolveSsl(); } finally {
+      for (const k of Object.keys(env)) {
+        if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k];
+      }
+      if (saveMode === undefined) delete process.env.PGSSLMODE; else process.env.PGSSLMODE = saveMode;
+    }
+    return out;
+  };
+
+  const literal = sslWith({ DATABASE_CA_CERT: "${hnk-db.CA_CERT}" });
+  report("S1) an unresolved CA binding is NOT trusted as a certificate — that cost a whole deploy",
+    !!literal && literal.rejectUnauthorized === false && literal.ca === undefined, literal);
+
+  const bound = sslWith({ DATABASE_CA_CERT: "${hnk-db.CA_CERT}",
+                          DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB: PEM });
+  report("S2) the binding that DID resolve is verified against, so the database is authenticated",
+    !!bound && bound.rejectUnauthorized === true && bound.ca === PEM, bound);
+
+  const stray = sslWith({ DATABASE_CA_CERT: "${hnk-db.CA_CERT}", PROXY_CA_CERT: PEM });
+  report("S3) a certificate under an unrelated key is not adopted — the wrong CA refuses every connection",
+    !!stray && stray.rejectUnauthorized === false && stray.ca === undefined, stray);
+
+  report("S4) PGSSLMODE=disable still turns TLS off for a local database",
+    sslWith({ PGSSLMODE: "disable", DATABASE_CA_CERT: PEM }) === false);
+
+  /* ============ a database that was not ready yet ============
+     A DigitalOcean development database is created WITH the app and takes
+     minutes to provision. One attempt was all there was, so a container that
+     booted first sat there reporting schema:null forever — the database
+     becoming ready a minute later changed nothing, because nothing looked
+     again and nothing restarts the container.
+
+     Driven for real: the service is started against a database that does not
+     exist, the database is then created underneath it, and the service has to
+     notice by itself. */
+  const LATE = DB + "_late";
+  psql(`drop database if exists ${LATE}`);
+  const late = await bootChild(
+    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
+    `@${ENV.PGHOST}:${ENV.PGPORT}/${LATE}`);
+  report("H13) a database that does not exist yet still boots, and says so",
+    !!late.health && late.health.ok === true && late.health.ready === false &&
+    /does not exist/.test(late.health.error || ""), late.health);
+
+  psql(`create database ${LATE}`);
+  let recovered = null;
+  for (let i = 0; i < 45 && !recovered; i++) {
+    await new Promise(done => setTimeout(done, 1000));
+    try {
+      const h = await (await fetch(`http://127.0.0.1:${late.port}/health`)).json();
+      if (h && h.ready === true) recovered = h;
+    } catch (_) { /* mid-restart of nothing; keep looking */ }
+  }
+  report("H14) ...and applies the schema itself once it appears, with no restart and nobody watching",
+    !!recovered && recovered.schema === 4 && recovered.error === undefined, recovered);
+  late.stop();
+  psql(`drop database if exists ${LATE}`);
+
   server.close();
   await require(path.join(ROOT, "server", "lib", "db")).pool.end();
   psql(`drop database if exists ${DB}`);

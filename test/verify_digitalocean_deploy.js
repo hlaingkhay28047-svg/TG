@@ -100,18 +100,28 @@ check('staging and production both serve docs', /source_dir:\s*\/docs\b/.test(st
  * postgres:// URL (verify_api_service.js H6 through H9 prove that end of it).
  *
  * Checked as a pair, because one binding alone is the bug. */
+const doubleBound = [
+  /* variable, the env key it lands in */
+  ['DATABASE_URL', 'DATABASE_URL'],
+  /* The certificate decides whether the database is AUTHENTICATED or merely
+     encrypted to, on the connection that carries the payment records. */
+  ['CA_CERT', 'DATABASE_CA_CERT'],
+];
 [['production', productionSpec], ['staging', stagingSpec]].forEach(([lane, spec]) => {
-  const bindings = (spec.match(/value:\s*\$\{[^}]*\.DATABASE_URL\}/g) || [])
-    .map(line => line.replace(/^value:\s*/, ''));
-  const components = bindings.map(b => b.slice(2, b.indexOf('.')));
-  check(`${lane} spec binds DATABASE_URL under both component names`,
-    components.includes('hnk-db') && components.includes('db'));
-  /* ...and they must be separate KEYS. Two values under one key is a spec that
-     overwrites itself, which looks right and delivers only the last one. */
-  check(`${lane} spec gives the second binding its own key`,
-    occurrences(spec, '- key: DATABASE_URL') === 2 &&
-    /- key: DATABASE_URL\n/.test(spec) &&
-    /- key: DATABASE_URL_[A-Z_]+\n/.test(spec));
+  doubleBound.forEach(([variable, key]) => {
+    const pattern = new RegExp('value:\\s*\\$\\{[^}]*\\.' + variable + '\\}', 'g');
+    const components = (spec.match(pattern) || [])
+      .map(line => line.replace(/^value:\s*/, ''))
+      .map(b => b.slice(2, b.indexOf('.')));
+    check(`${lane} spec binds ${variable} under both component names`,
+      components.includes('hnk-db') && components.includes('db'));
+    /* ...and they must be separate KEYS. Two values under one key is a spec
+       that overwrites itself, which looks right and delivers only the last. */
+    check(`${lane} spec gives the second ${variable} binding its own key`,
+      occurrences(spec, '- key: ' + key) === 2 &&
+      new RegExp('- key: ' + key + '\\n').test(spec) &&
+      new RegExp('- key: ' + key + '_[A-Z_]+\\n').test(spec));
+  });
 });
 
 if (failures.length) {
