@@ -70,7 +70,23 @@ services:
         type: SECRET
 
 databases:
+  # DEVELOPMENT DATABASE, deliberately. App Platform creates this one with the
+  # app and nothing has to exist first. `production: true` does something else
+  # entirely — it ATTACHES an already-created managed cluster and requires
+  # cluster_name, so a spec carrying it and nothing else is rejected outright:
+  #
+  #   error validating app spec field "databases.cluster_name":
+  #   is a required value for production databases
+  #
+  # Before real payments run through this, create a managed PostgreSQL cluster
+  # and replace this block with:
+  #
+  #   - name: hnk-db
+  #     engine: PG
+  #     production: true
+  #     cluster_name: <the cluster name in the account>
+  #
+  # A development database is not meant to hold data you cannot lose.
   - name: hnk-db
     engine: PG
-    version: "16"
-    production: true
+    production: false
