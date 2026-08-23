@@ -133,9 +133,24 @@ $$;
 
 grant execute on function storage.foldername(text) to anon, authenticated, service_role;
 
--- RLS on storage.objects is enabled by supabase/schema.sql section 8, which also
--- creates the bucket and both policies. Grants have to exist for those policies
--- to have anything to govern.
+-- ROW-LEVEL SECURITY IS ENABLED HERE, and it has to be.
+--
+-- supabase/schema.sql section 8 creates proofs_insert_own and
+-- proofs_read_own_or_admin on storage.objects but never enables RLS on the
+-- table, because on Supabase the platform ships it already enabled. A policy on
+-- a table without RLS does NOTHING — it is not an error, it simply never
+-- applies — so recreating the table here without this line reproduced the
+-- policies and none of the protection.
+--
+-- That is not a theory. test/verify_api_service.js caught it: one customer
+-- uploaded a file into another customer's folder and read that customer's bank
+-- slip, both answering 200, with the two policies present and correct the whole
+-- time. This is the single line that stops it.
+alter table storage.objects enable row level security;
+
+-- Grants have to exist for those policies to have anything to govern. INSERT
+-- and SELECT only: there is deliberately no UPDATE or DELETE policy, so a
+-- proof cannot be overwritten or removed after an admin has been shown it.
 grant select, insert on storage.objects to authenticated;
 
 -- ---------------------------------------------------------------------------

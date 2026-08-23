@@ -1,0 +1,10 @@
+{
+  "name": "hnk-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HNK Create Studio API — auth, PostgREST-compatible reads/writes and payment-proof storage over DigitalOcean Managed PostgreSQL.",
+  "main": "index.js",
+  "engines": { "node": ">=22" },
+  "scripts": { "start": "node index.js" },
+  "dependencies": { "pg": "8.13.1" }
+}

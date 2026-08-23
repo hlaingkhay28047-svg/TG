@@ -54,6 +54,9 @@ jobs:
       - name: Verify the schema ENFORCES what it claims (real PostgreSQL)
         run: node test/verify_schema_behaviour.js
 
+      - name: Verify the API service end to end (real PostgreSQL)
+        run: node test/verify_api_service.js
+
       - name: Install Playwright + Chromium
         run: |
           npm install playwright@1.62.1
