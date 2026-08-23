@@ -53,7 +53,15 @@ psqlFile(path.join(ROOT, "supabase", "schema.sql"), DB);
 report("platform.sql + schema.sql build the database", true);
 
 /* ---- boot the service against it ---- */
-process.env.DATABASE_URL = `postgres://${ENV.PGUSER}@${ENV.PGHOST}:${ENV.PGPORT}/${DB}`;
+/* The password belongs in the URL even though a local trust-auth server
+   ignores it. Leaving it out worked on a development cluster and failed in CI
+   with "SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string",
+   because the service container authenticates. psql-based checks did not catch
+   it — they read PGPASSWORD from the environment, while the pg driver only sees
+   what this string carries. */
+process.env.DATABASE_URL =
+  `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
+  `@${ENV.PGHOST}:${ENV.PGPORT}/${DB}`;
 process.env.PGSSLMODE = "disable";
 process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
 process.env.ALLOWED_ORIGIN = "https://example.test";
