@@ -273,22 +273,26 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   /* Booted as child processes, because this one already holds a working pool.
      Each starts the real server with a broken DATABASE_URL and is asked the
      same question the owner asks from a phone: what is wrong? */
-  let deadPort = PORT;
-  async function healthWith(url, extraEnv) {
-    deadPort++;
+  let childPort = PORT;
+  async function bootChild(url, extraEnv) {
+    childPort++;
+    const port = childPort;
     const child = spawn(process.execPath, [path.join(ROOT, "server", "index.js")], {
       env: Object.assign({}, process.env,
-        { DATABASE_URL: url, PGSSLMODE: "disable", PORT: String(deadPort) }, extraEnv || {}),
+        { DATABASE_URL: url, PGSSLMODE: "disable", PORT: String(port) }, extraEnv || {}),
       stdio: "ignore",
     });
-    const port = deadPort;
-    let body = null;
-    for (let i = 0; i < 80 && !body; i++) {
-      try { body = await (await fetch(`http://127.0.0.1:${port}/health`)).json(); }
+    let health = null;
+    for (let i = 0; i < 80 && !health; i++) {
+      try { health = await (await fetch(`http://127.0.0.1:${port}/health`)).json(); }
       catch (_) { await new Promise(done => setTimeout(done, 250)); }
     }
-    child.kill();
-    return body;
+    return { port, health, stop: () => child.kill() };
+  }
+  async function healthWith(url, extraEnv) {
+    const boot = await bootChild(url, extraEnv);
+    boot.stop();
+    return boot.health;
   }
 
   const dead = await healthWith("postgres://someone:hunter2pw@127.0.0.1:59999/nope");
@@ -324,6 +328,52 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     { DB_POSTGRESQL_URL: REAL, OTHER_PG_URL: "postgres://a:b@127.0.0.1:5432/other" });
   report("H9) two candidates are refused rather than guessed between — the wrong one holds the payments",
     !!ambiguous && ambiguous.ready === false && /guess/.test(ambiguous.error || ""), ambiguous);
+
+  /* ============ a schema that failed PARTWAY through ============
+     The other half of the same lesson. A migration that never reached the
+     database has applied nothing and is safe to boot from; one that stopped
+     midway may have left tables whose policies were never created, and
+     answering a query against those is worse than answering nothing. Exiting
+     is worse still — App Platform rolls the deployment back and the reason
+     stops being reachable at all, which is exactly how the previous failure
+     stayed a mystery.
+
+     Reproduced, not simulated: a `profiles` table that already exists with the
+     wrong shape makes `create table if not exists` a no-op and the statements
+     after it fail, with platform.sql already applied. */
+  const PARTIAL = DB + "_partial";
+  psql(`drop database if exists ${PARTIAL}`);
+  psql(`create database ${PARTIAL}`);
+  psql("create table public.profiles (id int)", PARTIAL);
+  const partial = await bootChild(
+    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
+    `@${ENV.PGHOST}:${ENV.PGPORT}/${PARTIAL}`);
+  report("H10) a half-applied schema still boots, so the reason stays readable",
+    !!partial.health && partial.health.ok === true && partial.health.ready === false &&
+    !!partial.health.error, partial.health);
+
+  /* Asked through a helper that survives a child which never came up, so a
+     regression here reports as a FAIL rather than a stack trace that hides the
+     checks after it. */
+  const askPartial = async (p2, init) => {
+    try {
+      const rr = await fetch(`http://127.0.0.1:${partial.port}${p2}`, init);
+      return { status: rr.status, body: await rr.json().catch(() => null) };
+    } catch (err) { return { status: 0, body: null, error: err.message }; }
+  };
+
+  const refused = await askPartial("/auth/v1/token?grant_type=password",
+    { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "someone@example.test", password: "hunter2hunter" }) });
+  report("H11) ...and every route that touches the database answers 503 instead of querying it",
+    refused.status === 503 && !!refused.body && refused.body.error === "schema_incomplete", refused);
+
+  const stillAnswers = await askPartial("/health");
+  report("H12) ...while /health itself keeps answering — it is the only way in",
+    !!stillAnswers.body && stillAnswers.body.ok === true && stillAnswers.body.ready === false,
+    stillAnswers);
+  partial.stop();
+  psql(`drop database if exists ${PARTIAL}`);
 
   server.close();
   await require(path.join(ROOT, "server", "lib", "db")).pool.end();

@@ -93,6 +93,12 @@ function uidFrom(req) {
   return payload ? payload.sub : null;
 }
 
+/* Set when the schema failed to apply PARTWAY THROUGH — see the boot block at
+   the bottom. While it is set the service answers nothing but /health, so a
+   schema with some of its row-level security missing is never queried, and the
+   reason is still readable from a URL. */
+let locked = null;
+
 const server = http.createServer(async (req, res) => {
   try {
     cors(req, res);
@@ -125,7 +131,7 @@ const server = http.createServer(async (req, res) => {
       const body = { ok: true, schema: schema, ready: schema === 4 };
       /* Only while something is actually wrong — a stale boot error must not
          keep accusing a database that has since come back. */
-      if (schema === null) {
+      if (!body.ready) {
         /* A configuration fault is reported ahead of whatever pg made of it.
            An unresolved binding reaches the driver as a hostname and comes back
            as `getaddrinfo ENOTFOUND base`, which sends the reader hunting for a
@@ -135,6 +141,21 @@ const server = http.createServer(async (req, res) => {
         if (why) body.error = why;
       }
       return send(res, 200, body);
+    }
+
+    /* Everything below this line touches the database. A schema that failed
+       partway through may have tables whose policies never got created, and
+       answering a query against those is the one outcome worse than answering
+       nothing — so nothing is answered. Exiting instead would be worse again:
+       App Platform rolls the deployment back, the previous build answers
+       /health in its own shape, and the failure becomes invisible to anyone
+       without the runtime logs. */
+    if (locked) {
+      return send(res, 503, {
+        error: "schema_incomplete",
+        message: "The database schema did not finish applying. See /health.",
+        msg: "The database schema did not finish applying. See /health.",
+      });
     }
 
     /* ---------------- auth ---------------- */
@@ -238,8 +259,15 @@ if (require.main === module) {
       console.error("WARNING: booting anyway; /health will report schema:null until this is fixed.");
       return listen();
     }
-    console.error("FATAL: migration failed —", err && err.message);
-    process.exit(1);
+    /* A failure AFTER a file started applying. The schema may be partly there,
+       so the service must not serve queries — but it must still be possible to
+       find out why, which a rolled-back deployment makes impossible. Boot
+       locked: /health tells the truth, every other route answers 503. */
+    locked = String((err && err.message) || "migration failed");
+    require("./lib/migrate").setLastError(locked);
+    console.error("FATAL: migration failed —", locked);
+    console.error("FATAL: booting LOCKED; /health reports the reason and every other route answers 503.");
+    return listen();
   });
 }
 

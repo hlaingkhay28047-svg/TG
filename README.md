@@ -129,16 +129,31 @@ account.
 
    ```
    {"ok":true,"schema":4,"ready":true}          the service and the schema are up
-   {"ok":true,"schema":0,"ready":false}         reached the database, schema incomplete
+   {"ok":true,"schema":1,"ready":false,         the schema stopped partway through,
+    "error":"…"}                                 and `error` says where
    {"ok":true,"schema":null,"ready":false,      could not reach the database at all,
     "error":"…"}                                 and `error` says why
    ```
 
-   `ok` describes the *service*, which is why it stays `true` while the database
-   is unreachable — an exiting container makes App Platform roll back to the
-   previous build, and then nothing about the deployment looks like it happened.
-   `error` is sanitised before it is shown: `/api/health` is public, and a
-   connection failure can carry the connection string.
+   `schema` counts how many of the four application tables exist, so `4` is the
+   only ready state and `null` means the database was not reachable at all.
+   `error` appears whenever `ready` is false and disappears again the moment the
+   database answers, so it never accuses one that has since come back. It is
+   sanitised first: `/api/health` is public, and a connection failure can carry
+   the connection string.
+
+   `ok` describes the *service*, which is why it stays `true` throughout. An
+   exiting container makes App Platform roll the deployment back to the previous
+   build, which answers `/health` in its own older shape — so the deploy looks
+   like it never happened and the cause becomes unreachable. Booting and saying
+   so is the only version of this that can be diagnosed from a phone.
+
+   A schema that stopped **partway** is the one case where the service also
+   stops answering: every route except `/health` returns `503
+   schema_incomplete`. Tables may exist there whose row-level security policies
+   never got created, and querying those is worse than answering nothing —
+   whereas a database that was never reached has applied nothing at all, so
+   there is no half-secured schema to protect anyone from.
 
    The message worth recognising is
 
