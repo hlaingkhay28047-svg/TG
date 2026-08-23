@@ -1,1 +1,6 @@
 node_modules/
+
+# copied in by `npm run build` when the repository root is present.
+# A committed copy would drift from supabase/schema.sql, which is the point of
+# copying it rather than duplicating it.
+sql/schema.sql

@@ -54,13 +54,13 @@
 const fs = require("fs");
 const path = require("path");
 
-/* Read the host out of the app rather than hardcoding it here. If the project
-   is ever moved, a hardcoded copy would silently stop matching and every sweep
-   would go back to making real requests to a host that no longer answers —
-   which is the failure this whole file exists to remove. */
-const APP_HTML = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
-const SB_URL = (APP_HTML.match(/var SB_URL\s*=\s*"([^"]+)"/) || [])[1];
-if (!SB_URL) throw new Error("_seed_premium: could not find SB_URL in docs/app/index.html");
+/* The API is on the page's own origin under /api, so there is no host to read
+   out of the app and no port to guess — each sweep serves on its own port.
+   This is a glob, not a URL: every caller appends a trailing wildcard and the
+   result matches the full request URL whatever the port happens to be.
+   (Deliberately not spelled out with asterisks here — a star-slash inside a
+   block comment ends the comment, which is exactly how this line broke once.) */
+const SB_URL = "**/api";
 
 const UID = "u-test-fixture";
 const EMAIL = "fixture@example.com";

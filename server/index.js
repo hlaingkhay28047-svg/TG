@@ -195,9 +195,24 @@ if (require.main === module) {
      three times and requires app_settings to still hold one row — so this
      converges on every boot instead of needing a database client the owner
      does not have. */
-  require("./lib/migrate").migrate()
-    .then(() => server.listen(PORT, () => console.log("hnk-api listening on " + PORT)))
-    .catch(err => { console.error("FATAL: migration failed —", err.message); process.exit(1); });
+  const listen = () => server.listen(PORT, () => console.log("hnk-api listening on " + PORT));
+  require("./lib/migrate").migrate().then(listen).catch(err => {
+    /* A migration that COULD NOT REACH the database has applied nothing, so
+       there is no half-secured schema to protect anyone from — and exiting
+       makes App Platform roll back to the previous build, which answers
+       /health in the old shape and hides the reason entirely. Boot instead:
+       /health then reports schema:null, the log carries the error, and the
+       problem is visible rather than disguised as "nothing happened".
+       A failure AFTER a file applied is different and still fatal; migrate()
+       raises that one only once it has proved the tables are missing. */
+    if (err && err.applied === false) {
+      console.error("WARNING: could not reach the database —", err.message);
+      console.error("WARNING: booting anyway; /health will report schema:null until this is fixed.");
+      return listen();
+    }
+    console.error("FATAL: migration failed —", err && err.message);
+    process.exit(1);
+  });
 }
 
 module.exports = { server };

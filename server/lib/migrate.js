@@ -60,7 +60,16 @@ async function migrate() {
     console.error("migrate: platform.sql will still be applied; the application tables will NOT exist.");
   }
 
-  const client = await pool.connect();
+  let client;
+  try {
+    client = await pool.connect();
+  } catch (err) {
+    /* Marked so index.js can tell "never reached the database" — nothing
+       applied, nothing half-done — from "applied something and it did not
+       take", which must still stop the service. */
+    err.applied = false;
+    throw err;
+  }
   try {
     for (const file of files) {
       const sql = fs.readFileSync(file, "utf8");
