@@ -35,14 +35,22 @@ const ROLES = new Set(["anon", "authenticated"]);
  * does not exist. The same trap through DATABASE_CA_CERT already cost one
  * rolled-back deploy.
  *
- * THE FALLBACK IS NOT A GUESS. A database added from the DigitalOcean console
- * rather than from this spec is named by the console, and App Platform exposes
- * its URL under a variable named after THAT component — so the database is
- * present and reachable while ${hnk-db.DATABASE_URL} sits there as text. One
- * unambiguous PostgreSQL URL elsewhere in the environment is that database and
- * nothing else. Two would be a choice, and a service silently choosing which
- * database holds the payments is worse than one that refuses to start, so two
- * is reported instead of picked between.
+ * THE FALLBACK IS NOT A GUESS. Both .do specs bind the URL twice — once under
+ * `hnk-db` and once under `db`, the name the console gives a database added
+ * from the console — precisely because only one of them can resolve. The other
+ * stays as text, which is not a postgres:// URL, so exactly one candidate is
+ * left and taking it is not a choice.
+ *
+ * ONLY DATABASE_URL* KEYS ARE CONSIDERED, and that restriction is the point.
+ * Scanning the whole environment for anything that looks like a PostgreSQL URL
+ * would sweep up a leftover credential from somewhere else entirely — the old
+ * Supabase database, say, which is still live during a migration — and quietly
+ * apply this schema to it. The keys this spec controls are the only ones that
+ * mean "the database this app was given".
+ *
+ * Two resolved candidates would be a choice, and a service silently deciding
+ * which database holds the payment records is worse than one that refuses to
+ * start, so two is reported instead of picked between.
  */
 function resolveDatabaseUrl() {
   const direct = process.env.DATABASE_URL || "";
@@ -50,7 +58,8 @@ function resolveDatabaseUrl() {
   if (direct && !unresolved) return { url: direct, key: "DATABASE_URL", why: null };
 
   const found = Object.keys(process.env).filter(k =>
-    k !== "DATABASE_URL" && /^postgres(?:ql)?:\/\/\S+$/.test(process.env[k] || ""));
+    k !== "DATABASE_URL" && /^DATABASE_URL./.test(k) &&
+    /^postgres(?:ql)?:\/\/\S+$/.test(process.env[k] || ""));
   if (found.length === 1) return { url: process.env[found[0]], key: found[0], why: null };
 
   const why = unresolved

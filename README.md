@@ -179,10 +179,15 @@ account.
 
    Exactly one of those resolves; the other stays as text, which is not a
    `postgres://` URL and is ignored. The service connects with the one that
-   resolved and logs which variable it came from. If **two** real PostgreSQL
-   URLs are ever in the environment it stops and says so instead — a service
-   quietly deciding for itself which database holds the payment records is worse
-   than one that does not start.
+   resolved and logs which variable it came from.
+
+   Only keys beginning `DATABASE_URL` are ever candidates, and that restriction
+   is deliberate. Sweeping the whole environment for anything postgres-shaped
+   would find a leftover credential from somewhere else — the old Supabase
+   database, which is still live throughout a migration — and quietly apply this
+   schema to it. If **two** of the spec's own bindings ever resolve at once the
+   service stops and says so instead: quietly deciding for itself which database
+   holds the payment records is worse than not starting.
 
    If the component is named neither, re-paste the spec with the right name in
    the binding — App Platform → your app → Settings → App Spec.

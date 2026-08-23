@@ -316,18 +316,30 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("H7) a DATABASE_URL that was never set says exactly that",
     !!unset && /DATABASE_URL is not set/.test(unset.error || ""), unset);
 
-  /* ...and the same situation is RECOVERED FROM, not merely described, when the
-     database really is attached under a name the spec does not mention — which
-     is what adding one from the console produces. */
+  /* ...and the same situation is RECOVERED FROM, not merely described. Both .do
+     specs bind the URL twice, under `hnk-db` and under `db`, exactly because
+     only one of them can resolve — so the second key is the one that carries a
+     real URL when the first is text. */
   const REAL = process.env.DATABASE_URL;
-  const rescued = await healthWith("${hnk-db.DATABASE_URL}", { DB_POSTGRESQL_URL: REAL });
-  report("H8) a database attached under another name is found and used, not merely reported",
+  const ALT = "DATABASE_URL_IF_COMPONENT_IS_NAMED_DB";
+  const rescued = await healthWith("${hnk-db.DATABASE_URL}", { [ALT]: REAL });
+  report("H8) the binding that DID resolve is found and used, not merely reported",
     !!rescued && rescued.schema === 4 && rescued.ready === true && rescued.error === undefined, rescued);
 
   const ambiguous = await healthWith("${hnk-db.DATABASE_URL}",
-    { DB_POSTGRESQL_URL: REAL, OTHER_PG_URL: "postgres://a:b@127.0.0.1:5432/other" });
+    { [ALT]: REAL, DATABASE_URL_THIRD: "postgres://a:b@127.0.0.1:5432/other" });
   report("H9) two candidates are refused rather than guessed between — the wrong one holds the payments",
     !!ambiguous && ambiguous.ready === false && /guess/.test(ambiguous.error || ""), ambiguous);
+
+  /* The restriction that makes H8 safe rather than reckless. During a migration
+     the OLD database is still live and its URL may still be sitting in the
+     environment under some unrelated name; sweeping the whole environment for
+     anything postgres-shaped would find it and quietly apply this schema to
+     someone else's database. Only keys this spec controls are candidates. */
+  const strayed = await healthWith("${hnk-db.DATABASE_URL}", { SUPABASE_DB_URL: REAL });
+  report("H9b) a PostgreSQL URL under an unrelated key is NOT adopted — it could be the old database",
+    !!strayed && strayed.ready === false &&
+    /unresolved App Platform binding/.test(strayed.error || ""), strayed);
 
   /* ============ a schema that failed PARTWAY through ============
      The other half of the same lesson. A migration that never reached the
