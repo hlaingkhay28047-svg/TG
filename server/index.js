@@ -176,7 +176,14 @@ if (require.main === module) {
   if (!process.env.JWT_SECRET) { console.error("FATAL: JWT_SECRET is not set — refusing to start."); process.exit(1); }
   if (!process.env.DATABASE_URL) { console.error("FATAL: DATABASE_URL is not set — refusing to start."); process.exit(1); }
   if (!ALLOWED_ORIGIN) console.warn("WARNING: ALLOWED_ORIGIN is unset — CORS will echo the caller's origin. Set it in production.");
-  server.listen(PORT, () => console.log("hnk-api listening on " + PORT));
+  /* The schema is applied before the first request rather than by hand. Both
+     files are idempotent — verify_schema_behaviour.js check B applies them
+     three times and requires app_settings to still hold one row — so this
+     converges on every boot instead of needing a database client the owner
+     does not have. */
+  require("./lib/migrate").migrate()
+    .then(() => server.listen(PORT, () => console.log("hnk-api listening on " + PORT)))
+    .catch(err => { console.error("FATAL: migration failed —", err.message); process.exit(1); });
 }
 
 module.exports = { server };

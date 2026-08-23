@@ -48,9 +48,6 @@ try { psql("select 1"); } catch (e) {
 }
 psql(`drop database if exists ${DB}`);
 psql(`create database ${DB}`);
-psqlFile(path.join(ROOT, "server", "sql", "platform.sql"), DB);
-psqlFile(path.join(ROOT, "supabase", "schema.sql"), DB);
-report("platform.sql + schema.sql build the database", true);
 
 /* ---- boot the service against it ---- */
 /* The password belongs in the URL even though a local trust-auth server
@@ -65,6 +62,12 @@ process.env.DATABASE_URL =
 process.env.PGSSLMODE = "disable";
 process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
 process.env.ALLOWED_ORIGIN = "https://example.test";
+/* The schema is built by the SERVICE'S OWN migration, not by psql here. That
+   is deliberate: it is the code path a real deployment takes on first boot, so
+   this check fails if boot-time migration breaks — which is the only thing
+   standing between an empty DigitalOcean database and a working one, now that
+   the owner applies no SQL by hand. */
+const { migrate } = require(path.join(ROOT, "server", "lib", "migrate.js"));
 const { server } = require(path.join(ROOT, "server", "index.js"));
 
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -81,6 +84,13 @@ async function call(method, p, { token, body, headers, raw } = {}) {
 }
 
 (async () => {
+  let migrated = null;
+  try { await migrate(); } catch (err) { migrated = err.message; }
+  const tables = psql("select count(*)::int from pg_tables where schemaname='public' " +
+    "and tablename in ('profiles','payment_requests','app_settings','devices')", DB);
+  report("the service migrates an EMPTY database to a working schema on boot",
+    migrated === null && tables === "4", { error: migrated, tables });
+
   await new Promise(r => server.listen(PORT, r));
 
   /* ================= the ordinary journey ================= */
