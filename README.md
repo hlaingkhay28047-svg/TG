@@ -164,17 +164,28 @@ account.
    which means the app has no component *named* `hnk-db`. App Platform passes an
    unmatched `${…}` through as literal text rather than failing, so the driver
    receives it as a hostname and would otherwise report `getaddrinfo ENOTFOUND
-   base` — a message about DNS, for a problem that is a name in the spec. Rename
-   the database component to `hnk-db`, or point the binding at whatever it is
-   actually called.
+   base` — a message about DNS, for a problem that is a name in the spec.
 
-   Mostly you will not see it, because a database added from the console is
-   still *attached*: App Platform exposes its URL under a variable named after
-   that component, so the service finds it and connects anyway, logging which
-   variable it used. It does that only when exactly one PostgreSQL URL is in the
-   environment. Two, and it stops and says so — a service quietly deciding for
-   itself which database holds the payment records is worse than one that does
-   not start.
+   The usual cause is that the database was added from the console rather than
+   from this file, where the default component name is **`db`**. Both specs
+   therefore bind the URL twice:
+
+   ```yaml
+   - key: DATABASE_URL
+     value: ${hnk-db.DATABASE_URL}
+   - key: DATABASE_URL_IF_COMPONENT_IS_NAMED_DB
+     value: ${db.DATABASE_URL}
+   ```
+
+   Exactly one of those resolves; the other stays as text, which is not a
+   `postgres://` URL and is ignored. The service connects with the one that
+   resolved and logs which variable it came from. If **two** real PostgreSQL
+   URLs are ever in the environment it stops and says so instead — a service
+   quietly deciding for itself which database holds the payment records is worse
+   than one that does not start.
+
+   If the component is named neither, re-paste the spec with the right name in
+   the binding — App Platform → your app → Settings → App Spec.
 
 4. **Make yourself an admin**, the same statement as before — it works because
    the guard trigger steps aside for a caller with no `auth.uid()`:
