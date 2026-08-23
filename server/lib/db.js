@@ -26,12 +26,21 @@ const ROLES = new Set(["anon", "authenticated"]);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  /* DigitalOcean Managed PostgreSQL terminates TLS with its own CA. When the CA
+  /* DigitalOcean Managed PostgreSQL terminates TLS with its own CA. When a real
      certificate is supplied we verify against it; otherwise we still encrypt.
-     Set PGSSLMODE=disable only for a local development database. */
+     Set PGSSLMODE=disable only for a local development database.
+
+     THE CERTIFICATE IS CHECKED FOR BEING A CERTIFICATE, not merely for being
+     set. .do/app.yaml binds DATABASE_CA_CERT to ${hnk-db.CA_CERT}; a binding
+     that does not resolve — which is the case for a development database — is
+     passed through as the LITERAL text "${hnk-db.CA_CERT}". Treating that as a
+     CA with rejectUnauthorized:true fails every TLS handshake, the pool never
+     connects, and the process exits during migration. App Platform then reports
+     "your container exited with a non-zero exit code" and rolls back, so the
+     old build keeps answering and nothing looks like it changed. */
   ssl: process.env.PGSSLMODE === "disable"
     ? false
-    : process.env.DATABASE_CA_CERT
+    : /BEGIN CERTIFICATE/.test(process.env.DATABASE_CA_CERT || "")
       ? { ca: process.env.DATABASE_CA_CERT, rejectUnauthorized: true }
       : { rejectUnauthorized: false },
   max: Number(process.env.PG_POOL_MAX || 10),
