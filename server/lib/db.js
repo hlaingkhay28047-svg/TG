@@ -151,15 +151,53 @@ function resolveSsl() {
 }
 
 
+/* THE CONNECTION STRING OVERRULES THE ssl CONFIG, AND IT DOES IT PER CLIENT.
+ *
+ * pg builds each connection with `new Client(pool.options)`, and Client's
+ * constructor re-parses `connectionString` and lets what it finds there replace
+ * what the config said. So a URL ending `?sslmode=require` — which is what
+ * DigitalOcean hands out — silently discards `ssl: { ca, rejectUnauthorized }`
+ * entirely. Measured, because it is invisible from the outside:
+ *
+ *   no sslmode          pool {"rejectUnauthorized":false}  client {"rejectUnauthorized":false}
+ *   ?sslmode=require    pool {"rejectUnauthorized":false}  client {}
+ *
+ * `{}` means verify, with no CA. And pg-connection-string treats `require`,
+ * `prefer` and `verify-ca` as aliases for `verify-full`, so the mode that reads
+ * like "encrypt this" actually means "verify it fully". That is the whole
+ * failure: the CA never reached the driver, verification was forced on without
+ * one, and every handshake was refused as `self-signed certificate in
+ * certificate chain` — a message about the server's chain, for a parameter in
+ * our own URL.
+ *
+ * It also makes the pool's ssl options unmutable in practice: a downgrade
+ * applied to pool.options is re-overridden by the next Client. So the mode is
+ * removed here and the ssl config left as the single source of truth. */
+function stripSslMode(url) {
+  if (!url) return { url: url, stripped: null };
+  const found = url.match(/[?&]sslmode=([^&]*)/i);
+  if (!found) return { url: url, stripped: null };
+  const without = url
+    .replace(/([?&])sslmode=[^&]*&/i, "$1")
+    .replace(/[?&]sslmode=[^&]*$/i, "");
+  return { url: without, stripped: found[1] };
+}
+
 const RESOLVED = resolveDatabaseUrl();
+const STRIPPED = stripSslMode(RESOLVED.url);
+if (STRIPPED.stripped) {
+  console.log("db: removed sslmode=" + STRIPPED.stripped +
+    " from the connection string; TLS is decided by resolveSsl() instead.");
+}
 if (RESOLVED.key && RESOLVED.key !== "DATABASE_URL") {
   console.warn("db: DATABASE_URL is unusable — connecting with " + RESOLVED.key + " instead.");
 }
 
 const pool = new Pool({
   /* undefined, not "", so a local development run still falls back to the
-     PG* environment variables the way psql does. */
-  connectionString: RESOLVED.url || undefined,
+     PG* environment variables the way psql does. sslmode is removed first —
+     see stripSslMode: left in, it overrules everything below, per connection. */
+  connectionString: STRIPPED.url || undefined,
   ssl: resolveSsl(),
   max: Number(process.env.PG_POOL_MAX || 10),
   idleTimeoutMillis: 30000,
@@ -276,4 +314,5 @@ async function asService(fn) {
 }
 
 module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl,
-                   usableCa, getTlsNote, downgradeTlsAfter, isCertificateError, tlsState };
+                   usableCa, getTlsNote, downgradeTlsAfter, isCertificateError, tlsState,
+                   stripSslMode };

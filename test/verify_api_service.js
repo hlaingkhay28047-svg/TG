@@ -501,6 +501,42 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     dbModule.tlsState() === "verified", dbModule.tlsState());
   dbModule.pool.options.ssl = savedSsl;
 
+  /* ---- the check that was missing, and why ----
+     Asserting on pool.options.ssl passes while the driver ignores it. pg builds
+     every connection with `new Client(pool.options)`, and Client re-parses
+     connectionString and lets sslmode there REPLACE the ssl config. So a URL
+     ending `?sslmode=require` — what DigitalOcean hands out — discards
+     { ca, rejectUnauthorized } silently, and pg-connection-string treats
+     `require` as an alias for `verify-full`: the mode that reads like "encrypt
+     this" means "verify it fully". The CA never reached the driver, so every
+     handshake failed on the server's chain, for a parameter in our own URL.
+     These assert what a CLIENT receives, which is the only thing that matters. */
+  const clientSsl = url => {
+    const throwaway = new dbModule.pool.constructor(
+      { connectionString: url, ssl: { rejectUnauthorized: false } });
+    const effective = new throwaway.Client(throwaway.options).connectionParameters.ssl;
+    throwaway.end().catch(() => {});
+    return effective;
+  };
+  const WITH_MODE = "postgres://u:p@h:5432/d?sslmode=require";
+
+  report("U1) sslmode is removed from the connection string, wherever it sits",
+    dbModule.stripSslMode(WITH_MODE).url === "postgres://u:p@h:5432/d" &&
+    dbModule.stripSslMode("postgres://u:p@h:5432/d?sslmode=verify-full&pool=x").url ===
+      "postgres://u:p@h:5432/d?pool=x" &&
+    dbModule.stripSslMode("postgres://u:p@h:5432/d?a=1&sslmode=require").url ===
+      "postgres://u:p@h:5432/d?a=1");
+  report("U2) a URL that never had one is left alone",
+    dbModule.stripSslMode("postgres://u:p@h:5432/d").url === "postgres://u:p@h:5432/d" &&
+    dbModule.stripSslMode("postgres://u:p@h:5432/d").stripped === null);
+
+  const kept = clientSsl(WITH_MODE);
+  report("U3) left in, sslmode makes the DRIVER discard our ssl config — this is the bug",
+    !!kept && kept.rejectUnauthorized === undefined, kept);
+  const stripped = clientSsl(dbModule.stripSslMode(WITH_MODE).url);
+  report("U4) stripped, the driver keeps it — which is what makes the CA and the downgrade real",
+    !!stripped && stripped.rejectUnauthorized === false, stripped);
+
   /* ============ a database that was not ready yet ============
      A DigitalOcean development database is created WITH the app and takes
      minutes to provision. One attempt was all there was, so a container that
