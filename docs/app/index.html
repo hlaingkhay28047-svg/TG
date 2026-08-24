@@ -2128,7 +2128,7 @@ body.wall #wallRetry.on{display:block}
                price_device_step lets accDeviceTierPrice() compute a price. -->
           <div class="acc-plan-line" id="payDeviceWrap" style="display:none;margin-top:8px">
             <label id="payDeviceH" for="payDeviceCount"></label>
-            <select class="input" id="payDeviceCount" style="width:auto;display:inline-block;margin-left:8px"></select>
+            <select class="inp" id="payDeviceCount" style="width:auto;max-width:100%;min-height:44px;display:inline-block;margin-inline-start:8px"></select>
           </div>
 
           <!-- v5.34 — the amount due, stated plainly. Before this the buy panel
@@ -19916,6 +19916,7 @@ function accSignOutLocal(reason){
      user-visible half was not. */
   if (!acc.sess) return;
   acc.sess = null; acc.profile = null; acc.devices = []; acc.requests = []; acc.pending = null;
+  accPayDeviceCount = 1;
   accLSDel(ACC_LS_SESS); accLSDel(ACC_LS_PROF);
   try { localStorage.removeItem(WALL_LS_SINCE); } catch(e){}   /* v5.30 */
   /* ACC_LS_DEV survives on purpose — logging out then back in on the same
@@ -20499,7 +20500,16 @@ function accKindAllowed(kind){
      service could not be reached. */
   if (accProfileUnknown()) return false;
   if (kind === "join_first") return accJoinFeeSet() && !accJoined();
-  if (kind === "extra_device") return true;   /* a device slot is orthogonal */
+  if (kind === "extra_device"){
+    /* A project with no joining fee keeps the legacy flat add-on flow exactly
+       as shipped. Once a joining fee or device tiers opt into a base bundle,
+       that bundle must be settled before an add-on; tiers also stop at the
+       same cap as the bundle picker. */
+    if (!accDeviceTierSet()) return accJoined() || !accJoinFeeSet();
+    if (!accJoined()) return false;
+    var devices = Number(acc.profile.allowed_devices);
+    return isFinite(devices) && devices >= 1 && devices < ACC_DEVICE_COUNT_MAX;
+  }
   /* the renewals are hidden only while a joining fee is genuinely owed */
   return accJoined() || !accJoinFeeSet();
 }
@@ -20531,6 +20541,13 @@ function accDeviceTierPrice(count){
   return p5 + step * (n - 5);
 }
 var ACC_DEVICE_COUNT_MAX = 10;
+function accTierChoiceValid(kind, count){
+  if (kind !== "join_first" || !accDeviceTierSet()) return true;
+  var n = Number(count);
+  var price = accDeviceTierPrice(n);
+  return isFinite(n) && n === Math.floor(n) && n >= 1 &&
+         n <= ACC_DEVICE_COUNT_MAX && price !== null && isFinite(price) && price > 0;
+}
 /* one source for "what is due for this chip" — the buy screen, the amount
    mismatch warning and the submit-time check all called accPriceN(
    accKindPriceKey(...)) separately before this, which is exactly the shape
@@ -20667,6 +20684,7 @@ function accPayValidate(){
   /* accKindAllowed, not merely "a kind is set": accPayKind is initialised to
      plan_1m and survives a render in which no chip was offered at all. */
   var ok = !!accPayKind && accKindAllowed(accPayKind) &&
+           accTierChoiceValid(accPayKind, accPayDeviceCount) &&
            accTxnOk() && accAmtOk() && !!accPayBlob && !!acc.settings && !!acc.sess;
   var b = $("btnPaySubmit"); if (b) b.disabled = !ok;
   /* INLINE, never setSt(). accPayValidate() runs from accRenderPay(), which
@@ -20729,6 +20747,9 @@ async function accSubmitPayment(){
      any of the four SKUs from any authenticated user, so "which one may I buy
      right now" is decided here or nowhere. */
   if (!accKindAllowed(accPayKind)){ setSt("stPay", t("acc_unreachable"), "err"); return; }
+  if (!accTierChoiceValid(accPayKind, accPayDeviceCount)){
+    setSt("stPay", t("pay_price_na"), "err"); return;
+  }
   if (!accTxnOk()){ setSt("stPay", t("pay_txn_bad"), "err"); return; }
   if (!accAmtOk()){ setSt("stPay", t("pay_amt_need"), "err"); $("payAmt").focus(); return; }
   if (!accPayBlob){ setSt("stPay", t("pay_shot_need"), "err"); return; }
@@ -21150,6 +21171,12 @@ function accRenderPay(){
   $("payForm").style.display    = pend ? "none" : "";
   $("payPending").style.display = pend ? "" : "none";
 
+  /* Normalise before chips are priced, not only before the select is painted:
+     one render must never show a blank/stale chip beside a clamped due line. */
+  if (accDeviceTierSet() && !accTierChoiceValid("join_first", accPayDeviceCount)){
+    accPayDeviceCount = 1;
+  }
+
   /* v5.34 — a chip the account cannot buy is not shown at all, rather than
      shown and then rejected. Until the joining fee is settled the only plan
      chip is the joining fee; afterwards it disappears for good. */
@@ -21159,7 +21186,8 @@ function accRenderPay(){
     var ok = accKindAllowed(c[1]);
     b.style.display = ok ? "" : "none";
     if (ok && !firstAllowed) firstAllowed = c[1];
-    var price = accPrice(c[3]);
+    var priceN = accKindDue(c[1]);
+    var price = priceN === null ? "" : accFmtMMK(priceN);
     b.textContent = t(c[2]) + (price ? " · " + price : "");
     b.className = "chip" + (c[1] === accPayKind ? " on" : "");
   });
@@ -21214,11 +21242,11 @@ function accRenderPay(){
   var showDev = accPayKind === "join_first" && accDeviceTierSet();
   if (devWrap) devWrap.style.display = showDev ? "" : "none";
   if (devSel && showDev){
-    if (accPayDeviceCount < 1) accPayDeviceCount = 1;
+    if (!accTierChoiceValid("join_first", accPayDeviceCount)) accPayDeviceCount = 1;
     var optHtml = "";
     for (var dv = 1; dv <= ACC_DEVICE_COUNT_MAX; dv++){
       var dp = accDeviceTierPrice(dv);
-      if (dp === null) continue;
+      if (!accTierChoiceValid("join_first", dv)) continue;
       optHtml += '<option value="' + dv + '"' + (dv === accPayDeviceCount ? " selected" : "") + '>'
                + dv + " · " + accFmtMMK(dp) + "</option>";
     }
@@ -21226,7 +21254,7 @@ function accRenderPay(){
     devSel.value = String(accPayDeviceCount);
     devSel.onchange = function(){
       var n = parseInt(devSel.value, 10);
-      accPayDeviceCount = isFinite(n) && n > 0 ? n : 1;
+      accPayDeviceCount = accTierChoiceValid("join_first", n) ? n : 1;
       accRenderPay();
     };
   }
@@ -21651,16 +21679,26 @@ var ADM_APPROVE = { my:"အတည်ပြု", en:"Approve", shn:"ႁပ်ႉ"
 var ADM_REJECT  = { my:"ပယ်ဖျက်", en:"Reject", shn:"ဢမ်ႇႁပ်ႉ", kac:"N hkap la", th:"ปฏิเสธ", zh:"拒绝", vi:"Từ chối", id:"Tolak", ms:"Tolak" };
 var ADM_NOTE_PH = { my:"မှတ်ချက် (ချန်ထားလို့ရ)", en:"Note (optional)", shn:"မၢႆတွင်း", kac:"Matsing", th:"หมายเหตุ", zh:"备注（可选）", vi:"Ghi chú", id:"Catatan", ms:"Nota" };
 
-var adm = { rows: [], busy: false, proofs: {}, who: {} };   /* who: uid -> profile (v5.34) */
+var adm = { rows: [], busy: false, proofs: {}, who: {}, whoFresh: {}, whoEpoch: 0 };   /* who: uid -> profile (v5.34) */
 
 async function admLoad(){
   if (!acc.sess || !admIsAdmin()) return;
+  /* Invalidate the old count as soon as Reload starts, not after the queue
+     request returns: the old row may remain readable, but never approvable as
+     though its cached renewal total had just been checked. The epoch also
+     prevents a slower earlier profile request from blessing a newer load. */
+  var whoEpoch = ++adm.whoEpoch;
+  adm.whoFresh = {};
+  admRender();
   setSt("stAdm", "");
   try {
     var r = await accFetch("/rest/v1/payment_requests?select=*&order=created_at.desc&limit=100", { method: "GET" });
     if (!r.ok){ setSt("stAdm", t("acc_unreachable"), "err"); return; }
     var rows = await accJson(r);
     adm.rows = Array.isArray(rows) ? rows : [];
+    /* Cached names may remain visible, but no cached device count is allowed
+       to validate a renewal during this load. admLoadWho marks only rows read
+       by this pass as fresh, then renders their exact totals. */
     /* v5.37.0 — AWAITED, and before the render. admDue() opens with
        `var st = acc.settings; if (!st) return null;`, and acc.settings was only
        ever loaded by opening the admin's OWN Buy accordion. So on a fresh
@@ -21690,17 +21728,18 @@ async function admLoad(){
        project, so `select=*,profiles(name,email)` 400s. Fetching after the
        render also means a slow or failed profile read degrades to the old
        behaviour instead of blanking the queue. */
-    admLoadWho();
+    admLoadWho(whoEpoch);
   } catch(e){ setSt("stAdm", friendlyError(e), "err"); }
 }
 
 /* uid -> {name, email, joined_paid, price overrides}. Admins can already read
    every profile: section 3 of the schema is `using (user_id = auth.uid() or
    hnk_is_admin())`. */
-async function admLoadWho(){
+async function admLoadWho(whoEpoch){
+  if (whoEpoch === undefined) whoEpoch = adm.whoEpoch;
   var ids = [];
   (adm.rows || []).forEach(function(r){
-    if (r && r.user_id && !adm.who[r.user_id] && ids.indexOf(r.user_id) < 0) ids.push(r.user_id);
+    if (r && r.user_id && ids.indexOf(r.user_id) < 0) ids.push(r.user_id);
   });
   if (!ids.length) return;
   try {
@@ -21709,9 +21748,28 @@ async function admLoadWho(){
     var r = await accFetch(q, { method: "GET" });
     if (!r.ok) return;
     var rows = await accJson(r);
-    (Array.isArray(rows) ? rows : []).forEach(function(p){ if (p && p.id) adm.who[p.id] = p; });
+    if (whoEpoch !== adm.whoEpoch) return;
+    (Array.isArray(rows) ? rows : []).forEach(function(p){
+      if (p && p.id){ adm.who[p.id] = p; adm.whoFresh[p.id] = true; }
+    });
     admRender();
   } catch(e){ /* the queue still works without names — never break it for this */ }
+}
+
+function admQuotedDue(row){
+  if (!row || row.quoted_amount_mmk === undefined || row.quoted_amount_mmk === null ||
+      row.quoted_amount_mmk === "") return null;
+  var n = Number(row.quoted_amount_mmk);
+  return isFinite(n) && n >= 0 ? n : null;
+}
+
+function admTierRenewalDueUnknown(row){
+  if (!row || row.is_grant || admQuotedDue(row) !== null || !accDeviceTierSet()) return false;
+  if (row.kind !== "plan_1m" && row.kind !== "plan_3m" && row.kind !== "plan_6m") return false;
+  var prof = adm.who[row.user_id];
+  if (!prof || !adm.whoFresh[row.user_id]) return true;
+  var devices = Number(prof.allowed_devices);
+  return !isFinite(devices) || devices <= 0;
 }
 
 /* v5.34 — what this request SHOULD have cost, from the same source the buy
@@ -21719,6 +21777,8 @@ async function admLoadWho(){
    app_settings default. Returns null when the price is unknown, and an unknown
    price must never render as a mismatch. */
 function admDue(row){
+  var quoted = admQuotedDue(row);
+  if (quoted !== null) return quoted;
   var prof = adm.who[row.user_id];
   /* v5.41.0 — a join_first row carries the device count it was filed for, so
      the tiered price the admin checks against is the one that customer's own
@@ -21756,8 +21816,8 @@ function admDue(row){
      device_count is, because a renewal keeps the devices the account already
      owns rather than buying new ones. */
   if (accDeviceTierSet() && (row.kind === "plan_1m" || row.kind === "plan_3m" || row.kind === "plan_6m")){
-    var devices = (prof && prof.allowed_devices) || 0;
-    if (devices > 0) n = n * devices;
+    if (admTierRenewalDueUnknown(row)) return null;
+    n = n * Number(prof.allowed_devices);
   }
   return n;
 }
@@ -21941,6 +22001,7 @@ function admRender(){
        so rather than rendering as zero, and an unknown price says nothing at
        all rather than accusing the customer of underpaying. */
     var due = admDue(row);
+    var tierRenewalUnknown = admTierRenewalDueUnknown(row);
     var sent = (row.amount_mmk === null || row.amount_mmk === undefined) ? null : Number(row.amount_mmk);
     var money = el("div","adm-money");
     if (row.is_grant){
@@ -21980,6 +22041,8 @@ function admRender(){
       li.appendChild(note);
       var act = el("div","adm-act");
       var ok = el("button","btn btn-gold"); setIcnText(ok, "i-check", admL(ADM_APPROVE));
+      ok.disabled = tierRenewalUnknown;
+      if (tierRenewalUnknown) ok.title = t("pay_price_na");
       ok.onclick = function(){ admReview(row, "approved", note.value.trim(), ok); };
       var no = el("button","btn"); setIcnText(no, "i-close", admL(ADM_REJECT));
       no.onclick = function(){ admReview(row, "rejected", note.value.trim(), no); };
@@ -22308,7 +22371,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.42.0";
+var APP_VER="5.42.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

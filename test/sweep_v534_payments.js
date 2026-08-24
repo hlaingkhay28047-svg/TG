@@ -265,9 +265,10 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     joinChip.shown && joinChip.label.indexOf(PRICE.price_join_first.toLocaleString("en-US")) >= 0 &&
     !c.find(x => x.id === "payKind1m").shown &&
     !c.find(x => x.id === "payKind3m").shown &&
-    !c.find(x => x.id === "payKind6m").shown &&
-    c.find(x => x.id === "payKindDev").shown,
+    !c.find(x => x.id === "payKind6m").shown,
     c);
+  report("A0) a never-joined customer cannot buy an extra-device add-on before the base bundle",
+    !c.find(x => x.id === "payKindDev").shown, c);
 
   let due = await page.evaluate(() => (document.getElementById("payDue").textContent || "").trim());
   report("C1) the amount due is quoted from app_settings, not from the code",
@@ -280,7 +281,8 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   report("B) once it is settled, join_first is gone for good and the renewals appear",
     !c.find(x => x.id === "payKindJoin").shown &&
     c.find(x => x.id === "payKind1m").shown &&
-    c.find(x => x.id === "payKind1m").label.indexOf(PRICE.price_1m.toLocaleString("en-US")) >= 0,
+    c.find(x => x.id === "payKind1m").label.indexOf(PRICE.price_1m.toLocaleString("en-US")) >= 0 &&
+    c.find(x => x.id === "payKindDev").shown,
     c);
 
   /* ---------- B2) THE UPGRADE CASE ----------
@@ -300,7 +302,8 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   await login();
   c = await chips();
   report("B2) a customer who paid BEFORE this column existed is never re-charged the joining fee",
-    !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown, c);
+    !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown &&
+    c.find(x => x.id === "payKindDev").shown, c);
 
   /* ---------- A2) an unconfigured joining fee means no joining fee ----------
      price_join_first is a new column. A project that upgrades and sets
@@ -317,7 +320,8 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   report("A2) with no joining fee configured, a new customer sees the ordinary plans and no unpriced chip",
     !c.find(x => x.id === "payKindJoin").shown &&
     c.find(x => x.id === "payKind1m").shown &&
-    c.find(x => x.id === "payKind1m").label.indexOf(PRICE.price_1m.toLocaleString("en-US")) >= 0,
+    c.find(x => x.id === "payKind1m").label.indexOf(PRICE.price_1m.toLocaleString("en-US")) >= 0 &&
+    c.find(x => x.id === "payKindDev").shown,
     c);
 
   /* zero is the same statement as absent — an owner who writes 0 is saying
@@ -327,7 +331,8 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   await login();
   c = await chips();
   report("A3) a joining fee of zero is treated the same as none at all",
-    !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown, c);
+    !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown &&
+    c.find(x => x.id === "payKindDev").shown, c);
 
   /* ---------- A4/A5/A6) device-tiered lifetime pricing (v5.41.0) ----------
      Deliberately NOT the owner's real numbers, deliberately not round, and
@@ -354,19 +359,74 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
 
   await page.selectOption("#payDeviceCount", "3");
   await page.waitForTimeout(150);
-  due = await page.evaluate(() => (document.getElementById("payDue").textContent || "").trim());
+  let tierQuote = await page.evaluate(() => ({
+    chip: (document.getElementById("payKindJoin").textContent || "").trim(),
+    due: (document.getElementById("payDue").textContent || "").trim(),
+  }));
+  due = tierQuote.due;
   report("A6) picking 3 devices quotes price_device_3 — a bundle rate, not price_device_1 × 3",
     due.indexOf(TIERS.price_device_3.toLocaleString("en-US")) >= 0 &&
-    due.indexOf((TIERS.price_device_1 * 3).toLocaleString("en-US")) < 0, { due });
+    due.indexOf((TIERS.price_device_1 * 3).toLocaleString("en-US")) < 0 &&
+    tierQuote.chip.indexOf(TIERS.price_device_3.toLocaleString("en-US")) >= 0, tierQuote);
+
+  /* A configured flat price is normal upgrade state: owners add the tier
+     columns; they do not first erase the old joining fee. The chip and the due
+     line must still quote the SAME tier, never one legacy amount and one tier. */
+  const TIER_UPGRADE = Object.assign({}, PRICE, TIERS);
+  await boot({ login: session, profile: profile(NEVER), settings: [TIER_UPGRADE] });
+  await login();
+  const upgradeOne = await page.evaluate(() => ({
+    chip: (document.getElementById("payKindJoin").textContent || "").trim(),
+    due: (document.getElementById("payDue").textContent || "").trim(),
+  }));
+  await page.selectOption("#payDeviceCount", "3");
+  await page.waitForTimeout(120);
+  const upgradeThree = await page.evaluate(() => ({
+    chip: (document.getElementById("payKindJoin").textContent || "").trim(),
+    due: (document.getElementById("payDue").textContent || "").trim(),
+  }));
+  report("A6b) an upgraded flat+tiers project quotes the selected tier consistently on chip and due",
+    upgradeOne.chip.indexOf(TIERS.price_device_1.toLocaleString("en-US")) >= 0 &&
+    upgradeOne.due.indexOf(TIERS.price_device_1.toLocaleString("en-US")) >= 0 &&
+    upgradeOne.chip.indexOf(PRICE.price_join_first.toLocaleString("en-US")) < 0 &&
+    upgradeThree.chip.indexOf(TIERS.price_device_3.toLocaleString("en-US")) >= 0 &&
+    upgradeThree.due.indexOf(TIERS.price_device_3.toLocaleString("en-US")) >= 0 &&
+    upgradeThree.chip.indexOf(PRICE.price_join_first.toLocaleString("en-US")) < 0,
+    { one: upgradeOne, three: upgradeThree });
 
   /* a renewal bills PER DEVICE once tiers are on — the account already has 4
      devices from a past purchase, so plan_1m's due is price_1m × 4, not the
      flat price_1m every non-tiered project still quotes. */
   await boot({ login: session, profile: profile({ joined_paid: true, allowed_devices: 4 }), settings: [TIERS] });
   await login();
-  due = await page.evaluate(() => (document.getElementById("payDue").textContent || "").trim());
+  const renewalQuote = await page.evaluate(() => ({
+    chip: (document.getElementById("payKind1m").textContent || "").trim(),
+    due: (document.getElementById("payDue").textContent || "").trim(),
+  }));
+  due = renewalQuote.due;
   report("A7) once joined, a renewal is priced per device — price_1m × allowed_devices",
-    due.indexOf((TIERS.price_1m * 4).toLocaleString("en-US")) >= 0, { due });
+    due.indexOf((TIERS.price_1m * 4).toLocaleString("en-US")) >= 0 &&
+    renewalQuote.chip.indexOf((TIERS.price_1m * 4).toLocaleString("en-US")) >= 0 &&
+    renewalQuote.chip.indexOf(TIERS.price_1m.toLocaleString("en-US")) < 0, renewalQuote);
+
+  await boot({ login: session, profile: profile({ joined_paid: true, allowed_devices: 9 }), settings: [TIERS] });
+  await login();
+  const belowCap = (await chips()).find(x => x.id === "payKindDev");
+  await boot({ login: session, profile: profile({ joined_paid: true, allowed_devices: 10 }), settings: [TIERS] });
+  await login();
+  const atCap = await page.evaluate(() => ({
+    chipShown: !!document.getElementById("payKindDev").getClientRects().length,
+    allowed: accKindAllowed("extra_device"),
+    before: accPayKind,
+  }));
+  await page.evaluate(() => accPayPick("extra_device"));
+  atCap.after = await page.evaluate(() => accPayKind);
+  await boot({ login: session, profile: profile({ joined_paid: true, allowed_devices: 10 }), settings: [PRICE] });
+  await login();
+  const flatAtCap = (await chips()).find(x => x.id === "payKindDev");
+  report("A7b) tier mode offers add-ons below the cap and refuses them at the cap, while flat mode keeps its legacy add-on",
+    belowCap.shown && !atCap.chipShown && !atCap.allowed && atCap.after === atCap.before && flatAtCap.shown,
+    { belowCap, atCap, flatAtCap });
 
   /* the picker must not survive into a kind it does not apply to */
   devWrap = await page.evaluate(() => {
@@ -375,6 +435,47 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   });
   report("A8) the device picker is gone once the selected chip is a renewal, not join_first",
     !devWrap, { devWrap });
+
+  /* A settings refresh may remove a tier that was selected moments earlier.
+     Rendering must clamp that stale count, and the final submit guard must
+     still stop a tampered count before either proof upload or request insert. */
+  const PARTIAL_TIERS = { price_device_1: 577000, price_1m: 13000, price_3m: 33000, price_6m: 61000 };
+  await boot({ login: session, profile: profile(NEVER), settings: [PARTIAL_TIERS] });
+  await login();
+  const clamped = await page.evaluate(() => {
+    accPayDeviceCount = 3;
+    accRenderPay();
+    return {
+      count: accPayDeviceCount,
+      value: document.getElementById("payDeviceCount").value,
+      due: (document.getElementById("payDue").textContent || "").trim(),
+    };
+  });
+  await page.fill("#payTxn", "482913");
+  await page.fill("#payAmt", String(PARTIAL_TIERS.price_device_1));
+  const refused = await page.evaluate(async () => {
+    accPayBlob = new Blob(["x"], { type: "image/jpeg" });
+    accPayDeviceCount = 3;                  /* bypass the select, as a stale/tampered caller can */
+    window.__sb.length = 0;
+    accPayValidate();
+    const disabled = document.getElementById("btnPaySubmit").disabled;
+    await accSubmitPayment();
+    return {
+      disabled,
+      uploads: window.__sb.filter(x => x.url.indexOf("/storage/v1/object/") >= 0).length,
+      posts: window.__sb.filter(x => x.url.indexOf("/rest/v1/payment_requests") >= 0 && x.method === "POST").length,
+    };
+  });
+  const reset = await page.evaluate(() => {
+    accPayDeviceCount = 3;
+    accSignOutLocal("quiet");
+    return accPayDeviceCount;
+  });
+  report("A9) render clamps an unavailable tier and submit refuses a stale/tampered tier before upload",
+    clamped.count === 1 && clamped.value === "1" &&
+    clamped.due.indexOf(PARTIAL_TIERS.price_device_1.toLocaleString("en-US")) >= 0 &&
+    refused.disabled && refused.uploads === 0 && refused.posts === 0 && reset === 1,
+    { clamped, refused, reset });
 
   /* ---------- C2) a per-customer price beats the default ---------- */
   await boot({ login: session, profile: profile({ joined_paid: true, price_1m_override: 9000 }), settings: [PRICE] });
@@ -662,6 +763,88 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     list.map(r => r.cls + " " + r.money));
   report("G3) a grant is labelled a grant rather than shown as a 0 MMK payment",
     /grant/.test(list[2].cls) && !/0 MMK/.test(list[2].money), list[2]);
+
+  /* ---------- G6/G7) tier renewal verification is fresh or neutral ----------
+     A cached profile may still be useful for the customer's NAME, but it must
+     never validate today's renewal price until this admLoad has read today's
+     allowed_devices. New server-authored quotes need no profile fallback at
+     all and therefore remain approvable while the name/count read is pending. */
+  const tierAdmin = await page.evaluate(({ other, tiers }) => {
+    const row = { id: "rt", user_id: other, kind: "plan_1m", txn_last6: "444444",
+      amount_mmk: tiers.price_1m * 4, status: "pending", created_at: "2026-08-21T05:00:00Z", is_grant: false };
+    const state = () => {
+      const li = document.querySelector("#admList li");
+      const buttons = li ? li.querySelectorAll(".adm-act button") : [];
+      const money = li && li.querySelector(".adm-money");
+      return {
+        due: admDue(adm.rows[0]),
+        cls: money ? money.className : "",
+        money: money ? money.textContent : "",
+        approveDisabled: !!(buttons[0] && buttons[0].disabled),
+        rejectDisabled: !!(buttons[1] && buttons[1].disabled),
+      };
+    };
+    acc.settings = tiers;
+    adm.rows = [row];
+    adm.who = { [other]: { id: other, name: "Nang Mo", email: "nang@example.com",
+      allowed_devices: 1, price_1m_override: null } };
+    adm.whoFresh = {};
+    admRender();
+    const neutral = state();
+
+    adm.rows = [Object.assign({}, row, { amount_mmk: 1, quoted_amount_mmk: 1624000, pricing_mode: "tier" })];
+    admRender();
+    const quoted = state();
+
+    adm.rows = [row];
+    adm.who[other].allowed_devices = 4;
+    adm.whoFresh[other] = true;
+    admRender();
+    const fresh = state();
+    return { neutral, quoted, fresh };
+  }, { other: OTHER, tiers: TIERS });
+  report("G6) a tier renewal is neutral and unapprovable until its device count is fresh; Reject stays available",
+    tierAdmin.neutral.due === null && !/warn|ok/.test(tierAdmin.neutral.cls) &&
+    tierAdmin.neutral.approveDisabled && !tierAdmin.neutral.rejectDisabled &&
+    tierAdmin.fresh.due === TIERS.price_1m * 4 && /ok/.test(tierAdmin.fresh.cls) &&
+    !tierAdmin.fresh.approveDisabled,
+    tierAdmin);
+  report("G6b) stored claim and authoritative quote stay distinct; an admin may deliberately accept the warned mismatch",
+    tierAdmin.quoted.due === 1624000 && /warn/.test(tierAdmin.quoted.cls) &&
+    tierAdmin.quoted.money.indexOf("1 MMK") >= 0 &&
+    tierAdmin.quoted.money.indexOf("1,624,000 MMK") >= 0 &&
+    tierAdmin.quoted.money.indexOf("1,623,999 MMK") >= 0 &&
+    !tierAdmin.quoted.approveDisabled && !tierAdmin.quoted.rejectDisabled,
+    tierAdmin.quoted);
+
+  const refreshedCounts = await page.evaluate(async ({ other, tiers }) => {
+    const prof = n => ({ id: other, name: "Nang Mo", email: "nang@example.com",
+      allowed_devices: n, price_1m_override: null });
+    const req = (id, n) => ({ id, user_id: other, kind: "plan_1m", txn_last6: "555555",
+      amount_mmk: tiers.price_1m * n, status: "pending", created_at: "2026-08-21T06:00:00Z", is_grant: false });
+    acc.settings = tiers;
+    adm.who = { [other]: prof(1) };             /* deliberately stale cache */
+    adm.whoFresh = { [other]: true };
+    window.__cfg.requests = [req("r4", 4)];
+    window.__cfg.who = [prof(4)];
+    await admLoad();
+    await new Promise(r => setTimeout(r, 100));
+    const first = { count: adm.who[other] && adm.who[other].allowed_devices,
+      fresh: !!adm.whoFresh[other], due: admDue(adm.rows[0]) };
+    window.__cfg.requests = [req("r5", 5)];
+    window.__cfg.who = [prof(5)];
+    await admLoad();
+    await new Promise(r => setTimeout(r, 100));
+    const second = { count: adm.who[other] && adm.who[other].allowed_devices,
+      fresh: !!adm.whoFresh[other], due: admDue(adm.rows[0]) };
+    return { first, second };
+  }, { other: OTHER, tiers: TIERS });
+  report("G7) every admLoad refetches profiles, so a changed device count cannot reuse a stale renewal total",
+    refreshedCounts.first.count === 4 && refreshedCounts.first.fresh &&
+    refreshedCounts.first.due === TIERS.price_1m * 4 &&
+    refreshedCounts.second.count === 5 && refreshedCounts.second.fresh &&
+    refreshedCounts.second.due === TIERS.price_1m * 5,
+    refreshedCounts);
 
   /* ---------- G0) the same queue, on a session that never opened Buy ----------
      The v5.34 amount check lives in admDue(), which opens

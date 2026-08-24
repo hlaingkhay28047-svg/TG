@@ -40,12 +40,16 @@ const readme = read("README.md");
 const landing = read("docs/index.html");
 const robots = read("docs/robots.txt");
 const sitemap = read("docs/sitemap.xml");
+const apiServer = read("server/index.js");
+const productionDeploy = read(".github/workflows/deploy-digitalocean.yml");
+const stagingDeploy = read(".github/workflows/deploy-digitalocean-staging.yml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
-const releaseDate = "2026-08-22";
+const releaseDate = versionJson.released;
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
 const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
 const appVersion = (html.match(/var APP_VER\s*=\s*"([\d.]+)"/) || [])[1] || "";
+const apiVersion = (apiServer.match(/const API_VERSION\s*=\s*"([\d.]+)"/) || [])[1] || "";
 const cacheVersion = (sw.match(/var CACHE\s*=\s*"hnk-web-studio-v(\d+)-(\d+)-(\d+)"/) || []).slice(1).join(".");
 const checkoutSha = (workflow.match(/actions\/checkout@([0-9a-f]{40})/) || [])[1] || "";
 const setupNodeSha = (workflow.match(/actions\/setup-node@([0-9a-f]{40})/) || [])[1] || "";
@@ -133,7 +137,14 @@ try {
 
 check("the app release is at least 5.2.0", versionAtLeast(appVersion, "5.2.0"), appVersion || "missing APP_VER");
 check("APP_VER and version.json stay in lockstep", appVersion === versionJson.v, `${appVersion} vs ${versionJson.v}`);
+check("the API identifies the same patch release as the web app", apiVersion === appVersion, `${apiVersion} vs ${appVersion}`);
 check("the service-worker shell cache follows the app release", cacheVersion === appVersion, `${cacheVersion} vs ${appVersion}`);
+check("both deploy lanes attest API version and the exact applied schema",
+  [productionDeploy, stagingDeploy].every(source =>
+    source.includes("/api/health") && source.includes("sha256sum server/sql/schema.sql") &&
+    source.includes(".apiVersion // empty") && source.includes(".schemaFingerprint // empty") &&
+    source.includes('ACTUAL_TLS" = "verified"')),
+  "production or staging can succeed without runtime schema attestation");
 check("every landing-page web-app badge advertises the shipped release", advertisedWebVersions.length > 0 && advertisedWebVersions.every(version => version === appVersion) && webAppSchema.softwareVersion === appVersion, `${[...new Set(advertisedWebVersions)].join(", ")} vs ${appVersion}`);
 check("the landing page advertises every supported language", languageCodes.length === 37 && languageClaims.length >= 37 && languageClaims.every(value => /\b(?:37|၃၇)\b/.test(value)) && JSON.stringify(webAppSchema.inLanguage) === JSON.stringify(languageCodes), `${languageCodes.length} codes, ${languageClaims.length} claims`);
 check("localized API-key copy describes the actual provider-only data flow", privacyClaims.length === languageCodes.length && privacyClaims.every(hasProviderOnlyFlow), `${privacyClaims.length} localized claims`);
@@ -142,6 +153,7 @@ check("the web app describes the same provider-only API-key flow in every locale
 check("fully translated app locales do not fall back to an English privacy note", appNativePrivacyCodes.every(language => !effectiveAppLocaleValue("key_note", language).includes(englishProviderFlow)), "an English-only notice leaked into localized copy");
 check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
+check("the release date is sourced from version.json", /^\d{4}-\d{2}-\d{2}$/.test(releaseDate || ""), releaseDate || "missing released date");
 /* Inventory copy is DERIVED, never typed. The literal list that used to live
    here pinned "One-Tap 131" and passed for seven waves while the app rendered
    138 — a test can only certify a number it does not itself invent. The app's

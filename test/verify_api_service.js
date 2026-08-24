@@ -23,6 +23,11 @@ const os = require("os");
 const ROOT = path.join(__dirname, "..");
 const DB = "hnk_api_test";
 const PORT = 8977;
+const EXPECTED_API_VERSION = JSON.parse(
+  fs.readFileSync(path.join(ROOT, "docs", "app", "version.json"), "utf8")).v;
+const EXPECTED_SCHEMA_SHA = crypto.createHash("sha256")
+  .update(fs.readFileSync(path.join(ROOT, "server", "sql", "schema.sql")))
+  .digest("hex");
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -98,8 +103,10 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   /* ---- /health: the only window the owner has into a deployment ---- */
   {
     const h = await call("GET", "/health");
-    report("A0) /health on a working database reports ready, with no error to explain",
+    report("A0) /health attests this API version and exact applied schema",
       h.status === 200 && h.json && h.json.schema === 4 && h.json.ready === true &&
+      h.json.apiVersion === EXPECTED_API_VERSION &&
+      h.json.schemaFingerprint === EXPECTED_SCHEMA_SHA &&
       h.json.error === undefined, h.json);
   }
 
@@ -165,30 +172,59 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("J) an admin listing profiles sees every row",
     r.status === 200 && Array.isArray(r.json) && r.json.length === 2, { count: Array.isArray(r.json) ? r.json.length : null });
 
-  await call("POST", "/rest/v1/payment_requests",
+  const adminProfileBatch = "/rest/v1/profiles?select=id,name,email,joined_paid,allowed_devices," +
+    "price_1m_override,price_3m_override,price_6m_override,price_join_first_override" +
+    "&id=in.(" + OWNER + "," + CUST + ")";
+  r = await call("GET", adminProfileBatch, { token: ownerToken });
+  const batchIds = Array.isArray(r.json) ? r.json.map(row => row.id).sort() : [];
+  report("J2) the production API supports the admin UI's bounded profile batch lookup",
+    r.status === 200 && batchIds.join(",") === [CUST, OWNER].sort().join(","),
+    { status: r.status, ids: batchIds });
+  r = await call("GET", adminProfileBatch, { token: custToken });
+  report("J3) an id batch still obeys profile RLS for a customer",
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 1 && r.json[0].id === CUST,
+    { status: r.status, rows: r.json });
+  const tooManyIds = Array(101).fill(CUST).join(",");
+  r = await call("GET", "/rest/v1/profiles?select=id&id=in.(" + tooManyIds + ")", { token: ownerToken });
+  report("J4) an id batch is capped at the admin queue's 100-row maximum",
+    r.status === 400, { status: r.status });
+
+  /* Keep this fixture in the historical flat/no-join-fee mode while giving the
+     quote trigger an authoritative positive SKU price. */
+  psql("update public.app_settings set price_1m=30000", DB);
+  const paymentCreated = await call("POST", "/rest/v1/payment_requests",
     { token: custToken, body: { user_id: CUST, kind: "plan_1m", txn_last6: "123456", amount_mmk: 30000 } });
+  const PAYMENT_ID = psql(`select id from public.payment_requests where user_id='${CUST}'`, DB);
   r = await call("PATCH", "/rest/v1/payment_requests?id=eq." +
-    psql(`select id from public.payment_requests limit 1`, DB),
+    PAYMENT_ID,
     { token: custToken, body: { status: "approved" }, headers: { prefer: "return=representation" } });
-  const stat = psql("select status from public.payment_requests", DB);
+  const stat = psql("select status||'|'||pricing_mode||'|'||quoted_amount_mmk from public.payment_requests", DB);
   report("K) a customer cannot approve their own payment through the API",
-    stat === "pending", { httpStatus: r.status, status: stat });
+    paymentCreated.status === 201 && PAYMENT_ID.length === 36 &&
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 0 &&
+    stat === "pending|flat|30000",
+    { created: paymentCreated.status, httpStatus: r.status, response: r.json, status: stat });
 
   r = await call("POST", "/rest/v1/payment_requests",
-    { token: custToken, body: { user_id: CUST, kind: "plan_6m", status: "approved", reviewed_by: OWNER, note: "ok" } });
-  report("L) a forged already-approved row is refused", r.status >= 400, { status: r.status });
+    { token: custToken, body: { user_id: CUST, kind: "plan_1m", status: "approved", reviewed_by: OWNER, note: "ok" } });
+  const paymentRowsAfterForgery = psql(`select count(*) from public.payment_requests where user_id='${CUST}'`, DB);
+  report("L) a forged already-approved row is refused",
+    r.status >= 400 && paymentRowsAfterForgery === "1",
+    { status: r.status, rows: paymentRowsAfterForgery });
 
   r = await call("GET", "/rest/v1/app_settings?select=*&limit=50");
   report("M) anon may read app_settings (the buy screen quotes prices signed out)",
     r.status === 200 && Array.isArray(r.json), { status: r.status });
 
-  r = await call("PATCH", "/rest/v1/app_settings?price_1m=eq.0", { body: { payment_phone: "09-ATTACKER" } });
+  r = await call("PATCH", "/rest/v1/app_settings?price_1m=eq.30000", { body: { payment_phone: "09-ATTACKER" } });
   const phone = psql("select coalesce(payment_phone,'(null)') from public.app_settings", DB);
-  report("N) anon cannot redirect the payment details", phone === "(null)", { httpStatus: r.status, phone });
+  report("N) anon cannot redirect the payment details",
+    r.status === 403 && phone === "(null)", { httpStatus: r.status, phone });
 
-  r = await call("PATCH", "/rest/v1/app_settings?price_1m=eq.0", { token: custToken, body: { price_1m: 1 } });
+  r = await call("PATCH", "/rest/v1/app_settings?price_1m=eq.30000", { token: custToken, body: { price_1m: 1 } });
   const price = psql("select coalesce(price_1m::text,'(null)') from public.app_settings", DB);
-  report("O) a signed-in customer cannot rewrite prices either", price === "(null)", { httpStatus: r.status, price });
+  report("O) a signed-in customer cannot rewrite prices either",
+    r.status === 403 && price === "30000", { httpStatus: r.status, price });
 
   /* ---- tokens ---- */
   /* A bad token must not authenticate. Whether that surfaces as 403 (the anon
@@ -217,7 +253,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("S) a table outside the allowlist is refused", r.status === 404, { status: r.status });
 
   r = await call("GET", "/rest/v1/profiles?id=gt.0", { token: custToken });
-  report("T) an operator other than eq is refused rather than ignored", r.status === 400, { status: r.status });
+  report("T) an unsupported operator is refused rather than ignored", r.status === 400, { status: r.status });
 
   /* ---- storage ---- */
   const boundary = "----hnk";
@@ -326,7 +362,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   const ALT = "DATABASE_URL_IF_COMPONENT_IS_NAMED_DB";
   const rescued = await healthWith("${hnk-db.DATABASE_URL}", { [ALT]: REAL });
   report("H8) the binding that DID resolve is found and used, not merely reported",
-    !!rescued && rescued.schema === 4 && rescued.ready === true && rescued.error === undefined, rescued);
+    !!rescued && rescued.schema === 4 && rescued.ready === true &&
+    rescued.schemaFingerprint === EXPECTED_SCHEMA_SHA && rescued.error === undefined, rescued);
 
   const ambiguous = await healthWith("${hnk-db.DATABASE_URL}",
     { [ALT]: REAL, DATABASE_URL_THIRD: "postgres://a:b@127.0.0.1:5432/other" });
@@ -343,6 +380,23 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     !!strayed && strayed.ready === false &&
     /unresolved App Platform binding/.test(strayed.error || ""), strayed);
 
+  /* Four table names alone are not proof that this running build applied their
+     current columns, policies and triggers. A skipped migration against the
+     already-populated fixture must therefore remain not-ready. */
+  const skippedBoot = await bootChild(REAL, { SKIP_MIGRATE: "1" });
+  const skipped = skippedBoot.health;
+  let skippedRoute = null;
+  try {
+    const response = await fetch(`http://127.0.0.1:${skippedBoot.port}/rest/v1/app_settings`);
+    skippedRoute = { status: response.status, body: await response.json().catch(() => null) };
+  } catch (err) { skippedRoute = { status: 0, error: err.message }; }
+  skippedBoot.stop();
+  report("H9c) four existing tables without this process applying the tracked schema are not ready",
+    !!skipped && skipped.schema === 4 && skipped.ready === false &&
+    skipped.schemaFingerprint === null && skippedRoute.status === 503 &&
+    skippedRoute.body && skippedRoute.body.error === "schema_incomplete",
+    { health: skipped, route: skippedRoute });
+
   /* ============ a schema that failed PARTWAY through ============
      The other half of the same lesson. A migration that never reached the
      database has applied nothing and is safe to boot from; one that stopped
@@ -358,12 +412,16 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   const PARTIAL = DB + "_partial";
   psql(`drop database if exists ${PARTIAL}`);
   psql(`create database ${PARTIAL}`);
-  psql("create table public.profiles (id int)", PARTIAL);
+  psql("create table public.profiles (id int); " +
+       "create table public.payment_requests (id int); " +
+       "create table public.app_settings (id int); " +
+       "create table public.devices (id int);", PARTIAL);
   const partial = await bootChild(
     `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
     `@${ENV.PGHOST}:${ENV.PGPORT}/${PARTIAL}`);
   report("H10) a half-applied schema still boots, so the reason stays readable",
-    !!partial.health && partial.health.ok === true && partial.health.ready === false &&
+    !!partial.health && partial.health.ok === true && partial.health.schema === 4 &&
+    partial.health.ready === false && partial.health.schemaFingerprint === null &&
     !!partial.health.error, partial.health);
 
   /* Asked through a helper that survives a child which never came up, so a
@@ -568,7 +626,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     } catch (_) { /* mid-restart of nothing; keep looking */ }
   }
   report("H14) ...and applies the schema itself once it appears, with no restart and nobody watching",
-    !!recovered && recovered.schema === 4 && recovered.error === undefined, recovered);
+    !!recovered && recovered.schema === 4 && recovered.schemaFingerprint === EXPECTED_SCHEMA_SHA &&
+    recovered.error === undefined, recovered);
   late.stop();
   psql(`drop database if exists ${LATE}`);
 
@@ -596,7 +655,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     `@${ENV.PGHOST}:${ENV.PGPORT}/${PACKAGED_DB}`,
     {}, path.join(PACKAGED, "server", "index.js"));
   report("H15) server/sql/schema.sql alone — no supabase/ sibling at all — still reaches ready:true",
-    !!packaged.health && packaged.health.ready === true && packaged.health.schema === 4, packaged.health);
+    !!packaged.health && packaged.health.ready === true && packaged.health.schema === 4 &&
+    packaged.health.schemaFingerprint === EXPECTED_SCHEMA_SHA, packaged.health);
   packaged.stop();
   fs.rmSync(PACKAGED, { recursive: true, force: true });
   psql(`drop database if exists ${PACKAGED_DB}`);

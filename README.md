@@ -124,15 +124,16 @@ account.
    idempotent by construction, and `test/verify_schema_behaviour.js` check B
    proves it by applying them three times in a row.
 
-   Read `/api/health` to see whether it worked. It answers in one of three
-   shapes:
+   Read `/api/health` to see whether it worked. It identifies both the running
+   API and the exact schema bytes that this process successfully applied:
 
    ```
-   {"ok":true,"schema":4,"ready":true}          the service and the schema are up
-   {"ok":true,"schema":1,"ready":false,         the schema stopped partway through,
-    "error":"…"}                                 and `error` says where
-   {"ok":true,"schema":null,"ready":false,      could not reach the database at all,
-    "error":"…"}                                 and `error` says why
+   {"ok":true,"apiVersion":"5.42.1","schema":4,
+    "schemaFingerprint":"<64 hex SHA-256>","ready":true,"tls":"verified"}
+   {"ok":true,"apiVersion":"5.42.1","schema":4,
+    "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
+   {"ok":true,"apiVersion":"5.42.1","schema":null,
+    "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
    ```
 
    No phone required: **Actions → Read production health → Run workflow** prints
@@ -144,12 +145,16 @@ account.
    a not-ready reading is worth knowing loudly, but failing the run would not
    make production any readier.
 
-   `schema` counts how many of the four application tables exist, so `4` is the
-   only ready state and `null` means the database was not reachable at all.
-   `error` appears whenever `ready` is false and disappears again the moment the
-   database answers, so it never accuses one that has since come back. It is
+   `schema` counts how many of the four application tables exist; `null` means
+   the database was not reachable. Four table names are necessary but no longer
+   sufficient for `ready:true`: `schemaFingerprint` must also be the SHA-256 of
+   the tracked schema that this running process applied. That prevents an old or
+   skipped migration over four stale tables from looking current. `apiVersion`
+   lets deployment verification require the matching server release. When a
+   diagnostic is available, the optional `error` field explains a not-ready
+   response and disappears again when the database and migration recover. It is
    sanitised first: `/api/health` is public, and a connection failure can carry
-   the connection string.
+   the connection string. `tls` is present in every response.
 
    `ok` describes the *service*, which is why it stays `true` throughout. An
    exiting container makes App Platform roll the deployment back to the previous
@@ -157,12 +162,11 @@ account.
    like it never happened and the cause becomes unreachable. Booting and saying
    so is the only version of this that can be diagnosed from a phone.
 
-   A schema that stopped **partway** is the one case where the service also
-   stops answering: every route except `/health` returns `503
-   schema_incomplete`. Tables may exist there whose row-level security policies
-   never got created, and querying those is worse than answering nothing —
-   whereas a database that was never reached has applied nothing at all, so
-   there is no half-secured schema to protect anyone from.
+   Until this running process has applied the exact tracked schema, every route
+   except `/health` returns `503 schema_incomplete`. That fail-closed rule covers
+   a missing/unreachable database, an explicitly skipped migration, and a schema
+   that stopped partway; none may serve account or payment requests on the
+   strength of stale table names alone.
 
    **It keeps trying.** A development database is created *with* the app and
    takes minutes to provision, so a container that boots first cannot reach it —

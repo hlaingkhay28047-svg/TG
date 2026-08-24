@@ -24,6 +24,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { pool, describeDatabaseUrl, downgradeTlsAfter } = require("./db");
 
 /* platform.sql sits inside server/ and is always there. supabase/schema.sql
@@ -42,13 +43,26 @@ function resolveSchema() {
   return null;
 }
 
+/* This is intentionally process-local. It proves THIS running build read and
+   successfully applied THIS exact schema file; four tables left by an older or
+   half-failed deploy are not equivalent evidence. */
+let appliedSchemaFingerprint = null;
+const getAppliedSchemaFingerprint = () => appliedSchemaFingerprint;
+
 async function migrate() {
+  /* Fail closed while a new attempt is in flight and after every failed or
+     skipped attempt. Only the success path at the bottom may publish a digest. */
+  appliedSchemaFingerprint = null;
   if (process.env.SKIP_MIGRATE === "1") {
     console.log("migrate: skipped (SKIP_MIGRATE=1)");
     return;
   }
   const schema = resolveSchema();
   const files = schema ? [PLATFORM, schema] : [PLATFORM];
+  const schemaBytes = schema ? fs.readFileSync(schema) : null;
+  const expectedFingerprint = schemaBytes
+    ? crypto.createHash("sha256").update(schemaBytes).digest("hex")
+    : null;
   if (!schema) {
     /* NOT fatal, deliberately. A missing file here is a packaging problem, not
        a broken database, and killing the process would leave the owner staring
@@ -58,6 +72,7 @@ async function migrate() {
     console.error("migrate: WARNING — supabase/schema.sql was not found in this build.");
     console.error("migrate: looked in:\n  " + SCHEMA_CANDIDATES.join("\n  "));
     console.error("migrate: platform.sql will still be applied; the application tables will NOT exist.");
+    setLastError("application schema file was not found in this build");
   }
 
   /* Checked before connecting, because pg turns an unresolved binding into
@@ -86,7 +101,9 @@ async function migrate() {
   }
   try {
     for (const file of files) {
-      const sql = fs.readFileSync(file, "utf8");
+      const sql = file === schema && schemaBytes
+        ? schemaBytes.toString("utf8")
+        : fs.readFileSync(file, "utf8");
       const started = Date.now();
       /* Not wrapped in an explicit transaction: each file is individually
          idempotent, so a retry on the next boot converges. */
@@ -102,6 +119,10 @@ async function migrate() {
          real failure and the service must not serve requests with row-level
          security partly missing. */
       throw new Error("schema applied but only " + rows[0].n + " of 4 tables exist");
+    }
+    if (schema && rows[0].n === 4) {
+      appliedSchemaFingerprint = expectedFingerprint;
+      console.log("migrate: schema fingerprint " + expectedFingerprint.slice(0, 12));
     }
   } finally {
     client.release();
@@ -121,4 +142,4 @@ function setLastError(msg) {
 }
 const getLastError = () => lastError;
 
-module.exports = { migrate, setLastError, getLastError };
+module.exports = { migrate, setLastError, getLastError, getAppliedSchemaFingerprint };
