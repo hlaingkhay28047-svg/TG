@@ -28,10 +28,36 @@
 -- with SET LOCAL ROLE inside a transaction, so a leaked database password is
 -- not also a leaked customer session.
 -- ---------------------------------------------------------------------------
-do $$ begin
-  if not exists (select 1 from pg_roles where rolname = 'anon')          then create role anon nologin;          end if;
-  if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
-  if not exists (select 1 from pg_roles where rolname = 'service_role')  then create role service_role nologin;  end if;
+--
+-- CREATING THEM NEEDS A PRIVILEGE THE DATABASE USER MAY NOT HAVE. A managed
+-- PostgreSQL user is often not allowed to CREATE ROLE, and plain `permission
+-- denied to create role` names the statement without naming the remedy — on a
+-- deployment whose only window is /api/health, that is most of the problem. So
+-- the failure is caught and re-raised carrying the exact statements to run,
+-- which is what reaches /health and therefore the person who has to act.
+do $$
+declare
+  missing text[] := '{}';
+  wanted  text;
+begin
+  foreach wanted in array array['anon', 'authenticated', 'service_role'] loop
+    if not exists (select 1 from pg_roles where rolname = wanted) then
+      missing := missing || wanted;
+    end if;
+  end loop;
+  if cardinality(missing) = 0 then return; end if;
+
+  begin
+    foreach wanted in array missing loop
+      execute format('create role %I nologin', wanted);
+    end loop;
+  exception when insufficient_privilege then
+    raise exception
+      'this database user cannot CREATE ROLE. Run once as an admin: %',
+      (select string_agg(format('create role %I nologin;', r), ' ')
+         from unnest(missing) as r)
+      using errcode = 'insufficient_privilege';
+  end;
 end $$;
 
 create schema if not exists auth;

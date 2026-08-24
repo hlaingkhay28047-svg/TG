@@ -269,6 +269,24 @@ account.
    If the component is named neither, re-paste the spec with the right name in
    the binding — App Platform → your app → Settings → App Spec.
 
+   One thing the service cannot do for itself: **create the three database
+   roles**. `platform.sql` needs `anon`, `authenticated` and `service_role`, and
+   a managed PostgreSQL user is often not allowed to `CREATE ROLE`. When that
+   happens `/api/health` says so and names the statements:
+
+   ```
+   this database user cannot CREATE ROLE. Run once as an admin:
+   create role anon nologin; create role authenticated nologin;
+   create role service_role nologin;
+   ```
+
+   Run those once, from any PostgreSQL client, using the database's connection
+   details. It is the only manual step left, and only the roles that are
+   actually missing are named. Everything after it — schemas, tables, policies,
+   triggers — the service applies itself: `verify_schema_behaviour.js` check R2
+   proves that same unprivileged user gets through the whole file once the roles
+   exist.
+
 4. **Make yourself an admin**, the same statement as before — it works because
    the guard trigger steps aside for a caller with no `auth.uid()`:
 

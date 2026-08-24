@@ -251,6 +251,56 @@ report("P2) profiles keeps its own duplicate-address index as defence in depth",
 
 sql('drop database if exists "' + DB + '"');
 
+/* ---- R) the privilege a managed database user may simply not have ----
+   platform.sql creates anon, authenticated and service_role, and a managed
+   PostgreSQL user is often not allowed to CREATE ROLE. Plain `permission denied
+   to create role` names the statement and not the remedy, which on a deployment
+   whose only window is /api/health is most of the problem — so the failure is
+   re-raised carrying the exact statements to run, and that sentence is what
+   reaches /health and therefore the person who has to act.
+
+   Driven for real: a NOCREATEROLE user owning its own database, which is the
+   shape DigitalOcean hands out. */
+const LIMITED_DB = DB + "_limited";
+const LIMITED_USER = "hnk_limited_probe";
+sql('drop database if exists "' + LIMITED_DB + '"');
+sql('drop role if exists ' + LIMITED_USER);
+sql("create role " + LIMITED_USER + " login password 'probe' nocreaterole nosuperuser");
+sql('create database "' + LIMITED_DB + '" owner ' + LIMITED_USER);
+
+/* The three roles have to be absent for the check to mean anything — if they
+   already exist platform.sql returns early and never attempts a CREATE. */
+const dropped = ["anon", "authenticated", "service_role"]
+  .every(r => sql("drop role if exists " + r).ok);
+
+const asLimited = (f, db) => {
+  const out = require("child_process").spawnSync("psql",
+    ["-h", ENV.PGHOST, "-p", ENV.PGPORT, "-U", LIMITED_USER, "-d", db,
+     "-v", "ON_ERROR_STOP=1", "-q", "-f", f],
+    { env: Object.assign({}, ENV, { PGUSER: LIMITED_USER, PGPASSWORD: "probe" }),
+      encoding: "utf8" });
+  return { ok: out.status === 0, out: (out.stdout || "") + (out.stderr || "") };
+};
+
+const denied = dropped ? asLimited(PLATFORM, LIMITED_DB) : { ok: true, out: "roles still in use" };
+report("R) a user that cannot CREATE ROLE is told exactly what to run, not just that it failed",
+  dropped && !denied.ok &&
+  /cannot CREATE ROLE/.test(denied.out) &&
+  /create role anon nologin;/.test(denied.out) &&
+  /create role authenticated nologin;/.test(denied.out) &&
+  /create role service_role nologin;/.test(denied.out),
+  denied.out.split("\n").slice(0, 2));
+
+/* ...and once an admin has run them, that same user applies the rest itself —
+   which is what makes it a single unblocking action rather than a dead end. */
+["anon", "authenticated", "service_role"].forEach(r => sql("create role " + r + " nologin"));
+const afterwards = asLimited(PLATFORM, LIMITED_DB);
+report("R2) ...and with the roles in place it applies the whole file unaided",
+  afterwards.ok, afterwards.out.split("\n").slice(0, 2));
+
+sql('drop database if exists "' + LIMITED_DB + '"');
+sql('drop role if exists ' + LIMITED_USER);
+
 console.log("      (this file proves the schema ENFORCES what it claims, on a database it " +
   "built from nothing — it still cannot prove the owner has applied it to their project)");
 console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
