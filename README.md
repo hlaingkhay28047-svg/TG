@@ -227,7 +227,25 @@ account.
    (escaped newlines restored, a base64-wrapped PEM decoded) and then actually
    parsed.
 
-   Parsing is not the whole answer, because a certificate can be perfectly
+   **The connection string overrules all of this, per connection, unless the
+   mode is removed.** `pg` builds every connection with `new Client(pool.options)`,
+   and `Client` re-parses `connectionString` and lets an `sslmode` there replace
+   the `ssl` config entirely:
+
+   ```
+   no sslmode          pool {"rejectUnauthorized":false}   client {"rejectUnauthorized":false}
+   ?sslmode=require    pool {"rejectUnauthorized":false}   client {}
+   ```
+
+   `{}` means verify, with no CA — and `pg-connection-string` treats `require`,
+   `prefer` and `verify-ca` as aliases for `verify-full`, so the mode that reads
+   like *"encrypt this"* actually means *"verify it fully"*. DigitalOcean's
+   `DATABASE_URL` ends with `?sslmode=require`, so the CA never reached the
+   driver and every handshake failed on the server's chain — for a parameter in
+   our own URL. The mode is therefore stripped from the URL and the `ssl` config
+   left as the single source of truth.
+
+   Parsing is not the whole answer either, because a certificate can be perfectly
    well-formed and simply not this database's CA — which refuses every
    connection forever and looks identical from outside. So verification is
    attempted first and **stood down from only after the handshake has actually
