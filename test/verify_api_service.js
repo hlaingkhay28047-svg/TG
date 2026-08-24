@@ -392,7 +392,16 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      require time, and its config is otherwise unobservable from outside — but
      it IS the function that decides, not a copy of the logic. */
   const { resolveSsl } = require(path.join(ROOT, "server", "lib", "db"));
-  const PEM = "-----BEGIN CERTIFICATE-----\nMIIBfake\n-----END CERTIFICATE-----\n";
+  /* A genuine certificate, generated rather than pasted.
+     The fixture this replaces was the literal string "-----BEGIN
+     CERTIFICATE-----\\nMIIBfake\\n-----END CERTIFICATE-----": it satisfied the
+     old `BEGIN CERTIFICATE` test and parses as nothing, so S2 was asserting
+     that a NON-certificate gets trusted as a CA — the exact defect that took
+     production down, written into the check meant to catch it. */
+  const PEM = execFileSync("openssl",
+    ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", "/dev/null",
+     "-subj", "/CN=verify-api-service", "-days", "1"],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
   const sslWith = env => {
     const saved = {};
     for (const k of Object.keys(env)) { saved[k] = process.env[k]; process.env[k] = env[k]; }
@@ -423,6 +432,40 @@ async function call(method, p, { token, body, headers, raw } = {}) {
 
   report("S4) PGSSLMODE=disable still turns TLS off for a local database",
     sslWith({ PGSSLMODE: "disable", DATABASE_CA_CERT: PEM }) === false);
+
+  /* ---- the one that took production down ----
+     `BEGIN CERTIFICATE` is not the same test as "is a usable CA". A PEM carried
+     through a layer that escaped its newlines contains the phrase and parses as
+     nothing, so pg is handed a trust anchor that anchors nothing and every
+     handshake is refused as `self-signed certificate in certificate chain` — an
+     error naming the server's chain rather than our own broken input. */
+  const dbModule = require(path.join(ROOT, "server", "lib", "db"));
+  const { usableCa } = dbModule;
+  const REAL_PEM = PEM;
+
+  /* Asserts the RESULT parses, not merely that something was returned. An
+     earlier version of these three checked only for non-null and passed with
+     the repair and the parse both removed — certifying that a string which
+     anchors nothing is a usable CA, which is the defect itself. */
+  const parses = value => {
+    if (!value) return false;
+    try { new crypto.X509Certificate(value); return true; } catch (_) { return false; }
+  };
+  report("S5) a real certificate is accepted, and what comes back is a real certificate",
+    parses(usableCa(REAL_PEM)));
+  report("S6) a certificate whose newlines were escaped is REPAIRED into a usable one",
+    parses(usableCa(REAL_PEM.replace(/\n/g, "\\n"))));
+  report("S7) a base64-wrapped certificate is decoded into a usable one",
+    parses(usableCa(Buffer.from(REAL_PEM).toString("base64"))));
+  report("S8) text that merely contains the phrase is NOT a certificate",
+    usableCa("BEGIN CERTIFICATE but not really") === null &&
+    usableCa("${hnk-db.CA_CERT}") === null && usableCa("") === null);
+
+  const unusable = sslWith({ DATABASE_CA_CERT: "-----BEGIN CERTIFICATE-----\nnot base64 at all\n-----END CERTIFICATE-----" });
+  report("S9) an unusable certificate connects UNVERIFIED rather than refusing every connection",
+    !!unusable && unusable.rejectUnauthorized === false && unusable.ca === undefined, unusable);
+  report("S10) ...and that downgrade is recorded so /health can report it",
+    /could not be parsed/.test(dbModule.getTlsNote() || ""), dbModule.getTlsNote());
 
   /* ============ a database that was not ready yet ============
      A DigitalOcean development database is created WITH the app and takes

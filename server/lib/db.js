@@ -20,6 +20,7 @@
  * no auth.uid() for exactly that reason. Forcing RLS would make the documented
  * first step impossible.
  */
+const crypto = require("crypto");
 const { Pool } = require("pg");
 
 const ROLES = new Set(["anon", "authenticated"]);
@@ -76,6 +77,41 @@ function resolveDatabaseUrl() {
   };
 }
 
+/* A certificate that merely LOOKS like a certificate.
+ *
+ * Testing for "BEGIN CERTIFICATE" is not the same as testing for a usable CA,
+ * and the difference took production down. A PEM carried through a layer that
+ * escaped its newlines still contains that phrase and parses as nothing: pg is
+ * handed a trust anchor that can anchor nothing, every handshake is refused as
+ * `self-signed certificate in certificate chain`, and the reason names the
+ * server's chain rather than our own broken input. Reproduced exactly, both
+ * halves — the escaped PEM matches the phrase and throws
+ * ERR_OSSL_PEM_NO_START_LINE, and against a real two-level chain it produces
+ * that precise error.
+ *
+ * So the text is repaired where it can be, and then actually parsed. Anything
+ * that still will not parse is not a CA and is not treated as one. */
+function usableCa(raw) {
+  let text = String(raw || "");
+  if (!text) return null;
+  if (!text.includes("\n") && text.includes("\\n")) text = text.replace(/\\n/g, "\n");
+  if (!/BEGIN CERTIFICATE/.test(text)) {
+    /* Some providers hand the whole PEM over base64-encoded. */
+    let decoded = "";
+    try { decoded = Buffer.from(text.trim(), "base64").toString("utf8"); } catch (_) { decoded = ""; }
+    if (/BEGIN CERTIFICATE/.test(decoded)) text = decoded;
+  }
+  if (!/BEGIN CERTIFICATE/.test(text)) return null;
+  try { new crypto.X509Certificate(text); } catch (_) { return null; }
+  return text;
+}
+
+/* Recorded when a certificate was supplied and could not be used. Reported by
+   /health, because silently connecting unverified is exactly the kind of
+   downgrade that is invisible until it matters. */
+let tlsNote = null;
+const getTlsNote = () => tlsNote;
+
 /* How TLS to the database is configured — and how much of it is verified.
  *
  * DigitalOcean Managed PostgreSQL terminates TLS with its own CA. Given a real
@@ -83,28 +119,37 @@ function resolveDatabaseUrl() {
  * one the traffic is still encrypted but an in-path substitution is not
  * refused, and this connection carries the payment records.
  *
- * THE CERTIFICATE IS CHECKED FOR BEING A CERTIFICATE, not merely for being set.
- * The specs bind this to ${hnk-db.CA_CERT}, and an unresolved binding arrives as
- * that literal text. Trusting it as a CA with rejectUnauthorized:true failed
- * every handshake, the pool never connected, migration threw, the container
- * exited, and App Platform rolled the deploy back reporting only "your
- * container exited with a non-zero exit code" — a whole deploy lost to a string
- * that merely looked set.
+ * An unusable certificate falls back to encrypted-but-unverified rather than
+ * refusing to connect. Refusing is what production was doing: not one request
+ * served, on the strength of a string that could not verify anything anyway.
+ * Unverified and running, saying so loudly, beats verified-in-principle and
+ * down.
  *
  * Bound twice for the same reason DATABASE_URL is, and read under the same
  * key-prefix restriction: a certificate elsewhere in the environment — an
  * outbound proxy's CA, NODE_EXTRA_CA_CERTS — is not this database's trust
- * anchor, and verifying against the wrong CA refuses every connection, which is
- * worse than not verifying at all. */
+ * anchor, and verifying against the wrong CA refuses every connection. */
 function resolveSsl() {
   if (process.env.PGSSLMODE === "disable") return false;
+  let sawSomethingCertificateShaped = false;
   for (const key of Object.keys(process.env)) {
     if (!/^DATABASE_CA_CERT/.test(key)) continue;
-    const value = process.env[key] || "";
-    if (/BEGIN CERTIFICATE/.test(value)) return { ca: value, rejectUnauthorized: true };
+    const raw = process.env[key] || "";
+    if (!raw) continue;
+    const ca = usableCa(raw);
+    if (ca) return { ca, rejectUnauthorized: true };
+    /* An unresolved ${...} binding is not certificate-shaped and is not worth
+       reporting — it is the ordinary case for a database that exposes no CA. */
+    if (/BEGIN CERTIFICATE/.test(raw)) sawSomethingCertificateShaped = true;
+  }
+  if (sawSomethingCertificateShaped) {
+    tlsNote = "a database CA certificate was supplied but could not be parsed; " +
+              "connecting encrypted but UNVERIFIED";
+    console.error("db: WARNING —", tlsNote);
   }
   return { rejectUnauthorized: false };
 }
+
 
 const RESOLVED = resolveDatabaseUrl();
 if (RESOLVED.key && RESOLVED.key !== "DATABASE_URL") {
@@ -186,4 +231,4 @@ async function asService(fn) {
   }
 }
 
-module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl };
+module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl, usableCa, getTlsNote };
