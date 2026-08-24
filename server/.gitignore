@@ -1,6 +1,12 @@
 node_modules/
 
-# copied in by `npm run build` when the repository root is present.
-# A committed copy would drift from supabase/schema.sql, which is the point of
-# copying it rather than duplicating it.
-sql/schema.sql
+# sql/schema.sql WAS ignored here, on the theory that `npm run build`'s
+# `cp ../supabase/schema.sql` would keep it current and a committed copy would
+# only drift. It shipped nothing: hnk-api's App Platform component builds from
+# source_dir /server, which does not include the sibling supabase/ directory
+# the cp reaches for, so the copy silently never happened in production. The
+# gap stayed invisible for as long as platform.sql kept failing first — the
+# moment it stopped, /health settled on schema:0 with no error, migrate()
+# having found no schema.sql at all. It is now a tracked file for exactly that
+# reason, and test/verify_release_contract.js asserts it stays byte-identical
+# to supabase/schema.sql instead of a comment asking nicely.
