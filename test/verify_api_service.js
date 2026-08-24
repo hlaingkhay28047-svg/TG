@@ -17,6 +17,8 @@
 const { execFileSync, spawn } = require("child_process");
 const path = require("path");
 const crypto = require("crypto");
+const fs = require("fs");
+const os = require("os");
 
 const ROOT = path.join(__dirname, "..");
 const DB = "hnk_api_test";
@@ -274,10 +276,10 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      Each starts the real server with a broken DATABASE_URL and is asked the
      same question the owner asks from a phone: what is wrong? */
   let childPort = PORT;
-  async function bootChild(url, extraEnv) {
+  async function bootChild(url, extraEnv, scriptPath) {
     childPort++;
     const port = childPort;
-    const child = spawn(process.execPath, [path.join(ROOT, "server", "index.js")], {
+    const child = spawn(process.execPath, [scriptPath || path.join(ROOT, "server", "index.js")], {
       env: Object.assign({}, process.env,
         { DATABASE_URL: url, PGSSLMODE: "disable", PORT: String(port) }, extraEnv || {}),
       stdio: "ignore",
@@ -569,6 +571,35 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     !!recovered && recovered.schema === 4 && recovered.error === undefined, recovered);
   late.stop();
   psql(`drop database if exists ${LATE}`);
+
+  /* H15) the packaging assumption none of H1-H14 could catch, because every
+     one of them boots the real checkout, where supabase/schema.sql is always
+     right there next to server/. hnk-api's App Platform component builds from
+     source_dir /server — a sibling directory outside it is not part of what
+     the build sees — and that gap stayed invisible for as long as platform.sql
+     itself kept failing first. The moment it stopped failing, production
+     proved the gap for real: /health settled on schema:0 with NO error, which
+     is what migrate() completing looks like when resolveSchema() found
+     nothing at all, not what it looks like when a found file fails to apply.
+
+     Copy /server into an isolated directory with no supabase/ sibling — the
+     shape DigitalOcean's build actually produces — and boot node against THAT
+     copy. The tracked server/sql/schema.sql fallback is what has to carry it,
+     or this proves nothing. */
+  const PACKAGED = fs.mkdtempSync(path.join(os.tmpdir(), "hnk-packaged-"));
+  fs.cpSync(path.join(ROOT, "server"), path.join(PACKAGED, "server"), { recursive: true });
+  const PACKAGED_DB = DB + "_packaged";
+  psql(`drop database if exists ${PACKAGED_DB}`);
+  psql(`create database ${PACKAGED_DB}`);
+  const packaged = await bootChild(
+    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
+    `@${ENV.PGHOST}:${ENV.PGPORT}/${PACKAGED_DB}`,
+    {}, path.join(PACKAGED, "server", "index.js"));
+  report("H15) server/sql/schema.sql alone — no supabase/ sibling at all — still reaches ready:true",
+    !!packaged.health && packaged.health.ready === true && packaged.health.schema === 4, packaged.health);
+  packaged.stop();
+  fs.rmSync(PACKAGED, { recursive: true, force: true });
+  psql(`drop database if exists ${PACKAGED_DB}`);
 
   server.close();
   await require(path.join(ROOT, "server", "lib", "db")).pool.end();

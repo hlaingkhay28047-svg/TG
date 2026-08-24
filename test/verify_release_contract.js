@@ -319,6 +319,26 @@ check("the production spec uses authenticated GitHub autodeploy", /github:\s*[\s
 check("the public one-click template remains a direct public-git source", /git:\s*[\s\S]*?branch:\s*main[\s\S]*?repo_clone_url:\s*https:\/\/github\.com\/hlaingkhay28047-svg\/TG\.git/.test(deployTemplate) && !/deploy_on_push:/.test(deployTemplate), "one-click source contract drifted");
 check("deployment docs explain the one-click/manual-deploy boundary", /one-click[\s\S]*manual(?:ly)? deploy/i.test(readme) && /authenticated GitHub/i.test(readme), "README lacks the production migration note");
 
+/* server/sql/schema.sql — the packaging half of the schema, not the writing
+   half. hnk-api's App Platform component builds from source_dir /server, and
+   a source_dir scopes the build to that subtree — a sibling directory outside
+   it (supabase/) is not part of what the buildpack sees. migrate.js already
+   falls back to server/sql/schema.sql for exactly this reason, and
+   package.json's build step tries to populate it with a plain
+   `cp ../supabase/schema.sql`, relying on the full repo having been checked
+   out into the build context — which production proved false: once
+   platform.sql started succeeding, /health settled on schema:0 with NO error,
+   the signature of migrate() completing having found no schema file at all,
+   not of one failing to apply.
+
+   The fix is not a smarter cp — it is not depending on one. server/sql/schema.sql
+   ships as a tracked file so it travels with /server regardless of what the
+   build step's relative path resolves to, and this check is what stops that
+   copy silently drifting from the file every other test here exercises. */
+check("server/sql/schema.sql is a byte-identical tracked copy of supabase/schema.sql",
+  read("server/sql/schema.sql") === read("supabase/schema.sql"),
+  "the packaged fallback migrate.js falls back to has drifted from the source");
+
 if (failures.length) {
   console.error(`\nFAIL — ${failures.length} release contract check(s) failed`);
   process.exit(1);
