@@ -119,14 +119,16 @@ const NEW = Object.keys(SCRIPTS);
        half-translated language this whole file exists to prevent — a green
        assertion that lies is worse than a red one that is true.
 
-   So the twenty entries are named here, and A2 below proves the app degrades
-   correctly for exactly them: LANG_FB routes tdd and khb to Shan, so a
-   customer sees real Shan rather than a raw key. That is what the app already
-   does for any missing key; the difference is that it is now measured.
+   So the entries are named here (twenty-four as of v5.41.0 — see the
+   v5.36.0 and v5.41.0 notes below for what was added since), and A2 below
+   proves the app degrades correctly for exactly them: LANG_FB routes tdd
+   and khb to Shan, so a customer sees real Shan rather than a raw key.
+   That is what the app already does for any missing key; the difference
+   is that it is now measured.
 
-   TO CLOSE THIS: a Tai Le / Tai Lue reader translates the ten keys, they go in
-   the packs, and this registry is deleted. Anything else missing from any pack
-   still fails A, because the registry is matched exactly. */
+   TO CLOSE THIS: a Tai Le / Tai Lue reader translates the twelve keys, they
+   go in the packs, and this registry is deleted. Anything else missing from
+   any pack still fails A, because the registry is matched exactly. */
   /* v5.36.0 adds pay_both to the registry. Khamti (kht) is NOT here and never
      was: it is a strict per-character transliteration of Shan -- 222 shipped
      pairs, every one the same length, zero ambiguous characters -- so its
@@ -135,12 +137,18 @@ const NEW = Object.keys(SCRIPTS);
      scripts; only 2% of their strings are even the same length as the Shan,
      which is why they were registered rather than guessed, and why pay_both
      joins them. LANG_FB sends both to Shan and A2 below proves what a reader
-     actually sees is real Shan, not a raw key. */
+     actually sees is real Shan, not a raw key.
+
+     v5.41.0 adds pay_devices_h the same way: kht got a real value derived
+     from the 318-pair shn->kht per-character map (zero conflicts, so the
+     map is a function), same as every other kht string. tdd and khb still
+     have no mechanical route and no reader on hand, so pay_devices_h joins
+     them here rather than getting a guessed translation. */
   const PENDING = {
     tdd: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
-          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both"],
+          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both","pay_devices_h"],
     khb: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
-          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both"],
+          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both","pay_devices_h"],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {
@@ -151,7 +159,7 @@ const NEW = Object.keys(SCRIPTS);
   const overRegistered = Object.keys(PENDING).filter(l =>
     PENDING[l].some(k => (data.missingByLang[l] || []).indexOf(k) < 0));
 
-  report("A) every language in TR_L carries the full key set, apart from the twenty entries registered above",
+  report("A) every language in TR_L carries the full key set, apart from the twenty-four entries registered above",
     data.fullCount >= 318 && Object.keys(unregistered).length === 0 && overRegistered.length === 0,
     { fullKeySet: data.fullCount, unregistered,
       staleRegistry: overRegistered.length ? overRegistered + " no longer missing — delete them from PENDING" : "" });
