@@ -60,9 +60,38 @@ begin
   end;
 end $$;
 
-create schema if not exists auth;
-create schema if not exists storage;
-grant usage on schema public, auth, storage to anon, authenticated, service_role;
+-- CREATING SCHEMAS NEEDS A PRIVILEGE THE DATABASE USER MAY NOT HAVE EITHER. A
+-- freshly provisioned managed-database user is CONNECT-only by default — CREATE
+-- on the database, which governs CREATE SCHEMA, belongs to the owner alone
+-- until an admin grants it. Same shape as the role bootstrap above: caught and
+-- re-raised naming the exact remedy, with the database and the connecting role
+-- read from the connection itself rather than guessed, since a hand-typed
+-- identifier that is even slightly wrong is a second round trip to find out.
+do $$
+begin
+  create schema if not exists auth;
+  create schema if not exists storage;
+exception when insufficient_privilege then
+  raise exception
+    'this database user cannot CREATE SCHEMA. Run once as an admin: %',
+    format('grant create on database %I to %I;', current_database(), current_user)
+    using errcode = 'insufficient_privilege';
+end $$;
+
+-- The schemas can exist (created above, or already present) while this user
+-- still lacks the grant option on "public" needed to hand USAGE to anon,
+-- authenticated and service_role — a distinct privilege from CREATE on the
+-- database, and one a fresh managed-database user is equally unlikely to hold
+-- by default. Caught the same way, naming its own remedy.
+do $$
+begin
+  grant usage on schema public, auth, storage to anon, authenticated, service_role;
+exception when insufficient_privilege then
+  raise exception
+    'this database user cannot GRANT usage on schema "public". Run once as an admin: %',
+    format('grant usage, create on schema public to %I with grant option;', current_user)
+    using errcode = 'insufficient_privilege';
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- 2. auth.users — the identity table profiles.id references

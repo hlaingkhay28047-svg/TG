@@ -299,6 +299,36 @@ report("R2) ...and with the roles in place it applies the whole file unaided",
   afterwards.ok, afterwards.out.split("\n").slice(0, 2));
 
 sql('drop database if exists "' + LIMITED_DB + '"');
+
+/* ---- R3) the OTHER privilege a managed database user may not have ----
+   Role creation is not the only gap. CREATE SCHEMA needs CREATE on the
+   DATABASE itself, which belongs to the owner alone by default — and R/R2's
+   probe cannot tell that apart from the role gap, because it OWNS the database
+   it is tested against, which grants CREATE along with everything else. That
+   is not the shape a converted Managed Database cluster hands an app user: the
+   database is created by the admin, the app user only gets CONNECT. Same
+   catch-and-re-raise shape, proven against that shape specifically. */
+const LIMITED_DB2 = DB + "_limited2";
+sql('drop database if exists "' + LIMITED_DB2 + '"');
+sql('create database "' + LIMITED_DB2 + '"');                          // owned by ENV.PGUSER, not the probe
+sql('grant connect on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER);
+
+const deniedSchema = asLimited(PLATFORM, LIMITED_DB2);
+report("R3) a user that cannot CREATE SCHEMA is told exactly what to run, not just that it failed",
+  !deniedSchema.ok &&
+  /cannot CREATE SCHEMA/.test(deniedSchema.out) &&
+  new RegExp("grant create on database " + LIMITED_DB2 + " to " + LIMITED_USER + ";").test(deniedSchema.out),
+  deniedSchema.out.split("\n").slice(0, 2));
+
+/* ...and once an admin has run that one grant, the same user applies the rest
+   of the file unaided — the database-privilege gap is a single unblocking
+   action too, not a dead end. */
+sql('grant create on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER);
+const afterSchemaGrant = asLimited(PLATFORM, LIMITED_DB2);
+report("R4) ...and with CREATE on the database granted it applies the whole file unaided",
+  afterSchemaGrant.ok, afterSchemaGrant.out.split("\n").slice(0, 2));
+
+sql('drop database if exists "' + LIMITED_DB2 + '"');
 sql('drop role if exists ' + LIMITED_USER);
 
 console.log("      (this file proves the schema ENFORCES what it claims, on a database it " +
