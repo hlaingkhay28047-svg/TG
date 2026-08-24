@@ -168,6 +168,50 @@ const pool = new Pool({
 
 pool.on("error", err => { console.error("pg pool error:", err.message); });
 
+/* Failures that mean THE CERTIFICATE REFUSED, as distinct from the database
+   being unreachable. The two need opposite responses: one is worth retrying
+   unchanged, the other will fail identically forever. */
+const CERT_ERROR_CODES = new Set([
+  "SELF_SIGNED_CERT_IN_CHAIN", "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT",
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "CERT_HAS_EXPIRED",
+  "CERT_NOT_YET_VALID", "ERR_TLS_CERT_ALTNAME_INVALID",
+]);
+const isCertificateError = err =>
+  !!err && (CERT_ERROR_CODES.has(err.code) || /certificate/i.test(String(err.message || "")));
+
+/* Give up on VERIFYING, not on connecting.
+ *
+ * Parsing catches a certificate that is malformed. It cannot catch one that is
+ * perfectly well-formed and simply not this database's CA — that failure looks
+ * identical from the outside and refuses every connection forever. So
+ * verification is attempted first and abandoned only after it has actually
+ * failed, which is the only moment the difference is observable.
+ *
+ * The traffic stays encrypted either way. The alternative on offer was never a
+ * safer connection, it was no product: production served zero requests for
+ * hours on the strength of a certificate that could not verify anything. pg
+ * reads pool.options.ssl per connection, so the next attempt picks this up. */
+function downgradeTlsAfter(err) {
+  if (!isCertificateError(err)) return false;
+  if (!pool.options.ssl || pool.options.ssl.rejectUnauthorized === false) return false;
+  pool.options.ssl = { rejectUnauthorized: false };
+  tlsNote = "the database certificate did not verify (" + (err.code || "certificate error") +
+            "); reconnected encrypted but UNVERIFIED";
+  console.error("db: WARNING —", tlsNote);
+  return true;
+}
+
+/* What /health reports, in every case rather than only the bad ones. Reported
+   always because "verified" is the claim worth being able to check, and a
+   field that appears only when something is wrong cannot distinguish a healthy
+   deployment from an old build that never had the field. */
+function tlsState() {
+  if (pool.options.ssl === false) return "off (PGSSLMODE=disable)";
+  if (pool.options.ssl && pool.options.ssl.rejectUnauthorized) return "verified";
+  return tlsNote ? "unverified — " + tlsNote : "unverified (no CA certificate supplied)";
+}
+
 /* Why the database cannot be reached for a reason /health can state plainly,
    or null when the configuration is fine. */
 const describeDatabaseUrl = () => RESOLVED.why;
@@ -231,4 +275,5 @@ async function asService(fn) {
   }
 }
 
-module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl, usableCa, getTlsNote };
+module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl,
+                   usableCa, getTlsNote, downgradeTlsAfter, isCertificateError, tlsState };

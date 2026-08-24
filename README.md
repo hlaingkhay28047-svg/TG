@@ -225,10 +225,28 @@ account.
    — an error naming the *server's* chain, with nothing to suggest the fault was
    in our own input. The certificate text is now repaired where it can be
    (escaped newlines restored, a base64-wrapped PEM decoded) and then actually
-   parsed. Anything that still will not parse is not treated as a CA: the
-   service connects encrypted-but-unverified and `/api/health` reports a `tls`
-   field saying so, rather than refusing to serve a single request on the
-   strength of a string that could never have verified anything.
+   parsed.
+
+   Parsing is not the whole answer, because a certificate can be perfectly
+   well-formed and simply not this database's CA — which refuses every
+   connection forever and looks identical from outside. So verification is
+   attempted first and **stood down from only after the handshake has actually
+   failed**, which is the one moment the difference is observable. Either way
+   the traffic stays encrypted; the alternative was never a safer connection,
+   it was no product.
+
+   `/api/health` reports a `tls` field in **every** case, not only the bad ones:
+
+   ```
+   "tls":"verified"                                  the database is authenticated
+   "tls":"unverified (no CA certificate supplied)"   encrypted only
+   "tls":"unverified — …did not verify (CODE)…"      a CA was supplied and refused
+   "tls":"off (PGSSLMODE=disable)"                   local development
+   ```
+
+   Always, because "verified" is the claim worth being able to check, and a
+   field that appears only when something is wrong cannot tell a healthy
+   deployment from an old build that never had the field.
 
    If the component is named neither, re-paste the spec with the right name in
    the binding — App Platform → your app → Settings → App Spec.

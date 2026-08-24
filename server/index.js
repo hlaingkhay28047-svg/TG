@@ -133,8 +133,7 @@ const server = http.createServer(async (req, res) => {
          UNVERIFIED because its certificate could not be parsed is precisely the
          kind of downgrade that is invisible until it matters, and `ready:true`
          is exactly when nobody would think to look. */
-      const tls = require("./lib/db").getTlsNote();
-      if (tls) body.tls = tls;
+      body.tls = require("./lib/db").tlsState();
       /* Only while something is actually wrong — a stale boot error must not
          keep accusing a database that has since come back. */
       if (!body.ready) {
