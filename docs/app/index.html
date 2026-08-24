@@ -2119,6 +2119,18 @@ body.wall #wallRetry.on{display:block}
             <button class="chip" id="payKindDev" data-kind="extra_device"></button>
           </div>
 
+          <!-- v5.41.0 — how many devices this lifetime purchase covers. Shown
+               only for the join_first chip, and only once the owner has
+               opted into device-tiered pricing (accDeviceTierSet()) — an
+               unconfigured project never sees this control at all, and the
+               join_first chip behaves exactly as it did before. Options are
+               built in JS because the top of the range depends on how far
+               price_device_step lets accDeviceTierPrice() compute a price. -->
+          <div class="acc-plan-line" id="payDeviceWrap" style="display:none;margin-top:8px">
+            <label id="payDeviceH" for="payDeviceCount"></label>
+            <select class="input" id="payDeviceCount" style="width:auto;display:inline-block;margin-left:8px"></select>
+          </div>
+
           <!-- v5.34 — the amount due, stated plainly. Before this the buy panel
                showed a price on a chip and then never mentioned money again,
                so a customer who mis-tapped a chip found out only when an admin
@@ -3583,6 +3595,7 @@ var TR_V430={
   dev_none:{my:"စက် တစ်လုံးမှ မမှတ်ပုံတင်ရသေးပါ",en:"No devices registered yet",shn:"ပႆႇမီးၶိူင်ႈဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ",kac:"Device langai mung n mahtai da shi ai",th:"ยังไม่มีอุปกรณ์ที่ลงทะเบียน",zh:"尚未注册任何设备",vi:"Chưa có thiết bị nào được đăng ký",id:"Belum ada perangkat terdaftar",ms:"Belum ada peranti didaftarkan"},
   pay_h:{my:"PREMIUM ဝယ်ရန်",en:"BUY PREMIUM",shn:"သိုဝ်ႉ PREMIUM",kac:"PREMIUM MARI U",th:"ซื้อ PREMIUM",zh:"购买 PREMIUM",vi:"MUA PREMIUM",id:"BELI PREMIUM",ms:"BELI PREMIUM"},
   pay_pick:{my:"ပက်ကေ့ချ် ရွေးပါ",en:"Choose a plan",shn:"လိူၵ်ႈပၵ်ႉၵဵတ်ႉ",kac:"Package langai lata u",th:"เลือกแพ็กเกจ",zh:"选择套餐",vi:"Chọn gói",id:"Pilih paket",ms:"Pilih pelan"},
+  pay_devices_h:{my:"Device အရေအတွက်",en:"Number of devices",shn:"ၸၢၵ်ႈမီးၵႃႈႁိုဝ်လုၵ်ႈ",kac:"Device gara law",th:"จำนวนอุปกรณ์",zh:"设备数量",vi:"Số thiết bị",id:"Jumlah perangkat",ms:"Bilangan peranti"},
   pay_1m:{my:"၁ လ",en:"1 month",shn:"1 လိူၼ်",kac:"Shata 1",th:"1 เดือน",zh:"1 个月",vi:"1 tháng",id:"1 bulan",ms:"1 bulan"},
   pay_3m:{my:"၃ လ",en:"3 months",shn:"3 လိူၼ်",kac:"Shata 3",th:"3 เดือน",zh:"3 个月",vi:"3 tháng",id:"3 bulan",ms:"3 bulan"},
   pay_6m:{my:"၆ လ",en:"6 months",shn:"6 လိူၼ်",kac:"Shata 6",th:"6 เดือน",zh:"6 个月",vi:"6 tháng",id:"6 bulan",ms:"6 bulan"},
@@ -20468,6 +20481,12 @@ function accJoined(){
    nobody remembered. Treating unconfigured as not-charging keeps the old
    behaviour exactly until the owner opts in. */
 function accJoinFeeSet(){
+  /* v5.41.0 — a project on device-tiered pricing charges a joining fee too,
+     just not through price_join_first; without this an owner who set only
+     the tiers would see the exact foot-gun this function exists to prevent —
+     "First purchase" hidden entirely, plan_1m/3m/6m offered with nothing
+     joined yet. */
+  if (accDeviceTierSet()) return true;
   var n = accPriceN("price_join_first");
   return n !== null && n > 0;
 }
@@ -20492,8 +20511,45 @@ function accKindPriceKey(kind){
        : kind === "extra_device" ? "price_extra_device" : "";
 }
 
+/* v5.41.0 — device-tiered lifetime pricing, opt-in via price_device_1. Unset
+   (the default) means the owner has not configured tiers, and every reader of
+   accKindDue() falls straight back to the flat price it already read before
+   this feature existed — nothing about an unconfigured project changes. */
+function accDeviceTierSet(){
+  var n = accPriceN("price_device_1");
+  return n !== null && n > 0;
+}
+/* price_device_1..5 are bundle totals, not a per-device multiply — the
+   owner's own numbers step unevenly (+300,000 for the second device, +200,000
+   each after), which a flat multiplier cannot represent. Beyond 5, continue
+   at price_device_step per additional device. */
+function accDeviceTierPrice(count){
+  var n = Math.max(1, Math.floor(Number(count) || 1));
+  if (n <= 5) return accPriceN("price_device_" + n);
+  var p5 = accPriceN("price_device_5"), step = accPriceN("price_device_step");
+  if (p5 === null || step === null) return null;
+  return p5 + step * (n - 5);
+}
+var ACC_DEVICE_COUNT_MAX = 10;
+/* one source for "what is due for this chip" — the buy screen, the amount
+   mismatch warning and the submit-time check all called accPriceN(
+   accKindPriceKey(...)) separately before this, which is exactly the shape
+   that drifts the day only one of the three call sites gets the tiered-price
+   branch added to it. */
+function accKindDue(kind){
+  if (kind === "join_first" && accDeviceTierSet()) return accDeviceTierPrice(accPayDeviceCount);
+  var n = accPriceN(accKindPriceKey(kind));
+  if (n === null) return null;
+  if (accDeviceTierSet() && (kind === "plan_1m" || kind === "plan_3m" || kind === "plan_6m")){
+    var devices = (acc.profile && acc.profile.allowed_devices) || 0;
+    if (devices > 0) return n * devices;
+  }
+  return n;
+}
+
 /* ---------------- §4.2 plan chooser ---------------- */
 var accPayKind = "plan_1m";
+var accPayDeviceCount = 1;
 var accPayBlob = null;
 var accPayPrevUrl = null;
 var ACC_PAY_CHIPS = [["payKindJoin","join_first","pay_join","price_join_first"],
@@ -20590,7 +20646,7 @@ function accAmtOk(){
    mismatch, and saying "you underpaid" on a failed settings fetch would be a
    lie the customer cannot check */
 function accAmtDelta(){
-  var due = accPriceN(accKindPriceKey(accPayKind));
+  var due = accKindDue(accPayKind);
   var got = accAmtN();
   if (due === null || got === null) return null;
   return got - due;
@@ -20599,7 +20655,7 @@ function accRenderAmtWarn(){
   var w = $("payAmtWarn"); if (!w) return;
   var d = accAmtDelta();
   if (d === null || d === 0){ w.style.display = "none"; w.textContent = ""; return; }
-  var due = accPriceN(accKindPriceKey(accPayKind));
+  var due = accKindDue(accPayKind);
   w.style.display = "";
   w.textContent = (d < 0 ? t("pay_amt_short") : t("pay_amt_over"))
     .replace("{A}", accFmtMMK(Math.abs(d)))
@@ -20696,9 +20752,15 @@ async function accSubmitPayment(){
          trigger compares it to a price. It exists so the admin sees what was
          sent beside what was due. is_grant is never sent by a customer — the
          insert policy refuses a true from this side, which is what stops a
-         forged "free VIP period" appearing in the approval queue. */
+         forged "free VIP period" appearing in the approval queue.
+         device_count is only meaningful for join_first, and only once the
+         owner has opted into device-tiered pricing — JSON.stringify drops an
+         undefined key entirely, so every other purchase inserts exactly the
+         row it always did. */
       body: JSON.stringify({ user_id: acc.sess.uid, kind: kind, txn_last6: txn,
-                             amount_mmk: amt, screenshot_path: path })
+                             amount_mmk: amt, screenshot_path: path,
+                             device_count: (kind === "join_first" && accDeviceTierSet())
+                               ? accPayDeviceCount : undefined })
     });
     if (!r.ok){ setSt("stPay", t("pay_fail"), "err"); return; }
     var rows = await accJson(r);
@@ -21143,8 +21205,34 @@ function accRenderPay(){
 
   var s = acc.settings;
 
+  /* v5.41.0 — the device-count picker. Shown only for join_first, and only
+     once the owner has opted into device-tiered pricing; rebuilt on every
+     render because accPriceN can return different tier prices after a
+     settings refresh, and a stale option list would show the wrong number
+     next to the right price. */
+  var devWrap = $("payDeviceWrap"), devSel = $("payDeviceCount");
+  var showDev = accPayKind === "join_first" && accDeviceTierSet();
+  if (devWrap) devWrap.style.display = showDev ? "" : "none";
+  if (devSel && showDev){
+    if (accPayDeviceCount < 1) accPayDeviceCount = 1;
+    var optHtml = "";
+    for (var dv = 1; dv <= ACC_DEVICE_COUNT_MAX; dv++){
+      var dp = accDeviceTierPrice(dv);
+      if (dp === null) continue;
+      optHtml += '<option value="' + dv + '"' + (dv === accPayDeviceCount ? " selected" : "") + '>'
+               + dv + " · " + accFmtMMK(dp) + "</option>";
+    }
+    if (devSel.innerHTML !== optHtml) devSel.innerHTML = optHtml;
+    devSel.value = String(accPayDeviceCount);
+    devSel.onchange = function(){
+      var n = parseInt(devSel.value, 10);
+      accPayDeviceCount = isFinite(n) && n > 0 ? n : 1;
+      accRenderPay();
+    };
+  }
+
   /* v5.34 — what is due, in one line, for the chip that is actually selected */
-  var dueN = accPriceN(accKindPriceKey(accPayKind));
+  var dueN = accKindDue(accPayKind);
   var due = $("payDue");
   if (due){
     if (dueN === null){ due.textContent = ""; due.style.display = "none"; }
@@ -21263,6 +21351,7 @@ function accApplyLang(){
   setIcnText($("btnDevBuyExtra2"), "i-gem", t("dev_buy_extra"));
 
   $("payPickH").textContent  = t("pay_pick");
+  $("payDeviceH").textContent = t("pay_devices_h");
   $("payInstrH").textContent = t("pay_instructions_h");
   $("payBoth").textContent = t("pay_both");
   $("payShotH").textContent  = t("pay_shot_h");
@@ -21615,7 +21704,7 @@ async function admLoadWho(){
   });
   if (!ids.length) return;
   try {
-    var q = "/rest/v1/profiles?select=id,name,email,joined_paid,price_1m_override,price_3m_override,price_6m_override,price_join_first_override"
+    var q = "/rest/v1/profiles?select=id,name,email,joined_paid,allowed_devices,price_1m_override,price_3m_override,price_6m_override,price_join_first_override"
           + "&id=in.(" + ids.map(encodeURIComponent).join(",") + ")";
     var r = await accFetch(q, { method: "GET" });
     if (!r.ok) return;
@@ -21631,24 +21720,46 @@ async function admLoadWho(){
    price must never render as a mismatch. */
 function admDue(row){
   var prof = adm.who[row.user_id];
+  /* v5.41.0 — a join_first row carries the device count it was filed for, so
+     the tiered price the admin checks against is the one that customer's own
+     buy screen quoted, not a flat number tiers have already replaced. There is
+     no per-customer override for a tier — overrides are a flat-price
+     mechanism and stop applying the moment tiers are configured, same as the
+     buy screen. */
+  if (row.kind === "join_first" && accDeviceTierSet()){
+    return accDeviceTierPrice(row.device_count || 1);
+  }
   var key = row.kind === "join_first" ? "price_join_first"
           : row.kind === "plan_1m"    ? "price_1m"
           : row.kind === "plan_3m"    ? "price_3m"
           : row.kind === "plan_6m"    ? "price_6m"
           : row.kind === "extra_device" ? "price_extra_device" : "";
   if (!key) return null;
+  var n = null;
   if (prof){
     var ov = prof[key + "_override"];
     if (ov !== undefined && ov !== null && ov !== ""){
       var no = Number(ov);
-      if (isFinite(no) && no >= 0) return no;
+      if (isFinite(no) && no >= 0) n = no;
     }
   }
-  var st = acc.settings; if (!st) return null;
-  var v = st[key];
-  if (v === undefined || v === null || v === "") return null;
-  var n = Number(v);
-  return isFinite(n) ? n : null;
+  if (n === null){
+    var st = acc.settings; if (!st) return null;
+    var v = st[key];
+    if (v === undefined || v === null || v === "") return null;
+    n = Number(v);
+    if (!isFinite(n)) return null;
+  }
+  /* v5.41.0 — once device-tiered pricing is on, price_1m/3m/6m are PER
+     DEVICE, and a renewal bills for however many devices the account
+     currently has — not a fresh choice per payment the way join_first's
+     device_count is, because a renewal keeps the devices the account already
+     owns rather than buying new ones. */
+  if (accDeviceTierSet() && (row.kind === "plan_1m" || row.kind === "plan_3m" || row.kind === "plan_6m")){
+    var devices = (prof && prof.allowed_devices) || 0;
+    if (devices > 0) n = n * devices;
+  }
+  return n;
 }
 
 /* v5.34 — file a free period for a student.
@@ -21794,7 +21905,13 @@ function admRender(){
     if (!row) return;
     var li = el("li");
     var top = el("div","rq-top");
-    var k = el("span"); k.textContent = accKindLabel(row.kind); top.appendChild(k);
+    var k = el("span"); k.textContent = accKindLabel(row.kind);
+    /* v5.41.0 — the admin approves what a customer asked to buy, and for a
+       tiered join_first that is a device count as much as it is a price;
+       showing only the money would leave "how many devices for this
+       payment?" answerable only by opening the account afterward. */
+    if (row.kind === "join_first" && row.device_count) k.textContent += " (" + row.device_count + ")";
+    top.appendChild(k);
     var dt = el("span","mut"); dt.textContent = accFmtDate(row.created_at); top.appendChild(dt);
     var tx = el("span","mut"); tx.textContent = "···" + String(row.txn_last6 || ""); top.appendChild(tx);
     var st = el("span","chip");

@@ -329,6 +329,53 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
   report("A3) a joining fee of zero is treated the same as none at all",
     !c.find(x => x.id === "payKindJoin").shown && c.find(x => x.id === "payKind1m").shown, c);
 
+  /* ---------- A4/A5/A6) device-tiered lifetime pricing (v5.41.0) ----------
+     Deliberately NOT the owner's real numbers, deliberately not round, and
+     deliberately WITHOUT price_join_first — the whole point of this block is
+     that tiers are a separate opt-in, and a project that has only configured
+     them must behave as if it configured a joining fee, not as if it forgot
+     one (that used to be accJoinFeeSet()'s exact foot-gun). */
+  const TIERS = { price_device_1: 511000, price_device_2: 819000, price_device_3: 1003000,
+                  price_device_4: 1207000, price_device_5: 1411000, price_device_step: 213000,
+                  price_1m: 11000, price_3m: 29000, price_6m: 55000 };
+  await boot({ login: session, profile: profile(NEVER), settings: [TIERS] });
+  await login();
+  c = await chips();
+  report("A4) tiers alone (no price_join_first) still offer the first-purchase chip",
+    c.find(x => x.id === "payKindJoin").shown && !c.find(x => x.id === "payKind1m").shown, c);
+
+  let devWrap = await page.evaluate(() => {
+    const w = document.getElementById("payDeviceWrap");
+    return w && w.getClientRects().length > 0;
+  });
+  due = await page.evaluate(() => (document.getElementById("payDue").textContent || "").trim());
+  report("A5) the device picker appears for a 1-device default, quoting price_device_1",
+    devWrap && due.indexOf(TIERS.price_device_1.toLocaleString("en-US")) >= 0, { devWrap, due });
+
+  await page.selectOption("#payDeviceCount", "3");
+  await page.waitForTimeout(150);
+  due = await page.evaluate(() => (document.getElementById("payDue").textContent || "").trim());
+  report("A6) picking 3 devices quotes price_device_3 — a bundle rate, not price_device_1 × 3",
+    due.indexOf(TIERS.price_device_3.toLocaleString("en-US")) >= 0 &&
+    due.indexOf((TIERS.price_device_1 * 3).toLocaleString("en-US")) < 0, { due });
+
+  /* a renewal bills PER DEVICE once tiers are on — the account already has 4
+     devices from a past purchase, so plan_1m's due is price_1m × 4, not the
+     flat price_1m every non-tiered project still quotes. */
+  await boot({ login: session, profile: profile({ joined_paid: true, allowed_devices: 4 }), settings: [TIERS] });
+  await login();
+  due = await page.evaluate(() => (document.getElementById("payDue").textContent || "").trim());
+  report("A7) once joined, a renewal is priced per device — price_1m × allowed_devices",
+    due.indexOf((TIERS.price_1m * 4).toLocaleString("en-US")) >= 0, { due });
+
+  /* the picker must not survive into a kind it does not apply to */
+  devWrap = await page.evaluate(() => {
+    const w = document.getElementById("payDeviceWrap");
+    return w && w.getClientRects().length > 0;
+  });
+  report("A8) the device picker is gone once the selected chip is a renewal, not join_first",
+    !devWrap, { devWrap });
+
   /* ---------- C2) a per-customer price beats the default ---------- */
   await boot({ login: session, profile: profile({ joined_paid: true, price_1m_override: 9000 }), settings: [PRICE] });
   await login();

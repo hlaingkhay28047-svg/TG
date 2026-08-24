@@ -190,6 +190,41 @@ const plan = sql("select plan_status||'|'||(plan_expires_at between now()+interv
   "and now()+interval '32 days') from public.profiles where id='" + CUST + "'", DB).out;
 report("J) an admin approval extends the plan by one month", plan === "active|true", { plan });
 
+/* ---- J2) device-tiered join_first sets allowed_devices from device_count ----
+   Not the +1 extra_device gets — join_first's device_count is a NEW bundle
+   choosing how many devices this purchase covers, so the trigger has to READ
+   it rather than leave the profiles column default standing. */
+const DEVBUYER = "55555555-5555-5555-5555-555555555555";
+sql("insert into auth.users (id,email) values ('" + DEVBUYER + "','devbuyer@example.com')", DB);
+asUser(DEVBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+asUser(DEVBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','654321',1000000,3);", DB);
+asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+  "reviewed_by=auth.uid() where user_id='" + DEVBUYER + "' and status='pending';", DB);
+const tierDevCount = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
+report("J2) a device-tiered join_first sets allowed_devices from device_count, not the column default",
+  tierDevCount === "3", { allowed_devices: tierDevCount });
+
+/* ...and a plain join_first that never sends device_count — every project not
+   using tiered pricing, and the shape this table had before this feature
+   existed — leaves allowed_devices exactly where it already was: the
+   profiles column default of 2 for a fresh row. */
+const PLAINBUYER = "66666666-6666-6666-6666-666666666666";
+sql("insert into auth.users (id,email) values ('" + PLAINBUYER + "','plainbuyer@example.com')", DB);
+asUser(PLAINBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+asUser(PLAINBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'join_first','111222',500000);", DB);
+asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+  "reviewed_by=auth.uid() where user_id='" + PLAINBUYER + "' and status='pending';", DB);
+const plainCount = sql("select allowed_devices from public.profiles where id='" + PLAINBUYER + "'", DB).out;
+report("J3) ...and a join_first with no device_count leaves allowed_devices at the unchanged default",
+  plainCount === "2", { allowed_devices: plainCount });
+
+/* cleanup — check N below counts rows in public.profiles and expects exactly
+   the OWNER/CUST cast that predates this block; cascading through auth.users
+   removes DEVBUYER/PLAINBUYER's profiles and payment_requests with them. */
+sql("delete from auth.users where id in ('" + DEVBUYER + "','" + PLAINBUYER + "');", DB);
+
 /* ---- K) the device cap ---- */
 asUser(CUST, "insert into public.devices (user_id,device_id,label) values (auth.uid(),'dev-a','A');", DB);
 asUser(CUST, "insert into public.devices (user_id,device_id,label) values (auth.uid(),'dev-b','B');", DB);
