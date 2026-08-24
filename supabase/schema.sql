@@ -206,6 +206,15 @@ grant select, insert, update         on public.profiles         to authenticated
 grant select, insert, update         on public.payment_requests to authenticated;
 grant select, insert, update, delete on public.devices          to authenticated;
 
+-- GRANT is additive. Supabase projects can already carry broad public-schema
+-- defaults, so naming only the privileges above does not remove an inherited
+-- anonymous write grant. Revoke it explicitly: otherwise an anon INSERT can
+-- enter a SECURITY DEFINER BEFORE trigger (and read/lock a guessed account)
+-- before RLS rejects the finished row. app_settings has no browser writer at
+-- all; both public roles keep SELECT and lose every row-level write privilege.
+revoke insert, update, delete on public.profiles, public.payment_requests, public.devices from anon;
+revoke insert, update, delete on public.app_settings from anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- 1. columns the client reads
 -- ---------------------------------------------------------------------------
@@ -255,6 +264,59 @@ alter table public.payment_requests add column if not exists is_grant boolean no
 -- Null everywhere else: a renewal's device count is the account's own
 -- allowed_devices, already on the profile, not a fresh choice per payment.
 alter table public.payment_requests add column if not exists device_count integer;
+
+-- v5.42.1 — a payment request keeps BOTH numbers: amount_mmk is what the
+-- customer says they transferred; quoted_amount_mmk is what the database says
+-- this product cost when the request was filed. The latter is written only by
+-- hnk_guard_payment_request below. Keeping the quote on the row prevents a
+-- later price/device edit from rewriting history while preserving the owner's
+-- deliberate ability to review an under/over-payment rather than making the
+-- browser silently reject it.
+alter table public.payment_requests add column if not exists quoted_amount_mmk integer;
+alter table public.payment_requests add column if not exists pricing_mode text;
+
+-- Existing production rows predate these invariants, so the constraints are
+-- NOT VALID: PostgreSQL enforces them for every new/changed row immediately
+-- without refusing the migration because an old pending row needs manual
+-- reconciliation. Once that queue is clean the owner may VALIDATE them.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'payment_requests_device_count_shape_chk'
+       and conrelid = 'public.payment_requests'::regclass
+  ) then
+    alter table public.payment_requests
+      add constraint payment_requests_device_count_shape_chk check (
+        pricing_mode is null or (
+          (kind = 'join_first' and (device_count is null or device_count between 1 and 10))
+          or (kind <> 'join_first' and device_count is null)
+        )
+      ) not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'payment_requests_quote_chk'
+       and conrelid = 'public.payment_requests'::regclass
+  ) then
+    alter table public.payment_requests
+      add constraint payment_requests_quote_chk check (
+        quoted_amount_mmk is null or quoted_amount_mmk between 0 and 100000000
+      ) not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'payment_requests_pricing_mode_chk'
+       and conrelid = 'public.payment_requests'::regclass
+  ) then
+    alter table public.payment_requests
+      add constraint payment_requests_pricing_mode_chk check (
+        pricing_mode is null or pricing_mode in ('flat','tier','grant')
+      ) not valid;
+  end if;
+end $$;
 
 -- A grant has no transfer and no slip, so the two columns that record them
 -- must accept their absence. If the table was created with them NOT NULL — the
@@ -333,6 +395,14 @@ create policy payreq_insert_own on public.payment_requests
     -- an amount is optional (older clients do not send one) but a negative or
     -- absurd one is a typo at best, so it is bounded here rather than trusted
     and (amount_mmk is null or (amount_mmk >= 0 and amount_mmk <= 100000000))
+    -- device_count is meaningful only on the one-time bundle and the shipped
+    -- picker's supported range is 1..10. Tier-vs-flat and configured-price
+    -- validation need live settings, so hnk_guard_payment_request below owns
+    -- that dynamic half; this static shape is defence in depth at the RLS edge.
+    and (
+      (kind = 'join_first' and (device_count is null or device_count between 1 and 10))
+      or (kind <> 'join_first' and device_count is null)
+    )
     -- a request always starts pending; a client that tries to insert itself as
     -- approved is refused rather than trusted
     and coalesce(status, 'pending') = 'pending'
@@ -358,6 +428,7 @@ create policy payreq_insert_admin_grant on public.payment_requests
     public.hnk_is_admin()
     and is_grant = true
     and coalesce(amount_mmk, 0) = 0
+    and device_count is null
     and kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')
     and coalesce(status, 'pending') = 'pending'
   );
@@ -427,6 +498,238 @@ create policy appset_read_all on public.app_settings
   using (true);
 
 -- ---------------------------------------------------------------------------
+-- 4c. server-authored payment quotes and immutable review transitions
+--
+-- The browser may SELECT the price list, but it is not the authority on either
+-- a quote or an entitlement. Every request crosses this function before it is
+-- stored. Returning no row means the requested product is not configured or
+-- its device shape is invalid; the guard trigger then rejects the statement.
+-- ---------------------------------------------------------------------------
+create or replace function public.hnk_payment_quote(
+  p_user_id uuid,
+  p_kind text,
+  p_device_count integer,
+  p_is_grant boolean
+)
+returns table (out_mode text, out_quote integer)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  settings_rows integer;
+  st public.app_settings%rowtype;
+  prof public.profiles%rowtype;
+  tiered boolean := false;
+  amount_big bigint;
+  mode_text text;
+begin
+  select count(*) into settings_rows from public.app_settings;
+  if settings_rows <> 1 then return; end if;
+  select a.* into st from public.app_settings a order by a.ctid limit 1;
+  select p.* into prof from public.profiles p where p.id = p_user_id;
+  if not found then return; end if;
+
+  if coalesce(p_is_grant, false) then
+    -- The admin UI grants periods/base access, never incremental paid slots.
+    -- Refusing grant add-ons also prevents a free row bypassing tier base/max.
+    if p_kind = 'extra_device' or p_device_count is not null then return; end if;
+    return query select 'grant'::text, 0::integer;
+    return;
+  end if;
+
+  tiered := coalesce(st.price_device_1, 0) > 0;
+
+  if p_kind = 'join_first' then
+    if tiered then
+      if p_device_count is null or p_device_count < 1 or p_device_count > 10 then return; end if;
+      mode_text := 'tier';
+      if p_device_count = 1 then amount_big := st.price_device_1::bigint;
+      elsif p_device_count = 2 then amount_big := st.price_device_2::bigint;
+      elsif p_device_count = 3 then amount_big := st.price_device_3::bigint;
+      elsif p_device_count = 4 then amount_big := st.price_device_4::bigint;
+      elsif p_device_count = 5 then amount_big := st.price_device_5::bigint;
+      elsif coalesce(st.price_device_5, 0) > 0 and coalesce(st.price_device_step, 0) > 0 then
+        amount_big := st.price_device_5::bigint + st.price_device_step::bigint * (p_device_count - 5);
+      else return;
+      end if;
+    else
+      if p_device_count is not null then return; end if;
+      mode_text := 'flat';
+      amount_big := coalesce(prof.price_join_first_override, st.price_join_first)::bigint;
+    end if;
+
+  elsif p_kind in ('plan_1m','plan_3m','plan_6m') then
+    if p_device_count is not null then return; end if;
+    mode_text := case when tiered then 'tier' else 'flat' end;
+    if p_kind = 'plan_1m' then
+      amount_big := coalesce(prof.price_1m_override, st.price_1m)::bigint;
+    elsif p_kind = 'plan_3m' then
+      amount_big := coalesce(prof.price_3m_override, st.price_3m)::bigint;
+    else
+      amount_big := coalesce(prof.price_6m_override, st.price_6m)::bigint;
+    end if;
+    if tiered then
+      if coalesce(prof.allowed_devices, 0) < 1 then return; end if;
+      amount_big := amount_big * prof.allowed_devices::bigint;
+    end if;
+
+  elsif p_kind = 'extra_device' then
+    if p_device_count is not null then return; end if;
+    mode_text := case when tiered then 'tier' else 'flat' end;
+    amount_big := st.price_extra_device::bigint;
+  else
+    return;
+  end if;
+
+  if amount_big is null or amount_big < 1 or amount_big > 100000000 then return; end if;
+  return query select mode_text, amount_big::integer;
+end;
+$$;
+
+revoke all on function public.hnk_payment_quote(uuid,text,integer,boolean) from public, authenticated;
+
+create or replace function public.hnk_guard_payment_request()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  mode_text text;
+  quote_value integer;
+  already_joined boolean;
+  current_allowance integer;
+  join_required boolean;
+begin
+  if tg_op = 'INSERT' then
+    -- BEFORE triggers run before RLS WITH CHECK. Refuse a forged user_id with
+    -- one uniform answer before this definer function reads or locks a victim's
+    -- profile; admins retain the cross-account VIP-grant path.
+    if auth.uid() is not null and new.user_id is distinct from auth.uid()
+       and not public.hnk_is_admin() then
+      raise exception 'payment user does not match authenticated caller'
+        using errcode = '42501';
+    end if;
+
+    -- Serialise all commercial requests for one account. Without this lock two
+    -- concurrent first-purchase inserts can both observe joined_paid=false.
+    select (p.joined_paid or p.plan_expires_at is not null
+            or coalesce(p.plan_status, 'none') <> 'none'),
+           coalesce(p.allowed_devices, 2),
+           (coalesce(a.price_device_1, 0) > 0
+            or coalesce(p.price_join_first_override, a.price_join_first, 0) > 0)
+      into already_joined, current_allowance, join_required
+      from public.profiles p cross join public.app_settings a
+     where p.id = new.user_id
+     order by a.ctid
+     limit 1
+       for update of p;
+    if not found then
+      raise exception 'payment account or singleton settings row is unavailable'
+        using errcode = '23514';
+    end if;
+
+    select q.out_mode, q.out_quote into mode_text, quote_value
+      from public.hnk_payment_quote(new.user_id, new.kind, new.device_count, new.is_grant) q;
+    if mode_text is null or quote_value is null then
+      raise exception 'payment kind, device count or configured price is invalid'
+        using errcode = '23514';
+    end if;
+
+    if new.kind = 'join_first' then
+      if already_joined then
+        raise exception 'first-purchase entitlement is already active'
+          using errcode = '23514';
+      end if;
+      if exists (
+        select 1 from public.payment_requests r
+         where r.user_id = new.user_id and r.kind = 'join_first'
+           and r.status = 'pending'
+      ) then
+        raise exception 'a first-purchase request is already pending'
+          using errcode = '23514';
+      end if;
+    elsif new.kind in ('plan_1m','plan_3m','plan_6m','extra_device')
+          and not coalesce(new.is_grant, false)
+          and join_required and not already_joined then
+      raise exception 'the first-purchase entitlement must be approved before renewals or add-ons'
+        using errcode = '23514';
+    end if;
+
+    if new.kind = 'extra_device' and mode_text = 'tier' and current_allowance >= 10 then
+      raise exception 'the tiered device maximum is 10'
+        using errcode = '23514';
+    end if;
+
+    -- These two values are never accepted from the payload. A modified client
+    -- may send them, but the authoritative values replace them before RLS and
+    -- CHECK constraints inspect the row.
+    new.pricing_mode := mode_text;
+    new.quoted_amount_mmk := quote_value;
+    return new;
+  end if;
+
+  -- The SQL editor/service role may repair the commercial fields of a still-
+  -- pending legacy row. It does not get a status-transition escape: approval
+  -- remains subject to the same state machine and entitlement trigger.
+  if auth.uid() is null and old.status = 'pending' and new.status = 'pending' then
+    return new;
+  end if;
+
+  if new.id is distinct from old.id
+     or new.user_id is distinct from old.user_id
+     or new.kind is distinct from old.kind
+     or new.txn_last6 is distinct from old.txn_last6
+     or new.screenshot_path is distinct from old.screenshot_path
+     or new.amount_mmk is distinct from old.amount_mmk
+     or new.is_grant is distinct from old.is_grant
+     or new.device_count is distinct from old.device_count
+     or new.pricing_mode is distinct from old.pricing_mode
+     or new.quoted_amount_mmk is distinct from old.quoted_amount_mmk
+     or new.created_at is distinct from old.created_at then
+    raise exception 'payment commercial fields are immutable after submission'
+      using errcode = '23514';
+  end if;
+
+  if old.status <> 'pending' or new.status not in ('approved','rejected') then
+    raise exception 'payment review may only move pending to approved or rejected'
+      using errcode = '23514';
+  end if;
+  if new.reviewed_at is null or new.reviewed_by is null then
+    raise exception 'a terminal payment review requires reviewer and time'
+      using errcode = '23514';
+  end if;
+  if auth.uid() is not null and new.reviewed_by is distinct from auth.uid() then
+    raise exception 'reviewed_by must be the signed-in admin'
+      using errcode = '23514';
+  end if;
+
+  -- Rows filed before v5.42.1 have no stored quote. Derive it once only when
+  -- approving; rejection must remain available for malformed/unpriced legacy
+  -- rows so an unsafe queue entry can always be closed without entitlement.
+  if new.status = 'approved'
+     and (old.pricing_mode is null or old.quoted_amount_mmk is null) then
+    select q.out_mode, q.out_quote into mode_text, quote_value
+      from public.hnk_payment_quote(old.user_id, old.kind, old.device_count, old.is_grant) q;
+    if mode_text is null or quote_value is null then
+      raise exception 'legacy payment cannot be reviewed until its price/device shape is reconciled'
+        using errcode = '23514';
+    end if;
+    new.pricing_mode := mode_text;
+    new.quoted_amount_mmk := quote_value;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists hnk_guard_payment_request on public.payment_requests;
+create trigger hnk_guard_payment_request
+  before insert or update on public.payment_requests
+  for each row execute function public.hnk_guard_payment_request();
+
+-- ---------------------------------------------------------------------------
 -- 5. devices
 -- ---------------------------------------------------------------------------
 alter table public.devices enable row level security;
@@ -467,6 +770,27 @@ declare
   used  integer;
   cap   integer;
 begin
+  -- As with payment inserts, this definer trigger runs before RLS. Reject a
+  -- forged user_id uniformly before taking a victim's lock or revealing their
+  -- device count/cap; admins keep the documented cross-account management path.
+  if auth.uid() is not null and new.user_id is distinct from auth.uid()
+     and not public.hnk_is_admin() then
+    raise exception 'device user does not match authenticated caller'
+      using errcode = '42501';
+  end if;
+
+  -- The profile row is the per-account entitlement mutex. Device inserts and
+  -- payment approvals take the same lock, so neither two new registrations nor
+  -- a registration racing a smaller tier approval can both validate against
+  -- stale counts. Lock BEFORE the duplicate check so a concurrent re-register
+  -- sees the first committed row and remains a silent no-op.
+  select coalesce(allowed_devices, 2) into cap
+    from public.profiles where id = new.user_id
+    for update;
+  if not found then
+    raise exception 'device profile is unavailable' using errcode = 'P0001';
+  end if;
+
   -- A RE-REGISTRATION IS NOT A NEW DEVICE, and until this branch existed the
   -- cap said it was. The unique index below was documented as what makes a
   -- second POST for the same browser "a no-op collision instead of a new row",
@@ -485,8 +809,6 @@ begin
   end if;
 
   select count(*) into used from public.devices where user_id = new.user_id;
-  select coalesce(allowed_devices, 2) into cap from public.profiles where id = new.user_id;
-  if cap is null then cap := 2; end if;
   if used >= cap then
     raise exception 'device limit reached: % of % slots used', used, cap
       using errcode = 'P0001';
@@ -643,9 +965,93 @@ as $$
 declare
   months integer := 0;
   base   timestamptz;
+  already_joined boolean;
+  current_allowance integer;
+  registered_devices integer;
+  settings_rows integer;
+  join_required boolean;
 begin
-  if new.status <> 'approved' or coalesce(old.status, '') = 'approved' then
+  if old.status <> 'pending' or new.status <> 'approved' then
     return new;
+  end if;
+
+  -- Serialize entitlement changes for this account. Two admins, two tabs or
+  -- two pending requests must observe one ordered state, not both calculate
+  -- from the same stale allowance and overwrite each other.
+  select (p.joined_paid or p.plan_expires_at is not null
+          or coalesce(p.plan_status, 'none') <> 'none'),
+         coalesce(p.allowed_devices, 2),
+         greatest(coalesce(p.plan_expires_at, now()), now())
+    into already_joined, current_allowance, base
+    from public.profiles p
+   where p.id = new.user_id
+     for update;
+  if not found then
+    raise exception 'payment profile is unavailable' using errcode = '23514';
+  end if;
+
+  -- A pending row can pre-date the server-authored quote columns. Re-check the
+  -- current authoritative join policy while the profile lock is held, so a
+  -- legacy renewal/add-on cannot become the evidence that makes an account
+  -- look joined. Flat deployments with no configured joining fee preserve the
+  -- historical renew-first flow; grants remain the explicit admin exception.
+  select count(*),
+         coalesce(bool_or(
+           coalesce(a.price_device_1, 0) > 0
+           or coalesce(p.price_join_first_override, a.price_join_first, 0) > 0
+         ), false)
+    into settings_rows, join_required
+    from public.app_settings a
+    join public.profiles p on p.id = new.user_id;
+  if settings_rows <> 1 then
+    raise exception 'payment settings must contain exactly one row'
+      using errcode = '23514';
+  end if;
+
+  if not coalesce(new.is_grant, false)
+     and new.kind in ('plan_1m','plan_3m','plan_6m','extra_device')
+     and join_required and not already_joined then
+    raise exception 'the first-purchase entitlement must be approved before renewals or add-ons'
+      using errcode = '23514';
+  end if;
+
+  if new.kind = 'join_first' then
+    if already_joined then
+      raise exception 'first-purchase entitlement is already active'
+        using errcode = '23514';
+    end if;
+    if new.pricing_mode = 'tier' then
+      if new.device_count is null or new.device_count < 1 or new.device_count > 10
+         or new.quoted_amount_mmk is null then
+        raise exception 'tiered first purchase has no valid server quote/device count'
+          using errcode = '23514';
+      end if;
+      -- A pre-tier account with manually granted/add-on entitlement needs an
+      -- explicit owner decision; silently replacing it with an absolute bundle
+      -- can erase a slot that was already paid for.
+      if current_allowance <> 2 then
+        raise exception 'existing device entitlement must be reconciled before a tier bundle'
+          using errcode = '23514';
+      end if;
+      select count(*) into registered_devices
+        from public.devices d where d.user_id = new.user_id;
+      if registered_devices > new.device_count then
+        raise exception 'remove registered devices before approving this smaller bundle'
+          using errcode = '23514';
+      end if;
+    elsif new.pricing_mode not in ('flat','grant') then
+      raise exception 'first purchase has no valid pricing mode'
+        using errcode = '23514';
+    end if;
+  elsif new.kind = 'extra_device' and new.pricing_mode = 'tier' then
+    if not already_joined then
+      raise exception 'tier add-on requires an approved base bundle'
+        using errcode = '23514';
+    end if;
+    if current_allowance >= 10 then
+      raise exception 'the tiered device maximum is 10'
+        using errcode = '23514';
+    end if;
   end if;
 
   if new.kind = 'plan_1m' then months := 1;
@@ -668,8 +1074,6 @@ begin
   end if;
 
   if months > 0 then
-    select greatest(coalesce(p.plan_expires_at, now()), now())
-      into base from public.profiles p where p.id = new.user_id;
     update public.profiles
        set plan_status     = 'active',
            plan_expires_at = coalesce(base, now()) + (months || ' months')::interval,
@@ -677,13 +1081,10 @@ begin
            -- else does. A plan_1m approval leaves joined_paid alone, so a
            -- customer cannot buy a cheap month to skip the joining fee.
            joined_paid     = case when new.kind = 'join_first' then true else joined_paid end,
-           -- v5.41.0 — device-tiered lifetime pricing set how many devices
-           -- THIS purchase covers on device_count; a plain join_first with no
-           -- tiers configured never sends it, and coalescing onto the existing
-           -- value leaves allowed_devices exactly where it already was (the
-           -- profiles column default), unchanged from before this feature.
-           allowed_devices = case when new.kind = 'join_first' and new.device_count is not null
-                                   then greatest(1, new.device_count)
+           -- Only a server-quoted tier may set an absolute bundle. A flat or
+           -- admin-grant join preserves the historical allowance.
+           allowed_devices = case when new.kind = 'join_first' and new.pricing_mode = 'tier'
+                                   then new.device_count
                                    else allowed_devices end
      where id = new.user_id;
   elsif new.kind = 'extra_device' then

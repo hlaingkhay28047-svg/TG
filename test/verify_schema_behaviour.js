@@ -36,7 +36,7 @@
    objects / foldername). It proves the schema's logic, not Supabase's.
 
    Usage: node test/verify_schema_behaviour.js */
-const { execFileSync } = require("child_process");
+const { execFileSync, spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -85,6 +85,18 @@ function asUser(uid, body, db) {
 function asAnon(body, db) {
   return sql("begin; set local role anon; " + body + " commit;", db);
 }
+function waitForAdvisory(lockId, db) {
+  for (let wait = 0; wait < 50; wait++) {
+    if (sql("select exists(select 1 from pg_locks where locktype='advisory' " +
+      "and objid=" + lockId + ")", db).out === "t") return true;
+    sql("select pg_sleep(0.05)", db);
+  }
+  return false;
+}
+function waitForAdvisoryRelease(lockId, db) {
+  return sql("select pg_advisory_lock(" + lockId + "); " +
+    "select pg_advisory_unlock(" + lockId + ")", db);
+}
 
 /* The platform objects supabase/schema.sql leans on. This used to be a stub
    written here; it is now the REAL file the service ships and the owner
@@ -125,6 +137,23 @@ report("A) schema.sql applies to an EMPTY database", first.ok, first.out.split("
 const second = file(SCHEMA, DB), third = file(SCHEMA, DB);
 report("B) it is idempotent (three consecutive runs)", second.ok && third.ok,
   { second: second.out.split("\n").slice(0, 2), third: third.out.split("\n").slice(0, 2) });
+
+/* Existing Supabase projects may inherit anon/authenticated DML grants from
+   public-schema defaults. Simulate that upgraded-project state, reapply the
+   schema, and require the explicit least-privilege repair to win. */
+const inheritedGrants = sql("grant insert,update,delete on public.profiles,public.payment_requests," +
+  "public.devices,public.app_settings to anon; " +
+  "grant insert,update,delete on public.app_settings to authenticated", DB);
+const privilegeRepair = file(SCHEMA, DB);
+const repairedPrivileges = sql("select " +
+  "has_table_privilege('anon','public.profiles','insert')||'|'||" +
+  "has_table_privilege('anon','public.payment_requests','insert')||'|'||" +
+  "has_table_privilege('anon','public.devices','insert')||'|'||" +
+  "has_table_privilege('anon','public.app_settings','update')||'|'||" +
+  "has_table_privilege('authenticated','public.app_settings','update')", DB).out;
+report("B2) reapplying removes inherited anonymous/app-settings write grants",
+  inheritedGrants.ok && privilegeRepair.ok && repairedPrivileges === "false|false|false|false|false",
+  { granted: inheritedGrants.ok, reapplied: privilegeRepair.ok, privileges: repairedPrivileges });
 
 /* ---- C) the singleton seed does not multiply ---- */
 const rows = sql("select count(*) from public.app_settings", DB).out;
@@ -170,6 +199,49 @@ const ident = sql("select email||'|'||name from public.profiles where id='" + CU
 report("G) a customer cannot rewrite their own email or name",
   ident === "customer@example.com|Customer", { ident });
 
+/* A payment product must have a configured server-side price. This keeps the
+   early flat-price compatibility checks realistic while the tier-specific
+   section below deliberately changes the menu and exercises both modes. */
+sql("update public.app_settings set price_1m=30000", DB);
+
+/* BEFORE triggers execute ahead of RLS. A definer trigger must therefore
+   reject another user_id before reading that profile, and return the same
+   answer whether the guessed account exists or not. */
+const UNKNOWN_ACCOUNT = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+const anonPaymentExisting = asAnon(
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values ('" + OWNER + "','plan_1m','110001',30000);", DB);
+const anonPaymentMissing = asAnon(
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values ('" + UNKNOWN_ACCOUNT + "','plan_1m','110002',30000);", DB);
+const anonDeviceExisting = asAnon(
+  "insert into public.devices (user_id,device_id,label) values ('" + OWNER + "','anon-a','A');", DB);
+const anonDeviceMissing = asAnon(
+  "insert into public.devices (user_id,device_id,label) values ('" + UNKNOWN_ACCOUNT + "','anon-b','B');", DB);
+const anonProbeRows = sql("select (select count(*) from public.payment_requests)||'|'||" +
+  "(select count(*) from public.devices)", DB).out;
+report("G1) anon never enters account-reading BEFORE triggers for existing or missing IDs",
+  !anonPaymentExisting.ok && !anonPaymentMissing.ok && !anonDeviceExisting.ok && !anonDeviceMissing.ok &&
+  /permission denied for table payment_requests/i.test(anonPaymentExisting.out) &&
+  /permission denied for table payment_requests/i.test(anonPaymentMissing.out) &&
+  /permission denied for table devices/i.test(anonDeviceExisting.out) &&
+  /permission denied for table devices/i.test(anonDeviceMissing.out) && anonProbeRows === "0|0",
+  { paymentExisting: anonPaymentExisting.out.split("\n")[0],
+    paymentMissing: anonPaymentMissing.out.split("\n")[0],
+    deviceExisting: anonDeviceExisting.out.split("\n")[0],
+    deviceMissing: anonDeviceMissing.out.split("\n")[0], rows: anonProbeRows });
+const crossExisting = asUser(CUST,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values ('" + OWNER + "','plan_1m','120001',30000);", DB);
+const crossMissing = asUser(CUST,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values ('" + UNKNOWN_ACCOUNT + "','plan_1m','120002',30000);", DB);
+report("G2) forged cross-account payments reveal neither profile state nor existence",
+  !crossExisting.ok && !crossMissing.ok &&
+  /payment user does not match authenticated caller/i.test(crossExisting.out) &&
+  /payment user does not match authenticated caller/i.test(crossMissing.out),
+  { existing: crossExisting.out.split("\n")[0], missing: crossMissing.out.split("\n")[0] });
+
 /* ---- H) a customer cannot approve their own payment ---- */
 asUser(CUST, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
   "values (auth.uid(),'plan_1m','123456',30000);", DB);
@@ -179,7 +251,7 @@ report("H) a customer cannot approve their own payment", stat === "pending", { s
 
 /* ---- I) nor forge one that arrives already reviewed ---- */
 const forge = asUser(CUST, "insert into public.payment_requests (user_id,kind,status,reviewed_by,note) " +
-  "values (auth.uid(),'plan_6m','approved','" + OWNER + "','approved by owner');", DB);
+  "values (auth.uid(),'plan_1m','approved','" + OWNER + "','approved by owner');", DB);
 report("I) a forged already-reviewed row is refused", !forge.ok && /row-level security/i.test(forge.out),
   { accepted: forge.ok, err: forge.out.split("\n")[0] });
 
@@ -190,42 +262,416 @@ const plan = sql("select plan_status||'|'||(plan_expires_at between now()+interv
   "and now()+interval '32 days') from public.profiles where id='" + CUST + "'", DB).out;
 report("J) an admin approval extends the plan by one month", plan === "active|true", { plan });
 
-/* ---- J2) device-tiered join_first sets allowed_devices from device_count ----
-   Not the +1 extra_device gets — join_first's device_count is a NEW bundle
-   choosing how many devices this purchase covers, so the trigger has to READ
-   it rather than leave the profiles column default standing. */
+/* ---- J2) the database, not the browser, owns the device-tier quote ----
+
+   device_count is customer input: the REST endpoint accepts every live table
+   column and the app is a public HTML file. The database must therefore decide
+   whether tiers are active, whether the requested count has a configured price,
+   and what that price was at submission time. A later settings edit must not
+   rewrite the amount an admin is reviewing. */
 const DEVBUYER = "55555555-5555-5555-5555-555555555555";
 sql("insert into auth.users (id,email) values ('" + DEVBUYER + "','devbuyer@example.com')", DB);
 asUser(DEVBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+sql("update public.app_settings set price_join_first=480000, " +
+    "price_device_1=511000, price_device_2=819000, price_device_3=1003000, " +
+    "price_device_4=1207000, price_device_5=1411000, price_device_step=213000, " +
+    "price_extra_device=17000, price_1m=11000, price_3m=29000, price_6m=55000", DB);
+/* CUST bought a normal flat plan before any joining fee existed. The client
+   and schema backfill both treat that payment history as already joined; a
+   later tier rollout must not strand the account if the settings change before
+   schema.sql is run again. */
+const upgradedRenewal = asUser(CUST,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'plan_1m','222333',22000);", DB);
+const upgradedAddon = asUser(CUST,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'extra_device','222334',17000);", DB);
+const upgradedQuotes = sql("select string_agg(kind||':'||pricing_mode||':'||quoted_amount_mmk,',' order by kind) " +
+  "from public.payment_requests where user_id='" + CUST + "' and status='pending'", DB).out;
+report("J2) a pre-tier paid account can renew and add a slot after tiers are enabled",
+  upgradedRenewal.ok && upgradedAddon.ok &&
+  upgradedQuotes === "extra_device:tier:17000,plan_1m:tier:22000",
+  { renewal: upgradedRenewal.ok, addOn: upgradedAddon.ok, stored: upgradedQuotes });
+sql("delete from public.payment_requests where user_id='" + CUST + "' and status='pending'", DB);
+const quoteOracle = asUser(DEVBUYER,
+  "select * from public.hnk_payment_quote('" + OWNER + "','plan_1m',null,false);", DB);
+report("J2) the internal quote function is not a cross-account price oracle",
+  !quoteOracle.ok && /permission denied for function hnk_payment_quote/i.test(quoteOracle.out),
+  { callable: quoteOracle.ok, err: quoteOracle.out.split("\n")[0] });
 asUser(DEVBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
-  "values (auth.uid(),'join_first','654321',1000000,3);", DB);
+  "values (auth.uid(),'join_first','654321',1003000,3);", DB);
+const tierQuote = sql("select pricing_mode||'|'||quoted_amount_mmk||'|'||device_count " +
+  "from public.payment_requests where user_id='" + DEVBUYER + "'", DB).out;
+report("J2) a tiered request stores a server-authored mode, quote and bounded count",
+  tierQuote === "tier|1003000|3", { stored: tierQuote });
+
+/* A forged quote/mode is overwritten, never trusted. The customer may claim a
+   different amount sent — admins deliberately review mismatches — but cannot
+   rewrite what the configured product cost. */
+const QUOTEBUYER = "77777777-7777-7777-7777-777777777777";
+sql("insert into auth.users (id,email) values ('" + QUOTEBUYER + "','quote@example.com')", DB);
+asUser(QUOTEBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+const forgedQuote = asUser(QUOTEBUYER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count,pricing_mode,quoted_amount_mmk) " +
+  "values (auth.uid(),'join_first','777777',1,6,'flat',1);", DB);
+const storedQuote = sql("select amount_mmk||'|'||pricing_mode||'|'||quoted_amount_mmk from public.payment_requests " +
+  "where user_id='" + QUOTEBUYER + "'", DB).out;
+report("J2b) customer-supplied quote fields are overwritten from authoritative settings",
+  forgedQuote.ok && storedQuote === "1|tier|1624000", { accepted: forgedQuote.ok, stored: storedQuote });
+
+/* The quote is a snapshot. Changing today's menu must not change yesterday's
+   pending request or the amount the approval queue compares against. */
+const priceChanged = sql("update public.app_settings set price_device_3=1999000", DB);
+const stableQuote = sql("select quoted_amount_mmk from public.payment_requests " +
+  "where user_id='" + DEVBUYER + "'", DB).out;
+const livePrice = sql("select price_device_3 from public.app_settings", DB).out;
+report("J2c) a pending request keeps its original server quote after prices change",
+  priceChanged.ok && livePrice === "1999000" && stableQuote === "1003000",
+  { changed: priceChanged.ok, livePrice, quote: stableQuote });
+
 asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where user_id='" + DEVBUYER + "' and status='pending';", DB);
 const tierDevCount = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
-report("J2) a device-tiered join_first sets allowed_devices from device_count, not the column default",
+report("J2d) approving the tiered bundle sets its exact device entitlement",
   tierDevCount === "3", { allowed_devices: tierDevCount });
 
-/* ...and a plain join_first that never sends device_count — every project not
-   using tiered pricing, and the shape this table had before this feature
-   existed — leaves allowed_devices exactly where it already was: the
-   profiles column default of 2 for a fresh row. */
+/* A tiered add-on is not a substitute for the base bundle. Once the bundle is
+   approved it increments exactly once, and the approved audit row becomes
+   immutable. A separate valid rejected-row replay proof follows below. */
+const tierAddonInsert = asUser(DEVBUYER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'extra_device','333444',17000);", DB);
+const tierAddonPending = sql("select count(*) from public.payment_requests where user_id='" + DEVBUYER +
+  "' and kind='extra_device' and status='pending'", DB).out;
+asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+  "reviewed_by=auth.uid() where user_id='" + DEVBUYER + "' and kind='extra_device' and status='pending';", DB);
+const afterExtra = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
+const terminalFlip = asUser(OWNER, "update public.payment_requests set status='rejected' " +
+  "where user_id='" + DEVBUYER + "' and kind='extra_device' and status='approved';", DB);
+const serviceRewrite = sql("update public.payment_requests set amount_mmk=1 " +
+  "where user_id='" + DEVBUYER + "' and kind='extra_device' and status='approved';", DB);
+const afterReplay = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
+report("J2e) add-on increments once and terminal audit rows are immutable for every caller",
+  tierAddonInsert.ok && tierAddonPending === "1" && afterExtra === "4" &&
+  !terminalFlip.ok && !serviceRewrite.ok && afterReplay === "4",
+  { inserted: tierAddonInsert.ok, pending: tierAddonPending, afterExtra,
+    flipAccepted: terminalFlip.ok, serviceRewrite: serviceRewrite.ok, afterReplay });
+
+const secondJoin = asUser(DEVBUYER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','333445',1999000,3);", DB);
+report("J2f) an existing entitlement cannot be reset by filing a second bundle",
+  !secondJoin.ok, { accepted: secondJoin.ok, err: secondJoin.out.split("\n")[0] });
+
+/* Re-check the maximum at approval, not only submission: an allowance can
+   change while a request is waiting in the admin queue. */
+sql("update public.profiles set allowed_devices=9 where id='" + DEVBUYER + "'", DB);
+const queuedAddonInsert = asUser(DEVBUYER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'extra_device','333446',17000);", DB);
+const queuedAddonPending = sql("select count(*) from public.payment_requests where user_id='" + DEVBUYER +
+  "' and kind='extra_device' and status='pending'", DB).out;
+sql("update public.profiles set allowed_devices=10 where id='" + DEVBUYER + "'", DB);
+const approveAtMax = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + DEVBUYER + "' and kind='extra_device' and status='pending';", DB);
+const atMaxState = sql("select status from public.payment_requests where user_id='" + DEVBUYER + "' " +
+  "and kind='extra_device' and status='pending'", DB).out;
+const atMaxCount = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
+report("J2g) a queued add-on cannot cross the tier maximum during approval",
+  queuedAddonInsert.ok && queuedAddonPending === "1" && !approveAtMax.ok &&
+  atMaxState === "pending" && atMaxCount === "10",
+  { inserted: queuedAddonInsert.ok, pending: queuedAddonPending,
+    approved: approveAtMax.ok, status: atMaxState, allowed_devices: atMaxCount });
+const grantPastMax = asUser(OWNER,
+  "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
+  "values ('" + DEVBUYER + "','extra_device',true,0);", DB);
+const grantAddOnRows = sql("select count(*) from public.payment_requests where user_id='" + DEVBUYER +
+  "' and kind='extra_device' and is_grant", DB).out;
+report("J2g2) a free admin grant cannot bypass the paid tier base/max rules",
+  !grantPastMax.ok && grantAddOnRows === "0",
+  { accepted: grantPastMax.ok, grantRows: grantAddOnRows });
+
+/* A baseline account can already have two registered devices. Buying a
+   one-device bundle must not leave two active registrations behind a cap of
+   one, so approval fails atomically until the customer reconciles them. */
+const SMALLBUYER = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+sql("insert into auth.users (id,email) values ('" + SMALLBUYER + "','small@example.com')", DB);
+asUser(SMALLBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+asUser(SMALLBUYER, "insert into public.devices (user_id,device_id,label) values " +
+  "(auth.uid(),'small-a','A'),(auth.uid(),'small-b','B');", DB);
+asUser(SMALLBUYER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','333447',511000,1);", DB);
+const shrinkApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + SMALLBUYER + "' and status='pending';", DB);
+const shrinkState = sql("select r.status||'|'||p.joined_paid||'|'||p.allowed_devices " +
+  "from public.payment_requests r join public.profiles p on p.id=r.user_id " +
+  "where r.user_id='" + SMALLBUYER + "'", DB).out;
+report("J2h) approval cannot shrink the cap below already registered devices",
+  !shrinkApproval.ok && shrinkState === "pending|false|2",
+  { approved: shrinkApproval.ok, state: shrinkState });
+
+/* Tier-off is the backward-compatible mode: a plain join never carries a
+   count, stores the flat quote, and leaves the historical default cap alone. */
 const PLAINBUYER = "66666666-6666-6666-6666-666666666666";
 sql("insert into auth.users (id,email) values ('" + PLAINBUYER + "','plainbuyer@example.com')", DB);
 asUser(PLAINBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+sql("update public.app_settings set price_device_1=null, price_device_2=null, price_device_3=null, " +
+    "price_device_4=null, price_device_5=null, price_device_step=null, price_join_first=480000", DB);
 asUser(PLAINBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
-  "values (auth.uid(),'join_first','111222',500000);", DB);
-asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+  "values (auth.uid(),'join_first','111222',480000);", DB);
+const flatQuote = sql("select pricing_mode||'|'||quoted_amount_mmk||'|'||coalesce(device_count::text,'null') " +
+  "from public.payment_requests where user_id='" + PLAINBUYER + "'", DB).out;
+const flatApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where user_id='" + PLAINBUYER + "' and status='pending';", DB);
-const plainCount = sql("select allowed_devices from public.profiles where id='" + PLAINBUYER + "'", DB).out;
-report("J3) ...and a join_first with no device_count leaves allowed_devices at the unchanged default",
-  plainCount === "2", { allowed_devices: plainCount });
+const flatState = sql("select r.status||'|'||p.joined_paid||'|'||p.allowed_devices " +
+  "from public.payment_requests r join public.profiles p on p.id=r.user_id " +
+  "where r.user_id='" + PLAINBUYER + "'", DB).out;
+report("J3) a flat legacy join stores the flat quote and preserves the existing device cap",
+  flatQuote === "flat|480000|null" && flatApproval.ok && flatState === "approved|true|2",
+  { stored: flatQuote, approved: flatApproval.ok, state: flatState });
+
+/* ---- J4) adversarial REST shapes fail before they can become entitlement ---- */
+const ATTACKER = "88888888-8888-8888-8888-888888888888";
+sql("insert into auth.users (id,email) values ('" + ATTACKER + "','attacker@example.com')", DB);
+asUser(ATTACKER, "insert into public.profiles (id) values (auth.uid());", DB);
+
+const flatForgedCount = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800001',480000,3);", DB);
+report("J4) flat-price requests cannot smuggle an arbitrary device entitlement",
+  !flatForgedCount.ok, { accepted: flatForgedCount.ok, err: flatForgedCount.out.split("\n")[0] });
+
+sql("update public.app_settings set price_device_1=511000, price_device_2=null, " +
+    "price_device_3=1003000, price_device_4=1207000, price_device_5=1411000, price_device_step=213000", DB);
+const tierMissing = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'join_first','800002',511000);", DB);
+const tierZero = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800003',511000,0);", DB);
+const tierTooHigh = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800004',511000,11);", DB);
+const tierUnpriced = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800005',511000,2);", DB);
+const wrongKind = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'plan_1m','800006',11000,3);", DB);
+report("J4b) tier mode refuses missing, zero, over-limit, unpriced and non-join counts",
+  !tierMissing.ok && !tierZero.ok && !tierTooHigh.ok && !tierUnpriced.ok && !wrongKind.ok,
+  { missing:tierMissing.ok, zero:tierZero.ok, high:tierTooHigh.ok,
+    unpriced:tierUnpriced.ok, wrongKind:wrongKind.ok });
+
+/* A customer cannot buy a tier add-on first, then have a later absolute bundle
+   overwrite that paid slot. The database rejects the unsafe order; after a
+   valid base purchase, the same add-on path is available. */
+const extraBeforeJoin = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'extra_device','800007',17000);", DB);
+report("J4c) a tier add-on cannot be filed before the base bundle",
+  !extraBeforeJoin.ok, { accepted: extraBeforeJoin.ok, err: extraBeforeJoin.out.split("\n")[0] });
+
+const badRows = sql("select count(*) from public.payment_requests where user_id='" + ATTACKER + "'", DB).out;
+const badEntitlement = sql("select allowed_devices from public.profiles where id='" + ATTACKER + "'", DB).out;
+report("J4d) refused payloads leave no request and no entitlement mutation",
+  badRows === "0" && badEntitlement === "2", { rows: badRows, allowed_devices: badEntitlement });
+
+/* Legacy rows may be too malformed to price, but rejecting one grants nothing
+   and must always remain possible. Simulate a pre-v5.42.1 pending row through
+   the documented SQL-editor repair path, then close it as an admin. */
+const LEGACY = "99999999-9999-9999-9999-999999999999";
+sql("insert into auth.users (id,email) values ('" + LEGACY + "','legacy@example.com')", DB);
+asUser(LEGACY, "insert into public.profiles (id) values (auth.uid());", DB);
+asUser(OWNER,
+  "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
+  "values ('" + LEGACY + "','plan_1m',true,0);", DB);
+const legacyDrop = sql("alter table public.payment_requests drop constraint payment_requests_device_count_shape_chk", DB);
+const legacyMalformed = sql("update public.payment_requests set is_grant=false, device_count=3, " +
+  "pricing_mode=null, quoted_amount_mmk=null where user_id='" + LEGACY + "';", DB);
+const legacyFixture = sql("select kind||'|'||is_grant||'|'||device_count||'|'||" +
+  "coalesce(pricing_mode,'null')||'|'||coalesce(quoted_amount_mmk::text,'null') " +
+  "from public.payment_requests where user_id='" + LEGACY + "'", DB).out;
+const legacyReapply = file(SCHEMA, DB);
+const legacyApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + LEGACY + "' and status='pending';", DB);
+const legacyPending = sql("select status from public.payment_requests where user_id='" + LEGACY + "'", DB).out;
+const rejectedLegacy = asUser(OWNER,
+  "update public.payment_requests set status='rejected', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + LEGACY + "' and status='pending';", DB);
+const legacyState = sql("select status from public.payment_requests where user_id='" + LEGACY + "'", DB).out;
+const legacyEntitlement = sql("select joined_paid||'|'||allowed_devices from public.profiles " +
+  "where id='" + LEGACY + "'", DB).out;
+report("J4e) an unquotable legacy row can be rejected without granting entitlement",
+  legacyDrop.ok && legacyMalformed.ok &&
+  legacyFixture === "plan_1m|false|3|null|null" && legacyReapply.ok &&
+  !legacyApproval.ok && legacyPending === "pending" &&
+  rejectedLegacy.ok && legacyState === "rejected" && legacyEntitlement === "false|2",
+  { dropped: legacyDrop.ok, malformed: legacyMalformed.ok, fixture: legacyFixture,
+    reapplied: legacyReapply.ok, approval: legacyApproval.ok, beforeReject: legacyPending,
+    rejected: rejectedLegacy.ok,
+    status: legacyState, entitlement: legacyEntitlement });
+
+/* Prove the terminal state machine with a fully valid, already quoted row.
+   If rejected -> approved ever regresses, this grant would activate a month;
+   no unrelated shape/quote failure can make the test pass accidentally. */
+const replayFixture = asUser(OWNER,
+  "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
+  "values ('" + ATTACKER + "','plan_1m',true,0);", DB);
+const replayOriginalId = sql("select id from public.payment_requests " +
+  "where user_id='" + ATTACKER + "' and status='pending'", DB).out;
+const replayQuote = sql("select pricing_mode||'|'||quoted_amount_mmk from public.payment_requests " +
+  "where user_id='" + ATTACKER + "' and status='pending'", DB).out;
+const replayIdMutation = asUser(OWNER,
+  "update public.payment_requests set id='dededede-dede-dede-dede-dededededede', " +
+  "status='rejected', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + ATTACKER + "' and status='pending';", DB);
+const replayAfterIdMutation = sql("select id||'|'||status from public.payment_requests " +
+  "where user_id='" + ATTACKER + "'", DB).out;
+const replayReject = asUser(OWNER,
+  "update public.payment_requests set status='rejected', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + ATTACKER + "' and status='pending';", DB);
+const rejectedReplay = asUser(OWNER,
+  "update public.payment_requests set status='approved' where user_id='" + ATTACKER + "';", DB);
+const replayState = sql("select r.status||'|'||r.pricing_mode||'|'||r.quoted_amount_mmk||'|'||" +
+  "p.joined_paid||'|'||coalesce(p.plan_status,'none')||'|'||p.allowed_devices " +
+  "from public.payment_requests r join public.profiles p on p.id=r.user_id " +
+  "where r.user_id='" + ATTACKER + "'", DB).out;
+report("J4e2) a valid rejected payment cannot be replayed into entitlement",
+  replayFixture.ok && replayOriginalId.length === 36 && replayQuote === "grant|0" &&
+  !replayIdMutation.ok && replayAfterIdMutation === replayOriginalId + "|pending" && replayReject.ok &&
+  !rejectedReplay.ok && replayState === "rejected|grant|0|false|none|2",
+  { inserted: replayFixture.ok, quote: replayQuote, idMutation: replayIdMutation.ok,
+    afterIdMutation: replayAfterIdMutation, rejected: replayReject.ok,
+    replayAccepted: rejectedReplay.ok, state: replayState });
+
+/* A well-shaped pre-v5.42 renewal still cannot manufacture its own base
+   entitlement. It receives a current server quote during review, then the
+   entitlement trigger refuses it because tier/configured-fee accounts must
+   settle join_first first. */
+const LEGACY_RENEW = "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd";
+sql("insert into auth.users (id,email) values ('" + LEGACY_RENEW + "','legacy-renew@example.com')", DB);
+asUser(LEGACY_RENEW, "insert into public.profiles (id) values (auth.uid());", DB);
+asUser(OWNER,
+  "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
+  "values ('" + LEGACY_RENEW + "','plan_1m',true,0);", DB);
+const legacyRenewNullified = sql("update public.payment_requests set is_grant=false, amount_mmk=11000, " +
+  "pricing_mode=null, quoted_amount_mmk=null where user_id='" + LEGACY_RENEW + "'", DB);
+const legacyRenewApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + LEGACY_RENEW + "' and status='pending';", DB);
+const legacyRenewState = sql("select r.status||'|'||coalesce(r.pricing_mode,'null')||'|'||" +
+  "coalesce(r.quoted_amount_mmk::text,'null')||'|'||p.joined_paid||'|'||" +
+  "coalesce(p.plan_status,'none')||'|'||p.allowed_devices " +
+  "from public.payment_requests r join public.profiles p on p.id=r.user_id " +
+  "where r.user_id='" + LEGACY_RENEW + "'", DB).out;
+report("J4f) a legacy renewal cannot bypass a required first purchase",
+  legacyRenewNullified.ok && !legacyRenewApproval.ok &&
+  legacyRenewState === "pending|null|null|false|none|2",
+  { nullified: legacyRenewNullified.ok, approved: legacyRenewApproval.ok,
+    state: legacyRenewState });
+
+const LEGACY_VALID = "abababab-abab-abab-abab-abababababab";
+sql("insert into auth.users (id,email) values ('" + LEGACY_VALID + "','legacy-valid@example.com')", DB);
+asUser(LEGACY_VALID, "insert into public.profiles (id) values (auth.uid());", DB);
+asUser(LEGACY_VALID,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','919191',1003000,3);", DB);
+const legacyNullified = sql("update public.payment_requests set pricing_mode=null, quoted_amount_mmk=null " +
+  "where user_id='" + LEGACY_VALID + "' and status='pending'", DB);
+const legacyNullState = sql("select coalesce(pricing_mode,'null')||'|'||" +
+  "coalesce(quoted_amount_mmk::text,'null') from public.payment_requests " +
+  "where user_id='" + LEGACY_VALID + "'", DB).out;
+const legacyValidApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + LEGACY_VALID + "' and status='pending';", DB);
+const legacyValidState = sql("select r.status||'|'||r.pricing_mode||'|'||r.quoted_amount_mmk||'|'||" +
+  "p.joined_paid||'|'||p.allowed_devices from public.payment_requests r " +
+  "join public.profiles p on p.id=r.user_id where r.user_id='" + LEGACY_VALID + "'", DB).out;
+report("J4f2) a valid legacy tier join is quoted once at approval and applies exactly once",
+  legacyNullified.ok && legacyNullState === "null|null" && legacyValidApproval.ok &&
+  legacyValidState === "approved|tier|1003000|true|3",
+  { nullified: legacyNullified.ok, before: legacyNullState,
+    approved: legacyValidApproval.ok, state: legacyValidState });
+
+/* Two simultaneous first-purchase submissions must serialize on the profile
+   row. The second session starts only after the first has inserted its
+   uncommitted row and published an advisory marker; without FOR UPDATE both
+   pending rows commit because neither can see the other yet. */
+const PAY_MUTEX = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+const PAY_MUTEX_LOCK = 542102;
+sql("insert into auth.users (id,email) values ('" + PAY_MUTEX + "','pay-mutex@example.com')", DB);
+asUser(PAY_MUTEX, "insert into public.profiles (id) values (auth.uid());", DB);
+spawn("psql", ["-d", DB, "-v", "ON_ERROR_STOP=1", "-c",
+  "begin; set local role authenticated; set local request.jwt.claim.sub='" + PAY_MUTEX + "'; " +
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','929291',511000,1); " +
+  "select pg_advisory_lock(" + PAY_MUTEX_LOCK + "); select pg_sleep(1); commit;"],
+  { env: ENV, stdio: "ignore" });
+const payMutexReady = waitForAdvisory(PAY_MUTEX_LOCK, DB);
+const secondPendingJoin = asUser(PAY_MUTEX,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','929292',511000,1);", DB);
+waitForAdvisoryRelease(PAY_MUTEX_LOCK, DB);
+const pendingJoinCount = sql("select count(*) from public.payment_requests where user_id='" +
+  PAY_MUTEX + "' and kind='join_first' and status='pending'", DB).out;
+report("J4g) concurrent first-purchase submissions leave exactly one pending row",
+  payMutexReady && !secondPendingJoin.ok && pendingJoinCount === "1",
+  { marker: payMutexReady, secondAccepted: secondPendingJoin.ok, rows: pendingJoinCount });
+
+/* Cross-trigger race: a second registration is uncommitted while an admin
+   tries to approve a one-device bundle. Approval must wait on the SAME profile
+   mutex, then see both devices and remain pending without shrinking the cap. */
+const APPROVAL_RACE = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+const APPROVAL_RACE_LOCK = 542103;
+sql("insert into auth.users (id,email) values ('" + APPROVAL_RACE + "','approval-race@example.com')", DB);
+asUser(APPROVAL_RACE, "insert into public.profiles (id) values (auth.uid());", DB);
+asUser(APPROVAL_RACE,
+  "insert into public.devices (user_id,device_id,label) values (auth.uid(),'approval-a','A');", DB);
+asUser(APPROVAL_RACE,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','939393',511000,1);", DB);
+spawn("psql", ["-d", DB, "-v", "ON_ERROR_STOP=1", "-c",
+  "begin; set local role authenticated; set local request.jwt.claim.sub='" + APPROVAL_RACE + "'; " +
+  "insert into public.devices (user_id,device_id,label) values (auth.uid(),'approval-b','B'); " +
+  "select pg_advisory_lock(" + APPROVAL_RACE_LOCK + "); select pg_sleep(1); commit;"],
+  { env: ENV, stdio: "ignore" });
+const approvalRaceReady = waitForAdvisory(APPROVAL_RACE_LOCK, DB);
+const racedApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
+  "where user_id='" + APPROVAL_RACE + "' and status='pending';", DB);
+waitForAdvisoryRelease(APPROVAL_RACE_LOCK, DB);
+const approvalRaceState = sql("select r.status||'|'||p.joined_paid||'|'||p.allowed_devices||'|'||" +
+  "(select count(*) from public.devices d where d.user_id=p.id) " +
+  "from public.payment_requests r join public.profiles p on p.id=r.user_id " +
+  "where r.user_id='" + APPROVAL_RACE + "'", DB).out;
+report("J4h) registration racing a smaller bundle cannot leave devices above entitlement",
+  approvalRaceReady && !racedApproval.ok && approvalRaceState === "pending|false|2|2",
+  { marker: approvalRaceReady, approved: racedApproval.ok, state: approvalRaceState });
 
 /* cleanup — check N below counts rows in public.profiles and expects exactly
    the OWNER/CUST cast that predates this block; cascading through auth.users
    removes DEVBUYER/PLAINBUYER's profiles and payment_requests with them. */
-sql("delete from auth.users where id in ('" + DEVBUYER + "','" + PLAINBUYER + "');", DB);
+sql("delete from auth.users where id in ('" + DEVBUYER + "','" + PLAINBUYER + "','" +
+    QUOTEBUYER + "','" + ATTACKER + "','" + LEGACY + "','" + LEGACY_RENEW + "','" + LEGACY_VALID + "','" +
+    SMALLBUYER + "','" + PAY_MUTEX + "','" + APPROVAL_RACE + "');", DB);
 
 /* ---- K) the device cap ---- */
+const deviceCrossExisting = asUser(CUST,
+  "insert into public.devices (user_id,device_id,label) values ('" + OWNER + "','probe-a','A');", DB);
+const deviceCrossMissing = asUser(CUST,
+  "insert into public.devices (user_id,device_id,label) values ('" + UNKNOWN_ACCOUNT + "','probe-b','B');", DB);
+report("J5) forged cross-account device inserts expose neither victim cap nor existence",
+  !deviceCrossExisting.ok && !deviceCrossMissing.ok &&
+  /device user does not match authenticated caller/i.test(deviceCrossExisting.out) &&
+  /device user does not match authenticated caller/i.test(deviceCrossMissing.out),
+  { existing: deviceCrossExisting.out.split("\n")[0], missing: deviceCrossMissing.out.split("\n")[0] });
+
 asUser(CUST, "insert into public.devices (user_id,device_id,label) values (auth.uid(),'dev-a','A');", DB);
 asUser(CUST, "insert into public.devices (user_id,device_id,label) values (auth.uid(),'dev-b','B');", DB);
 const third_dev = asUser(CUST, "insert into public.devices (user_id,device_id,label) values (auth.uid(),'dev-c','C');", DB);
@@ -237,6 +683,33 @@ const again = asUser(CUST, "insert into public.devices (user_id,device_id,label)
 const devCount = sql("select count(*) from public.devices where user_id='" + CUST + "'", DB).out;
 report("L) re-registering an existing device at the cap is a silent no-op",
   again.ok && devCount === "2", { accepted: again.ok, devices: devCount, err: again.out.split("\n")[0] });
+
+/* Two sessions prove the profile row is a real per-account mutex, not merely a
+   sequential count check. Session A inserts one device and holds both the row
+   lock and a visible advisory marker; session B then attempts a distinct one.
+   Without the shared profile lock both see zero committed devices and the cap
+   of one ends with two rows. */
+const RACE = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+const RACE_LOCK = 542101;
+sql("insert into auth.users (id,email) values ('" + RACE + "','race@example.com')", DB);
+asUser(RACE, "insert into public.profiles (id) values (auth.uid());", DB);
+sql("update public.profiles set allowed_devices=1 where id='" + RACE + "'", DB);
+spawn("psql", ["-d", DB, "-v", "ON_ERROR_STOP=1", "-c",
+  "begin; set local role authenticated; set local request.jwt.claim.sub='" + RACE + "'; " +
+  "insert into public.devices (user_id,device_id,label) values (auth.uid(),'race-a','A'); " +
+  "select pg_advisory_lock(" + RACE_LOCK + "); select pg_sleep(2); commit;"],
+  { env: ENV, stdio: "ignore" });
+const raceReady = waitForAdvisory(RACE_LOCK, DB);
+const racedDevice = asUser(RACE,
+  "insert into public.devices (user_id,device_id,label) values (auth.uid(),'race-b','B');", DB);
+/* A session-level advisory lock survives COMMIT until psql disconnects. Taking
+   and releasing it here waits for session A to be fully visible before count. */
+waitForAdvisoryRelease(RACE_LOCK, DB);
+const racedCount = sql("select count(*) from public.devices where user_id='" + RACE + "'", DB).out;
+report("L2) concurrent distinct registrations cannot exceed a one-device cap",
+  raceReady && !racedDevice.ok && racedCount === "1",
+  { marker: raceReady, secondAccepted: racedDevice.ok, devices: racedCount });
+sql("delete from auth.users where id='" + RACE + "'", DB);
 
 /* ---- M) the bank details are readable by everyone and writable by nobody ---- */
 const anonRead = asAnon("select count(*) from public.app_settings;", DB);

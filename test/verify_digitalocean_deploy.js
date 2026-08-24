@@ -26,6 +26,13 @@ check('production app name is locked', /DO_APP_NAME:\s*hnk-ai-tools-3\b/.test(pr
 check('production host is locked', /DO_APP_HOST:\s*hnk-ai-tools-3-s4nnu\.ondigitalocean\.app\b/.test(productionWorkflow));
 check('production verifier cancels when a newer main release supersedes it', /group:\s*digitalocean-production[\s\S]*?cancel-in-progress:\s*true/.test(productionWorkflow));
 check('production verifies version plus exact landing and app HTML', productionWorkflow.includes('/app/version.json') && productionWorkflow.includes('sha256sum docs/index.html') && productionWorkflow.includes('sha256sum docs/app/index.html'));
+check('production gates on live API version, exact schema fingerprint, readiness and verified TLS',
+  productionWorkflow.includes('/api/health') &&
+  productionWorkflow.includes('sha256sum server/sql/schema.sql') &&
+  productionWorkflow.includes(".apiVersion // empty") &&
+  productionWorkflow.includes(".schemaFingerprint // empty") &&
+  productionWorkflow.includes('[ "$ACTUAL_READY" = "true" ]') &&
+  productionWorkflow.includes('[ "$ACTUAL_TLS" = "verified" ]'));
 check('production verification is cache-busted by commit SHA', productionWorkflow.includes('sha=${GITHUB_SHA}'));
 check('production live verification consumes the shared job deadline', productionWorkflow.includes('DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"') && !productionWorkflow.includes('DEADLINE=$((SECONDS + 1800))') && !productionWorkflow.includes('seq 1 120'));
 check('production workflow leaves headroom for its scripted diagnostic', /timeout-minutes:\s*35\b/.test(productionWorkflow));
@@ -36,6 +43,13 @@ check('staging manual dispatch is restricted to upgrade-safe-wave', stagingWorkf
 check('staging app name is locked', /DO_APP_NAME:\s*hnk-ai-tools-2\b/.test(stagingWorkflow));
 check('staging host is locked', /DO_APP_HOST:\s*hnk-ai-tools-2-gibhz\.ondigitalocean\.app\b/.test(stagingWorkflow));
 check('staging verifies version plus exact landing and app HTML', stagingWorkflow.includes('/app/version.json') && stagingWorkflow.includes('sha256sum docs/index.html') && stagingWorkflow.includes('sha256sum docs/app/index.html'));
+check('staging gates on live API version, exact schema fingerprint, readiness and verified TLS',
+  stagingWorkflow.includes('/api/health') &&
+  stagingWorkflow.includes('sha256sum server/sql/schema.sql') &&
+  stagingWorkflow.includes(".apiVersion // empty") &&
+  stagingWorkflow.includes(".schemaFingerprint // empty") &&
+  stagingWorkflow.includes('[ "$ACTUAL_READY" = "true" ]') &&
+  stagingWorkflow.includes('[ "$ACTUAL_TLS" = "verified" ]'));
 check('staging verification is cache-busted by commit SHA', stagingWorkflow.includes('sha=${GITHUB_SHA}'));
 check('staging live verification consumes the shared job deadline', stagingWorkflow.includes('DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"') && !stagingWorkflow.includes('DEADLINE=$((SECONDS + 1800))') && !stagingWorkflow.includes('seq 1 120'));
 check('staging workflow leaves headroom for its scripted diagnostic', /timeout-minutes:\s*35\b/.test(stagingWorkflow));

@@ -65,6 +65,9 @@ jobs:
           echo "$BODY"
           READY="$(printf '%s' "$BODY" | jq -r '.ready // false' 2>/dev/null || echo false)"
           SCHEMA="$(printf '%s' "$BODY" | jq -r '.schema // "null"' 2>/dev/null || echo null)"
+          API_VERSION="$(printf '%s' "$BODY" | jq -r '.apiVersion // "unknown"' 2>/dev/null || echo unknown)"
+          FINGERPRINT="$(printf '%s' "$BODY" | jq -r '.schemaFingerprint // "none"' 2>/dev/null || echo none)"
+          TLS="$(printf '%s' "$BODY" | jq -r '.tls // "unknown"' 2>/dev/null || echo unknown)"
           WHY="$(printf '%s' "$BODY" | jq -r '.error // "none reported"' 2>/dev/null || echo "unparseable")"
 
           {
@@ -75,10 +78,10 @@ jobs:
             echo '```'
             echo
             if [ "$READY" = "true" ]; then
-              echo "**Ready.** All four application tables exist; the API is serving normally."
+              echo "**Ready.** API \`${API_VERSION}\` applied schema \`${FINGERPRINT}\`; database TLS is \`${TLS}\`."
             else
-              echo "**Not ready.** \`schema\` is \`${SCHEMA}\` — \`4\` is the only ready state, and"
-              echo "\`null\` means the database was not reachable at all."
+              echo "**Not ready.** \`schema\` is \`${SCHEMA}\`, fingerprint is \`${FINGERPRINT}\`, and TLS is \`${TLS}\`."
+              echo "Ready requires all four tables plus this running build's exact applied-schema fingerprint."
               echo
               echo "Reason reported: \`${WHY}\`"
             fi

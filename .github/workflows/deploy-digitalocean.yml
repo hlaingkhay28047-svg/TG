@@ -126,19 +126,26 @@ jobs:
           EXPECTED_VERSION="$(jq -r '.v' docs/app/version.json)"
           EXPECTED_LANDING_SHA="$(sha256sum docs/index.html | awk '{print $1}')"
           EXPECTED_APP_SHA="$(sha256sum docs/app/index.html | awk '{print $1}')"
+          EXPECTED_SCHEMA_SHA="$(sha256sum server/sql/schema.sql | awk '{print $1}')"
           LANDING_FILE="$RUNNER_TEMP/production-index.html"
           APP_FILE="$RUNNER_TEMP/production-app-index.html"
+          HEALTH_FILE="$RUNNER_TEMP/production-health.json"
           DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"
           attempt=0
-          echo "Expecting HNK Web Studio ${EXPECTED_VERSION}, landing ${EXPECTED_LANDING_SHA}, and app ${EXPECTED_APP_SHA} on ${DO_APP_HOST}."
+          echo "Expecting Web/API ${EXPECTED_VERSION}, landing ${EXPECTED_LANDING_SHA}, app ${EXPECTED_APP_SHA}, and schema ${EXPECTED_SCHEMA_SHA} on ${DO_APP_HOST}."
           while [ "$(date +%s)" -lt "$DEADLINE_EPOCH" ]; do
             attempt=$((attempt + 1))
             VERSION_URL="https://${DO_APP_HOST}/app/version.json?sha=${GITHUB_SHA}&attempt=${attempt}"
             LANDING_URL="https://${DO_APP_HOST}/?sha=${GITHUB_SHA}&attempt=${attempt}"
             APP_URL="https://${DO_APP_HOST}/app/?sha=${GITHUB_SHA}&attempt=${attempt}"
+            HEALTH_URL="https://${DO_APP_HOST}/api/health?sha=${GITHUB_SHA}&attempt=${attempt}"
             ACTUAL_VERSION="$(curl -fsSL --max-time 5 -H 'Cache-Control: no-cache' "$VERSION_URL" 2>/dev/null | jq -r '.v // empty' 2>/dev/null || true)"
             ACTUAL_LANDING_SHA=""
             ACTUAL_APP_SHA=""
+            ACTUAL_API_VERSION=""
+            ACTUAL_SCHEMA_SHA=""
+            ACTUAL_READY="false"
+            ACTUAL_TLS=""
             if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$LANDING_URL" -o "$LANDING_FILE" 2>/dev/null; then
               ACTUAL_LANDING_SHA="$(sha256sum "$LANDING_FILE" | awk '{print $1}')"
             fi
@@ -147,15 +154,21 @@ jobs:
                 ACTUAL_APP_SHA="$(sha256sum "$APP_FILE" | awk '{print $1}')"
               fi
             fi
-            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ]; then
-              echo "Verified production version ${ACTUAL_VERSION} with exact landing and app HTML."
+            if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$HEALTH_URL" -o "$HEALTH_FILE" 2>/dev/null; then
+              ACTUAL_API_VERSION="$(jq -r '.apiVersion // empty' "$HEALTH_FILE" 2>/dev/null || true)"
+              ACTUAL_SCHEMA_SHA="$(jq -r '.schemaFingerprint // empty' "$HEALTH_FILE" 2>/dev/null || true)"
+              ACTUAL_READY="$(jq -r '.ready // false' "$HEALTH_FILE" 2>/dev/null || echo false)"
+              ACTUAL_TLS="$(jq -r '.tls // empty' "$HEALTH_FILE" 2>/dev/null || true)"
+            fi
+            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ] && [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] && [ "$ACTUAL_READY" = "true" ] && [ "$ACTUAL_TLS" = "verified" ]; then
+              echo "Verified production Web/API ${ACTUAL_VERSION}, exact static HTML, schema fingerprint, readiness, and verified database TLS."
               exit 0
             fi
-            echo "Attempt ${attempt}: version='${ACTUAL_VERSION:-unavailable}', landing='${ACTUAL_LANDING_SHA:-unavailable}', app='${ACTUAL_APP_SHA:-unavailable}'."
+            echo "Attempt ${attempt}: web='${ACTUAL_VERSION:-unavailable}', api='${ACTUAL_API_VERSION:-unavailable}', landing='${ACTUAL_LANDING_SHA:-unavailable}', app='${ACTUAL_APP_SHA:-unavailable}', schema='${ACTUAL_SCHEMA_SHA:0:12}', ready='${ACTUAL_READY}', tls='${ACTUAL_TLS:-unavailable}'."
             if [ $(( $(date +%s) + 15 )) -ge "$DEADLINE_EPOCH" ]; then
               break
             fi
             sleep 15
           done
-          echo "::error::Production did not publish version ${EXPECTED_VERSION}, landing SHA-256 ${EXPECTED_LANDING_SHA}, and app SHA-256 ${EXPECTED_APP_SHA} before the shared 33-minute job deadline. Check the hnk-ai-tools-3 GitHub source binding."
+          echo "::error::Production did not simultaneously publish Web/API ${EXPECTED_VERSION}, exact static files, schema SHA-256 ${EXPECTED_SCHEMA_SHA}, ready:true, and tls:verified before the shared 33-minute job deadline. Check the hnk-ai-tools-3 source and API bindings."
           exit 1

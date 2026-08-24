@@ -1,7 +1,7 @@
 "use strict";
 /* A PostgREST-compatible shim, deliberately narrow.
  *
- * The app makes twelve query shapes against four tables. This implements those
+ * The app makes a small, fixed set of query shapes against four tables. This implements those
  * shapes and refuses everything else, because the alternative — a general
  * translator from URL to SQL — is a much larger thing to get right and the app
  * has never needed it.
@@ -42,10 +42,12 @@ class RestError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-/* PostgREST spells a filter `column=eq.value`. Only eq is implemented: it is
-   the only operator the app uses, and an unrecognised one is refused rather
-   than ignored — silently dropping a filter would widen a query, which for
-   `user_id=eq.<me>` means returning everybody's rows. */
+/* PostgREST spells filters `column=eq.value` and `column=in.(a,b)`. The app's
+   only set-valued query is the admin profile lookup by primary-key UUID, so IN
+   is deliberately restricted to `id`, 100 non-empty values, and bound SQL
+   parameters. Every other operator is refused rather than ignored — silently
+   dropping a filter would widen a query, which for `user_id=eq.<me>` means
+   returning everybody's rows. */
 function parseQuery(params, cols) {
   const out = { select: "*", filters: [], order: null, limit: null };
   for (const [key, raw] of params) {
@@ -68,8 +70,21 @@ function parseQuery(params, cols) {
       if (!cols.has(key)) throw new RestError(400, "unknown column in filter: " + key);
       const dot = raw.indexOf(".");
       const op = dot < 0 ? "" : raw.slice(0, dot);
-      if (op !== "eq") throw new RestError(400, "unsupported operator: " + (op || raw));
-      out.filters.push({ col: key, value: raw.slice(dot + 1) });
+      if (op === "eq") {
+        out.filters.push({ col: key, op: "eq", value: raw.slice(dot + 1) });
+      } else if (op === "in" && key === "id") {
+        const payload = raw.slice(dot + 1);
+        if (payload[0] !== "(" || payload[payload.length - 1] !== ")") {
+          throw new RestError(400, "bad in filter");
+        }
+        const list = payload.slice(1, -1).split(",");
+        if (!list.length || list.length > 100 || list.some(v => !v || v.length > 200)) {
+          throw new RestError(400, "bad in filter");
+        }
+        out.filters.push({ col: key, op: "in", values: list });
+      } else {
+        throw new RestError(400, "unsupported operator: " + (op || raw));
+      }
     }
   }
   return out;
@@ -77,7 +92,14 @@ function parseQuery(params, cols) {
 
 function whereClause(filters, values) {
   if (!filters.length) return "";
-  const parts = filters.map(f => { values.push(f.value); return `"${f.col}" = $${values.length}`; });
+  const parts = filters.map(f => {
+    if (f.op === "in") {
+      const bound = f.values.map(v => { values.push(v); return "$" + values.length; });
+      return `"${f.col}" in (${bound.join(", ")})`;
+    }
+    values.push(f.value);
+    return `"${f.col}" = $${values.length}`;
+  });
   return " where " + parts.join(" and ");
 }
 

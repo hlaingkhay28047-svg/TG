@@ -16,6 +16,7 @@ const { verifyToken } = require("./lib/crypto");
 
 const PORT = Number(process.env.PORT || 8080);
 const MAX_BODY = Number(process.env.MAX_BODY_BYTES || 12 * 1024 * 1024);
+const API_VERSION = "5.42.1";
 
 /* The browser calls this from another origin, so CORS has to allow the headers
    accFetch sends. ALLOWED_ORIGIN should name the site in production; the
@@ -110,10 +111,10 @@ const server = http.createServer(async (req, res) => {
     const uid = uidFrom(req);
 
     /* /health answers without touching the database, so App Platform's health
-       check passes while the schema is still being applied. `schema` is filled
-       in separately and reports how many of the four application tables exist:
-       it is the only way, from outside, to tell a service that booted from a
-       service that booted AND migrated. 4 means ready. */
+       check passes while the schema is still being applied. `schema` reports
+       how many application tables exist, while schemaFingerprint proves this
+       running build successfully applied the exact tracked SQL. Both are
+       required: four stale or half-built tables are not ready. */
     if (pathname === "/health") {
       let schema = null;
       try {
@@ -128,7 +129,15 @@ const server = http.createServer(async (req, res) => {
            too, not only one that was never reachable. */
         require("./lib/migrate").setLastError(err && err.message);
       }
-      const body = { ok: true, schema: schema, ready: schema === 4 };
+      const migration = require("./lib/migrate");
+      const schemaFingerprint = migration.getAppliedSchemaFingerprint();
+      const body = {
+        ok: true,
+        apiVersion: API_VERSION,
+        schema: schema,
+        schemaFingerprint: schemaFingerprint,
+        ready: schema === 4 && !!schemaFingerprint && locked === null,
+      };
       /* Reported even when ready. Connecting to the database encrypted but
          UNVERIFIED because its certificate could not be parsed is precisely the
          kind of downgrade that is invisible until it matters, and `ready:true`
@@ -142,7 +151,7 @@ const server = http.createServer(async (req, res) => {
            as `getaddrinfo ENOTFOUND base`, which sends the reader hunting for a
            DNS problem; the binding itself is the answer. */
         const why = require("./lib/db").describeDatabaseUrl() ||
-                    require("./lib/migrate").getLastError();
+                    migration.getLastError();
         if (why) body.error = why;
       }
       return send(res, 200, body);
@@ -155,7 +164,7 @@ const server = http.createServer(async (req, res) => {
        App Platform rolls the deployment back, the previous build answers
        /health in its own shape, and the failure becomes invisible to anyone
        without the runtime logs. */
-    if (locked) {
+    if (locked || !require("./lib/migrate").getAppliedSchemaFingerprint()) {
       return send(res, 503, {
         error: "schema_incomplete",
         message: "The database schema did not finish applying. See /health.",

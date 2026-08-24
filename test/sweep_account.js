@@ -688,7 +688,7 @@ const SB_FIX = {
     const bad = [];
     let n = 0;
     const scan = () => {
-      const nodes = Array.from(document.querySelectorAll("#cardAccount button, #cardAccount .chip, #cardAccount input"))
+      const nodes = Array.from(document.querySelectorAll("#cardAccount button, #cardAccount .chip, #cardAccount input, #cardAccount select"))
         .concat(Array.from(document.querySelectorAll("#wizPay .wiz-nav .btn")));
       nodes.forEach(el => {
         if (el.offsetParent === null) return;            /* hidden controls have no touch target */
@@ -703,20 +703,55 @@ const SB_FIX = {
     /* signed in, with the pending card and the device-limit block on screen */
     acc.sess = { access: "ACC1", refresh: "REF1", exp: Math.floor(Date.now()/1000) + 3600, uid: "u" };
     acc.profile = { name: "Hla Hla", email: "a@b.c", created_at: "2025-01-15T00:00:00Z",
-                    plan_status: "active", plan_expires_at: new Date(Date.now() + 30 * 86400000).toISOString(), allowed_devices: 2 };
-    acc.settings = { price_1m: 15000, payment_instructions_my: "x" };
+                    plan_status: "active", plan_expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
+                    joined_paid: true, allowed_devices: 2 };
+    acc.settings = { price_1m: 15000, price_extra_device: 12000, payment_instructions_my: "x" };
     acc.devices = [{ id: "d1", device_id: "zz", label: "Android · Chrome" }];
     acc.requests = [{ id: "r1", kind: "plan_3m", txn_last6: "482913", status: "rejected",
                       created_at: "2026-08-01T00:00:00Z", note: "wrong amount" }];
+    acc.pending = null;
     accRender(); accRenderPay(); accRenderDevices(); accRenderRequests(); accShowDeviceLimit();
     ["accGrpAuth","accGrpPlan","accGrpBuy","accGrpDev","accGrpReq"].forEach(id => {
       document.getElementById(id).className = "grp open";
     });
     scan();
-    return { n, bad };
+    /* Keep the legacy signed-in coverage above, then expose the new tier
+       picker as a second visible state in the same touch-target sweep. */
+    acc.profile = { name: "Hla Hla", email: "a@b.c", created_at: "2025-01-15T00:00:00Z",
+                    plan_status: "none", plan_expires_at: null, joined_paid: false, allowed_devices: 2 };
+    acc.settings = { price_device_1: 511000, price_device_2: 819000, price_device_3: 1003000,
+                     price_device_4: 1207000, price_device_5: 1411000, price_device_step: 213000,
+                     price_1m: 15000, payment_instructions_my: "x" };
+    const picker = document.getElementById("payDeviceCount");
+    accPayKind = "join_first";
+    accPayDeviceCount = 1;
+    accRender(); accRenderPay();
+    scan();
+    const ps = getComputedStyle(picker), pr = picker.getBoundingClientRect();
+    return { n, bad, picker: { shown: picker.offsetParent !== null,
+      inp: picker.classList.contains("inp"), h: Math.round(pr.height),
+      font: parseFloat(ps.fontSize), left: Math.round(pr.left), right: Math.round(pr.right) } };
   });
-  report("15 44px targets: every VISIBLE button, chip and input inside #cardAccount — across the logged-out login form, the sign-up form, the signed-in view, the device list, the request list and the pending card — plus both #wizPay actions, clears a 44px touch target",
-    c15.n > 20 && c15.bad.length === 0, JSON.stringify(c15));
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.waitForTimeout(120);
+  const picker320 = await page.evaluate(() => {
+    const e = document.getElementById("payDeviceCount"), root = document.documentElement;
+    const oldDir = root.dir;
+    root.dir = "rtl";
+    const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+    const rtlMarginLeft = parseFloat(cs.marginLeft), rtlMarginRight = parseFloat(cs.marginRight);
+    root.dir = oldDir;
+    return { innerW: innerWidth, scrollW: document.scrollingElement.scrollWidth,
+      left: Math.round(r.left), right: Math.round(r.right), h: Math.round(r.height),
+      rtlMarginLeft, rtlMarginRight };
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  report("15 44px targets: every VISIBLE button, chip, input and select inside #cardAccount clears a 44px target; the tier picker uses the shared field style, 16px phone text and stays inside 320/390px",
+    c15.n > 20 && c15.bad.length === 0 && c15.picker.shown && c15.picker.inp &&
+    c15.picker.h >= 44 && c15.picker.font >= 16 && c15.picker.left >= 0 && c15.picker.right <= 390 &&
+    picker320.h >= 44 && picker320.left >= 0 && picker320.right <= picker320.innerW &&
+    picker320.scrollW <= picker320.innerW + 1 && picker320.rtlMarginRight >= 7 && picker320.rtlMarginLeft < 1,
+    JSON.stringify({ at390: c15, at320: picker320 }));
 
   await page.evaluate(() => { document.getElementById("wizPay").className = "wiz"; });
 
