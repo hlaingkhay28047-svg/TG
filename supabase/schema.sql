@@ -34,10 +34,12 @@
 --   payment_requests  id, user_id, kind, txn_last6, screenshot_path, status,
 --                     reviewed_at, reviewed_by, note, created_at,
 --                     amount_mmk, is_grant                              (v5.34)
+--                     device_count                                     (v5.41.0)
 --   app_settings      price_1m, price_3m, price_6m, price_extra_device,
 --                     payment_instructions_my (+ per-language variants),
 --                     price_join_first, join_first_months,
 --                     payment_qr_url, payment_phone                     (v5.34)
+--                     price_device_1..5, price_device_step              (v5.41.0)
 --   kind              plan_1m | plan_3m | plan_6m | extra_device | join_first
 --   status            pending | approved | rejected
 --   storage bucket    payment-proofs, private, objects at <uid>/<kind>-<ts>.<ext>
@@ -49,6 +51,20 @@
 --     price_1m           = 30000,    -- the default monthly rate
 --     payment_phone      = '09688200680',
 --     payment_qr_url     = 'https://<project>.supabase.co/storage/v1/object/public/<bucket>/kbzpay-qr.jpg';
+--
+-- DEVICE-TIERED LIFETIME PRICING is a separate opt-in on top of the above
+-- (v5.41.0). Setting price_device_1 switches the buy screen from the flat
+-- price_join_first to a per-device-count bundle; leaving it null changes
+-- nothing. price_1m/3m/6m then price PER DEVICE, multiplied by the account's
+-- own allowed_devices at renewal time — not a second setting to configure:
+--   update public.app_settings set
+--     price_device_1     = 500000,   -- lifetime, 1 device
+--     price_device_2     = 800000,   -- lifetime, 2 devices (a bundle rate, not 2x)
+--     price_device_3     = 1000000,
+--     price_device_4     = 1200000,
+--     price_device_5     = 1400000,
+--     price_device_step  = 200000,   -- each device beyond 5 costs this much more
+--     price_1m           = 10000;    -- PER DEVICE per month once tiers are set
 --
 --   -- one student on a different monthly rate:
 --   update public.profiles set price_1m_override = 10000 where email = 'student@example.com';
@@ -234,6 +250,12 @@ update public.profiles
 alter table public.payment_requests add column if not exists amount_mmk integer;
 alter table public.payment_requests add column if not exists is_grant boolean not null default false;
 
+-- v5.41.0 — how many devices THIS join_first purchase covers, when the owner
+-- has opted into device-tiered lifetime pricing (see price_device_1 below).
+-- Null everywhere else: a renewal's device count is the account's own
+-- allowed_devices, already on the profile, not a fresh choice per payment.
+alter table public.payment_requests add column if not exists device_count integer;
+
 -- A grant has no transfer and no slip, so the two columns that record them
 -- must accept their absence. If the table was created with them NOT NULL — the
 -- shape a payments-only design naturally produces — an admin's first VIP grant
@@ -381,6 +403,21 @@ alter table public.app_settings add column if not exists join_first_months integ
 -- place to put one. Upload it to a Supabase storage bucket and paste the URL.
 alter table public.app_settings add column if not exists payment_qr_url text;
 alter table public.app_settings add column if not exists payment_phone text;
+
+-- v5.41.0 — device-tiered lifetime pricing, OPT IN. price_device_1 is the
+-- first-purchase price for one device; price_device_2..5 are the TOTAL price
+-- for that many (a bundle rate, not price_device_1 multiplied — the owner's
+-- own numbers step unevenly: +300,000 for the second device, +200,000 each
+-- after). price_device_step prices every device beyond five, continuing that
+-- same +200,000 pattern. Every column defaults to null, which means nothing
+-- here has changed: the buy screen falls back to the flat price_join_first
+-- exactly as before until price_device_1 is set.
+alter table public.app_settings add column if not exists price_device_1 integer;
+alter table public.app_settings add column if not exists price_device_2 integer;
+alter table public.app_settings add column if not exists price_device_3 integer;
+alter table public.app_settings add column if not exists price_device_4 integer;
+alter table public.app_settings add column if not exists price_device_5 integer;
+alter table public.app_settings add column if not exists price_device_step integer;
 
 alter table public.app_settings enable row level security;
 
@@ -639,7 +676,15 @@ begin
            -- v5.34 — settling the joining fee is what clears it, and nothing
            -- else does. A plan_1m approval leaves joined_paid alone, so a
            -- customer cannot buy a cheap month to skip the joining fee.
-           joined_paid     = case when new.kind = 'join_first' then true else joined_paid end
+           joined_paid     = case when new.kind = 'join_first' then true else joined_paid end,
+           -- v5.41.0 — device-tiered lifetime pricing set how many devices
+           -- THIS purchase covers on device_count; a plain join_first with no
+           -- tiers configured never sends it, and coalescing onto the existing
+           -- value leaves allowed_devices exactly where it already was (the
+           -- profiles column default), unchanged from before this feature.
+           allowed_devices = case when new.kind = 'join_first' and new.device_count is not null
+                                   then greatest(1, new.device_count)
+                                   else allowed_devices end
      where id = new.user_id;
   elsif new.kind = 'extra_device' then
     update public.profiles

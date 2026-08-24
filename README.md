@@ -676,6 +676,36 @@ storage bucket and paste its URL above. Changing bank details is then a
 dashboard edit, not a release — and nothing about the account is left in git
 history, which cannot be revoked.
 
+### Device-tiered lifetime pricing (v5.41.0)
+
+A separate opt-in on top of everything above, for a "buy the license once,
+pay for hosting monthly" model. Setting `price_device_1` switches the buy
+screen from the flat `price_join_first` to a device-count picker with a
+tiered bundle price; leaving it unset changes nothing — the flow above keeps
+working exactly as documented. `price_1m`/`price_3m`/`price_6m` then price
+**per device**, multiplied by the account's own `allowed_devices` at renewal —
+not a second setting, the same columns already above:
+
+```sql
+update public.app_settings set
+  price_device_1     = 500000,   -- lifetime, 1 device
+  price_device_2     = 800000,   -- lifetime, 2 devices — a bundle rate, not price_device_1 x 2
+  price_device_3     = 1000000,
+  price_device_4     = 1200000,
+  price_device_5     = 1400000,
+  price_device_step  = 200000,   -- each device beyond 5 costs this much more (device 6 = 1,600,000, ...)
+  price_1m           = 10000;    -- PER DEVICE per month once tiers are set — 5 devices = 50,000/month
+```
+
+The device count a customer picks at their first purchase is recorded on
+that `payment_requests` row (`device_count`) and, once approved, becomes
+`profiles.allowed_devices` — the same column the two-device default and the
+device cap already use, so the cap, the device list and every renewal price
+read the real number with no second place to keep it in sync. A stale-plan
+lockout follows from the existing model unchanged: whatever the owner already
+does when a monthly renewal lapses is what happens here too, because this
+adds a price, not a new enforcement path.
+
 **A different rate for one customer** — this is how a training-course student
 pays less than a studio, with no second price list and no code change:
 
