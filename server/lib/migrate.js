@@ -24,7 +24,7 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { pool, describeDatabaseUrl } = require("./db");
+const { pool, describeDatabaseUrl, downgradeTlsAfter } = require("./db");
 
 /* platform.sql sits inside server/ and is always there. supabase/schema.sql
    does not — it belongs to the repository root, and App Platform builds from
@@ -73,6 +73,11 @@ async function migrate() {
   try {
     client = await pool.connect();
   } catch (err) {
+    /* A certificate that refuses the handshake will refuse it identically on
+       every retry, so the retry is only worth making after standing down from
+       verification. Done here rather than at the call site because this is the
+       one place that knows the attempt failed at connect time. */
+    downgradeTlsAfter(err);
     /* Marked so index.js can tell "never reached the database" — nothing
        applied, nothing half-done — from "applied something and it did not
        take", which must still stop the service. */

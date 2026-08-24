@@ -467,6 +467,40 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("S10) ...and that downgrade is recorded so /health can report it",
     /could not be parsed/.test(dbModule.getTlsNote() || ""), dbModule.getTlsNote());
 
+  /* ---- the failure PARSING cannot catch ----
+     A certificate can be perfectly well-formed and simply not this database's
+     CA. That refuses every connection forever and looks identical from outside,
+     so it can only be told apart at the moment the handshake fails. Verified
+     end to end against a real TLS PostgreSQL serving a chain signed by one root
+     while the service was given a different, entirely valid root: it connects,
+     and /health reports `unverified — ... (SELF_SIGNED_CERT_IN_CHAIN)`. That
+     rig needs a TLS-enabled server, which the CI postgres service is not, so
+     what runs here is the decision itself. */
+  const savedSsl = dbModule.pool.options.ssl;
+  dbModule.pool.options.ssl = { rejectUnauthorized: true };
+  const certErr = Object.assign(new Error("self-signed certificate in certificate chain"),
+    { code: "SELF_SIGNED_CERT_IN_CHAIN" });
+  report("S11) a certificate failure stands down from VERIFYING rather than from connecting",
+    dbModule.downgradeTlsAfter(certErr) === true &&
+    dbModule.pool.options.ssl.rejectUnauthorized === false,
+    dbModule.pool.options.ssl);
+  report("S12) ...and says so, naming the code, so the downgrade is never silent",
+    /SELF_SIGNED_CERT_IN_CHAIN/.test(dbModule.getTlsNote() || "") &&
+    /UNVERIFIED/.test(dbModule.getTlsNote() || ""), dbModule.getTlsNote());
+  report("S13) ...and does not downgrade again once already unverified",
+    dbModule.downgradeTlsAfter(certErr) === false);
+
+  dbModule.pool.options.ssl = { rejectUnauthorized: true };
+  const downErr = Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:5432"),
+    { code: "ECONNREFUSED" });
+  report("S14) a database that is merely DOWN is not a certificate problem and keeps verifying",
+    dbModule.downgradeTlsAfter(downErr) === false &&
+    dbModule.pool.options.ssl.rejectUnauthorized === true,
+    dbModule.pool.options.ssl);
+  report("S15) /health reports the TLS state in every case, not only the bad ones",
+    dbModule.tlsState() === "verified", dbModule.tlsState());
+  dbModule.pool.options.ssl = savedSsl;
+
   /* ============ a database that was not ready yet ============
      A DigitalOcean development database is created WITH the app and takes
      minutes to provision. One attempt was all there was, so a container that
