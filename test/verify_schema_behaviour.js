@@ -190,40 +190,140 @@ const plan = sql("select plan_status||'|'||(plan_expires_at between now()+interv
   "and now()+interval '32 days') from public.profiles where id='" + CUST + "'", DB).out;
 report("J) an admin approval extends the plan by one month", plan === "active|true", { plan });
 
-/* ---- J2) device-tiered join_first sets allowed_devices from device_count ----
-   Not the +1 extra_device gets — join_first's device_count is a NEW bundle
-   choosing how many devices this purchase covers, so the trigger has to READ
-   it rather than leave the profiles column default standing. */
+/* ---- J2) the database, not the browser, owns the device-tier quote ----
+
+   device_count is customer input: the REST endpoint accepts every live table
+   column and the app is a public HTML file. The database must therefore decide
+   whether tiers are active, whether the requested count has a configured price,
+   and what that price was at submission time. A later settings edit must not
+   rewrite the amount an admin is reviewing. */
 const DEVBUYER = "55555555-5555-5555-5555-555555555555";
 sql("insert into auth.users (id,email) values ('" + DEVBUYER + "','devbuyer@example.com')", DB);
 asUser(DEVBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+sql("update public.app_settings set price_join_first=480000, " +
+    "price_device_1=511000, price_device_2=819000, price_device_3=1003000, " +
+    "price_device_4=1207000, price_device_5=1411000, price_device_step=213000, " +
+    "price_extra_device=17000, price_1m=11000, price_3m=29000, price_6m=55000", DB);
 asUser(DEVBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
-  "values (auth.uid(),'join_first','654321',1000000,3);", DB);
+  "values (auth.uid(),'join_first','654321',1003000,3);", DB);
+const tierQuote = sql("select pricing_mode||'|'||quoted_amount_mmk||'|'||device_count " +
+  "from public.payment_requests where user_id='" + DEVBUYER + "'", DB).out;
+report("J2) a tiered request stores a server-authored mode, quote and bounded count",
+  tierQuote === "tier|1003000|3", { stored: tierQuote });
+
+/* A forged quote/mode is overwritten, never trusted. The customer may claim a
+   different amount sent — admins deliberately review mismatches — but cannot
+   rewrite what the configured product cost. */
+const QUOTEBUYER = "77777777-7777-7777-7777-777777777777";
+sql("insert into auth.users (id,email) values ('" + QUOTEBUYER + "','quote@example.com')", DB);
+asUser(QUOTEBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+const forgedQuote = asUser(QUOTEBUYER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count,pricing_mode,quoted_amount_mmk) " +
+  "values (auth.uid(),'join_first','777777',1,6,'flat',1);", DB);
+const storedQuote = sql("select pricing_mode||'|'||quoted_amount_mmk from public.payment_requests " +
+  "where user_id='" + QUOTEBUYER + "'", DB).out;
+report("J2b) customer-supplied quote fields are overwritten from authoritative settings",
+  forgedQuote.ok && storedQuote === "tier|1624000", { accepted: forgedQuote.ok, stored: storedQuote });
+
+/* The quote is a snapshot. Changing today's menu must not change yesterday's
+   pending request or the amount the approval queue compares against. */
+sql("update public.app_settings set price_device_3=1999000", DB);
+const stableQuote = sql("select quoted_amount_mmk from public.payment_requests " +
+  "where user_id='" + DEVBUYER + "'", DB).out;
+report("J2c) a pending request keeps its original server quote after prices change",
+  stableQuote === "1003000", { quote: stableQuote });
+
 asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where user_id='" + DEVBUYER + "' and status='pending';", DB);
 const tierDevCount = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
-report("J2) a device-tiered join_first sets allowed_devices from device_count, not the column default",
+report("J2d) approving the tiered bundle sets its exact device entitlement",
   tierDevCount === "3", { allowed_devices: tierDevCount });
 
-/* ...and a plain join_first that never sends device_count — every project not
-   using tiered pricing, and the shape this table had before this feature
-   existed — leaves allowed_devices exactly where it already was: the
-   profiles column default of 2 for a fresh row. */
+/* A tiered add-on is not a substitute for the base bundle. Once the bundle is
+   approved it increments exactly once, and a terminal row cannot be replayed
+   through rejected -> approved. */
+asUser(DEVBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'extra_device','333444',17000);", DB);
+asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+  "reviewed_by=auth.uid() where user_id='" + DEVBUYER + "' and kind='extra_device' and status='pending';", DB);
+const afterExtra = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
+const terminalFlip = asUser(OWNER, "update public.payment_requests set status='rejected' " +
+  "where user_id='" + DEVBUYER + "' and kind='extra_device' and status='approved';", DB);
+const afterReplay = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
+report("J2e) add-on approval increments once and terminal payment rows cannot be reopened",
+  afterExtra === "4" && !terminalFlip.ok && afterReplay === "4",
+  { afterExtra, flipAccepted: terminalFlip.ok, afterReplay });
+
+/* Tier-off is the backward-compatible mode: a plain join never carries a
+   count, stores the flat quote, and leaves the historical default cap alone. */
 const PLAINBUYER = "66666666-6666-6666-6666-666666666666";
 sql("insert into auth.users (id,email) values ('" + PLAINBUYER + "','plainbuyer@example.com')", DB);
 asUser(PLAINBUYER, "insert into public.profiles (id) values (auth.uid());", DB);
+sql("update public.app_settings set price_device_1=null, price_device_2=null, price_device_3=null, " +
+    "price_device_4=null, price_device_5=null, price_device_step=null, price_join_first=480000", DB);
 asUser(PLAINBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
-  "values (auth.uid(),'join_first','111222',500000);", DB);
+  "values (auth.uid(),'join_first','111222',480000);", DB);
+const flatQuote = sql("select pricing_mode||'|'||quoted_amount_mmk||'|'||coalesce(device_count::text,'null') " +
+  "from public.payment_requests where user_id='" + PLAINBUYER + "'", DB).out;
 asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where user_id='" + PLAINBUYER + "' and status='pending';", DB);
 const plainCount = sql("select allowed_devices from public.profiles where id='" + PLAINBUYER + "'", DB).out;
-report("J3) ...and a join_first with no device_count leaves allowed_devices at the unchanged default",
-  plainCount === "2", { allowed_devices: plainCount });
+report("J3) a flat legacy join stores the flat quote and preserves the existing device cap",
+  flatQuote === "flat|480000|null" && plainCount === "2",
+  { stored: flatQuote, allowed_devices: plainCount });
+
+/* ---- J4) adversarial REST shapes fail before they can become entitlement ---- */
+const ATTACKER = "88888888-8888-8888-8888-888888888888";
+sql("insert into auth.users (id,email) values ('" + ATTACKER + "','attacker@example.com')", DB);
+asUser(ATTACKER, "insert into public.profiles (id) values (auth.uid());", DB);
+
+const flatForgedCount = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800001',480000,100);", DB);
+report("J4) flat-price requests cannot smuggle an arbitrary device entitlement",
+  !flatForgedCount.ok, { accepted: flatForgedCount.ok, err: flatForgedCount.out.split("\n")[0] });
+
+sql("update public.app_settings set price_device_1=511000, price_device_2=null, " +
+    "price_device_3=1003000, price_device_4=1207000, price_device_5=1411000, price_device_step=213000", DB);
+const tierMissing = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'join_first','800002',511000);", DB);
+const tierZero = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800003',511000,0);", DB);
+const tierTooHigh = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800004',511000,11);", DB);
+const tierUnpriced = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'join_first','800005',511000,2);", DB);
+const wrongKind = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
+  "values (auth.uid(),'plan_1m','800006',11000,3);", DB);
+report("J4b) tier mode refuses missing, zero, over-limit, unpriced and non-join counts",
+  !tierMissing.ok && !tierZero.ok && !tierTooHigh.ok && !tierUnpriced.ok && !wrongKind.ok,
+  { missing:tierMissing.ok, zero:tierZero.ok, high:tierTooHigh.ok,
+    unpriced:tierUnpriced.ok, wrongKind:wrongKind.ok });
+
+/* A customer cannot buy a tier add-on first, then have a later absolute bundle
+   overwrite that paid slot. The database rejects the unsafe order; after a
+   valid base purchase, the same add-on path is available. */
+const extraBeforeJoin = asUser(ATTACKER,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+  "values (auth.uid(),'extra_device','800007',17000);", DB);
+report("J4c) a tier add-on cannot be filed before the base bundle",
+  !extraBeforeJoin.ok, { accepted: extraBeforeJoin.ok, err: extraBeforeJoin.out.split("\n")[0] });
+
+const badRows = sql("select count(*) from public.payment_requests where user_id='" + ATTACKER + "'", DB).out;
+const badEntitlement = sql("select allowed_devices from public.profiles where id='" + ATTACKER + "'", DB).out;
+report("J4d) refused payloads leave no request and no entitlement mutation",
+  badRows === "0" && badEntitlement === "2", { rows: badRows, allowed_devices: badEntitlement });
 
 /* cleanup — check N below counts rows in public.profiles and expects exactly
    the OWNER/CUST cast that predates this block; cascading through auth.users
    removes DEVBUYER/PLAINBUYER's profiles and payment_requests with them. */
-sql("delete from auth.users where id in ('" + DEVBUYER + "','" + PLAINBUYER + "');", DB);
+sql("delete from auth.users where id in ('" + DEVBUYER + "','" + PLAINBUYER + "','" +
+    QUOTEBUYER + "','" + ATTACKER + "');", DB);
 
 /* ---- K) the device cap ---- */
 asUser(CUST, "insert into public.devices (user_id,device_id,label) values (auth.uid(),'dev-a','A');", DB);
