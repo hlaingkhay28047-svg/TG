@@ -1,0 +1,1 @@
+PR #284 API liveness validation. Create test-only resources, verify, then restore the exact static-only staging spec.
