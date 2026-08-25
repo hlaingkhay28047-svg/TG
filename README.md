@@ -1074,6 +1074,18 @@ workflow does not create a second push deployment; the authenticated source
 binding remains the sole deployment driver. Manual force-rebuild stays an
 explicit recovery action.
 
+The historical staging app was created before `hnk-api` existed and therefore
+had only `hnk-web`; a source push can rebuild an existing component but cannot
+create a missing one. The staging workflow contains a one-time repair locked to
+release `5.42.2`. It starts with the downloaded live spec, preserves its fields
+and encrypted secrets, makes the implicit web `/` route explicit, adds only the
+documented basic `hnk-api` service (and the development PostgreSQL component
+only when no database exists), generates a runner-local signing key, and asks
+`doctl apps propose` to validate the change before updating. It then downloads
+the result again and requires the ordinary live-spec validator to see the key
+as encrypted. The repair is not present in the production workflow; later
+releases fail closed if the staging service is missing instead of rotating it.
+
 Both lanes use one shared 33-minute deadline and require all of these to match
 at once: the active API service's `source_commit_hash` equals the pushed commit,
 Web/API version matches, both static HTML SHA-256 values match the checkout,

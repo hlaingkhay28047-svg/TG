@@ -111,7 +111,66 @@ jobs:
           umask 077
           LIVE_SPEC="$RUNNER_TEMP/staging-live-spec.json"
           PATCHED_SPEC="$RUNNER_TEMP/staging-patched-spec.json"
+          BOOTSTRAP_SPEC="$RUNNER_TEMP/staging-bootstrap-spec.json"
+          JWT_SECRET_FILE="$RUNNER_TEMP/staging-bootstrap-jwt"
+          PROPOSAL_FILE="$RUNNER_TEMP/staging-bootstrap-proposal.txt"
+          ROUNDTRIP_SPEC="$RUNNER_TEMP/staging-bootstrap-roundtrip.json"
+          ROUNDTRIP_PATCHED_SPEC="$RUNNER_TEMP/staging-bootstrap-roundtrip-patched.json"
+          trap 'rm -f "$LIVE_SPEC" "$PATCHED_SPEC" "$BOOTSTRAP_SPEC" "$JWT_SECRET_FILE" "$PROPOSAL_FILE" "$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC"' EXIT
           doctl apps spec get "${{ steps.app.outputs.app_id }}" --format json > "$LIVE_SPEC"
+
+          # This staging app was created as a static-only app before hnk-api was
+          # added to the tracked spec. Source auto-deploy updates existing
+          # components; it does not create that missing service. Permit one
+          # tightly-scoped bootstrap for the 5.42.2 repair, then return forever
+          # to the normal encrypted-live-spec path below.
+          if jq -e '(.services == null) or ((.services | type) == "array" and (.services | length) == 0)' "$LIVE_SPEC" >/dev/null; then
+            EXPECTED_VERSION="$(jq -r '.v // empty' docs/app/version.json)"
+            if [ "$EXPECTED_VERSION" != "5.42.2" ]; then
+              echo "::error::The one-time static-only staging bootstrap is locked to Web/API 5.42.2, not ${EXPECTED_VERSION:-unknown}."
+              exit 1
+            fi
+            openssl rand -hex 64 > "$JWT_SECRET_FILE"
+            chmod 600 "$JWT_SECRET_FILE"
+            node .github/scripts/bootstrap_digitalocean_staging_spec.js \
+              "$LIVE_SPEC" "$BOOTSTRAP_SPEC" "$JWT_SECRET_FILE" \
+              "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
+              "$DO_REPO" "$DO_BRANCH" "$DO_APP_HOST"
+            if ! doctl apps propose \
+              --app "${{ steps.app.outputs.app_id }}" \
+              --spec "$BOOTSTRAP_SPEC" > "$PROPOSAL_FILE" 2>&1; then
+              echo "::error::DigitalOcean rejected the staging bootstrap proposal; no app update was attempted."
+              exit 1
+            fi
+            BOOTSTRAP_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))
+            if [ "$BOOTSTRAP_TIMEOUT_SECONDS" -le 0 ]; then
+              echo "::error::Not enough time remains to bootstrap and verify staging."
+              exit 1
+            fi
+            timeout --foreground --signal=TERM --kill-after=10s "${BOOTSTRAP_TIMEOUT_SECONDS}s" \
+              doctl apps update "${{ steps.app.outputs.app_id }}" \
+              --spec "$BOOTSTRAP_SPEC" \
+              --update-sources \
+              --wait \
+              --format ID,DefaultIngress,Updated
+
+            # Prove DigitalOcean stored the generated key as EV[...] and the
+            # resulting full spec now passes the ordinary production-strength
+            # validator before live verification is allowed to continue.
+            doctl apps spec get "${{ steps.app.outputs.app_id }}" --format json > "$ROUNDTRIP_SPEC"
+            node .github/scripts/patch_digitalocean_spec.js \
+              "$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC" \
+              "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
+              "$DO_REPO" "$DO_BRANCH"
+            if ! cmp -s <(jq -S . "$ROUNDTRIP_SPEC") <(jq -S . "$ROUNDTRIP_PATCHED_SPEC"); then
+              echo "::error::The bootstrapped staging spec did not retain the approved readiness/liveness paths."
+              exit 1
+            fi
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Bootstrapped and revalidated the missing staging API service."
+            exit 0
+          fi
+
           node .github/scripts/patch_digitalocean_spec.js \
             "$LIVE_SPEC" "$PATCHED_SPEC" "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
             "$DO_REPO" "$DO_BRANCH"

@@ -66,6 +66,9 @@ jobs:
       - name: Verify DigitalOcean live-spec patch is narrow and fail-closed
         run: node test/verify_digitalocean_spec_patch.js
 
+      - name: Verify DigitalOcean staging bootstrap is narrow and fail-closed
+        run: node test/verify_digitalocean_staging_bootstrap.js
+
       - name: Verify the API service end to end (real PostgreSQL)
         run: node test/verify_api_service.js
 

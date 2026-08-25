@@ -74,6 +74,27 @@ try {
     unchanged && good.parsed.services[0].health_check.failure_threshold === 9 &&
     good.parsed.services[0].envs[0].value === "EV[1:jwt-ciphertext]");
 
+  const appLevelJwt = fixture();
+  appLevelJwt.envs.push({
+    key: "JWT_SECRET", scope: "RUN_TIME", type: "SECRET", value: "EV[1:app-jwt-ciphertext]",
+  });
+  appLevelJwt.services[0].envs = appLevelJwt.services[0].envs
+    .filter(env => env.key !== "JWT_SECRET");
+  const goodAppJwt = invoke(appLevelJwt, "app-level-jwt");
+  report("one encrypted app-level JWT secret satisfies the service signing contract",
+    goodAppJwt.run.status === 0 &&
+    goodAppJwt.parsed.envs.find(env => env.key === "JWT_SECRET").value ===
+      "EV[1:app-jwt-ciphertext]", goodAppJwt.run.stderr);
+
+  const duplicateJwt = fixture();
+  duplicateJwt.envs.push({
+    key: "JWT_SECRET", scope: "RUN_TIME", type: "SECRET", value: "EV[1:duplicate-jwt]",
+  });
+  const badDuplicateJwt = invoke(duplicateJwt, "duplicate-jwt");
+  report("duplicate app-level and service-level JWT secrets fail closed",
+    badDuplicateJwt.run.status !== 0 && !fs.existsSync(badDuplicateJwt.output),
+    badDuplicateJwt.run.stderr);
+
   const plaintext = fixture();
   plaintext.services[0].envs[0].value = "plaintext-secret";
   const badSecret = invoke(plaintext, "plaintext");
