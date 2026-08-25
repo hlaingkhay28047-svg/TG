@@ -22,6 +22,8 @@ const os = require("os");
 
 const ROOT = path.join(__dirname, "..");
 const DB = "hnk_api_test";
+const RUNTIME_USER = "hnk_api_runtime";
+const RUNTIME_PASSWORD = "roleless-api-probe";
 const PORT = 8977;
 const EXPECTED_API_VERSION = JSON.parse(
   fs.readFileSync(path.join(ROOT, "docs", "app", "version.json"), "utf8")).v;
@@ -41,20 +43,56 @@ const ENV = Object.assign({}, process.env, {
   PGUSER: process.env.PGUSER || "postgres",
   PGPASSWORD: process.env.PGPASSWORD || "postgres",
 });
+const RUNTIME_ENV = Object.assign({}, ENV, {
+  PGUSER: RUNTIME_USER,
+  PGPASSWORD: RUNTIME_PASSWORD,
+});
 const psql = (sql, db) => execFileSync("psql",
   ["-d", db || "postgres", "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql],
   { env: ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
-const psqlFile = (file, db) => execFileSync("psql",
-  ["-d", db, "-v", "ON_ERROR_STOP=1", "-q", "-f", file],
-  { env: ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+const runtimePsql = (sql, db) => execFileSync("psql",
+  ["-d", db, "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql],
+  { env: RUNTIME_ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const runtimeUrl = db =>
+  `postgres://${encodeURIComponent(RUNTIME_USER)}:${encodeURIComponent(RUNTIME_PASSWORD)}` +
+  `@${ENV.PGHOST}:${ENV.PGPORT}/${db}`;
+const createRuntimeDatabase = db => {
+  psql(`drop database if exists ${db}`);
+  psql(`create database ${db} owner ${RUNTIME_USER}`);
+};
+const LOCAL_SERVICE_CONTEXT =
+  "select set_config('request.role', 'service_role', true), " +
+  "set_config('request.jwt.claim.sub', '', true), " +
+  "set_config('request.is_admin', 'false', true), " +
+  "set_config('request.user_email', '', true)";
+const SESSION_SERVICE_CONTEXT =
+  "select set_config('request.role', 'service_role', false), " +
+  "set_config('request.jwt.claim.sub', '', false), " +
+  "set_config('request.is_admin', 'false', false), " +
+  "set_config('request.user_email', '', false)";
+const runtimeServicePsql = (sql, db) =>
+  runtimePsql(`begin; ${LOCAL_SERVICE_CONTEXT}; ${sql}; commit`, db);
+const applyRuntimeSchema = db => execFileSync("psql", [
+  "-d", db, "-v", "ON_ERROR_STOP=1", "-q",
+  "-c", SESSION_SERVICE_CONTEXT,
+  "-f", path.join(ROOT, "server", "sql", "platform.sql"),
+  "-f", path.join(ROOT, "server", "sql", "schema.sql"),
+], { env: RUNTIME_ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
 /* ---- build a database ---- */
 try { psql("select 1"); } catch (e) {
   console.log("FAIL — a PostgreSQL server is reachable\n       :: " + String(e.message).split("\n")[0]);
   console.log("\nFAIL (1)"); process.exit(1);
 }
-psql(`drop database if exists ${DB}`);
-psql(`create database ${DB}`);
+for (const db of [DB, DB + "_partial", DB + "_late", DB + "_locked",
+  DB + "_packaged", DB + "_packaged_missing"]) {
+  psql(`drop database if exists ${db}`);
+}
+psql("drop role if exists anon, authenticated, service_role");
+psql(`drop role if exists ${RUNTIME_USER}`);
+psql(`create role ${RUNTIME_USER} login password '${RUNTIME_PASSWORD}' ` +
+  "nosuperuser nocreaterole nocreatedb noreplication nobypassrls");
+createRuntimeDatabase(DB);
 
 /* ---- boot the service against it ---- */
 /* The password belongs in the URL even though a local trust-auth server
@@ -63,10 +101,9 @@ psql(`create database ${DB}`);
    because the service container authenticates. psql-based checks did not catch
    it — they read PGPASSWORD from the environment, while the pg driver only sees
    what this string carries. */
-process.env.DATABASE_URL =
-  `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
-  `@${ENV.PGHOST}:${ENV.PGPORT}/${DB}`;
+process.env.DATABASE_URL = runtimeUrl(DB);
 process.env.PGSSLMODE = "disable";
+process.env.PG_POOL_MAX = "1";
 process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
 process.env.ALLOWED_ORIGIN = "https://example.test";
 /* The schema is built by the SERVICE'S OWN migration, not by psql here. That
@@ -91,6 +128,17 @@ async function call(method, p, { token, body, headers, raw } = {}) {
 }
 
 (async () => {
+  const dbRuntime = require(path.join(ROOT, "server", "lib", "db"));
+  const readRequestContext = async client => (await client.query(
+    "select coalesce(current_setting('request.role', true), '') as role, " +
+    "coalesce(current_setting('request.jwt.claim.sub', true), '') as uid, " +
+    "coalesce(current_setting('request.is_admin', true), '') as is_admin, " +
+    "coalesce(current_setting('request.user_email', true), '') as email"
+  )).rows[0];
+  const contextIsEmpty = context =>
+    context && context.role === "" && context.uid === "" &&
+    context.is_admin === "" && context.email === "";
+
   let migrated = null;
   try { await migrate(); } catch (err) { migrated = err.message; }
   const tables = psql("select count(*)::int from pg_tables where schemaname='public' " +
@@ -98,17 +146,49 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("the service migrates an EMPTY database to a working schema on boot",
     migrated === null && tables === "4", { error: migrated, tables });
 
+  const runtimeFlags = psql(
+    "select rolsuper::text||'|'||rolcreaterole::text||'|'||rolbypassrls::text " +
+    `from pg_roles where rolname='${RUNTIME_USER}'`);
+  const databaseOwner = psql(
+    `select pg_get_userbyid(datdba) from pg_database where datname='${DB}'`);
+  report("the database and migration are owned by one limited runtime login",
+    runtimeFlags === "false|false|false" && databaseOwner === RUNTIME_USER,
+    { runtimeFlags, databaseOwner });
+
+  const requestRoles = psql(
+    "select coalesce(string_agg(rolname, ',' order by rolname), '') from pg_roles " +
+    "where rolname in ('anon','authenticated','service_role')");
+  report("roleless migration does not require cluster-wide request roles",
+    requestRoles === "", { requestRoles });
+
+  const forcedTables = psql(
+    "select coalesce(string_agg(n.nspname||'.'||c.relname, ',' order by n.nspname,c.relname), '') " +
+    "from pg_class c join pg_namespace n on n.oid=c.relnamespace " +
+    "where (n.nspname,c.relname) in " +
+    "(('public','profiles'),('public','payment_requests'),('public','app_settings')," +
+    "('public','devices'),('storage','objects'),('auth','users'),('auth','refresh_tokens')) " +
+    "and c.relrowsecurity and c.relforcerowsecurity", DB);
+  const expectedForcedTables =
+    "auth.refresh_tokens,auth.users,public.app_settings,public.devices," +
+    "public.payment_requests,public.profiles,storage.objects";
+  report("all request and auth tables enforce RLS even for their runtime owner",
+    forcedTables === expectedForcedTables, { forcedTables });
+
   /* migrate() uses session-scoped timeouts, so its connection must be
      discarded instead of returning to the request pool. Reacquiring
      immediately is the deterministic regression: before the fix this was the
      same session and SHOW returned 5s / 2min instead of PostgreSQL defaults. */
-  const cleanClient = await require(path.join(ROOT, "server", "lib", "db")).pool.connect();
+  const cleanClient = await dbRuntime.pool.connect();
   const cleanLockTimeout = (await cleanClient.query("show lock_timeout")).rows[0].lock_timeout;
   const cleanStatementTimeout = (await cleanClient.query("show statement_timeout")).rows[0].statement_timeout;
+  const cleanContext = await readRequestContext(cleanClient);
   cleanClient.release();
   report("the migration's session timeouts never leak into payment/auth requests",
     cleanLockTimeout === "0" && cleanStatementTimeout === "0",
     { lockTimeout: cleanLockTimeout, statementTimeout: cleanStatementTimeout });
+  report("PG_POOL_MAX=1 makes context reuse deterministic and migration context is cleared",
+    dbRuntime.pool.options.max === 1 && contextIsEmpty(cleanContext),
+    { poolMax: dbRuntime.pool.options.max, context: cleanContext });
 
   await new Promise(r => server.listen(PORT, r));
 
@@ -166,7 +246,40 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     { status: r.status, row: r.json && r.json[0] });
 
   await call("POST", "/rest/v1/profiles", { token: ownerToken, body: { id: OWNER } });
-  psql(`update public.profiles set is_admin = true where id = '${OWNER}'`, DB);
+  runtimeServicePsql(`update public.profiles set is_admin = true where id = '${OWNER}'`, DB);
+
+  const serviceAuthRows = await dbRuntime.asService(client =>
+    client.query("select count(*)::int as n from auth.users"));
+  const customerAuthRows = await dbRuntime.asUser(CUST, client =>
+    client.query("select count(*)::int as n from auth.users"));
+  const anonAuthRows = await dbRuntime.asAnon(client =>
+    client.query("select count(*)::int as n from auth.users"));
+  report("auth rows are visible only inside the trusted service context",
+    serviceAuthRows.rows[0].n === 2 && customerAuthRows.rows[0].n === 0 &&
+    anonAuthRows.rows[0].n === 0,
+    { service: serviceAuthRows.rows[0].n, customer: customerAuthRows.rows[0].n,
+      anon: anonAuthRows.rows[0].n });
+
+  const rollbackMarker = "deliberate service-context rollback";
+  let rolledBack = false;
+  try {
+    await dbRuntime.asService(async client => {
+      await client.query("select 1 from auth.users limit 1");
+      throw new Error(rollbackMarker);
+    });
+  } catch (err) { rolledBack = err.message === rollbackMarker; }
+  const resetClient = await dbRuntime.pool.connect();
+  const resetContext = await readRequestContext(resetClient);
+  const resetVisibility = (await resetClient.query(
+    "select (select count(*)::int from public.profiles) as profiles, " +
+    "(select count(*)::int from auth.users) as auth_users"
+  )).rows[0];
+  resetClient.release();
+  report("one reused pool connection clears trusted context after commit and rollback",
+    dbRuntime.pool.options.max === 1 && rolledBack && contextIsEmpty(resetContext) &&
+    resetVisibility.profiles === 0 && resetVisibility.auth_users === 0,
+    { poolMax: dbRuntime.pool.options.max, rolledBack, context: resetContext,
+      contextlessRows: resetVisibility });
 
   /* ================= attacks ================= */
   r = await call("PATCH", "/rest/v1/profiles?id=eq." + CUST,
@@ -203,7 +316,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
 
   /* Keep this fixture in the historical flat/no-join-fee mode while giving the
      quote trigger an authoritative positive SKU price. */
-  psql("update public.app_settings set price_1m=30000", DB);
+  runtimeServicePsql("update public.app_settings set price_1m=30000", DB);
   const paymentCreated = await call("POST", "/rest/v1/payment_requests",
     { token: custToken, body: { user_id: CUST, kind: "plan_1m", txn_last6: "123456", amount_mmk: 30000 } });
   const PAYMENT_ID = psql(`select id from public.payment_requests where user_id='${CUST}'`, DB);
@@ -226,17 +339,20 @@ async function call(method, p, { token, body, headers, raw } = {}) {
 
   r = await call("GET", "/rest/v1/app_settings?select=*&limit=50");
   report("M) anon may read app_settings (the buy screen quotes prices signed out)",
-    r.status === 200 && Array.isArray(r.json), { status: r.status });
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 1,
+    { status: r.status, rows: Array.isArray(r.json) ? r.json.length : null });
 
   r = await call("PATCH", "/rest/v1/app_settings?price_1m=eq.30000", { body: { payment_phone: "09-ATTACKER" } });
   const phone = psql("select coalesce(payment_phone,'(null)') from public.app_settings", DB);
   report("N) anon cannot redirect the payment details",
-    r.status === 403 && phone === "(null)", { httpStatus: r.status, phone });
+    (r.status === 200 || r.status === 403) && phone === "(null)",
+    { httpStatus: r.status, phone });
 
   r = await call("PATCH", "/rest/v1/app_settings?price_1m=eq.30000", { token: custToken, body: { price_1m: 1 } });
   const price = psql("select coalesce(price_1m::text,'(null)') from public.app_settings", DB);
   report("O) a signed-in customer cannot rewrite prices either",
-    r.status === 403 && price === "30000", { httpStatus: r.status, price });
+    (r.status === 200 || r.status === 403) && price === "30000",
+    { httpStatus: r.status, price });
 
   /* ---- tokens ---- */
   /* A bad token must not authenticate. Whether that surfaces as 403 (the anon
@@ -253,6 +369,32 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     .signToken({ sub: OWNER }, "not-the-real-secret", 3600).token;
   r = await call("GET", "/rest/v1/profiles?select=*", { token: forged });
   report("Q) a token signed with the wrong secret grants nothing",
+    r.status !== 500 && !leaked(r), { status: r.status, body: r.json });
+
+  /* Signature-valid JWT fields still are attacker-controlled data. Only sub is
+     accepted from the verified token; role, admin state and email are derived
+     or fixed by db.js before any request query runs. */
+  const forgedTrustedClaims = require(path.join(ROOT, "server", "lib", "crypto"))
+    .signToken({ sub: CUST, role: "service_role", is_admin: true, email: owner.email },
+      process.env.JWT_SECRET, 3600).token;
+  r = await call("GET", "/rest/v1/profiles?select=*", { token: forgedTrustedClaims });
+  report("Q2) signed-but-forged service_role/is_admin claims cannot widen customer access",
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 1 && r.json[0].id === CUST,
+    { status: r.status, rows: r.json });
+
+  r = await call("PATCH", "/rest/v1/app_settings?price_1m=eq.30000",
+    { token: forgedTrustedClaims, body: { price_1m: 1 } });
+  const priceAfterForgedClaims = psql(
+    "select coalesce(price_1m::text,'(null)') from public.app_settings", DB);
+  report("Q3) signed-but-forged service_role/is_admin claims cannot rewrite settings",
+    (r.status === 200 || r.status === 403) && priceAfterForgedClaims === "30000",
+    { status: r.status, price: priceAfterForgedClaims });
+
+  const forgedClaimsWithoutSubject = require(path.join(ROOT, "server", "lib", "crypto"))
+    .signToken({ role: "service_role", is_admin: true, email: owner.email },
+      process.env.JWT_SECRET, 3600).token;
+  r = await call("GET", "/rest/v1/profiles?select=*", { token: forgedClaimsWithoutSubject });
+  report("Q4) signed service/admin claims without a valid subject authenticate nobody",
     r.status !== 500 && !leaked(r), { status: r.status, body: r.json });
 
   /* ---- injection through identifiers ---- */
@@ -459,15 +601,12 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      wrong shape makes `create table if not exists` a no-op and the statements
      after it fail, with platform.sql already applied. */
   const PARTIAL = DB + "_partial";
-  psql(`drop database if exists ${PARTIAL}`);
-  psql(`create database ${PARTIAL}`);
-  psql("create table public.profiles (id int); " +
-       "create table public.payment_requests (id int); " +
-       "create table public.app_settings (id int); " +
-       "create table public.devices (id int);", PARTIAL);
-  const partial = await bootChild(
-    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
-    `@${ENV.PGHOST}:${ENV.PGPORT}/${PARTIAL}`);
+  createRuntimeDatabase(PARTIAL);
+  runtimeServicePsql("create table public.profiles (id int); " +
+                     "create table public.payment_requests (id int); " +
+                     "create table public.app_settings (id int); " +
+                     "create table public.devices (id int);", PARTIAL);
+  const partial = await bootChild(runtimeUrl(PARTIAL));
   report("H10) a half-applied schema still boots, so the reason stays readable",
     !!partial.health && partial.health.ok === true && partial.health.schema === 4 &&
     partial.health.ready === false && partial.health.schemaFingerprint === null &&
@@ -658,14 +797,12 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      notice by itself. */
   const LATE = DB + "_late";
   psql(`drop database if exists ${LATE}`);
-  const late = await bootChild(
-    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
-    `@${ENV.PGHOST}:${ENV.PGPORT}/${LATE}`);
+  const late = await bootChild(runtimeUrl(LATE));
   report("H13) a database that does not exist yet still boots, and says so",
     !!late.health && late.health.ok === true && late.health.ready === false &&
     /does not exist/.test(late.health.error || ""), late.health);
 
-  psql(`create database ${LATE}`);
+  psql(`create database ${LATE} owner ${RUNTIME_USER}`);
   let recovered = null;
   for (let i = 0; i < 45 && !recovered; i++) {
     await new Promise(done => setTimeout(done, 1000));
@@ -686,13 +823,9 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      owning startup forever, liveness must keep answering, readiness must keep
      traffic on the old instance, and the retry must converge after release. */
   const LOCKED = DB + "_locked";
-  psql(`drop database if exists ${LOCKED}`);
-  psql(`create database ${LOCKED}`);
-  psqlFile(path.join(ROOT, "server", "sql", "platform.sql"), LOCKED);
-  psqlFile(path.join(ROOT, "server", "sql", "schema.sql"), LOCKED);
-  const lockedUrl =
-    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
-    `@${ENV.PGHOST}:${ENV.PGPORT}/${LOCKED}`;
+  createRuntimeDatabase(LOCKED);
+  applyRuntimeSchema(LOCKED);
+  const lockedUrl = runtimeUrl(LOCKED);
   const { Client } = require(path.join(ROOT, "server", "node_modules", "pg"));
   const locker = new Client({ connectionString: lockedUrl, ssl: false });
   await locker.connect();
@@ -747,11 +880,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   const PACKAGED = fs.mkdtempSync(path.join(os.tmpdir(), "hnk-packaged-"));
   fs.cpSync(path.join(ROOT, "server"), path.join(PACKAGED, "server"), { recursive: true });
   const PACKAGED_DB = DB + "_packaged";
-  psql(`drop database if exists ${PACKAGED_DB}`);
-  psql(`create database ${PACKAGED_DB}`);
-  const packaged = await bootChild(
-    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
-    `@${ENV.PGHOST}:${ENV.PGPORT}/${PACKAGED_DB}`,
+  createRuntimeDatabase(PACKAGED_DB);
+  const packaged = await bootChild(runtimeUrl(PACKAGED_DB),
     {}, path.join(PACKAGED, "server", "index.js"));
   report("H15) server/sql/schema.sql alone — no supabase/ sibling at all — still reaches ready:true",
     !!packaged.health && packaged.health.ready === true && packaged.health.schema === 4 &&
@@ -765,11 +895,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      resolution for a successful application migration and erase the reason. */
   fs.rmSync(path.join(PACKAGED, "server", "sql", "schema.sql"));
   const PACKAGED_MISSING_DB = DB + "_packaged_missing";
-  psql(`drop database if exists ${PACKAGED_MISSING_DB}`);
-  psql(`create database ${PACKAGED_MISSING_DB}`);
-  const packagedMissing = await bootChild(
-    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
-    `@${ENV.PGHOST}:${ENV.PGPORT}/${PACKAGED_MISSING_DB}`,
+  createRuntimeDatabase(PACKAGED_MISSING_DB);
+  const packagedMissing = await bootChild(runtimeUrl(PACKAGED_MISSING_DB),
     {}, path.join(PACKAGED, "server", "index.js"));
   report("H15b) a packaged server missing application schema stays not-ready and names the fault",
     !!packagedMissing.health && packagedMissing.health.ready === false &&
@@ -801,8 +928,9 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   fs.rmSync(PACKAGED, { recursive: true, force: true });
 
   server.close();
-  await require(path.join(ROOT, "server", "lib", "db")).pool.end();
+  await dbRuntime.pool.end();
   psql(`drop database if exists ${DB}`);
+  psql(`drop role if exists ${RUNTIME_USER}`);
   console.log("      (drives the real HTTP service against a real database — it cannot prove the owner has deployed it)");
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   process.exit(failures === 0 ? 0 : 1);

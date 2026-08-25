@@ -3,27 +3,24 @@
  *
  * WHY THIS MODULE HAS NO RAW QUERY FUNCTION. supabase/schema.sql decides who
  * may approve a payment, promote an admin or read another customer's rows, and
- * it decides it with row-level security keyed on auth.uid(). Those policies
- * only apply to the role the statement runs as. The service connects as the
- * database owner, and an owner BYPASSES row-level security — so a query issued
- * without first switching role would sail straight past every guard, silently
- * and with no error to notice.
+ * it decides it with row-level security keyed on auth.uid(). The service
+ * connects as the database owner, so every request table uses FORCE ROW LEVEL
+ * SECURITY and every transaction receives one fixed internal request mode.
  *
  * The defence is structural rather than remembered: nothing is exported that
- * can run a statement outside a transaction that has already set a role. Adding
- * a convenience "just run this" helper here would undo the entire model.
+ * can run a statement outside a transaction that has already set its context.
+ * Adding a convenience "just run this" helper here would undo the entire model.
  *
- * Owner bypass is not "fixed" with FORCE ROW LEVEL SECURITY on purpose. The
- * README's bootstrap — `update public.profiles set is_admin = true where
- * email = ...`, run by hand as the owner — is how the first admin can ever
- * exist, and section 6 of schema.sql deliberately steps aside for a caller with
- * no auth.uid() for exactly that reason. Forcing RLS would make the documented
- * first step impossible.
+ * The context values are not accepted from JWT claims, headers or request
+ * bodies. A verified token supplies only its UUID; admin state and email are
+ * read from the database under a short service context before the transaction
+ * is narrowed to authenticated. Transaction-local settings cannot leak through
+ * the pool after commit or rollback.
  */
 const crypto = require("crypto");
 const { Pool } = require("pg");
 
-const ROLES = new Set(["anon", "authenticated"]);
+const REQUEST_ROLES = new Set(["anon", "authenticated", "service_role"]);
 
 /* Which connection string to use, and — if none is usable — why not, in words.
  *
@@ -254,23 +251,46 @@ function tlsState() {
    or null when the configuration is fine. */
 const describeDatabaseUrl = () => RESOLVED.why;
 
-/* Run fn inside one transaction, as `role`, with auth.uid() answering `uid`.
+/* Set the request identity on one already-open transaction.
  *
- * SET LOCAL is what scopes both to the transaction, so a pooled connection
- * cannot leak one request's identity into the next. It is also why this must be
- * a transaction at all: outside one, SET LOCAL is a no-op that leaves the
- * caller as the owner with a null uid — which would not error, it would quietly
- * disable every policy. `set_config(..., true)` is the parameterised form of
- * SET LOCAL; the role cannot be parameterised, so it is checked against a fixed
- * set instead of interpolated from anything a request can influence.
+ * `set_config(..., true)` is the parameterised form of SET LOCAL. All four
+ * values reset at transaction end, including on an error. The request role is
+ * checked against fixed literals even though callers below never pass request
+ * input into it; keeping that invariant here makes a future call site fail
+ * closed instead of silently inventing a privileged mode.
  */
+async function setRequestContext(client, role, uid, isAdmin, email) {
+  if (!REQUEST_ROLES.has(role)) throw new Error("refusing an unknown request role: " + role);
+  await client.query(
+    "select set_config('request.role', $1, true), " +
+    "set_config('request.jwt.claim.sub', $2, true), " +
+    "set_config('request.is_admin', $3, true), " +
+    "set_config('request.user_email', $4, true)",
+    [role, uid || "", isAdmin ? "true" : "false", email || ""]);
+}
+
+/* Run fn inside one transaction as an anonymous or verified user. */
 async function asRole(role, uid, fn) {
-  if (!ROLES.has(role)) throw new Error("refusing to set an unknown role: " + role);
+  if (role !== "anon" && role !== "authenticated") {
+    throw new Error("refusing an unknown public request role: " + role);
+  }
   const client = await pool.connect();
   try {
     await client.query("begin");
-    await client.query("set local role " + role);
-    await client.query("select set_config('request.jwt.claim.sub', $1, true)", [uid || ""]);
+    if (role === "authenticated") {
+      /* FORCE RLS also applies to the table owner. Enter the one internal mode
+         that can read identity/admin rows, derive both from the verified uid,
+         then narrow the same transaction before running any request query. */
+      await setRequestContext(client, "service_role", uid, false, "");
+      const identity = await client.query(
+        "select email from auth.users where id = $1", [uid]);
+      const admin = await client.query(
+        "select 1 from public.profiles where id = $1 and is_admin is true for share", [uid]);
+      await setRequestContext(client, "authenticated", uid,
+        admin.rowCount === 1, identity.rows[0] && identity.rows[0].email);
+    } else {
+      await setRequestContext(client, "anon", null, false, "");
+    }
     const result = await fn(client);
     await client.query("commit");
     return result;
@@ -289,19 +309,19 @@ const asUser = (uid, fn) => asRole("authenticated", uid, fn);
    appset_read_all grants select to anon so the buy screen can quote prices. */
 const asAnon = fn => asRole("anon", null, fn);
 
-/* The auth tables, which no customer role may touch at all.
+/* The auth tables, which no public request mode may touch at all.
  *
- * This runs as the connecting owner with NO role switch, so it is the one path
- * that is not policy-checked. It is reserved for auth.users and
- * auth.refresh_tokens — creating an account, checking a password, issuing and
- * revoking tokens — none of which a customer may read. It must never be handed
- * a statement against public.*, because that is precisely the owner bypass this
- * module exists to prevent.
+ * This runs under the explicit internal service context. It is reserved for
+ * auth.users and auth.refresh_tokens — creating an account, checking a password,
+ * issuing and revoking tokens — none of which a customer may read. It must never
+ * be handed a statement against public.*: service policies intentionally allow
+ * the internal auth path through FORCE RLS as well.
  */
 async function asService(fn) {
   const client = await pool.connect();
   try {
     await client.query("begin");
+    await setRequestContext(client, "service_role", null, false, "");
     const result = await fn(client);
     await client.query("commit");
     return result;

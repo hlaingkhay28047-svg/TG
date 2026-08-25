@@ -200,20 +200,34 @@ create table if not exists public.devices (
 -- existing privilege is a no-op. app_settings is readable by anon on purpose —
 -- the buy screen quotes prices before anyone signs in — and writable by nobody,
 -- which section 4b explains at length.
-grant usage on schema public to anon, authenticated;
-grant select                         on public.app_settings     to anon, authenticated;
-grant select, insert, update         on public.profiles         to authenticated;
-grant select, insert, update         on public.payment_requests to authenticated;
-grant select, insert, update, delete on public.devices          to authenticated;
+-- Supabase supplies real anon/authenticated roles and still needs its table
+-- privileges. The roleless API has neither role and connects as the table
+-- owner, so every role-naming statement must be dynamic and conditional: even
+-- a static GRANT to a missing role aborts the migration before RLS exists.
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'anon')
+     and exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'grant usage on schema public to anon, authenticated';
+    execute 'grant select on public.app_settings to anon, authenticated';
+    execute 'grant select, insert, update on public.profiles to authenticated';
+    execute 'grant select, insert, update on public.payment_requests to authenticated';
+    execute 'grant select, insert, update, delete on public.devices to authenticated';
 
--- GRANT is additive. Supabase projects can already carry broad public-schema
--- defaults, so naming only the privileges above does not remove an inherited
--- anonymous write grant. Revoke it explicitly: otherwise an anon INSERT can
--- enter a SECURITY DEFINER BEFORE trigger (and read/lock a guessed account)
--- before RLS rejects the finished row. app_settings has no browser writer at
--- all; both public roles keep SELECT and lose every row-level write privilege.
-revoke insert, update, delete on public.profiles, public.payment_requests, public.devices from anon;
-revoke insert, update, delete on public.app_settings from anon, authenticated;
+    -- GRANT is additive. Remove inherited anonymous writes before a SECURITY
+    -- DEFINER BEFORE trigger can inspect a guessed account.
+    execute 'revoke insert, update, delete on public.profiles, public.payment_requests, public.devices from anon';
+    execute 'revoke insert, update, delete on public.app_settings from anon, authenticated';
+  end if;
+
+  -- New Supabase projects no longer expose new public tables automatically.
+  -- Keep the secret server role usable too; it is never shipped to the client
+  -- and Supabase gives it BYPASSRLS for trusted administrative operations.
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    execute 'grant usage on schema public to service_role';
+    execute 'grant select, insert, update, delete on public.profiles, public.payment_requests, public.app_settings, public.devices to service_role';
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- 1. columns the client reads
@@ -328,8 +342,55 @@ alter table public.payment_requests alter column txn_last6 drop not null;
 alter table public.payment_requests alter column screenshot_path drop not null;
 
 -- ---------------------------------------------------------------------------
--- 2. the admin test
+-- 2. request identity and the admin test
 --
+-- On Supabase, current_user is the role selected by PostgREST. On the
+-- roleless API, platform.sql's private marker switches this helper to the
+-- transaction-local mode set by db.js. Unknown or absent values are NULL and
+-- therefore fail every policy closed.
+create or replace function public.hnk_request_role()
+returns text
+language plpgsql
+stable
+set search_path = pg_catalog
+as $$
+declare
+  requested text;
+begin
+  if to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+    requested := nullif(current_setting('request.role', true), '');
+    if requested in ('anon', 'authenticated', 'service_role') then
+      return requested;
+    end if;
+    return null;
+  end if;
+
+  requested := current_user::text;
+  if requested in ('anon', 'authenticated', 'service_role') then
+    return requested;
+  end if;
+  -- A Supabase SQL-editor owner already has its platform-native RLS bypass.
+  -- Do not turn any other auxiliary role with a stray table grant into the
+  -- service identity merely because its name is unfamiliar.
+  return null;
+end;
+$$;
+
+-- Supabase's opt-in Data API defaults can remove automatic function EXECUTE
+-- grants. Policies call this helper as the request role, so make that dependency
+-- explicit while leaving every unrelated auxiliary role fail-closed.
+revoke all on function public.hnk_request_role() from public;
+do $$
+declare
+  wanted text;
+begin
+  foreach wanted in array array['anon', 'authenticated', 'service_role'] loop
+    if exists (select 1 from pg_roles where rolname = wanted) then
+      execute format('grant execute on function public.hnk_request_role() to %I', wanted);
+    end if;
+  end loop;
+end $$;
+
 -- SECURITY DEFINER on purpose. A policy on `profiles` that itself selects from
 -- `profiles` re-enters the same policy and Postgres raises
 -- "infinite recursion detected in policy for relation profiles". A definer
@@ -339,16 +400,33 @@ alter table public.payment_requests alter column screenshot_path drop not null;
 -- ---------------------------------------------------------------------------
 create or replace function public.hnk_is_admin()
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
-  select coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
+begin
+  -- FORCE RLS makes the owner subject to this same profiles policy. Querying
+  -- profiles here would recurse, so the roleless API supplies only the boolean
+  -- it derived from the database before narrowing the transaction to the user.
+  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+    return public.hnk_request_role() = 'authenticated'
+       and coalesce(pg_catalog.current_setting('request.is_admin', true) = 'true', false);
+  end if;
+
+  -- Supabase does not install the marker or FORCE owner RLS, so retain the
+  -- original authoritative lookup for direct browser-to-Supabase requests.
+  return coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
+end;
 $$;
 
 revoke all on function public.hnk_is_admin() from public;
-grant execute on function public.hnk_is_admin() to authenticated;
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'grant execute on function public.hnk_is_admin() to authenticated';
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- 3. profiles — a user sees only their own row; only an admin may move a plan
@@ -360,21 +438,30 @@ grant execute on function public.hnk_is_admin() to authenticated;
 -- ---------------------------------------------------------------------------
 alter table public.profiles enable row level security;
 
+drop policy if exists profiles_service_all on public.profiles;
+create policy profiles_service_all on public.profiles
+  for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+
 drop policy if exists profiles_select_own_or_admin on public.profiles;
 create policy profiles_select_own_or_admin on public.profiles
-  for select to authenticated
-  using (id = auth.uid() or public.hnk_is_admin());
+  for select to public
+  using (public.hnk_request_role() = 'authenticated'
+         and (id = auth.uid() or public.hnk_is_admin()));
 
 drop policy if exists profiles_update_own_or_admin on public.profiles;
 create policy profiles_update_own_or_admin on public.profiles
-  for update to authenticated
-  using (id = auth.uid() or public.hnk_is_admin())
-  with check (id = auth.uid() or public.hnk_is_admin());
+  for update to public
+  using (public.hnk_request_role() = 'authenticated'
+         and (id = auth.uid() or public.hnk_is_admin()))
+  with check (public.hnk_request_role() = 'authenticated'
+              and (id = auth.uid() or public.hnk_is_admin()));
 
 drop policy if exists profiles_insert_self on public.profiles;
 create policy profiles_insert_self on public.profiles
-  for insert to authenticated
-  with check (id = auth.uid());
+  for insert to public
+  with check (public.hnk_request_role() = 'authenticated' and id = auth.uid());
 
 -- ---------------------------------------------------------------------------
 -- 4. payment_requests — a user may raise one and read their own; ONLY an admin
@@ -382,11 +469,18 @@ create policy profiles_insert_self on public.profiles
 -- ---------------------------------------------------------------------------
 alter table public.payment_requests enable row level security;
 
+drop policy if exists payreq_service_all on public.payment_requests;
+create policy payreq_service_all on public.payment_requests
+  for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+
 drop policy if exists payreq_insert_own on public.payment_requests;
 create policy payreq_insert_own on public.payment_requests
-  for insert to authenticated
+  for insert to public
   with check (
-    user_id = auth.uid()
+    public.hnk_request_role() = 'authenticated'
+    and user_id = auth.uid()
     and kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')
     -- a customer never marks their own row a grant; that is the admin's word,
     -- and without this line anyone could file a free VIP period into the queue
@@ -423,9 +517,10 @@ create policy payreq_insert_own on public.payment_requests
 -- with the same audit trail, as every payment.
 drop policy if exists payreq_insert_admin_grant on public.payment_requests;
 create policy payreq_insert_admin_grant on public.payment_requests
-  for insert to authenticated
+  for insert to public
   with check (
-    public.hnk_is_admin()
+    public.hnk_request_role() = 'authenticated'
+    and public.hnk_is_admin()
     and is_grant = true
     and coalesce(amount_mmk, 0) = 0
     and device_count is null
@@ -435,14 +530,15 @@ create policy payreq_insert_admin_grant on public.payment_requests
 
 drop policy if exists payreq_select_own_or_admin on public.payment_requests;
 create policy payreq_select_own_or_admin on public.payment_requests
-  for select to authenticated
-  using (user_id = auth.uid() or public.hnk_is_admin());
+  for select to public
+  using (public.hnk_request_role() = 'authenticated'
+         and (user_id = auth.uid() or public.hnk_is_admin()));
 
 drop policy if exists payreq_update_admin_only on public.payment_requests;
 create policy payreq_update_admin_only on public.payment_requests
-  for update to authenticated
-  using (public.hnk_is_admin())
-  with check (public.hnk_is_admin());
+  for update to public
+  using (public.hnk_request_role() = 'authenticated' and public.hnk_is_admin())
+  with check (public.hnk_request_role() = 'authenticated' and public.hnk_is_admin());
 
 -- no delete policy: nobody deletes a payment record, including an admin.
 -- The audit trail is the point.
@@ -492,10 +588,16 @@ alter table public.app_settings add column if not exists price_device_step integ
 
 alter table public.app_settings enable row level security;
 
+drop policy if exists appset_service_all on public.app_settings;
+create policy appset_service_all on public.app_settings
+  for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+
 drop policy if exists appset_read_all on public.app_settings;
 create policy appset_read_all on public.app_settings
-  for select to anon, authenticated
-  using (true);
+  for select to public
+  using (public.hnk_request_role() in ('anon', 'authenticated'));
 
 -- ---------------------------------------------------------------------------
 -- 4c. server-authored payment quotes and immutable review transitions
@@ -588,7 +690,13 @@ begin
 end;
 $$;
 
-revoke all on function public.hnk_payment_quote(uuid,text,integer,boolean) from public, authenticated;
+revoke all on function public.hnk_payment_quote(uuid,text,integer,boolean) from public;
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'revoke all on function public.hnk_payment_quote(uuid,text,integer,boolean) from authenticated';
+  end if;
+end $$;
 
 create or replace function public.hnk_guard_payment_request()
 returns trigger
@@ -603,6 +711,11 @@ declare
   current_allowance integer;
   join_required boolean;
 begin
+  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null
+     and not coalesce(public.hnk_request_role() in ('authenticated', 'service_role'), false) then
+    raise exception 'authentication required' using errcode = '42501';
+  end if;
+
   if tg_op = 'INSERT' then
     -- BEFORE triggers run before RLS WITH CHECK. Refuse a forged user_id with
     -- one uniform answer before this definer function reads or locks a victim's
@@ -674,7 +787,11 @@ begin
   -- The SQL editor/service role may repair the commercial fields of a still-
   -- pending legacy row. It does not get a status-transition escape: approval
   -- remains subject to the same state machine and entitlement trigger.
-  if auth.uid() is null and old.status = 'pending' and new.status = 'pending' then
+  if ((pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null
+       and public.hnk_request_role() = 'service_role')
+      or (pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is null
+          and auth.uid() is null))
+     and old.status = 'pending' and new.status = 'pending' then
     return new;
   end if;
 
@@ -734,11 +851,19 @@ create trigger hnk_guard_payment_request
 -- ---------------------------------------------------------------------------
 alter table public.devices enable row level security;
 
+drop policy if exists devices_service_all on public.devices;
+create policy devices_service_all on public.devices
+  for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+
 drop policy if exists devices_all_own_or_admin on public.devices;
 create policy devices_all_own_or_admin on public.devices
-  for all to authenticated
-  using (user_id = auth.uid() or public.hnk_is_admin())
-  with check (user_id = auth.uid() or public.hnk_is_admin());
+  for all to public
+  using (public.hnk_request_role() = 'authenticated'
+         and (user_id = auth.uid() or public.hnk_is_admin()))
+  with check (public.hnk_request_role() = 'authenticated'
+              and (user_id = auth.uid() or public.hnk_is_admin()));
 
 -- ---------------------------------------------------------------------------
 -- 5b. the device cap, enforced where it cannot be edited out
@@ -770,6 +895,11 @@ declare
   used  integer;
   cap   integer;
 begin
+  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null
+     and not coalesce(public.hnk_request_role() in ('authenticated', 'service_role'), false) then
+    raise exception 'authentication required' using errcode = '42501';
+  end if;
+
   -- As with payment inserts, this definer trigger runs before RLS. Reject a
   -- forged user_id uniformly before taking a victim's lock or revealing their
   -- device count/cap; admins keep the documented cross-account management path.
@@ -853,18 +983,20 @@ security definer
 set search_path = public
 as $$
 begin
-  -- THE BOOTSTRAP ESCAPE, and without it this file is self-defeating.
-  -- auth.uid() is NULL whenever there is no JWT on the connection, which is
-  -- exactly the Supabase SQL editor, a migration, or anything else running as
-  -- the service role. Those callers already bypass RLS entirely, so refusing
-  -- them here buys nothing — and it cost everything: the very first admin has
-  -- to be created by an UPDATE run in the SQL editor, hnk_is_admin() returned
-  -- false there, and this trigger copied is_admin=false straight back over it.
-  -- The file's own instructions could never work: no admin could ever exist,
-  -- so no payment could ever be approved. An ordinary customer can never reach
-  -- this branch, because the UPDATE policy in section 3 is `to authenticated`
-  -- and an authenticated request always carries a uid.
-  if auth.uid() is null then
+  -- THE BOOTSTRAP ESCAPE, and without it this file is self-defeating. In
+  -- Supabase, auth.uid() is NULL in the SQL editor/service-owner connection,
+  -- which already bypasses RLS. In the roleless API the owner is FORCE-RLS
+  -- constrained, so only an explicit internal service context receives the
+  -- same ability. A missing/unknown context fails closed; an authenticated
+  -- customer always takes the guarded branch below.
+  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+    if public.hnk_request_role() = 'service_role' then
+      return new;
+    end if;
+    if public.hnk_request_role() is distinct from 'authenticated' then
+      raise exception 'authentication required' using errcode = '42501';
+    end if;
+  elsif auth.uid() is null then
     return new;
   end if;
   if public.hnk_is_admin() then
@@ -882,17 +1014,17 @@ begin
     new.price_3m_override         := null;
     new.price_6m_override         := null;
     new.price_join_first_override := null;
-    -- v5.37: identity, taken from the identity provider rather than from the
-    -- payload. NOT nulled: the trigger that creates a profiles row on signup
-    -- lives in the owner's Supabase project and NOT in this repository, so
-    -- blanking the column here rested on an assumption about code this file
-    -- cannot see -- and if that trigger ever runs with a non-null auth.uid(),
-    -- blanking it would leave every new customer with no email, which is the
-    -- field the approval queue shows as who filed a payment and the field
-    -- admGrant looks students up by. auth.users is the authority; coalesce
-    -- keeps the supplied value only in the impossible case where the lookup
-    -- finds nothing (profiles.id references auth.users.id).
-    new.email := coalesce((select u.email from auth.users u where u.id = new.id), new.email);
+    -- v5.37: identity comes from the identity provider rather than the payload.
+    -- Supabase can read auth.users here. In roleless mode db.js reads it while
+    -- briefly in the internal service context, then pins that trusted value in
+    -- request.user_email before narrowing the transaction to authenticated.
+    -- Coalesce preserves the supplied value only if that authoritative value is
+    -- unexpectedly absent (profiles.id still references auth.users.id).
+    if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+      new.email := coalesce(nullif(pg_catalog.current_setting('request.user_email', true), ''), new.email);
+    else
+      new.email := coalesce((select u.email from auth.users u where u.id = new.id), new.email);
+    end if;
     return new;
   end if;
   new.plan_status     := old.plan_status;
@@ -1115,20 +1247,42 @@ values ('payment-proofs', 'payment-proofs', false)
 on conflict (id) do update set public = false;
 
 drop policy if exists proofs_insert_own on storage.objects;
+drop policy if exists proofs_service_all on storage.objects;
+create policy proofs_service_all on storage.objects
+  for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+
 create policy proofs_insert_own on storage.objects
-  for insert to authenticated
+  for insert to public
   with check (
-    bucket_id = 'payment-proofs'
+    public.hnk_request_role() = 'authenticated'
+    and bucket_id = 'payment-proofs'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 drop policy if exists proofs_read_own_or_admin on storage.objects;
 create policy proofs_read_own_or_admin on storage.objects
-  for select to authenticated
+  for select to public
   using (
-    bucket_id = 'payment-proofs'
+    public.hnk_request_role() = 'authenticated'
+    and bucket_id = 'payment-proofs'
     and ((storage.foldername(name))[1] = auth.uid()::text or public.hnk_is_admin())
   );
+
+-- A plain PostgreSQL table owner bypasses RLS unless FORCE is set. Do that only
+-- for the roleless API marker: Supabase's trusted SQL editor/service-owner flow
+-- deliberately retains its platform-native bypass semantics.
+do $$
+begin
+  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+    alter table public.profiles force row level security;
+    alter table public.payment_requests force row level security;
+    alter table public.app_settings force row level security;
+    alter table public.devices force row level security;
+    alter table storage.objects force row level security;
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- 9. check it worked
