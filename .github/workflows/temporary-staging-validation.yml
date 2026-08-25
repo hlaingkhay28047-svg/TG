@@ -175,7 +175,7 @@ jobs:
           ' "$HEALTH_FILE" >/dev/null
 
           docker exec "$CONTAINER" sh -c \
-            'kill -TERM "$(head -n 1 /tmp/hnk-contained-pgdata/postmaster.pid)"'
+            'kill -KILL "$(head -n 1 /tmp/hnk-contained-pgdata/postmaster.pid)"'
           EXIT_CODE="$(timeout --foreground --signal=TERM --kill-after=5s 20s docker wait "$CONTAINER")"
           if [ "$EXIT_CODE" != "1" ]; then
             echo "::error::Contained staging supervisor did not fail closed after PostgreSQL stopped (exit $EXIT_CODE)."

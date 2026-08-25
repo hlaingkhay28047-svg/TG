@@ -86,7 +86,7 @@ try {
     "desired spec or an older active deployment cannot prove a pending API was replaced");
   report("contained image is built and failure-injected before any remote mutation",
     /Build and smoke-test the contained database image[\s\S]*docker build --pull[\s\S]*docker run --detach/.test(WORKFLOW) &&
-    /kill -TERM[\s\S]*docker wait/.test(WORKFLOW) &&
+    /kill -KILL[\s\S]*docker wait/.test(WORKFLOW) &&
     WORKFLOW.indexOf("Build and smoke-test the contained database image") <
       WORKFLOW.indexOf("Prepare and validate the temporary full spec"),
     "workflow must prove build, migrations, health and PostgreSQL-death supervision locally first");
