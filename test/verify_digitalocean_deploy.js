@@ -13,6 +13,10 @@ const productionSpec = read('.do/app.yaml');
 const stagingSpec = read('.do/staging.app.yaml');
 const apiServer = read('server/index.js');
 const migration = read('server/lib/migrate.js');
+const stagingSyncStart = stagingWorkflow.indexOf('        id: spec_sync');
+const stagingSyncEnd = stagingWorkflow.indexOf('\n      - name: Force staging deploy', stagingSyncStart);
+const stagingSync = stagingSyncStart >= 0 && stagingSyncEnd > stagingSyncStart
+  ? stagingWorkflow.slice(stagingSyncStart, stagingSyncEnd) : '';
 const failures = [];
 
 function check(label, ok) {
@@ -77,16 +81,62 @@ check('the static-only repair is staging-only, release-locked, and owner-only',
   stagingWorkflow.includes('openssl rand -hex 64 > "$JWT_SECRET_FILE"') &&
   stagingWorkflow.includes('chmod 600 "$JWT_SECRET_FILE"') &&
   !productionWorkflow.includes('bootstrap_digitalocean_staging_spec.js'));
-check('staging proposes the preserved bootstrap spec before its one bounded update',
-  stagingWorkflow.includes('doctl apps propose') &&
-  stagingWorkflow.includes('> "$PROPOSAL_FILE" 2>&1') &&
-  stagingWorkflow.indexOf('doctl apps propose') <
-    stagingWorkflow.indexOf('--spec "$BOOTSTRAP_SPEC"', stagingWorkflow.indexOf('doctl apps update')) &&
-  stagingWorkflow.includes('BOOTSTRAP_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))'));
+check('staging proposes a narrow liveness warmup before its bounded update',
+  stagingSync.includes('doctl apps propose') &&
+  stagingSync.includes('> "$PROPOSAL_FILE" 2>&1') &&
+  stagingSync.indexOf('doctl apps propose') <
+    stagingSync.indexOf('--spec "$WARMUP_SPEC"', stagingSync.indexOf('doctl apps update')) &&
+  stagingSync.includes('WARMUP_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 720 ))'));
 check('staging redownloads and validates encrypted state after bootstrapping',
-  occurrences(stagingWorkflow, 'doctl apps spec get') >= 2 &&
-  stagingWorkflow.includes('"$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC"') &&
-  stagingWorkflow.includes('cmp -s <(jq -S . "$ROUNDTRIP_SPEC") <(jq -S . "$ROUNDTRIP_PATCHED_SPEC")'));
+  occurrences(stagingSync, 'doctl apps spec get') >= 3 &&
+  stagingSync.includes('"$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC"') &&
+  stagingSync.includes('cmp -s <(jq -S . "$ROUNDTRIP_SPEC") <(jq -S . "$WARMUP_RESTORED_SPEC")') &&
+  stagingSync.includes('"$FINAL_SPEC" "$FINAL_PATCHED_SPEC"') &&
+  stagingSync.includes('cmp -s <(jq -S . "$FINAL_SPEC") <(jq -S . "$FINAL_PATCHED_SPEC")'));
+check('staging bootstraps and recovers an inactive API through the liveness probe',
+  stagingSync.includes('[ "$DESIRED_SERVICE_COUNT" -eq 0 ]') &&
+  stagingSync.includes('[ "$DESIRED_SERVICE_COUNT" -eq 1 ]') &&
+  stagingSync.includes('[ "$ACTIVE_SERVICE_COUNT" -eq 0 ]') &&
+  stagingSync.includes('[ "$ACTIVE_SERVICE_COUNT" -eq 1 ]') &&
+  stagingSync.includes('.active_deployment.services[]?') &&
+  stagingSync.includes('.health_check.http_path) = "/live"') &&
+  stagingSync.includes('WARMUP_RESTORED_SPEC') &&
+  stagingSync.includes('Refusing an ambiguous staging deployment state'));
+check('staging steady state requires desired and active readiness probes to agree',
+  stagingSync.includes('ACTIVE_READY_PATH') &&
+  stagingSync.includes('ACTIVE_LIVE_PATH') &&
+  stagingSync.includes('[ "$CURRENT_READY_PATH" = "/ready" ]') &&
+  stagingSync.includes('[ "$ACTIVE_READY_PATH" = "/ready" ]') &&
+  stagingSync.includes('[ "$ACTIVE_LIVE_PATH" = "/live" ]'));
+check('staging retries a persisted desired-ready but active-live promotion',
+  stagingSync.includes('[ "$ACTIVE_READY_PATH" = "/live" ]') &&
+  stagingSync.includes('Resuming the staged readiness promotion') &&
+  stagingSync.includes('The final active staging deployment did not retain /ready and /live.'));
+check('staging waits for the exact API and schema before enforcing readiness',
+  stagingSync.includes('Waiting for the warm API and database before enforcing /ready') &&
+  stagingSync.includes('EXPECTED_SCHEMA_SHA="$(sha256sum server/sql/schema.sql') &&
+  stagingSync.includes('[ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ]') &&
+  stagingSync.includes('[ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ]') &&
+  stagingSync.includes('[ "$ACTUAL_READY" = "true" ]') &&
+  stagingSync.includes('[ "$ACTUAL_TLS" = "verified" ]') &&
+  stagingSync.includes('Enforced /ready after the staging API reached the release contract.'));
+check('staging attests the warmup source before the readiness promotion',
+  stagingSync.indexOf('[ "$ACTIVE_SOURCE_SHA" != "$GITHUB_SHA" ]') >= 0 &&
+  stagingSync.indexOf('[ "$ACTIVE_SOURCE_SHA" != "$GITHUB_SHA" ]') <
+    stagingSync.indexOf('--spec "$ROUNDTRIP_PATCHED_SPEC"'));
+check('staging promotes readiness exactly once after the warmup health gate',
+  occurrences(stagingSync, '--spec "$ROUNDTRIP_PATCHED_SPEC"') === 2 &&
+  stagingSync.indexOf('Waiting for the warm API and database before enforcing /ready') <
+    stagingSync.indexOf('doctl apps spec get "$APP_ID" --format json > "$ROUNDTRIP_SPEC"') &&
+  stagingSync.indexOf('doctl apps spec get "$APP_ID" --format json > "$ROUNDTRIP_SPEC"') <
+    stagingSync.indexOf('--spec "$ROUNDTRIP_PATCHED_SPEC"') &&
+  stagingSync.indexOf('--spec "$ROUNDTRIP_PATCHED_SPEC"') <
+    stagingSync.indexOf('doctl apps spec get "$APP_ID" --format json > "$FINAL_SPEC"'));
+check('staging warmup diagnostics never print remote specs, health bodies, or runtime logs',
+  !stagingSync.includes('doctl apps logs') &&
+  !stagingSync.includes('cat "$HEALTH_FILE"') &&
+  !stagingSync.includes('cat "$LIVE_SPEC"') &&
+  !stagingSync.includes("'.error //"));
 check('bootstrap plaintext material is deleted before later workflow steps',
   stagingWorkflow.includes("trap 'rm -f") &&
   stagingWorkflow.includes('$JWT_SECRET_FILE') &&
@@ -94,11 +144,12 @@ check('bootstrap plaintext material is deleted before later workflow steps',
   stagingWorkflow.includes('$PROPOSAL_FILE'));
 
 const manualRecovery = "github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true'";
-check('forced-rebuild recovery is manual-only and still runs after probe synchronization',
+check('forced-rebuild recovery is manual-only and does not duplicate a two-phase repair',
   occurrences(productionWorkflow, manualRecovery) === 1 && occurrences(stagingWorkflow, manualRecovery) === 1 &&
-  [productionWorkflow, stagingWorkflow].every(workflow =>
-    workflow.indexOf(manualRecovery) < workflow.indexOf('apps create-deployment') &&
-    !workflow.includes("steps.spec_sync.outputs.changed != 'true'")));
+  productionWorkflow.indexOf(manualRecovery) < productionWorkflow.indexOf('apps create-deployment') &&
+  stagingWorkflow.indexOf(manualRecovery) < stagingWorkflow.indexOf('apps create-deployment') &&
+  !productionWorkflow.includes("steps.spec_sync.outputs.changed != 'true'") &&
+  stagingWorkflow.includes("steps.spec_sync.outputs.changed != 'true'"));
 check('manual release verification fails closed when its lane token is absent',
   productionWorkflow.includes("github.event_name == 'workflow_dispatch' && steps.auth.outputs.available != 'true'") &&
   stagingWorkflow.includes("github.event_name == 'workflow_dispatch' && steps.auth.outputs.available != 'true'"));
