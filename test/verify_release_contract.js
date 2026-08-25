@@ -48,6 +48,21 @@ const releaseDate = versionJson.released;
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
 const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
+function collectPublishedTextFiles(dir, out = []) {
+  fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) collectPublishedTextFiles(full, out);
+    else if (/\.(?:html?|js|mjs|json|xml|txt|md|css)$/i.test(entry.name)) out.push(full);
+  });
+  return out;
+}
+const publishedCcxReferences = collectPublishedTextFiles(path.join(ROOT, "docs")).flatMap(file => {
+  const source = fs.readFileSync(file, "utf8");
+  return [...source.matchAll(/[^\s"'<>]*\.ccx(?:[?#][^\s"'<>]*)?/gi)].map(match => ({
+    file: path.relative(ROOT, file).replace(/\\/g, "/"), value: match[0]
+  }));
+});
+
 const appVersion = (html.match(/var APP_VER\s*=\s*"([\d.]+)"/) || [])[1] || "";
 const apiVersion = (apiServer.match(/const API_VERSION\s*=\s*"([\d.]+)"/) || [])[1] || "";
 const cacheVersion = (sw.match(/var CACHE\s*=\s*"hnk-web-studio-v(\d+)-(\d+)-(\d+)"/) || []).slice(1).join(".");
@@ -77,6 +92,11 @@ function effectiveLocaleValue(key, language) {
 const languageClaims = languageCodes.map(language => effectiveLocaleValue("duo1.li4", language));
 const privacyClaims = languageCodes.map(language => effectiveLocaleValue("key.body", language));
 const dateClaims = languageCodes.map(language => effectiveLocaleValue("badge.updated", language));
+const panelAcquisitionKeys = ["hero.cta2", "s5.dl", "step.1", "s5.dlacct"];
+const panelAcquisitionClaims = languageCodes.flatMap(language =>
+  panelAcquisitionKeys.map(key => ({ language, key, value: effectiveLocaleValue(key, language) })));
+const panelOverlayCodes = Object.keys(localeContext.PANEL_ACQ_L || {}).sort();
+const expectedPanelOverlayCodes = Object.keys(localeContext.SITE_L || {}).sort();
 
 const appLocaleStart = html.indexOf('var LANG = "my";');
 const appLocaleEnd = html.indexOf("function L9(o){", appLocaleStart);
@@ -154,6 +174,14 @@ check("fully translated app locales do not fall back to an English privacy note"
 check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
 check("the release date is sourced from version.json", /^\d{4}-\d{2}-\d{2}$/.test(releaseDate || ""), releaseDate || "missing released date");
+check("every landing locale carries current Account Center acquisition copy",
+  panelAcquisitionClaims.length === languageCodes.length * panelAcquisitionKeys.length &&
+  panelAcquisitionClaims.every(claim => typeof claim.value === "string" && claim.value.trim() && !/\b(?:35|88)\s*MB\b/i.test(claim.value)) &&
+  JSON.stringify(panelOverlayCodes) === JSON.stringify(expectedPanelOverlayCodes) &&
+  panelOverlayCodes.every(code => panelAcquisitionKeys.every(key =>
+    typeof localeContext.PANEL_ACQ_L[code][key] === "string" && localeContext.PANEL_ACQ_L[code][key].trim())),
+  panelAcquisitionClaims.filter(claim => !claim.value || /\b(?:35|88)\s*MB\b/i.test(claim.value))
+    .map(claim => `${claim.language}.${claim.key}`).join(", ") || "missing claims");
 /* Inventory copy is DERIVED, never typed. The literal list that used to live
    here pinned "One-Tap 131" and passed for seven waves while the app rendered
    138 — a test can only certify a number it does not itself invent. The app's
@@ -221,11 +249,11 @@ check("app canonical, social-image, and share fields use the exact production or
     `var APP_URL = "${productionBase}/app/";`
   ].every(value => html.includes(value)),
   "app canonical, Open Graph, Twitter, or share URL drifted");
-check("structured metadata uses exact production app and download URLs",
+check("structured metadata sends panel acquisition through the account center",
   webAppSchema.url === `${productionBase}/app/` &&
-  panelSchema.url === `${productionBase}/#panel` &&
-  panelSchema.downloadUrl === `${productionBase}/download/HNK_Ai_Panel_v${panelVersion}.ccx`,
-  "JSON-LD app, panel, or download URL drifted");
+  panelSchema.url === `${productionBase}/app/?panel=download` &&
+  !("downloadUrl" in panelSchema),
+  "JSON-LD exposes a public panel download instead of the account center");
 check("Telegram and Facebook share the exact production homepage",
   landing.includes(`https://t.me/share/url?url=${encodedProductionHome}&amp;text=`) &&
   landing.includes(`https://www.facebook.com/sharer/sharer.php?u=${encodedProductionHome}`),
@@ -260,14 +288,13 @@ check("the retired GitHub Pages host appears nowhere inside the panel",
    started a 35MB Photoshop-plugin download instead of opening the web app. The
    whole suite stayed green, because every landing assertion in it reads TEXT.
 
-   Neither list below names a URL. The Web-Studio CTAs must resolve to the app,
-   and every download must be the .ccx that panel-version.json currently names —
-   so a version bump that misses a link, or another careless replace, is red
-   here rather than live. */
+   The explicit route contracts below keep Web Studio CTAs on the app and send
+   Panel acquisition through Account Center. Any public installer href or
+   download attribute is red here rather than live. */
 const anchors = [...landing.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(m => ({
   attrs: m[1],
   href: (m[1].match(/\bhref="([^"]*)"/) || [])[1] || "",
-  download: /\bdownload\b(?![-\w])/.test(m[1]),
+  download: /(?:^|\s)download(?:\s|=|$)/.test(m[1]),
   key: (m[2].match(/data-i18n="([^"]+)"/) || [])[1] || "",
 }));
 const webStudioCtaKeys = ["nav.cta", "hero.cta1", "s4.cta", "duo1.cta"];
@@ -280,11 +307,17 @@ check("every Web Studio call to action opens the web app",
     : `found ${ctaAnchors.length} of ${webStudioCtaKeys.length} CTAs`);
 
 const expectedCcx = `download/HNK_Ai_Panel_v${panelVersion}.ccx`;
-const downloads = anchors.filter(a => a.download);
-const wrongDownloads = downloads.filter(a => a.href !== expectedCcx).map(a => `${a.key || "(no key)"} -> ${a.href}`);
-check("every download link on the landing is the published panel archive",
-  downloads.length > 0 && wrongDownloads.length === 0,
-  wrongDownloads.length ? wrongDownloads.join("; ") : `${downloads.length} download link(s), all ${expectedCcx}`);
+const panelAccountHref = "app/?panel=download";
+const panelCtaKeys = ["hero.cta2", "s5.dl"];
+const panelCtas = anchors.filter(a => panelCtaKeys.includes(a.key));
+const publicPanelLeaks = anchors.filter(a => a.download || /\.ccx(?:$|[?#])/i.test(a.href));
+check("public Panel calls to action open the Account Center",
+  panelCtas.length === panelCtaKeys.length &&
+  panelCtas.every(a => a.href === panelAccountHref && !a.download),
+  panelCtas.map(a => `${a.key} -> ${a.href}${a.download ? " [download]" : ""}`).join("; "));
+check("the landing page exposes no direct installer link",
+  publicPanelLeaks.length === 0,
+  publicPanelLeaks.map(a => `${a.key || "(no key)"} -> ${a.href}`).join("; ") || "none");
 
 /* the sticky CTA is cloned in JS, so its destination lives in a string literal
    rather than in the markup the two checks above can see */
@@ -315,7 +348,22 @@ check("temporary deployment probes are not published",
   !fs.existsSync(path.join(ROOT, "docs/.deploy-ts")) &&
   !fs.existsSync(path.join(ROOT, "docs/autolive-verify-20260817-0935.json")),
   `unexpected dotfiles: ${unexpectedDocsDotfiles.join(", ") || "none"}; probes: ${unexpectedProbeFiles.join(", ") || "none"}`);
-check("the web app downloads the published Photoshop panel", html.includes(`HNK_Ai_Panel_v${panelVersion}.ccx`) && html.includes(`CCX Download (v${panelVersion})`), `panel ${panelVersion}`);
+const accountCardStart = html.indexOf('<section class="card" id="cardAccount">');
+const accountCardEnd = html.indexOf("</section>", accountCardStart);
+const accountCard = accountCardStart >= 0 && accountCardEnd > accountCardStart
+  ? html.slice(accountCardStart, accountCardEnd)
+  : "";
+const ccxHref = `../${expectedCcx}`;
+const ccxHrefCount = html.split(`href="${ccxHref}"`).length - 1;
+check("the published Photoshop panel download lives only in the Account Center",
+  ccxHrefCount === 1 && accountCard.includes(`id="accGrpPanel"`) &&
+  accountCard.includes(`id="accPanelDownload"`) && accountCard.includes(`href="${ccxHref}"`) &&
+  /accGrpPanel[\s\S]{0,2500}?isPremium\(\)/.test(html),
+  `panel ${panelVersion}; links ${ccxHrefCount}; account group ${accountCard.includes('id="accGrpPanel"')}`);
+check("no other published page or script exposes an installer reference",
+  publishedCcxReferences.length === 1 && publishedCcxReferences[0].file === "docs/app/index.html" &&
+  publishedCcxReferences[0].value === ccxHref,
+  publishedCcxReferences.map(ref => `${ref.file}: ${ref.value}`).join("; ") || "no Account Center installer reference");
 check("the published Photoshop panel archive is valid and versioned", panelArtifactOk, panelArtifactDetail);
 
 check("GitHub Actions checkout is pinned to reviewed v7.0.1", checkoutSha === "3d3c42e5aac5ba805825da76410c181273ba90b1", checkoutSha || "missing full commit SHA");
