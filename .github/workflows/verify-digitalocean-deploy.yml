@@ -2,22 +2,32 @@ name: Verify DigitalOcean Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, upgrade-safe-wave]
     paths:
       - '.do/app.yaml'
       - '.do/staging.app.yaml'
       - '.github/workflows/deploy-digitalocean.yml'
       - '.github/workflows/deploy-digitalocean-staging.yml'
+      - '.github/workflows/read-production-health.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
+      - '.github/scripts/patch_digitalocean_spec.js'
+      - 'server/index.js'
+      - 'server/lib/migrate.js'
       - 'test/verify_digitalocean_deploy.js'
+      - 'test/verify_digitalocean_spec_patch.js'
   pull_request:
     paths:
       - '.do/app.yaml'
       - '.do/staging.app.yaml'
       - '.github/workflows/deploy-digitalocean.yml'
       - '.github/workflows/deploy-digitalocean-staging.yml'
+      - '.github/workflows/read-production-health.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
+      - '.github/scripts/patch_digitalocean_spec.js'
+      - 'server/index.js'
+      - 'server/lib/migrate.js'
       - 'test/verify_digitalocean_deploy.js'
+      - 'test/verify_digitalocean_spec_patch.js'
 
 permissions:
   contents: read
@@ -35,3 +45,4 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: node test/verify_digitalocean_deploy.js
+      - run: node test/verify_digitalocean_spec_patch.js

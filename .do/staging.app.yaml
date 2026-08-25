@@ -33,7 +33,9 @@ services:
     routes:
       - path: /api
     health_check:
-      http_path: /health
+      http_path: /ready
+    liveness_health_check:
+      http_path: /live
     envs:
       # Supplied by the managed database below — App Platform substitutes it.
       #

@@ -18,14 +18,29 @@
  * supabase/schema.sql's policies are written against; reversed, the second file
  * fails on its first statement.
  *
- * A failure here is fatal on purpose. A service that starts with a half-applied
- * schema answers requests with row-level security partly missing, which is the
- * one outcome worse than not starting.
+ * A failure here keeps readiness false and every database-backed route closed.
+ * The database-free process liveness and diagnostic health endpoints remain
+ * reachable so App Platform does not hide the cause behind an automatic
+ * rollback.
  */
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { pool, describeDatabaseUrl, downgradeTlsAfter } = require("./db");
+
+function positiveMilliseconds(raw, fallback) {
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+}
+
+/* DDL must never own process startup indefinitely. A short lock timeout lets a
+   live request finish and the retry loop try again; the statement timeout also
+   bounds a migration that is slow for a reason other than a conflicting lock.
+   Both defaults can be raised explicitly for a known large migration. */
+const MIGRATION_LOCK_TIMEOUT_MS = positiveMilliseconds(
+  process.env.MIGRATION_LOCK_TIMEOUT_MS, 5000);
+const MIGRATION_STATEMENT_TIMEOUT_MS = positiveMilliseconds(
+  process.env.MIGRATION_STATEMENT_TIMEOUT_MS, 120000);
 
 /* platform.sql sits inside server/ and is always there. supabase/schema.sql
    does not — it belongs to the repository root, and App Platform builds from
@@ -100,6 +115,10 @@ async function migrate() {
     throw err;
   }
   try {
+    await client.query(
+      "select set_config('lock_timeout', $1, false), " +
+      "set_config('statement_timeout', $2, false)",
+      [MIGRATION_LOCK_TIMEOUT_MS + "ms", MIGRATION_STATEMENT_TIMEOUT_MS + "ms"]);
     for (const file of files) {
       const sql = file === schema && schemaBytes
         ? schemaBytes.toString("utf8")
@@ -125,7 +144,11 @@ async function migrate() {
       console.log("migrate: schema fingerprint " + expectedFingerprint.slice(0, 12));
     }
   } finally {
-    client.release();
+    /* These timeouts are session-scoped. Never return this connection to the
+       request pool: an ordinary payment/auth transaction must not inherit a
+       migration-only 5-second lock timeout. A truthy release argument makes
+       pg-pool discard the session and open a clean one for future traffic. */
+    client.release(true);
   }
 }
 
