@@ -1,0 +1,1 @@
+PR #284 fallback retry. Prove abrupt database failure handling, then verify and restore static-only staging.
