@@ -393,25 +393,42 @@ check("deployment docs require native rollback to restore code and app spec toge
   /does not roll back\s+database data/i.test(readme),
   "README lacks the safe post-probe rollback procedure");
 
-/* server/sql/schema.sql — the packaging half of the schema, not the writing
-   half. hnk-api's App Platform component builds from source_dir /server, and
-   a source_dir scopes the build to that subtree — a sibling directory outside
-   it (supabase/) is not part of what the buildpack sees. migrate.js already
-   falls back to server/sql/schema.sql for exactly this reason, and
-   package.json's build step tries to populate it with a plain
-   `cp ../supabase/schema.sql`, relying on the full repo having been checked
-   out into the build context — which production proved false: once
-   platform.sql started succeeding, /health settled on schema:0 with NO error,
-   the signature of migrate() completing having found no schema file at all,
-   not of one failing to apply.
+/* The two backends deliberately use different platform object names. Supabase
+   owns auth/storage schemas; DigitalOcean's restricted runtime cannot CREATE
+   SCHEMA, so its tracked source_dir dialect keeps the same model in public
+   with hnk_ names. The transform stays mechanical so policy logic cannot drift
+   while the platform boundary remains explicit. */
+const nativeSchema = read("supabase/schema.sql");
+const dialectMap = [
+  ["auth.hnk_roleless_runtime()", "public.hnk_roleless_runtime()", 9],
+  ["auth.uid()", "public.hnk_uid()", 24],
+  ["auth.users", "public.hnk_auth_users", 9],
+  ["storage.buckets", "public.hnk_storage_buckets", 1],
+  ["storage.objects", "public.hnk_storage_objects", 7],
+  ["storage.foldername", "public.hnk_foldername", 2],
+];
+const dialectCounts = dialectMap.map(([native]) =>
+  nativeSchema.split(native).length - 1);
+check("the reviewed schema-dialect dependency inventory is unchanged",
+  dialectCounts.every((count, i) => count === dialectMap[i][2]),
+  `got ${dialectCounts.join(",")}`);
+const digitalOceanSchema = dialectMap.reduce(
+  (sql, [native, roleless]) => sql.replaceAll(native, roleless), nativeSchema);
+check("DigitalOcean schema is the deterministic public-schema dialect",
+  read("server/sql/schema.sql") === digitalOceanSchema,
+  "server/sql/schema.sql has policy drift beyond the reviewed name transform");
+const executableDigitalOceanSchema = digitalOceanSchema
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .replace(/--[^\n]*/g, "");
+check("DigitalOcean executable SQL has no native auth/storage dependency",
+  !/\b(?:auth|storage)\./.test(executableDigitalOceanSchema),
+  "server dialect still requires a non-public schema");
 
-   The fix is not a smarter cp — it is not depending on one. server/sql/schema.sql
-   ships as a tracked file so it travels with /server regardless of what the
-   build step's relative path resolves to, and this check is what stops that
-   copy silently drifting from the file every other test here exercises. */
-check("server/sql/schema.sql is a byte-identical tracked copy of supabase/schema.sql",
-  read("server/sql/schema.sql") === read("supabase/schema.sql"),
-  "the packaged fallback migrate.js falls back to has drifted from the source");
+const serverPackage = JSON.parse(read("server/package.json"));
+check("the API build preserves its tracked DigitalOcean schema",
+  /accessSync\(['\"]sql\/schema\.sql['\"]\)/.test(serverPackage.scripts.build || "") &&
+    !/supabase|\bcp\b/.test(serverPackage.scripts.build || ""),
+  "server build may overwrite the DigitalOcean dialect");
 
 if (failures.length) {
   console.error(`\nFAIL — ${failures.length} release contract check(s) failed`);

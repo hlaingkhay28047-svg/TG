@@ -58,7 +58,12 @@ const runtimeUrl = db =>
   `@${ENV.PGHOST}:${ENV.PGPORT}/${db}`;
 const createRuntimeDatabase = db => {
   psql(`drop database if exists ${db}`);
-  psql(`create database ${db} owner ${RUNTIME_USER}`);
+  psql(`create database ${db}`);
+  psql(`revoke all on database ${db} from ${RUNTIME_USER}; ` +
+    `revoke create on database ${db} from public; ` +
+    `grant connect on database ${db} to ${RUNTIME_USER}`);
+  psql(`revoke create on schema public from public; ` +
+    `grant usage, create on schema public to ${RUNTIME_USER}`, db);
 };
 const LOCAL_SERVICE_CONTEXT =
   "select set_config('request.role', 'service_role', true), " +
@@ -151,9 +156,14 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     `from pg_roles where rolname='${RUNTIME_USER}'`);
   const databaseOwner = psql(
     `select pg_get_userbyid(datdba) from pg_database where datname='${DB}'`);
-  report("the database and migration are owned by one limited runtime login",
-    runtimeFlags === "false|false|false" && databaseOwner === RUNTIME_USER,
-    { runtimeFlags, databaseOwner });
+  const runtimePrivileges = psql(
+    `select has_database_privilege('${RUNTIME_USER}','${DB}','create')::text||'|'||` +
+    `has_schema_privilege('${RUNTIME_USER}','public','usage')::text||'|'||` +
+    `has_schema_privilege('${RUNTIME_USER}','public','create')::text`, DB);
+  report("the runtime is restricted to object creation in existing public schema",
+    runtimeFlags === "false|false|false" && databaseOwner !== RUNTIME_USER &&
+    runtimePrivileges === "false|true|true",
+    { runtimeFlags, databaseOwner, runtimePrivileges });
 
   const requestRoles = psql(
     "select coalesce(string_agg(rolname, ',' order by rolname), '') from pg_roles " +
@@ -161,16 +171,23 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("roleless migration does not require cluster-wide request roles",
     requestRoles === "", { requestRoles });
 
+  const nativeSchemas = psql(
+    "select (to_regnamespace('auth') is null)::text||'|'||" +
+    "(to_regnamespace('storage') is null)::text", DB);
+  report("migration creates no auth/storage schema",
+    nativeSchemas === "true|true", { nativeSchemas });
+
   const forcedTables = psql(
     "select coalesce(string_agg(n.nspname||'.'||c.relname, ',' order by n.nspname,c.relname), '') " +
     "from pg_class c join pg_namespace n on n.oid=c.relnamespace " +
     "where (n.nspname,c.relname) in " +
     "(('public','profiles'),('public','payment_requests'),('public','app_settings')," +
-    "('public','devices'),('storage','objects'),('auth','users'),('auth','refresh_tokens')) " +
+    "('public','devices'),('public','hnk_storage_buckets'),('public','hnk_storage_objects')," +
+    "('public','hnk_auth_users'),('public','hnk_auth_refresh_tokens')) " +
     "and c.relrowsecurity and c.relforcerowsecurity", DB);
   const expectedForcedTables =
-    "auth.refresh_tokens,auth.users,public.app_settings,public.devices," +
-    "public.payment_requests,public.profiles,storage.objects";
+    "public.app_settings,public.devices,public.hnk_auth_refresh_tokens,public.hnk_auth_users," +
+    "public.hnk_storage_buckets,public.hnk_storage_objects,public.payment_requests,public.profiles";
   report("all request and auth tables enforce RLS even for their runtime owner",
     forcedTables === expectedForcedTables, { forcedTables });
 
@@ -249,11 +266,11 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   runtimeServicePsql(`update public.profiles set is_admin = true where id = '${OWNER}'`, DB);
 
   const serviceAuthRows = await dbRuntime.asService(client =>
-    client.query("select count(*)::int as n from auth.users"));
+    client.query("select count(*)::int as n from public.hnk_auth_users"));
   const customerAuthRows = await dbRuntime.asUser(CUST, client =>
-    client.query("select count(*)::int as n from auth.users"));
+    client.query("select count(*)::int as n from public.hnk_auth_users"));
   const anonAuthRows = await dbRuntime.asAnon(client =>
-    client.query("select count(*)::int as n from auth.users"));
+    client.query("select count(*)::int as n from public.hnk_auth_users"));
   report("auth rows are visible only inside the trusted service context",
     serviceAuthRows.rows[0].n === 2 && customerAuthRows.rows[0].n === 0 &&
     anonAuthRows.rows[0].n === 0,
@@ -264,7 +281,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   let rolledBack = false;
   try {
     await dbRuntime.asService(async client => {
-      await client.query("select 1 from auth.users limit 1");
+      await client.query("select 1 from public.hnk_auth_users limit 1");
       throw new Error(rollbackMarker);
     });
   } catch (err) { rolledBack = err.message === rollbackMarker; }
@@ -272,7 +289,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   const resetContext = await readRequestContext(resetClient);
   const resetVisibility = (await resetClient.query(
     "select (select count(*)::int from public.profiles) as profiles, " +
-    "(select count(*)::int from auth.users) as auth_users"
+    "(select count(*)::int from public.hnk_auth_users) as auth_users"
   )).rows[0];
   resetClient.release();
   report("one reused pool connection clears trusted context after commit and rollback",
@@ -802,7 +819,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     !!late.health && late.health.ok === true && late.health.ready === false &&
     /does not exist/.test(late.health.error || ""), late.health);
 
-  psql(`create database ${LATE} owner ${RUNTIME_USER}`);
+  createRuntimeDatabase(LATE);
   let recovered = null;
   for (let i = 0; i < 45 && !recovered; i++) {
     await new Promise(done => setTimeout(done, 1000));
@@ -863,20 +880,9 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   await locker.end();
   psql(`drop database if exists ${LOCKED}`);
 
-  /* H15) the packaging assumption none of H1-H14 could catch, because every
-     one of them boots the real checkout, where supabase/schema.sql is always
-     right there next to server/. hnk-api's App Platform component builds from
-     source_dir /server — a sibling directory outside it is not part of what
-     the build sees — and that gap stayed invisible for as long as platform.sql
-     itself kept failing first. The moment it stopped failing, production
-     proved the gap for real: /health settled on schema:0 with NO error, which
-     is what migrate() completing looks like when resolveSchema() found
-     nothing at all, not what it looks like when a found file fails to apply.
-
-     Copy /server into an isolated directory with no supabase/ sibling — the
-     shape DigitalOcean's build actually produces — and boot node against THAT
-     copy. The tracked server/sql/schema.sql fallback is what has to carry it,
-     or this proves nothing. */
+  /* H15) Copy /server into an isolated directory: this is the exact App
+     Platform source_dir shape. Its tracked DigitalOcean dialect must be
+     sufficient by itself and must never depend on a sibling Supabase file. */
   const PACKAGED = fs.mkdtempSync(path.join(os.tmpdir(), "hnk-packaged-"));
   fs.cpSync(path.join(ROOT, "server"), path.join(PACKAGED, "server"), { recursive: true });
   const PACKAGED_DB = DB + "_packaged";

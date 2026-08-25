@@ -18,7 +18,7 @@
  *    from the schema the way a hand-kept list would.
  *
  * Authorisation is NOT here. Every statement runs through db.asUser/asAnon
- * inside a transaction that has pinned an internal request mode and auth.uid(),
+ * inside a transaction that has pinned an internal request mode and public.hnk_uid(),
  * so the same row-level security that protects the Supabase project protects
  * this one. A bug in this file can return the wrong shape; it cannot hand a
  * customer another customer's row.

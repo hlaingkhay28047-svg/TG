@@ -6,8 +6,8 @@
   "main": "index.js",
   "engines": { "node": ">=18" },
   "scripts": {
-    "//build": "App Platform builds from source_dir. If the repository root came with it, keep a copy of the schema next to platform.sql so migrate.js finds it either way. Never fails the build.",
-    "build": "mkdir -p sql && (cp ../supabase/schema.sql sql/schema.sql 2>/dev/null || true)",
+    "//build": "The DigitalOcean SQL dialect is tracked inside source_dir and must never be overwritten by the native Supabase dialect.",
+    "build": "node -e \"require('fs').accessSync('sql/schema.sql')\"",
     "start": "node index.js"
   },
   "dependencies": { "pg": "8.13.1" }

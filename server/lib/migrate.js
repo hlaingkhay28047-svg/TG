@@ -10,13 +10,13 @@
  * It is safe here for one specific reason: both files are idempotent by
  * construction — `create ... if not exists`, `create or replace`,
  * `drop policy if exists` before every create — and that is not an assumption,
- * it is what test/verify_schema_behaviour.js check B asserts by applying them
- * three times in a row and requiring app_settings to still hold exactly one
- * row afterwards.
+ * it is what test/verify_no_create_schema.js asserts by applying both under the
+ * exact restricted runtime more than once.
  *
- * ORDER MATTERS. platform.sql creates auth.users, auth.uid() and the marker
- * that makes supabase/schema.sql enforce roleless FORCE RLS; reversed, the
- * second file fails on its first statement.
+ * ORDER MATTERS. platform.sql creates public.hnk_auth_users, public.hnk_uid()
+ * and the marker that makes server/sql/schema.sql enforce roleless FORCE RLS;
+ * reversed, the second file fails on its first statement. The native Supabase
+ * dialect is deliberately not a migration candidate here.
  *
  * A failure here keeps readiness false and every database-backed route closed.
  * The database-free process liveness and diagnostic health endpoints remain
@@ -42,17 +42,12 @@ const MIGRATION_LOCK_TIMEOUT_MS = positiveMilliseconds(
 const MIGRATION_STATEMENT_TIMEOUT_MS = positiveMilliseconds(
   process.env.MIGRATION_STATEMENT_TIMEOUT_MS, 120000);
 
-/* platform.sql sits inside server/ and is always there. supabase/schema.sql
-   does not — it belongs to the repository root, and App Platform builds from
-   source_dir, so whether the sibling directory is present depends on how the
-   source was packaged. Both locations are tried rather than assumed, and the
-   difference between "not shipped" and "failed to apply" is kept, because they
-   need opposite responses. */
+/* Both DigitalOcean SQL files are tracked inside /server, which is App
+   Platform's source_dir. Never prefer ../../supabase/schema.sql: it uses native
+   auth/storage schemas and intentionally remains a separate deployment
+   dialect. */
 const PLATFORM = path.join(__dirname, "..", "sql", "platform.sql");
-const SCHEMA_CANDIDATES = [
-  path.join(__dirname, "..", "..", "supabase", "schema.sql"),  /* full checkout */
-  path.join(__dirname, "..", "sql", "schema.sql"),             /* copied in at build */
-];
+const SCHEMA_CANDIDATES = [path.join(__dirname, "..", "sql", "schema.sql")];
 function resolveSchema() {
   for (const p of SCHEMA_CANDIDATES) if (fs.existsSync(p)) return p;
   return null;
@@ -84,7 +79,7 @@ async function migrate() {
        at a failed deploy with no way to see why. Booting means /health answers
        and this line is visible in the logs; every account request will fail
        loudly against the empty schema until it is resolved. */
-    console.error("migrate: WARNING — supabase/schema.sql was not found in this build.");
+    console.error("migrate: WARNING — server/sql/schema.sql was not found in this build.");
     console.error("migrate: looked in:\n  " + SCHEMA_CANDIDATES.join("\n  "));
     console.error("migrate: platform.sql will still be applied; the application tables will NOT exist.");
     setLastError("application schema file was not found in this build");
@@ -155,11 +150,12 @@ async function migrate() {
         "join pg_namespace n on n.oid = c.relnamespace " +
         "where (n.nspname, c.relname) in " +
         "(('public','profiles'),('public','payment_requests'),('public','app_settings')," +
-        " ('public','devices'),('storage','objects'),('auth','users'),('auth','refresh_tokens')) " +
+        " ('public','devices'),('public','hnk_storage_buckets'),('public','hnk_storage_objects')," +
+        " ('public','hnk_auth_users'),('public','hnk_auth_refresh_tokens')) " +
         "and c.relrowsecurity and c.relforcerowsecurity");
-      if (protectedTables.rows[0].n !== 7) {
+      if (protectedTables.rows[0].n !== 8) {
         throw new Error("schema applied but only " + protectedTables.rows[0].n +
-          " of 7 request/auth tables enforce FORCE RLS");
+          " of 8 request/auth/storage tables enforce FORCE RLS");
       }
       appliedSchemaFingerprint = expectedFingerprint;
       console.log("migrate: schema fingerprint " + expectedFingerprint.slice(0, 12));

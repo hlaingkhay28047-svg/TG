@@ -82,7 +82,7 @@ function readBody(req) {
   });
 }
 
-/* The bearer token is the ONLY thing that decides auth.uid(). A missing or
+/* The bearer token is the ONLY thing that decides public.hnk_uid(). A missing or
    invalid token yields null, which makes the request anonymous rather than
    trusted — never an error at this layer, because /rest/v1/app_settings is
    meant to be readable signed out. */
