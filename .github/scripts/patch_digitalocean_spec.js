@@ -100,8 +100,14 @@ try {
       }
     }
   }
-  const jwt = (Array.isArray(service.envs) ? service.envs : [])
-    .filter(env => env && env.key === "JWT_SECRET");
+  /* App Platform makes app-level envs available to every component. Accept one
+     encrypted signing key at either level, but never duplicates or a fallback
+     plaintext value. The bootstrap prefers an existing app-level key so a
+     staging repair does not rotate established sessions. */
+  const jwt = [
+    ...(Array.isArray(spec.envs) ? spec.envs : []),
+    ...(Array.isArray(service.envs) ? service.envs : []),
+  ].filter(env => env && env.key === "JWT_SECRET");
   if (jwt.length !== 1 || jwt[0].type !== "SECRET" ||
       typeof jwt[0].value !== "string" || !/^EV\[[^\]]+\]$/.test(jwt[0].value)) {
     fail("JWT_SECRET is missing or is not preserved as an encrypted live-spec value");
