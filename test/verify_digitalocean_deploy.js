@@ -70,7 +70,7 @@ check('both lanes bound an exact active-service source lookup',
     workflow.includes('timeout --foreground --signal=TERM --kill-after=2s 10s')));
 check('staging live verification consumes the shared job deadline', stagingWorkflow.includes('DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"') && !stagingWorkflow.includes('DEADLINE=$((SECONDS + 1800))') && !stagingWorkflow.includes('seq 1 120'));
 check('staging workflow leaves headroom for its scripted diagnostic', /timeout-minutes:\s*35\b/.test(stagingWorkflow));
-check('temporary staging safety queues app mutations instead of canceling cleanup', /group:\s*digitalocean-staging[\s\S]*?cancel-in-progress:\s*false/.test(stagingWorkflow));
+check('staging deploy concurrency cancels stale builds', /group:\s*digitalocean-staging[\s\S]*?cancel-in-progress:\s*true/.test(stagingWorkflow));
 
 const manualRecovery = "github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true'";
 check('forced-rebuild recovery is manual-only and still runs after probe synchronization',
