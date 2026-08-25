@@ -43,6 +43,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const SCHEMA = path.join(ROOT, "supabase", "schema.sql");
 const DB = "hnk_schema_behaviour_test";
+const REQUEST_ROLES = ["anon", "authenticated", "service_role"];
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -56,6 +57,11 @@ const ENV = Object.assign({}, process.env, {
   PGUSER: process.env.PGUSER || "postgres",
   PGPASSWORD: process.env.PGPASSWORD || "postgres",
   PGCLIENTENCODING: "UTF8",
+  /* Direct SQL below is trusted fixture/setup work. Once platform.sql has
+     installed the marker, BEFORE triggers require the same explicit service
+     context as production migrations; request helpers override it locally. */
+  PGOPTIONS: [process.env.PGOPTIONS, "-c request.role=service_role"]
+    .filter(Boolean).join(" "),
 });
 
 /* Run SQL, return {ok, out}. Never throws — a refused statement is frequently
@@ -75,15 +81,33 @@ function file(p, db) {
     return { ok: true, out: "" };
   } catch (e) { return { ok: false, out: ((e.stderr || "") + (e.stdout || "")).trim() }; }
 }
-/* As a signed-in customer: RLS applies and auth.uid() answers. Both settings
-   must be SET LOCAL inside a transaction — outside one they are a no-op that
-   silently leaves you as superuser with a null uid, which makes every "the
-   attack was refused" assertion pass for the wrong reason. */
+function mustFixture(label, result) {
+  if (result.ok) return result;
+  console.log("FAIL — " + label + "  :: " + JSON.stringify(result.out.split(/\r?\n/).slice(0, 3)));
+  process.exit(1);
+}
+/* As a signed-in customer: the marker makes policies read the internal request
+   context, while SET ROLE keeps this broad behaviour suite non-owner even
+   though its fixture uses the CI postgres superuser. The production API never
+   SETs a PostgreSQL role; verify_roleless_rls.js covers the real owner shape. */
+function userTransaction(uid, body) {
+  return "begin; " +
+    "set local request.role = 'service_role'; " +
+    "set local request.jwt.claim.sub = '" + uid + "'; " +
+    "do $ctx$ begin " +
+      "perform set_config('request.is_admin', coalesce((select is_admin::text from public.profiles where id='" + uid + "'),'false'), true); " +
+      "perform set_config('request.user_email', coalesce((select email from auth.users where id='" + uid + "'),''), true); " +
+    "end $ctx$; " +
+    "set local request.role = 'authenticated'; " +
+    "set local role authenticated; " + body + " commit;";
+}
 function asUser(uid, body, db) {
-  return sql("begin; set local role authenticated; set local request.jwt.claim.sub = '" + uid + "'; " + body + " commit;", db);
+  return sql(userTransaction(uid, body), db);
 }
 function asAnon(body, db) {
-  return sql("begin; set local role anon; " + body + " commit;", db);
+  return sql("begin; set local request.role = 'anon'; set local request.jwt.claim.sub = ''; " +
+    "set local request.is_admin = 'false'; set local request.user_email = ''; " +
+    "set local role anon; " + body + " commit;", db);
 }
 function waitForAdvisory(lockId, db) {
   for (let wait = 0; wait < 50; wait++) {
@@ -123,10 +147,15 @@ if (!ping.ok) {
 }
 report("a PostgreSQL server is reachable", true);
 
-sql('drop database if exists "' + DB + '"');
-sql('create database "' + DB + '"');
+mustFixture("fixture removes the prior main scratch database",
+  sql('drop database if exists "' + DB + '"'));
+for (const role of REQUEST_ROLES) {
+  mustFixture("fixture removes role " + role, sql("drop role if exists " + role));
+  mustFixture("fixture creates role " + role, sql("create role " + role + " nologin"));
+}
+mustFixture("fixture creates a fresh main scratch database", sql('create database "' + DB + '"'));
 const stubbed = file(PLATFORM, DB);
-report("server/sql/platform.sql loads (auth.users, auth.uid, storage, roles)",
+report("server/sql/platform.sql loads (auth.users, auth.uid, storage, roleless marker)",
   stubbed.ok, stubbed.out.split("\n").slice(0, 3));
 
 /* ---- A) it builds a database from nothing ---- */
@@ -159,10 +188,17 @@ report("B2) reapplying removes inherited anonymous/app-settings write grants",
 const rows = sql("select count(*) from public.app_settings", DB).out;
 report("C) app_settings still holds exactly one row after three runs", rows === "1", { rows });
 
-/* ---- D) RLS is on everywhere the client reaches ---- */
-const rls = sql("select count(*) from pg_tables where schemaname='public' and rowsecurity " +
-  "and tablename in ('profiles','payment_requests','app_settings','devices')", DB).out;
-report("D) RLS is enabled on all four tables", rls === "4", { withRls: rls });
+/* ---- D) RLS is on and forced everywhere the roleless service reaches ----
+   ENABLE alone is not enough: the DigitalOcean connection owns these tables,
+   and PostgreSQL table owners bypass ordinary RLS. */
+const forcedRls = sql("select count(*) from pg_class c " +
+  "join pg_namespace n on n.oid=c.relnamespace where " +
+  "((n.nspname='public' and c.relname in ('profiles','payment_requests','app_settings','devices')) " +
+  "or (n.nspname='storage' and c.relname='objects') " +
+  "or (n.nspname='auth' and c.relname in ('users','refresh_tokens'))) " +
+  "and c.relrowsecurity and c.relforcerowsecurity", DB).out;
+report("D) all seven request/auth tables have ENABLE + FORCE RLS",
+  forcedRls === "7", { forcedRls });
 
 /* seed two accounts; the app creates its own profiles row (v5.38.0) */
 sql("insert into auth.users (id,email) values ('" + OWNER + "','owner@example.com'),('" + CUST + "','customer@example.com')", DB);
@@ -179,14 +215,16 @@ report("E) the SQL-editor bootstrap (no JWT) can create the first admin", admin 
    assertions therefore expect true/false; check E, which selects the column on
    its own, expects t. Getting this backwards makes the check fail against a
    perfectly correct schema. */
-asUser(CUST, "update public.profiles set is_admin=true, plan_status='active', " +
+const promoteAttempt = asUser(CUST, "update public.profiles set is_admin=true, plan_status='active', " +
   "plan_expires_at=now()+interval '99 years', allowed_devices=99, joined_paid=true, price_1m_override=0 " +
   "where id = auth.uid();", DB);
-const after = sql("select is_admin||'|'||plan_status||'|'||allowed_devices||'|'||joined_paid||'|'||" +
+const afterResult = sql("select is_admin||'|'||plan_status||'|'||allowed_devices||'|'||joined_paid||'|'||" +
   "coalesce(price_1m_override::text,'null')||'|'||coalesce(plan_expires_at::text,'null') " +
-  "from public.profiles where id='" + CUST + "'", DB).out;
+  "from public.profiles where id='" + CUST + "'", DB);
 report("F) a customer promoting themselves has every field reverted",
-  after === "false|none|2|false|null|null", { after });
+  promoteAttempt.ok && afterResult.ok &&
+  afterResult.out === "false|none|2|false|null|null",
+  { updated: promoteAttempt.ok, after: afterResult.out });
 
 /* ---- G) identity is not the customer's to edit ----
    The address here must be one NOBODY holds. Pointing it at owner@example.com
@@ -194,10 +232,12 @@ report("F) a customer promoting themselves has every field reverted",
    refuses the duplicate first, so the assertion held even with the guard
    trigger dropped. An unused address leaves the unique index with no opinion,
    so the only thing that can preserve the row is the guard. */
-asUser(CUST, "update public.profiles set email='stolen@example.com', name='Somebody Else' where id = auth.uid();", DB);
-const ident = sql("select email||'|'||name from public.profiles where id='" + CUST + "'", DB).out;
+const identityEdit = asUser(CUST,
+  "update public.profiles set email='stolen@example.com', name='Somebody Else' where id = auth.uid();", DB);
+const identResult = sql("select email||'|'||name from public.profiles where id='" + CUST + "'", DB);
 report("G) a customer cannot rewrite their own email or name",
-  ident === "customer@example.com|Customer", { ident });
+  identityEdit.ok && identResult.ok && identResult.out === "customer@example.com|Customer",
+  { updated: identityEdit.ok, ident: identResult.out });
 
 /* A payment product must have a configured server-side price. This keeps the
    early flat-price compatibility checks realistic while the tier-specific
@@ -243,11 +283,15 @@ report("G2) forged cross-account payments reveal neither profile state nor exist
   { existing: crossExisting.out.split("\n")[0], missing: crossMissing.out.split("\n")[0] });
 
 /* ---- H) a customer cannot approve their own payment ---- */
-asUser(CUST, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+const paymentInsert = asUser(CUST,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
   "values (auth.uid(),'plan_1m','123456',30000);", DB);
-asUser(CUST, "update public.payment_requests set status='approved';", DB);
-const stat = sql("select status from public.payment_requests", DB).out;
-report("H) a customer cannot approve their own payment", stat === "pending", { status: stat });
+const selfApproval = asUser(CUST,
+  "update public.payment_requests set status='approved';", DB);
+const statResult = sql("select status from public.payment_requests", DB);
+report("H) a customer cannot approve their own payment",
+  paymentInsert.ok && selfApproval.ok && statResult.ok && statResult.out === "pending",
+  { inserted: paymentInsert.ok, updateAccepted: selfApproval.ok, status: statResult.out });
 
 /* ---- I) nor forge one that arrives already reviewed ---- */
 const forge = asUser(CUST, "insert into public.payment_requests (user_id,kind,status,reviewed_by,note) " +
@@ -256,11 +300,14 @@ report("I) a forged already-reviewed row is refused", !forge.ok && /row-level se
   { accepted: forge.ok, err: forge.out.split("\n")[0] });
 
 /* ---- J) an admin approval extends the plan, in the database ---- */
-asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+const adminApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where status='pending';", DB);
-const plan = sql("select plan_status||'|'||(plan_expires_at between now()+interval '27 days' " +
-  "and now()+interval '32 days') from public.profiles where id='" + CUST + "'", DB).out;
-report("J) an admin approval extends the plan by one month", plan === "active|true", { plan });
+const planResult = sql("select plan_status||'|'||(plan_expires_at between now()+interval '27 days' " +
+  "and now()+interval '32 days') from public.profiles where id='" + CUST + "'", DB);
+report("J) an admin approval extends the plan by one month",
+  adminApproval.ok && planResult.ok && planResult.out === "active|true",
+  { approved: adminApproval.ok, plan: planResult.out });
 
 /* ---- J2) the database, not the browser, owns the device-tier quote ----
 
@@ -608,10 +655,10 @@ const PAY_MUTEX_LOCK = 542102;
 sql("insert into auth.users (id,email) values ('" + PAY_MUTEX + "','pay-mutex@example.com')", DB);
 asUser(PAY_MUTEX, "insert into public.profiles (id) values (auth.uid());", DB);
 spawn("psql", ["-d", DB, "-v", "ON_ERROR_STOP=1", "-c",
-  "begin; set local role authenticated; set local request.jwt.claim.sub='" + PAY_MUTEX + "'; " +
+  userTransaction(PAY_MUTEX,
   "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
   "values (auth.uid(),'join_first','929291',511000,1); " +
-  "select pg_advisory_lock(" + PAY_MUTEX_LOCK + "); select pg_sleep(1); commit;"],
+  "select pg_advisory_lock(" + PAY_MUTEX_LOCK + "); select pg_sleep(1);")],
   { env: ENV, stdio: "ignore" });
 const payMutexReady = waitForAdvisory(PAY_MUTEX_LOCK, DB);
 const secondPendingJoin = asUser(PAY_MUTEX,
@@ -637,9 +684,9 @@ asUser(APPROVAL_RACE,
   "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
   "values (auth.uid(),'join_first','939393',511000,1);", DB);
 spawn("psql", ["-d", DB, "-v", "ON_ERROR_STOP=1", "-c",
-  "begin; set local role authenticated; set local request.jwt.claim.sub='" + APPROVAL_RACE + "'; " +
+  userTransaction(APPROVAL_RACE,
   "insert into public.devices (user_id,device_id,label) values (auth.uid(),'approval-b','B'); " +
-  "select pg_advisory_lock(" + APPROVAL_RACE_LOCK + "); select pg_sleep(1); commit;"],
+  "select pg_advisory_lock(" + APPROVAL_RACE_LOCK + "); select pg_sleep(1);")],
   { env: ENV, stdio: "ignore" });
 const approvalRaceReady = waitForAdvisory(APPROVAL_RACE_LOCK, DB);
 const racedApproval = asUser(OWNER,
@@ -695,9 +742,9 @@ sql("insert into auth.users (id,email) values ('" + RACE + "','race@example.com'
 asUser(RACE, "insert into public.profiles (id) values (auth.uid());", DB);
 sql("update public.profiles set allowed_devices=1 where id='" + RACE + "'", DB);
 spawn("psql", ["-d", DB, "-v", "ON_ERROR_STOP=1", "-c",
-  "begin; set local role authenticated; set local request.jwt.claim.sub='" + RACE + "'; " +
+  userTransaction(RACE,
   "insert into public.devices (user_id,device_id,label) values (auth.uid(),'race-a','A'); " +
-  "select pg_advisory_lock(" + RACE_LOCK + "); select pg_sleep(2); commit;"],
+  "select pg_advisory_lock(" + RACE_LOCK + "); select pg_sleep(2);")],
   { env: ENV, stdio: "ignore" });
 const raceReady = waitForAdvisory(RACE_LOCK, DB);
 const racedDevice = asUser(RACE,
@@ -713,7 +760,8 @@ sql("delete from auth.users where id='" + RACE + "'", DB);
 
 /* ---- M) the bank details are readable by everyone and writable by nobody ---- */
 const anonRead = asAnon("select count(*) from public.app_settings;", DB);
-report("M) anon may READ app_settings (the buy screen quotes prices signed-out)", anonRead.ok,
+report("M) anon may READ the one app_settings row (the buy screen quotes prices signed-out)",
+  anonRead.ok && /(^|\n)1(\n|$)/.test(anonRead.out),
   { err: anonRead.out.split("\n")[0] });
 const anonWrite = asAnon("update public.app_settings set payment_phone='09-ATTACKER';", DB);
 report("M2) anon may NOT redirect the payment details", !anonWrite.ok, { accepted: anonWrite.ok });
@@ -724,7 +772,7 @@ report("M3) a signed-in customer may NOT rewrite prices either", !custWrite.ok, 
 const own = asUser(CUST, "select count(*) from public.profiles;", DB);
 const all = asUser(OWNER, "select count(*) from public.profiles;", DB);
 report("N) a customer sees only their own profile; an admin sees every one",
-  /(^|\n)1(\n|$)/.test(own.out) && /(^|\n)2(\n|$)/.test(all.out),
+  own.ok && all.ok && /(^|\n)1(\n|$)/.test(own.out) && /(^|\n)2(\n|$)/.test(all.out),
   { customerSees: own.out.trim(), adminSees: all.out.trim() });
 
 /* ---- O) the v5.38.0 self-heal on a database this file built ---- */
@@ -757,29 +805,31 @@ const profIdx = sql("select count(*) from pg_indexes where schemaname='public' "
 report("P2) profiles keeps its own duplicate-address index as defence in depth",
   profIdx === "1", { found: profIdx });
 
-sql('drop database if exists "' + DB + '"');
+mustFixture("cleanup removes the main scratch database",
+  sql('drop database if exists "' + DB + '"'));
+for (const role of REQUEST_ROLES) {
+  mustFixture("cleanup removes role " + role, sql("drop role if exists " + role));
+}
 
-/* ---- R) the privilege a managed database user may simply not have ----
-   platform.sql creates anon, authenticated and service_role, and a managed
-   PostgreSQL user is often not allowed to CREATE ROLE. Plain `permission denied
-   to create role` names the statement and not the remedy, which on a deployment
-   whose only window is /api/health is most of the problem — so the failure is
-   re-raised carrying the exact statements to run, and that sentence is what
-   reaches /health and therefore the person who has to act.
-
-   Driven for real: a NOCREATEROLE user owning its own database, which is the
-   shape DigitalOcean hands out. */
+/* ---- R) the exact restricted-owner shape DigitalOcean supplies ----
+   Request identity is transaction-local now, so a NOCREATEROLE owner must be
+   able to apply both files while the old cluster-wide role names stay absent. */
 const LIMITED_DB = DB + "_limited";
 const LIMITED_USER = "hnk_limited_probe";
-sql('drop database if exists "' + LIMITED_DB + '"');
-sql('drop role if exists ' + LIMITED_USER);
-sql("create role " + LIMITED_USER + " login password 'probe' nocreaterole nosuperuser");
-sql('create database "' + LIMITED_DB + '" owner ' + LIMITED_USER);
+mustFixture("fixture removes the prior restricted-owner database",
+  sql('drop database if exists "' + LIMITED_DB + '"'));
+mustFixture("fixture removes the prior restricted owner",
+  sql('drop role if exists ' + LIMITED_USER));
+mustFixture("fixture creates the restricted owner", sql("create role " + LIMITED_USER +
+  " login password 'probe' nocreaterole nosuperuser nobypassrls"));
+mustFixture("fixture creates its owner database",
+  sql('create database "' + LIMITED_DB + '" owner ' + LIMITED_USER));
 
-/* The three roles have to be absent for the check to mean anything — if they
-   already exist platform.sql returns early and never attempts a CREATE. */
-const dropped = ["anon", "authenticated", "service_role"]
-  .every(r => sql("drop role if exists " + r).ok);
+for (const role of REQUEST_ROLES) {
+  mustFixture("restricted fixture removes cluster role " + role,
+    sql("drop role if exists " + role));
+}
+const dropped = true;
 
 const asLimited = (f, db) => {
   const out = require("child_process").spawnSync("psql",
@@ -790,26 +840,37 @@ const asLimited = (f, db) => {
   return { ok: out.status === 0, out: (out.stdout || "") + (out.stderr || "") };
 };
 
-const denied = dropped ? asLimited(PLATFORM, LIMITED_DB) : { ok: true, out: "roles still in use" };
-report("R) a user that cannot CREATE ROLE is told exactly what to run, not just that it failed",
-  dropped && !denied.ok &&
-  /cannot CREATE ROLE/.test(denied.out) &&
-  /create role anon nologin;/.test(denied.out) &&
-  /create role authenticated nologin;/.test(denied.out) &&
-  /create role service_role nologin;/.test(denied.out),
-  denied.out.split("\n").slice(0, 2));
+const limitedFlags = sql("select rolsuper||'|'||rolcreaterole||'|'||rolbypassrls " +
+  "from pg_roles where rolname='" + LIMITED_USER + "'");
+const limitedPlatform = dropped
+  ? asLimited(PLATFORM, LIMITED_DB) : { ok: false, out: "request roles could not be removed" };
+const limitedSchema = limitedPlatform.ok
+  ? asLimited(SCHEMA, LIMITED_DB) : { ok: false, out: "platform.sql did not apply" };
+report("R) a NOCREATEROLE owner applies platform.sql and schema.sql without request roles",
+  dropped && limitedFlags.ok && limitedFlags.out === "false|false|false" &&
+  limitedPlatform.ok && limitedSchema.ok,
+  { flags: limitedFlags.out,
+    platform: limitedPlatform.out.split("\n").slice(0, 2),
+    schema: limitedSchema.out.split("\n").slice(0, 2) });
 
-/* ...and once an admin has run them, that same user applies the rest itself —
-   which is what makes it a single unblocking action rather than a dead end. */
-["anon", "authenticated", "service_role"].forEach(r => sql("create role " + r + " nologin"));
-const afterwards = asLimited(PLATFORM, LIMITED_DB);
-report("R2) ...and with the roles in place it applies the whole file unaided",
-  afterwards.ok, afterwards.out.split("\n").slice(0, 2));
+const rolesAfterMigration = sql("select count(*) from pg_roles where rolname in " +
+  "('anon','authenticated','service_role')");
+const limitedForcedRls = sql("select count(*) from pg_class c " +
+  "join pg_namespace n on n.oid=c.relnamespace where " +
+  "((n.nspname='public' and c.relname in ('profiles','payment_requests','app_settings','devices')) " +
+  "or (n.nspname='storage' and c.relname='objects') " +
+  "or (n.nspname='auth' and c.relname in ('users','refresh_tokens'))) " +
+  "and c.relrowsecurity and c.relforcerowsecurity", LIMITED_DB);
+report("R2) roleless migration creates no cluster roles and forces owner RLS",
+  rolesAfterMigration.ok && rolesAfterMigration.out === "0" &&
+  limitedForcedRls.ok && limitedForcedRls.out === "7",
+  { roles: rolesAfterMigration.out, forcedRls: limitedForcedRls.out });
 
-sql('drop database if exists "' + LIMITED_DB + '"');
+mustFixture("cleanup removes the restricted-owner database",
+  sql('drop database if exists "' + LIMITED_DB + '"'));
 
-/* ---- R3) the OTHER privilege a managed database user may not have ----
-   Role creation is not the only gap. CREATE SCHEMA needs CREATE on the
+/* ---- R3) another privilege a managed database user may not have ----
+   CREATE SCHEMA needs CREATE on the
    DATABASE itself, which belongs to the owner alone by default — and R/R2's
    probe cannot tell that apart from the role gap, because it OWNS the database
    it is tested against, which grants CREATE along with everything else. That
@@ -817,9 +878,12 @@ sql('drop database if exists "' + LIMITED_DB + '"');
    database is created by the admin, the app user only gets CONNECT. Same
    catch-and-re-raise shape, proven against that shape specifically. */
 const LIMITED_DB2 = DB + "_limited2";
-sql('drop database if exists "' + LIMITED_DB2 + '"');
-sql('create database "' + LIMITED_DB2 + '"');                          // owned by ENV.PGUSER, not the probe
-sql('grant connect on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER);
+mustFixture("fixture removes the prior restricted-grant database",
+  sql('drop database if exists "' + LIMITED_DB2 + '"'));
+mustFixture("fixture creates the restricted-grant database",
+  sql('create database "' + LIMITED_DB2 + '"')); // owned by ENV.PGUSER, not the probe
+mustFixture("fixture grants only CONNECT to the restricted owner",
+  sql('grant connect on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER));
 
 const deniedSchema = asLimited(PLATFORM, LIMITED_DB2);
 report("R3) a user that cannot CREATE SCHEMA is told exactly what to run, not just that it failed",
@@ -831,13 +895,18 @@ report("R3) a user that cannot CREATE SCHEMA is told exactly what to run, not ju
 /* ...and once an admin has run that one grant, the same user applies the rest
    of the file unaided — the database-privilege gap is a single unblocking
    action too, not a dead end. */
-sql('grant create on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER);
+mustFixture("fixture grants CREATE on the restricted-grant database",
+  sql('grant create on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER));
 const afterSchemaGrant = asLimited(PLATFORM, LIMITED_DB2);
 report("R4) ...and with CREATE on the database granted it applies the whole file unaided",
   afterSchemaGrant.ok, afterSchemaGrant.out.split("\n").slice(0, 2));
 
-sql('drop database if exists "' + LIMITED_DB2 + '"');
-sql('drop role if exists ' + LIMITED_USER);
+mustFixture("cleanup removes the restricted-grant database",
+  sql('drop database if exists "' + LIMITED_DB2 + '"'));
+mustFixture("cleanup removes the restricted owner", sql('drop role if exists ' + LIMITED_USER));
+for (const role of REQUEST_ROLES) {
+  mustFixture("cleanup removes role " + role, sql("drop role if exists " + role));
+}
 
 console.log("      (this file proves the schema ENFORCES what it claims, on a database it " +
   "built from nothing — it still cannot prove the owner has applied it to their project)");

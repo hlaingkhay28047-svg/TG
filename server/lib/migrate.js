@@ -14,9 +14,9 @@
  * three times in a row and requiring app_settings to still hold exactly one
  * row afterwards.
  *
- * ORDER MATTERS. platform.sql creates auth.users, auth.uid() and the roles that
- * supabase/schema.sql's policies are written against; reversed, the second file
- * fails on its first statement.
+ * ORDER MATTERS. platform.sql creates auth.users, auth.uid() and the marker
+ * that makes supabase/schema.sql enforce roleless FORCE RLS; reversed, the
+ * second file fails on its first statement.
  *
  * A failure here keeps readiness false and every database-backed route closed.
  * The database-free process liveness and diagnostic health endpoints remain
@@ -115,9 +115,19 @@ async function migrate() {
     throw err;
   }
   try {
+    const runtimeRole = await client.query(
+      "select rolsuper, rolbypassrls from pg_roles where rolname = current_user");
+    if (!runtimeRole.rows.length || runtimeRole.rows[0].rolsuper || runtimeRole.rows[0].rolbypassrls) {
+      throw new Error("database runtime user must be NOSUPERUSER and NOBYPASSRLS");
+    }
+
     await client.query(
       "select set_config('lock_timeout', $1, false), " +
-      "set_config('statement_timeout', $2, false)",
+      "set_config('statement_timeout', $2, false), " +
+      "set_config('request.role', 'service_role', false), " +
+      "set_config('request.jwt.claim.sub', '', false), " +
+      "set_config('request.is_admin', 'false', false), " +
+      "set_config('request.user_email', '', false)",
       [MIGRATION_LOCK_TIMEOUT_MS + "ms", MIGRATION_STATEMENT_TIMEOUT_MS + "ms"]);
     for (const file of files) {
       const sql = file === schema && schemaBytes
@@ -140,6 +150,17 @@ async function migrate() {
       throw new Error("schema applied but only " + rows[0].n + " of 4 tables exist");
     }
     if (schema && rows[0].n === 4) {
+      const protectedTables = await client.query(
+        "select count(*)::int as n from pg_class c " +
+        "join pg_namespace n on n.oid = c.relnamespace " +
+        "where (n.nspname, c.relname) in " +
+        "(('public','profiles'),('public','payment_requests'),('public','app_settings')," +
+        " ('public','devices'),('storage','objects'),('auth','users'),('auth','refresh_tokens')) " +
+        "and c.relrowsecurity and c.relforcerowsecurity");
+      if (protectedTables.rows[0].n !== 7) {
+        throw new Error("schema applied but only " + protectedTables.rows[0].n +
+          " of 7 request/auth tables enforce FORCE RLS");
+      }
       appliedSchemaFingerprint = expectedFingerprint;
       console.log("migrate: schema fingerprint " + expectedFingerprint.slice(0, 12));
     }

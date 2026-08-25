@@ -4,13 +4,13 @@
 -- WHY THIS FILE EXISTS. supabase/schema.sql protects four tables with row-level
 -- security, and every one of its 18 guards asks the same question: `auth.uid()`.
 -- On Supabase that function reads the JWT the Auth service issued, and
--- auth.users, storage.buckets/objects and the anon / authenticated roles came
+-- auth.users, storage.buckets/objects and the request identity context came
 -- with the platform. On a plain PostgreSQL cluster none of that exists, so the
 -- app schema would not even load.
 --
 -- This file creates those objects for real. It is deliberately shaped so that
--- supabase/schema.sql applies on top UNCHANGED: same function name, same
--- signature, same semantics, same roles. That is what lets the whole tested
+-- supabase/schema.sql still applies on Supabase and here: same function name,
+-- same signature and same request semantics. That is what lets the whole tested
 -- security model — and test/verify_schema_behaviour.js's 21 checks — survive a
 -- move off Supabase instead of being rewritten in application code, which is
 -- where authorisation bugs live.
@@ -20,47 +20,16 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
--- 1. the two roles every policy names
+-- 1. schemas and the roleless-runtime marker
 --
--- RLS only governs roles that can reach a table at all, and `authenticated` is
--- the role the API assumes for a signed-in caller. NOLOGIN on purpose: nothing
--- connects AS these roles, the service connects as its own user and switches
--- with SET LOCAL ROLE inside a transaction, so a leaked database password is
--- not also a leaked customer session.
+-- A DigitalOcean development database gives the app one database owner but no
+-- cluster administrator. Cluster-wide CREATE ROLE is therefore unavailable.
+-- Request roles are transaction-local values set only by server/lib/db.js;
+-- schema.sql recognises this marker, pins every request table behind FORCE RLS,
+-- and refuses a connection with no explicit request context.
 -- ---------------------------------------------------------------------------
---
--- CREATING THEM NEEDS A PRIVILEGE THE DATABASE USER MAY NOT HAVE. A managed
--- PostgreSQL user is often not allowed to CREATE ROLE, and plain `permission
--- denied to create role` names the statement without naming the remedy — on a
--- deployment whose only window is /api/health, that is most of the problem. So
--- the failure is caught and re-raised carrying the exact statements to run,
--- which is what reaches /health and therefore the person who has to act.
-do $$
-declare
-  missing text[] := '{}';
-  wanted  text;
-begin
-  foreach wanted in array array['anon', 'authenticated', 'service_role'] loop
-    if not exists (select 1 from pg_roles where rolname = wanted) then
-      missing := missing || wanted;
-    end if;
-  end loop;
-  if cardinality(missing) = 0 then return; end if;
 
-  begin
-    foreach wanted in array missing loop
-      execute format('create role %I nologin', wanted);
-    end loop;
-  exception when insufficient_privilege then
-    raise exception
-      'this database user cannot CREATE ROLE. Run once as an admin: %',
-      (select string_agg(format('create role %I nologin;', r), ' ')
-         from unnest(missing) as r)
-      using errcode = 'insufficient_privilege';
-  end;
-end $$;
-
--- CREATING SCHEMAS NEEDS A PRIVILEGE THE DATABASE USER MAY NOT HAVE EITHER. A
+-- CREATING SCHEMAS NEEDS A PRIVILEGE THE DATABASE USER MAY NOT HAVE. A
 -- freshly provisioned managed-database user is CONNECT-only by default — CREATE
 -- on the database, which governs CREATE SCHEMA, belongs to the owner alone
 -- until an admin grants it. Same shape as the role bootstrap above: caught and
@@ -78,20 +47,14 @@ exception when insufficient_privilege then
     using errcode = 'insufficient_privilege';
 end $$;
 
--- The schemas can exist (created above, or already present) while this user
--- still lacks the grant option on "public" needed to hand USAGE to anon,
--- authenticated and service_role — a distinct privilege from CREATE on the
--- database, and one a fresh managed-database user is equally unlikely to hold
--- by default. Caught the same way, naming its own remedy.
-do $$
-begin
-  grant usage on schema public, auth, storage to anon, authenticated, service_role;
-exception when insufficient_privilege then
-  raise exception
-    'this database user cannot GRANT usage on schema "public". Run once as an admin: %',
-    format('grant usage, create on schema public to %I with grant option;', current_user)
-    using errcode = 'insufficient_privilege';
-end $$;
+create or replace function auth.hnk_roleless_runtime() returns boolean
+language sql
+immutable
+as $$ select true $$;
+
+-- Detection needs only the catalogue entry. Keeping execution owner-only stops
+-- this implementation marker becoming an accidental public API.
+revoke all on function auth.hnk_roleless_runtime() from public;
 
 -- ---------------------------------------------------------------------------
 -- 2. auth.users — the identity table profiles.id references
@@ -118,6 +81,18 @@ create table if not exists auth.users (
 -- row claiming that address decides arbitrarily who gets a free VIP period.
 create unique index if not exists users_email_uniq on auth.users (lower(email));
 
+-- Auth data contains password hashes, recovery tokens and refresh tokens. The
+-- old SET ROLE boundary made these tables unreachable to customer statements;
+-- FORCE RLS preserves that separation even though every request now uses the
+-- one database-owner login. Only db.asService/migrate set this internal mode.
+alter table auth.users enable row level security;
+drop policy if exists hnk_auth_users_service_all on auth.users;
+create policy hnk_auth_users_service_all on auth.users
+  for all to public
+  using (current_setting('request.role', true) = 'service_role')
+  with check (current_setting('request.role', true) = 'service_role');
+alter table auth.users force row level security;
+
 -- ---------------------------------------------------------------------------
 -- 3. auth.uid() — the hinge the entire security model turns on
 --
@@ -125,8 +100,8 @@ create unique index if not exists users_email_uniq on auth.users (lower(email));
 -- transaction setting the API writes after it has verified the caller's token:
 --
 --     begin;
---     set local role authenticated;
---     set local request.jwt.claim.sub = '<verified uid>';
+--     select set_config('request.role', 'authenticated', true),
+--            set_config('request.jwt.claim.sub', '<verified uid>', true);
 --     ...the app's query...
 --     commit;
 --
@@ -142,8 +117,6 @@ stable
 as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
 $$;
-
-grant execute on function auth.uid() to anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- 4. storage — payment proofs, kept in the database
@@ -186,8 +159,6 @@ as $$
   select string_to_array(name, '/');
 $$;
 
-grant execute on function storage.foldername(text) to anon, authenticated, service_role;
-
 -- ROW-LEVEL SECURITY IS ENABLED HERE, and it has to be.
 --
 -- supabase/schema.sql section 8 creates proofs_insert_own and
@@ -202,11 +173,6 @@ grant execute on function storage.foldername(text) to anon, authenticated, servi
 -- slip, both answering 200, with the two policies present and correct the whole
 -- time. This is the single line that stops it.
 alter table storage.objects enable row level security;
-
--- Grants have to exist for those policies to have anything to govern. INSERT
--- and SELECT only: there is deliberately no UPDATE or DELETE policy, so a
--- proof cannot be overwritten or removed after an admin has been shown it.
-grant select, insert on storage.objects to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 5. refresh tokens
@@ -224,3 +190,37 @@ create table if not exists auth.refresh_tokens (
 );
 
 create index if not exists refresh_tokens_user_idx on auth.refresh_tokens (user_id);
+
+alter table auth.refresh_tokens enable row level security;
+drop policy if exists hnk_refresh_tokens_service_all on auth.refresh_tokens;
+create policy hnk_refresh_tokens_service_all on auth.refresh_tokens
+  for all to public
+  using (current_setting('request.role', true) = 'service_role')
+  with check (current_setting('request.role', true) = 'service_role');
+alter table auth.refresh_tokens force row level security;
+
+-- ---------------------------------------------------------------------------
+-- 6. platform-object privileges, when Supabase-style roles already exist
+--
+-- The DigitalOcean runtime has none of these cluster roles and owns every
+-- object above, so it needs no GRANT. The behaviour suite deliberately also
+-- exercises this platform file with Supabase's request roles present; keep the
+-- platform-native auth/storage dependencies usable in that shape without ever
+-- requiring CREATE ROLE.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  wanted text;
+begin
+  foreach wanted in array array['anon', 'authenticated', 'service_role'] loop
+    if exists (select 1 from pg_roles where rolname = wanted) then
+      execute format('grant usage on schema public, auth, storage to %I', wanted);
+      execute format('grant execute on function auth.uid() to %I', wanted);
+      execute format('grant execute on function storage.foldername(text) to %I', wanted);
+    end if;
+  end loop;
+
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'grant select, insert on storage.objects to authenticated';
+  end if;
+end $$;
