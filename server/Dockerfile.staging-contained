@@ -8,10 +8,11 @@ COPY . ./
 FROM postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
 
 COPY --from=build /usr/local/bin/node /usr/local/bin/node
-COPY --from=build /usr/lib/libstdc++.so.6* /usr/lib/
-COPY --from=build /usr/lib/libgcc_s.so.1* /usr/lib/
+COPY --from=build /usr/lib/libstdc++.so.6.0.34 /usr/lib/libstdc++.so.6.0.34
+COPY --from=build /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
 COPY --from=build /app /app
-RUN chmod 0555 /app/start-contained-staging.sh
+RUN ln -sfn libstdc++.so.6.0.34 /usr/lib/libstdc++.so.6 \
+    && chmod 0555 /app/start-contained-staging.sh
 
 WORKDIR /app
 CMD ["/app/start-contained-staging.sh"]

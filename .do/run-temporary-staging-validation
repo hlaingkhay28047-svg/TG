@@ -1,1 +1,1 @@
-PR #284 fallback retry. Prove abrupt database failure handling, then verify and restore static-only staging.
+PR #284 retry: avoid App Platform's symlink-copy loop, then prove API/schema and static-only cleanup.
