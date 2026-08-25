@@ -198,3 +198,29 @@ create policy hnk_refresh_tokens_service_all on auth.refresh_tokens
   using (current_setting('request.role', true) = 'service_role')
   with check (current_setting('request.role', true) = 'service_role');
 alter table auth.refresh_tokens force row level security;
+
+-- ---------------------------------------------------------------------------
+-- 6. platform-object privileges, when Supabase-style roles already exist
+--
+-- The DigitalOcean runtime has none of these cluster roles and owns every
+-- object above, so it needs no GRANT. The behaviour suite deliberately also
+-- exercises this platform file with Supabase's request roles present; keep the
+-- platform-native auth/storage dependencies usable in that shape without ever
+-- requiring CREATE ROLE.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  wanted text;
+begin
+  foreach wanted in array array['anon', 'authenticated', 'service_role'] loop
+    if exists (select 1 from pg_roles where rolname = wanted) then
+      execute format('grant usage on schema public, auth, storage to %I', wanted);
+      execute format('grant execute on function auth.uid() to %I', wanted);
+      execute format('grant execute on function storage.foldername(text) to %I', wanted);
+    end if;
+  end loop;
+
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'grant select, insert on storage.objects to authenticated';
+  end if;
+end $$;

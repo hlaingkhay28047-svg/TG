@@ -215,14 +215,16 @@ report("E) the SQL-editor bootstrap (no JWT) can create the first admin", admin 
    assertions therefore expect true/false; check E, which selects the column on
    its own, expects t. Getting this backwards makes the check fail against a
    perfectly correct schema. */
-asUser(CUST, "update public.profiles set is_admin=true, plan_status='active', " +
+const promoteAttempt = asUser(CUST, "update public.profiles set is_admin=true, plan_status='active', " +
   "plan_expires_at=now()+interval '99 years', allowed_devices=99, joined_paid=true, price_1m_override=0 " +
   "where id = auth.uid();", DB);
-const after = sql("select is_admin||'|'||plan_status||'|'||allowed_devices||'|'||joined_paid||'|'||" +
+const afterResult = sql("select is_admin||'|'||plan_status||'|'||allowed_devices||'|'||joined_paid||'|'||" +
   "coalesce(price_1m_override::text,'null')||'|'||coalesce(plan_expires_at::text,'null') " +
-  "from public.profiles where id='" + CUST + "'", DB).out;
+  "from public.profiles where id='" + CUST + "'", DB);
 report("F) a customer promoting themselves has every field reverted",
-  after === "false|none|2|false|null|null", { after });
+  promoteAttempt.ok && afterResult.ok &&
+  afterResult.out === "false|none|2|false|null|null",
+  { updated: promoteAttempt.ok, after: afterResult.out });
 
 /* ---- G) identity is not the customer's to edit ----
    The address here must be one NOBODY holds. Pointing it at owner@example.com
@@ -230,10 +232,12 @@ report("F) a customer promoting themselves has every field reverted",
    refuses the duplicate first, so the assertion held even with the guard
    trigger dropped. An unused address leaves the unique index with no opinion,
    so the only thing that can preserve the row is the guard. */
-asUser(CUST, "update public.profiles set email='stolen@example.com', name='Somebody Else' where id = auth.uid();", DB);
-const ident = sql("select email||'|'||name from public.profiles where id='" + CUST + "'", DB).out;
+const identityEdit = asUser(CUST,
+  "update public.profiles set email='stolen@example.com', name='Somebody Else' where id = auth.uid();", DB);
+const identResult = sql("select email||'|'||name from public.profiles where id='" + CUST + "'", DB);
 report("G) a customer cannot rewrite their own email or name",
-  ident === "customer@example.com|Customer", { ident });
+  identityEdit.ok && identResult.ok && identResult.out === "customer@example.com|Customer",
+  { updated: identityEdit.ok, ident: identResult.out });
 
 /* A payment product must have a configured server-side price. This keeps the
    early flat-price compatibility checks realistic while the tier-specific
@@ -279,11 +283,15 @@ report("G2) forged cross-account payments reveal neither profile state nor exist
   { existing: crossExisting.out.split("\n")[0], missing: crossMissing.out.split("\n")[0] });
 
 /* ---- H) a customer cannot approve their own payment ---- */
-asUser(CUST, "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
+const paymentInsert = asUser(CUST,
+  "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk) " +
   "values (auth.uid(),'plan_1m','123456',30000);", DB);
-asUser(CUST, "update public.payment_requests set status='approved';", DB);
-const stat = sql("select status from public.payment_requests", DB).out;
-report("H) a customer cannot approve their own payment", stat === "pending", { status: stat });
+const selfApproval = asUser(CUST,
+  "update public.payment_requests set status='approved';", DB);
+const statResult = sql("select status from public.payment_requests", DB);
+report("H) a customer cannot approve their own payment",
+  paymentInsert.ok && selfApproval.ok && statResult.ok && statResult.out === "pending",
+  { inserted: paymentInsert.ok, updateAccepted: selfApproval.ok, status: statResult.out });
 
 /* ---- I) nor forge one that arrives already reviewed ---- */
 const forge = asUser(CUST, "insert into public.payment_requests (user_id,kind,status,reviewed_by,note) " +
@@ -292,11 +300,14 @@ report("I) a forged already-reviewed row is refused", !forge.ok && /row-level se
   { accepted: forge.ok, err: forge.out.split("\n")[0] });
 
 /* ---- J) an admin approval extends the plan, in the database ---- */
-asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+const adminApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where status='pending';", DB);
-const plan = sql("select plan_status||'|'||(plan_expires_at between now()+interval '27 days' " +
-  "and now()+interval '32 days') from public.profiles where id='" + CUST + "'", DB).out;
-report("J) an admin approval extends the plan by one month", plan === "active|true", { plan });
+const planResult = sql("select plan_status||'|'||(plan_expires_at between now()+interval '27 days' " +
+  "and now()+interval '32 days') from public.profiles where id='" + CUST + "'", DB);
+report("J) an admin approval extends the plan by one month",
+  adminApproval.ok && planResult.ok && planResult.out === "active|true",
+  { approved: adminApproval.ok, plan: planResult.out });
 
 /* ---- J2) the database, not the browser, owns the device-tier quote ----
 
@@ -761,7 +772,7 @@ report("M3) a signed-in customer may NOT rewrite prices either", !custWrite.ok, 
 const own = asUser(CUST, "select count(*) from public.profiles;", DB);
 const all = asUser(OWNER, "select count(*) from public.profiles;", DB);
 report("N) a customer sees only their own profile; an admin sees every one",
-  /(^|\n)1(\n|$)/.test(own.out) && /(^|\n)2(\n|$)/.test(all.out),
+  own.ok && all.ok && /(^|\n)1(\n|$)/.test(own.out) && /(^|\n)2(\n|$)/.test(all.out),
   { customerSees: own.out.trim(), adminSees: all.out.trim() });
 
 /* ---- O) the v5.38.0 self-heal on a database this file built ---- */
