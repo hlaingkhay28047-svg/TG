@@ -12,7 +12,7 @@
      3  refresh once      one refresh, replay with the new bearer, no logged-out flash
      4  concurrent 401s   the _accRefreshing coalesce holds under three at once
      5  logout            session cleared, DEVICE ID SURVIVES (never burn a slot)
-     6  days-left math    the Math.ceil rule and the expired-but-"active" case
+     6  days-left math    expiry math plus Panel route/entitlement lifecycle
      7  buy -> upload     multipart to payment-proofs/<uid>/, no app-set Content-Type
      8  buy -> insert     exactly four fields; status/reviewed_* never sent
      9  txn validation    digits-only, clamp to 6, submit gating, pay_shot_need
@@ -22,7 +22,7 @@
      13 SW                still refuses to cache a cross-origin (bearer) response
      14 320/390           no overflow with every accordion + the paywall open
      15 44px              every visible account control clears the touch target
-     16 i18n zero-miss    87 keys x 9 languages, placeholders intact, no emoji
+     16 i18n zero-miss    90 keys x 9 languages, placeholders intact, no emoji
      17 no secrets        the anon key ships in code but is never RENDERED
      18 console           zero console errors / pageerrors across the whole sweep
 
@@ -151,7 +151,7 @@ const SB_FIX = {
   })();`);
 
   const URL_ = `http://127.0.0.1:${PORT}/index.html`;
-  async function boot(cfg) {
+  async function boot(cfg, suffix) {
     await page.goto(URL_, { waitUntil: "load" });
     await page.evaluate(c => {
       localStorage.setItem("__sbcfg", JSON.stringify(c || {}));
@@ -159,7 +159,7 @@ const SB_FIX = {
       localStorage.removeItem("hnk_acc_profile_v1");
       localStorage.removeItem("hnk_acc_settings_v1");
     }, cfg);
-    await page.goto(URL_, { waitUntil: "load" });
+    await page.goto(URL_ + (suffix || ""), { waitUntil: "load" });
     await page.waitForTimeout(500);
     await page.evaluate(() => {
       state.key = "TEST_KEY";
@@ -329,7 +329,9 @@ const SB_FIX = {
     const probe = (status, iso) => {
       acc.profile = { id: uid, name: "x", email: "x@y.z", plan_status: status, plan_expires_at: iso, allowed_devices: 2 };
       accRender();
+      const panel = document.getElementById("accGrpPanel");
       return { days: planDaysLeft(acc.profile), premium: isPremium(),
+               panelAvailable: !!panel && panel.className.indexOf("hide") < 0,
                line: (document.getElementById("accPlanLine").textContent || "").trim() };
     };
     return { d30: probe("active", D(24 * 30)), d7: probe("active", D(24 * 7)),
@@ -352,15 +354,64 @@ const SB_FIX = {
      and that string does not call the account free in any of the words the app
      used for it. */
   const FREE_WORDS = /^(Free|အခမဲ့|လၢႆလၢႆ|ฟรี|免费|Miễn phí|Gratis|Percuma)/i;
-  report("6 days-left math: +30d -> 30 / acc_plan_active, +7d -> 7 / acc_plan_soon, +6h -> 1 NOT 0 (the Math.ceil rule), a passed date with plan_status still \"active\" -> acc_plan_expired and isPremium() false, plan_status none -> acc_plan_free and it no longer calls the account free",
-    c6.d30.days === 30 && /Premium active/i.test(c6.d30.line) && c6.d30.premium === true &&
-    c6.d7.days === 7 && /expires in 7 days/i.test(c6.d7.line) &&
-    c6.h6.days === 1 &&
-    c6.past.days === 0 && /has expired/i.test(c6.past.line) && c6.past.premium === false &&
+  report("6 days-left math and Panel entitlement: active plans reveal the Account Center download, while expired/no-plan accounts keep it hidden",
+    c6.d30.days === 30 && /Premium active/i.test(c6.d30.line) && c6.d30.premium === true && c6.d30.panelAvailable === true &&
+    c6.d7.days === 7 && /expires in 7 days/i.test(c6.d7.line) && c6.d7.panelAvailable === true &&
+    c6.h6.days === 1 && c6.h6.panelAvailable === true &&
+    c6.past.days === 0 && /has expired/i.test(c6.past.line) && c6.past.premium === false && c6.past.panelAvailable === false &&
     typeof c6.freeLabel === "string" && c6.freeLabel.length > 0 &&
     c6.none.line.indexOf(c6.freeLabel) >= 0 &&
-    !FREE_WORDS.test(c6.freeLabel) && c6.none.premium === false,
+    !FREE_WORDS.test(c6.freeLabel) && c6.none.premium === false && c6.none.panelAvailable === false,
     JSON.stringify({ d30: c6.d30.days, d7: c6.d7.days, sixHours: c6.h6.days, pastPremium: c6.past.premium, none: c6.none.line, label: c6.freeLabel }));
+
+  /* The public landing now links to this real query route. Exercise the whole
+     intent state machine rather than only toggling the entitlement CSS: auth
+     -> profile verification -> buy -> active download. A repeated render in
+     the same state must not reopen its group and yank the customer's scroll. */
+  await boot({}, "?panel=download");
+  const c6route = await page.evaluate((uid) => {
+    const open = id => document.getElementById(id).className.indexOf("open") >= 0;
+    const hidden = id => document.getElementById(id).className.indexOf("hide") >= 0;
+    const auth = { intent: _panelDownloadIntent, stage: _panelDownloadStage, open: open("accGrpAuth") };
+
+    acc.sess = { access: "ACC1", refresh: "REF1", exp: Math.floor(Date.now()/1000) + 3600, uid: uid };
+    acc.profile = null;
+    accRender();
+    const loading = { intent: _panelDownloadIntent, stage: _panelDownloadStage,
+                      buyOpen: open("accGrpBuy"), panelHidden: hidden("accGrpPanel") };
+
+    acc.profile = { id: uid, name: "x", email: "x@y.z", plan_status: "none",
+                    plan_expires_at: null, allowed_devices: 2 };
+    accRender();
+    const buy = { intent: _panelDownloadIntent, stage: _panelDownloadStage,
+                  open: open("accGrpBuy"), panelHidden: hidden("accGrpPanel") };
+    accOpenGrp("accGrpPlan");
+    accPanelIntentApply();
+    const stable = { planOpen: open("accGrpPlan"), buyOpen: open("accGrpBuy") };
+
+    acc.profile = { id: uid, name: "x", email: "x@y.z", plan_status: "active",
+                    plan_expires_at: new Date(Date.now() + 30 * 86400000).toISOString(), allowed_devices: 2 };
+    accRender();
+    const dl = document.getElementById("accPanelDownload");
+    const panel = { intent: _panelDownloadIntent, stage: _panelDownloadStage,
+                    open: open("accGrpPanel"), hidden: hidden("accGrpPanel"),
+                    href: dl.getAttribute("href"), focused: document.activeElement === dl,
+                    expanded: document.getElementById("accGrpPanelH").getAttribute("aria-expanded") };
+
+    document.getElementById("dashPromoGo").click();
+    const promo = { panelOpen: open("accGrpPanel"), intent: _panelDownloadIntent,
+                    stage: _panelDownloadStage };
+    return { auth, loading, buy, stable, panel, promo };
+  }, UID);
+  report("6b Panel acquisition route: ?panel=download opens login, waits for profile verification without a false upsell, preserves intent through purchase, opens and focuses the active-Premium download once, does not repeatedly hijack the accordion, and the dashboard promo uses the same flow",
+    c6route.auth.intent === true && c6route.auth.stage === "auth" && c6route.auth.open === true &&
+    c6route.loading.intent === true && c6route.loading.stage === "loading" && c6route.loading.buyOpen === false && c6route.loading.panelHidden === true &&
+    c6route.buy.intent === true && c6route.buy.stage === "buy" && c6route.buy.open === true && c6route.buy.panelHidden === true &&
+    c6route.stable.planOpen === true && c6route.stable.buyOpen === false &&
+    c6route.panel.intent === false && c6route.panel.stage === "done" && c6route.panel.open === true && c6route.panel.hidden === false &&
+    c6route.panel.href === "../download/HNK_Ai_Panel_v6.23.0.ccx" && c6route.panel.focused === true && c6route.panel.expanded === "true" &&
+    c6route.promo.panelOpen === true && c6route.promo.intent === false && c6route.promo.stage === "done",
+    JSON.stringify(c6route));
 
   // ------------------------------------------------- 9 / 7 / 8) the buy panel
   await boot({ login: SB_FIX.token, profile: SB_FIX.profileFree, settings: SB_FIX.settings,
@@ -609,8 +660,8 @@ const SB_FIX = {
         if (!Object.prototype.hasOwnProperty.call(e, L) || typeof e[L] !== "string" || !e[L].trim()) missing.push(k + "." + L);
         else {
           if (emoji.test(e[L])) emojis.push(k + "." + L);
-          const want = (e.en.match(/\{[NMDT]\}/g) || []).sort().join(",");
-          const got = (e[L].match(/\{[NMDT]\}/g) || []).sort().join(",");
+          const want = (e.en.match(/\{[NMDTV]\}/g) || []).sort().join(",");
+          const got = (e[L].match(/\{[NMDTV]\}/g) || []).sort().join(",");
           if (want !== got) badPlace.push(k + "." + L);
         }
       });
@@ -619,8 +670,8 @@ const SB_FIX = {
     LANG = before;
     return { total: keys.length, missing, emojis, unresolved, badPlace };
   });
-  report("16 i18n zero-miss: TR_V430 holds exactly 87 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, {N}/{M}/{D}/{T} survive every translation, and no value carries an emoji",
-    c16.total === 87 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+  report("16 i18n zero-miss: TR_V430 holds exactly 90 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
+    c16.total === 90 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));
@@ -650,7 +701,7 @@ const SB_FIX = {
   // ------------------------------------- 14) 320 / 390 no overflow (viewport-mutating)
   const openAll = () => page.evaluate(() => {
     switchPage("pgHome");
-    ["accGrpAuth","accGrpPlan","accGrpBuy","accGrpDev","accGrpReq"].forEach(id => {
+    ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpBuy","accGrpDev","accGrpReq"].forEach(id => {
       const g = document.getElementById(id); if (g) g.className = "grp open";   /* force, incl. the hidden plan group */
     });
     showPaywall("video");
@@ -688,7 +739,7 @@ const SB_FIX = {
     const bad = [];
     let n = 0;
     const scan = () => {
-      const nodes = Array.from(document.querySelectorAll("#cardAccount button, #cardAccount .chip, #cardAccount input, #cardAccount select"))
+      const nodes = Array.from(document.querySelectorAll("#cardAccount button, #cardAccount a.btn, #cardAccount .chip, #cardAccount input, #cardAccount select"))
         .concat(Array.from(document.querySelectorAll("#wizPay .wiz-nav .btn")));
       nodes.forEach(el => {
         if (el.offsetParent === null) return;            /* hidden controls have no touch target */
@@ -711,7 +762,7 @@ const SB_FIX = {
                       created_at: "2026-08-01T00:00:00Z", note: "wrong amount" }];
     acc.pending = null;
     accRender(); accRenderPay(); accRenderDevices(); accRenderRequests(); accShowDeviceLimit();
-    ["accGrpAuth","accGrpPlan","accGrpBuy","accGrpDev","accGrpReq"].forEach(id => {
+    ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpBuy","accGrpDev","accGrpReq"].forEach(id => {
       document.getElementById(id).className = "grp open";
     });
     scan();

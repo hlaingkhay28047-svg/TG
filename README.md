@@ -128,11 +128,11 @@ account.
    API and the exact schema bytes that this process successfully applied:
 
    ```
-   {"ok":true,"apiVersion":"5.42.1","schema":4,
+   {"ok":true,"apiVersion":"5.42.2","schema":4,
     "schemaFingerprint":"<64 hex SHA-256>","ready":true,"tls":"verified"}
-   {"ok":true,"apiVersion":"5.42.1","schema":4,
+   {"ok":true,"apiVersion":"5.42.2","schema":4,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
-   {"ok":true,"apiVersion":"5.42.1","schema":null,
+   {"ok":true,"apiVersion":"5.42.2","schema":null,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
    ```
 
