@@ -3,6 +3,15 @@ name: DigitalOcean Staging Deploy
 on:
   push:
     branches: [upgrade-safe-wave]
+    paths-ignore:
+      - .do/run-temporary-staging-validation
+      - .github/scripts/temporary_staging_spec.js
+      - .github/workflows/deploy-digitalocean-staging.yml
+      - .github/workflows/temporary-staging-validation.yml
+      - test/verify_digitalocean_deploy.js
+      - test/verify_temporary_staging_spec.js
+      - server/Dockerfile.staging-contained
+      - server/start-contained-staging.sh
   workflow_dispatch:
     inputs:
       force_rebuild:
@@ -16,7 +25,7 @@ permissions:
 
 concurrency:
   group: digitalocean-staging
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
