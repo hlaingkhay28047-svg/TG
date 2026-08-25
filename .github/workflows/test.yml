@@ -51,6 +51,9 @@ jobs:
       - name: Install the PostgreSQL client
         run: sudo apt-get install -y --no-install-recommends postgresql-client
 
+      - name: Verify roleless RLS under a restricted database owner
+        run: node test/verify_roleless_rls.js
+
       - name: Verify the schema ENFORCES what it claims (real PostgreSQL)
         run: node test/verify_schema_behaviour.js
 

@@ -1,8 +1,8 @@
-name: DigitalOcean Staging Database Binding Diagnostics
+name: DigitalOcean Staging Migration Diagnostics
 
 on:
   push:
-    branches: [codex/bootstrap-staging-db-roles]
+    branches: [upgrade-safe-wave]
     paths:
       - .github/workflows/diagnose-digitalocean-staging.yml
 
@@ -10,25 +10,26 @@ permissions:
   contents: read
 
 concurrency:
-  group: digitalocean-staging-database-binding-diagnostics
+  group: digitalocean-staging-diagnostics
   cancel-in-progress: true
 
 jobs:
   diagnose:
-    name: Report sanitized staging database binding shape
+    name: Report sanitized hnk-api migration state
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       DO_APP_NAME: hnk-ai-tools-2
       DO_REPO: hlaingkhay28047-svg/TG
       DO_BRANCH: upgrade-safe-wave
+      DO_SERVICE: hnk-api
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_STAGING_ACCESS_TOKEN }}
     steps:
       - name: Require staging diagnostics token
         shell: bash
         run: |
           if [ -z "$DO_TOKEN" ]; then
-            echo "::error::Staging database diagnostics require DIGITALOCEAN_STAGING_ACCESS_TOKEN."
+            echo "::error::Staging migration diagnostics require DIGITALOCEAN_STAGING_ACCESS_TOKEN."
             exit 1
           fi
 
@@ -38,18 +39,15 @@ jobs:
           token: ${{ env.DO_TOKEN }}
           version: 1.166.0
 
-      - name: Capture sanitized database binding diagnostics
+      - name: Capture sanitized migration diagnostics
         shell: bash
         run: |
           set -euo pipefail
           umask 077
-          APPS_FILE="$RUNNER_TEMP/staging-binding-apps.json"
-          LIVE_SPEC="$RUNNER_TEMP/staging-binding-spec.json"
-          APP_STATE="$RUNNER_TEMP/staging-binding-state.json"
-          CLUSTERS_FILE="$RUNNER_TEMP/staging-binding-clusters.json"
-          USERS_FILE="$RUNNER_TEMP/staging-binding-users.json"
-          ADMIN_URI_FILE="$RUNNER_TEMP/staging-binding-admin-uri"
-          trap 'rm -f "$APPS_FILE" "$LIVE_SPEC" "$APP_STATE" "$CLUSTERS_FILE" "$USERS_FILE" "$ADMIN_URI_FILE"' EXIT
+          APPS_FILE="$RUNNER_TEMP/staging-diagnostic-apps.json"
+          RAW_LOG="$RUNNER_TEMP/staging-diagnostic-runtime.log"
+          SAFE_LOG="$RUNNER_TEMP/staging-diagnostic-sanitized.log"
+          trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$SAFE_LOG"' EXIT
 
           doctl apps list --output json > "$APPS_FILE"
           APP_COUNT="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
@@ -71,60 +69,31 @@ jobs:
             | .id
           ' "$APPS_FILE")"
 
-          doctl apps spec get "$APP_ID" --format json > "$LIVE_SPEC"
-          doctl apps get "$APP_ID" --output json > "$APP_STATE"
-          DB_COUNT="$(jq -r '[.databases[]? | select(.engine == "PG")] | length' "$LIVE_SPEC")"
-          if [ "$DB_COUNT" -ne 1 ]; then
-            echo "::error::Expected exactly one PostgreSQL staging database component."
+          if ! doctl apps logs "$APP_ID" "$DO_SERVICE" \
+            --type run --tail 300 --no-prefix > "$RAW_LOG" 2>&1; then
+            echo "::error::DigitalOcean runtime logs could not be retrieved. Raw output remains private."
             exit 1
           fi
 
-          DB_KEYS="$(jq -r '[.databases[] | select(.engine == "PG")][0] | keys | sort | join(",")' "$LIVE_SPEC")"
-          ACTIVE_DB_KEYS="$(jq -r --arg id "$APP_ID" '
-            [(if type == "array" then .[] else . end)
-              | select(.id == $id) | .active_deployment.databases[]?]
-            | if length == 1 then (.[0] | keys | sort | join(",")) else "" end
-          ' "$APP_STATE")"
-          CLUSTER_NAME="$(jq -r '[.databases[] | select(.engine == "PG")][0].cluster_name // empty' "$LIVE_SPEC")"
-          DB_USER="$(jq -r '[.databases[] | select(.engine == "PG")][0].db_user // empty' "$LIVE_SPEC")"
-          DB_NAME="$(jq -r '[.databases[] | select(.engine == "PG")][0].db_name // empty' "$LIVE_SPEC")"
+          sed -E \
+            -e 's#postgres(ql)?://[^[:space:]]+#postgres://<redacted>#gI' \
+            -e 's/(password=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/(PGPASSWORD=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/((token|secret|api[_-]?key)=)[^[:space:]]+/\1<redacted>/gI' \
+            "$RAW_LOG" \
+            | LC_ALL=C tr -cd '\11\12\15\40-\176' \
+            | grep -E 'hnk-api listening|migrate:|db: WARNING|WARNING: could not reach the database|WARNING: booting anyway|FATAL: migration failed|FATAL: booting LOCKED' \
+            | cut -c1-1000 \
+            | tail -n 120 > "$SAFE_LOG" || true
 
-          echo "desired_database_keys=$DB_KEYS"
-          echo "active_database_keys=${ACTIVE_DB_KEYS:-none}"
-          echo "cluster_name_present=$([ -n "$CLUSTER_NAME" ] && echo true || echo false)"
-          echo "db_user_present=$([ -n "$DB_USER" ] && echo true || echo false)"
-          echo "db_name_present=$([ -n "$DB_NAME" ] && echo true || echo false)"
-
-          doctl databases list --output json > "$CLUSTERS_FILE"
-          echo "account_postgresql_cluster_count=$(jq -r '[.[] | select(.engine_slug == "postgresql")] | length' "$CLUSTERS_FILE")"
-          if [ -z "$CLUSTER_NAME" ]; then
-            echo "exact_cluster_match=unavailable"
-            exit 0
+          if [ ! -s "$SAFE_LOG" ]; then
+            echo "::error::No allowlisted migration diagnostics were present. Raw output remains private."
+            exit 1
           fi
 
-          CLUSTER_COUNT="$(jq -r --arg name "$CLUSTER_NAME" '[.[] | select(.name == $name and .engine_slug == "postgresql")] | length' "$CLUSTERS_FILE")"
-          echo "exact_cluster_match=$([ "$CLUSTER_COUNT" -eq 1 ] && echo true || echo false)"
-          if [ "$CLUSTER_COUNT" -ne 1 ]; then
-            exit 0
-          fi
-          CLUSTER_ID="$(jq -r --arg name "$CLUSTER_NAME" '.[] | select(.name == $name and .engine_slug == "postgresql") | .id' "$CLUSTERS_FILE")"
-          doctl databases user list "$CLUSTER_ID" --output json > "$USERS_FILE"
-          echo "primary_user_count=$(jq -r '[.[] | select(.role == "primary")] | length' "$USERS_FILE")"
-          echo "normal_user_count=$(jq -r '[.[] | select(.role == "normal")] | length' "$USERS_FILE")"
-          if [ -n "$DB_USER" ]; then
-            echo "spec_user_match_count=$(jq -r --arg user "$DB_USER" '[.[] | select(.name == $user)] | length' "$USERS_FILE")"
-          else
-            echo "spec_user_match_count=unavailable"
-          fi
-
-          if ! command -v psql >/dev/null 2>&1; then
-            echo "psql_available=false"
-            exit 0
-          fi
-          echo "psql_available=true"
-          doctl databases connection "$CLUSTER_ID" --format URI --no-header > "$ADMIN_URI_FILE"
-          chmod 600 "$ADMIN_URI_FILE"
-          ADMIN_CAPABILITY="$(psql "$(cat "$ADMIN_URI_FILE")" -XAtq -v ON_ERROR_STOP=1 \
-            -c "select rolcreaterole::text || '|' || rolcreatedb::text from pg_roles where rolname=current_user")"
-          echo "default_connection_can_create_role=${ADMIN_CAPABILITY%%|*}"
-          echo "default_connection_can_create_database=${ADMIN_CAPABILITY##*|}"
+          echo "::group::Sanitized hnk-api migration diagnostics"
+          STOP_TOKEN="staging-diagnostic-$(openssl rand -hex 16)"
+          echo "::stop-commands::$STOP_TOKEN"
+          cat "$SAFE_LOG"
+          echo "::$STOP_TOKEN::"
+          echo "::endgroup::"
