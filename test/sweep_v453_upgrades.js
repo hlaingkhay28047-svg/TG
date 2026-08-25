@@ -29,6 +29,7 @@
 
    Usage: PORT=8931 node test/sweep_v453_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const PORT = process.env.PORT || 8931;
 let failures = 0;
 function report(name, ok, detail) {
@@ -38,6 +39,10 @@ function report(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30: the app is account + Premium only, and the wall now REDIRECTS —
+     switchPage refuses to leave pgHome while it is up, so a suite page never
+     mounts and the controls below do not exist. Sign in first. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const pageErrors = [];
   page.on("pageerror", e => pageErrors.push(String(e).slice(0, 250)));

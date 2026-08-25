@@ -43,6 +43,7 @@
 
    Usage: PORT=8931 node test/sweep_v500_batchwf.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const fs = require("fs");
 const path = require("path");
 const PORT = process.env.PORT || 8931;
@@ -71,6 +72,9 @@ report("B2) the workflow branch appends nothing but the user's own extra line",
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   const errs = [], bad = [];

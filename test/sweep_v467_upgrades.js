@@ -46,6 +46,7 @@
 
    Usage: PORT=8931 node test/sweep_v467_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const fs = require("fs");
 const path = require("path");
 const PORT = process.env.PORT || 8931;
@@ -73,8 +74,16 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
   /body\.imageUrls\s*=\s*imageUrls/.test(src) &&
   /var imageParam\s*=\s*cfg\.imageParam\s*\|\|\s*"imageUrls"/.test(src));
 
+/* v5.39.0 — C2 WAS MEASURING NOTHING. The ref tiles and their role pills were
+   measured with no account fixture, so the access wall hid the page they live
+   on and every rectangle came back 0x0: `fits` reduced to 0 <= 0+1 && 0 >= 0-1
+   and `clipped` to 0 > 0+1, a true and a false that no layout change could
+   move. A label overflowing its tile — the entire subject of the check — was
+   unreachable. withPremium renders the page; refHostPage() below finds
+   whichever page the tiles are actually on rather than assuming; and the zero
+   guard turns "not rendered" back into a failure. */
 (async () => {
-  const browser = await chromium.launch();
+  const browser = withPremium(await chromium.launch());
   const pageErrors = [];
   const byWidth = {};
   /* G) watches the WIRE, not a literal. See the rewrite note above assertion G. */
@@ -109,6 +118,17 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
       renderRefs();
       await new Promise(r => setTimeout(r, 250));
 
+      /* go to whatever page the ref tiles are actually on. Assuming the id
+         would be the same mistake in a different place — the nav has been
+         regrouped twice and two other sweeps still point at ids that were
+         retired in v4.27. */
+      const firstRef = document.querySelector(".ref");
+      const host = firstRef && firstRef.closest(".page");
+      if (host && typeof switchPage === "function") switchPage(host.id);
+      await new Promise(r => setTimeout(r, 250));
+      out.refHostPage = host ? host.id : "";
+      out.refPageShown = (document.querySelector(".page.on") || {}).id || "";
+
       out.roleKeys = REF_ROLES.map(r => r.k);
       const sk = REF_ROLES.filter(r => r.k === "sketch")[0];
       out.hasSketch = !!sk;
@@ -127,15 +147,81 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
          an earlier version of this check silently measured a detached node. */
       const pill = () => Array.from(document.querySelectorAll(".ref"))[1].querySelector(".refrole");
       const tile = () => Array.from(document.querySelectorAll(".ref"))[1].getBoundingClientRect();
+      /* v5.40.0 — MEASURE THE RULE, NOT ONLY THE CONTENT. Deleting the
+         max-height line left this whole check green, because every SHIPPED
+         label fits: the cap is what stops a future one escaping, so the cap
+         itself has to be asserted. capBites drives a deliberate over-long
+         string through the real pill and requires the overflow to register. */
+      out.capActive = (() => { const cs = getComputedStyle(pill()); return cs.maxHeight !== "none" && cs.maxHeight !== ""; })();
+      out.capBites = (() => {
+        const q = pill(), keep = q.textContent;
+        q.textContent = "Person who must keep their exact facial identity across the whole rendered frame";
+        const tr = tile(), pr = q.getBoundingClientRect();
+        const r = { over: q.scrollHeight > q.clientHeight + 1,
+                    inside: pr.top >= tr.top - 1 && pr.bottom <= tr.bottom + 1 };
+        q.textContent = keep;
+        return r;
+      })();
+      /* ...and the pill must not sit on top of the IMG n slot badge, which is
+         the only thing naming the ordered slot a ROLE MAP binds against */
+      out.tagVisible = (() => {
+        const t2 = Array.from(document.querySelectorAll(".ref"))[1].querySelector(".tag");
+        if (!t2) return false;
+        const r = t2.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return !!hit && hit.className.indexOf("tag") >= 0;
+      })();
+
       const seen = [], fits = [], clipped = [];
+      /* the guard: a hidden tile measures 0x0 and then every comparison below
+         is between zeroes */
+      out.tileRendered = (() => { const r = tile(); return r.width > 0 && r.height > 0; })();
+      /* v5.40.0 — and it must stay INSIDE the tile. v5.39.0 let the pill wrap
+         with no height cap, so a long enough label grew it taller than the
+         88px tile and hung it off the top edge — while both metrics above
+         reported clean, because an uncapped box can never overflow itself. */
+      out.escapes = [];
       for (let i = 0; i < REF_ROLES.length; i++) {
         const q = pill(), tr = tile(), pr = q.getBoundingClientRect();
         seen.push(q.textContent.trim());
         fits.push(pr.right <= tr.right + 1 && pr.left >= tr.left - 1);
-        clipped.push(q.scrollWidth > q.clientWidth + 1);
+        /* v5.39.0 — height too. The label wraps to two lines now, so a label
+           that outgrows the pill would hide a whole line rather than trail an
+           ellipsis, and a width-only check would call that clean. */
+        clipped.push(q.scrollWidth > q.clientWidth + 1 || q.scrollHeight > q.clientHeight + 1);
+        if (!(pr.top >= tr.top - 1 && pr.bottom <= tr.bottom + 1)) {
+          out.escapes.push(q.textContent.trim().slice(0, 24) + " h=" + Math.round(pr.height) + " tile=" + Math.round(tr.height));
+        }
         q.click();
         await new Promise(r => setTimeout(r, 70));
       }
+      /* the English badge is what all 35 non-Burmese locales fall back to, and
+         it was the label this release edited — measuring only Burmese left it
+         outside the check entirely */
+      out.byLang = {};
+      for (const L of ["my", "en"]) {
+        LANG = L;
+        try { applyLang(); } catch (e) {}
+        renderRefs();
+        await new Promise(r => setTimeout(r, 200));
+        const labels = [], bad = [];
+        for (let i = 0; i < REF_ROLES.length; i++) {
+          const q = pill(), tr = tile(), pr = q.getBoundingClientRect();
+          labels.push(q.textContent.trim());
+          if (q.scrollWidth > q.clientWidth + 1 || q.scrollHeight > q.clientHeight + 1 ||
+              !(pr.top >= tr.top - 1 && pr.bottom <= tr.bottom + 1)) {
+            bad.push(L + ":" + q.textContent.trim().slice(0, 20));
+          }
+          q.click();
+          await new Promise(r => setTimeout(r, 70));
+        }
+        out.byLang[L] = { labels, bad };
+      }
+      LANG = "my";
+      try { applyLang(); } catch (e) {}
+      renderRefs();
+      await new Promise(r => setTimeout(r, 150));
+
       out.seenLabels = seen;
       out.reachedSketch = seen.some(x => /Sketch|ပုံကြမ်း/.test(x));
       out.allFit = fits.every(Boolean);
@@ -195,8 +281,19 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
     WS.map(w => w + ":" + JSON.stringify(at(w).seenLabels)).join(" | "));
 
   report("C2) its label fits the ref tile at phone widths without clipping",
-    WS.every(w => at(w).allFit === true && at(w).anyClipped === false),
-    WS.map(w => w + ": fit=" + at(w).allFit + " clipped=" + at(w).anyClipped).join(" "));
+    WS.every(w => at(w).tileRendered === true && at(w).allFit === true &&
+                  at(w).anyClipped === false && (at(w).escapes || []).length === 0 &&
+                  at(w).capActive === true &&
+                  at(w).capBites && at(w).capBites.over === true && at(w).capBites.inside === true &&
+                  at(w).tagVisible === true &&
+                  Object.keys(at(w).byLang || {}).length === 2 &&
+                  Object.keys(at(w).byLang || {}).every(L => at(w).byLang[L].bad.length === 0)),
+    WS.map(w => w + ": rendered=" + at(w).tileRendered + " on=" + at(w).refPageShown +
+                " fit=" + at(w).allFit + " clipped=" + at(w).anyClipped +
+                " escapes=" + JSON.stringify(at(w).escapes || []) +
+                " cap=" + at(w).capActive + " capBites=" + JSON.stringify(at(w).capBites) +
+                " tagVisible=" + at(w).tagVisible +
+                " byLang=" + JSON.stringify(at(w).byLang)).join(" "));
 
   report("D) the role sentence keeps all four guarantees — geometry-only, no drawn marks, must be a photo, fixes anatomy",
     WS.every(w => at(w).guarantees && Object.keys(at(w).guarantees).every(k => at(w).guarantees[k])),

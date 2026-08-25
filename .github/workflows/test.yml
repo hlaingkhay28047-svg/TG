@@ -12,6 +12,26 @@ jobs:
   sweep:
     name: Workflow sweep (mocked generate)
     runs-on: ubuntu-24.04
+
+    # verify_schema_behaviour.js applies supabase/schema.sql to a real database
+    # and attacks it. It deliberately does not skip when no server is present:
+    # a schema test that quietly passes unreachable proves nothing, and the two
+    # defects it caught (the file could not CREATE the tables it protects; the
+    # device cap counted a re-registration as a new device) were both invisible
+    # to every check that only reads the file.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -24,6 +44,30 @@ jobs:
 
       - name: Verify coordinated release and delivery contract
         run: node test/verify_release_contract.js
+
+      - name: Verify Supabase RLS contract (every client table is protected)
+        run: node test/verify_rls_contract.js
+
+      - name: Install the PostgreSQL client
+        run: sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Verify the schema ENFORCES what it claims (real PostgreSQL)
+        run: node test/verify_schema_behaviour.js
+
+      # verify_api_service.js boots the real service, which needs its one pinned
+      # dependency. npm ci installs exactly what package-lock.json names, so CI
+      # runs the same driver version that was tested.
+      - name: Install the API service dependencies
+        run: npm ci --omit=dev --prefix server
+
+      - name: Verify API liveness while the database migration is blocked
+        run: node test/verify_api_liveness.js
+
+      - name: Verify DigitalOcean live-spec patch is narrow and fail-closed
+        run: node test/verify_digitalocean_spec_patch.js
+
+      - name: Verify the API service end to end (real PostgreSQL)
+        run: node test/verify_api_service.js
 
       - name: Install Playwright + Chromium
         run: |
@@ -274,3 +318,42 @@ jobs:
 
       - name: Run v5.11.0 face-gate sweep (cpu fallback, measured-face-only makeup, busy-yield)
         run: node test/sweep_v511_facegate.js
+
+      - name: Run v5.28.0 safe-area sweep (landscape notch insets on every edge-pinned surface)
+        run: node test/sweep_v528_safearea.js
+
+      - name: Run v5.29.0 provider-hint sweep (locked providers explain themselves)
+        run: node test/sweep_v529_providerhint.js
+
+      - name: Run v5.30.0 access-wall sweep (account + Premium required to enter)
+        run: node test/sweep_v530_accesswall.js
+
+      - name: Run v5.30.1 wall-QC sweep (keyBanner/onboarding respect the wall, admin save translates)
+        run: node test/sweep_v5301_wallqc.js
+
+      - name: Run v5.31.0 landing-honesty sweep (no free claim survives the paywall)
+        run: node test/sweep_v5310_landing_honesty.js
+
+      - name: Verify landing counts match what the app and the .ccx actually ship
+        run: node test/verify_landing_counts.js
+
+      - name: Run v5.33.0 password-reset sweep (the recovery token stays on our origin)
+        run: node test/sweep_v533_reset.js
+
+      - name: Run v5.33.0 accessibility sweep (skip link, dialog names, live status)
+        run: node test/sweep_v533_a11y.js
+
+      - name: Run v5.33.0 legal-pages sweep (the privacy policy still describes this code)
+        run: node test/sweep_v533_legal.js
+
+      - name: Run v5.34.0 payments sweep (joining fee, per-customer price, amount check, VIP grant)
+        run: node test/sweep_v534_payments.js
+
+      - name: Run XSS sweep (hostile database text renders as text)
+        run: node test/sweep_xss.js
+
+      - name: Run v5.35.0 RTL + shareable-language sweep (Urdu reads right to left)
+        run: node test/sweep_v535_rtl_lang.js
+
+      - name: Run v6.22.0 panel gate sweep (the .ccx is behind the same account as the app)
+        run: node test/verify_panel_gate.js

@@ -69,7 +69,11 @@ const NEW = Object.keys(SCRIPTS);
        every pack drift 64 keys behind TR in lockstep while still passing. */
     const full = Object.keys(TR);
     const counts = {}; langs.forEach(l => counts[l] = Object.keys(TR_L[l]).length);
-    const drift = {}; langs.forEach(l => { const miss = full.filter(k => !(k in TR_L[l])); if (miss.length) drift[l] = miss.length; });
+    const drift = {}; const missingByLang = {};
+    langs.forEach(l => {
+      const miss = full.filter(k => !(k in TR_L[l]));
+      if (miss.length) { drift[l] = miss.length; missingByLang[l] = miss; }
+    });
 
     const placeholderMisses = [], markupMisses = [], stillEnglish = [];
     const PH = /\{[A-Za-z0-9_]+\}/g;
@@ -92,13 +96,95 @@ const NEW = Object.keys(SCRIPTS);
         if (String(tr) === en && en.replace(/[^A-Za-z]/g, "").length > 12) stillEnglish.push(l + ":" + k);
       });
     });
-    return { langs, fullCount: full.length, counts, placeholderMisses, markupMisses, stillEnglish };
+    return { langs, fullCount: full.length, counts, missingByLang, placeholderMisses, markupMisses, stillEnglish };
   }, NEW);
 
-  const short = Object.keys(data.counts).filter(l => data.counts[l] < data.fullCount);
-  report("A) every language in TR_L carries the full key set — no starter packs left",
-    data.fullCount >= 308 && short.length === 0,
-    { fullKeySet: data.fullCount, shortLanguages: short.map(l => l + "=" + data.counts[l]) });
+/* v5.34 — THE ONE REGISTERED GAP, and it is registered rather than hidden.
+
+   The payments wave added ten strings. Fourteen packs were translated, and
+   Khamti was produced by replaying the shn->kht character map derived from the
+   228 pairs already in the file — it reproduces all 171 comparable shipped
+   Khamti strings exactly, so applying it to ten more is the same operation
+   that produced the pack, not a guess.
+
+   Tai Le (tdd) and Tai Lue (khb) are NOT that. Only 7 of 228 shipped strings
+   align with Shan by length and only 6 of the 14 words these ten strings need
+   appear anywhere in either pack — they are real translations by someone who
+   reads those languages, and there is no mechanical route from Shan to them.
+   Both options available without a speaker were worse than this one:
+
+     - inventing the strings ships wrong words to real customers;
+     - copying the Shan text into the pack would make the count pass while
+       leaving a Tai Le reader looking at Shan, which is precisely the
+       half-translated language this whole file exists to prevent — a green
+       assertion that lies is worse than a red one that is true.
+
+   So the entries are named here (twenty-four as of v5.41.0 — see the
+   v5.36.0 and v5.41.0 notes below for what was added since), and A2 below
+   proves the app degrades correctly for exactly them: LANG_FB routes tdd
+   and khb to Shan, so a customer sees real Shan rather than a raw key.
+   That is what the app already does for any missing key; the difference
+   is that it is now measured.
+
+   TO CLOSE THIS: a Tai Le / Tai Lue reader translates the twelve keys, they
+   go in the packs, and this registry is deleted. Anything else missing from
+   any pack still fails A, because the registry is matched exactly. */
+  /* v5.36.0 adds pay_both to the registry. Khamti (kht) is NOT here and never
+     was: it is a strict per-character transliteration of Shan -- 222 shipped
+     pairs, every one the same length, zero ambiguous characters -- so its
+     string is derived from the Shan one by a map proven to reproduce all 222.
+     Tai Le (tdd) and Tai Lue (khb) are different languages in different
+     scripts; only 2% of their strings are even the same length as the Shan,
+     which is why they were registered rather than guessed, and why pay_both
+     joins them. LANG_FB sends both to Shan and A2 below proves what a reader
+     actually sees is real Shan, not a raw key.
+
+     v5.41.0 adds pay_devices_h the same way: kht got a real value derived
+     from the 318-pair shn->kht per-character map (zero conflicts, so the
+     map is a function), same as every other kht string. tdd and khb still
+     have no mechanical route and no reader on hand, so pay_devices_h joins
+     them here rather than getting a guessed translation. */
+  const PENDING = {
+    tdd: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
+          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both","pay_devices_h"],
+    khb: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
+          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both","pay_devices_h"],
+  };
+  const unregistered = {};
+  Object.keys(data.missingByLang || {}).forEach(l => {
+    const allowed = PENDING[l] || [];
+    const extra = data.missingByLang[l].filter(k => allowed.indexOf(k) < 0);
+    if (extra.length) unregistered[l] = extra;
+  });
+  const overRegistered = Object.keys(PENDING).filter(l =>
+    PENDING[l].some(k => (data.missingByLang[l] || []).indexOf(k) < 0));
+
+  report("A) every language in TR_L carries the full key set, apart from the twenty-four entries registered above",
+    data.fullCount >= 318 && Object.keys(unregistered).length === 0 && overRegistered.length === 0,
+    { fullKeySet: data.fullCount, unregistered,
+      staleRegistry: overRegistered.length ? overRegistered + " no longer missing — delete them from PENDING" : "" });
+
+  /* A2) the registered gap must be INVISIBLE to the customer. LANG_FB sends
+     tdd and khb to Shan, so a missing key has to resolve to real Shan text —
+     not to the key name, not to an empty string, not to English. Nothing
+     checked this before, for any language. */
+  const fb = await page.evaluate(pending => {
+    const out = {};
+    Object.keys(pending).forEach(l => {
+      const prev = window.LANG;
+      window.LANG = l;
+      out[l] = pending[l].map(k => {
+        const v = t(k);
+        return { k, ok: typeof v === "string" && v.length > 0 && v !== k &&
+                       /[\u1000-\u109f\uaa60-\uaa7f]/.test(v) };
+      }).filter(x => !x.ok).map(x => x.k);
+      window.LANG = prev;
+    });
+    return out;
+  }, PENDING);
+  const fbBroken = Object.keys(fb).filter(l => fb[l].length);
+  report("A2) every registered gap still renders real Shan through LANG_FB — no raw key, no blank, no English",
+    fbBroken.length === 0, fb);
 
   report("B) every {N}-style placeholder survives translation",
     data.placeholderMisses.length === 0,

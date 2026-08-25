@@ -146,7 +146,10 @@ function report(name, ok, detail) {
   const C_warns = /wfoot\.textContent=head\+" · "\+t\("wiz_noprompt"\)\.replace\("\{M\}"/.test(SRC);
   const C_styled = /wfoot\.className="mut warn";/.test(SRC) && /\.mut\.warn\{color:var\(--err\)\}/.test(SRC);
   /* the premise: the upscale endpoint genuinely cannot take a prompt */
-  const C_premise = /async function rhV2SubmitUpscale\(apiKey, apiPath, imageUrl, scale\)\{\s*var body = \{ imageUrl: imageUrl\|\|"", scale: scale\|\|"2x" \};/.test(SRC);
+  /* v5.20.0: rhV2SubmitUpscale gained a trailing `signal` param (Stop-button
+     wiring via fetchWithTimeout) — the premise itself (no prompt field in
+     the body) is unchanged, so the pin follows the signature, not drops it */
+  const C_premise = /async function rhV2SubmitUpscale\(apiKey, apiPath, imageUrl, scale, signal\)\{\s*var body = \{ imageUrl: imageUrl\|\|"", scale: scale\|\|"2x" \};/.test(SRC);
   const C_dispatch = /rhGenerateUpscale\(state\.rhKey, rhActiveForFallback\.apiPath, refDataUrls, sizeSel, onTick, genAbort\.signal\)/.test(SRC);
   report("C) an upscale endpoint really cannot take a prompt, and the dispatcher really sends none",
     C_premise && C_dispatch, { body: C_premise, dispatch: C_dispatch });

@@ -15,6 +15,7 @@
    8. destructive-action Undo parity (Path clear/remove, Retouch clear-all)
       and btnPtGalOne no longer double-adds to the Gallery */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const BASE = "http://localhost:8931/index.html";
 
 let failures = 0;
@@ -25,6 +26,10 @@ function report(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30: the app is account + Premium only, and the wall now REDIRECTS —
+     switchPage refuses to leave pgHome while it is up, so a suite page never
+     mounts and the controls below do not exist. Sign in first. */
+  withPremium(browser);
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.addInitScript(() => {
     localStorage.setItem("hnk_ws_onboarded", "1");
@@ -162,8 +167,15 @@ function report(name, ok, detail) {
   /* ---- 4b) beforeunload guard present in source ---- */
   const fs = require("fs"), pathmod = require("path");
   const src = fs.readFileSync(pathmod.resolve(__dirname, "..", "docs", "app", "index.html"), "utf8");
+  /* v5.25 — beforeunload used to guard on PT.busy alone; a fresh audit found
+     that left every OTHER in-flight paid/generate path (Smart Workflow
+     wizard, Studio bake, Video/T2I generate) with zero refresh warning,
+     silently losing photos + an already-spent paid API call. The guard now
+     ORs in wiz.busy (via window._wizBusy — wiz itself is scoped out of
+     reach at this point in the file), ST.busy and every *Abort in-flight
+     flag; PT.busy is still one of the conditions, just no longer alone. */
   report("4b) wake-lock + beforeunload plumbing in source",
-    src.indexOf("navigator.wakeLock.request") >= 0 && src.indexOf('addEventListener("beforeunload"') >= 0 && src.indexOf("PT.busy){ e.preventDefault()") >= 0, {});
+    src.indexOf("navigator.wakeLock.request") >= 0 && src.indexOf('addEventListener("beforeunload"') >= 0 && src.indexOf("PT.busy || window._wizBusy") >= 0, {});
 
   /* ---- 2) V2 manual-slider carryover honesty ---- */
   const v2 = await page.evaluate(async () => {

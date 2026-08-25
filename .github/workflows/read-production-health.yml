@@ -1,0 +1,126 @@
+name: Read production health
+
+# WHY THIS EXISTS. /api/health is the only window into whether the API reached
+# its database, and reading it needs a network route to the live app. The
+# deploy workflows have one; a phone has one; a development container behind a
+# network policy does not. This makes the reading available to anyone with the
+# Actions tab, which is what turned a five-minute diagnosis into an afternoon
+# the first time it mattered.
+#
+# It DIAGNOSES, it does not gate. A red reading here means production is not
+# ready — which is worth knowing loudly — but failing this run would not make it
+# any readier, and a permanently red lane teaches people to ignore red lanes.
+# A valid JSON 503/ready:false remains a diagnostic success. Transport failure,
+# an unexpected HTTP status, malformed health JSON, or a status/readiness
+# mismatch fails because none is a trustworthy health reading.
+
+on:
+  workflow_dispatch:
+    inputs:
+      host:
+        description: "Host to read (defaults to production)"
+        required: false
+        default: hnk-ai-tools-3-s4nnu.ondigitalocean.app
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    name: Read /api/health
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Read /api/health
+        shell: bash
+        # Through the environment, never interpolated into the script: a
+        # workflow input is attacker-controlled text the moment anyone else can
+        # dispatch it, and ${{ }} inside run: is substituted before bash sees it.
+        env:
+          HOST: ${{ inputs.host }}
+        run: |
+          set -uo pipefail
+          case "$HOST" in
+            ""|*[!a-zA-Z0-9.-]*)
+              echo "::error::Refusing a host with unexpected characters: $HOST"
+              exit 1
+              ;;
+          esac
+
+          URL="https://${HOST}/api/health"
+          BODY_FILE="$RUNNER_TEMP/production-health-body.json"
+          echo "Reading ${URL}"
+          : > "$BODY_FILE"
+          CURL_STATUS=0
+          HTTP_STATUS="$(curl -sSL --max-time 20 -H 'Cache-Control: no-cache' \
+            --output "$BODY_FILE" --write-out '%{http_code}' "$URL")" || CURL_STATUS=$?
+          BODY="$(cat "$BODY_FILE")"
+
+          if [ "$CURL_STATUS" -ne 0 ] || [ "$HTTP_STATUS" = "000" ] || [ -z "$BODY" ]; then
+            echo "::error::${URL} did not answer reliably (transport/no-body: curl ${CURL_STATUS}, HTTP ${HTTP_STATUS:-000}). The service itself is down, not merely unready."
+            {
+              echo "### \`/api/health\` on \`${HOST}\` (HTTP \`${HTTP_STATUS:-000}\`)"
+              echo
+              echo "**No answer.** The service is down — this is not the database being unreachable,"
+              echo "which would still return \`{\"ok\":true,...}\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "503" ]; then
+            echo "::error::${URL} returned unexpected HTTP ${HTTP_STATUS}; expected the health contract's 200 or 503."
+            exit 1
+          fi
+          if ! jq -s -e 'length == 1 and (.[0] | type == "object" and (.ok == true) and ((.ready | type) == "boolean"))' \
+            "$BODY_FILE" >/dev/null 2>&1; then
+            echo "::error::${URL} returned invalid health JSON."
+            exit 1
+          fi
+
+          HEALTH_JSON="$(jq -cs '.[0]' "$BODY_FILE")"
+          echo "HTTP ${HTTP_STATUS}"
+          echo "$HEALTH_JSON"
+          READY="$(printf '%s' "$HEALTH_JSON" | jq -r '.ready')"
+          if { [ "$HTTP_STATUS" = "200" ] && [ "$READY" != "true" ]; } || \
+             { [ "$HTTP_STATUS" = "503" ] && [ "$READY" != "false" ]; }; then
+            echo "::error::${URL} returned inconsistent health status HTTP ${HTTP_STATUS} with ready=${READY}."
+            exit 1
+          fi
+          BODY_SUMMARY="$HEALTH_JSON"
+          FIELDS_SUMMARY="$(printf '%s' "$HEALTH_JSON" | jq -c '{apiVersion:(.apiVersion // "unknown"),schema:(.schema // null),schemaFingerprint:(.schemaFingerprint // "none"),tls:(.tls // "unknown")}')"
+          WHY="$(printf '%s' "$HEALTH_JSON" | jq -r '.error // "none reported"')"
+          escape_workflow_command() {
+            local value="$1"
+            value="${value//'%'/'%25'}"
+            value="${value//$'\r'/'%0D'}"
+            value="${value//$'\n'/'%0A'}"
+            printf '%s' "$value"
+          }
+          WHY_ANNOTATION="$(escape_workflow_command "$WHY")"
+          WHY_SUMMARY="$(printf '%s' "$WHY" | jq -Rs .)"
+
+          {
+            echo "### \`/api/health\` on \`${HOST}\` (HTTP \`${HTTP_STATUS}\`)"
+            echo
+            printf '    %s\n' "$BODY_SUMMARY"
+            echo
+            if [ "$READY" = "true" ]; then
+              echo "**Ready.** Parsed health fields:"
+            else
+              echo "**Not ready.** Parsed health fields:"
+            fi
+            printf '    %s\n' "$FIELDS_SUMMARY"
+            if [ "$READY" != "true" ]; then
+              echo "Ready requires all four tables plus this running build's exact applied-schema fingerprint."
+              echo
+              echo "Reason reported:"
+              printf '    %s\n' "$WHY_SUMMARY"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$READY" = "true" ]; then
+            echo "::notice::The API is connected to its database and the schema is applied."
+          else
+            echo "::warning::The API is not ready — ${WHY_ANNOTATION}"
+          fi

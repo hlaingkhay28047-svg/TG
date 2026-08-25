@@ -40,12 +40,16 @@ const readme = read("README.md");
 const landing = read("docs/index.html");
 const robots = read("docs/robots.txt");
 const sitemap = read("docs/sitemap.xml");
+const apiServer = read("server/index.js");
+const productionDeploy = read(".github/workflows/deploy-digitalocean.yml");
+const stagingDeploy = read(".github/workflows/deploy-digitalocean-staging.yml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
-const releaseDate = "2026-08-18";
+const releaseDate = versionJson.released;
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
 const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
 const appVersion = (html.match(/var APP_VER\s*=\s*"([\d.]+)"/) || [])[1] || "";
+const apiVersion = (apiServer.match(/const API_VERSION\s*=\s*"([\d.]+)"/) || [])[1] || "";
 const cacheVersion = (sw.match(/var CACHE\s*=\s*"hnk-web-studio-v(\d+)-(\d+)-(\d+)"/) || []).slice(1).join(".");
 const checkoutSha = (workflow.match(/actions\/checkout@([0-9a-f]{40})/) || [])[1] || "";
 const setupNodeSha = (workflow.match(/actions\/setup-node@([0-9a-f]{40})/) || [])[1] || "";
@@ -106,9 +110,41 @@ try {
   panelArtifactDetail = error.message;
 }
 
+/* v6.22.0 — this check used to stop at the manifest, and the manifest was the
+   one file inside the .ccx that was right. main.js carried
+   `const PANEL_VERSION = "6.19.0"` while the manifest, panel-version.json and
+   the download filename all said 6.21.0, so the panel's own update probe
+   compared 6.19.0 against the published 6.21.0 and told every customer holding
+   the NEWEST build, on every single launch, that an update was waiting. And
+   the probe pointed at hlaingkhay28047-svg.github.io/TG — the GitHub Pages
+   host this project retired — which the check below has forbidden in the
+   landing page, robots.txt and the sitemap since the DigitalOcean move. It
+   never looked inside the .ccx. Both defects shipped. */
+let panelInternals = { version: "", updateUrl: "", brandVer: "", err: "" };
+try {
+  const panelMain = execFileSync("unzip", ["-p", panelArtifact, "main.js"],
+    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const panelIndex = execFileSync("unzip", ["-p", panelArtifact, "index.html"],
+    { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+  panelInternals = {
+    version: (panelMain.match(/const PANEL_VERSION\s*=\s*"([^"]+)"/) || [])[1] || "",
+    updateUrl: (panelMain.match(/const PANEL_VERSION_URL\s*=\s*"([^"]+)"/) || [])[1] || "",
+    brandVer: (panelIndex.match(/id="brandVer">v([0-9.]+)</) || [])[1] || "",
+    retiredHostHits: (panelMain + panelIndex).split("hlaingkhay28047-svg.github.io").length - 1,
+    err: ""
+  };
+} catch (error) { panelInternals.err = error.message; }
+
 check("the app release is at least 5.2.0", versionAtLeast(appVersion, "5.2.0"), appVersion || "missing APP_VER");
 check("APP_VER and version.json stay in lockstep", appVersion === versionJson.v, `${appVersion} vs ${versionJson.v}`);
+check("the API identifies the same patch release as the web app", apiVersion === appVersion, `${apiVersion} vs ${appVersion}`);
 check("the service-worker shell cache follows the app release", cacheVersion === appVersion, `${cacheVersion} vs ${appVersion}`);
+check("both deploy lanes attest API version and the exact applied schema",
+  [productionDeploy, stagingDeploy].every(source =>
+    source.includes("/api/health") && source.includes("sha256sum server/sql/schema.sql") &&
+    source.includes(".apiVersion // empty") && source.includes(".schemaFingerprint // empty") &&
+    source.includes('ACTUAL_TLS" = "verified"')),
+  "production or staging can succeed without runtime schema attestation");
 check("every landing-page web-app badge advertises the shipped release", advertisedWebVersions.length > 0 && advertisedWebVersions.every(version => version === appVersion) && webAppSchema.softwareVersion === appVersion, `${[...new Set(advertisedWebVersions)].join(", ")} vs ${appVersion}`);
 check("the landing page advertises every supported language", languageCodes.length === 37 && languageClaims.length >= 37 && languageClaims.every(value => /\b(?:37|၃၇)\b/.test(value)) && JSON.stringify(webAppSchema.inLanguage) === JSON.stringify(languageCodes), `${languageCodes.length} codes, ${languageClaims.length} claims`);
 check("localized API-key copy describes the actual provider-only data flow", privacyClaims.length === languageCodes.length && privacyClaims.every(hasProviderOnlyFlow), `${privacyClaims.length} localized claims`);
@@ -117,10 +153,51 @@ check("the web app describes the same provider-only API-key flow in every locale
 check("fully translated app locales do not fall back to an English privacy note", appNativePrivacyCodes.every(language => !effectiveAppLocaleValue("key_note", language).includes(englishProviderFlow)), "an English-only notice leaked into localized copy");
 check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
+check("the release date is sourced from version.json", /^\d{4}-\d{2}-\d{2}$/.test(releaseDate || ""), releaseDate || "missing released date");
+/* Inventory copy is DERIVED, never typed. The literal list that used to live
+   here pinned "One-Tap 131" and passed for seven waves while the app rendered
+   138 — a test can only certify a number it does not itself invent. The app's
+   own statline fallbacks are the reference; verify_landing_counts.js then
+   proves those fallbacks equal what the running app paints, which closes the
+   loop without either file naming a number.
+
+   "Smart Workflow" is ambiguous on this page by design: the web-app column
+   quotes the app's total, the Photoshop column quotes the panel's nine. Both
+   are accepted here and told apart precisely in verify_landing_counts.js. */
+const inventory = {
+  "One-Tap": (html.match(/<b id="stTapCount">(\d+)<\/b>/) || [])[1],
+  "Visual Library": (html.match(/<b id="stLibCount">(\d+)<\/b>/) || [])[1],
+  "Smart Workflow": (html.match(/<b id="stWfCount">(\d+)<\/b>/) || [])[1],
+};
+const panelWorkflowCount = (() => {
+  try {
+    const registry = execFileSync("unzip", ["-p", panelArtifact, "src/workflows/workflow-registry.js"], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+    const block = (registry.match(/var\s+WORKFLOWS\s*=\s*\[([\s\S]*?)\n\];/) || [])[1] || "";
+    return String([...block.matchAll(/\bid:\s*"[^"]+",\s*title:\s*"[^"]+"/g)].length);
+  } catch (error) { return ""; }
+})();
+function staleInventory(source) {
+  const stale = [];
+  for (const [label, want] of Object.entries(inventory)) {
+    if (!want) { stale.push(`${label}: no statline fallback to derive from`); continue; }
+    const found = [...source.matchAll(new RegExp(label.replace(/ /g, "\\s") + "(?: Studio| Pro| Controls)?\\s*(\\d+)", "g"))].map(m => m[1]);
+    if (!found.length) { stale.push(`${label}: never advertised`); continue; }
+    const wrong = [...new Set(found.filter(v => v !== want && !(label === "Smart Workflow" && v === panelWorkflowCount)))];
+    if (wrong.length) stale.push(`${label} ${wrong.join("/")} vs ${want}`);
+  }
+  return stale;
+}
+const landingStale = staleInventory(landing);
+/* v6.22.0 — this line used to read `landing.includes("907")`, four lines under
+   a comment explaining that a test can only certify a number it does not
+   itself invent. Nothing in this repository produced 907, so the assertion
+   proved only that somebody had typed the same number twice. The advertised
+   test count is now derived from the workflow that runs the tests, in
+   verify_landing_counts.js check H, which is where every other derived count
+   already lives. */
 check("landing inventory copy matches the shipped web app",
-  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu 162", "Evoto Pro 213", "907"].every(value => landing.includes(value)) &&
-  !["One-Tap 123", "Visual Library 607", "Smart Workflow 116", "Meitu 79", "Evoto Pro 79", "1,081", "1,134"].some(value => landing.includes(value)),
-  "landing inventory or test-count copy is stale");
+  landingStale.length === 0 && !["1,081", "1,134"].some(value => landing.includes(value)),
+  landingStale.length ? landingStale.join("; ") : "a stale inventory total is published");
 const encodedProductionHome = encodeURIComponent(productionBase + "/");
 const unexpectedDocsDotfiles = fs.readdirSync(path.join(ROOT, "docs"))
   .filter(name => name.startsWith(".") && name !== ".nojekyll");
@@ -158,6 +235,63 @@ check("SEO discovery files use the production origin",
   sitemap.includes(`<loc>${productionBase}/</loc>`) &&
   sitemap.includes(`<loc>${productionBase}/app/</loc>`),
   "robots.txt or sitemap.xml uses the wrong origin");
+check("the panel agrees with itself about which version it is",
+  panelInternals.version === panelVersion && panelInternals.brandVer === panelVersion,
+  `main.js ${panelInternals.version || "?"}, index.html ${panelInternals.brandVer || "?"}, published ${panelVersion}${panelInternals.err ? " :: " + panelInternals.err : ""}`);
+check("the panel's update probe points at the production origin",
+  panelInternals.updateUrl === `${productionBase}/download/panel-version.json`,
+  panelInternals.updateUrl || "no PANEL_VERSION_URL found");
+/* v5.36.0 — the first version of the check above pulled three named values out
+   of the .ccx and declared the retired host handled. It was not: the panel's
+   mini-browser still led its shortcut row with two links to
+   hlaingkhay28047-svg.github.io, and WEB_ALLOWED still whitelisted it. Naming
+   the places to look is how a check misses the place you did not name, so this
+   one reads the two files whole. */
+check("the retired GitHub Pages host appears nowhere inside the panel",
+  panelInternals.retiredHostHits === 0,
+  `${panelInternals.retiredHostHits} reference(s) in the shipped main.js/index.html`);
+/* v5.36.0 — WHERE THE BUTTONS GO.
+
+   Ninety-five test scripts, and not one of them read an href. This wave found
+   out the hard way: a single unbounded string replace, meant for the panel
+   download button, also hit the hero's "Try Web Studio — no install" CTA and
+   the Web Studio section's CTA, because all three shared a prefix. For one
+   commit the landing page's primary top-of-funnel button, in all 37 languages,
+   started a 35MB Photoshop-plugin download instead of opening the web app. The
+   whole suite stayed green, because every landing assertion in it reads TEXT.
+
+   Neither list below names a URL. The Web-Studio CTAs must resolve to the app,
+   and every download must be the .ccx that panel-version.json currently names —
+   so a version bump that misses a link, or another careless replace, is red
+   here rather than live. */
+const anchors = [...landing.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(m => ({
+  attrs: m[1],
+  href: (m[1].match(/\bhref="([^"]*)"/) || [])[1] || "",
+  download: /\bdownload\b(?![-\w])/.test(m[1]),
+  key: (m[2].match(/data-i18n="([^"]+)"/) || [])[1] || "",
+}));
+const webStudioCtaKeys = ["nav.cta", "hero.cta1", "s4.cta", "duo1.cta"];
+const ctaAnchors = anchors.filter(a => webStudioCtaKeys.includes(a.key));
+const misroutedCtas = ctaAnchors.filter(a => a.href !== "app/" || a.download)
+  .map(a => `${a.key} -> ${a.href}${a.download ? " [download]" : ""}`);
+check("every Web Studio call to action opens the web app",
+  ctaAnchors.length === webStudioCtaKeys.length && misroutedCtas.length === 0,
+  misroutedCtas.length ? misroutedCtas.join("; ")
+    : `found ${ctaAnchors.length} of ${webStudioCtaKeys.length} CTAs`);
+
+const expectedCcx = `download/HNK_Ai_Panel_v${panelVersion}.ccx`;
+const downloads = anchors.filter(a => a.download);
+const wrongDownloads = downloads.filter(a => a.href !== expectedCcx).map(a => `${a.key || "(no key)"} -> ${a.href}`);
+check("every download link on the landing is the published panel archive",
+  downloads.length > 0 && wrongDownloads.length === 0,
+  wrongDownloads.length ? wrongDownloads.join("; ") : `${downloads.length} download link(s), all ${expectedCcx}`);
+
+/* the sticky CTA is cloned in JS, so its destination lives in a string literal
+   rather than in the markup the two checks above can see */
+check("the sticky call to action clone also opens the web app",
+  /a\.href\s*=\s*"app\/"\s*;[\s\S]{0,400}?a\.setAttribute\("data-i18n",\s*"hero\.cta1"\)/.test(landing),
+  "the scripted sticky CTA no longer points at app/");
+
 check("retired GitHub Pages and repository URLs are absent",
   ![landing, html, robots, sitemap].some(value => value.includes("hlaingkhay28047-svg.github.io/TG")) &&
   !landing.includes("hlaingkhay28047-svg/HNK-Ai-V1") &&
@@ -167,13 +301,14 @@ check("both social preview images exist in the published site",
   fs.existsSync(path.join(ROOT, "docs/og-image.jpg")) &&
   fs.existsSync(path.join(ROOT, "docs/app/og-app.jpg")),
   "an Open Graph image is missing");
+/* Same derivation, turned on the app itself: its three link-preview
+   descriptions must quote the numbers its own statline shows. They did not —
+   all three said One-Tap 131 against a rendered 138, and no <meta> tag is ever
+   re-read by a human. */
+const appStale = staleInventory(html);
 check("web-app metadata and initial DOM inventory match the shipped UI",
-  ["One-Tap 131", "Visual Library 1811", "Smart Workflow 124", "Meitu Studio 162", "Evoto Pro 213"].every(value => html.includes(value)) &&
-  html.includes('<b id="stTapCount">131</b>') &&
-  html.includes('<b id="stLibCount">1811</b>') &&
-  html.includes('<b id="stWfCount">124</b>') &&
-  !["Smart Workflow 115", "Meitu Studio 50", "Evoto Pro 42", '<b id="stTapCount">128</b>', '<b id="stWfCount">115</b>'].some(value => html.includes(value)),
-  "app metadata or initial inventory is stale");
+  appStale.length === 0 && Object.values(inventory).every(Boolean),
+  appStale.length ? appStale.join("; ") : "a statline fallback is missing");
 check("temporary deployment probes are not published",
   unexpectedDocsDotfiles.length === 0 && unexpectedProbeFiles.length === 0 &&
   !fs.existsSync(path.join(ROOT, "docs/.auto-live-check")) &&
@@ -195,6 +330,40 @@ check("Playwright and its installer stay pinned", /npm install playwright@1\.62\
 check("the production spec uses authenticated GitHub autodeploy", /github:\s*[\s\S]*?repo:\s*hlaingkhay28047-svg\/TG[\s\S]*?branch:\s*main[\s\S]*?deploy_on_push:\s*true/.test(appSpec), "missing github deploy_on_push");
 check("the public one-click template remains a direct public-git source", /git:\s*[\s\S]*?branch:\s*main[\s\S]*?repo_clone_url:\s*https:\/\/github\.com\/hlaingkhay28047-svg\/TG\.git/.test(deployTemplate) && !/deploy_on_push:/.test(deployTemplate), "one-click source contract drifted");
 check("deployment docs explain the one-click/manual-deploy boundary", /one-click[\s\S]*manual(?:ly)? deploy/i.test(readme) && /authenticated GitHub/i.test(readme), "README lacks the production migration note");
+check("deployment docs require both lane tokens before pushing",
+  readme.includes("DIGITALOCEAN_STAGING_ACCESS_TOKEN") &&
+  readme.includes("DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN") &&
+  /must exist\s+before pushing/i.test(readme),
+  "README lacks the pre-push DigitalOcean credential gate");
+check("deployment docs distinguish liveness, readiness and health",
+  readme.includes("`/api/live`") && readme.includes("`/api/ready`") &&
+  readme.includes("`/api/health`") && /startup\/schema traffic gate/i.test(readme),
+  "README lacks the three-endpoint probe contract");
+check("deployment docs require native rollback to restore code and app spec together",
+  /native \*\*Activity → Rollback\*\*/.test(readme) &&
+  /restores the\s+previous code, configuration, and app spec together/i.test(readme) &&
+  /does not roll back\s+database data/i.test(readme),
+  "README lacks the safe post-probe rollback procedure");
+
+/* server/sql/schema.sql — the packaging half of the schema, not the writing
+   half. hnk-api's App Platform component builds from source_dir /server, and
+   a source_dir scopes the build to that subtree — a sibling directory outside
+   it (supabase/) is not part of what the buildpack sees. migrate.js already
+   falls back to server/sql/schema.sql for exactly this reason, and
+   package.json's build step tries to populate it with a plain
+   `cp ../supabase/schema.sql`, relying on the full repo having been checked
+   out into the build context — which production proved false: once
+   platform.sql started succeeding, /health settled on schema:0 with NO error,
+   the signature of migrate() completing having found no schema file at all,
+   not of one failing to apply.
+
+   The fix is not a smarter cp — it is not depending on one. server/sql/schema.sql
+   ships as a tracked file so it travels with /server regardless of what the
+   build step's relative path resolves to, and this check is what stops that
+   copy silently drifting from the file every other test here exercises. */
+check("server/sql/schema.sql is a byte-identical tracked copy of supabase/schema.sql",
+  read("server/sql/schema.sql") === read("supabase/schema.sql"),
+  "the packaged fallback migrate.js falls back to has drifted from the source");
 
 if (failures.length) {
   console.error(`\nFAIL — ${failures.length} release contract check(s) failed`);

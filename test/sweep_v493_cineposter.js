@@ -154,8 +154,20 @@ report("G2) the two workflows that had no art are off NO_CARD_JPG",
     return NEW_ART.every(n => list.indexOf('"' + n + '"') < 0);
   })());
 
-report("G3) Cinematic Poster IS on it — it ships before its own card photo",
-  /var NO_CARD_JPG=\[[^\]]*"cinematic-poster"/.test(src));
+/* v5.13 — Cinematic Poster's own art (held since v4.93) landed in the same
+   wave as the three fantasy cards' art. G3 used to pin the opposite: that it
+   was STILL on NO_CARD_JPG, ships-before-its-photo. That pin is now stale by
+   construction, the same way G2 would go stale the moment NEW_ART's ids
+   landed — so it is rewritten to what actually holds today: the id is off
+   the list AND a real 960x640 photo backs it, checked the same two ways G
+   and G2 already check the rest of this wave's art. */
+report("G3) Cinematic Poster's own art has landed — off NO_CARD_JPG, real photo on disk",
+  (function () {
+    const m = src.match(/var NO_CARD_JPG=\[([^\]]*)\]/);
+    const offList = m[1].indexOf('"cinematic-poster"') < 0;
+    const p = path.join(APP, "lib/wf/cards5", "cinematic-poster.jpg");
+    return offList && fs.existsSync(p);
+  })());
 
 report("G4) the purge marker covers every replaced name and none of the new ones",
   (function () {
@@ -214,16 +226,26 @@ report("G4) the purge marker covers every replaced name and none of the new ones
   report("H) the card renders on the Workflow page with a Burmese summary",
     !!seen.card && seen.card.burmese === true, seen.card);
 
-  report("H2) exactly one card is still on the generated-icon fallback, and it is this one",
-    seen.svgOnly.length === 1 && seen.svgOnly[0] === "Cinematic Poster", seen.svgOnly);
+  /* v5.13 — all four (Cinematic Poster, Nine-Tail Kitsune Fox, Mermaid
+     Transformation, Fairy Wings) landed their reference-locked photographs
+     and came off NO_CARD_JPG in the same wave. The INTENT this pin protects
+     is unchanged: NO_CARD_JPG must name exactly the cards that really have
+     no art yet — it happened to hold four between v5.12 and v5.13, and holds
+     none now. */
+  const EXPECT_SVG_ONLY = [];
+  report("H2) no card is left on the generated-icon fallback — every art gap from this wave has landed",
+    seen.svgOnly.length === EXPECT_SVG_ONLY.length && EXPECT_SVG_ONLY.every(t => seen.svgOnly.indexOf(t) >= 0),
+    seen.svgOnly);
 
-  report("H3) the deck grew by one", seen.total === 124, seen.total);
+  report("H3) the deck is at least the size this wave shipped it at (124 + Cinematic Poster's siblings)",
+    seen.total >= 125, seen.total);
   report("H4) nothing 404s", bad.length === 0, bad.slice(0, 6));
   report("H5) no page errors", errs.length === 0, errs);
 
   console.log("      (the twelve cards that used to sit on the SVG fallback or carry the " +
-    "feather at the mouth now show the owner's own photographs; Cinematic Poster is the " +
-    "only id left on NO_CARD_JPG)");
+    "feather at the mouth now show the owner's own photographs; Cinematic Poster and " +
+    "v5.12's three fantasy cards landed their own reference-locked art in v5.13 — " +
+    "NO_CARD_JPG is empty)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();

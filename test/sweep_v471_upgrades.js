@@ -52,6 +52,7 @@
 
    Usage: PORT=8931 node test/sweep_v471_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const { withPremium } = require("./_seed_premium.js");
 const fs = require("fs");
 const path = require("path");
 const PORT = process.env.PORT || 8931;
@@ -80,6 +81,9 @@ report("D) the swatch opt-out exists and the grade cards pass it",
 
 (async () => {
   const browser = await chromium.launch();
+  /* v5.30 — the app is account + Premium only; without a session every page
+     below opens on the login wall instead of the feature under test. */
+  withPremium(browser);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   const errs = [];

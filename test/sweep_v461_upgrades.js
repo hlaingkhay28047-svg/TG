@@ -33,8 +33,19 @@
    D) The parameterised keys actually render with a number substituted, in
       every full language, at the device cap the app computed.
 
+   G) v5.39.0 — NO PACK PUTS MYANMAR SCRIPT IN A LANGUAGE THAT DOES NOT USE
+      IT. The gu pack shipped `"unit":" ခု"` — the Burmese counter word — and
+      t() prefers the TR_L starter pack over everything else, so every counter
+      in the app rendered Burmese script for Gujarati customers at seven render
+      sites. Nothing caught it: A only compares placeholders, B only compares
+      key names, C only counts. A wrong-script string is complete, correctly
+      keyed, correctly parameterised and completely unreadable. my, shn and kht
+      are the three languages here that are actually written in that block.
+
    Usage: PORT=8931 node test/sweep_v461_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
+const fs = require("fs");
+const path = require("path");
 const PORT = process.env.PORT || 8931;
 let failures = 0;
 function report(name, ok, detail) {
@@ -115,6 +126,35 @@ const STARTER = [];
     LANG = save;
     out.D_ptMax = PT_MAX;
 
+    /* G) wrong-script detection. The Myanmar block plus the two extension
+       blocks Shan and Khamti draw from — a stray character from any of them in
+       a Gujarati or Japanese string is a paste accident, not a translation. */
+    const isMm = ch => {
+      const c = ch.codePointAt(0);
+      return (c >= 0x1000 && c <= 0x109F) || (c >= 0xAA60 && c <= 0xAA7F) || (c >= 0xA9E0 && c <= 0xA9FF);
+    };
+    const mmIn = str => Array.from(String(str)).filter(isMm).join("");
+    out.G_bad = [];
+    const scan = (tableName, table, langOf) => {
+      Object.keys(table || {}).forEach(k => {
+        const rec = table[k];
+        if (!rec || typeof rec !== "object") return;
+        Object.keys(rec).forEach(inner => {
+          const lang = langOf ? langOf(k) : inner;
+          const val = langOf ? rec[inner] : rec[inner];
+          if (typeof val !== "string") return;
+          if (cfg.MM_OK.indexOf(lang) >= 0) return;
+          const found = mmIn(val);
+          if (found) out.G_bad.push(tableName + "." + lang + "." + (langOf ? inner : k) + " [" + found + "] " + val.slice(0, 30));
+        });
+      });
+    };
+    /* TR / TR_MORE / TR_L10 are key -> {lang: string}; TR_L is lang -> {key: string} */
+    scan("TR", typeof TR !== "undefined" ? TR : {}, null);
+    scan("TR_MORE", typeof TR_MORE !== "undefined" ? TR_MORE : {}, null);
+    scan("TR_L10", typeof TR_L10 !== "undefined" ? TR_L10 : {}, null);
+    scan("TR_L", typeof TR_L !== "undefined" ? TR_L : {}, k => k);
+
     /* the five newly integrated languages must actually be selectable */
     out.E_options = Array.from(document.querySelectorAll("#selLang option")).map(o => o.value);
     out.E_missing = ["mr", "gu", "kn", "ml", "pa"].filter(l => out.E_options.indexOf(l) < 0);
@@ -124,7 +164,10 @@ const STARTER = [];
     out.F_mrHero = ($("heroH1") || {}).textContent || "";
     LANG = save; applyLang();
     return out;
-  }, { FULL, STARTER });
+  }, { FULL, STARTER,
+       /* the only three languages in this app actually written in the Myanmar
+          block: Burmese, Shan, and Khamti (which draws from the extensions) */
+       MM_OK: ["my", "shn", "kht"] });
 
   report("A) every TR_L string carries exactly its English source's placeholders",
     r.A_bad.length === 0, r.A_bad.slice(0, 12));
@@ -137,6 +180,24 @@ const STARTER = [];
     r.C_blank.length === 0, r.C_blank.slice(0, 12));
   report("D) the parameterised Path keys substitute a real number in every full language",
     r.D_bad.length === 0, { ptMax: r.D_ptMax, bad: r.D_bad.slice(0, 12) });
+  report("G) no language pack carries Myanmar script in a language that does not use it",
+    r.G_bad.length === 0, r.G_bad.slice(0, 12));
+
+  /* ...and the same rule over the raw source, which also covers the inline
+     L9({my:…,shn:…}) records that never reach a table object. */
+  {
+    const src = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
+    const MM = /[\u1000-\u109F\uAA60-\uAA7F\uA9E0-\uA9FF]/;
+    const srcBad = [];
+    for (const lang of ["en", "kac", "th", "zh", "vi", "id", "ms"]) {
+      const re = new RegExp(lang + ':"([^"]*)"', "g");
+      let m;
+      while ((m = re.exec(src))) if (MM.test(m[1])) srcBad.push(lang + ": " + m[1].slice(0, 40));
+    }
+    report("G2) ...and no inline L9 record does either",
+      srcBad.length === 0, srcBad.slice(0, 12));
+  }
+
   report("E) the five new languages are selectable",
     r.E_missing.length === 0, { missing: r.E_missing, options: r.E_options.length });
   report("F) switching to a new language actually changes the page",

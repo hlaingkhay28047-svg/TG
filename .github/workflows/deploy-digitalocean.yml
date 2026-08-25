@@ -28,6 +28,8 @@ jobs:
       DO_APP_HOST: hnk-ai-tools-3-s4nnu.ondigitalocean.app
       DO_REPO: hlaingkhay28047-svg/TG
       DO_BRANCH: main
+      DO_SERVICE: hnk-api
+      DO_STATIC_SITE: hnk-web
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
     steps:
       - name: Guard manual dispatch lane
@@ -54,31 +56,39 @@ jobs:
         run: |
           if [ -z "$DO_TOKEN" ]; then
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No production API token is stored in GitHub. Normal pushes deploy through the hnk-ai-tools-3 GitHub source binding."
+            echo "::warning::No production API token is stored in GitHub. This workflow will stop, although the independent DigitalOcean source binding may already have started a deployment."
           else
             echo "available=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Require token for manual recovery
-        if: github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available != 'true'
+      - name: Require token for live production spec synchronization
+        if: github.event_name == 'push' && steps.auth.outputs.available != 'true'
         shell: bash
         run: |
-          echo "::error::Manual production recovery requires DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN."
+          echo "::error::Production releases require DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN so the downloaded live spec can be patched without losing encrypted secrets."
+          exit 1
+
+      - name: Require token for manual release verification
+        if: github.event_name == 'workflow_dispatch' && steps.auth.outputs.available != 'true'
+        shell: bash
+        run: |
+          echo "::error::Manual production release verification requires DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN so it can attest the active API commit."
           exit 1
 
       - name: Install doctl for manual recovery
-        if: github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true'
+        if: steps.auth.outputs.available == 'true'
         uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
         with:
           token: ${{ env.DO_TOKEN }}
           version: 1.166.0
 
       - name: Resolve and validate production app
-        if: github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true'
+        if: steps.auth.outputs.available == 'true'
         id: app
         shell: bash
         run: |
           set -euo pipefail
+          umask 077
           doctl apps list --output json > "$RUNNER_TEMP/apps.json"
           APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg host "$DO_APP_HOST" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
             .[]
@@ -91,6 +101,39 @@ jobs:
             exit 1
           fi
           echo "app_id=$APP_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Synchronize health probes from the live spec
+        id: spec_sync
+        if: steps.auth.outputs.available == 'true' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true))
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          LIVE_SPEC="$RUNNER_TEMP/production-live-spec.json"
+          PATCHED_SPEC="$RUNNER_TEMP/production-patched-spec.json"
+          doctl apps spec get "${{ steps.app.outputs.app_id }}" --format json > "$LIVE_SPEC"
+          node .github/scripts/patch_digitalocean_spec.js \
+            "$LIVE_SPEC" "$PATCHED_SPEC" "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
+            "$DO_REPO" "$DO_BRANCH"
+          CURRENT_READY_PATH="$(jq -r --arg service "$DO_SERVICE" '.services[] | select(.name == $service) | .health_check.http_path // ""' "$LIVE_SPEC")"
+          CURRENT_LIVE_PATH="$(jq -r --arg service "$DO_SERVICE" '.services[] | select(.name == $service) | .liveness_health_check.http_path // ""' "$LIVE_SPEC")"
+          if [ "$CURRENT_READY_PATH" = "/ready" ] && [ "$CURRENT_LIVE_PATH" = "/live" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Live production health probes already match the release contract."
+            exit 0
+          fi
+          SYNC_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))
+          if [ "$SYNC_TIMEOUT_SECONDS" -le 0 ]; then
+            echo "::error::Not enough time remains to synchronize the live spec and verify production."
+            exit 1
+          fi
+          timeout --foreground --signal=TERM --kill-after=10s "${SYNC_TIMEOUT_SECONDS}s" \
+            doctl apps update "${{ steps.app.outputs.app_id }}" \
+            --spec "$PATCHED_SPEC" \
+            --update-sources \
+            --wait \
+            --format ID,DefaultIngress,Updated
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Force production deploy for manual recovery
         if: github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true'
@@ -120,25 +163,39 @@ jobs:
           fi
 
       - name: Verify production live release
+        env:
+          DO_APP_ID: ${{ steps.app.outputs.app_id }}
         shell: bash
         run: |
           set -euo pipefail
+          umask 077
+          : "${DO_APP_ID:?Cannot attest the production source commit without a resolved DigitalOcean app ID}"
           EXPECTED_VERSION="$(jq -r '.v' docs/app/version.json)"
           EXPECTED_LANDING_SHA="$(sha256sum docs/index.html | awk '{print $1}')"
           EXPECTED_APP_SHA="$(sha256sum docs/app/index.html | awk '{print $1}')"
+          EXPECTED_SCHEMA_SHA="$(sha256sum server/sql/schema.sql | awk '{print $1}')"
           LANDING_FILE="$RUNNER_TEMP/production-index.html"
           APP_FILE="$RUNNER_TEMP/production-app-index.html"
+          HEALTH_FILE="$RUNNER_TEMP/production-health.json"
+          APP_STATE_FILE="$RUNNER_TEMP/production-app-state.json"
           DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"
           attempt=0
-          echo "Expecting HNK Web Studio ${EXPECTED_VERSION}, landing ${EXPECTED_LANDING_SHA}, and app ${EXPECTED_APP_SHA} on ${DO_APP_HOST}."
+          echo "Expecting Web/API ${EXPECTED_VERSION}, landing ${EXPECTED_LANDING_SHA}, app ${EXPECTED_APP_SHA}, and schema ${EXPECTED_SCHEMA_SHA} on ${DO_APP_HOST}."
           while [ "$(date +%s)" -lt "$DEADLINE_EPOCH" ]; do
             attempt=$((attempt + 1))
             VERSION_URL="https://${DO_APP_HOST}/app/version.json?sha=${GITHUB_SHA}&attempt=${attempt}"
             LANDING_URL="https://${DO_APP_HOST}/?sha=${GITHUB_SHA}&attempt=${attempt}"
             APP_URL="https://${DO_APP_HOST}/app/?sha=${GITHUB_SHA}&attempt=${attempt}"
+            HEALTH_URL="https://${DO_APP_HOST}/api/health?sha=${GITHUB_SHA}&attempt=${attempt}"
             ACTUAL_VERSION="$(curl -fsSL --max-time 5 -H 'Cache-Control: no-cache' "$VERSION_URL" 2>/dev/null | jq -r '.v // empty' 2>/dev/null || true)"
             ACTUAL_LANDING_SHA=""
             ACTUAL_APP_SHA=""
+            ACTUAL_API_VERSION=""
+            ACTUAL_SCHEMA_SHA=""
+            ACTUAL_READY="false"
+            ACTUAL_TLS=""
+            ACTUAL_SOURCE_SHA=""
+            SOURCE_SHA_MATCH="false"
             if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$LANDING_URL" -o "$LANDING_FILE" 2>/dev/null; then
               ACTUAL_LANDING_SHA="$(sha256sum "$LANDING_FILE" | awk '{print $1}')"
             fi
@@ -147,15 +204,39 @@ jobs:
                 ACTUAL_APP_SHA="$(sha256sum "$APP_FILE" | awk '{print $1}')"
               fi
             fi
-            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ]; then
-              echo "Verified production version ${ACTUAL_VERSION} with exact landing and app HTML."
+            if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$HEALTH_URL" -o "$HEALTH_FILE" 2>/dev/null; then
+              ACTUAL_API_VERSION="$(jq -r '.apiVersion // empty' "$HEALTH_FILE" 2>/dev/null || true)"
+              ACTUAL_SCHEMA_SHA="$(jq -r '.schemaFingerprint // empty' "$HEALTH_FILE" 2>/dev/null || true)"
+              ACTUAL_READY="$(jq -r '.ready // false' "$HEALTH_FILE" 2>/dev/null || echo false)"
+              ACTUAL_TLS="$(jq -r '.tls // empty' "$HEALTH_FILE" 2>/dev/null || true)"
+            fi
+            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && \
+               [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && \
+               [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ] && \
+               [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] && \
+               [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] && \
+               [ "$ACTUAL_READY" = "true" ] && [ "$ACTUAL_TLS" = "verified" ]; then
+              if timeout --foreground --signal=TERM --kill-after=2s 10s \
+                doctl apps get "$DO_APP_ID" --output json > "$APP_STATE_FILE" 2>/dev/null; then
+                ACTUAL_SOURCE_SHA="$(jq -r --arg id "$DO_APP_ID" --arg service "$DO_SERVICE" '
+                  [.[0] | select(.id == $id) | .active_deployment.services[]?
+                    | select(.name == $service) | .source_commit_hash // empty]
+                  | if length == 1 then .[0] else empty end
+                ' "$APP_STATE_FILE")"
+                if [ "$ACTUAL_SOURCE_SHA" = "$GITHUB_SHA" ]; then
+                  SOURCE_SHA_MATCH="true"
+                fi
+              fi
+            fi
+            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ] && [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] && [ "$ACTUAL_READY" = "true" ] && [ "$ACTUAL_TLS" = "verified" ] && [ "$SOURCE_SHA_MATCH" = "true" ]; then
+              echo "Verified production Web/API ${ACTUAL_VERSION}, active source ${ACTUAL_SOURCE_SHA}, exact static HTML, schema fingerprint, readiness, and verified database TLS."
               exit 0
             fi
-            echo "Attempt ${attempt}: version='${ACTUAL_VERSION:-unavailable}', landing='${ACTUAL_LANDING_SHA:-unavailable}', app='${ACTUAL_APP_SHA:-unavailable}'."
+            echo "Attempt ${attempt}: web='${ACTUAL_VERSION:-unavailable}', api='${ACTUAL_API_VERSION:-unavailable}', source='${ACTUAL_SOURCE_SHA:0:12}', landing='${ACTUAL_LANDING_SHA:-unavailable}', app='${ACTUAL_APP_SHA:-unavailable}', schema='${ACTUAL_SCHEMA_SHA:0:12}', ready='${ACTUAL_READY}', tls='${ACTUAL_TLS:-unavailable}'."
             if [ $(( $(date +%s) + 15 )) -ge "$DEADLINE_EPOCH" ]; then
               break
             fi
             sleep 15
           done
-          echo "::error::Production did not publish version ${EXPECTED_VERSION}, landing SHA-256 ${EXPECTED_LANDING_SHA}, and app SHA-256 ${EXPECTED_APP_SHA} before the shared 33-minute job deadline. Check the hnk-ai-tools-3 GitHub source binding."
+          echo "::error::Production did not simultaneously publish commit ${GITHUB_SHA}, Web/API ${EXPECTED_VERSION}, exact static files, schema SHA-256 ${EXPECTED_SCHEMA_SHA}, ready:true, and tls:verified before the shared 33-minute job deadline. Check the hnk-ai-tools-3 source and API bindings."
           exit 1

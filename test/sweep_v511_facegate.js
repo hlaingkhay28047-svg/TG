@@ -49,9 +49,36 @@ const { chromium } = require("playwright-core");
 const PORT = process.env.PORT || 8931;
 
 (async () => {
-  // Deliberately no gpu flags — this is the no-webgl phone the bug was found on.
+  /* THE NO-WEBGL PHONE, MADE REPRODUCIBLE. This sweep first tried to be that
+     phone by launching with no gpu flags. That is not what a headless Chromium
+     is: it ships a working SwiftShader WebGL context, so the model booted on
+     webgl and check 1 below — the whole point of the wave — asserted a cpu
+     fallback that had never run. It passed only on a machine that happened to
+     have no context to offer, and failed on the CI runner, which does. Flags do
+     not fix it either: --disable-gpu leaves SwiftShader in place, and
+     --disable-3d-apis takes WebGL from the PAGE but not from a worker, which is
+     the only context that matters now that the model runs off-thread.
+
+     So the context is taken away where the model actually asks for it: the
+     worker script is served with a two-line shim that makes OffscreenCanvas
+     hand back no webgl context, and everything below runs on the cpu backend on
+     every machine. The route has to live on the CONTEXT — a page route never
+     sees a module worker's own script request. */
+  const WEBGL_OFF = `/* test shim (sweep_v511): no webgl in this worker */
+(() => { const g = OffscreenCanvas.prototype.getContext;
+  OffscreenCanvas.prototype.getContext = function (t, ...r) {
+    return String(t).indexOf("webgl") >= 0 ? null : g.call(this, t, ...r); }; })();
+`;
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 430, height: 1000 } });
+  const ctx = await browser.newContext({ viewport: { width: 430, height: 1000 } });
+  let workerShimmed = 0;
+  await ctx.route("**/face-worker.js", async route => {
+    const res = await route.fetch();
+    const body = await res.text();
+    workerShimmed++;
+    await route.fulfill({ status: 200, headers: { "content-type": "text/javascript" }, body: WEBGL_OFF + body });
+  });
+  const page = await ctx.newPage();
   const pageErrors = [];
   page.on("pageerror", e => pageErrors.push(String(e).slice(0, 200)));
   await page.addInitScript(() => {
@@ -90,8 +117,9 @@ const PORT = process.env.PORT || 8931;
   // ---------------------------------------------------------------- BUG 1
   // 1) the reversed policy: cpu is a real fallback, not a refusal
   const boot = await loadAndWait("st-sample.jpg");
-  report("the model runs on the cpu backend rather than refusing to load",
-    boot.faces === 1 && boot.backend === "cpu", JSON.stringify(boot));
+  report("with no webgl to be had, the model runs on the cpu backend rather than refusing to load",
+    workerShimmed > 0 && boot.faces === 1 && boot.backend === "cpu",
+    JSON.stringify({ ...boot, workerShimmed }));
 
   // 2) with a MEASURED face, makeup passes actually change pixels — the
   //    positive control, so a bug that disables makeup entirely cannot hide
