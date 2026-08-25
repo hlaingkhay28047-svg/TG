@@ -330,6 +330,20 @@ check("Playwright and its installer stay pinned", /npm install playwright@1\.62\
 check("the production spec uses authenticated GitHub autodeploy", /github:\s*[\s\S]*?repo:\s*hlaingkhay28047-svg\/TG[\s\S]*?branch:\s*main[\s\S]*?deploy_on_push:\s*true/.test(appSpec), "missing github deploy_on_push");
 check("the public one-click template remains a direct public-git source", /git:\s*[\s\S]*?branch:\s*main[\s\S]*?repo_clone_url:\s*https:\/\/github\.com\/hlaingkhay28047-svg\/TG\.git/.test(deployTemplate) && !/deploy_on_push:/.test(deployTemplate), "one-click source contract drifted");
 check("deployment docs explain the one-click/manual-deploy boundary", /one-click[\s\S]*manual(?:ly)? deploy/i.test(readme) && /authenticated GitHub/i.test(readme), "README lacks the production migration note");
+check("deployment docs require both lane tokens before pushing",
+  readme.includes("DIGITALOCEAN_STAGING_ACCESS_TOKEN") &&
+  readme.includes("DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN") &&
+  /must exist\s+before pushing/i.test(readme),
+  "README lacks the pre-push DigitalOcean credential gate");
+check("deployment docs distinguish liveness, readiness and health",
+  readme.includes("`/api/live`") && readme.includes("`/api/ready`") &&
+  readme.includes("`/api/health`") && /startup\/schema traffic gate/i.test(readme),
+  "README lacks the three-endpoint probe contract");
+check("deployment docs require native rollback to restore code and app spec together",
+  /native \*\*Activity → Rollback\*\*/.test(readme) &&
+  /restores the\s+previous code, configuration, and app spec together/i.test(readme) &&
+  /does not roll back\s+database data/i.test(readme),
+  "README lacks the safe post-probe rollback procedure");
 
 /* server/sql/schema.sql — the packaging half of the schema, not the writing
    half. hnk-api's App Platform component builds from source_dir /server, and

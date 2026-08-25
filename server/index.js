@@ -95,9 +95,9 @@ function uidFrom(req) {
 }
 
 /* Set when the schema failed to apply PARTWAY THROUGH — see the boot block at
-   the bottom. While it is set the service answers nothing but /health, so a
-   schema with some of its row-level security missing is never queried, and the
-   reason is still readable from a URL. */
+   the bottom. While it is set the service answers only /live, /ready and
+   /health, so a schema with some of its row-level security missing is never
+   queried, and the reason is still readable from a URL. */
 let locked = null;
 
 const server = http.createServer(async (req, res) => {
@@ -108,14 +108,57 @@ const server = http.createServer(async (req, res) => {
     const parsed = url.parse(req.url, false);
     const pathname = decodeURIComponent(parsed.pathname || "");
     const params = new url.URLSearchParams(parsed.query || "");
+
+    /* App Platform uses this as process liveness, not database readiness. A
+       zero-downtime deploy runs schema DDL while the previous container can
+       still hold ordinary transaction locks. The new process must open its
+       port and answer this probe even while that migration is waiting/retrying;
+       every database-backed route below remains closed by the schema
+       fingerprint guard until the exact tracked SQL has applied. */
+    if (pathname === "/live") {
+      return send(res, 200, { ok: true, live: true, apiVersion: API_VERSION });
+    }
+
+    /* Readiness is process-local and database-free. It changes to 200 only
+       after this exact process has applied the tracked schema. App Platform
+       therefore leaves traffic on the previous healthy instance while DDL is
+       waiting, but its separate /live probe still knows this process is alive. */
+    if (pathname === "/ready") {
+      const ready = !!require("./lib/migrate").getAppliedSchemaFingerprint() && locked === null;
+      return send(res, ready ? 200 : 503,
+        { ok: true, ready: ready, apiVersion: API_VERSION });
+    }
+
     const uid = uidFrom(req);
 
-    /* /health answers without touching the database, so App Platform's health
-       check passes while the schema is still being applied. `schema` reports
-       how many application tables exist, while schemaFingerprint proves this
-       running build successfully applied the exact tracked SQL. Both are
-       required: four stale or half-built tables are not ready. */
+    /* /health is readiness attestation and deliberately checks the database;
+       App Platform uses the database-free /live endpoint above for process
+       liveness. `schema` reports how many application tables exist, while
+       schemaFingerprint proves this running build successfully applied the
+       exact tracked SQL. Both are required: four stale or half-built tables
+       are not ready. */
     if (pathname === "/health") {
+      const migration = require("./lib/migrate");
+      const schemaFingerprint = migration.getAppliedSchemaFingerprint();
+
+      /* The stored App Platform spec may still probe /health during the first
+         deployment that introduces /ready. Do not wait for a second database
+         connection while the boot migration is itself waiting; answer 503
+         promptly so the old healthy instance keeps traffic until migration
+         completes and the workflow applies the new live spec. */
+      if (!schemaFingerprint &&
+          migration.getLastError() === "database schema migration is still applying") {
+        return send(res, 503, {
+          ok: true,
+          apiVersion: API_VERSION,
+          schema: null,
+          schemaFingerprint: null,
+          ready: false,
+          tls: require("./lib/db").tlsState(),
+          error: migration.getLastError(),
+        });
+      }
+
       let schema = null;
       try {
         const { rows } = await require("./lib/db").pool.query(
@@ -129,8 +172,6 @@ const server = http.createServer(async (req, res) => {
            too, not only one that was never reachable. */
         require("./lib/migrate").setLastError(err && err.message);
       }
-      const migration = require("./lib/migrate");
-      const schemaFingerprint = migration.getAppliedSchemaFingerprint();
       const body = {
         ok: true,
         apiVersion: API_VERSION,
@@ -154,7 +195,7 @@ const server = http.createServer(async (req, res) => {
                     migration.getLastError();
         if (why) body.error = why;
       }
-      return send(res, 200, body);
+      return send(res, body.ready ? 200 : 503, body);
     }
 
     /* Everything below this line touches the database. A schema that failed
@@ -252,11 +293,10 @@ if (require.main === module) {
      inventing one per container, which silently logs everyone out on restart
      and differs between instances. */
   if (!ALLOWED_ORIGIN) console.warn("WARNING: ALLOWED_ORIGIN is unset — CORS will echo the caller's origin. Set it in production.");
-  /* The schema is applied before the first request rather than by hand. Both
-     files are idempotent — verify_schema_behaviour.js check B applies them
-     three times and requires app_settings to still hold one row — so this
-     converges on every boot instead of needing a database client the owner
-     does not have. */
+  /* The schema is applied automatically rather than by hand. Both files are
+     idempotent — verify_schema_behaviour.js check B applies them three times
+     and requires app_settings to still hold one row — so this converges on
+     every boot instead of needing a database client the owner does not have. */
   const listen = () => server.listen(PORT, () => console.log("hnk-api listening on " + PORT));
   const migration = require("./lib/migrate");
 
@@ -276,26 +316,60 @@ if (require.main === module) {
      nothing. */
   const RETRY_MS = [1000, 2000, 4000, 8000, 15000, 30000, 60000];
   const sleep = ms => new Promise(done => setTimeout(done, ms));
-  async function keepMigrating(attempt) {
-    await sleep(RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)]);
-    try {
-      await migration.migrate();
-      locked = null;
-      console.log("migrate: succeeded on retry " + (attempt + 1) + "; the service is now serving normally.");
-      return;
-    } catch (err) {
-      migration.setLastError(err && err.message);
-      /* Logged sparsely on purpose: a database that is gone for a day would
-         otherwise write a line a minute into the runtime log the owner has to
-         page through to find anything. */
-      if (attempt < 3 || attempt % 10 === 0) {
-        console.error("migrate: retry " + (attempt + 1) + " failed —", err && err.message);
+  function finishMigration() {
+    if (!migration.getAppliedSchemaFingerprint()) return false;
+    locked = null;
+    migration.setLastError("");
+    return true;
+  }
+  async function keepMigrating() {
+    let attempt = 0;
+    for (;;) {
+      await sleep(RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)]);
+      try {
+        await migration.migrate();
+        if (!finishMigration()) {
+          if (attempt < 3 || attempt % 10 === 0) {
+            console.error("migrate: retry " + (attempt + 1) +
+              " completed without the application schema; retries continue.");
+          }
+        } else {
+          console.log("migrate: succeeded on retry " + (attempt + 1) + "; the service is now serving normally.");
+          return;
+        }
+      } catch (err) {
+        migration.setLastError(err && err.message);
+        /* Logged sparsely on purpose: a database that is gone for a day would
+           otherwise write a line a minute into the runtime log the owner has
+           to page through to find anything. */
+        if (attempt < 3 || attempt % 10 === 0) {
+          console.error("migrate: retry " + (attempt + 1) + " failed —", err && err.message);
+        }
       }
-      return keepMigrating(attempt + 1);
+      attempt++;
     }
   }
 
-  migration.migrate().then(listen).catch(err => {
+  /* Listen BEFORE migrating. A migration may wait on a live transaction's DDL
+     lock; tying the port to that promise makes App Platform report that the
+     container never answered health checks and roll it back. /live remains
+     database-free, while the fingerprint guard keeps every real route at 503
+     until migration proves this process applied the tracked schema. */
+  migration.setLastError(process.env.SKIP_MIGRATE === "1"
+    ? "database schema migration is disabled by SKIP_MIGRATE=1"
+    : "database schema migration is still applying");
+  listen();
+
+  if (process.env.SKIP_MIGRATE === "1") {
+    console.warn("migrate: disabled by SKIP_MIGRATE=1; the service will remain not-ready.");
+  } else migration.migrate().then(() => {
+    if (!finishMigration()) {
+      console.error("migrate: initial migration completed without the application schema; retries continue.");
+      keepMigrating();
+      return;
+    }
+    console.log("migrate: initial migration succeeded; the service is now serving normally.");
+  }).catch(err => {
     /* A migration that COULD NOT REACH the database has applied nothing, so
        there is no half-secured schema to protect anyone from — and exiting
        makes App Platform roll back to the previous build, which answers
@@ -309,8 +383,8 @@ if (require.main === module) {
        would make the reason unreachable, which is strictly worse than serving
        nothing while saying why.
 
-       Either way the first attempt is awaited before listening, so /health's
-       very first answer already carries the reason rather than racing it. */
+       Either way /ready remains 503 and every database route stays closed
+       until a retry proves the tracked schema applied successfully. */
     migration.setLastError(err && err.message);
     if (err && err.applied === false) {
       console.error("WARNING: could not reach the database —", err && err.message);
@@ -320,8 +394,7 @@ if (require.main === module) {
       console.error("FATAL: migration failed —", locked);
       console.error("FATAL: booting LOCKED; /health reports the reason and every other route answers 503.");
     }
-    listen();
-    keepMigrating(0);
+    keepMigrating();
   });
 }
 

@@ -136,6 +136,17 @@ account.
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
    ```
 
+   The three probe endpoints have separate jobs:
+
+   - `/api/live` is database-free process liveness and answers 200 once the
+     listener is up.
+   - `/api/ready` is a startup/schema traffic gate. It answers 503 until this
+     process applies the exact tracked schema, then stays 200 for that process
+     lifetime without continuously probing PostgreSQL.
+   - `/api/health` is the current database, schema and TLS diagnostic. Its
+     expected states are HTTP 200 with `ready:true`, or JSON HTTP 503 with
+     `ready:false` and a sanitised reason.
+
    No phone required: **Actions → Read production health → Run workflow** prints
    the same JSON into the run summary, along with a plain reading of what it
    means. That workflow exists because `/api/health` needs a network route to
@@ -156,17 +167,25 @@ account.
    sanitised first: `/api/health` is public, and a connection failure can carry
    the connection string. `tls` is present in every response.
 
-   `ok` describes the *service*, which is why it stays `true` throughout. An
-   exiting container makes App Platform roll the deployment back to the previous
-   build, which answers `/health` in its own older shape — so the deploy looks
-   like it never happened and the cause becomes unreachable. Booting and saying
-   so is the only version of this that can be diagnosed from a phone.
+   `ok:true` means the diagnostic handler answered; it does not mean database
+   traffic is ready. Use the HTTP status and `ready` field for that. An exiting
+   container makes App Platform roll the deployment back to the previous build,
+   which answers `/health` in its own older shape — so the deploy looks like it
+   never happened and the cause becomes unreachable. Booting and saying so is
+   the only version of this that can be diagnosed from a phone.
 
-   Until this running process has applied the exact tracked schema, every route
-   except `/health` returns `503 schema_incomplete`. That fail-closed rule covers
-   a missing/unreachable database, an explicitly skipped migration, and a schema
-   that stopped partway; none may serve account or payment requests on the
-   strength of stale table names alone.
+   Until this running process has applied the exact tracked schema, `/api/live`
+   remains 200, `/api/ready` and `/api/health` return 503, and every
+   database-backed route returns `503 schema_incomplete`. That fail-closed rule
+   covers a missing/unreachable database, an explicitly skipped migration, and
+   a schema that stopped partway; none may serve account or payment requests on
+   the strength of stale table names alone.
+
+   After initial readiness, a later PostgreSQL outage deliberately leaves
+   `/api/ready` at 200, makes `/api/health` return 503, and makes database-backed
+   calls fail until the connection pool recovers. Readiness here protects the
+   zero-downtime schema transition; `/api/health` is the continuous dependency
+   diagnostic.
 
    **It keeps trying.** A development database is created *with* the app and
    takes minutes to provision, so a container that boots first cannot reach it —
@@ -480,6 +499,11 @@ delivery path, `test/verify_digitalocean_deploy.js` and
 on-red is a defensible choice. It is the owner's call. What is not defensible
 is a document claiming a gate that the path does not have, so this paragraph
 exists.
+
+The lightweight DigitalOcean contract workflow does run on direct pushes to
+both `main` and `upgrade-safe-wave`. The full PostgreSQL-backed `Test` workflow
+runs for pull requests and `main`, not a direct staging-branch push, so staging
+changes must keep an open PR to receive the full gate before promotion.
 
 ## What an outage is allowed to do (v5.37.0)
 
@@ -1003,9 +1027,12 @@ Configuration files:
 - `.github/workflows/deploy-digitalocean.yml` — production push workflow, manual API recovery, and live version + exact landing/app-content verification.
 - `.github/workflows/verify-digitalocean-deploy.yml` — regression guard for both deployment lanes.
 
-### One-time DigitalOcean source binding
+### Authenticated DigitalOcean source binding
 
-For truly automatic deployments without storing a DigitalOcean API token in GitHub, each existing DigitalOcean app must be connected to the authenticated GitHub source once. **This migration is complete for both lanes as of 2026-08-17** — staging `hnk-ai-tools-2` and production `hnk-ai-tools-3` both follow their branches automatically.
+Each existing DigitalOcean app must be connected to the authenticated GitHub
+source once. **This migration is complete for both lanes as of 2026-08-17** —
+staging `hnk-ai-tools-2` and production `hnk-ai-tools-3` both follow their
+branches automatically.
 
 Staging `hnk-ai-tools-2`:
 
@@ -1027,6 +1054,38 @@ github:
 
 The public one-click template intentionally uses a direct public-git source, so an app created from it does not auto-deploy later commits. Any such app must either be manually deployed from DigitalOcean after each approved branch update, or migrated once to authenticated GitHub (via the dashboard App Spec editor, replacing the `git:` block with the `github:` block above) the way both live lanes already were.
 
-With the binding in place, normal pushes deploy directly from DigitalOcean. Each deploy workflow uses one shared 33-minute deadline across optional manual recovery and live verification, then verifies `/app/version.json` plus the SHA-256 of both live landing and app HTML against the checked-out commit. API force-rebuild is manual-only (`workflow_dispatch` with `force_rebuild: true`) so normal auto-deploys are never duplicated. Manual staging recovery requires `DIGITALOCEAN_STAGING_ACCESS_TOKEN`; manual production recovery requires the separate `DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN`. Before mutation, the workflow verifies the actual DigitalOcean app uses the expected repository and lane branch.
+The authenticated source binding starts a deployment independently on every
+lane push. The GitHub release workflows also require lane-isolated credentials
+before that push:
 
-No DigitalOcean access token is stored in repository files or logs.
+- staging: `DIGITALOCEAN_STAGING_ACCESS_TOKEN`
+- production: `DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN`
+
+Store them under **GitHub → Settings → Secrets and variables → Actions**. Never
+put a token in repository files, logs, issue text, or chat. They must exist
+before pushing because a failed GitHub authentication gate cannot stop the
+independent DigitalOcean source binding from starting its deployment.
+
+On the first probe rollout, the workflow downloads the complete live spec,
+rejects malformed ingress or source drift, preserves every encrypted `EV[...]`
+secret, patches only the API probe paths to `/ready` and `/live`, and runs one
+bounded `apps update --update-sources --wait`. Once those paths are live, the
+workflow does not create a second push deployment; the authenticated source
+binding remains the sole deployment driver. Manual force-rebuild stays an
+explicit recovery action.
+
+Both lanes use one shared 33-minute deadline and require all of these to match
+at once: the active API service's `source_commit_hash` equals the pushed commit,
+Web/API version matches, both static HTML SHA-256 values match the checkout,
+the schema fingerprint matches, `ready:true`, and database TLS is verified.
+Roll out and prove staging before production.
+
+### Rollback after the probe transition
+
+Use App Platform's native **Activity → Rollback** action. It restores the
+previous code, configuration, and app spec together; it does not roll back
+database data. Do not use a plain git revert to pre-probe code while the live
+spec still points at `/ready` and `/live`, because that older server does not
+provide those probes. After the native rollback is healthy, reconcile the
+branch separately. See DigitalOcean's
+[deployment rollback guide](https://docs.digitalocean.com/products/app-platform/how-to/manage-deployments/).

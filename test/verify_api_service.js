@@ -98,6 +98,18 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("the service migrates an EMPTY database to a working schema on boot",
     migrated === null && tables === "4", { error: migrated, tables });
 
+  /* migrate() uses session-scoped timeouts, so its connection must be
+     discarded instead of returning to the request pool. Reacquiring
+     immediately is the deterministic regression: before the fix this was the
+     same session and SHOW returned 5s / 2min instead of PostgreSQL defaults. */
+  const cleanClient = await require(path.join(ROOT, "server", "lib", "db")).pool.connect();
+  const cleanLockTimeout = (await cleanClient.query("show lock_timeout")).rows[0].lock_timeout;
+  const cleanStatementTimeout = (await cleanClient.query("show statement_timeout")).rows[0].statement_timeout;
+  cleanClient.release();
+  report("the migration's session timeouts never leak into payment/auth requests",
+    cleanLockTimeout === "0" && cleanStatementTimeout === "0",
+    { lockTimeout: cleanLockTimeout, statementTimeout: cleanStatementTimeout });
+
   await new Promise(r => server.listen(PORT, r));
 
   /* ---- /health: the only window the owner has into a deployment ---- */
@@ -312,6 +324,36 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      Each starts the real server with a broken DATABASE_URL and is asked the
      same question the owner asks from a phone: what is wrong? */
   let childPort = PORT;
+  function waitForChildExit(child, timeoutMs) {
+    return new Promise(resolve => {
+      if (child.exitCode !== null || child.signalCode !== null) return resolve(true);
+      let settled = false;
+      const finish = exited => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        child.removeListener("exit", onExit);
+        resolve(exited);
+      };
+      const onExit = () => finish(true);
+      const timer = setTimeout(() => finish(false), timeoutMs);
+      child.once("exit", onExit);
+    });
+  }
+
+  async function stopChild(child) {
+    if (child.exitCode !== null || child.signalCode !== null) return;
+    const gracefulExit = waitForChildExit(child, 2000);
+    child.kill("SIGTERM");
+    if (await gracefulExit) return;
+
+    const forcedExit = waitForChildExit(child, 2000);
+    child.kill("SIGKILL");
+    if (!await forcedExit) {
+      throw new Error("child process " + child.pid + " did not exit after SIGKILL");
+    }
+  }
+
   async function bootChild(url, extraEnv, scriptPath) {
     childPort++;
     const port = childPort;
@@ -321,15 +363,22 @@ async function call(method, p, { token, body, headers, raw } = {}) {
       stdio: "ignore",
     });
     let health = null;
-    for (let i = 0; i < 80 && !health; i++) {
-      try { health = await (await fetch(`http://127.0.0.1:${port}/health`)).json(); }
-      catch (_) { await new Promise(done => setTimeout(done, 250)); }
+    for (let i = 0; i < 80; i++) {
+      try {
+        const candidate = await (await fetch(`http://127.0.0.1:${port}/health`)).json();
+        health = candidate;
+        /* Listening now deliberately precedes migration. Ignore only this
+           explicit transient so success/failure tests observe the settled
+           migration result, while a genuinely not-ready result still returns. */
+        if (!candidate || candidate.error !== "database schema migration is still applying") break;
+      } catch (_) { /* process has not opened its port yet */ }
+      await new Promise(done => setTimeout(done, 250));
     }
-    return { port, health, stop: () => child.kill() };
+    return { port, health, stop: () => stopChild(child) };
   }
   async function healthWith(url, extraEnv) {
     const boot = await bootChild(url, extraEnv);
-    boot.stop();
+    await boot.stop();
     return boot.health;
   }
 
@@ -390,7 +439,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     const response = await fetch(`http://127.0.0.1:${skippedBoot.port}/rest/v1/app_settings`);
     skippedRoute = { status: response.status, body: await response.json().catch(() => null) };
   } catch (err) { skippedRoute = { status: 0, error: err.message }; }
-  skippedBoot.stop();
+  await skippedBoot.stop();
   report("H9c) four existing tables without this process applying the tracked schema are not ready",
     !!skipped && skipped.schema === 4 && skipped.ready === false &&
     skipped.schemaFingerprint === null && skippedRoute.status === 503 &&
@@ -444,7 +493,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("H12) ...while /health itself keeps answering — it is the only way in",
     !!stillAnswers.body && stillAnswers.body.ok === true && stillAnswers.body.ready === false,
     stillAnswers);
-  partial.stop();
+  await partial.stop();
   psql(`drop database if exists ${PARTIAL}`);
 
   /* ============ TLS to the database ============
@@ -628,8 +677,58 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("H14) ...and applies the schema itself once it appears, with no restart and nobody watching",
     !!recovered && recovered.schema === 4 && recovered.schemaFingerprint === EXPECTED_SCHEMA_SHA &&
     recovered.error === undefined, recovered);
-  late.stop();
+  await late.stop();
   psql(`drop database if exists ${LATE}`);
+
+  /* ============ DDL lock during a zero-downtime deploy ============
+     Keep an old-style read transaction open on profiles while a new process
+     applies the idempotent schema. The migration must time out instead of
+     owning startup forever, liveness must keep answering, readiness must keep
+     traffic on the old instance, and the retry must converge after release. */
+  const LOCKED = DB + "_locked";
+  psql(`drop database if exists ${LOCKED}`);
+  psql(`create database ${LOCKED}`);
+  psqlFile(path.join(ROOT, "server", "sql", "platform.sql"), LOCKED);
+  psqlFile(path.join(ROOT, "server", "sql", "schema.sql"), LOCKED);
+  const lockedUrl =
+    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
+    `@${ENV.PGHOST}:${ENV.PGPORT}/${LOCKED}`;
+  const { Client } = require(path.join(ROOT, "server", "node_modules", "pg"));
+  const locker = new Client({ connectionString: lockedUrl, ssl: false });
+  await locker.connect();
+  await locker.query("begin");
+  await locker.query("lock table public.profiles in access share mode");
+  const lockBoot = await bootChild(lockedUrl, {
+    MIGRATION_LOCK_TIMEOUT_MS: "200",
+    MIGRATION_STATEMENT_TIMEOUT_MS: "5000",
+  });
+  const lockLiveResponse = await fetch(`http://127.0.0.1:${lockBoot.port}/live`);
+  const lockReadyResponse = await fetch(`http://127.0.0.1:${lockBoot.port}/ready`);
+  const lockReadyBody = await lockReadyResponse.json().catch(() => null);
+  report("H14b) a conflicting DDL lock is bounded instead of owning startup",
+    !!lockBoot.health && lockBoot.health.ready === false &&
+    /lock timeout/i.test(lockBoot.health.error || ""), lockBoot.health);
+  report("H14c) liveness stays 200 while readiness keeps traffic off the locked process",
+    lockLiveResponse.status === 200 && lockReadyResponse.status === 503 &&
+    lockReadyBody && lockReadyBody.ready === false,
+    { live: lockLiveResponse.status, ready: lockReadyResponse.status, body: lockReadyBody });
+
+  await locker.query("commit");
+  let lockRecovered = null;
+  for (let i = 0; i < 40 && !lockRecovered; i++) {
+    await new Promise(done => setTimeout(done, 250));
+    try {
+      const response = await fetch(`http://127.0.0.1:${lockBoot.port}/ready`);
+      const body = await response.json();
+      if (response.status === 200 && body.ready === true) lockRecovered = body;
+    } catch (_) { /* retry is still applying */ }
+  }
+  report("H14d) releasing the old transaction lets the migration retry reach readiness",
+    !!lockRecovered && lockRecovered.apiVersion === EXPECTED_API_VERSION,
+    lockRecovered);
+  await lockBoot.stop();
+  await locker.end();
+  psql(`drop database if exists ${LOCKED}`);
 
   /* H15) the packaging assumption none of H1-H14 could catch, because every
      one of them boots the real checkout, where supabase/schema.sql is always
@@ -657,9 +756,49 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("H15) server/sql/schema.sql alone — no supabase/ sibling at all — still reaches ready:true",
     !!packaged.health && packaged.health.ready === true && packaged.health.schema === 4 &&
     packaged.health.schemaFingerprint === EXPECTED_SCHEMA_SHA, packaged.health);
-  packaged.stop();
-  fs.rmSync(PACKAGED, { recursive: true, force: true });
+  await packaged.stop();
   psql(`drop database if exists ${PACKAGED_DB}`);
+
+  /* A packaged service without its tracked fallback schema must stay visibly
+     not-ready. migrate() deliberately resolves after applying platform.sql so
+     /health can explain the packaging fault; index.js must not mistake that
+     resolution for a successful application migration and erase the reason. */
+  fs.rmSync(path.join(PACKAGED, "server", "sql", "schema.sql"));
+  const PACKAGED_MISSING_DB = DB + "_packaged_missing";
+  psql(`drop database if exists ${PACKAGED_MISSING_DB}`);
+  psql(`create database ${PACKAGED_MISSING_DB}`);
+  const packagedMissing = await bootChild(
+    `postgres://${encodeURIComponent(ENV.PGUSER)}:${encodeURIComponent(ENV.PGPASSWORD)}` +
+    `@${ENV.PGHOST}:${ENV.PGPORT}/${PACKAGED_MISSING_DB}`,
+    {}, path.join(PACKAGED, "server", "index.js"));
+  report("H15b) a packaged server missing application schema stays not-ready and names the fault",
+    !!packagedMissing.health && packagedMissing.health.ready === false &&
+    packagedMissing.health.schemaFingerprint === null &&
+    /application schema file was not found/i.test(packagedMissing.health.error || ""),
+    packagedMissing.health);
+
+  /* The process must keep retrying a migration that resolved without an
+     application fingerprint. Restoring the packaged file proves that this is
+     an active diagnostic state, not a permanent not-ready process whose error
+     merely happened to survive the first attempt. */
+  fs.copyFileSync(path.join(ROOT, "server", "sql", "schema.sql"),
+    path.join(PACKAGED, "server", "sql", "schema.sql"));
+  let packagedRecovered = null;
+  for (let i = 0; i < 60 && !packagedRecovered; i++) {
+    await new Promise(done => setTimeout(done, 250));
+    try {
+      const response = await fetch(`http://127.0.0.1:${packagedMissing.port}/health`);
+      const body = await response.json();
+      if (response.status === 200 && body.ready === true) packagedRecovered = body;
+    } catch (_) { /* retry is still applying */ }
+  }
+  report("H15c) restoring the packaged schema lets the missing-schema retry recover",
+    !!packagedRecovered && packagedRecovered.schemaFingerprint === EXPECTED_SCHEMA_SHA &&
+    packagedRecovered.error === undefined,
+    packagedRecovered);
+  await packagedMissing.stop();
+  psql(`drop database if exists ${PACKAGED_MISSING_DB}`);
+  fs.rmSync(PACKAGED, { recursive: true, force: true });
 
   server.close();
   await require(path.join(ROOT, "server", "lib", "db")).pool.end();
