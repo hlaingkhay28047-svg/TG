@@ -27,6 +27,7 @@ jobs:
       DO_DATABASE: "hnk-tmp-${{ github.run_id }}"
       DO_STATIC_SITE: hnk-web
       DO_MARKER: "run-${{ github.run_id }}"
+      TEMP_STAGING_DATABASE_MODE: contained
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_STAGING_ACCESS_TOKEN }}
 
     steps:
@@ -120,7 +121,67 @@ jobs:
             exit 1
           fi
           echo "recovered=true" >> "$GITHUB_OUTPUT"
-          echo "Recovered the static-only staging app. This rerun will not recreate paid resources."
+          echo "Recovered the static-only staging app before starting a fresh validation."
+
+      - name: Build and smoke-test the contained database image
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          IMAGE="hnk-contained-staging:${GITHUB_SHA}"
+          CONTAINER="hnk-contained-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          HEALTH_FILE="$RUNNER_TEMP/contained-health.json"
+          EXPECTED_VERSION="$(jq -r '.v' docs/app/version.json)"
+          EXPECTED_SCHEMA_SHA="$(sha256sum server/sql/schema.sql | awk '{print $1}')"
+
+          cleanup_smoke() {
+            STATUS=$?
+            if [ "$STATUS" -ne 0 ]; then
+              docker logs "$CONTAINER" 2>&1 || true
+            fi
+            docker rm --force "$CONTAINER" >/dev/null 2>&1 || true
+            exit "$STATUS"
+          }
+          trap cleanup_smoke EXIT
+
+          docker build --pull \
+            --file server/Dockerfile.staging-contained \
+            --tag "$IMAGE" server
+          docker run --detach --name "$CONTAINER" \
+            --env JWT_SECRET="$(openssl rand -hex 32)" \
+            --env HNK_CONTAINED_PG_PASSWORD="$(openssl rand -hex 32)" \
+            --env ALLOWED_ORIGIN="https://$DO_APP_HOST" \
+            --env APP_ORIGIN="https://$DO_APP_HOST" \
+            --publish 127.0.0.1:18080:8080 \
+            "$IMAGE" >/dev/null
+
+          DEADLINE=$(( $(date +%s) + 120 ))
+          until curl -fsS --max-time 5 http://127.0.0.1:18080/health -o "$HEALTH_FILE"; do
+            if [ "$(docker inspect --format '{{.State.Running}}' "$CONTAINER")" != "true" ]; then
+              echo "::error::Contained staging smoke container exited during startup."
+              exit 1
+            fi
+            if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+              echo "::error::Contained staging image did not become ready within 120 seconds."
+              exit 1
+            fi
+            sleep 2
+          done
+          curl -fsS --max-time 5 http://127.0.0.1:18080/live | jq -e '.live == true' >/dev/null
+          curl -fsS --max-time 5 http://127.0.0.1:18080/ready | jq -e '.ready == true' >/dev/null
+          jq -e --arg version "$EXPECTED_VERSION" --arg schema "$EXPECTED_SCHEMA_SHA" '
+            .ready == true and .apiVersion == $version and
+            .schemaFingerprint == $schema and .tls == "off (PGSSLMODE=disable)"
+          ' "$HEALTH_FILE" >/dev/null
+
+          docker exec "$CONTAINER" sh -c \
+            'kill -TERM "$(head -n 1 /tmp/hnk-contained-pgdata/postmaster.pid)"'
+          EXIT_CODE="$(timeout --foreground --signal=TERM --kill-after=5s 20s docker wait "$CONTAINER")"
+          if [ "$EXIT_CODE" != "1" ]; then
+            echo "::error::Contained staging supervisor did not fail closed after PostgreSQL stopped (exit $EXIT_CODE)."
+            exit 1
+          fi
+          echo "Contained PostgreSQL image passed build, migration, health and supervisor smoke tests."
 
       - name: Prepare and validate the temporary full spec
         id: prepare
@@ -139,7 +200,7 @@ jobs:
           echo "prepared=true" >> "$GITHUB_OUTPUT"
           echo "Validated a full-spec update while preserving the downloaded live staging configuration."
 
-      - name: Create the temporary API and development database
+      - name: Create the temporary API with contained PostgreSQL
         shell: bash
         run: |
           set -euo pipefail
@@ -150,7 +211,7 @@ jobs:
             --update-sources \
             --wait \
             --format ID,DefaultIngress,Updated; then
-            echo "Temporary staging resources deployed."
+            echo "Temporary staging API and contained PostgreSQL deployed."
           else
             STATUS=$?
             echo "::error::Temporary staging deployment failed or exceeded its bounded build window (exit $STATUS). Cleanup will still run."
@@ -226,10 +287,10 @@ jobs:
                 --arg marker "$DO_MARKER" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
                 (([.services[]? | select(.name == $service and .github.repo == $repo and
                     .github.branch == $branch and
+                    .dockerfile_path == "server/Dockerfile.staging-contained" and
                     any(.envs[]?; .key == "HNK_EPHEMERAL_STAGING_RUN" and .value == $marker))]
                   | length) == 1) and
-                (([.databases[]? | select(.name == $database and .engine == "PG" and
-                    (.production // false) == false)] | length) == 1)
+                (([.databases[]? | select(.name == $database)] | length) == 0)
               ' "$LIVE_SPEC_FILE" 2>/dev/null || echo false)"
             fi
             if doctl apps get "$DO_APP_ID" --output json > "$APP_STATE_FILE" 2>/dev/null; then
@@ -247,10 +308,10 @@ jobs:
                [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] && \
                [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] && \
                [ "$ACTUAL_READY" = "true" ] && \
-               [ "$ACTUAL_TLS" = "unverified (no CA certificate supplied)" ] && \
+               [ "$ACTUAL_TLS" = "off (PGSSLMODE=disable)" ] && \
                [ "$ACTUAL_SOURCE_SHA" = "$GITHUB_SHA" ] && [ "$LIVE_SPEC_OK" = "true" ]; then
               echo "Verified temporary staging Web/API $ACTUAL_VERSION, exact static files, liveness, readiness, schema fingerprint and source $ACTUAL_SOURCE_SHA."
-              echo "The test-only dev database connection was encrypted but has no managed-database CA; production remains gated on tls:verified."
+              echo "The test-only PostgreSQL 16 database ran inside the disposable API container; production remains gated on a managed database with tls:verified."
               exit 0
             fi
 
@@ -263,7 +324,7 @@ jobs:
           echo "::error::The temporary staging release did not satisfy every Web/API/schema/source assertion before the cleanup window."
           exit 1
 
-      - name: Always remove the temporary API and development database
+      - name: Always restore static-only staging
         if: ${{ always() && steps.prepare.outcome == 'success' }}
         shell: bash
         run: |
@@ -377,7 +438,7 @@ jobs:
                [ "$LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && \
                [ "$APP_SHA" = "$EXPECTED_APP_SHA" ] && [ "$API_STATUS" = "404" ] && \
                [ "$ACTIVE_CLEANUP" = "true" ]; then
-              echo "Cleanup verified: staging is static-only again; Web is intact; temporary API and database are removed."
+              echo "Cleanup verified: staging is static-only again; Web is intact; temporary resources are removed."
               exit 0
             fi
 
@@ -446,6 +507,7 @@ jobs:
       DO_DATABASE: "hnk-tmp-${{ github.run_id }}"
       DO_STATIC_SITE: hnk-web
       DO_MARKER: "run-${{ github.run_id }}"
+      TEMP_STAGING_DATABASE_MODE: contained
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_STAGING_ACCESS_TOKEN }}
 
     steps:

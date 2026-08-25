@@ -10,6 +10,8 @@ on:
       - .github/workflows/temporary-staging-validation.yml
       - test/verify_digitalocean_deploy.js
       - test/verify_temporary_staging_spec.js
+      - server/Dockerfile.staging-contained
+      - server/start-contained-staging.sh
   workflow_dispatch:
     inputs:
       force_rebuild:

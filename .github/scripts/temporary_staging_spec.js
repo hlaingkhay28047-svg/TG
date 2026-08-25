@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-/* Add or remove the test-only API + dev database used to validate one release
+/* Add or remove the test-only API + database harness used to validate one release
  * on the otherwise static-only staging app. The input is always a downloaded
  * live spec so domains, encrypted secrets, alerts and site settings survive.
  * Cleanup is marker-bound to the same workflow run that created the resources. */
@@ -10,11 +10,16 @@ const fs = require("fs");
 
 const [mode, inputPath, outputPath, appName, serviceName, databaseName,
   staticSiteName, repo, branch, origin, marker] = process.argv.slice(2);
+const databaseMode = process.env.TEMP_STAGING_DATABASE_MODE || "managed";
 
 if (![mode, inputPath, outputPath, appName, serviceName, databaseName,
   staticSiteName, repo, branch, origin, marker].every(Boolean) ||
   !["bootstrap", "cleanup"].includes(mode)) {
   console.error("usage: temporary_staging_spec.js bootstrap|cleanup INPUT OUTPUT APP SERVICE DATABASE STATIC_SITE REPO BRANCH ORIGIN MARKER");
+  process.exit(2);
+}
+if (!["managed", "contained"].includes(databaseMode)) {
+  console.error("TEMP_STAGING_DATABASE_MODE must be managed or contained");
   process.exit(2);
 }
 
@@ -27,7 +32,7 @@ const arrayAt = (spec, key) => {
   return spec[key];
 };
 
-function validateSecrets(spec, allowBootstrapJwt) {
+function validateSecrets(spec, allowBootstrapSecrets) {
   const groups = [];
   if (Object.prototype.hasOwnProperty.call(spec, "envs")) groups.push(arrayAt(spec, "envs"));
   for (const key of ["services", "static_sites", "workers", "jobs", "functions"]) {
@@ -41,9 +46,10 @@ function validateSecrets(spec, allowBootstrapJwt) {
   for (const envs of groups) {
     for (const env of envs) {
       if (!env || env.type !== "SECRET") continue;
-      const isBootstrapJwt = allowBootstrapJwt && env.key === "JWT_SECRET" &&
+      const isBootstrapSecret = allowBootstrapSecrets &&
+        ["JWT_SECRET", "HNK_CONTAINED_PG_PASSWORD"].includes(env.key) &&
         typeof env.value === "string" && /^[a-f0-9]{64}$/.test(env.value);
-      if (!isBootstrapJwt &&
+      if (!isBootstrapSecret &&
           (typeof env.value !== "string" || !/^EV\[[^\]]+\]$/.test(env.value))) {
         fail(`secret ${env.key || "<unnamed>"} is not an encrypted live-spec value`);
       }
@@ -117,13 +123,11 @@ function targetsApiPrefix(rule) {
     rule.match.path.prefix === "/api";
 }
 
-function makeService(jwtSecret) {
+function makeService(jwtSecret, containedPgPassword) {
   const service = {
     name: serviceName,
-    environment_slug: "node-js",
     github: { repo, branch, deploy_on_push: true },
     source_dir: "/server",
-    run_command: "node index.js",
     http_port: 8080,
     instance_count: 1,
     instance_size_slug: "apps-s-1vcpu-0.5gb",
@@ -135,15 +139,38 @@ function makeService(jwtSecret) {
       failure_threshold: 30,
       success_threshold: 1,
     },
-    liveness_health_check: { http_path: "/live" },
+    liveness_health_check: {
+      http_path: "/live",
+      initial_delay_seconds: 90,
+      period_seconds: 10,
+      timeout_seconds: 5,
+      failure_threshold: 6,
+      success_threshold: 1,
+    },
     envs: [
-      { key: "DATABASE_URL", scope: "RUN_TIME", value: `\${${databaseName}.DATABASE_URL}` },
       { key: "JWT_SECRET", scope: "RUN_TIME", type: "SECRET", value: jwtSecret },
       { key: "ALLOWED_ORIGIN", scope: "RUN_TIME", value: origin },
       { key: "APP_ORIGIN", scope: "RUN_TIME", value: origin },
       { key: "HNK_EPHEMERAL_STAGING_RUN", scope: "RUN_TIME", value: marker },
     ],
   };
+  if (databaseMode === "contained") {
+    service.dockerfile_path = "server/Dockerfile.staging-contained";
+    service.envs.push({
+      key: "HNK_CONTAINED_PG_PASSWORD",
+      scope: "RUN_TIME",
+      type: "SECRET",
+      value: containedPgPassword,
+    });
+  } else {
+    service.environment_slug = "node-js";
+    service.run_command = "node index.js";
+    service.envs.unshift({
+      key: "DATABASE_URL",
+      scope: "RUN_TIME",
+      value: `\${${databaseName}.DATABASE_URL}`,
+    });
+  }
   return service;
 }
 
@@ -165,9 +192,19 @@ try {
       ? crypto.randomBytes(32).toString("hex")
       : suppliedSecret;
     if (!/^[a-f0-9]{64}$/.test(jwtSecret)) fail("temporary JWT secret was not generated safely");
+    let containedPgPassword;
+    if (databaseMode === "contained") {
+      const suppliedPgPassword = process.env.TEMP_STAGING_PG_PASSWORD;
+      containedPgPassword = suppliedPgPassword === undefined
+        ? crypto.randomBytes(32).toString("hex")
+        : suppliedPgPassword;
+      if (!/^[a-f0-9]{64}$/.test(containedPgPassword)) {
+        fail("temporary contained PostgreSQL password was not generated safely");
+      }
+    }
 
     const patched = clone(spec);
-    const service = makeService(jwtSecret);
+    const service = makeService(jwtSecret, containedPgPassword);
     if (Object.prototype.hasOwnProperty.call(patched, "ingress")) {
       if (patched.ingress.rules.some(targetsApiPrefix) ||
           patched.ingress.rules.some(targetsTemporaryService)) {
@@ -181,10 +218,14 @@ try {
       service.routes = [{ path: "/api" }];
     }
     patched.services = [service];
-    patched.databases = [{ name: databaseName, engine: "PG", production: false, version: "16" }];
+    patched.databases = databaseMode === "managed"
+      ? [{ name: databaseName, engine: "PG", production: false, version: "16" }]
+      : [];
     validateSecrets(patched, true);
     fs.writeFileSync(outputPath, JSON.stringify(patched, null, 2) + "\n", { mode: 0o600 });
-    console.log("Prepared marker-bound temporary staging API and development database.");
+    console.log(databaseMode === "managed"
+      ? "Prepared marker-bound temporary staging API and development database."
+      : "Prepared marker-bound temporary staging API with contained PostgreSQL 16.");
   } else {
     validateSecrets(spec, false);
     const services = arrayAt(spec, "services");
@@ -197,6 +238,9 @@ try {
 
     const namedDatabases = databases.filter(database => database && database.name === databaseName);
     if (namedDatabases.length > 1) fail("staging database inventory contains a duplicate temporary database");
+    if (databaseMode === "contained" && namedDatabases.length !== 0) {
+      fail("contained mode does not own a managed staging database");
+    }
     if (namedDatabases.length === 1 &&
         (namedDatabases[0].engine !== "PG" || namedDatabases[0].production === true)) {
       fail("temporary database is not the expected non-production PostgreSQL database");

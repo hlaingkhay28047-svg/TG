@@ -10,6 +10,10 @@ const ROOT = path.resolve(__dirname, "..");
 const SCRIPT = path.join(ROOT, ".github", "scripts", "temporary_staging_spec.js");
 const WORKFLOW = fs.readFileSync(
   path.join(ROOT, ".github", "workflows", "temporary-staging-validation.yml"), "utf8");
+const CONTAINED_DOCKERFILE = fs.readFileSync(
+  path.join(ROOT, "server", "Dockerfile.staging-contained"), "utf8");
+const CONTAINED_START = fs.readFileSync(
+  path.join(ROOT, "server", "start-contained-staging.sh"), "utf8");
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "hnk-temp-staging-"));
 const args = ["hnk-ai-tools-2", "hnk-api", "hnk-tmp-run328", "hnk-web",
   "hlaingkhay28047-svg/TG", "upgrade-safe-wave",
@@ -51,7 +55,7 @@ function invoke(mode, spec, suffix, env = {}) {
   fs.writeFileSync(input, JSON.stringify(spec));
   const run = spawnSync(process.execPath, [SCRIPT, mode, input, output, ...args], {
     encoding: "utf8",
-    env: Object.assign({}, process.env, env),
+    env: Object.assign({}, process.env, { TEMP_STAGING_DATABASE_MODE: "managed" }, env),
   });
   return { run, output, parsed: fs.existsSync(output) ? JSON.parse(fs.readFileSync(output, "utf8")) : null };
 }
@@ -80,6 +84,20 @@ try {
     (WORKFLOW.match(/doctl apps get-deployment/g) || []).length >= 2 &&
     !/doctl apps create-deployment[\s\S]{0,180}--(?:update-sources|wait)/.test(WORKFLOW),
     "desired spec or an older active deployment cannot prove a pending API was replaced");
+  report("contained image is built and failure-injected before any remote mutation",
+    /Build and smoke-test the contained database image[\s\S]*docker build --pull[\s\S]*docker run --detach/.test(WORKFLOW) &&
+    /kill -TERM[\s\S]*docker wait/.test(WORKFLOW) &&
+    WORKFLOW.indexOf("Build and smoke-test the contained database image") <
+      WORKFLOW.indexOf("Prepare and validate the temporary full spec"),
+    "workflow must prove build, migrations, health and PostgreSQL-death supervision locally first");
+  report("contained runtime pins both base images and runs Node without root",
+    (CONTAINED_DOCKERFILE.match(/FROM [^\n]+@sha256:[a-f0-9]{64}/g) || []).length === 2 &&
+    CONTAINED_START.includes("gosu postgres node /app/index.js") &&
+    CONTAINED_START.includes('kill -0 "$postgres_pid"') &&
+    CONTAINED_START.includes('kill -0 "$node_pid"') &&
+    !CONTAINED_START.includes("fsync=off") &&
+    !CONTAINED_START.includes("full_page_writes=off"),
+    "runtime must be reproducible, non-root, durable and fail closed if either child dies");
 
   const source = fixture();
   const boot = invoke("bootstrap", source, "bootstrap", { TEMP_STAGING_JWT_SECRET: secret });
@@ -105,6 +123,47 @@ try {
     JSON.stringify(boot.parsed.static_sites) === JSON.stringify(source.static_sites) &&
     boot.parsed.envs[0].value === "EV[1:existing]",
     boot.parsed);
+
+  const contained = invoke("bootstrap", fixture(), "contained", {
+    TEMP_STAGING_DATABASE_MODE: "contained",
+    TEMP_STAGING_JWT_SECRET: secret,
+    TEMP_STAGING_PG_PASSWORD: "b".repeat(64),
+  });
+  const containedService = contained.parsed && contained.parsed.services && contained.parsed.services[0];
+  const containedPassword = containedService && containedService.envs
+    .find(env => env.key === "HNK_CONTAINED_PG_PASSWORD");
+  report("contained mode uses the exact Docker staging harness and no managed database",
+    contained.run.status === 0 && containedService &&
+    containedService.dockerfile_path === "server/Dockerfile.staging-contained" &&
+    containedService.source_dir === "/server" &&
+    !Object.prototype.hasOwnProperty.call(containedService, "environment_slug") &&
+    !Object.prototype.hasOwnProperty.call(containedService, "run_command") &&
+    containedPassword && containedPassword.type === "SECRET" &&
+    containedPassword.value === "b".repeat(64) &&
+    contained.parsed.databases.length === 0 &&
+    !contained.run.stdout.includes(containedPassword.value), contained.run.stderr);
+
+  contained.parsed.services[0].envs.find(env => env.key === "JWT_SECRET").value = "EV[1:jwt]";
+  contained.parsed.services[0].envs
+    .find(env => env.key === "HNK_CONTAINED_PG_PASSWORD").value = "EV[1:pg]";
+  const cleanContained = invoke("cleanup", contained.parsed, "contained-clean", {
+    TEMP_STAGING_DATABASE_MODE: "contained",
+  });
+  report("cleanup removes a contained API without requiring a managed database",
+    cleanContained.run.status === 0 && cleanContained.parsed.services.length === 0 &&
+    cleanContained.parsed.databases.length === 0 &&
+    cleanContained.parsed.ingress.rules.every(rule => rule.component.name !== "hnk-api"),
+    cleanContained.run.stderr);
+
+  const containedWithManagedDatabase = JSON.parse(JSON.stringify(contained.parsed));
+  containedWithManagedDatabase.databases = [{
+    name: "hnk-tmp-run328", engine: "PG", production: false, version: "16",
+  }];
+  const unsafeContainedClean = invoke("cleanup", containedWithManagedDatabase,
+    "contained-managed-database", { TEMP_STAGING_DATABASE_MODE: "contained" });
+  report("contained cleanup refuses a managed database it never created",
+    unsafeContainedClean.run.status !== 0 && !fs.existsSync(unsafeContainedClean.output),
+    unsafeContainedClean.run.stderr);
 
   /* Simulate App Platform encrypting the first-submission JWT before spec get. */
   boot.parsed.services[0].envs.find(env => env.key === "JWT_SECRET").value = "EV[1:jwt]";
