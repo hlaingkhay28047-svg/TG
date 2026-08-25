@@ -16,7 +16,7 @@ const { verifyToken } = require("./lib/crypto");
 
 const PORT = Number(process.env.PORT || 8080);
 const MAX_BODY = Number(process.env.MAX_BODY_BYTES || 12 * 1024 * 1024);
-const API_VERSION = "5.42.1";
+const API_VERSION = "5.42.2";
 
 /* The browser calls this from another origin, so CORS has to allow the headers
    accFetch sends. ALLOWED_ORIGIN should name the site in production; the
