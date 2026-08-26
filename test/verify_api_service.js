@@ -60,7 +60,7 @@ const psqlAsync = (sql, db) => new Promise((resolve,reject)=>{
     });
 });
 const runtimePsql = (sql, db) => execFileSync("psql",
-  ["-d", db, "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql],
+  ["-d", db, "-v", "ON_ERROR_STOP=1", "-q", "-t", "-A", "-c", sql],
   { env: RUNTIME_ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 const runtimeUrl = db =>
   `postgres://${encodeURIComponent(RUNTIME_USER)}:${encodeURIComponent(RUNTIME_PASSWORD)}` +
@@ -75,10 +75,10 @@ const createRuntimeDatabase = db => {
     `grant usage, create on schema public to ${RUNTIME_USER}`, db);
 };
 const LOCAL_SERVICE_CONTEXT =
-  "select set_config('request.role', 'service_role', true), " +
-  "set_config('request.jwt.claim.sub', '', true), " +
-  "set_config('request.is_admin', 'false', true), " +
-  "set_config('request.user_email', '', true)";
+  "set local request.role = 'service_role'; " +
+  "set local request.jwt.claim.sub = ''; " +
+  "set local request.is_admin = 'false'; " +
+  "set local request.user_email = ''";
 const SESSION_SERVICE_CONTEXT =
   "select set_config('request.role', 'service_role', false), " +
   "set_config('request.jwt.claim.sub', '', false), " +
@@ -361,6 +361,10 @@ function testPasswordHash(password,parallelization) {
   report("E4) password reset revokes a session created by an in-flight old-password login",
     observedPasswordRead&&raceLoginResult.status===200&&racedSessionRevoked==="true",
     {observedPasswordRead,status:raceLoginResult.status,sessionRevoked:racedSessionRevoked});
+  /* The race account is an isolated concurrency fixture. Remove it before the
+     ordinary two-account visibility/admin assertions below. */
+  runtimeServicePsql(
+    `delete from public.hnk_auth_users where id='${raceUserId}'`,DB);
 
   /* Unified signup creates the profile and enforcement rows transactionally;
      a canonical live session must never point at a missing profile. */
@@ -559,7 +563,7 @@ function testPasswordHash(password,parallelization) {
     r.status !== 500 && !leaked(r), { status: r.status, body: r.json });
 
   const forged = require(path.join(ROOT, "server", "lib", "crypto"))
-    .signToken({ sub: OWNER }, "not-the-real-secret", 3600).token;
+    .signToken({ sub: OWNER }, "wrong-api-signing-secret-with-32-bytes", 3600).token;
   r = await call("GET", "/rest/v1/profiles?select=*", { token: forged });
   report("Q) a token signed with the wrong secret grants nothing",
     r.status !== 500 && !leaked(r), { status: r.status, body: r.json });
