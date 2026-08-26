@@ -111,7 +111,7 @@ async function armSupabase(page, prof, mode) {
     /* Legacy wall-state probes deliberately opt out of v5.43 enforcement.
        Dedicated tests below cover unified verdicts; a 404 is the supported
        compatibility response, while a 200 [] would be a malformed verdict. */
-    if (url.indexOf("/v1/") >= 0) {
+    if (url.indexOf("/api/v1/") >= 0) {
       return route.fulfill({ status: 404, contentType: "application/json",
                              body: JSON.stringify({ error: "not_found" }) });
     }
@@ -573,7 +573,7 @@ async function look(browser, sess, prof, label) {
       const req = route.request(), url = req.url();
       const json = (b, st) => route.fulfill({ status: st || 200, contentType: "application/json",
                                               body: JSON.stringify(b) });
-      if (url.indexOf("/v1/") >= 0) return json({ error: "not_found" }, 404);
+      if (url.indexOf("/api/v1/") >= 0) return json({ error: "not_found" }, 404);
       if (url.indexOf("/auth/v1/token") >= 0) {
         return json({ access_token: "test.jwt", refresh_token: "test-refresh",
                       expires_in: 3600, user: { id: "u-test", email: "t@example.com" } });
@@ -658,7 +658,7 @@ async function look(browser, sess, prof, label) {
       vp.on("pageerror", e => errs.push("X2: " + String(e).slice(0, 160)));
       await vp.route(SB_URL + "/**", route => {
         const url = route.request().url();
-        if (url.indexOf("/v1/") >= 0) {
+        if (url.indexOf("/api/v1/") >= 0) {
           return route.fulfill({ status: 404, contentType: "application/json", body: '{"error":"not_found"}' });
         }
         if (url.indexOf("/auth/v1/token") >= 0) {
@@ -791,7 +791,7 @@ async function look(browser, sess, prof, label) {
     await rc.route(SB_URL + "/**", route => {
       const u = route.request().url(), m = route.request().method();
       const json = (b, st) => route.fulfill({ status: st || 200, contentType: "application/json", body: JSON.stringify(b) });
-      if (u.indexOf("/v1/") >= 0) return json({ error: "not_found" }, 404);
+      if (u.indexOf("/api/v1/") >= 0) return json({ error: "not_found" }, 404);
       if (u.indexOf("/rest/v1/profiles") >= 0) {
         if (m === "GET") { gets++; return route.fulfill({ status: 200, contentType: "application/json", body: "null" }); }
         if (m === "POST") { posts++; return json([], 201); }
