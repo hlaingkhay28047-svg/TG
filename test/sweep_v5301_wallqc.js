@@ -229,6 +229,11 @@ const future = new Date(Date.now() + 30 * 86400000).toISOString();
       const handoff = await page.evaluate(() => {
         acc.profile = acc.profile || {};
         acc.profile.is_admin = true;
+        /* The handoff lives on Home/Setup, while a normal premium boot may
+           restore any studio page. Navigate to its real surface before
+           measuring rendered visibility; keeping getClientRects() makes this
+           a customer-reachability assertion rather than a DOM-only check. */
+        switchPage("pgHome");
         admApplyLang();
         admRender();
         const link = document.getElementById("openAdminCenter");
