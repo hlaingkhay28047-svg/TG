@@ -182,6 +182,7 @@ function staticServer() {
   const proofSrc=await page.locator("#paymentProofImage").getAttribute("src");
   report("payment proof is fetched as an authenticated Blob and displayed in-page",calls.some(call=>/\/payment-requests\/request-1\/proof$/.test(call.url))&&String(proofSrc).startsWith("blob:"),proofSrc);
   await page.click("#closePaymentProof");
+  await page.waitForFunction(src=>{const image=document.getElementById("paymentProofImage");return window.__revokedPaymentProofs.includes(src)&&!image.getAttribute("src")&&image.hidden;},proofSrc);
   const proofClosed=await page.evaluate(src=>({revoked:window.__revokedPaymentProofs.includes(src),src:document.getElementById("paymentProofImage").getAttribute("src"),hidden:document.getElementById("paymentProofImage").hidden}),proofSrc);
   report("closing proof revokes the in-memory Blob URL and clears the image",proofClosed.revoked&&!proofClosed.src&&proofClosed.hidden,proofClosed);
 
