@@ -91,6 +91,37 @@ function premiumSession() {
   };
 }
 
+/* The unified endpoint is the authoritative wall decision. Keep this fixture
+   production-shaped and fail-closed for capabilities it cannot prove: the
+   signed-in test account may use the Web App, but without a registered
+   computer it may not download or open the Photoshop Panel. Returning a 404
+   here would exercise the temporary legacy fallback instead of the security
+   boundary every current deployment uses. */
+function premiumEntitlement() {
+  const profile = premiumProfile();
+  return {
+    account: {
+      id: UID,
+      name: profile.name,
+      email: EMAIL,
+      account_status: "active",
+      effective_status: "active",
+      approved: true,
+    },
+    license: {
+      status: "active",
+      start_at: "2025-01-01T00:00:00Z",
+      expires_at: profile.plan_expires_at,
+      active: true,
+    },
+    permissions: { web_app: true, ccx_download: true, photoshop_panel: true },
+    devices: { phone: null, computer: null, slots: [] },
+    panel: { latest_version: "6.24.0", minimum_supported_version: "6.24.0" },
+    allowed: { web_app: true, ccx_download: false, panel: false },
+    reasons: { web_app: "allowed", ccx_download: "computer_required", panel: "computer_required" },
+  };
+}
+
 /* Runs inside the page before any app script. Kept dependency-free and
    try/catch'd: a browser with storage disabled must not take the sweep down
    with it. */
@@ -130,6 +161,7 @@ function routeSupabase(route) {
   }
   if (url.indexOf("/auth/v1/logout") >= 0) return route.fulfill({ status: 204, body: "" });
   if (url.indexOf("/auth/v1/user") >= 0) return json({ id: UID, email: EMAIL });
+  if (url.indexOf("/v1/me/entitlement") >= 0) return json(premiumEntitlement());
   /* accLoadProfile asks with Accept: application/vnd.pgrst.object+json, so the
      live project answers with a bare object, not a one-element array */
   if (url.indexOf("/rest/v1/profiles") >= 0) return json(premiumProfile());
@@ -181,4 +213,7 @@ function withPremium(browser) {
   return browser;
 }
 
-module.exports = { withPremium, seedScript, premiumSession, premiumProfile, SB_URL, routeSupabase };
+module.exports = {
+  withPremium, seedScript, premiumSession, premiumProfile, premiumEntitlement,
+  SB_URL, routeSupabase,
+};

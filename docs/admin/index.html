@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1018">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'">
+  <meta name="robots" content="noindex,nofollow">
+  <title>HNK Admin Control Center</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to admin content</a>
+
+  <section class="gate" id="adminChecking" role="status" aria-live="polite">
+    <div class="gate-card"><span class="spinner" aria-hidden="true"></span><h1>Checking admin access…</h1><p>Verifying this session with HNK securely.</p></div>
+  </section>
+
+  <section class="gate" id="adminLogin" hidden>
+    <form class="gate-card gate-form" id="adminLoginForm">
+      <div class="auth-mark" aria-hidden="true">HNK</div>
+      <p class="eyebrow">ADMIN CONTROL CENTER</p>
+      <h1>Administrator sign in</h1>
+      <p>Use your administrator credentials. This creates a separate, tab-only admin session and never promotes a Student App session.</p>
+      <label>Email address<input id="adminLoginEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required></label>
+      <label>Password<input id="adminLoginPassword" type="password" autocomplete="current-password" minlength="6" required></label>
+      <button class="button primary full" id="adminLoginButton" type="submit">Continue securely</button>
+      <p class="form-status" id="adminLoginStatus" role="status" aria-live="polite"></p>
+      <p class="privacy-note">Your password is sent only to the same-origin secure authentication endpoint and is never stored by this page.</p>
+      <a class="text-link" href="../app/">Return to Student App</a>
+    </form>
+  </section>
+
+  <section class="gate" id="adminMfa" hidden>
+    <div class="gate-card gate-form">
+      <div class="auth-mark shield" aria-hidden="true">2×</div>
+      <p class="eyebrow">SECOND FACTOR REQUIRED</p>
+      <h1>Verify your authenticator</h1>
+      <p>The dashboard and every admin action stay locked until this admin session passes TOTP verification.</p>
+      <form id="adminMfaForm">
+        <label>6-digit authenticator code<input id="adminMfaCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required></label>
+        <button class="button primary full" id="adminMfaVerifyButton" type="submit">Verify admin session</button>
+      </form>
+      <div class="enrollment-box">
+        <p>First sign-in or replacing your authenticator?</p>
+        <button class="button full" id="adminMfaSetupButton" type="button">Set up authenticator</button>
+        <div id="adminMfaEnrollment" hidden>
+          <p class="secret-note" id="adminMfaInstructions"></p>
+          <button class="text-button" id="copyMfaSecret" type="button">Copy setup key</button>
+        </div>
+      </div>
+      <p class="form-status" id="adminMfaStatus" role="status" aria-live="polite"></p>
+      <button class="text-button" id="cancelAdminMfa" type="button">Use another administrator</button>
+    </div>
+  </section>
+
+  <section class="gate" id="adminForbidden" hidden>
+    <div class="gate-card danger-card">
+      <div class="gate-icon" aria-hidden="true">!</div>
+      <p class="eyebrow">ADMIN ACCESS</p>
+      <h1>Not authorized</h1>
+      <p>This page is restricted to verified HNK administrators. Student accounts cannot open the control center.</p>
+      <div class="gate-actions"><a class="button primary" href="../app/">Return to Student App</a><button class="button" id="retryAdmin" type="button">Check again</button><button class="button" id="clearAdmin" type="button">Use another admin</button></div>
+    </div>
+  </section>
+
+  <div class="shell" id="adminApp" hidden>
+    <aside class="sidebar" aria-label="Admin navigation">
+      <a class="brand" href="./" aria-label="HNK Admin home"><span class="brand-mark">HNK</span><span><b>Control Center</b><small>Production administration</small></span></a>
+      <nav class="side-nav" aria-label="Control Center sections">
+        <button class="nav-item active" type="button" data-panel="overview"><span aria-hidden="true">⌂</span>Overview</button>
+        <button class="nav-item" type="button" data-panel="students"><span aria-hidden="true">◎</span>Students</button>
+        <button class="nav-item" type="button" data-panel="payments"><span aria-hidden="true">¤</span>Payment review</button>
+        <button class="nav-item" type="button" data-panel="history"><span aria-hidden="true">↺</span>Activity history</button>
+        <button class="nav-item" type="button" data-panel="security"><span aria-hidden="true">◇</span>Security &amp; Panel</button>
+      </nav>
+      <div class="side-foot"><span class="online-dot" aria-hidden="true"></span><span>Server-authorized</span><a href="../app/">Student App</a></div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menuButton" type="button" aria-label="Open admin navigation" aria-expanded="false">☰</button>
+        <div><p class="eyebrow">HNK STUDIO</p><h1 id="pageTitle">Overview</h1></div>
+        <div class="top-actions"><button class="icon-button" id="refreshAll" type="button" aria-label="Refresh current data">↻</button><div class="admin-identity"><span id="adminInitial">A</span><div><b id="adminName">Administrator</b><small id="adminEmail"></small></div></div><button class="button compact" id="adminSignOut" type="button">Sign out</button></div>
+      </header>
+
+      <main id="main" tabindex="-1">
+        <section class="panel active" id="panel-overview" aria-labelledby="overviewHeading">
+          <div class="section-head"><div><p class="eyebrow">LIVE OPERATIONS</p><h2 id="overviewHeading">Student access at a glance</h2><p>Account, license, device and session health from the authoritative server.</p></div><time id="overviewUpdated"></time></div>
+          <div class="metric-grid" id="metricGrid" aria-label="Student metrics"></div>
+          <div class="split-grid">
+            <section class="surface"><div class="surface-head"><div><p class="eyebrow">RECENT ACCESS</p><h3>Latest logins</h3></div><button class="text-button" type="button" data-go="history">View all</button></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Device</th><th>Time</th><th>Result</th></tr></thead><tbody id="latestLogins"></tbody></table></div><p class="empty" id="latestEmpty" hidden>No recent logins.</p></section>
+            <section class="surface attention"><p class="eyebrow">QUICK REVIEW</p><h3>Needs attention</h3><div class="attention-list" id="attentionList"></div><button class="button primary full" type="button" data-go="students" data-filter-status="pending">Review pending students</button></section>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-students" aria-labelledby="studentsHeading">
+          <div class="section-head"><div><p class="eyebrow">STUDENT MANAGEMENT</p><h2 id="studentsHeading">Accounts and licenses</h2><p>Search, review and apply audited account actions.</p></div><button class="button" id="reloadStudents" type="button">Refresh list</button></div>
+          <form class="filter-bar" id="studentFilters" role="search">
+            <label class="search-field"><span class="sr-only">Search students</span><span aria-hidden="true">⌕</span><input id="studentSearch" type="search" placeholder="Search name or email" autocomplete="off"></label>
+            <label><span class="sr-only">Account status</span><select id="studentStatus"><option value="">All account states</option><option value="pending">Pending</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="expired">Expired</option><option value="banned">Banned</option><option value="rejected">Rejected</option></select></label>
+            <label><span class="sr-only">License status</span><select id="studentLicense"><option value="">All licenses</option><option value="active">License active</option><option value="expired">Expired</option><option value="none">No license</option></select></label>
+            <button class="button primary" type="submit">Apply filters</button>
+          </form>
+          <section class="surface">
+            <div class="table-wrap student-table"><table><thead><tr><th>Student</th><th>Account</th><th>License</th><th>Devices</th><th>Last active</th><th><span class="sr-only">Open</span></th></tr></thead><tbody id="studentRows"></tbody></table></div>
+            <div class="student-cards" id="studentCards"></div>
+            <p class="empty" id="studentsEmpty" hidden>No students match these filters.</p>
+            <div class="pagination"><button class="button" id="studentsPrev" type="button">Previous</button><span id="studentsPage">Page 1</span><button class="button" id="studentsNext" type="button">Next</button></div>
+          </section>
+        </section>
+
+        <section class="panel" id="panel-payments" aria-labelledby="paymentsHeading">
+          <div class="section-head"><div><p class="eyebrow">PAYMENT OPERATIONS</p><h2 id="paymentsHeading">Payment review and VIP grants</h2><p>Verify transfer proof, record an audit note and grant approved access from one protected queue.</p></div><button class="button" id="reloadPayments" type="button">Refresh queue</button></div>
+          <div class="payments-grid">
+            <section class="surface payment-queue" aria-labelledby="paymentQueueHeading" aria-busy="false">
+              <div class="surface-head payment-toolbar">
+                <div><p class="eyebrow">AUDITED QUEUE</p><h3 id="paymentQueueHeading">Payment requests</h3></div>
+                <div class="segmented-control" role="group" aria-label="Payment request view">
+                  <button class="payment-view active" type="button" aria-pressed="true" data-payment-view="pending">Pending</button>
+                  <button class="payment-view" type="button" aria-pressed="false" data-payment-view="history">History</button>
+                </div>
+              </div>
+              <p class="queue-status" id="paymentQueueStatus" role="status" aria-live="polite"></p>
+              <div class="payment-config-warning" id="paymentConfigWarning" role="alert" aria-live="assertive" aria-atomic="true" hidden><span aria-hidden="true">!</span><div><b>Payment configuration needs attention</b><p id="paymentConfigWarningText"></p></div></div>
+              <div id="paymentRequestResults">
+                <div class="table-wrap payment-table"><table><thead><tr><th>Student</th><th>Request</th><th>Transfer</th><th>Submitted</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody id="paymentRows"></tbody></table></div>
+                <div class="payment-cards" id="paymentCards"></div>
+                <p class="empty" id="paymentsEmpty" hidden>No payment requests in this view.</p>
+              </div>
+              <div class="pagination"><button class="button" id="paymentsPrev" type="button">Previous</button><span id="paymentsPage">Page 1</span><button class="button" id="paymentsNext" type="button">Next</button></div>
+            </section>
+
+            <form class="surface settings-card grant-card" id="paymentGrantForm">
+              <div class="setting-icon" aria-hidden="true">VIP</div>
+              <p class="eyebrow">MANUAL ACCESS</p><h3>Grant VIP access</h3>
+              <p>Create an approved, audited entitlement without a payment transfer. The server resolves the student from their exact email address.</p>
+              <label>Student email<input id="grantEmail" type="email" autocomplete="off" inputmode="email" autocapitalize="none" spellcheck="false" required placeholder="student@example.com"></label>
+              <label>Access period<select id="grantKind" required><option value="join_first">First access / VIP</option><option value="plan_1m">1 month</option><option value="plan_3m">3 months</option><option value="plan_6m">6 months</option></select></label>
+              <label>Admin note<textarea id="grantNote" rows="4" maxlength="500" required placeholder="Reason for this grant"></textarea></label>
+              <button class="button primary full" id="createPaymentGrant" type="submit">Review VIP grant</button>
+              <p class="form-status" id="paymentGrantStatus" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-history" aria-labelledby="historyHeading">
+          <div class="section-head"><div><p class="eyebrow">AUDIT TRAIL</p><h2 id="historyHeading">Login, device, download and admin activity</h2><p>Server-side events are searchable and never editable here.</p></div><button class="button" id="reloadHistory" type="button">Refresh history</button></div>
+          <form class="filter-bar" id="historyFilters" role="search">
+            <label class="search-field"><span class="sr-only">Search activity</span><span aria-hidden="true">⌕</span><input id="historySearch" type="search" placeholder="Student, email, device or action" autocomplete="off"></label>
+            <label><span class="sr-only">Activity type</span><select id="historyType"><option value="">All activity</option><option value="login">Logins</option><option value="failed_login">Failed logins</option><option value="device">Devices</option><option value="download">CCX downloads</option><option value="license">License changes</option><option value="account">Account actions</option><option value="admin">Admin actions</option></select></label>
+            <label class="date-field">From<input id="historyFrom" type="date"></label><label class="date-field">To<input id="historyTo" type="date"></label>
+            <button class="button primary" type="submit">Filter</button>
+          </form>
+          <section class="surface"><div class="table-wrap"><table><thead><tr><th>Time</th><th>Student</th><th>Activity</th><th>Device / App</th><th>Result</th></tr></thead><tbody id="historyRows"></tbody></table></div><p class="empty" id="historyEmpty" hidden>No matching activity.</p><div class="pagination"><button class="button" id="historyPrev" type="button">Previous</button><span id="historyPage">Page 1</span><button class="button" id="historyNext" type="button">Next</button></div></section>
+        </section>
+
+        <section class="panel" id="panel-security" aria-labelledby="securityHeading">
+          <div class="section-head"><div><p class="eyebrow">SECURITY &amp; RELEASES</p><h2 id="securityHeading">Panel policy and admin protection</h2><p>Minimum-version enforcement and mandatory administrator 2FA.</p></div></div>
+          <div class="settings-grid">
+            <form class="surface settings-card" id="panelVersionForm"><div class="setting-icon" aria-hidden="true">Ps</div><p class="eyebrow">PHOTOSHOP PANEL</p><h3>Version control</h3><p>Panels older than the minimum version receive Update Required.</p><label>Latest version<input id="latestVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.24.0"></label><label>Minimum supported<input id="minimumVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.24.0"></label><button class="button primary" type="submit">Save version policy</button></form>
+            <section class="surface settings-card"><div class="setting-icon" aria-hidden="true">2×</div><p class="eyebrow">ADMIN 2FA</p><h3>Authenticator verification</h3><p>This tab has passed mandatory two-factor verification. Reset setup only when replacing the administrator's authenticator.</p><button class="button" id="setupMfa" type="button">Replace authenticator</button><div id="mfaSetup" hidden><p class="secret-note" id="mfaInstructions"></p><label>6-digit authenticator code<input id="mfaCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></label><button class="button primary" id="verifyMfa" type="button">Verify replacement</button></div></section>
+            <form class="surface settings-card artifact-card" id="panelArtifactForm">
+              <div class="setting-icon" aria-hidden="true">↑</div><p class="eyebrow">PRIVATE PANEL ARTIFACT</p><h3>Upload, verify and enable a release</h3>
+              <p>The package stays in this tab's memory. HNK hashes it locally, uploads verified chunks to private storage, finalizes the artifact, and only then enables the version.</p>
+              <div class="artifact-fields"><label>Release version<input id="artifactVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.24.0"></label><label>Panel package<input id="panelArtifactFile" type="file" required></label></div>
+              <div class="artifact-file" id="artifactFileSummary">Choose a Creative Cloud panel package. Maximum 512 MiB.</div>
+              <progress id="artifactProgress" max="100" value="0" aria-label="Panel artifact upload progress"></progress>
+              <div class="artifact-progress-row"><span id="artifactProgressText">Waiting for a package</span><span id="artifactHashText"></span></div>
+              <button class="button primary" id="uploadPanelArtifact" type="submit">Upload, verify &amp; enable release</button>
+              <button class="button" id="checkArtifactResume" type="button" hidden>Check resumable upload</button>
+              <p class="form-status artifact-status" id="artifactUploadStatus" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="studentDialog" aria-labelledby="studentDialogTitle">
+    <div class="dialog-head"><div><p class="eyebrow">STUDENT DETAIL</p><h2 id="studentDialogTitle">Student</h2><p id="studentDialogEmail"></p></div><button class="icon-button" id="closeStudentDialog" type="button" aria-label="Close student detail">×</button></div>
+    <div class="dialog-scroll">
+      <div class="detail-summary" id="studentSummary"></div>
+      <div class="detail-grid"><section><h3>Access permissions</h3><div class="toggle-list" id="permissionToggles"></div></section><section><h3>Registered devices</h3><div class="device-list" id="studentDevices"></div></section></div>
+      <section class="action-section"><h3>Account actions</h3><div class="action-grid" id="accountActions"></div></section>
+      <section class="action-section"><h3>License</h3><div class="license-actions"><label>Extend by<select id="licenseMonths"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label><button class="button primary" id="extendLicense" type="button">Extend license</button><label>Custom expiry<input id="customExpiry" type="date"></label><button class="button" id="setExpiry" type="button">Set expiry</button></div></section>
+      <section class="action-section"><h3>Security &amp; devices</h3><div class="action-grid" id="securityActions"></div></section>
+      <section class="action-section"><div class="surface-head"><h3>Recent history</h3><button class="text-button" id="viewStudentHistory" type="button">Open full history</button></div><div id="studentHistory" class="mini-history"></div></section>
+    </div>
+  </dialog>
+
+  <dialog class="payment-proof-dialog" id="paymentProofDialog" aria-labelledby="paymentProofTitle">
+    <div class="dialog-head"><div><p class="eyebrow">PRIVATE PAYMENT PROOF</p><h2 id="paymentProofTitle">Transfer proof</h2><p id="paymentProofStudent"></p></div><button class="icon-button" id="closePaymentProof" type="button" aria-label="Close payment proof">×</button></div>
+    <div class="proof-body"><p class="proof-status" id="paymentProofStatus" role="status" aria-live="polite">Loading proof securely…</p><img id="paymentProofImage" alt="" hidden></div>
+  </dialog>
+
+  <dialog class="payment-review-dialog" id="paymentReviewDialog" aria-labelledby="paymentReviewTitle">
+    <form id="paymentReviewForm">
+      <div class="dialog-head"><div><p class="eyebrow">CONFIRM PAYMENT REVIEW</p><h2 id="paymentReviewTitle">Review request</h2><p id="paymentReviewStudent"></p></div><button class="icon-button" id="cancelPaymentReviewTop" type="button" aria-label="Cancel payment review">×</button></div>
+      <div class="dialog-scroll">
+        <p id="paymentReviewMessage"></p>
+        <label class="review-note">Admin note<textarea id="paymentReviewNote" rows="4" maxlength="500" required placeholder="Record how this decision was verified"></textarea></label>
+        <p class="form-status" id="paymentReviewStatus" role="status" aria-live="polite"></p>
+        <div class="dialog-actions"><button class="button" id="cancelPaymentReview" type="button">Cancel</button><button class="button primary" id="confirmPaymentReview" type="submit">Confirm approval</button></div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm">Confirm</button></div></form></dialog>
+
+  <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
+  <script src="admin.js" defer></script>
+</body>
+</html>

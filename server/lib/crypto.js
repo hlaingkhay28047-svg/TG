@@ -15,7 +15,31 @@ const crypto = require("crypto");
  */
 const SCRYPT_N = 16384, SCRYPT_r = 8, SCRYPT_p = 1, KEYLEN = 64;
 
-function hashPassword(password) {
+function createPasswordKdfGate(maxConcurrent) {
+  const parsed=Number(maxConcurrent);
+  const limit=Number.isFinite(parsed)
+    ? Math.min(16,Math.max(1,Math.floor(parsed))) : 4;
+  let active=0;
+  return async function runPasswordKdf(work) {
+    if (active>=limit) {
+      const error=new Error("Authentication is busy. Try again shortly.");
+      error.status=429;
+      error.code="auth_busy";
+      throw error;
+    }
+    active++;
+    try { return await work(); }
+    finally { active--; }
+  };
+}
+
+/* Reject excess work instead of letting crypto.scrypt build an unbounded
+   libuv queue. Public-auth database limits apply across instances; this gate
+   is the final per-process memory/CPU bound for login, signup and reset KDFs. */
+const runPasswordKdf=createPasswordKdfGate(
+  process.env.PASSWORD_KDF_MAX_CONCURRENCY||4);
+
+function hashPasswordWithSlot(password) {
   return new Promise((resolve, reject) => {
     const salt = crypto.randomBytes(16);
     crypto.scrypt(password, salt, KEYLEN, { N: SCRYPT_N, r: SCRYPT_r, p: SCRYPT_p }, (err, key) => {
@@ -25,7 +49,7 @@ function hashPassword(password) {
   });
 }
 
-function verifyPassword(password, stored) {
+function verifyPasswordWithSlot(password, stored) {
   return new Promise(resolve => {
     if (!stored || typeof stored !== "string") return resolve(false);
     const parts = stored.split("$");
@@ -44,6 +68,41 @@ function verifyPassword(password, stored) {
   });
 }
 
+/* Auth flows acquire capacity before they reserve a durable database attempt.
+   An overloaded process therefore rejects without poisoning a reset/signup
+   allowance or creating an unbounded reserve+cleanup loop. Raw KDF functions
+   are exposed only to the callback while the slot is owned. */
+function withPasswordKdfSlot(work) {
+  return runPasswordKdf(async()=>{
+    let operation=null;
+    const start=(fn,args)=>{
+      if (operation) {
+        const error=new Error("A password KDF slot may run only one operation");
+        error.status=500;
+        error.code="kdf_slot_reused";
+        throw error;
+      }
+      operation=fn(...args);
+      return operation;
+    };
+    const operations=Object.freeze({
+      hashPassword:password=>start(hashPasswordWithSlot,[password]),
+      verifyPassword:(password,stored)=>start(verifyPasswordWithSlot,[password,stored]),
+    });
+    try { return await work(operations); }
+    finally {
+      /* A callback that accidentally forgets to await its KDF cannot release
+         capacity while crypto.scrypt is still consuming memory/CPU. */
+      if (operation) await operation.catch(()=>{});
+    }
+  });
+}
+
+const hashPassword=password=>
+  withPasswordKdfSlot(kdf=>kdf.hashPassword(password));
+const verifyPassword=(password,stored)=>
+  withPasswordKdfSlot(kdf=>kdf.verifyPassword(password,stored));
+
 /* ---------------- access tokens ----------------
  * A compact JWT, HS256, verified with a timing-safe compare. The shape matters:
  * the app reads `sub` out of the payload, and public.hnk_uid() is fed from it, so a
@@ -51,7 +110,20 @@ function verifyPassword(password, stored) {
  */
 const b64u = buf => Buffer.from(buf).toString("base64url");
 
+function hasSecureTokenSecret(secret) {
+  return Buffer.byteLength(String(secret||""),"utf8")>=32;
+}
+
+function assertSecureTokenSecret(secret) {
+  if (hasSecureTokenSecret(secret)) return String(secret);
+  const error=new Error("JWT_SECRET must contain at least 32 bytes");
+  error.status=503;
+  error.code="security_configuration_missing";
+  throw error;
+}
+
 function signToken(payload, secret, ttlSeconds) {
+  secret=assertSecureTokenSecret(secret);
   const now = Math.floor(Date.now() / 1000);
   const body = Object.assign({}, payload, { iat: now, exp: now + ttlSeconds });
   const head = b64u(JSON.stringify({ alg: "HS256", typ: "JWT" }));
@@ -61,6 +133,7 @@ function signToken(payload, secret, ttlSeconds) {
 }
 
 function verifyToken(token, secret) {
+  if (!hasSecureTokenSecret(secret)) return null;
   if (typeof token !== "string") return null;
   const parts = token.split(".");
   if (parts.length !== 3) return null;
@@ -86,4 +159,6 @@ function verifyToken(token, secret) {
    in the database, so they carry no claims and can be revoked. */
 const randomToken = () => crypto.randomBytes(32).toString("base64url");
 
-module.exports = { hashPassword, verifyPassword, signToken, verifyToken, randomToken };
+module.exports = { hashPassword, verifyPassword, signToken, verifyToken, randomToken,
+  hasSecureTokenSecret,assertSecureTokenSecret,createPasswordKdfGate,
+  withPasswordKdfSlot };

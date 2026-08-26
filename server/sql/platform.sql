@@ -66,6 +66,9 @@ create table if not exists public.hnk_auth_users (
 
 create unique index if not exists hnk_auth_users_email_uniq
   on public.hnk_auth_users (lower(email));
+create unique index if not exists hnk_auth_users_recovery_token_uniq
+  on public.hnk_auth_users (recovery_token)
+  where recovery_token is not null;
 
 alter table public.hnk_auth_users enable row level security;
 drop policy if exists hnk_auth_users_service_all on public.hnk_auth_users;
@@ -135,4 +138,10 @@ alter table public.hnk_storage_buckets force row level security;
 revoke all on public.hnk_storage_buckets from public;
 
 alter table public.hnk_storage_objects enable row level security;
+drop policy if exists hnk_storage_objects_service_all on public.hnk_storage_objects;
+create policy hnk_storage_objects_service_all on public.hnk_storage_objects
+  for all to public
+  using (current_setting('request.role', true) = 'service_role')
+  with check (current_setting('request.role', true) = 'service_role');
+alter table public.hnk_storage_objects force row level security;
 revoke all on public.hnk_storage_objects from public;

@@ -1,12 +1,12 @@
 "use strict";
-/* Payment proofs. The bytes live in public.hnk_storage_objects.data, under the same
- * row-level security as the row that describes them.
+/* Payment proofs. The bytes live in public.hnk_storage_objects.data, under the
+ * same row-level security as the row that describes them.
  *
  * server/sql/schema.sql section 8 writes the two DO-dialect policies this relies on:
  * proofs_insert_own lets a customer write only under their own uid folder, and
- * proofs_read_own_or_admin lets them read their own while an admin reads all.
- * Because those policies are enforced by the database, this file does not
- * decide who may see a bank slip — it only moves bytes.
+ * proofs_read_own lets a customer read only their own. Cross-account review is
+ * performed by the strict admin service only after admin-session + MFA checks;
+ * its service_role context is the deliberate trusted bypass.
  */
 const { asUser } = require("./db");
 

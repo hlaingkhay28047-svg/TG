@@ -18,6 +18,18 @@ let failures = 0;
 const children = new Set();
 const stalledSockets = new Set();
 let stalledDatabase = null;
+const SECURITY_ENV = Object.freeze({
+  MFA_ENCRYPTION_KEY: "liveness-mfa-encryption-key-2026-08-26",
+  DEVICE_ID_HASH_SECRET: "liveness-device-id-hash-key-2026-08-26",
+  DEVICE_PAIRING_SECRET: "liveness-device-pairing-key-2026-08-26",
+  CCX_DOWNLOAD_SECRET: "liveness-ccx-download-key-2026-08-26",
+  PANEL_LEASE_SECRET: "liveness-panel-lease-key-2026-08-26",
+});
+function secureChildEnv(overrides) {
+  const env = Object.assign({}, process.env, SECURITY_ENV, overrides || {});
+  delete env.ALLOW_DERIVED_SECURITY_SECRETS;
+  return env;
+}
 
 function report(label, ok, detail) {
   console.log(`${ok ? "PASS" : "FAIL"} — ${label}${ok ? "" : ` :: ${JSON.stringify(detail)}`}`);
@@ -102,9 +114,10 @@ async function requestJson(url, deadlineMs) {
   const apiPort = await unusedPort();
   let logs = "";
   const child = trackChild(spawn(process.execPath, [path.join(ROOT, "server", "index.js")], {
-    env: Object.assign({}, process.env, {
+    env: secureChildEnv({
       DATABASE_URL: `postgres://hnk:hnk@127.0.0.1:${databasePort}/hnk`,
       PGSSLMODE: "disable",
+      ALLOW_UNVERIFIED_DB_TLS: "1",
       JWT_SECRET: "liveness-test-secret-that-is-never-used-for-real-tokens",
       ALLOWED_ORIGIN: "https://example.test",
       PORT: String(apiPort),
@@ -136,9 +149,10 @@ async function requestJson(url, deadlineMs) {
   let skippedLogs = "";
   const skippedChild = trackChild(spawn(process.execPath,
     [path.join(ROOT, "server", "index.js")], {
-      env: Object.assign({}, process.env, {
+      env: secureChildEnv({
         DATABASE_URL: `postgres://hnk:hnk@127.0.0.1:${databasePort}/hnk`,
         PGSSLMODE: "disable",
+        ALLOW_UNVERIFIED_DB_TLS: "1",
         JWT_SECRET: "skip-migration-test-secret-that-is-never-used-for-real-tokens",
         ALLOWED_ORIGIN: "https://example.test",
         PORT: String(skippedPort),

@@ -3,20 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<!-- A recovery token arrives in this page's URL. Two things follow from that.
+<!-- A recovery token arrives in this page's URL fragment. Two things follow.
 
-     1) referrer: no-referrer. Without it the token travels in the Referer
-        header of every request the page makes, including the Supabase call
-        it is about to make.
+     1) The fragment never reaches the origin, proxy, CDN or access log. The
+        referrer policy is still no-referrer as a second boundary.
      2) The token is stripped from the address bar with replaceState the
         instant it is read, so it does not sit in browser history, in a
         shoulder-surfed URL bar, or in whatever the user pastes next.
 
      There is nothing to gain from a permissive CSP here: this page loads no
-     script, style, font or image from anywhere. connect-src names exactly one
-     origin, which is the only host it may talk to. -->
+     script, style, font or image from anywhere. connect-src permits only this
+     origin's unified API. -->
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://vmtwuuybnalefpgvrast.supabase.co; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="robots" content="noindex,nofollow">
 <title>Set a new password — HNK Create Studio</title>
 <style>
@@ -120,11 +119,10 @@ label{display:block; margin:0 0 6px; font-size:13px; color:var(--muted)}
 (function(){
 "use strict";
 
-/* Same project, same publishable key as docs/app/index.html. The key is
-   designed to ship in a browser; row-level security is what protects the
-   data, and this page reads nothing anyway. */
-var SB_URL  = "https://vmtwuuybnalefpgvrast.supabase.co";
-var SB_ANON = "sb_publishable_brvtaDa8uJCvlf2P2sTe3A_BZNXhxUJ";
+/* Password recovery uses the same server-owned auth service as the Website,
+   Student App, Admin, and Panel. No database key or third-party auth origin is
+   present in this page. */
+var AUTH_URL = location.origin + "/api";
 
 /* ---------------- strings ----------------
    Every entry below except pw_link_dead and pw_title is COPIED VERBATIM from
@@ -192,17 +190,17 @@ function setSt(msg, kind){
 
 /* ---------------- read the recovery token, then erase it ----------------
 
-   Supabase hands a recovery back in one of two shapes depending on how the
-   project is configured, and a link that has already been used or has aged
-   out comes back as an error in the same place. All three are read here, and
-   whichever it was, the URL is rewritten before anything else happens. */
+   The server emails a high-entropy, one-hour token in the URL fragment, which
+   never reaches an HTTP access log. It is moved into memory and removed from
+   browser history before any request. Query fields remain only for already-
+   issued legacy links during their one-hour expiry window. */
 function readRecovery(){
   var hash = location.hash.replace(/^#/, "");
   var h = new URLSearchParams(hash);
   var q = new URLSearchParams(location.search);
   var out = {
-    accessToken: h.get("access_token") || "",
-    tokenHash:   q.get("token_hash") || q.get("token") || "",
+    recoveryToken: h.get("token") || h.get("token_hash") || h.get("access_token") ||
+                   q.get("token") || q.get("token_hash") || "",
     type:        h.get("type") || q.get("type") || "",
     error:       h.get("error_description") || h.get("error") ||
                  q.get("error_description") || q.get("error") || ""
@@ -212,32 +210,23 @@ function readRecovery(){
 }
 var REC = readRecovery();
 
-/* ---------------- Supabase ---------------- */
-function sbHeaders(bearer){
-  return { "apikey": SB_ANON, "Authorization": "Bearer " + (bearer || SB_ANON),
-           "Content-Type": "application/json" };
+/* ---------------- unified auth API ---------------- */
+function apiHeaders(bearer){
+  var headers = { "Content-Type": "application/json" };
+  if (bearer) headers.Authorization = "Bearer " + bearer;
+  return headers;
 }
-async function exchangeTokenHash(tokenHash){
-  var r = await fetch(SB_URL + "/auth/v1/verify", {
-    method: "POST", headers: sbHeaders(),
-    body: JSON.stringify({ type: "recovery", token_hash: tokenHash })
-  });
-  if (!r.ok) return "";
-  var j = await r.json().catch(function(){ return null; });
-  return (j && j.access_token) || "";
-}
-async function setPassword(bearer, password){
-  return fetch(SB_URL + "/auth/v1/user", {
-    method: "PUT", headers: sbHeaders(bearer),
-    body: JSON.stringify({ password: password })
+async function setPassword(recoveryToken, password){
+  return fetch(AUTH_URL + "/auth/v1/user", {
+    method: "PUT", headers: apiHeaders(),
+    body: JSON.stringify({ password: password, recovery_token: recoveryToken })
   });
 }
-/* A recovery session is a full session. It is never persisted here, and it is
-   revoked the moment the password is set, so a link left open in a shared
-   browser's history cannot be replayed into an authenticated session. */
+/* Password replacement returns a fresh session only for compatibility with
+   the Student App. This page never persists it and revokes it immediately. */
 async function revoke(bearer){
   try {
-    await fetch(SB_URL + "/auth/v1/logout", { method: "POST", headers: sbHeaders(bearer) });
+    await fetch(AUTH_URL + "/auth/v1/logout", { method: "POST", headers: apiHeaders(bearer) });
   } catch(e){}
 }
 
@@ -256,7 +245,7 @@ $("btn").textContent = t("pw_title");
 $("open").textContent = t("nav_cta");
 document.title = t("pw_title") + " — HNK Create Studio";
 
-var TOKEN = REC.accessToken;
+var TOKEN = REC.recoveryToken;
 var busy = false;
 
 function fail(msg){
@@ -267,7 +256,7 @@ function fail(msg){
 
 if (REC.error) {
   fail(t("pw_link_dead"));
-} else if (!TOKEN && !REC.tokenHash) {
+} else if (!TOKEN) {
   /* Somebody opened /reset/ directly. That is not an error worth alarming
      them about — it is just not a reset. */
   fail(t("pw_link_dead"));
@@ -286,22 +275,18 @@ $("form").addEventListener("submit", async function(e){
 
   busy = true; $("btn").disabled = true; setSt("");
   try {
-    if (!TOKEN && REC.tokenHash) TOKEN = await exchangeTokenHash(REC.tokenHash);
-    if (!TOKEN){ fail(t("pw_link_dead")); return; }
-
     var r = await setPassword(TOKEN, pw);
+    var j = await r.json().catch(function(){ return null; });
     if (r.status === 401 || r.status === 403 || r.status === 422){
-      /* 422 is what GoTrue answers when the new password is refused by the
-         project's own policy; 401/403 mean the recovery is spent. Either way
-         the link is the thing to replace. */
-      var j = await r.json().catch(function(){ return null; });
+      /* 422 means the password policy refused the replacement; 401/403 mean
+         the one-time recovery token is invalid or spent. */
       var m = j && (j.msg || j.message || j.error_description);
       fail(m && r.status === 422 ? m : t("pw_link_dead"));
       return;
     }
     if (!r.ok){ setSt(t("pw_unreachable"), "err"); return; }
 
-    await revoke(TOKEN);
+    if (j && j.access_token) await revoke(j.access_token);
     TOKEN = "";
     $("pw").value = "";
     $("form").className = "hide";

@@ -1,0 +1,158 @@
+{
+  "id": "com.hnkstudio.ai.panel.students",
+  "name": "HNK Photoshop Ai Panel (Students) V1",
+  "version": "6.24.0",
+  "main": "index.html",
+  "manifestVersion": 5,
+  "host": {
+    "app": "PS",
+    "minVersion": "24.2.0"
+  },
+  "requiredPermissions": {
+    "network": {
+      "domains": [
+        "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app",
+        "https://generativelanguage.googleapis.com",
+        "https://api.openai.com",
+        "https://www.runninghub.ai",
+        "https://*.runninghub.ai",
+        "https://photoeditorai.io",
+        "https://*.photoeditorai.io",
+        "https://photoeditor.ai",
+        "https://*.photoeditor.ai",
+        "https://playground.com",
+        "https://*.playground.com",
+        "https://pixlr.com",
+        "https://*.pixlr.com",
+        "https://fotor.com",
+        "https://*.fotor.com",
+        "https://remove.bg",
+        "https://*.remove.bg",
+        "https://*.google.com",
+        "https://*.googleapis.com",
+        "https://*.gstatic.com",
+        "https://*.facebook.com",
+        "https://*.cloudflare.com"
+      ]
+    },
+    "localFileSystem": "fullAccess",
+    "launchProcess": {
+      "schemes": [
+        "https"
+      ],
+      "extensions": [
+        ""
+      ]
+    },
+    "allowCodeGenerationFromStrings": false,
+    "webview": {
+      "allow": "yes",
+      "domains": [
+        "https://*.hnk-ai-tools-3-s4nnu.ondigitalocean.app",
+        "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app",
+        "https://photoeditorai.io",
+        "https://*.photoeditorai.io",
+        "https://photoeditor.ai",
+        "https://*.photoeditor.ai",
+        "https://playground.com",
+        "https://*.playground.com",
+        "https://pixlr.com",
+        "https://*.pixlr.com",
+        "https://fotor.com",
+        "https://*.fotor.com",
+        "https://remove.bg",
+        "https://*.remove.bg",
+        "https://google.com",
+        "https://*.google.com",
+        "https://*.googleapis.com",
+        "https://*.gstatic.com",
+        "https://*.facebook.com",
+        "https://*.cloudflare.com"
+      ],
+      "enableMessageBridge": "localAndRemote"
+    },
+    "clipboard": "readAndWrite"
+  },
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "hnkStudentsPanel",
+      "label": {
+        "default": "HNK Ai Panel (Students)"
+      },
+      "minimumSize": {
+        "width": 300,
+        "height": 480
+      },
+      "maximumSize": {
+        "width": 2000,
+        "height": 4000
+      },
+      "preferredDockedSize": {
+        "width": 340,
+        "height": 920
+      },
+      "preferredFloatingSize": {
+        "width": 360,
+        "height": 960
+      },
+      "icons": [
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/dark.png",
+          "scale": [
+            1,
+            2
+          ],
+          "theme": [
+            "darkest",
+            "dark",
+            "medium"
+          ],
+          "species": [
+            "chrome"
+          ]
+        },
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/light.png",
+          "scale": [
+            1,
+            2
+          ],
+          "theme": [
+            "lightest",
+            "light"
+          ],
+          "species": [
+            "chrome"
+          ]
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "width": 24,
+      "height": 24,
+      "path": "icons/plugin.png",
+      "scale": [
+        1,
+        2
+      ],
+      "theme": [
+        "darkest",
+        "dark",
+        "medium",
+        "lightest",
+        "light",
+        "all"
+      ],
+      "species": [
+        "pluginList"
+      ]
+    }
+  ]
+}

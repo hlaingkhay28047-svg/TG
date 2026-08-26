@@ -235,9 +235,10 @@ jobs:
               | if length == 1 then .[0] else empty end
             ' "$APP_STATE_FILE")"
             if [ "$CURRENT_READY_PATH" = "/ready" ] && [ "$CURRENT_LIVE_PATH" = "/live" ] &&
-               [ "$ACTIVE_READY_PATH" = "/ready" ] && [ "$ACTIVE_LIVE_PATH" = "/live" ]; then
+               [ "$ACTIVE_READY_PATH" = "/ready" ] && [ "$ACTIVE_LIVE_PATH" = "/live" ] &&
+               [ "$ACTIVE_SOURCE_SHA" = "$GITHUB_SHA" ]; then
               echo "changed=false" >> "$GITHUB_OUTPUT"
-              echo "Desired and active staging health probes already match the release contract."
+              echo "Desired and active staging probes and source already match the release contract."
               exit 0
             fi
             if { [ "$CURRENT_READY_PATH" = "/ready" ] || [ "$CURRENT_READY_PATH" = "/live" ]; } &&

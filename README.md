@@ -10,23 +10,48 @@ Every upgrade should have a live DigitalOcean copy automatically:
 2. Every push to `upgrade-safe-wave` runs GitHub CI and updates DigitalOcean staging `hnk-ai-tools-2`.
 3. As soon as the full CI sweep is green, merge to `main` — tested upgrades ship immediately by standing owner approval; the test suite is the release gate.
 4. Every push/merge to `main` updates DigitalOcean production `hnk-ai-tools-3` and verifies `/app/version.json` matches the repository release.
-5. Web app, landing site and Photoshop panel always ship together in one wave.
+5. Web app, landing site and Photoshop panel source/metadata ship together in
+   one wave. The CCX itself is built outside Git and delivered only through the
+   authenticated private-artifact path below.
 
 This keeps both GitHub and DigitalOcean moving together while still separating unfinished staging code from the production app.
 
-## Supabase — accounts, the Premium wall and the admin panel
+## Private Photoshop panel releases (v6.24.0+)
 
-From web v5.30.0 the app opens on a login wall: no session shows sign-in, a
-signed-in account with no active plan shows the buy flow, and only an active
-plan reaches the studio. A foreground tab re-reads the profile every five
-minutes, so an expiry or an admin approval lands without a manual refresh, and
-a sign-in older than 30 days is asked to log in again. Admins get a payment
-card on Home that approves or rejects each request.
+This repository is public, so it tracks **no CCX binary and no permanent CCX
+URL**. Packaging requires an explicit absolute output path outside the checkout;
+release tests optionally validate that untracked artifact through
+`HNK_PANEL_ARTIFACT`. The no-public-binary gate uses `git ls-files`, not a
+misleading folder name. See `PANEL_RELEASE_SECURITY.md` for the exact commands.
 
-**None of that is a security boundary.** `docs/` is a static site holding the
-anon key, so every request the browser makes can be replayed by hand. The wall
-and the admin card are user interface. What actually stops a customer approving
-their own payment is row-level security, and it lives in `supabase/schema.sql`.
+The deployable no-new-resource bridge stores immutable artifact chunks in the
+database; the production target is a private DigitalOcean Space streamed by the
+API after a five-minute, one-time token is consumed and live entitlement/device
+checks pass. App Platform's filesystem is not artifact storage.
+
+The official panel provides casual-copy control, not DRM: CCX JavaScript and
+the local installation identifier are patchable. The old public v6.23.0 remains
+in Git history and its legacy authorization path can honor a cached result for
+up to seven days, so the documented explicit-deny cutoff must finish before the
+old service is retired. Every new artifact also remains disabled until it has
+passed Adobe UXP Developer Tool packaging plus real Photoshop install/launch
+acceptance on the supported platforms.
+
+## Unified accounts, license wall and Admin Control Center
+
+The app opens on a login wall: no session shows sign-in, a signed-in account
+without approval and an active license remains blocked, and only an entitled
+account reaches the studio. A foreground tab re-reads entitlement state so an
+expiry, suspension or approval takes effect without a manual refresh. The
+Student App contains only a translated handoff to `/admin`; payment review,
+VIP grants and proof viewing live in that dedicated control center.
+
+**None of the UI is a security boundary.** `docs/` is static, so every ordinary
+browser request can be replayed by hand. Own-account access is constrained by
+row-level security in `supabase/schema.sql`; every cross-account admin action
+uses the API's `admin` client session, current MFA, role checks, service-owned
+transaction and audit log. There is no browser policy that can approve a
+payment, file a grant for another account or read another student's proof.
 
 Apply it once — Supabase dashboard → SQL editor → paste → Run (it is
 idempotent) — then grant yourself admin. It creates the four tables it
@@ -42,9 +67,8 @@ the current expiry, so renewing early adds time instead of losing it), and a
 guard trigger reverts any attempt by a non-admin to write their own
 `plan_status`, `plan_expires_at`, `allowed_devices` or `is_admin`.
 
-Until it is applied, treat the admin panel as a convenience and assume any
-signed-in user could approve themselves. Section 9 of the file is the check
-that proves it took.
+Until it is applied, the required own-account RLS boundary does not exist; do
+not expose the app. Section 9 of the file is the check that proves it took.
 
 **Re-run it after web v5.32.0.** That release closed three holes in the file
 itself, so a project still running the older schema is not protected by the
@@ -89,8 +113,9 @@ DigitalOcean applies the tracked `server/sql/platform.sql` followed by
 identity, refresh-token, and proof-storage objects live in the existing
 `public` schema under `hnk_` names. The DO application schema is a checked,
 mechanical name transform of the native policy file, not a second hand-edited
-authorization model. All eight request/auth/storage tables use `FORCE ROW
-LEVEL SECURITY`, and an absent or unknown request mode sees no protected rows.
+authorization model. Every platform and canonical application table uses
+`FORCE ROW LEVEL SECURITY`, and an absent or unknown request mode sees no
+protected rows.
 If an older roleless deployment already has `auth.users` or `storage.objects`,
 the DO bootstrap refuses to create parallel empty identity tables; migrate that
 data and its foreign keys explicitly before using this dialect.
@@ -120,11 +145,28 @@ account.
    PostgreSQL cluster and swap the block for one naming it — a development
    database is explicitly not meant to hold data you cannot lose.
 
-2. **Set `JWT_SECRET`** in the DigitalOcean console, as an encrypted secret, to
-   64 random hex characters. Anything that knows this value can mint a token for
-   any account, so it belongs nowhere else — not in this repository, not in a
-   message. Changing it later logs everybody out, which is exactly what you want
-   if it is ever exposed.
+2. **Set independent encrypted security secrets** in the DigitalOcean console.
+   Give each of `JWT_SECRET`, `MFA_ENCRYPTION_KEY`, `DEVICE_ID_HASH_SECRET`,
+   `DEVICE_PAIRING_SECRET`, `CCX_DOWNLOAD_SECRET`, and `PANEL_LEASE_SECRET` its
+   own 64 random hex characters. Readiness remains false if any is absent.
+
+   Do not derive them from one master value. `JWT_SECRET` may be rotated to log
+   everyone out without making stored MFA secrets undecryptable or changing
+   registered-device hashes. Keep `MFA_ENCRYPTION_KEY` and
+   `DEVICE_ID_HASH_SECRET` in the encrypted backup/recovery record: rotating the
+   first needs an explicit decrypt/re-encrypt migration, while rotating the
+   second requires an admin reset of every device slot. The pairing, download,
+   and lease secrets may be rotated first; that only invalidates pending pairing
+   codes, five-minute URLs, and short panel leases. Rotate `JWT_SECRET` last.
+
+   Password KDF work is bounded twice: a durable one-minute login admission
+   window defaults to 20 attempts per source and 300 across the deployment,
+   while each process admits at most four concurrent scrypt jobs. Tune only
+   with measured capacity through `LOGIN_ADMISSION_WINDOW_SECONDS`,
+   `LOGIN_ADMISSION_IP_LIMIT`, `LOGIN_ADMISSION_GLOBAL_LIMIT`, and
+   `PASSWORD_KDF_MAX_CONCURRENCY`. Failed-password email/source limits remain
+   separate, so a successful login never consumes a victim account's failure
+   allowance.
 
 3. **Nothing.** The schema used to be applied by hand here. The service now
    applies `server/sql/platform.sql` then `server/sql/schema.sql` itself on
@@ -138,11 +180,11 @@ account.
    API and the exact schema bytes that this process successfully applied:
 
    ```
-   {"ok":true,"apiVersion":"5.42.2","schema":4,
+   {"ok":true,"apiVersion":"5.43.0","schema":4,
     "schemaFingerprint":"<64 hex SHA-256>","ready":true,"tls":"verified"}
-   {"ok":true,"apiVersion":"5.42.2","schema":4,
+   {"ok":true,"apiVersion":"5.43.0","schema":4,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
-   {"ok":true,"apiVersion":"5.42.2","schema":null,
+   {"ok":true,"apiVersion":"5.43.0","schema":null,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
    ```
 
@@ -240,10 +282,14 @@ account.
    service stops and says so instead: quietly deciding for itself which database
    holds the payment records is worse than not starting.
 
-   The CA certificate is bound the same way, for the same reason and with the
-   same key-prefix rule. Given a real certificate the database is
-   *authenticated*; without one the traffic is still encrypted but an in-path
-   substitution is not refused — on the connection carrying the payment records.
+   The CA certificate is bound the same way and paired by the URL key's suffix:
+   `DATABASE_URL` uses `DATABASE_CA_CERT`, while
+   `DATABASE_URL_IF_COMPONENT_IS_NAMED_DB` uses
+   `DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB`. A usable certificate from the
+   other binding is never borrowed, because it may authenticate a different
+   database. Given the paired certificate the database is *authenticated*;
+   without it the traffic is still encrypted but an in-path substitution is not
+   refused — on the connection carrying the payment records.
 
    **A certificate is checked by parsing it, not by looking at it.** Testing for
    the text `BEGIN CERTIFICATE` is not the same test, and the difference took
@@ -279,20 +325,18 @@ account.
    left as the single source of truth.
 
    Parsing is not the whole answer either, because a certificate can be perfectly
-   well-formed and simply not this database's CA — which refuses every
-   connection forever and looks identical from outside. So verification is
-   attempted first and **stood down from only after the handshake has actually
-   failed**, which is the one moment the difference is observable. Either way
-   the traffic stays encrypted; the alternative was never a safer connection,
-   it was no product.
+   well-formed and simply not this database's CA. Production never stands down
+   from verification: migration, health queries, and request transactions refuse
+   to open a database connection until the CA is usable. Only a local/CI process
+   with the explicit `ALLOW_UNVERIFIED_DB_TLS=1` override may connect otherwise.
 
    `/api/health` reports a `tls` field in **every** case, not only the bad ones:
 
    ```
    "tls":"verified"                                  the database is authenticated
-   "tls":"unverified (no CA certificate supplied)"   encrypted only
-   "tls":"unverified — …did not verify (CODE)…"      a CA was supplied and refused
-   "tls":"off (PGSSLMODE=disable)"                   local development
+   "tls":"unverified (no CA certificate supplied)"   not ready; no DB connection
+   "tls":"unverified — …did not verify (CODE)…"      local override only
+   "tls":"off (PGSSLMODE=disable)"                   local override only
    ```
 
    Always, because "verified" is the claim worth being able to check, and a
@@ -304,8 +348,8 @@ account.
 
    No database-role bootstrap is required. Startup deliberately verifies that
    the runtime login is neither superuser nor `BYPASSRLS`, applies both files,
-   and then attests that all five request tables plus both auth tables have RLS
-   enabled and forced. Readiness stays false if any part of that contract is
+   and then attests that every request, auth, storage, and unified-system table
+   has RLS enabled and forced. Readiness stays false if any part of that contract is
    missing. `verify_roleless_rls.js` reproduces the same `NOCREATEROLE` owner
    shape in PostgreSQL 16 and attacks the resulting policy boundary.
 
@@ -336,7 +380,9 @@ then, they all need a reset, and step two below has to be working first.
 
 **Password-reset email needs an SMTP server.** Supabase sent those messages.
 Set `SMTP_HOST`, `SMTP_USER` and `SMTP_PASS` as secrets — a Gmail address with
-an app password is enough. Until you do, `recover` still answers 200 (it must
+an app password is enough. The client uses certificate-verified implicit TLS
+(`SMTP_PORT=465` by default); a STARTTLS-only plaintext-first port is rejected.
+Until you do, `recover` still answers 200 (it must
 not reveal which addresses exist) but **no mail is sent**, and a locked-out
 customer needs you to change their password by hand.
 
@@ -439,10 +485,9 @@ Section 0 now declares `profiles`, `payment_requests`, `app_settings` and
 throughout — so it is a no-op on a live project, and section 1 still adds the
 columns an existing table is missing. Two things stay deliberately absent, and
 are commented as such: no foreign key from `payment_requests.user_id` to
-`profiles.id`, because `admLoadWho` fetches names in a second request precisely
-*because* there is none, and declaring one would make a fresh project behave
-differently from the live one; and no signup trigger, because v5.38.0 moved
-that job to `profiles_insert_self`.
+`profiles.id`, because both already reference the same auth user and the strict
+admin service joins them by that id; and no signup trigger, because v5.38.0
+moved that job to `profiles_insert_self`.
 
 **The device cap counted a re-registration as a new device.** The unique index
 on `(user_id, device_id)` was documented as making a second POST for the same
@@ -539,31 +584,31 @@ The Photoshop panel's gate shipped the identical bug in v6.22.0 and was fixed
 the same way. Same signal, same wrong reading, two codebases — which is why both
 now say it in a comment rather than only in a commit message.
 
-## The owner's own account is the owner's own (v5.37.0)
+## The owner's own account is the owner's own (v5.37.0, retired admin path)
 
-`payreq_select_own_or_admin` and `devices_all_own_or_admin` return every row to
-an admin, on purpose. The client rendered all of them into the *customer* cards:
+The old `payreq_select_own_or_admin` and `devices_all_own_or_admin` policies
+returned every row to an admin browser. The client rendered those rows into the
+*customer* cards:
 "MY PAYMENT REQUESTS" listed a customer's row, "MY DEVICES" listed their
 machines with a working Remove button, and the buy panel adopted their pending
 request — so the owner saw "waiting for approval" against a stranger's reference
-and could not file a payment of their own at all. Both loaders are now scoped to
-the signed-in user. That filter is not a security control; RLS is. It is a scope
-control, for the case where RLS is doing exactly what it should.
+and could not file a payment of their own at all. Those cross-account browser
+policies and embedded admin loaders are now removed. Customer loaders are
+own-account only; the dedicated Admin Control Center uses strict server routes.
 
 Three more from the same audit:
 
-- The v5.34 amount-vs-due check was **dead on any fresh admin session**.
-  `admDue()` needs `acc.settings`, and `acc.settings` was only ever loaded by
-  opening the admin's own Buy accordion — so an owner reviewing payments on a
-  phone saw a 10,000 underpayment rendered identically to a 37,000 payment in
-  full. `admLoad()` now awaits the settings before it renders.
+- The v5.34 embedded amount-vs-due check depended on Student App state. The
+  replacement admin list is computed by the server and no longer trusts or
+  depends on an owner's customer-facing Buy accordion.
 - `ACC_REQ_KIND` had no `join_first` entry and fell back to `pay_1m`, so a filed
   500,000 joining fee read **"1 month"** to the customer and to the owner, in
   every language. The fallback now names the unknown kind instead of quietly
   claiming to be the cheapest plan.
 - `profiles.email` and `profiles.name` were writable by the owning customer
-  while the approval queue printed them as *who filed this payment*, `admGrant`
-  looked students up by them, and this README hands out admin rights with
+  while the approval queue printed them as *who filed this payment* and admin
+  grants resolve the target by normalized email. This README hands out admin
+  rights with
   `where email = '...'`. The guard trigger now restores both on update, and a
   unique index on `lower(email)` means the database refuses a duplicate identity
   rather than letting `limit=1` pick one arbitrarily.
@@ -750,15 +795,13 @@ pays less than a studio, with no second price list and no code change:
 update public.profiles set price_1m_override = 10000 where email = 'student@example.com';
 ```
 
-**A free period for a VIP student** is *filed*, not silently written. The admin
-card has a form for it: type the email, pick the period, and it lands in the
-approval queue as a grant with no money attached, which you then approve like
-any payment. Two things follow. The same trigger extends the plan, so a grant
-and a purchase can never drift apart; and "why does this account have Premium?"
-has an answer in the same list as every payment, instead of being an edit
-nobody recorded. Grant `join_first` for a student who has never joined — that
-both opens the period and clears the joining fee, which is what "first one
-free" means.
+**A free period for a VIP student** is granted only from the dedicated Admin
+Control Center. Type the email, pick the period and provide an audit note. The
+strict MFA-protected server action creates and approves the grant atomically in
+one transaction, so the same entitlement trigger extends the plan and the audit
+log explains why access changed. Grant `join_first` for a student who has never
+joined — that both opens the period and clears the joining fee, which is what
+"first one free" means.
 
 **What the admin sees on each request**, and none of it was there before:
 the customer's name and email rather than a UUID, the amount they say they
@@ -769,8 +812,9 @@ compares it to a price or acts on it. It exists so a 10,000 filed against a
 customer who underpaid can still file, deliberately — otherwise the mistake
 never reaches the person who can resolve it and the money is simply gone.
 
-Approval remains the only thing that grants access. This wave adds a second way
-to *file* a request and no second way to *approve* one.
+Approval remains the only payment transition that grants access. A VIP grant
+uses that same transition inside one audited server transaction; it does not
+create a second entitlement path.
 
 ### One small thing still open: Tai Le and Tai Lue
 
