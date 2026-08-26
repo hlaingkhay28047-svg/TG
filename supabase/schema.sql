@@ -1,14 +1,16 @@
 -- ============================================================================
 -- HNK Web Studio — Supabase schema, policies and the approval trigger.
 --
--- WHY THIS FILE EXISTS. The app is a static page that talks to Supabase
--- directly with the anon key. Everything the browser does can be replayed by
--- hand from a console. So the login wall, the Premium check and the admin
--- panel added in web v5.30.0 are USER INTERFACE, not security. What actually
--- stops a customer approving their own payment is the policies below.
+-- WHY THIS FILE EXISTS. The Student App uses an ordinary browser session, and
+-- every request that session can make can be replayed from a console. The
+-- login wall, license cards and Admin Control Center are user interface, not
+-- authorization. Own-account access is enforced by the policies below. Every
+-- cross-account payment review, VIP grant and proof read goes through the
+-- strict /v1/admin service, which requires an admin-client session plus current
+-- MFA, records an audit entry and uses service_role only inside that boundary.
 --
--- Until this file is applied, treat the admin panel as a convenience for you
--- and assume any signed-in user could PATCH payment_requests themselves.
+-- Until this file is applied, the required RLS boundary does not exist. Do not
+-- expose the app or approve a payment.
 --
 -- HOW TO APPLY. Supabase dashboard -> SQL editor -> paste -> Run. It is
 -- idempotent: safe to run more than once, and safe to run on the live project.
@@ -69,12 +71,9 @@
 --   -- one student on a different monthly rate:
 --   update public.profiles set price_1m_override = 10000 where email = 'student@example.com';
 --
---   -- a free period for a VIP student is filed as a GRANT, not a database
---   -- edit, so it is visible in the same queue as every payment. The admin
---   -- panel has a button for it; this is the same thing by hand:
---   insert into public.payment_requests (user_id, kind, is_grant, amount_mmk, note)
---   select id, 'plan_1m', true, 0, 'VIP — training course' from public.profiles
---    where email = 'student@example.com';
+--   -- File a free VIP period only from the Admin Control Center. Its strict
+--   -- server action creates and approves one audited grant transaction so the
+--   -- same entitlement trigger used by paid requests remains authoritative.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -107,15 +106,10 @@
 --
 -- WHAT IS DELIBERATELY ABSENT:
 --
---   * No foreign key from payment_requests.user_id to profiles.id. The admin
---     queue at admLoadWho fetches names in a SECOND request and says why:
---     "profiles and payment_requests have no declared foreign key in this
---     project, so `select=*,profiles(name,email)` 400s". Declaring one here
---     would make a fresh project behave differently from the live one — the
---     embed would start working in one and keep 400ing in the other — which is
---     precisely the drift this file exists to prevent. Both columns reference
---     auth.users instead, which gives the integrity without changing the shape
---     PostgREST sees.
+--   * No foreign key from payment_requests.user_id to profiles.id. The strict
+--     admin service joins those records server-side by their shared auth user
+--     id. Both columns reference auth.users, preserving integrity without
+--     changing the live PostgREST relationship graph.
 --
 --   * No trigger creating a profiles row on signup. The app stopped depending
 --     on one in v5.38.0: accLoadProfile reads 406 as "there is no row" and
@@ -156,7 +150,7 @@ create table if not exists public.payment_requests (
   created_at      timestamptz not null default now()
 );
 
--- The admin queue reads `order=created_at.desc&limit=100` on every open.
+-- The strict admin queue orders newest-first and pages this index.
 create index if not exists payment_requests_created_idx
   on public.payment_requests (created_at desc);
 
@@ -164,12 +158,11 @@ create index if not exists payment_requests_created_idx
 create index if not exists payment_requests_user_idx
   on public.payment_requests (user_id);
 
--- app_settings is a SINGLETON in everything but its declaration. hnk_apply_payment
--- reads `order by a.ctid limit 1` and the client reads its own copy, so a second
--- row lets an approved join_first open a different period from the one the buy
--- screen quoted. It is not constrained to one row here because the live table is
--- not, and a constraint this file cannot apply to production is a promise it
--- cannot keep; the admin panel warns when it finds more than one instead.
+-- app_settings is a SINGLETON in everything but its declaration. It is not
+-- constrained here because a live table may already contain duplicates that
+-- must be reconciled deliberately. hnk_apply_payment fails closed unless the
+-- count is exactly one; the strict admin API reports the count and its UI raises
+-- a prominent configuration warning.
 -- payment_instructions_my is the fallback every language falls back TO; the
 -- per-language columns (payment_instructions_en, _th, ...) are optional, and a
 -- missing one simply comes back undefined and takes the Burmese text.
@@ -370,9 +363,9 @@ end $$;
 
 -- A grant has no transfer and no slip, so the two columns that record them
 -- must accept their absence. If the table was created with them NOT NULL — the
--- shape a payments-only design naturally produces — an admin's first VIP grant
--- would be refused by the database with a constraint error the admin panel
--- could only report as "couldn't submit". Dropping NOT NULL is a no-op when
+-- shape a payments-only design naturally produces — the first server-owned VIP
+-- grant would be refused by the database with a constraint error. Dropping NOT
+-- NULL is a no-op when
 -- they are already nullable, which keeps this file idempotent.
 alter table public.payment_requests alter column txn_last6 drop not null;
 alter table public.payment_requests alter column screenshot_path drop not null;
@@ -549,23 +542,10 @@ create policy payreq_insert_own on public.payment_requests
     and note is null
   );
 
--- v5.34 — payreq_insert_own is `user_id = auth.uid()`, so an admin recording a
--- free period for a student would be refused by their own database. This is the
--- narrow exception: an admin may insert a row for ANY user, but only one marked
--- is_grant with no money attached. A grant therefore lands in the same queue,
--- with the same audit trail, as every payment.
+-- Cross-account grants are server-owned admin actions. A browser bearer may
+-- insert only its own ordinary request; the strict /v1/admin route verifies an
+-- admin-client session plus MFA and writes the audited grant as service_role.
 drop policy if exists payreq_insert_admin_grant on public.payment_requests;
-create policy payreq_insert_admin_grant on public.payment_requests
-  for insert to public
-  with check (
-    public.hnk_request_role() = 'authenticated'
-    and public.hnk_is_admin()
-    and is_grant = true
-    and coalesce(amount_mmk, 0) = 0
-    and device_count is null
-    and kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')
-    and coalesce(status, 'pending') = 'pending'
-  );
 
 drop policy if exists payreq_select_own_or_admin on public.payment_requests;
 drop policy if exists payreq_select_own on public.payment_requests;
@@ -755,7 +735,7 @@ begin
   if tg_op = 'INSERT' then
     -- BEFORE triggers run before RLS WITH CHECK. Refuse a forged user_id with
     -- one uniform answer before this definer function reads or locks a victim's
-    -- profile; admins retain the cross-account VIP-grant path.
+    -- profile; only the trusted service-role grant path may target another user.
     if auth.uid() is not null and new.user_id is distinct from auth.uid()
        and not public.hnk_is_admin() then
       raise exception 'payment user does not match authenticated caller'
@@ -941,7 +921,7 @@ begin
 
   -- As with payment inserts, this definer trigger runs before RLS. Reject a
   -- forged user_id uniformly before taking a victim's lock or revealing their
-  -- device count/cap; admins keep the documented cross-account management path.
+  -- device count/cap; cross-account management stays in the trusted service path.
   if auth.uid() is not null and new.user_id is distinct from auth.uid()
      and not public.hnk_is_admin() then
     raise exception 'device user does not match authenticated caller'
@@ -1087,9 +1067,9 @@ begin
   --   * the approval queue prints `name · email` as who filed a payment, so a
   --     customer could make their row read as somebody else while the owner
   --     decides whether to accept their money;
-  --   * admGrant looks a student up by typed email with limit=1 and no order,
-  --     so a second row claiming that address decides arbitrarily who gets a
-  --     free VIP period;
+  --   * the strict admin grant endpoint resolves a student by normalized
+  --     email, so a second row claiming that address would make the target
+  --     ambiguous;
   --   * this file's own instructions, and the README's, hand out admin and
   --     per-customer prices with `where email = '...'`.
   -- No shipped code path writes profiles at all -- every client reference is a
@@ -1123,8 +1103,9 @@ create trigger hnk_guard_profile_insert
 --
 -- The client comment at accPollOnce already assumes this ("the server trigger
 -- has already extended plan_expires_at / bumped allowed_devices — re-read
--- rather than guess"), and the admin panel writes ONLY the review fields for
--- the same reason. If both extended the plan, every approval would count twice.
+-- rather than guess"), and the strict admin service writes only the review
+-- transition for the same reason. If both extended the plan, every approval
+-- would count twice.
 --
 -- Extension is from the LATER of now and the current expiry, so renewing early
 -- adds to the remaining time instead of throwing it away.
@@ -1233,14 +1214,9 @@ begin
   elsif new.kind = 'join_first' then
     -- v5.34 — the one-time joining fee also opens the first period, and how
     -- long that period is belongs to the owner, not to this file. Default 1.
-    -- v5.39.0 — LIMIT without ORDER BY does not pick a row, it picks whatever
-    -- the planner emits first. With the one row this table is meant to hold
-    -- that is moot; with two, the period an approved join_first opens could
-    -- differ from the price the client quoted, which reads its own copy. ctid
-    -- is ordered on rather than a named column because this file only ALTERs
-    -- app_settings (see above) and so cannot promise any particular column
-    -- exists; every table has ctid. Deterministic is the most this can be —
-    -- AGREEING with the client requires app_settings to hold exactly one row.
+    -- The singleton check above has already rejected zero or duplicate rows.
+    -- ORDER BY ctid remains deterministic defence in depth without depending
+    -- on a named key that legacy app_settings tables may not have.
     select coalesce(nullif(a.join_first_months, 0), 1) into months
       from public.app_settings a order by a.ctid limit 1;
     months := coalesce(months, 1);
@@ -1277,12 +1253,12 @@ create trigger hnk_apply_payment
   for each row execute function public.hnk_apply_payment();
 
 -- ---------------------------------------------------------------------------
--- 8. payment proofs — a private bucket, own folder in, own or admin out
+-- 8. payment proofs — a private bucket, own folder in, service-reviewed
 --
--- The app uploads to payment-proofs/<uid>/<kind>-<ts>.<ext> and the admin panel
--- reads the bytes with the bearer token attached, so the bucket must stay
--- private: a public bucket would put every customer's bank slip on a guessable
--- URL.
+-- The app uploads to payment-proofs/<uid>/<kind>-<ts>.<ext>. A browser may
+-- read only its own object; the strict admin API resolves a payment id and
+-- reads the proof with service_role after admin-session + MFA checks. The
+-- bucket stays private so no bank slip has a permanent public URL.
 -- ---------------------------------------------------------------------------
 insert into storage.buckets (id, name, public)
 values ('payment-proofs', 'payment-proofs', false)

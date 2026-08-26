@@ -128,6 +128,7 @@ process.env.DEVICE_ID_HASH_SECRET = "api-service-device-id-hash-key-2026-08-26";
 process.env.DEVICE_PAIRING_SECRET = "api-service-device-pairing-key-2026-08-26";
 process.env.CCX_DOWNLOAD_SECRET = "api-service-ccx-download-key-2026-08-26";
 process.env.PANEL_LEASE_SECRET = "api-service-panel-lease-key-2026-08-26";
+process.env.MAX_UPLOAD_BYTES = "1024";
 process.env.ALLOWED_ORIGIN = "https://example.test";
 /* The schema is built by the SERVICE'S OWN migration, not by psql here. That
    is deliberate: it is the code path a real deployment takes on first boot, so
@@ -145,9 +146,12 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   if (raw) payload = raw;
   else if (body !== undefined) { h["content-type"] = "application/json"; payload = JSON.stringify(body); }
   const r = await fetch(BASE + p, { method, headers: h, body: payload });
-  const text = await r.text();
+  const bytes = Buffer.from(await r.arrayBuffer());
+  const text = bytes.toString("utf8");
   let json = null; try { json = JSON.parse(text); } catch (_) {}
-  return { status: r.status, json, text };
+  const responseHeaders = {};
+  r.headers.forEach((value,key)=>{ responseHeaders[key.toLowerCase()]=value; });
+  return { status: r.status, json, text, bytes, headers: responseHeaders };
 }
 
 function testPasswordHash(password,parallelization) {
@@ -465,6 +469,13 @@ function testPasswordHash(password,parallelization) {
   r = await call("GET", "/v1/admin/students", { token: ownerAdminToken });
   report("J7) an admin-client session remains blocked until MFA is current",
     r.status === 403, { status: r.status, body: r.json });
+  const paymentBeforeMfa = await call("GET", "/v1/admin/payment-requests?status=pending", {
+    token: ownerAdminToken,
+  });
+  report("J7b) the strict payment queue also requires current admin MFA",
+    paymentBeforeMfa.status === 403 && paymentBeforeMfa.json &&
+      paymentBeforeMfa.json.error === "mfa_required",
+    { status: paymentBeforeMfa.status, body: paymentBeforeMfa.json });
 
   const mfaSetup = await call("POST", "/v1/admin/mfa/setup", { token: ownerAdminToken, body: {} });
   const mfaSecret = mfaSetup.json && mfaSetup.json.secret;
@@ -506,7 +517,8 @@ function testPasswordHash(password,parallelization) {
      quote trigger an authoritative positive SKU price. */
   runtimeServicePsql("update public.app_settings set price_1m=30000", DB);
   const paymentCreated = await call("POST", "/rest/v1/payment_requests",
-    { token: custToken, body: { user_id: CUST, kind: "plan_1m", txn_last6: "123456", amount_mmk: 30000 } });
+    { token: custToken, body: { user_id: CUST, kind: "plan_1m", txn_last6: "123456",
+      amount_mmk: 30000, screenshot_path: `${CUST}/plan_1m-1.jpg` } });
   const PAYMENT_ID = psql(`select id from public.payment_requests where user_id='${CUST}'`, DB);
   r = await call("PATCH", "/rest/v1/payment_requests?id=eq." +
     PAYMENT_ID,
@@ -533,6 +545,108 @@ function testPasswordHash(password,parallelization) {
   report("L) a forged already-approved row is refused",
     r.status >= 400 && paymentRowsAfterForgery === "1",
     { status: r.status, rows: paymentRowsAfterForgery });
+
+  const webPaymentList = await call("GET", "/v1/admin/payment-requests?status=pending&page=1&limit=10", {
+    token: ownerToken,
+  });
+  report("L2) an owner web-session bearer cannot enter strict payment administration",
+    webPaymentList.status === 403 && webPaymentList.json && webPaymentList.json.error === "forbidden",
+    { status: webPaymentList.status, body: webPaymentList.json });
+
+  const strictPaymentList = await call("GET",
+    "/v1/admin/payment-requests?status=pending&page=1&limit=10", { token: ownerAdminToken });
+  const listedPayment = strictPaymentList.json && Array.isArray(strictPaymentList.json.payment_requests)
+    ? strictPaymentList.json.payment_requests.find(item=>item.id===PAYMENT_ID) : null;
+  report("L3) MFA-verified payment listing returns the bounded server-owned queue contract",
+    strictPaymentList.status === 200 && strictPaymentList.json &&
+      strictPaymentList.json.page === 1 && strictPaymentList.json.limit === 10 &&
+      strictPaymentList.json.total === 1 && listedPayment && listedPayment.status === "pending" &&
+      Array.isArray(strictPaymentList.json.configuration_warnings) &&
+      strictPaymentList.json.configuration_warnings.length === 0 &&
+      listedPayment.proof_available === true &&
+      listedPayment.proof_url === `/api/v1/admin/payment-requests/${PAYMENT_ID}/proof` &&
+      listedPayment.screenshot_path === undefined,
+    { status: strictPaymentList.status, body: strictPaymentList.json });
+
+  runtimeServicePsql("insert into public.app_settings (price_1m) values (99999)", DB);
+  const misconfiguredPaymentList = await call("GET",
+    "/v1/admin/payment-requests?status=pending&page=1&limit=10", { token: ownerAdminToken });
+  const configurationWarnings = misconfiguredPaymentList.json &&
+    misconfiguredPaymentList.json.configuration_warnings;
+  runtimeServicePsql("delete from public.app_settings where price_1m=99999", DB);
+  const restoredSettingsCount = psql("select count(*) from public.app_settings", DB);
+  report("L3b) payment listing warns without exposing settings when the singleton row count drifts",
+    misconfiguredPaymentList.status === 200 && Array.isArray(configurationWarnings) &&
+      configurationWarnings.length === 1 &&
+      configurationWarnings[0].code === "app_settings_row_count" &&
+      configurationWarnings[0].count === 2 && restoredSettingsCount === "1",
+    { status: misconfiguredPaymentList.status, warnings: configurationWarnings,
+      restoredSettingsCount });
+
+  const strictReview = await call("POST", `/v1/admin/payment-requests/${PAYMENT_ID}/review`, {
+    token: ownerAdminToken,
+    body: { status: "approved", note: "Bank transfer and proof verified" },
+  });
+  const reviewEvidence = psql(
+    `select r.status||'|'||(r.reviewed_by='${OWNER}')::text||'|'||` +
+    `(r.reviewed_at is not null)::text||'|'||p.plan_status||'|'||p.account_status||'|'||` +
+    `(p.plan_expires_at>now())::text||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='review_payment' ` +
+    `and details->>'payment_request_id'='${PAYMENT_ID}')::text ` +
+    `from public.payment_requests r join public.profiles p on p.id=r.user_id ` +
+    `where r.id='${PAYMENT_ID}'`, DB);
+  report("L4) strict review atomically stamps the reviewer, applies entitlement and audits",
+    strictReview.status === 200 && strictReview.json && strictReview.json.payment_request &&
+      strictReview.json.payment_request.status === "approved" &&
+      reviewEvidence === "approved|true|true|active|active|true|1",
+    { status: strictReview.status, body: strictReview.json, evidence: reviewEvidence });
+
+  const replayReview = await call("POST", `/v1/admin/payment-requests/${PAYMENT_ID}/review`, {
+    token: ownerAdminToken,
+    body: { status: "rejected", note: "Duplicate review attempt" },
+  });
+  const replayEvidence = psql(
+    `select r.status||'|'||(select count(*) from public.admin_audit_logs ` +
+    `where actor_user_id='${OWNER}' and target_user_id='${CUST}' and action='review_payment' ` +
+    `and details->>'payment_request_id'='${PAYMENT_ID}')::text ` +
+    `from public.payment_requests r where r.id='${PAYMENT_ID}'`, DB);
+  report("L5) a reviewed payment replays as 409 without a second transition or audit",
+    replayReview.status === 409 && replayReview.json &&
+      replayReview.json.error === "payment_already_reviewed" && replayEvidence === "approved|1",
+    { status: replayReview.status, body: replayReview.json, evidence: replayEvidence });
+
+  const paymentHistory = await call("GET",
+    "/v1/admin/payment-requests?status=history&page=1&limit=10", { token: ownerAdminToken });
+  report("L6) payment history maps to approved and rejected terminal requests",
+    paymentHistory.status === 200 && paymentHistory.json &&
+      Array.isArray(paymentHistory.json.payment_requests) &&
+      paymentHistory.json.payment_requests.some(item=>item.id===PAYMENT_ID&&item.status==="approved"),
+    { status: paymentHistory.status, body: paymentHistory.json });
+
+  const expiryBeforeGrant = psql(
+    `select extract(epoch from plan_expires_at)::bigint from public.profiles where id='${CUST}'`, DB);
+  const strictGrant = await call("POST", "/v1/admin/payment-grants", {
+    token: ownerAdminToken,
+    body: { email: cust.email, kind: "plan_3m", note: "Three-month scholarship" },
+  });
+  const strictGrantId = strictGrant.json && strictGrant.json.payment_request &&
+    /^[0-9a-f-]{36}$/i.test(String(strictGrant.json.payment_request.id||""))
+    ? strictGrant.json.payment_request.id : "00000000-0000-0000-0000-000000000000";
+  const grantEvidence = psql(
+    `select r.status||'|'||r.is_grant::text||'|'||(r.reviewed_by='${OWNER}')::text||'|'||` +
+    `(r.reviewed_at is not null)::text||'|'||r.pricing_mode||'|'||r.quoted_amount_mmk::text||'|'||` +
+    `p.plan_status||'|'||(extract(epoch from p.plan_expires_at)::bigint>${expiryBeforeGrant})::text||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='grant_payment' ` +
+    `and details->>'payment_request_id'='${strictGrantId}')::text ` +
+    `from public.payment_requests r join public.profiles p on p.id=r.user_id ` +
+    `where r.id='${strictGrantId}'`, DB);
+  report("L7) a strict grant atomically approves, extends entitlement and writes one audit row",
+    strictGrant.status === 201 && strictGrant.json && strictGrant.json.payment_request &&
+      strictGrant.json.payment_request.status === "approved" &&
+      grantEvidence === "approved|true|true|true|grant|0|active|true|1",
+    { status: strictGrant.status, body: strictGrant.json, evidence: grantEvidence });
 
   r = await call("GET", "/rest/v1/app_settings?select=*&limit=50");
   report("M) anon may read app_settings (the buy screen quotes prices signed out)",
@@ -572,7 +686,8 @@ function testPasswordHash(password,parallelization) {
      accepted from the verified token; role, admin state and email are derived
      or fixed by db.js before any request query runs. */
   const forgedTrustedClaims = require(path.join(ROOT, "server", "lib", "crypto"))
-    .signToken({ sub: CUST, role: "service_role", is_admin: true, email: owner.email },
+    .signToken({ sub: CUST, sid: custSession.session_id,
+      role: "service_role", is_admin: true, email: owner.email },
       process.env.JWT_SECRET, 3600).token;
   r = await call("GET", "/rest/v1/profiles?select=*", { token: forgedTrustedClaims });
   report("Q2) signed-but-forged service_role/is_admin claims cannot widen customer access",
@@ -608,9 +723,10 @@ function testPasswordHash(password,parallelization) {
 
   /* ---- storage ---- */
   const boundary = "----hnk";
+  const proofBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]);
   const body = Buffer.concat([
     Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.jpg"\r\nContent-Type: image/jpeg\r\n\r\n`),
-    Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]),
+    proofBytes,
     Buffer.from(`\r\n--${boundary}--\r\n`),
   ]);
   r = await call("POST", `/storage/v1/object/payment-proofs/${CUST}/plan_1m-1.jpg`,
@@ -619,6 +735,78 @@ function testPasswordHash(password,parallelization) {
 
   r = await call("GET", `/storage/v1/object/payment-proofs/${CUST}/plan_1m-1.jpg`, { token: custToken });
   report("U2) a customer can read their own payment proof", r.status === 200, { status: r.status });
+
+  const webProof = await call("GET", `/v1/admin/payment-requests/${PAYMENT_ID}/proof`, {
+    token: ownerToken,
+  });
+  const proofAuditAfterWebDenial = psql(
+    `select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='view_payment_proof'`, DB);
+  report("U3) an owner web-session bearer cannot read proof through the strict admin route",
+    webProof.status === 403 && proofAuditAfterWebDenial === "0",
+    { status: webProof.status, body: webProof.json, auditRows: proofAuditAfterWebDenial });
+
+  const strictProof = await call("GET", `/v1/admin/payment-requests/${PAYMENT_ID}/proof`, {
+    token: ownerAdminToken,
+  });
+  const proofAudit = psql(
+    `select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='view_payment_proof' ` +
+    `and details->>'payment_request_id'='${PAYMENT_ID}'`, DB);
+  report("U4) MFA-verified proof retrieval returns the exact private bytes and audits the view",
+    strictProof.status === 200 && strictProof.bytes.equals(proofBytes) &&
+      strictProof.headers["content-type"] === "image/jpeg" &&
+      /(?:^|,)\s*(?:private\s*,\s*)?no-store(?:\s*,|$)/i.test(strictProof.headers["cache-control"]||"") &&
+      strictProof.headers["x-content-type-options"] === "nosniff" &&
+      strictProof.headers["content-length"] === String(proofBytes.length) && proofAudit === "1",
+    { status: strictProof.status, headers: strictProof.headers,
+      bytes: strictProof.bytes.toString("hex"), auditRows: proofAudit });
+
+  const unsafePaymentCreated = await call("POST", "/rest/v1/payment_requests", {
+    token: custToken,
+    body: { user_id: CUST, kind: "plan_1m", txn_last6: "654321", amount_mmk: 30000,
+      screenshot_path: `${CUST}/unsafe.svg` },
+  });
+  const unsafePaymentId = psql(
+    `select id from public.payment_requests where screenshot_path='${CUST}/unsafe.svg'`, DB);
+  runtimeServicePsql(
+    `insert into public.hnk_storage_objects (bucket_id,name,owner,mime_type,data) values (` +
+    `'payment-proofs','${CUST}/unsafe.svg','${CUST}','image/svg+xml',decode('3c7376672f3e','hex'))`, DB);
+  const unsafeProof = await call("GET", `/v1/admin/payment-requests/${unsafePaymentId}/proof`, {
+    token: ownerAdminToken,
+  });
+  const unsafeProofAudit = psql(
+    `select count(*) from public.admin_audit_logs where action='view_payment_proof' ` +
+    `and details->>'payment_request_id'='${unsafePaymentId}'`, DB);
+  report("U5) strict proof retrieval rejects active stored MIME before bytes or audit",
+    unsafePaymentCreated.status === 201 && unsafePaymentId.length === 36 &&
+      unsafeProof.status === 415 && unsafeProof.json &&
+      unsafeProof.json.error === "unsupported_payment_proof_type" && unsafeProofAudit === "0",
+    { created: unsafePaymentCreated.status, status: unsafeProof.status,
+      body: unsafeProof.json, auditRows: unsafeProofAudit });
+
+  const largePaymentCreated = await call("POST", "/rest/v1/payment_requests", {
+    token: custToken,
+    body: { user_id: CUST, kind: "plan_1m", txn_last6: "777777", amount_mmk: 30000,
+      screenshot_path: `${CUST}/large.jpg` },
+  });
+  const largePaymentId = psql(
+    `select id from public.payment_requests where screenshot_path='${CUST}/large.jpg'`, DB);
+  runtimeServicePsql(
+    `insert into public.hnk_storage_objects (bucket_id,name,owner,mime_type,data) values (` +
+    `'payment-proofs','${CUST}/large.jpg','${CUST}','image/jpeg',decode(repeat('00',1025),'hex'))`, DB);
+  const largeProof = await call("GET", `/v1/admin/payment-requests/${largePaymentId}/proof`, {
+    token: ownerAdminToken,
+  });
+  const largeProofAudit = psql(
+    `select count(*) from public.admin_audit_logs where action='view_payment_proof' ` +
+    `and details->>'payment_request_id'='${largePaymentId}'`, DB);
+  report("U6) strict proof retrieval rejects a stored object above the response cap before audit",
+    largePaymentCreated.status === 201 && largePaymentId.length === 36 &&
+      largeProof.status === 413 && largeProof.json &&
+      largeProof.json.error === "payment_proof_too_large" && largeProofAudit === "0",
+    { created: largePaymentCreated.status, status: largeProof.status,
+      body: largeProof.json, auditRows: largeProofAudit });
 
   r = await call("POST", `/storage/v1/object/payment-proofs/${OWNER}/stolen.jpg`,
     { token: custToken, raw: body, headers: { "content-type": `multipart/form-data; boundary=${boundary}`, "x-upsert": "true" } });

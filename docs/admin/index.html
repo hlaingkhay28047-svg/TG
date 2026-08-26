@@ -70,6 +70,7 @@
       <nav class="side-nav" aria-label="Control Center sections">
         <button class="nav-item active" type="button" data-panel="overview"><span aria-hidden="true">⌂</span>Overview</button>
         <button class="nav-item" type="button" data-panel="students"><span aria-hidden="true">◎</span>Students</button>
+        <button class="nav-item" type="button" data-panel="payments"><span aria-hidden="true">¤</span>Payment review</button>
         <button class="nav-item" type="button" data-panel="history"><span aria-hidden="true">↺</span>Activity history</button>
         <button class="nav-item" type="button" data-panel="security"><span aria-hidden="true">◇</span>Security &amp; Panel</button>
       </nav>
@@ -107,6 +108,40 @@
             <p class="empty" id="studentsEmpty" hidden>No students match these filters.</p>
             <div class="pagination"><button class="button" id="studentsPrev" type="button">Previous</button><span id="studentsPage">Page 1</span><button class="button" id="studentsNext" type="button">Next</button></div>
           </section>
+        </section>
+
+        <section class="panel" id="panel-payments" aria-labelledby="paymentsHeading">
+          <div class="section-head"><div><p class="eyebrow">PAYMENT OPERATIONS</p><h2 id="paymentsHeading">Payment review and VIP grants</h2><p>Verify transfer proof, record an audit note and grant approved access from one protected queue.</p></div><button class="button" id="reloadPayments" type="button">Refresh queue</button></div>
+          <div class="payments-grid">
+            <section class="surface payment-queue" aria-labelledby="paymentQueueHeading" aria-busy="false">
+              <div class="surface-head payment-toolbar">
+                <div><p class="eyebrow">AUDITED QUEUE</p><h3 id="paymentQueueHeading">Payment requests</h3></div>
+                <div class="segmented-control" role="group" aria-label="Payment request view">
+                  <button class="payment-view active" type="button" aria-pressed="true" data-payment-view="pending">Pending</button>
+                  <button class="payment-view" type="button" aria-pressed="false" data-payment-view="history">History</button>
+                </div>
+              </div>
+              <p class="queue-status" id="paymentQueueStatus" role="status" aria-live="polite"></p>
+              <div class="payment-config-warning" id="paymentConfigWarning" role="alert" aria-live="assertive" aria-atomic="true" hidden><span aria-hidden="true">!</span><div><b>Payment configuration needs attention</b><p id="paymentConfigWarningText"></p></div></div>
+              <div id="paymentRequestResults">
+                <div class="table-wrap payment-table"><table><thead><tr><th>Student</th><th>Request</th><th>Transfer</th><th>Submitted</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody id="paymentRows"></tbody></table></div>
+                <div class="payment-cards" id="paymentCards"></div>
+                <p class="empty" id="paymentsEmpty" hidden>No payment requests in this view.</p>
+              </div>
+              <div class="pagination"><button class="button" id="paymentsPrev" type="button">Previous</button><span id="paymentsPage">Page 1</span><button class="button" id="paymentsNext" type="button">Next</button></div>
+            </section>
+
+            <form class="surface settings-card grant-card" id="paymentGrantForm">
+              <div class="setting-icon" aria-hidden="true">VIP</div>
+              <p class="eyebrow">MANUAL ACCESS</p><h3>Grant VIP access</h3>
+              <p>Create an approved, audited entitlement without a payment transfer. The server resolves the student from their exact email address.</p>
+              <label>Student email<input id="grantEmail" type="email" autocomplete="off" inputmode="email" autocapitalize="none" spellcheck="false" required placeholder="student@example.com"></label>
+              <label>Access period<select id="grantKind" required><option value="join_first">First access / VIP</option><option value="plan_1m">1 month</option><option value="plan_3m">3 months</option><option value="plan_6m">6 months</option></select></label>
+              <label>Admin note<textarea id="grantNote" rows="4" maxlength="500" required placeholder="Reason for this grant"></textarea></label>
+              <button class="button primary full" id="createPaymentGrant" type="submit">Review VIP grant</button>
+              <p class="form-status" id="paymentGrantStatus" role="status" aria-live="polite"></p>
+            </form>
+          </div>
         </section>
 
         <section class="panel" id="panel-history" aria-labelledby="historyHeading">
@@ -152,6 +187,23 @@
       <section class="action-section"><h3>Security &amp; devices</h3><div class="action-grid" id="securityActions"></div></section>
       <section class="action-section"><div class="surface-head"><h3>Recent history</h3><button class="text-button" id="viewStudentHistory" type="button">Open full history</button></div><div id="studentHistory" class="mini-history"></div></section>
     </div>
+  </dialog>
+
+  <dialog class="payment-proof-dialog" id="paymentProofDialog" aria-labelledby="paymentProofTitle">
+    <div class="dialog-head"><div><p class="eyebrow">PRIVATE PAYMENT PROOF</p><h2 id="paymentProofTitle">Transfer proof</h2><p id="paymentProofStudent"></p></div><button class="icon-button" id="closePaymentProof" type="button" aria-label="Close payment proof">×</button></div>
+    <div class="proof-body"><p class="proof-status" id="paymentProofStatus" role="status" aria-live="polite">Loading proof securely…</p><img id="paymentProofImage" alt="" hidden></div>
+  </dialog>
+
+  <dialog class="payment-review-dialog" id="paymentReviewDialog" aria-labelledby="paymentReviewTitle">
+    <form id="paymentReviewForm">
+      <div class="dialog-head"><div><p class="eyebrow">CONFIRM PAYMENT REVIEW</p><h2 id="paymentReviewTitle">Review request</h2><p id="paymentReviewStudent"></p></div><button class="icon-button" id="cancelPaymentReviewTop" type="button" aria-label="Cancel payment review">×</button></div>
+      <div class="dialog-scroll">
+        <p id="paymentReviewMessage"></p>
+        <label class="review-note">Admin note<textarea id="paymentReviewNote" rows="4" maxlength="500" required placeholder="Record how this decision was verified"></textarea></label>
+        <p class="form-status" id="paymentReviewStatus" role="status" aria-live="polite"></p>
+        <div class="dialog-actions"><button class="button" id="cancelPaymentReview" type="button">Cancel</button><button class="button primary" id="confirmPaymentReview" type="submit">Confirm approval</button></div>
+      </div>
+    </form>
   </dialog>
 
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm">Confirm</button></div></form></dialog>

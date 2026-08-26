@@ -202,13 +202,6 @@ h1 em{font-style:normal;color:var(--gold-hi)}
    it takes focus, which is the only moment it is useful: a keyboard or switch
    user pressing Tab on load would otherwise walk the entire tab bar before
    reaching the page they opened. */
-.adm-uid{font-size:11px;color:var(--muted);word-break:break-all;margin-top:2px}
-.adm-money{margin-top:6px;font-size:14px;font-weight:700}
-.adm-money.ok{color:var(--ok)}
-.adm-money.warn{color:var(--err)}
-.adm-money.grant{color:var(--gold-hi)}
-.adm-grant-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
-.adm-grant-row .btn,.adm-grant-row .inp{min-height:44px;flex:1 1 120px}
 .pay-routes{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0 12px}
 .pay-route{flex:1 1 180px;min-width:0;padding:12px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2)}
 /* aspect-ratio, not height:auto. A QR is square, and reserving the square
@@ -230,7 +223,7 @@ h1 em{font-style:normal;color:var(--gold-hi)}
 /* A price, a version and a device id are Latin/numeric runs inside RTL text.
    Without an explicit direction the bidi algorithm reorders "30,000 MMK" and
    "v5.36.0" into something that reads wrong, which is worse than untranslated. */
-[dir="rtl"] .pay-num,[dir="rtl"] .adm-uid,[dir="rtl"] .adm-money,[dir="rtl"] #payDue{direction:ltr;text-align:right}
+[dir="rtl"] .pay-num,[dir="rtl"] #payDue{direction:ltr;text-align:right}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 .skip{position:absolute;left:8px;top:-64px;z-index:200;padding:12px 16px;min-height:48px;display:flex;align-items:center;border-radius:11px;background:var(--gold);color:#1a1408;font-weight:800;text-decoration:none;transition:top .12s ease-out}
 .skip:focus{top:calc(8px + env(safe-area-inset-top))}
@@ -1401,15 +1394,8 @@ body.wall #wallRetry.on{display:block}
    `body.wall #pgHome>#cardAdmin` (2 ids, 1 class). Measured: the override rule
    matched, was declared later, and the card still computed display:none.
    Excluding it at the source has no such trap — and the reason it must be
-   excluded at all is that an admin whose OWN plan lapsed would otherwise be
-   locked out of the panel that approves their own renewal. */
-#admList{list-style:none;display:flex;flex-direction:column;gap:10px}
-#admList li{border:1px solid var(--line-soft);border-radius:12px;padding:10px;background:var(--panel)}
-#admList .rq-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-#admList .adm-who{font-size:11px;color:var(--muted);word-break:break-all;margin-top:4px}
-#admList .adm-proof{margin-top:8px;max-width:100%;border-radius:10px;border:1px solid var(--line-soft);display:block}
-#admList .adm-act{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-#admList .adm-note{width:100%;margin-top:8px}
+   excluded at all is that an admin whose own plan lapsed still needs the
+   secure handoff to the separate Control Center. */
 .hsl-hd{padding:9px 10px 5px;font-size:9.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;line-height:1.5;
   display:flex;align-items:center;gap:8px;color:var(--gold-hi);opacity:.85}
 .hsl-hd.nolat{letter-spacing:0;text-transform:none;font-size:10.5px}
@@ -2320,40 +2306,8 @@ body.wall #wallRetry.on{display:block}
   <section class="card" id="cardAdmin" style="display:none">
     <h2 id="admH2"></h2>
     <p class="mut" id="admIntro"></p>
-    <div class="row" style="gap:8px;align-items:center;margin-top:8px">
-      <button class="btn" id="btnAdmReload"></button>
-      <span class="mut" id="admCount"></span>
-    </div>
-    <div class="status" id="stAdm"></div>
-
-    <!-- v5.34 — a free period for a VIP student is FILED, not silently
-         written. It becomes an ordinary row in the queue below, marked as a
-         grant with no money attached, which the owner then approves like any
-         payment. Two consequences that are the whole point: the same trigger
-         extends the plan, so a grant and a payment can never diverge; and a
-         free period leaves the same audit trail as a paid one instead of
-         being an invisible edit to somebody's profile. -->
-    <div class="adm-grant">
-      <div class="subh" id="admGrantH"></div>
-      <div class="adm-grant-row">
-        <input class="inp" id="admGrantEmail" type="email" autocomplete="off" autocapitalize="none" spellcheck="false">
-        <select class="inp" id="admGrantKind">
-          <!-- join_first first, and deliberately: "VIP, first time free" IS the
-               joining purchase, so granting it both opens the period AND
-               clears the joining fee. Granting a plain month to a student who
-               has never joined would leave them owing 500,000 the moment the
-               free period ended, which is not what was promised. -->
-          <option value="join_first">join_first</option>
-          <option value="plan_1m">1</option>
-          <option value="plan_3m">3</option>
-          <option value="plan_6m">6</option>
-        </select>
-        <button class="btn btn-gold" id="btnAdmGrant"></button>
-      </div>
-      <div class="status" id="stAdmGrant"></div>
-    </div>
-    <ul id="admList"></ul>
-    <div class="mut" id="admEmpty" style="margin-top:8px"></div>
+    <a class="btn btn-gold" id="openAdminCenter" href="../admin/"></a>
+    <p class="mut" id="admSecurityNote" style="margin-top:10px"></p>
   </section>
 
   <section class="card" id="cardRh">
@@ -20057,7 +20011,7 @@ function accSignOutLocal(reason){
      function is also reachable from accFetch, which runs before the wall is
      defined on the very first paint. */
   try { if (typeof appWallApply === "function") appWallApply(); } catch(e){}
-  try { if (typeof admRender === "function"){ adm.rows = []; admRender(); } } catch(e){}
+  try { if (typeof admRender === "function") admRender(); } catch(e){}
 }
 
 /* ---------------- error mapping (§9 anchor 11) ---------------- */
@@ -20176,7 +20130,7 @@ function accPostLogin(){
        or to buy. Without this the wall would sit on "checking" until the next
        focus event. */
     try { wallStampLogin(); appWallApply(); } catch(e){}
-    try { admRender(); if (admIsAdmin()) admLoad(); } catch(e){}
+    try { admRender(); } catch(e){}
   })();
 }
 
@@ -20297,13 +20251,10 @@ async function accLoadProfile(){
 async function accLoadDevices(){
   if (!acc.sess) return { ok:false };
   try {
-    /* The filter here is NOT a security control -- RLS is, and the comment this
-       replaces was right that leaning on a client-side filter for safety is the
-       wrong instinct. It is a SCOPE control, and it is needed for exactly the
-       case the old reasoning did not cover: devices_all_own_or_admin grants an
-       admin every row on purpose, so on the owner's own account "MY DEVICES"
-       listed their customers' machines, each with a Remove button that RLS
-       happily honours. A card headed "mine" has to mean mine. */
+    /* The explicit filter is a scope contract in addition to own-account RLS:
+       a card headed "MY DEVICES" must always request only this account's rows.
+       Cross-account device administration belongs to the strict Admin Control
+       Center and never widens this customer request. */
     var r = await accFetch("/rest/v1/devices?select=*&user_id=eq." +
       encodeURIComponent(acc.sess.uid) + "&order=created_at.desc", { method: "GET" });
     if (!r.ok){ accSetInline("stDev", t("acc_unreachable"), "err"); return { ok:false }; }
@@ -20319,12 +20270,9 @@ async function accLoadDevices(){
 async function accLoadRequests(){
   if (!acc.sess) return { ok:false };
   try {
-    /* Scoped to the signed-in user for the same reason as accLoadDevices:
-       payreq_select_own_or_admin returns every row to an admin, so the owner's
-       own "MY PAYMENT REQUESTS" list showed a customer's row -- and worse, the
-       line below adopted that customer's pending request as acc.pending, which
-       replaced the owner's buy panel with "waiting for approval" quoting a
-       stranger's reference and left them unable to file a payment at all. */
+    /* Scoped to the signed-in user for the same reason as accLoadDevices. The
+       Student App never reads another account's payment rows; cross-account
+       review is available only through the strict Admin Control Center. */
     var r = await accFetch("/rest/v1/payment_requests?select=*&user_id=eq." +
       encodeURIComponent(acc.sess.uid) + "&order=created_at.desc&limit=20", { method: "GET" });
     if (!r.ok){ accSetInline("stReq", t("acc_unreachable"), "err"); return { ok:false }; }
@@ -20473,34 +20421,13 @@ function accParseSettings(rows){
   if (!rows) return null;
   if (!Array.isArray(rows)) rows = [rows];
   if (!rows.length) return null;
-  /* v5.39.0 — the query has no ORDER BY, so which row PostgREST returns first
-     is not defined. With the one row this table is meant to hold that is moot;
-     with two (an owner who inserted instead of updating in the dashboard) the
-     quoted price became whichever row the planner happened to emit first, and
-     could differ between two loads. Sorting the candidates here makes the
-     client's choice deterministic without asking the server to order by a
-     column this repo never creates and therefore cannot promise exists.
-     NOTE: the approval trigger in supabase/schema.sql picks its own row; the
-     only way to make the two agree is to keep app_settings to ONE row. */
+  /* A legacy response can contain more than one settings row. Sorting keeps
+     the customer quote deterministic, but it is not the safety boundary:
+     hnk_apply_payment refuses approval unless exactly one row exists, and the
+     strict Admin Control Center reports the server's row-count warning. */
   var wide = rows.filter(function(x){
     return x && (x.price_1m !== undefined || x.payment_instructions_my !== undefined);
   });
-  /* v5.40.0 — REMEMBER WHEN THERE IS MORE THAN ONE, and tell the owner. The
-     sort below makes the CLIENT deterministic; it cannot make the client and
-     the approval trigger agree, because the trigger picks its own row inside
-     Postgres. With the single row app_settings is meant to hold that is moot.
-     With two, the price a customer is quoted and the period an approved
-     join_first opens can come from different rows — money and entitlement
-     disagreeing, silently. Only the owner can fix that, so only the owner is
-     told: admRender says it out loud at the top of the queue.
-
-     NETWORK-DERIVED ON PURPOSE. This runs only when a settings response has
-     actually been parsed, so a session whose fetch failed shows no warning
-     rather than a stale one — the client genuinely does not know how many rows
-     there are. accLoadSettings fetches on every load even when it has a cached
-     copy, and admLoad awaits it before its second render, so an owner who is
-     online sees the warning on the same paint as the queue. */
-  accSettingsRowCount = wide.length;
   if (wide.length){
     if (wide.length > 1){
       wide.sort(function(a, b){
@@ -20520,10 +20447,6 @@ function accParseSettings(rows){
    so the buy panel opened on a slow connection showed a red error for the
    whole 15s the request was still in flight. */
 var accPriceFailed = false;
-/* how many app_settings rows the server returned that look like the wide
-   pricing row — anything above 1 is an owner misconfiguration the admin panel
-   names out loud (see accParseSettings and admRender) */
-var accSettingsRowCount = 0;
 async function accLoadSettings(){
   if (!acc.settings){
     var cached = accLSGet(ACC_LS_SET);
@@ -20543,9 +20466,9 @@ async function accLoadSettings(){
     return { ok: !!s };
   } catch(e){ accPriceFailed = true; acc.online = false; accRenderPay(); return { ok:false, offline:true }; }
 }
-/* v5.34 — the number, not the label. Split out so the buy screen, the amount
-   check and the admin panel all compare the same value rather than parsing a
-   formatted string back into a number.
+/* v5.34 — the number, not the label. Split out so the buy screen and stored
+   server-authored payment quote use a number rather than parsing a formatted
+   string back into one.
 
    A per-customer override in profiles wins over the app_settings default. That
    is the whole mechanism behind "this student pays 10,000 and that studio pays
@@ -21772,10 +21695,6 @@ function accShowForm(which){
 }
 function accWire(){
   if (!$("cardAccount")) return;
-  var abr = $("btnAdmReload");
-  if (abr) abr.onclick = function(){ admLoad(); };      /* v5.30 */
-  var abg = $("btnAdmGrant");
-  if (abg) abg.onclick = function(){ admGrant(); };     /* v5.34 */
   /* v5.41.0 — reuse wireKeyReveal: it flips input.type and keeps aria-pressed
      in step, which is what makes the gold border and the screen-reader state
      agree. Declared far above; function declarations hoist. */
@@ -21924,20 +21843,9 @@ function accWire(){
 function accBoot(){
   accWire();
   unifiedWire();
-  /* v5.34 — re-label the account and admin surfaces here, and this is a fix
-     rather than belt-and-braces.
-
-     applyLang() runs near the top of the file (line ~4045). accApplyLang is a
-     hoisted function declaration so it is CALLABLE from there, but the ADM_*
-     label objects it reads are `var`s assigned twenty thousand lines further
-     down and are therefore still undefined at that moment. admApplyLang
-     threw partway through, the `try { admApplyLang(); } catch(e){}` around the
-     call swallowed it, and every label after the throw point rendered empty —
-     which looked exactly like a missing translation and was an evaluation
-     order bug. A language SWITCH always worked, because by then the whole file
-     had run, which is why it survived being tested by hand.
-
-     accBoot is called from the bottom of the file, so everything exists. */
+  /* Re-label the account surface and secure admin handoff after the full
+     script has initialized. Early language application can run before these
+     lower declarations have been evaluated; this final pass is authoritative. */
   try { accApplyLang(); } catch(e){}
   var sess = accLSGet(ACC_LS_SESS);
   if (sess && sess.access && sess.uid) acc.sess = sess;
@@ -21980,441 +21888,30 @@ function accBoot(){
     } catch(e){}
     try { accRender(); accChipRender(); accRenderPay(); } catch(e){}
     try { appWallApply(); } catch(e){}          /* v5.30 — boot profile landed */
-    try { admRender(); if (admIsAdmin()) admLoad(); } catch(e){}
+    try { admRender(); } catch(e){}
   })();
 }
 
 /* ============================================================
-   v5.30 ADMIN PANEL — payment approve / reject.
-   The client has always refused to write status/reviewed_at/reviewed_by/note
-   (see accSubmitPayment): those are the admin's fields. This is the surface
-   that writes them, and NOTHING here is a security boundary — hiding the card
-   stops an honest user seeing it, not a determined one. What makes approval
-   actually admin-only is the RLS policy in supabase/schema.sql, which must be
-   applied in the Supabase dashboard. Without it, any signed-in user can PATCH
-   their own row from a console and approve themselves.
+   ADMIN HANDOFF. Cross-account reads and writes are deliberately unavailable
+   to Student App bearer sessions. This card only links an administrator to
+   /admin, whose separate client session, RBAC check and current MFA proof are
+   enforced again by the server for every action.
    ============================================================ */
 function admIsAdmin(){ return !!(acc.profile && acc.profile.is_admin === true); }
 
 function admL(o){ return L9(o); }
-/* v5.34 admin-only labels. These live outside TR_V430 like the three above,
-   for the reason admL exists: the admin panel renders for one person on this
-   whole deployment, so its strings do not belong in the table every customer
-   downloads. Shan and Kachin reuse the same attested morphemes documented at
-   the payments block in TR_V430. */
-var ADM_DUE_WAS   = { my:"ပေးရမည်မှာ {D}", en:"due {D}", shn:"တေလႆႈသူင်ႇ {D}", kac:"jaw ra ai {D}", th:"ต้องชำระ {D}", zh:"应付 {D}", vi:"cần trả {D}", id:"harus {D}", ms:"perlu {D}" };
-var ADM_NO_AMOUNT = { my:"ပမာဏ မပါ", en:"no amount given", shn:"ဢမ်ႇပႃးၵႃႈ", kac:"amount n lawm ai", th:"ไม่ได้ระบุจำนวน", zh:"未填金额", vi:"không có số tiền", id:"jumlah tidak diisi", ms:"jumlah tiada" };
-var ADM_GRANT_TAG = { my:"အခမဲ့ ပေးထားသည် (VIP)", en:"Free grant (VIP)", shn:"ပၼ်လၢႆလၢႆ (VIP)", kac:"Manu n la ai (VIP)", th:"ให้ฟรี (VIP)", zh:"免费授予（VIP）", vi:"Cấp miễn phí (VIP)", id:"Diberikan gratis (VIP)", ms:"Diberi percuma (VIP)" };
-var ADM_GRANT_H   = { my:"VIP အခမဲ့ ပေးရန်", en:"Grant a free period", shn:"ပၼ်ၶၢဝ်းယၢမ်းလၢႆလၢႆ", kac:"Aten langai manu n la ai sha jaw", th:"ให้ใช้ฟรี", zh:"授予免费时段", vi:"Cấp thời hạn miễn phí", id:"Beri periode gratis", ms:"Beri tempoh percuma" };
-var ADM_GRANT_EMAIL = { my:"အီးမေးလ်", en:"Email", shn:"ဢီးမေးလ်", kac:"Email", th:"อีเมล", zh:"邮箱", vi:"Email", id:"Email", ms:"E-mel" };
-var ADM_GRANT_GO  = { my:"ပေးမယ်", en:"Grant", shn:"ပၼ်", kac:"Jaw u", th:"ให้", zh:"授予", vi:"Cấp", id:"Beri", ms:"Beri" };
-var ADM_GRANT_OK  = { my:"ပေးပြီးပါပြီ — အောက်က စာရင်းထဲမှာ အတည်ပြုပါ", en:"Filed — approve it in the list below", shn:"သႂ်ႇယဝ်ႉ — ႁပ်ႉတီႈသဵၼ်ႈတႂ်ႈၼႆႉ", kac:"Bang ngut sai — npu kaw hkap la u", th:"บันทึกแล้ว — อนุมัติในรายการด้านล่าง", zh:"已提交 — 请在下方列表批准", vi:"Đã tạo — duyệt ở danh sách bên dưới", id:"Tercatat — setujui di daftar bawah", ms:"Direkodkan — luluskan dalam senarai di bawah" };
-var ADM_GRANT_NOUSER = { my:"ဒီအီးမေးလ်နဲ့ အကောင့် မတွေ့ပါ", en:"No account with that email", shn:"ဢမ်ႇႁၼ်ဢၶွင်ႉဢီးမေးလ်ၼႆႉ", kac:"Ndai email hte account n mu ai", th:"ไม่พบบัญชีอีเมลนี้", zh:"找不到该邮箱的账户", vi:"Không tìm thấy tài khoản với email đó", id:"Akun dengan email itu tidak ada", ms:"Tiada akaun dengan e-mel itu" };
-
-/* Declared ABOVE admApplyLang on purpose. applyLang() runs near the top of the
-   file, long before this line would have been reached if the block sat with
-   the other ADM_* constants below — so admApplyLang read an undefined var, the
-   `try { admApplyLang(); } catch(e){}` around the call swallowed it, and the
-   whole grant form rendered with empty labels and untranslated options. It
-   looked like an i18n gap and was a hoisting order bug. */
 function admApplyLang(){
   if (!$("cardAdmin")) return;
-  setIcnText($("admH2"), "i-key", admL({my:"Admin — ငွေပေးချေမှု",en:"Admin — payments",shn:"Admin — ငိုၼ်း",kac:"Admin — gumhpraw",th:"แอดมิน — การชำระเงิน",zh:"管理员 — 付款",vi:"Quản trị — thanh toán",id:"Admin — pembayaran",ms:"Admin — pembayaran"}), { cls:"ic-h2" });
-  $("admIntro").textContent = admL({my:"တောင်းဆိုမှုတွေကို စစ်ပြီး အတည်ပြု / ပယ်ဖျက်ပါ။",en:"Review each request and approve or reject it.",shn:"ၵူတ်ႇထတ်းသေ ႁပ်ႉ / ဢမ်ႇႁပ်ႉ",kac:"Jep nna hkap la kun n hkap la kun",th:"ตรวจสอบแล้วอนุมัติหรือปฏิเสธ",zh:"审核后批准或拒绝",vi:"Xem xét rồi duyệt hoặc từ chối",id:"Tinjau lalu setujui atau tolak",ms:"Semak lalu luluskan atau tolak"});
-  setIcnText($("btnAdmReload"), "i-retry", admL({my:"ပြန်ဆွဲမယ်",en:"Reload",shn:"ဢဝ်ၶိုၼ်း",kac:"Bai la u",th:"โหลดใหม่",zh:"重新载入",vi:"Tải lại",id:"Muat ulang",ms:"Muat semula"}));
-  /* v5.34 grant form */
-  $("admGrantH").textContent = admL(ADM_GRANT_H);
-  $("admGrantEmail").placeholder = admL(ADM_GRANT_EMAIL);
-  $("admGrantEmail").setAttribute("aria-label", admL(ADM_GRANT_EMAIL));
-  setIcnText($("btnAdmGrant"), "i-gem", admL(ADM_GRANT_GO));
-  /* the period options carry the same labels the buy chips use, so a grant of
-     "3" and a purchase of "3 months" cannot come to mean different things */
-  var gk = $("admGrantKind");
-  if (gk){
-    gk.setAttribute("aria-label", admL(ADM_GRANT_H));
-    [["join_first","pay_join"],["plan_1m","pay_1m"],["plan_3m","pay_3m"],["plan_6m","pay_6m"]].forEach(function(pair){
-      var o = gk.querySelector('option[value="' + pair[0] + '"]');
-      if (o) o.textContent = t(pair[1]);
-    });
-  }
-}
-
-var ADM_APPROVE = { my:"အတည်ပြု", en:"Approve", shn:"ႁပ်ႉ", kac:"Hkap la", th:"อนุมัติ", zh:"批准", vi:"Duyệt", id:"Setujui", ms:"Luluskan" };
-var ADM_REJECT  = { my:"ပယ်ဖျက်", en:"Reject", shn:"ဢမ်ႇႁပ်ႉ", kac:"N hkap la", th:"ปฏิเสธ", zh:"拒绝", vi:"Từ chối", id:"Tolak", ms:"Tolak" };
-var ADM_NOTE_PH = { my:"မှတ်ချက် (ချန်ထားလို့ရ)", en:"Note (optional)", shn:"မၢႆတွင်း", kac:"Matsing", th:"หมายเหตุ", zh:"备注（可选）", vi:"Ghi chú", id:"Catatan", ms:"Nota" };
-
-var adm = { rows: [], busy: false, proofs: {}, who: {}, whoFresh: {}, whoEpoch: 0 };   /* who: uid -> profile (v5.34) */
-
-async function admLoad(){
-  if (!acc.sess || !admIsAdmin()) return;
-  /* Invalidate the old count as soon as Reload starts, not after the queue
-     request returns: the old row may remain readable, but never approvable as
-     though its cached renewal total had just been checked. The epoch also
-     prevents a slower earlier profile request from blessing a newer load. */
-  var whoEpoch = ++adm.whoEpoch;
-  adm.whoFresh = {};
-  admRender();
-  setSt("stAdm", "");
-  try {
-    var r = await accFetch("/rest/v1/payment_requests?select=*&order=created_at.desc&limit=100", { method: "GET" });
-    if (!r.ok){ setSt("stAdm", t("acc_unreachable"), "err"); return; }
-    var rows = await accJson(r);
-    adm.rows = Array.isArray(rows) ? rows : [];
-    /* Cached names may remain visible, but no cached device count is allowed
-       to validate a renewal during this load. admLoadWho marks only rows read
-       by this pass as fresh, then renders their exact totals. */
-    /* v5.37.0 — AWAITED, and before the render. admDue() opens with
-       `var st = acc.settings; if (!st) return null;`, and acc.settings was only
-       ever loaded by opening the admin's OWN Buy accordion. So on a fresh
-       session -- a phone, or any browser with storage cleared -- the whole
-       amount-vs-due check was silently absent: an underpayment rendered
-       identically to a payment in full, with no warn class and no "due" line.
-       That check is the reason v5.34.0 exists. Fire-and-forget is not enough
-       either: settings landing after the render leaves the plain rows on
-       screen, because accLoadSettings calls accRenderPay, not admRender. */
-    admRender();
-    /* Render FIRST, then fill in the price and render again -- the same shape
-       admLoadWho() below uses, and for the same reason. Awaiting the settings
-       before the first render (the v5.37.0 draft) put the whole approval queue
-       behind a request that can stall for the full 15s accFetch timeout on a
-       slow link, so an owner with cleared site data stared at an empty panel
-       while three payments waited. A failed settings load now degrades to the
-       queue without the amount check rather than to no queue at all. */
-    if (!acc.settings){
-      try { await accLoadSettings(); } catch(e2){}
-      admRender();
-    }
-    /* v5.34 — render first, then fill in the names. The list used to print
-       row.user_id, a raw UUID, which told the owner nothing about who had
-       paid: approving meant matching a screenshot to a string of hex. The
-       names come from a second request rather than a PostgREST embed because
-       profiles and payment_requests have no declared foreign key in this
-       project, so `select=*,profiles(name,email)` 400s. Fetching after the
-       render also means a slow or failed profile read degrades to the old
-       behaviour instead of blanking the queue. */
-    admLoadWho(whoEpoch);
-  } catch(e){ setSt("stAdm", friendlyError(e), "err"); }
-}
-
-/* uid -> {name, email, joined_paid, price overrides}. Admins can already read
-   every profile: section 3 of the schema is `using (user_id = auth.uid() or
-   hnk_is_admin())`. */
-async function admLoadWho(whoEpoch){
-  if (whoEpoch === undefined) whoEpoch = adm.whoEpoch;
-  var ids = [];
-  (adm.rows || []).forEach(function(r){
-    if (r && r.user_id && ids.indexOf(r.user_id) < 0) ids.push(r.user_id);
-  });
-  if (!ids.length) return;
-  try {
-    var q = "/rest/v1/profiles?select=id,name,email,joined_paid,allowed_devices,price_1m_override,price_3m_override,price_6m_override,price_join_first_override"
-          + "&id=in.(" + ids.map(encodeURIComponent).join(",") + ")";
-    var r = await accFetch(q, { method: "GET" });
-    if (!r.ok) return;
-    var rows = await accJson(r);
-    if (whoEpoch !== adm.whoEpoch) return;
-    (Array.isArray(rows) ? rows : []).forEach(function(p){
-      if (p && p.id){ adm.who[p.id] = p; adm.whoFresh[p.id] = true; }
-    });
-    admRender();
-  } catch(e){ /* the queue still works without names — never break it for this */ }
-}
-
-function admQuotedDue(row){
-  if (!row || row.quoted_amount_mmk === undefined || row.quoted_amount_mmk === null ||
-      row.quoted_amount_mmk === "") return null;
-  var n = Number(row.quoted_amount_mmk);
-  return isFinite(n) && n >= 0 ? n : null;
-}
-
-function admTierRenewalDueUnknown(row){
-  if (!row || row.is_grant || admQuotedDue(row) !== null || !accDeviceTierSet()) return false;
-  if (row.kind !== "plan_1m" && row.kind !== "plan_3m" && row.kind !== "plan_6m") return false;
-  var prof = adm.who[row.user_id];
-  if (!prof || !adm.whoFresh[row.user_id]) return true;
-  var devices = Number(prof.allowed_devices);
-  return !isFinite(devices) || devices <= 0;
-}
-
-/* v5.34 — what this request SHOULD have cost, from the same source the buy
-   screen quoted: the customer's own override if they have one, else the
-   app_settings default. Returns null when the price is unknown, and an unknown
-   price must never render as a mismatch. */
-function admDue(row){
-  var quoted = admQuotedDue(row);
-  if (quoted !== null) return quoted;
-  var prof = adm.who[row.user_id];
-  /* v5.41.0 — a join_first row carries the device count it was filed for, so
-     the tiered price the admin checks against is the one that customer's own
-     buy screen quoted, not a flat number tiers have already replaced. There is
-     no per-customer override for a tier — overrides are a flat-price
-     mechanism and stop applying the moment tiers are configured, same as the
-     buy screen. */
-  if (row.kind === "join_first" && accDeviceTierSet()){
-    return accDeviceTierPrice(row.device_count || 1);
-  }
-  var key = row.kind === "join_first" ? "price_join_first"
-          : row.kind === "plan_1m"    ? "price_1m"
-          : row.kind === "plan_3m"    ? "price_3m"
-          : row.kind === "plan_6m"    ? "price_6m"
-          : row.kind === "extra_device" ? "price_extra_device" : "";
-  if (!key) return null;
-  var n = null;
-  if (prof){
-    var ov = prof[key + "_override"];
-    if (ov !== undefined && ov !== null && ov !== ""){
-      var no = Number(ov);
-      if (isFinite(no) && no >= 0) n = no;
-    }
-  }
-  if (n === null){
-    var st = acc.settings; if (!st) return null;
-    var v = st[key];
-    if (v === undefined || v === null || v === "") return null;
-    n = Number(v);
-    if (!isFinite(n)) return null;
-  }
-  /* v5.41.0 — once device-tiered pricing is on, price_1m/3m/6m are PER
-     DEVICE, and a renewal bills for however many devices the account
-     currently has — not a fresh choice per payment the way join_first's
-     device_count is, because a renewal keeps the devices the account already
-     owns rather than buying new ones. */
-  if (accDeviceTierSet() && (row.kind === "plan_1m" || row.kind === "plan_3m" || row.kind === "plan_6m")){
-    if (admTierRenewalDueUnknown(row)) return null;
-    n = n * Number(prof.allowed_devices);
-  }
-  return n;
-}
-
-/* v5.34 — file a free period for a student.
-
-   This does NOT touch the profile. It inserts a payment_requests row marked
-   is_grant with amount_mmk 0, which the owner then approves in the queue like
-   any payment, and the SAME trigger that extends a paid plan extends this one.
-   Two things follow, and both are the reason it is built this way rather than
-   as a direct update:
-
-     - a grant and a purchase can never drift apart, because there is one
-       extension path and this is not a second one;
-     - a free period is visible afterwards. "Why does this account have
-       Premium?" has an answer in the same list as every payment, with a date
-       and a note, instead of being an edit nobody recorded.
-
-   The insert is only permitted at all by payreq_insert_admin_grant, which
-   demands hnk_is_admin() AND is_grant AND no money. A non-admin reaching this
-   function — it is wired to a button inside a card that only renders for an
-   admin — is refused by the database, not by the button. */
-async function admGrant(){
-  var btn = $("btnAdmGrant");
-  var email = ($("admGrantEmail").value || "").trim().toLowerCase();
-  var kind = ($("admGrantKind") && $("admGrantKind").value) || "plan_1m";
-  accSetInline("stAdmGrant", "");
-  if (!accEmailOk(email)){ accSetInline("stAdmGrant", t("acc_email_bad"), "err"); $("admGrantEmail").focus(); return; }
-  if (["join_first","plan_1m","plan_3m","plan_6m"].indexOf(kind) < 0) return;
-  accBusy(btn, true);
-  try {
-    /* find the account. An admin may read every profile (schema section 3), so
-       this is a lookup rather than a search endpoint. */
-    var q = "/rest/v1/profiles?select=id,name,email&email=eq." + encodeURIComponent(email) + "&limit=1";
-    var r = await accFetch(q, { method: "GET" });
-    if (!r.ok){ accSetInline("stAdmGrant", t("acc_unreachable"), "err"); return; }
-    var rows = await accJson(r);
-    var prof = Array.isArray(rows) ? rows[0] : rows;
-    if (!prof || !prof.id){ accSetInline("stAdmGrant", admL(ADM_GRANT_NOUSER), "err"); return; }
-
-    var ins = await accFetch("/rest/v1/payment_requests", {
-      method: "POST",
-      headers: { "Prefer": "return=representation" },
-      /* note is the audit line. It is written by the admin's own client and
-         read back into the same admin list, so it is the one place a grant
-         explains itself later. */
-      /* txn_last6 and screenshot_path are simply ABSENT rather than null: a
-         grant has no transfer and no slip, and omitting them lets whatever
-         default the column carries apply instead of forcing a null into a
-         column that may not accept one. */
-      body: JSON.stringify({ user_id: prof.id, kind: kind, is_grant: true, amount_mmk: 0,
-                             note: "VIP grant" })
-    });
-    if (!ins.ok){ accSetInline("stAdmGrant", t("pay_fail"), "err"); return; }
-    $("admGrantEmail").value = "";
-    accSetInline("stAdmGrant", admL(ADM_GRANT_OK), "ok");
-    admLoad();
-  } catch(e){ accSetInline("stAdmGrant", friendlyError(e), "err"); }
-    finally { accBusy(btn, false); }
-}
-
-/* The proof lives in a private bucket, so an <img src> cannot fetch it — the
-   bearer token has to be on the request. Pull the bytes and hand the element
-   an object URL instead. Cached per path so re-rendering the list after an
-   approval does not re-download every screenshot. */
-async function admProof(imgEl, path){
-  if (!path) return;
-  if (adm.proofs[path]){ imgEl.src = adm.proofs[path]; return; }
-  try {
-    var r = await accFetch("/storage/v1/object/payment-proofs/" + path.split("/").map(encodeURIComponent).join("/"), { method: "GET" });
-    if (!r.ok) return;
-    var b = await r.blob();
-    var u = URL.createObjectURL(b);
-    adm.proofs[path] = u;
-    imgEl.src = u;
-  } catch(e){}
-}
-
-async function admReview(row, status, note, btn){
-  if (adm.busy) return;
-  adm.busy = true; accBusy(btn, true); setSt("stAdm", "");
-  try {
-    /* Only the review fields. plan_expires_at / allowed_devices are extended by
-       the database trigger on approval (see supabase/schema.sql) — writing them
-       here as well would double-extend every plan the trigger already handled. */
-    var body = { status: status, reviewed_at: new Date().toISOString(),
-                 reviewed_by: acc.sess.uid, note: note || null };
-    var r = await accFetch("/rest/v1/payment_requests?id=eq." + encodeURIComponent(row.id), {
-      method: "PATCH", headers: { "Prefer": "return=representation" }, body: JSON.stringify(body)
-    });
-    if (!r.ok){
-      /* 403 here is the RLS policy doing its job on a non-admin, which is the
-         one failure worth naming precisely rather than as a generic error. */
-      setSt("stAdm", (r.status === 401 || r.status === 403)
-        ? admL({my:"ခွင့်ပြုချက် မရှိပါ — Supabase RLS မှာ admin မဟုတ်သေးပါ",en:"Not permitted — this account is not an admin in Supabase RLS",shn:"ဢမ်ႇမီးသုၼ်ႇ — RLS admin ဢမ်ႇၸႂ်ႈ",kac:"Ahkang n nga ai — RLS admin n re",th:"ไม่ได้รับอนุญาต — บัญชีนี้ไม่ใช่แอดมินใน RLS",zh:"没有权限 — 此账号在 RLS 中不是管理员",vi:"Không có quyền — tài khoản này không phải admin trong RLS",id:"Tidak diizinkan — akun ini bukan admin di RLS",ms:"Tidak dibenarkan — akaun ini bukan admin dalam RLS"})
-        : t("acc_unreachable"), "err");
-      return;
-    }
-    await admLoad();
-    /* v5.30 QC — this called t("acc_saved"), a key that was never defined
-       anywhere in TR/TR_NEW/TR_L: every admin, in every language, saw the
-       literal string "acc_saved" instead of a confirmation. admL() is what
-       the 403 branch two lines up already uses for exactly this reason — the
-       admin panel's own strings live outside the main 37-language dictionary,
-       so t() silently returns the raw key on a miss (see t(), which returns
-       k itself when TR[k] is undefined) instead of falling back visibly.
-       Wording matches pt_saved_gal's already-shipped "saved" translations
-       rather than inventing new vocabulary. */
-    setSt("stAdm", admL({my:"သိမ်းပြီးပါပြီ ✓",en:"Saved ✓",shn:"သိမ်းယဝ်ႉ ✓",kac:"Makoi sai ✓",th:"บันทึกแล้ว ✓",zh:"已保存 ✓",vi:"Đã lưu ✓",id:"Tersimpan ✓",ms:"Disimpan ✓"}), "ok");
-  } catch(e){ setSt("stAdm", friendlyError(e), "err"); }
-    finally { adm.busy = false; accBusy(btn, false); }
+  setIcnText($("admH2"), "i-key", admL({my:"Admin Control Center",en:"Admin Control Center",shn:"Admin Control Center",kac:"Admin Control Center",th:"ศูนย์ควบคุมผู้ดูแล",zh:"管理员控制中心",vi:"Trung tâm quản trị",id:"Pusat Kontrol Admin",ms:"Pusat Kawalan Admin"}), { cls:"ic-h2" });
+  $("admIntro").textContent = admL({my:"အကောင့်၊ လိုင်စင်၊ ငွေပေးချေမှုနဲ့ စက်ပစ္စည်းလုပ်ဆောင်ချက်တွေကို 2FA စစ်ပြီးသော Admin session သီးသန့်ဖြင့် စီမံပါ။",en:"Manage accounts, licenses, payments and devices in a separate 2FA-verified admin session.",shn:"ၸတ်းၵၢၼ်ဢၶွင်ႉ၊ လၢႆႇသိၼ်၊ ငိုၼ်းလႄႈၶိူင်ႈ တီႈ admin session 2FA.",kac:"Account, license, payment hte device ni hpe 2FA admin session kaw galaw u.",th:"จัดการบัญชี ใบอนุญาต การชำระเงิน และอุปกรณ์ด้วยเซสชันแอดมินที่ผ่าน 2FA",zh:"请在独立且已通过 2FA 的管理员会话中管理账户、许可证、付款和设备。",vi:"Quản lý tài khoản, giấy phép, thanh toán và thiết bị trong phiên quản trị đã xác minh 2FA.",id:"Kelola akun, lisensi, pembayaran, dan perangkat dalam sesi admin terverifikasi 2FA.",ms:"Urus akaun, lesen, pembayaran dan peranti dalam sesi admin yang disahkan 2FA."});
+  setIcnText($("openAdminCenter"), "i-key", admL({my:"Admin Control Center ဖွင့်မယ်",en:"Open Admin Control Center",shn:"ပိုတ်ႇ Admin Control Center",kac:"Admin Control Center hpaw",th:"เปิดศูนย์ควบคุมผู้ดูแล",zh:"打开管理员控制中心",vi:"Mở Trung tâm quản trị",id:"Buka Pusat Kontrol Admin",ms:"Buka Pusat Kawalan Admin"}));
+  $("admSecurityNote").textContent = admL({my:"Student App session ဖြင့် admin လုပ်ဆောင်ချက် မလုပ်နိုင်ပါ။",en:"Student App sessions cannot perform administrator actions.",shn:"Student App session ဢမ်ႇႁဵတ်း admin action လႆႈ။",kac:"Student App session hte admin action n galaw lu ai.",th:"เซสชัน Student App ไม่สามารถทำคำสั่งผู้ดูแลได้",zh:"Student App 会话不能执行管理员操作。",vi:"Phiên Student App không thể thực hiện thao tác quản trị.",id:"Sesi Student App tidak dapat melakukan tindakan admin.",ms:"Sesi Student App tidak boleh melakukan tindakan admin."});
 }
 
 function admRender(){
   var card = $("cardAdmin"); if (!card) return;
-  var show = admIsAdmin();
-  card.style.display = show ? "" : "none";
-  if (!show) return;
-  var ul = $("admList"); ul.innerHTML = "";
-  var rows = adm.rows || [];
-  var pend = rows.filter(function(r){ return r && r.status === "pending"; }).length;
-  $("admCount").textContent = admL({my:"စောင့်ဆိုင်းနေ "+pend+" ခု · စုစုပေါင်း "+rows.length,en:pend+" pending · "+rows.length+" total",shn:"မီး "+pend+" · တင်းသဵင်ႈ "+rows.length,kac:pend+" la nga · "+rows.length+" yawng",th:"รอ "+pend+" · ทั้งหมด "+rows.length,zh:"待处理 "+pend+" · 共 "+rows.length,vi:pend+" chờ · "+rows.length+" tổng",id:pend+" menunggu · "+rows.length+" total",ms:pend+" menunggu · "+rows.length+" jumlah"});
-  $("admEmpty").textContent = rows.length ? "" : t("req_none");
-  /* v5.40.0 — app_settings is meant to hold ONE row. If it holds more, the
-     client picks deterministically and the approval trigger picks its own,
-     which can quote one price and open a period from a different row. Nothing
-     in the code can reconcile that; the owner has to delete the extra row. */
-  if (accSettingsRowCount > 1){
-    var warnLi = el("li");
-    warnLi.style.borderColor = "var(--gold)";
-    warnLi.textContent = admL({
-      my:"သတိ — app_settings မှာ အတန်း "+accSettingsRowCount+" တန်း ရှိနေပါတယ်။ တစ်တန်းသာ ရှိရပါမယ် — မလိုတဲ့အတန်းကို Supabase မှာ ဖျက်ပါ။ မဟုတ်ရင် စျေးနှုန်းနဲ့ သက်တမ်းက အတန်းမတူညီရာကနေ လာနိုင်ပါတယ်။",
-      en:"Warning — app_settings holds "+accSettingsRowCount+" rows. It must hold exactly one: delete the extra in Supabase, or a quoted price and an approved plan period can come from different rows.",
-      shn:"app_settings မီး "+accSettingsRowCount+" ထႅဝ် — လူဝ်ႇမီးထႅဝ်လဵဝ်ၵူၺ်း",
-      kac:"app_settings kaw "+accSettingsRowCount+" lang nga ai — langai sha ra ai",
-      th:"คำเตือน — app_settings มี "+accSettingsRowCount+" แถว ต้องมีแถวเดียวเท่านั้น",
-      zh:"警告 — app_settings 有 "+accSettingsRowCount+" 行，必须只有一行",
-      vi:"Cảnh báo — app_settings có "+accSettingsRowCount+" hàng, phải chỉ có một",
-      id:"Peringatan — app_settings punya "+accSettingsRowCount+" baris, harus tepat satu",
-      ms:"Amaran — app_settings ada "+accSettingsRowCount+" baris, mesti tepat satu"
-    });
-    ul.appendChild(warnLi);
-  }
-  rows.forEach(function(row){
-    if (!row) return;
-    var li = el("li");
-    var top = el("div","rq-top");
-    var k = el("span"); k.textContent = accKindLabel(row.kind);
-    /* v5.41.0 — the admin approves what a customer asked to buy, and for a
-       tiered join_first that is a device count as much as it is a price;
-       showing only the money would leave "how many devices for this
-       payment?" answerable only by opening the account afterward. */
-    if (row.kind === "join_first" && row.device_count) k.textContent += " (" + row.device_count + ")";
-    top.appendChild(k);
-    var dt = el("span","mut"); dt.textContent = accFmtDate(row.created_at); top.appendChild(dt);
-    var tx = el("span","mut"); tx.textContent = "···" + String(row.txn_last6 || ""); top.appendChild(tx);
-    var st = el("span","chip");
-    if (row.status === "approved"){ st.className = "chip on"; setIcnText(st, "i-check", t("req_approved")); }
-    else if (row.status === "rejected"){ st.className = "chip err"; setIcnText(st, "i-warn", t("req_rejected")); }
-    else { setIcnText(st, "i-clock", t("req_pending")); }
-    top.appendChild(st);
-    li.appendChild(top);
-
-    /* every value below came out of the database — textContent, never innerHTML */
-    /* v5.34 — a name and an email instead of a UUID. The uid stays, small and
-       last, because it is what a support conversation actually needs to
-       disambiguate two people with the same name. */
-    var prof = adm.who[row.user_id];
-    var who = el("div","adm-who");
-    who.textContent = prof
-      ? (String(prof.name || "").trim() || String(prof.email || "")) + (prof.email ? " · " + prof.email : "")
-      : String(row.user_id || "");
-    li.appendChild(who);
-    if (prof){
-      var uid = el("div","adm-uid"); uid.textContent = String(row.user_id || ""); li.appendChild(uid);
-    }
-
-    /* v5.34 — sent against due, side by side. This is the whole reason the
-       amount is collected: a 10,000 filed against a 50,000 plan is now visible
-       before approval instead of discovered afterwards. A missing amount says
-       so rather than rendering as zero, and an unknown price says nothing at
-       all rather than accusing the customer of underpaying. */
-    var due = admDue(row);
-    var tierRenewalUnknown = admTierRenewalDueUnknown(row);
-    var sent = (row.amount_mmk === null || row.amount_mmk === undefined) ? null : Number(row.amount_mmk);
-    var money = el("div","adm-money");
-    if (row.is_grant){
-      money.className = "adm-money grant";
-      setIcnText(money, "i-gem", admL(ADM_GRANT_TAG));
-    } else if (sent === null){
-      money.className = "adm-money warn";
-      money.textContent = admL(ADM_NO_AMOUNT);
-    } else {
-      var line = accFmtMMK(sent);
-      if (due !== null && due !== sent){
-        money.className = "adm-money warn";
-        line += "  →  " + admL(ADM_DUE_WAS).replace("{D}", accFmtMMK(due))
-              + " (" + (sent < due ? "−" : "+") + accFmtMMK(Math.abs(sent - due)) + ")";
-      } else if (due !== null){
-        money.className = "adm-money ok";
-        line += "  ✓";
-      }
-      money.textContent = line;
-    }
-    li.appendChild(money);
-    if (row.note){ var nt = el("div","mut"); nt.textContent = t("req_note").replace("{T}", String(row.note)); li.appendChild(nt); }
-
-    if (row.screenshot_path){
-      var im = document.createElement("img");
-      im.className = "adm-proof"; im.loading = "lazy"; im.alt = "";
-      im.setAttribute("aria-label", admL({my:"ငွေလွှဲပြေစာ",en:"Payment proof",shn:"ၶႅပ်းငိုၼ်း",kac:"Gumhpraw sumla",th:"สลิปโอนเงิน",zh:"付款凭证",vi:"Biên lai",id:"Bukti transfer",ms:"Resit"}));
-      li.appendChild(im);
-      admProof(im, row.screenshot_path);
-    }
-
-    if (row.status === "pending"){
-      var note = document.createElement("input");
-      note.type = "text"; note.className = "inp adm-note";
-      note.placeholder = admL(ADM_NOTE_PH);
-      note.setAttribute("aria-label", admL(ADM_NOTE_PH));
-      li.appendChild(note);
-      var act = el("div","adm-act");
-      var ok = el("button","btn btn-gold"); setIcnText(ok, "i-check", admL(ADM_APPROVE));
-      ok.disabled = tierRenewalUnknown;
-      if (tierRenewalUnknown) ok.title = t("pay_price_na");
-      ok.onclick = function(){ admReview(row, "approved", note.value.trim(), ok); };
-      var no = el("button","btn"); setIcnText(no, "i-close", admL(ADM_REJECT));
-      no.onclick = function(){ admReview(row, "rejected", note.value.trim(), no); };
-      act.appendChild(ok); act.appendChild(no);
-      li.appendChild(act);
-    }
-    ul.appendChild(li);
-  });
+  card.style.display = admIsAdmin() ? "" : "none";
 }
 
 /* ============================================================

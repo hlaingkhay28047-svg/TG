@@ -341,31 +341,29 @@ async function look(browser, sess, prof, label) {
     adminLapsed.wall === true && adminLapsed.adminCard === true,
     { wall: adminLapsed.wall, adminCard: adminLapsed.adminCard });
 
-  /* ---- K: the client must not extend the plan itself ---- */
-  report("K) approving writes only the review fields — the plan is the trigger's job",
-    /var body = \{ status: status, reviewed_at: new Date\(\)\.toISOString\(\),\s*reviewed_by: acc\.sess\.uid, note: note \|\| null \};/.test(src) &&
-    /* the colon matters: admReview's own comment NAMES plan_expires_at to
-       explain who owns it, and a bare-word search flags that prose as a write */
-    !/admReview[\s\S]{0,1200}plan_expires_at\s*:/.test(src) &&
-    !/admReview[\s\S]{0,1200}plan_status\s*:/.test(src),
-    { onlyReviewFields: /reviewed_by: acc\.sess\.uid, note: note \|\| null \};/.test(src) });
+  /* ---- K: Student App never becomes an administration client ---- */
+  const adminCard = (src.match(/<section class="card" id="cardAdmin"[\s\S]*?<\/section>/) || [""])[0];
+  report("K) the Student App hands administrators to the MFA Control Center",
+    /id="openAdminCenter" href="\.\.\/admin\/"/.test(adminCard) &&
+    !/btnAdmReload|btnAdmGrant|admList/.test(adminCard) &&
+    !/if \(admIsAdmin\(\)\) admLoad\(\)/.test(src),
+    { linked:/id="openAdminCenter" href="\.\.\/admin\/"/.test(adminCard),
+      legacyControls:/btnAdmReload|btnAdmGrant|admList/.test(adminCard) });
 
   /* ---- L: the half that is not in this repo at runtime ---- */
   const sqlPath = path.join(__dirname, "..", "supabase", "schema.sql");
   const sql = fs.existsSync(sqlPath) ? fs.readFileSync(sqlPath, "utf8") : "";
-  const adminUpdatePolicy = (sql.match(
-    /create policy payreq_update_admin_only[\s\S]*?;/) || [""])[0];
-  const authenticatedAdminGate =
-    /for update to public/.test(adminUpdatePolicy) &&
-    /using \(public\.hnk_request_role\(\) = 'authenticated'\s+and public\.hnk_is_admin\(\)\)/
-      .test(adminUpdatePolicy) &&
-    /with check \(public\.hnk_request_role\(\) = 'authenticated'\s+and public\.hnk_is_admin\(\)\)/
-      .test(adminUpdatePolicy);
-  report("L) the RLS that actually enforces any of this ships with the repo",
-    authenticatedAdminGate &&
+  const servicePolicy = (sql.match(
+    /create policy payreq_service_all[\s\S]*?;/) || [""])[0];
+  const noBrowserReview =
+    !/create policy payreq_update_admin_only/.test(sql) &&
+    /revoke update, delete on public\.payment_requests from authenticated/.test(sql) &&
+    /request_role\(\) = 'service_role'/.test(servicePolicy);
+  report("L) payment review is service-only; no browser-admin RLS path ships",
+    noBrowserReview &&
     /create trigger hnk_apply_payment/.test(sql) &&
     /security definer/.test(sql),
-    { found: !!sql, adminOnlyUpdate: authenticatedAdminGate,
+    { found: !!sql, noBrowserReview,
       trigger: /hnk_apply_payment/.test(sql) });
 
   /* ---- M/N/O: the wall has to be a REDIRECT, not just a set of hide rules ----

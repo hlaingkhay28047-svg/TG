@@ -5,6 +5,7 @@ const ADMIN_ACTIONS = Object.freeze([
   "extend_license", "change_expiry", "reset_phone", "reset_computer", "force_logout",
   "set_web_app_enabled", "set_ccx_download_enabled", "set_panel_enabled", "password_reset",
   "view_login_history", "view_device_history", "view_download_history", "manage_panel_versions",
+  "list_payment_requests", "review_payment", "view_payment_proof", "grant_payment",
 ]);
 
 function authorizeAdminAction(input) {

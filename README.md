@@ -37,19 +37,21 @@ old service is retired. Every new artifact also remains disabled until it has
 passed Adobe UXP Developer Tool packaging plus real Photoshop install/launch
 acceptance on the supported platforms.
 
-## Supabase — accounts, the Premium wall and the admin panel
+## Unified accounts, license wall and Admin Control Center
 
-From web v5.30.0 the app opens on a login wall: no session shows sign-in, a
-signed-in account with no active plan shows the buy flow, and only an active
-plan reaches the studio. A foreground tab re-reads the profile every five
-minutes, so an expiry or an admin approval lands without a manual refresh, and
-a sign-in older than 30 days is asked to log in again. Admins get a payment
-card on Home that approves or rejects each request.
+The app opens on a login wall: no session shows sign-in, a signed-in account
+without approval and an active license remains blocked, and only an entitled
+account reaches the studio. A foreground tab re-reads entitlement state so an
+expiry, suspension or approval takes effect without a manual refresh. The
+Student App contains only a translated handoff to `/admin`; payment review,
+VIP grants and proof viewing live in that dedicated control center.
 
-**None of that is a security boundary.** `docs/` is a static site holding the
-anon key, so every request the browser makes can be replayed by hand. The wall
-and the admin card are user interface. What actually stops a customer approving
-their own payment is row-level security, and it lives in `supabase/schema.sql`.
+**None of the UI is a security boundary.** `docs/` is static, so every ordinary
+browser request can be replayed by hand. Own-account access is constrained by
+row-level security in `supabase/schema.sql`; every cross-account admin action
+uses the API's `admin` client session, current MFA, role checks, service-owned
+transaction and audit log. There is no browser policy that can approve a
+payment, file a grant for another account or read another student's proof.
 
 Apply it once — Supabase dashboard → SQL editor → paste → Run (it is
 idempotent) — then grant yourself admin. It creates the four tables it
@@ -65,9 +67,8 @@ the current expiry, so renewing early adds time instead of losing it), and a
 guard trigger reverts any attempt by a non-admin to write their own
 `plan_status`, `plan_expires_at`, `allowed_devices` or `is_admin`.
 
-Until it is applied, treat the admin panel as a convenience and assume any
-signed-in user could approve themselves. Section 9 of the file is the check
-that proves it took.
+Until it is applied, the required own-account RLS boundary does not exist; do
+not expose the app. Section 9 of the file is the check that proves it took.
 
 **Re-run it after web v5.32.0.** That release closed three holes in the file
 itself, so a project still running the older schema is not protected by the
@@ -480,10 +481,9 @@ Section 0 now declares `profiles`, `payment_requests`, `app_settings` and
 throughout — so it is a no-op on a live project, and section 1 still adds the
 columns an existing table is missing. Two things stay deliberately absent, and
 are commented as such: no foreign key from `payment_requests.user_id` to
-`profiles.id`, because `admLoadWho` fetches names in a second request precisely
-*because* there is none, and declaring one would make a fresh project behave
-differently from the live one; and no signup trigger, because v5.38.0 moved
-that job to `profiles_insert_self`.
+`profiles.id`, because both already reference the same auth user and the strict
+admin service joins them by that id; and no signup trigger, because v5.38.0
+moved that job to `profiles_insert_self`.
 
 **The device cap counted a re-registration as a new device.** The unique index
 on `(user_id, device_id)` was documented as making a second POST for the same
@@ -580,31 +580,31 @@ The Photoshop panel's gate shipped the identical bug in v6.22.0 and was fixed
 the same way. Same signal, same wrong reading, two codebases — which is why both
 now say it in a comment rather than only in a commit message.
 
-## The owner's own account is the owner's own (v5.37.0)
+## The owner's own account is the owner's own (v5.37.0, retired admin path)
 
-`payreq_select_own_or_admin` and `devices_all_own_or_admin` return every row to
-an admin, on purpose. The client rendered all of them into the *customer* cards:
+The old `payreq_select_own_or_admin` and `devices_all_own_or_admin` policies
+returned every row to an admin browser. The client rendered those rows into the
+*customer* cards:
 "MY PAYMENT REQUESTS" listed a customer's row, "MY DEVICES" listed their
 machines with a working Remove button, and the buy panel adopted their pending
 request — so the owner saw "waiting for approval" against a stranger's reference
-and could not file a payment of their own at all. Both loaders are now scoped to
-the signed-in user. That filter is not a security control; RLS is. It is a scope
-control, for the case where RLS is doing exactly what it should.
+and could not file a payment of their own at all. Those cross-account browser
+policies and embedded admin loaders are now removed. Customer loaders are
+own-account only; the dedicated Admin Control Center uses strict server routes.
 
 Three more from the same audit:
 
-- The v5.34 amount-vs-due check was **dead on any fresh admin session**.
-  `admDue()` needs `acc.settings`, and `acc.settings` was only ever loaded by
-  opening the admin's own Buy accordion — so an owner reviewing payments on a
-  phone saw a 10,000 underpayment rendered identically to a 37,000 payment in
-  full. `admLoad()` now awaits the settings before it renders.
+- The v5.34 embedded amount-vs-due check depended on Student App state. The
+  replacement admin list is computed by the server and no longer trusts or
+  depends on an owner's customer-facing Buy accordion.
 - `ACC_REQ_KIND` had no `join_first` entry and fell back to `pay_1m`, so a filed
   500,000 joining fee read **"1 month"** to the customer and to the owner, in
   every language. The fallback now names the unknown kind instead of quietly
   claiming to be the cheapest plan.
 - `profiles.email` and `profiles.name` were writable by the owning customer
-  while the approval queue printed them as *who filed this payment*, `admGrant`
-  looked students up by them, and this README hands out admin rights with
+  while the approval queue printed them as *who filed this payment* and admin
+  grants resolve the target by normalized email. This README hands out admin
+  rights with
   `where email = '...'`. The guard trigger now restores both on update, and a
   unique index on `lower(email)` means the database refuses a duplicate identity
   rather than letting `limit=1` pick one arbitrarily.
@@ -791,15 +791,13 @@ pays less than a studio, with no second price list and no code change:
 update public.profiles set price_1m_override = 10000 where email = 'student@example.com';
 ```
 
-**A free period for a VIP student** is *filed*, not silently written. The admin
-card has a form for it: type the email, pick the period, and it lands in the
-approval queue as a grant with no money attached, which you then approve like
-any payment. Two things follow. The same trigger extends the plan, so a grant
-and a purchase can never drift apart; and "why does this account have Premium?"
-has an answer in the same list as every payment, instead of being an edit
-nobody recorded. Grant `join_first` for a student who has never joined — that
-both opens the period and clears the joining fee, which is what "first one
-free" means.
+**A free period for a VIP student** is granted only from the dedicated Admin
+Control Center. Type the email, pick the period and provide an audit note. The
+strict MFA-protected server action creates and approves the grant atomically in
+one transaction, so the same entitlement trigger extends the plan and the audit
+log explains why access changed. Grant `join_first` for a student who has never
+joined — that both opens the period and clears the joining fee, which is what
+"first one free" means.
 
 **What the admin sees on each request**, and none of it was there before:
 the customer's name and email rather than a UUID, the amount they say they
@@ -810,8 +808,9 @@ compares it to a price or acts on it. It exists so a 10,000 filed against a
 customer who underpaid can still file, deliberately — otherwise the mistake
 never reaches the person who can resolve it and the money is simply gone.
 
-Approval remains the only thing that grants access. This wave adds a second way
-to *file* a request and no second way to *approve* one.
+Approval remains the only payment transition that grants access. A VIP grant
+uses that same transition inside one audited server transaction; it does not
+create a second entitlement path.
 
 ### One small thing still open: Tai Le and Tai Lue
 

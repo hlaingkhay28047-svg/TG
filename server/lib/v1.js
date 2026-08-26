@@ -417,6 +417,24 @@ async function handle(input) {
   if (pathname==="/v1/admin/students"&&method==="GET") {
     return {status:200,body:await adminCall(identity,context,(client,id)=>admin.students(client,id,input.params))};
   }
+  if (pathname==="/v1/admin/payment-requests"&&method==="GET") {
+    return {status:200,body:await adminCall(identity,context,
+      (client,id)=>admin.listPaymentRequests(client,id,input.params))};
+  }
+  if (pathname==="/v1/admin/payment-grants"&&method==="POST") {
+    return {status:201,body:await adminCall(identity,context,
+      (client,id,ctx)=>admin.grantPayment(client,id,body,ctx))};
+  }
+  const paymentMatch=/^\/v1\/admin\/payment-requests\/([0-9a-f-]+)\/(review|proof)$/.exec(pathname);
+  if (paymentMatch&&paymentMatch[2]==="review"&&method==="POST") {
+    return {status:200,body:await adminCall(identity,context,
+      (client,id,ctx)=>admin.reviewPayment(client,id,paymentMatch[1],body,ctx))};
+  }
+  if (paymentMatch&&paymentMatch[2]==="proof"&&method==="GET") {
+    const proof=await adminCall(identity,context,
+      (client,id,ctx)=>admin.paymentProof(client,id,paymentMatch[1],ctx));
+    return {status:200,raw:proof.raw,contentType:proof.contentType};
+  }
   const studentMatch=/^\/v1\/admin\/students\/([0-9a-f-]+)(\/actions)?$/.exec(pathname);
   if (studentMatch&&method==="GET"&&!studentMatch[2]) {
     return {status:200,body:await adminCall(identity,context,(client,id)=>admin.studentDetail(client,id,studentMatch[1]))};

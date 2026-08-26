@@ -52,6 +52,7 @@ jobs:
           node test/verify_unified_backend_contract.js
           node test/verify_unified_security.js
           node test/verify_unified_api_contracts.js
+          node test/verify_admin_payments.js
           node test/verify_unified_artifacts.js
           node test/verify_unified_auth_security.js
           node test/verify_unified_frontend.js

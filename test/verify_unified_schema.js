@@ -298,11 +298,13 @@ for (const item of source.filter(entry => entry.exists)) {
     "devices_all_own", "proofs_read_own"];
   const missingOwnPolicies = ownPolicies.filter(name => !policyBody(sql, name));
   const adminBearingOwnPolicies = ownPolicies.filter(name => /hnk_is_admin/i.test(policyBody(sql, name)));
-  report(label + " legacy bearer policies never grant cross-account admin reads or updates",
+  report(label + " legacy bearer policies never grant cross-account browser administration",
     missingOwnPolicies.length === 0 && adminBearingOwnPolicies.length === 0 &&
-      !policyBody(sql, "payreq_update_admin_only"),
+      !policyBody(sql, "payreq_update_admin_only") &&
+      !policyBody(sql, "payreq_insert_admin_grant"),
     { missingOwnPolicies, adminBearingOwnPolicies,
-      directPaymentUpdate: Boolean(policyBody(sql, "payreq_update_admin_only")) });
+      directPaymentUpdate: Boolean(policyBody(sql, "payreq_update_admin_only")),
+      browserAdminGrant: Boolean(policyBody(sql, "payreq_insert_admin_grant")) });
 
   if (item.dialect === "roleless") {
     const withoutForce = Object.keys(canonical).filter(table => !hasForceRls(sql, table));

@@ -45,9 +45,8 @@
       mismatch WARNS without blocking — a customer who underpaid must still be
       able to file, or the mistake never reaches the person who can fix it.
    F) The insert carries amount_mmk and never carries is_grant.
-   G) The admin queue names the customer and shows sent against due, flagging a
-      mismatch.
-   H) A grant posts is_grant with no money, no reference and no slip.
+   G) Payment review is exposed only in the dedicated MFA Admin Control Center.
+   H) VIP grants use the strict server API; no browser RLS grant exists.
    I) The schema forbids from the other side everything the client is trusted
       not to do here.
    J) No console error anywhere in the above.
@@ -60,6 +59,9 @@ const path = require("path");
 const PORT = process.env.PORT || 8931;
 const URL_ = "http://127.0.0.1:" + PORT + "/index.html";
 const SQL = fs.readFileSync(path.join(__dirname, "..", "supabase", "schema.sql"), "utf8");
+const ADMIN_HTML = fs.readFileSync(path.join(__dirname, "..", "docs", "admin", "index.html"), "utf8");
+const ADMIN_JS = fs.readFileSync(path.join(__dirname, "..", "docs", "admin", "admin.js"), "utf8");
+const APP_HTML = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
 
 const UID = "11111111-2222-3333-4444-555555555555";
 /* deliberately not round numbers, and deliberately not the owner's real ones:
@@ -81,10 +83,12 @@ report("I1) a customer may file the joining fee but may never mark a row a grant
   { hasJoin: /join_first/.test(insertOwn), forbidsGrant: /is_grant/.test(insertOwn) });
 
 const insertGrant = (SQL.match(/create policy payreq_insert_admin_grant[\s\S]*?\);/) || [""])[0];
-report("I2) only an admin may file a grant, and only one with no money attached",
-  /hnk_is_admin\(\)/.test(insertGrant) && /is_grant\s*=\s*true/.test(insertGrant) &&
-  /coalesce\(amount_mmk, 0\)\s*=\s*0/.test(insertGrant),
-  { len: insertGrant.length });
+report("I2) browser sessions cannot file cross-account grants",
+  insertGrant.length === 0 &&
+  /id="paymentGrantForm"/.test(ADMIN_HTML) &&
+  /\/api\/v1\/admin\/payment-grants/.test(ADMIN_JS),
+  { browserGrantPolicy:insertGrant.length > 0,
+    strictAdminForm:/id="paymentGrantForm"/.test(ADMIN_HTML) });
 
 const guard = (SQL.match(/create or replace function public\.hnk_guard_profile_plan[\s\S]*?\$\$;/) || [""])[0];
 const guarded = ["joined_paid", "price_1m_override", "price_3m_override", "price_6m_override", "price_join_first_override"];
@@ -100,8 +104,8 @@ report("I4) approving the joining fee is what sets joined_paid, and nothing else
 /* v5.37.0 — identity. profiles_update_own_or_admin is a whole-row grant and the
    guard restored every plan and price column while leaving email and name
    writable, yet three things key on them: the approval queue prints
-   `name · email` as who filed a payment, admGrant looks a student up by typed
-   email, and this project's own instructions hand out admin and per-customer
+   `name · email` as who filed a payment, the strict admin grant endpoint
+   resolves the target by normalized email, and this project's own instructions hand out admin and per-customer
    prices with `where email = '...'`. */
 report("I6) a customer cannot rewrite the identity the owner approves payments against",
   /new\.email\s*:=\s*old\.email/.test(guard) && /new\.name\s*:=\s*old\.name/.test(guard),
@@ -727,230 +731,19 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     noOffer.submitDisabled && noOffer.posted === 0,
     noOffer);
 
-  /* ---------- G) the admin queue ---------- */
-  const OTHER = "99999999-8888-7777-6666-555555555555";
-  await boot({
-    login: session,
-    profile: profile({ joined_paid: true, is_admin: true }),
-    settings: [PRICE],
-    who: [{ id: OTHER, name: "Nang Mo", email: "nang@example.com", price_1m_override: null }],
-    requests: [
-      { id: "r1", user_id: OTHER, kind: "plan_1m", txn_last6: "111111", amount_mmk: 37000,
-        status: "pending", created_at: "2026-08-21T01:00:00Z", is_grant: false },
-      { id: "r2", user_id: OTHER, kind: "plan_1m", txn_last6: "222222", amount_mmk: 10000,
-        status: "pending", created_at: "2026-08-21T02:00:00Z", is_grant: false },
-      { id: "r3", user_id: OTHER, kind: "plan_1m", txn_last6: null, amount_mmk: 0,
-        status: "pending", created_at: "2026-08-21T03:00:00Z", is_grant: true },
-    ],
-  });
-  await login();
-  await page.evaluate(() => admLoad());
-  await page.waitForTimeout(700);
-  const list = await page.evaluate(() => [...document.querySelectorAll("#admList li")].map(li => ({
-    who: (li.querySelector(".adm-who") || {}).textContent || "",
-    uid: (li.querySelector(".adm-uid") || {}).textContent || "",
-    money: (li.querySelector(".adm-money") || {}).textContent || "",
-    cls: (li.querySelector(".adm-money") || {}).className || "",
-  })));
-  report("G1) the queue names the customer instead of printing a UUID",
-    list.length === 3 && list.every(r => r.who.indexOf("Nang Mo") >= 0 && r.who.indexOf("nang@example.com") >= 0) &&
-    list.every(r => r.uid.indexOf("99999999") >= 0),
-    list.map(r => r.who));
-  report("G2) a matching payment reads clean, a short one is flagged with both numbers",
-    /ok/.test(list[0].cls) && list[0].money.indexOf("37,000") >= 0 &&
-    /warn/.test(list[1].cls) && list[1].money.indexOf("10,000") >= 0 &&
-    list[1].money.indexOf("37,000") >= 0 && list[1].money.indexOf("27,000") >= 0,
-    list.map(r => r.cls + " " + r.money));
-  report("G3) a grant is labelled a grant rather than shown as a 0 MMK payment",
-    /grant/.test(list[2].cls) && !/0 MMK/.test(list[2].money), list[2]);
-
-  /* ---------- G6/G7) tier renewal verification is fresh or neutral ----------
-     A cached profile may still be useful for the customer's NAME, but it must
-     never validate today's renewal price until this admLoad has read today's
-     allowed_devices. New server-authored quotes need no profile fallback at
-     all and therefore remain approvable while the name/count read is pending. */
-  const tierAdmin = await page.evaluate(({ other, tiers }) => {
-    const row = { id: "rt", user_id: other, kind: "plan_1m", txn_last6: "444444",
-      amount_mmk: tiers.price_1m * 4, status: "pending", created_at: "2026-08-21T05:00:00Z", is_grant: false };
-    const state = () => {
-      const li = document.querySelector("#admList li");
-      const buttons = li ? li.querySelectorAll(".adm-act button") : [];
-      const money = li && li.querySelector(".adm-money");
-      return {
-        due: admDue(adm.rows[0]),
-        cls: money ? money.className : "",
-        money: money ? money.textContent : "",
-        approveDisabled: !!(buttons[0] && buttons[0].disabled),
-        rejectDisabled: !!(buttons[1] && buttons[1].disabled),
-      };
-    };
-    acc.settings = tiers;
-    adm.rows = [row];
-    adm.who = { [other]: { id: other, name: "Nang Mo", email: "nang@example.com",
-      allowed_devices: 1, price_1m_override: null } };
-    adm.whoFresh = {};
-    admRender();
-    const neutral = state();
-
-    adm.rows = [Object.assign({}, row, { amount_mmk: 1, quoted_amount_mmk: 1624000, pricing_mode: "tier" })];
-    admRender();
-    const quoted = state();
-
-    adm.rows = [row];
-    adm.who[other].allowed_devices = 4;
-    adm.whoFresh[other] = true;
-    admRender();
-    const fresh = state();
-    return { neutral, quoted, fresh };
-  }, { other: OTHER, tiers: TIERS });
-  report("G6) a tier renewal is neutral and unapprovable until its device count is fresh; Reject stays available",
-    tierAdmin.neutral.due === null && !/warn|ok/.test(tierAdmin.neutral.cls) &&
-    tierAdmin.neutral.approveDisabled && !tierAdmin.neutral.rejectDisabled &&
-    tierAdmin.fresh.due === TIERS.price_1m * 4 && /ok/.test(tierAdmin.fresh.cls) &&
-    !tierAdmin.fresh.approveDisabled,
-    tierAdmin);
-  report("G6b) stored claim and authoritative quote stay distinct; an admin may deliberately accept the warned mismatch",
-    tierAdmin.quoted.due === 1624000 && /warn/.test(tierAdmin.quoted.cls) &&
-    tierAdmin.quoted.money.indexOf("1 MMK") >= 0 &&
-    tierAdmin.quoted.money.indexOf("1,624,000 MMK") >= 0 &&
-    tierAdmin.quoted.money.indexOf("1,623,999 MMK") >= 0 &&
-    !tierAdmin.quoted.approveDisabled && !tierAdmin.quoted.rejectDisabled,
-    tierAdmin.quoted);
-
-  const refreshedCounts = await page.evaluate(async ({ other, tiers }) => {
-    const prof = n => ({ id: other, name: "Nang Mo", email: "nang@example.com",
-      allowed_devices: n, price_1m_override: null });
-    const req = (id, n) => ({ id, user_id: other, kind: "plan_1m", txn_last6: "555555",
-      amount_mmk: tiers.price_1m * n, status: "pending", created_at: "2026-08-21T06:00:00Z", is_grant: false });
-    acc.settings = tiers;
-    adm.who = { [other]: prof(1) };             /* deliberately stale cache */
-    adm.whoFresh = { [other]: true };
-    window.__cfg.requests = [req("r4", 4)];
-    window.__cfg.who = [prof(4)];
-    await admLoad();
-    await new Promise(r => setTimeout(r, 100));
-    const first = { count: adm.who[other] && adm.who[other].allowed_devices,
-      fresh: !!adm.whoFresh[other], due: admDue(adm.rows[0]) };
-    window.__cfg.requests = [req("r5", 5)];
-    window.__cfg.who = [prof(5)];
-    await admLoad();
-    await new Promise(r => setTimeout(r, 100));
-    const second = { count: adm.who[other] && adm.who[other].allowed_devices,
-      fresh: !!adm.whoFresh[other], due: admDue(adm.rows[0]) };
-    return { first, second };
-  }, { other: OTHER, tiers: TIERS });
-  report("G7) every admLoad refetches profiles, so a changed device count cannot reuse a stale renewal total",
-    refreshedCounts.first.count === 4 && refreshedCounts.first.fresh &&
-    refreshedCounts.first.due === TIERS.price_1m * 4 &&
-    refreshedCounts.second.count === 5 && refreshedCounts.second.fresh &&
-    refreshedCounts.second.due === TIERS.price_1m * 5,
-    refreshedCounts);
-
-  /* ---------- G0) the same queue, on a session that never opened Buy ----------
-     The v5.34 amount check lives in admDue(), which opens
-     `var st = acc.settings; if (!st) return null;` — and acc.settings was only
-     ever loaded by opening the admin's OWN buy accordion. Every assertion above
-     passes because login() opens it. An owner reviewing payments on a phone, or
-     after clearing site data, had no amount check at all: the underpayment and
-     the payment in full rendered identically. */
-  await boot({
-    login: session,
-    profile: profile({ joined_paid: true, is_admin: true }),
-    settings: [PRICE],
-    who: [{ id: OTHER, name: "Nang Mo", email: "nang@example.com", price_1m_override: null }],
-    requests: [
-      { id: "r1", user_id: OTHER, kind: "plan_1m", txn_last6: "111111", amount_mmk: 37000,
-        status: "pending", created_at: "2026-08-21T01:00:00Z", is_grant: false },
-      { id: "r2", user_id: OTHER, kind: "plan_1m", txn_last6: "222222", amount_mmk: 10000,
-        status: "pending", created_at: "2026-08-21T02:00:00Z", is_grant: false },
-      { id: "r4", user_id: OTHER, kind: "join_first", txn_last6: "333333", amount_mmk: 480000,
-        status: "pending", created_at: "2026-08-21T04:00:00Z", is_grant: false },
-    ],
-    devices: [{ id: "d-other", user_id: OTHER, device_id: "dev-other", label: "Nang's phone",
-                created_at: "2026-08-20T00:00:00Z" },
-              { id: "d-mine", user_id: UID, device_id: "dev-mine", label: "My laptop",
-                created_at: "2026-08-20T00:00:00Z" }],
-  });
-  await loginPlain();
-  await page.evaluate(() => admLoad());
-  await page.waitForTimeout(900);
-  const fresh = await page.evaluate(() => ({
-    settingsLoaded: !!acc.settings,
-    rows: [...document.querySelectorAll("#admList li")].map(li => ({
-      money: (li.querySelector(".adm-money") || {}).textContent || "",
-      cls: (li.querySelector(".adm-money") || {}).className || "",
-      kind: (li.querySelector(".adm-kind") || li.querySelector("li > div > span") || {}).textContent || "",
-    })),
-  }));
-  report("G0) the amount check works on a session that never opened the Buy panel",
-    fresh.settingsLoaded && fresh.rows.length === 3 &&
-    /warn/.test(fresh.rows[1].cls) && fresh.rows[1].money.indexOf("37,000") >= 0,
-    fresh);
-
-  /* G4) the joining fee is named. ACC_REQ_KIND had no join_first key and fell
-     back to pay_1m, so a filed 480,000 read "1 month" to the customer in their
-     own record and to the owner in this queue, in all 37 languages. */
-  const kindLabels = await page.evaluate(() => ({
-    join: t("pay_join"), month: t("pay_1m"),
-    rendered: [...document.querySelectorAll("#admList li")]
-      .map(li => (li.textContent || "").trim()),
-  }));
-  report("G4) a joining fee is labelled a joining fee, not '1 month'",
-    kindLabels.join !== kindLabels.month &&
-    kindLabels.rendered[2].indexOf(kindLabels.join) >= 0 &&
-    kindLabels.rendered[2].indexOf(kindLabels.month) < 0,
-    kindLabels);
-
-  /* G5) the owner's own customer-facing cards are their own. RLS returns every
-     row to an admin on purpose, and the client used to render all of them: the
-     buy panel adopted a customer's pending request — replacing the owner's own
-     panel with "waiting for approval" quoting a stranger's reference — and MY
-     DEVICES listed customers' machines with a working Remove button. */
-  await page.evaluate(async () => { await accLoadRequests(); await accLoadDevices(); });
-  await page.waitForTimeout(400);
-  const mine = await page.evaluate(() => ({
-    pendingUser: acc.pending ? acc.pending.user_id : null,
-    myRequests: (acc.requests || []).map(r => r.user_id),
-    myDevices: (acc.devices || []).map(d => d.user_id),
-  }));
-  report("G5) the admin's own requests and devices are the admin's own",
-    mine.pendingUser === null &&
-    mine.myRequests.every(u => u === UID) &&
-    mine.myDevices.length === 1 && mine.myDevices[0] === UID,
-    mine);
-
-  /* ---------- H) filing a grant ---------- */
-  await page.evaluate(() => { window.__sb.length = 0; });
-  await page.evaluate(() => {
-    localStorage.setItem("__cfg", JSON.stringify(Object.assign(JSON.parse(localStorage.getItem("__cfg")),
-      { byEmail: [{ id: "44444444-0000-0000-0000-000000000000", name: "Sai Noom", email: "student@example.com" }] })));
-    window.__cfg.byEmail = [{ id: "44444444-0000-0000-0000-000000000000", name: "Sai Noom", email: "student@example.com" }];
-  });
-  await page.fill("#admGrantEmail", "student@example.com");
-  await page.selectOption("#admGrantKind", "join_first");
-  await page.click("#btnAdmGrant");
-  await page.waitForTimeout(600);
-  const grant = await page.evaluate(() => {
-    const p = window.__sb.filter(x => x.url.indexOf("/rest/v1/payment_requests") >= 0 && x.method === "POST").pop();
-    return { body: p ? JSON.parse(p.body) : null,
-             st: (document.getElementById("stAdmGrant").textContent || "").trim() };
-  });
-  report("H) a grant posts is_grant with no money, no reference and no slip, for the named student",
-    !!grant.body && grant.body.is_grant === true && grant.body.amount_mmk === 0 &&
-    grant.body.kind === "join_first" &&
-    grant.body.user_id === "44444444-0000-0000-0000-000000000000" &&
-    !("txn_last6" in grant.body) && !("screenshot_path" in grant.body) &&
-    !("status" in grant.body) && grant.st.length > 0,
-    { keys: grant.body && Object.keys(grant.body).sort(), st: grant.st });
-
-  const badEmail = await page.evaluate(async () => {
-    window.__cfg.byEmail = [];
-    document.getElementById("admGrantEmail").value = "nobody@example.com";
-    await admGrant();
-    return (document.getElementById("stAdmGrant").textContent || "").trim();
-  });
-  report("H2) granting to an address with no account says so rather than failing silently",
-    badEmail.length > 0 && /no account/i.test(badEmail), { st: badEmail });
+  /* Cross-account review and VIP grants moved out of the Student App. The
+     dedicated admin contract below stays active in every run, while the
+     server-level suite exercises authorization, validation and transactions. */
+  report("G/H) payments and VIP grants live only in the MFA Admin Control Center",
+    /id="panel-payments"/.test(ADMIN_HTML) &&
+    /id="paymentGrantForm"/.test(ADMIN_HTML) &&
+    /\/api\/v1\/admin\/payment-requests/.test(ADMIN_JS) &&
+    /\/api\/v1\/admin\/payment-grants/.test(ADMIN_JS) &&
+    /id="openAdminCenter" href="\.\.\/admin\/"/.test(APP_HTML) &&
+    !/btnAdmReload|btnAdmGrant|admList/.test(
+      (APP_HTML.match(/<section class="card" id="cardAdmin"[\s\S]*?<\/section>/) || [""])[0]),
+    { adminPanel:/id="panel-payments"/.test(ADMIN_HTML),
+      appHandoff:/id="openAdminCenter" href="\.\.\/admin\/"/.test(APP_HTML) });
 
   /* ---- K) an approved DEVICE SLOT is not an approved PLAN ----
      accPollOnce toasted acc_plan_active on any approved row, so a customer
@@ -983,59 +776,6 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     !/0/.test(slot.said[0]) &&
     slot.devGrp.indexOf("open") >= 0 && slot.planGrp.indexOf("open") < 0,
     slot);
-
-  /* ---- L) a duplicated app_settings row is named, not absorbed ----
-     app_settings is meant to hold exactly one row. v5.39.0 made the CLIENT
-     deterministic about which row it reads, but it cannot make the client and
-     the approval trigger agree — the trigger picks its own row inside
-     Postgres. With two rows a customer can be quoted one price and granted a
-     period computed from the other. No code can reconcile that; only the owner
-     can delete the extra row, so the admin panel says so out loud. */
-  /* the third row is deliberately NARROW (a key/value row, not a pricing row).
-     Without it wide.length === rows.length and the assertion below cannot tell
-     the two apart — a one-word change to count every row instead of every
-     pricing row would warn a correctly-configured owner and still pass. */
-  const dupSettings = [
-    Object.assign({}, PRICE),
-    Object.assign({}, PRICE, { price_1m: 99000, join_first_months: 6 }),
-    { key: "unrelated", value: "x" },
-  ];
-  await boot({
-    login: session,
-    profile: profile({ joined_paid: true, is_admin: true }),
-    settings: dupSettings,
-    who: [], requests: [],
-  });
-  await login();
-  await page.evaluate(async () => { await accLoadSettings(); await admLoad(); });
-  await page.waitForTimeout(700);
-  const dup = await page.evaluate(() => {
-    const hits = Array.from(document.querySelectorAll("#admList li"))
-      .filter(li => /app_settings/.test(li.textContent || ""));
-    return {
-      count: typeof accSettingsRowCount !== "undefined" ? accSettingsRowCount : -1,
-      warned: hits.length,
-      text: hits.length ? hits[0].textContent : "",
-    };
-  });
-  await boot({
-    login: session,
-    profile: profile({ joined_paid: true, is_admin: true }),
-    settings: [PRICE], who: [], requests: [],
-  });
-  await login();
-  await page.evaluate(async () => { await accLoadSettings(); await admLoad(); });
-  await page.waitForTimeout(700);
-  const single = await page.evaluate(() => ({
-    count: typeof accSettingsRowCount !== "undefined" ? accSettingsRowCount : -1,
-    warned: Array.from(document.querySelectorAll("#admList li"))
-      .filter(li => /app_settings/.test(li.textContent || "")).length,
-  }));
-  /* count is the number of PRICING rows (2), not the number of rows (3) */
-  report("L) two app_settings pricing rows are reported to the admin; one row says nothing",
-    dup.count === 2 && dup.warned === 1 && single.count === 1 && single.warned === 0 &&
-    /\b2\b/.test(dup.text || "") && dupSettings.length === 3,
-    { dup, single });
 
   report("J) none of the above raised a console error", errs.length === 0, errs.slice(0, 4));
 

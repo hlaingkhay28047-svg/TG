@@ -824,9 +824,9 @@ report("O) accEnsureProfile's insert of {id} alone yields a complete free-tier r
    account is never created at all, which is the better place to stop it.
 
    Both are asserted. The auth-layer index is what a real signup hits; the
-   profiles-layer index still has to exist, because it is what protects admGrant
-   from an arbitrary `limit=1` pick if a row ever reaches profiles by another
-   route (a manual insert, a migration, an import from the old project). */
+   profiles-layer index still has to exist, because it protects the strict admin
+   grant lookup from an ambiguous address if a row ever reaches profiles by
+   another route (a manual insert, a migration, an import from the old project). */
 const twinUser = sql("insert into auth.users (id,email) values ('" + TWIN + "','newcustomer@EXAMPLE.com')", DB);
 report("P) a second ACCOUNT claiming the same address in another case is refused",
   !twinUser.ok && /users_email_uniq/i.test(twinUser.out),

@@ -21,6 +21,7 @@ needed.forEach(rel => check(rel + " exists", fs.existsSync(path.join(ROOT, rel))
 const app = read("docs/app/index.html");
 const admin = fs.existsSync(path.join(ROOT, "docs/admin/admin.js")) ? read("docs/admin/admin.js") : "";
 const adminHtml = fs.existsSync(path.join(ROOT, "docs/admin/index.html")) ? read("docs/admin/index.html") : "";
+const adminCss = fs.existsSync(path.join(ROOT, "docs/admin/admin.css")) ? read("docs/admin/admin.css") : "";
 const download = fs.existsSync(path.join(ROOT, "docs/download/download.js")) ? read("docs/download/download.js") : "";
 const downloadHtml = fs.existsSync(path.join(ROOT, "docs/download/index.html")) ? read("docs/download/index.html") : "";
 
@@ -102,6 +103,28 @@ check("artifact chunks are capped at 4 MiB and release enable follows finalizati
   /finalizePanelArtifact[\s\S]{0,1600}enabled\s*:\s*true/.test(admin));
 check("admin markup has search, filters, student detail dialog and live feedback",
   /type=["']search["']/.test(adminHtml) && /<dialog\b/i.test(adminHtml) && /aria-live=["']polite["']/.test(adminHtml));
+check("admin payment queue stays on strict same-origin endpoints with Pending and History views",
+  hasAll(admin, ["/api/v1/admin/payment-requests", "/api/v1/admin/payment-grants"]) &&
+  hasAll(adminHtml, ['data-payment-view="pending"', 'data-payment-view="history"']) &&
+  !/\/rest\/v1\/payment_requests|supabase\.co\/rest/i.test(admin));
+check("payment proof uses a private Blob URL and revokes it on close",
+  /URL\.createObjectURL\(blob\)/.test(admin) && /URL\.revokeObjectURL\(state\.proofUrl\)/.test(admin) &&
+  hasAll(adminHtml, ["paymentProofDialog", "paymentProofImage"]));
+check("payment review and VIP grant submit only allowlisted confirmed fields",
+  /JSON\.stringify\(\{ status: review\.decision, note \}\)/.test(admin) &&
+  /JSON\.stringify\(\{ email, kind, note \}\)/.test(admin) &&
+  hasAll(adminHtml, ["paymentReviewNote", "confirmPaymentReview", "paymentGrantForm", "grantNote"]));
+check("concurrent admin 401s share one refresh and ignore stale responses after session rotation",
+  hasAll(admin, ["refreshInFlight", "sessionGeneration"]) &&
+  /accessToken\(\) !== token/.test(admin) && /generation !== sessionGeneration/.test(admin));
+check("payment configuration cardinality warnings render as a high-contrast alert",
+  /id="paymentConfigWarning"[^>]*role="alert"/.test(adminHtml) && admin.includes("app_settings_row_count") &&
+  /\.payment-config-warning\{[^}]*border:[^}]*background:/s.test(adminCss));
+check("payment review keeps sent and due amounts separate and flags numeric mismatches",
+  hasAll(admin, ["paymentSentAmount", "paymentDueAmount", "paymentAmountMismatch"]) &&
+  /className: "payment-mismatch", role: "alert"/.test(admin) &&
+  /\.payment-mismatch\{[^}]*border:[^}]*background:/s.test(adminCss) &&
+  /Student sent \$\{sent\}; server due \$\{due\}/.test(admin));
 
 check("download requests a temporary URL only from an explicit control",
   download.includes("/api/v1/downloads/panel") && /addEventListener\s*\(\s*["']click["']/.test(download));

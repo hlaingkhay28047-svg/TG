@@ -385,6 +385,12 @@ const server = http.createServer(async (req, res) => {
         await streamDownloadResponse(req,res,out.status,out.stream);
         return;
       }
+      if (Buffer.isBuffer(out.raw)) {
+        res.setHeader("Cache-Control","private, no-store, max-age=0");
+        res.setHeader("Pragma","no-cache");
+        res.setHeader("X-Content-Type-Options","nosniff");
+        return send(res,out.status,out.raw,out.contentType);
+      }
       return send(res,out.status,out.body);
     }
 

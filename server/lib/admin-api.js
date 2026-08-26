@@ -11,6 +11,21 @@ const { compareVersions } = require("./panel-versions");
 const panelArtifacts = require("./panel-artifacts");
 
 const MONTHS = new Set([1,3,6,12]);
+const PAYMENT_REVIEW_STATUSES = new Set(["approved","rejected"]);
+const PAYMENT_QUEUE_STATUSES = new Set(["pending","approved","rejected","history"]);
+const PAYMENT_GRANT_KINDS = new Set(["join_first","plan_1m","plan_3m","plan_6m"]);
+const PAYMENT_PROOF_MIME_TYPES = new Set([
+  "image/jpeg","image/png","image/webp","image/gif","image/avif",
+  "image/heic","image/heif","image/bmp","image/tiff",
+]);
+const PAYMENT_PROOF_DEFAULT_MAX_BYTES = 8*1024*1024;
+const PAYMENT_PROOF_HARD_MAX_BYTES = 16*1024*1024;
+const configuredPaymentProofMax=Number(process.env.MAX_UPLOAD_BYTES||PAYMENT_PROOF_DEFAULT_MAX_BYTES);
+const PAYMENT_PROOF_MAX_BYTES=Number.isSafeInteger(configuredPaymentProofMax)&&configuredPaymentProofMax>0
+  ? Math.min(configuredPaymentProofMax,PAYMENT_PROOF_HARD_MAX_BYTES)
+  : PAYMENT_PROOF_DEFAULT_MAX_BYTES;
+const PAYMENT_NOTE_MAX_LENGTH = 1000;
+const ADMIN_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VERSION_RE = /^\d+\.\d+\.\d+$/;
 const MFA_FAILED_LIMIT = Math.max(3,Number(process.env.MFA_FAILED_LIMIT || 5));
@@ -344,6 +359,223 @@ async function studentAction(client, identity, userId, body, context) {
   return { ok:true,action:requested,student_id:userId,passwordReset,passwordResetEmail };
 }
 
+function paymentBody(body, allowed, code) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ApiError(400,"A JSON object is required",code);
+  }
+  const unexpected=Object.keys(body).filter(key=>!allowed.has(key));
+  if (unexpected.length) {
+    throw new ApiError(400,"Unexpected payment fields",code,{unexpected});
+  }
+  return body;
+}
+
+function paymentNote(value) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== "string") throw new ApiError(400,"Payment note must be text","invalid_payment_note");
+  const note=value.trim();
+  if (note.length>PAYMENT_NOTE_MAX_LENGTH) {
+    throw new ApiError(400,"Payment note is too long","invalid_payment_note");
+  }
+  return note || null;
+}
+
+function pageNumber(value, fallback, maximum) {
+  if (value === null || value === undefined || value === "") return fallback;
+  const parsed=Number(value);
+  if (!Number.isSafeInteger(parsed)||parsed<1) return fallback;
+  return maximum ? Math.min(parsed,maximum) : parsed;
+}
+
+async function listPaymentRequests(client, identity, params) {
+  requireAdmin(identity,"list_payment_requests");
+  const query=params&&typeof params.get==="function"?params:new URLSearchParams();
+  const values=[];const where=[];
+  const status=String(query.get("status")||"").trim().toLowerCase();
+  if (status&&!PAYMENT_QUEUE_STATUSES.has(status)) {
+    throw new ApiError(400,"Unknown payment status","invalid_payment_status");
+  }
+  if (status === "history") {
+    where.push("r.status in ('approved','rejected')");
+  } else if (status) {
+    values.push(status);where.push(`r.status=$${values.length}`);
+  }
+  const search=String(query.get("q")||query.get("search")||"").trim().toLowerCase().slice(0,100);
+  if (search) {
+    values.push("%"+search+"%");
+    where.push(`lower(concat_ws(' ',p.name,coalesce(p.email,u.email),r.txn_last6,r.kind,r.note)) like $${values.length}`);
+  }
+  const page=pageNumber(query.get("page"),1,1000000);
+  const limit=pageNumber(query.get("limit"),50,100);
+  const filterSql=where.length?"where "+where.join(" and "):"";
+  const counted=await client.query(
+    `select count(*)::int as total,
+            (select count(*)::int from public.app_settings) as app_settings_count
+       from public.payment_requests r
+       join public.profiles p on p.id=r.user_id
+       join public.hnk_auth_users u on u.id=r.user_id
+       ${filterSql}`,values.slice());
+  values.push(limit,(page-1)*limit);
+  const { rows }=await client.query(
+    `select r.id,r.user_id,r.kind,r.txn_last6,r.amount_mmk,r.is_grant,r.device_count,
+            r.pricing_mode,r.quoted_amount_mmk,r.status,r.note,r.screenshot_path,
+            r.created_at,r.reviewed_at,r.reviewed_by,p.name,coalesce(p.email,u.email) as email
+       from public.payment_requests r
+       join public.profiles p on p.id=r.user_id
+       join public.hnk_auth_users u on u.id=r.user_id
+       ${filterSql}
+      order by case when r.status='pending' then 0 else 1 end,r.created_at desc
+      limit $${values.length-1} offset $${values.length}`,values);
+  const total=Number(counted.rows[0]&&counted.rows[0].total||0);
+  const appSettingsCount=Number(counted.rows[0]&&counted.rows[0].app_settings_count||0);
+  const paymentRequests=rows.map(row=>{
+    const item=Object.assign({},row);
+    const hasProof=typeof item.screenshot_path==="string"&&item.screenshot_path.length>0;
+    delete item.screenshot_path;
+    item.proof_available=hasProof;
+    item.proof_url=hasProof?`/api/v1/admin/payment-requests/${item.id}/proof`:null;
+    return item;
+  });
+  const configurationWarnings=appSettingsCount===1?[]:[{
+    code:"app_settings_row_count",count:appSettingsCount,
+  }];
+  return {payment_requests:paymentRequests,page,limit,total,
+    configuration_warnings:configurationWarnings};
+}
+
+async function reviewPayment(client, identity, paymentId, input, context) {
+  requireAdmin(identity,"review_payment");
+  assertUuid(paymentId,"payment_request_id");
+  const body=paymentBody(input,new Set(["status","note"]),"invalid_payment_review");
+  const status=String(body.status||"").trim().toLowerCase();
+  if (!PAYMENT_REVIEW_STATUSES.has(status)) {
+    throw new ApiError(400,"Payment status must be approved or rejected","invalid_payment_status");
+  }
+  const note=paymentNote(body.note);
+  if (!note) {
+    throw new ApiError(400,"An admin note is required","invalid_payment_note");
+  }
+  const candidate=await client.query(
+    "select r.id,r.user_id,r.kind,r.status from public.payment_requests r where r.id=$1",
+    [paymentId]);
+  if (!candidate.rows.length) throw new ApiError(404,"Payment request not found","not_found");
+  if (candidate.rows[0].status!=="pending") {
+    throw new ApiError(409,"Payment request was already reviewed","payment_already_reviewed");
+  }
+  const userId=candidate.rows[0].user_id;
+  const profile=await client.query("select id from public.profiles where id=$1 for update",[userId]);
+  if (!profile.rows.length) throw new ApiError(409,"Payment account is unavailable","payment_account_missing");
+  const locked=await client.query(
+    "select id,user_id,kind,status,note from public.payment_requests where id=$1 and user_id=$2 for update",
+    [paymentId,userId]);
+  if (!locked.rows.length) throw new ApiError(404,"Payment request not found","not_found");
+  if (locked.rows[0].status!=="pending") {
+    throw new ApiError(409,"Payment request was already reviewed","payment_already_reviewed");
+  }
+  const reviewed=await client.query(
+    `update public.payment_requests
+        set status=$2,reviewed_at=now(),reviewed_by=$3,
+            note=case when $4::boolean then $5 else note end
+      where id=$1 and status='pending'
+      returning id,user_id,kind,txn_last6,amount_mmk,is_grant,device_count,
+                pricing_mode,quoted_amount_mmk,status,note,created_at,reviewed_at,reviewed_by`,
+    [paymentId,status,identity.uid,body.note!==undefined,note===undefined?null:note]);
+  if (!reviewed.rows.length) {
+    throw new ApiError(409,"Payment request was already reviewed","payment_already_reviewed");
+  }
+  await audit(client,identity,"review_payment",userId,{
+    payment_request_id:paymentId,status,kind:locked.rows[0].kind,
+  },context||{});
+  return {ok:true,payment_request:reviewed.rows[0]};
+}
+
+async function grantPayment(client, identity, input, context) {
+  requireAdmin(identity,"grant_payment");
+  const body=paymentBody(input,new Set(["email","kind","note"]),"invalid_payment_grant");
+  const email=String(body.email||"").trim().toLowerCase();
+  if (email.length>320||!ADMIN_EMAIL_RE.test(email)) {
+    throw new ApiError(400,"A valid student email is required","invalid_email");
+  }
+  const kind=String(body.kind||"").trim();
+  if (!PAYMENT_GRANT_KINDS.has(kind)) {
+    throw new ApiError(400,"Grant kind is not supported","invalid_payment_kind");
+  }
+  const note=paymentNote(body.note);
+  if (!note) {
+    throw new ApiError(400,"An admin note is required","invalid_payment_note");
+  }
+  const found=await client.query(
+    `select p.id,coalesce(p.email,u.email) as email
+       from public.profiles p join public.hnk_auth_users u on u.id=p.id
+      where lower(coalesce(p.email,u.email))=lower($1) limit 2`,[email]);
+  if (found.rows.length!==1) throw new ApiError(404,"Student account not found","not_found");
+  const userId=found.rows[0].id;
+  const profile=await client.query("select id from public.profiles where id=$1 for update",[userId]);
+  if (!profile.rows.length) throw new ApiError(404,"Student account not found","not_found");
+  const inserted=await client.query(
+    `insert into public.payment_requests (user_id,kind,is_grant,amount_mmk,note)
+     values ($1,$2,true,0,$3)
+     returning id,user_id,kind,status`,
+    [userId,kind,note]);
+  const granted=await client.query(
+    `update public.payment_requests
+        set status='approved',reviewed_at=now(),reviewed_by=$2
+      where id=$1 and status='pending'
+      returning id,user_id,kind,txn_last6,amount_mmk,is_grant,device_count,
+                pricing_mode,quoted_amount_mmk,status,note,created_at,reviewed_at,reviewed_by`,
+    [inserted.rows[0].id,identity.uid]);
+  if (!granted.rows.length) {
+    throw new ApiError(409,"Payment grant could not be applied","payment_grant_conflict");
+  }
+  await audit(client,identity,"grant_payment",userId,{
+    payment_request_id:granted.rows[0].id,kind,status:"approved",
+  },context||{});
+  return {ok:true,message:"VIP access granted.",payment_request:granted.rows[0]};
+}
+
+async function paymentProof(client, identity, paymentId, context) {
+  requireAdmin(identity,"view_payment_proof");
+  assertUuid(paymentId,"payment_request_id");
+  const payment=await client.query(
+    "select id,user_id,screenshot_path from public.payment_requests where id=$1 for share",
+    [paymentId]);
+  if (!payment.rows.length) throw new ApiError(404,"Payment request not found","not_found");
+  const objectName=String(payment.rows[0].screenshot_path||"");
+  const expectedPrefix=String(payment.rows[0].user_id)+"/";
+  if (!objectName||objectName.length>1024||objectName.includes("\0")||!objectName.startsWith(expectedPrefix)) {
+    throw new ApiError(404,"Payment proof not found","not_found");
+  }
+  const object=await client.query(
+    `select mime_type,octet_length(data)::bigint as byte_length
+       from public.hnk_storage_objects where bucket_id=$1 and name=$2 for share`,
+    ["payment-proofs",objectName]);
+  if (!object.rows.length) {
+    throw new ApiError(404,"Payment proof not found","not_found");
+  }
+  const byteLength=Number(object.rows[0].byte_length);
+  if (!Number.isSafeInteger(byteLength)||byteLength<1) {
+    throw new ApiError(404,"Payment proof not found","not_found");
+  }
+  if (byteLength>PAYMENT_PROOF_MAX_BYTES) {
+    throw new ApiError(413,"Payment proof is too large","payment_proof_too_large");
+  }
+  const storedType=String(object.rows[0].mime_type||"").split(";",1)[0].trim().toLowerCase();
+  if (!PAYMENT_PROOF_MIME_TYPES.has(storedType)) {
+    throw new ApiError(415,"Payment proof type is not supported","unsupported_payment_proof_type");
+  }
+  const bytes=await client.query(
+    "select data from public.hnk_storage_objects where bucket_id=$1 and name=$2",
+    ["payment-proofs",objectName]);
+  if (!bytes.rows.length||!Buffer.isBuffer(bytes.rows[0].data)||bytes.rows[0].data.length!==byteLength) {
+    throw new ApiError(404,"Payment proof not found","not_found");
+  }
+  await audit(client,identity,"view_payment_proof",payment.rows[0].user_id,{
+    payment_request_id:paymentId,
+  },context||{});
+  return {raw:bytes.rows[0].data,contentType:storedType};
+}
+
 const HISTORY_TYPES = new Set(["all","login","failed_login","device","download","admin","license","account"]);
 const LICENSE_ACTIONS = ["approve","extend_license","set_expiry"];
 const ACCOUNT_ACTIONS = ["reject","activate","suspend","ban","reset_phone","reset_computer",
@@ -658,7 +890,8 @@ async function mfaVerify(client, identity, body, context) {
   return { ok:true,mfa_verified:true,mfa_replaced:promotingPending };
 }
 
-module.exports={ audit,dashboard,students,studentDetail,studentAction,histories,
+module.exports={ audit,dashboard,students,studentDetail,studentAction,
+  listPaymentRequests,reviewPayment,paymentProof,grantPayment,histories,
   getPanelVersion,putPanelVersion,mfaSetup,mfaVerify,requireAdmin,requireAdminBase,
   effectiveAccountStatus,normalizeDeviceSlots,normalizeStudent,normalizeHistoryType,validatePanelPolicy,
   initiatePanelArtifact,panelArtifactStatus,putPanelArtifactChunk,finalizePanelArtifact };

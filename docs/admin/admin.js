@@ -7,6 +7,8 @@
     logout: "/api/auth/v1/logout",
     dashboard: "/api/v1/admin/dashboard",
     students: "/api/v1/admin/students",
+    paymentRequests: "/api/v1/admin/payment-requests",
+    paymentGrants: "/api/v1/admin/payment-grants",
     histories: "/api/v1/admin/histories",
     panelVersion: "/api/v1/admin/panel-version",
     artifactInitiate: "/api/v1/admin/panel-artifacts/initiate",
@@ -21,7 +23,11 @@
   const MAX_ARTIFACT_SIZE = 512 * 1024 * 1024;
   const pageSize = 20;
   const state = { studentPage: 1, historyPage: 1, studentTotal: 0, historyTotal: 0,
+    paymentPage: 1, paymentTotal: 0, paymentView: "pending", paymentRequests: [],
+    paymentSequence: 0, paymentReview: null, proofUrl: "", proofRequestId: "",
     selected: null, loading: false, mfaSecret: "", artifactFile: null, artifactBusy: false };
+  let refreshInFlight = null;
+  let sessionGeneration = 0;
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
 
@@ -31,10 +37,12 @@
   }
 
   function saveSession(next) {
+    sessionGeneration++;
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
   }
 
   function clearSession() {
+    sessionGeneration++;
     sessionStorage.removeItem(SESSION_KEY);
   }
 
@@ -65,18 +73,30 @@
   }
 
   async function refreshSession() {
+    if (refreshInFlight) return refreshInFlight;
     const token = refreshToken();
     if (!token) return false;
-    const response = await fetch(API.refresh, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({ refresh_token: token, client_type: "admin" }),
-    });
-    if (!response.ok) return false;
-    const body = await response.json();
-    saveSession(sessionEnvelope(body, readSession()));
-    return true;
+    const generation = sessionGeneration;
+    const request = (async () => {
+      let response;
+      try {
+        response = await fetch(API.refresh, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ refresh_token: token, client_type: "admin" }),
+        });
+      } catch (_) { return false; }
+      if (!response.ok || generation !== sessionGeneration) return false;
+      let body;
+      try { body = await response.json(); } catch (_) { return false; }
+      if (generation !== sessionGeneration) return false;
+      saveSession(sessionEnvelope(body, readSession()));
+      return true;
+    })();
+    refreshInFlight = request;
+    try { return await request; }
+    finally { if (refreshInFlight === request) refreshInFlight = null; }
   }
 
   async function api(path, options = {}, retried = false) {
@@ -88,7 +108,10 @@
     let response;
     try { response = await fetch(path, { ...options, headers, credentials: "same-origin" }); }
     catch (_) { throw Object.assign(new Error("The server could not be reached."), { status: 0 }); }
-    if (response.status === 401 && !retried && await refreshSession()) return api(path, options, true);
+    if (response.status === 401 && !retried) {
+      if (token && accessToken() && accessToken() !== token) return api(path, options, true);
+      if (await refreshSession()) return api(path, options, true);
+    }
     let body = {};
     try { body = await response.json(); } catch (_) { body = {}; }
     if (!response.ok) {
@@ -96,6 +119,28 @@
       throw Object.assign(new Error(message), { status: response.status, body });
     }
     return body;
+  }
+
+  async function apiBlob(path, retried = false) {
+    const headers = new Headers({ "Accept": "image/*" });
+    const token = accessToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    let response;
+    try { response = await fetch(path, { headers, credentials: "same-origin" }); }
+    catch (_) { throw Object.assign(new Error("The server could not be reached."), { status: 0 }); }
+    if (response.status === 401 && !retried) {
+      if (token && accessToken() && accessToken() !== token) return apiBlob(path, true);
+      if (await refreshSession()) return apiBlob(path, true);
+    }
+    if (!response.ok) {
+      let body = {};
+      try { body = await response.json(); } catch (_) {}
+      const message = body.message || body.msg || body.error || `Request failed (${response.status})`;
+      throw Object.assign(new Error(message), { status: response.status, body });
+    }
+    const blob = await response.blob();
+    if (!blob.size) throw Object.assign(new Error("The payment proof is empty."), { status: 502 });
+    return blob;
   }
 
   async function adminPasswordLogin(email, password) {
@@ -190,6 +235,7 @@
   }
 
   function hideAuthSurfaces() {
+    $$('dialog[open]').forEach(dialog => dialog.close());
     ["#adminChecking", "#adminLogin", "#adminMfa", "#adminForbidden"].forEach(selector => { $(selector).hidden = true; });
     $("#adminApp").hidden = true;
   }
@@ -372,6 +418,298 @@
     catch (error) { handleError(error, "Could not load activity history."); }
   }
 
+  function paymentId(item) {
+    return item.id || item.payment_request_id || "";
+  }
+
+  function paymentStudent(item) {
+    const nested = item.student || item.profile || item.user || {};
+    return {
+      name: item.student_name || item.name || nested.name || nested.full_name || item.student_email || item.email || nested.email || "Student",
+      email: item.student_email || item.email || nested.email || "",
+    };
+  }
+
+  function paymentKindLabel(value) {
+    const labels = { join_first: "First access / VIP", plan_1m: "1 month", plan_3m: "3 months", plan_6m: "6 months" };
+    return labels[value] || title(value || "payment");
+  }
+
+  function formatMmk(value) {
+    if (value === null || value === undefined || value === "") return "—";
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return text(value);
+    return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(amount)} MMK`;
+  }
+
+  function paymentSentAmount(item) {
+    return item.amount_mmk ?? item.amount;
+  }
+
+  function paymentDueAmount(item) {
+    return item.quoted_amount_mmk;
+  }
+
+  function numericMmk(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const amount = Number(value);
+    return Number.isFinite(amount) ? amount : null;
+  }
+
+  function paymentAmountMismatch(item) {
+    if (item.is_grant) return false;
+    const sent = numericMmk(paymentSentAmount(item));
+    const due = numericMmk(paymentDueAmount(item));
+    return sent !== null && due !== null && sent !== due;
+  }
+
+  function paymentMismatchWarning(item) {
+    if (!paymentAmountMismatch(item)) return null;
+    const sent = formatMmk(paymentSentAmount(item));
+    const due = formatMmk(paymentDueAmount(item));
+    return node("span", { className: "payment-mismatch", role: "alert", "aria-label": `Amount mismatch: student sent ${sent}; server amount due ${due}`, text: "Amount mismatch" });
+  }
+
+  function paymentHasProof(item) {
+    if (item.is_grant) return false;
+    return item.has_proof !== false && item.proof_available !== false;
+  }
+
+  function paymentActions(item) {
+    const id = paymentId(item);
+    const student = paymentStudent(item);
+    const who = student.email || student.name;
+    const actions = [];
+    if (id && paymentHasProof(item)) actions.push(node("button", { className: "button", type: "button", text: "View proof", "aria-label": `View payment proof for ${who}`, dataset: { paymentProof: id } }));
+    if (id && String(item.status || "pending").toLowerCase() === "pending") {
+      actions.push(node("button", { className: "button primary", type: "button", text: "Approve", "aria-label": `Approve payment for ${who}`, dataset: { paymentReview: id, paymentDecision: "approved" } }));
+      actions.push(node("button", { className: "button danger", type: "button", text: "Reject", "aria-label": `Reject payment for ${who}`, dataset: { paymentReview: id, paymentDecision: "rejected" } }));
+    }
+    return node("div", { className: "payment-actions" }, actions);
+  }
+
+  function paymentPerson(item) {
+    const student = paymentStudent(item);
+    return person({ name: student.name, email: student.email });
+  }
+
+  function paymentTransfer(item) {
+    if (item.is_grant) return [node("b", { text: "VIP grant" }), node("small", { text: "No transfer" })];
+    const suffix = item.txn_last6 ? `Txn ending ${item.txn_last6}` : "Transfer reference unavailable";
+    return [
+      node("b", { text: `Sent ${formatMmk(paymentSentAmount(item))}` }),
+      node("small", { text: `Due ${formatMmk(paymentDueAmount(item))}` }),
+      paymentMismatchWarning(item),
+      node("small", { text: suffix }),
+    ];
+  }
+
+  function renderPaymentConfigurationWarnings(body) {
+    const warnings = normalizeList(body, ["configuration_warnings", "warnings"]);
+    const warning = warnings.find(item => item && item.code === "app_settings_row_count");
+    const surface = $("#paymentConfigWarning");
+    if (!warning) {
+      surface.hidden = true;
+      $("#paymentConfigWarningText").textContent = "";
+      return;
+    }
+    const countValue = Number(warning.count);
+    const countLabel = Number.isFinite(countValue) ? String(countValue) : "an unexpected number of";
+    $("#paymentConfigWarningText").textContent = `The server found ${countLabel} configuration rows; exactly 1 is required. Review pricing settings before approving payments or granting access.`;
+    surface.hidden = false;
+  }
+
+  function renderPaymentRequests(body) {
+    const requests = normalizeList(body, ["payment_requests", "requests", "items", "data"]);
+    renderPaymentConfigurationWarnings(body);
+    state.paymentRequests = requests;
+    state.paymentTotal = count(body, "total", "count") || requests.length;
+    const rows = requests.map(item => node("tr", {}, [
+      node("td", {}, paymentPerson(item)),
+      node("td", {}, [node("b", { text: paymentKindLabel(item.kind) }), node("small", { text: item.is_grant ? "Manual grant" : "Student payment" })]),
+      node("td", {}, paymentTransfer(item)),
+      node("td", { text: formatDate(item.created_at || item.submitted_at) }),
+      node("td", {}, [statusPill(item.status || "pending"), node("small", { text: item.note || (item.reviewed_at ? `Reviewed ${formatDate(item.reviewed_at)}` : "") })]),
+      node("td", {}, paymentActions(item)),
+    ]));
+    const cards = requests.map(item => {
+      const student = paymentStudent(item);
+      const amountDetails = item.is_grant
+        ? [node("div", {}, [node("dt", { text: "Amount" }), node("dd", { text: "VIP grant" })])]
+        : [
+          node("div", {}, [node("dt", { text: "Sent" }), node("dd", { text: formatMmk(paymentSentAmount(item)) })]),
+          node("div", {}, [node("dt", { text: "Due" }), node("dd", { text: formatMmk(paymentDueAmount(item)) })]),
+        ];
+      const mismatch = paymentMismatchWarning(item);
+      return node("article", { className: "payment-card" }, [
+        node("div", { className: "payment-card-head" }, [node("div", {}, paymentPerson(item)), statusPill(item.status || "pending")]),
+        node("dl", { className: "payment-card-details" }, [
+          node("div", {}, [node("dt", { text: "Request" }), node("dd", { text: paymentKindLabel(item.kind) })]),
+          ...amountDetails,
+          node("div", {}, [node("dt", { text: "Submitted" }), node("dd", { text: formatDate(item.created_at || item.submitted_at) })]),
+          ...(item.note ? [node("div", {}, [node("dt", { text: "Admin note" }), node("dd", { text: item.note })])] : []),
+        ]),
+        mismatch,
+        paymentActions(item),
+        node("span", { className: "sr-only", text: `Payment request for ${student.email || student.name}` }),
+      ]);
+    });
+    $("#paymentRows").replaceChildren(...rows);
+    $("#paymentCards").replaceChildren(...cards);
+    $("#paymentsEmpty").hidden = requests.length > 0;
+    $("#paymentsPage").textContent = `Page ${state.paymentPage}`;
+    $("#paymentsPrev").disabled = state.paymentPage <= 1;
+    $("#paymentsNext").disabled = state.paymentPage * pageSize >= state.paymentTotal;
+    const label = state.paymentView === "pending" ? "pending request" : "reviewed request";
+    $("#paymentQueueStatus").textContent = `${state.paymentTotal} ${label}${state.paymentTotal === 1 ? "" : "s"}`;
+  }
+
+  async function loadPaymentRequests() {
+    const sequence = ++state.paymentSequence;
+    const queue = $(".payment-queue");
+    queue.setAttribute("aria-busy", "true");
+    $("#paymentQueueStatus").textContent = state.paymentView === "pending" ? "Loading pending requests…" : "Loading review history…";
+    const query = new URLSearchParams({ status: state.paymentView, page: String(state.paymentPage), limit: String(pageSize) });
+    try {
+      const body = await api(`${API.paymentRequests}?${query}`);
+      if (sequence === state.paymentSequence) renderPaymentRequests(body);
+    } catch (error) {
+      if (sequence === state.paymentSequence) {
+        $("#paymentQueueStatus").textContent = "Payment requests could not be loaded.";
+        handleError(error, "Could not load payment requests.");
+      }
+    } finally {
+      if (sequence === state.paymentSequence) queue.setAttribute("aria-busy", "false");
+    }
+  }
+
+  function selectPaymentView(view) {
+    state.paymentView = view === "history" ? "history" : "pending";
+    state.paymentPage = 1;
+    $$('[data-payment-view]').forEach(button => {
+      const active = button.dataset.paymentView === state.paymentView;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    loadPaymentRequests();
+  }
+
+  function paymentRequestById(id) {
+    return state.paymentRequests.find(item => String(paymentId(item)) === String(id));
+  }
+
+  function clearPaymentProof() {
+    state.proofRequestId = "";
+    if (state.proofUrl) URL.revokeObjectURL(state.proofUrl);
+    state.proofUrl = "";
+    $("#paymentProofImage").removeAttribute("src");
+    $("#paymentProofImage").hidden = true;
+  }
+
+  async function showPaymentProof(id) {
+    const item = paymentRequestById(id);
+    const student = paymentStudent(item || {});
+    const dialog = $("#paymentProofDialog");
+    clearPaymentProof();
+    state.proofRequestId = String(id);
+    $("#paymentProofStudent").textContent = student.email || student.name;
+    $("#paymentProofImage").alt = `Payment proof for ${student.name}`;
+    $("#paymentProofStatus").textContent = "Loading proof securely…";
+    if (!dialog.open) dialog.showModal();
+    $("#closePaymentProof").focus();
+    try {
+      const blob = await apiBlob(`${API.paymentRequests}/${encodeURIComponent(id)}/proof`);
+      if (state.proofRequestId !== String(id) || !dialog.open) return;
+      if (blob.type && !blob.type.toLowerCase().startsWith("image/")) throw Object.assign(new Error("This payment proof is not a supported image."), { status: 415 });
+      state.proofUrl = URL.createObjectURL(blob);
+      $("#paymentProofImage").src = state.proofUrl;
+      $("#paymentProofImage").hidden = false;
+      $("#paymentProofStatus").textContent = "Payment proof loaded from private storage.";
+    } catch (error) {
+      if (state.proofRequestId !== String(id)) return;
+      $("#paymentProofStatus").textContent = error.message || "Payment proof could not be loaded.";
+      if (error.status === 401 || error.status === 403) { dialog.close(); handleError(error, "Payment proof was not authorized."); }
+    }
+  }
+
+  function openPaymentReview(id, decision) {
+    const item = paymentRequestById(id);
+    if (!item || !["approved", "rejected"].includes(decision)) return;
+    const student = paymentStudent(item);
+    const sent = item.is_grant ? "no transfer" : formatMmk(paymentSentAmount(item));
+    const due = item.is_grant ? "no payment due" : formatMmk(paymentDueAmount(item));
+    const mismatch = paymentAmountMismatch(item) ? " Amount mismatch: verify the discrepancy before deciding." : "";
+    state.paymentReview = { id: String(id), decision, item };
+    const approving = decision === "approved";
+    $("#paymentReviewTitle").textContent = approving ? "Approve payment" : "Reject payment";
+    $("#paymentReviewStudent").textContent = student.email || student.name;
+    $("#paymentReviewMessage").textContent = approving
+      ? `Confirm the submitted proof. Student sent ${sent}; server due ${due}.${mismatch} Approval may activate or extend access immediately.`
+      : `Student sent ${sent}; server due ${due}.${mismatch} Confirm that this request should be rejected. No entitlement will be granted.`;
+    $("#paymentReviewNote").value = "";
+    setFormStatus("#paymentReviewStatus");
+    const button = $("#confirmPaymentReview");
+    button.textContent = approving ? "Confirm approval" : "Confirm rejection";
+    button.className = `button ${approving ? "primary" : "danger"}`;
+    const dialog = $("#paymentReviewDialog");
+    dialog.showModal();
+    $("#paymentReviewNote").focus();
+  }
+
+  function refreshPaymentSurfaces() {
+    loadPaymentRequests();
+    loadStudents();
+    loadDashboard(false).catch(error => handleError(error, "Could not refresh payment dashboard data."));
+  }
+
+  async function submitPaymentReview(event) {
+    event.preventDefault();
+    const review = state.paymentReview;
+    const note = $("#paymentReviewNote").value.trim();
+    if (!review) return setFormStatus("#paymentReviewStatus", "Choose a payment request first.");
+    if (!note) return setFormStatus("#paymentReviewStatus", "Record an admin note before confirming.");
+    const button = $("#confirmPaymentReview");
+    button.disabled = true;
+    setFormStatus("#paymentReviewStatus", review.decision === "approved" ? "Approving payment…" : "Rejecting payment…", true);
+    try {
+      const body = await api(`${API.paymentRequests}/${encodeURIComponent(review.id)}/review`, {
+        method: "POST", body: JSON.stringify({ status: review.decision, note }),
+      });
+      button.disabled = false;
+      $("#paymentReviewDialog").close();
+      notify(body.message || `Payment ${review.decision}.`);
+      refreshPaymentSurfaces();
+    } catch (error) {
+      setFormStatus("#paymentReviewStatus", error.message || "Payment review failed.");
+      if (error.status === 401 || error.status === 403) { $("#paymentReviewDialog").close(); handleError(error, "Payment review was not authorized."); }
+    } finally { button.disabled = false; }
+  }
+
+  async function submitPaymentGrant(event) {
+    event.preventDefault();
+    const email = $("#grantEmail").value.trim().toLowerCase();
+    const kind = $("#grantKind").value;
+    const note = $("#grantNote").value.trim();
+    if (!email || !["join_first", "plan_1m", "plan_3m", "plan_6m"].includes(kind) || !note) {
+      return setFormStatus("#paymentGrantStatus", "Enter a valid student email, access period and admin note.");
+    }
+    const confirmed = await confirmAction(`Grant ${paymentKindLabel(kind)} access to ${email}? This creates an approved entry in the admin audit history.`);
+    if (!confirmed) return;
+    const button = $("#createPaymentGrant");
+    button.disabled = true;
+    setFormStatus("#paymentGrantStatus", "Creating audited VIP grant…", true);
+    try {
+      const body = await api(API.paymentGrants, { method: "POST", body: JSON.stringify({ email, kind, note }) });
+      $("#paymentGrantForm").reset();
+      setFormStatus("#paymentGrantStatus", body.message || `VIP access granted to ${email}.`, true);
+      notify(body.message || "VIP access granted.");
+      refreshPaymentSurfaces();
+    } catch (error) {
+      setFormStatus("#paymentGrantStatus", error.message || "VIP grant could not be created.");
+      if (error.status === 401 || error.status === 403) handleError(error, "VIP grant was not authorized.");
+    } finally { button.disabled = false; }
+  }
+
   function detailRecord(body) {
     const student = body.student || body.user || body.profile || body;
     const flatLicense = {
@@ -482,6 +820,7 @@
     const dialog = $("#confirmDialog");
     $("#confirmMessage").textContent = message;
     $("#confirmAction").className = `button ${danger ? "danger" : "primary"}`;
+    dialog.returnValue = "";
     dialog.showModal();
     $("#confirmAction").focus();
     return new Promise(resolve => {
@@ -767,10 +1106,12 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-current", active ? "page" : "false");
     });
-    $("#pageTitle").textContent = title(name === "security" ? "Security & Panel" : name);
+    const titles = { security: "Security & Panel", payments: "Payment Review" };
+    $("#pageTitle").textContent = titles[name] || title(name);
     $(".sidebar").classList.remove("open");
     $("#menuButton").setAttribute("aria-expanded", "false");
     if (name === "students") loadStudents();
+    if (name === "payments") loadPaymentRequests();
     if (name === "history") loadHistory();
     if (name === "security") loadPanelVersion();
     if (name === "overview") loadDashboard(false).catch(error => handleError(error, "Could not refresh the dashboard."));
@@ -807,6 +1148,22 @@
     $("#studentRows").addEventListener("click", event => { const button = event.target.closest("[data-student-id]"); if (button) openStudent(button.dataset.studentId); });
     $("#studentCards").addEventListener("click", event => { const button = event.target.closest("[data-student-id]"); if (button) openStudent(button.dataset.studentId); });
     $("#closeStudentDialog").addEventListener("click", () => $("#studentDialog").close());
+    $("#reloadPayments").addEventListener("click", loadPaymentRequests);
+    $$('[data-payment-view]').forEach(button => button.addEventListener("click", () => selectPaymentView(button.dataset.paymentView)));
+    $("#paymentsPrev").addEventListener("click", () => { if (state.paymentPage > 1) { state.paymentPage--; loadPaymentRequests(); } });
+    $("#paymentsNext").addEventListener("click", () => { state.paymentPage++; loadPaymentRequests(); });
+    ["#paymentRows", "#paymentCards"].forEach(selector => $(selector).addEventListener("click", event => {
+      const proof = event.target.closest("[data-payment-proof]");
+      if (proof) return showPaymentProof(proof.dataset.paymentProof);
+      const review = event.target.closest("[data-payment-review]");
+      if (review) openPaymentReview(review.dataset.paymentReview, review.dataset.paymentDecision);
+    }));
+    $("#closePaymentProof").addEventListener("click", () => $("#paymentProofDialog").close());
+    $("#paymentProofDialog").addEventListener("close", clearPaymentProof);
+    $("#paymentReviewForm").addEventListener("submit", submitPaymentReview);
+    ["#cancelPaymentReview", "#cancelPaymentReviewTop"].forEach(selector => $(selector).addEventListener("click", () => $("#paymentReviewDialog").close()));
+    $("#paymentReviewDialog").addEventListener("close", () => { state.paymentReview = null; setFormStatus("#paymentReviewStatus"); });
+    $("#paymentGrantForm").addEventListener("submit", submitPaymentGrant);
     $("#reloadHistory").addEventListener("click", loadHistory);
     $("#historyFilters").addEventListener("submit", event => { event.preventDefault(); state.historyPage = 1; loadHistory(); });
     $("#historyPrev").addEventListener("click", () => { if (state.historyPage > 1) { state.historyPage--; loadHistory(); } });

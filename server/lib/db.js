@@ -327,13 +327,14 @@ const asUser = (uid, fn) => asRole("authenticated", uid, fn);
    appset_read_all grants select to anon so the buy screen can quote prices. */
 const asAnon = fn => asRole("anon", null, fn);
 
-/* The auth tables, which no public request mode may touch at all.
+/* Trusted server transactions, which no public request mode may impersonate.
  *
- * This runs under the explicit internal service context. It is reserved for
- * public.hnk_auth_users and public.hnk_auth_refresh_tokens — creating an account, checking a password,
- * issuing and revoking tokens — none of which a customer may read. It must never
- * be handed a statement against public.*: service policies intentionally allow
- * the internal auth path through FORCE RLS as well.
+ * This explicit internal context owns authentication records and narrowly
+ * authorized server actions such as MFA-gated administration, entitlement
+ * validation and private-artifact delivery. Callers must complete their route-
+ * specific identity/role checks before reaching it; browser claims alone never
+ * select this context. Service policies intentionally pass FORCE RLS only for
+ * those reviewed server operations.
  */
 async function asService(fn) {
   assertTlsConnectionAllowed();

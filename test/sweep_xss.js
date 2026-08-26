@@ -186,12 +186,12 @@ report("F) no interpolated value lands inside a single-quoted attribute (escH do
   await page.fill("#accPass", "secret123");
   await page.click("#btnAccLogin");
   await page.waitForTimeout(800);
-  /* open every accordion so each surface is really rendered, then the admin
-     queue, which is the one an approving account is looking at */
+  /* Open every customer accordion so each Student App surface is rendered.
+     Cross-account admin payment markup now lives in the separately tested
+     Admin Control Center. */
   await page.evaluate(async () => {
     ["accGrpPlan", "accGrpBuy", "accGrpDev", "accGrpReq"].forEach(g => { try { accOpenGrp(g); } catch(e){} });
     try { await accLoadRequests(); } catch(e){}
-    try { await admLoad(); } catch(e){}
     try { accRenderPay(); accRender(); } catch(e){}
   });
   await page.waitForTimeout(900);
