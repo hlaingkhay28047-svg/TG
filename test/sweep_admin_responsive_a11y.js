@@ -118,12 +118,15 @@ function staticServer() {
     await page.setViewportSize({width,height});
     return page.evaluate(()=>{
       const interactive=[...document.querySelectorAll("button,input,select,textarea,a[href]")].filter(el=>el.getClientRects().length&&!el.disabled);
-      return {inner:innerWidth,scroll:document.documentElement.scrollWidth,small:interactive.filter(el=>{const r=el.getBoundingClientRect();return r.height<44||r.width<44;}).map(el=>el.id||el.textContent.trim().slice(0,20)),unnamed:interactive.filter(el=>!(el.getAttribute("aria-label")||el.getAttribute("aria-labelledby")||el.textContent.trim()||el.getAttribute("title"))).length};
+      const hasName=el=>el.getAttribute("aria-label")||el.getAttribute("aria-labelledby")||
+        el.textContent.trim()||el.getAttribute("title")||
+        (el.labels&&[...el.labels].some(label=>label.textContent.trim()));
+      return {inner:innerWidth,scroll:document.documentElement.scrollWidth,small:interactive.filter(el=>{const r=el.getBoundingClientRect();return r.height<44||r.width<44;}).map(el=>el.id||el.textContent.trim().slice(0,20)),unnamed:interactive.filter(el=>!hasName(el)).map(el=>el.id||el.tagName.toLowerCase())};
     });
   }
   const m390=await measure(390,844),m320=await measure(320,800),m1280=await measure(1280,900);
   report("admin has no horizontal overflow at 320/390/1280",[m390,m320,m1280].every(m=>m.scroll<=m.inner+1),{m390,m320,m1280});
-  report("all visible admin controls clear 44px and have names",[m390,m320,m1280].every(m=>!m.small.length&&!m.unnamed),{m390,m320,m1280});
+  report("all visible admin controls clear 44px and have names",[m390,m320,m1280].every(m=>!m.small.length&&!m.unnamed.length),{m390,m320,m1280});
 
   await page.setViewportSize({width:390,height:844});
   /* Mobile navigation is intentionally off-canvas and closes after every
@@ -218,7 +221,7 @@ function staticServer() {
   const historyPaymentParams=new URL(historyPaymentCall.url).searchParams;
   report("payment history stays on the same audited endpoint",historyPaymentParams.get("status")==="history",Object.fromEntries(historyPaymentParams));
   const payment320=await measure(320,800),payment1280=await measure(1280,900);
-  report("payment review and grant controls stay responsive and accessible",[payment320,payment1280].every(m=>m.scroll<=m.inner+1&&!m.small.length&&!m.unnamed),{payment320,payment1280});
+  report("payment review and grant controls stay responsive and accessible",[payment320,payment1280].every(m=>m.scroll<=m.inner+1&&!m.small.length&&!m.unnamed.length),{payment320,payment1280});
 
   dashboard401=true;
   await page.click('[data-panel="overview"]');
