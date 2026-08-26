@@ -44,6 +44,10 @@ function staticServer() {
   let paymentRefresh401 = false;
   let refreshCalls = 0;
   let refreshedSurfaceReads = 0;
+  const failedExtendMutations = new Set();
+  const failedGrantMutations = new Set();
+  const committedRefreshFailureMutations = new Set();
+  let failNextCommittedDashboard = false;
   let resolveRefreshedSurfaces;
   const refreshedSurfaces = new Promise(resolve => { resolveRefreshedSurfaces = resolve; });
   const proofPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2n6sAAAAASUVORK5CYII=", "base64");
@@ -73,7 +77,22 @@ function staticServer() {
     if (url.includes("/dashboard")) {
       if (!mfaVerified) return json(403,{error:"mfa_required",message:"Two-factor verification is required"});
       if (dashboard401) { dashboard401=false; return json(401,{error:"session_expired"}); }
+      if (failNextCommittedDashboard) {
+        failNextCommittedDashboard=false;
+        return json(503,{error:"temporarily_unavailable",message:"Temporary dashboard refresh failure"});
+      }
       return json(200,{metrics:{total_students:12,active_students:8,pending_students:2,expired_students:1,suspended_students:1,online_students:3,expiring_soon:2},latest_logins:[]});
+    }
+    if (/\/students\/student-1\/actions$/.test(url)) {
+      const fail=parsed.months===1&&!failedExtendMutations.has(parsed.mutation_id);
+      if(fail) failedExtendMutations.add(parsed.mutation_id);
+      if(!fail&&parsed.months===6&&!committedRefreshFailureMutations.has(parsed.mutation_id)) {
+        committedRefreshFailureMutations.add(parsed.mutation_id);
+        failNextCommittedDashboard=true;
+      }
+      return json(fail?503:200,fail
+        ? {error:"temporarily_unavailable",message:"Temporary extension failure"}
+        : {ok:true,action:parsed.action,student_id:"student-1"});
     }
     if (/\/students\/student-1$/.test(url)) return json(200,{
       student:{id:"student-1",name:"Aye Aye",email:"aye@example.com",account_status:"active",license_status:"active",starts_at:"2026-08-01T00:00:00Z",expires_at:"2026-12-01T00:00:00Z",web_app_enabled:true,ccx_download_enabled:false,panel_enabled:true,last_active_at:"2026-08-26T00:00:00Z"},
@@ -88,7 +107,13 @@ function staticServer() {
       if(status==="history") return json(200,{payment_requests:[{id:"request-2",student_name:"Ko Min",student_email:"min@example.com",kind:"plan_1m",amount_mmk:11000,status:"approved",note:"Transfer verified",created_at:"2026-08-24T03:00:00Z",reviewed_at:"2026-08-25T04:00:00Z"}],page:1,limit:20,total:1});
       return json(200,{payment_requests:[{id:"request-1",student_name:"Aye Aye",student_email:"aye@example.com",kind:"plan_3m",amount_mmk:30000,quoted_amount_mmk:33000,txn_last6:"123456",screenshot_path:"student-1/proof.png",status:"pending",created_at:"2026-08-26T03:00:00Z"}],configuration_warnings:[{code:"app_settings_row_count",count:2}],page:1,limit:20,total:1});
     }
-    if (url.includes("/payment-grants")) return json(201,{ok:true,payment_request:{id:"grant-1",status:"approved",is_grant:true}});
+    if (url.includes("/payment-grants")) {
+      const fail=parsed.email==="vip@example.com"&&!failedGrantMutations.has(parsed.mutation_id);
+      if(fail) failedGrantMutations.add(parsed.mutation_id);
+      return json(fail?503:201,fail
+        ? {error:"temporarily_unavailable",message:"Temporary grant failure"}
+        : {ok:true,message:"VIP access granted.",payment_request:{id:"grant-1",status:"approved",is_grant:true}});
+    }
     if (url.includes("/panel-version")) return json(200,{latest_version:"6.24.0",minimum_supported_version:"6.24.0"});
     if (url.includes("/logout")) return json(200,{ok:true});
     return json(404,{error:"not_found"});
@@ -146,6 +171,72 @@ function staticServer() {
   await page.waitForSelector("#studentDialog[open]");
   const detail=await page.evaluate(()=>({focus:document.activeElement&&document.activeElement.id,labelled:!!document.getElementById("studentDialog").getAttribute("aria-labelledby"),summary:document.getElementById("studentSummary").textContent,devices:document.getElementById("studentDevices").textContent,permissions:[...document.querySelectorAll("#permissionToggles input")].map(input=>input.checked)}));
   report("flat detail normalizes into license, mixed permissions and Phone/Computer 1/1",detail.labelled&&!!detail.focus&&/Dec.*2026/i.test(detail.summary)&&/Phone 1\/1/.test(detail.devices)&&/Computer 1\/1/.test(detail.devices)&&JSON.stringify(detail.permissions)===JSON.stringify([true,false,true]),detail);
+  const accountActionLabels=await page.locator("#accountActions button").allTextContents();
+  report("an active account never offers the pending-only Approve action",
+    !accountActionLabels.includes("Approve"),accountActionLabels);
+
+  await page.click("#extendLicense");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
+  await page.waitForFunction(()=>/Temporary extension failure/.test(document.getElementById("liveStatus").textContent));
+  await page.selectOption("#licenseMonths","3");
+  await page.click("#extendLicense");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
+  await page.waitForFunction(()=>/Extend License completed/i.test(document.getElementById("liveStatus").textContent));
+  const extendKeysBeforeReload=await page.evaluate(()=>Object.keys(sessionStorage)
+    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  await page.reload({waitUntil:"networkidle"});
+  await page.waitForSelector("#adminApp:not([hidden])");
+  await page.click("#menuButton");
+  await page.click('[data-panel="students"]');
+  await page.click("#studentCards [data-student-id='student-1']");
+  await page.waitForSelector("#studentDialog[open]");
+  await page.selectOption("#licenseMonths","1");
+  await page.click("#extendLicense");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
+  await page.waitForFunction(()=>/Extend License completed/i.test(document.getElementById("liveStatus").textContent));
+  const extendCalls=calls.filter(call=>/\/students\/student-1\/actions$/.test(call.url));
+  const extendKeysAfterSuccess=await page.evaluate(()=>Object.keys(sessionStorage)
+    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  report("license-extension A survives interleaved B and reload, then clears only A on success",
+    extendCalls.length===3&&extendCalls.every(call=>call.body.action==="extend_license"&&
+      /^[0-9a-f-]{36}$/i.test(call.body.mutation_id||""))&&
+      extendCalls[0].body.months===1&&extendCalls[1].body.months===3&&extendCalls[2].body.months===1&&
+      extendCalls[0].body.mutation_id===extendCalls[2].body.mutation_id&&
+      extendCalls[0].body.mutation_id!==extendCalls[1].body.mutation_id&&
+      extendKeysBeforeReload.length===1&&extendKeysAfterSuccess.length===0,
+    {extendCalls,extendKeysBeforeReload,extendKeysAfterSuccess});
+
+  await page.selectOption("#licenseMonths","6");
+  await page.click("#extendLicense");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
+  await page.waitForFunction(()=>/Extend License completed, but refreshed data could not be loaded\./i
+    .test(document.getElementById("liveStatus").textContent));
+  const committedKeyBeforeReload=await page.evaluate(()=>Object.keys(sessionStorage)
+    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  await page.reload({waitUntil:"networkidle"});
+  await page.waitForSelector("#adminApp:not([hidden])");
+  await page.click("#menuButton");
+  await page.click('[data-panel="students"]');
+  await page.click("#studentCards [data-student-id='student-1']");
+  await page.waitForSelector("#studentDialog[open]");
+  await page.selectOption("#licenseMonths","6");
+  await page.click("#extendLicense");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
+  await page.waitForFunction(()=>/Extend License completed\./i
+    .test(document.getElementById("liveStatus").textContent));
+  const committedExtendCalls=calls.filter(call=>/\/students\/student-1\/actions$/.test(call.url)&&call.body.months===6);
+  const committedKeysAfterReplay=await page.evaluate(()=>Object.keys(sessionStorage)
+    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  report("a committed extension keeps its mutation id through refresh failure and clears it after replay refresh",
+    committedExtendCalls.length===2&&
+      committedExtendCalls[0].body.mutation_id===committedExtendCalls[1].body.mutation_id&&
+      committedKeyBeforeReload.length===1&&committedKeysAfterReplay.length===0,
+    {committedExtendCalls,committedKeyBeforeReload,committedKeysAfterReplay});
   await page.keyboard.press("Escape");
   report("Escape closes the student dialog",!(await page.locator("#studentDialog").evaluate(el=>el.open)));
 
@@ -211,10 +302,38 @@ function staticServer() {
   await page.click("#paymentGrantForm button[type=submit]");
   await page.waitForSelector("#confirmDialog[open]");
   await page.click("#confirmAction");
-  await page.waitForFunction(()=>document.getElementById("confirmDialog")&&!document.getElementById("confirmDialog").open);
+  await page.waitForFunction(()=>/Temporary grant failure/i.test(document.getElementById("paymentGrantStatus").textContent));
+  await page.fill("#grantEmail","vip-b@example.com");
+  await page.selectOption("#grantKind","plan_1m");
+  await page.fill("#grantNote","One-month interleaved grant.");
+  await page.click("#paymentGrantForm button[type=submit]");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
   await page.waitForFunction(()=>/VIP access granted/i.test(document.getElementById("paymentGrantStatus").textContent));
-  const grantCall=[...calls].reverse().find(call=>/\/payment-grants$/.test(call.url));
-  report("VIP grant confirmation sends the strict email/kind/note contract",grantCall&&grantCall.method==="POST"&&JSON.stringify(grantCall.body)===JSON.stringify({email:"vip@example.com",kind:"plan_3m",note:"Three-month scholarship."}),grantCall);
+  const grantKeysBeforeReload=await page.evaluate(()=>Object.keys(sessionStorage)
+    .filter(key=>key.startsWith("hnk_admin_mutation_v1:payment_grant:")));
+  await page.reload({waitUntil:"networkidle"});
+  await page.waitForSelector("#adminApp:not([hidden])");
+  await page.click('[data-panel="payments"]');
+  await page.fill("#grantEmail","vip@example.com");
+  await page.selectOption("#grantKind","plan_3m");
+  await page.fill("#grantNote","Three-month scholarship.");
+  await page.click("#paymentGrantForm button[type=submit]");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
+  await page.waitForFunction(()=>/VIP access granted/i.test(document.getElementById("paymentGrantStatus").textContent));
+  const grantCalls=calls.filter(call=>/\/payment-grants$/.test(call.url));
+  const grantKeysAfterSuccess=await page.evaluate(()=>Object.keys(sessionStorage)
+    .filter(key=>key.startsWith("hnk_admin_mutation_v1:payment_grant:")));
+  report("VIP grant A survives interleaved B and reload, then clears only A on success",
+    grantCalls.length===3&&grantCalls.every(call=>call.method==="POST"&&
+      /^[0-9a-f-]{36}$/i.test(call.body.mutation_id||""))&&
+      grantCalls[0].body.email==="vip@example.com"&&grantCalls[1].body.email==="vip-b@example.com"&&
+      grantCalls[2].body.email==="vip@example.com"&&
+      grantCalls[0].body.mutation_id===grantCalls[2].body.mutation_id&&
+      grantCalls[0].body.mutation_id!==grantCalls[1].body.mutation_id&&
+      grantKeysBeforeReload.length===1&&grantKeysAfterSuccess.length===0,
+    {grantCalls,grantKeysBeforeReload,grantKeysAfterSuccess});
 
   await page.click("[data-payment-view='history']");
   await page.waitForFunction(()=>/Approved/.test(document.getElementById("paymentRows").textContent));

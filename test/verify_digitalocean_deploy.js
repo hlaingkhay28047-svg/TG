@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -228,16 +229,12 @@ check('both deploy lanes validate and narrowly patch the downloaded live spec be
     workflow.includes('--spec "$PATCHED_SPEC"') &&
     workflow.includes('--update-sources') &&
     workflow.indexOf('apps spec get') < workflow.indexOf('apps update')));
-check('steady-state pushes leave source binding as the only deployment driver',
-  [productionWorkflow, stagingWorkflow].every(workflow => {
-    const steadyAt = workflow.indexOf('[ "$CURRENT_READY_PATH" = "/ready" ]');
-    const normalUpdateAt = workflow.indexOf('--spec "$PATCHED_SPEC"', steadyAt);
-    return workflow.includes('echo "changed=false" >> "$GITHUB_OUTPUT"') &&
-      workflow.includes('echo "changed=true" >> "$GITHUB_OUTPUT"') &&
-      steadyAt >= 0 && workflow.includes('[ "$CURRENT_LIVE_PATH" = "/live" ]') &&
-      normalUpdateAt > steadyAt &&
-      !workflow.includes('[ "$GITHUB_EVENT_NAME" != "push" ]');
-  }));
+check('production pushes synchronize the current source even when health probes already match',
+  /if \[ "\$CURRENT_READY_PATH" = "\/ready" \] && \[ "\$CURRENT_LIVE_PATH" = "\/live" \] &&\s*\[ "\$GITHUB_EVENT_NAME" != "push" \]; then[\s\S]{0,300}?echo "changed=false" >> "\$GITHUB_OUTPUT"[\s\S]{0,300}?exit 0/.test(productionWorkflow) &&
+  productionWorkflow.indexOf('doctl apps update', productionWorkflow.indexOf('[ "$GITHUB_EVENT_NAME" != "push" ]')) >= 0);
+check('staging steady-state exits only when the active deployment matches the pushed commit',
+  /if \[ "\$CURRENT_READY_PATH" = "\/ready" \] && \[ "\$CURRENT_LIVE_PATH" = "\/live" \] &&\s*\[ "\$ACTIVE_READY_PATH" = "\/ready" \] && \[ "\$ACTIVE_LIVE_PATH" = "\/live" \] &&\s*\[ "\$ACTIVE_SOURCE_SHA" = "\$GITHUB_SHA" \]; then[\s\S]{0,300}?echo "changed=false" >> "\$GITHUB_OUTPUT"[\s\S]{0,300}?exit 0/.test(stagingWorkflow) &&
+  stagingWorkflow.indexOf('doctl apps update', stagingWorkflow.indexOf('[ "$ACTIVE_SOURCE_SHA" = "$GITHUB_SHA" ]')) >= 0);
 check('the one-time probe transition updates source in the same deployment',
   [productionWorkflow, stagingWorkflow].every(workflow =>
     workflow.includes('doctl apps update') &&
@@ -340,6 +337,221 @@ function runScriptBlocks(workflow) {
   }
   return blocks;
 }
+
+function runBlockForStep(workflow, stepId) {
+  const lines = workflow.split('\n');
+  const idAt = lines.findIndex(line =>
+    new RegExp(`^\\s*id:\\s*${stepId}\\s*$`).test(line));
+  if (idAt < 0) return '';
+  for (let i = idAt + 1; i < lines.length; i++) {
+    if (/^\s*- name:/.test(lines[i])) break;
+    const opener = /^(\s*)run:\s*\|\s*$/.exec(lines[i]);
+    if (!opener) continue;
+    const indent = opener[1].length;
+    const body = [];
+    for (let j = i + 1; j < lines.length; j++) {
+      const line = lines[j];
+      if (line.trim() !== '' && line.length - line.trimStart().length <= indent) break;
+      body.push(line);
+    }
+    const bodyIndent = Math.min(...body
+      .filter(line => line.trim() !== '')
+      .map(line => line.length - line.trimStart().length));
+    return body.map(line => line.slice(Math.min(bodyIndent, line.length))).join('\n');
+  }
+  return '';
+}
+
+/* Execute the checked-in spec-sync shell, rather than only recognizing its
+ * text. The fake doctl persists the submitted spec and active source SHA, so a
+ * reverted early exit is observable as a missing update (and the staging
+ * source transition exercises the complete warmup/readiness path). */
+const deployControlTemp = fs.mkdtempSync(path.join(os.tmpdir(), 'hnk-deploy-control-'));
+try {
+  const fakeBin = path.join(deployControlTemp, 'bin');
+  fs.mkdirSync(fakeBin);
+  fs.writeFileSync(path.join(fakeBin, 'doctl'), `#!/usr/bin/env node
+"use strict";
+const fs = require("fs");
+const args = process.argv.slice(2);
+const statePath = process.env.FAKE_DOCTL_STATE;
+const logPath = process.env.FAKE_DOCTL_LOG;
+const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+function save() { fs.writeFileSync(statePath, JSON.stringify(state)); }
+function log(command) {
+  fs.appendFileSync(logPath, JSON.stringify({ command, args }) + "\\n");
+}
+if (args[0] !== "apps") process.exit(64);
+if (args[1] === "spec" && args[2] === "get") {
+  process.stdout.write(JSON.stringify(state.spec));
+} else if (args[1] === "get") {
+  process.stdout.write(JSON.stringify({
+    id: "test-app",
+    active_deployment: {
+      services: [{
+        name: process.env.FAKE_SERVICE_NAME,
+        source_commit_hash: state.source,
+      }],
+      static_sites: [{ name: process.env.FAKE_STATIC_SITE_NAME }],
+      spec: { services: state.spec.services },
+    },
+  }));
+} else if (args[1] === "propose") {
+  log("propose");
+  process.stdout.write("proposal accepted\\n");
+} else if (args[1] === "update") {
+  const specAt = args.indexOf("--spec");
+  if (specAt < 0 || !args[specAt + 1]) process.exit(65);
+  state.spec = JSON.parse(fs.readFileSync(args[specAt + 1], "utf8"));
+  state.source = process.env.GITHUB_SHA;
+  save();
+  log("update");
+  process.stdout.write("updated\\n");
+} else {
+  process.exit(66);
+}
+`, { mode: 0o755 });
+  fs.writeFileSync(path.join(fakeBin, 'curl'), `#!/usr/bin/env node
+"use strict";
+const fs = require("fs");
+const args = process.argv.slice(2);
+const outputAt = args.indexOf("--output");
+if (outputAt < 0 || !args[outputAt + 1]) process.exit(67);
+fs.writeFileSync(args[outputAt + 1], process.env.FAKE_HEALTH_BODY);
+process.stdout.write("200");
+`, { mode: 0o755 });
+
+  const releaseSha = '0123456789abcdef0123456789abcdef01234567';
+  const expectedVersion = JSON.parse(read('docs/app/version.json')).v;
+  const expectedSchema = crypto.createHash('sha256')
+    .update(fs.readFileSync(path.join(root, 'server/sql/schema.sql'))).digest('hex');
+  const healthBody = JSON.stringify({
+    ok: true,
+    ready: true,
+    apiVersion: expectedVersion,
+    schemaFingerprint: expectedSchema,
+    tls: 'verified',
+  });
+
+  function makeLiveSpec(lane, readyPath = '/ready') {
+    const production = lane === 'production';
+    const appName = production ? 'hnk-ai-tools-3' : 'hnk-ai-tools-2';
+    const branch = production ? 'main' : 'upgrade-safe-wave';
+    const github = {
+      repo: 'hlaingkhay28047-svg/TG',
+      branch,
+      deploy_on_push: true,
+    };
+    return {
+      name: appName,
+      services: [{
+        name: 'hnk-api',
+        github,
+        health_check: { http_path: readyPath },
+        liveness_health_check: { http_path: '/live' },
+        envs: [{ key: 'JWT_SECRET', type: 'SECRET', value: 'EV[test-ciphertext]' }],
+      }],
+      static_sites: [{ name: 'hnk-web', github }],
+    };
+  }
+
+  function executeSpecSync(label, workflow, lane, options = {}) {
+    const caseDir = path.join(deployControlTemp, label.replace(/[^a-z0-9]+/gi, '-'));
+    fs.mkdirSync(caseDir);
+    const statePath = path.join(caseDir, 'state.json');
+    const logPath = path.join(caseDir, 'doctl.jsonl');
+    const outputPath = path.join(caseDir, 'github-output.txt');
+    fs.writeFileSync(statePath, JSON.stringify({
+      spec: makeLiveSpec(lane, options.readyPath),
+      source: options.activeSource || releaseSha,
+    }));
+    fs.writeFileSync(logPath, '');
+    fs.writeFileSync(outputPath, '');
+    const rawScript = runBlockForStep(workflow, 'spec_sync');
+    const script = rawScript.replace(
+      /\$\{\{\s*steps\.app\.outputs\.app_id\s*\}\}/g, 'test-app');
+    const production = lane === 'production';
+    const run = spawnSync('bash', ['-c', script], {
+      cwd: root,
+      encoding: 'utf8',
+      env: Object.assign({}, process.env, {
+        PATH: `${fakeBin}${path.delimiter}${process.env.PATH}`,
+        RUNNER_TEMP: caseDir,
+        GITHUB_OUTPUT: outputPath,
+        GITHUB_EVENT_NAME: options.eventName || 'push',
+        GITHUB_SHA: releaseSha,
+        JOB_DEADLINE_EPOCH: String(Math.floor(Date.now() / 1000) + 3600),
+        DO_APP_NAME: production ? 'hnk-ai-tools-3' : 'hnk-ai-tools-2',
+        DO_APP_HOST: production ? 'hnk-ai-tools-3-s4nnu.ondigitalocean.app' : 'hnk-ai-tools-2-gibhz.ondigitalocean.app',
+        DO_SERVICE: 'hnk-api',
+        DO_STATIC_SITE: 'hnk-web',
+        DO_REPO: 'hlaingkhay28047-svg/TG',
+        DO_BRANCH: production ? 'main' : 'upgrade-safe-wave',
+        FAKE_DOCTL_STATE: statePath,
+        FAKE_DOCTL_LOG: logPath,
+        FAKE_SERVICE_NAME: 'hnk-api',
+        FAKE_STATIC_SITE_NAME: 'hnk-web',
+        FAKE_HEALTH_BODY: healthBody,
+      }),
+    });
+    const commands = fs.readFileSync(logPath, 'utf8').trim().split('\n')
+      .filter(Boolean).map(line => JSON.parse(line));
+    return {
+      run,
+      commands,
+      updates: commands.filter(command => command.command === 'update'),
+      output: fs.readFileSync(outputPath, 'utf8'),
+    };
+  }
+
+  const productionPush = executeSpecSync(
+    'production-push-ready', productionWorkflow, 'production', { eventName: 'push' });
+  check('production spec-sync executes an update for a push whose probes already match',
+    productionPush.run.status === 0 &&
+    productionPush.updates.length === 1 &&
+    productionPush.updates[0].args.includes('--update-sources') &&
+    productionPush.output.includes('changed=true') &&
+    !productionPush.output.includes('changed=false'));
+
+  const productionManual = executeSpecSync(
+    'production-manual-ready', productionWorkflow, 'production', { eventName: 'workflow_dispatch' });
+  check('production spec-sync leaves matching probes unchanged only for manual recovery',
+    productionManual.run.status === 0 &&
+    productionManual.updates.length === 0 &&
+    productionManual.output.includes('changed=false') &&
+    !productionManual.output.includes('changed=true'));
+
+  const productionManualRepair = executeSpecSync(
+    'production-manual-repair', productionWorkflow, 'production', {
+      eventName: 'workflow_dispatch',
+      readyPath: '/live',
+    });
+  check('production manual recovery still updates a noncanonical probe spec',
+    productionManualRepair.run.status === 0 &&
+    productionManualRepair.updates.length === 1 &&
+    productionManualRepair.updates[0].args.includes('--update-sources') &&
+    productionManualRepair.output.includes('changed=true'));
+
+  const stagingCurrent = executeSpecSync(
+    'staging-current-source', stagingWorkflow, 'staging');
+  check('staging spec-sync exits without an update only for the current active source',
+    stagingCurrent.run.status === 0 &&
+    stagingCurrent.updates.length === 0 &&
+    stagingCurrent.output.includes('changed=false'));
+
+  const stagingStale = executeSpecSync(
+    'staging-stale-source', stagingWorkflow, 'staging', { activeSource: 'stale-source-sha' });
+  check('staging spec-sync behaviorally warms a stale source and promotes readiness',
+    stagingStale.run.status === 0 &&
+    stagingStale.updates.length === 2 &&
+    stagingStale.updates[0].args.includes('--update-sources') &&
+    !stagingStale.updates[1].args.includes('--update-sources') &&
+    stagingStale.output.includes('changed=true') &&
+    !stagingStale.output.includes('changed=false'));
+} finally {
+  fs.rmSync(deployControlTemp, { recursive: true, force: true });
+}
+
 const healthScripts = runScriptBlocks(healthWorkflow);
 check('the dispatch input is passed through the environment, not interpolated into the script',
   /env:\s*\n\s*HOST:\s*\$\{\{\s*inputs\.host\s*\}\}/.test(healthWorkflow) &&

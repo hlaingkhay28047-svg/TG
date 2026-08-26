@@ -112,8 +112,25 @@ check("payment proof uses a private Blob URL and revokes it on close",
   hasAll(adminHtml, ["paymentProofDialog", "paymentProofImage"]));
 check("payment review and VIP grant submit only allowlisted confirmed fields",
   /JSON\.stringify\(\{ status: review\.decision, note \}\)/.test(admin) &&
-  /JSON\.stringify\(\{ email, kind, note \}\)/.test(admin) &&
+  /JSON\.stringify\(\{ email, kind, note, mutation_id: mutation\.id \}\)/.test(admin) &&
   hasAll(adminHtml, ["paymentReviewNote", "confirmPaymentReview", "paymentGrantForm", "grantNote"]));
+check("admin mutation retries retain a browser-generated idempotency key until success",
+  /crypto\.randomUUID\(\)/.test(admin) &&
+  /function mutationFor\(/.test(admin) && /function clearMutation\(/.test(admin) &&
+  /mutationFor\("payment_grant"/.test(admin) &&
+  /mutationFor\("extend_license"/.test(admin) &&
+  /crypto\.subtle\.digest\("SHA-256"/.test(admin) && /stablePayload\(/.test(admin) &&
+  /sessionStorage\.getItem\(key\)/.test(admin) &&
+  /sessionStorage\.setItem\(key, mutation\.id\)/.test(admin) &&
+  /sessionStorage\.getItem\(mutation\.key\) === mutation\.id/.test(admin) &&
+  /sessionStorage\.removeItem\(mutation\.key\)/.test(admin));
+check("a completed license mutation is never reported as failed when only dashboard refresh fails",
+  /body = await api\(`\$\{API\.students\}/.test(admin) &&
+  /notify\(body\.message[\s\S]{0,260}await Promise\.all\([\s\S]{0,180}if \(mutation\) clearMutation\(mutation\)/.test(admin) &&
+  /const summary = `\$\{title\(action\)\} completed, but refreshed data could not be loaded\.`/.test(admin) &&
+  /handleError\(Object\.assign\(new Error\(message\)/.test(admin));
+check("Approve is rendered only for a canonical pending account",
+  /canonicalAccountStatus\s*===\s*["']pending["'][\s\S]{0,180}\["approve",\s*"Approve"/.test(admin));
 check("concurrent admin 401s share one refresh and ignore stale responses after session rotation",
   hasAll(admin, ["refreshInFlight", "sessionGeneration"]) &&
   /accessToken\(\) !== token/.test(admin) && /generation !== sessionGeneration/.test(admin));

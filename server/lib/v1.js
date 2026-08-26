@@ -100,6 +100,29 @@ async function sessionInstallationHash(client, identity) {
   return rows[0] || null;
 }
 
+async function sessionComputerDevice(client,identity,expectedSlotId) {
+  const requireExpectedSlot=arguments.length>=3;
+  if (!identity||identity.clientType!=="web"||!identity.uid||!identity.deviceInstallationId||
+      (requireExpectedSlot&&!expectedSlotId)) return null;
+  const params=[identity.deviceInstallationId,identity.uid];
+  const slotMatch=requireExpectedSlot?" and i.slot_id=$3":"";
+  if (requireExpectedSlot) params.push(expectedSlotId);
+  const {rows}=await client.query(
+    `select i.id as installation_id,i.slot_id,i.client_type,
+            i.revoked_at as installation_revoked_at,s.slot_type,s.status as slot_status
+       from public.device_installations i
+       join public.device_slots s on s.id=i.slot_id
+      where i.id=$1 and s.user_id=$2 and i.client_type='web'
+        and i.revoked_at is null and s.slot_type='computer' and s.status='active'${slotMatch}`,
+    params);
+  const row=rows[0];
+  if (!row||String(row.installation_id)!==String(identity.deviceInstallationId)||
+      row.client_type!=="web"||row.installation_revoked_at||row.slot_type!=="computer"||
+      row.slot_status!=="active"||(requireExpectedSlot&&String(row.slot_id)!==String(expectedSlotId))) return null;
+  return {registered:true,matches:true,slotType:"computer",slotId:row.slot_id,
+    installationId:row.installation_id};
+}
+
 async function meEntitlement(identity, params) {
   return asService(async client => {
     let clientType = identity.clientType === "panel" ? "panel" : "web";
@@ -110,11 +133,11 @@ async function meEntitlement(identity, params) {
     else if (supplied) installationHash = hashInstallationId(supplied);
     const panelVersion = params.get("panel_version") || "";
     const state = await loadEntitlementState(client,identity.uid,{installationHash,clientType,panelVersion});
+    const downloadDevice=await sessionComputerDevice(client,identity);
     const slots = await listDeviceSlots(client,identity.uid);
-    const computer = slots.find(slot=>slot.type==="computer"&&slot.status==="active");
     const decisions = {
       web:authorizeState(state,"web",state.device),
-      download:authorizeState(state,"download",computer ? {registered:true,matches:true,slotType:"computer"} : null),
+      download:authorizeState(state,"download",downloadDevice),
       panel:authorizeState(state,"panel",clientType==="panel" ? state.device : null),
     };
     return { status:200,body:publicEntitlement(state,decisions,slots) };
@@ -278,8 +301,7 @@ async function issueDownload(identity, body, context) {
   return asService(async client => {
     const version=String(body.version||body.panel_version||"6.24.0");
     const state=await loadEntitlementState(client,identity.uid,{panelVersion:version});
-    const slot=await client.query("select id from public.device_slots where user_id=$1 and slot_type='computer' and status='active'",[identity.uid]);
-    const device=slot.rows[0]?{registered:true,matches:true,slotType:"computer",slotId:slot.rows[0].id}:null;
+    const device=await sessionComputerDevice(client,identity);
     rejectDecision(authorizeState(state,"download",device));
     const release=await client.query(
       "select version,artifact_key,sha256,size_bytes,artifact_id from public.panel_versions where version=$1 and enabled=true",[version]);
@@ -339,7 +361,7 @@ async function redeemDownload(token) {
         throw new ApiError(status,"Download token is not valid",consumed.reason);
       }
       const live=await client.query(
-        `select s.revoked_at,s.expires_at,p.account_status
+        `select s.revoked_at,s.expires_at,s.client_type,s.device_installation_id,p.account_status
            from public.sessions s join public.profiles p on p.id=s.user_id
           where s.id=$1 and s.user_id=$2`,[consumed.sessionId,consumed.userId]);
       if (!live.rows.length||live.rows[0].revoked_at||new Date(live.rows[0].expires_at).getTime()<=Date.now()||
@@ -347,10 +369,11 @@ async function redeemDownload(token) {
         throw new ApiError(403,"Account session is no longer active","session_revoked");
       }
       const state=await loadEntitlementState(client,consumed.userId,{panelVersion:consumed.panelVersion});
-      const slot=await client.query(
-        "select id from public.device_slots where id=$1 and user_id=$2 and slot_type='computer' and status='active'",
-        [consumed.deviceSlotId,consumed.userId]);
-      rejectDecision(authorizeState(state,"download",slot.rows[0]?{registered:true,matches:true,slotType:"computer"}:null));
+      const device=await sessionComputerDevice(client,{
+        uid:consumed.userId,clientType:live.rows[0].client_type,
+        deviceInstallationId:live.rows[0].device_installation_id,
+      },consumed.deviceSlotId);
+      rejectDecision(authorizeState(state,"download",device));
       const release=await client.query(
         "select version,artifact_key,size_bytes,sha256,artifact_id from public.panel_versions where version=$1 and enabled=true",[consumed.panelVersion]);
       if (!release.rows.length||release.rows[0].artifact_key!==consumed.artifactKey) {

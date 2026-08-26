@@ -17,6 +17,7 @@
     mfaVerify: "/api/v1/admin/mfa/verify",
   });
   const SESSION_KEY = "hnk_admin_sess_v1";
+  const MUTATION_KEY_PREFIX = "hnk_admin_mutation_v1";
   const ARTIFACT_STATE_KEY = "hnk_admin_artifact_upload_v1";
   const CLIENT_TYPE = "admin";
   const ARTIFACT_CHUNK_SIZE = 4 * 1024 * 1024;
@@ -30,6 +31,44 @@
   let sessionGeneration = 0;
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
+
+  function newMutationId() {
+    if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = [...bytes].map(value => value.toString(16).padStart(2, "0"));
+    return `${hex.slice(0,4).join("")}-${hex.slice(4,6).join("")}-${hex.slice(6,8).join("")}-${hex.slice(8,10).join("")}-${hex.slice(10).join("")}`;
+  }
+
+  function stablePayload(value) {
+    if (Array.isArray(value)) return `[${value.map(stablePayload).join(",")}]`;
+    if (value && typeof value === "object") {
+      return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stablePayload(value[key])}`).join(",")}}`;
+    }
+    return JSON.stringify(value);
+  }
+
+  async function mutationFor(scope, payload) {
+    const digest = await crypto.subtle.digest("SHA-256",
+      new TextEncoder().encode(`${scope}\n${stablePayload(payload)}`));
+    const fingerprint = [...new Uint8Array(digest)]
+      .map(value => value.toString(16).padStart(2, "0")).join("");
+    const key = `${MUTATION_KEY_PREFIX}:${scope}:${fingerprint}`;
+    const stored = sessionStorage.getItem(key);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored || "")) {
+      return { id: stored, fingerprint, key };
+    }
+    const mutation = { id: newMutationId(), fingerprint, key };
+    sessionStorage.setItem(key, mutation.id);
+    return mutation;
+  }
+
+  function clearMutation(mutation) {
+    if (mutation && sessionStorage.getItem(mutation.key) === mutation.id) {
+      sessionStorage.removeItem(mutation.key);
+    }
+  }
 
   function readSession() {
     try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null") || {}; }
@@ -695,11 +734,13 @@
     }
     const confirmed = await confirmAction(`Grant ${paymentKindLabel(kind)} access to ${email}? This creates an approved entry in the admin audit history.`);
     if (!confirmed) return;
+    const mutation = await mutationFor("payment_grant", { email, kind, note });
     const button = $("#createPaymentGrant");
     button.disabled = true;
     setFormStatus("#paymentGrantStatus", "Creating audited VIP grant…", true);
     try {
-      const body = await api(API.paymentGrants, { method: "POST", body: JSON.stringify({ email, kind, note }) });
+      const body = await api(API.paymentGrants, { method: "POST", body: JSON.stringify({ email, kind, note, mutation_id: mutation.id }) });
+      clearMutation(mutation);
       $("#paymentGrantForm").reset();
       setFormStatus("#paymentGrantStatus", body.message || `VIP access granted to ${email}.`, true);
       notify(body.message || "VIP access granted.");
@@ -790,8 +831,10 @@
       statusPill(device ? "active" : "empty"),
     ])));
 
+    const canonicalAccountStatus = String(account.status || item.account_status || item.status || "pending").toLowerCase();
     const accountActions = [
-      ["approve", "Approve", "primary"], ["reject", "Reject", "danger"], ["activate", "Activate", ""],
+      ...(canonicalAccountStatus === "pending" ? [["approve", "Approve", "primary"]] : []),
+      ["reject", "Reject", "danger"], ["activate", "Activate", ""],
       ["suspend", "Suspend", "danger"], ["ban", "Ban", "danger"],
     ];
     $("#accountActions").replaceChildren(...accountActions.map(([action, label, tone]) => actionButton(action, label, tone)));
@@ -838,12 +881,30 @@
   async function runAction(action, extra = {}, refresh = true) {
     const id = selectedId();
     if (!id) throw new Error("No student is selected.");
+    const payload = { action, ...extra };
+    const mutation = action === "extend_license"
+      ? await mutationFor("extend_license", { student_id: id, ...payload }) : null;
+    if (mutation) payload.mutation_id = mutation.id;
+    let body;
     try {
-      const body = await api(`${API.students}/${encodeURIComponent(id)}/actions`, { method: "POST", body: JSON.stringify({ action, ...extra }) });
-      notify(body.message || `${title(action)} completed.`);
-      if (refresh) await Promise.all([openStudent(id, false), loadStudents(), loadDashboard(false)]);
-      return body;
+      body = await api(`${API.students}/${encodeURIComponent(id)}/actions`, { method: "POST", body: JSON.stringify(payload) });
     } catch (error) { handleError(error, `${title(action)} failed.`); throw error; }
+    notify(body.message || `${title(action)} completed.`);
+    if (refresh) {
+      try {
+        await Promise.all([openStudent(id, false), loadStudents(), loadDashboard(false)]);
+        if (mutation) clearMutation(mutation);
+      }
+      catch (error) {
+        const summary = `${title(action)} completed, but refreshed data could not be loaded.`;
+        const message = error && error.message ? `${summary} ${error.message}` : summary;
+        handleError(Object.assign(new Error(message), {
+          status: error && error.status,
+          body: error && error.body,
+        }), summary);
+      }
+    } else if (mutation) clearMutation(mutation);
+    return body;
   }
 
   async function openStudent(id, open = true) {

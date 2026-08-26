@@ -1514,11 +1514,38 @@ create table if not exists public.admin_audit_logs (
   created_at     timestamptz not null default now(),
   details        jsonb not null default '{}'::jsonb,
   ip_hash        text,
-  user_agent     text
+  user_agent     text,
+  mutation_id    uuid,
+  request_hash   text,
+  result         jsonb,
+  completed_at   timestamptz
 );
 
 create index if not exists admin_audit_target_time_idx
   on public.admin_audit_logs (target_user_id, created_at desc);
+
+-- Retried administrator writes reserve one durable mutation row before any
+-- entitlement change. The partial unique index is the concurrency boundary:
+-- a second transaction with the same actor/action/key waits for the first and
+-- then reuses its stored result instead of applying the write again.
+alter table public.admin_audit_logs add column if not exists mutation_id uuid;
+alter table public.admin_audit_logs add column if not exists request_hash text;
+alter table public.admin_audit_logs add column if not exists result jsonb;
+alter table public.admin_audit_logs add column if not exists completed_at timestamptz;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'admin_audit_request_hash_chk'
+       and conrelid = 'public.admin_audit_logs'::regclass
+  ) then
+    alter table public.admin_audit_logs add constraint admin_audit_request_hash_chk
+      check (request_hash is null or request_hash ~ '^[0-9a-f]{64}$') not valid;
+  end if;
+end $$;
+create unique index if not exists admin_audit_mutation_uniq
+  on public.admin_audit_logs (actor_user_id, action, mutation_id)
+  where mutation_id is not null;
 
 create table if not exists public.panel_versions (
   version           text primary key check (version ~ '^[0-9]+\.[0-9]+\.[0-9]+$'),

@@ -66,6 +66,7 @@ async function verifyAdminContracts() {
   const contract = load("server/lib/admin-api.js", [
     "effectiveAccountStatus", "normalizeDeviceSlots", "normalizeStudent",
     "normalizeHistoryType", "validatePanelPolicy", "requireAdmin", "mfaSetup", "mfaVerify",
+    "studentAction",
   ]);
   if (!contract) return;
 
@@ -215,6 +216,69 @@ async function verifyAdminContracts() {
   const adminIdentity={uid:"22222222-2222-4222-8222-222222222222",
     clientType:"admin",roles:["admin"],mfaVerified:true};
   const target="11111111-1111-4111-8111-111111111111";
+
+  const missingStudentQueries=[];
+  let missingStudent=null;
+  try {
+    await contract.studentAction({async query(sql,params) {
+      missingStudentQueries.push({sql:String(sql),params});
+      if (/select id,account_status from public\.profiles/.test(sql)) return {rows:[],rowCount:0};
+      throw new Error("missing-student extension must not reserve an audit mutation");
+    }},adminIdentity,"33333333-3333-4333-8333-333333333333",{
+      action:"extend_license",months:1,mutation_id:"44444444-4444-4444-8444-444444444444",
+    },{});
+  } catch (error) { missingStudent={status:error&&error.status,code:error&&error.code}; }
+  report("a missing extension target returns 404 before reserving an audit mutation",
+    missingStudent&&missingStudent.status===404&&missingStudent.code==="not_found"&&
+      missingStudentQueries.length===1&&
+      !missingStudentQueries.some(item=>/admin_audit_logs/.test(item.sql)),
+    {missingStudent,queries:missingStudentQueries});
+
+  for (const accountStatus of ["active", "suspended", "banned", "rejected"]) {
+    const refusedQueries=[];
+    let refused=null;
+    try {
+      await contract.studentAction({async query(sql,params) {
+        refusedQueries.push({sql:String(sql),params});
+        if (/select id,account_status from public\.profiles/.test(sql)) {
+          return {rows:[{id:target,account_status:accountStatus}],rowCount:1};
+        }
+        throw new Error("approve must stop after locking a non-pending account");
+      }},adminIdentity,target,{action:"approve",months:1},{});
+    } catch (error) { refused={status:error&&error.status,code:error&&error.code}; }
+    report("Approve refuses canonical account state " + accountStatus + " without license mutation",
+      refused&&refused.status===409&&refused.code==="account_not_pending"&&
+        refusedQueries.length===1,
+      {refused,queries:refusedQueries});
+  }
+
+  const approvalQueries=[];
+  const approvalClient={async query(sql,params) {
+    approvalQueries.push({sql:String(sql),params});
+    if (/select id,account_status from public\.profiles/.test(sql)) {
+      return {rows:[{id:target,account_status:"pending"}],rowCount:1};
+    }
+    if (/update public\.profiles set account_status='active'/.test(sql)) {
+      return {rows:[{id:target}],rowCount:1};
+    }
+    return {rows:[],rowCount:1};
+  }};
+  await contract.studentAction(approvalClient,adminIdentity,target,{action:"approve",months:1},{});
+  const approvalLicense=approvalQueries.find(item=>/insert into public\.licenses/.test(item.sql));
+  report("pending approval preserves a longer existing active license",
+    approvalLicense&&/greatest\(public\.licenses\.expires_at,\s*excluded\.expires_at\)/i.test(approvalLicense.sql),
+    {licenseSql:approvalLicense&&approvalLicense.sql});
+
+  approvalQueries.length=0;
+  await contract.studentAction(approvalClient,adminIdentity,target,{
+    action:"approve",expires_at:"2027-01-01T00:00:00.000Z",
+  },{});
+  const explicitApprovalLicense=approvalQueries.find(item=>/insert into public\.licenses/.test(item.sql));
+  report("pending approval with explicit expires_at also preserves a longer existing license",
+    explicitApprovalLicense&&
+      /greatest\(public\.licenses\.expires_at,\s*excluded\.expires_at\)/i.test(explicitApprovalLicense.sql),
+    {licenseSql:explicitApprovalLicense&&explicitApprovalLicense.sql});
+
   await contract.studentAction(stateClient,adminIdentity,target,{action:"suspend"},{});
   await contract.studentAction(stateClient,adminIdentity,target,{action:"activate"},{});
   const accountUpdates=stateQueries.filter(item=>/update public\.profiles set account_status=\$2 where id=\$1/.test(item.sql));

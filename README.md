@@ -282,10 +282,14 @@ account.
    service stops and says so instead: quietly deciding for itself which database
    holds the payment records is worse than not starting.
 
-   The CA certificate is bound the same way, for the same reason and with the
-   same key-prefix rule. Given a real certificate the database is
-   *authenticated*; without one the traffic is still encrypted but an in-path
-   substitution is not refused — on the connection carrying the payment records.
+   The CA certificate is bound the same way and paired by the URL key's suffix:
+   `DATABASE_URL` uses `DATABASE_CA_CERT`, while
+   `DATABASE_URL_IF_COMPONENT_IS_NAMED_DB` uses
+   `DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB`. A usable certificate from the
+   other binding is never borrowed, because it may authenticate a different
+   database. Given the paired certificate the database is *authenticated*;
+   without it the traffic is still encrypted but an in-path substitution is not
+   refused — on the connection carrying the payment records.
 
    **A certificate is checked by parsing it, not by looking at it.** Testing for
    the text `BEGIN CERTIFICATE` is not the same test, and the difference took

@@ -513,6 +513,135 @@ function testPasswordHash(password,parallelization) {
     body: { action: "set_permission", permission: "ccx_download", enabled: true },
   });
 
+  /* Approval is a one-way registration transition, not an alias for rewriting
+     an already-active account. Seed a longer canonical term to prove that the
+     initial pending -> active transition cannot shorten paid time either. */
+  runtimeServicePsql(
+    `update public.profiles set account_status='pending',plan_status='none',plan_expires_at=null ` +
+    `where id='${CUST}'; ` +
+    `insert into public.licenses (user_id,status,starts_at,expires_at,created_by) ` +
+    `values ('${CUST}','active',now(),now()+interval '11 months','${OWNER}') ` +
+    `on conflict (user_id) do update set status='active',starts_at=excluded.starts_at,` +
+    `expires_at=excluded.expires_at,created_by=excluded.created_by`, DB);
+  const approvalExpiryBefore=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const approvedAccount=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,body:{action:"approve",months:1},
+  });
+  const approvalExpiryAfter=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const approvalEvidence=psql(
+    `select account_status||'|'||(select count(*) from public.admin_audit_logs ` +
+    `where actor_user_id='${OWNER}' and target_user_id='${CUST}' and action='approve') ` +
+    `from public.profiles where id='${CUST}'`,DB);
+  const repeatedApproval=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,body:{action:"approve",months:1},
+  });
+  const approvalExpiryAfterReplay=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  runtimeServicePsql(`update public.profiles set account_status='suspended' where id='${CUST}'`,DB);
+  const invalidApproval=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,body:{action:"approve",months:1},
+  });
+  runtimeServicePsql(`update public.profiles set account_status='active' where id='${CUST}'`,DB);
+  report("J11) Approve permits only pending -> active and never truncates an existing license",
+    approvedAccount.status===200&&approvalEvidence==="active|1"&&
+      approvalExpiryAfter===approvalExpiryBefore&&approvalExpiryAfterReplay===approvalExpiryBefore&&
+      repeatedApproval.status===409&&repeatedApproval.json&&
+      repeatedApproval.json.error==="account_not_pending"&&
+      invalidApproval.status===409&&invalidApproval.json&&invalidApproval.json.error==="account_not_pending",
+    {approved:approvedAccount.status,evidence:approvalEvidence,before:approvalExpiryBefore,
+      after:approvalExpiryAfter,replay:repeatedApproval,invalid:invalidApproval});
+
+  runtimeServicePsql(`update public.profiles set account_status='pending' where id='${CUST}'`,DB);
+  const explicitApprovalExpiryBefore=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const explicitApproval=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"approve",expires_at:new Date(Date.now()+31*24*60*60*1000).toISOString()},
+  });
+  const explicitApprovalExpiryAfter=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  report("J11b) explicit-expiry Approve preserves a longer existing canonical term",
+    explicitApproval.status===200&&explicitApprovalExpiryAfter===explicitApprovalExpiryBefore,
+    {status:explicitApproval.status,before:explicitApprovalExpiryBefore,
+      after:explicitApprovalExpiryAfter,body:explicitApproval.json});
+
+  const EXTEND_REPLAY_ID="55555555-5555-4555-8555-555555555551";
+  const extendExpiryBefore=approvalExpiryAfter;
+  const extendFirst=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"extend_license",months:1,mutation_id:EXTEND_REPLAY_ID},
+  });
+  const extendExpiryFirst=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const extendFirstIsOneTerm=psql(
+    `select (expires_at=to_timestamp(${extendExpiryBefore})+interval '1 month')::text ` +
+    `from public.licenses where user_id='${CUST}'`,DB);
+  const extendReplay=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"extend_license",months:1,mutation_id:EXTEND_REPLAY_ID},
+  });
+  const extendExpiryReplay=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const extendReplayAudit=psql(
+    `select count(*)||'|'||bool_and(result is not null)::text from public.admin_audit_logs ` +
+    `where actor_user_id='${OWNER}' and action='extend_license' and mutation_id='${EXTEND_REPLAY_ID}'`,DB);
+  const extendConflict=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"extend_license",months:3,mutation_id:EXTEND_REPLAY_ID},
+  });
+  report("J12) sequential extend_license replay returns one persisted result and extends once",
+    extendFirst.status===200&&extendReplay.status===200&&
+      extendFirst.json&&extendReplay.json&&extendFirst.json.action==="extend_license"&&
+      extendReplay.json.student_id===extendFirst.json.student_id&&
+      extendFirstIsOneTerm==="true"&&extendExpiryReplay===extendExpiryFirst&&
+      extendReplayAudit==="1|true"&&extendConflict.status===409&&extendConflict.json&&
+      extendConflict.json.error==="mutation_conflict",
+    {first:extendFirst,replay:extendReplay,before:extendExpiryBefore,after:extendExpiryFirst,
+      exactOneTerm:extendFirstIsOneTerm,
+      afterReplay:extendExpiryReplay,audit:extendReplayAudit,conflict:extendConflict});
+
+  const {Client:DirectPgClient}=require(path.join(ROOT,"server","node_modules","pg"));
+  const adminContract=require(path.join(ROOT,"server","lib","admin-api.js"));
+  const directAdminIdentity={uid:OWNER,clientType:"admin",roles:["admin"],mfaVerified:true};
+  async function directAdminMutation(invoke) {
+    const client=new DirectPgClient({connectionString:runtimeUrl(DB),ssl:false});
+    await client.connect();
+    try {
+      await client.query("begin");
+      await client.query(LOCAL_SERVICE_CONTEXT);
+      const result=await invoke(client);
+      await client.query("commit");
+      return result;
+    } catch (error) {
+      try { await client.query("rollback"); } catch (_) {}
+      throw error;
+    } finally { await client.end(); }
+  }
+  const EXTEND_CONCURRENT_ID="55555555-5555-4555-8555-555555555552";
+  const concurrentExtendBefore=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const concurrentExtends=await Promise.all([
+    directAdminMutation(client=>adminContract.studentAction(client,directAdminIdentity,CUST,
+      {action:"extend_license",months:1,mutation_id:EXTEND_CONCURRENT_ID},{})),
+    directAdminMutation(client=>adminContract.studentAction(client,directAdminIdentity,CUST,
+      {action:"extend_license",months:1,mutation_id:EXTEND_CONCURRENT_ID},{})),
+  ]);
+  const concurrentExtendAfter=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const concurrentExtendIsOneTerm=psql(
+    `select (expires_at=to_timestamp(${concurrentExtendBefore})+interval '1 month')::text ` +
+    `from public.licenses where user_id='${CUST}'`,DB);
+  const concurrentExtendAudit=psql(
+    `select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and action='extend_license' and mutation_id='${EXTEND_CONCURRENT_ID}'`,DB);
+  report("J13) concurrent extend_license replay commits one entitlement mutation and one audit",
+    concurrentExtends.length===2&&concurrentExtends.every(item=>item&&item.action==="extend_license")&&
+      concurrentExtendIsOneTerm==="true"&&concurrentExtendAudit==="1",
+    {results:concurrentExtends,before:concurrentExtendBefore,after:concurrentExtendAfter,
+      exactOneTerm:concurrentExtendIsOneTerm,audit:concurrentExtendAudit});
+
   /* Keep this fixture in the historical flat/no-join-fee mode while giving the
      quote trigger an authoritative positive SKU price. */
   runtimeServicePsql("update public.app_settings set price_1m=30000", DB);
@@ -626,9 +755,13 @@ function testPasswordHash(password,parallelization) {
 
   const expiryBeforeGrant = psql(
     `select extract(epoch from plan_expires_at)::bigint from public.profiles where id='${CUST}'`, DB);
+  const grantExpiryBeforeExact=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const GRANT_REPLAY_ID="66666666-6666-4666-8666-666666666661";
   const strictGrant = await call("POST", "/v1/admin/payment-grants", {
     token: ownerAdminToken,
-    body: { email: cust.email, kind: "plan_3m", note: "Three-month scholarship" },
+    body: { email: cust.email, kind: "plan_3m", note: "Three-month scholarship",
+      mutation_id:GRANT_REPLAY_ID },
   });
   const strictGrantId = strictGrant.json && strictGrant.json.payment_request &&
     /^[0-9a-f-]{36}$/i.test(String(strictGrant.json.payment_request.id||""))
@@ -647,6 +780,55 @@ function testPasswordHash(password,parallelization) {
       strictGrant.json.payment_request.status === "approved" &&
       grantEvidence === "approved|true|true|true|grant|0|active|true|1",
     { status: strictGrant.status, body: strictGrant.json, evidence: grantEvidence });
+
+  const grantExpiryFirst=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const grantFirstIsOneTerm=psql(
+    `select (plan_expires_at=to_timestamp(${grantExpiryBeforeExact})+interval '3 months')::text ` +
+    `from public.profiles where id='${CUST}'`,DB);
+  const grantReplay=await call("POST","/v1/admin/payment-grants",{
+    token:ownerAdminToken,
+    body:{email:cust.email,kind:"plan_3m",note:"Three-month scholarship",mutation_id:GRANT_REPLAY_ID},
+  });
+  const grantExpiryReplay=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const grantReplayEvidence=psql(
+    `select (select count(*) from public.payment_requests where id='${strictGrantId}')||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and action='grant_payment' and mutation_id='${GRANT_REPLAY_ID}')`,DB);
+  report("L8) sequential grantPayment replay returns the original grant without extending twice",
+    grantReplay.status===201&&grantReplay.json&&grantReplay.json.payment_request&&
+      grantReplay.json.payment_request.id===strictGrantId&&grantFirstIsOneTerm==="true"&&
+      grantExpiryReplay===grantExpiryFirst&&
+      grantReplayEvidence==="1|1",
+    {replay:grantReplay,firstExpiry:grantExpiryFirst,replayExpiry:grantExpiryReplay,
+      exactOneTerm:grantFirstIsOneTerm,
+      evidence:grantReplayEvidence});
+
+  const GRANT_CONCURRENT_ID="66666666-6666-4666-8666-666666666662";
+  const concurrentGrantBefore=grantExpiryReplay;
+  const concurrentGrants=await Promise.all([
+    directAdminMutation(client=>adminContract.grantPayment(client,directAdminIdentity,
+      {email:cust.email,kind:"plan_1m",note:"Concurrent scholarship",mutation_id:GRANT_CONCURRENT_ID},{})),
+    directAdminMutation(client=>adminContract.grantPayment(client,directAdminIdentity,
+      {email:cust.email,kind:"plan_1m",note:"Concurrent scholarship",mutation_id:GRANT_CONCURRENT_ID},{})),
+  ]);
+  const concurrentGrantIds=concurrentGrants.map(item=>item&&item.payment_request&&item.payment_request.id);
+  const concurrentGrantAfter=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const concurrentGrantIsOneTerm=psql(
+    `select (plan_expires_at=to_timestamp(${concurrentGrantBefore})+interval '1 month')::text ` +
+    `from public.profiles where id='${CUST}'`,DB);
+  const concurrentGrantEvidence=psql(
+    `select (select count(*) from public.payment_requests where id='${concurrentGrantIds[0]}')||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and action='grant_payment' and mutation_id='${GRANT_CONCURRENT_ID}')`,DB);
+  report("L9) concurrent grantPayment replay creates one payment, one extension and one audit",
+    concurrentGrantIds.length===2&&concurrentGrantIds[0]&&
+      concurrentGrantIds[0]===concurrentGrantIds[1]&&
+      concurrentGrantIsOneTerm==="true"&&concurrentGrantEvidence==="1|1",
+    {ids:concurrentGrantIds,before:concurrentGrantBefore,after:concurrentGrantAfter,
+      exactOneTerm:concurrentGrantIsOneTerm,evidence:concurrentGrantEvidence});
 
   r = await call("GET", "/rest/v1/app_settings?select=*&limit=50");
   report("M) anon may read app_settings (the buy screen quotes prices signed out)",
@@ -950,6 +1132,14 @@ function testPasswordHash(password,parallelization) {
   report("H9) two candidates are refused rather than guessed between — the wrong one holds the payments",
     !!ambiguous && ambiguous.ready === false && /guess/.test(ambiguous.error || ""), ambiguous);
 
+  const directAndAlternate = await healthWith(REAL,
+    { [ALT]: "postgres://a:b@127.0.0.1:5432/other" });
+  report("H9a) a resolved DATABASE_URL does not hide a second resolved candidate",
+    !!directAndAlternate && directAndAlternate.ready === false &&
+    /DATABASE_URL/.test(directAndAlternate.error || "") &&
+    new RegExp(ALT).test(directAndAlternate.error || "") &&
+    /guess/.test(directAndAlternate.error || ""), directAndAlternate);
+
   /* The restriction that makes H8 safe rather than reckless. During a migration
      the OLD database is still live and its URL may still be sitting in the
      environment under some unrelated name; sweeping the whole environment for
@@ -1039,6 +1229,10 @@ function testPasswordHash(password,parallelization) {
     ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", "/dev/null",
      "-subj", "/CN=verify-api-service", "-days", "1"],
     { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  const OTHER_PEM = execFileSync("openssl",
+    ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", "/dev/null",
+     "-subj", "/CN=wrong-database", "-days", "1"],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
   const sslWith = env => {
     const saved = {};
     for (const k of Object.keys(env)) { saved[k] = process.env[k]; process.env[k] = env[k]; }
@@ -1058,10 +1252,23 @@ function testPasswordHash(password,parallelization) {
   report("S1) an unresolved CA binding is NOT trusted as a certificate — that cost a whole deploy",
     !!literal && literal.rejectUnauthorized === false && literal.ca === undefined, literal);
 
-  const bound = sslWith({ DATABASE_CA_CERT: "${hnk-db.CA_CERT}",
-                          DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB: PEM });
-  report("S2) the binding that DID resolve is verified against, so the database is authenticated",
+  const bound = sslWith({
+    DATABASE_URL: "${hnk-db.DATABASE_URL}",
+    [ALT]: REAL,
+    DATABASE_CA_CERT: OTHER_PEM,
+    DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB: PEM,
+  });
+  report("S2) the CA paired with the resolved URL binding is used, not another database's CA",
     !!bound && bound.rejectUnauthorized === true && bound.ca === PEM, bound);
+
+  const unpaired = sslWith({
+    DATABASE_URL: "${hnk-db.DATABASE_URL}",
+    [ALT]: REAL,
+    DATABASE_CA_CERT: PEM,
+    DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB: "${db.CA_CERT}",
+  });
+  report("S2b) a usable CA for an unresolved URL binding is not borrowed for the selected database",
+    !!unpaired && unpaired.rejectUnauthorized === false && unpaired.ca === undefined, unpaired);
 
   const stray = sslWith({ DATABASE_CA_CERT: "${hnk-db.CA_CERT}", PROXY_CA_CERT: PEM });
   report("S3) a certificate under an unrelated key is not adopted — the wrong CA refuses every connection",

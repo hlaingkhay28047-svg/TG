@@ -18,6 +18,7 @@ function report(name, ok, detail) {
 const ADMIN_ID = "11111111-1111-4111-8111-111111111111";
 const STUDENT_ID = "22222222-2222-4222-8222-222222222222";
 const PAYMENT_ID = "33333333-3333-4333-8333-333333333333";
+const MUTATION_ID = "44444444-4444-4444-8444-444444444444";
 const verifiedAdmin = {
   uid: ADMIN_ID, clientType: "admin", roles: ["admin"], mfaVerified: true,
 };
@@ -54,7 +55,7 @@ async function verifyExportsAndBoundary() {
     () => admin.reviewPayment(strictClient,{...verifiedAdmin,mfaVerified:false},PAYMENT_ID,
       {status:"approved",note:"verified"},{}),
     () => admin.grantPayment(strictClient,{...verifiedAdmin,mfaVerified:false},
-      {email:"student@example.test",kind:"plan_1m",note:"verified"},{}),
+      {email:"student@example.test",kind:"plan_1m",note:"verified",mutation_id:MUTATION_ID},{}),
     () => admin.paymentProof(strictClient,{...verifiedAdmin,mfaVerified:false},PAYMENT_ID,{}),
   ];
   const strictErrors=[];
@@ -194,6 +195,9 @@ async function verifyGrant() {
       return {rows:[{id:STUDENT_ID,email:"student@example.test"}]};
     }
     if (/from public\.profiles where id=\$1 for update$/.test(normalized)) return {rows:[{id:STUDENT_ID}]};
+    if (/^insert into public\.admin_audit_logs/.test(normalized)&&/mutation_id/.test(normalized)) {
+      return {rows:[{id:"55555555-5555-4555-8555-555555555555"}],rowCount:1};
+    }
     if (/^insert into public\.payment_requests/.test(normalized)) return {rows:[{
       id:PAYMENT_ID,user_id:STUDENT_ID,kind:values[1],status:"pending",is_grant:true,
       amount_mmk:0,note:values[2],
@@ -202,11 +206,11 @@ async function verifyGrant() {
       id:PAYMENT_ID,user_id:STUDENT_ID,kind:"plan_3m",status:"approved",is_grant:true,
       amount_mmk:0,note:"scholarship",reviewed_by:values[1],reviewed_at:new Date(),
     }]};
-    if (/^insert into public\.admin_audit_logs/.test(normalized)) return {rows:[]};
+    if (/^update public\.admin_audit_logs/.test(normalized)) return {rows:[{id:values[0]}],rowCount:1};
     throw new Error("unexpected SQL: "+normalized);
   }};
   const result=await admin.grantPayment(client,verifiedAdmin,
-    {email:"student@example.test",kind:"plan_3m",note:"scholarship"},{});
+    {email:"student@example.test",kind:"plan_3m",note:"scholarship",mutation_id:MUTATION_ID},{});
   const insert=calls.find(call=>/^insert into public\.payment_requests/.test(call.sql));
   const approval=calls.find(call=>/^update public\.payment_requests/.test(call.sql));
   report("VIP grants atomically apply entitlement through the strict audited server path",
@@ -216,7 +220,9 @@ async function verifyGrant() {
       approval.values[0]===PAYMENT_ID && approval.values[1]===ADMIN_ID &&
       result.payment_request && result.payment_request.status==="approved" &&
       calls.some(call=>/^insert into public\.admin_audit_logs/.test(call.sql) &&
-        call.values[0]===ADMIN_ID && call.values[1]===STUDENT_ID && call.values[2]==="grant_payment"),
+        call.values[0]===ADMIN_ID && call.values[1]===STUDENT_ID && call.values[2]==="grant_payment" &&
+        call.values.includes(MUTATION_ID)) &&
+      calls.some(call=>/^update public\.admin_audit_logs/.test(call.sql)&&/result=/.test(call.sql)),
     {calls,result});
 
   let invalidError=null;let invalidTouched=0;
@@ -227,6 +233,15 @@ async function verifyGrant() {
   report("VIP grants require an admin note before querying",
     invalidError && invalidError.status===400 && invalidError.code==="invalid_payment_note" && invalidTouched===0,
     {invalidError,invalidTouched});
+
+  let mutationError=null;let mutationTouched=0;
+  try {
+    await admin.grantPayment({query:async()=>{mutationTouched++;return {rows:[]};}},verifiedAdmin,
+      {email:"student@example.test",kind:"plan_3m",note:"scholarship"},{});
+  } catch (error) { mutationError=apiCode(error); }
+  report("VIP grants require a durable mutation identifier before querying",
+    mutationError&&mutationError.status===400&&mutationError.code==="invalid_mutation_id"&&mutationTouched===0,
+    {mutationError,mutationTouched});
 }
 
 async function verifyProof() {

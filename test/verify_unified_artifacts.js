@@ -164,6 +164,360 @@ async function verifyDownloadConcurrency() {
     {cleanupError,active:failing.active});
 }
 
+async function verifyDownloadDeviceBinding() {
+  const source=fs.readFileSync(path.join(ROOT,"server/lib/v1.js"),"utf8");
+  const helperStart=source.indexOf("async function sessionComputerDevice(");
+  const helperEnd=source.indexOf("\n\nasync function meEntitlement",helperStart);
+  let sessionComputerDevice=null,error="";
+  if (helperStart>=0&&helperEnd>helperStart) {
+    try {
+      sessionComputerDevice=Function(source.slice(helperStart,helperEnd)+
+        ";return sessionComputerDevice;")();
+    } catch (caught) { error=String(caught&&caught.message||caught); }
+  }
+  report("download authorization exposes a testable current-session computer binding helper",
+    typeof sessionComputerDevice==="function",{helperStart,helperEnd,error});
+  if (!sessionComputerDevice) return;
+
+  const rowsByInstallation=new Map([
+    ["phone-installation",{installation_id:"phone-installation",slot_id:"phone-slot",
+      client_type:"web",slot_type:"phone",slot_status:"active",installation_revoked_at:null}],
+    ["computer-installation",{installation_id:"computer-installation",slot_id:"computer-slot",
+      client_type:"web",slot_type:"computer",slot_status:"active",installation_revoked_at:null}],
+  ]);
+  const bindingQueries=[];
+  const bindingClient={query:async(sql,params)=>{
+    bindingQueries.push({sql,params});
+    const row=rowsByInstallation.get(params[0]);
+    return {rows:row?[row]:[]};
+  }};
+  const baseIdentity={uid:"11111111-1111-4111-8111-111111111111",clientType:"web"};
+  const unbound=await sessionComputerDevice(bindingClient,baseIdentity);
+  const phone=await sessionComputerDevice(bindingClient,
+    Object.assign({},baseIdentity,{deviceInstallationId:"phone-installation"}));
+  const computer=await sessionComputerDevice(bindingClient,
+    Object.assign({},baseIdentity,{deviceInstallationId:"computer-installation"}));
+  const wrongSlot=await sessionComputerDevice(bindingClient,
+    Object.assign({},baseIdentity,{deviceInstallationId:"computer-installation"}),"other-computer-slot");
+  const normalizedSql=String(bindingQueries[0]&&bindingQueries[0].sql||"").replace(/\s+/g," ").toLowerCase();
+  report("only this web session's active computer installation satisfies download binding",
+    unbound===null&&phone===null&&computer&&computer.slotId==="computer-slot"&&
+      computer.slotType==="computer"&&wrongSlot===null&&bindingQueries.length===3&&
+      normalizedSql.includes("from public.device_installations")&&
+      normalizedSql.includes("join public.device_slots")&&normalizedSql.includes("i.id=$1")&&
+      normalizedSql.includes("s.user_id=$2")&&normalizedSql.includes("i.client_type='web'")&&
+      normalizedSql.includes("i.revoked_at is null")&&normalizedSql.includes("s.slot_type='computer'")&&
+      normalizedSql.includes("s.status='active'"),
+    {unbound,phone,computer,wrongSlot,queries:bindingQueries});
+
+  const issueStart=source.indexOf("async function issueDownload(");
+  const issueEnd=source.indexOf("\n\nasync function redeemDownload",issueStart);
+  const issueSource=issueStart>=0&&issueEnd>issueStart?source.slice(issueStart,issueEnd):"";
+  let issueDownload=null,issueCompileError="";
+  const tokenInputs=[];
+  const downloadHistoryWrites=[];
+  try {
+    class TestApiError extends Error {
+      constructor(status,message,code) { super(message);this.status=status;this.code=code; }
+    }
+    const rejectDecision=decision=>{
+      if (!decision||decision.allowed!==true) {
+        throw new TestApiError(409,"Access denied",decision&&decision.reason||"forbidden");
+      }
+    };
+    const authorizeState=(_state,_capability,device)=>device&&device.slotType==="computer"
+      ? {allowed:true,reason:"allowed"}:{allowed:false,reason:"device_required"};
+    issueDownload=Function("asService","loadEntitlementState","sessionComputerDevice",
+      "authorizeState","rejectDecision","readyArtifactForRelease","createDownloadTokenService",
+      "createPgDownloadRepository","requireSecret","ApiError",issueSource+";return issueDownload;")(
+      async fn=>fn(bindingClient),async()=>({}),sessionComputerDevice,authorizeState,rejectDecision,
+      async(_client,row)=>({artifactKey:row.artifact_key}),options=>({issue:async input=>{
+        tokenInputs.push(input);await options.repository.create(input);
+        return {token:"signed-token",tokenId:"token-id",expiresAt:"2026-08-26T00:05:00.000Z"};
+      }}),()=>({create:async row=>{downloadHistoryWrites.push(row);return {id:"token-id"};}}),
+      ()=>"s".repeat(32),TestApiError);
+  } catch (caught) { issueCompileError=String(caught&&caught.message||caught); }
+  report("panel download issue path compiles with its authorization dependencies isolated",
+    typeof issueDownload==="function",{issueStart,issueEnd,issueCompileError});
+
+  if (issueDownload) {
+    const originalQuery=bindingClient.query;
+    bindingClient.query=async(sql,params)=>{
+      if (/insert\s+into\s+public\.download_history/i.test(sql)) downloadHistoryWrites.push({sql,params});
+      if (/from\s+public\.panel_versions/i.test(sql)) return {rows:[{
+        version:"6.24.0",artifact_key:"HNK_Ai_Panel_v6.24.0.ccx",sha256:"a".repeat(64),
+        size_bytes:1,artifact_id:"artifact-id",
+      }]};
+      return originalQuery(sql,params);
+    };
+    const context={ipHash:"ip",userAgent:"test"};
+    const body={version:"6.24.0"};
+    async function deniedCode(identity) {
+      try { await issueDownload(identity,body,context);return null; }
+      catch (caught) { return caught&&caught.code; }
+    }
+    const unboundCode=await deniedCode(Object.assign({},baseIdentity,{sessionId:"session-unbound"}));
+    const phoneCode=await deniedCode(Object.assign({},baseIdentity,{
+      sessionId:"session-phone",deviceInstallationId:"phone-installation",
+    }));
+    const tokensBeforeComputer=tokenInputs.length;
+    const historyBeforeComputer=downloadHistoryWrites.length;
+    const computerResult=await issueDownload(Object.assign({},baseIdentity,{
+      sessionId:"session-computer",deviceInstallationId:"computer-installation",
+    }),body,context);
+    report("phone and unbound web sessions issue no CCX history/token while the bound computer succeeds",
+      unboundCode==="device_required"&&phoneCode==="device_required"&&tokensBeforeComputer===0&&
+        historyBeforeComputer===0&&downloadHistoryWrites.length===1&&
+        computerResult&&computerResult.status===200&&tokenInputs.length===1&&
+        tokenInputs[0].sessionId==="session-computer"&&
+        tokenInputs[0].deviceSlotId==="computer-slot",
+      {unboundCode,phoneCode,tokensBeforeComputer,historyBeforeComputer,downloadHistoryWrites,
+        computerStatus:computerResult&&computerResult.status,tokenInputs});
+  }
+
+  const entitlementStart=source.indexOf("async function meEntitlement(");
+  const entitlementEnd=source.indexOf("\n\nasync function enrollDevice",entitlementStart);
+  const entitlementSource=entitlementStart>=0&&entitlementEnd>entitlementStart
+    ? source.slice(entitlementStart,entitlementEnd):"";
+  let meEntitlement=null,entitlementCompileError="";
+  try {
+    const authorizeState=(_state,capability,device)=>capability==="download"
+      ? (device&&device.slotType==="computer"?{allowed:true,reason:"allowed"}:
+        {allowed:false,reason:"device_required"})
+      : {allowed:true,reason:"allowed"};
+    meEntitlement=Function("asService","sessionInstallationHash","hashInstallationId",
+      "loadEntitlementState","listDeviceSlots","sessionComputerDevice","authorizeState","publicEntitlement",
+      entitlementSource+";return meEntitlement;")(
+      async fn=>fn(bindingClient),async(_client,identity)=>identity.deviceInstallationId
+        ? {installation_hash:"bound-hash",client_type:"web"}:null,
+      value=>value,async()=>({device:null}),async()=>[
+        {id:"phone-slot",type:"phone",status:"active"},
+        {id:"computer-slot",type:"computer",status:"active"},
+      ],sessionComputerDevice,authorizeState,(_state,decisions,slots)=>({
+        allowed:{ccx_download:decisions.download.allowed},
+        reasons:{ccx_download:decisions.download.reason},devices:slots,
+      }));
+  } catch (caught) { entitlementCompileError=String(caught&&caught.message||caught); }
+  report("account entitlement compiles with current-session device binding isolated",
+    typeof meEntitlement==="function",{entitlementStart,entitlementEnd,entitlementCompileError});
+  if (meEntitlement) {
+    const params=new URLSearchParams("panel_version=6.24.0");
+    const phoneEntitlement=await meEntitlement(Object.assign({},baseIdentity,{
+      sessionId:"session-phone",deviceInstallationId:"phone-installation",
+    }),params);
+    const computerEntitlement=await meEntitlement(Object.assign({},baseIdentity,{
+      sessionId:"session-computer",deviceInstallationId:"computer-installation",
+    }),params);
+    report("phone entitlement denies CCX download even when the account also owns a computer slot",
+      phoneEntitlement.body.allowed.ccx_download===false&&
+        phoneEntitlement.body.reasons.ccx_download==="device_required"&&
+        phoneEntitlement.body.devices.some(slot=>slot.type==="computer")&&
+        computerEntitlement.body.allowed.ccx_download===true,
+      {phone:phoneEntitlement.body,computer:computerEntitlement.body});
+  }
+
+  const redeemStart=source.indexOf("async function redeemDownload(");
+  const redeemEnd=source.indexOf("\n\nasync function adminCall",redeemStart);
+  const redeem=redeemStart>=0&&redeemEnd>redeemStart?source.slice(redeemStart,redeemEnd):"";
+  const consumeAt=redeem.indexOf("service.consume({token})");
+  const liveAt=redeem.indexOf("from public.sessions",consumeAt);
+  const bindingAt=redeem.indexOf("sessionComputerDevice(client",liveAt);
+  const authorizeAt=redeem.indexOf('authorizeState(state,"download",device)',bindingAt);
+  report("token redemption revalidates the live session's same computer installation and slot",
+    consumeAt>=0&&liveAt>consumeAt&&bindingAt>liveAt&&authorizeAt>bindingAt&&
+      /device_installation_id/.test(redeem.slice(consumeAt,bindingAt))&&
+      /client_type/.test(redeem.slice(consumeAt,bindingAt))&&
+      /consumed\.deviceSlotId/.test(redeem.slice(bindingAt,authorizeAt)),
+    {consumeAt,liveAt,bindingAt,authorizeAt});
+}
+
+async function verifyDownloadRedemptionBinding() {
+  const source=fs.readFileSync(path.join(ROOT,"server/lib/v1.js"),"utf8");
+  const helperStart=source.indexOf("async function sessionComputerDevice(");
+  const helperEnd=source.indexOf("\n\nasync function meEntitlement",helperStart);
+  const redeemStart=source.indexOf("async function redeemDownload(");
+  const redeemEnd=source.indexOf("\n\nasync function adminCall",redeemStart);
+  const helperSource=helperStart>=0&&helperEnd>helperStart?source.slice(helperStart,helperEnd):"";
+  const redeemSource=redeemStart>=0&&redeemEnd>redeemStart?source.slice(redeemStart,redeemEnd):"";
+  const panelDownload=require(path.join(ROOT,"server/lib/panel-download.js"));
+  const signingSecret="isolated-redemption-secret-2026-08-26";
+  const userId="11111111-1111-4111-8111-111111111111";
+  const sessionId="22222222-2222-4222-8222-222222222222";
+  const issuedSlotId="33333333-3333-4333-8333-333333333333";
+  const currentInstallationId="44444444-4444-4444-8444-444444444444";
+  const artifactKey="HNK_Ai_Panel_v6.24.0.ccx";
+  let activeScenario=null;
+  let redeemDownload=null;
+  let compileError="";
+
+  class TestApiError extends Error {
+    constructor(status,message,code) { super(message);this.status=status;this.code=code; }
+  }
+  function semaphore() {
+    let active=0;
+    return {
+      get active() { return active; },
+      tryAcquire() {
+        active++;
+        let released=false;
+        return ()=>{
+          if (released) return false;
+          released=true;active--;return true;
+        };
+      },
+    };
+  }
+  const streamSlots=semaphore();
+  const materializationSlots=semaphore();
+  const queries=[];
+  const client={query:async(sql,params)=>{
+    const normalized=String(sql||"").replace(/\s+/g," ").toLowerCase();
+    queries.push({scenario:activeScenario&&activeScenario.name,sql:normalized,params});
+    if (normalized.includes("pg_advisory_xact_lock")) return {rows:[]};
+    if (normalized.includes("from public.download_history")&&normalized.includes("result='streaming'")) {
+      return {rows:[{n:0}]};
+    }
+    if (normalized.includes("from public.sessions s join public.profiles")) {
+      return {rows:activeScenario&&activeScenario.live?[activeScenario.live]:[]};
+    }
+    if (normalized.includes("from public.device_installations i")&&
+        normalized.includes("join public.device_slots s")) {
+      return {rows:activeScenario&&activeScenario.device?[activeScenario.device]:[]};
+    }
+    if (normalized.includes("from public.panel_versions")) return {rows:[{
+      version:"6.24.0",artifact_key:artifactKey,size_bytes:1,sha256:"a".repeat(64),artifact_id:"artifact-id",
+    }]};
+    throw new Error("unexpected redemption query: "+normalized);
+  }};
+  const materializations=[];
+  const cleanupCalls=[];
+
+  try {
+    redeemDownload=Function("requireSecret","createDownloadTokenService","ApiError",
+      "downloadStreamSlots","downloadMaterializationSlots","asService","createPgDownloadRepository",
+      "DOWNLOAD_STREAM_STALE_SECONDS","DOWNLOAD_USER_STREAM_LIMIT","loadEntitlementState",
+      "authorizeState","rejectDecision","readyArtifactForRelease","materializeArtifact",
+      "createDownloadStreamLifecycle","releaseSlotAfterCleanup",
+      helperSource+"\n"+redeemSource+"\nreturn redeemDownload;")(
+      ()=>signingSecret,panelDownload.createDownloadTokenService,TestApiError,
+      streamSlots,materializationSlots,async fn=>fn(client),()=>activeScenario.repository,
+      2100,1,async()=>({}),(_state,_capability,device)=>device
+        ? {allowed:true,reason:"allowed"}:{allowed:false,reason:"device_required"},
+      decision=>{
+        if (!decision||decision.allowed!==true) {
+          throw new TestApiError(409,"Access denied",decision&&decision.reason||"forbidden");
+        }
+      },async(_client,row)=>({artifactKey:row.artifact_key}),async()=>{
+        materializations.push(activeScenario.name);
+        return {filename:artifactKey,size:1,filePath:"/tmp/private-panel.ccx",cleanup:async()=>{
+          cleanupCalls.push(activeScenario.name);
+        }};
+      },panelDownload.createDownloadStreamLifecycle,(cleanup,releaseSlot)=>{
+        let pending=null;
+        return ()=>{
+          if (!pending) pending=Promise.resolve().then(()=>cleanup()).finally(()=>releaseSlot());
+          return pending;
+        };
+      });
+  } catch (caught) { compileError=String(caught&&caught.message||caught); }
+  report("CCX token redemption path compiles as an executable isolated contract",
+    typeof redeemDownload==="function",{helperStart,helperEnd,redeemStart,redeemEnd,compileError});
+  if (!redeemDownload) return;
+
+  function repository() {
+    let row=null;
+    return {
+      async create(input) { row=Object.assign({id:"download-id",downloadedAt:null},input);return row; },
+      async findByTokenHash(hash) { return row&&row.tokenHash===hash?row:null; },
+      async consumeIfUnused(hash,downloadedAt) {
+        if (!row||row.tokenHash!==hash||row.downloadedAt) return null;
+        row=Object.assign({},row,{downloadedAt,result:"streaming"});
+        return row;
+      },
+      async completeStream(_id,result,reason) {
+        row=Object.assign({},row,{result,reason,completedAt:new Date().toISOString()});
+        return row;
+      },
+    };
+  }
+  const liveSession=overrides=>Object.assign({
+    revoked_at:null,expires_at:new Date(Date.now()+60000).toISOString(),client_type:"web",
+    device_installation_id:currentInstallationId,account_status:"active",
+  },overrides||{});
+  const currentDevice=overrides=>Object.assign({
+    installation_id:currentInstallationId,slot_id:issuedSlotId,client_type:"web",
+    installation_revoked_at:null,slot_type:"computer",slot_status:"active",
+  },overrides||{});
+  async function exercise(scenario) {
+    activeScenario=Object.assign({repository:repository()},scenario);
+    const issued=await panelDownload.createDownloadTokenService({
+      repository:activeScenario.repository,secret:signingSecret,ttlSeconds:300,
+    }).issue({userId,sessionId,deviceSlotId:issuedSlotId,panelVersion:"6.24.0",artifactKey});
+    const queryStart=queries.length;
+    const materializationStart=materializations.length;
+    try {
+      const response=await redeemDownload(issued.token);
+      return {response,error:null,queries:queries.slice(queryStart),
+        materialized:materializations.length-materializationStart};
+    } catch (error) {
+      return {response:null,error,queries:queries.slice(queryStart),
+        materialized:materializations.length-materializationStart};
+    }
+  }
+
+  const revokedSession=await exercise({name:"revoked-session",live:liveSession({
+    revoked_at:new Date().toISOString(),
+  }),device:currentDevice()});
+  report("redemption rejects a token after its issuing web session is revoked",
+    revokedSession.error&&revokedSession.error.code==="session_revoked"&&
+      revokedSession.materialized===0&&!revokedSession.queries.some(item=>
+        item.sql.includes("from public.device_installations i")),
+    {code:revokedSession.error&&revokedSession.error.code,queries:revokedSession.queries});
+
+  const revokedInstallation=await exercise({name:"revoked-installation",live:liveSession(),
+    device:currentDevice({installation_revoked_at:new Date().toISOString()})});
+  report("redemption rejects the current session's revoked computer installation",
+    revokedInstallation.error&&revokedInstallation.error.code==="device_required"&&
+      revokedInstallation.materialized===0,
+    {code:revokedInstallation.error&&revokedInstallation.error.code,queries:revokedInstallation.queries});
+
+  const wrongInstallation=await exercise({name:"wrong-installation",live:liveSession(),
+    device:currentDevice({installation_id:"55555555-5555-4555-8555-555555555555"})});
+  const wrongInstallationQuery=wrongInstallation.queries.find(item=>
+    item.sql.includes("from public.device_installations i"));
+  report("redemption rejects an installation that is not the live session's bound installation",
+    wrongInstallation.error&&wrongInstallation.error.code==="device_required"&&
+      wrongInstallation.materialized===0&&wrongInstallationQuery&&
+      wrongInstallationQuery.params[0]===currentInstallationId&&wrongInstallationQuery.params[2]===issuedSlotId,
+    {code:wrongInstallation.error&&wrongInstallation.error.code,bindingQuery:wrongInstallationQuery});
+
+  const wrongSlot=await exercise({name:"wrong-slot",live:liveSession(),
+    device:currentDevice({slot_id:"66666666-6666-4666-8666-666666666666"})});
+  const wrongSlotQuery=wrongSlot.queries.find(item=>item.sql.includes("from public.device_installations i"));
+  report("redemption rejects a current installation outside the token's original computer slot",
+    wrongSlot.error&&wrongSlot.error.code==="device_required"&&wrongSlot.materialized===0&&
+      wrongSlotQuery&&wrongSlotQuery.params[0]===currentInstallationId&&wrongSlotQuery.params[2]===issuedSlotId,
+    {code:wrongSlot.error&&wrongSlot.error.code,bindingQuery:wrongSlotQuery});
+
+  const currentSessionDevice=await exercise({name:"current-session-device",live:liveSession(),
+    device:currentDevice()});
+  const currentDeviceQuery=currentSessionDevice.queries.find(item=>
+    item.sql.includes("from public.device_installations i"));
+  if (currentSessionDevice.response&&currentSessionDevice.response.stream&&
+      currentSessionDevice.response.stream.lifecycle) {
+    await currentSessionDevice.response.stream.lifecycle.finish();
+  }
+  report("redemption materializes only for the live session's exact active computer installation and issued slot",
+    !currentSessionDevice.error&&currentSessionDevice.response&&currentSessionDevice.response.status===200&&
+      currentSessionDevice.materialized===1&&currentDeviceQuery&&
+      currentDeviceQuery.params[0]===currentInstallationId&&currentDeviceQuery.params[1]===userId&&
+      currentDeviceQuery.params[2]===issuedSlotId&&streamSlots.active===0&&materializationSlots.active===0&&
+      cleanupCalls.includes("current-session-device"),
+    {status:currentSessionDevice.response&&currentSessionDevice.response.status,
+      bindingQuery:currentDeviceQuery,materialized:currentSessionDevice.materialized,
+      streamSlots:streamSlots.active,materializationSlots:materializationSlots.active,cleanupCalls});
+}
+
 async function verifyHttpDownloadLifecycle() {
   const source=fs.readFileSync(path.join(ROOT,"server/index.js"),"utf8");
   const helperStart=source.indexOf("async function streamDownloadResponse");
@@ -359,6 +713,8 @@ function verifyRoutes() {
   if (!concurrencyOnly) {
     verifySchema();
     await verifyModule();
+    await verifyDownloadDeviceBinding();
+    await verifyDownloadRedemptionBinding();
   }
   await verifyDownloadConcurrency();
   await verifyHttpDownloadLifecycle();

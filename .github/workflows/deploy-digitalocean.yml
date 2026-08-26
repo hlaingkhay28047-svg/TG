@@ -117,9 +117,10 @@ jobs:
             "$DO_REPO" "$DO_BRANCH"
           CURRENT_READY_PATH="$(jq -r --arg service "$DO_SERVICE" '.services[] | select(.name == $service) | .health_check.http_path // ""' "$LIVE_SPEC")"
           CURRENT_LIVE_PATH="$(jq -r --arg service "$DO_SERVICE" '.services[] | select(.name == $service) | .liveness_health_check.http_path // ""' "$LIVE_SPEC")"
-          if [ "$CURRENT_READY_PATH" = "/ready" ] && [ "$CURRENT_LIVE_PATH" = "/live" ]; then
+          if [ "$CURRENT_READY_PATH" = "/ready" ] && [ "$CURRENT_LIVE_PATH" = "/live" ] &&
+             [ "$GITHUB_EVENT_NAME" != "push" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Live production health probes already match the release contract."
+            echo "Live production health probes already match the manual recovery contract."
             exit 0
           fi
           SYNC_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))

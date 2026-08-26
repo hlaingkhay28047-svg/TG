@@ -53,12 +53,18 @@ const REQUEST_ROLES = new Set(["anon", "authenticated", "service_role"]);
 function resolveDatabaseUrl() {
   const direct = process.env.DATABASE_URL || "";
   const unresolved = direct.match(/\$\{[^}]*\}/);
-  if (direct && !unresolved) return { url: direct, key: "DATABASE_URL", why: null };
-
   const found = Object.keys(process.env).filter(k =>
-    k !== "DATABASE_URL" && /^DATABASE_URL./.test(k) &&
+    /^DATABASE_URL(?:$|.)/.test(k) &&
     /^postgres(?:ql)?:\/\/\S+$/.test(process.env[k] || ""));
   if (found.length === 1) return { url: process.env[found[0]], key: found[0], why: null };
+
+  if (found.length > 1) {
+    return {
+      url: "", key: null,
+      why: found.length + " PostgreSQL URLs are set (" + found.join(", ") +
+        ") and choosing between them would be a guess",
+    };
+  }
 
   const why = unresolved
     ? "DATABASE_URL is an unresolved App Platform binding " + unresolved[0] +
@@ -67,10 +73,7 @@ function resolveDatabaseUrl() {
     : "DATABASE_URL is not set on this service";
   return {
     url: "", key: null,
-    why: found.length > 1
-      ? why + "; " + found.length + " other PostgreSQL URLs are set (" +
-        found.join(", ") + ") and choosing between them would be a guess"
-      : why,
+    why,
   };
 }
 
@@ -123,17 +126,22 @@ const allowsUnverifiedTls = () => process.env.ALLOW_UNVERIFIED_DB_TLS === "1";
  * Unverified and running, saying so loudly, beats verified-in-principle and
  * down.
  *
- * Bound twice for the same reason DATABASE_URL is, and read under the same
- * key-prefix restriction: a certificate elsewhere in the environment — an
- * outbound proxy's CA, NODE_EXTRA_CA_CERTS — is not this database's trust
- * anchor, and verifying against the wrong CA refuses every connection. */
-function resolveSsl() {
+ * Bound twice for the same reason DATABASE_URL is. The suffix on the URL key
+ * identifies its CA key: DATABASE_URL pairs with DATABASE_CA_CERT, while
+ * DATABASE_URL_IF_COMPONENT_IS_NAMED_DB pairs with
+ * DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB. A usable CA from another binding
+ * may authenticate a different database, so it must never be borrowed merely
+ * because it shares the prefix. */
+function resolveSsl(databaseKey = resolveDatabaseUrl().key) {
   if (process.env.PGSSLMODE === "disable") return false;
+  const caKey = databaseKey && /^DATABASE_URL(?:$|.)/.test(databaseKey)
+    ? "DATABASE_CA_CERT" + databaseKey.slice("DATABASE_URL".length)
+    : null;
+  if (!caKey) return { rejectUnauthorized: false };
+
   let sawSomethingCertificateShaped = false;
-  for (const key of Object.keys(process.env)) {
-    if (!/^DATABASE_CA_CERT/.test(key)) continue;
-    const raw = process.env[key] || "";
-    if (!raw) continue;
+  const raw = process.env[caKey] || "";
+  if (raw) {
     const ca = usableCa(raw);
     if (ca) return { ca, rejectUnauthorized: true };
     /* An unresolved ${...} binding is not certificate-shaped and is not worth
@@ -196,7 +204,7 @@ const pool = new Pool({
      PG* environment variables the way psql does. sslmode is removed first —
      see stripSslMode: left in, it overrules everything below, per connection. */
   connectionString: STRIPPED.url || undefined,
-  ssl: resolveSsl(),
+  ssl: resolveSsl(RESOLVED.key),
   max: Number(process.env.PG_POOL_MAX || 10),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,

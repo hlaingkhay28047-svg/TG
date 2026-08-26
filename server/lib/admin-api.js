@@ -1,5 +1,6 @@
 "use strict";
 
+const crypto = require("crypto");
 const path = require("path");
 const { authorizeAdminAction } = require("./admin");
 const { createPgSessionRepository } = require("./session");
@@ -34,6 +35,56 @@ const MFA_FAILED_WINDOW_SECONDS = Math.max(60,Number(process.env.MFA_FAILED_WIND
 function assertUuid(value, name) {
   if (!UUID_RE.test(String(value || ""))) throw new ApiError(400, "Invalid " + name, "invalid_" + name);
   return String(value);
+}
+
+function requireMutationId(value) {
+  if (!UUID_RE.test(String(value||""))) {
+    throw new ApiError(400,"A valid mutation_id is required","invalid_mutation_id");
+  }
+  return String(value).toLowerCase();
+}
+
+function requestHash(parts) {
+  return crypto.createHash("sha256").update(JSON.stringify(parts)).digest("hex");
+}
+
+async function claimAdminMutation(client,identity,action,targetUserId,mutationId,parts,context) {
+  const hash=requestHash(parts);
+  const claimed=await client.query(
+    `insert into public.admin_audit_logs
+       (actor_user_id,target_user_id,action,details,ip_hash,user_agent,mutation_id,request_hash)
+     values ($1,$2,$3,$4::jsonb,$5,$6,$7,$8)
+     on conflict (actor_user_id,action,mutation_id) where mutation_id is not null do nothing
+     returning id`,
+    [identity.uid,targetUserId||null,action,JSON.stringify({mutation_id:mutationId}),
+     context&&context.ipHash||null,context&&context.userAgent||null,mutationId,hash]);
+  if (claimed.rows.length) {
+    return {id:claimed.rows[0].id,mutationId,requestHash:hash,replayed:false};
+  }
+  const existing=await client.query(
+    `select target_user_id,request_hash,result,completed_at
+       from public.admin_audit_logs
+      where actor_user_id=$1 and action=$2 and mutation_id=$3`,
+    [identity.uid,action,mutationId]);
+  const row=existing.rows[0];
+  if (!row||row.request_hash!==hash||String(row.target_user_id||"")!==String(targetUserId||"")) {
+    throw new ApiError(409,"mutation_id was already used for a different request","mutation_conflict");
+  }
+  if (!row.completed_at||!row.result||typeof row.result!=="object") {
+    throw new ApiError(409,"The original mutation has not completed","mutation_incomplete");
+  }
+  return {mutationId,requestHash:hash,replayed:true,result:row.result};
+}
+
+async function completeAdminMutation(client,claim,details,result) {
+  const completed=await client.query(
+    `update public.admin_audit_logs
+        set details=$2::jsonb,result=$3::jsonb,completed_at=now()
+      where id=$1 and mutation_id=$4 and result is null
+      returning id`,
+    [claim.id,JSON.stringify(Object.assign({},details||{},{mutation_id:claim.mutationId})),
+     JSON.stringify(result),claim.mutationId]);
+  if (!completed.rows.length) throw new Error("admin mutation result was not persisted");
 }
 
 function iso(value) {
@@ -242,21 +293,26 @@ function licenseExpiry(body) {
   return { expiresAt:null,months };
 }
 
-async function upsertLicense(client, target, body, actor, extend) {
+async function upsertLicense(client, target, body, actor, mode) {
   const expiry = licenseExpiry(body);
   if (expiry.expiresAt) {
     await client.query(
       `insert into public.licenses (user_id,status,starts_at,expires_at,created_by)
        values ($1,'active',now(),$2,$3)
        on conflict (user_id) do update set status='active',starts_at=least(public.licenses.starts_at,now()),
-         expires_at=excluded.expires_at,updated_at=now(),created_by=$3`, [target,expiry.expiresAt,actor]);
+         expires_at=case when $4='replace' then excluded.expires_at
+           else greatest(public.licenses.expires_at,excluded.expires_at) end,
+         updated_at=now(),created_by=$3`, [target,expiry.expiresAt,actor,mode]);
   } else {
     await client.query(
       `insert into public.licenses (user_id,status,starts_at,expires_at,created_by)
        values ($1,'active',now(),now()+make_interval(months=>$2),$3)
        on conflict (user_id) do update set status='active',
-         expires_at=(case when $4 then greatest(public.licenses.expires_at,now()) else now() end)+make_interval(months=>$2),
-         updated_at=now(),created_by=$3`, [target,expiry.months,actor,!!extend]);
+         starts_at=least(public.licenses.starts_at,now()),
+         expires_at=case when $4='extend'
+           then greatest(public.licenses.expires_at,now())+make_interval(months=>$2)
+           else greatest(public.licenses.expires_at,excluded.expires_at) end,
+         updated_at=now(),created_by=$3`, [target,expiry.months,actor,mode]);
   }
   await client.query(
     `update public.profiles p set plan_status='active',plan_expires_at=l.expires_at
@@ -283,15 +339,36 @@ async function studentAction(client, identity, userId, body, context) {
   };
   const action = actionMap[requested] || requested;
   requireAdmin(identity, action);
+  let extensionMutation=null;
+  if (requested==="extend_license") {
+    extensionMutation={
+      expiry:licenseExpiry(body||{}),
+      mutationId:requireMutationId(body&&body.mutation_id),
+    };
+  }
   const locked = await client.query("select id,account_status from public.profiles where id=$1 for update", [userId]);
   if (!locked.rows.length) throw new ApiError(404,"Student not found","not_found");
+  let mutationClaim=null;
+  if (extensionMutation) {
+    mutationClaim=await claimAdminMutation(client,identity,requested,userId,extensionMutation.mutationId,
+      [userId,extensionMutation.expiry.months,extensionMutation.expiry.expiresAt],context||{});
+    if (mutationClaim.replayed) return mutationClaim.result;
+  }
   let resetType = null;
   let passwordReset = false;
   let passwordResetEmail = null;
 
   if (requested === "approve") {
-    await client.query("update public.profiles set account_status='active' where id=$1", [userId]);
-    await upsertLicense(client,userId,body,identity.uid,false);
+    if (locked.rows[0].account_status!=="pending") {
+      throw new ApiError(409,"Only a pending account can be approved","account_not_pending");
+    }
+    const activated=await client.query(
+      "update public.profiles set account_status='active' where id=$1 and account_status='pending' returning id",
+      [userId]);
+    if (!activated.rows.length) {
+      throw new ApiError(409,"Only a pending account can be approved","account_not_pending");
+    }
+    await upsertLicense(client,userId,body,identity.uid,"preserve");
   } else if (["reject","activate","suspend","ban"].includes(requested)) {
     const status = requested === "activate" ? "active" : requested === "reject" ? "rejected" : requested;
     /* Account state and license state are independent controls. In particular,
@@ -306,10 +383,10 @@ async function studentAction(client, identity, userId, body, context) {
          values ($1,'forced_logout','admin',true,$2)`, [userId,status]);
     }
   } else if (requested === "extend_license") {
-    await upsertLicense(client,userId,body,identity.uid,true);
+    await upsertLicense(client,userId,body,identity.uid,"extend");
   } else if (requested === "set_expiry") {
     if (!body.expires_at) throw new ApiError(400,"expires_at is required","invalid_expiry");
-    await upsertLicense(client,userId,body,identity.uid,false);
+    await upsertLicense(client,userId,body,identity.uid,"replace");
   } else if (requested === "reset_phone" || requested === "reset_computer") {
     resetType = requested === "reset_phone" ? "phone" : "computer";
     const count = await createPgDeviceRepository(client).resetSlot(userId,resetType,new Date().toISOString());
@@ -351,12 +428,15 @@ async function studentAction(client, identity, userId, body, context) {
     throw new ApiError(400,"Unknown student action","unknown_action");
   }
 
-  await audit(client,identity,requested,userId,{
+  const details={
     months:body.months || null,expires_at:body.expires_at || null,
     permission:body.permission || null,enabled:typeof body.enabled === "boolean" ? body.enabled : null,
     reset_type:resetType,
-  },context);
-  return { ok:true,action:requested,student_id:userId,passwordReset,passwordResetEmail };
+  };
+  const result={ ok:true,action:requested,student_id:userId,passwordReset,passwordResetEmail };
+  if (mutationClaim) await completeAdminMutation(client,mutationClaim,details,result);
+  else await audit(client,identity,requested,userId,details,context);
+  return result;
 }
 
 function paymentBody(body, allowed, code) {
@@ -492,7 +572,7 @@ async function reviewPayment(client, identity, paymentId, input, context) {
 
 async function grantPayment(client, identity, input, context) {
   requireAdmin(identity,"grant_payment");
-  const body=paymentBody(input,new Set(["email","kind","note"]),"invalid_payment_grant");
+  const body=paymentBody(input,new Set(["email","kind","note","mutation_id"]),"invalid_payment_grant");
   const email=String(body.email||"").trim().toLowerCase();
   if (email.length>320||!ADMIN_EMAIL_RE.test(email)) {
     throw new ApiError(400,"A valid student email is required","invalid_email");
@@ -505,12 +585,16 @@ async function grantPayment(client, identity, input, context) {
   if (!note) {
     throw new ApiError(400,"An admin note is required","invalid_payment_note");
   }
+  const mutationId=requireMutationId(body.mutation_id);
   const found=await client.query(
     `select p.id,coalesce(p.email,u.email) as email
        from public.profiles p join public.hnk_auth_users u on u.id=p.id
       where lower(coalesce(p.email,u.email))=lower($1) limit 2`,[email]);
   if (found.rows.length!==1) throw new ApiError(404,"Student account not found","not_found");
   const userId=found.rows[0].id;
+  const mutationClaim=await claimAdminMutation(client,identity,"grant_payment",userId,mutationId,
+    [email,kind,note],context||{});
+  if (mutationClaim.replayed) return mutationClaim.result;
   const profile=await client.query("select id from public.profiles where id=$1 for update",[userId]);
   if (!profile.rows.length) throw new ApiError(404,"Student account not found","not_found");
   const inserted=await client.query(
@@ -528,10 +612,11 @@ async function grantPayment(client, identity, input, context) {
   if (!granted.rows.length) {
     throw new ApiError(409,"Payment grant could not be applied","payment_grant_conflict");
   }
-  await audit(client,identity,"grant_payment",userId,{
+  const result={ok:true,message:"VIP access granted.",payment_request:granted.rows[0]};
+  await completeAdminMutation(client,mutationClaim,{
     payment_request_id:granted.rows[0].id,kind,status:"approved",
-  },context||{});
-  return {ok:true,message:"VIP access granted.",payment_request:granted.rows[0]};
+  },result);
+  return result;
 }
 
 async function paymentProof(client, identity, paymentId, context) {
