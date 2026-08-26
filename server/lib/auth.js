@@ -32,7 +32,7 @@ async function session(client, user) {
   const access = signToken({ sub: user.id, email: user.email, role: "authenticated" }, SECRET, ACCESS_TTL);
   const refresh = randomToken();
   await client.query(
-    "insert into auth.refresh_tokens (token, user_id, expires_at) values ($1, $2, now() + ($3 || ' seconds')::interval)",
+    "insert into public.hnk_auth_refresh_tokens (token, user_id, expires_at) values ($1, $2, now() + ($3 || ' seconds')::interval)",
     [refresh, user.id, String(REFRESH_TTL)]);
   return {
     access_token: access.token,
@@ -52,10 +52,10 @@ async function signup(body) {
 
   const encrypted = await hashPassword(password);
   return asService(async client => {
-    const existing = await client.query("select id from auth.users where lower(email) = lower($1)", [email]);
+    const existing = await client.query("select id from public.hnk_auth_users where lower(email) = lower($1)", [email]);
     if (existing.rowCount) throw new AuthError(422, "User already registered", "user_already_exists");
     const { rows } = await client.query(
-      "insert into auth.users (email, encrypted_password, email_confirmed_at) values ($1, $2, $3) returning id, email",
+      "insert into public.hnk_auth_users (email, encrypted_password, email_confirmed_at) values ($1, $2, $3) returning id, email",
       [email, encrypted, REQUIRE_CONFIRM ? null : new Date()]);
     const user = rows[0];
     if (REQUIRE_CONFIRM) return { status: 200, body: { id: user.id, email: user.email, confirmation_sent_at: new Date() } };
@@ -68,7 +68,7 @@ async function tokenPassword(body) {
   const password = String((body && body.password) || "");
   return asService(async client => {
     const { rows } = await client.query(
-      "select id, email, encrypted_password, email_confirmed_at from auth.users where lower(email) = lower($1)", [email]);
+      "select id, email, encrypted_password, email_confirmed_at from public.hnk_auth_users where lower(email) = lower($1)", [email]);
     const user = rows[0];
     /* The password is verified even when no such account exists, against a
        throwaway hash, so a wrong address and a wrong password take the same
@@ -85,21 +85,21 @@ async function tokenRefresh(body) {
   const token = String((body && body.refresh_token) || "");
   return asService(async client => {
     const { rows } = await client.query(
-      "select t.token, u.id, u.email from auth.refresh_tokens t join auth.users u on u.id = t.user_id " +
+      "select t.token, u.id, u.email from public.hnk_auth_refresh_tokens t join public.hnk_auth_users u on u.id = t.user_id " +
       "where t.token = $1 and t.expires_at > now()", [token]);
     if (!rows.length) throw new AuthError(400, "Invalid Refresh Token: Refresh Token Not Found", "invalid_grant");
     /* Rotate: the presented token is spent. A stolen refresh token is then good
        for one use at most, and the theft shows up as the real customer being
        logged out rather than as nothing at all. */
-    await client.query("delete from auth.refresh_tokens where token = $1", [token]);
+    await client.query("delete from public.hnk_auth_refresh_tokens where token = $1", [token]);
     return { status: 200, body: await session(client, rows[0]) };
   });
 }
 
 async function logout(body, uid) {
   return asService(async client => {
-    if (body && body.refresh_token) await client.query("delete from auth.refresh_tokens where token = $1", [String(body.refresh_token)]);
-    else if (uid) await client.query("delete from auth.refresh_tokens where user_id = $1", [uid]);
+    if (body && body.refresh_token) await client.query("delete from public.hnk_auth_refresh_tokens where token = $1", [String(body.refresh_token)]);
+    else if (uid) await client.query("delete from public.hnk_auth_refresh_tokens where user_id = $1", [uid]);
     return { status: 204, body: null };
   });
 }
@@ -108,9 +108,9 @@ async function recover(body, redirectTo) {
   const email = String((body && body.email) || "").trim();
   const token = randomToken();
   return asService(async client => {
-    const { rows } = await client.query("select id, email from auth.users where lower(email) = lower($1)", [email]);
+    const { rows } = await client.query("select id, email from public.hnk_auth_users where lower(email) = lower($1)", [email]);
     if (rows.length) {
-      await client.query("update auth.users set recovery_token = $1, recovery_sent_at = now() where id = $2", [token, rows[0].id]);
+      await client.query("update public.hnk_auth_users set recovery_token = $1, recovery_sent_at = now() where id = $2", [token, rows[0].id]);
       try { await sendRecoveryEmail(rows[0].email, token, redirectTo); }
       catch (err) { console.error("recovery email failed:", err.message); }
     }
@@ -130,17 +130,17 @@ async function updateUser(body, uid, recoveryToken) {
     let target = uid;
     if (!target && recoveryToken) {
       const { rows } = await client.query(
-        "select id from auth.users where recovery_token = $1 and recovery_sent_at > now() - interval '1 hour'", [recoveryToken]);
+        "select id from public.hnk_auth_users where recovery_token = $1 and recovery_sent_at > now() - interval '1 hour'", [recoveryToken]);
       if (!rows.length) throw new AuthError(401, "Invalid or expired recovery token", "invalid_grant");
       target = rows[0].id;
     }
     if (!target) throw new AuthError(401, "Not authenticated", "unauthorized");
     const { rows } = await client.query(
-      "update auth.users set encrypted_password = $1, recovery_token = null, updated_at = now() " +
+      "update public.hnk_auth_users set encrypted_password = $1, recovery_token = null, updated_at = now() " +
       "where id = $2 returning id, email", [encrypted, target]);
     if (!rows.length) throw new AuthError(404, "User not found", "not_found");
     /* Changing a password invalidates every other session. */
-    await client.query("delete from auth.refresh_tokens where user_id = $1", [target]);
+    await client.query("delete from public.hnk_auth_refresh_tokens where user_id = $1", [target]);
     const s = await session(client, rows[0]);
     /* The client's accSaveSession accepts a USER object with a rotated token at
        the top level, which is the shape Supabase returns here. */
@@ -150,7 +150,7 @@ async function updateUser(body, uid, recoveryToken) {
 
 async function getUser(uid) {
   return asService(async client => {
-    const { rows } = await client.query("select id, email, created_at from auth.users where id = $1", [uid]);
+    const { rows } = await client.query("select id, email, created_at from public.hnk_auth_users where id = $1", [uid]);
     if (!rows.length) throw new AuthError(404, "User not found", "not_found");
     return { status: 200, body: rows[0] };
   });

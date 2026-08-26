@@ -14,7 +14,7 @@
 -- idempotent: safe to run more than once, and safe to run on the live project.
 -- Then make yourself an admin (replace the address). Run this in the SQL
 -- editor, which has no JWT — section 6's guard deliberately steps aside for a
--- caller with no auth.uid(), because that caller is already the service role
+-- caller with no public.hnk_uid(), because that caller is already the service role
 -- and bypasses RLS anyway. An ordinary signed-in customer running the same
 -- statement gets is_admin silently put back to false, which is the point.
 --
@@ -114,7 +114,7 @@
 --     would make a fresh project behave differently from the live one — the
 --     embed would start working in one and keep 400ing in the other — which is
 --     precisely the drift this file exists to prevent. Both columns reference
---     auth.users instead, which gives the integrity without changing the shape
+--     public.hnk_auth_users instead, which gives the integrity without changing the shape
 --     PostgREST sees.
 --
 --   * No trigger creating a profiles row on signup. The app stopped depending
@@ -125,10 +125,10 @@
 -- ---------------------------------------------------------------------------
 
 -- profiles.id IS the auth user's id — section 6 relies on it
--- ("profiles.id references auth.users.id") when it takes the email from the
+-- ("profiles.id references public.hnk_auth_users.id") when it takes the email from the
 -- identity provider rather than from the payload.
 create table if not exists public.profiles (
-  id         uuid primary key references auth.users (id) on delete cascade,
+  id         uuid primary key references public.hnk_auth_users (id) on delete cascade,
   name       text,
   email      text,
   created_at timestamptz not null default now()
@@ -140,7 +140,7 @@ create table if not exists public.profiles (
 -- header's, verbatim.
 create table if not exists public.payment_requests (
   id              uuid primary key default gen_random_uuid(),
-  user_id         uuid not null references auth.users (id) on delete cascade,
+  user_id         uuid not null references public.hnk_auth_users (id) on delete cascade,
   kind            text not null
                   check (kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')),
   txn_last6       text,
@@ -148,7 +148,7 @@ create table if not exists public.payment_requests (
   status          text not null default 'pending'
                   check (status in ('pending','approved','rejected')),
   reviewed_at     timestamptz,
-  reviewed_by     uuid references auth.users (id),
+  reviewed_by     uuid references public.hnk_auth_users (id),
   note            text,
   created_at      timestamptz not null default now()
 );
@@ -188,7 +188,7 @@ select null
 
 create table if not exists public.devices (
   id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null references auth.users (id) on delete cascade,
+  user_id    uuid not null references public.hnk_auth_users (id) on delete cascade,
   device_id  text not null,
   label      text,
   created_at timestamptz not null default now()
@@ -357,7 +357,7 @@ as $$
 declare
   requested text;
 begin
-  if to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+  if to_regprocedure('public.hnk_roleless_runtime()') is not null then
     requested := nullif(current_setting('request.role', true), '');
     if requested in ('anon', 'authenticated', 'service_role') then
       return requested;
@@ -409,14 +409,14 @@ begin
   -- FORCE RLS makes the owner subject to this same profiles policy. Querying
   -- profiles here would recurse, so the roleless API supplies only the boolean
   -- it derived from the database before narrowing the transaction to the user.
-  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+  if pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is not null then
     return public.hnk_request_role() = 'authenticated'
        and coalesce(pg_catalog.current_setting('request.is_admin', true) = 'true', false);
   end if;
 
   -- Supabase does not install the marker or FORCE owner RLS, so retain the
   -- original authoritative lookup for direct browser-to-Supabase requests.
-  return coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
+  return coalesce((select p.is_admin from public.profiles p where p.id = public.hnk_uid()), false);
 end;
 $$;
 
@@ -448,20 +448,20 @@ drop policy if exists profiles_select_own_or_admin on public.profiles;
 create policy profiles_select_own_or_admin on public.profiles
   for select to public
   using (public.hnk_request_role() = 'authenticated'
-         and (id = auth.uid() or public.hnk_is_admin()));
+         and (id = public.hnk_uid() or public.hnk_is_admin()));
 
 drop policy if exists profiles_update_own_or_admin on public.profiles;
 create policy profiles_update_own_or_admin on public.profiles
   for update to public
   using (public.hnk_request_role() = 'authenticated'
-         and (id = auth.uid() or public.hnk_is_admin()))
+         and (id = public.hnk_uid() or public.hnk_is_admin()))
   with check (public.hnk_request_role() = 'authenticated'
-              and (id = auth.uid() or public.hnk_is_admin()));
+              and (id = public.hnk_uid() or public.hnk_is_admin()));
 
 drop policy if exists profiles_insert_self on public.profiles;
 create policy profiles_insert_self on public.profiles
   for insert to public
-  with check (public.hnk_request_role() = 'authenticated' and id = auth.uid());
+  with check (public.hnk_request_role() = 'authenticated' and id = public.hnk_uid());
 
 -- ---------------------------------------------------------------------------
 -- 4. payment_requests — a user may raise one and read their own; ONLY an admin
@@ -480,7 +480,7 @@ create policy payreq_insert_own on public.payment_requests
   for insert to public
   with check (
     public.hnk_request_role() = 'authenticated'
-    and user_id = auth.uid()
+    and user_id = public.hnk_uid()
     and kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')
     -- a customer never marks their own row a grant; that is the admin's word,
     -- and without this line anyone could file a free VIP period into the queue
@@ -510,7 +510,7 @@ create policy payreq_insert_own on public.payment_requests
     and note is null
   );
 
--- v5.34 — payreq_insert_own is `user_id = auth.uid()`, so an admin recording a
+-- v5.34 — payreq_insert_own is `user_id = public.hnk_uid()`, so an admin recording a
 -- free period for a student would be refused by their own database. This is the
 -- narrow exception: an admin may insert a row for ANY user, but only one marked
 -- is_grant with no money attached. A grant therefore lands in the same queue,
@@ -532,7 +532,7 @@ drop policy if exists payreq_select_own_or_admin on public.payment_requests;
 create policy payreq_select_own_or_admin on public.payment_requests
   for select to public
   using (public.hnk_request_role() = 'authenticated'
-         and (user_id = auth.uid() or public.hnk_is_admin()));
+         and (user_id = public.hnk_uid() or public.hnk_is_admin()));
 
 drop policy if exists payreq_update_admin_only on public.payment_requests;
 create policy payreq_update_admin_only on public.payment_requests
@@ -711,7 +711,7 @@ declare
   current_allowance integer;
   join_required boolean;
 begin
-  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null
+  if pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is not null
      and not coalesce(public.hnk_request_role() in ('authenticated', 'service_role'), false) then
     raise exception 'authentication required' using errcode = '42501';
   end if;
@@ -720,7 +720,7 @@ begin
     -- BEFORE triggers run before RLS WITH CHECK. Refuse a forged user_id with
     -- one uniform answer before this definer function reads or locks a victim's
     -- profile; admins retain the cross-account VIP-grant path.
-    if auth.uid() is not null and new.user_id is distinct from auth.uid()
+    if public.hnk_uid() is not null and new.user_id is distinct from public.hnk_uid()
        and not public.hnk_is_admin() then
       raise exception 'payment user does not match authenticated caller'
         using errcode = '42501';
@@ -787,10 +787,10 @@ begin
   -- The SQL editor/service role may repair the commercial fields of a still-
   -- pending legacy row. It does not get a status-transition escape: approval
   -- remains subject to the same state machine and entitlement trigger.
-  if ((pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null
+  if ((pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is not null
        and public.hnk_request_role() = 'service_role')
-      or (pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is null
-          and auth.uid() is null))
+      or (pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is null
+          and public.hnk_uid() is null))
      and old.status = 'pending' and new.status = 'pending' then
     return new;
   end if;
@@ -818,7 +818,7 @@ begin
     raise exception 'a terminal payment review requires reviewer and time'
       using errcode = '23514';
   end if;
-  if auth.uid() is not null and new.reviewed_by is distinct from auth.uid() then
+  if public.hnk_uid() is not null and new.reviewed_by is distinct from public.hnk_uid() then
     raise exception 'reviewed_by must be the signed-in admin'
       using errcode = '23514';
   end if;
@@ -861,9 +861,9 @@ drop policy if exists devices_all_own_or_admin on public.devices;
 create policy devices_all_own_or_admin on public.devices
   for all to public
   using (public.hnk_request_role() = 'authenticated'
-         and (user_id = auth.uid() or public.hnk_is_admin()))
+         and (user_id = public.hnk_uid() or public.hnk_is_admin()))
   with check (public.hnk_request_role() = 'authenticated'
-              and (user_id = auth.uid() or public.hnk_is_admin()));
+              and (user_id = public.hnk_uid() or public.hnk_is_admin()));
 
 -- ---------------------------------------------------------------------------
 -- 5b. the device cap, enforced where it cannot be edited out
@@ -895,7 +895,7 @@ declare
   used  integer;
   cap   integer;
 begin
-  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null
+  if pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is not null
      and not coalesce(public.hnk_request_role() in ('authenticated', 'service_role'), false) then
     raise exception 'authentication required' using errcode = '42501';
   end if;
@@ -903,7 +903,7 @@ begin
   -- As with payment inserts, this definer trigger runs before RLS. Reject a
   -- forged user_id uniformly before taking a victim's lock or revealing their
   -- device count/cap; admins keep the documented cross-account management path.
-  if auth.uid() is not null and new.user_id is distinct from auth.uid()
+  if public.hnk_uid() is not null and new.user_id is distinct from public.hnk_uid()
      and not public.hnk_is_admin() then
     raise exception 'device user does not match authenticated caller'
       using errcode = '42501';
@@ -968,7 +968,7 @@ create unique index if not exists devices_user_device_uniq
 -- the plan columns back to what they were unless an admin is doing the update.
 --
 -- INSERT is guarded too, and that half is not theoretical tidiness. Section 3's
--- insert policy checks only `id = auth.uid()`, so a user whose profile row does
+-- insert policy checks only `id = public.hnk_uid()`, so a user whose profile row does
 -- not exist yet could create it with is_admin = true and hand themselves the
 -- approval panel. The app never inserts a profile — it only ever selects one —
 -- but the policy grants the right regardless of what the app chooses to do with
@@ -984,19 +984,19 @@ set search_path = public
 as $$
 begin
   -- THE BOOTSTRAP ESCAPE, and without it this file is self-defeating. In
-  -- Supabase, auth.uid() is NULL in the SQL editor/service-owner connection,
+  -- Supabase, public.hnk_uid() is NULL in the SQL editor/service-owner connection,
   -- which already bypasses RLS. In the roleless API the owner is FORCE-RLS
   -- constrained, so only an explicit internal service context receives the
   -- same ability. A missing/unknown context fails closed; an authenticated
   -- customer always takes the guarded branch below.
-  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+  if pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is not null then
     if public.hnk_request_role() = 'service_role' then
       return new;
     end if;
     if public.hnk_request_role() is distinct from 'authenticated' then
       raise exception 'authentication required' using errcode = '42501';
     end if;
-  elsif auth.uid() is null then
+  elsif public.hnk_uid() is null then
     return new;
   end if;
   if public.hnk_is_admin() then
@@ -1015,15 +1015,15 @@ begin
     new.price_6m_override         := null;
     new.price_join_first_override := null;
     -- v5.37: identity comes from the identity provider rather than the payload.
-    -- Supabase can read auth.users here. In roleless mode db.js reads it while
+    -- Supabase can read public.hnk_auth_users here. In roleless mode db.js reads it while
     -- briefly in the internal service context, then pins that trusted value in
     -- request.user_email before narrowing the transaction to authenticated.
     -- Coalesce preserves the supplied value only if that authoritative value is
-    -- unexpectedly absent (profiles.id still references auth.users.id).
-    if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+    -- unexpectedly absent (profiles.id still references public.hnk_auth_users.id).
+    if pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is not null then
       new.email := coalesce(nullif(pg_catalog.current_setting('request.user_email', true), ''), new.email);
     else
-      new.email := coalesce((select u.email from auth.users u where u.id = new.id), new.email);
+      new.email := coalesce((select u.email from public.hnk_auth_users u where u.id = new.id), new.email);
     end if;
     return new;
   end if;
@@ -1242,32 +1242,32 @@ create trigger hnk_apply_payment
 -- private: a public bucket would put every customer's bank slip on a guessable
 -- URL.
 -- ---------------------------------------------------------------------------
-insert into storage.buckets (id, name, public)
+insert into public.hnk_storage_buckets (id, name, public)
 values ('payment-proofs', 'payment-proofs', false)
 on conflict (id) do update set public = false;
 
-drop policy if exists proofs_insert_own on storage.objects;
-drop policy if exists proofs_service_all on storage.objects;
-create policy proofs_service_all on storage.objects
+drop policy if exists proofs_insert_own on public.hnk_storage_objects;
+drop policy if exists proofs_service_all on public.hnk_storage_objects;
+create policy proofs_service_all on public.hnk_storage_objects
   for all to public
   using (public.hnk_request_role() = 'service_role')
   with check (public.hnk_request_role() = 'service_role');
 
-create policy proofs_insert_own on storage.objects
+create policy proofs_insert_own on public.hnk_storage_objects
   for insert to public
   with check (
     public.hnk_request_role() = 'authenticated'
     and bucket_id = 'payment-proofs'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (public.hnk_foldername(name))[1] = public.hnk_uid()::text
   );
 
-drop policy if exists proofs_read_own_or_admin on storage.objects;
-create policy proofs_read_own_or_admin on storage.objects
+drop policy if exists proofs_read_own_or_admin on public.hnk_storage_objects;
+create policy proofs_read_own_or_admin on public.hnk_storage_objects
   for select to public
   using (
     public.hnk_request_role() = 'authenticated'
     and bucket_id = 'payment-proofs'
-    and ((storage.foldername(name))[1] = auth.uid()::text or public.hnk_is_admin())
+    and ((public.hnk_foldername(name))[1] = public.hnk_uid()::text or public.hnk_is_admin())
   );
 
 -- A plain PostgreSQL table owner bypasses RLS unless FORCE is set. Do that only
@@ -1275,12 +1275,12 @@ create policy proofs_read_own_or_admin on storage.objects
 -- deliberately retains its platform-native bypass semantics.
 do $$
 begin
-  if pg_catalog.to_regprocedure('auth.hnk_roleless_runtime()') is not null then
+  if pg_catalog.to_regprocedure('public.hnk_roleless_runtime()') is not null then
     alter table public.profiles force row level security;
     alter table public.payment_requests force row level security;
     alter table public.app_settings force row level security;
     alter table public.devices force row level security;
-    alter table storage.objects force row level security;
+    alter table public.hnk_storage_objects force row level security;
   end if;
 end $$;
 
@@ -1299,7 +1299,7 @@ end $$;
 --   update public.payment_requests set status='approved' where id='<some id>';
 --     -> must affect 0 rows. If it approves anything, this file is not applied.
 --
---   update public.profiles set is_admin=true, plan_status='active' where id=auth.uid();
+--   update public.profiles set is_admin=true, plan_status='active' where id=public.hnk_uid();
 --     -> must report success and change NOTHING. The trigger in section 6 puts
 --        every plan column back. If the row comes back with is_admin true, the
 --        approval panel is standing open to every customer you have.

@@ -1,9 +1,9 @@
 "use strict";
 /* The one place a query reaches the database.
  *
- * WHY THIS MODULE HAS NO RAW QUERY FUNCTION. supabase/schema.sql decides who
+ * WHY THIS MODULE HAS NO RAW QUERY FUNCTION. server/sql/schema.sql decides who
  * may approve a payment, promote an admin or read another customer's rows, and
- * it decides it with row-level security keyed on auth.uid(). The service
+ * it decides it with row-level security keyed on public.hnk_uid(). The service
  * connects as the database owner, so every request table uses FORCE ROW LEVEL
  * SECURITY and every transaction receives one fixed internal request mode.
  *
@@ -283,7 +283,7 @@ async function asRole(role, uid, fn) {
          then narrow the same transaction before running any request query. */
       await setRequestContext(client, "service_role", uid, false, "");
       const identity = await client.query(
-        "select email from auth.users where id = $1", [uid]);
+        "select email from public.hnk_auth_users where id = $1", [uid]);
       const admin = await client.query(
         "select 1 from public.profiles where id = $1 and is_admin is true for share", [uid]);
       await setRequestContext(client, "authenticated", uid,
@@ -312,7 +312,7 @@ const asAnon = fn => asRole("anon", null, fn);
 /* The auth tables, which no public request mode may touch at all.
  *
  * This runs under the explicit internal service context. It is reserved for
- * auth.users and auth.refresh_tokens — creating an account, checking a password,
+ * public.hnk_auth_users and public.hnk_auth_refresh_tokens — creating an account, checking a password,
  * issuing and revoking tokens — none of which a customer may read. It must never
  * be handed a statement against public.*: service policies intentionally allow
  * the internal auth path through FORCE RLS as well.

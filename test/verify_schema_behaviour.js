@@ -31,9 +31,10 @@
    certifies nothing, which is worse than not existing. With no server it FAILS
    and says how to start one.
 
-   WHAT IT STILL CANNOT DO. Supabase's own auth and storage schemas are stood
-   in for by a minimal stub below (auth.users, auth.uid(), storage.buckets /
-   objects / foldername). It proves the schema's logic, not Supabase's.
+   WHAT IT STILL CANNOT DO. Supabase's own auth and storage services are stood
+   in for by test/fixtures/supabase_platform.sql. It proves the native schema's
+   database logic, not the hosted services around it. The separate roleless
+   suites exercise the DigitalOcean dialect and exact runtime privileges.
 
    Usage: node test/verify_schema_behaviour.js */
 const { execFileSync, spawn } = require("child_process");
@@ -57,9 +58,8 @@ const ENV = Object.assign({}, process.env, {
   PGUSER: process.env.PGUSER || "postgres",
   PGPASSWORD: process.env.PGPASSWORD || "postgres",
   PGCLIENTENCODING: "UTF8",
-  /* Direct SQL below is trusted fixture/setup work. Once platform.sql has
-     installed the marker, BEFORE triggers require the same explicit service
-     context as production migrations; request helpers override it locally. */
+  /* Direct SQL below is trusted fixture/setup work. Request helpers override
+     the context and SET ROLE locally to model native Supabase requests. */
   PGOPTIONS: [process.env.PGOPTIONS, "-c request.role=service_role"]
     .filter(Boolean).join(" "),
 });
@@ -122,11 +122,10 @@ function waitForAdvisoryRelease(lockId, db) {
     "select pg_advisory_unlock(" + lockId + ")", db);
 }
 
-/* The platform objects supabase/schema.sql leans on. This used to be a stub
-   written here; it is now the REAL file the service ships and the owner
-   applies, so this test proves the shipped platform schema works rather than a
-   hand-written stand-in that could drift from it. */
-const PLATFORM = path.join(ROOT, "server", "sql", "platform.sql");
+/* Keep the native Supabase dialect independent from the DigitalOcean platform
+   file. Mixing them would let a DO-only change silently rewrite what this
+   suite claims to test. */
+const PLATFORM = path.join(ROOT, "test", "fixtures", "supabase_platform.sql");
 
 const OWNER = "11111111-1111-1111-1111-111111111111";
 const CUST  = "22222222-2222-2222-2222-222222222222";
@@ -155,7 +154,7 @@ for (const role of REQUEST_ROLES) {
 }
 mustFixture("fixture creates a fresh main scratch database", sql('create database "' + DB + '"'));
 const stubbed = file(PLATFORM, DB);
-report("server/sql/platform.sql loads (auth.users, auth.uid, storage, roleless marker)",
+report("the native Supabase auth/storage fixture loads",
   stubbed.ok, stubbed.out.split("\n").slice(0, 3));
 
 /* ---- A) it builds a database from nothing ---- */
@@ -188,17 +187,15 @@ report("B2) reapplying removes inherited anonymous/app-settings write grants",
 const rows = sql("select count(*) from public.app_settings", DB).out;
 report("C) app_settings still holds exactly one row after three runs", rows === "1", { rows });
 
-/* ---- D) RLS is on and forced everywhere the roleless service reaches ----
-   ENABLE alone is not enough: the DigitalOcean connection owns these tables,
-   and PostgreSQL table owners bypass ordinary RLS. */
-const forcedRls = sql("select count(*) from pg_class c " +
+/* ---- D) native Supabase client tables have RLS enabled ----
+   FORCE RLS is a DigitalOcean-owner requirement and is tested separately. */
+const enabledRls = sql("select count(*) from pg_class c " +
   "join pg_namespace n on n.oid=c.relnamespace where " +
   "((n.nspname='public' and c.relname in ('profiles','payment_requests','app_settings','devices')) " +
-  "or (n.nspname='storage' and c.relname='objects') " +
-  "or (n.nspname='auth' and c.relname in ('users','refresh_tokens'))) " +
-  "and c.relrowsecurity and c.relforcerowsecurity", DB).out;
-report("D) all seven request/auth tables have ENABLE + FORCE RLS",
-  forcedRls === "7", { forcedRls });
+  "or (n.nspname='storage' and c.relname='objects')) " +
+  "and c.relrowsecurity", DB).out;
+report("D) all five native client/storage tables have RLS enabled",
+  enabledRls === "5", { enabledRls });
 
 /* seed two accounts; the app creates its own profiles row (v5.38.0) */
 sql("insert into auth.users (id,email) values ('" + OWNER + "','owner@example.com'),('" + CUST + "','customer@example.com')", DB);
@@ -807,103 +804,6 @@ report("P2) profiles keeps its own duplicate-address index as defence in depth",
 
 mustFixture("cleanup removes the main scratch database",
   sql('drop database if exists "' + DB + '"'));
-for (const role of REQUEST_ROLES) {
-  mustFixture("cleanup removes role " + role, sql("drop role if exists " + role));
-}
-
-/* ---- R) the exact restricted-owner shape DigitalOcean supplies ----
-   Request identity is transaction-local now, so a NOCREATEROLE owner must be
-   able to apply both files while the old cluster-wide role names stay absent. */
-const LIMITED_DB = DB + "_limited";
-const LIMITED_USER = "hnk_limited_probe";
-mustFixture("fixture removes the prior restricted-owner database",
-  sql('drop database if exists "' + LIMITED_DB + '"'));
-mustFixture("fixture removes the prior restricted owner",
-  sql('drop role if exists ' + LIMITED_USER));
-mustFixture("fixture creates the restricted owner", sql("create role " + LIMITED_USER +
-  " login password 'probe' nocreaterole nosuperuser nobypassrls"));
-mustFixture("fixture creates its owner database",
-  sql('create database "' + LIMITED_DB + '" owner ' + LIMITED_USER));
-
-for (const role of REQUEST_ROLES) {
-  mustFixture("restricted fixture removes cluster role " + role,
-    sql("drop role if exists " + role));
-}
-const dropped = true;
-
-const asLimited = (f, db) => {
-  const out = require("child_process").spawnSync("psql",
-    ["-h", ENV.PGHOST, "-p", ENV.PGPORT, "-U", LIMITED_USER, "-d", db,
-     "-v", "ON_ERROR_STOP=1", "-q", "-f", f],
-    { env: Object.assign({}, ENV, { PGUSER: LIMITED_USER, PGPASSWORD: "probe" }),
-      encoding: "utf8" });
-  return { ok: out.status === 0, out: (out.stdout || "") + (out.stderr || "") };
-};
-
-const limitedFlags = sql("select rolsuper||'|'||rolcreaterole||'|'||rolbypassrls " +
-  "from pg_roles where rolname='" + LIMITED_USER + "'");
-const limitedPlatform = dropped
-  ? asLimited(PLATFORM, LIMITED_DB) : { ok: false, out: "request roles could not be removed" };
-const limitedSchema = limitedPlatform.ok
-  ? asLimited(SCHEMA, LIMITED_DB) : { ok: false, out: "platform.sql did not apply" };
-report("R) a NOCREATEROLE owner applies platform.sql and schema.sql without request roles",
-  dropped && limitedFlags.ok && limitedFlags.out === "false|false|false" &&
-  limitedPlatform.ok && limitedSchema.ok,
-  { flags: limitedFlags.out,
-    platform: limitedPlatform.out.split("\n").slice(0, 2),
-    schema: limitedSchema.out.split("\n").slice(0, 2) });
-
-const rolesAfterMigration = sql("select count(*) from pg_roles where rolname in " +
-  "('anon','authenticated','service_role')");
-const limitedForcedRls = sql("select count(*) from pg_class c " +
-  "join pg_namespace n on n.oid=c.relnamespace where " +
-  "((n.nspname='public' and c.relname in ('profiles','payment_requests','app_settings','devices')) " +
-  "or (n.nspname='storage' and c.relname='objects') " +
-  "or (n.nspname='auth' and c.relname in ('users','refresh_tokens'))) " +
-  "and c.relrowsecurity and c.relforcerowsecurity", LIMITED_DB);
-report("R2) roleless migration creates no cluster roles and forces owner RLS",
-  rolesAfterMigration.ok && rolesAfterMigration.out === "0" &&
-  limitedForcedRls.ok && limitedForcedRls.out === "7",
-  { roles: rolesAfterMigration.out, forcedRls: limitedForcedRls.out });
-
-mustFixture("cleanup removes the restricted-owner database",
-  sql('drop database if exists "' + LIMITED_DB + '"'));
-
-/* ---- R3) another privilege a managed database user may not have ----
-   CREATE SCHEMA needs CREATE on the
-   DATABASE itself, which belongs to the owner alone by default — and R/R2's
-   probe cannot tell that apart from the role gap, because it OWNS the database
-   it is tested against, which grants CREATE along with everything else. That
-   is not the shape a converted Managed Database cluster hands an app user: the
-   database is created by the admin, the app user only gets CONNECT. Same
-   catch-and-re-raise shape, proven against that shape specifically. */
-const LIMITED_DB2 = DB + "_limited2";
-mustFixture("fixture removes the prior restricted-grant database",
-  sql('drop database if exists "' + LIMITED_DB2 + '"'));
-mustFixture("fixture creates the restricted-grant database",
-  sql('create database "' + LIMITED_DB2 + '"')); // owned by ENV.PGUSER, not the probe
-mustFixture("fixture grants only CONNECT to the restricted owner",
-  sql('grant connect on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER));
-
-const deniedSchema = asLimited(PLATFORM, LIMITED_DB2);
-report("R3) a user that cannot CREATE SCHEMA is told exactly what to run, not just that it failed",
-  !deniedSchema.ok &&
-  /cannot CREATE SCHEMA/.test(deniedSchema.out) &&
-  new RegExp("grant create on database " + LIMITED_DB2 + " to " + LIMITED_USER + ";").test(deniedSchema.out),
-  deniedSchema.out.split("\n").slice(0, 2));
-
-/* ...and once an admin has run that one grant, the same user applies the rest
-   of the file unaided — the database-privilege gap is a single unblocking
-   action too, not a dead end. */
-mustFixture("fixture grants CREATE on the restricted-grant database",
-  sql('grant create on database "' + LIMITED_DB2 + '" to ' + LIMITED_USER));
-const afterSchemaGrant = asLimited(PLATFORM, LIMITED_DB2);
-report("R4) ...and with CREATE on the database granted it applies the whole file unaided",
-  afterSchemaGrant.ok, afterSchemaGrant.out.split("\n").slice(0, 2));
-
-mustFixture("cleanup removes the restricted-grant database",
-  sql('drop database if exists "' + LIMITED_DB2 + '"'));
-mustFixture("cleanup removes the restricted owner", sql('drop role if exists ' + LIMITED_USER));
 for (const role of REQUEST_ROLES) {
   mustFixture("cleanup removes role " + role, sql("drop role if exists " + role));
 }

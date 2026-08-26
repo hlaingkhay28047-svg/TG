@@ -78,17 +78,22 @@ alongside the static site in the same app.
 
 **Authorisation was not rewritten, deliberately.** Every request opens a
 transaction, pins an internal request mode and `request.jwt.claim.sub` from a
-verified token, and lets `supabase/schema.sql` decide the rest — the same
-policies and triggers exercised against Supabase. Admin state and email are
-looked up in the database; JWT claims cannot grant either one.
+verified token, and lets the same reviewed policies and triggers decide the
+rest. Admin state and email are looked up in the database; JWT claims cannot
+grant either one.
 
-`server/sql/platform.sql` creates what the platform used to: `auth.users`,
-`auth.uid()` and `storage.objects`. DigitalOcean's development database does
-not expose cluster-wide `CREATE ROLE`, so the API does not create or switch to
-`anon` / `authenticated` PostgreSQL roles. Instead, its database owner is
-`NOSUPERUSER NOBYPASSRLS`, every request and auth table uses `FORCE ROW LEVEL
-SECURITY`, and an absent or unknown request mode sees no protected rows. The
-platform file still applies **before** `supabase/schema.sql`.
+The two deployment targets intentionally have separate SQL dialects.
+`supabase/schema.sql` keeps Supabase's native `auth` and `storage` references.
+DigitalOcean applies the tracked `server/sql/platform.sql` followed by
+`server/sql/schema.sql`; its restricted runtime cannot `CREATE SCHEMA`, so the
+identity, refresh-token, and proof-storage objects live in the existing
+`public` schema under `hnk_` names. The DO application schema is a checked,
+mechanical name transform of the native policy file, not a second hand-edited
+authorization model. All eight request/auth/storage tables use `FORCE ROW
+LEVEL SECURITY`, and an absent or unknown request mode sees no protected rows.
+If an older roleless deployment already has `auth.users` or `storage.objects`,
+the DO bootstrap refuses to create parallel empty identity tables; migrate that
+data and its foreign keys explicitly before using this dialect.
 
 ### What you have to do, in order
 
@@ -121,12 +126,13 @@ account.
    message. Changing it later logs everybody out, which is exactly what you want
    if it is ever exposed.
 
-3. **Nothing.** The schema used to be applied by hand here, in the order
-   `server/sql/platform.sql` then `supabase/schema.sql`. The service now applies
-   both itself, on every boot, because the only other route to a development
+3. **Nothing.** The schema used to be applied by hand here. The service now
+   applies `server/sql/platform.sql` then `server/sql/schema.sql` itself on
+   every boot, because the only other route to a development
    database is a `psql` client that is not available on a phone. Both files are
-   idempotent by construction, and `test/verify_schema_behaviour.js` check B
-   proves it by applying them three times in a row.
+   idempotent by construction: `test/verify_no_create_schema.js` applies the
+   DigitalOcean pair repeatedly under the exact restricted runtime, while
+   `test/verify_schema_behaviour.js` repeats the native Supabase dialect.
 
    Read `/api/health` to see whether it worked. It identifies both the running
    API and the exact schema bytes that this process successfully applied:
@@ -348,7 +354,8 @@ select * from public.payment_requests;
 select * from public.devices;
 ```
 
-Insert `auth.users` rows first — `profiles.id` references them — leaving
+Insert `public.hnk_auth_users` rows first — `profiles.id` references them in
+the DigitalOcean dialect — leaving
 `encrypted_password` null so the account exists but cannot be signed into until
 its owner sets a password. `profiles_email_uniq` and `users_email_uniq` will
 refuse a duplicate address, which is the point.
@@ -370,8 +377,9 @@ DigitalOcean console before committing; they change.
 
 The Supabase project is untouched by any of this. Reverting means restoring the
 previous `SB_URL` in `docs/app/index.html` and removing the `services:` and
-`databases:` blocks from `.do/app.yaml` — the app schema is identical on both
-sides, so nothing else has to change.
+`databases:` blocks from `.do/app.yaml` — the policy logic is identical on both
+targets while their platform-owned object names intentionally differ, so
+nothing else has to change.
 
 ## The Visual Library was mostly thumbnails (panel v6.23.0)
 
