@@ -38,9 +38,28 @@ report("A4) pairing input and all gate controls exist",
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml",
   ".json": "application/json", ".woff2": "font/woff2", ".webp": "image/webp" };
+/* The visual icon library is deliberately excluded from Git until its
+   redistribution provenance is approved. This authorization-only browser
+   proof therefore supplies a deterministic pixel for the three initial-view
+   images it loads. Missing JS, CSS, HTML and every other resource still return
+   404 and remain visible to the console-error assertion below. */
+const GATE_ICON_PATHS = new Set([
+  "icons/plugin@2x.png",
+  "icons/hero-banner.jpg",
+  "icons/banners/studio.jpg",
+]);
+const GATE_ICON_PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "base64");
+report("A5) the gate harness isolates only the three excluded initial-view images",
+  GATE_ICON_PATHS.size === 3 && GATE_ICON_PATHS.has("icons/plugin@2x.png") &&
+  GATE_ICON_PATHS.has("icons/hero-banner.jpg") &&
+  GATE_ICON_PATHS.has("icons/banners/studio.jpg"), {});
 const server = http.createServer((req, res) => {
   const rel = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "") || "index.html";
   const abs = path.resolve(PANEL, rel);
+  if (GATE_ICON_PATHS.has(rel)) {
+    res.writeHead(200, { "Content-Type": "image/gif", "Cache-Control": "no-store" });
+    res.end(GATE_ICON_PIXEL); return;
+  }
   if (!abs.startsWith(PANEL + path.sep) || !fs.existsSync(abs) || fs.statSync(abs).isDirectory()) {
     res.writeHead(404); res.end(); return;
   }
