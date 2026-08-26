@@ -126,6 +126,10 @@ function staticServer() {
   report("all visible admin controls clear 44px and have names",[m390,m320,m1280].every(m=>!m.small.length&&!m.unnamed),{m390,m320,m1280});
 
   await page.setViewportSize({width:390,height:844});
+  /* Mobile navigation is intentionally off-canvas and closes after every
+     selection. Exercise the real menu control instead of force-clicking a
+     hidden sidebar button. */
+  await page.click("#menuButton");
   await page.click('[data-panel="students"]');
   await page.fill("#studentSearch","Aye");
   await page.selectOption("#studentStatus","active");
@@ -142,6 +146,7 @@ function staticServer() {
   await page.keyboard.press("Escape");
   report("Escape closes the student dialog",!(await page.locator("#studentDialog").evaluate(el=>el.open)));
 
+  await page.click("#menuButton");
   await page.click('[data-panel="history"]');
   await page.fill("#historySearch","Aye");
   await page.selectOption("#historyType","failed_login");
