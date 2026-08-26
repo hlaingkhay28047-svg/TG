@@ -164,7 +164,10 @@ mustFixture("fixture removes the prior main scratch database",
   sql('drop database if exists "' + DB + '"'));
 for (const role of REQUEST_ROLES) {
   mustFixture("fixture removes role " + role, sql("drop role if exists " + role));
-  mustFixture("fixture creates role " + role, sql("create role " + role + " nologin"));
+  /* Hosted Supabase gives its private service_role BYPASSRLS. Model that
+     platform boundary exactly; anon/authenticated remain ordinary roles. */
+  const roleOptions = role === "service_role" ? " nologin bypassrls" : " nologin";
+  mustFixture("fixture creates role " + role, sql("create role " + role + roleOptions));
 }
 mustFixture("fixture creates a fresh main scratch database", sql('create database "' + DB + '"'));
 const stubbed = file(PLATFORM, DB);
@@ -305,16 +308,22 @@ const selfApproval = asUser(CUST,
   "update public.payment_requests set status='approved';", DB);
 const statResult = sql("select status from public.payment_requests", DB);
 report("H) a customer cannot approve their own payment",
-  paymentInsert.ok && selfApproval.ok && statResult.ok && statResult.out === "pending",
-  { inserted: paymentInsert.ok, updateAccepted: selfApproval.ok, status: statResult.out });
+  paymentInsert.ok && !selfApproval.ok &&
+  /permission denied for table payment_requests/i.test(selfApproval.out) &&
+  statResult.ok && statResult.out === "pending",
+  { inserted: paymentInsert.ok, updateAccepted: selfApproval.ok,
+    updateError: selfApproval.out.split("\n")[0], status: statResult.out });
 
 const bearerAdminApproval = asUser(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where status='pending';", DB);
 const statusAfterBearerAdmin = sql("select status from public.payment_requests", DB).out;
 report("H2) an ordinary admin bearer cannot review another account's payment",
-  bearerAdminApproval.ok && statusAfterBearerAdmin === "pending",
-  { updateAccepted: bearerAdminApproval.ok, status: statusAfterBearerAdmin });
+  !bearerAdminApproval.ok &&
+  /permission denied for table payment_requests/i.test(bearerAdminApproval.out) &&
+  statusAfterBearerAdmin === "pending",
+  { updateAccepted: bearerAdminApproval.ok,
+    updateError: bearerAdminApproval.out.split("\n")[0], status: statusAfterBearerAdmin });
 
 /* ---- I) nor forge one that arrives already reviewed ---- */
 const forge = asUser(CUST, "insert into public.payment_requests (user_id,kind,status,reviewed_by,note) " +
