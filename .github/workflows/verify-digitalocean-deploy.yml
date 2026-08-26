@@ -11,10 +11,12 @@ on:
       - '.github/workflows/read-production-health.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
       - '.github/scripts/patch_digitalocean_spec.js'
+      - '.github/scripts/bootstrap_digitalocean_staging_spec.js'
       - 'server/index.js'
       - 'server/lib/migrate.js'
       - 'test/verify_digitalocean_deploy.js'
       - 'test/verify_digitalocean_spec_patch.js'
+      - 'test/verify_digitalocean_staging_bootstrap.js'
   pull_request:
     paths:
       - '.do/app.yaml'
@@ -24,10 +26,12 @@ on:
       - '.github/workflows/read-production-health.yml'
       - '.github/workflows/verify-digitalocean-deploy.yml'
       - '.github/scripts/patch_digitalocean_spec.js'
+      - '.github/scripts/bootstrap_digitalocean_staging_spec.js'
       - 'server/index.js'
       - 'server/lib/migrate.js'
       - 'test/verify_digitalocean_deploy.js'
       - 'test/verify_digitalocean_spec_patch.js'
+      - 'test/verify_digitalocean_staging_bootstrap.js'
 
 permissions:
   contents: read
@@ -46,3 +50,4 @@ jobs:
           package-manager-cache: false
       - run: node test/verify_digitalocean_deploy.js
       - run: node test/verify_digitalocean_spec_patch.js
+      - run: node test/verify_digitalocean_staging_bootstrap.js

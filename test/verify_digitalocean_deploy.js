@@ -71,6 +71,27 @@ check('both lanes bound an exact active-service source lookup',
 check('staging live verification consumes the shared job deadline', stagingWorkflow.includes('DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"') && !stagingWorkflow.includes('DEADLINE=$((SECONDS + 1800))') && !stagingWorkflow.includes('seq 1 120'));
 check('staging workflow leaves headroom for its scripted diagnostic', /timeout-minutes:\s*35\b/.test(stagingWorkflow));
 check('staging deploy concurrency cancels stale builds', /group:\s*digitalocean-staging[\s\S]*?cancel-in-progress:\s*true/.test(stagingWorkflow));
+check('the static-only repair is staging-only, release-locked, and owner-only',
+  stagingWorkflow.includes('bootstrap_digitalocean_staging_spec.js') &&
+  stagingWorkflow.includes('[ "$EXPECTED_VERSION" != "5.42.2" ]') &&
+  stagingWorkflow.includes('openssl rand -hex 64 > "$JWT_SECRET_FILE"') &&
+  stagingWorkflow.includes('chmod 600 "$JWT_SECRET_FILE"') &&
+  !productionWorkflow.includes('bootstrap_digitalocean_staging_spec.js'));
+check('staging proposes the preserved bootstrap spec before its one bounded update',
+  stagingWorkflow.includes('doctl apps propose') &&
+  stagingWorkflow.includes('> "$PROPOSAL_FILE" 2>&1') &&
+  stagingWorkflow.indexOf('doctl apps propose') <
+    stagingWorkflow.indexOf('--spec "$BOOTSTRAP_SPEC"', stagingWorkflow.indexOf('doctl apps update')) &&
+  stagingWorkflow.includes('BOOTSTRAP_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))'));
+check('staging redownloads and validates encrypted state after bootstrapping',
+  occurrences(stagingWorkflow, 'doctl apps spec get') >= 2 &&
+  stagingWorkflow.includes('"$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC"') &&
+  stagingWorkflow.includes('cmp -s <(jq -S . "$ROUNDTRIP_SPEC") <(jq -S . "$ROUNDTRIP_PATCHED_SPEC")'));
+check('bootstrap plaintext material is deleted before later workflow steps',
+  stagingWorkflow.includes("trap 'rm -f") &&
+  stagingWorkflow.includes('$JWT_SECRET_FILE') &&
+  stagingWorkflow.includes('$BOOTSTRAP_SPEC') &&
+  stagingWorkflow.includes('$PROPOSAL_FILE'));
 
 const manualRecovery = "github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true'";
 check('forced-rebuild recovery is manual-only and still runs after probe synchronization',
@@ -157,13 +178,15 @@ check('both deploy lanes validate and narrowly patch the downloaded live spec be
     workflow.includes('--update-sources') &&
     workflow.indexOf('apps spec get') < workflow.indexOf('apps update')));
 check('steady-state pushes leave source binding as the only deployment driver',
-  [productionWorkflow, stagingWorkflow].every(workflow =>
-    workflow.includes('echo "changed=false" >> "$GITHUB_OUTPUT"') &&
-    workflow.includes('echo "changed=true" >> "$GITHUB_OUTPUT"') &&
-    workflow.includes('[ "$CURRENT_READY_PATH" = "/ready" ]') &&
-    workflow.includes('[ "$CURRENT_LIVE_PATH" = "/live" ]') &&
-    workflow.indexOf('[ "$CURRENT_READY_PATH" = "/ready" ]') < workflow.indexOf('apps update') &&
-    !workflow.includes('[ "$GITHUB_EVENT_NAME" != "push" ]')));
+  [productionWorkflow, stagingWorkflow].every(workflow => {
+    const steadyAt = workflow.indexOf('[ "$CURRENT_READY_PATH" = "/ready" ]');
+    const normalUpdateAt = workflow.indexOf('--spec "$PATCHED_SPEC"', steadyAt);
+    return workflow.includes('echo "changed=false" >> "$GITHUB_OUTPUT"') &&
+      workflow.includes('echo "changed=true" >> "$GITHUB_OUTPUT"') &&
+      steadyAt >= 0 && workflow.includes('[ "$CURRENT_LIVE_PATH" = "/live" ]') &&
+      normalUpdateAt > steadyAt &&
+      !workflow.includes('[ "$GITHUB_EVENT_NAME" != "push" ]');
+  }));
 check('the one-time probe transition updates source in the same deployment',
   [productionWorkflow, stagingWorkflow].every(workflow =>
     workflow.includes('doctl apps update') &&

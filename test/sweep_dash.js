@@ -119,14 +119,14 @@ function check(ok, label, detail) {
   check(teaser.count >= 8 && teaser.count <= 10 && teaser.srcsOk && teaser.contained && teaser.after === "pgLib",
     "Library teaser: 8-10 real Featured thumbnails, scroll contained, View More opens pgLib", teaser);
 
-  /* promo band present with a _blank site link */
+  /* promo band present with the in-app Account Center acquisition route */
   const promo = await page.evaluate(() => {
     const a = document.getElementById("dashPromoGo");
     return { txt: (document.getElementById("dashPromoP").textContent || "").length > 10,
       href: a.getAttribute("href"), target: a.getAttribute("target"), rel: a.getAttribute("rel") };
   });
-  check(promo.txt && promo.href === "../" && promo.target === "_blank" && /noopener/.test(promo.rel),
-    "promo band: copy + pill linking to the site root in a new tab", promo);
+  check(promo.txt && promo.href === "?panel=download" && promo.target === null && promo.rel === null,
+    "promo band: copy + pill routing to the Account Center in the same tab", promo);
 
   /* ---- 3) Setup via header gear ---- */
   const gear = await page.evaluate(() => {

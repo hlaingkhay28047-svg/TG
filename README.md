@@ -128,11 +128,11 @@ account.
    API and the exact schema bytes that this process successfully applied:
 
    ```
-   {"ok":true,"apiVersion":"5.42.1","schema":4,
+   {"ok":true,"apiVersion":"5.42.2","schema":4,
     "schemaFingerprint":"<64 hex SHA-256>","ready":true,"tls":"verified"}
-   {"ok":true,"apiVersion":"5.42.1","schema":4,
+   {"ok":true,"apiVersion":"5.42.2","schema":4,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
-   {"ok":true,"apiVersion":"5.42.1","schema":null,
+   {"ok":true,"apiVersion":"5.42.2","schema":null,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
    ```
 
@@ -1073,6 +1073,18 @@ bounded `apps update --update-sources --wait`. Once those paths are live, the
 workflow does not create a second push deployment; the authenticated source
 binding remains the sole deployment driver. Manual force-rebuild stays an
 explicit recovery action.
+
+The historical staging app was created before `hnk-api` existed and therefore
+had only `hnk-web`; a source push can rebuild an existing component but cannot
+create a missing one. The staging workflow contains a one-time repair locked to
+release `5.42.2`. It starts with the downloaded live spec, preserves its fields
+and encrypted secrets, makes the implicit web `/` route explicit, adds only the
+documented basic `hnk-api` service (and the development PostgreSQL component
+only when no database exists), generates a runner-local signing key, and asks
+`doctl apps propose` to validate the change before updating. It then downloads
+the result again and requires the ordinary live-spec validator to see the key
+as encrypted. The repair is not present in the production workflow; later
+releases fail closed if the staging service is missing instead of rotating it.
 
 Both lanes use one shared 33-minute deadline and require all of these to match
 at once: the active API service's `source_commit_hash` equals the pushed commit,
