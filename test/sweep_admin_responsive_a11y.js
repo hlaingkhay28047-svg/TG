@@ -175,6 +175,23 @@ function staticServer() {
   report("an active account never offers the pending-only Approve action",
     !accountActionLabels.includes("Approve"),accountActionLabels);
 
+  /* The shell writes the "completed" status BEFORE awaiting the three refresh
+     requests, and clears the mutation key only after they resolve (admin.js:
+     notify(...) then await Promise.all([...]) then clearMutation). Waiting on
+     the status text alone samples sessionStorage while those refreshes are
+     still in flight, which is why this read used to be racy. Wait for the key
+     count the assertion expects; a count that never arrives still fails, and
+     report() below still records the state that was actually observed. */
+  const extendKeys = async expected => {
+    try {
+      await page.waitForFunction(count=>Object.keys(sessionStorage)
+        .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")).length===count,
+        expected,{timeout:10000});
+    } catch { /* fall through to the read below */ }
+    return page.evaluate(()=>Object.keys(sessionStorage)
+      .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  };
+
   await page.click("#extendLicense");
   await page.waitForSelector("#confirmDialog[open]");
   await page.click("#confirmAction");
@@ -184,8 +201,7 @@ function staticServer() {
   await page.waitForSelector("#confirmDialog[open]");
   await page.click("#confirmAction");
   await page.waitForFunction(()=>/Extend License completed/i.test(document.getElementById("liveStatus").textContent));
-  const extendKeysBeforeReload=await page.evaluate(()=>Object.keys(sessionStorage)
-    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  const extendKeysBeforeReload=await extendKeys(1);
   await page.reload({waitUntil:"networkidle"});
   await page.waitForSelector("#adminApp:not([hidden])");
   await page.click("#menuButton");
@@ -198,8 +214,7 @@ function staticServer() {
   await page.click("#confirmAction");
   await page.waitForFunction(()=>/Extend License completed/i.test(document.getElementById("liveStatus").textContent));
   const extendCalls=calls.filter(call=>/\/students\/student-1\/actions$/.test(call.url));
-  const extendKeysAfterSuccess=await page.evaluate(()=>Object.keys(sessionStorage)
-    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  const extendKeysAfterSuccess=await extendKeys(0);
   report("license-extension A survives interleaved B and reload, then clears only A on success",
     extendCalls.length===3&&extendCalls.every(call=>call.body.action==="extend_license"&&
       /^[0-9a-f-]{36}$/i.test(call.body.mutation_id||""))&&
@@ -215,8 +230,7 @@ function staticServer() {
   await page.click("#confirmAction");
   await page.waitForFunction(()=>/Extend License completed, but refreshed data could not be loaded\./i
     .test(document.getElementById("liveStatus").textContent));
-  const committedKeyBeforeReload=await page.evaluate(()=>Object.keys(sessionStorage)
-    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  const committedKeyBeforeReload=await extendKeys(1);
   await page.reload({waitUntil:"networkidle"});
   await page.waitForSelector("#adminApp:not([hidden])");
   await page.click("#menuButton");
@@ -230,8 +244,7 @@ function staticServer() {
   await page.waitForFunction(()=>/Extend License completed\./i
     .test(document.getElementById("liveStatus").textContent));
   const committedExtendCalls=calls.filter(call=>/\/students\/student-1\/actions$/.test(call.url)&&call.body.months===6);
-  const committedKeysAfterReplay=await page.evaluate(()=>Object.keys(sessionStorage)
-    .filter(key=>key.startsWith("hnk_admin_mutation_v1:extend_license:")));
+  const committedKeysAfterReplay=await extendKeys(0);
   report("a committed extension keeps its mutation id through refresh failure and clears it after replay refresh",
     committedExtendCalls.length===2&&
       committedExtendCalls[0].body.mutation_id===committedExtendCalls[1].body.mutation_id&&
