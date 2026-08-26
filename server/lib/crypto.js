@@ -46,7 +46,7 @@ function verifyPassword(password, stored) {
 
 /* ---------------- access tokens ----------------
  * A compact JWT, HS256, verified with a timing-safe compare. The shape matters:
- * the app reads `sub` out of the payload, and auth.uid() is fed from it, so a
+ * the app reads `sub` out of the payload, and public.hnk_uid() is fed from it, so a
  * forged or expired token must never reach db.asUser.
  */
 const b64u = buf => Buffer.from(buf).toString("base64url");
@@ -75,7 +75,7 @@ function verifyToken(token, secret) {
   catch (_) { return null; }
   if (!payload || typeof payload !== "object") return null;
   if (typeof payload.exp !== "number" || payload.exp <= Math.floor(Date.now() / 1000)) return null;
-  /* A uuid, because it is going to become auth.uid(). Anything else is refused
+  /* A uuid, because it is going to become public.hnk_uid(). Anything else is refused
      here rather than at the database, where a cast error would read as a bug. */
   if (typeof payload.sub !== "string" ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.sub)) return null;

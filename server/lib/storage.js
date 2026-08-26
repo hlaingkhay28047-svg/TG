@@ -1,8 +1,8 @@
 "use strict";
-/* Payment proofs. The bytes live in storage.objects.data, under the same
+/* Payment proofs. The bytes live in public.hnk_storage_objects.data, under the same
  * row-level security as the row that describes them.
  *
- * supabase/schema.sql section 8 already writes the two policies this relies on:
+ * server/sql/schema.sql section 8 writes the two DO-dialect policies this relies on:
  * proofs_insert_own lets a customer write only under their own uid folder, and
  * proofs_read_own_or_admin lets them read their own while an admin reads all.
  * Because those policies are enforced by the database, this file does not
@@ -61,7 +61,7 @@ async function upload({ uid, objectName, body, contentType }) {
      check simply produces a clearer 403 than a policy violation would. Both
      have to agree, and the database has the final say. */
   /* THE x-upsert HEADER CANNOT BE HONOURED, and that is correct rather than a
-     limitation to work around. supabase/schema.sql gives storage.objects an
+     limitation to work around. server/sql/schema.sql gives public.hnk_storage_objects an
      INSERT policy and a SELECT policy and deliberately no UPDATE policy, so
      with row-level security on, an update is refused for everyone — an upsert
      would need both a grant and a new policy, and that policy would be a way to
@@ -73,7 +73,7 @@ async function upload({ uid, objectName, body, contentType }) {
      reports the upload as failed, which is honest. */
   return asUser(uid, async client => {
     const { rows } = await client.query(
-      `insert into storage.objects (bucket_id, name, owner, mime_type, data)
+      `insert into public.hnk_storage_objects (bucket_id, name, owner, mime_type, data)
        values ($1, $2, $3, $4, $5) returning name`,
       [BUCKET, objectName, uid, file.type, file.data]);
     return { status: 200, body: { Key: BUCKET + "/" + rows[0].name } };
@@ -84,7 +84,7 @@ async function download({ uid, objectName }) {
   if (!uid) throw new StorageError(401, "not authenticated");
   return asUser(uid, async client => {
     const { rows } = await client.query(
-      "select mime_type, data from storage.objects where bucket_id = $1 and name = $2", [BUCKET, objectName]);
+      "select mime_type, data from public.hnk_storage_objects where bucket_id = $1 and name = $2", [BUCKET, objectName]);
     /* No row here means either it does not exist or the policy hid it. Both
        answer 404 on purpose: distinguishing them would tell a customer that
        somebody else's slip exists. */
