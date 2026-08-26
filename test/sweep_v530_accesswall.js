@@ -337,12 +337,20 @@ async function look(browser, sess, prof, label) {
   /* ---- L: the half that is not in this repo at runtime ---- */
   const sqlPath = path.join(__dirname, "..", "supabase", "schema.sql");
   const sql = fs.existsSync(sqlPath) ? fs.readFileSync(sqlPath, "utf8") : "";
+  const adminUpdatePolicy = (sql.match(
+    /create policy payreq_update_admin_only[\s\S]*?;/) || [""])[0];
+  const authenticatedAdminGate =
+    /for update to public/.test(adminUpdatePolicy) &&
+    /using \(public\.hnk_request_role\(\) = 'authenticated'\s+and public\.hnk_is_admin\(\)\)/
+      .test(adminUpdatePolicy) &&
+    /with check \(public\.hnk_request_role\(\) = 'authenticated'\s+and public\.hnk_is_admin\(\)\)/
+      .test(adminUpdatePolicy);
   report("L) the RLS that actually enforces any of this ships with the repo",
-    /create policy payreq_update_admin_only/.test(sql) &&
-    /using \(public\.hnk_is_admin\(\)\)/.test(sql) &&
+    authenticatedAdminGate &&
     /create trigger hnk_apply_payment/.test(sql) &&
     /security definer/.test(sql),
-    { found: !!sql, adminOnlyUpdate: /payreq_update_admin_only/.test(sql), trigger: /hnk_apply_payment/.test(sql) });
+    { found: !!sql, adminOnlyUpdate: authenticatedAdminGate,
+      trigger: /hnk_apply_payment/.test(sql) });
 
   /* ---- M/N/O: the wall has to be a REDIRECT, not just a set of hide rules ----
 

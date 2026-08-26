@@ -21,7 +21,8 @@
    and no test in this repo can perform.
 
    Pinned contracts:
-   A) Every /rest/v1/<table> the app fetches has `enable row level security`.
+   A) Every /rest/v1/<table> the app fetches has `enable row level security`
+      and the roleless runtime FORCEs it for the database-owner connection.
    B) Every such table has at least one policy, so RLS-on does not silently
       mean nobody-can-read.
    C) The tables the app WRITES have a policy for that verb.
@@ -78,6 +79,13 @@ const unprotected = [...readTables].filter(t => !rlsOn.has(t));
 report("A) every table the client fetches has RLS enabled",
   unprotected.length === 0, { unprotected, rlsOn: [...rlsOn].sort() });
 
+const rlsForced = new Set(
+  [...sql.matchAll(/alter\s+table\s+public\.(\w+)\s+force\s+row\s+level\s+security/gi)].map(x => x[1])
+);
+const unforced = [...readTables].filter(t => !rlsForced.has(t));
+report("A2) the roleless database owner cannot bypass any client-table policy",
+  unforced.length === 0, { unforced, rlsForced: [...rlsForced].sort() });
+
 /* ---- the policy parser ----
    v5.39.0: THE `to` CLAUSE IS OPTIONAL IN POSTGRES, AND IT WAS MANDATORY HERE.
    The old expression required `... for <verb> to <roles> using`, so a policy
@@ -113,17 +121,28 @@ report("A) every table the client fetches has RLS enabled",
 const POLICY_RE =
   /create\s+policy\s+"?(\w+)"?\s+on\s+public\.(\w+)(?:\s+as\s+(?:permissive|restrictive))?(?:\s+for\s+(\w+))?(?:\s+to\s+([\w\s,"]+?))?\s+(using|with)/gi;
 function parsePolicies(text) {
-  return [...text.matchAll(POLICY_RE)].map(x => ({
-    name: x[1], table: x[2],
+  return [...text.matchAll(POLICY_RE)].map(x => {
+    const end = text.indexOf(";", x.index);
+    const statement = text.slice(x.index, end < 0 ? text.length : end + 1);
+    const requestRoles = new Set();
+    for (const r of statement.matchAll(/hnk_request_role\(\)\s*=\s*'([^']+)'/gi)) requestRoles.add(r[1].toLowerCase());
+    for (const r of statement.matchAll(/hnk_request_role\(\)\s+in\s*\(([^)]+)\)/gi)) {
+      for (const value of r[1].matchAll(/'([^']+)'/g)) requestRoles.add(value[1].toLowerCase());
+    }
+    return {
+    name: x[1], table: x[2], statement,
     /* no `for` clause == FOR ALL, per Postgres */
     verb: (x[3] || "all").toLowerCase(),
     /* no `to` clause == TO PUBLIC, per Postgres */
     roles: (x[4] || "public").split(/[,\s]+/).filter(Boolean)
-             .map(r => r.replace(/"/g, "").toLowerCase()).filter(Boolean)
-  }));
+             .map(r => r.replace(/"/g, "").toLowerCase()).filter(Boolean),
+    requestRoles: [...requestRoles],
+  }; });
 }
-/* public is every role, logged in or not — anon included */
-const rolesInclude = (p, role) => p.roles.includes(role) || p.roles.includes("public");
+/* TO PUBLIC is narrowed when the policy carries an explicit, exact internal
+   request-role predicate. With no predicate it still means every role. */
+const rolesInclude = (p, role) => p.roles.includes(role) ||
+  (p.roles.includes("public") && (!p.requestRoles.length || p.requestRoles.includes(role)));
 
 /* ---- parser self-test: the blind spots, as fixtures ---- */
 (function selfTest() {
@@ -148,8 +167,11 @@ const rolesInclude = (p, role) => p.roles.includes(role) || p.roles.includes("pu
     }
   }
   /* and the checks that consume it must SEE public as anon */
-  if (!rolesInclude({ roles: ["public"] }, "anon")) bad.push({ why: "public must cover anon" });
-  if (rolesInclude({ roles: ["authenticated"] }, "anon")) bad.push({ why: "authenticated must NOT cover anon" });
+  if (!rolesInclude({ roles: ["public"], requestRoles: [] }, "anon")) bad.push({ why: "unguarded public must cover anon" });
+  if (rolesInclude({ roles: ["authenticated"], requestRoles: [] }, "anon")) bad.push({ why: "authenticated must NOT cover anon" });
+  if (rolesInclude({ roles: ["public"], requestRoles: ["authenticated"] }, "anon")) {
+    bad.push({ why: "an explicit authenticated request guard must exclude anon" });
+  }
   report("0) the policy parser sees the shapes Postgres accepts", bad.length === 0, bad);
 })();
 
