@@ -18,7 +18,7 @@
    would fix today's drift and rebuild the same trap for the next wave: the
    author who adds a preset gets a red test naming a literal, edits the
    literal, and the landing stays stale exactly as before. So this file pins
-   nothing. It BOOTS THE APP and UNZIPS THE PANEL, reads what each one reports
+   nothing. It BOOTS THE APP and reads tracked panel source, then reads what each product reports
    about itself, and demands the landing agree. Add a preset and this test
    names every file still carrying the old number.
 
@@ -33,7 +33,7 @@
    app's One-Tap total was ALSO 131 — a pure coincidence that would make a
    careless find-and-replace corrupt the correct string while fixing the wrong
    one. So every occurrence is attributed to the i18n key it lives under and
-   checked against that product's own source. The collision is then harmless.
+   checked against that product's tracked source. The collision is then harmless.
 
    Pinned contracts:
    A) The app renders a One-Tap, Visual Library, Smart Workflow, Meitu and
@@ -47,8 +47,8 @@
       original stale caption was in Myanmar digits and a naive ASCII grep
       walked straight past it.
    E) The panel's advertised Smart Workflow count equals the number of
-      workflows in the shipped .ccx's registry.
-   F) The nine workflow names the landing lists are the nine the .ccx defines,
+      workflows in the tracked panel registry.
+   F) The nine workflow names the landing lists are the nine that registry defines,
       so a panel wave cannot add a workflow the site never mentions.
    G) The app's share-sheet fallback count agrees too.
    H) The test count the landing advertises equals the number of test scripts
@@ -59,7 +59,6 @@
 
    Usage: PORT=8931 node test/verify_landing_counts.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
-const { execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const seed = require("./_seed_premium.js");
@@ -83,10 +82,11 @@ function toAscii(s) {
   return s.replace(/[၀-၉]/g, c => String(MY_DIGITS.indexOf(c)));
 }
 
-/* ---- the panel, read out of the artifact that actually ships ---- */
+/* ---- the panel, read from tracked source/metadata (CI needs no CCX) ---- */
 const panelVersion = JSON.parse(fs.readFileSync(path.join(ROOT, "docs", "download", "panel-version.json"), "utf8")).v;
-const ccx = path.join(ROOT, "docs", "download", "HNK_Ai_Panel_v" + panelVersion + ".ccx");
-const registry = execFileSync("unzip", ["-p", ccx, "src/workflows/workflow-registry.js"], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+const panelRelease = JSON.parse(fs.readFileSync(path.join(ROOT, "panel", "release-manifest.json"), "utf8"));
+if (panelRelease.version !== panelVersion) throw new Error("panel release metadata/version endpoint drift");
+const registry = fs.readFileSync(path.join(ROOT, "panel", "src", "workflows", "workflow-registry.js"), "utf8");
 const wfBlock = (registry.match(/var\s+WORKFLOWS\s*=\s*\[([\s\S]*?)\n\];/) || [])[1] || "";
 const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"]+)"/g)].map(m => ({ id: m[1], title: m[2] }));
 
@@ -130,7 +130,7 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
     staleFb.length === 0, staleFb);
 
   /* ---- E) the panel is self-describing too ---- */
-  report("E) the shipped .ccx defines a readable workflow registry",
+  report("E) tracked panel source defines a readable workflow registry",
     panelWorkflows.length >= 5, { version: panelVersion, count: panelWorkflows.length });
 
   /* ---- C/D) every labelled number on the landing ----
@@ -214,7 +214,7 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
   const panelTitles = panelWorkflows.map(w => w.title);
   const missing = panelTitles.filter(t => landingWf.indexOf(t) < 0);
   const extra = landingWf.filter(t => panelTitles.indexOf(t) < 0);
-  report("F) the landing lists exactly the workflows the .ccx defines",
+  report("F) the landing lists exactly the workflows tracked panel source defines",
     landingWf.length === panelTitles.length && missing.length === 0 && extra.length === 0,
     { landing: landingWf.length, panel: panelTitles.length, missing, extra });
 
@@ -273,7 +273,7 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
   console.log("      panel v" + panelVersion + ": " + panelWorkflows.length + " Smart Workflows (" +
     panelWorkflows.map(w => w.id).join(", ") + ")");
   console.log("      " + checked + " labelled numbers on docs/index.html attributed and checked");
-  console.log("      (nothing here is a literal — change the shipped data or the .ccx and this " +
+  console.log("      (nothing here is a literal — change the shipped data or panel source and this " +
     "test reports the new number, naming every file that still carries the old one)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));

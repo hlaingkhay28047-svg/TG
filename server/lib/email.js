@@ -14,7 +14,6 @@
  * hand.
  */
 const tls = require("tls");
-const net = require("net");
 
 const HOST = process.env.SMTP_HOST || "";
 const PORT = Number(process.env.SMTP_PORT || 465);
@@ -43,10 +42,23 @@ function talk(socket, expectCode, line) {
   });
 }
 
+function smtpTlsOptions(host,port) {
+  const hostname=String(host||"").trim();
+  const number=Number(port);
+  if (!hostname) throw new Error("SMTP_HOST is required");
+  if (!Number.isInteger(number)||number<1||number>65535) throw new Error("SMTP_PORT is invalid");
+  return {
+    host:hostname,port:number,servername:hostname,
+    rejectUnauthorized:true,minVersion:"TLSv1.2",
+  };
+}
+
 function connect() {
   return new Promise((resolve, reject) => {
-    const opts = { host: HOST, port: PORT, servername: HOST };
-    const socket = PORT === 465 ? tls.connect(opts, () => resolve(socket)) : net.connect(opts, () => resolve(socket));
+    /* Credentials and the reset bearer are never written before a verified
+       TLS handshake. Port 465 is the default. A STARTTLS-only port such as 587
+       will fail closed instead of silently falling back to plaintext. */
+    const socket = tls.connect(smtpTlsOptions(HOST,PORT), () => resolve(socket));
     socket.setTimeout(15000, () => { socket.destroy(new Error("SMTP timeout")); });
     socket.once("error", reject);
   });
@@ -81,14 +93,36 @@ async function sendMail(to, subject, text) {
   }
 }
 
-async function sendRecoveryEmail(to, token, redirectTo) {
-  const base = redirectTo || (APP_ORIGIN ? APP_ORIGIN + "/reset/" : "");
-  if (!base) throw new Error("no reset URL: set APP_ORIGIN or pass redirect_to");
-  const link = base + (base.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(token) + "&type=recovery";
+function recoveryBase(appOrigin) {
+  const configured = String(appOrigin === undefined ? APP_ORIGIN : appOrigin).trim();
+  if (!configured) throw new Error("no reset URL: set APP_ORIGIN");
+  let origin;
+  try { origin = new URL(configured); }
+  catch (_) { throw new Error("APP_ORIGIN must be a valid absolute URL"); }
+  if (origin.protocol !== "https:" && origin.hostname !== "127.0.0.1" && origin.hostname !== "localhost") {
+    throw new Error("APP_ORIGIN must use HTTPS");
+  }
+  if (origin.username || origin.password) throw new Error("APP_ORIGIN must not contain credentials");
+  return new URL("/reset/", origin.origin).href;
+}
+
+function recoveryLink(token,appOrigin) {
+  const base=recoveryBase(appOrigin);
+  /* URL fragments are consumed by the browser and are never sent in the HTTP
+     request line. Keeping the one-hour bearer here prevents DigitalOcean,
+     reverse proxies, CDNs, and access logs from retaining an account-reset
+     credential before the page has a chance to erase it. */
+  return base+"#"+new URLSearchParams({token:String(token||""),type:"recovery"}).toString();
+}
+
+async function sendRecoveryEmail(to, token) {
+  /* The destination is intentionally not a parameter. A caller may choose
+     which account receives mail, but never which origin receives its bearer. */
+  const link = recoveryLink(token);
   await sendMail(to, "HNK Create Studio — password reset",
     "A password reset was requested for this address.\n\n" +
     link + "\n\n" +
     "The link is valid for one hour. If you did not ask for this, ignore this message — nothing has changed.\n");
 }
 
-module.exports = { sendMail, sendRecoveryEmail };
+module.exports = { sendMail, sendRecoveryEmail, recoveryBase, recoveryLink, smtpTlsOptions };

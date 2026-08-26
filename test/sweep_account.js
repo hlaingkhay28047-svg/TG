@@ -18,7 +18,7 @@
      9  txn validation    digits-only, clamp to 6, submit gating, pay_shot_need
      10 device limit      a rejection NEVER fails the login, and never leaks P0001
      11 gates all off     free path untouched, zero account calls during a generate
-     12 offline           a dead backend cannot block, degrade or sign anyone out
+     12 offline           a missing unified verdict fails closed without signing out
      13 SW                still refuses to cache a cross-origin (bearer) response
      14 320/390           no overflow with every accordion + the paywall open
      15 44px              every visible account control clears the touch target
@@ -99,7 +99,7 @@ const SB_FIX = {
     var realFetch = window.fetch;
     window.fetch = function(url, opts){
       var u = String(url); opts = opts || {};
-      if (!/\\/auth\\/v1\\/|\\/rest\\/v1\\/|\\/storage\\/v1\\//.test(u)) return realFetch.apply(this, arguments);
+      if (!/\\/auth\\/v1\\/|\\/rest\\/v1\\/|\\/storage\\/v1\\/|\\/v1\\//.test(u)) return realFetch.apply(this, arguments);
       var isFD = (typeof FormData !== "undefined") && (opts.body instanceof FormData);
       var rec = { url: u, method: (opts.method || "GET").toUpperCase(),
                   headers: Object.assign({}, opts.headers || {}),
@@ -116,6 +116,16 @@ const SB_FIX = {
       if (window.__sbCfg.throwAll) return Promise.reject(new TypeError("Failed to fetch"));
 
       var C = window.__sbCfg;
+      /* The original payment probes use an explicit 404 compatibility lane.
+         A v5.43 phase opts into the authoritative response via entitlement. */
+      if (u.indexOf("/v1/me/entitlement") >= 0) {
+        return Promise.resolve(J(C.entitlement || { error:"not_found" }, C.entitlement ? 200 : 404));
+      }
+      if (u.indexOf("/v1/devices/enroll") >= 0) {
+        return Promise.resolve(J(C.deviceEnroll || { error:"not_found" }, C.deviceEnroll ? 200 : 404));
+      }
+      if (u.indexOf("/v1/devices/pairing-code") >= 0) return Promise.resolve(J(C.pairing || { pairing_code:"123456" }, 200));
+      if (u.indexOf("/v1/downloads/panel") >= 0) return Promise.resolve(J(C.panelDownload || { error:"forbidden" }, C.panelDownload ? 200 : 403));
       if (u.indexOf("/auth/v1/signup") >= 0) return Promise.resolve(J(C.signup, C.signupStatus || 200));
       if (u.indexOf("grant_type=refresh_token") >= 0) {
         window.__refreshN = (window.__refreshN || 0) + 1;
@@ -409,9 +419,93 @@ const SB_FIX = {
     c6route.buy.intent === true && c6route.buy.stage === "buy" && c6route.buy.open === true && c6route.buy.panelHidden === true &&
     c6route.stable.planOpen === true && c6route.stable.buyOpen === false &&
     c6route.panel.intent === false && c6route.panel.stage === "done" && c6route.panel.open === true && c6route.panel.hidden === false &&
-    c6route.panel.href === "../download/HNK_Ai_Panel_v6.23.0.ccx" && c6route.panel.focused === true && c6route.panel.expanded === "true" &&
+    c6route.panel.href === "../download/" && c6route.panel.focused === true && c6route.panel.expanded === "true" &&
     c6route.promo.panelOpen === true && c6route.promo.intent === false && c6route.promo.stage === "done",
     JSON.stringify(c6route));
+
+  /* v5.43 — the unified endpoint, not the cached legacy profile, owns the
+     final decision. Exercise an active account, the explicit signed-download
+     POST, every account denial state and the independent Web App permission. */
+  const entitlementActive = {
+    user: { id: UID, email: "hla@example.com" },
+    account: { status: "active", effective_status: "active", approved_at: "2026-08-01T00:00:00Z" },
+    license: { status: "active", active: true, starts_at: "2026-08-01T00:00:00Z",
+               expires_at: new Date(Date.now() + 30 * 86400000).toISOString() },
+    permissions: { web_app: true, ccx_download: true, panel: true },
+    devices: { phone: null, computer: { installation_id: "computer-1", label: "Windows · Chrome" } },
+    panel: { latest_version: "6.24.0", minimum_supported_version: "6.24.0" },
+    allowed: { web_app: true, ccx_download: true, panel: true }
+  };
+  await boot({ login: SB_FIX.token,
+               profile: Object.assign({}, SB_FIX.profileFree, { plan_status: "active", plan_expires_at: entitlementActive.license.expires_at }),
+               entitlement: entitlementActive, devices: [] });
+  await page.fill("#accEmail", "hla@example.com");
+  await page.fill("#accPass", "secret123");
+  await page.click("#btnAccLogin");
+  await page.waitForTimeout(900);
+  const c6cActive = await page.evaluate(() => {
+    switchPage("pgAccount");
+    return { enforced: unified.enforced, web: unifiedCanWeb(), download: unifiedCanDownload(),
+             state: appWallState(), page: curPage,
+             account: document.getElementById("unifiedAccountStatus").textContent.trim(),
+             license: document.getElementById("unifiedLicenseStatus").textContent.trim(),
+             computer: document.getElementById("unifiedComputer").textContent.trim(),
+             version: document.getElementById("unifiedPanelVersion").textContent.trim(),
+             disabled: document.getElementById("unifiedDownload").disabled };
+  });
+  await page.evaluate(() => {
+    window.__downloadTap = "";
+    window.__realAnchorClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function(){ window.__downloadTap = this.href; };
+    window.__sbCfg.panelDownload = {
+      download_url: "/api/v1/downloads/panel/test-token",
+      expires_at: new Date(Date.now() + 5 * 60000).toISOString(),
+      version: "6.24.0"
+    };
+    window.__sb = [];
+  });
+  await page.click("#unifiedDownload");
+  await page.waitForTimeout(250);
+  const c6cDownload = await page.evaluate(() => {
+    const call = window.__sb.filter(c => /\/v1\/downloads\/panel$/.test(c.url))[0] || {};
+    let body = {}; try { body = JSON.parse(call.body || "{}"); } catch(e){}
+    return { method: call.method, body, tap: window.__downloadTap,
+             status: document.getElementById("unifiedStatus").textContent.trim() };
+  });
+  const c6cDenied = await page.evaluate(async (base) => {
+    const rows = [];
+    for (const status of ["pending", "suspended", "expired", "banned", "rejected"]){
+      window.__sbCfg.entitlement = JSON.parse(JSON.stringify(base));
+      window.__sbCfg.entitlement.account.status = status;
+      window.__sbCfg.entitlement.account.effective_status = status;
+      if (status === "expired"){
+        window.__sbCfg.entitlement.license.status = "expired";
+        window.__sbCfg.entitlement.license.active = false;
+      }
+      await unifiedRefresh(true);
+      rows.push({ status, wall: appWallState(), page: curPage,
+                  heading: document.getElementById("wallH").textContent.trim(),
+                  web: unifiedCanWeb(), download: unifiedCanDownload() });
+    }
+    window.__sbCfg.entitlement = JSON.parse(JSON.stringify(base));
+    window.__sbCfg.entitlement.permissions.web_app = false;
+    await unifiedRefresh(true);
+    rows.push({ status: "web_app_disabled", wall: appWallState(), page: curPage,
+                heading: document.getElementById("wallH").textContent.trim(),
+                web: unifiedCanWeb(), download: unifiedCanDownload() });
+    return rows;
+  }, entitlementActive);
+  const deniedStates = ["pending", "suspended", "expired", "banned", "rejected", "web_app_disabled"];
+  report("6c unified entitlement: an active account opens AI Tools and requests Panel delivery only through a user-initiated POST; Pending/Suspended/Expired/Banned/Rejected and Web-App-disabled verdicts all fail closed immediately",
+    c6cActive.enforced && c6cActive.web && c6cActive.download && c6cActive.state === "" &&
+    c6cActive.page === "pgAccount" && c6cActive.account === "Active" && c6cActive.license === "Active" &&
+    /shared slot 1\/1/i.test(c6cActive.computer) && c6cActive.version === "6.24.0" && !c6cActive.disabled &&
+    c6cDownload.method === "POST" && !("computer_installation_id" in c6cDownload.body) &&
+    c6cDownload.body.version === "6.24.0" && /\/api\/v1\/downloads\/panel\/test-token$/.test(c6cDownload.tap) &&
+    /Temporary Panel delivery created/i.test(c6cDownload.status) &&
+    c6cDenied.length === deniedStates.length && c6cDenied.every((r, i) =>
+      r.status === deniedStates[i] && r.wall === "unified_blocked" && r.page === "pgHome" && !r.web && !!r.heading),
+    JSON.stringify({ active: c6cActive, download: c6cDownload, denied: c6cDenied }));
 
   // ------------------------------------------------- 9 / 7 / 8) the buy panel
   await boot({ login: SB_FIX.token, profile: SB_FIX.profileFree, settings: SB_FIX.settings,
@@ -581,7 +675,7 @@ const SB_FIX = {
     c11.wizBefore === "wiz" && c11.wizAfter === "wiz",
     JSON.stringify(c11));
 
-  // ---------------------------------------------------------------- 12) offline never blocks
+  // --------------------------------------------------------- 12) offline verdict fails closed
   {
     const exp = new Date(Date.now() + 30 * 86400000).toISOString();
     await page.goto(URL_, { waitUntil: "load" });
@@ -599,10 +693,15 @@ const SB_FIX = {
       const before = curPage;
       switchPage("pgCreate");
       const moved = curPage === "pgCreate";
-      switchPage("pgHome");
       const g = document.getElementById("accGrpPlan");
       if (g) g.className = "grp open";
       return { restored: before, moved, premium: isPremium(),
+               page: curPage,
+               wall: document.body.classList.contains("wall"),
+               wallState: appWallState(),
+               unifiedEnforced: unified.enforced,
+               unifiedError: unified.error,
+               webAllowed: unifiedCanWeb(),
                sess: !!localStorage.getItem("hnk_acc_sess_v1"),
                offlineTxt: (document.getElementById("accPlanOffline").textContent || "").trim(),
                offlineShown: document.getElementById("accPlanOffline").style.display !== "none",
@@ -615,11 +714,13 @@ const SB_FIX = {
                           ? document.getElementById("toast").textContent : "",
                signedIn: document.getElementById("accIn").style.display !== "none" };
     });
-    report("12 offline never blocks: with EVERY Supabase fetch throwing, the app still boots to its restored page, switchPage keeps working, the plan card reads from cache and shows acc_offline, isPremium() stays true for a paying user, the session is NOT cleared, nothing throws, and no unsolicited error toast is raised at boot",
-      errs.length === errsBefore && c12.restored === "pgLib" && c12.moved && c12.premium === true &&
-      c12.sess && c12.signedIn && c12.offlineShown && /Offline/i.test(c12.offlineTxt) &&
+    report("12 offline entitlement fails closed: when every authenticated request throws, a cached active profile does not authorize AI Tools, navigation remains on Home behind the checking wall, but the secure session/cache survive and no unsolicited error toast appears",
+      errs.length === errsBefore && c12.restored === "pgHome" && !c12.moved && c12.page === "pgHome" &&
+      c12.wall && c12.wallState === "checking" && c12.unifiedEnforced && c12.unifiedError && !c12.webAllowed &&
+      c12.premium === true && c12.sess && c12.signedIn && c12.offlineShown && /Offline/i.test(c12.offlineTxt) &&
       c12.bootToast === "",
-      JSON.stringify({ newErrors: errs.length - errsBefore, restored: c12.restored, premium: c12.premium,
+      JSON.stringify({ newErrors: errs.length - errsBefore, restored: c12.restored, moved: c12.moved,
+                       state: c12.wallState, unifiedError: c12.unifiedError, premiumCache: c12.premium,
                        sessKept: c12.sess, offline: c12.offlineTxt, bootToast: c12.bootToast }));
   }
 

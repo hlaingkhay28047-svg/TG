@@ -45,6 +45,20 @@ jobs:
       - name: Verify coordinated release and delivery contract
         run: node test/verify_release_contract.js
 
+      - name: Verify unified account, license, device, admin, and Panel contracts
+        run: |
+          node test/verify_no_public_ccx.js
+          node test/verify_unified_schema.js
+          node test/verify_unified_backend_contract.js
+          node test/verify_unified_security.js
+          node test/verify_unified_api_contracts.js
+          node test/verify_unified_artifacts.js
+          node test/verify_unified_auth_security.js
+          node test/verify_unified_frontend.js
+          node test/verify_unified_routes.js
+          node test/verify_panel_unified_backend.js
+          node test/verify_panel_manifest_permissions.js
+
       - name: Verify Supabase RLS contract (every client table is protected)
         run: node test/verify_rls_contract.js
 
@@ -363,3 +377,6 @@ jobs:
 
       - name: Run v6.22.0 panel gate sweep (the .ccx is behind the same account as the app)
         run: node test/verify_panel_gate.js
+
+      - name: Run unified admin MFA, responsive, and accessibility sweep
+        run: node test/sweep_admin_responsive_a11y.js

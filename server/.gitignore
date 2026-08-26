@@ -1,5 +1,12 @@
 node_modules/
 
+# App Platform builds this public source tree. Release binaries and interrupted
+# zip scratch files must stay in an external artifact store or local temp dir.
+private/
+*.ccx
+zi*
+*.ccx.tmp.*
+
 # sql/schema.sql WAS ignored here, on the theory that `npm run build`'s
 # `cp ../supabase/schema.sql` would keep it current and a committed copy would
 # only drift. It shipped nothing: hnk-api's App Platform component builds from

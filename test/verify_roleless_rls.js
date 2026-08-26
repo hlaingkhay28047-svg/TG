@@ -140,6 +140,11 @@ if (setupOk) {
       "insert into public.profiles(id,email,is_admin) values ('" + CUSTOMER + "','customer@example.test',false)," +
       "('" + ADMIN + "','admin@example.test',true);");
     report("E) internal service context can seed identity and profile rows", seeded.ok, seeded.out);
+    const seededAdminRole = ownerRequest("service_role", null, false,
+      "select count(*) from public.user_roles ur join public.roles r on r.id=ur.role_id " +
+      "where ur.user_id='" + ADMIN + "' and r.name='admin';");
+    report("E2) the authoritative profile flag bootstraps the canonical admin role",
+      seededAdminRole.ok && lastLine(seededAdminRole) === "1", seededAdminRole.out);
 
     const bareOwner = run("select count(*) from public.profiles", DB, OWNER_ENV);
     report("F) an uncontextualized runtime sees no customer rows",
@@ -172,8 +177,8 @@ if (setupOk) {
 
     const adminRows = ownerUserRequest(ADMIN,
       "select count(*) from public.profiles;");
-    report("J) database-derived admin context sees both profiles",
-      adminRows.ok && lastLine(adminRows) === "2", adminRows.out);
+    report("J) an ordinary admin bearer remains scoped to its own profile",
+      adminRows.ok && lastLine(adminRows) === "1", adminRows.out);
 
     const serviceAuth = ownerRequest("service_role", null, false,
       "select count(*) from public.hnk_auth_users;");
@@ -183,6 +188,19 @@ if (setupOk) {
       serviceAuth.ok && lastLine(serviceAuth) === "2" &&
       customerAuth.ok && lastLine(customerAuth) === "0",
       { service: serviceAuth.out, customer: customerAuth.out });
+
+    const demoted = ownerRequest("service_role", null, false,
+      "insert into public.sessions(user_id,client_type,refresh_token_hash,expires_at) values " +
+      "('" + ADMIN + "','admin','demotion-session',now()+interval '1 hour'); " +
+      "insert into public.hnk_auth_refresh_tokens(token,user_id,expires_at) values " +
+      "('demotion-refresh','" + ADMIN + "',now()+interval '1 hour'); " +
+      "update public.profiles set is_admin=false where id='" + ADMIN + "'; " +
+      "select (select count(*) from public.user_roles ur join public.roles r on r.id=ur.role_id " +
+      "where ur.user_id='" + ADMIN + "' and r.name='admin')||'|'||" +
+      "(select (revoked_at is not null)::text from public.sessions where refresh_token_hash='demotion-session')||'|'||" +
+      "(select count(*) from public.hnk_auth_refresh_tokens where token='demotion-refresh');");
+    report("K2) admin demotion removes RBAC and revokes canonical and legacy sessions",
+      demoted.ok && lastLine(demoted) === "0|true|0", demoted.out);
 
     const oldRole = ownerUserRequest(CUSTOMER,
       "set local role authenticated;");

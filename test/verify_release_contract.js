@@ -10,6 +10,10 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const vm = require("vm");
 
+/* This is part of the release gate, not an optional packaging check. It exits
+   immediately if the public Git index contains a CCX or static installer URL. */
+require("./verify_no_public_ccx.js");
+
 const ROOT = path.resolve(__dirname, "..");
 const read = relative => fs.readFileSync(path.join(ROOT, relative), "utf8");
 const failures = [];
@@ -44,6 +48,13 @@ const apiServer = read("server/index.js");
 const productionDeploy = read(".github/workflows/deploy-digitalocean.yml");
 const stagingDeploy = read(".github/workflows/deploy-digitalocean-staging.yml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
+const panelRelease = JSON.parse(read("panel/release-manifest.json"));
+const panelSourceManifest = JSON.parse(read("panel/manifest.json"));
+const panelSourceMain = read("panel/main.js");
+const panelSourceIndex = read("panel/index.html");
+const panelSourceRegistry = read("panel/src/workflows/workflow-registry.js");
+const panelArtifactInput = process.env.HNK_PANEL_ARTIFACT || process.argv[2] || "";
+const panelArtifact = panelArtifactInput ? path.resolve(panelArtifactInput) : "";
 const releaseDate = versionJson.released;
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
 const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
@@ -58,7 +69,7 @@ function collectPublishedTextFiles(dir, out = []) {
 }
 const publishedCcxReferences = collectPublishedTextFiles(path.join(ROOT, "docs")).flatMap(file => {
   const source = fs.readFileSync(file, "utf8");
-  return [...source.matchAll(/[^\s"'<>]*\.ccx(?:[?#][^\s"'<>]*)?/gi)].map(match => ({
+  return [...source.matchAll(/(?:https?:\/\/[^\s"'<>]+|(?:\.\.?\/|\/)[^\s"'<>]+|HNK_Ai_Panel_v\d+\.\d+\.\d+)\.ccx(?:[?#][^\s"'<>]*)?/gi)].map(match => ({
     file: path.relative(ROOT, file).replace(/\\/g, "/"), value: match[0]
   }));
 });
@@ -118,16 +129,29 @@ function hasProviderOnlyFlow(value) {
   return /\bAI\b/u.test(value) && /HNK/u.test(value) && !/never sent to any server/i.test(value);
 }
 
-const panelArtifact = path.join(ROOT, "docs", "download", `HNK_Ai_Panel_v${panelVersion}.ccx`);
-let panelArtifactDetail = "missing or invalid archive";
-let panelArtifactOk = false;
-try {
-  execFileSync("unzip", ["-tqq", panelArtifact], { stdio: "pipe" });
-  const panelManifest = JSON.parse(execFileSync("unzip", ["-p", panelArtifact, "manifest.json"], { encoding: "utf8" }));
-  panelArtifactDetail = `manifest ${panelManifest.version || "missing"}`;
-  panelArtifactOk = panelManifest.version === panelVersion;
-} catch (error) {
-  panelArtifactDetail = error.message;
+function isInsideRepository(candidate) {
+  const relative = path.relative(ROOT, candidate);
+  return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== "..");
+}
+
+let panelArtifactDetail = "source-only CI (no HNK_PANEL_ARTIFACT supplied)";
+let panelArtifactOk = !panelArtifactInput;
+if (panelArtifactInput) {
+  if (!path.isAbsolute(panelArtifactInput)) {
+    panelArtifactDetail = "HNK_PANEL_ARTIFACT must be an absolute path";
+  } else if (isInsideRepository(panelArtifact)) {
+    panelArtifactDetail = "HNK_PANEL_ARTIFACT must be outside the public repository";
+  } else {
+    try {
+      execFileSync("unzip", ["-tqq", panelArtifact], { stdio: "pipe" });
+      const archiveManifest = JSON.parse(execFileSync("unzip", ["-p", panelArtifact, "manifest.json"], { encoding: "utf8" }));
+      panelArtifactOk = archiveManifest.version === panelVersion &&
+        path.basename(panelArtifact) === panelRelease.artifact_file;
+      panelArtifactDetail = `${path.basename(panelArtifact)}; manifest ${archiveManifest.version || "missing"}`;
+    } catch (error) {
+      panelArtifactDetail = error.message;
+    }
+  }
 }
 
 /* v6.22.0 — this check used to stop at the manifest, and the manifest was the
@@ -140,20 +164,13 @@ try {
    host this project retired — which the check below has forbidden in the
    landing page, robots.txt and the sitemap since the DigitalOcean move. It
    never looked inside the .ccx. Both defects shipped. */
-let panelInternals = { version: "", updateUrl: "", brandVer: "", err: "" };
-try {
-  const panelMain = execFileSync("unzip", ["-p", panelArtifact, "main.js"],
-    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  const panelIndex = execFileSync("unzip", ["-p", panelArtifact, "index.html"],
-    { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
-  panelInternals = {
-    version: (panelMain.match(/const PANEL_VERSION\s*=\s*"([^"]+)"/) || [])[1] || "",
-    updateUrl: (panelMain.match(/const PANEL_VERSION_URL\s*=\s*"([^"]+)"/) || [])[1] || "",
-    brandVer: (panelIndex.match(/id="brandVer">v([0-9.]+)</) || [])[1] || "",
-    retiredHostHits: (panelMain + panelIndex).split("hlaingkhay28047-svg.github.io").length - 1,
-    err: ""
-  };
-} catch (error) { panelInternals.err = error.message; }
+const panelInternals = {
+  version: (panelSourceMain.match(/const PANEL_VERSION\s*=\s*"([^"]+)"/) || [])[1] || "",
+  updateUrl: (panelSourceMain.match(/const PANEL_VERSION_URL\s*=\s*"([^"]+)"/) || [])[1] || "",
+  brandVer: (panelSourceIndex.match(/id="brandVer">v([0-9.]+)</) || [])[1] || "",
+  retiredHostHits: (panelSourceMain + panelSourceIndex).split("hlaingkhay28047-svg.github.io").length - 1,
+  err: ""
+};
 
 check("the app release is at least 5.2.0", versionAtLeast(appVersion, "5.2.0"), appVersion || "missing APP_VER");
 check("APP_VER and version.json stay in lockstep", appVersion === versionJson.v, `${appVersion} vs ${versionJson.v}`);
@@ -197,13 +214,8 @@ const inventory = {
   "Visual Library": (html.match(/<b id="stLibCount">(\d+)<\/b>/) || [])[1],
   "Smart Workflow": (html.match(/<b id="stWfCount">(\d+)<\/b>/) || [])[1],
 };
-const panelWorkflowCount = (() => {
-  try {
-    const registry = execFileSync("unzip", ["-p", panelArtifact, "src/workflows/workflow-registry.js"], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
-    const block = (registry.match(/var\s+WORKFLOWS\s*=\s*\[([\s\S]*?)\n\];/) || [])[1] || "";
-    return String([...block.matchAll(/\bid:\s*"[^"]+",\s*title:\s*"[^"]+"/g)].length);
-  } catch (error) { return ""; }
-})();
+const panelWorkflowBlock = (panelSourceRegistry.match(/var\s+WORKFLOWS\s*=\s*\[([\s\S]*?)\n\];/) || [])[1] || "";
+const panelWorkflowCount = String([...panelWorkflowBlock.matchAll(/\bid:\s*"[^"]+",\s*title:\s*"[^"]+"/g)].length);
 function staleInventory(source) {
   const stale = [];
   for (const [label, want] of Object.entries(inventory)) {
@@ -263,9 +275,16 @@ check("SEO discovery files use the production origin",
   sitemap.includes(`<loc>${productionBase}/</loc>`) &&
   sitemap.includes(`<loc>${productionBase}/app/</loc>`),
   "robots.txt or sitemap.xml uses the wrong origin");
+check("panel source, release metadata, and public version endpoint agree",
+  panelSourceManifest.version === panelVersion && panelRelease.version === panelVersion &&
+  panelRelease.minimum_supported_version === panelVersion &&
+  panelRelease.artifact_file === `HNK_Ai_Panel_v${panelVersion}.ccx`,
+  JSON.stringify({ source: panelSourceManifest.version, release: panelRelease.version,
+    minimum: panelRelease.minimum_supported_version, endpoint: panelVersion,
+    artifact: panelRelease.artifact_file }));
 check("the panel agrees with itself about which version it is",
   panelInternals.version === panelVersion && panelInternals.brandVer === panelVersion,
-  `main.js ${panelInternals.version || "?"}, index.html ${panelInternals.brandVer || "?"}, published ${panelVersion}${panelInternals.err ? " :: " + panelInternals.err : ""}`);
+  `main.js ${panelInternals.version || "?"}, index.html ${panelInternals.brandVer || "?"}, release ${panelVersion}${panelInternals.err ? " :: " + panelInternals.err : ""}`);
 check("the panel's update probe points at the production origin",
   panelInternals.updateUrl === `${productionBase}/download/panel-version.json`,
   panelInternals.updateUrl || "no PANEL_VERSION_URL found");
@@ -278,6 +297,9 @@ check("the panel's update probe points at the production origin",
 check("the retired GitHub Pages host appears nowhere inside the panel",
   panelInternals.retiredHostHits === 0,
   `${panelInternals.retiredHostHits} reference(s) in the shipped main.js/index.html`);
+check("an explicit external panel artifact is valid when supplied",
+  panelArtifactOk,
+  panelArtifactDetail);
 /* v5.36.0 — WHERE THE BUTTONS GO.
 
    Ninety-five test scripts, and not one of them read an href. This wave found
@@ -306,7 +328,6 @@ check("every Web Studio call to action opens the web app",
   misroutedCtas.length ? misroutedCtas.join("; ")
     : `found ${ctaAnchors.length} of ${webStudioCtaKeys.length} CTAs`);
 
-const expectedCcx = `download/HNK_Ai_Panel_v${panelVersion}.ccx`;
 const panelAccountHref = "app/?panel=download";
 const panelCtaKeys = ["hero.cta2", "s5.dl"];
 const panelCtas = anchors.filter(a => panelCtaKeys.includes(a.key));
@@ -353,18 +374,15 @@ const accountCardEnd = html.indexOf("</section>", accountCardStart);
 const accountCard = accountCardStart >= 0 && accountCardEnd > accountCardStart
   ? html.slice(accountCardStart, accountCardEnd)
   : "";
-const ccxHref = `../${expectedCcx}`;
-const ccxHrefCount = html.split(`href="${ccxHref}"`).length - 1;
-check("the published Photoshop panel download lives only in the Account Center",
-  ccxHrefCount === 1 && accountCard.includes(`id="accGrpPanel"`) &&
-  accountCard.includes(`id="accPanelDownload"`) && accountCard.includes(`href="${ccxHref}"`) &&
-  /accGrpPanel[\s\S]{0,2500}?isPremium\(\)/.test(html),
-  `panel ${panelVersion}; links ${ccxHrefCount}; account group ${accountCard.includes('id="accGrpPanel"')}`);
-check("no other published page or script exposes an installer reference",
-  publishedCcxReferences.length === 1 && publishedCcxReferences[0].file === "docs/app/index.html" &&
-  publishedCcxReferences[0].value === ccxHref,
-  publishedCcxReferences.map(ref => `${ref.file}: ${ref.value}`).join("; ") || "no Account Center installer reference");
-check("the published Photoshop panel archive is valid and versioned", panelArtifactOk, panelArtifactDetail);
+check("the Account Center sends panel acquisition through the authenticated download area",
+  accountCard.includes(`id="accGrpPanel"`) && accountCard.includes(`id="accPanelDownload"`) &&
+  accountCard.includes(`href="../download/"`) &&
+  /function unifiedCanDownload\(\)[\s\S]{0,500}?p\.ccx_download\s*===\s*true/.test(html) &&
+  /accPanelDownload["']\);\s*if\s*\(ad\)\s*ad\.addEventListener\("click",accRequestPanelDownload\)/.test(html),
+  `panel ${panelVersion}; account group ${accountCard.includes('id="accGrpPanel"')}; authenticated handler ${html.includes("accRequestPanelDownload")}`);
+check("no published page or script exposes a permanent installer reference",
+  publishedCcxReferences.length === 0,
+  publishedCcxReferences.map(ref => `${ref.file}: ${ref.value}`).join("; ") || "none");
 
 check("GitHub Actions checkout is pinned to reviewed v7.0.1", checkoutSha === "3d3c42e5aac5ba805825da76410c181273ba90b1", checkoutSha || "missing full commit SHA");
 check("GitHub Actions setup-node is pinned to reviewed v7.0.0", setupNodeSha === "820762786026740c76f36085b0efc47a31fe5020", setupNodeSha || "missing full commit SHA");
@@ -393,36 +411,65 @@ check("deployment docs require native rollback to restore code and app spec toge
   /does not roll back\s+database data/i.test(readme),
   "README lacks the safe post-probe rollback procedure");
 
-/* The two backends deliberately use different platform object names. Supabase
-   owns auth/storage schemas; DigitalOcean's restricted runtime cannot CREATE
-   SCHEMA, so its tracked source_dir dialect keeps the same model in public
-   with hnk_ names. The transform stays mechanical so policy logic cannot drift
-   while the platform boundary remains explicit. */
+/* The two deployable schemas share one application model but intentionally do
+   not share bytes. Supabase owns auth/storage schemas and native request roles;
+   DigitalOcean's restricted runtime cannot create either, so its canonical
+   tables reference the public identity mirror and use FORCE RLS with a
+   transaction-local service context. Assert those semantics directly instead
+   of pretending a name-only transform can model the different privilege
+   boundaries. */
 const nativeSchema = read("supabase/schema.sql");
-const dialectMap = [
-  ["auth.hnk_roleless_runtime()", "public.hnk_roleless_runtime()", 9],
-  ["auth.uid()", "public.hnk_uid()", 24],
-  ["auth.users", "public.hnk_auth_users", 9],
-  ["storage.buckets", "public.hnk_storage_buckets", 1],
-  ["storage.objects", "public.hnk_storage_objects", 7],
-  ["storage.foldername", "public.hnk_foldername", 2],
-];
-const dialectCounts = dialectMap.map(([native]) =>
-  nativeSchema.split(native).length - 1);
-check("the reviewed schema-dialect dependency inventory is unchanged",
-  dialectCounts.every((count, i) => count === dialectMap[i][2]),
-  `got ${dialectCounts.join(",")}`);
-const digitalOceanSchema = dialectMap.reduce(
-  (sql, [native, roleless]) => sql.replaceAll(native, roleless), nativeSchema);
-check("DigitalOcean schema is the deterministic public-schema dialect",
-  read("server/sql/schema.sql") === digitalOceanSchema,
-  "server/sql/schema.sql has policy drift beyond the reviewed name transform");
+const digitalOceanSchema = read("server/sql/schema.sql");
 const executableDigitalOceanSchema = digitalOceanSchema
   .replace(/\/\*[\s\S]*?\*\//g, "")
   .replace(/--[^\n]*/g, "");
+const canonicalTables = ["roles","user_roles","licenses","app_permissions",
+  "device_slots","device_installations","sessions","login_history",
+  "download_history","admin_audit_logs","panel_versions","device_pairing_codes",
+  "device_history","admin_mfa","auth_attempts","panel_artifacts","panel_artifact_chunks"];
+const hasTable = (sql, table) => new RegExp(
+  "create\\s+table\\s+if\\s+not\\s+exists\\s+public\\."+table+"\\s*\\(", "i").test(sql);
+check("both schema dialects package the complete canonical application model",
+  canonicalTables.every(table => hasTable(nativeSchema,table)&&hasTable(digitalOceanSchema,table)),
+  "a canonical table is missing from one deployable dialect");
+check("both schema dialects package MFA rotation and durable auth-attempt controls",
+  [nativeSchema,digitalOceanSchema].every(sql =>
+    /alter\s+table\s+public\.admin_mfa\s+add\s+column\s+if\s+not\s+exists\s+pending_encrypted_secret\s+text/i.test(sql)&&
+    /login_history_event_type_check[\s\S]*?'mfa_failed'/i.test(sql)&&
+    /login_history_failed_ip_idx/i.test(sql)&&
+    /login_history_mfa_failed_user_idx/i.test(sql)&&
+    /download_history_streaming_user_idx/i.test(sql)&&
+    /auth_attempts_operation_check[\s\S]*?'login_admission'[\s\S]*?'password_change'/i.test(sql)&&
+    /auth_attempts_operation_ip_time_idx/i.test(sql)&&
+    /auth_attempts_operation_email_ip_time_idx/i.test(sql)&&
+    /auth_attempts_operation_email_time_idx/i.test(sql)&&
+    /auth_attempts_occurred_at_idx/i.test(sql)),
+  "an MFA/auth throttling constraint or index is missing from a dialect");
+check("both schema dialects reconcile profile admin flags and revoke demoted sessions",
+  [nativeSchema,digitalOceanSchema].every(sql =>
+    /hnk_sync_admin_role_from_profile/i.test(sql)&&
+    /after\s+insert\s+or\s+update\s+of\s+is_admin\s+on\s+public\.profiles/i.test(sql)&&
+    /update\s+public\.sessions[\s\S]*?revoked_at\s*=\s*now\s*\(\s*\)/i.test(sql))&&
+    /delete\s+from\s+public\.hnk_auth_refresh_tokens/i.test(digitalOceanSchema),
+  "admin-role synchronization or demotion revocation is missing from a dialect");
+const nativeCanonical = nativeSchema.slice(nativeSchema.indexOf("-- 10. unified accounts"));
+const rolelessCanonical = executableDigitalOceanSchema.slice(
+  executableDigitalOceanSchema.indexOf("create table if not exists public.roles"));
+check("each schema dialect binds canonical foreign keys to its authoritative identity table",
+  /references\s+auth\.users\s*\(/i.test(nativeCanonical)&&
+    !/public\.hnk_auth_users/i.test(nativeCanonical)&&
+    /references\s+public\.hnk_auth_users\s*\(/i.test(rolelessCanonical)&&
+    !/\bauth\.users\b/i.test(rolelessCanonical),
+  "native and roleless canonical identities are not separated");
 check("DigitalOcean executable SQL has no native auth/storage dependency",
   !/\b(?:auth|storage)\./.test(executableDigitalOceanSchema),
   "server dialect still requires a non-public schema");
+check("DigitalOcean canonical tables FORCE service-only RLS without cluster request roles",
+  canonicalTables.every(table =>
+    new RegExp("alter\\s+table\\s+public\\."+table+"\\s+force\\s+row\\s+level\\s+security","i").test(rolelessCanonical)&&
+    new RegExp("create\\s+policy\\s+"+table+"_service_all\\s+on\\s+public\\."+table+"[\\s\\S]*?hnk_request_role\\s*\\(\\s*\\)\\s*=\\s*'service_role'","i").test(rolelessCanonical))&&
+    !/\b(?:anon|authenticated)\b/i.test(rolelessCanonical),
+  "roleless canonical RLS depends on a missing role or lacks FORCE/service policy");
 
 const serverPackage = JSON.parse(read("server/package.json"));
 check("the API build preserves its tracked DigitalOcean schema",

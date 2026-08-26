@@ -2,8 +2,8 @@
 
    WHAT WAS WRONG. ACC_RESET_URL pointed at a hnk-account-center deployment on
    a third-party preview host, and the landing footer's "Account · Premium"
-   link pointed at the same place. Supabase puts the recovery token in the URL
-   it sends to redirect_to, so that one constant decided which host received
+   link pointed at the same place. The auth service puts the recovery token in
+   the redirect URL, so that one constant decided which host received
    every customer's password-reset token — and a token that resets a password
    is, for the moment it is alive, the account. The host was somebody else's
    domain, it had no visible relationship to the product a customer had signed
@@ -26,13 +26,14 @@
    C) A recovery link renders the form AND the token is gone from the URL
       before the user can read it.
    D) The token never reaches localStorage or sessionStorage.
-   E) Saving a password PUTs /auth/v1/user with the recovery bearer, then
-      revokes that session, so a link left in a shared browser's history
-      cannot be replayed into a signed-in session.
+   E) Saving a password PUTs /auth/v1/user with the one-time recovery secret in
+      the JSON body, then revokes the fresh compatibility session returned by
+      the API. The token is never sent in an HTTP URL or Authorization header.
    F) A spent or expired link shows the dead-link message and no form.
-   G) A token_hash link is exchanged through /auth/v1/verify first.
+   G) The transition token_hash spelling is accepted without calling a retired
+      third-party verification endpoint.
    H) A short password never leaves the browser.
-   I) referrer=no-referrer, and the CSP's connect-src names exactly one host.
+   I) referrer=no-referrer, and CSP permits only same-origin API requests.
    J) Every string the page renders comes from the app's own tables, apart from
       the two keys documented as new — so the reset page cannot drift into
       saying something the app never said. Matched across every language EITHER
@@ -51,7 +52,6 @@ const LANDING = fs.readFileSync(path.join(ROOT, "docs", "index.html"), "utf8");
 const RESET = fs.readFileSync(path.join(ROOT, "docs", "reset", "index.html"), "utf8");
 
 const ORIGIN = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
-const SB = "https://vmtwuuybnalefpgvrast.supabase.co";
 const RESET_URL = ORIGIN + "/reset/";
 
 let failures = 0;
@@ -72,6 +72,7 @@ for (const [file, body] of [["docs/app/index.html", APP], ["docs/index.html", LA
   for (const m of body.matchAll(/ACC_RESET_URL\s*=\s*"([^"]+)"/g)) {
     if (m[1].indexOf(ORIGIN + "/") !== 0) strays.push({ file, ACC_RESET_URL: m[1] });
   }
+  if (/vmtwuuybnalefpgvrast|sb_publishable_/i.test(body)) strays.push({ file, retiredAuthBackend:true });
 }
 const resetConst = (APP.match(/ACC_RESET_URL\s*=\s*"([^"]+)"/) || [])[1];
 report("A) no third-party account host is linked, and ACC_RESET_URL is on the production origin",
@@ -88,8 +89,8 @@ report("B) the reset page requests nothing off-origin",
 const referrer = (RESET.match(/<meta\s+name="referrer"\s+content="([^"]*)"/) || [])[1];
 const csp = (RESET.match(/<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i) || [])[1] || "";
 const connectSrc = (csp.match(/connect-src\s+([^;]+)/) || [])[1] || "";
-report("I) the page sends no referrer and its CSP connect-src names exactly the Supabase origin",
-  referrer === "no-referrer" && connectSrc.trim() === SB && /default-src\s+'none'/.test(csp),
+report("I) the page sends no referrer and its CSP permits only the same-origin auth API",
+  referrer === "no-referrer" && connectSrc.trim() === "'self'" && /default-src\s+'none'/.test(csp),
   { referrer, connectSrc: connectSrc.trim(), csp: csp.slice(0, 90) });
 
 /* ---------- J) the strings are the shipped ones, in all nine languages ----------
@@ -162,30 +163,31 @@ report("J) every reused string matches its shipped source in every language eith
 (async () => {
   const browser = await chromium.launch();
 
-  /* one context helper: serve /reset/ from disk at its real production URL,
-     and answer GoTrue from a script the test controls */
-  async function open(url, gotrue) {
+  /* One context helper: serve /reset/ from disk at its real production URL,
+     and answer the same-origin unified auth API from a script the test owns. */
+  async function open(url, authApi) {
     const ctx = await browser.newContext({ viewport: { width: 412, height: 900 } });
     const calls = [];
     await ctx.route(ORIGIN + "/**", route => {
-      const p = new URL(route.request().url()).pathname;
+      const req = route.request();
+      const p = new URL(req.url()).pathname;
+      if (p.indexOf("/api/auth/v1/") === 0) {
+        const entry = {
+          path: p.slice(4),
+          method: req.method(),
+          auth: req.headers()["authorization"] || "",
+          apikey: !!req.headers()["apikey"],
+        };
+        try { entry.body = JSON.parse(req.postData() || "{}"); } catch (e) { entry.body = null; }
+        calls.push(entry);
+        const answer = authApi(entry) || { status: 200, body: {} };
+        return route.fulfill({ status: answer.status, contentType: "application/json",
+          body: JSON.stringify(answer.body || {}) });
+      }
       if (p === "/reset/" || p === "/reset/index.html") {
         return route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: RESET });
       }
       return route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>app</title>" });
-    });
-    await ctx.route(SB + "/**", async route => {
-      const req = route.request();
-      const entry = {
-        path: new URL(req.url()).pathname,
-        method: req.method(),
-        auth: req.headers()["authorization"] || "",
-        apikey: !!req.headers()["apikey"],
-      };
-      try { entry.body = JSON.parse(req.postData() || "{}"); } catch (e) { entry.body = null; }
-      calls.push(entry);
-      const r = gotrue(entry) || { status: 200, body: {} };
-      return route.fulfill({ status: r.status, contentType: "application/json", body: JSON.stringify(r.body || {}) });
     });
     const page = await ctx.newPage();
     const errors = [];
@@ -196,18 +198,18 @@ report("J) every reused string matches its shipped source in every language eith
     return { ctx, page, calls, errors };
   }
 
-  const TOKEN = "recovery-access-token-fixture";
-  const okGotrue = e => {
-    if (e.path === "/auth/v1/user") return { status: 200, body: { id: "u1" } };
+  const TOKEN = "one-time-recovery-token-fixture";
+  const FRESH_ACCESS = "fresh-session-access-token";
+  const okAuth = e => {
+    if (e.path === "/auth/v1/user") return { status: 200, body: { id: "u1", access_token:FRESH_ACCESS } };
     if (e.path === "/auth/v1/logout") return { status: 204, body: {} };
-    if (e.path === "/auth/v1/verify") return { status: 200, body: { access_token: TOKEN } };
     return { status: 200, body: {} };
   };
 
-  /* ---------- C + D) a live recovery link ---------- */
+  /* ---------- C + D) a live fragment recovery link ---------- */
   {
     const { ctx, page, errors } = await open(
-      RESET_URL + "#access_token=" + TOKEN + "&refresh_token=r1&type=recovery&expires_in=3600", okGotrue);
+      RESET_URL + "#token=" + encodeURIComponent(TOKEN) + "&type=recovery", okAuth);
     const s = await page.evaluate(() => ({
       url: location.href,
       hash: location.hash,
@@ -228,7 +230,7 @@ report("J) every reused string matches its shipped source in every language eith
 
   /* ---------- H) a short password never leaves the browser ---------- */
   {
-    const { ctx, page, calls } = await open(RESET_URL + "#access_token=" + TOKEN + "&type=recovery", okGotrue);
+    const { ctx, page, calls } = await open(RESET_URL + "?token=" + encodeURIComponent(TOKEN) + "&type=recovery", okAuth);
     await page.fill("#pw", "12345");
     await page.waitForTimeout(80);
     const disabled = await page.evaluate(() => document.getElementById("btn").disabled);
@@ -241,7 +243,7 @@ report("J) every reused string matches its shipped source in every language eith
 
   /* ---------- E) saving, then revoking ---------- */
   {
-    const { ctx, page, calls, errors } = await open(RESET_URL + "#access_token=" + TOKEN + "&type=recovery", okGotrue);
+    const { ctx, page, calls, errors } = await open(RESET_URL + "#token=" + encodeURIComponent(TOKEN) + "&type=recovery", okAuth);
     await page.fill("#pw", "brand-new-secret");
     await page.waitForTimeout(80);
     await page.click("#btn");
@@ -255,10 +257,10 @@ report("J) every reused string matches its shipped source in every language eith
       pw: document.getElementById("pw").value,
       live: document.getElementById("st").getAttribute("aria-live"),
     }));
-    report("E) saving PUTs /auth/v1/user with the recovery bearer and the new password, then revokes that session",
-      !!put && put.method === "PUT" && put.auth === "Bearer " + TOKEN && put.apikey &&
-      put.body && put.body.password === "brand-new-secret" &&
-      !!out && out.method === "POST" && out.auth === "Bearer " + TOKEN,
+    report("E) saving PUTs the one-time secret in JSON, then revokes only the fresh returned session",
+      !!put && put.method === "PUT" && put.auth === "" && !put.apikey &&
+      put.body && put.body.password === "brand-new-secret" && put.body.recovery_token === TOKEN &&
+      !!out && out.method === "POST" && out.auth === "Bearer " + FRESH_ACCESS,
       { put: put && { m: put.method, auth: put.auth, keys: put.body && Object.keys(put.body) }, logout: !!out });
     report("E2) success hides the form, clears the field, announces politely and offers the app",
       after.formHidden && after.pw === "" && after.openShown && after.st.length > 0 && after.live === "polite",
@@ -269,18 +271,16 @@ report("J) every reused string matches its shipped source in every language eith
 
   /* ---------- G) the token_hash shape ---------- */
   {
-    const { ctx, page, calls } = await open(RESET_URL + "?token_hash=th-fixture&type=recovery", okGotrue);
+    const { ctx, page, calls } = await open(RESET_URL + "?token_hash=th-fixture&type=recovery", okAuth);
     await page.fill("#pw", "brand-new-secret");
     await page.waitForTimeout(80);
     await page.click("#btn");
     await page.waitForTimeout(500);
-    const verify = calls.find(c => c.path === "/auth/v1/verify");
     const put = calls.find(c => c.path === "/auth/v1/user");
-    report("G) a token_hash link is exchanged through /auth/v1/verify, then used as the bearer",
-      !!verify && verify.body && verify.body.type === "recovery" && verify.body.token_hash === "th-fixture" &&
-      !!put && put.auth === "Bearer " + TOKEN &&
-      calls.indexOf(verify) < calls.indexOf(put),
-      { verify: verify && verify.body, putAuth: put && put.auth });
+    const verify = calls.find(c => c.path === "/auth/v1/verify");
+    report("G) token_hash transition links use the unified one-time-token contract without /verify",
+      !verify && !!put && put.auth === "" && put.body && put.body.recovery_token === "th-fixture",
+      { verify: !!verify, put: put && {auth:put.auth,body:put.body} });
     await ctx.close();
   }
 
@@ -289,7 +289,7 @@ report("J) every reused string matches its shipped source in every language eith
     ["an expired link", RESET_URL + "#error=access_denied&error_description=Email+link+is+invalid+or+has+expired"],
     ["a bare visit", RESET_URL],
   ]) {
-    const { ctx, page, calls } = await open(url, okGotrue);
+    const { ctx, page, calls } = await open(url, okAuth);
     const s = await page.evaluate(() => ({
       formHidden: document.getElementById("form").className === "hide",
       st: (document.getElementById("st").textContent || "").trim(),
@@ -305,9 +305,8 @@ report("J) every reused string matches its shipped source in every language eith
   {
     const ctx = await browser.newContext({ viewport: { width: 320, height: 700 } });
     await ctx.route(ORIGIN + "/**", route => route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: RESET }));
-    await ctx.route(SB + "/**", route => route.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
     const page = await ctx.newPage();
-    await page.goto(RESET_URL + "#access_token=" + TOKEN + "&type=recovery", { waitUntil: "load" });
+    await page.goto(RESET_URL + "?token=" + encodeURIComponent(TOKEN) + "&type=recovery", { waitUntil: "load" });
     await page.waitForTimeout(200);
     const k = await page.evaluate(() => {
       const small = [];

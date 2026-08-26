@@ -14,7 +14,7 @@
  *
  * Usage: node test/verify_api_service.js   (needs PostgreSQL; see
  *        verify_schema_behaviour.js for how to start one) */
-const { execFileSync, spawn } = require("child_process");
+const { execFile, execFileSync, spawn } = require("child_process");
 const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
@@ -50,6 +50,15 @@ const RUNTIME_ENV = Object.assign({}, ENV, {
 const psql = (sql, db) => execFileSync("psql",
   ["-d", db || "postgres", "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql],
   { env: ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const psqlAsync = (sql, db) => new Promise((resolve,reject)=>{
+  execFile("psql",["-d",db||"postgres","-v","ON_ERROR_STOP=1","-t","-A","-c",sql],
+    {env:ENV,encoding:"utf8"},(error,stdout,stderr)=>{
+      if (error) {
+        error.message += stderr ? "\n"+stderr.trim() : "";
+        reject(error);
+      } else resolve(String(stdout||"").trim());
+    });
+});
 const runtimePsql = (sql, db) => execFileSync("psql",
   ["-d", db, "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql],
   { env: RUNTIME_ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -108,8 +117,17 @@ createRuntimeDatabase(DB);
    what this string carries. */
 process.env.DATABASE_URL = runtimeUrl(DB);
 process.env.PGSSLMODE = "disable";
+process.env.ALLOW_UNVERIFIED_DB_TLS = "1";
+delete process.env.ALLOW_DERIVED_SECURITY_SECRETS;
 process.env.PG_POOL_MAX = "1";
+process.env.FAILED_LOGIN_LIMIT = "3";
+process.env.PASSWORD_KDF_MAX_CONCURRENCY = "1";
 process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
+process.env.MFA_ENCRYPTION_KEY = "api-service-mfa-encryption-key-2026-08-26";
+process.env.DEVICE_ID_HASH_SECRET = "api-service-device-id-hash-key-2026-08-26";
+process.env.DEVICE_PAIRING_SECRET = "api-service-device-pairing-key-2026-08-26";
+process.env.CCX_DOWNLOAD_SECRET = "api-service-ccx-download-key-2026-08-26";
+process.env.PANEL_LEASE_SECRET = "api-service-panel-lease-key-2026-08-26";
 process.env.ALLOWED_ORIGIN = "https://example.test";
 /* The schema is built by the SERVICE'S OWN migration, not by psql here. That
    is deliberate: it is the code path a real deployment takes on first boot, so
@@ -130,6 +148,15 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   const text = await r.text();
   let json = null; try { json = JSON.parse(text); } catch (_) {}
   return { status: r.status, json, text };
+}
+
+function testPasswordHash(password,parallelization) {
+  return new Promise((resolve,reject)=>{
+    const salt=crypto.randomBytes(16);
+    crypto.scrypt(password,salt,64,{N:16384,r:8,p:parallelization,maxmem:64*1024*1024},
+      (error,key)=>error?reject(error):resolve(
+        `scrypt$16384$8$${parallelization}$${salt.toString("base64")}$${key.toString("base64")}`));
+  });
 }
 
 (async () => {
@@ -217,6 +244,10 @@ async function call(method, p, { token, body, headers, raw } = {}) {
       h.json.apiVersion === EXPECTED_API_VERSION &&
       h.json.schemaFingerprint === EXPECTED_SCHEMA_SHA &&
       h.json.error === undefined, h.json);
+    const recoveryIndex=psql(
+      "select to_regclass('public.hnk_auth_users_recovery_token_uniq')::text",DB);
+    report("A0.1) recovery-token lookup is indexed before auth traffic is admitted",
+      recoveryIndex==="hnk_auth_users_recovery_token_uniq",{recoveryIndex});
   }
 
   /* ================= the ordinary journey ================= */
@@ -250,19 +281,103 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("E) an unknown address answers identically, not 'no such user'",
     r.status === 400 && /Invalid login credentials/.test(r.text), { status: r.status });
 
-  /* ---- the v5.38.0 self-heal, over HTTP ---- */
+  const bruteEmail = "parallel-bruteforce@example.test";
+  const bruteStatuses = [];
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await call("POST", "/auth/v1/token?grant_type=password", {
+      body: { email: bruteEmail, password: "wrong" },
+    });
+    bruteStatuses.push(response.status);
+  }
+  const bruteEmailHash = crypto.createHmac("sha256", process.env.JWT_SECRET)
+    .update(bruteEmail, "utf8").digest("hex");
+  const bruteEvidence = runtimeServicePsql(
+    `select (select count(*) from public.auth_attempts where operation='login' ` +
+    `and email_hash='${bruteEmailHash}')||'|'||` +
+    `(select count(*) from public.auth_attempts where operation='login_admission' ` +
+    `and email_hash='${bruteEmailHash}')||'|'||` +
+    `(select count(*) from public.login_history where event_type='failed_login' ` +
+    `and attempted_email='${bruteEmail}')`, DB);
+  report("E2) failed-password admission stops at the durable pre-KDF limit without audit amplification",
+    bruteStatuses.join(",") === "400,400,400,429" && bruteEvidence === "3|3|3",
+    { statuses: bruteStatuses, failureAdmissionAndAudit: bruteEvidence });
+
+  /* Make verification slow enough to observe the transaction after it reads
+     the old hash. A concurrent password update must wait on that shared row
+     lock, then revoke the session the login just created. Without FOR SHARE,
+     the update commits first and an in-flight old password creates a fresh,
+     unrevoked session afterward. */
+  const raceEmail="password-race@example.test";
+  const racePassword="old-password-race";
+  const slowOldHash=await testPasswordHash(racePassword,12);
+  const replacementHash=await testPasswordHash("replacement-password",1);
+  runtimeServicePsql(
+    `insert into public.hnk_auth_users (email,encrypted_password,email_confirmed_at) ` +
+    `values ('${raceEmail}','${slowOldHash}',now())`,DB);
+  const raceUserId=psql(
+    `select id from public.hnk_auth_users where email='${raceEmail}'`,DB);
+  const racingLogin=call("POST","/auth/v1/token?grant_type=password",{
+    body:{email:raceEmail,password:racePassword},
+  });
+  let observedPasswordRead=false;
+  const observeDeadline=Date.now()+5000;
+  while (Date.now()<observeDeadline) {
+    const active=await psqlAsync(
+      `select count(*) from pg_stat_activity where datname='${DB}' ` +
+      `and usename='${RUNTIME_USER}' and state='idle in transaction' ` +
+      `and query ilike '%encrypted_password%'`,"postgres");
+    if (Number(active)>0) { observedPasswordRead=true;break; }
+    await new Promise(resolve=>setTimeout(resolve,20));
+  }
+  const overflowRecoveryToken=crypto.randomBytes(32).toString("base64url");
+  const recoveryProbeBefore=await psqlAsync(
+    "select count(*) from public.auth_attempts where operation='recovery_probe'",DB);
+  const overflowRecovery=await call("PUT",
+    "/auth/v1/user?token="+encodeURIComponent(overflowRecoveryToken),{
+      body:{password:"replacement-password"},
+    });
+  const recoveryProbeAfter=await psqlAsync(
+    "select count(*) from public.auth_attempts where operation='recovery_probe'",DB);
+  report("E3) a saturated KDF gate rejects recovery before token lookup or durable reservation",
+    observedPasswordRead&&overflowRecovery.status===429&&
+      overflowRecovery.json&&overflowRecovery.json.error==="auth_busy"&&
+      recoveryProbeAfter===recoveryProbeBefore,
+    {observedPasswordRead,status:overflowRecovery.status,
+      error:overflowRecovery.json&&overflowRecovery.json.error,
+      recoveryProbeBefore,recoveryProbeAfter});
+  const racingReset=psqlAsync(
+    `begin; ${LOCAL_SERVICE_CONTEXT}; ` +
+    `update public.hnk_auth_users set encrypted_password='${replacementHash}',updated_at=now() ` +
+    `where id='${raceUserId}'; ` +
+    `update public.sessions set revoked_at=coalesce(revoked_at,now()),` +
+    `revoked_reason=coalesce(revoked_reason,'password_reset') where user_id='${raceUserId}'; commit`,DB);
+  const raceLoginResult=await racingLogin;
+  await racingReset;
+  const racedSessionId=raceLoginResult.json&&raceLoginResult.json.session_id;
+  const racedSessionRevoked=racedSessionId
+    ? runtimeServicePsql(
+      `select (revoked_at is not null)::text from public.sessions where id='${racedSessionId}'`,DB)
+    : "missing";
+  report("E4) password reset revokes a session created by an in-flight old-password login",
+    observedPasswordRead&&raceLoginResult.status===200&&racedSessionRevoked==="true",
+    {observedPasswordRead,status:raceLoginResult.status,sessionRevoked:racedSessionRevoked});
+
+  /* Unified signup creates the profile and enforcement rows transactionally;
+     a canonical live session must never point at a missing profile. */
   r = await call("GET", "/rest/v1/profiles?select=*&id=eq." + CUST,
     { token: custToken, headers: { accept: "application/vnd.pgrst.object+json" } });
-  report("F) a missing profile answers 406, which is what accLoadProfile keys on",
-    r.status === 406, { status: r.status });
+  report("F) signup leaves a complete own-only pending profile behind",
+    r.status === 200 && r.json && r.json.plan_status === "none" &&
+      r.json.allowed_devices === 2 && r.json.is_admin === false &&
+      r.json.account_status === "pending" && r.json.email === cust.email,
+    { status: r.status, row: r.json });
+  const unifiedSignupRows = psql(
+    `select (select count(*) from public.user_roles ur join public.roles rr on rr.id=ur.role_id ` +
+    `where ur.user_id='${CUST}' and rr.name='student')||'|'||` +
+    `(select count(*) from public.app_permissions where user_id='${CUST}')`, DB);
+  report("G) signup atomically creates the student's canonical role and permissions",
+    unifiedSignupRows === "1|1", { roleAndPermissions: unifiedSignupRows });
 
-  r = await call("POST", "/rest/v1/profiles", { token: custToken, body: { id: CUST }, headers: { prefer: "return=representation" } });
-  report("G) accEnsureProfile's insert of {id} yields a complete free-tier row",
-    r.status === 201 && r.json && r.json[0] && r.json[0].plan_status === "none" &&
-    r.json[0].allowed_devices === 2 && r.json[0].is_admin === false && r.json[0].email === cust.email,
-    { status: r.status, row: r.json && r.json[0] });
-
-  await call("POST", "/rest/v1/profiles", { token: ownerToken, body: { id: OWNER } });
   runtimeServicePsql(`update public.profiles set is_admin = true where id = '${OWNER}'`, DB);
 
   const serviceAuthRows = await dbRuntime.asService(client =>
@@ -311,16 +426,17 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     { status: r.status, count: Array.isArray(r.json) ? r.json.length : null });
 
   r = await call("GET", "/rest/v1/profiles?select=*", { token: ownerToken });
-  report("J) an admin listing profiles sees every row",
-    r.status === 200 && Array.isArray(r.json) && r.json.length === 2, { count: Array.isArray(r.json) ? r.json.length : null });
+  report("J) an ordinary admin bearer remains scoped to its own profile",
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 1 && r.json[0].id === OWNER,
+    { count: Array.isArray(r.json) ? r.json.length : null, rows: r.json });
 
   const adminProfileBatch = "/rest/v1/profiles?select=id,name,email,joined_paid,allowed_devices," +
     "price_1m_override,price_3m_override,price_6m_override,price_join_first_override" +
     "&id=in.(" + OWNER + "," + CUST + ")";
   r = await call("GET", adminProfileBatch, { token: ownerToken });
   const batchIds = Array.isArray(r.json) ? r.json.map(row => row.id).sort() : [];
-  report("J2) the production API supports the admin UI's bounded profile batch lookup",
-    r.status === 200 && batchIds.join(",") === [CUST, OWNER].sort().join(","),
+  report("J2) a bounded generic REST batch cannot widen an admin bearer",
+    r.status === 200 && batchIds.join(",") === OWNER,
     { status: r.status, ids: batchIds });
   r = await call("GET", adminProfileBatch, { token: custToken });
   report("J3) an id batch still obeys profile RLS for a customer",
@@ -328,8 +444,59 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     { status: r.status, rows: r.json });
   const tooManyIds = Array(101).fill(CUST).join(",");
   r = await call("GET", "/rest/v1/profiles?select=id&id=in.(" + tooManyIds + ")", { token: ownerToken });
-  report("J4) an id batch is capped at the admin queue's 100-row maximum",
+  report("J4) generic REST still caps an oversized id filter",
     r.status === 400, { status: r.status });
+
+  r = await call("GET", "/v1/admin/students", { token: ownerToken });
+  report("J5) a web-session admin bearer cannot enter the strict admin API",
+    r.status === 403, { status: r.status, body: r.json });
+
+  r = await call("POST", "/auth/v1/token?grant_type=password", {
+    body: { email: owner.email, password: owner.password, client_type: "admin" },
+  });
+  const ownerAdminToken = r.json && r.json.access_token;
+  report("J6) admin login creates a dedicated admin-client session",
+    r.status === 200 && !!ownerAdminToken, { status: r.status });
+
+  r = await call("GET", "/v1/admin/students", { token: ownerAdminToken });
+  report("J7) an admin-client session remains blocked until MFA is current",
+    r.status === 403, { status: r.status, body: r.json });
+
+  const mfaSetup = await call("POST", "/v1/admin/mfa/setup", { token: ownerAdminToken, body: {} });
+  const mfaSecret = mfaSetup.json && mfaSetup.json.secret;
+  const mfaCode = mfaSecret
+    ? require(path.join(ROOT, "server", "lib", "mfa")).totp(mfaSecret, Date.now())
+    : "";
+  const mfaVerified = await call("POST", "/v1/admin/mfa/verify", {
+    token: ownerAdminToken, body: { code: mfaCode },
+  });
+  report("J8) the dedicated admin session completes TOTP setup and verification",
+    mfaSetup.status === 200 && !!mfaSecret && mfaVerified.status === 200 &&
+      mfaVerified.json && mfaVerified.json.mfa_verified === true,
+    { setup: mfaSetup.status, verify: mfaVerified.status });
+
+  r = await call("GET", "/v1/admin/students?limit=10", { token: ownerAdminToken });
+  const strictAdminIds = r.json && Array.isArray(r.json.students)
+    ? r.json.students.map(row => row.id).sort() : [];
+  report("J9) cross-account student reads use only the MFA-verified strict admin API",
+    r.status === 200 && strictAdminIds.join(",") === [CUST, OWNER].sort().join(","),
+    { status: r.status, ids: strictAdminIds });
+
+  r = await call("POST", `/v1/admin/students/${CUST}/actions`, {
+    token: ownerAdminToken,
+    body: { action: "set_permission", permission: "ccx_download", enabled: false },
+  });
+  const strictPermissionAudit = psql(
+    `select (select ccx_download_enabled::text from public.app_permissions where user_id='${CUST}')||'|'||` +
+    `(select count(*)::text from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='set_permission')`, DB);
+  report("J10) strict admin mutations are server-authorized and audited",
+    r.status === 200 && strictPermissionAudit === "false|1",
+    { status: r.status, stateAndAudit: strictPermissionAudit });
+  await call("POST", `/v1/admin/students/${CUST}/actions`, {
+    token: ownerAdminToken,
+    body: { action: "set_permission", permission: "ccx_download", enabled: true },
+  });
 
   /* Keep this fixture in the historical flat/no-join-fee mode while giving the
      quote trigger an authoritative positive SKU price. */
@@ -346,6 +513,15 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     r.status === 200 && Array.isArray(r.json) && r.json.length === 0 &&
     stat === "pending|flat|30000",
     { created: paymentCreated.status, httpStatus: r.status, response: r.json, status: stat });
+
+  r = await call("PATCH", "/rest/v1/payment_requests?id=eq." + PAYMENT_ID,
+    { token: ownerToken, body: { status: "approved" }, headers: { prefer: "return=representation" } });
+  const statusAfterAdminBearer = psql(
+    `select status from public.payment_requests where id='${PAYMENT_ID}'`, DB);
+  report("K2) an ordinary admin bearer cannot review another account's payment",
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 0 &&
+      statusAfterAdminBearer === "pending",
+    { status: r.status, response: r.json, paymentStatus: statusAfterAdminBearer });
 
   r = await call("POST", "/rest/v1/payment_requests",
     { token: custToken, body: { user_id: CUST, kind: "plan_1m", status: "approved", reviewed_by: OWNER, note: "ok" } });
@@ -437,12 +613,16 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     { token: custToken, raw: body, headers: { "content-type": `multipart/form-data; boundary=${boundary}`, "x-upsert": "true" } });
   report("U) a customer can upload a proof into their own folder", r.status === 200, { status: r.status, text: r.text.slice(0, 90) });
 
+  r = await call("GET", `/storage/v1/object/payment-proofs/${CUST}/plan_1m-1.jpg`, { token: custToken });
+  report("U2) a customer can read their own payment proof", r.status === 200, { status: r.status });
+
   r = await call("POST", `/storage/v1/object/payment-proofs/${OWNER}/stolen.jpg`,
     { token: custToken, raw: body, headers: { "content-type": `multipart/form-data; boundary=${boundary}`, "x-upsert": "true" } });
   report("V) a customer cannot upload into another user's folder", r.status >= 400, { status: r.status });
 
   r = await call("GET", `/storage/v1/object/payment-proofs/${CUST}/plan_1m-1.jpg`, { token: ownerToken });
-  report("W) an admin can read a customer's proof", r.status === 200, { status: r.status });
+  report("W) an ordinary admin bearer cannot read a customer's proof",
+    r.status === 404, { status: r.status });
 
   /* a second customer must not */
   const other = { email: "other@example.test", password: "otherpass123" };
@@ -745,11 +925,18 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   dbModule.pool.options.ssl = { rejectUnauthorized: true };
   const certErr = Object.assign(new Error("self-signed certificate in certificate chain"),
     { code: "SELF_SIGNED_CERT_IN_CHAIN" });
-  report("S11) a certificate failure stands down from VERIFYING rather than from connecting",
+  const savedUnverifiedOverride=process.env.ALLOW_UNVERIFIED_DB_TLS;
+  delete process.env.ALLOW_UNVERIFIED_DB_TLS;
+  report("S11) production refuses to downgrade after certificate verification fails",
+    dbModule.downgradeTlsAfter(certErr) === false &&
+    dbModule.pool.options.ssl.rejectUnauthorized === true,
+    dbModule.pool.options.ssl);
+  process.env.ALLOW_UNVERIFIED_DB_TLS="1";
+  report("S12) an explicit local/test override may stand down from verification",
     dbModule.downgradeTlsAfter(certErr) === true &&
     dbModule.pool.options.ssl.rejectUnauthorized === false,
     dbModule.pool.options.ssl);
-  report("S12) ...and says so, naming the code, so the downgrade is never silent",
+  report("S12b) ...and says so, naming the code, so the downgrade is never silent",
     /SELF_SIGNED_CERT_IN_CHAIN/.test(dbModule.getTlsNote() || "") &&
     /UNVERIFIED/.test(dbModule.getTlsNote() || ""), dbModule.getTlsNote());
   report("S13) ...and does not downgrade again once already unverified",
@@ -765,6 +952,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("S15) /health reports the TLS state in every case, not only the bad ones",
     dbModule.tlsState() === "verified", dbModule.tlsState());
   dbModule.pool.options.ssl = savedSsl;
+  if (savedUnverifiedOverride===undefined) delete process.env.ALLOW_UNVERIFIED_DB_TLS;
+  else process.env.ALLOW_UNVERIFIED_DB_TLS=savedUnverifiedOverride;
 
   /* ---- the check that was missing, and why ----
      Asserting on pool.options.ssl passes while the driver ignores it. pg builds

@@ -56,3 +56,11 @@ Makefile
 # Node (test tooling under test/)
 node_modules/
 npm-debug.log*
+
+# Photoshop release artifacts are private distribution outputs, never source.
+# The repository is public: Git LFS and a directory named "private" would not
+# make a committed CCX private.
+*.ccx
+/panel/assets/
+/panel/.package-*
+/server/private/

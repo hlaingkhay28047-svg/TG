@@ -1,7 +1,8 @@
 # TG — HNK Create Studio
 
-Adobe Photoshop panel (`docs/download/*.ccx`) + HNK web app (`docs/app/`) +
-landing site (`docs/index.html`), deployed as DigitalOcean static sites.
+Adobe Photoshop panel source (`panel/`) + HNK web app (`docs/app/`) + landing
+site (`docs/index.html`). The public repository never contains a CCX binary;
+private panel delivery is owned by the unified API.
 
 ## Standing release policy (owner instruction, 2026-08-18)
 
@@ -16,10 +17,11 @@ work on staging waiting for per-wave sign-off:
    binding, `deploy_on_push: true`); both deploy workflows verify the live
    `/app/version.json` and the exact SHA-256 of landing and app HTML.
 3. Verify the production deploy run succeeded before calling the work done.
-4. Web app, landing site and Photoshop panel ship together: a panel change
-   bumps the panel version (new `.ccx` + `panel-version.json` + download
-   links) and the web app version in lockstep (`APP_VER`, `version.json`,
-   service-worker cache name, landing badges, JSON-LD).
+4. Web app, landing site and Photoshop panel source/metadata ship together: a
+   panel change bumps `panel/release-manifest.json`, `panel-version.json`, and
+   the web app version in lockstep (`APP_VER`, `version.json`, service-worker
+   cache name, landing badges, JSON-LD). Build the CCX to an explicit external
+   path; never commit it or publish a permanent URL.
 
 The tests are the gate: never merge red, never skip or weaken a check to
 get green, and never expose or commit API keys or tokens.
@@ -32,6 +34,11 @@ get green, and never expose or commit API keys or tokens.
 - `test/verify_release_contract.js` and `test/verify_digitalocean_deploy.js`
   pin the release/CI/deploy contracts — run them after any version bump,
   README release-flow edit, or workflow change.
+- Panel artifact procedure and security limits: `PANEL_RELEASE_SECURITY.md`.
+  Database chunks are the temporary delivery bridge; a private DigitalOcean
+  Space is the production target. v6.23.0 needs its full seven-day explicit-deny
+  cutoff. The official client is casual-copy control, not DRM, and a new release
+  stays disabled until Adobe UXP Developer Tool plus real Photoshop acceptance.
 
 ## Hard-won rules
 
@@ -39,6 +46,6 @@ get green, and never expose or commit API keys or tokens.
   new ones client-side; list only endpoints that actually exist.
 - The one-click template (`.do/deploy.template.yaml`) stays a public-git
   source with no `deploy_on_push` — that contract is tested.
-- `docs/app/index.html` is one large file; the panel `.ccx` is a plain zip
-  whose `manifest.json` version must equal `panel-version.json` and the
-  download filename.
+- `docs/app/index.html` is one large file; a CCX is inspectable client-side code.
+  `panel/manifest.json`, `panel/release-manifest.json`, and
+  `panel-version.json` must agree, while the binary remains outside Git.

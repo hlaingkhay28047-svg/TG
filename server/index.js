@@ -9,14 +9,29 @@
  */
 const http = require("http");
 const url = require("url");
+const fs = require("fs");
 const auth = require("./lib/auth");
 const rest = require("./lib/rest");
 const storage = require("./lib/storage");
-const { verifyToken } = require("./lib/crypto");
+const v1 = require("./lib/v1");
+const { authenticateRequest, requestContext } = require("./lib/live-auth");
+const { hasSecureTokenSecret } = require("./lib/crypto");
+const database = require("./lib/db");
+const { securitySecretStatus } = require("./lib/entitlements");
 
 const PORT = Number(process.env.PORT || 8080);
 const MAX_BODY = Number(process.env.MAX_BODY_BYTES || 12 * 1024 * 1024);
-const API_VERSION = "5.42.2";
+const API_VERSION = "5.43.0";
+
+function boundedTimeout(value,fallback,minimum,maximum) {
+  const parsed=Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(maximum,Math.max(minimum,Math.floor(parsed)));
+}
+const DOWNLOAD_IDLE_TIMEOUT_MS=boundedTimeout(
+  process.env.CCX_DOWNLOAD_IDLE_TIMEOUT_MS,30000,5000,120000);
+const DOWNLOAD_MAX_DURATION_MS=boundedTimeout(
+  process.env.CCX_DOWNLOAD_MAX_DURATION_MS,10*60*1000,60000,30*60*1000);
 
 /* The browser calls this from another origin, so CORS has to allow the headers
    accFetch sends. ALLOWED_ORIGIN should name the site in production; the
@@ -30,7 +45,7 @@ function cors(req, res) {
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,PUT,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers",
-    "authorization,apikey,content-type,accept,prefer,x-upsert,x-client-info");
+    "authorization,apikey,content-type,accept,prefer,x-upsert,x-client-info,x-device-name,x-device-type");
   res.setHeader("Access-Control-Expose-Headers", "content-range,content-type");
   res.setHeader("Access-Control-Max-Age", "86400");
 }
@@ -62,11 +77,13 @@ function fail(res, err) {
     : 500;
   if (status >= 500) console.error("unhandled:", err && err.stack ? err.stack : err);
   const message = status >= 500 ? "Internal error" : String((err && err.message) || "Bad request");
-  send(res, status, {
+  const body = {
     error: err && err.code ? err.code : (status >= 500 ? "internal_error" : "bad_request"),
     message: message,
     msg: message,
-  });
+  };
+  if (status < 500 && err && err.details !== undefined) body.details = err.details;
+  send(res,status,body);
 }
 
 function readBody(req) {
@@ -86,19 +103,110 @@ function readBody(req) {
    invalid token yields null, which makes the request anonymous rather than
    trusted — never an error at this layer, because /rest/v1/app_settings is
    meant to be readable signed out. */
-function uidFrom(req) {
-  const header = String(req.headers.authorization || "");
-  const m = /^Bearer\s+(.+)$/i.exec(header);
-  if (!m) return null;
-  const payload = verifyToken(m[1].trim(), auth.SECRET);
-  return payload ? payload.sub : null;
-}
-
 /* Set when the schema failed to apply PARTWAY THROUGH — see the boot block at
    the bottom. While it is set the service answers only /live, /ready and
    /health, so a schema with some of its row-level security missing is never
    queried, and the reason is still readable from a URL. */
 let locked = null;
+
+async function streamDownloadResponse(req,res,status,stream,options) {
+  const runtime=options||{};
+  const createReadStream=runtime.createReadStream||fs.createReadStream;
+  const scheduleTimeout=runtime.setTimeout||setTimeout;
+  const cancelTimeout=runtime.clearTimeout||clearTimeout;
+  const idleTimeoutMs=runtime.idleTimeoutMs===undefined
+    ? DOWNLOAD_IDLE_TIMEOUT_MS : runtime.idleTimeoutMs;
+  const maxDurationMs=runtime.maxDurationMs===undefined
+    ? DOWNLOAD_MAX_DURATION_MS : runtime.maxDurationMs;
+  const onLifecycleError=runtime.onLifecycleError||((error)=>{
+    console.error("download stream lifecycle:",error&&error.stack?error.stack:error);
+  });
+  const onStreamError=runtime.onStreamError||((error)=>{
+    console.error("download stream setup:",error&&error.stack?error.stack:error);
+  });
+  const lifecycle=stream.lifecycle;
+  let file=null;
+  let totalTimer=null;
+  let idleTimeoutArmed=false;
+  let streamSettled=false;
+
+  function completeLifecycle(result,reason) {
+    let completion;
+    try {
+      if (lifecycle) completion=result==="finish" ? lifecycle.finish() : lifecycle.abort(reason);
+      else if (typeof stream.cleanup==="function") completion=stream.cleanup();
+    } catch (error) {
+      onLifecycleError(error);
+      return Promise.resolve();
+    }
+    return Promise.resolve(completion).catch(onLifecycleError);
+  }
+
+  function clearStreamTimers() {
+    if (totalTimer!==null) {
+      cancelTimeout(totalTimer);
+      totalTimer=null;
+    }
+    if (idleTimeoutArmed&&!res.destroyed) {
+      try { res.setTimeout(0); } catch (_) {}
+    }
+    idleTimeoutArmed=false;
+  }
+
+  async function settleStream(result,reason,destroyStreams) {
+    if (streamSettled) return false;
+    streamSettled=true;
+    clearStreamTimers();
+    if (destroyStreams&&file&&typeof file.destroy==="function") {
+      try { file.destroy(); } catch (_) {}
+    }
+    const completion=completeLifecycle(result,reason);
+    if (destroyStreams&&!res.destroyed&&typeof res.destroy==="function") {
+      try { res.destroy(); } catch (_) {}
+    }
+    await completion;
+    return true;
+  }
+
+  if (req.destroyed||res.destroyed||!res.writable) {
+    await settleStream("abort","stream_aborted_before_start",false);
+    return false;
+  }
+
+  /* Register response terminal events before committing headers. This closes
+     the ownership gap between token redemption/materialization and file.pipe. */
+  res.on("finish",()=>{settleStream("finish",null,false);});
+  res.on("close",()=>{
+    if (!res.writableFinished) settleStream("abort","stream_aborted",true);
+  });
+  res.on("error",()=>{settleStream("abort","stream_error",true);});
+
+  try {
+    res.writeHead(status, {
+      "Content-Type": stream.contentType,
+      "Content-Length": stream.size,
+      "Content-Disposition": `attachment; filename="${stream.filename}"`,
+      "Cache-Control": "private, no-store, max-age=0",
+      "X-Content-Type-Options": "nosniff",
+    });
+    file=createReadStream(stream.filePath);
+    file.on("error",()=>{settleStream("abort","stream_error",true);});
+    totalTimer=scheduleTimeout(
+      ()=>{settleStream("abort","stream_duration_timeout",true);},maxDurationMs);
+    if (totalTimer&&typeof totalTimer.unref==="function") totalTimer.unref();
+    idleTimeoutArmed=true;
+    res.setTimeout(idleTimeoutMs,()=>{settleStream("abort","stream_idle_timeout",true);});
+    if (streamSettled) return false;
+    file.pipe(res);
+    return true;
+  } catch (error) {
+    const responseStarted=!!res.headersSent;
+    await settleStream("abort","stream_setup_error",responseStarted||res.destroyed);
+    if (!responseStarted&&!res.destroyed) throw error;
+    onStreamError(error);
+    return false;
+  }
+}
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -124,12 +232,16 @@ const server = http.createServer(async (req, res) => {
        therefore leaves traffic on the previous healthy instance while DDL is
        waiting, but its separate /live probe still knows this process is alive. */
     if (pathname === "/ready") {
-      const ready = !!require("./lib/migrate").getAppliedSchemaFingerprint() && locked === null;
+      const secretStatus=securitySecretStatus();
+      const securityReady=hasSecureTokenSecret(auth.SECRET)&&secretStatus.ready;
+      const tlsReady=database.tlsSecurityReady();
+      const ready = !!require("./lib/migrate").getAppliedSchemaFingerprint() &&
+        locked === null && securityReady && tlsReady;
       return send(res, ready ? 200 : 503,
-        { ok: true, ready: ready, apiVersion: API_VERSION });
+        { ok:true,ready,apiVersion:API_VERSION,securityReady,
+          missingSecuritySecrets:secretStatus.missing,
+          duplicateSecuritySecrets:secretStatus.duplicates,tlsReady,tls:database.tlsState() });
     }
-
-    const uid = uidFrom(req);
 
     /* /health is readiness attestation and deliberately checks the database;
        App Platform uses the database-free /live endpoint above for process
@@ -148,23 +260,35 @@ const server = http.createServer(async (req, res) => {
          completes and the workflow applies the new live spec. */
       if (!schemaFingerprint &&
           migration.getLastError() === "database schema migration is still applying") {
+        const secretStatus=securitySecretStatus();
         return send(res, 503, {
           ok: true,
           apiVersion: API_VERSION,
           schema: null,
           schemaFingerprint: null,
           ready: false,
-          tls: require("./lib/db").tlsState(),
+          securityReady:hasSecureTokenSecret(auth.SECRET)&&secretStatus.ready,
+          missingSecuritySecrets:secretStatus.missing,
+          duplicateSecuritySecrets:secretStatus.duplicates,
+          tls: database.tlsState(),
+          tlsReady: database.tlsSecurityReady(),
           error: migration.getLastError(),
         });
       }
 
       let schema = null;
+      let unifiedSchema = null;
       try {
+        database.assertTlsConnectionAllowed();
         const { rows } = await require("./lib/db").pool.query(
           "select count(*)::int as n from pg_tables where schemaname='public' " +
           "and tablename in ('profiles','payment_requests','app_settings','devices')");
         schema = rows[0].n;
+        const required = require("./lib/migrate").REQUIRED_APPLICATION_TABLES;
+        const attested = await require("./lib/db").pool.query(
+          "select count(*)::int as n from pg_tables where schemaname='public' and tablename=any($1::text[])",
+          [required]);
+        unifiedSchema = attested.rows[0].n;
       } catch (err) {
         /* An unreachable database is reported as null, not as an outage: the
            service itself is up. The reason is recorded here as well as at boot,
@@ -176,14 +300,23 @@ const server = http.createServer(async (req, res) => {
         ok: true,
         apiVersion: API_VERSION,
         schema: schema,
+        unifiedSchema: unifiedSchema,
+        unifiedSchemaExpected: migration.REQUIRED_APPLICATION_TABLES.length,
         schemaFingerprint: schemaFingerprint,
-        ready: schema === 4 && !!schemaFingerprint && locked === null,
+        securityReady:hasSecureTokenSecret(auth.SECRET)&&securitySecretStatus().ready,
+        missingSecuritySecrets:securitySecretStatus().missing,
+        duplicateSecuritySecrets:securitySecretStatus().duplicates,
+        tlsReady:database.tlsSecurityReady(),
+        ready: schema === 4 && unifiedSchema === migration.REQUIRED_APPLICATION_TABLES.length &&
+          !!schemaFingerprint && locked === null && hasSecureTokenSecret(auth.SECRET) &&
+          securitySecretStatus().ready &&
+          database.tlsSecurityReady(),
       };
       /* Reported even when ready. Connecting to the database encrypted but
          UNVERIFIED because its certificate could not be parsed is precisely the
          kind of downgrade that is invisible until it matters, and `ready:true`
          is exactly when nobody would think to look. */
-      body.tls = require("./lib/db").tlsState();
+      body.tls = database.tlsState();
       /* Only while something is actually wrong — a stale boot error must not
          keep accusing a database that has since come back. */
       if (!body.ready) {
@@ -191,7 +324,10 @@ const server = http.createServer(async (req, res) => {
            An unresolved binding reaches the driver as a hostname and comes back
            as `getaddrinfo ENOTFOUND base`, which sends the reader hunting for a
            DNS problem; the binding itself is the answer. */
-        const why = require("./lib/db").describeDatabaseUrl() ||
+        const why = (!hasSecureTokenSecret(auth.SECRET) ? "JWT_SECRET must contain at least 32 bytes" : null) ||
+                    (!securitySecretStatus().ready ? "required independent security secrets are missing" : null) ||
+                    (!body.tlsReady ? "verified database TLS is required; configure the managed database CA" : null) ||
+                    database.describeDatabaseUrl() ||
                     migration.getLastError();
         if (why) body.error = why;
       }
@@ -205,12 +341,51 @@ const server = http.createServer(async (req, res) => {
        App Platform rolls the deployment back, the previous build answers
        /health in its own shape, and the failure becomes invisible to anyone
        without the runtime logs. */
-    if (locked || !require("./lib/migrate").getAppliedSchemaFingerprint()) {
+    if (locked || !require("./lib/migrate").getAppliedSchemaFingerprint() ||
+        !hasSecureTokenSecret(auth.SECRET) || !securitySecretStatus().ready ||
+        !database.tlsSecurityReady()) {
+      const tlsBlocked=!database.tlsSecurityReady();
+      const secretsBlocked=!hasSecureTokenSecret(auth.SECRET)||!securitySecretStatus().ready;
       return send(res, 503, {
-        error: "schema_incomplete",
-        message: "The database schema did not finish applying. See /health.",
-        msg: "The database schema did not finish applying. See /health.",
+        error: secretsBlocked ? "security_configuration_missing" :
+          tlsBlocked ? "database_tls_unverified" : "schema_incomplete",
+        message: secretsBlocked
+          ? "Required security secrets are not independently configured. See /health."
+          : tlsBlocked
+          ? "Verified database TLS is not configured. See /health."
+          : "The database schema did not finish applying. See /health.",
+        msg: secretsBlocked
+          ? "Required security secrets are not independently configured. See /health."
+          : tlsBlocked
+          ? "Verified database TLS is not configured. See /health."
+          : "The database schema did not finish applying. See /health.",
       });
+    }
+
+    /* A bearer is only an assertion until its canonical session row is checked.
+       This lookup happens for every protected request, so force logout,
+       suspension and ban take effect without waiting for JWT expiry. */
+    const identity = await authenticateRequest(req, auth.SECRET);
+    const uid = identity.valid ? identity.uid : null;
+    const baseContext = requestContext(req, auth.SECRET, identity.clientType || "web");
+
+    /* ---------------- unified server-owned API ---------------- */
+    if (pathname.startsWith("/v1/")) {
+      const raw = (req.method === "GET" || req.method === "DELETE") ? Buffer.alloc(0) : await readBody(req);
+      let body = {};
+      if (raw.length) {
+        try { body = JSON.parse(raw.toString("utf8")); }
+        catch (_) { return fail(res, Object.assign(new Error("invalid JSON"), { status: 400, code: "invalid_json" })); }
+      }
+      const context = Object.assign({}, baseContext, {
+        clientType: ["web","panel","admin"].includes(body.client_type) ? body.client_type : baseContext.clientType,
+      });
+      const out = await v1.handle({ method:req.method,pathname,params,headers:req.headers,body,identity,context });
+      if (out.stream) {
+        await streamDownloadResponse(req,res,out.status,out.stream);
+        return;
+      }
+      return send(res,out.status,out.body);
     }
 
     /* ---------------- auth ---------------- */
@@ -220,18 +395,27 @@ const server = http.createServer(async (req, res) => {
       if (raw.length) { try { body = JSON.parse(raw.toString("utf8")); } catch (_) { return fail(res, Object.assign(new Error("invalid JSON"), { status: 400 })); } }
       const route = pathname.slice("/auth/v1/".length);
       let out;
-      if (route === "signup" && req.method === "POST") out = await auth.signup(body);
+      const context = Object.assign({}, baseContext, {
+        clientType:["web","panel","admin"].includes(body.client_type || body.client_kind)
+          ? (body.client_type || body.client_kind) : "web",
+      });
+      if (route === "signup" && req.method === "POST") out = await auth.signup(body,context);
       else if (route === "token" && req.method === "POST") {
         const grant = params.get("grant_type");
-        if (grant === "password") out = await auth.tokenPassword(body);
-        else if (grant === "refresh_token") out = await auth.tokenRefresh(body);
+        if (grant === "password") out = await auth.tokenPassword(body,context);
+        else if (grant === "refresh_token") out = await auth.tokenRefresh(body,context);
         else return fail(res, Object.assign(new Error("unsupported grant_type"), { status: 400 }));
       }
-      else if (route === "logout" && req.method === "POST") out = await auth.logout(body, uid);
-      else if (route === "recover" && req.method === "POST") out = await auth.recover(body, params.get("redirect_to"));
+      else if (route === "logout" && req.method === "POST") out = await auth.logout(body,uid,identity.sessionId,context);
+      /* Recovery destinations are server configuration, never caller input.
+         Accepting redirect_to here would email a raw reset bearer to an
+         attacker-controlled origin. */
+      else if (route === "recover" && req.method === "POST") out = await auth.recover(body,context);
       else if (route === "user" && req.method === "PUT") {
         /* A reset link carries its token; a signed-in change carries a bearer. */
-        out = await auth.updateUser(body, uid, params.get("token") || (body && body.recovery_token) || null);
+        out = await auth.updateUser(body,uid,
+          params.get("token") || (body && body.recovery_token) || null,
+          context,identity.sessionId||null);
       }
       else if (route === "user" && req.method === "GET") {
         if (!uid) return fail(res, Object.assign(new Error("Not authenticated"), { status: 401, code: "unauthorized" }));
@@ -243,6 +427,9 @@ const server = http.createServer(async (req, res) => {
 
     /* ---------------- rest ---------------- */
     if (pathname.startsWith("/rest/v1/")) {
+      if (identity.provided && !identity.valid) {
+        return fail(res,Object.assign(new Error("Not authenticated"),{status:401,code:"unauthorized"}));
+      }
       const table = pathname.slice("/rest/v1/".length).split("/")[0];
       const raw = (req.method === "GET" || req.method === "DELETE") ? Buffer.alloc(0) : await readBody(req);
       let body = null;
@@ -281,7 +468,9 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
-  if (!process.env.JWT_SECRET) { console.error("FATAL: JWT_SECRET is not set — refusing to start."); process.exit(1); }
+  if (!hasSecureTokenSecret(process.env.JWT_SECRET)) {
+    console.error("FATAL: JWT_SECRET must contain at least 32 bytes — booting diagnostic-only and not ready.");
+  }
   /* A missing DATABASE_URL used to be fatal here. It is not any more, for the
      same reason an unreachable database is not: exiting makes App Platform roll
      back to the previous build, which answers /health in the old shape, so the

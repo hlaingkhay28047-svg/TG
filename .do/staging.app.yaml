@@ -70,6 +70,23 @@ services:
       - key: JWT_SECRET
         scope: RUN_TIME
         type: SECRET
+      # Independent long-lived secrets. Never derive these from JWT_SECRET:
+      # JWT rotation must not destroy MFA decryptability or device identity.
+      - key: MFA_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: DEVICE_ID_HASH_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: DEVICE_PAIRING_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: CCX_DOWNLOAD_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: PANEL_LEASE_SECRET
+        scope: RUN_TIME
+        type: SECRET
       # The only address the browser calls from. Leaving it unset makes the
       # service echo whatever origin asked, which is right for local
       # development and wrong here.
@@ -79,6 +96,11 @@ services:
       - key: APP_ORIGIN
         scope: RUN_TIME
         value: https://hnk-ai-tools-2-gibhz.ondigitalocean.app
+      # App Platform supplies the original client in do-connecting-ip; its
+      # X-Forwarded-For value identifies the DigitalOcean ingress server.
+      - key: TRUST_DO_CONNECTING_IP
+        scope: RUN_TIME
+        value: "1"
       # Password-reset mail. Until these are set no reset message is sent and a
       # locked-out customer needs their password changed by hand.
       - key: SMTP_HOST

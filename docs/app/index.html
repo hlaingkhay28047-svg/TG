@@ -1586,6 +1586,15 @@ body.wall #wallRetry.on{display:block}
 .st-tgh{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
 .st-tgh .st-tgi{width:14px;height:14px;color:var(--gold)}
 
+/* ---- v5.43 unified account, license and device status ---- */
+.unified-hero{position:relative;overflow:hidden;padding:clamp(20px,5vw,34px);border:1px solid var(--line);border-radius:var(--r-lg);background:linear-gradient(145deg,rgba(33,43,65,.98),rgba(17,23,36,.98));box-shadow:var(--shadow)}
+.unified-hero:after{content:"";position:absolute;width:230px;height:230px;right:-100px;top:-120px;border-radius:50%;background:rgba(217,164,65,.12);filter:blur(3px);pointer-events:none}
+.unified-kick{margin:0 0 6px;color:var(--gold-hi);font-size:var(--fs-xs);font-weight:850;letter-spacing:.13em;text-transform:uppercase}.unified-hero h1{position:relative;margin:0;font-size:clamp(1.55rem,5vw,2.75rem);line-height:1.08}.unified-hero>p:not(.unified-kick){position:relative;max-width:720px;color:var(--muted)}
+.unified-banner{display:flex;align-items:flex-start;gap:12px;margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel-2)}.unified-banner b,.unified-banner span{display:block}.unified-banner span{margin-top:3px;color:var(--muted);font-size:var(--fs-sm)}.unified-banner .u-dot{flex:0 0 auto;width:12px;height:12px;margin-top:5px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 5px rgba(145,151,168,.1)}.unified-banner.ready .u-dot{background:var(--ok);box-shadow:0 0 0 5px rgba(81,194,146,.12)}.unified-banner.denied .u-dot{background:var(--bad);box-shadow:0 0 0 5px rgba(240,111,119,.12)}
+.unified-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.unified-stat{min-height:112px;padding:15px;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--panel)}.unified-stat span,.unified-stat b{display:block}.unified-stat span{color:var(--muted);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.07em}.unified-stat b{margin-top:12px;font-size:var(--fs-lg);overflow-wrap:anywhere}.unified-actions{display:flex;flex-wrap:wrap;gap:9px}.unified-actions .btn{min-height:44px}.unified-devices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.unified-device{padding:16px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel-2)}.unified-device h3{margin:0}.unified-device p{min-height:44px;color:var(--muted)}.unified-code{margin-top:10px;padding:13px;border:1px dashed var(--gold);border-radius:var(--r-sm);color:var(--gold-hi);font-size:1.25rem;font-weight:900;letter-spacing:.18em;text-align:center}.tutorial-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.tutorial-card{padding:18px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel)}.tutorial-card h2{font-size:var(--fs-lg)}.tutorial-card p{color:var(--muted)}
+@media(max-width:760px){.unified-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tutorial-grid{grid-template-columns:1fr}.unified-devices{grid-template-columns:1fr}}
+@media(max-width:370px){.unified-grid{grid-template-columns:1fr}.unified-actions .btn{width:100%}}
+
 </style>
 
 <body>
@@ -1921,6 +1930,15 @@ body.wall #wallRetry.on{display:block}
   <!-- v4.41: the first screen greets the owner by name/time-of-day instead of
        opening cold — plan state rides along when an account is signed in -->
   <section class="dash-greet" id="dashGreet"></section>
+  <section class="card" aria-label="Student Web App destinations">
+    <h2>Student Web App</h2>
+    <div class="unified-actions">
+      <button class="btn btn-gold" type="button" data-unified-page="pgWf">AI Tools</button>
+      <button class="btn" type="button" data-unified-page="pgAccount">Account &amp; license</button>
+      <button class="btn" type="button" data-unified-page="pgTutorials">Tutorials</button>
+      <a class="btn" href="../download/">Photoshop Panel download</a>
+    </div>
+  </section>
   <section class="card" id="dashCont" style="display:none">
     <h2 id="dashContH2"></h2>
     <div class="row" id="dashContRow"></div>
@@ -1968,6 +1986,54 @@ body.wall #wallRetry.on{display:block}
     <a class="btn" id="dashPromoGo" href="?panel=download"></a>
   </section>
 </div><!-- /pgDash -->
+
+<div class="page" id="pgAccount">
+  <header class="unified-hero">
+    <p class="unified-kick">HNK STUDENT ACCOUNT</p>
+    <h1>Account, license &amp; devices</h1>
+    <p>Your live access state comes from the shared HNK server. One Phone and one shared Computer slot cover the Web App and Photoshop Panel.</p>
+  </header>
+  <section class="unified-banner" id="unifiedAccessBanner" role="status" aria-live="polite">
+    <span class="u-dot" aria-hidden="true"></span><div><b id="unifiedAccessTitle">Checking secure access…</b><span id="unifiedAccessText">Tools remain locked until the server confirms this session.</span></div>
+  </section>
+  <section class="unified-grid" aria-label="Account and license summary">
+    <article class="unified-stat"><span>Account status</span><b id="unifiedAccountStatus">Checking</b></article>
+    <article class="unified-stat"><span>License status</span><b id="unifiedLicenseStatus">Checking</b></article>
+    <article class="unified-stat"><span>License expiry</span><b id="unifiedLicenseExpiry">—</b></article>
+    <article class="unified-stat"><span>Panel version</span><b id="unifiedPanelVersion">6.24.0</b></article>
+    <article class="unified-stat"><span>Web App permission</span><b id="unifiedWebPermission">Checking</b></article>
+    <article class="unified-stat"><span>Panel download</span><b id="unifiedDownloadPermission">Checking</b></article>
+    <article class="unified-stat"><span>Photoshop Panel</span><b id="unifiedPanelPermission">Checking</b></article>
+  </section>
+  <section class="card">
+    <h2>Registered devices</h2>
+    <p class="mut">Device replacement is protected. Students cannot reset a registered slot; an HNK administrator must approve the reset.</p>
+    <div class="unified-devices">
+      <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button></article>
+      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><button class="btn" id="unifiedPairComputer" type="button">Create Panel pairing code</button><div class="unified-code" id="unifiedPairingCode" hidden aria-live="polite"></div></article>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Secure Photoshop Panel</h2>
+    <p class="mut" id="unifiedDownloadNote">Approved account, active license, download permission and the registered Computer are required.</p>
+    <div class="unified-actions">
+      <button class="btn btn-gold" id="unifiedDownload" type="button" disabled>Create temporary Panel download</button>
+      <a class="btn" href="../download/">Open secure download area</a>
+      <button class="btn" id="unifiedOpenSetup" type="button">Login, password &amp; payments</button>
+      <button class="btn" id="unifiedLogout" type="button">Logout</button>
+    </div>
+    <div class="status" id="unifiedStatus" role="status" aria-live="polite"></div>
+  </section>
+</div><!-- /pgAccount -->
+
+<div class="page" id="pgTutorials">
+  <header class="unified-hero"><p class="unified-kick">HNK LEARNING</p><h1>Tutorials</h1><p>Start with device registration, then learn the AI Tools and pair the Photoshop Panel on the same Computer.</p></header>
+  <section class="tutorial-grid" aria-label="Tutorial topics">
+    <article class="tutorial-card"><span class="chip on">01</span><h2>Dashboard &amp; AI Tools</h2><p>Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it as your account password.</p><button class="btn" type="button" data-tutorial-page="pgDash">Open Dashboard</button></article>
+    <article class="tutorial-card"><span class="chip on">02</span><h2>Phone + Computer</h2><p>Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel.</p><button class="btn" type="button" data-tutorial-page="pgAccount">Check devices</button></article>
+    <article class="tutorial-card"><span class="chip on">03</span><h2>Install &amp; pair Panel</h2><p>Request a temporary download, install it in Photoshop, then enter the short pairing code shown on your registered Computer.</p><a class="btn btn-gold" href="../download/">Secure Panel download</a></article>
+  </section>
+</div><!-- /pgTutorials -->
 
 <div class="page on" id="pgWf">
   <!-- v4.27.0: Home (pgDash) now owns routing + the inventory statline, so this
@@ -2106,7 +2172,7 @@ body.wall #wallRetry.on{display:block}
       <div class="grp-b" id="accGrpPanelBody">
         <p class="mut" id="accPanelP"></p>
         <div class="row" style="margin-top:10px">
-          <a class="btn btn-gold grow" id="accPanelDownload" href="../download/HNK_Ai_Panel_v6.23.0.ccx" download style="text-align:center"></a>
+          <a class="btn btn-gold grow" id="accPanelDownload" href="../download/" style="text-align:center"></a>
         </div>
       </div>
     </div>
@@ -4367,6 +4433,8 @@ function setSt(id, msg, cls){
 /* ---------- pages ---------- */
 var PAGES=[
   ["pgDash","i-home","Home"],
+  ["pgAccount","i-key","Account"],
+  ["pgTutorials","i-books","Tutorials"],
   ["pgWf","i-brain","Workflow"],
   ["pgCreate","i-pen","Freeform"],
   ["pgMeitu","i-makeup","Meitu"],
@@ -4398,8 +4466,8 @@ var TOPGROUPS=[
 ];
 function findGroup(id){
   for(var i=0;i<TOPGROUPS.length;i++){ if(TOPGROUPS[i].pages.indexOf(id)>=0) return TOPGROUPS[i]; }
-  /* pgHome (Setup) lives outside the tab groups since v4.27.0 — it's reached
-     via the header gear / deep link, and no bar tab highlights for it */
+  /* Setup, Account and Tutorials live outside the five compact top groups.
+     Account/Tutorials are reached from Dashboard cards; Setup stays on gear. */
   return null;
 }
 function pageMeta(id){
@@ -4503,6 +4571,9 @@ var _wallWanted = null;
    It is cleared only after the verified download group has been opened. */
 var _panelDownloadIntent = false;
 var _panelDownloadStage = "";
+/* Server-authored account/license/device decision. `enforced` becomes true as
+   soon as the unified endpoint answers; unknown/error then stays fail-closed. */
+var unified = { entitlement:null, enforced:false, legacy:false, loading:false, error:false, inFlight:null, last:0 };
 
 function switchPage(id, fromPop){
   /* v4.96: every deep link, gate and shortcut that still says "pgStudio" lands
@@ -4573,6 +4644,7 @@ function switchPage(id, fromPop){
   try{ localStorage.setItem("hnk_web_studio_page", id); }catch(e){}
   if (id==="pgGallery" && typeof renderGallery==="function") renderGallery();
   if (id==="pgDash" && typeof renderDash==="function") renderDash();
+  if (id==="pgAccount" && typeof unifiedRender==="function") unifiedRender();
   if (id==="pgHome" && typeof renderSetupStatus==="function"){ renderSetupStatus(); if(typeof refreshDataStore==="function") refreshDataStore(); }
 }
 window.addEventListener("popstate", function(ev){
@@ -19970,6 +20042,7 @@ function accSignOutLocal(reason){
      user-visible half was not. */
   if (!acc.sess) return;
   acc.sess = null; acc.profile = null; acc.devices = []; acc.requests = []; acc.pending = null;
+  unified.entitlement = null; unified.enforced = false; unified.legacy = false; unified.loading = false; unified.error = false; unified.last = 0;
   accPayDeviceCount = 1;
   accLSDel(ACC_LS_SESS); accLSDel(ACC_LS_PROF);
   try { localStorage.removeItem(WALL_LS_SINCE); } catch(e){}   /* v5.30 */
@@ -20092,6 +20165,7 @@ async function accLogin(){
 function accPostLogin(){
   (async function(){
     try { await accLoadProfile(); } catch(e){}
+    try { await unifiedRefresh(true); } catch(e){}
     try {
       var d = await accRegisterDevice();
       if (d && d.limit) accShowDeviceLimit();
@@ -20335,12 +20409,32 @@ function accDevLimitMsg(){
   var m = (acc.profile && acc.profile.allowed_devices != null) ? String(acc.profile.allowed_devices) : "";
   return t("dev_limit").replace("{M}", accNum(m));
 }
-/* Best-effort, GET-then-POST (safe whether or not a UNIQUE (user_id, device_id)
-   constraint exists). A rejection here NEVER fails the login. */
+/* The unified backend owns the Phone/Computer slots. A 404 fallback keeps an
+   older staged API usable during the rolling deployment; production uses the
+   typed endpoint and never lets the browser choose or replace another slot. */
 async function accRegisterDevice(){
   if (!acc.sess) return { ok:true };
   var did = deviceId();
   try {
+    var typed = await accFetch("/v1/devices/enroll", {
+      method: "POST",
+      body: JSON.stringify({
+        installation_id: did,
+        device_type: unifiedDeviceType(),
+        channel: "web",
+        label: deviceLabel()
+      })
+    });
+    if (typed.ok){
+      try { await unifiedRefresh(true); } catch(e){}
+      return { ok:true };
+    }
+    if (typed.status !== 404){
+      var typedBody = null; try { typedBody = await typed.json(); } catch(e){}
+      if (accIsDeviceLimit(typed.status, typedBody)) return { ok:false, limit:true };
+      return { ok:false };
+    }
+
     var g = await accFetch("/rest/v1/devices?select=id&user_id=eq." + encodeURIComponent(acc.sess.uid) +
                            "&device_id=eq." + encodeURIComponent(did) + "&limit=1", { method: "GET" });
     if (g.ok){ var rows = await accJson(g); if (rows && rows.length) return { ok:true }; }
@@ -20372,20 +20466,6 @@ function accHideDeviceLimit(){
   var box = $("accDevLimit"); if (box) box.style.display = "none";
   var dt = $("devLimitTxt"); if (dt) dt.style.display = "none";
   var da = $("devLimitAct"); if (da) da.style.display = "none";
-}
-async function accRemoveDevice(row){
-  if (!row || !row.id) return;
-  if (!confirm(t("dev_remove_confirm"))) return;
-  try {
-    var r = await accFetch("/rest/v1/devices?id=eq." + encodeURIComponent(row.id),
-      { method: "DELETE", headers: { "Prefer": "return=minimal" } });
-    if (!r.ok){ accSetInline("stDev", t("acc_unreachable"), "err"); return; }
-    acc.devices = acc.devices.filter(function(x){ return x !== row; });
-    accSetInline("stDev", "");      /* a retry after a failure must not keep the red line */
-    accHideDeviceLimit();
-    accRenderDevices();
-    toast(t("dev_removed"), "ok");
-  } catch(e){ accSetInline("stDev", friendlyError(e), "err"); }
 }
 
 /* ---------------- §4.1 live prices ---------------- */
@@ -20965,7 +21045,9 @@ function gate(key){
    quietly skip the extra pass rather than interrupt with an upsell. */
 function gateAllows(key){
   if (PREMIUM_GATES[key] !== true) return true;
-  return isPremium();
+  /* Once the shared backend has answered, a cached legacy plan can never
+     override suspension, expiry or the Web App permission switch. */
+  return unified.enforced ? unifiedCanWeb() : isPremium();
 }
 function showPaywall(key){
   var w = $("wizPay"), b = $("wizPayIn");
@@ -21040,7 +21122,8 @@ function accOpenBuy(kind){
 }
 function accPanelIntentApply(){
   if (!_panelDownloadIntent) return;
-  var stage = !acc.sess ? "auth" : (!acc.profile ? "loading" : (isPremium() ? "panel" : "buy"));
+  var entitled = unified.enforced ? unifiedCanDownload() : isPremium();
+  var stage = !acc.sess ? "auth" : (!acc.profile || (unified.enforced && unified.loading) ? "loading" : (entitled ? "panel" : "buy"));
   /* Renders also happen on focus, reconnect and account polling. Steer only
      when the entitlement state changes, otherwise the pending intent would
      repeatedly collapse the group the customer deliberately opened. */
@@ -21075,7 +21158,7 @@ function accRender(){
   var panel = $("accGrpPanel");
   if (panel){
     var panelOpen = panel.className.indexOf("open") >= 0;
-    var showPanel = inn && isPremium();
+    var showPanel = inn && (unified.enforced ? unifiedCanDownload() : isPremium());
     panel.className = "grp" + (showPanel ? "" : " hide") + (showPanel && panelOpen ? " open" : "");
     var panelH = panel.querySelector(".grp-h");
     if (panelH) panelH.setAttribute("aria-expanded", showPanel && panelOpen ? "true" : "false");
@@ -21093,6 +21176,7 @@ function accRender(){
     var da = $("devLimitAct"); if (da) da.style.display = "none";
   }
   accRenderPlan();
+  unifiedRender();
   accPanelIntentApply();
 }
 
@@ -21195,19 +21279,206 @@ function accRenderDevices(){
     li.appendChild(nm);
     var isMe = !!(row && row.device_id === me);
     if (isMe){ var pill = el("span","dv-me"); pill.textContent = t("dev_this"); li.appendChild(pill); }
-    /* No Remove on your own row. dev_remove_confirm promises "it will have to
-       log in again", and for THIS browser that is a lie: the session survives,
-       the id survives in localStorage, and the next boot silently re-registers
-       it. The row a user actually needs to drop is another device, and that one
-       still offers the button. */
-    if (!isMe){
-      var rm = el("button","btn");
-      setIcnText(rm, "i-trash", t("dev_remove"));
-      rm.onclick = function(){ accRemoveDevice(row); };
-      li.appendChild(rm);
-    }
+    /* Device replacement is an audited administrator action. The student can
+       inspect both slots here but cannot silently free one from the client. */
+    if (!isMe){ var locked = el("span","dv-me"); locked.textContent = "Admin reset only"; li.appendChild(locked); }
     ul.appendChild(li);
   });
+}
+
+/* ---------------- v5.43 unified entitlement ---------------- */
+function unifiedDeviceType(){
+  var ua = navigator.userAgent || "";
+  try { if (navigator.userAgentData && navigator.userAgentData.mobile === true) return "phone"; } catch(e){}
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return "phone";
+  /* iPadOS may identify as Macintosh. Touch + a genuinely tablet-sized short
+     edge is used together; width alone would misclassify a resized computer. */
+  try { if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) <= 1024) return "phone"; } catch(e){}
+  return "computer";
+}
+function unifiedAccountStatus(data){
+  var a = data && data.account || {};
+  return String(a.effective_status || a.status || "pending").toLowerCase();
+}
+function unifiedLicenseActive(data){
+  var l = data && data.license || {};
+  return l.active === true || l.status === "active";
+}
+function unifiedAllowed(name){
+  var data = unified.entitlement || {}, allowed = data.allowed;
+  if (allowed && typeof allowed === "object"){
+    var key = name === "panel" ? "panel" : name;
+    if (allowed[key] === false) return false;
+  } else if (allowed === false) return false;
+  return true;
+}
+function unifiedCanWeb(){
+  var data = unified.entitlement, p = data && data.permissions || {};
+  return !!(data && unifiedAccountStatus(data) === "active" && unifiedLicenseActive(data) && p.web_app === true && unifiedAllowed("web_app"));
+}
+function unifiedCanDownload(){
+  var data = unified.entitlement, p = data && data.permissions || {}, d = data && data.devices || {};
+  return !!(data && unifiedAccountStatus(data) === "active" && unifiedLicenseActive(data) && p.ccx_download === true && d.computer && unifiedAllowed("ccx_download"));
+}
+function unifiedPretty(v){
+  return String(v || "unknown").replace(/_/g," ").replace(/\b\w/g,function(c){ return c.toUpperCase(); });
+}
+function unifiedDate(v){
+  if (!v) return "—";
+  var d = new Date(v); if (isNaN(d.getTime())) return String(v);
+  try { return new Intl.DateTimeFormat(undefined,{year:"numeric",month:"short",day:"numeric"}).format(d); }
+  catch(e){ return d.toISOString().slice(0,10); }
+}
+function unifiedMessage(status, data){
+  var p = data && data.permissions || {}, l = data && data.license || {}, d = data && data.devices || {};
+  var states = {
+    pending:["Approval pending","Your registration is waiting for an HNK administrator. AI Tools and Panel access remain locked."],
+    suspended:["Account suspended","Web App, secure download and Photoshop Panel access are blocked immediately."],
+    expired:["License expired","Renew or extend the license before using AI Tools or the Photoshop Panel."],
+    banned:["Account banned","This account is blocked from all licensed HNK services."],
+    rejected:["Registration rejected","This registration was not approved. Contact HNK Studio if you believe this is a mistake."]
+  };
+  if (status !== "active") return states[status] || ["Account unavailable","The server has not authorized this account."];
+  if (!unifiedLicenseActive(data)) return ["License inactive", l.expires_at ? "Your license period has ended." : "An active license has not been assigned yet."];
+  if (p.web_app !== true) return ["Web App disabled","An administrator has switched off Web App permission for this account."];
+  if (!unifiedAllowed("web_app")) return ["Access blocked","The server is not authorizing Web App access for this session."];
+  if (!d.phone && !d.computer) return ["Choose this device","Register this browser as your Phone or Computer to finish setup."];
+  return ["Access active","Account, license and Web App permission are verified by the HNK server."];
+}
+function unifiedRender(){
+  if (!$("unifiedAccessBanner")) return;
+  var data = unified.entitlement, banner = $("unifiedAccessBanner");
+  if (!acc.sess){
+    banner.className = "unified-banner denied";
+    $("unifiedAccessTitle").textContent = "Sign in required";
+    $("unifiedAccessText").textContent = "Open Login, password & payments to sign in or register.";
+    $("unifiedAccountStatus").textContent = "Signed out"; $("unifiedLicenseStatus").textContent = "—"; $("unifiedLicenseExpiry").textContent = "—";
+    $("unifiedWebPermission").textContent = "—"; $("unifiedDownloadPermission").textContent = "—"; $("unifiedPanelPermission").textContent = "—";
+    $("unifiedDownload").disabled = true; return;
+  }
+  if (unified.loading || (unified.enforced && !data)){
+    banner.className = "unified-banner";
+    $("unifiedAccessTitle").textContent = unified.error ? "Verification unavailable" : "Checking secure access…";
+    $("unifiedAccessText").textContent = "AI Tools and Panel delivery remain locked until the server confirms this session.";
+    $("unifiedAccountStatus").textContent = "Checking"; $("unifiedLicenseStatus").textContent = "Checking";
+    $("unifiedWebPermission").textContent = "Checking"; $("unifiedDownloadPermission").textContent = "Checking"; $("unifiedPanelPermission").textContent = "Checking";
+    $("unifiedDownload").disabled = true; return;
+  }
+  if (!data){
+    banner.className = "unified-banner";
+    $("unifiedAccessTitle").textContent = "Account compatibility mode";
+    $("unifiedAccessText").textContent = "Refreshing the unified account service. Your existing plan remains visible in Setup.";
+    $("unifiedAccountStatus").textContent = acc.profile ? "Active plan check" : "Checking"; $("unifiedLicenseStatus").textContent = isPremium() ? "Active" : "Inactive";
+    $("unifiedWebPermission").textContent = "Legacy"; $("unifiedDownloadPermission").textContent = "Legacy"; $("unifiedPanelPermission").textContent = "Legacy";
+    $("unifiedDownload").disabled = true; return;
+  }
+  var status = unifiedAccountStatus(data), license = data.license || {}, p = data.permissions || {}, devices = data.devices || {}, panel = data.panel || {};
+  var msg = unifiedMessage(status,data), ready = unifiedCanWeb();
+  banner.className = "unified-banner " + (ready ? "ready" : "denied");
+  $("unifiedAccessTitle").textContent = msg[0]; $("unifiedAccessText").textContent = msg[1];
+  $("unifiedAccountStatus").textContent = unifiedPretty(status);
+  $("unifiedLicenseStatus").textContent = unifiedPretty(license.status || (license.active ? "active" : "inactive"));
+  $("unifiedLicenseExpiry").textContent = unifiedDate(license.expires_at);
+  $("unifiedPanelVersion").textContent = panel.latest_version || "6.24.0";
+  $("unifiedWebPermission").textContent = p.web_app === true && unifiedAllowed("web_app") ? "ON" : "OFF";
+  $("unifiedDownloadPermission").textContent = p.ccx_download === true && unifiedAllowed("ccx_download") ? "ON" : "OFF";
+  $("unifiedPanelPermission").textContent = (p.photoshop_panel === true || p.panel === true) && unifiedAllowed("panel") ? "ON" : "OFF";
+  $("unifiedPhone").textContent = devices.phone ? ((devices.phone.label || devices.phone.device_name || "Registered") + " · 1/1") : "Available · 0/1";
+  $("unifiedComputer").textContent = devices.computer ? ((devices.computer.label || devices.computer.device_name || "Registered") + " · shared slot 1/1") : "Available · 0/1";
+  var current = unifiedDeviceType();
+  $("unifiedEnrollPhone").hidden = current !== "phone" || !!devices.phone;
+  $("unifiedEnrollComputer").hidden = current !== "computer" || !!devices.computer;
+  $("unifiedPairComputer").hidden = current !== "computer" || !devices.computer;
+  $("unifiedDownload").disabled = !unifiedCanDownload();
+  $("unifiedDownloadNote").textContent = unifiedCanDownload()
+    ? "Verified. A temporary link will be created only when you press the button."
+    : "Download requires Active account + license, download permission and this registered Computer.";
+  var legacyPanel = $("accGrpPanel");
+  if (legacyPanel){
+    var open = legacyPanel.className.indexOf("open") >= 0;
+    legacyPanel.className = "grp" + (unifiedCanDownload() ? "" : " hide") + (unifiedCanDownload() && open ? " open" : "");
+  }
+}
+async function unifiedRefresh(force){
+  if (!acc.sess){ unified.entitlement = null; unified.loading = false; unified.error = false; unifiedRender(); return null; }
+  if (unified.inFlight) return unified.inFlight;
+  if (!force && unified.last && Date.now() - unified.last < 15000) return unified.entitlement;
+  unified.loading = true; unifiedRender();
+  unified.inFlight = (async function(){
+    try {
+      var r = await accFetch("/v1/me/entitlement", {method:"GET"}, {json:false});
+      if (r.status === 404){ unified.legacy = true; unified.enforced = false; unified.error = false; return null; }
+      var ct = ""; try { ct = r.headers.get("content-type") || ""; } catch(e){}
+      if (r.ok && !/json/i.test(ct) && location.protocol !== "https:"){
+        unified.legacy = true; unified.enforced = false; unified.error = false; return null;
+      }
+      unified.enforced = true;
+      if (!r.ok) throw new Error("Entitlement verification failed");
+      unified.entitlement = await accJson(r);
+      unified.error = false; unified.legacy = false; unified.last = Date.now();
+      return unified.entitlement;
+    } catch(e){ unified.enforced = true; unified.error = true; unified.entitlement = null; return null; }
+    finally {
+      unified.loading = false; unified.inFlight = null;
+      try { unifiedRender(); } catch(e){}
+      try { appWallApply(); } catch(e){}
+    }
+  })();
+  return unified.inFlight;
+}
+async function unifiedEnroll(kind){
+  if (!acc.sess || kind !== unifiedDeviceType()) return;
+  accSetInline("unifiedStatus","Registering this " + unifiedPretty(kind) + "…");
+  try {
+    var r = await accFetch("/v1/devices/enroll", {method:"POST",body:JSON.stringify({installation_id:deviceId(),device_type:kind,channel:"web",label:deviceLabel()})});
+    if (!r.ok){ var b={}; try{b=await r.json();}catch(e){} throw new Error(b.message||b.msg||b.error||"Device registration was not authorized"); }
+    await unifiedRefresh(true); accSetInline("unifiedStatus",unifiedPretty(kind)+" registered.","ok");
+  } catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
+}
+async function unifiedPair(){
+  var data = unified.entitlement || {}, computer = data.devices && data.devices.computer;
+  if (!computer) return accSetInline("unifiedStatus","Register this Computer first.","err");
+  try {
+    /* Never round-trip a server slot id or stored installation hash. Pairing
+       proves this browser using the raw installation id already held locally. */
+    var r = await accFetch("/v1/devices/pairing-code", {method:"POST",body:JSON.stringify({computer_installation_id:deviceId()})});
+    var b = await accJson(r); if (!r.ok) throw new Error(b.message||b.msg||b.error||"Pairing code was not authorized");
+    var code = String(b.code||b.pairing_code||""); if (!code) throw new Error("The server did not issue a pairing code");
+    $("unifiedPairingCode").textContent = code; $("unifiedPairingCode").hidden = false;
+    accSetInline("unifiedStatus","Enter this short-lived code in the Photoshop Panel.","ok");
+  } catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
+}
+/* Account Center delivery also uses POST /api/v1/downloads/panel. The browser
+   receives the short-lived address only after this explicit button action. */
+async function accRequestPanelDownload(ev){
+  if (ev && ev.preventDefault) ev.preventDefault();
+  if (!unifiedCanDownload()){
+    accSetInline("unifiedStatus","Panel download is not authorized for this account or Computer.","err");
+    try { switchPage("pgAccount"); } catch(e){}
+    return;
+  }
+  var data=unified.entitlement||{};
+  try {
+    var r=await accFetch("/v1/downloads/panel",{method:"POST",body:JSON.stringify({version:data.panel&&data.panel.latest_version})});
+    var b=await accJson(r); if(!r.ok) throw new Error(b.message||b.msg||b.error||"Secure delivery was not authorized");
+    var u=new URL(String(b.download_url||""),location.href);
+    if(location.protocol!=="file:"&&u.origin!==location.origin) throw new Error("The server returned an invalid delivery address");
+    var a=document.createElement("a"); a.href=u.href; a.hidden=true; a.rel="noopener"; document.body.appendChild(a); a.click(); a.remove();
+    accSetInline("unifiedStatus","Temporary Panel delivery created. It expires " + unifiedDate(b.expires_at) + ".","ok");
+  }catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
+}
+function unifiedWire(){
+  document.querySelectorAll("[data-unified-page],[data-tutorial-page]").forEach(function(b){ b.addEventListener("click",function(){ switchPage(b.getAttribute("data-unified-page")||b.getAttribute("data-tutorial-page")); }); });
+  var ep=$("unifiedEnrollPhone"); if(ep) ep.onclick=function(){ unifiedEnroll("phone"); };
+  var ec=$("unifiedEnrollComputer"); if(ec) ec.onclick=function(){ unifiedEnroll("computer"); };
+  var pc=$("unifiedPairComputer"); if(pc) pc.onclick=unifiedPair;
+  var dl=$("unifiedDownload"); if(dl) dl.onclick=accRequestPanelDownload;
+  var ad=$("accPanelDownload"); if(ad) ad.addEventListener("click",accRequestPanelDownload);
+  var os=$("unifiedOpenSetup"); if(os) os.onclick=function(){ switchPage("pgHome"); accOpenGrp("accGrpAuth"); };
+  var lo=$("unifiedLogout"); if(lo) lo.onclick=function(){ accLogout(); };
+}
+function unifiedHeartbeat(){
+  if (acc.sess && document.visibilityState === "visible") unifiedRefresh(true);
 }
 
 /* Every SKU payreq_insert_own accepts. join_first was missing, so a filed
@@ -21466,7 +21737,7 @@ function accApplyLang(){
   setIcnText($("btnDevBuyExtra"), "i-gem", t("dev_buy_extra"));
   setIcnText($("btnDevBuyExtra2"), "i-gem", t("dev_buy_extra"));
   $("accPanelP").textContent = t("acc_panel_p");
-  setIcnText($("accPanelDownload"), "i-download", t("acc_panel_dl").replace("{V}", "6.23.0"));
+  setIcnText($("accPanelDownload"), "i-download", t("acc_panel_dl").replace("{V}", "6.24.0"));
 
   $("payPickH").textContent  = t("pay_pick");
   $("payDeviceH").textContent = t("pay_devices_h");
@@ -21599,7 +21870,7 @@ function accWire(){
     };
   }
   document.addEventListener("visibilitychange", function(){
-    if (document.visibilityState === "visible") { try { accPollOnce(); } catch(e){} }
+    if (document.visibilityState === "visible") { try { accPollOnce(); } catch(e){} try { unifiedRefresh(true); } catch(e){} }
   });
   window.addEventListener("online", function(){
     acc.online = true;
@@ -21629,6 +21900,7 @@ function accWire(){
            at the moment it happens) */
         accRegisterDevice().then(function(d){ if (d && d.limit) accShowDeviceLimit(); })
                            .catch(function(){});
+        unifiedRefresh(true).catch(function(){});
       }
       accPollOnce(); accRender();
     } catch(e){}
@@ -21651,6 +21923,7 @@ function accWire(){
    account layer at all in v4.30. */
 function accBoot(){
   accWire();
+  unifiedWire();
   /* v5.34 — re-label the account and admin surfaces here, and this is a fix
      rather than belt-and-braces.
 
@@ -21696,6 +21969,7 @@ function accBoot(){
       }
     } catch(e){}
     try { await accLoadProfile(); } catch(e){}
+    try { await unifiedRefresh(true); } catch(e){}
     /* requests are NOT fetched here. accOnGrpOpen("accGrpReq") already loads
        them the moment that accordion is opened (§2.8 step 3 says lazily), and
        a cold start on a Myanmar mobile connection should spend its first
@@ -22252,6 +22526,10 @@ function wallRetryWire(){
    customer for the length of one round trip. */
 function appWallState(){
   if (!acc.sess) return "login";
+  if (unified.enforced){
+    if (unified.loading || unified.error || !unified.entitlement) return "checking";
+    if (!unifiedCanWeb()) return "unified_blocked";
+  }
   if (!acc.profile) return "checking";
   return isPremium() ? "" : "buy";
 }
@@ -22297,6 +22575,10 @@ function appWallApply(){
         ? L9({my:"Premium ကုန်သွားပါပြီ",en:"Your Premium has ended",shn:"Premium မူတ်းယဝ်ႉ",kac:"Premium htum sai",th:"Premium หมดอายุแล้ว",zh:"Premium 已到期",vi:"Premium đã hết hạn",id:"Premium sudah berakhir",ms:"Premium telah tamat"})
         : L9({my:"Premium လိုအပ်ပါတယ်",en:"Premium required",shn:"လူဝ်ႇ Premium",kac:"Premium ra ai",th:"ต้องมี Premium",zh:"需要 Premium",vi:"Cần Premium",id:"Perlu Premium",ms:"Perlu Premium"}));
       p.textContent = L9({my:"အောက်မှာ plan ရွေးပြီး ငွေလွှဲပြေစာ တင်ပါ။ Admin အတည်ပြုပြီးတာနဲ့ ချက်ချင်း ပြန်ဖွင့်ပေးပါမယ်။",en:"Pick a plan below and upload your transfer slip. Access opens as soon as an admin approves it.",shn:"လိူၵ်ႈ plan တီႈတႂ်ႈသေ သႂ်ႇၶႅပ်းႁၢင်ႈငိုၼ်း။ Admin ႁပ်ႉယဝ်ႉ ပိုတ်ႇပၼ်ၵမ်းလဵဝ်",kac:"Npu hta plan lata nna gumhpraw sumla bang u. Admin hkap la yang jahpaw na",th:"เลือกแพ็กเกจด้านล่างและอัปโหลดสลิป เมื่อแอดมินอนุมัติจะเปิดให้ทันที",zh:"请在下方选择套餐并上传付款凭证。管理员通过后立即开通",vi:"Chọn gói bên dưới và tải lên biên lai. Mở khoá ngay khi quản trị viên duyệt",id:"Pilih paket di bawah dan unggah bukti transfer. Terbuka begitu admin menyetujui",ms:"Pilih pelan di bawah dan muat naik resit. Dibuka sebaik admin meluluskan"});
+    } else if (st === "unified_blocked"){
+      var unifiedCopy = unifiedMessage(unifiedAccountStatus(unified.entitlement), unified.entitlement);
+      h.innerHTML = icn("i-key","ic-h2") + " " + escH(unifiedCopy[0]);
+      p.textContent = unifiedCopy[1];
     } else if (st === "checking"){
       h.innerHTML = icn("i-clock","ic-h2") + " " + escH(L9({my:"အကောင့် စစ်ဆေးနေပါတယ်…",en:"Checking your account…",shn:"ၵူတ်ႇထတ်း account ယူႇ…",kac:"Account jep nga ai…",th:"กำลังตรวจสอบบัญชี…",zh:"正在检查账号…",vi:"Đang kiểm tra tài khoản…",id:"Memeriksa akun…",ms:"Menyemak akaun…"}));
       /* v5.39.0 — this was an empty paragraph. A customer whose first profile
@@ -22446,6 +22728,9 @@ document.addEventListener("visibilitychange", function(){
 });
 window.addEventListener("focus", function(){ wallRecheck(false); });
 setInterval(function(){ if (document.visibilityState === "visible") wallRecheck(false); }, WALL_RECHECK_MS);
+/* A visible studio learns about suspension/permission changes within roughly
+   15 seconds; focus and visibility changes still force an immediate check. */
+setInterval(unifiedHeartbeat, 15000);
 
 /* v4.30: fire-and-forget, never awaited by anything on the startup path.
    Placed after applyLang() and the page restore, before SW registration. */
@@ -22461,7 +22746,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.42.2";
+var APP_VER="5.43.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

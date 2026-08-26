@@ -10,9 +10,32 @@ Every upgrade should have a live DigitalOcean copy automatically:
 2. Every push to `upgrade-safe-wave` runs GitHub CI and updates DigitalOcean staging `hnk-ai-tools-2`.
 3. As soon as the full CI sweep is green, merge to `main` — tested upgrades ship immediately by standing owner approval; the test suite is the release gate.
 4. Every push/merge to `main` updates DigitalOcean production `hnk-ai-tools-3` and verifies `/app/version.json` matches the repository release.
-5. Web app, landing site and Photoshop panel always ship together in one wave.
+5. Web app, landing site and Photoshop panel source/metadata ship together in
+   one wave. The CCX itself is built outside Git and delivered only through the
+   authenticated private-artifact path below.
 
 This keeps both GitHub and DigitalOcean moving together while still separating unfinished staging code from the production app.
+
+## Private Photoshop panel releases (v6.24.0+)
+
+This repository is public, so it tracks **no CCX binary and no permanent CCX
+URL**. Packaging requires an explicit absolute output path outside the checkout;
+release tests optionally validate that untracked artifact through
+`HNK_PANEL_ARTIFACT`. The no-public-binary gate uses `git ls-files`, not a
+misleading folder name. See `PANEL_RELEASE_SECURITY.md` for the exact commands.
+
+The deployable no-new-resource bridge stores immutable artifact chunks in the
+database; the production target is a private DigitalOcean Space streamed by the
+API after a five-minute, one-time token is consumed and live entitlement/device
+checks pass. App Platform's filesystem is not artifact storage.
+
+The official panel provides casual-copy control, not DRM: CCX JavaScript and
+the local installation identifier are patchable. The old public v6.23.0 remains
+in Git history and its legacy authorization path can honor a cached result for
+up to seven days, so the documented explicit-deny cutoff must finish before the
+old service is retired. Every new artifact also remains disabled until it has
+passed Adobe UXP Developer Tool packaging plus real Photoshop install/launch
+acceptance on the supported platforms.
 
 ## Supabase — accounts, the Premium wall and the admin panel
 
@@ -89,8 +112,9 @@ DigitalOcean applies the tracked `server/sql/platform.sql` followed by
 identity, refresh-token, and proof-storage objects live in the existing
 `public` schema under `hnk_` names. The DO application schema is a checked,
 mechanical name transform of the native policy file, not a second hand-edited
-authorization model. All eight request/auth/storage tables use `FORCE ROW
-LEVEL SECURITY`, and an absent or unknown request mode sees no protected rows.
+authorization model. Every platform and canonical application table uses
+`FORCE ROW LEVEL SECURITY`, and an absent or unknown request mode sees no
+protected rows.
 If an older roleless deployment already has `auth.users` or `storage.objects`,
 the DO bootstrap refuses to create parallel empty identity tables; migrate that
 data and its foreign keys explicitly before using this dialect.
@@ -120,11 +144,28 @@ account.
    PostgreSQL cluster and swap the block for one naming it — a development
    database is explicitly not meant to hold data you cannot lose.
 
-2. **Set `JWT_SECRET`** in the DigitalOcean console, as an encrypted secret, to
-   64 random hex characters. Anything that knows this value can mint a token for
-   any account, so it belongs nowhere else — not in this repository, not in a
-   message. Changing it later logs everybody out, which is exactly what you want
-   if it is ever exposed.
+2. **Set independent encrypted security secrets** in the DigitalOcean console.
+   Give each of `JWT_SECRET`, `MFA_ENCRYPTION_KEY`, `DEVICE_ID_HASH_SECRET`,
+   `DEVICE_PAIRING_SECRET`, `CCX_DOWNLOAD_SECRET`, and `PANEL_LEASE_SECRET` its
+   own 64 random hex characters. Readiness remains false if any is absent.
+
+   Do not derive them from one master value. `JWT_SECRET` may be rotated to log
+   everyone out without making stored MFA secrets undecryptable or changing
+   registered-device hashes. Keep `MFA_ENCRYPTION_KEY` and
+   `DEVICE_ID_HASH_SECRET` in the encrypted backup/recovery record: rotating the
+   first needs an explicit decrypt/re-encrypt migration, while rotating the
+   second requires an admin reset of every device slot. The pairing, download,
+   and lease secrets may be rotated first; that only invalidates pending pairing
+   codes, five-minute URLs, and short panel leases. Rotate `JWT_SECRET` last.
+
+   Password KDF work is bounded twice: a durable one-minute login admission
+   window defaults to 20 attempts per source and 300 across the deployment,
+   while each process admits at most four concurrent scrypt jobs. Tune only
+   with measured capacity through `LOGIN_ADMISSION_WINDOW_SECONDS`,
+   `LOGIN_ADMISSION_IP_LIMIT`, `LOGIN_ADMISSION_GLOBAL_LIMIT`, and
+   `PASSWORD_KDF_MAX_CONCURRENCY`. Failed-password email/source limits remain
+   separate, so a successful login never consumes a victim account's failure
+   allowance.
 
 3. **Nothing.** The schema used to be applied by hand here. The service now
    applies `server/sql/platform.sql` then `server/sql/schema.sql` itself on
@@ -138,11 +179,11 @@ account.
    API and the exact schema bytes that this process successfully applied:
 
    ```
-   {"ok":true,"apiVersion":"5.42.2","schema":4,
+   {"ok":true,"apiVersion":"5.43.0","schema":4,
     "schemaFingerprint":"<64 hex SHA-256>","ready":true,"tls":"verified"}
-   {"ok":true,"apiVersion":"5.42.2","schema":4,
+   {"ok":true,"apiVersion":"5.43.0","schema":4,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
-   {"ok":true,"apiVersion":"5.42.2","schema":null,
+   {"ok":true,"apiVersion":"5.43.0","schema":null,
     "schemaFingerprint":null,"ready":false,"tls":"<state>","error":"…"}
    ```
 
@@ -279,20 +320,18 @@ account.
    left as the single source of truth.
 
    Parsing is not the whole answer either, because a certificate can be perfectly
-   well-formed and simply not this database's CA — which refuses every
-   connection forever and looks identical from outside. So verification is
-   attempted first and **stood down from only after the handshake has actually
-   failed**, which is the one moment the difference is observable. Either way
-   the traffic stays encrypted; the alternative was never a safer connection,
-   it was no product.
+   well-formed and simply not this database's CA. Production never stands down
+   from verification: migration, health queries, and request transactions refuse
+   to open a database connection until the CA is usable. Only a local/CI process
+   with the explicit `ALLOW_UNVERIFIED_DB_TLS=1` override may connect otherwise.
 
    `/api/health` reports a `tls` field in **every** case, not only the bad ones:
 
    ```
    "tls":"verified"                                  the database is authenticated
-   "tls":"unverified (no CA certificate supplied)"   encrypted only
-   "tls":"unverified — …did not verify (CODE)…"      a CA was supplied and refused
-   "tls":"off (PGSSLMODE=disable)"                   local development
+   "tls":"unverified (no CA certificate supplied)"   not ready; no DB connection
+   "tls":"unverified — …did not verify (CODE)…"      local override only
+   "tls":"off (PGSSLMODE=disable)"                   local override only
    ```
 
    Always, because "verified" is the claim worth being able to check, and a
@@ -304,8 +343,8 @@ account.
 
    No database-role bootstrap is required. Startup deliberately verifies that
    the runtime login is neither superuser nor `BYPASSRLS`, applies both files,
-   and then attests that all five request tables plus both auth tables have RLS
-   enabled and forced. Readiness stays false if any part of that contract is
+   and then attests that every request, auth, storage, and unified-system table
+   has RLS enabled and forced. Readiness stays false if any part of that contract is
    missing. `verify_roleless_rls.js` reproduces the same `NOCREATEROLE` owner
    shape in PostgreSQL 16 and attacks the resulting policy boundary.
 
@@ -336,7 +375,9 @@ then, they all need a reset, and step two below has to be working first.
 
 **Password-reset email needs an SMTP server.** Supabase sent those messages.
 Set `SMTP_HOST`, `SMTP_USER` and `SMTP_PASS` as secrets — a Gmail address with
-an app password is enough. Until you do, `recover` still answers 200 (it must
+an app password is enough. The client uses certificate-verified implicit TLS
+(`SMTP_PORT=465` by default); a STARTTLS-only plaintext-first port is rejected.
+Until you do, `recover` still answers 200 (it must
 not reveal which addresses exist) but **no mail is sent**, and a locked-out
 customer needs you to change their password by hand.
 

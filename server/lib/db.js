@@ -108,6 +108,7 @@ function usableCa(raw) {
    downgrade that is invisible until it matters. */
 let tlsNote = null;
 const getTlsNote = () => tlsNote;
+const allowsUnverifiedTls = () => process.env.ALLOW_UNVERIFIED_DB_TLS === "1";
 
 /* How TLS to the database is configured — and how much of it is verified.
  *
@@ -230,6 +231,10 @@ const isCertificateError = err =>
 function downgradeTlsAfter(err) {
   if (!isCertificateError(err)) return false;
   if (!pool.options.ssl || pool.options.ssl.rejectUnauthorized === false) return false;
+  if (!allowsUnverifiedTls()) {
+    console.error("db: certificate verification failed; refusing an unverified TLS downgrade");
+    return false;
+  }
   pool.options.ssl = { rejectUnauthorized: false };
   tlsNote = "the database certificate did not verify (" + (err.code || "certificate error") +
             "); reconnected encrypted but UNVERIFIED";
@@ -245,6 +250,18 @@ function tlsState() {
   if (pool.options.ssl === false) return "off (PGSSLMODE=disable)";
   if (pool.options.ssl && pool.options.ssl.rejectUnauthorized) return "verified";
   return tlsNote ? "unverified — " + tlsNote : "unverified (no CA certificate supplied)";
+}
+
+function tlsSecurityReady() {
+  return tlsState() === "verified" || allowsUnverifiedTls();
+}
+
+function assertTlsConnectionAllowed() {
+  if (tlsSecurityReady()) return;
+  const error=new Error("verified database TLS is required; configure the managed database CA");
+  error.code="database_tls_unverified";
+  error.status=503;
+  throw error;
 }
 
 /* Why the database cannot be reached for a reason /health can state plainly,
@@ -274,6 +291,7 @@ async function asRole(role, uid, fn) {
   if (role !== "anon" && role !== "authenticated") {
     throw new Error("refusing an unknown public request role: " + role);
   }
+  assertTlsConnectionAllowed();
   const client = await pool.connect();
   try {
     await client.query("begin");
@@ -318,6 +336,7 @@ const asAnon = fn => asRole("anon", null, fn);
  * the internal auth path through FORCE RLS as well.
  */
 async function asService(fn) {
+  assertTlsConnectionAllowed();
   const client = await pool.connect();
   try {
     await client.query("begin");
@@ -335,4 +354,4 @@ async function asService(fn) {
 
 module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl,
                    usableCa, getTlsNote, downgradeTlsAfter, isCertificateError, tlsState,
-                   stripSslMode };
+                   tlsSecurityReady, allowsUnverifiedTls, assertTlsConnectionAllowed, stripSslMode };

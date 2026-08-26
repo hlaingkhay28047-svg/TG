@@ -26,7 +26,21 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { pool, describeDatabaseUrl, downgradeTlsAfter } = require("./db");
+const { pool, describeDatabaseUrl, downgradeTlsAfter, assertTlsConnectionAllowed } = require("./db");
+
+const REQUIRED_APPLICATION_TABLES = Object.freeze([
+  "profiles","payment_requests","app_settings","devices",
+  "roles","user_roles","licenses","app_permissions","device_slots","device_installations",
+  "sessions","login_history","download_history","admin_audit_logs","panel_versions",
+  "device_pairing_codes","device_history","admin_mfa","auth_attempts","panel_artifacts","panel_artifact_chunks",
+]);
+const REQUIRED_PLATFORM_TABLES = Object.freeze([
+  "hnk_auth_users","hnk_auth_refresh_tokens","hnk_storage_buckets","hnk_storage_objects",
+]);
+const REQUIRED_FORCE_RLS_TABLES = Object.freeze([
+  ...REQUIRED_PLATFORM_TABLES,
+  ...REQUIRED_APPLICATION_TABLES,
+]);
 
 function positiveMilliseconds(raw, fallback) {
   const value = Number(raw);
@@ -94,6 +108,9 @@ async function migrate() {
     throw err;
   }
 
+  try { assertTlsConnectionAllowed(); }
+  catch (err) { err.applied=false;throw err; }
+
   let client;
   try {
     client = await pool.connect();
@@ -135,28 +152,26 @@ async function migrate() {
       console.log(`migrate: applied ${path.basename(file)} in ${Date.now() - started}ms`);
     }
     const { rows } = await client.query(
-      "select count(*)::int as n from pg_tables where schemaname='public' " +
-      "and tablename in ('profiles','payment_requests','app_settings','devices')");
-    console.log(`migrate: ${rows[0].n} of 4 application tables present`);
-    if (schema && rows[0].n !== 4) {
+      "select count(*)::int as n from pg_tables where schemaname='public' and tablename=any($1::text[])",
+      [REQUIRED_APPLICATION_TABLES]);
+    console.log(`migrate: ${rows[0].n} of ${REQUIRED_APPLICATION_TABLES.length} application tables present`);
+    if (schema && rows[0].n !== REQUIRED_APPLICATION_TABLES.length) {
       /* The file was there and applied, and the tables still are not. That is a
          real failure and the service must not serve requests with row-level
          security partly missing. */
-      throw new Error("schema applied but only " + rows[0].n + " of 4 tables exist");
+      throw new Error("schema applied but only " + rows[0].n + " of " + REQUIRED_APPLICATION_TABLES.length + " tables exist");
     }
-    if (schema && rows[0].n === 4) {
-      const protectedTables = await client.query(
-        "select count(*)::int as n from pg_class c " +
-        "join pg_namespace n on n.oid = c.relnamespace " +
-        "where (n.nspname, c.relname) in " +
-        "(('public','profiles'),('public','payment_requests'),('public','app_settings')," +
-        " ('public','devices'),('public','hnk_storage_buckets'),('public','hnk_storage_objects')," +
-        " ('public','hnk_auth_users'),('public','hnk_auth_refresh_tokens')) " +
-        "and c.relrowsecurity and c.relforcerowsecurity");
-      if (protectedTables.rows[0].n !== 8) {
-        throw new Error("schema applied but only " + protectedTables.rows[0].n +
-          " of 8 request/auth/storage tables enforce FORCE RLS");
-      }
+    const rls = await client.query(
+      "select count(*)::int as n from pg_class c join pg_namespace n on n.oid=c.relnamespace " +
+      "where n.nspname='public' and c.relname=any($1::text[]) " +
+      "and c.relrowsecurity and c.relforcerowsecurity",
+      [REQUIRED_FORCE_RLS_TABLES]);
+    console.log(`migrate: ${rls.rows[0].n} of ${REQUIRED_FORCE_RLS_TABLES.length} required tables have ENABLE + FORCE RLS`);
+    if (schema && rls.rows[0].n !== REQUIRED_FORCE_RLS_TABLES.length) {
+      throw new Error("schema applied but only " + rls.rows[0].n + " of " + REQUIRED_FORCE_RLS_TABLES.length + " required tables have ENABLE + FORCE RLS");
+    }
+    if (schema && rows[0].n === REQUIRED_APPLICATION_TABLES.length &&
+        rls.rows[0].n === REQUIRED_FORCE_RLS_TABLES.length) {
       appliedSchemaFingerprint = expectedFingerprint;
       console.log("migrate: schema fingerprint " + expectedFingerprint.slice(0, 12));
     }
@@ -182,4 +197,6 @@ function setLastError(msg) {
 }
 const getLastError = () => lastError;
 
-module.exports = { migrate, setLastError, getLastError, getAppliedSchemaFingerprint };
+module.exports = { migrate, setLastError, getLastError, getAppliedSchemaFingerprint,
+                   REQUIRED_APPLICATION_TABLES, REQUIRED_PLATFORM_TABLES,
+                   REQUIRED_FORCE_RLS_TABLES };
