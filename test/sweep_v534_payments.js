@@ -170,6 +170,16 @@ report("I5) a grant has no reference and no slip, so those columns accept their 
     var realFetch = window.fetch;
     window.fetch = function(url, opts){
       var u = String(url); opts = opts || {};
+      /* This sweep owns the legacy Supabase payment surface, but current
+         clients probe the unified service before using that compatibility
+         lane. Mock only those exact probes: a broad /v1/ matcher would also
+         swallow /api/auth/v1 and /api/rest/v1, turning the fixture into a
+         false positive. A 404 is the documented rolling-deploy signal that
+         makes the client continue through the legacy routes tested below. */
+      if (u.indexOf("/api/v1/me/entitlement") >= 0)
+        return Promise.resolve(J({ error: "not_found" }, 404));
+      if (u.indexOf("/api/v1/devices/enroll") >= 0)
+        return Promise.resolve(J({ error: "not_found" }, 404));
       if (!/\\/auth\\/v1\\/|\\/rest\\/v1\\/|\\/storage\\/v1\\//.test(u)) return realFetch.apply(this, arguments);
       var isFD = (typeof FormData !== "undefined") && (opts.body instanceof FormData);
       window.__sb.push({ url: u, method: (opts.method || "GET").toUpperCase(),
