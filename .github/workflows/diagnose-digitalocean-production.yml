@@ -188,6 +188,37 @@ jobs:
             echo "No failed deployment found; reading the active one."
           fi
 
+          # THE ENVIRONMENT AS THE PLATFORM ACTUALLY HOLDS IT.
+          #
+          # The container reported all six security secrets missing while the
+          # console showed all six present and encrypted. Exactly one of those
+          # is a description of what the service receives, and neither says
+          # which KEY the platform stored -- the console truncates long names
+          # to the width of an input box, so MFA_ENCRYPTION_KEY and a key that
+          # really is called MFA_ENCRYPTION_K look identical there.
+          #
+          # Keys, types and scopes are metadata, not secrets: the value is
+          # never read, and a SECRET's value is ciphertext here in any case.
+          # Printing them turns "the secrets are set, honest" into something
+          # checkable.
+          SPEC_FILE="$RUNNER_TEMP/production-diagnostic-spec.json"
+          if doctl apps spec get "$APP_ID" --format json > "$SPEC_FILE" 2>/dev/null; then
+            echo "::group::Environment variables the live spec defines for $DO_SERVICE"
+            jq -r --arg service "$DO_SERVICE" '
+              [ (.envs // [] | map(. + {level: "app"})),
+                (.services // [] | map(select(.name == $service) | .envs // []
+                   | map(. + {level: "service"})) | add // []) ]
+              | add // []
+              | sort_by(.key)
+              | .[]
+              | "  \(.level)  \(.key)  type=\(.type // "GENERAL")  scope=\(.scope // "RUN_AND_BUILD_TIME")  value_len=\(.value | tostring | length)"
+            ' "$SPEC_FILE" || echo "  (spec could not be parsed)"
+            echo "::endgroup::"
+            rm -f "$SPEC_FILE"
+          else
+            echo "Live spec could not be read; continuing with logs only."
+          fi
+
           : > "$RAW_LOG"
           FOUND=0
 
