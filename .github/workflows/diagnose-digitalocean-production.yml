@@ -235,7 +235,7 @@ jobs:
           # first, so a widened filter widens what is explained, not what is
           # exposed.
           grep -E \
-            -e 'hnk-api listening|migrate:|db: WARNING' \
+            -e 'hnk-api listening|migrate:|db: WARNING|ready: NOT READY|ready: serving' \
             -e 'WARNING: could not reach the database|WARNING: booting anyway' \
             -e 'FATAL: migration failed|FATAL: booting LOCKED' \
             -e '^[A-Za-z]*Error(:| )|^ +at |Cannot find module|MODULE_NOT_FOUND' \
