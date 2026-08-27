@@ -1,0 +1,99 @@
+name: DigitalOcean Staging Migration Diagnostics
+
+on:
+  push:
+    branches: [upgrade-safe-wave]
+    paths:
+      - .github/workflows/diagnose-digitalocean-staging.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-staging-diagnostics
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    name: Report sanitized hnk-api migration state
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      DO_APP_NAME: hnk-ai-tools-2
+      DO_REPO: hlaingkhay28047-svg/TG
+      DO_BRANCH: upgrade-safe-wave
+      DO_SERVICE: hnk-api
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_STAGING_ACCESS_TOKEN }}
+    steps:
+      - name: Require staging diagnostics token
+        shell: bash
+        run: |
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::Staging migration diagnostics require DIGITALOCEAN_STAGING_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.166.0
+
+      - name: Capture sanitized migration diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          APPS_FILE="$RUNNER_TEMP/staging-diagnostic-apps.json"
+          RAW_LOG="$RUNNER_TEMP/staging-diagnostic-runtime.log"
+          SAFE_LOG="$RUNNER_TEMP/staging-diagnostic-sanitized.log"
+          trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$SAFE_LOG"' EXIT
+
+          doctl apps list --output json > "$APPS_FILE"
+          APP_COUNT="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            [.[]
+              | select(.spec.name == $name)
+              | select(any(.spec.static_sites[]?;
+                  .github.repo == $repo and .github.branch == $branch))]
+            | length
+          ' "$APPS_FILE")"
+          if [ "$APP_COUNT" -ne 1 ]; then
+            echo "::error::Refusing to diagnose an ambiguous staging app selection."
+            exit 1
+          fi
+          APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            .[]
+            | select(.spec.name == $name)
+            | select(any(.spec.static_sites[]?;
+                .github.repo == $repo and .github.branch == $branch))
+            | .id
+          ' "$APPS_FILE")"
+
+          if ! doctl apps logs "$APP_ID" "$DO_SERVICE" \
+            --type run --tail 300 --no-prefix > "$RAW_LOG" 2>&1; then
+            echo "::error::DigitalOcean runtime logs could not be retrieved. Raw output remains private."
+            exit 1
+          fi
+
+          sed -E \
+            -e 's#postgres(ql)?://[^[:space:]]+#postgres://<redacted>#gI' \
+            -e 's/(password=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/(PGPASSWORD=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/((token|secret|api[_-]?key)=)[^[:space:]]+/\1<redacted>/gI' \
+            "$RAW_LOG" \
+            | LC_ALL=C tr -cd '\11\12\15\40-\176' \
+            | grep -E 'hnk-api listening|migrate:|db: WARNING|WARNING: could not reach the database|WARNING: booting anyway|FATAL: migration failed|FATAL: booting LOCKED' \
+            | cut -c1-1000 \
+            | tail -n 120 > "$SAFE_LOG" || true
+
+          if [ ! -s "$SAFE_LOG" ]; then
+            echo "::error::No allowlisted migration diagnostics were present. Raw output remains private."
+            exit 1
+          fi
+
+          echo "::group::Sanitized hnk-api migration diagnostics"
+          STOP_TOKEN="staging-diagnostic-$(openssl rand -hex 16)"
+          echo "::stop-commands::$STOP_TOKEN"
+          cat "$SAFE_LOG"
+          echo "::$STOP_TOKEN::"
+          echo "::endgroup::"

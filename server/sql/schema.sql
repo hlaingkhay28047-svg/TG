@@ -1,14 +1,16 @@
 -- ============================================================================
 -- HNK Web Studio — Supabase schema, policies and the approval trigger.
 --
--- WHY THIS FILE EXISTS. The app is a static page that talks to Supabase
--- directly with the anon key. Everything the browser does can be replayed by
--- hand from a console. So the login wall, the Premium check and the admin
--- panel added in web v5.30.0 are USER INTERFACE, not security. What actually
--- stops a customer approving their own payment is the policies below.
+-- WHY THIS FILE EXISTS. The Student App uses an ordinary browser session, and
+-- every request that session can make can be replayed from a console. The
+-- login wall, license cards and Admin Control Center are user interface, not
+-- authorization. Own-account access is enforced by the policies below. Every
+-- cross-account payment review, VIP grant and proof read goes through the
+-- strict /v1/admin service, which requires an admin-client session plus current
+-- MFA, records an audit entry and uses service_role only inside that boundary.
 --
--- Until this file is applied, treat the admin panel as a convenience for you
--- and assume any signed-in user could PATCH payment_requests themselves.
+-- Until this file is applied, the required RLS boundary does not exist. Do not
+-- expose the app or approve a payment.
 --
 -- HOW TO APPLY. Supabase dashboard -> SQL editor -> paste -> Run. It is
 -- idempotent: safe to run more than once, and safe to run on the live project.
@@ -69,12 +71,9 @@
 --   -- one student on a different monthly rate:
 --   update public.profiles set price_1m_override = 10000 where email = 'student@example.com';
 --
---   -- a free period for a VIP student is filed as a GRANT, not a database
---   -- edit, so it is visible in the same queue as every payment. The admin
---   -- panel has a button for it; this is the same thing by hand:
---   insert into public.payment_requests (user_id, kind, is_grant, amount_mmk, note)
---   select id, 'plan_1m', true, 0, 'VIP — training course' from public.profiles
---    where email = 'student@example.com';
+--   -- File a free VIP period only from the Admin Control Center. Its strict
+--   -- server action creates and approves one audited grant transaction so the
+--   -- same entitlement trigger used by paid requests remains authoritative.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -107,15 +106,10 @@
 --
 -- WHAT IS DELIBERATELY ABSENT:
 --
---   * No foreign key from payment_requests.user_id to profiles.id. The admin
---     queue at admLoadWho fetches names in a SECOND request and says why:
---     "profiles and payment_requests have no declared foreign key in this
---     project, so `select=*,profiles(name,email)` 400s". Declaring one here
---     would make a fresh project behave differently from the live one — the
---     embed would start working in one and keep 400ing in the other — which is
---     precisely the drift this file exists to prevent. Both columns reference
---     public.hnk_auth_users instead, which gives the integrity without changing the shape
---     PostgREST sees.
+--   * No foreign key from payment_requests.user_id to profiles.id. The strict
+--     admin service joins those records server-side by their shared auth user
+--     id. Both columns reference public.hnk_auth_users, preserving integrity
+--     without changing the live PostgREST relationship graph.
 --
 --   * No trigger creating a profiles row on signup. The app stopped depending
 --     on one in v5.38.0: accLoadProfile reads 406 as "there is no row" and
@@ -131,7 +125,10 @@ create table if not exists public.profiles (
   id         uuid primary key references public.hnk_auth_users (id) on delete cascade,
   name       text,
   email      text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  account_status text not null default 'pending'
+                 constraint profiles_account_status_chk
+                 check (account_status in ('pending','active','suspended','banned','rejected'))
 );
 
 -- kind and status are checked here as well as in the policies. The policies
@@ -153,7 +150,7 @@ create table if not exists public.payment_requests (
   created_at      timestamptz not null default now()
 );
 
--- The admin queue reads `order=created_at.desc&limit=100` on every open.
+-- The strict admin queue orders newest-first and pages this index.
 create index if not exists payment_requests_created_idx
   on public.payment_requests (created_at desc);
 
@@ -161,12 +158,11 @@ create index if not exists payment_requests_created_idx
 create index if not exists payment_requests_user_idx
   on public.payment_requests (user_id);
 
--- app_settings is a SINGLETON in everything but its declaration. hnk_apply_payment
--- reads `order by a.ctid limit 1` and the client reads its own copy, so a second
--- row lets an approved join_first open a different period from the one the buy
--- screen quoted. It is not constrained to one row here because the live table is
--- not, and a constraint this file cannot apply to production is a promise it
--- cannot keep; the admin panel warns when it finds more than one instead.
+-- app_settings is a SINGLETON in everything but its declaration. It is not
+-- constrained here because a live table may already contain duplicates that
+-- must be reconciled deliberately. hnk_apply_payment fails closed unless the
+-- count is exactly one; the strict admin API reports the count and its UI raises
+-- a prominent configuration warning.
 -- payment_instructions_my is the fallback every language falls back TO; the
 -- per-language columns (payment_instructions_en, _th, ...) are optional, and a
 -- missing one simply comes back undefined and takes the Burmese text.
@@ -211,12 +207,13 @@ begin
     execute 'grant usage on schema public to anon, authenticated';
     execute 'grant select on public.app_settings to anon, authenticated';
     execute 'grant select, insert, update on public.profiles to authenticated';
-    execute 'grant select, insert, update on public.payment_requests to authenticated';
+    execute 'grant select, insert on public.payment_requests to authenticated';
     execute 'grant select, insert, update, delete on public.devices to authenticated';
 
     -- GRANT is additive. Remove inherited anonymous writes before a SECURITY
     -- DEFINER BEFORE trigger can inspect a guessed account.
     execute 'revoke insert, update, delete on public.profiles, public.payment_requests, public.devices from anon';
+    execute 'revoke update, delete on public.payment_requests from authenticated';
     execute 'revoke insert, update, delete on public.app_settings from anon, authenticated';
   end if;
 
@@ -236,6 +233,38 @@ alter table public.profiles add column if not exists is_admin boolean not null d
 alter table public.profiles add column if not exists plan_status text not null default 'none';
 alter table public.profiles add column if not exists plan_expires_at timestamptz;
 alter table public.profiles add column if not exists allowed_devices integer not null default 2;
+
+-- The unified account lifecycle is independent from the legacy payment plan.
+-- Existing paid/admin accounts are activated only when this column is first
+-- introduced; later registrations keep the fail-closed `pending` default.
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public' and table_name = 'profiles'
+       and column_name = 'account_status'
+  ) then
+    alter table public.profiles add column account_status text;
+    update public.profiles
+       set account_status = case
+         when coalesce(is_admin, false)
+           or coalesce(plan_status, 'none') = 'active'
+           or plan_expires_at is not null then 'active'
+         else 'pending'
+       end;
+    alter table public.profiles alter column account_status set default 'pending';
+    alter table public.profiles alter column account_status set not null;
+  end if;
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'profiles_account_status_chk'
+       and conrelid = 'public.profiles'::regclass
+  ) then
+    alter table public.profiles add constraint profiles_account_status_chk
+      check (account_status in ('pending','active','suspended','banned','rejected'))
+      not valid;
+  end if;
+end $$;
 
 -- v5.34 pricing. Every number lives in the database, never in the client:
 -- the owner sets them in the dashboard and the buy screen quotes whatever is
@@ -334,9 +363,9 @@ end $$;
 
 -- A grant has no transfer and no slip, so the two columns that record them
 -- must accept their absence. If the table was created with them NOT NULL — the
--- shape a payments-only design naturally produces — an admin's first VIP grant
--- would be refused by the database with a constraint error the admin panel
--- could only report as "couldn't submit". Dropping NOT NULL is a no-op when
+-- shape a payments-only design naturally produces — the first server-owned VIP
+-- grant would be refused by the database with a constraint error. Dropping NOT
+-- NULL is a no-op when
 -- they are already nullable, which keeps this file idempotent.
 alter table public.payment_requests alter column txn_last6 drop not null;
 alter table public.payment_requests alter column screenshot_path drop not null;
@@ -429,7 +458,8 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 3. profiles — a user sees only their own row; only an admin may move a plan
+-- 3. profiles — a browser bearer sees and edits only its own row. Cross-account
+--    administration is authorized and audited by the strict /v1/admin API.
 --
 -- The UPDATE policy deliberately does NOT let a user write their own
 -- plan_status / plan_expires_at / allowed_devices / is_admin. Postgres has no
@@ -445,18 +475,20 @@ create policy profiles_service_all on public.profiles
   with check (public.hnk_request_role() = 'service_role');
 
 drop policy if exists profiles_select_own_or_admin on public.profiles;
-create policy profiles_select_own_or_admin on public.profiles
+drop policy if exists profiles_select_own on public.profiles;
+create policy profiles_select_own on public.profiles
   for select to public
   using (public.hnk_request_role() = 'authenticated'
-         and (id = public.hnk_uid() or public.hnk_is_admin()));
+         and id = public.hnk_uid());
 
 drop policy if exists profiles_update_own_or_admin on public.profiles;
-create policy profiles_update_own_or_admin on public.profiles
+drop policy if exists profiles_update_own on public.profiles;
+create policy profiles_update_own on public.profiles
   for update to public
   using (public.hnk_request_role() = 'authenticated'
-         and (id = public.hnk_uid() or public.hnk_is_admin()))
+         and id = public.hnk_uid())
   with check (public.hnk_request_role() = 'authenticated'
-              and (id = public.hnk_uid() or public.hnk_is_admin()));
+              and id = public.hnk_uid());
 
 drop policy if exists profiles_insert_self on public.profiles;
 create policy profiles_insert_self on public.profiles
@@ -464,8 +496,8 @@ create policy profiles_insert_self on public.profiles
   with check (public.hnk_request_role() = 'authenticated' and id = public.hnk_uid());
 
 -- ---------------------------------------------------------------------------
--- 4. payment_requests — a user may raise one and read their own; ONLY an admin
---    may change one. This is the policy the whole admin panel rests on.
+-- 4. payment_requests — a user may raise one and read their own. Review and
+--    status changes exist only behind the strict server-owned /v1/admin API.
 -- ---------------------------------------------------------------------------
 alter table public.payment_requests enable row level security;
 
@@ -510,35 +542,19 @@ create policy payreq_insert_own on public.payment_requests
     and note is null
   );
 
--- v5.34 — payreq_insert_own is `user_id = public.hnk_uid()`, so an admin recording a
--- free period for a student would be refused by their own database. This is the
--- narrow exception: an admin may insert a row for ANY user, but only one marked
--- is_grant with no money attached. A grant therefore lands in the same queue,
--- with the same audit trail, as every payment.
+-- Cross-account grants are server-owned admin actions. A browser bearer may
+-- insert only its own ordinary request; the strict /v1/admin route verifies an
+-- admin-client session plus MFA and writes the audited grant as service_role.
 drop policy if exists payreq_insert_admin_grant on public.payment_requests;
-create policy payreq_insert_admin_grant on public.payment_requests
-  for insert to public
-  with check (
-    public.hnk_request_role() = 'authenticated'
-    and public.hnk_is_admin()
-    and is_grant = true
-    and coalesce(amount_mmk, 0) = 0
-    and device_count is null
-    and kind in ('plan_1m','plan_3m','plan_6m','extra_device','join_first')
-    and coalesce(status, 'pending') = 'pending'
-  );
 
 drop policy if exists payreq_select_own_or_admin on public.payment_requests;
-create policy payreq_select_own_or_admin on public.payment_requests
+drop policy if exists payreq_select_own on public.payment_requests;
+create policy payreq_select_own on public.payment_requests
   for select to public
   using (public.hnk_request_role() = 'authenticated'
-         and (user_id = public.hnk_uid() or public.hnk_is_admin()));
+         and user_id = public.hnk_uid());
 
 drop policy if exists payreq_update_admin_only on public.payment_requests;
-create policy payreq_update_admin_only on public.payment_requests
-  for update to public
-  using (public.hnk_request_role() = 'authenticated' and public.hnk_is_admin())
-  with check (public.hnk_request_role() = 'authenticated' and public.hnk_is_admin());
 
 -- no delete policy: nobody deletes a payment record, including an admin.
 -- The audit trail is the point.
@@ -719,7 +735,7 @@ begin
   if tg_op = 'INSERT' then
     -- BEFORE triggers run before RLS WITH CHECK. Refuse a forged user_id with
     -- one uniform answer before this definer function reads or locks a victim's
-    -- profile; admins retain the cross-account VIP-grant path.
+    -- profile; only the trusted service-role grant path may target another user.
     if public.hnk_uid() is not null and new.user_id is distinct from public.hnk_uid()
        and not public.hnk_is_admin() then
       raise exception 'payment user does not match authenticated caller'
@@ -847,7 +863,8 @@ create trigger hnk_guard_payment_request
   for each row execute function public.hnk_guard_payment_request();
 
 -- ---------------------------------------------------------------------------
--- 5. devices
+-- 5. devices — legacy clients may manage only their own compatibility rows.
+--    Cross-account resets belong to the strict server-owned /v1/admin API.
 -- ---------------------------------------------------------------------------
 alter table public.devices enable row level security;
 
@@ -858,12 +875,14 @@ create policy devices_service_all on public.devices
   with check (public.hnk_request_role() = 'service_role');
 
 drop policy if exists devices_all_own_or_admin on public.devices;
-create policy devices_all_own_or_admin on public.devices
+drop policy if exists devices_read_own_or_admin on public.devices;
+drop policy if exists devices_all_own on public.devices;
+create policy devices_all_own on public.devices
   for all to public
   using (public.hnk_request_role() = 'authenticated'
-         and (user_id = public.hnk_uid() or public.hnk_is_admin()))
+         and user_id = public.hnk_uid())
   with check (public.hnk_request_role() = 'authenticated'
-              and (user_id = public.hnk_uid() or public.hnk_is_admin()));
+              and user_id = public.hnk_uid());
 
 -- ---------------------------------------------------------------------------
 -- 5b. the device cap, enforced where it cannot be edited out
@@ -902,7 +921,7 @@ begin
 
   -- As with payment inserts, this definer trigger runs before RLS. Reject a
   -- forged user_id uniformly before taking a victim's lock or revealing their
-  -- device count/cap; admins keep the documented cross-account management path.
+  -- device count/cap; cross-account management stays in the trusted service path.
   if public.hnk_uid() is not null and new.user_id is distinct from public.hnk_uid()
      and not public.hnk_is_admin() then
     raise exception 'device user does not match authenticated caller'
@@ -1007,6 +1026,7 @@ begin
     new.plan_expires_at := null;
     new.allowed_devices := 2;
     new.is_admin        := false;
+    new.account_status  := 'pending';
     -- v5.34: a self-inserted row must not arrive already joined, nor carrying
     -- a price of its own choosing
     new.joined_paid               := false;
@@ -1031,6 +1051,7 @@ begin
   new.plan_expires_at := old.plan_expires_at;
   new.allowed_devices := old.allowed_devices;
   new.is_admin        := old.is_admin;
+  new.account_status  := old.account_status;
   -- v5.34: joined_paid decides whether the joining fee is still owed and the
   -- overrides decide what everything costs. A customer who could write either
   -- could set their own price to zero, which is the same hole as writing
@@ -1046,9 +1067,9 @@ begin
   --   * the approval queue prints `name · email` as who filed a payment, so a
   --     customer could make their row read as somebody else while the owner
   --     decides whether to accept their money;
-  --   * admGrant looks a student up by typed email with limit=1 and no order,
-  --     so a second row claiming that address decides arbitrarily who gets a
-  --     free VIP period;
+  --   * the strict admin grant endpoint resolves a student by normalized
+  --     email, so a second row claiming that address would make the target
+  --     ambiguous;
   --   * this file's own instructions, and the README's, hand out admin and
   --     per-customer prices with `where email = '...'`.
   -- No shipped code path writes profiles at all -- every client reference is a
@@ -1082,8 +1103,9 @@ create trigger hnk_guard_profile_insert
 --
 -- The client comment at accPollOnce already assumes this ("the server trigger
 -- has already extended plan_expires_at / bumped allowed_devices — re-read
--- rather than guess"), and the admin panel writes ONLY the review fields for
--- the same reason. If both extended the plan, every approval would count twice.
+-- rather than guess"), and the strict admin service writes only the review
+-- transition for the same reason. If both extended the plan, every approval
+-- would count twice.
 --
 -- Extension is from the LATER of now and the current expiry, so renewing early
 -- adds to the remaining time instead of throwing it away.
@@ -1192,14 +1214,9 @@ begin
   elsif new.kind = 'join_first' then
     -- v5.34 — the one-time joining fee also opens the first period, and how
     -- long that period is belongs to the owner, not to this file. Default 1.
-    -- v5.39.0 — LIMIT without ORDER BY does not pick a row, it picks whatever
-    -- the planner emits first. With the one row this table is meant to hold
-    -- that is moot; with two, the period an approved join_first opens could
-    -- differ from the price the client quoted, which reads its own copy. ctid
-    -- is ordered on rather than a named column because this file only ALTERs
-    -- app_settings (see above) and so cannot promise any particular column
-    -- exists; every table has ctid. Deterministic is the most this can be —
-    -- AGREEING with the client requires app_settings to hold exactly one row.
+    -- The singleton check above has already rejected zero or duplicate rows.
+    -- ORDER BY ctid remains deterministic defence in depth without depending
+    -- on a named key that legacy app_settings tables may not have.
     select coalesce(nullif(a.join_first_months, 0), 1) into months
       from public.app_settings a order by a.ctid limit 1;
     months := coalesce(months, 1);
@@ -1208,6 +1225,7 @@ begin
   if months > 0 then
     update public.profiles
        set plan_status     = 'active',
+           account_status  = 'active',
            plan_expires_at = coalesce(base, now()) + (months || ' months')::interval,
            -- v5.34 — settling the joining fee is what clears it, and nothing
            -- else does. A plan_1m approval leaves joined_paid alone, so a
@@ -1235,12 +1253,12 @@ create trigger hnk_apply_payment
   for each row execute function public.hnk_apply_payment();
 
 -- ---------------------------------------------------------------------------
--- 8. payment proofs — a private bucket, own folder in, own or admin out
+-- 8. payment proofs — a private bucket, own folder in, service-reviewed
 --
--- The app uploads to payment-proofs/<uid>/<kind>-<ts>.<ext> and the admin panel
--- reads the bytes with the bearer token attached, so the bucket must stay
--- private: a public bucket would put every customer's bank slip on a guessable
--- URL.
+-- The app uploads to payment-proofs/<uid>/<kind>-<ts>.<ext>. A browser may
+-- read only its own object; the strict admin API resolves a payment id and
+-- reads the proof with service_role after admin-session + MFA checks. The
+-- bucket stays private so no bank slip has a permanent public URL.
 -- ---------------------------------------------------------------------------
 insert into public.hnk_storage_buckets (id, name, public)
 values ('payment-proofs', 'payment-proofs', false)
@@ -1262,12 +1280,13 @@ create policy proofs_insert_own on public.hnk_storage_objects
   );
 
 drop policy if exists proofs_read_own_or_admin on public.hnk_storage_objects;
-create policy proofs_read_own_or_admin on public.hnk_storage_objects
+drop policy if exists proofs_read_own on public.hnk_storage_objects;
+create policy proofs_read_own on public.hnk_storage_objects
   for select to public
   using (
     public.hnk_request_role() = 'authenticated'
     and bucket_id = 'payment-proofs'
-    and ((public.hnk_foldername(name))[1] = public.hnk_uid()::text or public.hnk_is_admin())
+    and (public.hnk_foldername(name))[1] = public.hnk_uid()::text
   );
 
 -- A plain PostgreSQL table owner bypasses RLS unless FORCE is set. Do that only
@@ -1304,3 +1323,581 @@ end $$;
 --        every plan column back. If the row comes back with is_admin true, the
 --        approval panel is standing open to every customer you have.
 -- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- 10. unified accounts, licenses, devices, sessions and audit history (v5.43)
+--
+-- This section is strictly additive. The four legacy application tables and
+-- their columns remain available while server-owned `/v1` APIs use the
+-- canonical records below. Every table is RLS-enabled even though sensitive
+-- writes are performed only by the server after live-session authorization.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.roles (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null unique check (name in ('student','admin')),
+  created_at timestamptz not null default now()
+);
+
+insert into public.roles (name) values ('student'), ('admin')
+on conflict (name) do nothing;
+
+create table if not exists public.user_roles (
+  user_id    uuid not null references public.hnk_auth_users (id) on delete cascade,
+  role_id    uuid not null references public.roles (id) on delete cascade,
+  granted_by uuid references public.hnk_auth_users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  primary key (user_id, role_id)
+);
+
+insert into public.user_roles (user_id, role_id)
+select p.id, r.id from public.profiles p
+join public.roles r on r.name = case when p.is_admin then 'admin' else 'student' end
+on conflict (user_id, role_id) do nothing;
+
+create table if not exists public.licenses (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null unique references public.hnk_auth_users (id) on delete cascade,
+  status     text not null default 'active' check (status in ('active','revoked')),
+  starts_at  timestamptz not null default now(),
+  expires_at timestamptz not null,
+  created_by uuid references public.hnk_auth_users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (expires_at > starts_at)
+);
+
+insert into public.licenses (user_id, status, starts_at, expires_at)
+select p.id,
+       case when p.plan_expires_at > now() and p.plan_status = 'active' then 'active' else 'revoked' end,
+       least(p.created_at, p.plan_expires_at - interval '1 second'),
+       p.plan_expires_at
+  from public.profiles p
+ where p.plan_expires_at is not null
+   and p.plan_expires_at > least(p.created_at, p.plan_expires_at - interval '1 second')
+on conflict (user_id) do nothing;
+
+create table if not exists public.app_permissions (
+  user_id              uuid primary key references public.hnk_auth_users (id) on delete cascade,
+  web_app_enabled      boolean not null default true,
+  ccx_download_enabled boolean not null default true,
+  panel_enabled        boolean not null default true,
+  updated_by           uuid references public.hnk_auth_users (id) on delete set null,
+  updated_at           timestamptz not null default now()
+);
+
+insert into public.app_permissions (user_id)
+select id from public.profiles
+on conflict (user_id) do nothing;
+
+create table if not exists public.device_slots (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.hnk_auth_users (id) on delete cascade,
+  slot_type  text not null check (slot_type in ('phone','computer')),
+  status     text not null default 'active' check (status in ('active','reset')),
+  generation integer not null default 1 check (generation > 0),
+  label      text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  reset_at   timestamptz,
+  unique (user_id, slot_type)
+);
+
+create table if not exists public.device_installations (
+  id                uuid primary key default gen_random_uuid(),
+  slot_id           uuid not null references public.device_slots (id) on delete cascade,
+  client_type       text not null check (client_type in ('web','panel')),
+  installation_hash text not null,
+  label             text,
+  created_at        timestamptz not null default now(),
+  last_seen_at      timestamptz not null default now(),
+  revoked_at        timestamptz,
+  unique (slot_id, client_type, installation_hash)
+);
+
+create unique index if not exists device_installations_active_client_uniq
+  on public.device_installations (slot_id, client_type)
+  where revoked_at is null;
+create unique index if not exists device_installations_active_hash_uniq
+  on public.device_installations (installation_hash)
+  where revoked_at is null;
+
+create table if not exists public.sessions (
+  id                     uuid primary key default gen_random_uuid(),
+  user_id                uuid not null references public.hnk_auth_users (id) on delete cascade,
+  device_installation_id uuid references public.device_installations (id) on delete set null,
+  client_type            text not null check (client_type in ('web','panel','admin')),
+  refresh_token_hash     text not null unique,
+  created_at             timestamptz not null default now(),
+  last_seen_at           timestamptz not null default now(),
+  expires_at             timestamptz not null,
+  revoked_at             timestamptz,
+  revoked_reason         text,
+  ip_hash                text,
+  user_agent             text,
+  mfa_verified_at        timestamptz,
+  check (expires_at > created_at)
+);
+
+create index if not exists sessions_user_active_idx
+  on public.sessions (user_id, expires_at) where revoked_at is null;
+
+create table if not exists public.login_history (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid references public.hnk_auth_users (id) on delete set null,
+  session_id      uuid references public.sessions (id) on delete set null,
+  event_type      text not null check (event_type in ('login','failed_login','refresh','logout','forced_logout','password_reset')),
+  occurred_at     timestamptz not null default now(),
+  client_type     text not null default 'web' check (client_type in ('web','panel','admin')),
+  success         boolean not null,
+  attempted_email text,
+  device_type     text,
+  device_name     text,
+  ip_hash         text,
+  user_agent      text,
+  failure_reason  text
+);
+
+-- Authentication records MFA failures in the same immutable history stream.
+-- Name the constraint explicitly so upgrading an older inline CHECK is
+-- idempotent and cannot leave the API writing an event the database rejects.
+alter table public.login_history drop constraint if exists login_history_event_type_check;
+alter table public.login_history add constraint login_history_event_type_check
+  check (event_type in ('login','failed_login','refresh','logout','forced_logout','password_reset','mfa_failed'));
+
+create index if not exists login_history_user_time_idx
+  on public.login_history (user_id, occurred_at desc);
+create index if not exists login_history_failed_email_idx
+  on public.login_history (lower(attempted_email), occurred_at desc)
+  where success = false;
+create index if not exists login_history_failed_ip_idx
+  on public.login_history (ip_hash, occurred_at desc)
+  where success = false;
+create index if not exists login_history_mfa_failed_user_idx
+  on public.login_history (user_id, occurred_at desc)
+  where success = false and event_type = 'mfa_failed';
+
+create table if not exists public.download_history (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid references public.hnk_auth_users (id) on delete set null,
+  session_id     uuid references public.sessions (id) on delete set null,
+  device_slot_id uuid references public.device_slots (id) on delete set null,
+  panel_version  text,
+  artifact_key   text,
+  token_hash     text unique,
+  issued_at      timestamptz not null default now(),
+  expires_at     timestamptz,
+  downloaded_at  timestamptz,
+  completed_at   timestamptz,
+  result         text not null check (result in ('issued','streaming','downloaded','failed','denied','expired','invalid')),
+  reason         text,
+  ip_hash        text,
+  user_agent     text
+);
+
+alter table public.download_history add column if not exists completed_at timestamptz;
+alter table public.download_history drop constraint if exists download_history_result_check;
+alter table public.download_history add constraint download_history_result_check
+  check (result in ('issued','streaming','downloaded','failed','denied','expired','invalid'));
+
+create index if not exists download_history_user_time_idx
+  on public.download_history (user_id, issued_at desc);
+create index if not exists download_history_streaming_user_idx
+  on public.download_history (user_id, downloaded_at desc)
+  where result = 'streaming';
+
+create table if not exists public.admin_audit_logs (
+  id             uuid primary key default gen_random_uuid(),
+  actor_user_id  uuid not null references public.hnk_auth_users (id) on delete restrict,
+  target_user_id uuid references public.hnk_auth_users (id) on delete set null,
+  action         text not null,
+  created_at     timestamptz not null default now(),
+  details        jsonb not null default '{}'::jsonb,
+  ip_hash        text,
+  user_agent     text,
+  mutation_id    uuid,
+  request_hash   text,
+  result         jsonb,
+  completed_at   timestamptz
+);
+
+create index if not exists admin_audit_target_time_idx
+  on public.admin_audit_logs (target_user_id, created_at desc);
+
+-- Retried administrator writes reserve one durable mutation row before any
+-- entitlement change. The partial unique index is the concurrency boundary:
+-- a second transaction with the same actor/action/key waits for the first and
+-- then reuses its stored result instead of applying the write again.
+alter table public.admin_audit_logs add column if not exists mutation_id uuid;
+alter table public.admin_audit_logs add column if not exists request_hash text;
+alter table public.admin_audit_logs add column if not exists result jsonb;
+alter table public.admin_audit_logs add column if not exists completed_at timestamptz;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'admin_audit_request_hash_chk'
+       and conrelid = 'public.admin_audit_logs'::regclass
+  ) then
+    alter table public.admin_audit_logs add constraint admin_audit_request_hash_chk
+      check (request_hash is null or request_hash ~ '^[0-9a-f]{64}$') not valid;
+  end if;
+end $$;
+create unique index if not exists admin_audit_mutation_uniq
+  on public.admin_audit_logs (actor_user_id, action, mutation_id)
+  where mutation_id is not null;
+
+create table if not exists public.panel_versions (
+  version           text primary key check (version ~ '^[0-9]+\.[0-9]+\.[0-9]+$'),
+  is_latest         boolean not null default false,
+  minimum_supported boolean not null default false,
+  enabled           boolean not null default true,
+  artifact_key      text not null,
+  sha256            text check (sha256 is null or sha256 ~ '^[0-9a-f]{64}$'),
+  size_bytes        bigint check (size_bytes is null or size_bytes > 0),
+  released_at       timestamptz not null default now(),
+  created_by        uuid references public.hnk_auth_users (id) on delete set null
+);
+
+create unique index if not exists panel_versions_one_latest_idx
+  on public.panel_versions (is_latest) where is_latest;
+create unique index if not exists panel_versions_one_minimum_idx
+  on public.panel_versions (minimum_supported) where minimum_supported;
+
+insert into public.panel_versions
+  (version, is_latest, minimum_supported, enabled, artifact_key, sha256, size_bytes)
+values ('6.24.0', true, true, false, 'HNK_Ai_Panel_v6.24.0.ccx',
+        'ef7d5fe2e34d682a086fed3b3bdcb83ac7ba32e27f4094f81df630647f310725', 92228620)
+on conflict (version) do nothing;
+
+create table if not exists public.device_pairing_codes (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.hnk_auth_users (id) on delete cascade,
+  slot_id     uuid not null references public.device_slots (id) on delete cascade,
+  code_hash   text not null unique,
+  created_at  timestamptz not null default now(),
+  expires_at  timestamptz not null,
+  consumed_at timestamptz,
+  check (expires_at > created_at)
+);
+
+create table if not exists public.device_history (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references public.hnk_auth_users (id) on delete cascade,
+  device_slot_id uuid references public.device_slots (id) on delete set null,
+  actor_user_id  uuid references public.hnk_auth_users (id) on delete set null,
+  event_type     text not null check (event_type in ('registered','paired','seen','reset','blocked')),
+  client_type    text check (client_type is null or client_type in ('web','panel')),
+  label          text,
+  created_at     timestamptz not null default now(),
+  details        jsonb not null default '{}'::jsonb
+);
+
+create index if not exists device_history_user_time_idx
+  on public.device_history (user_id, created_at desc);
+
+create table if not exists public.admin_mfa (
+  user_id          uuid primary key references public.hnk_auth_users (id) on delete cascade,
+  encrypted_secret text not null,
+  confirmed_at     timestamptz,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+
+-- Rotation never replaces the confirmed secret until the new TOTP proves it
+-- works. Existing deployments receive the staging column idempotently.
+alter table public.admin_mfa
+  add column if not exists pending_encrypted_secret text;
+
+-- Signup, login, recovery and password-change throttles are durable server state. Email/IP values are
+-- one-way hashes and this table has no browser-readable policy or grant.
+create table if not exists public.auth_attempts (
+  id          uuid primary key default gen_random_uuid(),
+  operation   text not null,
+  occurred_at timestamptz not null default now(),
+  ip_hash     text not null,
+  email_hash  text
+);
+
+alter table public.auth_attempts drop constraint if exists auth_attempts_operation_check;
+alter table public.auth_attempts add constraint auth_attempts_operation_check
+  check (operation in ('signup','login','login_admission','recover','recovery_probe','password_change'));
+
+create index if not exists auth_attempts_operation_ip_time_idx
+  on public.auth_attempts (operation, ip_hash, occurred_at desc);
+create index if not exists auth_attempts_operation_email_ip_time_idx
+  on public.auth_attempts (operation, email_hash, ip_hash, occurred_at desc)
+  where email_hash is not null;
+create index if not exists auth_attempts_operation_email_time_idx
+  on public.auth_attempts (operation, email_hash, occurred_at desc)
+  where email_hash is not null;
+create index if not exists auth_attempts_operation_time_idx
+  on public.auth_attempts (operation, occurred_at desc);
+create index if not exists auth_attempts_occurred_at_idx
+  on public.auth_attempts (occurred_at);
+
+-- Paid panel binaries are not repository assets. An MFA-verified admin uploads
+-- them in bounded chunks; the server enables a release only after recomputing
+-- the complete artifact digest and size. These tables have no client grants or
+-- policies: only the server-owned transaction path may read/write the bytes.
+create table if not exists public.panel_artifacts (
+  id                  uuid primary key default gen_random_uuid(),
+  version             text not null unique check (version ~ '^[0-9]+\.[0-9]+\.[0-9]+$'),
+  artifact_key        text not null unique,
+  expected_sha256     text not null check (expected_sha256 ~ '^[0-9a-f]{64}$'),
+  expected_size_bytes bigint not null check (expected_size_bytes > 0 and expected_size_bytes <= 536870912),
+  chunk_size_bytes    integer not null check (chunk_size_bytes between 65536 and 4194304),
+  chunk_count         integer not null check (chunk_count > 0 and chunk_count <= 8192),
+  status              text not null default 'uploading' check (status in ('uploading','ready','failed')),
+  uploaded_size_bytes bigint not null default 0 check (uploaded_size_bytes >= 0),
+  created_by          uuid not null references public.hnk_auth_users (id) on delete restrict,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now(),
+  finalized_at        timestamptz
+);
+
+create table if not exists public.panel_artifact_chunks (
+  artifact_id uuid not null references public.panel_artifacts (id) on delete cascade,
+  chunk_index integer not null check (chunk_index >= 0),
+  data        bytea not null,
+  size_bytes  integer not null check (size_bytes > 0 and size_bytes <= 4194304),
+  sha256      text not null check (sha256 ~ '^[0-9a-f]{64}$'),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  primary key (artifact_id, chunk_index),
+  check (octet_length(data) = size_bytes and octet_length(data) <= 4194304)
+);
+
+create index if not exists panel_artifacts_ready_idx
+  on public.panel_artifacts (version, status);
+
+alter table public.panel_versions
+  add column if not exists artifact_id uuid references public.panel_artifacts (id) on delete set null;
+
+-- Existing deployments may have received the metadata-only seed from an
+-- earlier build. It must not remain downloadable without a finalized private
+-- artifact. Once a matching artifact is ready this update becomes a no-op.
+update public.panel_versions v
+   set enabled = false, artifact_id = null
+ where v.version = '6.24.0'
+   and not exists (
+     select 1 from public.panel_artifacts a
+      where a.version = v.version and a.artifact_key = v.artifact_key
+        and a.expected_sha256 = v.sha256 and a.expected_size_bytes = v.size_bytes
+        and a.status = 'ready'
+   );
+
+-- profiles.is_admin is the bootstrap source of truth for the canonical admin
+-- role. Re-running the schema removes stale grants before inserting the exact
+-- set of current administrators.
+delete from public.user_roles ur
+ using public.roles r
+ where ur.role_id = r.id
+   and r.name = 'admin'
+   and not exists (
+     select 1 from public.profiles p
+      where p.id = ur.user_id and p.is_admin = true
+   );
+
+insert into public.user_roles (user_id, role_id)
+select p.id, r.id
+  from public.profiles p
+  join public.roles r on r.name = 'admin'
+ where p.is_admin = true
+on conflict (user_id, role_id) do nothing;
+
+create or replace function public.hnk_sync_admin_role_from_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  admin_role_id uuid;
+begin
+  select id into admin_role_id from public.roles where name = 'admin';
+  if new.is_admin = true then
+    insert into public.user_roles (user_id, role_id)
+    values (new.id, admin_role_id)
+    on conflict (user_id, role_id) do nothing;
+  else
+    delete from public.user_roles
+     where user_id = new.id and role_id = admin_role_id;
+    if tg_op = 'UPDATE' then
+      if coalesce(old.is_admin, false) = true then
+        update public.sessions
+           set revoked_at = now()
+         where user_id = new.id and revoked_at is null;
+        delete from public.hnk_auth_refresh_tokens where user_id = new.id;
+      end if;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.hnk_sync_admin_role_from_profile() from public;
+
+drop trigger if exists hnk_sync_admin_role_from_profile on public.profiles;
+create trigger hnk_sync_admin_role_from_profile
+  after insert or update of is_admin on public.profiles
+  for each row execute function public.hnk_sync_admin_role_from_profile();
+
+-- Server RBAC uses user_roles. The earlier hnk_is_admin() definition remains a
+-- deliberately protected compatibility path for legacy RLS and first-admin
+-- bootstrap; profile triggers prevent customers from editing is_admin.
+
+-- Keep canonical licenses synchronized when the legacy payment trigger extends
+-- plan_expires_at. The canonical record remains the server policy source.
+create or replace function public.hnk_sync_legacy_license()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.plan_expires_at is not null
+     and (old.plan_expires_at is distinct from new.plan_expires_at
+          or old.plan_status is distinct from new.plan_status) then
+    insert into public.licenses (user_id, status, starts_at, expires_at)
+    values (new.id,
+            case when new.plan_status = 'active' and new.plan_expires_at > now()
+                 then 'active' else 'revoked' end,
+            least(now(), new.plan_expires_at - interval '1 second'),
+            new.plan_expires_at)
+    on conflict (user_id) do update
+      set status = excluded.status,
+          starts_at = least(public.licenses.starts_at, excluded.starts_at),
+          expires_at = excluded.expires_at,
+          updated_at = now();
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.hnk_sync_legacy_license() from public;
+
+drop trigger if exists hnk_sync_legacy_license on public.profiles;
+create trigger hnk_sync_legacy_license
+  after update of plan_status, plan_expires_at on public.profiles
+  for each row execute function public.hnk_sync_legacy_license();
+
+-- The managed-database login owns the objects it creates and there are no
+-- cluster-wide request roles. Revoke PUBLIC privileges, FORCE the owner through
+-- RLS, remove any policy left by an earlier native-dialect attempt, and expose
+-- one path only: the server's transaction-local service context. Student and
+-- administrator authorization remains in the live-session `/v1` layer.
+revoke all on public.roles, public.user_roles, public.licenses,
+  public.app_permissions, public.device_slots, public.device_installations,
+  public.sessions, public.login_history, public.download_history,
+  public.admin_audit_logs, public.panel_versions, public.device_pairing_codes,
+  public.device_history, public.admin_mfa, public.auth_attempts, public.panel_artifacts,
+  public.panel_artifact_chunks from public;
+
+alter table public.roles enable row level security;
+alter table public.user_roles enable row level security;
+alter table public.licenses enable row level security;
+alter table public.app_permissions enable row level security;
+alter table public.device_slots enable row level security;
+alter table public.device_installations enable row level security;
+alter table public.sessions enable row level security;
+alter table public.login_history enable row level security;
+alter table public.download_history enable row level security;
+alter table public.admin_audit_logs enable row level security;
+alter table public.panel_versions enable row level security;
+alter table public.device_pairing_codes enable row level security;
+alter table public.device_history enable row level security;
+alter table public.admin_mfa enable row level security;
+alter table public.auth_attempts enable row level security;
+alter table public.panel_artifacts enable row level security;
+alter table public.panel_artifact_chunks enable row level security;
+
+alter table public.roles force row level security;
+alter table public.user_roles force row level security;
+alter table public.licenses force row level security;
+alter table public.app_permissions force row level security;
+alter table public.device_slots force row level security;
+alter table public.device_installations force row level security;
+alter table public.sessions force row level security;
+alter table public.login_history force row level security;
+alter table public.download_history force row level security;
+alter table public.admin_audit_logs force row level security;
+alter table public.panel_versions force row level security;
+alter table public.device_pairing_codes force row level security;
+alter table public.device_history force row level security;
+alter table public.admin_mfa force row level security;
+alter table public.auth_attempts force row level security;
+alter table public.panel_artifacts force row level security;
+alter table public.panel_artifact_chunks force row level security;
+
+do $$
+declare
+  existing_policy record;
+begin
+  for existing_policy in
+    select schemaname, tablename, policyname
+      from pg_catalog.pg_policies
+     where schemaname = 'public'
+       and tablename::text = any (array[
+         'roles','user_roles','licenses','app_permissions','device_slots',
+         'device_installations','sessions','login_history','download_history',
+         'admin_audit_logs','panel_versions','device_pairing_codes',
+         'device_history','admin_mfa','auth_attempts','panel_artifacts','panel_artifact_chunks'
+       ]::text[])
+  loop
+    execute format('drop policy if exists %I on %I.%I',
+                   existing_policy.policyname,
+                   existing_policy.schemaname,
+                   existing_policy.tablename);
+  end loop;
+end $$;
+
+create policy roles_service_all on public.roles for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy user_roles_service_all on public.user_roles for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy licenses_service_all on public.licenses for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy app_permissions_service_all on public.app_permissions for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy device_slots_service_all on public.device_slots for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy device_installations_service_all on public.device_installations for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy sessions_service_all on public.sessions for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy login_history_service_all on public.login_history for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy download_history_service_all on public.download_history for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy admin_audit_logs_service_all on public.admin_audit_logs for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy panel_versions_service_all on public.panel_versions for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy device_pairing_codes_service_all on public.device_pairing_codes for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy device_history_service_all on public.device_history for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy admin_mfa_service_all on public.admin_mfa for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy auth_attempts_service_all on public.auth_attempts for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy panel_artifacts_service_all on public.panel_artifacts for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy panel_artifact_chunks_service_all on public.panel_artifact_chunks for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');

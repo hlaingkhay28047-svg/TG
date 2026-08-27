@@ -14,7 +14,7 @@
  *
  * Usage: node test/verify_api_service.js   (needs PostgreSQL; see
  *        verify_schema_behaviour.js for how to start one) */
-const { execFileSync, spawn } = require("child_process");
+const { execFile, execFileSync, spawn } = require("child_process");
 const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
@@ -50,8 +50,17 @@ const RUNTIME_ENV = Object.assign({}, ENV, {
 const psql = (sql, db) => execFileSync("psql",
   ["-d", db || "postgres", "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql],
   { env: ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const psqlAsync = (sql, db) => new Promise((resolve,reject)=>{
+  execFile("psql",["-d",db||"postgres","-v","ON_ERROR_STOP=1","-t","-A","-c",sql],
+    {env:ENV,encoding:"utf8"},(error,stdout,stderr)=>{
+      if (error) {
+        error.message += stderr ? "\n"+stderr.trim() : "";
+        reject(error);
+      } else resolve(String(stdout||"").trim());
+    });
+});
 const runtimePsql = (sql, db) => execFileSync("psql",
-  ["-d", db, "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql],
+  ["-d", db, "-v", "ON_ERROR_STOP=1", "-q", "-t", "-A", "-c", sql],
   { env: RUNTIME_ENV, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 const runtimeUrl = db =>
   `postgres://${encodeURIComponent(RUNTIME_USER)}:${encodeURIComponent(RUNTIME_PASSWORD)}` +
@@ -66,10 +75,10 @@ const createRuntimeDatabase = db => {
     `grant usage, create on schema public to ${RUNTIME_USER}`, db);
 };
 const LOCAL_SERVICE_CONTEXT =
-  "select set_config('request.role', 'service_role', true), " +
-  "set_config('request.jwt.claim.sub', '', true), " +
-  "set_config('request.is_admin', 'false', true), " +
-  "set_config('request.user_email', '', true)";
+  "set local request.role = 'service_role'; " +
+  "set local request.jwt.claim.sub = ''; " +
+  "set local request.is_admin = 'false'; " +
+  "set local request.user_email = ''";
 const SESSION_SERVICE_CONTEXT =
   "select set_config('request.role', 'service_role', false), " +
   "set_config('request.jwt.claim.sub', '', false), " +
@@ -108,8 +117,18 @@ createRuntimeDatabase(DB);
    what this string carries. */
 process.env.DATABASE_URL = runtimeUrl(DB);
 process.env.PGSSLMODE = "disable";
+process.env.ALLOW_UNVERIFIED_DB_TLS = "1";
+delete process.env.ALLOW_DERIVED_SECURITY_SECRETS;
 process.env.PG_POOL_MAX = "1";
+process.env.FAILED_LOGIN_LIMIT = "3";
+process.env.PASSWORD_KDF_MAX_CONCURRENCY = "1";
 process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
+process.env.MFA_ENCRYPTION_KEY = "api-service-mfa-encryption-key-2026-08-26";
+process.env.DEVICE_ID_HASH_SECRET = "api-service-device-id-hash-key-2026-08-26";
+process.env.DEVICE_PAIRING_SECRET = "api-service-device-pairing-key-2026-08-26";
+process.env.CCX_DOWNLOAD_SECRET = "api-service-ccx-download-key-2026-08-26";
+process.env.PANEL_LEASE_SECRET = "api-service-panel-lease-key-2026-08-26";
+process.env.MAX_UPLOAD_BYTES = "1024";
 process.env.ALLOWED_ORIGIN = "https://example.test";
 /* The schema is built by the SERVICE'S OWN migration, not by psql here. That
    is deliberate: it is the code path a real deployment takes on first boot, so
@@ -127,9 +146,21 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   if (raw) payload = raw;
   else if (body !== undefined) { h["content-type"] = "application/json"; payload = JSON.stringify(body); }
   const r = await fetch(BASE + p, { method, headers: h, body: payload });
-  const text = await r.text();
+  const bytes = Buffer.from(await r.arrayBuffer());
+  const text = bytes.toString("utf8");
   let json = null; try { json = JSON.parse(text); } catch (_) {}
-  return { status: r.status, json, text };
+  const responseHeaders = {};
+  r.headers.forEach((value,key)=>{ responseHeaders[key.toLowerCase()]=value; });
+  return { status: r.status, json, text, bytes, headers: responseHeaders };
+}
+
+function testPasswordHash(password,parallelization) {
+  return new Promise((resolve,reject)=>{
+    const salt=crypto.randomBytes(16);
+    crypto.scrypt(password,salt,64,{N:16384,r:8,p:parallelization,maxmem:64*1024*1024},
+      (error,key)=>error?reject(error):resolve(
+        `scrypt$16384$8$${parallelization}$${salt.toString("base64")}$${key.toString("base64")}`));
+  });
 }
 
 (async () => {
@@ -217,6 +248,10 @@ async function call(method, p, { token, body, headers, raw } = {}) {
       h.json.apiVersion === EXPECTED_API_VERSION &&
       h.json.schemaFingerprint === EXPECTED_SCHEMA_SHA &&
       h.json.error === undefined, h.json);
+    const recoveryIndex=psql(
+      "select to_regclass('public.hnk_auth_users_recovery_token_uniq')::text",DB);
+    report("A0.1) recovery-token lookup is indexed before auth traffic is admitted",
+      recoveryIndex==="hnk_auth_users_recovery_token_uniq",{recoveryIndex});
   }
 
   /* ================= the ordinary journey ================= */
@@ -250,19 +285,107 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("E) an unknown address answers identically, not 'no such user'",
     r.status === 400 && /Invalid login credentials/.test(r.text), { status: r.status });
 
-  /* ---- the v5.38.0 self-heal, over HTTP ---- */
+  const bruteEmail = "parallel-bruteforce@example.test";
+  const bruteStatuses = [];
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await call("POST", "/auth/v1/token?grant_type=password", {
+      body: { email: bruteEmail, password: "wrong" },
+    });
+    bruteStatuses.push(response.status);
+  }
+  const bruteEmailHash = crypto.createHmac("sha256", process.env.JWT_SECRET)
+    .update(bruteEmail, "utf8").digest("hex");
+  const bruteEvidence = runtimeServicePsql(
+    `select (select count(*) from public.auth_attempts where operation='login' ` +
+    `and email_hash='${bruteEmailHash}')||'|'||` +
+    `(select count(*) from public.auth_attempts where operation='login_admission' ` +
+    `and email_hash='${bruteEmailHash}')||'|'||` +
+    `(select count(*) from public.login_history where event_type='failed_login' ` +
+    `and attempted_email='${bruteEmail}')`, DB);
+  report("E2) failed-password admission stops at the durable pre-KDF limit without audit amplification",
+    bruteStatuses.join(",") === "400,400,400,429" && bruteEvidence === "3|3|3",
+    { statuses: bruteStatuses, failureAdmissionAndAudit: bruteEvidence });
+
+  /* Make verification slow enough to observe the transaction after it reads
+     the old hash. A concurrent password update must wait on that shared row
+     lock, then revoke the session the login just created. Without FOR SHARE,
+     the update commits first and an in-flight old password creates a fresh,
+     unrevoked session afterward. */
+  const raceEmail="password-race@example.test";
+  const racePassword="old-password-race";
+  const slowOldHash=await testPasswordHash(racePassword,12);
+  const replacementHash=await testPasswordHash("replacement-password",1);
+  runtimeServicePsql(
+    `insert into public.hnk_auth_users (email,encrypted_password,email_confirmed_at) ` +
+    `values ('${raceEmail}','${slowOldHash}',now())`,DB);
+  const raceUserId=psql(
+    `select id from public.hnk_auth_users where email='${raceEmail}'`,DB);
+  const racingLogin=call("POST","/auth/v1/token?grant_type=password",{
+    body:{email:raceEmail,password:racePassword},
+  });
+  let observedPasswordRead=false;
+  const observeDeadline=Date.now()+5000;
+  while (Date.now()<observeDeadline) {
+    const active=await psqlAsync(
+      `select count(*) from pg_stat_activity where datname='${DB}' ` +
+      `and usename='${RUNTIME_USER}' and state='idle in transaction' ` +
+      `and query ilike '%encrypted_password%'`,"postgres");
+    if (Number(active)>0) { observedPasswordRead=true;break; }
+    await new Promise(resolve=>setTimeout(resolve,20));
+  }
+  const overflowRecoveryToken=crypto.randomBytes(32).toString("base64url");
+  const recoveryProbeBefore=await psqlAsync(
+    "select count(*) from public.auth_attempts where operation='recovery_probe'",DB);
+  const overflowRecovery=await call("PUT",
+    "/auth/v1/user?token="+encodeURIComponent(overflowRecoveryToken),{
+      body:{password:"replacement-password"},
+    });
+  const recoveryProbeAfter=await psqlAsync(
+    "select count(*) from public.auth_attempts where operation='recovery_probe'",DB);
+  report("E3) a saturated KDF gate rejects recovery before token lookup or durable reservation",
+    observedPasswordRead&&overflowRecovery.status===429&&
+      overflowRecovery.json&&overflowRecovery.json.error==="auth_busy"&&
+      recoveryProbeAfter===recoveryProbeBefore,
+    {observedPasswordRead,status:overflowRecovery.status,
+      error:overflowRecovery.json&&overflowRecovery.json.error,
+      recoveryProbeBefore,recoveryProbeAfter});
+  const racingReset=psqlAsync(
+    `begin; ${LOCAL_SERVICE_CONTEXT}; ` +
+    `update public.hnk_auth_users set encrypted_password='${replacementHash}',updated_at=now() ` +
+    `where id='${raceUserId}'; ` +
+    `update public.sessions set revoked_at=coalesce(revoked_at,now()),` +
+    `revoked_reason=coalesce(revoked_reason,'password_reset') where user_id='${raceUserId}'; commit`,DB);
+  const raceLoginResult=await racingLogin;
+  await racingReset;
+  const racedSessionId=raceLoginResult.json&&raceLoginResult.json.session_id;
+  const racedSessionRevoked=racedSessionId
+    ? runtimeServicePsql(
+      `select (revoked_at is not null)::text from public.sessions where id='${racedSessionId}'`,DB)
+    : "missing";
+  report("E4) password reset revokes a session created by an in-flight old-password login",
+    observedPasswordRead&&raceLoginResult.status===200&&racedSessionRevoked==="true",
+    {observedPasswordRead,status:raceLoginResult.status,sessionRevoked:racedSessionRevoked});
+  /* The race account is an isolated concurrency fixture. Remove it before the
+     ordinary two-account visibility/admin assertions below. */
+  runtimeServicePsql(
+    `delete from public.hnk_auth_users where id='${raceUserId}'`,DB);
+
+  /* Unified signup creates the profile and enforcement rows transactionally;
+     a canonical live session must never point at a missing profile. */
   r = await call("GET", "/rest/v1/profiles?select=*&id=eq." + CUST,
     { token: custToken, headers: { accept: "application/vnd.pgrst.object+json" } });
-  report("F) a missing profile answers 406, which is what accLoadProfile keys on",
-    r.status === 406, { status: r.status });
+  report("F) signup leaves a complete own-only pending profile behind",
+    r.status === 200 && r.json && r.json.plan_status === "none" &&
+      r.json.allowed_devices === 2 && r.json.is_admin === false &&
+      r.json.account_status === "pending" && r.json.email === cust.email,
+    { status: r.status, row: r.json });
+  const unifiedSignupRows = psql(
+    `select (select count(*) from public.user_roles ur join public.roles rr on rr.id=ur.role_id ` +
+    `where ur.user_id='${CUST}' and rr.name='student')||'|'||` +
+    `(select count(*) from public.app_permissions where user_id='${CUST}')`, DB);
+  report("G) signup atomically creates the student's canonical role and permissions",
+    unifiedSignupRows === "1|1", { roleAndPermissions: unifiedSignupRows });
 
-  r = await call("POST", "/rest/v1/profiles", { token: custToken, body: { id: CUST }, headers: { prefer: "return=representation" } });
-  report("G) accEnsureProfile's insert of {id} yields a complete free-tier row",
-    r.status === 201 && r.json && r.json[0] && r.json[0].plan_status === "none" &&
-    r.json[0].allowed_devices === 2 && r.json[0].is_admin === false && r.json[0].email === cust.email,
-    { status: r.status, row: r.json && r.json[0] });
-
-  await call("POST", "/rest/v1/profiles", { token: ownerToken, body: { id: OWNER } });
   runtimeServicePsql(`update public.profiles set is_admin = true where id = '${OWNER}'`, DB);
 
   const serviceAuthRows = await dbRuntime.asService(client =>
@@ -311,16 +434,17 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     { status: r.status, count: Array.isArray(r.json) ? r.json.length : null });
 
   r = await call("GET", "/rest/v1/profiles?select=*", { token: ownerToken });
-  report("J) an admin listing profiles sees every row",
-    r.status === 200 && Array.isArray(r.json) && r.json.length === 2, { count: Array.isArray(r.json) ? r.json.length : null });
+  report("J) an ordinary admin bearer remains scoped to its own profile",
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 1 && r.json[0].id === OWNER,
+    { count: Array.isArray(r.json) ? r.json.length : null, rows: r.json });
 
   const adminProfileBatch = "/rest/v1/profiles?select=id,name,email,joined_paid,allowed_devices," +
     "price_1m_override,price_3m_override,price_6m_override,price_join_first_override" +
     "&id=in.(" + OWNER + "," + CUST + ")";
   r = await call("GET", adminProfileBatch, { token: ownerToken });
   const batchIds = Array.isArray(r.json) ? r.json.map(row => row.id).sort() : [];
-  report("J2) the production API supports the admin UI's bounded profile batch lookup",
-    r.status === 200 && batchIds.join(",") === [CUST, OWNER].sort().join(","),
+  report("J2) a bounded generic REST batch cannot widen an admin bearer",
+    r.status === 200 && batchIds.join(",") === OWNER,
     { status: r.status, ids: batchIds });
   r = await call("GET", adminProfileBatch, { token: custToken });
   report("J3) an id batch still obeys profile RLS for a customer",
@@ -328,14 +452,202 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     { status: r.status, rows: r.json });
   const tooManyIds = Array(101).fill(CUST).join(",");
   r = await call("GET", "/rest/v1/profiles?select=id&id=in.(" + tooManyIds + ")", { token: ownerToken });
-  report("J4) an id batch is capped at the admin queue's 100-row maximum",
+  report("J4) generic REST still caps an oversized id filter",
     r.status === 400, { status: r.status });
+
+  r = await call("GET", "/v1/admin/students", { token: ownerToken });
+  report("J5) a web-session admin bearer cannot enter the strict admin API",
+    r.status === 403, { status: r.status, body: r.json });
+
+  r = await call("POST", "/auth/v1/token?grant_type=password", {
+    body: { email: owner.email, password: owner.password, client_type: "admin" },
+  });
+  const ownerAdminToken = r.json && r.json.access_token;
+  report("J6) admin login creates a dedicated admin-client session",
+    r.status === 200 && !!ownerAdminToken, { status: r.status });
+
+  r = await call("GET", "/v1/admin/students", { token: ownerAdminToken });
+  report("J7) an admin-client session remains blocked until MFA is current",
+    r.status === 403, { status: r.status, body: r.json });
+  const paymentBeforeMfa = await call("GET", "/v1/admin/payment-requests?status=pending", {
+    token: ownerAdminToken,
+  });
+  report("J7b) the strict payment queue also requires current admin MFA",
+    paymentBeforeMfa.status === 403 && paymentBeforeMfa.json &&
+      paymentBeforeMfa.json.error === "mfa_required",
+    { status: paymentBeforeMfa.status, body: paymentBeforeMfa.json });
+
+  const mfaSetup = await call("POST", "/v1/admin/mfa/setup", { token: ownerAdminToken, body: {} });
+  const mfaSecret = mfaSetup.json && mfaSetup.json.secret;
+  const mfaCode = mfaSecret
+    ? require(path.join(ROOT, "server", "lib", "mfa")).totp(mfaSecret, Date.now())
+    : "";
+  const mfaVerified = await call("POST", "/v1/admin/mfa/verify", {
+    token: ownerAdminToken, body: { code: mfaCode },
+  });
+  report("J8) the dedicated admin session completes TOTP setup and verification",
+    mfaSetup.status === 200 && !!mfaSecret && mfaVerified.status === 200 &&
+      mfaVerified.json && mfaVerified.json.mfa_verified === true,
+    { setup: mfaSetup.status, verify: mfaVerified.status });
+
+  r = await call("GET", "/v1/admin/students?limit=10", { token: ownerAdminToken });
+  const strictAdminIds = r.json && Array.isArray(r.json.students)
+    ? r.json.students.map(row => row.id).sort() : [];
+  report("J9) cross-account student reads use only the MFA-verified strict admin API",
+    r.status === 200 && strictAdminIds.join(",") === [CUST, OWNER].sort().join(","),
+    { status: r.status, ids: strictAdminIds });
+
+  r = await call("POST", `/v1/admin/students/${CUST}/actions`, {
+    token: ownerAdminToken,
+    body: { action: "set_permission", permission: "ccx_download", enabled: false },
+  });
+  const strictPermissionAudit = psql(
+    `select (select ccx_download_enabled::text from public.app_permissions where user_id='${CUST}')||'|'||` +
+    `(select count(*)::text from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='set_permission')`, DB);
+  report("J10) strict admin mutations are server-authorized and audited",
+    r.status === 200 && strictPermissionAudit === "false|1",
+    { status: r.status, stateAndAudit: strictPermissionAudit });
+  await call("POST", `/v1/admin/students/${CUST}/actions`, {
+    token: ownerAdminToken,
+    body: { action: "set_permission", permission: "ccx_download", enabled: true },
+  });
+
+  /* Approval is a one-way registration transition, not an alias for rewriting
+     an already-active account. Seed a longer canonical term to prove that the
+     initial pending -> active transition cannot shorten paid time either. */
+  runtimeServicePsql(
+    `update public.profiles set account_status='pending',plan_status='none',plan_expires_at=null ` +
+    `where id='${CUST}'; ` +
+    `insert into public.licenses (user_id,status,starts_at,expires_at,created_by) ` +
+    `values ('${CUST}','active',now(),now()+interval '11 months','${OWNER}') ` +
+    `on conflict (user_id) do update set status='active',starts_at=excluded.starts_at,` +
+    `expires_at=excluded.expires_at,created_by=excluded.created_by`, DB);
+  const approvalExpiryBefore=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const approvedAccount=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,body:{action:"approve",months:1},
+  });
+  const approvalExpiryAfter=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const approvalEvidence=psql(
+    `select account_status||'|'||(select count(*) from public.admin_audit_logs ` +
+    `where actor_user_id='${OWNER}' and target_user_id='${CUST}' and action='approve') ` +
+    `from public.profiles where id='${CUST}'`,DB);
+  const repeatedApproval=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,body:{action:"approve",months:1},
+  });
+  const approvalExpiryAfterReplay=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  runtimeServicePsql(`update public.profiles set account_status='suspended' where id='${CUST}'`,DB);
+  const invalidApproval=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,body:{action:"approve",months:1},
+  });
+  runtimeServicePsql(`update public.profiles set account_status='active' where id='${CUST}'`,DB);
+  report("J11) Approve permits only pending -> active and never truncates an existing license",
+    approvedAccount.status===200&&approvalEvidence==="active|1"&&
+      approvalExpiryAfter===approvalExpiryBefore&&approvalExpiryAfterReplay===approvalExpiryBefore&&
+      repeatedApproval.status===409&&repeatedApproval.json&&
+      repeatedApproval.json.error==="account_not_pending"&&
+      invalidApproval.status===409&&invalidApproval.json&&invalidApproval.json.error==="account_not_pending",
+    {approved:approvedAccount.status,evidence:approvalEvidence,before:approvalExpiryBefore,
+      after:approvalExpiryAfter,replay:repeatedApproval,invalid:invalidApproval});
+
+  runtimeServicePsql(`update public.profiles set account_status='pending' where id='${CUST}'`,DB);
+  const explicitApprovalExpiryBefore=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const explicitApproval=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"approve",expires_at:new Date(Date.now()+31*24*60*60*1000).toISOString()},
+  });
+  const explicitApprovalExpiryAfter=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  report("J11b) explicit-expiry Approve preserves a longer existing canonical term",
+    explicitApproval.status===200&&explicitApprovalExpiryAfter===explicitApprovalExpiryBefore,
+    {status:explicitApproval.status,before:explicitApprovalExpiryBefore,
+      after:explicitApprovalExpiryAfter,body:explicitApproval.json});
+
+  const EXTEND_REPLAY_ID="55555555-5555-4555-8555-555555555551";
+  const extendExpiryBefore=approvalExpiryAfter;
+  const extendFirst=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"extend_license",months:1,mutation_id:EXTEND_REPLAY_ID},
+  });
+  const extendExpiryFirst=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const extendFirstIsOneTerm=psql(
+    `select (expires_at=to_timestamp(${extendExpiryBefore})+interval '1 month')::text ` +
+    `from public.licenses where user_id='${CUST}'`,DB);
+  const extendReplay=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"extend_license",months:1,mutation_id:EXTEND_REPLAY_ID},
+  });
+  const extendExpiryReplay=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const extendReplayAudit=psql(
+    `select count(*)||'|'||bool_and(result is not null)::text from public.admin_audit_logs ` +
+    `where actor_user_id='${OWNER}' and action='extend_license' and mutation_id='${EXTEND_REPLAY_ID}'`,DB);
+  const extendConflict=await call("POST",`/v1/admin/students/${CUST}/actions`,{
+    token:ownerAdminToken,
+    body:{action:"extend_license",months:3,mutation_id:EXTEND_REPLAY_ID},
+  });
+  report("J12) sequential extend_license replay returns one persisted result and extends once",
+    extendFirst.status===200&&extendReplay.status===200&&
+      extendFirst.json&&extendReplay.json&&extendFirst.json.action==="extend_license"&&
+      extendReplay.json.student_id===extendFirst.json.student_id&&
+      extendFirstIsOneTerm==="true"&&extendExpiryReplay===extendExpiryFirst&&
+      extendReplayAudit==="1|true"&&extendConflict.status===409&&extendConflict.json&&
+      extendConflict.json.error==="mutation_conflict",
+    {first:extendFirst,replay:extendReplay,before:extendExpiryBefore,after:extendExpiryFirst,
+      exactOneTerm:extendFirstIsOneTerm,
+      afterReplay:extendExpiryReplay,audit:extendReplayAudit,conflict:extendConflict});
+
+  const {Client:DirectPgClient}=require(path.join(ROOT,"server","node_modules","pg"));
+  const adminContract=require(path.join(ROOT,"server","lib","admin-api.js"));
+  const directAdminIdentity={uid:OWNER,clientType:"admin",roles:["admin"],mfaVerified:true};
+  async function directAdminMutation(invoke) {
+    const client=new DirectPgClient({connectionString:runtimeUrl(DB),ssl:false});
+    await client.connect();
+    try {
+      await client.query("begin");
+      await client.query(LOCAL_SERVICE_CONTEXT);
+      const result=await invoke(client);
+      await client.query("commit");
+      return result;
+    } catch (error) {
+      try { await client.query("rollback"); } catch (_) {}
+      throw error;
+    } finally { await client.end(); }
+  }
+  const EXTEND_CONCURRENT_ID="55555555-5555-4555-8555-555555555552";
+  const concurrentExtendBefore=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const concurrentExtends=await Promise.all([
+    directAdminMutation(client=>adminContract.studentAction(client,directAdminIdentity,CUST,
+      {action:"extend_license",months:1,mutation_id:EXTEND_CONCURRENT_ID},{})),
+    directAdminMutation(client=>adminContract.studentAction(client,directAdminIdentity,CUST,
+      {action:"extend_license",months:1,mutation_id:EXTEND_CONCURRENT_ID},{})),
+  ]);
+  const concurrentExtendAfter=psql(
+    `select extract(epoch from expires_at) from public.licenses where user_id='${CUST}'`,DB);
+  const concurrentExtendIsOneTerm=psql(
+    `select (expires_at=to_timestamp(${concurrentExtendBefore})+interval '1 month')::text ` +
+    `from public.licenses where user_id='${CUST}'`,DB);
+  const concurrentExtendAudit=psql(
+    `select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and action='extend_license' and mutation_id='${EXTEND_CONCURRENT_ID}'`,DB);
+  report("J13) concurrent extend_license replay commits one entitlement mutation and one audit",
+    concurrentExtends.length===2&&concurrentExtends.every(item=>item&&item.action==="extend_license")&&
+      concurrentExtendIsOneTerm==="true"&&concurrentExtendAudit==="1",
+    {results:concurrentExtends,before:concurrentExtendBefore,after:concurrentExtendAfter,
+      exactOneTerm:concurrentExtendIsOneTerm,audit:concurrentExtendAudit});
 
   /* Keep this fixture in the historical flat/no-join-fee mode while giving the
      quote trigger an authoritative positive SKU price. */
   runtimeServicePsql("update public.app_settings set price_1m=30000", DB);
   const paymentCreated = await call("POST", "/rest/v1/payment_requests",
-    { token: custToken, body: { user_id: CUST, kind: "plan_1m", txn_last6: "123456", amount_mmk: 30000 } });
+    { token: custToken, body: { user_id: CUST, kind: "plan_1m", txn_last6: "123456",
+      amount_mmk: 30000, screenshot_path: `${CUST}/plan_1m-1.jpg` } });
   const PAYMENT_ID = psql(`select id from public.payment_requests where user_id='${CUST}'`, DB);
   r = await call("PATCH", "/rest/v1/payment_requests?id=eq." +
     PAYMENT_ID,
@@ -347,12 +659,176 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     stat === "pending|flat|30000",
     { created: paymentCreated.status, httpStatus: r.status, response: r.json, status: stat });
 
+  r = await call("PATCH", "/rest/v1/payment_requests?id=eq." + PAYMENT_ID,
+    { token: ownerToken, body: { status: "approved" }, headers: { prefer: "return=representation" } });
+  const statusAfterAdminBearer = psql(
+    `select status from public.payment_requests where id='${PAYMENT_ID}'`, DB);
+  report("K2) an ordinary admin bearer cannot review another account's payment",
+    r.status === 200 && Array.isArray(r.json) && r.json.length === 0 &&
+      statusAfterAdminBearer === "pending",
+    { status: r.status, response: r.json, paymentStatus: statusAfterAdminBearer });
+
   r = await call("POST", "/rest/v1/payment_requests",
     { token: custToken, body: { user_id: CUST, kind: "plan_1m", status: "approved", reviewed_by: OWNER, note: "ok" } });
   const paymentRowsAfterForgery = psql(`select count(*) from public.payment_requests where user_id='${CUST}'`, DB);
   report("L) a forged already-approved row is refused",
     r.status >= 400 && paymentRowsAfterForgery === "1",
     { status: r.status, rows: paymentRowsAfterForgery });
+
+  const webPaymentList = await call("GET", "/v1/admin/payment-requests?status=pending&page=1&limit=10", {
+    token: ownerToken,
+  });
+  report("L2) an owner web-session bearer cannot enter strict payment administration",
+    webPaymentList.status === 403 && webPaymentList.json && webPaymentList.json.error === "forbidden",
+    { status: webPaymentList.status, body: webPaymentList.json });
+
+  const strictPaymentList = await call("GET",
+    "/v1/admin/payment-requests?status=pending&page=1&limit=10", { token: ownerAdminToken });
+  const listedPayment = strictPaymentList.json && Array.isArray(strictPaymentList.json.payment_requests)
+    ? strictPaymentList.json.payment_requests.find(item=>item.id===PAYMENT_ID) : null;
+  report("L3) MFA-verified payment listing returns the bounded server-owned queue contract",
+    strictPaymentList.status === 200 && strictPaymentList.json &&
+      strictPaymentList.json.page === 1 && strictPaymentList.json.limit === 10 &&
+      strictPaymentList.json.total === 1 && listedPayment && listedPayment.status === "pending" &&
+      Array.isArray(strictPaymentList.json.configuration_warnings) &&
+      strictPaymentList.json.configuration_warnings.length === 0 &&
+      listedPayment.proof_available === true &&
+      listedPayment.proof_url === `/api/v1/admin/payment-requests/${PAYMENT_ID}/proof` &&
+      listedPayment.screenshot_path === undefined,
+    { status: strictPaymentList.status, body: strictPaymentList.json });
+
+  runtimeServicePsql("insert into public.app_settings (price_1m) values (99999)", DB);
+  const misconfiguredPaymentList = await call("GET",
+    "/v1/admin/payment-requests?status=pending&page=1&limit=10", { token: ownerAdminToken });
+  const configurationWarnings = misconfiguredPaymentList.json &&
+    misconfiguredPaymentList.json.configuration_warnings;
+  runtimeServicePsql("delete from public.app_settings where price_1m=99999", DB);
+  const restoredSettingsCount = psql("select count(*) from public.app_settings", DB);
+  report("L3b) payment listing warns without exposing settings when the singleton row count drifts",
+    misconfiguredPaymentList.status === 200 && Array.isArray(configurationWarnings) &&
+      configurationWarnings.length === 1 &&
+      configurationWarnings[0].code === "app_settings_row_count" &&
+      configurationWarnings[0].count === 2 && restoredSettingsCount === "1",
+    { status: misconfiguredPaymentList.status, warnings: configurationWarnings,
+      restoredSettingsCount });
+
+  const strictReview = await call("POST", `/v1/admin/payment-requests/${PAYMENT_ID}/review`, {
+    token: ownerAdminToken,
+    body: { status: "approved", note: "Bank transfer and proof verified" },
+  });
+  const reviewEvidence = psql(
+    `select r.status||'|'||(r.reviewed_by='${OWNER}')::text||'|'||` +
+    `(r.reviewed_at is not null)::text||'|'||p.plan_status||'|'||p.account_status||'|'||` +
+    `(p.plan_expires_at>now())::text||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='review_payment' ` +
+    `and details->>'payment_request_id'='${PAYMENT_ID}')::text ` +
+    `from public.payment_requests r join public.profiles p on p.id=r.user_id ` +
+    `where r.id='${PAYMENT_ID}'`, DB);
+  report("L4) strict review atomically stamps the reviewer, applies entitlement and audits",
+    strictReview.status === 200 && strictReview.json && strictReview.json.payment_request &&
+      strictReview.json.payment_request.status === "approved" &&
+      reviewEvidence === "approved|true|true|active|active|true|1",
+    { status: strictReview.status, body: strictReview.json, evidence: reviewEvidence });
+
+  const replayReview = await call("POST", `/v1/admin/payment-requests/${PAYMENT_ID}/review`, {
+    token: ownerAdminToken,
+    body: { status: "rejected", note: "Duplicate review attempt" },
+  });
+  const replayEvidence = psql(
+    `select r.status||'|'||(select count(*) from public.admin_audit_logs ` +
+    `where actor_user_id='${OWNER}' and target_user_id='${CUST}' and action='review_payment' ` +
+    `and details->>'payment_request_id'='${PAYMENT_ID}')::text ` +
+    `from public.payment_requests r where r.id='${PAYMENT_ID}'`, DB);
+  report("L5) a reviewed payment replays as 409 without a second transition or audit",
+    replayReview.status === 409 && replayReview.json &&
+      replayReview.json.error === "payment_already_reviewed" && replayEvidence === "approved|1",
+    { status: replayReview.status, body: replayReview.json, evidence: replayEvidence });
+
+  const paymentHistory = await call("GET",
+    "/v1/admin/payment-requests?status=history&page=1&limit=10", { token: ownerAdminToken });
+  report("L6) payment history maps to approved and rejected terminal requests",
+    paymentHistory.status === 200 && paymentHistory.json &&
+      Array.isArray(paymentHistory.json.payment_requests) &&
+      paymentHistory.json.payment_requests.some(item=>item.id===PAYMENT_ID&&item.status==="approved"),
+    { status: paymentHistory.status, body: paymentHistory.json });
+
+  const expiryBeforeGrant = psql(
+    `select extract(epoch from plan_expires_at)::bigint from public.profiles where id='${CUST}'`, DB);
+  const grantExpiryBeforeExact=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const GRANT_REPLAY_ID="66666666-6666-4666-8666-666666666661";
+  const strictGrant = await call("POST", "/v1/admin/payment-grants", {
+    token: ownerAdminToken,
+    body: { email: cust.email, kind: "plan_3m", note: "Three-month scholarship",
+      mutation_id:GRANT_REPLAY_ID },
+  });
+  const strictGrantId = strictGrant.json && strictGrant.json.payment_request &&
+    /^[0-9a-f-]{36}$/i.test(String(strictGrant.json.payment_request.id||""))
+    ? strictGrant.json.payment_request.id : "00000000-0000-0000-0000-000000000000";
+  const grantEvidence = psql(
+    `select r.status||'|'||r.is_grant::text||'|'||(r.reviewed_by='${OWNER}')::text||'|'||` +
+    `(r.reviewed_at is not null)::text||'|'||r.pricing_mode||'|'||r.quoted_amount_mmk::text||'|'||` +
+    `p.plan_status||'|'||(extract(epoch from p.plan_expires_at)::bigint>${expiryBeforeGrant})::text||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='grant_payment' ` +
+    `and details->>'payment_request_id'='${strictGrantId}')::text ` +
+    `from public.payment_requests r join public.profiles p on p.id=r.user_id ` +
+    `where r.id='${strictGrantId}'`, DB);
+  report("L7) a strict grant atomically approves, extends entitlement and writes one audit row",
+    strictGrant.status === 201 && strictGrant.json && strictGrant.json.payment_request &&
+      strictGrant.json.payment_request.status === "approved" &&
+      grantEvidence === "approved|true|true|true|grant|0|active|true|1",
+    { status: strictGrant.status, body: strictGrant.json, evidence: grantEvidence });
+
+  const grantExpiryFirst=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const grantFirstIsOneTerm=psql(
+    `select (plan_expires_at=to_timestamp(${grantExpiryBeforeExact})+interval '3 months')::text ` +
+    `from public.profiles where id='${CUST}'`,DB);
+  const grantReplay=await call("POST","/v1/admin/payment-grants",{
+    token:ownerAdminToken,
+    body:{email:cust.email,kind:"plan_3m",note:"Three-month scholarship",mutation_id:GRANT_REPLAY_ID},
+  });
+  const grantExpiryReplay=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const grantReplayEvidence=psql(
+    `select (select count(*) from public.payment_requests where id='${strictGrantId}')||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and action='grant_payment' and mutation_id='${GRANT_REPLAY_ID}')`,DB);
+  report("L8) sequential grantPayment replay returns the original grant without extending twice",
+    grantReplay.status===201&&grantReplay.json&&grantReplay.json.payment_request&&
+      grantReplay.json.payment_request.id===strictGrantId&&grantFirstIsOneTerm==="true"&&
+      grantExpiryReplay===grantExpiryFirst&&
+      grantReplayEvidence==="1|1",
+    {replay:grantReplay,firstExpiry:grantExpiryFirst,replayExpiry:grantExpiryReplay,
+      exactOneTerm:grantFirstIsOneTerm,
+      evidence:grantReplayEvidence});
+
+  const GRANT_CONCURRENT_ID="66666666-6666-4666-8666-666666666662";
+  const concurrentGrantBefore=grantExpiryReplay;
+  const concurrentGrants=await Promise.all([
+    directAdminMutation(client=>adminContract.grantPayment(client,directAdminIdentity,
+      {email:cust.email,kind:"plan_1m",note:"Concurrent scholarship",mutation_id:GRANT_CONCURRENT_ID},{})),
+    directAdminMutation(client=>adminContract.grantPayment(client,directAdminIdentity,
+      {email:cust.email,kind:"plan_1m",note:"Concurrent scholarship",mutation_id:GRANT_CONCURRENT_ID},{})),
+  ]);
+  const concurrentGrantIds=concurrentGrants.map(item=>item&&item.payment_request&&item.payment_request.id);
+  const concurrentGrantAfter=psql(
+    `select extract(epoch from plan_expires_at) from public.profiles where id='${CUST}'`,DB);
+  const concurrentGrantIsOneTerm=psql(
+    `select (plan_expires_at=to_timestamp(${concurrentGrantBefore})+interval '1 month')::text ` +
+    `from public.profiles where id='${CUST}'`,DB);
+  const concurrentGrantEvidence=psql(
+    `select (select count(*) from public.payment_requests where id='${concurrentGrantIds[0]}')||'|'||` +
+    `(select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and action='grant_payment' and mutation_id='${GRANT_CONCURRENT_ID}')`,DB);
+  report("L9) concurrent grantPayment replay creates one payment, one extension and one audit",
+    concurrentGrantIds.length===2&&concurrentGrantIds[0]&&
+      concurrentGrantIds[0]===concurrentGrantIds[1]&&
+      concurrentGrantIsOneTerm==="true"&&concurrentGrantEvidence==="1|1",
+    {ids:concurrentGrantIds,before:concurrentGrantBefore,after:concurrentGrantAfter,
+      exactOneTerm:concurrentGrantIsOneTerm,evidence:concurrentGrantEvidence});
 
   r = await call("GET", "/rest/v1/app_settings?select=*&limit=50");
   report("M) anon may read app_settings (the buy screen quotes prices signed out)",
@@ -383,7 +859,7 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     r.status !== 500 && !leaked(r), { status: r.status, body: r.json });
 
   const forged = require(path.join(ROOT, "server", "lib", "crypto"))
-    .signToken({ sub: OWNER }, "not-the-real-secret", 3600).token;
+    .signToken({ sub: OWNER }, "wrong-api-signing-secret-with-32-bytes", 3600).token;
   r = await call("GET", "/rest/v1/profiles?select=*", { token: forged });
   report("Q) a token signed with the wrong secret grants nothing",
     r.status !== 500 && !leaked(r), { status: r.status, body: r.json });
@@ -392,7 +868,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
      accepted from the verified token; role, admin state and email are derived
      or fixed by db.js before any request query runs. */
   const forgedTrustedClaims = require(path.join(ROOT, "server", "lib", "crypto"))
-    .signToken({ sub: CUST, role: "service_role", is_admin: true, email: owner.email },
+    .signToken({ sub: CUST, sid: custSession.session_id,
+      role: "service_role", is_admin: true, email: owner.email },
       process.env.JWT_SECRET, 3600).token;
   r = await call("GET", "/rest/v1/profiles?select=*", { token: forgedTrustedClaims });
   report("Q2) signed-but-forged service_role/is_admin claims cannot widen customer access",
@@ -428,21 +905,98 @@ async function call(method, p, { token, body, headers, raw } = {}) {
 
   /* ---- storage ---- */
   const boundary = "----hnk";
+  const proofBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]);
   const body = Buffer.concat([
     Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.jpg"\r\nContent-Type: image/jpeg\r\n\r\n`),
-    Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]),
+    proofBytes,
     Buffer.from(`\r\n--${boundary}--\r\n`),
   ]);
   r = await call("POST", `/storage/v1/object/payment-proofs/${CUST}/plan_1m-1.jpg`,
     { token: custToken, raw: body, headers: { "content-type": `multipart/form-data; boundary=${boundary}`, "x-upsert": "true" } });
   report("U) a customer can upload a proof into their own folder", r.status === 200, { status: r.status, text: r.text.slice(0, 90) });
 
+  r = await call("GET", `/storage/v1/object/payment-proofs/${CUST}/plan_1m-1.jpg`, { token: custToken });
+  report("U2) a customer can read their own payment proof", r.status === 200, { status: r.status });
+
+  const webProof = await call("GET", `/v1/admin/payment-requests/${PAYMENT_ID}/proof`, {
+    token: ownerToken,
+  });
+  const proofAuditAfterWebDenial = psql(
+    `select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='view_payment_proof'`, DB);
+  report("U3) an owner web-session bearer cannot read proof through the strict admin route",
+    webProof.status === 403 && proofAuditAfterWebDenial === "0",
+    { status: webProof.status, body: webProof.json, auditRows: proofAuditAfterWebDenial });
+
+  const strictProof = await call("GET", `/v1/admin/payment-requests/${PAYMENT_ID}/proof`, {
+    token: ownerAdminToken,
+  });
+  const proofAudit = psql(
+    `select count(*) from public.admin_audit_logs where actor_user_id='${OWNER}' ` +
+    `and target_user_id='${CUST}' and action='view_payment_proof' ` +
+    `and details->>'payment_request_id'='${PAYMENT_ID}'`, DB);
+  report("U4) MFA-verified proof retrieval returns the exact private bytes and audits the view",
+    strictProof.status === 200 && strictProof.bytes.equals(proofBytes) &&
+      strictProof.headers["content-type"] === "image/jpeg" &&
+      /(?:^|,)\s*(?:private\s*,\s*)?no-store(?:\s*,|$)/i.test(strictProof.headers["cache-control"]||"") &&
+      strictProof.headers["x-content-type-options"] === "nosniff" &&
+      strictProof.headers["content-length"] === String(proofBytes.length) && proofAudit === "1",
+    { status: strictProof.status, headers: strictProof.headers,
+      bytes: strictProof.bytes.toString("hex"), auditRows: proofAudit });
+
+  const unsafePaymentCreated = await call("POST", "/rest/v1/payment_requests", {
+    token: custToken,
+    body: { user_id: CUST, kind: "plan_1m", txn_last6: "654321", amount_mmk: 30000,
+      screenshot_path: `${CUST}/unsafe.svg` },
+  });
+  const unsafePaymentId = psql(
+    `select id from public.payment_requests where screenshot_path='${CUST}/unsafe.svg'`, DB);
+  runtimeServicePsql(
+    `insert into public.hnk_storage_objects (bucket_id,name,owner,mime_type,data) values (` +
+    `'payment-proofs','${CUST}/unsafe.svg','${CUST}','image/svg+xml',decode('3c7376672f3e','hex'))`, DB);
+  const unsafeProof = await call("GET", `/v1/admin/payment-requests/${unsafePaymentId}/proof`, {
+    token: ownerAdminToken,
+  });
+  const unsafeProofAudit = psql(
+    `select count(*) from public.admin_audit_logs where action='view_payment_proof' ` +
+    `and details->>'payment_request_id'='${unsafePaymentId}'`, DB);
+  report("U5) strict proof retrieval rejects active stored MIME before bytes or audit",
+    unsafePaymentCreated.status === 201 && unsafePaymentId.length === 36 &&
+      unsafeProof.status === 415 && unsafeProof.json &&
+      unsafeProof.json.error === "unsupported_payment_proof_type" && unsafeProofAudit === "0",
+    { created: unsafePaymentCreated.status, status: unsafeProof.status,
+      body: unsafeProof.json, auditRows: unsafeProofAudit });
+
+  const largePaymentCreated = await call("POST", "/rest/v1/payment_requests", {
+    token: custToken,
+    body: { user_id: CUST, kind: "plan_1m", txn_last6: "777777", amount_mmk: 30000,
+      screenshot_path: `${CUST}/large.jpg` },
+  });
+  const largePaymentId = psql(
+    `select id from public.payment_requests where screenshot_path='${CUST}/large.jpg'`, DB);
+  runtimeServicePsql(
+    `insert into public.hnk_storage_objects (bucket_id,name,owner,mime_type,data) values (` +
+    `'payment-proofs','${CUST}/large.jpg','${CUST}','image/jpeg',decode(repeat('00',1025),'hex'))`, DB);
+  const largeProof = await call("GET", `/v1/admin/payment-requests/${largePaymentId}/proof`, {
+    token: ownerAdminToken,
+  });
+  const largeProofAudit = psql(
+    `select count(*) from public.admin_audit_logs where action='view_payment_proof' ` +
+    `and details->>'payment_request_id'='${largePaymentId}'`, DB);
+  report("U6) strict proof retrieval rejects a stored object above the response cap before audit",
+    largePaymentCreated.status === 201 && largePaymentId.length === 36 &&
+      largeProof.status === 413 && largeProof.json &&
+      largeProof.json.error === "payment_proof_too_large" && largeProofAudit === "0",
+    { created: largePaymentCreated.status, status: largeProof.status,
+      body: largeProof.json, auditRows: largeProofAudit });
+
   r = await call("POST", `/storage/v1/object/payment-proofs/${OWNER}/stolen.jpg`,
     { token: custToken, raw: body, headers: { "content-type": `multipart/form-data; boundary=${boundary}`, "x-upsert": "true" } });
   report("V) a customer cannot upload into another user's folder", r.status >= 400, { status: r.status });
 
   r = await call("GET", `/storage/v1/object/payment-proofs/${CUST}/plan_1m-1.jpg`, { token: ownerToken });
-  report("W) an admin can read a customer's proof", r.status === 200, { status: r.status });
+  report("W) an ordinary admin bearer cannot read a customer's proof",
+    r.status === 404, { status: r.status });
 
   /* a second customer must not */
   const other = { email: "other@example.test", password: "otherpass123" };
@@ -578,6 +1132,14 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("H9) two candidates are refused rather than guessed between — the wrong one holds the payments",
     !!ambiguous && ambiguous.ready === false && /guess/.test(ambiguous.error || ""), ambiguous);
 
+  const directAndAlternate = await healthWith(REAL,
+    { [ALT]: "postgres://a:b@127.0.0.1:5432/other" });
+  report("H9a) a resolved DATABASE_URL does not hide a second resolved candidate",
+    !!directAndAlternate && directAndAlternate.ready === false &&
+    /DATABASE_URL/.test(directAndAlternate.error || "") &&
+    new RegExp(ALT).test(directAndAlternate.error || "") &&
+    /guess/.test(directAndAlternate.error || ""), directAndAlternate);
+
   /* The restriction that makes H8 safe rather than reckless. During a migration
      the OLD database is still live and its URL may still be sitting in the
      environment under some unrelated name; sweeping the whole environment for
@@ -667,6 +1229,10 @@ async function call(method, p, { token, body, headers, raw } = {}) {
     ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", "/dev/null",
      "-subj", "/CN=verify-api-service", "-days", "1"],
     { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  const OTHER_PEM = execFileSync("openssl",
+    ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", "/dev/null",
+     "-subj", "/CN=wrong-database", "-days", "1"],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
   const sslWith = env => {
     const saved = {};
     for (const k of Object.keys(env)) { saved[k] = process.env[k]; process.env[k] = env[k]; }
@@ -686,10 +1252,23 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("S1) an unresolved CA binding is NOT trusted as a certificate — that cost a whole deploy",
     !!literal && literal.rejectUnauthorized === false && literal.ca === undefined, literal);
 
-  const bound = sslWith({ DATABASE_CA_CERT: "${hnk-db.CA_CERT}",
-                          DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB: PEM });
-  report("S2) the binding that DID resolve is verified against, so the database is authenticated",
+  const bound = sslWith({
+    DATABASE_URL: "${hnk-db.DATABASE_URL}",
+    [ALT]: REAL,
+    DATABASE_CA_CERT: OTHER_PEM,
+    DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB: PEM,
+  });
+  report("S2) the CA paired with the resolved URL binding is used, not another database's CA",
     !!bound && bound.rejectUnauthorized === true && bound.ca === PEM, bound);
+
+  const unpaired = sslWith({
+    DATABASE_URL: "${hnk-db.DATABASE_URL}",
+    [ALT]: REAL,
+    DATABASE_CA_CERT: PEM,
+    DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB: "${db.CA_CERT}",
+  });
+  report("S2b) a usable CA for an unresolved URL binding is not borrowed for the selected database",
+    !!unpaired && unpaired.rejectUnauthorized === false && unpaired.ca === undefined, unpaired);
 
   const stray = sslWith({ DATABASE_CA_CERT: "${hnk-db.CA_CERT}", PROXY_CA_CERT: PEM });
   report("S3) a certificate under an unrelated key is not adopted — the wrong CA refuses every connection",
@@ -745,11 +1324,18 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   dbModule.pool.options.ssl = { rejectUnauthorized: true };
   const certErr = Object.assign(new Error("self-signed certificate in certificate chain"),
     { code: "SELF_SIGNED_CERT_IN_CHAIN" });
-  report("S11) a certificate failure stands down from VERIFYING rather than from connecting",
+  const savedUnverifiedOverride=process.env.ALLOW_UNVERIFIED_DB_TLS;
+  delete process.env.ALLOW_UNVERIFIED_DB_TLS;
+  report("S11) production refuses to downgrade after certificate verification fails",
+    dbModule.downgradeTlsAfter(certErr) === false &&
+    dbModule.pool.options.ssl.rejectUnauthorized === true,
+    dbModule.pool.options.ssl);
+  process.env.ALLOW_UNVERIFIED_DB_TLS="1";
+  report("S12) an explicit local/test override may stand down from verification",
     dbModule.downgradeTlsAfter(certErr) === true &&
     dbModule.pool.options.ssl.rejectUnauthorized === false,
     dbModule.pool.options.ssl);
-  report("S12) ...and says so, naming the code, so the downgrade is never silent",
+  report("S12b) ...and says so, naming the code, so the downgrade is never silent",
     /SELF_SIGNED_CERT_IN_CHAIN/.test(dbModule.getTlsNote() || "") &&
     /UNVERIFIED/.test(dbModule.getTlsNote() || ""), dbModule.getTlsNote());
   report("S13) ...and does not downgrade again once already unverified",
@@ -765,6 +1351,8 @@ async function call(method, p, { token, body, headers, raw } = {}) {
   report("S15) /health reports the TLS state in every case, not only the bad ones",
     dbModule.tlsState() === "verified", dbModule.tlsState());
   dbModule.pool.options.ssl = savedSsl;
+  if (savedUnverifiedOverride===undefined) delete process.env.ALLOW_UNVERIFIED_DB_TLS;
+  else process.env.ALLOW_UNVERIFIED_DB_TLS=savedUnverifiedOverride;
 
   /* ---- the check that was missing, and why ----
      Asserting on pool.options.ssl passes while the driver ignores it. pg builds

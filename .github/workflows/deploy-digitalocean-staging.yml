@@ -109,23 +109,75 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
+          APP_ID="${{ steps.app.outputs.app_id }}"
           LIVE_SPEC="$RUNNER_TEMP/staging-live-spec.json"
           PATCHED_SPEC="$RUNNER_TEMP/staging-patched-spec.json"
           BOOTSTRAP_SPEC="$RUNNER_TEMP/staging-bootstrap-spec.json"
+          WARMUP_SPEC="$RUNNER_TEMP/staging-warmup-spec.json"
+          WARMUP_RESTORED_SPEC="$RUNNER_TEMP/staging-warmup-restored-spec.json"
           JWT_SECRET_FILE="$RUNNER_TEMP/staging-bootstrap-jwt"
           PROPOSAL_FILE="$RUNNER_TEMP/staging-bootstrap-proposal.txt"
           ROUNDTRIP_SPEC="$RUNNER_TEMP/staging-bootstrap-roundtrip.json"
           ROUNDTRIP_PATCHED_SPEC="$RUNNER_TEMP/staging-bootstrap-roundtrip-patched.json"
-          trap 'rm -f "$LIVE_SPEC" "$PATCHED_SPEC" "$BOOTSTRAP_SPEC" "$JWT_SECRET_FILE" "$PROPOSAL_FILE" "$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC"' EXIT
-          doctl apps spec get "${{ steps.app.outputs.app_id }}" --format json > "$LIVE_SPEC"
+          FINAL_SPEC="$RUNNER_TEMP/staging-final-spec.json"
+          FINAL_PATCHED_SPEC="$RUNNER_TEMP/staging-final-patched-spec.json"
+          APP_STATE_FILE="$RUNNER_TEMP/staging-app-state.json"
+          HEALTH_FILE="$RUNNER_TEMP/staging-warm-health.json"
+          trap 'rm -f "$LIVE_SPEC" "$PATCHED_SPEC" "$BOOTSTRAP_SPEC" "$WARMUP_SPEC" "$WARMUP_RESTORED_SPEC" "$JWT_SECRET_FILE" "$PROPOSAL_FILE" "$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC" "$FINAL_SPEC" "$FINAL_PATCHED_SPEC" "$APP_STATE_FILE" "$HEALTH_FILE"' EXIT
+          doctl apps spec get "$APP_ID" --format json > "$LIVE_SPEC"
+          doctl apps get "$APP_ID" --output json > "$APP_STATE_FILE"
+
+          APP_OBJECT_COUNT="$(jq -r --arg id "$APP_ID" '
+            [(if type == "array" then .[] else . end) | select(.id == $id)] | length
+          ' "$APP_STATE_FILE")"
+          DESIRED_SERVICE_COUNT="$(jq -r '[.services[]?] | length' "$LIVE_SPEC")"
+          DESIRED_API_COUNT="$(jq -r --arg service "$DO_SERVICE" '
+            [.services[]? | select(.name == $service)] | length
+          ' "$LIVE_SPEC")"
+          ACTIVE_SERVICE_COUNT="$(jq -r --arg id "$APP_ID" '
+            [(if type == "array" then .[] else . end)
+              | select(.id == $id) | .active_deployment.services[]?] | length
+          ' "$APP_STATE_FILE")"
+          ACTIVE_API_COUNT="$(jq -r --arg id "$APP_ID" --arg service "$DO_SERVICE" '
+            [(if type == "array" then .[] else . end)
+              | select(.id == $id) | .active_deployment.services[]?
+              | select(.name == $service)] | length
+          ' "$APP_STATE_FILE")"
+          ACTIVE_STATIC_COUNT="$(jq -r --arg id "$APP_ID" --arg site "$DO_STATIC_SITE" '
+            [(if type == "array" then .[] else . end)
+              | select(.id == $id) | .active_deployment.static_sites[]?
+              | select(.name == $site)] | length
+          ' "$APP_STATE_FILE")"
+          ACTIVE_READY_PATH="$(jq -r --arg id "$APP_ID" --arg service "$DO_SERVICE" '
+            [(if type == "array" then .[] else . end)
+              | select(.id == $id) | .active_deployment.spec.services[]?
+              | select(.name == $service) | .health_check.http_path // empty]
+            | if length == 1 then .[0] else empty end
+          ' "$APP_STATE_FILE")"
+          ACTIVE_LIVE_PATH="$(jq -r --arg id "$APP_ID" --arg service "$DO_SERVICE" '
+            [(if type == "array" then .[] else . end)
+              | select(.id == $id) | .active_deployment.spec.services[]?
+              | select(.name == $service) | .liveness_health_check.http_path // empty]
+            | if length == 1 then .[0] else empty end
+          ' "$APP_STATE_FILE")"
+          if [ "$APP_OBJECT_COUNT" -ne 1 ] || [ "$ACTIVE_STATIC_COUNT" -ne 1 ]; then
+            echo "::error::Refusing an ambiguous staging deployment state before health-probe synchronization."
+            exit 1
+          fi
+
+          EXPECTED_VERSION="$(jq -r '.v // empty' docs/app/version.json)"
+          EXPECTED_SCHEMA_SHA="$(sha256sum server/sql/schema.sql | awk '{print $1}')"
+          CANONICAL_SPEC=""
+          WARMUP_DEPLOY_REQUIRED="false"
+          READY_PROMOTION_REQUIRED="false"
 
           # This staging app was created as a static-only app before hnk-api was
           # added to the tracked spec. Source auto-deploy updates existing
-          # components; it does not create that missing service. Permit one
-          # tightly-scoped bootstrap for the 5.42.2 repair, then return forever
-          # to the normal encrypted-live-spec path below.
-          if jq -e '(.services == null) or ((.services | type) == "array" and (.services | length) == 0)' "$LIVE_SPEC" >/dev/null; then
-            EXPECTED_VERSION="$(jq -r '.v // empty' docs/app/version.json)"
+          # components; it does not create that missing service. Bootstrap a
+          # canonical spec, but deploy it first through /live so the new
+          # database has time to migrate before /ready becomes the gate.
+          if [ "$DESIRED_SERVICE_COUNT" -eq 0 ] && [ "$DESIRED_API_COUNT" -eq 0 ] &&
+             [ "$ACTIVE_SERVICE_COUNT" -eq 0 ] && [ "$ACTIVE_API_COUNT" -eq 0 ]; then
             if [ "$EXPECTED_VERSION" != "5.42.2" ]; then
               echo "::error::The one-time static-only staging bootstrap is locked to Web/API 5.42.2, not ${EXPECTED_VERSION:-unknown}."
               exit 1
@@ -136,66 +188,257 @@ jobs:
               "$LIVE_SPEC" "$BOOTSTRAP_SPEC" "$JWT_SECRET_FILE" \
               "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
               "$DO_REPO" "$DO_BRANCH" "$DO_APP_HOST"
+            CANONICAL_SPEC="$BOOTSTRAP_SPEC"
+            WARMUP_DEPLOY_REQUIRED="true"
+            READY_PROMOTION_REQUIRED="true"
+          elif [ "$DESIRED_SERVICE_COUNT" -eq 1 ] && [ "$DESIRED_API_COUNT" -eq 1 ] &&
+               [ "$ACTIVE_SERVICE_COUNT" -eq 0 ] && [ "$ACTIVE_API_COUNT" -eq 0 ]; then
+            # A failed bootstrap persists the desired service while the active
+            # deployment rolls back to static-only. Validate the encrypted live
+            # spec, then retry it through the liveness gate.
+            if [ "$EXPECTED_VERSION" != "5.42.2" ]; then
+              echo "::error::The inactive-API staging recovery is locked to Web/API 5.42.2, not ${EXPECTED_VERSION:-unknown}."
+              exit 1
+            fi
+            node .github/scripts/patch_digitalocean_spec.js \
+              "$LIVE_SPEC" "$PATCHED_SPEC" \
+              "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
+              "$DO_REPO" "$DO_BRANCH"
+            EXPECTED_DB_COUNT="$(jq -r '
+              [.databases[]? | select((.name == "hnk-db" or .name == "db") and .engine == "PG")] | length
+            ' "$LIVE_SPEC")"
+            TOTAL_DB_COUNT="$(jq -r '[.databases[]?] | length' "$LIVE_SPEC")"
+            if [ "$EXPECTED_DB_COUNT" -ne 1 ] || [ "$TOTAL_DB_COUNT" -ne 1 ]; then
+              echo "::error::Inactive-API recovery requires exactly one expected PostgreSQL staging database."
+              exit 1
+            fi
+            CANONICAL_SPEC="$PATCHED_SPEC"
+            WARMUP_DEPLOY_REQUIRED="true"
+            READY_PROMOTION_REQUIRED="true"
+          elif [ "$DESIRED_SERVICE_COUNT" -eq 1 ] && [ "$DESIRED_API_COUNT" -eq 1 ] &&
+               [ "$ACTIVE_SERVICE_COUNT" -eq 1 ] && [ "$ACTIVE_API_COUNT" -eq 1 ]; then
+            node .github/scripts/patch_digitalocean_spec.js \
+              "$LIVE_SPEC" "$PATCHED_SPEC" "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
+              "$DO_REPO" "$DO_BRANCH"
+            CANONICAL_SPEC="$PATCHED_SPEC"
+            CURRENT_READY_PATH="$(jq -r --arg service "$DO_SERVICE" '
+              .services[] | select(.name == $service) | .health_check.http_path // ""
+            ' "$LIVE_SPEC")"
+            CURRENT_LIVE_PATH="$(jq -r --arg service "$DO_SERVICE" '
+              .services[] | select(.name == $service) | .liveness_health_check.http_path // ""
+            ' "$LIVE_SPEC")"
+            ACTIVE_SOURCE_SHA="$(jq -r --arg service "$DO_SERVICE" '
+              [(if type == "array" then .[0] else . end)
+                | .active_deployment.services[]?
+                | select(.name == $service)
+                | .source_commit_hash // empty]
+              | if length == 1 then .[0] else empty end
+            ' "$APP_STATE_FILE")"
+            if [ "$CURRENT_READY_PATH" = "/ready" ] && [ "$CURRENT_LIVE_PATH" = "/live" ] &&
+               [ "$ACTIVE_READY_PATH" = "/ready" ] && [ "$ACTIVE_LIVE_PATH" = "/live" ] &&
+               [ "$ACTIVE_SOURCE_SHA" = "$GITHUB_SHA" ]; then
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              echo "Desired and active staging probes and source already match the release contract."
+              exit 0
+            fi
+            if { [ "$CURRENT_READY_PATH" = "/ready" ] || [ "$CURRENT_READY_PATH" = "/live" ]; } &&
+               [ "$CURRENT_LIVE_PATH" = "/live" ] &&
+               { [ "$ACTIVE_READY_PATH" = "/ready" ] || [ "$ACTIVE_READY_PATH" = "/live" ]; } &&
+               [ "$ACTIVE_LIVE_PATH" = "/live" ]; then
+              READY_PROMOTION_REQUIRED="true"
+              if [ "$ACTIVE_SOURCE_SHA" != "$GITHUB_SHA" ]; then
+                WARMUP_DEPLOY_REQUIRED="true"
+              else
+                echo "Resuming the staged readiness promotion (desired $CURRENT_READY_PATH; active $ACTIVE_READY_PATH)."
+              fi
+            else
+              SYNC_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))
+              if [ "$SYNC_TIMEOUT_SECONDS" -le 0 ]; then
+                echo "::error::Not enough time remains to synchronize the live spec and verify staging."
+                exit 1
+              fi
+              timeout --foreground --signal=TERM --kill-after=10s "${SYNC_TIMEOUT_SECONDS}s" \
+                doctl apps update "$APP_ID" \
+                --spec "$PATCHED_SPEC" \
+                --update-sources \
+                --wait \
+                --format ID,DefaultIngress,Updated
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            echo "::error::Refusing an ambiguous staging deployment state (desired services $DESIRED_SERVICE_COUNT/API $DESIRED_API_COUNT; active services $ACTIVE_SERVICE_COUNT/API $ACTIVE_API_COUNT)."
+            exit 1
+          fi
+
+          if [ "$READY_PROMOTION_REQUIRED" != "true" ] || [ -z "$CANONICAL_SPEC" ]; then
+            echo "::error::Staging probe synchronization reached an invalid internal state."
+            exit 1
+          fi
+
+          if [ "$WARMUP_DEPLOY_REQUIRED" = "true" ]; then
+            jq --arg service "$DO_SERVICE" '
+              (.services[] | select(.name == $service) | .health_check.http_path) = "/live"
+            ' "$CANONICAL_SPEC" > "$WARMUP_SPEC"
+            jq --arg service "$DO_SERVICE" '
+              (.services[] | select(.name == $service) | .health_check.http_path) = "/ready"
+            ' "$WARMUP_SPEC" > "$WARMUP_RESTORED_SPEC"
+            if ! cmp -s <(jq -S . "$CANONICAL_SPEC") <(jq -S . "$WARMUP_RESTORED_SPEC"); then
+              echo "::error::The temporary liveness warmup changed fields outside the API readiness path."
+              exit 1
+            fi
             if ! doctl apps propose \
-              --app "${{ steps.app.outputs.app_id }}" \
-              --spec "$BOOTSTRAP_SPEC" > "$PROPOSAL_FILE" 2>&1; then
-              echo "::error::DigitalOcean rejected the staging bootstrap proposal; no app update was attempted."
+              --app "$APP_ID" \
+              --spec "$WARMUP_SPEC" > "$PROPOSAL_FILE" 2>&1; then
+              echo "::error::DigitalOcean rejected the staging liveness-warmup proposal; no app update was attempted."
               exit 1
             fi
-            BOOTSTRAP_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))
-            if [ "$BOOTSTRAP_TIMEOUT_SECONDS" -le 0 ]; then
-              echo "::error::Not enough time remains to bootstrap and verify staging."
+            WARMUP_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 720 ))
+            if [ "$WARMUP_TIMEOUT_SECONDS" -le 0 ]; then
+              echo "::error::Not enough time remains for the liveness warmup and readiness promotion."
               exit 1
             fi
-            timeout --foreground --signal=TERM --kill-after=10s "${BOOTSTRAP_TIMEOUT_SECONDS}s" \
-              doctl apps update "${{ steps.app.outputs.app_id }}" \
-              --spec "$BOOTSTRAP_SPEC" \
+            timeout --foreground --signal=TERM --kill-after=10s "${WARMUP_TIMEOUT_SECONDS}s" \
+              doctl apps update "$APP_ID" \
+              --spec "$WARMUP_SPEC" \
               --update-sources \
               --wait \
               --format ID,DefaultIngress,Updated
-
-            # Prove DigitalOcean stored the generated key as EV[...] and the
-            # resulting full spec now passes the ordinary production-strength
-            # validator before live verification is allowed to continue.
-            doctl apps spec get "${{ steps.app.outputs.app_id }}" --format json > "$ROUNDTRIP_SPEC"
-            node .github/scripts/patch_digitalocean_spec.js \
-              "$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC" \
-              "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
-              "$DO_REPO" "$DO_BRANCH"
-            if ! cmp -s <(jq -S . "$ROUNDTRIP_SPEC") <(jq -S . "$ROUNDTRIP_PATCHED_SPEC"); then
-              echo "::error::The bootstrapped staging spec did not retain the approved readiness/liveness paths."
-              exit 1
-            fi
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Bootstrapped and revalidated the missing staging API service."
-            exit 0
           fi
 
-          node .github/scripts/patch_digitalocean_spec.js \
-            "$LIVE_SPEC" "$PATCHED_SPEC" "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
-            "$DO_REPO" "$DO_BRANCH"
-          CURRENT_READY_PATH="$(jq -r --arg service "$DO_SERVICE" '.services[] | select(.name == $service) | .health_check.http_path // ""' "$LIVE_SPEC")"
-          CURRENT_LIVE_PATH="$(jq -r --arg service "$DO_SERVICE" '.services[] | select(.name == $service) | .liveness_health_check.http_path // ""' "$LIVE_SPEC")"
-          if [ "$CURRENT_READY_PATH" = "/ready" ] && [ "$CURRENT_LIVE_PATH" = "/live" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Live staging health probes already match the release contract."
-            exit 0
-          fi
-          SYNC_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))
-          if [ "$SYNC_TIMEOUT_SECONDS" -le 0 ]; then
-            echo "::error::Not enough time remains to synchronize the live spec and verify staging."
+          doctl apps get "$APP_ID" --output json > "$APP_STATE_FILE"
+          ACTIVE_SOURCE_SHA="$(jq -r --arg service "$DO_SERVICE" '
+            [(if type == "array" then .[0] else . end)
+              | .active_deployment.services[]?
+              | select(.name == $service)
+              | .source_commit_hash // empty]
+            | if length == 1 then .[0] else empty end
+          ' "$APP_STATE_FILE")"
+          if [ "$ACTIVE_SOURCE_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::The liveness warmup did not activate the expected staging API source commit."
             exit 1
           fi
-          timeout --foreground --signal=TERM --kill-after=10s "${SYNC_TIMEOUT_SECONDS}s" \
-            doctl apps update "${{ steps.app.outputs.app_id }}" \
-            --spec "$PATCHED_SPEC" \
-            --update-sources \
+
+          echo "Waiting for the warm API and database before enforcing /ready."
+          WARMUP_READY_DEADLINE=$(( JOB_DEADLINE_EPOCH - 600 ))
+          WARMUP_READY="false"
+          attempt=0
+          while [ "$(date +%s)" -lt "$WARMUP_READY_DEADLINE" ]; do
+            attempt=$((attempt + 1))
+            HEALTH_URL="https://${DO_APP_HOST}/api/health?sha=${GITHUB_SHA}&warmup=${attempt}"
+            HTTP_STATUS="$(curl --silent --show-error --max-time 20 \
+              --output "$HEALTH_FILE" --write-out '%{http_code}' \
+              -H 'Cache-Control: no-cache' "$HEALTH_URL" 2>/dev/null || true)"
+            ACTUAL_API_VERSION=""
+            ACTUAL_SCHEMA_SHA=""
+            ACTUAL_READY="false"
+            ACTUAL_TLS=""
+            if [ "$HTTP_STATUS" = "200" ] && jq -e 'type == "object"' "$HEALTH_FILE" >/dev/null 2>&1; then
+              ACTUAL_API_VERSION="$(jq -r '.apiVersion // empty' "$HEALTH_FILE")"
+              ACTUAL_SCHEMA_SHA="$(jq -r '.schemaFingerprint // empty' "$HEALTH_FILE")"
+              ACTUAL_READY="$(jq -r '.ready // false' "$HEALTH_FILE")"
+              ACTUAL_TLS="$(jq -r '.tls // empty' "$HEALTH_FILE")"
+            fi
+            if [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] &&
+               [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] &&
+               [ "$ACTUAL_READY" = "true" ] &&
+               [ "$ACTUAL_TLS" = "verified" ]; then
+              WARMUP_READY="true"
+              break
+            fi
+            sleep 10
+          done
+          if [ "$WARMUP_READY" != "true" ]; then
+            echo "::error::The staging API did not reach the exact version/schema/readiness/TLS contract during its liveness warmup. Inspect the restricted DigitalOcean runtime logs."
+            exit 1
+          fi
+
+          # DigitalOcean has now encrypted any bootstrap secret. Re-download
+          # the live warmup spec and let the fail-closed patcher restore /ready.
+          doctl apps spec get "$APP_ID" --format json > "$ROUNDTRIP_SPEC"
+          node .github/scripts/patch_digitalocean_spec.js \
+            "$ROUNDTRIP_SPEC" "$ROUNDTRIP_PATCHED_SPEC" \
+            "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
+            "$DO_REPO" "$DO_BRANCH"
+          ROUNDTRIP_READY_PATH="$(jq -r --arg service "$DO_SERVICE" '
+            .services[] | select(.name == $service) | .health_check.http_path // ""
+          ' "$ROUNDTRIP_SPEC")"
+          if [ "$ROUNDTRIP_READY_PATH" = "/live" ]; then
+            jq --arg service "$DO_SERVICE" '
+              (.services[] | select(.name == $service) | .health_check.http_path) = "/live"
+            ' "$ROUNDTRIP_PATCHED_SPEC" > "$WARMUP_RESTORED_SPEC"
+            if ! cmp -s <(jq -S . "$ROUNDTRIP_SPEC") <(jq -S . "$WARMUP_RESTORED_SPEC"); then
+              echo "::error::The readiness promotion would change fields outside the approved probe transition."
+              exit 1
+            fi
+          elif [ "$ROUNDTRIP_READY_PATH" = "/ready" ]; then
+            if ! cmp -s <(jq -S . "$ROUNDTRIP_SPEC") <(jq -S . "$ROUNDTRIP_PATCHED_SPEC"); then
+              echo "::error::The persisted readiness spec changed outside the approved probe contract."
+              exit 1
+            fi
+          else
+            echo "::error::The staging readiness promotion found an unapproved desired probe."
+            exit 1
+          fi
+          if ! doctl apps propose \
+            --app "$APP_ID" \
+            --spec "$ROUNDTRIP_PATCHED_SPEC" > "$PROPOSAL_FILE" 2>&1; then
+            echo "::error::DigitalOcean rejected the final staging readiness proposal."
+            exit 1
+          fi
+          READY_TIMEOUT_SECONDS=$(( JOB_DEADLINE_EPOCH - $(date +%s) - 120 ))
+          if [ "$READY_TIMEOUT_SECONDS" -le 0 ]; then
+            echo "::error::Not enough time remains to enforce /ready and verify staging."
+            exit 1
+          fi
+          timeout --foreground --signal=TERM --kill-after=10s "${READY_TIMEOUT_SECONDS}s" \
+            doctl apps update "$APP_ID" \
+            --spec "$ROUNDTRIP_PATCHED_SPEC" \
             --wait \
             --format ID,DefaultIngress,Updated
+
+          doctl apps spec get "$APP_ID" --format json > "$FINAL_SPEC"
+          node .github/scripts/patch_digitalocean_spec.js \
+            "$FINAL_SPEC" "$FINAL_PATCHED_SPEC" \
+            "$DO_APP_NAME" "$DO_SERVICE" "$DO_STATIC_SITE" \
+            "$DO_REPO" "$DO_BRANCH"
+          if ! cmp -s <(jq -S . "$FINAL_SPEC") <(jq -S . "$FINAL_PATCHED_SPEC"); then
+            echo "::error::The final staging spec did not retain /ready and /live."
+            exit 1
+          fi
+          doctl apps get "$APP_ID" --output json > "$APP_STATE_FILE"
+          FINAL_ACTIVE_READY_PATH="$(jq -r --arg service "$DO_SERVICE" '
+            [(if type == "array" then .[0] else . end)
+              | .active_deployment.spec.services[]?
+              | select(.name == $service) | .health_check.http_path // empty]
+            | if length == 1 then .[0] else empty end
+          ' "$APP_STATE_FILE")"
+          FINAL_ACTIVE_LIVE_PATH="$(jq -r --arg service "$DO_SERVICE" '
+            [(if type == "array" then .[0] else . end)
+              | .active_deployment.spec.services[]?
+              | select(.name == $service) | .liveness_health_check.http_path // empty]
+            | if length == 1 then .[0] else empty end
+          ' "$APP_STATE_FILE")"
+          FINAL_ACTIVE_SOURCE_SHA="$(jq -r --arg service "$DO_SERVICE" '
+            [(if type == "array" then .[0] else . end)
+              | .active_deployment.services[]?
+              | select(.name == $service) | .source_commit_hash // empty]
+            | if length == 1 then .[0] else empty end
+          ' "$APP_STATE_FILE")"
+          if [ "$FINAL_ACTIVE_READY_PATH" != "/ready" ] ||
+             [ "$FINAL_ACTIVE_LIVE_PATH" != "/live" ]; then
+            echo "::error::The final active staging deployment did not retain /ready and /live."
+            exit 1
+          fi
+          if [ "$FINAL_ACTIVE_SOURCE_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::The final active staging deployment did not retain the expected source commit."
+            exit 1
+          fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "Enforced /ready after the staging API reached the release contract."
 
       - name: Force staging deploy for manual recovery
-        if: github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true'
+        if: github.event_name == 'workflow_dispatch' && inputs.force_rebuild == true && steps.auth.outputs.available == 'true' && steps.spec_sync.outputs.changed != 'true'
         shell: bash
         run: |
           set -euo pipefail

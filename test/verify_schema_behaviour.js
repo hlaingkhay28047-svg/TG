@@ -104,6 +104,20 @@ function userTransaction(uid, body) {
 function asUser(uid, body, db) {
   return sql(userTransaction(uid, body), db);
 }
+/* Cross-account administration is never a browser-bearer capability. Model
+   the database half of the strict /v1/admin path only after that API has
+   authenticated an admin-client session, verified MFA and arranged auditing. */
+function serverAdminTransaction(uid, body) {
+  return "begin; " +
+    "set local request.role = 'service_role'; " +
+    "set local request.jwt.claim.sub = '" + uid + "'; " +
+    "set local request.is_admin = 'true'; " +
+    "set local request.user_email = 'owner@example.com'; " +
+    "set local role service_role; " + body + " commit;";
+}
+function asAdminServer(uid, body, db) {
+  return sql(serverAdminTransaction(uid, body), db);
+}
 function asAnon(body, db) {
   return sql("begin; set local request.role = 'anon'; set local request.jwt.claim.sub = ''; " +
     "set local request.is_admin = 'false'; set local request.user_email = ''; " +
@@ -150,7 +164,10 @@ mustFixture("fixture removes the prior main scratch database",
   sql('drop database if exists "' + DB + '"'));
 for (const role of REQUEST_ROLES) {
   mustFixture("fixture removes role " + role, sql("drop role if exists " + role));
-  mustFixture("fixture creates role " + role, sql("create role " + role + " nologin"));
+  /* Hosted Supabase gives its private service_role BYPASSRLS. Model that
+     platform boundary exactly; anon/authenticated remain ordinary roles. */
+  const roleOptions = role === "service_role" ? " nologin bypassrls" : " nologin";
+  mustFixture("fixture creates role " + role, sql("create role " + role + roleOptions));
 }
 mustFixture("fixture creates a fresh main scratch database", sql('create database "' + DB + '"'));
 const stubbed = file(PLATFORM, DB);
@@ -205,6 +222,10 @@ sql("insert into public.profiles (id,email,name) values ('" + OWNER + "','owner@
 sql("update public.profiles set is_admin = true where email='owner@example.com'", DB);
 const admin = sql("select is_admin from public.profiles where email='owner@example.com'", DB).out;
 report("E) the SQL-editor bootstrap (no JWT) can create the first admin", admin === "t", { is_admin: admin });
+const canonicalAdmin = sql("select count(*) from public.user_roles ur join public.roles r on r.id=ur.role_id " +
+  "where ur.user_id='" + OWNER + "' and r.name='admin'", DB).out;
+report("E2) the bootstrap flag synchronizes the canonical admin role",
+  canonicalAdmin === "1", { canonicalAdmin });
 
 /* ---- F) a customer cannot promote themselves ----
    NOTE ON BOOLEANS: psql -t -A prints a bare boolean column as t/f, but a
@@ -287,8 +308,22 @@ const selfApproval = asUser(CUST,
   "update public.payment_requests set status='approved';", DB);
 const statResult = sql("select status from public.payment_requests", DB);
 report("H) a customer cannot approve their own payment",
-  paymentInsert.ok && selfApproval.ok && statResult.ok && statResult.out === "pending",
-  { inserted: paymentInsert.ok, updateAccepted: selfApproval.ok, status: statResult.out });
+  paymentInsert.ok && !selfApproval.ok &&
+  /permission denied for table payment_requests/i.test(selfApproval.out) &&
+  statResult.ok && statResult.out === "pending",
+  { inserted: paymentInsert.ok, updateAccepted: selfApproval.ok,
+    updateError: selfApproval.out.split("\n")[0], status: statResult.out });
+
+const bearerAdminApproval = asUser(OWNER,
+  "update public.payment_requests set status='approved', reviewed_at=now(), " +
+  "reviewed_by=auth.uid() where status='pending';", DB);
+const statusAfterBearerAdmin = sql("select status from public.payment_requests", DB).out;
+report("H2) an ordinary admin bearer cannot review another account's payment",
+  !bearerAdminApproval.ok &&
+  /permission denied for table payment_requests/i.test(bearerAdminApproval.out) &&
+  statusAfterBearerAdmin === "pending",
+  { updateAccepted: bearerAdminApproval.ok,
+    updateError: bearerAdminApproval.out.split("\n")[0], status: statusAfterBearerAdmin });
 
 /* ---- I) nor forge one that arrives already reviewed ---- */
 const forge = asUser(CUST, "insert into public.payment_requests (user_id,kind,status,reviewed_by,note) " +
@@ -297,7 +332,7 @@ report("I) a forged already-reviewed row is refused", !forge.ok && /row-level se
   { accepted: forge.ok, err: forge.out.split("\n")[0] });
 
 /* ---- J) an admin approval extends the plan, in the database ---- */
-const adminApproval = asUser(OWNER,
+const adminApproval = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where status='pending';", DB);
 const planResult = sql("select plan_status||'|'||(plan_expires_at between now()+interval '27 days' " +
@@ -373,7 +408,7 @@ report("J2c) a pending request keeps its original server quote after prices chan
   priceChanged.ok && livePrice === "1999000" && stableQuote === "1003000",
   { changed: priceChanged.ok, livePrice, quote: stableQuote });
 
-asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+asAdminServer(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where user_id='" + DEVBUYER + "' and status='pending';", DB);
 const tierDevCount = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
 report("J2d) approving the tiered bundle sets its exact device entitlement",
@@ -387,10 +422,10 @@ const tierAddonInsert = asUser(DEVBUYER,
   "values (auth.uid(),'extra_device','333444',17000);", DB);
 const tierAddonPending = sql("select count(*) from public.payment_requests where user_id='" + DEVBUYER +
   "' and kind='extra_device' and status='pending'", DB).out;
-asUser(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
+asAdminServer(OWNER, "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where user_id='" + DEVBUYER + "' and kind='extra_device' and status='pending';", DB);
 const afterExtra = sql("select allowed_devices from public.profiles where id='" + DEVBUYER + "'", DB).out;
-const terminalFlip = asUser(OWNER, "update public.payment_requests set status='rejected' " +
+const terminalFlip = asAdminServer(OWNER, "update public.payment_requests set status='rejected' " +
   "where user_id='" + DEVBUYER + "' and kind='extra_device' and status='approved';", DB);
 const serviceRewrite = sql("update public.payment_requests set amount_mmk=1 " +
   "where user_id='" + DEVBUYER + "' and kind='extra_device' and status='approved';", DB);
@@ -416,7 +451,7 @@ const queuedAddonInsert = asUser(DEVBUYER,
 const queuedAddonPending = sql("select count(*) from public.payment_requests where user_id='" + DEVBUYER +
   "' and kind='extra_device' and status='pending'", DB).out;
 sql("update public.profiles set allowed_devices=10 where id='" + DEVBUYER + "'", DB);
-const approveAtMax = asUser(OWNER,
+const approveAtMax = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + DEVBUYER + "' and kind='extra_device' and status='pending';", DB);
 const atMaxState = sql("select status from public.payment_requests where user_id='" + DEVBUYER + "' " +
@@ -427,7 +462,7 @@ report("J2g) a queued add-on cannot cross the tier maximum during approval",
   atMaxState === "pending" && atMaxCount === "10",
   { inserted: queuedAddonInsert.ok, pending: queuedAddonPending,
     approved: approveAtMax.ok, status: atMaxState, allowed_devices: atMaxCount });
-const grantPastMax = asUser(OWNER,
+const grantPastMax = asAdminServer(OWNER,
   "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
   "values ('" + DEVBUYER + "','extra_device',true,0);", DB);
 const grantAddOnRows = sql("select count(*) from public.payment_requests where user_id='" + DEVBUYER +
@@ -447,7 +482,7 @@ asUser(SMALLBUYER, "insert into public.devices (user_id,device_id,label) values 
 asUser(SMALLBUYER,
   "insert into public.payment_requests (user_id,kind,txn_last6,amount_mmk,device_count) " +
   "values (auth.uid(),'join_first','333447',511000,1);", DB);
-const shrinkApproval = asUser(OWNER,
+const shrinkApproval = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + SMALLBUYER + "' and status='pending';", DB);
 const shrinkState = sql("select r.status||'|'||p.joined_paid||'|'||p.allowed_devices " +
@@ -468,7 +503,7 @@ asUser(PLAINBUYER, "insert into public.payment_requests (user_id,kind,txn_last6,
   "values (auth.uid(),'join_first','111222',480000);", DB);
 const flatQuote = sql("select pricing_mode||'|'||quoted_amount_mmk||'|'||coalesce(device_count::text,'null') " +
   "from public.payment_requests where user_id='" + PLAINBUYER + "'", DB).out;
-const flatApproval = asUser(OWNER,
+const flatApproval = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), " +
   "reviewed_by=auth.uid() where user_id='" + PLAINBUYER + "' and status='pending';", DB);
 const flatState = sql("select r.status||'|'||p.joined_paid||'|'||p.allowed_devices " +
@@ -531,7 +566,7 @@ report("J4d) refused payloads leave no request and no entitlement mutation",
 const LEGACY = "99999999-9999-9999-9999-999999999999";
 sql("insert into auth.users (id,email) values ('" + LEGACY + "','legacy@example.com')", DB);
 asUser(LEGACY, "insert into public.profiles (id) values (auth.uid());", DB);
-asUser(OWNER,
+asAdminServer(OWNER,
   "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
   "values ('" + LEGACY + "','plan_1m',true,0);", DB);
 const legacyDrop = sql("alter table public.payment_requests drop constraint payment_requests_device_count_shape_chk", DB);
@@ -541,11 +576,11 @@ const legacyFixture = sql("select kind||'|'||is_grant||'|'||device_count||'|'||"
   "coalesce(pricing_mode,'null')||'|'||coalesce(quoted_amount_mmk::text,'null') " +
   "from public.payment_requests where user_id='" + LEGACY + "'", DB).out;
 const legacyReapply = file(SCHEMA, DB);
-const legacyApproval = asUser(OWNER,
+const legacyApproval = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + LEGACY + "' and status='pending';", DB);
 const legacyPending = sql("select status from public.payment_requests where user_id='" + LEGACY + "'", DB).out;
-const rejectedLegacy = asUser(OWNER,
+const rejectedLegacy = asAdminServer(OWNER,
   "update public.payment_requests set status='rejected', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + LEGACY + "' and status='pending';", DB);
 const legacyState = sql("select status from public.payment_requests where user_id='" + LEGACY + "'", DB).out;
@@ -564,23 +599,23 @@ report("J4e) an unquotable legacy row can be rejected without granting entitleme
 /* Prove the terminal state machine with a fully valid, already quoted row.
    If rejected -> approved ever regresses, this grant would activate a month;
    no unrelated shape/quote failure can make the test pass accidentally. */
-const replayFixture = asUser(OWNER,
+const replayFixture = asAdminServer(OWNER,
   "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
   "values ('" + ATTACKER + "','plan_1m',true,0);", DB);
 const replayOriginalId = sql("select id from public.payment_requests " +
   "where user_id='" + ATTACKER + "' and status='pending'", DB).out;
 const replayQuote = sql("select pricing_mode||'|'||quoted_amount_mmk from public.payment_requests " +
   "where user_id='" + ATTACKER + "' and status='pending'", DB).out;
-const replayIdMutation = asUser(OWNER,
+const replayIdMutation = asAdminServer(OWNER,
   "update public.payment_requests set id='dededede-dede-dede-dede-dededededede', " +
   "status='rejected', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + ATTACKER + "' and status='pending';", DB);
 const replayAfterIdMutation = sql("select id||'|'||status from public.payment_requests " +
   "where user_id='" + ATTACKER + "'", DB).out;
-const replayReject = asUser(OWNER,
+const replayReject = asAdminServer(OWNER,
   "update public.payment_requests set status='rejected', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + ATTACKER + "' and status='pending';", DB);
-const rejectedReplay = asUser(OWNER,
+const rejectedReplay = asAdminServer(OWNER,
   "update public.payment_requests set status='approved' where user_id='" + ATTACKER + "';", DB);
 const replayState = sql("select r.status||'|'||r.pricing_mode||'|'||r.quoted_amount_mmk||'|'||" +
   "p.joined_paid||'|'||coalesce(p.plan_status,'none')||'|'||p.allowed_devices " +
@@ -601,12 +636,12 @@ report("J4e2) a valid rejected payment cannot be replayed into entitlement",
 const LEGACY_RENEW = "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd";
 sql("insert into auth.users (id,email) values ('" + LEGACY_RENEW + "','legacy-renew@example.com')", DB);
 asUser(LEGACY_RENEW, "insert into public.profiles (id) values (auth.uid());", DB);
-asUser(OWNER,
+asAdminServer(OWNER,
   "insert into public.payment_requests (user_id,kind,is_grant,amount_mmk) " +
   "values ('" + LEGACY_RENEW + "','plan_1m',true,0);", DB);
 const legacyRenewNullified = sql("update public.payment_requests set is_grant=false, amount_mmk=11000, " +
   "pricing_mode=null, quoted_amount_mmk=null where user_id='" + LEGACY_RENEW + "'", DB);
-const legacyRenewApproval = asUser(OWNER,
+const legacyRenewApproval = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + LEGACY_RENEW + "' and status='pending';", DB);
 const legacyRenewState = sql("select r.status||'|'||coalesce(r.pricing_mode,'null')||'|'||" +
@@ -631,7 +666,7 @@ const legacyNullified = sql("update public.payment_requests set pricing_mode=nul
 const legacyNullState = sql("select coalesce(pricing_mode,'null')||'|'||" +
   "coalesce(quoted_amount_mmk::text,'null') from public.payment_requests " +
   "where user_id='" + LEGACY_VALID + "'", DB).out;
-const legacyValidApproval = asUser(OWNER,
+const legacyValidApproval = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + LEGACY_VALID + "' and status='pending';", DB);
 const legacyValidState = sql("select r.status||'|'||r.pricing_mode||'|'||r.quoted_amount_mmk||'|'||" +
@@ -686,7 +721,7 @@ spawn("psql", ["-d", DB, "-v", "ON_ERROR_STOP=1", "-c",
   "select pg_advisory_lock(" + APPROVAL_RACE_LOCK + "); select pg_sleep(1);")],
   { env: ENV, stdio: "ignore" });
 const approvalRaceReady = waitForAdvisory(APPROVAL_RACE_LOCK, DB);
-const racedApproval = asUser(OWNER,
+const racedApproval = asAdminServer(OWNER,
   "update public.payment_requests set status='approved', reviewed_at=now(), reviewed_by=auth.uid() " +
   "where user_id='" + APPROVAL_RACE + "' and status='pending';", DB);
 waitForAdvisoryRelease(APPROVAL_RACE_LOCK, DB);
@@ -768,9 +803,9 @@ report("M3) a signed-in customer may NOT rewrite prices either", !custWrite.ok, 
 /* ---- N) row visibility ---- */
 const own = asUser(CUST, "select count(*) from public.profiles;", DB);
 const all = asUser(OWNER, "select count(*) from public.profiles;", DB);
-report("N) a customer sees only their own profile; an admin sees every one",
-  own.ok && all.ok && /(^|\n)1(\n|$)/.test(own.out) && /(^|\n)2(\n|$)/.test(all.out),
-  { customerSees: own.out.trim(), adminSees: all.out.trim() });
+report("N) customer and ordinary admin bearers each see only their own profile",
+  own.ok && all.ok && /(^|\n)1(\n|$)/.test(own.out) && /(^|\n)1(\n|$)/.test(all.out),
+  { customerSees: own.out.trim(), adminBearerSees: all.out.trim() });
 
 /* ---- O) the v5.38.0 self-heal on a database this file built ---- */
 sql("insert into auth.users (id,email) values ('" + NEWBIE + "','NewCustomer@Example.com')", DB);
@@ -789,9 +824,9 @@ report("O) accEnsureProfile's insert of {id} alone yields a complete free-tier r
    account is never created at all, which is the better place to stop it.
 
    Both are asserted. The auth-layer index is what a real signup hits; the
-   profiles-layer index still has to exist, because it is what protects admGrant
-   from an arbitrary `limit=1` pick if a row ever reaches profiles by another
-   route (a manual insert, a migration, an import from the old project). */
+   profiles-layer index still has to exist, because it protects the strict admin
+   grant lookup from an ambiguous address if a row ever reaches profiles by
+   another route (a manual insert, a migration, an import from the old project). */
 const twinUser = sql("insert into auth.users (id,email) values ('" + TWIN + "','newcustomer@EXAMPLE.com')", DB);
 report("P) a second ACCOUNT claiming the same address in another case is refused",
   !twinUser.ok && /users_email_uniq/i.test(twinUser.out),

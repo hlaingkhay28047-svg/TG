@@ -53,12 +53,18 @@ const REQUEST_ROLES = new Set(["anon", "authenticated", "service_role"]);
 function resolveDatabaseUrl() {
   const direct = process.env.DATABASE_URL || "";
   const unresolved = direct.match(/\$\{[^}]*\}/);
-  if (direct && !unresolved) return { url: direct, key: "DATABASE_URL", why: null };
-
   const found = Object.keys(process.env).filter(k =>
-    k !== "DATABASE_URL" && /^DATABASE_URL./.test(k) &&
+    /^DATABASE_URL(?:$|.)/.test(k) &&
     /^postgres(?:ql)?:\/\/\S+$/.test(process.env[k] || ""));
   if (found.length === 1) return { url: process.env[found[0]], key: found[0], why: null };
+
+  if (found.length > 1) {
+    return {
+      url: "", key: null,
+      why: found.length + " PostgreSQL URLs are set (" + found.join(", ") +
+        ") and choosing between them would be a guess",
+    };
+  }
 
   const why = unresolved
     ? "DATABASE_URL is an unresolved App Platform binding " + unresolved[0] +
@@ -67,10 +73,7 @@ function resolveDatabaseUrl() {
     : "DATABASE_URL is not set on this service";
   return {
     url: "", key: null,
-    why: found.length > 1
-      ? why + "; " + found.length + " other PostgreSQL URLs are set (" +
-        found.join(", ") + ") and choosing between them would be a guess"
-      : why,
+    why,
   };
 }
 
@@ -108,6 +111,7 @@ function usableCa(raw) {
    downgrade that is invisible until it matters. */
 let tlsNote = null;
 const getTlsNote = () => tlsNote;
+const allowsUnverifiedTls = () => process.env.ALLOW_UNVERIFIED_DB_TLS === "1";
 
 /* How TLS to the database is configured — and how much of it is verified.
  *
@@ -122,17 +126,22 @@ const getTlsNote = () => tlsNote;
  * Unverified and running, saying so loudly, beats verified-in-principle and
  * down.
  *
- * Bound twice for the same reason DATABASE_URL is, and read under the same
- * key-prefix restriction: a certificate elsewhere in the environment — an
- * outbound proxy's CA, NODE_EXTRA_CA_CERTS — is not this database's trust
- * anchor, and verifying against the wrong CA refuses every connection. */
-function resolveSsl() {
+ * Bound twice for the same reason DATABASE_URL is. The suffix on the URL key
+ * identifies its CA key: DATABASE_URL pairs with DATABASE_CA_CERT, while
+ * DATABASE_URL_IF_COMPONENT_IS_NAMED_DB pairs with
+ * DATABASE_CA_CERT_IF_COMPONENT_IS_NAMED_DB. A usable CA from another binding
+ * may authenticate a different database, so it must never be borrowed merely
+ * because it shares the prefix. */
+function resolveSsl(databaseKey = resolveDatabaseUrl().key) {
   if (process.env.PGSSLMODE === "disable") return false;
+  const caKey = databaseKey && /^DATABASE_URL(?:$|.)/.test(databaseKey)
+    ? "DATABASE_CA_CERT" + databaseKey.slice("DATABASE_URL".length)
+    : null;
+  if (!caKey) return { rejectUnauthorized: false };
+
   let sawSomethingCertificateShaped = false;
-  for (const key of Object.keys(process.env)) {
-    if (!/^DATABASE_CA_CERT/.test(key)) continue;
-    const raw = process.env[key] || "";
-    if (!raw) continue;
+  const raw = process.env[caKey] || "";
+  if (raw) {
     const ca = usableCa(raw);
     if (ca) return { ca, rejectUnauthorized: true };
     /* An unresolved ${...} binding is not certificate-shaped and is not worth
@@ -195,7 +204,7 @@ const pool = new Pool({
      PG* environment variables the way psql does. sslmode is removed first —
      see stripSslMode: left in, it overrules everything below, per connection. */
   connectionString: STRIPPED.url || undefined,
-  ssl: resolveSsl(),
+  ssl: resolveSsl(RESOLVED.key),
   max: Number(process.env.PG_POOL_MAX || 10),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
@@ -230,6 +239,10 @@ const isCertificateError = err =>
 function downgradeTlsAfter(err) {
   if (!isCertificateError(err)) return false;
   if (!pool.options.ssl || pool.options.ssl.rejectUnauthorized === false) return false;
+  if (!allowsUnverifiedTls()) {
+    console.error("db: certificate verification failed; refusing an unverified TLS downgrade");
+    return false;
+  }
   pool.options.ssl = { rejectUnauthorized: false };
   tlsNote = "the database certificate did not verify (" + (err.code || "certificate error") +
             "); reconnected encrypted but UNVERIFIED";
@@ -245,6 +258,18 @@ function tlsState() {
   if (pool.options.ssl === false) return "off (PGSSLMODE=disable)";
   if (pool.options.ssl && pool.options.ssl.rejectUnauthorized) return "verified";
   return tlsNote ? "unverified — " + tlsNote : "unverified (no CA certificate supplied)";
+}
+
+function tlsSecurityReady() {
+  return tlsState() === "verified" || allowsUnverifiedTls();
+}
+
+function assertTlsConnectionAllowed() {
+  if (tlsSecurityReady()) return;
+  const error=new Error("verified database TLS is required; configure the managed database CA");
+  error.code="database_tls_unverified";
+  error.status=503;
+  throw error;
 }
 
 /* Why the database cannot be reached for a reason /health can state plainly,
@@ -274,6 +299,7 @@ async function asRole(role, uid, fn) {
   if (role !== "anon" && role !== "authenticated") {
     throw new Error("refusing an unknown public request role: " + role);
   }
+  assertTlsConnectionAllowed();
   const client = await pool.connect();
   try {
     await client.query("begin");
@@ -309,15 +335,17 @@ const asUser = (uid, fn) => asRole("authenticated", uid, fn);
    appset_read_all grants select to anon so the buy screen can quote prices. */
 const asAnon = fn => asRole("anon", null, fn);
 
-/* The auth tables, which no public request mode may touch at all.
+/* Trusted server transactions, which no public request mode may impersonate.
  *
- * This runs under the explicit internal service context. It is reserved for
- * public.hnk_auth_users and public.hnk_auth_refresh_tokens — creating an account, checking a password,
- * issuing and revoking tokens — none of which a customer may read. It must never
- * be handed a statement against public.*: service policies intentionally allow
- * the internal auth path through FORCE RLS as well.
+ * This explicit internal context owns authentication records and narrowly
+ * authorized server actions such as MFA-gated administration, entitlement
+ * validation and private-artifact delivery. Callers must complete their route-
+ * specific identity/role checks before reaching it; browser claims alone never
+ * select this context. Service policies intentionally pass FORCE RLS only for
+ * those reviewed server operations.
  */
 async function asService(fn) {
+  assertTlsConnectionAllowed();
   const client = await pool.connect();
   try {
     await client.query("begin");
@@ -335,4 +363,4 @@ async function asService(fn) {
 
 module.exports = { pool, asUser, asAnon, asService, describeDatabaseUrl, resolveSsl,
                    usableCa, getTlsNote, downgradeTlsAfter, isCertificateError, tlsState,
-                   stripSslMode };
+                   tlsSecurityReady, allowsUnverifiedTls, assertTlsConnectionAllowed, stripSslMode };

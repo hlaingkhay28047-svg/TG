@@ -25,9 +25,10 @@
    differ in wording on purpose: telling a lapsed customer they have never paid
    is both insulting and false.
 
-   OFFLINE IS NOT UNPAID. isPremium() reads the cached profile, so a paying
-   studio on a bad Mandalay connection keeps working; only a profile that has
-   actually been read and actually says lapsed closes the door. E asserts it.
+   UNIFIED ACCESS FAILS CLOSED. The legacy profile cache remains available for
+   account copy, but it cannot authorize AI Tools when the authoritative
+   entitlement endpoint is unreachable. E asserts that the wall closes while
+   the secure session survives for a retry.
 
    Pinned contracts:
    A) The five states resolve as above.
@@ -38,7 +39,7 @@
       the no-regression half, and the one that would catch a wall that never
       lifts.
    D) Expired and never-bought say different things.
-   E) A cached active profile with the network down still opens the app.
+   E) A cached active profile cannot bypass an unavailable unified verdict.
    F) The login stamp is what ages a session out, not sess.exp — refresh keeps
       pushing sess.exp forward forever, so it can never answer "how long since
       this person typed a password".
@@ -107,6 +108,13 @@ async function armSupabase(page, prof, mode) {
     const json = body => route.fulfill({ status: 200, contentType: "application/json",
                                          body: JSON.stringify(body === undefined ? null : body) });
     if (mode === "offline") return route.abort("internetdisconnected");
+    /* Legacy wall-state probes deliberately opt out of v5.43 enforcement.
+       Dedicated tests below cover unified verdicts; a 404 is the supported
+       compatibility response, while a 200 [] would be a malformed verdict. */
+    if (url.indexOf("/api/v1/") >= 0) {
+      return route.fulfill({ status: 404, contentType: "application/json",
+                             body: JSON.stringify({ error: "not_found" }) });
+    }
     /* v5.37.0 — two failure shapes the old three modes could not express, both
        of which the app used to read as a verdict rather than an outage:
          tokenBoom     the token endpoint ANSWERS 503
@@ -284,7 +292,7 @@ async function look(browser, sess, prof, label) {
     stranded.length === 0,
     stranded.map(k => ({ state: k, logoutReachable: out[k].logoutReachable })));
 
-  /* ---- E: offline is not unpaid ---- */
+  /* ---- E: an unavailable unified verdict is fail-closed ---- */
   const offlinePage = await browser.newPage({ viewport: { width: 412, height: 900 } });
   offlinePage.on("pageerror", e => errs.push("offline: " + String(e).slice(0, 160)));
   /* every Supabase call fails outright — a studio whose connection dropped */
@@ -301,11 +309,19 @@ async function look(browser, sess, prof, label) {
   await offlinePage.context().setOffline(true);
   await offlinePage.evaluate(() => { window.dispatchEvent(new Event("offline")); });
   await offlinePage.waitForTimeout(600);
-  const off = await offlinePage.evaluate(() => ({ wall: document.body.classList.contains("wall"), state: (typeof appWallState === "function") ? appWallState() : "(no wall)" }));
+  const off = await offlinePage.evaluate(() => ({
+    wall: document.body.classList.contains("wall"),
+    state: (typeof appWallState === "function") ? appWallState() : "(no wall)",
+    page: (document.querySelector(".page.on") || {}).id,
+    session: !!localStorage.getItem("hnk_acc_sess_v1"),
+    enforced: !!(window.unified && unified.enforced),
+    error: !!(window.unified && unified.error),
+    web: typeof unifiedCanWeb === "function" ? unifiedCanWeb() : true,
+  }));
   await offlinePage.context().setOffline(false);
   await offlinePage.close();
-  report("E) a paying studio whose connection drops keeps working",
-    off.wall === false && off.state === "", off);
+  report("E) a missing unified verdict closes licensed routes without deleting the secure session",
+    off.wall === true && off.state === "checking" && off.page === "pgHome" && off.session && off.enforced && off.error && !off.web, off);
 
   /* ---- I: the admin panel ---- */
   const adminOpen   = await look(browser, SESS, { id: "u-test", plan_status: "active", plan_expires_at: future, is_admin: true }, "adminOpen");
@@ -325,31 +341,29 @@ async function look(browser, sess, prof, label) {
     adminLapsed.wall === true && adminLapsed.adminCard === true,
     { wall: adminLapsed.wall, adminCard: adminLapsed.adminCard });
 
-  /* ---- K: the client must not extend the plan itself ---- */
-  report("K) approving writes only the review fields — the plan is the trigger's job",
-    /var body = \{ status: status, reviewed_at: new Date\(\)\.toISOString\(\),\s*reviewed_by: acc\.sess\.uid, note: note \|\| null \};/.test(src) &&
-    /* the colon matters: admReview's own comment NAMES plan_expires_at to
-       explain who owns it, and a bare-word search flags that prose as a write */
-    !/admReview[\s\S]{0,1200}plan_expires_at\s*:/.test(src) &&
-    !/admReview[\s\S]{0,1200}plan_status\s*:/.test(src),
-    { onlyReviewFields: /reviewed_by: acc\.sess\.uid, note: note \|\| null \};/.test(src) });
+  /* ---- K: Student App never becomes an administration client ---- */
+  const adminCard = (src.match(/<section class="card" id="cardAdmin"[\s\S]*?<\/section>/) || [""])[0];
+  report("K) the Student App hands administrators to the MFA Control Center",
+    /id="openAdminCenter" href="\.\.\/admin\/"/.test(adminCard) &&
+    !/btnAdmReload|btnAdmGrant|admList/.test(adminCard) &&
+    !/if \(admIsAdmin\(\)\) admLoad\(\)/.test(src),
+    { linked:/id="openAdminCenter" href="\.\.\/admin\/"/.test(adminCard),
+      legacyControls:/btnAdmReload|btnAdmGrant|admList/.test(adminCard) });
 
   /* ---- L: the half that is not in this repo at runtime ---- */
   const sqlPath = path.join(__dirname, "..", "supabase", "schema.sql");
   const sql = fs.existsSync(sqlPath) ? fs.readFileSync(sqlPath, "utf8") : "";
-  const adminUpdatePolicy = (sql.match(
-    /create policy payreq_update_admin_only[\s\S]*?;/) || [""])[0];
-  const authenticatedAdminGate =
-    /for update to public/.test(adminUpdatePolicy) &&
-    /using \(public\.hnk_request_role\(\) = 'authenticated'\s+and public\.hnk_is_admin\(\)\)/
-      .test(adminUpdatePolicy) &&
-    /with check \(public\.hnk_request_role\(\) = 'authenticated'\s+and public\.hnk_is_admin\(\)\)/
-      .test(adminUpdatePolicy);
-  report("L) the RLS that actually enforces any of this ships with the repo",
-    authenticatedAdminGate &&
+  const servicePolicy = (sql.match(
+    /create policy payreq_service_all[\s\S]*?;/) || [""])[0];
+  const noBrowserReview =
+    !/create policy payreq_update_admin_only/.test(sql) &&
+    /revoke update, delete on public\.payment_requests from authenticated/.test(sql) &&
+    /request_role\(\) = 'service_role'/.test(servicePolicy);
+  report("L) payment review is service-only; no browser-admin RLS path ships",
+    noBrowserReview &&
     /create trigger hnk_apply_payment/.test(sql) &&
     /security definer/.test(sql),
-    { found: !!sql, adminOnlyUpdate: authenticatedAdminGate,
+    { found: !!sql, noBrowserReview,
       trigger: /hnk_apply_payment/.test(sql) });
 
   /* ---- M/N/O: the wall has to be a REDIRECT, not just a set of hide rules ----
@@ -559,6 +573,7 @@ async function look(browser, sess, prof, label) {
       const req = route.request(), url = req.url();
       const json = (b, st) => route.fulfill({ status: st || 200, contentType: "application/json",
                                               body: JSON.stringify(b) });
+      if (url.indexOf("/api/v1/") >= 0) return json({ error: "not_found" }, 404);
       if (url.indexOf("/auth/v1/token") >= 0) {
         return json({ access_token: "test.jwt", refresh_token: "test-refresh",
                       expires_in: 3600, user: { id: "u-test", email: "t@example.com" } });
@@ -643,6 +658,9 @@ async function look(browser, sess, prof, label) {
       vp.on("pageerror", e => errs.push("X2: " + String(e).slice(0, 160)));
       await vp.route(SB_URL + "/**", route => {
         const url = route.request().url();
+        if (url.indexOf("/api/v1/") >= 0) {
+          return route.fulfill({ status: 404, contentType: "application/json", body: '{"error":"not_found"}' });
+        }
         if (url.indexOf("/auth/v1/token") >= 0) {
           return route.fulfill({ status: st, contentType: "application/json",
                                  body: JSON.stringify({ error: "boom" }) });
@@ -773,6 +791,7 @@ async function look(browser, sess, prof, label) {
     await rc.route(SB_URL + "/**", route => {
       const u = route.request().url(), m = route.request().method();
       const json = (b, st) => route.fulfill({ status: st || 200, contentType: "application/json", body: JSON.stringify(b) });
+      if (u.indexOf("/api/v1/") >= 0) return json({ error: "not_found" }, 404);
       if (u.indexOf("/rest/v1/profiles") >= 0) {
         if (m === "GET") { gets++; return route.fulfill({ status: 200, contentType: "application/json", body: "null" }); }
         if (m === "POST") { posts++; return json([], 201); }

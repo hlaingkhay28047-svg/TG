@@ -1,5 +1,5 @@
 /* v5.30.1 regression sweep — the wall doesn't leave orphaned UI standing next
-   to it, and the admin panel's own success message actually translates.
+   to it, and the Student App hands administration to the secure control center.
 
    THREE DEFECTS, all found by an adversarial QC pass run AFTER v5.30.0 was
    already live in production — the wall's own tests were green, because none
@@ -25,11 +25,9 @@
       key" button reused the identical dead scrollIntoView-to-a-hidden-card
       pattern as #keyBanner's.
 
-   3) admReview()'s success path called t("acc_saved") — a key that was never
-      defined anywhere in TR, TR_NEW or TR_L. t() returns the raw key on a
-      miss, so every admin, in every language, saw the literal text
-      "acc_saved" after approving or rejecting a payment, instead of any kind
-      of confirmation.
+   3) Cross-account payment review used to run inside the Student App with its
+      ordinary web bearer. It now links to the dedicated Admin Control Center,
+      whose API requires an admin-client session and current MFA.
 
    THE FIX, in each case:
    1) `body.wall .keybanner{display:none}` — hidden at the source, the same
@@ -41,10 +39,8 @@
       appWallShowOnboardingIfDue(), runs from every "wall just came down"
       branch in appWallApply() and shows the tour exactly once, at the point
       #cardKey is actually visible again — so the CTA works when it fires.
-   3) admReview() now calls admL({...}) with the same nine languages the rest
-      of the admin panel already uses (my/en/shn/kac/th/zh/vi/id/ms), wording
-      matched to the already-shipped pt_saved_gal "saved" translations rather
-      than inventing new vocabulary.
+   3) The embedded card is now a translated handoff only; no payment queue,
+      grant form or cross-account REST call remains in the Student App.
 
    Pinned contracts:
    A) Walled, no key saved: #keyBanner never becomes visible.
@@ -54,10 +50,8 @@
    C) Walled, never onboarded: the onboarding tour does not appear.
    D) The wall comes down for a never-onboarded visitor: the tour appears
       then, at a point where #cardKey is actually reachable.
-   E) admReview's success message is real, human text — never the literal
-      string "acc_saved" — checked in three of the nine admin-panel languages
-      (en, my, th) so a single accidentally-correct language cannot hide a
-      broken fourth.
+   E) The secure-admin handoff is real translated text in en, my and th and its
+      target remains ../admin/.
    F) No page errors in any state.
 
    Usage: PORT=8931 node test/sweep_v5301_wallqc.js  (serve docs/app first) */
@@ -85,14 +79,12 @@ report("source: the boot onboarding trigger checks the wall before showing",
 report("source: appWallShowOnboardingIfDue exists and runs from the wall-lifted branch",
   /function appWallShowOnboardingIfDue\(\)/.test(src) && /if \(!on\) appWallShowOnboardingIfDue\(\);/.test(src),
   { fn: /function appWallShowOnboardingIfDue/.test(src), wired: /if \(!on\) appWallShowOnboardingIfDue/.test(src) });
-report("source: admReview no longer calls the undefined t(\"acc_saved\") key",
-  /* the call SITE, not the word — this file's own comment above explains the
-     history and legitimately contains the string "acc_saved" in prose */
-  !/setSt\("stAdm",\s*t\("acc_saved"\)/.test(src),
-  { stillPresent: /setSt\("stAdm",\s*t\("acc_saved"\)/.test(src) });
-report("source: admReview's save confirmation goes through admL()",
-  /setSt\("stAdm", admL\(\{my:"[^"]*✓",en:"Saved ✓"/.test(src),
-  { found: /admL\(\{my:"[^"]*✓",en:"Saved ✓"/.test(src) });
+report("source: the embedded admin card is a link, not a browser review client",
+  /id="openAdminCenter" href="\.\.\/admin\/"/.test(src) &&
+  !/if \(admIsAdmin\(\)\) admLoad\(\)/.test(src) &&
+  !/accFetch\("\/rest\/v1\/payment_requests\?select=\*&order=/.test(src),
+  { linked:/id="openAdminCenter" href="\.\.\/admin\/"/.test(src),
+    autoLoad:/if \(admIsAdmin\(\)\) admLoad\(\)/.test(src) });
 
 /* Every Supabase call answered locally — signed-out boot still fires an anon
    settings/price read, and this file has no business depending on whether the
@@ -222,7 +214,7 @@ const future = new Date(Date.now() + 30 * 86400000).toISOString();
     await page.close();
   }
 
-  /* ---- E) admReview's success message is real text in three languages ---- */
+  /* ---- E) admin handoff is translated and always targets /admin ---- */
   {
     const results = {};
     for (const lang of ["en", "my", "th"]) {
@@ -234,30 +226,35 @@ const future = new Date(Date.now() + 30 * 86400000).toISOString();
       } catch (e) {} }, lang);
       await page.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
       await page.waitForTimeout(800);
-      /* drive admReview() directly with a synthetic row — this pins the
-         translated text itself, independent of the RLS 403 path (see
-         sweep_v530_accesswall.js assertion K for that half) */
-      const text = await page.evaluate(async () => {
+      const handoff = await page.evaluate(() => {
         acc.profile = acc.profile || {};
         acc.profile.is_admin = true;
-        const origFetch = window.fetch;
-        window.fetch = function (u, o) {
-          if (String(u).indexOf("/rest/v1/payment_requests") >= 0) {
-            return Promise.resolve(new Response(JSON.stringify([{ id: "r1", status: "approved" }]),
-              { status: 200, headers: { "Content-Type": "application/json" } }));
-          }
-          return origFetch.apply(this, arguments);
-        };
-        await admReview({ id: "r1" }, "approved", "", null);
-        window.fetch = origFetch;
-        const st = document.getElementById("stAdm");
-        return st ? st.textContent : "(no #stAdm)";
+        /* The handoff lives on Home/Setup, while a normal premium boot may
+           restore any studio page. Navigate to its real surface before
+           measuring rendered visibility; keeping getClientRects() makes this
+           a customer-reachability assertion rather than a DOM-only check. */
+        switchPage("pgHome");
+        admApplyLang();
+        admRender();
+        const link = document.getElementById("openAdminCenter");
+        const note = document.getElementById("admSecurityNote");
+        const before = { text:link ? link.textContent.trim() : "",
+          href:link ? link.getAttribute("href") : "",
+          note:note ? note.textContent.trim() : "",
+          visible:!!(link && link.getClientRects().length) };
+        const signedIn = !!acc.sess;
+        accSignOutLocal("quiet");
+        const card = document.getElementById("cardAdmin");
+        return Object.assign(before, { signedIn,
+          hiddenAfterSignOut:!!(card && getComputedStyle(card).display === "none") });
       });
-      results[lang] = text;
+      results[lang] = handoff;
       await page.close();
     }
-    const bad = Object.entries(results).filter(([, t]) => !t || t.indexOf("acc_saved") >= 0 || t.trim() === "");
-    report("E) the admin save confirmation is real translated text, not the raw key",
+    const bad = Object.entries(results).filter(([, item]) =>
+      !item.text || !item.note || item.href !== "../admin/" || !item.visible ||
+      !item.signedIn || !item.hiddenAfterSignOut);
+    report("E) the secure Admin Control Center handoff is translated, visible and cleared on sign-out",
       bad.length === 0, results);
   }
 
