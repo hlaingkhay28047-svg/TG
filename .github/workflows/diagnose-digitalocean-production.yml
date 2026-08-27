@@ -17,11 +17,24 @@ name: DigitalOcean Production Migration Diagnostics
 # ASCII, filtered to an allowlist of migration and boot lines, truncated, and
 # wrapped in stop-commands so a log line cannot forge a workflow command.
 #
+# IT READS THE DEPLOYMENT THAT FAILED, not the one that survived. That was the
+# first version's mistake: `doctl apps logs --type deploy` defaults to the
+# ACTIVE deployment, so after a rollback it returns the old build cheerfully
+# reporting that its migration succeeded — the exact opposite of the reading
+# the incident needed. By default this now finds the most recent deployment in
+# an ERROR phase and asks for that one by id.
+#
 # MANUAL ONLY. There is nothing to gate: it reads, it does not deploy, and a
 # scheduled lane would hold a production token open for no reason.
 
 on:
   workflow_dispatch:
+    inputs:
+      deployment:
+        description: "Deployment id to read (default: the most recent failed one)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -41,6 +54,10 @@ jobs:
       DO_BRANCH: main
       DO_SERVICE: hnk-api
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
+      # Through the environment, never interpolated into the script: a
+      # workflow input is attacker-controlled text the moment anyone else can
+      # dispatch it, and ${{ }} inside run: is substituted before bash sees it.
+      DEPLOYMENT_INPUT: ${{ inputs.deployment }}
     steps:
       - name: Require production diagnostics token
         shell: bash
@@ -86,16 +103,64 @@ jobs:
             | .id
           ' "$APPS_FILE")"
 
-          # --type run is the surviving container. A rolled-back deploy leaves
-          # its own reason in --type deploy, which is the one worth having here
-          # and is fetched second so a missing deploy log cannot hide the run log.
-          if ! doctl apps logs "$APP_ID" "$DO_SERVICE" \
-            --type run --tail 300 --no-prefix > "$RAW_LOG" 2>&1; then
-            echo "::error::DigitalOcean runtime logs could not be retrieved. Raw output remains private."
+          # An id is a UUID or nothing. Checked before it reaches a command line
+          # because anyone who can dispatch this workflow chooses its value.
+          case "$DEPLOYMENT_INPUT" in
+            "") DEPLOYMENT="" ;;
+            [0-9a-fA-F]*[-][0-9a-fA-F]*[-][0-9a-fA-F]*[-][0-9a-fA-F]*[-][0-9a-fA-F]*)
+              case "$DEPLOYMENT_INPUT" in
+                *[!0-9a-fA-F-]*)
+                  echo "::error::Refusing a deployment id with unexpected characters."
+                  exit 1 ;;
+                *) DEPLOYMENT="$DEPLOYMENT_INPUT" ;;
+              esac ;;
+            *)
+              echo "::error::Refusing a deployment id that is not a UUID."
+              exit 1 ;;
+          esac
+
+          # THE POINT OF THIS WHOLE FILE. After a failed deploy App Platform
+          # rolls back, and the ACTIVE deployment is then the build that
+          # SURVIVED — so the default --type deploy log is the healthy old
+          # container saying its migration succeeded. The deployment worth
+          # reading is the newest one that ended in ERROR.
+          if [ -z "$DEPLOYMENT" ]; then
+            DEPLOYMENTS_FILE="$RUNNER_TEMP/production-diagnostic-deployments.json"
+            trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$SAFE_LOG" "$DEPLOYMENTS_FILE"' EXIT
+            if doctl apps list-deployments "$APP_ID" --output json > "$DEPLOYMENTS_FILE" 2>/dev/null; then
+              DEPLOYMENT="$(jq -r '
+                [.[] | select(.phase == "ERROR")]
+                | sort_by(.created_at)
+                | last
+                | .id // empty
+              ' "$DEPLOYMENTS_FILE")"
+            fi
+          fi
+
+          if [ -n "$DEPLOYMENT" ]; then
+            echo "Reading deployment $DEPLOYMENT"
+          else
+            echo "No failed deployment found; reading the active one."
+          fi
+
+          # Both log types, because a container that never became ready splits
+          # its story between them: the deploy log carries the boot and the
+          # migration, the run log whatever the process managed to say after.
+          : > "$RAW_LOG"
+          FOUND=0
+          for TYPE in deploy run; do
+            if [ -n "$DEPLOYMENT" ]; then
+              doctl apps logs "$APP_ID" "$DO_SERVICE" --deployment "$DEPLOYMENT" \
+                --type "$TYPE" --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 && FOUND=1 || true
+            else
+              doctl apps logs "$APP_ID" "$DO_SERVICE" \
+                --type "$TYPE" --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 && FOUND=1 || true
+            fi
+          done
+          if [ "$FOUND" -ne 1 ]; then
+            echo "::error::DigitalOcean logs could not be retrieved. Raw output remains private."
             exit 1
           fi
-          doctl apps logs "$APP_ID" "$DO_SERVICE" \
-            --type deploy --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 || true
 
           sed -E \
             -e 's#postgres(ql)?://[^[:space:]]+#postgres://<redacted>#gI' \
