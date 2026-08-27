@@ -168,11 +168,24 @@ function runBootstrap(bootstrapEmail) {
   const child = spawnSync(process.execPath, ["-e", script], {
     env: RUNTIME_ENV, encoding: "utf8", maxBuffer: 10 * 1024 * 1024, cwd: ROOT,
   });
+  /* A child that printed nothing died before the module ran — a missing
+     server/ dependency is the way that happens, and reporting a bare exit
+     code for it sends the next reader hunting through eleven assertions for
+     a cause the child already printed on stderr. */
+  if (!String(child.stdout || "").trim()) {
+    const stderr = (child.stderr || "").trim().split(/\r?\n/);
+    /* Node prints the loader frame before the sentence that names the cause,
+       so the first lines are the least useful ones. Prefer the lines that
+       actually say something. */
+    const named = stderr.filter(line => /Error|Cannot find|ECONNREFUSED|denied/i.test(line));
+    return { exit: child.status, died: true,
+             stderr: (named.length ? named : stderr).slice(0, 3) };
+  }
   try {
-    return Object.assign({ exit: child.status }, JSON.parse(child.stdout || "{}"));
+    return Object.assign({ exit: child.status }, JSON.parse(child.stdout));
   } catch (err) {
     return { exit: child.status, parseError: String(err && err.message),
-             stdout: (child.stdout || "").slice(0, 400),
+             stdout: String(child.stdout).slice(0, 400),
              stderr: (child.stderr || "").slice(0, 400) };
   }
 }
