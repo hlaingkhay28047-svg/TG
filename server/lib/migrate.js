@@ -27,6 +27,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { pool, describeDatabaseUrl, downgradeTlsAfter, assertTlsConnectionAllowed } = require("./db");
+const { bootstrapAdmin } = require("./bootstrap-admin");
 
 const REQUIRED_APPLICATION_TABLES = Object.freeze([
   "profiles","payment_requests","app_settings","devices",
@@ -186,6 +187,11 @@ async function migrate() {
       appliedSchemaFingerprint = expectedFingerprint;
       console.log("migrate: schema fingerprint " + expectedFingerprint.slice(0, 12));
     }
+    /* Last, on the same service-role session, because the first administrator
+       cannot be created through the product and this connection is the only
+       one that exists. It never throws: see server/lib/bootstrap-admin.js for
+       why an administrator convenience must not be able to fail a boot. */
+    await bootstrapAdmin(client, process.env);
   } finally {
     /* These timeouts are session-scoped. Never return this connection to the
        request pool: an ordinary payment/auth transaction must not inherit a

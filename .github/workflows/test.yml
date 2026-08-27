@@ -76,6 +76,13 @@ jobs:
       - name: Verify the legacy auth/storage migration keeps every row
         run: node test/verify_legacy_dialect_migration.js
 
+      # No account can promote itself to administrator, by design, so the FIRST
+      # one has to be granted from inside the container. This proves that grant
+      # only ever grants — clearing the variable must never be able to lock
+      # every administrator out of a panel nothing else can reopen.
+      - name: Verify the first-administrator bootstrap grants and never revokes
+        run: node test/verify_admin_bootstrap.js
+
       - name: Verify the schema ENFORCES what it claims (real PostgreSQL)
         run: node test/verify_schema_behaviour.js
 
