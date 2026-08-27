@@ -2102,7 +2102,6 @@ body.wall #wallRetry.on{display:block}
           </div>
           <div id="accFormSignup" style="display:none">
             <div class="subh" id="accSignupH"></div>
-            <div class="row"><input class="inp grow" id="accName" type="text" autocomplete="name"></div>
             <div class="row"><input class="inp grow" id="accEmail2" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
             <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass2" type="button"></button></div>
             <div class="row"><button class="btn btn-gold grow" id="btnAccSignup"></button></div>
@@ -2123,7 +2122,6 @@ body.wall #wallRetry.on{display:block}
           <div id="accDevLimit" style="display:none">
             <div class="acc-actions">
               <button class="btn" id="btnDevManage"></button>
-              <button class="btn btn-gold" id="btnDevBuyExtra"></button>
             </div>
           </div>
 
@@ -2145,7 +2143,10 @@ body.wall #wallRetry.on{display:block}
         <div class="acc-plan-line" id="accPlanLine"></div>
         <div class="mut" id="accPlanUntil" style="margin-top:6px"></div>
         <div class="mut" id="accPlanOffline" style="display:none;margin-top:6px"></div>
-        <div class="acc-actions"><button class="btn btn-gold" id="btnPlanBuy" style="display:none"></button></div>
+        <!-- v5.44.0 — the owner grants access from /admin, so an account that has
+             not been approved yet has nothing to buy and nothing to submit. It is
+             told that, rather than being shown an empty panel. -->
+        <div class="mut" id="accPending" style="display:none;margin-top:6px"></div>
       </div>
     </div>
 
@@ -2163,123 +2164,6 @@ body.wall #wallRetry.on{display:block}
       </div>
     </div>
 
-    <div class="grp" id="accGrpBuy">
-      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="accGrpBuyT"></span></button>
-      <div class="grp-b">
-        <!-- v5.37.0 — shown INSTEAD of the form when nothing is on offer. It
-             sits outside #payForm on purpose: the form is what gets hidden. -->
-        <p class="mut" id="payNoOffer" style="display:none"></p>
-        <div id="payForm">
-          <div class="subh" id="payPickH"></div>
-          <div class="chips pay" id="payKinds">
-            <!-- v5.34 — the joining fee is a chip like any other rather than a
-                 separate screen, so the flow below it (instructions, amount,
-                 slip, reference) is identical whichever the customer is
-                 paying. It is shown ONLY while profiles.joined_paid is false;
-                 the renewal chips are hidden until it is true, because a first
-                 purchase that skipped the joining fee is not a thing the owner
-                 offers. -->
-            <button class="chip" id="payKindJoin" data-kind="join_first" style="display:none"></button>
-            <button class="chip" id="payKind1m" data-kind="plan_1m"></button>
-            <button class="chip" id="payKind3m" data-kind="plan_3m"></button>
-            <button class="chip" id="payKind6m" data-kind="plan_6m"></button>
-            <button class="chip" id="payKindDev" data-kind="extra_device"></button>
-          </div>
-
-          <!-- v5.41.0 — how many devices this lifetime purchase covers. Shown
-               only for the join_first chip, and only once the owner has
-               opted into device-tiered pricing (accDeviceTierSet()) — an
-               unconfigured project never sees this control at all, and the
-               join_first chip behaves exactly as it did before. Options are
-               built in JS because the top of the range depends on how far
-               price_device_step lets accDeviceTierPrice() compute a price. -->
-          <div class="acc-plan-line" id="payDeviceWrap" style="display:none;margin-top:8px">
-            <label id="payDeviceH" for="payDeviceCount"></label>
-            <select class="inp" id="payDeviceCount" style="width:auto;max-width:100%;min-height:44px;display:inline-block;margin-inline-start:8px"></select>
-          </div>
-
-          <!-- v5.34 — the amount due, stated plainly. Before this the buy panel
-               showed a price on a chip and then never mentioned money again,
-               so a customer who mis-tapped a chip found out only when an admin
-               rejected them days later. -->
-          <div class="acc-plan-line gold" id="payDue" style="margin-top:10px"></div>
-
-          <!-- v5.36.0 — the panel is behind this same account from v6.22.0, and a
-               customer looking at a 500,000 joining fee deserves to be told, on
-               the screen where they decide, that it is not 500,000 each. -->
-          <p class="mut" id="payBoth" style="margin-top:6px"></p>
-
-          <div class="acc-sub">
-            <div class="subh" id="payInstrH"></div>
-
-            <!-- v5.34 — two ways to pay, because a phone that can scan a QR and
-                 a phone being read out to someone else are different rooms.
-                 Both come from app_settings; neither is in this file, and the
-                 QR is a URL rather than a committed image because it encodes a
-                 live bank account and a public git repository is permanent. -->
-            <div class="pay-routes" id="payRoutes" style="display:none">
-              <div class="pay-route" id="payRouteQr" style="display:none">
-                <div class="subh" id="payQrH"></div>
-                <img id="payQrImg" alt="" loading="lazy" decoding="async">
-              </div>
-              <div class="pay-route" id="payRouteNum" style="display:none">
-                <div class="subh" id="payNumH"></div>
-                <div class="pay-num" id="payNum"></div>
-                <button class="btn" id="btnPayNumCopy"></button>
-              </div>
-            </div>
-
-            <!-- DB free text. textContent only, #payInstr{white-space:pre-wrap}
-                 preserves the owner's line breaks without ever parsing it. -->
-            <div class="mut" id="payInstr"></div>
-            <div class="acc-actions"><button class="btn" id="btnPayRetry" style="display:none"></button></div>
-          </div>
-
-          <!-- v5.34 — what you actually sent. The admin sees this next to what
-               was due, so a short payment is caught before approval rather
-               than argued about after it. -->
-          <div class="acc-sub">
-            <div class="subh" id="payAmtH"></div>
-            <!-- NO maxlength, and that is the fix rather than an oversight. The field
-                 displays the amount with thousands separators, and maxlength counts
-                 those commas: at "1,234,567" the input is already nine characters, so
-                 the browser silently refused the eighth digit. A customer typing
-                 12,345,678 watched it stay 1,234,567 — an order of magnitude wrong, in
-                 a money field, with no message. The digit ceiling belongs in the
-                 handler, which caps at nine ACTUAL digits. -->
-            <input class="inp" id="payAmt" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocapitalize="none" spellcheck="false">
-            <div class="mut" id="payAmtWarn" style="margin-top:6px;display:none"></div>
-          </div>
-
-          <div class="acc-sub">
-            <div class="subh" id="payShotH"></div>
-            <input type="file" id="payShot" accept="image/*" style="display:none">
-            <button class="btn" id="btnPayShot"></button>
-            <img id="payShotPrev" alt="" style="display:none">
-          </div>
-
-          <div class="acc-sub">
-            <div class="subh" id="payTxnH"></div>
-            <input class="inp" id="payTxn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="123456">
-          </div>
-
-          <div class="row"><button class="btn btn-gold grow" id="btnPaySubmit" disabled></button></div>
-          <div class="status" id="stPay"></div>
-        </div>
-
-        <div id="payPending" style="display:none">
-          <div class="acc-plan-line gold" id="payPendingH"></div>
-          <p class="mut" id="payPendingP" style="margin-top:8px"></p>
-          <div class="mut" id="payPendingMeta" style="margin-top:8px"></div>
-          <div class="mut" id="payPendingNote" style="margin-top:6px"></div>
-          <div class="acc-actions">
-            <button class="btn" id="btnPayRefresh"></button>
-            <button class="btn btn-gold" id="btnPayAgain" style="display:none"></button>
-          </div>
-          <div class="status" id="stPayPend"></div>
-        </div>
-      </div>
-    </div>
 
     <div class="grp" id="accGrpDev">
       <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="accGrpDevT"></span></button>
@@ -2288,19 +2172,10 @@ body.wall #wallRetry.on{display:block}
         <ul id="devList"></ul>
         <div class="mut" id="devEmpty" style="display:none"></div>
         <div class="mut" id="devLimitTxt" style="display:none;margin-top:10px"></div>
-        <div class="acc-actions" id="devLimitAct" style="display:none"><button class="btn btn-gold" id="btnDevBuyExtra2"></button></div>
         <div class="status" id="stDev"></div>
       </div>
     </div>
 
-    <div class="grp" id="accGrpReq">
-      <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="accGrpReqT"></span></button>
-      <div class="grp-b">
-        <ul id="reqList"></ul>
-        <div class="mut" id="reqEmpty" style="display:none"></div>
-        <div class="status" id="stReq"></div>
-      </div>
-    </div>
   </section>
 
   <section class="card" id="cardAdmin" style="display:none">
@@ -3614,6 +3489,7 @@ var TR_V430={
   acc_member_since:{my:"အဖွဲ့ဝင် ဖြစ်သည့်နေ့ — {D}",en:"Member since {D}",shn:"ပဵၼ်လုၵ်ႈၸုမ်းမႃး — {D}",kac:"Amyu masha byin ai shani — {D}",th:"เป็นสมาชิกตั้งแต่ {D}",zh:"注册于 {D}",vi:"Thành viên từ {D}",id:"Anggota sejak {D}",ms:"Ahli sejak {D}"},
   acc_plan_h:{my:"အသုံးပြုခွင့် အခြေအနေ",en:"PLAN",shn:"ငဝ်းလၢႆးၸႂ်ႉတိုဝ်း",kac:"PACKAGE",th:"แพ็กเกจ",zh:"套餐状态",vi:"GÓI",id:"PAKET",ms:"PELAN"},
   acc_plan_free:{my:"Premium မဝယ်ရသေးပါ",en:"No Premium yet",shn:"ပႆႇလႆႈသိုဝ်ႉ Premium",kac:"Premium n mari shi ai",th:"ยังไม่มี Premium",zh:"尚未购买 Premium",vi:"Chưa có Premium",id:"Belum ada Premium",ms:"Belum ada Premium"},
+  acc_pending:{my:"သင့် account ကို HNK က စစ်ဆေးနေပါသည်။ ခွင့်ပြုပြီးပါက ဤနေရာတွင် ပြပါမည်။",en:"HNK is reviewing your account. Once it is approved this is where it will show.",shn:"HNK တိုၵ်ႉတူၺ်း account ၸဝ်ႈၵဝ်ႇယူႇ။ ပေႃးၶႂၢင်းပၼ်ယဝ်ႉ တေၼႄတီႈၼႆႈ။",kac:"HNK nang a account hpe yu nga ai. Hkap la ngut jang ndai kaw madun na.",th:"HNK กำลังตรวจสอบบัญชีของคุณ เมื่ออนุมัติแล้วจะแสดงที่นี่",zh:"HNK 正在审核你的账户。通过后会显示在这里。",vi:"HNK đang xét duyệt tài khoản của bạn. Sau khi được duyệt sẽ hiển thị ở đây.",id:"HNK sedang meninjau akun Anda. Setelah disetujui akan tampil di sini.",ms:"HNK sedang menyemak akaun anda. Setelah diluluskan ia akan dipaparkan di sini."},
   acc_plan_active:{my:"Premium သုံးနေဆဲ — {N} ရက် ကျန်ပါသေးတယ်",en:"Premium active — {N} days left",shn:"Premium ၸႂ်ႉယူႇ — ၵိုတ်း {N} ဝၼ်း",kac:"Premium galaw nga ai — {N} ya ngam ai",th:"Premium ใช้งานอยู่ — เหลือ {N} วัน",zh:"Premium 使用中 — 剩余 {N} 天",vi:"Premium đang hoạt động — còn {N} ngày",id:"Premium aktif — sisa {N} hari",ms:"Premium aktif — tinggal {N} hari"},
   acc_plan_soon:{my:"Premium သက်တမ်း {N} ရက်အတွင်း ကုန်ပါတော့မယ် — ကြိုတင် သက်တမ်းတိုးထားပါ",en:"Premium expires in {N} days — renew now",shn:"Premium တေမူတ်းၼႂ်း {N} ဝၼ်း — တေႃႇသိုပ်ႇဝႆႉၵွၼ်ႇ",kac:"Premium gaw {N} ya hta htum na — ya matut la u",th:"Premium จะหมดอายุใน {N} วัน — ต่ออายุตอนนี้",zh:"Premium 将在 {N} 天后到期 — 请提前续费",vi:"Premium hết hạn sau {N} ngày — gia hạn ngay",id:"Premium berakhir dalam {N} hari — perpanjang sekarang",ms:"Premium tamat dalam {N} hari — perbaharui sekarang"},
   acc_plan_expired:{my:"Premium သက်တမ်း ကုန်သွားပါပြီ — အောက်မှာ ပြန်လည် သက်တမ်းတိုးနိုင်ပါတယ်",en:"Premium has expired — you can renew below",shn:"Premium မူတ်းယဝ်ႉ — တေႃႇသိုပ်ႇလႆႈတီႈတႂ်ႈၼႆႉ",kac:"Premium htum sai — npu kaw bai matut la lu ai",th:"Premium หมดอายุแล้ว — ต่ออายุได้ด้านล่าง",zh:"Premium 已到期 — 可在下方续费",vi:"Premium đã hết hạn — bạn có thể gia hạn bên dưới",id:"Premium sudah berakhir — perpanjang di bawah",ms:"Premium telah tamat — anda boleh perbaharui di bawah"},
@@ -7151,7 +7027,7 @@ $("filePick").onchange = function(){
 /* static (non-JS-built) accordions wire up the same open/close toggle
    the grp() builder below uses, so a hand-written .grp/.grp-h/.grp-b
    block (like Setup's Platform Guide) behaves identically to a built one */
-["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced","genGrpAdvanced","ptGrpFx","ptGrpPrompt","accGrpAuth","accGrpPlan","accGrpPanel","accGrpBuy","accGrpDev","accGrpReq","moneyGrpRuns"].forEach(function(id){
+["platGrpAndroid","platGrpIos","platGrpDesktop","platGrpPs","rhGrpAdvanced","rsGrpManual","v2GrpAdvanced","genGrpAdvanced","ptGrpFx","ptGrpPrompt","accGrpAuth","accGrpPlan","accGrpPanel","accGrpDev","moneyGrpRuns"].forEach(function(id){
   var g=$(id); if(!g) return;
   var h=g.querySelector(".grp-h");
   h.onclick=function(){
@@ -20051,10 +19927,9 @@ function accFmtDate(iso){
 
 /* ---------------- §2.2 sign up ---------------- */
 async function accSignup(){
-  var nm = $("accName").value.trim(), em = $("accEmail2").value.trim(), pw = $("accPass2").value;
+  var em = $("accEmail2").value.trim(), pw = $("accPass2").value;
   /* §8 ships no dedicated "name is required" key and the sweep pins the dict
      at exactly 75 entries, so the field label doubles as the error. */
-  if (nm.length < 1){ setSt("stAcc", t("acc_name"), "err"); $("accName").focus(); return; }
   if (!accEmailOk(em)){ setSt("stAcc", t("acc_email_bad"), "err"); $("accEmail2").focus(); return; }
   if (pw.length < 6){ setSt("stAcc", t("acc_pass_short"), "err"); $("accPass2").focus(); return; }
   var btn = $("btnAccSignup"); accBusy(btn, true); setSt("stAcc", "");
@@ -21007,7 +20882,7 @@ function showPaywall(key){
   go.onclick = function(){
     w.className = "wiz";
     switchPage("pgHome");
-    accOpenGrp(acc.sess ? "accGrpBuy" : "accGrpAuth");
+    accOpenGrp(acc.sess ? "accGrpPlan" : "accGrpAuth");
   };
   var later = el("button","btn"); later.textContent = t("gate_later");
   later.onclick = function(){ w.className = "wiz"; };
@@ -21017,7 +20892,7 @@ function showPaywall(key){
 }
 
 /* ---------------- accordion helpers ---------------- */
-var ACC_GRPS = ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpBuy","accGrpDev","accGrpReq"];
+var ACC_GRPS = ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpDev"];
 function accCollapseGrp(id){
   var g = $(id); if (!g) return;
   g.className = "grp" + (g.className.indexOf("hide") >= 0 ? " hide" : "");
@@ -21035,13 +20910,7 @@ function accOpenGrp(id){
 /* lazy loads — §2.8 step 3: devices and requests only when their accordion is
    first opened, prices only when the buy panel is */
 function accOnGrpOpen(id){
-  if (id === "accGrpBuy"){ accLoadSettings(); if (acc.pending && acc.pending.status === "pending") accPollStart(); }
-  else if (id === "accGrpDev"){ if (acc.sess) accLoadDevices(); }
-  else if (id === "accGrpReq"){ if (acc.sess) accLoadRequests(); }
-}
-function accOpenBuy(kind){
-  if (kind) accPayPick(kind);
-  accOpenGrp("accGrpBuy");
+  if (id === "accGrpDev"){ if (acc.sess) accLoadDevices(); }
 }
 function accPanelIntentApply(){
   if (!_panelDownloadIntent) return;
@@ -21054,7 +20923,7 @@ function accPanelIntentApply(){
   _panelDownloadStage = stage;
   if (stage === "loading") return;
   if (stage === "auth"){ accOpenGrp("accGrpAuth"); return; }
-  if (stage === "buy"){ accOpenGrp("accGrpBuy"); return; }
+  if (stage === "buy"){ accOpenGrp("accGrpPlan"); return; }
   accOpenGrp("accGrpPanel");
   _panelDownloadIntent = false;
   _panelDownloadStage = "done";
@@ -21108,28 +20977,30 @@ function accRenderPlan(){
   var p = acc.profile;
   var days = planDaysLeft(p);
   var active = !!(p && p.plan_status === "active");
-  var buy = $("btnPlanBuy");
   var until = $("accPlanUntil");
+  var pending = $("accPending");
+  if (pending) pending.style.display = "none";   /* only the inactive branch shows it */
   line.className = "acc-plan-line";
   if (!active){
     setIcnText(line, "i-key", t("acc_plan_free"));
     if (until) until.textContent = "";
-    if (buy){ buy.style.display = ""; setIcnText(buy, "i-gem", t("pay_h")); }
+    /* v5.44.0 — there is nothing to purchase and nothing to submit here any
+       more: the owner grants access from /admin. An account still waiting on
+       that is told so, rather than being shown the empty space where the
+       purchase form used to be. */
+    if (pending && acc.sess) { pending.textContent = t("acc_pending"); pending.style.display = ""; }
   } else if (days === 0){
     line.className = "acc-plan-line err";
     setIcnText(line, "i-warn", t("acc_plan_expired"));
     if (until) until.textContent = "";
-    if (buy){ buy.style.display = ""; setIcnText(buy, "i-gem", t("pay_h")); }
   } else if (days <= 7){
     line.className = "acc-plan-line gold";
     setIcnText(line, "i-warn", t("acc_plan_soon").replace("{N}", accNum(days)));
     if (until) until.textContent = t("acc_plan_until").replace("{D}", accFmtDate(p.plan_expires_at));
-    if (buy){ buy.style.display = ""; setIcnText(buy, "i-gem", t("pay_h")); }
   } else {
     line.className = "acc-plan-line gold";
     setIcnText(line, "i-gem", t("acc_plan_active").replace("{N}", accNum(days)));
     if (until) until.textContent = t("acc_plan_until").replace("{D}", accFmtDate(p.plan_expires_at));
-    if (buy) buy.style.display = "none";
   }
   var off = $("accPlanOffline");
   if (off){
@@ -21629,16 +21500,13 @@ function accApplyLang(){
   setIcnText($("accGrpAuthT"), "i-key",    t("acc_h2"));
   setIcnText($("accGrpPlanT"), "i-gem",    t("acc_plan_h"));
   setIcnText($("accGrpPanelT"), "i-palette", t("acc_panel_h"));
-  setIcnText($("accGrpBuyT"),  "i-gem",    t("pay_h"));
   setIcnText($("accGrpDevT"),  "i-phone",  t("dev_h"));
-  setIcnText($("accGrpReqT"),  "i-clock",  t("req_h"));
 
   $("accLoginH").textContent  = t("acc_signin_h");
   $("accSignupH").textContent = t("acc_signup_h");
   try { admApplyLang(); } catch(e){}   /* v5.30 */
   $("accEmail").placeholder   = t("acc_email");
   $("accPass").placeholder    = t("acc_pass");
-  $("accName").placeholder    = t("acc_name");
   $("accEmail2").placeholder  = t("acc_email");
   $("accPass2").placeholder   = t("acc_pass");
   $("accPassNew").placeholder = t("acc_pass_new");
@@ -21657,30 +21525,10 @@ function accApplyLang(){
   $("accPassH").textContent = t("acc_change_pass_h");
   setIcnText($("btnAccPass"), "i-check", t("acc_change_pass_h"));
   setIcnText($("btnDevManage"), "i-phone", t("dev_h"));
-  setIcnText($("btnDevBuyExtra"), "i-gem", t("dev_buy_extra"));
-  setIcnText($("btnDevBuyExtra2"), "i-gem", t("dev_buy_extra"));
   $("accPanelP").textContent = t("acc_panel_p");
   setIcnText($("accPanelDownload"), "i-download", t("acc_panel_dl").replace("{V}", "6.24.0"));
 
-  $("payPickH").textContent  = t("pay_pick");
-  $("payDeviceH").textContent = t("pay_devices_h");
-  $("payInstrH").textContent = t("pay_instructions_h");
-  $("payBoth").textContent = t("pay_both");
-  $("payShotH").textContent  = t("pay_shot_h");
-  $("payTxnH").textContent   = t("pay_txn_h");
   /* v5.34 */
-  $("payQrH").textContent    = t("pay_qr_h");
-  $("payNumH").textContent   = t("pay_num_h");
-  $("payAmtH").textContent   = t("pay_amt_h");
-  $("payAmt").placeholder    = t("pay_amt_h");
-  $("payAmt").setAttribute("aria-label", t("pay_amt_h"));
-  setIcnText($("btnPayNumCopy"), "i-doc", t("pay_num_copy"));
-  setIcnText($("btnPayShot"),   "i-camera", t("pay_shot_pick"));
-  setIcnText($("btnPaySubmit"), "i-check",  t("pay_submit"));
-  setIcnText($("btnPayRetry"),  "i-retry",  t("acc_retry"));
-  setIcnText($("btnPayRefresh"),"i-retry",  t("pay_refresh"));
-  setIcnText($("btnPayAgain"),  "i-gem",    t("pay_submit"));
-  $("payPendingP").textContent = t("pay_pending_p");
 
   /* the gear's title/aria-label pair is owned by accChipRender() (called just
      below), so hover text and accessible name can never drift apart */
@@ -21708,66 +21556,22 @@ function accWire(){
   $("btnAccForgot").onclick = function(){ accForgot(); };
   $("btnAccLogout").onclick = function(){ accLogout(); };
   $("btnAccPass").onclick   = function(){ accChangePass(); };
-  $("btnPlanBuy").onclick   = function(){ accOpenBuy(null); };
   $("btnDevManage").onclick = function(){ accOpenGrp("accGrpDev"); };
-  $("btnDevBuyExtra").onclick  = function(){ accOpenBuy("extra_device"); };
-  $("btnDevBuyExtra2").onclick = function(){ accOpenBuy("extra_device"); };
   ACC_PAY_CHIPS.forEach(function(c){
     var b = $(c[0]); if (b) b.onclick = function(){ accPayPick(c[1]); };
   });
-  $("btnPayShot").onclick = function(){ $("payShot").click(); };
-  $("payShot").onchange = function(){ var f = this.files && this.files[0]; this.value = ""; if (f) accPickShot(f); };
-  $("payTxn").oninput = function(){
-    this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
-    accPayValidate();
-  };
-  $("payTxn").onblur = function(){
-    if (this.value && !accTxnOk()) setSt("stPay", t("pay_txn_bad"), "err");
-  };
   /* v5.34 — the amount. Digits are kept as the user types so a pasted
      "50,000 MMK" out of a banking app becomes 50000 rather than being
      rejected, and the field is re-formatted with separators on the way back
      out because a bare 500000 is genuinely hard to read on a phone. */
-  $("payAmt").oninput = function(){
-    var digits = this.value.replace(/[^0-9]/g, "").slice(0, 9);
-    this.value = digits ? Number(digits).toLocaleString("en-US") : "";
-    accPayValidate();
-  };
-  $("payAmt").onblur = function(){
-    if (this.value && !accAmtOk()) setSt("stPay", t("pay_amt_need"), "err");
-  };
   /* v5.34 — copying the number is the whole point of showing it: reading
      eleven digits off a screen into a banking app is where a payment goes to
      the wrong account. */
-  $("btnPayNumCopy").onclick = async function(){
-    var n = ($("payNum").textContent || "").trim();
-    if (!n) return;
-    try { await navigator.clipboard.writeText(n); accSetInline("stPay", t("pay_num_copied"), "ok"); }
-    catch(e){
-      /* clipboard denied (an insecure context, or the user said no) — select
-         it instead so a long-press copy still works rather than doing nothing */
-      try {
-        var r = document.createRange(); r.selectNodeContents($("payNum"));
-        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      } catch(e2){}
-    }
-  };
-  $("btnPaySubmit").onclick = function(){ accSubmitPayment(); };
-  $("btnPayRetry").onclick  = function(){ accLoadSettings(); };
   /* #stPayPend has sat in the markup unwritten since the wave shipped, so a
      failed status check produced nothing at all — no text, no toast, on a 500,
      on a dead network, on an empty reply. accSetInline, not setSt: this node
      lives inside the collapsible buy accordion and setSt() toasts when its
      target is off-screen. Reuses existing keys, so the 75-key pin holds. */
-  $("btnPayRefresh").onclick = function(){
-    var b = this;
-    accBusy(b, true); accSetInline("stPayPend", "");
-    accPollOnce().then(function(r){
-      accBusy(b, false);
-      if (!r || !r.ok) accSetInline("stPayPend", t(r && r.offline ? "acc_offline" : "acc_unreachable"), "err");
-    });
-  };
-  $("btnPayAgain").onclick = function(){ acc.pending = null; accRenderPay(); };
   /* the gear already routes to Setup (switchPage("pgHome")); v4.30 adds the
      account affordance to it — see the header note in the stylesheet.
 
@@ -21857,7 +21661,7 @@ function accBoot(){
 
   /* default accordion states, applied ONCE at boot (an interactive login must
      not yank the panel the user is looking at out from under them) */
-  accCollapseGrp("accGrpPanel"); accCollapseGrp("accGrpBuy"); accCollapseGrp("accGrpDev"); accCollapseGrp("accGrpReq");
+  accCollapseGrp("accGrpPanel"); accCollapseGrp("accGrpDev");
   if (acc.sess){ accCollapseGrp("accGrpAuth"); }
   else { var a = $("accGrpAuth"); if (a) a.className = "grp open"; }
 
@@ -22146,7 +21950,7 @@ function appWallApply(){
              Sign-out still has to be reachable (see the v5.30 note this
              replaces), so accGrpAuth is expanded DIRECTLY rather than through
              the exclusive helper, which leaves both open. */
-          accOpenGrp("accGrpBuy");
+          accOpenGrp("accGrpPlan");
           var a = $("accGrpAuth");
           if (a && a.className.indexOf("hide") < 0) a.className = "grp open";
         }
@@ -22243,7 +22047,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.43.0";
+var APP_VER="5.44.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -190,7 +190,7 @@ report("F) no interpolated value lands inside a single-quoted attribute (escH do
      Cross-account admin payment markup now lives in the separately tested
      Admin Control Center. */
   await page.evaluate(async () => {
-    ["accGrpPlan", "accGrpBuy", "accGrpDev", "accGrpReq"].forEach(g => { try { accOpenGrp(g); } catch(e){} });
+    ["accGrpPlan", "accGrpDev"].forEach(g => { try { accOpenGrp(g); } catch(e){} });
     try { await accLoadRequests(); } catch(e){}
     try { accRenderPay(); accRender(); } catch(e){}
   });
@@ -230,7 +230,7 @@ report("F) no interpolated value lands inside a single-quoted attribute (escH do
      Setup page first: the checks above ended on the dashboard, and a route
      that is merely on a hidden page is not evidence either way. */
   await page.evaluate(() => {
-    try { switchPage("pgHome"); accOpenGrp("accGrpBuy"); } catch(e){}
+    try { switchPage("pgHome"); accOpenGrp("accGrpPlan"); } catch(e){}
   });
   await page.waitForTimeout(300);
   for (const [label, url, wantShown] of [

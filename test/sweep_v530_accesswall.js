@@ -460,12 +460,11 @@ async function look(browser, sess, prof, label) {
      path a customer has to pay:
 
      Q) accOpenGrp is an EXCLUSIVE accordion — its first act is to collapse
-        every other group in ACC_GRPS, and accGrpBuy is in that list. The wall's
-        buy branch called it twice, so the second call closed the payment panel
-        the first had just opened. The wall rendered "Pick a plan below and
-        upload your transfer slip" directly above a shut panel. Measured before
-        the fix: planChipsVisible false, submitVisible false, on every boot into
-        the buy state. Assertion H already covered the sign-out half of that
+        every other group in ACC_GRPS, and the group the wall opens is in that
+        list. The wall's branch called it twice, so the second call closed the
+        panel the first had just opened, and the wall rendered its instruction
+        directly above a shut panel. Measured before the fix: the panel's
+        contents invisible on every boot into that state. Assertion H already covered the sign-out half of that
         same block, which is exactly why this went unnoticed — it asserted the
         door was open and never that the till was.
 
@@ -495,13 +494,15 @@ async function look(browser, sess, prof, label) {
     const look = () => q.evaluate(() => {
       const vis = id => { const e = document.getElementById(id);
         return !!(e && e.getClientRects().length && getComputedStyle(e).display !== "none"); };
+      const g = document.getElementById("accGrpPlan");
       return { state: typeof appWallState === "function" ? appWallState() : "?",
-               chips: vis("payKind3m"), submit: vis("btnPaySubmit"),
+               planOpen: !!g && g.className.indexOf("open") >= 0,
+               pending: vis("accPending"),
                logout: vis("btnAccLogout"), scrollY: Math.round(window.scrollY) };
     });
     const atBoot = await look();
-    report("Q) the buy wall opens the panel it tells the customer to use",
-      atBoot.state === "buy" && atBoot.chips === true && atBoot.submit === true,
+    report("Q) the wall opens the panel it points the customer at — v5.44.0 there is nothing to buy, so that panel is the plan group carrying the approval notice",
+      atBoot.state === "buy" && atBoot.planOpen === true && atBoot.pending === true,
       atBoot);
     /* sign-out has to survive the reordering — this is assertion H's concern,
        re-checked here because the fix touches the same two lines */
