@@ -62,6 +62,13 @@ const MIGRATION_STATEMENT_TIMEOUT_MS = positiveMilliseconds(
    dialect. */
 const PLATFORM = path.join(__dirname, "..", "sql", "platform.sql");
 const SCHEMA_CANDIDATES = [path.join(__dirname, "..", "sql", "schema.sql")];
+/* Applied BEFORE platform.sql, whose first statement refuses a database still
+   carrying the legacy auth/storage dialect rather than silently stranding the
+   accounts in it. This file is the explicit migration that guard asks for. On a
+   database that never used the legacy dialect every block in it is a no-op, so
+   it costs one statement per boot and is never conditional on a flag somebody
+   has to remember to set. */
+const LEGACY = path.join(__dirname, "..", "sql", "legacy-auth-storage.sql");
 function resolveSchema() {
   for (const p of SCHEMA_CANDIDATES) if (fs.existsSync(p)) return p;
   return null;
@@ -82,7 +89,11 @@ async function migrate() {
     return;
   }
   const schema = resolveSchema();
-  const files = schema ? [PLATFORM, schema] : [PLATFORM];
+  const files = [
+    ...(fs.existsSync(LEGACY) ? [LEGACY] : []),
+    PLATFORM,
+    ...(schema ? [schema] : []),
+  ];
   const schemaBytes = schema ? fs.readFileSync(schema) : null;
   const expectedFingerprint = schemaBytes
     ? crypto.createHash("sha256").update(schemaBytes).digest("hex")
