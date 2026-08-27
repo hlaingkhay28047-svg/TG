@@ -80,8 +80,9 @@ jobs:
           umask 077
           APPS_FILE="$RUNNER_TEMP/production-diagnostic-apps.json"
           RAW_LOG="$RUNNER_TEMP/production-diagnostic-runtime.log"
+          CLEAN_LOG="$RUNNER_TEMP/production-diagnostic-clean.log"
           SAFE_LOG="$RUNNER_TEMP/production-diagnostic-sanitized.log"
-          trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$SAFE_LOG"' EXIT
+          trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$CLEAN_LOG" "$SAFE_LOG"' EXIT
 
           doctl apps list --output json > "$APPS_FILE"
           APP_COUNT="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
@@ -126,7 +127,7 @@ jobs:
           # reading is the newest one that ended in ERROR.
           if [ -z "$DEPLOYMENT" ]; then
             DEPLOYMENTS_FILE="$RUNNER_TEMP/production-diagnostic-deployments.json"
-            trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$SAFE_LOG" "$DEPLOYMENTS_FILE"' EXIT
+            trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$CLEAN_LOG" "$SAFE_LOG" "$DEPLOYMENTS_FILE"' EXIT
             if doctl apps list-deployments "$APP_ID" --output json > "$DEPLOYMENTS_FILE" 2>/dev/null; then
               DEPLOYMENT="$(jq -r '
                 [.[] | select(.phase == "ERROR")]
@@ -169,12 +170,45 @@ jobs:
             -e 's/((token|secret|api[_-]?key)=)[^[:space:]]+/\1<redacted>/gI' \
             "$RAW_LOG" \
             | LC_ALL=C tr -cd '\11\12\15\40-\176' \
-            | grep -E 'hnk-api listening|migrate:|db: WARNING|WARNING: could not reach the database|WARNING: booting anyway|FATAL: migration failed|FATAL: booting LOCKED' \
+            > "$CLEAN_LOG"
+
+          # AN ALLOWLIST THAT ONLY KNOWS THE HAPPY PATH CANNOT REPORT A
+          # SURPRISE. The first version listed the lines a migration prints
+          # when it runs, so a container that died BEFORE migrating matched
+          # nothing and the lane reported "no diagnostics present" — which is
+          # the one case the lane exists for. The vocabulary of failure is
+          # added here: Node's error and stack shapes, the connection and
+          # certificate errors a managed database produces, and the process
+          # signals App Platform kills a container with. Redaction still runs
+          # first, so a widened filter widens what is explained, not what is
+          # exposed.
+          grep -E \
+            -e 'hnk-api listening|migrate:|db: WARNING' \
+            -e 'WARNING: could not reach the database|WARNING: booting anyway' \
+            -e 'FATAL: migration failed|FATAL: booting LOCKED' \
+            -e '^[A-Za-z]*Error(:| )|^ +at |Cannot find module|MODULE_NOT_FOUND' \
+            -e 'ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|ECONNRESET|EADDRINUSE' \
+            -e 'certificate|password authentication failed|too many connections' \
+            -e 'permission denied|relation .* does not exist|lock timeout' \
+            -e 'security_configuration_missing|database_tls_unverified|schema_incomplete' \
+            -e 'npm ERR!|node:internal|SIGTERM|SIGKILL|OOMKilled|exited with' \
+            "$CLEAN_LOG" \
             | cut -c1-1000 \
             | tail -n 120 > "$SAFE_LOG" || true
 
+          # A COUNT IS NOT CONTENT. Reporting how many lines the deployment
+          # actually produced costs nothing and separates the two readings the
+          # first version confused: a deployment whose logs are gone or empty,
+          # and one that said plenty of things none of which were recognised.
+          RAW_LINES="$(wc -l < "$CLEAN_LOG" | tr -d ' ')"
+          echo "Deployment produced ${RAW_LINES} log line(s)."
+
           if [ ! -s "$SAFE_LOG" ]; then
-            echo "::error::No allowlisted migration diagnostics were present. Raw output remains private."
+            if [ "$RAW_LINES" -eq 0 ]; then
+              echo "::error::That deployment produced no log output at all — DigitalOcean has none retained for it."
+            else
+              echo "::error::${RAW_LINES} log line(s) were present and none matched the diagnostic filter. Raw output remains private."
+            fi
             exit 1
           fi
 
