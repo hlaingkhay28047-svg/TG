@@ -1,0 +1,121 @@
+name: DigitalOcean Production Migration Diagnostics
+
+# WHY THIS EXISTS. When hnk-ai-tools-3 fails a deploy with
+# DeployContainerHealthChecksFailed, App Platform rolls the old build back and
+# the container that could have said why is gone. /api/health answers from the
+# build that survived, so it reports the OLD state and nothing about the failure
+# — which is how a one-line `migrate:` message becomes an afternoon of guessing.
+#
+# The staging lane already had this. Production did not, and the first time it
+# mattered the only route to the reason was asking the owner to photograph a
+# console on a phone. This is the same reading, available to anyone with the
+# Actions tab.
+#
+# IT NEVER PRINTS RAW LOGS. Runtime output carries connection strings and
+# whatever an error happened to interpolate, and an Actions log is readable by
+# anyone who can see the run. So the output is redacted, stripped to printable
+# ASCII, filtered to an allowlist of migration and boot lines, truncated, and
+# wrapped in stop-commands so a log line cannot forge a workflow command.
+#
+# MANUAL ONLY. There is nothing to gate: it reads, it does not deploy, and a
+# scheduled lane would hold a production token open for no reason.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-production-diagnostics
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    name: Report sanitized hnk-api migration state
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      DO_APP_NAME: hnk-ai-tools-3
+      DO_REPO: hlaingkhay28047-svg/TG
+      DO_BRANCH: main
+      DO_SERVICE: hnk-api
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
+    steps:
+      - name: Require production diagnostics token
+        shell: bash
+        run: |
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::Production migration diagnostics require DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.166.0
+
+      - name: Capture sanitized migration diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          APPS_FILE="$RUNNER_TEMP/production-diagnostic-apps.json"
+          RAW_LOG="$RUNNER_TEMP/production-diagnostic-runtime.log"
+          SAFE_LOG="$RUNNER_TEMP/production-diagnostic-sanitized.log"
+          trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$SAFE_LOG"' EXIT
+
+          doctl apps list --output json > "$APPS_FILE"
+          APP_COUNT="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            [.[]
+              | select(.spec.name == $name)
+              | select(any(.spec.static_sites[]?;
+                  .github.repo == $repo and .github.branch == $branch))]
+            | length
+          ' "$APPS_FILE")"
+          if [ "$APP_COUNT" -ne 1 ]; then
+            echo "::error::Refusing to diagnose an ambiguous production app selection."
+            exit 1
+          fi
+          APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            .[]
+            | select(.spec.name == $name)
+            | select(any(.spec.static_sites[]?;
+                .github.repo == $repo and .github.branch == $branch))
+            | .id
+          ' "$APPS_FILE")"
+
+          # --type run is the surviving container. A rolled-back deploy leaves
+          # its own reason in --type deploy, which is the one worth having here
+          # and is fetched second so a missing deploy log cannot hide the run log.
+          if ! doctl apps logs "$APP_ID" "$DO_SERVICE" \
+            --type run --tail 300 --no-prefix > "$RAW_LOG" 2>&1; then
+            echo "::error::DigitalOcean runtime logs could not be retrieved. Raw output remains private."
+            exit 1
+          fi
+          doctl apps logs "$APP_ID" "$DO_SERVICE" \
+            --type deploy --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 || true
+
+          sed -E \
+            -e 's#postgres(ql)?://[^[:space:]]+#postgres://<redacted>#gI' \
+            -e 's/(password=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/(PGPASSWORD=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/((token|secret|api[_-]?key)=)[^[:space:]]+/\1<redacted>/gI' \
+            "$RAW_LOG" \
+            | LC_ALL=C tr -cd '\11\12\15\40-\176' \
+            | grep -E 'hnk-api listening|migrate:|db: WARNING|WARNING: could not reach the database|WARNING: booting anyway|FATAL: migration failed|FATAL: booting LOCKED' \
+            | cut -c1-1000 \
+            | tail -n 120 > "$SAFE_LOG" || true
+
+          if [ ! -s "$SAFE_LOG" ]; then
+            echo "::error::No allowlisted migration diagnostics were present. Raw output remains private."
+            exit 1
+          fi
+
+          echo "::group::Sanitized hnk-api migration diagnostics"
+          STOP_TOKEN="production-diagnostic-$(openssl rand -hex 16)"
+          echo "::stop-commands::$STOP_TOKEN"
+          cat "$SAFE_LOG"
+          echo "::$STOP_TOKEN::"
+          echo "::endgroup::"
