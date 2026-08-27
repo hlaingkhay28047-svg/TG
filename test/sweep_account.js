@@ -22,7 +22,7 @@
      13 SW                still refuses to cache a cross-origin (bearer) response
      14 320/390           no overflow with every accordion + the paywall open
      15 44px              every visible account control clears the touch target
-     16 i18n zero-miss    90 keys x 9 languages, placeholders intact, no emoji
+     16 i18n zero-miss    91 keys x 9 languages, placeholders intact, no emoji
      17 no secrets        the anon key ships in code but is never RENDERED
      18 console           zero console errors / pageerrors across the whole sweep
 
@@ -187,7 +187,6 @@ const SB_FIX = {
   // ---------------------------------------------------------------- 1) signup
   await boot({ signup: SB_FIX.signupNoSession, signupStatus: 200 });
   await page.evaluate(() => { accShowForm("signup"); });
-  await page.fill("#accName", "Hla Hla");
   await page.fill("#accEmail2", "hla@example.com");
   await page.fill("#accPass2", "secret123");
   await page.click("#btnAccSignup");
@@ -202,9 +201,10 @@ const SB_FIX = {
     sess: localStorage.getItem("hnk_acc_sess_v1")
   }));
   const c1ProfInsert = c1calls.filter(c => /\/rest\/v1\/profiles/.test(c.url) && c.method === "POST").length;
-  report("1 signup: POST /auth/v1/signup carries {email,password,data.name} + apikey + anon bearer; the client never inserts into profiles; a session-less 200 renders acc_confirm_email and leaves the panel logged out",
+  report("1 signup: POST /auth/v1/signup carries {email,password} and NOTHING else — v5.44.0 dropped the name field, so the body must not smuggle one — plus apikey + anon bearer; the client never inserts into profiles; a session-less 200 renders acc_confirm_email and leaves the panel logged out",
     su.method === "POST" && suBody.email === "hla@example.com" && suBody.password === "secret123" &&
-    suBody.data && suBody.data.name === "Hla Hla" && !!su.headers.apikey && hasAnonAuth(su.headers) &&
+    suBody.data === undefined && Object.keys(suBody).length === 2 &&
+    !!su.headers.apikey && hasAnonAuth(su.headers) &&
     c1ProfInsert === 0 && /confirmation link/i.test(c1ui.st) && c1ui.loggedOut && !c1ui.sess,
     JSON.stringify({ profileInserts: c1ProfInsert, st: c1ui.st, loggedOut: c1ui.loggedOut }));
 
@@ -215,7 +215,6 @@ const SB_FIX = {
      at all. Reordering the two statements makes this FAIL. */
   await boot({ signup: { msg: "User already registered" }, signupStatus: 400 });
   await page.evaluate(() => { accShowForm("signup"); });
-  await page.fill("#accName", "Hla Hla");
   await page.fill("#accEmail2", "taken@example.com");
   await page.fill("#accPass2", "hunter2secret");
   await page.click("#btnAccSignup");
@@ -388,16 +387,16 @@ const SB_FIX = {
     acc.profile = null;
     accRender();
     const loading = { intent: _panelDownloadIntent, stage: _panelDownloadStage,
-                      buyOpen: open("accGrpBuy"), panelHidden: hidden("accGrpPanel") };
+                      planOpen: open("accGrpPlan"), panelHidden: hidden("accGrpPanel") };
 
     acc.profile = { id: uid, name: "x", email: "x@y.z", plan_status: "none",
                     plan_expires_at: null, allowed_devices: 2 };
     accRender();
     const buy = { intent: _panelDownloadIntent, stage: _panelDownloadStage,
-                  open: open("accGrpBuy"), panelHidden: hidden("accGrpPanel") };
+                  open: open("accGrpPlan"), panelHidden: hidden("accGrpPanel") };
     accOpenGrp("accGrpPlan");
     accPanelIntentApply();
-    const stable = { planOpen: open("accGrpPlan"), buyOpen: open("accGrpBuy") };
+    const stable = { planOpen: open("accGrpPlan") };
 
     acc.profile = { id: uid, name: "x", email: "x@y.z", plan_status: "active",
                     plan_expires_at: new Date(Date.now() + 30 * 86400000).toISOString(), allowed_devices: 2 };
@@ -415,9 +414,9 @@ const SB_FIX = {
   }, UID);
   report("6b Panel acquisition route: ?panel=download opens login, waits for profile verification without a false upsell, preserves intent through purchase, opens and focuses the active-Premium download once, does not repeatedly hijack the accordion, and the dashboard promo uses the same flow",
     c6route.auth.intent === true && c6route.auth.stage === "auth" && c6route.auth.open === true &&
-    c6route.loading.intent === true && c6route.loading.stage === "loading" && c6route.loading.buyOpen === false && c6route.loading.panelHidden === true &&
+    c6route.loading.intent === true && c6route.loading.stage === "loading" && c6route.loading.planOpen === false && c6route.loading.panelHidden === true &&
     c6route.buy.intent === true && c6route.buy.stage === "buy" && c6route.buy.open === true && c6route.buy.panelHidden === true &&
-    c6route.stable.planOpen === true && c6route.stable.buyOpen === false &&
+    c6route.stable.planOpen === true &&
     c6route.panel.intent === false && c6route.panel.stage === "done" && c6route.panel.open === true && c6route.panel.hidden === false &&
     c6route.panel.href === "../download/" && c6route.panel.focused === true && c6route.panel.expanded === "true" &&
     c6route.promo.panelOpen === true && c6route.promo.intent === false && c6route.promo.stage === "done",
@@ -507,112 +506,36 @@ const SB_FIX = {
       r.status === deniedStates[i] && r.wall === "unified_blocked" && r.page === "pgHome" && !r.web && !!r.heading),
     JSON.stringify({ active: c6cActive, download: c6cDownload, denied: c6cDenied }));
 
-  // ------------------------------------------------- 9 / 7 / 8) the buy panel
+  // ------------------------------------------- 9) the wall with nothing to sell
+  /* v5.44.0 — the purchase panel and the payment-proof list are gone. The owner
+     grants access from /admin, so an account with no active plan has nothing to
+     buy and nothing to submit, and what it needs instead is to be TOLD that.
+     This used to assert the buy group was left open with its price chips
+     visible; the equivalent guarantee now is that the plan group is left open
+     and carries the approval notice, because a signed-in customer who is shown
+     an empty account page has learned nothing. */
   await boot({ login: SB_FIX.token, profile: SB_FIX.profileFree, settings: SB_FIX.settings,
                devices: [], devicesPost: { id: "d9" }, requests: [] });
   await page.fill("#accEmail", "hla@example.com");
   await page.fill("#accPass", "secret123");
   await page.click("#btnAccLogin");
   await page.waitForTimeout(400);
-  /* v5.32.0 — this used to click the accordion header to open the buy group.
-     It no longer may. Before v5.32.0 appWallApply's buy branch called
-     accOpenGrp("accGrpBuy") and then accOpenGrp("accGrpAuth"); accOpenGrp is
-     an EXCLUSIVE accordion whose first act is to collapse every other group,
-     so the second call shut the buy panel again and a customer who had just
-     been told to pay was left staring at a collapsed group. The header click
-     here quietly papered over that: it opened what the wall should have opened
-     itself, so the defect could not fail this test.
-     The fix makes the wall leave the buy group open, which turns the same
-     click into a TOGGLE-CLOSED. So the click is gone and the guarantee is
-     asserted instead — strictly more than this block checked before. */
-  const buyGroupOpen = await page.evaluate(() => {
-    const g = document.getElementById("accGrpBuy");
-    const k = document.getElementById("payKind3m");
-    return { open: !!g && g.className.indexOf("open") >= 0,
-             kindVisible: !!(k && k.getClientRects().length) };
+  const wallNothingToSell = await page.evaluate(() => {
+    const g = document.getElementById("accGrpPlan");
+    const p = document.getElementById("accPending");
+    return { planOpen: !!g && g.className.indexOf("open") >= 0,
+             noBuyPanel: !document.getElementById("accGrpBuy"),
+             noReqPanel: !document.getElementById("accGrpReq"),
+             noBuyButton: !document.getElementById("btnPlanBuy"),
+             pendingShown: !!(p && p.getClientRects().length),
+             pendingText: p ? (p.textContent || "").trim() : "" };
   });
-  report("9a buy wall: being told to pay leaves the payment group OPEN, so the only path to paying is on screen without hunting for it (pre-v5.32.0 the exclusive accordion re-collapsed it)",
-    buyGroupOpen.open && buyGroupOpen.kindVisible, JSON.stringify(buyGroupOpen));
-  await page.click("#payKind3m");
+  report("9 no-purchase wall: an account without a plan is left on an OPEN plan group that says its approval is pending, and the purchase panel, the payment-proof list and every buy button are gone from the document",
+    wallNothingToSell.planOpen && wallNothingToSell.noBuyPanel && wallNothingToSell.noReqPanel &&
+    wallNothingToSell.noBuyButton && wallNothingToSell.pendingShown &&
+    wallNothingToSell.pendingText.length > 10,
+    JSON.stringify(wallNothingToSell));
 
-  const v9 = {};
-  async function txn(val) {
-    await page.fill("#payTxn", val);
-    await page.waitForTimeout(60);
-    return page.evaluate(() => ({ value: document.getElementById("payTxn").value,
-                                  disabled: document.getElementById("btnPaySubmit").disabled,
-                                  st: (document.getElementById("stPay").textContent || "").trim() }));
-  }
-  v9.noShot = await txn("482913");                       /* valid txn, no screenshot yet */
-  v9.short = await txn("12345");
-  await page.focus("#payTxn");
-  await page.evaluate(() => document.getElementById("payTxn").blur());
-  await page.waitForTimeout(60);
-  v9.shortBlur = await page.evaluate(() => ({ st: (document.getElementById("stPay").textContent || "").trim() }));
-  await page.setInputFiles("#payShot", { name: "shot.png", mimeType: "image/png", buffer: Buffer.from(B64, "base64") });
-  await page.waitForTimeout(400);
-  v9.long = await txn("1234567");
-  v9.mixed = await txn("4a8b2c");
-  v9.good = await txn("482913");
-  /* v5.34 — the amount is now part of the gate, so "enabled on exactly 6
-     digits" is only true once an amount is present. Filling it here rather
-     than relaxing the assertion keeps the txn rules exactly as strict as they
-     were AND records the new requirement: the two v9.*Amt reads below prove
-     the button really is held by the amount and released by it. */
-  v9.noAmt = await page.evaluate(() => ({ disabled: document.getElementById("btnPaySubmit").disabled }));
-  await page.fill("#payAmt", "91000");
-  await page.waitForTimeout(120);
-  v9.withAmt = await page.evaluate(() => ({
-    value: document.getElementById("payAmt").value,
-    disabled: document.getElementById("btnPaySubmit").disabled,
-  }));
-
-  report("9 txn validation: non-digits are stripped, >6 clamps to 6, a valid txn with no screenshot keeps submit disabled showing pay_shot_need, and (v5.34) the amount is required too — six good digits and a slip are not enough on their own",
-    v9.noShot.disabled === true && /screenshot/i.test(v9.noShot.st) &&
-    v9.short.value === "12345" && v9.short.disabled === true &&
-    /exactly 6 digits/i.test(v9.shortBlur.st) &&
-    v9.long.value === "123456" &&
-    v9.mixed.value === "482" && v9.mixed.disabled === true &&
-    v9.good.value === "482913" &&
-    v9.noAmt.disabled === true &&
-    v9.withAmt.value === "91,000" && v9.withAmt.disabled === false,
-    JSON.stringify({ noShotSt: v9.noShot.st, blurSt: v9.shortBlur.st, clamp: v9.long.value,
-                     stripped: v9.mixed.value, heldByAmount: v9.noAmt.disabled, amount: v9.withAmt.value }));
-
-  await page.evaluate(() => { window.__sb = []; });
-  await page.click("#btnPaySubmit");
-  await page.waitForTimeout(700);
-  const c78 = await sb();
-  const up = c78.filter(c => c.url.indexOf("/storage/v1/object/") >= 0)[0] || { headers: {} };
-  const upHdrKeys = Object.keys(up.headers || {}).map(k => k.toLowerCase());
-  const upPath = (up.url || "").split("/storage/v1/object/payment-proofs/")[1] || "";
-  report("7 buy -> upload: the proof goes to POST /storage/v1/object/payment-proofs/<uid>/plan_3m-<ts>.(jpg|png) as multipart FormData with a `file` field, carrying apikey + the access bearer + x-upsert, and the app sets NO Content-Type (the browser owns the boundary)",
-    up.method === "POST" && new RegExp("^" + UID + "/plan_3m-\\d+\\.(jpg|png)$").test(upPath) &&
-    up.isFormData === true && up.formKeys.indexOf("file") >= 0 &&
-    upHdrKeys.indexOf("apikey") >= 0 && /^Bearer ACC1$/.test(up.headers.Authorization || "") &&
-    upHdrKeys.indexOf("x-upsert") >= 0 && upHdrKeys.indexOf("content-type") < 0,
-    JSON.stringify({ path: upPath, isFormData: up.isFormData, formKeys: up.formKeys, headers: upHdrKeys }));
-
-  const ins = c78.filter(c => /\/rest\/v1\/payment_requests/.test(c.url) && c.method === "POST")[0] || { headers: {} };
-  let insBody = {}; try { insBody = JSON.parse(ins.body); } catch(e) {}
-  const insKeys = Object.keys(insBody).sort();
-  const c8ui = await page.evaluate(() => ({
-    pending: (document.getElementById("payPendingH").textContent || "").trim(),
-    formHidden: document.getElementById("payForm").style.display === "none"
-  }));
-  /* v5.34 adds amount_mmk — what the customer says they sent — and the exact
-     key list stays pinned rather than loosened. is_grant is deliberately NOT
-     in it: only an admin filing a free period sends that, and a customer's
-     insert carrying it is exactly the forged-VIP-grant shape the schema's
-     insert policy refuses. status / reviewed_* / note remain the admin's. */
-  report("8 buy -> insert: the payment_requests body is exactly {user_id,kind,txn_last6,amount_mmk,screenshot_path} matching the uploaded path, with Prefer: return=representation; status / reviewed_at / reviewed_by / note / is_grant are ABSENT (they are the admin's fields); then the pending card renders",
-    ins.method === "POST" && JSON.stringify(insKeys) === JSON.stringify(["amount_mmk","kind","screenshot_path","txn_last6","user_id"]) &&
-    insBody.kind === "plan_3m" && insBody.txn_last6 === "482913" && insBody.user_id === UID &&
-    insBody.amount_mmk === 91000 &&
-    insBody.screenshot_path === upPath && /return=representation/.test(ins.headers.Prefer || "") &&
-    /Waiting for admin approval/i.test(c8ui.pending) && c8ui.formHidden,
-    JSON.stringify({ keys: insKeys, amount: insBody.amount_mmk, path: insBody.screenshot_path, prefer: ins.headers.Prefer, pending: c8ui.pending }));
-  await page.evaluate(() => { accPollStop(); });
 
   // ---------------------------------------------------------------- 10) device limit
   await boot({ login: SB_FIX.token, profile: SB_FIX.profileFree, devices: [],
@@ -626,14 +549,16 @@ const SB_FIX = {
     sess: !!localStorage.getItem("hnk_acc_sess_v1"),
     limitTxt: (document.getElementById("stAccDev").textContent || "").trim(),
     limitVisible: document.getElementById("stAccDev").offsetParent !== null,
-    buyExtra: !!document.getElementById("btnDevBuyExtra") &&
-              document.getElementById("btnDevBuyExtra").offsetParent !== null,
-    manage: !!document.getElementById("btnDevManage"),
+    /* v5.44.0 — there is no extra-device slot to sell any more, so the only
+       thing a customer at the cap can be offered is the list to prune. */
+    noBuyExtra: !document.getElementById("btnDevBuyExtra"),
+    manage: !!document.getElementById("btnDevManage") &&
+            document.getElementById("btnDevManage").offsetParent !== null,
     body: document.body.innerText || ""
   }));
-  report("10 device-limit: the trigger's rejection NEVER fails the login — the signed-in view renders and the session is stored — while dev_limit shows inline with {M} substituted from allowed_devices, #btnDevBuyExtra is offered, and the raw Postgres message (\"P0001\", \"exceeded\") appears nowhere in the DOM",
+  report("10 device-limit: the trigger's rejection NEVER fails the login — the signed-in view renders and the session is stored — while dev_limit shows inline with {M} substituted from allowed_devices, the manage button is offered and no buy-a-slot button is, and the raw Postgres message (\"P0001\", \"exceeded\") appears nowhere in the DOM",
     c10.signedIn && c10.sess && /Device limit reached/i.test(c10.limitTxt) &&
-    /allows 2 devices/i.test(c10.limitTxt) && c10.limitVisible && c10.buyExtra && c10.manage &&
+    /allows 2 devices/i.test(c10.limitTxt) && c10.limitVisible && c10.noBuyExtra && c10.manage &&
     c10.body.indexOf("P0001") < 0 && !/exceeded/i.test(c10.body),
     JSON.stringify({ signedIn: c10.signedIn, limitTxt: c10.limitTxt.slice(0, 80),
                      leakP0001: c10.body.indexOf("P0001") >= 0, leakExceeded: /exceeded/i.test(c10.body) }));
@@ -771,8 +696,8 @@ const SB_FIX = {
     LANG = before;
     return { total: keys.length, missing, emojis, unresolved, badPlace };
   });
-  report("16 i18n zero-miss: TR_V430 holds exactly 90 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
-    c16.total === 90 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+  report("16 i18n zero-miss: TR_V430 holds exactly 91 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
+    c16.total === 91 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));
@@ -802,7 +727,7 @@ const SB_FIX = {
   // ------------------------------------- 14) 320 / 390 no overflow (viewport-mutating)
   const openAll = () => page.evaluate(() => {
     switchPage("pgHome");
-    ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpBuy","accGrpDev","accGrpReq"].forEach(id => {
+    ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpDev"].forEach(id => {
       const g = document.getElementById(id); if (g) g.className = "grp open";   /* force, incl. the hidden plan group */
     });
     showPaywall("video");
@@ -863,47 +788,19 @@ const SB_FIX = {
                       created_at: "2026-08-01T00:00:00Z", note: "wrong amount" }];
     acc.pending = null;
     accRender(); accRenderPay(); accRenderDevices(); accRenderRequests(); accShowDeviceLimit();
-    ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpBuy","accGrpDev","accGrpReq"].forEach(id => {
+    ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpDev"].forEach(id => {
       document.getElementById(id).className = "grp open";
     });
     scan();
-    /* Keep the legacy signed-in coverage above, then expose the new tier
-       picker as a second visible state in the same touch-target sweep. */
-    acc.profile = { name: "Hla Hla", email: "a@b.c", created_at: "2025-01-15T00:00:00Z",
-                    plan_status: "none", plan_expires_at: null, joined_paid: false, allowed_devices: 2 };
-    acc.settings = { price_device_1: 511000, price_device_2: 819000, price_device_3: 1003000,
-                     price_device_4: 1207000, price_device_5: 1411000, price_device_step: 213000,
-                     price_1m: 15000, payment_instructions_my: "x" };
-    const picker = document.getElementById("payDeviceCount");
-    accPayKind = "join_first";
-    accPayDeviceCount = 1;
-    accRender(); accRenderPay();
-    scan();
-    const ps = getComputedStyle(picker), pr = picker.getBoundingClientRect();
-    return { n, bad, picker: { shown: picker.offsetParent !== null,
-      inp: picker.classList.contains("inp"), h: Math.round(pr.height),
-      font: parseFloat(ps.fontSize), left: Math.round(pr.left), right: Math.round(pr.right) } };
+    /* v5.44.0 — the device-count tier picker lived in the purchase panel and
+       went with it. The scan above still covers every surviving control in
+       #cardAccount across all four states, which is what this check was for;
+       what is gone is one widget, not the guarantee. */
+    return { n, bad };
   });
-  await page.setViewportSize({ width: 320, height: 800 });
-  await page.waitForTimeout(120);
-  const picker320 = await page.evaluate(() => {
-    const e = document.getElementById("payDeviceCount"), root = document.documentElement;
-    const oldDir = root.dir;
-    root.dir = "rtl";
-    const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
-    const rtlMarginLeft = parseFloat(cs.marginLeft), rtlMarginRight = parseFloat(cs.marginRight);
-    root.dir = oldDir;
-    return { innerW: innerWidth, scrollW: document.scrollingElement.scrollWidth,
-      left: Math.round(r.left), right: Math.round(r.right), h: Math.round(r.height),
-      rtlMarginLeft, rtlMarginRight };
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  report("15 44px targets: every VISIBLE button, chip, input and select inside #cardAccount clears a 44px target; the tier picker uses the shared field style, 16px phone text and stays inside 320/390px",
-    c15.n > 20 && c15.bad.length === 0 && c15.picker.shown && c15.picker.inp &&
-    c15.picker.h >= 44 && c15.picker.font >= 16 && c15.picker.left >= 0 && c15.picker.right <= 390 &&
-    picker320.h >= 44 && picker320.left >= 0 && picker320.right <= picker320.innerW &&
-    picker320.scrollW <= picker320.innerW + 1 && picker320.rtlMarginRight >= 7 && picker320.rtlMarginLeft < 1,
-    JSON.stringify({ at390: c15, at320: picker320 }));
+  report("15 44px targets: every VISIBLE button, chip, input and select inside #cardAccount clears a 44px target, across logged-out, both sub-forms, and signed-in with every accordion expanded",
+    c15.n > 20 && c15.bad.length === 0,
+    JSON.stringify({ scanned: c15.n, tooSmall: c15.bad }));
 
   await page.evaluate(() => { document.getElementById("wizPay").className = "wiz"; });
 

@@ -190,7 +190,7 @@ report("F) no interpolated value lands inside a single-quoted attribute (escH do
      Cross-account admin payment markup now lives in the separately tested
      Admin Control Center. */
   await page.evaluate(async () => {
-    ["accGrpPlan", "accGrpBuy", "accGrpDev", "accGrpReq"].forEach(g => { try { accOpenGrp(g); } catch(e){} });
+    ["accGrpPlan", "accGrpDev"].forEach(g => { try { accOpenGrp(g); } catch(e){} });
     try { await accLoadRequests(); } catch(e){}
     try { accRenderPay(); accRender(); } catch(e){}
   });
@@ -226,32 +226,33 @@ report("F) no interpolated value lands inside a single-quoted attribute (escH do
     result.qrShown === false && result.qrSrc.indexOf("javascript:") < 0,
     { qrShown: result.qrShown, src: result.qrSrc.slice(0, 60) });
 
-  /* the same again for the other URL shapes an owner might paste. Back to the
-     Setup page first: the checks above ended on the dashboard, and a route
-     that is merely on a hidden page is not evidence either way. */
+  /* v5.44.0 — the per-scheme payment_qr_url cases that used to follow are
+     gone with the panel that rendered them. There is no <img> in the app whose
+     src an owner-supplied setting can reach any more, so what those cases
+     guarded is now structural rather than filtered. Assert THAT, which is the
+     stronger statement, instead of leaving three checks pointed at elements
+     that no longer exist and would pass on absence alone. */
   await page.evaluate(() => {
-    try { switchPage("pgHome"); accOpenGrp("accGrpBuy"); } catch(e){}
+    try { switchPage("pgHome"); accOpenGrp("accGrpPlan"); } catch(e){}
   });
   await page.waitForTimeout(300);
-  for (const [label, url, wantShown] of [
-    ["data:", "data:text/html,<script>window.__xss=1<\/script>", false],
-    ["http:", "http://insecure.example/qr.jpg", false],
-    ["https:", "https://example.supabase.co/qr.jpg", true],
-  ]) {
-    await page.evaluate(u => {
-      acc.settings.payment_qr_url = u;
-      accRenderPay();
-    }, url);
-    await page.waitForTimeout(200);
-    const r = await page.evaluate(() => ({
-      shown: !!(document.getElementById("payRouteQr") && document.getElementById("payRouteQr").getClientRects().length),
-      src: document.getElementById("payQrImg").getAttribute("src") || "",
+  const qrSurface = await page.evaluate(() => {
+    acc.settings = acc.settings || {};
+    acc.settings.payment_qr_url = "data:text/html,<script>window.__xss=1<\/script>";
+    try { accRenderPay(); accRender(); } catch(e){}
+    return {
+      qrImg: !!document.getElementById("payQrImg"),
+      qrRoute: !!document.getElementById("payRouteQr"),
+      dataSrc: Array.from(document.images).filter(i =>
+        (i.getAttribute("src") || "").slice(0, 5) === "data:" &&
+        (i.getAttribute("src") || "").indexOf("text/html") >= 0).length,
       xss: window.__xss,
-    }));
-    report("D) a " + label + " payment_qr_url is " + (wantShown ? "accepted" : "refused"),
-      r.shown === wantShown && r.xss === 0 && (wantShown || r.src.indexOf(url) < 0),
-      { ...r, url: url.slice(0, 40) });
-  }
+    };
+  });
+  report("D) an owner-supplied payment_qr_url has no image left to reach: the QR surface is gone from the document and nothing rendered a text/html data: source",
+    qrSurface.qrImg === false && qrSurface.qrRoute === false &&
+    qrSurface.dataSrc === 0 && qrSurface.xss === 0,
+    qrSurface);
 
   report("H) no uncaught exception while rendering any of it",
     errs.length === 0, errs.slice(0, 3));
