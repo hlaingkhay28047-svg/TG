@@ -22,7 +22,7 @@
      13 SW                still refuses to cache a cross-origin (bearer) response
      14 320/390           no overflow with every accordion + the paywall open
      15 44px              every visible account control clears the touch target
-     16 i18n zero-miss    90 keys x 9 languages, placeholders intact, no emoji
+     16 i18n zero-miss    91 keys x 9 languages, placeholders intact, no emoji
      17 no secrets        the anon key ships in code but is never RENDERED
      18 console           zero console errors / pageerrors across the whole sweep
 
@@ -201,9 +201,10 @@ const SB_FIX = {
     sess: localStorage.getItem("hnk_acc_sess_v1")
   }));
   const c1ProfInsert = c1calls.filter(c => /\/rest\/v1\/profiles/.test(c.url) && c.method === "POST").length;
-  report("1 signup: POST /auth/v1/signup carries {email,password,data.name} + apikey + anon bearer; the client never inserts into profiles; a session-less 200 renders acc_confirm_email and leaves the panel logged out",
+  report("1 signup: POST /auth/v1/signup carries {email,password} and NOTHING else — v5.44.0 dropped the name field, so the body must not smuggle one — plus apikey + anon bearer; the client never inserts into profiles; a session-less 200 renders acc_confirm_email and leaves the panel logged out",
     su.method === "POST" && suBody.email === "hla@example.com" && suBody.password === "secret123" &&
-    suBody.data && suBody.data.name === "Hla Hla" && !!su.headers.apikey && hasAnonAuth(su.headers) &&
+    suBody.data === undefined && Object.keys(suBody).length === 2 &&
+    !!su.headers.apikey && hasAnonAuth(su.headers) &&
     c1ProfInsert === 0 && /confirmation link/i.test(c1ui.st) && c1ui.loggedOut && !c1ui.sess,
     JSON.stringify({ profileInserts: c1ProfInsert, st: c1ui.st, loggedOut: c1ui.loggedOut }));
 
@@ -548,14 +549,16 @@ const SB_FIX = {
     sess: !!localStorage.getItem("hnk_acc_sess_v1"),
     limitTxt: (document.getElementById("stAccDev").textContent || "").trim(),
     limitVisible: document.getElementById("stAccDev").offsetParent !== null,
-    buyExtra: !!document.getElementById("btnDevBuyExtra") &&
-              document.getElementById("btnDevBuyExtra").offsetParent !== null,
-    manage: !!document.getElementById("btnDevManage"),
+    /* v5.44.0 — there is no extra-device slot to sell any more, so the only
+       thing a customer at the cap can be offered is the list to prune. */
+    noBuyExtra: !document.getElementById("btnDevBuyExtra"),
+    manage: !!document.getElementById("btnDevManage") &&
+            document.getElementById("btnDevManage").offsetParent !== null,
     body: document.body.innerText || ""
   }));
-  report("10 device-limit: the trigger's rejection NEVER fails the login — the signed-in view renders and the session is stored — while dev_limit shows inline with {M} substituted from allowed_devices, #btnDevBuyExtra is offered, and the raw Postgres message (\"P0001\", \"exceeded\") appears nowhere in the DOM",
+  report("10 device-limit: the trigger's rejection NEVER fails the login — the signed-in view renders and the session is stored — while dev_limit shows inline with {M} substituted from allowed_devices, the manage button is offered and no buy-a-slot button is, and the raw Postgres message (\"P0001\", \"exceeded\") appears nowhere in the DOM",
     c10.signedIn && c10.sess && /Device limit reached/i.test(c10.limitTxt) &&
-    /allows 2 devices/i.test(c10.limitTxt) && c10.limitVisible && c10.buyExtra && c10.manage &&
+    /allows 2 devices/i.test(c10.limitTxt) && c10.limitVisible && c10.noBuyExtra && c10.manage &&
     c10.body.indexOf("P0001") < 0 && !/exceeded/i.test(c10.body),
     JSON.stringify({ signedIn: c10.signedIn, limitTxt: c10.limitTxt.slice(0, 80),
                      leakP0001: c10.body.indexOf("P0001") >= 0, leakExceeded: /exceeded/i.test(c10.body) }));
@@ -693,8 +696,8 @@ const SB_FIX = {
     LANG = before;
     return { total: keys.length, missing, emojis, unresolved, badPlace };
   });
-  report("16 i18n zero-miss: TR_V430 holds exactly 90 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
-    c16.total === 90 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+  report("16 i18n zero-miss: TR_V430 holds exactly 91 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
+    c16.total === 91 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));
@@ -789,43 +792,15 @@ const SB_FIX = {
       document.getElementById(id).className = "grp open";
     });
     scan();
-    /* Keep the legacy signed-in coverage above, then expose the new tier
-       picker as a second visible state in the same touch-target sweep. */
-    acc.profile = { name: "Hla Hla", email: "a@b.c", created_at: "2025-01-15T00:00:00Z",
-                    plan_status: "none", plan_expires_at: null, joined_paid: false, allowed_devices: 2 };
-    acc.settings = { price_device_1: 511000, price_device_2: 819000, price_device_3: 1003000,
-                     price_device_4: 1207000, price_device_5: 1411000, price_device_step: 213000,
-                     price_1m: 15000, payment_instructions_my: "x" };
-    const picker = document.getElementById("payDeviceCount");
-    accPayKind = "join_first";
-    accPayDeviceCount = 1;
-    accRender(); accRenderPay();
-    scan();
-    const ps = getComputedStyle(picker), pr = picker.getBoundingClientRect();
-    return { n, bad, picker: { shown: picker.offsetParent !== null,
-      inp: picker.classList.contains("inp"), h: Math.round(pr.height),
-      font: parseFloat(ps.fontSize), left: Math.round(pr.left), right: Math.round(pr.right) } };
+    /* v5.44.0 — the device-count tier picker lived in the purchase panel and
+       went with it. The scan above still covers every surviving control in
+       #cardAccount across all four states, which is what this check was for;
+       what is gone is one widget, not the guarantee. */
+    return { n, bad };
   });
-  await page.setViewportSize({ width: 320, height: 800 });
-  await page.waitForTimeout(120);
-  const picker320 = await page.evaluate(() => {
-    const e = document.getElementById("payDeviceCount"), root = document.documentElement;
-    const oldDir = root.dir;
-    root.dir = "rtl";
-    const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
-    const rtlMarginLeft = parseFloat(cs.marginLeft), rtlMarginRight = parseFloat(cs.marginRight);
-    root.dir = oldDir;
-    return { innerW: innerWidth, scrollW: document.scrollingElement.scrollWidth,
-      left: Math.round(r.left), right: Math.round(r.right), h: Math.round(r.height),
-      rtlMarginLeft, rtlMarginRight };
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  report("15 44px targets: every VISIBLE button, chip, input and select inside #cardAccount clears a 44px target; the tier picker uses the shared field style, 16px phone text and stays inside 320/390px",
-    c15.n > 20 && c15.bad.length === 0 && c15.picker.shown && c15.picker.inp &&
-    c15.picker.h >= 44 && c15.picker.font >= 16 && c15.picker.left >= 0 && c15.picker.right <= 390 &&
-    picker320.h >= 44 && picker320.left >= 0 && picker320.right <= picker320.innerW &&
-    picker320.scrollW <= picker320.innerW + 1 && picker320.rtlMarginRight >= 7 && picker320.rtlMarginLeft < 1,
-    JSON.stringify({ at390: c15, at320: picker320 }));
+  report("15 44px targets: every VISIBLE button, chip, input and select inside #cardAccount clears a 44px target, across logged-out, both sub-forms, and signed-in with every accordion expanded",
+    c15.n > 20 && c15.bad.length === 0,
+    JSON.stringify({ scanned: c15.n, tooSmall: c15.bad }));
 
   await page.evaluate(() => { document.getElementById("wizPay").className = "wiz"; });
 

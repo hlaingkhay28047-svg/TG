@@ -226,13 +226,17 @@ report("I2) both surfaces name the same right-to-left languages",
       const dir = id => { const e = document.getElementById(id); return e ? getComputedStyle(e).direction : null; };
       return {
         skipRight: sk && sk.right, skipLeft: sk && sk.left,
-        payDue: dir("payDue"), payNum: dir("payNum"),
+        /* v5.44.0 — #payDue and .pay-num went with the purchase panel. The
+           rule that matters survives on .statline b, which is where a count
+           still sits inside RTL prose. */
+        statNum: (function(){ const e = document.querySelector(".statline b");
+                              return e ? getComputedStyle(e).direction : null; })(),
       };
     });
     report("D) the skip link mirrors to the trailing edge in RTL",
       pinned.skipRight === "8px" && pinned.skipLeft !== "8px", pinned);
-    report("E) prices and numbers keep an explicit left-to-right run inside RTL text",
-      pinned.payDue === "ltr" && pinned.payNum === "ltr", pinned);
+    report("E) numbers keep an explicit left-to-right run inside RTL text",
+      pinned.statNum === "ltr", pinned);
     await ctx.close();
   }
 

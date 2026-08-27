@@ -136,16 +136,21 @@ function report(name, ok, detail) {
   });
   await outPage.goto(BASE, { waitUntil: "networkidle" });
   await outPage.waitForTimeout(1200);
-  setup.payHint = await outPage.evaluate(() => {
-    const el = document.getElementById("stPay");
-    return !!el && el.textContent.trim().length > 5;
+  /* v5.44.0 — #stPay lived in the purchase panel and went with it. A signed-
+     out visitor has nothing to pay for; what must not happen is an account
+     card that says nothing at all, so the login form is the thing to find. */
+  setup.authPrompt = await outPage.evaluate(() => {
+    const g = document.getElementById("accGrpAuth");
+    const f = document.getElementById("accFormLogin");
+    return !!g && g.className.indexOf("open") >= 0 &&
+           !!f && f.getClientRects().length > 0;
   });
   await outPage.close();
 
-  report("Setup: readiness strip live, manual update check reports current, backup exports a file, key removal works, logged-out pay hint",
+  report("Setup: readiness strip live, manual update check reports current, backup exports a file, key removal works, logged-out sign-in prompt",
     /* the version LINE must name the build, whatever the build is — pinning
        this to /^v4\./ made a major bump look like a Setup regression */
-    setup.gemReady && setup.upToDate && setup.ver === "v" + setup.appVer && /^\d+\.\d+\.\d+$/.test(setup.appVer) && /hnk-backup-/.test(setup.exported || "") && setup.delVisible && setup.keyGone && setup.payHint && setup.dataLine,
+    setup.gemReady && setup.upToDate && setup.ver === "v" + setup.appVer && /^\d+\.\d+\.\d+$/.test(setup.appVer) && /hnk-backup-/.test(setup.exported || "") && setup.delVisible && setup.keyGone && setup.authPrompt && setup.dataLine,
     setup);
 
   /* ---- 4) Workflow page ---- */

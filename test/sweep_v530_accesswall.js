@@ -517,9 +517,9 @@ async function look(browser, sess, prof, label) {
                              document.dispatchEvent(new Event("visibilitychange")); });
     await q.waitForTimeout(700);
     const after = await look();
-    report("R) coming back from another app does not collapse the payment form",
-      after.chips === before.chips && after.submit === before.submit &&
-      after.chips === true && Math.abs(after.scrollY - before.scrollY) < 40,
+    report("R) coming back from another app does not collapse the panel the wall opened",
+      after.planOpen === before.planOpen && after.pending === before.pending &&
+      after.planOpen === true && Math.abs(after.scrollY - before.scrollY) < 40,
       { before, after });
     await q.close();
   }
