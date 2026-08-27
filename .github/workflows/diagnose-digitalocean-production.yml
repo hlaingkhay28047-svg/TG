@@ -35,6 +35,11 @@ on:
         required: false
         default: ""
         type: string
+      watch:
+        description: "Follow a deployment that is still running, so its container's output is captured before DigitalOcean discards it"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -58,6 +63,7 @@ jobs:
       # workflow input is attacker-controlled text the moment anyone else can
       # dispatch it, and ${{ }} inside run: is substituted before bash sees it.
       DEPLOYMENT_INPUT: ${{ inputs.deployment }}
+      WATCH_INPUT: ${{ inputs.watch }}
     steps:
       - name: Require production diagnostics token
         shell: bash
@@ -120,44 +126,89 @@ jobs:
               exit 1 ;;
           esac
 
+          DEPLOYMENTS_FILE="$RUNNER_TEMP/production-diagnostic-deployments.json"
+          trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$CLEAN_LOG" "$SAFE_LOG" "$DEPLOYMENTS_FILE"' EXIT
+
+          deployment_phase() {
+            doctl apps list-deployments "$APP_ID" --output json > "$DEPLOYMENTS_FILE" 2>/dev/null || return 1
+            jq -r --arg id "$1" '.[] | select(.id == $id) | .phase // empty' "$DEPLOYMENTS_FILE"
+          }
+
           # THE POINT OF THIS WHOLE FILE. After a failed deploy App Platform
           # rolls back, and the ACTIVE deployment is then the build that
           # SURVIVED — so the default --type deploy log is the healthy old
           # container saying its migration succeeded. The deployment worth
-          # reading is the newest one that ended in ERROR.
-          if [ -z "$DEPLOYMENT" ]; then
-            DEPLOYMENTS_FILE="$RUNNER_TEMP/production-diagnostic-deployments.json"
-            trap 'rm -f "$APPS_FILE" "$RAW_LOG" "$CLEAN_LOG" "$SAFE_LOG" "$DEPLOYMENTS_FILE"' EXIT
-            if doctl apps list-deployments "$APP_ID" --output json > "$DEPLOYMENTS_FILE" 2>/dev/null; then
+          # reading is the newest one that ended in ERROR; in watch mode it is
+          # whichever one is still running.
+          if [ -z "$DEPLOYMENT" ] && doctl apps list-deployments "$APP_ID" --output json > "$DEPLOYMENTS_FILE" 2>/dev/null; then
+            if [ "$WATCH_INPUT" = "true" ]; then
+              DEPLOYMENT="$(jq -r '
+                [.[] | select(.phase | IN("ERROR","ACTIVE","CANCELED","SUPERSEDED") | not)]
+                | sort_by(.created_at) | last | .id // empty
+              ' "$DEPLOYMENTS_FILE")"
+            fi
+            if [ -z "$DEPLOYMENT" ]; then
               DEPLOYMENT="$(jq -r '
                 [.[] | select(.phase == "ERROR")]
-                | sort_by(.created_at)
-                | last
-                | .id // empty
+                | sort_by(.created_at) | last | .id // empty
               ' "$DEPLOYMENTS_FILE")"
             fi
           fi
 
           if [ -n "$DEPLOYMENT" ]; then
-            echo "Reading deployment $DEPLOYMENT"
+            echo "Reading deployment $DEPLOYMENT (phase $(deployment_phase "$DEPLOYMENT"))"
           else
             echo "No failed deployment found; reading the active one."
           fi
 
-          # Both log types, because a container that never became ready splits
-          # its story between them: the deploy log carries the boot and the
-          # migration, the run log whatever the process managed to say after.
           : > "$RAW_LOG"
           FOUND=0
-          for TYPE in deploy run; do
-            if [ -n "$DEPLOYMENT" ]; then
-              doctl apps logs "$APP_ID" "$DO_SERVICE" --deployment "$DEPLOYMENT" \
-                --type "$TYPE" --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 && FOUND=1 || true
-            else
-              doctl apps logs "$APP_ID" "$DO_SERVICE" \
-                --type "$TYPE" --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 && FOUND=1 || true
-            fi
-          done
+
+          fetch_once() {
+            # Both log types, because a container that never became ready splits
+            # its story between them: the deploy log carries the boot and the
+            # migration, the run log whatever the process managed to say after.
+            for TYPE in deploy run; do
+              if [ -n "$DEPLOYMENT" ]; then
+                doctl apps logs "$APP_ID" "$DO_SERVICE" --deployment "$DEPLOYMENT" \
+                  --type "$TYPE" --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 && FOUND=1 || true
+              else
+                doctl apps logs "$APP_ID" "$DO_SERVICE" \
+                  --type "$TYPE" --tail 300 --no-prefix >> "$RAW_LOG" 2>&1 && FOUND=1 || true
+              fi
+            done
+          }
+
+          # WATCH MODE EXISTS BECAUSE THE READING IS PERISHABLE. Asked for a
+          # finished deployment's container output, the API refuses outright:
+          #
+          #   400 cannot get running logs from deployment <id> in phase
+          #   final_cleanup
+          #
+          # A container that fails its health checks is rolled back and reaped,
+          # and everything it said goes with it. There is no after-the-fact
+          # reading to take, so the only way to learn why is to be holding the
+          # line while it is still talking. Poll until the deployment reaches a
+          # terminal phase, keeping every snapshot; the duplicates the overlap
+          # produces are collapsed at the end, which is much cheaper than
+          # missing the one line that mattered.
+          if [ "$WATCH_INPUT" = "true" ] && [ -n "$DEPLOYMENT" ]; then
+            DEADLINE=$(( $(date +%s) + 480 ))
+            while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+              fetch_once
+              PHASE="$(deployment_phase "$DEPLOYMENT")"
+              case "$PHASE" in
+                ERROR|ACTIVE|CANCELED|SUPERSEDED|"")
+                  echo "Deployment reached phase ${PHASE:-unknown}; stopping."
+                  break ;;
+              esac
+              sleep 10
+            done
+            fetch_once
+          else
+            fetch_once
+          fi
+
           if [ "$FOUND" -ne 1 ]; then
             echo "::error::DigitalOcean logs could not be retrieved. Raw output remains private."
             exit 1
@@ -170,6 +221,7 @@ jobs:
             -e 's/((token|secret|api[_-]?key)=)[^[:space:]]+/\1<redacted>/gI' \
             "$RAW_LOG" \
             | LC_ALL=C tr -cd '\11\12\15\40-\176' \
+            | awk '!seen[$0]++' \
             > "$CLEAN_LOG"
 
           # AN ALLOWLIST THAT ONLY KNOWS THE HAPPY PATH CANNOT REPORT A
