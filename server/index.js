@@ -109,6 +109,51 @@ function readBody(req) {
    queried, and the reason is still readable from a URL. */
 let locked = null;
 
+/* WHY READINESS EXPLAINS ITSELF IN THE LOG.
+ *
+ * /ready has always known exactly why it is refusing — which secrets are too
+ * short, which collide, whether the certificate verified, whether the schema
+ * applied — and it says so in its body. But nothing can read that body. App
+ * Platform keeps traffic on the previous healthy instance until this one is
+ * ready, so a container that never becomes ready is never routed to, and when
+ * it is rolled back the API declines to return its logs at all:
+ *
+ *   400 cannot get running logs from deployment <id> in phase final_cleanup
+ *
+ * Three deploys failed with DeployContainerHealthChecksFailed and the reason
+ * was, each time, sitting in a response nobody could fetch. Writing it to
+ * stdout costs one line and makes it survivable.
+ *
+ * NAMES, NEVER VALUES. A missing or duplicated secret is identified by the
+ * variable it lives in; entitlements.js compares digests rather than the
+ * secrets themselves for the same reason. Logged only when the reason CHANGES,
+ * because App Platform probes every ten seconds and a line per probe is a line
+ * nobody reads. */
+let lastReadinessReport = null;
+function reportReadiness(state) {
+  const reason = state.ready ? "ready" : [
+    state.schemaReady ? null : "schema not applied",
+    locked === null ? null : "migration locked",
+    state.securityReady ? null : "security configuration incomplete",
+    state.tlsReady ? null : "database TLS unverified",
+  ].filter(Boolean).join("; ");
+  /* duplicates is a list of GROUPS that share one digest, so each group is
+     named as the set it is — "A = B" says more than listing A and B apart. */
+  const detail = [
+    reason,
+    state.jwtReady === false ? "JWT_SECRET missing or under 32 bytes" : null,
+    state.secretStatus.missing.length
+      ? "missing or under 32 bytes: " + state.secretStatus.missing.join(", ") : null,
+    state.secretStatus.duplicates.length
+      ? "not unique: " + state.secretStatus.duplicates
+          .map(group => group.join(" = ")).join("; ") : null,
+  ].filter(Boolean).join(" | ");
+  if (detail === lastReadinessReport) return;
+  lastReadinessReport = detail;
+  if (state.ready) console.log("ready: serving");
+  else console.error("ready: NOT READY — " + detail);
+}
+
 async function streamDownloadResponse(req,res,status,stream,options) {
   const runtime=options||{};
   const createReadStream=runtime.createReadStream||fs.createReadStream;
@@ -235,8 +280,10 @@ const server = http.createServer(async (req, res) => {
       const secretStatus=securitySecretStatus();
       const securityReady=hasSecureTokenSecret(auth.SECRET)&&secretStatus.ready;
       const tlsReady=database.tlsSecurityReady();
-      const ready = !!require("./lib/migrate").getAppliedSchemaFingerprint() &&
-        locked === null && securityReady && tlsReady;
+      const schemaReady=!!require("./lib/migrate").getAppliedSchemaFingerprint();
+      const jwtReady=hasSecureTokenSecret(auth.SECRET);
+      const ready = schemaReady && locked === null && securityReady && tlsReady;
+      reportReadiness({ ready, schemaReady, securityReady, tlsReady, jwtReady, secretStatus });
       return send(res, ready ? 200 : 503,
         { ok:true,ready,apiVersion:API_VERSION,securityReady,
           missingSecuritySecrets:secretStatus.missing,
