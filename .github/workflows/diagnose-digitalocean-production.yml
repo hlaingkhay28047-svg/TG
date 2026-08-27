@@ -62,7 +62,9 @@ jobs:
   diagnose:
     name: Report sanitized hnk-api migration state
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    # Long enough to follow a deployment that gets superseded and then follow
+    # its replacement, plus the build ahead of each.
+    timeout-minutes: 20
     env:
       DO_APP_NAME: hnk-ai-tools-3
       DO_REPO: hlaingkhay28047-svg/TG
@@ -218,14 +220,29 @@ jobs:
           # produces are collapsed at the end, which is much cheaper than
           # missing the one line that mattered.
           if [ "$WATCH_INPUT" = "true" ] && [ -n "$DEPLOYMENT" ]; then
-            DEADLINE=$(( $(date +%s) + 480 ))
+            DEADLINE=$(( $(date +%s) + 900 ))
             while [ "$(date +%s)" -lt "$DEADLINE" ]; do
               fetch_once
               PHASE="$(deployment_phase "$DEPLOYMENT")"
               case "$PHASE" in
-                ERROR|ACTIVE|CANCELED|SUPERSEDED|"")
-                  echo "Deployment reached phase ${PHASE:-unknown}; stopping."
+                ERROR|ACTIVE)
+                  echo "Deployment $DEPLOYMENT reached phase $PHASE; stopping."
                   break ;;
+                CANCELED|SUPERSEDED|"")
+                  # NOT AN ENDING. Two deployments race every push: App Platform
+                  # opens one, then the deploy workflow patches the spec and
+                  # that opens another, which supersedes the first. Treating
+                  # CANCELED as terminal is what lost the reading three times --
+                  # the run that mattered was always the replacement. Follow it.
+                  echo "Deployment $DEPLOYMENT is ${PHASE:-gone}; looking for the one that replaced it."
+                  NEXT="$(running_deployment)"
+                  if [ -n "$NEXT" ] && [ "$NEXT" != "$DEPLOYMENT" ]; then
+                    DEPLOYMENT="$NEXT"
+                    echo "Following $DEPLOYMENT instead."
+                  else
+                    echo "Nothing replaced it; stopping."
+                    break
+                  fi ;;
               esac
               sleep 10
             done
