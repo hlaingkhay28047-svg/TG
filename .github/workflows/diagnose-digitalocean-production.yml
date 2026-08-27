@@ -24,10 +24,17 @@ name: DigitalOcean Production Migration Diagnostics
 # the incident needed. By default this now finds the most recent deployment in
 # an ERROR phase and asks for that one by id.
 #
-# MANUAL ONLY. There is nothing to gate: it reads, it does not deploy, and a
-# scheduled lane would hold a production token open for no reason.
+# IT ARMS ITSELF ON PUSH, because the window is five minutes wide and a human
+# cannot reliably hit it. Twice now the reading was lost to timing rather than
+# to any defect: dispatched a minute early the run was cancelled, dispatched
+# seven minutes later the deployment had already been reaped. A push to main is
+# what CAUSES a deploy, so it is the only trigger that cannot arrive late.
+# Dispatching by hand still works and still defaults to reading the last
+# failure.
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       deployment:
@@ -44,9 +51,12 @@ on:
 permissions:
   contents: read
 
+# NEVER cancel-in-progress. A diagnostic racing a five-minute window is exactly
+# what must not be killed by the next one arriving; losing the reading costs a
+# whole deploy cycle, while two overlapping readers cost nothing.
 concurrency:
   group: digitalocean-production-diagnostics
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   diagnose:
@@ -63,7 +73,9 @@ jobs:
       # workflow input is attacker-controlled text the moment anyone else can
       # dispatch it, and ${{ }} inside run: is substituted before bash sees it.
       DEPLOYMENT_INPUT: ${{ inputs.deployment }}
-      WATCH_INPUT: ${{ inputs.watch }}
+      # A push is a deploy about to happen, so it always watches. A manual run
+      # honours the box, and an unchecked box still reads the last failure.
+      WATCH_INPUT: ${{ github.event_name == 'push' && 'true' || inputs.watch }}
     steps:
       - name: Require production diagnostics token
         shell: bash
@@ -140,19 +152,32 @@ jobs:
           # container saying its migration succeeded. The deployment worth
           # reading is the newest one that ended in ERROR; in watch mode it is
           # whichever one is still running.
+          running_deployment() {
+            doctl apps list-deployments "$APP_ID" --output json > "$DEPLOYMENTS_FILE" 2>/dev/null || return 1
+            jq -r '
+              [.[] | select(.phase | IN("ERROR","ACTIVE","CANCELED","SUPERSEDED") | not)]
+              | sort_by(.created_at) | last | .id // empty
+            ' "$DEPLOYMENTS_FILE"
+          }
+
+          if [ -z "$DEPLOYMENT" ] && [ "$WATCH_INPUT" = "true" ]; then
+            # App Platform takes a few seconds to open the deployment a push
+            # causes, and this job starts the moment the push lands. Give it a
+            # short window to appear rather than immediately falling back to the
+            # previous failure, which is the reading we already have.
+            DISCOVER_DEADLINE=$(( $(date +%s) + 150 ))
+            while [ "$(date +%s)" -lt "$DISCOVER_DEADLINE" ]; do
+              DEPLOYMENT="$(running_deployment)"
+              [ -n "$DEPLOYMENT" ] && break
+              sleep 10
+            done
+          fi
+
           if [ -z "$DEPLOYMENT" ] && doctl apps list-deployments "$APP_ID" --output json > "$DEPLOYMENTS_FILE" 2>/dev/null; then
-            if [ "$WATCH_INPUT" = "true" ]; then
-              DEPLOYMENT="$(jq -r '
-                [.[] | select(.phase | IN("ERROR","ACTIVE","CANCELED","SUPERSEDED") | not)]
-                | sort_by(.created_at) | last | .id // empty
-              ' "$DEPLOYMENTS_FILE")"
-            fi
-            if [ -z "$DEPLOYMENT" ]; then
-              DEPLOYMENT="$(jq -r '
-                [.[] | select(.phase == "ERROR")]
-                | sort_by(.created_at) | last | .id // empty
-              ' "$DEPLOYMENTS_FILE")"
-            fi
+            DEPLOYMENT="$(jq -r '
+              [.[] | select(.phase == "ERROR")]
+              | sort_by(.created_at) | last | .id // empty
+            ' "$DEPLOYMENTS_FILE")"
           fi
 
           if [ -n "$DEPLOYMENT" ]; then
