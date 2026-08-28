@@ -288,6 +288,12 @@ check("the panel agrees with itself about which version it is",
 check("the panel's update probe points at the production origin",
   panelInternals.updateUrl === `${productionBase}/download/panel-version.json`,
   panelInternals.updateUrl || "no PANEL_VERSION_URL found");
+/* v5.46 — the download page's footer had quietly slipped TWO web releases
+   ("Web App 5.43.0") because nothing read it. Every user-visible version
+   badge either follows the release or gets pinned here; this one now does. */
+check("the download page footer advertises the shipped web app and panel",
+  read("docs/download/index.html").includes(`Web App ${appVersion} · Panel ${panelVersion}`),
+  `expected "Web App ${appVersion} · Panel ${panelVersion}" in docs/download/index.html`);
 /* v5.36.0 — the first version of the check above pulled three named values out
    of the .ccx and declared the retired host handled. It was not: the panel's
    mini-browser still led its shortcut row with two links to

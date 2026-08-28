@@ -744,6 +744,23 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   #pgHome .page-hero,#pgAccount .page-hero,#pgHome #pendingGo{column-span:all}
   #pgHome>.card,#pgHome>section,#pgAccount>.card,#pgAccount>section{break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box;margin-top:0;margin-bottom:var(--sp-4)}
   #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box{max-width:880px;margin-left:auto;margin-right:auto}
+  /* the edge-to-edge phone tab strip becomes a floating centered dock — a
+     desktop control, not a stretched thumb bar. Deliberately still at the
+     bottom: the editors' slim-header mode owns the top edge, and a fixed
+     top dock would collide with it. */
+  .tabbar{left:50%;right:auto;bottom:18px;transform:translateX(-50%);width:auto;border:1px solid var(--line);border-radius:16px;padding:4px 10px;box-shadow:0 12px 40px rgba(0,0,0,.5);background:rgba(11,13,20,.94)}
+  .tabb{flex:0 0 auto;min-width:88px;padding:8px 14px 9px;border-radius:10px}
+  body{padding-bottom:112px}
+  .page-hero{min-height:208px}
+}
+/* v5.46 — the OS's stock light scrollbars sat on every desktop overflow pane
+   like stickers on a dark dashboard. Thin, theme-colored, and only where a
+   pointer implies real scrollbars exist. */
+@media(hover:hover) and (pointer:fine){
+  *{scrollbar-width:thin;scrollbar-color:#2a3450 transparent}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#2a3450;border-radius:8px;border:2px solid #0b0d14}
+  ::-webkit-scrollbar-track{background:transparent}
 }
 /* v5.46 — Chrome/Edge autofill painted its own white pill over the dark
    inputs, white-on-white on the login card. Autofilled fields now keep the

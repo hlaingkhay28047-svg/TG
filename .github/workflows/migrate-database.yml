@@ -172,46 +172,101 @@ jobs:
           done
           [ "$DEP_PHASE" = "ACTIVE" ] || { echo "::error::Deployment did not become ACTIVE in 30 minutes."; exit 1; }
 
-          # The copy job's own report: table names, row counts and durations
-          # only — the job prints no row values and no connection strings.
-          #
-          # THIS READING IS THE PHASE'S PROOF, so it retries instead of racing.
-          # The first attach run grepped once, 0.6 seconds after the deployment
-          # went ACTIVE, and found nothing: the POST_DEPLOY job's output was
-          # not queryable yet, and a second deployment had superseded the id
-          # the loop had been watching. Both are ordinary — so poll for up to
-          # four minutes, ask for the watched deployment AND fall back to the
-          # component's latest logs, and FAIL the run if the report never
-          # appears or reports a failure. A phase that cannot show its copy
-          # line has not proven anything, and the switch phase leans on this
-          # same line ("already holds N account(s)") as the data-arrived proof.
+          # The copy job's own report, if the platform still holds it. A
+          # seconds-long POST_DEPLOY job's container is reaped almost
+          # immediately and its logs go with it — the diagnostics lane
+          # documented the same perishability for deploy containers, and a
+          # 16-attempt, four-minute poll of this endpoint retrieved nothing
+          # three runs in a row. So this reading is informational only; the
+          # phase's PROOF is the database probe in the next step, which asks
+          # the cluster itself what it holds.
           if [ "$PHASE_INPUT" != "cleanup" ]; then
-            COPY_LINES=""
-            for attempt in $(seq 1 16); do
+            for attempt in 1 2 3; do
               COPY_LINES="$(doctl apps logs "$APP_ID" db-copy --type run --deployment "$DEP_ID" 2>/dev/null \
                 | grep -a "copy-database:" || true)"
-              if [ -z "$COPY_LINES" ]; then
-                COPY_LINES="$(doctl apps logs "$APP_ID" db-copy --type run 2>/dev/null \
-                  | grep -a "copy-database:" || true)"
-              fi
-              [ -n "$COPY_LINES" ] && break
-              echo "copy job report not readable yet (attempt $attempt); the POST_DEPLOY job runs around the deployment going live"
-              sleep 15
+              [ -z "$COPY_LINES" ] && COPY_LINES="$(doctl apps logs "$APP_ID" db-copy --type run 2>/dev/null \
+                | grep -a "copy-database:" || true)"
+              if [ -n "$COPY_LINES" ]; then printf '%s\n' "$COPY_LINES"; break; fi
+              sleep 10
             done
-            if [ -z "$COPY_LINES" ]; then
-              echo "::error::The db-copy job's report never became readable; the copy is unproven. Re-run this phase (it is idempotent) or read the deployment's Runtime Logs for db-copy."
-              exit 1
-            fi
-            printf '%s\n' "$COPY_LINES"
-            if printf '%s' "$COPY_LINES" | grep -aq "copy-database: FAILED"; then
-              echo "::error::The db-copy job reported a failure."
-              exit 1
-            fi
-            if ! printf '%s' "$COPY_LINES" | grep -aEq "MIGRATION COMPLETE|already holds"; then
-              echo "::error::The db-copy report carries neither the completion line nor the populated-target line."
-              exit 1
-            fi
+            [ -z "${COPY_LINES:-}" ] && echo "copy job output already reaped (expected for a seconds-long job); the database probe below is the gate"
           fi
+
+      - name: Prove the copied data inside the cluster
+        if: inputs.phase == 'attach' || inputs.phase == 'switch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          # THE GATE. Job logs are perishable, so the proof is the cluster's
+          # own answer: connect as the cluster admin under the service-role
+          # request context (every table FORCEs RLS — a contextless count
+          # reads zero rows and proves nothing) and count the accounts.
+          # Output is counts only: no row values, no addresses, and the
+          # connection URI is never echoed.
+          CLUSTER_ID="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" '.[] | select(.name == $n) | .id')"
+          if [ -z "$CLUSTER_ID" ]; then
+            echo "::error::Cluster $DO_CLUSTER was not found."
+            exit 1
+          fi
+
+          CA_FILE="$RUNNER_TEMP/cluster-ca.crt"
+          RULE_ADDED=""
+          cleanup_probe() {
+            rm -f "$CA_FILE"
+            # remove the temporary trusted-source rule for this runner, if one was added
+            if [ -n "$RULE_ADDED" ]; then
+              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" --output json 2>/dev/null \
+                | jq -r --arg v "$RULE_ADDED" '.[] | select(.type == "ip_addr" and .value == $v) | .uuid' | head -1)"
+              [ -n "$RULE_UUID" ] && doctl databases firewalls remove "$CLUSTER_ID" --uuid "$RULE_UUID" > /dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_probe EXIT
+
+          # A cluster with a non-empty trusted-sources list blocks every other
+          # address, including this runner. Attaching the app can create that
+          # list, so grant this runner's address for the probe and remove it
+          # again on the way out.
+          RULES="$(doctl databases firewalls list "$CLUSTER_ID" --output json | jq 'length')"
+          if [ "${RULES:-0}" -gt 0 ]; then
+            RUNNER_IP="$(curl -fsS --max-time 15 https://api.ipify.org)"
+            case "$RUNNER_IP" in (*[!0-9.]*|"") echo "::error::Could not determine the runner address for the trusted-source grant."; exit 1;; esac
+            doctl databases firewalls append "$CLUSTER_ID" --rule "ip_addr:$RUNNER_IP" > /dev/null
+            RULE_ADDED="$RUNNER_IP"
+            sleep 10
+          fi
+
+          doctl databases ca "$CLUSTER_ID" --output json | jq -r '.[0].certificate' > "$CA_FILE"
+          URI="$(doctl databases connection "$CLUSTER_ID" --output json | jq -r '.uri')"
+          if [ -z "$URI" ] || [ "$URI" = "null" ]; then
+            echo "::error::No connection URI is available for $DO_CLUSTER."
+            exit 1
+          fi
+          BASE="${URI%%\?*}"
+
+          set +e
+          OUT="$(PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=20 psql "$BASE?sslmode=verify-ca" \
+            -X -v ON_ERROR_STOP=1 -q -t -A \
+            -c "select set_config('request.role','service_role',false), set_config('request.jwt.claim.sub','',false), set_config('request.is_admin','false',false), set_config('request.user_email','',false)" \
+            -c "select 'accounts='||count(*) from public.hnk_auth_users" 2>&1 | tail -1)"
+          PROBE_STATUS=$?
+          set -e
+          if [ "$PROBE_STATUS" -ne 0 ]; then
+            case "$OUT" in
+              *"does not exist"*)
+                echo "::error::The cluster has no hnk_auth_users table — the db-copy job has never run against it. Re-run the attach phase and read the db-copy Runtime Logs in the DigitalOcean console." ;;
+              *)
+                echo "::error::The cluster probe could not connect or query (${OUT:-no output}). If this is a network refusal, check the cluster's trusted sources." ;;
+            esac
+            exit 1
+          fi
+          COUNT="${OUT#accounts=}"
+          case "$COUNT" in (''|*[!0-9]*) echo "::error::Unexpected probe output."; exit 1;; esac
+          if [ "$COUNT" -lt 1 ]; then
+            echo "::error::The cluster holds 0 accounts — the copy has not landed. Re-run the attach phase (idempotent) and read the db-copy Runtime Logs in the DigitalOcean console."
+            exit 1
+          fi
+          echo "PROOF: the cluster holds $COUNT account(s) — the copied data is present."
 
       - name: Verify live health after the phase
         if: inputs.phase == 'switch' || inputs.phase == 'cleanup'
