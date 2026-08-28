@@ -43,7 +43,14 @@
       background:linear-gradient(135deg,#f4d488,#c79a3c);color:#161b22;font-size:13px;
       font-weight:700;cursor:pointer}
     #hnkGate .gate-busy{opacity:.55;cursor:default}
-    #hnkGate .gate-b2{background:none;border:1px solid #2a323d;color:#9aa7b4;font-weight:600}
+    /* v6.25 — the secondary buttons were invisible in real Photoshop: UXP's
+       widget styling dropped the label color, leaving dark text on the dark
+       gate. Explicit backgrounds plus a span-carried label (spans always
+       honor color under UXP where button labels do not) make Retry/Sign out
+       readable on every UXP build. */
+    #hnkGate .gate-b2{background:none;background-color:#151b23;border:1px solid #45536b;color:#e6edf3;font-weight:600}
+    #hnkGate .gate-b span{color:#161b22;font-size:13px;font-weight:700}
+    #hnkGate .gate-b2 span{color:#e6edf3;font-weight:600}
     #hnkGate .gate-msg{font-size:12px;line-height:1.7;margin:0 0 13px;color:#c9d3de;text-align:left}
     #hnkGate .gate-err{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ff8b8b;min-height:1px}
     #hnkGate .gate-lang{box-sizing:border-box;margin:14px auto 0;padding:5px 8px;
@@ -93,7 +100,7 @@
         <div class="hdr-t hero-t">
           <div class="hero-brand">HNK <span class="hero-brand-gold">PLUGIN PANEL</span></div>
           <div class="title hero-app" data-i18n="app_title"></div>
-          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.24.0</span> &middot; <span id="brandProv">Gemini AI</span><span id="brandPlan" class="hero-plan"></span></div>
+          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.25.0</span> &middot; <span id="brandProv">Gemini AI</span><span id="brandPlan" class="hero-plan"></span></div>
         </div>
         <div class="hdr-ctl">
           <select id="selLang" class="lang-sel" title="Language"></select>
@@ -101,7 +108,7 @@
         </div>
       </div>
       <div class="hero-chips">
-        <span class="hero-chip">&#10022; 366 Visual Library</span>
+        <span class="hero-chip">&#10022; 1801 Visual Library</span>
         <span class="hero-chip">&#9889; Smart Workflow</span>
         <span class="hero-chip">&#9678; Gemini &middot; GPT &middot; RunningHub</span>
       </div>
@@ -594,7 +601,7 @@
            Renderer auto-mounts into #hnkCompactLibraryCards; selecting a card
            routes through HNK.onLibraryPresetSelect → reference-2 slot. -->
       <div class="card">
-        <div class="chead" id="cUserLibH"><span class="car">&#9662;</span><span class="chead-t">Visual Library &middot; 366</span></div>
+        <div class="chead" id="cUserLibH"><span class="car">&#9662;</span><span class="chead-t">Visual Library</span></div>
         <div class="cbody" id="cUserLibB">
           <div id="hnkCompactLibraryCards" class="hnk-library-root"></div>
         </div>
