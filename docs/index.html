@@ -124,6 +124,33 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 /* ---- badges ---- */
 .badges{display:flex;flex-wrap:wrap;gap:8px}
 .badge{display:inline-flex;align-items:center;gap:7px;background:rgba(16,16,20,.72);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:var(--r-pill);padding:5px 13px;font-size:var(--fs-xs);color:var(--cream);font-weight:600}
+/* hero stat strip — big tabular digits over a fading gold rule */
+.hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 18px;margin-top:24px;max-width:660px}
+.hstat{position:relative;padding-bottom:11px;min-width:0}
+.hstat::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;border-radius:var(--r-pill);background:linear-gradient(90deg,var(--gold) 0%,rgba(233,185,73,.28) 55%,transparent 100%)}
+[dir="rtl"] .hstat::after{background:linear-gradient(270deg,var(--gold) 0%,rgba(233,185,73,.28) 55%,transparent 100%)}
+.hstat b{display:block;font-size:clamp(1.45rem,3.2vw,2.2rem);font-weight:700;line-height:1;color:var(--cream);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.hstat span{display:block;margin-top:7px;font-size:var(--fs-2xs);color:var(--muted);letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:560px){.hero-stats{grid-template-columns:1fr 1fr}}
+/* numbered section eyebrows — "01 / KICKER", the editorial index */
+.sec-head .kick::before{color:var(--cream);opacity:.45;font-weight:600;letter-spacing:.1em}
+#features .sec-head .kick::before{content:"01 / "}
+#proof .sec-head .kick::before{content:"02 / "}
+#webstudio .sec-head .kick::before{content:"03 / "}
+#panel .sec-head .kick::before{content:"04 / "}
+#engines .sec-head .kick::before{content:"05 / "}
+#course .sec-head .kick::before{content:"06 / "}
+#pricing .sec-head .kick::before{content:"07 / "}
+#tutorial .sec-head .kick::before{content:"08 / "}
+#contact .sec-head .kick::before{content:"09 / "}
+#faq .sec-head .kick::before{content:"10 / "}
+/* course duotone banner — one existing plate, grayscaled under a gold wash */
+.course-banner{position:relative;overflow:hidden;height:clamp(150px,24vw,235px);border-radius:var(--r-xl);border:1px solid var(--line);margin-bottom:var(--sp-4)}
+.course-banner img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;filter:grayscale(1) contrast(1.06) brightness(.92);display:block}
+.cb-shade{position:absolute;inset:0;background:linear-gradient(115deg,rgba(233,185,73,.42) 0%,rgba(120,86,20,.35) 34%,rgba(10,10,12,.55) 72%,rgba(10,10,12,.86) 100%)}
+.cb-type{position:absolute;left:clamp(16px,3.4vw,30px);bottom:clamp(13px,2.6vw,24px);z-index:1}
+.cb-type b{display:block;font-size:clamp(1.35rem,3.6vw,2.35rem);font-weight:700;line-height:1.06;color:#fff;letter-spacing:.01em;text-shadow:0 2px 14px rgba(0,0,0,.55)}
+.cb-type span{display:block;margin-top:5px;font-size:clamp(.72rem,1.5vw,.95rem);color:rgba(255,255,255,.72);letter-spacing:.12em;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.5)}
 .badge i{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:none}
 /* ---- nav ---- */
 .nav{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:10px var(--sp-4);flex-wrap:nowrap}
@@ -594,6 +621,12 @@ main .btn-dim:focus-visible{outline:2px solid var(--gold-hi); outline-offset:3px
       <span class="badge"><i></i><span data-i18n="badge.panel">Panel v6.25.3</span></span>
       <span class="badge"><i></i><span data-i18n="badge.updated">updated 2026-08-28</span></span>
     </div>
+    <div class="hero-stats" aria-label="HNK by the numbers">
+      <div class="hstat"><b data-count="lib">1850</b><span class="lat">Visual Library</span></div>
+      <div class="hstat"><b data-count="tap">138</b><span class="lat">One-Tap Looks</span></div>
+      <div class="hstat"><b data-count="wf">131</b><span class="lat">Smart Workflows</span></div>
+      <div class="hstat"><b data-count="tests">120</b><span class="lat">Tests Green</span></div>
+    </div>
   </div>
 </header>
 
@@ -780,6 +813,11 @@ main .btn-dim:focus-visible{outline:2px solid var(--gold-hi); outline-offset:3px
 <!-- ============ COURSE ============ -->
 <section id="course">
   <div class="sec-head"><h2><span class="kick lat">HNK COURSE PATH</span><span>စတင်သုံးခြင်းမှ Production Workflow အထိ</span></h2></div>
+  <div class="course-banner" aria-hidden="true">
+    <img src="assets/site/feat-path.jpg" alt="" loading="lazy" decoding="async">
+    <div class="cb-shade"></div>
+    <div class="cb-type lat"><b>HNK Course Path</b><span>Beginner &rarr; Production Workflow</span></div>
+  </div>
   <p class="sec-sub">Register → Admin approval → Device setup → AI Tools → Photoshop Panel ကို လက်တွေ့လိုက်လုပ်နိုင်တဲ့ အဆင့်လိုက် သင်ခန်းစာများ။</p>
   <div class="info-grid">
     <article class="info-card"><span class="num">01</span><h3>Foundation</h3><p>Secure account, one Phone + one Computer policy, license status နဲ့ ကိုယ့် AI provider key ကို မှန်ကန်စွာ ပြင်ဆင်မယ်။</p></article>

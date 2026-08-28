@@ -116,3 +116,16 @@ A reproducible ZIP test is not Adobe acceptance. Before enabling a release:
 Only after repository checks, artifact verification, private upload, Adobe
 acceptance, and server-side release enablement may the download be exposed to
 eligible students.
+
+## Acceptance record
+
+- **v6.25.2** — accepted 2026-08-28. Tester: the owner, in real Photoshop on
+  Windows (Creative Cloud CCX install; the div-button gate build). Artifact
+  `HNK_Ai_Panel_v6.25.2.ccx`, SHA-256
+  `423eed7920db2abc684b86066567d546a170c57ef94694498624228002da53ba`,
+  529,773 bytes. Verified in-app: install and launch, sign-in, computer
+  pairing, the update-required deny clearing after server-side release
+  enablement, Visual Library art loading from the deployed /app/lib tree,
+  and provider tool operation. v6.25.3 (catalog-only data change over the
+  same code) stays `pending` until the owner confirms it in Photoshop the
+  same way.
