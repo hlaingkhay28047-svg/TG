@@ -46,7 +46,7 @@ then verify the exact untracked artifact:
 
 ```bash
 release_dir="$(mktemp -d)"
-artifact="$release_dir/HNK_Ai_Panel_v6.24.0.ccx"
+artifact="$release_dir/HNK_Ai_Panel_v6.25.0.ccx"
 panel/package.sh "$artifact"
 HNK_PANEL_ARTIFACT="$artifact" node test/verify_ccx_package.js
 HNK_PANEL_ARTIFACT="$artifact" node test/verify_release_contract.js

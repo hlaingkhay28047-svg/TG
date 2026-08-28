@@ -732,6 +732,46 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   .wfgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .wfgrid .wf-span2{grid-column:auto}
 }
+/* v5.46 — desktop layer 2: a monitor stops being a very tall phone.
+   The settings-style pages (Setup, Account) pack their independent cards into
+   two masonry columns with the hero spanning both; the single-flow tool pages
+   keep one column but read as a centered work column instead of edge-to-edge
+   slabs. The editors (Meitu/Evoto/Studio) already carry their own desktop
+   grids and are deliberately untouched. */
+@media(min-width:1200px){
+  .wrap{max-width:1160px}
+  #pgHome.on,#pgAccount.on{column-count:2;column-gap:18px}
+  #pgHome .page-hero,#pgAccount .page-hero,#pgHome #pendingGo{column-span:all}
+  #pgHome>.card,#pgHome>section,#pgAccount>.card,#pgAccount>section{break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box;margin-top:0;margin-bottom:var(--sp-4)}
+  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box{max-width:880px;margin-left:auto;margin-right:auto}
+  /* the edge-to-edge phone tab strip becomes a floating centered dock — a
+     desktop control, not a stretched thumb bar. Deliberately still at the
+     bottom: the editors' slim-header mode owns the top edge, and a fixed
+     top dock would collide with it. */
+  .tabbar{left:50%;right:auto;bottom:18px;transform:translateX(-50%);width:auto;border:1px solid var(--line);border-radius:16px;padding:4px 10px;box-shadow:0 12px 40px rgba(0,0,0,.5);background:rgba(11,13,20,.94)}
+  .tabb{flex:0 0 auto;min-width:88px;padding:8px 14px 9px;border-radius:10px}
+  body{padding-bottom:112px}
+  .page-hero{min-height:208px}
+}
+/* v5.46 — the OS's stock light scrollbars sat on every desktop overflow pane
+   like stickers on a dark dashboard. Thin, theme-colored, and only where a
+   pointer implies real scrollbars exist. */
+@media(hover:hover) and (pointer:fine){
+  *{scrollbar-width:thin;scrollbar-color:#2a3450 transparent}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#2a3450;border-radius:8px;border:2px solid #0b0d14}
+  ::-webkit-scrollbar-track{background:transparent}
+}
+/* v5.46 — Chrome/Edge autofill painted its own white pill over the dark
+   inputs, white-on-white on the login card. Autofilled fields now keep the
+   app's panel background and cream text (the inset-shadow trick, because the
+   UA stylesheet's background-color cannot be overridden directly). */
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px var(--panel-2) inset;
+  -webkit-text-fill-color:var(--cream);
+  caret-color:var(--cream);
+  border:1px solid var(--line);
+  transition:background-color 999999s ease-out}
 /* pointer-only hover feedback for the interactives that had none */
 @media(hover:hover){
   .tabb:hover{color:var(--cream)}
@@ -20849,7 +20889,10 @@ function admL(o){ return L9(o); }
 function admApplyLang(){
   if (!$("cardAdmin")) return;
   setIcnText($("admH2"), "i-key", admL({my:"Admin Control Center",en:"Admin Control Center",shn:"Admin Control Center",kac:"Admin Control Center",th:"ศูนย์ควบคุมผู้ดูแล",zh:"管理员控制中心",vi:"Trung tâm quản trị",id:"Pusat Kontrol Admin",ms:"Pusat Kawalan Admin"}), { cls:"ic-h2" });
-  $("admIntro").textContent = admL({my:"အကောင့်၊ လိုင်စင်၊ ငွေပေးချေမှုနဲ့ စက်ပစ္စည်းလုပ်ဆောင်ချက်တွေကို 2FA စစ်ပြီးသော Admin session သီးသန့်ဖြင့် စီမံပါ။",en:"Manage accounts, licenses, payments and devices in a separate 2FA-verified admin session.",shn:"ၸတ်းၵၢၼ်ဢၶွင်ႉ၊ လၢႆႇသိၼ်၊ ငိုၼ်းလႄႈၶိူင်ႈ တီႈ admin session 2FA.",kac:"Account, license, payment hte device ni hpe 2FA admin session kaw galaw u.",th:"จัดการบัญชี ใบอนุญาต การชำระเงิน และอุปกรณ์ด้วยเซสชันแอดมินที่ผ่าน 2FA",zh:"请在独立且已通过 2FA 的管理员会话中管理账户、许可证、付款和设备。",vi:"Quản lý tài khoản, giấy phép, thanh toán và thiết bị trong phiên quản trị đã xác minh 2FA.",id:"Kelola akun, lisensi, pembayaran, dan perangkat dalam sesi admin terverifikasi 2FA.",ms:"Urus akaun, lesen, pembayaran dan peranti dalam sesi admin yang disahkan 2FA."});
+  /* v5.46 — the intro described payments and 2FA, both of which the admin
+     console no longer has (payments retired in v5.45, the authenticator gate
+     removed the same week). The copy now matches the console it opens. */
+  $("admIntro").textContent = admL({my:"အကောင့်၊ လိုင်စင်နဲ့ စက်ပစ္စည်းတွေကို သီးသန့် Admin session ဖြင့် စီမံပါ။",en:"Manage accounts, licenses and devices in a separate admin session.",shn:"ၸတ်းၵၢၼ်ဢၶွင်ႉ၊ လၢႆႇသိၼ်လႄႈၶိူင်ႈ တီႈ admin session ႁင်းၶေႃ.",kac:"Account, license hte device ni hpe admin session hta galaw u.",th:"จัดการบัญชี ใบอนุญาต และอุปกรณ์ในเซสชันแอดมินแยกต่างหาก",zh:"请在独立的管理员会话中管理账户、许可证和设备。",vi:"Quản lý tài khoản, giấy phép và thiết bị trong phiên quản trị riêng.",id:"Kelola akun, lisensi, dan perangkat dalam sesi admin terpisah.",ms:"Urus akaun, lesen dan peranti dalam sesi admin yang berasingan."});
   setIcnText($("openAdminCenter"), "i-key", admL({my:"Admin Control Center ဖွင့်မယ်",en:"Open Admin Control Center",shn:"ပိုတ်ႇ Admin Control Center",kac:"Admin Control Center hpaw",th:"เปิดศูนย์ควบคุมผู้ดูแล",zh:"打开管理员控制中心",vi:"Mở Trung tâm quản trị",id:"Buka Pusat Kontrol Admin",ms:"Buka Pusat Kawalan Admin"}));
   $("admSecurityNote").textContent = admL({my:"Student App session ဖြင့် admin လုပ်ဆောင်ချက် မလုပ်နိုင်ပါ။",en:"Student App sessions cannot perform administrator actions.",shn:"Student App session ဢမ်ႇႁဵတ်း admin action လႆႈ။",kac:"Student App session hte admin action n galaw lu ai.",th:"เซสชัน Student App ไม่สามารถทำคำสั่งผู้ดูแลได้",zh:"Student App 会话不能执行管理员操作。",vi:"Phiên Student App không thể thực hiện thao tác quản trị.",id:"Sesi Student App tidak dapat melakukan tindakan admin.",ms:"Sesi Student App tidak boleh melakukan tindakan admin."});
 }
@@ -21188,7 +21231,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.45.0";
+var APP_VER="5.46.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

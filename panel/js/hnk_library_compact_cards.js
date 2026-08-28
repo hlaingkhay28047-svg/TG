@@ -6,6 +6,22 @@
   var state = { data:null, all:[], filtered:[], visible:12, pageSize:12, collection:'All', category:'All', query:'', favorites:{} };
   var ids = { root:'hnkCompactLibraryCards', list:'hnkCompactLibraryList', count:'hnkCompactLibraryCount', search:'hnkCompactLibrarySearch', category:'hnkCompactLibraryCategory', more:'hnkCompactLibraryMore' };
   function el(tag, cls, text){ var n=doc.createElement(tag); if(cls){n.className=cls;} if(text!==undefined){n.textContent=text;} return n; }
+  /* v6.25 — THE CARDS SHIPPED IMAGELESS. Every record's paths point at the
+     assets/user_library folders, which have never existed inside the CCX (an
+     archive carrying 1,801 plates twice over would be ~100MB of inspectable
+     client-side bytes), so every card fired onerror and rendered "Preview
+     unavailable" — a visual library with no visuals. The same plates are
+     served by the licensed web host the manifest already allows for the API,
+     under the web app's own /app/lib/ui and /app/lib/full names, so the panel
+     now reads them from there: online studios get the real art, offline ones
+     keep the text cards exactly as before. */
+  var ASSET_BASE='https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/lib/';
+  function resolveAsset(p){
+    var s=String(p||'');
+    var m=s.match(/^assets\/user_library(_ui|_thumb)?\/(.+)$/);
+    if(!m){ return s; }
+    return ASSET_BASE+(m[1]?'ui':'full')+'/'+m[2];
+  }
   function getData(){ return global.HNK_LIBRARY_INDEX || (global.HNK && global.HNK.USER_LIBRARY_INDEX) || null; }
   function readFavorites(){
     try { var raw=global.localStorage && global.localStorage.getItem('hnkCompactLibraryFavorites'); state.favorites=raw?JSON.parse(raw):{}; }
@@ -57,7 +73,7 @@
     var meta=modal.querySelector('.hnk-preview-meta');
     title.textContent=item.title;
     img.alt=item.title;
-    img.src=item.paths.full;
+    img.src=resolveAsset(item.paths.full);
     meta.textContent=item.familyMM+' · '+item.ratio+' · '+item.tone+' · '+item.contrast+' · Full image shown with no crop';
     modal.classList.add('open');
     modal.setAttribute('aria-hidden','false');
@@ -67,7 +83,7 @@
     var card=el('article','hnk-lib-card'); card.setAttribute('data-id',item.id);
     var main=el('div','hnk-lib-main');
     var media=el('button','hnk-lib-media'); media.type='button'; media.setAttribute('aria-label','Open full preview: '+item.title);
-    var img=el('img','hnk-lib-image'); img.alt=item.title; img.loading='lazy'; img.decoding='async'; img.src=item.paths.preview;
+    var img=el('img','hnk-lib-image'); img.alt=item.title; img.loading='lazy'; img.decoding='async'; img.src=resolveAsset(item.paths.preview);
     img.onerror=function(){ this.style.display='none'; media.appendChild(el('span','hnk-lib-purpose','Preview unavailable')); };
     media.appendChild(img); media.appendChild(el('span','hnk-lib-ratio',item.ratio)); media.addEventListener('click',function(){openPreview(item);});
     var info=el('div','hnk-lib-info');

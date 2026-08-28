@@ -1,7 +1,7 @@
 {
   "id": "com.hnkstudio.ai.panel.students",
   "name": "HNK Photoshop Ai Panel (Students) V1",
-  "version": "6.24.0",
+  "version": "6.25.0",
   "main": "index.html",
   "manifestVersion": 5,
   "host": {
@@ -12,6 +12,8 @@
     "network": {
       "domains": [
         "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app",
+        "https://hnkaistudio.com",
+        "https://*.hnkaistudio.com",
         "https://generativelanguage.googleapis.com",
         "https://api.openai.com",
         "https://www.runninghub.ai",

@@ -5571,7 +5571,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.24.0";
+const PANEL_VERSION = "6.25.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5655,7 +5655,20 @@ const gateS = {
 function gateStale(ticket) { return ticket !== gateS.run; }
 
 function gateEl(id) { try { return document.getElementById(id); } catch (e) { return null; } }
-function gateTxt(id, s) { const el = gateEl(id); if (el) el.textContent = s || ""; }
+function gateTxt(id, s) {
+  const el = gateEl(id); if (!el) return;
+  /* v6.25 — button labels ride a span: UXP's widget rendering ignores the
+     color set on the <button> itself on some Photoshop builds, which is how
+     Retry/Sign out shipped as blank dark rectangles. Span text always honors
+     CSS color, on UXP and in a browser alike. */
+  if (el.tagName === "BUTTON") {
+    let sp = el.firstChild;
+    if (!sp || sp.nodeName !== "SPAN") { el.textContent = ""; sp = document.createElement("span"); el.appendChild(sp); }
+    sp.textContent = s || "";
+    return;
+  }
+  el.textContent = s || "";
+}
 function gateT(k) { try { return t(k); } catch (e) { return k; } }
 function gateErr(s) { gateTxt("gateErr", s); }
 
@@ -6061,7 +6074,7 @@ function gateWire() {
        own helper and it sets BOTH o.text and o.textContent, which is a UXP
        workaround the rest of the file has needed since v1. */
     try {
-      fillSelect(sl, LANGS.map(function (l) { return { v: l.code, label: l.native }; }));
+      fillSelect(sl, LANGS.map(function (l) { return { v: l.code, label: langOptionLabel(l) }; }));
       sl.value = state.lang;
     } catch (e) { }
     if (sl.addEventListener) sl.addEventListener("change", function () {
@@ -6158,6 +6171,25 @@ const LANGS = [
   { code: "ko", label: "KO", native: "한국어" }
 ];
 const LANG_CODES = LANGS.map(function (l) { return l.code; });
+/* v6.25 — the dropdown showed endonyms only, and UXP's fixed font stack has
+   no glyphs for several of these scripts on a stock Windows Photoshop: the
+   owner's screenshot showed rows of tofu boxes no one could pick a language
+   from. Each non-Latin endonym now carries a Latin gloss, so every row is
+   readable even where its own script is not; endonyms that already include a
+   Latin name are left alone. */
+const LANG_GLOSS = {
+  my: "Myanmar", shn: "Shan", th: "Thai", zh: "Chinese", mnw: "Mon",
+  rki: "Rakhine", ksw: "Karen", kyu: "Kayah", cnh: "Chin", blk: "Pa-O",
+  pll: "Ta'ang", khb: "Tai Lue", ahk: "Akha", lhu: "Lahu", lis: "Lisu",
+  hi: "Hindi", bn: "Bangla", ta: "Tamil", te: "Telugu", mr: "Marathi",
+  gu: "Gujarati", kn: "Kannada", ml: "Malayalam", pa: "Punjabi", ur: "Urdu",
+  ne: "Nepali", lo: "Lao", km: "Khmer", ja: "Japanese", ko: "Korean"
+};
+function langOptionLabel(l) {
+  const gloss = LANG_GLOSS[l.code];
+  if (!gloss || String(l.native).indexOf(gloss) >= 0) return l.native;
+  return l.native + " · " + gloss;
+}
 /* Which full I18N table an extended code reads when its starter pack misses:
    Myanmar ethnic -> Burmese, Tai Lue -> Shan, Lao -> Thai (closest readable),
    everything else -> English. */
@@ -6659,8 +6691,8 @@ function populateSelects() {
     for (let i = 0; i < LANGS.length; i++) {
       const o = document.createElement("option");
       o.value = LANGS[i].code;
-      o.text = LANGS[i].native;
-      o.textContent = LANGS[i].native;
+      o.text = langOptionLabel(LANGS[i]);
+      o.textContent = langOptionLabel(LANGS[i]);
       sl.appendChild(o);
     }
   }

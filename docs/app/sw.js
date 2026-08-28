@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v5-45-0";
+var CACHE = "hnk-web-studio-v5-46-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -215,10 +215,19 @@ function purgeReplacedLibArt() {
 }
 
 self.addEventListener("activate", function (e) {
+  /* v5.46 — ACTIVATION SURVIVES A BROKEN CACHE STORAGE. caches.keys() itself
+     can reject (exhausted quota, a corrupted profile, endpoint security
+     products that wall off storage APIs — all real on studio Windows
+     machines). An unhandled rejection here fails activation and strands the
+     customer on whatever worker came before, so storage failure is absorbed
+     and the worker claims its clients regardless. */
   e.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== LIB_CACHE; }).map(function (k) { return caches.delete(k); }));
-    }).then(purgeReplacedLibArt).then(function () { return self.clients.claim(); })
+    }).then(purgeReplacedLibArt)
+      .catch(function () {})
+      .then(function () { return self.clients.claim(); })
+      .catch(function () {})
   );
 });
 
@@ -238,26 +247,37 @@ self.addEventListener("fetch", function (e) {
   if (url.pathname === "/api" || url.pathname.indexOf("/api/") === 0) return;
   var isLib = url.pathname.indexOf("/lib/") >= 0 && !LIB_ICON_RE.test(url.pathname);
   if (isLib) {
+    /* v5.46 — THE CACHE MUST NEVER TAKE DOWN WHAT IT EXISTS TO PROTECT. On a
+       desktop whose Cache Storage is broken (quota exhausted, profile
+       corruption, endpoint security walling off the API), caches.open() or
+       c.match() rejects — and because this branch owns the request via
+       respondWith, that rejection killed EVERY /lib/ image on the machine
+       while the network sat healthy underneath: broken hero banners, blank
+       tool cards, a library of grey icons. The phone worked, the desktop
+       didn't, and the difference was never the site. Every cache failure now
+       falls back to the plain network fetch, and cache writes are best-effort. */
     e.respondWith(
       caches.open(LIB_CACHE).then(function (c) {
         return c.match(e.request).then(function (hit) {
           if (hit) return hit;
           return fetch(e.request).then(function (res) {
             if (res && res.ok) {
-              c.put(e.request, res.clone());
-              /* LRU-ish insurance: cap the lib cache so it can't grow
-                 without bound (Cache API keys() returns insertion order —
-                 delete the oldest entries past the cap). */
-              c.keys().then(function (keys) {
-                if (keys.length > LIB_MAX_ENTRIES) {
-                  keys.slice(0, keys.length - LIB_MAX_ENTRIES).forEach(function (k) { c.delete(k); });
-                }
-              }).catch(function () {});
+              try {
+                c.put(e.request, res.clone()).catch(function () {});
+                /* LRU-ish insurance: cap the lib cache so it can't grow
+                   without bound (Cache API keys() returns insertion order —
+                   delete the oldest entries past the cap). */
+                c.keys().then(function (keys) {
+                  if (keys.length > LIB_MAX_ENTRIES) {
+                    keys.slice(0, keys.length - LIB_MAX_ENTRIES).forEach(function (k) { c.delete(k); });
+                  }
+                }).catch(function () {});
+              } catch (err) {}
             }
             return res;
           });
         });
-      })
+      }).catch(function () { return fetch(e.request); })
     );
   } else if (e.request.mode === "navigate") {
     /* v5.32 — NAVIGATIONS ARE STALE-WHILE-REVALIDATE, NOT NETWORK-FIRST.
@@ -280,7 +300,7 @@ self.addEventListener("fetch", function (e) {
       caches.open(CACHE).then(function (c) {
         return c.match(OFFLINE_URL).then(function (hit) {
           var net = fetch(e.request).then(function (res) {
-            if (res && res.ok) c.put(OFFLINE_URL, res.clone());
+            if (res && res.ok) { try { c.put(OFFLINE_URL, res.clone()).catch(function () {}); } catch (err) {} }
             return res;
           }).catch(function () {
             return hit || new Response("", { status: 504, statusText: "offline" });
@@ -288,7 +308,9 @@ self.addEventListener("fetch", function (e) {
           /* cached shell now if we have one; otherwise wait for the network */
           return hit || net;
         });
-      })
+      /* same storage-failure rule as the /lib/ branch: a broken Cache Storage
+         must degrade to plain network, never to a dead app shell */
+      }).catch(function () { return fetch(e.request); })
     );
   } else {
     e.respondWith(
@@ -309,7 +331,8 @@ self.addEventListener("fetch", function (e) {
             }
             return offline;
           });
-        });
+        /* network AND cache storage both down: answer offline, don't throw */
+        }).catch(function () { return new Response("", { status: 504, statusText: "offline" }); });
       })
     );
   }
