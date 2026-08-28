@@ -294,6 +294,16 @@ check("the panel's update probe points at the production origin",
 check("the download page footer advertises the shipped web app and panel",
   read("docs/download/index.html").includes(`Web App ${appVersion} · Panel ${panelVersion}`),
   `expected "Web App ${appVersion} · Panel ${panelVersion}" in docs/download/index.html`);
+/* v5.46 — a directory URL without its trailing slash (/app, /admin) is served
+   as the document itself with no platform redirect, so the browser resolves
+   every relative reference against the SITE ROOT: all images, sw.js and the
+   stylesheet 404 while the page renders. One evening was lost to exactly
+   that. Both directory-served documents must carry the boot statement that
+   normalises the URL before any asset is requested. */
+const SLASH_GUARD = 'location.replace(location.pathname+"/"+location.search+location.hash)';
+check("the app and admin documents self-heal a slashless directory URL",
+  html.includes(SLASH_GUARD) && read("docs/admin/index.html").includes(SLASH_GUARD),
+  "the slashless-URL boot redirect is missing from docs/app or docs/admin");
 /* v5.36.0 — the first version of the check above pulled three named values out
    of the .ccx and declared the retired host handled. It was not: the panel's
    mini-browser still led its shortcut row with two links to

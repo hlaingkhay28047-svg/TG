@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- SLASHLESS DIRECTORY URLS BREAK EVERY RELATIVE REFERENCE. Served at
+       /admin (no trailing slash, no platform redirect), the browser resolves
+       admin.css against the SITE ROOT — 404 — and the console renders as the
+       unstyled boot screen on every device. This one statement runs before
+       the stylesheet is requested and normalises the URL; its CSP hash below
+       is the only inline script this page permits. -->
+  <script>if(!location.pathname.endsWith("/")&&!/\.[a-z0-9]+$/i.test(location.pathname))location.replace(location.pathname+"/"+location.search+location.hash);</script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1018">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self' 'sha256-N1JqgPKm0tGnTeG9YIQ2WKMWU1lwsKr7E7ykGcGDRes='; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'">
   <meta name="robots" content="noindex,nofollow">
   <title>HNK Admin Control Center</title>
   <!-- Bump both ?v= values on every admin.css/admin.js change. Browsers

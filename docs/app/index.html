@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="my">
 <meta charset="utf-8">
+<!-- SLASHLESS DIRECTORY URLS BREAK EVERY RELATIVE REFERENCE. Served at /app
+     (no trailing slash, no redirect from the platform), the browser resolves
+     lib/... against the SITE ROOT: every banner, thumbnail, the manifest and
+     sw.js all 404 while the document itself renders — an app with its images
+     torn out, on any device, from any link written without the slash. This
+     runs before a single asset is requested and normalises the URL itself. -->
+<script>if(!location.pathname.endsWith("/")&&!/\.[a-z0-9]+$/i.test(location.pathname))location.replace(location.pathname+"/"+location.search+location.hash);</script>
 <!-- SECURITY POLICY. Delivered as a meta tag rather than a response header
      because DigitalOcean App Platform static sites do not let the app spec set
      arbitrary response headers; a meta CSP is honoured by every browser and
