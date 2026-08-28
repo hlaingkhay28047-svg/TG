@@ -38,11 +38,15 @@
     #hnkGate .gate-f{box-sizing:border-box;display:block;width:100%;margin:0 0 9px;
       padding:10px 12px;border-radius:9px;border:1px solid #2a323d;background:#0d1014;
       color:#e6edf3;font-size:13px}
+    /* v6.25.2 — the gate's buttons are DIVs, not <button>: UXP paints div
+       text with full CSS fidelity, while its button widget dropped the label
+       on every build the owner tested (blank gold and grey rectangles).
+       Longhand backgrounds only, centered label, no widget chrome to fight. */
     #hnkGate .gate-b{box-sizing:border-box;display:block;width:100%;margin:0 0 8px;
-      padding:11px 12px;border-radius:9px;border:1px solid transparent;
-      background:linear-gradient(135deg,#f4d488,#c79a3c);color:#161b22;font-size:13px;
-      font-weight:700;cursor:pointer}
-    #hnkGate .gate-busy{opacity:.55;cursor:default}
+      padding:11px 12px;border-radius:9px;border:1px solid #c79a3c;
+      background-color:#e7c470;background-image:none;color:#161b22;font-size:13px;
+      font-weight:700;cursor:pointer;text-align:center;line-height:1.35}
+    #hnkGate .gate-busy{opacity:.55;cursor:default;pointer-events:none}
     /* v6.25.1 — longhands only, and no `background:none` anywhere: UXP's
        cascade on button widgets is unreliable with shorthands and
        multi-class overrides (the 6.24 secondary buttons rendered as blank
@@ -71,16 +75,16 @@
     <div id="gateLogin" class="gate-hide">
       <input id="gateEmail" class="gate-f" type="text" spellcheck="false" autocomplete="off" />
       <input id="gatePass" class="gate-f" type="password" autocomplete="off" />
-      <button id="gateSignIn" class="gate-b" type="button"></button>
+      <div id="gateSignIn" class="gate-b" role="button" tabindex="0"></div>
     </div>
     <input id="gatePairCode" class="gate-f" type="text" inputmode="numeric"
       maxlength="12" spellcheck="false" autocomplete="off"
       aria-label="Computer pairing code" />
     <div id="gateLocked" class="gate-hide">
       <div class="gate-msg" id="gateLockedMsg"></div>
-      <button id="gateBuy" class="gate-b" type="button"></button>
-      <button id="gateRetry" class="gate-b gate-b2" type="button"></button>
-      <button id="gateSignOut" class="gate-b gate-b2" type="button"></button>
+      <div id="gateBuy" class="gate-b" role="button" tabindex="0"></div>
+      <div id="gateRetry" class="gate-b gate-b2" role="button" tabindex="0"></div>
+      <div id="gateSignOut" class="gate-b gate-b2" role="button" tabindex="0"></div>
     </div>
     <div class="gate-err" id="gateErr" role="alert"></div>
     <select id="gateLang" class="gate-lang" title="Language"></select>
@@ -99,7 +103,7 @@
         <div class="hdr-t hero-t">
           <div class="hero-brand">HNK <span class="hero-brand-gold">PLUGIN PANEL</span></div>
           <div class="title hero-app" data-i18n="app_title"></div>
-          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.25.1</span> &middot; <span id="brandProv">Gemini AI</span><span id="brandPlan" class="hero-plan"></span></div>
+          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.25.2</span> &middot; <span id="brandProv">Gemini AI</span><span id="brandPlan" class="hero-plan"></span></div>
         </div>
         <div class="hdr-ctl">
           <select id="selLang" class="lang-sel" title="Language"></select>
