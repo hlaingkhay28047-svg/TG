@@ -2,7 +2,8 @@
 
 /* Browser sweep for the dedicated admin shell. It pins the security boundary:
  * a Student App session is ignored, admin password login requests client_type
- * admin, dashboard data waits for TOTP, and all policy mutations stay server-side. */
+ * admin, no admin data is read before a session exists, and all policy
+ * mutations stay server-side. */
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
@@ -39,7 +40,6 @@ function staticServer() {
   };
 
   const calls = [];
-  let mfaVerified = false;
   let dashboard401 = false;
   /* A successful 12-month extension arms a one-shot 401 on the three surface
      refreshes runAction fires concurrently (student detail, student list,
@@ -65,8 +65,6 @@ function staticServer() {
       await new Promise(resolve => setTimeout(resolve, 25));
       return json(200,{access_token:"ADMIN-B",refresh_token:"ADMIN-R2",expires_at:1999999999,session_id:"admin-session",user:{id:"admin-1",email:"owner@example.com"}});
     }
-    if (url.includes("/mfa/setup")) return json(200,{secret:"JBSWY3DPEHPK3PXP",otpauth_uri:"otpauth://totp/HNK:owner?secret=JBSWY3DPEHPK3PXP"});
-    if (url.includes("/mfa/verify")) { mfaVerified = parsed.code === "123456"; return json(mfaVerified?200:400,mfaVerified?{ok:true,mfa_verified:true}:{error:"invalid_mfa_code"}); }
     if (surfaceRefresh401 && request.method()==="GET" && /\/(dashboard|students\?|students\/student-1$)/.test(url)) {
       const bearer=request.headers()["authorization"]||"";
       if(bearer==="Bearer ADMIN-A") return json(401,{error:"session_expired"});
@@ -76,7 +74,6 @@ function staticServer() {
       }
     }
     if (url.includes("/dashboard")) {
-      if (!mfaVerified) return json(403,{error:"mfa_required",message:"Two-factor verification is required"});
       if (dashboard401) { dashboard401=false; return json(401,{error:"session_expired"}); }
       if (failNextCommittedDashboard) {
         failNextCommittedDashboard=false;
@@ -112,20 +109,21 @@ function staticServer() {
   const studentIgnored = await page.evaluate(() => ({login:!document.getElementById("adminLogin").hidden,adminSession:sessionStorage.getItem("hnk_admin_sess_v1"),studentSession:!!localStorage.getItem("hnk_acc_sess_v1")}));
   report("a Student App session cannot enter or silently become an admin session",studentIgnored.login&&!studentIgnored.adminSession&&studentIgnored.studentSession,studentIgnored);
 
+  const preLoginAdminReads=calls.filter(call=>call.url.includes("/api/v1/admin/")).length;
   await page.fill("#adminLoginEmail","owner@example.com");
   await page.fill("#adminLoginPassword","correct-horse");
   await page.click("#adminLoginButton");
-  await page.waitForSelector("#adminMfa:not([hidden])");
-  const loginCall=calls.find(call=>call.url.includes("grant_type=password"));
-  const beforeMfa=calls.filter(call=>/\/api\/v1\/admin\/(students|histories|panel-version)/.test(call.url));
-  report("admin login requests client_type admin and protected data waits for TOTP",loginCall&&loginCall.method==="POST"&&loginCall.body.client_type==="admin"&&!beforeMfa.length,{loginCall,beforeMfa});
-
-  await page.click("#adminMfaSetupButton");
-  await page.fill("#adminMfaCode","123456");
-  await page.click("#adminMfaVerifyButton");
   await page.waitForSelector("#adminApp:not([hidden])");
+  const loginCall=calls.find(call=>call.url.includes("grant_type=password"));
+  report("admin login requests client_type admin and no admin data is read before it",
+    loginCall&&loginCall.method==="POST"&&loginCall.body.client_type==="admin"&&preLoginAdminReads===0,
+    {loginCall,preLoginAdminReads});
+
   const stored=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("hnk_admin_sess_v1")||"{}"));
-  report("TOTP verification unlocks a tab-scoped admin session",mfaVerified&&stored.client_type==="admin"&&stored.access==="ADMIN-A",stored);
+  const mfaAbsence=await page.evaluate(()=>({gate:!!document.getElementById("adminMfa"),card:!!document.getElementById("setupMfa"),markup:/mfa|authenticator/i.test(document.documentElement.outerHTML)}));
+  report("password sign-in opens a tab-scoped admin session with no authenticator step anywhere in the shell",
+    stored.client_type==="admin"&&stored.access==="ADMIN-A"&&Object.values(mfaAbsence).every(present=>!present),
+    {stored,mfaAbsence});
 
   async function measure(width,height){
     await page.setViewportSize({width,height});
@@ -283,6 +281,8 @@ function staticServer() {
   report("admin refresh rotation retains client_type admin",refreshCall&&refreshCall.body.client_type==="admin",refreshCall);
   const paymentCalls=calls.filter(call=>/payment/i.test(call.url));
   report("no admin interaction ever called a payment endpoint",!paymentCalls.length,paymentCalls);
+  const mfaCalls=calls.filter(call=>/\/mfa\//.test(call.url));
+  report("no admin interaction ever called an MFA endpoint",!mfaCalls.length,mfaCalls);
 
   const forbidden=await browser.newPage({viewport:{width:390,height:844}});
   await forbidden.route("**/api/**",route=>{
@@ -299,7 +299,7 @@ function staticServer() {
   await forbidden.close(); await page.close(); await browser.close(); browser=null;
   await new Promise(resolve=>server.close(resolve)); server=null;
   if(failed) process.exit(1);
-  console.log("\nPASS — admin dedicated-session, MFA, responsive and accessibility sweep");
+  console.log("\nPASS — admin dedicated-session, responsive and accessibility sweep");
 })().catch(async error=>{
   console.error(error);
   if(browser) await browser.close().catch(()=>{});

@@ -90,11 +90,16 @@ const actions = ["approve", "reject", "activate", "suspend", "ban", "extend_lice
   "reset_phone", "reset_computer", "force_logout", "set_permission", "password_reset"];
 check("admin exposes every required named student action", hasAll(admin, actions),
   "missing: " + actions.filter(a => !admin.includes(a)).join(", "));
-check("admin provides MFA setup and verification UI",
-  hasAll(admin, ["/api/v1/admin/mfa/setup", "/api/v1/admin/mfa/verify"]) &&
-  hasAll(adminHtml, ["adminLoginForm", "adminMfaForm"]) && /mfa|2fa/i.test(adminHtml));
-check("dashboard data is loaded only after an admin session passes MFA",
-  /mfa_required/.test(admin) && /verifyMfaGate[\s\S]{0,900}loadDashboard/.test(admin));
+/* 2026-08-28 — the owner retired the authenticator system from the admin UI:
+ * administrator sign-in is email+password only. The server keeps its MFA
+ * endpoints and enrolled-admin enforcement (verify_api_service and
+ * verify_unified_api_contracts pin them), but with no enrolment UI no
+ * administrator can become enrolled, so no session can be code-gated. */
+check("admin authenticator UI is fully retired: password sign-in only",
+  adminHtml.includes("adminLoginForm") &&
+  !/mfa|2fa|authenticator|totp|second factor/i.test(adminHtml) &&
+  !/mfa|2fa|authenticator|totp/i.test(admin) &&
+  !/mfa|2fa|authenticator|enrollment|secret-note/i.test(adminCss));
 check("admin supports resumable private Panel artifact upload and finalization",
   hasAll(admin, ["/api/v1/admin/panel-artifacts/initiate", "/chunks/", "/finalize", "uploaded_indices", "crypto.subtle.digest", "data_base64"]) &&
   hasAll(adminHtml, ["panelArtifactFile", "artifactProgress", "artifactUploadStatus"]));
