@@ -174,9 +174,43 @@ jobs:
 
           # The copy job's own report: table names, row counts and durations
           # only — the job prints no row values and no connection strings.
+          #
+          # THIS READING IS THE PHASE'S PROOF, so it retries instead of racing.
+          # The first attach run grepped once, 0.6 seconds after the deployment
+          # went ACTIVE, and found nothing: the POST_DEPLOY job's output was
+          # not queryable yet, and a second deployment had superseded the id
+          # the loop had been watching. Both are ordinary — so poll for up to
+          # four minutes, ask for the watched deployment AND fall back to the
+          # component's latest logs, and FAIL the run if the report never
+          # appears or reports a failure. A phase that cannot show its copy
+          # line has not proven anything, and the switch phase leans on this
+          # same line ("already holds N account(s)") as the data-arrived proof.
           if [ "$PHASE_INPUT" != "cleanup" ]; then
-            doctl apps logs "$APP_ID" db-copy --type run --deployment "$DEP_ID" 2>/dev/null \
-              | grep -a "copy-database:" || echo "copy job log lines were not retrievable; check the deployment's Runtime Logs for db-copy"
+            COPY_LINES=""
+            for attempt in $(seq 1 16); do
+              COPY_LINES="$(doctl apps logs "$APP_ID" db-copy --type run --deployment "$DEP_ID" 2>/dev/null \
+                | grep -a "copy-database:" || true)"
+              if [ -z "$COPY_LINES" ]; then
+                COPY_LINES="$(doctl apps logs "$APP_ID" db-copy --type run 2>/dev/null \
+                  | grep -a "copy-database:" || true)"
+              fi
+              [ -n "$COPY_LINES" ] && break
+              echo "copy job report not readable yet (attempt $attempt); the POST_DEPLOY job runs around the deployment going live"
+              sleep 15
+            done
+            if [ -z "$COPY_LINES" ]; then
+              echo "::error::The db-copy job's report never became readable; the copy is unproven. Re-run this phase (it is idempotent) or read the deployment's Runtime Logs for db-copy."
+              exit 1
+            fi
+            printf '%s\n' "$COPY_LINES"
+            if printf '%s' "$COPY_LINES" | grep -aq "copy-database: FAILED"; then
+              echo "::error::The db-copy job reported a failure."
+              exit 1
+            fi
+            if ! printf '%s' "$COPY_LINES" | grep -aEq "MIGRATION COMPLETE|already holds"; then
+              echo "::error::The db-copy report carries neither the completion line nor the populated-target line."
+              exit 1
+            fi
           fi
 
       - name: Verify live health after the phase
