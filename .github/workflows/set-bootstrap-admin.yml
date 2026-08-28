@@ -1,0 +1,172 @@
+name: Set the first administrator
+
+# WHY THIS EXISTS. /admin is gated on public.profiles.is_admin, and nothing in
+# the running application can set it — schema.sql defaults the column to false
+# and its trigger forces it back to false on any insert carrying a JWT — so the
+# FIRST administrator is granted on boot from BOOTSTRAP_ADMIN_EMAIL by
+# server/lib/bootstrap-admin.js.
+#
+# Setting that variable by hand means typing a twenty-two character key into a
+# console input box that shows about half of it. That is exactly how six
+# security secrets were silently truncated and five production deploys failed:
+# a variable stored as BOOTSTRAP_ADMIN_EM is indistinguishable in the console
+# from the one the service looks for. A name written once by a program cannot
+# be truncated by the width of a box.
+#
+# THE ADDRESS IS TYPED AT DISPATCH, NEVER COMMITTED. It is a person's email and
+# this repository is public. It is passed through the environment rather than
+# interpolated into any script, and every line this workflow prints shows it
+# masked — the same masking the service applies before anything reaches a log.
+#
+# IT TOUCHES ONE VARIABLE on one component. Every other environment variable is
+# left exactly where it is, the six SECRET entries included, and the spec is
+# read back afterwards to prove it.
+#
+# MANUAL, AND GUARDED. It changes production configuration, so it never runs on
+# a push and requires the word SET to be typed at dispatch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "The account to make an administrator (it must already have signed up)"
+        required: true
+        default: ""
+        type: string
+      confirm:
+        description: "Type SET to write BOOTSTRAP_ADMIN_EMAIL and redeploy production"
+        required: true
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-production-secrets
+  cancel-in-progress: false
+
+jobs:
+  set:
+    name: Write BOOTSTRAP_ADMIN_EMAIL to hnk-api
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      DO_APP_NAME: hnk-ai-tools-3
+      DO_REPO: hlaingkhay28047-svg/TG
+      DO_BRANCH: main
+      DO_SERVICE: hnk-api
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
+      # Through the environment, never interpolated into the script: a workflow
+      # input is attacker-controlled text the moment anyone else can dispatch it.
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      EMAIL_INPUT: ${{ inputs.email }}
+    steps:
+      - name: Require the typed confirmation
+        shell: bash
+        run: |
+          if [ "$CONFIRM_INPUT" != "SET" ]; then
+            echo "::error::Refusing to change production configuration without the typed confirmation SET."
+            exit 1
+          fi
+
+      - name: Require production token
+        shell: bash
+        run: |
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::Writing production configuration requires DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Check out the patch script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.1
+        with:
+          persist-credentials: false
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.166.0
+
+      - name: Write the address into the live spec
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          APPS_FILE="$RUNNER_TEMP/bootstrap-admin-apps.json"
+          LIVE_SPEC="$RUNNER_TEMP/bootstrap-admin-live.json"
+          PATCHED_SPEC="$RUNNER_TEMP/bootstrap-admin-patched.json"
+          VERIFY_SPEC="$RUNNER_TEMP/bootstrap-admin-verify.json"
+          trap 'rm -f "$APPS_FILE" "$LIVE_SPEC" "$PATCHED_SPEC" "$VERIFY_SPEC"' EXIT
+
+          doctl apps list --output json > "$APPS_FILE"
+          APP_COUNT="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            [.[]
+              | select(.spec.name == $name)
+              | select(any(.spec.static_sites[]?;
+                  .github.repo == $repo and .github.branch == $branch))]
+            | length
+          ' "$APPS_FILE")"
+          if [ "$APP_COUNT" -ne 1 ]; then
+            echo "::error::Refusing to write configuration to an ambiguous production app selection."
+            exit 1
+          fi
+          APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            .[]
+            | select(.spec.name == $name)
+            | select(any(.spec.static_sites[]?;
+                .github.repo == $repo and .github.branch == $branch))
+            | .id
+          ' "$APPS_FILE")"
+
+          doctl apps spec get "$APP_ID" --format json > "$LIVE_SPEC"
+
+          # How many variables the component holds now, so the read-back can
+          # prove the count moved by exactly the one this writes.
+          BEFORE="$(jq -r --arg service "$DO_SERVICE" '
+            [.services[]? | select(.name == $service) | .envs[]?] | length
+          ' "$LIVE_SPEC")"
+
+          node .github/scripts/set_bootstrap_admin.js \
+            "$LIVE_SPEC" "$PATCHED_SPEC" "$DO_SERVICE" "$EMAIL_INPUT"
+
+          # --update-sources is deliberately absent: this changes configuration,
+          # not which commit is deployed.
+          doctl apps update "$APP_ID" --spec "$PATCHED_SPEC" \
+            --format ID,DefaultIngress,Updated
+          rm -f "$PATCHED_SPEC"
+
+          # READ IT BACK. The failure this lane exists because of was a
+          # configuration that looked right and was not, so the run does not get
+          # to claim success on the strength of having submitted something.
+          doctl apps spec get "$APP_ID" --format json > "$VERIFY_SPEC"
+          FOUND="$(jq -r --arg service "$DO_SERVICE" '
+            [.services[]? | select(.name == $service) | .envs[]?
+              | select(.key == "BOOTSTRAP_ADMIN_EMAIL" and .scope == "RUN_TIME")]
+            | length
+          ' "$VERIFY_SPEC")"
+          AFTER="$(jq -r --arg service "$DO_SERVICE" '
+            [.services[]? | select(.name == $service) | .envs[]?] | length
+          ' "$VERIFY_SPEC")"
+
+          # Keys and scopes only. A value is never printed, and the one variable
+          # this writes holds a person's address.
+          echo "::group::Environment variables the live spec now defines for $DO_SERVICE"
+          jq -r --arg service "$DO_SERVICE" '
+            .services[]? | select(.name == $service) | .envs[]?
+            | "  \(.key)  type=\(.type // "GENERAL")  scope=\(.scope // "RUN_AND_BUILD_TIME")"
+          ' "$VERIFY_SPEC" | sort
+          echo "::endgroup::"
+
+          if [ "$FOUND" != "1" ]; then
+            echo "::error::BOOTSTRAP_ADMIN_EMAIL is not present exactly once as RUN_TIME on $DO_SERVICE."
+            exit 1
+          fi
+          if [ "$AFTER" -lt "$BEFORE" ]; then
+            echo "::error::$DO_SERVICE lost variables: $BEFORE before, $AFTER after."
+            exit 1
+          fi
+          echo "BOOTSTRAP_ADMIN_EMAIL is set on $DO_SERVICE ($BEFORE variables before, $AFTER after)."
+          echo "The redeploy this triggered will promote that account and print the"
+          echo "administrator roster, masked, into its boot log."

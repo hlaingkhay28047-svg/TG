@@ -104,6 +104,13 @@ jobs:
       - name: Verify DigitalOcean staging bootstrap is narrow and fail-closed
         run: node test/verify_digitalocean_staging_bootstrap.js
 
+      # This one edits the LIVE production spec, and the six security secrets
+      # live in the same array it edits. Losing one is an outage that looks
+      # like nothing until the next boot, so "every other variable survives
+      # byte for byte" is asserted rather than assumed.
+      - name: Verify the first-administrator spec patch touches one variable
+        run: node test/verify_bootstrap_admin_patch.js
+
       - name: Verify the API service end to end (real PostgreSQL)
         run: node test/verify_api_service.js
 
