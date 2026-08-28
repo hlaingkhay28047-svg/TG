@@ -129,7 +129,9 @@ jobs:
           APPS_FILE="$RUNNER_TEMP/migrate-apps.json"
           LIVE_SPEC="$RUNNER_TEMP/migrate-live.json"
           PATCHED_SPEC="$RUNNER_TEMP/migrate-patched.json"
-          trap 'rm -f "$APPS_FILE" "$LIVE_SPEC" "$PATCHED_SPEC"' EXIT
+          DBCOPY_LOG="$RUNNER_TEMP/db-copy-follow.log"
+          FOLLOW_PID=""
+          trap 'kill "$FOLLOW_PID" 2>/dev/null || true; rm -f "$APPS_FILE" "$LIVE_SPEC" "$PATCHED_SPEC" "$DBCOPY_LOG"' EXIT
 
           doctl apps list --output json > "$APPS_FILE"
           APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
@@ -159,41 +161,76 @@ jobs:
           doctl apps update "$APP_ID" --spec "$PATCHED_SPEC" --format ID,Updated
           rm -f "$PATCHED_SPEC"
 
+          # THE READING IS PERISHABLE, SO IT IS TAKEN LIVE. The db-copy job's
+          # container exists for seconds and its logs are reaped with it — a
+          # 16-attempt, four-minute poll after the fact retrieved nothing,
+          # three runs in a row. This is the diagnostics lane's watch-mode
+          # lesson applied here: hold the line while the job is talking.
+          # --follow exits whenever the stream closes, so the follower
+          # reattaches until the deployment settles and the trap kills it.
+          if [ "$PHASE_INPUT" != "cleanup" ]; then
+            : > "$DBCOPY_LOG"
+            (
+              while :; do
+                doctl apps logs "$APP_ID" db-copy --type run --follow --no-prefix >> "$DBCOPY_LOG" 2>/dev/null || true
+                sleep 5
+              done
+            ) & FOLLOW_PID=$!
+          fi
+
           echo "Waiting for the triggered deployment to finish..."
+          DEPLOY_OUTCOME=""
+          FIRST_DEP_ID=""
           for attempt in $(seq 1 90); do
             read -r DEP_ID DEP_PHASE < <(doctl apps list-deployments "$APP_ID" --output json \
               | jq -r '.[0] | "\(.id) \(.phase)"')
+            [ -z "$FIRST_DEP_ID" ] && FIRST_DEP_ID="$DEP_ID"
             echo "deployment $DEP_ID: $DEP_PHASE (check $attempt)"
             case "$DEP_PHASE" in
-              ACTIVE) break ;;
-              ERROR|CANCELED|CANCELLED) echo "::error::Deployment entered $DEP_PHASE."; exit 1 ;;
+              ACTIVE) DEPLOY_OUTCOME="active"; break ;;
+              ERROR|CANCELED|CANCELLED) DEPLOY_OUTCOME="failed"; break ;;
             esac
             sleep 20
           done
-          [ "$DEP_PHASE" = "ACTIVE" ] || { echo "::error::Deployment did not become ACTIVE in 30 minutes."; exit 1; }
 
-          # The copy job's own report, if the platform still holds it. A
-          # seconds-long POST_DEPLOY job's container is reaped almost
-          # immediately and its logs go with it — the diagnostics lane
-          # documented the same perishability for deploy containers, and a
-          # 16-attempt, four-minute poll of this endpoint retrieved nothing
-          # three runs in a row. So this reading is informational only; the
-          # phase's PROOF is the database probe in the next step, which asks
-          # the cluster itself what it holds.
+          # Print whatever the follower caught before judging the outcome —
+          # on failure these lines ARE the diagnosis. Wrapped in
+          # stop-commands so log content cannot forge a workflow command;
+          # the copier prints table names, counts and first-line errors only.
           if [ "$PHASE_INPUT" != "cleanup" ]; then
-            for attempt in 1 2 3; do
-              COPY_LINES="$(doctl apps logs "$APP_ID" db-copy --type run --deployment "$DEP_ID" 2>/dev/null \
-                | grep -a "copy-database:" || true)"
-              [ -z "$COPY_LINES" ] && COPY_LINES="$(doctl apps logs "$APP_ID" db-copy --type run 2>/dev/null \
-                | grep -a "copy-database:" || true)"
-              if [ -n "$COPY_LINES" ]; then printf '%s\n' "$COPY_LINES"; break; fi
-              sleep 10
-            done
-            [ -z "${COPY_LINES:-}" ] && echo "copy job output already reaped (expected for a seconds-long job); the database probe below is the gate"
+            sleep 15
+            kill "$FOLLOW_PID" 2>/dev/null || true
+            FOLLOW_PID=""
+            if grep -aq "copy-database:" "$DBCOPY_LOG"; then
+              STOP_TOKEN="dbcopy-$(openssl rand -hex 12)"
+              echo "db-copy job output (captured live):"
+              echo "::stop-commands::$STOP_TOKEN"
+              grep -a "copy-database:" "$DBCOPY_LOG" | tail -40
+              echo "::$STOP_TOKEN::"
+            else
+              echo "the follower captured no db-copy output this round"
+            fi
           fi
 
+          # A rolled-back deployment reports ACTIVE while carrying none of
+          # this phase's work — DO opens a replacement deployment when a
+          # POST_DEPLOY job fails, and three attach runs were mistaken for
+          # successes exactly this way. An id change mid-wait is therefore
+          # reported, and the database probe in the next step remains the
+          # only proof either way.
+          if [ -n "$FIRST_DEP_ID" ] && [ "$FIRST_DEP_ID" != "$DEP_ID" ]; then
+            echo "::warning::The watched deployment was superseded ($FIRST_DEP_ID -> $DEP_ID) — a rollback after a failed component is the usual cause."
+          fi
+          if [ "$DEPLOY_OUTCOME" = "failed" ]; then
+            echo "::error::Deployment entered $DEP_PHASE."
+            exit 1
+          fi
+          [ "$DEPLOY_OUTCOME" = "active" ] || { echo "::error::Deployment did not become ACTIVE in 30 minutes."; exit 1; }
+
       - name: Prove the copied data inside the cluster
-        if: inputs.phase == 'attach' || inputs.phase == 'switch'
+        # always(): on a failed apply step this reading is the diagnosis —
+        # "no table yet" vs "empty" vs "populated" are three different bugs.
+        if: always() && (inputs.phase == 'attach' || inputs.phase == 'switch')
         shell: bash
         run: |
           set -euo pipefail
