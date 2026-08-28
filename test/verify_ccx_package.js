@@ -30,7 +30,7 @@ check("tracked panel release metadata exists", fs.existsSync(METADATA), METADATA
 if (fs.existsSync(PACKAGE_SCRIPT)) {
   const noOutput = spawnSync(PACKAGE_SCRIPT, [], { cwd: ROOT, encoding: "utf8" });
   const repositoryOutput = spawnSync(PACKAGE_SCRIPT,
-    [path.join(ROOT, "HNK_Ai_Panel_v6.25.2.ccx")], { cwd: ROOT, encoding: "utf8" });
+    [path.join(ROOT, "HNK_Ai_Panel_v6.25.3.ccx")], { cwd: ROOT, encoding: "utf8" });
   check("packaging requires an explicit output path",
     noOutput.status === 64 && /Usage:/i.test(noOutput.stderr || ""),
     `exit ${noOutput.status}: ${(noOutput.stderr || "").trim()}`);
@@ -53,7 +53,7 @@ if (fs.existsSync(METADATA)) {
   const sourceManifest = fs.existsSync(sourceManifestPath)
     ? JSON.parse(fs.readFileSync(sourceManifestPath, "utf8")) : {};
   check("panel version is coordinated across release metadata and source",
-    metadata.version === "6.25.2" && metadata.minimum_supported_version === metadata.version &&
+    metadata.version === "6.25.3" && metadata.minimum_supported_version === metadata.version &&
     sourceManifest.version === metadata.version,
     JSON.stringify({ metadata: metadata.version, minimum: metadata.minimum_supported_version,
       manifest: sourceManifest.version }));
