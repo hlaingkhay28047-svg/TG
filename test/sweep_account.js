@@ -696,8 +696,10 @@ const SB_FIX = {
     LANG = before;
     return { total: keys.length, missing, emojis, unresolved, badPlace };
   });
-  report("16 i18n zero-miss: TR_V430 holds exactly 91 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
-    c16.total === 91 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+  /* v5.45.0 — the 38 pay_ and req_ keys left with the dead payment flow, so
+     the registry pin drops from 91 to exactly the 53 surviving keys. */
+  report("16 i18n zero-miss: TR_V430 holds exactly 53 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
+    c16.total === 53 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));
@@ -782,12 +784,8 @@ const SB_FIX = {
     acc.profile = { name: "Hla Hla", email: "a@b.c", created_at: "2025-01-15T00:00:00Z",
                     plan_status: "active", plan_expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
                     joined_paid: true, allowed_devices: 2 };
-    acc.settings = { price_1m: 15000, price_extra_device: 12000, payment_instructions_my: "x" };
     acc.devices = [{ id: "d1", device_id: "zz", label: "Android · Chrome" }];
-    acc.requests = [{ id: "r1", kind: "plan_3m", txn_last6: "482913", status: "rejected",
-                      created_at: "2026-08-01T00:00:00Z", note: "wrong amount" }];
-    acc.pending = null;
-    accRender(); accRenderPay(); accRenderDevices(); accRenderRequests(); accShowDeviceLimit();
+    accRender(); accRenderDevices(); accShowDeviceLimit();
     ["accGrpAuth","accGrpPlan","accGrpPanel","accGrpDev"].forEach(id => {
       document.getElementById(id).className = "grp open";
     });

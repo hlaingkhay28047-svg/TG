@@ -68,7 +68,11 @@ while ((m = callRe.exec(app))) {
 /* string-concatenated paths (…"/rest/v1/devices?id=eq." + id) are caught by the
    same expression because the table name precedes the first quote break */
 
-report("client tables discovered", readTables.size >= 3,
+/* v5.45.0 — the payment flow's payment_requests and app_settings reads left
+   with the dead purchase machinery, so the client's whole REST surface is
+   devices + profiles. The floor exists only to prove the parser still finds
+   the calls; every check below derives from whatever it finds. */
+report("client tables discovered", readTables.size >= 2,
   { read: [...readTables].sort(), write: [...writeTables].sort(), anon: [...anonTables].sort() });
 
 /* ---- A) RLS is on for every one of them ---- */
