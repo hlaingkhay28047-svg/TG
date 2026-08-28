@@ -1,0 +1,239 @@
+name: Publish the panel release
+
+# WHY THIS EXISTS. Enabling a panel release used to be console work: upload
+# the CCX through the admin browser, finalize it, then point Version control
+# at it. The owner asked for that path to be runnable without a console. This
+# lane does the same thing the admin endpoints do, with the repository tree
+# as the only release authority:
+#
+#   - The version, artifact name, SHA-256 and byte size come from
+#     panel/release-manifest.json in the checked-out commit — never from a
+#     dispatch input, so nobody can point production at an arbitrary build.
+#   - The CCX is rebuilt from the reviewed source by panel/package.sh, whose
+#     output is deterministic (pinned mtimes, sorted entries, zip -X). The
+#     lane refuses to continue unless the measured digest and size equal the
+#     tracked pins, then runs the full package validation battery.
+#   - The artifact bytes exist only in the runner's private temp directory
+#     and, chunked, inside the private database bridge. They are never
+#     committed, never uploaded as a run artifact, and never given a URL —
+#     the same boundary PANEL_RELEASE_SECURITY.md draws for every CCX.
+#   - The database writes come from .github/scripts/generate_panel_release_sql.sh,
+#     which mirrors the admin console's own transitions (initiate -> chunks ->
+#     verify -> ready; one latest, one minimum, enable only against a
+#     finalized artifact) inside one transaction, applied as the NOBYPASSRLS
+#     runtime user under the service-role request context.
+#     test/verify_panel_release_workflow.js runs that script against a real
+#     scratch database carrying the tracked schema.
+#
+# MANUAL, AND GUARDED: never on a push, and the word RELEASE must be typed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "inspect prints the live release state; publish stores the rebuilt artifact and points the policy at it"
+        required: true
+        type: choice
+        options: [inspect, publish]
+      confirm:
+        description: "Type RELEASE to run against production"
+        required: true
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-production-secrets
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Run the ${{ inputs.action }} action
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DO_CLUSTER: hnk-pg
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
+      # Through the environment, never interpolated into scripts.
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      ACTION_INPUT: ${{ inputs.action }}
+    steps:
+      - name: Require the typed confirmation and a production token
+        shell: bash
+        run: |
+          if [ "$CONFIRM_INPUT" != "RELEASE" ]; then
+            echo "::error::Refusing to touch the production release state without the typed confirmation RELEASE."
+            exit 1
+          fi
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::This lane requires DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Check out the reviewed panel source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.1
+        with:
+          persist-credentials: false
+
+      - name: Read the tracked release pins
+        id: pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(jq -r '.version' panel/release-manifest.json)"
+          ARTIFACT="$(jq -r '.artifact_file' panel/release-manifest.json)"
+          SHA="$(jq -r '.sha256' panel/release-manifest.json)"
+          BYTES="$(jq -r '.bytes' panel/release-manifest.json)"
+          MINIMUM="$(jq -r '.minimum_supported_version' docs/download/panel-version.json)"
+          MANIFEST_VERSION="$(jq -r '.version' panel/manifest.json)"
+          printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::release-manifest version is not semantic."; exit 1; }
+          printf '%s\n' "$MINIMUM" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::panel-version.json minimum is not semantic."; exit 1; }
+          printf '%s\n' "$SHA" | grep -Eq '^[0-9a-f]{64}$' || { echo "::error::release-manifest sha256 is malformed."; exit 1; }
+          case "$BYTES" in (''|*[!0-9]*) echo "::error::release-manifest bytes is malformed."; exit 1;; esac
+          [ "$ARTIFACT" = "HNK_Ai_Panel_v$VERSION.ccx" ] || { echo "::error::artifact_file does not match the version."; exit 1; }
+          [ "$MANIFEST_VERSION" = "$VERSION" ] || { echo "::error::panel/manifest.json and release-manifest.json disagree."; exit 1; }
+          # minimum <= latest, or the policy write below would lock everyone out
+          LOWEST="$(printf '%s\n%s\n' "$MINIMUM" "$VERSION" | sort -V | head -1)"
+          [ "$LOWEST" = "$MINIMUM" ] || { echo "::error::minimum_supported_version is newer than the release."; exit 1; }
+          {
+            echo "version=$VERSION"; echo "artifact=$ARTIFACT"; echo "sha=$SHA"
+            echo "bytes=$BYTES"; echo "minimum=$MINIMUM"
+          } >> "$GITHUB_OUTPUT"
+          echo "Release pins: $ARTIFACT sha256=$SHA bytes=$BYTES minimum=$MINIMUM"
+
+      - name: Rebuild the artifact and verify it equals the tracked pins
+        if: inputs.action == 'publish'
+        shell: bash
+        env:
+          ARTIFACT: ${{ steps.pins.outputs.artifact }}
+          EXPECTED_SHA: ${{ steps.pins.outputs.sha }}
+          EXPECTED_BYTES: ${{ steps.pins.outputs.bytes }}
+        run: |
+          set -euo pipefail
+          umask 077
+          RELEASE_DIR="$(mktemp -d "$RUNNER_TEMP/panel-release.XXXXXX")"
+          echo "RELEASE_DIR=$RELEASE_DIR" >> "$GITHUB_ENV"
+          panel/package.sh "$RELEASE_DIR/$ARTIFACT" > /dev/null
+          MEASURED_SHA="$(sha256sum "$RELEASE_DIR/$ARTIFACT" | awk '{print $1}')"
+          MEASURED_BYTES="$(stat -c %s "$RELEASE_DIR/$ARTIFACT")"
+          echo "Rebuilt $ARTIFACT: sha256=$MEASURED_SHA bytes=$MEASURED_BYTES"
+          if [ "$MEASURED_SHA" != "$EXPECTED_SHA" ] || [ "$MEASURED_BYTES" != "$EXPECTED_BYTES" ]; then
+            echo "::error::The rebuilt artifact does not match panel/release-manifest.json — refusing to publish an unpinned build."
+            exit 1
+          fi
+          HNK_PANEL_ARTIFACT="$RELEASE_DIR/$ARTIFACT" node test/verify_ccx_package.js
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.166.0
+
+      - name: Apply the ${{ inputs.action }} action against the private release store
+        shell: bash
+        env:
+          VERSION: ${{ steps.pins.outputs.version }}
+          ARTIFACT: ${{ steps.pins.outputs.artifact }}
+          EXPECTED_SHA: ${{ steps.pins.outputs.sha }}
+          EXPECTED_BYTES: ${{ steps.pins.outputs.bytes }}
+          MINIMUM: ${{ steps.pins.outputs.minimum }}
+        run: |
+          set -euo pipefail
+          umask 077
+          CA_FILE="$RUNNER_TEMP/release-ca.crt"
+          SQL_FILE="$RUNNER_TEMP/release.sql"
+          RULE_ADDED=""
+          CLUSTER_ID="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" '.[] | select(.name == $n) | .id')"
+          if [ -z "$CLUSTER_ID" ]; then
+            echo "::error::Cluster $DO_CLUSTER was not found."
+            exit 1
+          fi
+          cleanup_release() {
+            rm -f "$CA_FILE" "$SQL_FILE"
+            if [ -n "$RULE_ADDED" ]; then
+              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null \
+                | awk -v v="$RULE_ADDED" '$2 == "ip_addr" && $3 == v { print $1; exit }')"
+              [ -n "$RULE_UUID" ] && doctl databases firewalls remove "$CLUSTER_ID" --uuid "$RULE_UUID" > /dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_release EXIT
+
+          # A cluster with a non-empty trusted-sources list blocks every other
+          # address, including this runner: grant this runner for the session
+          # and remove the rule again on the way out.
+          # this doctl build prints firewalls as a table, never JSON — count data rows
+          RULES="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null | awk 'NR > 1 && NF > 0' | wc -l)"
+          if [ "${RULES:-0}" -gt 0 ]; then
+            RUNNER_IP="$(curl -fsS --max-time 15 https://api.ipify.org)"
+            case "$RUNNER_IP" in (*[!0-9.]*|"") echo "::error::Could not determine the runner address for the trusted-source grant."; exit 1;; esac
+            doctl databases firewalls append "$CLUSTER_ID" --rule "ip_addr:$RUNNER_IP" > /dev/null
+            RULE_ADDED="$RUNNER_IP"
+            sleep 10
+          fi
+
+          # The REST API's shapes are documented and stable where this doctl
+          # build's are not: /ca returns {"ca":{"certificate":"<base64 PEM>"}}.
+          CA_RAW="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID/ca" | jq -r '.ca.certificate')"
+          if printf '%s' "$CA_RAW" | grep -q "BEGIN CERTIFICATE"; then
+            printf '%s\n' "$CA_RAW" > "$CA_FILE"
+          else
+            printf '%s' "$CA_RAW" | base64 -d > "$CA_FILE" 2>/dev/null || true
+          fi
+          grep -q "BEGIN CERTIFICATE" "$CA_FILE" || { echo "::error::Could not obtain the cluster CA."; exit 1; }
+          URI="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID" | jq -r '.database.connection.uri')"
+          if [ -z "$URI" ] || [ "$URI" = "null" ]; then
+            echo "::error::No connection URI is available for $DO_CLUSTER."
+            exit 1
+          fi
+
+          # The release tables FORCE row security and carry service-role-only
+          # policies, and doadmin's BYPASSRLS never grants table privileges —
+          # so connect as the NOBYPASSRLS runtime user that owns the schema,
+          # exactly like the service itself. Credential from the documented
+          # REST shape; masked, never echoed, never written to disk.
+          RPASS="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID/users/hnk_runtime" | jq -r '.user.password // empty')"
+          if [ -z "$RPASS" ]; then
+            RPASS="$(doctl databases user list "$CLUSTER_ID" --output json | jq -r '.[] | select(.name=="hnk_runtime") | .password // empty')"
+          fi
+          [ -n "$RPASS" ] || { echo "::error::Could not obtain the runtime user credential."; exit 1; }
+          echo "::add-mask::$RPASS"
+          BASE="${URI%%\?*}"
+          HOSTPART="${BASE#*@}"
+          RUNTIME_URI="postgresql://hnk_runtime:$(jq -rn --arg v "$RPASS" '$v|@uri')@$HOSTPART"
+
+          if [ "$ACTION_INPUT" = "publish" ]; then
+            ARTIFACT_PATH="$RELEASE_DIR/$ARTIFACT" .github/scripts/generate_panel_release_sql.sh > "$SQL_FILE"
+          else
+            cat > "$SQL_FILE" <<'SQL'
+          \o /dev/null
+          select set_config('request.role','service_role',false),
+                 set_config('request.jwt.claim.sub','',false),
+                 set_config('request.is_admin','false',false),
+                 set_config('request.user_email','',false);
+          \o
+          select 'RELEASE: version='||v.version||' latest='||v.is_latest::text||' minimum='||v.minimum_supported::text
+                 ||' enabled='||v.enabled::text||' bytes='||coalesce(v.size_bytes::text,'-')
+                 ||' sha12='||coalesce(left(v.sha256,12),'-')||' artifact='||coalesce(a.status,'none')
+            from public.panel_versions v
+            left join public.panel_artifacts a on a.id = v.artifact_id
+           order by v.released_at desc;
+          select 'ARTIFACT: version='||version||' status='||status||' bytes='||expected_size_bytes::text
+                 ||' chunks='||chunk_count::text||' sha12='||left(expected_sha256,12)
+            from public.panel_artifacts order by created_at desc;
+          select 'ADMIN ACCOUNTS: '||count(*)::text
+            from public.hnk_auth_users u
+            join public.user_roles ur on ur.user_id = u.id
+            join public.roles r on r.id = ur.role_id
+           where r.name = 'admin';
+          SQL
+          fi
+          PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=20 psql "$RUNTIME_URI?sslmode=verify-ca" \
+            -X -v ON_ERROR_STOP=1 -q -t -A -f "$SQL_FILE"
+          if [ "$ACTION_INPUT" = "publish" ]; then
+            echo "The $VERSION release is stored, verified and enabled; minimum supported is $MINIMUM."
+          fi

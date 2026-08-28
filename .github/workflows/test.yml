@@ -124,6 +124,13 @@ jobs:
       - name: Verify the dev-to-cluster database copier mirrors and refuses re-runs
         run: node test/verify_copy_database.js
 
+      # The panel-release lane's SQL is applied once against production, so
+      # its generator runs here against a real schema-carrying database as
+      # the NOBYPASSRLS runtime role: artifact chunks verified byte-for-byte,
+      # one latest, one minimum, refusals for every unpinned caller.
+      - name: Verify the panel release lane publishes exactly the tracked artifact
+        run: node test/verify_panel_release_workflow.js
+
       - name: Verify the API service end to end (real PostgreSQL)
         run: node test/verify_api_service.js
 
