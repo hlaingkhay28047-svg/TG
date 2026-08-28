@@ -37,6 +37,15 @@ const CLUSTER = "hnk-pg";
 const JOB = "db-copy";
 const REPO = "hlaingkhay28047-svg/TG";
 const BRANCH = "main";
+/* NEVER doadmin. A bare cluster attachment binds DigitalOcean's doadmin,
+ * which carries BYPASSRLS — and migrate() rightly refuses a BYPASSRLS
+ * runtime user, because under it every FORCE RLS policy in the schema means
+ * nothing. That refusal is exactly how the first attach failed: the db-copy
+ * job exited non-zero on every deployment. The create-cluster phase creates
+ * this plain NOSUPERUSER/NOBYPASSRLS user and grants it CREATE on the public
+ * schema; every component binds through it. */
+const RUNTIME_DB_USER = "hnk_runtime";
+const RUNTIME_DB_NAME = "defaultdb";
 
 function fail(message) {
   console.error("::error::" + message);
@@ -94,9 +103,17 @@ if (phase === "attach") {
   if (!clusterDb) {
     patched.databases = [...(patched.databases || []), {
       name: CLUSTER, engine: "PG", production: true, cluster_name: CLUSTER,
+      db_user: RUNTIME_DB_USER, db_name: RUNTIME_DB_NAME,
     }];
-    summary.push("attached managed cluster " + CLUSTER);
-  } else summary.push("cluster " + CLUSTER + " already attached");
+    summary.push("attached managed cluster " + CLUSTER + " as " + RUNTIME_DB_USER);
+  } else {
+    const patchedCluster = patched.databases.find(d => d && d.name === CLUSTER);
+    if (patchedCluster.db_user !== RUNTIME_DB_USER || patchedCluster.db_name !== RUNTIME_DB_NAME) {
+      patchedCluster.db_user = RUNTIME_DB_USER;
+      patchedCluster.db_name = RUNTIME_DB_NAME;
+      summary.push("repointed the cluster binding to the " + RUNTIME_DB_USER + " runtime user");
+    } else summary.push("cluster " + CLUSTER + " already attached");
+  }
   if (!copyJob) {
     patched.jobs = [...(patched.jobs || []), {
       name: JOB,
@@ -120,6 +137,10 @@ if (phase === "attach") {
 
 if (phase === "switch") {
   if (!clusterDb) fail("cluster " + CLUSTER + " is not attached; run the attach phase first");
+  if (clusterDb.db_user !== RUNTIME_DB_USER) {
+    fail("the cluster is still bound as " + (clusterDb.db_user || "doadmin") +
+      " — the service would boot LOCKED on a BYPASSRLS user; run the attach phase first");
+  }
   if (!copyJob) fail("the " + JOB + " job is not present; run the attach phase first");
   const patchedService = patched.services.find(s => s.name === SERVICE);
   const envs = Array.isArray(patchedService.envs) ? patchedService.envs : [];
@@ -153,6 +174,11 @@ if (phase === "cleanup") {
 const expected = clone(spec);
 if (phase === "attach") {
   if (!clusterDb) expected.databases = [...(expected.databases || []), clone(patched.databases[patched.databases.length - 1])];
+  else {
+    const expectedCluster = expected.databases.find(d => d && d.name === CLUSTER);
+    expectedCluster.db_user = RUNTIME_DB_USER;
+    expectedCluster.db_name = RUNTIME_DB_NAME;
+  }
   if (!copyJob) expected.jobs = [...(expected.jobs || []), clone(patched.jobs[patched.jobs.length - 1])];
 }
 if (phase === "switch") {
