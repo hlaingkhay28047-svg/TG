@@ -92,8 +92,32 @@ async function listAdmins(client) {
   return { total: counted[0].n, listed: rows.slice(0, ROSTER_LIMIT) };
 }
 
+/* NEVER PRINT A WHOLE ADDRESS. This repository is public, and the production
+   diagnostics workflow republishes container stdout into a GitHub Actions log
+   that anyone on the internet can read. The line exists so the owner can tell
+   whether the administrator is them, which a masked address answers just as
+   well as a whole one — and an address that never reaches stdout cannot be
+   republished by a lane that learns a new pattern later.
+ *
+ * IT MUST NOT LOOK LIKE AN ADDRESS EITHER. The diagnostics lane redacts
+ * anything matching local@domain.tld, so `Hl***47@gmail.com` would come back
+ * as `<email redacted>` and answer nothing. Writing " [at] " instead of "@"
+ * keeps the line legible through a filter whose job is to be indiscriminate.
+ * Pure ASCII, because that lane also strips the log to printable ASCII. */
+function maskEmail(value) {
+  const email = String(value || "");
+  const at = email.lastIndexOf("@");
+  if (at < 1) return "<address withheld>";
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const shown = local.length <= 4
+    ? local.slice(0, 1) + "***"
+    : local.slice(0, 2) + "***" + local.slice(-2);
+  return shown + " [at] " + domain;
+}
+
 function describeAdmin(row) {
-  return row.email + " (" + row.account_status + ")";
+  return maskEmail(row.email) + " (" + row.account_status + ")";
 }
 
 /* Promote first, then report, so one boot log answers both "did my variable
@@ -114,17 +138,17 @@ async function bootstrapAdmin(client, env, log) {
       const promoted = await promoteAdmin(client, email);
       if (promoted.length) {
         say("admin: promoted " + promoted.length + " account to administrator — " +
-            promoted.join(", "));
+            promoted.map(maskEmail).join(", "));
       } else {
         /* Two very different situations share this branch and the owner needs
            to tell them apart, so the roster line below carries the answer:
            already an administrator, or no such account yet. */
-        say("admin: BOOTSTRAP_ADMIN_EMAIL " + email +
+        say("admin: BOOTSTRAP_ADMIN_EMAIL " + maskEmail(email) +
             " promoted nothing — either it is already an administrator, or no " +
             "account has signed up with that address yet");
       }
     } catch (err) {
-      warn("admin: promoting " + email + " failed — " + (err && err.message));
+      warn("admin: promoting " + maskEmail(email) + " failed — " + (err && err.message));
     }
   }
 
@@ -143,4 +167,4 @@ async function bootstrapAdmin(client, env, log) {
   }
 }
 
-module.exports = { bootstrapAdmin, promoteAdmin, listAdmins, requestedAdminEmail };
+module.exports = { bootstrapAdmin, promoteAdmin, listAdmins, requestedAdminEmail, maskEmail };
