@@ -152,13 +152,13 @@ const NEW = Object.keys(SCRIPTS);
      Shan like tdd and khb, so what a Khamti reader actually sees is the real
      Shan sentence, which A2 below measures. Closing it means running the map
      over one more pair, not translating anything new. */
+  /* v5.45.0 — every pay_* entry left this registry the honest way: the keys
+     themselves were deleted with the dead payment flow, not translated. What
+     remains registered is acc_pending alone, for the three packs that still
+     lack a reader. */
   const PENDING = {
-    tdd: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
-          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both","pay_devices_h",
-          "acc_pending"],
-    khb: ["pay_join","pay_due","pay_qr_h","pay_num_h","pay_num_copy","pay_num_copied",
-          "pay_amt_h","pay_amt_need","pay_amt_short","pay_amt_over","pay_both","pay_devices_h",
-          "acc_pending"],
+    tdd: ["acc_pending"],
+    khb: ["acc_pending"],
     kht: ["acc_pending"],
   };
   const unregistered = {};
@@ -170,8 +170,8 @@ const NEW = Object.keys(SCRIPTS);
   const overRegistered = Object.keys(PENDING).filter(l =>
     PENDING[l].some(k => (data.missingByLang[l] || []).indexOf(k) < 0));
 
-  report("A) every language in TR_L carries the full key set, apart from the twenty-seven entries registered above",
-    data.fullCount >= 318 && Object.keys(unregistered).length === 0 && overRegistered.length === 0,
+  report("A) every language in TR_L carries the full key set, apart from the entries registered above",
+    data.fullCount >= 286 && Object.keys(unregistered).length === 0 && overRegistered.length === 0,
     { fullKeySet: data.fullCount, unregistered,
       staleRegistry: overRegistered.length ? overRegistered + " no longer missing — delete them from PENDING" : "" });
 

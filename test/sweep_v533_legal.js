@@ -122,8 +122,10 @@ report("E1) the claim \"no analytics, no tracker, no third-party script\" holds"
 /* every absolute URL the client POSTs a body to */
 const PROVIDER_HOSTS = ["generativelanguage.googleapis.com", "www.runninghub.ai", "api.openai.com"];
 const ourUploads = [...APP.matchAll(/\/storage\/v1\/object\/([a-z-]+)/g)].map(m => m[1]);
-report("E2) the claim \"your photos never reach our servers\" holds — the only upload to our own storage is the payment proof",
-  [...new Set(ourUploads)].join(",") === "payment-proofs",
+/* v5.45.0 — the payment-proof upload left with the dead payment flow, so the
+   claim now holds in its strongest form: the app writes to NO bucket at all. */
+report("E2) the claim \"your photos never reach our servers\" holds — the app uploads to no bucket of ours at all",
+  [...new Set(ourUploads)].length === 0,
   { bucketsWrittenTo: [...new Set(ourUploads)] });
 
 const devIdFn = (APP.match(/function deviceId\(\)\{[\s\S]{0,400}?\n\}/) || [])[0] || "";
@@ -137,7 +139,7 @@ report("E4) the claim \"your API keys stay in your browser\" holds — the provi
   { providers: PROVIDER_HOSTS.filter(h => APP.indexOf(h) > 0) });
 
 report("E5) the claim \"your results stay in your browser\" holds — the gallery is IndexedDB with no server mirror",
-  /indexedDB\.open\("hnk_web_studio"/.test(APP) && ourUploads.every(b => b === "payment-proofs"),
+  /indexedDB\.open\("hnk_web_studio"/.test(APP) && ourUploads.length === 0,
   { idb: /indexedDB\.open\("hnk_web_studio"/.test(APP) });
 
 /* ---------- F) reachable ---------- */
