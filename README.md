@@ -52,9 +52,10 @@ server-side payment endpoints remain, unreferenced by any published page.
 **None of the UI is a security boundary.** `docs/` is static, so every ordinary
 browser request can be replayed by hand. Own-account access is constrained by
 row-level security in `supabase/schema.sql`; every cross-account admin action
-uses the API's `admin` client session, MFA whenever the administrator has an
-enrolled authenticator, role checks, service-owned
-transaction and audit log. There is no browser policy that can approve a
+uses the API's `admin` client session, role checks, service-owned
+transaction and audit log. Administrator sign-in is email and password; the
+authenticator UI was retired by owner decision, while the API keeps its
+enrolled-admin MFA enforcement for any future client that reinstates it. There is no browser policy that can approve a
 payment, file a grant for another account or read another student's proof.
 
 Apply it once — Supabase dashboard → SQL editor → paste → Run (it is
@@ -800,12 +801,10 @@ update public.profiles set price_1m_override = 10000 where email = 'student@exam
 ```
 
 **A free period for a VIP student** is granted only from the dedicated Admin
-Control Center. Type the email, pick the period and provide an audit note. The
-strict MFA-protected server action creates and approves the grant atomically in
-one transaction, so the same entitlement trigger extends the plan and the audit
-log explains why access changed. Grant `join_first` for a student who has never
-joined — that both opens the period and clears the joining fee, which is what
-"first one free" means.
+Control Center: open the student's detail, approve the account if it is still
+pending, and extend the license by the period being granted. Both are audited
+server-side admin actions — the admin history records who granted what and
+when, and the same entitlement rules open the student's access immediately.
 
 **What the admin sees on each request**, and none of it was there before:
 the customer's name and email rather than a UUID, the amount they say they

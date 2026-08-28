@@ -11,8 +11,6 @@
     panelVersion: "/api/v1/admin/panel-version",
     artifactInitiate: "/api/v1/admin/panel-artifacts/initiate",
     artifacts: "/api/v1/admin/panel-artifacts",
-    mfaSetup: "/api/v1/admin/mfa/setup",
-    mfaVerify: "/api/v1/admin/mfa/verify",
   });
   const SESSION_KEY = "hnk_admin_sess_v1";
   const MUTATION_KEY_PREFIX = "hnk_admin_mutation_v1";
@@ -22,7 +20,7 @@
   const MAX_ARTIFACT_SIZE = 512 * 1024 * 1024;
   const pageSize = 20;
   const state = { studentPage: 1, historyPage: 1, studentTotal: 0, historyTotal: 0,
-    selected: null, loading: false, mfaSecret: "", artifactFile: null, artifactBusy: false };
+    selected: null, loading: false, artifactFile: null, artifactBusy: false };
   let refreshInFlight = null;
   let sessionGeneration = 0;
   const $ = selector => document.querySelector(selector);
@@ -249,7 +247,7 @@
 
   function hideAuthSurfaces() {
     $$('dialog[open]').forEach(dialog => dialog.close());
-    ["#adminChecking", "#adminLogin", "#adminMfa", "#adminForbidden"].forEach(selector => { $(selector).hidden = true; });
+    ["#adminChecking", "#adminLogin", "#adminForbidden"].forEach(selector => { $(selector).hidden = true; });
     $("#adminApp").hidden = true;
   }
 
@@ -265,14 +263,6 @@
     setFormStatus("#adminLoginStatus", message);
     $("#adminLoginPassword").value = "";
     requestAnimationFrame(() => $("#adminLoginEmail").focus());
-  }
-
-  function showMfa(message = "Enter the current 6-digit code from your authenticator.") {
-    hideAuthSurfaces();
-    $("#adminMfa").hidden = false;
-    setFormStatus("#adminMfaStatus", message);
-    $("#adminMfaCode").value = "";
-    requestAnimationFrame(() => $("#adminMfaCode").focus());
   }
 
   function showForbidden(message = "Admin access was not authorized by the server.") {
@@ -755,59 +745,6 @@
     } finally { state.artifactBusy = false; state.artifactFile = null; button.disabled = false; }
   }
 
-  function errorCode(error) {
-    const body = error && error.body || {};
-    return String(body.code || body.error || body.reason || "").toLowerCase();
-  }
-
-  function mfaInstructions(body) {
-    state.mfaSecret = String(body.secret || "");
-    const lines = [];
-    if (state.mfaSecret) lines.push(`Setup key: ${state.mfaSecret}`);
-    if (body.otpauth_uri || body.uri) lines.push(`Authenticator URI: ${body.otpauth_uri || body.uri}`);
-    if (!lines.length) lines.push(body.instructions || "Add HNK Studio to your authenticator, then enter its 6-digit code.");
-    return lines.join("\n");
-  }
-
-  async function startMfaSetup(target = "gate") {
-    try {
-      const body = await api(API.mfaSetup, { method: "POST", body: "{}" });
-      const instructions = mfaInstructions(body);
-      if (target === "gate") {
-        $("#adminMfaInstructions").textContent = instructions;
-        $("#adminMfaEnrollment").hidden = false;
-        setFormStatus("#adminMfaStatus", "Authenticator setup created. Enter the new 6-digit code above.", true);
-        $("#adminMfaCode").focus();
-      } else {
-        $("#mfaInstructions").textContent = instructions;
-        $("#mfaSetup").hidden = false;
-        $("#mfaCode").focus();
-      }
-    } catch (error) {
-      if (target === "gate" && error.status !== 401 && error.status !== 403) setFormStatus("#adminMfaStatus", error.message || "2FA setup could not start.");
-      else handleError(error, "2FA setup could not start.");
-    }
-  }
-
-  async function verifyMfaGate(event) {
-    event.preventDefault();
-    const code = $("#adminMfaCode").value.trim();
-    if (!/^\d{6}$/.test(code)) return setFormStatus("#adminMfaStatus", "Enter a valid 6-digit code.");
-    const button = $("#adminMfaVerifyButton"); button.disabled = true;
-    try {
-      await api(API.mfaVerify, { method: "POST", body: JSON.stringify({ code }) });
-      setFormStatus("#adminMfaStatus", "Verified. Opening the Control Center…", true);
-      await loadDashboard(true);
-      await Promise.all([loadStudents(), loadHistory(), loadPanelVersion()]);
-    } catch (error) {
-      if (errorCode(error) === "mfa_not_configured") {
-        setFormStatus("#adminMfaStatus", "Set up an authenticator for this administrator first.");
-        $("#adminMfaSetupButton").focus();
-      } else if (error.status === 400) setFormStatus("#adminMfaStatus", error.message || "The authenticator code was not accepted.");
-      else handleError(error, "The authenticator code was not accepted.");
-    } finally { button.disabled = false; }
-  }
-
   async function submitAdminLogin(event) {
     event.preventDefault();
     const email = $("#adminLoginEmail").value.trim();
@@ -828,7 +765,6 @@
 
   function handleError(error, fallback) {
     if (error.status === 401) { clearSession(); showLogin("Your secure admin session expired. Sign in again to continue."); return; }
-    if (error.status === 403 && errorCode(error) === "mfa_required") { showMfa(); return; }
     if (error.status === 403) { showForbidden("Not authorized: the server rejected this session's administrator role."); return; }
     notify(error.message || fallback, "error");
   }
@@ -860,14 +796,6 @@
 
   function bind() {
     $("#adminLoginForm").addEventListener("submit", submitAdminLogin);
-    $("#adminMfaForm").addEventListener("submit", verifyMfaGate);
-    $("#adminMfaSetupButton").addEventListener("click", () => startMfaSetup("gate"));
-    $("#copyMfaSecret").addEventListener("click", async () => {
-      if (!state.mfaSecret) return setFormStatus("#adminMfaStatus", "Create the authenticator setup first.");
-      try { await navigator.clipboard.writeText(state.mfaSecret); setFormStatus("#adminMfaStatus", "Setup key copied.", true); }
-      catch (_) { setFormStatus("#adminMfaStatus", `Setup key: ${state.mfaSecret}`); }
-    });
-    $("#cancelAdminMfa").addEventListener("click", () => signOutAdmin("Sign in with another administrator account."));
     $("#clearAdmin").addEventListener("click", () => signOutAdmin("Sign in with another administrator account."));
     $("#adminSignOut").addEventListener("click", () => signOutAdmin());
     $$("[data-panel]").forEach(button => button.addEventListener("click", () => activatePanel(button.dataset.panel)));
@@ -916,13 +844,6 @@
         await api(API.panelVersion, { method: "PUT", body: JSON.stringify({ latest_version: $("#latestVersion").value, minimum_supported_version: $("#minimumVersion").value }) });
         notify("Panel version policy saved.");
       } catch (error) { handleError(error, "Could not save panel version policy."); }
-    });
-    $("#setupMfa").addEventListener("click", () => startMfaSetup("settings"));
-    $("#verifyMfa").addEventListener("click", async () => {
-      const code = $("#mfaCode").value.trim();
-      if (!/^\d{6}$/.test(code)) return notify("Enter a valid 6-digit code.", "error");
-      try { await api(API.mfaVerify, { method: "POST", body: JSON.stringify({ code }) }); notify("2FA is verified and enabled."); $("#mfaSetup").hidden = true; }
-      catch (error) { handleError(error, "The authenticator code was not accepted."); }
     });
   }
 

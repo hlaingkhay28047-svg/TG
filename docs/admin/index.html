@@ -11,7 +11,7 @@
        revalidate this HTML but may keep the assets cached, and a stale
        admin.js binding against changed markup throws before the boot code
        runs, wedging the tab on the "Checking admin access" gate. -->
-  <link rel="stylesheet" href="admin.css?v=20260828">
+  <link rel="stylesheet" href="admin.css?v=20260828b">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to admin content</a>
@@ -33,29 +33,6 @@
       <p class="privacy-note">Your password is sent only to the same-origin secure authentication endpoint and is never stored by this page.</p>
       <a class="text-link" href="../app/">Return to Student App</a>
     </form>
-  </section>
-
-  <section class="gate" id="adminMfa" hidden>
-    <div class="gate-card gate-form">
-      <div class="auth-mark shield" aria-hidden="true">2×</div>
-      <p class="eyebrow">SECOND FACTOR REQUIRED</p>
-      <h1>Verify your authenticator</h1>
-      <p>The dashboard and every admin action stay locked until this admin session passes TOTP verification.</p>
-      <form id="adminMfaForm">
-        <label>6-digit authenticator code<input id="adminMfaCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required></label>
-        <button class="button primary full" id="adminMfaVerifyButton" type="submit">Verify admin session</button>
-      </form>
-      <div class="enrollment-box">
-        <p>First sign-in or replacing your authenticator?</p>
-        <button class="button full" id="adminMfaSetupButton" type="button">Set up authenticator</button>
-        <div id="adminMfaEnrollment" hidden>
-          <p class="secret-note" id="adminMfaInstructions"></p>
-          <button class="text-button" id="copyMfaSecret" type="button">Copy setup key</button>
-        </div>
-      </div>
-      <p class="form-status" id="adminMfaStatus" role="status" aria-live="polite"></p>
-      <button class="text-button" id="cancelAdminMfa" type="button">Use another administrator</button>
-    </div>
   </section>
 
   <section class="gate" id="adminForbidden" hidden>
@@ -125,10 +102,9 @@
         </section>
 
         <section class="panel" id="panel-security" aria-labelledby="securityHeading">
-          <div class="section-head"><div><p class="eyebrow">SECURITY &amp; RELEASES</p><h2 id="securityHeading">Panel policy and admin protection</h2><p>Minimum-version enforcement and optional administrator 2FA.</p></div></div>
+          <div class="section-head"><div><p class="eyebrow">SECURITY &amp; RELEASES</p><h2 id="securityHeading">Panel policy and admin protection</h2><p>Minimum-version enforcement and private panel release control.</p></div></div>
           <div class="settings-grid">
             <form class="surface settings-card" id="panelVersionForm"><div class="setting-icon" aria-hidden="true">Ps</div><p class="eyebrow">PHOTOSHOP PANEL</p><h3>Version control</h3><p>Panels older than the minimum version receive Update Required.</p><label>Latest version<input id="latestVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.24.0"></label><label>Minimum supported<input id="minimumVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.24.0"></label><button class="button primary" type="submit">Save version policy</button></form>
-            <section class="surface settings-card"><div class="setting-icon" aria-hidden="true">2×</div><p class="eyebrow">ADMIN 2FA</p><h3>Authenticator verification</h3><p>Two-factor sign-in is optional. Once an authenticator is enrolled, every new admin session must present its 6-digit code. Set up or replace it here.</p><button class="button" id="setupMfa" type="button">Set up or replace authenticator</button><div id="mfaSetup" hidden><p class="secret-note" id="mfaInstructions"></p><label>6-digit authenticator code<input id="mfaCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"></label><button class="button primary" id="verifyMfa" type="button">Verify authenticator</button></div></section>
             <form class="surface settings-card artifact-card" id="panelArtifactForm">
               <div class="setting-icon" aria-hidden="true">↑</div><p class="eyebrow">PRIVATE PANEL ARTIFACT</p><h3>Upload, verify and enable a release</h3>
               <p>The package stays in this tab's memory. HNK hashes it locally, uploads verified chunks to private storage, finalizes the artifact, and only then enables the version.</p>
@@ -161,6 +137,6 @@
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js?v=20260828" defer></script>
+  <script src="admin.js?v=20260828b" defer></script>
 </body>
 </html>
