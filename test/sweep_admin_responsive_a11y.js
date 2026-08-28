@@ -41,16 +41,17 @@ function staticServer() {
   const calls = [];
   let mfaVerified = false;
   let dashboard401 = false;
-  let paymentRefresh401 = false;
+  /* A successful 12-month extension arms a one-shot 401 on the three surface
+     refreshes runAction fires concurrently (student detail, student list,
+     dashboard), proving they share a single rotating token refresh. */
+  let surfaceRefresh401 = false;
   let refreshCalls = 0;
   let refreshedSurfaceReads = 0;
   const failedExtendMutations = new Set();
-  const failedGrantMutations = new Set();
   const committedRefreshFailureMutations = new Set();
   let failNextCommittedDashboard = false;
   let resolveRefreshedSurfaces;
   const refreshedSurfaces = new Promise(resolve => { resolveRefreshedSurfaces = resolve; });
-  const proofPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2n6sAAAAASUVORK5CYII=", "base64");
   const page = await browser.newPage({ viewport:{width:390,height:844} });
   await page.addInitScript(() => localStorage.setItem("hnk_acc_sess_v1", JSON.stringify({access:"STUDENT",uid:"student-1"})));
   await page.route("**/api/**", async route => {
@@ -66,12 +67,12 @@ function staticServer() {
     }
     if (url.includes("/mfa/setup")) return json(200,{secret:"JBSWY3DPEHPK3PXP",otpauth_uri:"otpauth://totp/HNK:owner?secret=JBSWY3DPEHPK3PXP"});
     if (url.includes("/mfa/verify")) { mfaVerified = parsed.code === "123456"; return json(mfaVerified?200:400,mfaVerified?{ok:true,mfa_verified:true}:{error:"invalid_mfa_code"}); }
-    if (paymentRefresh401 && request.method()==="GET" && /\/(dashboard|students\?|payment-requests\?)/.test(url)) {
+    if (surfaceRefresh401 && request.method()==="GET" && /\/(dashboard|students\?|students\/student-1$)/.test(url)) {
       const bearer=request.headers()["authorization"]||"";
       if(bearer==="Bearer ADMIN-A") return json(401,{error:"session_expired"});
       if(bearer==="Bearer ADMIN-B") {
         refreshedSurfaceReads++;
-        if(refreshedSurfaceReads>=3){paymentRefresh401=false;resolveRefreshedSurfaces();}
+        if(refreshedSurfaceReads>=3){surfaceRefresh401=false;resolveRefreshedSurfaces();}
       }
     }
     if (url.includes("/dashboard")) {
@@ -90,6 +91,7 @@ function staticServer() {
         committedRefreshFailureMutations.add(parsed.mutation_id);
         failNextCommittedDashboard=true;
       }
+      if(!fail&&parsed.months===12) surfaceRefresh401=true;
       return json(fail?503:200,fail
         ? {error:"temporarily_unavailable",message:"Temporary extension failure"}
         : {ok:true,action:parsed.action,student_id:"student-1"});
@@ -100,20 +102,6 @@ function staticServer() {
     });
     if (/\/students(?:\?|$)/.test(url)) return json(200,{students:[{id:"student-1",name:"Aye Aye",email:"aye@example.com",account_status:"active",license_status:"active",expires_at:"2026-12-01T00:00:00Z",last_active_at:"2026-08-26T00:00:00Z"}],page:1,total:1});
     if (url.includes("/histories")) return json(200,{events:[],page:1,total:0});
-    if (/\/payment-requests\/request-1\/proof$/.test(url)) return route.fulfill({status:200,contentType:"image/png",body:proofPng});
-    if (/\/payment-requests\/request-1\/review$/.test(url)) { paymentRefresh401=true; return json(200,{ok:true,payment_request:{id:"request-1",status:parsed.status,note:parsed.note}}); }
-    if (/\/payment-requests\?/.test(url)) {
-      const status=new URL(url).searchParams.get("status");
-      if(status==="history") return json(200,{payment_requests:[{id:"request-2",student_name:"Ko Min",student_email:"min@example.com",kind:"plan_1m",amount_mmk:11000,status:"approved",note:"Transfer verified",created_at:"2026-08-24T03:00:00Z",reviewed_at:"2026-08-25T04:00:00Z"}],page:1,limit:20,total:1});
-      return json(200,{payment_requests:[{id:"request-1",student_name:"Aye Aye",student_email:"aye@example.com",kind:"plan_3m",amount_mmk:30000,quoted_amount_mmk:33000,txn_last6:"123456",screenshot_path:"student-1/proof.png",status:"pending",created_at:"2026-08-26T03:00:00Z"}],configuration_warnings:[{code:"app_settings_row_count",count:2}],page:1,limit:20,total:1});
-    }
-    if (url.includes("/payment-grants")) {
-      const fail=parsed.email==="vip@example.com"&&!failedGrantMutations.has(parsed.mutation_id);
-      if(fail) failedGrantMutations.add(parsed.mutation_id);
-      return json(fail?503:201,fail
-        ? {error:"temporarily_unavailable",message:"Temporary grant failure"}
-        : {ok:true,message:"VIP access granted.",payment_request:{id:"grant-1",status:"approved",is_grant:true}});
-    }
     if (url.includes("/panel-version")) return json(200,{latest_version:"6.24.0",minimum_supported_version:"6.24.0"});
     if (url.includes("/logout")) return json(200,{ok:true});
     return json(404,{error:"not_found"});
@@ -250,6 +238,20 @@ function staticServer() {
       committedExtendCalls[0].body.mutation_id===committedExtendCalls[1].body.mutation_id&&
       committedKeyBeforeReload.length===1&&committedKeysAfterReplay.length===0,
     {committedExtendCalls,committedKeyBeforeReload,committedKeysAfterReplay});
+
+  /* A fourth, 12-month extension succeeds and then finds the admin bearer
+     expired on all three concurrent surface refreshes at once. */
+  await page.selectOption("#licenseMonths","12");
+  await page.click("#extendLicense");
+  await page.waitForSelector("#confirmDialog[open]");
+  await page.click("#confirmAction");
+  const refreshSettled=await Promise.race([refreshedSurfaces.then(()=>true),new Promise(resolve=>setTimeout(()=>resolve(false),10000))]);
+  const rotatedKeys=await extendKeys(0);
+  const rotatedSession=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("hnk_admin_sess_v1")||"{}"));
+  report("concurrent post-action 401s share one rotating refresh and replay with its new bearer",
+    refreshSettled&&refreshCalls===1&&rotatedSession.access==="ADMIN-B"&&rotatedKeys.length===0,
+    {refreshSettled,refreshCalls,refreshedSurfaceReads,rotatedSession,rotatedKeys});
+
   await page.keyboard.press("Escape");
   report("Escape closes the student dialog",!(await page.locator("#studentDialog").evaluate(el=>el.open)));
 
@@ -263,104 +265,24 @@ function staticServer() {
   report("history type/search filters reach the backend contract",historyParams.get("type")==="failed_login"&&historyParams.get("search")==="Aye",Object.fromEntries(historyParams));
 
   await page.setViewportSize({width:1280,height:900});
-  await page.click('[data-panel="payments"]');
-  await page.waitForSelector("#paymentRows [data-payment-proof='request-1']");
-  const pendingCall=[...calls].reverse().find(call=>/\/payment-requests\?/.test(call.url));
-  const pendingParams=new URL(pendingCall.url).searchParams;
-  report("payment queue requests the server-authorized pending page",pendingParams.get("status")==="pending"&&pendingParams.get("page")==="1"&&pendingParams.get("limit")==="20",Object.fromEntries(pendingParams));
-  const desktopPayment=await page.locator("#paymentRows tr").first().innerText();
-  const configurationWarning=await page.locator("#paymentConfigWarning").innerText();
-  const mismatchPresentation=await page.locator("#paymentRows .payment-mismatch").evaluate(element=>{const style=getComputedStyle(element);return{role:element.getAttribute("role"),background:style.backgroundColor,border:style.borderTopColor,color:style.color};});
-  const configurationPresentation=await page.locator("#paymentConfigWarning").evaluate(element=>{const style=getComputedStyle(element);return{role:element.getAttribute("role"),background:style.backgroundColor,border:style.borderTopColor,color:style.color};});
-  report("desktop queue separates sent and due amounts and visibly flags an accessible mismatch",/Sent\s+30,000 MMK/.test(desktopPayment)&&/Due\s+33,000 MMK/.test(desktopPayment)&&/Amount mismatch/.test(desktopPayment)&&mismatchPresentation.role==="alert"&&!/rgba?\(0, 0, 0, 0\)/.test(mismatchPresentation.background),{desktopPayment,mismatchPresentation});
-  report("payment configuration singleton warnings are prominent and accessible",await page.locator("#paymentConfigWarning").isVisible()&&/2 configuration rows/.test(configurationWarning)&&configurationPresentation.role==="alert"&&!/rgba?\(0, 0, 0, 0\)/.test(configurationPresentation.background),{configurationWarning,configurationPresentation});
-  await page.setViewportSize({width:390,height:844});
-  await page.waitForSelector("#paymentCards .payment-mismatch",{state:"visible"});
-  const mobilePayment=await page.locator("#paymentCards .payment-card").first().innerText();
-  report("mobile payment card preserves sent, due and mismatch evidence",/Sent\s+30,000 MMK/.test(mobilePayment)&&/Due\s+33,000 MMK/.test(mobilePayment)&&/Amount mismatch/.test(mobilePayment),mobilePayment);
-  await page.setViewportSize({width:1280,height:900});
-
-  await page.evaluate(()=>{const revoke=URL.revokeObjectURL.bind(URL);window.__revokedPaymentProofs=[];URL.revokeObjectURL=url=>{window.__revokedPaymentProofs.push(url);revoke(url);};});
-  await page.click("#paymentRows [data-payment-proof='request-1']");
-  await page.waitForSelector("#paymentProofDialog[open] #paymentProofImage[src^='blob:']");
-  const proofSrc=await page.locator("#paymentProofImage").getAttribute("src");
-  report("payment proof is fetched as an authenticated Blob and displayed in-page",calls.some(call=>/\/payment-requests\/request-1\/proof$/.test(call.url))&&String(proofSrc).startsWith("blob:"),proofSrc);
-  await page.click("#closePaymentProof");
-  await page.waitForFunction(src=>{const image=document.getElementById("paymentProofImage");return window.__revokedPaymentProofs.includes(src)&&!image.getAttribute("src")&&image.hidden;},proofSrc);
-  const proofClosed=await page.evaluate(src=>({revoked:window.__revokedPaymentProofs.includes(src),src:document.getElementById("paymentProofImage").getAttribute("src"),hidden:document.getElementById("paymentProofImage").hidden}),proofSrc);
-  report("closing proof revokes the in-memory Blob URL and clears the image",proofClosed.revoked&&!proofClosed.src&&proofClosed.hidden,proofClosed);
-
-  await page.click("#paymentRows [data-payment-review='request-1'][data-payment-decision='approved']");
-  const approvalMessage=await page.locator("#paymentReviewMessage").innerText();
-  report("payment confirmation repeats both sent and due amounts before approval",/sent 30,000 MMK/i.test(approvalMessage)&&/due 33,000 MMK/i.test(approvalMessage)&&/mismatch/i.test(approvalMessage),approvalMessage);
-  await page.fill("#paymentReviewNote","Bank transfer verified.");
-  await page.click("#confirmPaymentReview");
-  await page.waitForFunction(()=>document.getElementById("paymentReviewDialog")&&!document.getElementById("paymentReviewDialog").open);
-  const reviewCall=[...calls].reverse().find(call=>/\/payment-requests\/request-1\/review$/.test(call.url));
-  report("payment approval sends only the reviewed status and audit note",reviewCall&&reviewCall.method==="POST"&&JSON.stringify(reviewCall.body)===JSON.stringify({status:"approved",note:"Bank transfer verified."}),reviewCall);
-  const refreshSettled=await Promise.race([refreshedSurfaces.then(()=>true),new Promise(resolve=>setTimeout(()=>resolve(false),3000))]);
-  const rotatedAfterPayment=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("hnk_admin_sess_v1")||"{}"));
-  report("concurrent post-review 401s share one rotating refresh and replay with its new bearer",refreshSettled&&refreshCalls===1&&rotatedAfterPayment.access==="ADMIN-B",{refreshSettled,refreshCalls,refreshedSurfaceReads,rotatedAfterPayment});
-
-  await page.click("#paymentRows [data-payment-review='request-1'][data-payment-decision='rejected']");
-  await page.fill("#paymentReviewNote","Proof did not match the transfer.");
-  await page.click("#confirmPaymentReview");
-  await page.waitForFunction(()=>document.getElementById("paymentReviewDialog")&&!document.getElementById("paymentReviewDialog").open);
-  const rejectionCall=[...calls].reverse().find(call=>/\/payment-requests\/request-1\/review$/.test(call.url));
-  report("payment rejection requires the same explicit note confirmation",rejectionCall&&rejectionCall.method==="POST"&&JSON.stringify(rejectionCall.body)===JSON.stringify({status:"rejected",note:"Proof did not match the transfer."}),rejectionCall);
-
-  await page.fill("#grantEmail","vip@example.com");
-  await page.selectOption("#grantKind","plan_3m");
-  await page.fill("#grantNote","Three-month scholarship.");
-  await page.click("#paymentGrantForm button[type=submit]");
-  await page.waitForSelector("#confirmDialog[open]");
-  await page.click("#confirmAction");
-  await page.waitForFunction(()=>/Temporary grant failure/i.test(document.getElementById("paymentGrantStatus").textContent));
-  await page.fill("#grantEmail","vip-b@example.com");
-  await page.selectOption("#grantKind","plan_1m");
-  await page.fill("#grantNote","One-month interleaved grant.");
-  await page.click("#paymentGrantForm button[type=submit]");
-  await page.waitForSelector("#confirmDialog[open]");
-  await page.click("#confirmAction");
-  await page.waitForFunction(()=>/VIP access granted/i.test(document.getElementById("paymentGrantStatus").textContent));
-  const grantKeysBeforeReload=await page.evaluate(()=>Object.keys(sessionStorage)
-    .filter(key=>key.startsWith("hnk_admin_mutation_v1:payment_grant:")));
-  await page.reload({waitUntil:"networkidle"});
-  await page.waitForSelector("#adminApp:not([hidden])");
-  await page.click('[data-panel="payments"]');
-  await page.fill("#grantEmail","vip@example.com");
-  await page.selectOption("#grantKind","plan_3m");
-  await page.fill("#grantNote","Three-month scholarship.");
-  await page.click("#paymentGrantForm button[type=submit]");
-  await page.waitForSelector("#confirmDialog[open]");
-  await page.click("#confirmAction");
-  await page.waitForFunction(()=>/VIP access granted/i.test(document.getElementById("paymentGrantStatus").textContent));
-  const grantCalls=calls.filter(call=>/\/payment-grants$/.test(call.url));
-  const grantKeysAfterSuccess=await page.evaluate(()=>Object.keys(sessionStorage)
-    .filter(key=>key.startsWith("hnk_admin_mutation_v1:payment_grant:")));
-  report("VIP grant A survives interleaved B and reload, then clears only A on success",
-    grantCalls.length===3&&grantCalls.every(call=>call.method==="POST"&&
-      /^[0-9a-f-]{36}$/i.test(call.body.mutation_id||""))&&
-      grantCalls[0].body.email==="vip@example.com"&&grantCalls[1].body.email==="vip-b@example.com"&&
-      grantCalls[2].body.email==="vip@example.com"&&
-      grantCalls[0].body.mutation_id===grantCalls[2].body.mutation_id&&
-      grantCalls[0].body.mutation_id!==grantCalls[1].body.mutation_id&&
-      grantKeysBeforeReload.length===1&&grantKeysAfterSuccess.length===0,
-    {grantCalls,grantKeysBeforeReload,grantKeysAfterSuccess});
-
-  await page.click("[data-payment-view='history']");
-  await page.waitForFunction(()=>/Approved/.test(document.getElementById("paymentRows").textContent));
-  const historyPaymentCall=[...calls].reverse().find(call=>/\/payment-requests\?/.test(call.url));
-  const historyPaymentParams=new URL(historyPaymentCall.url).searchParams;
-  report("payment history stays on the same audited endpoint",historyPaymentParams.get("status")==="history",Object.fromEntries(historyPaymentParams));
-  const payment320=await measure(320,800),payment1280=await measure(1280,900);
-  report("payment review and grant controls stay responsive and accessible",[payment320,payment1280].every(m=>m.scroll<=m.inner+1&&!m.small.length&&!m.unnamed.length),{payment320,payment1280});
+  const paymentAbsence=await page.evaluate(()=>({
+    nav:!!document.querySelector('[data-panel="payments"]'),
+    panel:!!document.getElementById("panel-payments"),
+    proofDialog:!!document.getElementById("paymentProofDialog"),
+    reviewDialog:!!document.getElementById("paymentReviewDialog"),
+    grantForm:!!document.getElementById("paymentGrantForm"),
+    markup:/payment/i.test(document.documentElement.outerHTML),
+  }));
+  report("the retired payment queue, proof, review and VIP-grant surfaces are absent from the served shell",
+    Object.values(paymentAbsence).every(present=>!present),paymentAbsence);
 
   dashboard401=true;
   await page.click('[data-panel="overview"]');
   await page.waitForTimeout(250);
   const refreshCall=[...calls].reverse().find(call=>call.url.includes("grant_type=refresh_token"));
   report("admin refresh rotation retains client_type admin",refreshCall&&refreshCall.body.client_type==="admin",refreshCall);
+  const paymentCalls=calls.filter(call=>/payment/i.test(call.url));
+  report("no admin interaction ever called a payment endpoint",!paymentCalls.length,paymentCalls);
 
   const forbidden=await browser.newPage({viewport:{width:390,height:844}});
   await forbidden.route("**/api/**",route=>{

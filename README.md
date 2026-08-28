@@ -43,13 +43,17 @@ The app opens on a login wall: no session shows sign-in, a signed-in account
 without approval and an active license remains blocked, and only an entitled
 account reaches the studio. A foreground tab re-reads entitlement state so an
 expiry, suspension or approval takes effect without a manual refresh. The
-Student App contains only a translated handoff to `/admin`; payment review,
-VIP grants and proof viewing live in that dedicated control center.
+Student App contains only a translated handoff to `/admin`; student approval,
+license extension and device administration live in that dedicated control
+center. Payments are arranged outside the app, so neither client carries a
+payment queue, VIP-grant form or proof viewer any more — the audited
+server-side payment endpoints remain, unreferenced by any published page.
 
 **None of the UI is a security boundary.** `docs/` is static, so every ordinary
 browser request can be replayed by hand. Own-account access is constrained by
 row-level security in `supabase/schema.sql`; every cross-account admin action
-uses the API's `admin` client session, current MFA, role checks, service-owned
+uses the API's `admin` client session, MFA whenever the administrator has an
+enrolled authenticator, role checks, service-owned
 transaction and audit log. There is no browser policy that can approve a
 payment, file a grant for another account or read another student's proof.
 
