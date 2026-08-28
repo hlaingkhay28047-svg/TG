@@ -1,0 +1,195 @@
+name: Migrate to a backup-capable database
+
+# WHY THIS EXISTS. Production runs on an App Platform DEV database — the spec
+# says so on purpose ("A development database is not meant to hold data you
+# cannot lose") — and a dev database has no backups. The owner approved the
+# move to a managed PostgreSQL cluster (~$15/month, daily backups,
+# point-in-time recovery) on 2026-08-28.
+#
+# THE MOVE IS FOUR GUARDED PHASES, run one at a time, in order, each proving
+# its work before the next is allowed:
+#
+#   create-cluster  make the managed cluster in the app's own region and wait
+#                   for it to come online. Costs money from this moment; no
+#                   app configuration changes.
+#   attach          attach the cluster to the app and add the db-copy
+#                   POST_DEPLOY job. The triggered deployment runs the copy:
+#                   the tracked schema is applied to the cluster and every
+#                   table's rows are copied, counts verified. THE SERVICE
+#                   KEEPS RUNNING ON THE DEV DATABASE — live traffic is
+#                   untouched by this phase.
+#   switch          repoint the service's DATABASE_URL/DATABASE_CA_CERT to
+#                   the cluster and redeploy. The dev database stays attached,
+#                   untouched, as the instant rollback (flip the bindings
+#                   back). The copy job re-runs and, finding the cluster
+#                   populated, reports the account count and no-ops — that
+#                   line doubles as the data-arrived proof.
+#   cleanup         remove the copy job and the dev database. REMOVING THE DEV
+#                   DATABASE DELETES IT AND ITS DATA — run only after the
+#                   owner has confirmed the cluster serves correctly.
+#
+# Spec edits go through .github/scripts/edit_database_spec.js, which starts
+# from the downloaded live spec, refuses one whose secrets are not the
+# platform's encrypted EV[...] forms, and proves by deep comparison that its
+# phase changed nothing outside its own scope. The six-secrets incident is why
+# nothing here is ever typed into a console box.
+#
+# MANUAL, AND GUARDED: never on a push, and the word MIGRATE must be typed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "Which migration phase to run"
+        required: true
+        type: choice
+        options: [create-cluster, attach, switch, cleanup]
+      confirm:
+        description: "Type MIGRATE to run the selected phase against production"
+        required: true
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-production-secrets
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Run the ${{ inputs.phase }} phase
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DO_APP_NAME: hnk-ai-tools-3
+      DO_REPO: hlaingkhay28047-svg/TG
+      DO_BRANCH: main
+      DO_SERVICE: hnk-api
+      DO_CLUSTER: hnk-pg
+      DO_REGION: sgp1
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
+      # Through the environment, never interpolated into scripts.
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      PHASE_INPUT: ${{ inputs.phase }}
+    steps:
+      - name: Require the typed confirmation and a production token
+        shell: bash
+        run: |
+          if [ "$CONFIRM_INPUT" != "MIGRATE" ]; then
+            echo "::error::Refusing to change production without the typed confirmation MIGRATE."
+            exit 1
+          fi
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::This lane requires DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Check out the spec editor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.1
+        with:
+          persist-credentials: false
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.166.0
+
+      - name: Create the managed cluster and wait for it
+        if: inputs.phase == 'create-cluster'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if doctl databases list --output json | jq -e --arg n "$DO_CLUSTER" '.[] | select(.name == $n)' > /dev/null; then
+            echo "Cluster $DO_CLUSTER already exists; nothing to create."
+          else
+            doctl databases create "$DO_CLUSTER" \
+              --engine pg --version 16 \
+              --region "$DO_REGION" \
+              --size db-s-1vcpu-1gb --num-nodes 1 \
+              --output json | jq -r '.[0] | "created cluster id=\(.id) status=\(.status)"'
+          fi
+          for attempt in $(seq 1 60); do
+            STATUS="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" '.[] | select(.name == $n) | .status')"
+            echo "cluster status: ${STATUS:-unknown} (check $attempt)"
+            [ "$STATUS" = "online" ] && break
+            sleep 20
+          done
+          [ "$STATUS" = "online" ] || { echo "::error::Cluster did not come online in 20 minutes."; exit 1; }
+          echo "Cluster $DO_CLUSTER is online. Daily backups and 7-day point-in-time recovery are managed by DigitalOcean."
+
+      - name: Apply the spec phase and redeploy
+        if: inputs.phase != 'create-cluster'
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          APPS_FILE="$RUNNER_TEMP/migrate-apps.json"
+          LIVE_SPEC="$RUNNER_TEMP/migrate-live.json"
+          PATCHED_SPEC="$RUNNER_TEMP/migrate-patched.json"
+          trap 'rm -f "$APPS_FILE" "$LIVE_SPEC" "$PATCHED_SPEC"' EXIT
+
+          doctl apps list --output json > "$APPS_FILE"
+          APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            [.[]
+              | select(.spec.name == $name)
+              | select(any(.spec.static_sites[]?;
+                  .github.repo == $repo and .github.branch == $branch))]
+            | if length == 1 then .[0].id else empty end
+          ' "$APPS_FILE")"
+          if [ -z "$APP_ID" ]; then
+            echo "::error::Refusing to patch an ambiguous production app selection."
+            exit 1
+          fi
+
+          if [ "$PHASE_INPUT" != "create-cluster" ]; then
+            STATUS="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" '.[] | select(.name == $n) | .status')"
+            if [ "$STATUS" != "online" ]; then
+              echo "::error::Cluster $DO_CLUSTER is not online (status: ${STATUS:-absent}); run create-cluster first."
+              exit 1
+            fi
+          fi
+
+          doctl apps spec get "$APP_ID" --format json > "$LIVE_SPEC"
+          node .github/scripts/edit_database_spec.js "$LIVE_SPEC" "$PATCHED_SPEC" "$PHASE_INPUT"
+
+          # --update-sources deliberately absent: configuration, not commits.
+          doctl apps update "$APP_ID" --spec "$PATCHED_SPEC" --format ID,Updated
+          rm -f "$PATCHED_SPEC"
+
+          echo "Waiting for the triggered deployment to finish..."
+          for attempt in $(seq 1 90); do
+            read -r DEP_ID DEP_PHASE < <(doctl apps list-deployments "$APP_ID" --output json \
+              | jq -r '.[0] | "\(.id) \(.phase)"')
+            echo "deployment $DEP_ID: $DEP_PHASE (check $attempt)"
+            case "$DEP_PHASE" in
+              ACTIVE) break ;;
+              ERROR|CANCELED|CANCELLED) echo "::error::Deployment entered $DEP_PHASE."; exit 1 ;;
+            esac
+            sleep 20
+          done
+          [ "$DEP_PHASE" = "ACTIVE" ] || { echo "::error::Deployment did not become ACTIVE in 30 minutes."; exit 1; }
+
+          # The copy job's own report: table names, row counts and durations
+          # only — the job prints no row values and no connection strings.
+          if [ "$PHASE_INPUT" != "cleanup" ]; then
+            doctl apps logs "$APP_ID" db-copy --type run --deployment "$DEP_ID" 2>/dev/null \
+              | grep -a "copy-database:" || echo "copy job log lines were not retrievable; check the deployment's Runtime Logs for db-copy"
+          fi
+
+      - name: Verify live health after the phase
+        if: inputs.phase == 'switch' || inputs.phase == 'cleanup'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            BODY="$(curl -fsS --max-time 15 "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/api/health" || true)"
+            READY="$(printf '%s' "$BODY" | jq -r '.ready // false' 2>/dev/null || echo false)"
+            echo "health ready=$READY (check $attempt)"
+            [ "$READY" = "true" ] && break
+            sleep 10
+          done
+          [ "$READY" = "true" ] || { echo "::error::The API did not report ready after the phase."; exit 1; }
+          printf '%s' "$BODY" | jq '{ok, apiVersion, schema, unifiedSchema, ready, tls}'
