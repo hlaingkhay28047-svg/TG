@@ -160,10 +160,18 @@ jobs:
             RULE_ADDED="$RUNNER_IP"
             sleep 10
           fi
-          doctl databases ca "$CLUSTER_ID" --output json \
-            | jq -r 'if type == "array" then .[0].certificate else .certificate end' > "$CA_FILE"
-          URI="$(doctl databases connection "$CLUSTER_ID" --output json \
-            | jq -r 'if type == "array" then .[0].uri else .uri end')"
+          # The REST API's shapes are documented and stable where this doctl
+          # build's are not: /ca returns {"ca":{"certificate":"<base64 PEM>"}}.
+          CA_RAW="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID/ca" | jq -r '.ca.certificate')"
+          if printf '%s' "$CA_RAW" | grep -q "BEGIN CERTIFICATE"; then
+            printf '%s\n' "$CA_RAW" > "$CA_FILE"
+          else
+            printf '%s' "$CA_RAW" | base64 -d > "$CA_FILE" 2>/dev/null || true
+          fi
+          grep -q "BEGIN CERTIFICATE" "$CA_FILE" || { echo "::error::Could not obtain the cluster CA."; exit 1; }
+          URI="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID" | jq -r '.database.connection.uri')"
           if [ -z "$URI" ] || [ "$URI" = "null" ]; then
             echo "::error::No connection URI is available for $DO_CLUSTER."
             exit 1
@@ -327,10 +335,18 @@ jobs:
             sleep 10
           fi
 
-          doctl databases ca "$CLUSTER_ID" --output json \
-            | jq -r 'if type == "array" then .[0].certificate else .certificate end' > "$CA_FILE"
-          URI="$(doctl databases connection "$CLUSTER_ID" --output json \
-            | jq -r 'if type == "array" then .[0].uri else .uri end')"
+          # The REST API's shapes are documented and stable where this doctl
+          # build's are not: /ca returns {"ca":{"certificate":"<base64 PEM>"}}.
+          CA_RAW="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID/ca" | jq -r '.ca.certificate')"
+          if printf '%s' "$CA_RAW" | grep -q "BEGIN CERTIFICATE"; then
+            printf '%s\n' "$CA_RAW" > "$CA_FILE"
+          else
+            printf '%s' "$CA_RAW" | base64 -d > "$CA_FILE" 2>/dev/null || true
+          fi
+          grep -q "BEGIN CERTIFICATE" "$CA_FILE" || { echo "::error::Could not obtain the cluster CA."; exit 1; }
+          URI="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID" | jq -r '.database.connection.uri')"
           if [ -z "$URI" ] || [ "$URI" = "null" ]; then
             echo "::error::No connection URI is available for $DO_CLUSTER."
             exit 1
