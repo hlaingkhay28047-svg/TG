@@ -120,6 +120,56 @@ jobs:
           [ "$STATUS" = "online" ] || { echo "::error::Cluster did not come online in 20 minutes."; exit 1; }
           echo "Cluster $DO_CLUSTER is online. Daily backups and 7-day point-in-time recovery are managed by DigitalOcean."
 
+          # THE RUNTIME USER — never doadmin. A bare cluster attachment binds
+          # doadmin, and DigitalOcean's doadmin carries BYPASSRLS, which
+          # migrate() rightly refuses ("database runtime user must be
+          # NOSUPERUSER and NOBYPASSRLS"): under BYPASSRLS the schema's FORCE
+          # RLS means nothing. That refusal is why the db-copy job exited
+          # non-zero on every attach deployment. Create a plain user and grant
+          # it CREATE on the public schema; the attach phase binds every
+          # component through it. Idempotent, like the cluster creation above.
+          CLUSTER_ID="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" '.[] | select(.name == $n) | .id')"
+          if doctl databases user list "$CLUSTER_ID" --output json | jq -e '.[] | select(.name == "hnk_runtime")' > /dev/null; then
+            echo "Runtime user hnk_runtime already exists."
+          else
+            doctl databases user create "$CLUSTER_ID" hnk_runtime --output json > /dev/null
+            echo "Created runtime user hnk_runtime."
+          fi
+
+          # Grant as doadmin over the cluster's own connection (URI never
+          # echoed). If the cluster's trusted-sources list is non-empty this
+          # runner is granted for the session and removed on exit.
+          umask 077
+          CA_FILE="$RUNNER_TEMP/create-cluster-ca.crt"
+          RULE_ADDED=""
+          cleanup_grant() {
+            rm -f "$CA_FILE"
+            if [ -n "$RULE_ADDED" ]; then
+              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" --output json 2>/dev/null \
+                | jq -r --arg v "$RULE_ADDED" '.[] | select(.type == "ip_addr" and .value == $v) | .uuid' | head -1)"
+              [ -n "$RULE_UUID" ] && doctl databases firewalls remove "$CLUSTER_ID" --uuid "$RULE_UUID" > /dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_grant EXIT
+          RULES="$(doctl databases firewalls list "$CLUSTER_ID" --output json | jq 'length')"
+          if [ "${RULES:-0}" -gt 0 ]; then
+            RUNNER_IP="$(curl -fsS --max-time 15 https://api.ipify.org)"
+            case "$RUNNER_IP" in (*[!0-9.]*|"") echo "::error::Could not determine the runner address for the trusted-source grant."; exit 1;; esac
+            doctl databases firewalls append "$CLUSTER_ID" --rule "ip_addr:$RUNNER_IP" > /dev/null
+            RULE_ADDED="$RUNNER_IP"
+            sleep 10
+          fi
+          doctl databases ca "$CLUSTER_ID" --output json | jq -r '.[0].certificate' > "$CA_FILE"
+          URI="$(doctl databases connection "$CLUSTER_ID" --output json | jq -r '.uri')"
+          if [ -z "$URI" ] || [ "$URI" = "null" ]; then
+            echo "::error::No connection URI is available for $DO_CLUSTER."
+            exit 1
+          fi
+          BASE="${URI%%\?*}"
+          PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=20 psql "$BASE?sslmode=verify-ca" -X -v ON_ERROR_STOP=1 -q \
+            -c 'grant usage, create on schema public to hnk_runtime'
+          echo "Granted hnk_runtime USAGE and CREATE on schema public."
+
       - name: Apply the spec phase and redeploy
         if: inputs.phase != 'create-cluster'
         shell: bash

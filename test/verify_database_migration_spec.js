@@ -87,13 +87,31 @@ const attach = run(baseSpec(), "attach");
 const cluster = attach.patched && attach.patched.databases.find(d => d.name === "hnk-pg");
 const job = attach.patched && (attach.patched.jobs || []).find(j => j.name === "db-copy");
 const jobEnv = key => job && (job.envs || []).find(e => e.key === key);
-report("A) attach adds the production cluster and the POST_DEPLOY copy job, nothing else",
+report("A) attach adds the production cluster (bound as the plain runtime user, never doadmin) and the POST_DEPLOY copy job, nothing else",
   attach.status === 0 && cluster && cluster.production === true && cluster.cluster_name === "hnk-pg" &&
+    cluster.db_user === "hnk_runtime" && cluster.db_name === "defaultdb" &&
     job && job.kind === "POST_DEPLOY" && job.run_command === "node copy-database.js" &&
     jobEnv("SOURCE_DATABASE_URL") && jobEnv("SOURCE_DATABASE_URL").value === "${hnk-db.DATABASE_URL}" &&
     jobEnv("DATABASE_URL") && jobEnv("DATABASE_URL").value === "${hnk-pg.DATABASE_URL}" &&
     JSON.stringify(withoutAdded(attach.patched)) === JSON.stringify(baseSpec()),
   { status: attach.status, out: attach.out.slice(0, 200) });
+
+/* ---- A2) attach repairs a doadmin-bound cluster in place ----
+   The first live attach ran before the runtime user existed, so the live spec
+   carries the cluster WITHOUT db_user — meaning doadmin, whose BYPASSRLS
+   migrate() rightly refuses. Attach against that spec must change exactly the
+   two binding fields and nothing else. */
+const doadminBound = (() => {
+  const s = JSON.parse(JSON.stringify(attach.patched));
+  const c = s.databases.find(d => d.name === "hnk-pg");
+  delete c.db_user; delete c.db_name;
+  return s;
+})();
+const repaired = run(doadminBound, "attach");
+report("A2) attach repoints a doadmin-bound cluster to the runtime user and changes nothing else",
+  repaired.status === 0 && /runtime user/.test(repaired.out) &&
+    JSON.stringify(repaired.patched) === JSON.stringify(attach.patched),
+  { status: repaired.status, out: repaired.out.slice(0, 200) });
 
 /* ---- B) attach is idempotent ---- */
 const again = run(attach.patched, "attach");
@@ -114,10 +132,12 @@ report("C) switch repoints exactly the two database bindings",
 
 const noAttach = run(baseSpec(), "switch");
 const oddBinding = (() => { const s = JSON.parse(JSON.stringify(attach.patched)); envOf(s, "DATABASE_URL").value = "postgres://typed-by-hand"; return run(s, "switch"); })();
-report("C2) switch refuses an unattached spec and refuses to overwrite an unrecognised binding",
-  noAttach.status === 1 && oddBinding.status === 1 &&
-    /attach phase/.test(noAttach.out) && /refusing to guess/.test(oddBinding.out),
-  { noAttach: noAttach.status, oddBinding: oddBinding.status });
+const doadminSwitch = run(doadminBound, "switch");
+report("C2) switch refuses an unattached spec, an unrecognised binding, and a doadmin-bound cluster",
+  noAttach.status === 1 && oddBinding.status === 1 && doadminSwitch.status === 1 &&
+    /attach phase/.test(noAttach.out) && /refusing to guess/.test(oddBinding.out) &&
+    /BYPASSRLS/.test(doadminSwitch.out),
+  { noAttach: noAttach.status, oddBinding: oddBinding.status, doadminSwitch: doadminSwitch.status });
 
 /* ---- D) cleanup ---- */
 const early = run(attach.patched, "cleanup");
