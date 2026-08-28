@@ -466,16 +466,18 @@ function testPasswordHash(password,parallelization) {
   report("J6) admin login creates a dedicated admin-client session",
     r.status === 200 && !!ownerAdminToken, { status: r.status });
 
+  /* MFA is OPTIONAL. A dedicated admin session whose account has enrolled no
+     second factor reaches the strict admin API on password alone — the forced
+     first-sign-in enrolment that could lock out the sole administrator is
+     gone. */
   r = await call("GET", "/v1/admin/students", { token: ownerAdminToken });
-  report("J7) an admin-client session remains blocked until MFA is current",
-    r.status === 403, { status: r.status, body: r.json });
+  report("J7) an admin-client session with no enrolled MFA reaches the strict admin API",
+    r.status === 200, { status: r.status, body: r.json });
   const paymentBeforeMfa = await call("GET", "/v1/admin/payment-requests?status=pending", {
     token: ownerAdminToken,
   });
-  report("J7b) the strict payment queue also requires current admin MFA",
-    paymentBeforeMfa.status === 403 && paymentBeforeMfa.json &&
-      paymentBeforeMfa.json.error === "mfa_required",
-    { status: paymentBeforeMfa.status, body: paymentBeforeMfa.json });
+  report("J7b) the strict payment queue is likewise reachable before any MFA is enrolled",
+    paymentBeforeMfa.status === 200, { status: paymentBeforeMfa.status, body: paymentBeforeMfa.json });
 
   const mfaSetup = await call("POST", "/v1/admin/mfa/setup", { token: ownerAdminToken, body: {} });
   const mfaSecret = mfaSetup.json && mfaSetup.json.secret;
@@ -485,10 +487,23 @@ function testPasswordHash(password,parallelization) {
   const mfaVerified = await call("POST", "/v1/admin/mfa/verify", {
     token: ownerAdminToken, body: { code: mfaCode },
   });
-  report("J8) the dedicated admin session completes TOTP setup and verification",
+  report("J8) the dedicated admin session can still opt into TOTP and verify it",
     mfaSetup.status === 200 && !!mfaSecret && mfaVerified.status === 200 &&
       mfaVerified.json && mfaVerified.json.mfa_verified === true,
     { setup: mfaSetup.status, verify: mfaVerified.status });
+
+  /* Opting in is enforced from then on: once the account has a confirmed
+     secret, a FRESH admin login is blocked until it passes the second factor.
+     Optional does not mean toothless for an administrator who chose it. */
+  const secondLogin = await call("POST", "/auth/v1/token?grant_type=password", {
+    body: { email: owner.email, password: owner.password, client_type: "admin" },
+  });
+  const secondAdminToken = secondLogin.json && secondLogin.json.access_token;
+  const enrolledBlocked = await call("GET", "/v1/admin/students", { token: secondAdminToken });
+  report("J8b) once enrolled, a fresh admin session is blocked until it verifies MFA",
+    enrolledBlocked.status === 403 && enrolledBlocked.json &&
+      enrolledBlocked.json.error === "mfa_required",
+    { status: enrolledBlocked.status, body: enrolledBlocked.json });
 
   r = await call("GET", "/v1/admin/students?limit=10", { token: ownerAdminToken });
   const strictAdminIds = r.json && Array.isArray(r.json.students)
