@@ -184,6 +184,19 @@ function verifyRecoveryTokens() {
     smtp&&smtp.rejectUnauthorized===true&&smtp.minVersion==="TLSv1.2"&&
       /tls\.connect\(smtpTlsOptions/.test(emailSource)&&
       !/require\(["']net["']\)|net\.connect/.test(emailSource));
+  /* 2026-08-28 — the owner is emailed on each signup so pending students are
+     approved without polling the dashboard. The recipient is only ever the
+     owner's configured address, the send is fire-and-forget after the commit,
+     and a failure log carries no address (public diagnostics republish
+     container stdout). */
+  report("signup notices go only to the owner-configured address, fire-and-forget, with masked failure logs",
+    /async function sendSignupNotice\(/.test(emailSource)&&
+      /SIGNUP_NOTICE_EMAIL|BOOTSTRAP_ADMIN_EMAIL/.test(emailSource)&&
+      !/sendSignupNotice\([^)]*to[,)]/.test(emailSource)&&
+      /notifySignupBestEffort\(email\);\s*return outcome;/.test(source)&&
+      /replace\(EMAIL_MASK_RE, "<address withheld>"\)/.test(source)&&
+      /smtpConfigured:require\("\.\/lib\/email"\)\.smtpConfigured\(\)/.test(
+        fs.readFileSync(path.join(ROOT,"server/index.js"),"utf8")));
 }
 
 function verifyReadiness() {
