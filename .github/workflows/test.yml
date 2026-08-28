@@ -59,6 +59,7 @@ jobs:
           node test/verify_unified_routes.js
           node test/verify_panel_unified_backend.js
           node test/verify_panel_manifest_permissions.js
+          node test/verify_panel_catalog_sync.js
 
       - name: Verify Supabase RLS contract (every client table is protected)
         run: node test/verify_rls_contract.js
