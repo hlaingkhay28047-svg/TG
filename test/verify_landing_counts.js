@@ -263,6 +263,21 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
       records: claimText.length,
       missingKeys: claimKeys.filter(k => foundKeys.indexOf(k) < 0) });
 
+  /* ---- I) the hero stat strip ----
+     The strip separates each number from its label with markup, so the
+     label-adjacency scan in C cannot see it. Every <b data-count="…"> is
+     therefore checked here against the same runtime/CI sources — the strip
+     cannot quietly go stale, and a strip number with an unknown key fails
+     rather than passing unattributed. */
+  const heroStats = [...LANDING.matchAll(/<b[^>]*\bdata-count="([a-z]+)"[^>]*>([0-9၀-၉]+)<\/b>/g)];
+  const heroWant = { lib: live.lib, tap: live.tap, wf: live.wf,
+    meitu: live.meitu, evoto: live.evoto, tests: String(ciTests) };
+  const heroBad = heroStats
+    .map(([, key, value]) => ({ key, got: toAscii(value), want: heroWant[key] }))
+    .filter(x => !x.want || x.got !== x.want);
+  report("I) every hero stat strip count is runtime-derived and current",
+    heroStats.length >= 4 && heroBad.length === 0, { found: heroStats.length, bad: heroBad });
+
   /* ---- G) the share sheet ---- */
   const shareFb = (APP.match(/shareTapCount\s*=\s*\([^)]*\)\s*\|\|\s*"(\d+)"/) || [])[1];
   report("G) the share-sheet fallback count matches the runtime value",
