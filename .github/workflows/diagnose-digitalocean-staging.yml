@@ -80,9 +80,10 @@ jobs:
             -e 's/(password=)[^[:space:]]+/\1<redacted>/gI' \
             -e 's/(PGPASSWORD=)[^[:space:]]+/\1<redacted>/gI' \
             -e 's/((token|secret|api[_-]?key)=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email redacted>/g' \
             "$RAW_LOG" \
             | LC_ALL=C tr -cd '\11\12\15\40-\176' \
-            | grep -E 'hnk-api listening|migrate:|db: WARNING|WARNING: could not reach the database|WARNING: booting anyway|FATAL: migration failed|FATAL: booting LOCKED' \
+            | grep -E 'hnk-api listening|migrate:|admin:|db: WARNING|WARNING: could not reach the database|WARNING: booting anyway|FATAL: migration failed|FATAL: booting LOCKED' \
             | cut -c1-1000 \
             | tail -n 120 > "$SAFE_LOG" || true
 

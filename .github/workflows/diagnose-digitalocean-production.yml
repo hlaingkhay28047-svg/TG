@@ -292,6 +292,7 @@ jobs:
             -e 's/(password=)[^[:space:]]+/\1<redacted>/gI' \
             -e 's/(PGPASSWORD=)[^[:space:]]+/\1<redacted>/gI' \
             -e 's/((token|secret|api[_-]?key)=)[^[:space:]]+/\1<redacted>/gI' \
+            -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email redacted>/g' \
             "$RAW_LOG" \
             | LC_ALL=C tr -cd '\11\12\15\40-\176' \
             | awk '!seen[$0]++' \
@@ -308,7 +309,7 @@ jobs:
           # first, so a widened filter widens what is explained, not what is
           # exposed.
           grep -E \
-            -e 'hnk-api listening|migrate:|db: WARNING|ready: NOT READY|ready: serving' \
+            -e 'hnk-api listening|migrate:|admin:|db: WARNING|ready: NOT READY|ready: serving' \
             -e 'WARNING: could not reach the database|WARNING: booting anyway' \
             -e 'FATAL: migration failed|FATAL: booting LOCKED' \
             -e '^[A-Za-z]*Error(:| )|^ +at |Cannot find module|MODULE_NOT_FOUND' \

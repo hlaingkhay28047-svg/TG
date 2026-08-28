@@ -53,6 +53,12 @@ const OWNER_EMAIL = "Hlaingkhay28047@gmail.com";
 const STUDENT_EMAIL = "student@example.com";
 const NO_COPY_EMAIL = "NoProfileCopy@example.com";
 
+/* What the roster is allowed to say about the owner. The repository is public
+   and the diagnostics workflow republishes container stdout into a GitHub
+   Actions log the whole internet can read, so a whole address must never reach
+   stdout in the first place. */
+const OWNER_MASKED = "Hl***47 [at] gmail.com";
+
 const ADMIN_ENV = Object.assign({}, process.env, {
   PGHOST: process.env.PGHOST || "127.0.0.1",
   PGPORT: process.env.PGPORT || "5432",
@@ -235,7 +241,7 @@ function main() {
   run = runBootstrap(OWNER_EMAIL.toLowerCase());
   const ePromoted = admins() === OWNER;
   const eSaid = (run.lines || []).some(l => /promoted 1 account to administrator/.test(l));
-  const eRoster = (run.lines || []).some(l => /1 account\(s\) hold is_admin/.test(l) && l.includes(OWNER_EMAIL));
+  const eRoster = (run.lines || []).some(l => /1 account\(s\) hold is_admin/.test(l) && l.includes(OWNER_MASKED));
   report("E case-insensitive promotion: exactly the owner, announced, and in the roster",
     ePromoted && eSaid && eRoster && !run.threw, { admins: admins(), run });
 
@@ -269,7 +275,45 @@ function main() {
      glance that a pending administrator is still an administrator. */
   run = runBootstrap(null);
   report("J the roster reports each administrator's account status",
-    (run.lines || []).some(l => l.includes(OWNER_EMAIL + " (pending)")), run);
+    (run.lines || []).some(l => l.includes(OWNER_MASKED + " (pending)")), run);
+
+  /* L — THE OTHER ONE THAT MUST NEVER REGRESS. Every line this module can
+     write is driven above; none of them may carry a whole address. The
+     repository is public and the diagnostics workflow republishes container
+     stdout into a GitHub Actions log anyone can read, so an address that never
+     reaches stdout is the only kind that cannot leak — a redaction rule in the
+     lane is a second line of defence, not the first. */
+  const everyLine = [];
+  for (const arg of [null, "not-an-email", "nobody@example.com",
+                     OWNER_EMAIL, OWNER_EMAIL.toLowerCase(), NO_COPY_EMAIL]) {
+    everyLine.push(...(runBootstrap(arg).lines || []));
+  }
+  const leaked = everyLine.filter(line =>
+    [OWNER_EMAIL, STUDENT_EMAIL, NO_COPY_EMAIL, "nobody@example.com"]
+      .some(address => line.toLowerCase().includes(address.toLowerCase())));
+  report("L no line the module writes carries a whole address",
+    leaked.length === 0 && everyLine.some(l => l.includes(OWNER_MASKED)),
+    { leaked: leaked.slice(0, 3), sample: everyLine.slice(-2) });
+
+  /* M — the roster has to survive the lane that publishes it. The diagnostics
+     workflow redacts anything shaped like an address and strips the log to
+     printable ASCII before its allowlist runs, so a mask that still looks like
+     an address comes back as "<email redacted>" and answers nothing, and a
+     mask built from "…" loses the character that made it readable. Both of
+     those were written here before this assertion caught them. */
+  const rosterLine = everyLine.find(l => /account\(s\) hold is_admin/.test(l)) || "";
+  const throughLane = spawnSync("bash", ["-c",
+    "sed -E -e 's#postgres(ql)?://[^[:space:]]+#postgres://<redacted>#gI'" +
+    " -e 's/(password=)[^[:space:]]+/\\1<redacted>/gI'" +
+    " -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/<email redacted>/g'" +
+    " | LC_ALL=C tr -cd '\\11\\12\\15\\40-\\176'" +
+    " | grep -E 'hnk-api listening|migrate:|admin:|db: WARNING|ready: NOT READY|ready: serving'"],
+    { input: rosterLine + "\n", encoding: "utf8" });
+  const published = (throughLane.stdout || "").trim();
+  report("M the roster still names the administrator after the diagnostics lane runs",
+    published.includes(OWNER_MASKED) && !/redacted/.test(published) &&
+    !published.toLowerCase().includes(OWNER_EMAIL.toLowerCase()),
+    { rosterLine, published });
 
   /* K — a failing query is reported, not thrown. Revoking the runtime login's
      access to profiles reproduces the shape of a permission the migration
