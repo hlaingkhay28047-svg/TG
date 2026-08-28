@@ -19,8 +19,13 @@ const ADMIN_ID = "11111111-1111-4111-8111-111111111111";
 const STUDENT_ID = "22222222-2222-4222-8222-222222222222";
 const PAYMENT_ID = "33333333-3333-4333-8333-333333333333";
 const MUTATION_ID = "44444444-4444-4444-8444-444444444444";
+/* An ENROLLED administrator: MFA is optional, so the "missing MFA is rejected"
+   assertions below only hold for an admin who has actually confirmed a second
+   factor. mfaEnrolled:true is what makes {..., mfaVerified:false} a session
+   that opted into MFA and has not yet passed it this time. */
 const verifiedAdmin = {
-  uid: ADMIN_ID, clientType: "admin", roles: ["admin"], mfaVerified: true,
+  uid: ADMIN_ID, clientType: "admin", roles: ["admin"],
+  mfaEnrolled: true, mfaVerified: true,
 };
 
 function sqlText(value) { return String(value || "").replace(/\s+/g, " ").trim(); }

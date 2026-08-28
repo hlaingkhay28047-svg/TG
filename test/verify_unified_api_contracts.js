@@ -131,12 +131,26 @@ async function verifyAdminContracts() {
   try {
     contract.requireAdmin({ clientType: "web", roles: ["admin"], mfaVerified: true }, "view_dashboard");
   } catch (error) { wrongClient = error && error.code; }
-  let missingMfa = null;
+  /* MFA is OPTIONAL, required only from an administrator who has confirmed one.
+     An enrolled admin who has not verified THIS session is stopped; an admin
+     with no confirmed secret reaches the dashboard on the admin-client session
+     alone. Both are asserted so neither half of the contract can drift. */
+  let enrolledMissingMfa = null;
   try {
-    contract.requireAdmin({ clientType: "admin", roles: ["admin"], mfaVerified: false }, "view_dashboard");
-  } catch (error) { missingMfa = error && error.code; }
-  report("admin actions require both an admin-client session and current MFA",
-    wrongClient === "forbidden" && missingMfa === "mfa_required", { wrongClient, missingMfa });
+    contract.requireAdmin(
+      { clientType: "admin", roles: ["admin"], mfaEnrolled: true, mfaVerified: false },
+      "view_dashboard");
+  } catch (error) { enrolledMissingMfa = error && error.code; }
+  let notEnrolledAllowed = "allowed";
+  try {
+    contract.requireAdmin(
+      { clientType: "admin", roles: ["admin"], mfaEnrolled: false, mfaVerified: false },
+      "view_dashboard");
+  } catch (error) { notEnrolledAllowed = error && error.code; }
+  report("admin actions require an admin-client session, and MFA only once enrolled",
+    wrongClient === "forbidden" && enrolledMissingMfa === "mfa_required" &&
+      notEnrolledAllowed === "allowed",
+    { wrongClient, enrolledMissingMfa, notEnrolledAllowed });
 
   const fakeClient = {
     async query(sql) {

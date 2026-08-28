@@ -142,11 +142,18 @@ function requireAdminBase(identity) {
   }
 }
 
+/* MFA is OPTIONAL, not mandatory. The owner instruction (2026-08-28) is that a
+   forced first-sign-in enrolment must not be able to lock the sole
+   administrator out of a panel nothing else can reopen — which is exactly what
+   happened. So a second factor is required only from an administrator who has
+   actually confirmed one (identity.mfaEnrolled): they opted in, so it is held
+   to. An administrator with no confirmed secret reaches the dashboard with
+   email and password alone, and may still enrol later from the same screen. */
 function requireAdmin(identity, action) {
   requireAdminBase(identity);
   const decision = authorizeAdminAction({
     actor:{ userId:identity.uid,roles:identity.roles,mfaVerified:identity.mfaVerified },
-    action,requireMfa:true,
+    action,requireMfa:identity.mfaEnrolled === true,
   });
   if (!decision.allowed) {
     const status = decision.reason === "mfa_required" ? 403 : 403;
