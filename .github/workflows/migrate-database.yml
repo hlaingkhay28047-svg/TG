@@ -145,13 +145,14 @@ jobs:
           cleanup_grant() {
             rm -f "$CA_FILE"
             if [ -n "$RULE_ADDED" ]; then
-              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" --output json 2>/dev/null \
-                | jq -r --arg v "$RULE_ADDED" '.[] | select(.type == "ip_addr" and .value == $v) | .uuid' | head -1)"
+              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null \
+                | awk -v v="$RULE_ADDED" '$2 == "ip_addr" && $3 == v { print $1; exit }')"
               [ -n "$RULE_UUID" ] && doctl databases firewalls remove "$CLUSTER_ID" --uuid "$RULE_UUID" > /dev/null 2>&1 || true
             fi
           }
           trap cleanup_grant EXIT
-          RULES="$(doctl databases firewalls list "$CLUSTER_ID" --output json | jq 'length')"
+          # this doctl build prints firewalls as a table, never JSON — count data rows
+          RULES="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null | awk 'NR > 1 && NF > 0' | wc -l)"
           if [ "${RULES:-0}" -gt 0 ]; then
             RUNNER_IP="$(curl -fsS --max-time 15 https://api.ipify.org)"
             case "$RUNNER_IP" in (*[!0-9.]*|"") echo "::error::Could not determine the runner address for the trusted-source grant."; exit 1;; esac
@@ -159,8 +160,10 @@ jobs:
             RULE_ADDED="$RUNNER_IP"
             sleep 10
           fi
-          doctl databases ca "$CLUSTER_ID" --output json | jq -r '.[0].certificate' > "$CA_FILE"
-          URI="$(doctl databases connection "$CLUSTER_ID" --output json | jq -r '.uri')"
+          doctl databases ca "$CLUSTER_ID" --output json \
+            | jq -r 'if type == "array" then .[0].certificate else .certificate end' > "$CA_FILE"
+          URI="$(doctl databases connection "$CLUSTER_ID" --output json \
+            | jq -r 'if type == "array" then .[0].uri else .uri end')"
           if [ -z "$URI" ] || [ "$URI" = "null" ]; then
             echo "::error::No connection URI is available for $DO_CLUSTER."
             exit 1
@@ -303,8 +306,8 @@ jobs:
             rm -f "$CA_FILE"
             # remove the temporary trusted-source rule for this runner, if one was added
             if [ -n "$RULE_ADDED" ]; then
-              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" --output json 2>/dev/null \
-                | jq -r --arg v "$RULE_ADDED" '.[] | select(.type == "ip_addr" and .value == $v) | .uuid' | head -1)"
+              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null \
+                | awk -v v="$RULE_ADDED" '$2 == "ip_addr" && $3 == v { print $1; exit }')"
               [ -n "$RULE_UUID" ] && doctl databases firewalls remove "$CLUSTER_ID" --uuid "$RULE_UUID" > /dev/null 2>&1 || true
             fi
           }
@@ -314,7 +317,8 @@ jobs:
           # address, including this runner. Attaching the app can create that
           # list, so grant this runner's address for the probe and remove it
           # again on the way out.
-          RULES="$(doctl databases firewalls list "$CLUSTER_ID" --output json | jq 'length')"
+          # this doctl build prints firewalls as a table, never JSON — count data rows
+          RULES="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null | awk 'NR > 1 && NF > 0' | wc -l)"
           if [ "${RULES:-0}" -gt 0 ]; then
             RUNNER_IP="$(curl -fsS --max-time 15 https://api.ipify.org)"
             case "$RUNNER_IP" in (*[!0-9.]*|"") echo "::error::Could not determine the runner address for the trusted-source grant."; exit 1;; esac
@@ -323,8 +327,10 @@ jobs:
             sleep 10
           fi
 
-          doctl databases ca "$CLUSTER_ID" --output json | jq -r '.[0].certificate' > "$CA_FILE"
-          URI="$(doctl databases connection "$CLUSTER_ID" --output json | jq -r '.uri')"
+          doctl databases ca "$CLUSTER_ID" --output json \
+            | jq -r 'if type == "array" then .[0].certificate else .certificate end' > "$CA_FILE"
+          URI="$(doctl databases connection "$CLUSTER_ID" --output json \
+            | jq -r 'if type == "array" then .[0].uri else .uri end')"
           if [ -z "$URI" ] || [ "$URI" = "null" ]; then
             echo "::error::No connection URI is available for $DO_CLUSTER."
             exit 1
