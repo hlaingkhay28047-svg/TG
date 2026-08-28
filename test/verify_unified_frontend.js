@@ -103,21 +103,21 @@ check("artifact chunks are capped at 4 MiB and release enable follows finalizati
   /finalizePanelArtifact[\s\S]{0,1600}enabled\s*:\s*true/.test(admin));
 check("admin markup has search, filters, student detail dialog and live feedback",
   /type=["']search["']/.test(adminHtml) && /<dialog\b/i.test(adminHtml) && /aria-live=["']polite["']/.test(adminHtml));
-check("admin payment queue stays on strict same-origin endpoints with Pending and History views",
-  hasAll(admin, ["/api/v1/admin/payment-requests", "/api/v1/admin/payment-grants"]) &&
-  hasAll(adminHtml, ['data-payment-view="pending"', 'data-payment-view="history"']) &&
+/* 2026-08-28 — payment review is retired end-to-end in the admin shell: students
+ * stopped submitting payment requests in v5.44.0, so the queue could only ever
+ * be empty, and manual access goes through the audited student Approve /
+ * extend_license actions instead. The server-side payment endpoints remain
+ * (removing them reaches into ADMIN_ACTIONS and the unified contracts), but no
+ * published client may reference them. */
+check("admin payment surfaces are fully retired from markup, script and styles",
+  !/payment/i.test(admin) && !/payment/i.test(adminHtml) && !/payment/i.test(adminCss) &&
   !/\/rest\/v1\/payment_requests|supabase\.co\/rest/i.test(admin));
-check("payment proof uses a private Blob URL and revokes it on close",
-  /URL\.createObjectURL\(blob\)/.test(admin) && /URL\.revokeObjectURL\(state\.proofUrl\)/.test(admin) &&
-  hasAll(adminHtml, ["paymentProofDialog", "paymentProofImage"]));
-check("payment review and VIP grant submit only allowlisted confirmed fields",
-  /JSON\.stringify\(\{ status: review\.decision, note \}\)/.test(admin) &&
-  /JSON\.stringify\(\{ email, kind, note, mutation_id: mutation\.id \}\)/.test(admin) &&
-  hasAll(adminHtml, ["paymentReviewNote", "confirmPaymentReview", "paymentGrantForm", "grantNote"]));
+check("no orphaned proof-Blob or VIP-grant machinery survives the payment removal",
+  !/createObjectURL|revokeObjectURL|apiBlob/.test(admin) &&
+  !/proof/i.test(adminHtml) && !/grant/i.test(adminHtml) && !/proof|grant-card/i.test(adminCss));
 check("admin mutation retries retain a browser-generated idempotency key until success",
   /crypto\.randomUUID\(\)/.test(admin) &&
   /function mutationFor\(/.test(admin) && /function clearMutation\(/.test(admin) &&
-  /mutationFor\("payment_grant"/.test(admin) &&
   /mutationFor\("extend_license"/.test(admin) &&
   /crypto\.subtle\.digest\("SHA-256"/.test(admin) && /stablePayload\(/.test(admin) &&
   /sessionStorage\.getItem\(key\)/.test(admin) &&
@@ -134,14 +134,6 @@ check("Approve is rendered only for a canonical pending account",
 check("concurrent admin 401s share one refresh and ignore stale responses after session rotation",
   hasAll(admin, ["refreshInFlight", "sessionGeneration"]) &&
   /accessToken\(\) !== token/.test(admin) && /generation !== sessionGeneration/.test(admin));
-check("payment configuration cardinality warnings render as a high-contrast alert",
-  /id="paymentConfigWarning"[^>]*role="alert"/.test(adminHtml) && admin.includes("app_settings_row_count") &&
-  /\.payment-config-warning\{[^}]*border:[^}]*background:/s.test(adminCss));
-check("payment review keeps sent and due amounts separate and flags numeric mismatches",
-  hasAll(admin, ["paymentSentAmount", "paymentDueAmount", "paymentAmountMismatch"]) &&
-  /className: "payment-mismatch", role: "alert"/.test(admin) &&
-  /\.payment-mismatch\{[^}]*border:[^}]*background:/s.test(adminCss) &&
-  /Student sent \$\{sent\}; server due \$\{due\}/.test(admin));
 
 check("download requests a temporary URL only from an explicit control",
   download.includes("/api/v1/downloads/panel") && /addEventListener\s*\(\s*["']click["']/.test(download));
