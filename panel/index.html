@@ -43,14 +43,13 @@
       background:linear-gradient(135deg,#f4d488,#c79a3c);color:#161b22;font-size:13px;
       font-weight:700;cursor:pointer}
     #hnkGate .gate-busy{opacity:.55;cursor:default}
-    /* v6.25 — the secondary buttons were invisible in real Photoshop: UXP's
-       widget styling dropped the label color, leaving dark text on the dark
-       gate. Explicit backgrounds plus a span-carried label (spans always
-       honor color under UXP where button labels do not) make Retry/Sign out
-       readable on every UXP build. */
-    #hnkGate .gate-b2{background:none;background-color:#151b23;border:1px solid #45536b;color:#e6edf3;font-weight:600}
-    #hnkGate .gate-b span{color:#161b22;font-size:13px;font-weight:700}
-    #hnkGate .gate-b2 span{color:#e6edf3;font-weight:600}
+    /* v6.25.1 — longhands only, and no `background:none` anywhere: UXP's
+       cascade on button widgets is unreliable with shorthands and
+       multi-class overrides (the 6.24 secondary buttons rendered as blank
+       dark rectangles exactly this way). The stylesheet states the intent;
+       gateApplyWidgetStyles in main.js repeats it as inline styles, the one
+       layer every UXP build honors. */
+    #hnkGate .gate-b2{background-color:#1c2530;background-image:none;border:1px solid #45536b;color:#e6edf3;font-weight:600}
     #hnkGate .gate-msg{font-size:12px;line-height:1.7;margin:0 0 13px;color:#c9d3de;text-align:left}
     #hnkGate .gate-err{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ff8b8b;min-height:1px}
     #hnkGate .gate-lang{box-sizing:border-box;margin:14px auto 0;padding:5px 8px;
@@ -100,7 +99,7 @@
         <div class="hdr-t hero-t">
           <div class="hero-brand">HNK <span class="hero-brand-gold">PLUGIN PANEL</span></div>
           <div class="title hero-app" data-i18n="app_title"></div>
-          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.25.0</span> &middot; <span id="brandProv">Gemini AI</span><span id="brandPlan" class="hero-plan"></span></div>
+          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.25.1</span> &middot; <span id="brandProv">Gemini AI</span><span id="brandPlan" class="hero-plan"></span></div>
         </div>
         <div class="hdr-ctl">
           <select id="selLang" class="lang-sel" title="Language"></select>

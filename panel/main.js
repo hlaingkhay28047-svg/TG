@@ -5571,7 +5571,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.25.0";
+const PANEL_VERSION = "6.25.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5655,20 +5655,13 @@ const gateS = {
 function gateStale(ticket) { return ticket !== gateS.run; }
 
 function gateEl(id) { try { return document.getElementById(id); } catch (e) { return null; } }
-function gateTxt(id, s) {
-  const el = gateEl(id); if (!el) return;
-  /* v6.25 — button labels ride a span: UXP's widget rendering ignores the
-     color set on the <button> itself on some Photoshop builds, which is how
-     Retry/Sign out shipped as blank dark rectangles. Span text always honors
-     CSS color, on UXP and in a browser alike. */
-  if (el.tagName === "BUTTON") {
-    let sp = el.firstChild;
-    if (!sp || sp.nodeName !== "SPAN") { el.textContent = ""; sp = document.createElement("span"); el.appendChild(sp); }
-    sp.textContent = s || "";
-    return;
-  }
-  el.textContent = s || "";
-}
+/* v6.25.1 — PLAIN textContent, NOTHING ELSE. The 6.25.0 attempt wrapped
+   button labels in a span, and on real Photoshop the whole gate rendered
+   half-empty: UXP's button widget does not reliably accept element children,
+   and one throw mid-gateTexts() left password, Sign in and the language
+   labels unset. Label visibility is handled purely with styles now (see
+   gateApplyWidgetStyles below), so this helper can never take the gate down. */
+function gateTxt(id, s) { const el = gateEl(id); if (el) el.textContent = s || ""; }
 function gateT(k) { try { return t(k); } catch (e) { return k; } }
 function gateErr(s) { gateTxt("gateErr", s); }
 
@@ -6042,7 +6035,30 @@ async function gateOpenSite() {
   gateErr(gateT("gate_open_fail").replace("{U}", GATE_BUY_URL));
 }
 
+/* v6.25.1 — INLINE STYLES, because they are the one layer of the cascade
+   every UXP build honors on its button widgets. The 6.24 screenshots showed
+   the secondary buttons as blank dark rectangles: the box rendered, the
+   stylesheet's multi-class color override did not. Nothing here can throw
+   the gate down — every assignment is guarded, and a style that fails to
+   apply simply leaves the stylesheet's own attempt in place. */
+function gateApplyWidgetStyles() {
+  const paint = function (id, styles) {
+    const el = gateEl(id);
+    if (!el || !el.style) return;
+    for (const key in styles) { try { el.style[key] = styles[key]; } catch (e) { } }
+  };
+  paint("gateSignIn", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
+  paint("gateBuy", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
+  paint("gateRetry", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
+  paint("gateSignOut", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
+  paint("gateEmail", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
+  paint("gatePass", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
+  paint("gatePairCode", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
+  paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
+}
+
 function gateWire() {
+  gateApplyWidgetStyles();
   const on = function (id, fn) {
     const el = gateEl(id);
     if (el && el.addEventListener) el.addEventListener("click", fn);
@@ -6186,9 +6202,14 @@ const LANG_GLOSS = {
   ne: "Nepali", lo: "Lao", km: "Khmer", ja: "Japanese", ko: "Korean"
 };
 function langOptionLabel(l) {
-  const gloss = LANG_GLOSS[l.code];
-  if (!gloss || String(l.native).indexOf(gloss) >= 0) return l.native;
-  return l.native + " · " + gloss;
+  /* ASCII parentheses, not a middle dot: the glyph set UXP's select popup
+     draws with is narrow, and a label must never depend on it. Defensive
+     because a thrown label would empty the whole dropdown. */
+  try {
+    const gloss = LANG_GLOSS[l.code];
+    if (!gloss || String(l.native).indexOf(gloss) >= 0) return l.native;
+    return l.native + " (" + gloss + ")";
+  } catch (e) { return l.native; }
 }
 /* Which full I18N table an extended code reads when its starter pack misses:
    Myanmar ethnic -> Burmese, Tai Lue -> Shan, Lao -> Thai (closest readable),

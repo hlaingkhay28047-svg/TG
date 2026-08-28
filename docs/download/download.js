@@ -144,7 +144,7 @@
     $("#downloadFacts").replaceChildren(
       fact("Account", label(status)),
       fact("License expiry", date(license.expires_at)),
-      fact("Panel version", value(panel.latest_version, "6.25.0")),
+      fact("Panel version", value(panel.latest_version, "6.25.1")),
     );
     $("#requestDownload").hidden = !allowed;
     $("#requestDownload").disabled = !allowed;
@@ -213,7 +213,7 @@
       const delivery = safeDeliveryPath(body.download_url);
       $("#downloadResult").hidden = true;
       $("#issuedState").hidden = false;
-      $("#issuedMessage").textContent = `Version ${value(body.version, "6.25.0")} was authorized. The address is valid only for this short delivery window.`;
+      $("#issuedMessage").textContent = `Version ${value(body.version, "6.25.1")} was authorized. The address is valid only for this short delivery window.`;
       startCountdown(body.expires_at || new Date(Date.now() + 5 * 60000).toISOString());
       const anchor = document.createElement("a");
       anchor.href = delivery;
