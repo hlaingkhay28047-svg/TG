@@ -354,6 +354,9 @@ const server = http.createServer(async (req, res) => {
         missingSecuritySecrets:securitySecretStatus().missing,
         duplicateSecuritySecrets:securitySecretStatus().duplicates,
         tlsReady:database.tlsSecurityReady(),
+        /* Boolean only — whether owner mail (password resets, signup notices)
+           can send at all. Never the host, user or any address. */
+        smtpConfigured:require("./lib/email").smtpConfigured(),
         ready: schema === 4 && unifiedSchema === migration.REQUIRED_APPLICATION_TABLES.length &&
           !!schemaFingerprint && locked === null && hasSecureTokenSecret(auth.SECRET) &&
           securitySecretStatus().ready &&

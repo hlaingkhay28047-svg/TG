@@ -13,7 +13,7 @@
 const crypto = require("crypto");
 const { asService } = require("./db");
 const { withPasswordKdfSlot, signToken, verifyToken, randomToken } = require("./crypto");
-const { sendRecoveryEmail } = require("./email");
+const { sendRecoveryEmail, sendSignupNotice } = require("./email");
 const { createSessionStore, createPgSessionRepository, hashRefreshToken } = require("./session");
 const { evaluateFailedLoginThrottle,evaluateAuthAttemptThrottle,
   evaluateLoginAdmissionThrottle } = require("./login-protection");
@@ -240,6 +240,18 @@ async function ensureUnifiedProfile(client, user, body) {
     [user.id]);
 }
 
+const EMAIL_MASK_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+function notifySignupBestEffort(studentEmail) {
+  /* Fire-and-forget: the account is already created, so a notification
+     failure must neither fail nor slow the signup response. Container stdout
+     is republished by public diagnostics lanes, so no address — the student's,
+     or the owner's echoed back inside an SMTP reply — may reach the log. */
+  sendSignupNotice(studentEmail).catch(error => {
+    const why = String((error && error.message) || error).replace(EMAIL_MASK_RE, "<address withheld>");
+    console.warn("signup notice not sent: " + why);
+  });
+}
+
 async function signup(body, context) {
   const email = String((body && body.email) || "").trim();
   const password = String((body && body.password) || "");
@@ -251,7 +263,7 @@ async function signup(body, context) {
     await reserveAuthAttempt("signup",email,context);
     return kdf.hashPassword(password);
   });
-  return asService(async client => {
+  const outcome = await asService(async client => {
     const existing = await client.query("select id from public.hnk_auth_users where lower(email) = lower($1)", [email]);
     if (existing.rowCount) throw new AuthError(422, "User already registered", "user_already_exists");
     const { rows } = await client.query(
@@ -267,6 +279,11 @@ async function signup(body, context) {
     }));
     return { status: 200, body: envelope };
   });
+  /* Outside the transaction, after the commit: SMTP work must never hold a
+     database connection open, and only a signup that really happened may
+     notify the owner. */
+  notifySignupBestEffort(email);
+  return outcome;
 }
 
 async function tokenPassword(body, context) {

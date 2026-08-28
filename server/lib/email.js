@@ -125,4 +125,26 @@ async function sendRecoveryEmail(to, token) {
     "The link is valid for one hour. If you did not ask for this, ignore this message — nothing has changed.\n");
 }
 
-module.exports = { sendMail, sendRecoveryEmail, recoveryBase, recoveryLink, smtpTlsOptions };
+function smtpConfigured() {
+  return !!(HOST && USER && PASS);
+}
+
+/* Where the owner is told about a new signup. The recipient comes only from
+   the owner's own configuration — SIGNUP_NOTICE_EMAIL, or the address already
+   trusted to name the first administrator — never from the request, so a
+   signup cannot choose where its notification lands. */
+const SIGNUP_NOTICE_TO = String(process.env.SIGNUP_NOTICE_EMAIL || process.env.BOOTSTRAP_ADMIN_EMAIL || "").trim();
+
+async function sendSignupNotice(studentEmail) {
+  if (!SIGNUP_NOTICE_TO) throw new Error("no signup-notice recipient: set BOOTSTRAP_ADMIN_EMAIL or SIGNUP_NOTICE_EMAIL");
+  let adminUrl = "";
+  try { adminUrl = new URL(recoveryBase()).origin + "/admin/"; } catch (_) {}
+  await sendMail(SIGNUP_NOTICE_TO, "HNK Create Studio — new student awaiting approval",
+    "A new student just signed up and is waiting for approval:\n\n" +
+    "    " + String(studentEmail || "") + "\n\n" +
+    (adminUrl
+      ? "Approve or reject from the Control Center:\n\n    " + adminUrl + "\n"
+      : "Approve or reject from the Control Center.\n"));
+}
+
+module.exports = { sendMail, sendRecoveryEmail, sendSignupNotice, smtpConfigured, recoveryBase, recoveryLink, smtpTlsOptions };
