@@ -7,7 +7,11 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'">
   <meta name="robots" content="noindex,nofollow">
   <title>HNK Admin Control Center</title>
-  <link rel="stylesheet" href="admin.css">
+  <!-- Bump both ?v= values on every admin.css/admin.js change. Browsers
+       revalidate this HTML but may keep the assets cached, and a stale
+       admin.js binding against changed markup throws before the boot code
+       runs, wedging the tab on the "Checking admin access" gate. -->
+  <link rel="stylesheet" href="admin.css?v=20260828">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to admin content</a>
@@ -157,6 +161,6 @@
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js" defer></script>
+  <script src="admin.js?v=20260828" defer></script>
 </body>
 </html>
