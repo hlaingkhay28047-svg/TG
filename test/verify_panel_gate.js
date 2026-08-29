@@ -34,6 +34,8 @@ report("A3) every protected provider image call begins with live lease validatio
 report("A4) pairing input and all gate controls exist",
   ["gateEmail", "gatePass", "gatePairCode", "gateSignIn", "gateRetry", "gateSignOut"]
     .every(id => indexHtml.includes(`id="${id}"`)), {});
+report("A6) the whole gate card ships visible — no per-state hidden groups (v6.26.1)",
+  !/gate-hide/.test(indexHtml) && !/gate-hide/.test(mainJs), {});
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml",
@@ -150,7 +152,10 @@ async function run(browser, cfg) {
     view: typeof gateS === "undefined" ? "missing" : gateS.view,
     hidden: getComputedStyle(document.getElementById("hnkGate")).display === "none",
     app: getComputedStyle(document.getElementById("app")).display,
+    loginRow: getComputedStyle(document.getElementById("gateLogin")).display !== "none",
+    lockedRow: getComputedStyle(document.getElementById("gateLocked")).display !== "none",
     error: (document.getElementById("gateErr").textContent || "").trim(),
+    lockedMsg: (document.getElementById("gateLockedMsg").textContent || "").trim(),
     password: document.getElementById("gatePass").value,
     validateCalls: window.__validateCalls,
     requests: window.__reqs
@@ -168,6 +173,8 @@ async function run(browser, cfg) {
   allErrors.push(...result.errors);
   report("B) no saved session shows login and keeps the app out of the focus tree",
     result.state.view === "login" && !result.state.hidden && result.state.app === "none", result.state);
+  report("B2) the signed-out card shows every control at once with a quiet locked message",
+    result.state.loginRow && result.state.lockedRow && result.state.lockedMsg === "", result.state);
   await result.page.close();
 
   result = await run(browser, { settings: saved });
@@ -181,6 +188,8 @@ async function run(browser, cfg) {
   allErrors.push(...result.errors);
   report("D) suspended/disabled/expired server verdict stays locked",
     result.state.view === "locked" && !result.state.hidden && result.state.app === "none", result.state);
+  report("D2) the denied card keeps sign-in visible and explains the lock",
+    result.state.loginRow && result.state.lockedRow && result.state.lockedMsg !== "", result.state);
   await result.page.close();
 
   result = await run(browser, { settings: saved, enrollStatus: 409 });
