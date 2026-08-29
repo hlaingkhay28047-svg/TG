@@ -19,18 +19,17 @@
 (function () {
 "use strict";
 
-/* face-centred square thumbs (icons/thumbs/) — the wide banners beheaded
-   subjects when cover-cropped into the 48px square (user report) */
-var HNK_SQ_THUMBS = {
-  "icons/banners/create.jpg": 1, "icons/banners/studio.jpg": 1,
-  "icons/banners/setup.jpg": 1, "icons/banners/aitools.jpg": 1,
-  "icons/banners/retouch.jpg": 1, "icons/banners/reference-transfer.jpg": 1,
-  "icons/banners/master-bgfg-replace.jpg": 1, "icons/hero-banner.jpg": 1,
-  "assets/user_library_ui/user-ref-085.jpg": 1, "assets/user_library_ui/user-ref-087.jpg": 1
-};
-function hnkThumbSrc(v) {
-  if (v && HNK_SQ_THUMBS[v]) return "icons/thumbs/" + v.split("/").pop();
-  return v;
+/* v6.27.0 — webapp-parity art cards (same treatment as the home screen):
+   each workflow shows its own bundled catalog card whole, as an <img> at
+   its intrinsic 3:2 — the repo's proven UXP-safe image fit. */
+function hnkArtCard(doc, visual) {
+  if (!visual) return null;
+  var art = doc.createElement("div");
+  art.className = "hnk-cardart";
+  var im = doc.createElement("img");
+  im.src = visual; im.alt = "";
+  art.appendChild(im);
+  return art;
 }
 
 
@@ -62,14 +61,10 @@ function create(deps) {
     }
     var listEl = dom.el(doc, "div", { class: "hnk-wf-list" });
     registry.list().forEach(function (wf) {
-      var thumb = null;
-      if (wf.visual) {
-        thumb = dom.el(doc, "div", { class: "hnk-thumb" });
-        thumb.style.backgroundImage = 'url("' + hnkThumbSrc(wf.visual) + '")';
-      }
+      var art = hnkArtCard(doc, wf.visual);
       var m = modelRegistry.getModel(wf.route.modelId);
-      var b = dom.el(doc, "button", { class: "hnk-action" + (wf.visual ? " has-thumb" : ""), id: "hnkWf_" + wf.id }, [
-        thumb,
+      var b = dom.el(doc, "button", { class: "hnk-action" + (art ? " art-card" : ""), id: "hnkWf_" + wf.id }, [
+        art,
         dom.el(doc, "div", { class: "hnk-action-txt" }, [
           dom.el(doc, "div", { class: "hnk-action-label", text: wf.title }),
           dom.el(doc, "div", { class: "hnk-action-sub",

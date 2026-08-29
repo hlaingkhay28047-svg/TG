@@ -154,7 +154,14 @@ eligible students.
   and busy dimming. Artifact `HNK_Ai_Panel_v6.26.1.ccx`, SHA-256
   `71785a0b45e52b3d96fe8a5792a251770970bb83365de7f285173f0909ce14e2`,
   523,600 bytes.
-- **v6.26.2** — `pending`. v6.26.1 plus web-app UI/UX parity for the member
+- **v6.26.2** — superseded by v6.27.0 before acceptance completed. During a
+  browser render of the tracked panel source for fresh website screenshots,
+  the AI Tools tab failed to start with `applyDefaultsTo is not defined`:
+  the v6.26.0 OpenAI removal deleted the provider-neutral
+  `applyDefaultsTo` helper beside the removed key block while
+  settings-service's return object (and the AI Tools bootstrap) still
+  referenced it, so `create()` threw and the AI Tools tab was broken in
+  6.26.0 through 6.26.2. Was: v6.26.1 plus web-app UI/UX parity for the member
   identity (owner request): the gate's HNK square shows the member's own
   profile photo — fetched from their profiles row after session refresh,
   bounded exactly like the web app (jpeg/png/webp data URL ≤ 96 KB),
@@ -170,4 +177,39 @@ eligible students.
   one; HNK mark for one that does not; photo gone after sign-out).
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
-  524,577 bytes. The release stays disabled until that acceptance.
+  524,577 bytes.
+- **v6.27.0** — `pending`. The owner's inside-and-out audit wave (a v6.26.3
+  carrying only the applyDefaultsTo fix was built but never published;
+  its scope is folded in here):
+  * `applyDefaultsTo` restored verbatim in settings-service — the v6.26.0
+    OpenAI removal deleted it while the return object and the AI Tools
+    bootstrap still referenced it, so the AI Tools tab threw at start in
+    6.26.0–6.26.2.
+  * Workflow card art now SHIPS in the CCX: `icons/cards/<id>.jpg`, one per
+    registry workflow, re-encoded from the web app's own public cards5
+    catalog (docs/app/lib/wf/cards5 — in-house art, no third-party
+    provenance), plus the screen banners and gate hero from the same
+    catalog. Every shipped release before this one rendered the workflow
+    list and screen banners imageless in real Photoshop.
+  * Home and Workflow Tools lists redrawn to web-app parity: each workflow
+    shows its full catalog card at intrinsic 3:2 (UXP-safe `<img>`), text
+    beneath — the same card language the web app uses.
+  * Library preset select fixed: the full plates never shipped in the CCX,
+    and unlike the card thumbs (fixed v6.25) the select path still read
+    the plugin folder and threw — every preset tap silently failed. It now
+    fetches the plate from the licensed web host the manifest already
+    allows, with the plugin-folder read kept as the dev-tree fallback.
+  * Text / Logo workflow re-routed from gpt-image-2 — whose RunningHub
+    endpoint is an intentionally-empty placeholder, so the workflow could
+    never generate — to the confirmed nano-banana-2 edit deployment its
+    sibling workflows use. Deployment audit: every panel apiPath
+    (rhart-* and platform paths alike) verified present in the web app's
+    client; none invented.
+  Real-Photoshop acceptance MUST cover the full v6.26.2 checklist above,
+  with special weight on: the AI Tools tab opening to the workflow home
+  WITH card art visible, an AI Tools generate, a library preset tap
+  landing in Reference 2, and a Text / Logo generate.
+  Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
+  `e5c47ce4111673fdc64b2c8e97d945ab2ec9f17f7970b7e7e9bbd7d31719811e`,
+  1,425,484 bytes (the bundled card art accounts for the growth over
+  6.26.2's 524,577). The release stays disabled until that acceptance.

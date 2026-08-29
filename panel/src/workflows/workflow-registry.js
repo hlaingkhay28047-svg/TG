@@ -60,7 +60,7 @@ function _lockLine() { return "Subject lock: " + SUBJECT_LOCKS.join("; ") + ".";
 var WORKFLOWS = [
   {
     id: "bg-replace", title: "BG Replace", home: true,
-    visual: "icons/banners/studio.jpg",
+    visual: "icons/cards/bg-replace.jpg",
     summary: "Replace the background",
     explanation: "Replaces the background behind your subject. Your person, pose and edges stay exactly the same — the subject is relit naturally so it truly belongs in the new scene.",
     humanSubject: true, referenceTransfer: false,
@@ -72,7 +72,7 @@ var WORKFLOWS = [
   },
   {
     id: "reference-transfer", title: "Reference Transfer", home: true,
-    visual: "icons/banners/reference-transfer.jpg",
+    visual: "icons/cards/reference-transfer.jpg",
     summary: "Put your subject into a reference scene",
     explanation: "Takes a reference photo's whole scene (but NOT the people in it) and places YOUR subject into it — keeping your subject's identity, pose and framing, and matching the scene's light and perspective.",
     humanSubject: true, referenceTransfer: true,
@@ -86,7 +86,7 @@ var WORKFLOWS = [
   },
   {
     id: "master-bgfg-replace", title: "Master BG FG Replace", home: true,
-    visual: "icons/banners/master-bgfg-replace.jpg",
+    visual: "icons/cards/master-bgfg-replace.jpg",
     summary: "Remove the scene's person, rebuild bg/fg, insert your subject",
     explanation: "The strictest subject-in-scene replacement: completely removes the person from your reference scene, naturally reconstructs the hidden background and foreground, then places your exact subject into that spot — identity, pose, proportions, hairstyle, outfit, skin and lighting locked from your photo, while the reference supplies only the scene, camera and depth.",
     humanSubject: true, referenceTransfer: true,
@@ -102,7 +102,7 @@ var WORKFLOWS = [
   },
   {
     id: "subject-face", title: "Subject / Face", home: true,
-    visual: "icons/hero-banner.jpg",
+    visual: "icons/cards/subject-face.jpg",
     summary: "Transfer a subject or face onto a base",
     explanation: "Blends a referenced subject or face onto your base image seamlessly, keeping the base composition intact.",
     humanSubject: true, referenceTransfer: false,
@@ -118,7 +118,7 @@ var WORKFLOWS = [
   },
   {
     id: "retouch", title: "AI Retouch", home: true,
-    visual: "icons/banners/retouch.jpg",
+    visual: "icons/cards/retouch.jpg",
     summary: "Natural portrait enhancement",
     explanation: "Gives a natural retouch to skin, hair and tone. Your identity, features and expression are kept — no plastic skin, no face change.",
     humanSubject: true, referenceTransfer: false,
@@ -129,7 +129,7 @@ var WORKFLOWS = [
   },
   {
     id: "upscale", title: "AI Upscale", home: true,
-    visual: "assets/user_library_ui/user-ref-085.jpg",
+    visual: "icons/cards/upscale.jpg",
     summary: "Detail-preserving upscale",
     explanation: "Upscales your image while restoring fine natural detail in skin, hair and fabric. Identity, pose, composition and colors stay exactly the same — no plastic smoothing.",
     humanSubject: true, referenceTransfer: false,
@@ -140,7 +140,7 @@ var WORKFLOWS = [
   },
   {
     id: "object-edit", title: "Object Edit", home: true,
-    visual: "icons/banners/setup.jpg",
+    visual: "icons/cards/object-edit.jpg",
     summary: "Remove, replace or add objects",
     explanation: "Removes, replaces or adds objects using a controlled local edit. Everything you don't touch stays the same.",
     humanSubject: false, referenceTransfer: false,
@@ -152,7 +152,7 @@ var WORKFLOWS = [
   },
   {
     id: "water-edit", title: "Water Edit", home: false,
-    visual: "icons/banners/aitools.jpg",
+    visual: "icons/cards/water-edit.jpg",
     summary: "Water and reflection edits",
     explanation: "Adds or edits water, reflections and wet surfaces so they look physically natural, keeping your subject intact.",
     humanSubject: false, referenceTransfer: false,
@@ -163,7 +163,7 @@ var WORKFLOWS = [
   },
   {
     id: "text-logo", title: "Text / Logo", home: false,
-    visual: "assets/user_library_ui/user-ref-087.jpg",
+    visual: "icons/cards/text-logo.jpg",
     summary: "Add or edit text and logos",
     explanation: "Adds or edits clean, legible text or a logo on the image while keeping the composition.",
     humanSubject: false, referenceTransfer: false,
@@ -171,7 +171,11 @@ var WORKFLOWS = [
     optionalInputs: [{ key: "logo", label: "Logo Reference (optional)", role: "text" }],
     negative: "illegible text, warped or garbled lettering, misspelled words, garish or cartoonish font, wrong font substitution, redesigned or restyled logo mark, incorrect logo proportions or colours, text or logo covering the face, unwanted extra logos, unwanted extra text, watermark-style repeated text, mismatched perspective or scale, floating or misaligned typography, changed pose, changed identity, changed clothing, altered composition",
     hiddenPrompt: "Add or edit the requested text/logo. If a reference graphic is supplied, reproduce its exact lettering, shapes, font style, proportions and colours faithfully \u2014 do not redesign, restyle or substitute a different font or mark. Render clean, crisp, fully legible typography at correct perspective and scale for its placement surface, with natural shadow/highlight integration so it reads as part of the photo. Place it tastefully at a balanced size that never covers or overlaps the subject's face. Keep the rest of the composition, subject and identity unchanged. COMPOSITION LOCK: do not re-pose, re-angle the camera, zoom, recrop or reinterpret the shot in any way \u2014 the subject's exact position, scale and pose within the frame must match the source photo pixel-for-pixel wherever this task does not explicitly require a change.",
-    route: { modelId: "gpt-image-2", auto: true }
+    /* v6.27.0 \u2014 was gpt-image-2, whose RunningHub endpoint is still an
+       intentionally-empty placeholder in runninghub-config, so this
+       workflow could never generate. Routed to the same confirmed edit
+       deployment the sibling identity-edit workflows run on. */
+    route: { modelId: "nano-banana-2", auto: true }
   }
 ];
 

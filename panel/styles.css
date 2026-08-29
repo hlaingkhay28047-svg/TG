@@ -764,12 +764,14 @@ input[type="range"] { min-width: 0; }
    Signature-artwork thumbs on every workflow card + a wide hero and meaning
    chips on the selected workflow. UXP-SAFE: inline backgroundImage +
    background-size (the repo's proven pattern) — no object-fit. */
-.hnk-action.has-thumb { display: flex; flex-direction: row; align-items: center; text-align: left; }
-.hnk-thumb {
-  flex: none; width: 48px; height: 48px; margin-right: 10px;
-  border: 1px solid rgba(217, 164, 65, 0.6); border-radius: 10px;
-  background-color: #0b0d14; background-size: cover; background-position: center; background-repeat: no-repeat;
-}
+/* v6.27.0 — webapp-parity art cards: the 48px square thumb rows became the
+   web app's own card language. The bundled catalog card renders whole as an
+   <img> at its intrinsic 3:2 (UXP-safe — no object-fit, no aspect-ratio),
+   with the text block beneath and the familiar gold hover on the frame. */
+.hnk-action.art-card { display: block; padding: 0; overflow: hidden; text-align: left; }
+.hnk-cardart { background-color: #0b0d14; }
+.hnk-cardart img { width: 100%; height: auto; display: block; }
+.hnk-action.art-card .hnk-action-txt { padding: 10px 12px 12px; }
 .hnk-action-txt { flex: 1; min-width: 0; }
 .hnk-action-meta { margin-top: 2px; font-size: 8.5px; font-weight: 700; color: var(--accent-soft); }
 .hnk-wf-hero {
