@@ -156,10 +156,19 @@ const NEW = Object.keys(SCRIPTS);
      themselves were deleted with the dead payment flow, not translated. What
      remains registered is acc_pending alone, for the three packs that still
      lack a reader. */
+  /* v5.48.0 adds the profile-photo and welcome strings the same honest way:
+     15 packs got real translations; the three Tai packs without a reader are
+     registered here, and LANG_FB keeps showing them real Shan (A2 proves it).
+     kht stays registered rather than machine-derived for the same reason
+     acc_pending is: the shn->kht per-character map was not run over these
+     pairs, and a hand-guessed Khamti string is the invention this registry
+     exists to refuse. */
+  const AVATAR_KEYS = ["ava_change", "ava_remove", "ava_saved", "ava_removed",
+                       "ava_fail", "aw_sub", "aw_back"];
   const PENDING = {
-    tdd: ["acc_pending"],
-    khb: ["acc_pending"],
-    kht: ["acc_pending"],
+    tdd: ["acc_pending", ...AVATAR_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

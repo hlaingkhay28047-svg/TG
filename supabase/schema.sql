@@ -279,6 +279,18 @@ alter table public.profiles add column if not exists price_3m_override integer;
 alter table public.profiles add column if not exists price_6m_override integer;
 alter table public.profiles add column if not exists price_join_first_override integer;
 
+-- v5.48.0 -- the account's own profile photo, stored inline as a data URL the
+-- app has already downscaled to 256px JPEG. The check bounds what ANY writer
+-- may leave behind: a small base64 image data URL or nothing.
+alter table public.profiles add column if not exists avatar text;
+alter table public.profiles drop constraint if exists profiles_avatar_chk;
+alter table public.profiles add constraint profiles_avatar_chk
+  check (avatar is null
+         or (char_length(avatar) <= 98304
+             and (avatar like 'data:image/jpeg;base64,%'
+                  or avatar like 'data:image/png;base64,%'
+                  or avatar like 'data:image/webp;base64,%')));
+
 -- BACKFILL, and it is not optional. joined_paid defaults to false, so without
 -- this every customer who has already paid would be quoted the joining fee
 -- again the moment this release lands. An account that has ever had a plan has
