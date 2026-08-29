@@ -215,6 +215,6 @@ eligible students.
   WITH card art visible, an AI Tools generate, a library preset tap
   landing in Reference 2, and a Text / Logo generate.
   Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
-  `362bda482c586eb789cbda80d5c0742cfd765859d27a8dbb43dde7705f243ccc`,
-  1,424,806 bytes (the bundled card art accounts for the growth over
+  `6d14f22910a6e2f358752739432d8c905cdf915b6f51a560b1ffd1f16acfcf87`,
+  1,425,197 bytes (the bundled card art accounts for the growth over
   6.26.2's 524,577). The release stays disabled until that acceptance.

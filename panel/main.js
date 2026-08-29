@@ -10897,6 +10897,14 @@ function switchPage(key) {
   if (pg) pg.scrollTop = 0;
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }
   if (key === "create") { try { refreshCreateCompare(); } catch (e) { } }
+  /* v6.27.0 — the bottom Home tab always returns to the cards home, like
+     the web app; the AI Tools stack's own "Home" pill left with this. */
+  if (key === "aitools") {
+    try {
+      const aiApp = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.aiToolsApp : null;
+      if (aiApp && aiApp.current && aiApp.current() !== "home") aiApp.navigate("home");
+    } catch (e) { }
+  }
   if (key === "presets") { try { renderLightStage(); } catch (e) { } }
   if (key === "setup") {
     try {

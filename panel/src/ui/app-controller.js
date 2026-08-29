@@ -35,13 +35,19 @@ function create(deps) {
   var current = "home";
   var free = null, workflow = null;
 
+  /* v6.27.0 — web-app parity (owner report: the localized pill row over the
+     English tab bar read as two stacked navigations saying nothing). The web
+     app's in-page section pills are short ENGLISH words in every locale
+     (Freeform · Studio · Retouch · Path), and none of them repeats a bottom
+     tab: so these pills drop the "Home" duplicate (the bottom Home tab now
+     returns to the cards home from anywhere) and take fixed web-app words —
+     Freeform · Workflows · History · Settings — one row, one language. */
   function navContainer(activeScreen) {
     var nav = dom.el(doc, "div", { class: "hnk-nav", id: "hnkNav" });
-    [["home", "ai_nav_home", "Home"], ["free-generate", "ai_free_generate", "Free Generate"],
-     ["workflow-tools", "ai_nav_tools", "Tools"], ["history", "ai_history", "History"],
-     ["settings", "ai_settings", "Settings"]].forEach(function (pair) {
+    [["free-generate", "Freeform"], ["workflow-tools", "Workflows"],
+     ["history", "History"], ["settings", "Settings"]].forEach(function (pair) {
       var isActive = pair[0] === activeScreen;
-      var b = dom.el(doc, "button", { class: "hnk-nav-btn" + (isActive ? " active" : ""), id: "hnkNav_" + pair[0], text: dom.t(pair[1], pair[2]) });
+      var b = dom.el(doc, "button", { class: "hnk-nav-btn" + (isActive ? " active" : ""), id: "hnkNav_" + pair[0], text: pair[1] });
       if (isActive) b.setAttribute("aria-current", "page");
       dom.on(b, "click", function () { navigate(pair[0]); });
       nav.appendChild(b);
