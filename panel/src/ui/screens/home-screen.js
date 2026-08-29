@@ -11,20 +11,20 @@
 (function () {
 "use strict";
 
-/* face-centred square thumbs (icons/thumbs/) — the wide banners beheaded
-   subjects when cover-cropped into the 48px square (user report) */
-var HNK_SQ_THUMBS = {
-  "icons/banners/create.jpg": 1, "icons/banners/studio.jpg": 1,
-  "icons/banners/setup.jpg": 1, "icons/banners/aitools.jpg": 1,
-  "icons/banners/retouch.jpg": 1, "icons/banners/reference-transfer.jpg": 1,
-  "icons/banners/master-bgfg-replace.jpg": 1, "icons/hero-banner.jpg": 1,
-  "assets/user_library_ui/user-ref-085.jpg": 1, "assets/user_library_ui/user-ref-087.jpg": 1
-};
-function hnkThumbSrc(v) {
-  if (v && HNK_SQ_THUMBS[v]) return "icons/thumbs/" + v.split("/").pop();
-  return v;
+/* v6.27.0 — webapp-parity art cards. Every workflow's visual is now the
+   SAME catalog card the web app shows for it (icons/cards/<id>.jpg, bundled
+   in the CCX), rendered whole as an <img> at its intrinsic 3:2 — the
+   repo's proven UXP-safe image fit — so the 48px square-thumb path (and its
+   beheading crops) is gone from this screen. */
+function hnkArtCard(doc, visual) {
+  if (!visual) return null;
+  var art = doc.createElement("div");
+  art.className = "hnk-cardart";
+  var im = doc.createElement("img");
+  im.src = visual; im.alt = "";
+  art.appendChild(im);
+  return art;
 }
-
 
 var _CJS = (typeof module !== "undefined" && module.exports);
 var dom = _CJS ? require("../dom") : globalThis.HNK.dom;
@@ -39,7 +39,7 @@ function render(root, deps) {
 
   var actions = [];
   // Free Generate is always first (spec §3)
-  actions.push({ id: "free", label: dom.t("ai_free_generate", "Free Generate"), sub: dom.t("ai_free_sub", "Write your own prompt"), nav: "free-generate", visual: "icons/banners/create.jpg" });
+  actions.push({ id: "free", label: dom.t("ai_free_generate", "Free Generate"), sub: dom.t("ai_free_sub", "Write your own prompt"), nav: "free-generate", visual: "icons/cards/free-generate.jpg" });
 
   // Home workflows come from the registry (no hardcoded UI list)
   var homeWfs = workflowRegistry.homeList();
@@ -52,15 +52,9 @@ function render(root, deps) {
 
   var list = dom.el(doc, "div", { class: "hnk-h-actions" });
   actions.forEach(function (a) {
-    /* signature-visual thumb (style.backgroundImage — the repo's proven
-       UXP-safe image-fit) + text column */
-    var thumb = null;
-    if (a.visual) {
-      thumb = dom.el(doc, "div", { class: "hnk-thumb" });
-      thumb.style.backgroundImage = 'url("' + hnkThumbSrc(a.visual) + '")';
-    }
-    var card = dom.el(doc, "button", { class: "hnk-action" + (a.visual ? " has-thumb" : ""), id: "hnkAction_" + a.id }, [
-      thumb,
+    var art = hnkArtCard(doc, a.visual);
+    var card = dom.el(doc, "button", { class: "hnk-action" + (art ? " art-card" : ""), id: "hnkAction_" + a.id }, [
+      art,
       dom.el(doc, "div", { class: "hnk-action-txt" }, [
         dom.el(doc, "div", { class: "hnk-action-label", text: a.label }),
         a.sub ? dom.el(doc, "div", { class: "hnk-action-sub", text: a.sub }) : null

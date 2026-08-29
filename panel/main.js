@@ -681,7 +681,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 one continuous pro workflow",
     pgb_create: "From idea to artwork \u2014 4 reference slots \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "One-tap professional \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "One-tap professional \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "Skin \u00b7 Face \u00b7 Body \u2014 professional sliders",
     wf_sum_bg_replace: "Replace the background",
     wf_sum_reference_transfer: "Put your subject into a reference scene",
@@ -1281,7 +1281,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 \u1015\u101b\u102d\u102f\u1021\u101c\u102f\u1015\u103a\u1005\u1009\u103a \u1010\u1005\u103a\u1006\u1000\u103a\u1010\u100a\u103a\u1038",
     pgb_create: "\u1005\u102d\u1010\u103a\u1000\u1030\u1038\u1019\u103e \u1021\u1014\u102f\u1015\u100a\u102c\u1006\u102e \u2014 Reference 4 \u1000\u103d\u1000\u103a \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "\u1010\u1005\u103a\u1001\u103b\u1000\u103a\u1014\u103e\u102d\u1015\u103a Professional \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "\u1010\u1005\u103a\u1001\u103b\u1000\u103a\u1014\u103e\u102d\u1015\u103a Professional \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "\u1021\u101e\u102c\u1038\u1021\u101b\u1031 \u00b7 \u1019\u103b\u1000\u103a\u1014\u103e\u102c \u00b7 \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a \u2014 Professional Sliders",
     wf_sum_bg_replace: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1000\u102d\u102f \u1021\u1005\u102c\u1038\u1011\u102d\u102f\u1038",
     wf_sum_reference_transfer: "\u101e\u1004\u1037\u103a\u1015\u102f\u1036\u1011\u1032\u1000 \u101c\u1030\u1000\u102d\u102f reference scene \u1011\u1032 \u1011\u100a\u1037\u103a",
@@ -1881,7 +1881,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 \u1076\u1075\u103a\u1089\u1075\u1062\u107c\u103a\u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089 \u101e\u102d\u102f\u1015\u103a\u1087\u1075\u107c\u103a",
     pgb_create: "\u1010\u102e\u1088\u107c\u1082\u103a\u1038\u1078\u1082\u103a \u1011\u102d\u102f\u1004\u103a\u1081\u1062\u1004\u103a\u1088\u101c\u102e \u2014 Reference 4 \u101e\u103d\u1004\u103a\u1089 \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "\u107c\u1035\u1075\u103a\u1038\u1015\u103d\u1075\u103a\u1088\u101c\u1035\u101d\u103a \u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089 \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "\u107c\u1035\u1075\u103a\u1038\u1015\u103d\u1075\u103a\u1088\u101c\u1035\u101d\u103a \u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089 \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "\u107d\u102d\u101d\u103a\u107c\u1004\u103a \u00b7 \u107c\u1083\u1088\u1010\u1083 \u00b7 \u1010\u1030\u101d\u103a\u1076\u102d\u1004\u103a\u1038 \u2014 Professional Sliders",
     wf_sum_bg_replace: "\u101c\u1085\u1075\u103a\u1088\u107d\u1062\u1086\u1087\u101c\u1004\u103a",
     wf_sum_reference_transfer: "\u101e\u1082\u103a\u1087\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 \u1076\u101d\u103a\u1088\u107c\u1082\u103a\u1038 scene reference",
@@ -2481,7 +2481,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 atsawm bungli lam langai matut",
     pgb_create: "Myit kaw na sumla tsawm de \u2014 Reference 4 slot \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "Kalang dip sha atsawm \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "Kalang dip sha atsawm \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "Hpyi \u00b7 Myi man \u00b7 Hkum \u2014 Professional Sliders",
     wf_sum_bg_replace: "Hpang maga galai",
     wf_sum_reference_transfer: "Na a masha hpe reference scene kaw bang",
@@ -3081,7 +3081,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 \u0e40\u0e27\u0e34\u0e23\u0e4c\u0e01\u0e42\u0e1f\u0e25\u0e27\u0e4c\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e\u0e15\u0e48\u0e2d\u0e40\u0e19\u0e37\u0e48\u0e2d\u0e07",
     pgb_create: "\u0e08\u0e32\u0e01\u0e44\u0e2d\u0e40\u0e14\u0e35\u0e22\u0e2a\u0e39\u0e48\u0e1c\u0e25\u0e07\u0e32\u0e19 \u2014 4 \u0e0a\u0e48\u0e2d\u0e07 reference \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "\u0e41\u0e15\u0e30\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "\u0e41\u0e15\u0e30\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "\u0e1c\u0e34\u0e27 \u00b7 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u00b7 \u0e23\u0e39\u0e1b\u0e23\u0e48\u0e32\u0e07 \u2014 \u0e2a\u0e44\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e",
     wf_sum_bg_replace: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
     wf_sum_reference_transfer: "\u0e22\u0e49\u0e32\u0e22\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e02\u0e49\u0e32\u0e44\u0e1b\u0e43\u0e19\u0e09\u0e32\u0e01 reference",
@@ -3681,7 +3681,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 \u4e00\u6c14\u5475\u6210\u7684\u4e13\u4e1a\u6d41\u7a0b",
     pgb_create: "\u4ece\u7075\u611f\u5230\u4f5c\u54c1 \u2014 4 \u4e2a reference \u69fd\u4f4d \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "\u4e00\u952e\u4e13\u4e1a\u51fa\u56fe \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "\u4e00\u952e\u4e13\u4e1a\u51fa\u56fe \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "\u808c\u80a4 \u00b7 \u9762\u90e8 \u00b7 \u4f53\u578b \u2014 \u4e13\u4e1a\u6ed1\u6746",
     wf_sum_bg_replace: "\u66ff\u6362\u80cc\u666f",
     wf_sum_reference_transfer: "\u628a\u4f60\u7684\u4e3b\u4f53\u653e\u8fdb reference \u573a\u666f",
@@ -4281,7 +4281,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 quy tr\u00ecnh pro li\u1ec1n m\u1ea1ch",
     pgb_create: "T\u1eeb \u00fd t\u01b0\u1edfng \u0111\u1ebfn t\u00e1c ph\u1ea9m \u2014 4 \u00f4 reference \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "M\u1ed9t ch\u1ea1m chuy\u00ean nghi\u1ec7p \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "M\u1ed9t ch\u1ea1m chuy\u00ean nghi\u1ec7p \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "Da \u00b7 Khu\u00f4n m\u1eb7t \u00b7 V\u00f3c d\u00e1ng \u2014 sliders chuy\u00ean nghi\u1ec7p",
     wf_sum_bg_replace: "Thay n\u1ec1n",
     wf_sum_reference_transfer: "\u0110\u01b0a ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n v\u00e0o c\u1ea3nh reference",
@@ -4881,7 +4881,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 alur kerja pro tanpa putus",
     pgb_create: "Dari ide jadi karya \u2014 4 slot reference \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "Sekali ketuk profesional \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "Sekali ketuk profesional \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "Kulit \u00b7 Wajah \u00b7 Tubuh \u2014 slider profesional",
     wf_sum_bg_replace: "Ganti latar",
     wf_sum_reference_transfer: "Masukkan subjek Anda ke adegan reference",
@@ -5481,7 +5481,7 @@ const I18N = {
     pgb_studio: "Prompt \u2192 Reference \u2192 Generate \u2014 aliran kerja pro berterusan",
     pgb_create: "Dari idea ke karya \u2014 4 slot reference \u00b7 Variations",
     pgb_presets: "Visual Library 366 \u00b7 Scenes \u00b7 Wedding \u00b7 Style Chains",
-    pgb_aitools: "Satu ketikan profesional \u2014 Nano Banana \u00b7 GPT Image \u00b7 RunningHub",
+    pgb_aitools: "Satu ketikan profesional \u2014 Nano Banana \u00b7 RunningHub",
     pgb_retouch: "Kulit \u00b7 Wajah \u00b7 Tubuh \u2014 slider profesional",
     wf_sum_bg_replace: "Ganti latar",
     wf_sum_reference_transfer: "Letak subjek anda ke dalam adegan reference",
@@ -5522,7 +5522,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.26.3";
+const PANEL_VERSION = "6.27.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5669,7 +5669,7 @@ function gateForget() {
   gatePaintPlan();
   state.accRefresh = ""; state.accUid = ""; state.accEmail = "";
   state.accProfile = null; state.accSeenAt = 0;
-  state.accAvatar = "";           /* v6.26.3 — the photo leaves with the session */
+  state.accAvatar = "";           /* v6.27.0 — the photo leaves with the session */
   saveSettings();
   try { gatePaintAvatar(); } catch (e) { }
 }
@@ -5810,7 +5810,7 @@ function gateUnlock() {
   gateS.view = "open";
   gatePaintPlan();
 }
-/* v6.26.3 — UI/UX parity with the web app's account circle: the member's
+/* v6.27.0 — UI/UX parity with the web app's account circle: the member's
    profile photo (saved on the website, 256px square center-crop, bounded by
    profiles_avatar_chk) fills the gate's identity square; the HNK mark stays
    the fallback. The panel only DISPLAYS it — changing the photo lives in
@@ -5974,7 +5974,7 @@ async function gateCheck() {
     gateErr(rf === "dead" ? gateT("gate_bad") : "License service is unavailable");
     return;
   }
-  /* v6.26.3 — the profile photo rides alongside the device/entitlement
+  /* v6.27.0 — the profile photo rides alongside the device/entitlement
      round-trip: fire-and-forget, so a slow or missing profiles row can
      never delay or fail the authorization path. */
   gateAvatarRefresh();
@@ -6130,7 +6130,7 @@ async function gateBoot() {
                      email: state.accEmail || "" };
     }
     gateWire();
-    gatePaintAvatar();   /* v6.26.3 — the cached photo greets before any network */
+    gatePaintAvatar();   /* v6.27.0 — the cached photo greets before any network */
     gateShow(gateS.sess ? "checking" : "login");
     await gateCheck();
     if (!gateS.timer && typeof setInterval === "function") {
@@ -6466,8 +6466,27 @@ async function refCaptureEntry(f) {
    (assets/user_library/…), so it is read from the plugin folder and assigned to
    the reference-2 slot like any other reference capture. */
 async function userLibraryCapture(relPath) {
+  /* v6.27.0 — selecting a library preset was broken in every shipped CCX:
+     the full plates live under assets/user_library/…, which has never been
+     inside the archive (the cards fixed this for THUMBS in v6.25 by reading
+     the licensed web host; the select path kept reading the plugin folder
+     and threw). Read the plate from the same licensed host the manifest
+     already allows, exactly like the cards do; the plugin-folder read stays
+     as the dev-tree fallback. */
+  const rel = String(relPath || "");
+  const m = rel.match(/^assets\/user_library(_ui|_thumb)?\/(.+)$/);
+  if (m) {
+    try {
+      const r = await fetch("https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/lib/" +
+        (m[1] ? "ui" : "full") + "/" + m[2]);
+      if (r && r.ok) {
+        const rbuf = await r.arrayBuffer();
+        if (rbuf && rbuf.byteLength) return { b64: bufToB64(rbuf), mime: "image/jpeg", label: m[2] };
+      }
+    } catch (e) { hwarn("userlib remote:", e); }
+  }
   let entry = await fsp.getPluginFolder();
-  const parts = String(relPath || "").split("/");
+  const parts = rel.split("/");
   for (let i = 0; i < parts.length; i++) {
     if (parts[i]) entry = await entry.getEntry(parts[i]);
   }
@@ -6994,7 +7013,7 @@ async function loadSettings() {
       if (o.accProfile && typeof o.accProfile === "object") state.accProfile = o.accProfile;
       if (typeof o.accSeenAt === "number" && isFinite(o.accSeenAt)) state.accSeenAt = o.accSeenAt;
       if (typeof o.accDevId === "string") state.accDevId = o.accDevId;
-      /* v6.26.3 — the cached profile photo: re-bounded on load because the
+      /* v6.27.0 — the cached profile photo: re-bounded on load because the
          settings file is user-editable disk, not a trusted store. */
       if (typeof o.accAvatar === "string" && gateAvaOk(o.accAvatar)) state.accAvatar = o.accAvatar;
       if (typeof o.lang === "string" && LANG_CODES.indexOf(o.lang) >= 0) state.lang = o.lang;
