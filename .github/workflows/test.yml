@@ -92,6 +92,12 @@ jobs:
       - name: Verify the splash and work-in-progress contract
         run: node test/verify_splash_wip.js
 
+      # landing glam: the social dock mirrors the contact row's real links,
+      # the ghost wordmark stays decoration, and the Latin-only kick stagger
+      # can never split a complex script.
+      - name: Verify the landing glam contract
+        run: node test/verify_landing_glam.js
+
       # verify_api_service.js boots the real service, which needs its one pinned
       # dependency. npm ci installs exactly what package-lock.json names, so CI
       # runs the same driver version that was tested.
