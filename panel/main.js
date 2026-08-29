@@ -10905,7 +10905,7 @@ function switchPage(key) {
       if (aiApp && aiApp.current && aiApp.current() !== "home") aiApp.navigate("home");
     } catch (e) { }
   }
-  if (key === "presets") { try { renderLightStage(); } catch (e) { } }
+  if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
   if (key === "setup") {
     try {
       const wv = $("webView");

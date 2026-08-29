@@ -439,165 +439,14 @@
       </div>
       <div class="ftr">HNK Studio &mdash; Portrait &middot; Wedding &middot; Graduation &middot; Myanmar</div>
 
-    </div>
 
-    <!-- ========== PAGE: CREATE (standalone) ========== -->
-    <div class="page" id="pageCreate">
-      <div class="pgbanner pgb-create">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">HNK CREATE STUDIO</div>
-          <div class="pgbanner-title">CREATE</div>
-          <div class="pgbanner-sub" data-i18n="pgb_create"></div>
-        </div>
-      </div>
-      <!-- Prompt -->
-      <div class="card">
-        <div class="mut" data-i18n="create_note"></div>
-        <textarea id="cPromptBox" class="pbox" rows="6" maxlength="20000" data-i18n-ph="create_ph"></textarea>
-        <div class="row tight">
-        </div>
-        <div class="mut" data-i18n="cr_lib"></div>
-        <div class="chiprow" id="libList"></div>
-      </div>
-
-      <!-- References (up to 4) -->
-      <div class="card">
-        <div class="chead" id="cCrefH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="cr_refs"></span></div>
-        <div class="cbody" id="cCrefB">
-          <div class="mut" data-i18n="cr_refs_note"></div>
-          <div class="refrow">
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg0" class="refbg"></div><div id="cRefPh0" class="refph">1</div><button id="cRefX0" class="xbtn">&times;</button></div>
-              <div class="reflb" id="cRefLb0"></div>
-              <div class="row tight refbtns"><button id="cRefLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
-              <div class="row tight">
-                <button id="cRefLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
-              </div>
-            </div>
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg1" class="refbg"></div><div id="cRefPh1" class="refph">2</div><button id="cRefX1" class="xbtn">&times;</button></div>
-              <div class="reflb" id="cRefLb1"></div>
-              <div class="row tight refbtns"><button id="cRefLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
-              <div class="row tight">
-                <button id="cRefLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
-              </div>
-            </div>
-          </div>
-          <div class="refrow" style="margin-top:8px;">
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg2" class="refbg"></div><div id="cRefPh2" class="refph">3</div><button id="cRefX2" class="xbtn">&times;</button></div>
-              <div class="reflb" id="cRefLb2"></div>
-              <div class="row tight refbtns"><button id="cRefLib2" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
-              <div class="row tight">
-                <button id="cRefLayer2" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile2" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb2" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
-              </div>
-            </div>
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg3" class="refbg"></div><div id="cRefPh3" class="refph">4</div><button id="cRefX3" class="xbtn">&times;</button></div>
-              <div class="reflb" id="cRefLb3"></div>
-              <div class="row tight refbtns"><button id="cRefLib3" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
-              <div class="row tight">
-                <button id="cRefLayer3" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile3" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb3" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
-              </div>
-            </div>
-          </div>
-          <div class="urlbar" id="cUrlBar">
-            <div class="urlhead">
-              <span class="urlttl" data-i18n="url_title"></span>
-              <span class="urltag" id="cUrlSlotTag"></span>
-            </div>
-            <input id="cUrlInput" type="text" class="inp" data-i18n-ph="url_ph" />
-            <div class="row tight">
-              <button id="cBtnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></button>
-              <button id="cBtnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></button>
-              <button id="cBtnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings + Generate -->
-      <div class="card">
-        <p class="mut" data-i18n="scope_create_note" style="margin-bottom:8px;"></p>
-        <div class="row tight">
-          <div class="slbl" data-i18n="cr_ratio"></div>
-          <button class="segb" id="cRatio0"></button>
-          <button class="segb" id="cRatio1"></button>
-          <button class="segb" id="cRatio2"></button>
-          <button class="segb" id="cRatio3"></button>
-          <button class="segb" id="cRatio4"></button>
-        </div>
-        <div class="row tight">
-          <div class="slbl" data-i18n="cr_var"></div>
-          <button class="segb" id="cVar1">1</button>
-          <button class="segb" id="cVar2">2</button>
-          <button class="segb" id="cVar3">3</button>
-          <button class="segb" id="cVar4">4</button>
-        </div>
-        <div class="mut cengine" id="cEngineTag"></div>
-        <button id="btnCreateGen" class="gen" data-i18n="btn_generate"></button>
-      </div>
-
-      <!-- Results -->
-      <div class="card">
-        <div class="chead" id="cResH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="cr_results"></span></div>
-        <div class="cbody" id="cResB">
-          <div class="mut" id="cGalInfo"></div>
-          <div class="gallery" id="cGallery"></div>
-          <div class="cmp" id="cCmpBox" style="margin-top:10px;">
-            <img id="cImgAfter" class="cmp-base" />
-            <div class="cmp-top" id="cCmpTop"><img id="cImgBefore" /></div>
-            <div class="cmp-line" id="cCmpLine"></div>
-            <div class="cmp-tag tag-b" data-i18n="before"></div>
-            <div class="cmp-tag tag-a" data-i18n="after"></div>
-          </div>
-          <div class="slider">
-            <input type="range" id="cCmpSlider" min="0" max="100" value="50" />
-          </div>
-          <div class="row tight" style="margin-top:8px;">
-            <button id="btnCreateToPS" class="btn btn-sm btn-gold grow" data-i18n="btn_create_ps"></button>
-            <button id="btnCreateSave" class="btn btn-sm grow" data-i18n="cr_save"></button>
-          </div>
-          <div class="row tight">
-            <button id="btnCreateToRef" class="btn btn-sm grow" data-i18n="btn_to_ref"></button>
-            <button id="btnCreateRestyle" class="btn btn-sm grow" data-i18n="cr_restyle"></button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========== PAGE: PRESETS ========== -->
-    <div class="page" id="pagePresets">
-      <div class="pgbanner pgb-presets">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">HNK CREATE STUDIO</div>
-          <div class="pgbanner-title">PRESETS &amp; LIBRARY</div>
-          <div class="pgbanner-sub" data-i18n="pgb_presets"></div>
-        </div>
-      </div>
-      <div class="tglrow" style="margin:0 2px 8px 2px;">
-        <div class="tgltxt" data-i18n="learn_lbl"></div>
-        <button id="tglLearn" class="tgl"></button>
-      </div>
-
-      <!-- Compact user reference library (366 curated assets, 3 collections).
-           Renderer auto-mounts into #hnkCompactLibraryCards; selecting a card
-           routes through HNK.onLibraryPresetSelect → reference-2 slot. -->
-      <div class="card">
-        <div class="chead" id="cUserLibH"><span class="car">&#9662;</span><span class="chead-t">Visual Library</span></div>
-        <div class="cbody" id="cUserLibB">
-          <div id="hnkCompactLibraryCards" class="hnk-library-root"></div>
-        </div>
-      </div>
-
+      <!-- v6.27.0 — regrouped (owner request: each thing with its own group).
+           The one-tap Presets (Meitu/Evoto styles included), Chains, Ref ops,
+           Scenes, Wedding, Recipes, Lighting and the Pipeline moved here from
+           the old Presets page: they all edit the CURRENT photo through this
+           page's runGenerate/Keep/cleanup machinery, and the Edit-page batch
+           already advertises chains+cleanup — the Library tab keeps only the
+           1850 Visual Library, like the web app. -->
       <div class="card">
         <div class="chead" id="cPipeH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="crd_pipe"></span></div>
         <div class="cbody" id="cPipeB">
@@ -1001,6 +850,165 @@
           <div class="row last">
             <button id="btnLightGen" class="btn btn-sm btn-gold grow" data-i18n="btn_lightgen"></button>
           </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========== PAGE: CREATE (standalone) ========== -->
+    <div class="page" id="pageCreate">
+      <div class="pgbanner pgb-create">
+        <div class="pgbanner-shade">
+          <div class="pgbanner-kick">HNK CREATE STUDIO</div>
+          <div class="pgbanner-title">CREATE</div>
+          <div class="pgbanner-sub" data-i18n="pgb_create"></div>
+        </div>
+      </div>
+      <!-- Prompt -->
+      <div class="card">
+        <div class="mut" data-i18n="create_note"></div>
+        <textarea id="cPromptBox" class="pbox" rows="6" maxlength="20000" data-i18n-ph="create_ph"></textarea>
+        <div class="row tight">
+        </div>
+        <div class="mut" data-i18n="cr_lib"></div>
+        <div class="chiprow" id="libList"></div>
+      </div>
+
+      <!-- References (up to 4) -->
+      <div class="card">
+        <div class="chead" id="cCrefH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="cr_refs"></span></div>
+        <div class="cbody" id="cCrefB">
+          <div class="mut" data-i18n="cr_refs_note"></div>
+          <div class="refrow">
+            <div class="refslot">
+              <div class="refthumb"><div id="cRefImg0" class="refbg"></div><div id="cRefPh0" class="refph">1</div><button id="cRefX0" class="xbtn">&times;</button></div>
+              <div class="reflb" id="cRefLb0"></div>
+              <div class="row tight refbtns"><button id="cRefLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight">
+                <button id="cRefLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
+                <button id="cRefFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
+                <button id="cRefWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+              </div>
+            </div>
+            <div class="refslot">
+              <div class="refthumb"><div id="cRefImg1" class="refbg"></div><div id="cRefPh1" class="refph">2</div><button id="cRefX1" class="xbtn">&times;</button></div>
+              <div class="reflb" id="cRefLb1"></div>
+              <div class="row tight refbtns"><button id="cRefLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight">
+                <button id="cRefLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
+                <button id="cRefFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
+                <button id="cRefWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+              </div>
+            </div>
+          </div>
+          <div class="refrow" style="margin-top:8px;">
+            <div class="refslot">
+              <div class="refthumb"><div id="cRefImg2" class="refbg"></div><div id="cRefPh2" class="refph">3</div><button id="cRefX2" class="xbtn">&times;</button></div>
+              <div class="reflb" id="cRefLb2"></div>
+              <div class="row tight refbtns"><button id="cRefLib2" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight">
+                <button id="cRefLayer2" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
+                <button id="cRefFile2" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
+                <button id="cRefWeb2" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+              </div>
+            </div>
+            <div class="refslot">
+              <div class="refthumb"><div id="cRefImg3" class="refbg"></div><div id="cRefPh3" class="refph">4</div><button id="cRefX3" class="xbtn">&times;</button></div>
+              <div class="reflb" id="cRefLb3"></div>
+              <div class="row tight refbtns"><button id="cRefLib3" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight">
+                <button id="cRefLayer3" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
+                <button id="cRefFile3" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
+                <button id="cRefWeb3" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+              </div>
+            </div>
+          </div>
+          <div class="urlbar" id="cUrlBar">
+            <div class="urlhead">
+              <span class="urlttl" data-i18n="url_title"></span>
+              <span class="urltag" id="cUrlSlotTag"></span>
+            </div>
+            <input id="cUrlInput" type="text" class="inp" data-i18n-ph="url_ph" />
+            <div class="row tight">
+              <button id="cBtnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></button>
+              <button id="cBtnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></button>
+              <button id="cBtnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings + Generate -->
+      <div class="card">
+        <p class="mut" data-i18n="scope_create_note" style="margin-bottom:8px;"></p>
+        <div class="row tight">
+          <div class="slbl" data-i18n="cr_ratio"></div>
+          <button class="segb" id="cRatio0"></button>
+          <button class="segb" id="cRatio1"></button>
+          <button class="segb" id="cRatio2"></button>
+          <button class="segb" id="cRatio3"></button>
+          <button class="segb" id="cRatio4"></button>
+        </div>
+        <div class="row tight">
+          <div class="slbl" data-i18n="cr_var"></div>
+          <button class="segb" id="cVar1">1</button>
+          <button class="segb" id="cVar2">2</button>
+          <button class="segb" id="cVar3">3</button>
+          <button class="segb" id="cVar4">4</button>
+        </div>
+        <div class="mut cengine" id="cEngineTag"></div>
+        <button id="btnCreateGen" class="gen" data-i18n="btn_generate"></button>
+      </div>
+
+      <!-- Results -->
+      <div class="card">
+        <div class="chead" id="cResH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="cr_results"></span></div>
+        <div class="cbody" id="cResB">
+          <div class="mut" id="cGalInfo"></div>
+          <div class="gallery" id="cGallery"></div>
+          <div class="cmp" id="cCmpBox" style="margin-top:10px;">
+            <img id="cImgAfter" class="cmp-base" />
+            <div class="cmp-top" id="cCmpTop"><img id="cImgBefore" /></div>
+            <div class="cmp-line" id="cCmpLine"></div>
+            <div class="cmp-tag tag-b" data-i18n="before"></div>
+            <div class="cmp-tag tag-a" data-i18n="after"></div>
+          </div>
+          <div class="slider">
+            <input type="range" id="cCmpSlider" min="0" max="100" value="50" />
+          </div>
+          <div class="row tight" style="margin-top:8px;">
+            <button id="btnCreateToPS" class="btn btn-sm btn-gold grow" data-i18n="btn_create_ps"></button>
+            <button id="btnCreateSave" class="btn btn-sm grow" data-i18n="cr_save"></button>
+          </div>
+          <div class="row tight">
+            <button id="btnCreateToRef" class="btn btn-sm grow" data-i18n="btn_to_ref"></button>
+            <button id="btnCreateRestyle" class="btn btn-sm grow" data-i18n="cr_restyle"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PAGE: PRESETS ========== -->
+    <div class="page" id="pagePresets">
+      <div class="pgbanner pgb-presets">
+        <div class="pgbanner-shade">
+          <div class="pgbanner-kick">HNK CREATE STUDIO</div>
+          <div class="pgbanner-title">VISUAL LIBRARY</div>
+          <div class="pgbanner-sub" data-i18n="pgb_presets"></div>
+        </div>
+      </div>
+      <div class="tglrow" style="margin:0 2px 8px 2px;">
+        <div class="tgltxt" data-i18n="learn_lbl"></div>
+        <button id="tglLearn" class="tgl"></button>
+      </div>
+
+      <!-- Compact user reference library (366 curated assets, 3 collections).
+           Renderer auto-mounts into #hnkCompactLibraryCards; selecting a card
+           routes through HNK.onLibraryPresetSelect → reference-2 slot. -->
+      <div class="card">
+        <div class="chead" id="cUserLibH"><span class="car">&#9662;</span><span class="chead-t">Visual Library</span></div>
+        <div class="cbody" id="cUserLibB">
+          <div id="hnkCompactLibraryCards" class="hnk-library-root"></div>
         </div>
       </div>
 

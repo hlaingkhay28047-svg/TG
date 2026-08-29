@@ -209,12 +209,23 @@ eligible students.
     app's — Home (the workflow card home) first and the fresh-boot landing
     tab, then Edit (the prompt studio), Create, Retouch, Library (the
     1850 catalog), Setup last. Same six pages; names, order and landing
-    match the web app.
+    match the web app. The AI Tools stack's localized pill row became the
+    web app's English section pills (Freeform · Workflows · History ·
+    Settings) with the Home duplicate removed — the bottom Home tab now
+    returns to the cards home from any sub-screen.
+  * Each family in its own group (owner request): the one-tap Presets
+    (Meitu/Evoto styles included), Chains, Ref ops, Scenes, Wedding,
+    Recipes, Lighting and the Pipeline moved from the old Presets page
+    into Edit — they all drive the Edit page's runGenerate/Keep/cleanup
+    machinery, which the Edit-page batch (photos + output folder, the
+    web app's Path counterpart) already advertises. The Library tab now
+    holds only the 1850 Visual Library, like the web app; Retouch keeps
+    the slider suite plus the Meitu/Evoto style buttons.
   Real-Photoshop acceptance MUST cover the full v6.26.2 checklist above,
   with special weight on: the AI Tools tab opening to the workflow home
   WITH card art visible, an AI Tools generate, a library preset tap
   landing in Reference 2, and a Text / Logo generate.
   Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
-  `6d14f22910a6e2f358752739432d8c905cdf915b6f51a560b1ffd1f16acfcf87`,
-  1,425,197 bytes (the bundled card art accounts for the growth over
+  `3e72f821e167abb9ebfce2f247235e694407d1eadf3b890230553fccae501a39`,
+  1,425,652 bytes (the bundled card art accounts for the growth over
   6.26.2's 524,577). The release stays disabled until that acceptance.
