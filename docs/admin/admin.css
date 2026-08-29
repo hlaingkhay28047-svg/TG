@@ -31,7 +31,7 @@ main{padding:clamp(24px,4vw,48px);max-width:1600px;margin:auto}.panel{display:no
   border:1px solid rgba(231,187,102,.22);
   background:radial-gradient(120% 90% at 50% -20%,rgba(231,187,102,.16) 0%,transparent 55%),linear-gradient(165deg,rgba(28,26,18,.9),rgba(12,11,9,.9));
   box-shadow:inset 0 1px 0 rgba(247,217,142,.22)}
-.side-nav .nav-ic svg,.icon-button .ib-ic{width:17px;height:17px;fill:none;stroke:url(#gg);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.side-nav .nav-ic svg,.icon-button .ib-ic{width:17px;height:17px;fill:none;stroke:#e7bb66;stroke:url(#gg) #e7bb66;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 .side-nav .nav-item.active .nav-ic{border-color:rgba(231,187,102,.55);box-shadow:inset 0 1px 0 rgba(247,217,142,.3),0 0 12px rgba(231,187,102,.2)}
 .ib-ic{width:19px;height:19px;display:block;margin:auto}
 /* motion pass — panels rise in, metrics stagger; still under reduced motion */
