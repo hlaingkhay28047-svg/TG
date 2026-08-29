@@ -103,11 +103,13 @@ report("every cinema clip and poster ships with the site",
   acts.every(m => fs2.existsSync(path2.join(ROOT2, "docs", m[1]))) &&
   fs2.existsSync(path2.join(ROOT2, "docs/assets/site/promo-panel-poster.jpg")),
   acts.filter(m => !fs2.existsSync(path2.join(ROOT2, "docs", m[1]))).map(m => m[1]));
-report("cinema sound never autoplays — muted start, unmute only inside the button's click handler",
+/* v5.52.1 — owner decision: the cinema is SILENT. No sound toggle exists
+   and nothing in the page can ever unmute a clip. */
+report("cinema stays silent — permanently muted clips, no unmute path, no sound button",
   /\.cinema \.act\[data-promo\]/.test(landing) &&
   /reduce3\|\|\(\(navigator\.connection\|\|\{\}\)\.saveData\)/.test(landing) &&
   (landing.match(/v\.muted=true;v\.loop=true;v\.playsInline=true/g) || []).length >= 2 &&
-  /b\.onclick=function\(\)\{[\s\S]{0,220}v\.muted=false/.test(landing));
+  !landing.includes("muted=false") && !landing.includes("act-snd"));
 
 console.log(failures ? `\n${failures} FAILURE(S)` : "\nLanding glam contract verified.");
 process.exit(failures ? 1 : 0);
