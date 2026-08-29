@@ -195,8 +195,13 @@ function report(name, ok, detail) {
     document.getElementById("libFav").click(); // unstar
     // gallery seed
     await new Promise(res => {
-      const rq = indexedDB.open("hnk_web_studio", 1);
-      rq.onupgradeneeded = () => rq.result.createObjectStore("gal", { keyPath: "id", autoIncrement: true });
+      /* no version pin — v5.49.0 moved the shared database to version 2 (the
+         kv store joined the gallery), and a version-1 open against it fires
+         VersionError, never onsuccess, which left this promise to be garbage
+         collected. Opening without a version attaches at whatever the app
+         created, and the store guard covers a truly fresh profile. */
+      const rq = indexedDB.open("hnk_web_studio");
+      rq.onupgradeneeded = () => { if (!rq.result.objectStoreNames.contains("gal")) rq.result.createObjectStore("gal", { keyPath: "id", autoIncrement: true }); };
       rq.onsuccess = () => {
         const tx = rq.result.transaction("gal", "readwrite");
         tx.objectStore("gal").add({ mime: "image/png", b64: PNG1, prompt: "p1", ts: Date.now() - 9e7, prov: "Gemini · flash" });

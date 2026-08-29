@@ -324,7 +324,15 @@
 
   function person(item) {
     const name = item.name || item.full_name || item.student_name || item.email || "Student";
-    return [node("span", { className: "avatar", text: name.slice(0, 1).toUpperCase(), "aria-hidden": "true" }), node("span", {}, [node("b", { text: name }), node("small", { text: item.email || item.student_email || "" })])];
+    /* v5.49.0 — members' own profile photos. The value is API text, so it is
+       accepted ONLY as a small base64 image data URL (the same bound the
+       schema enforces); anything else falls back to the initial badge. */
+    const photo = typeof item.avatar === "string" && item.avatar.length <= 98304 &&
+      /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(item.avatar) ? item.avatar : "";
+    const badge = photo
+      ? node("img", { className: "avatar avatar-photo", src: photo, alt: "", "aria-hidden": "true" })
+      : node("span", { className: "avatar", text: name.slice(0, 1).toUpperCase(), "aria-hidden": "true" });
+    return [badge, node("span", {}, [node("b", { text: name }), node("small", { text: item.email || item.student_email || "" })])];
   }
 
   function studentStatus(item) {
