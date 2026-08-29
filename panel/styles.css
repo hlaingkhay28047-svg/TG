@@ -244,9 +244,12 @@ body {
   font-size: 7.5px; font-weight: 800; letter-spacing: 2px;
   color: #e9c46a; text-transform: uppercase;
 }
+/* v6.27.0 — the title carries the web app's localized headline now (big
+   Burmese under an English kick, like every web-app page hero). Tall
+   Myanmar glyph metrics: generous line-height, no display letter-spacing. */
 .pgbanner-title {
-  margin-top: 2px;
-  font-size: 17px; font-weight: 800; letter-spacing: 1.2px;
+  margin-top: 3px;
+  font-size: 15px; font-weight: 800; letter-spacing: 0.2px; line-height: 1.55;
   color: #f7f4ec;
 }
 .pgbanner-sub {

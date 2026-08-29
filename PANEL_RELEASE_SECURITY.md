@@ -221,11 +221,18 @@ eligible students.
     web app's Path counterpart) already advertises. The Library tab now
     holds only the 1850 Visual Library, like the web app; Retouch keeps
     the slider suite plus the Meitu/Evoto style buttons.
+  * Web-app page heroes (owner request): every page banner now reads like
+    the web app's — an English kick (Freeform Create · Text to Image ·
+    Retouch Pro · Reference Library · Setup · Smart Workflow) over the web
+    app's own localized headline (Burmese for my, the web app's English
+    line elsewhere), on the web app's own banner art bundled into the CCX
+    (flower-portrait, coral-fairy, flower-gown, train-station, archer).
+    The Library card opens by default — the Library tab IS the library.
   Real-Photoshop acceptance MUST cover the full v6.26.2 checklist above,
   with special weight on: the AI Tools tab opening to the workflow home
   WITH card art visible, an AI Tools generate, a library preset tap
   landing in Reference 2, and a Text / Logo generate.
   Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
-  `3e72f821e167abb9ebfce2f247235e694407d1eadf3b890230553fccae501a39`,
-  1,425,652 bytes (the bundled card art accounts for the growth over
+  `7f224700dc5ba14c1c7606a4af4d108937191161c676d9b3836dfca67a90facb`,
+  1,374,377 bytes (the bundled card art accounts for the growth over
   6.26.2's 524,577). The release stays disabled until that acceptance.
