@@ -21,6 +21,7 @@ function hnkArtCard(doc, visual) {
   var art = doc.createElement("div");
   art.className = "hnk-cardart";
   var im = doc.createElement("img");
+  im.onerror = function () { try { art.parentNode && art.parentNode.removeChild(art); } catch (e) { } };
   im.src = visual; im.alt = "";
   art.appendChild(im);
   return art;

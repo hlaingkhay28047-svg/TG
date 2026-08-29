@@ -182,9 +182,55 @@ var WORKFLOWS = [
 var _byId = {};
 for (var i = 0; i < WORKFLOWS.length; i++) _byId[WORKFLOWS[i].id] = WORKFLOWS[i];
 
+/* v6.27.0 — the web app's FULL Smart Workflow catalog (all 131, owner
+   request). The nine hand-built definitions above stay authoritative for
+   their ids and gain their app category; every other catalog item is
+   wrapped into the same registry shape: the app's own prompt rides as a
+   complete bespoke instruction (compile() appends nothing to bespoke
+   prompts), the app's negative and input labels come along, and routing
+   uses the same confirmed nano-banana-2 edit deployment as the app's
+   tier. Card art for wrapped items loads from the licensed web host the
+   manifest already allows (the same host the Visual Library reads);
+   offline the card falls back to text. Data: js/hnk_wf_catalog_data.js —
+   GENERATED from the app and pinned to it by
+   test/verify_panel_wf_catalog_sync.js. */
+var _CATALOG = (typeof module !== "undefined" && module.exports)
+  ? (function () { try { return require("../../js/hnk_wf_catalog_data.js"); } catch (e) { return null; } })()
+  : ((typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.WF_CATALOG : null);
+var _CATEGORIES = [];
+var _ART_BASE = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/lib/wf/cards5/";
+if (_CATALOG && _CATALOG.categories) {
+  _CATALOG.categories.forEach(function (c) {
+    var ids = [];
+    c.items.forEach(function (w) {
+      ids.push(w.id);
+      if (_byId[w.id]) { if (!_byId[w.id].category) _byId[w.id].category = c.category; return; }
+      var wf = {
+        id: w.id, title: w.title, home: false, category: c.category,
+        visual: _ART_BASE + w.id + ".jpg",
+        summary: w.summary, explanation: w.explanation,
+        humanSubject: false, referenceTransfer: false, bespoke: true,
+        requiredInputs: (w.req || []).map(function (label, ri) {
+          return { key: "img" + (ri + 1), label: label, role: ri === 0 ? "main" : "reference" };
+        }),
+        optionalInputs: (w.opt || []).map(function (label, oi) {
+          return { key: "opt" + (oi + 1), label: label, role: "reference" };
+        }),
+        negative: w.negative,
+        hiddenPrompt: w.prompt,
+        route: { modelId: "nano-banana-2", auto: true }
+      };
+      WORKFLOWS.push(wf);
+      _byId[wf.id] = wf;
+    });
+    _CATEGORIES.push({ category: c.category, icon: c.icon || "", ids: ids });
+  });
+}
+
 function list() { return WORKFLOWS.slice(); }
 function homeList() { return WORKFLOWS.filter(function (w) { return w.home; }); }
 function get(id) { return _byId[id] || null; }
+function categories() { return _CATEGORIES.slice(); }
 
 /* Assemble the FULL protected prompt + negatives for a workflow. This is what
    goes to the provider — self-contained, no external guard needed. */
@@ -235,7 +281,7 @@ var INPUT_LABEL_KEYS = {
 function inputLabelKey(label) { return INPUT_LABEL_KEYS[String(label || "")] || null; }
 
 var API = {
-  list: list, homeList: homeList, get: get, compile: compile,
+  list: list, homeList: homeList, get: get, categories: categories, compile: compile,
   summaryKey: summaryKey, explanationKey: explanationKey,
   inputLabelKey: inputLabelKey, INPUT_LABEL_KEYS: INPUT_LABEL_KEYS,
   SUBJECT_LOCKS: SUBJECT_LOCKS, NEGATIVES: NEGATIVES, REFERENCE_TRANSFER: REFERENCE_TRANSFER

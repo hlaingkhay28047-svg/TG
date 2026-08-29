@@ -60,6 +60,7 @@ jobs:
           node test/verify_panel_unified_backend.js
           node test/verify_panel_manifest_permissions.js
           node test/verify_panel_catalog_sync.js
+          node test/verify_panel_wf_catalog_sync.js
           node test/verify_spaces_client.js
           node test/verify_spaces_artifact_path.js
 

@@ -228,11 +228,23 @@ eligible students.
     line elsewhere), on the web app's own banner art bundled into the CCX
     (flower-portrait, coral-fairy, flower-gown, train-station, archer).
     The Library card opens by default — the Library tab IS the library.
+  * The FULL Smart Workflow catalog (owner request: "there are over 100"):
+    all 131 workflows the web app composes for its Workflows page — core
+    definitions plus the preset/cleanup/wedding/scene-derived one-taps,
+    prompts, negatives and input labels included — now ship in the CCX as
+    a GENERATED data file (js/hnk_wf_catalog_data.js) taken from the web
+    app's own composed catalog (window.HNK_WF_CATALOG), never re-derived
+    by hand. The panel's Workflows list shows them grouped by the app's
+    own nine categories; the nine hand-built definitions stay
+    authoritative for their ids; wrapped items run the same confirmed
+    nano-banana-2 edit deployment as the app's tier; card art loads from
+    the licensed host with a text fallback offline.
+    test/verify_panel_wf_catalog_sync.js pins the file to the app.
   Real-Photoshop acceptance MUST cover the full v6.26.2 checklist above,
   with special weight on: the AI Tools tab opening to the workflow home
   WITH card art visible, an AI Tools generate, a library preset tap
   landing in Reference 2, and a Text / Logo generate.
   Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
-  `561b532e59ed2601e1e5383303b4de7601418be510d7e1a17245f0e7bfd064a0`,
-  1,374,525 bytes (the bundled card art accounts for the growth over
+  `c4370ade88d9abf03e32e94ed1fd2323a9057db91e683984bb58657dc5e87280`,
+  1,424,150 bytes (the bundled card art accounts for the growth over
   6.26.2's 524,577). The release stays disabled until that acceptance.

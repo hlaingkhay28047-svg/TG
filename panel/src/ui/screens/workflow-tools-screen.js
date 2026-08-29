@@ -27,6 +27,8 @@ function hnkArtCard(doc, visual) {
   var art = doc.createElement("div");
   art.className = "hnk-cardart";
   var im = doc.createElement("img");
+  /* remote catalog art (licensed host) falls back to a text card offline */
+  im.onerror = function () { try { art.parentNode && art.parentNode.removeChild(art); } catch (e) { } };
   im.src = visual; im.alt = "";
   art.appendChild(im);
   return art;
@@ -59,8 +61,12 @@ function create(deps) {
       dom.on(d, "click", function () { deps.onToggleDirect(); d.textContent = dom.tOnOff("ai_direct_gen", "Direct Generate", directMode()); });
       root.appendChild(d);
     }
+    /* v6.27.0 \u2014 all 131 catalog workflows, grouped by the web app's own
+       categories (owner request: the full set, cards included, each family
+       with its own group). Falls back to the flat list if the generated
+       catalog is somehow absent. */
     var listEl = dom.el(doc, "div", { class: "hnk-wf-list" });
-    registry.list().forEach(function (wf) {
+    function card(wf) {
       var art = hnkArtCard(doc, wf.visual);
       var m = modelRegistry.getModel(wf.route.modelId);
       var b = dom.el(doc, "button", { class: "hnk-action" + (art ? " art-card" : ""), id: "hnkWf_" + wf.id }, [
@@ -76,7 +82,16 @@ function create(deps) {
       ]);
       dom.on(b, "click", function () { select(wf.id); });
       listEl.appendChild(b);
-    });
+    }
+    var cats = (registry.categories && registry.categories()) || [];
+    if (cats.length) {
+      cats.forEach(function (c) {
+        listEl.appendChild(dom.el(doc, "div", { class: "hnk-sec hnk-wf-cat", text: c.category + " \u00b7 " + c.ids.length }));
+        c.ids.forEach(function (id) { var wf = registry.get(id); if (wf) card(wf); });
+      });
+    } else {
+      registry.list().forEach(card);
+    }
     root.appendChild(listEl);
   }
 
