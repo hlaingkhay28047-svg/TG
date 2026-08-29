@@ -355,21 +355,27 @@ const anchors = [...landing.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(m => (
   download: /(?:^|\s)download(?:\s|=|$)/.test(m[1]),
   key: (m[2].match(/data-i18n="([^"]+)"/) || [])[1] || "",
 }));
+/* v5.52.0 — a CTA key may legitimately appear more than once (the cinema
+   promo act reuses s4.cta/s5.dl so its buttons stay translated). The
+   contract is therefore per-key coverage plus per-occurrence routing:
+   every key present at least once, and EVERY occurrence routed right. */
 const webStudioCtaKeys = ["nav.cta", "hero.cta1", "s4.cta", "duo1.cta"];
 const ctaAnchors = anchors.filter(a => webStudioCtaKeys.includes(a.key));
+const missingCtaKeys = webStudioCtaKeys.filter(k => !ctaAnchors.some(a => a.key === k));
 const misroutedCtas = ctaAnchors.filter(a => a.href !== "app/" || a.download)
   .map(a => `${a.key} -> ${a.href}${a.download ? " [download]" : ""}`);
 check("every Web Studio call to action opens the web app",
-  ctaAnchors.length === webStudioCtaKeys.length && misroutedCtas.length === 0,
+  missingCtaKeys.length === 0 && misroutedCtas.length === 0,
   misroutedCtas.length ? misroutedCtas.join("; ")
-    : `found ${ctaAnchors.length} of ${webStudioCtaKeys.length} CTAs`);
+    : missingCtaKeys.length ? "missing CTA keys: " + missingCtaKeys.join(", ")
+    : `found ${ctaAnchors.length} CTAs across ${webStudioCtaKeys.length} keys`);
 
 const panelAccountHref = "app/?panel=download";
 const panelCtaKeys = ["hero.cta2", "s5.dl"];
 const panelCtas = anchors.filter(a => panelCtaKeys.includes(a.key));
 const publicPanelLeaks = anchors.filter(a => a.download || /\.ccx(?:$|[?#])/i.test(a.href));
 check("public Panel calls to action open the Account Center",
-  panelCtas.length === panelCtaKeys.length &&
+  panelCtaKeys.every(k => panelCtas.some(a => a.key === k)) &&
   panelCtas.every(a => a.href === panelAccountHref && !a.download),
   panelCtas.map(a => `${a.key} -> ${a.href}${a.download ? " [download]" : ""}`).join("; "));
 check("the landing page exposes no direct installer link",

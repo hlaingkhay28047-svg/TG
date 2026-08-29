@@ -69,5 +69,45 @@ report("kick stagger lives inside the reduced-motion-guarded observer block",
   landing.indexOf("var kickBurst=function") > landing.indexOf("prefers-reduced-motion: reduce") &&
   /if\(!reduce&&"IntersectionObserver" in window\)\{[\s\S]{0,900}kickBurst/.test(landing));
 
+/* ---- v5.52.0 living workflow cards: straight from the shipped app ---- */
+const fs2 = require("fs");
+const path2 = require("path");
+const ROOT2 = path2.resolve(__dirname, "..");
+const masonry = (landing.match(/<div class="masonry"[\s\S]*?<\/div>/) || [""])[0];
+const cardAnchors = [...masonry.matchAll(/<a href="([^"]+)"(?:\s+data-live="([^"]+)"\s+data-geo="([^"]+)")?/g)];
+report("every showcase card is the shipped app's own catalog art (app/lib/wf/cards5)",
+  cardAnchors.length >= 9 && cardAnchors.every(m => m[1].startsWith("app/lib/wf/cards5/")),
+  cardAnchors.map(m => m[1]));
+report("every showcase card's catalog art exists in the shipped app",
+  cardAnchors.every(m => fs2.existsSync(path2.join(ROOT2, "docs", m[1]))),
+  cardAnchors.filter(m => !fs2.existsSync(path2.join(ROOT2, "docs", m[1]))).map(m => m[1]));
+report("every living card names a cinemagraph that ships with the site",
+  cardAnchors.every(m => !m[2] || fs2.existsSync(path2.join(ROOT2, "docs", m[2]))),
+  cardAnchors.filter(m => m[2] && !fs2.existsSync(path2.join(ROOT2, "docs", m[2]))).map(m => m[2]));
+report("living cards load lazily, muted, and stand down for reduced motion and Data Saver",
+  /\.masonry a\[data-live\]/.test(landing) &&
+  /reduce2\|\|\(\(navigator\.connection\|\|\{\}\)\.saveData\)/.test(landing) &&
+  /v\.muted=true;v\.loop=true;v\.playsInline=true/.test(landing) &&
+  /IntersectionObserver/.test(landing));
+report("the panel section shows its nine workflows with the app's own card art",
+  [...landing.matchAll(/<div class="wf-gallery"[\s\S]*?<\/div>/g)].some(m =>
+    (m[0].match(/src="app\/lib\/wf\/cards5\//g) || []).length === 9));
+
+/* ---- v5.52.0 cinema promo: one act per product, sound only by gesture ---- */
+const acts = [...landing.matchAll(/<div class="act" data-promo="([^"]+)"/g)];
+report("the cinema section stages one act for the Web Studio and one for the panel",
+  acts.length === 2 &&
+  acts.some(m => m[1].includes("promo-webstudio")) && acts.some(m => m[1].includes("promo-panel")),
+  acts.map(m => m[1]));
+report("every cinema clip and poster ships with the site",
+  acts.every(m => fs2.existsSync(path2.join(ROOT2, "docs", m[1]))) &&
+  fs2.existsSync(path2.join(ROOT2, "docs/assets/site/promo-panel-poster.jpg")),
+  acts.filter(m => !fs2.existsSync(path2.join(ROOT2, "docs", m[1]))).map(m => m[1]));
+report("cinema sound never autoplays — muted start, unmute only inside the button's click handler",
+  /\.cinema \.act\[data-promo\]/.test(landing) &&
+  /reduce3\|\|\(\(navigator\.connection\|\|\{\}\)\.saveData\)/.test(landing) &&
+  (landing.match(/v\.muted=true;v\.loop=true;v\.playsInline=true/g) || []).length >= 2 &&
+  /b\.onclick=function\(\)\{[\s\S]{0,220}v\.muted=false/.test(landing));
+
 console.log(failures ? `\n${failures} FAILURE(S)` : "\nLanding glam contract verified.");
 process.exit(failures ? 1 : 0);
