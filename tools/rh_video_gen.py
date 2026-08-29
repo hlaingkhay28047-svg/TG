@@ -5,7 +5,8 @@ Mirrors the shipped web app's own client exactly (docs/app/index.html):
 upload -> submit alibaba/wan-2.7/image-to-video -> poll /query -> download.
 The key is NEVER stored in this file: pass it as the RH_KEY environment
 variable. Outputs land in videodrop/ next to the repo root, plus a
-videodrop/status.json report.
+videodrop/status.json report. Already-generated clips are skipped, so
+re-running only produces what is missing.
 
 Usage:  RH_KEY=xxxx python3 tools/rh_video_gen.py
 """
@@ -48,6 +49,36 @@ TARGETS = [
     ("banner-flower-gown", "docs/app/lib/banners/banner-flower-gown.jpg", "720P",
      STYLE + "Only the scene breathes: flower petals stir and drift very slowly, "
              "the gown fabric ripples faintly, soft light breathes."),
+    ("banner-flower-portrait", "docs/app/lib/banners/banner-flower-portrait.jpg", "720P",
+     STYLE + "Only the scene breathes: flower petals drift slowly, single hair "
+             "strands stir in a gentle breeze, soft light breathes across the scene."),
+    ("banner-archer", "docs/app/lib/banners/banner-archer.jpg", "720P",
+     STYLE + "Only the scene breathes: her hair and clothing edges stir in the "
+             "wind, dust motes drift in the light, the atmosphere shimmers softly."),
+    ("banner-naga", "docs/app/lib/banners/banner-naga.jpg", "720P",
+     STYLE + "Only the scene breathes: mist flows slowly, scales and gold glint "
+             "subtly as light shifts, water or haze shimmers gently."),
+    ("banner-path-batch", "docs/app/lib/banners/banner-path-batch.jpg", "720P",
+     STYLE + "Only the scene breathes: leaves stir along the path, shafts of "
+             "light shimmer slowly, particles drift through the air."),
+    ("banner-superhero", "docs/app/lib/banners/banner-superhero.jpg", "720P",
+     STYLE + "Only the scene breathes: the cape or fabric ripples slowly in the "
+             "wind, city lights flicker faintly, atmospheric haze drifts."),
+    ("banner-train-station", "docs/app/lib/banners/banner-train-station.jpg", "720P",
+     STYLE + "Only the scene breathes: steam or haze drifts slowly, warm lights "
+             "flicker gently, dust motes float in the light beams."),
+    ("hero-greet-morning", "docs/app/lib/banners/hero-greet-morning.jpg", "720P",
+     STYLE + "Only the scene breathes: soft golden morning light slowly brightens "
+             "and shimmers, gentle mist drifts, leaves stir faintly."),
+    ("hero-greet-afternoon", "docs/app/lib/banners/hero-greet-afternoon.jpg", "720P",
+     STYLE + "Only the scene breathes: bright daylight shimmers softly, foliage "
+             "sways gently, atmosphere breathes with warmth."),
+    ("hero-greet-evening", "docs/app/lib/banners/hero-greet-evening.jpg", "720P",
+     STYLE + "Only the scene breathes: warm dusk glow pulses slowly, golden "
+             "particles drift, soft shadows breathe."),
+    ("hero-mermaid", "docs/app/lib/banners/hero-mermaid.jpg", "720P",
+     STYLE + "Only the underwater world breathes: light caustics shimmer and "
+             "dance, her hair floats gently, tiny bubbles rise, fins sway slowly."),
 ]
 
 def call_json(path, body):
