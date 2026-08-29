@@ -72,7 +72,7 @@ const state = {
      token is short-lived and re-minted every launch. accProfile/accSeenAt
      are what the offline grace window reads. */
   accRefresh: "", accUid: "", accEmail: "", accProfile: null,
-  accSeenAt: 0, accDevId: "",
+  accSeenAt: 0, accDevId: "", accAvatar: "",
   rhKey: "", lang: "my", theme: "dark", model: "auto", size: "1K", ratio: "auto",
   autoRun: true, autoPlace: true, intensity: 60,
   refs: [null, null],
@@ -5522,7 +5522,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.26.1";
+const PANEL_VERSION = "6.26.2";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5669,7 +5669,9 @@ function gateForget() {
   gatePaintPlan();
   state.accRefresh = ""; state.accUid = ""; state.accEmail = "";
   state.accProfile = null; state.accSeenAt = 0;
+  state.accAvatar = "";           /* v6.26.2 — the photo leaves with the session */
   saveSettings();
+  try { gatePaintAvatar(); } catch (e) { }
 }
 
 /* Refresh-token rotation happens at the unified backend. A network failure is
@@ -5808,6 +5810,42 @@ function gateUnlock() {
   gateS.view = "open";
   gatePaintPlan();
 }
+/* v6.26.2 — UI/UX parity with the web app's account circle: the member's
+   profile photo (saved on the website, 256px square center-crop, bounded by
+   profiles_avatar_chk) fills the gate's identity square; the HNK mark stays
+   the fallback. The panel only DISPLAYS it — changing the photo lives in
+   the web app's account card. Same shape bounds as the web app, re-checked
+   here because a settings file is user-editable disk. */
+const GATE_AVA_MAX = 98304;
+const GATE_AVA_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+function gateAvaOk(a) {
+  return typeof a === "string" && a.length <= GATE_AVA_MAX && GATE_AVA_RE.test(a);
+}
+function gatePaintAvatar() {
+  const img = gateEl("gateLogoImg"), txt = gateEl("gateLogoTxt");
+  const a = gateAvaOk(state.accAvatar) ? state.accAvatar : "";
+  if (img) {
+    if (a) { img.src = a; img.style.display = "block"; }
+    else { try { img.removeAttribute("src"); } catch (e) { } img.style.display = "none"; }
+  }
+  if (txt) txt.style.display = a ? "none" : "";
+}
+async function gateAvatarRefresh() {
+  try {
+    if (!gateS.sess || !gateS.sess.uid || !gateS.sess.access) return;
+    const r = await gateReq("/rest/v1/profiles?select=avatar&id=eq." +
+      encodeURIComponent(gateS.sess.uid) + "&limit=1", { method: "GET" }, gateS.sess.access);
+    if (!r.ok) return;
+    const rows = await r.json().catch(function () { return null; });
+    const a = rows && rows[0] ? rows[0].avatar : "";
+    const next = gateAvaOk(a) ? a : "";
+    if (next === state.accAvatar) return;
+    state.accAvatar = next;
+    saveSettings();
+    gatePaintAvatar();
+  } catch (e) { }
+}
+
 /* The header chip is derived only from the live entitlement response. */
 function gatePaintPlan() {
   const el = gateEl("brandPlan"); if (!el) return;
@@ -5936,6 +5974,10 @@ async function gateCheck() {
     gateErr(rf === "dead" ? gateT("gate_bad") : "License service is unavailable");
     return;
   }
+  /* v6.26.2 — the profile photo rides alongside the device/entitlement
+     round-trip: fire-and-forget, so a slow or missing profiles row can
+     never delay or fail the authorization path. */
+  gateAvatarRefresh();
   const device = await gateRegisterDevice();
   if (gateStale(ticket)) return;
   if (!device.ok) {
@@ -6088,6 +6130,7 @@ async function gateBoot() {
                      email: state.accEmail || "" };
     }
     gateWire();
+    gatePaintAvatar();   /* v6.26.2 — the cached photo greets before any network */
     gateShow(gateS.sess ? "checking" : "login");
     await gateCheck();
     if (!gateS.timer && typeof setInterval === "function") {
@@ -6923,7 +6966,8 @@ async function saveSettings() {
       libToken: state.libToken, libFolderName: state.libFolderName, libNativePath: state.libNativePath,
       libImgCount: state.libImgCount, libLastScan: state.libLastScan, refTokens: state.refTokens,
       accRefresh: state.accRefresh, accUid: state.accUid, accEmail: state.accEmail,
-      accProfile: state.accProfile, accSeenAt: state.accSeenAt, accDevId: state.accDevId
+      accProfile: state.accProfile, accSeenAt: state.accSeenAt, accDevId: state.accDevId,
+      accAvatar: state.accAvatar
     };
     await f.write(JSON.stringify(o), { format: formats.utf8 });
   } catch (e) { hwarn("saveSettings:", e); }
@@ -6950,6 +6994,9 @@ async function loadSettings() {
       if (o.accProfile && typeof o.accProfile === "object") state.accProfile = o.accProfile;
       if (typeof o.accSeenAt === "number" && isFinite(o.accSeenAt)) state.accSeenAt = o.accSeenAt;
       if (typeof o.accDevId === "string") state.accDevId = o.accDevId;
+      /* v6.26.2 — the cached profile photo: re-bounded on load because the
+         settings file is user-editable disk, not a trusted store. */
+      if (typeof o.accAvatar === "string" && gateAvaOk(o.accAvatar)) state.accAvatar = o.accAvatar;
       if (typeof o.lang === "string" && LANG_CODES.indexOf(o.lang) >= 0) state.lang = o.lang;
       if (o.theme === "dark" || o.theme === "light") state.theme = o.theme;
       if (o.model === "auto" || o.model === "flash" || o.model === "pro") state.model = o.model;

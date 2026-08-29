@@ -36,6 +36,10 @@ report("A4) pairing input and all gate controls exist",
     .every(id => indexHtml.includes(`id="${id}"`)), {});
 report("A6) the whole gate card ships visible — no per-state hidden groups (v6.26.1)",
   !/gate-hide/.test(indexHtml) && !/gate-hide/.test(mainJs), {});
+report("A7) the gate identity square can carry the member photo within web-app bounds (v6.26.2)",
+  indexHtml.includes('id="gateLogoImg"') && indexHtml.includes('id="gateLogoTxt"') &&
+  mainJs.includes("data:image\\/(jpeg|png|webp);base64") &&
+  /GATE_AVA_MAX\s*=\s*98304/.test(mainJs), {});
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml",
@@ -133,6 +137,7 @@ function initScript(cfg) {
             license: { active: true, expires_at: new Date(Date.now() + 30 * 86400000).toISOString() } } });
       }
       if (url.indexOf("/auth/v1/logout") >= 0) return Promise.resolve(new Response(null, { status: 204 }));
+      if (url.indexOf("/rest/v1/profiles") >= 0) return json([{ avatar: "data:image/jpeg;base64,/9j/4AAQSkZJRg==" }]);
       return json({ message: "not found" }, 404);
     };
   })();`;
@@ -154,6 +159,7 @@ async function run(browser, cfg) {
     app: getComputedStyle(document.getElementById("app")).display,
     loginRow: getComputedStyle(document.getElementById("gateLogin")).display !== "none",
     lockedRow: getComputedStyle(document.getElementById("gateLocked")).display !== "none",
+    avaShown: getComputedStyle(document.getElementById("gateLogoImg")).display !== "none",
     error: (document.getElementById("gateErr").textContent || "").trim(),
     lockedMsg: (document.getElementById("gateLockedMsg").textContent || "").trim(),
     password: document.getElementById("gatePass").value,
@@ -175,6 +181,8 @@ async function run(browser, cfg) {
     result.state.view === "login" && !result.state.hidden && result.state.app === "none", result.state);
   report("B2) the signed-out card shows every control at once with a quiet locked message",
     result.state.loginRow && result.state.lockedRow && result.state.lockedMsg === "", result.state);
+  report("B3) signed out, the identity square shows the HNK mark — never a stale member photo",
+    !result.state.avaShown, result.state);
   await result.page.close();
 
   result = await run(browser, { settings: saved });
@@ -182,6 +190,12 @@ async function run(browser, cfg) {
   report("C) active account plus enrolled computer plus live lease unlocks",
     result.state.view === "open" && result.state.hidden && result.state.app !== "none" && result.state.validateCalls >= 1,
     result.state);
+  const avaAfter = await result.page.evaluate(() =>
+    getComputedStyle(document.getElementById("gateLogoImg")).display !== "none" &&
+    (document.getElementById("gateLogoImg").getAttribute("src") || "").indexOf("data:image/jpeg") === 0
+  ).catch(() => false);
+  report("C2) the member's website profile photo fills the gate identity square (v6.26.2)",
+    avaAfter === true, { avaAfter });
   await result.page.close();
 
   result = await run(browser, { settings: saved, validateStatus: 403 });

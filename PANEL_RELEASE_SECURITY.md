@@ -148,16 +148,26 @@ eligible students.
   v6.26.1 gate redesign below. Artifact `HNK_Ai_Panel_v6.26.0.ccx`, SHA-256
   `f6d9f8cfebf11e0a131ab0269832e6b59adcfa90544d6d3a2c46b02d5406b3e0`,
   523,178 bytes.
-- **v6.26.1** — `pending`. Same RunningHub-only engine as v6.26.0 plus the
-  always-visible gate card (owner request): every gate input and button
-  paints in every state; state changes only the message strings and busy
-  dimming. Real-Photoshop acceptance MUST cover the full v6.26.0 checklist
-  — RunningHub key save + verify in Setup, a Studio generate (fast and
-  quality tiers), a preset and a Retouch run, a Create-tab generation, an
-  AI Tools generate, a legacy-settings launch (a 6.25.x settings file with
-  a stored Gemini key must open cleanly with the key purged) — and the
-  gate card showing sign-in, pairing, website/retry/sign-out and language
-  controls together in the signed-out, checking and denied states.
-  Artifact `HNK_Ai_Panel_v6.26.1.ccx`, SHA-256
+- **v6.26.1** — superseded by v6.26.2 before acceptance completed. Added
+  the always-visible gate card (owner request): every gate input and
+  button paints in every state; state changes only the message strings
+  and busy dimming. Artifact `HNK_Ai_Panel_v6.26.1.ccx`, SHA-256
   `71785a0b45e52b3d96fe8a5792a251770970bb83365de7f285173f0909ce14e2`,
-  523,600 bytes. The release stays disabled until that acceptance.
+  523,600 bytes.
+- **v6.26.2** — `pending`. v6.26.1 plus web-app UI/UX parity for the member
+  identity (owner request): the gate's HNK square shows the member's own
+  profile photo — fetched from their profiles row after session refresh,
+  bounded exactly like the web app (jpeg/png/webp data URL ≤ 96 KB),
+  cached in settings with the same bound re-checked on load, and cleared
+  on sign-out. The panel only displays the photo; changing it stays on
+  the website. Real-Photoshop acceptance MUST cover the full v6.26.0
+  engine checklist — RunningHub key save + verify in Setup, a Studio
+  generate (fast and quality tiers), a preset and a Retouch run, a
+  Create-tab generation, an AI Tools generate, a legacy-settings launch
+  (a 6.25.x settings file with a stored Gemini key must open cleanly with
+  the key purged) — plus the v6.26.1 full-card gate states and the new
+  photo behavior (photo appears after sign-in for an account that has
+  one; HNK mark for one that does not; photo gone after sign-out).
+  Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
+  `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
+  524,577 bytes. The release stays disabled until that acceptance.
