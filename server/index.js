@@ -21,7 +21,7 @@ const { securitySecretStatus } = require("./lib/entitlements");
 
 const PORT = Number(process.env.PORT || 8080);
 const MAX_BODY = Number(process.env.MAX_BODY_BYTES || 12 * 1024 * 1024);
-const API_VERSION = "5.50.3";
+const API_VERSION = "5.51.0";
 
 function boundedTimeout(value,fallback,minimum,maximum) {
   const parsed=Number(value);

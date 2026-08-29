@@ -1136,6 +1136,8 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    animated welcome line beneath. Everything stands down for reduced motion. */
 .acc-hero{display:flex;flex-direction:column;align-items:center;margin:6px 0 14px}
 .acc-ava{position:relative;width:96px;height:96px;flex:none;padding:0;border:none;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* v5.51.0 — sign-up form's compact photo preview (hidden until picked) */
+.ava-mini{width:44px;height:44px;flex:none;border-radius:50%;object-fit:cover;display:none;border:1px solid rgba(233,185,73,.55)}
 .ava-ring{position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from 0deg,rgba(233,185,73,.05),#f7d98e 25%,rgba(233,185,73,.12) 50%,#b98a24 75%,rgba(233,185,73,.05));animation:avaSpin 8s linear infinite;filter:drop-shadow(0 0 10px rgba(233,185,73,.28))}
 @keyframes avaSpin{to{transform:rotate(360deg)}}
 .ava-clip{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 50% 0%,#2a2417,#12100b);box-shadow:inset 0 1px 0 rgba(247,217,142,.25),inset 0 -8px 18px rgba(0,0,0,.55)}
@@ -2213,6 +2215,16 @@ html.splashing #splash{display:flex}
             <div class="subh" id="accSignupH"></div>
             <div class="row"><input class="inp grow" id="accEmail2" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
             <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass2" type="button"></button></div>
+            <!-- v5.51.0 — optional profile photo at sign-up: same pick →
+                 canvas-downscale pipeline as the account card; the result is
+                 held in memory and PATCHed to the caller's own profiles row
+                 the moment the new session exists. Skipping it is fine — the
+                 fairy mascot stays until a photo is chosen. -->
+            <div class="row" style="align-items:center">
+              <img class="ava-mini" id="avaSignupPrev" alt="">
+              <button class="btn grow" id="btnAvaPickSignup" type="button"></button>
+            </div>
+            <input type="file" id="avaFileSignup" accept="image/*" style="display:none">
             <div class="row"><button class="btn btn-gold grow" id="btnAccSignup"></button></div>
             <button class="acc-lnk" id="accToLogin"></button>
           </div>
@@ -19838,6 +19850,9 @@ async function accLogin(){
 function accPostLogin(){
   (async function(){
     try { await accLoadProfile(); } catch(e){}
+    /* v5.51.0 — a photo picked on the sign-up form is saved the moment the
+       session exists; harmless no-op when nothing is pending. */
+    try { accAvaPendingTake(); } catch(e){}
     try { await unifiedRefresh(true); } catch(e){}
     try {
       var d = await accRegisterDevice();
@@ -20276,13 +20291,17 @@ async function accAvaSave(val, btn){
   } catch(e){ setSt("stAva", friendlyError(e), "err"); }
     finally { accBusy(btn, false); }
 }
-function accAvaPickFile(file){
+/* v5.51.0 — `done` lets the sign-up form reuse this pipeline without a
+   session: it holds the downscaled result instead of PATCHing profiles.
+   `stId` routes failures to whichever status line is actually visible. */
+function accAvaPickFile(file, done, stId){
+  stId = stId || "stAva";
   if (!file || !/^image\//.test(String(file.type || ""))) return;
   var fr = new FileReader();
-  fr.onerror = function(){ setSt("stAva", t("ava_fail"), "err"); };
+  fr.onerror = function(){ setSt(stId, t("ava_fail"), "err"); };
   fr.onload = function(){
     var im = new Image();
-    im.onerror = function(){ setSt("stAva", t("ava_fail"), "err"); };
+    im.onerror = function(){ setSt(stId, t("ava_fail"), "err"); };
     im.onload = function(){
       try {
         var S = 256, c = document.createElement("canvas");
@@ -20293,13 +20312,27 @@ function accAvaPickFile(file){
         x.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
         var out = c.toDataURL("image/jpeg", .82);
         if (out.length > AVA_MAX_CHARS) out = c.toDataURL("image/jpeg", .55);
-        if (out.length > AVA_MAX_CHARS || !AVA_RE.test(out)){ setSt("stAva", t("ava_fail"), "err"); return; }
-        accAvaSave(out, $("btnAvaPick"));
-      } catch(e){ setSt("stAva", t("ava_fail"), "err"); }
+        if (out.length > AVA_MAX_CHARS || !AVA_RE.test(out)){ setSt(stId, t("ava_fail"), "err"); return; }
+        if (done) done(out);
+        else accAvaSave(out, $("btnAvaPick"));
+      } catch(e){ setSt(stId, t("ava_fail"), "err"); }
     };
     im.src = String(fr.result);
   };
   fr.readAsDataURL(file);
+}
+
+/* v5.51.0 — the photo picked on the sign-up form, waiting for its session.
+   Saved by accPostLogin (the first moment the profiles row is ours under
+   RLS), then cleared — whether the user finished by signing up or by
+   switching to the login form. */
+var accAvaPending = "";
+function accAvaPendingTake(){
+  if (!accAvaPending) return;
+  var v = accAvaPending; accAvaPending = "";
+  var prev = $("avaSignupPrev");
+  if (prev){ prev.removeAttribute("src"); prev.style.display = "none"; }
+  accAvaSave(v, null);
 }
 
 /* ---------------- render ---------------- */
@@ -20672,6 +20705,8 @@ function accApplyLang(){
   $("accLblName").textContent  = t("acc_name");
   $("accLblEmail").textContent = t("acc_email");
   $("btnAvaPick").textContent  = t("ava_change");
+  var avaPickSignupBtn = $("btnAvaPickSignup");
+  if (avaPickSignupBtn) avaPickSignupBtn.textContent = t("ava_change");
   $("btnAvaDrop").textContent  = t("ava_remove");
   $("accAva").setAttribute("aria-label", t("ava_change"));
   try { accAvaRender(); } catch(e){}   /* the welcome line follows the language */
@@ -20723,6 +20758,19 @@ function accWire(){
     if (avaFile.files && avaFile.files[0]) accAvaPickFile(avaFile.files[0]);
   });
   if (avaDrop) avaDrop.onclick = function(){ accAvaSave(null, avaDrop); };
+  /* v5.51.0 — the sign-up form's own picker: downscale now, save after the
+     session exists (accAvaPendingTake in accPostLogin). Failures land on
+     stAcc — the status line the sign-up form actually shows. */
+  var avaPickS = $("btnAvaPickSignup"), avaFileS = $("avaFileSignup");
+  if (avaPickS && avaFileS) avaPickS.onclick = function(){ avaFileS.value = ""; avaFileS.click(); };
+  if (avaFileS) avaFileS.addEventListener("change", function(){
+    if (!(avaFileS.files && avaFileS.files[0])) return;
+    accAvaPickFile(avaFileS.files[0], function(out){
+      accAvaPending = out;
+      var prev = $("avaSignupPrev");
+      if (prev){ prev.src = out; prev.style.display = ""; }
+    }, "stAcc");
+  });
   /* the gear already routes to Setup (switchPage("pgHome")); v4.30 adds the
      account affordance to it — see the header note in the stylesheet.
 
@@ -21194,7 +21242,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.50.3";
+var APP_VER="5.51.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
