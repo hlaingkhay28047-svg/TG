@@ -160,6 +160,23 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .cb-type{position:absolute;left:clamp(16px,3.4vw,30px);bottom:clamp(13px,2.6vw,24px);z-index:1}
 .cb-type b{display:block;font-size:clamp(1.35rem,3.6vw,2.35rem);font-weight:700;line-height:1.06;color:#fff;letter-spacing:.01em;text-shadow:0 2px 14px rgba(0,0,0,.55)}
 .cb-type span{display:block;margin-top:5px;font-size:clamp(.72rem,1.5vw,.95rem);color:rgba(255,255,255,.72);letter-spacing:.12em;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+/* ---- motion: entrance, reveal, parallax — transform/opacity only ---- */
+@keyframes heroIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.hero .kick{animation:heroIn .6s ease both .05s}
+.hero h1{animation:heroIn .7s ease both .14s}
+.hero .lede{animation:heroIn .7s ease both .24s}
+.hero .ctas{animation:heroIn .7s ease both .34s}
+.hero .badges{animation:heroIn .7s ease both .44s}
+.hero .hero-stats{animation:heroIn .7s ease both .52s}
+.hmedia img{will-change:transform}
+.js-rv{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s cubic-bezier(.2,.7,.3,1)}
+.js-rv.in{opacity:1;transform:translateY(0)}
+@keyframes lineDraw{from{width:0;opacity:0}to{width:46px;opacity:.85}}
+.js-rv.in .sec-head h2::after,section.js-rv.in>.sec-head h2::after{animation:lineDraw .8s cubic-bezier(.2,.7,.3,1) both .15s}
+@media (prefers-reduced-motion:reduce){
+  .hero .kick,.hero h1,.hero .lede,.hero .ctas,.hero .badges,.hero .hero-stats{animation:none}
+  .js-rv{opacity:1;transform:none;transition:none}
+}
 .badge i{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:none}
 /* ---- nav ---- */
 .nav{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:10px var(--sp-4);flex-wrap:nowrap}
@@ -1243,5 +1260,59 @@ fetch("app/version.json",{cache:"no-store"}).then(function(r){return r.json();})
 })();
 </script>
 
+<script>
+/* Motion pass — depth on the ORIGINAL hero banner (nothing replaced), a
+   one-way scroll reveal, and the stat strip counting up once. Everything
+   stands down for prefers-reduced-motion, and without JS the page simply
+   renders still and complete. */
+(function(){
+  "use strict";
+  var reduce=false;
+  try{reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  var media=document.querySelector(".hero .hmedia");
+  if(media&&!reduce){
+    var img=media.querySelector("img"),fx=media.querySelector(".fx"),raf=0;
+    var apply=function(){
+      raf=0;
+      var y=window.scrollY||0,h=media.offsetHeight||1;
+      if(y>h)return;
+      if(img)img.style.transform="translateY("+(y*.22).toFixed(1)+"px) scale(1.04)";
+      if(fx)fx.style.transform="translateY("+(y*.4).toFixed(1)+"px)";
+    };
+    window.addEventListener("scroll",function(){if(!raf)raf=requestAnimationFrame(apply);},{passive:true});
+  }
+  if(!reduce&&"IntersectionObserver" in window){
+    var targets=[];
+    document.querySelectorAll("main.wrap > section").forEach(function(s){targets.push(s);});
+    document.querySelectorAll(".fcard").forEach(function(c,i){c.style.transitionDelay=(i%4*70)+"ms";targets.push(c);});
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});
+    },{rootMargin:"0px 0px -6% 0px",threshold:.05});
+    targets.forEach(function(t){t.classList.add("js-rv");io.observe(t);});
+  }
+  var stats=document.querySelectorAll(".hero-stats b[data-count]");
+  if(stats.length&&!reduce&&"IntersectionObserver" in window){
+    var ran=false;
+    var run=function(){
+      if(ran)return;ran=true;
+      stats.forEach(function(b){
+        var target=parseInt(b.textContent.replace(/[^0-9]/g,""),10);
+        if(!isFinite(target)||target<=0)return;
+        var t0=null;
+        var step=function(ts){
+          if(t0===null)t0=ts;
+          var p=Math.min(1,(ts-t0)/1100),eased=1-Math.pow(1-p,3);
+          b.textContent=String(Math.round(target*eased));
+          if(p<1)requestAnimationFrame(step);else b.textContent=String(target);
+        };
+        requestAnimationFrame(step);
+      });
+    };
+    var host=document.querySelector(".hero-stats")||stats[0];
+    var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){run();so.disconnect();}});},{threshold:.4});
+    so.observe(host);
+  }
+})();
+</script>
 </body>
 </html>
