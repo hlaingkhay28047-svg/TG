@@ -87,6 +87,17 @@ for (const key of ["ava_change", "ava_remove", "ava_saved", "ava_removed", "ava_
   report("string " + key + " is translated", new RegExp("\\b" + key + ":\\{my:").test(app));
 }
 
+/* ---- B2) the admin can see every member's photo, safely ---- */
+const adminApi = fs.readFileSync(path.join(ROOT, "server", "lib", "admin-api.js"), "utf8");
+const adminJs = fs.readFileSync(path.join(ROOT, "docs", "admin", "admin.js"), "utf8");
+report("admin list and detail queries both carry the avatar",
+  (adminApi.match(/^\s*p\.avatar,$/gm) || []).length === 2);
+report("admin UI accepts the avatar only as a bounded image data URL",
+  /item\.avatar\.length <= 98304/.test(adminJs) &&
+  /\^data:image\\\/\(jpeg\|png\|webp\);base64,\[A-Za-z0-9\+\/=\]\+\$/.test(adminJs));
+report("admin UI falls back to the initial badge, never an empty img",
+  /: node\("span", \{ className: "avatar", text: name\.slice\(0, 1\)\.toUpperCase\(\)/.test(adminJs));
+
 /* ---- C) the real database refuses what it should ---- */
 const ENV = Object.assign({}, process.env, {
   PGHOST: process.env.PGHOST || "127.0.0.1",

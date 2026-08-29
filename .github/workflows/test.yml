@@ -87,6 +87,11 @@ jobs:
       - name: Verify the profile avatar contract (real PostgreSQL)
         run: node test/verify_profile_avatar.js
 
+      # v5.49.0 — the launch splash's guards and the work-in-progress
+      # snapshot's four refusals, plus the shared IndexedDB upgrade path.
+      - name: Verify the splash and work-in-progress contract
+        run: node test/verify_splash_wip.js
+
       # verify_api_service.js boots the real service, which needs its one pinned
       # dependency. npm ci installs exactly what package-lock.json names, so CI
       # runs the same driver version that was tested.

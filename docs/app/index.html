@@ -1131,7 +1131,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 /* text links (switch sub-form / forgot password) are real buttons so they
    keep the 44px target and the keyboard focus ring */
 .acc-lnk{background:none;border:none;color:var(--gold-hi);font-size:var(--fs-md);font-weight:700;text-align:left;padding:var(--sp-2) 0;min-height:44px;width:100%;text-decoration:underline}
-/* v5.48.0 — the profile circle: HNK monogram until a photo is saved, a
+/* v5.49.0 — the profile circle: HNK monogram until a photo is saved, a
    slowly turning gold ring behind it, a + badge to add or change, and the
    animated welcome line beneath. Everything stands down for reduced motion. */
 .acc-hero{display:flex;flex-direction:column;align-items:center;margin:6px 0 14px}
@@ -1672,6 +1672,57 @@ body.wall #wallRetry.on{display:block}
 })();
 </script>
 
+<!-- v5.49.0 — the launch splash. Installed-app launches (standalone display
+     mode) get the HNK mark and welcome while the 3MB document parses, once
+     per session; the browser tab, reduced-motion users and every failure
+     path get the app exactly as before. Its style rides inline so the
+     overlay paints before the main stylesheet is even fetched. -->
+<style>
+#splash{position:fixed;inset:0;z-index:2147483000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(120% 100% at 50% 28%,#191408 0%,#0a0a0c 68%)}
+html.splashing #splash{display:flex}
+#splash .sp-ring{position:relative;width:118px;height:118px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+#splash .sp-ring::before{content:"";position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,rgba(233,185,73,.04),#f7d98e 25%,rgba(233,185,73,.1) 50%,#b98a24 75%,rgba(233,185,73,.04));animation:spSpin 2.6s linear infinite;filter:drop-shadow(0 0 14px rgba(233,185,73,.35))}
+#splash .sp-ring::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(120% 100% at 50% 0%,#2a2417,#12100b);box-shadow:inset 0 1px 0 rgba(247,217,142,.25),inset 0 -10px 22px rgba(0,0,0,.55)}
+#splash .sp-mark{position:relative;z-index:1;font:800 34px/1 system-ui,sans-serif;letter-spacing:.06em;background:linear-gradient(115deg,#8a6420 0%,#f7d98e 38%,#fff3c4 50%,#e9b949 62%,#8a6420 100%);background-size:230% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:spSheen 2.2s ease-in-out infinite}
+#splash .sp-h{font:600 17px/1.5 system-ui,sans-serif;color:#f4e9d0;opacity:0;animation:spUp .7s cubic-bezier(.2,.8,.2,1) .25s forwards}
+#splash .sp-h b{font-weight:800;background:linear-gradient(115deg,#e9b949,#fff3c4 50%,#e9b949);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:spSheen 2.2s ease-in-out infinite}
+#splash .sp-sub{font:500 12px/1.5 system-ui,sans-serif;letter-spacing:.22em;color:#9a927e;opacity:0;animation:spUp .7s cubic-bezier(.2,.8,.2,1) .45s forwards}
+#splash.out{opacity:0;transition:opacity .55s ease}
+@keyframes spSpin{to{transform:rotate(360deg)}}
+@keyframes spSheen{0%,12%{background-position:125% 0}60%,100%{background-position:-35% 0}}
+@keyframes spUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+</style>
+<div id="splash" aria-hidden="true">
+  <div class="sp-ring"><span class="sp-mark">HNK</span></div>
+  <div class="sp-h">Welcome to <b>HNK AI Studio</b></div>
+  <div class="sp-sub">PORTRAIT · WEDDING · MYANMAR</div>
+</div>
+<script>
+(function(){
+  try{
+    var standalone = false, reduce = false;
+    try{ standalone = matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; }catch(e){}
+    try{ reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){}
+    if (!standalone || reduce) return;
+    if (sessionStorage.getItem("hnk_splashed")) return;
+    sessionStorage.setItem("hnk_splashed", "1");
+    document.documentElement.classList.add("splashing");
+    var t0 = Date.now(), gone = false;
+    var drop = function(){
+      if (gone) return; gone = true;
+      var sp = document.getElementById("splash");
+      if (sp) sp.classList.add("out");
+      setTimeout(function(){ document.documentElement.classList.remove("splashing"); }, 600);
+    };
+    var hide = function(){ setTimeout(drop, Math.max(0, 1400 - (Date.now() - t0))); };
+    if (document.readyState === "complete") hide();
+    else window.addEventListener("load", hide);
+    /* the splash may never outstay its welcome, whatever load does */
+    setTimeout(drop, 6000);
+  }catch(e){ try{ document.documentElement.classList.remove("splashing"); }catch(_){} }
+})();
+</script>
+
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
   <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9e2a4"/><stop offset=".5" stop-color="#e9b949"/><stop offset="1" stop-color="#c08a20"/></linearGradient></defs>
   <!-- HNK shared icon sprite — v4.25.0 set: 65 symbols (24×24, stroke 1.8 via CSS, round caps/joins, currentColor).
@@ -2144,7 +2195,7 @@ body.wall #wallRetry.on{display:block}
     <div class="grp open" id="accGrpAuth">
       <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="accGrpAuthT"></span></button>
       <div class="grp-b">
-        <!-- v5.48.0 — the profile circle. Before the user saves a photo it
+        <!-- v5.49.0 — the profile circle. Before the user saves a photo it
              wears the HNK monogram; a saved photo takes its place. The +
              badge is the add/change affordance; a slow gold ring turns
              behind it, and the animated welcome line sits underneath. -->
@@ -2184,7 +2235,7 @@ body.wall #wallRetry.on{display:block}
           <div class="acc-kv"><span class="k" id="accLblName"></span><span class="v" id="accInfoName"></span></div>
           <div class="acc-kv"><span class="k" id="accLblEmail"></span><span class="v" id="accInfoEmail"></span></div>
           <div class="mut" id="accInfoSince" style="margin-top:8px"></div>
-          <!-- v5.48.0 — own profile photo: pick → downscale on a canvas →
+          <!-- v5.49.0 — own profile photo: pick → downscale on a canvas →
                PATCH the profiles row the caller already owns under RLS -->
           <div class="acc-actions">
             <button class="btn" id="btnAvaPick" type="button"></button>
@@ -4571,12 +4622,66 @@ var _idb=null;
 function galDb(){
   return new Promise(function(res,rej){
     if(_idb) return res(_idb);
-    var r=indexedDB.open("hnk_web_studio",1);
-    r.onupgradeneeded=function(){ r.result.createObjectStore("gal",{keyPath:"id",autoIncrement:true}); };
+    /* v5.49.0 — version 2 adds the small "kv" store beside the gallery; the
+       upgrade guard creates whichever store a database is missing, so both a
+       fresh install and a v1 upgrade end with the same two stores */
+    var r=indexedDB.open("hnk_web_studio",2);
+    r.onupgradeneeded=function(){
+      var d=r.result;
+      if(!d.objectStoreNames.contains("gal")) d.createObjectStore("gal",{keyPath:"id",autoIncrement:true});
+      if(!d.objectStoreNames.contains("kv")) d.createObjectStore("kv");
+    };
     r.onsuccess=function(){ _idb=r.result; res(_idb); };
     r.onerror=function(){ rej(r.error); };
   });
 }
+/* v5.49.0 — tiny promise wrappers over the kv store. Used for the
+   work-in-progress snapshot; anything else that needs a durable scrap of
+   state should come through here rather than growing localStorage. */
+function kvSet(k,v){ return galDb().then(function(db){ return new Promise(function(res,rej){
+  var tx=db.transaction("kv","readwrite"); tx.objectStore("kv").put(v,k);
+  tx.oncomplete=function(){res();}; tx.onerror=function(){rej(tx.error);}; }); }); }
+function kvGet(k){ return galDb().then(function(db){ return new Promise(function(res,rej){
+  var q=db.transaction("kv","readonly").objectStore("kv").get(k);
+  q.onsuccess=function(){res(q.result);}; q.onerror=function(){rej(q.error);}; }); }); }
+function kvDel(k){ return galDb().then(function(db){ return new Promise(function(res,rej){
+  var tx=db.transaction("kv","readwrite"); tx.objectStore("kv").delete(k);
+  tx.oncomplete=function(){res();}; tx.onerror=function(){rej(tx.error);}; }); }); }
+/* ---------- v5.49.0 work-in-progress survives leaving the app ----------
+   The owner's scenario: add photos on a phone, switch to another app, come
+   back — and the browser has reclaimed the tab. The gallery already keeps
+   every RESULT; this keeps the INPUTS. The snapshot is written when the app
+   goes to the background (visibilitychange/pagehide — the last events a
+   reclaimed tab reliably sees) and read back on boot only when the session
+   starts empty, so an explicit clear stays cleared and a deep link that
+   arrives with its own photos wins. 72 hours is the shelf life: long enough
+   for tomorrow, short enough that stale shoots do not haunt the picker. */
+var WIP_TTL_MS = 72*3600*1000;
+function wipSave(){
+  try{
+    var refs = (state && state.refs) || [];
+    if (refs.some(function(r){ return r && r.b64; }))
+      kvSet("wip", { refs: refs.slice(0,3), t: Date.now() }).catch(function(){});
+    else kvDel("wip").catch(function(){});
+  }catch(e){}
+}
+function wipRestore(){
+  kvGet("wip").then(function(w){
+    if (!w || !Array.isArray(w.refs)) return;
+    if (!(Date.now() - (w.t||0) < WIP_TTL_MS)){ kvDel("wip").catch(function(){}); return; }
+    if (state.refs.some(function(r){ return r && r.b64; })) return;
+    var back = w.refs.slice(0,3).map(function(r){
+      return (r && typeof r.mime === "string" && typeof r.b64 === "string") ? r : null;
+    });
+    if (!back.some(Boolean)) return;
+    state.refs = [back[0]||null, back[1]||null, back[2]||null];
+    renderRefs();
+  }).catch(function(){});
+}
+window.addEventListener("pagehide", wipSave);
+document.addEventListener("visibilitychange", function(){
+  if (document.visibilityState === "hidden") wipSave();
+});
 /* ---------- gallery thumbnails (v4.53) ----------
    The grid is an 84px tile grid, but every tile used to carry the FULL
    delivered plate as a data: URI — and Studio bakes at the source photo's own
@@ -20428,7 +20533,7 @@ function accPanelIntentStart(){
   accPanelIntentApply();
 }
 
-/* ---------------- v5.48.0 profile photo ---------------- */
+/* ---------------- v5.49.0 profile photo ---------------- */
 /* The circle above the account card shows the fairy until the user saves a
    photo of their own. The photo is downscaled HERE, on a canvas, so what
    travels is a ~15KB 256px JPEG data URL — and the schema's
@@ -20909,7 +21014,7 @@ function accWire(){
   $("btnAccLogout").onclick = function(){ accLogout(); };
   $("btnAccPass").onclick   = function(){ accChangePass(); };
   $("btnDevManage").onclick = function(){ accOpenGrp("accGrpDev"); };
-  /* v5.48.0 — own profile photo: the circle and the picker button both open
+  /* v5.49.0 — own profile photo: the circle and the picker button both open
      the file dialog; signed out, the circle walks you to the email field */
   var avaPick = $("btnAvaPick"), avaFile = $("avaFile"), avaDrop = $("btnAvaDrop");
   var avaOpen = function(){ if (!avaFile) return; avaFile.value = ""; avaFile.click(); };
@@ -21394,7 +21499,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.48.0";
+var APP_VER="5.49.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -21828,6 +21933,9 @@ try {
   var _qp = stNormalizePage(new URLSearchParams(location.search).get("page"));
   if (_qp && PAGES.some(function(p){ return p[0]===_qp; })) switchPage(_qp);
 } catch(e){}
+/* v5.49.0 — bring back the photos the user was working with when the phone
+   reclaimed the tab; runs after the page restore so both land together */
+try { wipRestore(); } catch(e){}
 /* Public Panel CTAs carry one acquisition intent instead of a file URL. The
    Account Center decides whether to show login, purchase, verification, or
    the entitled download, and keeps the intent through those transitions. */
