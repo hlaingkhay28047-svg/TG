@@ -81,7 +81,23 @@ function create(store, verifier) {
     }
   }
 
-  /* v6.26.0 — the OpenAI key (and its save/verify) left with its provider. */
+  /* v6.26.0 — the OpenAI key (and its save/verify) left with its provider.
+     v6.26.3 — applyDefaultsTo left with it by accident: the function body sat
+     beside the removed OpenAI block, but the return object (and
+     bootstrap.js's AI Tools init) still referenced it, so create() threw
+     ReferenceError and the AI Tools tab failed to start in 6.26.0–6.26.2.
+     Restored verbatim — it was always provider-neutral. */
+  function applyDefaultsTo(state) {
+    if (!state) return state;
+    var s = _read();
+    state.modelId = s.defaultModel;
+    state.size = s.defaultSize;
+    state.ratio = s.defaultRatio;
+    state.quality = s.defaultQuality;
+    state.variants = s.defaultVariants;
+    if (state.advanced) state.advanced.addAsNewLayer = s.addAsNewLayer;
+    return state;
+  }
 
   return { get: get, set: set, saveAndVerifyKey: saveAndVerifyKey, applyDefaultsTo: applyDefaultsTo, defaults: defaults };
 }

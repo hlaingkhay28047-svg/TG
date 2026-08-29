@@ -154,7 +154,14 @@ eligible students.
   and busy dimming. Artifact `HNK_Ai_Panel_v6.26.1.ccx`, SHA-256
   `71785a0b45e52b3d96fe8a5792a251770970bb83365de7f285173f0909ce14e2`,
   523,600 bytes.
-- **v6.26.2** — `pending`. v6.26.1 plus web-app UI/UX parity for the member
+- **v6.26.2** — superseded by v6.26.3 before acceptance completed. During a
+  browser render of the tracked panel source for fresh website screenshots,
+  the AI Tools tab failed to start with `applyDefaultsTo is not defined`:
+  the v6.26.0 OpenAI removal deleted the provider-neutral
+  `applyDefaultsTo` helper beside the removed key block while
+  settings-service's return object (and the AI Tools bootstrap) still
+  referenced it, so `create()` threw and the AI Tools tab was broken in
+  6.26.0 through 6.26.2. Was: v6.26.1 plus web-app UI/UX parity for the member
   identity (owner request): the gate's HNK square shows the member's own
   profile photo — fetched from their profiles row after session refresh,
   bounded exactly like the web app (jpeg/png/webp data URL ≤ 96 KB),
@@ -170,4 +177,14 @@ eligible students.
   one; HNK mark for one that does not; photo gone after sign-out).
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
-  524,577 bytes. The release stays disabled until that acceptance.
+  524,577 bytes.
+- **v6.26.3** — `pending`. v6.26.2 plus the one-line regression fix:
+  `applyDefaultsTo` restored verbatim in settings-service (provider-neutral
+  defaults for model/size/ratio/quality/variants and the add-as-new-layer
+  flag), so the AI Tools tab starts again. Real-Photoshop acceptance MUST
+  cover the full v6.26.2 checklist above — with special weight on the AI
+  Tools tab: it must open to the workflow home and complete an AI Tools
+  generate, since exactly that path was broken in 6.26.0–6.26.2.
+  Artifact `HNK_Ai_Panel_v6.26.3.ccx`, SHA-256
+  `e5833011f8fdf980583278346169104a38fa6786032dc0537de97f20b4f54a9b`,
+  524,843 bytes. The release stays disabled until that acceptance.

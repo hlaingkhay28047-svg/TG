@@ -5522,7 +5522,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.26.2";
+const PANEL_VERSION = "6.26.3";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5669,7 +5669,7 @@ function gateForget() {
   gatePaintPlan();
   state.accRefresh = ""; state.accUid = ""; state.accEmail = "";
   state.accProfile = null; state.accSeenAt = 0;
-  state.accAvatar = "";           /* v6.26.2 — the photo leaves with the session */
+  state.accAvatar = "";           /* v6.26.3 — the photo leaves with the session */
   saveSettings();
   try { gatePaintAvatar(); } catch (e) { }
 }
@@ -5810,7 +5810,7 @@ function gateUnlock() {
   gateS.view = "open";
   gatePaintPlan();
 }
-/* v6.26.2 — UI/UX parity with the web app's account circle: the member's
+/* v6.26.3 — UI/UX parity with the web app's account circle: the member's
    profile photo (saved on the website, 256px square center-crop, bounded by
    profiles_avatar_chk) fills the gate's identity square; the HNK mark stays
    the fallback. The panel only DISPLAYS it — changing the photo lives in
@@ -5974,7 +5974,7 @@ async function gateCheck() {
     gateErr(rf === "dead" ? gateT("gate_bad") : "License service is unavailable");
     return;
   }
-  /* v6.26.2 — the profile photo rides alongside the device/entitlement
+  /* v6.26.3 — the profile photo rides alongside the device/entitlement
      round-trip: fire-and-forget, so a slow or missing profiles row can
      never delay or fail the authorization path. */
   gateAvatarRefresh();
@@ -6130,7 +6130,7 @@ async function gateBoot() {
                      email: state.accEmail || "" };
     }
     gateWire();
-    gatePaintAvatar();   /* v6.26.2 — the cached photo greets before any network */
+    gatePaintAvatar();   /* v6.26.3 — the cached photo greets before any network */
     gateShow(gateS.sess ? "checking" : "login");
     await gateCheck();
     if (!gateS.timer && typeof setInterval === "function") {
@@ -6994,7 +6994,7 @@ async function loadSettings() {
       if (o.accProfile && typeof o.accProfile === "object") state.accProfile = o.accProfile;
       if (typeof o.accSeenAt === "number" && isFinite(o.accSeenAt)) state.accSeenAt = o.accSeenAt;
       if (typeof o.accDevId === "string") state.accDevId = o.accDevId;
-      /* v6.26.2 — the cached profile photo: re-bounded on load because the
+      /* v6.26.3 — the cached profile photo: re-bounded on load because the
          settings file is user-editable disk, not a trusted store. */
       if (typeof o.accAvatar === "string" && gateAvaOk(o.accAvatar)) state.accAvatar = o.accAvatar;
       if (typeof o.lang === "string" && LANG_CODES.indexOf(o.lang) >= 0) state.lang = o.lang;
