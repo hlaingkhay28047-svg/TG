@@ -171,7 +171,7 @@ var WORKFLOWS = [
     optionalInputs: [{ key: "logo", label: "Logo Reference (optional)", role: "text" }],
     negative: "illegible text, warped or garbled lettering, misspelled words, garish or cartoonish font, wrong font substitution, redesigned or restyled logo mark, incorrect logo proportions or colours, text or logo covering the face, unwanted extra logos, unwanted extra text, watermark-style repeated text, mismatched perspective or scale, floating or misaligned typography, changed pose, changed identity, changed clothing, altered composition",
     hiddenPrompt: "Add or edit the requested text/logo. If a reference graphic is supplied, reproduce its exact lettering, shapes, font style, proportions and colours faithfully \u2014 do not redesign, restyle or substitute a different font or mark. Render clean, crisp, fully legible typography at correct perspective and scale for its placement surface, with natural shadow/highlight integration so it reads as part of the photo. Place it tastefully at a balanced size that never covers or overlaps the subject's face. Keep the rest of the composition, subject and identity unchanged. COMPOSITION LOCK: do not re-pose, re-angle the camera, zoom, recrop or reinterpret the shot in any way \u2014 the subject's exact position, scale and pose within the frame must match the source photo pixel-for-pixel wherever this task does not explicitly require a change.",
-    route: { modelId: "gpt-image-2-openai", auto: true }
+    route: { modelId: "gpt-image-2", auto: true }
   }
 ];
 

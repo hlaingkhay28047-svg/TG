@@ -103,7 +103,7 @@
         <div class="hdr-t hero-t">
           <div class="hero-brand">HNK <span class="hero-brand-gold">PLUGIN PANEL</span></div>
           <div class="title hero-app" data-i18n="app_title"></div>
-          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.25.3</span> &middot; <span id="brandProv">Gemini AI</span><span id="brandPlan" class="hero-plan"></span></div>
+          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.26.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="hero-plan"></span></div>
         </div>
         <div class="hdr-ctl">
           <select id="selLang" class="lang-sel" title="Language"></select>
@@ -113,7 +113,7 @@
       <div class="hero-chips">
         <span class="hero-chip">&#10022; 1850 Visual Library</span>
         <span class="hero-chip">&#9889; Smart Workflow</span>
-        <span class="hero-chip">&#9678; Gemini &middot; GPT &middot; RunningHub</span>
+        <span class="hero-chip">&#9678; RunningHub Enterprise</span>
       </div>
     </div>
   </div>
@@ -141,16 +141,8 @@
             <button id="btnTestKey" class="btn btn-sm grow" data-i18n="btn_test"></button>
             <button id="btnSaveKey" class="btn btn-sm btn-gold grow" data-i18n="btn_save"></button>
           </div>
-          <div class="row tight" style="margin-top:8px;">
-            <div class="slbl" data-i18n="prov_lbl"></div>
-            <button id="provGem" class="segb">Gemini</button>
-            <button id="provOai" class="segb">OpenAI</button>
-          </div>
-          <div class="row last">
-            <input id="oaiKey" type="password" class="inp grow" data-i18n-ph="oai_key_ph" />
-            <button id="btnTestOaiKey" class="btn btn-sm" data-i18n="btn_test"></button>
-            <button id="btnSaveOaiKey" class="btn btn-sm btn-gold" data-i18n="btn_save"></button>
-          </div>
+          <!-- v6.26.0 — the provider segment and the OpenAI key row left with
+               their providers: RunningHub Enterprise is the one engine. -->
         </div>
       </div>
 
@@ -189,15 +181,7 @@
               <button class="segb" id="size4K">4K</button>
             </div>
           </div>
-          <div class="row last" id="qualRow" style="display:none;">
-            <div class="lbl" data-i18n="lbl_quality"></div>
-            <div class="seg grow">
-              <button class="segb" id="qAuto" data-i18n="qual_auto"></button>
-              <button class="segb" id="qLow" data-i18n="qual_low"></button>
-              <button class="segb" id="qMed" data-i18n="qual_med"></button>
-              <button class="segb" id="qHigh" data-i18n="qual_high"></button>
-            </div>
-          </div>
+          <!-- v6.26.0 — the OpenAI quality segment left with its provider. -->
         </div>
       </div>
 
@@ -307,17 +291,13 @@
           <div class="pwrap">
             <textarea id="promptBoxMy" class="pbox" rows="5" maxlength="20000" data-i18n-ph="hint_prompt_my"></textarea>
           </div>
-          <div class="tglrow">
-            <div class="tgltxt" data-i18n="live_trans"></div>
-            <div class="mut" id="transInfo" style="margin:0 8px 0 0;"></div>
-            <button id="tglLiveTrans" class="tgl"></button>
-          </div>
+          <!-- v6.26.0 — the Gemini live-translate toggle left with its
+               provider: a Burmese prompt now sends exactly as written. -->
           <div class="row tight">
             <select id="selRecentPrompts" class="inp grow"></select>
           </div>
           <div class="row last">
-            <button id="btnImprove" class="btn btn-sm grow" data-i18n="btn_improve"></button>
-            <button id="btnClearP" class="btn btn-sm" data-i18n="btn_clear"></button>
+            <button id="btnClearP" class="btn btn-sm grow" data-i18n="btn_clear"></button>
           </div>
         </div>
       </div>
@@ -465,8 +445,6 @@
         <div class="mut" data-i18n="create_note"></div>
         <textarea id="cPromptBox" class="pbox" rows="6" maxlength="20000" data-i18n-ph="create_ph"></textarea>
         <div class="row tight">
-          <button id="btnCreateImprove" class="btn btn-sm grow" data-i18n="cr_improve"></button>
-          <button id="btnCreateDescribe" class="btn btn-sm grow" data-i18n="cr_describe"></button>
         </div>
         <div class="mut" data-i18n="cr_lib"></div>
         <div class="chiprow" id="libList"></div>
@@ -679,14 +657,9 @@
             <div class="grp-h" id="grpI2pH"><span class="car">&#9656;</span><span data-i18n="grp_i2p"></span></div>
             <div class="grp-b" id="grpI2pB">
               <div class="mut" data-i18n="i2p_note"></div>
-              <div class="ckrow"><button id="i2pObjects" class="ckb"></button><div class="cklb" data-i18n="i2p_objects"></div></div>
-              <div class="ckrow"><button id="i2pLight" class="ckb"></button><div class="cklb" data-i18n="i2p_light"></div></div>
-              <div class="ckrow"><button id="i2pColor" class="ckb"></button><div class="cklb" data-i18n="i2p_color"></div></div>
-              <div class="ckrow"><button id="i2pBg" class="ckb"></button><div class="cklb" data-i18n="i2p_bg"></div></div>
-              <div class="ckrow"><button id="i2pFg" class="ckb"></button><div class="cklb" data-i18n="i2p_fg"></div></div>
-              <div class="row">
-                <button id="btnI2pExtract" class="btn btn-sm grow" data-i18n="btn_i2p"></button>
-              </div>
+              <!-- v6.26.0 — the scene-EXTRACT checkboxes and button (Gemini
+                   vision) left with their provider; Scene Generate below is a
+                   RunningHub image job and stays. -->
               <div class="ckrow"><button id="i2pFit" class="ckb"></button><div class="cklb" data-i18n="i2p_fit"></div></div>
               <div class="ckrow"><button id="i2pAdapt" class="ckb"></button><div class="cklb" data-i18n="i2p_adapt"></div></div>
               <div class="row last">
@@ -1224,11 +1197,6 @@
 <script src="src/providers/runninghub-enterprise-adapter.js"></script>
 <script src="src/providers/runninghub-http.js"></script>
 <script src="src/providers/runninghub-setup.js"></script>
-<!-- HNK AI Tools OpenAI adapter (transport-injected; a direct alternative to
-     RunningHub — single request, no upload/poll cycle, uses the same shared
-     transport in runninghub-http.js) -->
-<script src="src/providers/openai-error-normalizer.js"></script>
-<script src="src/providers/openai-adapter.js"></script>
 <!-- HNK AI Tools Photoshop services (host-injected; logic is unit-tested) -->
 <script src="src/photoshop/canvas-fit-service.js"></script>
 <script src="src/photoshop/image-import-service.js"></script>

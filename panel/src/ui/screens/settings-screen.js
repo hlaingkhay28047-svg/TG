@@ -105,60 +105,8 @@ function renderRunningHub(root, deps, s) {
   root.appendChild(status);
 }
 
-/* OpenAI key entry — a direct alternative to the RunningHub Enterprise key
-   above. No node-mapping to configure (OpenAI's model/endpoints are fixed),
-   so this mirrors just the top "Enterprise key" block, not the full
-   RunningHub no-code form. */
-function renderOpenAI(root, deps, s) {
-  var doc = deps.document;
-  var svc = deps.settings;
-  root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_oai_sec", "OpenAI (Advanced \u2014 optional)") }));
-  root.appendChild(dom.el(doc, "div", { class: "hnk-field-label", text: dom.t("ai_oai_note", "Use your own OpenAI API key with GPT Image 2 instead of (or alongside) RunningHub Enterprise.") }));
-
-  var keyInput = dom.el(doc, "input", { class: "hnk-sel", id: "hnkOaiKey", attrs: { type: "password", placeholder: "sk-… (platform.openai.com/api-keys)" } });
-  keyInput.value = s.oaiKey || "";
-  var status = dom.el(doc, "div", { class: "hnk-status", id: "hnkOaiStatus",
-    text: s.oaiKeyVerified ? "Key verified." : (s.oaiKey ? "Key saved (not verified)." : "No key set.") });
-  var saveBtn = dom.el(doc, "button", { class: "hnk-btn", id: "hnkOaiSave", text: dom.t("ai_save_verify", "Save & Verify") });
-  var oaiSaveToken = 0;
-  dom.on(saveBtn, "click", function () {
-    var myToken = ++oaiSaveToken;
-    dom.setDisabled(saveBtn, true);
-    status.textContent = dom.t("ai_verifying", "Verifying…");
-    var res = svc.saveAndVerifyOaiKey(keyInput.value);
-    /* v6.21 — saveAndVerifyOaiKey no longer persists a key that fails
-       verification (it used to, silently overwriting a working saved key —
-       see settings-service.js), so this status text must not claim "saved"
-       for that case any more. */
-    var apply = function (r) {
-      if (myToken !== oaiSaveToken) return;
-      dom.setDisabled(saveBtn, false);
-      status.textContent = r.ok ? "Key verified."
-        : (r.error && r.error.code === "no-verifier" ? "Key saved (verify unavailable)."
-        : "Verification failed — your previous key (if any) was kept.");
-    };
-    if (res && typeof res.then === "function") res.then(apply); else apply(res || {});
-  });
-  root.appendChild(_field(doc, "OpenAI API Key", keyInput));
-  root.appendChild(saveBtn);
-
-  var testBtn = dom.el(doc, "button", { class: "hnk-btn", id: "hnkOaiTest", text: dom.t("ai_test_conn", "Test connection") });
-  var oaiTestToken = 0;
-  dom.on(testBtn, "click", function () {
-    var myToken = ++oaiTestToken;
-    dom.setDisabled(testBtn, true);
-    status.textContent = dom.t("ai_verifying", "Verifying…");
-    var p = deps.oai.verify(keyInput.value || svc.get().oaiKey);
-    var apply = function (r) {
-      if (myToken !== oaiTestToken) return;
-      dom.setDisabled(testBtn, false);
-      status.textContent = r.ok ? "OpenAI connection OK ✓" : (r.error && r.error.code === "no-transport" ? "Test needs the live connection (in Photoshop)." : "Connection failed — check the key.");
-    };
-    if (p && p.then) p.then(apply); else apply(p || {});
-  });
-  root.appendChild(testBtn);
-  root.appendChild(status);
-}
+/* v6.26.0 — the OpenAI key entry left with its provider: RunningHub
+   Enterprise (above) is the one engine. */
 
 function render(root, deps) {
   var doc = deps.document;
@@ -226,8 +174,6 @@ function render(root, deps) {
 
   // ---- RunningHub setup (no-code, optional/advanced) ----
   if (deps.rh && deps.rh.setup) renderRunningHub(root, deps, s);
-  // ---- OpenAI key (direct alternative, optional/advanced) ----
-  if (deps.oai) renderOpenAI(root, deps, s);
   return root;
 }
 

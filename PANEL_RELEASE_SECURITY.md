@@ -138,3 +138,16 @@ eligible students.
   and provider tool operation. v6.25.3 (catalog-only data change over the
   same code) stays `pending` until the owner confirms it in Photoshop the
   same way.
+- **v6.26.0** — `pending`. RunningHub-only conversion (owner decision,
+  mirrors web app 5.50.0): the Gemini and OpenAI engines, the Gemini text
+  bridge (improve/translate/scene-extract) and both providers' network
+  domains are removed; every generation routes through the AI Tools
+  RunningHub adapter stack. Because this release changes the generate
+  engine itself, real-Photoshop acceptance MUST cover: RunningHub key save
+  + verify in Setup, a Studio generate (fast and quality tiers), a preset
+  and a Retouch run, a Create-tab generation, an AI Tools generate, and a
+  legacy-settings launch (a 6.25.x settings file with a stored Gemini key
+  must open cleanly with the key purged). Artifact
+  `HNK_Ai_Panel_v6.26.0.ccx`, SHA-256
+  `f6d9f8cfebf11e0a131ab0269832e6b59adcfa90544d6d3a2c46b02d5406b3e0`,
+  523,178 bytes. The release stays disabled until that acceptance.

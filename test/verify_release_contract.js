@@ -292,6 +292,15 @@ check("the panel agrees with itself about which version it is",
 check("the panel's update probe points at the production origin",
   panelInternals.updateUrl === `${productionBase}/download/panel-version.json`,
   panelInternals.updateUrl || "no PANEL_VERSION_URL found");
+/* v6.26.0 — the panel runs on RunningHub Enterprise alone (same owner
+   decision the web app shipped in 5.50.0). The retired Gemini/OpenAI
+   endpoints must be gone from the panel SOURCE and from the manifest's
+   network permission list — a lingering domain grant is a lingering call
+   path in an inspectable, distributed CCX. */
+check("the panel dials only the one documented engine — retired Gemini/OpenAI hosts are gone from source and manifest",
+  [panelSourceMain, panelSourceIndex, read("panel/manifest.json")].every(source =>
+    !source.includes("generativelanguage.googleapis.com") && !source.includes("api.openai.com")),
+  "a retired provider host lingers in panel source or its manifest permissions");
 /* v5.46 — the download page's footer had quietly slipped TWO web releases
    ("Web App 5.43.0") because nothing read it. Every user-visible version
    badge either follows the release or gets pinned here; this one now does. */

@@ -144,7 +144,7 @@ function create(deps) {
       });
     } else if (current === "settings" && deps.settings) {
       settingsScreen.render(body, {
-        document: doc, settings: deps.settings, rh: deps.rh, oai: deps.oai,
+        document: doc, settings: deps.settings, rh: deps.rh,
         onLanguage: deps.onLanguage, onTheme: deps.onTheme,
         onDensity: function () { mount(); } // re-apply the density class immediately
       });

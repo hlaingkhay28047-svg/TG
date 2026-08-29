@@ -28,7 +28,6 @@ var appController = dep("../ui/app-controller", "appController");
 var errorNormalizer = dep("../providers/runninghub-error-normalizer", "errorNormalizer");
 var adapter = dep("../providers/runninghub-enterprise-adapter", "runninghubAdapter");
 var rhSetupSvc = dep("../providers/runninghub-setup", "runninghubSetup");
-var openaiAdapter = dep("../providers/openai-adapter", "openaiAdapter");
 var registry = dep("../models/model-registry", "modelRegistry");
 var resultGroup = dep("../photoshop/result-group-service", "resultGroupService");
 var maskedPlace = dep("../photoshop/masked-place-service", "maskedPlaceService");
@@ -36,13 +35,10 @@ var wfRegistry = dep("../workflows/workflow-registry", "workflowRegistry");
 var progressStrip = dep("../ui/progress-strip", "progressStrip");
 var dom = dep("../ui/dom", "dom");
 
-/* Route a request to its model's provider adapter (spec §17, §19 — model
-   capabilities/routing are DATA, read from the registry, never hardcoded
-   per call site). Unknown/"auto" models fall back to RunningHub, the
-   original default provider. */
+/* v6.26.0 — one engine: every model routes to the RunningHub Enterprise
+   adapter (the direct-OpenAI adapter left with its provider). */
 function adapterFor(modelId) {
-  var m = registry.getModel(modelId);
-  return (m && m.provider === "openai") ? openaiAdapter : adapter;
+  return adapter;
 }
 
 var DRAFT_KEY = "hnk_free_draft";
@@ -63,10 +59,7 @@ function create(opts) {
     (opts.transport ? function (apiKey) {
       return adapter.makeVerifier({ transport: opts.transport, configOverride: currentOverride() })(apiKey);
     } : undefined);
-  var oaiVerifier = opts.oaiVerifier ||
-    (opts.transport ? openaiAdapter.makeVerifier({ transport: opts.transport }) : undefined);
-
-  var settings = settingsService.create(store, verifier, oaiVerifier);
+  var settings = settingsService.create(store, verifier);
   var history = historyService.create(store);
   var presets = presetService.create(store);
   var rhSetup = rhSetupSvc.create(store);
@@ -81,15 +74,6 @@ function create(opts) {
     verify: function (apiKey) {
       if (!opts.transport) return Promise.resolve({ ok: false, error: { code: "no-transport" } });
       return adapter.verifyKey({ transport: opts.transport, configOverride: currentOverride(), apiKey: apiKey }, apiKey);
-    }
-  };
-
-  // OpenAI key test connection for the Settings screen — no node-mapping to
-  // manage (fixed model/endpoints), so just a verify.
-  var oai = {
-    verify: function (apiKey) {
-      if (!opts.transport) return Promise.resolve({ ok: false, error: { code: "no-transport" } });
-      return openaiAdapter.verifyKey({ transport: opts.transport, apiKey: apiKey }, apiKey);
     }
   };
 
@@ -166,11 +150,10 @@ function create(opts) {
         }
         await panelAuth.requireLease();
         var chosen = adapterFor(request && request.model);
-        var isOai = chosen === openaiAdapter;
         var s = settings.get();
         var res = await chosen.generate({
           transport: opts.transport, configOverride: currentOverride(),
-          apiKey: isOai ? s.oaiKey : s.apiKey, host: opts.host, now: opts.now
+          apiKey: s.apiKey, host: opts.host, now: opts.now
         }, request, { onStage: stageAll });
         if (!res.ok) { status(res.error); return res; }
 
@@ -235,7 +218,6 @@ function create(opts) {
     onLanguage: opts.onLanguage,
     onTheme: opts.onTheme,
     rh: rh,
-    oai: oai,
     onGenerate: handleGenerate
   });
 
@@ -265,7 +247,7 @@ function create(opts) {
   return {
     app: app,
     store: store,
-    services: { settings: settings, history: history, presets: presets, rhSetup: rhSetup, rh: rh, oai: oai },
+    services: { settings: settings, history: history, presets: presets, rhSetup: rhSetup, rh: rh },
     saveDraft: saveDraft,
     runViaProvider: runViaProvider,
     lastRun: function () { return lastRun; },
