@@ -112,6 +112,12 @@ jobs:
       - name: Verify the first-administrator spec patch touches one variable
         run: node test/verify_bootstrap_admin_patch.js
 
+      # The SMTP lane edits the same live spec, from repository secrets in a
+      # public repo: four names written, every other variable byte-for-byte,
+      # and no path — success or refusal — that echoes a credential.
+      - name: Verify the SMTP spec patch is narrow and never echoes a credential
+        run: node test/verify_smtp_secrets_patch.js
+
       # The database-migration lane edits the same live spec, phase by phase.
       # Each phase must change exactly what it means and nothing else — the
       # cluster attach, the two binding flips, the guarded cleanup — with the
