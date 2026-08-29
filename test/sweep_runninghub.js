@@ -136,25 +136,23 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   // ratio, or count at all) — the Create page must hide them rather than
   // let a user configure settings that get silently ignored, and must
   // switch back to visible when a non-upscale model is active.
+  /* v5.50.0 — RunningHub is the one engine: the Quality select and the
+     Gemini branch left with the retirement, so the check covers Ratio/Count
+     hiding for upscale-kind and their return for a prompt-capable model. */
   const genOptsUi = await page.evaluate(() => {
-    document.getElementById("selProvider").value = "runninghub";
     var c1 = rhCfg(); c1.activeModel = "upscale-pro"; rhSaveCfg(c1);
-    document.getElementById("selProvider").onchange();
+    updateGenOptsForRHKind();
     var hiddenForUpscale = document.getElementById("selRatio").style.display === "none"
-      && document.getElementById("selQual").style.display === "none"
       && document.getElementById("selCount").style.display === "none";
     var c2 = rhCfg(); c2.activeModel = "nano-banana-2"; rhSaveCfg(c2);
-    document.getElementById("selProvider").onchange();
+    updateGenOptsForRHKind();
     var visibleForNonUpscale = document.getElementById("selRatio").style.display !== "none"
-      && document.getElementById("selQual").style.display !== "none"
       && document.getElementById("selCount").style.display !== "none";
-    document.getElementById("selProvider").value = "gemini";
-    document.getElementById("selProvider").onchange();
-    var visibleForGemini = document.getElementById("selRatio").style.display !== "none";
-    return { hiddenForUpscale, visibleForNonUpscale, visibleForGemini };
+    var qualGone = !document.getElementById("selQual");
+    return { hiddenForUpscale, visibleForNonUpscale, qualGone };
   });
-  console.log("genOpts UI (upscale-kind hides Ratio/Quality/Count):", JSON.stringify(genOptsUi));
-  const genOptsUiOk = genOptsUi.hiddenForUpscale && genOptsUi.visibleForNonUpscale && genOptsUi.visibleForGemini;
+  console.log("genOpts UI (upscale-kind hides Ratio/Count):", JSON.stringify(genOptsUi));
+  const genOptsUiOk = genOptsUi.hiddenForUpscale && genOptsUi.visibleForNonUpscale && genOptsUi.qualGone;
   console.log(genOptsUiOk ? "PASS (genOpts hidden for upscale-kind, visible otherwise)" : ("FAIL (genOpts UI): " + JSON.stringify(genOptsUi)));
   if (!genOptsUiOk) {
     await browser.close();

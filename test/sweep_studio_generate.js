@@ -17,22 +17,49 @@ const PORT = process.env.PORT || 8931;
   const page = await browser.newPage({ viewport: { width: 420, height: 1000 } });
   page.on("pageerror", e => console.log("PAGEERROR:", String(e).slice(0, 300)));
   await page.addInitScript(`
-    localStorage.setItem("hnk_ws_onboarded","1");
-    localStorage.setItem("hnk_ws_seen","1");
     window.__reqs = [];
+    window.__upB64s = [];
     const realFetch = window.fetch;
     window.fetch = function(url, opts){
-      if (String(url).indexOf(":generateContent") >= 0) {
-        try { window.__reqs.push(JSON.parse(opts.body)); } catch(e) { window.__reqs.push({parseError:String(e)}); }
-        return new Promise(function(resolve){
-          setTimeout(function(){
-            resolve(new Response(JSON.stringify({
-              candidates:[{content:{parts:[{inline_data:{mime_type:"image/png",data:"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="}}]},finishReason:"STOP"}]
-            }), {status:200, headers:{"Content-Type":"application/json"}}));
-          }, 40);
+      var u = String(url);
+      if (u.indexOf("mock.runninghub.test") >= 0) {
+        var bin = atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
+        var bytes = new Uint8Array(bin.length);
+        for (var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+        return Promise.resolve(new Response(bytes, {status:200, headers:{"Content-Type":"image/png"}}));
+      }
+      if (u.indexOf("www.runninghub.ai") < 0) return realFetch.apply(this, arguments);
+      if (u.indexOf("/openapi/v2/media/upload/binary") >= 0) {
+        var done = Promise.resolve();
+        try {
+          if (opts && opts.body && typeof opts.body.forEach === "function") {
+            opts.body.forEach(function(v){
+              if (v && typeof v.arrayBuffer === "function") {
+                done = v.arrayBuffer().then(function(ab){
+                  var by = new Uint8Array(ab), bin2 = "";
+                  for (var i=0;i<by.length;i++) bin2 += String.fromCharCode(by[i]);
+                  window.__upB64s.push(btoa(bin2));
+                });
+              }
+            });
+          }
+        } catch(e) {}
+        return done.then(function(){
+          return new Response(JSON.stringify({code:0,message:"success",data:{type:"image",download_url:"https://mock.runninghub.test/up_0.png",fileName:"openapi/up_0.png",size:"100"}}), {status:200});
         });
       }
-      return realFetch.apply(this, arguments);
+      if (u.indexOf("/openapi/v2/query") >= 0) {
+        return Promise.resolve(new Response(JSON.stringify({taskId:"T1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
+      }
+      /* only a v2 model submit is a generate — the spend ledger's balance
+         and price-preview calls must never count as one */
+      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0) {
+        return Promise.resolve(new Response(JSON.stringify({code:0,data:{remainCoins:"0"}}), {status:200}));
+      }
+      if (opts && typeof opts.body === "string") {
+        try { window.__reqs.push(JSON.parse(opts.body)); } catch(e) { window.__reqs.push({parseError:String(e)}); }
+      }
+      return Promise.resolve(new Response(JSON.stringify({taskId:"T1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
     };
   `);
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
@@ -46,7 +73,7 @@ const PORT = process.env.PORT || 8931;
 
   await page.evaluate(async () => {
     switchPage("pgStudio");
-    state.key = "TEST_KEY";
+    state.rhKey = "TEST_RH_KEY";
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
     const c = document.createElement("canvas"); c.width = 48; c.height = 48;
     const x = c.getContext("2d");
@@ -63,15 +90,14 @@ const PORT = process.env.PORT || 8931;
     const inp = document.getElementById("mu_faceSlim");
     inp.value = "40";
     inp.dispatchEvent(new Event("input", { bubbles: true }));
-    window.__reqs = [];
+    window.__reqs = []; window.__upB64s = [];
     const savedPromptBefore = document.getElementById("prompt").value;
     document.getElementById("btnStGen").onclick();
     for (let w = 0; w < 200 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 30));
     for (let w = 0; w < 200 && document.getElementById("btnStGen").disabled; w++) await new Promise(r => setTimeout(r, 30));
-    const r = window.__reqs[0] || {};
-    const parts = (r.contents && r.contents[0] && r.contents[0].parts) || [];
-    const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
-    const imgs = parts.filter(p => p.inline_data && p.inline_data.data).map(p => p.inline_data.data);
+    const r = window.__reqs.find(x => x && typeof x.prompt === "string" && x.prompt.length) || window.__reqs[0] || {};
+    const txt = String(r.prompt || "");
+    const imgs = window.__upB64s.slice();
     return {
       reqCount: window.__reqs.length,
       has40: /40%/.test(txt),
@@ -137,16 +163,15 @@ const PORT = process.env.PORT || 8931;
 
   async function runGenerate(page) {
     return page.evaluate(async () => {
-      window.__reqs = [];
+      window.__reqs = []; window.__upB64s = [];
       document.getElementById("btnStGen").onclick();
       for (let w = 0; w < 200 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 30));
       for (let w = 0; w < 200 && document.getElementById("btnStGen").disabled; w++) await new Promise(r => setTimeout(r, 30));
-      const r = window.__reqs[0] || {};
-      const parts = (r.contents && r.contents[0] && r.contents[0].parts) || [];
+      const r = window.__reqs.find(x => x && typeof x.prompt === "string" && x.prompt.length) || window.__reqs[0] || {};
       return {
         reqCount: window.__reqs.length,
-        txt: parts.filter(p => p.text).map(p => p.text).join("\n"),
-        imgCount: parts.filter(p => p.inline_data && p.inline_data.data).length
+        txt: String(r.prompt || ""),
+        imgCount: window.__upB64s.length
       };
     });
   }

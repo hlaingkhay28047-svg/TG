@@ -1,5 +1,6 @@
 /* Mocked end-to-end sweep: open every workflow wizard card, fill slots,
-   GENERATE against a mocked Gemini, assert the request is well-formed.
+   GENERATE against a mocked RunningHub (v5.50.0 — the one engine), assert
+   the submitted request is well-formed.
    Run against the deployed docs/app/index.html — the same file real users
    get — not a rebuilt copy, so this catches anything that broke between
    source and what actually shipped.
@@ -15,22 +16,39 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
 
   await page.addInitScript(`
     window.__reqs = [];
+    window.__ups = 0;
     const realFetch = window.fetch;
     window.fetch = function(url, opts){
-      if (String(url).indexOf(":generateContent") >= 0) {
-        try { window.__reqs.push(JSON.parse(opts.body)); } catch(e) { window.__reqs.push({parseError:String(e)}); }
-        return Promise.resolve(new Response(JSON.stringify({
-          candidates:[{content:{parts:[{inline_data:{mime_type:"image/png",data:"${B64}"}}]},finishReason:"STOP"}]
-        }), {status:200, headers:{"Content-Type":"application/json"}}));
+      var u = String(url);
+      if (u.indexOf("mock.runninghub.test") >= 0) {
+        var bin = atob("${B64}");
+        var bytes = new Uint8Array(bin.length);
+        for (var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+        return Promise.resolve(new Response(bytes, {status:200, headers:{"Content-Type":"image/png"}}));
       }
-      return realFetch.apply(this, arguments);
+      if (u.indexOf("www.runninghub.ai") < 0) return realFetch.apply(this, arguments);
+      if (u.indexOf("/openapi/v2/media/upload/binary") >= 0) {
+        window.__ups++;
+        return Promise.resolve(new Response(JSON.stringify({code:0,message:"success",data:{type:"image",download_url:"https://mock.runninghub.test/up_0.png",fileName:"openapi/up_0.png",size:"100"}}), {status:200}));
+      }
+      if (u.indexOf("/openapi/v2/query") >= 0) {
+        return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
+      }
+      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0) {
+        return Promise.resolve(new Response(JSON.stringify({code:0,data:{}}), {status:200}));
+      }
+      /* any other RH call is the model submit — capture its body */
+      if (opts && typeof opts.body === "string") {
+        try { window.__reqs.push(JSON.parse(opts.body)); } catch(e) { window.__reqs.push({parseError:String(e)}); }
+      }
+      return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
     };
   `);
 
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1000);
   await page.evaluate(() => {
-    state.key = "TEST_KEY";
+    state.rhKey = "TEST_RH_KEY";
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
   });
 
@@ -49,7 +67,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       const title = card.querySelector(".t") ? card.querySelector(".t").textContent : ("card" + idx);
       state.refs = [null, null, null, null];
       state.imgRoles = null;
-      window.__reqs = [];
+      window.__reqs = []; window.__ups = 0;
       card.click();
       await sleep(30);
       const gold = () => document.querySelector(".wiz.on .wiz-nav .btn-gold");
@@ -61,22 +79,21 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       gold().click(); await sleep(30);            // step 2 -> 3
       if (!gold()) return title + " :: no GENERATE button";
       gold().click();                              // GENERATE
-      for (let w = 0; w < 100 && !window.__reqs.length; w++) await sleep(50);
+      const hasPrompted = () => window.__reqs.some(x => x && typeof x.prompt === "string" && x.prompt.length);
+      for (let w = 0; w < 120 && !hasPrompted(); w++) await sleep(50);
       if (!window.__reqs.length) return title + " :: no request sent";
-      const r = window.__reqs[0];
+      /* a card may legitimately fire a promptless helper submit first (the
+         BG Replace card's transparent FG cutout does) — judge the prompt on
+         the first submit that actually carries one */
+      const r = window.__reqs.find(x => x && typeof x.prompt === "string" && x.prompt.length) || window.__reqs[0];
       if (!r || r.parseError) return title + " :: bad request body";
-      const parts = r.contents && r.contents[0] && r.contents[0].parts || [];
-      const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
-      const imgs = parts.filter(p => p.inline_data && p.inline_data.data).length;
+      const txt = String(r.prompt || "");
+      const imgs = window.__ups;
       let v = "OK";
       if (txt.length < 60) v = "prompt too short: " + txt.length;
-      else if (imgs < 1) v = "no images in request";
+      else if (imgs < 1) v = "no images uploaded";
       else if (/\{[A-Z_]+\}/.test(txt)) v = "placeholder leftover";
       else if (txt.indexOf("GUARD (HNK edit rule)") < 0) v = "guard missing";
-      else {
-        const gm = (r.generationConfig && r.generationConfig.responseModalities) || [];
-        if (gm.indexOf("IMAGE") < 0) v = "no IMAGE modality";
-      }
       // close wizard + return to workflow page for next card
       const wz = document.getElementById("wiz");
       if (wz) { wz.className = "wiz"; document.body.style.overflow = ""; window._wizOnPick = null; }

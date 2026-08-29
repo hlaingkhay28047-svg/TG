@@ -107,15 +107,16 @@ function report(name, ok, detail) {
     out.D_reasonShown = document.getElementById("moneyProv").textContent.indexOf(
       t("money_norate").replace("{V}", "Google Gemini").slice(0, 24)) >= 0;
 
-    /* E) booked on the image, not on the request. The Gemini call lives inside
-       the generate dispatcher's closure and has no addressable name, so this
-       reads the shipped source: the booking must sit inside the
-       `if(d&&d.data)` branch — the one place an image actually exists — and
-       not next to the fetch, where a safety block or a 503 would be charged. */
-    out.E_gemOnImage = /if\(d&&d\.data\)\{[\s\S]{0,600}?spendNoteRun\("gemini"/.test(SRC);
-    out.E_gemNotOnFetch = SRC.indexOf('generateContent?key=') >= 0 &&
-      !/generateContent\?key=[\s\S]{0,300}?spendNoteRun/.test(SRC);
-    out.E_oaAfterCheck = /if\(!b64\)\{[\s\S]{0,200}?throw e2; \}[\s\S]{0,600}?spendNoteRun\("openai"/.test(String(oaGenerateOne));
+    /* E) v5.50.0 — the retired vendors' generate/booking paths are GONE from
+       the shipped source: no Gemini generateContent dispatch, no
+       oaGenerateOne, no api.openai.com. Their ledger rows above are HISTORY
+       that the vendor-generic ledger must keep rendering (pinned by A–D).
+       The one live booking path is RunningHub's, which books the REPORTED
+       charge only after the poll completes (rhBookSpend on `final`). */
+    out.E_gemGone = SRC.indexOf("generateContent?key=") < 0 &&
+      SRC.indexOf("generativelanguage.googleapis.com") < 0;
+    out.E_oaGone = typeof window.oaGenerateOne === "undefined" && SRC.indexOf("api.openai.com") < 0;
+    out.E_rhBooksReported = /rhV2PollUntilDone[\s\S]{0,400}?rhBookSpend\(taskId, meta, final\)/.test(SRC);
 
     /* F) nine languages */
     const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
@@ -150,9 +151,9 @@ function report(name, ok, detail) {
     r.D_rhHasNoRate && r.D_estShown && r.D_reasonShown,
     { blocks: r.D_blocks, first: r.D_first, rates: r.D_rateInputs,
       rhNoRate: r.D_rhHasNoRate, est: r.D_estShown, reason: r.D_reasonShown });
-  report("E) a Gemini/OpenAI run is booked on the image, never on the request",
-    r.E_gemOnImage && r.E_gemNotOnFetch && r.E_oaAfterCheck,
-    { gemini: r.E_gemOnImage, notOnFetch: r.E_gemNotOnFetch, openai: r.E_oaAfterCheck });
+  report("E) v5.50.0: the Gemini/OpenAI booking paths are gone with their vendors; RunningHub books the reported charge only after the job completes",
+    r.E_gemGone && r.E_oaGone && r.E_rhBooksReported,
+    { gemGone: r.E_gemGone, oaGone: r.E_oaGone, rhBooks: r.E_rhBooksReported });
   report("F) every new string exists in all nine languages",
     r.F_missing.length === 0, r.F_missing);
 

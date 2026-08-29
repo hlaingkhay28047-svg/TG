@@ -47,6 +47,14 @@
    at all trivially renders none when all keys are set, which is exactly why D
    alone would be a worthless assertion.
 
+   v5.50.0 — ONE ENGINE. Gemini and OpenAI are removed outright (owner
+   decision), so the picker's job narrows but does not vanish: a studio
+   without a RunningHub key still opens a picker that must EXPLAIN, not sit
+   silent — one locked RunningHub hint row with the reason, the derived
+   count, and a tap to the Setup card. With the key saved the hint is gone.
+   B/B2/D below now pin that; the three-provider scenarios left with the
+   providers they described.
+
    Usage: PORT=8931 node test/sweep_v529_providerhint.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
 const { withPremium } = require("./_seed_premium.js");
@@ -89,9 +97,8 @@ const openPage = async (browser, keys) => {
   await page.addInitScript(k => {
     try {
       localStorage.setItem("hnk_ws_onboarded", "1");
-      localStorage.setItem("hnk_web_studio_key", "AIzaTESTONLY");
+      /* v5.50.0 — the only key that exists any more */
       if (k.rh) localStorage.setItem("hnk_rh_apikey", "TEST-rh-key");
-      if (k.oa) localStorage.setItem("hnk_oa_apikey", "sk-TESTONLY");
     } catch (e) {}
   }, keys);
   await page.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
@@ -134,22 +141,20 @@ const readPicker = page => page.evaluate(() => {
   const browser = withPremium(await chromium.launch());
   const errs = [];
 
-  /* ---- B + C: the reported case, a Gemini key alone ---- */
+  /* ---- B + C: v5.50.0's reported case — NO RunningHub key yet ---- */
   const p1 = await openPage(browser, {});
   p1.on("pageerror", e => errs.push(String(e).slice(0, 180)));
   const only = await readPicker(p1);
   const rh = only.locked.find(l => l.name === "RunningHub");
-  const oa = only.locked.find(l => l.name === "OpenAI");
 
-  report("B) with only a Gemini key, Gemini stays selectable and both others are shown as locked",
-    only.selectable.length === 1 && only.selectable[0] === "Gemini" && !!rh && !!oa,
+  report("B) with no RunningHub key the picker still explains itself: the one engine row plus one locked RunningHub hint row",
+    only.selectable.length === 1 && only.selectable[0] === "RunningHub" &&
+    only.locked.length === 1 && !!rh,
     { selectable: only.selectable, locked: only.locked.map(l => l.name) });
 
-  report("B2) each locked row carries a reason and is marked not-choosable",
-    !!rh && !!oa && rh.why.length > 8 && oa.why.length > 8 &&
-    rh.ariaDisabled === "true" && oa.ariaDisabled === "true" &&
-    rh.role === "option" && oa.role === "option",
-    { rh: rh, oa: oa });
+  report("B2) the locked row carries a reason and is marked not-choosable",
+    !!rh && rh.why.length > 8 && rh.ariaDisabled === "true" && rh.role === "option",
+    { rh: rh });
 
   report("B3) the locked rows sit under their own header",
     only.headers.length >= 1, { headers: only.headers });
@@ -190,23 +195,17 @@ const readPicker = page => page.evaluate(() => {
     { before, nav });
   await p1.close();
 
-  /* ---- D: it must disappear once there is nothing to say ---- */
-  const p2 = await openPage(browser, { rh: 1, oa: 1 });
+  /* ---- D: it must disappear once there is nothing to say. v5.50.0 — one
+     key is now EVERY key, so the old D2 midpoint (one of three keys) has no
+     separate scenario left and is folded into this. ---- */
+  const p2 = await openPage(browser, { rh: 1 });
   p2.on("pageerror", e => errs.push(String(e).slice(0, 180)));
   const all = await readPicker(p2);
-  report("D) with every key set there are no locked rows and no header",
-    all.locked.length === 0 && all.headers.length === 0 && all.selectable.length === 3,
+  report("D) with the RunningHub key set there are no locked rows and no header — the hint never becomes a permanent nag",
+    all.locked.length === 0 && all.headers.length === 0 &&
+    all.selectable.length === 1 && all.selectable[0] === "RunningHub",
     { selectable: all.selectable, locked: all.locked.length, headers: all.headers });
   await p2.close();
-
-  /* one key in between — the list must shrink, not stay static */
-  const p3 = await openPage(browser, { rh: 1 });
-  p3.on("pageerror", e => errs.push(String(e).slice(0, 180)));
-  const mid = await readPicker(p3);
-  report("D2) adding one key moves that provider from locked to selectable",
-    mid.selectable.length === 2 && mid.locked.length === 1 && mid.locked[0].name === "OpenAI",
-    { selectable: mid.selectable, locked: mid.locked.map(l => l.name) });
-  await p3.close();
 
   /* ---- G: the dim has to be VISIBLE, not just declared ---- */
   const p4 = await openPage(browser, {});

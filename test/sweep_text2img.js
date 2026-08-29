@@ -142,27 +142,23 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const imagineOk = imagine.ok && imagine.body && imagine.body.numImages === "1" && imagine.body.resolution === "2k";
   console.log(imagineOk ? "PASS (imagine size honored + numImages)" : ("FAIL (imagine): " + JSON.stringify(imagine)));
 
-  // ---- v4.28 §3.1: Burmese prompts auto-translate on EVERY provider ----
-  // Before v4.28 the translator gate only ran on the Gemini/Create path, so a
-  // Burmese prompt typed on Text-to-Image was shipped raw to Flux/Qwen/Seedream
-  // (models with no Burmese comprehension) and silently produced garbage.
+  // ---- v5.50.0: the Gemini translate bridge is retired — a Burmese t2i
+  // prompt always ships raw with the English-recommended hint shown, and no
+  // translate call ever leaves the browser. ----
   const MY = "ရွှေရောင် နေဝင်ချိန်မှာ တောင်တန်းတွေ";
-  const trWithKey = await page.evaluate(async (args) => {
-    var [MY] = args;
-    state.key = "TEST_GEMINI_KEY";
+  const trWithKey = await page.evaluate(async () => {
     window.__trCalls.length = 0;
     return null;
-  }, [MY]).then(() => runModel("flux-2-dev", "1:1", "1K", MY, "f-2-dev/text-to-image"));
+  }).then(() => runModel("flux-2-dev", "1:1", "1K", MY, "f-2-dev/text-to-image"));
   const trCalls = await page.evaluate(() => window.__trCalls.length);
   const hintWithKey = await page.evaluate(() => {
     var h = document.getElementById("t2iTrHint");
     return !!h && h.style.display !== "none";
   });
-  console.log("translated t2i body prompt:", JSON.stringify(trWithKey.body && trWithKey.body.prompt));
-  const trOk = trWithKey.ok && trWithKey.body && trCalls === 1
-    && trWithKey.body.prompt.indexOf("TRANSLATED_ENGLISH_PROMPT") >= 0
-    && trWithKey.body.prompt.indexOf(MY) < 0 && !hintWithKey;
-  console.log(trOk ? "PASS (Burmese t2i prompt is translated before it reaches RunningHub; no hint while a key can translate)"
+  console.log("raw Burmese t2i body prompt:", JSON.stringify(trWithKey.body && trWithKey.body.prompt));
+  const trOk = trWithKey.ok && trWithKey.body && trCalls === 0
+    && trWithKey.body.prompt.indexOf(MY) >= 0 && hintWithKey;
+  console.log(trOk ? "PASS (Burmese t2i prompt sends raw with the hint — no translate call leaves the browser)"
     : ("FAIL (t2i translate gate): " + JSON.stringify({ trCalls, hintWithKey, prompt: trWithKey.body && trWithKey.body.prompt })));
 
   // Without a Gemini key there is nothing to translate WITH — the app must say

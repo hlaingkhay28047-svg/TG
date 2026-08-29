@@ -188,7 +188,11 @@ check("localized API-key copy describes the actual provider-only data flow", pri
 check("fully translated landing locales do not fall back to an English privacy tail", landingNativePrivacyCodes.every(language => !effectiveLocaleValue("key.body", language).includes(englishProviderFlow)), "an English-only disclosure leaked into localized copy");
 check("the web app describes the same provider-only API-key flow in every locale", appPrivacyClaims.length === languageCodes.length && appPrivacyClaims.every(hasProviderOnlyFlow), `${appPrivacyClaims.length} localized app notices`);
 check("fully translated app locales do not fall back to an English privacy note", appNativePrivacyCodes.every(language => !effectiveAppLocaleValue("key_note", language).includes(englishProviderFlow)), "an English-only notice leaked into localized copy");
-check("provider credentials route directly to the documented upstream APIs", /var API_BASE\s*=\s*"https:\/\/generativelanguage\.googleapis\.com\/v1beta"/.test(html) && /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && /var OA_BASE\s*=\s*"https:\/\/api\.openai\.com\/v1"/.test(html), "Gemini, RunningHub, or OpenAI base URL drifted");
+/* v5.50.0 — RunningHub Enterprise is the one engine by owner decision. The
+   check now pins BOTH halves of that: the RunningHub base URL is exactly the
+   documented one, and the retired Gemini/OpenAI endpoints are truly gone from
+   the shipped app — a lingering base URL would mean a lingering call path. */
+check("provider credentials route directly to the one documented upstream API", /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && !/generativelanguage\.googleapis\.com/.test(html) && !/api\.openai\.com/.test(html), "RunningHub base URL drifted, or a retired Gemini/OpenAI endpoint lingers");
 check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
 check("the release date is sourced from version.json", /^\d{4}-\d{2}-\d{2}$/.test(releaseDate || ""), releaseDate || "missing released date");
 check("every landing locale carries current Account Center acquisition copy",

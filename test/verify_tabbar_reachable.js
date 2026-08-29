@@ -92,7 +92,8 @@ const PORT = process.env.PORT || 8931;
           movedThere: before !== "pgHome" && active() === "pgHome",
           onSetup: document.getElementById("pgHome").className.indexOf("on") >= 0,
           gearHighlighted: gear.className.indexOf("on") >= 0,
-          apiKeyFieldPresent: !!document.getElementById("apiKey")
+          /* v5.50.0 — the RunningHub key field is the one engine field */
+          apiKeyFieldPresent: !!document.getElementById("rhKey")
         });
       }, 300);
     });

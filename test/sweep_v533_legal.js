@@ -120,7 +120,11 @@ report("E1) the claim \"no analytics, no tracker, no third-party script\" holds"
   { app: ANALYTICS.test(APP), landing: ANALYTICS.test(LANDING) });
 
 /* every absolute URL the client POSTs a body to */
-const PROVIDER_HOSTS = ["generativelanguage.googleapis.com", "www.runninghub.ai", "api.openai.com"];
+/* v5.50.0 — one engine: the key goes to RunningHub and NOWHERE else. The
+   retired providers' hosts must now be ABSENT from the app, which is the
+   same privacy claim in its strongest form. */
+const PROVIDER_HOSTS = ["www.runninghub.ai"];
+const RETIRED_HOSTS = ["generativelanguage.googleapis.com", "api.openai.com"];
 const ourUploads = [...APP.matchAll(/\/storage\/v1\/object\/([a-z-]+)/g)].map(m => m[1]);
 /* v5.45.0 — the payment-proof upload left with the dead payment flow, so the
    claim now holds in its strongest form: the app writes to NO bucket at all. */
@@ -133,10 +137,12 @@ report("E3) the claim \"the device id is a random number, not a fingerprint\" ho
   /accRandomId\(\)/.test(devIdFn) && !/userAgent|canvas|webgl|screen\.|fonts/i.test(devIdFn),
   { body: devIdFn.replace(/\s+/g, " ").slice(0, 150) });
 
-report("E4) the claim \"your API keys stay in your browser\" holds — the provider bases are unchanged",
+report("E4) the claim \"your API key stays in your browser\" holds — the one provider base is present and the retired hosts are gone",
   PROVIDER_HOSTS.every(h => APP.indexOf(h) > 0) &&
+  RETIRED_HOSTS.every(h => APP.indexOf(h) < 0) &&
   !/apiKey|api_key/.test((APP.match(/accFetch\([\s\S]{0,200}?apikey[\s\S]{0,200}?\)/) || [""])[0].replace(/apikey/g, "")),
-  { providers: PROVIDER_HOSTS.filter(h => APP.indexOf(h) > 0) });
+  { providers: PROVIDER_HOSTS.filter(h => APP.indexOf(h) > 0),
+    retiredStillPresent: RETIRED_HOSTS.filter(h => APP.indexOf(h) > 0) });
 
 report("E5) the claim \"your results stay in your browser\" holds — the gallery is IndexedDB with no server mirror",
   /indexedDB\.open\("hnk_web_studio"/.test(APP) && ourUploads.length === 0,

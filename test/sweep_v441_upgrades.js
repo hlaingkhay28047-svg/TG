@@ -2,14 +2,15 @@
    1. visual ratio chip rails (shape = aspect, tap writes the native select,
       model narrowing re-renders, upscale-kind hiding mirrors)
    2. Home: greeting header, 6-card grid art, gallery-backed Continue fallback
-   3. Setup: readiness strip, About/updates card, backup export, key removal
+   3. Setup: readiness strip, About/updates card, backup export, one-engine
+      key card (v5.50.0: RunningHub only — the Gemini key card and its
+      removal control are gone)
    4. Workflow page: category jump rail, photo-count pills, alias search with
       live count, wedding sub-group chips, favorites hint
    5. Library: token-AND + Burmese alias search, favorites filter, full-screen
       viewer; Gallery: provenance line, n/60 meter, IMAGE 2, select-all
-   6. Generate: engine-honest UI (Gemini model picker hidden on other
-      providers), provider-aware button, ETA line, settings persistence,
-      result provenance
+   6. Generate: engine-honest UI, RunningHub-named button, ETA line, settings
+      persistence, result provenance
    7. i18n: 30-language picker with my/en fallback resolution */
 const { chromium } = require("playwright-core");
 const { withPremium } = require("./_seed_premium.js");
@@ -32,7 +33,8 @@ function report(name, ok, detail) {
   await page.addInitScript(() => {
     localStorage.setItem("hnk_ws_onboarded", "1");
     localStorage.setItem("hnk_ws_seen", "1");
-    localStorage.setItem("hnk_web_studio_key", "AIzaTestKeyValue");
+    /* v5.50.0 — the app is RunningHub-only; its key is the one boot restores */
+    localStorage.setItem("hnk_rh_apikey", "TEST_RH_KEY");
   });
   page.on("pageerror", e => report("no page error", false, e.message));
   await page.goto(BASE);
@@ -97,9 +99,10 @@ function report(name, ok, detail) {
     switchPage("pgHome");
     await new Promise(r => setTimeout(r, 350));
     const rows = Array.from(document.querySelectorAll("#setupStatusRows .acc-kv"));
-    /* 4 ready/not-ready rows (Gemini, RunningHub, OpenAI, Account) + 3 pure
-       navigation shortcuts (Money, Data, About — v5.18 UI/UX wave) = 7 */
-    const gemReady = rows.length === 7 && /✓/.test(rows[0].textContent);
+    /* v5.50.0 — ONE engine: 2 ready/not-ready rows (RunningHub, Account) + 3
+       pure navigation shortcuts (Money, Data, About) = 5. The Gemini and
+       OpenAI rows left with their providers. */
+    const rhReady = rows.length === 5 && /RunningHub/.test(rows[0].textContent) && /✓/.test(rows[0].textContent);
     document.getElementById("btnCheckUpdate").click();
     await new Promise(r => setTimeout(r, 900));
     const upToDate = /✓/.test(document.getElementById("stAbout").textContent);
@@ -109,14 +112,12 @@ function report(name, ok, detail) {
     HTMLAnchorElement.prototype.click = function () { exported = this.download; };
     document.getElementById("btnExportData").click();
     HTMLAnchorElement.prototype.click = orig;
-    const del = document.getElementById("stKeyDel");
-    const delVisible = del && del.style.display !== "none";
-    window.confirm = () => true;
-    del.click();
-    const keyGone = !localStorage.getItem("hnk_web_studio_key");
-    // restore for later checks
-    localStorage.setItem("hnk_web_studio_key", "AIzaTestKeyValue"); state.key = "AIzaTestKeyValue";
-    return { gemReady, upToDate, ver, appVer: APP_VER, exported, delVisible, keyGone,
+    /* v5.50.0 — the Gemini key card (and its #stKeyDel removal control) is
+       GONE; the one engine card is #cardRh with its Save & Verify flow. */
+    const rhCard = !!document.getElementById("rhKey") && !!document.getElementById("btnSaveRhKey");
+    const gemCardGone = !document.getElementById("apiKey") && !document.getElementById("btnSaveKey")
+      && !document.getElementById("stKeyDel");
+    return { rhReady, upToDate, ver, appVer: APP_VER, exported, rhCard, gemCardGone,
       dataLine: document.getElementById("dataStore").textContent.indexOf("KB") >= 0 || document.getElementById("dataStore").textContent.indexOf("MB") >= 0 };
   });
   /* The pay hint is a SIGNED-OUT string — "sign in before you can buy" — so from
@@ -147,10 +148,10 @@ function report(name, ok, detail) {
   });
   await outPage.close();
 
-  report("Setup: readiness strip live, manual update check reports current, backup exports a file, key removal works, logged-out sign-in prompt",
+  report("Setup: 5-row readiness strip with RunningHub ✓ first, manual update check reports current, backup exports a file, one-engine key card only (Gemini card gone), logged-out sign-in prompt",
     /* the version LINE must name the build, whatever the build is — pinning
        this to /^v4\./ made a major bump look like a Setup regression */
-    setup.gemReady && setup.upToDate && setup.ver === "v" + setup.appVer && /^\d+\.\d+\.\d+$/.test(setup.appVer) && /hnk-backup-/.test(setup.exported || "") && setup.delVisible && setup.keyGone && setup.authPrompt && setup.dataLine,
+    setup.rhReady && setup.upToDate && setup.ver === "v" + setup.appVer && /^\d+\.\d+\.\d+$/.test(setup.appVer) && /hnk-backup-/.test(setup.exported || "") && setup.rhCard && setup.gemCardGone && setup.authPrompt && setup.dataLine,
     setup);
 
   /* ---- 4) Workflow page ---- */
@@ -239,21 +240,25 @@ function report(name, ok, detail) {
     switchPage("pgCreate");
     await new Promise(r => setTimeout(r, 250));
     const out = {};
-    out.btnGemini = document.getElementById("btnGen").textContent.indexOf("Gemini") >= 0;
+    /* v5.50.0 — the button names the ONE engine, and the model select is the
+       RunningHub model picker (visible for every non-hidden state) */
+    out.btnRh = document.getElementById("btnGen").textContent.indexOf("RunningHub") >= 0;
+    out.noGeminiBtn = document.getElementById("btnGen").textContent.indexOf("Gemini") < 0;
     out.eta = document.getElementById("genEta").textContent.indexOf("≈") >= 0;
-    out.modelShownForGemini = document.getElementById("selModel").style.display !== "none";
+    out.modelShown = document.getElementById("selModel").style.display !== "none"
+      && document.getElementById("selModel").options.length > 0;
     document.getElementById("selRatio").value = "4:5";
     document.getElementById("selRatio").dispatchEvent(new Event("change"));
     out.persisted = (JSON.parse(localStorage.getItem("hnk_ws_create") || "{}").selRatio) === "4:5";
-    state.hist.unshift({ mime: "image/png", b64: "AAAA", _prov: "Gemini · test-model" });
+    state.hist.unshift({ mime: "image/png", b64: "AAAA", _prov: "RunningHub · test-model" });
     state.histSel = 0; showResult();
-    out.provLine = document.getElementById("resProv").textContent === "Gemini · test-model";
+    out.provLine = document.getElementById("resProv").textContent === "RunningHub · test-model";
     state.hist.shift();
     out.share = !!document.getElementById("btnShareRes");
     return out;
   });
-  report("Generate: provider-named button, ETA line, model select visible for Gemini, settings persist, result provenance line, share button present",
-    gen.btnGemini && gen.eta && gen.modelShownForGemini && gen.persisted && gen.provLine && gen.share, gen);
+  report("Generate: RunningHub-named button (no Gemini text), ETA line, RH model picker populated, settings persist, result provenance line, share button present",
+    gen.btnRh && gen.noGeminiBtn && gen.eta && gen.modelShown && gen.persisted && gen.provLine && gen.share, gen);
 
   /* ---- 7) grouped language picker + fallback resolution ----
      v4.43 grew the picker to 35 (Asia set: ne/lo/km/ja/ko) in 3 optgroups;

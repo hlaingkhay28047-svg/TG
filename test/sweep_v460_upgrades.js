@@ -150,7 +150,10 @@ function report(name, ok, detail) {
      wiring via fetchWithTimeout) — the premise itself (no prompt field in
      the body) is unchanged, so the pin follows the signature, not drops it */
   const C_premise = /async function rhV2SubmitUpscale\(apiKey, apiPath, imageUrl, scale, signal\)\{\s*var body = \{ imageUrl: imageUrl\|\|"", scale: scale\|\|"2x" \};/.test(SRC);
-  const C_dispatch = /rhGenerateUpscale\(state\.rhKey, rhActiveForFallback\.apiPath, refDataUrls, sizeSel, onTick, genAbort\.signal\)/.test(SRC);
+  /* v5.50.0 — the dispatcher's active-model variable is plain `rhActive` now
+     (the fallback-chain naming left with the retired providers); the pinned
+     premise is unchanged: the upscale route gets NO prompt argument. */
+  const C_dispatch = /rhGenerateUpscale\(state\.rhKey, rhActive\.apiPath, refDataUrls, sizeSel, onTick, genAbort\.signal\)/.test(SRC);
   report("C) an upscale endpoint really cannot take a prompt, and the dispatcher really sends none",
     C_premise && C_dispatch, { body: C_premise, dispatch: C_dispatch });
   report("C) the footer detects an upscale model and says the prompt will be discarded",

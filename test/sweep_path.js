@@ -38,43 +38,54 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     localStorage.setItem("hnk_ws_seen", "1");
   });
   await page.addInitScript(`
-    window.__reqs = [];        // recorded :generateContent calls
-    window.__gemDelay = 60;    // ms each call stalls (Stop / re-entrancy windows)
-    window.__failAt = -1;      // 0-based call index that answers HTTP 500
+    window.__reqs = [];        // recorded RunningHub model SUBMITS (v5.50.0 — the one engine)
+    window.__rhDelay = 60;     // ms each submit stalls (Stop / re-entrancy windows)
+    window.__failAt = -1;      // 0-based submit index that answers HTTP 500
     window.__pickN = 0;        // #ptFilePick.click() spy
     const realFetch = window.fetch;
+    function png(){
+      var bin = atob("${B64}"), bytes = new Uint8Array(bin.length);
+      for (var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return new Response(bytes, {status:200, headers:{"Content-Type":"image/png"}});
+    }
     window.fetch = function(url, opts){
       var u = String(url);
-      if (u.indexOf(":generateContent") >= 0) {
-        var body = null; try { body = JSON.parse(opts.body); } catch(e) {}
-        var isPing = !!(body && body.contents && body.contents[0] && body.contents[0].parts
-          && body.contents[0].parts.length === 1 && body.contents[0].parts[0].text === "ping");
-        if (isPing) return Promise.resolve(new Response(JSON.stringify({candidates:[{content:{parts:[{text:"pong"}]}}]}), {status:200}));
-        var idx = window.__reqs.length;
-        window.__reqs.push({ url: u, body: body });
-        var res;
-        if (idx === window.__failAt) {
-          res = new Response(JSON.stringify({error:{code:500,status:"INTERNAL",message:"mock server error"}}), {status:500});
-        } else {
-          res = new Response(JSON.stringify({candidates:[{content:{parts:[
-            {inline_data:{mime_type:"image/png", data:"${B64}"}}]},finishReason:"STOP"}]}), {status:200});
-        }
-        return new Promise(function(ok){ setTimeout(function(){ ok(res); }, window.__gemDelay); });
+      if (u.indexOf("mock.runninghub.test") >= 0) return Promise.resolve(png());
+      if (u.indexOf("www.runninghub.ai") < 0) return realFetch.apply(this, arguments);
+      if (u.indexOf("/media/upload/binary") >= 0)
+        return Promise.resolve(new Response(JSON.stringify({code:0,message:"success",data:{download_url:"https://mock.runninghub.test/up.png",fileName:"openapi/up.png"}}), {status:200}));
+      if (u.indexOf("/openapi/v2/query") >= 0)
+        return Promise.resolve(new Response(JSON.stringify({taskId:"t1",status:"SUCCESS",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png"}]}), {status:200}));
+      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0)
+        return Promise.resolve(new Response(JSON.stringify({code:0,data:{}}), {status:200}));
+      var body = null; try { body = JSON.parse(opts.body); } catch(e) {}
+      var idx = window.__reqs.length;
+      window.__reqs.push({ url: u, body: body });
+      var res;
+      if (idx === window.__failAt) {
+        res = new Response(JSON.stringify({code:500,message:"mock server error"}), {status:500});
+      } else {
+        res = new Response(JSON.stringify({taskId:"t1",status:"RUNNING"}), {status:200});
       }
-      return realFetch.apply(this, arguments);
+      return new Promise(function(ok){ setTimeout(function(){ ok(res); }, window.__rhDelay); });
     };
   `);
 
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1000);
   await page.evaluate(() => {
-    state.key = "TEST_KEY";
+    state.rhKey = "TEST_KEY";
     window.scrollTo = function(){};
     Element.prototype.scrollIntoView = function(){};
     document.getElementById("ptFilePick").click = function(){ window.__pickN++; };
-    /* seed helper + gallery counter used by several checks below */
+    /* seed helper + gallery counter used by several checks below.
+       v5.50.0 — the dataUrl must be REAL base64 now: the RunningHub flow
+       atob()s it for the upload, unlike the old Gemini flow which passed the
+       string through untouched. This function body is serialized by
+       page.evaluate, so "${B64}" here would be a literal — the real bytes
+       arrive via window.__B64 (set right after this evaluate). */
     window.__seed = function(n, from){
-      const du = "data:image/png;base64," + "${B64}";
+      const du = "data:image/png;base64," + window.__B64;
       const list = [];
       for (let i = 0; i < n; i++) list.push({ name: "wed-" + ((from||0) + i + 1) + ".jpg", dataUrl: du });
       return ptIngestDataUrls(list);
@@ -84,7 +95,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       state.pt.look = "pt_foliage"; state.pt.tier = "fast";
       state.pt.fx = { blur:"off", fg:"off", sync:false, proLight:true, frame:"off" };
       state.pt.custom = "";
-      window.__reqs = []; window.__failAt = -1; window.__gemDelay = 60;
+      window.__reqs = []; window.__failAt = -1; window.__rhDelay = 60;
       ptSync();
     };
     window.__galCount = function(){
@@ -104,13 +115,12 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     console.log((ok ? "PASS" : "FAIL") + " (" + name + ")" + (extra ? " :: " + extra : ""));
     if (!ok) allOk = false;
   }
-  const joinedText = r => {
-    const parts = (r && r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    return parts.filter(p => p.text).map(p => p.text).join("\n");
-  };
+  /* v5.50.0 — the captured request is a RunningHub submit: the prompt is a
+     plain body field and the image rides as the uploaded file's URL */
+  const joinedText = r => String((r && r.body && r.body.prompt) || "");
   const hasImage = r => {
-    const parts = (r && r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    return parts.some(p => p.inline_data && p.inline_data.data);
+    const b = (r && r.body) || {};
+    return (Array.isArray(b.imageUrls) && b.imageUrls.length > 0) || !!b.image || !!b.imageUrl;
   };
 
   // ---------------------------------------------------------------- 1
@@ -223,27 +233,27 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     window.__reset();
     window.__seed(5);
     const gal0 = await window.__galCount();
-    /* make the pre-run values of every borrowed control distinctive */
-    document.getElementById("selModel").value = "auto";
-    document.getElementById("selQual").value = "high";
+    /* make the pre-run values of every borrowed control distinctive.
+       v5.50.0 — selQual left with Gemini (_forceQualityHigh is the internal
+       replacement) and selModel is now the RH model picker whose value the
+       run may legitimately re-sync, so the restored-controls pin covers the
+       three the Path runner forces: Ratio (blanked), Count (forced 1),
+       Size (tier). */
     document.getElementById("selRatio").value = "9:16";
     document.getElementById("selCount").value = "2";
     document.getElementById("selSize").value = "4K";
     document.getElementById("prompt").value = "MY FREEFORM PROMPT";
     state.refs = [{mime:"image/png", b64:"FREEFORMREF", label:"kept"}, null, null];
-    const pre = ["selModel","selQual","selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
+    const pre = ["selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
     window.__reqs = [];
     await ptRunAll(null);
-    const post = ["selModel","selQual","selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
+    const post = ["selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
     const gal1 = await window.__galCount();
     return {
       reqs: window.__reqs.length,
-      texts: window.__reqs.map(r => {
-        const parts = r.body.contents[0].parts;
-        return parts.filter(p => p.text).map(p => p.text).join("\n");
-      }),
-      images: window.__reqs.map(r => r.body.contents[0].parts.some(p => p.inline_data && p.inline_data.data)),
-      models: window.__reqs.map(r => (r.url.match(/models\/([^:]+):/) || [])[1]),
+      texts: window.__reqs.map(r => String(r.body.prompt || "")),
+      images: window.__reqs.map(r => (Array.isArray(r.body.imageUrls) && r.body.imageUrls.length > 0) || !!r.body.image || !!r.body.imageUrl),
+      models: window.__reqs.map(r => (r.url.match(/openapi\/v2\/(.+)$/) || [])[1]),
       badges: [...document.querySelectorAll("#ptGrid .pt-badge")].map(b => b.className.replace("pt-badge ", "")),
       galDelta: gal1 - gal0,
       selectsRestored: JSON.stringify(pre) === JSON.stringify(post),
@@ -253,9 +263,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       busy: PT.busy, rsBusy: rsBusy
     };
   });
-  report("5 mocked batch generates N results: 5 photos -> 5 flash requests, each carrying the composed Path prompt AND its inline photo, all 5 badges land done, the Gallery grew by exactly 5 (no double-add), and every borrowed control (selModel/Qual/Ratio/Count/Size, #prompt, state.refs) is restored to its pre-run value",
+  report("5 mocked batch generates N results: 5 photos -> 5 RunningHub fast-tier submits, each carrying the composed Path prompt AND its uploaded photo URL, all 5 badges land done, the Gallery grew by exactly 5 (no double-add), and every borrowed control (selRatio/Count/Size, #prompt, state.refs) is restored to its pre-run value",
     r5.reqs === 5 && r5.texts.every(t => t.indexOf("dappled leaf-and-branch shadows") >= 0 && t.indexOf("PRESERVE EXACTLY:") >= 0)
-      && r5.images.every(Boolean) && r5.models.every(m => m === "gemini-2.5-flash-image")
+      && r5.images.every(Boolean) && r5.models.every(m => m === "rhart-image-n-g31-flash/image-to-image")
       && r5.badges.length === 5 && r5.badges.every(b => b === "done")
       && r5.galDelta === 5 && r5.selectsRestored && r5.promptRestored && r5.refsRestored && !r5.busy && !r5.rsBusy,
     JSON.stringify({ reqs: r5.reqs, badges: r5.badges, galDelta: r5.galDelta, models: r5.models, pre: r5.pre, post: r5.post, promptRestored: r5.promptRestored, refsRestored: r5.refsRestored }));
@@ -269,7 +279,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     const thumbFilters = [...document.querySelectorAll("#ptGrid .pt-th img")].map(i => i.style.filter);
     window.__reqs = [];
     await ptRunAll(null);
-    const texts = window.__reqs.map(r => r.body.contents[0].parts.filter(p => p.text).map(p => p.text).join("\n"));
+    const texts = window.__reqs.map(r => String(r.body.prompt || ""));
     return {
       reqs: window.__reqs.length,
       p0Foliage: texts[0].indexOf("dappled leaf-and-branch shadows") >= 0,
@@ -287,7 +297,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const r7 = await page.evaluate(async () => {
     window.__reset();
     window.__seed(5);
-    window.__gemDelay = 400;
+    window.__rhDelay = 400;
     window.__reqs = [];
     const run = ptRunAll(null);
     /* let the first photo's request go out, then Stop */
@@ -298,7 +308,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     const badges = [...document.querySelectorAll("#ptGrid .pt-badge")].map(b => b.className.replace("pt-badge ", ""));
     /* Run must be tappable again straight away */
     const runnable = !document.getElementById("btnPtRun").disabled;
-    window.__gemDelay = 60;
+    window.__rhDelay = 60;
     return {
       midReqs, total: window.__reqs.length,
       badges,
@@ -336,7 +346,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const r9 = await page.evaluate(async () => {
     window.__reset();
     window.__seed(3);
-    window.__gemDelay = 300;
+    window.__rhDelay = 300;
     window.__reqs = [];
     const a = document.getElementById("btnPtRun").onclick();
     const b = document.getElementById("btnPtRun").onclick();   // double tap, same tick
@@ -349,7 +359,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       new Promise(r => setTimeout(() => r(false), 40))
     ]);
     await a;
-    window.__gemDelay = 60;
+    window.__rhDelay = 60;
     return { duringFirst, total: window.__reqs.length, busy: PT.busy, secondWasSwallowed };
   });
   report("9 re-entrancy: a second Run tap while the first pass is in flight is swallowed by the shared rsBusy/PT.busy guard — only one request is open at a time and the batch still totals 3, not 6",

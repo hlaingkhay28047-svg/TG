@@ -117,11 +117,12 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(labelOk ? "PASS (W1: video model keeps its id but no longer claims to be a Gemini engine)"
     : ("FAIL (W1 label): " + JSON.stringify(label)));
 
-  // ---- v4.28 §3.1: Burmese video prompts translate too ----
+  // ---- v5.50.0: the Gemini translate bridge is retired — a Burmese video
+  // prompt now always sends exactly as written, with the English-recommended
+  // hint shown, and no translate call can ever leave the browser. ----
   const MY = "မိန်းကလေးက ဖြည်းဖြည်းချင်း လှည့်ကြည့်ပြီး ပြုံးတယ်";
   const trVid = await page.evaluate(async (args) => {
     var [b64, MY] = args;
-    state.key = "TEST_GEMINI_KEY";
     window.__trCalls.length = 0; window.__rhBodies.length = 0;
     document.getElementById("vidResultBox").className = "card result-box";
     document.getElementById("selVidModel").value = "rh-video-g-off";
@@ -139,11 +140,10 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       hint: document.getElementById("vidTrHint").style.display !== "none"
     };
   }, [B64, MY]);
-  console.log("translated video body:", JSON.stringify(trVid));
-  const trVidOk = trVid.ok && trVid.calls === 1 && trVid.body && !trVid.hint
-    && String(trVid.body.prompt || "").indexOf("TRANSLATED_ENGLISH_PROMPT") >= 0
-    && String(trVid.body.prompt || "").indexOf(MY) < 0;
-  console.log(trVidOk ? "PASS (Burmese video prompt is translated before it reaches RunningHub)"
+  console.log("raw Burmese video body:", JSON.stringify(trVid));
+  const trVidOk = trVid.ok && trVid.calls === 0 && trVid.body && trVid.hint
+    && String(trVid.body.prompt || "").indexOf(MY) >= 0;
+  console.log(trVidOk ? "PASS (Burmese video prompt sends raw — no translate call leaves the browser)"
     : ("FAIL (video translate gate): " + JSON.stringify(trVid)));
 
   const noKeyVid = await page.evaluate(async (args) => {

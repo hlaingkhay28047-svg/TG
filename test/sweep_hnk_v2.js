@@ -40,23 +40,10 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     const realFetch = window.fetch;
     window.fetch = function(url, opts){
       var u = String(url);
-      if (u.indexOf(":generateContent") >= 0) {
-        var thisCall = window.__callN;
-        try { window.__reqs.push({ url: u, body: JSON.parse(opts.body) }); } catch(e) { window.__reqs.push({ url: u, parseError: String(e) }); }
-        window.__callN++;
-        var out = window.__outs[thisCall] || "${B64}";
-        // response delay AFTER recording — same re-entrancy window the
-        // retouch-studio harness uses
-        return new Promise(function(resolve){
-          setTimeout(function(){
-            resolve(new Response(JSON.stringify({
-              candidates:[{content:{parts:[{inline_data:{mime_type:"image/png",data: out}}]},finishReason:"STOP"}]
-            }), {status:200, headers:{"Content-Type":"application/json"}}));
-          }, 60);
-        });
-      }
       if (u.indexOf("mock.runninghub.test") >= 0) {
-        var bin = atob("${B64}");
+        var mo = /out_(\\d+)\\.png/.exec(u);
+        var payload = (mo && window.__outs[+mo[1]]) || "${B64}";
+        var bin = atob(payload);
         var bytes = new Uint8Array(bin.length);
         for (var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
         return Promise.resolve(new Response(bytes, {status:200, headers:{"Content-Type":"image/png"}}));
@@ -66,12 +53,28 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
           return Promise.resolve(new Response(JSON.stringify({code:0,message:"success",data:{type:"image",download_url:"https://mock.runninghub.test/in.png",fileName:"openapi/in.png",size:"100"}}), {status:200}));
         }
         if (u.indexOf("/openapi/v2/query") >= 0) {
-          return Promise.resolve(new Response(JSON.stringify({taskId:"T1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
+          var tn = 0;
+          try { tn = +(/T(\\d+)/.exec(JSON.parse(opts.body).taskId)||[0,0])[1]; } catch(e){}
+          return Promise.resolve(new Response(JSON.stringify({taskId:"T"+tn,status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out_"+tn+".png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
         }
         if (u.indexOf("topazlabs/image-upscale-standard-v2") >= 0) {
           try { window.__rhReqs.push({ url: u, body: JSON.parse(opts.body) }); } catch(e) { window.__rhReqs.push({ url: u, parseError: String(e) }); }
-          return Promise.resolve(new Response(JSON.stringify({taskId:"T1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
+          return Promise.resolve(new Response(JSON.stringify({taskId:"T999",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
         }
+        if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0) {
+          return Promise.resolve(new Response(JSON.stringify({code:0,data:{}}), {status:200}));
+        }
+        /* v5.50.0 — every other RH call is a main-model submit (the one
+           engine); record it exactly like the old Gemini branch did, delay
+           AFTER recording for the same re-entrancy window */
+        var thisCall = window.__callN;
+        try { window.__reqs.push({ url: u, body: JSON.parse(opts.body) }); } catch(e) { window.__reqs.push({ url: u, parseError: String(e) }); }
+        window.__callN++;
+        return new Promise(function(resolve){
+          setTimeout(function(){
+            resolve(new Response(JSON.stringify({taskId:"T"+thisCall,status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
+          }, 60);
+        });
       }
       return realFetch.apply(this, arguments);
     };
@@ -80,7 +83,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1000);
   await page.evaluate(() => {
-    state.key = "TEST_KEY";
+    state.rhKey = "TEST_RH_KEY";
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
     // the picker stub: V2's START doubles as the photo picker when slot 0 is empty
     document.getElementById("filePick").click = function(){ window.__pickN++; };
@@ -91,10 +94,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     console.log((ok ? "PASS" : "FAIL") + " (" + name + ")" + (extra ? " :: " + extra : ""));
     if (!ok) allOk = false;
   }
-  const joinedText = r => {
-    const parts = (r && r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    return parts.filter(p => p.text).map(p => p.text).join("\n");
-  };
+  const joinedText = r => String((r && r.body && r.body.prompt) || "");
 
   // 1) hero present + gen-bar picker gating: an empty tap opens the picker,
   // sends nothing and errors nothing
@@ -119,26 +119,25 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     // pin the defaults regardless of any state a previous check persisted
     state.v2 = { strength:60, mode:"both", quality:"fast", balance:0, blemish:60, deshine:0, tone:"off", toneStrength:42, hair:"off", outfit:"off" };
     renderV2Hero();
-    const pre = ["selModel","selQual","selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
+    const pre = ["selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
     // make the pre-run values distinctive so a non-restore is visible
-    document.getElementById("selModel").value = "auto";
     document.getElementById("selRatio").value = "9:16";
     document.getElementById("selCount").value = "2";
-    const pre2 = ["selModel","selQual","selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
+    const pre2 = ["selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
     window.__reqs = []; window.__callN = 0;
     await document.getElementById("btnV2Start").onclick();
-    const post = ["selModel","selQual","selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
+    const post = ["selRatio","selCount","selSize"].map(id => document.getElementById(id).value);
     // put the shared selects back to their defaults: later checks (Manual
     // layer) generate through the live selects, where count=2 would honestly
     // fire two requests
     document.getElementById("selRatio").value = "";
     document.getElementById("selCount").value = "1";
     const r = window.__reqs[0] || {};
-    const parts = (r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
+    const txt = String((r.body && r.body.prompt) || "");
     return {
       reqCount: window.__reqs.length,
-      urlFlash: String(r.url || "").indexOf("gemini-2.5-flash-image") >= 0,
+      urlFlash: String(r.url || "").indexOf("rhart-image-n-g31-flash/image-to-image") >= 0,
+      noQualityLine: txt.indexOf("QUALITY: ultra-detailed") < 0,
       has60: txt.indexOf("(60%)") >= 0,
       hasTexture: txt.indexOf("SKIN TEXTURE") >= 0,
       hasColor: txt.indexOf("SKIN COLOR") >= 0,
@@ -149,10 +148,10 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       pre, pre2, post
     };
   }, B64);
-  report("Fast defaults compose the full prompt on flash and restore the shared selects",
+  report("Fast defaults compose the full prompt on the RH model and restore the shared selects",
     fastResult.reqCount === 1 && fastResult.urlFlash && fastResult.has60 && fastResult.hasTexture
     && fastResult.hasColor && fastResult.hasNeverBlur && fastResult.hasGuard && fastResult.noRatioLine
-    && fastResult.selectsRestored,
+    && fastResult.noQualityLine && fastResult.selectsRestored,
     JSON.stringify(fastResult));
 
   // 3+4) Quality tier + Subtle dot + single mode reshape the request; the
@@ -165,13 +164,11 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     const beforeFirst = state.hist[0];
     await document.getElementById("btnV2Start").onclick();
     const r = window.__reqs[0] || {};
-    const parts = (r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
-    const ic = (r.body && r.body.generationConfig && r.body.generationConfig.imageConfig) || {};
+    const txt = String((r.body && r.body.prompt) || "");
     return {
       reqCount: window.__reqs.length,
-      urlPro: String(r.url || "").indexOf("gemini-3-pro-image-preview") >= 0,
-      imageSize2K: ic.imageSize === "2K",
+      urlPro: String(r.url || "").indexOf("rhart-image-n-g31-flash/image-to-image") >= 0,
+      imageSize2K: txt.indexOf("QUALITY: ultra-detailed") >= 0, /* the tier's QUALITY line replaces the old 2K model force */
       has30: txt.indexOf("(30%)") >= 0,
       hasOrangeYellow: txt.indexOf("orange/yellow") >= 0,
       noTextureBlock: txt.indexOf("SKIN TEXTURE") < 0,
@@ -183,7 +180,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       logStamped: /\[\d\d:\d\d:\d\d\]/.test(document.getElementById("v2Log").textContent)
     };
   });
-  report("Quality tier forces pro model + 2K; Subtle dot + Color-only mode reshape the prompt",
+  report("Quality tier forces the QUALITY finish line; Subtle dot + Color-only mode reshape the prompt",
     qualityResult.reqCount === 1 && qualityResult.urlPro && qualityResult.imageSize2K
     && qualityResult.has30 && qualityResult.hasOrangeYellow && qualityResult.noTextureBlock,
     JSON.stringify(qualityResult));
@@ -205,8 +202,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     window.__reqs = []; window.__callN = 0;
     await document.getElementById("btnV2Start").onclick();
     const r = window.__reqs[0] || {};
-    const parts = (r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
+    const txt = String((r.body && r.body.prompt) || "");
     const frags = ["E7D9DE", "42%", "flyaway", "oily shine"];
     return {
       opened,
@@ -268,8 +264,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     for (let w = 0; w < 100 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 30));
     for (let w = 0; w < 200 && rsBusy; w++) await new Promise(r => setTimeout(r, 30));
     const r = window.__reqs[0] || {};
-    const parts = (r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
+    const txt = String((r.body && r.body.prompt) || "");
     const strengthNow = state.v2.strength;
     return {
       armed, picked,
@@ -306,8 +301,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     for (let w = 0; w < 100 && !window.__reqs.length; w++) await new Promise(r => setTimeout(r, 30));
     for (let w = 0; w < 200 && rsBusy; w++) await new Promise(r => setTimeout(r, 30));
     const r = window.__reqs[0] || {};
-    const parts = (r.body && r.body.contents && r.body.contents[0] && r.body.contents[0].parts) || [];
-    const txt = parts.filter(p => p.text).map(p => p.text).join("\n");
+    const txt = String((r.body && r.body.prompt) || "");
     return {
       present, closedByDefault, opens, insideOk, renamed, titleHasOld,
       manualReqCount: window.__reqs.length,

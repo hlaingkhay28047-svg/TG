@@ -575,20 +575,34 @@ const SB_FIX = {
     state.refs = [{ mime: "image/png", b64: b64, label: "before" }, null, null];
     if (typeof renderRefs === "function") renderRefs();
     if (typeof renderV2Hero === "function") renderV2Hero();
-    window.__sb = []; window.__gemN = 0;
+    /* v5.50.0 — the generate runs on RunningHub (the one engine): mock the
+       upload -> submit -> query -> download chain and count SUBMITS */
+    window.__sb = []; window.__rhN = 0;
+    state.rhKey = "TEST_RH_KEY";
     const realFetch = window.fetch;
     window.fetch = function(u, o){
-      if (String(u).indexOf(":generateContent") >= 0) {
-        window.__gemN++;
-        return Promise.resolve(new Response(JSON.stringify({ candidates: [{ content: { parts: [
-          { inlineData: { mimeType: "image/png", data: b64 } }] } }] }), { status: 200 }));
+      var us = String(u);
+      if (us.indexOf("mock.runninghub.test") >= 0) {
+        var bin = atob(b64), bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return Promise.resolve(new Response(bytes, { status: 200, headers: { "Content-Type": "image/png" } }));
+      }
+      if (us.indexOf("www.runninghub.ai") >= 0) {
+        if (us.indexOf("/media/upload/binary") >= 0)
+          return Promise.resolve(new Response(JSON.stringify({ code: 0, message: "success", data: { download_url: "https://mock.runninghub.test/up.png", fileName: "openapi/up.png" } }), { status: 200 }));
+        if (us.indexOf("/openapi/v2/query") >= 0)
+          return Promise.resolve(new Response(JSON.stringify({ taskId: "t1", status: "SUCCESS", results: [{ url: "https://mock.runninghub.test/out.png", nodeId: "2", outputType: "png" }] }), { status: 200 }));
+        if (us.indexOf("/openapi/v2/") < 0 || us.indexOf("/price-preview/") >= 0)
+          return Promise.resolve(new Response(JSON.stringify({ code: 0, data: {} }), { status: 200 }));
+        window.__rhN++;
+        return Promise.resolve(new Response(JSON.stringify({ taskId: "t1", status: "RUNNING" }), { status: 200 }));
       }
       return realFetch.apply(this, arguments);
     };
     await document.getElementById("btnV2Start").onclick();
     const out = { gatesOff, loggedOut, allow, wizBefore,
                   wizAfter: document.getElementById("wizPay").className,
-                  gemCalls: window.__gemN, sbDuringRun: window.__sb.length,
+                  rhCalls: window.__rhN, sbDuringRun: window.__sb.length,
                   gotResult: !!state.result };
     switchPage("pgHome");
     return out;
@@ -596,7 +610,7 @@ const SB_FIX = {
   report("11 gates all off: every PREMIUM_GATES value is false, gate() returns true while logged out, a full logged-out V2 generate on #pgRetouch runs to a result exactly as before, ZERO account calls fire during it, and #wizPay never gains class \"on\"",
     c11.gatesOff && c11.loggedOut && c11.allow.video === true && c11.allow.v2 === true &&
     c11.allow.t2i === true && c11.allow.batch === true &&
-    c11.gemCalls >= 1 && c11.gotResult && c11.sbDuringRun === 0 &&
+    c11.rhCalls >= 1 && c11.gotResult && c11.sbDuringRun === 0 &&
     c11.wizBefore === "wiz" && c11.wizAfter === "wiz",
     JSON.stringify(c11));
 

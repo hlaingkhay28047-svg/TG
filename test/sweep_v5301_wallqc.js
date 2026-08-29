@@ -200,16 +200,18 @@ const future = new Date(Date.now() + 30 * 86400000).toISOString();
                        plan_expires_at: new Date(Date.now() + 30 * 86400000).toISOString() };
       appWallApply();
       const el = document.getElementById("onb");
-      const card = document.getElementById("cardKey");
+      /* v5.50.0 — the tour's key step points at the RunningHub card now;
+         #cardKey left with the Gemini provider */
+      const card = document.getElementById("cardRh");
       return {
         wall: document.body.classList.contains("wall"),
         onbOn: !!(el && el.className.indexOf(" on") >= 0),
-        cardKeyVisible: !!(card && getComputedStyle(card).display !== "none"),
+        cardRhVisible: !!(card && getComputedStyle(card).display !== "none"),
       };
     });
     report("D) the deferred tour appears once the wall actually lifts, with its target reachable",
       before.wall === true && before.onbOn === false &&
-      after.wall === false && after.onbOn === true && after.cardKeyVisible === true,
+      after.wall === false && after.onbOn === true && after.cardRhVisible === true,
       { before, after });
     await page.close();
   }
