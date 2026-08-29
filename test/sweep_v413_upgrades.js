@@ -118,16 +118,19 @@ const PORT = process.env.PORT || 8931;
   const mimeOk = mimeResult.stillNull && /ပုံ|image/i.test(mimeResult.toastText);
   console.log(mimeOk ? "PASS (non-image file rejected)" : "FAIL (mime check)");
 
+  /* v5.50.0 — friendly() (the Gemini HTTP mapper) left with that provider;
+     rhFriendly() is the surviving error translator, so the localization
+     no-Burmese-leak-at-en guarantee is checked on it instead. */
   const friendlyResult = await page.evaluate(() => {
     var saved = window.LANG;
     window.LANG = "en";
-    var msg = friendly(429, {});
+    var msg = rhFriendly({ code: "failed" });
     window.LANG = saved;
     return msg;
   });
-  console.log("friendly(429) at LANG=en:", friendlyResult);
-  const friendlyOk = /quota/i.test(friendlyResult) && !/[က-႟]/.test(friendlyResult);
-  console.log(friendlyOk ? "PASS (friendly() localizes, no Burmese leak at en)" : "FAIL (friendly localization)");
+  console.log("rhFriendly(failed) at LANG=en:", friendlyResult);
+  const friendlyOk = friendlyResult.length > 5 && !/[က-႟]/.test(friendlyResult);
+  console.log(friendlyOk ? "PASS (rhFriendly() localizes, no Burmese leak at en)" : "FAIL (friendly localization)");
 
   // Sticky toast must not permanently silence toast() forever if the update
   // banner is shown but never tapped — only gate while sticky is true.

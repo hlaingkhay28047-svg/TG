@@ -51,24 +51,30 @@ function report(name, ok, detail) {
 
   const r = await page.evaluate(async () => {
     const out = {};
-    /* capture what the dispatcher would actually send */
+    /* capture what the dispatcher would actually send — v5.50.0: the app is
+       RunningHub-only, so the capture point is the RH model SUBMIT body
+       (upload/query/price-preview are answered but never captured) */
     window.__sent = [];
     const realFetch = window.fetch;
+    const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
     window.fetch = async function (u, o) {
       const url = String(u);
-      if (url.indexOf("generativelanguage") >= 0 || url.indexOf("runninghub") >= 0) {
-        let body = "";
-        try { body = (o && o.body) ? String(o.body) : ""; } catch (e) { }
-        window.__sent.push(body);
-        return {
-          ok: true, status: 200, json: async () => ({
-            candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" } }] } }]
-          })
-        };
+      if (url.indexOf("mock.runninghub.test") >= 0) {
+        const bin = atob(PNG_B64); const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new Response(bytes, { status: 200, headers: { "Content-Type": "image/png" } });
       }
-      return realFetch(u, o);
+      if (url.indexOf("www.runninghub.ai") < 0) return realFetch(u, o);
+      if (url.indexOf("/media/upload/binary") >= 0)
+        return new Response(JSON.stringify({ code: 0, message: "success", data: { download_url: "https://mock.runninghub.test/up.png", fileName: "openapi/up.png" } }), { status: 200 });
+      if (url.indexOf("/openapi/v2/query") >= 0)
+        return new Response(JSON.stringify({ taskId: "t1", status: "SUCCESS", results: [{ url: "https://mock.runninghub.test/out.png", nodeId: "2", outputType: "png" }] }), { status: 200 });
+      if (url.indexOf("/openapi/v2/") < 0 || url.indexOf("/price-preview/") >= 0)
+        return new Response(JSON.stringify({ code: 0, data: {} }), { status: 200 });
+      window.__sent.push((o && o.body) ? String(o.body) : "");
+      return new Response(JSON.stringify({ taskId: "t1", status: "RUNNING" }), { status: 200 });
     };
-    state.key = "test-key";
+    state.rhKey = "test-key";
 
     const plate = (() => {
       const c = document.createElement("canvas"); c.width = 900; c.height = 600;
@@ -119,7 +125,7 @@ function report(name, ok, detail) {
     out.F_path = /r\.value\s*=\s*""/.test(String(ptDoGenerateOne));
 
     window.fetch = realFetch;
-    state.key = "";
+    state.rhKey = "";
     state.st.pend = [];
     return out;
   });

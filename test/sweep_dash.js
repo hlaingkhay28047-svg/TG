@@ -140,7 +140,7 @@ function check(ok, label, detail) {
       onSetup: curPage === "pgHome" && document.getElementById("pgHome").className.indexOf("on") >= 0,
       noTabActive: !Array.from(document.getElementById("tabbar").children).some(b => b.className.indexOf("on") >= 0),
       gearOn: g.className.indexOf("on") >= 0,
-      apiKey: !!document.getElementById("apiKey")
+      apiKey: !!document.getElementById("rhKey") /* v5.50.0 — the RunningHub key field is the one engine field */
     };
   });
   check(gear.big && /setup/i.test(gear.aria) && gear.onSetup && gear.noTabActive && gear.gearOn && gear.apiKey,
@@ -217,12 +217,24 @@ function check(ok, label, detail) {
     localStorage.setItem("hnk_ws_seen","1");
     const realFetch = window.fetch;
     window.fetch = function(url, opts){
-      if (String(url).indexOf(":generateContent") >= 0) {
-        return Promise.resolve(new Response(JSON.stringify({
-          candidates:[{content:{parts:[{inline_data:{mime_type:"image/png",data:"${B64}"}}]},finishReason:"STOP"}]
-        }), {status:200, headers:{"Content-Type":"application/json"}}));
+      var u = String(url);
+      if (u.indexOf("mock.runninghub.test") >= 0) {
+        var bin = atob("${B64}");
+        var bytes = new Uint8Array(bin.length);
+        for (var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+        return Promise.resolve(new Response(bytes, {status:200, headers:{"Content-Type":"image/png"}}));
       }
-      return realFetch.apply(this, arguments);
+      if (u.indexOf("www.runninghub.ai") < 0) return realFetch.apply(this, arguments);
+      if (u.indexOf("/openapi/v2/media/upload/binary") >= 0) {
+        return Promise.resolve(new Response(JSON.stringify({code:0,message:"success",data:{type:"image",download_url:"https://mock.runninghub.test/up_0.png",fileName:"openapi/up_0.png",size:"100"}}), {status:200}));
+      }
+      if (u.indexOf("/openapi/v2/query") >= 0) {
+        return Promise.resolve(new Response(JSON.stringify({taskId:"T1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
+      }
+      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0 || u.indexOf("/queue/status") >= 0) {
+        return Promise.resolve(new Response(JSON.stringify({code:0,data:{}}), {status:200}));
+      }
+      return Promise.resolve(new Response(JSON.stringify({taskId:"T1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
     };
   `);
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
@@ -230,7 +242,7 @@ function check(ok, label, detail) {
 
   const wiz4 = await page.evaluate(async (b64) => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-    state.key = "TEST_KEY";
+    state.rhKey = "TEST_RH_KEY";
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
     switchPage("pgWf");
     document.querySelectorAll("#wfHost .grp").forEach(g => g.classList.add("open"));
@@ -310,15 +322,15 @@ function check(ok, label, detail) {
      hid every page and the banner (a sibling of the stack) measured fine
      regardless, so pgGallery was never actually covered. Now it is. */
   const kb = await page.evaluate(pgs => {
-    try { localStorage.removeItem("hnk_web_studio_key"); } catch (e) {}
-    state.key = ""; updateKeyBanner();
+    try { localStorage.removeItem("hnk_rh_apikey"); } catch (e) {}
+    state.rhKey = ""; updateKeyBanner();
     const el = document.getElementById("keyBanner");
     const noKey = {};
     pgs.forEach(id => { switchPage(id); noKey[id] = el.offsetHeight; });
-    state.key = "AIza-test-key-value-placeholder"; updateKeyBanner();
+    state.rhKey = "rh-test-key-value-placeholder"; updateKeyBanner();
     switchPage("pgDash");
     const withKey = el.offsetHeight;
-    state.key = ""; updateKeyBanner();
+    state.rhKey = ""; updateKeyBanner();
     return { noKey, withKey, pages: pgs.length };
   }, ["pgDash","pgWf","pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath","pgText2Img","pgVideo","pgVideoUp","pgLib","pgGallery","pgHome"]);
   const kbHidden = Object.keys(kb.noKey).filter(k => !(kb.noKey[k] > 0));

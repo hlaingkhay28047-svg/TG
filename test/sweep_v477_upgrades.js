@@ -165,10 +165,17 @@ const NEW = Object.keys(SCRIPTS);
      exists to refuse. */
   const AVATAR_KEYS = ["ava_change", "ava_remove", "ava_saved", "ava_removed",
                        "ava_fail", "aw_sub", "aw_back"];
+  /* v5.50.0 (RunningHub-only wave) rewrote onb_1 and tr_hint. The 15 packs
+     with readers got real translations; the three Tai packs join this
+     registry the same honest way as v5.48.0's avatar keys — LANG_FB keeps
+     showing them real Shan (A2 proves it), and a pasted-Shan or hand-guessed
+     string in their own packs is exactly what this registry and
+     sweep_v461's script check exist to refuse. */
+  const V550_KEYS = ["onb_1", "tr_hint"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

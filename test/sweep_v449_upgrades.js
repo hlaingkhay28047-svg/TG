@@ -13,8 +13,11 @@
       (the dispatcher hands that .apiPath to rhGenerateOne).
    C) rhEngineLabel() names the resolved engine; V2 hero and Path tier card
       render it when provider is runninghub, hidden otherwise.
-   D) Switching back to Gemini restores the exact 3-option Gemini dropdown.
+   D) v5.50.0 — REPLACED: there is no Gemini dropdown to restore (one
+      engine); #selModel must hold ONLY RunningHub model ids at all times.
    E) The #genEngine link becomes a manage-models Setup jump under RH.
+   G) v5.50.0 — REPLACED: the Gemini shadow-model machinery
+      (genGeminiModel/genSetGeminiModel) is verified GONE with its provider.
 
    Usage: PORT=8931 node test/sweep_v449_upgrades.js  (serve docs/app first) */
 const { chromium } = require("playwright-core");
@@ -75,11 +78,13 @@ function report(name, ok, detail) {
 
     switchPage("pgCreate"); await new Promise(r2 => setTimeout(r2, 200));
     out.E_manage = (document.getElementById("genEngine") || {}).style.display !== "none";
-    sp.value = "gemini"; sp.dispatchEvent(new Event("change"));
-    out.D_restored = Array.from(sm.options).map(o => o.value).join(",") ===
-      "auto,gemini-2.5-flash-image,gemini-3-pro-image-preview";
+    /* D) v5.50.0 — one engine: nothing to "restore to". The pin is now that
+       the dropdown holds ONLY RunningHub model ids — no auto/gemini/openai
+       option can ever reappear in it. */
+    const dVals = Array.from(sm.options).map(o => o.value);
+    out.D_rhOnly = dVals.length >= 10 && dVals.every(v => !/^(auto|gemini|gpt-4|dall)/.test(v));
     renderV2Hero();
-    out.D_notesHidden = document.getElementById("v2EngineNote").style.display === "none";
+    out.D_noteNames = document.getElementById("v2EngineNote").textContent.indexOf("Seedream v4.5") >= 0;
 
     /* F) v4.49 fixes verified by the 880 adversarial review */
     await new Promise(res => st880Load(res));
@@ -99,13 +104,10 @@ function report(name, ok, detail) {
     out.F_evChk = ST.groups.filter(g => g.host === "ev").pop().chk[0]() === true;
     st880Clear();
 
-    /* G) the Gemini model survives while the RH list occupies the dropdown */
-    sp.value = "gemini"; sp.dispatchEvent(new Event("change"));
-    sm.value = "gemini-3-pro-image-preview"; sm.dispatchEvent(new Event("change"));
-    sp.value = "runninghub"; sp.dispatchEvent(new Event("change"));
-    out.G_shadowKept = genGeminiModel() === "gemini-3-pro-image-preview";
-    genSetGeminiModel("gemini-2.5-flash-image");     /* what a V2 tier run does */
-    out.G_shadowWrite = genGeminiModel() === "gemini-2.5-flash-image";
+    /* G) v5.50.0 — the Gemini shadow-model machinery left with its provider:
+       both helpers must be GONE, and the RH pick must still stand. */
+    out.G_retired = typeof window.genGeminiModel === "undefined"
+      && typeof window.genSetGeminiModel === "undefined";
     out.G_rhUntouched = sm.value === "seedream-v4-5";
     state.rhKey = "";
     return out;
@@ -117,13 +119,13 @@ function report(name, ok, detail) {
     r.B_written && r.B_resolves, r);
   report("C) engine label renders on V2 + Path when RH is active",
     r.C_label && r.C_v2 && r.C_pt, r);
-  report("D) Gemini restore brings back the exact 3-option dropdown, notes hide",
-    r.D_restored && r.D_notesHidden, r);
+  report("D) v5.50.0: #selModel holds only RunningHub model ids — no Gemini/OpenAI option can reappear; engine note names the model",
+    r.D_rhOnly && r.D_noteNames, r);
   report("E) manage-models Setup link shows under RH", r.E_manage, r);
   report("F) 880 apply race: fast second tap combines, Clear all sticks, Evoto chk true",
     r.F_raceCombines && r.F_clearSticks && r.F_evChk, r);
-  report("G) Gemini model shadow survives the RH dropdown takeover",
-    r.G_shadowKept && r.G_shadowWrite && r.G_rhUntouched, r);
+  report("G) v5.50.0: the Gemini shadow-model helpers are gone and the RH pick still stands",
+    r.G_retired && r.G_rhUntouched, r);
   report("no page errors", pageErrors.length === 0, pageErrors);
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));

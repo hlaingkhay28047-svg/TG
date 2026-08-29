@@ -25,7 +25,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   await page.addInitScript(() => {
     const realFetch = window.fetch;
     window.fetch = function (url, opts) {
-      if (String(url).indexOf(":generateContent") >= 0) {
+      if (String(url).indexOf("www.runninghub.ai") >= 0) {
         return Promise.reject(new TypeError("Failed to fetch"));
       }
       return realFetch.apply(this, arguments);
@@ -35,7 +35,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1000);
   await page.evaluate(() => {
-    state.key = "TEST_KEY";
+    state.rhKey = "TEST_RH_KEY";
     window.scrollTo = function () {}; Element.prototype.scrollIntoView = function () {};
   });
 

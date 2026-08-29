@@ -2,14 +2,16 @@
    Mirrors the sweep_v413_upgrades.js structure: one page, mocked network,
    report(name, ok, extra) lines, hard exit code.
 
-   Covers, in spec §8.3 order:
+   Covers, in spec §8.3 order (v5.50.0: the app is RunningHub-only — the
+   Gemini/OpenAI machinery three of these checks exercised is GONE, so those
+   checks now pin the surviving RunningHub behavior or the removal itself):
      1  rsOrig            non-destructive To-Ref + restore chip + true Before
      2  cmpBase           truthful Create Before/After across chained runs
      3  Stop              mid-run cancel releases busy and discards a late land
      4  Batch             sequential multi-photo passes, Stop mid-queue, filenames
-     5  G1                key test refuses an HTTP 400 API_KEY_INVALID
+     5  G1 (v5.50.0)      the Gemini key card is gone; boot purges legacy keys
      6  Wizard sync       step-3 clones follow the main card's narrowing
-     7  Size gating       2K/4K disabled when the request resolves to Flash
+     7  Size honesty      selSize hides/stays per RH model kind (was Flash/Pro)
      8  HD Finish parity  V2 forces "2K" via the shared hdFinishSize(), L9 label
      9  i18n zero-miss    TR dict complete for all 7 secondary languages
      10 Shimmer scoping   loaded library thumbs stop animating forever
@@ -47,38 +49,30 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   await page.addInitScript(() => {
     localStorage.setItem("hnk_ws_onboarded", "1");
     localStorage.setItem("hnk_ws_seen", "1");
+    /* v5.50.0 — seed the three RETIRED provider keys before the app boots;
+       check 5 asserts the boot purge removes every one of them. */
+    localStorage.setItem("hnk_web_studio_key", "LEGACY_GEMINI_KEY");
+    localStorage.setItem("hnk_oa_apikey", "LEGACY_OPENAI_KEY");
+    localStorage.setItem("hnk_oa_model", "gpt-image-1");
   });
   await page.addInitScript(`
-    window.__gem = [];        // Gemini generateContent calls
-    window.__gemDelay = 0;    // ms to stall each Gemini call (Stop test)
-    window.__gemOut = "GEMOUT";
-    window.__keyStatus = 200; // key-test override for check 5
-    window.__rh = [];         // RunningHub submits
+    window.__rh = [];         // RunningHub MODEL submits (never upload/query/price)
+    window.__rhDelay = 0;     // ms to stall each RH submit (Stop/Batch tests)
+    window.__outB64 = null;   // per-test result-image override (late-landing marker)
+    window.__foreign = [];    // any Gemini/OpenAI call = a v5.50.0 regression
     const realFetch = window.fetch;
     function png(){
-      var bin = atob("${B64}"), bytes = new Uint8Array(bin.length);
+      var bin = atob(window.__outB64 || "${B64}"), bytes = new Uint8Array(bin.length);
       for (var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
       return new Response(bytes, {status:200, headers:{"Content-Type":"image/png"}});
     }
     window.fetch = function(url, opts){
       var u = String(url);
-      if (u.indexOf(":generateContent") >= 0) {
-        var body = null; try { body = JSON.parse(opts.body); } catch(e) {}
-        var isPing = !!(body && body.contents && body.contents[0] && body.contents[0].parts
-          && body.contents[0].parts.length === 1 && body.contents[0].parts[0].text === "ping");
-        if (isPing) {
-          // Setup's key test — 400 + API_KEY_INVALID must be treated as invalid
-          if (window.__keyStatus === 400) {
-            return Promise.resolve(new Response(JSON.stringify({error:{code:400,status:"INVALID_ARGUMENT",
-              message:"API key not valid. Please pass a valid API key.", details:[{reason:"API_KEY_INVALID"}]}}), {status:400}));
-          }
-          return Promise.resolve(new Response(JSON.stringify({candidates:[{content:{parts:[{text:"pong"}]}}]}), {status:200}));
-        }
-        window.__gem.push(u);
-        var res = new Response(JSON.stringify({candidates:[{content:{parts:[
-          {inlineData:{mimeType:"image/png", data:window.__gemOut}}]}}]}), {status:200});
-        if (!window.__gemDelay) return Promise.resolve(res);
-        return new Promise(function(ok){ setTimeout(function(){ ok(res); }, window.__gemDelay); });
+      /* v5.50.0 tripwire — the retired providers must never be dialed again */
+      if (u.indexOf(":generateContent") >= 0 || u.indexOf("generativelanguage.googleapis.com") >= 0
+          || u.indexOf("api.openai.com") >= 0) {
+        window.__foreign.push(u);
+        return Promise.resolve(new Response(JSON.stringify({error:{message:"v5.50.0: provider removed"}}), {status:500}));
       }
       if (u.indexOf("mock.runninghub.test") >= 0) return Promise.resolve(png());
       if (u.indexOf("www.runninghub.ai") >= 0) {
@@ -86,9 +80,15 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
           return Promise.resolve(new Response(JSON.stringify({code:0,message:"success",data:{download_url:"https://mock.runninghub.test/up.png",fileName:"openapi/up.png"}}), {status:200}));
         if (u.indexOf("/openapi/v2/query") >= 0)
           return Promise.resolve(new Response(JSON.stringify({taskId:"t1",status:"SUCCESS",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png"}]}), {status:200}));
+        /* price-preview / balance / anything not under /openapi/v2/ is benign
+           chrome, never a submit — answer it but keep it out of __rh */
+        if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0 || u.indexOf("/queue/status") >= 0)
+          return Promise.resolve(new Response(JSON.stringify({code:0,data:{}}), {status:200}));
         var body2 = null; try { body2 = JSON.parse(opts.body); } catch(e) {}
         window.__rh.push({ url: u, body: body2 });
-        return Promise.resolve(new Response(JSON.stringify({taskId:"t1",status:"RUNNING"}), {status:200}));
+        var res2 = new Response(JSON.stringify({taskId:"t1",status:"RUNNING"}), {status:200});
+        if (!window.__rhDelay) return Promise.resolve(res2);
+        return new Promise(function(ok){ setTimeout(function(){ ok(res2); }, window.__rhDelay); });
       }
       return realFetch.apply(this, arguments);
     };
@@ -98,7 +98,7 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   await page.waitForTimeout(1000);
   await page.evaluate(() => {
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
-    state.key = "TEST_GEMINI_KEY";
+    state.rhKey = "TEST_RH_KEY";
   });
 
   // ---------------------------------------------------------------- 1) rsOrig
@@ -161,12 +161,16 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   // ---------------------------------------------------------------- 3) Stop
   // Stop has to be reachable WHILE the .v2-busy frame is pointer-events:none,
   // release the UI immediately, and discard whatever lands afterwards.
-  const c3 = await page.evaluate(async (b64) => {
+  const c3 = await page.evaluate(async (args) => {
+    const [b64, b64late] = args;
     switchPage("pgRetouch");
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     state.refs[0] = { mime: "image/png", b64: b64, label: "orig" };
     state.rsOrig = null; state.hist = []; renderRefs(); renderV2Hero();
-    window.__gem = []; window.__gemDelay = 1500; window.__gemOut = "LATE_LANDING_RESULT";
+    /* v5.50.0 — the stall now lives on the RunningHub SUBMIT (the app's only
+       engine); the distinguishable late result comes back through the mocked
+       result download instead of a Gemini inlineData part */
+    window.__rh = []; window.__rhDelay = 1500; window.__outB64 = b64late;
     document.getElementById("btnV2Start").onclick();
     await sleep(220);
     const stop = document.getElementById("btnV2Stop");
@@ -187,11 +191,11 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     const histAtStop = state.hist.length;
     await sleep(1800);                                     // let the late response land
     const discarded = state.hist.length === histAtStop
-      && !state.hist.some(h => h.b64 === "LATE_LANDING_RESULT");
-    window.__gemDelay = 0; window.__gemOut = "GEMOUT";
+      && !state.hist.some(h => h.b64 === b64late);
+    window.__rhDelay = 0; window.__outB64 = null;
     se.scrollTop = 0;
     return { busyOn, clickable, topId, pe, releasedFast, histAtStop, discarded, hist: state.hist.length };
-  }, B64);
+  }, [B64, B64B]);
   report("3 Stop: reachable through the .v2-busy freeze, releases the UI within a frame tick, and the late-landing result is discarded",
     c3.busyOn && c3.clickable && c3.pe === "auto" && c3.releasedFast && c3.discarded, JSON.stringify(c3));
 
@@ -209,7 +213,7 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
       })).catch(() => -1);
     }
 
-    state.hist = []; state.v2BatchN = 0; window.__gem = []; window.__gemDelay = 0;
+    state.hist = []; state.v2BatchN = 0; window.__rh = []; window.__rhDelay = 0;
     state.refs[0] = { mime: "image/png", b64: b64, label: "orig" };
     renderRefs(); renderV2Hero();
     const galBefore = await galCount();
@@ -220,22 +224,22 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     window.rsShowResult = function () { realShow.apply(this, arguments); names.push(document.getElementById("btnRsDl").download); };
     await rsRunBatch([fileOf("a.png"), fileOf("b.png"), fileOf("c.png")]);
     window.rsShowResult = realShow;
-    const batch1Reqs = window.__gem.length;
+    const batch1Reqs = window.__rh.length;
     const hist1 = state.hist.length;
     await sleep(400);                                     // let the IndexedDB writes land
     const galAfter = await galCount();
     const log3 = document.getElementById("v2Log").textContent;
 
     // Stop after the first photo abandons the queue but keeps what finished
-    state.hist = []; window.__gem = []; window.__gemDelay = 400;
+    state.hist = []; window.__rh = []; window.__rhDelay = 400;
     state.refs[0] = { mime: "image/png", b64: b64, label: "orig" };
     const p = rsRunBatch([fileOf("d.png"), fileOf("e.png"), fileOf("f.png")]);
     await sleep(700);
     document.getElementById("btnV2Stop").onclick();
     await p.catch(() => {});
     await sleep(400);
-    const afterStopReqs = window.__gem.length;
-    window.__gemDelay = 0;
+    const afterStopReqs = window.__rh.length;
+    window.__rhDelay = 0;
     return {
       batch1Reqs, hist1, names, uniqueNames: new Set(names).size,
       galBefore, galAfter, galDelta: galAfter - galBefore, log3,
@@ -254,43 +258,26 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     JSON.stringify(c4));
 
   // ---------------------------------------------------------------- 5) G1
-  // Google answers a malformed key with HTTP 400 + API_KEY_INVALID. The old
-  // code read `r.status===400 || r.ok` as "valid" and saved the bad key.
-  const c5 = await page.evaluate(async () => {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    switchPage("pgHome");
-    const saved = state.key;
-    try { localStorage.removeItem(LS_KEY); } catch (e) {}
-    state.key = "";
-    window.__keyStatus = 400;
-    window.__offers = 0;
-    const realOffer = window.pendingOffer;
-    if (typeof realOffer === "function") window.pendingOffer = function () { window.__offers++; };
-    document.getElementById("apiKey").value = "AIza-BAD-KEY";
-    document.getElementById("btnSaveKey").onclick();
-    for (let w = 0; w < 60 && document.getElementById("btnSaveKey").disabled; w++) await sleep(50);
-    let ls = null; try { ls = localStorage.getItem(LS_KEY); } catch (e) {}
-    const out = {
-      msg: document.getElementById("stKey").textContent,
-      cls: document.getElementById("stKey").className,
-      stateKey: state.key, stored: ls, offers: window.__offers,
-      expected: t("st_key_invalid"),
-      /* v5.39.0 — this section used to switchPage("pgSetup"), an id that has
-         not existed since the v4.27 nav regroup. switchPage() left NO page
-         displayed and the whole section ran against a blank app. Reporting
-         what actually landed makes a dead id fail here instead of quietly
-         emptying the screen. */
-      landed: (document.querySelector(".page.on") || {}).id || ""
-    };
-    if (typeof realOffer === "function") window.pendingOffer = realOffer;
-    window.__keyStatus = 200;
-    state.key = saved;
-    try { if (saved) localStorage.setItem(LS_KEY, saved); } catch (e) {}
-    return out;
-  });
-  report("5 G1: a 400 + API_KEY_INVALID reply is rejected — st_key_invalid shown, key not saved to state or localStorage, no pending-intent offer",
-    c5.landed === "pgHome" &&
-    c5.msg === c5.expected && c5.cls.indexOf("err") >= 0 && !c5.stateKey && !c5.stored && c5.offers === 0,
+  /* v5.50.0 — OWNER DECISION: Gemini and OpenAI are removed outright; the app
+     runs on RunningHub Enterprise models only. The key card this check used
+     to exercise (#apiKey / #btnSaveKey / #stKey and the 400+API_KEY_INVALID
+     probe) no longer exists, so the check now pins the REMOVAL: no key-card
+     DOM anywhere, and the three retired provider keys seeded into
+     localStorage before load (see the first addInitScript) are purged at
+     boot rather than restored into state. */
+  const c5 = await page.evaluate(() => ({
+    apiKey: !!document.getElementById("apiKey"),
+    saveBtn: !!document.getElementById("btnSaveKey"),
+    cardKey: !!document.getElementById("cardKey"),
+    cardOa: !!document.getElementById("cardOa"),
+    legacyGem: localStorage.getItem("hnk_web_studio_key"),
+    legacyOaKey: localStorage.getItem("hnk_oa_apikey"),
+    legacyOaModel: localStorage.getItem("hnk_oa_model"),
+    stateKey: (typeof state !== "undefined" && state.key) || ""
+  }));
+  report("5 G1 (v5.50.0): the Gemini/OpenAI key cards are gone from the DOM and boot PURGES all three seeded legacy provider keys instead of restoring them",
+    !c5.apiKey && !c5.saveBtn && !c5.cardKey && !c5.cardOa
+    && c5.legacyGem === null && c5.legacyOaKey === null && c5.legacyOaModel === null && !c5.stateKey,
     JSON.stringify(c5));
 
   // ---------------------------------------------------------------- 6) Wizard sync
@@ -305,8 +292,14 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     await new Promise(r => setTimeout(r, 120));
     const startedOn = (document.querySelector(".page.on") || {}).id || "";
     switchPage("pgWf");
-    state.rhKey = "TEST_RH_KEY"; renderRhProviderOption();
+    /* v5.50.0 — there is no provider clone to flip anymore (one engine); the
+       sync under test is now MODEL-kind narrowing: an upscale-kind active
+       model hides Ratio/Count on the main card AND the step-3 clones, and
+       flipping the CLONE's model select back to an edit model writes the
+       shared rhCfg().activeModel and restores both surfaces. */
+    state.rhKey = "TEST_RH_KEY";
     var cfg = rhCfg(); cfg.activeModel = "upscale-pro"; rhSaveCfg(cfg);
+    renderRhProviderOption();
     document.querySelectorAll("#wfHost .grp").forEach(g => g.classList.add("open"));
     document.querySelectorAll("#wfHost .wfmini")[0].click();
     await sleep(40);
@@ -314,52 +307,52 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     for (let s = 0; s < 4; s++) state.refs[s] = { mime: "image/png", b64: "x", label: "t" + s };
     gold().click(); await sleep(40);
     gold().click(); await sleep(60);                     // -> step 3, clone row built
-    const clone = document.getElementById("wiz_selProvider");
-    if (!clone) return { skip: "no wizard clone row" };
-    clone.value = "runninghub"; clone.onchange();
-    await sleep(60);
+    if (!document.getElementById("wiz_selModel")) return { skip: "no wizard clone row" };
     const hidden = id => document.getElementById(id).style.display === "none";
     const cloneHidden = id => { const c = document.getElementById("wiz_" + id); return !c || c.style.display === "none"; };
-    const rh = {
+    const up = {
       mainRatio: hidden("selRatio"), cloneRatio: cloneHidden("selRatio"),
-      mainQual: hidden("selQual"), cloneQual: cloneHidden("selQual"),
+      mainCount: hidden("selCount"), cloneCount: cloneHidden("selCount"),
+      /* Size must STAY for upscale-kind — there it is the scale picker */
+      mainSize: hidden("selSize"), cloneSize: cloneHidden("selSize")
+    };
+    const cm = document.getElementById("wiz_selModel");
+    cm.value = "nano-banana-2"; cm.onchange();
+    await sleep(60);
+    const ed = {
+      activeModel: rhCfg().activeModel,
+      mainRatio: hidden("selRatio"), cloneRatio: cloneHidden("selRatio"),
       mainCount: hidden("selCount"), cloneCount: cloneHidden("selCount")
     };
-    const back = document.getElementById("wiz_selProvider");
-    back.value = "gemini"; back.onchange();
-    await sleep(60);
-    const gm = { mainRatio: hidden("selRatio"), cloneRatio: cloneHidden("selRatio") };
     document.getElementById("wiz").className = "wiz";   // closeWizard() is module-private
     document.body.style.overflow = "";
-    cfg.activeModel = "nano-banana-2"; rhSaveCfg(cfg);
-    document.getElementById("selProvider").value = "gemini";
-    if (document.getElementById("selProvider").onchange) document.getElementById("selProvider").onchange();
-    return { rh, gm, startedOn, landed: (document.querySelector(".page.on") || {}).id || "" };
+    return { up, ed, startedOn, landed: (document.querySelector(".page.on") || {}).id || "" };
   });
-  report("6 Wizard sync: switching the step-3 provider clone to an upscale-kind RunningHub model hides Ratio/Quality/Count on BOTH the main card and the clones; switching back restores them",
+  report("6 Wizard sync: an upscale-kind active model hides Ratio/Count on the main card AND the step-3 clones (Size stays — it IS the scale picker); flipping the clone's model to an edit model writes rhCfg().activeModel and restores both",
     !c6.skip && c6.startedOn === "pgHome" && c6.landed === "pgWf" &&
-    c6.rh.mainRatio && c6.rh.cloneRatio && c6.rh.mainQual && c6.rh.cloneQual
-    && c6.rh.mainCount && c6.rh.cloneCount && !c6.gm.mainRatio && !c6.gm.cloneRatio,
+    c6.up.mainRatio && c6.up.cloneRatio && c6.up.mainCount && c6.up.cloneCount
+    && !c6.up.mainSize && !c6.up.cloneSize
+    && c6.ed.activeModel === "nano-banana-2"
+    && !c6.ed.mainRatio && !c6.ed.cloneRatio && !c6.ed.mainCount && !c6.ed.cloneCount,
     JSON.stringify(c6));
 
-  // ---------------------------------------------------------------- 7) Size gating
+  // ---------------------------------------------------------------- 7) Size honesty
+  /* v5.50.0 — the Gemini Flash/Pro 2K/4K gate left with that provider. The
+     surviving size honesty is per-RunningHub-model-kind (the same "never
+     offer a control the model will ignore" rule): Z-Image's endpoint has no
+     resolution field at all so Size HIDES; upscale-kind keeps it (there it
+     IS the scale picker); the default edit models keep it too. */
   const c7 = await page.evaluate(() => {
     switchPage("pgCreate");
-    document.getElementById("selProvider").value = "gemini";
-    document.getElementById("selModel").value = "auto";
-    state.refs[0] = { mime: "image/png", b64: "x", label: "ref" };   // a ref -> Auto resolves to Flash
-    updateGenOptsForRHKind();
-    const sel = document.getElementById("selSize");
-    const o = v => sel.querySelector('option[value="' + v + '"]');
-    const flash = { d2: o("2K").disabled, d4: o("4K").disabled, autoTxt: o("").textContent };
-    document.getElementById("selModel").value = "gemini-3-pro-image-preview";
-    if (document.getElementById("selModel").onchange) document.getElementById("selModel").onchange();
-    const pro = { d2: o("2K").disabled, d4: o("4K").disabled };
-    return { flash, pro };
+    const vis = () => document.getElementById("selSize").style.display !== "none";
+    const set = id => { var c = rhCfg(); c.activeModel = id; rhSaveCfg(c); updateGenOptsForRHKind(); };
+    set("z-image-turbo");   const z = vis();
+    set("upscale-pro");     const up = vis();
+    set("nano-banana-2");   const ed = vis();
+    return { z, up, ed };
   });
-  report("7 Size gating: with Auto resolving to Flash the 2K/4K tiers are disabled and the Auto option says so; picking Pro re-enables them",
-    c7.flash.d2 && c7.flash.d4 && /1K/.test(c7.flash.autoTxt) && /Flash/i.test(c7.flash.autoTxt)
-    && !c7.pro.d2 && !c7.pro.d4, JSON.stringify(c7));
+  report("7 Size honesty (v5.50.0): Size hides for Z-Image (endpoint has no resolution field), stays visible for upscale-kind (it IS the scale picker) and for edit models",
+    !c7.z && c7.up && c7.ed, JSON.stringify(c7));
 
   // ---------------------------------------------------------------- 8) HD Finish parity
   const c8 = await page.evaluate(async () => {
@@ -572,7 +565,10 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
     const gen = document.getElementById("btnGen");
     const adv = document.getElementById("genGrpAdvanced");
     const cr = card.getBoundingClientRect(), gr = gen.getBoundingClientRect();
-    const inAdv = ["selCount", "selSize", "selQual"].every(id => adv.contains(document.getElementById(id)));
+    /* v5.50.0 — selQual left with the Gemini provider (_forceQualityHigh is
+       the internal replacement); Count and Size are the surviving accordion
+       residents */
+    const inAdv = ["selCount", "selSize"].every(id => adv.contains(document.getElementById(id)));
     return {
       genTopFromCard: Math.round(gr.top - cr.top),
       firstViewport: Math.round(window.innerHeight),
@@ -696,6 +692,13 @@ const B64B = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDw
   }
   report("15b Icons (site parity): docs/assets/site/ carries byte-identical copies of the app's favicon and apple-touch icon, so the marketing site and the product ship the same mark",
     siteRows.every(r => r.present && r.same), JSON.stringify(siteRows));
+
+  // ---------------------------------------------------------------- 16) v5.50.0 tripwire
+  // Every check above ran real generate/batch/wizard flows — if ANY of them
+  // had dialed Gemini or OpenAI the stub logged it here instead of answering.
+  const foreign = await page.evaluate(() => window.__foreign);
+  report("16 Provider tripwire (v5.50.0): across every flow this sweep exercised, not one call left for a retired Gemini/OpenAI host",
+    foreign.length === 0, JSON.stringify(foreign));
 
   console.log("\n" + (allOk ? "PASS" : "FAIL"));
   await browser.close();

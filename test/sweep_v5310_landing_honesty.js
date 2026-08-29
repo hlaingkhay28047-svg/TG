@@ -130,16 +130,27 @@ for (const key of CLEANED) {
 report("A) no locale still calls the Web Studio itself free", dirty.length === 0, dirty.slice(0, 6));
 
 /* ---- B) the no-over-correction half ----
-   Gemini's free tier is a fact about Google, not about HNK. If a later change
-   strips every "free" on the page these three go quiet and this fails. */
-const GEMINI_KEYS = ["step.4", "e1.desc", "faq3.a"];
-const lostTruth = GEMINI_KEYS.filter(k => {
+   v5.50.0 — the Gemini free tier left the page with its provider. The
+   surviving cost truth is RunningHub's: pay-as-you-go credits at roughly
+   US$0.01–0.05 per image. A later edit that strips the price, or drifts the
+   copy back to promising anything free, goes quiet here and this fails. */
+const COST_KEYS = ["faq3.a", "key.body"];
+const lostTruth = COST_KEYS.filter(k => {
   const en = I18N[k] && I18N[k].en;
   const my = I18N[k] && I18N[k].my;
-  return !(typeof en === "string" && /free/i.test(en)) || !(typeof my === "string" && my.includes("အခမဲ့"));
+  return !(typeof en === "string" && /US\$0\.01–0\.05/.test(en) && /credit/i.test(en))
+      || !(typeof my === "string" && /US\$0\.01–0\.05/.test(my) && my.includes("credit"));
 });
-report("B) the Gemini free-tier facts are still stated (over-correction check)",
-  lostTruth.length === 0, { lost: lostTruth });
+const step4 = I18N["step.4"] || {};
+const step4Ok = /RunningHub Enterprise key/.test(step4.en || "") && /RunningHub Enterprise key/.test(step4.my || "");
+const freeCreep = COST_KEYS.concat(["step.4"]).filter(k => {
+  const en = (I18N[k] && I18N[k].en) || "";
+  const my = (I18N[k] && I18N[k].my) || "";
+  return /\bfree\b/i.test(en) || my.includes("အခမဲ့");
+});
+report("B) the RunningHub credit-cost facts are stated and nothing drifted back to promising a free engine",
+  lostTruth.length === 0 && step4Ok && freeCreep.length === 0,
+  { lostCostTruth: lostTruth, step4Ok, freeCreep });
 
 /* ---- C) the link-preview cards ---- */
 const metas = {};
@@ -181,10 +192,11 @@ report("E) key.body names the product and its requirement in every locale",
   { coreMissing: missing, nativePacks: slBodies, named: slNamed });
 
 /* the bring-your-own-key half must survive too — the point is two separate
-   costs, not that the engines became included */
+   costs, not that the engine became included. v5.50.0: the one engine is
+   RunningHub and the key is the owner's own Enterprise key. */
 const byok = I18N["key.body"] && I18N["key.body"].en;
-report("E2) key.body still explains the bring-your-own-key engines",
-  typeof byok === "string" && /your own key/i.test(byok) && /Gemini/.test(byok),
+report("E2) key.body still explains the bring-your-own-key engine",
+  typeof byok === "string" && /own Enterprise key/i.test(byok) && /RunningHub/.test(byok),
   { head: (byok || "").slice(0, 120) });
 
 /* ---- G) the same lie, inside the app ----
