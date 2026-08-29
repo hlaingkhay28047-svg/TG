@@ -56,7 +56,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
         return Promise.resolve(new Response(JSON.stringify({code:0,message:"success",data:{download_url:"https://mock.runninghub.test/up.png",fileName:"openapi/up.png"}}), {status:200}));
       if (u.indexOf("/openapi/v2/query") >= 0)
         return Promise.resolve(new Response(JSON.stringify({taskId:"t1",status:"SUCCESS",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png"}]}), {status:200}));
-      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0)
+      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0 || u.indexOf("/queue/status") >= 0)
         return Promise.resolve(new Response(JSON.stringify({code:0,data:{}}), {status:200}));
       var body = null; try { body = JSON.parse(opts.body); } catch(e) {}
       var idx = window.__reqs.length;

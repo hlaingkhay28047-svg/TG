@@ -34,7 +34,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       if (u.indexOf("/openapi/v2/query") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
       }
-      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0) {
+      if (u.indexOf("/openapi/v2/") < 0 || u.indexOf("/price-preview/") >= 0 || u.indexOf("/queue/status") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({code:0,data:{}}), {status:200}));
       }
       /* any other RH call is the model submit — capture its body */

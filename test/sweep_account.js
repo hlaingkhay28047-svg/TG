@@ -592,7 +592,7 @@ const SB_FIX = {
           return Promise.resolve(new Response(JSON.stringify({ code: 0, message: "success", data: { download_url: "https://mock.runninghub.test/up.png", fileName: "openapi/up.png" } }), { status: 200 }));
         if (us.indexOf("/openapi/v2/query") >= 0)
           return Promise.resolve(new Response(JSON.stringify({ taskId: "t1", status: "SUCCESS", results: [{ url: "https://mock.runninghub.test/out.png", nodeId: "2", outputType: "png" }] }), { status: 200 }));
-        if (us.indexOf("/openapi/v2/") < 0 || us.indexOf("/price-preview/") >= 0)
+        if (us.indexOf("/openapi/v2/") < 0 || us.indexOf("/price-preview/") >= 0 || us.indexOf("/queue/status") >= 0)
           return Promise.resolve(new Response(JSON.stringify({ code: 0, data: {} }), { status: 200 }));
         window.__rhN++;
         return Promise.resolve(new Response(JSON.stringify({ taskId: "t1", status: "RUNNING" }), { status: 200 }));
