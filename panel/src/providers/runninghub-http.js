@@ -54,7 +54,7 @@ function create(opts) {
         var f = req.body.fields || {};
         for (var k in f) if (f.hasOwnProperty(k)) fd.append(k, f[k]);
         if (req.body.file && req.body.file.dataUrl) fd.append(req.body.file.fieldName || "file", _dataUrlToBlob(req.body.file.dataUrl), req.body.file.name || "file.png");
-        // Multiple files under a repeated field name (e.g. OpenAI's "image[]").
+        // Multiple files under a repeated field name.
         if (Array.isArray(req.body.files)) {
           req.body.files.forEach(function (fl) {
             if (fl && fl.dataUrl) fd.append(fl.fieldName || "file", _dataUrlToBlob(fl.dataUrl), fl.name || "file.png");

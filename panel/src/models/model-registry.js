@@ -391,30 +391,6 @@ var MODELS = [
       identityRetention: "high"
     },
     recommendedFor: ["upscale", "restore"]
-  },
-  {
-    /* Migrated from gpt-image-1 — OpenAI retires that model's API on
-       2026-10-23. Old saved drafts/presets carrying "gpt-image-1" resolve
-       here via LEGACY_ALIASES below. (Distinct from the "gpt-image-2"
-       entry above, which is RunningHub's hosted endpoint.) */
-    id: "gpt-image-2-openai",
-    displayName: "GPT Image 2 (OpenAI)",
-    provider: "openai",
-    category: ["creative", "image-edit"],
-    tagline: "Direct OpenAI account — no Enterprise key needed",
-    detail: "Image generation and editing straight from your own OpenAI API key",
-    capabilities: {
-      textToImage: true,
-      imageEdit: true,
-      multiReference: true,
-      maxImages: 4,
-      supportedSizes: ["1k", "2k"],
-      supportedRatios: ["auto", "1:1", "3:2", "2:3"],
-      variants: false,
-      visibleText: "high",
-      identityRetention: "medium"
-    },
-    recommendedFor: ["poster", "text-logo", "creative"]
   }
 ];
 
@@ -433,8 +409,10 @@ var AUTO_MODEL_ID = "auto";
 
 /* Retired model ids from older releases -> their current registry entry, so
    saved drafts/presets/settings keep resolving instead of failing.
-   gpt-image-1: OpenAI API shutdown 2026-10-23 — migrated to gpt-image-2. */
-var LEGACY_ALIASES = { "gpt-image-1": "gpt-image-2-openai" };
+   gpt-image-1: OpenAI API shutdown 2026-10-23. gpt-image-2-openai: the
+   direct-OpenAI route left with its provider in v6.26.0 — both resolve to
+   RunningHub's hosted gpt-image-2 entry. */
+var LEGACY_ALIASES = { "gpt-image-1": "gpt-image-2", "gpt-image-2-openai": "gpt-image-2" };
 
 var _byId = {};
 for (var i = 0; i < MODELS.length; i++) _byId[MODELS[i].id] = MODELS[i];

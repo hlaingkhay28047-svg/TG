@@ -1,6 +1,6 @@
 /* ============================================================
    HNK Photoshop Ai Panel (Students) V1 — main.js
-   HNK Studio · Myanmar · Gemini API (v1beta)
+   HNK Studio · Myanmar · RunningHub Enterprise (openapi/v2 — the one engine, v6.26.0)
    UXP-SAFE: no localStorage, no element.dataset, no textarea,
    guarded window.*, flexbox-only CSS, native textarea prompt (runtime capacity self-test).
    ============================================================ */
@@ -18,10 +18,8 @@ const formats = uxp.storage.formats;
 const shell = (uxp && uxp.shell) ? uxp.shell : null; /* openPath (folder in Finder/Explorer); may be null on old hosts */
 
 /* ---------------- Constants ---------------- */
-const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const MODEL_FLASH_IMG = "gemini-2.5-flash-image";      // 1K fast
-const MODEL_PRO_IMG = "gemini-3-pro-image-preview";    // 1K/2K/4K quality
-const MODEL_TEXT = "gemini-2.5-flash";                 // prompt improve
+/* v6.26.0 — the Gemini API constants left with that provider; the one
+   engine's base URL and paths live in src/providers/runninghub-config.js. */
 const MAX_PROMPT = 20000;
 const SETTINGS_FILE = "hnk_students_settings.json";
 const RATIOS = [
@@ -75,7 +73,7 @@ const state = {
      are what the offline grace window reads. */
   accRefresh: "", accUid: "", accEmail: "", accProfile: null,
   accSeenAt: 0, accDevId: "",
-  apiKey: "", lang: "my", theme: "dark", model: "auto", size: "1K", ratio: "auto",
+  rhKey: "", lang: "my", theme: "dark", model: "auto", size: "1K", ratio: "auto",
   autoRun: true, autoPlace: true, intensity: 60,
   refs: [null, null],
   beforeB64: null, beforeMime: "image/jpeg",
@@ -88,15 +86,13 @@ const state = {
   i2p: { objects: true, light: true, color: true, bg: true, fg: true, fit: true, adapt: true },
   lights: null, lightSel: 0, lightEquip: false,
   chains: { prewedding: false, pageant: false, model: false, glass: false, commercial: false, korea: false, vietnam: false, chinese: false },
-  restMode: "color", myCache: null, pendingBtn: null, busyBtnEl: null, busyBtnTxt: null,
+  restMode: "color", pendingBtn: null, busyBtnEl: null, busyBtnTxt: null,
   history: [],
   recentPrompts: [], histSel: -1, lastAction: "Prompt",
-  provider: "gemini", oaiKey: "", oaiModel: "gpt-image-2", oaiQuality: "auto",
   cRatio: "1:1", cVariations: 1, cGallery: [], cSel: 0, cUrlSlot: -1,
   cRefs: [null, null, null, null], cResultB64: null, cMime: "image/png", cBeforeB64: null,
   genCount: 0, batch: false, batchStop: false, lastUserText: "", lastFinalPrompt: "",
   webUrl: null, webNudged: false,
-  liveTrans: true, enCache: null, transTimer: null, fillingEn: false, fillingMy: false,
   realOn: true, realDir: "auto", banText: true,
   camOn: false, camBody: null, camMm: null, camF: null, camFilm: null, camBokeh: null,
   camIso: 100, camIsoOn: false, camK: 5600, camKOn: false,
@@ -106,7 +102,7 @@ const state = {
   match: { color: true, light: true, makeup: true, skin: true },
   pipeline: [], pipeRunning: false, pipeMerge: false,
   wedTrail: "trailBlush", wedVeil: 2, wedGown: 3, wedPetal: "petGentle", wedExtra: "horse1",
-  autoSave: false, saveDirH: null, sessionLog: "", _proFellBack: false,
+  autoSave: false, saveDirH: null, sessionLog: "",
   learnMode: true, armedKey: null, armedEl: null, armTimer: null, armStage: 0,
   /* Reference Image Library (user-selected folder + persistent token) */
   libToken: "", libFolderName: "", libNativePath: "", libImgCount: 0, libLastScan: 0,
@@ -135,7 +131,7 @@ const I18N = {
     gate_grace: "Offline — {D} days of offline use left",
     gate_open_fail: "Could not open the browser. Address: {U}",
     app_title: "HNK Photoshop Ai Panel (Students)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "Show",
     btn_hide: "Hide",
     btn_test: "Test Key",
@@ -144,7 +140,7 @@ const I18N = {
     st_key_ok: "\u2713 API key is working",
     st_key_bad: "API key failed",
     st_key_saved: "API key saved \u2713",
-    st_need_key: "Enter your Gemini API key first",
+    st_need_key: "Enter your RunningHub Enterprise key first",
     sec_model: "Model & Output",
     scope_model_note: "Used by the Prompt tab's Generate button below \u2014 Create and AI Tools each have their own separate model settings.",
     model_auto: "Auto (recommended)",
@@ -313,7 +309,6 @@ const I18N = {
     st_img_bad: "Image data failed the integrity check \u2014 re-add the photo",
     st_auto_comp: "Auto Composite: IMAGE 1 subject \u2192 reference scene",
     prov_lbl: "AI Provider",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "Create",
     create_note: "CREATE MODE \u2014 brand-new image from your prompt (+ its own 4 refs). Fully standalone: never reads the document, presets, chains or locks.",
     create_ph: "Describe the image you want to create\u2026",
@@ -329,7 +324,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d Describe Ref 1 \u2192 Prompt",
     st_describing: "Reading the reference\u2026",
     st_described: "Prompt written from Ref 1 \u2713",
-    st_need_gem: "Add a Gemini API key (Setup) \u2014 this uses Gemini text",
     st_need_ref1: "Add an image to Ref 1 first",
     st_lib_added: "Prompt added \u2713",
     cr_refs: "Reference Images (up to 4)",
@@ -597,8 +591,7 @@ const I18N = {
     btn_clearlog: "Clear",
     diag_host: "Photoshop host",
     diag_uxp: "UXP capabilities",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "Active document",
     diag_set: "set",
     diag_unset: "not set",
@@ -672,8 +665,6 @@ const I18N = {
     ai_rh_note: "Built-in models already work with the key above \u2014 nothing to do. If a model shows \"not connected\" (its endpoint path isn't confirmed yet), copy the path from RunningHub's API docs and paste it here.",
     ai_rh_save: "Save this model's endpoint",
     ai_test_conn: "Test connection",
-    ai_oai_sec: "OpenAI (Advanced \u2014 optional)",
-    ai_oai_note: "Use your own OpenAI API key with GPT Image 2 instead of (or alongside) RunningHub Enterprise.",
     ai_save_verify: "Save & Verify",
     ai_settings: "Settings",
     ai_add_layers: "Add Results as New Layers",
@@ -740,7 +731,7 @@ const I18N = {
     gate_grace: "အင်တာနက် မရှိ — အော့ဖ်လိုင်း {D} ရက် ကျန်ပါသေးတယ်",
     gate_open_fail: "browser ဖွင့်လို့ မရပါ။ လိပ်စာ — {U}",
     app_title: "HNK Photoshop Ai Panel (\u1000\u103b\u1031\u102c\u1004\u103a\u1038\u101e\u102c\u1038\u1019\u103b\u102c\u1038)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "\u1015\u103c",
     btn_hide: "\u1016\u103d\u1000\u103a",
     btn_test: "Test \u1005\u1005\u103a\u1019\u101a\u103a",
@@ -749,7 +740,7 @@ const I18N = {
     st_key_ok: "\u2713 API Key \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1015\u102b\u1010\u101a\u103a",
     st_key_bad: "API Key \u1019\u103e\u102c\u1038\u1014\u1031\u1015\u102b\u1010\u101a\u103a",
     st_key_saved: "API Key \u101e\u102d\u1019\u103a\u1038\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e \u2713",
-    st_need_key: "Gemini API Key \u1021\u101b\u1004\u103a\u1011\u100a\u103a\u1015\u102b",
+    st_need_key: "RunningHub Enterprise Key \u1021\u101b\u1004\u103a\u1011\u100a\u103a\u1015\u102b",
     sec_model: "Model \u1014\u1032\u1037 Output",
     scope_model_note: "\u1021\u1031\u102c\u1000\u103a\u1000 Prompt tab \u101b\u1032\u1037 Generate \u1001\u101c\u102f\u1010\u103a\u1021\u1010\u103d\u1000\u103a\u1015\u102b \u2014 Create \u1014\u1032\u1037 AI Tools \u1010\u102d\u102f\u1037\u1019\u103e\u102c \u101e\u1030\u1010\u102d\u102f\u1037\u1000\u102d\u102f\u101a\u103a\u1015\u102d\u102f\u1004\u103a model setting \u101e\u102e\u1038\u1001\u103c\u102c\u1038\u1005\u102e \u101b\u103e\u102d\u1015\u102b\u1010\u101a\u103a\u104b",
     model_auto: "Auto (\u1021\u1000\u103c\u1036\u1015\u103c\u102f)",
@@ -918,7 +909,6 @@ const I18N = {
     st_img_bad: "\u1015\u102f\u1036 data \u1005\u1005\u103a\u1006\u1031\u1038\u1019\u1021\u1031\u102c\u1004\u103a \u2014 \u1015\u102f\u1036\u1000\u102d\u102f \u1015\u103c\u1014\u103a\u1011\u100a\u1037\u103a\u1015\u102b",
     st_auto_comp: "Auto Composite: \u1015\u1004\u103a\u1010\u102d\u102f\u1004\u103a (IMAGE 1) \u2192 reference scene \u1011\u1032\u101e\u103d\u1004\u103a\u1038\u1014\u1031\u101e\u100a\u103a",
     prov_lbl: "AI \u101d\u1014\u103a\u1006\u1031\u102c\u1004\u103a\u1019\u103e\u102f\u1015\u1031\u1038\u101e\u1030",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "\u1016\u1014\u103a\u1010\u102e\u1038",
     create_note: "CREATE MODE \u2014 prompt (+ \u1000\u102d\u102f\u101a\u103a\u1015\u102d\u102f\u1004\u103a ref 4 \u1000\u103d\u1000\u103a) \u1014\u1032\u1037 \u1015\u102f\u1036\u1021\u101e\u1005\u103a\u1016\u1014\u103a\u1010\u102e\u1038\u1019\u101a\u103a\u104b Document \u1000\u102d\u102f \u101c\u102f\u1036\u1038\u101d\u1019\u1016\u1010\u103a \u2014 \u1018\u102c feature \u1014\u1032\u1037\u1019\u103e \u1019\u101b\u1031\u102c\u104b",
     create_ph: "\u1016\u1014\u103a\u1010\u102e\u1038\u1001\u103b\u1004\u103a\u1010\u1032\u1037\u1015\u102f\u1036\u1000\u102d\u102f \u1016\u1031\u102c\u103a\u1015\u103c\u1015\u102b\u2026",
@@ -934,7 +924,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d Ref 1 \u2192 Prompt \u1016\u1010\u103a",
     st_describing: "Reference \u1016\u1010\u103a\u1014\u1031\u101e\u100a\u103a\u2026",
     st_described: "Ref 1 \u1019\u103e prompt \u101b\u1015\u103c\u102e \u2713",
-    st_need_gem: "Gemini API key \u1011\u100a\u1037\u103a\u1015\u102b (Setup) \u2014 Gemini text \u101e\u102f\u1036\u1038\u101e\u100a\u103a",
     st_need_ref1: "Ref 1 \u1011\u1032 \u1015\u102f\u1036\u1021\u101b\u1004\u103a\u1011\u100a\u1037\u103a\u1015\u102b",
     st_lib_added: "Prompt \u1011\u100a\u1037\u103a\u1015\u103c\u102e\u1038 \u2713",
     cr_refs: "Reference \u1015\u102f\u1036\u1019\u103b\u102c\u1038 (\u1021\u1019\u103b\u102c\u1038\u1006\u102f\u1036\u1038 4)",
@@ -1202,8 +1191,7 @@ const I18N = {
     btn_clearlog: "\u101b\u103e\u1004\u103a\u1038",
     diag_host: "Photoshop \u1021\u1000\u103a\u1015\u103a",
     diag_uxp: "UXP \u1005\u103d\u1019\u103a\u1038\u101b\u100a\u103a",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "\u1016\u103d\u1004\u103a\u1011\u102c\u1038\u101e\u1031\u102c document",
     diag_set: "\u1011\u100a\u103a\u1015\u103c\u102e\u1038",
     diag_unset: "\u1019\u1011\u100a\u103a\u101b\u101e\u1031\u1038",
@@ -1277,8 +1265,6 @@ const I18N = {
     ai_rh_note: "\u1015\u102b\u1015\u103c\u102e\u1038\u101e\u102c\u1038 model \u1010\u103d\u1031\u1000 \u1021\u1015\u1031\u102b\u103a\u1000 key \u1014\u1032\u1037 \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1015\u102b\u1015\u103c\u102e \u2014 \u1018\u102c\u1019\u103e\u101c\u102f\u1015\u103a\u1005\u101b\u102c \u1019\u101c\u102d\u102f\u1015\u102b\u104b model \u1010\u1005\u103a\u1001\u102f\u1000 \"not connected\" \u1015\u103c\u1014\u1031\u101b\u1004\u103a (endpoint path \u1019\u101e\u1031\u1001\u103b\u102c\u101e\u1031\u1038\u101c\u102d\u102f\u1037) RunningHub API docs \u1000\u1014\u1031 path \u1000\u102d\u102f \u1000\u1030\u1038\u1015\u103c\u102e\u1038 \u1012\u102e\u1019\u103e\u102c \u1011\u100a\u1037\u103a\u1015\u102b\u104b",
     ai_rh_save: "\u1012\u102e model \u101b\u1032\u1037 endpoint \u101e\u102d\u1019\u103a\u1038",
     ai_test_conn: "\u1001\u103b\u102d\u1010\u103a\u1006\u1000\u103a\u1019\u103e\u102f \u1005\u1005\u103a",
-    ai_oai_sec: "OpenAI (Advanced \u2014 \u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)",
-    ai_oai_note: "RunningHub Enterprise \u1021\u1005\u102c\u1038 (\u101e\u102d\u102f\u1037) \u1021\u1010\u1030\u1010\u1030 \u1000\u102d\u102f\u101a\u103a\u1015\u102d\u102f\u1004\u103a OpenAI API key \u1014\u1032\u1037 GPT Image 2 \u101e\u102f\u1036\u1038\u1014\u102d\u102f\u1004\u103a\u1015\u102b\u1010\u101a\u103a\u104b",
     ai_save_verify: "\u101e\u102d\u1019\u103a\u1038\u1015\u103c\u102e\u1038 \u1005\u1005\u103a",
     ai_settings: "\u1006\u1000\u103a\u1010\u1004\u103a",
     ai_add_layers: "\u101b\u101c\u1012\u103a\u1000\u102d\u102f Layer \u1021\u101e\u1005\u103a\u1021\u1016\u103c\u1005\u103a \u1011\u100a\u1037\u103a",
@@ -1345,7 +1331,7 @@ const I18N = {
     gate_grace: "ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ၸႂ်ႉလႆႈထႅင်ႈ {D} ဝၼ်း",
     gate_open_fail: "ပိုတ်ႇ browser ဢမ်ႇလႆႈ။ လိင်ႉ — {U}",
     app_title: "HNK Photoshop Ai Panel (\u101c\u102f\u1075\u103a\u1088\u1081\u1035\u107c\u103a\u1038)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "\u107c\u1084",
     btn_hide: "\u1019\u1030\u1075\u103a\u1038",
     btn_test: "\u1010\u1085\u1010\u103a\u1088 Key",
@@ -1354,7 +1340,7 @@ const I18N = {
     st_key_ok: "\u2713 API key \u1081\u1035\u1010\u103a\u1038\u1075\u1062\u107c\u103a\u101c\u102e",
     st_key_bad: "API key \u1022\u1019\u103a\u1087\u1015\u1035\u107c\u103a",
     st_key_saved: "\u101e\u102d\u1019\u103a\u1038 API key \u101a\u101d\u103a\u1089 \u2713",
-    st_need_key: "\u101e\u1082\u103a\u1087 Gemini API key \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
+    st_need_key: "\u101e\u1082\u103a\u1087 RunningHub Enterprise key \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
     sec_model: "Model \u101c\u1084\u1088 Output",
     scope_model_note: "\u1078\u1082\u103a\u1089\u1010\u103d\u107c\u103a\u1088\u1010\u1083\u1087\u1015\u102f\u1019\u103a\u1087 Generate \u107c\u1082\u103a\u1038 tab Prompt \u1010\u1082\u103a\u1088\u107c\u1086\u1089 \u2014 Create \u101c\u1084\u1088 AI Tools \u1019\u102e\u1038 setting model \u1081\u1004\u103a\u1038\u107d\u1082\u103a\u1019\u107c\u103a\u1038\u104b",
     model_auto: "\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 (\u1076\u102d\u102f\u1075\u103a\u1089)",
@@ -1523,7 +1509,6 @@ const I18N = {
     st_img_bad: "\u1076\u1031\u1083\u1088\u1019\u102f\u107c\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 \u1022\u1019\u103a\u1087\u107d\u1062\u107c\u103a\u1087\u101c\u103d\u1004\u103a\u1088\u1010\u1085\u1010\u103a\u1088 \u2014 \u101e\u1082\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1076\u102d\u102f\u107c\u103a\u1038",
     st_auto_comp: "\u107d\u103d\u1019\u103a\u1089\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038: \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 IMAGE 1 \u2192 scene reference",
     prov_lbl: "\u107d\u1030\u1088\u1015\u107c\u103a\u101d\u1086\u1089 AI",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "Create",
     create_note: "CREATE MODE \u2014 \u1081\u1035\u1010\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1019\u1082\u103a\u1087\u1010\u102e\u1088 prompt \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 (+ ref 4 \u1022\u107c\u103a\u1081\u1004\u103a\u1038\u1076\u1031\u1083)\u104b \u1081\u1004\u103a\u1038\u1076\u1031\u1083\u1010\u1084\u1089\u1010\u1084\u1089: \u1022\u1019\u103a\u1087\u101c\u1030 document, preset, chains \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101c\u103d\u1075\u103a\u1089\u101e\u1004\u103a\u104b",
     create_ph: "\u1010\u1085\u1019\u103a\u1088\u101d\u1083\u1088 \u1076\u1082\u103a\u1088\u101e\u1062\u1004\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u102e\u1088\u101e\u1004\u103a\u2026",
@@ -1539,7 +1524,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d \u101c\u1030 Ref 1 \u2192 Prompt",
     st_describing: "\u1010\u102d\u102f\u1075\u103a\u1089\u101c\u1030\u1076\u1085\u1015\u103a\u1038 reference\u2026",
     st_described: "\u1010\u1085\u1019\u103a\u1088 prompt \u1010\u102e\u1088 Ref 1 \u101a\u101d\u103a\u1089 \u2713",
-    st_need_gem: "\u101e\u1082\u103a\u1087 Gemini API key (Setup) \u2014 \u1022\u107c\u103a\u107c\u1086\u1089\u1078\u1082\u103a\u1089 Gemini text",
     st_need_ref1: "\u101e\u1082\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1076\u101d\u103a\u1088 Ref 1 \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
     st_lib_added: "\u101e\u1082\u103a\u1087 prompt \u101a\u101d\u103a\u1089 \u2713",
     cr_refs: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 Reference (\u1011\u102d\u102f\u1004\u103a 4)",
@@ -1807,8 +1791,7 @@ const I18N = {
     btn_clearlog: "\u1019\u103d\u1010\u103a\u1087",
     diag_host: "\u1022\u1085\u1015\u103a\u1089 Photoshop",
     diag_uxp: "\u107c\u1019\u103a\u1089\u1075\u1010\u103a\u1089 UXP",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "Document \u1022\u107c\u103a\u1015\u102d\u102f\u1010\u103a\u1087\u101d\u1086\u1089",
     diag_set: "\u1019\u1075\u103a\u1038\u101d\u1086\u1089",
     diag_unset: "\u1015\u1086\u1087\u1019\u1075\u103a\u1038",
@@ -1882,8 +1865,6 @@ const I18N = {
     ai_rh_note: "Model \u1022\u107c\u103a\u1015\u1083\u1038\u1019\u1083\u1038\u1078\u102d\u102f\u1004\u103a \u1078\u1082\u103a\u1089\u1010\u1004\u103a\u1038 key \u107c\u102d\u1030\u101d\u103a\u107c\u1086\u1089\u101c\u1086\u1088\u101a\u101d\u103a\u1089 \u2014 \u1022\u1019\u103a\u1087\u101c\u1030\u101d\u103a\u1087\u1081\u1035\u1010\u103a\u1038\u101e\u1004\u103a\u104b Model \u101c\u1082\u103a\u107c\u1084\u101d\u1083\u1088 \"not connected\" (endpoint path \u1015\u1086\u1087\u1010\u1085\u1010\u103a\u1088) \u1078\u102d\u102f\u1004\u103a \u1022\u101d\u103a path \u1010\u102e\u1088 RunningHub API docs \u101e\u1031 \u101e\u1082\u103a\u1087\u1010\u102e\u1088\u107c\u1086\u1088\u104b",
     ai_rh_save: "\u101e\u102d\u1019\u103a\u1038 endpoint \u1076\u103d\u1004\u103a model \u107c\u1086\u1089",
     ai_test_conn: "\u1010\u1085\u1010\u103a\u1088\u101c\u103d\u1004\u103a\u1088\u1075\u1015\u103a\u1038\u101e\u102d\u102f\u1015\u103a\u1087",
-    ai_oai_sec: "OpenAI (Advanced \u2014 \u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
-    ai_oai_note: "\u1078\u1082\u103a\u1089 OpenAI API key \u1081\u1004\u103a\u1038\u1076\u1031\u1083\u1010\u1004\u103a\u1038 GPT Image 2 \u1010\u1085\u107c\u103a\u1038 RunningHub Enterprise \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1078\u1082\u103a\u1089\u1078\u103d\u1019\u103a\u1038\u1075\u107c\u103a\u104b",
     ai_save_verify: "\u101e\u102d\u1019\u103a\u1038\u101e\u1031 \u1010\u1085\u1010\u103a\u1088",
     ai_settings: "\u1078\u1010\u103a\u1038\u101e\u1083\u1087",
     ai_add_layers: "\u101e\u1082\u103a\u1087\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1015\u1035\u107c\u103a Layer \u1019\u1082\u103a\u1087",
@@ -1950,7 +1931,7 @@ const I18N = {
     gate_grace: "Internet n nga ai — {D} ya lang lu ai",
     gate_open_fail: "Browser hpaw n lu ai. Address: {U}",
     app_title: "HNK Photoshop Ai Panel (Sharin ma ni)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "Madun",
     btn_hide: "Makoi",
     btn_test: "Key sawn yu",
@@ -1959,7 +1940,7 @@ const I18N = {
     st_key_ok: "\u2713 API key akyu rawng nga ai",
     st_key_bad: "API key n byin ai",
     st_key_saved: "API key makoi da sai \u2713",
-    st_need_key: "Na a Gemini API key hpe shawng bang u",
+    st_need_key: "Na a RunningHub Enterprise key hpe shawng bang u",
     sec_model: "Model hte Output",
     scope_model_note: "Npu na Prompt tab a Generate button hpe lang ai \u2014 Create hte AI Tools gaw shada n bung ai model setting nga ai.",
     model_auto: "Shi hkrai (tsun shadawn ai)",
@@ -2128,7 +2109,6 @@ const I18N = {
     st_img_bad: "Sumla data gaw sawn yu ai lam n lai ai \u2014 sumla bai bang u",
     st_auto_comp: "Shi hkrai composite: IMAGE 1 masha \u2192 reference scene",
     prov_lbl: "AI jaw ai",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "Create",
     create_note: "CREATE MODE \u2014 na a prompt kaw na sumla nnan (+ shi a ref 4). Shi hkrai tsap ai: document, preset, chains, lock ni hpe galoi mung n hti ai.",
     create_ph: "Galaw mayu ai sumla hpe tsun dan u\u2026",
@@ -2144,7 +2124,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d Ref 1 hti \u2192 Prompt",
     st_describing: "Reference sumla hpe hti nga ai\u2026",
     st_described: "Ref 1 kaw na prompt ka sai \u2713",
-    st_need_gem: "Gemini API key bang u (Setup) \u2014 ndai gaw Gemini text lang ai",
     st_need_ref1: "Ref 1 kaw sumla shawng bang u",
     st_lib_added: "Prompt bang sai \u2713",
     cr_refs: "Reference sumla (4 du hkra)",
@@ -2412,8 +2391,7 @@ const I18N = {
     btn_clearlog: "Kasat kau",
     diag_host: "Photoshop nta madu",
     diag_uxp: "UXP atsam",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "Hpaw da ai document",
     diag_set: "masat da sai",
     diag_unset: "n masat shi ai",
@@ -2487,8 +2465,6 @@ const I18N = {
     ai_rh_note: "Nlung ai model ni gaw ntsa na key hte galaw sai \u2014 hpa galaw ra ai n nga. Model langai \"not connected\" madun yang (endpoint path teng sha n chye shi ai), RunningHub API docs kaw na path hpe la nna ndai kaw bang u.",
     ai_rh_save: "Ndai model a endpoint makoi",
     ai_test_conn: "Matut lam sawn yu",
-    ai_oai_sec: "OpenAI (Advanced \u2014 n bang mung mai)",
-    ai_oai_note: "RunningHub Enterprise malai shing nrai shi hte rau, nang a OpenAI API key hte GPT Image 2 lang mai ai.",
     ai_save_verify: "Makoi nna sawn",
     ai_settings: "Setting",
     ai_add_layers: "Pru ai lam hpe Layer nnan hku bang",
@@ -2555,7 +2531,7 @@ const I18N = {
     gate_grace: "ออฟไลน์ — ใช้งานแบบออฟไลน์ได้อีก {D} วัน",
     gate_open_fail: "เปิดเบราว์เซอร์ไม่ได้ ที่อยู่: {U}",
     app_title: "HNK Ai Panel (\u0e19\u0e31\u0e01\u0e40\u0e23\u0e35\u0e22\u0e19)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "\u0e41\u0e2a\u0e14\u0e07",
     btn_hide: "\u0e0b\u0e48\u0e2d\u0e19",
     btn_test: "\u0e17\u0e14\u0e2a\u0e2d\u0e1a",
@@ -2564,7 +2540,7 @@ const I18N = {
     st_key_ok: "\u2713 API key \u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49",
     st_key_bad: "API key \u0e25\u0e49\u0e21\u0e40\u0e2b\u0e25\u0e27",
     st_key_saved: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 API key \u0e41\u0e25\u0e49\u0e27 \u2713",
-    st_need_key: "\u0e43\u0e2a\u0e48 Gemini API key \u0e01\u0e48\u0e2d\u0e19",
+    st_need_key: "\u0e43\u0e2a\u0e48 RunningHub Enterprise key \u0e01\u0e48\u0e2d\u0e19",
     sec_model: "\u0e42\u0e21\u0e40\u0e14\u0e25 & \u0e40\u0e2d\u0e32\u0e15\u0e4c\u0e1e\u0e38\u0e15",
     scope_model_note: "\u0e43\u0e0a\u0e49\u0e01\u0e31\u0e1a\u0e1b\u0e38\u0e48\u0e21 Generate \u0e02\u0e2d\u0e07\u0e41\u0e17\u0e47\u0e1a Prompt \u0e14\u0e49\u0e32\u0e19\u0e25\u0e48\u0e32\u0e07 \u2014 Create \u0e41\u0e25\u0e30 AI Tools \u0e21\u0e35\u0e01\u0e32\u0e23\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e42\u0e21\u0e40\u0e14\u0e25\u0e41\u0e22\u0e01\u0e02\u0e2d\u0e07\u0e15\u0e31\u0e27\u0e40\u0e2d\u0e07",
     model_auto: "\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 (\u0e41\u0e19\u0e30\u0e19\u0e33)",
@@ -2733,7 +2709,6 @@ const I18N = {
     st_img_bad: "\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e20\u0e32\u0e1e\u0e44\u0e21\u0e48\u0e1c\u0e48\u0e32\u0e19\u0e01\u0e32\u0e23\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21\u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e21\u0e48",
     st_auto_comp: "\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34: \u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a IMAGE 1 \u2192 \u0e09\u0e32\u0e01\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
     prov_lbl: "\u0e1c\u0e39\u0e49\u0e43\u0e2b\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23 AI",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "\u0e2a\u0e23\u0e49\u0e32\u0e07",
     create_note: "\u0e42\u0e2b\u0e21\u0e14 CREATE \u2014 \u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e21\u0e48\u0e08\u0e32\u0e01\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c (\u0e21\u0e35 ref \u0e02\u0e2d\u0e07\u0e15\u0e31\u0e27\u0e40\u0e2d\u0e07 4 \u0e23\u0e39\u0e1b)",
     create_ph: "\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e04\u0e38\u0e13\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e2a\u0e23\u0e49\u0e32\u0e07\u2026",
@@ -2749,7 +2724,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d \u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22 Ref 1 \u2192 \u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
     st_describing: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e48\u0e32\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u2026",
     st_described: "\u0e40\u0e02\u0e35\u0e22\u0e19\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e08\u0e32\u0e01 Ref 1 \u0e41\u0e25\u0e49\u0e27 \u2713",
-    st_need_gem: "\u0e40\u0e1e\u0e34\u0e48\u0e21 Gemini API key (\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32) \u2014 \u0e43\u0e0a\u0e49 Gemini \u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21",
     st_need_ref1: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e20\u0e32\u0e1e\u0e25\u0e07 Ref 1 \u0e01\u0e48\u0e2d\u0e19",
     st_lib_added: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e41\u0e25\u0e49\u0e27 \u2713",
     cr_refs: "\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 (\u0e2a\u0e39\u0e07\u0e2a\u0e38\u0e14 4)",
@@ -3017,8 +2991,7 @@ const I18N = {
     btn_clearlog: "\u0e25\u0e49\u0e32\u0e07",
     diag_host: "\u0e42\u0e2e\u0e2a\u0e15\u0e4c Photoshop",
     diag_uxp: "\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16 UXP",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19",
     diag_set: "\u0e15\u0e31\u0e49\u0e07\u0e41\u0e25\u0e49\u0e27",
     diag_unset: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e15\u0e31\u0e49\u0e07",
@@ -3092,8 +3065,6 @@ const I18N = {
     ai_rh_note: "\u0e42\u0e21\u0e40\u0e14\u0e25\u0e17\u0e35\u0e48\u0e21\u0e35\u0e21\u0e32\u0e43\u0e2b\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49\u0e14\u0e49\u0e27\u0e22\u0e04\u0e35\u0e22\u0e4c\u0e14\u0e49\u0e32\u0e19\u0e1a\u0e19\u0e41\u0e25\u0e49\u0e27 \u2014 \u0e44\u0e21\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e17\u0e33\u0e2d\u0e30\u0e44\u0e23 \u0e2b\u0e32\u0e01\u0e42\u0e21\u0e40\u0e14\u0e25\u0e43\u0e14\u0e02\u0e36\u0e49\u0e19\u0e27\u0e48\u0e32 \"not connected\" (\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19 endpoint path) \u0e43\u0e2b\u0e49\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01 path \u0e08\u0e32\u0e01 API docs \u0e02\u0e2d\u0e07 RunningHub \u0e21\u0e32\u0e27\u0e32\u0e07\u0e17\u0e35\u0e48\u0e19\u0e35\u0e48",
     ai_rh_save: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 endpoint \u0e02\u0e2d\u0e07\u0e42\u0e21\u0e40\u0e14\u0e25\u0e19\u0e35\u0e49",
     ai_test_conn: "\u0e17\u0e14\u0e2a\u0e2d\u0e1a\u0e01\u0e32\u0e23\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d",
-    ai_oai_sec: "OpenAI (\u0e02\u0e31\u0e49\u0e19\u0e2a\u0e39\u0e07 \u2014 \u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)",
-    ai_oai_note: "\u0e43\u0e0a\u0e49 OpenAI API key \u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e2d\u0e07\u0e01\u0e31\u0e1a GPT Image 2 \u0e41\u0e17\u0e19 (\u0e2b\u0e23\u0e37\u0e2d\u0e04\u0e27\u0e1a\u0e04\u0e39\u0e48\u0e01\u0e31\u0e1a) RunningHub Enterprise",
     ai_save_verify: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e41\u0e25\u0e30\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a",
     ai_settings: "\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32",
     ai_add_layers: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e40\u0e1b\u0e47\u0e19 Layer \u0e43\u0e2b\u0e21\u0e48",
@@ -3160,7 +3131,7 @@ const I18N = {
     gate_grace: "离线 — 还可离线使用 {D} 天",
     gate_open_fail: "无法打开浏览器。网址：{U}",
     app_title: "HNK Ai \u9762\u677f\uff08\u5b66\u751f\u7248\uff09",
-    sec_api: "Gemini API \u5bc6\u94a5",
+    sec_api: "RunningHub Enterprise \u5bc6\u94a5",
     btn_show: "\u663e\u793a",
     btn_hide: "\u9690\u85cf",
     btn_test: "\u6d4b\u8bd5",
@@ -3169,7 +3140,7 @@ const I18N = {
     st_key_ok: "\u2713 API \u5bc6\u94a5\u53ef\u7528",
     st_key_bad: "API \u5bc6\u94a5\u5931\u8d25",
     st_key_saved: "\u5df2\u4fdd\u5b58 API \u5bc6\u94a5 \u2713",
-    st_need_key: "\u8bf7\u5148\u8f93\u5165 Gemini API \u5bc6\u94a5",
+    st_need_key: "\u8bf7\u5148\u8f93\u5165 RunningHub Enterprise \u5bc6\u94a5",
     sec_model: "\u6a21\u578b\u4e0e\u8f93\u51fa",
     scope_model_note: "\u7528\u4e8e\u4e0b\u65b9 Prompt \u6807\u7b7e\u9875\u7684 Generate \u6309\u94ae \u2014 Create \u4e0e AI Tools \u5404\u6709\u72ec\u7acb\u7684\u6a21\u578b\u8bbe\u7f6e\u3002",
     model_auto: "\u81ea\u52a8\uff08\u63a8\u8350\uff09",
@@ -3338,7 +3309,6 @@ const I18N = {
     st_img_bad: "\u56fe\u7247\u6570\u636e\u672a\u901a\u8fc7\u5b8c\u6574\u6027\u68c0\u67e5 \u2014 \u8bf7\u91cd\u65b0\u6dfb\u52a0\u7167\u7247",
     st_auto_comp: "\u81ea\u52a8\u5408\u6210\uff1aIMAGE 1 \u4e3b\u4f53 \u2192 \u53c2\u8003\u573a\u666f",
     prov_lbl: "AI \u63d0\u4f9b\u65b9",
-    oai_key_ph: "sk-...\uff08OpenAI API \u5bc6\u94a5\uff09",
     tab_create: "\u521b\u5efa",
     create_note: "\u521b\u5efa\u6a21\u5f0f \u2014 \u4ec5\u51ed\u63d0\u793a\u8bcd\u751f\u6210\u5168\u65b0\u56fe\u7247\uff08\u542b\u81ea\u5e26 4 \u5f20\u53c2\u8003\u56fe\uff09",
     create_ph: "\u63cf\u8ff0\u4f60\u60f3\u521b\u5efa\u7684\u56fe\u7247\u2026",
@@ -3354,7 +3324,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d \u63cf\u8ff0 Ref 1 \u2192 \u63d0\u793a\u8bcd",
     st_describing: "\u6b63\u5728\u8bfb\u53d6\u53c2\u8003\u56fe\u2026",
     st_described: "\u5df2\u7531 Ref 1 \u751f\u6210\u63d0\u793a\u8bcd \u2713",
-    st_need_gem: "\u8bf7\u6dfb\u52a0 Gemini API \u5bc6\u94a5\uff08\u8bbe\u7f6e\uff09\u2014 \u6b64\u529f\u80fd\u7528 Gemini \u6587\u672c",
     st_need_ref1: "\u8bf7\u5148\u7ed9 Ref 1 \u6dfb\u52a0\u56fe\u7247",
     st_lib_added: "\u5df2\u6dfb\u52a0\u63d0\u793a\u8bcd \u2713",
     cr_refs: "\u53c2\u8003\u56fe\uff08\u6700\u591a 4 \u5f20\uff09",
@@ -3622,8 +3591,7 @@ const I18N = {
     btn_clearlog: "\u6e05\u7a7a",
     diag_host: "Photoshop \u4e3b\u673a",
     diag_uxp: "UXP \u80fd\u529b",
-    diag_gem: "Gemini API \u5bc6\u94a5",
-    diag_oai: "OpenAI API \u5bc6\u94a5",
+    diag_rh: "RunningHub Enterprise \u5bc6\u94a5",
     diag_doc: "\u6d3b\u52a8\u6587\u6863",
     diag_set: "\u5df2\u8bbe\u7f6e",
     diag_unset: "\u672a\u8bbe\u7f6e",
@@ -3697,8 +3665,6 @@ const I18N = {
     ai_rh_note: "\u5185\u7f6e model \u5df2\u53ef\u7528\u4e0a\u65b9\u7684 key \u8fd0\u884c\uff0c\u65e0\u9700\u8bbe\u7f6e\u3002\u82e5\u67d0\u4e2a model \u663e\u793a \"not connected\"\uff08\u5176 endpoint path \u5c1a\u672a\u786e\u8ba4\uff09\uff0c\u8bf7\u4ece RunningHub \u7684 API \u6587\u6863\u590d\u5236 path \u5e76\u7c98\u8d34\u5230\u8fd9\u91cc\u3002",
     ai_rh_save: "\u4fdd\u5b58\u6b64 model \u7684 endpoint",
     ai_test_conn: "\u6d4b\u8bd5\u8fde\u63a5",
-    ai_oai_sec: "OpenAI\uff08\u9ad8\u7ea7 \u2014 \u53ef\u9009\uff09",
-    ai_oai_note: "\u7528\u4f60\u81ea\u5df1\u7684 OpenAI API key \u642d\u914d GPT Image 2\uff0c\u66ff\u4ee3\uff08\u6216\u4e0e\uff09RunningHub Enterprise \u5e76\u7528\u3002",
     ai_save_verify: "\u4fdd\u5b58\u5e76\u9a8c\u8bc1",
     ai_settings: "\u8bbe\u7f6e",
     ai_add_layers: "\u5c06\u7ed3\u679c\u6dfb\u52a0\u4e3a\u65b0 Layer",
@@ -3765,7 +3731,7 @@ const I18N = {
     gate_grace: "Ngoại tuyến — còn dùng ngoại tuyến được {D} ngày",
     gate_open_fail: "Không mở được trình duyệt. Địa chỉ: {U}",
     app_title: "HNK Photoshop Ai Panel (H\u1ecdc vi\u00ean)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "Hi\u1ec7n",
     btn_hide: "\u1ea8n",
     btn_test: "Ki\u1ec3m tra key",
@@ -3774,7 +3740,7 @@ const I18N = {
     st_key_ok: "\u2713 API key ho\u1ea1t \u0111\u1ed9ng t\u1ed1t",
     st_key_bad: "API key kh\u00f4ng d\u00f9ng \u0111\u01b0\u1ee3c",
     st_key_saved: "\u0110\u00e3 l\u01b0u API key \u2713",
-    st_need_key: "H\u00e3y nh\u1eadp Gemini API key tr\u01b0\u1edbc",
+    st_need_key: "H\u00e3y nh\u1eadp RunningHub Enterprise key tr\u01b0\u1edbc",
     sec_model: "Model & Output",
     scope_model_note: "D\u00f9ng cho n\u00fat Generate c\u1ee7a tab Prompt b\u00ean d\u01b0\u1edbi \u2014 Create v\u00e0 AI Tools \u0111\u1ec1u c\u00f3 thi\u1ebft l\u1eadp model ri\u00eang.",
     model_auto: "T\u1ef1 \u0111\u1ed9ng (khuy\u00ean d\u00f9ng)",
@@ -3943,7 +3909,6 @@ const I18N = {
     st_img_bad: "D\u1eef li\u1ec7u \u1ea3nh kh\u00f4ng qua \u0111\u01b0\u1ee3c ki\u1ec3m tra to\u00e0n v\u1eb9n \u2014 h\u00e3y th\u00eam l\u1ea1i \u1ea3nh",
     st_auto_comp: "Gh\u00e9p t\u1ef1 \u0111\u1ed9ng: ch\u1ee7 th\u1ec3 IMAGE 1 \u2192 c\u1ea3nh tham chi\u1ebfu",
     prov_lbl: "Nh\u00e0 cung c\u1ea5p AI",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "Create",
     create_note: "CH\u1ebe \u0110\u1ed8 CREATE \u2014 t\u1ea1o \u1ea3nh ho\u00e0n to\u00e0n m\u1edbi t\u1eeb prompt c\u1ee7a b\u1ea1n (+ 4 ref ri\u00eang). Ho\u00e0n to\u00e0n \u0111\u1ed9c l\u1eadp: kh\u00f4ng \u0111\u1ecdc t\u00e0i li\u1ec7u, preset, chains hay kh\u00f3a n\u00e0o.",
     create_ph: "M\u00f4 t\u1ea3 b\u1ee9c \u1ea3nh b\u1ea1n mu\u1ed1n t\u1ea1o\u2026",
@@ -3959,7 +3924,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d \u0110\u1ecdc Ref 1 \u2192 Prompt",
     st_describing: "\u0110ang \u0111\u1ecdc \u1ea3nh tham chi\u1ebfu\u2026",
     st_described: "\u0110\u00e3 vi\u1ebft prompt t\u1eeb Ref 1 \u2713",
-    st_need_gem: "H\u00e3y th\u00eam Gemini API key (Setup) \u2014 ch\u1ee9c n\u0103ng n\u00e0y d\u00f9ng Gemini text",
     st_need_ref1: "H\u00e3y th\u00eam \u1ea3nh v\u00e0o Ref 1 tr\u01b0\u1edbc",
     st_lib_added: "\u0110\u00e3 th\u00eam prompt \u2713",
     cr_refs: "\u1ea2nh tham chi\u1ebfu (t\u1ed1i \u0111a 4)",
@@ -4227,8 +4191,7 @@ const I18N = {
     btn_clearlog: "X\u00f3a",
     diag_host: "\u1ee8ng d\u1ee5ng Photoshop",
     diag_uxp: "Kh\u1ea3 n\u0103ng UXP",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "T\u00e0i li\u1ec7u \u0111ang m\u1edf",
     diag_set: "\u0111\u00e3 \u0111\u1eb7t",
     diag_unset: "ch\u01b0a \u0111\u1eb7t",
@@ -4302,8 +4265,6 @@ const I18N = {
     ai_rh_note: "C\u00e1c model t\u00edch h\u1ee3p \u0111\u00e3 ch\u1ea1y \u0111\u01b0\u1ee3c v\u1edbi key \u1edf tr\u00ean \u2014 kh\u00f4ng c\u1ea7n l\u00e0m g\u00ec. N\u1ebfu m\u1ed9t model hi\u1ec7n \"not connected\" (endpoint path ch\u01b0a \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn), h\u00e3y sao ch\u00e9p path t\u1eeb t\u00e0i li\u1ec7u API c\u1ee7a RunningHub v\u00e0 d\u00e1n v\u00e0o \u0111\u00e2y.",
     ai_rh_save: "L\u01b0u endpoint c\u1ee7a model n\u00e0y",
     ai_test_conn: "Ki\u1ec3m tra k\u1ebft n\u1ed1i",
-    ai_oai_sec: "OpenAI (N\u00e2ng cao \u2014 t\u00f9y ch\u1ecdn)",
-    ai_oai_note: "D\u00f9ng OpenAI API key c\u1ee7a b\u1ea1n v\u1edbi GPT Image 2 thay cho (ho\u1eb7c song song v\u1edbi) RunningHub Enterprise.",
     ai_save_verify: "L\u01b0u & x\u00e1c minh",
     ai_settings: "C\u00e0i \u0111\u1eb7t",
     ai_add_layers: "Th\u00eam k\u1ebft qu\u1ea3 th\u00e0nh Layer m\u1edbi",
@@ -4370,7 +4331,7 @@ const I18N = {
     gate_grace: "Offline — sisa {D} hari pemakaian offline",
     gate_open_fail: "Tidak bisa membuka browser. Alamat: {U}",
     app_title: "HNK Photoshop Ai Panel (Pelajar)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "Tampilkan",
     btn_hide: "Sembunyikan",
     btn_test: "Uji Key",
@@ -4379,7 +4340,7 @@ const I18N = {
     st_key_ok: "\u2713 API key berfungsi",
     st_key_bad: "API key gagal",
     st_key_saved: "API key tersimpan \u2713",
-    st_need_key: "Masukkan Gemini API key Anda dulu",
+    st_need_key: "Masukkan RunningHub Enterprise key Anda dulu",
     sec_model: "Model & Output",
     scope_model_note: "Dipakai oleh tombol Generate di tab Prompt bawah \u2014 Create dan AI Tools punya pengaturan model sendiri-sendiri.",
     model_auto: "Otomatis (disarankan)",
@@ -4548,7 +4509,6 @@ const I18N = {
     st_img_bad: "Data gambar gagal pemeriksaan integritas \u2014 tambahkan ulang fotonya",
     st_auto_comp: "Komposit Otomatis: subjek IMAGE 1 \u2192 adegan referensi",
     prov_lbl: "Penyedia AI",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "Create",
     create_note: "MODE CREATE \u2014 gambar baru sepenuhnya dari prompt Anda (+ 4 ref miliknya sendiri). Berdiri sendiri: tidak pernah membaca dokumen, preset, chains, atau kunci.",
     create_ph: "Jelaskan gambar yang ingin Anda buat\u2026",
@@ -4564,7 +4524,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d Baca Ref 1 \u2192 Prompt",
     st_describing: "Membaca gambar referensi\u2026",
     st_described: "Prompt ditulis dari Ref 1 \u2713",
-    st_need_gem: "Tambahkan Gemini API key (Setup) \u2014 fitur ini memakai Gemini text",
     st_need_ref1: "Tambahkan gambar ke Ref 1 dulu",
     st_lib_added: "Prompt ditambahkan \u2713",
     cr_refs: "Gambar Referensi (maks 4)",
@@ -4832,8 +4791,7 @@ const I18N = {
     btn_clearlog: "Bersihkan",
     diag_host: "Aplikasi Photoshop",
     diag_uxp: "Kemampuan UXP",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "Dokumen aktif",
     diag_set: "tersetel",
     diag_unset: "belum disetel",
@@ -4907,8 +4865,6 @@ const I18N = {
     ai_rh_note: "Model bawaan sudah berjalan dengan key di atas \u2014 tidak perlu diatur. Jika sebuah model menampilkan \"not connected\" (endpoint path-nya belum dipastikan), salin path dari dokumentasi API RunningHub lalu tempel di sini.",
     ai_rh_save: "Simpan endpoint model ini",
     ai_test_conn: "Uji koneksi",
-    ai_oai_sec: "OpenAI (Lanjutan \u2014 opsional)",
-    ai_oai_note: "Gunakan OpenAI API key Anda dengan GPT Image 2 sebagai pengganti (atau pendamping) RunningHub Enterprise.",
     ai_save_verify: "Simpan & Verifikasi",
     ai_settings: "Pengaturan",
     ai_add_layers: "Tambahkan hasil sebagai Layer baru",
@@ -4975,7 +4931,7 @@ const I18N = {
     gate_grace: "Luar talian — tinggal {D} hari penggunaan luar talian",
     gate_open_fail: "Tidak dapat membuka pelayar. Alamat: {U}",
     app_title: "HNK Photoshop Ai Panel (Pelajar)",
-    sec_api: "Gemini API Key",
+    sec_api: "RunningHub Enterprise Key",
     btn_show: "Papar",
     btn_hide: "Sembunyi",
     btn_test: "Uji Key",
@@ -4984,7 +4940,7 @@ const I18N = {
     st_key_ok: "\u2713 API key berfungsi",
     st_key_bad: "API key gagal",
     st_key_saved: "API key disimpan \u2713",
-    st_need_key: "Masukkan Gemini API key anda dahulu",
+    st_need_key: "Masukkan RunningHub Enterprise key anda dahulu",
     sec_model: "Model & Output",
     scope_model_note: "Digunakan oleh butang Generate pada tab Prompt di bawah \u2014 Create dan AI Tools masing-masing ada tetapan model tersendiri.",
     model_auto: "Automatik (disyorkan)",
@@ -5153,7 +5109,6 @@ const I18N = {
     st_img_bad: "Data imej gagal pemeriksaan integriti \u2014 tambah semula fotonya",
     st_auto_comp: "Komposit Automatik: subjek IMAGE 1 \u2192 adegan rujukan",
     prov_lbl: "Pembekal AI",
-    oai_key_ph: "sk-... (OpenAI API key)",
     tab_create: "Create",
     create_note: "MOD CREATE \u2014 imej baharu sepenuhnya daripada prompt anda (+ 4 ref tersendiri). Berdiri sendiri: tidak pernah membaca dokumen, preset, chains atau kunci.",
     create_ph: "Terangkan imej yang anda mahu cipta\u2026",
@@ -5169,7 +5124,6 @@ const I18N = {
     cr_describe: "\ud83d\udd0d Baca Ref 1 \u2192 Prompt",
     st_describing: "Membaca imej rujukan\u2026",
     st_described: "Prompt ditulis daripada Ref 1 \u2713",
-    st_need_gem: "Tambah Gemini API key (Setup) \u2014 ciri ini menggunakan Gemini text",
     st_need_ref1: "Tambah imej ke Ref 1 dahulu",
     st_lib_added: "Prompt ditambah \u2713",
     cr_refs: "Imej Rujukan (sehingga 4)",
@@ -5437,8 +5391,7 @@ const I18N = {
     btn_clearlog: "Kosongkan",
     diag_host: "Aplikasi Photoshop",
     diag_uxp: "Keupayaan UXP",
-    diag_gem: "Gemini API key",
-    diag_oai: "OpenAI API key",
+    diag_rh: "RunningHub Enterprise key",
     diag_doc: "Dokumen aktif",
     diag_set: "ditetapkan",
     diag_unset: "belum ditetapkan",
@@ -5512,8 +5465,6 @@ const I18N = {
     ai_rh_note: "Model terbina dalam sudah berfungsi dengan key di atas \u2014 tiada apa perlu dibuat. Jika sesuatu model memaparkan \"not connected\" (endpoint path belum disahkan), salin path dari dokumentasi API RunningHub dan tampal di sini.",
     ai_rh_save: "Simpan endpoint model ini",
     ai_test_conn: "Uji sambungan",
-    ai_oai_sec: "OpenAI (Lanjutan \u2014 pilihan)",
-    ai_oai_note: "Guna OpenAI API key anda dengan GPT Image 2 sebagai ganti (atau bersama) RunningHub Enterprise.",
     ai_save_verify: "Simpan & Sahkan",
     ai_settings: "Tetapan",
     ai_add_layers: "Tambah hasil sebagai Layer baharu",
@@ -5571,7 +5522,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.25.3";
+const PANEL_VERSION = "6.26.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6222,21 +6173,21 @@ const LANG_FB = { kyu: "my", ksw: "my", cnh: "my", mnw: "my", rki: "my", ahk: "m
    Long-form text falls through LANG_FB. Same honest posture as the web app:
    Myanmar ethnic languages ship no guessed text. */
 const I18N_L = {
-bn:{app_title:"HNK Photoshop Ai Panel (শিক্ষার্থীদের জন্য)",sec_api:"Gemini API Key",btn_show:"দেখান",btn_hide:"লুকান",btn_test:"Key পরীক্ষা",btn_save:"সংরক্ষণ",st_testing:"কী পরীক্ষা করা হচ্ছে",st_key_ok:"✓ API key কাজ করছে",st_key_bad:"API key কাজ করেনি",st_key_saved:"API key সংরক্ষিত হয়েছে ✓",st_need_key:"আগে Gemini API key দিন",sec_model:"মডেল ও আউটপুট",scope_model_note:"নিচের প্রম্পট ট্যাবের জেনারেট বোতামে এটি ব্যবহৃত হয় — Create এবং AI Tools-এর প্রতিটির নিজস্ব আলাদা মডেল সেটিংস আছে।",model_auto:"অটো (প্রস্তাবিত)",model_flash:"Flash — দ্রুত (2.5)",model_pro:"Pro — উন্নত মান (3.0)",lbl_ratio:"অনুপাত",ratio_auto:"অটো অনুপাত (ডকুমেন্ট থেকে)",lbl_size:"আকার",lbl_quality:"মান",qual_auto:"অটো",qual_low:"নিম্ন",qual_med:"মাঝারি",qual_high:"উচ্চ",sec_prompt:"প্রম্পট",hint_prompt:"এখানে আপনার প্রম্পট লিখুন… (সর্বোচ্চ 20,000 অক্ষর)",btn_improve:"Prompt উন্নত করুন",btn_clear:"মুছুন",st_improving:"প্রম্পট উন্নত করা হচ্ছে",st_improved:"প্রম্পট উন্নত হয়েছে ✓",sec_refs:"রেফারেন্স ছবি (2টি স্লট)",base_note:"বেস ছবি = আপনার সক্রিয় Photoshop ডকুমেন্ট (স্বয়ংক্রিয়ভাবে নেওয়া হয়)।",btn_ref_layer:"+ লেয়ার",btn_ref_file:"ফাইল",btn_ref_web:"ওয়েব",st_ref_layer_added:"লেয়ার রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_ref_file_added:"ফাইল রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_importing:"ফাইল ইমপোর্ট হচ্ছে",url_title:"URL থেকে রেফারেন্স — Chrome / Pinterest",url_ph:"https://… ছবির ঠিকানা বা Pinterest পিন লিংক",btn_paste:"পেস্ট",btn_load:"লোড",btn_cancel:"বাতিল",st_url_loading:"ওয়েব ছবি ডাউনলোড হচ্ছে",st_ref_web_added:"ওয়েব ছবি রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_url_bad:"এই URL থেকে ছবি লোড করা যায়নি — ছবির ঠিকানা কপি করে আবার চেষ্টা করুন",no_layer:"কোনো লেয়ার নির্বাচিত নেই",sec_presets:"AI প্রিসেট",auto_run:"প্রিসেটে ক্লিক → অটো জেনারেট (OFF = শুধু প্রম্পটে যোগ হবে)",grp_cleanup:"ক্লিনআপ টুল",p_remove_people:"মানুষ সরান",p_fix_hands:"অতিরিক্ত হাত ঠিক করুন",p_fix_legs:"অতিরিক্ত পা ঠিক করুন",p_full_clean:"সম্পূর্ণ ক্লিনআপ",grp_moved_note:"রেফারেন্স টুলগুলো এখন নিচের Reference Ops Pro কার্ডে আছে (এক জায়গায়, Solo/Couple/Family + গাইডসহ)।",ro_h_detail:"চুল · অ্যাক্সেসরিজ · পোজ (← Ref1)",ro_h_comp:"কম্পোজিট · স্টাইল · টেক্সট (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"হেয়ারস্টাইল (← Ref1)",p_access:"গয়না+অ্যাক্সেসরিজ (← Ref1)",p_pose:"পোজ মিলিয়ে নিন (Doc → Ref1)",p_fgprops:"FG প্রপস (← Ref1)",p_textlogo:"টেক্সট / লোগো (← Ref1)",p_style:"ফটো স্টাইল (← Ref1)",grp_repsubj:"সাবজেক্ট প্রতিস্থাপন (Doc → Ref1 দৃশ্য)",p_rep_solo:"সোলো প্রতিস্থাপন",p_rep_couple:"কাপল প্রতিস্থাপন",p_rep_family:"পরিবার প্রতিস্থাপন",grp_rmix:"Replace Mix — টিক দিয়ে Ref1 থেকে নিন",rm_bg:"ব্যাকগ্রাউন্ড (BG)",rm_fg:"ফোরগ্রাউন্ড (FG)",rm_light:"লাইটিং",rm_color:"রং",rm_object:"অবজেক্ট / প্রপস",btn_rmix:"রিপ্লেস জেনারেট",rm_none:"আগে অন্তত একটি দিক টিক দিন",grp_i2p:"Image → Prompt (সিন বিল্ডার)",i2p_note:"1) এক্সট্র্যাক্ট: Ref1 দৃশ্য → বিস্তারিত টেক্সট প্রম্পট (মানুষ বাদ)। 2) প্রম্পট পেজে সেটি সম্পাদনা করুন। 3) সিন জেনারেট সেটিকে আপনার ডকুমেন্টের সাবজেক্ট ঘিরে তৈরি করে — যেকোনো অ্যাঙ্গেলে অটো-ফিট হয়। Face/Pose/Frame লক = আসলটা অপরিবর্তিত থাকে।",i2p_objects:"অবজেক্ট ও প্রপসের বিবরণ",i2p_light:"লাইটিংয়ের বিবরণ",i2p_color:"রং / গ্রেডের বিবরণ",i2p_bg:"ব্যাকগ্রাউন্ডের বিবরণ",i2p_fg:"ফোরগ্রাউন্ডের বিবরণ",btn_i2p:"Image → Prompt (সিন এক্সট্র্যাক্ট)",i2p_fit:"সিন অটো-ফিট — ডকুমেন্টের অ্যাঙ্গেল / দূরত্ব / লেন্স অনুযায়ী দৃশ্য পুনর্বিন্যাস",i2p_adapt:"সাবজেক্টের আলো ও রং দৃশ্যের সাথে মানিয়ে নিন",btn_scenegen:"সিন জেনারেট",st_extract:"দৃশ্য থেকে প্রম্পট তৈরি হচ্ছে",st_extract_done:"সিন প্রম্পট প্রস্তুত — প্রম্পট পেজে দেখে নিন",scene_no_prompt:"প্রম্পট বক্স খালি — আগে Image → Prompt চালান",i2p_none:"আগে অন্তত একটি বিবরণের দিক টিক দিন",sec_light:"স্টুডিও লাইটিং — AI রিলাইট",light_note:"লাইটগুলো ON করুন, একটি সারিতে ট্যাপ করে নির্বাচন করুন, স্লাইডার দিয়ে আকার দিন — 3D টপ-ভিউ ডায়াগ্রাম সাথে সাথে বদলায় (▴ = উঁচু, ▾ = নিচু)। লাইটিং জেনারেট আপনার ডকুমেন্টকে ঠিক এই সেটআপ অনুযায়ী রিলাইট করে; মুখ / পোজ / ফ্রেম লক থাকে।",lbl_my_prompt:"মিয়ানমার প্রম্পট",lstage_model:"মডেল",lstage_cam:"ক্যাম",l_key:"কী লাইট",l_fill:"ফিল / ফ্রন্ট",l_butterfly:"বাটারফ্লাই (উপরে-সামনে)",l_side:"সাইড লাইট",l_rim:"রিম লাইট",l_back:"ব্যাক লাইট",l_hair:"হেয়ার লাইট",l_bglight:"ব্যাকগ্রাউন্ড লাইট",lt_softbox:"সফটবক্স",lt_octa:"অক্টা",lt_strip:"স্ট্রিপ",lt_umbrella:"আমব্রেলা",lt_beauty:"বিউটি",lt_hard:"হার্ড",li_int:"তীব্রতা",li_angle:"কোণ",li_height:"উচ্চতা",li_dist:"দূরত্ব",li_size:"আকার",btn_lightgen:"লাইটিং জেনারেট",light_none:"আগে অন্তত একটি লাইট ON করুন",lg_equip:"ছবিতে লাইটের সরঞ্জাম দেখান (সফটবক্স / স্ট্যান্ড দৃশ্যমান)",grp_chains:"স্টাইল চেইন — ✓ স্টাইলগুলো একসাথে মেশান",chains_note:"যেকোনো স্টাইল ON করুন — সেগুলো প্রতিটি জেনারেট / প্রিসেট / রিটাচে একসাথে মিশে যায়।",grp_restore:"পুরনো ছবি পুনরুদ্ধার",p_restore:"পুরনো ছবি পুনরুদ্ধার",rest_color:"সম্পূর্ণ রঙিন",rest_bw:"সাদা-কালো",restore_note:"ছেঁড়া, পানি / পোড়া দাগ ও বিবর্ণতা মেরামত করে — প্রতিটি আসল মুখ 100% অবিকল থাকে।",rt_browstyle:"ভ্রুর স্টাইল",rt_lashstyle:"আইল্যাশ স্টাইল",rt_blush:"ব্লাশের রং",rt_contour:"কনট্যুর স্টাইল",rt_bust:"বাস্ট",rt_butt:"নিতম্ব",rt_thigh:"ঊরু",rt_calf:"কাফ",rt_neck:"ঘাড়",rt_fingers:"আঙুল",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"মিয়ানমার প্রম্পট ইংরেজিতে অনুবাদ হচ্ছে",live_trans:"লাইভ ⇄ স্বয়ংক্রিয় অনুবাদ (EN ↔ MY, টাইপ থামানোর পরে)",st_retry:"আবার চেষ্টা করা হচ্ছে",grp_recipes:"রেসিপি — সেটিংস সংরক্ষণ / শেয়ার",recipe_note:"সবকিছু (চেইন, রিটাচ, লাইট, লক, প্রম্পট) একটি .json রেসিপি হিসেবে সংরক্ষণ করুন — শিক্ষার্থীরা শুধু লোড করলেই হবে।",btn_recipe_save:"রেসিপি সংরক্ষণ",btn_recipe_load:"রেসিপি লোড",st_recipe_saved:"রেসিপি সংরক্ষিত ✓",st_recipe_loaded:"রেসিপি লোড হয়েছে ✓ — সব কন্ট্রোল আপডেট হয়েছে",st_recipe_bad:"এটি HNK রেসিপি ফাইল নয়",sec_final:"চূড়ান্ত প্রম্পট (AI-এ পাঠানো হয়)",btn_copy:"কপি",st_copied:"কপি হয়েছে ✓",hist_note:"ইতিহাস — শেষ 6টি ফলাফল, দেখতে ট্যাপ করুন:",btn_hist_prompt:"→ প্রম্পট",sec_batch:"ব্যাচ মোড",batch_note:"একাধিক ছবি + একটি আউটপুট ফোল্ডার বেছে নিন — বর্তমান প্রম্পট, চেইন, ক্লিনআপ ও Keep লক প্রতিটি ছবিতে চলবে; ফলাফল *_HNK.png নামে সংরক্ষিত হয়।",btn_batch:"ব্যাচ চালান",btn_batch_stop:"থামান",st_batch:"ব্যাচ",st_batch_done:"ব্যাচ সম্পন্ন",sec_web:"ওয়েব AI — মিনি ব্রাউজার",web_note:"যেকোনো ওয়েব AI এডিটর Photoshop-এর ভেতরেই খুলুন। সেখানে জেনারেট করুন, তারপর ফলাফলটি লেয়ার হিসেবে নিয়ে আসুন:",web_import_note:"ইমপোর্ট: ① ওয়েব অ্যাপে Copy image address ব্যবহার করুন, তারপর 'কপি করা লিংক ইমপোর্ট' চাপুন · ② অথবা ফাইলটি ডাউনলোড করে 'ফাইল ইমপোর্ট' ব্যবহার করুন · ③ HNK ব্রিজযুক্ত পার্টনার ওয়েব অ্যাপ ছবি স্বয়ংক্রিয়ভাবে পাঠায়।",btn_web_go:"যান",btn_web_home:"হোম",btn_web_reload:"রিলোড",btn_web_import_link:"কপি করা লিংক ইমপোর্ট → PS",btn_web_import_file:"ফাইল ইমপোর্ট → PS",st_web_import:"লেয়ার হিসেবে Photoshop-এ ইমপোর্ট হয়েছে ✓",st_web_nourl:"আগে একটি ছবির লিংক কপি করুন (রাইট-ক্লিক → Copy image address)",st_web_fetch:"লিংক থেকে ছবি আনা হচ্ছে",st_web_notallowed:"এই ডোমেইনটি allow-list-এ নেই — ফাঁকা থাকতে পারে। HNK-কে এটি যোগ করতে বলুন।",st_need_doc:"প্রথমে Photoshop-এ একটি ফটো ডকুমেন্ট খুলুন",sec_campro:"ক্যামেরা প্রো ও কোয়ালিটি",autosave_lbl:"প্রতিটি ফলাফল অটো-এক্সপোর্ট (PNG + prompt লগ → ফোল্ডার)",st_folder_ok:"এক্সপোর্ট ফোল্ডার সেট হয়েছে ✓",st_exported:"এক্সপোর্ট হয়েছে ✓",st_export_fail:"এক্সপোর্ট ব্যর্থ — ফোল্ডারটি পরীক্ষা করুন",st_pro_fallback:"Pro মডেল পাওয়া যাচ্ছে না — এই রানের জন্য Flash-এ পরিবর্তন করা হয়েছে",st_img_bad:"ছবির ডেটা ইন্টিগ্রিটি চেক-এ ব্যর্থ — ছবিটি আবার যোগ করুন",st_auto_comp:"অটো কম্পোজিট: IMAGE 1 সাবজেক্ট → রেফারেন্স দৃশ্য",prov_lbl:"AI প্রোভাইডার",oai_key_ph:"sk-... (OpenAI API key)",tab_create:"তৈরি",create_note:"ক্রিয়েট মোড — আপনার prompt থেকে সম্পূর্ণ নতুন ছবি (+ নিজস্ব 4টি রেফ)। পুরোপুরি স্বাধীন: ডকুমেন্ট, প্রিসেট, চেইন বা লক কখনও পড়ে না।",create_ph:"যে ছবিটি তৈরি করতে চান তা বর্ণনা করুন…",btn_create_ps:"⬇ Photoshop-এ পাঠান",btn_to_ref:"↺ Ref 1 হিসেবে ব্যবহার করুন",st_to_ref:"ফলাফল Ref 1-এ লোড হয়েছে ✓",scope_create_note:"Setup-এর Model ও Output থেকে স্বাধীন — এই সেটিংগুলি শুধু Create-এর Generate-এ প্রযোজ্য।",cr_ratio:"অনুপাত",cr_var:"ভ্যারিয়েশন",cr_restyle:"♻ ফলাফল রিস্টাইল করুন",cr_lib:"Prompt লাইব্রেরি — ঢোকাতে ট্যাপ করুন",cr_improve:"উন্নত করুন",cr_describe:"Ref 1 বর্ণনা → Prompt",st_describing:"রেফারেন্স পড়া হচ্ছে…",st_described:"Ref 1 থেকে prompt লেখা হয়েছে ✓",st_need_gem:"একটি Gemini API key যোগ করুন (Setup) — এটি Gemini টেক্সট ব্যবহার করে",st_need_ref1:"প্রথমে Ref 1-এ একটি ছবি যোগ করুন",st_lib_added:"Prompt যোগ হয়েছে ✓",cr_refs:"রেফারেন্স ছবি (সর্বোচ্চ 4টি)",cr_refs_note:"ঐচ্ছিক — Layer / File / Web দিয়ে যোগ করুন। আপনার prompt যা চায়, Create শুধু সেটুকুই নেয়।",cr_results:"ফলাফল",cr_gal_empty:"এখনও কোনো ফলাফল নেই — Generate ট্যাপ করুন।",cr_gal_have:"টি ফলাফল · প্রিভিউ / কাজ করতে থাম্বনেইলে ট্যাপ করুন",cr_save:"⬇ PNG সংরক্ষণ করুন",cr_engine:"ইঞ্জিন",cr_need_result:"প্রথমে একটি ছবি জেনারেট করুন",btn_web_import_url:"⬇ URL ইমপোর্ট করুন",st_clip_help:"ক্লিপবোর্ড ফাঁকা/ব্লক করা — লিংকটি URL বারে পেস্ট করুন, তারপর ⬇ Import URL ট্যাপ করুন",st_web_blob:"এটি একটি অস্থায়ী blob: লিংক — রাইট-ক্লিক → Copy IMAGE Address ব্যবহার করুন, অথবা ফাইলটি সংরক্ষণ করে Import File ব্যবহার করুন",err_key:"API key অবৈধ — Setup ট্যাবে key আবার পরীক্ষা করুন · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"কোটা / রেট লিমিট — একটু অপেক্ষা করে আবার চেষ্টা করুন · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"ছবিটি API-এর জন্য খুব বড় — ছোট করে আবার চেষ্টা করুন · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"সেফটি ফিল্টার আটকে দিয়েছে — prompt বা ছবিটি বদলে আবার চেষ্টা করুন · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"নেটওয়ার্ক / সার্ভার সমস্যা — অনুগ্রহ করে আবার চেষ্টা করুন · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"অনুরোধের সময় শেষ — সার্ভার খুব বেশি সময় নিয়েছে; আবার চেষ্টা করুন · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"অনুরোধটি সম্পন্ন করা যায়নি — অনুগ্রহ করে আবার চেষ্টা করুন",err_img:"কোনো ব্যবহারযোগ্য ছবি তৈরি হয়নি — অনুগ্রহ করে আবার চেষ্টা করুন",err_mode:"এই ডকুমেন্টটি RGB মোডে নেই — প্রথমে রূপান্তর করুন (Image ▸ Mode ▸ RGB Color), তারপর আবার চেষ্টা করুন",cam_master:"ক্যামেরা ব্লক ON — প্রতিটি prompt-এর শেষে যোগ হবে",cam_body:"ক্যামেরা বডি",cam_lens:"প্রাইম লেন্স (mm)",cam_f:"অ্যাপারচার",cam_film:"ফিল্ম লুক",cam_bokeh:"বোকেহ স্টাইল",cam_iso:"ISO",cam_k:"WB কেলভিন",cam_note:"ব্লকটি ON করুন, তারপর যা দরকার শুধু সেটুকু বাছুন — – চিপগুলি নীরব থাকে। সবকিছু চূড়ান্ত prompt-এর শেষে যুক্ত হয়।",ro_h_main:"রেফারেন্স অপস প্রো (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (নারী) · Ref2 = IMAGE 3 (পুরুষ)। একটি টার্গেট বেছে নিয়ে একটি অপ চালান — মিল না-থাকা ব্যক্তিরা কখনও বদলায় না।",ro_target:"টার্গেট:",ro_solo:"একক",ro_couple:"যুগল",ro_family:"পরিবার",ro_mk:"রেফ-এর মেকআপ কপি করুন",ro_hair:"রেফ-এর হেয়ারস্টাইল নিন",ro_h_face:"ফেস অপস",ro_h_bg:"BG / FG অপস",ro_h_sub:"সাবজেক্ট অপস",ro_h_lc:"আলো ও রং অপস",ro_h_dress:"পোশাক অপস",ro_h_mk:"মেকআপ অপস",ro_h_match:"★ মাস্টার ম্যাচ (এক লুক)",ro_match_note:"IMAGE 1-কে রেফারেন্সের সাথে মেলান, যাতে দুটোই এক সম্পাদনার মতো দেখায় — কী মেলাতে হবে টিক দিন:",m_color:"রং",m_light:"আলো",m_makeup:"মেকআপ",m_skin:"স্কিন রিটাচ",crd_pipe:"⛓ পাইপলাইন বিল্ডার — যেকোনো কিছু চেইন করুন",pipe_note:"যেকোনো ধাপ একটি চেইনে যুক্ত করুন — প্রতিটি ধাপের ফলাফল পরের ধাপে যায়। সর্বোচ্চ 6।",pipe_add:"+ যোগ করুন",pipe_run:"▶ পাইপলাইন চালান",pipe_clear:"মুছুন",pipe_retouch:"রিটাচ প্রয়োগ (বর্তমান স্লাইডার)",pipe_relight:"রিলাইট (বর্তমান লাইট রিগ)",pipe_prompt:"Prompt (বর্তমান EN বক্স)",pipe_empty:"প্রথমে অন্তত একটি ধাপ যোগ করুন",pipe_max:"পাইপলাইন পূর্ণ (সর্বোচ্চ 6 ধাপ)",st_pipe:"পাইপলাইন ধাপ",st_pipe_done:"পাইপলাইন সম্পন্ন",st_pipe_stop:"পাইপলাইন থেমে গেছে (একটি ধাপ ব্যর্থ হয়েছে)",pipe_merge:"⚡ ওয়ান-শট মার্জ — সব ধাপ একটিমাত্র কলে (দ্রুত/সাশ্রয়ী · সেরা ≤ 3 কাজ)",crd_chainsrest:"স্টাইল চেইন + পুরোনো ছবি পুনরুদ্ধার",crd_refops:"রেফারেন্স অপস প্রো (Ref1 / Ref2)",crd_scenes:"🎬 সিন প্রো — সাবজেক্ট লক · দৃশ্য মিলে যায়",scn_note:"আপনার সাবজেক্ট লক করুন (মুখ · ভঙ্গি · পোশাক · ফ্রেম) — পুরো দৃশ্য তাদের সাথে মিলিয়ে নতুন করে তৈরি হয়; আলো, ছায়া, রং, ব্যাকগ্রাউন্ড, ফোরগ্রাউন্ড ও বস্তু সবই আসল ছবির মতো লুকের জন্য স্বয়ংক্রিয়ভাবে মানিয়ে নেয়।",scn_h_style:"দৃশ্যের স্টাইল (ইনডোর / সাংস্কৃতিক)",scn_h_bday:"🎂 জন্মদিন — বয়সের সংখ্যা 1–45",scn_h_cap:"ক্যাপশন / টেক্সট (শিশু · Miss Universe · জন্মদিন)",scn_h_scarf:"আউটডোর / উড়ন্ত স্কার্ফ",scn_grad:"গ্র্যাজুয়েশন ইনডোর",scn_prewed:"প্রি-ওয়েডিং ইনডোর",scn_vietnam:"ভিয়েতনাম",scn_myanmar:"মিয়ানমার",scn_chinese:"চীনা",scn_shan:"শান",scn_newborn:"নবজাতক / শিশু",scn_age:"বয়স",scn_bday_go:"🎂 জন্মদিনের দৃশ্য",scn_cap_on:"ক্যাপশন টেক্সট যোগ করুন",scn_cap_ph:"ক্যাপশন টেক্সট (যেমন Happy 1st Birthday, নাম)…",scn_cap_pos:"অবস্থান",scn_top:"উপরে",scn_bottom:"নিচে",scn_scarf:"✦ উড়ন্ত স্কার্ফ দৃশ্য",scn_dir:"দিক",scn_left:"বাম",scn_right:"ডান",scn_up:"উপর",scn_len:"দৈর্ঘ্য",scn_short:"ছোট",scn_long:"লম্বা",g_cat_scene:"সিন অপ — আপনার সাবজেক্ট লক থাকে (মুখ · ভঙ্গি · পোশাক · ফ্রেম); জেনারেট হওয়া পুরো দৃশ্য (আলো, ছায়া, রং, ব্যাকগ্রাউন্ড, ফোরগ্রাউন্ড, বস্তু, আবহ) আসল ছবির মতো কম্পোজিটের জন্য সাবজেক্টের সাথে স্বয়ংক্রিয়ভাবে মেলানো হয়।",crd_wed:"♥ ওয়েডিং প্রো স্যুট",crd_recipes:"রেসিপি — সংরক্ষণ / শেয়ার",learn_lbl:"🎓 লার্ন মোড — প্রথম ট্যাপ = গাইড (হলুদ), দ্বিতীয় = prompt (নীল), তৃতীয় = রান (সবুজ)",guide_hint:"আবার ট্যাপ করুন: হলুদ → নীল (prompt) → সবুজ (রান) ▶",g_learn_next_prompt:"আবার ট্যাপ করুন → হুবহু PROMPT দেখায় (নীল)।",g_learn_prompt_head:"এই বোতামটি যে PROMPT পাঠাবে (আবার ট্যাপ = রান):",g_learn_next_run:"আরেকবার ট্যাপ করুন → রান (সবুজ) জেনারেট করে।",st_prompt_ready:"Prompt প্রস্তুত — চালাতে আবার ট্যাপ করুন (সবুজ) ✓",g_step_doc:"প্রথমে Photoshop-এ আপনার ফটো ডকুমেন্ট খুলুন।",g_step_ref1:"রেফারেন্স ছবিটি Ref1-এ লোড করুন (এটি IMAGE 2 হয়ে যায়)। দ্বিতীয় ব্যক্তির জন্য Ref2 যোগ করুন।",g_step_target:"টার্গেট বাছুন: একক / যুগল (Ref1 = নারী, Ref2 = পুরুষ) / পরিবার।",g_step_mkhair:"ঐচ্ছিক: ফেস অপস-এর উপরে ‘রেফ-এর মেকআপ কপি করুন’ / ‘রেফ-এর হেয়ারস্টাইল নিন’ টিক দিন।",g_step_petal:"প্রথমে পাপড়ির রং বাছুন (auto = আপনার দৃশ্যের সাথে মেলে)।",g_step_rest:"উপরের ✓ দিয়ে ফুল কালার বা সাদা-কালো বেছে নিন।",g_step_int:"পছন্দমতো ইনটেনসিটি স্লাইডার সেট করুন।",g_step_confirm:"এগোতে আবার ট্যাপ করুন: গাইড (হলুদ) → PROMPT (নীল) → রান (সবুজ জেনারেট করে)।",g_cat_face:"ফেস অপ — রেফারেন্সের মুখ মিল-থাকা ব্যক্তির উপর স্থানান্তর করে; বাকি সবাই অপরিবর্তিত থাকে।",g_cat_sub:"সাবজেক্ট অপ — রেফারেন্সের ব্যক্তিকে আপনার দৃশ্যে আনে/রূপান্তর করে; দৃশ্য ও ফ্রেমিং অপরিবর্তিত থাকে।",g_cat_bgfg:"BG/FG অপ — রেফারেন্স ব্যবহার করে শুধু ব্যাকগ্রাউন্ড / ফোরগ্রাউন্ড বদলায়।",g_cat_lc:"আলো ও রং অপ — রেফারেন্সের লাইটিং ও গ্রেড কপি করে; মানুষজন পিক্সেল-নিখুঁত থাকে।",g_cat_dress:"পোশাক অপ — রেফারেন্স ব্যবহার করে শুধু পোশাক বদলায়।",g_cat_mkop:"মেকআপ অপ — রেফারেন্স ব্যবহার করে শুধু মেকআপ বদলায়।",g_cat_match:"মাস্টার ম্যাচ — আপনার ছবিকে রেফারেন্সের সম্পূর্ণ লুকের সাথে মেলায় (উপরের স্তরগুলিতে টিক দিন)।",g_cat_trail:"ওয়েডিং ট্রেইল — বিলাসবহুল ঘাস + প্রবাহিত ফুলের পথ; মুখ/ভঙ্গি/ফ্রেম সম্পূর্ণ লক থাকে।",g_cat_veil:"উড়ন্ত ভেইল — এই দৈর্ঘ্যে বাতাসে-ওড়া ভেইল যোগ/প্রসারিত করে; মুখ কখনও ঢাকা পড়ে না।",g_cat_gown:"গাউন — বর্তমান গাউনটি পরিষ্কার করে (ডিজাইন অপরিবর্তিত) এবং এই ট্রেন-দৈর্ঘ্য সেট করে।",g_cat_petal:"উড়ন্ত পাপড়ি — এই স্টাইলে বাতাসে পাপড়ি যোগ করে; রং উপরের সোয়াচ থেকে।",g_cat_wedx:"ওয়েডিং এক্সট্রা — আপনার দৃশ্যের সাথে মিলিয়ে এই উপাদান যোগ করে; সাবজেক্ট লক থাকে।",g_cat_canvas:"রিপ্লেস (ক্যানভাস) — আপনার সাবজেক্টকে রেফারেন্সের দৃশ্যে বসায়; রেফ-এর মানুষজন সরিয়ে দেওয়া হয়।",g_cat_restore:"পুরোনো ছবি পুনরুদ্ধার — ক্ষতি মেরামত করে; প্রতিটি মূল মুখ 100% অবিকল থাকে।",g_cat_generic:"প্রিসেট — আপনার ছবিতে এই পেশাদার সম্পাদনা প্রয়োগ করে।",g_gen:"জেনারেট — আপনার ডকুমেন্টে prompt বক্স (+ চেইন, কিপ, ক্যামেরা ব্লক) চালায়।",g_retouchbtn:"রিটাচ প্রয়োগ — আপনার সব স্লাইডার সেটিং এক পেশাদার রিটাচ পাস হিসেবে চালায়।",g_relightbtn:"লাইটিং জেনারেট — আপনার 3D লাইট ডায়াগ্রাম অনুযায়ী ছবিটি হুবহু রিলাইট করে।",g_scene:"সিন জেনারেট — এক্সট্র্যাক্ট করা prompt থেকে দৃশ্য নতুন করে তৈরি করে; সাবজেক্ট অপরিবর্তিত থাকে।",g_rmix:"রিপ্লেস মিক্স — রেফারেন্স থেকে শুধু ✓ টিক দেওয়া অংশগুলি প্রতিস্থাপন করে।",g_pipe:"পাইপলাইন চালান — চেইন করা প্রতিটি ধাপ ক্রমানুসারে চালায়; প্রতিটি ফলাফল পরের ধাপে যায়।",ro_faceRep:"ফেস রিপ্লেস",ro_faceSwap:"ফেস সোয়াপ",ro_bgRep:"BG রিপ্লেস",ro_bgSwap:"BG সোয়াপ",ro_fgRep:"FG রিপ্লেস",ro_bg_note:"Doc = সাবজেক্ট · Ref1 = নতুন দৃশ্য। Target (Solo/Couple/Family) নির্ধারণ করে কাকে রাখা হবে।",ro_bg_frame:"ফ্রেম ও কম্পোজিশন বজায় রাখুন",ro_bg_light:"সাবজেক্টের আলো/রং অক্ষুণ্ণ রাখুন",ro_subSwap:"সাবজেক্ট বদল",ro_lcRef:"L&C রেফারেন্স",ro_lcCopy:"L&C কপি-পেস্ট",ro_dressRef:"পোশাক রেফারেন্স",ro_dressRep:"পোশাক বদল",ro_mkCopy:"মেকআপ কপি",ro_matchBtn:"★ মাস্টার ম্যাচ",grp_retouch:"স্কিন রিটাচ প্রিসেট",lbl_intensity:"তীব্রতা",p_evoto:"Evoto স্টাইল",p_meitu:"Meitu স্টাইল",auto_place:"ফলাফল স্বয়ংক্রিয়ভাবে Photoshop-এ নতুন লেয়ার হিসেবে বসান",sec_retouchpro:"রিটাচ প্রো — স্লাইডার",rt_skin:"ত্বক",rt_faceai:"ফেস AI",rt_hair:"চুল",rt_dress:"পোশাক",rt_bg:"ব্যাকগ্রাউন্ড",rt_smooth:"ত্বক মসৃণ",rt_acne:"ব্রণ দূর",rt_spots:"কালো দাগ",rt_wrinkle:"বলিরেখা",rt_tone:"ফরসা / ট্যান",rt_glow:"গ্লো",rt_reshape:"AI রিশেপ",rt_lash:"চোখের পাপড়ি",rt_brow:"ভ্রু",rt_lipsmooth:"ঠোঁট মসৃণ",rt_lipcolor:"ঠোঁটের রং",rt_lenscolor:"লেন্সের রং",rt_hairstray:"এলোমেলো চুল",rt_hairsmooth:"চুল মসৃণ",rt_hairshine:"চুলের ঝলক (D&B)",rt_dresssmooth:"কাপড় মসৃণ",rt_dressedge:"কিনারা পরিষ্কার",rt_dresswrinkle:"ভাঁজ দূর",rt_dresstexture:"টেক্সচার পুনরুদ্ধার",rt_bgsmooth:"BG পরিষ্কার/মসৃণ",rt_bgcolor:"BG রং",rt_bgrecolor:"BG রং মসৃণ",rt_shape:"রিশেপ প্রো (মুখ + শরীর)",rt_teeth:"দাঁত সাদা",rt_eyewhite:"চোখের সাদা অংশ পরিষ্কার",rt_faceslim:"মুখ চিকন",rt_jaw:"চোয়ালের রেখা",rt_chin:"থুতনি",rt_nosesize:"নাকের আকার",rt_eyesize:"চোখের আকার",rt_lipfull:"ভরাট ঠোঁট",rt_waist:"কোমর চিকন",rt_bodyslim:"শরীর চিকন",rt_shoulder:"কাঁধ",rt_hip:"নিতম্ব চিকন",rt_leglen:"পায়ের দৈর্ঘ্য",rt_armslim:"বাহু চিকন",rt_dressfit:"পোশাক ফিট",rt_dressclean:"পোশাক পরিষ্কার",rt_dresscolorpure:"পোশাকের রং নিখুঁত",rt_bodygrp:"বডি স্কিন প্রো",rt_bodysmooth:"শরীরের ত্বক মসৃণ",rt_bodyblemish:"শরীরের দাগ পরিষ্কার",rt_bodytone:"শরীরের সমান টোন",rt_bodyglow:"বডি গ্লো",rt_bodyhairrm:"শরীরের লোম কমান",rt_hairvolume:"চুলের ভলিউম",rt_hairgloss:"চুলের গ্লস",rt_hairfill:"চুল ভরাট (পাতলা জায়গা)",wp_h_trail:"♥ ওয়েডিং — লাক্সারি ফ্লাওয়ার ট্রেইল",wp_h_veil:"♥ ওয়েডিং — উড়ন্ত ভেইল",wp_h_gown:"♥ ওয়েডিং — গাউন ক্লিন + ট্রেন",wp_h_petal:"♥ ওয়েডিং — উড়ন্ত পাপড়ি",wp_h_extra:"♥ ওয়েডিং — ঘোড়া · পানি · মুড",wp_note:"Face ID / পোজ / ফ্রেম / পোশাকের ডিজাইন সম্পূর্ণ লক থাকে — শুধু নির্দিষ্ট উপাদানটিই বদলায়।",wp_petalcolor:"পাপড়ির রং (auto = দৃশ্যের সাথে মিল)",wp_trail_c:"ফুলের রং",wp_trail_go:"▶ ফ্লাওয়ার ট্রেইল",wp_veil_c:"ভেইলের দৈর্ঘ্য",wp_veil_go:"▶ উড়ন্ত ভেইল",wp_gown_c:"ট্রেনের দৈর্ঘ্য",wp_gown_go:"▶ গাউন ক্লিন + ট্রেন",wp_pet_c:"পাপড়ির স্টাইল",wp_pet_go:"▶ উড়ন্ত পাপড়ি",wp_extra_c:"অতিরিক্ত",wp_extra_go:"▶ অতিরিক্ত যোগ করুন",btn_apply_rt:"রিটাচ প্রয়োগ করুন",btn_reset:"রিসেট",rt_none:"আগে অন্তত একটি রিটাচ স্লাইডার বা রং সেট করুন",tab_setup:"সেটআপ",tab_prompt:"স্টুডিও",tab_presets:"প্রিসেট",recent_lbl:"সাম্প্রতিক prompt…",tab_retouch:"রিটাচ",tab_aitools:"AI টুলস",cap_warn:"Photoshop এই prompt বক্সের সীমা:",cleanup_note:"টিক দেওয়া আইটেমগুলো প্রতিবার জেনারেট / প্রিসেট চালানোর সাথে একসাথে চলে।",btn_generate:"তৈরি করুন",st_ready:"প্রস্তুত",st_capture:"ডকুমেন্ট ক্যাপচার হচ্ছে",st_gen:"জেনারেট হচ্ছে…",st_place:"Photoshop-এ বসানো হচ্ছে…",st_placed_masked:"লেয়ার + মাস্ক গ্রুপ হিসেবে বসানো হয়েছে — মূল ছবি অক্ষত ✓",st_placed_plain:"সাধারণ লেয়ার হিসেবে বসানো হয়েছে (এই হোস্টে মাস্ক/গ্রুপ পাওয়া যায় না)",stage_queued:"সারিতে আছে",stage_uploading:"আপলোড হচ্ছে",stage_generating:"জেনারেট হচ্ছে",stage_downloading:"ডাউনলোড হচ্ছে",stage_placing:"বসানো হচ্ছে",st_done:"হয়ে গেছে ✓",st_err:"ত্রুটি",st_no_doc:"কোনো সক্রিয় ডকুমেন্ট নেই — আগে একটি ছবি খুলুন",st_no_prompt:"Prompt খালি",need_ref:"এই প্রিসেটের জন্য স্লট 1-এ একটি রেফারেন্স ছবি দরকার",st_new_doc:"ফলাফল নতুন ডকুমেন্ট হিসেবে খোলা হয়েছে ✓",sec_preview:"প্রিভিউ — আগে / পরে",before:"আগে",after:"পরে",btn_place:"Photoshop-এ বসান",btn_saveas:"নতুন নামে সেভ করুন…",st_saved:"সেভ হয়েছে ✓",sec_diag:"সিস্টেম চেক",sec_log:"কার্যকলাপ লগ",btn_diag:"চেক চালান",btn_copylog:"লগ কপি করুন",btn_clearlog:"মুছুন",diag_host:"Photoshop হোস্ট",diag_uxp:"UXP সক্ষমতা",diag_gem:"Gemini API key",diag_oai:"OpenAI API key",diag_doc:"সক্রিয় ডকুমেন্ট",diag_set:"সেট করা",diag_unset:"সেট করা নেই",diag_open:"খোলা",diag_none:"কোনোটি খোলা নেই",diag_missing:"অনুপস্থিত",diag_done:"সিস্টেম চেক সম্পন্ন ✓",diag_lib:"রেফারেন্স লাইব্রেরি",diag_lib_open:"ফোল্ডার খোলার সক্ষমতা",sec_reflib:"রেফারেন্স ইমেজ লাইব্রেরি",reflib_note:"আপনার পছন্দের রেফারেন্স ছবির ফোল্ডারটি একবার বেছে নিন — ব্রাউজ সেটি মনে রাখে এবং সব জায়গায় সেটির ভেতরেই খোলে।",btn_browse:"ব্রাউজ",lib_choose:"ফোল্ডার বাছুন",lib_open:"ফোল্ডার খুলুন",lib_change:"ফোল্ডার বদলান",lib_reset:"রিসেট",lib_rescan:"পুনরায় স্ক্যান",lib_current:"বর্তমান ফোল্ডার",lib_found:"পাওয়া ছবি",lib_status:"অবস্থা",lib_lastscan:"শেষ স্ক্যান",lib_images:"ছবি",lib_connected:"সংযুক্ত",lib_not_config:"কনফিগার করা নেই",lib_perm_lost:"অনুমতি হারিয়ে গেছে — আবার নির্বাচন করুন",lib_none:"(কোনো ফোল্ডার নির্বাচিত নয়)",lib_copy_only:"শুধু পাথ কপি",lib_choose_msg:"আপনার HNK রেফারেন্স ইমেজ লাইব্রেরি ফোল্ডারটি বেছে নিন।",lib_scanning:"লাইব্রেরি স্ক্যান হচ্ছে…",lib_scan_done:"পুনরায় স্ক্যান সম্পন্ন ✓",lib_reset_done:"লাইব্রেরি রিসেট হয়েছে ✓",lib_path_copied:"পাথ কপি হয়েছে",lib_unsupported:"অসমর্থিত ছবির ধরন",lib_restore_fail:"রেফারেন্স পুনরুদ্ধার করা যায়নি",on:"চালু",off:"বন্ধ"},
-gu:{tab_setup:"સેટઅપ",tab_prompt:"સ્ટુડિયો",tab_presets:"પ્રીસેટ",tab_retouch:"રીટચ",tab_aitools:"AI ટૂલ્સ",tab_create:"બનાવો",btn_generate:"બનાવો",st_ready:"તૈયાર",st_done:"થઈ ગયું ✓",st_need_key:"પહેલા Gemini API key નાખો",btn_show:"બતાવો",btn_hide:"છુપાવો",btn_save:"સાચવો",btn_test:"Key ચકાસો",btn_clear:"કાઢી નાખો",btn_cancel:"રદ કરો",btn_load:"લોડ",btn_paste:"પેસ્ટ",btn_improve:"Prompt સુધારો",lbl_ratio:"ગુણોત્તર",lbl_size:"કદ",lbl_quality:"ગુણવત્તા"},
-hi:{app_title:"HNK Photoshop Ai पैनल (छात्रों के लिए)",sec_api:"Gemini API key",btn_show:"दिखाएँ",btn_hide:"छिपाएँ",btn_test:"Key परखें",btn_save:"सहेजें",st_testing:"Key की जाँच हो रही है",st_key_ok:"✓ API key काम कर रही है",st_key_bad:"API key विफल रही",st_key_saved:"API key सेव हो गई ✓",st_need_key:"पहले Gemini API key डालें",sec_model:"मॉडल और आउटपुट",scope_model_note:"नीचे Prompt टैब के Generate बटन में उपयोग होता है — Create और AI Tools की अपनी-अपनी अलग मॉडल सेटिंग्स हैं।",model_auto:"ऑटो (अनुशंसित)",model_flash:"Flash — तेज़ (2.5)",model_pro:"Pro — गुणवत्ता (3.0)",lbl_ratio:"अनुपात",ratio_auto:"ऑटो अनुपात (डॉक्यूमेंट से)",lbl_size:"आकार",lbl_quality:"गुणवत्ता",qual_auto:"ऑटो",qual_low:"कम",qual_med:"मध्यम",qual_high:"उच्च",sec_prompt:"Prompt",hint_prompt:"अपना prompt यहाँ लिखें… (अधिकतम 20,000 अक्षर)",btn_improve:"Prompt सुधारें",btn_clear:"हटाएँ",st_improving:"Prompt बेहतर बनाया जा रहा है",st_improved:"Prompt बेहतर हो गया ✓",sec_refs:"संदर्भ इमेज (2 स्लॉट)",base_note:"बेस इमेज = आपका सक्रिय Photoshop डॉक्यूमेंट (अपने आप कैप्चर होता है)।",btn_ref_layer:"+ लेयर",btn_ref_file:"फ़ाइल",btn_ref_web:"वेब",st_ref_layer_added:"लेयर संदर्भ के रूप में जुड़ गई ✓",st_ref_file_added:"फ़ाइल संदर्भ के रूप में जुड़ गई ✓",st_importing:"फ़ाइल इंपोर्ट हो रही है",url_title:"URL से संदर्भ — Chrome / Pinterest",url_ph:"https://… इमेज का पता या Pinterest पिन लिंक",btn_paste:"पेस्ट",btn_load:"लोड करें",btn_cancel:"रद्द करें",st_url_loading:"वेब इमेज डाउनलोड हो रही है",st_ref_web_added:"वेब इमेज संदर्भ के रूप में जुड़ गई ✓",st_url_bad:"इस URL से इमेज लोड नहीं हो सकी — इमेज का पता कॉपी करके फिर से आज़माएँ",no_layer:"कोई लेयर चयनित नहीं है",sec_presets:"AI प्रीसेट",auto_run:"प्रीसेट क्लिक → ऑटो Generate (OFF = केवल prompt में जोड़ें)",grp_cleanup:"क्लीनअप टूल",p_remove_people:"लोग हटाएँ",p_fix_hands:"अतिरिक्त हाथ ठीक करें",p_fix_legs:"अतिरिक्त पैर ठीक करें",p_full_clean:"पूरा क्लीनअप",grp_moved_note:"संदर्भ टूल अब नीचे Reference Ops Pro कार्ड में हैं (एक ही जगह, Solo/Couple/Family + गाइड के साथ)।",ro_h_detail:"हेयर · एक्सेसरीज़ · पोज़ (← Ref1)",ro_h_comp:"कंपोज़िट · स्टाइल · टेक्स्ट (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"हेयरस्टाइल (← Ref1)",p_access:"ज्वेलरी+एक्सेसरीज़ (← Ref1)",p_pose:"पोज़ मिलान (Doc → Ref1)",p_fgprops:"FG प्रॉप्स (← Ref1)",p_textlogo:"टेक्स्ट / लोगो (← Ref1)",p_style:"फ़ोटो स्टाइल (← Ref1)",grp_repsubj:"सब्जेक्ट बदलें (Doc → Ref1 दृश्य)",p_rep_solo:"सोलो बदलें",p_rep_couple:"कपल बदलें",p_rep_family:"परिवार बदलें",grp_rmix:"Replace Mix — टिक करें और Ref1 से लें",rm_bg:"बैकग्राउंड (BG)",rm_fg:"फ़ोरग्राउंड (FG)",rm_light:"लाइटिंग",rm_color:"रंग",rm_object:"ऑब्जेक्ट / प्रॉप्स",btn_rmix:"रिप्लेस जनरेट करें",rm_none:"पहले कम से कम एक पहलू टिक करें",grp_i2p:"इमेज → Prompt (सीन बिल्डर)",i2p_note:"1) Extract: Ref1 का दृश्य → विस्तृत टेक्स्ट prompt (लोग शामिल नहीं)। 2) इसे Prompt पेज पर संपादित करें। 3) 'सीन जनरेट करें' इसे आपके डॉक्यूमेंट के सब्जेक्ट के चारों ओर बनाता है — किसी भी एंगल पर अपने आप फ़िट। फ़ेस/पोज़/फ़्रेम लॉक = मूल बनाए रखें।",i2p_objects:"ऑब्जेक्ट और प्रॉप्स का विवरण",i2p_light:"लाइटिंग का विवरण",i2p_color:"रंग / ग्रेड का विवरण",i2p_bg:"बैकग्राउंड का विवरण",i2p_fg:"फ़ोरग्राउंड का विवरण",btn_i2p:"इमेज → Prompt (सीन निकालें)",i2p_fit:"सीन ऑटो-फ़िट — दृश्य को डॉक्यूमेंट के एंगल / दूरी / लेंस के अनुसार री-प्रोजेक्ट करें",i2p_adapt:"सब्जेक्ट की रोशनी और रंग दृश्य के अनुसार ढालें",btn_scenegen:"सीन जनरेट करें",st_extract:"दृश्य से prompt निकाला जा रहा है",st_extract_done:"सीन prompt तैयार है — Prompt पेज पर देख लें",scene_no_prompt:"Prompt बॉक्स खाली है — पहले इमेज → Prompt चलाएँ",i2p_none:"पहले कम से कम एक विवरण पहलू टिक करें",sec_light:"स्टूडियो लाइटिंग — AI रीलाइट",light_note:"लाइटें ON टिक करें, चुनने के लिए पंक्ति पर टैप करें, स्लाइडर से उन्हें आकार दें — 3D टॉप-व्यू डायग्राम लाइव बदलता है (▴ = ऊँचा, ▾ = नीचा)। 'लाइटिंग जनरेट करें' आपके डॉक्यूमेंट को ठीक इसी सेटअप के अनुसार रीलाइट करता है; फ़ेस / पोज़ / फ़्रेम लॉक रहते हैं।",lbl_my_prompt:"म्यांमार PROMPT",lstage_model:"मॉडल",lstage_cam:"कैमरा",l_key:"की लाइट",l_fill:"फ़िल / फ्रंट",l_butterfly:"बटरफ़्लाई (ऊपर-सामने)",l_side:"साइड लाइट",l_rim:"रिम लाइट",l_back:"बैक लाइट",l_hair:"हेयर लाइट",l_bglight:"बैकग्राउंड लाइट",lt_softbox:"सॉफ्टबॉक्स",lt_octa:"ऑक्टा",lt_strip:"स्ट्रिप",lt_umbrella:"अम्ब्रेला",lt_beauty:"ब्यूटी",lt_hard:"हार्ड",li_int:"तीव्रता",li_angle:"कोण",li_height:"ऊँचाई",li_dist:"दूरी",li_size:"आकार",btn_lightgen:"लाइटिंग जनरेट करें",light_none:"पहले कम से कम एक लाइट ON करें",lg_equip:"फ़ोटो में लाइट उपकरण दिखाएँ (सॉफ्टबॉक्स / स्टैंड दिखें)",grp_chains:"स्टाइल चेन — ✓ स्टाइल मिलाएँ",chains_note:"कोई भी स्टाइल ON करें — वे हर Generate / प्रीसेट / रीटच में एक साथ मिल जाती हैं।",grp_restore:"पुरानी फ़ोटो बहाली",p_restore:"पुरानी फ़ोटो बहाली",rest_color:"पूर्ण रंगीन",rest_bw:"ब्लैक एंड व्हाइट",restore_note:"फटने, पानी / जलने के नुकसान और फीकेपन की मरम्मत करता है — हर मूल चेहरा 100% वैसा ही रहता है।",rt_browstyle:"आइब्रो स्टाइल",rt_lashstyle:"लैश स्टाइल",rt_blush:"ब्लश रंग",rt_contour:"कंटूर स्टाइल",rt_bust:"वक्ष",rt_butt:"नितंब",rt_thigh:"जाँघें",rt_calf:"पिंडलियाँ",rt_neck:"गर्दन",rt_fingers:"उँगलियाँ",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"म्यांमार prompt का अंग्रेज़ी में अनुवाद हो रहा है",live_trans:"लाइव ⇄ ऑटो-अनुवाद (EN ↔ MY, टाइपिंग रुकने के बाद)",st_retry:"फिर से कोशिश की जा रही है",grp_recipes:"रेसिपी — सेटिंग्स सेव / शेयर करें",recipe_note:"सब कुछ (चेन, रीटच, लाइटें, लॉक, prompt) एक ही .json रेसिपी में सेव करें — छात्र बस उसे लोड कर लें।",btn_recipe_save:"रेसिपी सेव करें",btn_recipe_load:"रेसिपी लोड करें",st_recipe_saved:"रेसिपी सेव हो गई ✓",st_recipe_loaded:"रेसिपी लोड हो गई ✓ — सभी कंट्रोल अपडेट हो गए",st_recipe_bad:"यह HNK रेसिपी फ़ाइल नहीं है",sec_final:"अंतिम Prompt (AI को भेजा जाता है)",btn_copy:"कॉपी करें",st_copied:"कॉपी हो गया ✓",hist_note:"इतिहास — पिछले 6 परिणाम, देखने के लिए टैप करें:",btn_hist_prompt:"→ Prompt",sec_batch:"बैच मोड",batch_note:"कई फ़ोटो + एक आउटपुट फ़ोल्डर चुनें — मौजूदा prompt, चेन, क्लीनअप और Keep लॉक हर फ़ोटो पर चलते हैं; परिणाम *_HNK.png के रूप में सेव होते हैं।",btn_batch:"बैच चलाएँ",btn_batch_stop:"रोकें",st_batch:"बैच",st_batch_done:"बैच पूरा हुआ",sec_web:"वेब AI — मिनी ब्राउज़र",web_note:"Photoshop के अंदर कोई भी वेब AI एडिटर खोलें। वहाँ जनरेट करें, फिर परिणाम को लेयर के रूप में लाएँ:",web_import_note:"इंपोर्ट: ① वेब ऐप में 'इमेज का पता कॉपी करें' उपयोग करें, फिर 'कॉपी किया लिंक इंपोर्ट करें' दबाएँ · ② या फ़ाइल डाउनलोड करके 'फ़ाइल इंपोर्ट करें' उपयोग करें · ③ HNK ब्रिज वाले पार्टनर वेब ऐप इमेज अपने आप भेज देते हैं।",btn_web_go:"जाएँ",btn_web_home:"होम",btn_web_reload:"रीलोड करें",btn_web_import_link:"कॉपी किया लिंक इंपोर्ट करें → PS",btn_web_import_file:"फ़ाइल इंपोर्ट करें → PS",st_web_import:"Photoshop में लेयर के रूप में इंपोर्ट हो गया ✓",st_web_nourl:"पहले इमेज लिंक कॉपी करें (राइट-क्लिक → इमेज का पता कॉपी करें)",st_web_fetch:"लिंक से इमेज लाई जा रही है",st_web_notallowed:"यह डोमेन allow-list में नहीं है — यह खाली रह सकता है। इसे जुड़वाने के लिए HNK से कहें।",st_need_doc:"पहले Photoshop में कोई फोटो डॉक्यूमेंट खोलें",sec_campro:"Camera Pro और क्वालिटी",autosave_lbl:"हर परिणाम का ऑटो-एक्सपोर्ट (PNG + prompt लॉग → फ़ोल्डर)",st_folder_ok:"एक्सपोर्ट फ़ोल्डर सेट हो गया ✓",st_exported:"एक्सपोर्ट हो गया ✓",st_export_fail:"एक्सपोर्ट विफल — फ़ोल्डर जाँचें",st_pro_fallback:"Pro मॉडल उपलब्ध नहीं — इस बार Flash पर स्विच किया गया",st_img_bad:"इमेज डेटा इंटीग्रिटी जाँच में विफल रहा — फोटो दोबारा जोड़ें",st_auto_comp:"ऑटो कंपोज़िट: IMAGE 1 सब्जेक्ट → रेफ़रेंस सीन",prov_lbl:"AI प्रोवाइडर",oai_key_ph:"sk-... (OpenAI API key)",tab_create:"बनाएँ",create_note:"क्रिएट मोड — आपके prompt से बिल्कुल नई इमेज (+ इसके अपने 4 रेफ़)। पूरी तरह स्वतंत्र: डॉक्यूमेंट, प्रीसेट, चेन या लॉक कभी नहीं पढ़ता।",create_ph:"जो इमेज बनाना चाहते हैं उसका वर्णन करें…",btn_create_ps:"⬇ Photoshop में भेजें",btn_to_ref:"↺ Ref 1 के रूप में इस्तेमाल करें",st_to_ref:"परिणाम Ref 1 में लोड हो गया ✓",scope_create_note:"Setup के Model और Output से स्वतंत्र — ये सेटिंग्स सिर्फ़ Create के Generate पर लागू होती हैं।",cr_ratio:"अनुपात",cr_var:"वेरिएशन",cr_restyle:"♻ परिणाम को नया स्टाइल दें",cr_lib:"Prompt लाइब्रेरी — डालने के लिए टैप करें",cr_improve:"बेहतर बनाएँ",cr_describe:"Ref 1 का वर्णन → Prompt",st_describing:"रेफ़रेंस पढ़ा जा रहा है…",st_described:"Ref 1 से prompt तैयार हो गया ✓",st_need_gem:"Gemini API key जोड़ें (Setup) — यह Gemini टेक्स्ट इस्तेमाल करता है",st_need_ref1:"पहले Ref 1 में कोई इमेज जोड़ें",st_lib_added:"Prompt जोड़ा गया ✓",cr_refs:"रेफ़रेंस इमेज (अधिकतम 4)",cr_refs_note:"वैकल्पिक — Layer / File / Web से जोड़ें। Create सिर्फ़ वही लेता है जो आपका prompt माँगता है।",cr_results:"परिणाम",cr_gal_empty:"अभी कोई परिणाम नहीं — Generate टैप करें।",cr_gal_have:"परिणाम · प्रीव्यू / कार्रवाई के लिए थंबनेल टैप करें",cr_save:"⬇ PNG सेव करें",cr_engine:"इंजन",cr_need_result:"पहले कोई इमेज जनरेट करें",btn_web_import_url:"⬇ URL इंपोर्ट करें",st_clip_help:"क्लिपबोर्ड खाली/ब्लॉक है — लिंक को URL बार में पेस्ट करें, फिर ⬇ URL इंपोर्ट करें टैप करें",st_web_blob:"यह एक अस्थायी blob: लिंक है — राइट-क्लिक → Copy IMAGE Address इस्तेमाल करें, या फ़ाइल सेव करके Import File इस्तेमाल करें",err_key:"API key अमान्य — Setup टैब पर key दोबारा जाँचें · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"कोटा / रेट लिमिट — थोड़ा रुककर फिर कोशिश करें · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API के लिए इमेज बहुत बड़ी है — छोटा करके फिर कोशिश करें · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"सेफ़्टी फ़िल्टर ने रोका — prompt या फोटो बदलकर देखें · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"नेटवर्क / सर्वर समस्या — कृपया फिर कोशिश करें · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"अनुरोध का समय समाप्त — सर्वर ने बहुत देर लगाई; कृपया फिर कोशिश करें · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"अनुरोध पूरा नहीं हो सका — कृपया फिर कोशिश करें",err_img:"कोई उपयोगी इमेज नहीं बनी — कृपया फिर कोशिश करें",err_mode:"यह डॉक्यूमेंट RGB मोड में नहीं है — पहले कन्वर्ट करें (Image ▸ Mode ▸ RGB Color), फिर दोबारा कोशिश करें",cam_master:"कैमरा ब्लॉक ON — हर prompt के अंत में जोड़ा जाएगा",cam_body:"कैमरा बॉडी",cam_lens:"प्राइम लेंस (mm)",cam_f:"अपर्चर",cam_film:"फ़िल्म लुक",cam_bokeh:"बोकेह स्टाइल",cam_iso:"ISO",cam_k:"WB केल्विन",cam_note:"ब्लॉक ON करें, फिर सिर्फ़ ज़रूरी चीज़ें चुनें — – चिप्स चुप रहती हैं। सब कुछ अंतिम prompt के अंत में जुड़ता है।",ro_h_main:"रेफ़रेंस ऑप्स प्रो (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (महिला) · Ref2 = IMAGE 3 (पुरुष)। टारगेट चुनें, फिर कोई ऑप चलाएँ — जिनसे मेल नहीं है वे लोग कभी नहीं बदलते।",ro_target:"टारगेट:",ro_solo:"सोलो",ro_couple:"कपल",ro_family:"परिवार",ro_mk:"रेफ़ का मेकअप कॉपी करें",ro_hair:"रेफ़ का हेयरस्टाइल लें",ro_h_face:"फेस ऑप्स",ro_h_bg:"BG / FG ऑप्स",ro_h_sub:"सब्जेक्ट ऑप्स",ro_h_lc:"लाइट और कलर ऑप्स",ro_h_dress:"ड्रेस ऑप्स",ro_h_mk:"मेकअप ऑप्स",ro_h_match:"★ मास्टर मैच (एक जैसा लुक)",ro_match_note:"IMAGE 1 को रेफ़रेंस से मिलाएँ ताकि दोनों एक ही एडिट जैसे दिखें — जो मैच करना है उसे टिक करें:",m_color:"कलर",m_light:"लाइट",m_makeup:"मेकअप",m_skin:"स्किन रीटच",crd_pipe:"⛓ पाइपलाइन बिल्डर — कुछ भी चेन करें",pipe_note:"किन्हीं भी स्टेप्स को एक चेन में जोड़ें — हर स्टेप का परिणाम अगले स्टेप में जाता है। अधिकतम 6।",pipe_add:"+ जोड़ें",pipe_run:"▶ पाइपलाइन चलाएँ",pipe_clear:"साफ़ करें",pipe_retouch:"रीटच अप्लाई (मौजूदा स्लाइडर)",pipe_relight:"रीलाइट (मौजूदा लाइट रिग)",pipe_prompt:"Prompt (मौजूदा EN बॉक्स)",pipe_empty:"पहले कम से कम एक स्टेप जोड़ें",pipe_max:"पाइपलाइन भर गई है (अधिकतम 6 स्टेप)",st_pipe:"पाइपलाइन स्टेप",st_pipe_done:"पाइपलाइन पूरी हुई",st_pipe_stop:"पाइपलाइन रुक गई (एक स्टेप विफल हुआ)",pipe_merge:"⚡ वन-शॉट मर्ज — सारे स्टेप एक ही कॉल में (तेज़/सस्ता · ≤ 3 कामों के लिए सर्वोत्तम)",crd_chainsrest:"स्टाइल चेन + पुरानी फोटो रिस्टोर",crd_refops:"रेफ़रेंस ऑप्स प्रो (Ref1 / Ref2)",crd_scenes:"🎬 सीन प्रो — लॉक्ड सब्जेक्ट · मैचिंग सीन",scn_note:"अपने सब्जेक्ट को लॉक करें (चेहरा · पोज़ · ड्रेस · फ्रेम) और पूरा सीन उनके अनुसार दोबारा बनाएँ — लाइट, शैडो, कलर, बैकग्राउंड, फ़ोरग्राउंड और ऑब्जेक्ट सब अपने आप ढलकर असली फोटो जैसा लुक देते हैं।",scn_h_style:"सीन स्टाइल (इनडोर / सांस्कृतिक)",scn_h_bday:"🎂 जन्मदिन — उम्र का अंक 1–45",scn_h_cap:"कैप्शन / टेक्स्ट (बच्चा · Miss Universe · जन्मदिन)",scn_h_scarf:"आउटडोर / फ्लाइंग स्कार्फ़",scn_grad:"ग्रेजुएशन इनडोर",scn_prewed:"प्रीवेडिंग इनडोर",scn_vietnam:"वियतनाम",scn_myanmar:"म्यांमार",scn_chinese:"चीनी",scn_shan:"शान",scn_newborn:"नवजात / शिशु",scn_age:"उम्र",scn_bday_go:"🎂 जन्मदिन सीन",scn_cap_on:"कैप्शन टेक्स्ट जोड़ें",scn_cap_ph:"कैप्शन टेक्स्ट (जैसे Happy 1st Birthday, नाम)…",scn_cap_pos:"पोज़िशन",scn_top:"ऊपर",scn_bottom:"नीचे",scn_scarf:"✦ फ्लाइंग स्कार्फ़ सीन",scn_dir:"दिशा",scn_left:"बाएँ",scn_right:"दाएँ",scn_up:"ऊपर",scn_len:"लंबाई",scn_short:"छोटा",scn_long:"लंबा",g_cat_scene:"सीन ऑप — आपका सब्जेक्ट लॉक है (चेहरा · पोज़ · ड्रेस · फ्रेम); पूरा जनरेट किया गया सीन (लाइट, शैडो, कलर, बैकग्राउंड, फ़ोरग्राउंड, ऑब्जेक्ट, माहौल) असली फोटो जैसे कंपोज़िट के लिए सब्जेक्ट से अपने आप मैच किया जाता है।",crd_wed:"♥ वेडिंग प्रो सूट",crd_recipes:"रेसिपी — सेव / शेयर करें",learn_lbl:"🎓 लर्न मोड — पहला टैप = गाइड (पीला), दूसरा = prompt (नीला), तीसरा = रन (हरा)",guide_hint:"फिर टैप करें: पीला → नीला (prompt) → हरा (रन) ▶",g_learn_next_prompt:"फिर टैप करें → सटीक PROMPT दिखेगा (नीला)।",g_learn_prompt_head:"यह बटन जो PROMPT भेजेगा (फिर टैप = रन):",g_learn_next_run:"एक बार और टैप करें → रन (हरा) जनरेट करता है।",st_prompt_ready:"Prompt तैयार — चलाने के लिए फिर टैप करें (हरा) ✓",g_step_doc:"पहले Photoshop में अपना फोटो डॉक्यूमेंट खोलें।",g_step_ref1:"रेफ़रेंस इमेज को Ref1 में लोड करें (वह IMAGE 2 बन जाती है)। दूसरे व्यक्ति के लिए Ref2 जोड़ें।",g_step_target:"टारगेट चुनें: सोलो / कपल (Ref1 = महिला, Ref2 = पुरुष) / परिवार।",g_step_mkhair:"वैकल्पिक: फेस ऑप्स के ऊपर ‘रेफ़ का मेकअप कॉपी करें’ / ‘रेफ़ का हेयरस्टाइल लें’ टिक करें।",g_step_petal:"पहले पंखुड़ी का रंग चुनें (auto = आपके सीन से मैच)।",g_step_rest:"ऊपर दिए ✓ से फुल कलर या B&W चुनें।",g_step_int:"इंटेंसिटी स्लाइडर अपनी पसंद से सेट करें।",g_step_confirm:"आगे बढ़ने के लिए फिर टैप करें: गाइड (पीला) → PROMPT (नीला) → रन (हरा जनरेट करता है)।",g_cat_face:"फेस ऑप — रेफ़रेंस चेहरा मिलते-जुलते व्यक्ति पर ट्रांसफ़र करता है; बाकी सब जस के तस रहते हैं।",g_cat_sub:"सब्जेक्ट ऑप — रेफ़रेंस व्यक्ति को आपके सीन में लाता/ढालता है; सीन और फ्रेमिंग वही रहती है।",g_cat_bgfg:"BG/FG ऑप — रेफ़रेंस के आधार पर सिर्फ़ बैकग्राउंड / फ़ोरग्राउंड बदलता है।",g_cat_lc:"लाइट और कलर ऑप — रेफ़रेंस की लाइटिंग और ग्रेड कॉपी करता है; लोग पिक्सेल-दर-पिक्सेल वैसे ही रहते हैं।",g_cat_dress:"ड्रेस ऑप — रेफ़रेंस के आधार पर सिर्फ़ पोशाक बदलता है।",g_cat_mkop:"मेकअप ऑप — रेफ़रेंस के आधार पर सिर्फ़ मेकअप बदलता है।",g_cat_match:"मास्टर मैच — आपकी फोटो को रेफ़रेंस के पूरे लुक से मैच करता है (ऊपर की परतें टिक करें)।",g_cat_trail:"वेडिंग ट्रेल — लक्ज़री घास + बहती फूलों की राह; चेहरे/पोज़/फ्रेम पूरी तरह लॉक रहते हैं।",g_cat_veil:"फ्लाइंग वेल — इस लंबाई का हवा में उड़ता वेल जोड़ता/बढ़ाता है; चेहरा कभी नहीं ढकता।",g_cat_gown:"गाउन — मौजूदा गाउन साफ़ करता है (डिज़ाइन वही रहता है) और ट्रेन की यह लंबाई सेट करता है।",g_cat_petal:"फ्लाइंग पेटल्स — इस स्टाइल में हवा में पंखुड़ियाँ जोड़ता है; रंग ऊपर के स्वैच से।",g_cat_wedx:"वेडिंग एक्स्ट्रा — आपके सीन से मैच करता यह एलिमेंट जोड़ता है; सब्जेक्ट लॉक रहता है।",g_cat_canvas:"रिप्लेस (कैनवस) — आपके सब्जेक्ट को रेफ़रेंस के सीन में रखता है; रेफ़ के लोग हटा दिए जाते हैं।",g_cat_restore:"पुरानी फोटो रिस्टोर — नुक़सान की मरम्मत करता है; हर मूल चेहरा 100% वैसा ही रहता है।",g_cat_generic:"प्रीसेट — आपकी फोटो पर यह प्रोफ़ेशनल एडिट लागू करता है।",g_gen:"जनरेट — prompt बॉक्स (+ चेन, कीप्स, कैमरा ब्लॉक) आपके डॉक्यूमेंट पर चलाता है।",g_retouchbtn:"रीटच अप्लाई — आपकी सभी स्लाइडर सेटिंग्स को एक प्रोफ़ेशनल रीटच पास के रूप में चलाता है।",g_relightbtn:"लाइटिंग जनरेट — आपके 3D लाइट डायग्राम के हिसाब से फोटो को हूबहू रीलाइट करता है।",g_scene:"सीन जनरेट — निकाले गए prompt से सीन दोबारा बनाता है; सब्जेक्ट वही रहता है।",g_rmix:"रिप्लेस मिक्स — रेफ़रेंस से सिर्फ़ ✓ टिक किए गए हिस्से बदलता है।",g_pipe:"रन पाइपलाइन — हर चेन किया गया स्टेप क्रम से चलाता है; हर परिणाम अगले में जाता है।",ro_faceRep:"फेस रिप्लेस",ro_faceSwap:"फेस स्वैप",ro_bgRep:"BG रिप्लेस",ro_bgSwap:"BG स्वैप",ro_fgRep:"FG रिप्लेस",ro_bg_note:"Doc = सब्जेक्ट · Ref1 = नया सीन। Target (Solo/Couple/Family) तय करता है कि किसे रखा जाए।",ro_bg_frame:"फ़्रेम और कंपोज़िशन बनाए रखें",ro_bg_light:"सब्जेक्ट की रोशनी/रंग सुरक्षित रखें",ro_subSwap:"सब्जेक्ट स्वैप",ro_lcRef:"L&C रेफ़रेंस",ro_lcCopy:"L&C कॉपी-पेस्ट",ro_dressRef:"ड्रेस रेफ़रेंस",ro_dressRep:"ड्रेस रिप्लेस",ro_mkCopy:"मेकअप कॉपी",ro_matchBtn:"★ मास्टर मैच",grp_retouch:"स्किन रीटच प्रीसेट",lbl_intensity:"तीव्रता",p_evoto:"Evoto स्टाइल",p_meitu:"Meitu स्टाइल",auto_place:"परिणाम को नई लेयर के रूप में Photoshop में अपने-आप रखें",sec_retouchpro:"रीटच प्रो — स्लाइडर",rt_skin:"स्किन",rt_faceai:"फ़ेस AI",rt_hair:"बाल",rt_dress:"ड्रेस",rt_bg:"बैकग्राउंड",rt_smooth:"स्किन स्मूद",rt_acne:"मुँहासे हटाएँ",rt_spots:"काले धब्बे",rt_wrinkle:"झुर्रियाँ",rt_tone:"गोरापन / टैन",rt_glow:"ग्लो",rt_reshape:"AI रीशेप",rt_lash:"पलकें",rt_brow:"भौंहें",rt_lipsmooth:"होंठ स्मूद",rt_lipcolor:"होंठों का रंग",rt_lenscolor:"लेंस का रंग",rt_hairstray:"बिखरे बाल",rt_hairsmooth:"बाल स्मूद",rt_hairshine:"बालों की चमक (D&B)",rt_dresssmooth:"कपड़ा स्मूद",rt_dressedge:"किनारों की सफ़ाई",rt_dresswrinkle:"सिलवटें हटाएँ",rt_dresstexture:"टेक्सचर वापस लाएँ",rt_bgsmooth:"BG साफ़/स्मूद",rt_bgcolor:"BG रंग",rt_bgrecolor:"BG रंग स्मूद",rt_shape:"रीशेप प्रो (चेहरा + शरीर)",rt_teeth:"दाँत सफ़ेद करें",rt_eyewhite:"आँखों की सफ़ेदी साफ़",rt_faceslim:"चेहरा स्लिम",rt_jaw:"जॉलाइन",rt_chin:"ठोड़ी",rt_nosesize:"नाक का आकार",rt_eyesize:"आँखों का आकार",rt_lipfull:"भरे होंठ",rt_waist:"कमर स्लिम",rt_bodyslim:"बॉडी स्लिम",rt_shoulder:"कंधे",rt_hip:"हिप स्लिम",rt_leglen:"टाँगों की लंबाई",rt_armslim:"बाँह स्लिम",rt_dressfit:"ड्रेस फ़िट",rt_dressclean:"ड्रेस साफ़",rt_dresscolorpure:"ड्रेस का शुद्ध रंग",rt_bodygrp:"बॉडी स्किन प्रो",rt_bodysmooth:"बॉडी स्किन स्मूद",rt_bodyblemish:"बॉडी दाग़-धब्बे साफ़",rt_bodytone:"बॉडी एक-सा टोन",rt_bodyglow:"बॉडी ग्लो",rt_bodyhairrm:"शरीर के बाल कम करें",rt_hairvolume:"बालों का वॉल्यूम",rt_hairgloss:"हेयर ग्लॉस",rt_hairfill:"हेयर फ़िल (पतले हिस्से)",wp_h_trail:"♥ वेडिंग — लक्ज़री फ्लावर ट्रेल",wp_h_veil:"♥ वेडिंग — उड़ता वेल",wp_h_gown:"♥ वेडिंग — गाउन क्लीन + ट्रेन",wp_h_petal:"♥ वेडिंग — उड़ती पंखुड़ियाँ",wp_h_extra:"♥ वेडिंग — घोड़ा · पानी · मूड",wp_note:"फ़ेस ID / पोज़ / फ़्रेम / ड्रेस डिज़ाइन पूरी तरह लॉक हैं — केवल चुना गया तत्व ही बदलता है।",wp_petalcolor:"पंखुड़ी का रंग (auto = सीन से मेल)",wp_trail_c:"फूल का रंग",wp_trail_go:"▶ फ्लावर ट्रेल",wp_veil_c:"वेल की लंबाई",wp_veil_go:"▶ उड़ता वेल",wp_gown_c:"ट्रेन की लंबाई",wp_gown_go:"▶ गाउन क्लीन + ट्रेन",wp_pet_c:"पंखुड़ी की शैली",wp_pet_go:"▶ उड़ती पंखुड़ियाँ",wp_extra_c:"अतिरिक्त",wp_extra_go:"▶ अतिरिक्त जोड़ें",btn_apply_rt:"रीटच लागू करें",btn_reset:"रीसेट",rt_none:"पहले कम से कम एक रीटच स्लाइडर या रंग सेट करें",tab_setup:"सेटअप",tab_prompt:"स्टूडियो",tab_presets:"प्रीसेट",recent_lbl:"हाल के prompts…",tab_retouch:"रीटच",tab_aitools:"AI टूल्स",cap_warn:"Photoshop इस prompt बॉक्स की सीमा रखता है:",cleanup_note:"टिक किए गए आइटम हर जनरेट / प्रीसेट के साथ चलते हैं।",btn_generate:"बनाएँ",st_ready:"तैयार",st_capture:"दस्तावेज़ कैप्चर हो रहा है",st_gen:"जनरेट हो रहा है…",st_place:"Photoshop में रखा जा रहा है…",st_placed_masked:"लेयर + मास्क ग्रुप के रूप में रखा गया — मूल छवि ज्यों की त्यों ✓",st_placed_plain:"सादी लेयर के रूप में रखा गया (इस होस्ट पर मास्क/ग्रुप उपलब्ध नहीं)",stage_queued:"कतार में",stage_uploading:"अपलोड हो रहा है",stage_generating:"जनरेट हो रहा है",stage_downloading:"डाउनलोड हो रहा है",stage_placing:"रखा जा रहा है",st_done:"हो गया ✓",st_err:"त्रुटि",st_no_doc:"कोई सक्रिय दस्तावेज़ नहीं — पहले कोई फ़ोटो खोलें",st_no_prompt:"Prompt खाली है",need_ref:"इस प्रीसेट के लिए स्लॉट 1 में रेफ़रेंस इमेज चाहिए",st_new_doc:"परिणाम नए दस्तावेज़ के रूप में खुल गया ✓",sec_preview:"पूर्वावलोकन — पहले / बाद",before:"पहले",after:"बाद",btn_place:"Photoshop में रखें",btn_saveas:"इस रूप में सहेजें…",st_saved:"सहेजा गया ✓",sec_diag:"सिस्टम जाँच",sec_log:"गतिविधि लॉग",btn_diag:"जाँच चलाएँ",btn_copylog:"लॉग कॉपी करें",btn_clearlog:"साफ़ करें",diag_host:"Photoshop होस्ट",diag_uxp:"UXP क्षमताएँ",diag_gem:"Gemini API key",diag_oai:"OpenAI API key",diag_doc:"सक्रिय दस्तावेज़",diag_set:"सेट है",diag_unset:"सेट नहीं",diag_open:"खुला है",diag_none:"कोई खुला नहीं",diag_missing:"अनुपलब्ध",diag_done:"सिस्टम जाँच पूरी ✓",diag_lib:"रेफ़रेंस लाइब्रेरी",diag_lib_open:"फ़ोल्डर खोलने की क्षमता",sec_reflib:"रेफ़रेंस इमेज लाइब्रेरी",reflib_note:"अपनी पसंदीदा रेफ़रेंस इमेज का फ़ोल्डर एक बार चुनें — ब्राउज़ इसे याद रखता है और हर जगह इसी में खुलता है।",btn_browse:"ब्राउज़ करें",lib_choose:"फ़ोल्डर चुनें",lib_open:"फ़ोल्डर खोलें",lib_change:"फ़ोल्डर बदलें",lib_reset:"रीसेट",lib_rescan:"फिर स्कैन करें",lib_current:"वर्तमान फ़ोल्डर",lib_found:"इमेज मिलीं",lib_status:"स्थिति",lib_lastscan:"अंतिम स्कैन",lib_images:"इमेज",lib_connected:"कनेक्टेड",lib_not_config:"कॉन्फ़िगर नहीं",lib_perm_lost:"अनुमति खो गई — फिर से चुनें",lib_none:"(कोई फ़ोल्डर चयनित नहीं)",lib_copy_only:"केवल पथ कॉपी करें",lib_choose_msg:"अपना HNK रेफ़रेंस इमेज लाइब्रेरी फ़ोल्डर चुनें।",lib_scanning:"लाइब्रेरी स्कैन हो रही है…",lib_scan_done:"री-स्कैन पूरा ✓",lib_reset_done:"लाइब्रेरी रीसेट हो गई ✓",lib_path_copied:"पथ कॉपी हुआ",lib_unsupported:"असमर्थित इमेज प्रकार",lib_restore_fail:"रेफ़रेंस पुनर्स्थापित नहीं हो सका",on:"चालू",off:"बंद"},
-ja:{tab_setup:"設定",tab_prompt:"スタジオ",tab_presets:"プリセット",tab_retouch:"レタッチ",tab_aitools:"AIツール",tab_create:"作成",btn_generate:"生成",st_ready:"準備完了",st_done:"完了 ✓",st_need_key:"先に Gemini API key を入力してください",btn_show:"表示",btn_hide:"隠す",btn_save:"保存",btn_test:"キーをテスト",btn_clear:"クリア",btn_cancel:"キャンセル",btn_load:"読み込み",btn_paste:"貼り付け",btn_improve:"プロンプト改善",lbl_ratio:"比率",lbl_size:"サイズ",lbl_quality:"品質"},
-km:{tab_setup:"រៀបចំ",tab_prompt:"ស្ទូឌីយោ",tab_presets:"ព្រីសេត",tab_retouch:"រីតាច់",tab_aitools:"ឧបករណ៍ AI",tab_create:"បង្កើត",btn_generate:"បង្កើត",st_ready:"រួចរាល់",st_done:"រួចរាល់ហើយ ✓",st_need_key:"សូមបញ្ចូល Gemini API key ជាមុន",btn_show:"បង្ហាញ",btn_hide:"លាក់",btn_save:"រក្សាទុក",btn_test:"សាកល្បង Key",btn_clear:"លុប",btn_cancel:"បោះបង់",btn_load:"ផ្ទុក",btn_paste:"បិទភ្ជាប់",btn_improve:"កែលម្អ Prompt",lbl_ratio:"សមាមាត្រ",lbl_size:"ទំហំ",lbl_quality:"គុណភាព"},
-kn:{tab_setup:"ಸೆಟಪ್",tab_prompt:"ಸ್ಟುಡಿಯೋ",tab_presets:"ಪ್ರೀಸೆಟ್",tab_retouch:"ರೀಟಚ್",tab_aitools:"AI ಟೂಲ್ಸ್",tab_create:"ರಚಿಸಿ",btn_generate:"ರಚಿಸಿ",st_ready:"ಸಿದ್ಧ",st_done:"ಮುಗಿದಿದೆ ✓",st_need_key:"ಮೊದಲು Gemini API key ಹಾಕಿ",btn_show:"ತೋರಿಸಿ",btn_hide:"ಮರೆಮಾಡಿ",btn_save:"ಉಳಿಸಿ",btn_test:"Key ಪರೀಕ್ಷಿಸಿ",btn_clear:"ಅಳಿಸಿ",btn_cancel:"ರದ್ದು",btn_load:"ಲೋಡ್",btn_paste:"ಪೇಸ್ಟ್",btn_improve:"Prompt ಸುಧಾರಿಸಿ",lbl_ratio:"ಅನುಪಾತ",lbl_size:"ಗಾತ್ರ",lbl_quality:"ಗುಣಮಟ್ಟ"},
-ko:{tab_setup:"설정",tab_prompt:"스튜디오",tab_presets:"프리셋",tab_retouch:"리터치",tab_aitools:"AI 도구",tab_create:"만들기",btn_generate:"생성",st_ready:"준비 완료",st_done:"완료 ✓",st_need_key:"먼저 Gemini API key를 입력하세요",btn_show:"보기",btn_hide:"숨기기",btn_save:"저장",btn_test:"키 테스트",btn_clear:"지우기",btn_cancel:"취소",btn_load:"불러오기",btn_paste:"붙여넣기",btn_improve:"프롬프트 개선",lbl_ratio:"비율",lbl_size:"크기",lbl_quality:"품질"},
-lo:{tab_setup:"ຕັ້ງຄ່າ",tab_prompt:"ສະຕູດິໂອ",tab_presets:"ພຣີເຊັດ",tab_retouch:"ຣີທັດ",tab_aitools:"ເຄື່ອງມື AI",tab_create:"ສ້າງ",btn_generate:"ສ້າງພາບ",st_ready:"ພ້ອມ",st_done:"ສຳເລັດ ✓",st_need_key:"ກະລຸນາໃສ່ Gemini API key ກ່ອນ",btn_show:"ສະແດງ",btn_hide:"ເຊື່ອງ",btn_save:"ບັນທຶກ",btn_test:"ທົດສອບ Key",btn_clear:"ລຶບ",btn_cancel:"ຍົກເລີກ",btn_load:"ໂຫຼດ",btn_paste:"ວາງ",btn_improve:"ປັບປຸງ Prompt",lbl_ratio:"ອັດຕາສ່ວນ",lbl_size:"ຂະໜາດ",lbl_quality:"ຄຸນນະພາບ"},
-ml:{tab_setup:"സെറ്റപ്പ്",tab_prompt:"സ്റ്റുഡിയോ",tab_presets:"പ്രീസെറ്റ്",tab_retouch:"റീടച്ച്",tab_aitools:"AI ടൂളുകൾ",tab_create:"സൃഷ്ടിക്കുക",btn_generate:"സൃഷ്ടിക്കുക",st_ready:"തയ്യാർ",st_done:"കഴിഞ്ഞു ✓",st_need_key:"ആദ്യം Gemini API key ചേർക്കുക",btn_show:"കാണിക്കുക",btn_hide:"മറയ്ക്കുക",btn_save:"സേവ്",btn_test:"Key പരിശോധിക്കുക",btn_clear:"മായ്ക്കുക",btn_cancel:"റദ്ദാക്കുക",btn_load:"ലോഡ്",btn_paste:"പേസ്റ്റ്",btn_improve:"Prompt മെച്ചപ്പെടുത്തുക",lbl_ratio:"അനുപാതം",lbl_size:"വലുപ്പം",lbl_quality:"നിലവാരം"},
-mr:{tab_setup:"सेटअप",tab_prompt:"स्टुडिओ",tab_presets:"प्रीसेट",tab_retouch:"रीटच",tab_aitools:"AI साधने",tab_create:"तयार करा",btn_generate:"तयार करा",st_ready:"तयार",st_done:"झाले ✓",st_need_key:"आधी Gemini API key टाका",btn_show:"दाखवा",btn_hide:"लपवा",btn_save:"जतन करा",btn_test:"Key तपासा",btn_clear:"काढा",btn_cancel:"रद्द",btn_load:"लोड",btn_paste:"पेस्ट",btn_improve:"Prompt सुधारा",lbl_ratio:"गुणोत्तर",lbl_size:"आकार",lbl_quality:"गुणवत्ता"},
-ne:{tab_setup:"सेटअप",tab_prompt:"स्टुडियो",tab_presets:"प्रिसेट",tab_retouch:"रिटच",tab_aitools:"AI उपकरण",tab_create:"बनाउनुहोस्",btn_generate:"बनाउनुहोस्",st_ready:"तयार",st_done:"भयो ✓",st_need_key:"पहिले Gemini API key राख्नुहोस्",btn_show:"देखाउनुहोस्",btn_hide:"लुकाउनुहोस्",btn_save:"सेभ",btn_test:"Key जाँच",btn_clear:"हटाउनुहोस्",btn_cancel:"रद्द",btn_load:"लोड",btn_paste:"पेस्ट",btn_improve:"Prompt सुधार्नुहोस्",lbl_ratio:"अनुपात",lbl_size:"आकार",lbl_quality:"गुणस्तर"},
-pa:{tab_setup:"ਸੈੱਟਅੱਪ",tab_prompt:"ਸਟੂਡੀਓ",tab_presets:"ਪ੍ਰੀਸੈੱਟ",tab_retouch:"ਰੀਟੱਚ",tab_aitools:"AI ਟੂਲ",tab_create:"ਬਣਾਓ",btn_generate:"ਬਣਾਓ",st_ready:"ਤਿਆਰ",st_done:"ਹੋ ਗਿਆ ✓",st_need_key:"ਪਹਿਲਾਂ Gemini API key ਪਾਓ",btn_show:"ਦਿਖਾਓ",btn_hide:"ਲੁਕਾਓ",btn_save:"ਸੰਭਾਲੋ",btn_test:"Key ਪਰਖੋ",btn_clear:"ਹਟਾਓ",btn_cancel:"ਰੱਦ ਕਰੋ",btn_load:"ਲੋਡ",btn_paste:"ਪੇਸਟ",btn_improve:"Prompt ਸੁਧਾਰੋ",lbl_ratio:"ਅਨੁਪਾਤ",lbl_size:"ਆਕਾਰ",lbl_quality:"ਗੁਣਵੱਤਾ"},
-ta:{app_title:"HNK Photoshop Ai பேனல் (மாணவர்கள்)",sec_api:"Gemini API Key",btn_show:"காட்டு",btn_hide:"மறை",btn_test:"Key சோதி",btn_save:"சேமி",st_testing:"Key சோதிக்கப்படுகிறது",st_key_ok:"✓ API key வேலை செய்கிறது",st_key_bad:"API key செயல்படவில்லை",st_key_saved:"API key சேமிக்கப்பட்டது ✓",st_need_key:"முதலில் Gemini API key சேர்க்கவும்",sec_model:"மாடல் & வெளியீடு",scope_model_note:"கீழே உள்ள Prompt தாவலின் Generate பொத்தானுக்கு மட்டுமே இது பயன்படும் — Create மற்றும் AI Tools ஒவ்வொன்றுக்கும் தனித்தனி மாடல் அமைப்புகள் உள்ளன.",model_auto:"ஆட்டோ (பரிந்துரைக்கப்படுகிறது)",model_flash:"Flash — வேகமானது (2.5)",model_pro:"Pro — தரமானது (3.0)",lbl_ratio:"விகிதம்",ratio_auto:"ஆட்டோ விகிதம் (ஆவணத்திலிருந்து)",lbl_size:"அளவு",lbl_quality:"தரம்",qual_auto:"ஆட்டோ",qual_low:"குறைவு",qual_med:"நடுத்தரம்",qual_high:"உயர்",sec_prompt:"Prompt",hint_prompt:"உங்கள் prompt-ஐ இங்கே தட்டச்சு செய்யவும்… (அதிகபட்சம் 20,000 எழுத்துகள்)",btn_improve:"Prompt மேம்படுத்து",btn_clear:"அழி",st_improving:"Prompt மேம்படுத்தப்படுகிறது",st_improved:"Prompt மேம்படுத்தப்பட்டது ✓",sec_refs:"ரெஃபரன்ஸ் படங்கள் (2 இடங்கள்)",base_note:"அடிப்படைப் படம் = செயலில் உள்ள உங்கள் Photoshop ஆவணம் (தானாகவே எடுக்கப்படும்).",btn_ref_layer:"+ லேயர்",btn_ref_file:"கோப்பு",btn_ref_web:"வெப்",st_ref_layer_added:"லேயர் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_ref_file_added:"கோப்பு ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_importing:"கோப்பு இறக்குமதியாகிறது",url_title:"URL-இலிருந்து ரெஃபரன்ஸ் — Chrome / Pinterest",url_ph:"https://… படத்தின் முகவரி அல்லது Pinterest pin இணைப்பு",btn_paste:"ஒட்டு",btn_load:"ஏற்று",btn_cancel:"ரத்து",st_url_loading:"வெப் படம் பதிவிறக்கப்படுகிறது",st_ref_web_added:"வெப் படம் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_url_bad:"இந்த URL-இலிருந்து படத்தை ஏற்ற முடியவில்லை — படத்தின் முகவரியை நகலெடுத்து மீண்டும் முயற்சிக்கவும்",no_layer:"லேயர் எதுவும் தேர்ந்தெடுக்கப்படவில்லை",sec_presets:"AI ப்ரீசெட்கள்",auto_run:"ப்ரீசெட் கிளிக் → தானாக Generate (OFF = prompt-இல் மட்டும் சேர்க்கும்)",grp_cleanup:"சுத்தம் செய்யும் கருவிகள்",p_remove_people:"நபர்களை நீக்கு",p_fix_hands:"கூடுதல் கைகளைச் சரிசெய்",p_fix_legs:"கூடுதல் கால்களைச் சரிசெய்",p_full_clean:"முழு சுத்தம்",grp_moved_note:"ரெஃபரன்ஸ் கருவிகள் இப்போது கீழே உள்ள Reference Ops Pro கார்டில் உள்ளன (ஒரே இடத்தில் — தனிநபர்/ஜோடி/குடும்பம் + வழிகாட்டிகளுடன்).",ro_h_detail:"முடி · அணிகலன்கள் · போஸ் (← Ref1)",ro_h_comp:"காம்போசிட் · ஸ்டைல் · உரை (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"ஹேர்ஸ்டைல் (← Ref1)",p_access:"நகைகள்+அணிகலன்கள் (← Ref1)",p_pose:"போஸ் பொருத்தம் (Doc → Ref1)",p_fgprops:"FG ப்ராப்ஸ் (← Ref1)",p_textlogo:"உரை / லோகோ (← Ref1)",p_style:"புகைப்பட ஸ்டைல் (← Ref1)",grp_repsubj:"சப்ஜெக்ட்டை மாற்று (Doc → Ref1 காட்சி)",p_rep_solo:"தனிநபரை மாற்று",p_rep_couple:"ஜோடியை மாற்று",p_rep_family:"குடும்பத்தை மாற்று",grp_rmix:"Replace Mix — டிக் செய்து Ref1-இலிருந்து எடு",rm_bg:"பின்னணி (BG)",rm_fg:"முன்னணி (FG)",rm_light:"ஒளியமைப்பு",rm_color:"நிறம்",rm_object:"பொருட்கள் / ப்ராப்ஸ்",btn_rmix:"REPLACE GENERATE",rm_none:"முதலில் குறைந்தது ஒரு அம்சத்தையாவது டிக் செய்யவும்",grp_i2p:"படம் → Prompt (காட்சி உருவாக்கி)",i2p_note:"1) Extract: Ref1 காட்சி → விரிவான உரை prompt (நபர்கள் நீங்கலாக). 2) அதை Prompt பக்கத்தில் திருத்தவும். 3) SCENE GENERATE அதை உங்கள் ஆவணத்தின் சப்ஜெக்ட்டைச் சுற்றி உருவாக்கும் — எந்தக் கோணத்திற்கும் தானாகப் பொருந்தும். முகம்/போஸ்/ஃப்ரேம் பூட்டுகள் = அசல் அப்படியே.",i2p_objects:"பொருட்கள் & ப்ராப்ஸ் விவரம்",i2p_light:"ஒளியமைப்பு விவரம்",i2p_color:"நிறம் / கிரேடு விவரம்",i2p_bg:"பின்னணி விவரம்",i2p_fg:"முன்னணி விவரம்",btn_i2p:"படம் → Prompt (காட்சியைப் பிரித்தெடு)",i2p_fit:"காட்சி ஆட்டோ-பொருத்தம் — ஆவணத்தின் கோணம் / தூரம் / லென்ஸுக்கு ஏற்பக் காட்சியை மறு-அமைக்கும்",i2p_adapt:"சப்ஜெக்ட்டின் ஒளி & நிறத்தைக் காட்சிக்கு ஏற்ப மாற்று",btn_scenegen:"SCENE GENERATE",st_extract:"காட்சி prompt-ஆகப் பிரித்தெடுக்கப்படுகிறது",st_extract_done:"காட்சி prompt தயார் — Prompt பக்கத்தில் சரிபார்க்கவும்",scene_no_prompt:"Prompt பெட்டி காலியாக உள்ளது — முதலில் படம் → Prompt-ஐ இயக்கவும்",i2p_none:"முதலில் குறைந்தது ஒரு விவர அம்சத்தையாவது டிக் செய்யவும்",sec_light:"ஸ்டுடியோ லைட்டிங் — AI Relight",light_note:"விளக்குகளை ON செய்யவும், ஒரு வரிசையைத் தட்டித் தேர்வு செய்யவும், ஸ்லைடர்களால் வடிவமைக்கவும் — 3D மேல்-பார்வை வரைபடம் நேரடியாக மாறும் (▴ = உயரம், ▾ = தாழ்வு). LIGHTING GENERATE உங்கள் ஆவணத்தை இந்த அமைப்புக்கு ஏற்பத் துல்லியமாக மறு-ஒளியூட்டும்; முகம் / போஸ் / ஃப்ரேம் பூட்டப்பட்டே இருக்கும்.",lbl_my_prompt:"மியான்மர் PROMPT",lstage_model:"மாடல்",lstage_cam:"கேம்",l_key:"கீ லைட்",l_fill:"ஃபில் / முன்",l_butterfly:"பட்டர்ஃபிளை (மேல்-முன்)",l_side:"சைட் லைட்",l_rim:"ரிம் லைட்",l_back:"பேக் லைட்",l_hair:"ஹேர் லைட்",l_bglight:"பின்னணி லைட்",lt_softbox:"சாஃப்ட்பாக்ஸ்",lt_octa:"ஆக்டா",lt_strip:"ஸ்ட்ரிப்",lt_umbrella:"அம்ப்ரெல்லா",lt_beauty:"பியூட்டி",lt_hard:"ஹார்ட்",li_int:"தீவிரம்",li_angle:"கோணம்",li_height:"உயரம்",li_dist:"தூரம்",li_size:"அளவு",btn_lightgen:"LIGHTING GENERATE",light_none:"முதலில் குறைந்தது ஒரு விளக்கையாவது ON செய்யவும்",lg_equip:"புகைப்படத்தில் லைட் உபகரணங்களைக் காட்டு (சாஃப்ட்பாக்ஸ் / ஸ்டாண்டுகள் தெரியும்)",grp_chains:"ஸ்டைல் செயின்கள் — ✓ ஸ்டைல்களை இணை",chains_note:"எந்த ஸ்டைல்களையும் ON செய்யலாம் — அவை ஒவ்வொரு Generate / ப்ரீசெட் / ரீடச்சிலும் ஒன்றாகக் கலந்து சேரும்.",grp_restore:"பழைய புகைப்பட மீட்டெடுப்பு",p_restore:"பழைய புகைப்பட மீட்டெடுப்பு",rest_color:"முழு வண்ணம்",rest_bw:"கருப்பு & வெள்ளை",restore_note:"கிழிசல்கள், நீர் / தீக்காயச் சேதம், மங்கல் ஆகியவற்றைச் சரிசெய்யும் — ஒவ்வொரு அசல் முகத்தையும் 100% அப்படியே வைத்திருக்கும்.",rt_browstyle:"புருவ ஸ்டைல்",rt_lashstyle:"இமை ஸ்டைல்",rt_blush:"ப்ளஷ் நிறம்",rt_contour:"கான்டூர் ஸ்டைல்",rt_bust:"மார்பு",rt_butt:"பிட்டம்",rt_thigh:"தொடைகள்",rt_calf:"கெண்டைக்கால்கள்",rt_neck:"கழுத்து",rt_fingers:"விரல்கள்",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"மியான்மர் prompt ஆங்கிலத்தில் மொழிபெயர்க்கப்படுகிறது",live_trans:"Live ⇄ தானியங்கு மொழிபெயர்ப்பு (EN ↔ MY, தட்டச்சை நிறுத்திய பிறகு)",st_retry:"மீண்டும் முயற்சிக்கப்படுகிறது",grp_recipes:"ரெசிபிகள் — அமைப்புகளைச் சேமி / பகிர்",recipe_note:"எல்லாவற்றையும் (செயின்கள், ரீடச், லைட்கள், Keep பூட்டுகள், prompt-கள்) ஒரே .json ரெசிபியாகச் சேமிக்கவும் — மாணவர்கள் அதை Load செய்தால் போதும்.",btn_recipe_save:"ரெசிபியைச் சேமி",btn_recipe_load:"ரெசிபியை ஏற்று",st_recipe_saved:"ரெசிபி சேமிக்கப்பட்டது ✓",st_recipe_loaded:"ரெசிபி ஏற்றப்பட்டது ✓ — எல்லா கட்டுப்பாடுகளும் புதுப்பிக்கப்பட்டன",st_recipe_bad:"இது HNK ரெசிபி கோப்பு அல்ல",sec_final:"இறுதி Prompt (AI-க்கு அனுப்பப்படுவது)",btn_copy:"நகலெடு",st_copied:"நகலெடுக்கப்பட்டது ✓",hist_note:"வரலாறு — கடைசி 6 முடிவுகள், பார்க்கத் தட்டவும்:",btn_hist_prompt:"→ Prompt",sec_batch:"பேட்ச் பயன்முறை",batch_note:"பல புகைப்படங்களையும் + ஒரு அவுட்புட் கோப்புறையையும் தேர்வு செய்யவும் — தற்போதைய prompt, செயின்கள், சுத்தம் மற்றும் Keep பூட்டுகள் ஒவ்வொரு புகைப்படத்திலும் இயங்கும்; முடிவுகள் *_HNK.png ஆகச் சேமிக்கப்படும்.",btn_batch:"பேட்ச்சை இயக்கு",btn_batch_stop:"நிறுத்து",st_batch:"பேட்ச்",st_batch_done:"பேட்ச் முடிந்தது",sec_web:"வெப் AI — மினி பிரவுசர்",web_note:"எந்த வெப் AI எடிட்டரையும் Photoshop-க்குள்ளேயே திறக்கலாம். அங்கே உருவாக்கிய பிறகு, முடிவை லேயராகக் கொண்டு வரலாம்:",web_import_note:"இறக்குமதி: ① வெப் ஆப்பில் Copy image address (படத்தின் முகவரியை நகலெடு) பயன்படுத்தி, பிறகு 'நகலெடுத்த இணைப்பை இறக்குமதி' · ② அல்லது கோப்பைப் பதிவிறக்கி 'கோப்பை இறக்குமதி' பயன்படுத்தவும் · ③ HNK bridge உள்ள கூட்டாளர் வெப் ஆப்கள் படங்களைத் தானாகவே அனுப்பும்.",btn_web_go:"செல்",btn_web_home:"முகப்பு",btn_web_reload:"மீண்டும் ஏற்று",btn_web_import_link:"நகலெடுத்த இணைப்பை இறக்குமதி → PS",btn_web_import_file:"கோப்பை இறக்குமதி → PS",st_web_import:"Photoshop-இல் லேயராக இறக்குமதி செய்யப்பட்டது ✓",st_web_nourl:"முதலில் படத்தின் இணைப்பை நகலெடுக்கவும் (வலது-கிளிக் → Copy image address)",st_web_fetch:"இணைப்பிலிருந்து படத்தைப் பெறுகிறது",st_web_notallowed:"இந்த டொமைன் அனுமதிப் பட்டியலில் இல்லை — வெறுமையாக இருக்கலாம். இதைச் சேர்க்க HNK-ஐக் கேளுங்கள்.",st_need_doc:"முதலில் Photoshop-இல் ஒரு புகைப்பட ஆவணத்தைத் திறக்கவும்",sec_campro:"கேமரா Pro & தரம்",autosave_lbl:"ஒவ்வொரு முடிவையும் தானாக ஏற்றுமதி செய் (PNG + prompt பதிவு → கோப்புறை)",st_folder_ok:"ஏற்றுமதி கோப்புறை அமைக்கப்பட்டது ✓",st_exported:"ஏற்றுமதி செய்யப்பட்டது ✓",st_export_fail:"ஏற்றுமதி தோல்வி — கோப்புறையைச் சரிபார்க்கவும்",st_pro_fallback:"Pro மாடல் கிடைக்கவில்லை — இந்த முறைக்கு Flash-க்கு மாற்றப்பட்டது",st_img_bad:"படத் தரவு ஒருமைப்பாடு சரிபார்ப்பில் தோல்வி — புகைப்படத்தை மீண்டும் சேர்க்கவும்",st_auto_comp:"தானியங்கு காம்போசிட்: IMAGE 1 சப்ஜெக்ட் → ரெஃபரன்ஸ் காட்சி",prov_lbl:"AI வழங்குநர்",oai_key_ph:"sk-... (OpenAI API key)",tab_create:"உருவாக்கு",create_note:"CREATE பயன்முறை — உங்கள் prompt-இலிருந்து முற்றிலும் புதிய படம் (+ அதற்கென 4 ரெஃப்கள்). முழுவதும் தனித்தியங்கும்: ஆவணம், ப்ரீசெட்கள், செயின்கள் அல்லது லாக்குகள் எதையும் படிக்காது.",create_ph:"உருவாக்க விரும்பும் படத்தை விவரிக்கவும்…",btn_create_ps:"⬇ Photoshop-க்கு அனுப்பு",btn_to_ref:"↺ Ref 1 ஆகப் பயன்படுத்து",st_to_ref:"முடிவு Ref 1-இல் ஏற்றப்பட்டது ✓",scope_create_note:"Setup-இன் Model & Output அமைப்புகளிலிருந்து தனித்தது — இவை Create-இன் Generate-க்கு மட்டுமே பொருந்தும்.",cr_ratio:"விகிதம்",cr_var:"மாறுபாடுகள்",cr_restyle:"♻ முடிவை மறுஸ்டைல் செய்",cr_lib:"Prompt நூலகம் — சேர்க்கத் தட்டவும்",cr_improve:"மேம்படுத்து",cr_describe:"Ref 1-ஐ விவரி → Prompt",st_describing:"ரெஃபரன்ஸைப் படிக்கிறது…",st_described:"Ref 1-இலிருந்து prompt எழுதப்பட்டது ✓",st_need_gem:"Gemini API key சேர்க்கவும் (Setup) — இது Gemini உரையைப் பயன்படுத்துகிறது",st_need_ref1:"முதலில் Ref 1-இல் ஒரு படத்தைச் சேர்க்கவும்",st_lib_added:"Prompt சேர்க்கப்பட்டது ✓",cr_refs:"ரெஃபரன்ஸ் படங்கள் (அதிகபட்சம் 4)",cr_refs_note:"விருப்பத்தேர்வு — Layer / File / Web மூலம் சேர்க்கவும். உங்கள் prompt கேட்பதை மட்டுமே Create எடுத்துக்கொள்ளும்.",cr_results:"முடிவுகள்",cr_gal_empty:"இன்னும் முடிவுகள் இல்லை — Generate-ஐத் தட்டவும்.",cr_gal_have:"முடிவு(கள்) · முன்னோட்டம் காண / செயல்படுத்த ஒரு சிறுபடத்தைத் தட்டவும்",cr_save:"⬇ PNG சேமி",cr_engine:"எஞ்சின்",cr_need_result:"முதலில் ஒரு படத்தை உருவாக்கவும்",btn_web_import_url:"⬇ URL இறக்குமதி",st_clip_help:"கிளிப்போர்டு காலி/தடுக்கப்பட்டது — இணைப்பை URL பட்டியில் ஒட்டி, பிறகு ⬇ URL இறக்குமதி-ஐத் தட்டவும்",st_web_blob:"அது தற்காலிக blob: இணைப்பு — வலது-கிளிக் → Copy IMAGE Address பயன்படுத்தவும், அல்லது கோப்பைச் சேமித்து Import File மூலம் சேர்க்கவும்",err_key:"API key தவறானது — Setup தாவலில் key-ஐ மீண்டும் சரிபார்க்கவும் · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"கோட்டா / வேக வரம்பு — சிறிது நேரம் காத்திருந்து மீண்டும் முயற்சிக்கவும் · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API-க்கு படம் மிகப் பெரியது — அளவைக் குறைத்து மீண்டும் முயற்சிக்கவும் · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"பாதுகாப்பு வடிப்பானால் தடுக்கப்பட்டது — prompt அல்லது புகைப்படத்தை மாற்றவும் · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"நெட்வொர்க் / சர்வர் சிக்கல் — மீண்டும் முயற்சிக்கவும் · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"கோரிக்கை நேரம் முடிந்தது — சர்வர் அதிக நேரம் எடுத்தது; மீண்டும் முயற்சிக்கவும் · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"கோரிக்கையை நிறைவேற்ற முடியவில்லை — மீண்டும் முயற்சிக்கவும்",err_img:"பயன்படுத்தக்கூடிய படம் உருவாகவில்லை — மீண்டும் முயற்சிக்கவும்",err_mode:"இந்த ஆவணம் RGB பயன்முறையில் இல்லை — முதலில் மாற்றவும் (Image ▸ Mode ▸ RGB Color), பிறகு மீண்டும் முயற்சிக்கவும்",cam_master:"கேமரா தொகுதி ON — ஒவ்வொரு prompt-இன் இறுதியிலும் சேர்க்கப்படும்",cam_body:"கேமரா பாடி",cam_lens:"ப்ரைம் லென்ஸ் (mm)",cam_f:"அபெர்ச்சர்",cam_film:"ஃபிலிம் லுக்",cam_bokeh:"போகே ஸ்டைல்",cam_iso:"ISO",cam_k:"WB கெல்வின்",cam_note:"தொகுதியை ON செய்து, தேவையானதை மட்டும் தேர்வு செய்யவும் — – சிப்கள் எதுவும் சேர்க்காது. அனைத்தும் இறுதி prompt-இன் கடைசியில் சேரும்.",ro_h_main:"ரெஃபரன்ஸ் ஆப்ஸ் PRO (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (பெண்) · Ref2 = IMAGE 3 (ஆண்). ஒரு இலக்கைத் தேர்ந்தெடுத்து, பிறகு ஒரு செயல்பாட்டை இயக்கவும் — பொருந்தாத நபர்கள் ஒருபோதும் மாற மாட்டார்கள்.",ro_target:"இலக்கு:",ro_solo:"தனி",ro_couple:"ஜோடி",ro_family:"குடும்பம்",ro_mk:"ரெஃப் மேக்கப்பை நகலெடு",ro_hair:"ரெஃப் ஹேர்ஸ்டைலை எடு",ro_h_face:"முக ஆப்ஸ்",ro_h_bg:"BG / FG ஆப்ஸ்",ro_h_sub:"சப்ஜெக்ட் ஆப்ஸ்",ro_h_lc:"ஒளி & வண்ண ஆப்ஸ்",ro_h_dress:"உடை ஆப்ஸ்",ro_h_mk:"மேக்கப் ஆப்ஸ்",ro_h_match:"★ மாஸ்டர் மேட்ச் (ஒரே லுக்)",ro_match_note:"IMAGE 1-ஐ ரெஃபரன்ஸுடன் பொருத்தி இரண்டும் ஒரே எடிட் போலத் தோன்றச் செய்யும் — எதைப் பொருத்த வேண்டுமோ அதைத் டிக் செய்யவும்:",m_color:"வண்ணம்",m_light:"ஒளி",m_makeup:"மேக்கப்",m_skin:"சரும ரீடச்",crd_pipe:"⛓ பைப்லைன் பில்டர் — எதையும் சங்கிலியாக இணைக்கலாம்",pipe_note:"எந்தப் படிகளையும் ஒரே சங்கிலியாக இணைக்கவும் — ஒவ்வொரு படியின் முடிவும் அடுத்த படிக்குச் செல்லும். அதிகபட்சம் 6.",pipe_add:"+ சேர்",pipe_run:"▶ பைப்லைனை இயக்கு",pipe_clear:"அழி",pipe_retouch:"ரீடச் அப்ளை (தற்போதைய ஸ்லைடர்கள்)",pipe_relight:"ரீலைட் (தற்போதைய ஒளி அமைப்பு)",pipe_prompt:"Prompt (தற்போதைய EN பெட்டி)",pipe_empty:"முதலில் குறைந்தது ஒரு படியைச் சேர்க்கவும்",pipe_max:"பைப்லைன் நிரம்பியது (அதிகபட்சம் 6 படிகள்)",st_pipe:"பைப்லைன் படி",st_pipe_done:"பைப்லைன் முடிந்தது",st_pipe_stop:"பைப்லைன் நிறுத்தப்பட்டது (ஒரு படி தோல்வியடைந்தது)",pipe_merge:"⚡ ஒன்-ஷாட் இணைப்பு — எல்லாப் படிகளும் ஒரே அழைப்பில் (வேகம்/சிக்கனம் · ≤ 3 பணிகளுக்குச் சிறந்தது)",crd_chainsrest:"ஸ்டைல் செயின்கள் + பழைய புகைப்பட மீட்டமைப்பு",crd_refops:"ரெஃபரன்ஸ் ஆப்ஸ் ப்ரோ (Ref1 / Ref2)",crd_scenes:"🎬 சீன்ஸ் ப்ரோ — லாக் செய்த சப்ஜெக்ட் · பொருந்தும் காட்சி",scn_note:"உங்கள் சப்ஜெக்டை லாக் செய்து (முகம் · போஸ் · உடை · ஃப்ரேம்) முழுக் காட்சியையும் அவர்களுக்குப் பொருந்த மறு-உருவாக்கும் — ஒளி, நிழல், வண்ணம், பின்னணி, முன்னணி, பொருள்கள் அனைத்தும் உண்மையான புகைப்படத் தோற்றத்திற்குத் தானாகவே பொருந்திக்கொள்ளும்.",scn_h_style:"காட்சி ஸ்டைல் (உட்புறம் / கலாச்சாரம்)",scn_h_bday:"🎂 பிறந்தநாள் — வயது எண் 1–45",scn_h_cap:"தலைப்பு / உரை (குழந்தை · Miss Universe · பிறந்தநாள்)",scn_h_scarf:"வெளிப்புறம் / பறக்கும் ஸ்கார்ஃப்",scn_grad:"பட்டமளிப்பு உட்புறம்",scn_prewed:"ப்ரீவெடிங் உட்புறம்",scn_vietnam:"வியட்நாம்",scn_myanmar:"மியான்மர்",scn_chinese:"சீன",scn_shan:"ஷான்",scn_newborn:"பச்சிளம் குழந்தை / பேபி",scn_age:"வயது",scn_bday_go:"🎂 பிறந்தநாள் காட்சி",scn_cap_on:"தலைப்பு உரையைச் சேர்",scn_cap_ph:"தலைப்பு உரை (எ.கா. Happy 1st Birthday, பெயர்)…",scn_cap_pos:"இடம்",scn_top:"மேலே",scn_bottom:"கீழே",scn_scarf:"✦ பறக்கும் ஸ்கார்ஃப் காட்சி",scn_dir:"திசை",scn_left:"இடது",scn_right:"வலது",scn_up:"மேல்",scn_len:"நீளம்",scn_short:"குட்டை",scn_long:"நீண்டது",g_cat_scene:"காட்சி OP — உங்கள் சப்ஜெக்ட் லாக் செய்யப்பட்டுள்ளது (முகம் · போஸ் · உடை · ஃப்ரேம்); உருவாக்கப்படும் முழுக் காட்சியும் (ஒளி, நிழல், வண்ணம், பின்னணி, முன்னணி, பொருள்கள், சூழல்) உண்மையான புகைப்படக் காம்போசிட்டுக்காக சப்ஜெக்டுடன் தானாகப் பொருத்தப்படும்.",crd_wed:"♥ திருமண ப்ரோ தொகுப்பு",crd_recipes:"ரெசிபிகள் — சேமி / பகிர்",learn_lbl:"🎓 கற்றல் பயன்முறை — 1-ஆம் தட்டு = வழிகாட்டி (மஞ்சள்), 2-ஆம் = prompt (நீலம்), 3-ஆம் = இயக்கு (பச்சை)",guide_hint:"மீண்டும் தட்டவும்: மஞ்சள் → நீலம் (prompt) → பச்சை (இயக்கு) ▶",g_learn_next_prompt:"மீண்டும் தட்டவும் → சரியான PROMPT-ஐக் காட்டும் (நீலம்).",g_learn_prompt_head:"இந்தப் பொத்தான் அனுப்பும் PROMPT (மீண்டும் தட்டினால் = இயக்கம்):",g_learn_next_run:"இன்னொரு முறை தட்டவும் → இயக்கு (பச்சை) உருவாக்கும்.",st_prompt_ready:"Prompt தயார் — இயக்க மீண்டும் தட்டவும் (பச்சை) ✓",g_step_doc:"முதலில் உங்கள் புகைப்பட ஆவணத்தை Photoshop-இல் திறக்கவும்.",g_step_ref1:"ரெஃபரன்ஸ் படத்தை Ref1-இல் ஏற்றவும் (அது IMAGE 2 ஆகும்). இரண்டாவது நபருக்கு Ref2 சேர்க்கவும்.",g_step_target:"இலக்கைத் தேர்ந்தெடுக்கவும்: தனி / ஜோடி (Ref1 = பெண், Ref2 = ஆண்) / குடும்பம்.",g_step_mkhair:"விருப்பம்: முக ஆப்ஸுக்கு மேலே உள்ள ‘ரெஃப் மேக்கப்பை நகலெடு’ / ‘ரெஃப் ஹேர்ஸ்டைலை எடு’ என்பதைத் டிக் செய்யவும்.",g_step_petal:"முதலில் இதழ் வண்ணத்தைத் தேர்ந்தெடுக்கவும் (auto = உங்கள் காட்சிக்குப் பொருந்தும்).",g_step_rest:"மேலே உள்ள ✓ மூலம் முழு வண்ணம் அல்லது B&W தேர்வு செய்யவும்.",g_step_int:"தீவிரம் ஸ்லைடரை விருப்பப்படி அமைக்கவும்.",g_step_confirm:"முன்னேற மீண்டும் தட்டவும்: வழிகாட்டி (மஞ்சள்) → PROMPT (நீலம்) → இயக்கு (பச்சை உருவாக்கும்).",g_cat_face:"முக OP — ரெஃபரன்ஸ் முகத்தைப் பொருந்தும் நபருக்கு மாற்றும்; மற்ற அனைவரும் மாறாமல் இருப்பார்கள்.",g_cat_sub:"சப்ஜெக்ட் OP — ரெஃபரன்ஸ் நபரை உங்கள் காட்சிக்குள் கொண்டுவரும்/உருமாற்றும்; காட்சியும் ஃப்ரேமிங்கும் அப்படியே இருக்கும்.",g_cat_bgfg:"BG/FG OP — ரெஃபரன்ஸைப் பயன்படுத்தி பின்னணி / முன்னணியை மட்டும் மாற்றும்.",g_cat_lc:"ஒளி & வண்ண OP — ரெஃபரன்ஸின் ஒளியமைப்பையும் கலர் கிரேடையும் நகலெடுக்கும்; நபர்கள் பிக்சல் அளவில் மாறாமல் இருப்பார்கள்.",g_cat_dress:"உடை OP — ரெஃபரன்ஸைப் பயன்படுத்தி உடையை மட்டும் மாற்றும்.",g_cat_mkop:"மேக்கப் OP — ரெஃபரன்ஸைப் பயன்படுத்தி மேக்கப்பை மட்டும் மாற்றும்.",g_cat_match:"மாஸ்டர் மேட்ச் — உங்கள் புகைப்படத்தை ரெஃபரன்ஸின் முழு லுக்குடன் பொருத்தும் (மேலே உள்ள அடுக்குகளைத் டிக் செய்யவும்).",g_cat_trail:"வெடிங் ட்ரெயில் — ஆடம்பரப் புல் + பாயும் மலர்ப் பாதை; முகங்கள்/போஸ்/ஃப்ரேம் முழுமையாக லாக் செய்யப்படும்.",g_cat_veil:"பறக்கும் முக்காடு — இந்த நீளத்தில் காற்றில் பறக்கும் முக்காட்டைச் சேர்க்கும்/நீட்டிக்கும்; முகம் ஒருபோதும் மறைக்கப்படாது.",g_cat_gown:"கவுன் — தற்போதைய கவுனைச் சுத்தப்படுத்தி (வடிவமைப்பு மாறாது) இந்த டிரெயின் நீளத்தை அமைக்கும்.",g_cat_petal:"பறக்கும் இதழ்கள் — இந்த ஸ்டைலில் காற்றில் இதழ்களைச் சேர்க்கும்; வண்ணம் மேலே உள்ள ஸ்வாட்சிலிருந்து.",g_cat_wedx:"வெடிங் எக்ஸ்ட்ரா — உங்கள் காட்சிக்குப் பொருந்தும் வகையில் இந்த உறுப்பைச் சேர்க்கும்; சப்ஜெக்ட் லாக்கிலேயே இருக்கும்.",g_cat_canvas:"மாற்று (கேன்வாஸ்) — உங்கள் சப்ஜெக்டை ரெஃபரன்ஸின் காட்சிக்குள் வைக்கும்; ரெஃப் நபர்கள் நீக்கப்படுவர்.",g_cat_restore:"பழைய புகைப்பட மீட்டமைப்பு — சேதங்களைச் சரிசெய்யும்; ஒவ்வொரு அசல் முகமும் 100% அப்படியே இருக்கும்.",g_cat_generic:"ப்ரீசெட் — இந்த ப்ரொஃபஷனல் எடிட்டை உங்கள் புகைப்படத்தில் பயன்படுத்தும்.",g_gen:"GENERATE — உங்கள் ஆவணத்தில் prompt பெட்டியை (+ செயின்கள், கீப்கள், கேமரா தொகுதி) இயக்கும்.",g_retouchbtn:"ரீடச் அப்ளை — உங்கள் எல்லா ஸ்லைடர் அமைப்புகளையும் ஒரே ப்ரொஃபஷனல் ரீடச் பாஸாக இயக்கும்.",g_relightbtn:"ஒளியமைப்பு GENERATE — உங்கள் 3D ஒளி வரைபடத்தின்படி புகைப்படத்தைத் துல்லியமாக மறு-ஒளியமைக்கும்.",g_scene:"காட்சி GENERATE — பிரித்தெடுத்த prompt-இலிருந்து காட்சியை மறு-உருவாக்கும்; சப்ஜெக்ட் அப்படியே இருக்கும்.",g_rmix:"REPLACE MIX — ரெஃபரன்ஸிலிருந்து ✓ டிக் செய்த பகுதிகளை மட்டும் மாற்றும்.",g_pipe:"பைப்லைனை இயக்கு — சங்கிலியிலுள்ள ஒவ்வொரு படியையும் வரிசையாக இயக்கும்; ஒவ்வொரு முடிவும் அடுத்ததற்குச் செல்லும்.",ro_faceRep:"முக மாற்றீடு",ro_faceSwap:"முக ஸ்வாப்",ro_bgRep:"BG மாற்றீடு",ro_bgSwap:"BG ஸ்வாப்",ro_fgRep:"FG மாற்றீடு",ro_bg_note:"Doc = சப்ஜெக்ட் · Ref1 = புதிய காட்சி. Target (Solo/Couple/Family) யாரை வைத்திருப்பது என்பதைத் தேர்வுசெய்கிறது.",ro_bg_frame:"ஃபிரேம் & காட்சியமைப்பைத் தக்கவை",ro_bg_light:"சப்ஜெக்ட்டின் ஒளி/நிறத்தைப் பாதுகாக்கவும்",ro_subSwap:"நபர் மாற்றம்",ro_lcRef:"L&C ரெஃபரன்ஸ்",ro_lcCopy:"L&C காப்பி-பேஸ்ட்",ro_dressRef:"உடை ரெஃபரன்ஸ்",ro_dressRep:"உடை மாற்றம்",ro_mkCopy:"மேக்கப் காப்பி",ro_matchBtn:"★ மாஸ்டர் மேட்ச்",grp_retouch:"சரும ரீடச் ப்ரீசெட்கள்",lbl_intensity:"தீவிரம்",p_evoto:"Evoto ஸ்டைல்",p_meitu:"Meitu ஸ்டைல்",auto_place:"முடிவை Photoshop-இல் புதிய லேயராகத் தானாக வைக்கவும்",sec_retouchpro:"ரீடச் ப்ரோ — ஸ்லைடர்கள்",rt_skin:"சருமம்",rt_faceai:"முக AI",rt_hair:"முடி",rt_dress:"உடை",rt_bg:"பின்னணி",rt_smooth:"சரும மென்மை",rt_acne:"பரு நீக்கம்",rt_spots:"கரும்புள்ளிகள்",rt_wrinkle:"சுருக்கங்கள்",rt_tone:"வெளுப்பு / டேன்",rt_glow:"பொலிவு",rt_reshape:"AI ரீஷேப்",rt_lash:"இமை முடி",rt_brow:"புருவங்கள்",rt_lipsmooth:"உதடு மென்மை",rt_lipcolor:"உதடு நிறம்",rt_lenscolor:"லென்ஸ் நிறம்",rt_hairstray:"சிதறிய முடி",rt_hairsmooth:"முடி மென்மை",rt_hairshine:"முடி பளபளப்பு (D&B)",rt_dresssmooth:"துணி மென்மை",rt_dressedge:"விளிம்பு சுத்தம்",rt_dresswrinkle:"சுருக்கம் நீக்கம்",rt_dresstexture:"டெக்ஸ்சர் மீட்பு",rt_bgsmooth:"பின்னணி சுத்தம்/மென்மை",rt_bgcolor:"பின்னணி நிறம்",rt_bgrecolor:"பின்னணி நிற மென்மை",rt_shape:"ரீஷேப் ப்ரோ (முகம் + உடல்)",rt_teeth:"பல் வெண்மை",rt_eyewhite:"கண் வெள்ளைப் பகுதி சுத்தம்",rt_faceslim:"முக மெலிவு",rt_jaw:"தாடைக் கோடு",rt_chin:"மோவாய்",rt_nosesize:"மூக்கு அளவு",rt_eyesize:"கண் அளவு",rt_lipfull:"உதடு திரட்சி",rt_waist:"இடை மெலிவு",rt_bodyslim:"உடல் மெலிவு",rt_shoulder:"தோள்கள்",rt_hip:"இடுப்பு மெலிவு",rt_leglen:"கால் நீளம்",rt_armslim:"கை மெலிவு",rt_dressfit:"உடை பொருத்தம்",rt_dressclean:"உடை சுத்தம்",rt_dresscolorpure:"உடை நிறத் தூய்மை",rt_bodygrp:"உடல் சருமம் ப்ரோ",rt_bodysmooth:"உடல் சரும மென்மை",rt_bodyblemish:"உடல் கறை சுத்தம்",rt_bodytone:"உடல் சீரான நிறம்",rt_bodyglow:"உடல் பொலிவு",rt_bodyhairrm:"உடல் முடி குறைப்பு",rt_hairvolume:"முடி அடர்த்தி",rt_hairgloss:"முடி மினுமினுப்பு",rt_hairfill:"முடி நிரப்பல் (மெலிந்த பகுதிகள்)",wp_h_trail:"♥ திருமணம் — சொகுசு மலர்ப் பாதை",wp_h_veil:"♥ திருமணம் — பறக்கும் முக்காடு",wp_h_gown:"♥ திருமணம் — கவுன் சுத்தம் + ட்ரெயின்",wp_h_petal:"♥ திருமணம் — பறக்கும் மலர் இதழ்கள்",wp_h_extra:"♥ திருமணம் — குதிரை · நீர் · மூட்",wp_note:"முக அடையாளம் / போஸ் / ஃபிரேம் / உடை டிசைன் உறுதியாகப் பூட்டப்பட்டுள்ளன — குறிப்பிடப்பட்ட உறுப்பு மட்டுமே மாறும்.",wp_petalcolor:"இதழ் நிறம் (auto = காட்சிப் பொருத்தம்)",wp_trail_c:"மலர் நிறம்",wp_trail_go:"▶ மலர்ப் பாதை",wp_veil_c:"முக்காடு நீளம்",wp_veil_go:"▶ பறக்கும் முக்காடு",wp_gown_c:"ட்ரெயின் நீளம்",wp_gown_go:"▶ கவுன் சுத்தம் + ட்ரெயின்",wp_pet_c:"இதழ் ஸ்டைல்",wp_pet_go:"▶ பறக்கும் இதழ்கள்",wp_extra_c:"கூடுதல்",wp_extra_go:"▶ கூடுதல் சேர்",btn_apply_rt:"ரீடச்சைப் பயன்படுத்து",btn_reset:"மீட்டமை",rt_none:"முதலில் ஏதேனும் ஒரு ரீடச் ஸ்லைடரையோ நிறத்தையோ அமைக்கவும்",tab_setup:"அமைப்பு",tab_prompt:"ஸ்டுடியோ",tab_presets:"ப்ரீசெட்",recent_lbl:"சமீபத்திய prompt-கள்…",tab_retouch:"ரீடச்",tab_aitools:"AI கருவிகள்",cap_warn:"இந்த prompt பெட்டிக்கான Photoshop வரம்பு:",cleanup_note:"டிக் செய்யப்பட்டவை ஒவ்வொரு 'உருவாக்கு' / ப்ரீசெட்டுடனும் சேர்ந்து இயங்கும்.",btn_generate:"உருவாக்கு",st_ready:"தயார்",st_capture:"ஆவணம் எடுக்கப்படுகிறது",st_gen:"உருவாக்கப்படுகிறது…",st_place:"Photoshop-இல் வைக்கப்படுகிறது…",st_placed_masked:"லேயர் + மாஸ்க் குழுவாக வைக்கப்பட்டது — அசல் அப்படியே உள்ளது ✓",st_placed_plain:"சாதாரண லேயராக வைக்கப்பட்டது (இந்த ஹோஸ்டில் மாஸ்க்/குழு கிடைக்கவில்லை)",stage_queued:"வரிசையில்",stage_uploading:"பதிவேற்றம்",stage_generating:"உருவாக்கம்",stage_downloading:"பதிவிறக்கம்",stage_placing:"வைத்தல்",st_done:"முடிந்தது ✓",st_err:"பிழை",st_no_doc:"செயலில் உள்ள ஆவணம் இல்லை — முதலில் ஒரு புகைப்படத்தைத் திறக்கவும்",st_no_prompt:"Prompt காலியாக உள்ளது",need_ref:"இந்த ப்ரீசெட்டுக்கு ஸ்லாட் 1-இல் ஒரு ரெஃபரன்ஸ் படம் தேவை",st_new_doc:"முடிவு புதிய ஆவணமாகத் திறக்கப்பட்டது ✓",sec_preview:"முன்னோட்டம் — முன் / பின்",before:"முன்",after:"பின்",btn_place:"Photoshop-இல் வை",btn_saveas:"இவ்வாறு சேமி…",st_saved:"சேமிக்கப்பட்டது ✓",sec_diag:"சிஸ்டம் சரிபார்ப்பு",sec_log:"செயல்பாட்டுப் பதிவு",btn_diag:"சரிபார்ப்பை இயக்கு",btn_copylog:"பதிவை நகலெடு",btn_clearlog:"அழி",diag_host:"Photoshop ஹோஸ்ட்",diag_uxp:"UXP திறன்கள்",diag_gem:"Gemini API key",diag_oai:"OpenAI API key",diag_doc:"செயலில் உள்ள ஆவணம்",diag_set:"அமைக்கப்பட்டது",diag_unset:"அமைக்கப்படவில்லை",diag_open:"திறந்துள்ளது",diag_none:"எதுவும் திறக்கவில்லை",diag_missing:"காணவில்லை",diag_done:"சிஸ்டம் சரிபார்ப்பு முடிந்தது ✓",diag_lib:"ரெஃபரன்ஸ் லைப்ரரி",diag_lib_open:"கோப்புறை திறக்கும் திறன்",sec_reflib:"ரெஃபரன்ஸ் பட லைப்ரரி",reflib_note:"உங்களுக்குப் பிடித்த ரெஃபரன்ஸ் படங்களின் கோப்புறையை ஒருமுறை தேர்வுசெய்யுங்கள் — 'உலாவு' அதை நினைவில் வைத்து எங்கும் அதற்குள்ளேயே திறக்கும்.",btn_browse:"உலாவு",lib_choose:"கோப்புறையைத் தேர்வுசெய்",lib_open:"கோப்புறையைத் திற",lib_change:"கோப்புறையை மாற்று",lib_reset:"மீட்டமை",lib_rescan:"மீண்டும் ஸ்கேன்",lib_current:"தற்போதைய கோப்புறை",lib_found:"கண்டறிந்த படங்கள்",lib_status:"நிலை",lib_lastscan:"கடைசி ஸ்கேன்",lib_images:"படங்கள்",lib_connected:"இணைக்கப்பட்டது",lib_not_config:"கட்டமைக்கப்படவில்லை",lib_perm_lost:"அனுமதி இழக்கப்பட்டது — மீண்டும் தேர்வுசெய்யவும்",lib_none:"(கோப்புறை தேர்வு செய்யப்படவில்லை)",lib_copy_only:"பாதையை மட்டும் நகலெடு",lib_choose_msg:"உங்கள் HNK ரெஃபரன்ஸ் பட லைப்ரரி கோப்புறையைத் தேர்வுசெய்யவும்.",lib_scanning:"லைப்ரரி ஸ்கேன் செய்யப்படுகிறது…",lib_scan_done:"மீண்டும் ஸ்கேன் முடிந்தது ✓",lib_reset_done:"லைப்ரரி மீட்டமைக்கப்பட்டது ✓",lib_path_copied:"பாதை நகலெடுக்கப்பட்டது",lib_unsupported:"ஆதரிக்கப்படாத பட வகை",lib_restore_fail:"ரெஃபரன்ஸை மீட்டெடுக்க முடியவில்லை",on:"ஆன்",off:"ஆஃப்"},
-te:{app_title:"HNK Photoshop Ai ప్యానెల్ (విద్యార్థులు)",sec_api:"Gemini API Key",btn_show:"చూపించు",btn_hide:"దాచు",btn_test:"Key పరీక్ష",btn_save:"సేవ్",st_testing:"కీని పరీక్షిస్తోంది",st_key_ok:"✓ API key పని చేస్తోంది",st_key_bad:"API key విఫలమైంది",st_key_saved:"API key సేవ్ అయింది ✓",st_need_key:"ముందుగా Gemini API key ఇవ్వండి",sec_model:"మోడల్ & అవుట్‌పుట్",scope_model_note:"ఇది కింద ఉన్న Prompt ట్యాబ్‌లోని జనరేట్ బటన్‌కు మాత్రమే వర్తిస్తుంది — Create, AI Tools లకు వేటికవే ప్రత్యేక మోడల్ సెట్టింగ్‌లు ఉంటాయి.",model_auto:"ఆటో (సిఫార్సు చేయబడింది)",model_flash:"Flash — వేగం (2.5)",model_pro:"Pro — నాణ్యత (3.0)",lbl_ratio:"నిష్పత్తి",ratio_auto:"ఆటో నిష్పత్తి (డాక్యుమెంట్ నుండి)",lbl_size:"పరిమాణం",lbl_quality:"నాణ్యత",qual_auto:"ఆటో",qual_low:"తక్కువ",qual_med:"మధ్యస్థం",qual_high:"అధికం",sec_prompt:"Prompt",hint_prompt:"మీ prompt ఇక్కడ టైప్ చేయండి… (గరిష్ఠంగా 20,000 అక్షరాలు)",btn_improve:"Prompt మెరుగుపరచు",btn_clear:"తొలగించు",st_improving:"Prompt మెరుగుపరుస్తోంది",st_improved:"Prompt మెరుగుపడింది ✓",sec_refs:"రిఫరెన్స్ చిత్రాలు (2 స్లాట్‌లు)",base_note:"బేస్ చిత్రం = మీ యాక్టివ్ Photoshop డాక్యుమెంట్ (ఆటోమేటిక్‌గా తీసుకోబడుతుంది).",btn_ref_layer:"+ లేయర్",btn_ref_file:"ఫైల్",btn_ref_web:"వెబ్",st_ref_layer_added:"లేయర్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_ref_file_added:"ఫైల్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_importing:"ఫైల్ దిగుమతి అవుతోంది",url_title:"URL నుండి రిఫరెన్స్ — Chrome / Pinterest",url_ph:"https://… చిత్ర చిరునామా లేదా Pinterest పిన్ లింక్",btn_paste:"పేస్ట్",btn_load:"లోడ్",btn_cancel:"రద్దు",st_url_loading:"వెబ్ చిత్రం డౌన్‌లోడ్ అవుతోంది",st_ref_web_added:"వెబ్ చిత్రం రిఫరెన్స్‌గా జోడించబడింది ✓",st_url_bad:"ఈ URL నుండి చిత్రం లోడ్ కాలేదు — చిత్ర చిరునామాను కాపీ చేసి మళ్లీ ప్రయత్నించండి",no_layer:"ఏ లేయర్ ఎంపిక కాలేదు",sec_presets:"AI ప్రీసెట్‌లు",auto_run:"ప్రీసెట్ క్లిక్ → ఆటో జనరేట్ (OFF = promptలో మాత్రమే చేరుస్తుంది)",grp_cleanup:"క్లీనప్ టూల్స్",p_remove_people:"వ్యక్తులను తొలగించు",p_fix_hands:"అదనపు చేతులు సరిచేయి",p_fix_legs:"అదనపు కాళ్లు సరిచేయి",p_full_clean:"పూర్తి క్లీనప్",grp_moved_note:"రిఫరెన్స్ టూల్స్ ఇప్పుడు కింద ఉన్న Reference Ops Pro కార్డ్‌లో ఉన్నాయి (అన్నీ ఒకే చోట — సోలో/జంట/కుటుంబం + గైడ్‌లతో).",ro_h_detail:"జుట్టు · యాక్సెసరీలు · భంగిమ (← Ref1)",ro_h_comp:"కాంపోజిట్ · స్టైల్ · టెక్స్ట్ (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"హెయిర్‌స్టైల్ (← Ref1)",p_access:"నగలు+యాక్సెసరీలు (← Ref1)",p_pose:"భంగిమ మ్యాచ్ (Doc → Ref1)",p_fgprops:"FG ప్రాప్స్ (← Ref1)",p_textlogo:"టెక్స్ట్ / లోగో (← Ref1)",p_style:"ఫోటో స్టైల్ (← Ref1)",grp_repsubj:"సబ్జెక్ట్ రీప్లేస్ (Doc → Ref1 సన్నివేశం)",p_rep_solo:"సోలో రీప్లేస్",p_rep_couple:"జంట రీప్లేస్",p_rep_family:"కుటుంబం రీప్లేస్",grp_rmix:"రీప్లేస్ మిక్స్ — టిక్ చేసి Ref1 నుండి తీసుకోండి",rm_bg:"నేపథ్యం (BG)",rm_fg:"ముందుభాగం (FG)",rm_light:"లైటింగ్",rm_color:"రంగు",rm_object:"వస్తువులు / ప్రాప్స్",btn_rmix:"రీప్లేస్ జనరేట్",rm_none:"ముందుగా కనీసం ఒక అంశాన్ని టిక్ చేయండి",grp_i2p:"చిత్రం → Prompt (సీన్ బిల్డర్)",i2p_note:"1) ఎక్స్‌ట్రాక్ట్: Ref1 సన్నివేశం → వివరమైన టెక్స్ట్ prompt (వ్యక్తులు ఉండరు). 2) దాన్ని Prompt పేజీలో సవరించండి. 3) సీన్ జనరేట్ దాన్ని మీ డాక్యుమెంట్ సబ్జెక్ట్ చుట్టూ నిర్మిస్తుంది — ఏ కోణానికైనా ఆటోగా సరిపోతుంది. ముఖం/భంగిమ/ఫ్రేమ్ లాక్‌లు = ఒరిజినల్ అలాగే ఉంటాయి.",i2p_objects:"వస్తువులు & ప్రాప్స్ వివరాలు",i2p_light:"లైటింగ్ వివరాలు",i2p_color:"రంగు / గ్రేడ్ వివరాలు",i2p_bg:"నేపథ్యం వివరాలు",i2p_fg:"ముందుభాగం వివరాలు",btn_i2p:"చిత్రం → Prompt (సీన్ ఎక్స్‌ట్రాక్ట్)",i2p_fit:"సీన్ ఆటో-ఫిట్ — సన్నివేశాన్ని డాక్యుమెంట్ కోణం / దూరం / లెన్స్‌కు తగినట్లు మళ్లీ అమర్చుతుంది",i2p_adapt:"సబ్జెక్ట్ లైట్ & రంగును సన్నివేశానికి సర్దుబాటు చేయి",btn_scenegen:"సీన్ జనరేట్",st_extract:"సన్నివేశాన్ని promptగా మారుస్తోంది",st_extract_done:"సీన్ prompt సిద్ధం — Prompt పేజీలో సమీక్షించండి",scene_no_prompt:"Prompt బాక్స్ ఖాళీగా ఉంది — ముందుగా చిత్రం → Prompt రన్ చేయండి",i2p_none:"ముందుగా కనీసం ఒక వివరాల అంశాన్ని టిక్ చేయండి",sec_light:"స్టూడియో లైటింగ్ — AI రీలైట్",light_note:"లైట్‌లను ON చేయండి, వరుసను ఎంచుకోవడానికి దానిపై ట్యాప్ చేయండి, స్లయిడర్‌లతో మలచండి — 3D టాప్-వ్యూ డయాగ్రామ్ లైవ్‌గా మారుతూ ఉంటుంది (▴ = ఎత్తుగా, ▾ = కిందుగా). లైటింగ్ జనరేట్ మీ డాక్యుమెంట్‌ను సరిగ్గా ఈ సెటప్ ప్రకారం రీలైట్ చేస్తుంది; ముఖం / భంగిమ / ఫ్రేమ్ లాక్ అయ్యే ఉంటాయి.",lbl_my_prompt:"మయన్మార్ PROMPT",lstage_model:"మోడల్",lstage_cam:"కెమెరా",l_key:"కీ లైట్",l_fill:"ఫిల్ / ఫ్రంట్",l_butterfly:"బటర్‌ఫ్లై (పైన-ముందు)",l_side:"సైడ్ లైట్",l_rim:"రిమ్ లైట్",l_back:"బ్యాక్ లైట్",l_hair:"హెయిర్ లైట్",l_bglight:"బ్యాక్‌గ్రౌండ్ లైట్",lt_softbox:"సాఫ్ట్‌బాక్స్",lt_octa:"ఆక్టా",lt_strip:"స్ట్రిప్",lt_umbrella:"అంబ్రెల్లా",lt_beauty:"బ్యూటీ",lt_hard:"హార్డ్",li_int:"తీవ్రత",li_angle:"కోణం",li_height:"ఎత్తు",li_dist:"దూరం",li_size:"పరిమాణం",btn_lightgen:"లైటింగ్ జనరేట్",light_none:"ముందుగా కనీసం ఒక లైట్‌ను ON చేయండి",lg_equip:"ఫోటోలో లైట్ పరికరాలు చూపించు (సాఫ్ట్‌బాక్స్ / స్టాండ్‌లు కనిపిస్తాయి)",grp_chains:"స్టైల్ చెయిన్స్ — ✓ స్టైల్స్ కలపండి",chains_note:"ఏ స్టైల్స్ అయినా ON చేయండి — అవి ప్రతి జనరేట్ / ప్రీసెట్ / రీటచ్‌లోనూ కలిసి మిళితమవుతాయి.",grp_restore:"పాత ఫోటో పునరుద్ధరణ",p_restore:"పాత ఫోటో పునరుద్ధరణ",rest_color:"పూర్తి రంగు",rest_bw:"నలుపు & తెలుపు",restore_note:"చిరుగులు, నీరు / కాలిన నష్టం, రంగు వెలిసిపోవడం సరిచేస్తుంది — ప్రతి ఒరిజినల్ ముఖాన్ని 100% అలాగే ఉంచుతుంది.",rt_browstyle:"కనుబొమల స్టైల్",rt_lashstyle:"ఐల్యాష్ స్టైల్",rt_blush:"బ్లష్ రంగు",rt_contour:"కాంటూర్ స్టైల్",rt_bust:"వక్షం",rt_butt:"పిరుదులు",rt_thigh:"తొడలు",rt_calf:"పిక్కలు",rt_neck:"మెడ",rt_fingers:"వేళ్లు",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"మయన్మార్ promptను ఇంగ్లీషులోకి అనువదిస్తోంది",live_trans:"లైవ్ ⇄ ఆటో-అనువాదం (EN ↔ MY, టైపింగ్ ఆపిన తర్వాత)",st_retry:"మళ్లీ ప్రయత్నిస్తోంది",grp_recipes:"రెసిపీలు — సెట్టింగ్‌లను సేవ్ / షేర్ చేయండి",recipe_note:"అన్నింటినీ (చెయిన్స్, రీటచ్, లైట్లు, కీప్ లాక్‌లు, prompts) ఒకే .json రెసిపీగా సేవ్ చేయండి — విద్యార్థులు దాన్ని లోడ్ చేస్తే చాలు.",btn_recipe_save:"రెసిపీ సేవ్ చేయండి",btn_recipe_load:"రెసిపీ లోడ్ చేయండి",st_recipe_saved:"రెసిపీ సేవ్ అయింది ✓",st_recipe_loaded:"రెసిపీ లోడ్ అయింది ✓ — అన్ని కంట్రోల్స్ అప్‌డేట్ అయ్యాయి",st_recipe_bad:"ఇది HNK రెసిపీ ఫైల్ కాదు",sec_final:"తుది Prompt (AIకి పంపబడేది)",btn_copy:"కాపీ",st_copied:"కాపీ అయింది ✓",hist_note:"చరిత్ర — చివరి 6 ఫలితాలు, చూడటానికి ట్యాప్ చేయండి:",btn_hist_prompt:"→ Prompt",sec_batch:"బ్యాచ్ మోడ్",batch_note:"అనేక ఫోటోలు + అవుట్‌పుట్ ఫోల్డర్ ఎంచుకోండి — ప్రస్తుత prompt, చెయిన్స్, క్లీనప్, Keep లాక్‌లు ప్రతి ఫోటోపైనా అమలవుతాయి; ఫలితాలు *_HNK.png గా సేవ్ అవుతాయి.",btn_batch:"బ్యాచ్ రన్ చేయండి",btn_batch_stop:"ఆపు",st_batch:"బ్యాచ్",st_batch_done:"బ్యాచ్ పూర్తయింది",sec_web:"వెబ్ AI — మినీ బ్రౌజర్",web_note:"ఏ వెబ్ AI ఎడిటర్‌నైనా Photoshop లోపలే తెరవండి. అక్కడ జనరేట్ చేసి, ఫలితాన్ని లేయర్‌గా తీసుకురండి:",web_import_note:"దిగుమతి: ① వెబ్ యాప్‌లో Copy image address ఉపయోగించి, ఆపై 'కాపీ చేసిన లింక్ దిగుమతి' నొక్కండి · ② లేదా ఫైల్‌ను డౌన్‌లోడ్ చేసి 'ఫైల్ దిగుమతి' ఉపయోగించండి · ③ HNK బ్రిడ్జ్ ఉన్న భాగస్వామ్య వెబ్ యాప్‌లు చిత్రాలను ఆటోమేటిక్‌గా పంపుతాయి.",btn_web_go:"వెళ్లు",btn_web_home:"హోమ్",btn_web_reload:"రీలోడ్",btn_web_import_link:"కాపీ చేసిన లింక్ దిగుమతి → PS",btn_web_import_file:"ఫైల్ దిగుమతి → PS",st_web_import:"Photoshopలోకి లేయర్‌గా దిగుమతి అయింది ✓",st_web_nourl:"ముందుగా చిత్రం లింక్ కాపీ చేయండి (రైట్-క్లిక్ → Copy image address)",st_web_fetch:"లింక్ నుండి చిత్రాన్ని తెస్తోంది",st_web_notallowed:"ఈ డొమైన్ అనుమతి జాబితాలో లేదు — ఖాళీగా ఉండిపోవచ్చు. దీన్ని చేర్చమని HNK ని అడగండి.",st_need_doc:"ముందుగా Photoshop లో ఒక ఫోటో డాక్యుమెంట్ తెరవండి",sec_campro:"కెమెరా ప్రో & నాణ్యత",autosave_lbl:"ప్రతి ఫలితాన్ని ఆటో-ఎక్స్‌పోర్ట్ చేయి (PNG + prompt లాగ్ → ఫోల్డర్)",st_folder_ok:"ఎక్స్‌పోర్ట్ ఫోల్డర్ సెట్ అయింది ✓",st_exported:"ఎక్స్‌పోర్ట్ అయింది ✓",st_export_fail:"ఎక్స్‌పోర్ట్ విఫలమైంది — ఫోల్డర్‌ను తనిఖీ చేయండి",st_pro_fallback:"Pro మోడల్ అందుబాటులో లేదు — ఈ రన్ కోసం Flash కు మార్చబడింది",st_img_bad:"చిత్ర డేటా సమగ్రత తనిఖీలో విఫలమైంది — ఫోటోను మళ్లీ జోడించండి",st_auto_comp:"ఆటో కాంపోజిట్: IMAGE 1 సబ్జెక్ట్ → రిఫరెన్స్ సీన్",prov_lbl:"AI ప్రొవైడర్",oai_key_ph:"sk-... (OpenAI API key)",tab_create:"సృష్టించు",create_note:"క్రియేట్ మోడ్ — మీ prompt నుండి పూర్తిగా కొత్త చిత్రం (+ దీని సొంత 4 రిఫరెన్స్‌లు). పూర్తిగా స్వతంత్రం: డాక్యుమెంట్, ప్రీసెట్లు, చైన్‌లు లేదా లాక్‌లను ఎప్పుడూ చదవదు.",create_ph:"మీరు సృష్టించాలనుకునే చిత్రాన్ని వివరించండి…",btn_create_ps:"⬇ Photoshop కు పంపు",btn_to_ref:"↺ Ref 1 గా వాడు",st_to_ref:"ఫలితం Ref 1 లోకి లోడ్ అయింది ✓",scope_create_note:"Setup లోని Model & Output నుండి స్వతంత్రం — ఈ సెట్టింగ్‌లు క్రియేట్‌లోని Generate కు మాత్రమే వర్తిస్తాయి.",cr_ratio:"నిష్పత్తి",cr_var:"వేరియేషన్లు",cr_restyle:"♻ ఫలితాన్ని రీస్టైల్ చేయి",cr_lib:"Prompt లైబ్రరీ — చొప్పించడానికి నొక్కండి",cr_improve:"మెరుగుపరచు",cr_describe:"Ref 1 ను వివరించు → Prompt",st_describing:"రిఫరెన్స్‌ను చదువుతోంది…",st_described:"Ref 1 నుండి prompt రాయబడింది ✓",st_need_gem:"Gemini API key జోడించండి (Setup) — ఇది Gemini టెక్స్ట్‌ను ఉపయోగిస్తుంది",st_need_ref1:"ముందుగా Ref 1 కు ఒక చిత్రాన్ని జోడించండి",st_lib_added:"Prompt జోడించబడింది ✓",cr_refs:"రిఫరెన్స్ చిత్రాలు (గరిష్ఠంగా 4)",cr_refs_note:"ఐచ్ఛికం — Layer / File / Web ద్వారా జోడించండి. మీ prompt అడిగినవి మాత్రమే క్రియేట్ తీసుకుంటుంది.",cr_results:"ఫలితాలు",cr_gal_empty:"ఇంకా ఫలితాలు లేవు — Generate నొక్కండి.",cr_gal_have:"ఫలితం(లు) · ప్రివ్యూ / చర్య కోసం థంబ్‌నెయిల్ నొక్కండి",cr_save:"⬇ PNG సేవ్ చేయి",cr_engine:"ఇంజిన్",cr_need_result:"ముందుగా ఒక చిత్రాన్ని జనరేట్ చేయండి",btn_web_import_url:"⬇ URL ఇంపోర్ట్",st_clip_help:"క్లిప్‌బోర్డ్ ఖాళీ/బ్లాక్ అయింది — లింక్‌ను URL బార్‌లో పేస్ట్ చేసి, ఆపై ⬇ URL ఇంపోర్ట్ నొక్కండి",st_web_blob:"అది తాత్కాలిక blob: లింక్ — రైట్-క్లిక్ → Copy IMAGE Address వాడండి, లేదా ఫైల్‌ను సేవ్ చేసి Import File వాడండి",err_key:"API key చెల్లదు — Setup ట్యాబ్‌లో key ను మళ్లీ తనిఖీ చేయండి · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"కోటా / రేట్ పరిమితి — కాసేపు ఆగి, మళ్లీ ప్రయత్నించండి · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API కి చిత్రం చాలా పెద్దది — పరిమాణం తగ్గించి, మళ్లీ ప్రయత్నించండి · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"సేఫ్టీ ఫిల్టర్ బ్లాక్ చేసింది — prompt లేదా ఫోటోను సవరించండి · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"నెట్‌వర్క్ / సర్వర్ సమస్య — దయచేసి మళ్లీ ప్రయత్నించండి · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"అభ్యర్థన సమయం మించిపోయింది — సర్వర్ చాలా ఆలస్యం చేసింది; దయచేసి మళ్లీ ప్రయత్నించండి · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"అభ్యర్థన పూర్తి కాలేదు — దయచేసి మళ్లీ ప్రయత్నించండి",err_img:"వాడదగిన చిత్రం ఏదీ రాలేదు — దయచేసి మళ్లీ ప్రయత్నించండి",err_mode:"ఈ డాక్యుమెంట్ RGB మోడ్‌లో లేదు — ముందుగా మార్చండి (Image ▸ Mode ▸ RGB Color), ఆపై మళ్లీ ప్రయత్నించండి",cam_master:"కెమెరా బ్లాక్ ON — ప్రతి prompt చివరన జోడించబడుతుంది",cam_body:"కెమెరా బాడీ",cam_lens:"ప్రైమ్ లెన్స్ (mm)",cam_f:"అపెర్చర్",cam_film:"ఫిల్మ్ లుక్",cam_bokeh:"బొకే స్టైల్",cam_iso:"ISO",cam_k:"WB కెల్విన్",cam_note:"బ్లాక్‌ను ON చేసి, మీకు కావాల్సినవి మాత్రమే ఎంచుకోండి — – చిప్‌లు ఏమీ జోడించవు. అన్నీ తుది prompt చివరన చేరతాయి.",ro_h_main:"రిఫరెన్స్ ఆప్స్ ప్రో (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (మహిళ) · Ref2 = IMAGE 3 (పురుషుడు). టార్గెట్ ఎంచుకుని, ఒక ఆప్ నడపండి — సరిపోలని వ్యక్తులు ఎప్పుడూ మారరు.",ro_target:"టార్గెట్:",ro_solo:"సోలో",ro_couple:"జంట",ro_family:"కుటుంబం",ro_mk:"రిఫ్ మేకప్ కాపీ చేయి",ro_hair:"రిఫ్ హెయిర్‌స్టైల్ తీసుకో",ro_h_face:"ఫేస్ ఆప్స్",ro_h_bg:"BG / FG ఆప్స్",ro_h_sub:"సబ్జెక్ట్ ఆప్స్",ro_h_lc:"లైట్ & కలర్ ఆప్స్",ro_h_dress:"డ్రెస్ ఆప్స్",ro_h_mk:"మేకప్ ఆప్స్",ro_h_match:"★ మాస్టర్ మ్యాచ్ (ఒకే లుక్)",ro_match_note:"రెండూ ఒకే ఎడిట్‌లా కనిపించేలా IMAGE 1 ను రిఫరెన్స్‌తో మ్యాచ్ చేయండి — దేన్ని మ్యాచ్ చేయాలో టిక్ చేయండి:",m_color:"కలర్",m_light:"లైట్",m_makeup:"మేకప్",m_skin:"స్కిన్ రీటచ్",crd_pipe:"⛓ పైప్‌లైన్ బిల్డర్ — దేనినైనా చైన్ చేయండి",pipe_note:"ఏ స్టెప్‌లనైనా ఒకే చైన్‌గా లింక్ చేయండి — ప్రతి స్టెప్ ఫలితం తర్వాతి స్టెప్‌కు వెళ్తుంది. గరిష్ఠం 6.",pipe_add:"+ జోడించు",pipe_run:"▶ పైప్‌లైన్ రన్ చేయి",pipe_clear:"క్లియర్",pipe_retouch:"రీటచ్ అప్లై (ప్రస్తుత స్లయిడర్లు)",pipe_relight:"రీలైట్ (ప్రస్తుత లైట్ రిగ్)",pipe_prompt:"Prompt (ప్రస్తుత EN బాక్స్)",pipe_empty:"ముందుగా కనీసం ఒక స్టెప్ జోడించండి",pipe_max:"పైప్‌లైన్ నిండింది (గరిష్ఠం 6 స్టెప్‌లు)",st_pipe:"పైప్‌లైన్ స్టెప్",st_pipe_done:"పైప్‌లైన్ పూర్తయింది",st_pipe_stop:"పైప్‌లైన్ ఆగింది (ఒక స్టెప్ విఫలమైంది)",pipe_merge:"⚡ వన్-షాట్ మెర్జ్ — అన్ని స్టెప్‌లు ఒకే కాల్‌లో (వేగం/చవక · ≤ 3 టాస్క్‌లకు ఉత్తమం)",crd_chainsrest:"స్టైల్ చైన్స్ + పాత ఫోటో పునరుద్ధరణ",crd_refops:"రిఫరెన్స్ ఆప్స్ ప్రో (Ref1 / Ref2)",crd_scenes:"🎬 సీన్స్ ప్రో — లాక్ చేసిన సబ్జెక్ట్ · సీన్ మ్యాచ్ అవుతుంది",scn_note:"మీ సబ్జెక్ట్‌ను లాక్ చేసి (ముఖం · పోజ్ · డ్రెస్ · ఫ్రేమ్), వారికి సరిపోయేలా మొత్తం సీన్‌ను మళ్లీ నిర్మిస్తుంది — లైట్, నీడ, రంగు, బ్యాక్‌గ్రౌండ్, ఫోర్‌గ్రౌండ్, వస్తువులు అన్నీ రియల్-ఫోటో లుక్ కోసం ఆటోమేటిక్‌గా సర్దుబాటవుతాయి.",scn_h_style:"సీన్ స్టైల్ (ఇండోర్ / సాంస్కృతిక)",scn_h_bday:"🎂 పుట్టినరోజు — వయసు సంఖ్య 1–45",scn_h_cap:"క్యాప్షన్ / టెక్స్ట్ (పిల్లలు · Miss Universe · పుట్టినరోజు)",scn_h_scarf:"అవుట్‌డోర్ / ఎగిరే స్కార్ఫ్",scn_grad:"గ్రాడ్యుయేషన్ ఇండోర్",scn_prewed:"ప్రీవెడ్డింగ్ ఇండోర్",scn_vietnam:"వియత్నాం",scn_myanmar:"మయన్మార్",scn_chinese:"చైనీస్",scn_shan:"షాన్",scn_newborn:"నవజాత శిశువు / బేబీ",scn_age:"వయసు",scn_bday_go:"🎂 పుట్టినరోజు సీన్",scn_cap_on:"క్యాప్షన్ టెక్స్ట్ జోడించు",scn_cap_ph:"క్యాప్షన్ టెక్స్ట్ (ఉదా. Happy 1st Birthday, పేరు)…",scn_cap_pos:"స్థానం",scn_top:"పైన",scn_bottom:"కింద",scn_scarf:"✦ ఎగిరే స్కార్ఫ్ సీన్",scn_dir:"దిశ",scn_left:"ఎడమ",scn_right:"కుడి",scn_up:"పైకి",scn_len:"పొడవు",scn_short:"పొట్టి",scn_long:"పొడవైనది",g_cat_scene:"సీన్ ఆప్ — మీ సబ్జెక్ట్ లాక్ అయి ఉంటుంది (ముఖం · పోజ్ · డ్రెస్ · ఫ్రేమ్); జనరేట్ అయిన మొత్తం సీన్ (లైట్, నీడ, రంగు, బ్యాక్‌గ్రౌండ్, ఫోర్‌గ్రౌండ్, వస్తువులు, వాతావరణం) రియల్-ఫోటో కాంపోజిట్ కోసం సబ్జెక్ట్‌కు ఆటో-మ్యాచ్ అవుతుంది.",crd_wed:"♥ వెడ్డింగ్ ప్రో స్యూట్",crd_recipes:"రెసిపీలు — సేవ్ / షేర్",learn_lbl:"🎓 లెర్న్ మోడ్ — 1వ ట్యాప్ = గైడ్ (పసుపు), 2వ = prompt (నీలం), 3వ = రన్ (ఆకుపచ్చ)",guide_hint:"మళ్లీ నొక్కండి: పసుపు → నీలం (prompt) → ఆకుపచ్చ (రన్) ▶",g_learn_next_prompt:"మళ్లీ నొక్కండి → ఖచ్చితమైన PROMPT చూపుతుంది (నీలం).",g_learn_prompt_head:"ఈ బటన్ పంపే PROMPT (మళ్లీ నొక్కితే = రన్):",g_learn_next_run:"మరోసారి నొక్కండి → రన్ (ఆకుపచ్చ) జనరేట్ చేస్తుంది.",st_prompt_ready:"Prompt సిద్ధం — నడపడానికి మళ్లీ నొక్కండి (ఆకుపచ్చ) ✓",g_step_doc:"ముందుగా మీ ఫోటో డాక్యుమెంట్‌ను Photoshop లో తెరవండి.",g_step_ref1:"రిఫరెన్స్ చిత్రాన్ని Ref1 లోకి లోడ్ చేయండి (అది IMAGE 2 అవుతుంది). రెండో వ్యక్తి కోసం Ref2 జోడించండి.",g_step_target:"టార్గెట్ ఎంచుకోండి: సోలో / జంట (Ref1 = మహిళ, Ref2 = పురుషుడు) / కుటుంబం.",g_step_mkhair:"ఐచ్ఛికం: ఫేస్ ఆప్స్ పైన ఉన్న ‘రిఫ్ మేకప్ కాపీ చేయి’ / ‘రిఫ్ హెయిర్‌స్టైల్ తీసుకో’ టిక్ చేయండి.",g_step_petal:"ముందుగా పూరేకుల రంగు ఎంచుకోండి (auto = మీ సీన్‌కు సరిపోతుంది).",g_step_rest:"పైన ఉన్న ✓ తో ఫుల్ కలర్ లేదా B&W ఎంచుకోండి.",g_step_int:"ఇంటెన్సిటీ స్లయిడర్‌ను మీకు నచ్చినట్టు సెట్ చేయండి.",g_step_confirm:"ముందుకు వెళ్లడానికి మళ్లీ నొక్కండి: గైడ్ (పసుపు) → PROMPT (నీలం) → రన్ (ఆకుపచ్చ జనరేట్ చేస్తుంది).",g_cat_face:"ఫేస్ ఆప్ — రిఫరెన్స్ ముఖాన్ని సరిపోలే వ్యక్తిపైకి బదిలీ చేస్తుంది; మిగతా వారందరూ మారకుండా ఉంటారు.",g_cat_sub:"సబ్జెక్ట్ ఆప్ — రిఫరెన్స్ వ్యక్తిని మీ సీన్‌లోకి తెస్తుంది/మార్ఫ్ చేస్తుంది; సీన్, ఫ్రేమింగ్ అలాగే ఉంటాయి.",g_cat_bgfg:"BG/FG ఆప్ — రిఫరెన్స్ ఉపయోగించి బ్యాక్‌గ్రౌండ్ / ఫోర్‌గ్రౌండ్ మాత్రమే మారుస్తుంది.",g_cat_lc:"లైట్ & కలర్ ఆప్ — రిఫరెన్స్ లైటింగ్, కలర్ గ్రేడ్‌ను కాపీ చేస్తుంది; వ్యక్తులు పిక్సెల్-స్థాయిలో యథాతథంగా ఉంటారు.",g_cat_dress:"డ్రెస్ ఆప్ — రిఫరెన్స్ ఉపయోగించి దుస్తులు మాత్రమే మారుస్తుంది.",g_cat_mkop:"మేకప్ ఆప్ — రిఫరెన్స్ ఉపయోగించి మేకప్ మాత్రమే మారుస్తుంది.",g_cat_match:"మాస్టర్ మ్యాచ్ — మీ ఫోటోను రిఫరెన్స్ మొత్తం లుక్‌కు సరిపోయేలా చేస్తుంది (పైన లేయర్‌లను టిక్ చేయండి).",g_cat_trail:"వెడ్డింగ్ ట్రైల్ — లగ్జరీ గడ్డి + ప్రవహించే పూల దారి; ముఖాలు/పోజ్/ఫ్రేమ్ పూర్తిగా లాక్ అవుతాయి.",g_cat_veil:"ఎగిరే వెయిల్ — ఈ పొడవులో గాలికి ఎగిరే వెయిల్‌ను జోడిస్తుంది/పొడిగిస్తుంది; ముఖం ఎప్పుడూ కప్పబడదు.",g_cat_gown:"గౌన్ — ఉన్న గౌన్‌ను శుభ్రం చేస్తుంది (డిజైన్ మారదు), ఈ ట్రైన్ పొడవును సెట్ చేస్తుంది.",g_cat_petal:"ఎగిరే పూరేకులు — ఈ స్టైల్‌లో గాలిలో పూరేకులను జోడిస్తుంది; రంగు పైన ఉన్న స్వాచ్ నుండి.",g_cat_wedx:"వెడ్డింగ్ ఎక్స్‌ట్రా — మీ సీన్‌కు సరిపోయేలా ఈ ఎలిమెంట్‌ను జోడిస్తుంది; సబ్జెక్ట్ లాక్ అయి ఉంటుంది.",g_cat_canvas:"రీప్లేస్ (కాన్వాస్) — మీ సబ్జెక్ట్‌ను రిఫరెన్స్ సీన్‌లో ఉంచుతుంది; రిఫ్‌లోని వ్యక్తులు తీసివేయబడతారు.",g_cat_restore:"పాత ఫోటో పునరుద్ధరణ — పాడైన భాగాలను బాగు చేస్తుంది; ప్రతి అసలు ముఖం 100% అలాగే ఉంటుంది.",g_cat_generic:"ప్రీసెట్ — ఈ ప్రొఫెషనల్ ఎడిట్‌ను మీ ఫోటోకు వర్తింపజేస్తుంది.",g_gen:"జనరేట్ — మీ డాక్యుమెంట్‌పై prompt బాక్స్‌ను (+ చైన్‌లు, కీప్‌లు, కెమెరా బ్లాక్) నడుపుతుంది.",g_retouchbtn:"రీటచ్ అప్లై — మీ అన్ని స్లయిడర్ సెట్టింగ్‌లను ఒకే ప్రొఫెషనల్ రీటచ్ పాస్‌గా నడుపుతుంది.",g_relightbtn:"లైటింగ్ జనరేట్ — మీ 3D లైట్ డయాగ్రామ్‌కు సరిగ్గా అనుగుణంగా ఫోటోను రీలైట్ చేస్తుంది.",g_scene:"సీన్ జనరేట్ — సేకరించిన prompt నుండి సీన్‌ను మళ్లీ నిర్మిస్తుంది; సబ్జెక్ట్ అలాగే ఉంటుంది.",g_rmix:"రీప్లేస్ మిక్స్ — రిఫరెన్స్ నుండి ✓ టిక్ చేసిన భాగాలను మాత్రమే రీప్లేస్ చేస్తుంది.",g_pipe:"పైప్‌లైన్ రన్ — చైన్ చేసిన ప్రతి స్టెప్‌ను వరుసగా నడుపుతుంది; ప్రతి ఫలితం తర్వాతిదానికి వెళ్తుంది.",ro_faceRep:"ఫేస్ రీప్లేస్",ro_faceSwap:"ఫేస్ స్వాప్",ro_bgRep:"BG రీప్లేస్",ro_bgSwap:"BG స్వాప్",ro_fgRep:"FG రీప్లేస్",ro_bg_note:"Doc = సబ్జెక్ట్ · Ref1 = కొత్త సీన్. టార్గెట్ (సోలో/జంట/కుటుంబం) ఎవరిని ఉంచాలో నిర్ణయిస్తుంది.",ro_bg_frame:"ఫ్రేమ్ & కంపోజిషన్‌ను అలాగే ఉంచు",ro_bg_light:"సబ్జెక్ట్ లైట్/రంగును అలాగే ఉంచు",ro_subSwap:"సబ్జెక్ట్ స్వాప్",ro_lcRef:"L&C రిఫరెన్స్",ro_lcCopy:"L&C కాపీ-పేస్ట్",ro_dressRef:"డ్రెస్ రిఫరెన్స్",ro_dressRep:"డ్రెస్ రీప్లేస్",ro_mkCopy:"మేకప్ కాపీ",ro_matchBtn:"★ మాస్టర్ మ్యాచ్",grp_retouch:"స్కిన్ రీటచ్ ప్రీసెట్‌లు",lbl_intensity:"తీవ్రత",p_evoto:"Evoto స్టైల్",p_meitu:"Meitu స్టైల్",auto_place:"ఫలితాన్ని Photoshopలో కొత్త లేయర్‌గా ఆటోమేటిక్‌గా ప్లేస్ చేయి",sec_retouchpro:"రీటచ్ ప్రో — స్లయిడర్లు",rt_skin:"స్కిన్",rt_faceai:"ఫేస్ AI",rt_hair:"జుట్టు",rt_dress:"డ్రెస్",rt_bg:"బ్యాక్‌గ్రౌండ్",rt_smooth:"స్కిన్ స్మూత్",rt_acne:"మొటిమల తొలగింపు",rt_spots:"నల్ల మచ్చలు",rt_wrinkle:"ముడతలు",rt_tone:"వైటెన్ / టాన్",rt_glow:"గ్లో",rt_reshape:"AI రీషేప్",rt_lash:"ఐలాషెస్",rt_brow:"కనుబొమ్మలు",rt_lipsmooth:"లిప్ స్మూత్",rt_lipcolor:"లిప్ కలర్",rt_lenscolor:"లెన్స్ కలర్",rt_hairstray:"చెదిరిన వెంట్రుకలు",rt_hairsmooth:"హెయిర్ స్మూత్",rt_hairshine:"హెయిర్ షైన్ (D&B)",rt_dresssmooth:"ఫ్యాబ్రిక్ స్మూత్",rt_dressedge:"అంచుల క్లీనప్",rt_dresswrinkle:"ముడతల తొలగింపు",rt_dresstexture:"టెక్స్చర్ రికవరీ",rt_bgsmooth:"BG క్లీన్/స్మూత్",rt_bgcolor:"BG కలర్",rt_bgrecolor:"BG కలర్ స్మూత్",rt_shape:"రీషేప్ ప్రో (ముఖం + శరీరం)",rt_teeth:"పళ్ల వైటెనింగ్",rt_eyewhite:"కంటి తెల్లభాగం క్లీన్",rt_faceslim:"ఫేస్ స్లిమ్",rt_jaw:"జాలైన్",rt_chin:"గడ్డం",rt_nosesize:"ముక్కు పరిమాణం",rt_eyesize:"కళ్ల పరిమాణం",rt_lipfull:"నిండైన పెదవులు",rt_waist:"నడుము స్లిమ్",rt_bodyslim:"బాడీ స్లిమ్",rt_shoulder:"భుజాలు",rt_hip:"హిప్ స్లిమ్",rt_leglen:"కాళ్ల పొడవు",rt_armslim:"చేతుల స్లిమ్",rt_dressfit:"డ్రెస్ ఫిట్",rt_dressclean:"డ్రెస్ క్లీన్",rt_dresscolorpure:"డ్రెస్ కలర్ ప్యూర్",rt_bodygrp:"బాడీ స్కిన్ ప్రో",rt_bodysmooth:"బాడీ స్కిన్ స్మూత్",rt_bodyblemish:"బాడీ మచ్చల క్లీన్",rt_bodytone:"బాడీ ఈవెన్ టోన్",rt_bodyglow:"బాడీ గ్లో",rt_bodyhairrm:"బాడీ హెయిర్ తగ్గింపు",rt_hairvolume:"హెయిర్ వాల్యూమ్",rt_hairgloss:"హెయిర్ గ్లోస్",rt_hairfill:"హెయిర్ ఫిల్ (పలుచని చోట్లు)",wp_h_trail:"♥ వెడ్డింగ్ — లగ్జరీ ఫ్లవర్ ట్రెయిల్",wp_h_veil:"♥ వెడ్డింగ్ — ఎగిరే వెయిల్",wp_h_gown:"♥ వెడ్డింగ్ — గౌన్ క్లీన్ + ట్రెయిన్",wp_h_petal:"♥ వెడ్డింగ్ — ఎగిరే పూల రేకులు",wp_h_extra:"♥ వెడ్డింగ్ — గుర్రం · నీరు · మూడ్",wp_note:"ఫేస్ ID / పోజ్ / ఫ్రేమ్ / డ్రెస్ డిజైన్ పూర్తిగా లాక్ అయి ఉంటాయి — పేర్కొన్న అంశం మాత్రమే మారుతుంది.",wp_petalcolor:"పూల రేకుల రంగు (ఆటో = సీన్ మ్యాచ్)",wp_trail_c:"పూల రంగు",wp_trail_go:"▶ ఫ్లవర్ ట్రెయిల్",wp_veil_c:"వెయిల్ పొడవు",wp_veil_go:"▶ ఎగిరే వెయిల్",wp_gown_c:"ట్రెయిన్ పొడవు",wp_gown_go:"▶ గౌన్ క్లీన్ + ట్రెయిన్",wp_pet_c:"పూల రేకుల స్టైల్",wp_pet_go:"▶ ఎగిరే పూల రేకులు",wp_extra_c:"ఎక్స్‌ట్రా",wp_extra_go:"▶ ఎక్స్‌ట్రా జోడించండి",btn_apply_rt:"రీటచ్ వర్తింపజేయండి",btn_reset:"రీసెట్",rt_none:"ముందుగా కనీసం ఒక రీటచ్ స్లయిడర్ లేదా రంగు సెట్ చేయండి",tab_setup:"సెటప్",tab_prompt:"స్టూడియో",tab_presets:"ప్రీసెట్",recent_lbl:"ఇటీవలి prompts…",tab_retouch:"రీటచ్",tab_aitools:"AI టూల్స్",cap_warn:"Photoshop ఈ prompt బాక్స్ పరిమితి:",cleanup_note:"టిక్ చేసిన అంశాలు ప్రతి జనరేట్ / ప్రీసెట్‌తో కలిసి అమలవుతాయి.",btn_generate:"సృష్టించు",st_ready:"సిద్ధం",st_capture:"డాక్యుమెంట్ క్యాప్చర్ అవుతోంది",st_gen:"జనరేట్ అవుతోంది…",st_place:"Photoshopలో ప్లేస్ అవుతోంది…",st_placed_masked:"లేయర్ + మాస్క్ గ్రూప్‌గా ప్లేస్ అయింది — ఒరిజినల్‌కు ఎలాంటి మార్పు లేదు ✓",st_placed_plain:"సాధారణ లేయర్‌గా ప్లేస్ అయింది (ఈ హోస్ట్‌లో మాస్క్/గ్రూప్ అందుబాటులో లేదు)",stage_queued:"క్యూలో ఉంది",stage_uploading:"అప్‌లోడ్ అవుతోంది",stage_generating:"జనరేట్ అవుతోంది",stage_downloading:"డౌన్‌లోడ్ అవుతోంది",stage_placing:"ప్లేస్ అవుతోంది",st_done:"పూర్తయింది ✓",st_err:"లోపం",st_no_doc:"యాక్టివ్ డాక్యుమెంట్ లేదు — ముందుగా ఒక ఫోటో తెరవండి",st_no_prompt:"Prompt ఖాళీగా ఉంది",need_ref:"ఈ ప్రీసెట్‌కు స్లాట్ 1లో రిఫరెన్స్ ఇమేజ్ అవసరం",st_new_doc:"ఫలితం కొత్త డాక్యుమెంట్‌గా తెరుచుకుంది ✓",sec_preview:"ప్రివ్యూ — ముందు / తర్వాత",before:"ముందు",after:"తర్వాత",btn_place:"Photoshopలో ప్లేస్ చేయండి",btn_saveas:"ఇలా సేవ్ చేయండి…",st_saved:"సేవ్ అయింది ✓",sec_diag:"సిస్టమ్ చెక్",sec_log:"యాక్టివిటీ లాగ్",btn_diag:"చెక్ రన్ చేయండి",btn_copylog:"లాగ్ కాపీ చేయండి",btn_clearlog:"క్లియర్",diag_host:"Photoshop హోస్ట్",diag_uxp:"UXP సామర్థ్యాలు",diag_gem:"Gemini API key",diag_oai:"OpenAI API key",diag_doc:"యాక్టివ్ డాక్యుమెంట్",diag_set:"సెట్ అయింది",diag_unset:"సెట్ కాలేదు",diag_open:"తెరిచి ఉంది",diag_none:"ఏదీ తెరిచి లేదు",diag_missing:"లేదు",diag_done:"సిస్టమ్ చెక్ పూర్తయింది ✓",diag_lib:"రిఫరెన్స్ లైబ్రరీ",diag_lib_open:"ఫోల్డర్ తెరిచే సామర్థ్యం",sec_reflib:"రిఫరెన్స్ ఇమేజ్ లైబ్రరీ",reflib_note:"మీకు ఇష్టమైన రిఫరెన్స్ ఇమేజ్‌ల ఫోల్డర్‌ను ఒక్కసారి ఎంచుకోండి — బ్రౌజ్ దాన్ని గుర్తుంచుకుని ప్రతిచోటా అందులోనే తెరుస్తుంది.",btn_browse:"బ్రౌజ్",lib_choose:"ఫోల్డర్ ఎంచుకోండి",lib_open:"ఫోల్డర్ తెరవండి",lib_change:"ఫోల్డర్ మార్చండి",lib_reset:"రీసెట్",lib_rescan:"మళ్లీ స్కాన్ చేయండి",lib_current:"ప్రస్తుత ఫోల్డర్",lib_found:"దొరికిన ఇమేజ్‌లు",lib_status:"స్థితి",lib_lastscan:"చివరి స్కాన్",lib_images:"ఇమేజ్‌లు",lib_connected:"కనెక్ట్ అయింది",lib_not_config:"కాన్ఫిగర్ కాలేదు",lib_perm_lost:"అనుమతి పోయింది — మళ్లీ ఎంచుకోండి",lib_none:"(ఫోల్డర్ ఎంపిక కాలేదు)",lib_copy_only:"పాత్ కాపీ మాత్రమే",lib_choose_msg:"మీ HNK రిఫరెన్స్ ఇమేజ్ లైబ్రరీ ఫోల్డర్‌ను ఎంచుకోండి.",lib_scanning:"లైబ్రరీ స్కాన్ అవుతోంది…",lib_scan_done:"మళ్లీ స్కాన్ పూర్తయింది ✓",lib_reset_done:"లైబ్రరీ రీసెట్ అయింది ✓",lib_path_copied:"పాత్ కాపీ అయింది",lib_unsupported:"మద్దతు లేని ఇమేజ్ రకం",lib_restore_fail:"రిఫరెన్స్‌ను పునరుద్ధరించడం సాధ్యపడలేదు",on:"ఆన్",off:"ఆఫ్"},
-ur:{tab_setup:"سیٹ اپ",tab_prompt:"اسٹوڈیو",tab_presets:"پری سیٹ",tab_retouch:"ری ٹچ",tab_aitools:"AI ٹولز",tab_create:"بنائیں",btn_generate:"بنائیں",st_ready:"تیار",st_done:"ہو گیا ✓",st_need_key:"پہلے Gemini API key ڈالیں",btn_show:"دکھائیں",btn_hide:"چھپائیں",btn_save:"محفوظ کریں",btn_test:"Key جانچیں",btn_clear:"صاف کریں",btn_cancel:"منسوخ",btn_load:"لوڈ",btn_paste:"پیسٹ",btn_improve:"Prompt بہتر بنائیں",lbl_ratio:"تناسب",lbl_size:"سائز",lbl_quality:"معیار"}
+bn:{app_title:"HNK Photoshop Ai Panel (শিক্ষার্থীদের জন্য)",sec_api:"RunningHub Enterprise Key",btn_show:"দেখান",btn_hide:"লুকান",btn_test:"Key পরীক্ষা",btn_save:"সংরক্ষণ",st_testing:"কী পরীক্ষা করা হচ্ছে",st_key_ok:"✓ API key কাজ করছে",st_key_bad:"API key কাজ করেনি",st_key_saved:"API key সংরক্ষিত হয়েছে ✓",st_need_key:"আগে RunningHub Enterprise key দিন",sec_model:"মডেল ও আউটপুট",scope_model_note:"নিচের প্রম্পট ট্যাবের জেনারেট বোতামে এটি ব্যবহৃত হয় — Create এবং AI Tools-এর প্রতিটির নিজস্ব আলাদা মডেল সেটিংস আছে।",model_auto:"অটো (প্রস্তাবিত)",model_flash:"Flash — দ্রুত (2.5)",model_pro:"Pro — উন্নত মান (3.0)",lbl_ratio:"অনুপাত",ratio_auto:"অটো অনুপাত (ডকুমেন্ট থেকে)",lbl_size:"আকার",lbl_quality:"মান",qual_auto:"অটো",qual_low:"নিম্ন",qual_med:"মাঝারি",qual_high:"উচ্চ",sec_prompt:"প্রম্পট",hint_prompt:"এখানে আপনার প্রম্পট লিখুন… (সর্বোচ্চ 20,000 অক্ষর)",btn_improve:"Prompt উন্নত করুন",btn_clear:"মুছুন",st_improving:"প্রম্পট উন্নত করা হচ্ছে",st_improved:"প্রম্পট উন্নত হয়েছে ✓",sec_refs:"রেফারেন্স ছবি (2টি স্লট)",base_note:"বেস ছবি = আপনার সক্রিয় Photoshop ডকুমেন্ট (স্বয়ংক্রিয়ভাবে নেওয়া হয়)।",btn_ref_layer:"+ লেয়ার",btn_ref_file:"ফাইল",btn_ref_web:"ওয়েব",st_ref_layer_added:"লেয়ার রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_ref_file_added:"ফাইল রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_importing:"ফাইল ইমপোর্ট হচ্ছে",url_title:"URL থেকে রেফারেন্স — Chrome / Pinterest",url_ph:"https://… ছবির ঠিকানা বা Pinterest পিন লিংক",btn_paste:"পেস্ট",btn_load:"লোড",btn_cancel:"বাতিল",st_url_loading:"ওয়েব ছবি ডাউনলোড হচ্ছে",st_ref_web_added:"ওয়েব ছবি রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_url_bad:"এই URL থেকে ছবি লোড করা যায়নি — ছবির ঠিকানা কপি করে আবার চেষ্টা করুন",no_layer:"কোনো লেয়ার নির্বাচিত নেই",sec_presets:"AI প্রিসেট",auto_run:"প্রিসেটে ক্লিক → অটো জেনারেট (OFF = শুধু প্রম্পটে যোগ হবে)",grp_cleanup:"ক্লিনআপ টুল",p_remove_people:"মানুষ সরান",p_fix_hands:"অতিরিক্ত হাত ঠিক করুন",p_fix_legs:"অতিরিক্ত পা ঠিক করুন",p_full_clean:"সম্পূর্ণ ক্লিনআপ",grp_moved_note:"রেফারেন্স টুলগুলো এখন নিচের Reference Ops Pro কার্ডে আছে (এক জায়গায়, Solo/Couple/Family + গাইডসহ)।",ro_h_detail:"চুল · অ্যাক্সেসরিজ · পোজ (← Ref1)",ro_h_comp:"কম্পোজিট · স্টাইল · টেক্সট (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"হেয়ারস্টাইল (← Ref1)",p_access:"গয়না+অ্যাক্সেসরিজ (← Ref1)",p_pose:"পোজ মিলিয়ে নিন (Doc → Ref1)",p_fgprops:"FG প্রপস (← Ref1)",p_textlogo:"টেক্সট / লোগো (← Ref1)",p_style:"ফটো স্টাইল (← Ref1)",grp_repsubj:"সাবজেক্ট প্রতিস্থাপন (Doc → Ref1 দৃশ্য)",p_rep_solo:"সোলো প্রতিস্থাপন",p_rep_couple:"কাপল প্রতিস্থাপন",p_rep_family:"পরিবার প্রতিস্থাপন",grp_rmix:"Replace Mix — টিক দিয়ে Ref1 থেকে নিন",rm_bg:"ব্যাকগ্রাউন্ড (BG)",rm_fg:"ফোরগ্রাউন্ড (FG)",rm_light:"লাইটিং",rm_color:"রং",rm_object:"অবজেক্ট / প্রপস",btn_rmix:"রিপ্লেস জেনারেট",rm_none:"আগে অন্তত একটি দিক টিক দিন",grp_i2p:"Image → Prompt (সিন বিল্ডার)",i2p_note:"1) এক্সট্র্যাক্ট: Ref1 দৃশ্য → বিস্তারিত টেক্সট প্রম্পট (মানুষ বাদ)। 2) প্রম্পট পেজে সেটি সম্পাদনা করুন। 3) সিন জেনারেট সেটিকে আপনার ডকুমেন্টের সাবজেক্ট ঘিরে তৈরি করে — যেকোনো অ্যাঙ্গেলে অটো-ফিট হয়। Face/Pose/Frame লক = আসলটা অপরিবর্তিত থাকে।",i2p_objects:"অবজেক্ট ও প্রপসের বিবরণ",i2p_light:"লাইটিংয়ের বিবরণ",i2p_color:"রং / গ্রেডের বিবরণ",i2p_bg:"ব্যাকগ্রাউন্ডের বিবরণ",i2p_fg:"ফোরগ্রাউন্ডের বিবরণ",btn_i2p:"Image → Prompt (সিন এক্সট্র্যাক্ট)",i2p_fit:"সিন অটো-ফিট — ডকুমেন্টের অ্যাঙ্গেল / দূরত্ব / লেন্স অনুযায়ী দৃশ্য পুনর্বিন্যাস",i2p_adapt:"সাবজেক্টের আলো ও রং দৃশ্যের সাথে মানিয়ে নিন",btn_scenegen:"সিন জেনারেট",st_extract:"দৃশ্য থেকে প্রম্পট তৈরি হচ্ছে",st_extract_done:"সিন প্রম্পট প্রস্তুত — প্রম্পট পেজে দেখে নিন",scene_no_prompt:"প্রম্পট বক্স খালি — আগে Image → Prompt চালান",i2p_none:"আগে অন্তত একটি বিবরণের দিক টিক দিন",sec_light:"স্টুডিও লাইটিং — AI রিলাইট",light_note:"লাইটগুলো ON করুন, একটি সারিতে ট্যাপ করে নির্বাচন করুন, স্লাইডার দিয়ে আকার দিন — 3D টপ-ভিউ ডায়াগ্রাম সাথে সাথে বদলায় (▴ = উঁচু, ▾ = নিচু)। লাইটিং জেনারেট আপনার ডকুমেন্টকে ঠিক এই সেটআপ অনুযায়ী রিলাইট করে; মুখ / পোজ / ফ্রেম লক থাকে।",lbl_my_prompt:"মিয়ানমার প্রম্পট",lstage_model:"মডেল",lstage_cam:"ক্যাম",l_key:"কী লাইট",l_fill:"ফিল / ফ্রন্ট",l_butterfly:"বাটারফ্লাই (উপরে-সামনে)",l_side:"সাইড লাইট",l_rim:"রিম লাইট",l_back:"ব্যাক লাইট",l_hair:"হেয়ার লাইট",l_bglight:"ব্যাকগ্রাউন্ড লাইট",lt_softbox:"সফটবক্স",lt_octa:"অক্টা",lt_strip:"স্ট্রিপ",lt_umbrella:"আমব্রেলা",lt_beauty:"বিউটি",lt_hard:"হার্ড",li_int:"তীব্রতা",li_angle:"কোণ",li_height:"উচ্চতা",li_dist:"দূরত্ব",li_size:"আকার",btn_lightgen:"লাইটিং জেনারেট",light_none:"আগে অন্তত একটি লাইট ON করুন",lg_equip:"ছবিতে লাইটের সরঞ্জাম দেখান (সফটবক্স / স্ট্যান্ড দৃশ্যমান)",grp_chains:"স্টাইল চেইন — ✓ স্টাইলগুলো একসাথে মেশান",chains_note:"যেকোনো স্টাইল ON করুন — সেগুলো প্রতিটি জেনারেট / প্রিসেট / রিটাচে একসাথে মিশে যায়।",grp_restore:"পুরনো ছবি পুনরুদ্ধার",p_restore:"পুরনো ছবি পুনরুদ্ধার",rest_color:"সম্পূর্ণ রঙিন",rest_bw:"সাদা-কালো",restore_note:"ছেঁড়া, পানি / পোড়া দাগ ও বিবর্ণতা মেরামত করে — প্রতিটি আসল মুখ 100% অবিকল থাকে।",rt_browstyle:"ভ্রুর স্টাইল",rt_lashstyle:"আইল্যাশ স্টাইল",rt_blush:"ব্লাশের রং",rt_contour:"কনট্যুর স্টাইল",rt_bust:"বাস্ট",rt_butt:"নিতম্ব",rt_thigh:"ঊরু",rt_calf:"কাফ",rt_neck:"ঘাড়",rt_fingers:"আঙুল",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"মিয়ানমার প্রম্পট ইংরেজিতে অনুবাদ হচ্ছে",live_trans:"লাইভ ⇄ স্বয়ংক্রিয় অনুবাদ (EN ↔ MY, টাইপ থামানোর পরে)",st_retry:"আবার চেষ্টা করা হচ্ছে",grp_recipes:"রেসিপি — সেটিংস সংরক্ষণ / শেয়ার",recipe_note:"সবকিছু (চেইন, রিটাচ, লাইট, লক, প্রম্পট) একটি .json রেসিপি হিসেবে সংরক্ষণ করুন — শিক্ষার্থীরা শুধু লোড করলেই হবে।",btn_recipe_save:"রেসিপি সংরক্ষণ",btn_recipe_load:"রেসিপি লোড",st_recipe_saved:"রেসিপি সংরক্ষিত ✓",st_recipe_loaded:"রেসিপি লোড হয়েছে ✓ — সব কন্ট্রোল আপডেট হয়েছে",st_recipe_bad:"এটি HNK রেসিপি ফাইল নয়",sec_final:"চূড়ান্ত প্রম্পট (AI-এ পাঠানো হয়)",btn_copy:"কপি",st_copied:"কপি হয়েছে ✓",hist_note:"ইতিহাস — শেষ 6টি ফলাফল, দেখতে ট্যাপ করুন:",btn_hist_prompt:"→ প্রম্পট",sec_batch:"ব্যাচ মোড",batch_note:"একাধিক ছবি + একটি আউটপুট ফোল্ডার বেছে নিন — বর্তমান প্রম্পট, চেইন, ক্লিনআপ ও Keep লক প্রতিটি ছবিতে চলবে; ফলাফল *_HNK.png নামে সংরক্ষিত হয়।",btn_batch:"ব্যাচ চালান",btn_batch_stop:"থামান",st_batch:"ব্যাচ",st_batch_done:"ব্যাচ সম্পন্ন",sec_web:"ওয়েব AI — মিনি ব্রাউজার",web_note:"যেকোনো ওয়েব AI এডিটর Photoshop-এর ভেতরেই খুলুন। সেখানে জেনারেট করুন, তারপর ফলাফলটি লেয়ার হিসেবে নিয়ে আসুন:",web_import_note:"ইমপোর্ট: ① ওয়েব অ্যাপে Copy image address ব্যবহার করুন, তারপর 'কপি করা লিংক ইমপোর্ট' চাপুন · ② অথবা ফাইলটি ডাউনলোড করে 'ফাইল ইমপোর্ট' ব্যবহার করুন · ③ HNK ব্রিজযুক্ত পার্টনার ওয়েব অ্যাপ ছবি স্বয়ংক্রিয়ভাবে পাঠায়।",btn_web_go:"যান",btn_web_home:"হোম",btn_web_reload:"রিলোড",btn_web_import_link:"কপি করা লিংক ইমপোর্ট → PS",btn_web_import_file:"ফাইল ইমপোর্ট → PS",st_web_import:"লেয়ার হিসেবে Photoshop-এ ইমপোর্ট হয়েছে ✓",st_web_nourl:"আগে একটি ছবির লিংক কপি করুন (রাইট-ক্লিক → Copy image address)",st_web_fetch:"লিংক থেকে ছবি আনা হচ্ছে",st_web_notallowed:"এই ডোমেইনটি allow-list-এ নেই — ফাঁকা থাকতে পারে। HNK-কে এটি যোগ করতে বলুন।",st_need_doc:"প্রথমে Photoshop-এ একটি ফটো ডকুমেন্ট খুলুন",sec_campro:"ক্যামেরা প্রো ও কোয়ালিটি",autosave_lbl:"প্রতিটি ফলাফল অটো-এক্সপোর্ট (PNG + prompt লগ → ফোল্ডার)",st_folder_ok:"এক্সপোর্ট ফোল্ডার সেট হয়েছে ✓",st_exported:"এক্সপোর্ট হয়েছে ✓",st_export_fail:"এক্সপোর্ট ব্যর্থ — ফোল্ডারটি পরীক্ষা করুন",st_pro_fallback:"Pro মডেল পাওয়া যাচ্ছে না — এই রানের জন্য Flash-এ পরিবর্তন করা হয়েছে",st_img_bad:"ছবির ডেটা ইন্টিগ্রিটি চেক-এ ব্যর্থ — ছবিটি আবার যোগ করুন",st_auto_comp:"অটো কম্পোজিট: IMAGE 1 সাবজেক্ট → রেফারেন্স দৃশ্য",prov_lbl:"AI প্রোভাইডার",tab_create:"তৈরি",create_note:"ক্রিয়েট মোড — আপনার prompt থেকে সম্পূর্ণ নতুন ছবি (+ নিজস্ব 4টি রেফ)। পুরোপুরি স্বাধীন: ডকুমেন্ট, প্রিসেট, চেইন বা লক কখনও পড়ে না।",create_ph:"যে ছবিটি তৈরি করতে চান তা বর্ণনা করুন…",btn_create_ps:"⬇ Photoshop-এ পাঠান",btn_to_ref:"↺ Ref 1 হিসেবে ব্যবহার করুন",st_to_ref:"ফলাফল Ref 1-এ লোড হয়েছে ✓",scope_create_note:"Setup-এর Model ও Output থেকে স্বাধীন — এই সেটিংগুলি শুধু Create-এর Generate-এ প্রযোজ্য।",cr_ratio:"অনুপাত",cr_var:"ভ্যারিয়েশন",cr_restyle:"♻ ফলাফল রিস্টাইল করুন",cr_lib:"Prompt লাইব্রেরি — ঢোকাতে ট্যাপ করুন",cr_improve:"উন্নত করুন",cr_describe:"Ref 1 বর্ণনা → Prompt",st_describing:"রেফারেন্স পড়া হচ্ছে…",st_described:"Ref 1 থেকে prompt লেখা হয়েছে ✓",st_need_ref1:"প্রথমে Ref 1-এ একটি ছবি যোগ করুন",st_lib_added:"Prompt যোগ হয়েছে ✓",cr_refs:"রেফারেন্স ছবি (সর্বোচ্চ 4টি)",cr_refs_note:"ঐচ্ছিক — Layer / File / Web দিয়ে যোগ করুন। আপনার prompt যা চায়, Create শুধু সেটুকুই নেয়।",cr_results:"ফলাফল",cr_gal_empty:"এখনও কোনো ফলাফল নেই — Generate ট্যাপ করুন।",cr_gal_have:"টি ফলাফল · প্রিভিউ / কাজ করতে থাম্বনেইলে ট্যাপ করুন",cr_save:"⬇ PNG সংরক্ষণ করুন",cr_engine:"ইঞ্জিন",cr_need_result:"প্রথমে একটি ছবি জেনারেট করুন",btn_web_import_url:"⬇ URL ইমপোর্ট করুন",st_clip_help:"ক্লিপবোর্ড ফাঁকা/ব্লক করা — লিংকটি URL বারে পেস্ট করুন, তারপর ⬇ Import URL ট্যাপ করুন",st_web_blob:"এটি একটি অস্থায়ী blob: লিংক — রাইট-ক্লিক → Copy IMAGE Address ব্যবহার করুন, অথবা ফাইলটি সংরক্ষণ করে Import File ব্যবহার করুন",err_key:"API key অবৈধ — Setup ট্যাবে key আবার পরীক্ষা করুন · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"কোটা / রেট লিমিট — একটু অপেক্ষা করে আবার চেষ্টা করুন · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"ছবিটি API-এর জন্য খুব বড় — ছোট করে আবার চেষ্টা করুন · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"সেফটি ফিল্টার আটকে দিয়েছে — prompt বা ছবিটি বদলে আবার চেষ্টা করুন · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"নেটওয়ার্ক / সার্ভার সমস্যা — অনুগ্রহ করে আবার চেষ্টা করুন · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"অনুরোধের সময় শেষ — সার্ভার খুব বেশি সময় নিয়েছে; আবার চেষ্টা করুন · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"অনুরোধটি সম্পন্ন করা যায়নি — অনুগ্রহ করে আবার চেষ্টা করুন",err_img:"কোনো ব্যবহারযোগ্য ছবি তৈরি হয়নি — অনুগ্রহ করে আবার চেষ্টা করুন",err_mode:"এই ডকুমেন্টটি RGB মোডে নেই — প্রথমে রূপান্তর করুন (Image ▸ Mode ▸ RGB Color), তারপর আবার চেষ্টা করুন",cam_master:"ক্যামেরা ব্লক ON — প্রতিটি prompt-এর শেষে যোগ হবে",cam_body:"ক্যামেরা বডি",cam_lens:"প্রাইম লেন্স (mm)",cam_f:"অ্যাপারচার",cam_film:"ফিল্ম লুক",cam_bokeh:"বোকেহ স্টাইল",cam_iso:"ISO",cam_k:"WB কেলভিন",cam_note:"ব্লকটি ON করুন, তারপর যা দরকার শুধু সেটুকু বাছুন — – চিপগুলি নীরব থাকে। সবকিছু চূড়ান্ত prompt-এর শেষে যুক্ত হয়।",ro_h_main:"রেফারেন্স অপস প্রো (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (নারী) · Ref2 = IMAGE 3 (পুরুষ)। একটি টার্গেট বেছে নিয়ে একটি অপ চালান — মিল না-থাকা ব্যক্তিরা কখনও বদলায় না।",ro_target:"টার্গেট:",ro_solo:"একক",ro_couple:"যুগল",ro_family:"পরিবার",ro_mk:"রেফ-এর মেকআপ কপি করুন",ro_hair:"রেফ-এর হেয়ারস্টাইল নিন",ro_h_face:"ফেস অপস",ro_h_bg:"BG / FG অপস",ro_h_sub:"সাবজেক্ট অপস",ro_h_lc:"আলো ও রং অপস",ro_h_dress:"পোশাক অপস",ro_h_mk:"মেকআপ অপস",ro_h_match:"★ মাস্টার ম্যাচ (এক লুক)",ro_match_note:"IMAGE 1-কে রেফারেন্সের সাথে মেলান, যাতে দুটোই এক সম্পাদনার মতো দেখায় — কী মেলাতে হবে টিক দিন:",m_color:"রং",m_light:"আলো",m_makeup:"মেকআপ",m_skin:"স্কিন রিটাচ",crd_pipe:"⛓ পাইপলাইন বিল্ডার — যেকোনো কিছু চেইন করুন",pipe_note:"যেকোনো ধাপ একটি চেইনে যুক্ত করুন — প্রতিটি ধাপের ফলাফল পরের ধাপে যায়। সর্বোচ্চ 6।",pipe_add:"+ যোগ করুন",pipe_run:"▶ পাইপলাইন চালান",pipe_clear:"মুছুন",pipe_retouch:"রিটাচ প্রয়োগ (বর্তমান স্লাইডার)",pipe_relight:"রিলাইট (বর্তমান লাইট রিগ)",pipe_prompt:"Prompt (বর্তমান EN বক্স)",pipe_empty:"প্রথমে অন্তত একটি ধাপ যোগ করুন",pipe_max:"পাইপলাইন পূর্ণ (সর্বোচ্চ 6 ধাপ)",st_pipe:"পাইপলাইন ধাপ",st_pipe_done:"পাইপলাইন সম্পন্ন",st_pipe_stop:"পাইপলাইন থেমে গেছে (একটি ধাপ ব্যর্থ হয়েছে)",pipe_merge:"⚡ ওয়ান-শট মার্জ — সব ধাপ একটিমাত্র কলে (দ্রুত/সাশ্রয়ী · সেরা ≤ 3 কাজ)",crd_chainsrest:"স্টাইল চেইন + পুরোনো ছবি পুনরুদ্ধার",crd_refops:"রেফারেন্স অপস প্রো (Ref1 / Ref2)",crd_scenes:"🎬 সিন প্রো — সাবজেক্ট লক · দৃশ্য মিলে যায়",scn_note:"আপনার সাবজেক্ট লক করুন (মুখ · ভঙ্গি · পোশাক · ফ্রেম) — পুরো দৃশ্য তাদের সাথে মিলিয়ে নতুন করে তৈরি হয়; আলো, ছায়া, রং, ব্যাকগ্রাউন্ড, ফোরগ্রাউন্ড ও বস্তু সবই আসল ছবির মতো লুকের জন্য স্বয়ংক্রিয়ভাবে মানিয়ে নেয়।",scn_h_style:"দৃশ্যের স্টাইল (ইনডোর / সাংস্কৃতিক)",scn_h_bday:"🎂 জন্মদিন — বয়সের সংখ্যা 1–45",scn_h_cap:"ক্যাপশন / টেক্সট (শিশু · Miss Universe · জন্মদিন)",scn_h_scarf:"আউটডোর / উড়ন্ত স্কার্ফ",scn_grad:"গ্র্যাজুয়েশন ইনডোর",scn_prewed:"প্রি-ওয়েডিং ইনডোর",scn_vietnam:"ভিয়েতনাম",scn_myanmar:"মিয়ানমার",scn_chinese:"চীনা",scn_shan:"শান",scn_newborn:"নবজাতক / শিশু",scn_age:"বয়স",scn_bday_go:"🎂 জন্মদিনের দৃশ্য",scn_cap_on:"ক্যাপশন টেক্সট যোগ করুন",scn_cap_ph:"ক্যাপশন টেক্সট (যেমন Happy 1st Birthday, নাম)…",scn_cap_pos:"অবস্থান",scn_top:"উপরে",scn_bottom:"নিচে",scn_scarf:"✦ উড়ন্ত স্কার্ফ দৃশ্য",scn_dir:"দিক",scn_left:"বাম",scn_right:"ডান",scn_up:"উপর",scn_len:"দৈর্ঘ্য",scn_short:"ছোট",scn_long:"লম্বা",g_cat_scene:"সিন অপ — আপনার সাবজেক্ট লক থাকে (মুখ · ভঙ্গি · পোশাক · ফ্রেম); জেনারেট হওয়া পুরো দৃশ্য (আলো, ছায়া, রং, ব্যাকগ্রাউন্ড, ফোরগ্রাউন্ড, বস্তু, আবহ) আসল ছবির মতো কম্পোজিটের জন্য সাবজেক্টের সাথে স্বয়ংক্রিয়ভাবে মেলানো হয়।",crd_wed:"♥ ওয়েডিং প্রো স্যুট",crd_recipes:"রেসিপি — সংরক্ষণ / শেয়ার",learn_lbl:"🎓 লার্ন মোড — প্রথম ট্যাপ = গাইড (হলুদ), দ্বিতীয় = prompt (নীল), তৃতীয় = রান (সবুজ)",guide_hint:"আবার ট্যাপ করুন: হলুদ → নীল (prompt) → সবুজ (রান) ▶",g_learn_next_prompt:"আবার ট্যাপ করুন → হুবহু PROMPT দেখায় (নীল)।",g_learn_prompt_head:"এই বোতামটি যে PROMPT পাঠাবে (আবার ট্যাপ = রান):",g_learn_next_run:"আরেকবার ট্যাপ করুন → রান (সবুজ) জেনারেট করে।",st_prompt_ready:"Prompt প্রস্তুত — চালাতে আবার ট্যাপ করুন (সবুজ) ✓",g_step_doc:"প্রথমে Photoshop-এ আপনার ফটো ডকুমেন্ট খুলুন।",g_step_ref1:"রেফারেন্স ছবিটি Ref1-এ লোড করুন (এটি IMAGE 2 হয়ে যায়)। দ্বিতীয় ব্যক্তির জন্য Ref2 যোগ করুন।",g_step_target:"টার্গেট বাছুন: একক / যুগল (Ref1 = নারী, Ref2 = পুরুষ) / পরিবার।",g_step_mkhair:"ঐচ্ছিক: ফেস অপস-এর উপরে ‘রেফ-এর মেকআপ কপি করুন’ / ‘রেফ-এর হেয়ারস্টাইল নিন’ টিক দিন।",g_step_petal:"প্রথমে পাপড়ির রং বাছুন (auto = আপনার দৃশ্যের সাথে মেলে)।",g_step_rest:"উপরের ✓ দিয়ে ফুল কালার বা সাদা-কালো বেছে নিন।",g_step_int:"পছন্দমতো ইনটেনসিটি স্লাইডার সেট করুন।",g_step_confirm:"এগোতে আবার ট্যাপ করুন: গাইড (হলুদ) → PROMPT (নীল) → রান (সবুজ জেনারেট করে)।",g_cat_face:"ফেস অপ — রেফারেন্সের মুখ মিল-থাকা ব্যক্তির উপর স্থানান্তর করে; বাকি সবাই অপরিবর্তিত থাকে।",g_cat_sub:"সাবজেক্ট অপ — রেফারেন্সের ব্যক্তিকে আপনার দৃশ্যে আনে/রূপান্তর করে; দৃশ্য ও ফ্রেমিং অপরিবর্তিত থাকে।",g_cat_bgfg:"BG/FG অপ — রেফারেন্স ব্যবহার করে শুধু ব্যাকগ্রাউন্ড / ফোরগ্রাউন্ড বদলায়।",g_cat_lc:"আলো ও রং অপ — রেফারেন্সের লাইটিং ও গ্রেড কপি করে; মানুষজন পিক্সেল-নিখুঁত থাকে।",g_cat_dress:"পোশাক অপ — রেফারেন্স ব্যবহার করে শুধু পোশাক বদলায়।",g_cat_mkop:"মেকআপ অপ — রেফারেন্স ব্যবহার করে শুধু মেকআপ বদলায়।",g_cat_match:"মাস্টার ম্যাচ — আপনার ছবিকে রেফারেন্সের সম্পূর্ণ লুকের সাথে মেলায় (উপরের স্তরগুলিতে টিক দিন)।",g_cat_trail:"ওয়েডিং ট্রেইল — বিলাসবহুল ঘাস + প্রবাহিত ফুলের পথ; মুখ/ভঙ্গি/ফ্রেম সম্পূর্ণ লক থাকে।",g_cat_veil:"উড়ন্ত ভেইল — এই দৈর্ঘ্যে বাতাসে-ওড়া ভেইল যোগ/প্রসারিত করে; মুখ কখনও ঢাকা পড়ে না।",g_cat_gown:"গাউন — বর্তমান গাউনটি পরিষ্কার করে (ডিজাইন অপরিবর্তিত) এবং এই ট্রেন-দৈর্ঘ্য সেট করে।",g_cat_petal:"উড়ন্ত পাপড়ি — এই স্টাইলে বাতাসে পাপড়ি যোগ করে; রং উপরের সোয়াচ থেকে।",g_cat_wedx:"ওয়েডিং এক্সট্রা — আপনার দৃশ্যের সাথে মিলিয়ে এই উপাদান যোগ করে; সাবজেক্ট লক থাকে।",g_cat_canvas:"রিপ্লেস (ক্যানভাস) — আপনার সাবজেক্টকে রেফারেন্সের দৃশ্যে বসায়; রেফ-এর মানুষজন সরিয়ে দেওয়া হয়।",g_cat_restore:"পুরোনো ছবি পুনরুদ্ধার — ক্ষতি মেরামত করে; প্রতিটি মূল মুখ 100% অবিকল থাকে।",g_cat_generic:"প্রিসেট — আপনার ছবিতে এই পেশাদার সম্পাদনা প্রয়োগ করে।",g_gen:"জেনারেট — আপনার ডকুমেন্টে prompt বক্স (+ চেইন, কিপ, ক্যামেরা ব্লক) চালায়।",g_retouchbtn:"রিটাচ প্রয়োগ — আপনার সব স্লাইডার সেটিং এক পেশাদার রিটাচ পাস হিসেবে চালায়।",g_relightbtn:"লাইটিং জেনারেট — আপনার 3D লাইট ডায়াগ্রাম অনুযায়ী ছবিটি হুবহু রিলাইট করে।",g_scene:"সিন জেনারেট — এক্সট্র্যাক্ট করা prompt থেকে দৃশ্য নতুন করে তৈরি করে; সাবজেক্ট অপরিবর্তিত থাকে।",g_rmix:"রিপ্লেস মিক্স — রেফারেন্স থেকে শুধু ✓ টিক দেওয়া অংশগুলি প্রতিস্থাপন করে।",g_pipe:"পাইপলাইন চালান — চেইন করা প্রতিটি ধাপ ক্রমানুসারে চালায়; প্রতিটি ফলাফল পরের ধাপে যায়।",ro_faceRep:"ফেস রিপ্লেস",ro_faceSwap:"ফেস সোয়াপ",ro_bgRep:"BG রিপ্লেস",ro_bgSwap:"BG সোয়াপ",ro_fgRep:"FG রিপ্লেস",ro_bg_note:"Doc = সাবজেক্ট · Ref1 = নতুন দৃশ্য। Target (Solo/Couple/Family) নির্ধারণ করে কাকে রাখা হবে।",ro_bg_frame:"ফ্রেম ও কম্পোজিশন বজায় রাখুন",ro_bg_light:"সাবজেক্টের আলো/রং অক্ষুণ্ণ রাখুন",ro_subSwap:"সাবজেক্ট বদল",ro_lcRef:"L&C রেফারেন্স",ro_lcCopy:"L&C কপি-পেস্ট",ro_dressRef:"পোশাক রেফারেন্স",ro_dressRep:"পোশাক বদল",ro_mkCopy:"মেকআপ কপি",ro_matchBtn:"★ মাস্টার ম্যাচ",grp_retouch:"স্কিন রিটাচ প্রিসেট",lbl_intensity:"তীব্রতা",p_evoto:"Evoto স্টাইল",p_meitu:"Meitu স্টাইল",auto_place:"ফলাফল স্বয়ংক্রিয়ভাবে Photoshop-এ নতুন লেয়ার হিসেবে বসান",sec_retouchpro:"রিটাচ প্রো — স্লাইডার",rt_skin:"ত্বক",rt_faceai:"ফেস AI",rt_hair:"চুল",rt_dress:"পোশাক",rt_bg:"ব্যাকগ্রাউন্ড",rt_smooth:"ত্বক মসৃণ",rt_acne:"ব্রণ দূর",rt_spots:"কালো দাগ",rt_wrinkle:"বলিরেখা",rt_tone:"ফরসা / ট্যান",rt_glow:"গ্লো",rt_reshape:"AI রিশেপ",rt_lash:"চোখের পাপড়ি",rt_brow:"ভ্রু",rt_lipsmooth:"ঠোঁট মসৃণ",rt_lipcolor:"ঠোঁটের রং",rt_lenscolor:"লেন্সের রং",rt_hairstray:"এলোমেলো চুল",rt_hairsmooth:"চুল মসৃণ",rt_hairshine:"চুলের ঝলক (D&B)",rt_dresssmooth:"কাপড় মসৃণ",rt_dressedge:"কিনারা পরিষ্কার",rt_dresswrinkle:"ভাঁজ দূর",rt_dresstexture:"টেক্সচার পুনরুদ্ধার",rt_bgsmooth:"BG পরিষ্কার/মসৃণ",rt_bgcolor:"BG রং",rt_bgrecolor:"BG রং মসৃণ",rt_shape:"রিশেপ প্রো (মুখ + শরীর)",rt_teeth:"দাঁত সাদা",rt_eyewhite:"চোখের সাদা অংশ পরিষ্কার",rt_faceslim:"মুখ চিকন",rt_jaw:"চোয়ালের রেখা",rt_chin:"থুতনি",rt_nosesize:"নাকের আকার",rt_eyesize:"চোখের আকার",rt_lipfull:"ভরাট ঠোঁট",rt_waist:"কোমর চিকন",rt_bodyslim:"শরীর চিকন",rt_shoulder:"কাঁধ",rt_hip:"নিতম্ব চিকন",rt_leglen:"পায়ের দৈর্ঘ্য",rt_armslim:"বাহু চিকন",rt_dressfit:"পোশাক ফিট",rt_dressclean:"পোশাক পরিষ্কার",rt_dresscolorpure:"পোশাকের রং নিখুঁত",rt_bodygrp:"বডি স্কিন প্রো",rt_bodysmooth:"শরীরের ত্বক মসৃণ",rt_bodyblemish:"শরীরের দাগ পরিষ্কার",rt_bodytone:"শরীরের সমান টোন",rt_bodyglow:"বডি গ্লো",rt_bodyhairrm:"শরীরের লোম কমান",rt_hairvolume:"চুলের ভলিউম",rt_hairgloss:"চুলের গ্লস",rt_hairfill:"চুল ভরাট (পাতলা জায়গা)",wp_h_trail:"♥ ওয়েডিং — লাক্সারি ফ্লাওয়ার ট্রেইল",wp_h_veil:"♥ ওয়েডিং — উড়ন্ত ভেইল",wp_h_gown:"♥ ওয়েডিং — গাউন ক্লিন + ট্রেন",wp_h_petal:"♥ ওয়েডিং — উড়ন্ত পাপড়ি",wp_h_extra:"♥ ওয়েডিং — ঘোড়া · পানি · মুড",wp_note:"Face ID / পোজ / ফ্রেম / পোশাকের ডিজাইন সম্পূর্ণ লক থাকে — শুধু নির্দিষ্ট উপাদানটিই বদলায়।",wp_petalcolor:"পাপড়ির রং (auto = দৃশ্যের সাথে মিল)",wp_trail_c:"ফুলের রং",wp_trail_go:"▶ ফ্লাওয়ার ট্রেইল",wp_veil_c:"ভেইলের দৈর্ঘ্য",wp_veil_go:"▶ উড়ন্ত ভেইল",wp_gown_c:"ট্রেনের দৈর্ঘ্য",wp_gown_go:"▶ গাউন ক্লিন + ট্রেন",wp_pet_c:"পাপড়ির স্টাইল",wp_pet_go:"▶ উড়ন্ত পাপড়ি",wp_extra_c:"অতিরিক্ত",wp_extra_go:"▶ অতিরিক্ত যোগ করুন",btn_apply_rt:"রিটাচ প্রয়োগ করুন",btn_reset:"রিসেট",rt_none:"আগে অন্তত একটি রিটাচ স্লাইডার বা রং সেট করুন",tab_setup:"সেটআপ",tab_prompt:"স্টুডিও",tab_presets:"প্রিসেট",recent_lbl:"সাম্প্রতিক prompt…",tab_retouch:"রিটাচ",tab_aitools:"AI টুলস",cap_warn:"Photoshop এই prompt বক্সের সীমা:",cleanup_note:"টিক দেওয়া আইটেমগুলো প্রতিবার জেনারেট / প্রিসেট চালানোর সাথে একসাথে চলে।",btn_generate:"তৈরি করুন",st_ready:"প্রস্তুত",st_capture:"ডকুমেন্ট ক্যাপচার হচ্ছে",st_gen:"জেনারেট হচ্ছে…",st_place:"Photoshop-এ বসানো হচ্ছে…",st_placed_masked:"লেয়ার + মাস্ক গ্রুপ হিসেবে বসানো হয়েছে — মূল ছবি অক্ষত ✓",st_placed_plain:"সাধারণ লেয়ার হিসেবে বসানো হয়েছে (এই হোস্টে মাস্ক/গ্রুপ পাওয়া যায় না)",stage_queued:"সারিতে আছে",stage_uploading:"আপলোড হচ্ছে",stage_generating:"জেনারেট হচ্ছে",stage_downloading:"ডাউনলোড হচ্ছে",stage_placing:"বসানো হচ্ছে",st_done:"হয়ে গেছে ✓",st_err:"ত্রুটি",st_no_doc:"কোনো সক্রিয় ডকুমেন্ট নেই — আগে একটি ছবি খুলুন",st_no_prompt:"Prompt খালি",need_ref:"এই প্রিসেটের জন্য স্লট 1-এ একটি রেফারেন্স ছবি দরকার",st_new_doc:"ফলাফল নতুন ডকুমেন্ট হিসেবে খোলা হয়েছে ✓",sec_preview:"প্রিভিউ — আগে / পরে",before:"আগে",after:"পরে",btn_place:"Photoshop-এ বসান",btn_saveas:"নতুন নামে সেভ করুন…",st_saved:"সেভ হয়েছে ✓",sec_diag:"সিস্টেম চেক",sec_log:"কার্যকলাপ লগ",btn_diag:"চেক চালান",btn_copylog:"লগ কপি করুন",btn_clearlog:"মুছুন",diag_host:"Photoshop হোস্ট",diag_uxp:"UXP সক্ষমতা",diag_rh:"RunningHub Enterprise key",diag_doc:"সক্রিয় ডকুমেন্ট",diag_set:"সেট করা",diag_unset:"সেট করা নেই",diag_open:"খোলা",diag_none:"কোনোটি খোলা নেই",diag_missing:"অনুপস্থিত",diag_done:"সিস্টেম চেক সম্পন্ন ✓",diag_lib:"রেফারেন্স লাইব্রেরি",diag_lib_open:"ফোল্ডার খোলার সক্ষমতা",sec_reflib:"রেফারেন্স ইমেজ লাইব্রেরি",reflib_note:"আপনার পছন্দের রেফারেন্স ছবির ফোল্ডারটি একবার বেছে নিন — ব্রাউজ সেটি মনে রাখে এবং সব জায়গায় সেটির ভেতরেই খোলে।",btn_browse:"ব্রাউজ",lib_choose:"ফোল্ডার বাছুন",lib_open:"ফোল্ডার খুলুন",lib_change:"ফোল্ডার বদলান",lib_reset:"রিসেট",lib_rescan:"পুনরায় স্ক্যান",lib_current:"বর্তমান ফোল্ডার",lib_found:"পাওয়া ছবি",lib_status:"অবস্থা",lib_lastscan:"শেষ স্ক্যান",lib_images:"ছবি",lib_connected:"সংযুক্ত",lib_not_config:"কনফিগার করা নেই",lib_perm_lost:"অনুমতি হারিয়ে গেছে — আবার নির্বাচন করুন",lib_none:"(কোনো ফোল্ডার নির্বাচিত নয়)",lib_copy_only:"শুধু পাথ কপি",lib_choose_msg:"আপনার HNK রেফারেন্স ইমেজ লাইব্রেরি ফোল্ডারটি বেছে নিন।",lib_scanning:"লাইব্রেরি স্ক্যান হচ্ছে…",lib_scan_done:"পুনরায় স্ক্যান সম্পন্ন ✓",lib_reset_done:"লাইব্রেরি রিসেট হয়েছে ✓",lib_path_copied:"পাথ কপি হয়েছে",lib_unsupported:"অসমর্থিত ছবির ধরন",lib_restore_fail:"রেফারেন্স পুনরুদ্ধার করা যায়নি",on:"চালু",off:"বন্ধ"},
+gu:{tab_setup:"સેટઅપ",tab_prompt:"સ્ટુડિયો",tab_presets:"પ્રીસેટ",tab_retouch:"રીટચ",tab_aitools:"AI ટૂલ્સ",tab_create:"બનાવો",btn_generate:"બનાવો",st_ready:"તૈયાર",st_done:"થઈ ગયું ✓",st_need_key:"પહેલા RunningHub Enterprise key નાખો",btn_show:"બતાવો",btn_hide:"છુપાવો",btn_save:"સાચવો",btn_test:"Key ચકાસો",btn_clear:"કાઢી નાખો",btn_cancel:"રદ કરો",btn_load:"લોડ",btn_paste:"પેસ્ટ",btn_improve:"Prompt સુધારો",lbl_ratio:"ગુણોત્તર",lbl_size:"કદ",lbl_quality:"ગુણવત્તા"},
+hi:{app_title:"HNK Photoshop Ai पैनल (छात्रों के लिए)",sec_api:"RunningHub Enterprise key",btn_show:"दिखाएँ",btn_hide:"छिपाएँ",btn_test:"Key परखें",btn_save:"सहेजें",st_testing:"Key की जाँच हो रही है",st_key_ok:"✓ API key काम कर रही है",st_key_bad:"API key विफल रही",st_key_saved:"API key सेव हो गई ✓",st_need_key:"पहले RunningHub Enterprise key डालें",sec_model:"मॉडल और आउटपुट",scope_model_note:"नीचे Prompt टैब के Generate बटन में उपयोग होता है — Create और AI Tools की अपनी-अपनी अलग मॉडल सेटिंग्स हैं।",model_auto:"ऑटो (अनुशंसित)",model_flash:"Flash — तेज़ (2.5)",model_pro:"Pro — गुणवत्ता (3.0)",lbl_ratio:"अनुपात",ratio_auto:"ऑटो अनुपात (डॉक्यूमेंट से)",lbl_size:"आकार",lbl_quality:"गुणवत्ता",qual_auto:"ऑटो",qual_low:"कम",qual_med:"मध्यम",qual_high:"उच्च",sec_prompt:"Prompt",hint_prompt:"अपना prompt यहाँ लिखें… (अधिकतम 20,000 अक्षर)",btn_improve:"Prompt सुधारें",btn_clear:"हटाएँ",st_improving:"Prompt बेहतर बनाया जा रहा है",st_improved:"Prompt बेहतर हो गया ✓",sec_refs:"संदर्भ इमेज (2 स्लॉट)",base_note:"बेस इमेज = आपका सक्रिय Photoshop डॉक्यूमेंट (अपने आप कैप्चर होता है)।",btn_ref_layer:"+ लेयर",btn_ref_file:"फ़ाइल",btn_ref_web:"वेब",st_ref_layer_added:"लेयर संदर्भ के रूप में जुड़ गई ✓",st_ref_file_added:"फ़ाइल संदर्भ के रूप में जुड़ गई ✓",st_importing:"फ़ाइल इंपोर्ट हो रही है",url_title:"URL से संदर्भ — Chrome / Pinterest",url_ph:"https://… इमेज का पता या Pinterest पिन लिंक",btn_paste:"पेस्ट",btn_load:"लोड करें",btn_cancel:"रद्द करें",st_url_loading:"वेब इमेज डाउनलोड हो रही है",st_ref_web_added:"वेब इमेज संदर्भ के रूप में जुड़ गई ✓",st_url_bad:"इस URL से इमेज लोड नहीं हो सकी — इमेज का पता कॉपी करके फिर से आज़माएँ",no_layer:"कोई लेयर चयनित नहीं है",sec_presets:"AI प्रीसेट",auto_run:"प्रीसेट क्लिक → ऑटो Generate (OFF = केवल prompt में जोड़ें)",grp_cleanup:"क्लीनअप टूल",p_remove_people:"लोग हटाएँ",p_fix_hands:"अतिरिक्त हाथ ठीक करें",p_fix_legs:"अतिरिक्त पैर ठीक करें",p_full_clean:"पूरा क्लीनअप",grp_moved_note:"संदर्भ टूल अब नीचे Reference Ops Pro कार्ड में हैं (एक ही जगह, Solo/Couple/Family + गाइड के साथ)।",ro_h_detail:"हेयर · एक्सेसरीज़ · पोज़ (← Ref1)",ro_h_comp:"कंपोज़िट · स्टाइल · टेक्स्ट (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"हेयरस्टाइल (← Ref1)",p_access:"ज्वेलरी+एक्सेसरीज़ (← Ref1)",p_pose:"पोज़ मिलान (Doc → Ref1)",p_fgprops:"FG प्रॉप्स (← Ref1)",p_textlogo:"टेक्स्ट / लोगो (← Ref1)",p_style:"फ़ोटो स्टाइल (← Ref1)",grp_repsubj:"सब्जेक्ट बदलें (Doc → Ref1 दृश्य)",p_rep_solo:"सोलो बदलें",p_rep_couple:"कपल बदलें",p_rep_family:"परिवार बदलें",grp_rmix:"Replace Mix — टिक करें और Ref1 से लें",rm_bg:"बैकग्राउंड (BG)",rm_fg:"फ़ोरग्राउंड (FG)",rm_light:"लाइटिंग",rm_color:"रंग",rm_object:"ऑब्जेक्ट / प्रॉप्स",btn_rmix:"रिप्लेस जनरेट करें",rm_none:"पहले कम से कम एक पहलू टिक करें",grp_i2p:"इमेज → Prompt (सीन बिल्डर)",i2p_note:"1) Extract: Ref1 का दृश्य → विस्तृत टेक्स्ट prompt (लोग शामिल नहीं)। 2) इसे Prompt पेज पर संपादित करें। 3) 'सीन जनरेट करें' इसे आपके डॉक्यूमेंट के सब्जेक्ट के चारों ओर बनाता है — किसी भी एंगल पर अपने आप फ़िट। फ़ेस/पोज़/फ़्रेम लॉक = मूल बनाए रखें।",i2p_objects:"ऑब्जेक्ट और प्रॉप्स का विवरण",i2p_light:"लाइटिंग का विवरण",i2p_color:"रंग / ग्रेड का विवरण",i2p_bg:"बैकग्राउंड का विवरण",i2p_fg:"फ़ोरग्राउंड का विवरण",btn_i2p:"इमेज → Prompt (सीन निकालें)",i2p_fit:"सीन ऑटो-फ़िट — दृश्य को डॉक्यूमेंट के एंगल / दूरी / लेंस के अनुसार री-प्रोजेक्ट करें",i2p_adapt:"सब्जेक्ट की रोशनी और रंग दृश्य के अनुसार ढालें",btn_scenegen:"सीन जनरेट करें",st_extract:"दृश्य से prompt निकाला जा रहा है",st_extract_done:"सीन prompt तैयार है — Prompt पेज पर देख लें",scene_no_prompt:"Prompt बॉक्स खाली है — पहले इमेज → Prompt चलाएँ",i2p_none:"पहले कम से कम एक विवरण पहलू टिक करें",sec_light:"स्टूडियो लाइटिंग — AI रीलाइट",light_note:"लाइटें ON टिक करें, चुनने के लिए पंक्ति पर टैप करें, स्लाइडर से उन्हें आकार दें — 3D टॉप-व्यू डायग्राम लाइव बदलता है (▴ = ऊँचा, ▾ = नीचा)। 'लाइटिंग जनरेट करें' आपके डॉक्यूमेंट को ठीक इसी सेटअप के अनुसार रीलाइट करता है; फ़ेस / पोज़ / फ़्रेम लॉक रहते हैं।",lbl_my_prompt:"म्यांमार PROMPT",lstage_model:"मॉडल",lstage_cam:"कैमरा",l_key:"की लाइट",l_fill:"फ़िल / फ्रंट",l_butterfly:"बटरफ़्लाई (ऊपर-सामने)",l_side:"साइड लाइट",l_rim:"रिम लाइट",l_back:"बैक लाइट",l_hair:"हेयर लाइट",l_bglight:"बैकग्राउंड लाइट",lt_softbox:"सॉफ्टबॉक्स",lt_octa:"ऑक्टा",lt_strip:"स्ट्रिप",lt_umbrella:"अम्ब्रेला",lt_beauty:"ब्यूटी",lt_hard:"हार्ड",li_int:"तीव्रता",li_angle:"कोण",li_height:"ऊँचाई",li_dist:"दूरी",li_size:"आकार",btn_lightgen:"लाइटिंग जनरेट करें",light_none:"पहले कम से कम एक लाइट ON करें",lg_equip:"फ़ोटो में लाइट उपकरण दिखाएँ (सॉफ्टबॉक्स / स्टैंड दिखें)",grp_chains:"स्टाइल चेन — ✓ स्टाइल मिलाएँ",chains_note:"कोई भी स्टाइल ON करें — वे हर Generate / प्रीसेट / रीटच में एक साथ मिल जाती हैं।",grp_restore:"पुरानी फ़ोटो बहाली",p_restore:"पुरानी फ़ोटो बहाली",rest_color:"पूर्ण रंगीन",rest_bw:"ब्लैक एंड व्हाइट",restore_note:"फटने, पानी / जलने के नुकसान और फीकेपन की मरम्मत करता है — हर मूल चेहरा 100% वैसा ही रहता है।",rt_browstyle:"आइब्रो स्टाइल",rt_lashstyle:"लैश स्टाइल",rt_blush:"ब्लश रंग",rt_contour:"कंटूर स्टाइल",rt_bust:"वक्ष",rt_butt:"नितंब",rt_thigh:"जाँघें",rt_calf:"पिंडलियाँ",rt_neck:"गर्दन",rt_fingers:"उँगलियाँ",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"म्यांमार prompt का अंग्रेज़ी में अनुवाद हो रहा है",live_trans:"लाइव ⇄ ऑटो-अनुवाद (EN ↔ MY, टाइपिंग रुकने के बाद)",st_retry:"फिर से कोशिश की जा रही है",grp_recipes:"रेसिपी — सेटिंग्स सेव / शेयर करें",recipe_note:"सब कुछ (चेन, रीटच, लाइटें, लॉक, prompt) एक ही .json रेसिपी में सेव करें — छात्र बस उसे लोड कर लें।",btn_recipe_save:"रेसिपी सेव करें",btn_recipe_load:"रेसिपी लोड करें",st_recipe_saved:"रेसिपी सेव हो गई ✓",st_recipe_loaded:"रेसिपी लोड हो गई ✓ — सभी कंट्रोल अपडेट हो गए",st_recipe_bad:"यह HNK रेसिपी फ़ाइल नहीं है",sec_final:"अंतिम Prompt (AI को भेजा जाता है)",btn_copy:"कॉपी करें",st_copied:"कॉपी हो गया ✓",hist_note:"इतिहास — पिछले 6 परिणाम, देखने के लिए टैप करें:",btn_hist_prompt:"→ Prompt",sec_batch:"बैच मोड",batch_note:"कई फ़ोटो + एक आउटपुट फ़ोल्डर चुनें — मौजूदा prompt, चेन, क्लीनअप और Keep लॉक हर फ़ोटो पर चलते हैं; परिणाम *_HNK.png के रूप में सेव होते हैं।",btn_batch:"बैच चलाएँ",btn_batch_stop:"रोकें",st_batch:"बैच",st_batch_done:"बैच पूरा हुआ",sec_web:"वेब AI — मिनी ब्राउज़र",web_note:"Photoshop के अंदर कोई भी वेब AI एडिटर खोलें। वहाँ जनरेट करें, फिर परिणाम को लेयर के रूप में लाएँ:",web_import_note:"इंपोर्ट: ① वेब ऐप में 'इमेज का पता कॉपी करें' उपयोग करें, फिर 'कॉपी किया लिंक इंपोर्ट करें' दबाएँ · ② या फ़ाइल डाउनलोड करके 'फ़ाइल इंपोर्ट करें' उपयोग करें · ③ HNK ब्रिज वाले पार्टनर वेब ऐप इमेज अपने आप भेज देते हैं।",btn_web_go:"जाएँ",btn_web_home:"होम",btn_web_reload:"रीलोड करें",btn_web_import_link:"कॉपी किया लिंक इंपोर्ट करें → PS",btn_web_import_file:"फ़ाइल इंपोर्ट करें → PS",st_web_import:"Photoshop में लेयर के रूप में इंपोर्ट हो गया ✓",st_web_nourl:"पहले इमेज लिंक कॉपी करें (राइट-क्लिक → इमेज का पता कॉपी करें)",st_web_fetch:"लिंक से इमेज लाई जा रही है",st_web_notallowed:"यह डोमेन allow-list में नहीं है — यह खाली रह सकता है। इसे जुड़वाने के लिए HNK से कहें।",st_need_doc:"पहले Photoshop में कोई फोटो डॉक्यूमेंट खोलें",sec_campro:"Camera Pro और क्वालिटी",autosave_lbl:"हर परिणाम का ऑटो-एक्सपोर्ट (PNG + prompt लॉग → फ़ोल्डर)",st_folder_ok:"एक्सपोर्ट फ़ोल्डर सेट हो गया ✓",st_exported:"एक्सपोर्ट हो गया ✓",st_export_fail:"एक्सपोर्ट विफल — फ़ोल्डर जाँचें",st_pro_fallback:"Pro मॉडल उपलब्ध नहीं — इस बार Flash पर स्विच किया गया",st_img_bad:"इमेज डेटा इंटीग्रिटी जाँच में विफल रहा — फोटो दोबारा जोड़ें",st_auto_comp:"ऑटो कंपोज़िट: IMAGE 1 सब्जेक्ट → रेफ़रेंस सीन",prov_lbl:"AI प्रोवाइडर",tab_create:"बनाएँ",create_note:"क्रिएट मोड — आपके prompt से बिल्कुल नई इमेज (+ इसके अपने 4 रेफ़)। पूरी तरह स्वतंत्र: डॉक्यूमेंट, प्रीसेट, चेन या लॉक कभी नहीं पढ़ता।",create_ph:"जो इमेज बनाना चाहते हैं उसका वर्णन करें…",btn_create_ps:"⬇ Photoshop में भेजें",btn_to_ref:"↺ Ref 1 के रूप में इस्तेमाल करें",st_to_ref:"परिणाम Ref 1 में लोड हो गया ✓",scope_create_note:"Setup के Model और Output से स्वतंत्र — ये सेटिंग्स सिर्फ़ Create के Generate पर लागू होती हैं।",cr_ratio:"अनुपात",cr_var:"वेरिएशन",cr_restyle:"♻ परिणाम को नया स्टाइल दें",cr_lib:"Prompt लाइब्रेरी — डालने के लिए टैप करें",cr_improve:"बेहतर बनाएँ",cr_describe:"Ref 1 का वर्णन → Prompt",st_describing:"रेफ़रेंस पढ़ा जा रहा है…",st_described:"Ref 1 से prompt तैयार हो गया ✓",st_need_ref1:"पहले Ref 1 में कोई इमेज जोड़ें",st_lib_added:"Prompt जोड़ा गया ✓",cr_refs:"रेफ़रेंस इमेज (अधिकतम 4)",cr_refs_note:"वैकल्पिक — Layer / File / Web से जोड़ें। Create सिर्फ़ वही लेता है जो आपका prompt माँगता है।",cr_results:"परिणाम",cr_gal_empty:"अभी कोई परिणाम नहीं — Generate टैप करें।",cr_gal_have:"परिणाम · प्रीव्यू / कार्रवाई के लिए थंबनेल टैप करें",cr_save:"⬇ PNG सेव करें",cr_engine:"इंजन",cr_need_result:"पहले कोई इमेज जनरेट करें",btn_web_import_url:"⬇ URL इंपोर्ट करें",st_clip_help:"क्लिपबोर्ड खाली/ब्लॉक है — लिंक को URL बार में पेस्ट करें, फिर ⬇ URL इंपोर्ट करें टैप करें",st_web_blob:"यह एक अस्थायी blob: लिंक है — राइट-क्लिक → Copy IMAGE Address इस्तेमाल करें, या फ़ाइल सेव करके Import File इस्तेमाल करें",err_key:"API key अमान्य — Setup टैब पर key दोबारा जाँचें · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"कोटा / रेट लिमिट — थोड़ा रुककर फिर कोशिश करें · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API के लिए इमेज बहुत बड़ी है — छोटा करके फिर कोशिश करें · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"सेफ़्टी फ़िल्टर ने रोका — prompt या फोटो बदलकर देखें · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"नेटवर्क / सर्वर समस्या — कृपया फिर कोशिश करें · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"अनुरोध का समय समाप्त — सर्वर ने बहुत देर लगाई; कृपया फिर कोशिश करें · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"अनुरोध पूरा नहीं हो सका — कृपया फिर कोशिश करें",err_img:"कोई उपयोगी इमेज नहीं बनी — कृपया फिर कोशिश करें",err_mode:"यह डॉक्यूमेंट RGB मोड में नहीं है — पहले कन्वर्ट करें (Image ▸ Mode ▸ RGB Color), फिर दोबारा कोशिश करें",cam_master:"कैमरा ब्लॉक ON — हर prompt के अंत में जोड़ा जाएगा",cam_body:"कैमरा बॉडी",cam_lens:"प्राइम लेंस (mm)",cam_f:"अपर्चर",cam_film:"फ़िल्म लुक",cam_bokeh:"बोकेह स्टाइल",cam_iso:"ISO",cam_k:"WB केल्विन",cam_note:"ब्लॉक ON करें, फिर सिर्फ़ ज़रूरी चीज़ें चुनें — – चिप्स चुप रहती हैं। सब कुछ अंतिम prompt के अंत में जुड़ता है।",ro_h_main:"रेफ़रेंस ऑप्स प्रो (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (महिला) · Ref2 = IMAGE 3 (पुरुष)। टारगेट चुनें, फिर कोई ऑप चलाएँ — जिनसे मेल नहीं है वे लोग कभी नहीं बदलते।",ro_target:"टारगेट:",ro_solo:"सोलो",ro_couple:"कपल",ro_family:"परिवार",ro_mk:"रेफ़ का मेकअप कॉपी करें",ro_hair:"रेफ़ का हेयरस्टाइल लें",ro_h_face:"फेस ऑप्स",ro_h_bg:"BG / FG ऑप्स",ro_h_sub:"सब्जेक्ट ऑप्स",ro_h_lc:"लाइट और कलर ऑप्स",ro_h_dress:"ड्रेस ऑप्स",ro_h_mk:"मेकअप ऑप्स",ro_h_match:"★ मास्टर मैच (एक जैसा लुक)",ro_match_note:"IMAGE 1 को रेफ़रेंस से मिलाएँ ताकि दोनों एक ही एडिट जैसे दिखें — जो मैच करना है उसे टिक करें:",m_color:"कलर",m_light:"लाइट",m_makeup:"मेकअप",m_skin:"स्किन रीटच",crd_pipe:"⛓ पाइपलाइन बिल्डर — कुछ भी चेन करें",pipe_note:"किन्हीं भी स्टेप्स को एक चेन में जोड़ें — हर स्टेप का परिणाम अगले स्टेप में जाता है। अधिकतम 6।",pipe_add:"+ जोड़ें",pipe_run:"▶ पाइपलाइन चलाएँ",pipe_clear:"साफ़ करें",pipe_retouch:"रीटच अप्लाई (मौजूदा स्लाइडर)",pipe_relight:"रीलाइट (मौजूदा लाइट रिग)",pipe_prompt:"Prompt (मौजूदा EN बॉक्स)",pipe_empty:"पहले कम से कम एक स्टेप जोड़ें",pipe_max:"पाइपलाइन भर गई है (अधिकतम 6 स्टेप)",st_pipe:"पाइपलाइन स्टेप",st_pipe_done:"पाइपलाइन पूरी हुई",st_pipe_stop:"पाइपलाइन रुक गई (एक स्टेप विफल हुआ)",pipe_merge:"⚡ वन-शॉट मर्ज — सारे स्टेप एक ही कॉल में (तेज़/सस्ता · ≤ 3 कामों के लिए सर्वोत्तम)",crd_chainsrest:"स्टाइल चेन + पुरानी फोटो रिस्टोर",crd_refops:"रेफ़रेंस ऑप्स प्रो (Ref1 / Ref2)",crd_scenes:"🎬 सीन प्रो — लॉक्ड सब्जेक्ट · मैचिंग सीन",scn_note:"अपने सब्जेक्ट को लॉक करें (चेहरा · पोज़ · ड्रेस · फ्रेम) और पूरा सीन उनके अनुसार दोबारा बनाएँ — लाइट, शैडो, कलर, बैकग्राउंड, फ़ोरग्राउंड और ऑब्जेक्ट सब अपने आप ढलकर असली फोटो जैसा लुक देते हैं।",scn_h_style:"सीन स्टाइल (इनडोर / सांस्कृतिक)",scn_h_bday:"🎂 जन्मदिन — उम्र का अंक 1–45",scn_h_cap:"कैप्शन / टेक्स्ट (बच्चा · Miss Universe · जन्मदिन)",scn_h_scarf:"आउटडोर / फ्लाइंग स्कार्फ़",scn_grad:"ग्रेजुएशन इनडोर",scn_prewed:"प्रीवेडिंग इनडोर",scn_vietnam:"वियतनाम",scn_myanmar:"म्यांमार",scn_chinese:"चीनी",scn_shan:"शान",scn_newborn:"नवजात / शिशु",scn_age:"उम्र",scn_bday_go:"🎂 जन्मदिन सीन",scn_cap_on:"कैप्शन टेक्स्ट जोड़ें",scn_cap_ph:"कैप्शन टेक्स्ट (जैसे Happy 1st Birthday, नाम)…",scn_cap_pos:"पोज़िशन",scn_top:"ऊपर",scn_bottom:"नीचे",scn_scarf:"✦ फ्लाइंग स्कार्फ़ सीन",scn_dir:"दिशा",scn_left:"बाएँ",scn_right:"दाएँ",scn_up:"ऊपर",scn_len:"लंबाई",scn_short:"छोटा",scn_long:"लंबा",g_cat_scene:"सीन ऑप — आपका सब्जेक्ट लॉक है (चेहरा · पोज़ · ड्रेस · फ्रेम); पूरा जनरेट किया गया सीन (लाइट, शैडो, कलर, बैकग्राउंड, फ़ोरग्राउंड, ऑब्जेक्ट, माहौल) असली फोटो जैसे कंपोज़िट के लिए सब्जेक्ट से अपने आप मैच किया जाता है।",crd_wed:"♥ वेडिंग प्रो सूट",crd_recipes:"रेसिपी — सेव / शेयर करें",learn_lbl:"🎓 लर्न मोड — पहला टैप = गाइड (पीला), दूसरा = prompt (नीला), तीसरा = रन (हरा)",guide_hint:"फिर टैप करें: पीला → नीला (prompt) → हरा (रन) ▶",g_learn_next_prompt:"फिर टैप करें → सटीक PROMPT दिखेगा (नीला)।",g_learn_prompt_head:"यह बटन जो PROMPT भेजेगा (फिर टैप = रन):",g_learn_next_run:"एक बार और टैप करें → रन (हरा) जनरेट करता है।",st_prompt_ready:"Prompt तैयार — चलाने के लिए फिर टैप करें (हरा) ✓",g_step_doc:"पहले Photoshop में अपना फोटो डॉक्यूमेंट खोलें।",g_step_ref1:"रेफ़रेंस इमेज को Ref1 में लोड करें (वह IMAGE 2 बन जाती है)। दूसरे व्यक्ति के लिए Ref2 जोड़ें।",g_step_target:"टारगेट चुनें: सोलो / कपल (Ref1 = महिला, Ref2 = पुरुष) / परिवार।",g_step_mkhair:"वैकल्पिक: फेस ऑप्स के ऊपर ‘रेफ़ का मेकअप कॉपी करें’ / ‘रेफ़ का हेयरस्टाइल लें’ टिक करें।",g_step_petal:"पहले पंखुड़ी का रंग चुनें (auto = आपके सीन से मैच)।",g_step_rest:"ऊपर दिए ✓ से फुल कलर या B&W चुनें।",g_step_int:"इंटेंसिटी स्लाइडर अपनी पसंद से सेट करें।",g_step_confirm:"आगे बढ़ने के लिए फिर टैप करें: गाइड (पीला) → PROMPT (नीला) → रन (हरा जनरेट करता है)।",g_cat_face:"फेस ऑप — रेफ़रेंस चेहरा मिलते-जुलते व्यक्ति पर ट्रांसफ़र करता है; बाकी सब जस के तस रहते हैं।",g_cat_sub:"सब्जेक्ट ऑप — रेफ़रेंस व्यक्ति को आपके सीन में लाता/ढालता है; सीन और फ्रेमिंग वही रहती है।",g_cat_bgfg:"BG/FG ऑप — रेफ़रेंस के आधार पर सिर्फ़ बैकग्राउंड / फ़ोरग्राउंड बदलता है।",g_cat_lc:"लाइट और कलर ऑप — रेफ़रेंस की लाइटिंग और ग्रेड कॉपी करता है; लोग पिक्सेल-दर-पिक्सेल वैसे ही रहते हैं।",g_cat_dress:"ड्रेस ऑप — रेफ़रेंस के आधार पर सिर्फ़ पोशाक बदलता है।",g_cat_mkop:"मेकअप ऑप — रेफ़रेंस के आधार पर सिर्फ़ मेकअप बदलता है।",g_cat_match:"मास्टर मैच — आपकी फोटो को रेफ़रेंस के पूरे लुक से मैच करता है (ऊपर की परतें टिक करें)।",g_cat_trail:"वेडिंग ट्रेल — लक्ज़री घास + बहती फूलों की राह; चेहरे/पोज़/फ्रेम पूरी तरह लॉक रहते हैं।",g_cat_veil:"फ्लाइंग वेल — इस लंबाई का हवा में उड़ता वेल जोड़ता/बढ़ाता है; चेहरा कभी नहीं ढकता।",g_cat_gown:"गाउन — मौजूदा गाउन साफ़ करता है (डिज़ाइन वही रहता है) और ट्रेन की यह लंबाई सेट करता है।",g_cat_petal:"फ्लाइंग पेटल्स — इस स्टाइल में हवा में पंखुड़ियाँ जोड़ता है; रंग ऊपर के स्वैच से।",g_cat_wedx:"वेडिंग एक्स्ट्रा — आपके सीन से मैच करता यह एलिमेंट जोड़ता है; सब्जेक्ट लॉक रहता है।",g_cat_canvas:"रिप्लेस (कैनवस) — आपके सब्जेक्ट को रेफ़रेंस के सीन में रखता है; रेफ़ के लोग हटा दिए जाते हैं।",g_cat_restore:"पुरानी फोटो रिस्टोर — नुक़सान की मरम्मत करता है; हर मूल चेहरा 100% वैसा ही रहता है।",g_cat_generic:"प्रीसेट — आपकी फोटो पर यह प्रोफ़ेशनल एडिट लागू करता है।",g_gen:"जनरेट — prompt बॉक्स (+ चेन, कीप्स, कैमरा ब्लॉक) आपके डॉक्यूमेंट पर चलाता है।",g_retouchbtn:"रीटच अप्लाई — आपकी सभी स्लाइडर सेटिंग्स को एक प्रोफ़ेशनल रीटच पास के रूप में चलाता है।",g_relightbtn:"लाइटिंग जनरेट — आपके 3D लाइट डायग्राम के हिसाब से फोटो को हूबहू रीलाइट करता है।",g_scene:"सीन जनरेट — निकाले गए prompt से सीन दोबारा बनाता है; सब्जेक्ट वही रहता है।",g_rmix:"रिप्लेस मिक्स — रेफ़रेंस से सिर्फ़ ✓ टिक किए गए हिस्से बदलता है।",g_pipe:"रन पाइपलाइन — हर चेन किया गया स्टेप क्रम से चलाता है; हर परिणाम अगले में जाता है।",ro_faceRep:"फेस रिप्लेस",ro_faceSwap:"फेस स्वैप",ro_bgRep:"BG रिप्लेस",ro_bgSwap:"BG स्वैप",ro_fgRep:"FG रिप्लेस",ro_bg_note:"Doc = सब्जेक्ट · Ref1 = नया सीन। Target (Solo/Couple/Family) तय करता है कि किसे रखा जाए।",ro_bg_frame:"फ़्रेम और कंपोज़िशन बनाए रखें",ro_bg_light:"सब्जेक्ट की रोशनी/रंग सुरक्षित रखें",ro_subSwap:"सब्जेक्ट स्वैप",ro_lcRef:"L&C रेफ़रेंस",ro_lcCopy:"L&C कॉपी-पेस्ट",ro_dressRef:"ड्रेस रेफ़रेंस",ro_dressRep:"ड्रेस रिप्लेस",ro_mkCopy:"मेकअप कॉपी",ro_matchBtn:"★ मास्टर मैच",grp_retouch:"स्किन रीटच प्रीसेट",lbl_intensity:"तीव्रता",p_evoto:"Evoto स्टाइल",p_meitu:"Meitu स्टाइल",auto_place:"परिणाम को नई लेयर के रूप में Photoshop में अपने-आप रखें",sec_retouchpro:"रीटच प्रो — स्लाइडर",rt_skin:"स्किन",rt_faceai:"फ़ेस AI",rt_hair:"बाल",rt_dress:"ड्रेस",rt_bg:"बैकग्राउंड",rt_smooth:"स्किन स्मूद",rt_acne:"मुँहासे हटाएँ",rt_spots:"काले धब्बे",rt_wrinkle:"झुर्रियाँ",rt_tone:"गोरापन / टैन",rt_glow:"ग्लो",rt_reshape:"AI रीशेप",rt_lash:"पलकें",rt_brow:"भौंहें",rt_lipsmooth:"होंठ स्मूद",rt_lipcolor:"होंठों का रंग",rt_lenscolor:"लेंस का रंग",rt_hairstray:"बिखरे बाल",rt_hairsmooth:"बाल स्मूद",rt_hairshine:"बालों की चमक (D&B)",rt_dresssmooth:"कपड़ा स्मूद",rt_dressedge:"किनारों की सफ़ाई",rt_dresswrinkle:"सिलवटें हटाएँ",rt_dresstexture:"टेक्सचर वापस लाएँ",rt_bgsmooth:"BG साफ़/स्मूद",rt_bgcolor:"BG रंग",rt_bgrecolor:"BG रंग स्मूद",rt_shape:"रीशेप प्रो (चेहरा + शरीर)",rt_teeth:"दाँत सफ़ेद करें",rt_eyewhite:"आँखों की सफ़ेदी साफ़",rt_faceslim:"चेहरा स्लिम",rt_jaw:"जॉलाइन",rt_chin:"ठोड़ी",rt_nosesize:"नाक का आकार",rt_eyesize:"आँखों का आकार",rt_lipfull:"भरे होंठ",rt_waist:"कमर स्लिम",rt_bodyslim:"बॉडी स्लिम",rt_shoulder:"कंधे",rt_hip:"हिप स्लिम",rt_leglen:"टाँगों की लंबाई",rt_armslim:"बाँह स्लिम",rt_dressfit:"ड्रेस फ़िट",rt_dressclean:"ड्रेस साफ़",rt_dresscolorpure:"ड्रेस का शुद्ध रंग",rt_bodygrp:"बॉडी स्किन प्रो",rt_bodysmooth:"बॉडी स्किन स्मूद",rt_bodyblemish:"बॉडी दाग़-धब्बे साफ़",rt_bodytone:"बॉडी एक-सा टोन",rt_bodyglow:"बॉडी ग्लो",rt_bodyhairrm:"शरीर के बाल कम करें",rt_hairvolume:"बालों का वॉल्यूम",rt_hairgloss:"हेयर ग्लॉस",rt_hairfill:"हेयर फ़िल (पतले हिस्से)",wp_h_trail:"♥ वेडिंग — लक्ज़री फ्लावर ट्रेल",wp_h_veil:"♥ वेडिंग — उड़ता वेल",wp_h_gown:"♥ वेडिंग — गाउन क्लीन + ट्रेन",wp_h_petal:"♥ वेडिंग — उड़ती पंखुड़ियाँ",wp_h_extra:"♥ वेडिंग — घोड़ा · पानी · मूड",wp_note:"फ़ेस ID / पोज़ / फ़्रेम / ड्रेस डिज़ाइन पूरी तरह लॉक हैं — केवल चुना गया तत्व ही बदलता है।",wp_petalcolor:"पंखुड़ी का रंग (auto = सीन से मेल)",wp_trail_c:"फूल का रंग",wp_trail_go:"▶ फ्लावर ट्रेल",wp_veil_c:"वेल की लंबाई",wp_veil_go:"▶ उड़ता वेल",wp_gown_c:"ट्रेन की लंबाई",wp_gown_go:"▶ गाउन क्लीन + ट्रेन",wp_pet_c:"पंखुड़ी की शैली",wp_pet_go:"▶ उड़ती पंखुड़ियाँ",wp_extra_c:"अतिरिक्त",wp_extra_go:"▶ अतिरिक्त जोड़ें",btn_apply_rt:"रीटच लागू करें",btn_reset:"रीसेट",rt_none:"पहले कम से कम एक रीटच स्लाइडर या रंग सेट करें",tab_setup:"सेटअप",tab_prompt:"स्टूडियो",tab_presets:"प्रीसेट",recent_lbl:"हाल के prompts…",tab_retouch:"रीटच",tab_aitools:"AI टूल्स",cap_warn:"Photoshop इस prompt बॉक्स की सीमा रखता है:",cleanup_note:"टिक किए गए आइटम हर जनरेट / प्रीसेट के साथ चलते हैं।",btn_generate:"बनाएँ",st_ready:"तैयार",st_capture:"दस्तावेज़ कैप्चर हो रहा है",st_gen:"जनरेट हो रहा है…",st_place:"Photoshop में रखा जा रहा है…",st_placed_masked:"लेयर + मास्क ग्रुप के रूप में रखा गया — मूल छवि ज्यों की त्यों ✓",st_placed_plain:"सादी लेयर के रूप में रखा गया (इस होस्ट पर मास्क/ग्रुप उपलब्ध नहीं)",stage_queued:"कतार में",stage_uploading:"अपलोड हो रहा है",stage_generating:"जनरेट हो रहा है",stage_downloading:"डाउनलोड हो रहा है",stage_placing:"रखा जा रहा है",st_done:"हो गया ✓",st_err:"त्रुटि",st_no_doc:"कोई सक्रिय दस्तावेज़ नहीं — पहले कोई फ़ोटो खोलें",st_no_prompt:"Prompt खाली है",need_ref:"इस प्रीसेट के लिए स्लॉट 1 में रेफ़रेंस इमेज चाहिए",st_new_doc:"परिणाम नए दस्तावेज़ के रूप में खुल गया ✓",sec_preview:"पूर्वावलोकन — पहले / बाद",before:"पहले",after:"बाद",btn_place:"Photoshop में रखें",btn_saveas:"इस रूप में सहेजें…",st_saved:"सहेजा गया ✓",sec_diag:"सिस्टम जाँच",sec_log:"गतिविधि लॉग",btn_diag:"जाँच चलाएँ",btn_copylog:"लॉग कॉपी करें",btn_clearlog:"साफ़ करें",diag_host:"Photoshop होस्ट",diag_uxp:"UXP क्षमताएँ",diag_rh:"RunningHub Enterprise key",diag_doc:"सक्रिय दस्तावेज़",diag_set:"सेट है",diag_unset:"सेट नहीं",diag_open:"खुला है",diag_none:"कोई खुला नहीं",diag_missing:"अनुपलब्ध",diag_done:"सिस्टम जाँच पूरी ✓",diag_lib:"रेफ़रेंस लाइब्रेरी",diag_lib_open:"फ़ोल्डर खोलने की क्षमता",sec_reflib:"रेफ़रेंस इमेज लाइब्रेरी",reflib_note:"अपनी पसंदीदा रेफ़रेंस इमेज का फ़ोल्डर एक बार चुनें — ब्राउज़ इसे याद रखता है और हर जगह इसी में खुलता है।",btn_browse:"ब्राउज़ करें",lib_choose:"फ़ोल्डर चुनें",lib_open:"फ़ोल्डर खोलें",lib_change:"फ़ोल्डर बदलें",lib_reset:"रीसेट",lib_rescan:"फिर स्कैन करें",lib_current:"वर्तमान फ़ोल्डर",lib_found:"इमेज मिलीं",lib_status:"स्थिति",lib_lastscan:"अंतिम स्कैन",lib_images:"इमेज",lib_connected:"कनेक्टेड",lib_not_config:"कॉन्फ़िगर नहीं",lib_perm_lost:"अनुमति खो गई — फिर से चुनें",lib_none:"(कोई फ़ोल्डर चयनित नहीं)",lib_copy_only:"केवल पथ कॉपी करें",lib_choose_msg:"अपना HNK रेफ़रेंस इमेज लाइब्रेरी फ़ोल्डर चुनें।",lib_scanning:"लाइब्रेरी स्कैन हो रही है…",lib_scan_done:"री-स्कैन पूरा ✓",lib_reset_done:"लाइब्रेरी रीसेट हो गई ✓",lib_path_copied:"पथ कॉपी हुआ",lib_unsupported:"असमर्थित इमेज प्रकार",lib_restore_fail:"रेफ़रेंस पुनर्स्थापित नहीं हो सका",on:"चालू",off:"बंद"},
+ja:{tab_setup:"設定",tab_prompt:"スタジオ",tab_presets:"プリセット",tab_retouch:"レタッチ",tab_aitools:"AIツール",tab_create:"作成",btn_generate:"生成",st_ready:"準備完了",st_done:"完了 ✓",st_need_key:"先に RunningHub Enterprise key を入力してください",btn_show:"表示",btn_hide:"隠す",btn_save:"保存",btn_test:"キーをテスト",btn_clear:"クリア",btn_cancel:"キャンセル",btn_load:"読み込み",btn_paste:"貼り付け",btn_improve:"プロンプト改善",lbl_ratio:"比率",lbl_size:"サイズ",lbl_quality:"品質"},
+km:{tab_setup:"រៀបចំ",tab_prompt:"ស្ទូឌីយោ",tab_presets:"ព្រីសេត",tab_retouch:"រីតាច់",tab_aitools:"ឧបករណ៍ AI",tab_create:"បង្កើត",btn_generate:"បង្កើត",st_ready:"រួចរាល់",st_done:"រួចរាល់ហើយ ✓",st_need_key:"សូមបញ្ចូល RunningHub Enterprise key ជាមុន",btn_show:"បង្ហាញ",btn_hide:"លាក់",btn_save:"រក្សាទុក",btn_test:"សាកល្បង Key",btn_clear:"លុប",btn_cancel:"បោះបង់",btn_load:"ផ្ទុក",btn_paste:"បិទភ្ជាប់",btn_improve:"កែលម្អ Prompt",lbl_ratio:"សមាមាត្រ",lbl_size:"ទំហំ",lbl_quality:"គុណភាព"},
+kn:{tab_setup:"ಸೆಟಪ್",tab_prompt:"ಸ್ಟುಡಿಯೋ",tab_presets:"ಪ್ರೀಸೆಟ್",tab_retouch:"ರೀಟಚ್",tab_aitools:"AI ಟೂಲ್ಸ್",tab_create:"ರಚಿಸಿ",btn_generate:"ರಚಿಸಿ",st_ready:"ಸಿದ್ಧ",st_done:"ಮುಗಿದಿದೆ ✓",st_need_key:"ಮೊದಲು RunningHub Enterprise key ಹಾಕಿ",btn_show:"ತೋರಿಸಿ",btn_hide:"ಮರೆಮಾಡಿ",btn_save:"ಉಳಿಸಿ",btn_test:"Key ಪರೀಕ್ಷಿಸಿ",btn_clear:"ಅಳಿಸಿ",btn_cancel:"ರದ್ದು",btn_load:"ಲೋಡ್",btn_paste:"ಪೇಸ್ಟ್",btn_improve:"Prompt ಸುಧಾರಿಸಿ",lbl_ratio:"ಅನುಪಾತ",lbl_size:"ಗಾತ್ರ",lbl_quality:"ಗುಣಮಟ್ಟ"},
+ko:{tab_setup:"설정",tab_prompt:"스튜디오",tab_presets:"프리셋",tab_retouch:"리터치",tab_aitools:"AI 도구",tab_create:"만들기",btn_generate:"생성",st_ready:"준비 완료",st_done:"완료 ✓",st_need_key:"먼저 RunningHub Enterprise key를 입력하세요",btn_show:"보기",btn_hide:"숨기기",btn_save:"저장",btn_test:"키 테스트",btn_clear:"지우기",btn_cancel:"취소",btn_load:"불러오기",btn_paste:"붙여넣기",btn_improve:"프롬프트 개선",lbl_ratio:"비율",lbl_size:"크기",lbl_quality:"품질"},
+lo:{tab_setup:"ຕັ້ງຄ່າ",tab_prompt:"ສະຕູດິໂອ",tab_presets:"ພຣີເຊັດ",tab_retouch:"ຣີທັດ",tab_aitools:"ເຄື່ອງມື AI",tab_create:"ສ້າງ",btn_generate:"ສ້າງພາບ",st_ready:"ພ້ອມ",st_done:"ສຳເລັດ ✓",st_need_key:"ກະລຸນາໃສ່ RunningHub Enterprise key ກ່ອນ",btn_show:"ສະແດງ",btn_hide:"ເຊື່ອງ",btn_save:"ບັນທຶກ",btn_test:"ທົດສອບ Key",btn_clear:"ລຶບ",btn_cancel:"ຍົກເລີກ",btn_load:"ໂຫຼດ",btn_paste:"ວາງ",btn_improve:"ປັບປຸງ Prompt",lbl_ratio:"ອັດຕາສ່ວນ",lbl_size:"ຂະໜາດ",lbl_quality:"ຄຸນນະພາບ"},
+ml:{tab_setup:"സെറ്റപ്പ്",tab_prompt:"സ്റ്റുഡിയോ",tab_presets:"പ്രീസെറ്റ്",tab_retouch:"റീടച്ച്",tab_aitools:"AI ടൂളുകൾ",tab_create:"സൃഷ്ടിക്കുക",btn_generate:"സൃഷ്ടിക്കുക",st_ready:"തയ്യാർ",st_done:"കഴിഞ്ഞു ✓",st_need_key:"ആദ്യം RunningHub Enterprise key ചേർക്കുക",btn_show:"കാണിക്കുക",btn_hide:"മറയ്ക്കുക",btn_save:"സേവ്",btn_test:"Key പരിശോധിക്കുക",btn_clear:"മായ്ക്കുക",btn_cancel:"റദ്ദാക്കുക",btn_load:"ലോഡ്",btn_paste:"പേസ്റ്റ്",btn_improve:"Prompt മെച്ചപ്പെടുത്തുക",lbl_ratio:"അനുപാതം",lbl_size:"വലുപ്പം",lbl_quality:"നിലവാരം"},
+mr:{tab_setup:"सेटअप",tab_prompt:"स्टुडिओ",tab_presets:"प्रीसेट",tab_retouch:"रीटच",tab_aitools:"AI साधने",tab_create:"तयार करा",btn_generate:"तयार करा",st_ready:"तयार",st_done:"झाले ✓",st_need_key:"आधी RunningHub Enterprise key टाका",btn_show:"दाखवा",btn_hide:"लपवा",btn_save:"जतन करा",btn_test:"Key तपासा",btn_clear:"काढा",btn_cancel:"रद्द",btn_load:"लोड",btn_paste:"पेस्ट",btn_improve:"Prompt सुधारा",lbl_ratio:"गुणोत्तर",lbl_size:"आकार",lbl_quality:"गुणवत्ता"},
+ne:{tab_setup:"सेटअप",tab_prompt:"स्टुडियो",tab_presets:"प्रिसेट",tab_retouch:"रिटच",tab_aitools:"AI उपकरण",tab_create:"बनाउनुहोस्",btn_generate:"बनाउनुहोस्",st_ready:"तयार",st_done:"भयो ✓",st_need_key:"पहिले RunningHub Enterprise key राख्नुहोस्",btn_show:"देखाउनुहोस्",btn_hide:"लुकाउनुहोस्",btn_save:"सेभ",btn_test:"Key जाँच",btn_clear:"हटाउनुहोस्",btn_cancel:"रद्द",btn_load:"लोड",btn_paste:"पेस्ट",btn_improve:"Prompt सुधार्नुहोस्",lbl_ratio:"अनुपात",lbl_size:"आकार",lbl_quality:"गुणस्तर"},
+pa:{tab_setup:"ਸੈੱਟਅੱਪ",tab_prompt:"ਸਟੂਡੀਓ",tab_presets:"ਪ੍ਰੀਸੈੱਟ",tab_retouch:"ਰੀਟੱਚ",tab_aitools:"AI ਟੂਲ",tab_create:"ਬਣਾਓ",btn_generate:"ਬਣਾਓ",st_ready:"ਤਿਆਰ",st_done:"ਹੋ ਗਿਆ ✓",st_need_key:"ਪਹਿਲਾਂ RunningHub Enterprise key ਪਾਓ",btn_show:"ਦਿਖਾਓ",btn_hide:"ਲੁਕਾਓ",btn_save:"ਸੰਭਾਲੋ",btn_test:"Key ਪਰਖੋ",btn_clear:"ਹਟਾਓ",btn_cancel:"ਰੱਦ ਕਰੋ",btn_load:"ਲੋਡ",btn_paste:"ਪੇਸਟ",btn_improve:"Prompt ਸੁਧਾਰੋ",lbl_ratio:"ਅਨੁਪਾਤ",lbl_size:"ਆਕਾਰ",lbl_quality:"ਗੁਣਵੱਤਾ"},
+ta:{app_title:"HNK Photoshop Ai பேனல் (மாணவர்கள்)",sec_api:"RunningHub Enterprise Key",btn_show:"காட்டு",btn_hide:"மறை",btn_test:"Key சோதி",btn_save:"சேமி",st_testing:"Key சோதிக்கப்படுகிறது",st_key_ok:"✓ API key வேலை செய்கிறது",st_key_bad:"API key செயல்படவில்லை",st_key_saved:"API key சேமிக்கப்பட்டது ✓",st_need_key:"முதலில் RunningHub Enterprise key சேர்க்கவும்",sec_model:"மாடல் & வெளியீடு",scope_model_note:"கீழே உள்ள Prompt தாவலின் Generate பொத்தானுக்கு மட்டுமே இது பயன்படும் — Create மற்றும் AI Tools ஒவ்வொன்றுக்கும் தனித்தனி மாடல் அமைப்புகள் உள்ளன.",model_auto:"ஆட்டோ (பரிந்துரைக்கப்படுகிறது)",model_flash:"Flash — வேகமானது (2.5)",model_pro:"Pro — தரமானது (3.0)",lbl_ratio:"விகிதம்",ratio_auto:"ஆட்டோ விகிதம் (ஆவணத்திலிருந்து)",lbl_size:"அளவு",lbl_quality:"தரம்",qual_auto:"ஆட்டோ",qual_low:"குறைவு",qual_med:"நடுத்தரம்",qual_high:"உயர்",sec_prompt:"Prompt",hint_prompt:"உங்கள் prompt-ஐ இங்கே தட்டச்சு செய்யவும்… (அதிகபட்சம் 20,000 எழுத்துகள்)",btn_improve:"Prompt மேம்படுத்து",btn_clear:"அழி",st_improving:"Prompt மேம்படுத்தப்படுகிறது",st_improved:"Prompt மேம்படுத்தப்பட்டது ✓",sec_refs:"ரெஃபரன்ஸ் படங்கள் (2 இடங்கள்)",base_note:"அடிப்படைப் படம் = செயலில் உள்ள உங்கள் Photoshop ஆவணம் (தானாகவே எடுக்கப்படும்).",btn_ref_layer:"+ லேயர்",btn_ref_file:"கோப்பு",btn_ref_web:"வெப்",st_ref_layer_added:"லேயர் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_ref_file_added:"கோப்பு ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_importing:"கோப்பு இறக்குமதியாகிறது",url_title:"URL-இலிருந்து ரெஃபரன்ஸ் — Chrome / Pinterest",url_ph:"https://… படத்தின் முகவரி அல்லது Pinterest pin இணைப்பு",btn_paste:"ஒட்டு",btn_load:"ஏற்று",btn_cancel:"ரத்து",st_url_loading:"வெப் படம் பதிவிறக்கப்படுகிறது",st_ref_web_added:"வெப் படம் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_url_bad:"இந்த URL-இலிருந்து படத்தை ஏற்ற முடியவில்லை — படத்தின் முகவரியை நகலெடுத்து மீண்டும் முயற்சிக்கவும்",no_layer:"லேயர் எதுவும் தேர்ந்தெடுக்கப்படவில்லை",sec_presets:"AI ப்ரீசெட்கள்",auto_run:"ப்ரீசெட் கிளிக் → தானாக Generate (OFF = prompt-இல் மட்டும் சேர்க்கும்)",grp_cleanup:"சுத்தம் செய்யும் கருவிகள்",p_remove_people:"நபர்களை நீக்கு",p_fix_hands:"கூடுதல் கைகளைச் சரிசெய்",p_fix_legs:"கூடுதல் கால்களைச் சரிசெய்",p_full_clean:"முழு சுத்தம்",grp_moved_note:"ரெஃபரன்ஸ் கருவிகள் இப்போது கீழே உள்ள Reference Ops Pro கார்டில் உள்ளன (ஒரே இடத்தில் — தனிநபர்/ஜோடி/குடும்பம் + வழிகாட்டிகளுடன்).",ro_h_detail:"முடி · அணிகலன்கள் · போஸ் (← Ref1)",ro_h_comp:"காம்போசிட் · ஸ்டைல் · உரை (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"ஹேர்ஸ்டைல் (← Ref1)",p_access:"நகைகள்+அணிகலன்கள் (← Ref1)",p_pose:"போஸ் பொருத்தம் (Doc → Ref1)",p_fgprops:"FG ப்ராப்ஸ் (← Ref1)",p_textlogo:"உரை / லோகோ (← Ref1)",p_style:"புகைப்பட ஸ்டைல் (← Ref1)",grp_repsubj:"சப்ஜெக்ட்டை மாற்று (Doc → Ref1 காட்சி)",p_rep_solo:"தனிநபரை மாற்று",p_rep_couple:"ஜோடியை மாற்று",p_rep_family:"குடும்பத்தை மாற்று",grp_rmix:"Replace Mix — டிக் செய்து Ref1-இலிருந்து எடு",rm_bg:"பின்னணி (BG)",rm_fg:"முன்னணி (FG)",rm_light:"ஒளியமைப்பு",rm_color:"நிறம்",rm_object:"பொருட்கள் / ப்ராப்ஸ்",btn_rmix:"REPLACE GENERATE",rm_none:"முதலில் குறைந்தது ஒரு அம்சத்தையாவது டிக் செய்யவும்",grp_i2p:"படம் → Prompt (காட்சி உருவாக்கி)",i2p_note:"1) Extract: Ref1 காட்சி → விரிவான உரை prompt (நபர்கள் நீங்கலாக). 2) அதை Prompt பக்கத்தில் திருத்தவும். 3) SCENE GENERATE அதை உங்கள் ஆவணத்தின் சப்ஜெக்ட்டைச் சுற்றி உருவாக்கும் — எந்தக் கோணத்திற்கும் தானாகப் பொருந்தும். முகம்/போஸ்/ஃப்ரேம் பூட்டுகள் = அசல் அப்படியே.",i2p_objects:"பொருட்கள் & ப்ராப்ஸ் விவரம்",i2p_light:"ஒளியமைப்பு விவரம்",i2p_color:"நிறம் / கிரேடு விவரம்",i2p_bg:"பின்னணி விவரம்",i2p_fg:"முன்னணி விவரம்",btn_i2p:"படம் → Prompt (காட்சியைப் பிரித்தெடு)",i2p_fit:"காட்சி ஆட்டோ-பொருத்தம் — ஆவணத்தின் கோணம் / தூரம் / லென்ஸுக்கு ஏற்பக் காட்சியை மறு-அமைக்கும்",i2p_adapt:"சப்ஜெக்ட்டின் ஒளி & நிறத்தைக் காட்சிக்கு ஏற்ப மாற்று",btn_scenegen:"SCENE GENERATE",st_extract:"காட்சி prompt-ஆகப் பிரித்தெடுக்கப்படுகிறது",st_extract_done:"காட்சி prompt தயார் — Prompt பக்கத்தில் சரிபார்க்கவும்",scene_no_prompt:"Prompt பெட்டி காலியாக உள்ளது — முதலில் படம் → Prompt-ஐ இயக்கவும்",i2p_none:"முதலில் குறைந்தது ஒரு விவர அம்சத்தையாவது டிக் செய்யவும்",sec_light:"ஸ்டுடியோ லைட்டிங் — AI Relight",light_note:"விளக்குகளை ON செய்யவும், ஒரு வரிசையைத் தட்டித் தேர்வு செய்யவும், ஸ்லைடர்களால் வடிவமைக்கவும் — 3D மேல்-பார்வை வரைபடம் நேரடியாக மாறும் (▴ = உயரம், ▾ = தாழ்வு). LIGHTING GENERATE உங்கள் ஆவணத்தை இந்த அமைப்புக்கு ஏற்பத் துல்லியமாக மறு-ஒளியூட்டும்; முகம் / போஸ் / ஃப்ரேம் பூட்டப்பட்டே இருக்கும்.",lbl_my_prompt:"மியான்மர் PROMPT",lstage_model:"மாடல்",lstage_cam:"கேம்",l_key:"கீ லைட்",l_fill:"ஃபில் / முன்",l_butterfly:"பட்டர்ஃபிளை (மேல்-முன்)",l_side:"சைட் லைட்",l_rim:"ரிம் லைட்",l_back:"பேக் லைட்",l_hair:"ஹேர் லைட்",l_bglight:"பின்னணி லைட்",lt_softbox:"சாஃப்ட்பாக்ஸ்",lt_octa:"ஆக்டா",lt_strip:"ஸ்ட்ரிப்",lt_umbrella:"அம்ப்ரெல்லா",lt_beauty:"பியூட்டி",lt_hard:"ஹார்ட்",li_int:"தீவிரம்",li_angle:"கோணம்",li_height:"உயரம்",li_dist:"தூரம்",li_size:"அளவு",btn_lightgen:"LIGHTING GENERATE",light_none:"முதலில் குறைந்தது ஒரு விளக்கையாவது ON செய்யவும்",lg_equip:"புகைப்படத்தில் லைட் உபகரணங்களைக் காட்டு (சாஃப்ட்பாக்ஸ் / ஸ்டாண்டுகள் தெரியும்)",grp_chains:"ஸ்டைல் செயின்கள் — ✓ ஸ்டைல்களை இணை",chains_note:"எந்த ஸ்டைல்களையும் ON செய்யலாம் — அவை ஒவ்வொரு Generate / ப்ரீசெட் / ரீடச்சிலும் ஒன்றாகக் கலந்து சேரும்.",grp_restore:"பழைய புகைப்பட மீட்டெடுப்பு",p_restore:"பழைய புகைப்பட மீட்டெடுப்பு",rest_color:"முழு வண்ணம்",rest_bw:"கருப்பு & வெள்ளை",restore_note:"கிழிசல்கள், நீர் / தீக்காயச் சேதம், மங்கல் ஆகியவற்றைச் சரிசெய்யும் — ஒவ்வொரு அசல் முகத்தையும் 100% அப்படியே வைத்திருக்கும்.",rt_browstyle:"புருவ ஸ்டைல்",rt_lashstyle:"இமை ஸ்டைல்",rt_blush:"ப்ளஷ் நிறம்",rt_contour:"கான்டூர் ஸ்டைல்",rt_bust:"மார்பு",rt_butt:"பிட்டம்",rt_thigh:"தொடைகள்",rt_calf:"கெண்டைக்கால்கள்",rt_neck:"கழுத்து",rt_fingers:"விரல்கள்",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"மியான்மர் prompt ஆங்கிலத்தில் மொழிபெயர்க்கப்படுகிறது",live_trans:"Live ⇄ தானியங்கு மொழிபெயர்ப்பு (EN ↔ MY, தட்டச்சை நிறுத்திய பிறகு)",st_retry:"மீண்டும் முயற்சிக்கப்படுகிறது",grp_recipes:"ரெசிபிகள் — அமைப்புகளைச் சேமி / பகிர்",recipe_note:"எல்லாவற்றையும் (செயின்கள், ரீடச், லைட்கள், Keep பூட்டுகள், prompt-கள்) ஒரே .json ரெசிபியாகச் சேமிக்கவும் — மாணவர்கள் அதை Load செய்தால் போதும்.",btn_recipe_save:"ரெசிபியைச் சேமி",btn_recipe_load:"ரெசிபியை ஏற்று",st_recipe_saved:"ரெசிபி சேமிக்கப்பட்டது ✓",st_recipe_loaded:"ரெசிபி ஏற்றப்பட்டது ✓ — எல்லா கட்டுப்பாடுகளும் புதுப்பிக்கப்பட்டன",st_recipe_bad:"இது HNK ரெசிபி கோப்பு அல்ல",sec_final:"இறுதி Prompt (AI-க்கு அனுப்பப்படுவது)",btn_copy:"நகலெடு",st_copied:"நகலெடுக்கப்பட்டது ✓",hist_note:"வரலாறு — கடைசி 6 முடிவுகள், பார்க்கத் தட்டவும்:",btn_hist_prompt:"→ Prompt",sec_batch:"பேட்ச் பயன்முறை",batch_note:"பல புகைப்படங்களையும் + ஒரு அவுட்புட் கோப்புறையையும் தேர்வு செய்யவும் — தற்போதைய prompt, செயின்கள், சுத்தம் மற்றும் Keep பூட்டுகள் ஒவ்வொரு புகைப்படத்திலும் இயங்கும்; முடிவுகள் *_HNK.png ஆகச் சேமிக்கப்படும்.",btn_batch:"பேட்ச்சை இயக்கு",btn_batch_stop:"நிறுத்து",st_batch:"பேட்ச்",st_batch_done:"பேட்ச் முடிந்தது",sec_web:"வெப் AI — மினி பிரவுசர்",web_note:"எந்த வெப் AI எடிட்டரையும் Photoshop-க்குள்ளேயே திறக்கலாம். அங்கே உருவாக்கிய பிறகு, முடிவை லேயராகக் கொண்டு வரலாம்:",web_import_note:"இறக்குமதி: ① வெப் ஆப்பில் Copy image address (படத்தின் முகவரியை நகலெடு) பயன்படுத்தி, பிறகு 'நகலெடுத்த இணைப்பை இறக்குமதி' · ② அல்லது கோப்பைப் பதிவிறக்கி 'கோப்பை இறக்குமதி' பயன்படுத்தவும் · ③ HNK bridge உள்ள கூட்டாளர் வெப் ஆப்கள் படங்களைத் தானாகவே அனுப்பும்.",btn_web_go:"செல்",btn_web_home:"முகப்பு",btn_web_reload:"மீண்டும் ஏற்று",btn_web_import_link:"நகலெடுத்த இணைப்பை இறக்குமதி → PS",btn_web_import_file:"கோப்பை இறக்குமதி → PS",st_web_import:"Photoshop-இல் லேயராக இறக்குமதி செய்யப்பட்டது ✓",st_web_nourl:"முதலில் படத்தின் இணைப்பை நகலெடுக்கவும் (வலது-கிளிக் → Copy image address)",st_web_fetch:"இணைப்பிலிருந்து படத்தைப் பெறுகிறது",st_web_notallowed:"இந்த டொமைன் அனுமதிப் பட்டியலில் இல்லை — வெறுமையாக இருக்கலாம். இதைச் சேர்க்க HNK-ஐக் கேளுங்கள்.",st_need_doc:"முதலில் Photoshop-இல் ஒரு புகைப்பட ஆவணத்தைத் திறக்கவும்",sec_campro:"கேமரா Pro & தரம்",autosave_lbl:"ஒவ்வொரு முடிவையும் தானாக ஏற்றுமதி செய் (PNG + prompt பதிவு → கோப்புறை)",st_folder_ok:"ஏற்றுமதி கோப்புறை அமைக்கப்பட்டது ✓",st_exported:"ஏற்றுமதி செய்யப்பட்டது ✓",st_export_fail:"ஏற்றுமதி தோல்வி — கோப்புறையைச் சரிபார்க்கவும்",st_pro_fallback:"Pro மாடல் கிடைக்கவில்லை — இந்த முறைக்கு Flash-க்கு மாற்றப்பட்டது",st_img_bad:"படத் தரவு ஒருமைப்பாடு சரிபார்ப்பில் தோல்வி — புகைப்படத்தை மீண்டும் சேர்க்கவும்",st_auto_comp:"தானியங்கு காம்போசிட்: IMAGE 1 சப்ஜெக்ட் → ரெஃபரன்ஸ் காட்சி",prov_lbl:"AI வழங்குநர்",tab_create:"உருவாக்கு",create_note:"CREATE பயன்முறை — உங்கள் prompt-இலிருந்து முற்றிலும் புதிய படம் (+ அதற்கென 4 ரெஃப்கள்). முழுவதும் தனித்தியங்கும்: ஆவணம், ப்ரீசெட்கள், செயின்கள் அல்லது லாக்குகள் எதையும் படிக்காது.",create_ph:"உருவாக்க விரும்பும் படத்தை விவரிக்கவும்…",btn_create_ps:"⬇ Photoshop-க்கு அனுப்பு",btn_to_ref:"↺ Ref 1 ஆகப் பயன்படுத்து",st_to_ref:"முடிவு Ref 1-இல் ஏற்றப்பட்டது ✓",scope_create_note:"Setup-இன் Model & Output அமைப்புகளிலிருந்து தனித்தது — இவை Create-இன் Generate-க்கு மட்டுமே பொருந்தும்.",cr_ratio:"விகிதம்",cr_var:"மாறுபாடுகள்",cr_restyle:"♻ முடிவை மறுஸ்டைல் செய்",cr_lib:"Prompt நூலகம் — சேர்க்கத் தட்டவும்",cr_improve:"மேம்படுத்து",cr_describe:"Ref 1-ஐ விவரி → Prompt",st_describing:"ரெஃபரன்ஸைப் படிக்கிறது…",st_described:"Ref 1-இலிருந்து prompt எழுதப்பட்டது ✓",st_need_ref1:"முதலில் Ref 1-இல் ஒரு படத்தைச் சேர்க்கவும்",st_lib_added:"Prompt சேர்க்கப்பட்டது ✓",cr_refs:"ரெஃபரன்ஸ் படங்கள் (அதிகபட்சம் 4)",cr_refs_note:"விருப்பத்தேர்வு — Layer / File / Web மூலம் சேர்க்கவும். உங்கள் prompt கேட்பதை மட்டுமே Create எடுத்துக்கொள்ளும்.",cr_results:"முடிவுகள்",cr_gal_empty:"இன்னும் முடிவுகள் இல்லை — Generate-ஐத் தட்டவும்.",cr_gal_have:"முடிவு(கள்) · முன்னோட்டம் காண / செயல்படுத்த ஒரு சிறுபடத்தைத் தட்டவும்",cr_save:"⬇ PNG சேமி",cr_engine:"எஞ்சின்",cr_need_result:"முதலில் ஒரு படத்தை உருவாக்கவும்",btn_web_import_url:"⬇ URL இறக்குமதி",st_clip_help:"கிளிப்போர்டு காலி/தடுக்கப்பட்டது — இணைப்பை URL பட்டியில் ஒட்டி, பிறகு ⬇ URL இறக்குமதி-ஐத் தட்டவும்",st_web_blob:"அது தற்காலிக blob: இணைப்பு — வலது-கிளிக் → Copy IMAGE Address பயன்படுத்தவும், அல்லது கோப்பைச் சேமித்து Import File மூலம் சேர்க்கவும்",err_key:"API key தவறானது — Setup தாவலில் key-ஐ மீண்டும் சரிபார்க்கவும் · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"கோட்டா / வேக வரம்பு — சிறிது நேரம் காத்திருந்து மீண்டும் முயற்சிக்கவும் · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API-க்கு படம் மிகப் பெரியது — அளவைக் குறைத்து மீண்டும் முயற்சிக்கவும் · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"பாதுகாப்பு வடிப்பானால் தடுக்கப்பட்டது — prompt அல்லது புகைப்படத்தை மாற்றவும் · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"நெட்வொர்க் / சர்வர் சிக்கல் — மீண்டும் முயற்சிக்கவும் · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"கோரிக்கை நேரம் முடிந்தது — சர்வர் அதிக நேரம் எடுத்தது; மீண்டும் முயற்சிக்கவும் · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"கோரிக்கையை நிறைவேற்ற முடியவில்லை — மீண்டும் முயற்சிக்கவும்",err_img:"பயன்படுத்தக்கூடிய படம் உருவாகவில்லை — மீண்டும் முயற்சிக்கவும்",err_mode:"இந்த ஆவணம் RGB பயன்முறையில் இல்லை — முதலில் மாற்றவும் (Image ▸ Mode ▸ RGB Color), பிறகு மீண்டும் முயற்சிக்கவும்",cam_master:"கேமரா தொகுதி ON — ஒவ்வொரு prompt-இன் இறுதியிலும் சேர்க்கப்படும்",cam_body:"கேமரா பாடி",cam_lens:"ப்ரைம் லென்ஸ் (mm)",cam_f:"அபெர்ச்சர்",cam_film:"ஃபிலிம் லுக்",cam_bokeh:"போகே ஸ்டைல்",cam_iso:"ISO",cam_k:"WB கெல்வின்",cam_note:"தொகுதியை ON செய்து, தேவையானதை மட்டும் தேர்வு செய்யவும் — – சிப்கள் எதுவும் சேர்க்காது. அனைத்தும் இறுதி prompt-இன் கடைசியில் சேரும்.",ro_h_main:"ரெஃபரன்ஸ் ஆப்ஸ் PRO (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (பெண்) · Ref2 = IMAGE 3 (ஆண்). ஒரு இலக்கைத் தேர்ந்தெடுத்து, பிறகு ஒரு செயல்பாட்டை இயக்கவும் — பொருந்தாத நபர்கள் ஒருபோதும் மாற மாட்டார்கள்.",ro_target:"இலக்கு:",ro_solo:"தனி",ro_couple:"ஜோடி",ro_family:"குடும்பம்",ro_mk:"ரெஃப் மேக்கப்பை நகலெடு",ro_hair:"ரெஃப் ஹேர்ஸ்டைலை எடு",ro_h_face:"முக ஆப்ஸ்",ro_h_bg:"BG / FG ஆப்ஸ்",ro_h_sub:"சப்ஜெக்ட் ஆப்ஸ்",ro_h_lc:"ஒளி & வண்ண ஆப்ஸ்",ro_h_dress:"உடை ஆப்ஸ்",ro_h_mk:"மேக்கப் ஆப்ஸ்",ro_h_match:"★ மாஸ்டர் மேட்ச் (ஒரே லுக்)",ro_match_note:"IMAGE 1-ஐ ரெஃபரன்ஸுடன் பொருத்தி இரண்டும் ஒரே எடிட் போலத் தோன்றச் செய்யும் — எதைப் பொருத்த வேண்டுமோ அதைத் டிக் செய்யவும்:",m_color:"வண்ணம்",m_light:"ஒளி",m_makeup:"மேக்கப்",m_skin:"சரும ரீடச்",crd_pipe:"⛓ பைப்லைன் பில்டர் — எதையும் சங்கிலியாக இணைக்கலாம்",pipe_note:"எந்தப் படிகளையும் ஒரே சங்கிலியாக இணைக்கவும் — ஒவ்வொரு படியின் முடிவும் அடுத்த படிக்குச் செல்லும். அதிகபட்சம் 6.",pipe_add:"+ சேர்",pipe_run:"▶ பைப்லைனை இயக்கு",pipe_clear:"அழி",pipe_retouch:"ரீடச் அப்ளை (தற்போதைய ஸ்லைடர்கள்)",pipe_relight:"ரீலைட் (தற்போதைய ஒளி அமைப்பு)",pipe_prompt:"Prompt (தற்போதைய EN பெட்டி)",pipe_empty:"முதலில் குறைந்தது ஒரு படியைச் சேர்க்கவும்",pipe_max:"பைப்லைன் நிரம்பியது (அதிகபட்சம் 6 படிகள்)",st_pipe:"பைப்லைன் படி",st_pipe_done:"பைப்லைன் முடிந்தது",st_pipe_stop:"பைப்லைன் நிறுத்தப்பட்டது (ஒரு படி தோல்வியடைந்தது)",pipe_merge:"⚡ ஒன்-ஷாட் இணைப்பு — எல்லாப் படிகளும் ஒரே அழைப்பில் (வேகம்/சிக்கனம் · ≤ 3 பணிகளுக்குச் சிறந்தது)",crd_chainsrest:"ஸ்டைல் செயின்கள் + பழைய புகைப்பட மீட்டமைப்பு",crd_refops:"ரெஃபரன்ஸ் ஆப்ஸ் ப்ரோ (Ref1 / Ref2)",crd_scenes:"🎬 சீன்ஸ் ப்ரோ — லாக் செய்த சப்ஜெக்ட் · பொருந்தும் காட்சி",scn_note:"உங்கள் சப்ஜெக்டை லாக் செய்து (முகம் · போஸ் · உடை · ஃப்ரேம்) முழுக் காட்சியையும் அவர்களுக்குப் பொருந்த மறு-உருவாக்கும் — ஒளி, நிழல், வண்ணம், பின்னணி, முன்னணி, பொருள்கள் அனைத்தும் உண்மையான புகைப்படத் தோற்றத்திற்குத் தானாகவே பொருந்திக்கொள்ளும்.",scn_h_style:"காட்சி ஸ்டைல் (உட்புறம் / கலாச்சாரம்)",scn_h_bday:"🎂 பிறந்தநாள் — வயது எண் 1–45",scn_h_cap:"தலைப்பு / உரை (குழந்தை · Miss Universe · பிறந்தநாள்)",scn_h_scarf:"வெளிப்புறம் / பறக்கும் ஸ்கார்ஃப்",scn_grad:"பட்டமளிப்பு உட்புறம்",scn_prewed:"ப்ரீவெடிங் உட்புறம்",scn_vietnam:"வியட்நாம்",scn_myanmar:"மியான்மர்",scn_chinese:"சீன",scn_shan:"ஷான்",scn_newborn:"பச்சிளம் குழந்தை / பேபி",scn_age:"வயது",scn_bday_go:"🎂 பிறந்தநாள் காட்சி",scn_cap_on:"தலைப்பு உரையைச் சேர்",scn_cap_ph:"தலைப்பு உரை (எ.கா. Happy 1st Birthday, பெயர்)…",scn_cap_pos:"இடம்",scn_top:"மேலே",scn_bottom:"கீழே",scn_scarf:"✦ பறக்கும் ஸ்கார்ஃப் காட்சி",scn_dir:"திசை",scn_left:"இடது",scn_right:"வலது",scn_up:"மேல்",scn_len:"நீளம்",scn_short:"குட்டை",scn_long:"நீண்டது",g_cat_scene:"காட்சி OP — உங்கள் சப்ஜெக்ட் லாக் செய்யப்பட்டுள்ளது (முகம் · போஸ் · உடை · ஃப்ரேம்); உருவாக்கப்படும் முழுக் காட்சியும் (ஒளி, நிழல், வண்ணம், பின்னணி, முன்னணி, பொருள்கள், சூழல்) உண்மையான புகைப்படக் காம்போசிட்டுக்காக சப்ஜெக்டுடன் தானாகப் பொருத்தப்படும்.",crd_wed:"♥ திருமண ப்ரோ தொகுப்பு",crd_recipes:"ரெசிபிகள் — சேமி / பகிர்",learn_lbl:"🎓 கற்றல் பயன்முறை — 1-ஆம் தட்டு = வழிகாட்டி (மஞ்சள்), 2-ஆம் = prompt (நீலம்), 3-ஆம் = இயக்கு (பச்சை)",guide_hint:"மீண்டும் தட்டவும்: மஞ்சள் → நீலம் (prompt) → பச்சை (இயக்கு) ▶",g_learn_next_prompt:"மீண்டும் தட்டவும் → சரியான PROMPT-ஐக் காட்டும் (நீலம்).",g_learn_prompt_head:"இந்தப் பொத்தான் அனுப்பும் PROMPT (மீண்டும் தட்டினால் = இயக்கம்):",g_learn_next_run:"இன்னொரு முறை தட்டவும் → இயக்கு (பச்சை) உருவாக்கும்.",st_prompt_ready:"Prompt தயார் — இயக்க மீண்டும் தட்டவும் (பச்சை) ✓",g_step_doc:"முதலில் உங்கள் புகைப்பட ஆவணத்தை Photoshop-இல் திறக்கவும்.",g_step_ref1:"ரெஃபரன்ஸ் படத்தை Ref1-இல் ஏற்றவும் (அது IMAGE 2 ஆகும்). இரண்டாவது நபருக்கு Ref2 சேர்க்கவும்.",g_step_target:"இலக்கைத் தேர்ந்தெடுக்கவும்: தனி / ஜோடி (Ref1 = பெண், Ref2 = ஆண்) / குடும்பம்.",g_step_mkhair:"விருப்பம்: முக ஆப்ஸுக்கு மேலே உள்ள ‘ரெஃப் மேக்கப்பை நகலெடு’ / ‘ரெஃப் ஹேர்ஸ்டைலை எடு’ என்பதைத் டிக் செய்யவும்.",g_step_petal:"முதலில் இதழ் வண்ணத்தைத் தேர்ந்தெடுக்கவும் (auto = உங்கள் காட்சிக்குப் பொருந்தும்).",g_step_rest:"மேலே உள்ள ✓ மூலம் முழு வண்ணம் அல்லது B&W தேர்வு செய்யவும்.",g_step_int:"தீவிரம் ஸ்லைடரை விருப்பப்படி அமைக்கவும்.",g_step_confirm:"முன்னேற மீண்டும் தட்டவும்: வழிகாட்டி (மஞ்சள்) → PROMPT (நீலம்) → இயக்கு (பச்சை உருவாக்கும்).",g_cat_face:"முக OP — ரெஃபரன்ஸ் முகத்தைப் பொருந்தும் நபருக்கு மாற்றும்; மற்ற அனைவரும் மாறாமல் இருப்பார்கள்.",g_cat_sub:"சப்ஜெக்ட் OP — ரெஃபரன்ஸ் நபரை உங்கள் காட்சிக்குள் கொண்டுவரும்/உருமாற்றும்; காட்சியும் ஃப்ரேமிங்கும் அப்படியே இருக்கும்.",g_cat_bgfg:"BG/FG OP — ரெஃபரன்ஸைப் பயன்படுத்தி பின்னணி / முன்னணியை மட்டும் மாற்றும்.",g_cat_lc:"ஒளி & வண்ண OP — ரெஃபரன்ஸின் ஒளியமைப்பையும் கலர் கிரேடையும் நகலெடுக்கும்; நபர்கள் பிக்சல் அளவில் மாறாமல் இருப்பார்கள்.",g_cat_dress:"உடை OP — ரெஃபரன்ஸைப் பயன்படுத்தி உடையை மட்டும் மாற்றும்.",g_cat_mkop:"மேக்கப் OP — ரெஃபரன்ஸைப் பயன்படுத்தி மேக்கப்பை மட்டும் மாற்றும்.",g_cat_match:"மாஸ்டர் மேட்ச் — உங்கள் புகைப்படத்தை ரெஃபரன்ஸின் முழு லுக்குடன் பொருத்தும் (மேலே உள்ள அடுக்குகளைத் டிக் செய்யவும்).",g_cat_trail:"வெடிங் ட்ரெயில் — ஆடம்பரப் புல் + பாயும் மலர்ப் பாதை; முகங்கள்/போஸ்/ஃப்ரேம் முழுமையாக லாக் செய்யப்படும்.",g_cat_veil:"பறக்கும் முக்காடு — இந்த நீளத்தில் காற்றில் பறக்கும் முக்காட்டைச் சேர்க்கும்/நீட்டிக்கும்; முகம் ஒருபோதும் மறைக்கப்படாது.",g_cat_gown:"கவுன் — தற்போதைய கவுனைச் சுத்தப்படுத்தி (வடிவமைப்பு மாறாது) இந்த டிரெயின் நீளத்தை அமைக்கும்.",g_cat_petal:"பறக்கும் இதழ்கள் — இந்த ஸ்டைலில் காற்றில் இதழ்களைச் சேர்க்கும்; வண்ணம் மேலே உள்ள ஸ்வாட்சிலிருந்து.",g_cat_wedx:"வெடிங் எக்ஸ்ட்ரா — உங்கள் காட்சிக்குப் பொருந்தும் வகையில் இந்த உறுப்பைச் சேர்க்கும்; சப்ஜெக்ட் லாக்கிலேயே இருக்கும்.",g_cat_canvas:"மாற்று (கேன்வாஸ்) — உங்கள் சப்ஜெக்டை ரெஃபரன்ஸின் காட்சிக்குள் வைக்கும்; ரெஃப் நபர்கள் நீக்கப்படுவர்.",g_cat_restore:"பழைய புகைப்பட மீட்டமைப்பு — சேதங்களைச் சரிசெய்யும்; ஒவ்வொரு அசல் முகமும் 100% அப்படியே இருக்கும்.",g_cat_generic:"ப்ரீசெட் — இந்த ப்ரொஃபஷனல் எடிட்டை உங்கள் புகைப்படத்தில் பயன்படுத்தும்.",g_gen:"GENERATE — உங்கள் ஆவணத்தில் prompt பெட்டியை (+ செயின்கள், கீப்கள், கேமரா தொகுதி) இயக்கும்.",g_retouchbtn:"ரீடச் அப்ளை — உங்கள் எல்லா ஸ்லைடர் அமைப்புகளையும் ஒரே ப்ரொஃபஷனல் ரீடச் பாஸாக இயக்கும்.",g_relightbtn:"ஒளியமைப்பு GENERATE — உங்கள் 3D ஒளி வரைபடத்தின்படி புகைப்படத்தைத் துல்லியமாக மறு-ஒளியமைக்கும்.",g_scene:"காட்சி GENERATE — பிரித்தெடுத்த prompt-இலிருந்து காட்சியை மறு-உருவாக்கும்; சப்ஜெக்ட் அப்படியே இருக்கும்.",g_rmix:"REPLACE MIX — ரெஃபரன்ஸிலிருந்து ✓ டிக் செய்த பகுதிகளை மட்டும் மாற்றும்.",g_pipe:"பைப்லைனை இயக்கு — சங்கிலியிலுள்ள ஒவ்வொரு படியையும் வரிசையாக இயக்கும்; ஒவ்வொரு முடிவும் அடுத்ததற்குச் செல்லும்.",ro_faceRep:"முக மாற்றீடு",ro_faceSwap:"முக ஸ்வாப்",ro_bgRep:"BG மாற்றீடு",ro_bgSwap:"BG ஸ்வாப்",ro_fgRep:"FG மாற்றீடு",ro_bg_note:"Doc = சப்ஜெக்ட் · Ref1 = புதிய காட்சி. Target (Solo/Couple/Family) யாரை வைத்திருப்பது என்பதைத் தேர்வுசெய்கிறது.",ro_bg_frame:"ஃபிரேம் & காட்சியமைப்பைத் தக்கவை",ro_bg_light:"சப்ஜெக்ட்டின் ஒளி/நிறத்தைப் பாதுகாக்கவும்",ro_subSwap:"நபர் மாற்றம்",ro_lcRef:"L&C ரெஃபரன்ஸ்",ro_lcCopy:"L&C காப்பி-பேஸ்ட்",ro_dressRef:"உடை ரெஃபரன்ஸ்",ro_dressRep:"உடை மாற்றம்",ro_mkCopy:"மேக்கப் காப்பி",ro_matchBtn:"★ மாஸ்டர் மேட்ச்",grp_retouch:"சரும ரீடச் ப்ரீசெட்கள்",lbl_intensity:"தீவிரம்",p_evoto:"Evoto ஸ்டைல்",p_meitu:"Meitu ஸ்டைல்",auto_place:"முடிவை Photoshop-இல் புதிய லேயராகத் தானாக வைக்கவும்",sec_retouchpro:"ரீடச் ப்ரோ — ஸ்லைடர்கள்",rt_skin:"சருமம்",rt_faceai:"முக AI",rt_hair:"முடி",rt_dress:"உடை",rt_bg:"பின்னணி",rt_smooth:"சரும மென்மை",rt_acne:"பரு நீக்கம்",rt_spots:"கரும்புள்ளிகள்",rt_wrinkle:"சுருக்கங்கள்",rt_tone:"வெளுப்பு / டேன்",rt_glow:"பொலிவு",rt_reshape:"AI ரீஷேப்",rt_lash:"இமை முடி",rt_brow:"புருவங்கள்",rt_lipsmooth:"உதடு மென்மை",rt_lipcolor:"உதடு நிறம்",rt_lenscolor:"லென்ஸ் நிறம்",rt_hairstray:"சிதறிய முடி",rt_hairsmooth:"முடி மென்மை",rt_hairshine:"முடி பளபளப்பு (D&B)",rt_dresssmooth:"துணி மென்மை",rt_dressedge:"விளிம்பு சுத்தம்",rt_dresswrinkle:"சுருக்கம் நீக்கம்",rt_dresstexture:"டெக்ஸ்சர் மீட்பு",rt_bgsmooth:"பின்னணி சுத்தம்/மென்மை",rt_bgcolor:"பின்னணி நிறம்",rt_bgrecolor:"பின்னணி நிற மென்மை",rt_shape:"ரீஷேப் ப்ரோ (முகம் + உடல்)",rt_teeth:"பல் வெண்மை",rt_eyewhite:"கண் வெள்ளைப் பகுதி சுத்தம்",rt_faceslim:"முக மெலிவு",rt_jaw:"தாடைக் கோடு",rt_chin:"மோவாய்",rt_nosesize:"மூக்கு அளவு",rt_eyesize:"கண் அளவு",rt_lipfull:"உதடு திரட்சி",rt_waist:"இடை மெலிவு",rt_bodyslim:"உடல் மெலிவு",rt_shoulder:"தோள்கள்",rt_hip:"இடுப்பு மெலிவு",rt_leglen:"கால் நீளம்",rt_armslim:"கை மெலிவு",rt_dressfit:"உடை பொருத்தம்",rt_dressclean:"உடை சுத்தம்",rt_dresscolorpure:"உடை நிறத் தூய்மை",rt_bodygrp:"உடல் சருமம் ப்ரோ",rt_bodysmooth:"உடல் சரும மென்மை",rt_bodyblemish:"உடல் கறை சுத்தம்",rt_bodytone:"உடல் சீரான நிறம்",rt_bodyglow:"உடல் பொலிவு",rt_bodyhairrm:"உடல் முடி குறைப்பு",rt_hairvolume:"முடி அடர்த்தி",rt_hairgloss:"முடி மினுமினுப்பு",rt_hairfill:"முடி நிரப்பல் (மெலிந்த பகுதிகள்)",wp_h_trail:"♥ திருமணம் — சொகுசு மலர்ப் பாதை",wp_h_veil:"♥ திருமணம் — பறக்கும் முக்காடு",wp_h_gown:"♥ திருமணம் — கவுன் சுத்தம் + ட்ரெயின்",wp_h_petal:"♥ திருமணம் — பறக்கும் மலர் இதழ்கள்",wp_h_extra:"♥ திருமணம் — குதிரை · நீர் · மூட்",wp_note:"முக அடையாளம் / போஸ் / ஃபிரேம் / உடை டிசைன் உறுதியாகப் பூட்டப்பட்டுள்ளன — குறிப்பிடப்பட்ட உறுப்பு மட்டுமே மாறும்.",wp_petalcolor:"இதழ் நிறம் (auto = காட்சிப் பொருத்தம்)",wp_trail_c:"மலர் நிறம்",wp_trail_go:"▶ மலர்ப் பாதை",wp_veil_c:"முக்காடு நீளம்",wp_veil_go:"▶ பறக்கும் முக்காடு",wp_gown_c:"ட்ரெயின் நீளம்",wp_gown_go:"▶ கவுன் சுத்தம் + ட்ரெயின்",wp_pet_c:"இதழ் ஸ்டைல்",wp_pet_go:"▶ பறக்கும் இதழ்கள்",wp_extra_c:"கூடுதல்",wp_extra_go:"▶ கூடுதல் சேர்",btn_apply_rt:"ரீடச்சைப் பயன்படுத்து",btn_reset:"மீட்டமை",rt_none:"முதலில் ஏதேனும் ஒரு ரீடச் ஸ்லைடரையோ நிறத்தையோ அமைக்கவும்",tab_setup:"அமைப்பு",tab_prompt:"ஸ்டுடியோ",tab_presets:"ப்ரீசெட்",recent_lbl:"சமீபத்திய prompt-கள்…",tab_retouch:"ரீடச்",tab_aitools:"AI கருவிகள்",cap_warn:"இந்த prompt பெட்டிக்கான Photoshop வரம்பு:",cleanup_note:"டிக் செய்யப்பட்டவை ஒவ்வொரு 'உருவாக்கு' / ப்ரீசெட்டுடனும் சேர்ந்து இயங்கும்.",btn_generate:"உருவாக்கு",st_ready:"தயார்",st_capture:"ஆவணம் எடுக்கப்படுகிறது",st_gen:"உருவாக்கப்படுகிறது…",st_place:"Photoshop-இல் வைக்கப்படுகிறது…",st_placed_masked:"லேயர் + மாஸ்க் குழுவாக வைக்கப்பட்டது — அசல் அப்படியே உள்ளது ✓",st_placed_plain:"சாதாரண லேயராக வைக்கப்பட்டது (இந்த ஹோஸ்டில் மாஸ்க்/குழு கிடைக்கவில்லை)",stage_queued:"வரிசையில்",stage_uploading:"பதிவேற்றம்",stage_generating:"உருவாக்கம்",stage_downloading:"பதிவிறக்கம்",stage_placing:"வைத்தல்",st_done:"முடிந்தது ✓",st_err:"பிழை",st_no_doc:"செயலில் உள்ள ஆவணம் இல்லை — முதலில் ஒரு புகைப்படத்தைத் திறக்கவும்",st_no_prompt:"Prompt காலியாக உள்ளது",need_ref:"இந்த ப்ரீசெட்டுக்கு ஸ்லாட் 1-இல் ஒரு ரெஃபரன்ஸ் படம் தேவை",st_new_doc:"முடிவு புதிய ஆவணமாகத் திறக்கப்பட்டது ✓",sec_preview:"முன்னோட்டம் — முன் / பின்",before:"முன்",after:"பின்",btn_place:"Photoshop-இல் வை",btn_saveas:"இவ்வாறு சேமி…",st_saved:"சேமிக்கப்பட்டது ✓",sec_diag:"சிஸ்டம் சரிபார்ப்பு",sec_log:"செயல்பாட்டுப் பதிவு",btn_diag:"சரிபார்ப்பை இயக்கு",btn_copylog:"பதிவை நகலெடு",btn_clearlog:"அழி",diag_host:"Photoshop ஹோஸ்ட்",diag_uxp:"UXP திறன்கள்",diag_rh:"RunningHub Enterprise key",diag_doc:"செயலில் உள்ள ஆவணம்",diag_set:"அமைக்கப்பட்டது",diag_unset:"அமைக்கப்படவில்லை",diag_open:"திறந்துள்ளது",diag_none:"எதுவும் திறக்கவில்லை",diag_missing:"காணவில்லை",diag_done:"சிஸ்டம் சரிபார்ப்பு முடிந்தது ✓",diag_lib:"ரெஃபரன்ஸ் லைப்ரரி",diag_lib_open:"கோப்புறை திறக்கும் திறன்",sec_reflib:"ரெஃபரன்ஸ் பட லைப்ரரி",reflib_note:"உங்களுக்குப் பிடித்த ரெஃபரன்ஸ் படங்களின் கோப்புறையை ஒருமுறை தேர்வுசெய்யுங்கள் — 'உலாவு' அதை நினைவில் வைத்து எங்கும் அதற்குள்ளேயே திறக்கும்.",btn_browse:"உலாவு",lib_choose:"கோப்புறையைத் தேர்வுசெய்",lib_open:"கோப்புறையைத் திற",lib_change:"கோப்புறையை மாற்று",lib_reset:"மீட்டமை",lib_rescan:"மீண்டும் ஸ்கேன்",lib_current:"தற்போதைய கோப்புறை",lib_found:"கண்டறிந்த படங்கள்",lib_status:"நிலை",lib_lastscan:"கடைசி ஸ்கேன்",lib_images:"படங்கள்",lib_connected:"இணைக்கப்பட்டது",lib_not_config:"கட்டமைக்கப்படவில்லை",lib_perm_lost:"அனுமதி இழக்கப்பட்டது — மீண்டும் தேர்வுசெய்யவும்",lib_none:"(கோப்புறை தேர்வு செய்யப்படவில்லை)",lib_copy_only:"பாதையை மட்டும் நகலெடு",lib_choose_msg:"உங்கள் HNK ரெஃபரன்ஸ் பட லைப்ரரி கோப்புறையைத் தேர்வுசெய்யவும்.",lib_scanning:"லைப்ரரி ஸ்கேன் செய்யப்படுகிறது…",lib_scan_done:"மீண்டும் ஸ்கேன் முடிந்தது ✓",lib_reset_done:"லைப்ரரி மீட்டமைக்கப்பட்டது ✓",lib_path_copied:"பாதை நகலெடுக்கப்பட்டது",lib_unsupported:"ஆதரிக்கப்படாத பட வகை",lib_restore_fail:"ரெஃபரன்ஸை மீட்டெடுக்க முடியவில்லை",on:"ஆன்",off:"ஆஃப்"},
+te:{app_title:"HNK Photoshop Ai ప్యానెల్ (విద్యార్థులు)",sec_api:"RunningHub Enterprise Key",btn_show:"చూపించు",btn_hide:"దాచు",btn_test:"Key పరీక్ష",btn_save:"సేవ్",st_testing:"కీని పరీక్షిస్తోంది",st_key_ok:"✓ API key పని చేస్తోంది",st_key_bad:"API key విఫలమైంది",st_key_saved:"API key సేవ్ అయింది ✓",st_need_key:"ముందుగా RunningHub Enterprise key ఇవ్వండి",sec_model:"మోడల్ & అవుట్‌పుట్",scope_model_note:"ఇది కింద ఉన్న Prompt ట్యాబ్‌లోని జనరేట్ బటన్‌కు మాత్రమే వర్తిస్తుంది — Create, AI Tools లకు వేటికవే ప్రత్యేక మోడల్ సెట్టింగ్‌లు ఉంటాయి.",model_auto:"ఆటో (సిఫార్సు చేయబడింది)",model_flash:"Flash — వేగం (2.5)",model_pro:"Pro — నాణ్యత (3.0)",lbl_ratio:"నిష్పత్తి",ratio_auto:"ఆటో నిష్పత్తి (డాక్యుమెంట్ నుండి)",lbl_size:"పరిమాణం",lbl_quality:"నాణ్యత",qual_auto:"ఆటో",qual_low:"తక్కువ",qual_med:"మధ్యస్థం",qual_high:"అధికం",sec_prompt:"Prompt",hint_prompt:"మీ prompt ఇక్కడ టైప్ చేయండి… (గరిష్ఠంగా 20,000 అక్షరాలు)",btn_improve:"Prompt మెరుగుపరచు",btn_clear:"తొలగించు",st_improving:"Prompt మెరుగుపరుస్తోంది",st_improved:"Prompt మెరుగుపడింది ✓",sec_refs:"రిఫరెన్స్ చిత్రాలు (2 స్లాట్‌లు)",base_note:"బేస్ చిత్రం = మీ యాక్టివ్ Photoshop డాక్యుమెంట్ (ఆటోమేటిక్‌గా తీసుకోబడుతుంది).",btn_ref_layer:"+ లేయర్",btn_ref_file:"ఫైల్",btn_ref_web:"వెబ్",st_ref_layer_added:"లేయర్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_ref_file_added:"ఫైల్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_importing:"ఫైల్ దిగుమతి అవుతోంది",url_title:"URL నుండి రిఫరెన్స్ — Chrome / Pinterest",url_ph:"https://… చిత్ర చిరునామా లేదా Pinterest పిన్ లింక్",btn_paste:"పేస్ట్",btn_load:"లోడ్",btn_cancel:"రద్దు",st_url_loading:"వెబ్ చిత్రం డౌన్‌లోడ్ అవుతోంది",st_ref_web_added:"వెబ్ చిత్రం రిఫరెన్స్‌గా జోడించబడింది ✓",st_url_bad:"ఈ URL నుండి చిత్రం లోడ్ కాలేదు — చిత్ర చిరునామాను కాపీ చేసి మళ్లీ ప్రయత్నించండి",no_layer:"ఏ లేయర్ ఎంపిక కాలేదు",sec_presets:"AI ప్రీసెట్‌లు",auto_run:"ప్రీసెట్ క్లిక్ → ఆటో జనరేట్ (OFF = promptలో మాత్రమే చేరుస్తుంది)",grp_cleanup:"క్లీనప్ టూల్స్",p_remove_people:"వ్యక్తులను తొలగించు",p_fix_hands:"అదనపు చేతులు సరిచేయి",p_fix_legs:"అదనపు కాళ్లు సరిచేయి",p_full_clean:"పూర్తి క్లీనప్",grp_moved_note:"రిఫరెన్స్ టూల్స్ ఇప్పుడు కింద ఉన్న Reference Ops Pro కార్డ్‌లో ఉన్నాయి (అన్నీ ఒకే చోట — సోలో/జంట/కుటుంబం + గైడ్‌లతో).",ro_h_detail:"జుట్టు · యాక్సెసరీలు · భంగిమ (← Ref1)",ro_h_comp:"కాంపోజిట్ · స్టైల్ · టెక్స్ట్ (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"హెయిర్‌స్టైల్ (← Ref1)",p_access:"నగలు+యాక్సెసరీలు (← Ref1)",p_pose:"భంగిమ మ్యాచ్ (Doc → Ref1)",p_fgprops:"FG ప్రాప్స్ (← Ref1)",p_textlogo:"టెక్స్ట్ / లోగో (← Ref1)",p_style:"ఫోటో స్టైల్ (← Ref1)",grp_repsubj:"సబ్జెక్ట్ రీప్లేస్ (Doc → Ref1 సన్నివేశం)",p_rep_solo:"సోలో రీప్లేస్",p_rep_couple:"జంట రీప్లేస్",p_rep_family:"కుటుంబం రీప్లేస్",grp_rmix:"రీప్లేస్ మిక్స్ — టిక్ చేసి Ref1 నుండి తీసుకోండి",rm_bg:"నేపథ్యం (BG)",rm_fg:"ముందుభాగం (FG)",rm_light:"లైటింగ్",rm_color:"రంగు",rm_object:"వస్తువులు / ప్రాప్స్",btn_rmix:"రీప్లేస్ జనరేట్",rm_none:"ముందుగా కనీసం ఒక అంశాన్ని టిక్ చేయండి",grp_i2p:"చిత్రం → Prompt (సీన్ బిల్డర్)",i2p_note:"1) ఎక్స్‌ట్రాక్ట్: Ref1 సన్నివేశం → వివరమైన టెక్స్ట్ prompt (వ్యక్తులు ఉండరు). 2) దాన్ని Prompt పేజీలో సవరించండి. 3) సీన్ జనరేట్ దాన్ని మీ డాక్యుమెంట్ సబ్జెక్ట్ చుట్టూ నిర్మిస్తుంది — ఏ కోణానికైనా ఆటోగా సరిపోతుంది. ముఖం/భంగిమ/ఫ్రేమ్ లాక్‌లు = ఒరిజినల్ అలాగే ఉంటాయి.",i2p_objects:"వస్తువులు & ప్రాప్స్ వివరాలు",i2p_light:"లైటింగ్ వివరాలు",i2p_color:"రంగు / గ్రేడ్ వివరాలు",i2p_bg:"నేపథ్యం వివరాలు",i2p_fg:"ముందుభాగం వివరాలు",btn_i2p:"చిత్రం → Prompt (సీన్ ఎక్స్‌ట్రాక్ట్)",i2p_fit:"సీన్ ఆటో-ఫిట్ — సన్నివేశాన్ని డాక్యుమెంట్ కోణం / దూరం / లెన్స్‌కు తగినట్లు మళ్లీ అమర్చుతుంది",i2p_adapt:"సబ్జెక్ట్ లైట్ & రంగును సన్నివేశానికి సర్దుబాటు చేయి",btn_scenegen:"సీన్ జనరేట్",st_extract:"సన్నివేశాన్ని promptగా మారుస్తోంది",st_extract_done:"సీన్ prompt సిద్ధం — Prompt పేజీలో సమీక్షించండి",scene_no_prompt:"Prompt బాక్స్ ఖాళీగా ఉంది — ముందుగా చిత్రం → Prompt రన్ చేయండి",i2p_none:"ముందుగా కనీసం ఒక వివరాల అంశాన్ని టిక్ చేయండి",sec_light:"స్టూడియో లైటింగ్ — AI రీలైట్",light_note:"లైట్‌లను ON చేయండి, వరుసను ఎంచుకోవడానికి దానిపై ట్యాప్ చేయండి, స్లయిడర్‌లతో మలచండి — 3D టాప్-వ్యూ డయాగ్రామ్ లైవ్‌గా మారుతూ ఉంటుంది (▴ = ఎత్తుగా, ▾ = కిందుగా). లైటింగ్ జనరేట్ మీ డాక్యుమెంట్‌ను సరిగ్గా ఈ సెటప్ ప్రకారం రీలైట్ చేస్తుంది; ముఖం / భంగిమ / ఫ్రేమ్ లాక్ అయ్యే ఉంటాయి.",lbl_my_prompt:"మయన్మార్ PROMPT",lstage_model:"మోడల్",lstage_cam:"కెమెరా",l_key:"కీ లైట్",l_fill:"ఫిల్ / ఫ్రంట్",l_butterfly:"బటర్‌ఫ్లై (పైన-ముందు)",l_side:"సైడ్ లైట్",l_rim:"రిమ్ లైట్",l_back:"బ్యాక్ లైట్",l_hair:"హెయిర్ లైట్",l_bglight:"బ్యాక్‌గ్రౌండ్ లైట్",lt_softbox:"సాఫ్ట్‌బాక్స్",lt_octa:"ఆక్టా",lt_strip:"స్ట్రిప్",lt_umbrella:"అంబ్రెల్లా",lt_beauty:"బ్యూటీ",lt_hard:"హార్డ్",li_int:"తీవ్రత",li_angle:"కోణం",li_height:"ఎత్తు",li_dist:"దూరం",li_size:"పరిమాణం",btn_lightgen:"లైటింగ్ జనరేట్",light_none:"ముందుగా కనీసం ఒక లైట్‌ను ON చేయండి",lg_equip:"ఫోటోలో లైట్ పరికరాలు చూపించు (సాఫ్ట్‌బాక్స్ / స్టాండ్‌లు కనిపిస్తాయి)",grp_chains:"స్టైల్ చెయిన్స్ — ✓ స్టైల్స్ కలపండి",chains_note:"ఏ స్టైల్స్ అయినా ON చేయండి — అవి ప్రతి జనరేట్ / ప్రీసెట్ / రీటచ్‌లోనూ కలిసి మిళితమవుతాయి.",grp_restore:"పాత ఫోటో పునరుద్ధరణ",p_restore:"పాత ఫోటో పునరుద్ధరణ",rest_color:"పూర్తి రంగు",rest_bw:"నలుపు & తెలుపు",restore_note:"చిరుగులు, నీరు / కాలిన నష్టం, రంగు వెలిసిపోవడం సరిచేస్తుంది — ప్రతి ఒరిజినల్ ముఖాన్ని 100% అలాగే ఉంచుతుంది.",rt_browstyle:"కనుబొమల స్టైల్",rt_lashstyle:"ఐల్యాష్ స్టైల్",rt_blush:"బ్లష్ రంగు",rt_contour:"కాంటూర్ స్టైల్",rt_bust:"వక్షం",rt_butt:"పిరుదులు",rt_thigh:"తొడలు",rt_calf:"పిక్కలు",rt_neck:"మెడ",rt_fingers:"వేళ్లు",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"మయన్మార్ promptను ఇంగ్లీషులోకి అనువదిస్తోంది",live_trans:"లైవ్ ⇄ ఆటో-అనువాదం (EN ↔ MY, టైపింగ్ ఆపిన తర్వాత)",st_retry:"మళ్లీ ప్రయత్నిస్తోంది",grp_recipes:"రెసిపీలు — సెట్టింగ్‌లను సేవ్ / షేర్ చేయండి",recipe_note:"అన్నింటినీ (చెయిన్స్, రీటచ్, లైట్లు, కీప్ లాక్‌లు, prompts) ఒకే .json రెసిపీగా సేవ్ చేయండి — విద్యార్థులు దాన్ని లోడ్ చేస్తే చాలు.",btn_recipe_save:"రెసిపీ సేవ్ చేయండి",btn_recipe_load:"రెసిపీ లోడ్ చేయండి",st_recipe_saved:"రెసిపీ సేవ్ అయింది ✓",st_recipe_loaded:"రెసిపీ లోడ్ అయింది ✓ — అన్ని కంట్రోల్స్ అప్‌డేట్ అయ్యాయి",st_recipe_bad:"ఇది HNK రెసిపీ ఫైల్ కాదు",sec_final:"తుది Prompt (AIకి పంపబడేది)",btn_copy:"కాపీ",st_copied:"కాపీ అయింది ✓",hist_note:"చరిత్ర — చివరి 6 ఫలితాలు, చూడటానికి ట్యాప్ చేయండి:",btn_hist_prompt:"→ Prompt",sec_batch:"బ్యాచ్ మోడ్",batch_note:"అనేక ఫోటోలు + అవుట్‌పుట్ ఫోల్డర్ ఎంచుకోండి — ప్రస్తుత prompt, చెయిన్స్, క్లీనప్, Keep లాక్‌లు ప్రతి ఫోటోపైనా అమలవుతాయి; ఫలితాలు *_HNK.png గా సేవ్ అవుతాయి.",btn_batch:"బ్యాచ్ రన్ చేయండి",btn_batch_stop:"ఆపు",st_batch:"బ్యాచ్",st_batch_done:"బ్యాచ్ పూర్తయింది",sec_web:"వెబ్ AI — మినీ బ్రౌజర్",web_note:"ఏ వెబ్ AI ఎడిటర్‌నైనా Photoshop లోపలే తెరవండి. అక్కడ జనరేట్ చేసి, ఫలితాన్ని లేయర్‌గా తీసుకురండి:",web_import_note:"దిగుమతి: ① వెబ్ యాప్‌లో Copy image address ఉపయోగించి, ఆపై 'కాపీ చేసిన లింక్ దిగుమతి' నొక్కండి · ② లేదా ఫైల్‌ను డౌన్‌లోడ్ చేసి 'ఫైల్ దిగుమతి' ఉపయోగించండి · ③ HNK బ్రిడ్జ్ ఉన్న భాగస్వామ్య వెబ్ యాప్‌లు చిత్రాలను ఆటోమేటిక్‌గా పంపుతాయి.",btn_web_go:"వెళ్లు",btn_web_home:"హోమ్",btn_web_reload:"రీలోడ్",btn_web_import_link:"కాపీ చేసిన లింక్ దిగుమతి → PS",btn_web_import_file:"ఫైల్ దిగుమతి → PS",st_web_import:"Photoshopలోకి లేయర్‌గా దిగుమతి అయింది ✓",st_web_nourl:"ముందుగా చిత్రం లింక్ కాపీ చేయండి (రైట్-క్లిక్ → Copy image address)",st_web_fetch:"లింక్ నుండి చిత్రాన్ని తెస్తోంది",st_web_notallowed:"ఈ డొమైన్ అనుమతి జాబితాలో లేదు — ఖాళీగా ఉండిపోవచ్చు. దీన్ని చేర్చమని HNK ని అడగండి.",st_need_doc:"ముందుగా Photoshop లో ఒక ఫోటో డాక్యుమెంట్ తెరవండి",sec_campro:"కెమెరా ప్రో & నాణ్యత",autosave_lbl:"ప్రతి ఫలితాన్ని ఆటో-ఎక్స్‌పోర్ట్ చేయి (PNG + prompt లాగ్ → ఫోల్డర్)",st_folder_ok:"ఎక్స్‌పోర్ట్ ఫోల్డర్ సెట్ అయింది ✓",st_exported:"ఎక్స్‌పోర్ట్ అయింది ✓",st_export_fail:"ఎక్స్‌పోర్ట్ విఫలమైంది — ఫోల్డర్‌ను తనిఖీ చేయండి",st_pro_fallback:"Pro మోడల్ అందుబాటులో లేదు — ఈ రన్ కోసం Flash కు మార్చబడింది",st_img_bad:"చిత్ర డేటా సమగ్రత తనిఖీలో విఫలమైంది — ఫోటోను మళ్లీ జోడించండి",st_auto_comp:"ఆటో కాంపోజిట్: IMAGE 1 సబ్జెక్ట్ → రిఫరెన్స్ సీన్",prov_lbl:"AI ప్రొవైడర్",tab_create:"సృష్టించు",create_note:"క్రియేట్ మోడ్ — మీ prompt నుండి పూర్తిగా కొత్త చిత్రం (+ దీని సొంత 4 రిఫరెన్స్‌లు). పూర్తిగా స్వతంత్రం: డాక్యుమెంట్, ప్రీసెట్లు, చైన్‌లు లేదా లాక్‌లను ఎప్పుడూ చదవదు.",create_ph:"మీరు సృష్టించాలనుకునే చిత్రాన్ని వివరించండి…",btn_create_ps:"⬇ Photoshop కు పంపు",btn_to_ref:"↺ Ref 1 గా వాడు",st_to_ref:"ఫలితం Ref 1 లోకి లోడ్ అయింది ✓",scope_create_note:"Setup లోని Model & Output నుండి స్వతంత్రం — ఈ సెట్టింగ్‌లు క్రియేట్‌లోని Generate కు మాత్రమే వర్తిస్తాయి.",cr_ratio:"నిష్పత్తి",cr_var:"వేరియేషన్లు",cr_restyle:"♻ ఫలితాన్ని రీస్టైల్ చేయి",cr_lib:"Prompt లైబ్రరీ — చొప్పించడానికి నొక్కండి",cr_improve:"మెరుగుపరచు",cr_describe:"Ref 1 ను వివరించు → Prompt",st_describing:"రిఫరెన్స్‌ను చదువుతోంది…",st_described:"Ref 1 నుండి prompt రాయబడింది ✓",st_need_ref1:"ముందుగా Ref 1 కు ఒక చిత్రాన్ని జోడించండి",st_lib_added:"Prompt జోడించబడింది ✓",cr_refs:"రిఫరెన్స్ చిత్రాలు (గరిష్ఠంగా 4)",cr_refs_note:"ఐచ్ఛికం — Layer / File / Web ద్వారా జోడించండి. మీ prompt అడిగినవి మాత్రమే క్రియేట్ తీసుకుంటుంది.",cr_results:"ఫలితాలు",cr_gal_empty:"ఇంకా ఫలితాలు లేవు — Generate నొక్కండి.",cr_gal_have:"ఫలితం(లు) · ప్రివ్యూ / చర్య కోసం థంబ్‌నెయిల్ నొక్కండి",cr_save:"⬇ PNG సేవ్ చేయి",cr_engine:"ఇంజిన్",cr_need_result:"ముందుగా ఒక చిత్రాన్ని జనరేట్ చేయండి",btn_web_import_url:"⬇ URL ఇంపోర్ట్",st_clip_help:"క్లిప్‌బోర్డ్ ఖాళీ/బ్లాక్ అయింది — లింక్‌ను URL బార్‌లో పేస్ట్ చేసి, ఆపై ⬇ URL ఇంపోర్ట్ నొక్కండి",st_web_blob:"అది తాత్కాలిక blob: లింక్ — రైట్-క్లిక్ → Copy IMAGE Address వాడండి, లేదా ఫైల్‌ను సేవ్ చేసి Import File వాడండి",err_key:"API key చెల్లదు — Setup ట్యాబ్‌లో key ను మళ్లీ తనిఖీ చేయండి · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"కోటా / రేట్ పరిమితి — కాసేపు ఆగి, మళ్లీ ప్రయత్నించండి · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API కి చిత్రం చాలా పెద్దది — పరిమాణం తగ్గించి, మళ్లీ ప్రయత్నించండి · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"సేఫ్టీ ఫిల్టర్ బ్లాక్ చేసింది — prompt లేదా ఫోటోను సవరించండి · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"నెట్‌వర్క్ / సర్వర్ సమస్య — దయచేసి మళ్లీ ప్రయత్నించండి · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"అభ్యర్థన సమయం మించిపోయింది — సర్వర్ చాలా ఆలస్యం చేసింది; దయచేసి మళ్లీ ప్రయత్నించండి · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"అభ్యర్థన పూర్తి కాలేదు — దయచేసి మళ్లీ ప్రయత్నించండి",err_img:"వాడదగిన చిత్రం ఏదీ రాలేదు — దయచేసి మళ్లీ ప్రయత్నించండి",err_mode:"ఈ డాక్యుమెంట్ RGB మోడ్‌లో లేదు — ముందుగా మార్చండి (Image ▸ Mode ▸ RGB Color), ఆపై మళ్లీ ప్రయత్నించండి",cam_master:"కెమెరా బ్లాక్ ON — ప్రతి prompt చివరన జోడించబడుతుంది",cam_body:"కెమెరా బాడీ",cam_lens:"ప్రైమ్ లెన్స్ (mm)",cam_f:"అపెర్చర్",cam_film:"ఫిల్మ్ లుక్",cam_bokeh:"బొకే స్టైల్",cam_iso:"ISO",cam_k:"WB కెల్విన్",cam_note:"బ్లాక్‌ను ON చేసి, మీకు కావాల్సినవి మాత్రమే ఎంచుకోండి — – చిప్‌లు ఏమీ జోడించవు. అన్నీ తుది prompt చివరన చేరతాయి.",ro_h_main:"రిఫరెన్స్ ఆప్స్ ప్రో (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (మహిళ) · Ref2 = IMAGE 3 (పురుషుడు). టార్గెట్ ఎంచుకుని, ఒక ఆప్ నడపండి — సరిపోలని వ్యక్తులు ఎప్పుడూ మారరు.",ro_target:"టార్గెట్:",ro_solo:"సోలో",ro_couple:"జంట",ro_family:"కుటుంబం",ro_mk:"రిఫ్ మేకప్ కాపీ చేయి",ro_hair:"రిఫ్ హెయిర్‌స్టైల్ తీసుకో",ro_h_face:"ఫేస్ ఆప్స్",ro_h_bg:"BG / FG ఆప్స్",ro_h_sub:"సబ్జెక్ట్ ఆప్స్",ro_h_lc:"లైట్ & కలర్ ఆప్స్",ro_h_dress:"డ్రెస్ ఆప్స్",ro_h_mk:"మేకప్ ఆప్స్",ro_h_match:"★ మాస్టర్ మ్యాచ్ (ఒకే లుక్)",ro_match_note:"రెండూ ఒకే ఎడిట్‌లా కనిపించేలా IMAGE 1 ను రిఫరెన్స్‌తో మ్యాచ్ చేయండి — దేన్ని మ్యాచ్ చేయాలో టిక్ చేయండి:",m_color:"కలర్",m_light:"లైట్",m_makeup:"మేకప్",m_skin:"స్కిన్ రీటచ్",crd_pipe:"⛓ పైప్‌లైన్ బిల్డర్ — దేనినైనా చైన్ చేయండి",pipe_note:"ఏ స్టెప్‌లనైనా ఒకే చైన్‌గా లింక్ చేయండి — ప్రతి స్టెప్ ఫలితం తర్వాతి స్టెప్‌కు వెళ్తుంది. గరిష్ఠం 6.",pipe_add:"+ జోడించు",pipe_run:"▶ పైప్‌లైన్ రన్ చేయి",pipe_clear:"క్లియర్",pipe_retouch:"రీటచ్ అప్లై (ప్రస్తుత స్లయిడర్లు)",pipe_relight:"రీలైట్ (ప్రస్తుత లైట్ రిగ్)",pipe_prompt:"Prompt (ప్రస్తుత EN బాక్స్)",pipe_empty:"ముందుగా కనీసం ఒక స్టెప్ జోడించండి",pipe_max:"పైప్‌లైన్ నిండింది (గరిష్ఠం 6 స్టెప్‌లు)",st_pipe:"పైప్‌లైన్ స్టెప్",st_pipe_done:"పైప్‌లైన్ పూర్తయింది",st_pipe_stop:"పైప్‌లైన్ ఆగింది (ఒక స్టెప్ విఫలమైంది)",pipe_merge:"⚡ వన్-షాట్ మెర్జ్ — అన్ని స్టెప్‌లు ఒకే కాల్‌లో (వేగం/చవక · ≤ 3 టాస్క్‌లకు ఉత్తమం)",crd_chainsrest:"స్టైల్ చైన్స్ + పాత ఫోటో పునరుద్ధరణ",crd_refops:"రిఫరెన్స్ ఆప్స్ ప్రో (Ref1 / Ref2)",crd_scenes:"🎬 సీన్స్ ప్రో — లాక్ చేసిన సబ్జెక్ట్ · సీన్ మ్యాచ్ అవుతుంది",scn_note:"మీ సబ్జెక్ట్‌ను లాక్ చేసి (ముఖం · పోజ్ · డ్రెస్ · ఫ్రేమ్), వారికి సరిపోయేలా మొత్తం సీన్‌ను మళ్లీ నిర్మిస్తుంది — లైట్, నీడ, రంగు, బ్యాక్‌గ్రౌండ్, ఫోర్‌గ్రౌండ్, వస్తువులు అన్నీ రియల్-ఫోటో లుక్ కోసం ఆటోమేటిక్‌గా సర్దుబాటవుతాయి.",scn_h_style:"సీన్ స్టైల్ (ఇండోర్ / సాంస్కృతిక)",scn_h_bday:"🎂 పుట్టినరోజు — వయసు సంఖ్య 1–45",scn_h_cap:"క్యాప్షన్ / టెక్స్ట్ (పిల్లలు · Miss Universe · పుట్టినరోజు)",scn_h_scarf:"అవుట్‌డోర్ / ఎగిరే స్కార్ఫ్",scn_grad:"గ్రాడ్యుయేషన్ ఇండోర్",scn_prewed:"ప్రీవెడ్డింగ్ ఇండోర్",scn_vietnam:"వియత్నాం",scn_myanmar:"మయన్మార్",scn_chinese:"చైనీస్",scn_shan:"షాన్",scn_newborn:"నవజాత శిశువు / బేబీ",scn_age:"వయసు",scn_bday_go:"🎂 పుట్టినరోజు సీన్",scn_cap_on:"క్యాప్షన్ టెక్స్ట్ జోడించు",scn_cap_ph:"క్యాప్షన్ టెక్స్ట్ (ఉదా. Happy 1st Birthday, పేరు)…",scn_cap_pos:"స్థానం",scn_top:"పైన",scn_bottom:"కింద",scn_scarf:"✦ ఎగిరే స్కార్ఫ్ సీన్",scn_dir:"దిశ",scn_left:"ఎడమ",scn_right:"కుడి",scn_up:"పైకి",scn_len:"పొడవు",scn_short:"పొట్టి",scn_long:"పొడవైనది",g_cat_scene:"సీన్ ఆప్ — మీ సబ్జెక్ట్ లాక్ అయి ఉంటుంది (ముఖం · పోజ్ · డ్రెస్ · ఫ్రేమ్); జనరేట్ అయిన మొత్తం సీన్ (లైట్, నీడ, రంగు, బ్యాక్‌గ్రౌండ్, ఫోర్‌గ్రౌండ్, వస్తువులు, వాతావరణం) రియల్-ఫోటో కాంపోజిట్ కోసం సబ్జెక్ట్‌కు ఆటో-మ్యాచ్ అవుతుంది.",crd_wed:"♥ వెడ్డింగ్ ప్రో స్యూట్",crd_recipes:"రెసిపీలు — సేవ్ / షేర్",learn_lbl:"🎓 లెర్న్ మోడ్ — 1వ ట్యాప్ = గైడ్ (పసుపు), 2వ = prompt (నీలం), 3వ = రన్ (ఆకుపచ్చ)",guide_hint:"మళ్లీ నొక్కండి: పసుపు → నీలం (prompt) → ఆకుపచ్చ (రన్) ▶",g_learn_next_prompt:"మళ్లీ నొక్కండి → ఖచ్చితమైన PROMPT చూపుతుంది (నీలం).",g_learn_prompt_head:"ఈ బటన్ పంపే PROMPT (మళ్లీ నొక్కితే = రన్):",g_learn_next_run:"మరోసారి నొక్కండి → రన్ (ఆకుపచ్చ) జనరేట్ చేస్తుంది.",st_prompt_ready:"Prompt సిద్ధం — నడపడానికి మళ్లీ నొక్కండి (ఆకుపచ్చ) ✓",g_step_doc:"ముందుగా మీ ఫోటో డాక్యుమెంట్‌ను Photoshop లో తెరవండి.",g_step_ref1:"రిఫరెన్స్ చిత్రాన్ని Ref1 లోకి లోడ్ చేయండి (అది IMAGE 2 అవుతుంది). రెండో వ్యక్తి కోసం Ref2 జోడించండి.",g_step_target:"టార్గెట్ ఎంచుకోండి: సోలో / జంట (Ref1 = మహిళ, Ref2 = పురుషుడు) / కుటుంబం.",g_step_mkhair:"ఐచ్ఛికం: ఫేస్ ఆప్స్ పైన ఉన్న ‘రిఫ్ మేకప్ కాపీ చేయి’ / ‘రిఫ్ హెయిర్‌స్టైల్ తీసుకో’ టిక్ చేయండి.",g_step_petal:"ముందుగా పూరేకుల రంగు ఎంచుకోండి (auto = మీ సీన్‌కు సరిపోతుంది).",g_step_rest:"పైన ఉన్న ✓ తో ఫుల్ కలర్ లేదా B&W ఎంచుకోండి.",g_step_int:"ఇంటెన్సిటీ స్లయిడర్‌ను మీకు నచ్చినట్టు సెట్ చేయండి.",g_step_confirm:"ముందుకు వెళ్లడానికి మళ్లీ నొక్కండి: గైడ్ (పసుపు) → PROMPT (నీలం) → రన్ (ఆకుపచ్చ జనరేట్ చేస్తుంది).",g_cat_face:"ఫేస్ ఆప్ — రిఫరెన్స్ ముఖాన్ని సరిపోలే వ్యక్తిపైకి బదిలీ చేస్తుంది; మిగతా వారందరూ మారకుండా ఉంటారు.",g_cat_sub:"సబ్జెక్ట్ ఆప్ — రిఫరెన్స్ వ్యక్తిని మీ సీన్‌లోకి తెస్తుంది/మార్ఫ్ చేస్తుంది; సీన్, ఫ్రేమింగ్ అలాగే ఉంటాయి.",g_cat_bgfg:"BG/FG ఆప్ — రిఫరెన్స్ ఉపయోగించి బ్యాక్‌గ్రౌండ్ / ఫోర్‌గ్రౌండ్ మాత్రమే మారుస్తుంది.",g_cat_lc:"లైట్ & కలర్ ఆప్ — రిఫరెన్స్ లైటింగ్, కలర్ గ్రేడ్‌ను కాపీ చేస్తుంది; వ్యక్తులు పిక్సెల్-స్థాయిలో యథాతథంగా ఉంటారు.",g_cat_dress:"డ్రెస్ ఆప్ — రిఫరెన్స్ ఉపయోగించి దుస్తులు మాత్రమే మారుస్తుంది.",g_cat_mkop:"మేకప్ ఆప్ — రిఫరెన్స్ ఉపయోగించి మేకప్ మాత్రమే మారుస్తుంది.",g_cat_match:"మాస్టర్ మ్యాచ్ — మీ ఫోటోను రిఫరెన్స్ మొత్తం లుక్‌కు సరిపోయేలా చేస్తుంది (పైన లేయర్‌లను టిక్ చేయండి).",g_cat_trail:"వెడ్డింగ్ ట్రైల్ — లగ్జరీ గడ్డి + ప్రవహించే పూల దారి; ముఖాలు/పోజ్/ఫ్రేమ్ పూర్తిగా లాక్ అవుతాయి.",g_cat_veil:"ఎగిరే వెయిల్ — ఈ పొడవులో గాలికి ఎగిరే వెయిల్‌ను జోడిస్తుంది/పొడిగిస్తుంది; ముఖం ఎప్పుడూ కప్పబడదు.",g_cat_gown:"గౌన్ — ఉన్న గౌన్‌ను శుభ్రం చేస్తుంది (డిజైన్ మారదు), ఈ ట్రైన్ పొడవును సెట్ చేస్తుంది.",g_cat_petal:"ఎగిరే పూరేకులు — ఈ స్టైల్‌లో గాలిలో పూరేకులను జోడిస్తుంది; రంగు పైన ఉన్న స్వాచ్ నుండి.",g_cat_wedx:"వెడ్డింగ్ ఎక్స్‌ట్రా — మీ సీన్‌కు సరిపోయేలా ఈ ఎలిమెంట్‌ను జోడిస్తుంది; సబ్జెక్ట్ లాక్ అయి ఉంటుంది.",g_cat_canvas:"రీప్లేస్ (కాన్వాస్) — మీ సబ్జెక్ట్‌ను రిఫరెన్స్ సీన్‌లో ఉంచుతుంది; రిఫ్‌లోని వ్యక్తులు తీసివేయబడతారు.",g_cat_restore:"పాత ఫోటో పునరుద్ధరణ — పాడైన భాగాలను బాగు చేస్తుంది; ప్రతి అసలు ముఖం 100% అలాగే ఉంటుంది.",g_cat_generic:"ప్రీసెట్ — ఈ ప్రొఫెషనల్ ఎడిట్‌ను మీ ఫోటోకు వర్తింపజేస్తుంది.",g_gen:"జనరేట్ — మీ డాక్యుమెంట్‌పై prompt బాక్స్‌ను (+ చైన్‌లు, కీప్‌లు, కెమెరా బ్లాక్) నడుపుతుంది.",g_retouchbtn:"రీటచ్ అప్లై — మీ అన్ని స్లయిడర్ సెట్టింగ్‌లను ఒకే ప్రొఫెషనల్ రీటచ్ పాస్‌గా నడుపుతుంది.",g_relightbtn:"లైటింగ్ జనరేట్ — మీ 3D లైట్ డయాగ్రామ్‌కు సరిగ్గా అనుగుణంగా ఫోటోను రీలైట్ చేస్తుంది.",g_scene:"సీన్ జనరేట్ — సేకరించిన prompt నుండి సీన్‌ను మళ్లీ నిర్మిస్తుంది; సబ్జెక్ట్ అలాగే ఉంటుంది.",g_rmix:"రీప్లేస్ మిక్స్ — రిఫరెన్స్ నుండి ✓ టిక్ చేసిన భాగాలను మాత్రమే రీప్లేస్ చేస్తుంది.",g_pipe:"పైప్‌లైన్ రన్ — చైన్ చేసిన ప్రతి స్టెప్‌ను వరుసగా నడుపుతుంది; ప్రతి ఫలితం తర్వాతిదానికి వెళ్తుంది.",ro_faceRep:"ఫేస్ రీప్లేస్",ro_faceSwap:"ఫేస్ స్వాప్",ro_bgRep:"BG రీప్లేస్",ro_bgSwap:"BG స్వాప్",ro_fgRep:"FG రీప్లేస్",ro_bg_note:"Doc = సబ్జెక్ట్ · Ref1 = కొత్త సీన్. టార్గెట్ (సోలో/జంట/కుటుంబం) ఎవరిని ఉంచాలో నిర్ణయిస్తుంది.",ro_bg_frame:"ఫ్రేమ్ & కంపోజిషన్‌ను అలాగే ఉంచు",ro_bg_light:"సబ్జెక్ట్ లైట్/రంగును అలాగే ఉంచు",ro_subSwap:"సబ్జెక్ట్ స్వాప్",ro_lcRef:"L&C రిఫరెన్స్",ro_lcCopy:"L&C కాపీ-పేస్ట్",ro_dressRef:"డ్రెస్ రిఫరెన్స్",ro_dressRep:"డ్రెస్ రీప్లేస్",ro_mkCopy:"మేకప్ కాపీ",ro_matchBtn:"★ మాస్టర్ మ్యాచ్",grp_retouch:"స్కిన్ రీటచ్ ప్రీసెట్‌లు",lbl_intensity:"తీవ్రత",p_evoto:"Evoto స్టైల్",p_meitu:"Meitu స్టైల్",auto_place:"ఫలితాన్ని Photoshopలో కొత్త లేయర్‌గా ఆటోమేటిక్‌గా ప్లేస్ చేయి",sec_retouchpro:"రీటచ్ ప్రో — స్లయిడర్లు",rt_skin:"స్కిన్",rt_faceai:"ఫేస్ AI",rt_hair:"జుట్టు",rt_dress:"డ్రెస్",rt_bg:"బ్యాక్‌గ్రౌండ్",rt_smooth:"స్కిన్ స్మూత్",rt_acne:"మొటిమల తొలగింపు",rt_spots:"నల్ల మచ్చలు",rt_wrinkle:"ముడతలు",rt_tone:"వైటెన్ / టాన్",rt_glow:"గ్లో",rt_reshape:"AI రీషేప్",rt_lash:"ఐలాషెస్",rt_brow:"కనుబొమ్మలు",rt_lipsmooth:"లిప్ స్మూత్",rt_lipcolor:"లిప్ కలర్",rt_lenscolor:"లెన్స్ కలర్",rt_hairstray:"చెదిరిన వెంట్రుకలు",rt_hairsmooth:"హెయిర్ స్మూత్",rt_hairshine:"హెయిర్ షైన్ (D&B)",rt_dresssmooth:"ఫ్యాబ్రిక్ స్మూత్",rt_dressedge:"అంచుల క్లీనప్",rt_dresswrinkle:"ముడతల తొలగింపు",rt_dresstexture:"టెక్స్చర్ రికవరీ",rt_bgsmooth:"BG క్లీన్/స్మూత్",rt_bgcolor:"BG కలర్",rt_bgrecolor:"BG కలర్ స్మూత్",rt_shape:"రీషేప్ ప్రో (ముఖం + శరీరం)",rt_teeth:"పళ్ల వైటెనింగ్",rt_eyewhite:"కంటి తెల్లభాగం క్లీన్",rt_faceslim:"ఫేస్ స్లిమ్",rt_jaw:"జాలైన్",rt_chin:"గడ్డం",rt_nosesize:"ముక్కు పరిమాణం",rt_eyesize:"కళ్ల పరిమాణం",rt_lipfull:"నిండైన పెదవులు",rt_waist:"నడుము స్లిమ్",rt_bodyslim:"బాడీ స్లిమ్",rt_shoulder:"భుజాలు",rt_hip:"హిప్ స్లిమ్",rt_leglen:"కాళ్ల పొడవు",rt_armslim:"చేతుల స్లిమ్",rt_dressfit:"డ్రెస్ ఫిట్",rt_dressclean:"డ్రెస్ క్లీన్",rt_dresscolorpure:"డ్రెస్ కలర్ ప్యూర్",rt_bodygrp:"బాడీ స్కిన్ ప్రో",rt_bodysmooth:"బాడీ స్కిన్ స్మూత్",rt_bodyblemish:"బాడీ మచ్చల క్లీన్",rt_bodytone:"బాడీ ఈవెన్ టోన్",rt_bodyglow:"బాడీ గ్లో",rt_bodyhairrm:"బాడీ హెయిర్ తగ్గింపు",rt_hairvolume:"హెయిర్ వాల్యూమ్",rt_hairgloss:"హెయిర్ గ్లోస్",rt_hairfill:"హెయిర్ ఫిల్ (పలుచని చోట్లు)",wp_h_trail:"♥ వెడ్డింగ్ — లగ్జరీ ఫ్లవర్ ట్రెయిల్",wp_h_veil:"♥ వెడ్డింగ్ — ఎగిరే వెయిల్",wp_h_gown:"♥ వెడ్డింగ్ — గౌన్ క్లీన్ + ట్రెయిన్",wp_h_petal:"♥ వెడ్డింగ్ — ఎగిరే పూల రేకులు",wp_h_extra:"♥ వెడ్డింగ్ — గుర్రం · నీరు · మూడ్",wp_note:"ఫేస్ ID / పోజ్ / ఫ్రేమ్ / డ్రెస్ డిజైన్ పూర్తిగా లాక్ అయి ఉంటాయి — పేర్కొన్న అంశం మాత్రమే మారుతుంది.",wp_petalcolor:"పూల రేకుల రంగు (ఆటో = సీన్ మ్యాచ్)",wp_trail_c:"పూల రంగు",wp_trail_go:"▶ ఫ్లవర్ ట్రెయిల్",wp_veil_c:"వెయిల్ పొడవు",wp_veil_go:"▶ ఎగిరే వెయిల్",wp_gown_c:"ట్రెయిన్ పొడవు",wp_gown_go:"▶ గౌన్ క్లీన్ + ట్రెయిన్",wp_pet_c:"పూల రేకుల స్టైల్",wp_pet_go:"▶ ఎగిరే పూల రేకులు",wp_extra_c:"ఎక్స్‌ట్రా",wp_extra_go:"▶ ఎక్స్‌ట్రా జోడించండి",btn_apply_rt:"రీటచ్ వర్తింపజేయండి",btn_reset:"రీసెట్",rt_none:"ముందుగా కనీసం ఒక రీటచ్ స్లయిడర్ లేదా రంగు సెట్ చేయండి",tab_setup:"సెటప్",tab_prompt:"స్టూడియో",tab_presets:"ప్రీసెట్",recent_lbl:"ఇటీవలి prompts…",tab_retouch:"రీటచ్",tab_aitools:"AI టూల్స్",cap_warn:"Photoshop ఈ prompt బాక్స్ పరిమితి:",cleanup_note:"టిక్ చేసిన అంశాలు ప్రతి జనరేట్ / ప్రీసెట్‌తో కలిసి అమలవుతాయి.",btn_generate:"సృష్టించు",st_ready:"సిద్ధం",st_capture:"డాక్యుమెంట్ క్యాప్చర్ అవుతోంది",st_gen:"జనరేట్ అవుతోంది…",st_place:"Photoshopలో ప్లేస్ అవుతోంది…",st_placed_masked:"లేయర్ + మాస్క్ గ్రూప్‌గా ప్లేస్ అయింది — ఒరిజినల్‌కు ఎలాంటి మార్పు లేదు ✓",st_placed_plain:"సాధారణ లేయర్‌గా ప్లేస్ అయింది (ఈ హోస్ట్‌లో మాస్క్/గ్రూప్ అందుబాటులో లేదు)",stage_queued:"క్యూలో ఉంది",stage_uploading:"అప్‌లోడ్ అవుతోంది",stage_generating:"జనరేట్ అవుతోంది",stage_downloading:"డౌన్‌లోడ్ అవుతోంది",stage_placing:"ప్లేస్ అవుతోంది",st_done:"పూర్తయింది ✓",st_err:"లోపం",st_no_doc:"యాక్టివ్ డాక్యుమెంట్ లేదు — ముందుగా ఒక ఫోటో తెరవండి",st_no_prompt:"Prompt ఖాళీగా ఉంది",need_ref:"ఈ ప్రీసెట్‌కు స్లాట్ 1లో రిఫరెన్స్ ఇమేజ్ అవసరం",st_new_doc:"ఫలితం కొత్త డాక్యుమెంట్‌గా తెరుచుకుంది ✓",sec_preview:"ప్రివ్యూ — ముందు / తర్వాత",before:"ముందు",after:"తర్వాత",btn_place:"Photoshopలో ప్లేస్ చేయండి",btn_saveas:"ఇలా సేవ్ చేయండి…",st_saved:"సేవ్ అయింది ✓",sec_diag:"సిస్టమ్ చెక్",sec_log:"యాక్టివిటీ లాగ్",btn_diag:"చెక్ రన్ చేయండి",btn_copylog:"లాగ్ కాపీ చేయండి",btn_clearlog:"క్లియర్",diag_host:"Photoshop హోస్ట్",diag_uxp:"UXP సామర్థ్యాలు",diag_rh:"RunningHub Enterprise key",diag_doc:"యాక్టివ్ డాక్యుమెంట్",diag_set:"సెట్ అయింది",diag_unset:"సెట్ కాలేదు",diag_open:"తెరిచి ఉంది",diag_none:"ఏదీ తెరిచి లేదు",diag_missing:"లేదు",diag_done:"సిస్టమ్ చెక్ పూర్తయింది ✓",diag_lib:"రిఫరెన్స్ లైబ్రరీ",diag_lib_open:"ఫోల్డర్ తెరిచే సామర్థ్యం",sec_reflib:"రిఫరెన్స్ ఇమేజ్ లైబ్రరీ",reflib_note:"మీకు ఇష్టమైన రిఫరెన్స్ ఇమేజ్‌ల ఫోల్డర్‌ను ఒక్కసారి ఎంచుకోండి — బ్రౌజ్ దాన్ని గుర్తుంచుకుని ప్రతిచోటా అందులోనే తెరుస్తుంది.",btn_browse:"బ్రౌజ్",lib_choose:"ఫోల్డర్ ఎంచుకోండి",lib_open:"ఫోల్డర్ తెరవండి",lib_change:"ఫోల్డర్ మార్చండి",lib_reset:"రీసెట్",lib_rescan:"మళ్లీ స్కాన్ చేయండి",lib_current:"ప్రస్తుత ఫోల్డర్",lib_found:"దొరికిన ఇమేజ్‌లు",lib_status:"స్థితి",lib_lastscan:"చివరి స్కాన్",lib_images:"ఇమేజ్‌లు",lib_connected:"కనెక్ట్ అయింది",lib_not_config:"కాన్ఫిగర్ కాలేదు",lib_perm_lost:"అనుమతి పోయింది — మళ్లీ ఎంచుకోండి",lib_none:"(ఫోల్డర్ ఎంపిక కాలేదు)",lib_copy_only:"పాత్ కాపీ మాత్రమే",lib_choose_msg:"మీ HNK రిఫరెన్స్ ఇమేజ్ లైబ్రరీ ఫోల్డర్‌ను ఎంచుకోండి.",lib_scanning:"లైబ్రరీ స్కాన్ అవుతోంది…",lib_scan_done:"మళ్లీ స్కాన్ పూర్తయింది ✓",lib_reset_done:"లైబ్రరీ రీసెట్ అయింది ✓",lib_path_copied:"పాత్ కాపీ అయింది",lib_unsupported:"మద్దతు లేని ఇమేజ్ రకం",lib_restore_fail:"రిఫరెన్స్‌ను పునరుద్ధరించడం సాధ్యపడలేదు",on:"ఆన్",off:"ఆఫ్"},
+ur:{tab_setup:"سیٹ اپ",tab_prompt:"اسٹوڈیو",tab_presets:"پری سیٹ",tab_retouch:"ری ٹچ",tab_aitools:"AI ٹولز",tab_create:"بنائیں",btn_generate:"بنائیں",st_ready:"تیار",st_done:"ہو گیا ✓",st_need_key:"پہلے RunningHub Enterprise key ڈالیں",btn_show:"دکھائیں",btn_hide:"چھپائیں",btn_save:"محفوظ کریں",btn_test:"Key جانچیں",btn_clear:"صاف کریں",btn_cancel:"منسوخ",btn_load:"لوڈ",btn_paste:"پیسٹ",btn_improve:"Prompt بہتر بنائیں",lbl_ratio:"تناسب",lbl_size:"سائز",lbl_quality:"معیار"}
 };
 
 function t(k) {
@@ -6342,9 +6293,8 @@ function collectDiag() {
   const caps = !!((typeof imaging !== "undefined" && imaging) && (typeof batchPlay === "function") && (typeof fsp !== "undefined" && fsp));
   rows.push({ key: "diag_uxp", level: caps ? "ok" : "err", detail: caps ? "imaging · batchPlay · fs" : t("diag_missing") });
 
-  const isOai = state.provider === "openai";
-  const pk = isOai ? state.oaiKey : state.apiKey;
-  rows.push({ key: isOai ? "diag_oai" : "diag_gem", level: pk ? "ok" : "warn", detail: pk ? t("diag_set") : t("diag_unset") });
+  const pk = state.rhKey;
+  rows.push({ key: "diag_rh", level: pk ? "ok" : "warn", detail: pk ? t("diag_set") : t("diag_unset") });
 
   const hasDoc = (function () { try { return !!(app && app.activeDocument); } catch (e) { return false; } })();
   rows.push({ key: "diag_doc", level: hasDoc ? "ok" : "pend", detail: hasDoc ? t("diag_open") : t("diag_none") });
@@ -6720,19 +6670,11 @@ function populateSelects() {
   if (sl) sl.value = state.lang;
   const sm = $("selModel");
   if (sm) {
-    if (state.provider === "openai") {
-      fillSelect(sm, OAI_MODEL_OPTIONS);
-      sm.value = oaiModel();
-    } else {
-      fillSelect(sm, MODEL_OPTIONS.map(function (m) { return { v: m.v, label: t(m.k) }; }));
-      sm.value = state.model;
-    }
+    fillSelect(sm, MODEL_OPTIONS.map(function (m) { return { v: m.v, label: t(m.k) }; }));
+    sm.value = state.model;
   }
   const sz = $("szRow");
-  if (sz) sz.style.display = (state.provider === "openai") ? "none" : "flex";
-  const qr = $("qualRow");
-  if (qr) qr.style.display = (state.provider === "openai") ? "flex" : "none";
-  try { paintQualSeg(); } catch (e) { }
+  if (sz) sz.style.display = "flex";
   const sr = $("selRatio");
   if (sr) {
     fillSelect(sr, RATIO_OPTIONS.map(function (id) {
@@ -6946,17 +6888,16 @@ async function saveSettings() {
     const f = await folder.createFile(SETTINGS_FILE, { overwrite: true });
     /* v4.16: de-duplicated — every persisted field appears exactly once. */
     const o = {
-      apiKey: state.apiKey, lang: state.lang, theme: state.theme, model: state.model,
+      rhKey: state.rhKey, lang: state.lang, theme: state.theme, model: state.model,
       size: state.size, ratio: state.ratio,
       autoRun: state.autoRun, autoPlace: state.autoPlace, intensity: state.intensity,
       rt: state.rt, sections: state.sections, page: state.page,
       clean: state.clean,
       keep: state.keep, rmix: state.rmix, i2p: state.i2p, lights: state.lights,
       lightEquip: state.lightEquip, chains: state.chains, restMode: state.restMode,
-      provider: state.provider, oaiKey: state.oaiKey, oaiModel: state.oaiModel, oaiQuality: state.oaiQuality,
       cRatio: state.cRatio, cVariations: state.cVariations,
       recentPrompts: state.recentPrompts,
-      webUrl: state.webUrl, liveTrans: state.liveTrans,
+      webUrl: state.webUrl,
       refTarget: state.refTarget, refMkOn: state.refMkOn, refHairOn: state.refHairOn,
       bgKeepFrame: state.bgKeepFrame, bgKeepSubLight: state.bgKeepSubLight, match: state.match,
       bdayAge: state.bdayAge, capOn: state.capOn, capText: state.capText, capPos: state.capPos, scarfDir: state.scarfDir, scarfLen: state.scarfLen,
@@ -6983,7 +6924,13 @@ async function loadSettings() {
     const txt = await f.read({ format: formats.utf8 });
     const o = JSON.parse(txt);
     if (o && typeof o === "object") {
-      if (typeof o.apiKey === "string") state.apiKey = o.apiKey;
+      if (typeof o.rhKey === "string") state.rhKey = o.rhKey;
+      /* v6.26.0 — legacy Gemini/OpenAI keys are PURGED, never restored: the
+         next saveSettings() writes a file without them (web app 5.50.0 rule). */
+      if (typeof o.apiKey === "string" || typeof o.oaiKey === "string") {
+        /* rewrite the settings file WITHOUT the retired providers' keys */
+        setTimeout(function () { try { saveSettings(); } catch (e) { } }, 0);
+      }
       if (typeof o.accRefresh === "string") state.accRefresh = o.accRefresh;
       if (typeof o.accUid === "string") state.accUid = o.accUid;
       if (typeof o.accEmail === "string") state.accEmail = o.accEmail;
@@ -7017,16 +6964,10 @@ async function loadSettings() {
         for (const ik in state.i2p) { if (typeof o.i2p[ik] === "boolean") state.i2p[ik] = o.i2p[ik]; }
       }
       if (typeof o.lightEquip === "boolean") state.lightEquip = o.lightEquip;
-      if (o.provider === "gemini" || o.provider === "openai") state.provider = o.provider;
-      if (typeof o.oaiKey === "string") state.oaiKey = o.oaiKey;
-      if (o.oaiModel === MODEL_OAI_IMG2) state.oaiModel = o.oaiModel;
-      else if (o.oaiModel === MODEL_OAI_IMG) state.oaiModel = MODEL_OAI_IMG2; /* migrate: gpt-image-1 API retired 2026-10-23 */
-      if (typeof o.oaiQuality === "string" && OAI_QUALITIES.indexOf(o.oaiQuality) >= 0) state.oaiQuality = o.oaiQuality;
       if (Array.isArray(o.recentPrompts)) state.recentPrompts = o.recentPrompts.filter(function (r) { return r && typeof r.t === "string"; }).slice(0, 20);
       if (typeof o.cRatio === "string") state.cRatio = o.cRatio;
       if (typeof o.cVariations === "number") state.cVariations = Math.max(1, Math.min(4, o.cVariations));
       if (typeof o.webUrl === "string") state.webUrl = o.webUrl;
-      if (typeof o.liveTrans === "boolean") state.liveTrans = o.liveTrans;
       sanitizeCam(o);
       if (o.refTarget === "solo" || o.refTarget === "couple" || o.refTarget === "family") state.refTarget = o.refTarget;
       if (typeof o.refMkOn === "boolean") state.refMkOn = o.refMkOn;
@@ -7213,8 +7154,8 @@ async function pickReferenceFile() {
   if (!f) return null;
   const name = f.name || "file";
   const ext = (name.indexOf(".") >= 0 ? name.split(".").pop() : "").toLowerCase();
-  /* AUDIT-FIX #8: only the MIME types Gemini accepts inline may be read directly.
-     gif/bmp are NOT in GEMINI_DIRECT_MIME, so they must fall through to
+  /* AUDIT-FIX #8: only the MIME types the upload path accepts may be read directly.
+     gif/bmp are NOT in DIRECT_UPLOAD_MIME, so they must fall through to
      captureFileViaPS (which re-encodes to JPEG) instead of poisoning the next
      Generate with an unsupported-MIME 400 / a misleading "corrupt image" error. */
   const direct = {
@@ -7229,7 +7170,7 @@ async function pickReferenceFile() {
 }
 
 /* ---------------- Web / URL references (Chrome, Pinterest) ---------------- */
-const GEMINI_DIRECT_MIME = { "image/jpeg": 1, "image/png": 1, "image/webp": 1 };
+const DIRECT_UPLOAD_MIME = { "image/jpeg": 1, "image/png": 1, "image/webp": 1 };
 const EXT_BY_MIME = {
   "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
   "image/gif": "gif", "image/bmp": "bmp", "image/avif": "avif",
@@ -7326,7 +7267,7 @@ async function loadUrlIntoAnySlot(rawUrl, cfg) {
     const got = await fetchWebImage(url, 0);
     let ref = null;
     const small = got.buf.byteLength <= 6 * 1024 * 1024;
-    if (GEMINI_DIRECT_MIME[got.mime] && small) {
+    if (DIRECT_UPLOAD_MIME[got.mime] && small) {
       ref = { b64: bufToB64(got.buf), mime: got.mime, label: urlLabel(got.url) };
     } else {
       /* convert / downscale through Photoshop (avif, heic, gif, bmp, tif, oversized) */
@@ -7456,75 +7397,9 @@ function getMyPromptText() {
   return (el && typeof el.value === "string") ? el.value : "";
 }
 
-async function translateMyPrompt(txt) {
-  if (state.myCache && state.myCache.src === txt) return state.myCache.out;
-  const out = await callGeminiText(
-    "Translate this Myanmar (Burmese) photo-editing prompt into precise, professional English for an AI image model. Keep the words IMAGE 1, IMAGE 2, IMAGE 3 unchanged. Output ONLY the English translation, nothing else.\n\n" + txt
-  );
-  state.myCache = { src: txt, out: out };
-  return out;
-}
-
-async function translateEnToMy(txt) {
-  if (state.enCache && state.enCache.src === txt) return state.enCache.out;
-  const out = await callGeminiText(
-    "Translate this English photo-editing prompt into natural Myanmar (Burmese) that a photographer would write. Keep the words IMAGE 1, IMAGE 2, IMAGE 3 and common technical terms (softbox, 8K, HDR, bokeh) in English. Output ONLY the Burmese translation, nothing else.\n\n" + txt
-  );
-  state.enCache = { src: txt, out: out };
-  return out;
-}
-
-function setTransInfo(txt) {
-  const el = $("transInfo");
-  if (el) el.textContent = txt || "";
-}
-
-function scheduleLiveTrans(dir) {
-  if (!state.liveTrans || !state.apiKey) return;
-  if (state.transTimer) { try { clearTimeout(state.transTimer); } catch (e) { } }
-  state.transTimer = setTimeout(function () { doLiveTrans(dir); }, 900);
-}
-
-async function doLiveTrans(dir) {
-  if (!state.liveTrans || !state.apiKey || state.busy) return;
-  const pb = $("promptBox");
-  const pm = $("promptBoxMy");
-  if (!pb || !pm) return;
-  try {
-    if (dir === "en2my") {
-      const src = (pb.value || "").trim();
-      if (!src) {
-        state.fillingMy = true; pm.value = ""; state.fillingMy = false;
-        refreshPromptMeta(); setTransInfo(""); return;
-      }
-      setTransInfo("\u21C4 \u2026");
-      const out = await translateEnToMy(src);
-      if ((pb.value || "").trim() !== src) return;
-      state.fillingMy = true;
-      pm.value = out.slice(0, promptCap());
-      state.fillingMy = false;
-      refreshPromptMeta();
-      setTransInfo("\u21C4 \u2713");
-    } else {
-      const src = (pm.value || "").trim();
-      if (!src) {
-        state.fillingEn = true; pb.value = ""; state.fillingEn = false;
-        refreshPromptMeta(); setTransInfo(""); return;
-      }
-      setTransInfo("\u21C4 \u2026");
-      const out = await translateMyPrompt(src);
-      if ((pm.value || "").trim() !== src) return;
-      state.fillingEn = true;
-      pb.value = out.slice(0, promptCap());
-      state.fillingEn = false;
-      refreshPromptMeta();
-      setTransInfo("\u21C4 \u2713");
-    }
-  } catch (e) {
-    setTransInfo("\u21C4 \u2717");
-  }
-}
-
+/* v6.26.0 — the Gemini live-translate bridge left with its provider. A
+   Burmese prompt now sends exactly as written (the RunningHub models accept
+   it; English simply steers them better), mirroring the web app. */
 function promptCap() { return state.promptCap || MAX_PROMPT; }
 
 /* Force the textarea look via inline styles — immune to UXP selector gaps. */
@@ -7586,7 +7461,6 @@ function onPromptInput() {
   const cap = promptCap();
   if (el && el.value.length > cap) el.value = el.value.slice(0, cap);
   refreshPromptMeta();
-  if (!state.fillingEn) scheduleLiveTrans("en2my");
 }
 
 function appendPrompt(txt) {
@@ -8950,114 +8824,37 @@ function resolveRatio(base) {
   return "1:1";
 }
 
-const OAI_BASE = "https://api.openai.com/v1";
-/* Legacy id — OpenAI retires gpt-image-1's API on 2026-10-23. Kept ONLY so
-   old saved settings can be migrated; never offered, never sent. */
-const MODEL_OAI_IMG = "gpt-image-1";
-const MODEL_OAI_IMG2 = "gpt-image-2";
-/* The one OpenAI image model the panel offers. gpt-image-2 keeps the same
-   /images/generations + /images/edits shape gpt-image-1 used (model/prompt/
-   size + optional quality low|medium|high, multipart image[] for edits,
-   b64_json response) per the current OpenAI Images API reference
-   (gpt-image-2 additionally accepts arbitrary WIDTHxHEIGHT sizes — the
-   fixed sizes this panel sends remain valid). */
-const OAI_MODEL_OPTIONS = [
-  { v: MODEL_OAI_IMG2, label: "gpt-image-2 (OpenAI)" }
-];
-function oaiModel() {
-  /* Any saved value — including a legacy "gpt-image-1" from an older
-     install — resolves to gpt-image-2 (the old model's API dies 2026-10-23). */
-  return MODEL_OAI_IMG2;
-}
+/* ---------------- RunningHub Enterprise engine (v6.26.0) ----------------
+   OWNER DECISION: the panel runs on RunningHub Enterprise shared models
+   alone — the Gemini and OpenAI engines, and the Gemini text bridge
+   (improve/translate/describe), left with their providers. Mirrors the web
+   app's 5.50.0 change. The generate choke point below routes every image
+   call through the SAME adapter stack the AI Tools tab already ships
+   (HNK.runninghubAdapter → upload → submit → poll → download), so the two
+   halves of the panel can never drift onto different engines. */
+const RH_TIER_MODEL = "nano-banana-2"; /* registry id — rhart-image-n-g31-flash/image-to-image */
+const RH_QUALITY_LINE = "QUALITY: ultra-detailed professional finish \u2014 crisp micro-detail in skin, hair and fabric, clean edges, accurate materials, no artifacts.";
 
-function resolveModel() {
-  if (state.provider === "openai") return oaiModel();
-  if (state.model === "flash") return MODEL_FLASH_IMG;
-  if (state.model === "pro") return MODEL_PRO_IMG;
-  return (state.size === "1K") ? MODEL_FLASH_IMG : MODEL_PRO_IMG;
-}
-
-/* size mapping for OpenAI (nearest of the 3 supported) */
-function oaiSizeForRatio(r) {
-  if (!r || r === "1:1") return "1024x1024";
-  const p = r.split(":");
-  const v = Number(p[0]) / Number(p[1]);
-  if (v > 1.05) return "1536x1024";
-  if (v < 0.95) return "1024x1536";
-  return "1024x1024";
-}
-
-/* parts (Gemini shape) -> OpenAI: joined prompt + image list */
-function oaiFromParts(parts) {
+/* parts (the panel's internal prompt shape) -> joined prompt + image refs */
+function partsToPromptImages(parts) {
   const texts = [];
-  const imgs = [];
+  const refs = [];
   for (let i = 0; i < parts.length; i++) {
     if (parts[i].text) texts.push(parts[i].text);
-    else if (parts[i].inlineData) imgs.push(parts[i].inlineData);
-  }
-  return { prompt: texts.join("\n"), images: imgs };
-}
-
-async function callOpenAIImage(model, parts, imageConfig) {
-  if (!state.oaiKey) throw new Error("HNKERR:err_key:OpenAI key missing");
-  const m = oaiFromParts(parts);
-  const size = oaiSizeForRatio(imageConfig && imageConfig.aspectRatio);
-  let res;
-  if (m.images.length) {
-    if (typeof FormData === "undefined" || typeof Blob === "undefined") {
-      throw new Error("HNKERR:err_generic:This Photoshop version cannot send reference images to OpenAI - use Gemini for reference edits");
+    else if (parts[i].inlineData) {
+      const d = parts[i].inlineData;
+      refs.push("data:" + (d.mimeType || "image/png") + ";base64," + d.data);
     }
-    const fd = new FormData();
-    fd.append("model", model);
-    fd.append("prompt", m.prompt.slice(0, 30000));
-    fd.append("size", size);
-    if (state.oaiQuality && state.oaiQuality !== "auto") fd.append("quality", state.oaiQuality);
-    for (let i = 0; i < Math.min(m.images.length, 10); i++) {
-      fd.append("image[]", new Blob([b64ToBuf(m.images[i].data)], { type: m.images[i].mimeType || "image/png" }), "ref" + (i + 1) + ".png");
-    }
-    res = await hnkFetch(OAI_BASE + "/images/edits", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + state.oaiKey },
-      body: fd
-    }, 120000);
-  } else {
-    const genBody = { model: model, prompt: m.prompt.slice(0, 30000), size: size, n: 1 };
-    if (state.oaiQuality && state.oaiQuality !== "auto") genBody.quality = state.oaiQuality;
-    res = await hnkFetch(OAI_BASE + "/images/generations", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + state.oaiKey, "Content-Type": "application/json" },
-      body: JSON.stringify(genBody)
-    });
   }
-  /* AUDIT-FIX #12: guard the parse like the Gemini path — a 5xx HTML
-     gateway page must classify as err_net, not throw a cryptic SyntaxError. */
-  const j = await res.json().catch(function () { return null; });
-  if (!res.ok) {
-    const msg = (j && j.error && j.error.message) ? j.error.message : ("HTTP " + res.status);
-    const ck = classifyGemError(res.status, msg, "");
-    throw new Error(ck ? "HNKERR:" + ck + ":" + msg : msg);
-  }
-  const d = j && j.data && j.data[0];
-  if (!d || !d.b64_json) throw new Error("HNKERR:err_generic:OpenAI returned no image");
-  return { b64: d.b64_json, mime: "image/png" };
+  return { prompt: texts.join("\n"), refs: refs };
 }
 
-/* single choke point: every image call routes by provider */
-async function callImageAPI(model, parts, imageConfig) {
-  await gateRequireLease();
-  if (state.provider === "openai") return callOpenAIImage(oaiModel(), parts, imageConfig);
-  return callGeminiImage(model, parts, imageConfig);
-}
-
-/* ---------------- Gemini API ---------------- */
-function classifyGemError(status, msg, block) {
-  const m = (msg || "") + " " + (block || "");
-  if (status === 401 || status === 403 || /API key|API_KEY|key not valid|PERMISSION_DENIED/i.test(m)) return "err_key";
-  if (status === 429 || /quota|RESOURCE_EXHAUSTED|rate limit/i.test(m)) return "err_quota";
-  if (status === 413 || /payload|too large|exceeds the maximum/i.test(m)) return "err_big";
-  if (/SAFETY|PROHIBITED|IMAGE_SAFETY|blocked/i.test(m)) return "err_safety";
-  if ((status && status >= 500) || /network|fetch|timed? ?out/i.test(m)) return "err_net";
-  return "";
+let _rhTransport = null;
+function rhTransport() {
+  if (_rhTransport) return _rhTransport;
+  const http = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.runninghubHttp) || null;
+  _rhTransport = (http && http.create) ? http.create() : null;
+  return _rhTransport;
 }
 
 function friendlyErr(e) {
@@ -9069,104 +8866,51 @@ function friendlyErr(e) {
   return t("st_err") + ": " + m.replace(/^HNKERR:[a-z_]+:/, "");
 }
 
-async function callGeminiImage(model, parts, imageConfig) {
-  const url = API_BASE + "/models/" + model + ":generateContent?key=" + encodeURIComponent(state.apiKey);
-  const modalitySets = [["IMAGE"], ["TEXT", "IMAGE"]];
-  let lastErr = null;
-  for (let i = 0; i < modalitySets.length; i++) {
-    const body = {
-      contents: [{ role: "user", parts: parts }],
-      generationConfig: { responseModalities: modalitySets[i] }
-    };
-    if (imageConfig) body.generationConfig.imageConfig = imageConfig;
-    let res, j;
-    let attempt = 0;
-    while (true) {
-      attempt++;
-      try {
-        res = await hnkFetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        }, 120000);
-        j = await res.json();
-      } catch (e) {
-        if (attempt < 3) {
-          setStatus(t("st_retry") + " " + attempt + "/3 \u2026");
-          await sleep(1500 * attempt);
-          continue;
-        }
-        throw new Error("HNKERR:err_net:" + (e && e.message ? e.message : e));
-      }
-      if (!res.ok && [429, 500, 502, 503, 504].indexOf(res.status) >= 0 && attempt < 3) {
-        setStatus(t("st_retry") + " " + attempt + "/3 (HTTP " + res.status + ")");
-        await sleep(1500 * attempt);
-        continue;
-      }
-      break;
-    }
-    if (res.ok) {
-      const cand = j.candidates && j.candidates[0];
-      const cparts = (cand && cand.content && cand.content.parts) ? cand.content.parts : [];
-      for (let k = 0; k < cparts.length; k++) {
-        const d = cparts[k].inlineData || cparts[k].inline_data;
-        if (d && d.data) {
-          return { b64: d.data, mime: d.mimeType || d.mime_type || "image/png" };
-        }
-      }
-      const txts = [];
-      for (let k = 0; k < cparts.length; k++) { if (cparts[k].text) txts.push(cparts[k].text); }
-      const block = (j.promptFeedback && j.promptFeedback.blockReason) || (cand && cand.finishReason) || "";
-      const ck0 = classifyGemError(0, txts.join(" "), block);
-      const base0 = (txts.join(" ").slice(0, 200) || "No image returned") + (block ? " [" + block + "]" : "");
-      lastErr = new Error(ck0 ? "HNKERR:" + ck0 + ":" + base0 : base0);
-      break;
-    } else {
-      const msg = (j && j.error && j.error.message) ? j.error.message : ("HTTP " + res.status);
-      if (/modalit|response_modalities/i.test(msg) && i < modalitySets.length - 1) {
-        lastErr = new Error(msg);
-        continue;
-      }
-      if (model === MODEL_PRO_IMG && !state._proFellBack &&
-        (res.status === 404 || /not found|does not exist|not supported/i.test(msg))) {
-        state._proFellBack = true;
-        setStatus(t("st_pro_fallback"));
-        return await callGeminiImage(MODEL_FLASH_IMG, parts, imageConfig);
-      }
-      const ck = classifyGemError(res.status, msg, "");
-      throw new Error(ck ? "HNKERR:" + ck + ":" + msg : msg);
-    }
-  }
-  throw lastErr || new Error("Unknown error");
+/* adapter error -> the panel's HNKERR:<i18n-key>: convention friendlyErr reads */
+function rhErrToHnk(err) {
+  const code = (err && err.code) || "";
+  const msg = [err && err.title, err && err.message].filter(Boolean).join(" ") ||
+    (err && err.bullets && err.bullets.join(" \u00b7 ")) || "RunningHub error";
+  if (code === "invalid-key") return new Error("HNKERR:err_key:" + msg);
+  if (code === "timeout") return new Error("HNKERR:err_net:" + msg);
+  if (code === "quota" || code === "rate-limited") return new Error("HNKERR:err_quota:" + msg);
+  return new Error("HNKERR:err_generic:" + msg);
 }
 
-async function callGeminiText(prompt) {
+/* single choke point: every image generation in the classic panel runs on
+   RunningHub Enterprise. `model` (the old Gemini id) is ignored — the tier
+   picker (state.model flash|pro|auto) now shapes the PROMPT and the size,
+   exactly as the web app's fast/quality tiers do. */
+async function callImageAPI(model, parts, imageConfig) {
   await gateRequireLease();
-  const url = API_BASE + "/models/" + MODEL_TEXT + ":generateContent?key=" + encodeURIComponent(state.apiKey);
-  const parts = Array.isArray(prompt) ? prompt : [{ text: prompt }];
-  const body = { contents: [{ role: "user", parts: parts }] };
-  let res, j;
-  for (let at = 1; ; at++) {
-    try {
-      res = await hnkFetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }, 90000);
-      j = await res.json();
-    } catch (e) {
-      if (at < 2) { await sleep(1200); continue; }
-      throw new Error("Network: " + (e && e.message ? e.message : e));
-    }
-    if (!res.ok && [429, 500, 502, 503, 504].indexOf(res.status) >= 0 && at < 2) { await sleep(1200); continue; }
-    break;
+  const adapter = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.runninghubAdapter) || null;
+  const transport = rhTransport();
+  if (!adapter || !transport) throw new Error("HNKERR:err_generic:RunningHub engine failed to load - reload the panel");
+  const key = (state.rhKey || "").trim();
+  if (!key) throw new Error("HNKERR:err_key:RunningHub Enterprise key missing");
+  const m = partsToPromptImages(parts);
+  const pro = state.model === "pro" || (state.model === "auto" && state.size !== "1K");
+  let prompt = m.prompt.slice(0, MAX_PROMPT);
+  if (pro) prompt += "\n" + RH_QUALITY_LINE;
+  const size = pro && state.size === "1K" ? "2K" : state.size;
+  const ratio = (imageConfig && imageConfig.aspectRatio) || "";
+  const res = await adapter.generate(
+    { transport: transport, apiKey: key },
+    { model: RH_TIER_MODEL, prompt: prompt,
+      images: m.refs.map(function (r) { return { ref: r }; }),
+      output: { ratio: ratio, size: size }, requestCount: 1 },
+    { onStage: function (stage, info) {
+        if (stage === "UPLOADING" && info && info.total) setStatus(t("st_gen") + " \u00b7 " + (info.current || 0) + "/" + info.total);
+      } }
+  );
+  if (!res || !res.ok) {
+    if (res && res.cancelled) throw new Error("HNKERR:err_generic:cancelled");
+    throw rhErrToHnk(res && res.error);
   }
-  if (!res.ok) throw new Error((j && j.error && j.error.message) ? j.error.message : ("HTTP " + res.status));
-  const cand = j.candidates && j.candidates[0];
-  const cparts = (cand && cand.content && cand.content.parts) ? cand.content.parts : [];
-  const txts = [];
-  for (let k = 0; k < cparts.length; k++) { if (cparts[k].text) txts.push(cparts[k].text); }
-  return txts.join("\n").trim();
+  const first = res.results && res.results[0] && res.results[0].ref;
+  const pm = /^data:([^;]+);base64,(.*)$/.exec(String(first || ""));
+  if (!pm) throw new Error("HNKERR:err_generic:RunningHub returned no image");
+  return { b64: pm[2], mime: pm[1] || "image/png" };
 }
 
 /* ---------------- Studio Lighting AI (3D diagram + relight) ---------------- */
@@ -9370,49 +9114,15 @@ const I2P_SECTIONS = {
   color: "COLOR: the full color palette, grading style, saturation, contrast character and overall mood."
 };
 
-function buildExtractPrompt() {
-  const secs = [];
-  for (const k in I2P_SECTIONS) { if (state.i2p[k]) secs.push("- " + I2P_SECTIONS[k]); }
-  if (!secs.length) return "";
-  return "Analyze IMAGE 1 and write ONE exhaustive photographic scene description to be used as an AI image-generation prompt.\n" +
-    "CRITICAL: EXCLUDE every person, human figure, face and body completely - describe the scene as if it were empty of people.\n" +
-    "Describe in rich detail:\n" + secs.join("\n") +
-    "\nAlways also state: location type, time of day, atmosphere, and the camera angle / lens feel of the original photo.\n" +
-    "Output ONLY the scene description in English as flowing prose (no lists, no headings, no explanations, no quotes). Maximum 2500 characters.";
-}
-
+/* v6.26.0 — Scene EXTRACT (Gemini vision → text) left with its provider.
+   Scene GENERATE below is an image job and runs on RunningHub as before. */
 const SCENE_FIT = "SCENE FIT (AUTO): Build the described scene AROUND the IMAGE 1 subject following IMAGE 1's framing, composition, camera distance and camera angle exactly. Whatever the shot type - close-up, half-body, full-body or wide - re-project the scene naturally for that viewpoint: correct perspective and camera-lens proportions, believable depth of field, foreground and background elements placed and scaled to IMAGE 1's viewpoint, lighting direction and color kept consistent across the frame. The result must look photographed in-camera from IMAGE 1's exact camera position.";
 const SCENE_ADAPT_ON = "Re-light and color-grade the IMAGE 1 subject so they naturally match the new scene's lighting direction, intensity and color palette.";
 const SCENE_ADAPT_OFF = "Keep the IMAGE 1 subject's original lighting and colors untouched; blend the scene around them believably.";
 const SCENE_GUARD = "SCENE BUILD RULE: the final image contains only the IMAGE 1 subject(s) - build the described scene around them; never add people.";
 
-async function extractScenePrompt() {
-  if (state.busy) return;
-  const key = (state.apiKey || "").trim() || $("apiKey").value.trim();
-  if (!key) { setStatus(t("st_need_key"), "err"); return; }
-  state.apiKey = key;
-  const r = state.refs[0];
-  if (!r) { setStatus(t("need_ref"), "err"); return; }
-  const instr = buildExtractPrompt();
-  if (!instr) { setStatus(t("i2p_none"), "err"); return; }
-  startBusy("st_extract");
-  try {
-    const out = await callGeminiText([
-      { text: instr },
-      { text: "IMAGE 1:" },
-      { inlineData: { mimeType: r.mime, data: r.b64 } }
-    ]);
-    if (!out) throw new Error("empty");
-    setPromptText(out.slice(0, promptCap()));
-    endBusy();
-    setStatus(t("st_extract_done"), "ok");
-    switchPage("prompt");
-  } catch (e) {
-    endBusy();
-    setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err");
-  }
-}
-
+/* v6.26.0 — extractScenePrompt (Gemini vision → scene text) left with its
+   provider; the sceneGenerate image job below is untouched. */
 function sceneGenerate() {
   if (state.busy) return;
   const boxTxt = getPromptText().trim();
@@ -9893,7 +9603,7 @@ function applyRecipe(o) {
 }
 
 function repaintFromState() {
-  try { const sm = $("selModel"); if (sm) sm.value = (state.provider === "openai") ? oaiModel() : state.model; } catch (e) { }
+  try { const sm = $("selModel"); if (sm) sm.value = state.model; } catch (e) { }
   try { const sr = $("selRatio"); if (sr) sr.value = state.ratio; } catch (e) { }
   try { paintSizeSeg(); } catch (e) { }
   try { const iv = $("intVal"), is2 = $("intSlider"); if (is2) is2.value = String(state.intensity); if (iv) iv.textContent = state.intensity + "%"; } catch (e) { }
@@ -10016,10 +9726,9 @@ async function copyFinalPrompt() {
 /* ---------------- Generate pipeline ---------------- */
 async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) {
   const op = opts || {};
-  state._proFellBack = false;
   if (op.action) state.lastAction = op.action;
   if (state.busy) return;
-  const key = (state.apiKey || "").trim();
+  const key = (state.rhKey || "").trim();
   if (!key) { setStatus(t("st_need_key"), "err"); return; }
   /* AUDIT-FIX #1: clear any prior result up front so a failed generation can never
      be mistaken for success. batch/pipeline callers snapshot op.base BEFORE calling
@@ -10053,13 +9762,8 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
   const hasRef = !noRefs && !!(state.refs[0] || state.refs[1]);
   if (!userText && !myTxt && !hasRef) { setStatus(t("st_no_prompt"), "err"); return; }
   if (myTxt && !getPromptText().trim()) {
-    startBusy("st_translate");
-    try {
-      const tr = await translateMyPrompt(myTxt);
-      userText = (userText ? userText + "\n" : "") + tr;
-    } catch (te) {
-      userText = (userText ? userText + "\n" : "") + myTxt;
-    }
+    /* v6.26.0 — no translate hop: the Burmese text IS the prompt */
+    userText = (userText ? userText + "\n" : "") + myTxt;
   }
 
   startBusy("st_capture");
@@ -10120,7 +9824,7 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
       parts.push({ inlineData: { mimeType: selMask.mime, data: selMask.b64 } });
     }
 
-    const model = resolveModel();
+    const model = null; /* v6.26.0 — the tier (state.model) shapes the call inside callImageAPI */
     const imageConfig = {};
     const ratio = resolveRatio(base);
     if (ratio) imageConfig.aspectRatio = ratio;
@@ -10157,7 +9861,8 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
 
 /* ---------------- Auto-Export (v3.9) ---------------- */
 function provTag() {
-  return state.provider === "openai" ? ("OpenAI \u00B7 " + oaiModel()) : ("Gemini \u00B7 " + (state.model === "pro" ? "Pro" : state.model === "flash" ? "Flash" : "Auto"));
+  const tier = state.model === "pro" ? "Quality" : state.model === "flash" ? "Fast" : "Auto";
+  return "RunningHub \u00B7 " + tier;
 }
 
 function tsStamp() {
@@ -10528,7 +10233,7 @@ async function createGenerate(restyle) {
            { inlineData: { mimeType: restyleMime, data: restyleBase } },
            { text: (p || "enhance quality and lighting") + "\n" + CREATE_FINISH }]
         : buildCreateParts(p);
-      const img = await callImageAPI(resolveModel(), parts, cfg);
+      const img = await callImageAPI(null, parts, cfg);
       if (!imgMagicOk(img.b64)) throw new Error("HNKERR:st_img_bad:create result");
       if (i === 0) firstNew = img.b64;
       state.cResultB64 = img.b64;
@@ -10609,43 +10314,8 @@ const PROMPT_LIB = [
 
 const C_RATIOS = ["1:1", "3:4", "4:3", "9:16", "16:9"];
 
-async function createImprove() {
-  if (state.busy) return;
-  const key = (state.apiKey || "").trim();
-  if (!key) { setStatus(t("st_need_gem"), "err"); return; }
-  const p = getCreateText().trim();
-  if (!p) { setStatus(t("st_no_prompt"), "err"); return; }
-  startBusy("st_improving");
-  try {
-    const sys = "You are an expert prompt engineer for AI image generation used by a professional Myanmar photo studio (portrait, wedding, prewedding, graduation, maternity). Rewrite and enrich the user's idea into ONE vivid, camera-accurate image prompt: specify subject, lighting, mood, color palette, background, lens/DOF and realism. Keep the original intent. Output ONLY the improved English prompt - no notes, no markdown, no quotes.";
-    const out = await callGeminiText(sys + "\n\nIDEA:\n" + p);
-    const el = $("cPromptBox");
-    if (out && el) el.value = out.slice(0, 20000);
-    endBusy();
-    setStatus(t("st_improved"), "ok");
-  } catch (e) { endBusy(); setStatus(friendlyErr(e), "err"); }
-}
-
-async function createDescribe() {
-  if (state.busy) return;
-  const key = (state.apiKey || "").trim();
-  if (!key) { setStatus(t("st_need_gem"), "err"); return; }
-  const ref = state.cRefs[0];
-  if (!ref) { setStatus(t("st_need_ref1"), "err"); return; }
-  startBusy("st_describing");
-  try {
-    const sys = "Look at this photograph and write a single detailed English image-generation prompt that would recreate its style: describe the subject, pose, lighting setup and direction, color grade, mood, background, lens and framing. Be concrete and photographic. Output ONLY the prompt - no notes, no markdown, no quotes.";
-    const out = await callGeminiText([
-      { text: sys },
-      { inlineData: { mimeType: ref.mime, data: ref.b64 } }
-    ]);
-    const el = $("cPromptBox");
-    if (out && el) el.value = out.slice(0, 20000);
-    endBusy();
-    setStatus(t("st_described"), "ok");
-  } catch (e) { endBusy(); setStatus(friendlyErr(e), "err"); }
-}
-
+/* v6.26.0 — the Create tab's AI Improve/Describe (Gemini text) left with
+   their provider. */
 function insertLibPrompt(idx) {
   const el = $("cPromptBox");
   const item = PROMPT_LIB[idx];
@@ -10702,10 +10372,6 @@ function bindCreate() {
   }
   paintV();
   paintCGallery();
-  const im = $("btnCreateImprove");
-  if (im) im.addEventListener("click", function () { createImprove(); });
-  const de = $("btnCreateDescribe");
-  if (de) de.addEventListener("click", function () { createDescribe(); });
   const rs = $("btnCreateRestyle");
   if (rs) rs.addEventListener("click", function () { createGenerate(true); });
   const g = $("btnCreateGen");
@@ -10760,14 +10426,15 @@ async function testKey() {
   if (!key) { setStatus(t("st_need_key"), "err"); return; }
   setStatus(t("st_testing") + "\u2026");
   try {
-    const res = await hnkFetch(API_BASE + "/models?key=" + encodeURIComponent(key) + "&pageSize=1", { method: "GET" }, 30000);
-    const j = await res.json();
-    if (res.ok) {
-      state.apiKey = key;
+    const adapter = (globalThis.HNK && globalThis.HNK.runninghubAdapter) || null;
+    const transport = rhTransport();
+    if (!adapter || !transport) { setStatus(t("st_key_bad") + ": engine not loaded", "err"); return; }
+    const res = await adapter.verifyKey({ transport: transport, apiKey: key }, key);
+    if (res && res.ok) {
+      state.rhKey = key;
       setStatus(t("st_key_ok"), "ok");
     } else {
-      const msg = (j && j.error && j.error.message) ? j.error.message : ("HTTP " + res.status);
-      setStatus(t("st_key_bad") + ": " + msg, "err");
+      setStatus(t("st_key_bad"), "err");
     }
   } catch (e) {
     setStatus(t("st_key_bad") + ": " + (e && e.message ? e.message : e), "err");
@@ -10820,63 +10487,17 @@ function bindScenes() {
 }
 
 function bindProvider() {
-  const map = [["provGem", "gemini"], ["provOai", "openai"]];
-  const paint = function () {
-    for (let i = 0; i < map.length; i++) {
-      const b = $(map[i][0]);
-      if (b) b.className = "segb" + (state.provider === map[i][1] ? " on" : "");
-    }
-    const bp = $("brandProv");
-    if (bp) bp.textContent = state.provider === "openai" ? "OpenAI" : "Gemini AI";
-    try { populateSelects(); } catch (e) { }
-  };
-  for (let i = 0; i < map.length; i++) {
-    (function (id, val) {
-      const b = $(id);
-      if (b) b.addEventListener("click", function () { state.provider = val; paint(); saveSettings(); });
-    })(map[i][0], map[i][1]);
-  }
-  paint();
-  const tk = $("btnTestOaiKey");
-  if (tk) tk.addEventListener("click", async function () {
-    const k = (($("oaiKey") && $("oaiKey").value) || state.oaiKey || "").trim();
-    if (!k) { setStatus(t("st_need_key"), "err"); return; }
-    setStatus(t("st_testing") + "\u2026");
-    try {
-      const res = await hnkFetch(OAI_BASE + "/models?limit=1", { method: "GET", headers: { "Authorization": "Bearer " + k } }, 30000);
-      if (res.ok) { state.oaiKey = k; saveSettings(); setStatus(t("st_key_ok"), "ok"); }
-      else {
-        const j = await res.json().catch(function () { return null; });
-        const msg = (j && j.error && j.error.message) ? j.error.message : ("HTTP " + res.status);
-        setStatus(t("st_key_bad") + ": " + msg, "err");
-      }
-    } catch (e) { setStatus(t("st_key_bad") + ": " + (e && e.message ? e.message : e), "err"); }
-  });
-  const ok2 = $("btnSaveOaiKey");
-  if (ok2) ok2.addEventListener("click", function () {
-    /* AUDIT-FIX #2: only overwrite when the user typed something, so a Save click on a
-       (transiently) blank field can never wipe a stored key. */
-    const v = ($("oaiKey") ? $("oaiKey").value : "").trim();
-    if (v) state.oaiKey = v;
-    saveSettings();
-    setStatus(t("st_key_saved"), "ok");
-  });
-  const ki = $("oaiKey");
-  if (ki && state.oaiKey) ki.value = state.oaiKey;
-  /* AUDIT-FIX #2 + #13: bindProvider runs before loadSettings resolves, so repaint the
-     provider segment, brand label and the OpenAI key field AFTER settings load (the
-     apply block calls applyI18n which runs every REFRESHER). */
+  /* v6.26.0 — one engine: the provider segment and the OpenAI key UI left
+     with their providers; the brand line simply names RunningHub. */
+  const bp = $("brandProv");
+  if (bp) bp.textContent = "RunningHub";
   REFRESHERS.push(function () {
-    try {
-      for (let i = 0; i < map.length; i++) { const b = $(map[i][0]); if (b) b.className = "segb" + (state.provider === map[i][1] ? " on" : ""); }
-      const bp = $("brandProv"); if (bp) bp.textContent = state.provider === "openai" ? "OpenAI" : "Gemini AI";
-      const ki2 = $("oaiKey"); if (ki2) ki2.value = state.oaiKey || "";
-    } catch (e) { }
+    try { const b2 = $("brandProv"); if (b2) b2.textContent = "RunningHub"; } catch (e) { }
   });
 }
 
 function saveKey() {
-  state.apiKey = $("apiKey").value.trim();
+  state.rhKey = $("apiKey").value.trim();
   saveSettings();
   setStatus(t("st_key_saved"), "ok");
 }
@@ -10886,26 +10507,7 @@ function paintShowKey() {
   if (b) b.textContent = t(state.keyShown ? "btn_hide" : "btn_show");
 }
 
-/* ---------------- Improve prompt ---------------- */
-async function improvePrompt() {
-  if (state.busy) return;
-  const key = (state.apiKey || "").trim() || $("apiKey").value.trim();
-  if (!key) { setStatus(t("st_need_key"), "err"); return; }
-  state.apiKey = key;
-  const p = getPromptText().trim();
-  if (!p) { setStatus(t("st_no_prompt"), "err"); return; }
-  startBusy("st_improving");
-  try {
-    const sys = "You are an expert prompt engineer for AI photo editing (Gemini image models) used by a professional Myanmar photo studio (portrait, wedding, graduation). Rewrite and improve the user's prompt: make it precise and richly detailed about lighting, skin, color, background, composition and camera realism. Keep the user's original intent and any IMAGE 1/2/3 references exactly. Output ONLY the improved prompt in English \u2014 no explanations, no markdown, no quotes.";
-    const out = await callGeminiText(sys + "\n\nUSER PROMPT:\n" + p);
-    if (out) setPromptText(out.slice(0, MAX_PROMPT));
-    endBusy();
-    setStatus(t("st_improved"), "ok");
-  } catch (e) {
-    endBusy();
-    setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err");
-  }
-}
+/* v6.26.0 — Improve Prompt (Gemini text) left with its provider. */
 
 /* ---------------- UI wiring ---------------- */
 function bindToggle(id, key) {
@@ -10961,26 +10563,7 @@ function bindSizeSeg() {
   paintSizeSeg();
 }
 
-/* OpenAI output quality (gpt-image): auto / low / medium / high */
-const OAI_QUALITIES = ["auto", "low", "medium", "high"];
-function paintQualSeg() {
-  const map = [["qAuto", "auto"], ["qLow", "low"], ["qMed", "medium"], ["qHigh", "high"]];
-  for (let i = 0; i < map.length; i++) {
-    const b = $(map[i][0]);
-    if (b) b.className = "segb" + (state.oaiQuality === map[i][1] ? " on" : "");
-  }
-}
-function bindQualSeg() {
-  const map = [["qAuto", "auto"], ["qLow", "low"], ["qMed", "medium"], ["qHigh", "high"]];
-  for (let i = 0; i < map.length; i++) {
-    (function (id, val) {
-      const b = $(id);
-      if (!b) return;
-      b.addEventListener("click", function () { state.oaiQuality = val; paintQualSeg(); saveSettings(); });
-    })(map[i][0], map[i][1]);
-  }
-  paintQualSeg();
-}
+/* v6.26.0 — the OpenAI quality segment left with its provider. */
 
 /* ---------------- Retouch Pro (v1.4) ---------------- */
 const RT_DEFAULT = {
@@ -11327,7 +10910,7 @@ function init() {
     /* first: the wall comes down only if the plan says so */
     safe("gate", function () { gateBoot(); });
     safe("apply-settings", function () {
-      $("apiKey").value = state.apiKey || "";
+      $("apiKey").value = state.rhKey || "";
       $("selModel").value = state.model;
       $("selRatio").value = state.ratio;
       $("intSlider").value = String(state.intensity);
@@ -11372,20 +10955,18 @@ function init() {
     REFRESHERS.push(paintShowKey);
     $("btnTestKey").addEventListener("click", testKey);
     $("btnSaveKey").addEventListener("click", saveKey);
-    $("apiKey").addEventListener("input", function () { state.apiKey = $("apiKey").value.trim(); });
+    $("apiKey").addEventListener("input", function () { state.rhKey = $("apiKey").value.trim(); });
   });
 
   /* model / ratio / size */
   safe("model", function () {
     $("selModel").addEventListener("change", function () {
-      if (state.provider === "openai") state.oaiModel = $("selModel").value;
-      else state.model = $("selModel").value;
+      state.model = $("selModel").value;
       try { updateCreateEngineTag(); } catch (e) { }
       saveSettings();
     });
     $("selRatio").addEventListener("change", function () { state.ratio = $("selRatio").value; saveSettings(); });
     bindSizeSeg();
-    bindQualSeg();
   });
 
   /* prompt — UXP has NO pointer-events:none; click anywhere focuses + places caret */
@@ -11401,7 +10982,6 @@ function init() {
         const cap = promptCap();
         if (pm.value.length > cap) pm.value = pm.value.slice(0, cap);
         refreshPromptMeta();
-        if (!state.fillingMy) scheduleLiveTrans("my2en");
       });
     }
     const fpb = $("finalPromptBox");
@@ -11415,8 +10995,6 @@ function init() {
     if (bc) bc.addEventListener("click", copyFinalPrompt);
     $("pwrap").addEventListener("click", function () { try { pb.focus(); } catch (e) { } });
     $("btnClearP").addEventListener("click", function () { setPromptText(""); try { pb.focus(); } catch (e) { } });
-    bindToggle("tglLiveTrans", "liveTrans");
-    $("btnImprove").addEventListener("click", function () { setBusyBtn($("btnImprove")); improvePrompt(); });
     const rp = $("selRecentPrompts");
     if (rp) {
       rp.addEventListener("change", function () {
@@ -11457,7 +11035,7 @@ function init() {
 
   /* collapsible cards (persisted) */
   safe("cards", function () {
-    bindCard("cApiH", "cApiB", "api", !state.apiKey);
+    bindCard("cApiH", "cApiB", "api", !state.rhKey);
     bindCard("cModelH", "cModelB", "model", false);
     bindCard("cPromptH", "cPromptB", "prompt", true);
     bindCard("cRefH", "cRefB", "refs", true);
@@ -11539,7 +11117,7 @@ function init() {
     bindGroup("grpI2pH", "grpI2pB", false);
     bindChecks(I2P_CK, state.i2p);
     bindChecks(I2P_OPT_CK, state.i2p);
-    $("btnI2pExtract").addEventListener("click", function () { setBusyBtn($("btnI2pExtract")); extractScenePrompt(); });
+    /* v6.26.0 — btnI2pExtract left with the Gemini vision bridge */;
     $("btnSceneGen").addEventListener("click", function () { const g0 = $("btnSceneGen"); armGate("__scene", g0, function () { setBusyBtn(g0); sceneGenerate(); }); });
   });
 

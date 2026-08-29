@@ -14,8 +14,7 @@
    scheme this file used to hold, which needed external per-account app
    ids this plugin never received and so never went live.
 
-   One model (gpt-image-2, the RunningHub-hosted entry — not to be confused
-   with gpt-image-2-openai, the separate OpenAI-provider model) intentionally
+   One model (gpt-image-2, the RunningHub-hosted entry) intentionally
    still carries an empty apiPath: its RunningHub endpoint has not been
    confirmed yet — `isPlaceholder` reports it "not configured" rather than
    guessing at a path. flux-2-dev below now carries its confirmed

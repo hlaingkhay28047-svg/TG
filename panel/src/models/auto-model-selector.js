@@ -69,12 +69,12 @@ function resolve(input) {
 
   // Poster / visible-text intent wins whenever the model can take the images.
   if (posterHit && count <= 4) {
-    return { modelId: "gpt-image-2-openai", reason: 'Poster or visible-text request detected ("' + posterHit + '")' };
+    return { modelId: "gpt-image-2", reason: 'Poster or visible-text request detected ("' + posterHit + '")' };
   }
 
   // No image → creative text-to-image.
   if (count === 0) {
-    if (posterHit) return { modelId: "gpt-image-2-openai", reason: "Text-to-image with visible text" };
+    if (posterHit) return { modelId: "gpt-image-2", reason: "Text-to-image with visible text" };
     return { modelId: "flux-2-dev", reason: "Creative prompt with no input image" };
   }
 
