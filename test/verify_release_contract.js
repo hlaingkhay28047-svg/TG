@@ -57,7 +57,14 @@ const panelArtifactInput = process.env.HNK_PANEL_ARTIFACT || process.argv[2] || 
 const panelArtifact = panelArtifactInput ? path.resolve(panelArtifactInput) : "";
 const releaseDate = versionJson.released;
 const englishProviderFlow = "Keys are stored locally and sent only to the AI provider you choose — never through HNK servers.";
-const productionBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
+/* v5.50.3 — the public face of the product is the owner's custom domain;
+   every canonical, share, SEO and structured-data URL must carry it. The
+   DigitalOcean app hostname remains the SERVICE address: the Photoshop
+   panel dials it directly (its API and update probe are pinned below via
+   serviceBase), and the deploy lanes probe it — a custom-domain DNS lapse
+   must never brick installed panels or the deploy verifier. */
+const productionBase = "https://hnkaistudio.com";
+const serviceBase = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
 
 function collectPublishedTextFiles(dir, out = []) {
   fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
@@ -289,8 +296,8 @@ check("panel source, release metadata, and public version endpoint agree",
 check("the panel agrees with itself about which version it is",
   panelInternals.version === panelVersion && panelInternals.brandVer === panelVersion,
   `main.js ${panelInternals.version || "?"}, index.html ${panelInternals.brandVer || "?"}, release ${panelVersion}${panelInternals.err ? " :: " + panelInternals.err : ""}`);
-check("the panel's update probe points at the production origin",
-  panelInternals.updateUrl === `${productionBase}/download/panel-version.json`,
+check("the panel's update probe points at the stable service origin",
+  panelInternals.updateUrl === `${serviceBase}/download/panel-version.json`,
   panelInternals.updateUrl || "no PANEL_VERSION_URL found");
 /* v6.26.0 — the panel runs on RunningHub Enterprise alone (same owner
    decision the web app shipped in 5.50.0). The retired Gemini/OpenAI

@@ -51,7 +51,7 @@ const APP = fs.readFileSync(path.join(ROOT, "docs", "app", "index.html"), "utf8"
 const LANDING = fs.readFileSync(path.join(ROOT, "docs", "index.html"), "utf8");
 const RESET = fs.readFileSync(path.join(ROOT, "docs", "reset", "index.html"), "utf8");
 
-const ORIGIN = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
+const ORIGIN = "https://hnkaistudio.com";
 const RESET_URL = ORIGIN + "/reset/";
 
 let failures = 0;
