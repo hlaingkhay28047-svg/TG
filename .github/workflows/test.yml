@@ -82,6 +82,11 @@ jobs:
       - name: Verify the schema ENFORCES what it claims (real PostgreSQL)
         run: node test/verify_schema_behaviour.js
 
+      # v5.48.0 — the profile photo column: bounded on the server, self-only
+      # under RLS, and wired safely in the app. Attacks a real database.
+      - name: Verify the profile avatar contract (real PostgreSQL)
+        run: node test/verify_profile_avatar.js
+
       # verify_api_service.js boots the real service, which needs its one pinned
       # dependency. npm ci installs exactly what package-lock.json names, so CI
       # runs the same driver version that was tested.

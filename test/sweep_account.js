@@ -697,9 +697,11 @@ const SB_FIX = {
     return { total: keys.length, missing, emojis, unresolved, badPlace };
   });
   /* v5.45.0 — the 38 pay_ and req_ keys left with the dead payment flow, so
-     the registry pin drops from 91 to exactly the 53 surviving keys. */
-  report("16 i18n zero-miss: TR_V430 holds exactly 53 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
-    c16.total === 53 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+     the registry pin dropped from 91 to the 53 surviving keys. v5.48.0 adds
+     the seven profile-photo and welcome strings (ava_* and aw_*), so the pin
+     moves to 60 — every one still carrying all 9 languages. */
+  report("16 i18n zero-miss: TR_V430 holds exactly 60 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
+    c16.total === 60 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));
