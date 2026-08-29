@@ -205,11 +205,16 @@ eligible students.
     sibling workflows use. Deployment audit: every panel apiPath
     (rhart-* and platform paths alike) verified present in the web app's
     client; none invented.
+  * Web-app tab parity (owner request): the tab bar reads like the web
+    app's — Home (the workflow card home) first and the fresh-boot landing
+    tab, then Edit (the prompt studio), Create, Retouch, Library (the
+    1850 catalog), Setup last. Same six pages; names, order and landing
+    match the web app.
   Real-Photoshop acceptance MUST cover the full v6.26.2 checklist above,
   with special weight on: the AI Tools tab opening to the workflow home
   WITH card art visible, an AI Tools generate, a library preset tap
   landing in Reference 2, and a Text / Logo generate.
   Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
-  `e5c47ce4111673fdc64b2c8e97d945ab2ec9f17f7970b7e7e9bbd7d31719811e`,
-  1,425,484 bytes (the bundled card art accounts for the growth over
+  `362bda482c586eb789cbda80d5c0742cfd765859d27a8dbb43dde7705f243ccc`,
+  1,424,806 bytes (the bundled card art accounts for the growth over
   6.26.2's 524,577). The release stays disabled until that acceptance.
