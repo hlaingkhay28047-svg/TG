@@ -1237,9 +1237,12 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
   flex:none;display:inline-block;vertical-align:-.18em;pointer-events:none}
 /* premium icon pass — the active tab and hero-size icons carry the gold
-   gradient with a soft glow; on-gold buttons keep their dark strokes */
+   gradient with a soft glow; on-gold buttons keep their dark strokes.
+   Solid gold first, then the SVG2 paint fallback form, so engines that
+   cannot resolve the sprite gradient still draw a visible gold stroke. */
 .tabb.on svg.ic-tab,#btnGearSetup.on svg.ic-s,svg.ic-xl,.page-hero svg{
-  stroke:url(#gg);filter:drop-shadow(0 0 6px rgba(233,185,73,.4))}
+  stroke:#e9b949;stroke:url(#gg) #e9b949;
+  filter:drop-shadow(0 0 6px rgba(233,185,73,.4))}
 .btn-gold svg.ic-s,.btn-gold svg.ic-m{stroke:currentColor;filter:none}
 .ic-s{width:1.1em;height:1.1em}
 .ic-m{width:1.3em;height:1.3em;vertical-align:-.24em}
@@ -21244,7 +21247,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.47.0";
+var APP_VER="5.47.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
