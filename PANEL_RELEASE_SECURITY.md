@@ -73,14 +73,23 @@ computer slot, and enabled release, and then stream the private object. Do not
 redirect to a presigned object URL when strict one-time redemption is required;
 that URL can be replayed until it expires.
 
-If creating a paid Space is not yet authorized, the deployable bridge is the
-existing PostgreSQL database: store immutable metadata plus fixed-size (for
-example 4 MiB) binary chunks, verify SHA-256/size on finalization, and let the
-same authenticated endpoint stream those chunks. This is a low-volume bridge,
-not the production target. The App Platform filesystem is ephemeral, and the
-currently declared development database is not suitable for irreplaceable
-production data. Do not launch paid student delivery until the backing data is
-on a managed/backup-capable store.
+The guarded `setup-spaces.yml` lane (typed confirmation SPACES) builds this
+target without console work: an account-scoped private bucket created with an
+ephemeral fullaccess key that is deleted on every exit path, a rotated
+read-only runtime key written into the live spec as SPACES_* (pinned by
+`test/verify_spaces_secrets_patch.js`), and `/api/health` reporting
+`artifactStore: "spaces"` before the lane may finish. The release lane then
+mirrors each rebuilt artifact to the content-addressed key
+`ccx/<sha256>/<artifact-file>` with a per-run ephemeral readwrite credential,
+verifies the round trip byte-for-byte, and records the object on the release
+row; the serving path re-verifies SHA-256/size on every materialization
+(`test/verify_spaces_artifact_path.js`).
+
+The PostgreSQL chunk store — immutable metadata plus fixed-size (for example
+4 MiB) binary chunks, SHA-256/size verified on finalization — remains the
+delivery bridge and the always-on fallback: a Space outage degrades to the
+bridge, never to an unverified byte. Do not launch paid student delivery
+until the backing data is on a managed/backup-capable store.
 
 ## Legacy v6.23.0 cutoff
 

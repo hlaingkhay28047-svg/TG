@@ -79,6 +79,7 @@ function mapArtifact(row) {
     expectedSha256:row.expected_sha256,expectedSizeBytes:Number(row.expected_size_bytes),
     chunkSize:Number(row.chunk_size_bytes),chunkCount:Number(row.chunk_count),
     status:row.status,uploadedSizeBytes:Number(row.uploaded_size_bytes||0),
+    objectKey:row.object_key||null,
     createdAt:row.created_at,updatedAt:row.updated_at,finalizedAt:row.finalized_at,
   };
 }
@@ -206,6 +207,31 @@ async function readyArtifactForRelease(client,release) {
   return mapArtifact(result.rows[0]);
 }
 
+/* The production target is the private Space; the database chunks remain the
+   delivery bridge and the fallback. Either source must prove the exact
+   expected digest and size before a byte reaches a student — a Space object
+   is fetched whole (its size is known and bounded) and hash-verified, and
+   any Space failure falls back to the chunk path rather than surfacing. */
+async function materializeFromSpace(artifact,directory,partial,destination) {
+  const spaces=require("./spaces");
+  if (!artifact.objectKey||!spaces.spacesConfigured()) return null;
+  let data;
+  try {
+    data=await spaces.getObject(artifact.objectKey,{maxBytes:artifact.expectedSizeBytes});
+  } catch (error) {
+    console.warn("panel artifact object fetch failed; using the database bridge: "+error.message);
+    return null;
+  }
+  if (data.length!==artifact.expectedSizeBytes||!safeEqualHex(sha256(data),artifact.expectedSha256)) {
+    console.warn("panel artifact object failed SHA-256/size verification; using the database bridge");
+    return null;
+  }
+  await fs.promises.writeFile(partial,data,{mode:0o600});
+  await fs.promises.rename(partial,destination);
+  return {filePath:destination,filename:artifact.artifactKey,size:artifact.expectedSizeBytes,
+    cleanup:()=>fs.promises.rm(directory,{recursive:true,force:true})};
+}
+
 async function materializeArtifact(client,artifact) {
   if (!artifact||artifact.status!=="ready") throw new ApiError(503,"Private panel artifact is not ready","artifact_not_ready");
   const directory=await fs.promises.mkdtemp(path.join(os.tmpdir(),"hnk-panel-"));
@@ -213,6 +239,8 @@ async function materializeArtifact(client,artifact) {
   const destination=path.join(directory,artifact.artifactKey);
   let handle=null;
   try {
+    const fromSpace=await materializeFromSpace(artifact,directory,partial,destination);
+    if (fromSpace) return fromSpace;
     handle=await fs.promises.open(partial,"wx",0o600);
     let position=0;
     await verifyChunkSequence(artifact,async index=>{

@@ -138,6 +138,15 @@ report("the runtime credential is masked and never echoed",
 report("the temporary trusted-source rule is removed on exit",
   WORKFLOW.includes("trap cleanup_release EXIT") && WORKFLOW.includes("firewalls remove"),
   "firewall cleanup missing");
+report("the Space mirror uploads through the tested helper and verifies round-trip",
+  WORKFLOW.includes(".github/scripts/put_panel_object.js"), "mirror helper not used");
+report("the mirror's ephemeral upload key is deleted on every exit path",
+  WORKFLOW.includes("trap cleanup_mirror EXIT") &&
+  WORKFLOW.includes("/v2/spaces/keys/$MIRROR_KEY_ACCESS"), "ephemeral key cleanup missing");
+report("a missing Space stands the mirror down instead of failing the release",
+  WORKFLOW.includes("the release stays on the database bridge"), "graceful stand-down missing");
+report("only a content-addressed object key is accepted from the mirror",
+  WORKFLOW.includes("(ccx/*)"), "object key shape check missing");
 
 /* ---- build the real artifact once ---- */
 const releaseDir = fs.mkdtempSync(path.join(os.tmpdir(), "hnk-release-probe-"));
@@ -173,6 +182,10 @@ report("B2: an artifact that does not equal the declared digest is refused",
 refused = runGenerator(Object.assign({}, baseEnv, { MINIMUM: "99.0.0" }));
 report("B3: a minimum newer than the release is refused",
   refused.status === 64 && /locks the release out/.test(refused.stderr || ""), refused.status);
+refused = runGenerator(Object.assign({}, baseEnv, { OBJECT_KEY: "../not/a/key" }));
+report("B4: a malformed Space object key is refused",
+  refused.status === 64 && /OBJECT_KEY is malformed/.test(refused.stderr || "") &&
+  !/insert into/.test(refused.stdout || ""), refused.status);
 
 /* ---- C, D) against the real tracked schema ---- */
 (async () => {
@@ -259,6 +272,21 @@ report("B3: a minimum newer than the release is refused",
   q = serviceSql("select count(*)::text from public.panel_versions where is_latest");
   report("D1: a second run is a clean no-op that keeps one latest",
     reapplied.ok && q.ok && q.out === "1", reapplied.out.slice(-200));
+
+  /* D3: after the Space mirror, the same generator run records the object
+     key on the ALREADY-FINALIZED artifact — exactly how an existing release
+     gains its object pointer when the Space comes online later. */
+  const objectKey = `ccx/${artifactSha}/${artifactName}`;
+  const withObject = runGenerator(Object.assign({}, baseEnv, { OBJECT_KEY: objectKey }));
+  fs.writeFileSync(sqlFile, withObject.stdout || "");
+  const applied3 = psql(["-d", DB, "-f", sqlFile], RUNTIME_ENV);
+  q = serviceSql(`select coalesce(object_key,'') from public.panel_artifacts where version='${baseEnv.VERSION}'`);
+  report("D3: the already-finalized artifact gains its Space object pointer",
+    withObject.status === 0 && applied3.ok && q.ok && q.out === objectKey &&
+    /object=set/.test(applied3.out),
+    { gen: withObject.status, genErr: (withObject.stderr || "").slice(0, 200),
+      appliedOk: applied3.ok, appliedTail: applied3.out.slice(-700),
+      qOk: q.ok, out: q.out.slice(0, 80) });
 
   const orphanMinimum = runGenerator(Object.assign({}, baseEnv, { MINIMUM: "0.0.1" }));
   fs.writeFileSync(sqlFile, orphanMinimum.stdout || "");

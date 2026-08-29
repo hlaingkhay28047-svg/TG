@@ -357,6 +357,10 @@ const server = http.createServer(async (req, res) => {
         /* Boolean only — whether owner mail (password resets, signup notices)
            can send at all. Never the host, user or any address. */
         smtpConfigured:require("./lib/email").smtpConfigured(),
+        /* Which store serves panel artifacts: the private Space when the
+           runtime credentials exist, else the database bridge. A name only —
+           never the bucket, region or a key. */
+        artifactStore:require("./lib/spaces").spacesConfigured()?"spaces":"db",
         ready: schema === 4 && unifiedSchema === migration.REQUIRED_APPLICATION_TABLES.length &&
           !!schemaFingerprint && locked === null && hasSecureTokenSecret(auth.SECRET) &&
           securitySecretStatus().ready &&
