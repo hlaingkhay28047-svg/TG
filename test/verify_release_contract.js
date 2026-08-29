@@ -375,11 +375,16 @@ check("the sticky call to action clone also opens the web app",
   /a\.href\s*=\s*"app\/"\s*;[\s\S]{0,400}?a\.setAttribute\("data-i18n",\s*"hero\.cta1"\)/.test(landing),
   "the scripted sticky CTA no longer points at app/");
 
-check("retired GitHub Pages and repository URLs are absent",
+/* v5.50.2 — owner decision: the public site advertises NO repository link at
+   all. This check used to require the current github.com/…/TG link on the
+   landing (proof the retired Pages/old-repo links had been migrated, not
+   merely deleted); it now pins the stronger rule that no GitHub host of any
+   kind appears in the published landing, app, robots, or sitemap. */
+check("retired GitHub Pages, old-repository, and all public repository links are absent",
   ![landing, html, robots, sitemap].some(value => value.includes("hlaingkhay28047-svg.github.io/TG")) &&
   !landing.includes("hlaingkhay28047-svg/HNK-Ai-V1") &&
-  landing.includes("https://github.com/hlaingkhay28047-svg/TG"),
-  "a canonical, share, or repository link is stale");
+  ![landing, html, robots, sitemap].some(value => /github\.com/i.test(value)),
+  "a stale hosting link, or a repository link the public site must no longer carry, is present");
 check("both social preview images exist in the published site",
   fs.existsSync(path.join(ROOT, "docs/og-image.jpg")) &&
   fs.existsSync(path.join(ROOT, "docs/app/og-app.jpg")),

@@ -58,7 +58,6 @@
     #hnkGate .gate-err{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ff8b8b;min-height:1px}
     #hnkGate .gate-lang{box-sizing:border-box;margin:14px auto 0;padding:5px 8px;
       font-size:11px;border-radius:7px;border:1px solid #2a323d;background:#0d1014;color:#9aa7b4}
-    #hnkGate .gate-hide{display:none}
     .hero-plan{margin-left:6px;opacity:.9}
   </style>
 </head>
@@ -66,13 +65,19 @@
 <!-- ============ v6.24.0 SERVER AUTHORIZATION GATE ============
      Ships visible and fails closed: a scripting fault leaves this up rather
      than handing the panel over. Selling happens on the website; this screen
-     only reads the plan the website sold. -->
+     only reads the plan the website sold.
+
+     v6.26.1 — the whole card is always on screen (owner request): every
+     input and button paints in every state, so a mid-check screenshot never
+     looks like a broken half-empty dialog. State changes only the message
+     strings and the busy dimming; gateShow in main.js no longer hides the
+     login or locked groups. -->
 <div id="hnkGate" role="dialog" aria-modal="true" aria-labelledby="gateH">
   <div class="gate-card">
     <div class="gate-logo">HNK</div>
     <div class="gate-h" id="gateH">HNK Create Studio</div>
     <div class="gate-sub" id="gateSub"></div>
-    <div id="gateLogin" class="gate-hide">
+    <div id="gateLogin">
       <input id="gateEmail" class="gate-f" type="text" spellcheck="false" autocomplete="off" />
       <input id="gatePass" class="gate-f" type="password" autocomplete="off" />
       <div id="gateSignIn" class="gate-b" role="button" tabindex="0"></div>
@@ -80,7 +85,7 @@
     <input id="gatePairCode" class="gate-f" type="text" inputmode="numeric"
       maxlength="12" spellcheck="false" autocomplete="off"
       aria-label="Computer pairing code" />
-    <div id="gateLocked" class="gate-hide">
+    <div id="gateLocked">
       <div class="gate-msg" id="gateLockedMsg"></div>
       <div id="gateBuy" class="gate-b" role="button" tabindex="0"></div>
       <div id="gateRetry" class="gate-b gate-b2" role="button" tabindex="0"></div>
@@ -103,7 +108,7 @@
         <div class="hdr-t hero-t">
           <div class="hero-brand">HNK <span class="hero-brand-gold">PLUGIN PANEL</span></div>
           <div class="title hero-app" data-i18n="app_title"></div>
-          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.26.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="hero-plan"></span></div>
+          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.26.1</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="hero-plan"></span></div>
         </div>
         <div class="hdr-ctl">
           <select id="selLang" class="lang-sel" title="Language"></select>

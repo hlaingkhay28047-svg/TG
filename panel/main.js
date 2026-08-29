@@ -5522,7 +5522,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.26.0";
+const PANEL_VERSION = "6.26.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5750,7 +5750,10 @@ function gateTexts() {
   const busy = (gateS.view === "checking");
   gateTxt("gateSub", busy ? gateT("gate_checking")
                    : (gateS.view === "locked") ? "" : gateT("gate_sub_login"));
-  gateTxt("gateLockedMsg", gateT("gate_locked"));
+  /* The locked explainer only when actually locked: the div itself now stays
+     in the layout in every state (v6.26.1), so the text must be state-driven
+     or the login screen would open with an alarming "access" paragraph. */
+  gateTxt("gateLockedMsg", (gateS.view === "locked") ? gateT("gate_locked") : "");
   gateTxt("gateSignIn", gateT("gate_signin"));
   gateTxt("gateBuy", gateT("gate_buy"));
   gateTxt("gateRetry", gateT("gate_retry"));
@@ -5775,9 +5778,14 @@ function gateShow(view) {
      a wall that may not have covered anything. display:none set from JS is what
      the other 28 show/hide sites in this file already use. */
   const appEl = gateEl("app"); if (appEl) appEl.style.display = "none";
+  /* v6.26.1 — the whole card stays visible in every state (owner request):
+     hiding the login and locked groups made the "checking" interim look like
+     a broken dialog with one orphan input. State now changes only the
+     message strings (gateTexts) and the busy dimming (gateBusy); handlers
+     that must not run mid-check already guard on gateS.busy. */
   const login = gateEl("gateLogin"), locked = gateEl("gateLocked");
-  if (login) login.className = (view === "login") ? "" : "gate-hide";
-  if (locked) locked.className = (view === "locked") ? "" : "gate-hide";
+  if (login) login.className = "";
+  if (locked) locked.className = "";
   gateTexts();
   if (view !== "checking") gateBusy(false);
 }
@@ -5790,7 +5798,9 @@ function gateBusy(on) {
     el.className = (on ? "gate-b gate-busy" : "gate-b") + (extra ? " " + extra : "");
   };
   mark("gateSignIn", "");
+  mark("gateBuy", "");
   mark("gateRetry", "gate-b2");
+  mark("gateSignOut", "gate-b2");
 }
 function gateUnlock() {
   const g = gateEl("hnkGate"); if (g) g.classList.add("off");
@@ -6018,6 +6028,9 @@ function gateWire() {
   on("gateRetry", function () { if (!gateS.busy) gateCheck(); });
   on("gateBuy", function () { gateOpenSite(); });
   on("gateSignOut", async function () {
+    /* Reachable in every state since v6.26.1 — never mid-check: a sign-out
+       under a running gateCheck would race the check's session. */
+    if (gateS.busy) return;
     const sess = gateS.sess;
     try {
       if (sess && sess.access) await gateReq("/auth/v1/logout", {
