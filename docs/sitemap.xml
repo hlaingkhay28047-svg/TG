@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/</loc><lastmod>2026-08-26</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/</loc><lastmod>2026-08-26</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/privacy/</loc><lastmod>2026-08-26</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/terms/</loc><lastmod>2026-08-26</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://hnkaistudio.com/</loc><lastmod>2026-08-26</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://hnkaistudio.com/app/</loc><lastmod>2026-08-26</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://hnkaistudio.com/privacy/</loc><lastmod>2026-08-26</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://hnkaistudio.com/terms/</loc><lastmod>2026-08-26</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <!-- /reset/ is deliberately absent, and carries noindex: it is only ever
        reached from a link Supabase emails, it is useless without the token in
        that link, and a search result pointing at it would only confuse. -->

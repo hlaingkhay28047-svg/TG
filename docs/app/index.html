@@ -31,7 +31,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>HNK Web Studio — One-Tap AI Studio</title>
-<link rel="canonical" href="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/">
+<link rel="canonical" href="https://hnkaistudio.com/app/">
 <meta name="description" content="Browser ထဲမှာ One-Tap 138 + Visual Library 1850 + Smart Workflow 131 + Meitu Studio 162 · Evoto Pro 213 — HNK Create Studio Web App">
 <meta name="theme-color" content="#0b0d14">
 <link rel="manifest" href="manifest.webmanifest">
@@ -46,14 +46,14 @@
 <meta property="og:site_name" content="HNK Create Studio">
 <meta property="og:title" content="HNK Web Studio — One-Tap AI Studio">
 <meta property="og:description" content="One-Tap 138 · Visual Library 1850 · Smart Workflow 131 · Meitu Studio 162 · Evoto Pro 213 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
-<meta property="og:url" content="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/">
-<meta property="og:image" content="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/og-app.jpg">
+<meta property="og:url" content="https://hnkaistudio.com/app/">
+<meta property="og:image" content="https://hnkaistudio.com/app/og-app.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HNK Web Studio — One-Tap AI Studio">
 <meta name="twitter:description" content="One-Tap 138 · Visual Library 1850 · Smart Workflow 131 · Meitu Studio 162 · Evoto Pro 213">
-<meta name="twitter:image" content="https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/og-app.jpg">
+<meta name="twitter:image" content="https://hnkaistudio.com/app/og-app.jpg">
 <style>
 :root{
   /* v5.28 — horizontal safe areas. Only the TOP and BOTTOM insets were ever
@@ -19532,7 +19532,7 @@ var ACC_UP_TIMEOUT = 30000;      /* ms — the screenshot upload              */
    -> URL Configuration -> Redirect URLs. GoTrue silently falls back to the
    project Site URL for any redirect_to that is not allow-listed, so a missing
    entry does not raise an error -- it quietly sends people somewhere else. */
-var ACC_RESET_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/reset/";
+var ACC_RESET_URL = "https://hnkaistudio.com/reset/";
 
 var acc = { sess:null, profile:null, settings:null, devices:[], requests:[],
             pending:null, online:true, unreach:false };
@@ -21194,7 +21194,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.50.2";
+var APP_VER="5.50.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -21637,7 +21637,7 @@ try {
 } catch(e){}
 
 /* share / copy link */
-var APP_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
+var APP_URL = "https://hnkaistudio.com/app/";
 $("btnShare").onclick = async function(){
   if (navigator.share) {
     var shareTapCount = ($("stTapCount") && $("stTapCount").textContent) || "138";

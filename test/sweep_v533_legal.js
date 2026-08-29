@@ -59,7 +59,7 @@ const PRIVACY = read("docs/privacy/index.html");
 const TERMS = read("docs/terms/index.html");
 const LANDING = read("docs/index.html");
 const APP = read("docs/app/index.html");
-const ORIGIN = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app";
+const ORIGIN = "https://hnkaistudio.com";
 
 let failures = 0;
 function report(name, ok, detail) {
