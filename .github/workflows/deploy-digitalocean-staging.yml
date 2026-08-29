@@ -449,7 +449,6 @@ jobs:
           fi
           if timeout --foreground --signal=TERM --kill-after=10s "${RECOVERY_TIMEOUT_SECONDS}s" \
             doctl apps create-deployment "${{ steps.app.outputs.app_id }}" \
-            --update-sources \
             --force-rebuild \
             --wait \
             --format ID,Phase,Updated; then

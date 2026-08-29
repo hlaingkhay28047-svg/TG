@@ -65,6 +65,18 @@ if [ "$EXPECTED_BYTES" -gt 67108864 ]; then
   exit 65
 fi
 
+# Optional: the content-addressed key of the already-verified Space object.
+# When present it is recorded on the artifact row — including on the
+# already-finalized path, which is how an existing release gains its object
+# pointer after the Space comes online.
+OBJECT_KEY="${OBJECT_KEY:-}"
+OBJECT_SQL=""
+if [ -n "$OBJECT_KEY" ]; then
+  printf '%s\n' "$OBJECT_KEY" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9/._-]{0,511}$' || { echo "generate_panel_release_sql: OBJECT_KEY is malformed" >&2; exit 64; }
+  case "$OBJECT_KEY" in (*..*|*//*) echo "generate_panel_release_sql: OBJECT_KEY is malformed" >&2; exit 64;; esac
+  OBJECT_SQL="update public.panel_artifacts set object_key = '$OBJECT_KEY', updated_at = now() where id = v_id;"
+fi
+
 umask 077
 CHUNK_DIR="$(mktemp -d)"
 trap 'rm -rf "$CHUNK_DIR"' EXIT
@@ -160,6 +172,7 @@ begin
       raise exception 'RELEASE_ABORT: artifact finalization lost its lock';
     end if;
   end if;
+  $OBJECT_SQL
   if not exists (select 1 from public.panel_versions where version = '$MINIMUM')
      and '$MINIMUM' <> '$VERSION' then
     raise exception 'RELEASE_ABORT: minimum version $MINIMUM has no release record';
@@ -186,6 +199,7 @@ commit;
 select 'PROOF: version='||v.version||' latest='||v.is_latest::text||' minimum='||v.minimum_supported::text
        ||' enabled='||v.enabled::text||' bytes='||coalesce(v.size_bytes::text,'-')
        ||' artifact='||coalesce(a.status,'none')
+       ||' object='||case when a.object_key is null then 'none' else 'set' end
   from public.panel_versions v
   left join public.panel_artifacts a on a.id = v.artifact_id
  order by v.released_at desc;

@@ -131,6 +131,71 @@ jobs:
           token: ${{ env.DO_TOKEN }}
           version: 1.166.0
 
+      # The production artifact store. When the setup lane has wired a Space,
+      # the rebuilt artifact is mirrored there under a content-addressed key —
+      # uploaded with an EPHEMERAL readwrite credential deleted on every exit
+      # path, then downloaded back and byte-verified before the key is passed
+      # on for the release row to record. No Space yet is not a failure: the
+      # database bridge keeps serving, and this step says so and stands down.
+      - name: Mirror the artifact into the private Space
+        if: inputs.action == 'publish'
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ steps.pins.outputs.sha }}
+          EXPECTED_BYTES: ${{ steps.pins.outputs.bytes }}
+          ARTIFACT: ${{ steps.pins.outputs.artifact }}
+        run: |
+          set -euo pipefail
+          umask 077
+          MIRROR_KEY_ACCESS=""
+          cleanup_mirror() {
+            if [ -n "$MIRROR_KEY_ACCESS" ]; then
+              curl -fsS --max-time 20 -X DELETE -H "Authorization: Bearer $DO_TOKEN" \
+                "https://api.digitalocean.com/v2/spaces/keys/$MIRROR_KEY_ACCESS" > /dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_mirror EXIT
+
+          # The bucket and region are plain configuration on the live service.
+          APPS_JSON="$(doctl apps list --output json)"
+          APP_ID="$(printf '%s' "$APPS_JSON" | jq -r '
+            [.[] | select(.spec.name == "hnk-ai-tools-3")] | if length == 1 then .[0].id else empty end')"
+          if [ -z "$APP_ID" ]; then
+            echo "::error::Could not resolve the production app."
+            exit 1
+          fi
+          SPEC_JSON="$(doctl apps spec get "$APP_ID" --format json)"
+          BUCKET="$(printf '%s' "$SPEC_JSON" | jq -r '.services[]? | select(.name=="hnk-api") | .envs[]? | select(.key=="SPACES_BUCKET") | .value // empty')"
+          REGION="$(printf '%s' "$SPEC_JSON" | jq -r '.services[]? | select(.name=="hnk-api") | .envs[]? | select(.key=="SPACES_REGION") | .value // empty')"
+          if [ -z "$BUCKET" ] || [ -z "$REGION" ]; then
+            echo "No private Space is wired yet — the release stays on the database bridge (run setup-spaces to add one)."
+            exit 0
+          fi
+
+          MIRROR_JSON="$(curl -fsS --max-time 20 -X POST -H "Authorization: Bearer $DO_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"hnk-release-ephemeral-$GITHUB_RUN_ID\",\"grants\":[{\"bucket\":\"$BUCKET\",\"permission\":\"readwrite\"}]}" \
+            "https://api.digitalocean.com/v2/spaces/keys")"
+          MIRROR_KEY_ACCESS="$(printf '%s' "$MIRROR_JSON" | jq -r '.key.access_key // empty')"
+          MIRROR_KEY_SECRET="$(printf '%s' "$MIRROR_JSON" | jq -r '.key.secret_key // empty')"
+          if [ -z "$MIRROR_KEY_ACCESS" ] || [ -z "$MIRROR_KEY_SECRET" ]; then
+            echo "::error::The Spaces keys API did not return an ephemeral upload credential."
+            exit 1
+          fi
+          echo "::add-mask::$MIRROR_KEY_SECRET"
+          echo "::add-mask::$MIRROR_KEY_ACCESS"
+
+          OBJECT_KEY="$(SPACES_REGION="$REGION" SPACES_BUCKET="$BUCKET" \
+            SPACES_KEY_ID="$MIRROR_KEY_ACCESS" SPACES_SECRET="$MIRROR_KEY_SECRET" \
+            ARTIFACT_PATH="$RELEASE_DIR/$ARTIFACT" \
+            node .github/scripts/put_panel_object.js)"
+          case "$OBJECT_KEY" in
+            (ccx/*) ;;
+            (*) echo "::error::The mirror did not produce a content-addressed object key."; exit 1;;
+          esac
+          echo "OBJECT_KEY=$OBJECT_KEY" >> "$GITHUB_ENV"
+          echo "Mirrored and verified: the release row will record its Space object."
+
       - name: Apply the ${{ inputs.action }} action against the private release store
         shell: bash
         env:

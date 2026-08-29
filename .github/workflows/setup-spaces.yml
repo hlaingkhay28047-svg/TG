@@ -1,0 +1,207 @@
+name: Set up the private artifact Space
+
+# WHY THIS EXISTS. PANEL_RELEASE_SECURITY.md names the production target for
+# panel binaries: a private Space with immutable, content-addressed keys,
+# separate credentials for release upload and runtime read, and the
+# authenticated endpoint streaming the object itself — never a public or
+# presigned URL. The database chunks remain the delivery bridge and the
+# fallback.
+#
+# This lane makes that true without a console: it derives a deterministic
+# bucket name from the account, creates the private bucket with an EPHEMERAL
+# fullaccess key that is deleted on every exit path, rotates a read-only
+# runtime key scoped to that bucket alone, writes the four SPACES_* settings
+# into the live spec through .github/scripts/set_spaces_secrets.js (pinned by
+# test/verify_spaces_secrets_patch.js), and then waits for /api/health to
+# report artifactStore "spaces" on the redeployed service. Credentials are
+# born in the runner, masked, and never printed; the summary carries names,
+# byte lengths and the bucket name only.
+#
+# MANUAL, AND GUARDED: never on a push, and the word SPACES must be typed.
+# Creating the first bucket starts the Spaces subscription (~$5/month) — the
+# owner approved that cost before this lane existed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type SPACES to create the private bucket and wire production to it"
+        required: true
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-production-secrets
+  cancel-in-progress: false
+
+jobs:
+  spaces:
+    name: Create the Space and wire hnk-api to it
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DO_APP_NAME: hnk-ai-tools-3
+      DO_REPO: hlaingkhay28047-svg/TG
+      DO_BRANCH: main
+      DO_SERVICE: hnk-api
+      DO_REGION: sgp1
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
+      # Through the environment, never interpolated into scripts.
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+    steps:
+      - name: Require the typed confirmation and a production token
+        shell: bash
+        run: |
+          if [ "$CONFIRM_INPUT" != "SPACES" ]; then
+            echo "::error::Refusing to create paid storage without the typed confirmation SPACES."
+            exit 1
+          fi
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::This lane requires DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Check out the client and patch script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.1
+        with:
+          persist-credentials: false
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.166.0
+
+      - name: Create the bucket, rotate the runtime read key, wire the spec
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          LIVE_SPEC="$RUNNER_TEMP/spaces-live.json"
+          PATCHED_SPEC="$RUNNER_TEMP/spaces-patched.json"
+          VERIFY_SPEC="$RUNNER_TEMP/spaces-verify.json"
+          EPHEMERAL_ACCESS=""
+          cleanup_spaces() {
+            rm -f "$LIVE_SPEC" "$PATCHED_SPEC" "$VERIFY_SPEC"
+            # the fullaccess key exists only for this run, on every exit path
+            if [ -n "$EPHEMERAL_ACCESS" ]; then
+              curl -fsS --max-time 20 -X DELETE -H "Authorization: Bearer $DO_TOKEN" \
+                "https://api.digitalocean.com/v2/spaces/keys/$EPHEMERAL_ACCESS" > /dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_spaces EXIT
+
+          # A deterministic, account-scoped bucket name: globally unique
+          # without being guessable from the repository alone.
+          ACCOUNT_UUID="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/account" | jq -r '.account.uuid // empty')"
+          if [ -z "$ACCOUNT_UUID" ]; then
+            echo "::error::Could not read the account identity."
+            exit 1
+          fi
+          BUCKET="hnk-panel-$(printf '%s' "$ACCOUNT_UUID" | tr -dc 'a-f0-9' | cut -c1-8)"
+          echo "Private artifact bucket: $BUCKET ($DO_REGION)"
+
+          # 1. The ephemeral fullaccess key that creates the bucket.
+          EPHEMERAL_JSON="$(curl -fsS --max-time 20 -X POST -H "Authorization: Bearer $DO_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"hnk-setup-ephemeral-$GITHUB_RUN_ID\",\"grants\":[{\"bucket\":\"\",\"permission\":\"fullaccess\"}]}" \
+            "https://api.digitalocean.com/v2/spaces/keys")"
+          EPHEMERAL_ACCESS="$(printf '%s' "$EPHEMERAL_JSON" | jq -r '.key.access_key // empty')"
+          EPHEMERAL_SECRET="$(printf '%s' "$EPHEMERAL_JSON" | jq -r '.key.secret_key // empty')"
+          if [ -z "$EPHEMERAL_ACCESS" ] || [ -z "$EPHEMERAL_SECRET" ]; then
+            echo "::error::The Spaces keys API did not return an ephemeral credential."
+            exit 1
+          fi
+          echo "::add-mask::$EPHEMERAL_SECRET"
+          echo "::add-mask::$EPHEMERAL_ACCESS"
+
+          # 2. The private bucket, idempotently, through the tested client.
+          SPACES_REGION="$DO_REGION" SPACES_BUCKET="$BUCKET" \
+          SPACES_KEY_ID="$EPHEMERAL_ACCESS" SPACES_SECRET="$EPHEMERAL_SECRET" \
+            node -e 'require("./server/lib/spaces").ensureBucket().then(r=>{console.log(r.created?"Bucket created.":"Bucket already exists and answers this account.");},e=>{console.error("::error::"+e.message);process.exit(1);});'
+
+          # 3. Rotate the runtime read key: delete same-named keys, create anew.
+          RUNTIME_NAME="hnk-runtime-read-$BUCKET"
+          for OLD in $(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+              "https://api.digitalocean.com/v2/spaces/keys?per_page=200" \
+              | jq -r --arg n "$RUNTIME_NAME" '.keys[]? | select(.name == $n) | .access_key'); do
+            curl -fsS --max-time 20 -X DELETE -H "Authorization: Bearer $DO_TOKEN" \
+              "https://api.digitalocean.com/v2/spaces/keys/$OLD" > /dev/null || true
+          done
+          RUNTIME_JSON="$(curl -fsS --max-time 20 -X POST -H "Authorization: Bearer $DO_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"$RUNTIME_NAME\",\"grants\":[{\"bucket\":\"$BUCKET\",\"permission\":\"read\"}]}" \
+            "https://api.digitalocean.com/v2/spaces/keys")"
+          RUNTIME_ACCESS="$(printf '%s' "$RUNTIME_JSON" | jq -r '.key.access_key // empty')"
+          RUNTIME_SECRET="$(printf '%s' "$RUNTIME_JSON" | jq -r '.key.secret_key // empty')"
+          if [ -z "$RUNTIME_ACCESS" ] || [ -z "$RUNTIME_SECRET" ]; then
+            echo "::error::The Spaces keys API did not return the runtime read credential."
+            exit 1
+          fi
+          echo "::add-mask::$RUNTIME_SECRET"
+          echo "::add-mask::$RUNTIME_ACCESS"
+
+          # 4. Prove the read key reaches the bucket before production gets it:
+          # a clean not-found is authenticated reach; a denial would throw.
+          SPACES_REGION="$DO_REGION" SPACES_BUCKET="$BUCKET" \
+          SPACES_KEY_ID="$RUNTIME_ACCESS" SPACES_SECRET="$RUNTIME_SECRET" \
+            node -e 'require("./server/lib/spaces").headObject("ccx/probe/none.bin").then(r=>{if(r.exists){console.error("::error::probe object unexpectedly exists");process.exit(1);}console.log("Runtime read key reaches the bucket.");},e=>{console.error("::error::runtime read key probe failed: "+e.message);process.exit(1);});'
+
+          # 5. Write the four settings into the live spec.
+          doctl apps list --output json > "$LIVE_SPEC.apps"
+          APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
+            [.[]
+              | select(.spec.name == $name)
+              | select(any(.spec.static_sites[]?;
+                  .github.repo == $repo and .github.branch == $branch))]
+            | if length == 1 then .[0].id else empty end
+          ' "$LIVE_SPEC.apps")"
+          rm -f "$LIVE_SPEC.apps"
+          if [ -z "$APP_ID" ]; then
+            echo "::error::Refusing to write settings to an ambiguous production app selection."
+            exit 1
+          fi
+          doctl apps spec get "$APP_ID" --format json > "$LIVE_SPEC"
+          SPACES_REGION_VALUE="$DO_REGION" SPACES_BUCKET_VALUE="$BUCKET" \
+          SPACES_KEY_ID_VALUE="$RUNTIME_ACCESS" SPACES_SECRET_VALUE="$RUNTIME_SECRET" \
+            node .github/scripts/set_spaces_secrets.js "$LIVE_SPEC" "$PATCHED_SPEC" "$DO_SERVICE"
+          doctl apps update "$APP_ID" --spec "$PATCHED_SPEC" \
+            --format ID,DefaultIngress,Updated
+          rm -f "$PATCHED_SPEC"
+
+          doctl apps spec get "$APP_ID" --format json > "$VERIFY_SPEC"
+          MISSING=""
+          for KEY in SPACES_REGION SPACES_BUCKET SPACES_KEY_ID SPACES_SECRET; do
+            FOUND="$(jq -r --arg service "$DO_SERVICE" --arg key "$KEY" '
+              [.services[]? | select(.name == $service) | .envs[]? | select(.key == $key)] | length
+            ' "$VERIFY_SPEC")"
+            if [ "$FOUND" != "1" ]; then MISSING="$MISSING $KEY"; fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::The platform did not store:$MISSING"
+            exit 1
+          fi
+          echo "All four Spaces settings are stored on $DO_SERVICE."
+
+      - name: Wait for the service to report the Space as its artifact store
+        shell: bash
+        run: |
+          set -euo pipefail
+          STORE=""
+          for attempt in $(seq 1 36); do
+            BODY="$(curl -fsS --max-time 15 "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/api/health" || true)"
+            STORE="$(printf '%s' "$BODY" | jq -r '.artifactStore // "unknown"' 2>/dev/null || echo unknown)"
+            READY="$(printf '%s' "$BODY" | jq -r '.ready // false' 2>/dev/null || echo false)"
+            echo "health ready=$READY artifactStore=$STORE (check $attempt)"
+            if [ "$STORE" = "spaces" ] && [ "$READY" = "true" ]; then break; fi
+            sleep 10
+          done
+          if [ "$STORE" != "spaces" ]; then
+            echo "::error::The service has not reported the Space after six minutes — read the deployment in the DigitalOcean console."
+            exit 1
+          fi
+          echo "The service is ready and serves panel artifacts from the private Space (database bridge remains the fallback)."

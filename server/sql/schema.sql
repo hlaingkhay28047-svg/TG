@@ -1674,6 +1674,19 @@ create index if not exists panel_artifacts_ready_idx
 alter table public.panel_versions
   add column if not exists artifact_id uuid references public.panel_artifacts (id) on delete set null;
 
+-- The production artifact store is a private Space with immutable,
+-- content-addressed object keys; the chunk tables remain the delivery bridge
+-- and the fallback. A finalized artifact may therefore also name its object,
+-- and the serving path prefers it whenever the runtime credentials exist.
+alter table public.panel_artifacts
+  add column if not exists object_key text;
+-- PostgreSQL bounds regex repetition at 255, so the length cap is spelled as
+-- char_length beside an unbounded character-class match.
+alter table public.panel_artifacts drop constraint if exists panel_artifacts_object_key_check;
+alter table public.panel_artifacts add constraint panel_artifacts_object_key_check
+  check (object_key is null or (char_length(object_key) <= 512
+    and object_key ~ '^[A-Za-z0-9][A-Za-z0-9/._-]*$'));
+
 -- Existing deployments may have received the metadata-only seed from an
 -- earlier build. It must not remain downloadable without a finalized private
 -- artifact. Once a matching artifact is ready this update becomes a no-op.

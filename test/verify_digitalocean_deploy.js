@@ -158,6 +158,15 @@ check('manual recovery validates the actual DigitalOcean repo and branch before 
   [productionWorkflow, stagingWorkflow].every(workflow => workflow.includes('.github.repo == $repo') && workflow.includes('.github.branch == $branch') && workflow.indexOf('.github.repo == $repo') < workflow.indexOf('apps create-deployment')));
 check('manual recovery still pulls, rebuilds, and waits exactly once per lane',
   [productionWorkflow, stagingWorkflow].every(workflow => occurrences(workflow, 'apps create-deployment') === 1 && workflow.includes('--update-sources') && workflow.includes('--force-rebuild') && workflow.includes('--wait')));
+/* --update-sources belongs to `apps update`; on `apps create-deployment` this
+   doctl prints its usage and exits 255, which is exactly how recovery run
+   #104 died while the spec-sync race it existed to fix stayed unfixed. */
+check('manual recovery passes create-deployment only flags it actually has',
+  [productionWorkflow, stagingWorkflow].every(workflow => {
+    const invocation = workflow.slice(workflow.indexOf('apps create-deployment'),
+      workflow.indexOf('--format ID,Phase,Updated'));
+    return invocation.length > 0 && !invocation.includes('--update-sources');
+  }));
 check('both lanes record one shared 33-minute deadline before optional recovery',
   [productionWorkflow, stagingWorkflow].every(workflow =>
     occurrences(workflow, 'JOB_DEADLINE_EPOCH=$(( $(date +%s) + 1980 ))') === 1 &&
