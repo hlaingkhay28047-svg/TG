@@ -341,8 +341,12 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 /* v5.52.0 — cinema promo acts: full-bleed cinemagraph with a copy stack
    over a bottom shade; the poster is the ground truth and the fallback. */
 .cinema{display:grid;gap:14px;margin:34px 0 8px}
-@media(min-width:900px){.cinema{grid-template-columns:1fr 1fr}}
-.act{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--panel);aspect-ratio:3/2;min-height:300px}
+/* NO min-height here: with aspect-ratio set, a min-height transfers back
+   into WIDTH (300px min at 3/2 forced every act to 450px and the whole
+   page sideways-scrolled on phones — the RTL sweep caught it). Portrait
+   3/4 gives phones their height honestly; desktop goes cinematic 3/2. */
+.act{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--panel);aspect-ratio:3/4}
+@media(min-width:900px){.cinema{grid-template-columns:1fr 1fr}.act{aspect-ratio:3/2}}
 .act .act-poster,.act video{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
 .act video{opacity:0;transition:opacity 1s ease}
 .act video.on{opacity:1}
