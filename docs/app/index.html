@@ -1136,7 +1136,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    animated welcome line beneath. Everything stands down for reduced motion. */
 .acc-hero{display:flex;flex-direction:column;align-items:center;margin:6px 0 14px}
 .acc-ava{position:relative;width:96px;height:96px;flex:none;padding:0;border:none;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-/* v5.52.1 — sign-up form's compact photo preview (hidden until picked) */
+/* v5.53.0 — sign-up form's compact photo preview (hidden until picked) */
 .ava-mini{width:44px;height:44px;flex:none;border-radius:50%;object-fit:cover;display:none;border:1px solid rgba(233,185,73,.55)}
 .ava-ring{position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from 0deg,rgba(233,185,73,.05),#f7d98e 25%,rgba(233,185,73,.12) 50%,#b98a24 75%,rgba(233,185,73,.05));animation:avaSpin 8s linear infinite;filter:drop-shadow(0 0 10px rgba(233,185,73,.28))}
 @keyframes avaSpin{to{transform:rotate(360deg)}}
@@ -1678,24 +1678,38 @@ body.wall #wallRetry.on{display:block}
      mode) get the HNK mark and welcome while the 3MB document parses, once
      per session; the browser tab, reduced-motion users and every failure
      path get the app exactly as before. Its style rides inline so the
-     overlay paints before the main stylesheet is even fetched. -->
+     overlay paints before the main stylesheet is even fetched.
+     v5.53.0 — cinematic icon intro (owner request): the OS splash hands off
+     to the SAME icon art the home screen shows, a gold ring draws itself
+     around it, a light sweeps the art, and the whole intro irises away into
+     the app. All v5.49.0 guards are untouched. -->
 <style>
-#splash{position:fixed;inset:0;z-index:2147483000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(120% 100% at 50% 28%,#191408 0%,#0a0a0c 68%)}
+#splash{position:fixed;inset:0;z-index:2147483000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(120% 100% at 50% 30%,#17130a 0%,#0b0d14 70%);clip-path:circle(141% at 50% 42%)}
 html.splashing #splash{display:flex}
-#splash .sp-ring{position:relative;width:118px;height:118px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-#splash .sp-ring::before{content:"";position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,rgba(233,185,73,.04),#f7d98e 25%,rgba(233,185,73,.1) 50%,#b98a24 75%,rgba(233,185,73,.04));animation:spSpin 2.6s linear infinite;filter:drop-shadow(0 0 14px rgba(233,185,73,.35))}
-#splash .sp-ring::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(120% 100% at 50% 0%,#2a2417,#12100b);box-shadow:inset 0 1px 0 rgba(247,217,142,.25),inset 0 -10px 22px rgba(0,0,0,.55)}
-#splash .sp-mark{position:relative;z-index:1;font:800 34px/1 system-ui,sans-serif;letter-spacing:.06em;background:linear-gradient(115deg,#8a6420 0%,#f7d98e 38%,#fff3c4 50%,#e9b949 62%,#8a6420 100%);background-size:230% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:spSheen 2.2s ease-in-out infinite}
-#splash .sp-h{font:600 17px/1.5 system-ui,sans-serif;color:#f4e9d0;opacity:0;animation:spUp .7s cubic-bezier(.2,.8,.2,1) .25s forwards}
+#splash .sp-stage{position:relative;width:134px;height:134px}
+#splash .sp-stage::before{content:"";position:absolute;inset:-12px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 40%,rgba(233,185,73,.20) 50%,transparent 60%);animation:spSpin 3.2s linear .9s infinite;filter:blur(1px)}
+#splash .sp-draw{position:absolute;inset:-7px;width:calc(100% + 14px);height:calc(100% + 14px);transform:rotate(-90deg)}
+#splash .sp-draw circle{fill:none;stroke:#e9b949;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:396;stroke-dashoffset:396;filter:drop-shadow(0 0 8px rgba(233,185,73,.55));animation:spDraw 1.15s cubic-bezier(.4,0,.25,1) .15s forwards}
+#splash .sp-icon{position:absolute;inset:9px;border-radius:24%;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,.6),0 0 34px rgba(233,185,73,.16);animation:spPop .8s cubic-bezier(.2,.8,.2,1) both}
+#splash .sp-icon img{width:100%;height:100%;object-fit:cover;animation:spKb 6s ease-in-out infinite alternate}
+#splash .sp-icon::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,243,196,.30) 47%,rgba(255,243,196,.06) 53%,transparent 68%);transform:translateX(-135%);animation:spSweep 2.5s ease-in-out .6s infinite}
+#splash .sp-h{font:600 17px/1.5 system-ui,sans-serif;color:#f4e9d0;opacity:0;animation:spUp .7s cubic-bezier(.2,.8,.2,1) .45s forwards}
 #splash .sp-h b{font-weight:800;background:linear-gradient(115deg,#e9b949,#fff3c4 50%,#e9b949);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:spSheen 2.2s ease-in-out infinite}
-#splash .sp-sub{font:500 12px/1.5 system-ui,sans-serif;letter-spacing:.22em;color:#9a927e;opacity:0;animation:spUp .7s cubic-bezier(.2,.8,.2,1) .45s forwards}
-#splash.out{opacity:0;transition:opacity .55s ease}
+#splash .sp-sub{font:500 12px/1.5 system-ui,sans-serif;letter-spacing:.22em;color:#9a927e;opacity:0;animation:spUp .7s cubic-bezier(.2,.8,.2,1) .65s forwards}
+#splash.out{opacity:0;clip-path:circle(0% at 50% 42%);transition:clip-path .65s cubic-bezier(.6,0,.85,.3),opacity .55s ease .12s}
 @keyframes spSpin{to{transform:rotate(360deg)}}
+@keyframes spDraw{to{stroke-dashoffset:0}}
+@keyframes spPop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes spKb{from{transform:scale(1)}to{transform:scale(1.07)}}
+@keyframes spSweep{0%{transform:translateX(-135%)}55%,100%{transform:translateX(135%)}}
 @keyframes spSheen{0%,12%{background-position:125% 0}60%,100%{background-position:-35% 0}}
 @keyframes spUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 </style>
 <div id="splash" aria-hidden="true">
-  <div class="sp-ring"><span class="sp-mark">HNK</span></div>
+  <div class="sp-stage">
+    <div class="sp-icon"><img src="lib/icon-192.png" alt=""></div>
+    <svg class="sp-draw" viewBox="0 0 134 134" aria-hidden="true"><circle cx="67" cy="67" r="63"/></svg>
+  </div>
   <div class="sp-h">Welcome to <b>HNK AI Studio</b></div>
   <div class="sp-sub">PORTRAIT · WEDDING · MYANMAR</div>
 </div>
@@ -1716,7 +1730,7 @@ html.splashing #splash{display:flex}
       if (sp) sp.classList.add("out");
       setTimeout(function(){ document.documentElement.classList.remove("splashing"); }, 600);
     };
-    var hide = function(){ setTimeout(drop, Math.max(0, 1400 - (Date.now() - t0))); };
+    var hide = function(){ setTimeout(drop, Math.max(0, 1800 - (Date.now() - t0))); };
     if (document.readyState === "complete") hide();
     else window.addEventListener("load", hide);
     /* the splash may never outstay its welcome, whatever load does */
@@ -2215,7 +2229,7 @@ html.splashing #splash{display:flex}
             <div class="subh" id="accSignupH"></div>
             <div class="row"><input class="inp grow" id="accEmail2" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
             <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass2" type="button"></button></div>
-            <!-- v5.52.1 — optional profile photo at sign-up: same pick →
+            <!-- v5.53.0 — optional profile photo at sign-up: same pick →
                  canvas-downscale pipeline as the account card; the result is
                  held in memory and PATCHed to the caller's own profiles row
                  the moment the new session exists. Skipping it is fine — the
@@ -19850,7 +19864,7 @@ async function accLogin(){
 function accPostLogin(){
   (async function(){
     try { await accLoadProfile(); } catch(e){}
-    /* v5.52.1 — a photo picked on the sign-up form is saved the moment the
+    /* v5.53.0 — a photo picked on the sign-up form is saved the moment the
        session exists; harmless no-op when nothing is pending. */
     try { accAvaPendingTake(); } catch(e){}
     try { await unifiedRefresh(true); } catch(e){}
@@ -20291,7 +20305,7 @@ async function accAvaSave(val, btn){
   } catch(e){ setSt("stAva", friendlyError(e), "err"); }
     finally { accBusy(btn, false); }
 }
-/* v5.52.1 — `done` lets the sign-up form reuse this pipeline without a
+/* v5.53.0 — `done` lets the sign-up form reuse this pipeline without a
    session: it holds the downscaled result instead of PATCHing profiles.
    `stId` routes failures to whichever status line is actually visible. */
 function accAvaPickFile(file, done, stId){
@@ -20322,7 +20336,7 @@ function accAvaPickFile(file, done, stId){
   fr.readAsDataURL(file);
 }
 
-/* v5.52.1 — the photo picked on the sign-up form, waiting for its session.
+/* v5.53.0 — the photo picked on the sign-up form, waiting for its session.
    Saved by accPostLogin (the first moment the profiles row is ours under
    RLS), then cleared — whether the user finished by signing up or by
    switching to the login form. */
@@ -20758,7 +20772,7 @@ function accWire(){
     if (avaFile.files && avaFile.files[0]) accAvaPickFile(avaFile.files[0]);
   });
   if (avaDrop) avaDrop.onclick = function(){ accAvaSave(null, avaDrop); };
-  /* v5.52.1 — the sign-up form's own picker: downscale now, save after the
+  /* v5.53.0 — the sign-up form's own picker: downscale now, save after the
      session exists (accAvaPendingTake in accPostLogin). Failures land on
      stAcc — the status line the sign-up form actually shows. */
   var avaPickS = $("btnAvaPickSignup"), avaFileS = $("avaFileSignup");
@@ -21242,7 +21256,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.52.1";
+var APP_VER="5.53.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
