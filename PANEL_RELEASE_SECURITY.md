@@ -200,9 +200,18 @@ eligible students.
   wired from owner-pasted specs carry no api-id comment, which is why a
   comment-only scan overcounts). Acceptance carries over the v6.30.0
   checklist plus one Z-Image LoRA edit spot-check.
+  * Field-report fix folded in the same day: a student's real-Photoshop
+    screenshot showed the pairing gate dead-ending on the generic
+    "Device could not be registered". The backend has always sent the
+    specific reason (invalid_pairing_code / pairing_expired /
+    pairing_already_used / panel_slot_occupied / computer_device_required
+    / device_mismatch) in the response's `error` field; the gate now maps
+    each to actionable Burmese guidance (fresh-code-within-5-minutes,
+    case-sensitive typing, ask the admin for Reset Computer) instead of
+    discarding it.
   Artifact `HNK_Ai_Panel_v6.31.0.ccx`, SHA-256
-  `7d847ee3788237ed9c9d6e67eecab17f798b0524608a2740efeb21789f2d6799`,
-  1,286,699 bytes. The release stays disabled until that acceptance.
+  `e19e858ca95a95b40303c8a3e33529deff467cf26bb08bec4a54b4132ae05397`,
+  1,287,431 bytes. The release stays disabled until that acceptance.
 - **v6.30.0** — superseded by v6.31.0 the same day (the completeness
   pass above) before Photoshop acceptance; it was published to the
   private release store and its content ships within v6.31.0.

@@ -5915,8 +5915,25 @@ async function gateRegisterDevice() {
   }
 }
 
+/* v6.31.0 — a student in real Photoshop hit the generic "Device could not be
+   registered" with no way to tell WHY (owner screenshot, 2026-08-30). The
+   backend has always sent the specific reason in the response's `error`
+   field (fail() in server/index.js serializes ApiError.code there); the
+   gate simply never showed it. Each pairing-flow reason now maps to
+   actionable Burmese guidance instead of the dead-end generic line. */
+const GATE_REASON_MY = {
+  invalid_pairing_code: "Code မှားနေပါတယ် — code က အကြီးအသေး ခွဲပါတယ်၊ website က ပြထားတဲ့အတိုင်း အတိအကျ ရိုက်ပါ",
+  pairing_expired: "Code သက်တမ်းကုန်သွားပါပြီ (၅ မိနစ်ပဲ ခံပါတယ်) — website မှာ code အသစ်ထုတ်ပြီး ချက်ချင်း ရိုက်ထည့်ပါ",
+  pairing_already_used: "ဒီ code က တစ်ခါ သုံးပြီးသားပါ — website မှာ code အသစ် ထုတ်ပါ",
+  pairing_required: "Computer မှာ website ဖွင့်ပြီး ထုတ်ပေးတဲ့ pairing code လိုပါတယ် — code ရိုက်ထည့်ပြီး ပြန်စစ်ပါ",
+  panel_slot_occupied: "ဒီအကောင့်မှာ Photoshop panel တစ်ခု ချိတ်ပြီးသားပါ — စက်ပြောင်း/ပြန်သွင်းထားရင် ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
+  computer_device_required: "Website ကို ဒီ computer မှာ အရင် ဝင်ပြီး computer ကို register လုပ်ပါ — ပြီးမှ pairing code ထုတ်လို့ရပါမယ်",
+  device_mismatch: "ဒီစက်က ဒီအကောင့်နဲ့ ချိတ်ထားတာ မဟုတ်ပါ — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ"
+};
 function gateResponseMessage(j, status) {
   if (status === 426 || (j && j.code === "UPDATE_REQUIRED")) return "Update Required";
+  const reason = j && (j.error || j.code);
+  if (reason && GATE_REASON_MY[reason]) return GATE_REASON_MY[reason];
   return String((j && (j.message || j.msg || j.error)) ||
     (status ? ("Access denied (HTTP " + status + ")") : "License service is unavailable"));
 }
