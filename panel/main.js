@@ -5797,7 +5797,13 @@ function gateTexts() {
   /* The locked explainer only when actually locked: the div itself now stays
      in the layout in every state (v6.26.1), so the text must be state-driven
      or the login screen would open with an alarming "access" paragraph. */
-  gateTxt("gateLockedMsg", (gateS.view === "locked") ? gateT("gate_locked") : "");
+  /* v6.31.0 — welcome-back: while the remembered session re-validates, the
+     card greets the member by the address it remembers instead of sitting
+     silent next to an empty login form. */
+  gateTxt("gateLockedMsg",
+    (gateS.view === "locked") ? gateT("gate_locked") :
+    (gateS.view === "checking" && gateS.sess && gateS.sess.email)
+      ? ("\ud83d\udc4b " + gateS.sess.email + " — " + gateT("gate_checking")) : "");
   gateTxt("gateSignIn", gateT("gate_signin"));
   gateTxt("gateBuy", gateT("gate_buy"));
   gateTxt("gateRetry", gateT("gate_retry"));
@@ -5805,6 +5811,7 @@ function gateTexts() {
   const em = gateEl("gateEmail"), pw = gateEl("gatePass");
   if (em) em.placeholder = gateT("gate_email_ph");
   if (pw) pw.placeholder = gateT("gate_pass_ph");
+  gateTxt("gateForgot", "စကားဝှက် မေ့နေလား? · Forgot password?");
 }
 function gateShow(view) {
   gateS.view = view;
@@ -6109,6 +6116,7 @@ function gateApplyWidgetStyles() {
   };
   paint("gateSignIn", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
   paint("gateBuy", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
+  paint("gateForgot", { backgroundColor: "transparent", color: "#9ab", border: "none", fontSize: "11px", textAlign: "center", marginTop: "4px" });
   paint("gateRetry", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   paint("gateSignOut", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   paint("gateEmail", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
@@ -6126,6 +6134,8 @@ function gateWire() {
   on("gateSignIn", function () { gateSignIn(); });
   on("gateRetry", function () { if (!gateS.busy) gateCheck(); });
   on("gateBuy", function () { gateOpenSite(); });
+  /* the reset flow lives on the website's login card — the gate only links */
+  on("gateForgot", function () { gateOpenSite(); });
   on("gateSignOut", async function () {
     /* Reachable in every state since v6.26.1 — never mid-check: a sign-out
        under a running gateCheck would race the check's session. */

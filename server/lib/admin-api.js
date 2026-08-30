@@ -230,7 +230,7 @@ async function students(client, identity, params) {
   const clause = where.length ? " where " + where.join(" and ") : "";
   const { rows } = await client.query(
     `select p.id,p.name,coalesce(p.email,u.email) as email,p.account_status,p.created_at,
-            p.avatar,
+            p.avatar,p.allowed_devices,
             l.status as license_status,l.starts_at,l.expires_at,
             a.web_app_enabled,a.ccx_download_enabled,a.panel_enabled,
             (select max(s.last_seen_at) from public.sessions s where s.user_id=p.id) as last_active_at,
@@ -259,7 +259,7 @@ async function studentDetail(client, identity, userId) {
   assertUuid(userId,"student_id");
   const profile = await client.query(
     `select p.id,p.name,coalesce(p.email,u.email) as email,p.account_status,p.created_at,
-            p.avatar,
+            p.avatar,p.allowed_devices,
             l.status as license_status,l.starts_at,l.expires_at,
             a.web_app_enabled,a.ccx_download_enabled,a.panel_enabled,
             (select max(occurred_at) from public.login_history where user_id=p.id and event_type='login' and success) as last_login_at,
@@ -429,6 +429,18 @@ async function studentAction(client, identity, userId, body, context) {
         [userId,sessionType,body.permission+"_disabled"]);
       await client.query("delete from public.hnk_auth_refresh_tokens where user_id=$1",[userId]);
     }
+  } else if (requested === "set_devices") {
+    /* 2026-08-30 owner instruction: the machine count is the admin's dial.
+       allowed_devices is the same column renewal payments multiply by, so
+       raising a student to 2 machines also prices their renewal at 2. */
+    const n = Number(body.allowed_devices);
+    if (!Number.isInteger(n) || n < 1 || n > 20) {
+      throw new ApiError(400,"allowed_devices must be a whole number from 1 to 20","invalid_device_limit");
+    }
+    await client.query("update public.profiles set allowed_devices=$2 where id=$1",[userId,n]);
+    await client.query(
+      `insert into public.device_history (user_id,actor_user_id,event_type,details)
+       values ($1,$2,'limit',$3::jsonb)`, [userId,identity.uid,JSON.stringify({allowed_devices:n})]);
   } else if (requested === "password_reset") {
     passwordReset = true;
     const user = await client.query("select email from public.hnk_auth_users where id=$1",[userId]);
@@ -441,6 +453,7 @@ async function studentAction(client, identity, userId, body, context) {
     months:body.months || null,expires_at:body.expires_at || null,
     permission:body.permission || null,enabled:typeof body.enabled === "boolean" ? body.enabled : null,
     reset_type:resetType,
+    allowed_devices:requested === "set_devices" ? Number(body.allowed_devices) : null,
   };
   const result={ ok:true,action:requested,student_id:userId,passwordReset,passwordResetEmail };
   if (mutationClaim) await completeAdminMutation(client,mutationClaim,details,result);
@@ -673,7 +686,7 @@ async function paymentProof(client, identity, paymentId, context) {
 const HISTORY_TYPES = new Set(["all","login","failed_login","device","download","admin","license","account"]);
 const LICENSE_ACTIONS = ["approve","extend_license","set_expiry"];
 const ACCOUNT_ACTIONS = ["reject","activate","suspend","ban","reset_phone","reset_computer",
-  "force_logout","set_permission","password_reset"];
+  "force_logout","set_permission","set_devices","password_reset"];
 
 function normalizeHistoryType(value) {
   const kind=String(value || "all").trim() || "all";

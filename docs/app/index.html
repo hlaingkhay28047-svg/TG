@@ -2134,7 +2134,7 @@ html.splashing #splash{display:flex}
     <p class="mut">Device replacement is protected. Students cannot reset a registered slot; an HNK administrator must approve the reset.</p>
     <div class="unified-devices">
       <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button></article>
-      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button></article>
+      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><p class="mut" style="margin-top:6px;font-size:12px">ဒီ computer က တစ်ခါ register ဖြစ်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက် ထပ်တိုးချင်ရင် ဆရာ့ကို ပြောပါ။</p></article>
     </div>
   </section>
   <section class="card">
@@ -2244,9 +2244,18 @@ html.splashing #splash{display:flex}
             <button class="acc-lnk" id="btnAccForgot"></button>
           </div>
           <div id="accFormSignup" style="display:none">
+            <!-- v5.55.0 — the three-step journey, visible from step one so a
+                 new student knows what comes after the form. Passive markers,
+                 not .chip controls: no touch-target contract applies. -->
+            <div class="row" id="accSteps" style="gap:6px;margin-bottom:8px">
+              <span class="acc-step" style="flex:1;text-align:center;border:1px solid var(--gold);border-radius:var(--r-pill);background:var(--gold);color:#1a1408;padding:6px 4px;font-size:var(--fs-sm);font-weight:700">1 · အကောင့်ဖွင့်</span>
+              <span class="acc-step" style="flex:1;text-align:center;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--cream);padding:6px 4px;font-size:var(--fs-sm);font-weight:700">2 · ငွေသွင်း</span>
+              <span class="acc-step" style="flex:1;text-align:center;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--cream);padding:6px 4px;font-size:var(--fs-sm);font-weight:700">3 · စတင်သုံး</span>
+            </div>
             <div class="subh" id="accSignupH"></div>
             <div class="row"><input class="inp grow" id="accEmail2" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
             <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass2" type="button"></button></div>
+            <div class="mut" id="accPassStrength" style="margin-top:2px;font-size:12px"></div>
             <!-- v5.53.1 — optional profile photo at sign-up: same pick →
                  canvas-downscale pipeline as the account card; the result is
                  held in memory and PATCHed to the caller's own profiles row
@@ -21656,6 +21665,16 @@ function accWire(){
   wireKeyReveal("btnShowAccPassNew", "accPassNew");
   $("btnAccLogin").onclick  = function(){ accLogin(); };
   $("btnAccSignup").onclick = function(){ accSignup(); };
+  /* v5.55.0 — a live strength hint, advice not a gate: the 6-char server
+     minimum stays the only hard rule. */
+  $("accPass2").addEventListener("input", function(){
+    var v=this.value, el=$("accPassStrength");
+    if(!v){ el.textContent=""; return; }
+    var score=(v.length>=8?1:0)+(v.length>=12?1:0)+(/[0-9]/.test(v)?1:0)+(/[^A-Za-z0-9]/.test(v)?1:0);
+    var lab=["အားနည်း — ၈ လုံးအထက် သုံးပါ","သင့်တင့်","ကောင်း","အလွန်ကောင်း","အလွန်ကောင်း"][score];
+    el.textContent="🔐 "+lab;
+    el.style.color=["#e08585","#e0c085","#9fd08f","#7ec97e","#7ec97e"][score];
+  });
   $("accToSignup").onclick  = function(){ accShowForm("signup"); };
   $("accToLogin").onclick   = function(){ accShowForm("login"); };
   $("btnAccForgot").onclick = function(){ accForgot(); };

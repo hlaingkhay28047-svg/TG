@@ -90,7 +90,7 @@ check("admin sends functional student and history filter contracts",
 check("admin detail tolerates flat permissions/licenses and device-slot arrays",
   hasAll(admin, ["web_app_enabled", "ccx_download_enabled", "panel_enabled", "license_status", "slot_type", "installations"]));
 const actions = ["approve", "reject", "activate", "suspend", "ban", "extend_license", "set_expiry",
-  "reset_phone", "reset_computer", "force_logout", "set_permission", "password_reset"];
+  "reset_phone", "reset_computer", "force_logout", "set_permission", "password_reset", "set_devices"];
 check("admin exposes every required named student action", hasAll(admin, actions),
   "missing: " + actions.filter(a => !admin.includes(a)).join(", "));
 /* 2026-08-28 — the owner retired the authenticator system from the admin UI:

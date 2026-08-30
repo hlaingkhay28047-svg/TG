@@ -148,6 +148,7 @@ function createDeviceRepository() {
   const slots = [];
   const installations = [];
   const pairings = [];
+  const deviceLimits = new Map();
   let sequence = 0;
   const copy = value => value ? Object.assign({}, value) : null;
   return {
@@ -157,21 +158,35 @@ function createDeviceRepository() {
     async getSlot(userId, slotType) {
       return copy(slots.find(row => row.userId === userId && row.slotType === slotType && row.status === "active"));
     },
-    /* Atomic PostgreSQL adapter contract. The UNIQUE(user_id, slot_type) row
-     * is reused after reset, with generation incremented, rather than inserting
-     * a second historical slot that violates the invariant. */
+    /* 2026-08-30 — SEATS, not one-per-type: claimSlot mirrors the PG
+     * adapter's advisory-locked count against profiles.allowed_devices
+     * (admin-adjustable; default 2). A reset seat of the type is revived
+     * with generation incremented before a new row is inserted. */
+    setAllowedDevices(userId, n) { deviceLimits.set(userId, n); },
     async claimSlot(row) {
-      const existing = slots.find(item => item.userId === row.userId && item.slotType === row.slotType);
-      if (existing && existing.status === "active") return { claimed: false, slot: copy(existing) };
-      if (existing) {
-        Object.assign(existing, row, {
-          status: "active", generation: existing.generation + 1, resetAt: null,
+      const limit = deviceLimits.has(row.userId) ? deviceLimits.get(row.userId) : 2;
+      const active = slots.filter(item => item.userId === row.userId && item.status === "active");
+      if (active.length >= limit) {
+        const current = slots.find(item => item.userId === row.userId && item.slotType === row.slotType);
+        return { claimed: false, slot: current ? copy(current) : null };
+      }
+      const resettable = slots.find(item => item.userId === row.userId &&
+        item.slotType === row.slotType && item.status === "reset");
+      if (resettable) {
+        Object.assign(resettable, row, {
+          status: "active", generation: resettable.generation + 1, resetAt: null,
         });
-        return { claimed: true, slot: copy(existing) };
+        return { claimed: true, slot: copy(resettable) };
       }
       const saved = Object.assign({ id: "slot-" + (++sequence), status: "active", generation: 1 }, row);
       slots.push(saved);
       return { claimed: true, slot: copy(saved) };
+    },
+    async findFreeSlot(userId, slotType, clientType) {
+      const free = slots.find(slot => slot.userId === userId && slot.slotType === slotType &&
+        slot.status === "active" &&
+        !installations.some(i => i.slotId === slot.id && i.clientType === clientType && !i.revokedAt));
+      return free ? copy(free) : null;
     },
     async getInstallation(userId, clientType, installationId) {
       const installation = installations.find(row => row.userId === userId && row.clientType === clientType &&
@@ -432,15 +447,18 @@ async function verifyDevices() {
   });
   const userId = "22222222-2222-4222-8222-222222222222";
 
+  /* 2026-08-30 owner instruction: device count is the ADMIN's dial
+     (profiles.allowed_devices, default 2), enforced as fungible SEATS. */
   const phoneA = await registry.registerWebDevice({
     userId, deviceType: "phone", installationId: "phone-A", label: "Student phone",
   });
-  const phoneBReason = await denied(() => registry.registerWebDevice({
-    userId, deviceType: "phone", installationId: "phone-B", label: "Borrowed phone",
-  }));
-  report("one account accepts one phone and refuses a different second phone",
-    phoneA && phoneA.allowed === true && phoneA.slotType === "phone" && phoneBReason === "phone_slot_occupied",
-    { phoneA, phoneBReason });
+  const phoneB = await registry.registerWebDevice({
+    userId, deviceType: "phone", installationId: "phone-B", label: "Second phone",
+  });
+  report("seats are fungible — the default two seats can both be phones",
+    phoneA && phoneA.allowed === true && phoneA.slotType === "phone" &&
+      phoneB && phoneB.allowed === true && phoneB.slotId !== phoneA.slotId,
+    { phoneA, phoneB });
 
   const copiedPhoneIdReason = await denied(() => registry.registerWebDevice({
     userId, deviceType: "computer", installationId: "phone-A", label: "Desktop claiming phone id",
@@ -448,16 +466,19 @@ async function verifyDevices() {
   report("an existing installation id cannot cross from its authoritative phone slot into computer",
     copiedPhoneIdReason === "device_type_mismatch", { copiedPhoneIdReason });
 
+  const overLimitReason = await denied(() => registry.registerWebDevice({
+    userId, deviceType: "computer", installationId: "computer-web-A", label: "Student PC",
+  }));
+  report("the third device is refused while the admin dial says two",
+    overLimitReason === "computer_slot_occupied", { overLimitReason });
+
+  repository.setAllowedDevices(userId, 3);
   const computerA = await registry.registerWebDevice({
     userId, deviceType: "computer", installationId: "computer-web-A", label: "Student PC",
   });
-  const computerBReason = await denied(() => registry.registerWebDevice({
-    userId, deviceType: "computer", installationId: "computer-web-B", label: "Other PC",
-  }));
-  report("one account accepts one computer and refuses a different second computer",
-    computerA && computerA.allowed === true && computerA.slotType === "computer" &&
-      computerBReason === "computer_slot_occupied",
-    { computerA, computerBReason });
+  report("raising allowed_devices to three admits the computer",
+    computerA && computerA.allowed === true && computerA.slotType === "computer",
+    { computerA });
 
   /* 2026-08-30 owner instruction: the pairing-code step is gone. The panel
      registers itself directly; the control that actually limits sharing is
@@ -476,6 +497,15 @@ async function verifyDevices() {
   const retired = ["createPanelPairing", "pairPanel"].filter(fn => typeof registry[fn] === "function");
   report("the retired pairing-code surface is gone from the registry",
     retired.length === 0, { retired });
+
+  repository.setAllowedDevices(userId, 4);
+  const panelB = await registry.registerPanelDevice({
+    userId, installationId: "panel-B", label: "Second studio machine",
+  });
+  report("the owner scenario end-to-end: a fourth seat lets a second machine's panel in",
+    panelB && panelB.allowed === true && panelB.slotType === "computer" &&
+      panelB.slotId !== panelA.slotId,
+    { panelB });
 
   const validPanel = await registry.validate({ userId, clientType: "panel", installationId: "panel-A" });
   const copiedPanelReason = await denied(() => registry.validate({

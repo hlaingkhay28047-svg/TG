@@ -25,15 +25,22 @@ function createDeviceRegistry(options) {
       return { allowed: true, reason: "allowed", slotId: existing.slotId, slotType: existing.slotType };
     }
 
-    const claim = await repository.claimSlot({
-      userId: input.userId,
-      slotType: input.deviceType,
-      label: input.label || null,
-      createdAt: clock().toISOString(),
-      updatedAt: clock().toISOString(),
-    });
-    if (!claim || claim.claimed !== true) return denial(input.deviceType + "_slot_occupied");
-    const slot = claim.slot;
+    /* seat model: sit on an existing seat with a free web place first, and
+       only then ask claimSlot for a NEW seat (which enforces the
+       admin-set allowed_devices count). */
+    let slot = typeof repository.findFreeSlot === "function"
+      ? await repository.findFreeSlot(input.userId, input.deviceType, "web") : null;
+    if (!slot) {
+      const claim = await repository.claimSlot({
+        userId: input.userId,
+        slotType: input.deviceType,
+        label: input.label || null,
+        createdAt: clock().toISOString(),
+        updatedAt: clock().toISOString(),
+      });
+      if (!claim || claim.claimed !== true) return denial(input.deviceType + "_slot_occupied");
+      slot = claim.slot;
+    }
     const installation = await repository.insertInstallation({
       userId: input.userId,
       slotId: slot.id,
@@ -58,7 +65,8 @@ function createDeviceRegistry(options) {
   async function registerPanelDevice(input) {
     const installationId = normalizeInstallation(input.installationId);
     if (!installationId) return denial("invalid_installation_id");
-    let slot = await repository.getSlot(input.userId, "computer");
+    let slot = typeof repository.findFreeSlot === "function"
+      ? await repository.findFreeSlot(input.userId, "computer", "panel") : null;
     if (!slot) {
       const claim = await repository.claimSlot({
         userId: input.userId,
@@ -67,7 +75,7 @@ function createDeviceRegistry(options) {
         createdAt: clock().toISOString(),
         updatedAt: clock().toISOString(),
       });
-      if (!claim || claim.claimed !== true) return denial("computer_slot_occupied");
+      if (!claim || claim.claimed !== true) return denial("panel_slot_occupied");
       slot = claim.slot;
     }
     try {
@@ -128,20 +136,51 @@ function createPgDeviceRepository(client) {
         [userId,slotType]);
       return mapSlot(rows[0]);
     },
+    /* 2026-08-30 — slots are SEATS counted against profiles.allowed_devices
+       (admin-adjustable), no longer one-per-type. The per-user advisory
+       lock serializes concurrent claims inside the asService transaction
+       so two racing enrolls cannot both squeeze past the count. A reset
+       seat of the same type is reactivated before a new one is created. */
     async claimSlot(row) {
+      await client.query("select pg_advisory_xact_lock(hashtext($1))", [String(row.userId)]);
+      const limitQ = await client.query(
+        "select coalesce(allowed_devices,2) as n from public.profiles where id=$1", [row.userId]);
+      const limit = limitQ.rows.length ? Number(limitQ.rows[0].n) : 2;
+      const activeQ = await client.query(
+        "select count(*)::int as n from public.device_slots where user_id=$1 and status='active'",
+        [row.userId]);
+      if (Number(activeQ.rows[0].n) >= limit) {
+        const current = await client.query(
+          "select * from public.device_slots where user_id=$1 and slot_type=$2 order by created_at limit 1",
+          [row.userId,row.slotType]);
+        return { claimed: false, slot: mapSlot(current.rows[0]) };
+      }
+      const revived = await client.query(
+        `update public.device_slots
+            set status='active',generation=generation+1,label=$3,updated_at=$4,reset_at=null
+          where id = (select id from public.device_slots
+                       where user_id=$1 and slot_type=$2 and status='reset'
+                       order by created_at limit 1)
+          returning *`,
+        [row.userId,row.slotType,row.label,row.updatedAt]);
+      if (revived.rows[0]) return { claimed: true, slot: mapSlot(revived.rows[0]) };
       const { rows } = await client.query(
         `insert into public.device_slots (user_id,slot_type,status,generation,label,created_at,updated_at)
-         values ($1,$2,'active',1,$3,$4,$5)
-         on conflict (user_id,slot_type) do update
-           set status='active',generation=public.device_slots.generation+1,label=excluded.label,
-               updated_at=excluded.updated_at,reset_at=null
-           where public.device_slots.status <> 'active'
-         returning *`,
+         values ($1,$2,'active',1,$3,$4,$5) returning *`,
         [row.userId,row.slotType,row.label,row.createdAt,row.updatedAt]);
-      if (rows[0]) return { claimed: true, slot: mapSlot(rows[0]) };
-      const current = await client.query(
-        "select * from public.device_slots where user_id=$1 and slot_type=$2", [row.userId,row.slotType]);
-      return { claimed: false, slot: mapSlot(current.rows[0]) };
+      return { claimed: true, slot: mapSlot(rows[0]) };
+    },
+    /* an active seat of this type with no live installation of this client
+       kind — where a new web browser or panel install sits down first */
+    async findFreeSlot(userId, slotType, clientType) {
+      const { rows } = await client.query(
+        `select s.* from public.device_slots s
+          where s.user_id=$1 and s.slot_type=$2 and s.status='active'
+            and not exists (select 1 from public.device_installations i
+                             where i.slot_id=s.id and i.client_type=$3 and i.revoked_at is null)
+          order by s.created_at limit 1`,
+        [userId,slotType,clientType]);
+      return mapSlot(rows[0]);
     },
     async getInstallation(userId, clientType, installationHash) {
       const { rows } = await client.query(
