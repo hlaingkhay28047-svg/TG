@@ -137,7 +137,7 @@ input,textarea,select{font-family:inherit}
 @keyframes heroSpark{0%{opacity:0;transform:translateY(0) scale(.6)}12%{opacity:.9}60%{opacity:.55}100%{opacity:0;transform:translateY(-130px) scale(1)}}
 .hero-strip h1 em,.page-hero .ph-head em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:heroShine 5s ease-in-out infinite}
 @keyframes heroShine{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
-@media (prefers-reduced-motion: reduce){.hero-art img,.hero-art:before,.hero-fx i,.hero-strip h1 em,.page-hero .ph-head em,.hnk-wordmark,.lib-grid img{animation:none!important}}
+@media (prefers-reduced-motion: reduce){.hero-art img,.hero-art:before,.hero-fx i,.hero-strip h1 em,.page-hero .ph-head em,.page-hero>img,.page-hero:before,.dash-greet,.hnk-wordmark,.lib-grid img{animation:none!important}}
 @media (forced-colors:active){.hnk-wordmark{background:none!important;color:CanvasText;-webkit-text-fill-color:CanvasText;filter:none;animation:none}.hnk-studio-label{color:CanvasText;text-shadow:none}.nav-name::after{background:CanvasText;box-shadow:none}}
 /* v5.9 — the mini hero used to render its photograph at half opacity, and
    with the scrim below that put the art under a combined ~0.94 of cover in
@@ -149,7 +149,20 @@ input,textarea,select{font-family:inherit}
    (cover image + dark legibility scrim + gold kicker + one-line benefit headline).
    Text is real HTML overlay (selectable, i18n via t()) — never baked into images. ---- */
 .page-hero{position:relative;min-height:126px;margin:var(--sp-3) 0 var(--sp-3);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;padding:12px 16px;border:1px solid var(--line-soft)}
-.page-hero>img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}
+/* v5.53.2 — the page banners come alive (owner: "hero banners live video motion").
+   Same cinema language as the sign-in hero: a slow Ken Burns drift on the
+   plate plus a warm glow that breathes and a soft light sweep gliding across
+   — pure CSS, so every banner plays like a cinemagraph with no video bytes.
+   Hidden pages are display:none, so only the visible banner ever animates. */
+.page-hero>img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;will-change:transform;transform-origin:100% 42%;animation:phKB 26s ease-in-out infinite alternate}
+/* The zoom anchors on the RIGHT edge (transform-origin 100%) and only ever
+   translates leftward: the plate's right edge never crosses its own box, so
+   the drift can't create horizontal overflow at any animation phase (the
+   v465 sweep measures exactly that). The growth spills left, where the
+   hero's overflow:hidden clips it. */
+@keyframes phKB{from{transform:scale(1.03)}to{transform:scale(1.12) translate3d(-1.5%,-.9%,0)}}
+.page-hero:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(60% 70% at 70% 24%,rgba(255,214,130,.20),transparent 70%),linear-gradient(115deg,transparent 0%,transparent 42%,rgba(255,238,190,.16) 50%,transparent 58%,transparent 100%);background-size:100% 100%,320% 100%;background-position:0 0,-120% 0;animation:phSweep 9s ease-in-out infinite}
+@keyframes phSweep{0%,55%{background-position:0 0,-120% 0}88%,100%{background-position:0 0,220% 0}}
 .page-hero:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(11,13,20,.06) 0%,rgba(11,13,20,.18) 46%,rgba(11,13,20,.78) 100%)}
 .page-hero .ph-kick{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
 .page-hero .ph-head{position:relative;z-index:2;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
@@ -1199,7 +1212,12 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
      top 40% of the plate, and a centred cover crop on a card this wide cuts
      the forehead off. */
   background-size:cover;background-position:78% 22%;background-repeat:no-repeat;
-  border:1px solid var(--line-soft);border-radius:var(--r-lg);overflow:hidden}
+  border:1px solid var(--line-soft);border-radius:var(--r-lg);overflow:hidden;
+  /* v5.53.2 — the greeting plate drifts like the page banners. Horizontal
+     only, and only 74%–82% around the measured 78% anchor: the faces sit in
+     the top 40% of all three frames, so the 22% vertical must never move. */
+  animation:greetDrift 34s ease-in-out infinite alternate}
+@keyframes greetDrift{from{background-position:74% 22%}to{background-position:82% 22%}}
 @media (min-width:768px){.dash-greet{min-height:168px;padding:16px 20px}}
 /* The scrim is sized from the art rather than guessed, and it is sized ONCE
    PER FRAME because the frames are not alike. Measured over the text zone
@@ -21260,7 +21278,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.53.1";
+var APP_VER="5.53.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
