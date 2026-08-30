@@ -58,6 +58,12 @@ function defaults() {
       "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800 },
       "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800 },
       "flux-2-dev":            { apiPath: "rhart-image/f-2-dev/text-to-image", kind: "t2i" },
+      /* v6.27.0 — the web app's three remaining text-to-image models, ported
+         with their confirmed endpoints (owner: the model set must be
+         complete). Field shapes mirror the app's defs verbatim. */
+      "nano-banana-pro-t2i":   { apiPath: "rhart-image-n-pro-official/text-to-image", kind: "t2i", promptMax: 20000 },
+      "qwen-image-3-pro-t2i":  { apiPath: "alibaba/qwen-image-3.0-pro/text-to-image", kind: "t2i", sizeParam: true, promptMax: 2048 },
+      "rh-imagine-quality":    { apiPath: "rhart-imagine-image-quality/text-to-image", kind: "t2i", resolutions: ["1k", "2k"], promptMax: 4000 },
       "wan-image-edit":        { apiPath: "alibaba/wan-2.7/image-edit", whParam: true, promptMax: 2048 },
       "wan-image-edit-pro":    { apiPath: "alibaba/wan-2.7/image-edit-pro", whParam: true, promptMax: 2048 },
       "upscale-pro":           { apiPath: "topazlabs/image-upscale-standard-v2", imageParam: "imageUrl", kind: "upscale" },

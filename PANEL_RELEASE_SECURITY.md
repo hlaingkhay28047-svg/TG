@@ -240,11 +240,40 @@ eligible students.
     nano-banana-2 edit deployment as the app's tier; card art loads from
     the licensed host with a text fallback offline.
     test/verify_panel_wf_catalog_sync.js pins the file to the app.
+  * Model set completed to the web app's (owner request): the three
+    text-to-image models the app carries and the panel lacked — Nano
+    Banana Pro (T2I, official), Qwen 3.0 Pro (T2I) and RH Imagine
+    Quality (T2I) — added to the model registry and RunningHub config
+    with their endpoints ported verbatim from the app's own client
+    (`rhart-image-n-pro-official/text-to-image`,
+    `alibaba/qwen-image-3.0-pro/text-to-image`,
+    `rhart-imagine-image-quality/text-to-image`). 21 models total; no
+    path invented.
+  * Every image slot offers all four sources (owner request): the AI
+    Tools surfaces caught up with the classic tabs — each Smart Workflow
+    input row and the Free Generate slot strip now offer Active Layer ·
+    File · Web Link · Library (classic Edit ×2 and Create ×4 slots
+    already carried all four). The OS file picker lives in the host
+    adapter (`pickImageFile`), the Web source opens an inline URL row,
+    and the Library source uses the existing last-pick bridge. The audit
+    shim proves both new paths end-to-end: a web link really imports
+    into a workflow slot and a Free Generate slot through the real host
+    adapter.
+  * Hero banners complete — ten shipped visuals (owner request): the web
+    app's time-greeting hero (same morning/afternoon/evening clock split,
+    same three banner arts, all nine language greetings) now opens the
+    AI Tools Home, bundled beside the six page banners and the gate
+    hero. Two stale unreferenced banner duplicates removed
+    (icons/banners/{master-bgfg-replace,reference-transfer}.jpg — their
+    icons/cards/ copies are the referenced ones), so the CCX shrinks
+    slightly despite the three new arts.
   Real-Photoshop acceptance MUST cover the full v6.26.2 checklist above,
   with special weight on: the AI Tools tab opening to the workflow home
-  WITH card art visible, an AI Tools generate, a library preset tap
-  landing in Reference 2, and a Text / Logo generate.
+  WITH card art visible AND the time-greeting hero, an AI Tools generate,
+  all four sources visible on one workflow input row (and a web-link
+  import), a library preset tap landing in Reference 2, and a Text / Logo
+  generate.
   Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
-  `c4370ade88d9abf03e32e94ed1fd2323a9057db91e683984bb58657dc5e87280`,
-  1,424,150 bytes (the bundled card art accounts for the growth over
+  `215551a31bc96354ba7323268c501a8babcddae488ba2481d9c0dd132f250b48`,
+  1,341,521 bytes (the bundled card art accounts for the growth over
   6.26.2's 524,577). The release stays disabled until that acceptance.

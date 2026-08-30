@@ -101,15 +101,43 @@ function create(deps) {
     renderSelected();
   }
 
+  /* v6.27.0 — owner requirement: EVERY image slot offers the same four
+     sources the classic tabs do (Active Layer · File · Web Link · Library).
+     One applier so all four sources land in the slot identically. */
+  function applySlot(inp, slot) {
+    wstate.setInput(state, inp.key, { source: slot.source, role: inp.role, ref: slot.ref, valid: slot.valid, reason: slot.reason });
+    refresh();
+  }
+
   function addImage(inp) {
     if (deps.host && imageImport) {
       var res = imageImport.fromActiveLayer(deps.host);
-      var apply = function (slot) { wstate.setInput(state, inp.key, { source: slot.source, role: inp.role, ref: slot.ref, valid: slot.valid, reason: slot.reason }); refresh(); };
-      if (res && typeof res.then === "function") res.then(apply); else apply(res);
+      if (res && typeof res.then === "function") res.then(function (slot) { applySlot(inp, slot); });
+      else applySlot(inp, res);
     } else {
       wstate.setInput(state, inp.key, { source: "file", role: inp.role, ref: deps.stubRef || ("ref_" + inp.key), valid: true });
       refresh();
     }
+  }
+
+  function addFromFile(inp) {
+    if (!(deps.host && deps.host.pickImageFile && imageImport)) {
+      // stub hosts (tests) have no OS picker — behave like the stub add
+      wstate.setInput(state, inp.key, { source: "file", role: inp.role, ref: deps.stubRef || ("ref_" + inp.key), valid: true });
+      refresh();
+      return;
+    }
+    Promise.resolve(deps.host.pickImageFile()).then(function (file) {
+      if (!file) return; // user cancelled the picker — not an error
+      return Promise.resolve(imageImport.fromFile(deps.host, file)).then(function (slot) { applySlot(inp, slot); });
+    }).catch(function () { applySlot(inp, { source: "file", ref: null, valid: false, reason: "unreadable" }); });
+  }
+
+  function addFromWeb(inp, url) {
+    if (!imageImport) return;
+    var res = imageImport.fromWebLink(deps.host, url);
+    if (res && typeof res.then === "function") res.then(function (slot) { applySlot(inp, slot); });
+    else applySlot(inp, res);
   }
 
   function refresh() {
@@ -243,12 +271,37 @@ function create(deps) {
     var mark = dom.el(doc, "span", { class: "hnk-req-mark miss", text: dom.t("ai_missing", "Missing") });
     nodes["req_" + inp.key] = mark;
     var lbl = dom.t(registry.inputLabelKey(inp.label) || "", inp.label);
-    var add = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfAdd_" + inp.key, text: dom.t("ai_add", "Add") + " " + lbl });
+    /* All four sources, matching the classic tabs' reference slots. The
+       Layer button keeps the historic hnkWfAdd_ id (audit + muscle memory). */
+    var add = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfAdd_" + inp.key, text: dom.t("btn_ref_layer", "+ Layer") });
     dom.on(add, "click", function () { addImage(inp); });
+    var fileB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfFile_" + inp.key, text: dom.t("btn_ref_file", "File") });
+    dom.on(fileB, "click", function () { addFromFile(inp); });
+    var webB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfWeb_" + inp.key, text: dom.t("btn_ref_web", "Web") });
     var lib = dom.el(doc, "button", { class: "hnk-btn hnk-req-add hnk-req-lib", id: "hnkWfLib_" + inp.key, text: "\u2726 " + dom.t("ai_library", "Library") });
     dom.on(lib, "click", function () { addFromLibrary(inp); });
-    return dom.el(doc, "div", { class: "hnk-req-row" }, [
-      dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, lib
+
+    /* Web Link entry row \u2014 hidden until its Web button is pressed. */
+    var urlInp = dom.el(doc, "input", { class: "hnk-inp hnk-url-inp", id: "hnkWfUrl_" + inp.key,
+      attrs: { type: "text", placeholder: dom.t("url_ph", "https://... image link") } });
+    var urlGo = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfUrlGo_" + inp.key, text: dom.t("btn_load", "Load") });
+    var urlRow = dom.el(doc, "div", { class: "hnk-url-row", id: "hnkWfUrlRow_" + inp.key }, [urlInp, urlGo]);
+    urlRow.style.display = "none";
+    dom.on(webB, "click", function () {
+      var open = urlRow.style.display === "none";
+      urlRow.style.display = open ? "" : "none";
+      if (open) { try { urlInp.focus(); } catch (e) {} }
+    });
+    dom.on(urlGo, "click", function () {
+      addFromWeb(inp, urlInp.value);
+      urlRow.style.display = "none";
+    });
+
+    return dom.el(doc, "div", { class: "hnk-req-block" }, [
+      dom.el(doc, "div", { class: "hnk-req-row" }, [
+        dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, fileB, webB, lib
+      ]),
+      urlRow
     ]);
   }
 

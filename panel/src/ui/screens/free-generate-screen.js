@@ -58,6 +58,11 @@ function create(deps) {
       nodes.addRef.textContent = atLimit
         ? ("Max " + ev.maxSlots + " images for this model")
         : "+ Add Reference Image";
+      /* v6.27.0 — the other three sources share the same dynamic limit */
+      [nodes.addRefFile, nodes.addRefWeb, nodes.addRefLib].forEach(function (b) {
+        if (b) dom.setDisabled(b, atLimit);
+      });
+      if (atLimit && nodes.refUrlRow) nodes.refUrlRow.style.display = "none";
     }
     if (nodes.estimate) {
       nodes.estimate.textContent = ev.requestCount > 1
@@ -114,26 +119,82 @@ function create(deps) {
     root.appendChild(nodes.slots);
     nodes.slotErrors = dom.el(doc, "div", { class: "hnk-slot-errors" });
     root.appendChild(nodes.slotErrors);
+    /* v6.27.0 — owner requirement: every image slot offers the classic tabs'
+       four sources (Active Layer · File · Web Link · Library), not just the
+       active layer. One applier so every source lands identically. */
+    var atLimit = function () { return state.images.length >= evaluate().maxSlots; }; // dynamic limit (§5)
+    var applySlot = function (slot) {
+      fstate.addImage(state, { source: slot.source, ref: slot.ref, valid: slot.valid, reason: slot.reason });
+      refresh();
+    };
     nodes.addRef = dom.el(doc, "button", { class: "hnk-btn", id: "hnkAddRef", text: dom.t("ai_add_ref", "+ Add Reference Image") });
     dom.on(nodes.addRef, "click", function () {
-      var ev = evaluate();
-      if (state.images.length >= ev.maxSlots) return; // dynamic limit (§5)
-      // With a Photoshop host, the default slot source is the active layer
+      if (atLimit()) return;
+      // With a Photoshop host, this button's slot source is the active layer
       // (spec §5); otherwise fall back to a stub ref (tests without a host).
       if (deps.host && imageImport) {
         var res = imageImport.fromActiveLayer(deps.host);
-        var apply = function (slot) {
-          fstate.addImage(state, { source: slot.source, ref: slot.ref, valid: slot.valid, reason: slot.reason });
-          refresh();
-        };
-        if (res && typeof res.then === "function") res.then(apply);
-        else apply(res);
+        if (res && typeof res.then === "function") res.then(applySlot);
+        else applySlot(res);
       } else {
         fstate.addImage(state, { source: "file", ref: deps.stubRef || null, valid: deps.stubRef ? true : false });
         refresh();
       }
     });
     root.appendChild(nodes.addRef);
+
+    var srcRow = dom.el(doc, "div", { class: "hnk-src-row" });
+    nodes.addRefFile = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkAddRefFile", text: dom.t("btn_ref_file", "File") });
+    dom.on(nodes.addRefFile, "click", function () {
+      if (atLimit()) return;
+      if (!(deps.host && deps.host.pickImageFile && imageImport)) {
+        fstate.addImage(state, { source: "file", ref: deps.stubRef || null, valid: !!deps.stubRef });
+        refresh();
+        return;
+      }
+      Promise.resolve(deps.host.pickImageFile()).then(function (file) {
+        if (!file) return; // user cancelled the picker — not an error
+        return Promise.resolve(imageImport.fromFile(deps.host, file)).then(applySlot);
+      }).catch(function () { applySlot({ source: "file", ref: null, valid: false, reason: "unreadable" }); });
+    });
+    srcRow.appendChild(nodes.addRefFile);
+    nodes.addRefWeb = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkAddRefWeb", text: dom.t("btn_ref_web", "Web") });
+    srcRow.appendChild(nodes.addRefWeb);
+    nodes.addRefLib = dom.el(doc, "button", { class: "hnk-btn hnk-req-add hnk-req-lib", id: "hnkAddRefLib", text: "✦ " + dom.t("ai_library", "Library") });
+    dom.on(nodes.addRefLib, "click", function () {
+      if (atLimit()) return;
+      var g = (typeof globalThis !== "undefined") ? globalThis : {};
+      var getPick = g.HNK && g.HNK.getLibraryPickDataUrl;
+      var hint = function (msg) { if (nodes.status) nodes.status.textContent = msg; };
+      if (!getPick) { hint(dom.t("ai_lib_bridge_off", "Library bridge unavailable on this host.")); return; }
+      getPick().then(function (res) {
+        if (!res || !res.dataUrl) { hint(dom.t("ai_lib_pick_first", "Pick a photo from the Presets tab → Visual Library first.")); return; }
+        applySlot({ source: "library", ref: res.dataUrl, valid: true });
+      }).catch(function () { hint(dom.t("ai_lib_load_fail", "Library image could not be loaded.")); });
+    });
+    srcRow.appendChild(nodes.addRefLib);
+    root.appendChild(srcRow);
+
+    /* Web Link entry row — hidden until the Web button is pressed. */
+    var urlInp = dom.el(doc, "input", { class: "hnk-inp hnk-url-inp", id: "hnkRefUrl",
+      attrs: { type: "text", placeholder: dom.t("url_ph", "https://... image link") } });
+    var urlGo = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkRefUrlGo", text: dom.t("btn_load", "Load") });
+    nodes.refUrlRow = dom.el(doc, "div", { class: "hnk-url-row", id: "hnkRefUrlRow" }, [urlInp, urlGo]);
+    nodes.refUrlRow.style.display = "none";
+    dom.on(nodes.addRefWeb, "click", function () {
+      if (atLimit()) return;
+      var open = nodes.refUrlRow.style.display === "none";
+      nodes.refUrlRow.style.display = open ? "" : "none";
+      if (open) { try { urlInp.focus(); } catch (e) {} }
+    });
+    dom.on(urlGo, "click", function () {
+      if (atLimit() || !imageImport) return;
+      var res = imageImport.fromWebLink(deps.host, urlInp.value);
+      if (res && typeof res.then === "function") res.then(applySlot);
+      else applySlot(res);
+      nodes.refUrlRow.style.display = "none";
+    });
+    root.appendChild(nodes.refUrlRow);
 
     // PROMPT
     root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_prompt", "PROMPT") }));

@@ -60,7 +60,6 @@ jobs:
           node test/verify_panel_unified_backend.js
           node test/verify_panel_manifest_permissions.js
           node test/verify_panel_catalog_sync.js
-          node test/verify_panel_wf_catalog_sync.js
           node test/verify_spaces_client.js
           node test/verify_spaces_artifact_path.js
 
@@ -175,6 +174,9 @@ jobs:
         run: |
           python3 -m http.server 8931 --directory docs/app &
           sleep 1
+
+      - name: Verify the panel Smart Workflow catalog tracks the web app exactly
+        run: node test/verify_panel_wf_catalog_sync.js
 
       - name: Run workflow sweep against docs/app/index.html
         run: node test/sweep_workflows.js

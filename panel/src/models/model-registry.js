@@ -152,6 +152,69 @@ var MODELS = [
     },
     recommendedFor: ["text-to-image", "creative"]
   },
+  /* v6.27.0 — the web app's remaining text-to-image models, ported with
+     their confirmed RunningHub endpoints so the model set matches the app
+     (owner request). Endpoint + field shapes live in runninghub-config. */
+  {
+    id: "nano-banana-pro-t2i",
+    displayName: "Nano Banana Pro — Best Quality (T2I)",
+    provider: "runninghub-enterprise",
+    category: ["high-quality", "creative"],
+    tagline: "The app's best-quality text-to-image",
+    detail: "Text to image only",
+    capabilities: {
+      textToImage: true,
+      imageEdit: false,
+      multiReference: false,
+      maxImages: 0,
+      supportedSizes: ["1k", "2k", "4k"],
+      supportedRatios: ["auto", "1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"],
+      variants: true,
+      visibleText: "high",
+      identityRetention: "low"
+    },
+    recommendedFor: ["text-to-image", "high-quality"]
+  },
+  {
+    id: "qwen-image-3-pro-t2i",
+    displayName: "Qwen 3.0 Pro — Asia Looks (T2I)",
+    provider: "runninghub-enterprise",
+    category: ["creative"],
+    tagline: "Asia-look text-to-image generation",
+    detail: "Text to image only",
+    capabilities: {
+      textToImage: true,
+      imageEdit: false,
+      multiReference: false,
+      maxImages: 0,
+      supportedSizes: ["1k", "2k"],
+      supportedRatios: ["auto", "1:1", "4:3", "3:4", "16:9", "9:16"],
+      variants: true,
+      visibleText: "medium",
+      identityRetention: "low"
+    },
+    recommendedFor: ["text-to-image"]
+  },
+  {
+    id: "rh-imagine-quality",
+    displayName: "RH Imagine — Sharp & Clean (T2I)",
+    provider: "runninghub-enterprise",
+    category: ["fast", "creative"],
+    tagline: "Sharp, clean text-to-image",
+    detail: "Text to image only",
+    capabilities: {
+      textToImage: true,
+      imageEdit: false,
+      multiReference: false,
+      maxImages: 0,
+      supportedSizes: ["1k", "2k"],
+      supportedRatios: ["auto", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
+      variants: true,
+      visibleText: "medium",
+      identityRetention: "low"
+    },
+    recommendedFor: ["text-to-image", "fast"]
+  },
   {
     id: "wan-image-edit",
     displayName: "Wan Image Edit",

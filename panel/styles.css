@@ -716,6 +716,30 @@ input[type="range"] { min-width: 0; }
 .hnk-req-mark { font-size:11px; color:var(--muted); min-width:52px; }
 .hnk-todo { font-size:12px; color:var(--muted); padding:16px 0; }
 
+/* v6.27.0 — every image slot offers all four sources; the Web source opens a
+   small inline URL row under its slot. */
+.hnk-req-block { padding: 2px 0; }
+.hnk-src-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 2px; }
+.hnk-url-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; }
+.hnk-url-inp { flex: 1; min-width: 0; font-size: 12px; padding: 7px 9px; }
+
+/* v6.27.0 — webapp-parity time-greeting hero on the AI Tools Home screen
+   (same clock split + banner art as the web app's dashboard greeting). */
+.hnk-greet {
+  position: relative; min-height: 96px; margin: 2px 0 10px; padding: 14px 14px 12px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  border: 1px solid rgba(217, 164, 65, 0.55); border-radius: 12px;
+  background-color: #0b0d14; background-size: cover; background-position: center 32%; background-repeat: no-repeat;
+  overflow: hidden;
+}
+.hnk-greet::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(6, 8, 14, 0.05) 30%, rgba(6, 8, 14, 0.72) 100%);
+}
+.hnk-greet > * { position: relative; z-index: 2; }
+.hnk-greet-hi { font-size: 15px; font-weight: 700; color: #f4ead2; letter-spacing: .2px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 2px 12px rgba(0,0,0,.6); }
+.hnk-greet-sub { margin-top: 2px; font-size: 11px; color: #dcd6c9; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+
 /* ---- HNK AI Tools: History screen (§22) ---- */
 .hnk-hist-list { display:flex; flex-direction:column; gap:8px; }
 .hnk-hist { display:flex; flex-direction:column; gap:4px; padding:10px; border:1px solid var(--line);
