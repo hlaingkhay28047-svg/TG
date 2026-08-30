@@ -1,0 +1,116 @@
+# Generate the hero motion clips (v5.57.x) — image-to-video on RunningHub.
+#
+# WHY A WORKFLOW: the maintenance container has no egress to runninghub.ai,
+# and this public repository must never carry the Enterprise key. The key
+# therefore arrives as a manual dispatch input, is masked in the very first
+# step before anything can log, lives only in this run's environment, and is
+# never written to any file, artifact or output. The clips land as a run
+# artifact; a human (or the maintenance session) downloads, transcodes and
+# commits them separately — this lane never writes to the repository.
+#
+# Model: kling-v2.6-pro/image-to-video — body transcribed from the fetched
+# parameter doc (REQUIRED: prompt, imageUrl, sound, duration; optional
+# negativePrompt <=2500). Submit returns data.taskId; POST /openapi/v2/query
+# {taskId} until top-level status SUCCESS, then results[0].url is the video.
+name: Generate hero motion clips
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type GENERATE to run (each clip spends RunningHub credit)'
+        required: true
+      rh_key:
+        description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
+        required: true
+      banners:
+        description: 'space-separated banner basenames, or "all"'
+        required: false
+        default: 'all'
+permissions:
+  contents: read
+concurrency:
+  group: hero-videos
+  cancel-in-progress: false
+jobs:
+  generate:
+    if: ${{ inputs.confirm == 'GENERATE' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - name: Mask the key before any other step can log
+        env:
+          K: ${{ inputs.rh_key }}
+        run: |
+          echo "::add-mask::$K"
+          echo "RH_KEY=$K" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - name: Generate one clip per banner still
+        shell: bash
+        env:
+          BANNERS: ${{ inputs.banners }}
+        run: |
+          set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
+          BASE="https://www.runninghub.ai/openapi/v2"
+          AUTH="Authorization: Bearer $RH_KEY"
+          COMMON="The person, face, outfit, pose, framing and background stay EXACTLY as in the photo. Subtle living cinemagraph motion only:"
+          TAIL="Gentle, slow, seamless loop, no camera movement, no cuts, photorealistic, high detail."
+          NEG="identity change, face change, different person, outfit change, clothing change, new objects, extra people, camera movement, camera cut, zoom, morphing, distortion, text, watermark"
+          declare -A MOTION=(
+            [banner-archer]="her hair and dress sway in a soft breeze, the bowstring quivers faintly, dust motes drift in the golden light."
+            [banner-train-station]="thin steam drifts across the platform, warm lamplight flickers softly, her hair moves in a light draft."
+            [hero-mermaid]="her hair floats gently as if underwater, light ripples play across the scene, small bubbles rise slowly."
+            [banner-flower-portrait]="flower petals drift slowly through the air, her hair stirs in a soft breeze, soft light breathes."
+            [banner-flower-gown]="the gown fabric ripples softly, petals fall slowly around her, ambient light shimmers."
+            [banner-naga]="clouds drift slowly behind her, the ornaments and scales shimmer, her hair sways gently."
+            [banner-superhero]="the cape ripples in the wind, distant lights twinkle, hair moves in the breeze."
+            [banner-path-batch]="soft golden light sweeps slowly across the scene, hair and fabric stir gently."
+            [banner-coral-fairy]="coral fronds sway as in a gentle current, small motes of light drift upward, her hair floats softly."
+            [banner-fairy-forest]="fireflies drift among the trees, leaves flutter down slowly, her wings shimmer faintly."
+          )
+          LIST="$BANNERS"
+          if [ "$LIST" = "all" ]; then LIST="${!MOTION[@]}"; fi
+          mkdir -p out
+          fail=0
+          for b in $LIST; do
+            still="docs/app/lib/banners/$b.jpg"
+            if [ ! -f "$still" ]; then echo "SKIP $b (no still)"; continue; fi
+            echo "== $b: upload"
+            up=$(curl -sf -X POST "$BASE/media/upload/binary" -H "$AUTH" -F "file=@$still;filename=$b.jpg") || { echo "UPLOAD FAILED $b"; fail=1; continue; }
+            url=$(printf '%s' "$up" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["data"].get("download_url") or d["data"].get("fileName") or "")') || url=""
+            [ -n "$url" ] || { echo "UPLOAD PARSE FAILED $b"; fail=1; continue; }
+            case "$url" in http*) : ;; *) url="https://www.runninghub.ai/${url#/}";; esac
+            prompt="$COMMON ${MOTION[$b]} $TAIL"
+            body=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"imageUrl":sys.argv[2],"sound":"false","duration":"5","negativePrompt":sys.argv[3]}))' "$prompt" "$url" "$NEG")
+            echo "== $b: price preview"
+            curl -s -X POST "$BASE/price-preview/kling-v2.6-pro/image-to-video" -H "$AUTH" -H "Content-Type: application/json" -d "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  price:", (d.get("data") or {}).get("priceText") or d)' || true
+            echo "== $b: submit"
+            sub=$(curl -sf -X POST "$BASE/kling-v2.6-pro/image-to-video" -H "$AUTH" -H "Content-Type: application/json" -d "$body") || { echo "SUBMIT FAILED $b"; fail=1; continue; }
+            tid=$(printf '%s' "$sub" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("data",{}).get("taskId") or "")') || tid=""
+            [ -n "$tid" ] || { echo "SUBMIT PARSE FAILED $b: $sub"; fail=1; continue; }
+            echo "== $b: task $tid — polling"
+            deadline=$((SECONDS+900)); vid=""
+            while [ $SECONDS -lt $deadline ]; do
+              sleep 8
+              q=$(curl -s -X POST "$BASE/query" -H "$AUTH" -H "Content-Type: application/json" -d "{\"taskId\":\"$tid\"}") || continue
+              st=$(printf '%s' "$q" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("status") or "").upper())' 2>/dev/null) || st=""
+              if [ "$st" = "SUCCESS" ]; then
+                vid=$(printf '%s' "$q" | python3 -c 'import json,sys; r=(json.load(sys.stdin).get("results") or [{}])[0]; print(r.get("url") or r.get("fileUrl") or "")')
+                printf '%s' "$q" | python3 -c 'import json,sys; u=json.load(sys.stdin).get("usage") or {}; print("  usage:", u.get("consumeMoney"), u.get("consumeCoins"), "in", u.get("taskCostTime"), "s")' || true
+                break
+              elif [ "$st" = "FAILED" ]; then echo "  FAILED: $q"; break; fi
+            done
+            [ -n "$vid" ] || { echo "NO RESULT $b"; fail=1; continue; }
+            echo "== $b: download"
+            curl -sfL "$vid" -o "out/$b.mp4" || { echo "DOWNLOAD FAILED $b"; fail=1; continue; }
+            ls -la "out/$b.mp4"
+          done
+          ls -la out/ || true
+          exit $fail
+      - name: Publish the clips as a run artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hero-motion-clips
+          path: out/
+          retention-days: 3
+          if-no-files-found: warn
