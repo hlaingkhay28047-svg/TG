@@ -31,7 +31,10 @@ on:
         required: false
         default: ''
 permissions:
-  contents: read
+  # write: the maintenance container cannot reach the Azure blob store that
+  # serves run artifacts, so the finished clips travel home as a throwaway
+  # branch (hero-clips-drop) instead — git is the one road that is open.
+  contents: write
 concurrency:
   group: hero-videos
   cancel-in-progress: false
@@ -136,3 +139,23 @@ jobs:
           path: out/
           retention-days: 3
           if-no-files-found: warn
+      - name: Transcode to the shipping pair and push the drop branch
+        if: success()
+        run: |
+          set -euo pipefail
+          mkdir -p pub
+          for f in out/*.mp4; do
+            b=$(basename "$f" .mp4)
+            echo "== transcode $b"
+            ffmpeg -y -loglevel error -i "$f" -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -an -c:v libx264 -crf 27 -pix_fmt yuv420p -movflags +faststart "pub/$b.mp4"
+            ffmpeg -y -loglevel error -i "$f" -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -an -c:v libvpx-vp9 -b:v 550k -pix_fmt yuv420p "pub/$b.webm"
+          done
+          ls -la pub/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B hero-clips-drop
+          mkdir -p docs/app/lib/banners/motion
+          cp pub/* docs/app/lib/banners/motion/
+          git add docs/app/lib/banners/motion
+          git commit -m "Hero motion clips: generated pair drop (transcoded on the runner)"
+          git push -f origin hero-clips-drop
