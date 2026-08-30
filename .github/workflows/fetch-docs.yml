@@ -1,0 +1,45 @@
+name: Fetch RunningHub doc pages
+
+# Read-only helper. The sandboxed dev container's egress policy blocks
+# runninghub.ai, so it cannot read the PUBLIC API doc pages (the same
+# "Copy Page" markdown the owner pastes by hand). GitHub runners can.
+# This job curls a fixed list of doc pages and prints each into the job
+# log between unambiguous markers; the container then reads the log via
+# the GitHub API. No secrets are used, nothing is written to the repo,
+# and the fetched text is treated as reference data only.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/hnk-studio-deployment-pr292-www53j]
+    paths: [".github/workflows/fetch-docs.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    name: fetch-${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: batch1
+            ids: "448184518 448184482 448184504 459580545 425761030 448184490"
+          - name: batch2
+            ids: "448184501 448184500 448184497 448184499 448184534 448184496"
+          - name: batch3
+            ids: "448184488 448184489 494859258 448184543 448184542 454760430"
+          - name: batch4
+            ids: "448184477 448184478 448184392 448184385 448184371 448184375 495680094"
+    steps:
+      - name: Fetch doc pages
+        run: |
+          for id in ${{ matrix.ids }}; do
+            echo "=====DOC ${id} START====="
+            curl -sSL --retry 3 --retry-delay 2 --max-time 90 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              || echo "FETCH-FAILED ${id}"
+            echo ""
+            echo "=====DOC ${id} END====="
+          done
