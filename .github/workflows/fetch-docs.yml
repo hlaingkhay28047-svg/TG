@@ -24,24 +24,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Round 3b — the 53 video pages whose text fell off the front of
-          # the round-3 job logs (the log API returns at most ~350KB per
-          # job, truncating from the START; 21 pages per job was too many).
-          # Eight pages per job keeps each log under the cap.
-          - name: vidb01
-            ids: "448184341 448184344 448184343 448184345 448184340 448184339 448184348 494859290"
-          - name: vidb02
-            ids: "449426879 449426878 494859288 448184356 498749516 448184361 448184368 448184369"
-          - name: vidb03
-            ids: "448184370 448184374 448184373 505575335 505922314 448184390 448184389 448184391"
-          - name: vidb04
-            ids: "494859289 494859281 448184400 498749513 450573659 498749512 448184403 459865193"
-          - name: vidb05
-            ids: "448184395 448184398 448184405 498749514 502119463 505575334 505922313 494859273"
-          - name: vidb06
-            ids: "494859271 498749519 448184416 494859270 498749518 448184431 448184429 448184425"
-          - name: vidb07
-            ids: "448184433 448184434 495380677 498749521 448184447"
+          # Round 4 — one page the video round missed: the index files
+          # vidu/reference-to-video-q2-pro under Image > reference-to-image
+          # (miscategorized there), so the video-category sweep skipped it.
+          - name: vid4a
+            ids: "448184544"
     steps:
       - name: Fetch doc pages
         run: |
