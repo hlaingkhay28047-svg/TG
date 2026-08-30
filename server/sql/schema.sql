@@ -1452,6 +1452,19 @@ create table if not exists public.sessions (
   mfa_verified_at        timestamptz,
   check (expires_at > created_at)
 );
+/* 2026-08-30 — one-step-back refresh acceptance for student clients.
+   Hard rotation logged students out whenever the rotated token never
+   reached disk (Photoshop quit mid-flight, a lost response): the client
+   still held the PREVIOUS token, which the server had already spent.
+   The immediately-previous token is now kept and accepted again for web
+   and panel sessions (admin stays strict single-token); using it issues
+   a fresh current token, so the chain always moves forward and a token
+   two or more steps back stays invalid. */
+alter table public.sessions add column if not exists prev_refresh_token_hash text;
+create index if not exists sessions_prev_refresh_hash_idx
+  on public.sessions (prev_refresh_token_hash)
+  where prev_refresh_token_hash is not null and revoked_at is null;
+
 
 create index if not exists sessions_user_active_idx
   on public.sessions (user_id, expires_at) where revoked_at is null;

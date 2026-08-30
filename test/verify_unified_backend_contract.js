@@ -98,10 +98,26 @@ function createSessionRepository() {
       return Object.assign({}, row);
     },
     /* Atomic in PostgreSQL: UPDATE ... WHERE refresh_token_hash=$old AND
-     * revoked_at IS NULL RETURNING *. Returning null spends a replayed token. */
+     * revoked_at IS NULL RETURNING *. Returning null spends a replayed token.
+     * 2026-08-30: rotation now parks the spent hash in prevRefreshTokenHash
+     * so a client whose rotated reply never reached disk can re-join once. */
     async rotateRefreshToken(currentHash, nextHash, nextExpiresAt, rotatedAt) {
       const row = [...rows.values()].find(item =>
         item.refreshTokenHash === currentHash && !item.revokedAt);
+      if (!row) return null;
+      row.prevRefreshTokenHash = row.refreshTokenHash;
+      row.refreshTokenHash = nextHash;
+      row.expiresAt = nextExpiresAt;
+      row.lastSeenAt = rotatedAt;
+      return Object.assign({}, row);
+    },
+    async findByPrevRefreshTokenHash(hash) {
+      const row = [...rows.values()].find(item => item.prevRefreshTokenHash === hash);
+      return row ? Object.assign({}, row) : null;
+    },
+    async rotateFromPrev(prevHash, nextHash, nextExpiresAt, rotatedAt) {
+      const row = [...rows.values()].find(item =>
+        item.prevRefreshTokenHash === prevHash && !item.revokedAt);
       if (!row) return null;
       row.refreshTokenHash = nextHash;
       row.expiresAt = nextExpiresAt;
@@ -336,13 +352,39 @@ async function verifySessions() {
     validation && validation.active === false && validation.reason === "session_revoked",
     { validation });
 
+  /* 2026-08-30 owner instruction: students must never be asked to sign in
+     again because Photoshop quit before the rotated token reached disk. The
+     immediately-PREVIOUS token therefore re-joins the chain once more for
+     web/panel sessions (a deliberate trade: the panel lease, the device
+     slot and account status stay the real gates), while anything two or
+     more steps back stays dead — and admin sessions stay strict. */
   const rotating = await store.issue({ userId, clientType: "panel", deviceInstallationId: "panel-pc-A" });
   const rotated = await store.rotate({ refreshToken: rotating.refreshToken });
-  const replayReason = await denied(() => store.rotate({ refreshToken: rotating.refreshToken }));
-  report("refresh rotation spends the old token and rejects a replay",
+  const rejoined = await store.rotate({ refreshToken: rotating.refreshToken });
+  report("refresh rotation issues a new token, and the crash-lost previous token re-joins the chain",
     rotated && rotated.refreshToken && rotated.refreshToken !== rotating.refreshToken &&
-      replayReason === "invalid_refresh_token",
-    { rotated: rotated && { sessionId: rotated.sessionId, changed: rotated.refreshToken !== rotating.refreshToken }, replayReason });
+      rejoined && rejoined.refreshToken && rejoined.sessionId === rotated.sessionId &&
+      rejoined.refreshToken !== rotated.refreshToken,
+    { rotated: rotated && { sessionId: rotated.sessionId }, rejoined: rejoined && { sessionId: rejoined.sessionId } });
+  /* the middle token was superseded by the re-join and never parked as prev:
+     it is the "two steps back" credential and must stay dead */
+  const supersededReason = await denied(() => store.rotate({ refreshToken: rotated.refreshToken }));
+  report("a superseded middle token (two steps back) stays dead",
+    supersededReason === "invalid_refresh_token", { supersededReason });
+  /* repeated crash-loss keeps working: the parked previous token can re-join
+     again — the student's stored credential never strands them */
+  const rejoinedAgain = await store.rotate({ refreshToken: rotating.refreshToken });
+  report("the parked previous token survives repeated lost replies",
+    rejoinedAgain && rejoinedAgain.sessionId === rotated.sessionId &&
+      rejoinedAgain.refreshToken !== rejoined.refreshToken,
+    { rejoinedAgain: rejoinedAgain && { sessionId: rejoinedAgain.sessionId } });
+
+  const adminRotating = await store.issue({ userId, clientType: "admin" });
+  const adminRotated = await store.rotate({ refreshToken: adminRotating.refreshToken });
+  const adminReplayReason = await denied(() => store.rotate({ refreshToken: adminRotating.refreshToken }));
+  report("admin sessions stay strict single-token — a spent admin token is refused",
+    adminRotated && adminRotated.refreshToken && adminReplayReason === "invalid_refresh_token",
+    { adminReplayReason });
 
   const idleStore = contract.createSessionStore({
     repository,

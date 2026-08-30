@@ -1024,12 +1024,23 @@ function testPasswordHash(password,parallelization) {
   const refreshed = r.json;
   report("Y) a refresh token exchanges for a new session", r.status === 200 && !!refreshed.access_token, { status: r.status });
 
+  /* Y2 — 2026-08-30 owner instruction: students must not be logged out when
+     Photoshop quits before a rotated token reaches disk. The immediately-
+     previous token now RE-JOINS the chain (200, fresh token) for web/panel
+     sessions; the superseded middle token is the one that must stay dead. */
   r = await call("POST", "/auth/v1/token?grant_type=refresh_token", { body: { refresh_token: custSession.refresh_token } });
-  report("Y2) the spent refresh token cannot be replayed", r.status === 400, { status: r.status });
-
-  await call("POST", "/auth/v1/logout", { token: refreshed.access_token, body: { refresh_token: refreshed.refresh_token } });
+  const rejoined = r.json;
+  report("Y2) the crash-lost previous token re-joins with a fresh session",
+    r.status === 200 && !!rejoined.refresh_token && rejoined.refresh_token !== refreshed.refresh_token,
+    { status: r.status });
   r = await call("POST", "/auth/v1/token?grant_type=refresh_token", { body: { refresh_token: refreshed.refresh_token } });
+  report("Y3) the superseded middle token (two steps back) stays dead", r.status === 400, { status: r.status });
+
+  await call("POST", "/auth/v1/logout", { token: rejoined.access_token, body: { refresh_token: rejoined.refresh_token } });
+  r = await call("POST", "/auth/v1/token?grant_type=refresh_token", { body: { refresh_token: rejoined.refresh_token } });
   report("Z) logout revokes the refresh token server-side", r.status === 400, { status: r.status });
+  r = await call("POST", "/auth/v1/token?grant_type=refresh_token", { body: { refresh_token: custSession.refresh_token } });
+  report("Z2) logout also closes the parked previous token — sign-out means OUT", r.status === 400, { status: r.status });
 
   /* ================= /health when the database is gone =================
      WHY THIS IS HERE. A DigitalOcean deploy answered

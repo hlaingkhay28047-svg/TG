@@ -224,12 +224,28 @@ eligible students.
     each to actionable Burmese guidance (fresh-code-within-5-minutes,
     case-sensitive typing, ask the admin for Reset Computer) instead of
     discarding it.
+  * Stay-signed-in fix, same day (owner: "တစ်ခါဝင်ပြီးရင် ထပ်ခါထပ်ခါ
+    မဝင်ရအောင်"): repeated logins traced to hard refresh-token rotation —
+    when Photoshop quit before the rotated token reached disk (or the
+    reply was lost), the stored credential was already spent and the
+    next launch demanded a password. The sessions table now parks the
+    immediately-previous token hash (prev_refresh_token_hash, additive
+    column) and web/panel sessions may re-join the chain with it —
+    repeatedly if replies keep getting lost — while a superseded middle
+    token stays dead, ADMIN sessions stay strict single-token, and
+    logout/revocation closes the parked token too (all pinned in
+    verify_unified_backend_contract and verify_api_service Y2/Y3/Z/Z2).
+    The gate also serializes concurrent refreshes behind one in-flight
+    call. Net effect: one sign-in per machine; only a 30-day idle gap,
+    sign-out, or an admin action asks for the password again.
   Acceptance addition for this decision: sign in on a machine with NO
   prior pairing and confirm the panel unlocks with no code step; then
-  confirm a second machine is refused until Reset Computer.
+  confirm a second machine is refused until Reset Computer; then quit
+  and relaunch Photoshop and confirm the panel opens WITHOUT asking for
+  the password.
   Artifact `HNK_Ai_Panel_v6.31.0.ccx`, SHA-256
-  `79d6f3414a95e9b94b70161ea40e8f3482e1b061a8fd5d70b084df50a53bf6d7`,
-  1,287,146 bytes. The release stays disabled until that acceptance.
+  `366910dd654ba7b66cbc7baf9554e4508ae5a973eaa587641bf1e3fa3aa71be6`,
+  1,287,391 bytes. The release stays disabled until that acceptance.
 - **v6.30.0** — superseded by v6.31.0 the same day (the completeness
   pass above) before Photoshop acceptance; it was published to the
   private release store and its content ships within v6.31.0.

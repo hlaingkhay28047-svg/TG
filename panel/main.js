@@ -5711,18 +5711,29 @@ function gateForget() {
    freshly validated lease. */
 async function gateRefresh(ticket) {
   if (!gateS.sess || !gateS.sess.refresh) return "dead";
-  try {
-    const r = await gateReq("/auth/v1/token?grant_type=refresh_token",
-      { method: "POST", body: JSON.stringify({ refresh_token: gateS.sess.refresh }) }, null);
-    /* the answer to a question nobody is waiting for is not written to disk */
-    if (ticket !== undefined && gateStale(ticket)) return "stale";
-    if (r.ok) {
-      const j = await r.json();
-      return gateSaveSess(j) ? true : "dead";
-    }
-    if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 422) return "dead";
-    return "offline";
-  } catch (e) { return "offline"; }
+  /* v6.31.0 — one refresh at a time. Boot, the heartbeat and a focus event
+     can all want a refresh in the same instant; racing two rotations used
+     to spend the same token twice and misread the second answer as a dead
+     session. Everyone awaits the single in-flight call instead. (The
+     server now also accepts the immediately-previous token once, so even
+     a lost reply no longer strands the stored credential.) */
+  if (gateS.refreshing) return gateS.refreshing;
+  gateS.refreshing = (async () => {
+    try {
+      const r = await gateReq("/auth/v1/token?grant_type=refresh_token",
+        { method: "POST", body: JSON.stringify({ refresh_token: gateS.sess.refresh }) }, null);
+      /* the answer to a question nobody is waiting for is not written to disk */
+      if (ticket !== undefined && gateStale(ticket)) return "stale";
+      if (r.ok) {
+        const j = await r.json();
+        return gateSaveSess(j) ? true : "dead";
+      }
+      if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 422) return "dead";
+      return "offline";
+    } catch (e) { return "offline"; }
+  })();
+  try { return await gateS.refreshing; }
+  finally { gateS.refreshing = null; }
 }
 
 /* Three outcomes, and the difference between them is the whole point:
