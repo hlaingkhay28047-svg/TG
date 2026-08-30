@@ -190,7 +190,11 @@ check("both deploy lanes attest API version and the exact applied schema",
     source.includes('ACTUAL_TLS" = "verified"')),
   "production or staging can succeed without runtime schema attestation");
 check("every landing-page web-app badge advertises the shipped release", advertisedWebVersions.length > 0 && advertisedWebVersions.every(version => version === appVersion) && webAppSchema.softwareVersion === appVersion, `${[...new Set(advertisedWebVersions)].join(", ")} vs ${appVersion}`);
-check("the landing page advertises every supported language", languageCodes.length === 37 && languageClaims.length >= 37 && languageClaims.every(value => /\b(?:37|၃၇)\b/.test(value)) && JSON.stringify(webAppSchema.inLanguage) === JSON.stringify(languageCodes), `${languageCodes.length} codes, ${languageClaims.length} claims`);
+/* v5.56.0 — 37 -> 27: the ten zero-native-text fallback shells left the
+   picker (owner's real-languages-only instruction), so the honest count the
+   landing may advertise is 27, and the JSON-LD inLanguage list must match
+   the picker exactly. */
+check("the landing page advertises every supported language", languageCodes.length === 27 && languageClaims.length >= 27 && languageClaims.every(value => /\b(?:27|၂၇)\b/.test(value)) && JSON.stringify(webAppSchema.inLanguage) === JSON.stringify(languageCodes), `${languageCodes.length} codes, ${languageClaims.length} claims`);
 check("localized API-key copy describes the actual provider-only data flow", privacyClaims.length === languageCodes.length && privacyClaims.every(hasProviderOnlyFlow), `${privacyClaims.length} localized claims`);
 check("fully translated landing locales do not fall back to an English privacy tail", landingNativePrivacyCodes.every(language => !effectiveLocaleValue("key.body", language).includes(englishProviderFlow)), "an English-only disclosure leaked into localized copy");
 check("the web app describes the same provider-only API-key flow in every locale", appPrivacyClaims.length === languageCodes.length && appPrivacyClaims.every(hasProviderOnlyFlow), `${appPrivacyClaims.length} localized app notices`);
@@ -200,7 +204,7 @@ check("fully translated app locales do not fall back to an English privacy note"
    documented one, and the retired Gemini/OpenAI endpoints are truly gone from
    the shipped app — a lingering base URL would mean a lingering call path. */
 check("provider credentials route directly to the one documented upstream API", /var RH_BASE\s*=\s*"https:\/\/www\.runninghub\.ai"/.test(html) && !/generativelanguage\.googleapis\.com/.test(html) && !/api\.openai\.com/.test(html), "RunningHub base URL drifted, or a retired Gemini/OpenAI endpoint lingers");
-check("the landing page carries the current release date in every locale", dateClaims.length >= 35 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
+check("the landing page carries the current release date in every locale", dateClaims.length >= 27 && dateClaims.every(value => value.includes(releaseDate)) && !/2026-08-(?:12|13)/.test(landing), `${dateClaims.length} localized dates`);
 check("the release date is sourced from version.json", /^\d{4}-\d{2}-\d{2}$/.test(releaseDate || ""), releaseDate || "missing released date");
 check("every landing locale carries current Account Center acquisition copy",
   panelAcquisitionClaims.length === languageCodes.length * panelAcquisitionKeys.length &&

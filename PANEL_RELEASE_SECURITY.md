@@ -178,7 +178,29 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.31.0** — `pending`. The completeness pass the owner's "are the
+- **v6.32.0** — `pending`. The real-things-only wave (2026-08-30, owner:
+  ratio ကို ပုံသဏ္ဌာန်နဲ့ / workflow အလိုက် သုံးလို့ရတဲ့ model / model
+  အစစ်ပြ / ဘာသာစကား အစစ်ပဲပြ). The panel's share of the wave is the
+  language picker: measured against its ~560-key I18N table, only the
+  nine core languages are complete and only hi/bn/ta/te carry ~500-key
+  native packs — the picker now offers exactly those 13. The ten
+  Myanmar-ethnic rows (zero native panel strings — pure Burmese-fallback
+  shells) and the eleven ~22-key starter shells are retired from the list
+  until reviewed packs land; their pack data and fallbacks stay dormant
+  in code, and an install storing a retired code returns to the default
+  language through the existing LANG_CODES guards. Nothing else in the
+  CCX changes; the web app's side of the wave (visual ratio rail in the
+  workflow wizard, per-workflow model capacity filter, authentic family
+  marks, 27-language picker) ships in v5.56.0. Acceptance: carry over the
+  v6.31.0 checklist; additionally open the language dropdown in real
+  Photoshop and confirm 13 rows, each rendering real text when picked.
+  Artifact `HNK_Ai_Panel_v6.32.0.ccx`, SHA-256
+  `cbd8ebfcc52ba57a87f7bade53d4c50f4f5ae50f4475856df63f409fa7f2769d`,
+  1,287,438 bytes. The release stays disabled until that acceptance.
+- **v6.31.0** — superseded by v6.32.0 the same day (the language-picker
+  honesty pass above) before Photoshop acceptance; published to the
+  private release store, its content ships within v6.32.0.
+  The completeness pass the owner's "are the
   i2i/t2i models really all there?" question triggered (2026-08-30): a
   programmatic cross-check of every image doc id in RunningHub's index
   against the wired endpoints found exactly two absentees, both now

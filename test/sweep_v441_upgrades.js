@@ -261,26 +261,76 @@ function report(name, ok, detail) {
     gen.btnRh && gen.noGeminiBtn && gen.eta && gen.modelShown && gen.persisted && gen.provLine && gen.share, gen);
 
   /* ---- 7) grouped language picker + fallback resolution ----
-     v4.43 grew the picker to 35 (Asia set: ne/lo/km/ja/ko) in 3 optgroups;
-     v5.7 added real Tai Le (tdd) + Khamti (kht) dictionaries -> 37 */
+     v4.43 grew the picker to 35, v5.7 to 37; v5.56.0 cut it back to 27 —
+     the owner's real-things-only rule: the ten codes with ZERO native
+     strings (mnw rki ksw kyu cnh blk pll ahk lhu lis — measured pure
+     Burmese-fallback shells) left the picker until native packs exist.
+     Every remaining code renders real text (9 full sets + 18 packs). */
   const lang = await page.evaluate(() => {
     const sel = document.getElementById("selLang");
     const values = Array.from(sel.querySelectorAll("option")).map(o => o.value);
-    const need = ["my", "en", "shn", "mnw", "rki", "ksw", "kyu", "cnh", "blk", "pll", "khb", "tdd", "kht", "ahk", "lhu", "lis",
+    const need = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms", "khb", "tdd", "kht",
       "hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa", "ur", "ne", "lo", "km", "ja", "ko"];
     const missing = need.filter(v => values.indexOf(v) < 0);
+    const retired = ["mnw", "rki", "ksw", "kyu", "cnh", "blk", "pll", "ahk", "lhu", "lis"];
+    const shellLeak = retired.filter(v => values.indexOf(v) >= 0);
     // fallback resolution without a reload: swap LANG in-place
     const keep = LANG;
     const probe = { my: "burmese-text", en: "english-text", shn: "shan-text" };
-    LANG = "mnw"; const mn = L9(probe);          // ethnic -> Burmese
     LANG = "hi"; const hin = L9(probe);          // Indic -> English
     LANG = "khb"; const tl = L9(probe);          // Tai Lue -> Shan
     LANG = keep;
-    return { total: values.length, missing, mn, hin, tl, grouped: sel.querySelectorAll("optgroup").length === 3 };
+    // a browser still storing a shell code is moved to its real fallback at boot
+    const migrated = typeof LANG_RETIRED === "object" && retired.every(c => LANG_RETIRED[c] === 1);
+    return { total: values.length, missing, shellLeak, hin, tl, migrated,
+      grouped: sel.querySelectorAll("optgroup").length === 3 };
   });
-  report("languages: 37 codes in a grouped picker; Mon falls back to Burmese, Hindi to English, Tai Lue to Shan",
-    lang.total === 37 && lang.missing.length === 0 && lang.mn === "burmese-text" && lang.hin === "english-text" && lang.tl === "shan-text" && lang.grouped,
+  report("languages: 27 real codes in a grouped picker; the ten zero-text shells stay retired and migrate at boot; Hindi falls back to English, Tai Lue to Shan",
+    lang.total === 27 && lang.missing.length === 0 && lang.shellLeak.length === 0 && lang.migrated && lang.hin === "english-text" && lang.tl === "shan-text" && lang.grouped,
     lang);
+
+  /* ---- 8) v5.56.0 — the rail speaks shapes, the picker speaks capacity ----
+     Auto is a dashed box carrying its own "A"; rhModelMaxIn reads what each
+     builder REALLY sends (single-image kinds 1, node graphs their declared
+     slots, documented arrays the 3-slot app ceiling); a workflow needing two
+     images hides every model whose request cannot carry two, restores the
+     catalog when cleared, and never strands the selection on a hidden row. */
+  const v56 = await page.evaluate(() => {
+    const out = {};
+    const auto = document.querySelector("#selRatioRail .rchip.auto i");
+    out.autoA = auto ? auto.textContent : "";
+    out.one = rhModelMaxIn("rh-image-x-off") === 1 && rhModelMaxIn("flux-2-dev") === 1 && rhModelMaxIn("upscale-pro") === 1;
+    out.many = rhModelMaxIn("nano-banana-2") === 3 && rhModelMaxIn("qwen-edit-2511") >= 2;
+    const list = window._wfBatchList ? window._wfBatchList() : [];
+    const two = list.find(w => w.reqN >= 2);
+    out.haveTwo = !!two;
+    if (two) {
+      wfModelFilter(two.reqN);
+      const sel = document.getElementById("selModel");
+      const opts = Array.from(sel.options);
+      out.disabledSingles = opts.filter(o => o.disabled).every(o => rhModelMaxIn(o.value) < two.reqN)
+        && opts.some(o => o.disabled);
+      out.curCapable = rhModelMaxIn(sel.value) >= two.reqN;
+      wfModelFilter(0);
+      out.cleared = !Array.from(sel.options).some(o => o.disabled);
+    }
+    return out;
+  });
+  report("v5.56.0: Auto rail box carries \"A\"; capacity is builder-true; a 2-image workflow filters the model picker and hands it back untouched",
+    v56.autoA === "A" && v56.one && v56.many && v56.haveTwo && v56.disabledSingles && v56.curCapable && v56.cleared, v56);
+
+  /* and the wizard's own wiring, pinned at the source: the cloned generate
+     row attaches the rail, and an untouched ratio is still blanked while a
+     deliberately picked one now survives the run */
+  const srcApp = require("fs").readFileSync(require("path").join(__dirname, "..", "docs", "app", "index.html"), "utf8");
+  report("v5.56.0: the wizard generate step hosts the ratio rail, honors a deliberate ratio pick, and the capacity switch fires at RUN time only (never on open — opening a guide must not rewrite the active model)",
+    srcApp.includes('ratioRailAttach("wiz_selRatio")') &&
+    srcApp.includes("if(!wiz.ratioPicked) wzR.value=\"\";") &&
+    srcApp.includes('if(pair[0]==="selRatio") wiz.ratioPicked=true;') &&
+    srcApp.includes("wfModelFilter((w.req||[]).length)") &&
+    srcApp.includes("wfEnsureCapableModel((w.req||[]).length)") &&
+    !/wfApplyModelFilter\(\)[\s\S]{0,400}sel\.onchange\(\)/.test(srcApp.slice(srcApp.indexOf("function wfApplyModelFilter"), srcApp.indexOf("function wfEnsureCapableModel"))),
+    "wizard rail/ratio-honesty/run-time-switch wiring missing");
 
   await page.close();
   await browser.close();
