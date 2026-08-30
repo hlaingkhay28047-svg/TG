@@ -43,6 +43,14 @@
     #hnkGate .gate-f{box-sizing:border-box;display:block;width:100%;margin:0 0 9px;
       padding:10px 12px;border-radius:9px;border:1px solid #2a323d;background:#0d1014;
       color:#e6edf3;font-size:13px}
+    /* v6.27.1 — password row: field + eye toggle side by side. Flex with
+       longhand properties only (the UXP cascade rule this gate already
+       follows); the eye is a div-button like every other gate control. */
+    #hnkGate .gate-pw-row{display:flex;flex-direction:row;align-items:stretch;margin:0 0 9px}
+    #hnkGate .gate-pw-row .gate-f{flex:1 1 auto;min-width:0;margin:0}
+    #hnkGate .gate-eye{box-sizing:border-box;flex:0 0 auto;margin-left:8px;padding:10px 12px;
+      border-radius:9px;border:1px solid #2a323d;background-color:#1c2530;background-image:none;
+      color:#e6edf3;font-size:13px;line-height:1.35;cursor:pointer;text-align:center}
     /* v6.25.3 — the gate's buttons are DIVs, not <button>: UXP paints div
        text with full CSS fidelity, while its button widget dropped the label
        on every build the owner tested (blank gold and grey rectangles).
@@ -63,7 +71,7 @@
     #hnkGate .gate-err{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ff8b8b;min-height:1px}
     #hnkGate .gate-lang{box-sizing:border-box;margin:14px auto 0;padding:5px 8px;
       font-size:11px;border-radius:7px;border:1px solid #2a323d;background:#0d1014;color:#9aa7b4}
-    .hero-plan{margin-left:6px;opacity:.9}
+    .topbar-plan{margin-left:6px;opacity:.9}
   </style>
 </head>
 <body>
@@ -84,7 +92,15 @@
     <div class="gate-sub" id="gateSub"></div>
     <div id="gateLogin">
       <input id="gateEmail" class="gate-f" type="text" spellcheck="false" autocomplete="off" />
-      <input id="gatePass" class="gate-f" type="password" autocomplete="off" />
+      <!-- v6.27.1 — UXP renders type="password" without visible dots on some
+           Photoshop builds (typing registers, nothing paints). The eye flips
+           the field to plain text — the same input.type toggle the Setup key
+           field has shipped with since v1 — so the customer can SEE what they
+           type on any host. A div-button, like every other gate control. -->
+      <div class="gate-pw-row">
+        <input id="gatePass" class="gate-f" type="password" autocomplete="off" />
+        <div id="gatePassEye" class="gate-eye" role="button" tabindex="0" aria-label="Show password" aria-pressed="false">&#128065;</div>
+      </div>
       <div id="gateSignIn" class="gate-b" role="button" tabindex="0"></div>
     </div>
     <input id="gatePairCode" class="gate-f" type="text" inputmode="numeric"
@@ -103,28 +119,21 @@
 
 <div class="app" id="app">
 
-  <!-- ================= HEADER: HERO BANNER (fixed) =================
-       The banner background is the studio's own signature artwork
-       (icons/hero-banner.jpg) under a cinematic dark gradient shade. -->
-  <div class="hdr hero">
-    <div class="hero-shade">
-      <div class="hero-row">
-        <div class="hero-badge"><img class="logo hero-logo" src="icons/plugin@2x.png" /></div>
-        <div class="hdr-t hero-t">
-          <div class="hero-brand">HNK <span class="hero-brand-gold">PLUGIN PANEL</span></div>
-          <div class="title hero-app" data-i18n="app_title"></div>
-          <div class="sub hero-sub">Professional Studio OS &middot; <span id="brandVer">v6.27.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="hero-plan"></span></div>
-        </div>
-        <div class="hdr-ctl">
-          <select id="selLang" class="lang-sel" title="Language"></select>
-          <button id="btnTheme" class="btn btn-icon" title="Theme">☀</button>
-        </div>
-      </div>
-      <div class="hero-chips">
-        <span class="hero-chip">&#10022; 1850 Visual Library</span>
-        <span class="hero-chip">&#9889; Smart Workflow</span>
-        <span class="hero-chip">&#9678; RunningHub Enterprise</span>
-      </div>
+  <!-- ================= HEADER: compact web-app top bar (v6.28.0) =================
+       The web app's own header language: small logo, gold HNK wordmark over a
+       tiny label, controls on the right. The old full-height hero art + chips
+       header is gone — in real Photoshop it truncated the title AND spent a
+       third of a narrow panel before any tool appeared; the web app never had
+       it, and the Home greeting hero already carries the signature art. -->
+  <div class="hdr topbar">
+    <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
+    <div class="hdr-t">
+      <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.28.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+    </div>
+    <div class="hdr-ctl">
+      <select id="selLang" class="lang-sel" title="Language"></select>
+      <button id="btnTheme" class="btn btn-icon" title="Theme">☀</button>
     </div>
   </div>
 
@@ -1183,13 +1192,18 @@
          then the editing surfaces, Library where the web app keeps it, Setup
          last (the web app parks settings behind the gear). Same six pages,
          web-app names and order. -->
+    <!-- v6.28.0 — the web app's own bottom nav: stroke icon above a small
+         label (its i-home/i-sparkle/i-pen/i-sliders/i-frame/i-gear paths,
+         inlined because UXP has no <use>/<symbol>). In real Photoshop the old
+         text-pill tabs truncated to "H… Cr… Re…" at panel width; an icon
+         carries the meaning at any width and the 9.5px label fits. -->
     <div class="tabbar">
-      <button id="tabAiTools" class="tabb" data-i18n="tab_aitools"></button>
-      <button id="tabPrompt" class="tabb" data-i18n="tab_prompt"></button>
-      <button id="tabCreate" class="tabb" data-i18n="tab_create"></button>
-      <button id="tabRetouch" class="tabb" data-i18n="tab_retouch"></button>
-      <button id="tabPresets" class="tabb" data-i18n="tab_presets"></button>
-      <button id="tabSetup" class="tabb" data-i18n="tab_setup"></button>
+      <button id="tabAiTools" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.8 10.8 8.2-7 8.2 7"/><path d="M5.8 9.2v9.3a1.7 1.7 0 0 0 1.7 1.7h9a1.7 1.7 0 0 0 1.7-1.7V9.2"/><path d="M9.8 20.2v-5a1 1 0 0 1 1-1h2.4a1 1 0 0 1 1 1v5"/></svg><span class="tabb-l" data-i18n="tab_aitools"></span></button>
+      <button id="tabPrompt" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.8c.6 3.7 2.6 5.7 6.3 6.3-3.7.6-5.7 2.6-6.3 6.3-.6-3.7-2.6-5.7-6.3-6.3 3.7-.6 5.7-2.6 6.3-6.3Z"/><path d="M18.3 14.8c.3 1.9 1.3 2.9 3.2 3.2-1.9.3-2.9 1.3-3.2 3.2-.3-1.9-1.3-2.9-3.2-3.2 1.9-.3 2.9-1.3 3.2-3.2Z"/></svg><span class="tabb-l" data-i18n="tab_prompt"></span></button>
+      <button id="tabCreate" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 19.5 1-4L16.6 4.4a2.05 2.05 0 0 1 2.9 2.9L8.5 18.5l-4 1Z"/><path d="m14.6 6.4 2.9 2.9"/></svg><span class="tabb-l" data-i18n="tab_create"></span></button>
+      <button id="tabRetouch" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5v5.6M6 14.9v4.6M12 4.5v1.6M12 10.9v8.6M18 4.5v8.6M18 17.9v1.6"/><circle cx="6" cy="12.4" r="1.9"/><circle cx="12" cy="8.4" r="1.9"/><circle cx="18" cy="15.4" r="1.9"/></svg><span class="tabb-l" data-i18n="tab_retouch"></span></button>
+      <button id="tabPresets" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4.5 18.5 4.5-5 3.4 3.4 2.6-2.8 4.9 5.2"/></svg><span class="tabb-l" data-i18n="tab_presets"></span></button>
+      <button id="tabSetup" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 14.9a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5v.2a2 2 0 1 1-3.8 0v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1h-.2a2 2 0 1 1 0-3.8h.2a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5v-.2a2 2 0 1 1 3.8 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 3.8h-.2a1.6 1.6 0 0 0-1.5 1Z"/></svg><span class="tabb-l" data-i18n="tab_setup"></span></button>
     </div>
   </div>
 

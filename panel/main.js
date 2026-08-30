@@ -5549,7 +5549,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.27.0";
+const PANEL_VERSION = "6.28.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6083,6 +6083,7 @@ function gateApplyWidgetStyles() {
   paint("gateSignOut", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   paint("gateEmail", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gatePass", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
+  paint("gatePassEye", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", cursor: "pointer" });
   paint("gatePairCode", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
 }
@@ -6112,6 +6113,24 @@ function gateWire() {
   if (pw && pw.addEventListener) {
     pw.addEventListener("keydown", function (ev) {
       if (ev && (ev.key === "Enter" || ev.keyCode === 13)) { ev.preventDefault(); gateSignIn(); }
+    });
+  }
+  /* v6.27.1 — owner's in-Photoshop acceptance: UXP paints type="password"
+     with NO visible dots on some hosts (the keystrokes register, the field
+     just looks empty). The eye flips the field to plain text and back — the
+     exact input.type toggle the Setup key field has shipped with since v1,
+     so it is proven on this host class. */
+  const eye = gateEl("gatePassEye");
+  if (eye && eye.addEventListener && pw) {
+    const flip = function () {
+      const showing = pw.type !== "password";
+      try { pw.type = showing ? "password" : "text"; } catch (e) { }
+      try { eye.setAttribute("aria-pressed", showing ? "false" : "true"); } catch (e) { }
+      try { pw.focus(); } catch (e) { }
+    };
+    eye.addEventListener("click", flip);
+    eye.addEventListener("keydown", function (ev) {
+      if (ev && (ev.key === "Enter" || ev.key === " " || ev.keyCode === 13)) { ev.preventDefault(); flip(); }
     });
   }
   /* The language picker lives in the header, which is behind this overlay. A

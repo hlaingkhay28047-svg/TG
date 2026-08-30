@@ -599,8 +599,8 @@
     try {
       const body = await api(API.panelVersion);
       const policy = body.panel || body;
-      $("#latestVersion").value = policy.latest_version || policy.latest || "6.27.0";
-      $("#minimumVersion").value = policy.minimum_supported_version || policy.minimum || "6.27.0";
+      $("#latestVersion").value = policy.latest_version || policy.latest || "6.28.0";
+      $("#minimumVersion").value = policy.minimum_supported_version || policy.minimum || "6.28.0";
       if (!$("#artifactVersion").value) $("#artifactVersion").value = $("#latestVersion").value;
       const resumable = readArtifactState();
       $("#checkArtifactResume").hidden = !(resumable && resumable.id);
