@@ -161,9 +161,18 @@ input,textarea,select{font-family:inherit}
    v465 sweep measures exactly that). The growth spills left, where the
    hero's overflow:hidden clips it. */
 @keyframes phKB{from{transform:scale(1.03)}to{transform:scale(1.12) translate3d(-1.5%,-.9%,0)}}
-.page-hero:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(60% 70% at 70% 24%,rgba(255,214,130,.20),transparent 70%),linear-gradient(115deg,transparent 0%,transparent 42%,rgba(255,238,190,.16) 50%,transparent 58%,transparent 100%);background-size:100% 100%,320% 100%;background-position:0 0,-120% 0;animation:phSweep 9s ease-in-out infinite}
+/* v5.56.1 — owner field report: the banners read as veiled ("အရှေ့မှာ
+   တစ်ခုခုကာနေသလို"). The permanent gold glow drops from .20 to .09 and
+   shrinks, and the sweep line thins to .12 — the glint stays, the haze
+   goes. The photo itself is the hero. */
+.page-hero:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(48% 56% at 70% 24%,rgba(255,214,130,.09),transparent 60%),linear-gradient(115deg,transparent 0%,transparent 42%,rgba(255,238,190,.12) 50%,transparent 58%,transparent 100%);background-size:100% 100%,320% 100%;background-position:0 0,-120% 0;animation:phSweep 9s ease-in-out infinite}
 @keyframes phSweep{0%,55%{background-position:0 0,-120% 0}88%,100%{background-position:0 0,220% 0}}
-.page-hero:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(11,13,20,.06) 0%,rgba(11,13,20,.18) 46%,rgba(11,13,20,.78) 100%)}
+/* v5.56.1 — the scrim used to shade the photo from its very top (.06 -> .18
+   by mid-frame), dimming faces that sit in the upper two-thirds. It now
+   stays fully clear until past the middle and only the text zone at the
+   bottom is shaded; the doubled text-shadows on .ph-kick/.ph-head carry the
+   rest of the legibility. */
+.page-hero:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(11,13,20,0) 0%,rgba(11,13,20,.04) 52%,rgba(11,13,20,.72) 100%)}
 .page-hero .ph-kick{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
 .page-hero .ph-head{position:relative;z-index:2;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
 @media (min-width:768px){.page-hero{min-height:172px;padding:16px 20px 14px}}
@@ -1232,9 +1241,14 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .dash-greet[data-art="evening"]::before{
   background:linear-gradient(97deg,rgba(6,8,14,.5) 0%,rgba(6,8,14,.42) 32%,rgba(6,8,14,.22) 56%,rgba(6,8,14,0) 80%)}
 .dash-greet>*{position:relative;z-index:2}
-.dash-greet .hi{font-size:18px;font-weight:700;color:var(--cream);letter-spacing:.2px;text-shadow:0 1px 3px rgba(0,0,0,.85),0 2px 14px rgba(0,0,0,.6)}
-@media (min-width:768px){.dash-greet .hi{font-size:22px}}
-.dash-greet .sub{margin-top:4px;font-size:12px;color:#dcd6c9;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+/* v5.56.1 — owner's phone screenshot: a long account name pushed the
+   greeting clean across the subject's face. The type drops a step and the
+   text block is capped to the measured scrim zone (left ~58%), so a long
+   name WRAPS inside the dark area instead of riding over the portrait;
+   overflow-wrap covers names with no space to break at. */
+.dash-greet .hi{font-size:15px;font-weight:700;color:var(--cream);letter-spacing:.2px;max-width:58%;overflow-wrap:anywhere;text-shadow:0 1px 3px rgba(0,0,0,.85),0 2px 14px rgba(0,0,0,.6)}
+@media (min-width:768px){.dash-greet .hi{font-size:19px}}
+.dash-greet .sub{margin-top:4px;font-size:12px;color:#dcd6c9;max-width:58%;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 /* The plan pill sits on photographic art now, so it carries its own ground —
    a gold hairline alone disappears over a lit wall. */
 .dash-greet .pill{display:inline-block;align-self:flex-start;margin-top:8px;padding:3px 10px;border:1px solid var(--gold);border-radius:999px;color:var(--gold-hi);font-size:11px;background:rgba(6,8,14,.55)}
@@ -22311,7 +22325,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.56.0";
+var APP_VER="5.56.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
