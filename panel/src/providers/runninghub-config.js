@@ -14,12 +14,12 @@
    scheme this file used to hold, which needed external per-account app
    ids this plugin never received and so never went live.
 
-   One model (gpt-image-2, the RunningHub-hosted entry) intentionally
-   still carries an empty apiPath: its RunningHub endpoint has not been
-   confirmed yet — `isPlaceholder` reports it "not configured" rather than
-   guessing at a path. flux-2-dev below now carries its confirmed
-   text-to-image endpoint, ported from the companion web app's RH_T2I_MODELS
-   (kind:"t2i" — no image input, prompt+aspectRatio+outputFormat only).
+   v6.28.2 — no placeholder remains: the owner's verified Enterprise-Shared
+   reference (2026-08-30) identifies rhart-image-g-2-official as GPT Image 2
+   official stable, so the old empty "gpt-image-2" entry is retired and the
+   id aliases to rh-image-g2-off in the model registry. flux-2-dev carries
+   its confirmed text-to-image endpoint, ported from the companion web
+   app's RH_T2I_MODELS (kind:"t2i" — prompt+aspectRatio+outputFormat only).
    ============================================================ */
 /* HNK-IIFE-WRAP: isolate module scope so top-level vars never collide
    under UXP shared-global <script> loading (browser-style). */
@@ -54,7 +54,6 @@ function defaults() {
       "rh-image-g2-off":       { apiPath: "rhart-image-g-2-official/image-to-image", quality: "medium" },
       "rh-image-g2":           { apiPath: "rhart-image-g-2/image-to-image" },
       "rh-image-x-off":        { apiPath: "rhart-image-x-official/edit", imageParam: "image" },
-      "gpt-image-2":           { apiPath: "" },
       "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800 },
       "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800 },
       "flux-2-dev":            { apiPath: "rhart-image/f-2-dev/text-to-image", kind: "t2i" },

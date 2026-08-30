@@ -178,7 +178,35 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.28.1** — `pending`. The owner's de-duplication pass over 6.28.0
+- **v6.28.2** — `pending`. GPT Image 2 becomes REAL in both apps, from the
+  owner's own verified Enterprise-Shared reference PDF (2026-08-30):
+  * The reference's "Exact verified photo endpoints" table maps
+    rhart-image-g-2-official to GPT Image 2 official stable — the endpoint
+    this project has shipped WORKING since the openapi/v2 port, hidden
+    behind the label "RH Image G-2 (Official)". Relabeled to
+    "GPT Image 2 — Official" in the web app and the panel (same id, same
+    endpoint, same documented required quality — the Grok Imagine relabel
+    precedent).
+  * The never-configured "gpt-image-2" placeholder entry is retired from
+    both apps; in the panel the old id joins LEGACY_ALIASES →
+    rh-image-g2-off so every stored draft/preset keeps resolving. 20
+    models remain, all with real endpoints — no placeholder anywhere.
+  * Real bug fixed on the way: the panel's Auto-model selector routed
+    every poster/visible-text request to the placeholder, i.e. to a model
+    that could never run. Poster jobs with images now go to
+    rh-image-g2-off (the verified GPT Image 2); poster text-to-image goes
+    to nano-banana-pro-t2i (the registry's confirmed high-visible-text
+    T2I).
+  * The reference also lists GPT Image 2 text-to-image
+    (rhart-image-g-2-official/text-to-image) — held until its parameter
+    table is provided, per the wire-nothing-unread rule.
+  Acceptance carries over the v6.28.1 checklist, plus: an Auto-model
+  poster request must resolve to GPT Image 2 — Official and generate.
+  Artifact `HNK_Ai_Panel_v6.28.2.ccx`, SHA-256
+  `735e22b41b07c089174274093ea90fa9abdc1b3515707c3ba0c81095d9098e8a`,
+  1,275,279 bytes. The release stays disabled until that acceptance.
+- **v6.28.1** — superseded by v6.28.2 the same day (the GPT Image 2
+  identification above). The owner's de-duplication pass over 6.28.0
   ("every setting has ONE home"):
   * The Enterprise key now lives ONLY on the Setup tab. This fixes a real
     split, not just a duplicate control: the classic stack persists to

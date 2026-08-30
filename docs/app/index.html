@@ -3379,14 +3379,18 @@ var RH_POLL_MS = 2500, RH_TIMEOUT_MS = 300000;
    string instead. */
 var RH_MODELS = [
   { id:"nano-banana-2",     label:"Nano Banana 2",           apiPath:"rhart-image-n-g31-flash/image-to-image" },
-  { id:"rh-image-g2-off",   label:"RH Image G-2 (Official)", apiPath:"rhart-image-g-2-official/image-to-image", quality:"medium" },
+  /* v5.53.3 — relabeled for what it actually is: the owner's verified
+   Enterprise-Shared reference (2026-08-30) maps rhart-image-g-2-official
+   to "GPT Image 2 — official stable". Same id, same endpoint, same
+   documented required quality — only the name stops hiding the model.
+   Precedent: the v4.98.1 Grok Imagine relabel. */
+  { id:"rh-image-g2-off",   label:"GPT Image 2 (Official)",  apiPath:"rhart-image-g-2-official/image-to-image", quality:"medium" },
   { id:"rh-image-g2",       label:"RH Image G-2",            apiPath:"rhart-image-g-2/image-to-image" },
   { id:"rh-image-x-off",    label:"RH Image X (Official)",   apiPath:"rhart-image-x-official/edit", imageParam:"image" },
   /* name_en in RunningHub's own model-registry.public.json literally reads
      "nano-banana-pro/edit-...-stable" for these two endpoints — not a guess. */
   { id:"nano-banana-pro-off", label:"Nano Banana Pro (Official)", apiPath:"rhart-image-n-pro-official/edit" },
   { id:"nano-banana-pro",     label:"Nano Banana Pro",            apiPath:"rhart-image-n-pro/edit" },
-  { id:"gpt-image-2",       label:"GPT Image 2 (RunningHub — needs endpoint)", apiPath:"" },
   /* Qwen's image-edit endpoints take a "size" WxH string (512*512-2048*2048),
      not resolution/aspectRatio like the RHArt-family endpoints above — mapped
      via RH_QWEN_SIZE_MAP from the exact enum options in the registry. Prompt
@@ -21278,7 +21282,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.53.2";
+var APP_VER="5.53.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

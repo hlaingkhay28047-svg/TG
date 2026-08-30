@@ -72,26 +72,12 @@ var MODELS = [
     },
     recommendedFor: ["full-scene-edit", "reference-transfer", "multi-reference"]
   },
-  {
-    id: "gpt-image-2",
-    displayName: "GPT Image 2",
-    provider: "runninghub-enterprise",
-    category: ["recommended", "creative", "image-edit", "high-quality"],
-    tagline: "Best for posters, layouts and complex instructions",
-    detail: "Image generation and editing · Strong at visible text",
-    capabilities: {
-      textToImage: true,
-      imageEdit: true,
-      multiReference: true,
-      maxImages: 4,
-      supportedSizes: ["1k", "2k"],
-      supportedRatios: ["auto", "source", "1:1", "3:2", "2:3", "16:9", "9:16", "4:5", "5:4"],
-      variants: true,
-      visibleText: "high",
-      identityRetention: "medium"
-    },
-    recommendedFor: ["poster", "text-logo", "layout", "creative"]
-  },
+  /* v6.28.2 — the separate "GPT Image 2 (needs endpoint)" placeholder is
+     gone: the owner's verified Enterprise-Shared reference (2026-08-30)
+     shows GPT Image 2's official endpoint is rhart-image-g-2-official —
+     the rh-image-g2-off entry above, which has shipped working since the
+     v2 port. One model, one entry; the old id resolves via LEGACY_ALIASES
+     so every stored draft/preset keeps working. */
   {
     id: "qwen-image-2",
     displayName: "Qwen Image 2.0",
@@ -257,10 +243,15 @@ var MODELS = [
   },
   {
     id: "rh-image-g2-off",
-    displayName: "RH Image G-2 (Official)",
+    /* v6.28.2 — relabeled for what it actually is: the owner's verified
+       Enterprise-Shared reference (2026-08-30) maps rhart-image-g-2-official
+       to "GPT Image 2 — official stable". Same id (stored configs keep
+       working), same endpoint, same documented required quality — only the
+       name stops hiding the model. Precedent: the Grok Imagine relabel. */
+    displayName: "GPT Image 2 — Official",
     provider: "runninghub-enterprise",
     category: ["recommended", "image-edit", "multi-reference"],
-    tagline: "RunningHub's official general-purpose edit model",
+    tagline: "GPT Image 2 (official stable) on the studio's RunningHub engine",
     detail: "Multi-reference image editing · Up to 4K",
     capabilities: {
       textToImage: true,
@@ -473,9 +464,11 @@ var AUTO_MODEL_ID = "auto";
 /* Retired model ids from older releases -> their current registry entry, so
    saved drafts/presets/settings keep resolving instead of failing.
    gpt-image-1: OpenAI API shutdown 2026-10-23. gpt-image-2-openai: the
-   direct-OpenAI route left with its provider in v6.26.0 — both resolve to
-   RunningHub's hosted gpt-image-2 entry. */
-var LEGACY_ALIASES = { "gpt-image-1": "gpt-image-2", "gpt-image-2-openai": "gpt-image-2" };
+   direct-OpenAI route left with its provider in v6.26.0. gpt-image-2: the
+   never-configured placeholder retired in v6.28.2 — all three resolve to
+   rh-image-g2-off, which the verified Enterprise-Shared reference
+   (2026-08-30) identifies as GPT Image 2's real official endpoint. */
+var LEGACY_ALIASES = { "gpt-image-1": "rh-image-g2-off", "gpt-image-2-openai": "rh-image-g2-off", "gpt-image-2": "rh-image-g2-off" };
 
 var _byId = {};
 for (var i = 0; i < MODELS.length; i++) _byId[MODELS[i].id] = MODELS[i];
