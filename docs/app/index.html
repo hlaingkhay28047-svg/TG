@@ -7504,17 +7504,24 @@ function wfApplyModelFilter(){
   Array.prototype.forEach.call(sel.options,function(o){
     o.disabled = (wfNeed>1 && !wfNoCapable) ? rhModelMaxIn(o.value)<wfNeed : false;
   });
-  var cur=sel.options[sel.selectedIndex];
-  if(cur && cur.disabled){
-    for(var i=0;i<sel.options.length;i++){
-      if(!sel.options[i].disabled){
-        sel.value=sel.options[i].value;
-        if(sel.onchange) sel.onchange();   /* rebuilds options via updateGenOptsForRHKind… */
-        wfApplyModelFilter();              /* …so the pass runs once more on the fresh list */
-        break;
-      }
+  /* deliberately NO auto-switch here: opening a workflow's guide must not
+     rewrite the student's active model as a side effect (it broke every
+     flow that had legitimately selected a single-input model). The switch
+     happens at RUN time — wfEnsureCapableModel, called by runWizGenerate
+     and the batch hand-off — the moment capacity actually matters. */
+}
+function wfEnsureCapableModel(need){
+  if(!(need>1)) return true;
+  var sel=$("selModel"); if(!sel || !sel.options.length) return false;
+  if(rhModelMaxIn(sel.value)>=need) return true;
+  for(var i=0;i<sel.options.length;i++){
+    if(rhModelMaxIn(sel.options[i].value)>=need){
+      sel.value=sel.options[i].value;
+      if(sel.onchange) sel.onchange();
+      return true;
     }
   }
+  return false; /* no configured model qualifies — the wizard footer already says so */
 }
 function wfModelFilter(need){ wfNeed=need>1?need:0; wfApplyModelFilter(); }
 /* ---------- v4.41: visual ratio chips ----------
@@ -8350,6 +8357,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
      box), so nothing about the generate contract changes. */
   async function runWizGenerate(){
     var w=wiz.w;
+    /* v5.56.0 — the capacity guard fires HERE, when the money is about to
+       be spent, never on open: if the active model cannot carry every
+       required image, switch to the first that can (the footer has been
+       saying so since step 3; when none qualifies nothing switches and
+       the run proceeds under the footer's explicit warning). */
+    try{ if(typeof wfEnsureCapableModel==="function") wfEnsureCapableModel((w.req||[]).length); }catch(e){}
     var inputs=wizInputs(w);
     for(var ri=inputs.length; ri<state.refs.length; ri++) state.refs[ri]=null;
     state.imgRoles=inputs.map(function(x){ return x.label; });
@@ -10963,18 +10976,7 @@ window._ptUseWorkflow=function(id){
      would silently lose IMAGE 2 — switch to the first model that can,
      and say so, before a hundred calls are spent. */
   try{
-    if(wInfo && wInfo.reqN>1 && typeof rhModelMaxIn==="function"){
-      var pSel=$("selModel");
-      if(pSel && pSel.value && rhModelMaxIn(pSel.value)<wInfo.reqN){
-        for(var pi=0;pi<pSel.options.length;pi++){
-          if(rhModelMaxIn(pSel.options[pi].value)>=wInfo.reqN){
-            pSel.value=pSel.options[pi].value;
-            if(pSel.onchange) pSel.onchange();
-            break;
-          }
-        }
-      }
-    }
+    if(wInfo && wInfo.reqN>1 && typeof wfEnsureCapableModel==="function") wfEnsureCapableModel(wInfo.reqN);
   }catch(e){}
   switchPage("pgPath");
   var box=$("ptWfBox");

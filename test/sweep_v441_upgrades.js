@@ -323,12 +323,14 @@ function report(name, ok, detail) {
      row attaches the rail, and an untouched ratio is still blanked while a
      deliberately picked one now survives the run */
   const srcApp = require("fs").readFileSync(require("path").join(__dirname, "..", "docs", "app", "index.html"), "utf8");
-  report("v5.56.0: the wizard generate step hosts the ratio rail and honors a deliberate ratio pick",
+  report("v5.56.0: the wizard generate step hosts the ratio rail, honors a deliberate ratio pick, and the capacity switch fires at RUN time only (never on open — opening a guide must not rewrite the active model)",
     srcApp.includes('ratioRailAttach("wiz_selRatio")') &&
     srcApp.includes("if(!wiz.ratioPicked) wzR.value=\"\";") &&
     srcApp.includes('if(pair[0]==="selRatio") wiz.ratioPicked=true;') &&
-    srcApp.includes("wfModelFilter((w.req||[]).length)"),
-    "wizard rail/ratio-honesty wiring missing");
+    srcApp.includes("wfModelFilter((w.req||[]).length)") &&
+    srcApp.includes("wfEnsureCapableModel((w.req||[]).length)") &&
+    !/wfApplyModelFilter\(\)[\s\S]{0,400}sel\.onchange\(\)/.test(srcApp.slice(srcApp.indexOf("function wfApplyModelFilter"), srcApp.indexOf("function wfEnsureCapableModel"))),
+    "wizard rail/ratio-honesty/run-time-switch wiring missing");
 
   await page.close();
   await browser.close();
