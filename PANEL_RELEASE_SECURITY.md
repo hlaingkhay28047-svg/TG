@@ -178,7 +178,66 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.29.0** — `pending`. Five owner-supplied OpenAPI specs (2026-08-30)
+- **v6.30.0** — `pending`. The full image-catalog wave (2026-08-30), the
+  owner's "အကုန်ထည့်ပေးပါ" instruction executed literally: every image
+  endpoint in RunningHub's public doc index is wired, or its absence is
+  recorded. 74 new models (31 image-to-image + 43 text-to-image) join BOTH
+  apps — the panel registry grows 22 → 96 models and the web app's
+  RH_MODELS/RH_T2I_MODELS grow identically; every entry carries its
+  `api-<id>` doc citation, and every body was parameter-verified against
+  the doc the fetch lane pulled (round 2: 79 catalog docs, ten matrix
+  jobs, zero failures).
+  * New declarative body kinds, mirrored field-for-field across web app
+    and panel adapter: a generic ComfyUI `node` kind whose per-model key
+    map covers single- and multi-slot graphs (qwen edit-2511 fills
+    57##/58## and leaves 59## absent with two refs) over the shared
+    "1".."7" ratio table with per-model "9" auto-match; `grokimg` (one
+    endpoint, four Grok versions behind a REQUIRED model field — shipped
+    as g-4.2); `sdlayer` (Seedream 5 layer decomposition); `sd5lite`/
+    `sd5pro` (their real resolution enums + png output); `wan25` (the
+    documented 8-ratio size table, omitted on Auto); `nanov1` (REQUIRED
+    aspectRatio whose Auto is the literal "auto"); `ratioOnly`; `gpt15`
+    (ratio picks the fixed size — NO aspectRatio field exists, so none is
+    sent); and `bare` (prompt + imageUrls only). The seven Topaz models
+    ride the proven upscale/upscale-transparent shapes. T2I defs gain the
+    matching flags (nodeKeys with conditional fileType, autoRatioValue,
+    ratioForSizeOnly, wan25/gpt15 size maps, whField, numImagesField).
+  * Control honesty scales with the catalog: kind-driven noRatio/noSize
+    tables hide the web app's Ratio/Size pickers wherever an endpoint
+    declares no such field, and the Ratio dropdown narrows to each
+    model's documented enum (generic node models get the shared seven).
+  * The wave's own sweep caught a real dispatch bug before ship:
+    rhModelCfgOut handed rhV2Body a stripped copy (id/apiPath/kind/…)
+    that silently dropped the new declarative fields — a node-kind body
+    came out as literally {"undefined":"..."}. The dispatch cfg now
+    carries the WHOLE model def with the user-editable effective values
+    layered on top; the panel was already safe (its resolve() deep-merge
+    returns full entries).
+  * Recorded as unobtainable, per the same instruction: RunningHub's LLM
+    API has no page in the public doc index at all, so the panel's
+    translate/Improve-Prompt hooks stay unwired until the owner supplies
+    that spec from the portal's separate LLM section. Deprecated pages
+    (gpt-image-1.5 low-price) are skipped on the doc site's own advice.
+    Video catalog top-up, 3D and audio are separate future waves.
+  * Tests grow with the surface: sweep_runninghub mocks 16 endpoints and
+    proves the new shapes on the wire (multi-slot node fill, grokimg
+    model field + hidden controls, nano v1 "auto", sd5-pro enum clamp +
+    png, Topaz gigapixel outputWidth/Height); sweep_text2img covers 49
+    T2I options with wan-2.5 default size, gpt-1.5 fixed size + quality
+    with no aspectRatio, MJ v8.2's REQUIRED hd flag, nano v1 "auto" and
+    z-image-turbo's node body. The 46-check panel audit expects 97
+    selectable models.
+  Acceptance carries over the v6.29.0 checklist, plus catalog spot-checks
+  in real Photoshop: a two-image "Qwen Edit 2511" edit, one Topaz
+  Gigapixel upscale landing as a layer, a "Wan 2.5 — T2I" generation at a
+  non-square ratio, and one Grok Imagine (grokimg) edit.
+  Artifact `HNK_Ai_Panel_v6.30.0.ccx`, SHA-256
+  `bffcb63b1007617b17569027b06b8fe807a121a9697dd34885a34e864d05bc8d`,
+  1,286,513 bytes. The release stays disabled until that acceptance.
+- **v6.29.0** — superseded by v6.30.0 the same day (the full-catalog
+  wave above) before Photoshop acceptance; it was published to the
+  private release store and its content ships within v6.30.0.
+  Five owner-supplied OpenAPI specs (2026-08-30)
   plus a read-only CI doc-fetch lane (`fetch-docs.yml` — the container's
   egress policy blocks runninghub.ai, so a GitHub runner curls the PUBLIC
   doc pages into its job log; no secrets, no repo writes) close out every

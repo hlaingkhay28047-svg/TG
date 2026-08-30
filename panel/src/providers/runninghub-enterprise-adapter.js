@@ -58,6 +58,17 @@ var RH_NODE_RATIO_MAP = { "1:1": "1", "3:4": "2", "4:3": "3", "9:16": "4", "16:9
    documented auto default, so a ratio is sent only when it is one of the
    seven. */
 var RH_IMAGINE_RATIO_ENUM = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"];
+/* v6.30.0 — the full-catalog wave's shared tables, each transcribed from
+   the model's fetched doc (api-<id> cited beside every config entry). Wan
+   2.5's edit and t2i routes document DIFFERENT fixed W*H enums; GPT Image
+   1.5's three fixed sizes are keyed off the picked ratio's orientation. */
+var RH_WAN25I_SIZE = { "1:1": "1280*1280", "2:3": "800*1200", "3:2": "1200*800", "3:4": "960*1280", "4:3": "1280*960", "9:16": "720*1280", "16:9": "1280*720", "21:9": "1344*576" };
+var RH_WAN25T_SIZE = { "1:1": "1280*1280", "3:4": "1104*1472", "4:3": "1472*1104", "9:16": "960*1696", "16:9": "1696*960" };
+function rhGpt15Size(ratio) {
+  if (ratio === "2:3" || ratio === "3:4" || ratio === "9:16" || ratio === "4:5" || ratio === "9:21" || ratio === "1:2") return "1024*1536";
+  if (ratio === "3:2" || ratio === "4:3" || ratio === "16:9" || ratio === "5:4" || ratio === "21:9" || ratio === "2:1") return "1536*1024";
+  return "1024*1024";
+}
 
 function rhRatio(ratio) { return RH_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : ""; }
 /* Auto -> the cheapest tier; the Standard API requires a lowercase 1k/2k/4k
@@ -142,24 +153,42 @@ function buildRequestBody(mc, request, uploadedUrls) {
       nbT[mc.t2iNodeKeys.prompt] = body.prompt;
       var nrT = mc.t2iRatios && mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.t2iRatios ? mc.t2iRatios[0] : "1:1");
       nbT[mc.t2iNodeKeys.ratio] = RH_NODE_RATIO_MAP[nrT] || "1";
-      nbT[mc.t2iNodeKeys.fileType] = "PNG";
+      // v6.30.0 — klein-4b's t2i-lora graph has no file_type field at all.
+      if (mc.t2iNodeKeys.fileType) nbT[mc.t2iNodeKeys.fileType] = "PNG";
       return nbT;
     }
     if (mc.t2iRatios) {
-      var useR = mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.ratioRequired ? mc.t2iRatios[0] : "");
-      if (useR) body.aspectRatio = useR;
+      // v6.30.0 — autoRatioValue: nano-banana v1's aspectRatio is REQUIRED
+      // with a literal documented "auto" value, sent for Auto/unknown.
+      var useR = mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.autoRatioValue || (mc.ratioRequired ? mc.t2iRatios[0] : ""));
+      // ratioForSizeOnly (gpt-1.5 t2i): the ratio only picks the fixed
+      // size — the endpoint declares NO aspectRatio field.
+      if (useR && !mc.ratioForSizeOnly) body.aspectRatio = useR;
     }
     if (mc.resolutionField) {
       var allowedR = mc.resolutions && mc.resolutions.length ? mc.resolutions : ["1k", "2k", "4k"];
       var resV = String(size || "").toLowerCase();
       body.resolution = allowedR.indexOf(resV) !== -1 ? resV : allowedR[0];
     }
-    if (mc.sizeParam) {
-      var szV = qwen3T2ISize(ratio, size);
+    if (mc.sizeParam || mc.sizeMap) {
+      // v6.30.0 — per-model size tables: qwen2's fixed W*H enum, wan-2.5's
+      // five fixed sizes (REQUIRED — documented default 1280*1280),
+      // gpt-1.5's three orientation sizes, else the qwen3 free-form map.
+      var szV = mc.sizeMap === "qwen2" ? qwenSize(ratio, size)
+              : mc.sizeMap === "wan25" ? (RH_WAN25T_SIZE[ratio] || (mc.sizeRequired ? "1280*1280" : ""))
+              : mc.sizeMap === "gpt15" ? rhGpt15Size(ratio)
+              : qwen3T2ISize(ratio, size);
       if (szV) body.size = szV;
+    }
+    if (mc.whField) {
+      // v6.30.0 — wan-2.7 t2i's optional width/height ints; omitted on
+      // Auto so the documented 1024x1024 default applies.
+      var whV = wanWH(ratio, size);
+      if (whV) { body.width = whV.w; body.height = whV.h; }
     }
     if (mc.numImagesField) body.numImages = "1";
     if (mc.outputFormat) body.outputFormat = mc.outputFormat;
+    if (mc.extraBody) { for (var ek in mc.extraBody) { if (mc.extraBody.hasOwnProperty(ek)) body[ek] = mc.extraBody[ek]; } }
     if (mc.quality) body.quality = mc.quality;
     return body;
   }
@@ -198,6 +227,40 @@ function buildRequestBody(mc, request, uploadedUrls) {
     zb["65##file_type"] = "PNG";
     return zb;
   }
+
+  // v6.30.0 — generic ComfyUI node-keyed image-edit endpoints: mc.node
+  // names each model's keys (single `image` or an ordered `images` list for
+  // multi-slot graphs like qwen edit-2511). All share the "1".."7" ratio
+  // table; models whose doc also lists "9" auto-match set node.auto, the
+  // rest fall back to "1" = 1:1. fileType (when the field exists) always
+  // ships the documented "PNG"; LoRA node pairs are never sent.
+  if (mc.kind === "node") {
+    var nn = mc.node || {}, nb2 = {};
+    if (nn.images) { for (var qi = 0; qi < nn.images.length && qi < uploadedUrls.length; qi++) nb2[nn.images[qi]] = uploadedUrls[qi]; }
+    else nb2[nn.image] = uploadedUrls[0] || "";
+    nb2[nn.prompt] = body.prompt;
+    nb2[nn.ratio] = RH_NODE_RATIO_MAP[ratio] || (nn.auto ? "9" : "1");
+    if (nn.fileType) nb2[nn.fileType] = "PNG";
+    return nb2;
+  }
+  // api-448184479 — one endpoint carries four Grok image versions via a
+  // REQUIRED "model" field; prompt REQUIRED, imageUrl optional single.
+  if (mc.kind === "grokimg") {
+    var gb = { model: "g-4.2", prompt: body.prompt };
+    if (uploadedUrls[0]) gb.imageUrl = uploadedUrls[0];
+    return gb;
+  }
+  // api-498427798 — Seedream 5 layer decomposition: ONE imageUrl, optional
+  // prompt, optional resolution (auto/1k/1.5k/2k — 4K coarsens to the 2k
+  // ceiling). Results arrive as base + up to 16 layers; the shared download
+  // loop collects them all (they land as layers in Photoshop).
+  if (mc.kind === "sdlayer") {
+    var lb = { imageUrl: uploadedUrls[0] || "" };
+    if (body.prompt) lb.prompt = body.prompt;
+    var lr = String(size || "").toLowerCase();
+    if (lr === "1k") lb.resolution = "1k"; else if (lr === "2k" || lr === "4k") lb.resolution = "2k";
+    return lb;
+  }
   var imageParam = mc.imageParam || "imageUrls";
   if (imageParam === "image") body.image = uploadedUrls[0] || "";
   else if (imageParam === "imageUrl") body.imageUrl = uploadedUrls[0] || "";
@@ -219,6 +282,36 @@ function buildRequestBody(mc, request, uploadedUrls) {
     // Grok Imagine — Edit (v6.29.0): the spec declares EXACTLY prompt +
     // image. The default branch's resolution/aspectRatio are not in it —
     // append nothing.
+  } else if (mc.kind === "sd5lite") {
+    // api-448184476 — resolution enum is 2k|3k and OPTIONAL: sent only for
+    // an explicit 2K/4K pick (4K coarsens to the documented 3k ceiling).
+    var s5 = String(size || "").toLowerCase();
+    if (s5 === "2k") body.resolution = "2k"; else if (s5 === "4k") body.resolution = "3k";
+    body.sequentialImageGeneration = "disabled"; body.maxImages = 1;
+  } else if (mc.kind === "sd5pro") {
+    // api-494859263 / api-494859267 — resolution 1k|2k (doc default 2k),
+    // outputFormat jpeg|png (png for lossless layer work).
+    body.resolution = String(size || "").toLowerCase() === "1k" ? "1k" : "2k";
+    body.outputFormat = "png";
+  } else if (mc.kind === "wan25") {
+    // api-448184493 — a fixed W*H "size" enum keyed by ratio; omitted on
+    // Auto so the documented 1280*1280 default applies.
+    var w25 = RH_WAN25I_SIZE[ratio]; if (w25) body.size = w25;
+  } else if (mc.kind === "nanov1") {
+    // api-448184495 / api-448184498 — aspectRatio is REQUIRED and "auto"
+    // is a documented enum value: anything outside the enum sends "auto".
+    body.aspectRatio = (mc.ratioEnum || []).indexOf(ratio) !== -1 ? ratio : "auto";
+  } else if (mc.kind === "ratioOnly") {
+    // the nano-banana-2-lite pair — prompt + imageUrls plus an OPTIONAL
+    // aspectRatio; no resolution field exists on these endpoints.
+    if ((mc.ratioEnum || []).indexOf(ratio) !== -1 && ratio !== "auto") body.aspectRatio = ratio;
+  } else if (mc.kind === "gpt15") {
+    // api-448184503 — size and quality are REQUIRED; three fixed sizes
+    // keyed off the picked ratio's orientation, documented default medium.
+    body.size = rhGpt15Size(ratio); body.quality = "medium";
+  } else if (mc.kind === "bare") {
+    // api-465292102 — Jimeng 4.6 takes prompt + imageUrls only (its
+    // optional width/height/scale knobs stay on their documented defaults).
   } else if (mc.sizeParam) {
     var sz = qwenSize(ratio, size); if (sz) body.size = sz;
   } else if (mc.whParam) {
