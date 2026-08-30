@@ -70,9 +70,11 @@ function resolve(input) {
   /* v6.28.2 — poster/text jobs routed to "gpt-image-2", a placeholder whose
      apiPath was empty, so Auto sent every poster request to a model that
      could never run. They now go to the models that actually run: with
-     images, rh-image-g2-off (the verified GPT Image 2 official endpoint);
-     with none, nano-banana-pro-t2i (the confirmed T2I with high visible-text
-     capability in this registry). */
+     images, rh-image-g2-off (the verified GPT Image 2 official endpoint).
+     v6.29.0 — with none, rh-image-g2-t2i: GPT Image 2's own text-to-image
+     is wired now (owner's OpenAPI spec), completing the owner's original
+     ask that Auto poster jobs generate on GPT Image 2 with or without
+     input images. (Interim route was nano-banana-pro-t2i.) */
   // Poster / visible-text intent wins whenever the model can take the images.
   if (posterHit && count >= 1 && count <= 4) {
     return { modelId: "rh-image-g2-off", reason: 'Poster or visible-text request detected ("' + posterHit + '")' };
@@ -80,7 +82,7 @@ function resolve(input) {
 
   // No image → creative text-to-image.
   if (count === 0) {
-    if (posterHit) return { modelId: "nano-banana-pro-t2i", reason: "Text-to-image with visible text" };
+    if (posterHit) return { modelId: "rh-image-g2-t2i", reason: "Text-to-image with visible text" };
     return { modelId: "flux-2-dev", reason: "Creative prompt with no input image" };
   }
 

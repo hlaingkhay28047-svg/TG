@@ -189,6 +189,31 @@ var MODELS = [
     },
     recommendedFor: ["text-to-image", "high-quality"]
   },
+  /* v6.29.0 — GPT Image 2's official text-to-image route, wired from the
+     owner's full OpenAPI spec (2026-08-30); it was listed in the verified
+     Enterprise-Shared reference and held until this parameter table
+     arrived. The endpoint's own blurb is the poster engine's: cinematic
+     posters, lighting, textures, visible text. */
+  {
+    id: "rh-image-g2-t2i",
+    displayName: "GPT Image 2 — Poster & Text (T2I)",
+    provider: "runninghub-enterprise",
+    category: ["recommended", "high-quality", "creative"],
+    tagline: "GPT Image 2 text-to-image — posters and visible text",
+    detail: "Text to image only · Up to 4K",
+    capabilities: {
+      textToImage: true,
+      imageEdit: false,
+      multiReference: false,
+      maxImages: 0,
+      supportedSizes: ["1k", "2k", "4k"],
+      supportedRatios: ["auto", "1:1", "4:5", "5:4", "3:4", "4:3", "2:3", "3:2", "16:9", "9:16", "21:9"],
+      variants: false,
+      visibleText: "high",
+      identityRetention: "low"
+    },
+    recommendedFor: ["text-to-image", "poster", "high-quality"]
+  },
   {
     id: "qwen-image-3-pro-t2i",
     displayName: "Qwen 3.0 Pro — Asia Looks (T2I)",

@@ -1,6 +1,6 @@
 /* Mocked end-to-end check of RunningHub text-to-image generation: save a
-   fake key, verify all 5 confirmed models populate the model select, then
-   run two representative models through the actual generate flow and
+   fake key, verify all 6 confirmed models populate the model select, then
+   run representative models through the actual generate flow and
    inspect the captured request body:
      - Flux 2 Dev (rhart-image/f-2-dev/text-to-image): aspectRatio is
        REQUIRED, so a bad/missing ratio selection must still send a valid
@@ -46,6 +46,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       }
       if (u.indexOf("/openapi/v2/rhart-image/f-2-dev/text-to-image") >= 0
           || u.indexOf("/openapi/v2/alibaba/qwen-image-3.0-pro/text-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-g-2-official/text-to-image") >= 0
           || u.indexOf("/openapi/v2/rhart-imagine-image-quality/text-to-image") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-t2i-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
@@ -59,7 +60,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const setup = await page.evaluate(() => {
     window.scrollTo = function(){}; Element.prototype.scrollIntoView = function(){};
     state.rhKey = "TEST_RH_KEY";
-    var ids = ["flux-2-dev","nano-banana-pro-t2i","rh-imagine-quality","qwen-image-3-pro-t2i","youchuan-v81"];
+    var ids = ["flux-2-dev","nano-banana-pro-t2i","rh-image-g2-t2i","rh-imagine-quality","qwen-image-3-pro-t2i","youchuan-v81"];
     var sel = document.getElementById("selT2IModel");
     return {
       allOptionsPresent: ids.every(function(id){ return !!sel.querySelector('option[value="'+id+'"]'); }),
@@ -67,8 +68,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     };
   });
   console.log("setup:", JSON.stringify(setup));
-  if (!setup.allOptionsPresent || setup.optionCount !== 5) {
-    console.log("FAIL: text-to-image model select did not populate all 5 models");
+  if (!setup.allOptionsPresent || setup.optionCount !== 6) {
+    console.log("FAIL: text-to-image model select did not populate all 6 models");
     await browser.close();
     process.exit(1);
   }
@@ -142,6 +143,28 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const imagineOk = imagine.ok && imagine.body && imagine.body.numImages === "1" && imagine.body.resolution === "2k";
   console.log(imagineOk ? "PASS (imagine size honored + numImages)" : ("FAIL (imagine): " + JSON.stringify(imagine)));
 
+  // GPT Image 2 T2I (v5.53.4, from the owner's OpenAPI spec): resolution and
+  // quality are REQUIRED (quality ships the documented default "medium",
+  // exactly like the i2i sibling), aspectRatio is optional, and the endpoint
+  // declares NO outputFormat/numImages/size fields — sending one would be an
+  // invented parameter.
+  const gpt = await runModel("rh-image-g2-t2i", "16:9", "2K", "a wedding poster with golden title text", "rhart-image-g-2-official/text-to-image");
+  console.log("gpt t2i body:", JSON.stringify(gpt.body));
+  const gptOk = gpt.ok && gpt.body && gpt.body.resolution === "2k" && gpt.body.quality === "medium"
+    && gpt.body.aspectRatio === "16:9"
+    && gpt.body.outputFormat === undefined && gpt.body.numImages === undefined && gpt.body.size === undefined
+    && gpt.body.imageUrls === undefined;
+  console.log(gptOk ? "PASS (gpt t2i required resolution+quality, no invented fields)" : ("FAIL (gpt t2i): " + JSON.stringify(gpt)));
+
+  // Auto size must still send the REQUIRED resolution (cheapest documented
+  // tier), and Auto ratio must omit the optional aspectRatio so the server's
+  // own documented 16:9 default applies.
+  const gptAuto = await runModel("rh-image-g2-t2i", "", "", "a minimal product photo", "rhart-image-g-2-official/text-to-image");
+  console.log("gpt t2i auto body:", JSON.stringify(gptAuto.body));
+  const gptAutoOk = gptAuto.ok && gptAuto.body && gptAuto.body.resolution === "1k"
+    && gptAuto.body.quality === "medium" && gptAuto.body.aspectRatio === undefined;
+  console.log(gptAutoOk ? "PASS (gpt t2i Auto: resolution still sent, aspectRatio omitted)" : ("FAIL (gpt t2i auto): " + JSON.stringify(gptAuto)));
+
   // ---- v5.50.0: the Gemini translate bridge is retired — a Burmese t2i
   // prompt always ships raw with the English-recommended hint shown, and no
   // translate call ever leaves the browser. ----
@@ -188,7 +211,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(enOk ? "PASS (English prompt skips the translator and the hint entirely)"
     : ("FAIL (t2i english passthrough): " + JSON.stringify(enState)));
 
-  const overall = fluxOk && qwenOk && imagineOk && trOk && noKeyOk && enOk;
+  const overall = fluxOk && qwenOk && imagineOk && gptOk && gptAutoOk && trOk && noKeyOk && enOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

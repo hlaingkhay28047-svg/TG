@@ -178,15 +178,38 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.29.0** — `pending`. FLUX.2 Dev's image-editing route becomes real in
-  both apps, from the owner's own OpenAPI spec paste (2026-08-30) for
-  `rhart-image/f-2-dev/edit-lora`:
+- **v6.29.0** — `pending`. Two owner-supplied OpenAPI specs (2026-08-30)
+  close out every held endpoint in one release: FLUX.2 Dev's image-editing
+  route (`rhart-image/f-2-dev/edit-lora`) and GPT Image 2's official
+  text-to-image (`rhart-image-g-2-official/text-to-image`, held since
+  v6.28.2 for exactly this parameter table):
+  * GPT Image 2 T2I joins both apps — the web app's T2I page
+    ("GPT Image 2 (Official) — Poster & Text") and the panel registry
+    (`rh-image-g2-t2i`, 22 models now). Body per the spec: prompt
+    (1–20000, REQUIRED), aspectRatio (optional 15-value enum, omitted on
+    Auto so the server's documented 16:9 default applies), resolution
+    (REQUIRED 1k/2k/4k, always sent), quality (REQUIRED, shipped as the
+    documented default "medium" like the i2i sibling). No
+    outputFormat/numImages/size fields exist on this endpoint, so none is
+    sent. The panel's Auto selector now routes poster/visible-text jobs
+    WITHOUT images to it (interim nano-banana-pro-t2i route retired),
+    completing the owner's original "Auto poster → GPT Image 2" ask for
+    both the with-images and no-image cases.
+  * Real fidelity bug fixed on the way: the panel's t2i request branch
+    sent one blanket flux-shaped body (aspectRatio + outputFormat:"png")
+    for every t2i model — an undeclared outputFormat for Nano Banana
+    Pro/Qwen 3.0, no documented resolution for Nano/Imagine, no "size"
+    for Qwen 3.0, and a droppable-on-Auto aspectRatio for flux (whose doc
+    marks it REQUIRED). The branch is now flag-driven per model config,
+    genuinely mirroring the web app's rhV2SubmitT2I defs (t2iRatios/
+    ratioRequired/resolutionField/numImagesField/outputFormat, plus the
+    Qwen 3.0 T2I size map ported verbatim).
   * The web app's last placeholder is gone: "Flux 2 Dev (RunningHub — needs
     endpoint)" (empty apiPath since the v2 port) is now "Flux 2 Dev — Edit"
     on the documented endpoint. The panel gains the matching
     `flux-2-dev-edit` registry model ("FLUX.2 Dev — Edit", single image,
     ratio-only output control) beside the existing flux-2-dev
-    text-to-image entry — 21 registry models, all with real endpoints.
+    text-to-image entry — every registry model has a real endpoint.
   * The endpoint's body is ComfyUI node-keyed, unlike every other wired
     endpoint: `51##image` (ONE image URL), `16##text` (prompt),
     `47##select` (ratio enum — "1".."7" fixed ratios per the spec's
@@ -203,16 +226,22 @@ eligible students.
     (the endpoint has no resolution tier — custom W/H exists only behind
     the unused "8" option) and narrows the Ratio dropdown to the
     documented seven plus Auto (no "4:5").
-  * sweep_runninghub now proves the node-keyed body on the wire (mocked
-    endpoint): correct four fields, prompt wrapped as usual inside
+  * sweep_runninghub now proves the node-keyed flux body on the wire
+    (mocked endpoint): correct four fields, prompt wrapped as usual inside
     16##text, no standard prompt/imageUrls/resolution/aspectRatio keys, no
     LoRA keys, Auto ratio → "9", and the narrowed/hidden controls.
+    sweep_text2img gains the GPT Image 2 T2I model (6 models) with two
+    on-the-wire body checks: required resolution+quality with no invented
+    fields, and Auto behavior (resolution still sent, aspectRatio
+    omitted).
   Acceptance carries over the v6.28.2 checklist, plus: pick
   "FLUX.2 Dev — Edit" in AI Tools with one image and a Burmese/English
-  instruction and confirm a real edited result lands as a layer.
+  instruction and confirm a real edited result lands as a layer; and an
+  Auto poster request with NO image must resolve to
+  "GPT Image 2 — Poster & Text (T2I)" and generate.
   Artifact `HNK_Ai_Panel_v6.29.0.ccx`, SHA-256
-  `ba9edc27a2fae1a0cbe23d8f1eb6f4e8e735d7dd77d52f3d2884ddf9ee276931`,
-  1,276,388 bytes. The release stays disabled until that acceptance.
+  `39951b7845eb8869b5ec9bbf2672d79062ece9ee620fca63e5e093925fb9df52`,
+  1,277,643 bytes. The release stays disabled until that acceptance.
 - **v6.28.2** — superseded by v6.29.0 the same day (the FLUX.2 Dev edit
   endpoint above) before acceptance completed. GPT Image 2 becomes REAL in
   both apps, from the owner's own verified Enterprise-Shared reference PDF

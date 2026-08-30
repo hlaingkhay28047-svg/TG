@@ -21,10 +21,14 @@
    its confirmed text-to-image endpoint, ported from the companion web
    app's RH_T2I_MODELS (kind:"t2i" — prompt+aspectRatio+outputFormat only).
 
-   v6.29.0 — flux-2-dev-edit joins from the owner's OpenAPI spec for
-   rhart-image/f-2-dev/edit-lora (2026-08-30): FLUX.2 Dev's image-editing
-   route, whose body is ComfyUI node-keyed (51##image/16##text/47##select/
-   52##file_type) — see the adapter's kind:"fluxedit" branch.
+   v6.29.0 — two owner-supplied OpenAPI specs (2026-08-30) close out the
+   held endpoints: flux-2-dev-edit joins on rhart-image/f-2-dev/edit-lora
+   (FLUX.2 Dev's image-editing route, ComfyUI node-keyed body — see the
+   adapter's kind:"fluxedit" branch), and rh-image-g2-t2i joins on
+   rhart-image-g-2-official/text-to-image (GPT Image 2's official
+   text-to-image, held since v6.28.2 for exactly this parameter table).
+   The t2i branch is also field-faithful per model now — see the flag
+   comments below.
    ============================================================ */
 /* HNK-IIFE-WRAP: isolate module scope so top-level vars never collide
    under UXP shared-global <script> loading (browser-style). */
@@ -61,14 +65,28 @@ function defaults() {
       "rh-image-x-off":        { apiPath: "rhart-image-x-official/edit", imageParam: "image" },
       "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800 },
       "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800 },
-      "flux-2-dev":            { apiPath: "rhart-image/f-2-dev/text-to-image", kind: "t2i" },
+      "flux-2-dev":            { apiPath: "rhart-image/f-2-dev/text-to-image", kind: "t2i",
+                                 t2iRatios: ["1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2"], ratioRequired: true, outputFormat: "png" },
       "flux-2-dev-edit":       { apiPath: "rhart-image/f-2-dev/edit-lora", kind: "fluxedit" },
-      /* v6.27.0 — the web app's three remaining text-to-image models, ported
-         with their confirmed endpoints (owner: the model set must be
-         complete). Field shapes mirror the app's defs verbatim. */
-      "nano-banana-pro-t2i":   { apiPath: "rhart-image-n-pro-official/text-to-image", kind: "t2i", promptMax: 20000 },
+      /* v6.27.0 — the web app's remaining text-to-image models, ported with
+         their confirmed endpoints (owner: the model set must be complete).
+         v6.29.0 — the field flags now really do mirror the app's defs
+         verbatim (t2iRatios/ratioRequired/resolutionField/numImagesField/
+         outputFormat), fixing the blanket flux-shaped body the old t2i
+         branch sent for every one of them. */
+      "nano-banana-pro-t2i":   { apiPath: "rhart-image-n-pro-official/text-to-image", kind: "t2i", promptMax: 20000,
+                                 t2iRatios: ["1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"], resolutionField: true },
       "qwen-image-3-pro-t2i":  { apiPath: "alibaba/qwen-image-3.0-pro/text-to-image", kind: "t2i", sizeParam: true, promptMax: 2048 },
-      "rh-imagine-quality":    { apiPath: "rhart-imagine-image-quality/text-to-image", kind: "t2i", resolutions: ["1k", "2k"], promptMax: 4000 },
+      "rh-imagine-quality":    { apiPath: "rhart-imagine-image-quality/text-to-image", kind: "t2i", resolutions: ["1k", "2k"], promptMax: 4000,
+                                 t2iRatios: ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], resolutionField: true, numImagesField: true, outputFormat: "png" },
+      /* v6.29.0 — GPT Image 2 text-to-image (official stable), wired from
+         the owner's full OpenAPI spec (2026-08-30): aspectRatio optional
+         15-value enum, resolution REQUIRED 1k/2k/4k, quality REQUIRED
+         (documented default medium, shipped constant like the i2i
+         sibling). No outputFormat/numImages/size fields on this endpoint. */
+      "rh-image-g2-t2i":       { apiPath: "rhart-image-g-2-official/text-to-image", kind: "t2i", promptMax: 20000,
+                                 t2iRatios: ["1:1", "1:2", "2:1", "1:3", "3:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "21:9", "9:21", "16:9"],
+                                 resolutionField: true, quality: "medium" },
       "wan-image-edit":        { apiPath: "alibaba/wan-2.7/image-edit", whParam: true, promptMax: 2048 },
       "wan-image-edit-pro":    { apiPath: "alibaba/wan-2.7/image-edit-pro", whParam: true, promptMax: 2048 },
       "upscale-pro":           { apiPath: "topazlabs/image-upscale-standard-v2", imageParam: "imageUrl", kind: "upscale" },

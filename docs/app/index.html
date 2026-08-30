@@ -6272,7 +6272,7 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
   return outs;
 }
 /* ---------- RunningHub text-to-image (no reference photo needed) ----------
-   A separate catalog from RH_MODELS/RH_VIDEO_MODELS: these 5 endpoints don't
+   A separate catalog from RH_MODELS/RH_VIDEO_MODELS: these 6 endpoints don't
    take any input image at all, so they don't fit the edit-a-photo pipeline
    the rest of the app is built around. Confirmed against real RunningHub API
    docs pasted for each exact endpoint (2026-08) — nothing here is guessed.
@@ -6289,6 +6289,16 @@ var RH_T2I_MODELS = [
   { id:"nano-banana-pro-t2i", label:"Nano Banana Pro — Best Quality", apiPath:"rhart-image-n-pro-official/text-to-image",
     ratios:["1:1","3:2","2:3","3:4","4:3","4:5","5:4","9:16","16:9","21:9"],
     resolutionField:"resolution", promptMax:20000 },
+  /* v5.53.4 — GPT Image 2 text-to-image (official stable), held since the
+     owner's Enterprise-Shared reference listed it and wired now that the
+     owner supplied its full OpenAPI spec (2026-08-30): prompt 1-20000
+     REQUIRED, aspectRatio optional 15-value enum (server default 16:9 when
+     omitted), resolution REQUIRED 1k/2k/4k, quality REQUIRED low/medium/
+     high (documented default medium, shipped constant like its i2i
+     sibling). No outputFormat/numImages/size fields exist on this endpoint. */
+  { id:"rh-image-g2-t2i", label:"GPT Image 2 (Official) — Poster & Text", apiPath:"rhart-image-g-2-official/text-to-image",
+    ratios:["1:1","1:2","2:1","1:3","3:1","2:3","3:2","3:4","4:3","4:5","5:4","9:16","21:9","9:21","16:9"],
+    resolutionField:"resolution", promptMax:20000, extra:{ quality:"medium" } },
   { id:"rh-imagine-quality", label:"RH Imagine — Sharp & Clean", apiPath:"rhart-imagine-image-quality/text-to-image",
     ratios:["1:1","16:9","9:16","4:3","3:4","3:2","2:3"],
     resolutionField:"resolution", resolutionEnum:["1k","2k"], numImagesField:"numImages",

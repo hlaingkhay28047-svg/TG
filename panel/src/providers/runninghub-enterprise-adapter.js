@@ -79,6 +79,25 @@ function qwenSize(ratio, size) {
   var s = String(size || "").toLowerCase();
   return (s === "2k" || s === "4k") ? m.hd : m.std;
 }
+/* Qwen 3.0 Pro's TEXT-TO-IMAGE "size" enum — a different option list from
+   its image-edit sibling's map above, kept separate exactly as the web app
+   keeps RH_QWEN3_T2I_SIZE_MAP beside RH_QWEN_SIZE_MAP (the two endpoints'
+   enums aren't guaranteed to match). Ported verbatim. */
+var RH_QWEN3_T2I_SIZE_MAP = {
+  "1:1":  { std: "1024*1024", hd: "1600*1600" },
+  "2:3":  { std: "768*1152",  hd: "1280*1920" },
+  "3:2":  { std: "1152*768",  hd: "1920*1280" },
+  "3:4":  { std: "768*1024",  hd: "1536*2048" },
+  "4:3":  { std: "1024*768",  hd: "1792*1344" },
+  "9:16": { std: "576*1024",  hd: "1152*2048" },
+  "16:9": { std: "1024*576",  hd: "2048*1152" }
+};
+function qwen3T2ISize(ratio, size) {
+  var m = RH_QWEN3_T2I_SIZE_MAP[ratio];
+  if (!m) return "";
+  var s = String(size || "").toLowerCase();
+  return (s === "2k" || s === "4k") ? m.hd : m.std;
+}
 function wanWH(ratio, size) {
   var pr = RH_WAN_RATIO_WH[ratio];
   if (!pr) return null;
@@ -100,15 +119,33 @@ function buildRequestBody(mc, request, uploadedUrls) {
   var ratio = (request.output && request.output.ratio) || "";
   var size = (request.output && request.output.size) || "";
 
-  // Pure text-to-image endpoints (e.g. flux-2-dev's confirmed RunningHub
-  // route) take no image field at all and no resolution — prompt +
-  // aspectRatio + a constant outputFormat only, ported 1:1 from the web
-  // app's rhV2SubmitT2I. Return early so the imageUrls/resolution logic
-  // below (which every image-edit endpoint needs) never runs for these.
+  // Pure text-to-image endpoints take no image field at all. v6.29.0: this
+  // branch is now genuinely ported 1:1 from the web app's rhV2SubmitT2I —
+  // each model's config declares exactly the fields its own doc page lists
+  // (t2iRatios/ratioRequired, resolutionField with an optional narrower
+  // `resolutions` enum, sizeParam via the Qwen3 T2I map, numImagesField,
+  // outputFormat, quality). The old branch sent a blanket aspectRatio +
+  // outputFormat:"png" for every t2i model — right for flux-2-dev, but an
+  // undeclared parameter for Nano Banana Pro/Qwen 3.0 (whose docs list no
+  // outputFormat), and it never sent Nano's/Imagine's documented resolution
+  // or Qwen 3.0's "size" at all. Return early so the imageUrls/resolution
+  // logic below (which every image-edit endpoint needs) never runs.
   if (mc.kind === "t2i") {
-    var rT2i = rhRatio(ratio);
-    if (rT2i) body.aspectRatio = rT2i;
-    body.outputFormat = "png";
+    if (mc.t2iRatios) {
+      var useR = mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.ratioRequired ? mc.t2iRatios[0] : "");
+      if (useR) body.aspectRatio = useR;
+    }
+    if (mc.resolutionField) {
+      var allowedR = mc.resolutions && mc.resolutions.length ? mc.resolutions : ["1k", "2k", "4k"];
+      var resV = String(size || "").toLowerCase();
+      body.resolution = allowedR.indexOf(resV) !== -1 ? resV : allowedR[0];
+    }
+    if (mc.sizeParam) {
+      var szV = qwen3T2ISize(ratio, size);
+      if (szV) body.size = szV;
+    }
+    if (mc.numImagesField) body.numImages = "1";
+    if (mc.outputFormat) body.outputFormat = mc.outputFormat;
     if (mc.quality) body.quality = mc.quality;
     return body;
   }
