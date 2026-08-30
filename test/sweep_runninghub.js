@@ -69,7 +69,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
       "wan-image-edit", "wan-image-edit-pro", "upscale-pro", "seedream-v4", "seedream-v4-5",
       "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent"];
-    var stillUnconfigured = ["gpt-image-2", "flux-2-dev"];
+    var stillUnconfigured = ["flux-2-dev"];
     return {
       hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
       apiPath: rhEffectiveApiPath("nano-banana-2"),
