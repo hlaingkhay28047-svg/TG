@@ -47,6 +47,11 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       if (u.indexOf("/openapi/v2/rhart-image/f-2-dev/text-to-image") >= 0
           || u.indexOf("/openapi/v2/alibaba/qwen-image-3.0-pro/text-to-image") >= 0
           || u.indexOf("/openapi/v2/rhart-image-g-2-official/text-to-image") >= 0
+          || u.indexOf("/openapi/v2/alibaba/wan-2.5-preview/text-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-g-1.5-official/text-to-image") >= 0
+          || u.indexOf("/openapi/v2/youchuan/text-to-image-v82") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-v1/text-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image/z-image/turbo") >= 0
           || u.indexOf("/openapi/v2/rhart-imagine-image-quality/text-to-image") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-t2i-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
@@ -68,8 +73,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     };
   });
   console.log("setup:", JSON.stringify(setup));
-  if (!setup.allOptionsPresent || setup.optionCount !== 6) {
-    console.log("FAIL: text-to-image model select did not populate all 6 models");
+  if (!setup.allOptionsPresent || setup.optionCount !== 49) {
+    console.log("FAIL: text-to-image model select did not populate all 49 models (6 + the v5.54.0 catalog wave's 43)");
     await browser.close();
     process.exit(1);
   }
@@ -171,6 +176,33 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && gptAuto.body.quality === "medium" && gptAuto.body.aspectRatio === undefined;
   console.log(gptAutoOk ? "PASS (gpt t2i Auto: resolution still sent, aspectRatio omitted)" : ("FAIL (gpt t2i auto): " + JSON.stringify(gptAuto)));
 
+  // ---- v5.54.0 catalog wave: five representative new models prove their
+  // documented shapes on the wire (each def cites its fetched doc). ----
+  // wan-2.5 t2i: size is REQUIRED from a five-value W*H enum — Auto must
+  // still send the documented default 1280*1280, never omit.
+  const wan25 = await runModel("wan-25-t2i", "", "1K", "a red lantern", "wan-2.5-preview/text-to-image");
+  const wan25Ok = wan25.ok && wan25.body && wan25.body.size === "1280*1280" && wan25.body.aspectRatio === undefined;
+  console.log(wan25Ok ? "PASS (wan-2.5 t2i required size defaults to 1280*1280)" : ("FAIL (wan25 t2i): " + JSON.stringify(wan25.body)));
+  // gpt-1.5 t2i: ratio only picks one of three fixed sizes; the endpoint
+  // declares NO aspectRatio field, and quality is REQUIRED.
+  const g15 = await runModel("gpt15-off-t2i", "3:2", "1K", "a poster", "rhart-image-g-1.5-official/text-to-image");
+  const g15Ok = g15.ok && g15.body && g15.body.size === "1536*1024" && g15.body.quality === "medium" && g15.body.aspectRatio === undefined;
+  console.log(g15Ok ? "PASS (gpt-1.5 t2i fixed size + quality, no aspectRatio)" : ("FAIL (gpt15 t2i): " + JSON.stringify(g15.body)));
+  // midjourney v8.2: hd is REQUIRED (like v8.1) and ships true.
+  const mj82 = await runModel("mj-v82-t2i", "16:9", "1K", "an anime city", "youchuan/text-to-image-v82");
+  const mj82Ok = mj82.ok && mj82.body && mj82.body.hd === true && mj82.body.aspectRatio === "16:9";
+  console.log(mj82Ok ? "PASS (mj v8.2 required hd flag)" : ("FAIL (mj82): " + JSON.stringify(mj82.body)));
+  // nano-banana v1: aspectRatio is REQUIRED with a literal "auto" value —
+  // Auto sends "auto", never omits and never forces a fixed ratio.
+  const nv1 = await runModel("nano-v1-t2i", "", "1K", "a banana", "rhart-image-v1/text-to-image");
+  const nv1Ok = nv1.ok && nv1.body && nv1.body.aspectRatio === "auto";
+  console.log(nv1Ok ? 'PASS (nano v1 t2i Auto sends the documented literal "auto")' : ("FAIL (nano v1): " + JSON.stringify(nv1.body)));
+  // z-image turbo t2i: node-keyed (10##text/28##select/29##file_type).
+  const zt = await runModel("z-turbo-t2i", "9:16", "1K", "a neon sign", "rhart-image/z-image/turbo");
+  const ztOk = zt.ok && zt.body && zt.body["28##select"] === "4" && zt.body["29##file_type"] === "PNG"
+    && String(zt.body["10##text"]).indexOf("a neon sign") >= 0 && zt.body.prompt === undefined;
+  console.log(ztOk ? "PASS (z-image turbo t2i node-keyed body)" : ("FAIL (z-turbo): " + JSON.stringify(zt.body)));
+
   // ---- v5.50.0: the Gemini translate bridge is retired — a Burmese t2i
   // prompt always ships raw with the English-recommended hint shown, and no
   // translate call ever leaves the browser. ----
@@ -217,7 +249,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(enOk ? "PASS (English prompt skips the translator and the hint entirely)"
     : ("FAIL (t2i english passthrough): " + JSON.stringify(enState)));
 
-  const overall = fluxOk && qwenOk && imagineOk && gptOk && gptAutoOk && trOk && noKeyOk && enOk;
+  const overall = fluxOk && qwenOk && imagineOk && gptOk && gptAutoOk && wan25Ok && g15Ok && mj82Ok && nv1Ok && ztOk && trOk && noKeyOk && enOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

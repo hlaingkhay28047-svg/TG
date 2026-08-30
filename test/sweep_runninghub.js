@@ -52,6 +52,12 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
           || u.indexOf("/openapi/v2/rhart-imagine-image-quality/edit") >= 0
           || u.indexOf("/openapi/v2/rhart-image/z-image-turbo/image-to-image") >= 0
           || u.indexOf("/openapi/v2/rhart-image/f-2-dev/edit-lora") >= 0
+          || u.indexOf("/openapi/v2/rhart-image/qwen-image/edit-2511") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-g/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-v1/edit") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-g-1.5-official/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/seedream-v5-pro/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/topazlabs/image-gigapixel-standard-2") >= 0
           || u.indexOf("/openapi/v2/topazlabs/image-upscale-transparent") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
@@ -70,7 +76,17 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off",
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
       "wan-image-edit", "wan-image-edit-pro", "upscale-pro", "seedream-v4", "seedream-v4-5",
-      "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent", "flux-2-dev"];
+      "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent", "flux-2-dev",
+      /* v5.54.0 catalog wave — every new image-edit entry ships configured */
+      "seedream-v5-lite", "seedream-v5-pro", "dola-seedream-5-pro", "grok-image-i2i",
+      "qwen-image-3", "qwen-image-3-pro", "wan-25-image", "nano-banana-v1-off",
+      "nano-banana-v1", "nano-banana-2-off", "nano-banana-2-lite-off", "nano-banana-2-lite",
+      "nano-banana-pro-ultra", "gpt-image-15-off", "jimeng-46", "sd5-layers",
+      "topaz-gp-standard", "topaz-gp-lowres", "topaz-gp-text", "topaz-gp-hifi",
+      "topaz-gp-art", "topaz-up-faces", "topaz-up-hifi3",
+      "flux-2-dev-edit-plain", "flux-klein-9b-edit", "flux-klein-4b-edit",
+      "flux-klein-4b-edit-lora", "flux-kontext-lora", "qwen-edit-2511",
+      "qwen-edit-2511-lora", "wan-22-image"];
     /* v5.53.4 — empty at last: flux-2-dev was the final placeholder, now
        configured with the owner's rhart-image/f-2-dev/edit-lora spec. The
        mechanism stays so any future placeholder lands here, not in silence. */
@@ -523,6 +539,114 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && xeditResult.ratioHidden === true && xeditResult.sizeHidden === true;
   console.log(xeditOk ? "PASS (grok imagine edit sends the bare prompt+image pair; Ratio/Size hidden)" : ("FAIL (grok imagine edit): " + JSON.stringify(xeditResult)));
 
+  // ---- v5.54.0 catalog wave: representative new i2i shapes on the wire ----
+  // Generic node kind (qwen edit-2511): three image slots — with two refs,
+  // 57## and 58## fill and 59## stays absent; ratio "16:9" -> "5".
+  const q2511 = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "qwen-edit-2511"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    updateGenOptsForRHKind();
+    document.getElementById("selRatio").value = "16:9";
+    document.getElementById("prompt").value = "test 2511";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "a" };
+    state.refs[1] = { mime: "image/png", b64: b64, label: "b" };
+    for (let i = 2; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    return (window.__rhBodies.find(b => b.url.indexOf("/qwen-image/edit-2511") >= 0) || {}).body || null;
+  }, B64);
+  console.log("qwen-2511 body:", JSON.stringify(q2511));
+  const q2511Ok = q2511 && typeof q2511["57##image"] === "string" && typeof q2511["58##image"] === "string"
+    && q2511["59##image"] === undefined && q2511["28##select"] === "5" && q2511["52##file_type"] === "PNG"
+    && q2511.prompt === undefined && q2511.imageUrls === undefined;
+  console.log(q2511Ok ? "PASS (generic node kind: multi-slot fill + shared ratio table)" : ("FAIL (qwen-2511): " + JSON.stringify(q2511)));
+
+  // grokimg: REQUIRED model field, single optional imageUrl, nothing else.
+  const grok42 = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "grok-image-i2i"; rhSaveCfg(c);
+    updateGenOptsForRHKind();
+    var ratioHidden = document.getElementById("selRatio").style.display === "none";
+    var sizeHidden = document.getElementById("selSize").style.display === "none";
+    document.getElementById("prompt").value = "test grok 4.2";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "a" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    return { body: (window.__rhBodies.find(b => b.url.indexOf("/rhart-image-g/image-to-image") >= 0) || {}).body || null,
+      ratioHidden: ratioHidden, sizeHidden: sizeHidden };
+  }, B64);
+  console.log("grok 4.2 body:", JSON.stringify(grok42.body), "hidden:", grok42.ratioHidden, grok42.sizeHidden);
+  const grok42Ok = grok42.body && grok42.body.model === "g-4.2" && typeof grok42.body.imageUrl === "string"
+    && grok42.body.resolution === undefined && grok42.body.aspectRatio === undefined
+    && grok42.ratioHidden === true && grok42.sizeHidden === true;
+  console.log(grok42Ok ? "PASS (grok 4.2 model field + bare body; Ratio/Size hidden)" : ("FAIL (grok42): " + JSON.stringify(grok42)));
+
+  // nanov1: aspectRatio REQUIRED with a literal documented "auto" — an
+  // out-of-enum pick must send "auto", never the raw value.
+  const nanoV1 = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "nano-banana-v1"; rhSaveCfg(c);
+    updateGenOptsForRHKind();
+    document.getElementById("selRatio").value = "";
+    document.getElementById("prompt").value = "test nano v1";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "a" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    return (window.__rhBodies.find(b => b.url.indexOf("/rhart-image-v1/edit") >= 0) || {}).body || null;
+  }, B64);
+  const nanoV1Ok = nanoV1 && nanoV1.aspectRatio === "auto" && Array.isArray(nanoV1.imageUrls) && nanoV1.resolution === undefined;
+  console.log(nanoV1Ok ? 'PASS (nano v1 Auto sends the documented literal "auto")' : ("FAIL (nano v1): " + JSON.stringify(nanoV1)));
+
+  // sd5pro: resolution 1k|2k (2k default) + outputFormat png; never 4k.
+  const sd5 = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "seedream-v5-pro"; rhSaveCfg(c);
+    updateGenOptsForRHKind();
+    document.getElementById("selSize").value = "4K";
+    document.getElementById("prompt").value = "test sd5 pro";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "a" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    return (window.__rhBodies.find(b => b.url.indexOf("/seedream-v5-pro/image-to-image") >= 0) || {}).body || null;
+  }, B64);
+  const sd5Ok = sd5 && sd5.resolution === "2k" && sd5.outputFormat === "png" && Array.isArray(sd5.imageUrls);
+  console.log(sd5Ok ? "PASS (seedream v5 pro clamps to its 1k|2k enum + png output)" : ("FAIL (sd5pro): " + JSON.stringify(sd5)));
+
+  // topaz gigapixel reuses the upscale-transparent shape end to end.
+  const gp = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "topaz-gp-standard"; rhSaveCfg(c);
+    updateGenOptsForRHKind();
+    document.getElementById("selSize").value = "2K";
+    document.getElementById("prompt").value = "";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "a" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/topazlabs/image-gigapixel-standard-2") >= 0) || {}).body || null;
+    // restore the default control set for the tests below
+    var c2 = rhCfg(); c2.activeModel = "nano-banana-2"; rhSaveCfg(c2);
+    updateGenOptsForRHKind();
+    return body;
+  }, B64);
+  const gpOk = gp && gp.outputWidth === 2560 && gp.outputHeight === 1440 && typeof gp.imageUrl === "string"
+    && gp.scale === undefined && gp.prompt === undefined;
+  console.log(gpOk ? "PASS (topaz gigapixel rides the upscale-transparent shape)" : ("FAIL (gigapixel): " + JSON.stringify(gp)));
+
   // Upscale Transparent: activate it, pick "2K" (-> 2560x1440), and inspect
   // the actual request body — must carry outputWidth/outputHeight (never
   // "scale", which is Upscale Pro's field, not this endpoint's), no prompt,
@@ -591,7 +715,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
   const overall = result === "OK" && qwenOk && upOk && seedreamOk && sd45Ok && sd40Ok && imagineOk && zimageOk && zimageValidOk
-    && fluxOk && fluxAutoOk && imagineOutOk && xeditOk && upTransparentOk && upTransparentNoImgOk && noImgOk;
+    && fluxOk && fluxAutoOk && imagineOutOk && xeditOk && q2511Ok && grok42Ok && nanoV1Ok && sd5Ok && gpOk
+    && upTransparentOk && upTransparentNoImgOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

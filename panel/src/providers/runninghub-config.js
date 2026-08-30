@@ -115,7 +115,161 @@ function defaults() {
          64##select/65##file_type), built whole in the adapter's zimage
          branch — no flat image field exists to name. */
       "z-image-turbo":         { apiPath: "rhart-image/z-image-turbo/image-to-image", kind: "zimage" },
-      "upscale-transparent":   { apiPath: "topazlabs/image-upscale-transparent", imageParam: "imageUrl", kind: "upscale-transparent" }
+      "upscale-transparent":   { apiPath: "topazlabs/image-upscale-transparent", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* ---------- v6.30.0 full-catalog wave ----------
+         Every entry below was wired from its own fetched doc page (the
+         api-<id> comment; pulled by fetch-docs.yml). Body shapes come
+         from the kind/flags exactly as documented — nothing is guessed.
+         Node-keyed graphs never send their LoRA pairs, so each doc's
+         default adapter/strength applies. */
+      /* api-448184476 */
+      "seedream-v5-lite": { apiPath: "seedream-v5-lite/image-to-image", kind: "sd5lite", promptMax: 2000 },
+      /* api-494859263 */
+      "seedream-v5-pro": { apiPath: "seedream-v5-pro/image-to-image", kind: "sd5pro", promptMax: 5000 },
+      /* api-494859267 */
+      "dola-seedream-5-pro": { apiPath: "dola-Seedream-5.0-pro/image-to-image", kind: "sd5pro", promptMax: 5000 },
+      /* api-448184479 */
+      "grok-image-i2i": { apiPath: "rhart-image-g/image-to-image", kind: "grokimg" },
+      /* api-497874395 */
+      "qwen-image-3": { apiPath: "alibaba/qwen-image-3.0/image-edit", sizeParam: true, promptMax: 3000 },
+      /* api-494859264 */
+      "qwen-image-3-pro": { apiPath: "alibaba/qwen-image-3.0-pro/image-edit", sizeParam: true, promptMax: 3000 },
+      /* api-448184493 */
+      "wan-25-image": { apiPath: "alibaba/wan-2.5-preview/image-to-image", kind: "wan25", promptMax: 2000, ratioEnum: ["1:1","2:3","3:2","3:4","4:3","9:16","16:9","21:9"] },
+      /* api-448184495 */
+      "nano-banana-v1-off": { apiPath: "rhart-image-v1-official/edit", kind: "nanov1", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"] },
+      /* api-448184498 */
+      "nano-banana-v1": { apiPath: "rhart-image-v1/edit", kind: "nanov1", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"] },
+      /* api-448184501 */
+      "nano-banana-2-off": { apiPath: "rhart-image-n-g31-flash-official/image-to-image", promptMax: 20000 },
+      /* api-494859265 */
+      "nano-banana-2-lite-off": { apiPath: "rhart-image-n-g31-flash-lite-official/image-to-image", kind: "ratioOnly", promptMax: 20000, ratioEnum: ["auto","1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+      /* api-494859266 */
+      "nano-banana-2-lite": { apiPath: "rhart-image-n-g31-flash-lite/image-to-image", kind: "ratioOnly", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+      /* api-448184496 */
+      "nano-banana-pro-ultra": { apiPath: "rhart-image-n-pro-official/edit-ultra", promptMax: 20000, resolutions: ["4k", "8k"] },
+      /* api-448184503 */
+      "gpt-image-15-off": { apiPath: "rhart-image-g-1.5-official/image-to-image", kind: "gpt15", ratioEnum: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"] },
+      /* api-465292102 */
+      "jimeng-46": { apiPath: "bytedance/jimeng-4.6/image-to-image", kind: "bare", promptMax: 800 },
+      /* api-498427798 */
+      "sd5-layers": { apiPath: "seedream-v5-pro/layer-decomposition", kind: "sdlayer", promptMax: 2000 },
+      /* api-495680091 */
+      "topaz-gp-standard": { apiPath: "topazlabs/image-gigapixel-standard-2", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* api-495680090 */
+      "topaz-gp-lowres": { apiPath: "topazlabs/image-gigapixel-low-resolution-2", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* api-495680089 */
+      "topaz-gp-text": { apiPath: "topazlabs/image-gigapixel-text-and-shapes", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* api-495680092 */
+      "topaz-gp-hifi": { apiPath: "topazlabs/image-gigapixel-high-fidelity-2", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* api-495680093 */
+      "topaz-gp-art": { apiPath: "topazlabs/image-gigapixel-art-and-cgi", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* api-495680095 */
+      "topaz-up-faces": { apiPath: "topazlabs/image-upscale-detail-faces", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* api-495680096 */
+      "topaz-up-hifi3": { apiPath: "topazlabs/image-upscale-high-fidelity-v3", imageParam: "imageUrl", kind: "upscale-transparent" },
+      /* api-448184482 */
+      "flux-2-dev-edit-plain": { apiPath: "rhart-image/f-2-dev/edit", kind: "node", node: { image: "20##image", prompt: "17##text", ratio: "46##select", fileType: "51##file_type", auto: true } },
+      /* api-448184483 */
+      "flux-klein-9b-edit": { apiPath: "rhart-image/f-2-klein-9b/edit", kind: "node", node: { image: "53##image", prompt: "54##text", ratio: "81##select", fileType: "55##file_type", auto: true } },
+      /* api-448184484 */
+      "flux-klein-4b-edit": { apiPath: "rhart-image/f-2-klein-4b/edit", kind: "node", node: { image: "19##image", prompt: "17##text", ratio: "47##select", fileType: "51##file_type" } },
+      /* api-448184485 */
+      "flux-klein-4b-edit-lora": { apiPath: "rhart-image/f-2-klein-4b/edit-lora", kind: "node", node: { image: "41##image", prompt: "16##text", ratio: "37##select", fileType: "40##file_type" } },
+      /* api-448184480 */
+      "flux-kontext-lora": { apiPath: "rhart-video/f-kontext/dev-lora", kind: "node", node: { image: "15##image", prompt: "4##text", ratio: "41##select", fileType: "16##file_type", auto: true } },
+      /* api-448184487 */
+      "qwen-edit-2511": { apiPath: "rhart-image/qwen-image/edit-2511", kind: "node", node: { images: ["57##image","58##image","59##image"], prompt: "53##text", ratio: "28##select", fileType: "52##file_type" } },
+      /* api-448184486 */
+      "qwen-edit-2511-lora": { apiPath: "rhart-image/qwen-image/edit-2511-lora", kind: "node", node: { image: "44##image", prompt: "38##text", ratio: "32##select", fileType: "40##file_type" } },
+      /* api-448184492 */
+      "wan-22-image": { apiPath: "rhart-video/wan-2.2/image-to-image", kind: "node", node: { image: "272##image", prompt: "79##text", ratio: "267##select", fileType: "242##file_type", auto: true } },
+      /* api-448184505 */
+      "seedream-v4-t2i": { apiPath: "seedream-v4/text-to-image", kind: "t2i", resolutionField: true, extraBody: { sequentialImageGeneration:"disabled", maxImages:1 } },
+      /* api-448184506 */
+      "seedream-v45-t2i": { apiPath: "seedream-v4.5/text-to-image", kind: "t2i", resolutionField: true, resolutions: ["2k","4k"], extraBody: { sequentialImageGeneration:"disabled", maxImages:1 } },
+      /* api-448184507 */
+      "seedream-v5-lite-t2i": { apiPath: "seedream-v5-lite/text-to-image", kind: "t2i", resolutionField: true, resolutions: ["2k","3k"], extraBody: { sequentialImageGeneration:"disabled", maxImages:1 } },
+      /* api-494859257 */
+      "seedream-v5-pro-t2i": { apiPath: "seedream-v5-pro/text-to-image", kind: "t2i", resolutionField: true, resolutions: ["1k","2k"], extraBody: { outputFormat:"png" } },
+      /* api-494859262 */
+      "dola-sd5-t2i": { apiPath: "dola-Seedream-5.0-pro/text-to-image", kind: "t2i", resolutionField: true, resolutions: ["1k","2k"], extraBody: { outputFormat:"png" } },
+      /* api-448184508 */
+      "grok-image-t2i": { apiPath: "rhart-image-g/text-to-image", kind: "t2i", t2iRatios: ["960x960","720x1280","1280x720","1168x784","784x1168"], extraBody: { model:"g-4.2" } },
+      /* api-448969339 */
+      "grok-imagine-t2i": { apiPath: "rhart-image-x-official/text-to-image", kind: "t2i", t2iRatios: ["2:1","20:9","16:9","4:3","3:2","1:1","2:3","3:4","9:16","9:20","1:2"], extraBody: { outputFormat:"png" } },
+      /* api-497874394 */
+      "qwen-image-3-t2i": { apiPath: "alibaba/qwen-image-3.0/text-to-image", kind: "t2i", sizeMap: "qwen3" },
+      /* api-448184511 */
+      "qwen-image-2-t2i": { apiPath: "alibaba/qwen-image-2.0/text-to-image", kind: "t2i", sizeMap: "qwen2" },
+      /* api-448184512 */
+      "qwen-image-2-pro-t2i": { apiPath: "alibaba/qwen-image-2.0-pro/text-to-image", kind: "t2i", sizeMap: "qwen2" },
+      /* api-448184526 */
+      "wan-25-t2i": { apiPath: "alibaba/wan-2.5-preview/text-to-image", kind: "t2i", sizeMap: "wan25", sizeRequired: true },
+      /* api-448184525 */
+      "wan-27-t2i": { apiPath: "alibaba/wan-2.7/text-to-image", kind: "t2i", whField: true },
+      /* api-448184527 */
+      "wan-27-pro-t2i": { apiPath: "alibaba/wan-2.7/text-to-image-pro", kind: "t2i", whField: true },
+      /* api-448184532 */
+      "nano-v1-off-t2i": { apiPath: "rhart-image-v1-official/text-to-image", kind: "t2i", t2iRatios: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"], autoRatioValue: "auto" },
+      /* api-448184535 */
+      "nano-v1-t2i": { apiPath: "rhart-image-v1/text-to-image", kind: "t2i", t2iRatios: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"], autoRatioValue: "auto" },
+      /* api-448184536 */
+      "nano-pro-low-t2i": { apiPath: "rhart-image-n-pro/text-to-image", kind: "t2i", t2iRatios: ["1:1","3:2","2:3","3:4","4:3","4:5","5:4","9:16","16:9","21:9"], resolutionField: true },
+      /* api-448184533 */
+      "nano-pro-ultra-t2i": { apiPath: "rhart-image-n-pro-official/text-to-image-ultra", kind: "t2i", t2iRatios: ["1:1","3:2","2:3","3:4","4:3","4:5","5:4","9:16","16:9","21:9"], resolutionField: true, resolutions: ["4k","8k"] },
+      /* api-448184537 */
+      "nano2-off-t2i": { apiPath: "rhart-image-n-g31-flash-official/text-to-image", kind: "t2i", t2iRatios: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"], resolutionField: true },
+      /* api-448184538 */
+      "nano2-low-t2i": { apiPath: "rhart-image-n-g31-flash/text-to-image", kind: "t2i", t2iRatios: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"], resolutionField: true },
+      /* api-494859260 */
+      "nano2-lite-off-t2i": { apiPath: "rhart-image-n-g31-flash-lite-official/text-to-image", kind: "t2i", t2iRatios: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+      /* api-494859261 */
+      "nano2-lite-low-t2i": { apiPath: "rhart-image-n-g31-flash-lite/text-to-image", kind: "t2i", t2iRatios: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+      /* api-448184539 */
+      "gpt15-off-t2i": { apiPath: "rhart-image-g-1.5-official/text-to-image", kind: "t2i", ratioForSizeOnly: true, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], sizeMap: "gpt15", sizeRequired: true, extraBody: { quality:"medium" } },
+      /* api-448184541 */
+      "gpt2-low-t2i": { apiPath: "rhart-image-g-2/text-to-image", kind: "t2i", t2iRatios: ["1:1","2:3","3:2","4:5","5:4","4:3","3:4","16:9","9:16","21:9","9:21","2:1","1:2","3:1","1:3"], resolutionField: true },
+      /* api-465292103 */
+      "jimeng-t2i": { apiPath: "bytedance/jimeng-4.6/text-to-image", kind: "t2i" },
+      /* api-448184494 */
+      "mj-v6-t2i": { apiPath: "youchuan/text-to-image-v6", kind: "t2i", t2iRatios: ["1:1","4:3","3:2","16:9","3:4","2:3","9:16"] },
+      /* api-448184530 */
+      "mj-v61-t2i": { apiPath: "youchuan/text-to-image-v61", kind: "t2i", t2iRatios: ["1:1","4:3","3:2","16:9","3:4","2:3","9:16"] },
+      /* api-448184529 */
+      "mj-niji6-t2i": { apiPath: "youchuan/text-to-image-niji6", kind: "t2i", t2iRatios: ["1:1","4:3","3:2","16:9","3:4","2:3","9:16"] },
+      /* api-448184531 */
+      "mj-v7-t2i": { apiPath: "youchuan/text-to-image-v7", kind: "t2i", t2iRatios: ["1:1","4:3","3:2","16:9","3:4","2:3","9:16"] },
+      /* api-448184528 */
+      "mj-niji7-t2i": { apiPath: "youchuan/text-to-image-niji7", kind: "t2i", t2iRatios: ["1:1","4:3","3:2","16:9","3:4","2:3","9:16"] },
+      /* api-494859259 */
+      "mj-v82-t2i": { apiPath: "youchuan/text-to-image-v82", kind: "t2i", t2iRatios: ["1:1","4:3","3:2","16:9","3:4","2:3","9:16"], extraBody: { hd:true } },
+      /* api-448184510 */
+      "qwen-2512-t2i": { apiPath: "rhart-image/qwen-image/text-to-image-2512", kind: "t2i", t2iNodeKeys: { prompt: "3##text", ratio: "25##select", fileType: "31##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184509 */
+      "qwen-2512-lora-t2i": { apiPath: "rhart-image/qwen-image/text-to-image-2512-lora", kind: "t2i", t2iNodeKeys: { prompt: "6##text", ratio: "24##select", fileType: "30##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184514 */
+      "z-turbo-t2i": { apiPath: "rhart-image/z-image/turbo", kind: "t2i", t2iNodeKeys: { prompt: "10##text", ratio: "28##select", fileType: "29##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184513 */
+      "z-turbo-lora-t2i": { apiPath: "rhart-image/z-image/turbo-lora", kind: "t2i", t2iNodeKeys: { prompt: "6##text", ratio: "30##select", fileType: "34##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184517 */
+      "flux2-lora-t2i": { apiPath: "rhart-image/f-2-dev/text-to-image-lora", kind: "t2i", t2iNodeKeys: { prompt: "12##text", ratio: "42##select", fileType: "44##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184520 */
+      "klein9b-t2i": { apiPath: "rhart-image/f-2-klein-9b/text-to-image", kind: "t2i", t2iNodeKeys: { prompt: "36##text", ratio: "51##select", fileType: "54##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184519 */
+      "klein9b-lora-t2i": { apiPath: "rhart-image/f-2-klein-9b/text-to-image-lora", kind: "t2i", t2iNodeKeys: { prompt: "37##text", ratio: "52##select", fileType: "55##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184521 */
+      "klein4b-t2i": { apiPath: "rhart-image/f-2-klein-4b/text-to-image", kind: "t2i", t2iNodeKeys: { prompt: "9##text", ratio: "94##select", fileType: "103##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184522 */
+      "klein4b-lora-t2i": { apiPath: "rhart-image/f-2-klein-4b/text-to-image-lora", kind: "t2i", t2iNodeKeys: { prompt: "9##text", ratio: "33##select" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184515 */
+      "krea-t2i": { apiPath: "rhart-image/f-krea-dev-lora", kind: "t2i", t2iNodeKeys: { prompt: "45##text", ratio: "133##select", fileType: "135##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184523 */
+      "fdev-t2i": { apiPath: "rhart-image/f-dev", kind: "t2i", t2iNodeKeys: { prompt: "23##text", ratio: "43##select", fileType: "48##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184516 */
+      "fdev-lora-t2i": { apiPath: "rhart-image/f-dev-lora", kind: "t2i", t2iNodeKeys: { prompt: "105##text", ratio: "104##select", fileType: "106##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
+      /* api-448184524 */
+      "wan22-lora-t2i": { apiPath: "rhart-video/wan-2.2/text-to-image-lora", kind: "t2i", t2iNodeKeys: { prompt: "79##text", ratio: "225##select", fileType: "201##file_type" }, t2iRatios: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired: true },
     }
   };
 }
