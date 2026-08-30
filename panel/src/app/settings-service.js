@@ -44,7 +44,26 @@ function create(store, verifier) {
   }
   function _write(s) { try { store && store.set(KEY, s); } catch (e) {} }
 
-  function get() { return _read(); }
+  function get() {
+    var s = _read();
+    /* v6.28.1 — ONE key home (owner: "don't duplicate"). Setup's Enterprise
+       key (hnk_students_settings.json, bridged by main.js as HNK.studioKey)
+       is the single source of truth; this store only ever carried its own
+       copy because the two stacks persist to different files. When this
+       store has no key of its own, adopt Setup's — so saving the key once
+       in Setup lights up Free Generate and the Smart Workflows too. */
+    if (!s.apiKey) {
+      try {
+        var g = (typeof globalThis !== "undefined") ? globalThis : null;
+        var bridged = g && g.HNK && typeof g.HNK.studioKey === "function" ? g.HNK.studioKey() : "";
+        if (bridged) {
+          s.apiKey = bridged;
+          s.keyVerified = !!(g.HNK.studioKeyVerified && g.HNK.studioKeyVerified());
+        }
+      } catch (e) {}
+    }
+    return s;
+  }
 
   function set(patch) {
     var s = Object.assign(_read(), patch || {});
