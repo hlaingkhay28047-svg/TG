@@ -230,7 +230,8 @@ async function students(client, identity, params) {
   const clause = where.length ? " where " + where.join(" and ") : "";
   const { rows } = await client.query(
     `select p.id,p.name,coalesce(p.email,u.email) as email,p.account_status,p.created_at,
-            p.avatar,p.allowed_devices,
+            p.avatar,
+            p.allowed_devices,
             l.status as license_status,l.starts_at,l.expires_at,
             a.web_app_enabled,a.ccx_download_enabled,a.panel_enabled,
             (select max(s.last_seen_at) from public.sessions s where s.user_id=p.id) as last_active_at,
@@ -259,7 +260,8 @@ async function studentDetail(client, identity, userId) {
   assertUuid(userId,"student_id");
   const profile = await client.query(
     `select p.id,p.name,coalesce(p.email,u.email) as email,p.account_status,p.created_at,
-            p.avatar,p.allowed_devices,
+            p.avatar,
+            p.allowed_devices,
             l.status as license_status,l.starts_at,l.expires_at,
             a.web_app_enabled,a.ccx_download_enabled,a.panel_enabled,
             (select max(occurred_at) from public.login_history where user_id=p.id and event_type='login' and success) as last_login_at,
