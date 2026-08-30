@@ -205,11 +205,75 @@ eligible students.
     sibling workflows use. Deployment audit: every panel apiPath
     (rhart-* and platform paths alike) verified present in the web app's
     client; none invented.
+  * Web-app tab parity (owner request): the tab bar reads like the web
+    app's — Home (the workflow card home) first and the fresh-boot landing
+    tab, then Edit (the prompt studio), Create, Retouch, Library (the
+    1850 catalog), Setup last. Same six pages; names, order and landing
+    match the web app. The AI Tools stack's localized pill row became the
+    web app's English section pills (Freeform · Workflows · History ·
+    Settings) with the Home duplicate removed — the bottom Home tab now
+    returns to the cards home from any sub-screen.
+  * Each family in its own group (owner request): the one-tap Presets
+    (Meitu/Evoto styles included), Chains, Ref ops, Scenes, Wedding,
+    Recipes, Lighting and the Pipeline moved from the old Presets page
+    into Edit — they all drive the Edit page's runGenerate/Keep/cleanup
+    machinery, which the Edit-page batch (photos + output folder, the
+    web app's Path counterpart) already advertises. The Library tab now
+    holds only the 1850 Visual Library, like the web app; Retouch keeps
+    the slider suite plus the Meitu/Evoto style buttons.
+  * Web-app page heroes (owner request): every page banner now reads like
+    the web app's — an English kick (Freeform Create · Text to Image ·
+    Retouch Pro · Reference Library · Setup · Smart Workflow) over the web
+    app's own localized headline (Burmese for my, the web app's English
+    line elsewhere), on the web app's own banner art bundled into the CCX
+    (flower-portrait, coral-fairy, flower-gown, train-station, archer).
+    The Library card opens by default — the Library tab IS the library.
+  * The FULL Smart Workflow catalog (owner request: "there are over 100"):
+    all 131 workflows the web app composes for its Workflows page — core
+    definitions plus the preset/cleanup/wedding/scene-derived one-taps,
+    prompts, negatives and input labels included — now ship in the CCX as
+    a GENERATED data file (js/hnk_wf_catalog_data.js) taken from the web
+    app's own composed catalog (window.HNK_WF_CATALOG), never re-derived
+    by hand. The panel's Workflows list shows them grouped by the app's
+    own nine categories; the nine hand-built definitions stay
+    authoritative for their ids; wrapped items run the same confirmed
+    nano-banana-2 edit deployment as the app's tier; card art loads from
+    the licensed host with a text fallback offline.
+    test/verify_panel_wf_catalog_sync.js pins the file to the app.
+  * Model set completed to the web app's (owner request): the three
+    text-to-image models the app carries and the panel lacked — Nano
+    Banana Pro (T2I, official), Qwen 3.0 Pro (T2I) and RH Imagine
+    Quality (T2I) — added to the model registry and RunningHub config
+    with their endpoints ported verbatim from the app's own client
+    (`rhart-image-n-pro-official/text-to-image`,
+    `alibaba/qwen-image-3.0-pro/text-to-image`,
+    `rhart-imagine-image-quality/text-to-image`). 21 models total; no
+    path invented.
+  * Every image slot offers all four sources (owner request): the AI
+    Tools surfaces caught up with the classic tabs — each Smart Workflow
+    input row and the Free Generate slot strip now offer Active Layer ·
+    File · Web Link · Library (classic Edit ×2 and Create ×4 slots
+    already carried all four). The OS file picker lives in the host
+    adapter (`pickImageFile`), the Web source opens an inline URL row,
+    and the Library source uses the existing last-pick bridge. The audit
+    shim proves both new paths end-to-end: a web link really imports
+    into a workflow slot and a Free Generate slot through the real host
+    adapter.
+  * Hero banners complete — ten shipped visuals (owner request): the web
+    app's time-greeting hero (same morning/afternoon/evening clock split,
+    same three banner arts, all nine language greetings) now opens the
+    AI Tools Home, bundled beside the six page banners and the gate
+    hero. Two stale unreferenced banner duplicates removed
+    (icons/banners/{master-bgfg-replace,reference-transfer}.jpg — their
+    icons/cards/ copies are the referenced ones), so the CCX shrinks
+    slightly despite the three new arts.
   Real-Photoshop acceptance MUST cover the full v6.26.2 checklist above,
   with special weight on: the AI Tools tab opening to the workflow home
-  WITH card art visible, an AI Tools generate, a library preset tap
-  landing in Reference 2, and a Text / Logo generate.
+  WITH card art visible AND the time-greeting hero, an AI Tools generate,
+  all four sources visible on one workflow input row (and a web-link
+  import), a library preset tap landing in Reference 2, and a Text / Logo
+  generate.
   Artifact `HNK_Ai_Panel_v6.27.0.ccx`, SHA-256
-  `e5c47ce4111673fdc64b2c8e97d945ab2ec9f17f7970b7e7e9bbd7d31719811e`,
-  1,425,484 bytes (the bundled card art accounts for the growth over
+  `215551a31bc96354ba7323268c501a8babcddae488ba2481d9c0dd132f250b48`,
+  1,341,521 bytes (the bundled card art accounts for the growth over
   6.26.2's 524,577). The release stays disabled until that acceptance.

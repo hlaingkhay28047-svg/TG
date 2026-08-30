@@ -1136,7 +1136,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    animated welcome line beneath. Everything stands down for reduced motion. */
 .acc-hero{display:flex;flex-direction:column;align-items:center;margin:6px 0 14px}
 .acc-ava{position:relative;width:96px;height:96px;flex:none;padding:0;border:none;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-/* v5.53.0 — sign-up form's compact photo preview (hidden until picked) */
+/* v5.53.1 — sign-up form's compact photo preview (hidden until picked) */
 .ava-mini{width:44px;height:44px;flex:none;border-radius:50%;object-fit:cover;display:none;border:1px solid rgba(233,185,73,.55)}
 .ava-ring{position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from 0deg,rgba(233,185,73,.05),#f7d98e 25%,rgba(233,185,73,.12) 50%,#b98a24 75%,rgba(233,185,73,.05));animation:avaSpin 8s linear infinite;filter:drop-shadow(0 0 10px rgba(233,185,73,.28))}
 @keyframes avaSpin{to{transform:rotate(360deg)}}
@@ -1679,7 +1679,7 @@ body.wall #wallRetry.on{display:block}
      per session; the browser tab, reduced-motion users and every failure
      path get the app exactly as before. Its style rides inline so the
      overlay paints before the main stylesheet is even fetched.
-     v5.53.0 — cinematic icon intro (owner request): the OS splash hands off
+     v5.53.1 — cinematic icon intro (owner request): the OS splash hands off
      to the SAME icon art the home screen shows, a gold ring draws itself
      around it, a light sweeps the art, and the whole intro irises away into
      the app. All v5.49.0 guards are untouched. -->
@@ -2229,7 +2229,7 @@ html.splashing #splash{display:flex}
             <div class="subh" id="accSignupH"></div>
             <div class="row"><input class="inp grow" id="accEmail2" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
             <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass2" type="button"></button></div>
-            <!-- v5.53.0 — optional profile photo at sign-up: same pick →
+            <!-- v5.53.1 — optional profile photo at sign-up: same pick →
                  canvas-downscale pipeline as the account card; the result is
                  held in memory and PATCHed to the caller's own profiles row
                  the moment the new session exists. Skipping it is fine — the
@@ -8231,6 +8231,10 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     }
   }
   var wfCats=deriveWorkflowCats(), wfTotal=0;
+  /* v5.53.1 — the composed catalog, exposed read-only so the Photoshop
+     panel's build/sync tooling can mirror the EXACT same 131 workflows
+     (ids, prompts, inputs, categories) instead of re-deriving them. */
+  try{ window.HNK_WF_CATALOG = wfCats; }catch(e){}
   var wfJumpTargets=[];
   wfCats.forEach(function(c){
     wfTotal += c.items.length;
@@ -19864,7 +19868,7 @@ async function accLogin(){
 function accPostLogin(){
   (async function(){
     try { await accLoadProfile(); } catch(e){}
-    /* v5.53.0 — a photo picked on the sign-up form is saved the moment the
+    /* v5.53.1 — a photo picked on the sign-up form is saved the moment the
        session exists; harmless no-op when nothing is pending. */
     try { accAvaPendingTake(); } catch(e){}
     try { await unifiedRefresh(true); } catch(e){}
@@ -20305,7 +20309,7 @@ async function accAvaSave(val, btn){
   } catch(e){ setSt("stAva", friendlyError(e), "err"); }
     finally { accBusy(btn, false); }
 }
-/* v5.53.0 — `done` lets the sign-up form reuse this pipeline without a
+/* v5.53.1 — `done` lets the sign-up form reuse this pipeline without a
    session: it holds the downscaled result instead of PATCHing profiles.
    `stId` routes failures to whichever status line is actually visible. */
 function accAvaPickFile(file, done, stId){
@@ -20336,7 +20340,7 @@ function accAvaPickFile(file, done, stId){
   fr.readAsDataURL(file);
 }
 
-/* v5.53.0 — the photo picked on the sign-up form, waiting for its session.
+/* v5.53.1 — the photo picked on the sign-up form, waiting for its session.
    Saved by accPostLogin (the first moment the profiles row is ours under
    RLS), then cleared — whether the user finished by signing up or by
    switching to the login form. */
@@ -20772,7 +20776,7 @@ function accWire(){
     if (avaFile.files && avaFile.files[0]) accAvaPickFile(avaFile.files[0]);
   });
   if (avaDrop) avaDrop.onclick = function(){ accAvaSave(null, avaDrop); };
-  /* v5.53.0 — the sign-up form's own picker: downscale now, save after the
+  /* v5.53.1 — the sign-up form's own picker: downscale now, save after the
      session exists (accAvaPendingTake in accPostLogin). Failures land on
      stAcc — the status line the sign-up form actually shows. */
   var avaPickS = $("btnAvaPickSignup"), avaFileS = $("avaFileSignup");
@@ -21256,7 +21260,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.53.0";
+var APP_VER="5.53.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

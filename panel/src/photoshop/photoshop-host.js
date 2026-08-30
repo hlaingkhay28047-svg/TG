@@ -89,6 +89,25 @@ async function readImageFile(file) {
   } catch (e) { return null; }
 }
 
+/* ---- confident: open the OS image picker and return the chosen file ----
+   v6.27.0 — the AI Tools slots gained the classic tabs' File source, and the
+   screens are host-agnostic, so the picker lives here. Returns the UXP file
+   entry (readImageFile then reads it) or null on cancel / no UXP host. The
+   two-step types fallback mirrors main.js pickAnyFile: some hosts reject a
+   typeless call, others reject the types array. ---- */
+async function pickImageFile() {
+  var uxp = _uxp();
+  var lfs = uxp && uxp.storage && uxp.storage.localFileSystem;
+  if (!lfs || !lfs.getFileForOpening) return null;
+  try {
+    return await lfs.getFileForOpening({ allowMultiple: false });
+  } catch (e) {
+    try {
+      return await lfs.getFileForOpening({ allowMultiple: false, types: ["png", "jpg", "jpeg", "webp"] });
+    } catch (e2) { return null; }
+  }
+}
+
 /* ---- confident: fetch a web image into a data-URL ref ---- */
 async function fetchImageUrl(url) {
   try {
@@ -275,6 +294,7 @@ var API = {
   hasActiveDocument: hasActiveDocument,
   canvasSize: canvasSize,
   readImageFile: readImageFile,
+  pickImageFile: pickImageFile,
   fetchImageUrl: fetchImageUrl,
   readClipboardImage: readClipboardImage,
   captureActiveLayer: captureActiveLayer,

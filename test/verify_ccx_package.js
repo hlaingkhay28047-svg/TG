@@ -27,10 +27,23 @@ check("panel source includes a deterministic packaging command",
   fs.existsSync(PACKAGE_SCRIPT), "panel/package.sh missing");
 check("tracked panel release metadata exists", fs.existsSync(METADATA), METADATA);
 
+/* v6.27.0 — the probe filename and the coordination check below used to
+   carry the CURRENT version as a literal ("6.26.2"), so every release bump
+   broke this file twice: the in-repo probe started failing the FILENAME
+   check before it could reach the repository-path refusal it exists to
+   prove, and the coordination check failed with three identical versions
+   in its own detail. Same disease sweep_v467's G-note documents: the pin
+   measured the contents, not the promise. Both now derive the version from
+   the tracked panel manifest — the coordination itself stays fully pinned. */
+const sourceVersion = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(SOURCE, "manifest.json"), "utf8")).version || ""; }
+  catch (e) { return ""; }
+})();
+
 if (fs.existsSync(PACKAGE_SCRIPT)) {
   const noOutput = spawnSync(PACKAGE_SCRIPT, [], { cwd: ROOT, encoding: "utf8" });
   const repositoryOutput = spawnSync(PACKAGE_SCRIPT,
-    [path.join(ROOT, "HNK_Ai_Panel_v6.26.2.ccx")], { cwd: ROOT, encoding: "utf8" });
+    [path.join(ROOT, `HNK_Ai_Panel_v${sourceVersion}.ccx`)], { cwd: ROOT, encoding: "utf8" });
   check("packaging requires an explicit output path",
     noOutput.status === 64 && /Usage:/i.test(noOutput.stderr || ""),
     `exit ${noOutput.status}: ${(noOutput.stderr || "").trim()}`);
@@ -53,7 +66,8 @@ if (fs.existsSync(METADATA)) {
   const sourceManifest = fs.existsSync(sourceManifestPath)
     ? JSON.parse(fs.readFileSync(sourceManifestPath, "utf8")) : {};
   check("panel version is coordinated across release metadata and source",
-    metadata.version === "6.26.2" && metadata.minimum_supported_version === metadata.version &&
+    /^\d+\.\d+\.\d+$/.test(metadata.version || "") &&
+    metadata.minimum_supported_version === metadata.version &&
     sourceManifest.version === metadata.version,
     JSON.stringify({ metadata: metadata.version, minimum: metadata.minimum_supported_version,
       manifest: sourceManifest.version }));

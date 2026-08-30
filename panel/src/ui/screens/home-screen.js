@@ -21,6 +21,7 @@ function hnkArtCard(doc, visual) {
   var art = doc.createElement("div");
   art.className = "hnk-cardart";
   var im = doc.createElement("img");
+  im.onerror = function () { try { art.parentNode && art.parentNode.removeChild(art); } catch (e) { } };
   im.src = visual; im.alt = "";
   art.appendChild(im);
   return art;
@@ -34,6 +35,24 @@ var workflowRegistry = _CJS ? require("../../workflows/workflow-registry") : glo
 function render(root, deps) {
   var doc = deps.document;
   dom.clear(root);
+
+  /* v6.27.0 — webapp-parity time-greeting hero. Same clock split as the web
+     app's renderDashGreet (morning <11 / afternoon <16 / evening) with the
+     SAME three banner arts, bundled beside the page banners so the art and
+     the words always agree — online or offline. */
+  var h = new Date().getHours();
+  var art = h < 11 ? "morning" : h < 16 ? "afternoon" : "evening";
+  var greet = h < 11 ? dom.t("ai_greet_morning", "Good morning")
+    : h < 16 ? dom.t("ai_greet_afternoon", "Good afternoon")
+    : dom.t("ai_greet_evening", "Good evening");
+  var hero = dom.el(doc, "div", { class: "hnk-greet", id: "hnkGreet" });
+  hero.style.backgroundImage = 'url("icons/banners/hero-greet-' + art + '.jpg")';
+  hero.appendChild(dom.el(doc, "div", { class: "hnk-greet-hi", text: greet }));
+  var dt = "";
+  try { dt = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" }).format(new Date()); }
+  catch (e) { try { dt = new Date().toDateString(); } catch (e2) { dt = ""; } }
+  if (dt) hero.appendChild(dom.el(doc, "div", { class: "hnk-greet-sub", text: dt }));
+  root.appendChild(hero);
 
   root.appendChild(dom.el(doc, "div", { class: "hnk-h-title", text: dom.t("ai_home_title", "What do you want to create?") }));
 
