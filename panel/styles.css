@@ -140,79 +140,64 @@ body {
   padding: 5px 5px 8px 5px;
 }
 .botbar .status { margin: 0 0 6px 0; min-height: 14px; }
+/* v6.28.0 — the web app's own bottom nav: stroke icon above a small label,
+   active tab in gold on a soft gold tint (the web app draws that tint with a
+   ::before pseudo-element, which UXP does not render — here the button
+   itself carries it). The old text-pill tabs truncated to "H… Cr… Re…" at
+   real Photoshop panel widths. */
 .tabbar { display: flex; flex-direction: row; }
 .tabb {
-  font-size: 9px; font-weight: 700;
+  font-size: 9.5px; font-weight: 800;
   flex: 1; min-width: 0;
-  background-color: var(--panel-2);
-  border: 1px solid var(--line-2);
-  border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
   color: var(--muted);
-  letter-spacing: -0.2px;
-  padding: 8px 1px;
+  letter-spacing: 0.1px;
+  padding: 6px 1px 5px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
-.tabb + .tabb { margin-left: 3px; }
-.tabb.on { background-color: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.tabb + .tabb { margin-left: 2px; }
+.tabic {
+  width: 20px; height: 20px; display: block; margin-bottom: 3px;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.tabb-l { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tabb.on { background-color: rgba(217, 164, 65, 0.16); color: var(--accent); }
 
 /* ---------- Header bits ---------- */
 .logo { width: 32px; height: 32px; border-radius: 8px; margin-right: 8px; }
 
-/* ---------- Hero banner (v6.0) ----------
-   UXP-SAFE: flexbox, background-size (the repo's sanctioned image-fit) and
-   linear-gradient only. The banner background is the studio's signature
-   artwork; a cinematic dark shade keeps the branding readable, so the hero
-   stays identical (and premium) in both themes — its colours are fixed, not
-   theme tokens. */
-.hero {
-  display: block;
-  padding: 0;
+/* ---------- Compact web-app top bar (v6.28.0) ----------
+   The web app's own header language: small logo, gold HNK wordmark over a
+   tiny letterspaced label, controls on the right. Solid colours only —
+   the old art header proved that a photo + gradient header truncates and
+   crowds a real Photoshop panel. */
+.topbar {
+  padding: 8px 10px;
   background-color: #0b0d14;
-  background-image: url("icons/hero-banner.jpg");
-  background-size: cover;
-  background-position: center 30%;
-  background-repeat: no-repeat;
-  border-bottom: 1px solid var(--accent);
+  border-bottom: 1px solid var(--line);
 }
-.hero-shade {
-  padding: 12px 10px 9px 10px;
-  background: linear-gradient(100deg, rgba(8, 9, 15, 0.94) 0%, rgba(10, 12, 20, 0.86) 42%, rgba(8, 9, 15, 0.38) 78%, rgba(8, 9, 15, 0.55) 100%);
+.topbar-logo { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(233, 196, 106, 0.55); }
+.topbar-brand {
+  font-size: 15px; font-weight: 900; letter-spacing: 2px; line-height: 1.1;
+  color: #e9c46a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.hero-row { display: flex; flex-direction: row; align-items: center; }
-.hero-badge {
-  flex: none; display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; margin-right: 9px;
-  border: 1px solid #d9a441;
-  border-radius: 11px;
-  background: linear-gradient(160deg, rgba(26, 29, 41, 0.9), rgba(12, 13, 20, 0.9));
+.topbar-label {
+  font-size: 8.5px; font-weight: 800; letter-spacing: 2.4px;
+  color: #f2e2ae; vertical-align: 2px;
 }
-.hero-logo { width: 36px; height: 36px; border-radius: 8px; margin-right: 0; }
-.hero-t { flex: 1; min-width: 0; }
-.hero-brand {
-  font-size: 12px; font-weight: 800; letter-spacing: 0.8px;
-  color: #f3efe6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.hero-brand-gold { color: #e9c46a; }
-.hero-app { font-size: 9px; font-weight: 600; color: #c9c4b8; margin-top: 1px; }
-.hero-sub { font-size: 9px; color: #a8a394; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hero-sub #brandProv { color: #e9c46a; font-weight: 700; }
-.hero-chips { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
-.hero-chip {
-  flex: 0 1 auto; text-align: center;
-  margin-right: 4px; margin-bottom: 2px; padding: 3px 7px;
-  border: 1px solid rgba(233, 196, 106, 0.45); border-radius: 999px;
-  background-color: rgba(10, 12, 19, 0.72); color: #efe7d2;
-  font-size: 8.5px; font-weight: 700; white-space: nowrap;
-}
-.hero-chip:last-child { margin-right: 0; }
-/* header controls sit on the photo — keep them legible in both themes */
-.hero .lang-sel, .hero .btn-icon {
+.topbar-sub { font-size: 9px; color: #a8a394; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-sub #brandProv { color: #e9c46a; font-weight: 700; }
+.topbar .lang-sel, .topbar .btn-icon {
   background-color: rgba(16, 18, 27, 0.82); color: #efe7d2;
   border-color: rgba(233, 196, 106, 0.5);
 }
+.topbar-plan { color: #e9c46a; font-weight: 700; }
 
 /* ---------- Per-page hero banners (v6.0) ----------
    Each tab opens on its own signature visual from the studio's 355-asset
@@ -234,11 +219,16 @@ body {
 .pgb-aitools { background-image: url("icons/banners/aitools.jpg"); background-position: center 14%; }
 .pgb-presets { background-image: url("icons/banners/presets.jpg"); background-position: center 18%; }
 .pgb-retouch { background-image: url("icons/banners/retouch.jpg"); background-position: center 38%; }
+/* v6.28.0 — the legibility scrim is BAKED INTO the banner JPEGs now: the
+   owner's real-Photoshop screenshots showed white headlines sitting on raw
+   bright art because UXP dropped this div's gradient (`background:`
+   shorthand + rgba stops). Pixels render on every engine. The longhand
+   gradient below stays as a browser-side bonus only. */
 .pgbanner-shade {
   display: flex; flex-direction: column; justify-content: flex-end;
   min-height: 118px;
   padding: 12px 12px 9px 12px;
-  background: linear-gradient(180deg, rgba(8, 9, 15, 0.02) 0%, rgba(8, 9, 15, 0.22) 55%, rgba(8, 9, 15, 0.85) 100%);
+  background-image: linear-gradient(180deg, rgba(8, 9, 15, 0) 0%, rgba(8, 9, 15, 0.1) 60%, rgba(8, 9, 15, 0.35) 100%);
 }
 .pgbanner-kick {
   font-size: 7.5px; font-weight: 800; letter-spacing: 2px;
@@ -675,8 +665,11 @@ input[type="range"] { min-width: 0; }
    ============================================================ */
 #hnkAiToolsRoot { display:flex; flex-direction:column; gap:10px; padding:10px; color:var(--text); }
 .hnk-nav { display:flex; gap:4px; flex-wrap:wrap; }
-.hnk-nav-btn { flex:1 1 auto; padding:7px 8px; border:1px solid var(--line); background:var(--btn);
-  color:var(--text); border-radius:8px; font-size:12px; cursor:pointer; }
+/* v6.28.0 — sized like the web app's subtab pills so all four sit on ONE
+   row at real Photoshop panel widths (they wrapped 2×2 on the owner's Mac). */
+.hnk-nav-btn { flex:1 1 0; min-width:0; padding:6px 4px; border:1px solid var(--line); background:var(--btn);
+  color:var(--text); border-radius:999px; font-size:10.5px; font-weight:700; cursor:pointer;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
 .hnk-nav-btn:hover { background:var(--btn-h); }
 .hnk-nav-btn.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; }
 .hnk-screen { display:flex; flex-direction:column; gap:10px; }
@@ -732,10 +725,9 @@ input[type="range"] { min-width: 0; }
   background-color: #0b0d14; background-size: cover; background-position: center 32%; background-repeat: no-repeat;
   overflow: hidden;
 }
-.hnk-greet::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(6, 8, 14, 0.05) 30%, rgba(6, 8, 14, 0.72) 100%);
-}
+/* v6.28.0 — no pseudo-element overlay: UXP never rendered it, and the
+   greeting arts now carry their scrim baked in (left + bottom, the web
+   app's own measured shade), so browser and Photoshop paint identically. */
 .hnk-greet > * { position: relative; z-index: 2; }
 .hnk-greet-hi { font-size: 15px; font-weight: 700; color: #f4ead2; letter-spacing: .2px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 2px 12px rgba(0,0,0,.6); }
 .hnk-greet-sub { margin-top: 2px; font-size: 11px; color: #dcd6c9; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,.8); }

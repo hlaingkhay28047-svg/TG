@@ -178,7 +178,52 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.27.0** — `pending`. The owner's inside-and-out audit wave (a v6.26.3
+- **v6.28.0** — `pending`. The owner's first real-Photoshop acceptance run
+  on 6.27.0 (MacBook Pro, Photoshop 2026) proved sign-in, computer pairing
+  (code from the web app's Account page) and the gate end to end — and
+  surfaced a set of REAL UXP rendering gaps the browser shim renders
+  fine, which this release rebuilds around so the CCX finally looks like
+  the web app on the actual host ("တစ်ပုံစံတည်း", the owner's words):
+  * Banner legibility scrims are BAKED INTO the JPEGs now (all six page
+    banners + the three greeting arts, regenerated from the web app's own
+    plates with the shade composited in PIL). On the owner's Mac the old
+    shade div's `background:` gradient never rendered, leaving white
+    headlines on raw bright art; pixels render on every engine. The CSS
+    gradient survives as a browser-side bonus only, and the greeting
+    card's pseudo-element overlay (which UXP also never drew) is gone.
+  * The bottom nav is the web app's own: its i-home/i-sparkle/i-pen/
+    i-sliders/i-frame/i-gear stroke icons (inlined — UXP has no
+    <symbol>/<use>) above 9.5px labels, active tab gold on a soft gold
+    tint. The old text-pill tabs truncated to "H… Cr… Re…" at real panel
+    widths.
+  * The header is the web app's compact top bar (small logo, gold HNK
+    wordmark + AI PANEL label, version line, language + theme controls).
+    The full-height hero-art header — which truncated its own title and
+    spent a third of a narrow panel — is deleted along with its
+    icons/hero-banner.jpg.
+  * The AI Tools section pills are sized like the web app's subtab pills
+    so Freeform · Workflows · History · Settings sit on one row (they
+    wrapped 2×2 on the owner's Mac).
+  * The sign-in password field gains an eye toggle (div-button +
+    stylesheet + painted inline styles like every gate control): UXP
+    paints `type="password"` with no visible dots on some hosts — the
+    owner's keystrokes registered but the field looked dead. Same
+    `input.type` flip the Setup key field has always shipped with.
+  Acceptance carries over the full v6.27.0 checklist below, plus: the six
+  banners must read with their headlines legible, the six bottom tabs
+  must show icon + full label untruncated, and the password eye must
+  reveal typed text.
+  Artifact `HNK_Ai_Panel_v6.28.0.ccx`, SHA-256
+  `e5355f4c0810011e415497cc2df4e41e0df02bfc372dc4f8b063293b331a6125`,
+  1,244,981 bytes. The release stays disabled until that acceptance.
+- **v6.27.1** — superseded by v6.28.0 the same day, unreleased to any
+  student: it carried only the password-eye fix before the owner's
+  screenshots showed the wider UXP rendering gaps above, which belong in
+  one coherent rebuild rather than a papercut trail.
+- **v6.27.0** — superseded before acceptance completed (sign-in, pairing
+  and the gate itself passed on the owner's real Photoshop; the UI
+  rendering gaps above did not). The owner's inside-and-out audit
+  wave (a v6.26.3
   carrying only the applyDefaultsTo fix was built but never published;
   its scope is folded in here):
   * `applyDefaultsTo` restored verbatim in settings-service — the v6.26.0
