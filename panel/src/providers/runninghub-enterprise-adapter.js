@@ -33,9 +33,6 @@ var registry = dep("../models/model-registry", "modelRegistry");
 /* Ratio/size enums + per-family mappings — ported verbatim from the web
    app's confirmed rhV2Submit (see docs comment in runninghub-config.js). */
 var RH_RATIO_ENUM = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "5:4", "4:5", "21:9", "1:4", "4:1", "1:8", "8:1"];
-/* Z-Image Turbo's aspectRatio enum is a strict subset of RH_RATIO_ENUM —
-   notably no "4:5" — so it needs its own narrower check. */
-var RH_ZIMAGE_RATIO_ENUM = ["3:2", "2:3", "16:9", "9:16", "4:3", "3:4", "1:1"];
 var RH_QWEN_SIZE_MAP = {
   "1:1":  { std: "1024*1024", hd: "1536*1536" },
   "2:3":  { std: "768*1152",  hd: "1024*1536" },
@@ -49,6 +46,18 @@ var RH_WAN_RATIO_WH = {
   "1:1": [1, 1], "3:4": [3, 4], "4:3": [4, 3], "4:5": [4, 5], "5:4": [5, 4],
   "9:16": [9, 16], "16:9": [16, 9], "2:3": [2, 3], "3:2": [3, 2]
 };
+/* The rhart-image/ ComfyUI-backed endpoints frame their output ratio as a
+   node select with the SAME "1".."7" option table (owner's OpenAPI specs,
+   2026-08-30): 1=1:1, 2=3:4, 3=4:3, 4=9:16, 5=16:9, 6=2:3, 7=3:2. FLUX.2
+   Dev edit-lora additionally documents "8" custom width/height (unused
+   here) and "9" auto-match-the-input; Z-Image Turbo's enum stops at the
+   seven. Each branch picks its own documented fallback. */
+var RH_NODE_RATIO_MAP = { "1:1": "1", "3:4": "2", "4:3": "3", "9:16": "4", "16:9": "5", "2:3": "6", "3:2": "7" };
+/* Grok Imagine Quality Edit's OPTIONAL aspectRatio enum (owner's OpenAPI
+   spec, 2026-08-30): auto/1:1/16:9/9:16/4:3/3:4/3:2/2:3 — omission IS the
+   documented auto default, so a ratio is sent only when it is one of the
+   seven. */
+var RH_IMAGINE_RATIO_ENUM = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"];
 
 function rhRatio(ratio) { return RH_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : ""; }
 /* Auto -> the cheapest tier; the Standard API requires a lowercase 1k/2k/4k
@@ -68,6 +77,25 @@ function rhResolutionFor(mc, size) {
 }
 function qwenSize(ratio, size) {
   var m = RH_QWEN_SIZE_MAP[ratio];
+  if (!m) return "";
+  var s = String(size || "").toLowerCase();
+  return (s === "2k" || s === "4k") ? m.hd : m.std;
+}
+/* Qwen 3.0 Pro's TEXT-TO-IMAGE "size" enum — a different option list from
+   its image-edit sibling's map above, kept separate exactly as the web app
+   keeps RH_QWEN3_T2I_SIZE_MAP beside RH_QWEN_SIZE_MAP (the two endpoints'
+   enums aren't guaranteed to match). Ported verbatim. */
+var RH_QWEN3_T2I_SIZE_MAP = {
+  "1:1":  { std: "1024*1024", hd: "1600*1600" },
+  "2:3":  { std: "768*1152",  hd: "1280*1920" },
+  "3:2":  { std: "1152*768",  hd: "1920*1280" },
+  "3:4":  { std: "768*1024",  hd: "1536*2048" },
+  "4:3":  { std: "1024*768",  hd: "1792*1344" },
+  "9:16": { std: "576*1024",  hd: "1152*2048" },
+  "16:9": { std: "1024*576",  hd: "2048*1152" }
+};
+function qwen3T2ISize(ratio, size) {
+  var m = RH_QWEN3_T2I_SIZE_MAP[ratio];
   if (!m) return "";
   var s = String(size || "").toLowerCase();
   return (s === "2k" || s === "4k") ? m.hd : m.std;
@@ -93,20 +121,83 @@ function buildRequestBody(mc, request, uploadedUrls) {
   var ratio = (request.output && request.output.ratio) || "";
   var size = (request.output && request.output.size) || "";
 
-  // Pure text-to-image endpoints (e.g. flux-2-dev's confirmed RunningHub
-  // route) take no image field at all and no resolution — prompt +
-  // aspectRatio + a constant outputFormat only, ported 1:1 from the web
-  // app's rhV2SubmitT2I. Return early so the imageUrls/resolution logic
-  // below (which every image-edit endpoint needs) never runs for these.
+  // Pure text-to-image endpoints take no image field at all. v6.29.0: this
+  // branch is now genuinely ported 1:1 from the web app's rhV2SubmitT2I —
+  // each model's config declares exactly the fields its own doc page lists
+  // (t2iRatios/ratioRequired, resolutionField with an optional narrower
+  // `resolutions` enum, sizeParam via the Qwen3 T2I map, numImagesField,
+  // outputFormat, quality). The old branch sent a blanket aspectRatio +
+  // outputFormat:"png" for every t2i model — right for flux-2-dev, but an
+  // undeclared parameter for Nano Banana Pro/Qwen 3.0 (whose docs list no
+  // outputFormat), and it never sent Nano's/Imagine's documented resolution
+  // or Qwen 3.0's "size" at all. Return early so the imageUrls/resolution
+  // logic below (which every image-edit endpoint needs) never runs.
   if (mc.kind === "t2i") {
-    var rT2i = rhRatio(ratio);
-    if (rT2i) body.aspectRatio = rT2i;
-    body.outputFormat = "png";
+    // Node-keyed T2I endpoints (currently flux-2-dev, per its fetched doc
+    // api-448184518) name their fields as ComfyUI node keys. No auto
+    // option exists on its "1".."8" select — fallback t2iRatios[0] (1:1),
+    // the same value the old required-ratio logic defaulted to.
+    if (mc.t2iNodeKeys) {
+      var nbT = {};
+      nbT[mc.t2iNodeKeys.prompt] = body.prompt;
+      var nrT = mc.t2iRatios && mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.t2iRatios ? mc.t2iRatios[0] : "1:1");
+      nbT[mc.t2iNodeKeys.ratio] = RH_NODE_RATIO_MAP[nrT] || "1";
+      nbT[mc.t2iNodeKeys.fileType] = "PNG";
+      return nbT;
+    }
+    if (mc.t2iRatios) {
+      var useR = mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.ratioRequired ? mc.t2iRatios[0] : "");
+      if (useR) body.aspectRatio = useR;
+    }
+    if (mc.resolutionField) {
+      var allowedR = mc.resolutions && mc.resolutions.length ? mc.resolutions : ["1k", "2k", "4k"];
+      var resV = String(size || "").toLowerCase();
+      body.resolution = allowedR.indexOf(resV) !== -1 ? resV : allowedR[0];
+    }
+    if (mc.sizeParam) {
+      var szV = qwen3T2ISize(ratio, size);
+      if (szV) body.size = szV;
+    }
+    if (mc.numImagesField) body.numImages = "1";
+    if (mc.outputFormat) body.outputFormat = mc.outputFormat;
     if (mc.quality) body.quality = mc.quality;
     return body;
   }
 
   uploadedUrls = uploadedUrls || [];
+
+  // FLUX.2 Dev edit-lora (flux-2-dev-edit) takes a ComfyUI node-keyed body,
+  // completely unlike the field-named endpoints around it: 51##image (ONE
+  // image URL), 16##text (the prompt), 47##select (ratio enum — see
+  // RH_FLUXEDIT_RATIO_MAP), 52##file_type (output format). The optional
+  // 18##lora_name/18##strength_model pair is omitted on purpose (documented
+  // default strength 0 = plain FLUX.2 Dev editing — a guessed .safetensors
+  // name would invent a server-side asset), and no resolution/size field
+  // exists on this endpoint. Ported 1:1 from the web app's fluxedit branch.
+  if (mc.kind === "fluxedit") {
+    var fx = {};
+    fx["51##image"] = uploadedUrls[0] || "";
+    fx["16##text"] = body.prompt;
+    fx["47##select"] = RH_NODE_RATIO_MAP[ratio] || "9";
+    fx["52##file_type"] = "PNG";
+    return fx;
+  }
+
+  // Z-Image Turbo (v6.29.0): the owner's OpenAPI spec shows this
+  // rhart-image/ sibling is node-keyed too — 66##image/41##text/
+  // 64##select/65##file_type, all REQUIRED. Its ratio enum is the shared
+  // "1".."7" table with NO auto option, so out-of-enum/Auto falls back to
+  // "1" (1:1) — the same fallback the old flat body used. The flat
+  // imageUrl/prompt/aspectRatio/outputFormat keys shipped before are not
+  // in this spec and are gone. Ported 1:1 from the web app.
+  if (mc.kind === "zimage") {
+    var zb = {};
+    zb["66##image"] = uploadedUrls[0] || "";
+    zb["41##text"] = body.prompt;
+    zb["64##select"] = RH_NODE_RATIO_MAP[ratio] || "1";
+    zb["65##file_type"] = "PNG";
+    return zb;
+  }
   var imageParam = mc.imageParam || "imageUrls";
   if (imageParam === "image") body.image = uploadedUrls[0] || "";
   else if (imageParam === "imageUrl") body.imageUrl = uploadedUrls[0] || "";
@@ -120,10 +211,14 @@ function buildRequestBody(mc, request, uploadedUrls) {
     var res3 = String(size || "").toLowerCase();
     body.resolution = (res3 === "2k" || res3 === "4k") ? "2k" : "1k";
     body.numImages = "1";
-    var r3 = rhRatio(ratio); if (r3) body.aspectRatio = r3;
-  } else if (mc.kind === "zimage") {
-    body.aspectRatio = RH_ZIMAGE_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : "1:1";
-    body.outputFormat = "png";
+    // v6.29.0 — only the endpoint's own documented seven; the generic
+    // rhRatio pass-through could ship 4:5/5:4/21:9, values outside this
+    // spec's enum. Omission = the documented "auto" default.
+    if (RH_IMAGINE_RATIO_ENUM.indexOf(ratio) !== -1) body.aspectRatio = ratio;
+  } else if (mc.kind === "xedit") {
+    // Grok Imagine — Edit (v6.29.0): the spec declares EXACTLY prompt +
+    // image. The default branch's resolution/aspectRatio are not in it —
+    // append nothing.
   } else if (mc.sizeParam) {
     var sz = qwenSize(ratio, size); if (sz) body.size = sz;
   } else if (mc.whParam) {

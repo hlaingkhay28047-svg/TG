@@ -163,8 +163,17 @@ const readPicker = page => page.evaluate(() => {
   report("C) the RunningHub row counts what a key ALONE unlocks",
     !!shown && Number(shown) === only.arrayTotal && only.arrayTotal > 50,
     { shownInRow: shown, keyAloneUnlocks: only.arrayTotal, rawArrayTotal: only.rawTotal });
-  report("C2) it does not quote the raw array total, which overclaims by the unconfigured models",
-    only.rawTotal > only.arrayTotal && Number(shown) !== only.rawTotal,
+  /* v5.53.4 — the last unconfigured placeholder (flux-2-dev's empty edit
+     apiPath) got its real endpoint, so the configured-filtered count and the
+     raw array total legitimately CONVERGED: rawTotal > arrayTotal can no
+     longer hold, and "shown !== rawTotal" would now fail exactly because
+     the overclaim it guarded against is gone. The derivation itself is
+     still pinned twice: A2 proves the source computes the count through
+     rhIsConfigured (not a typed literal), and C proves the rendered number
+     equals that derived count. C2 keeps the honesty direction that can
+     still be asserted: the row must never claim MORE than the arrays hold. */
+  report("C2) the shown count never exceeds the raw array total (no overclaim), and matches the derived count exactly",
+    only.rawTotal >= only.arrayTotal && Number(shown) === only.arrayTotal && Number(shown) <= only.rawTotal,
     { shownInRow: shown, keyAloneUnlocks: only.arrayTotal, rawArrayTotal: only.rawTotal });
 
   /* ---- E: the tap is the point of the row ---- */

@@ -3385,8 +3385,22 @@ var RH_MODELS = [
    documented required quality — only the name stops hiding the model.
    Precedent: the v4.98.1 Grok Imagine relabel. */
   { id:"rh-image-g2-off",   label:"GPT Image 2 (Official)",  apiPath:"rhart-image-g-2-official/image-to-image", quality:"medium" },
-  { id:"rh-image-g2",       label:"RH Image G-2",            apiPath:"rhart-image-g-2/image-to-image" },
-  { id:"rh-image-x-off",    label:"RH Image X (Official)",   apiPath:"rhart-image-x-official/edit", imageParam:"image" },
+  /* v5.53.4 — identified by the endpoint's own fetched doc (api-448184504):
+     rhart-image-g-2/image-to-image is "gpt-image-2.0/edit-channel-low-price"
+     — GPT Image 2's cheaper channel route (doc's own caveat: stability not
+     guaranteed, 2k/4k best-effort, most results 1k). Body verified
+     field-for-field against the default branch: prompt 1-20000 REQUIRED
+     (cap added), imageUrls ≤10 REQUIRED, aspectRatio optional 15-enum,
+     resolution optional 1k/2k/4k — no quality field, so none is sent. */
+  { id:"rh-image-g2",       label:"GPT Image 2 (Low-cost)",  apiPath:"rhart-image-g-2/image-to-image", promptMax:20000 },
+  /* v5.53.4 — identified and corrected by the owner's OpenAPI spec
+     (2026-08-30): rhart-image-x-official/edit is "xai/grok-imagine-image/
+     edit-official-stable" — Grok Imagine's image edit model (same
+     relabel-to-what-it-is precedent as GPT Image 2). Its body declares
+     EXACTLY two fields, prompt (5-20000) + image — the resolution and
+     aspectRatio the default branch used to append are not in the spec, so
+     kind:"xedit" sends the bare pair and the UI hides Ratio/Size. */
+  { id:"rh-image-x-off",    label:"Grok Imagine — Edit (Official)", apiPath:"rhart-image-x-official/edit", imageParam:"image", kind:"xedit", promptMax:20000 },
   /* name_en in RunningHub's own model-registry.public.json literally reads
      "nano-banana-pro/edit-...-stable" for these two endpoints — not a guess. */
   { id:"nano-banana-pro-off", label:"Nano Banana Pro (Official)", apiPath:"rhart-image-n-pro-official/edit" },
@@ -3397,7 +3411,15 @@ var RH_MODELS = [
      is capped at 800 chars here (vs. 20000 for the RHArt endpoints above). */
   { id:"qwen-image-2",      label:"Qwen Image 2",            apiPath:"alibaba/qwen-image-2.0/image-edit",     sizeParam:true, promptMax:800 },
   { id:"qwen-image-2-pro",  label:"Qwen Image 2 Pro",        apiPath:"alibaba/qwen-image-2.0-pro/image-edit", sizeParam:true, promptMax:800 },
-  { id:"flux-2-dev",        label:"Flux 2 Dev (RunningHub — needs endpoint)", apiPath:"" },
+  /* v5.53.4 — configured at last: the owner's OpenAPI spec (2026-08-30) for
+     rhart-image/f-2-dev/edit-lora is FLUX.2 Dev's image-editing route. Its
+     body is ComfyUI node-keyed (51##image/16##text/47##select/52##file_type
+     — see rhV2Body's fluxedit branch), takes ONE input image, and has no
+     resolution tier. The endpoint is LoRA-capable; the optional 18## LoRA
+     fields are omitted (documented default strength 0 = plain FLUX.2 Dev
+     editing) until a real LoRA picker exists — a guessed .safetensors name
+     would be inventing a server-side asset. */
+  { id:"flux-2-dev",        label:"Flux 2 Dev — Edit",       apiPath:"rhart-image/f-2-dev/edit-lora", kind:"fluxedit" },
   /* Wan's image-edit takes explicit width/height ints (512-4096, default
      1024x1024), not resolution/aspectRatio — mapped via RH_WAN_RATIO_WH. */
   { id:"wan-image-edit",    label:"Wan Image Edit",          apiPath:"alibaba/wan-2.7/image-edit", whParam:true, promptMax:2048 },
@@ -3420,29 +3442,32 @@ var RH_MODELS = [
      output image. */
   { id:"seedream-v4",       label:"Seedream v4",             apiPath:"seedream-v4/image-to-image",   kind:"seedream", promptMax:2000 },
   { id:"seedream-v4-5",     label:"Seedream v4.5",           apiPath:"seedream-v4.5/image-to-image", kind:"seedream", promptMax:2000 },
-  /* RH Imagine Image Quality (edit) — the image-edit sibling of the
-     already-shipped text-to-image model of the same name. Confirmed shape:
-     single "imageUrl" (not imageUrls), a required "resolution" enum limited
-     to 1k/2k only (no 4k, unlike most other endpoints), a required
-     "numImages" enum sent as a string, and an optional aspectRatio. Routed
-     through kind:"imagine", which clamps the shared selSize picker's 4K
-     option down to the endpoint's real 2k ceiling (the same coarsening
-     already accepted for Qwen's HD tier) rather than sending an invalid
-     value, and omits aspectRatio entirely when no ratio is selected/valid —
-     matching the same "let the endpoint decide" behavior used everywhere
-     else in this app instead of guessing at a literal "auto" string. */
-  { id:"rh-imagine-quality-edit", label:"RH Imagine Image Quality", apiPath:"rhart-imagine-image-quality/edit", imageParam:"imageUrl", kind:"imagine" },
-  /* Z-Image Turbo image-to-image: confirmed shape is genuinely different from
-     every other endpoint above — single "imageUrl", a REQUIRED aspectRatio
-     enum (3:2/2:3/16:9/9:16/4:3/3:4/1:1, no "auto"/omit option), a REQUIRED
-     outputFormat enum, and no resolution field in the schema at all. Routed
-     through kind:"zimage", which always sends a valid aspectRatio (defaulting
-     to 1:1 when the shared ratio picker is unset or holds a ratio outside
-     this endpoint's enum, since the field can't be omitted) and a constant
-     outputFormat:"png", and never sends resolution — this endpoint simply
-     doesn't accept it, so sending one would be inventing an undeclared
-     parameter rather than a confirmed default. */
-  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", imageParam:"imageUrl", kind:"zimage" },
+  /* Grok Imagine Quality Edit — v5.53.4: the owner's full OpenAPI spec
+     (2026-08-30) titles rhart-imagine-image-quality/edit
+     "xai/rhart-imagine-image-quality/edit-official-stable", i.e. the Grok
+     Imagine quality-edit model — relabeled accordingly (same precedent as
+     GPT Image 2 and Grok Imagine — Edit above). Shape per the spec: single
+     "imageUrl", REQUIRED "resolution" (1k/2k only), REQUIRED "numImages"
+     string enum, prompt capped at 4000, and an OPTIONAL aspectRatio whose
+     enum is exactly auto/1:1/16:9/9:16/4:3/3:4/3:2/2:3 — narrower than the
+     shared picker, so kind:"imagine" now sends a ratio only when it is in
+     that documented set (omitting = the documented "auto" default) and the
+     UI narrows the dropdown to those seven plus Auto. The 4K→2k clamp
+     stays. */
+  { id:"rh-imagine-quality-edit", label:"Grok Imagine — Quality Edit", apiPath:"rhart-imagine-image-quality/edit", imageParam:"imageUrl", kind:"imagine", promptMax:4000 },
+  /* Z-Image Turbo image-to-image — v5.53.4: the owner's full OpenAPI spec
+     for this exact endpoint (2026-08-30) shows its body is ComfyUI
+     node-keyed like its rhart-image/ sibling f-2-dev/edit-lora — 66##image
+     (ONE image URL, REQUIRED), 41##text (prompt, REQUIRED), 64##select
+     (aspect ratio as the SAME "1".."7" option table flux edit documents,
+     REQUIRED, no auto option), 65##file_type (REQUIRED, "PNG"). The flat
+     imageUrl/prompt/aspectRatio/outputFormat body shipped before carried
+     the right VALUES under keys this spec does not declare — corrected in
+     rhV2Body's zimage branch. Still no resolution field of any kind. The
+     substance of the old confirmation stands: one image, seven fixed
+     ratios (1:1 fallback since the field can't be omitted), constant PNG
+     output, no size tier. */
+  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", kind:"zimage" },
   /* Upscale Transparent: a second Upscale variant, routed through its own
      dedicated submit/generate pair (rhV2SubmitUpscaleTransparent /
      rhGenerateUpscaleTransparent) since — like Upscale Pro — its body shape
@@ -5309,6 +5334,11 @@ var RH_RATIO_ENUM = ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21
    let "4:5" through as "valid" for this endpoint, so it needs its own
    narrower enum check rather than reusing the generic one. */
 var RH_ZIMAGE_RATIO_ENUM = ["3:2","2:3","16:9","9:16","4:3","3:4","1:1"];
+/* Grok Imagine Quality Edit's OPTIONAL aspectRatio enum (owner's OpenAPI
+   spec, 2026-08-30): auto/1:1/16:9/9:16/4:3/3:4/3:2/2:3 — the literal
+   "auto" is what omission defaults to, so the app sends a ratio only when
+   it is one of these seven and omits otherwise. */
+var RH_IMAGINE_RATIO_ENUM = ["1:1","16:9","9:16","4:3","3:4","3:2","2:3"];
 function rhV2Ratio(ratio){ return RH_RATIO_ENUM.indexOf(ratio)>=0 ? ratio : ""; }
 /* selSize gives "", "1K", "2K", "4K" — the Standard API requires a lowercase
    1k/2k/4k on every call, so "Auto" maps to the cheapest tier. */
@@ -5376,6 +5406,14 @@ function rhWanWH(ratio, sizeSel){
   if(rw>=rh){ w=base; h=Math.round(base*rh/rw); } else { h=base; w=Math.round(base*rw/rh); }
   return { w: Math.max(512,Math.min(4096,w)), h: Math.max(512,Math.min(4096,h)) };
 }
+/* The rhart-image/ ComfyUI-backed endpoints frame their output ratio as a
+   node select with the SAME "1".."7" option table (owner's OpenAPI specs,
+   2026-08-30): 1=1:1, 2=3:4, 3=4:3, 4=9:16, 5=16:9, 6=2:3, 7=3:2. FLUX.2
+   Dev edit-lora additionally documents "8" custom width/height (unused
+   here) and "9" auto-match-the-input; Z-Image Turbo's enum stops at the
+   seven. The map holds exactly the shared documented seven — each branch
+   picks its own documented fallback for anything else. */
+var RH_NODE_RATIO_MAP = { "1:1":"1", "3:4":"2", "4:3":"3", "9:16":"4", "16:9":"5", "2:3":"6", "3:2":"7" };
 /* Plain slice(0,maxLen) would cut from the tail — but finalPrompt always ends
    with the fixed "TASK GUARD:" block (identity/pixel-preservation rules) that
    must never be silently dropped just because Style Chains/Cleanup/Camera/
@@ -5403,8 +5441,39 @@ async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolut
 }
 function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
   var cfg = modelCfg || {};
-  var body={ prompt: rhTruncatePrompt(promptText, cfg.promptMax) };
   imageUrls = imageUrls||[];
+  /* FLUX.2 Dev edit-lora takes a ComfyUI node-keyed body — completely unlike
+     the field-named endpoints below: 51##image (ONE image URL), 16##text
+     (the prompt), 47##select (ratio enum — see RH_NODE_RATIO_MAP),
+     52##file_type (output format). The optional 18##lora_name/
+     18##strength_model pair is omitted on purpose (documented default
+     strength 0 = plain FLUX.2 Dev editing), and no resolution/size field
+     exists on this endpoint at all. Auto/unknown ratios send this
+     endpoint's documented "9" (auto-match the input image). */
+  if(cfg.kind==="fluxedit"){
+    var fx={};
+    fx["51##image"]=imageUrls[0]||"";
+    fx["16##text"]=rhTruncatePrompt(promptText, cfg.promptMax);
+    fx["47##select"]=RH_NODE_RATIO_MAP[ratio]||"9";
+    fx["52##file_type"]="PNG";
+    return fx;
+  }
+  /* Z-Image Turbo (v5.53.4): the owner's OpenAPI spec shows this
+     rhart-image/ sibling is node-keyed too — 66##image/41##text/
+     64##select/65##file_type, all REQUIRED. Its ratio enum is the shared
+     "1".."7" table with NO auto option, so out-of-enum/Auto falls back to
+     "1" (1:1) — the same fallback the old flat body used. The flat
+     imageUrl/prompt/aspectRatio/outputFormat keys shipped before are not
+     in this spec and are gone. */
+  if(cfg.kind==="zimage"){
+    var zb={};
+    zb["66##image"]=imageUrls[0]||"";
+    zb["41##text"]=rhTruncatePrompt(promptText, cfg.promptMax);
+    zb["64##select"]=RH_NODE_RATIO_MAP[ratio]||"1";
+    zb["65##file_type"]="PNG";
+    return zb;
+  }
+  var body={ prompt: rhTruncatePrompt(promptText, cfg.promptMax) };
   var imageParam = cfg.imageParam || "imageUrls";
   if(imageParam==="image") body.image = imageUrls[0]||"";
   else if(imageParam==="imageUrl") body.imageUrl = imageUrls[0]||"";
@@ -5422,10 +5491,14 @@ function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
     var res3 = String(resolution||"").toLowerCase();
     body.resolution = (res3==="2k"||res3==="4k") ? "2k" : "1k";
     body.numImages = "1";
-    var r3=rhV2Ratio(ratio); if(r3) body.aspectRatio=r3;
-  } else if(cfg.kind==="zimage"){
-    body.aspectRatio = RH_ZIMAGE_RATIO_ENUM.indexOf(ratio)>=0 ? ratio : "1:1";
-    body.outputFormat = "png";
+    /* v5.53.4 — only the endpoint's own documented seven; the generic
+       rhV2Ratio pass-through could ship 4:5/5:4/21:9, values outside this
+       spec's enum. Omission = the documented "auto" default. */
+    if(RH_IMAGINE_RATIO_ENUM.indexOf(ratio)>=0) body.aspectRatio=ratio;
+  } else if(cfg.kind==="xedit"){
+    /* Grok Imagine — Edit (v5.53.4): the spec declares EXACTLY prompt +
+       image. The default branch's resolution/aspectRatio are not in it —
+       append nothing. */
   } else if(cfg.sizeParam){
     var sz = rhQwenSize(ratio, resolution);
     if(sz) body.size = sz;
@@ -6242,7 +6315,7 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
   return outs;
 }
 /* ---------- RunningHub text-to-image (no reference photo needed) ----------
-   A separate catalog from RH_MODELS/RH_VIDEO_MODELS: these 5 endpoints don't
+   A separate catalog from RH_MODELS/RH_VIDEO_MODELS: these 6 endpoints don't
    take any input image at all, so they don't fit the edit-a-photo pipeline
    the rest of the app is built around. Confirmed against real RunningHub API
    docs pasted for each exact endpoint (2026-08) — nothing here is guessed.
@@ -6253,18 +6326,40 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
    {mime,b64} images (small, unlike video), so they reuse the same Gallery/
    IndexedDB persistence as every other image result. */
 var RH_T2I_MODELS = [
+  /* v5.53.4 — corrected to the endpoint's own fetched doc (api-448184518):
+     like its two rhart-image/ siblings, f-2-dev/text-to-image is ComfyUI
+     node-keyed — 12##text (prompt, REQUIRED), 41##select (ratio "1".."8",
+     REQUIRED, 8=custom W/H unused, NO auto option — fallback "1"=1:1, the
+     same default the old required-ratio logic sent), 43##file_type
+     (REQUIRED, "PNG"). The flat prompt/aspectRatio/outputFormat body
+     shipped before carried the right values under keys the spec does not
+     declare. */
   { id:"flux-2-dev", label:"Flux 2 Dev — Standard (fast)", apiPath:"rhart-image/f-2-dev/text-to-image",
     ratios:["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired:true,
-    extra:{ outputFormat:"png" } },
+    nodeKeys:{ prompt:"12##text", ratio:"41##select", fileType:"43##file_type" } },
   { id:"nano-banana-pro-t2i", label:"Nano Banana Pro — Best Quality", apiPath:"rhart-image-n-pro-official/text-to-image",
     ratios:["1:1","3:2","2:3","3:4","4:3","4:5","5:4","9:16","16:9","21:9"],
     resolutionField:"resolution", promptMax:20000 },
+  /* v5.53.4 — GPT Image 2 text-to-image (official stable), held since the
+     owner's Enterprise-Shared reference listed it and wired now that the
+     owner supplied its full OpenAPI spec (2026-08-30): prompt 1-20000
+     REQUIRED, aspectRatio optional 15-value enum (server default 16:9 when
+     omitted), resolution REQUIRED 1k/2k/4k, quality REQUIRED low/medium/
+     high (documented default medium, shipped constant like its i2i
+     sibling). No outputFormat/numImages/size fields exist on this endpoint. */
+  { id:"rh-image-g2-t2i", label:"GPT Image 2 (Official) — Poster & Text", apiPath:"rhart-image-g-2-official/text-to-image",
+    ratios:["1:1","1:2","2:1","1:3","3:1","2:3","3:2","3:4","4:3","4:5","5:4","9:16","21:9","9:21","16:9"],
+    resolutionField:"resolution", promptMax:20000, extra:{ quality:"medium" } },
   { id:"rh-imagine-quality", label:"RH Imagine — Sharp & Clean", apiPath:"rhart-imagine-image-quality/text-to-image",
     ratios:["1:1","16:9","9:16","4:3","3:4","3:2","2:3"],
     resolutionField:"resolution", resolutionEnum:["1k","2k"], numImagesField:"numImages",
     promptMax:4000, extra:{ outputFormat:"png" } },
+  /* v5.53.4 — promptMax raised to the fetched doc's real 3000 cap
+     (api-494859258; the old 2048 was an over-tight guess). Its "size" is a
+     free-form W*H string with server default 1024*1024, so the map's
+     values stay valid and omission on Auto stays correct. */
   { id:"qwen-image-3-pro-t2i", label:"Qwen 3.0 Pro — Asia Looks", apiPath:"alibaba/qwen-image-3.0-pro/text-to-image",
-    sizeField:"size", promptMax:2048 },
+    sizeField:"size", promptMax:3000 },
   { id:"youchuan-v81", label:"Midjourney v8.1 — Artistic", apiPath:"youchuan/text-to-image-v81",
     ratios:["1:1","4:3","3:2","16:9","3:4","2:3","9:16"], promptMax:8192, extra:{ hd:true } }
 ];
@@ -6288,6 +6383,22 @@ function rhQwen3T2ISize(ratio, sizeSel){
   return (s==="2k"||s==="4k") ? m.hd : m.std;
 }
 async function rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel, signal){
+  /* v5.53.4 — node-keyed T2I endpoints (currently flux-2-dev, per its
+     fetched doc) declare their fields as ComfyUI node keys; the def's
+     nodeKeys map names them. No auto option exists on flux's "1".."8"
+     select, so the fallback is ratios[0] (1:1) — the same value the old
+     required-ratio logic defaulted to. */
+  if(model.nodeKeys){
+    var nb={};
+    nb[model.nodeKeys.prompt] = model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"");
+    var nr = model.ratios && model.ratios.indexOf(ratio)>=0 ? ratio : (model.ratios ? model.ratios[0] : "1:1");
+    nb[model.nodeKeys.ratio] = RH_NODE_RATIO_MAP[nr] || "1";
+    nb[model.nodeKeys.fileType] = "PNG";
+    var rN=await fetchWithTimeout(RH_V2_BASE+"/"+String(model.apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(nb) }, RH_SUBMIT_TIMEOUT_MS, signal);
+    var jN=await rN.json().catch(function(){return null;});
+    if(!rN.ok || !jN || !jN.taskId){ var eN=new Error("submit-failed"); eN.status=rN.status; eN.body=jN; throw eN; }
+    return jN.taskId;
+  }
   var body = { prompt: model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"") };
   if(model.ratios){
     var useRatio = model.ratios.indexOf(ratio)>=0 ? ratio : (model.ratioRequired ? model.ratios[0] : "");
@@ -6455,7 +6566,9 @@ var _selRatioDefaultHtml = null;
    don't define an aspect for at all) — narrow the dropdown to what the
    active model actually honors, the same "never offer a control the model
    will ignore" rule already applied to Ratio/Quality/Count on upscale-kind
-   models below. */
+   models below. v5.53.4: Flux 2 Dev — Edit joins the narrowed set — its
+   node select documents exactly seven ratios (no "4:5") plus an auto-match
+   option the Auto entry maps to. */
 function rhNarrowRatioOptionsFor(active){
   var sel=$("selRatio");
   if(!_selRatioDefaultHtml) _selRatioDefaultHtml = sel.innerHTML;
@@ -6466,6 +6579,17 @@ function rhNarrowRatioOptionsFor(active){
     /* v4.41: default "1:1", matching rhV2Submit's own invalid-ratio fallback —
        the UI default and the submit-side coercion used to disagree (3:2 vs 1:1) */
     sel.value = RH_ZIMAGE_RATIO_ENUM.indexOf(cur)>=0 ? cur : "1:1";
+    return;
+  }
+  if(active && active.kind==="imagine"){
+    /* v5.53.4 — Grok Imagine Quality Edit's aspectRatio enum is seven
+       ratios plus auto; Auto stays offered because omission IS the
+       documented auto default. */
+    var curI=sel.value;
+    sel.innerHTML="";
+    var autoI=document.createElement("option"); autoI.value=""; autoI.textContent="Ratio: Auto"; sel.appendChild(autoI);
+    RH_IMAGINE_RATIO_ENUM.forEach(function(r){ var o=document.createElement("option"); o.textContent=r; sel.appendChild(o); });
+    sel.value = RH_IMAGINE_RATIO_ENUM.indexOf(curI)>=0 ? curI : "";
     return;
   }
   if(active && active.sizeParam){
@@ -6482,6 +6606,16 @@ function rhNarrowRatioOptionsFor(active){
     var auto2=document.createElement("option"); auto2.value=""; auto2.textContent="Ratio: Auto"; sel.appendChild(auto2);
     wratios.forEach(function(r){ var o=document.createElement("option"); o.textContent=r; sel.appendChild(o); });
     sel.value = wratios.indexOf(cur4)>=0 ? cur4 : "";
+    return;
+  }
+  if(active && active.kind==="fluxedit"){
+    var curF=sel.value, fratios=Object.keys(RH_NODE_RATIO_MAP);
+    sel.innerHTML="";
+    /* Auto stays offered: the submit side maps it to the documented "9"
+       (auto-match the input image) rather than omitting the REQUIRED field. */
+    var autoF=document.createElement("option"); autoF.value=""; autoF.textContent="Ratio: Auto"; sel.appendChild(autoF);
+    fratios.forEach(function(r){ var o=document.createElement("option"); o.textContent=r; sel.appendChild(o); });
+    sel.value = fratios.indexOf(curF)>=0 ? curF : "";
     return;
   }
   if(sel.innerHTML!==_selRatioDefaultHtml){
@@ -6513,14 +6647,19 @@ function rhFillModelSelect(sel, active){
 function updateGenOptsForRHKind(){
   var active = rhActiveModelCfg();
   var isUpscaleKind = !!(active && (active.kind==="upscale" || active.kind==="upscale-transparent"));
-  $("selRatio").style.display = isUpscaleKind ? "none" : "";
+  /* v5.53.4 — Grok Imagine — Edit (xedit) declares prompt + image ONLY, so
+     Ratio joins the hidden set for it (an offered-but-ignored control), and
+     Size below likewise. */
+  var isXedit = !!(active && active.kind==="xedit");
+  $("selRatio").style.display = (isUpscaleKind || isXedit) ? "none" : "";
   $("selCount").style.display = isUpscaleKind ? "none" : "";
   if(isUpscaleKind) $("selCount").value = "1";
-  if(!isUpscaleKind) rhNarrowRatioOptionsFor(active);
+  if(!isUpscaleKind && !isXedit) rhNarrowRatioOptionsFor(active);
   /* v4.41 control honesty, kept: Z-Image has no resolution field — hide Size
      rather than accept-and-ignore. Upscale-kind keeps it: there it IS the
-     scale picker. */
-  $("selSize").style.display = (active && active.kind==="zimage") ? "none" : "";
+     scale picker. v5.53.4: Flux 2 Dev — Edit (fluxedit) and Grok Imagine —
+     Edit (xedit) likewise have no size/resolution tier. */
+  $("selSize").style.display = (active && (active.kind==="zimage" || active.kind==="fluxedit" || active.kind==="xedit")) ? "none" : "";
   rhFillModelSelect($("selModel"), active);
   var eng=$("genEngine");
   if(!eng){
@@ -21282,7 +21421,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.53.3";
+var APP_VER="5.53.4";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -23221,6 +23360,9 @@ function brandOf(v,label){
   if(/seedream|seedance/.test(s)) return {ic:"seed",g:"Seedream"};
   if(/z-image/.test(s)) return {ic:"zimg",g:"Z-Image"};
   if(/midjourney|youchuan/.test(s)) return {ic:"mj",g:"Midjourney"};
+  /* v5.53.4 — the owner's specs identify rhart-image-x-official and
+     rhart-imagine-image-quality/edit as xAI Grok Imagine models */
+  if(/grok/.test(s)) return {ic:"rh",g:"xAI · Grok"};
   if(/rh[- ]|rhart|imagine/.test(s)) return {ic:"rh",g:"RunningHub"};
   return {ic:"spark",g:""};
 }

@@ -44,12 +44,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
       }
       if (u.indexOf("/openapi/v2/rhart-image-n-g31-flash/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-x-official/edit") >= 0
           || u.indexOf("/openapi/v2/alibaba/qwen-image-2.0/image-edit") >= 0
           || u.indexOf("/openapi/v2/topazlabs/image-upscale-standard-v2") >= 0
           || u.indexOf("/openapi/v2/seedream-v4/image-to-image") >= 0
           || u.indexOf("/openapi/v2/seedream-v4.5/image-to-image") >= 0
           || u.indexOf("/openapi/v2/rhart-imagine-image-quality/edit") >= 0
           || u.indexOf("/openapi/v2/rhart-image/z-image-turbo/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image/f-2-dev/edit-lora") >= 0
           || u.indexOf("/openapi/v2/topazlabs/image-upscale-transparent") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
@@ -68,8 +70,11 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off",
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
       "wan-image-edit", "wan-image-edit-pro", "upscale-pro", "seedream-v4", "seedream-v4-5",
-      "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent"];
-    var stillUnconfigured = ["flux-2-dev"];
+      "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent", "flux-2-dev"];
+    /* v5.53.4 — empty at last: flux-2-dev was the final placeholder, now
+       configured with the owner's rhart-image/f-2-dev/edit-lora spec. The
+       mechanism stays so any future placeholder lands here, not in silence. */
+    var stillUnconfigured = [];
     return {
       hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
       apiPath: rhEffectiveApiPath("nano-banana-2"),
@@ -77,6 +82,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       noneOfUnconfigured: stillUnconfigured.every(function(id){ return !rhIsConfigured(id); }),
       g2OffQuality: rhEffectiveQuality("rh-image-g2-off"),
       xOffImageParam: rhEffectiveImageParam("rh-image-x-off"),
+      xOffKind: rhEffectiveKind("rh-image-x-off"),
       qwenSizeParam: rhEffectiveSizeParam("qwen-image-2"),
       wanWhParam: rhEffectiveWhParam("wan-image-edit"),
       wanProWhParam: rhEffectiveWhParam("wan-image-edit-pro"),
@@ -87,7 +93,6 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       imagineKind: rhEffectiveKind("rh-imagine-quality-edit"),
       imagineImageParam: rhEffectiveImageParam("rh-imagine-quality-edit"),
       zimageKind: rhEffectiveKind("z-image-turbo"),
-      zimageImageParam: rhEffectiveImageParam("z-image-turbo"),
       upTransparentKind: rhEffectiveKind("upscale-transparent"),
       upTransparentImageParam: rhEffectiveImageParam("upscale-transparent"),
       upTransparentWh2k: rhUpscaleTransparentWH("2K"),
@@ -113,11 +118,12 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log("setup:", JSON.stringify(setup));
   var setupOk = setup.hasOption && setup.configured && setup.active && setup.allBuiltinsConfigured
     && setup.noneOfUnconfigured && setup.g2OffQuality === "medium" && setup.xOffImageParam === "image"
+    && setup.xOffKind === "xedit"
     && setup.qwenSizeParam === true && setup.wanWhParam === true && setup.wanProWhParam === true && setup.upscaleKind === "upscale"
     && setup.upscaleImageParam === "imageUrl"
     && setup.seedreamKind === "seedream" && setup.seedream45Kind === "seedream"
     && setup.imagineKind === "imagine" && setup.imagineImageParam === "imageUrl"
-    && setup.zimageKind === "zimage" && setup.zimageImageParam === "imageUrl"
+    && setup.zimageKind === "zimage"
     && setup.upTransparentKind === "upscale-transparent" && setup.upTransparentImageParam === "imageUrl"
     && setup.upTransparentWh2k && setup.upTransparentWh2k.w === 2560 && setup.upTransparentWh2k.h === 1440
     && setup.upTransparentWhAuto === null
@@ -337,12 +343,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && imagineResult.body.imageUrls === undefined;
   console.log(imagineOk ? "PASS (imagine edit resolution clamp + numImages)" : ("FAIL (imagine edit): " + JSON.stringify(imagineResult)));
 
-  // Z-Image Turbo: pick "4:5" — a ratio the shared #selRatio dropdown DOES
-  // offer, but Z-Image Turbo's own aspectRatio enum does NOT include (its
-  // enum is a strict subset of the shared dropdown's options). Must fall
-  // back to the confirmed default "1:1" rather than sending the invalid
-  // "4:5" value straight through. Also confirms outputFormat is always
-  // sent and resolution is never sent (this endpoint has no such field).
+  // Z-Image Turbo (v5.53.4 — corrected to the owner's OpenAPI spec): the
+  // body is ComfyUI node-keyed (66##image/41##text/64##select/
+  // 65##file_type, all REQUIRED) — never the old flat imageUrl/prompt/
+  // aspectRatio/outputFormat keys, which the spec does not declare. Pick
+  // "4:5" — a ratio the shared #selRatio dropdown DOES offer but this
+  // endpoint's "1".."7" select does NOT — and it must fall back to "1"
+  // (1:1), the same fallback the flat body used. No resolution of any
+  // kind, and no auto option exists on this endpoint's enum.
   const zimageResult = await page.evaluate(async (b64) => {
     window.__rhBodies.length = 0;
     document.getElementById("resultBox").className = "card result-box";
@@ -360,11 +368,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body, st: document.getElementById("stGen").textContent };
   }, B64);
   console.log("z-image submit body (ratio 4:5 out of endpoint enum):", JSON.stringify(zimageResult.body));
-  const zimageOk = zimageResult.ok && zimageResult.body && zimageResult.body.aspectRatio === "1:1"
-    && zimageResult.body.outputFormat === "png" && zimageResult.body.resolution === undefined
-    && typeof zimageResult.body.imageUrl === "string" && zimageResult.body.imageUrl.length > 0
-    && zimageResult.body.imageUrls === undefined;
-  console.log(zimageOk ? "PASS (z-image out-of-enum ratio falls back to 1:1)" : ("FAIL (z-image): " + JSON.stringify(zimageResult)));
+  const zimageOk = zimageResult.ok && zimageResult.body && zimageResult.body["64##select"] === "1"
+    && zimageResult.body["65##file_type"] === "PNG"
+    && typeof zimageResult.body["66##image"] === "string" && zimageResult.body["66##image"].length > 0
+    && String(zimageResult.body["41##text"]).indexOf("test z-image prompt") >= 0
+    && zimageResult.body.aspectRatio === undefined && zimageResult.body.outputFormat === undefined
+    && zimageResult.body.imageUrl === undefined && zimageResult.body.imageUrls === undefined
+    && zimageResult.body.prompt === undefined && zimageResult.body.resolution === undefined;
+  console.log(zimageOk ? "PASS (z-image node-keyed body; out-of-enum ratio falls back to \"1\" = 1:1)" : ("FAIL (z-image): " + JSON.stringify(zimageResult)));
 
   // A valid Z-Image Turbo ratio must pass through unchanged (not always 1:1).
   const zimageValidResult = await page.evaluate(async (b64) => {
@@ -383,8 +394,134 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
   }, B64);
   console.log("z-image submit body (valid ratio 16:9):", JSON.stringify(zimageValidResult.body));
-  const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body.aspectRatio === "16:9";
-  console.log(zimageValidOk ? "PASS (z-image valid ratio passes through)" : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
+  const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body["64##select"] === "5";
+  console.log(zimageValidOk ? 'PASS (z-image valid ratio 16:9 maps to the documented "5")' : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
+
+  // Flux 2 Dev — Edit (v5.53.4): the ComfyUI node-keyed body from the owner's
+  // rhart-image/f-2-dev/edit-lora OpenAPI spec — 51##image/16##text/
+  // 47##select/52##file_type ONLY. Must never carry the standard prompt/
+  // imageUrls/resolution/aspectRatio fields, and must omit the optional
+  // 18## LoRA pair (documented default strength 0 = plain FLUX.2 editing).
+  // Also checks the control-honesty UI: Size hidden (no such field on this
+  // endpoint) and the ratio dropdown narrowed to the documented seven
+  // (no "4:5").
+  const fluxResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "flux-2-dev"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    updateGenOptsForRHKind();
+    var opts = Array.prototype.map.call(document.getElementById("selRatio").options, function(o){ return o.value || o.textContent; });
+    var ratioHas45 = opts.indexOf("4:5") >= 0;
+    var sizeHidden = document.getElementById("selSize").style.display === "none";
+    document.getElementById("selRatio").value = "16:9";
+    document.getElementById("prompt").value = "test flux edit prompt";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/f-2-dev/edit-lora") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body,
+      ratioHas45: ratioHas45, sizeHidden: sizeHidden, st: document.getElementById("stGen").textContent };
+  }, B64);
+  console.log("flux edit submit body:", JSON.stringify(fluxResult.body),
+    "ratioHas45:", fluxResult.ratioHas45, "sizeHidden:", fluxResult.sizeHidden);
+  const fluxOk = fluxResult.ok && fluxResult.body
+    && typeof fluxResult.body["51##image"] === "string" && fluxResult.body["51##image"].length > 0
+    && String(fluxResult.body["16##text"]).indexOf("test flux edit prompt") >= 0
+    && fluxResult.body["47##select"] === "5"
+    && fluxResult.body["52##file_type"] === "PNG"
+    && fluxResult.body.prompt === undefined && fluxResult.body.imageUrls === undefined
+    && fluxResult.body.resolution === undefined && fluxResult.body.aspectRatio === undefined
+    && fluxResult.body["18##lora_name"] === undefined && fluxResult.body["18##strength_model"] === undefined
+    && fluxResult.ratioHas45 === false && fluxResult.sizeHidden === true;
+  console.log(fluxOk ? "PASS (flux edit node-keyed body + narrowed controls)" : ("FAIL (flux edit): " + JSON.stringify(fluxResult)));
+
+  // Auto ratio must send the documented "9" (auto-match the input image) —
+  // 47##select is REQUIRED, so it can never be omitted or guessed.
+  const fluxAutoResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    document.getElementById("selRatio").value = "";
+    document.getElementById("prompt").value = "test flux edit auto ratio";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/f-2-dev/edit-lora") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
+  }, B64);
+  console.log("flux edit auto-ratio body:", JSON.stringify(fluxAutoResult.body));
+  const fluxAutoOk = fluxAutoResult.ok && fluxAutoResult.body && fluxAutoResult.body["47##select"] === "9";
+  console.log(fluxAutoOk ? 'PASS (flux edit Auto ratio sends the documented "9" auto-match)' : ("FAIL (flux edit auto ratio): " + JSON.stringify(fluxAutoResult)));
+
+  // Restore the full ratio dropdown for the tests below (they assume the
+  // default, un-narrowed control set).
+  await page.evaluate(() => {
+    var c = rhCfg(); c.activeModel = "nano-banana-2"; rhSaveCfg(c);
+    updateGenOptsForRHKind();
+  });
+
+  // Grok Imagine Quality Edit (v5.53.4): the spec's OPTIONAL aspectRatio
+  // enum is seven ratios + auto — a shared-dropdown value outside it
+  // ("4:5") must be OMITTED (= the documented auto default), never sent.
+  const imagineOutResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "rh-imagine-quality-edit"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selRatio").value = "4:5";
+    document.getElementById("selSize").value = "1K";
+    document.getElementById("prompt").value = "test imagine out-of-enum ratio";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/rhart-imagine-image-quality/edit") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
+  }, B64);
+  console.log("imagine edit out-of-enum ratio body:", JSON.stringify(imagineOutResult.body));
+  const imagineOutOk = imagineOutResult.ok && imagineOutResult.body && imagineOutResult.body.aspectRatio === undefined
+    && imagineOutResult.body.resolution === "1k" && imagineOutResult.body.numImages === "1";
+  console.log(imagineOutOk ? 'PASS (imagine edit omits an out-of-enum ratio — the documented "auto" default)' : ("FAIL (imagine out-of-enum): " + JSON.stringify(imagineOutResult)));
+
+  // Grok Imagine — Edit (v5.53.4, was "RH Image X (Official)"): the owner's
+  // spec declares EXACTLY prompt + image. The body must carry nothing else
+  // (the old default-branch resolution/aspectRatio were undeclared params),
+  // and the Create page must hide Ratio and Size for it.
+  const xeditResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "rh-image-x-off"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    updateGenOptsForRHKind();
+    var ratioHidden = document.getElementById("selRatio").style.display === "none";
+    var sizeHidden = document.getElementById("selSize").style.display === "none";
+    document.getElementById("prompt").value = "test grok imagine edit prompt";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/rhart-image-x-official/edit") >= 0) || {}).body || null;
+    // restore the default control set for the tests below
+    var c2 = rhCfg(); c2.activeModel = "nano-banana-2"; rhSaveCfg(c2);
+    updateGenOptsForRHKind();
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body,
+      ratioHidden: ratioHidden, sizeHidden: sizeHidden };
+  }, B64);
+  console.log("grok imagine edit body:", JSON.stringify(xeditResult.body),
+    "ratioHidden:", xeditResult.ratioHidden, "sizeHidden:", xeditResult.sizeHidden);
+  const xeditOk = xeditResult.ok && xeditResult.body
+    && typeof xeditResult.body.prompt === "string" && xeditResult.body.prompt.length > 0
+    && typeof xeditResult.body.image === "string" && xeditResult.body.image.length > 0
+    && xeditResult.body.resolution === undefined && xeditResult.body.aspectRatio === undefined
+    && xeditResult.body.imageUrls === undefined && xeditResult.body.imageUrl === undefined
+    && xeditResult.ratioHidden === true && xeditResult.sizeHidden === true;
+  console.log(xeditOk ? "PASS (grok imagine edit sends the bare prompt+image pair; Ratio/Size hidden)" : ("FAIL (grok imagine edit): " + JSON.stringify(xeditResult)));
 
   // Upscale Transparent: activate it, pick "2K" (-> 2560x1440), and inspect
   // the actual request body — must carry outputWidth/outputHeight (never
@@ -454,7 +591,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
   const overall = result === "OK" && qwenOk && upOk && seedreamOk && sd45Ok && sd40Ok && imagineOk && zimageOk && zimageValidOk
-    && upTransparentOk && upTransparentNoImgOk && noImgOk;
+    && fluxOk && fluxAutoOk && imagineOutOk && xeditOk && upTransparentOk && upTransparentNoImgOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);
