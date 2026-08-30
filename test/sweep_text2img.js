@@ -120,13 +120,19 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     }, [modelId, ratioValue, sizeValue, prompt, apiPathFragment]);
   }
 
-  // Flux 2 Dev: aspectRatio is REQUIRED — selecting "Auto" (empty) must still
-  // send a valid default, never an empty/missing aspectRatio.
+  // Flux 2 Dev (v5.53.4 — corrected to its fetched doc api-448184518): the
+  // body is ComfyUI node-keyed — 12##text/41##select/43##file_type, all
+  // REQUIRED. "Auto" (empty) must still send a valid select — "1" (1:1),
+  // since this endpoint's enum has no auto option — and the old flat
+  // prompt/aspectRatio/outputFormat keys must be gone.
   const flux = await runModel("flux-2-dev", "", "1K", "a lion on the savannah", "f-2-dev/text-to-image");
   console.log("flux body:", JSON.stringify(flux.body));
-  const fluxOk = flux.ok && flux.body && typeof flux.body.aspectRatio === "string" && flux.body.aspectRatio.length > 0
-    && flux.body.outputFormat === "png" && flux.body.imageUrls === undefined;
-  console.log(fluxOk ? "PASS (flux required-ratio default)" : ("FAIL (flux): " + JSON.stringify(flux)));
+  const fluxOk = flux.ok && flux.body && flux.body["41##select"] === "1"
+    && String(flux.body["12##text"]).indexOf("a lion on the savannah") >= 0
+    && flux.body["43##file_type"] === "PNG"
+    && flux.body.prompt === undefined && flux.body.aspectRatio === undefined
+    && flux.body.outputFormat === undefined && flux.body.imageUrls === undefined;
+  console.log(fluxOk ? "PASS (flux node-keyed body; Auto ratio sends \"1\" = 1:1)" : ("FAIL (flux): " + JSON.stringify(flux)));
 
   // Qwen 3.0 Pro T2I: uses "size" WxH, no aspectRatio/resolution fields.
   const qwen = await runModel("qwen-image-3-pro-t2i", "16:9", "2K", "a futuristic city skyline", "qwen-image-3.0-pro/text-to-image");
@@ -178,9 +184,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var h = document.getElementById("t2iTrHint");
     return !!h && h.style.display !== "none";
   });
-  console.log("raw Burmese t2i body prompt:", JSON.stringify(trWithKey.body && trWithKey.body.prompt));
+  console.log("raw Burmese t2i body prompt:", JSON.stringify(trWithKey.body && trWithKey.body["12##text"]));
   const trOk = trWithKey.ok && trWithKey.body && trCalls === 0
-    && trWithKey.body.prompt.indexOf(MY) >= 0 && hintWithKey;
+    && String(trWithKey.body["12##text"]).indexOf(MY) >= 0 && hintWithKey;
   console.log(trOk ? "PASS (Burmese t2i prompt sends raw with the hint — no translate call leaves the browser)"
     : ("FAIL (t2i translate gate): " + JSON.stringify({ trCalls, hintWithKey, prompt: trWithKey.body && trWithKey.body.prompt })));
 
@@ -195,7 +201,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   });
   console.log("no-key hint:", JSON.stringify(noKeyState));
   const noKeyOk = noKey.ok && noKey.body && noKeyState.visible && noKeyState.text.length > 0
-    && noKeyState.calls === 0 && noKey.body.prompt.indexOf(MY) >= 0;
+    && noKeyState.calls === 0 && String(noKey.body["12##text"]).indexOf(MY) >= 0;
   console.log(noKeyOk ? "PASS (no key: inline hint is shown and the raw prompt still sends)"
     : ("FAIL (t2i no-key hint): " + JSON.stringify({ noKeyState, prompt: noKey.body && noKey.body.prompt })));
 
@@ -207,7 +213,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     hint: document.getElementById("t2iTrHint").style.display !== "none"
   }));
   const enOk = enOnly.ok && enState.calls === 0 && !enState.hint
-    && enOnly.body.prompt.indexOf("a lighthouse at dawn") >= 0;
+    && String(enOnly.body["12##text"]).indexOf("a lighthouse at dawn") >= 0;
   console.log(enOk ? "PASS (English prompt skips the translator and the hint entirely)"
     : ("FAIL (t2i english passthrough): " + JSON.stringify(enState)));
 

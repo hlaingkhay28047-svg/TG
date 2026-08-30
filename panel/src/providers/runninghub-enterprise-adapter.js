@@ -133,6 +133,18 @@ function buildRequestBody(mc, request, uploadedUrls) {
   // or Qwen 3.0's "size" at all. Return early so the imageUrls/resolution
   // logic below (which every image-edit endpoint needs) never runs.
   if (mc.kind === "t2i") {
+    // Node-keyed T2I endpoints (currently flux-2-dev, per its fetched doc
+    // api-448184518) name their fields as ComfyUI node keys. No auto
+    // option exists on its "1".."8" select — fallback t2iRatios[0] (1:1),
+    // the same value the old required-ratio logic defaulted to.
+    if (mc.t2iNodeKeys) {
+      var nbT = {};
+      nbT[mc.t2iNodeKeys.prompt] = body.prompt;
+      var nrT = mc.t2iRatios && mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.t2iRatios ? mc.t2iRatios[0] : "1:1");
+      nbT[mc.t2iNodeKeys.ratio] = RH_NODE_RATIO_MAP[nrT] || "1";
+      nbT[mc.t2iNodeKeys.fileType] = "PNG";
+      return nbT;
+    }
     if (mc.t2iRatios) {
       var useR = mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.ratioRequired ? mc.t2iRatios[0] : "");
       if (useR) body.aspectRatio = useR;

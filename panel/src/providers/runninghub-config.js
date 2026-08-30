@@ -61,7 +61,11 @@ function defaults() {
       "nano-banana-pro":       { apiPath: "rhart-image-n-pro/edit" },
       "nano-banana-pro-off":   { apiPath: "rhart-image-n-pro-official/edit" },
       "rh-image-g2-off":       { apiPath: "rhart-image-g-2-official/image-to-image", quality: "medium" },
-      "rh-image-g2":           { apiPath: "rhart-image-g-2/image-to-image" },
+      /* v6.29.0 — the fetched doc (api-448184504) identifies this as
+         "gpt-image-2.0/edit-channel-low-price": GPT Image 2's cheaper
+         channel route. prompt is capped at its documented 20000; no
+         quality field exists here, so none is configured. */
+      "rh-image-g2":           { apiPath: "rhart-image-g-2/image-to-image", promptMax: 20000 },
       /* v6.29.0 — the owner's OpenAPI spec titles this endpoint
          "xai/grok-imagine-image/edit-official-stable": Grok Imagine's
          image edit model, whose body declares EXACTLY prompt + image.
@@ -70,8 +74,13 @@ function defaults() {
       "rh-image-x-off":        { apiPath: "rhart-image-x-official/edit", imageParam: "image", kind: "xedit", promptMax: 20000 },
       "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800 },
       "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800 },
+      /* v6.29.0 — corrected to the endpoint's own fetched doc
+         (api-448184518): node-keyed like its rhart-image/ siblings —
+         12##text/41##select/43##file_type, all REQUIRED, no auto ratio
+         option (fallback "1" = 1:1, the old required-ratio default). */
       "flux-2-dev":            { apiPath: "rhart-image/f-2-dev/text-to-image", kind: "t2i",
-                                 t2iRatios: ["1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2"], ratioRequired: true, outputFormat: "png" },
+                                 t2iRatios: ["1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2"], ratioRequired: true,
+                                 t2iNodeKeys: { prompt: "12##text", ratio: "41##select", fileType: "43##file_type" } },
       "flux-2-dev-edit":       { apiPath: "rhart-image/f-2-dev/edit-lora", kind: "fluxedit" },
       /* v6.27.0 — the web app's remaining text-to-image models, ported with
          their confirmed endpoints (owner: the model set must be complete).
@@ -81,7 +90,7 @@ function defaults() {
          branch sent for every one of them. */
       "nano-banana-pro-t2i":   { apiPath: "rhart-image-n-pro-official/text-to-image", kind: "t2i", promptMax: 20000,
                                  t2iRatios: ["1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"], resolutionField: true },
-      "qwen-image-3-pro-t2i":  { apiPath: "alibaba/qwen-image-3.0-pro/text-to-image", kind: "t2i", sizeParam: true, promptMax: 2048 },
+      "qwen-image-3-pro-t2i":  { apiPath: "alibaba/qwen-image-3.0-pro/text-to-image", kind: "t2i", sizeParam: true, promptMax: 3000 },
       "rh-imagine-quality":    { apiPath: "rhart-imagine-image-quality/text-to-image", kind: "t2i", resolutions: ["1k", "2k"], promptMax: 4000,
                                  t2iRatios: ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], resolutionField: true, numImagesField: true, outputFormat: "png" },
       /* v6.29.0 — GPT Image 2 text-to-image (official stable), wired from

@@ -319,12 +319,16 @@ var MODELS = [
     },
     recommendedFor: ["reference-transfer", "background-edit", "multi-reference"]
   },
+  /* v6.29.0 — identified by the endpoint's own fetched doc
+     (api-448184504): rhart-image-g-2 is GPT Image 2's channel-low-price
+     route (cheaper, stability best-effort per the doc). Same id/endpoint;
+     relabeled like the official sibling above. */
   {
     id: "rh-image-g2",
-    displayName: "RH Image G-2",
+    displayName: "GPT Image 2 — Low-cost",
     provider: "runninghub-enterprise",
-    category: ["image-edit", "multi-reference"],
-    tagline: "General-purpose multi-reference image editing",
+    category: ["image-edit", "multi-reference", "fast"],
+    tagline: "GPT Image 2 on the cheaper channel route — best-effort stability",
     detail: "Multi-reference image editing · Up to 4K",
     capabilities: {
       textToImage: true,

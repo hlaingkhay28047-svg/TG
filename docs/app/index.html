@@ -3385,7 +3385,14 @@ var RH_MODELS = [
    documented required quality — only the name stops hiding the model.
    Precedent: the v4.98.1 Grok Imagine relabel. */
   { id:"rh-image-g2-off",   label:"GPT Image 2 (Official)",  apiPath:"rhart-image-g-2-official/image-to-image", quality:"medium" },
-  { id:"rh-image-g2",       label:"RH Image G-2",            apiPath:"rhart-image-g-2/image-to-image" },
+  /* v5.53.4 — identified by the endpoint's own fetched doc (api-448184504):
+     rhart-image-g-2/image-to-image is "gpt-image-2.0/edit-channel-low-price"
+     — GPT Image 2's cheaper channel route (doc's own caveat: stability not
+     guaranteed, 2k/4k best-effort, most results 1k). Body verified
+     field-for-field against the default branch: prompt 1-20000 REQUIRED
+     (cap added), imageUrls ≤10 REQUIRED, aspectRatio optional 15-enum,
+     resolution optional 1k/2k/4k — no quality field, so none is sent. */
+  { id:"rh-image-g2",       label:"GPT Image 2 (Low-cost)",  apiPath:"rhart-image-g-2/image-to-image", promptMax:20000 },
   /* v5.53.4 — identified and corrected by the owner's OpenAPI spec
      (2026-08-30): rhart-image-x-official/edit is "xai/grok-imagine-image/
      edit-official-stable" — Grok Imagine's image edit model (same
@@ -6319,9 +6326,17 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
    {mime,b64} images (small, unlike video), so they reuse the same Gallery/
    IndexedDB persistence as every other image result. */
 var RH_T2I_MODELS = [
+  /* v5.53.4 — corrected to the endpoint's own fetched doc (api-448184518):
+     like its two rhart-image/ siblings, f-2-dev/text-to-image is ComfyUI
+     node-keyed — 12##text (prompt, REQUIRED), 41##select (ratio "1".."8",
+     REQUIRED, 8=custom W/H unused, NO auto option — fallback "1"=1:1, the
+     same default the old required-ratio logic sent), 43##file_type
+     (REQUIRED, "PNG"). The flat prompt/aspectRatio/outputFormat body
+     shipped before carried the right values under keys the spec does not
+     declare. */
   { id:"flux-2-dev", label:"Flux 2 Dev — Standard (fast)", apiPath:"rhart-image/f-2-dev/text-to-image",
     ratios:["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], ratioRequired:true,
-    extra:{ outputFormat:"png" } },
+    nodeKeys:{ prompt:"12##text", ratio:"41##select", fileType:"43##file_type" } },
   { id:"nano-banana-pro-t2i", label:"Nano Banana Pro — Best Quality", apiPath:"rhart-image-n-pro-official/text-to-image",
     ratios:["1:1","3:2","2:3","3:4","4:3","4:5","5:4","9:16","16:9","21:9"],
     resolutionField:"resolution", promptMax:20000 },
@@ -6339,8 +6354,12 @@ var RH_T2I_MODELS = [
     ratios:["1:1","16:9","9:16","4:3","3:4","3:2","2:3"],
     resolutionField:"resolution", resolutionEnum:["1k","2k"], numImagesField:"numImages",
     promptMax:4000, extra:{ outputFormat:"png" } },
+  /* v5.53.4 — promptMax raised to the fetched doc's real 3000 cap
+     (api-494859258; the old 2048 was an over-tight guess). Its "size" is a
+     free-form W*H string with server default 1024*1024, so the map's
+     values stay valid and omission on Auto stays correct. */
   { id:"qwen-image-3-pro-t2i", label:"Qwen 3.0 Pro — Asia Looks", apiPath:"alibaba/qwen-image-3.0-pro/text-to-image",
-    sizeField:"size", promptMax:2048 },
+    sizeField:"size", promptMax:3000 },
   { id:"youchuan-v81", label:"Midjourney v8.1 — Artistic", apiPath:"youchuan/text-to-image-v81",
     ratios:["1:1","4:3","3:2","16:9","3:4","2:3","9:16"], promptMax:8192, extra:{ hd:true } }
 ];
@@ -6364,6 +6383,22 @@ function rhQwen3T2ISize(ratio, sizeSel){
   return (s==="2k"||s==="4k") ? m.hd : m.std;
 }
 async function rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel, signal){
+  /* v5.53.4 — node-keyed T2I endpoints (currently flux-2-dev, per its
+     fetched doc) declare their fields as ComfyUI node keys; the def's
+     nodeKeys map names them. No auto option exists on flux's "1".."8"
+     select, so the fallback is ratios[0] (1:1) — the same value the old
+     required-ratio logic defaulted to. */
+  if(model.nodeKeys){
+    var nb={};
+    nb[model.nodeKeys.prompt] = model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"");
+    var nr = model.ratios && model.ratios.indexOf(ratio)>=0 ? ratio : (model.ratios ? model.ratios[0] : "1:1");
+    nb[model.nodeKeys.ratio] = RH_NODE_RATIO_MAP[nr] || "1";
+    nb[model.nodeKeys.fileType] = "PNG";
+    var rN=await fetchWithTimeout(RH_V2_BASE+"/"+String(model.apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(nb) }, RH_SUBMIT_TIMEOUT_MS, signal);
+    var jN=await rN.json().catch(function(){return null;});
+    if(!rN.ok || !jN || !jN.taskId){ var eN=new Error("submit-failed"); eN.status=rN.status; eN.body=jN; throw eN; }
+    return jN.taskId;
+  }
   var body = { prompt: model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"") };
   if(model.ratios){
     var useRatio = model.ratios.indexOf(ratio)>=0 ? ratio : (model.ratioRequired ? model.ratios[0] : "");
