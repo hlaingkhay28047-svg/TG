@@ -200,6 +200,15 @@ eligible students.
   * The reference also lists GPT Image 2 text-to-image
     (rhart-image-g-2-official/text-to-image) — held until its parameter
     table is provided, per the wire-nothing-unread rule.
+  * Same-day follow-up: the owner supplied the model's own verified
+    image-to-image parameter table (RunningHub api-detail
+    2046514150500524035). Both apps' shipped request bodies match it
+    field-for-field — prompt (≤20000, both cap there), imageUrls
+    (List, 1–10; both declare maxImages 10), resolution REQUIRED
+    (1k/2k/4k; both always send it), aspectRatio optional (both send a
+    doc-enum subset, omit on auto), quality REQUIRED (both always send
+    the configured "medium"). The endpoint identification above is now
+    parameter-verified, not just name-verified; no code changed.
   Acceptance carries over the v6.28.1 checklist, plus: an Auto-model
   poster request must resolve to GPT Image 2 — Official and generate.
   Artifact `HNK_Ai_Panel_v6.28.2.ccx`, SHA-256
