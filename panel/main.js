@@ -629,6 +629,8 @@ const I18N = {
     on: "ON",
     off: "OFF",
     ai_home_title: "What do you want to create?",
+    ai_settings_defaults: "AI Tools \u2014 Defaults",
+    ai_key_lives_in_setup: "The RunningHub Enterprise key is managed on the Setup tab \u2014 saved once, used everywhere.",
     ai_greet_morning: "Good morning",
     ai_greet_afternoon: "Good afternoon",
     ai_greet_evening: "Good evening",
@@ -1232,6 +1234,8 @@ const I18N = {
     on: "\u1016\u103d\u1004\u1037\u103a",
     off: "\u1015\u102d\u1010\u103a",
     ai_home_title: "\u1018\u102c\u1016\u1014\u103a\u1010\u102e\u1038\u1001\u103b\u1004\u103a\u101c\u1032\u104b",
+    ai_settings_defaults: "AI Tools \u2014 \u1019\u1030\u101e\u1031 Setting \u1019\u103b\u102c\u1038",
+    ai_key_lives_in_setup: "RunningHub Enterprise key \u1000\u102d\u102f Setup tab \u1019\u103e\u102c \u1010\u1005\u103a\u1001\u102b\u1011\u100a\u1037\u103a\u101b\u102f\u1036\u1015\u102b \u2014 \u1014\u1031\u101b\u102c\u1010\u102d\u102f\u1004\u103a\u1038\u1019\u103e\u102c \u1021\u101c\u102d\u102f\u1021\u101c\u103b\u1031\u102c\u1000\u103a \u101e\u102f\u1036\u1038\u1015\u102b\u1019\u101a\u103a\u104b",
     ai_greet_morning: "\u1019\u1004\u103a\u1039\u1002\u101c\u102c\u1014\u1036\u1014\u1000\u103a\u1001\u1004\u103a\u1038\u1015\u102b",
     ai_greet_afternoon: "\u1019\u1004\u103a\u1039\u1002\u101c\u102c\u1014\u1031\u1037\u101c\u101a\u103a\u1001\u1004\u103a\u1038\u1015\u102b",
     ai_greet_evening: "\u1019\u1004\u103a\u1039\u1002\u101c\u102c\u100a\u1014\u1031\u1001\u1004\u103a\u1038\u1015\u102b",
@@ -5549,7 +5553,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.28.0";
+const PANEL_VERSION = "6.28.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6339,6 +6343,18 @@ function applyI18n() {
       codes: LANG_CODES,
       lang: function () { return state.lang; }
     };
+    /* v6.28.1 — ONE key home (owner: "don't duplicate"). The AI Tools stack
+       persists to hnk_ai_tools.json while Setup saves the Enterprise key to
+       hnk_students_settings.json — two files, so a key saved in Setup never
+       reached Free Generate and the Settings pill grew its own key field.
+       This bridge makes Setup the single source of truth: the AI Tools
+       settings service falls back to it whenever its own key is empty. */
+    g.HNK.studioKey = function () { return (state && state.rhKey) || ""; };
+    /* A key Setup has SAVED is the studio's working key (the classic stack
+       keeps no separate verified flag — Test Key only gates the save), so a
+       bridged key counts as verified: Free Generate must not nag the user
+       to re-verify a key that already runs the classic tabs. */
+    g.HNK.studioKeyVerified = function () { return !!(state && state.rhKey); };
   } catch (e) { }
 })();
 

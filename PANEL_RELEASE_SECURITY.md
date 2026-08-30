@@ -178,7 +178,41 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.28.0** — `pending`. The owner's first real-Photoshop acceptance run
+- **v6.28.1** — `pending`. The owner's de-duplication pass over 6.28.0
+  ("every setting has ONE home"):
+  * The Enterprise key now lives ONLY on the Setup tab. This fixes a real
+    split, not just a duplicate control: the classic stack persists to
+    hnk_students_settings.json while the AI Tools stack persists to
+    hnk_ai_tools.json — so a key saved in Setup never reached Free
+    Generate, and the AI Tools Settings screen had grown its own key
+    field. main.js now bridges Setup's key (HNK.studioKey) and the AI
+    Tools settings service adopts it whenever its own store has no key —
+    saved once in Setup, used everywhere. The AI Tools Settings screen
+    drops its key field, and its Language/Theme pickers (duplicates of
+    the header controls); it keeps what exists nowhere else: the AI Tools
+    defaults, Panel Density, Direct Generate, Add-as-Layers and the
+    advanced endpoint form.
+  * A 48px (with 96px @2x) plugin-list icon of the owner's HNK mark joins
+    the manifest's 24px entry: some Creative Cloud builds read the larger
+    species entry for their plugin tile. Note honestly recorded: the CC
+    desktop app's tile for a NON-marketplace (sideloaded) CCX is drawn by
+    Creative Cloud itself and may stay generic regardless — only an Adobe
+    Marketplace listing controls that surface; inside Photoshop's own
+    Plugins list the mark shows.
+  * gpt-image-2 stays "needs endpoint" for one more release: RunningHub's
+    own registry lists gpt-image-2 endpoints, but this environment cannot
+    open the doc page that carries the exact parameter table, and this
+    repo wires no endpoint it has not read (the rule that has kept every
+    other model honest). It is wired in both apps the moment the doc's
+    Endpoint line + parameter table are provided.
+  Acceptance carries over the full v6.28.0 checklist below, plus: Setup's
+  key alone must power an AI Tools Free Generate, and the AI Tools
+  Settings screen must show no key/language/theme controls.
+  Artifact `HNK_Ai_Panel_v6.28.1.ccx`, SHA-256
+  `ae9e41da63e2299c21d5a2b4d63ce36e799815f9a9f365e692fc6ce61e98bb6a`,
+  1,274,761 bytes. The release stays disabled until that acceptance.
+- **v6.28.0** — superseded by v6.28.1 before acceptance completed (the
+  settings de-duplication above). The owner's first real-Photoshop acceptance run
   on 6.27.0 (MacBook Pro, Photoshop 2026) proved sign-in, computer pairing
   (code from the web app's Account page) and the gate end to end — and
   surfaced a set of REAL UXP rendering gaps the browser shim renders

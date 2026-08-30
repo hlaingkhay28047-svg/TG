@@ -20,14 +20,8 @@ var SIZES = ["1k", "2k", "4k"];
 var RATIOS = ["auto", "source", "1:1", "4:5", "5:4", "3:4", "4:3", "2:3", "3:2", "16:9", "9:16", "21:9"];
 var QUALITIES = ["draft", "standard", "high", "ultra"];
 var VARIANTS = ["1", "2", "4"];
-/* v6.11 — mirrors main.js LANGS: nine full languages, then Myanmar ethnic
-   (Burmese-fallback UI), India + Asia (native starter packs). One list, one
-   order, everywhere the language is pickable. */
-var LANGS = [["my", "မြန်မာ"], ["en", "English"], ["shn", "တႆး"], ["kac", "Jinghpaw"], ["th", "ไทย"], ["zh", "中文"], ["vi", "Tiếng Việt"], ["id", "Indonesia"], ["ms", "Melayu"],
-  ["mnw", "မွန်"], ["rki", "ရခိုင်"], ["ksw", "ကညီ (ကရင်)"], ["kyu", "ကယား"], ["cnh", "ချင်း (Laiholh)"], ["blk", "ပအိုဝ်"], ["pll", "တအာင်း (ပလောင်)"], ["khb", "တႆးလိုဝ်ႉ"], ["ahk", "အာခါ (Akha)"], ["lhu", "လားဟူ (Lahu)"], ["lis", "လီဆူ (Lisu)"],
-  ["hi", "हिन्दी"], ["bn", "বাংলা"], ["ta", "தமிழ்"], ["te", "తెలుగు"], ["mr", "मराठी"], ["gu", "ગુજરાતી"], ["kn", "ಕನ್ನಡ"], ["ml", "മലയാളം"], ["pa", "ਪੰਜਾਬੀ"], ["ur", "اردو"],
-  ["ne", "नेपाली"], ["lo", "ລາວ"], ["km", "ខ្មែរ"], ["ja", "日本語"], ["ko", "한국어"]];
-var THEMES = [["system", "System"], ["dark", "Dark"], ["light", "Light"]];
+/* v6.28.1 — the Language and Theme pickers (and their LANGS/THEMES tables)
+   left this screen for the header controls, their one home. */
 var DENSITIES = [["compact", "Compact"], ["normal", "Normal"], ["comfortable", "Comfortable"]];
 
 function _select(doc, id, options, current, onChange) {
@@ -113,36 +107,15 @@ function render(root, deps) {
   var svc = deps.settings;
   var s = svc.get();
   dom.clear(root);
-  root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_settings", "Settings") }));
-
-  // Enterprise key
-  var keyInput = dom.el(doc, "input", { class: "hnk-sel", id: "hnkSetKey", attrs: { type: "password", placeholder: "RunningHub Enterprise-Shared Key" } });
-  keyInput.value = s.apiKey || "";
-  var keyStatus = dom.el(doc, "div", { class: "hnk-status", id: "hnkSetKeyStatus",
-    text: s.keyVerified ? "Key verified." : (s.apiKey ? "Key saved (not verified)." : "No key set.") });
-  var saveKey = dom.el(doc, "button", { class: "hnk-btn", id: "hnkSetKeySave", text: dom.t("ai_save_verify", "Save & Verify") });
-  var setKeyToken = 0;
-  dom.on(saveKey, "click", function () {
-    var myToken = ++setKeyToken;
-    dom.setDisabled(saveKey, true);
-    keyStatus.textContent = dom.t("ai_verifying", "Verifying…");
-    var res = svc.saveAndVerifyKey(keyInput.value);
-    /* v6.21 — saveAndVerifyKey no longer persists a key that fails
-       verification (it used to, silently overwriting a working saved key —
-       see settings-service.js), so this status text must not claim "saved"
-       for that case any more. */
-    var apply = function (r) {
-      if (myToken !== setKeyToken) return;
-      dom.setDisabled(saveKey, false);
-      keyStatus.textContent = r.ok ? "Key verified."
-        : (r.error && r.error.code === "no-verifier" ? "Key saved (verify unavailable)."
-        : "Verification failed — your previous key (if any) was kept.");
-    };
-    if (res && typeof res.then === "function") res.then(apply); else apply(res || {});
-  });
-  root.appendChild(_field(doc, "RunningHub Enterprise-Shared Key", keyInput));
-  root.appendChild(saveKey);
-  root.appendChild(keyStatus);
+  /* v6.28.1 — ONE home per setting (owner: "don't duplicate"). The
+     Enterprise key lives ONLY on the Setup tab now — the settings service
+     bridges it in (see settings-service.js), so saving it once there powers
+     Free Generate and the Smart Workflows too. Language and Theme live ONLY
+     in the header controls. What remains here exists nowhere else: the AI
+     Tools defaults, behaviour switches and the advanced endpoint form. */
+  root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_settings_defaults", "AI Tools — Defaults") }));
+  root.appendChild(dom.el(doc, "div", { class: "hnk-field-label",
+    text: dom.t("ai_key_lives_in_setup", "The RunningHub Enterprise key is managed on the Setup tab — saved once, used everywhere.") }));
 
   // Defaults
   var modelOpts = [["auto", "Auto Model"]].concat(registry.listModels().map(function (m) { return [m.id, m.displayName]; }));
@@ -151,8 +124,6 @@ function render(root, deps) {
   root.appendChild(_field(doc, "Default Ratio", _select(doc, "hnkSetRatio", RATIOS, s.defaultRatio, function (v) { svc.set({ defaultRatio: v }); })));
   root.appendChild(_field(doc, "Default Quality", _select(doc, "hnkSetQuality", QUALITIES, s.defaultQuality, function (v) { svc.set({ defaultQuality: v }); })));
   root.appendChild(_field(doc, "Default Variants", _select(doc, "hnkSetVariants", VARIANTS, String(s.defaultVariants), function (v) { svc.set({ defaultVariants: v | 0 }); })));
-  root.appendChild(_field(doc, "Language", _select(doc, "hnkSetLang", LANGS, s.language, function (v) { svc.set({ language: v }); if (deps.onLanguage) deps.onLanguage(v); })));
-  root.appendChild(_field(doc, "Theme", _select(doc, "hnkSetTheme", THEMES, s.theme, function (v) { svc.set({ theme: v }); if (deps.onTheme) deps.onTheme(v); })));
   root.appendChild(_field(doc, "Panel Density", _select(doc, "hnkSetDensity", DENSITIES, s.density, function (v) { svc.set({ density: v }); if (deps.onDensity) deps.onDensity(v); })));
 
   // Direct Generate — skip the staged Prepare step when inputs are already valid.
