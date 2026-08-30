@@ -93,7 +93,11 @@ function defaults() {
       "seedream-v4":           { apiPath: "seedream-v4/image-to-image", kind: "seedream", promptMax: 2000 },
       "seedream-v4-5":         { apiPath: "seedream-v4.5/image-to-image", kind: "seedream", promptMax: 2000, resolutions: ["2k", "4k"] },
       "rh-imagine-quality-edit": { apiPath: "rhart-imagine-image-quality/edit", imageParam: "imageUrl", kind: "imagine" },
-      "z-image-turbo":         { apiPath: "rhart-image/z-image-turbo/image-to-image", imageParam: "imageUrl", kind: "zimage" },
+      /* v6.29.0 — imageParam dropped: the owner's OpenAPI spec shows this
+         endpoint's body is ComfyUI node-keyed (66##image/41##text/
+         64##select/65##file_type), built whole in the adapter's zimage
+         branch — no flat image field exists to name. */
+      "z-image-turbo":         { apiPath: "rhart-image/z-image-turbo/image-to-image", kind: "zimage" },
       "upscale-transparent":   { apiPath: "topazlabs/image-upscale-transparent", imageParam: "imageUrl", kind: "upscale-transparent" }
     }
   };

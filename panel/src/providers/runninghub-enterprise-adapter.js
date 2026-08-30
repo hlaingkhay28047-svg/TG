@@ -33,9 +33,6 @@ var registry = dep("../models/model-registry", "modelRegistry");
 /* Ratio/size enums + per-family mappings — ported verbatim from the web
    app's confirmed rhV2Submit (see docs comment in runninghub-config.js). */
 var RH_RATIO_ENUM = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "5:4", "4:5", "21:9", "1:4", "4:1", "1:8", "8:1"];
-/* Z-Image Turbo's aspectRatio enum is a strict subset of RH_RATIO_ENUM —
-   notably no "4:5" — so it needs its own narrower check. */
-var RH_ZIMAGE_RATIO_ENUM = ["3:2", "2:3", "16:9", "9:16", "4:3", "3:4", "1:1"];
 var RH_QWEN_SIZE_MAP = {
   "1:1":  { std: "1024*1024", hd: "1536*1536" },
   "2:3":  { std: "768*1152",  hd: "1024*1536" },
@@ -49,13 +46,13 @@ var RH_WAN_RATIO_WH = {
   "1:1": [1, 1], "3:4": [3, 4], "4:3": [4, 3], "4:5": [4, 5], "5:4": [5, 4],
   "9:16": [9, 16], "16:9": [16, 9], "2:3": [2, 3], "3:2": [3, 2]
 };
-/* FLUX.2 Dev edit-lora frames its output ratio as a ComfyUI node select
-   (owner's OpenAPI spec, 2026-08-30): "1".."7" name fixed ratios, "8" is
-   custom width/height (unused here), "9" auto-matches the input image. The
-   map holds exactly the documented seven; anything else — Auto included —
-   sends "9", because the field is REQUIRED and auto-match is the documented
-   "decide from the source image" option, not an invented default. */
-var RH_FLUXEDIT_RATIO_MAP = { "1:1": "1", "3:4": "2", "4:3": "3", "9:16": "4", "16:9": "5", "2:3": "6", "3:2": "7" };
+/* The rhart-image/ ComfyUI-backed endpoints frame their output ratio as a
+   node select with the SAME "1".."7" option table (owner's OpenAPI specs,
+   2026-08-30): 1=1:1, 2=3:4, 3=4:3, 4=9:16, 5=16:9, 6=2:3, 7=3:2. FLUX.2
+   Dev edit-lora additionally documents "8" custom width/height (unused
+   here) and "9" auto-match-the-input; Z-Image Turbo's enum stops at the
+   seven. Each branch picks its own documented fallback. */
+var RH_NODE_RATIO_MAP = { "1:1": "1", "3:4": "2", "4:3": "3", "9:16": "4", "16:9": "5", "2:3": "6", "3:2": "7" };
 
 function rhRatio(ratio) { return RH_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : ""; }
 /* Auto -> the cheapest tier; the Standard API requires a lowercase 1k/2k/4k
@@ -164,9 +161,25 @@ function buildRequestBody(mc, request, uploadedUrls) {
     var fx = {};
     fx["51##image"] = uploadedUrls[0] || "";
     fx["16##text"] = body.prompt;
-    fx["47##select"] = RH_FLUXEDIT_RATIO_MAP[ratio] || "9";
+    fx["47##select"] = RH_NODE_RATIO_MAP[ratio] || "9";
     fx["52##file_type"] = "PNG";
     return fx;
+  }
+
+  // Z-Image Turbo (v6.29.0): the owner's OpenAPI spec shows this
+  // rhart-image/ sibling is node-keyed too — 66##image/41##text/
+  // 64##select/65##file_type, all REQUIRED. Its ratio enum is the shared
+  // "1".."7" table with NO auto option, so out-of-enum/Auto falls back to
+  // "1" (1:1) — the same fallback the old flat body used. The flat
+  // imageUrl/prompt/aspectRatio/outputFormat keys shipped before are not
+  // in this spec and are gone. Ported 1:1 from the web app.
+  if (mc.kind === "zimage") {
+    var zb = {};
+    zb["66##image"] = uploadedUrls[0] || "";
+    zb["41##text"] = body.prompt;
+    zb["64##select"] = RH_NODE_RATIO_MAP[ratio] || "1";
+    zb["65##file_type"] = "PNG";
+    return zb;
   }
   var imageParam = mc.imageParam || "imageUrls";
   if (imageParam === "image") body.image = uploadedUrls[0] || "";
@@ -182,9 +195,6 @@ function buildRequestBody(mc, request, uploadedUrls) {
     body.resolution = (res3 === "2k" || res3 === "4k") ? "2k" : "1k";
     body.numImages = "1";
     var r3 = rhRatio(ratio); if (r3) body.aspectRatio = r3;
-  } else if (mc.kind === "zimage") {
-    body.aspectRatio = RH_ZIMAGE_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : "1:1";
-    body.outputFormat = "png";
   } else if (mc.sizeParam) {
     var sz = qwenSize(ratio, size); if (sz) body.size = sz;
   } else if (mc.whParam) {

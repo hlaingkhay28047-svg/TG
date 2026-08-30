@@ -3440,17 +3440,19 @@ var RH_MODELS = [
      matching the same "let the endpoint decide" behavior used everywhere
      else in this app instead of guessing at a literal "auto" string. */
   { id:"rh-imagine-quality-edit", label:"RH Imagine Image Quality", apiPath:"rhart-imagine-image-quality/edit", imageParam:"imageUrl", kind:"imagine" },
-  /* Z-Image Turbo image-to-image: confirmed shape is genuinely different from
-     every other endpoint above — single "imageUrl", a REQUIRED aspectRatio
-     enum (3:2/2:3/16:9/9:16/4:3/3:4/1:1, no "auto"/omit option), a REQUIRED
-     outputFormat enum, and no resolution field in the schema at all. Routed
-     through kind:"zimage", which always sends a valid aspectRatio (defaulting
-     to 1:1 when the shared ratio picker is unset or holds a ratio outside
-     this endpoint's enum, since the field can't be omitted) and a constant
-     outputFormat:"png", and never sends resolution — this endpoint simply
-     doesn't accept it, so sending one would be inventing an undeclared
-     parameter rather than a confirmed default. */
-  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", imageParam:"imageUrl", kind:"zimage" },
+  /* Z-Image Turbo image-to-image — v5.53.4: the owner's full OpenAPI spec
+     for this exact endpoint (2026-08-30) shows its body is ComfyUI
+     node-keyed like its rhart-image/ sibling f-2-dev/edit-lora — 66##image
+     (ONE image URL, REQUIRED), 41##text (prompt, REQUIRED), 64##select
+     (aspect ratio as the SAME "1".."7" option table flux edit documents,
+     REQUIRED, no auto option), 65##file_type (REQUIRED, "PNG"). The flat
+     imageUrl/prompt/aspectRatio/outputFormat body shipped before carried
+     the right VALUES under keys this spec does not declare — corrected in
+     rhV2Body's zimage branch. Still no resolution field of any kind. The
+     substance of the old confirmation stands: one image, seven fixed
+     ratios (1:1 fallback since the field can't be omitted), constant PNG
+     output, no size tier. */
+  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", kind:"zimage" },
   /* Upscale Transparent: a second Upscale variant, routed through its own
      dedicated submit/generate pair (rhV2SubmitUpscaleTransparent /
      rhGenerateUpscaleTransparent) since — like Upscale Pro — its body shape
@@ -5384,13 +5386,14 @@ function rhWanWH(ratio, sizeSel){
   if(rw>=rh){ w=base; h=Math.round(base*rh/rw); } else { h=base; w=Math.round(base*rw/rh); }
   return { w: Math.max(512,Math.min(4096,w)), h: Math.max(512,Math.min(4096,h)) };
 }
-/* FLUX.2 Dev edit-lora frames its output ratio as a ComfyUI node select
-   (owner's OpenAPI spec, 2026-08-30): "1".."7" name fixed ratios, "8" is
-   custom width/height (unused here), "9" auto-matches the input image. The
-   map holds exactly the documented seven; anything else — Auto included —
-   sends "9", because the field is REQUIRED and auto-match is the documented
-   "decide from the source image" option, not an invented default. */
-var RH_FLUXEDIT_RATIO_MAP = { "1:1":"1", "3:4":"2", "4:3":"3", "9:16":"4", "16:9":"5", "2:3":"6", "3:2":"7" };
+/* The rhart-image/ ComfyUI-backed endpoints frame their output ratio as a
+   node select with the SAME "1".."7" option table (owner's OpenAPI specs,
+   2026-08-30): 1=1:1, 2=3:4, 3=4:3, 4=9:16, 5=16:9, 6=2:3, 7=3:2. FLUX.2
+   Dev edit-lora additionally documents "8" custom width/height (unused
+   here) and "9" auto-match-the-input; Z-Image Turbo's enum stops at the
+   seven. The map holds exactly the shared documented seven — each branch
+   picks its own documented fallback for anything else. */
+var RH_NODE_RATIO_MAP = { "1:1":"1", "3:4":"2", "4:3":"3", "9:16":"4", "16:9":"5", "2:3":"6", "3:2":"7" };
 /* Plain slice(0,maxLen) would cut from the tail — but finalPrompt always ends
    with the fixed "TASK GUARD:" block (identity/pixel-preservation rules) that
    must never be silently dropped just because Style Chains/Cleanup/Camera/
@@ -5421,18 +5424,34 @@ function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
   imageUrls = imageUrls||[];
   /* FLUX.2 Dev edit-lora takes a ComfyUI node-keyed body — completely unlike
      the field-named endpoints below: 51##image (ONE image URL), 16##text
-     (the prompt), 47##select (ratio enum — see RH_FLUXEDIT_RATIO_MAP),
+     (the prompt), 47##select (ratio enum — see RH_NODE_RATIO_MAP),
      52##file_type (output format). The optional 18##lora_name/
      18##strength_model pair is omitted on purpose (documented default
      strength 0 = plain FLUX.2 Dev editing), and no resolution/size field
-     exists on this endpoint at all. */
+     exists on this endpoint at all. Auto/unknown ratios send this
+     endpoint's documented "9" (auto-match the input image). */
   if(cfg.kind==="fluxedit"){
     var fx={};
     fx["51##image"]=imageUrls[0]||"";
     fx["16##text"]=rhTruncatePrompt(promptText, cfg.promptMax);
-    fx["47##select"]=RH_FLUXEDIT_RATIO_MAP[ratio]||"9";
+    fx["47##select"]=RH_NODE_RATIO_MAP[ratio]||"9";
     fx["52##file_type"]="PNG";
     return fx;
+  }
+  /* Z-Image Turbo (v5.53.4): the owner's OpenAPI spec shows this
+     rhart-image/ sibling is node-keyed too — 66##image/41##text/
+     64##select/65##file_type, all REQUIRED. Its ratio enum is the shared
+     "1".."7" table with NO auto option, so out-of-enum/Auto falls back to
+     "1" (1:1) — the same fallback the old flat body used. The flat
+     imageUrl/prompt/aspectRatio/outputFormat keys shipped before are not
+     in this spec and are gone. */
+  if(cfg.kind==="zimage"){
+    var zb={};
+    zb["66##image"]=imageUrls[0]||"";
+    zb["41##text"]=rhTruncatePrompt(promptText, cfg.promptMax);
+    zb["64##select"]=RH_NODE_RATIO_MAP[ratio]||"1";
+    zb["65##file_type"]="PNG";
+    return zb;
   }
   var body={ prompt: rhTruncatePrompt(promptText, cfg.promptMax) };
   var imageParam = cfg.imageParam || "imageUrls";
@@ -5453,9 +5472,6 @@ function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
     body.resolution = (res3==="2k"||res3==="4k") ? "2k" : "1k";
     body.numImages = "1";
     var r3=rhV2Ratio(ratio); if(r3) body.aspectRatio=r3;
-  } else if(cfg.kind==="zimage"){
-    body.aspectRatio = RH_ZIMAGE_RATIO_ENUM.indexOf(ratio)>=0 ? ratio : "1:1";
-    body.outputFormat = "png";
   } else if(cfg.sizeParam){
     var sz = rhQwenSize(ratio, resolution);
     if(sz) body.size = sz;
@@ -6527,7 +6543,7 @@ function rhNarrowRatioOptionsFor(active){
     return;
   }
   if(active && active.kind==="fluxedit"){
-    var curF=sel.value, fratios=Object.keys(RH_FLUXEDIT_RATIO_MAP);
+    var curF=sel.value, fratios=Object.keys(RH_NODE_RATIO_MAP);
     sel.innerHTML="";
     /* Auto stays offered: the submit side maps it to the documented "9"
        (auto-match the input image) rather than omitting the REQUIRED field. */

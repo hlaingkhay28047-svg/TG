@@ -178,11 +178,25 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.29.0** — `pending`. Two owner-supplied OpenAPI specs (2026-08-30)
-  close out every held endpoint in one release: FLUX.2 Dev's image-editing
-  route (`rhart-image/f-2-dev/edit-lora`) and GPT Image 2's official
-  text-to-image (`rhart-image-g-2-official/text-to-image`, held since
-  v6.28.2 for exactly this parameter table):
+- **v6.29.0** — `pending`. Three owner-supplied OpenAPI specs (2026-08-30)
+  close out every held endpoint and correct a shipped body in one release:
+  FLUX.2 Dev's image-editing route (`rhart-image/f-2-dev/edit-lora`),
+  GPT Image 2's official text-to-image
+  (`rhart-image-g-2-official/text-to-image`, held since v6.28.2 for
+  exactly this parameter table), and Z-Image Turbo's own spec:
+  * Z-Image Turbo's request body is CORRECTED in both apps: the owner's
+    spec for `rhart-image/z-image-turbo/image-to-image` shows it is
+    ComfyUI node-keyed like its rhart-image/ sibling f-2-dev/edit-lora —
+    66##image / 41##text / 64##select (the same "1".."7" ratio table,
+    no auto option) / 65##file_type, all REQUIRED. The flat
+    imageUrl/prompt/aspectRatio/outputFormat body shipped since the v2
+    port carried the right values under keys this spec does not declare;
+    both apps now send the node keys, with the same 1:1 fallback for
+    Auto/out-of-enum ratios the flat body used. UI is unchanged (seven
+    ratios, no Size). NOTE: the sibling `rhart-image/f-2-dev/
+    text-to-image` (flux t2i) still ships the flat body its own doc was
+    read as confirming — its current page has been requested from the
+    owner to check whether it is node-keyed too.
   * GPT Image 2 T2I joins both apps — the web app's T2I page
     ("GPT Image 2 (Official) — Poster & Text") and the panel registry
     (`rh-image-g2-t2i`, 22 models now). Body per the spec: prompt
@@ -240,8 +254,8 @@ eligible students.
   Auto poster request with NO image must resolve to
   "GPT Image 2 — Poster & Text (T2I)" and generate.
   Artifact `HNK_Ai_Panel_v6.29.0.ccx`, SHA-256
-  `39951b7845eb8869b5ec9bbf2672d79062ece9ee620fca63e5e093925fb9df52`,
-  1,277,643 bytes. The release stays disabled until that acceptance.
+  `ec9f313f26fe8037deabd6ae58714021349e6d413e3ff88fa48ccbd74c2d2730`,
+  1,277,907 bytes. The release stays disabled until that acceptance.
 - **v6.28.2** — superseded by v6.29.0 the same day (the FLUX.2 Dev edit
   endpoint above) before acceptance completed. GPT Image 2 becomes REAL in
   both apps, from the owner's own verified Enterprise-Shared reference PDF

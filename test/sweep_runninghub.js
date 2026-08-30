@@ -91,7 +91,6 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       imagineKind: rhEffectiveKind("rh-imagine-quality-edit"),
       imagineImageParam: rhEffectiveImageParam("rh-imagine-quality-edit"),
       zimageKind: rhEffectiveKind("z-image-turbo"),
-      zimageImageParam: rhEffectiveImageParam("z-image-turbo"),
       upTransparentKind: rhEffectiveKind("upscale-transparent"),
       upTransparentImageParam: rhEffectiveImageParam("upscale-transparent"),
       upTransparentWh2k: rhUpscaleTransparentWH("2K"),
@@ -121,7 +120,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && setup.upscaleImageParam === "imageUrl"
     && setup.seedreamKind === "seedream" && setup.seedream45Kind === "seedream"
     && setup.imagineKind === "imagine" && setup.imagineImageParam === "imageUrl"
-    && setup.zimageKind === "zimage" && setup.zimageImageParam === "imageUrl"
+    && setup.zimageKind === "zimage"
     && setup.upTransparentKind === "upscale-transparent" && setup.upTransparentImageParam === "imageUrl"
     && setup.upTransparentWh2k && setup.upTransparentWh2k.w === 2560 && setup.upTransparentWh2k.h === 1440
     && setup.upTransparentWhAuto === null
@@ -341,12 +340,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     && imagineResult.body.imageUrls === undefined;
   console.log(imagineOk ? "PASS (imagine edit resolution clamp + numImages)" : ("FAIL (imagine edit): " + JSON.stringify(imagineResult)));
 
-  // Z-Image Turbo: pick "4:5" — a ratio the shared #selRatio dropdown DOES
-  // offer, but Z-Image Turbo's own aspectRatio enum does NOT include (its
-  // enum is a strict subset of the shared dropdown's options). Must fall
-  // back to the confirmed default "1:1" rather than sending the invalid
-  // "4:5" value straight through. Also confirms outputFormat is always
-  // sent and resolution is never sent (this endpoint has no such field).
+  // Z-Image Turbo (v5.53.4 — corrected to the owner's OpenAPI spec): the
+  // body is ComfyUI node-keyed (66##image/41##text/64##select/
+  // 65##file_type, all REQUIRED) — never the old flat imageUrl/prompt/
+  // aspectRatio/outputFormat keys, which the spec does not declare. Pick
+  // "4:5" — a ratio the shared #selRatio dropdown DOES offer but this
+  // endpoint's "1".."7" select does NOT — and it must fall back to "1"
+  // (1:1), the same fallback the flat body used. No resolution of any
+  // kind, and no auto option exists on this endpoint's enum.
   const zimageResult = await page.evaluate(async (b64) => {
     window.__rhBodies.length = 0;
     document.getElementById("resultBox").className = "card result-box";
@@ -364,11 +365,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body, st: document.getElementById("stGen").textContent };
   }, B64);
   console.log("z-image submit body (ratio 4:5 out of endpoint enum):", JSON.stringify(zimageResult.body));
-  const zimageOk = zimageResult.ok && zimageResult.body && zimageResult.body.aspectRatio === "1:1"
-    && zimageResult.body.outputFormat === "png" && zimageResult.body.resolution === undefined
-    && typeof zimageResult.body.imageUrl === "string" && zimageResult.body.imageUrl.length > 0
-    && zimageResult.body.imageUrls === undefined;
-  console.log(zimageOk ? "PASS (z-image out-of-enum ratio falls back to 1:1)" : ("FAIL (z-image): " + JSON.stringify(zimageResult)));
+  const zimageOk = zimageResult.ok && zimageResult.body && zimageResult.body["64##select"] === "1"
+    && zimageResult.body["65##file_type"] === "PNG"
+    && typeof zimageResult.body["66##image"] === "string" && zimageResult.body["66##image"].length > 0
+    && String(zimageResult.body["41##text"]).indexOf("test z-image prompt") >= 0
+    && zimageResult.body.aspectRatio === undefined && zimageResult.body.outputFormat === undefined
+    && zimageResult.body.imageUrl === undefined && zimageResult.body.imageUrls === undefined
+    && zimageResult.body.prompt === undefined && zimageResult.body.resolution === undefined;
+  console.log(zimageOk ? "PASS (z-image node-keyed body; out-of-enum ratio falls back to \"1\" = 1:1)" : ("FAIL (z-image): " + JSON.stringify(zimageResult)));
 
   // A valid Z-Image Turbo ratio must pass through unchanged (not always 1:1).
   const zimageValidResult = await page.evaluate(async (b64) => {
@@ -387,8 +391,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
   }, B64);
   console.log("z-image submit body (valid ratio 16:9):", JSON.stringify(zimageValidResult.body));
-  const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body.aspectRatio === "16:9";
-  console.log(zimageValidOk ? "PASS (z-image valid ratio passes through)" : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
+  const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body["64##select"] === "5";
+  console.log(zimageValidOk ? 'PASS (z-image valid ratio 16:9 maps to the documented "5")' : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
 
   // Flux 2 Dev — Edit (v5.53.4): the ComfyUI node-keyed body from the owner's
   // rhart-image/f-2-dev/edit-lora OpenAPI spec — 51##image/16##text/
