@@ -332,6 +332,39 @@ function report(name, ok, detail) {
     !/wfApplyModelFilter\(\)[\s\S]{0,400}sel\.onchange\(\)/.test(srcApp.slice(srcApp.indexOf("function wfApplyModelFilter"), srcApp.indexOf("function wfEnsureCapableModel"))),
     "wizard rail/ratio-honesty/run-time-switch wiring missing");
 
+  /* ---- 9) v5.57.0 — video hero banners: the layer is armed, honest and
+     cheap. One <video class="ph-motion"> rides behind every page-hero still,
+     lazily loaded only on screen, paused off screen, format picked by what
+     the browser can decode (mp4/webm pair), silently removed when no clip
+     exists — and the clips are excluded from the SW's LIB_CACHE so eleven
+     streams can never evict the thumbnails. (Playback itself is proven
+     manually with a real clip; this Chromium build has no H.264, which is
+     exactly why the canPlayType pick exists.) */
+  const v57 = await page.evaluate(() => {
+    const vids = document.querySelectorAll(".page-hero video.ph-motion, .page-hero>img");
+    const heroes = document.querySelectorAll(".page-hero>img").length;
+    // with no clips shipped, every probe must have fallen back silently:
+    // no .live videos, no has-motion heroes, zero page errors (checked by
+    // this sweep's pageerror hook)
+    const live = document.querySelectorAll(".page-hero video.ph-motion.live").length;
+    const hm = document.querySelectorAll(".page-hero.has-motion").length;
+    return { heroes, live, hm };
+  });
+  const swSrc = require("fs").readFileSync(require("path").join(__dirname, "..", "docs", "app", "sw.js"), "utf8");
+  report("v5.57.0: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback) and motion clips excluded from LIB_CACHE",
+    v57.heroes >= 11 && v57.live === 0 && v57.hm === 0 &&
+    srcApp.includes('v.className="ph-motion"') &&
+    srcApp.includes('canPlayType(\'video/mp4; codecs="avc1.42E01E"\')') &&
+    srcApp.includes('"lib/banners/motion/"+m[1]+phExt') &&
+    srcApp.includes('v.addEventListener("error"') &&
+    /else if\(!v\.paused\)\{ v\.pause\(\); \}/.test(srcApp) &&
+    /* NO_CARD_JPG's rule for video: a clip is probed only when its files
+       really shipped, so a console never eats a certain 404 */
+    srcApp.includes("var PH_MOTION_CLIPS=") &&
+    srcApp.includes("PH_MOTION_CLIPS.indexOf(m[1])<0) return;") &&
+    swSrc.includes('url.pathname.indexOf("/lib/banners/motion/") >= 0) return;'),
+    JSON.stringify(v57));
+
   await page.close();
   await browser.close();
   console.log("\n" + (failures ? "FAIL (" + failures + " failure(s))" : "PASS"));

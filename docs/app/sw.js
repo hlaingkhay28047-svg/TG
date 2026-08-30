@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v5-56-1";
+var CACHE = "hnk-web-studio-v5-57-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -245,6 +245,12 @@ self.addEventListener("fetch", function (e) {
      access-wall checks the moment the base URL changed, which is how it was
      found. Nothing under /api is ever cached or replayed. */
   if (url.pathname === "/api" || url.pathname.indexOf("/api/") === 0) return;
+  /* v5.57.0 — hero motion clips are streamed by the <video> element (Range
+     requests, multi-MB payloads). They must never enter LIB_CACHE: a full
+     cached response breaks range semantics, and eleven clips would LRU-evict
+     the thumbnails the cache exists to protect. Left to the browser, whose
+     own HTTP cache handles media correctly. */
+  if (url.pathname.indexOf("/lib/banners/motion/") >= 0) return;
   var isLib = url.pathname.indexOf("/lib/") >= 0 && !LIB_ICON_RE.test(url.pathname);
   if (isLib) {
     /* v5.46 — THE CACHE MUST NEVER TAKE DOWN WHAT IT EXISTS TO PROTECT. On a

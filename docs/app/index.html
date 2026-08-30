@@ -173,6 +173,16 @@ input,textarea,select{font-family:inherit}
    bottom is shaded; the doubled text-shadows on .ph-kick/.ph-head carry the
    rest of the legibility. */
 .page-hero:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(11,13,20,0) 0%,rgba(11,13,20,.04) 52%,rgba(11,13,20,.72) 100%)}
+/* v5.57.0 — VIDEO HERO BANNERS. A looping motion clip named after the
+   banner (lib/banners/motion/<name>.mp4) slides in ABOVE the still and
+   fades up once it can actually play; the JPG stays underneath as the
+   instant poster and the only frame reduced-motion, save-data and
+   missing-clip users ever see. The sweep/scrim pseudo-layers sit at z1,
+   so they dress the video exactly as they dress the still. */
+.page-hero video.ph-motion{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
+.page-hero video.ph-motion.live{opacity:1}
+.page-hero.has-motion>img{animation:none}
+@media (prefers-reduced-motion: reduce){.page-hero video.ph-motion{display:none}}
 .page-hero .ph-kick{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
 .page-hero .ph-head{position:relative;z-index:2;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
 @media (min-width:768px){.page-hero{min-height:172px;padding:16px 20px 14px}}
@@ -7603,6 +7613,67 @@ $("selModel").onchange = function(){
 };
 $("rhModelSel").onchange = function(){ rhLoadFormFor(this.value); };
 ratioRailAttach("selRatio"); ratioRailAttach("selT2IRatio"); ratioRailAttach("selVidAspect");
+/* ---------- v5.57.0: video hero banners ----------
+   Owner instruction: the eleven page banners come alive as motion clips —
+   same subject, same outfit, same frame. Each hero probes for a clip named
+   after its own still (lib/banners/motion/<name>.mp4) and lights it up only
+   when the clip really plays; anything else — clip not generated yet, slow
+   network, save-data, reduced-motion, playback refusal — leaves the still
+   with its Ken Burns drift exactly as it is today. Clips load lazily (only
+   when the banner is on screen) and pause off-screen, so the pane costs
+   nothing to pages you never visit. Excluded from the SW LIB_CACHE (see
+   sw.js) — the browser's own HTTP cache handles media. */
+/* Which banners HAVE a generated clip pair on disk. Empty until the owner's
+   image-to-video clips land — the same mechanism as NO_CARD_JPG: probing a
+   file known to be absent buys a certain 404 in every console (and this
+   codebase pins consoles clean), so a clip is announced here in the same
+   commit that adds its files. */
+var PH_MOTION_CLIPS=[];
+(function phMotionBoot(){
+  try{
+    if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var con=navigator.connection;
+    if(con && (con.saveData || /(^|-)2g/.test(String(con.effectiveType||"")))) return;
+    if(!("IntersectionObserver" in window)) return;
+    var heroes=document.querySelectorAll(".page-hero>img");
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        var v=en.target._phv; if(!v) return;
+        if(en.isIntersecting){
+          if(!v._armed){ v._armed=true; v.preload="auto"; v.load(); }
+          var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){});
+        } else if(!v.paused){ v.pause(); }
+      });
+    },{threshold:.15});
+    Array.prototype.forEach.call(heroes,function(img){
+      var m=/lib\/banners\/([a-z0-9-]+)\.jpg/.exec(img.getAttribute("src")||"");
+      if(!m || PH_MOTION_CLIPS.indexOf(m[1])<0) return;
+      var hero=img.parentElement;
+      var v=document.createElement("video");
+      v.muted=true; v.loop=true; v.playsInline=true;
+      v.setAttribute("muted",""); v.setAttribute("playsinline","");
+      v.preload="none"; v.className="ph-motion";
+      v.setAttribute("aria-hidden","true"); v.tabIndex=-1;
+      /* identical framing: the still's art-directed crop rides along */
+      if(img.style.objectPosition) v.style.objectPosition=img.style.objectPosition;
+      /* each clip ships as an .mp4/.webm pair: H.264 for Safari/iOS, VP9
+         for browsers built without the proprietary codec — picked by what
+         THIS browser says it can decode, so a wrong guess can't 404-loop */
+      var canMp4=v.canPlayType('video/mp4; codecs="avc1.42E01E"');
+      var canWebm=v.canPlayType('video/webm; codecs="vp9"');
+      var phExt=canMp4?".mp4":(canWebm?".webm":"");
+      if(!phExt) return;
+      v.src="lib/banners/motion/"+m[1]+phExt;
+      v.addEventListener("playing",function(){ v.classList.add("live"); hero.classList.add("has-motion"); });
+      v.addEventListener("error",function(){ io.unobserve(hero); v.remove(); hero.classList.remove("has-motion"); });
+      img.insertAdjacentElement("afterend", v);
+      /* the observer watches the HERO; the callback reaches the clip
+         through this stash */
+      hero._phv=v;
+      io.observe(hero);
+    });
+  }catch(e){}
+})();
 rhLoadFormFor($("rhModelSel").value);
 rhRenderConfiguredList();
 renderRhProviderOption();
@@ -22325,7 +22396,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.56.1";
+var APP_VER="5.57.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
