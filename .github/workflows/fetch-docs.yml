@@ -24,20 +24,35 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: batch1
-            ids: "448184518 448184482 448184504 459580545 425761030 448184490"
-          - name: batch2
-            ids: "448184501 448184500 448184497 448184499 448184534 448184496"
-          - name: batch3
-            ids: "448184488 448184489 494859258 448184543 448184542 454760430"
-          - name: batch4
+          # Round 2 — the full remaining image catalog (i2i, t2i, tools,
+          # effects) for the owner's "add every documented image model" wave,
+          # plus a retry of round 1's stalled batch4 pages.
+          - name: cat01
+            ids: "448184476 494859263 448184479 448184483 448184484 448184485 448184480 497874395"
+          - name: cat02
+            ids: "494859264 448184486 448184487 448184492 448184493 448184494 448184495 448184498"
+          - name: cat03
+            ids: "494859265 494859266 448184503 465292102 494859267 495680091 495680090 448184505"
+          - name: cat04
+            ids: "448184506 448184507 494859257 448184508 497874394 448184509 448184510 448184511"
+          - name: cat05
+            ids: "448184512 448184513 448184514 448184517 448184519 448184520 448184521 448184522"
+          - name: cat06
+            ids: "448184515 448184516 448184523 448184524 448184526 448184527 448184525 448184531"
+          - name: cat07
+            ids: "448184528 448184530 448184529 494859259 448184532 448184533 448184537 448184535"
+          - name: cat08
+            ids: "494859260 448184536 494859261 448184538 448184539 448184541 448969339 465292103"
+          - name: cat09
+            ids: "494859262 495680089 495680095 495680096 495680092 495680093 498427798 448184496"
+          - name: cat10
             ids: "448184477 448184478 448184392 448184385 448184371 448184375 495680094"
     steps:
       - name: Fetch doc pages
         run: |
           for id in ${{ matrix.ids }}; do
             echo "=====DOC ${id} START====="
-            curl -sSL --retry 3 --retry-delay 2 --max-time 90 \
+            curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 \
               "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
               || echo "FETCH-FAILED ${id}"
             echo ""
