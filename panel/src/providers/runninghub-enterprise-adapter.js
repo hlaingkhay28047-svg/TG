@@ -53,6 +53,11 @@ var RH_WAN_RATIO_WH = {
    here) and "9" auto-match-the-input; Z-Image Turbo's enum stops at the
    seven. Each branch picks its own documented fallback. */
 var RH_NODE_RATIO_MAP = { "1:1": "1", "3:4": "2", "4:3": "3", "9:16": "4", "16:9": "5", "2:3": "6", "3:2": "7" };
+/* Grok Imagine Quality Edit's OPTIONAL aspectRatio enum (owner's OpenAPI
+   spec, 2026-08-30): auto/1:1/16:9/9:16/4:3/3:4/3:2/2:3 — omission IS the
+   documented auto default, so a ratio is sent only when it is one of the
+   seven. */
+var RH_IMAGINE_RATIO_ENUM = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"];
 
 function rhRatio(ratio) { return RH_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : ""; }
 /* Auto -> the cheapest tier; the Standard API requires a lowercase 1k/2k/4k
@@ -194,7 +199,14 @@ function buildRequestBody(mc, request, uploadedUrls) {
     var res3 = String(size || "").toLowerCase();
     body.resolution = (res3 === "2k" || res3 === "4k") ? "2k" : "1k";
     body.numImages = "1";
-    var r3 = rhRatio(ratio); if (r3) body.aspectRatio = r3;
+    // v6.29.0 — only the endpoint's own documented seven; the generic
+    // rhRatio pass-through could ship 4:5/5:4/21:9, values outside this
+    // spec's enum. Omission = the documented "auto" default.
+    if (RH_IMAGINE_RATIO_ENUM.indexOf(ratio) !== -1) body.aspectRatio = ratio;
+  } else if (mc.kind === "xedit") {
+    // Grok Imagine — Edit (v6.29.0): the spec declares EXACTLY prompt +
+    // image. The default branch's resolution/aspectRatio are not in it —
+    // append nothing.
   } else if (mc.sizeParam) {
     var sz = qwenSize(ratio, size); if (sz) body.size = sz;
   } else if (mc.whParam) {

@@ -44,6 +44,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"SUCCESS",errorCode:"",errorMessage:"",results:[{url:"https://mock.runninghub.test/out.png",nodeId:"2",outputType:"png",text:null}],clientId:"",promptTips:""}), {status:200}));
       }
       if (u.indexOf("/openapi/v2/rhart-image-n-g31-flash/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image-x-official/edit") >= 0
           || u.indexOf("/openapi/v2/alibaba/qwen-image-2.0/image-edit") >= 0
           || u.indexOf("/openapi/v2/topazlabs/image-upscale-standard-v2") >= 0
           || u.indexOf("/openapi/v2/seedream-v4/image-to-image") >= 0
@@ -81,6 +82,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       noneOfUnconfigured: stillUnconfigured.every(function(id){ return !rhIsConfigured(id); }),
       g2OffQuality: rhEffectiveQuality("rh-image-g2-off"),
       xOffImageParam: rhEffectiveImageParam("rh-image-x-off"),
+      xOffKind: rhEffectiveKind("rh-image-x-off"),
       qwenSizeParam: rhEffectiveSizeParam("qwen-image-2"),
       wanWhParam: rhEffectiveWhParam("wan-image-edit"),
       wanProWhParam: rhEffectiveWhParam("wan-image-edit-pro"),
@@ -116,6 +118,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log("setup:", JSON.stringify(setup));
   var setupOk = setup.hasOption && setup.configured && setup.active && setup.allBuiltinsConfigured
     && setup.noneOfUnconfigured && setup.g2OffQuality === "medium" && setup.xOffImageParam === "image"
+    && setup.xOffKind === "xedit"
     && setup.qwenSizeParam === true && setup.wanWhParam === true && setup.wanProWhParam === true && setup.upscaleKind === "upscale"
     && setup.upscaleImageParam === "imageUrl"
     && setup.seedreamKind === "seedream" && setup.seedream45Kind === "seedream"
@@ -461,6 +464,65 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     updateGenOptsForRHKind();
   });
 
+  // Grok Imagine Quality Edit (v5.53.4): the spec's OPTIONAL aspectRatio
+  // enum is seven ratios + auto — a shared-dropdown value outside it
+  // ("4:5") must be OMITTED (= the documented auto default), never sent.
+  const imagineOutResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "rh-imagine-quality-edit"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    document.getElementById("selRatio").value = "4:5";
+    document.getElementById("selSize").value = "1K";
+    document.getElementById("prompt").value = "test imagine out-of-enum ratio";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/rhart-imagine-image-quality/edit") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
+  }, B64);
+  console.log("imagine edit out-of-enum ratio body:", JSON.stringify(imagineOutResult.body));
+  const imagineOutOk = imagineOutResult.ok && imagineOutResult.body && imagineOutResult.body.aspectRatio === undefined
+    && imagineOutResult.body.resolution === "1k" && imagineOutResult.body.numImages === "1";
+  console.log(imagineOutOk ? 'PASS (imagine edit omits an out-of-enum ratio — the documented "auto" default)' : ("FAIL (imagine out-of-enum): " + JSON.stringify(imagineOutResult)));
+
+  // Grok Imagine — Edit (v5.53.4, was "RH Image X (Official)"): the owner's
+  // spec declares EXACTLY prompt + image. The body must carry nothing else
+  // (the old default-branch resolution/aspectRatio were undeclared params),
+  // and the Create page must hide Ratio and Size for it.
+  const xeditResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "rh-image-x-off"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    updateGenOptsForRHKind();
+    var ratioHidden = document.getElementById("selRatio").style.display === "none";
+    var sizeHidden = document.getElementById("selSize").style.display === "none";
+    document.getElementById("prompt").value = "test grok imagine edit prompt";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/rhart-image-x-official/edit") >= 0) || {}).body || null;
+    // restore the default control set for the tests below
+    var c2 = rhCfg(); c2.activeModel = "nano-banana-2"; rhSaveCfg(c2);
+    updateGenOptsForRHKind();
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body,
+      ratioHidden: ratioHidden, sizeHidden: sizeHidden };
+  }, B64);
+  console.log("grok imagine edit body:", JSON.stringify(xeditResult.body),
+    "ratioHidden:", xeditResult.ratioHidden, "sizeHidden:", xeditResult.sizeHidden);
+  const xeditOk = xeditResult.ok && xeditResult.body
+    && typeof xeditResult.body.prompt === "string" && xeditResult.body.prompt.length > 0
+    && typeof xeditResult.body.image === "string" && xeditResult.body.image.length > 0
+    && xeditResult.body.resolution === undefined && xeditResult.body.aspectRatio === undefined
+    && xeditResult.body.imageUrls === undefined && xeditResult.body.imageUrl === undefined
+    && xeditResult.ratioHidden === true && xeditResult.sizeHidden === true;
+  console.log(xeditOk ? "PASS (grok imagine edit sends the bare prompt+image pair; Ratio/Size hidden)" : ("FAIL (grok imagine edit): " + JSON.stringify(xeditResult)));
+
   // Upscale Transparent: activate it, pick "2K" (-> 2560x1440), and inspect
   // the actual request body — must carry outputWidth/outputHeight (never
   // "scale", which is Upscale Pro's field, not this endpoint's), no prompt,
@@ -529,7 +591,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
   const overall = result === "OK" && qwenOk && upOk && seedreamOk && sd45Ok && sd40Ok && imagineOk && zimageOk && zimageValidOk
-    && fluxOk && fluxAutoOk && upTransparentOk && upTransparentNoImgOk && noImgOk;
+    && fluxOk && fluxAutoOk && imagineOutOk && xeditOk && upTransparentOk && upTransparentNoImgOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

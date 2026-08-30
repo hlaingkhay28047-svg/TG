@@ -62,7 +62,12 @@ function defaults() {
       "nano-banana-pro-off":   { apiPath: "rhart-image-n-pro-official/edit" },
       "rh-image-g2-off":       { apiPath: "rhart-image-g-2-official/image-to-image", quality: "medium" },
       "rh-image-g2":           { apiPath: "rhart-image-g-2/image-to-image" },
-      "rh-image-x-off":        { apiPath: "rhart-image-x-official/edit", imageParam: "image" },
+      /* v6.29.0 — the owner's OpenAPI spec titles this endpoint
+         "xai/grok-imagine-image/edit-official-stable": Grok Imagine's
+         image edit model, whose body declares EXACTLY prompt + image.
+         kind:"xedit" stops the default branch appending the undeclared
+         resolution/aspectRatio it used to send. */
+      "rh-image-x-off":        { apiPath: "rhart-image-x-official/edit", imageParam: "image", kind: "xedit", promptMax: 20000 },
       "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800 },
       "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800 },
       "flux-2-dev":            { apiPath: "rhart-image/f-2-dev/text-to-image", kind: "t2i",
@@ -92,7 +97,10 @@ function defaults() {
       "upscale-pro":           { apiPath: "topazlabs/image-upscale-standard-v2", imageParam: "imageUrl", kind: "upscale" },
       "seedream-v4":           { apiPath: "seedream-v4/image-to-image", kind: "seedream", promptMax: 2000 },
       "seedream-v4-5":         { apiPath: "seedream-v4.5/image-to-image", kind: "seedream", promptMax: 2000, resolutions: ["2k", "4k"] },
-      "rh-imagine-quality-edit": { apiPath: "rhart-imagine-image-quality/edit", imageParam: "imageUrl", kind: "imagine" },
+      /* v6.29.0 — promptMax 4000 per the owner's OpenAPI spec, which also
+         narrows this endpoint's optional aspectRatio to seven ratios plus
+         auto (enforced in the adapter's imagine branch). */
+      "rh-imagine-quality-edit": { apiPath: "rhart-imagine-image-quality/edit", imageParam: "imageUrl", kind: "imagine", promptMax: 4000 },
       /* v6.29.0 — imageParam dropped: the owner's OpenAPI spec shows this
          endpoint's body is ComfyUI node-keyed (66##image/41##text/
          64##select/65##file_type), built whole in the adapter's zimage

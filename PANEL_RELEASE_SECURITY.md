@@ -178,12 +178,28 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.29.0** — `pending`. Three owner-supplied OpenAPI specs (2026-08-30)
-  close out every held endpoint and correct a shipped body in one release:
-  FLUX.2 Dev's image-editing route (`rhart-image/f-2-dev/edit-lora`),
-  GPT Image 2's official text-to-image
+- **v6.29.0** — `pending`. Five owner-supplied OpenAPI specs (2026-08-30)
+  close out every held endpoint and correct three shipped request bodies
+  in one release: FLUX.2 Dev's image-editing route
+  (`rhart-image/f-2-dev/edit-lora`), GPT Image 2's official text-to-image
   (`rhart-image-g-2-official/text-to-image`, held since v6.28.2 for
-  exactly this parameter table), and Z-Image Turbo's own spec:
+  exactly this parameter table), Z-Image Turbo, and the two Grok Imagine
+  edit routes:
+  * "RH Image X (Official)" is IDENTIFIED: its spec is titled
+    "xai/grok-imagine-image/edit-official-stable" — Grok Imagine's image
+    edit model. Relabeled "Grok Imagine — Edit (Official)" in both apps
+    (same id/endpoint; the GPT Image 2 precedent). Its body declares
+    EXACTLY prompt (5–20000) + image — the resolution and aspectRatio the
+    default branch used to append were undeclared params and are gone
+    (new kind:"xedit"); the web app hides Ratio/Size for it and the panel
+    registry stops advertising sizes/ratios the endpoint cannot honour.
+  * "RH Imagine Image Quality" (edit) is likewise titled
+    "xai/rhart-imagine-image-quality/edit-official-stable" — relabeled
+    "Grok Imagine — Quality Edit". Fixed to its spec: prompt now capped
+    at the documented 4000, and the optional aspectRatio restricted to
+    the spec's own enum (auto + seven ratios) — the generic pass-through
+    could previously ship 4:5/5:4/21:9, values outside that enum. The web
+    app's ratio dropdown narrows to the documented set for it.
   * Z-Image Turbo's request body is CORRECTED in both apps: the owner's
     spec for `rhart-image/z-image-turbo/image-to-image` shows it is
     ComfyUI node-keyed like its rhart-image/ sibling f-2-dev/edit-lora —
@@ -254,8 +270,8 @@ eligible students.
   Auto poster request with NO image must resolve to
   "GPT Image 2 — Poster & Text (T2I)" and generate.
   Artifact `HNK_Ai_Panel_v6.29.0.ccx`, SHA-256
-  `ec9f313f26fe8037deabd6ae58714021349e6d413e3ff88fa48ccbd74c2d2730`,
-  1,277,907 bytes. The release stays disabled until that acceptance.
+  `a37d1df1f19d10a96223c567db8d2b9a85cabee534d039c3c4492c0975c1d816`,
+  1,278,649 bytes. The release stays disabled until that acceptance.
 - **v6.28.2** — superseded by v6.29.0 the same day (the FLUX.2 Dev edit
   endpoint above) before acceptance completed. GPT Image 2 becomes REAL in
   both apps, from the owner's own verified Enterprise-Shared reference PDF

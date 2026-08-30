@@ -339,20 +339,26 @@ var MODELS = [
     },
     recommendedFor: ["reference-transfer", "background-edit", "multi-reference"]
   },
+  /* v6.29.0 — identified by the owner's OpenAPI spec (2026-08-30):
+     rhart-image-x-official/edit is "xai/grok-imagine-image/
+     edit-official-stable", Grok Imagine's image edit model. Same id,
+     same endpoint — relabeled like GPT Image 2 before it. Its body is
+     prompt + image ONLY (no ratio, no size tier), so the capabilities
+     stop advertising controls the endpoint cannot honour. */
   {
     id: "rh-image-x-off",
-    displayName: "RH Image X (Official)",
+    displayName: "Grok Imagine — Edit (Official)",
     provider: "runninghub-enterprise",
     category: ["image-edit"],
-    tagline: "RunningHub's official single-image edit model",
-    detail: "Single-image edit · Up to 4K",
+    tagline: "Grok Imagine's official image edit model",
+    detail: "Single-image edit · prompt-only control, keeps source framing",
     capabilities: {
       textToImage: false,
       imageEdit: true,
       multiReference: false,
       maxImages: 1,
-      supportedSizes: ["1k", "2k", "4k"],
-      supportedRatios: COMMON_RATIOS,
+      supportedSizes: ["1k"],
+      supportedRatios: ["source"],
       variants: false,
       visibleText: "medium",
       identityRetention: "high"
@@ -439,12 +445,17 @@ var MODELS = [
     },
     recommendedFor: ["creative", "reference-transfer", "multi-reference"]
   },
+  /* v6.29.0 — the owner's OpenAPI spec titles this endpoint
+     "xai/rhart-imagine-image-quality/edit-official-stable": the Grok
+     Imagine quality-edit model — relabeled, prompt capped at the
+     documented 4000, and the ratio list narrowed to the spec's own
+     optional enum (auto + seven). */
   {
     id: "rh-imagine-quality-edit",
-    displayName: "RH Imagine Image Quality",
+    displayName: "Grok Imagine — Quality Edit",
     provider: "runninghub-enterprise",
     category: ["image-edit", "high-quality"],
-    tagline: "Quality-focused single-image editing",
+    tagline: "Grok Imagine's quality-focused single-image editing",
     detail: "Single-image edit · 1K–2K only",
     capabilities: {
       textToImage: false,
@@ -452,7 +463,7 @@ var MODELS = [
       multiReference: false,
       maxImages: 1,
       supportedSizes: ["1k", "2k"],
-      supportedRatios: COMMON_RATIOS,
+      supportedRatios: ["auto", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
       variants: false,
       visibleText: "medium",
       identityRetention: "high"
