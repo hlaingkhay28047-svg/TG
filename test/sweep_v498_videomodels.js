@@ -90,8 +90,8 @@ const REFUSED = ["kling-elements-advanced",
       dur: (m.durations || []).slice(-1)[0], promptMax: m.promptMax, last: !!m.lastParam }))
   }));
 
-  report("A) the shelf is 182 models, with unique ids and unique endpoints",
-    reg.n === 182 && new Set(reg.ids).size === 182 && new Set(reg.paths).size === 182,
+  report("A) the shelf is 183 models, with unique ids and unique endpoints",
+    reg.n === 183 && new Set(reg.ids).size === 183 && new Set(reg.paths).size === 183,
     { n: reg.n, ids: new Set(reg.ids).size, paths: new Set(reg.paths).size });
 
   report("A2) the two that shipped before are still there, under the same ids",
@@ -241,8 +241,8 @@ const REFUSED = ["kling-elements-advanced",
   report("E2) and that is not a hypothetical — 63 models have no resolution, 13 no duration",
     ui.noRes === 63 && ui.noDur === 13, { noRes: ui.noRes, noDur: ui.noDur });
 
-  report("F) 182 options are grouped by family, not one flat scroll",
-    ui.groups.length >= 30 && ui.options === 182 &&
+  report("F) 183 options are grouped by family, not one flat scroll",
+    ui.groups.length >= 30 && ui.options === 183 &&
     ui.groups.some(g => /^Seedance/.test(g)) && ui.groups.some(g => /^Kling/.test(g)),
     { groups: ui.groups, options: ui.options });
 
@@ -257,7 +257,7 @@ const REFUSED = ["kling-elements-advanced",
 
   report("H) no page errors", errs.length === 0, errs);
 
-  console.log("      (the full doc-verified catalog: 182 pane models across " +
+  console.log("      (the full doc-verified catalog: 183 pane models across " +
     ui.groups.length + " family groups — i2v, reference and text-to-video — " +
     "plus the video-input tools shelf; the endpoints this app cannot drive " +
     "are refused by name)");

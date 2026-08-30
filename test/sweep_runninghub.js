@@ -86,7 +86,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       "topaz-gp-art", "topaz-up-faces", "topaz-up-hifi3",
       "flux-2-dev-edit-plain", "flux-klein-9b-edit", "flux-klein-4b-edit",
       "flux-klein-4b-edit-lora", "flux-kontext-lora", "qwen-edit-2511",
-      "qwen-edit-2511-lora", "wan-22-image"];
+      "qwen-edit-2511-lora", "wan-22-image", "z-image-turbo-lora"];
     /* v5.53.4 — empty at last: flux-2-dev was the final placeholder, now
        configured with the owner's rhart-image/f-2-dev/edit-lora spec. The
        mechanism stays so any future placeholder lands here, not in silence. */

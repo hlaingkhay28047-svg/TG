@@ -3503,6 +3503,14 @@ var RH_MODELS = [
      ratios (1:1 fallback since the field can't be omitted), constant PNG
      output, no size tier. */
   { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", kind:"zimage" },
+  /* api-448184490 — the LoRA sibling of the route above (completeness pass,
+     v5.55.0): same node-keyed graph under different key numbers — 44##image /
+     18##text / 41##select (the shared "1".."7" table; the doc's default "8"
+     is the unused custom slot, so out-of-enum falls back "1" like the
+     non-LoRA route) / 42##file_type. The optional 43##lora_name/
+     43##strength_model pair is omitted on purpose — documented default
+     strength 0 = plain Z-Image Turbo (the f-2-dev/edit-lora precedent). */
+  { id:"z-image-turbo-lora", label:"Z-Image Turbo — Edit LoRA", apiPath:"rhart-image/z-image-turbo/image-to-image-lora", kind:"node", node:{ image:"44##image", prompt:"18##text", ratio:"41##select", fileType:"42##file_type" } },
   /* Upscale Transparent: a second Upscale variant, routed through its own
      dedicated submit/generate pair (rhV2SubmitUpscaleTransparent /
      rhGenerateUpscaleTransparent) since — like Upscale Pro — its body shape
@@ -6484,6 +6492,12 @@ var RH_VIDEO_MODELS = [
   /* ======== v5.55.0 reference-to-video — every documented endpoint ======== */
   /* api-448184395 */
   { id:"vidu-r2v-q2", label:"Vidu Q2 — Ref (1080p, 10s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q2", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1"], promptMax:4000, extra:{"movementAmplitude": "auto"} },
+  /* api-448184544 — filed under Image > reference-to-image in the doc index
+     (a miscategorization; fetched in round 4). Only prompt is REQUIRED;
+     imageUrls (<=7) and every control are optional with documented
+     defaults. The doc's optional `videos` refs (<=2) are not sent — the
+     pane has no video-ref slot. */
+  { id:"vidu-r2v-q2-pro", label:"Vidu Q2 Pro — Ref (1080p, 10s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q2-pro", imageParam:"imageUrls", minImages:0, maxImages:7, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1"], promptMax:2000 },
   /* api-448184399 */
   { id:"vidu-r2v-q3", label:"Vidu Q3 — Ref (1080p, 16s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q3", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], durInt:true, aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1", "auto"], promptMax:5000 },
   /* api-494859280 */

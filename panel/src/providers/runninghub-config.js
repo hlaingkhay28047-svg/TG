@@ -115,6 +115,9 @@ function defaults() {
          64##select/65##file_type), built whole in the adapter's zimage
          branch — no flat image field exists to name. */
       "z-image-turbo":         { apiPath: "rhart-image/z-image-turbo/image-to-image", kind: "zimage" },
+      /* api-448184490 — LoRA sibling, node-keyed; LoRA pair omitted (default
+         strength 0 = plain Z-Image Turbo). v6.31.0 completeness pass. */
+      "z-image-turbo-lora":    { apiPath: "rhart-image/z-image-turbo/image-to-image-lora", kind: "node", node: { image: "44##image", prompt: "18##text", ratio: "41##select", fileType: "42##file_type" } },
       "upscale-transparent":   { apiPath: "topazlabs/image-upscale-transparent", imageParam: "imageUrl", kind: "upscale-transparent" },
       /* ---------- v6.30.0 full-catalog wave ----------
          Every entry below was wired from its own fetched doc page (the

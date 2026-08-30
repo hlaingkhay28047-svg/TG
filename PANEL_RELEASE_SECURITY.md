@@ -178,7 +178,35 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.30.0** — `pending`. The full image-catalog wave (2026-08-30), the
+- **v6.31.0** — `pending`. The completeness pass the owner's "are the
+  i2i/t2i models really all there?" question triggered (2026-08-30): a
+  programmatic cross-check of every image doc id in RunningHub's index
+  against the wired endpoints found exactly two absentees, both now
+  closed.
+  * z-image-turbo/image-to-image-lora (api-448184490): the LoRA sibling
+    of the wired non-LoRA route — node-keyed 44##image / 18##text /
+    41##select (shared "1".."7" table; the doc's default "8" is the
+    unused custom slot, fallback "1") / 42##file_type. The optional
+    43## LoRA pair is omitted (documented default strength 0 = plain
+    Z-Image Turbo; the f-2-dev/edit-lora precedent). Registry grows
+    96 → 97 models; the 46-check audit expects the 98-option selector.
+  * vidu/reference-to-video-q2-pro (api-448184544, web app only): filed
+    under Image > reference-to-image in the doc index although it is a
+    video endpoint, so both catalog sweeps missed it; fetched in round 4
+    and wired beside its q2 sibling (prompt REQUIRED, imageUrls ≤7
+    optional, documented enums for ratio/resolution/duration; its
+    optional `videos` refs are not sent — no video-ref slot).
+  Every other image doc id is verified wired (the six 6.29.0 endpoints
+  wired from owner-pasted specs carry no api-id comment, which is why a
+  comment-only scan overcounts). Acceptance carries over the v6.30.0
+  checklist plus one Z-Image LoRA edit spot-check.
+  Artifact `HNK_Ai_Panel_v6.31.0.ccx`, SHA-256
+  `7d847ee3788237ed9c9d6e67eecab17f798b0524608a2740efeb21789f2d6799`,
+  1,286,699 bytes. The release stays disabled until that acceptance.
+- **v6.30.0** — superseded by v6.31.0 the same day (the completeness
+  pass above) before Photoshop acceptance; it was published to the
+  private release store and its content ships within v6.31.0.
+  The full image-catalog wave (2026-08-30), the
   owner's "အကုန်ထည့်ပေးပါ" instruction executed literally: every image
   endpoint in RunningHub's public doc index is wired, or its absence is
   recorded. 74 new models (31 image-to-image + 43 text-to-image) join BOTH
