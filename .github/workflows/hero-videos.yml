@@ -26,6 +26,10 @@ on:
         description: 'space-separated banner basenames, or "all"'
         required: false
         default: 'all'
+      tasks:
+        description: 'COLLECT-ONLY: space-separated banner:taskId pairs — skips upload/submit and only polls + downloads already-paid tasks'
+        required: false
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -48,6 +52,7 @@ jobs:
         shell: bash
         env:
           BANNERS: ${{ inputs.banners }}
+          TASKS: ${{ inputs.tasks }}
         run: |
           set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
           BASE="https://www.runninghub.ai/openapi/v2"
@@ -67,10 +72,39 @@ jobs:
             [banner-coral-fairy]="coral fronds sway as in a gentle current, small motes of light drift upward, her hair floats softly."
             [banner-fairy-forest]="fireflies drift among the trees, leaves flutter down slowly, her wings shimmer faintly."
           )
-          LIST="$BANNERS"
-          if [ "$LIST" = "all" ]; then LIST="${!MOTION[@]}"; fi
           mkdir -p out
           fail=0
+          poll_and_fetch() { # $1=banner  $2=taskId — RunningHub charges at
+            # SUBMIT, so this half is the one that must never be lost
+            local b="$1" tid="$2" deadline=$((SECONDS+900)) vid="" q st
+            echo "== $b: task $tid — polling"
+            while [ $SECONDS -lt $deadline ]; do
+              q=$(curl -s -X POST "$BASE/query" -H "$AUTH" -H "Content-Type: application/json" -d "{\"taskId\":\"$tid\"}") || { sleep 8; continue; }
+              st=$(printf '%s' "$q" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("status") or "").upper())' 2>/dev/null) || st=""
+              if [ "$st" = "SUCCESS" ]; then
+                vid=$(printf '%s' "$q" | python3 -c 'import json,sys; r=(json.load(sys.stdin).get("results") or [{}])[0]; print(r.get("url") or r.get("fileUrl") or "")')
+                printf '%s' "$q" | python3 -c 'import json,sys; u=json.load(sys.stdin).get("usage") or {}; print("  usage:", u.get("consumeMoney"), u.get("consumeCoins"), "in", u.get("taskCostTime"), "s")' || true
+                break
+              elif [ "$st" = "FAILED" ]; then echo "  FAILED: $q"; return 1; fi
+              sleep 8
+            done
+            [ -n "$vid" ] || { echo "NO RESULT $b"; return 1; }
+            echo "== $b: download"
+            curl -sfL "$vid" -o "out/$b.mp4" || { echo "DOWNLOAD FAILED $b"; return 1; }
+            ls -la "out/$b.mp4"
+          }
+          if [ -n "$TASKS" ]; then
+            # collect-only: recover already-submitted (already-paid) tasks
+            for pair in $TASKS; do
+              b="${pair%%:*}"; tid="${pair##*:}"
+              [ -n "$b" ] && [ -n "$tid" ] || { echo "BAD PAIR $pair"; fail=1; continue; }
+              poll_and_fetch "$b" "$tid" || fail=1
+            done
+            ls -la out/ || true
+            exit $fail
+          fi
+          LIST="$BANNERS"
+          if [ "$LIST" = "all" ]; then LIST="${!MOTION[@]}"; fi
           for b in $LIST; do
             still="docs/app/lib/banners/$b.jpg"
             if [ ! -f "$still" ]; then echo "SKIP $b (no still)"; continue; fi
@@ -85,24 +119,12 @@ jobs:
             curl -s -X POST "$BASE/price-preview/kling-v2.6-pro/image-to-video" -H "$AUTH" -H "Content-Type: application/json" -d "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  price:", (d.get("data") or {}).get("priceText") or d)' || true
             echo "== $b: submit"
             sub=$(curl -sf -X POST "$BASE/kling-v2.6-pro/image-to-video" -H "$AUTH" -H "Content-Type: application/json" -d "$body") || { echo "SUBMIT FAILED $b"; fail=1; continue; }
-            tid=$(printf '%s' "$sub" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("data",{}).get("taskId") or "")') || tid=""
+            # kling returns the taskId at the TOP LEVEL ({taskId, status:QUEUED,
+            # …}) — the data.taskId shape belongs to other endpoint families,
+            # and reading only that lost the first paid batch to a parse miss
+            tid=$(printf '%s' "$sub" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("taskId") or (d.get("data") or {}).get("taskId") or "")') || tid=""
             [ -n "$tid" ] || { echo "SUBMIT PARSE FAILED $b: $sub"; fail=1; continue; }
-            echo "== $b: task $tid — polling"
-            deadline=$((SECONDS+900)); vid=""
-            while [ $SECONDS -lt $deadline ]; do
-              sleep 8
-              q=$(curl -s -X POST "$BASE/query" -H "$AUTH" -H "Content-Type: application/json" -d "{\"taskId\":\"$tid\"}") || continue
-              st=$(printf '%s' "$q" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("status") or "").upper())' 2>/dev/null) || st=""
-              if [ "$st" = "SUCCESS" ]; then
-                vid=$(printf '%s' "$q" | python3 -c 'import json,sys; r=(json.load(sys.stdin).get("results") or [{}])[0]; print(r.get("url") or r.get("fileUrl") or "")')
-                printf '%s' "$q" | python3 -c 'import json,sys; u=json.load(sys.stdin).get("usage") or {}; print("  usage:", u.get("consumeMoney"), u.get("consumeCoins"), "in", u.get("taskCostTime"), "s")' || true
-                break
-              elif [ "$st" = "FAILED" ]; then echo "  FAILED: $q"; break; fi
-            done
-            [ -n "$vid" ] || { echo "NO RESULT $b"; fail=1; continue; }
-            echo "== $b: download"
-            curl -sfL "$vid" -o "out/$b.mp4" || { echo "DOWNLOAD FAILED $b"; fail=1; continue; }
-            ls -la "out/$b.mp4"
+            poll_and_fetch "$b" "$tid" || fail=1
           done
           ls -la out/ || true
           exit $fail
