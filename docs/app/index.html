@@ -262,7 +262,7 @@ select.inp{padding:9px 10px}
 .ratio-rail{display:flex;gap:6px;margin-top:var(--sp-2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
 .ratio-rail::-webkit-scrollbar{display:none}
 .rchip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:46px;min-height:54px;padding:7px 9px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;color:var(--muted);font:inherit;font-size:10.5px;cursor:pointer}
-.rchip i{display:block;border:1.6px solid currentColor;border-radius:3px;opacity:.85}
+.rchip i{display:flex;align-items:center;justify-content:center;border:1.6px solid currentColor;border-radius:3px;opacity:.85;font-style:normal;font-size:9px;font-weight:800;line-height:1}
 .rchip.auto i{border-style:dashed}
 .rchip.on{border-color:var(--gold);color:var(--gold-hi);background:rgba(217,164,65,.10)}
 .rr-native{display:none}
@@ -3603,6 +3603,19 @@ var LS_STATE = "hnk_web_studio_v2_state";
 /* ---------- language (my/en) — toggle reloads so every builder re-reads t() ---------- */
 var LANG = "my";
 try { LANG = localStorage.getItem("hnk_ws_lang") || "my"; } catch(e){}
+/* v5.56.0 — the picker offers only languages that really render (owner
+   instruction: "တကယ်ရှိပြီး သုံးလို့ရတာတွေပဲ ပြပါ"). Ten codes shipped as
+   pure fallback shells with ZERO native strings — picking Mon showed
+   Burmese with a Mon label on the button. They are gone from the picker;
+   a browser still storing one is moved to the language it was actually
+   reading all along (its fallback), not silently left on a ghost code. */
+var LANG_RETIRED = { mnw:1, rki:1, ksw:1, kyu:1, cnh:1, blk:1, pll:1, ahk:1, lhu:1, lis:1 };
+try {
+  if (LANG_RETIRED[LANG]) {
+    LANG = "my"; /* every retired code fell back to Burmese (see LANG_FB) */
+    localStorage.setItem("hnk_ws_lang", LANG);
+  }
+} catch(e){}
 var TR = {
   hero_h1: { my: 'Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ', en: 'The panel\'s <em>One-Taps</em>, now in your browser' },
   hero_lede: { my: 'Plugin ရဲ့ တကယ့် prompt data အစစ်ကို web ထဲ တိုက်ရိုက်ထည့်ထား — Preset · Wedding Suite · Lighting · Meitu Studio · Evoto Pro အကုန်။', en: 'The plugin\'s real prompt data, ported straight to the web — Presets · Wedding Suite · Lighting · Meitu Studio · Evoto Pro, all of it.' },
@@ -4180,10 +4193,13 @@ function applyLang(){
   setIcnText($("galDel"),"i-trash",t("gal_del"));
   $("spin").textContent=t("spin_gen");
   var LANGS=[["my","မြန်မာ"],["en","English"],["shn","တႆး"],["kac","Jinghpaw"],["th","ไทย"],["zh","中文"],["vi","Tiếng Việt"],["id","Indonesia"],["ms","Melayu"]];
-  /* v4.41: Myanmar ethnic languages (Burmese-fallback UI until native text
-     packs land) and the Indian family (English-fallback UI) */
-  var LANGS_MM=[["mnw","မွန်"],["rki","ရခိုင်"],["ksw","ကညီ (ကရင်)"],["kyu","ကယား"],["cnh","ချင်း (Laiholh)"],
-    ["blk","ပအိုဝ်"],["pll","တအာင်း (ပလောင်)"],["khb","တႆးလိုဝ်ႉ (ရှစ်ဆောင်ပန်းနား)"],["tdd","ᥖᥭᥰᥘᥫᥴ (Tai Le)"],["kht","တႆးၶမ်းတီႈ (Khamti)"],["ahk","အာခါ (Akha)"],["lhu","လားဟူ (Lahu)"],["lis","လီဆူ (Lisu)"]];
+  /* v5.56.0 — only languages with REAL text ship in the picker. The v4.41
+     Burmese-fallback shells (Mon, Rakhine, Karen, Kayah, Chin, Pa'O,
+     Ta'ang, Akha, Lahu, Lisu — zero native strings each, measured) are
+     retired until a native pack exists; the three Tai scripts stay because
+     their dictionaries are real (v5.7). Stored shell choices are migrated
+     at boot — see LANG_RETIRED. */
+  var LANGS_MM=[["khb","တႆးလိုဝ်ႉ (ရှစ်ဆောင်ပန်းနား)"],["tdd","ᥖᥭᥰᥘᥫᥴ (Tai Le)"],["kht","တႆးၶမ်းတီႈ (Khamti)"]];
   var LANGS_IN=[["hi","हिन्दी"],["bn","বাংলা"],["ta","தமிழ்"],["te","తెలుగు"],["mr","मराठी"],
     ["gu","ગુજરાતી"],["kn","ಕನ್ನಡ"],["ml","മലയാളം"],["pa","ਪੰਜਾਬੀ"],["ur","اردو"]];
   /* v4.43: neighbours + wedding-client languages, all with native starter packs */
@@ -4197,7 +4213,7 @@ function applyLang(){
     });
   }
   addLangOpts(sel, LANGS);
-  var ogMM=document.createElement("optgroup"); ogMM.label="— မြန်မာတိုင်းရင်းသား —";
+  var ogMM=document.createElement("optgroup"); ogMM.label="— Tai · တႆး —";
   addLangOpts(ogMM, LANGS_MM); sel.appendChild(ogMM);
   var ogIN=document.createElement("optgroup"); ogIN.label="— India —";
   addLangOpts(ogIN, LANGS_IN); sel.appendChild(ogIN);
@@ -4386,10 +4402,13 @@ function syncInputLabels(root){
    a code recognisable — are defined between the LANG declaration and here. */
 try {
   var _urlLang = (new URLSearchParams(location.search)).get("lang") || "";
-  if (_urlLang && (
+  /* v5.56.0 — a link may only carry a language that really renders: one of
+     the nine full sets or a code with a native TR_L pack. The retired
+     fallback shells no longer qualify (they would stamp <html lang> with a
+     language the page is not actually in). */
+  if (_urlLang && !LANG_RETIRED[_urlLang] && (
         /^(my|en|shn|kac|th|zh|vi|id|ms)$/.test(_urlLang) ||
-        (typeof TR_L !== "undefined" && TR_L[_urlLang]) ||
-        (typeof LANG_FB !== "undefined" && LANG_FB[_urlLang]))) {
+        (typeof TR_L !== "undefined" && TR_L[_urlLang]))) {
     LANG = _urlLang;
   }
 } catch(e){}
@@ -7421,6 +7440,9 @@ function updateGenOptsForRHKind(){
   if(!hideRatio) rhNarrowRatioOptionsFor(active);
   $("selSize").style.display = (active && noSize[active.kind]) ? "none" : "";
   rhFillModelSelect($("selModel"), active);
+  /* v5.56.0 — a rebuild resets every option to enabled; while a Smart
+     Workflow is active the capacity filter must survive it */
+  if(typeof wfApplyModelFilter==="function" && wfNeed>1) wfApplyModelFilter();
   var eng=$("genEngine");
   if(!eng){
     eng=document.createElement("button");
@@ -7448,6 +7470,53 @@ function updateGenOptsForRHKind(){
   $("btnGen").innerHTML='<svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg> GENERATE — RunningHub';
 }
 $("selCount") && ($("selCount").addEventListener("change", function(){ if(typeof updateGenOptsForRHKind==="function") updateGenOptsForRHKind(); }));
+/* ---------- v5.56.0: per-workflow model honesty ----------
+   A 2-image Smart Workflow dispatched to a single-input model silently
+   DROPPED IMAGE 2 (rhV2Body takes imageUrls[0] for image/imageUrl params
+   and every node/zimage/grokimg/sdlayer/xedit/fluxedit graph is built for
+   one image) — the student paid for a reference transfer that never saw
+   the reference. Capacity is read from what each builder really sends,
+   never guessed: node graphs count their declared image slots, the single
+   kinds are 1, and every documented imageUrls array in the shipped catalog
+   allows at least the app's own 3-slot ceiling (verified against the
+   fetched parameter docs' maxItems). While a workflow needing N required
+   images is active, the model picker offers only models whose request can
+   carry N; if none is configured, nothing is hidden and the wizard footer
+   says exactly what will be dropped. */
+function rhModelMaxIn(id){
+  var def=rhModelDef(id); if(!def) return 3;
+  var k=def.kind||"";
+  if(k==="node") return (def.node&&def.node.images)?def.node.images.length:1;
+  if(k==="zimage"||k==="grokimg"||k==="sdlayer"||k==="xedit"||k==="fluxedit"||k==="upscale"||k==="upscale-transparent") return 1;
+  var ip=def.imageParam||"imageUrls";
+  if(ip==="image"||ip==="imageUrl") return 1;
+  return 3;
+}
+var wfNeed=0, wfNoCapable=false;
+function wfApplyModelFilter(){
+  var sel=$("selModel"); if(!sel || !sel.options.length) return;
+  wfNoCapable=false;
+  if(wfNeed>1){
+    var capable=0;
+    Array.prototype.forEach.call(sel.options,function(o){ if(rhModelMaxIn(o.value)>=wfNeed) capable++; });
+    if(!capable){ wfNoCapable=true; }
+  }
+  Array.prototype.forEach.call(sel.options,function(o){
+    o.disabled = (wfNeed>1 && !wfNoCapable) ? rhModelMaxIn(o.value)<wfNeed : false;
+  });
+  var cur=sel.options[sel.selectedIndex];
+  if(cur && cur.disabled){
+    for(var i=0;i<sel.options.length;i++){
+      if(!sel.options[i].disabled){
+        sel.value=sel.options[i].value;
+        if(sel.onchange) sel.onchange();   /* rebuilds options via updateGenOptsForRHKind… */
+        wfApplyModelFilter();              /* …so the pass runs once more on the fresh list */
+        break;
+      }
+    }
+  }
+}
+function wfModelFilter(need){ wfNeed=need>1?need:0; wfApplyModelFilter(); }
 /* ---------- v4.41: visual ratio chips ----------
    The native <select>s stay the single source of truth — every generate path
    reads them and three different narrowing functions rewrite their options —
@@ -7458,7 +7527,9 @@ function ratioRailAttach(selId){
   var sel=$(selId); if(!sel || sel._rail) return;
   var rail=document.createElement("div");
   rail.className="ratio-rail"; rail.id=selId+"Rail";
-  var row=sel.closest(".row")||sel;
+  /* v5.56.0 — the wizard's cloned generate row (.wizrow) hosts a rail too */
+  var row=sel.closest(".row,.wizrow")||sel;
+  if(!row.parentNode) return;
   row.parentNode.insertBefore(rail, row.nextSibling);
   sel.classList.add("rr-native");
   function render(){
@@ -7478,6 +7549,9 @@ function ratioRailAttach(selId){
         else { h=MX; w=Math.max(7,Math.round(MX*rw/rh)); }
       }
       i.style.width=w+"px"; i.style.height=h+"px";
+      /* v5.56.0 — the Auto box carries its own "A" so the dashed square
+         reads as a choice, not an empty slot (owner spec) */
+      if(!m) i.textContent="A";
       b.appendChild(i);
       b.appendChild(el("span","",v||"Auto"));
       b.onclick=function(){
@@ -8225,7 +8299,9 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     for (var i=0;i<wiz.w.req.length;i++) if(!state.refs[i]) return false;
     return true;
   }
-  function closeWizard(){ $("wiz").className="wiz"; document.body.style.overflow=""; window._wizOnPick=null; window._wizCurrentId=null; modalClosed("wiz"); }
+  function closeWizard(){ $("wiz").className="wiz"; document.body.style.overflow=""; window._wizOnPick=null; window._wizCurrentId=null;
+    if(typeof wfModelFilter==="function") wfModelFilter(0); /* v5.56.0 — the full catalog returns outside a workflow */
+    modalClosed("wiz"); }
   /* generic 1-2-3-4 guide for preset-derived workflows (no hand-written steps) */
   var GS={"wed": {"my": ["IMAGE 1 မှာ wedding ဓာတ်ပုံ (စုံတွဲ/သတို့သမီး) တင်ပါ", "ဒီ one-tap က: {T} — ဂါဝန် design နဲ့ လူတွေ ဘယ်တော့မှ မပြောင်းဘူး", "“Start” နှိပ်ပါ — prompt အစစ် ရောက်လာမယ်၊ ထပ်ဖြည့်ချင်တာ ရေးလို့ရတယ်", "GENERATE နှိပ်ပါ — scene အပိုင်းပဲ ပြောင်းမယ်၊ ကျန်တာ အတိအကျ ကျန်မယ်"], "en": ["Add your wedding photo as IMAGE 1 (couple or bride)", "This one-tap applies: {T} — gown design and people never change", "Tap Start — the exact panel prompt loads; add tweaks if you like", "Tap GENERATE — only the scene element changes, everything else stays"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈ wedding တီႈ IMAGE 1", "One-tap ၼႆႉ: {T} — ဂၢဝ်ႇ design လႄႈ ၵူၼ်း ဢမ်ႇလႅၵ်ႈလၢႆႈ", "ၼဵၵ်း Start — prompt တႄႉ တေမႃး", "ၼဵၵ်း GENERATE — scene ၵူၺ်း လႅၵ်ႈ၊ တၢင်ႇၸိူဝ်း ယူႇမိူၼ်ၵဝ်ႇ"], "kac": ["Wedding sumla hpe IMAGE 1 hta bang u", "Ndai one-tap gaw: {T} — gown design hte masha ni galoi n galai ai", "Start dip u — prompt teng du na", "GENERATE dip u — scene sha galai na, kaga ni raw nga na"], "th": ["ใส่รูปแต่งงานเป็น IMAGE 1 (คู่รักหรือเจ้าสาว)", "One-tap นี้ทำ: {T} — ดีไซน์ชุดและตัวบุคคลไม่เปลี่ยนแน่นอน", "กด Start — prompt จริงจากแผงจะโหลดมา เพิ่มเติมได้", "กด GENERATE — เปลี่ยนเฉพาะส่วนฉาก ที่เหลือคงเดิมทุกพิกเซล"], "zh": ["把婚纱照片添加为 IMAGE 1（情侣或新娘）", "此 One-Tap 执行：{T} — 礼服设计与人物绝不改变", "点 Start — 加载面板的真实 prompt，可自行补充", "点 GENERATE — 只改变场景元素，其余保持原样"], "vi": ["Thêm ảnh cưới làm IMAGE 1 (cặp đôi hoặc cô dâu)", "One-tap này áp dụng: {T} — thiết kế váy và con người không bao giờ đổi", "Bấm Start — prompt thật của bảng sẽ tải vào, có thể chỉnh thêm", "Bấm GENERATE — chỉ phần cảnh thay đổi, mọi thứ khác giữ nguyên"], "id": ["Tambahkan foto pernikahan sebagai IMAGE 1 (pasangan atau pengantin)", "One-tap ini menerapkan: {T} — desain gaun dan orang tidak pernah berubah", "Tekan Start — prompt asli panel dimuat; boleh ditambah", "Tekan GENERATE — hanya elemen scene berubah, sisanya tetap"], "ms": ["Tambah foto perkahwinan sebagai IMAGE 1 (pasangan atau pengantin)", "One-tap ini: {T} — reka bentuk gaun dan orang tidak berubah", "Tekan Start — prompt sebenar panel dimuatkan; boleh tambah", "Tekan GENERATE — hanya elemen scene berubah, yang lain kekal"]}, "lg": {"my": ["IMAGE 1 မှာ အလင်းပြန်ထွန်းချင်တဲ့ပုံ တင်ပါ", "ဒီ card က {L} တစ်လုံးတည်း ထွန်းတာ — studio physics အတိုင်း တိကျ", "“Start” နှိပ်ပါ — relight diagram prompt အပြည့် ရောက်လာမယ်", "GENERATE နှိပ်ပါ — အလင်း/အရိပ်/မျက်လုံး catchlight ပြန်ဆောက်မယ်၊ ကျန်တာ မပြောင်းဘူး"], "en": ["Add the photo to relight as IMAGE 1", "This applies only the {L} — physically accurate studio light", "Tap Start — the full relight diagram prompt loads", "Tap GENERATE — lighting, shadows and catchlights rebuild; nothing else changes"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈတီႈ IMAGE 1", "Card ၼႆႉ ထွၼ်ႈ {L} လုၵ်ႈလဵဝ်", "ၼဵၵ်း Start — relight prompt တဵမ်တဵမ် မႃး", "ၼဵၵ်း GENERATE — လႅင်းလႄႈငဝ်း ၵေႃႇသၢင်ႈမႂ်ႇ"], "kac": ["Relight galaw na sumla hpe IMAGE 1 hta bang u", "Ndai gaw {L} langai sha shakut ai — studio physics hte ding ai", "Start dip u — relight prompt hpring tsup du na", "GENERATE dip u — nhtoi hte shingma ni bai gaw na, kaga n galai"], "th": ["ใส่รูปที่ต้องการจัดแสงใหม่เป็น IMAGE 1", "การ์ดนี้เปิดเฉพาะ {L} — แสงสตูดิโอตามหลักฟิสิกส์", "กด Start — prompt แผนผังจัดแสงเต็มรูปแบบจะโหลดมา", "กด GENERATE — แสง เงา และประกายตาถูกสร้างใหม่ ส่วนอื่นคงเดิม"], "zh": ["把要重新打光的照片添加为 IMAGE 1", "此卡只启用 {L} — 物理精确的棚拍灯光", "点 Start — 完整的布光图 prompt 加载", "点 GENERATE — 重建光线、阴影和眼神光，其余不变"], "vi": ["Thêm ảnh cần đánh sáng lại làm IMAGE 1", "Thẻ này chỉ bật {L} — ánh sáng studio chuẩn vật lý", "Bấm Start — prompt sơ đồ ánh sáng đầy đủ tải vào", "Bấm GENERATE — ánh sáng, bóng và catchlight dựng lại; phần khác giữ nguyên"], "id": ["Tambahkan foto yang mau dipencahayaan ulang sebagai IMAGE 1", "Kartu ini hanya menyalakan {L} — cahaya studio akurat fisika", "Tekan Start — prompt diagram cahaya lengkap dimuat", "Tekan GENERATE — cahaya, bayangan, catchlight dibangun ulang; lainnya tetap"], "ms": ["Tambah foto untuk pencahayaan semula sebagai IMAGE 1", "Kad ini hanya {L} — cahaya studio tepat fizik", "Tekan Start — prompt rajah cahaya penuh dimuatkan", "Tekan GENERATE — cahaya, bayang dan catchlight dibina semula; lain kekal"]}, "mx": {"my": ["IMAGE 1 မှာ ကိုယ့်ပုံ တင်ပါ", "IMAGE 2 မှာ ယူချင်တဲ့ source ပုံ တင်ပါ — {S}", "“Start” နှိပ်ပါ — ရွေးယူမယ့် prompt ရောက်လာမယ်", "GENERATE နှိပ်ပါ — မရွေးထားတဲ့ အပိုင်းတွေ IMAGE 1 အတိုင်း အတိအကျ ကျန်မယ်"], "en": ["Add your photo as IMAGE 1", "Add the source photo as IMAGE 2 — {S}", "Tap Start — the selective-replace prompt loads", "Tap GENERATE — un-ticked aspects stay exactly as IMAGE 1"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇတီႈ IMAGE 1", "သႂ်ႇ source တီႈ IMAGE 2 — {S}", "ၼဵၵ်း Start", "ၼဵၵ်း GENERATE — ဢၼ်ဢမ်ႇလိူၵ်ႈ ယူႇမိူၼ် IMAGE 1"], "kac": ["Nang a sumla hpe IMAGE 1 hta bang u", "Source sumla hpe IMAGE 2 hta bang u — {S}", "Start dip u", "GENERATE dip u — n lata ai ni IMAGE 1 hte maren raw nga na"], "th": ["ใส่รูปของคุณเป็น IMAGE 1", "ใส่รูปต้นทางเป็น IMAGE 2 — {S}", "กด Start — prompt แบบเลือกแทนที่จะโหลดมา", "กด GENERATE — ส่วนที่ไม่เลือกจะเหมือน IMAGE 1 ทุกประการ"], "zh": ["把你的照片添加为 IMAGE 1", "把来源照片添加为 IMAGE 2 — {S}", "点 Start — 选择性替换 prompt 加载", "点 GENERATE — 未勾选的部分与 IMAGE 1 完全一致"], "vi": ["Thêm ảnh của bạn làm IMAGE 1", "Thêm ảnh nguồn làm IMAGE 2 — {S}", "Bấm Start — prompt thay thế chọn lọc tải vào", "Bấm GENERATE — phần không chọn giữ đúng như IMAGE 1"], "id": ["Tambahkan foto Anda sebagai IMAGE 1", "Tambahkan foto sumber sebagai IMAGE 2 — {S}", "Tekan Start — prompt penggantian selektif dimuat", "Tekan GENERATE — bagian yang tidak dipilih tetap seperti IMAGE 1"], "ms": ["Tambah foto anda sebagai IMAGE 1", "Tambah foto sumber sebagai IMAGE 2 — {S}", "Tekan Start — prompt gantian terpilih dimuatkan", "Tekan GENERATE — bahagian tidak dipilih kekal seperti IMAGE 1"]}, "pl": {"my": ["ပုံမလိုဘူး — ဒါက professional text-to-image prompt", "ကိုယ့်လူ identity ထည့်ချင်ရင် IMAGE 1 မှာ ပုံထည့်လို့ရတယ် (optional)", "“Start” နှိပ်ပါ — prompt ရောက်လာမယ်၊ ကြိုက်သလို ပြင်လို့ရတယ်", "GENERATE နှိပ်ပါ — ratio/size ကြိုရွေးရင် လိုချင်တဲ့အတိုင်း အတိအကျရမယ်"], "en": ["No photo needed — this is a professional text-to-image prompt", "Optionally add IMAGE 1 to keep a subject's identity in the scene", "Tap Start — the prompt loads; edit any detail you like", "Tap GENERATE — pick ratio/size first for the exact output you want"], "shn": ["ဢမ်ႇလူဝ်ႇၶႅပ်းႁၢင်ႈ — text-to-image prompt", "ၶႂ်ႈသႂ်ႇတူဝ်ၵဝ်ႇ သႂ်ႇတီႈ IMAGE 1 လႆႈ (optional)", "ၼဵၵ်း Start — prompt မႃး", "ၼဵၵ်း GENERATE"], "kac": ["Sumla n ra ai — ndai gaw text-to-image prompt re", "Nang a masha identity ra yang IMAGE 1 hta sumla bang mai ai (optional)", "Start dip u — prompt du na, ra ai hku lai mai ai", "GENERATE dip u — ratio/size shawng lata yang grau ding ai"], "th": ["ไม่ต้องใช้รูป — นี่คือ prompt แบบ text-to-image ระดับมืออาชีพ", "อยากคงตัวตนของบุคคลก็เพิ่ม IMAGE 1 ได้ (ไม่บังคับ)", "กด Start — prompt โหลดมา แก้ไขได้ตามใจ", "กด GENERATE — เลือก ratio/size ก่อนเพื่อผลลัพธ์ที่ต้องการ"], "zh": ["无需照片 — 这是专业的文生图 prompt", "想保留人物身份可选择添加 IMAGE 1（可选）", "点 Start — prompt 加载，可任意修改", "点 GENERATE — 先选比例/尺寸可得到精确输出"], "vi": ["Không cần ảnh — đây là prompt text-to-image chuyên nghiệp", "Muốn giữ danh tính chủ thể thì thêm IMAGE 1 (tùy chọn)", "Bấm Start — prompt tải vào, chỉnh tùy ý", "Bấm GENERATE — chọn ratio/size trước để có kết quả chính xác"], "id": ["Tidak perlu foto — ini prompt text-to-image profesional", "Ingin identitas subjek tetap? Tambahkan IMAGE 1 (opsional)", "Tekan Start — prompt dimuat, silakan edit", "Tekan GENERATE — pilih ratio/size dulu untuk hasil pas"], "ms": ["Tidak perlu foto — ini prompt text-to-image profesional", "Mahu kekalkan identiti subjek? Tambah IMAGE 1 (pilihan)", "Tekan Start — prompt dimuatkan, boleh edit", "Tekan GENERATE — pilih ratio/size dahulu untuk hasil tepat"]}, "gen": {"my": ["IMAGE 1 မှာ ကိုယ့်ပင်မပုံ တင်ပါ", "{S2}", "“Start” နှိပ်ပါ — prompt အစစ် (guard အပါ) ရောက်လာမယ်", "GENERATE နှိပ်ပါ — ပြောင်းမယ်၊ ကျန်တာ မပြောင်းဘူး"], "en": ["Add your main photo as IMAGE 1", "{S2}", "Tap Start — the panel's real prompt loads (guards included)", "Tap GENERATE — only what the task asks for changes"], "shn": ["သႂ်ႇၶႅပ်းႁၢင်ႈလမ်ႇလွင်ႈတီႈ IMAGE 1", "{S2}", "ၼဵၵ်း Start — prompt တႄႉ (guard ပႃး) မႃး", "ၼဵၵ်း GENERATE — TASK ဝႃႈၼၼ်ႉၵူၺ်း လႅၵ်ႈ"], "kac": ["Nang a madung sumla hpe IMAGE 1 hta bang u", "{S2}", "Start dip u — prompt teng (guard lawm) du na", "GENERATE dip u — tsun ai sha galai na"], "th": ["ใส่รูปหลักของคุณเป็น IMAGE 1", "{S2}", "กด Start — prompt จริงจากแผงจะโหลดมา (มี guard ครบ)", "กด GENERATE — เปลี่ยนเฉพาะที่สั่ง ที่เหลือคงเดิม"], "zh": ["把主照片添加为 IMAGE 1", "{S2}", "点 Start — 面板真实 prompt 加载（含保护指令）", "点 GENERATE — 只改任务要求的部分，其余不变"], "vi": ["Thêm ảnh chính làm IMAGE 1", "{S2}", "Bấm Start — prompt thật của bảng tải vào (kèm guard)", "Bấm GENERATE — chỉ thay đổi phần yêu cầu"], "id": ["Tambahkan foto utama sebagai IMAGE 1", "{S2}", "Tekan Start — prompt asli dimuat (dengan guard)", "Tekan GENERATE — hanya yang diminta yang berubah"], "ms": ["Tambah foto utama sebagai IMAGE 1", "{S2}", "Tekan Start — prompt sebenar dimuatkan (dengan guard)", "Tekan GENERATE — hanya yang diminta berubah"]}, "s2req": {"my": "IMAGE 2 မှာ တင်ပါ — “{R}”", "en": "Add IMAGE 2 — “{R}”", "shn": "သႂ်ႇ IMAGE 2 — “{R}”", "kac": "IMAGE 2 bang u — “{R}”", "th": "ใส่ IMAGE 2 — “{R}”", "zh": "添加 IMAGE 2 — “{R}”", "vi": "Thêm IMAGE 2 — “{R}”", "id": "Tambahkan IMAGE 2 — “{R}”", "ms": "Tambah IMAGE 2 — “{R}”"}, "s2opt": {"my": "IMAGE 2 (မထည့်လည်းရ) — “{R}”", "en": "Optional IMAGE 2 — “{R}”", "shn": "IMAGE 2 (ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ) — “{R}”", "kac": "IMAGE 2 (n bang tim mai ai) — “{R}”", "th": "IMAGE 2 (ไม่บังคับ) — “{R}”", "zh": "IMAGE 2（可选）— “{R}”", "vi": "IMAGE 2 (tùy chọn) — “{R}”", "id": "IMAGE 2 (opsional) — “{R}”", "ms": "IMAGE 2 (pilihan) — “{R}”"}, "s2none": {"my": "IMAGE 1 တစ်ပုံတည်း လိုတယ် — reference မလိုဘူး", "en": "Only IMAGE 1 is needed — no reference required", "shn": "လူဝ်ႇ IMAGE 1 လုၵ်ႈလဵဝ်ၵူၺ်း", "kac": "IMAGE 1 langai sha ra ai", "th": "ใช้แค่ IMAGE 1 — ไม่ต้องมีรูปอ้างอิง", "zh": "只需 IMAGE 1 — 无需参考图", "vi": "Chỉ cần IMAGE 1 — không cần ảnh tham chiếu", "id": "Cukup IMAGE 1 — tanpa referensi", "ms": "Cukup IMAGE 1 — tanpa rujukan"}};
   function gsPick(section){ var g=GS[section]; return g[LANG]||g.en; }
@@ -8253,6 +8329,10 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   function openWizard(w){
     recentPush(w.id); renderFavRecent();
     wiz.w=w; wiz.step=1;
+    wiz.ratioPicked=false; /* v5.56.0 — see runWizGenerate's ratio rule */
+    /* v5.56.0 — only models whose request can really carry this workflow's
+       required images are offered while it is open */
+    if(typeof wfModelFilter==="function") wfModelFilter((w.req||[]).length);
     wiz.token++; wiz.busy=false; wiz.result=null; wiz.error=""; window._wizBusy=false;
     wiz.prompt=w.prompt+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
     document.body.style.overflow="hidden";
@@ -8281,14 +8361,16 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     var token=wiz.token;
     wiz.step=4; wiz.busy=true; wiz.result=null; wiz.error=""; window._wizBusy=true;
     renderWiz(); $("wiz").scrollTop=0;
-    /* v4.54 — the wizard is a modal: #selRatio is not visible or reachable from
-       inside it, so any value there is a leftover from an earlier Create-page
-       run. The dispatcher would still append "Output aspect ratio: X" and
-       reframe a workflow the user never asked to reframe. Every workflow's own
-       prompt already states the framing it wants, so the stale global is
-       blanked for the run and restored after. */
+    /* v4.54 — a value left on #selRatio by an earlier Create-page run must
+       not silently reframe a workflow, so the stale global is blanked for
+       the run and restored after.
+       v5.56.0 — but a ratio the user picked INSIDE this wizard session (the
+       cloned select or its visual rail on the Generate step, tracked by
+       wiz.ratioPicked) is a deliberate instruction, not a leftover — the
+       select showed a choice, so the choice must be real. Only an untouched
+       control is blanked. */
     var wzR=$("selRatio"), wzSavedRatio=wzR.value;
-    wzR.value="";
+    if(!wiz.ratioPicked) wzR.value="";
     /* identity check, never length — state.hist caps at 8 (see rsDoGenerate) */
     var beforeFirst=state.hist[0];
     try{ await $("btnGen").onclick(); }catch(e){}
@@ -8446,6 +8528,9 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
           if(mainSel.disabled) c.disabled=true;
           c.onchange=function(){
             mainSel.value=c.value;
+            /* v5.56.0 — touching the wizard's ratio control (select or its
+               rail) makes the pick real for THIS run; see runWizGenerate */
+            if(pair[0]==="selRatio") wiz.ratioPicked=true;
             if(mainSel.onchange) mainSel.onchange();
             saveState && saveState();
             buildWizGenRow();
@@ -8453,6 +8538,13 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
           };
           row.appendChild(c);
         });
+        /* v5.56.0 — the same visual ratio rail the Create card has, under
+           the cloned select: proportioned boxes, dashed "A" for Auto, gold
+           highlight. The clone is rebuilt on every change, so any previous
+           rail is dropped and a fresh one attached to the live clone. */
+        var oldRail=$("wiz_selRatioRail");
+        if(oldRail && oldRail.parentNode) oldRail.parentNode.removeChild(oldRail);
+        if(row.parentNode && typeof ratioRailAttach==="function") ratioRailAttach("wiz_selRatio");
       };
       /* v4.28 C1: the footer names the engine that will actually run — not a
          hardcoded "Gemini" — and re-renders when the provider clone changes */
@@ -8483,10 +8575,29 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
           wfoot.textContent=head+" · prompt "+wiz.prompt.length+L9({my:" လုံး · {E} engine · guard ပါပြီးသား",en:" chars · {E} engine · guards included",shn:" တူဝ် · {E} engine · ပႃး guard ယဝ်ႉ",kac:" chars · {E} engine · guard ni lawm sai",th:" ตัวอักษร · {E} engine · มี guard รวมให้แล้ว",zh:" 字符 · {E} engine · 已含防护",vi:" ký tự · engine {E} · đã kèm guard",id:" karakter · engine {E} · guard disertakan",ms:" aksara · enjin {E} · guard disertakan"}).replace("{E}",eng);
           wfoot.className="mut";
         }
+        /* v5.56.0 — the one case the capacity filter cannot fix: no
+           configured model can carry every required image. Nothing is
+           hidden then, and the last screen before the money says which
+           image will not be seen instead of letting it vanish silently. */
+        if(typeof wfNoCapable!=="undefined" && wfNoCapable && (w.req||[]).length>1){
+          wfoot.textContent += " · " + L9({
+            my:"⚠ ဒီ workflow က ပုံ "+w.req.length+" ပုံလိုပေမဲ့ ရွေးထားတဲ့ model တွေက တစ်ပုံပဲ လက်ခံလို့ IMAGE 2 ကို မမြင်ရပါဘူး — Nano Banana လို multi-image model ရွေးပါ",
+            en:"⚠ this workflow needs "+w.req.length+" images but every configured model accepts one — IMAGE 2 will not be seen; pick a multi-image model such as Nano Banana",
+            shn:"⚠ workflow ၼႆႉ လူဝ်ႇၶႅပ်းႁၢင်ႈ "+w.req.length+" — model ဢၼ်လိူၵ်ႈဝႆႉ ႁပ်ႉလႆႈၶႅပ်းလဵဝ်ၵူၺ်း",
+            kac:"⚠ ndai workflow gaw sumla "+w.req.length+" ra ai raitim model ni gaw langai sha hkap la ai",
+            th:"⚠ เวิร์กโฟลว์นี้ต้องใช้ "+w.req.length+" ภาพ แต่โมเดลที่ตั้งค่าไว้รับได้ภาพเดียว — IMAGE 2 จะไม่ถูกเห็น",
+            zh:"⚠ 此工作流需要 "+w.req.length+" 张图片，但已配置的模型只接受一张 — IMAGE 2 将不会被看到",
+            vi:"⚠ workflow này cần "+w.req.length+" ảnh nhưng các model đã cấu hình chỉ nhận một — IMAGE 2 sẽ không được nhìn thấy",
+            id:"⚠ workflow ini butuh "+w.req.length+" gambar tapi model yang dikonfigurasi hanya menerima satu — IMAGE 2 tidak akan terlihat",
+            ms:"⚠ aliran kerja ini perlukan "+w.req.length+" imej tetapi model yang dikonfigurasi hanya terima satu — IMAGE 2 tidak akan dilihat"});
+          wfoot.className="mut warn";
+        }
       };
       wiz._footUpd=wfootUpd;
-      buildWizGenRow();
+      /* v5.56.0 — row goes into the body BEFORE the first build so the
+         ratio rail (inserted after the row) has a parent to land in */
       body.appendChild(row);
+      buildWizGenRow();
       wfootUpd();
       body.appendChild(wfoot);
       var advH=el("button","wizadv-h"); advH.innerHTML=icn("i-gear")+" Advanced — "+escH(L9({my:"prompt ပြင်ချင်ရင် (မပြင်လည်းရ)",en:"edit the prompt (optional)",shn:"သင်ၶႂ်ႈမႄး prompt (ဢမ်ႇမႄးၵေႃႈလႆႈ)",kac:"prompt hpe galai mai ai (n galai yang mung mai)",th:"แก้ไข prompt (ไม่บังคับ)",zh:"编辑 prompt (可选)",vi:"chỉnh sửa prompt (không bắt buộc)",id:"edit prompt (opsional)",ms:"sunting prompt (pilihan)"}));
@@ -10844,8 +10955,27 @@ function ptPending(){
 }
 /* the hand-off every workflow card and the wizard call */
 window._ptUseWorkflow=function(id){
-  if(typeof window._wfBatchInfo==="function" && !window._wfBatchInfo(id)) return;
+  var wInfo=(typeof window._wfBatchInfo==="function") ? window._wfBatchInfo(id) : null;
+  if(typeof window._wfBatchInfo==="function" && !wInfo) return;
   if(!ptSetWorkflow(id)) return;
+  /* v5.56.0 — a batch inherits the Create card's model. If that model
+     cannot carry this workflow's required images, every photo in the run
+     would silently lose IMAGE 2 — switch to the first model that can,
+     and say so, before a hundred calls are spent. */
+  try{
+    if(wInfo && wInfo.reqN>1 && typeof rhModelMaxIn==="function"){
+      var pSel=$("selModel");
+      if(pSel && pSel.value && rhModelMaxIn(pSel.value)<wInfo.reqN){
+        for(var pi=0;pi<pSel.options.length;pi++){
+          if(rhModelMaxIn(pSel.options[pi].value)>=wInfo.reqN){
+            pSel.value=pSel.options[pi].value;
+            if(pSel.onchange) pSel.onchange();
+            break;
+          }
+        }
+      }
+    }
+  }catch(e){}
   switchPage("pgPath");
   var box=$("ptWfBox");
   if(box) setTimeout(function(){ try{ box.scrollIntoView({block:"center"}); }catch(e){} },60);
@@ -22179,7 +22309,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.55.0";
+var APP_VER="5.56.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -24232,7 +24362,21 @@ bolt:['t-gold','<svg viewBox="0 0 24 24"><path fill="#e9b949" d="M13.4 2 4.6 13.
 count:['t-plain','<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2" fill="none" stroke="#9aa3b5" stroke-width="1.7"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="2" fill="none" stroke="#9aa3b5" stroke-width="1.7"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2" fill="none" stroke="#9aa3b5" stroke-width="1.7"/><rect x="13" y="13" width="7.5" height="7.5" rx="2" fill="none" stroke="#e9b949" stroke-width="1.7"/></svg>'],
 size:['t-plain','<svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="3.5" fill="none" stroke="#9aa3b5" stroke-width="1.8"/><text x="12" y="15.4" text-anchor="middle" font-family="Segoe UI,system-ui,sans-serif" font-weight="800" font-size="7.5" fill="#e9b949">HD</text></svg>'],
 clock:['t-plain','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="#9aa3b5" stroke-width="1.8"/><path d="M12 7.5V12l3.2 2" fill="none" stroke="#e9b949" stroke-width="2" stroke-linecap="round"/></svg>'],
-video:['t-plain','<svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="13.5" height="13" rx="3" fill="none" stroke="#9aa3b5" stroke-width="1.8"/><path d="M16.5 10.5 21.5 7.5v9l-5-3z" fill="#e9b949"/></svg>']
+video:['t-plain','<svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="13.5" height="13" rx="3" fill="none" stroke="#9aa3b5" stroke-width="1.8"/><path d="M16.5 10.5 21.5 7.5v9l-5-3z" fill="#e9b949"/></svg>'],
+/* v5.56.0 — every family the video catalog actually ships gets its own
+   authentic mark (owner: "model တွေကို အစစ်အမှန် ပြပါ"): distinctive
+   family-true motifs, never a guessed vendor logo. */
+kling:['t-plain','<svg viewBox="0 0 24 24"><path d="M6 3.5v17M6 12l8.5-8.5M6 12l8.5 8.5" stroke="#39e6c3" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'],
+vidu:['t-plain','<svg viewBox="0 0 24 24"><path fill="#8b6bff" d="M6.5 4.5 19.5 12 6.5 19.5z"/><circle cx="6.5" cy="12" r="2.1" fill="#c4b3ff"/></svg>'],
+veo:['t-plain','<svg viewBox="0 0 24 24"><defs><linearGradient id="hslveo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d9fff"/><stop offset="1" stop-color="#2fd4b2"/></linearGradient></defs><rect x="3" y="6" width="12.5" height="12" rx="3" fill="none" stroke="url(#hslveo)" stroke-width="2"/><path d="M16.5 10.5 21 8v8l-4.5-2.5z" fill="url(#hslveo)"/></svg>'],
+hailuo:['t-plain','<svg viewBox="0 0 24 24"><path d="M3 15c2.5-6 6-6 8.5 0s6.5 6 9.5 0" fill="none" stroke="#ff7a59" stroke-width="2.3" stroke-linecap="round"/><circle cx="18.4" cy="6.6" r="2.3" fill="#ff7a59"/></svg>'],
+pixverse:['t-plain','<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="#ff4fd8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="#ff4fd8" opacity=".55"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="#ff4fd8" opacity=".55"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="#ff4fd8" opacity=".25"/></svg>'],
+ltx:['t-plain','<svg viewBox="0 0 24 24"><text x="12" y="16.2" text-anchor="middle" font-family="Segoe UI,system-ui,sans-serif" font-weight="800" font-size="9" fill="#9ab6ff">LTX</text></svg>'],
+skyreels:['t-plain','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="#6cc4ff" stroke-width="1.9"/><circle cx="12" cy="12" r="1.7" fill="#6cc4ff"/><circle cx="12" cy="7.2" r="1.5" fill="#6cc4ff"/><circle cx="16.6" cy="12" r="1.5" fill="#6cc4ff"/><circle cx="12" cy="16.8" r="1.5" fill="#6cc4ff"/><circle cx="7.4" cy="12" r="1.5" fill="#6cc4ff"/></svg>'],
+horse:['t-plain','<svg viewBox="0 0 24 24"><path d="M6 20v-7a6 6 0 0 1 12 0v7" fill="none" stroke="#e8a13d" stroke-width="2.5" stroke-linecap="round"/><path d="M4.5 20h3M16.5 20h3" stroke="#e8a13d" stroke-width="2.1" stroke-linecap="round"/></svg>'],
+higgs:['t-plain','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2" fill="#c07dff"/><ellipse cx="12" cy="12" rx="9" ry="4" fill="none" stroke="#c07dff" stroke-width="1.5" transform="rotate(28 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" fill="none" stroke="#c07dff" stroke-width="1.5" opacity=".55" transform="rotate(-28 12 12)"/></svg>'],
+grokx:['t-plain','<svg viewBox="0 0 24 24"><path d="M4.5 4.5 19.5 19.5M19.5 4.5l-6.1 6.1M4.5 19.5l6.1-6.1" stroke="#eceff4" stroke-width="2.3" stroke-linecap="round"/></svg>'],
+volc:['t-plain','<svg viewBox="0 0 24 24"><path d="M3.5 19.5 10 7l3 5 2.5-4 5 11.5z" fill="none" stroke="#ff6a5e" stroke-width="2" stroke-linejoin="round"/></svg>']
 };
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function tile(k){ var d=IC[k]||IC.spark; return '<span class="hsl-tile '+d[0]+'">'+d[1]+'</span>'; }
@@ -24246,17 +24390,34 @@ function brandOf(v,label){
   /* v5.50.0 — these buckets name the MODEL FAMILY of catalog entries and
      legacy stored values, never an engine: everything here runs on RunningHub */
   if(/gemini|^auto |model: auto/.test(s)||v==="auto") return {ic:"gemini",g:"Google"};
+  /* v5.56.0 — sora before gpt/openai so "OpenAI · Sora" wins the family
+     name; vendor-qualified groups only where the apiPath itself carries
+     the vendor (alibaba/, bytedance/, minimax/, topazlabs/) or the model
+     is universally that vendor's (Sora, Veo, Grok). */
+  if(/sora/.test(s)) return {ic:"openai",g:"OpenAI · Sora"};
   if(/gpt|openai|dall/.test(s)) return {ic:"openai",g:"GPT Image"};
-  if(/qwen/.test(s)) return {ic:"qwen",g:"Qwen"};
+  if(/qwen/.test(s)) return {ic:"qwen",g:"Alibaba · Qwen"};
+  if(/kling/.test(s)) return {ic:"kling",g:"Kling"};
+  if(/vidu/.test(s)) return {ic:"vidu",g:"Vidu"};
+  if(/veo/.test(s)) return {ic:"veo",g:"Google · Veo"};
+  if(/minimax|hailuo/.test(s)) return {ic:"hailuo",g:"MiniMax · Hailuo"};
+  if(/pixverse/.test(s)) return {ic:"pixverse",g:"PixVerse"};
+  if(/\bltx/.test(s)) return {ic:"ltx",g:"LTX"};
+  if(/skyreels/.test(s)) return {ic:"skyreels",g:"SkyReels"};
+  if(/happyhorse|happy horse/.test(s)) return {ic:"horse",g:"HappyHorse"};
+  if(/higgsfield/.test(s)) return {ic:"higgs",g:"Higgsfield"};
+  if(/dreamactor/.test(s)) return {ic:"seed",g:"ByteDance · DreamActor"};
+  if(/volc/.test(s)) return {ic:"volc",g:"Volcano Engine"};
   if(/flux/.test(s)) return {ic:"flux",g:"Flux"};
-  if(/^wan|wan[- ]image|wan[- ]2/.test(s)) return {ic:"wan",g:"Wan"};
-  if(/upscale|topaz/.test(s)) return {ic:"up",g:"Topaz Upscale"};
-  if(/seedream|seedance/.test(s)) return {ic:"seed",g:"Seedream"};
+  if(/^wan|wan[- ]image|wan[- ]2/.test(s)) return {ic:"wan",g:"Alibaba · Wan"};
+  if(/upscale|topaz/.test(s)) return {ic:"up",g:"Topaz Labs"};
+  if(/seedance/.test(s)) return {ic:"seed",g:"ByteDance · Seedance"};
+  if(/seedream/.test(s)) return {ic:"seed",g:"ByteDance · Seedream"};
   if(/z-image/.test(s)) return {ic:"zimg",g:"Z-Image"};
   if(/midjourney|youchuan/.test(s)) return {ic:"mj",g:"Midjourney"};
   /* v5.53.4 — the owner's specs identify rhart-image-x-official and
      rhart-imagine-image-quality/edit as xAI Grok Imagine models */
-  if(/grok/.test(s)) return {ic:"rh",g:"xAI · Grok"};
+  if(/grok/.test(s)) return {ic:"grokx",g:"xAI · Grok"};
   if(/jimeng/.test(s)) return {ic:"seed",g:"ByteDance · Jimeng"};
   if(/klein|krea|kontext|f-dev/.test(s)) return {ic:"flux",g:"Flux"};
   if(/rh[- ]|rhart|imagine/.test(s)) return {ic:"rh",g:"RunningHub"};
@@ -24295,9 +24456,13 @@ function iconFor(sel,opt){
     return tile("spark");
   }
   if(/selModel$|rhModelSel$|selT2IModel$/.test(id)) return tile(brandOf(v,label).ic);
-  if(/selVidModel$/.test(id)){
+  if(/selVidModel$|selVtModel$/.test(id)){
+    /* v5.56.0 — the video pane and the tools shelf show each family's real
+       mark; only a family with no brand entry falls back to its letter */
     var og=opt&&opt.parentElement&&opt.parentElement.tagName==="OPTGROUP"?opt.parentElement.label:"";
     var fam=(og||"HNK").replace(/\s*\(\d+\)\s*$/,"");
+    var vb=brandOf(v, fam+" "+label);
+    if(vb.ic!=="spark") return tile(vb.ic);
     return mono(fam.charAt(0).toUpperCase(),hueOf(fam));
   }
   if(/selCount$/.test(id)) return tile("count");
@@ -24330,6 +24495,7 @@ function closePop(){
 /* two-line trigger: tiny context word over the value — no truncated
    "Provider: G..." in the narrow option-grid cells */
 var CTX={selProvider:"Provider",selModel:"Model",rhModelSel:"Model",selT2IModel:"Model",selVidModel:"Model",
+  selVtModel:"Tool",
   selCount:"Count",selSize:"Size",selT2IRes:"Size",selQual:"Quality",rhQuality:"Quality",
   selVidRes:"Res",selVuRes:"Res",selVidDur:"Duration"};
 function ctxOf(id){ var k; for(k in CTX) if(new RegExp(k+"$").test(id)) return CTX[k]; return ""; }
@@ -24362,7 +24528,7 @@ function buildGroups(sel){
     return groups.filter(function(g){ return g.items.length; });
   }
   var opts=sel.options;
-  if(/selModel$|rhModelSel$|selT2IModel$/.test(sel.id||"") && opts.length>4){
+  if(/selModel$|rhModelSel$|selT2IModel$|selVtModel$/.test(sel.id||"") && opts.length>4){
     var byG={}, order=[];
     for(i=0;i<opts.length;i++){
       if(opts[i].disabled) continue;
