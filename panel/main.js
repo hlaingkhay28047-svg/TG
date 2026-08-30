@@ -5791,10 +5791,9 @@ function gateTexts() {
   gateTxt("gateBuy", gateT("gate_buy"));
   gateTxt("gateRetry", gateT("gate_retry"));
   gateTxt("gateSignOut", gateT("gate_signout"));
-  const em = gateEl("gateEmail"), pw = gateEl("gatePass"), pair = gateEl("gatePairCode");
+  const em = gateEl("gateEmail"), pw = gateEl("gatePass");
   if (em) em.placeholder = gateT("gate_email_ph");
   if (pw) pw.placeholder = gateT("gate_pass_ph");
-  if (pair) pair.placeholder = "Computer pairing code (if requested)";
 }
 function gateShow(view) {
   gateS.view = view;
@@ -5889,26 +5888,28 @@ function gatePaintPlan() {
 }
 
 /* ---------------- flow ---------------- */
-/* The backend owns the shared Computer slot. A second installation can join
-   that row only with the short pairing code shown by the authenticated web app.
-   A refusal is authoritative and keeps the overlay up. */
+/* The backend owns the shared Computer slot. Signing in registers this
+   installation directly; a refusal is authoritative and keeps the overlay
+   up (only an admin Reset Computer frees the slot for another machine). */
 async function gateRegisterDevice() {
   try {
-    const pair = ((gateEl("gatePairCode") || {}).value || "").trim();
+    /* 2026-08-30 owner instruction: the pairing-code step is gone — signing
+       in registers this computer directly. The server still allows only ONE
+       active panel installation per account (a second machine is refused
+       until the admin uses Reset Computer), which is the control that
+       actually mattered. */
     const r = await gateReq("/v1/devices/enroll", {
       method: "POST",
       body: JSON.stringify({
         installation_id: gateS.devId,
         device_type: "computer",
         channel: "panel",
-        label: gateDevLabel(),
-        pairing_code: pair || undefined
+        label: gateDevLabel()
       })
     }, gateS.sess.access);
     const j = await r.json().catch(function () { return {}; });
     if (!r.ok) return { ok: false, status: r.status, body: j };
     gateS.enrolled = true;
-    const input = gateEl("gatePairCode"); if (input) input.value = "";
     return { ok: true, body: j };
   } catch (e) {
     return { ok: false, status: 0, body: { message: "License service is unavailable" } };
@@ -5917,17 +5918,14 @@ async function gateRegisterDevice() {
 
 /* v6.31.0 — a student in real Photoshop hit the generic "Device could not be
    registered" with no way to tell WHY (owner screenshot, 2026-08-30). The
-   backend has always sent the specific reason in the response's `error`
-   field (fail() in server/index.js serializes ApiError.code there); the
-   gate simply never showed it. Each pairing-flow reason now maps to
-   actionable Burmese guidance instead of the dead-end generic line. */
+   backend sends the specific reason in the response's `error` field
+   (fail() in server/index.js serializes ApiError.code there); the gate
+   now maps each device-slot reason to actionable Burmese guidance. The
+   same day the owner removed the pairing-code step entirely, so only the
+   slot reasons remain. */
 const GATE_REASON_MY = {
-  invalid_pairing_code: "Code မှားနေပါတယ် — code က အကြီးအသေး ခွဲပါတယ်၊ website က ပြထားတဲ့အတိုင်း အတိအကျ ရိုက်ပါ",
-  pairing_expired: "Code သက်တမ်းကုန်သွားပါပြီ (၅ မိနစ်ပဲ ခံပါတယ်) — website မှာ code အသစ်ထုတ်ပြီး ချက်ချင်း ရိုက်ထည့်ပါ",
-  pairing_already_used: "ဒီ code က တစ်ခါ သုံးပြီးသားပါ — website မှာ code အသစ် ထုတ်ပါ",
-  pairing_required: "Computer မှာ website ဖွင့်ပြီး ထုတ်ပေးတဲ့ pairing code လိုပါတယ် — code ရိုက်ထည့်ပြီး ပြန်စစ်ပါ",
   panel_slot_occupied: "ဒီအကောင့်မှာ Photoshop panel တစ်ခု ချိတ်ပြီးသားပါ — စက်ပြောင်း/ပြန်သွင်းထားရင် ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
-  computer_device_required: "Website ကို ဒီ computer မှာ အရင် ဝင်ပြီး computer ကို register လုပ်ပါ — ပြီးမှ pairing code ထုတ်လို့ရပါမယ်",
+  computer_slot_occupied: "ဒီအကောင့်ရဲ့ computer နေရာ ပြည့်နေပါတယ် — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
   device_mismatch: "ဒီစက်က ဒီအကောင့်နဲ့ ချိတ်ထားတာ မဟုတ်ပါ — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ"
 };
 function gateResponseMessage(j, status) {
@@ -6105,7 +6103,6 @@ function gateApplyWidgetStyles() {
   paint("gateEmail", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gatePass", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gatePassEye", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", cursor: "pointer" });
-  paint("gatePairCode", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
 }
 

@@ -115,7 +115,7 @@ A reproducible ZIP test is not Adobe acceptance. Before enabling a release:
 
 1. package/test the reviewed source with Adobe UXP Developer Tool;
 2. install and launch it in every supported Photoshop/OS combination;
-3. verify login, computer pairing, online failure, update-required behavior,
+3. verify login, direct device registration, online failure, update-required behavior,
    provider operation, logout, and reinstall;
 4. record the UXP Developer Tool version, Photoshop/OS versions, artifact hash,
    date, and tester;
@@ -200,6 +200,21 @@ eligible students.
   wired from owner-pasted specs carry no api-id comment, which is why a
   comment-only scan overcounts). Acceptance carries over the v6.30.0
   checklist plus one Z-Image LoRA edit spot-check.
+  * Owner decision the same day, after the field report below: the
+    pairing-code step is REMOVED end to end ("code နဲ့ပတ်သက်တာတွေ
+    ဖြုတ်ပေးပါ"). The panel now registers itself at sign-in
+    (registerPanelDevice joins — or claims — the account's computer
+    slot); the web app's "Create Panel pairing code" button, the
+    /v1/devices/pairing-code endpoint and the gate's code input are all
+    gone. What the code never actually provided is unchanged: the
+    partial unique index still allows ONE active panel installation per
+    account, a second machine is refused with panel_slot_occupied, and
+    the audited admin Reset Computer action stays the only recovery
+    path. The device_pairing_codes table and DEVICE_PAIRING_SECRET stay
+    in the schema/env contract (no destructive migration; reset still
+    clears stale rows). Contract tests re-pinned to the new flow:
+    direct registration joins the computer slot, a second panel is
+    refused, and the retired pairing surface must stay gone.
   * Field-report fix folded in the same day: a student's real-Photoshop
     screenshot showed the pairing gate dead-ending on the generic
     "Device could not be registered". The backend has always sent the
@@ -209,9 +224,12 @@ eligible students.
     each to actionable Burmese guidance (fresh-code-within-5-minutes,
     case-sensitive typing, ask the admin for Reset Computer) instead of
     discarding it.
+  Acceptance addition for this decision: sign in on a machine with NO
+  prior pairing and confirm the panel unlocks with no code step; then
+  confirm a second machine is refused until Reset Computer.
   Artifact `HNK_Ai_Panel_v6.31.0.ccx`, SHA-256
-  `e19e858ca95a95b40303c8a3e33529deff467cf26bb08bec4a54b4132ae05397`,
-  1,287,431 bytes. The release stays disabled until that acceptance.
+  `79d6f3414a95e9b94b70161ea40e8f3482e1b061a8fd5d70b084df50a53bf6d7`,
+  1,287,146 bytes. The release stays disabled until that acceptance.
 - **v6.30.0** — superseded by v6.31.0 the same day (the completeness
   pass above) before Photoshop acceptance; it was published to the
   private release store and its content ships within v6.31.0.

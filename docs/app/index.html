@@ -2134,7 +2134,7 @@ html.splashing #splash{display:flex}
     <p class="mut">Device replacement is protected. Students cannot reset a registered slot; an HNK administrator must approve the reset.</p>
     <div class="unified-devices">
       <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button></article>
-      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><button class="btn" id="unifiedPairComputer" type="button">Create Panel pairing code</button><div class="unified-code" id="unifiedPairingCode" hidden aria-live="polite"></div></article>
+      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button></article>
     </div>
   </section>
   <section class="card">
@@ -2155,7 +2155,7 @@ html.splashing #splash{display:flex}
   <section class="tutorial-grid" aria-label="Tutorial topics">
     <article class="tutorial-card"><span class="chip on">01</span><h2>Dashboard &amp; AI Tools</h2><p>Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it as your account password.</p><button class="btn" type="button" data-tutorial-page="pgDash">Open Dashboard</button></article>
     <article class="tutorial-card"><span class="chip on">02</span><h2>Phone + Computer</h2><p>Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel.</p><button class="btn" type="button" data-tutorial-page="pgAccount">Check devices</button></article>
-    <article class="tutorial-card"><span class="chip on">03</span><h2>Install &amp; pair Panel</h2><p>Request a temporary download, install it in Photoshop, then enter the short pairing code shown on your registered Computer.</p><a class="btn btn-gold" href="../download/">Secure Panel download</a></article>
+    <article class="tutorial-card"><span class="chip on">03</span><h2>Install the Panel</h2><p>Request a temporary download, install it in Photoshop, then just sign in — the panel registers this computer by itself.</p><a class="btn btn-gold" href="../download/">Secure Panel download</a></article>
   </section>
 </div><!-- /pgTutorials -->
 
@@ -21513,7 +21513,6 @@ function unifiedRender(){
   var current = unifiedDeviceType();
   $("unifiedEnrollPhone").hidden = current !== "phone" || !!devices.phone;
   $("unifiedEnrollComputer").hidden = current !== "computer" || !!devices.computer;
-  $("unifiedPairComputer").hidden = current !== "computer" || !devices.computer;
   $("unifiedDownload").disabled = !unifiedCanDownload();
   $("unifiedDownloadNote").textContent = unifiedCanDownload()
     ? "Verified. A temporary link will be created only when you press the button."
@@ -21560,19 +21559,9 @@ async function unifiedEnroll(kind){
     await unifiedRefresh(true); accSetInline("unifiedStatus",unifiedPretty(kind)+" registered.","ok");
   } catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
 }
-async function unifiedPair(){
-  var data = unified.entitlement || {}, computer = data.devices && data.devices.computer;
-  if (!computer) return accSetInline("unifiedStatus","Register this Computer first.","err");
-  try {
-    /* Never round-trip a server slot id or stored installation hash. Pairing
-       proves this browser using the raw installation id already held locally. */
-    var r = await accFetch("/v1/devices/pairing-code", {method:"POST",body:JSON.stringify({computer_installation_id:deviceId()})});
-    var b = await accJson(r); if (!r.ok) throw new Error(b.message||b.msg||b.error||"Pairing code was not authorized");
-    var code = String(b.code||b.pairing_code||""); if (!code) throw new Error("The server did not issue a pairing code");
-    $("unifiedPairingCode").textContent = code; $("unifiedPairingCode").hidden = false;
-    accSetInline("unifiedStatus","Enter this short-lived code in the Photoshop Panel.","ok");
-  } catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
-}
+/* 2026-08-30 owner instruction: the Panel pairing-code step is gone — the
+   panel registers itself at sign-in, and the one-active-panel limit plus
+   the admin Reset Computer action carry the sharing control. */
 /* Account Center delivery also uses POST /api/v1/downloads/panel. The browser
    receives the short-lived address only after this explicit button action. */
 async function accRequestPanelDownload(ev){
@@ -21596,7 +21585,6 @@ function unifiedWire(){
   document.querySelectorAll("[data-unified-page],[data-tutorial-page]").forEach(function(b){ b.addEventListener("click",function(){ switchPage(b.getAttribute("data-unified-page")||b.getAttribute("data-tutorial-page")); }); });
   var ep=$("unifiedEnrollPhone"); if(ep) ep.onclick=function(){ unifiedEnroll("phone"); };
   var ec=$("unifiedEnrollComputer"); if(ec) ec.onclick=function(){ unifiedEnroll("computer"); };
-  var pc=$("unifiedPairComputer"); if(pc) pc.onclick=unifiedPair;
   var dl=$("unifiedDownload"); if(dl) dl.onclick=accRequestPanelDownload;
   var ad=$("accPanelDownload"); if(ad) ad.addEventListener("click",accRequestPanelDownload);
   var os=$("unifiedOpenSetup"); if(os) os.onclick=function(){ switchPage("pgHome"); accOpenGrp("accGrpAuth"); };

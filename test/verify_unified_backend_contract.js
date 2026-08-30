@@ -165,6 +165,16 @@ function createDeviceRepository() {
       return copy(Object.assign({}, installation, { slotType: slot && slot.slotType }));
     },
     async insertInstallation(row) {
+      /* mirror device_installations_active_client_uniq — the partial unique
+         index on (slot_id, client_type) where revoked_at is null. Without
+         this the mock silently accepts the second panel the real database
+         refuses, and the one-active-panel pin above proves nothing. */
+      if (installations.some(existing => existing.slotId === row.slotId &&
+          existing.clientType === row.clientType && !existing.revokedAt)) {
+        const err = new Error("duplicate active installation for slot/client");
+        err.code = "23505";
+        throw err;
+      }
       const saved = Object.assign({ id: "installation-" + (++sequence), revokedAt: null }, row);
       installations.push(saved);
       return copy(saved);
@@ -407,27 +417,23 @@ async function verifyDevices() {
       computerBReason === "computer_slot_occupied",
     { computerA, computerBReason });
 
-  const pairing = await registry.createPanelPairing({
-    userId, computerInstallationId: "computer-web-A",
+  /* 2026-08-30 owner instruction: the pairing-code step is gone. The panel
+     registers itself directly; the control that actually limits sharing is
+     the ONE-active-panel-per-slot rule, so that is what this pins now. */
+  const panelA = await registry.registerPanelDevice({
+    userId, installationId: "panel-A", label: "Photoshop",
   });
-  const storedPairing = repository.pairings[0];
-  report("panel pairing is short-lived and stores no plaintext pairing code",
-    pairing && pairing.allowed === true && pairing.code && pairing.code.length >= 12 &&
-      storedPairing && storedPairing.codeHash &&
-      !JSON.stringify(storedPairing).includes(pairing.code) &&
-      Date.parse(pairing.expiresAt) - nowMs > 0 && Date.parse(pairing.expiresAt) - nowMs <= 300000,
-    { pairing: pairing && { allowed: pairing.allowed, expiresAt: pairing.expiresAt }, storedPairing });
-
-  const panelA = await registry.pairPanel({
-    userId, pairingCode: pairing.code, panelInstallationId: "panel-A", label: "Photoshop",
-  });
-  const replayReason = await denied(() => registry.pairPanel({
-    userId, pairingCode: pairing.code, panelInstallationId: "panel-B", label: "Copied Photoshop",
+  const secondPanelReason = await denied(() => registry.registerPanelDevice({
+    userId, installationId: "panel-B", label: "Copied Photoshop",
   }));
-  report("one-time pairing attaches the panel installation to the existing computer slot",
+  report("direct panel registration joins the existing computer slot, and a second panel is refused",
     panelA && panelA.allowed === true && panelA.slotType === "computer" &&
-      panelA.slotId === computerA.slotId && replayReason === "pairing_already_used",
-    { computerA, panelA, replayReason });
+      panelA.slotId === computerA.slotId && secondPanelReason === "panel_slot_occupied",
+    { computerA, panelA, secondPanelReason });
+
+  const retired = ["createPanelPairing", "pairPanel"].filter(fn => typeof registry[fn] === "function");
+  report("the retired pairing-code surface is gone from the registry",
+    retired.length === 0, { retired });
 
   const validPanel = await registry.validate({ userId, clientType: "panel", installationId: "panel-A" });
   const copiedPanelReason = await denied(() => registry.validate({

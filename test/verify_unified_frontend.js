@@ -58,10 +58,13 @@ check("premium execution gates honor cached suspension and Web App disable verdi
 check("entitlement authorization failures clear cached verdicts and stay fail-closed",
   /catch\(e\)\{\s*unified\.enforced\s*=\s*true;\s*unified\.error\s*=\s*true;\s*unified\.entitlement\s*=\s*null;/.test(app) &&
   /if \(unified\.loading \|\| unified\.error \|\| !unified\.entitlement\) return ["']checking["']/.test(app));
-check("student app targets typed enrollment and computer pairing",
-  hasAll(app, ["/v1/devices/enroll", "/v1/devices/pairing-code", "device_type", "installation_id"]));
-check("pairing submits this browser installation id, never a returned slot id or hash",
-  /\/v1\/devices\/pairing-code[\s\S]{0,220}computer_installation_id\s*:\s*deviceId\(\)/.test(app));
+/* 2026-08-30 owner instruction: the Panel pairing-code step is retired.
+   Typed device enrollment stays; the pairing-code endpoint and its UI must
+   stay gone from the student app. */
+check("student app targets typed device enrollment",
+  hasAll(app, ["/v1/devices/enroll", "device_type", "installation_id"]));
+check("the retired pairing-code surface stays gone from the student app",
+  !app.includes("/v1/devices/pairing-code") && !app.includes("unifiedPairingCode"));
 check("student UI has dashboard, AI tools, account and tutorials destinations",
   hasAll(app, ["pgDash", "AI Tools", "pgAccount", "pgTutorials"]));
 check("student cannot self-reset or delete a registered device",

@@ -46,37 +46,34 @@ function createDeviceRegistry(options) {
     return { allowed: true, reason: "allowed", slotId: slot.id, slotType: slot.slotType, installationId: installation.id };
   }
 
-  async function createPanelPairing(input) {
-    const installationId = normalizeInstallation(input.computerInstallationId);
-    const web = await repository.getInstallation(input.userId, "web", installationId);
-    const slot = web && await repository.getSlot(input.userId, "computer");
-    if (!web || !slot || web.slotId !== slot.id) return denial("computer_device_required");
-    const code = String(randomToken()).slice(0, 12);
-    const expiresAt = new Date(clock().getTime() + pairingTtlSeconds * 1000).toISOString();
-    await repository.insertPairing({
-      userId: input.userId,
-      slotId: slot.id,
-      codeHash: hmac(pairingSecret, code),
-      createdAt: clock().toISOString(),
-      expiresAt,
-    });
-    return { allowed: true, reason: "allowed", code, expiresAt, slotId: slot.id };
-  }
-
-  async function pairPanel(input) {
-    const codeHash = hmac(pairingSecret, input.pairingCode);
-    const pairing = await repository.findPairingByCodeHash(codeHash);
-    if (!pairing || pairing.userId !== input.userId) return denial("invalid_pairing_code");
-    if (pairing.consumedAt) return denial("pairing_already_used");
-    if (new Date(pairing.expiresAt).getTime() <= clock().getTime()) return denial("pairing_expired");
-    const installationId = normalizeInstallation(input.panelInstallationId);
+  /* 2026-08-30 owner instruction: the pairing-code step is gone. Students
+     found the generate-on-website / type-within-5-minutes dance too hard
+     (real field report the same day). What actually limited account
+     sharing was never the code — it is the partial unique index
+     device_installations_active_client_uniq: ONE active panel
+     installation per computer slot. That stays. The panel now registers
+     itself directly on sign-in: it joins the existing computer slot (or
+     claims one if the account has none yet), and a second machine gets
+     panel_slot_occupied until an admin uses Reset Computer. */
+  async function registerPanelDevice(input) {
+    const installationId = normalizeInstallation(input.installationId);
     if (!installationId) return denial("invalid_installation_id");
-    const consumed = await repository.consumePairing(codeHash, clock().toISOString());
-    if (!consumed) return denial("pairing_already_used");
+    let slot = await repository.getSlot(input.userId, "computer");
+    if (!slot) {
+      const claim = await repository.claimSlot({
+        userId: input.userId,
+        slotType: "computer",
+        label: input.label || null,
+        createdAt: clock().toISOString(),
+        updatedAt: clock().toISOString(),
+      });
+      if (!claim || claim.claimed !== true) return denial("computer_slot_occupied");
+      slot = claim.slot;
+    }
     try {
       await repository.insertInstallation({
         userId: input.userId,
-        slotId: pairing.slotId,
+        slotId: slot.id,
         clientType: "panel",
         installationId,
         label: input.label || null,
@@ -87,7 +84,7 @@ function createDeviceRegistry(options) {
       if (error && error.code === "23505") return denial("panel_slot_occupied");
       throw error;
     }
-    return { allowed: true, reason: "allowed", slotId: pairing.slotId, slotType: "computer" };
+    return { allowed: true, reason: "allowed", slotId: slot.id, slotType: "computer" };
   }
 
   async function validate(input) {
@@ -104,7 +101,7 @@ function createDeviceRegistry(options) {
     return { allowed: true, reason: "allowed", resetCount: count };
   }
 
-  return { registerWebDevice, createPanelPairing, pairPanel, validate, resetSlot };
+  return { registerWebDevice, registerPanelDevice, validate, resetSlot };
 }
 
 function mapSlot(row) {

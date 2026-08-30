@@ -32,10 +32,12 @@ check("panel authentication remains password-token compatible",
   main.includes("/auth/v1/token?grant_type=password") &&
   main.includes("/auth/v1/token?grant_type=refresh_token"),
   "login or refresh route missing");
-check("computer enrollment and authenticated pairing are required",
-  main.includes("/v1/devices/enroll") && main.includes("pairing_code") &&
-  /id="gatePairCode"/.test(index),
-  "device enrollment/pairing UI missing");
+/* 2026-08-30 owner instruction: the pairing-code step is retired. Enrollment
+   stays mandatory; the code input and pairing_code field must stay GONE. */
+check("computer enrollment is required and the retired pairing step stays gone",
+  main.includes("/v1/devices/enroll") && !main.includes("pairing_code") &&
+  !/id="gatePairCode"/.test(index),
+  "device enrollment missing, or the pairing UI came back");
 check("the panel obtains a server authorization lease",
   main.includes("/v1/panel/validate") && /gateS\.lease/.test(main) &&
   /gateLeaseValid\s*\(/.test(main),

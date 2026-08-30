@@ -31,9 +31,12 @@ report("A2) panel source uses the unified API without the retired Supabase host"
   !/vmtwuuybnalefpgvrast|sb_publishable_/i.test(mainJs), {});
 report("A3) every protected provider image call begins with live lease validation",
   /async function callImageAPI\s*\([^)]*\)\s*\{\s*await gateRequireLease\(\)/.test(mainJs), {});
-report("A4) pairing input and all gate controls exist",
-  ["gateEmail", "gatePass", "gatePairCode", "gateSignIn", "gateRetry", "gateSignOut"]
-    .every(id => indexHtml.includes(`id="${id}"`)), {});
+/* 2026-08-30 owner instruction: the pairing-code step is REMOVED — the gate
+   must have the sign-in controls and must NOT reintroduce the code input. */
+report("A4) gate controls exist and the retired pairing input stays gone",
+  ["gateEmail", "gatePass", "gateSignIn", "gateRetry", "gateSignOut"]
+    .every(id => indexHtml.includes(`id="${id}"`)) &&
+  !indexHtml.includes('id="gatePairCode"') && !mainJs.includes("pairing_code"), {});
 report("A6) the whole gate card ships visible — no per-state hidden groups (v6.26.1)",
   !/gate-hide/.test(indexHtml) && !/gate-hide/.test(mainJs), {});
 report("A7) the gate identity square can carry the member photo within web-app bounds (v6.26.2)",
@@ -224,10 +227,11 @@ async function run(browser, cfg) {
     result.state.view === "locked" && !result.state.hidden && result.state.app === "none", result.state);
   await result.page.close();
 
+  /* 2026-08-30 owner instruction: no pairing code. Sign-in registers the
+     device directly; the enroll body must NOT carry a pairing_code field. */
   result = await run(browser, { settings: {}, goodPass: "correct-horse" });
   await result.page.fill("#gateEmail", "student@example.com");
   await result.page.fill("#gatePass", "correct-horse");
-  await result.page.fill("#gatePairCode", "482913");
   await result.page.click("#gateSignIn");
   await result.page.waitForFunction(() => gateS.view === "open", null, { timeout: 30000 }).catch(() => {});
   const signed = await result.page.evaluate(() => ({
@@ -236,8 +240,10 @@ async function run(browser, cfg) {
     enrollBody: (window.__reqs.find(r => r.url.indexOf("/v1/devices/enroll") >= 0) || {}).body || ""
   }));
   allErrors.push(...result.errors);
-  report("H) sign-in clears the password and sends the one-time pairing code",
-    signed.view === "open" && signed.password === "" && /\"pairing_code\":\"482913\"/.test(signed.enrollBody), signed);
+  report("H) sign-in clears the password and enrolls with no pairing code",
+    signed.view === "open" && signed.password === "" &&
+    signed.enrollBody.indexOf('"installation_id"') >= 0 &&
+    signed.enrollBody.indexOf("pairing_code") < 0, signed);
   await result.page.close();
 
   result = await run(browser, { settings: saved });
