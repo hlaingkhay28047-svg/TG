@@ -98,10 +98,26 @@ function createSessionRepository() {
       return Object.assign({}, row);
     },
     /* Atomic in PostgreSQL: UPDATE ... WHERE refresh_token_hash=$old AND
-     * revoked_at IS NULL RETURNING *. Returning null spends a replayed token. */
+     * revoked_at IS NULL RETURNING *. Returning null spends a replayed token.
+     * 2026-08-30: rotation now parks the spent hash in prevRefreshTokenHash
+     * so a client whose rotated reply never reached disk can re-join once. */
     async rotateRefreshToken(currentHash, nextHash, nextExpiresAt, rotatedAt) {
       const row = [...rows.values()].find(item =>
         item.refreshTokenHash === currentHash && !item.revokedAt);
+      if (!row) return null;
+      row.prevRefreshTokenHash = row.refreshTokenHash;
+      row.refreshTokenHash = nextHash;
+      row.expiresAt = nextExpiresAt;
+      row.lastSeenAt = rotatedAt;
+      return Object.assign({}, row);
+    },
+    async findByPrevRefreshTokenHash(hash) {
+      const row = [...rows.values()].find(item => item.prevRefreshTokenHash === hash);
+      return row ? Object.assign({}, row) : null;
+    },
+    async rotateFromPrev(prevHash, nextHash, nextExpiresAt, rotatedAt) {
+      const row = [...rows.values()].find(item =>
+        item.prevRefreshTokenHash === prevHash && !item.revokedAt);
       if (!row) return null;
       row.refreshTokenHash = nextHash;
       row.expiresAt = nextExpiresAt;
@@ -132,6 +148,7 @@ function createDeviceRepository() {
   const slots = [];
   const installations = [];
   const pairings = [];
+  const deviceLimits = new Map();
   let sequence = 0;
   const copy = value => value ? Object.assign({}, value) : null;
   return {
@@ -141,21 +158,35 @@ function createDeviceRepository() {
     async getSlot(userId, slotType) {
       return copy(slots.find(row => row.userId === userId && row.slotType === slotType && row.status === "active"));
     },
-    /* Atomic PostgreSQL adapter contract. The UNIQUE(user_id, slot_type) row
-     * is reused after reset, with generation incremented, rather than inserting
-     * a second historical slot that violates the invariant. */
+    /* 2026-08-30 — SEATS, not one-per-type: claimSlot mirrors the PG
+     * adapter's advisory-locked count against profiles.allowed_devices
+     * (admin-adjustable; default 2). A reset seat of the type is revived
+     * with generation incremented before a new row is inserted. */
+    setAllowedDevices(userId, n) { deviceLimits.set(userId, n); },
     async claimSlot(row) {
-      const existing = slots.find(item => item.userId === row.userId && item.slotType === row.slotType);
-      if (existing && existing.status === "active") return { claimed: false, slot: copy(existing) };
-      if (existing) {
-        Object.assign(existing, row, {
-          status: "active", generation: existing.generation + 1, resetAt: null,
+      const limit = deviceLimits.has(row.userId) ? deviceLimits.get(row.userId) : 2;
+      const active = slots.filter(item => item.userId === row.userId && item.status === "active");
+      if (active.length >= limit) {
+        const current = slots.find(item => item.userId === row.userId && item.slotType === row.slotType);
+        return { claimed: false, slot: current ? copy(current) : null };
+      }
+      const resettable = slots.find(item => item.userId === row.userId &&
+        item.slotType === row.slotType && item.status === "reset");
+      if (resettable) {
+        Object.assign(resettable, row, {
+          status: "active", generation: resettable.generation + 1, resetAt: null,
         });
-        return { claimed: true, slot: copy(existing) };
+        return { claimed: true, slot: copy(resettable) };
       }
       const saved = Object.assign({ id: "slot-" + (++sequence), status: "active", generation: 1 }, row);
       slots.push(saved);
       return { claimed: true, slot: copy(saved) };
+    },
+    async findFreeSlot(userId, slotType, clientType) {
+      const free = slots.find(slot => slot.userId === userId && slot.slotType === slotType &&
+        slot.status === "active" &&
+        !installations.some(i => i.slotId === slot.id && i.clientType === clientType && !i.revokedAt));
+      return free ? copy(free) : null;
     },
     async getInstallation(userId, clientType, installationId) {
       const installation = installations.find(row => row.userId === userId && row.clientType === clientType &&
@@ -165,6 +196,16 @@ function createDeviceRepository() {
       return copy(Object.assign({}, installation, { slotType: slot && slot.slotType }));
     },
     async insertInstallation(row) {
+      /* mirror device_installations_active_client_uniq — the partial unique
+         index on (slot_id, client_type) where revoked_at is null. Without
+         this the mock silently accepts the second panel the real database
+         refuses, and the one-active-panel pin above proves nothing. */
+      if (installations.some(existing => existing.slotId === row.slotId &&
+          existing.clientType === row.clientType && !existing.revokedAt)) {
+        const err = new Error("duplicate active installation for slot/client");
+        err.code = "23505";
+        throw err;
+      }
       const saved = Object.assign({ id: "installation-" + (++sequence), revokedAt: null }, row);
       installations.push(saved);
       return copy(saved);
@@ -326,13 +367,39 @@ async function verifySessions() {
     validation && validation.active === false && validation.reason === "session_revoked",
     { validation });
 
+  /* 2026-08-30 owner instruction: students must never be asked to sign in
+     again because Photoshop quit before the rotated token reached disk. The
+     immediately-PREVIOUS token therefore re-joins the chain once more for
+     web/panel sessions (a deliberate trade: the panel lease, the device
+     slot and account status stay the real gates), while anything two or
+     more steps back stays dead — and admin sessions stay strict. */
   const rotating = await store.issue({ userId, clientType: "panel", deviceInstallationId: "panel-pc-A" });
   const rotated = await store.rotate({ refreshToken: rotating.refreshToken });
-  const replayReason = await denied(() => store.rotate({ refreshToken: rotating.refreshToken }));
-  report("refresh rotation spends the old token and rejects a replay",
+  const rejoined = await store.rotate({ refreshToken: rotating.refreshToken });
+  report("refresh rotation issues a new token, and the crash-lost previous token re-joins the chain",
     rotated && rotated.refreshToken && rotated.refreshToken !== rotating.refreshToken &&
-      replayReason === "invalid_refresh_token",
-    { rotated: rotated && { sessionId: rotated.sessionId, changed: rotated.refreshToken !== rotating.refreshToken }, replayReason });
+      rejoined && rejoined.refreshToken && rejoined.sessionId === rotated.sessionId &&
+      rejoined.refreshToken !== rotated.refreshToken,
+    { rotated: rotated && { sessionId: rotated.sessionId }, rejoined: rejoined && { sessionId: rejoined.sessionId } });
+  /* the middle token was superseded by the re-join and never parked as prev:
+     it is the "two steps back" credential and must stay dead */
+  const supersededReason = await denied(() => store.rotate({ refreshToken: rotated.refreshToken }));
+  report("a superseded middle token (two steps back) stays dead",
+    supersededReason === "invalid_refresh_token", { supersededReason });
+  /* repeated crash-loss keeps working: the parked previous token can re-join
+     again — the student's stored credential never strands them */
+  const rejoinedAgain = await store.rotate({ refreshToken: rotating.refreshToken });
+  report("the parked previous token survives repeated lost replies",
+    rejoinedAgain && rejoinedAgain.sessionId === rotated.sessionId &&
+      rejoinedAgain.refreshToken !== rejoined.refreshToken,
+    { rejoinedAgain: rejoinedAgain && { sessionId: rejoinedAgain.sessionId } });
+
+  const adminRotating = await store.issue({ userId, clientType: "admin" });
+  const adminRotated = await store.rotate({ refreshToken: adminRotating.refreshToken });
+  const adminReplayReason = await denied(() => store.rotate({ refreshToken: adminRotating.refreshToken }));
+  report("admin sessions stay strict single-token — a spent admin token is refused",
+    adminRotated && adminRotated.refreshToken && adminReplayReason === "invalid_refresh_token",
+    { adminReplayReason });
 
   const idleStore = contract.createSessionStore({
     repository,
@@ -380,15 +447,18 @@ async function verifyDevices() {
   });
   const userId = "22222222-2222-4222-8222-222222222222";
 
+  /* 2026-08-30 owner instruction: device count is the ADMIN's dial
+     (profiles.allowed_devices, default 2), enforced as fungible SEATS. */
   const phoneA = await registry.registerWebDevice({
     userId, deviceType: "phone", installationId: "phone-A", label: "Student phone",
   });
-  const phoneBReason = await denied(() => registry.registerWebDevice({
-    userId, deviceType: "phone", installationId: "phone-B", label: "Borrowed phone",
-  }));
-  report("one account accepts one phone and refuses a different second phone",
-    phoneA && phoneA.allowed === true && phoneA.slotType === "phone" && phoneBReason === "phone_slot_occupied",
-    { phoneA, phoneBReason });
+  const phoneB = await registry.registerWebDevice({
+    userId, deviceType: "phone", installationId: "phone-B", label: "Second phone",
+  });
+  report("seats are fungible — the default two seats can both be phones",
+    phoneA && phoneA.allowed === true && phoneA.slotType === "phone" &&
+      phoneB && phoneB.allowed === true && phoneB.slotId !== phoneA.slotId,
+    { phoneA, phoneB });
 
   const copiedPhoneIdReason = await denied(() => registry.registerWebDevice({
     userId, deviceType: "computer", installationId: "phone-A", label: "Desktop claiming phone id",
@@ -396,38 +466,46 @@ async function verifyDevices() {
   report("an existing installation id cannot cross from its authoritative phone slot into computer",
     copiedPhoneIdReason === "device_type_mismatch", { copiedPhoneIdReason });
 
+  const overLimitReason = await denied(() => registry.registerWebDevice({
+    userId, deviceType: "computer", installationId: "computer-web-A", label: "Student PC",
+  }));
+  report("the third device is refused while the admin dial says two",
+    overLimitReason === "computer_slot_occupied", { overLimitReason });
+
+  repository.setAllowedDevices(userId, 3);
   const computerA = await registry.registerWebDevice({
     userId, deviceType: "computer", installationId: "computer-web-A", label: "Student PC",
   });
-  const computerBReason = await denied(() => registry.registerWebDevice({
-    userId, deviceType: "computer", installationId: "computer-web-B", label: "Other PC",
-  }));
-  report("one account accepts one computer and refuses a different second computer",
-    computerA && computerA.allowed === true && computerA.slotType === "computer" &&
-      computerBReason === "computer_slot_occupied",
-    { computerA, computerBReason });
+  report("raising allowed_devices to three admits the computer",
+    computerA && computerA.allowed === true && computerA.slotType === "computer",
+    { computerA });
 
-  const pairing = await registry.createPanelPairing({
-    userId, computerInstallationId: "computer-web-A",
+  /* 2026-08-30 owner instruction: the pairing-code step is gone. The panel
+     registers itself directly; the control that actually limits sharing is
+     the ONE-active-panel-per-slot rule, so that is what this pins now. */
+  const panelA = await registry.registerPanelDevice({
+    userId, installationId: "panel-A", label: "Photoshop",
   });
-  const storedPairing = repository.pairings[0];
-  report("panel pairing is short-lived and stores no plaintext pairing code",
-    pairing && pairing.allowed === true && pairing.code && pairing.code.length >= 12 &&
-      storedPairing && storedPairing.codeHash &&
-      !JSON.stringify(storedPairing).includes(pairing.code) &&
-      Date.parse(pairing.expiresAt) - nowMs > 0 && Date.parse(pairing.expiresAt) - nowMs <= 300000,
-    { pairing: pairing && { allowed: pairing.allowed, expiresAt: pairing.expiresAt }, storedPairing });
-
-  const panelA = await registry.pairPanel({
-    userId, pairingCode: pairing.code, panelInstallationId: "panel-A", label: "Photoshop",
-  });
-  const replayReason = await denied(() => registry.pairPanel({
-    userId, pairingCode: pairing.code, panelInstallationId: "panel-B", label: "Copied Photoshop",
+  const secondPanelReason = await denied(() => registry.registerPanelDevice({
+    userId, installationId: "panel-B", label: "Copied Photoshop",
   }));
-  report("one-time pairing attaches the panel installation to the existing computer slot",
+  report("direct panel registration joins the existing computer slot, and a second panel is refused",
     panelA && panelA.allowed === true && panelA.slotType === "computer" &&
-      panelA.slotId === computerA.slotId && replayReason === "pairing_already_used",
-    { computerA, panelA, replayReason });
+      panelA.slotId === computerA.slotId && secondPanelReason === "panel_slot_occupied",
+    { computerA, panelA, secondPanelReason });
+
+  const retired = ["createPanelPairing", "pairPanel"].filter(fn => typeof registry[fn] === "function");
+  report("the retired pairing-code surface is gone from the registry",
+    retired.length === 0, { retired });
+
+  repository.setAllowedDevices(userId, 4);
+  const panelB = await registry.registerPanelDevice({
+    userId, installationId: "panel-B", label: "Second studio machine",
+  });
+  report("the owner scenario end-to-end: a fourth seat lets a second machine's panel in",
+    panelB && panelB.allowed === true && panelB.slotType === "computer" &&
+      panelB.slotId !== panelA.slotId,
+    { panelB });
 
   const validPanel = await registry.validate({ userId, clientType: "panel", installationId: "panel-A" });
   const copiedPanelReason = await denied(() => registry.validate({

@@ -5553,7 +5553,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.30.0";
+const PANEL_VERSION = "6.31.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5711,18 +5711,29 @@ function gateForget() {
    freshly validated lease. */
 async function gateRefresh(ticket) {
   if (!gateS.sess || !gateS.sess.refresh) return "dead";
-  try {
-    const r = await gateReq("/auth/v1/token?grant_type=refresh_token",
-      { method: "POST", body: JSON.stringify({ refresh_token: gateS.sess.refresh }) }, null);
-    /* the answer to a question nobody is waiting for is not written to disk */
-    if (ticket !== undefined && gateStale(ticket)) return "stale";
-    if (r.ok) {
-      const j = await r.json();
-      return gateSaveSess(j) ? true : "dead";
-    }
-    if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 422) return "dead";
-    return "offline";
-  } catch (e) { return "offline"; }
+  /* v6.31.0 — one refresh at a time. Boot, the heartbeat and a focus event
+     can all want a refresh in the same instant; racing two rotations used
+     to spend the same token twice and misread the second answer as a dead
+     session. Everyone awaits the single in-flight call instead. (The
+     server now also accepts the immediately-previous token once, so even
+     a lost reply no longer strands the stored credential.) */
+  if (gateS.refreshing) return gateS.refreshing;
+  gateS.refreshing = (async () => {
+    try {
+      const r = await gateReq("/auth/v1/token?grant_type=refresh_token",
+        { method: "POST", body: JSON.stringify({ refresh_token: gateS.sess.refresh }) }, null);
+      /* the answer to a question nobody is waiting for is not written to disk */
+      if (ticket !== undefined && gateStale(ticket)) return "stale";
+      if (r.ok) {
+        const j = await r.json();
+        return gateSaveSess(j) ? true : "dead";
+      }
+      if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 422) return "dead";
+      return "offline";
+    } catch (e) { return "offline"; }
+  })();
+  try { return await gateS.refreshing; }
+  finally { gateS.refreshing = null; }
 }
 
 /* Three outcomes, and the difference between them is the whole point:
@@ -5786,15 +5797,21 @@ function gateTexts() {
   /* The locked explainer only when actually locked: the div itself now stays
      in the layout in every state (v6.26.1), so the text must be state-driven
      or the login screen would open with an alarming "access" paragraph. */
-  gateTxt("gateLockedMsg", (gateS.view === "locked") ? gateT("gate_locked") : "");
+  /* v6.31.0 — welcome-back: while the remembered session re-validates, the
+     card greets the member by the address it remembers instead of sitting
+     silent next to an empty login form. */
+  gateTxt("gateLockedMsg",
+    (gateS.view === "locked") ? gateT("gate_locked") :
+    (gateS.view === "checking" && gateS.sess && gateS.sess.email)
+      ? ("\ud83d\udc4b " + gateS.sess.email + " — " + gateT("gate_checking")) : "");
   gateTxt("gateSignIn", gateT("gate_signin"));
   gateTxt("gateBuy", gateT("gate_buy"));
   gateTxt("gateRetry", gateT("gate_retry"));
   gateTxt("gateSignOut", gateT("gate_signout"));
-  const em = gateEl("gateEmail"), pw = gateEl("gatePass"), pair = gateEl("gatePairCode");
+  const em = gateEl("gateEmail"), pw = gateEl("gatePass");
   if (em) em.placeholder = gateT("gate_email_ph");
   if (pw) pw.placeholder = gateT("gate_pass_ph");
-  if (pair) pair.placeholder = "Computer pairing code (if requested)";
+  gateTxt("gateForgot", "စကားဝှက် မေ့နေလား? · Forgot password?");
 }
 function gateShow(view) {
   gateS.view = view;
@@ -5889,34 +5906,50 @@ function gatePaintPlan() {
 }
 
 /* ---------------- flow ---------------- */
-/* The backend owns the shared Computer slot. A second installation can join
-   that row only with the short pairing code shown by the authenticated web app.
-   A refusal is authoritative and keeps the overlay up. */
+/* The backend owns the shared Computer slot. Signing in registers this
+   installation directly; a refusal is authoritative and keeps the overlay
+   up (only an admin Reset Computer frees the slot for another machine). */
 async function gateRegisterDevice() {
   try {
-    const pair = ((gateEl("gatePairCode") || {}).value || "").trim();
+    /* 2026-08-30 owner instruction: the pairing-code step is gone — signing
+       in registers this computer directly. The server still allows only ONE
+       active panel installation per account (a second machine is refused
+       until the admin uses Reset Computer), which is the control that
+       actually mattered. */
     const r = await gateReq("/v1/devices/enroll", {
       method: "POST",
       body: JSON.stringify({
         installation_id: gateS.devId,
         device_type: "computer",
         channel: "panel",
-        label: gateDevLabel(),
-        pairing_code: pair || undefined
+        label: gateDevLabel()
       })
     }, gateS.sess.access);
     const j = await r.json().catch(function () { return {}; });
     if (!r.ok) return { ok: false, status: r.status, body: j };
     gateS.enrolled = true;
-    const input = gateEl("gatePairCode"); if (input) input.value = "";
     return { ok: true, body: j };
   } catch (e) {
     return { ok: false, status: 0, body: { message: "License service is unavailable" } };
   }
 }
 
+/* v6.31.0 — a student in real Photoshop hit the generic "Device could not be
+   registered" with no way to tell WHY (owner screenshot, 2026-08-30). The
+   backend sends the specific reason in the response's `error` field
+   (fail() in server/index.js serializes ApiError.code there); the gate
+   now maps each device-slot reason to actionable Burmese guidance. The
+   same day the owner removed the pairing-code step entirely, so only the
+   slot reasons remain. */
+const GATE_REASON_MY = {
+  panel_slot_occupied: "ဒီအကောင့်မှာ Photoshop panel တစ်ခု ချိတ်ပြီးသားပါ — စက်ပြောင်း/ပြန်သွင်းထားရင် ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
+  computer_slot_occupied: "ဒီအကောင့်ရဲ့ computer နေရာ ပြည့်နေပါတယ် — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
+  device_mismatch: "ဒီစက်က ဒီအကောင့်နဲ့ ချိတ်ထားတာ မဟုတ်ပါ — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ"
+};
 function gateResponseMessage(j, status) {
   if (status === 426 || (j && j.code === "UPDATE_REQUIRED")) return "Update Required";
+  const reason = j && (j.error || j.code);
+  if (reason && GATE_REASON_MY[reason]) return GATE_REASON_MY[reason];
   return String((j && (j.message || j.msg || j.error)) ||
     (status ? ("Access denied (HTTP " + status + ")") : "License service is unavailable"));
 }
@@ -6083,12 +6116,12 @@ function gateApplyWidgetStyles() {
   };
   paint("gateSignIn", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
   paint("gateBuy", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
+  paint("gateForgot", { backgroundColor: "transparent", color: "#9ab", border: "none", fontSize: "11px", textAlign: "center", marginTop: "4px" });
   paint("gateRetry", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   paint("gateSignOut", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   paint("gateEmail", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gatePass", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gatePassEye", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", cursor: "pointer" });
-  paint("gatePairCode", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
   paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
 }
 
@@ -6101,6 +6134,8 @@ function gateWire() {
   on("gateSignIn", function () { gateSignIn(); });
   on("gateRetry", function () { if (!gateS.busy) gateCheck(); });
   on("gateBuy", function () { gateOpenSite(); });
+  /* the reset flow lives on the website's login card — the gate only links */
+  on("gateForgot", function () { gateOpenSite(); });
   on("gateSignOut", async function () {
     /* Reachable in every state since v6.26.1 — never mid-check: a sign-out
        under a running gateCheck would race the check's session. */

@@ -115,7 +115,7 @@ A reproducible ZIP test is not Adobe acceptance. Before enabling a release:
 
 1. package/test the reviewed source with Adobe UXP Developer Tool;
 2. install and launch it in every supported Photoshop/OS combination;
-3. verify login, computer pairing, online failure, update-required behavior,
+3. verify login, direct device registration, online failure, update-required behavior,
    provider operation, logout, and reinstall;
 4. record the UXP Developer Tool version, Photoshop/OS versions, artifact hash,
    date, and tester;
@@ -178,7 +178,109 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.30.0** — `pending`. The full image-catalog wave (2026-08-30), the
+- **v6.31.0** — `pending`. The completeness pass the owner's "are the
+  i2i/t2i models really all there?" question triggered (2026-08-30): a
+  programmatic cross-check of every image doc id in RunningHub's index
+  against the wired endpoints found exactly two absentees, both now
+  closed.
+  * z-image-turbo/image-to-image-lora (api-448184490): the LoRA sibling
+    of the wired non-LoRA route — node-keyed 44##image / 18##text /
+    41##select (shared "1".."7" table; the doc's default "8" is the
+    unused custom slot, fallback "1") / 42##file_type. The optional
+    43## LoRA pair is omitted (documented default strength 0 = plain
+    Z-Image Turbo; the f-2-dev/edit-lora precedent). Registry grows
+    96 → 97 models; the 46-check audit expects the 98-option selector.
+  * vidu/reference-to-video-q2-pro (api-448184544, web app only): filed
+    under Image > reference-to-image in the doc index although it is a
+    video endpoint, so both catalog sweeps missed it; fetched in round 4
+    and wired beside its q2 sibling (prompt REQUIRED, imageUrls ≤7
+    optional, documented enums for ratio/resolution/duration; its
+    optional `videos` refs are not sent — no video-ref slot).
+  Every other image doc id is verified wired (the six 6.29.0 endpoints
+  wired from owner-pasted specs carry no api-id comment, which is why a
+  comment-only scan overcounts). Acceptance carries over the v6.30.0
+  checklist plus one Z-Image LoRA edit spot-check.
+  * Owner decision the same day, after the field report below: the
+    pairing-code step is REMOVED end to end ("code နဲ့ပတ်သက်တာတွေ
+    ဖြုတ်ပေးပါ"). The panel now registers itself at sign-in
+    (registerPanelDevice joins — or claims — the account's computer
+    slot); the web app's "Create Panel pairing code" button, the
+    /v1/devices/pairing-code endpoint and the gate's code input are all
+    gone. What the code never actually provided is unchanged: the
+    partial unique index still allows ONE active panel installation per
+    account, a second machine is refused with panel_slot_occupied, and
+    the audited admin Reset Computer action stays the only recovery
+    path. The device_pairing_codes table and DEVICE_PAIRING_SECRET stay
+    in the schema/env contract (no destructive migration; reset still
+    clears stale rows). Contract tests re-pinned to the new flow:
+    direct registration joins the computer slot, a second panel is
+    refused, and the retired pairing surface must stay gone.
+  * Field-report fix folded in the same day: a student's real-Photoshop
+    screenshot showed the pairing gate dead-ending on the generic
+    "Device could not be registered". The backend has always sent the
+    specific reason (invalid_pairing_code / pairing_expired /
+    pairing_already_used / panel_slot_occupied / computer_device_required
+    / device_mismatch) in the response's `error` field; the gate now maps
+    each to actionable Burmese guidance (fresh-code-within-5-minutes,
+    case-sensitive typing, ask the admin for Reset Computer) instead of
+    discarding it.
+  * Stay-signed-in fix, same day (owner: "တစ်ခါဝင်ပြီးရင် ထပ်ခါထပ်ခါ
+    မဝင်ရအောင်"): repeated logins traced to hard refresh-token rotation —
+    when Photoshop quit before the rotated token reached disk (or the
+    reply was lost), the stored credential was already spent and the
+    next launch demanded a password. The sessions table now parks the
+    immediately-previous token hash (prev_refresh_token_hash, additive
+    column) and web/panel sessions may re-join the chain with it —
+    repeatedly if replies keep getting lost — while a superseded middle
+    token stays dead, ADMIN sessions stay strict single-token, and
+    logout/revocation closes the parked token too (all pinned in
+    verify_unified_backend_contract and verify_api_service Y2/Y3/Z/Z2).
+    The gate also serializes concurrent refreshes behind one in-flight
+    call. Net effect: one sign-in per machine; only a 30-day idle gap,
+    sign-out, or an admin action asks for the password again.
+  * Seat-model device limits, same day (owner: "စက်ဘယ်နှစ်လုံးသုံးမလဲ
+    အတိုးအလျော့ကို admin က သတ်မှတ်"): device slots become fungible SEATS
+    counted against the profile's `allowed_devices` (the column the
+    renewal payment already multiplies by), instead of the hard
+    one-phone-one-computer pair. The `UNIQUE (user_id, slot_type)`
+    constraint is dropped (replaced by a plain lookup index);
+    `claimSlot` takes a per-user advisory lock, counts active seats
+    against the admin-set limit (default 2, admin-adjustable 1–20 via
+    the new audited `set_devices` action + the admin UI's device dial),
+    and revives a reset seat before creating one. New installs sit on an
+    existing seat with a free place for their client type first, so a
+    web browser and the panel can share one computer seat as before.
+    The ONE-active-panel-per-seat partial unique index is unchanged: a
+    second panel machine is still refused with panel_slot_occupied until
+    Reset Computer or a raised limit grants a fresh seat. Pinned in
+    verify_unified_backend_contract (fungible-seat narrative incl.
+    limit-raise admitting a new machine), verify_unified_schema (both
+    schema files), and the admin action registries.
+  * Register/sign-in UX wave, same day, panel side: the locked gate
+    greets a returning student by their saved e-mail while re-checking
+    ("👋 you@… — gate_checking") instead of flashing the sign-in form;
+    a bilingual "Forgot password? / စကားဝှက်မေ့နေလား" link under the
+    sign-in button opens the web app where reset lives; the refusal
+    reason map keeps only the three slot/mismatch reasons that still
+    exist. Web-app side (v5.55.0): the signup form carries a three-step
+    journey strip (account → payment → start), a live password-strength
+    hint (guidance only — the 6-character server minimum stays the only
+    hard rule), and the device card explains in Burmese that this
+    machine is now auto-remembered and the admin can raise the seat
+    count.
+  Acceptance addition for this decision: sign in on a machine with NO
+  prior pairing and confirm the panel unlocks with no code step; then
+  confirm a second machine is refused until Reset Computer; then quit
+  and relaunch Photoshop and confirm the panel opens WITHOUT asking for
+  the password; then have the admin raise the account's device limit by
+  one and confirm the refused machine signs in on the next attempt.
+  Artifact `HNK_Ai_Panel_v6.31.0.ccx`, SHA-256
+  `1f1eb1a7c25acd2c10c816b0d4be120822967c29ed01e3b731f1de2e1a51af6f`,
+  1,287,652 bytes. The release stays disabled until that acceptance.
+- **v6.30.0** — superseded by v6.31.0 the same day (the completeness
+  pass above) before Photoshop acceptance; it was published to the
+  private release store and its content ships within v6.31.0.
+  The full image-catalog wave (2026-08-30), the
   owner's "အကုန်ထည့်ပေးပါ" instruction executed literally: every image
   endpoint in RunningHub's public doc index is wired, or its absence is
   recorded. 74 new models (31 image-to-image + 43 text-to-image) join BOTH

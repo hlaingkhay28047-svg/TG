@@ -348,7 +348,10 @@
     const devices = item.devices || {};
     const phone = devices.phone || item.phone_device;
     const computer = devices.computer || item.computer_device;
-    return `${phone ? "Phone 1/1" : "Phone 0/1"} · ${computer ? "Computer 1/1" : "Computer 0/1"}`;
+    /* 2026-08-30 — seats: the denominator is the admin-set allowed_devices */
+    const limit = item.allowed_devices != null ? Number(item.allowed_devices) : 2;
+    const used = (phone ? 1 : 0) + (computer ? 1 : 0);
+    return `Devices ${used}/${limit}` + (phone ? " · Phone" : "") + (computer ? " · Computer" : "");
   }
 
   function detailButton(item, compact = false) {
@@ -521,6 +524,8 @@
       ["force_logout", "Force logout", "danger"], ["password_reset", "Send password reset", ""],
     ];
     $("#securityActions").replaceChildren(...securityActions.map(([action, label, tone]) => actionButton(action, label, tone)));
+    const limitInput = $("#deviceLimit");
+    if (limitInput) limitInput.value = item.allowed_devices != null ? String(item.allowed_devices) : "2";
 
     const events = normalizeList({ events: item.history }, ["events"]);
     $("#studentHistory").replaceChildren(...events.slice(0, 6).map(event => node("div", { className: "history-item" }, [node("time", { text: formatDate(event.created_at || event.time) }), node("b", { text: title(eventName(event)) }), node("span", { text: event.detail || event.message || event.device_name || "—" })])));
@@ -599,8 +604,8 @@
     try {
       const body = await api(API.panelVersion);
       const policy = body.panel || body;
-      $("#latestVersion").value = policy.latest_version || policy.latest || "6.30.0";
-      $("#minimumVersion").value = policy.minimum_supported_version || policy.minimum || "6.30.0";
+      $("#latestVersion").value = policy.latest_version || policy.latest || "6.31.0";
+      $("#minimumVersion").value = policy.minimum_supported_version || policy.minimum || "6.31.0";
       if (!$("#artifactVersion").value) $("#artifactVersion").value = $("#latestVersion").value;
       const resumable = readArtifactState();
       $("#checkArtifactResume").hidden = !(resumable && resumable.id);
@@ -783,6 +788,13 @@
     renderDashboard(body);
     return body;
   }
+
+  const deviceLimitSave = $("#deviceLimitSave");
+  if (deviceLimitSave) deviceLimitSave.addEventListener("click", async () => {
+    const n = Number(($("#deviceLimit") || {}).value);
+    if (!Number.isInteger(n) || n < 1 || n > 20) { alert("Devices must be 1-20"); return; }
+    await runAction("set_devices", { allowed_devices: n });
+  });
 
   function activatePanel(name) {
     $$(".panel").forEach(panel => panel.classList.toggle("active", panel.id === `panel-${name}`));

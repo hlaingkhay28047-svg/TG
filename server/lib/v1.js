@@ -167,13 +167,15 @@ async function enrollDevice(identity, body, context) {
     const registry=deviceRegistry(client);
     let result;
     if (channel === "panel") {
+      /* 2026-08-30 owner instruction: no more pairing codes. The panel
+         registers itself directly; the one-active-panel-per-account
+         limit (panel_slot_occupied) is what actually stops sharing, and
+         the admin Reset Computer action remains the recovery path. Any
+         pairing_code an older panel still sends is simply ignored. */
       const existing=await registry.validate({userId:identity.uid,clientType:"panel",installationId});
-      if (existing.allowed) result=existing;
-      else if (body.pairing_code) result=await registry.pairPanel({
-        userId:identity.uid,pairingCode:String(body.pairing_code),panelInstallationId:installationId,
-        label:String(body.label||"Photoshop").slice(0,200),
+      result = existing.allowed ? existing : await registry.registerPanelDevice({
+        userId:identity.uid,installationId,label:String(body.label||"Photoshop").slice(0,200),
       });
-      else throw new ApiError(409,"A pairing code from the registered computer is required","pairing_required");
     } else {
       result=await registry.registerWebDevice({
         userId:identity.uid,deviceType,installationId,label:String(body.label||"").slice(0,200)||null,
@@ -200,23 +202,11 @@ async function enrollDevice(identity, body, context) {
   });
 }
 
-async function pairingCode(identity, body) {
-  if (identity.clientType !== "web") throw new ApiError(403,"A web session is required","client_type_mismatch");
-  return asService(async client => {
-    const state=await loadEntitlementState(client,identity.uid,{panelVersion:"6.24.0"});
-    rejectDecision(authorizeState(state,"web",{registered:true,matches:true,slotType:"computer"}));
-    const result=await deviceRegistry(client).createPanelPairing({
-      userId:identity.uid,computerInstallationId:String(body.computer_installation_id||body.installation_id||""),
-    });
-    if (!result.allowed) throw new ApiError(409,"Registered computer not found",result.reason);
-    return {status:200,body:{ok:true,code:result.code,expires_at:result.expiresAt}};
-  });
-}
-
 async function panelPair(identity, body, context) {
+  /* kept as a route alias for older panels; pairing codes are ignored now */
   return enrollDevice(identity,{
     channel:"panel",device_type:"computer",installation_id:body.panel_installation_id||body.installation_id,
-    pairing_code:body.code||body.pairing_code,label:body.label,panel_version:body.panel_version||"6.24.0",
+    label:body.label,panel_version:body.panel_version||"6.24.0",
   },context);
 }
 
@@ -429,7 +419,6 @@ async function handle(input) {
   requireIdentity(identity);
   if (pathname==="/v1/me/entitlement"&&method==="GET") return meEntitlement(identity,input.params);
   if (pathname==="/v1/devices/enroll"&&method==="POST") return enrollDevice(identity,body,context);
-  if (pathname==="/v1/devices/pairing-code"&&method==="POST") return pairingCode(identity,body);
   if (pathname==="/v1/panel/pair"&&method==="POST") return panelPair(identity,body,context);
   if (pathname==="/v1/panel/validate"&&method==="POST") return panelValidate(identity,body);
   if (pathname==="/v1/downloads/panel"&&method==="POST") return issueDownload(identity,body,context);

@@ -231,11 +231,24 @@ for (const item of source.filter(entry => entry.exists)) {
     ["phone", "computer"].every(kind => slots.includes("'" + kind + "'")),
     { expectedSlotTypes: ["phone", "computer"] });
 
+  /* 2026-08-30 seat model: slots are fungible seats counted against the
+     admin-adjustable profiles.allowed_devices, no longer one-per-type. The
+     old UNIQUE (user_id, slot_type) must be gone from the table body AND
+     explicitly dropped for existing databases, replaced by a plain lookup
+     index; allowed_devices is the seat count claimSlot enforces. */
   const compact = sql.replace(/\s+/g, " ");
-  const uniqueSlot = /unique\s*(?:index[^;]*?on\s+(?:public\.)?device_slots\s*)?\(\s*user_id\s*,\s*slot_type\s*\)/i.test(compact) ||
-    /unique\s*\(\s*user_id\s*,\s*slot_type\s*\)/i.test(slots);
-  report(label + " enforces one slot of each type per account at the database boundary",
-    uniqueSlot, { expected: "UNIQUE (user_id, slot_type)" });
+  const uniqueSlotGone = !/unique\s*\(\s*user_id\s*,\s*slot_type\s*\)/i.test(slots);
+  report(label + " no longer hard-limits accounts to one slot per type (seat model)",
+    uniqueSlotGone, { unexpected: "UNIQUE (user_id, slot_type) still in device_slots" });
+  report(label + " drops the legacy one-per-type constraint on existing databases",
+    /alter\s+table\s+(?:public\.)?device_slots\s+drop\s+constraint\s+if\s+exists\s+device_slots_user_id_slot_type_key/i.test(compact),
+    { expected: "ALTER TABLE device_slots DROP CONSTRAINT IF EXISTS device_slots_user_id_slot_type_key" });
+  report(label + " keeps device_slots lookups indexed by user and type after the constraint drop",
+    /create\s+index\s+if\s+not\s+exists\s+device_slots_user_type_idx\s+on\s+(?:public\.)?device_slots\s*\(\s*user_id\s*,\s*slot_type\s*\)/i.test(compact),
+    { expected: "CREATE INDEX IF NOT EXISTS device_slots_user_type_idx ON device_slots (user_id, slot_type)" });
+  report(label + " stores the admin-adjustable seat count on the profile",
+    /allowed_devices/i.test(tableBody(sql, "profiles") || "") || /allowed_devices/i.test(compact),
+    { expected: "profiles.allowed_devices seat count" });
 
   const installations = (tableBody(sql, "device_installations") || "").toLowerCase();
   report(label + " permits web and panel installations to share one computer slot",

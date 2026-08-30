@@ -68,8 +68,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     process.exit(1);
   }
 
-  // Guard check: Gemini Omni Flash video rejects exactly 2 reference images.
+  // v5.55.0 — the old "rejects exactly 2 images" guard pinned a registry-era
+  // odd-count note. The fetched doc for gemini-omni-flash/image-to-video
+  // declares imageUrls 1..3 with NO odd restriction, so 2 references must now
+  // SUBMIT, carrying both URLs in imageUrls. (The oddOnly mechanism stays in
+  // the pane for any future model that documents one.)
   const guard = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("vidResultBox").className = "card result-box";
     document.getElementById("selVidModel").value = "gemini-omni-video";
     document.getElementById("selVidModel").onchange();
     state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
@@ -78,11 +84,13 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     document.getElementById("vidPrompt").value = "test prompt";
     document.getElementById("btnVidGen").onclick();
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-    await sleep(50);
-    return document.getElementById("stVidGen").textContent;
+    for (let w = 0; w < 100 && document.getElementById("vidResultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    var sub = (window.__rhBodies.find(b => b.url.indexOf("gemini-omni-flash/image-to-video") >= 0) || {}).body || null;
+    return { st: document.getElementById("stVidGen").textContent, body: sub };
   }, B64);
-  console.log("2-image guard message:", guard);
-  const guardOk = /2/.test(guard) || /support/i.test(guard) || /မရပါ/.test(guard);
+  console.log("2-image submit body:", JSON.stringify(guard.body));
+  const guardOk = guard.body && Array.isArray(guard.body.imageUrls) && guard.body.imageUrls.length === 2
+    && guard.body.duration && guard.body.resolution;
 
   const result = await page.evaluate(async (b64) => {
     document.getElementById("selVidModel").value = "rh-video-g-off";
@@ -102,7 +110,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const calls = await page.evaluate(() => window.__rhCalls);
   console.log("RunningHub calls made:", JSON.stringify(calls));
   console.log(result === "OK" ? "PASS (video)" : ("FAIL: " + result));
-  console.log(guardOk ? "PASS (2-image guard)" : "FAIL: 2-image guard did not block submission");
+  console.log(guardOk ? "PASS (2 references submit per the doc — no invented odd-count rule)" : "FAIL: 2-image submit did not carry both imageUrls");
 
   // ---- v4.28 §4.5 (W1): the video model label must not credit Gemini ----
   // The id stays `gemini-omni-video` for stored-config compatibility; only the

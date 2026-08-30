@@ -494,6 +494,27 @@ var MODELS = [
     },
     recommendedFor: ["object-edit", "local-edit"]
   },
+  /* api-448184490 — v6.31.0 completeness pass: the LoRA sibling route. */
+  {
+    id: "z-image-turbo-lora",
+    displayName: "Z-Image Turbo — Edit LoRA",
+    provider: "runninghub-enterprise",
+    category: ["fast", "image-edit"],
+    tagline: "Z-Image Turbo editing via the LoRA graph",
+    detail: "Single-image edit · fixed aspect ratios · LoRA slot at its server default",
+    capabilities: {
+      textToImage: false,
+      imageEdit: true,
+      multiReference: false,
+      maxImages: 1,
+      supportedSizes: ["1k"],
+      supportedRatios: ["3:2", "2:3", "16:9", "9:16", "4:3", "3:4", "1:1"],
+      variants: false,
+      visibleText: "low",
+      identityRetention: "medium"
+    },
+    recommendedFor: ["object-edit", "local-edit"]
+  },
   {
     id: "upscale-transparent",
     displayName: "Upscale Transparent",

@@ -1,4 +1,10 @@
 /* v4.98.0 regression sweep — the video shelf goes from two models to sixty-five.
+   v5.55.0 — the shelf becomes the FULL doc-verified catalog: 182 models
+   (image-to-video incl. Start+End pairs, reference-to-video, text-to-video)
+   plus nine registry-sourced keepers with no doc page. Pins updated to the
+   new measured truth; the per-model body check now understands the three
+   new def shapes (maxImages 0 = no image field at all, kind:"vnode" =
+   ComfyUI node-keyed body, durInt = numeric duration).
 
    WHAT THE OWNER ASKED. He asked whether the video models were complete and
    whether Seedance was there. Measured: the app registered TWO endpoints while
@@ -47,8 +53,18 @@ const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
 /* The two ids that existed before this release. Every saved config and every
    video workflow card names one of them, so they must survive verbatim. */
 const LEGACY = ["rh-video-g-off", "gemini-omni-video"];
-/* Deliberately absent — see the header. */
-const REFUSED = ["rhart-video-flux3/image-to-video",
+/* Deliberately absent — v5.55.0: ten documented endpoints this app cannot
+   author inputs for (asset registration, lip-sync session flows, audio-file
+   inputs, script authoring, draftCache), plus the one endpoint no longer in
+   the doc index at all. rhart-video-flux3/image-to-video moved OUT of this
+   list: its doc shows keyframes is an array of image URLs, so it is wired. */
+const REFUSED = ["kling-elements-advanced",
+                 "kling-lip-sync/lip-sync-video",
+                 "kling-v2-ai-avatar-standard/image-audio-to-video",
+                 "kling-v2-ai-avatar-pro/image-audio-to-video",
+                 "vidu/short-play-q3-drama",
+                 "vidu/short-play-q3-ad",
+                 "rhart-video-flux3/draft-enhance",
                  "minimax/hailuo-h3/regeneration-image-to-video"];
 
 (async () => {
@@ -74,15 +90,15 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
       dur: (m.durations || []).slice(-1)[0], promptMax: m.promptMax, last: !!m.lastParam }))
   }));
 
-  report("A) the shelf is sixty-five models, with unique ids and unique endpoints",
-    reg.n === 65 && new Set(reg.ids).size === 65 && new Set(reg.paths).size === 65,
+  report("A) the shelf is 183 models, with unique ids and unique endpoints",
+    reg.n === 183 && new Set(reg.ids).size === 183 && new Set(reg.paths).size === 183,
     { n: reg.n, ids: new Set(reg.ids).size, paths: new Set(reg.paths).size });
 
   report("A2) the two that shipped before are still there, under the same ids",
     LEGACY.every(id => reg.ids.indexOf(id) >= 0), reg.ids.slice(0, 4));
 
-  report("B) Seedance is registered — six variants, which is what the owner asked about",
-    reg.seedance.length === 6 &&
+  report("B) Seedance is registered — at least the six variants the owner asked about",
+    reg.seedance.length >= 6 &&
     reg.seedance.some(m => /sparkvideo-2\.0\/image-to-video$/.test(m.path)) &&
     reg.seedance.some(m => /seedance-2\.5-token/.test(m.path)),
     reg.seedance);
@@ -112,7 +128,7 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
       let seen = null;
       window.fetch = async (u, o) => { seen = { url: String(u), body: JSON.parse(o.body) }; throw new Error("halt"); };
       try {
-        await rhV2SubmitVideo("K", m.apiPath, ["FIRST.jpg", "SECOND.jpg"], "p",
+        await rhV2SubmitVideo("K", m.apiPath, m.maxImages === 0 ? [] : ["FIRST.jpg", "SECOND.jpg"], "p",
           (m.resolutions || [])[0], (m.durations || [])[0], (m.aspects || [])[0],
           m.imageParam, m.promptMax, m);
       } catch (e) { /* expected */ }
@@ -127,8 +143,19 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
   const wantByPath = await page.evaluate(() =>
     RH_VIDEO_MODELS.reduce((a, m) => { a[m.id] = { apiPath: m.apiPath }; return a; }, {}));
 
-  const missingImage = bodies.filter(b => !b.ok || !(b.want.imageParam in b.body));
-  report("D) every model puts the photo in the field ITS endpoint declares",
+  /* v5.55.0 — three def shapes have no top-level image field to check:
+     text-to-video (maxImages 0 sends no image at all), and vnode graphs
+     (the photo rides its ##image node key, asserted separately below). */
+  const wantById = await page.evaluate(() =>
+    RH_VIDEO_MODELS.reduce((a, m) => { a[m.id] = { maxImages: m.maxImages, kind: m.kind || null, node: m.node || null }; return a; }, {}));
+  const missingImage = bodies.filter(b => {
+    const w = wantById[b.id];
+    if (!b.ok) return true;
+    if (w.kind === "vnode") return (w.node.images || []).some(k => b.body[k] !== "FIRST.jpg" && !(w.node.images.indexOf(k) === 1 && b.body[k] === "SECOND.jpg"));
+    if (w.maxImages === 0) return Object.keys(b.body).some(k => /image|frame|keyframe/i.test(k));
+    return !(b.want.imageParam in b.body);
+  });
+  report("D) every model puts the photo in the field ITS endpoint declares (and t2v sends none)",
     missingImage.length === 0, missingImage.slice(0, 4).map(b => ({ id: b.id, want: b.want.imageParam, got: Object.keys(b.body || {}) })));
 
   const missingExtra = bodies.filter(b => b.want.extra &&
@@ -180,8 +207,13 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
   report("D4) the nineteen that take a last frame receive the second image there",
     lastBad.length === 0, lastBad.slice(0, 4).map(b => b.id));
 
-  const promptBad = bodies.filter(b => typeof b.body.prompt !== "string");
-  report("D5) every request carries a prompt", promptBad.length === 0, promptBad.slice(0, 3).map(b => b.id));
+  const promptBad = bodies.filter(b => {
+    const w = wantById[b.id];
+    if (w.kind === "vnode") return w.node.prompt ? typeof b.body[w.node.prompt] !== "string" : false;
+    return typeof b.body.prompt !== "string";
+  });
+  report("D5) every request carries a prompt (vnode graphs under their ##text key)",
+    promptBad.length === 0, promptBad.slice(0, 3).map(b => b.id));
 
   /* ---- E) no control that looks available and does nothing ---- */
   const ui = await page.evaluate(() => {
@@ -206,11 +238,11 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
   });
   report("E) a control with no options is hidden, never rendered empty",
     ui.bad.length === 0, ui.bad.slice(0, 5));
-  report("E2) and that is not a hypothetical — 27 models have no resolution, 15 no duration",
-    ui.noRes === 27 && ui.noDur === 15, { noRes: ui.noRes, noDur: ui.noDur });
+  report("E2) and that is not a hypothetical — 63 models have no resolution, 13 no duration",
+    ui.noRes === 63 && ui.noDur === 13, { noRes: ui.noRes, noDur: ui.noDur });
 
-  report("F) sixty-five options are grouped by family, not one flat scroll",
-    ui.groups.length >= 12 && ui.options === 65 &&
+  report("F) 183 options are grouped by family, not one flat scroll",
+    ui.groups.length >= 30 && ui.options === 183 &&
     ui.groups.some(g => /^Seedance/.test(g)) && ui.groups.some(g => /^Kling/.test(g)),
     { groups: ui.groups, options: ui.options });
 
@@ -225,9 +257,10 @@ const REFUSED = ["rhart-video-flux3/image-to-video",
 
   report("H) no page errors", errs.length === 0, errs);
 
-  console.log("      (65 of RunningHub's 67 image-to-video endpoints, across " +
-    ui.groups.length + " families; the 2 that need a base video or a keyframe " +
-    "structure are refused by name)");
+  console.log("      (the full doc-verified catalog: 183 pane models across " +
+    ui.groups.length + " family groups — i2v, reference and text-to-video — " +
+    "plus the video-input tools shelf; the endpoints this app cannot drive " +
+    "are refused by name)");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();

@@ -160,9 +160,10 @@ account.
    registered-device hashes. Keep `MFA_ENCRYPTION_KEY` and
    `DEVICE_ID_HASH_SECRET` in the encrypted backup/recovery record: rotating the
    first needs an explicit decrypt/re-encrypt migration, while rotating the
-   second requires an admin reset of every device slot. The pairing, download,
-   and lease secrets may be rotated first; that only invalidates pending pairing
-   codes, five-minute URLs, and short panel leases. Rotate `JWT_SECRET` last.
+   second requires an admin reset of every device slot. The download and lease
+   secrets may be rotated first; that only invalidates five-minute URLs and
+   short panel leases (the pairing secret remains in the env contract but the
+   pairing-code flow itself was retired on 2026-08-30 by owner instruction). Rotate `JWT_SECRET` last.
 
    Password KDF work is bounded twice: a durable one-minute login admission
    window defaults to 20 attempts per source and 300 across the deployment,

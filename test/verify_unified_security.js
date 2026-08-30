@@ -220,6 +220,7 @@ async function verifyAdminRbac() {
     "extend_license", "change_expiry", "reset_phone", "reset_computer", "force_logout",
     "set_web_app_enabled", "set_ccx_download_enabled", "set_panel_enabled", "password_reset",
     "view_login_history", "view_device_history", "view_download_history", "manage_panel_versions",
+    "set_devices",
   ];
   const published = actionValues(contract.ADMIN_ACTIONS);
   report("admin action registry covers every specified control and history view",

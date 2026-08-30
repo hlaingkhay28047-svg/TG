@@ -51,7 +51,20 @@ function createSessionStore(options) {
        authoritative row was already idle past the limit. Check the old row
        before the atomic rotation updates last_seen_at. The row's client type,
        not a caller-supplied body field, decides whether this rule applies. */
-    const current = await repository.findByRefreshTokenHash(currentHash);
+    let current = await repository.findByRefreshTokenHash(currentHash);
+    let matchedPrev = false;
+    if (!current && typeof repository.findByPrevRefreshTokenHash === "function") {
+      /* 2026-08-30 — one-step-back acceptance (owner: students must not be
+         asked to sign in again and again). If the presented token is the
+         session's immediately-PREVIOUS one, the rotated reply never made
+         it to the client's disk (Photoshop quit mid-flight, response
+         lost). For web/panel sessions that is the same person, so the
+         chain re-joins here and moves forward; admin sessions stay strict
+         single-token, and anything two or more steps back stays dead. */
+      current = await repository.findByPrevRefreshTokenHash(currentHash);
+      if (current && current.clientType === "admin") return denial("invalid_refresh_token");
+      matchedPrev = !!current;
+    }
     if (!current) return denial("invalid_refresh_token");
     if (current.revokedAt) return denial("session_revoked");
     if (new Date(current.expiresAt).getTime() <= clock().getTime()) {
@@ -63,8 +76,9 @@ function createSessionStore(options) {
       return denial("admin_session_timeout");
     }
     const nextToken = randomToken();
-    const row = await repository.rotateRefreshToken(
-      currentHash, hashRefreshToken(nextToken), expiry(), isoNow());
+    const row = matchedPrev
+      ? await repository.rotateFromPrev(currentHash, hashRefreshToken(nextToken), expiry(), isoNow())
+      : await repository.rotateRefreshToken(currentHash, hashRefreshToken(nextToken), expiry(), isoNow());
     if (!row || new Date(row.expiresAt).getTime() <= clock().getTime()) {
       return denial("invalid_refresh_token");
     }
@@ -92,6 +106,7 @@ function mapSession(row) {
     deviceInstallationId: row.device_installation_id,
     clientType: row.client_type,
     refreshTokenHash: row.refresh_token_hash,
+    prevRefreshTokenHash: row.prev_refresh_token_hash || null,
     createdAt: row.created_at,
     lastSeenAt: row.last_seen_at,
     expiresAt: row.expires_at,
@@ -105,7 +120,7 @@ function mapSession(row) {
 
 function createPgSessionRepository(client) {
   const returning = "id,user_id,device_installation_id,client_type,refresh_token_hash," +
-    "created_at,last_seen_at,expires_at,revoked_at,revoked_reason,ip_hash,user_agent,mfa_verified_at";
+    "prev_refresh_token_hash,created_at,last_seen_at,expires_at,revoked_at,revoked_reason,ip_hash,user_agent,mfa_verified_at";
   return {
     async create(row) {
       const { rows } = await client.query(
@@ -136,10 +151,29 @@ function createPgSessionRepository(client) {
     },
     async rotateRefreshToken(currentHash, nextHash, nextExpiresAt, rotatedAt) {
       const { rows } = await client.query(
-        `update public.sessions set refresh_token_hash=$2,expires_at=$3,last_seen_at=$4
+        `update public.sessions
+            set prev_refresh_token_hash=refresh_token_hash,
+                refresh_token_hash=$2,expires_at=$3,last_seen_at=$4
           where refresh_token_hash=$1 and revoked_at is null and expires_at > $4
           returning ${returning}`,
         [currentHash,nextHash,nextExpiresAt,rotatedAt]);
+      return mapSession(rows[0]);
+    },
+    async findByPrevRefreshTokenHash(hash) {
+      const { rows } = await client.query(
+        `select ${returning} from public.sessions where prev_refresh_token_hash=$1`, [hash]);
+      return mapSession(rows[0]);
+    },
+    /* the client that presents the PREVIOUS token proved it never received
+       the current one — keep prev as-is (it may need to re-join again after
+       another lost reply) and move the current hash forward */
+    async rotateFromPrev(prevHash, nextHash, nextExpiresAt, rotatedAt) {
+      const { rows } = await client.query(
+        `update public.sessions
+            set refresh_token_hash=$2,expires_at=$3,last_seen_at=$4
+          where prev_refresh_token_hash=$1 and revoked_at is null and expires_at > $4
+          returning ${returning}`,
+        [prevHash,nextHash,nextExpiresAt,rotatedAt]);
       return mapSession(rows[0]);
     },
     async revokeById(id, revokedAt, reason) {

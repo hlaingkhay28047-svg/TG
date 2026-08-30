@@ -2134,7 +2134,7 @@ html.splashing #splash{display:flex}
     <p class="mut">Device replacement is protected. Students cannot reset a registered slot; an HNK administrator must approve the reset.</p>
     <div class="unified-devices">
       <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button></article>
-      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><button class="btn" id="unifiedPairComputer" type="button">Create Panel pairing code</button><div class="unified-code" id="unifiedPairingCode" hidden aria-live="polite"></div></article>
+      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><p class="mut" style="margin-top:6px;font-size:12px">ဒီ computer က တစ်ခါ register ဖြစ်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက် ထပ်တိုးချင်ရင် ဆရာ့ကို ပြောပါ။</p></article>
     </div>
   </section>
   <section class="card">
@@ -2155,7 +2155,7 @@ html.splashing #splash{display:flex}
   <section class="tutorial-grid" aria-label="Tutorial topics">
     <article class="tutorial-card"><span class="chip on">01</span><h2>Dashboard &amp; AI Tools</h2><p>Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it as your account password.</p><button class="btn" type="button" data-tutorial-page="pgDash">Open Dashboard</button></article>
     <article class="tutorial-card"><span class="chip on">02</span><h2>Phone + Computer</h2><p>Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel.</p><button class="btn" type="button" data-tutorial-page="pgAccount">Check devices</button></article>
-    <article class="tutorial-card"><span class="chip on">03</span><h2>Install &amp; pair Panel</h2><p>Request a temporary download, install it in Photoshop, then enter the short pairing code shown on your registered Computer.</p><a class="btn btn-gold" href="../download/">Secure Panel download</a></article>
+    <article class="tutorial-card"><span class="chip on">03</span><h2>Install the Panel</h2><p>Request a temporary download, install it in Photoshop, then just sign in — the panel registers this computer by itself.</p><a class="btn btn-gold" href="../download/">Secure Panel download</a></article>
   </section>
 </div><!-- /pgTutorials -->
 
@@ -2244,9 +2244,18 @@ html.splashing #splash{display:flex}
             <button class="acc-lnk" id="btnAccForgot"></button>
           </div>
           <div id="accFormSignup" style="display:none">
+            <!-- v5.55.0 — the three-step journey, visible from step one so a
+                 new student knows what comes after the form. Passive markers,
+                 not .chip controls: no touch-target contract applies. -->
+            <div class="row" id="accSteps" style="gap:6px;margin-bottom:8px">
+              <span class="acc-step" style="flex:1;text-align:center;border:1px solid var(--gold);border-radius:var(--r-pill);background:var(--gold);color:#1a1408;padding:6px 4px;font-size:var(--fs-sm);font-weight:700">1 · အကောင့်ဖွင့်</span>
+              <span class="acc-step" style="flex:1;text-align:center;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--cream);padding:6px 4px;font-size:var(--fs-sm);font-weight:700">2 · ငွေသွင်း</span>
+              <span class="acc-step" style="flex:1;text-align:center;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--cream);padding:6px 4px;font-size:var(--fs-sm);font-weight:700">3 · စတင်သုံး</span>
+            </div>
             <div class="subh" id="accSignupH"></div>
             <div class="row"><input class="inp grow" id="accEmail2" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
             <div class="row"><input class="inp grow" id="accPass2" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><button class="btn" id="btnShowAccPass2" type="button"></button></div>
+            <div class="mut" id="accPassStrength" style="margin-top:2px;font-size:12px"></div>
             <!-- v5.53.1 — optional profile photo at sign-up: same pick →
                  canvas-downscale pipeline as the account card; the result is
                  held in memory and PATCHed to the caller's own profiles row
@@ -3028,6 +3037,41 @@ html.splashing #splash{display:flex}
     <div class="subh" style="margin-top:12px" id="vuHistH"></div>
     <div class="hist" id="vuHist"></div>
   </section>
+  <!-- v5.55.0 — VIDEO TOOLS: the doc-verified video-input catalog (edit,
+       extend, denoise, interpolate, subtitle-erase, motion control). Same
+       page as Upscale because every tool here starts from an existing
+       video file; the Upscale card above is untouched. -->
+  <section class="card">
+    <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-clapper"/></svg>VIDEO TOOLS</h2>
+    <p class="mut" id="vtIntro"></p>
+    <select class="inp" id="selVtModel" style="width:100%;margin-bottom:8px"></select>
+    <input type="file" accept="video/mp4" id="vtFilePick" style="display:none">
+    <button class="btn" id="btnVtPick"></button>
+    <div class="mut" id="vtFileName" style="margin-top:6px"></div>
+    <input type="file" accept="image/*" id="vtImgPick" style="display:none">
+    <button class="btn" id="btnVtImgPick" style="display:none;margin-top:6px"></button>
+    <div class="mut" id="vtImgName" style="margin-top:6px"></div>
+    <textarea class="inp" id="vtPrompt" rows="3" style="display:none;margin-top:8px" placeholder=""></textarea>
+    <div class="row" id="vtOpts" style="margin-top:8px">
+      <select class="inp" id="selVtOpt1" style="display:none"></select>
+      <select class="inp" id="selVtOpt2" style="display:none"></select>
+    </div>
+    <div class="mut" id="vtNeedNote" style="margin-top:6px"></div>
+    <button class="btn btn-gold gen" id="btnVtGen"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-clapper"/></svg> RUN VIDEO TOOL</button>
+    <div class="spin" id="vtSpin"></div>
+    <button class="btn" id="btnVtCancel" style="display:none;margin-top:8px"></button>
+    <div class="status" id="stVtGen"></div>
+    <button class="btn" id="btnVtRetry" style="display:none;margin-top:8px"></button>
+  </section>
+
+  <section class="card result-box" id="vtResultBox">
+    <h2 id="vtResultH2"></h2>
+    <div class="result-img"><video id="vtResultVideo" controls playsinline style="width:100%;border-radius:12px;background:#000"></video></div>
+    <p class="mut" id="vtExpireNote" style="margin-top:8px"></p>
+    <div class="row" style="margin-top:10px">
+      <a class="btn btn-gold grow" id="btnVtOpen" target="_blank" rel="noopener"></a>
+    </div>
+  </section>
 </div><!-- /pgVideoUp -->
 
 <!-- ================= PATH RETOUCH (pgPath) — batch looks =================
@@ -3468,6 +3512,14 @@ var RH_MODELS = [
      ratios (1:1 fallback since the field can't be omitted), constant PNG
      output, no size tier. */
   { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", kind:"zimage" },
+  /* api-448184490 — the LoRA sibling of the route above (completeness pass,
+     v5.55.0): same node-keyed graph under different key numbers — 44##image /
+     18##text / 41##select (the shared "1".."7" table; the doc's default "8"
+     is the unused custom slot, so out-of-enum falls back "1" like the
+     non-LoRA route) / 42##file_type. The optional 43##lora_name/
+     43##strength_model pair is omitted on purpose — documented default
+     strength 0 = plain Z-Image Turbo (the f-2-dev/edit-lora precedent). */
+  { id:"z-image-turbo-lora", label:"Z-Image Turbo — Edit LoRA", apiPath:"rhart-image/z-image-turbo/image-to-image-lora", kind:"node", node:{ image:"44##image", prompt:"18##text", ratio:"41##select", fileType:"42##file_type" } },
   /* Upscale Transparent: a second Upscale variant, routed through its own
      dedicated submit/generate pair (rhV2SubmitUpscaleTransparent /
      rhGenerateUpscaleTransparent) since — like Upscale Pro — its body shape
@@ -6243,117 +6295,405 @@ function hdFinishSize(forced){
   var s=$("selSize"); return (s && s.value) || "";
 }
 var RH_VIDEO_MODELS = [
-  /* v4.98.1 — named for what it actually is. "RH Video G" told a customer
-     nothing: RunningHub's own registry maps this endpoint to
-     xai/grok-imagine/image-to-video-official-stable, so the studio was paying
-     for Grok Imagine without the picker ever saying so. Precedent: v4.28 W1
-     relabelled the neighbouring entry for the mirror-image reason — it claimed
-     "Gemini" while running on RunningHub. The id stays put; a stored config or
-     a shared link that names it must keep working. */
-  { id:"rh-video-g-off", label:"Grok Imagine — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video",
-    imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false,
-    resolutions:["720p","480p"], durations:["6","10"], aspect:false, promptMax:800 },
-  /* v4.28 W1: relabeled — this endpoint runs on RunningHub, NOT on the user's
-     Gemini key (the old "Gemini …" label misattributed it). id stays
-     gemini-omni-video for stored-config compatibility. */
-  { id:"gemini-omni-video", label:"Omni Flash (RunningHub) — up to 4K", apiPath:"gemini-omni-flash/image-to-video",
-    imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:true,
-    resolutions:["720p","1080p","4k"], durations:["4","6","8","10"], aspect:true, promptMax:2048 },
-
-  /* v4.98 — the other sixty-three, taken from RunningHub's own published model
-     registry rather than typed by hand.
-
-     v4.98.2 — NINE OF THEM DECLARED `duration` REQUIRED AND PUBLISHED NO OPTIONS,
-     and the first cut read the options list to build BOTH the picker and the
-     request. So those nine sent no duration at all, and every run of a Kling
-     v3/o3, a PixVerse c1/v6, a Wan 2.7 Spicy or either Grok channel would have
-     failed at submit with the opaque error this whole descriptor exists to
-     prevent. A required field with an empty enum is not a field with no value;
-     it is a field whose only documented value is its default. Those defaults
-     (5s, or 6s on the two Grok channels) now travel in `extra`. The generic
-     sweep passed because it only checked the extras a model DECLARED — it could
-     not see a requirement the model never recorded. The check now reads
-     RunningHub's registry, not our own copy of it.
-
-     THE SHELF WAS TWO MODELS DEEP AND THE PROVIDER OFFERS SIXTY-SEVEN
-     image-to-video endpoints. The owner asked for all of them. Sixty-five can
-     be driven from one photograph and a prompt; the two that cannot are named
-     in the note below, because silently dropping an endpoint the owner asked
-     for is worse than saying which and why.
-
-     EACH ENTRY DESCRIBES ITS OWN REQUEST SHAPE, because these endpoints do not
-     share one. Measured across the sixty-seven: the first image arrives as
-     imageUrl (34), firstImageUrl (18), imageUrls (4) or firstFrameUrl (6);
-     nineteen take a LAST frame too; the aspect field is aspectRatio on some and
-     ratio on others; and thirty carry REQUIRED parameters the old adapter never
-     sent at all — sound, bgm, generateAudio, cameraFixed, movementAmplitude,
-     enablePromptExpansion, promptOptimizer, shotType, mode. An entry missing
-     one of those does not fail loudly; it fails at submit with an opaque
-     error. `extra` carries each endpoint's OWN documented default so the
-     request is complete on arrival. */
-  { id:"alibaba-happyhorse-1-0", label:"happyhorse-1.0 \u2014 1080p, 15s", fam:"HappyHorse", apiPath:"alibaba/happyhorse-1.0/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
-  { id:"alibaba-happyhorse-1-1", label:"happyhorse-1.1 \u2014 1080p, 15s", fam:"HappyHorse", apiPath:"alibaba/happyhorse-1.1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  /* v5.55.0 — the FULL video catalog, doc-verified. Every entry below that
+     carries an api-<id> comment was generated from RunningHub's own
+     published parameter table for that endpoint (fetched via the read-only
+     fetch-docs CI lane): image field names, resolution/duration/aspect enums,
+     prompt caps, and every REQUIRED parameter's documented default all come
+     from the doc, never from memory. Three modes share this one shelf:
+       - image-to-video  (minImages >= 1; Start+End pairs use lastParam)
+       - reference-to-video (fam "· Ref": an imageUrls-style array of refs)
+       - text-to-video   (fam "· T2V": minImages 0 — no photo needed; models
+         with optional image slots also allow 0)
+     durInt:true marks endpoints whose duration is a JSON NUMBER (integer
+     range in the doc) rather than a string enum; resParam:"size" marks the
+     two Wan endpoints whose resolution field is literally named "size";
+     kind:"vnode" marks ComfyUI node-keyed graphs (wan-2.2, LTX, MiniMax-H3
+     oss): node.images/prompt/dur name the per-graph keys and node.fixed
+     carries each REQUIRED select at its documented default.
+     TEN documented video endpoints are deliberately NOT here, because this
+     app cannot author their inputs yet (each is named so a later "we added
+     them all" cannot quietly include a broken one):
+       kling-elements, kling-elements-advanced (asset registration),
+       rhart-video-s/sora-upload-character (character asset, no consumer),
+       kling-lip-sync/identify-face + kling-lip-sync/lip-sync-video
+       (multi-step session flow with an audio timeline),
+       kling-v2-ai-avatar-standard/image-audio-to-video and
+       kling-v2-ai-avatar-pro/image-audio-to-video (REQUIRE an audio file),
+       vidu/short-play-q3-drama + vidu/short-play-q3-ad (script authoring),
+       rhart-video-flux3/draft-enhance (needs a prior run's draftCache).
+     minimax/hailuo-h3/regeneration-image-to-video stays refused too — it is
+     no longer in the doc index at all.
+     The two ids every stored config and workflow card names keep the top. */
+  /* api-448184392 */
+  { id:"rh-video-g-off", label:"Grok Imagine — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "10"], aspect:false, promptMax:800 },
+  /* api-462492098 */
+  { id:"gemini-omni-video", label:"Omni Flash (RunningHub) — up to 4K", apiPath:"gemini-omni-flash/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8", "10"], aspect:true, aspects:["16:9", "9:16"], promptMax:2048 },
+  /* ======== v5.55.0 image-to-video — every documented endpoint ======== */
+  /* api-448184338 */
+  { id:"vidu-q2-pro", label:"Vidu Q2 Pro — (1080p, 10s)", fam:"Vidu", apiPath:"vidu/image-to-video-q2-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  /* api-448184341 */
+  { id:"vidu-q2-pro-fast", label:"Vidu Q2 Pro Fast — (1080p, 10s)", fam:"Vidu", apiPath:"vidu/image-to-video-q2-pro-fast", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  /* api-448184339 */
+  { id:"vidu-q2-turbo", label:"Vidu Q2 Turbo — (1080p, 10s)", fam:"Vidu", apiPath:"vidu/image-to-video-q2-turbo", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  /* api-448184340 */
+  { id:"vidu-q3-pro", label:"Vidu Q3 Pro — (2k, 16s)", fam:"Vidu", apiPath:"vidu/image-to-video-q3-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p", "2k"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"audio": true} },
+  /* api-448184343 */
+  { id:"vidu-q3-turbo", label:"Vidu Q3 Turbo — (1080p, 16s)", fam:"Vidu", apiPath:"vidu/image-to-video-q3-turbo", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"audio": true} },
+  /* api-448184337 */
+  { id:"vidu-se2v-q2-pro", label:"Vidu Q2 Pro — Start+End (1080p, 8s)", fam:"Vidu", apiPath:"vidu/start-end-to-video-q2-pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  /* api-448184342 */
+  { id:"vidu-se2v-q2-pro-fast", label:"Vidu Q2 Pro Fast — Start+End (1080p, 8s)", fam:"Vidu", apiPath:"vidu/start-end-to-video-q2-pro-fast", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:["720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  /* api-448184336 */
+  { id:"vidu-se2v-q2-turbo", label:"Vidu Q2 Turbo — Start+End (1080p, 8s)", fam:"Vidu", apiPath:"vidu/start-end-to-video-q2-turbo", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
+  /* api-448184345 */
+  { id:"vidu-se2v-q3-pro", label:"Vidu Q3 Pro — Start+End (1080p, 16s)", fam:"Vidu", apiPath:"vidu/start-end-to-video-q3-pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "audio": true} },
+  /* api-448184344 */
+  { id:"vidu-se2v-q3-turbo", label:"Vidu Q3 Turbo — Start+End (1080p, 16s)", fam:"Vidu", apiPath:"vidu/start-end-to-video-q3-turbo", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "audio": true} },
+  /* api-448184350 */
+  { id:"kling-v2-5-turbo-pro", label:"Kling v2.5 Turbo Pro — (10s)", fam:"Kling", apiPath:"kling-v2.5-turbo-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
+  /* api-448184349 */
+  { id:"kling-v2-5-turbo-std", label:"Kling v2.5 Turbo Std — (10s)", fam:"Kling", apiPath:"kling-v2.5-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
+  /* api-448184355 */
+  { id:"kling-v2-6-pro", label:"Kling v2.6 Pro — (10s)", fam:"Kling", apiPath:"kling-v2.6-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000, extra:{"sound": "true"} },
+  /* api-494859290 */
+  { id:"kling-v2-6-std", label:"Kling v2.6 Std — (10s)", fam:"Kling", apiPath:"kling-v2.6-std/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
+  /* api-449426879 */
+  { id:"kling-v3-4k", label:"Kling v3.0 4k — (15s)", fam:"Kling", apiPath:"kling-v3-4k/image-to-video", imageParam:"imageUrl", lastParam:"endImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2500 },
+  /* api-494859292 */
+  { id:"kling-v3-turbo-pro", label:"Kling V3 Turbo Pro — (15s)", fam:"Kling", apiPath:"kling-v3-turbo-pro/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  /* api-494859291 */
+  { id:"kling-v3-turbo-std", label:"Kling V3 Turbo Std — (15s)", fam:"Kling", apiPath:"kling-v3-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  /* api-448184352 */
+  { id:"kling-v3-0-pro", label:"Kling v3.0 Pro — (15s)", fam:"Kling", apiPath:"kling-v3.0-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
+  /* api-448184354 */
+  { id:"kling-v3-0-std", label:"Kling v3.0 Std — (15s)", fam:"Kling", apiPath:"kling-v3.0-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
+  /* api-448184346 */
+  { id:"kling-video-o1", label:"Kling video O1 — (10s)", fam:"Kling", apiPath:"kling-video-o1/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std"} },
+  /* api-448184347 */
+  { id:"kling-video-o1-se2v", label:"Kling video O1 — Start+End (10s)", fam:"Kling", apiPath:"kling-video-o1/start-to-end", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std"} },
+  /* api-449426878 */
+  { id:"kling-video-o3-4k", label:"Kling video O3 4k — (15s)", fam:"Kling", apiPath:"kling-video-o3-4k/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2500 },
+  /* api-448184351 */
+  { id:"kling-video-o3-pro", label:"Kling video O3 Pro — (15s)", fam:"Kling", apiPath:"kling-video-o3-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2500, extra:{"sound": true} },
+  /* api-448184353 */
+  { id:"kling-video-o3-std", label:"Kling video O3 Std — (15s)", fam:"Kling", apiPath:"kling-video-o3-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2500, extra:{"sound": true} },
+  /* api-448184359 */
+  { id:"seedance-2-0-global-fast-i2v", label:"Seedance 2.0 Global Fast — (4k, 15s)", fam:"Seedance", apiPath:"bytedance/seedance-2.0-global-fast/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859285 */
+  { id:"seedance-2-0-global-mini-i2v", label:"Seedance 2.0 Global Mini — (4k, 15s)", fam:"Seedance", apiPath:"bytedance/seedance-2.0-global-mini/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-448184358 */
+  { id:"seedance-2-0-global-i2v", label:"Seedance 2.0 Global — (4k, 15s)", fam:"Seedance", apiPath:"bytedance/seedance-2.0-global/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-498749515 */
+  { id:"seedance-2-5-global-token-i2v", label:"Seedance 2.5 Global — (4k, 30s)", fam:"Seedance", apiPath:"bytedance/seedance-2.5-global-token/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive"], promptMax:20480 },
+  /* api-498749516 */
+  { id:"bytedance-seedance-2-5-token", label:"Seedance 2.5 — (4k, 30s)", fam:"Seedance", apiPath:"bytedance/seedance-2.5-token/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive"], promptMax:20480 },
+  /* api-494859287 */
+  { id:"rhart-video-sparkvideo-2-0-fast", label:"Seedance 2.0 Fast — (4k, 15s)", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-fast/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859286 */
+  { id:"rhart-video-sparkvideo-2-0-mini", label:"Seedance 2.0 Mini — (4k, 15s)", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-mini/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859288 */
+  { id:"rhart-video-sparkvideo-2-0", label:"Seedance 2.0 — (4k, 15s)", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859293 */
+  { id:"rhv-sparkvideo-2-0-mmv-star", label:"Stephen Chow IP Video Gen(Seedance 2.0) — (4k, 15s)", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0/multimodal-video-star", imageParam:"imageUrl", minImages:0, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p", "native1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20000, extra:{"templateId": "ca4e2a5b6ba3429aa32f1b6ce8095e49"} },
+  /* api-494859294 */
+  { id:"rhv-sparkvideo-2-0-mmv-star-fast", label:"Stephen Chow IP Video Gen Fast (Seedance 2.0 Fast) — (4k, 15s)", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0/multimodal-video-star-fast", imageParam:"imageUrl", minImages:0, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20000, extra:{"templateId": "ca4e2a5b6ba3429aa32f1b6ce8095e49"} },
+  /* api-448184357 */
+  { id:"seedance-v1-5-pro", label:"Seedance v1.5 Pro — (1080p, 12s)", fam:"Seedance", apiPath:"seedance-v1.5-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "adaptive"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
+  /* api-448184356 */
+  { id:"seedance-v1-5-pro-fast", label:"Seedance v1.5 Pro Fast — (1080p, 12s)", fam:"Seedance", apiPath:"seedance-v1.5-pro/image-to-video-fast", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "adaptive"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
+  /* api-448184367 */
+  { id:"mm-hailuo-02-fast", label:"Hailuo 02 Fast — (10s)", fam:"MiniMax", apiPath:"minimax/hailuo-02/fast", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184366 */
+  { id:"minimax-hailuo-02-pro", label:"Hailuo 02 Pro", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184361 */
+  { id:"minimax-hailuo-02-standard", label:"Hailuo 02 Standard — (10s)", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-standard", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184360 */
+  { id:"mm-hailuo-02-standard", label:"Hailuo 02 Standard — (10s)", fam:"MiniMax", apiPath:"minimax/hailuo-02/standard", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:0, maxImages:2, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184364 */
+  { id:"minimax-hailuo-2-3-fast-pro", label:"Hailuo 2.3 Fast Pro — (6s)", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184363 */
+  { id:"minimax-hailuo-2-3-fast", label:"Hailuo 2.3 Fast — (10s)", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184362 */
+  { id:"minimax-hailuo-2-3-standard", label:"Hailuo 2.3 Standard — (10s)", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/i2v-standard", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184365 */
+  { id:"minimax-hailuo-2-3-pro", label:"Hailuo 2.3 Pro", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-495380676 */
+  { id:"minimax-hailuo-h3", label:"MiniMax H3 (first last frame) — (768P, 15s)", fam:"MiniMax", apiPath:"minimax/hailuo-h3/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:0, maxImages:2, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
+  /* api-502119462 */
+  { id:"rhv-mm-h3-oss-fl2va", label:"MiniMax H3 fl2va RH插件流 支持文生、图生、首尾帧 — (15s)", fam:"MiniMax", apiPath:"rhart-video/minimax-h3-oss/fl2va", kind:"vnode", node:{"images": [], "optImages": ["136##image", "152##image"], "prompt": "144##prompt", "fixed": {}, "dur": "157##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  /* api-448184368 */
+  { id:"youchuan", label:"Midjourney — (720p)", fam:"Midjourney", apiPath:"youchuan/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:8192 },
+  /* api-448184371 */
+  { id:"rhart-video-v3-1-fast-official", label:"Veo3.1 Fast — (4k, 8s)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-fast-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
+  /* api-448184374 */
+  { id:"rhart-video-v3-1-fast", label:"Veo3.1 Fast Low cost — (4k, 8s)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-fast/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
+  /* api-448184373 */
+  { id:"rhv-v3-1-fast-se2v", label:"Veo3.1 Fast Low cost — Start+End (4k, 8s)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-fast/start-end-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
+  /* api-448184375 */
+  { id:"rhart-video-v3-1-lite-official", label:"Veo3.1 Lite — (1080p, 8s)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-lite-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "6", "8"], aspect:true, aspects:["16:9", "9:16"], promptMax:20000 },
+  /* api-448184431 */
+  { id:"rhv-v3-1-lite-official-se2v", label:"Veo3.1 Lite — Start+End (1080p)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-lite-official/start-end-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:true, aspects:["16:9", "9:16"], promptMax:20000 },
+  /* api-448184369 */
+  { id:"rhart-video-v3-1-pro-official", label:"Veo3.1 Pro — (4k, 8s)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-pro-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
+  /* api-448184370 */
+  { id:"rhv-v3-1-pro-official-r2v", label:"Veo3.1 Pro — (4k)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-pro-official/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:[], aspect:false, promptMax:8000, extra:{"generateAudio": false} },
+  /* api-471297125 */
+  { id:"rhart-video-v3-1-pro", label:"Veo3.1 Pro Low cost — (4k, 8s)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
+  /* api-448184372 */
+  { id:"rhv-v3-1-pro-se2v", label:"Veo3.1 Pro Low cost — Start+End (4k, 8s)", fam:"Veo 3.1", apiPath:"rhart-video-v3.1-pro/start-end-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
+  /* api-448184380 */
+  { id:"rhart-video-s-official", label:"Sora 2 — (12s)", fam:"Sora", apiPath:"rhart-video-s-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:20000 },
+  /* api-448184378 */
+  { id:"rhart-video-s-official-pro", label:"Sora 2 Pro — (1080p, 20s)", fam:"Sora", apiPath:"rhart-video-s-official/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "8", "12", "16", "20"], aspect:false, promptMax:20000 },
+  /* api-448184376 */
+  { id:"rhart-video-s-official-realistic", label:"Sora 2 Realistic — (12s)", fam:"Sora", apiPath:"rhart-video-s-official/image-to-video-realistic", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:20000 },
+  /* api-448184381 */
+  { id:"rhart-video-s", label:"Sora 2 Low cost — (15s)", fam:"Sora", apiPath:"rhart-video-s/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
+  /* api-448184379 */
+  { id:"rhart-video-s-pro-deprecated", label:"Sora 2 Pro Low cost — (25s)", fam:"Sora", apiPath:"rhart-video-s/image-to-video-pro-deprecated", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["15", "25"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
+  /* api-448184388 */
+  { id:"alibaba-wan-2-5-preview", label:"Wan 2.5 Preview — (1080p, 10s)", fam:"Wan", apiPath:"alibaba/wan-2.5-preview/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["5", "10"], aspect:false, promptMax:1500 },
+  /* api-448184393 */
+  { id:"alibaba-wan-2-6", label:"Wan 2.6 — (1080p, 15s)", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["5", "10", "15"], aspect:false, promptMax:20000, extra:{"shotType": "single"} },
+  /* api-448184385 */
+  { id:"alibaba-wan-2-6-flash", label:"Wan 2.6 Flash — (1080p, 15s)", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video-flash", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20000, extra:{"shotType": "single", "enablePromptExpansion": false, "enableAudio": true} },
+  /* api-448184383 */
+  { id:"wan-2-6-r2v", label:"Wan 2.6 — (1248*1632, 10s)", fam:"Wan", apiPath:"alibaba/wan-2.6/reference-to-video", imageParam:"imageUrls", minImages:0, maxImages:5, oddOnly:false, resolutions:["1280*720", "720*1280", "960*960", "1088*832", "832*1088", "1920*1080", "1080*1920", "1440*1440", "1632*1248", "1248*1632"], resParam:"size", durations:["2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:20000 },
+  /* api-448184384 */
+  { id:"wan-2-6-r2v-flash", label:"Wan 2.6 Flash — (1248*1632, 10s)", fam:"Wan", apiPath:"alibaba/wan-2.6/reference-to-video-flash", imageParam:"imageUrls", minImages:0, maxImages:5, oddOnly:false, resolutions:["1280*720", "720*1280", "960*960", "1088*832", "832*1088", "1920*1080", "1080*1920", "1440*1440", "1632*1248", "1248*1632"], resParam:"size", durations:["2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:20000, extra:{"audio": true} },
+  /* api-494859283 */
+  { id:"alibaba-wan-2-7-spicy", label:"Wan 2.7 Spicy — (1080p, 15s)", fam:"Wan", apiPath:"alibaba/wan-2.7-spicy/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:5000 },
+  /* api-448184387 */
+  { id:"alibaba-wan-2-7", label:"Wan 2.7 — (1080P, 15s)", fam:"Wan", apiPath:"alibaba/wan-2.7/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:5000 },
+  /* api-448184447 */
+  { id:"wan-2-7-video-edit", label:"Wan 2.7 video edit — (1080P, 10s)", fam:"Wan", apiPath:"alibaba/wan-2.7/video-edit", imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:false, resolutions:["720P", "1080P"], durations:["0", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:5000 },
+  /* api-505922314 */
+  { id:"wan-3-0-prime-i2v", label:"Wan 3.0 Prime — (1080P, 30s)", fam:"Wan", apiPath:"alibaba/wan-3.0-prime/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480P", "720P", "1080P"], durations:["auto", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20000 },
+  /* api-505575335 */
+  { id:"wan-3-0-i2v", label:"Wan 3.0 — (1080P, 30s)", fam:"Wan", apiPath:"alibaba/wan-3.0/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480P", "720P", "1080P"], durations:["auto", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20000 },
+  /* api-448184386 */
+  { id:"rhv-wan-2-2-i2v", label:"Wan 2.2", fam:"Wan", apiPath:"rhart-video/wan-2.2/image-to-video", kind:"vnode", node:{"images": ["219##image"], "optImages": [], "prompt": "183##text", "fixed": {"202##select": "1", "218##select": "7"}}, minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000 },
+  /* api-448184382 */
+  { id:"rhv-wan-2-2-se2v", label:"Wan 2.2 video — Start+End", fam:"Wan", apiPath:"rhart-video/wan-2.2/start-to-end", kind:"vnode", node:{"images": ["219##image", "222##image"], "optImages": [], "prompt": "183##text", "fixed": {"202##select": "1", "218##select": "7"}}, minImages:2, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000 },
+  /* api-448184389 */
+  { id:"rhv-ltx-2-3-i2v", label:"Ltx 2.3 — (20s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video", kind:"vnode", node:{"images": ["98##image"], "optImages": [], "prompt": "200##prompt", "fixed": {"245##select": "1", "240##select": "2"}, "dur": "222##value", "durRange": {"min": 5, "max": 20, "def": 5}}, minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:false, promptMax:20000 },
+  /* api-448184390 */
+  { id:"rhv-ltx-2-3-i2v-lora", label:"Ltx 2.3 lora — (15s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video-lora", kind:"vnode", node:{"images": ["98##image"], "optImages": [], "prompt": "269##prompt", "fixed": {"245##select": "1", "240##select": "2"}, "dur": "222##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  /* api-494859289 */
+  { id:"rhart-video-g-official-v1-5", label:"Grok imagine video v1.5 — (720p, 15s)", fam:"Grok", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2048 },
+  /* api-448184391 */
+  { id:"rhart-video-g", label:"Grok imagine Low cost v1.5 — (480p, 30s)", fam:"Grok", apiPath:"rhart-video-g/image-to-video", imageParam:"imageUrls", minImages:0, maxImages:7, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], durInt:true, aspect:true, aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000 },
+  /* api-448184394 */
+  { id:"pixverse-v6", label:"Pixverse V6 — (1080p, 15s)", fam:"PixVerse", apiPath:"pixverse-v6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2048, extra:{"generateAudioSwitch": true} },
+  /* api-448184452 */
+  { id:"pixverse-v6-transition", label:"Pixverse V6 transition — Start+End (1080p, 15s)", fam:"PixVerse", apiPath:"pixverse-v6/transition", imageParam:"firstImageUrl", lastParam:"endImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "4:3", "1:1", "3:4", "9:16", "2:3", "3:2", "21:9"], promptMax:2048, extra:{"generateAudioSwitch": false, "generateMultiClipSwitch": false} },
+  /* api-450326933 */
+  { id:"alibaba-happyhorse-1-0", label:"Happyhorse 1.0 — (1080p, 15s)", fam:"HappyHorse", apiPath:"alibaba/happyhorse-1.0/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  /* api-494859284 */
+  { id:"alibaba-happyhorse-1-1", label:"Happyhorse 1.1 — (1080p, 15s)", fam:"HappyHorse", apiPath:"alibaba/happyhorse-1.1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
+  /* api-454760426 */
+  { id:"skyreels-v4-fast", label:"Skyreels V4 Fast — (1080p, 15s)", fam:"SkyReels", apiPath:"skyreels-v4/image-to-video-fast", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2048, extra:{"promptOptimizer": true} },
+  /* api-454760427 */
+  { id:"skyreels-v4-std", label:"Skyreels V4 Std — (1080p, 15s)", fam:"SkyReels", apiPath:"skyreels-v4/image-to-video-std", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2048, extra:{"sound": true, "promptOptimizer": true} },
+  /* api-498749517 */
+  { id:"rhv-flux3-i2v", label:"Flux 3 video — (fhd, 20s)", fam:"Flux", apiPath:"rhart-video-flux3/image-to-video", imageParam:"keyframes", minImages:1, maxImages:10, oddOnly:false, resolutions:["hd", "fhd"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:true, aspects:["auto", "21:9", "2:1", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
+  /* ======== v5.55.0 reference-to-video — every documented endpoint ======== */
+  /* api-448184395 */
+  { id:"vidu-r2v-q2", label:"Vidu Q2 — Ref (1080p, 10s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q2", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1"], promptMax:4000, extra:{"movementAmplitude": "auto"} },
+  /* api-448184544 — filed under Image > reference-to-image in the doc index
+     (a miscategorization; fetched in round 4). Only prompt is REQUIRED;
+     imageUrls (<=7) and every control are optional with documented
+     defaults. The doc's optional `videos` refs (<=2) are not sent — the
+     pane has no video-ref slot. */
+  { id:"vidu-r2v-q2-pro", label:"Vidu Q2 Pro — Ref (1080p, 10s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q2-pro", imageParam:"imageUrls", minImages:0, maxImages:7, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1"], promptMax:2000 },
+  /* api-448184399 */
+  { id:"vidu-r2v-q3", label:"Vidu Q3 — Ref (1080p, 16s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q3", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], durInt:true, aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1", "auto"], promptMax:5000 },
+  /* api-494859280 */
+  { id:"vidu-r2v-q3-ad", label:"Vidu Q3 Ad — Ref (1080p, 16s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q3-ad", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], durInt:true, aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1", "auto"], promptMax:5000 },
+  /* api-494859277 */
+  { id:"vidu-r2v-q3-drama", label:"Vidu Q3 Drama — Ref (1080p, 15s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q3-drama", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["1080p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1", "auto"], promptMax:5000 },
+  /* api-448184398 */
+  { id:"vidu-r2v-q3-mix", label:"Vidu Q3 Mix — Ref (1080p, 16s)", fam:"Vidu · Ref", apiPath:"vidu/reference-to-video-q3-mix", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], durInt:true, aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1", "auto"], promptMax:5000 },
+  /* api-448184396 */
+  { id:"kling-video-o1-std-refrence-to-video", label:"Kling video O1 Std refrence to video — Ref (10s)", fam:"Kling · Ref", apiPath:"kling-video-o1-std/refrence-to-video", imageParam:"imageUrls", minImages:0, maxImages:7, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std", "keepOriginalSound": true} },
+  /* api-449426880 */
+  { id:"kling-video-o3-4k-r2v", label:"Kling video O3 4k — Ref (15s)", fam:"Kling · Ref", apiPath:"kling-video-o3-4k/reference-to-video", imageParam:"imageUrls", minImages:0, maxImages:7, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:2500 },
+  /* api-448184401 */
+  { id:"kling-video-o3-pro-r2v", label:"Kling video O3 Pro — Ref (15s)", fam:"Kling · Ref", apiPath:"kling-video-o3-pro/reference-to-video", imageParam:"imageUrls", minImages:0, maxImages:7, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:2500, extra:{"keepOriginalSound": true} },
+  /* api-448184402 */
+  { id:"kling-video-o3-std-r2v", label:"Kling video O3 Std — Ref (15s)", fam:"Kling · Ref", apiPath:"kling-video-o3-std/reference-to-video", imageParam:"imageUrls", minImages:0, maxImages:7, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:2500, extra:{"keepOriginalSound": true} },
+  /* api-448184405 */
+  { id:"seedance-2-0-global-fast-mmv", label:"Seedance 2.0 Global Fast — Ref (4k, 15s)", fam:"Seedance · Ref", apiPath:"bytedance/seedance-2.0-global-fast/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859278 */
+  { id:"seedance-2-0-global-mini-mmv", label:"Seedance 2.0 Global Mini — Ref (4k, 15s)", fam:"Seedance · Ref", apiPath:"bytedance/seedance-2.0-global-mini/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-448184404 */
+  { id:"seedance-2-0-global-mmv", label:"Seedance 2.0 Global — Ref (4k, 15s)", fam:"Seedance · Ref", apiPath:"bytedance/seedance-2.0-global/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-498749512 */
+  { id:"seedance-2-5-global-token-mmv", label:"Seedance 2.5 Global — Ref (4k, 30s)", fam:"Seedance · Ref", apiPath:"bytedance/seedance-2.5-global-token/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:30, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-498749513 */
+  { id:"seedance-2-5-token-mmv", label:"Seedance 2.5 — Ref (4k, 30s)", fam:"Seedance · Ref", apiPath:"bytedance/seedance-2.5-token/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:30, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859281 */
+  { id:"rhv-sparkvideo-2-0-fast-mmv", label:"Seedance 2.0 Fast — Ref (4k, 15s)", fam:"Seedance · Ref", apiPath:"rhart-video/sparkvideo-2.0-fast/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859279 */
+  { id:"rhv-sparkvideo-2-0-mini-mmv", label:"Seedance 2.0 Mini — Ref (4k, 15s)", fam:"Seedance · Ref", apiPath:"rhart-video/sparkvideo-2.0-mini/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859282 */
+  { id:"rhv-sparkvideo-2-0-mmv", label:"Seedance 2.0 — Ref (4k, 15s)", fam:"Seedance · Ref", apiPath:"rhart-video/sparkvideo-2.0/multimodal-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-448184397 */
+  { id:"seedance-v1-lite-r2v", label:"Seedance V1 Lite — Ref (480p, 12s)", fam:"Seedance · Ref", apiPath:"seedance-v1-lite/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:4, oddOnly:false, resolutions:["720p", "480p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "21:9", "1:1"], promptMax:5000, extra:{"cameraFixed": "false"} },
+  /* api-495380675 */
+  { id:"mm-hailuo-h3-multimodal-to-video", label:"MiniMax H3 Multimodal — Ref (768P, 15s)", fam:"MiniMax · Ref", apiPath:"minimax/hailuo-h3/multimodal-to-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
+  /* api-502119463 */
+  { id:"rhv-mm-h3-oss-fl2va-advanced", label:"MiniMax H3 ref2va RH插件流 支持多参 — Ref (15s)", fam:"MiniMax · Ref", apiPath:"rhart-video/minimax-h3-oss/fl2va-advanced", kind:"vnode", node:{"images": [], "optImages": ["170##image", "171##image", "172##image", "173##image", "174##image", "175##image", "176##image", "177##image", "178##image"], "prompt": "144##prompt", "fixed": {}, "dur": "157##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:9, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  /* api-459865193 */
+  { id:"rhv-v3-1-fast-official-r2v", label:"Veo3.1 Fast — Ref (1080p)", fam:"Veo 3.1 · Ref", apiPath:"rhart-video-v3.1-fast-official/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
+  /* api-448184400 */
+  { id:"wan-2-7-r2v", label:"Wan 2.7 — Ref (1080P, 10s)", fam:"Wan · Ref", apiPath:"alibaba/wan-2.7/reference-to-video", imageParam:"imageUrls", minImages:0, maxImages:5, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:5000 },
+  /* api-505922313 */
+  { id:"wan-3-0-prime-r2v", label:"Wan 3.0 Prime — Ref (1080P, 30s)", fam:"Wan · Ref", apiPath:"alibaba/wan-3.0-prime/reference-to-video", imageParam:"imageUrls", minImages:0, maxImages:10, oddOnly:false, resolutions:["480P", "720P", "1080P"], durations:["auto", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20000 },
+  /* api-505575334 */
+  { id:"wan-3-0-r2v", label:"Wan 3.0 — Ref (1080P, 30s)", fam:"Wan · Ref", apiPath:"alibaba/wan-3.0/reference-to-video", imageParam:"imageUrls", minImages:0, maxImages:10, oddOnly:false, resolutions:["480P", "720P", "1080P"], durations:["auto", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20000 },
+  /* api-448184403 */
+  { id:"rhv-g-official-r2v", label:"Grok imagine video — Ref (480p, 10s)", fam:"Grok · Ref", apiPath:"rhart-video-g-official/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:7, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "10"], aspect:false, promptMax:2048 },
+  /* api-498749514 */
+  { id:"rhv-g-official-r2v-v1-5", label:"Grok imagine video v1.5 — Ref (720p, 15s)", fam:"Grok · Ref", apiPath:"rhart-video-g-official/reference-to-video-v1.5", imageParam:"referenceImages", minImages:1, maxImages:7, oddOnly:false, resolutions:["480p", "720p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "1:1", "9:16", "3:2", "2:3"], promptMax:2048 },
+  /* api-450573659 */
+  { id:"happyhorse-1-0-r2v", label:"Happyhorse 1.0 — Ref (1080p, 15s)", fam:"HappyHorse · Ref", apiPath:"alibaba/happyhorse-1.0/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:9, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "3:4", "4:3", "1:1"], promptMax:2500 },
+  /* api-494859276 */
+  { id:"happyhorse-1-1-r2v", label:"Happyhorse 1.1 — Ref (1080p, 15s)", fam:"HappyHorse · Ref", apiPath:"alibaba/happyhorse-1.1/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:9, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "3:4", "4:3", "1:1", "4:5", "5:4", "9:21", "21:9"], promptMax:2500 },
+  /* api-454760425 */
+  { id:"skyreels-v4-omni-reference-fast", label:"Skyreels V4 omni reference Fast — Ref (1080p, 15s)", fam:"SkyReels · Ref", apiPath:"skyreels-v4/omni-reference-fast", imageParam:"refImages", minImages:0, maxImages:3, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2500 },
+  /* api-454760424 */
+  { id:"skyreels-v4-omni-reference-std", label:"Skyreels V4 omni reference Std — Ref (1080p, 15s)", fam:"SkyReels · Ref", apiPath:"skyreels-v4/omni-reference-std", imageParam:"refImages", minImages:0, maxImages:3, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2500, extra:{"sound": true} },
+  /* ======== v5.55.0 text-to-video — every documented endpoint ======== */
+  /* api-448184406 */
+  { id:"vidu-t2v", label:"Vidu Q2 — T2V (1080p, 10s)", fam:"Vidu · T2V", apiPath:"vidu/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["4:3", "3:4", "16:9", "9:16", "1:1"], promptMax:4000, extra:{"style": "general", "movementAmplitude": "auto"} },
+  /* api-448184407 */
+  { id:"vidu-t2v-q3-pro", label:"Vidu Q3 Pro — T2V (1080p, 16s)", fam:"Vidu · T2V", apiPath:"vidu/text-to-video-q3-pro", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:true, aspects:["4:3", "3:4", "16:9", "9:16", "1:1"], promptMax:4000, extra:{"style": "general", "audio": true} },
+  /* api-448184408 */
+  { id:"vidu-t2v-q3-turbo", label:"Vidu Q3 Turbo — T2V (1080p, 16s)", fam:"Vidu · T2V", apiPath:"vidu/text-to-video-q3-turbo", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:true, aspects:["4:3", "3:4", "16:9", "9:16", "1:1"], promptMax:4000, extra:{"style": "general", "audio": true} },
+  /* api-448184410 */
+  { id:"kling-v2-5-turbo-pro-t2v", label:"Kling v2.5 Turbo Pro — T2V (10s)", fam:"Kling · T2V", apiPath:"kling-v2.5-turbo-pro/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2000 },
+  /* api-452094100 */
+  { id:"kling-v2-5-turbo-std-t2v", label:"Kling v2.5 Turbo Std — T2V (10s)", fam:"Kling · T2V", apiPath:"kling-v2.5-turbo-std/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2000 },
+  /* api-448184411 */
+  { id:"kling-v2-6-pro-t2v", label:"Kling v2.6 Pro — T2V (10s)", fam:"Kling · T2V", apiPath:"kling-v2.6-pro/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2000, extra:{"sound": "true"} },
+  /* api-494859273 */
+  { id:"kling-v2-6-std-t2v", label:"Kling v2.6 Std — T2V (10s)", fam:"Kling · T2V", apiPath:"kling-v2.6-std/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2000 },
+  /* api-449426877 */
+  { id:"kling-v3-4k-t2v", label:"Kling V3 4k — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-v3-4k/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:2500 },
+  /* api-494859275 */
+  { id:"kling-v3-turbo-pro-t2v", label:"Kling V3 Turbo Pro — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-v3-turbo-pro/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2500 },
+  /* api-494859274 */
+  { id:"kling-v3-turbo-std-t2v", label:"Kling V3 Turbo Std — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-v3-turbo-std/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2500 },
+  /* api-448184414 */
+  { id:"kling-v3-0-pro-t2v", label:"Kling v3.0 Pro — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-v3.0-pro/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2500, extra:{"sound": true} },
+  /* api-448184415 */
+  { id:"kling-v3-0-std-t2v", label:"Kling v3.0 Std — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-v3.0-std/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2500, extra:{"sound": true} },
+  /* api-448184409 */
+  { id:"kling-video-o1-t2v", label:"Kling video O1 — T2V (10s)", fam:"Kling · T2V", apiPath:"kling-video-o1/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std"} },
+  /* api-449426876 */
+  { id:"kling-video-o3-4k-t2v", label:"Kling video O3 4k — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-video-o3-4k/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:2500 },
+  /* api-448184413 */
+  { id:"kling-video-o3-pro-t2v", label:"Kling video O3 Pro — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-video-o3-pro/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2500, extra:{"sound": true} },
+  /* api-448184412 */
+  { id:"kling-video-o3-std-t2v", label:"Kling video O3 Std — T2V (15s)", fam:"Kling · T2V", apiPath:"kling-video-o3-std/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["1:1", "16:9", "9:16"], promptMax:2500, extra:{"sound": true} },
+  /* api-448184419 */
+  { id:"seedance-2-0-global-fast-t2v", label:"Seedance 2.0 Global Fast — T2V (4k, 15s)", fam:"Seedance · T2V", apiPath:"bytedance/seedance-2.0-global-fast/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859268 */
+  { id:"seedance-2-0-global-mini-t2v", label:"Seedance 2.0 Global Mini — T2V (4k, 15s)", fam:"Seedance · T2V", apiPath:"bytedance/seedance-2.0-global-mini/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-448184418 */
+  { id:"seedance-2-0-global-t2v", label:"Seedance 2.0 Global — T2V (4k, 15s)", fam:"Seedance · T2V", apiPath:"bytedance/seedance-2.0-global/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-498749518 */
+  { id:"seedance-2-5-global-token-t2v", label:"Seedance 2.5 Global — T2V (4k, 30s)", fam:"Seedance · T2V", apiPath:"bytedance/seedance-2.5-global-token/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-498749519 */
+  { id:"seedance-2-5-token-t2v", label:"Seedance 2.5 — T2V (4k, 30s)", fam:"Seedance · T2V", apiPath:"bytedance/seedance-2.5-token/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859270 */
+  { id:"rhv-sparkvideo-2-0-fast-t2v", label:"Seedance 2.0 Fast — T2V (4k, 15s)", fam:"Seedance · T2V", apiPath:"rhart-video/sparkvideo-2.0-fast/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859269 */
+  { id:"rhv-sparkvideo-2-0-mini-t2v", label:"Seedance 2.0 Mini — T2V (4k, 15s)", fam:"Seedance · T2V", apiPath:"rhart-video/sparkvideo-2.0-mini/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-494859271 */
+  { id:"rhv-sparkvideo-2-0-t2v", label:"Seedance 2.0 — T2V (4k, 15s)", fam:"Seedance · T2V", apiPath:"rhart-video/sparkvideo-2.0/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["-1", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
+  /* api-448184417 */
+  { id:"seedance-v1-5-pro-t2v", label:"Seedance v1.5 Pro — T2V (1080p, 12s)", fam:"Seedance · T2V", apiPath:"seedance-v1.5-pro/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1", "21:9"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
+  /* api-448184416 */
+  { id:"seedance-v1-5-pro-t2v-fast", label:"Seedance v1.5 Pro Fast — T2V (1080p, 12s)", fam:"Seedance · T2V", apiPath:"seedance-v1.5-pro/text-to-video-fast", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspects:["16:9", "9:16", "4:3", "3:4", "1:1", "21:9"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
+  /* api-448184420 */
+  { id:"mm-hailuo-02-pro", label:"Hailuo 02 Pro — T2V (6s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-02/pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:0, maxImages:2, oddOnly:false, resolutions:[], durations:["6"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184424 */
+  { id:"mm-hailuo-02-t2v-pro", label:"Hailuo 02 Pro — T2V", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-02/t2v-pro", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184421 */
+  { id:"mm-hailuo-02-t2v-standard", label:"Hailuo 02 Standard — T2V (10s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-02/t2v-standard", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184423 */
+  { id:"mm-hailuo-2-3-t2v-pro", label:"Hailuo 2.3 Pro — T2V", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-2.3/t2v-pro", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-448184422 */
+  { id:"mm-hailuo-2-3-t2v-standard", label:"Hailuo 2.3 Standard — T2V (10s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-2.3/t2v-standard", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
+  /* api-495380677 */
+  { id:"mm-hailuo-h3-t2v", label:"MiniMax H3 — T2V (768P, 15s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-h3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
+  /* api-448184430 */
+  { id:"rhv-v3-1-fast-official-t2v", label:"Veo3.1 Fast — T2V (4k, 8s)", fam:"Veo 3.1 · T2V", apiPath:"rhart-video-v3.1-fast-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": true} },
+  /* api-448184429 */
+  { id:"rhv-v3-1-fast-t2v", label:"Veo3.1 Fast Low cost — T2V (4k, 8s)", fam:"Veo 3.1 · T2V", apiPath:"rhart-video-v3.1-fast/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
+  /* api-448184432 */
+  { id:"rhv-v3-1-lite-official-t2v", label:"Veo3.1 Lite — T2V (1080p, 8s)", fam:"Veo 3.1 · T2V", apiPath:"rhart-video-v3.1-lite-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "6", "8"], aspect:true, aspects:["16:9", "9:16"], promptMax:20000 },
+  /* api-448184426 */
+  { id:"rhv-v3-1-pro-official-t2v", label:"Veo3.1 Pro — T2V (4k, 8s)", fam:"Veo 3.1 · T2V", apiPath:"rhart-video-v3.1-pro-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
+  /* api-448184425 */
+  { id:"rhv-v3-1-pro-t2v", label:"Veo3.1 Pro Low cost — T2V (4k, 8s)", fam:"Veo 3.1 · T2V", apiPath:"rhart-video-v3.1-pro/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
+  /* api-448184442 */
+  { id:"rhv-s-official-t2v", label:"Sora 2 — T2V (1280x720, 12s)", fam:"Sora · T2V", apiPath:"rhart-video-s-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720x1280", "1280x720"], resParam:"size", durations:["4", "8", "12"], aspect:false, promptMax:20000 },
+  /* api-448184377 */
+  { id:"rhv-s-official-t2v-pro", label:"Sora 2 Pro — T2V (1920x1080, 20s)", fam:"Sora · T2V", apiPath:"rhart-video-s-official/text-to-video-pro", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720x1280", "1280x720", "1024x1792", "1792x1024", "1080x1920", "1920x1080"], resParam:"size", durations:["4", "8", "12", "16", "20"], aspect:false, promptMax:20000 },
+  /* api-448184443 */
+  { id:"rhv-s-t2v", label:"Sora 2 Low cost — T2V (15s)", fam:"Sora · T2V", apiPath:"rhart-video-s/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
+  /* api-448184441 */
+  { id:"rhv-s-t2v-pro-deprecated", label:"Sora 2 Pro Low cost — T2V (25s)", fam:"Sora · T2V", apiPath:"rhart-video-s/text-to-video-pro-deprecated", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["15", "25"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
+  /* api-448184437 */
+  { id:"wan-2-5-preview-t2v", label:"Wan 2.5 Preview — T2V (1248*1632, 10s)", fam:"Wan · T2V", apiPath:"alibaba/wan-2.5-preview/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["832*480", "480*832", "624*624", "1280*720", "720*1280", "960*960", "1088*832", "832*1088", "1920*1080", "1080*1920", "1440*1440", "1632*1248", "1248*1632"], resParam:"size", durations:["5", "10"], aspect:false, promptMax:1500 },
+  /* api-448184440 */
+  { id:"wan-2-6-t2v", label:"Wan 2.6 — T2V (1080*1920, 15s)", fam:"Wan · T2V", apiPath:"alibaba/wan-2.6/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["1280*720", "720*1280", "1920*1080", "1080*1920"], durations:["5", "10", "15"], aspect:false, promptMax:5000, extra:{"shotType": "single"} },
+  /* api-448184436 */
+  { id:"wan-2-7-t2v", label:"Wan 2.7 — T2V (1080P, 15s)", fam:"Wan · T2V", apiPath:"alibaba/wan-2.7/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:5000 },
+  /* api-448184435 */
+  { id:"rhv-wan-2-2-t2v", label:"Wan 2.2 — T2V", fam:"Wan · T2V", apiPath:"rhart-video/wan-2.2/text-to-video", kind:"vnode", node:{"images": [], "optImages": [], "prompt": "14##positive_prompt", "fixed": {"133##select": "1", "130##select": "1"}}, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000 },
+  /* api-448184438 */
+  { id:"rhv-ltx-2-3-t2v", label:"Ltx 2.3 — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video", kind:"vnode", node:{"images": [], "optImages": [], "prompt": "188##prompt", "fixed": {"247##select": "2", "248##select": "2"}, "dur": "227##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  /* api-448184439 */
+  { id:"rhv-ltx-2-3-t2v-lora", label:"Ltx 2.3 lora — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video-lora", kind:"vnode", node:{"images": [], "optImages": [], "prompt": "188##prompt", "fixed": {"247##select": "1", "248##select": "2"}, "dur": "227##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  /* api-448184433 */
+  { id:"rhv-g-official-t2v", label:"Grok imagine — T2V (480p, 10s)", fam:"Grok · T2V", apiPath:"rhart-video-g-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "10"], aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:800 },
+  /* api-498749520 */
+  { id:"rhv-g-official-t2v-v1-5", label:"Grok imagine video v1.5 — T2V (1080p, 15s)", fam:"Grok · T2V", apiPath:"rhart-video-g-official/text-to-video-v1.5", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "1:1", "9:16", "3:2", "2:3"], promptMax:2048 },
+  /* api-448184434 */
+  { id:"rhv-g-t2v", label:"Grok imagine Low cost v1.5 — T2V (480p, 30s)", fam:"Grok · T2V", apiPath:"rhart-video-g/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], durInt:true, aspect:true, aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000 },
+  /* api-448184444 */
+  { id:"pixverse-v6-t2v", label:"Pixverse V6 — T2V (1080p, 15s)", fam:"PixVerse · T2V", apiPath:"pixverse-v6/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "4:3", "1:1", "3:4", "9:16", "2:3", "3:2", "21:9"], promptMax:2048, extra:{"generateAudioSwitch": true} },
+  /* api-450326932 */
+  { id:"happyhorse-1-0-t2v", label:"Happyhorse 1.0 — T2V (1080p, 15s)", fam:"HappyHorse · T2V", apiPath:"alibaba/happyhorse-1.0/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2500 },
+  /* api-494859272 */
+  { id:"happyhorse-1-1-t2v", label:"Happyhorse 1.1 — T2V (1080p, 15s)", fam:"HappyHorse · T2V", apiPath:"alibaba/happyhorse-1.1/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "4:5", "5:4", "9:21", "21:9"], promptMax:2500 },
+  /* api-454760428 */
+  { id:"skyreels-v4-t2v-fast", label:"Skyreels V4 Fast — T2V (1080p, 15s)", fam:"SkyReels · T2V", apiPath:"skyreels-v4/text-to-video-fast", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2048, extra:{"promptOptimizer": true} },
+  /* api-454760429 */
+  { id:"skyreels-v4-t2v-std", label:"Skyreels V4 Std — T2V (1080p, 15s)", fam:"SkyReels · T2V", apiPath:"skyreels-v4/text-to-video-std", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2048, extra:{"sound": true, "promptOptimizer": true} },
+  /* api-462492099 */
+  { id:"gemini-omni-flash-t2v", label:"Gemini omni Flash Low cost — T2V (4k, 10s)", fam:"Omni Flash · T2V", apiPath:"gemini-omni-flash/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8", "10"], aspect:true, aspects:["16:9", "9:16"], promptMax:2048 },
+  /* api-498749521 */
+  { id:"rhv-flux3-t2v", label:"Flux 3 video — T2V (fhd, 20s)", fam:"Flux · T2V", apiPath:"rhart-video-flux3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["hd", "fhd"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:true, aspects:["auto", "21:9", "2:1", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
+  /* -------- registry-sourced keepers: these nine endpoints have NO page in
+     the current doc index (higgsfield, pixverse c1/v5.5/v5.6, runway gen4
+     pair, sora asyn, veo3.1-lite low-price, vidu q3-pro-fast). They shipped
+     in v4.98 from RunningHub's own model registry and stay exactly as
+     registered until a doc page exists to verify them against. -------- */
   { id:"higgsfield-dop", label:"higgsfield dop", fam:"Higgsfield", apiPath:"higgsfield/dop/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2048, extra:{"options": "dop-turbo"} },
-  { id:"kling-v2-5-turbo-pro", label:"kling-v2.5-turbo-pro \u2014 10s", fam:"Kling", apiPath:"kling-v2.5-turbo-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
-  { id:"kling-v2-5-turbo-std", label:"kling-v2.5-turbo-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.5-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
-  { id:"kling-v2-6-pro", label:"kling-v2.6-pro \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000, extra:{"sound": "true"} },
-  { id:"kling-v2-6-std", label:"kling-v2.6-std \u2014 10s", fam:"Kling", apiPath:"kling-v2.6-std/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:false, promptMax:2000 },
-  { id:"kling-v3-4k", label:"kling-v3.0-4k", fam:"Kling", apiPath:"kling-v3-4k/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5} },
-  { id:"kling-v3-turbo-pro", label:"kling-v3-turbo-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-pro/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
-  { id:"kling-v3-turbo-std", label:"kling-v3-turbo-std \u2014 15s", fam:"Kling", apiPath:"kling-v3-turbo-std/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500 },
-  { id:"kling-v3-0-pro", label:"kling-v3.0-pro \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
-  { id:"kling-v3-0-std", label:"kling-v3.0-std \u2014 15s", fam:"Kling", apiPath:"kling-v3.0-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2500, extra:{"sound": true} },
-  { id:"kling-video-o1", label:"kling-video-o1 \u2014 10s", fam:"Kling", apiPath:"kling-video-o1/image-to-video", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["1:1", "9:16", "16:9"], promptMax:2000, extra:{"mode": "std"} },
-  { id:"kling-video-o3-4k", label:"kling-video-o3-4k", fam:"Kling", apiPath:"kling-video-o3-4k/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5} },
-  { id:"kling-video-o3-pro", label:"kling-video-o3-pro", fam:"Kling", apiPath:"kling-video-o3-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5, "sound": true} },
-  { id:"kling-video-o3-std", label:"kling-video-o3-std", fam:"Kling", apiPath:"kling-video-o3-std/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2500, extra:{duration:5, "sound": true} },
-  { id:"minimax-hailuo-02-pro", label:"hailuo-02-i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-pro", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
-  { id:"minimax-hailuo-02-standard", label:"hailuo-02-i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-02/i2v-standard", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
-  { id:"minimax-hailuo-2-3-fast-pro", label:"hailuo-2.3-fast-pro \u2014 6s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
-  { id:"minimax-hailuo-2-3-fast", label:"hailuo-2.3-fast \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3-fast/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
-  { id:"minimax-hailuo-2-3-standard", label:"hailuo-2.3 i2v-standard \u2014 10s", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/i2v-standard", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
-  { id:"minimax-hailuo-2-3-pro", label:"hailuo-2.3 i2v-pro", fam:"MiniMax", apiPath:"minimax/hailuo-2.3/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
-  { id:"minimax-hailuo-h3", label:"MiniMax-H3 Image-to-Video (first last frame) \u2014 2K, 15s", fam:"MiniMax", apiPath:"minimax/hailuo-h3/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["2K"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
   { id:"pixverse-c1", label:"pixverse-c1 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-c1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{duration:5, "generateAudioSwitch": true} },
   { id:"pixverse-v5-5", label:"pixverse-v5.5 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.5/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false", "generateMultiClipSwitch": "false"} },
   { id:"pixverse-v5-6", label:"pixverse-v5.6 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false"} },
-  { id:"pixverse-v6", label:"pixverse-v6 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-v6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{duration:5, "generateAudioSwitch": true} },
-  { id:"rhart-video-g", label:"xai grok-imagine \u2014 480p", fam:"RHArt Video", apiPath:"rhart-video-g/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:[], aspect:true, aspectParam:"aspectRatio", aspects:["2:3", "3:2", "1:1", "16:9", "9:16"], promptMax:20000, extra:{duration:6} },
   { id:"rhart-video-r-gen4-turbo-official", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2048 },
   { id:"rhart-video-r-gen4-turbo", label:"runwayml gen4-turbo \u2014 10s", fam:"RHArt Video", apiPath:"rhart-video-r/gen4-turbo/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "10"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"], promptMax:1000 },
-  { id:"rhart-video-s-official", label:"sora-2 \u2014 12s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:2048 },
-  { id:"rhart-video-s-official-pro", label:"sora-2 \u2014 1080p, 20s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "8", "12", "16", "20"], aspect:false, promptMax:2048 },
-  { id:"rhart-video-s-official-realistic", label:"sora-2 \u2014 12s", fam:"RHArt Video", apiPath:"rhart-video-s-official/image-to-video-realistic", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:2048 },
-  { id:"rhart-video-s", label:"sora-2 \u2014 15s", fam:"RHArt Video", apiPath:"rhart-video-s/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspectParam:"aspectRatio", aspects:["9:16", "16:9"], promptMax:4000 },
   { id:"rhart-video-s-asyn", label:"sora-2 \u2014 15s", fam:"RHArt Video", apiPath:"rhart-video-s/image-to-video-asyn", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspectParam:"aspectRatio", aspects:["9:16", "16:9"], promptMax:4000 },
-  { id:"rhart-video-s-pro-deprecated", label:"sora-2 \u2014 25s", fam:"RHArt Video", apiPath:"rhart-video-s/image-to-video-pro-deprecated", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["15", "25"], aspect:true, aspectParam:"aspectRatio", aspects:["9:16", "16:9"], promptMax:4000 },
-  { id:"rhart-video-v3-1-fast-official", label:"google veo3.1-fast \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-fast-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
-  { id:"rhart-video-v3-1-fast", label:"google veo3.1-fast \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-fast/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000 },
-  { id:"rhart-video-v3-1-lite-official", label:"google veo3.1-lite \u2014 1080p, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-lite-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:20000 },
   { id:"rhart-video-v3-1-lite", label:"google veo3.1-lite \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-lite/image-to-video", imageParam:"imageUrls", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:20000 },
-  { id:"rhart-video-v3-1-pro-official", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro-official/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": false} },
-  { id:"rhart-video-v3-1-pro", label:"google veo3.1-pro \u2014 4k, 8s", fam:"RHArt Video", apiPath:"rhart-video-v3.1-pro/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["8"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16"], promptMax:8000 },
-  { id:"rhart-video-g-official-v1-5", label:"xai grok-imagine-video-v1.5 \u2014 720p", fam:"RHArt Video G", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:2048, extra:{duration:6} },
-  { id:"bytedance-seedance-2-5-token", label:"seedance-2.5 \u2014 4k, 30s", fam:"Seedance", apiPath:"bytedance/seedance-2.5-token/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspectParam:"ratio", aspects:["adaptive"], promptMax:20480 },
-  { id:"rhart-video-sparkvideo-2-0-fast", label:"Seedance2.0 Fast Image to Video \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-fast/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
-  { id:"rhart-video-sparkvideo-2-0-mini", label:"seedance-2.0-mini \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0-mini/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
-  { id:"rhart-video-sparkvideo-2-0", label:"Seedance2.0 Image to Video \u2014 4k, 15s", fam:"Seedance", apiPath:"rhart-video/sparkvideo-2.0/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "native1080p", "native4k", "1080p", "2k", "4k"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16", "21:9"], promptMax:20480 },
-  { id:"seedance-v1-5-pro", label:"seedance-v1.5-pro \u2014 1080p, 12s", fam:"Seedance", apiPath:"seedance-v1.5-pro/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "adaptive"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
-  { id:"seedance-v1-5-pro-fast", label:"seedance-v1.5-pro \u2014 1080p, 12s", fam:"Seedance", apiPath:"seedance-v1.5-pro/image-to-video-fast", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720p", "1080p"], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12"], aspect:true, aspectParam:"aspectRatio", aspects:["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "adaptive"], promptMax:5000, extra:{"generateAudio": "true", "cameraFixed": "false"} },
-  { id:"skyreels-v4-fast", label:"skyreels-v4 \u2014 1080p", fam:"SkyReels", apiPath:"skyreels-v4/image-to-video-fast", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"promptOptimizer": true} },
-  { id:"skyreels-v4-std", label:"skyreels-v4 \u2014 1080p", fam:"SkyReels", apiPath:"skyreels-v4/image-to-video-std", imageParam:"firstImageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{"sound": true, "promptOptimizer": true} },
-  { id:"vidu-q2-pro", label:"Vidu \u2014 1080p, 10s", fam:"Vidu", apiPath:"vidu/image-to-video-q2-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
-  { id:"vidu-q2-pro-fast", label:"Vidu \u2014 1080p, 10s", fam:"Vidu", apiPath:"vidu/image-to-video-q2-pro-fast", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
-  { id:"vidu-q2-turbo", label:"Vidu \u2014 1080p, 10s", fam:"Vidu", apiPath:"vidu/image-to-video-q2-turbo", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:false, promptMax:4000, extra:{"movementAmplitude": "auto", "bgm": true} },
-  { id:"vidu-q3-pro", label:"Vidu \u2014 2k, 16s", fam:"Vidu", apiPath:"vidu/image-to-video-q3-pro", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p", "2k"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"audio": true} },
   { id:"vidu-q3-pro-fast", label:"Vidu \u2014 1080p, 16s", fam:"Vidu", apiPath:"vidu/image-to-video-q3-pro-fast", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:2000 },
-  { id:"vidu-q3-turbo", label:"Vidu \u2014 1080p, 16s", fam:"Vidu", apiPath:"vidu/image-to-video-q3-turbo", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], aspect:false, promptMax:4000, extra:{"audio": true} },
-  { id:"alibaba-wan-2-5-preview", label:"wan-2.5-preview \u2014 1080p, 10s", fam:"Wan", apiPath:"alibaba/wan-2.5-preview/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["5", "10"], aspect:false, promptMax:1500 },
-  { id:"alibaba-wan-2-6", label:"alibaba wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["5", "10", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single"} },
-  { id:"alibaba-wan-2-6-flash", label:"wan-2.6 \u2014 1080p, 15s", fam:"Wan", apiPath:"alibaba/wan-2.6/image-to-video-flash", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:2048, extra:{"shotType": "single", "enablePromptExpansion": false, "enableAudio": true} },
-  { id:"alibaba-wan-2-7-spicy", label:"wan-2.7-spicy \u2014 1080p", fam:"Wan", apiPath:"alibaba/wan-2.7-spicy/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:false, promptMax:5000, extra:{duration:5} },
-  { id:"alibaba-wan-2-7", label:"wan-2.7 \u2014 1080P, 15s", fam:"Wan", apiPath:"alibaba/wan-2.7/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:5000 },
-  { id:"youchuan", label:"midjourney \u2014 720p", fam:"Youchuan", apiPath:"youchuan/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:8192 }
 ];
 /* The two image-to-video endpoints deliberately NOT registered, and why:
      rhart-video-flux3/image-to-video          requires a `keyframes` structure
@@ -6380,14 +6720,44 @@ async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolutio
      never used to send — an omission that does not fail loudly, it fails at
      submit with an opaque error. */
   def = def || {};
+  /* v5.55.0 — ComfyUI node-keyed graphs (wan-2.2, LTX, MiniMax-H3 oss): the
+     body is the node map itself. images fill the REQUIRED slots in order,
+     optImages take any spares, the prompt rides its ##text/##prompt key, the
+     duration (when the graph has one) is a NUMBER, and node.fixed carries
+     every other REQUIRED select at its documented default. */
+  if(def.kind==="vnode" && def.node){
+    var nd=def.node, nb={};
+    (nd.images||[]).forEach(function(k,i){ nb[k]=imageUrls[i]||""; });
+    var used=(nd.images||[]).length;
+    (nd.optImages||[]).forEach(function(k){ if(imageUrls[used]) nb[k]=imageUrls[used++]; });
+    if(nd.prompt) nb[nd.prompt]=body.prompt;
+    if(nd.dur) nb[nd.dur]=Number(duration || (nd.durRange&&nd.durRange.def) || 5);
+    if(nd.fixed) Object.keys(nd.fixed).forEach(function(k){ nb[k]=nd.fixed[k]; });
+    body=nb;
+  } else {
   var ip = imageParam || def.imageParam || "imageUrls";
-  if(ip==="imageUrls") body.imageUrls = imageUrls;
-  else body[ip] = imageUrls[0]||"";
-  if(def.lastParam && imageUrls.length>1) body[def.lastParam] = imageUrls[1];
-  if(resolution) body.resolution = resolution;
-  if(duration) body.duration = String(duration);
+  var isArrayParam = (ip==="imageUrls"||ip==="referenceImages"||ip==="keyframes"||ip==="refImages");
+  /* text-to-video and optional-image models: with no refs and minImages 0,
+     the doc declares the image field optional (or absent) — omit it rather
+     than sending an empty string the endpoint would reject. */
+  if(!imageUrls.length && (def.minImages===0 || def.maxImages===0)){
+    /* no image field at all */
+  } else if(isArrayParam){
+    body[ip] = imageUrls;
+  } else {
+    body[ip] = imageUrls[0]||"";
+    if(def.lastParam && imageUrls.length>1) body[def.lastParam] = imageUrls[1];
+  }
+  /* resParam:"size" — the two Wan endpoints whose resolution enum lives in a
+     field literally named "size" (documented W*H values). */
+  if(resolution) body[def.resParam || "resolution"] = resolution;
+  /* durInt — endpoints whose doc types duration as an integer range send a
+     JSON number; string-enum endpoints keep the string (some enums include
+     the documented "-1"/"auto" auto-length values verbatim). */
+  if(duration) body.duration = def.durInt ? Number(duration) : String(duration);
   if(aspectRatio) body[def.aspectParam || "aspectRatio"] = aspectRatio;
   if(def.extra) Object.keys(def.extra).forEach(function(k){ if(!(k in body)) body[k]=def.extra[k]; });
+  }
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
   var j=await r.json().catch(function(){return null;});
   if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
@@ -6458,6 +6828,125 @@ async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, on
      landed on pgVideo's history strip instead of pgVideoUp's — the user
      couldn't find it and could end up re-paying for the same upscale. */
   var final = await rhPollTracked(apiKey, taskId, {kind:"video-upscale", label:RH_VU_APIPATH, prompt:"video upscale "+(targetResolution||"")}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
+  var results=(final && final.results)||[];
+  var outs=[];
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    outs.push({ url:results[i].url, outputType:results[i].outputType||"video" });
+  }
+  return outs;
+}
+
+
+/* ---------- v5.55.0 — VIDEO TOOLS: the doc-verified video-INPUT catalog ----------
+   Every documented endpoint whose primary input is an existing video: edit,
+   extend, upscale-family (Topaz), denoise, frame interpolation, subtitle
+   erase, motion control and continuation. Each entry was generated from
+   RunningHub's published parameter table (see the api-<id> comment):
+   videoParam names the endpoint's own video field, imageParam its optional
+   or REQUIRED reference-photo field, options are its REAL enums with the
+   documented defaults, and extra carries every other REQUIRED parameter at
+   its documented default. whPreset marks the five Topaz endpoints whose
+   REQUIRED outputWidth/outputHeight integers are picked through a
+   resolution preset (720p/1080p/2k/4k -> documented-range W/H pairs). */
+var RH_VTOOL_MODELS = [
+  /* api-448184427 */
+  { id:"rhv-v3-1-fast-official-video-extend", label:"Google veo3.1 fast video extend Official", apiPath:"rhart-video-v3.1-fast-official/video-extend", videoParam:"video", prompt:true, promptMax:8000, options:[{"key": "resolution", "values": ["720p", "1080p"], "def": "720p"}] },
+  /* api-448184428 */
+  { id:"rhv-v3-1-pro-official-video-extend", label:"Google veo3.1 pro video extend Official", apiPath:"rhart-video-v3.1-pro-official/video-extend", videoParam:"video", prompt:true, promptMax:8000, options:[{"key": "resolution", "values": ["720p", "1080p"], "def": "720p"}] },
+  /* api-450573658 */
+  { id:"happyhorse-1-0-video-edit", label:"Happyhorse 1.0 video edit", apiPath:"alibaba/happyhorse-1.0/video-edit", videoParam:"videoUrl", imageParam:"imageUrls", imageArray:true, imageMax:5, prompt:"req", promptMax:2500, options:[{"key": "resolution", "values": ["720p", "1080p"], "def": "1080p"}] },
+  /* api-448184446 */
+  { id:"rhv-g-official-edit-video", label:"Xai grok imagine edit video Official", apiPath:"rhart-video-g-official/edit-video", videoParam:"videoUrl", prompt:"req", promptMax:800, options:[{"key": "resolution", "values": ["720p", "480p"], "def": "480p"}] },
+  /* api-465292104 */
+  { id:"gemini-omni-flash-video-edit", label:"Gemini omni flash video edit Low cost", apiPath:"gemini-omni-flash/video-edit", videoParam:"videoUrl", imageParam:"imageUrls", imageArray:true, imageMax:3, prompt:"req", promptMax:2048, options:[{"key": "resolution", "values": ["720p", "1080p", "4k"], "def": "720p"}] },
+  /* api-448184445 */
+  { id:"kling-video-o1-std-edit-video", label:"Kling video o1 std edit video", apiPath:"kling-video-o1-std/edit-video", videoParam:"videoUrl", imageParam:"imageUrls", imageArray:true, imageMax:7, prompt:"req", promptMax:2000, options:[{"key": "mode", "values": ["std", "pro"], "def": "std"}], extra:{"keepOriginalSound": true} },
+  /* api-448184449 */
+  { id:"kling-video-o3-std-video-edit", label:"Kling video o3 std video edit", apiPath:"kling-video-o3-std/video-edit", videoParam:"videoUrl", imageParam:"imageUrls", imageArray:true, imageMax:4, prompt:"req", promptMax:2500, extra:{"keepOriginalSound": true} },
+  /* api-448184448 */
+  { id:"kling-video-o3-pro-video-edit", label:"Kling video o3 pro video edit", apiPath:"kling-video-o3-pro/video-edit", videoParam:"videoUrl", imageParam:"imageUrls", imageArray:true, imageMax:4, prompt:"req", promptMax:2500, extra:{"keepOriginalSound": true} },
+  /* api-465573721 */
+  { id:"volc-subtitle-erase-pro-video", label:"Volc subtitle erase video(Refined version)", apiPath:"volc-subtitle-erase-pro/video", videoParam:"videoUrl" },
+  /* api-495680098 */
+  { id:"topazlabs-video-astra", label:"Topazlabs video astra", apiPath:"topazlabs/video-astra", videoParam:"videoUrl", whPreset:true, options:[{"key": "model", "values": ["ast-2"], "def": "ast-2"}] },
+  /* api-495680100 */
+  { id:"topazlabs-video-starlight", label:"Topazlabs video starlight", apiPath:"topazlabs/video-starlight", videoParam:"videoUrl", whPreset:true, options:[{"key": "model", "values": ["slp-2.5", "slhq-1", "slm-1", "wonder-1", "slf-2"], "def": "slp-2.5"}] },
+  /* api-465573722 */
+  { id:"volc-subtitle-erase-video", label:"Volc subtitle erase video(Standard Version)", apiPath:"volc-subtitle-erase/video", videoParam:"videoUrl" },
+  /* api-495680099 */
+  { id:"topazlabs-video-denoise", label:"Topazlabs video denoise", apiPath:"topazlabs/video-denoise", videoParam:"videoUrl", whPreset:true, options:[{"key": "model", "values": ["nyx-3", "nxhf-1", "nxl-1", "nxf-1"], "def": "nyx-3"}] },
+  /* api-448184453 */
+  { id:"rhv-video-fps-increaser", label:"Rh video fps increaser", apiPath:"rhart-video/video-fps-increaser", videoParam:"videoUrl" },
+  /* api-448184454 */
+  { id:"rhv-video-upscaler", label:"Rh video upscaler", apiPath:"rhart-video/video-upscaler", videoParam:"videoUrl", options:[{"key": "targetResolution", "values": ["720p", "1080p", "2k", "4k"], "def": "1080p"}] },
+  /* api-448184451 */
+  { id:"pixverse-v6-extend", label:"Pixverse v6 extend", apiPath:"pixverse-v6/extend", videoParam:"videoUrl", prompt:"req", promptMax:2048, options:[{"key": "resolution", "values": ["360p", "540p", "720p", "1080p"], "def": "720p"}, {"key": "duration", "values": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], "def": "5", "int": true}], extra:{"generateAudioSwitch": true} },
+  /* api-495680097 */
+  { id:"topazlabs-video-frame-interpolation", label:"Topazlabs video frame interpolation", apiPath:"topazlabs/video-frame-interpolation", videoParam:"videoUrl", whPreset:true, options:[{"key": "model", "values": ["apo-8", "apf-2", "aion-1", "chr-2", "chf-3"], "def": "apo-8"}] },
+  /* api-448184455 */
+  { id:"dreamactor-v2", label:"Bytedance dreamactor v2", apiPath:"bytedance/dreamactor-v2", videoParam:"videoUrl", imageParam:"imageUrl", imageReq:true },
+  /* api-448184459 */
+  { id:"kling-v2-6-std-motion-control", label:"Kling v2.6 std motion control", apiPath:"kling-v2.6-std/motion-control", videoParam:"videoUrl", imageParam:"imageUrl", imageReq:true, prompt:true, promptMax:2500, options:[{"key": "characterOrientation", "values": ["image", "video"], "def": "video"}] },
+  /* api-448184458 */
+  { id:"kling-v2-6-pro-motion-control", label:"Kling v2.6 pro motion control", apiPath:"kling-v2.6-pro/motion-control", videoParam:"videoUrl", imageParam:"imageUrl", imageReq:true, prompt:true, promptMax:2500, options:[{"key": "characterOrientation", "values": ["image", "video"], "def": "video"}] },
+  /* api-448184457 */
+  { id:"kling-v3-0-std-motion-control", label:"Kling v3.0 std motion control", apiPath:"kling-v3.0-std/motion-control", videoParam:"videoUrl", imageParam:"imageUrl", imageReq:true, prompt:true, promptMax:2500, options:[{"key": "characterOrientation", "values": ["image", "video"], "def": "video"}] },
+  /* api-448184456 */
+  { id:"kling-v3-0-pro-motion-control", label:"Kling v3.0 pro motion control", apiPath:"kling-v3.0-pro/motion-control", videoParam:"videoUrl", imageParam:"imageUrl", imageReq:true, prompt:true, promptMax:2500, options:[{"key": "characterOrientation", "values": ["image", "video"], "def": "video"}] },
+  /* api-495680101 */
+  { id:"topazlabs-video-proteus", label:"Topazlabs video proteus", apiPath:"topazlabs/video-proteus", videoParam:"videoUrl", whPreset:true, options:[{"key": "model", "values": ["prob-4", "pnat-1", "rhea-1", "thd-3", "thf-4", "ahq-12", "alqs-2", "alq-13", "amqs-2", "amq-13", "ddv-3", "dtv-4", "dtd-4", "dtvs-2", "dtds-2", "gcg-5", "ghq-5", "ganim-1", "iris-3", "iris-2"], "def": "prob-4"}] },
+  /* api-448184462 */
+  { id:"wan-2-7-video-extend", label:"Wan 2.7 video extend", apiPath:"alibaba/wan-2.7/video-extend", videoParam:"videoUrl", prompt:true, promptMax:5000, options:[{"key": "resolution", "values": ["720P", "1080P"], "def": "1080P"}, {"key": "duration", "values": ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], "def": "5"}] },
+  /* api-448184463 */
+  { id:"rhv-g-official-video-extend", label:"Xai grok imagine video video extend Official", apiPath:"rhart-video-g-official/video-extend", videoParam:"videoUrl", prompt:"req", promptMax:2048, options:[{"key": "duration", "values": ["6", "10"], "def": "6"}] },
+  /* api-498749523 */
+  { id:"rhv-flux3-video-to-video", label:"Flux 3 video video continuation", apiPath:"rhart-video-flux3/video-to-video", videoParam:"startVideo", prompt:"req", promptMax:20480, options:[{"key": "resolution", "values": ["hd", "fhd"], "def": "hd"}] },
+  /* api-469373161 — ComfyUI node pair: the reference photo goes to 299##image,
+     the motion video to 275##video; no other field exists on this graph. */
+  { id:"wan22-motion-transfer", label:"Wan 2.2 Character Motion Transfer", apiPath:"rhart-video/wan2.2/character-motion-transfer", kind:"vnode", videoParam:"275##video", imageParam:"299##image", imageReq:true },
+];
+var RH_VT_WH = { "720p":[1280,720], "1080p":[1920,1080], "2k":[2560,1440], "4k":[3840,2160] };
+function rhVtModelDef(id){ return RH_VTOOL_MODELS.find(function(m){ return m.id===id; }) || RH_VTOOL_MODELS[0]; }
+/* The body builder is its own function so tests can prove every tool sends
+   exactly the fields ITS endpoint declares (the sweep drives it directly). */
+function rhVtBody(def, videoUrl, imageUrls, promptText, optVals){
+  optVals = optVals||{};
+  imageUrls = imageUrls||[];
+  var body={};
+  if(def.kind==="vnode"){
+    body[def.videoParam]=videoUrl;
+    if(def.imageParam) body[def.imageParam]=imageUrls[0]||"";
+    return body;
+  }
+  body[def.videoParam]=videoUrl;
+  if(def.imageParam && imageUrls.length){
+    body[def.imageParam] = def.imageArray ? imageUrls.slice(0, def.imageMax||1) : imageUrls[0];
+  }
+  if(def.prompt){
+    var p=String(promptText||"");
+    if(def.promptMax && p.length>def.promptMax) p=p.slice(0, def.promptMax);
+    if(p || def.prompt==="req") body.prompt=p;
+  }
+  (def.options||[]).forEach(function(o){
+    var v = (o.key in optVals) ? optVals[o.key] : o.def;
+    body[o.key] = o.int ? Number(v) : v;
+  });
+  if(def.whPreset){
+    var wh = RH_VT_WH[optVals.whPreset || "720p"] || RH_VT_WH["720p"];
+    body.outputWidth=wh[0]; body.outputHeight=wh[1];
+  }
+  if(def.extra) Object.keys(def.extra).forEach(function(k){ if(!(k in body)) body[k]=def.extra[k]; });
+  return body;
+}
+async function rhGenerateVideoTool(apiKey, def, videoDataUrl, imageDataUrls, promptText, optVals, onTick, signal){
+  var videoUrl = await rhV2UploadVideo(apiKey, videoDataUrl, signal);
+  var imageUrls = (imageDataUrls&&imageDataUrls.length) ? await rhV2UploadAll(apiKey, imageDataUrls, signal) : [];
+  var body = rhVtBody(def, videoUrl, imageUrls, promptText, optVals);
+  var r=await fetchWithTimeout(RH_V2_BASE+"/"+def.apiPath, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  var final = await rhPollTracked(apiKey, j.taskId, {kind:"video-tool", label:def.apiPath, prompt:promptText||def.label}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -21033,7 +21522,6 @@ function unifiedRender(){
   var current = unifiedDeviceType();
   $("unifiedEnrollPhone").hidden = current !== "phone" || !!devices.phone;
   $("unifiedEnrollComputer").hidden = current !== "computer" || !!devices.computer;
-  $("unifiedPairComputer").hidden = current !== "computer" || !devices.computer;
   $("unifiedDownload").disabled = !unifiedCanDownload();
   $("unifiedDownloadNote").textContent = unifiedCanDownload()
     ? "Verified. A temporary link will be created only when you press the button."
@@ -21080,19 +21568,9 @@ async function unifiedEnroll(kind){
     await unifiedRefresh(true); accSetInline("unifiedStatus",unifiedPretty(kind)+" registered.","ok");
   } catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
 }
-async function unifiedPair(){
-  var data = unified.entitlement || {}, computer = data.devices && data.devices.computer;
-  if (!computer) return accSetInline("unifiedStatus","Register this Computer first.","err");
-  try {
-    /* Never round-trip a server slot id or stored installation hash. Pairing
-       proves this browser using the raw installation id already held locally. */
-    var r = await accFetch("/v1/devices/pairing-code", {method:"POST",body:JSON.stringify({computer_installation_id:deviceId()})});
-    var b = await accJson(r); if (!r.ok) throw new Error(b.message||b.msg||b.error||"Pairing code was not authorized");
-    var code = String(b.code||b.pairing_code||""); if (!code) throw new Error("The server did not issue a pairing code");
-    $("unifiedPairingCode").textContent = code; $("unifiedPairingCode").hidden = false;
-    accSetInline("unifiedStatus","Enter this short-lived code in the Photoshop Panel.","ok");
-  } catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
-}
+/* 2026-08-30 owner instruction: the Panel pairing-code step is gone — the
+   panel registers itself at sign-in, and the one-active-panel limit plus
+   the admin Reset Computer action carry the sharing control. */
 /* Account Center delivery also uses POST /api/v1/downloads/panel. The browser
    receives the short-lived address only after this explicit button action. */
 async function accRequestPanelDownload(ev){
@@ -21116,7 +21594,6 @@ function unifiedWire(){
   document.querySelectorAll("[data-unified-page],[data-tutorial-page]").forEach(function(b){ b.addEventListener("click",function(){ switchPage(b.getAttribute("data-unified-page")||b.getAttribute("data-tutorial-page")); }); });
   var ep=$("unifiedEnrollPhone"); if(ep) ep.onclick=function(){ unifiedEnroll("phone"); };
   var ec=$("unifiedEnrollComputer"); if(ec) ec.onclick=function(){ unifiedEnroll("computer"); };
-  var pc=$("unifiedPairComputer"); if(pc) pc.onclick=unifiedPair;
   var dl=$("unifiedDownload"); if(dl) dl.onclick=accRequestPanelDownload;
   var ad=$("accPanelDownload"); if(ad) ad.addEventListener("click",accRequestPanelDownload);
   var os=$("unifiedOpenSetup"); if(os) os.onclick=function(){ switchPage("pgHome"); accOpenGrp("accGrpAuth"); };
@@ -21188,6 +21665,16 @@ function accWire(){
   wireKeyReveal("btnShowAccPassNew", "accPassNew");
   $("btnAccLogin").onclick  = function(){ accLogin(); };
   $("btnAccSignup").onclick = function(){ accSignup(); };
+  /* v5.55.0 — a live strength hint, advice not a gate: the 6-char server
+     minimum stays the only hard rule. */
+  $("accPass2").addEventListener("input", function(){
+    var v=this.value, el=$("accPassStrength");
+    if(!v){ el.textContent=""; return; }
+    var score=(v.length>=8?1:0)+(v.length>=12?1:0)+(/[0-9]/.test(v)?1:0)+(/[^A-Za-z0-9]/.test(v)?1:0);
+    var lab=["အားနည်း — ၈ လုံးအထက် သုံးပါ","သင့်တင့်","ကောင်း","အလွန်ကောင်း","အလွန်ကောင်း"][score];
+    el.textContent="🔐 "+lab;
+    el.style.color=["#e08585","#e0c085","#9fd08f","#7ec97e","#7ec97e"][score];
+  });
   $("accToSignup").onclick  = function(){ accShowForm("signup"); };
   $("accToLogin").onclick   = function(){ accShowForm("login"); };
   $("btnAccForgot").onclick = function(){ accForgot(); };
@@ -21692,7 +22179,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.54.0";
+var APP_VER="5.55.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -22551,7 +23038,7 @@ function updateVidModelUI(){
   if(keepR && (m.resolutions||[]).indexOf(keepR)>=0) res.value=keepR;
   res.style.display = (m.resolutions||[]).length ? "" : "none";
   var dur=$("selVidDur"), keepD=dur.value; dur.innerHTML="";
-  (m.durations||[]).forEach(function(d){ var o=document.createElement("option"); o.value=d; o.textContent=d+"s"; dur.appendChild(o); });
+  (m.durations||[]).forEach(function(d){ var o=document.createElement("option"); o.value=d; o.textContent=(d==="-1"||d==="auto")?"Auto":(d+"s"); dur.appendChild(o); });
   if(keepD && (m.durations||[]).map(String).indexOf(String(keepD))>=0) dur.value=keepD;
   dur.style.display = (m.durations||[]).length ? "" : "none";
   /* And when a model publishes its OWN aspect list, use it. The static markup
@@ -22567,7 +23054,14 @@ function updateVidModelUI(){
   $("vidPrompt").setAttribute("maxlength", m.promptMax);
   updateVidPromptCount();
   var needTxt;
-  if(m.minImages===m.maxImages){
+  /* v5.55.0 — text-to-video models need no photo at all, and the flex models
+     (optional image slots) work with or without one. Say so instead of
+     demanding an image the endpoint does not require. */
+  if(m.maxImages===0){
+    needTxt=L9({my:"ပုံ မလိုပါ — prompt တစ်ခုတည်းနဲ့ ဗီဒီယို ထုတ်ပေးပါတယ်",en:"No image needed — this model generates from the prompt alone",shn:"ဢမ်ႇလူဝ်ႇၶႅပ်းႁၢင်ႈ — prompt ဢၼ်လဵဝ်ၵေႃႈလႆႈ",kac:"Sumla n ra ai — prompt hte sha video galaw ya ai",th:"ไม่ต้องใช้รูป — โมเดลนี้สร้างจาก prompt อย่างเดียว",zh:"无需图片 — 该模型仅凭 prompt 生成视频",vi:"Không cần ảnh — mô hình này tạo video chỉ từ prompt",id:"Tidak perlu gambar — model ini membuat video dari prompt saja",ms:"Tiada imej diperlukan — model ini menjana daripada prompt sahaja"});
+  } else if(m.minImages===0){
+    needTxt=L9({my:"ပုံ ထည့်လည်းရ မထည့်လည်းရ — အများဆုံး "+m.maxImages+" ပုံ",en:"Images are optional — up to "+m.maxImages,shn:"ၶႅပ်းႁၢင်ႈသႂ်ႇၵေႃႈလႆႈ ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ — ထိုင် "+m.maxImages,kac:"Sumla bang yang mai, n bang yang mai — "+m.maxImages+" du hkra",th:"รูปภาพไม่บังคับ — สูงสุด "+m.maxImages+" รูป",zh:"图片可选 — 最多 "+m.maxImages+" 张",vi:"Ảnh là tùy chọn — tối đa "+m.maxImages,id:"Gambar opsional — hingga "+m.maxImages,ms:"Imej pilihan — sehingga "+m.maxImages});
+  } else if(m.minImages===m.maxImages){
     needTxt=L9({my:"ပုံ "+m.minImages+" ပုံ လိုအပ်ပါတယ်",en:"Needs "+m.minImages+" reference image"+(m.minImages>1?"s":""),shn:"လူဝ်ႇၶႅပ်းႁၢင်ႈ "+m.minImages+" ဢၼ်",kac:"Sumla "+m.minImages+" ra ai",th:"ต้องการรูปอ้างอิง "+m.minImages+" รูป",zh:"需要 "+m.minImages+" 张参考图片",vi:"Cần "+m.minImages+" ảnh tham chiếu",id:"Butuh "+m.minImages+" gambar referensi",ms:"Perlukan "+m.minImages+" imej rujukan"});
   } else if(m.oddOnly){
     needTxt=L9({my:"ပုံ ၁ ပုံ (သို့) ၃ ပုံ လိုအပ်ပါတယ် — ၂ ပုံ မရပါ",en:"Needs 1 or 3 reference images — 2 is not supported",shn:"လူဝ်ႇၶႅပ်းႁၢင်ႈ 1 ဢမ်ႇၼၼ် 3 — 2 ဢမ်ႇလႆႈ",kac:"Sumla sumla 1 nrai 3 ra ai — 2 gaw n mai byin ai",th:"ต้องการรูปอ้างอิง 1 หรือ 3 รูป — ใช้ 2 รูปไม่ได้",zh:"需要 1 张或 3 张参考图片 — 不支持 2 张",vi:"Cần 1 hoặc 3 ảnh tham chiếu — không hỗ trợ 2 ảnh",id:"Butuh 1 atau 3 gambar referensi — 2 gambar tidak didukung",ms:"Perlukan 1 atau 3 imej rujukan — 2 imej tidak disokong"});
@@ -23410,6 +23904,127 @@ $("btnVuGen").onclick = async function(){
 };
 $("btnVuCancel").onclick=function(){ if(state.vuAbort) state.vuAbort.abort(); };
 $("btnVuRetry").onclick=function(){ if($("btnVuGen").disabled) return; this.style.display="none"; $("btnVuGen").onclick(); };
+
+/* ---------- v5.55.0 — VIDEO TOOLS wiring (same page as Upscale) ---------- */
+state.vtFile = null; state.vtImg = null;
+$("vtIntro").textContent = L9({my:"ရှိပြီးသား ဗီဒီယိုကို ပြင်မယ်/ဆက်မယ်/သန့်မယ် — model တစ်ခုရွေးပြီး ဗီဒီယိုဖိုင် တင်ပါ။ RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Edit, extend or clean an existing video — pick a tool, upload the clip. Needs your RunningHub Enterprise key.",shn:"မႄးၶိုၼ်း/သိုပ်ႇ/သုၵ်ႈသႅင်ႇ ဝီဒီရူဝ်ႈဢၼ်မီးယူႇ",kac:"Video nga ai hpe galaw/madung/san seng — tool langai lata nna video bang u",th:"แก้ไข ต่อ หรือปรับปรุงวิดีโอที่มีอยู่ — เลือกเครื่องมือแล้วอัปโหลดคลิป",zh:"编辑、延长或修复现有视频 — 选择工具并上传视频",vi:"Chỉnh sửa, kéo dài hoặc làm sạch video có sẵn — chọn công cụ rồi tải video lên",id:"Edit, perpanjang, atau bersihkan video yang ada — pilih alat lalu unggah klip",ms:"Edit, panjangkan atau bersihkan video sedia ada — pilih alat dan muat naik klip"});
+setIcnText($("btnVtPick"),"i-clapper",L9({my:"ဗီဒီယို ဖိုင် ရွေးမယ် (MP4)",en:"Pick a video file (MP4)",shn:"ထၢႆႇၾၢႆႇဝီဒီရူဝ်ႈ (MP4)",kac:"Video file lata u (MP4)",th:"เลือกไฟล์วิดีโอ (MP4)",zh:"选择视频文件 (MP4)",vi:"Chọn tệp video (MP4)",id:"Pilih file video (MP4)",ms:"Pilih fail video (MP4)"}));
+setIcnText($("btnVtImgPick"),"i-plus",L9({my:"ပုံ ထည့်မယ်",en:"Add reference photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูปอ้างอิง",zh:"添加参考图片",vi:"Thêm ảnh tham chiếu",id:"Tambah foto referensi",ms:"Tambah foto rujukan"}));
+$("vtResultH2").textContent = L9({my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"});
+(function(){
+  var sel=$("selVtModel");
+  RH_VTOOL_MODELS.forEach(function(m){
+    var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; sel.appendChild(o);
+  });
+})();
+function updateVtModelUI(){
+  var m=rhVtModelDef($("selVtModel").value);
+  $("btnVtImgPick").style.display = m.imageParam ? "" : "none";
+  if(!m.imageParam){ state.vtImg=null; $("vtImgName").textContent=""; }
+  var pr=$("vtPrompt");
+  pr.style.display = m.prompt ? "" : "none";
+  if(m.prompt){ pr.setAttribute("maxlength", m.promptMax||20000);
+    pr.placeholder = m.prompt==="req" ? L9({my:"Prompt (မဖြစ်မနေ) — ဗီဒီယိုမှာ ဘာပြောင်းစေချင်လဲ",en:"Prompt (required) — what should change in the video",shn:"Prompt (တၵ်းလူဝ်ႇ)",kac:"Prompt (ra ai)",th:"Prompt (จำเป็น)",zh:"Prompt（必填）",vi:"Prompt (bắt buộc)",id:"Prompt (wajib)",ms:"Prompt (wajib)"}) : L9({my:"Prompt (ထည့်ချင်မှထည့်)",en:"Prompt (optional)",shn:"Prompt (သင်ႇလႆႈ)",kac:"Prompt (nkau)",th:"Prompt (ไม่บังคับ)",zh:"Prompt（可选）",vi:"Prompt (tùy chọn)",id:"Prompt (opsional)",ms:"Prompt (pilihan)"}); }
+  /* the two dynamic option selects: each tool's REAL enums (or the Topaz
+     width/height preset), documented default preselected */
+  var slots=[$("selVtOpt1"),$("selVtOpt2")];
+  var defs=[];
+  (m.options||[]).forEach(function(o){ defs.push(o); });
+  if(m.whPreset) defs.unshift({ key:"whPreset", values:Object.keys(RH_VT_WH), def:"720p" });
+  slots.forEach(function(slot,idx){
+    var o=defs[idx];
+    slot.innerHTML="";
+    if(!o){ slot.style.display="none"; return; }
+    o.values.forEach(function(v){
+      var op=document.createElement("option"); op.value=v;
+      op.textContent=o.key.replace(/([A-Z])/g," $1").toLowerCase()+": "+v;
+      if(String(v)===String(o.def)) op.selected=true;
+      slot.appendChild(op);
+    });
+    slot.dataset.key=o.key;
+    slot.style.display="";
+  });
+  var need = state.vtFile ? "" : L9({my:"⚠ ဗီဒီယို ဖိုင် တစ်ခု ရွေးရပါမယ်",en:"⚠ You'll need to pick a video file",shn:"⚠ လူဝ်ႇထၢႆႇဝီဒီရူဝ်ႈ",kac:"⚠ Video langai tawn ra ai",th:"⚠ ต้องเลือกไฟล์วิดีโอก่อน",zh:"⚠ 需要先选择一个视频文件",vi:"⚠ Bạn cần chọn một tệp video",id:"⚠ Anda perlu memilih file video",ms:"⚠ Anda perlu pilih fail video"});
+  if(!need && m.imageParam && m.imageReq && !state.vtImg)
+    need = L9({my:"⚠ ဒီ tool အတွက် ပုံ တစ်ပုံလည်း လိုပါတယ်",en:"⚠ This tool also needs a reference photo",shn:"⚠ Tool ၼႆႉလူဝ်ႇၶႅပ်းႁၢင်ႈထႅင်ႈ",kac:"⚠ Ndai tool gaw sumla mung ra ai",th:"⚠ เครื่องมือนี้ต้องใช้รูปอ้างอิงด้วย",zh:"⚠ 此工具还需要一张参考图片",vi:"⚠ Công cụ này cũng cần một ảnh tham chiếu",id:"⚠ Alat ini juga butuh foto referensi",ms:"⚠ Alat ini juga perlukan foto rujukan"});
+  $("vtNeedNote").textContent=need;
+}
+$("selVtModel").onchange=updateVtModelUI;
+updateVtModelUI();
+$("btnVtPick").onclick=function(){ $("vtFilePick").click(); };
+$("vtFilePick").onchange=function(){
+  var f=this.files && this.files[0]; this.value="";
+  if(!f) return;
+  var looksMp4=(f.type && f.type.toLowerCase()==="video/mp4") || /\.mp4$/i.test(f.name||"");
+  if(!looksMp4){ toast(L9({my:"MP4 ဖိုင်ပဲ ရပါတယ်",en:"MP4 only",shn:"MP4 ၵူၺ်း",kac:"MP4 sha",th:"รับเฉพาะ MP4",zh:"仅支持 MP4",vi:"Chỉ hỗ trợ MP4",id:"Hanya MP4",ms:"MP4 sahaja"}),"err"); return; }
+  if(f.size>200*1024*1024){ toast(L9({my:"ဗီဒီယို ကြီးလွန်းပါတယ် (200MB အထိ)",en:"Too large (200MB max)",shn:"ယႂ်ႇပူၼ်ႉ (200MB)",kac:"Kaba law ai (200MB)",th:"ใหญ่เกินไป (สูงสุด 200MB)",zh:"过大（最大 200MB）",vi:"Quá lớn (tối đa 200MB)",id:"Terlalu besar (maks 200MB)",ms:"Terlalu besar (maks 200MB)"}),"err"); return; }
+  var rd=new FileReader();
+  rd.onload=function(){
+    var m=String(rd.result).match(/^data:([^;]+);base64,(.+)$/);
+    if(m){ state.vtFile={mime:m[1],b64:m[2],name:f.name}; $("vtFileName").textContent=f.name; updateVtModelUI(); }
+  };
+  rd.readAsDataURL(f);
+};
+$("btnVtImgPick").onclick=function(){ $("vtImgPick").click(); };
+$("vtImgPick").onchange=function(){
+  var f=this.files && this.files[0]; this.value="";
+  if(!f) return;
+  var name=f.name;
+  var rd=new FileReader();
+  rd.onload=function(){
+    downscale(String(rd.result), function(dataUrl){
+      if(!dataUrl){ toast(L9({my:"ဒီပုံကို ဖတ်လို့မရပါ",en:"Couldn't read this image",shn:"ဢမ်ႇလူတ်ႇလႆႈၶႅပ်းႁၢင်ႈၼႆႉ",kac:"Ndai sumla hti n mai ai",th:"อ่านรูปนี้ไม่ได้",zh:"无法读取此图片",vi:"Không đọc được ảnh này",id:"Tidak bisa membaca gambar ini",ms:"Tidak dapat membaca imej ini"}),"err"); return; }
+      var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if(m){ state.vtImg={mime:m[1],b64:m[2]}; $("vtImgName").textContent=name; updateVtModelUI(); }
+    });
+  };
+  rd.readAsDataURL(f);
+};
+$("btnVtGen").onclick=async function(){
+  if(!gate("video")) return;
+  if(!state.rhKey){ pendingCapture(); switchPage("pgHome"); toast(t("st_needkey")||"RunningHub key?", "err"); return; }
+  var m=rhVtModelDef($("selVtModel").value);
+  if(!state.vtFile){ setSt("stVtGen", rhFriendly({code:"no-video"}), "err"); return; }
+  if(m.imageParam && m.imageReq && !state.vtImg){ setSt("stVtGen", L9({my:"ပုံ တစ်ပုံလည်း ထည့်ပါ",en:"Add the reference photo too",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈပႃး",kac:"Sumla mung bang u",th:"เพิ่มรูปอ้างอิงด้วย",zh:"也请添加参考图片",vi:"Thêm cả ảnh tham chiếu",id:"Tambahkan juga foto referensi",ms:"Tambah juga foto rujukan"}), "err"); return; }
+  var text=$("vtPrompt").value.trim();
+  if(m.prompt==="req" && !text){ setSt("stVtGen", L9({my:"ဒီ tool အတွက် prompt ရေးရပါမယ်",en:"This tool needs a prompt",shn:"Tool ၼႆႉလူဝ်ႇ prompt",kac:"Ndai tool gaw prompt ra ai",th:"เครื่องมือนี้ต้องใช้ prompt",zh:"此工具需要 prompt",vi:"Công cụ này cần prompt",id:"Alat ini butuh prompt",ms:"Alat ini perlukan prompt"}), "err"); return; }
+  var optVals={};
+  [$("selVtOpt1"),$("selVtOpt2")].forEach(function(slot){ if(slot.style.display!=="none" && slot.dataset.key) optVals[slot.dataset.key]=slot.value; });
+  var btn=this; btn.disabled=true; btn.classList.add("working"); $("vtSpin").className="spin on"; setSt("stVtGen","");
+  $("btnVtRetry").style.display="none";
+  var spinBase=$("vtSpin").textContent;
+  var abort=new AbortController(); state.vtAbort=abort;
+  setIcnText($("btnVtCancel"),"i-close",t("btn_cancel")); $("btnVtCancel").style.display="";
+  try{
+    if(text) text = await translateIfMyanmar(text, $("vtSpin"));
+    $("vtSpin").textContent=spinBase;
+    var videoDataUrl="data:"+state.vtFile.mime+";base64,"+state.vtFile.b64;
+    var imgs = state.vtImg ? ["data:"+state.vtImg.mime+";base64,"+state.vtImg.b64] : [];
+    var outs=await rhGenerateVideoTool(state.rhKey, m, videoDataUrl, imgs, text, optVals, function(elapsed, status){
+      $("vtSpin").textContent=spinBase+(status?" · "+status:"")+" · "+Math.round(elapsed/1000)+"s";
+    }, abort.signal);
+    if(!outs.length){
+      setSt("stVtGen", L9({my:"ရလဒ် မထွက်လာပါ — ပြန်စမ်းပါ",en:"Nothing came back — try again",shn:"ဢမ်ႇမီးလွင်ႈဢွၵ်ႇ — ၸၢမ်းၶိုၼ်း",kac:"Hpa n pru ai — bai chyam u",th:"ไม่มีผลลัพธ์ — ลองใหม่",zh:"没有结果 — 请重试",vi:"Không có kết quả — thử lại",id:"Tidak ada hasil — coba lagi",ms:"Tiada hasil — cuba lagi"}), "err");
+      $("btnVtRetry").style.display="";
+    } else {
+      $("vtResultBox").className="card result-box on";
+      $("vtResultVideo").src=outs[0].url;
+      var a=$("btnVtOpen"); a.href=outs[0].url; setIcnText(a,"i-link",L9({my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"}));
+      $("vtExpireNote").textContent = $("vuExpireNote").textContent;
+      $("vtResultBox").scrollIntoView({behavior:"smooth"});
+      setSt("stVtGen", t("st_done"), "ok");
+    }
+  }catch(e){
+    setSt("stVtGen", rhFriendly(e), (e&&e.code==="cancelled")?"ok":"err");
+    if(!(e&&e.code==="cancelled")) $("btnVtRetry").style.display="";
+  }
+  state.vtAbort=null;
+  $("btnVtCancel").style.display="none";
+  btn.disabled=false; btn.classList.remove("working"); $("vtSpin").className="spin"; $("vtSpin").textContent=spinBase;
+};
+$("btnVtCancel").onclick=function(){ if(state.vtAbort) state.vtAbort.abort(); };
+$("btnVtRetry").onclick=function(){ if($("btnVtGen").disabled) return; this.style.display="none"; $("btnVtGen").onclick(); };
+
 $("btnVuDl").onclick=async function(){
   var out=state.vuHist[state.vuHistSel]; if(!out) return;
   var btn=this; if(btn.disabled) return; btn.disabled=true; setIcnText(btn,"i-download",VID_DL_BUSY);
