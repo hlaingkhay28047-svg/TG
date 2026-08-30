@@ -49,6 +49,13 @@ var RH_WAN_RATIO_WH = {
   "1:1": [1, 1], "3:4": [3, 4], "4:3": [4, 3], "4:5": [4, 5], "5:4": [5, 4],
   "9:16": [9, 16], "16:9": [16, 9], "2:3": [2, 3], "3:2": [3, 2]
 };
+/* FLUX.2 Dev edit-lora frames its output ratio as a ComfyUI node select
+   (owner's OpenAPI spec, 2026-08-30): "1".."7" name fixed ratios, "8" is
+   custom width/height (unused here), "9" auto-matches the input image. The
+   map holds exactly the documented seven; anything else — Auto included —
+   sends "9", because the field is REQUIRED and auto-match is the documented
+   "decide from the source image" option, not an invented default. */
+var RH_FLUXEDIT_RATIO_MAP = { "1:1": "1", "3:4": "2", "4:3": "3", "9:16": "4", "16:9": "5", "2:3": "6", "3:2": "7" };
 
 function rhRatio(ratio) { return RH_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : ""; }
 /* Auto -> the cheapest tier; the Standard API requires a lowercase 1k/2k/4k
@@ -107,6 +114,23 @@ function buildRequestBody(mc, request, uploadedUrls) {
   }
 
   uploadedUrls = uploadedUrls || [];
+
+  // FLUX.2 Dev edit-lora (flux-2-dev-edit) takes a ComfyUI node-keyed body,
+  // completely unlike the field-named endpoints around it: 51##image (ONE
+  // image URL), 16##text (the prompt), 47##select (ratio enum — see
+  // RH_FLUXEDIT_RATIO_MAP), 52##file_type (output format). The optional
+  // 18##lora_name/18##strength_model pair is omitted on purpose (documented
+  // default strength 0 = plain FLUX.2 Dev editing — a guessed .safetensors
+  // name would invent a server-side asset), and no resolution/size field
+  // exists on this endpoint. Ported 1:1 from the web app's fluxedit branch.
+  if (mc.kind === "fluxedit") {
+    var fx = {};
+    fx["51##image"] = uploadedUrls[0] || "";
+    fx["16##text"] = body.prompt;
+    fx["47##select"] = RH_FLUXEDIT_RATIO_MAP[ratio] || "9";
+    fx["52##file_type"] = "PNG";
+    return fx;
+  }
   var imageParam = mc.imageParam || "imageUrls";
   if (imageParam === "image") body.image = uploadedUrls[0] || "";
   else if (imageParam === "imageUrl") body.imageUrl = uploadedUrls[0] || "";

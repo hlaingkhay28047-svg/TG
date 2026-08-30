@@ -50,6 +50,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
           || u.indexOf("/openapi/v2/seedream-v4.5/image-to-image") >= 0
           || u.indexOf("/openapi/v2/rhart-imagine-image-quality/edit") >= 0
           || u.indexOf("/openapi/v2/rhart-image/z-image-turbo/image-to-image") >= 0
+          || u.indexOf("/openapi/v2/rhart-image/f-2-dev/edit-lora") >= 0
           || u.indexOf("/openapi/v2/topazlabs/image-upscale-transparent") >= 0) {
         return Promise.resolve(new Response(JSON.stringify({taskId:"mock-task-1",status:"RUNNING",errorCode:"",errorMessage:"",results:null,clientId:"mock-client",promptTips:""}), {status:200}));
       }
@@ -68,8 +69,11 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var builtins = ["nano-banana-2", "rh-image-g2-off", "rh-image-g2", "rh-image-x-off",
       "nano-banana-pro-off", "nano-banana-pro", "qwen-image-2", "qwen-image-2-pro",
       "wan-image-edit", "wan-image-edit-pro", "upscale-pro", "seedream-v4", "seedream-v4-5",
-      "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent"];
-    var stillUnconfigured = ["flux-2-dev"];
+      "rh-imagine-quality-edit", "z-image-turbo", "upscale-transparent", "flux-2-dev"];
+    /* v5.53.4 — empty at last: flux-2-dev was the final placeholder, now
+       configured with the owner's rhart-image/f-2-dev/edit-lora spec. The
+       mechanism stays so any future placeholder lands here, not in silence. */
+    var stillUnconfigured = [];
     return {
       hasOption: !!opt, configured: rhIsConfigured("nano-banana-2"), active: !!rhActiveModelCfg(),
       apiPath: rhEffectiveApiPath("nano-banana-2"),
@@ -386,6 +390,73 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body.aspectRatio === "16:9";
   console.log(zimageValidOk ? "PASS (z-image valid ratio passes through)" : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
 
+  // Flux 2 Dev — Edit (v5.53.4): the ComfyUI node-keyed body from the owner's
+  // rhart-image/f-2-dev/edit-lora OpenAPI spec — 51##image/16##text/
+  // 47##select/52##file_type ONLY. Must never carry the standard prompt/
+  // imageUrls/resolution/aspectRatio fields, and must omit the optional
+  // 18## LoRA pair (documented default strength 0 = plain FLUX.2 editing).
+  // Also checks the control-honesty UI: Size hidden (no such field on this
+  // endpoint) and the ratio dropdown narrowed to the documented seven
+  // (no "4:5").
+  const fluxResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    var c = rhCfg(); c.activeModel = "flux-2-dev"; rhSaveCfg(c);
+    document.getElementById("selProvider").value = "runninghub";
+    updateGenOptsForRHKind();
+    var opts = Array.prototype.map.call(document.getElementById("selRatio").options, function(o){ return o.value || o.textContent; });
+    var ratioHas45 = opts.indexOf("4:5") >= 0;
+    var sizeHidden = document.getElementById("selSize").style.display === "none";
+    document.getElementById("selRatio").value = "16:9";
+    document.getElementById("prompt").value = "test flux edit prompt";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/f-2-dev/edit-lora") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body,
+      ratioHas45: ratioHas45, sizeHidden: sizeHidden, st: document.getElementById("stGen").textContent };
+  }, B64);
+  console.log("flux edit submit body:", JSON.stringify(fluxResult.body),
+    "ratioHas45:", fluxResult.ratioHas45, "sizeHidden:", fluxResult.sizeHidden);
+  const fluxOk = fluxResult.ok && fluxResult.body
+    && typeof fluxResult.body["51##image"] === "string" && fluxResult.body["51##image"].length > 0
+    && String(fluxResult.body["16##text"]).indexOf("test flux edit prompt") >= 0
+    && fluxResult.body["47##select"] === "5"
+    && fluxResult.body["52##file_type"] === "PNG"
+    && fluxResult.body.prompt === undefined && fluxResult.body.imageUrls === undefined
+    && fluxResult.body.resolution === undefined && fluxResult.body.aspectRatio === undefined
+    && fluxResult.body["18##lora_name"] === undefined && fluxResult.body["18##strength_model"] === undefined
+    && fluxResult.ratioHas45 === false && fluxResult.sizeHidden === true;
+  console.log(fluxOk ? "PASS (flux edit node-keyed body + narrowed controls)" : ("FAIL (flux edit): " + JSON.stringify(fluxResult)));
+
+  // Auto ratio must send the documented "9" (auto-match the input image) —
+  // 47##select is REQUIRED, so it can never be omitted or guessed.
+  const fluxAutoResult = await page.evaluate(async (b64) => {
+    window.__rhBodies.length = 0;
+    document.getElementById("resultBox").className = "card result-box";
+    document.getElementById("selRatio").value = "";
+    document.getElementById("prompt").value = "test flux edit auto ratio";
+    state.refs[0] = { mime: "image/png", b64: b64, label: "t0" };
+    for (let i = 1; i < 4; i++) state.refs[i] = null;
+    document.getElementById("btnGen").onclick();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    for (let w = 0; w < 100 && document.getElementById("resultBox").className.indexOf("on") < 0; w++) await sleep(50);
+    const body = (window.__rhBodies.find(b => b.url.indexOf("/f-2-dev/edit-lora") >= 0) || {}).body || null;
+    return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
+  }, B64);
+  console.log("flux edit auto-ratio body:", JSON.stringify(fluxAutoResult.body));
+  const fluxAutoOk = fluxAutoResult.ok && fluxAutoResult.body && fluxAutoResult.body["47##select"] === "9";
+  console.log(fluxAutoOk ? 'PASS (flux edit Auto ratio sends the documented "9" auto-match)' : ("FAIL (flux edit auto ratio): " + JSON.stringify(fluxAutoResult)));
+
+  // Restore the full ratio dropdown for the tests below (they assume the
+  // default, un-narrowed control set).
+  await page.evaluate(() => {
+    var c = rhCfg(); c.activeModel = "nano-banana-2"; rhSaveCfg(c);
+    updateGenOptsForRHKind();
+  });
+
   // Upscale Transparent: activate it, pick "2K" (-> 2560x1440), and inspect
   // the actual request body — must carry outputWidth/outputHeight (never
   // "scale", which is Upscale Pro's field, not this endpoint's), no prompt,
@@ -454,7 +525,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(noImgOk ? "PASS (upscale no-image message)" : ("FAIL (upscale no-image message): " + noImgMsg));
 
   const overall = result === "OK" && qwenOk && upOk && seedreamOk && sd45Ok && sd40Ok && imagineOk && zimageOk && zimageValidOk
-    && upTransparentOk && upTransparentNoImgOk && noImgOk;
+    && fluxOk && fluxAutoOk && upTransparentOk && upTransparentNoImgOk && noImgOk;
   console.log("\n" + (overall ? "PASS" : "FAIL"));
   await browser.close();
   process.exit(overall ? 0 : 1);

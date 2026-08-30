@@ -178,8 +178,45 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.28.2** — `pending`. GPT Image 2 becomes REAL in both apps, from the
-  owner's own verified Enterprise-Shared reference PDF (2026-08-30):
+- **v6.29.0** — `pending`. FLUX.2 Dev's image-editing route becomes real in
+  both apps, from the owner's own OpenAPI spec paste (2026-08-30) for
+  `rhart-image/f-2-dev/edit-lora`:
+  * The web app's last placeholder is gone: "Flux 2 Dev (RunningHub — needs
+    endpoint)" (empty apiPath since the v2 port) is now "Flux 2 Dev — Edit"
+    on the documented endpoint. The panel gains the matching
+    `flux-2-dev-edit` registry model ("FLUX.2 Dev — Edit", single image,
+    ratio-only output control) beside the existing flux-2-dev
+    text-to-image entry — 21 registry models, all with real endpoints.
+  * The endpoint's body is ComfyUI node-keyed, unlike every other wired
+    endpoint: `51##image` (ONE image URL), `16##text` (prompt),
+    `47##select` (ratio enum — "1".."7" fixed ratios per the spec's
+    option table, "9" auto-match; sent for Auto and for any undocumented
+    ratio, since the field is REQUIRED), `52##file_type` ("PNG"). Both
+    apps build it in a dedicated `fluxedit` branch, identical
+    field-for-field.
+  * The optional `18##lora_name`/`18##strength_model` pair is deliberately
+    omitted: the spec's default strength is 0 (no LoRA effect), and the
+    only documented LoRA name is the server's own default — sending a
+    guessed .safetensors name would invent a server-side asset. A LoRA
+    picker can follow when the owner supplies the available LoRA list.
+  * Control honesty carried over: the web app hides Size for this model
+    (the endpoint has no resolution tier — custom W/H exists only behind
+    the unused "8" option) and narrows the Ratio dropdown to the
+    documented seven plus Auto (no "4:5").
+  * sweep_runninghub now proves the node-keyed body on the wire (mocked
+    endpoint): correct four fields, prompt wrapped as usual inside
+    16##text, no standard prompt/imageUrls/resolution/aspectRatio keys, no
+    LoRA keys, Auto ratio → "9", and the narrowed/hidden controls.
+  Acceptance carries over the v6.28.2 checklist, plus: pick
+  "FLUX.2 Dev — Edit" in AI Tools with one image and a Burmese/English
+  instruction and confirm a real edited result lands as a layer.
+  Artifact `HNK_Ai_Panel_v6.29.0.ccx`, SHA-256
+  `ba9edc27a2fae1a0cbe23d8f1eb6f4e8e735d7dd77d52f3d2884ddf9ee276931`,
+  1,276,388 bytes. The release stays disabled until that acceptance.
+- **v6.28.2** — superseded by v6.29.0 the same day (the FLUX.2 Dev edit
+  endpoint above) before acceptance completed. GPT Image 2 becomes REAL in
+  both apps, from the owner's own verified Enterprise-Shared reference PDF
+  (2026-08-30):
   * The reference's "Exact verified photo endpoints" table maps
     rhart-image-g-2-official to GPT Image 2 official stable — the endpoint
     this project has shipped WORKING since the openapi/v2 port, hidden
@@ -213,7 +250,7 @@ eligible students.
   poster request must resolve to GPT Image 2 — Official and generate.
   Artifact `HNK_Ai_Panel_v6.28.2.ccx`, SHA-256
   `735e22b41b07c089174274093ea90fa9abdc1b3515707c3ba0c81095d9098e8a`,
-  1,275,279 bytes. The release stays disabled until that acceptance.
+  1,275,279 bytes. Never enabled; its content ships within v6.29.0.
 - **v6.28.1** — superseded by v6.28.2 the same day (the GPT Image 2
   identification above). The owner's de-duplication pass over 6.28.0
   ("every setting has ONE home"):

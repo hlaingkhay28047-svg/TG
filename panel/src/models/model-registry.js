@@ -124,7 +124,7 @@ var MODELS = [
     provider: "runninghub-enterprise",
     category: ["creative", "fast"],
     tagline: "Best for creative text-to-image generation",
-    detail: "Limited editing support",
+    detail: "Text to image only",
     capabilities: {
       textToImage: true,
       imageEdit: false,
@@ -137,6 +137,34 @@ var MODELS = [
       identityRetention: "low"
     },
     recommendedFor: ["text-to-image", "creative"]
+  },
+  /* v6.29.0 — FLUX.2 Dev's image-editing route, from the owner's OpenAPI
+     spec for rhart-image/f-2-dev/edit-lora (2026-08-30). The endpoint is
+     LoRA-capable; the panel ships it as plain FLUX.2 Dev editing (the
+     documented default LoRA strength is 0) until a LoRA picker exists.
+     One input image, no resolution tier — its ratio node select documents
+     seven fixed ratios plus auto-match (see the adapter's fluxedit
+     branch). The old "Limited editing support" note on flux-2-dev above
+     is retired: t2i and edit are separate routes now. */
+  {
+    id: "flux-2-dev-edit",
+    displayName: "FLUX.2 Dev — Edit",
+    provider: "runninghub-enterprise",
+    category: ["image-edit", "creative", "high-quality"],
+    tagline: "High-fidelity FLUX.2 Dev image editing",
+    detail: "Single-image edit · structure, subject and lighting preserved",
+    capabilities: {
+      textToImage: false,
+      imageEdit: true,
+      multiReference: false,
+      maxImages: 1,
+      supportedSizes: ["1k"],
+      supportedRatios: ["auto", "1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2"],
+      variants: false,
+      visibleText: "medium",
+      identityRetention: "high"
+    },
+    recommendedFor: ["object-edit", "local-edit", "retouch"]
   },
   /* v6.27.0 — the web app's remaining text-to-image models, ported with
      their confirmed RunningHub endpoints so the model set matches the app

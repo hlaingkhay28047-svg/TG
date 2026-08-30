@@ -20,6 +20,11 @@
    id aliases to rh-image-g2-off in the model registry. flux-2-dev carries
    its confirmed text-to-image endpoint, ported from the companion web
    app's RH_T2I_MODELS (kind:"t2i" — prompt+aspectRatio+outputFormat only).
+
+   v6.29.0 — flux-2-dev-edit joins from the owner's OpenAPI spec for
+   rhart-image/f-2-dev/edit-lora (2026-08-30): FLUX.2 Dev's image-editing
+   route, whose body is ComfyUI node-keyed (51##image/16##text/47##select/
+   52##file_type) — see the adapter's kind:"fluxedit" branch.
    ============================================================ */
 /* HNK-IIFE-WRAP: isolate module scope so top-level vars never collide
    under UXP shared-global <script> loading (browser-style). */
@@ -57,6 +62,7 @@ function defaults() {
       "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800 },
       "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800 },
       "flux-2-dev":            { apiPath: "rhart-image/f-2-dev/text-to-image", kind: "t2i" },
+      "flux-2-dev-edit":       { apiPath: "rhart-image/f-2-dev/edit-lora", kind: "fluxedit" },
       /* v6.27.0 — the web app's three remaining text-to-image models, ported
          with their confirmed endpoints (owner: the model set must be
          complete). Field shapes mirror the app's defs verbatim. */
