@@ -143,6 +143,8 @@ jobs:
         if: success()
         run: |
           set -euo pipefail
+          # the ubuntu-24.04 image ships without ffmpeg
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
           mkdir -p pub
           for f in out/*.mp4; do
             b=$(basename "$f" .mp4)
