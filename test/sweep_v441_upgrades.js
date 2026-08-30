@@ -341,18 +341,23 @@ function report(name, ok, detail) {
      manually with a real clip; this Chromium build has no H.264, which is
      exactly why the canPlayType pick exists.) */
   const v57 = await page.evaluate(() => {
-    const vids = document.querySelectorAll(".page-hero video.ph-motion, .page-hero>img");
     const heroes = document.querySelectorAll(".page-hero>img").length;
-    // with no clips shipped, every probe must have fallen back silently:
-    // no .live videos, no has-motion heroes, zero page errors (checked by
-    // this sweep's pageerror hook)
-    const live = document.querySelectorAll(".page-hero video.ph-motion.live").length;
-    const hm = document.querySelectorAll(".page-hero.has-motion").length;
-    return { heroes, live, hm };
+    // v5.57.1 — the ten generated clip pairs shipped: every listed banner
+    // carries an injected (not yet armed — heroes are off screen at boot)
+    // video element, and nothing unlisted does
+    const injected = document.querySelectorAll(".page-hero video.ph-motion").length;
+    const listed = (typeof PH_MOTION_CLIPS !== "undefined") ? PH_MOTION_CLIPS.length : -1;
+    return { heroes, injected, listed };
   });
-  const swSrc = require("fs").readFileSync(require("path").join(__dirname, "..", "docs", "app", "sw.js"), "utf8");
-  report("v5.57.0: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback) and motion clips excluded from LIB_CACHE",
-    v57.heroes >= 11 && v57.live === 0 && v57.hm === 0 &&
+  const fsMod = require("fs"), pathMod = require("path");
+  const motionDir = pathMod.join(__dirname, "..", "docs", "app", "lib", "banners", "motion");
+  const clipNames = ["banner-archer","banner-train-station","hero-mermaid","banner-flower-portrait",
+    "banner-flower-gown","banner-naga","banner-superhero","banner-path-batch","banner-coral-fairy","banner-fairy-forest"];
+  const pairsOnDisk = clipNames.every(n =>
+    fsMod.existsSync(pathMod.join(motionDir, n + ".mp4")) && fsMod.existsSync(pathMod.join(motionDir, n + ".webm")));
+  const swSrc = fsMod.readFileSync(pathMod.join(__dirname, "..", "docs", "app", "sw.js"), "utf8");
+  report("v5.57.1: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback), all ten clip pairs on disk and announced, clips excluded from LIB_CACHE",
+    v57.heroes >= 11 && v57.listed === 10 && v57.injected >= 10 && pairsOnDisk &&
     srcApp.includes('v.className="ph-motion"') &&
     srcApp.includes('canPlayType(\'video/mp4; codecs="avc1.42E01E"\')') &&
     srcApp.includes('"lib/banners/motion/"+m[1]+phExt') &&
