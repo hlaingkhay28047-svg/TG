@@ -75,15 +75,25 @@ function report(name, ok, detail) {
       ST.stageResult = circleResult(resW, resH);
       ST._resImg = null;
       stStageDrawResult();
-      await new Promise(r => setTimeout(r, 900));
+      /* v5.53.2 — the draw lands asynchronously, and a fixed 900ms was only
+         ever "usually enough": under full-suite load (now with the hero
+         banners animating) the capture sometimes sampled the stage BEFORE
+         the circle was painted and measured an empty canvas (-1e9 extents).
+         Poll for the painted circle instead — same assertions, no arbitrary
+         sleep. The 8s ceiling still fails honestly if nothing ever draws. */
       const t = document.createElement("canvas"); t.width = cv.width; t.height = cv.height;
-      t.getContext("2d").drawImage(cv, 0, 0);
-      const d = t.getContext("2d").getImageData(0, 0, t.width, t.height).data;
+      let d = null, minX, maxX, minY, maxY;
       function white(x, y) { const q = (y * t.width + x) * 4; return d[q] > 200 && d[q + 1] > 200 && d[q + 2] > 200; }
-      let minX = 1e9, maxX = -1, minY = 1e9, maxY = -1;
-      for (let y = 0; y < t.height; y += 2) for (let x = 0; x < t.width; x += 2) if (white(x, y)) {
-        if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
-      }
+      const deadline = Date.now() + 8000;
+      do {
+        await new Promise(r => setTimeout(r, 300));
+        t.getContext("2d").drawImage(cv, 0, 0);
+        d = t.getContext("2d").getImageData(0, 0, t.width, t.height).data;
+        minX = 1e9; maxX = -1; minY = 1e9; maxY = -1;
+        for (let y = 0; y < t.height; y += 2) for (let x = 0; x < t.width; x += 2) if (white(x, y)) {
+          if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+      } while (maxX < 0 && Date.now() < deadline);
       const w = maxX - minX, h = maxY - minY;
       return {
         src: srcW + "x" + srcH, res: resW + "x" + resH,
