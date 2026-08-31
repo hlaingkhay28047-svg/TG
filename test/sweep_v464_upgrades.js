@@ -155,7 +155,14 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    16.58 MB (16.579598 exactly — rounded up, same rule as
    v5.14/v5.16/v5.17/v5.62/v5.63). B above confirms every file is correctly
    sized, so this is real content weight, not the native-1536px mistake. */
-const PREV_MB = 16.58;
+/* v5.64b — the Derma Skin Pro split-face card and the Blue Silk Boudoir
+   card each shipped their own verified 960x640 photo (a real two-pass derma
+   run over the shipped raw-skin before, and the corrected gold-screen frame
+   at the source's own composition), taking the pack to 143 files / 16.79 MB
+   (16.785508 exactly — rounded up, same rule as always). B above confirms
+   both files are correctly sized, so this is real content weight, not the
+   native-1536px mistake. */
+const PREV_MB = 16.79;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });
