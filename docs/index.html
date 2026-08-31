@@ -809,6 +809,53 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
 @media (max-width:560px){.pn-tabs{grid-template-columns:1fr}}
 /* the follow-along CTA bar is a PHONE affordance: on a desktop it lies
    over every chapter's own buttons and reads as a broken overlay */
+/* ---- THE ROOM — 5D chapter explorer ---- */
+.ch-media{cursor:pointer}
+.ch-open{position:absolute;right:10px;bottom:10px;z-index:3;padding:5px 11px;border-radius:999px;
+  border:1px solid rgba(233,185,73,.5);background:rgba(8,9,15,.62);backdrop-filter:blur(6px);
+  color:var(--gold-hi);font-size:11.5px;font-weight:700;letter-spacing:.06em;pointer-events:none}
+.chx{width:min(880px,calc(100% - 20px));max-height:calc(100dvh - 20px);padding:0;border:1px solid rgba(233,185,73,.3);
+  border-radius:20px;background:linear-gradient(160deg,#10131d,#0a0c13);color:var(--cream);overflow:hidden;box-shadow:0 40px 110px rgba(0,0,0,.7)}
+.chx::backdrop{background:rgba(4,5,10,.72);backdrop-filter:blur(9px)}
+.chx-in{display:grid;grid-template-columns:1fr;transform:scale(.88) rotateX(8deg);opacity:0;
+  transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .35s ease;transform-origin:50% 60%}
+.chx.on .chx-in{transform:none;opacity:1}
+.chx-x{position:absolute;top:10px;right:10px;z-index:5;width:40px;height:40px;border-radius:50%;
+  border:1px solid rgba(233,185,73,.4);background:rgba(8,9,15,.66);color:var(--gold-hi);font-size:20px;cursor:pointer}
+.chx-media{position:relative;aspect-ratio:16/9;max-height:44dvh;overflow:hidden}
+.chx-media img,.chx-media video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.chx-media video{opacity:0;transition:opacity .8s ease;pointer-events:none}
+.chx-media video.live{opacity:1}
+.chx-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,9,15,0) 55%,rgba(10,12,19,.92) 100%)}
+.chx-body{position:relative;padding:14px 18px calc(16px + env(safe-area-inset-bottom));min-height:200px}
+.chx-body .kick{display:block;color:var(--gold);font-size:var(--fs-xs);font-weight:700;letter-spacing:.16em;margin-bottom:6px;animation:kickGlow 6s ease-in-out infinite}
+.chx-step{min-height:96px;perspective:700px}
+.chx-n{display:block;color:transparent;-webkit-text-stroke:1.2px rgba(244,212,136,.45);
+  font-family:"Arial Black","Segoe UI Black",Roboto,system-ui,sans-serif;font-size:26px;font-weight:900;margin-bottom:4px}
+.chx-step h3{margin:0 0 8px;font-size:clamp(1.15rem,4.6vw,1.7rem);line-height:1.35;font-weight:800}
+.chx-step h3 em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:hnkShine 5s ease-in-out infinite}
+.chx-step p{margin:0;color:var(--muted);font-size:var(--fs-sm);line-height:1.75}
+.chx-step.go h3,.chx-step.go p,.chx-step.go .chx-n{animation:chxIn .42s cubic-bezier(.16,1,.3,1) both}
+.chx-step.go p{animation-delay:.07s}
+@keyframes chxIn{from{opacity:0;transform:translateX(46px) rotateY(10deg)}to{opacity:1;transform:none}}
+.chx-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+.chx-dots{display:flex;gap:6px}
+.chx-dots i{width:7px;height:7px;border-radius:50%;background:rgba(233,185,73,.25);transition:.25s}
+.chx-dots i.on{background:var(--gold);box-shadow:0 0 10px rgba(233,185,73,.6)}
+.chx-go{width:100%;justify-content:center;margin-top:14px}
+@media (min-width:760px){
+  .chx-in{grid-template-columns:7fr 6fr}
+  .chx-media{aspect-ratio:auto;max-height:none;height:100%;min-height:380px}
+  .chx-shade{background:linear-gradient(90deg,rgba(8,9,15,0) 55%,rgba(10,12,19,.85) 100%)}
+  .chx-body{padding:22px 24px;display:flex;flex-direction:column;justify-content:center}
+}
+@media (prefers-reduced-motion: reduce){
+  .chx-in{transition:none;transform:none;opacity:1}
+  .chx-step.go h3,.chx-step.go p,.chx-step.go .chx-n{animation:none}
+  .chx-media video{display:none}
+  .ch-open{display:none}
+}
 @media (min-width:768px){#stickyCta{display:none!important}}
 </style>
 </head>
@@ -1445,6 +1492,30 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
   <div class="ghostwrap" aria-hidden="true"><div class="ghost">HNK</div></div>
 </footer>
 
+<!-- v5.59.0 — THE ROOM (owner): tapping a chapter opens INTO it with a
+     5D transition; inside, that page's features play step by step like an
+     advertisement, ending on the real door into the app. One dialog serves
+     all eleven chapters — everything is read from the chapter's own DOM. -->
+<dialog id="chx" class="chx" aria-label="Feature explorer">
+  <div class="chx-in">
+    <button type="button" class="chx-x" id="chxClose" aria-label="ပိတ်ရန်">×</button>
+    <div class="chx-media"><img alt=""><span class="chx-shade" aria-hidden="true"></span></div>
+    <div class="chx-body">
+      <p class="kick lat" id="chxKick"></p>
+      <div class="chx-step" id="chxStep">
+        <span class="chx-n lat" id="chxN"></span>
+        <h3 id="chxTitle"></h3>
+        <p id="chxDesc"></p>
+      </div>
+      <div class="chx-nav">
+        <button type="button" class="btn btn-dim" id="chxBack" aria-label="နောက်သို့">←</button>
+        <div class="chx-dots" id="chxDots" aria-hidden="true"></div>
+        <button type="button" class="btn btn-gold" id="chxNext">ရှေ့ဆက် →</button>
+      </div>
+      <a class="btn btn-gold chx-go" id="chxGo" href="app/" hidden><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>ဒီခန်းကို တကယ်ဖွင့်မယ်</span></a>
+    </div>
+  </div>
+</dialog>
 <dialog id="lb" aria-label="ပုံအကြီးချဲ့ကြည့်ရန်" data-i18n-aria="lb.aria">
   <button type="button" class="lb-x" id="lbClose" aria-label="ပိတ်ရန်" data-i18n-aria="lb.close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
   <img alt="">
@@ -1979,6 +2050,90 @@ fetch("app/version.json",{cache:"no-store"}).then(function(r){return r.json();})
     es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); countUp(e.target); rio.unobserve(e.target); } });
   },{threshold:.12});
   chs.forEach(function(c){rio.observe(c);});
+})();
+/* THE ROOM: tap a chapter, travel INTO it. The overlay is one dialog fed
+   from the tapped chapter's own DOM — headline, story, each checklist row
+   becomes a step, and the final step is the real door into the app. The
+   card-to-room travel rides the View Transitions API where the browser
+   has it; everywhere else the dialog's own 5D scale-in carries it. */
+(function(){
+  var dlg=document.getElementById("chx"); if(!dlg||!dlg.showModal) return;
+  var reduceR=false; try{reduceR=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  var img=dlg.querySelector(".chx-media img"), kick=document.getElementById("chxKick"),
+      stepBox=document.getElementById("chxStep"), nEl=document.getElementById("chxN"),
+      tEl=document.getElementById("chxTitle"), dEl=document.getElementById("chxDesc"),
+      dots=document.getElementById("chxDots"), back=document.getElementById("chxBack"),
+      next=document.getElementById("chxNext"), go=document.getElementById("chxGo");
+  var probe=document.createElement("video");
+  var ext=probe.canPlayType('video/mp4; codecs="avc1.42E01E"')?".mp4":
+          (probe.canPlayType('video/webm; codecs="vp9"')?".webm":"");
+  var steps=[], idx=0, vid=null;
+  function renderDots(){
+    dots.textContent="";
+    steps.forEach(function(_,i){ var d=document.createElement("i"); if(i===idx) d.className="on"; dots.appendChild(d); });
+  }
+  function show(i){
+    idx=Math.max(0,Math.min(steps.length-1,i));
+    var st=steps[idx];
+    stepBox.classList.remove("go"); void stepBox.offsetWidth;
+    nEl.textContent=(idx+1)+" / "+steps.length;
+    if(st.html) tEl.innerHTML=st.html; else tEl.textContent=st.t;
+    dEl.textContent=st.d||"";
+    stepBox.classList.add("go");
+    back.disabled=idx===0;
+    var last=idx===steps.length-1;
+    next.hidden=last; go.hidden=!last;
+    renderDots();
+  }
+  function openFor(ch){
+    var kk=ch.querySelector(".ch-copy .kick"), h=ch.querySelector(".ch-h"),
+        pp=ch.querySelector(".ch-p"), cta=ch.querySelector('a.btn');
+    kick.textContent=kk?kk.textContent:"";
+    steps=[{html:h?h.innerHTML:"", d:pp?pp.textContent:""}];
+    [].forEach.call(ch.querySelectorAll(".ch-can li"),function(li){ steps.push({t:li.textContent,d:""}); });
+    steps.push({t:"အသင့်ပါပဲ — ကိုယ်တိုင် စမ်းကြည့်လိုက်ပါ",d:"HNK အကောင့်တစ်ခုတည်းနဲ့ ဒီခန်းအပါအဝင် အခန်းအားလုံး ပွင့်ပါတယ်။"});
+    if(cta) go.href=cta.getAttribute("href");
+    var poster=ch.querySelector(".ch-media img");
+    img.src=poster?poster.getAttribute("src"):"";
+    img.style.objectPosition=poster&&poster.style.objectPosition||"center 30%";
+    if(vid){ try{vid.remove();}catch(e){} vid=null; }
+    var clip=ch.getAttribute("data-clip");
+    if(clip&&ext&&!reduceR){
+      vid=document.createElement("video");
+      vid.muted=true; vid.loop=true; vid.playsInline=true;
+      vid.setAttribute("muted",""); vid.setAttribute("playsinline",""); vid.setAttribute("aria-hidden","true");
+      vid.src=clip+ext;
+      vid.style.objectPosition=img.style.objectPosition;
+      vid.addEventListener("playing",function(){ vid.classList.add("live"); });
+      vid.addEventListener("error",function(){ try{vid.remove();}catch(e){} vid=null; });
+      img.insertAdjacentElement("afterend",vid);
+    }
+    var open=function(){
+      dlg.showModal();
+      requestAnimationFrame(function(){ dlg.classList.add("on"); });
+      show(0);
+      if(vid){ var pr=vid.play(); if(pr&&pr.catch)pr.catch(function(){}); }
+    };
+    if(document.startViewTransition&&!reduceR){ document.startViewTransition(open); } else open();
+  }
+  function close(){
+    dlg.classList.remove("on");
+    setTimeout(function(){ try{dlg.close();}catch(e){} if(vid&&!vid.paused) vid.pause(); }, reduceR?0:180);
+  }
+  next.addEventListener("click",function(){ show(idx+1); });
+  back.addEventListener("click",function(){ show(idx-1); });
+  document.getElementById("chxClose").addEventListener("click",close);
+  dlg.addEventListener("click",function(e){ if(e.target===dlg) close(); });
+  dlg.addEventListener("cancel",function(e){ e.preventDefault(); close(); });
+  [].forEach.call(document.querySelectorAll(".chapter"),function(ch){
+    var m=ch.querySelector(".ch-media"); if(!m) return;
+    var hint=document.createElement("span");
+    hint.className="ch-open"; hint.textContent="အထဲဝင်ကြည့်မယ် ↗";
+    m.appendChild(hint);
+    m.addEventListener("click",function(){ openFor(ch); });
+    var hh=ch.querySelector(".ch-h");
+    if(hh){ hh.style.cursor="pointer"; hh.addEventListener("click",function(){ openFor(ch); }); }
+  });
 })();
 /* THE JOURNEY: the 5D tilt — fine-pointer screens only, the frame leans
    toward the cursor and the gloss follows it; touch and reduced motion
