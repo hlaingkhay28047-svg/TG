@@ -1,6 +1,27 @@
 "use strict";
 
 (() => {
+  /* 20260831e — self-healing freshness: the ?v= stamps only work once the
+     DOCUMENT itself is fresh, and phones kept serving a cached index.html
+     minutes after a release (three owner reports). On every load, quietly
+     re-fetch the document past the HTTP cache; if its asset stamp differs
+     from the one this page booted with, reload once — never loops, and
+     stays silent offline. */
+  (function ensureFreshDocument() {
+    try {
+      const mine = (document.querySelector('script[src*="admin.js"]') || {}).src || "";
+      const stamp = (mine.match(/[?&]v=([0-9a-z]+)/i) || [])[1];
+      if (!stamp) return;
+      fetch("index.html", { cache: "reload" }).then(r => r.ok ? r.text() : "").then(html => {
+        const live = (html.match(/admin\.js\?v=([0-9a-z]+)/i) || [])[1];
+        if (live && live !== stamp && sessionStorage.getItem("hnkAdminFresh") !== live) {
+          sessionStorage.setItem("hnkAdminFresh", live);
+          location.reload();
+        }
+      }).catch(() => {});
+    } catch (e) {}
+  })();
+
   const API = Object.freeze({
     password: "/api/auth/v1/token?grant_type=password",
     refresh: "/api/auth/v1/token?grant_type=refresh_token",

@@ -4,11 +4,15 @@
   "private": true,
   "description": "HNK Create Studio API — auth, PostgREST-compatible reads/writes and payment-proof storage over DigitalOcean Managed PostgreSQL.",
   "main": "index.js",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "//build": "The DigitalOcean SQL dialect is tracked inside source_dir and must never be overwritten by the native Supabase dialect.",
     "build": "node -e \"require('fs').accessSync('sql/schema.sql')\"",
     "start": "node index.js"
   },
-  "dependencies": { "pg": "8.13.1" }
+  "dependencies": {
+    "pg": "8.23.0"
+  }
 }
