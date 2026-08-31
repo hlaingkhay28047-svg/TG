@@ -79,6 +79,7 @@ jobs:
             [hero-greet-morning]="soft golden morning light breathes through the scene, her hair stirs gently, dust motes drift in the sunbeams."
             [hero-greet-afternoon]="bright soft daylight shimmers gently, her hair and clothing sway in a light breeze."
             [hero-greet-evening]="warm lamplight flickers softly in the evening glow, her hair sways gently, tiny motes of light drift."
+            [banner-golden-temple]="warm golden light breathes across the temple, her hair and earrings sway gently, thin incense haze drifts through the air."
           )
           mkdir -p out
           fail=0

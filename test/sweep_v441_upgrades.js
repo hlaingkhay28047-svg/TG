@@ -396,7 +396,7 @@ function report(name, ok, detail) {
     srcApp.includes(".dash-greet video.greet-motion{position:absolute") &&
     srcApp.includes(".dash-greet.has-motion{animation:none}") &&
     /\.dash-greet::before\{[^}]*z-index:1/.test(srcApp) &&
-    srcApp.includes(".page-hero video.ph-motion,.dash-greet video.greet-motion{display:none}"),
+    srcApp.includes("video.ph-motion,.dash-greet video.greet-motion{display:none}"),
     JSON.stringify(greet));
 
   await page.close();

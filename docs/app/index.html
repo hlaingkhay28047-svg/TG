@@ -115,10 +115,11 @@ input,textarea,select{font-family:inherit}
 
 .hero-strip{position:relative;padding:26px 0 6px;overflow:hidden;border-radius:0 0 18px 18px}
 .hero-art{position:absolute;top:0;left:-16px;right:-16px;bottom:0;z-index:-1;overflow:hidden}
-.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:.92;will-change:transform;animation:heroKB 22s ease-in-out infinite alternate}
-@keyframes heroKB{from{transform:scale(1)}to{transform:scale(1.09) translateX(-1.2%)}}
-.hero-art:before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:radial-gradient(55% 65% at 66% 26%,rgba(255,214,130,.22),transparent 70%);mix-blend-mode:screen;animation:heroGlow 7s ease-in-out infinite alternate}
-@keyframes heroGlow{from{opacity:.3}to{opacity:1}}
+/* v5.58.0 — owner: the Workflows hero drops its dress-up like the eleven
+   page banners did in v5.57.2. The Ken Burns zoom, the breathing gold glow
+   and the six drifting sparks are RETIRED; the photo (or its cinemagraph)
+   plus the scrim and the type effects are the whole show now. */
+.hero-art img{width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:.92}
 /* two scrims: diagonal left-dark keeps the text zone readable while the
    right side stays clear so the hero subject's face is actually visible;
    the vertical fade anchors the statline and blends into the page */
@@ -126,18 +127,9 @@ input,textarea,select{font-family:inherit}
 .hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:76%;text-shadow:0 1px 4px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,.75)}
 .hero-strip .statline{text-shadow:0 1px 3px rgba(0,0,0,.9),0 2px 10px rgba(0,0,0,.7)}
 @media (min-width:768px){.hero-strip .kick,.hero-strip h1,.hero-strip .lede{max-width:62%}}
-.hero-fx{position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;pointer-events:none;overflow:hidden}
-.hero-fx i{position:absolute;display:block;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle,#ffe9ae 0%,rgba(233,185,73,.85) 55%,transparent 72%);box-shadow:0 0 12px 2px rgba(233,185,73,.5);opacity:0;animation:heroSpark 8s linear infinite}
-.hero-fx i:nth-child(1){left:10%;top:80%;animation-duration:8.4s;animation-delay:0s;transform:scale(.7)}
-.hero-fx i:nth-child(2){left:30%;top:88%;animation-duration:7.1s;animation-delay:1.7s;transform:scale(.55)}
-.hero-fx i:nth-child(3){left:52%;top:78%;animation-duration:9.2s;animation-delay:3.2s;transform:scale(.95)}
-.hero-fx i:nth-child(4){left:70%;top:86%;animation-duration:7.7s;animation-delay:.8s;transform:scale(.6)}
-.hero-fx i:nth-child(5){left:86%;top:80%;animation-duration:8.9s;animation-delay:2.5s;transform:scale(.8)}
-.hero-fx i:nth-child(6){left:42%;top:92%;animation-duration:8s;animation-delay:4.6s;transform:scale(.7)}
-@keyframes heroSpark{0%{opacity:0;transform:translateY(0) scale(.6)}12%{opacity:.9}60%{opacity:.55}100%{opacity:0;transform:translateY(-130px) scale(1)}}
 .hero-strip h1 em,.page-hero .ph-head em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:heroShine 5s ease-in-out infinite}
 @keyframes heroShine{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
-@media (prefers-reduced-motion: reduce){.hero-art img,.hero-art:before,.hero-fx i,.hero-strip h1 em,.page-hero .ph-head em,.dash-greet,.hnk-wordmark,.lib-grid img{animation:none!important}}
+@media (prefers-reduced-motion: reduce){.hero-strip h1 em,.page-hero .ph-head em,.dash-greet,.hnk-wordmark,.lib-grid img{animation:none!important}}
 @media (forced-colors:active){.hnk-wordmark{background:none!important;color:CanvasText;-webkit-text-fill-color:CanvasText;filter:none;animation:none}.hnk-studio-label{color:CanvasText;text-shadow:none}.nav-name::after{background:CanvasText;box-shadow:none}}
 /* v5.9 — the mini hero used to render its photograph at half opacity, and
    with the scrim below that put the art under a combined ~0.94 of cover in
@@ -172,9 +164,11 @@ input,textarea,select{font-family:inherit}
    instant poster and the only frame reduced-motion, save-data and
    missing-clip users ever see. The readability scrim sits at z1 and
    dresses the video exactly as it dresses the still. */
-.page-hero video.ph-motion{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
-.page-hero video.ph-motion.live{opacity:1}
-@media (prefers-reduced-motion: reduce){.page-hero video.ph-motion,.dash-greet video.greet-motion{display:none}}
+/* selector kept bare: the same clip machinery now also serves the
+   Workflows hero, whose <img> lives inside .hero-art, not a .page-hero */
+video.ph-motion{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
+video.ph-motion.live{opacity:1}
+@media (prefers-reduced-motion: reduce){video.ph-motion,.dash-greet video.greet-motion{display:none}}
 .page-hero .ph-kick{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
 .page-hero .ph-head{position:relative;z-index:2;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
 @media (min-width:768px){.page-hero{min-height:172px;padding:16px 20px 14px}}
@@ -2193,7 +2187,6 @@ html.splashing #splash{display:flex}
        hero ships permanently in its compact kick-line form (hero-mini) -->
   <header class="hero-strip hero-mini">
   <div class="hero-art"><img src="lib/banners/banner-golden-temple.jpg" alt="" style="object-position:83% 27%"></div>
-  <div class="hero-fx"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <!-- v5.58.0 — this brand line still said "Gemini AI" four waves after the
        5.50.0 RunningHub-only decision; static copy, no i18n rewrite touches it -->
   <div class="kick">No Install · Panel Data · RunningHub AI</div>
@@ -7642,7 +7635,9 @@ var PH_MOTION_CLIPS=["banner-archer","banner-train-station","hero-mermaid","bann
     var con=navigator.connection;
     if(con && (con.saveData || /(^|-)2g/.test(String(con.effectiveType||"")))) return;
     if(!("IntersectionObserver" in window)) return;
-    var heroes=document.querySelectorAll(".page-hero>img");
+    /* .hero-art>img: the Workflows hero rides the same machinery since
+       v5.58.0 — its wrapper div plays the .page-hero role here */
+    var heroes=document.querySelectorAll(".page-hero>img,.hero-art>img");
     var io=new IntersectionObserver(function(entries){
       entries.forEach(function(en){
         var v=en.target._phv; if(!v) return;
@@ -20269,7 +20264,7 @@ function renderDashCont(){
    same manifest rule though — only a listed basename is ever probed, so a
    missing clip can never 404 the console. Filled when the generated pairs
    actually land in lib/banners/motion/. */
-var GREET_MOTION_CLIPS=[];
+var GREET_MOTION_CLIPS=["hero-greet-morning","hero-greet-afternoon","hero-greet-evening"];
 function greetAttachMotion(host, art){
   try{
     var name="hero-greet-"+art;
