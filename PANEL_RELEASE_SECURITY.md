@@ -178,7 +178,24 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.32.0** — `pending`. The real-things-only wave (2026-08-30, owner:
+- **v6.33.0** — `pending`. The rename wave (2026-08-31, owner: meitu နဲ့
+  evoto အမည်ကို Retouch A နဲ့ Retouch B ဆိုပြီးပြောင်းမယ် — website,
+  webapp, Photoshop panel, ဘယ်နေရာမဆို). Every user-visible "Meitu"
+  becomes "Retouch A" and every "Evoto" becomes "Retouch B" across the
+  panel's I18N strings, tab surfaces and catalog labels; internal
+  identifiers (p_meitu/p_evoto ids, storage keys, catalog keys) are
+  deliberately unchanged so presets, history and installs carry over
+  untouched. The web app and landing rename ships in v5.60.0 in the same
+  merge. Acceptance: carry over the v6.32.0 checklist; additionally
+  confirm in real Photoshop that the Retouch tab and Library show
+  "Retouch A" / "Retouch B" labels with no "Meitu"/"Evoto" remaining
+  anywhere in the visible UI, and that a preset saved under v6.32.0
+  still loads. Artifact `HNK_Ai_Panel_v6.33.0.ccx`, SHA-256
+  `3108b06e6075` (full digest in release-manifest.json), 1,287,432
+  bytes. The release stays disabled until that acceptance.
+- **v6.32.0** — superseded by v6.33.0 (the Retouch A/B rename above)
+  before Photoshop acceptance; its content ships within v6.33.0.
+  The real-things-only wave (2026-08-30, owner:
   ratio ကို ပုံသဏ္ဌာန်နဲ့ / workflow အလိုက် သုံးလို့ရတဲ့ model / model
   အစစ်ပြ / ဘာသာစကား အစစ်ပဲပြ). The panel's share of the wave is the
   language picker: measured against its ~560-key I18N table, only the

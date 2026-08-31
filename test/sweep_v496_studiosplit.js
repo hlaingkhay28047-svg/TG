@@ -1,9 +1,9 @@
-/* v4.96.0 regression sweep — Meitu and Evoto are two pages, and the photo
+/* v4.96.0 regression sweep — Retouch A and Retouch B are two pages, and the photo
    survives the trip between them.
 
    WHAT THE OWNER ASKED FOR, AND WHAT WAS MEASURED INSTEAD. He asked repeatedly
    for the two suites to be split into pages. They were not. Both #muHost and
-   #evHost were display:block at the same moment, and the MEITU/EVOTO chips
+   #evHost were display:block at the same moment, and the RETOUCH A/RETOUCH B chips
    called scrollIntoView and nothing else — they never switched suite and never
    marked which one you were in. One page carried 34 accordions and 253 sliders,
    4395px tall on a 390px phone: 5.2 screens of scrolling to reach a slider.
@@ -15,8 +15,8 @@
    node while preserving its listeners and its canvas bitmap. Copying the markup
    would have cloned ~40 ids and re-run the preview init, dropping the customer's
    photo on every suite switch. E and F are the two halves of that: exactly one
-   of each shared node exists, and a photo loaded on Meitu is still on screen
-   after switching to Evoto. If someone later "simplifies" this by duplicating
+   of each shared node exists, and a photo loaded on Retouch A is still on screen
+   after switching to Retouch B. If someone later "simplifies" this by duplicating
    the markup, F is what fails.
 
    AND TWO ASSERTIONS PIN MISTAKES THIS CHANGE ACTUALLY MADE.
@@ -143,9 +143,9 @@ report("A2) both sit in the Edit group, beside the other photo pages",
   const E = await look("pgEvoto");
 
   /* ---- B) one suite per page, the other parked ---- */
-  report("B) Meitu shows only the Meitu card, and Evoto's is parked in the dock",
+  report("B) Retouch A shows only the Retouch A card, and Retouch B's is parked in the dock",
     M.mu === true && M.ev === false && M.evDocked === true, M);
-  report("B2) Evoto shows only the Evoto card, and Meitu's is parked in the dock",
+  report("B2) Retouch B shows only the Retouch B card, and Retouch A's is parked in the dock",
     E.ev === true && E.mu === false && E.muDocked === true, E);
 
   /* ---- C/D) the scrolling this release exists to cut ---- */
@@ -219,15 +219,15 @@ report("A2) both sit in the Edit group, beside the other photo pages",
       srcStillLoaded: !!(window.ST && ST.srcBitmap)
     };
   });
-  report("F) a photo loaded on Meitu is still loaded, and still drawn, after switching to Evoto",
+  report("F) a photo loaded on Retouch A is still loaded, and still drawn, after switching to Retouch B",
     carried.srcStillLoaded === true && carried.sameNode === true &&
     carried.spreadBefore > 20 && carried.spreadAfter === carried.spreadBefore &&
     carried.meanAfter === carried.meanBefore && carried.after === carried.before, carried);
 
   /* ---- G) the chip finally answers "which suite am I in" ---- */
   report("G) exactly one suite chip is marked active, and it is the page you are on",
-    M.chipOn.length === 1 && /MEITU/.test(M.chipOn[0]) &&
-    E.chipOn.length === 1 && /EVOTO/.test(E.chipOn[0]),
+    M.chipOn.length === 1 && /RETOUCH A/.test(M.chipOn[0]) &&
+    E.chipOn.length === 1 && /RETOUCH B/.test(E.chipOn[0]),
     { onMeitu: M.chipOn, onEvoto: E.chipOn });
 
   /* ---- L) the specificity guard ---- */
@@ -306,7 +306,7 @@ report("A2) both sit in the Edit group, beside the other photo pages",
     crossSearch.landed === "pgMeitu" && crossSearch.visible === true, crossSearch);
 
   /* M3 — the look-shelf art observer armed on stActivePage() ONCE at load, which
-     is pgMeitu until told otherwise. A studio whose first Studio visit was Evoto
+     is pgMeitu until told otherwise. A studio whose first Studio visit was Retouch B
      watched a page that never appeared: the art never woke and the shelf stayed
      on computed tiles for the whole session. */
   const viaEvoto = await (async () => {
@@ -325,7 +325,7 @@ report("A2) both sit in the Edit group, beside the other photo pages",
     await c.close();
     return r;
   })();
-  report("M3) entering Studio via Evoto FIRST still wakes the look art",
+  report("M3) entering Studio via Retouch B FIRST still wakes the look art",
     viaEvoto.artOn === true && viaEvoto.page === "pgEvoto", viaEvoto);
 
   /* M4 — v4.96's own comment claimed stNormalizePage covered "the saved page,

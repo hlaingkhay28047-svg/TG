@@ -1,8 +1,8 @@
 /* v4.45.0 regression sweep — Edit-pages Wave 3 (house style, presets,
-   hand-off) + the 880-style Meitu/Evoto reference pack.
+   hand-off) + the 880-style Retouch A/Retouch B reference pack.
 
    Pinned contracts:
-   A) 880 pack: both suites carry a Style Looks group (17 Meitu + 17 Evoto
+   A) 880 pack: both suites carry a Style Looks group (17 Retouch A + 17 Retouch B
       groups total), catalog serves 880 records, picking a style sets
       state.st.refX (IMAGE 2) + queues the st_style880 pend edit whose frag
       carries the pack's instruction + identity lock, tap-again clears.

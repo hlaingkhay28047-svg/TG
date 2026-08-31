@@ -334,8 +334,8 @@ const PORT = process.env.PORT || 8931;
   // 15) guarantee sweep (§2.2): canvas >=120px AND controls window >=130px at every depth on
   //     320/360/390 portrait, with the slider under the finger hit-testing as itself (not btnStGen).
   //     #14 removed the photo — reload a portrait fixture through the public API first.
-  //     v4.96 SPLIT: this used to sweep "#pgStudio .rng", which reached Meitu's 99 sliders and
-  //     Evoto's 153 in one page view. Only one suite card is mounted now — the other is parked
+  //     v4.96 SPLIT: this used to sweep "#pgStudio .rng", which reached Retouch A's 99 sliders and
+  //     Retouch B's 153 in one page view. Only one suite card is mounted now — the other is parked
   //     in #stDock and measures 0x0 — so the sweep runs ONCE PER SUITE PAGE and is reported as
   //     two checks. Identical thresholds (canvas >=119.5px, window >=130px, exact hit-test) on
   //     each; nothing was loosened, the same slider population is still covered in total.
@@ -468,7 +468,7 @@ const PORT = process.env.PORT || 8931;
     const stillFull = !stg.classList.contains("compact");
     /* v4.96: the drift marker used to be an #evHost group, which only worked
        because both suite cards shared the page. #evHost is parked in #stDock
-       whenever Evoto is not the active suite and measures 0x0 there, so the
+       whenever Retouch B is not the active suite and measures 0x0 there, so the
        marker has to come from the MOUNTED suite host — same role (a plain,
        non-sticky block below the stage in normal flow), same 4px tolerance. */
     const grp = document.querySelectorAll("#muHost .grp")[3];

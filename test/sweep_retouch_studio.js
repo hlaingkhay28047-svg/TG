@@ -153,7 +153,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
 
   // 5) a slider chip toggles the shared state.rt entry (the single source of
   // truth every generate reads), and generating carries the retouch block.
-  // (#rtChips — the old Studio mirror host — left with v4.23.0's Meitu/Evoto
+  // (#rtChips — the old Studio mirror host — left with v4.23.0's Retouch A/Retouch B
   // rebuild, so the state entry itself is now the cross-page contract.)
   const sliderSyncResult = await page.evaluate(async () => {
     rsSetMode("sliders");

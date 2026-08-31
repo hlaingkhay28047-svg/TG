@@ -176,7 +176,7 @@ function check(ok, label, detail) {
     "returning user's cold-open restore still wins over the Home default — legacy pgStudio resolves to pgMeitu (+ one-time group seed ran)", ret);
 
   /* ...and it resolves to the suite they were actually last on, not a constant:
-     with hnk_st_suite remembering Evoto, the same stale "pgStudio" must reopen
+     with hnk_st_suite remembering Retouch B, the same stale "pgStudio" must reopen
      #pgEvoto. This is the half of stNormalizePage() a hardcoded default passes. */
   await page.evaluate(() => localStorage.setItem("hnk_st_suite", "pgEvoto"));
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
@@ -187,7 +187,7 @@ function check(ok, label, detail) {
     stored: localStorage.getItem("hnk_web_studio_page")
   }));
   check(retEv.cur === "pgEvoto" && retEv.vis && retEv.stored === "pgEvoto",
-    "legacy pgStudio restore follows the last-used suite (Evoto) and rewrites the saved id to the real page", retEv);
+    "legacy pgStudio restore follows the last-used suite (Retouch B) and rewrites the saved id to the real page", retEv);
 
   /* ---- 4) deep link ?page=pgHome ---- */
   await page.goto(`http://127.0.0.1:${PORT}/index.html?page=pgHome`, { waitUntil: "domcontentloaded" });

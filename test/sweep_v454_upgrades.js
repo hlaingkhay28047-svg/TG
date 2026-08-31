@@ -1,6 +1,6 @@
 /* v4.54.0 regression sweep — original framing is sacred on every surface.
 
-   Reported by the studio owner: Evoto/Meitu before-after results came back
+   Reported by the studio owner: Retouch B/Retouch A before-after results came back
    with the subject re-framed and the aspect ratio changed.
 
    The cause: the shared dispatcher appends "Output aspect ratio: X" to the

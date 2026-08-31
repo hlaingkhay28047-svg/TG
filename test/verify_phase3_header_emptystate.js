@@ -35,7 +35,7 @@ const PORT = process.env.PORT || 8931;
   console.log("h2 elements still containing an inline-span subtitle:", badHeaders);
   console.log(badHeaders === 0 ? "PASS (no inline-span subtitles left in any h2, aside from the intentional (optional) badges)" : "FAIL (inline-span subtitle regression)");
 
-  // --- Studio headers (v4.23.0 Meitu/Evoto rebuild): each card keeps the
+  // --- Studio headers (v4.23.0 Retouch A/Retouch B rebuild): each card keeps the
   // h2-title + separate .mut-subtitle pattern ---
   // v4.96 split the single #pgStudio page into two real pages, #pgMeitu and
   // #pgEvoto. The shared block (#stCols: PHOTO, MY RECIPES, stage, result box…)
@@ -60,18 +60,18 @@ const PORT = process.env.PORT || 8931;
   await page.evaluate(() => switchPage("pgEvoto"));
   await page.waitForTimeout(200);
   const evotoHdrs = await readCardHeaders("pgEvoto");
-  console.log("Meitu headers:", JSON.stringify(meituHdrs));
-  console.log("Evoto headers:", JSON.stringify(evotoHdrs));
+  console.log("Retouch A headers:", JSON.stringify(meituHdrs));
+  console.log("Retouch B headers:", JSON.stringify(evotoHdrs));
   // PHOTO + MY RECIPES ride along in #stCols, so they must hold the pattern on
   // BOTH suite pages; only the third card differs. (MY RECIPES card added by
   // the pgStudio v2 upgrade; v4.25 icon system renders the h2 glyph as inline
   // SVG, so it contributes no text.)
-  const wantMeitu = ["PHOTO", "MY RECIPES", "MEITU STUDIO"];
-  const wantEvoto = ["PHOTO", "MY RECIPES", "EVOTO PRO"];
+  const wantMeitu = ["PHOTO", "MY RECIPES", "RETOUCH A STUDIO"];
+  const wantEvoto = ["PHOTO", "MY RECIPES", "RETOUCH B PRO"];
   const hdrsOk = (got, want) => got.length === want.length &&
     got.every((s, i) => s.h2Text === want[i] && s.subIsMut && s.subFilled);
   const studioOk = hdrsOk(meituHdrs, wantMeitu) && hdrsOk(evotoHdrs, wantEvoto);
-  console.log(studioOk ? "PASS (PHOTO / MY RECIPES / MEITU STUDIO on #pgMeitu and PHOTO / MY RECIPES / EVOTO PRO on #pgEvoto each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
+  console.log(studioOk ? "PASS (PHOTO / MY RECIPES / RETOUCH A STUDIO on #pgMeitu and PHOTO / MY RECIPES / RETOUCH B PRO on #pgEvoto each use h2 + non-empty .mut subtitle)" : "FAIL (Studio header structure)");
 
   // --- Gallery empty-state: shown by default (icon + message + CTA), the reference pattern ---
   await page.evaluate(() => switchPage("pgGallery"));
