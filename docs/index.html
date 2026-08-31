@@ -270,9 +270,12 @@ h1,h2,h3{font-weight:700;line-height:1.6}
   .hmedia video{object-position:50% 24%}
   .hm-kick,.hm-tag{display:none}
   .hero .wrap .kick{display:block}
+  /* v5.59.0 — owner: "the big dark thing covers the person." The scrim now
+     stops at the text column's edge (~56%) and the floor fade begins only
+     below her — the fairy stays fully lit while every line stays readable */
   .hero:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-    background:linear-gradient(102deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.6) 38%,rgba(0,0,0,.12) 66%,rgba(0,0,0,0) 100%),
-               linear-gradient(180deg,rgba(0,0,0,.06) 0%,rgba(0,0,0,.12) 42%,var(--ink) 100%)}
+    background:linear-gradient(96deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.55) 26%,rgba(0,0,0,.14) 44%,rgba(0,0,0,0) 56%),
+               linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 70%,rgba(11,13,20,.5) 88%,var(--ink) 100%)}
   .fx{z-index:2}
   .hero .wrap{padding-bottom:var(--sp-7)}
 }
