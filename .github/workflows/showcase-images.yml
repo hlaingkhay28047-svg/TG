@@ -8,12 +8,15 @@
 # throwaway showcase-drop orphan branch (no .github in its tree, so the token
 # needs no workflows permission), and the branch is deleted after the wave.
 #
-# WHAT IT MAKES (owner instruction 2026-08-31: "Before/After ပုံတွေက
-# အသစ်တွေနဲ့ ပိုကောင်းအောင်"): two honest pairs -
-#   pair 1  ba-retouch-before  : T2I base — unretouched studio portrait
+# WHAT IT MAKES (owner instructions 2026-08-31: new images; then "the model
+# uses THIS face" — the promo-panel woman, fair complexion, clean white
+# western/Vietnamese-style dress): two honest pairs -
+#   pair 1  ba-retouch-before  : identity-preserving edit from her poster —
+#                                natural un-retouched studio portrait
 #           ba-retouch-after   : that base run through the shipped catalog's
 #                                REAL "retouch" workflow prompt, verbatim
-#   pair 2  ba-scene-before    : T2I base — bride on a plain studio backdrop
+#   pair 2  ba-scene-before    : identity-preserving edit — white ao-dai
+#                                dress on a plain studio backdrop
 #           ba-scene-after     : that base run through the shipped catalog's
 #                                REAL "bg-replace" workflow prompt, verbatim,
 #                                plus the new-background description its
@@ -66,7 +69,6 @@ jobs:
           set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
           BASE="https://www.runninghub.ai/openapi/v2"
           AUTH="Authorization: Bearer $RH_KEY"
-          T2I_PATH="rhart-image-n-pro-official/text-to-image"
           EDIT_PATH="rhart-image-n-pro-official/edit"
           mkdir -p out
           # The AFTER prompts come from the shipped catalog itself, verbatim —
@@ -86,8 +88,15 @@ jobs:
           PY
           )
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
-          BASE_A_PROMPT="RAW unretouched studio portrait photograph of a young Myanmar woman, head and shoulders, facing the camera, neutral gray seamless studio background, soft even lighting, natural imperfect skin with visible pores, a few small temporary blemishes, slight under-eye darkness, stray flyaway hairs, no retouching, realistic candid skin texture, 85mm portrait lens, photorealistic"
-          BASE_B_PROMPT="Full-length studio photograph of a Myanmar bride in a traditional white and gold wedding dress, standing on a plain light-gray seamless studio backdrop, soft even studio lighting, whole body and shoes visible, natural relaxed pose, soft contact shadow on the floor, photorealistic"
+          # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
+          # bases are IDENTITY-PRESERVING edits from her poster (shipped in the
+          # repo), fair clear complexion, clean white western/Vietnamese-style
+          # dress. The before for the retouch pair keeps honest natural texture
+          # so the divider still has real work to reveal.
+          REF_IMG="docs/assets/site/promo-panel-poster.jpg"
+          IDENTITY="Use the exact same woman and facial identity from the reference image — same face shape, eyes, eyebrows, nose, lips, jawline, expression character and apparent age; do not redesign or beautify her facial structure."
+          BASE_A_PROMPT="$IDENTITY Create a head-and-shoulders studio portrait of her facing the camera on a neutral gray seamless studio background with soft even lighting. Fair, clear complexion but RAW un-retouched skin: visible pores, a few small temporary blemishes, slight under-eye darkness, stray flyaway hairs, no makeup polish. She wears a simple clean white western-style blouse. 85mm portrait lens, photorealistic."
+          BASE_B_PROMPT="$IDENTITY Create a full-length studio photograph of her standing on a plain light-gray seamless studio backdrop with soft even lighting, whole body and shoes visible, natural relaxed pose, soft contact shadow on the floor. She wears an elegant clean pure-white Vietnamese ao-dai-inspired modern dress — minimal, bright white, western-clean styling — with simple white shoes. Fair clear complexion, photorealistic."
           poll_and_fetch() { # $1=name  $2=taskId — RunningHub charges at SUBMIT,
             # so this half is the one that must never be lost
             local n="$1" tid="$2" deadline=$((SECONDS+600)) img="" q st
@@ -138,15 +147,16 @@ jobs:
             exit $fail
           fi
           LIST="$PAIRS"; [ "$LIST" = "all" ] && LIST="retouch scene"
+          refurl=$(reupload "$REF_IMG") || { echo "REFERENCE UPLOAD FAILED"; exit 1; }
           for p in $LIST; do
             case "$p" in
               retouch)
-                submit "ba-retouch-before" "$T2I_PATH" "$(jbody "$BASE_A_PROMPT" "[]" "3:4")" || { fail=1; continue; }
+                submit "ba-retouch-before" "$EDIT_PATH" "$(jbody "$BASE_A_PROMPT" "[\"$refurl\"]" "3:4")" || { fail=1; continue; }
                 u=$(reupload "out/ba-retouch-before.png") || { echo "REUPLOAD FAILED retouch"; fail=1; continue; }
                 submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$u\"]" "3:4")" || fail=1
                 ;;
               scene)
-                submit "ba-scene-before" "$T2I_PATH" "$(jbody "$BASE_B_PROMPT" "[]" "2:3")" || { fail=1; continue; }
+                submit "ba-scene-before" "$EDIT_PATH" "$(jbody "$BASE_B_PROMPT" "[\"$refurl\"]" "2:3")" || { fail=1; continue; }
                 u=$(reupload "out/ba-scene-before.png") || { echo "REUPLOAD FAILED scene"; fail=1; continue; }
                 submit "ba-scene-after" "$EDIT_PATH" "$(jbody "$BG_PROMPT $BG_SCENE" "[\"$u\"]" "2:3")" || fail=1
                 ;;
