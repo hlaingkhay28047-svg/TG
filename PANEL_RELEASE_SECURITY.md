@@ -178,6 +178,23 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.35.0** — `pending`. The Concept Art Poster wave (2026-08-31, owner:
+  the two reference videos — heritage art poster design + the DP-CONCEPT
+  results grid). One new Smart Workflow (concept-poster, Studio Scenes)
+  with per-run design fields riding the shared catalog: a free poster-text
+  box, a backdrop colour picker, and ON/OFF switches for skin beauty,
+  colour tone, hair, dress, liquify and the gold folk-art layer — the
+  panel compiles them into the prompt with byte-identical logic to the
+  web app, so both surfaces produce the same request. Also: the seven
+  LEARN-DESIGN palette themes on the theme wheel, and the catalog total
+  moves 131 → 132 (sync tests green). Acceptance: carry over the v6.34.0
+  checklist; additionally open Concept Art Poster in real Photoshop,
+  confirm the six switches, text box and colour swatches render, run one
+  pass with custom text and confirm the poster returns with that exact
+  text; step the theme wheel through all nine stops and confirm every
+  screen stays readable. Artifact `HNK_Ai_Panel_v6.35.0.ccx`, SHA-256
+  `4c3d46e0b4cbb2851136c3628adb203870dc027d4b73474c908d568b1decdb8a`,
+  1,295,434 bytes. Stays disabled for customers until this acceptance.
 - **v6.34.0** — `pending`. The glam retouch wave (2026-08-31, owner:
   Retouch တွေကို လက်ရှိထက် ၁၀ ဆမက ပိုချောအောင် — Vietnam/China studio
   glass-skin standard). The four retouch-family workflow prompts
@@ -191,8 +208,10 @@ eligible students.
   one One-Tap AI Retouch and one Retouch A Style pass in real Photoshop
   and confirm the new glam finish returns as layers with the face
   unchanged. Artifact `HNK_Ai_Panel_v6.34.0.ccx`, SHA-256
-  `f54e282205578bf6f0d3e24de8210599d6202c5d7f8af80c010f4952c9fff6e3`,
-  1,287,825 bytes. Stays disabled for customers until this acceptance.
+  `737d02c9ddfd00bd78818d97630a89667552688ffedb1d878c718ba7d6ea3298`,
+  1,288,240 bytes (the digest the publish lane rebuilt and verified on
+  2026-08-31; an earlier pre-one-skin build was recorded here first).
+  Stays disabled for customers until this acceptance.
 - **v6.33.0** — `pending`, now superseded by v6.34.0 (the glam retouch prompts above)
   before Photoshop acceptance; its rename content ships within v6.34.0. Original entry follows.
 - **v6.33.0** — `pending`. The rename wave (2026-08-31, owner: meitu နဲ့

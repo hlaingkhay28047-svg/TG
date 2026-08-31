@@ -37,6 +37,7 @@ function defaultState() {
     protectionRules: [],
     validation: {},
     resolvedRoute: null,
+    fieldVals: {},           // v6.35.0 — per-workflow design fields (text/colour/toggles)
     output: {}               // shared prefs — set by the app, preserved on switch
   };
 }
@@ -57,6 +58,9 @@ function selectWorkflow(state, workflowId) {
   state.negativePrompt = "";
   state.protectionRules = [];
   state.userText = "";
+  /* v6.35.0 — design fields start at the workflow's own defaults */
+  state.fieldVals = {};
+  (wf.fields || []).forEach(function (f) { state.fieldVals[f.key] = f.type === "toggle" ? f.default !== false : (f.default || ""); });
   state.validation = {};
   state.resolvedRoute = wf.route ? Object.assign({}, wf.route) : null;
   return state;
@@ -65,7 +69,7 @@ function selectWorkflow(state, workflowId) {
 /* Click 2 — prepare: load the workflow's full protected prompt + negatives. */
 function prepare(state) {
   if (!state.workflowId) return state;
-  var c = registry.compile(state.workflowId);
+  var c = registry.compile(state.workflowId, state.fieldVals);
   if (c) {
     state.compiledPrompt = c.prompt;
     state.negativePrompt = c.negativePrompt;
@@ -95,6 +99,13 @@ function setInput(state, key, image) {
 
 /* Set the shared output preferences (size/ratio/quality). Called by the app
    from persisted settings; workflows never reset this. */
+/* v6.35.0 — one design field changed on the screen */
+function setField(state, key, val) {
+  if (!state.fieldVals) state.fieldVals = {};
+  state.fieldVals[key] = val;
+  return state;
+}
+
 function setOutput(state, output) { state.output = Object.assign({}, state.output, output || {}); return state; }
 
 /* Leaving workflow mode: clear workflow-owned state but KEEP output prefs. */
@@ -111,6 +122,7 @@ var API = {
   selectWorkflow: selectWorkflow,
   prepare: prepare,
   setInput: setInput,
+  setField: setField,
   setOutput: setOutput,
   setUserText: setUserText,
   reset: reset

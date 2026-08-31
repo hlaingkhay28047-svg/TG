@@ -33,8 +33,14 @@ function compile(state) {
   var negative = state.negativePrompt;
   var rules = state.protectionRules;
   if (!prompt) {
-    var c = registry.compile(wf.id) || {};
+    var c = registry.compile(wf.id, state.fieldVals) || {};
     prompt = c.prompt; negative = c.negativePrompt; rules = c.rules;
+  }
+  /* v6.35.0 — design fields resolve at the moment of generation, so a
+     staged prompt can never carry stale toggle/text/colour choices. */
+  if (wf.fields && wf.fields.length) {
+    var cf = registry.compile(wf.id, state.fieldVals) || {};
+    if (cf.prompt) { prompt = cf.prompt; negative = negative || cf.negativePrompt; rules = rules || cf.rules; }
   }
 
   /* The screen's optional typed instruction: without it, object-edit and

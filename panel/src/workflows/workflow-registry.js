@@ -217,6 +217,7 @@ if (_CATALOG && _CATALOG.categories) {
           return { key: "opt" + (oi + 1), label: label, role: "reference" };
         }),
         negative: w.negative,
+        fields: w.fields || [],
         hiddenPrompt: w.prompt,
         route: { modelId: "nano-banana-2", auto: true }
       };
@@ -234,10 +235,49 @@ function categories() { return _CATEGORIES.slice(); }
 
 /* Assemble the FULL protected prompt + negatives for a workflow. This is what
    goes to the provider — self-contained, no external guard needed. */
-function compile(id) {
+/* v6.35.0 — per-workflow design fields (concept-poster): byte-identical
+   assembly logic to the web app's applyWfFields. A toggle OFF removes the
+   prompt line that starts with its tag; a text field fills its token or
+   removes its tagged line when empty; a colour field fills its token with
+   "#hex (colour name)". The canonical prompt in the catalog stays the
+   all-ON version, so the sync test keeps pinning app and panel together. */
+function colourName(hex) {
+  var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim()); if (!m) return "deep colour";
+  var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  var sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  if (l < 0.08) return "near-black";
+  if (l > 0.93) return "near-white";
+  if (sat < 0.12) return l < 0.5 ? "charcoal grey" : "soft grey";
+  var h = 0;
+  if (mx === r) h = 60 * (((g - b) / d) % 6); else if (mx === g) h = 60 * ((b - r) / d + 2); else h = 60 * ((r - g) / d + 4);
+  if (h < 0) h += 360;
+  var name = h < 15 ? "red" : h < 40 ? (l < 0.4 ? "brown" : "warm orange") : h < 65 ? "golden yellow" : h < 150 ? (l < 0.35 ? "forest green" : "green") : h < 190 ? "teal" : h < 250 ? (l < 0.35 ? "navy blue" : "blue") : h < 290 ? "violet" : h < 330 ? "magenta" : "crimson";
+  return (l < 0.3 ? "deep " : l > 0.75 ? "light " : "") + name;
+}
+function applyFields(prompt, fields, vals) {
+  var p = prompt;
+  (fields || []).forEach(function (f) {
+    var v = vals ? vals[f.key] : undefined;
+    if (f.type === "toggle") {
+      var on = (v === undefined) ? (f.default !== false) : !!v;
+      if (!on && f.tag) p = p.split("\n").filter(function (ln) { return ln.indexOf(f.tag) !== 0; }).join("\n");
+    } else if (f.type === "text") {
+      var tv = String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, f.max || 80);
+      if (!tv && f.tag) p = p.split("\n").filter(function (ln) { return ln.indexOf(f.tag) !== 0; }).join("\n");
+      else if (tv && f.token) p = p.split(f.token).join(tv);
+    } else if (f.type === "color") {
+      var cv = String(v || f.default || "#123B2F");
+      if (f.token) p = p.split(f.token).join(cv + " (" + colourName(cv) + ")");
+    }
+  });
+  return p;
+}
+function compile(id, fieldVals) {
   var wf = _byId[id];
   if (!wf) return null;
-  var parts = [wf.hiddenPrompt];
+  var base = (wf.fields && wf.fields.length) ? applyFields(wf.hiddenPrompt, wf.fields, fieldVals) : wf.hiddenPrompt;
+  var parts = [base];
   var rules = [];
   /* bespoke: the hiddenPrompt is a complete, self-resolving instruction
      (ported from the web app) — appending the generic reference-transfer or
@@ -282,6 +322,7 @@ function inputLabelKey(label) { return INPUT_LABEL_KEYS[String(label || "")] || 
 
 var API = {
   list: list, homeList: homeList, get: get, categories: categories, compile: compile,
+  applyFields: applyFields, colourName: colourName,
   summaryKey: summaryKey, explanationKey: explanationKey,
   inputLabelKey: inputLabelKey, INPUT_LABEL_KEYS: INPUT_LABEL_KEYS,
   SUBJECT_LOCKS: SUBJECT_LOCKS, NEGATIVES: NEGATIVES, REFERENCE_TRANSFER: REFERENCE_TRANSFER
