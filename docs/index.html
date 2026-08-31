@@ -818,6 +818,25 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
 @media (max-width:560px){.pn-tabs{grid-template-columns:1fr}}
 /* the follow-along CTA bar is a PHONE affordance: on a desktop it lies
    over every chapter's own buttons and reads as a broken overlay */
+/* ---- v5.59.0 — words and buttons LIVE on their own (owner: 5D alive).
+   Phones never hover, so the life is idle-borne: the headline floats and
+   its gold breathes light; every gold button carries a breathing aura and
+   a glass sheen that sweeps by itself every few seconds. Reduced motion
+   stills all of it. */
+.hero h1{animation:heroDrift 7s ease-in-out infinite alternate}
+@keyframes heroDrift{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+.hero h1 em{animation:emBreathe 4.5s ease-in-out infinite}
+@keyframes emBreathe{0%,100%{text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 18px rgba(244,212,136,.35)}
+  50%{text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 36px rgba(244,212,136,.8),0 0 10px rgba(244,212,136,.5)}}
+.btn-gold{animation:goldAura 3.8s ease-in-out infinite}
+@keyframes goldAura{0%,100%{box-shadow:0 10px 24px rgba(0,0,0,.45),0 4px 16px rgba(233,185,73,.3),inset 0 1px 0 rgba(255,250,230,.75)}
+  50%{box-shadow:0 12px 30px rgba(0,0,0,.5),0 6px 32px rgba(233,185,73,.6),inset 0 1px 0 rgba(255,250,230,.9)}}
+.btn-gold::after{animation:btnSheen 4.6s ease-in-out infinite}
+@keyframes btnSheen{0%,58%{transform:skewX(-18deg) translateX(-160%)}88%,100%{transform:skewX(-18deg) translateX(540%)}}
+@media (prefers-reduced-motion: reduce){
+  .hero h1,.hero h1 em,.btn-gold{animation:none!important}
+  .btn-gold::after{animation:none!important}
+}
 /* ---- v5.59.0 — the sleeping-fairy cinemagraph returns to the MAIN hero
    (owner). The still stays as the poster; the moment the clip actually
    plays, the poster steps aside entirely so it is unmistakably a VIDEO —
