@@ -64,3 +64,4 @@ img.brand-mark,img.auth-mark{object-fit:cover;background:#10131c;border:1px soli
 .admin-hero-text em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 @media(max-width:760px){.admin-hero{margin:12px 12px 0;min-height:96px}}
 @media(prefers-reduced-motion:reduce){.admin-hero video{display:none}}
+.visits-sub{margin-top:14px}
