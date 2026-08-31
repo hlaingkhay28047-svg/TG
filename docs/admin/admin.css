@@ -123,3 +123,13 @@ img.brand-mark,img.auth-mark{object-fit:cover;background:#10131c;border:1px soli
    owns everything up to 1000px (above), and the remaining narrow-desktop
    band wraps long emails instead of forcing a horizontal scroll. */
 @media(max-width:1200px){.table-wrap td{overflow-wrap:anywhere;padding:12px 12px}.table-wrap table{min-width:640px}}
+
+/* v5.62.2 — owner (live phone): unbroken gmail strings stretched the student
+   cards past the screen edge, pushing View details off-screen. Every text
+   line in a card wraps anywhere it must, and the card never exceeds its
+   column. */
+.student-card{min-width:0;overflow:hidden}
+.student-card .person{min-width:0}
+.student-card .person>span{min-width:0}
+.student-card .person b,.student-card .person small{overflow-wrap:anywhere;white-space:normal}
+.student-card-meta .status-pill{white-space:normal}
