@@ -160,9 +160,15 @@ jobs:
           ls -la pub/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -B hero-clips-drop
+          # ORPHAN commit holding ONLY the clips: a drop branch that carries
+          # .github/ needs the token to hold `workflows` permission the moment
+          # the checked-out lane file differs from the branch's last drop —
+          # exactly how the first greet delivery bounced. No workflow files in
+          # the tree, no permission to need, create or update alike.
+          git checkout --orphan hero-clips-drop
+          git rm -rf --cached . >/dev/null
           mkdir -p docs/app/lib/banners/motion
           cp pub/* docs/app/lib/banners/motion/
-          git add docs/app/lib/banners/motion
+          git add -f docs/app/lib/banners/motion
           git commit -m "Hero motion clips: generated pair drop (transcoded on the runner)"
           git push -f origin hero-clips-drop
