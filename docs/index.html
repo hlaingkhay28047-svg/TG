@@ -764,6 +764,49 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
   .ch-copy{padding:2px 4px 0}
   .ch-h{font-size:clamp(1.3rem,5.6vw,1.6rem)}
 }
+/* ---- EVERYTHING LIVE (owner) ----
+   The frame breathes on a registered custom property so the pointer tilt
+   (CSS vars, set by JS) and the idle bob COMPOSE instead of fighting; a
+   glass sheen sweeps the clip every few seconds; headline gold shimmers;
+   kickers pulse; numerals drift; checklist rows walk in one by one.
+   Reduced motion turns every one of these off below. */
+@property --bob{syntax:"<length>";inherits:false;initial-value:0px}
+.ch-media{transform:translateY(var(--bob,0px)) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(var(--tz,0px));
+  animation:chBob 6s ease-in-out infinite alternate}
+@keyframes chBob{from{--bob:0px}to{--bob:-7px}}
+.ch-media::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(115deg,transparent 42%,rgba(255,244,214,.10) 50%,transparent 58%);
+  background-size:240% 100%;animation:chSheen 7.5s ease-in-out infinite}
+@keyframes chSheen{0%,55%{background-position:120% 0}100%{background-position:-120% 0}}
+.ch-h em{animation:hnkShine 5s ease-in-out infinite}
+.jy-h em{background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none;
+  animation:hnkShine 5s ease-in-out infinite}
+.ch-copy .kick{animation:kickGlow 6s ease-in-out infinite}
+.ch-num{animation:numFloat 5.5s ease-in-out infinite alternate}
+@keyframes numFloat{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+.ch-can li{opacity:0;transform:translateX(-12px);transition:opacity .5s ease,transform .5s cubic-bezier(.16,1,.3,1)}
+.chapter.in .ch-can li{opacity:1;transform:none}
+.chapter.in .ch-can li:nth-child(2){transition-delay:.09s}
+.chapter.in .ch-can li:nth-child(3){transition-delay:.18s}
+.chapter.in .ch-can li:nth-child(4){transition-delay:.27s}
+@media (prefers-reduced-motion: reduce){
+  .ch-media,.ch-num,.ch-h em,.jy-h em,.ch-copy .kick{animation:none!important}
+  .ch-media::before{display:none}
+  .ch-can li{opacity:1!important;transform:none!important;transition:none!important}
+}
+/* what every inner page can do — the checklist inside each chapter */
+.ch-can{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:7px}
+.ch-can li{position:relative;padding-left:22px;color:#d9d3c4;font-size:var(--fs-sm);line-height:1.6}
+.ch-can li::before{content:"✓";position:absolute;left:0;top:0;color:var(--gold);font-weight:800}
+/* the panel's six real tabs */
+.pn-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.pn-tab{padding:16px 18px;border:1px solid rgba(233,185,73,.2);border-radius:14px;
+  background:linear-gradient(160deg,#10131d,#0a0c13)}
+.pn-tab b{display:block;color:var(--gold-hi);letter-spacing:.08em;margin-bottom:6px}
+.pn-tab p{margin:0;color:var(--muted);font-size:var(--fs-sm);line-height:1.7}
+@media (max-width:900px){.pn-tabs{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.pn-tabs{grid-template-columns:1fr}}
 /* the follow-along CTA bar is a PHONE affordance: on a desktop it lies
    over every chapter's own buttons and reads as a broken overlay */
 @media (min-width:768px){#stickyCta{display:none!important}}
@@ -935,6 +978,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">SMART WORKFLOWS</p>
         <h3 class="ch-h">တစ်ချက်နှိပ်ရုံ —<br><em>professional look</em> ထွက်လာမယ်</h3>
         <p class="ch-p">Wedding veil, နောက်ခံပြောင်း, မျက်နှာမပြောင်း scene ပြောင်း — အသင့်စီထားတဲ့ workflow တွေက အကုန် စောင့်နေတယ်။</p>
+        <ul class="ch-can"><li>Face &amp; Portrait, Background &amp; Scene အမျိုးအစားလိုက် စီထား</li><li>Wizard က တစ်ဆင့်ချင်း လမ်းညွှန်ပေး</li><li>ပုံ ၁–၄ ပုံအထိ တွဲသုံးတဲ့ workflow တွေပါဝင်</li><li>ကြိုက်တဲ့ အချိုးအစား (ratio) ရွေးထုတ်နိုင်</li></ul>
         <div class="ch-stat"><b data-count="wf">131</b><span class="lat">Smart Workflows</span></div>
         <a class="btn btn-gold" href="app/?page=pgWf"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Workflows ခန်းထဲ ဝင်မယ်</span></a>
       </div>
@@ -948,6 +992,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">VISUAL LIBRARY</p>
         <h3 class="ch-h">ကြိုက်တဲ့ look ကို <em>မြင်ပြီးမှ</em> ရွေးပါ</h3>
         <p class="ch-p">စာမဖတ်နဲ့ — ပုံကြည့်ပြီး ရွေးရုံပဲ။ ရွေးလိုက်တဲ့ look က ကိုယ့် customer ပုံပေါ် တန်းသက်ရောက်မယ်။</p>
+        <ul class="ch-can"><li>အမျိုးအစားလိုက် ပုံကြည့်ပြီး လျှောက်ရွေး</li><li>ရွေးလိုက်တဲ့ look က ကိုယ့်ပုံပေါ် တန်းသက်ရောက်</li><li>စာဖတ်စရာမလို — မြင်ရတဲ့အတိုင်း ရမယ်</li></ul>
         <div class="ch-stat"><b data-count="lib">1850</b><span class="lat">Curated Looks</span></div>
         <a class="btn btn-gold" href="app/?page=pgLib"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Library ခန်းထဲ ဝင်မယ်</span></a>
       </div>
@@ -961,6 +1006,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">MEITU STUDIO</p>
         <h3 class="ch-h">Slider ဆွဲရင်း <em>live</em> မြင်ရမယ်</h3>
         <p class="ch-p">အသားအရေ၊ မျက်နှာသွယ်၊ မိတ်ကပ် — Meitu suite ရဲ့ ချိန်ညှိချက်တိုင်းက မျက်စိရှေ့မှာ တန်းပြောင်းပြမယ်။</p>
+        <ul class="ch-can"><li>အသားအရေ · မျက်နှာသွယ် · မိတ်ကပ် slider အစုံ</li><li>ဆွဲလိုက်တာနဲ့ မျက်စိရှေ့မှာ live ပြောင်း</li><li>ချိန်ပြီးသား setting ကို Batch မှာ ပြန်သုံးနိုင်</li></ul>
         <div class="ch-stat"><b data-count="meitu">162</b><span class="lat">Meitu Controls</span></div>
         <a class="btn btn-gold" href="app/?page=pgMeitu"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Meitu ခန်းထဲ ဝင်မယ်</span></a>
       </div>
@@ -974,6 +1020,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">EVOTO PRO</p>
         <h3 class="ch-h">Portrait retouch ကို <em>professional</em> အဆင့်နဲ့</h3>
         <p class="ch-p">Evoto-style ချိန်ညှိချက်တွေနဲ့ အသားအရေကနေ အလင်းရောင်အထိ — studio delivery အဆင့် ထွက်မယ်။</p>
+        <ul class="ch-can"><li>Portrait professional ချိန်ညှိချက် အသေးစိတ်</li><li>အလင်း · အရောင် · အသားအရေ အဆင့်မြင့် ထိန်း</li><li>Studio queue ထဲ ထည့်ပြီး တွဲသုံးနိုင်</li></ul>
         <div class="ch-stat"><b data-count="evoto">213</b><span class="lat">Evoto Controls</span></div>
         <a class="btn btn-gold" href="app/?page=pgEvoto"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Evoto ခန်းထဲ ဝင်မယ်</span></a>
       </div>
@@ -987,6 +1034,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">RETOUCH PRO</p>
         <h3 class="ch-h">ဓာတ်ပုံတင် · တစ်ချက်နှိပ် · <em>ပြီး</em></h3>
         <p class="ch-p">V2 Retouch — မျက်နှာက မူရင်းအတိုင်း၊ အသားအရေက သန့်သွား။ Customer ပြန်ပို့ဖို့ အသင့်။</p>
+        <ul class="ch-can"><li>V2 Retouch — ဓာတ်ပုံတင်ပြီး တစ်ချက်နှိပ်</li><li>မျက်နှာ identity ဘယ်တော့မှ မပြောင်း</li><li>Before / After နှိုင်းယှဉ်ကြည့်နိုင်</li></ul>
         <a class="btn btn-gold" href="app/?page=pgRetouch"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Retouch ခန်းထဲ ဝင်မယ်</span></a>
       </div>
     </article>
@@ -999,6 +1047,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">FREEFORM CREATE</p>
         <h3 class="ch-h">ပြင်ချင်တာကို <em>စကားနဲ့</em> ရေးလိုက်ပါ</h3>
         <p class="ch-p">"နောက်ခံကို ညနေခင်းပင်လယ်ကမ်းခြေ ပြောင်းပေး" — ရေးလိုက်ရုံပဲ၊ AI က နားလည်ပြီး လုပ်ပေးမယ်။</p>
+        <ul class="ch-can"><li>မြန်မာလို / English လို ရေးလို့ရ</li><li>Reference ပုံတွေ ထည့်ပြီး ညွှန်နိုင်</li><li>ရလဒ်ကို ဆက်ပြင် ဆက်ထုတ်နိုင်</li></ul>
         <a class="btn btn-gold" href="app/?page=pgCreate"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Freeform ခန်းထဲ ဝင်မယ်</span></a>
       </div>
     </article>
@@ -1011,6 +1060,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">MEDIA LAB · IMAGE → VIDEO</p>
         <h3 class="ch-h">ဓာတ်ပုံက <em>အသက်ဝင်</em> လှုပ်ရှားလာမယ်</h3>
         <p class="ch-p">ပုံတစ်ပုံကနေ cinematic clip — ဒီစာမျက်နှာမှာ လှုပ်နေတဲ့ banner တွေအားလုံးလည်း ဒီနည်းနဲ့ပဲ ထုတ်ထားတာပါ။</p>
+        <ul class="ch-can"><li>ပုံတစ်ပုံကနေ လှုပ်ရှားတဲ့ cinematic clip</li><li>Video model catalog ထဲက ကြိုက်တာရွေး</li><li>လှုပ်ရှားပုံကို prompt နဲ့ ညွှန်ကြားနိုင်</li></ul>
         <a class="btn btn-gold" href="app/?page=pgVideo"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Media Lab ခန်းထဲ ဝင်မယ်</span></a>
       </div>
     </article>
@@ -1023,6 +1073,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">VIDEO UPSCALE</p>
         <h3 class="ch-h">ဗီဒီယိုကို <em>ကြည်လင်</em> အောင် မြှင့်မယ်</h3>
         <p class="ch-p">ရိုက်ပြီးသား ဗီဒီယိုတွေကို resolution မြှင့်ပြီး delivery အဆင့် ရောက်အောင် — Media Lab ထဲမှာပဲ။</p>
+        <ul class="ch-can"><li>ရိုက်ပြီးသား video ကို resolution မြှင့်</li><li>Delivery အဆင့် ကြည်လင်ပြတ်သား</li><li>Media Lab ထဲမှာပဲ — တခြား app မလို</li></ul>
         <a class="btn btn-gold" href="app/?page=pgVideoUp"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Upscale ခန်းထဲ ဝင်မယ်</span></a>
       </div>
     </article>
@@ -1035,6 +1086,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">BATCH LOOKS · PATH</p>
         <h3 class="ch-h">ပုံ ၅၀–၁၀၀ ကို <em>တစ်ပြိုင်တည်း</em></h3>
         <p class="ch-p">Wedding album တစ်အုပ်လုံးကို look တစ်ခုတည်းနဲ့ — folder ရွေး၊ စတင်၊ လက်ဖက်ရည်သောက်။</p>
+        <ul class="ch-can"><li>Folder ထဲက ပုံအားလုံး တစ်ပြိုင်တည်း</li><li>Studio ချိန်ညှိချက် သို့ workflow တစ်ခုနဲ့ ပြင်</li><li>တိုးတက်မှုကို တစ်ပုံချင်း မြင်ရ</li></ul>
         <a class="btn btn-gold" href="app/?page=pgPath"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Batch ခန်းထဲ ဝင်မယ်</span></a>
       </div>
     </article>
@@ -1047,6 +1099,7 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
         <p class="kick lat">MY GALLERY</p>
         <h3 class="ch-h">အလုပ်တိုင်း <em>ကိုယ့်ဖုန်းထဲမှာ</em> စုနေမယ်</h3>
         <p class="ch-p">ထုတ်သမျှ ရလဒ်တွေ ကိုယ့်စက်ထဲမှာပဲ သိမ်းတယ် — full resolution နဲ့ ပြန်ယူ၊ customer ဆီ တန်းပို့။</p>
+        <ul class="ch-can"><li>ရလဒ်အားလုံး ကိုယ့်စက်ထဲမှာပဲ သိမ်း</li><li>Full-resolution ပြန်ယူ · ZIP စုဒေါင်း</li><li>ပုံကို source အဖြစ် ပြန်သုံးနိုင်</li></ul>
         <a class="btn btn-gold" href="app/?page=pgGallery"><svg class="ic ic-s"><use href="#i-bolt"/></svg><span>Gallery ခန်းထဲ ဝင်မယ်</span></a>
       </div>
     </article>
@@ -1209,6 +1262,17 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
       <p class="dl-note" data-i18n="s5.dlacct">Web App မှာ HNK အကောင့်ဝင်ပြီး သက်တမ်းရှိ plan ကို စစ်ပြီးမှ Account Center ထဲမှာ download ခလုတ် ပေါ်မယ်။ တစ်ကြိမ်ပေးရင် Web App နဲ့ Panel နှစ်ခုလုံး ရတယ်။</p>
       <p class="dl-note" data-i18n="s5.dlnote">လက်ရှိ build — Panel v6.32.0 · 127 tests အောင်ပြီး</p>
     </div>
+    </div>
+  <!-- v5.59.0 — owner: show what every INNER page can do. These are the
+       panel's six real tabs, named exactly as the shipped panel names them. -->
+  <div class="sec-head"><h2><span class="kick lat">INSIDE THE PANEL · SIX TABS</span><span>Panel အတွင်းပိုင်း — tab ၆ ခုမှာ ဘာလုပ်လို့ရလဲ</span></h2></div>
+  <div class="pn-tabs">
+    <article class="pn-tab"><b class="lat">Home</b><p>Smart Workflow ၉ ခု — တစ်ချက်နှိပ်ရုံနဲ့ layer + mask အဖြစ် ပြန်ရ။ Batch လည်း လုပ်နိုင်။</p></article>
+    <article class="pn-tab"><b class="lat">Edit</b><p>ဖွင့်ထားတဲ့ Photoshop document ကို prompt နဲ့ ပြင် — reference ပုံ ၄ ပုံအထိ တွဲညွှန်နိုင်။</p></article>
+    <article class="pn-tab"><b class="lat">Create</b><p>Prompt ကနေ ပုံအသစ် လုံးဝအသစ် ထုတ် — document ကို မထိဘဲ သီးသန့် အလုပ်လုပ်။</p></article>
+    <article class="pn-tab"><b class="lat">Retouch</b><p>Retouch slider တွေနဲ့ အရောင်ချိန်ညှိ — ရလဒ်က non-destructive layer အဖြစ် ဆင်း။</p></article>
+    <article class="pn-tab"><b class="lat">Library</b><p>Web Studio နဲ့ တူတဲ့ look catalog — ရွေးပြီး Photoshop ထဲမှာ တန်းသုံး။</p></article>
+    <article class="pn-tab"><b class="lat">Setup</b><p>RunningHub key တစ်ခါထည့် · ဘာသာစကားရွေး · ရလဒ်တိုင်း PNG + prompt မှတ်တမ်းနဲ့ auto-export။</p></article>
   </div>
 </section>
 
@@ -1897,8 +1961,22 @@ fetch("app/version.json",{cache:"no-store"}).then(function(r){return r.json();})
   var chs=[].slice.call(document.querySelectorAll(".chapter"));
   if(!chs.length) return;
   if(!("IntersectionObserver" in window)){ chs.forEach(function(c){c.classList.add("in");}); return; }
+  var reduceC=false; try{reduceC=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  var countUp=function(ch){
+    if(reduceC) return;
+    var b=ch.querySelector(".ch-stat b"); if(!b||b._ran) return; b._ran=true;
+    var target=parseInt(b.textContent,10); if(!target) return;
+    var t0=null;
+    var tick=function(t){
+      if(!t0) t0=t;
+      var k=Math.min(1,(t-t0)/900); k=1-Math.pow(1-k,3);
+      b.textContent=String(Math.round(target*k));
+      if(k<1) requestAnimationFrame(tick); else b.textContent=String(target);
+    };
+    requestAnimationFrame(tick);
+  };
   var rio=new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); rio.unobserve(e.target); } });
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); countUp(e.target); rio.unobserve(e.target); } });
   },{threshold:.12});
   chs.forEach(function(c){rio.observe(c);});
 })();
@@ -1914,7 +1992,9 @@ fetch("app/version.json",{cache:"no-store"}).then(function(r){return r.json();})
     var media=ch.querySelector(".ch-media"); if(!media) return;
     var raf=0,rx=0,ry=0,mx=50,my=40,on=false;
     var paint=function(){ raf=0;
-      media.style.transform=on?("rotateX("+rx.toFixed(2)+"deg) rotateY("+ry.toFixed(2)+"deg) translateZ(14px)"):"";
+      media.style.setProperty("--rx",(on?rx.toFixed(2):0)+"deg");
+      media.style.setProperty("--ry",(on?ry.toFixed(2):0)+"deg");
+      media.style.setProperty("--tz",(on?14:0)+"px");
       media.style.setProperty("--mx",mx.toFixed(1)+"%"); media.style.setProperty("--my",my.toFixed(1)+"%");
     };
     ch.addEventListener("pointermove",function(e){
