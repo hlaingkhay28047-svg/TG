@@ -269,6 +269,14 @@ jobs:
                 submit "concept-poster-card" "$EDIT_PATH" "$(jbody "$CP_PROMPT" "[\"$up\"]" "3:2")" || fail=1
                 submit "concept-poster-sample" "$EDIT_PATH" "$(jbody "$CP_PROMPT" "[\"$up\"]" "2:3")" || fail=1
                 ;;
+              freeform)
+                # v5.62.1 — the Freeform/Edit page's OWN hero still (owner:
+                # it shared Retouch B's flower-portrait). Same model, one hop
+                # from her reference poster; wide dream-atelier design with
+                # clear left negative space for the page's interface text.
+                FREEFORM_PROMPT="Using the reference image: the SAME woman, her exact young face and beautiful balanced proportions — early twenties, soft rounded youthful cheeks, never older or harder than the reference. Create a cinematic wide studio banner: she stands waist-up at the right third of the frame in a dark teal-and-gold dream atelier, one hand raised with warm golden creative light streaming from her fingertips, while translucent glowing picture-frames of imagined scenes — a white wedding gown, a fairy forest, a golden temple — drift around her like floating holograms; fine gold light particles in the air, soft rim light on her hair, deep cinematic contrast, expensive editorial finish, photorealistic. She wears an elegant modern black-and-gold creative studio outfit. Wide 16:9 banner composition with clear dark negative space on the left third."
+                submit "banner-freeform" "$EDIT_PATH" "$(jbody "$FREEFORM_PROMPT" "[\"$refurl\"]" "16:9")" || fail=1
+                ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac
           done
