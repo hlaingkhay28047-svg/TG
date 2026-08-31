@@ -109,7 +109,11 @@ jobs:
           # so the divider still has real work to reveal.
           REF_IMG="docs/assets/site/promo-panel-poster.jpg"
           IDENTITY="Use the exact same woman and facial identity from the reference image — same face shape, eyes, eyebrows, nose, lips, jawline, expression character and apparent age; do not redesign or beautify her facial structure."
-          BASE_A_PROMPT="$IDENTITY Create a head-and-shoulders studio portrait of her facing the camera on a neutral gray seamless studio background with soft even lighting. Fair, clear complexion but RAW un-retouched skin: visible pores, a few small temporary blemishes, slight under-eye darkness, stray flyaway hairs, no makeup polish. She wears a simple clean white western-style blouse. 85mm portrait lens, photorealistic."
+          # owner correction (2026-08-31): the first cut aged her — the face
+          # came out longer and more gaunt than the reference. She is YOUNG
+          # with very beautiful proportions; the base must hold them exactly.
+          YOUTH="Her exact face proportions from the reference must be kept: she is a very young woman in her early twenties with soft, smooth, slightly rounded youthful cheeks, a gentle jawline and beautiful balanced facial proportions. Do NOT elongate, narrow, hollow, sharpen or age the face in any way — no gauntness, no sunken cheeks, no mature look."
+          BASE_A_PROMPT="$IDENTITY $YOUTH Create a head-and-shoulders studio portrait of her facing the camera on a neutral gray seamless studio background with soft even lighting. Fair, clear complexion but RAW un-retouched skin: visible pores, a few small temporary blemishes, slight under-eye darkness, stray flyaway hairs, no makeup polish. She wears a simple clean white western-style blouse. 85mm portrait lens, photorealistic."
           BASE_B_PROMPT="$IDENTITY Create a full-length studio photograph of her standing on a plain light-gray seamless studio backdrop with soft even lighting, whole body and shoes visible, natural relaxed pose, soft contact shadow on the floor. She wears an elegant clean pure-white Vietnamese ao-dai-inspired modern dress — minimal, bright white, western-clean styling — with simple white shoes. Fair clear complexion, photorealistic."
           poll_and_fetch() { # $1=name  $2=taskId — RunningHub charges at SUBMIT,
             # so this half is the one that must never be lost
@@ -167,7 +171,12 @@ jobs:
               retouch)
                 submit "ba-retouch-before" "$EDIT_PATH" "$(jbody "$BASE_A_PROMPT" "[\"$refurl\"]" "3:4")" || { fail=1; continue; }
                 u=$(reupload "out/ba-retouch-before.png") || { echo "REUPLOAD FAILED retouch"; fail=1; continue; }
-                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$u\"]" "3:4")" || fail=1
+                # the after is the full shipped pipeline: V2 Retouch, then the
+                # Retouch A Style beauty finish (owner: အရမ်းချောအောင်)
+                submit "ba-retouch-step" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$u\"]" "3:4")" || { fail=1; continue; }
+                u2=$(reupload "out/ba-retouch-step.png") || { echo "REUPLOAD FAILED retouch step"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$u2\"]" "3:4")" || fail=1
+                rm -f out/ba-retouch-step.png
                 ;;
               scene)
                 submit "ba-scene-before" "$EDIT_PATH" "$(jbody "$BASE_B_PROMPT" "[\"$refurl\"]" "2:3")" || { fail=1; continue; }
