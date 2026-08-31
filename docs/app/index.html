@@ -142,12 +142,15 @@ input,textarea,select{font-family:inherit}
    visual language as every .page-hero: a rounded, bordered banner card, the
    art tall and readable, the words resting on a soft base scrim. The motion
    clip rides the identical geometry (phMotionBoot copies the img's crop). */
-.hero-mini{margin:var(--sp-3) 0;padding:0 16px 12px;min-height:190px;border-radius:var(--r-lg);border:1px solid var(--line-soft);display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.hero-mini{margin:var(--sp-3) 0;padding:0 14px 10px;min-height:126px;border-radius:var(--r-lg);border:1px solid var(--line-soft);display:flex;flex-direction:column;justify-content:flex-end;gap:1px}
 .hero-mini .hero-art{left:0;right:0;border-radius:inherit}
 .hero-mini .hero-art:after{background:linear-gradient(102deg,rgba(11,13,20,.58) 0%,rgba(11,13,20,.30) 45%,rgba(11,13,20,0) 75%),linear-gradient(180deg,rgba(11,13,20,0) 42%,rgba(11,13,20,.68) 100%)}
-.hero-mini .kick{padding-top:14px}
-.hero-mini h1{font-size:clamp(1.15rem,4.6vw,1.6rem)}
-@media(min-width:768px){.hero-mini{min-height:230px}}
+/* v5.62.2 — owner, live phone: the first cut ran ~2x the other pages' bands.
+   Same 126px floor as .page-hero, tighter type, no desktop growth — the
+   card language matches AND the size does. */
+.hero-mini .kick{padding-top:10px;font-size:.68rem}
+.hero-mini h1{font-size:clamp(.98rem,3.7vw,1.2rem);line-height:1.35}
+.hero-mini .lede{display:none}
 /* ---- page-hero: compact per-page banner band — same visual language as .hero-art
    (cover image + dark legibility scrim + gold kicker + one-line benefit headline).
    Text is real HTML overlay (selectable, i18n via t()) — never baked into images. ---- */
@@ -22736,7 +22739,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.62.1";
+var APP_VER="5.62.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

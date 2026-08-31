@@ -356,7 +356,7 @@
        screenshot). The sub-line renders only when it adds information. */
     const email = item.email || item.student_email || "";
     const line = [node("b", { text: name })];
-    if (email && email !== name) line.push(node("small", { text: email }));
+    if (email && email.trim().toLowerCase() !== name.trim().toLowerCase()) line.push(node("small", { text: email }));
     return [badge, node("span", {}, line)];
   }
 
