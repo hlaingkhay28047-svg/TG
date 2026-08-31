@@ -1,6 +1,6 @@
 /* Regression test for the .grp accordion convention (Phase 4), updated for
-   v4.23.0's Studio rebuild: pgStudio now hosts the MEITU STUDIO suite
-   (12 .grp groups in #muHost) and the EVOTO PRO suite (11 .grp groups in
+   v4.23.0's Studio rebuild: pgStudio now hosts the RETOUCH A STUDIO suite
+   (12 .grp groups in #muHost) and the RETOUCH B PRO suite (11 .grp groups in
    #evHost), all closed by default, opening on header click to reveal the
    live-preview controls (.st-ctl slider rows / .chips picks). Setup's
    accordion checks (RunningHub advanced config + 4-platform guide) are
@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 8931;
   await page.waitForTimeout(800);
   await page.evaluate(() => { const o = document.querySelector(".onb"); if (o) o.classList.remove("on"); });
 
-  // --- Studio: MEITU 15 + EVOTO 16 .grp groups (pgStudio v2 upgrade), every one closed by default ---
+  // --- Studio: RETOUCH A 15 + RETOUCH B 16 .grp groups (pgStudio v2 upgrade), every one closed by default ---
   await page.evaluate(() => switchPage("pgStudio"));
   await page.waitForTimeout(200);
   const suiteGroups = await page.evaluate(() => {
@@ -33,11 +33,11 @@ const PORT = process.env.PORT || 8931;
     return { mu: grab("muHost"), ev: grab("evHost") };
   });
   console.log("Studio suite groups:", "mu=" + suiteGroups.mu.length, "ev=" + suiteGroups.ev.length);
-  /* v4.42 added the Meitu "Heal & Brush (local)" group → 16;
+  /* v4.42 added the Retouch A "Heal & Brush (local)" group → 16;
      v4.45 added a "Style Looks (880 pack)" group to BOTH suites → 17 each */
   const addonsOk = suiteGroups.mu.length === 17 && suiteGroups.ev.length === 17 &&
     suiteGroups.mu.concat(suiteGroups.ev).every(g => !g.open && !g.bodyVisible);
-  console.log(addonsOk ? "PASS (17 Meitu + 17 Evoto groups, all closed by default)" : "FAIL (Studio suite accordion structure regression)");
+  console.log(addonsOk ? "PASS (17 Retouch A + 17 Retouch B groups, all closed by default)" : "FAIL (Studio suite accordion structure regression)");
 
   const clickResult = await page.evaluate(() => {
     const g = document.querySelector("#muHost > .grp");
@@ -48,7 +48,7 @@ const PORT = process.env.PORT || 8931;
       hasControls: !!(g.querySelector(".st-ctl") || g.querySelector(".chips"))
     };
   });
-  console.log("First Meitu group after click:", JSON.stringify(clickResult));
+  console.log("First Retouch A group after click:", JSON.stringify(clickResult));
   const clickOk = clickResult.open && clickResult.bodyVisible && clickResult.hasControls;
   console.log(clickOk ? "PASS (clicking header opens group + reveals live controls)" : "FAIL (accordion click regression)");
 

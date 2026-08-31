@@ -10,12 +10,12 @@
         made the frame ~2.7x thinner and "reset this slider" changed the picture
      3. Reset announced "all adjustments reset" but left Bride/Groom armed, so
         the next GENERATE silently retouched one person only
-     4. Evoto Color Grading was pinned to k:45 with no Amount, so the subtle end
-        of the grade was unreachable while its Meitu sibling had the full range
+     4. Retouch B Color Grading was pinned to k:45 with no Amount, so the subtle end
+        of the grade was unreachable while its Retouch A sibling had the full range
      5. twelve sub-sliders were gated on a master the UI never mentioned: the
         readout lit gold, nothing queued, no pixel moved
      6. both suite badges read 79 — a sum of 31 hand-typed literals that matched
-        neither suite and made Evoto look the same size as Meitu
+        neither suite and made Retouch B look the same size as Retouch A
 
    Usage: PORT=8931 node test/sweep_studio_fixes.js   (serve docs/app on $PORT) */
 const { chromium } = require("playwright-core");
@@ -50,7 +50,7 @@ function check(ok, label, detail) {
        DOM/state fact, not a layout one — nothing here is measured — and both
        cards are always in the document: the active suite's card sits in the
        active page, the other is parked in #stDock. Scoping by card therefore
-       still sees all 12 (7 Meitu + 5 Evoto) in one pass, so the count stays 12
+       still sees all 12 (7 Retouch A + 5 Retouch B) in one pass, so the count stays 12
        instead of being split into two smaller numbers. */
     const out = Array.from(document.querySelectorAll('#stMuCard input[type="color"],#stEvCard input[type="color"]')).map(i => ({
       id: i.id, value: i.value, unset: i.classList.contains("unset"),
@@ -100,7 +100,7 @@ function check(ok, label, detail) {
     "Reset clears the retouch target too, so the next GENERATE cannot silently retouch one person",
     reset);
 
-  /* ---- 4) Evoto Color Grading has a reachable Amount ---- */
+  /* ---- 4) Retouch B Color Grading has a reachable Amount ---- */
   const grade = await page.evaluate(() => {
     state.st.v = {}; stRefreshUI();
     const amt = document.getElementById("st_grade_evAmt");
@@ -115,7 +115,7 @@ function check(ok, label, detail) {
   });
   check(!grade.missing && grade.shown === "45" &&
         grade.atDefault[0] === 45 && grade.at90[0] === 90 && grade.at10[0] === 10,
-    "Evoto grading strength is a real control: 45 by default (so saved recipes render unchanged) and reachable from 10 to 90",
+    "Retouch B grading strength is a real control: 45 by default (so saved recipes render unchanged) and reachable from 10 to 90",
     grade);
 
   /* ---- 5) a sub-slider moved off zero seeds the master it depends on ---- */
@@ -238,7 +238,7 @@ function check(ok, label, detail) {
       return new Promise(res => { const f = new FileReader(); f.onload = () => res(f.result); f.readAsDataURL(b); });
     };
     /* v4.96: same card-scoping as check 1. There is exactly one stNoiseNote()
-       per suite — Meitu's "Skin" group and Evoto's "Sharpen & Noise Reduction"
+       per suite — Retouch A's "Skin" group and Retouch B's "Sharpen & Noise Reduction"
        group — so the total is still 2 and the threshold below is unchanged.
        The per-note display flag is set on the <p> itself by its refresh(), and
        a computed display is not rewritten by a display:none ancestor, so a note

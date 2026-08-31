@@ -20,8 +20,8 @@ const PORT = process.env.PORT || 8931;
 
 // [pageId, expected top-tab label (null = no tab highlights: Setup lives on
 //  the header gear since v4.27.0), expected subtab count (null = no subtabs)]
-// v4.96: the single ["pgStudio","Edit",4] row became two rows — the Meitu and
-// Evoto suites are separate pages now — so every Edit page shows 5 subtabs.
+// v4.96: the single ["pgStudio","Edit",4] row became two rows — the Retouch A and
+// Retouch B suites are separate pages now — so every Edit page shows 5 subtabs.
 const ALL_PAGES = [
   ["pgDash", "Home", null],
   ["pgWf", "Workflows", null],

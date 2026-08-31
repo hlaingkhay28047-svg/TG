@@ -40,7 +40,7 @@ const PORT = process.env.PORT || 8931;
   // with the expected resolved values (i.e. the token swap didn't silently
   // change the visual language) and nothing throws
   const pageChecks = [];
-  /* v5.39.0 — pgStudio has not existed since the Meitu/Evoto split; with the
+  /* v5.39.0 — pgStudio has not existed since the Retouch A/Retouch B split; with the
      wall in the way every id landed on pgHome so nothing noticed, and the
      moment the redirect guard went in it reported pgStudio->pgMeitu. Both
      halves of the split are measured now. */

@@ -12,7 +12,7 @@
    number and left the landing behind. Seven had accumulated. Nothing in 87
    test scripts noticed, because no test knew what the number was supposed to
    be. The same sweep found the carousel's Studio caption still promising
-   "Meitu ၁၅၈ · Evoto ၂၁၀" while the app shipped 162 and 213.
+   "Retouch A ၁၅၈ · Retouch B ၂၁၀" while the app shipped 162 and 213.
 
    WHY IT IS NOT JUST ANOTHER PINNED NUMBER. Writing `assert tap === 138` here
    would fix today's drift and rebuild the same trap for the next wave: the
@@ -36,8 +36,8 @@
    checked against that product's tracked source. The collision is then harmless.
 
    Pinned contracts:
-   A) The app renders a One-Tap, Visual Library, Smart Workflow, Meitu and
-      Evoto count at runtime.
+   A) The app renders a One-Tap, Visual Library, Smart Workflow, Retouch A and
+      Retouch B count at runtime.
    B) docs/app/index.html's static statline fallbacks equal those runtime
       values, so the pre-JS paint never flashes a number about to change.
    C) Every labelled number on the landing — visible copy, the two meta/OG
@@ -139,10 +139,10 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
      two products are told apart. Keys are matched in the same pass for both
      dictionary shapes the page uses: the shared block spells a key once with a
      per-language object, the per-locale packs spell it with a plain string. */
-  const WEB = { "One-Tap": "tap", "Visual Library": "lib", "Meitu": "meitu", "Evoto": "evoto" };
+  const WEB = { "One-Tap": "tap", "Visual Library": "lib", "Retouch A": "meitu", "Retouch B": "evoto" };
   const PANEL_KEY = /^(duo2\.|s5\.|wf\.)/;
 
-  const labelRe = /(One-Tap|Smart Workflows?|Visual Library|Meitu(?: Controls| Studio)?|Evoto(?: Pro)?)\s*([0-9၀-၉]+)|([0-9၀-၉]+)\s+(Smart Workflows?|One-Tap|Visual Library)/g;
+  const labelRe = /(One-Tap|Smart Workflows?|Visual Library|Retouch A(?: Controls| Studio)?|Retouch B(?: Pro)?)\s*([0-9၀-၉]+)|([0-9၀-၉]+)\s+(Smart Workflows?|One-Tap|Visual Library)/g;
   /* Two markers name a key, and the page uses both: the dictionaries write
      "duo2.li2": …, while the static HTML that paints before i18n runs writes
      data-i18n="duo2.li2" on the element. Reading only the first would leave
@@ -183,7 +183,7 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
   /* D) the Myanmar-numeral path is exercised, not merely available — if the
      page ever stops spelling a count in Myanmar digits this assertion says so
      rather than passing vacuously on an untested code path */
-  const myNumeric = [...LANDING.matchAll(/(One-Tap|Smart Workflows?|Visual Library|Meitu|Evoto)[^0-9၀-၉]{0,4}[၀-၉]+/g)];
+  const myNumeric = [...LANDING.matchAll(/(One-Tap|Smart Workflows?|Visual Library|Retouch A|Retouch B)[^0-9၀-၉]{0,4}[၀-၉]+/g)];
   report("D) Myanmar-numeral counts exist on the page and were checked above",
     myNumeric.length > 0, { myanmarNumeralCounts: myNumeric.length });
 
@@ -284,7 +284,7 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
     !shareFb || shareFb === live.tap, { shareFb, runtime: live.tap });
 
   console.log("\n      app runtime: One-Tap " + live.tap + " · Visual Library " + live.lib +
-    " · Smart Workflow " + live.wf + " · Meitu " + live.meitu + " · Evoto " + live.evoto);
+    " · Smart Workflow " + live.wf + " · Retouch A " + live.meitu + " · Retouch B " + live.evoto);
   console.log("      panel v" + panelVersion + ": " + panelWorkflows.length + " Smart Workflows (" +
     panelWorkflows.map(w => w.id).join(", ") + ")");
   console.log("      " + checked + " labelled numbers on docs/index.html attributed and checked");

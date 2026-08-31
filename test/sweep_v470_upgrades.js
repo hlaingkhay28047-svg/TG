@@ -1,6 +1,6 @@
 /* v4.70.0 regression sweep — the look tiles get the phone's real pixels.
 
-   WHAT THE OWNER SAW. On the Meitu/Evoto shelves the "Soft Film" tile rendered
+   WHAT THE OWNER SAW. On the Retouch A/Retouch B shelves the "Soft Film" tile rendered
    with a coarse regular polka-dot pattern across the whole face — the owner's
    phone showed it looking diseased — and every other tile looked soft next to
    the rest of the app. The reasonable assumption was bad artwork, and the
@@ -32,7 +32,7 @@
       one place where more resolution would otherwise mean less effect.
    F) Both shelves still render all 8 tiles, at every DPR, with no page errors.
 
-   v4.96 note: the two shelves no longer share a page. Meitu and Evoto are
+   v4.96 note: the two shelves no longer share a page. Retouch A and Retouch B are
    #pgMeitu and #pgEvoto now, and only the ACTIVE suite's card sits in the shown
    page — the other one, plus the shared #stCols block, is parked in the hidden
    #stDock where everything measures 0x0. Every claim above is unchanged and
@@ -86,10 +86,10 @@ report("E2) the tile DPR is clamped, so a 4x display cannot quadruple the paint 
        is reached through switchPage(). So each shelf is now measured while its
        own page is the mounted one — same rows, same numbers, two visits.
 
-       Meitu is visited FIRST on purpose. stArtWatch arms its IntersectionObserver
+       Retouch A is visited FIRST on purpose. stArtWatch arms its IntersectionObserver
        on stActivePage(), which is #pgMeitu on fresh storage, so that visit is
        what wakes the look art and the sample photo the tiles are painted from.
-       Land on Evoto without it and both shelves stay on the gradient placeholder
+       Land on Retouch B without it and both shelves stay on the gradient placeholder
        — smooth by construction, so C and D would be measuring nothing. */
     const measureRow = id => {
       const h = document.getElementById(id);
@@ -112,7 +112,7 @@ report("E2) the tile DPR is clamped, so a 4x display cannot quadruple the paint 
     await showSuite("pgEvoto");
     const evRow = await page.evaluate(measureRow, "evPresetRow");
 
-    /* the pixel work below is all Evoto tiles (Soft Film vs Natural Pro), so it
+    /* the pixel work below is all Retouch B tiles (Soft Film vs Natural Pro), so it
        runs while #pgEvoto is the mounted page */
     byDpr[dpr] = await page.evaluate(rows => {
       const out = { dpr: devicePixelRatio, rows };

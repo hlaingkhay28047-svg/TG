@@ -122,7 +122,7 @@ function report(name, ok, detail) {
   report("D) v5.50.0: #selModel holds only RunningHub model ids — no Gemini/OpenAI option can reappear; engine note names the model",
     r.D_rhOnly && r.D_noteNames, r);
   report("E) manage-models Setup link shows under RH", r.E_manage, r);
-  report("F) 880 apply race: fast second tap combines, Clear all sticks, Evoto chk true",
+  report("F) 880 apply race: fast second tap combines, Clear all sticks, Retouch B chk true",
     r.F_raceCombines && r.F_clearSticks && r.F_evChk, r);
   report("G) v5.50.0: the Gemini shadow-model helpers are gone and the RH pick still stands",
     r.G_retired && r.G_rhUntouched, r);

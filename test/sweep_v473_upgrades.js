@@ -1,6 +1,6 @@
 /* v4.73.0 regression sweep — the look shelf shows real photographs.
 
-   WHAT SHIPPED. Before a customer picks a photo, every Meitu/Evoto look tile
+   WHAT SHIPPED. Before a customer picks a photo, every Retouch A/Retouch B look tile
    was the neutral sample run through the app's OWN approximation of that look.
    That approximation cannot render three of the nineteen Tier-1 controls at all
    — sharpen, background blur and dehaze — so the shelf undersold itself on the
@@ -137,7 +137,7 @@ report("E2) the art is a fallback-safe upgrade, not a dependency",
        #pgStudio. That page is gone, and hand-revealing #pgMeitu instead shows
        an EMPTY page: #stCols and #stMuCard only leave the hidden #stDock inside
        stMountSuite(), which nothing but switchPage() calls. Navigate properly
-       and the Meitu shelf is mounted, on screen, and — because stArtWatch arms
+       and the Retouch A shelf is mounted, on screen, and — because stArtWatch arms
        its IntersectionObserver on stActivePage(), #pgMeitu on fresh storage —
        the look art and the base sample are woken by this very visit. */
     switchPage("pgMeitu");

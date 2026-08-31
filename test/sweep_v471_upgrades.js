@@ -168,7 +168,7 @@ report("D) the swatch opt-out exists and the grade cards pass it",
 
     /* E) the grade swatch row.
        v4.96 split Studio into two real pages, #pgMeitu and #pgEvoto, and the
-       grade cards are built by the Evoto host (evHost, inside #stEvCard) — so
+       grade cards are built by the Retouch B host (evHost, inside #stEvCard) — so
        pgEvoto is the page this assertion is actually about. Hand-toggling .on
        the way this used to no longer shows anything: the shared #stCols block
        and the INACTIVE suite card both sit in #stDock, which is class="page"
@@ -180,7 +180,7 @@ report("D) the swatch opt-out exists and the grade cards pass it",
     try { if (window.stRenderGradeCards) stRenderGradeCards(); } catch (e) { }
     await new Promise(r => setTimeout(r, 300));
     const host = document.getElementById("stGradeCards");
-    /* The Evoto suite card is a stack of accordion groups and the grade row ships
+    /* The Retouch B suite card is a stack of accordion groups and the grade row ships
        collapsed, so a rect taken straight away is 0x0 — the element is real,
        it simply has no layout box yet. Measuring that would repeat the mistake
        an earlier sweep in this repo made when it asserted 116 VISIBLE cards on

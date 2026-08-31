@@ -434,7 +434,7 @@ report("B2) the workflow branch appends nothing but the user's own extra line",
     { got: persisted, want: chosen });
   await page.evaluate(() => { ptSetWorkflow(""); });
 
-  /* ---- O) the third source: the Meitu/Evoto suite over the whole shoot ----
+  /* ---- O) the third source: the Retouch A/Retouch B suite over the whole shoot ----
      The owner asked for "ကြိုက်တဲ့ pages က function features tools" — the tools
      of whichever page he likes, not only the workflow cards. Retouch, Cleanup,
      Chains, Camera and Mix already ride along on every Path request through the
@@ -543,7 +543,7 @@ report("B2) the workflow branch appends nothing but the user's own extra line",
      "@studio" sentinel takes a different branch of ptBuildPrompt, and that
      branch reached stComposePrompt() -> state.st.t2 fifty-five lines before
      state.st is created. Because this is top-level code in one <script>, the
-     throw killed state.st, the whole Meitu/Evoto module, Video, Text-to-Image,
+     throw killed state.st, the whole Retouch A/Retouch B module, Video, Text-to-Image,
      APP_VER and the service worker. The app booted into a dead shell. */
   const bootStudio = await (async () => {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -740,7 +740,7 @@ report("B2) the workflow branch appends nothing but the user's own extra line",
   });
   report("P6) the hero names the source that is actually driving the run",
     hero.look.hero !== hero.wf.hero && hero.wf.hero !== hero.st.hero &&
-    /Workflow/i.test(hero.wf.hero) && /Meitu|Evoto/i.test(hero.st.hero) &&
+    /Workflow/i.test(hero.wf.hero) && /Retouch A|Retouch B/i.test(hero.st.hero) &&
     hero.wf.em && hero.st.em &&
     hero.look.kick === "BATCH LOOKS" && hero.wf.kick !== "BATCH LOOKS",
     hero);
@@ -826,8 +826,8 @@ report("B2) the workflow branch appends nothing but the user's own extra line",
     orphan.after.runLabel.indexOf("2") >= 0 && orphan.back.pending === 0,
     orphan);
 
-  /* Q2 — the ghost half of a Studio look. Meitu's Filter Library, Auto
-     Beautify and Evoto's Camera Sim never touch state.st.t1/t2; they live in
+  /* Q2 — the ghost half of a Studio look. Retouch A's Filter Library, Auto
+     Beautify and Retouch B's Camera Sim never touch state.st.t1/t2; they live in
      ST.g1/ST.g2 and are folded in by stEffT1/stEffT2, which is why the Studio
      page's own preview shows them. Reading only the base keys made the batch
      silently drop the filter the owner had just watched warm up the photo. */

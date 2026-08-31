@@ -36,8 +36,8 @@
    G) The vertical cost is stated, not discovered: the row grows, and this
       test prints the real number so nobody has to guess it again.
 
-   v4.96 — ONE STUDIO PAGE BECAME TWO. #pgStudio is gone; the Meitu suite lives
-   on #pgMeitu and the Evoto suite on #pgEvoto, and the shared block (#stCols)
+   v4.96 — ONE STUDIO PAGE BECAME TWO. #pgStudio is gone; the Retouch A suite lives
+   on #pgMeitu and the Retouch B suite on #pgEvoto, and the shared block (#stCols)
    is MOVED into whichever of the two is active. The inactive suite's card is
    parked in the hidden #stDock, so its rows measure 0x0 and cannot be read in
    the same page view as the other's. The ergonomics rule this file pins also
@@ -154,9 +154,9 @@ const SUITES = [["pgMeitu", "mu"], ["pgEvoto", "ev"]];
          suite CARDS rather than to a page: whether a row wears .st-slider is a
          DOM fact that needs no layout, and both cards are always in the
          document — the active suite's in its page, the other in #stDock. So
-         this still counts all 252 rows (99 Meitu + 153 Evoto) in one pass and
+         this still counts all 252 rows (99 Retouch A + 153 Retouch B) in one pass and
          the >100 floor below keeps its original meaning. Splitting it per page
-         would have put Meitu's 99 under a threshold nothing about the app
+         would have put Retouch A's 99 under a threshold nothing about the app
          changed. */
       out.allRng = document.querySelectorAll("#stMuCard input.rng,#stEvCard input.rng").length;
       out.markedRows = document.querySelectorAll("#stMuCard .st-ctl.st-slider,#stEvCard .st-ctl.st-slider").length;

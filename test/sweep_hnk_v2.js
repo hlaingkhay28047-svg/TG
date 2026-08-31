@@ -294,7 +294,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     });
     const chip0 = document.querySelectorAll("#rsPresetGrid .chip")[0]; // evoto -> renamed
     const renamed = chip0 && chip0.textContent.indexOf("Studio Clean") >= 0;
-    const titleHasOld = chip0 && String(chip0.title).indexOf("Evoto") >= 0;
+    const titleHasOld = chip0 && String(chip0.title).indexOf("Retouch B") >= 0;
     window.__reqs = []; window.__callN = 0;
     window.__outs = ["GEMOUT_MANUAL"];
     chip0.click();

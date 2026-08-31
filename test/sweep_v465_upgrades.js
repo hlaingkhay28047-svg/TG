@@ -32,8 +32,8 @@
    5.2 screens tall to many times that. Changing it needs evidence this file
    does not have, so it stays.
 
-   v4.96 — ONE STUDIO PAGE BECAME TWO. #pgStudio no longer exists. The Meitu
-   suite (#stMuCard) is its own page #pgMeitu and the Evoto suite (#stEvCard)
+   v4.96 — ONE STUDIO PAGE BECAME TWO. #pgStudio no longer exists. The Retouch A
+   suite (#stMuCard) is its own page #pgMeitu and the Retouch B suite (#stEvCard)
    is its own page #pgEvoto, and everything they share — the PHOTO card, the
    live preview, the jump bar, recipes, the result box and the generate bar —
    lives once in #stCols and is MOVED into whichever suite page is active. The
@@ -47,7 +47,7 @@
      - C and D used to see both preset rows in one page view (16 tiles). They
        cannot any more, so they are SPLIT: #muPresetRow is measured on #pgMeitu
        and #evPresetRow on #pgEvoto, at the SAME thresholds. Note that "Clean
-       Commercial" — the name that motivated the fix — is an Evoto preset, so
+       Commercial" — the name that motivated the fix — is an Retouch B preset, so
        the original assertion's real subject now lives on the #pgEvoto arm.
      - A, B, E and F read the shared block and G reads the hero, and all five
        now run once per suite page rather than once on the page that used to
@@ -75,7 +75,7 @@ function report(name, ok, detail) {
 const WIDTHS = [320, 390, 414];
 /* v4.96: the two suite pages that replaced #pgStudio. Every check below runs
    once per entry, per width. */
-const SUITES = [["pgMeitu", "Meitu"], ["pgEvoto", "Evoto"]];
+const SUITES = [["pgMeitu", "Retouch A"], ["pgEvoto", "Retouch B"]];
 
 (async () => {
   const browser = await chromium.launch();
