@@ -94,6 +94,13 @@ jobs:
           print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='pr-meitu'))
           PY
           )
+          SCN_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='pr-scnVietnam'))
+          PY
+          )
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
           # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
           # bases are IDENTITY-PRESERVING edits from her poster (shipped in the
@@ -175,6 +182,15 @@ jobs:
                 # the pair keeps its alignment and its honesty.
                 ug=$(reupload "docs/assets/site/ba/ba-retouch-after.jpg") || { echo "GLAM UPLOAD FAILED"; fail=1; continue; }
                 submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$ug\"]" "3:4")" || fail=1
+                ;;
+              vnscene)
+                # owner (2026-08-31, on the palace after): not the yellow
+                # backdrop — a beautiful Library scene, natural indoor light,
+                # tender skin. The catalog's own pr-scnVietnam (Vietnam soft
+                # pastel set) prompt, verbatim, on the shipped scene before;
+                # its LOCK keeps her and the white ao dai exactly as shot.
+                us=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "VNSCENE UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-scene-after" "$EDIT_PATH" "$(jbody "$SCN_PROMPT" "[\"$us\"]" "2:3")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac
