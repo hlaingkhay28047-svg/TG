@@ -137,6 +137,17 @@ input,textarea,select{font-family:inherit}
    were all still in the file and none of them reached the screen. The plate
    is graded dark already, so it carries the type without being dimmed. */
 .hero-mini .hero-art img{opacity:1}
+/* v5.62.1 — owner (live screenshot): the Workflows hero looked like no other
+   page — a text strip with the art crammed behind it. It now wears the same
+   visual language as every .page-hero: a rounded, bordered banner card, the
+   art tall and readable, the words resting on a soft base scrim. The motion
+   clip rides the identical geometry (phMotionBoot copies the img's crop). */
+.hero-mini{margin:var(--sp-3) 0;padding:0 16px 12px;min-height:190px;border-radius:var(--r-lg);border:1px solid var(--line-soft);display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.hero-mini .hero-art{left:0;right:0;border-radius:inherit}
+.hero-mini .hero-art:after{background:linear-gradient(102deg,rgba(11,13,20,.58) 0%,rgba(11,13,20,.30) 45%,rgba(11,13,20,0) 75%),linear-gradient(180deg,rgba(11,13,20,0) 42%,rgba(11,13,20,.68) 100%)}
+.hero-mini .kick{padding-top:14px}
+.hero-mini h1{font-size:clamp(1.15rem,4.6vw,1.6rem)}
+@media(min-width:768px){.hero-mini{min-height:230px}}
 /* ---- page-hero: compact per-page banner band — same visual language as .hero-art
    (cover image + dark legibility scrim + gold kicker + one-line benefit headline).
    Text is real HTML overlay (selectable, i18n via t()) — never baked into images. ---- */
@@ -20588,6 +20599,19 @@ function renderDashGreet(){
   try{
     var loc = LANG==="my" ? "my-MM" : LANG==="zh" ? "zh-CN" : LANG;
     dt=new Intl.DateTimeFormat(loc,{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+    /* v5.62.1 — owner: the card also tells the TIME and the CITY, in the
+       same small line. The city is the device clock's own IANA timezone
+       city — no permission prompt, no network, and honest about what it
+       is; a Burmese reader gets the Burmese name for the common ones. */
+    var tm=new Intl.DateTimeFormat(loc,{hour:"numeric",minute:"2-digit"}).format(new Date());
+    var city="";
+    try{
+      var tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||"");
+      var cityRaw=(tz.split("/").pop()||"").replace(/_/g," ");
+      var CITY_MY={"Yangon":"ရန်ကုန်","Rangoon":"ရန်ကုန်","Bangkok":"ဘန်ကောက်","Singapore":"စင်္ကာပူ","Kuala Lumpur":"ကွာလာလမ်ပူ","Jakarta":"ဂျာကာတာ","Ho Chi Minh":"ဟိုချီမင်း","Saigon":"ဟိုချီမင်း","Shanghai":"ရှန်ဟိုင်း","Hong Kong":"ဟောင်ကောင်","Tokyo":"တိုကျို","Seoul":"ဆိုးလ်","Taipei":"ထိုင်ပေ","Dubai":"ဒူဘိုင်း","London":"လန်ဒန်","Phnom Penh":"ဖနွမ်းပင်","Vientiane":"ဗီယင်ကျန်း","Dhaka":"ဒါကာ","Kolkata":"ကိုလကတ္တား","Sydney":"ဆစ်ဒနီ","Los Angeles":"လော့စ်အိန်ဂျယ်လိစ်","New York":"နယူးယောက်"};
+      city=(LANG==="my"&&CITY_MY[cityRaw])?CITY_MY[cityRaw]:cityRaw;
+    }catch(e2){}
+    dt=dt+" · "+tm+(city?" · "+city:"");
   }catch(e){ dt=new Date().toISOString().slice(0,10); }
   host.innerHTML="";
   host.appendChild(el("div","hi", L9(g)+(name?" — "+name.slice(0,24):"")));
@@ -20600,6 +20624,9 @@ function renderDashGreet(){
      rest of the children */
   greetAttachMotion(host, art);
 }
+/* v5.62.1 — the card's clock ticks: re-render once a minute while the
+   Dashboard is the visible page (the art guard makes the repaint cheap). */
+setInterval(function(){ try{ if(typeof curPage!=="undefined"&&curPage==="pgDash") renderDashGreet(); }catch(e){} }, 60000);
 /* v4.52 — jobs RunningHub is still holding, or finished while the app was
    away. The card only exists when there is something to claim; a studio with
    no interrupted work never sees it. */
@@ -22709,7 +22736,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.62.0";
+var APP_VER="5.62.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

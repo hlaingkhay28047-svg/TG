@@ -65,3 +65,55 @@ img.brand-mark,img.auth-mark{object-fit:cover;background:#10131c;border:1px soli
 @media(max-width:760px){.admin-hero{margin:12px 12px 0;min-height:96px}}
 @media(prefers-reduced-motion:reduce){.admin-hero video{display:none}}
 .visits-sub{margin-top:14px}
+
+/* ============================================================
+   v5.62.1 — owner: "Hero banners ကိုလဲ အပြည့်ပြပေးပါ effects နဲ့".
+   The band now takes the artwork's own frame (2:1, capped for very wide
+   desktops), the still breathes with a slow Ken Burns drift, the title
+   carries the studio gold sweep over a soft aura, and a shimmer runs the
+   gold base line. The sign-in card gets the same cinematic treatment.
+   Reduced-motion stills every animation and keeps the full frame.
+   ============================================================ */
+.admin-hero{min-height:0;aspect-ratio:2/1;max-height:420px;animation:adminHeroIn .8s ease both}
+.admin-hero>img,.admin-hero video{object-position:center 30%;transform-origin:center 35%}
+.admin-hero>img{animation:adminHeroKen 24s ease-in-out infinite alternate}
+.admin-hero::before{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;z-index:2;
+  background:linear-gradient(90deg,rgba(231,187,102,0) 0%,#e7bb66 25%,#f9ecc4 50%,#e7bb66 75%,rgba(231,187,102,0) 100%);
+  background-size:220% 100%;animation:adminHeroLine 5s linear infinite;opacity:.85}
+.admin-hero-text{padding:20px 26px}
+.admin-hero-text b{font-size:clamp(1.3rem,3.4vw,2.1rem)}
+.admin-hero-text .eyebrow{letter-spacing:.22em}
+.admin-hero-text em{background-size:250% 100%;animation:adminShine 3.8s ease-in-out infinite}
+.admin-hero-text::before{content:"";position:absolute;inset:-30px -40px;z-index:-1;
+  background:radial-gradient(60% 80% at 20% 80%,rgba(231,187,102,.16),transparent 70%);
+  animation:adminAura 4.5s ease-in-out infinite}
+@keyframes adminHeroKen{from{transform:scale(1.02)}to{transform:scale(1.1) translateY(-2%)}}
+@keyframes adminHeroIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes adminHeroLine{from{background-position:0% 0}to{background-position:220% 0}}
+@keyframes adminShine{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
+@keyframes adminAura{0%,100%{opacity:.6}50%{opacity:1}}
+@media(max-width:760px){.admin-hero{aspect-ratio:2/1;min-height:0;max-height:none}}
+@media(prefers-reduced-motion:reduce){
+  .admin-hero,.admin-hero>img,.admin-hero::before,.admin-hero-text em,.admin-hero-text::before{animation:none}
+}
+/* cards lift toward the light on hover — the same weight everywhere */
+.card{transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+@media(hover:hover){
+  .card:hover{transform:translateY(-2px);border-color:rgba(231,187,102,.42);box-shadow:0 14px 34px rgba(0,0,0,.35),0 0 0 1px rgba(231,187,102,.08)}
+}
+/* the sign-in gate joins the cinema: soft gold aura, floating mark, sheen */
+.gate-card{position:relative;animation:adminHeroIn .7s ease both}
+.gate-card::before{content:"";position:absolute;inset:-1px;z-index:-1;border-radius:inherit;
+  background:radial-gradient(120% 90% at 50% -10%,rgba(231,187,102,.22),transparent 60%);
+  animation:adminAura 5s ease-in-out infinite}
+.gate-form .auth-mark{animation:adminMarkFloat 6s ease-in-out infinite}
+@keyframes adminMarkFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.button.primary{position:relative;overflow:hidden}
+.button.primary::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:skewX(-18deg);transition:left .5s ease}
+@media(hover:hover){.button.primary:hover::after{left:120%}}
+@media(prefers-reduced-motion:reduce){
+  .gate-card,.gate-card::before,.gate-form .auth-mark{animation:none}
+  .card,.card:hover{transform:none}
+}
