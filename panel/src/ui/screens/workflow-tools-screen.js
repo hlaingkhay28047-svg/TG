@@ -178,10 +178,37 @@ function create(deps) {
 
   function doGenerate() {
     if (!state.prepared) wstate.prepare(state); // Direct mode assembles now
+    var wf = registry.get(state.workflowId);
+    var hint = function (msg) { if (nodes.readyMsg) { nodes.readyMsg.className = "hnk-status"; nodes.readyMsg.textContent = msg; } };
+    /* v6.36.0 — a required design field (Selection Edit's request box) must
+       carry text before anything is sent. */
+    var missingField = ((wf && wf.fields) || []).some(function (f) {
+      return f.required && !String((state.fieldVals && state.fieldVals[f.key]) || "").trim();
+    });
+    if (missingField) { hint(dom.t("ai_wf_field_req", "Type your request first — the request box cannot be empty.")); return; }
     var ev = validator.evaluate(state);
     if (!ev.ready) { refresh(); return; }
-    var request = compiler.compile(state);
-    if (deps.onGenerate) deps.onGenerate(request);
+    var fire = function () {
+      var request = compiler.compile(state);
+      if (deps.onGenerate) deps.onGenerate(request);
+    };
+    /* v6.36.0 — Selection Edit: capture the live rectangular selection as
+       the subject at Generate time. The result is placed back at these exact
+       bounds with a layer mask cut from the same rectangle, so pixels
+       outside the selection are untouched by construction. */
+    if (wf && wf.region && deps.host && deps.host.getSelectionBounds) {
+      Promise.resolve(deps.host.getSelectionBounds()).then(function (b) {
+        if (!b) { hint(dom.t("ai_wf_select_first", "Make a rectangular selection in Photoshop first, then press GENERATE.")); return; }
+        return Promise.resolve(deps.host.captureRegion(b)).then(function (cap) {
+          if (!cap || !cap.ref) { hint(dom.t("ai_wf_capture_fail", "Could not read the selected pixels — try again.")); return; }
+          if (state.requiredInputs[0]) state.requiredInputs[0].image = { source: "selection", role: state.requiredInputs[0].role, ref: cap.ref, valid: true };
+          state.regionBounds = { x: b.x, y: b.y, width: b.width, height: b.height };
+          fire();
+        });
+      }).catch(function () { hint(dom.t("ai_wf_capture_fail", "Could not read the selected pixels — try again.")); });
+      return;
+    }
+    fire();
   }
 
   function renderSelected() {
@@ -261,7 +288,25 @@ function create(deps) {
 
     root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_req_images", "Required Images") }));
     var reqWrap = dom.el(doc, "div", { class: "hnk-wf-reqs" });
-    state.requiredInputs.forEach(function (inp) { reqWrap.appendChild(inputRow(inp)); });
+    state.requiredInputs.forEach(function (inp) {
+      /* v6.36.0 — a region workflow's photo comes from the live rectangular
+         selection at Generate time: no source buttons, just the slot. */
+      if (wf.region && inp.image && inp.image.source === "selection") {
+        var mark = dom.el(doc, "span", { class: "hnk-req-mark ok", text: "✓" });
+        nodes["req_" + inp.key] = mark;
+        reqWrap.appendChild(dom.el(doc, "div", { class: "hnk-req-block" }, [
+          dom.el(doc, "div", { class: "hnk-req-row" }, [
+            dom.el(doc, "span", { class: "hnk-req-label", text: dom.t(registry.inputLabelKey(inp.label) || "", inp.label) }), mark
+          ])
+        ]));
+      } else {
+        reqWrap.appendChild(inputRow(inp));
+      }
+    });
+    if (wf.region) {
+      reqWrap.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc",
+        text: dom.t("ai_region_hint", "Drag a Rectangle-tool selection over the area to change, type your request above, then press GENERATE. Only the selected area changes — every pixel outside it stays identical.") }));
+    }
     root.appendChild(reqWrap);
     if (state.optionalInputs.length) {
       root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_opt_images", "Optional Images") }));

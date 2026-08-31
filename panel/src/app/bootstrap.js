@@ -168,7 +168,8 @@ function create(opts) {
           var canvas = (opts.host.canvasSize && opts.host.canvasSize()) || { width: 1024, height: 1024 };
           var placed = await maskedPlace.placeResults({
             host: opts.host, results: res.results, feature: featureOf(request),
-            modelId: res.model, canvas: canvas, timeLabel: opts.timeLabel
+            modelId: res.model, canvas: canvas, timeLabel: opts.timeLabel,
+            regionBounds: (request && request.regionBounds) || null
           });
           res.placement = placed;
           if (!placed.ok) {

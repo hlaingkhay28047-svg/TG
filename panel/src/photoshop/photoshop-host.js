@@ -149,6 +149,47 @@ async function captureActiveLayer() {
   }
 }
 
+/* ---- v6.36.0: the active RECTANGULAR selection's bounds, or null ----
+   batchPlay get of the document's selection property; pixels. A missing
+   selection resolves null so region-edit can say "select first" honestly. */
+async function getSelectionBounds() {
+  var ps = _ps();
+  if (!ps || !hasActiveDocument()) return null;
+  try {
+    var r = await ps.action.batchPlay([{
+      _obj: "get",
+      _target: [{ _property: "selection" }, { _ref: "document", _enum: "ordinal", _value: "targetEnum" }],
+      _options: { dialogOptions: "dontDisplay" }
+    }], { synchronousExecution: false });
+    var sel = r && r[0] && r[0].selection;
+    if (!sel || sel.top == null) return null;
+    var v = function (x) { return Math.round(Number(x && x._value != null ? x._value : x) || 0); };
+    var top = v(sel.top), left = v(sel.left), bottom = v(sel.bottom), right = v(sel.right);
+    if (right - left < 8 || bottom - top < 8) return null;
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  } catch (e) { return null; }
+}
+
+/* ---- v6.36.0: capture the document COMPOSITE inside bounds ----
+   getPixels with sourceBounds sees the flattened view — a region edit must
+   work on what the eye sees, not one layer. */
+async function captureRegion(bounds) {
+  var ps = _ps();
+  if (!ps || !hasActiveDocument() || !bounds) return null;
+  try {
+    var imaging = ps.imaging;
+    var pix = await imaging.getPixels({
+      sourceBounds: { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height }
+    });
+    var jpg = await imaging.encodeImageData({ imageData: pix.imageData, base64: true });
+    if (pix.imageData && pix.imageData.dispose) pix.imageData.dispose();
+    return { ref: "data:image/jpeg;base64," + jpg, width: bounds.width, height: bounds.height };
+  } catch (e) {
+    _herr("captureRegion failed", e);
+    return null;
+  }
+}
+
 /* ---- data-URL ("data:image/png;base64,…") -> bytes, UXP-safe ---- */
 function _dataUrlToBytes(ref) {
   var m = /^data:([^;,]+)?(?:;base64)?,(.*)$/.exec(String(ref || ""));
@@ -275,9 +316,20 @@ async function placeAsLayer(opts) {
           var mps = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.maskedPlaceService : null;
           var selD = mps ? mps.selectLayerDescriptor(lyr.id)
             : { _obj: "select", _target: [{ _ref: "layer", _id: lyr.id }], makeVisible: false, _options: { dialogOptions: "dontDisplay" } };
-          var maskD = mps ? mps.maskDescriptor()
-            : { _obj: "make", "new": { _class: "channel" }, at: { _ref: "channel", _enum: "channel", _value: "mask" }, using: { _enum: "userMaskEnabled", _value: "revealAll" }, _options: { dialogOptions: "dontDisplay" } };
-          await batchPlay([selD, maskD], {});
+          var seq = [];
+          /* v6.36.0 — region-edit: re-make the user's rectangle and cut the
+             mask FROM it, so every pixel outside the selection is the
+             original layer showing through — by construction, not by hope. */
+          if (opts.maskSelection && opts.bounds && mps && mps.rectSelectDescriptor) {
+            seq.push(mps.rectSelectDescriptor(opts.bounds));
+            seq.push(selD);
+            seq.push(mps.maskDescriptor("revealSelection"));
+          } else {
+            seq.push(selD);
+            seq.push(mps ? mps.maskDescriptor()
+              : { _obj: "make", "new": { _class: "channel" }, at: { _ref: "channel", _enum: "channel", _value: "mask" }, using: { _enum: "userMaskEnabled", _value: "revealAll" }, _options: { dialogOptions: "dontDisplay" } });
+          }
+          await batchPlay(seq, {});
           masked = true;
         } catch (eM) { masked = false; }
       }
@@ -300,7 +352,9 @@ var API = {
   captureActiveLayer: captureActiveLayer,
   supportsLayerMask: supportsLayerMask,
   createGroup: createGroup,
-  placeAsLayer: placeAsLayer
+  placeAsLayer: placeAsLayer,
+  getSelectionBounds: getSelectionBounds,
+  captureRegion: captureRegion
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
