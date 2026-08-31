@@ -73,9 +73,24 @@ check("student cannot self-reset or delete a registered device",
 check("student panel acquisition no longer embeds a CCX path", !/href=["'][^"']*\.ccx/i.test(app));
 
 check("admin uses only same-origin /api/v1 routes", admin.includes("/api/v1/admin/") && !/https?:\/\//i.test(admin));
-check("admin uses an isolated tab-scoped session instead of the student session",
-  admin.includes("sessionStorage") && admin.includes("hnk_admin_sess_v1") &&
-  !admin.includes("hnk_acc_sess_v1") && !/localStorage\.(?:getItem|setItem)\(/.test(admin));
+/* 2026-08-31 — owner instruction: leaving and returning must not sign the
+   administrator out, and the console reopens on the panel they left. The
+   session therefore PERSISTS (localStorage) — still under its own isolated
+   admin key, never the student session key, with sign-out clearing every
+   copy. The old tab-scoped pin described the retired design. */
+check("admin session persists across visits in its own isolated store, never the student session",
+  admin.includes("hnk_admin_sess_v1") && admin.includes("hnk_admin_panel_v1") &&
+  /localStorage\.setItem\(SESSION_KEY/.test(admin) &&
+  /localStorage\.removeItem\(SESSION_KEY/.test(admin) &&
+  !admin.includes("hnk_acc_sess_v1"));
+check("admin is installable with its own identity: manifest, ADMIN-badged icons, cinema hero band",
+  adminHtml.includes('rel="manifest"') && adminHtml.includes("manifest.webmanifest") &&
+  adminHtml.includes("admin-icon-192.png") &&
+  fs.existsSync(path.join(ROOT, "docs/admin/manifest.webmanifest")) &&
+  fs.existsSync(path.join(ROOT, "docs/admin/admin-icon-192.png")) &&
+  fs.existsSync(path.join(ROOT, "docs/admin/admin-icon-512.png")) &&
+  adminHtml.includes('class="admin-hero"') && adminCss.includes(".admin-hero video") &&
+  admin.includes("banner-superhero") && !/style="/.test(adminHtml));
 check("admin password and refresh grants explicitly request an admin client session",
   admin.includes("/api/auth/v1/token?grant_type=password") &&
   admin.includes("/api/auth/v1/token?grant_type=refresh_token") &&

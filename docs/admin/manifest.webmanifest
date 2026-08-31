@@ -1,0 +1,16 @@
+{
+  "name": "HNK Admin Control Center",
+  "short_name": "HNK Admin",
+  "description": "Production administration for HNK Create Studio — students, licenses, activity history and panel releases.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1018",
+  "theme_color": "#0b1018",
+  "icons": [
+    { "src": "admin-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "admin-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "admin-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
