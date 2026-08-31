@@ -8,12 +8,15 @@
 # throwaway showcase-drop orphan branch (no .github in its tree, so the token
 # needs no workflows permission), and the branch is deleted after the wave.
 #
-# WHAT IT MAKES (owner instruction 2026-08-31: "Before/After ပုံတွေက
-# အသစ်တွေနဲ့ ပိုကောင်းအောင်"): two honest pairs -
-#   pair 1  ba-retouch-before  : T2I base — unretouched studio portrait
+# WHAT IT MAKES (owner instructions 2026-08-31: new images; then "the model
+# uses THIS face" — the promo-panel woman, fair complexion, clean white
+# western/Vietnamese-style dress): two honest pairs -
+#   pair 1  ba-retouch-before  : identity-preserving edit from her poster —
+#                                natural un-retouched studio portrait
 #           ba-retouch-after   : that base run through the shipped catalog's
 #                                REAL "retouch" workflow prompt, verbatim
-#   pair 2  ba-scene-before    : T2I base — bride on a plain studio backdrop
+#   pair 2  ba-scene-before    : identity-preserving edit — white ao-dai
+#                                dress on a plain studio backdrop
 #           ba-scene-after     : that base run through the shipped catalog's
 #                                REAL "bg-replace" workflow prompt, verbatim,
 #                                plus the new-background description its
@@ -66,7 +69,6 @@ jobs:
           set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
           BASE="https://www.runninghub.ai/openapi/v2"
           AUTH="Authorization: Bearer $RH_KEY"
-          T2I_PATH="rhart-image-n-pro-official/text-to-image"
           EDIT_PATH="rhart-image-n-pro-official/edit"
           mkdir -p out
           # The AFTER prompts come from the shipped catalog itself, verbatim —
@@ -85,9 +87,34 @@ jobs:
           print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='bg-replace'))
           PY
           )
+          MEITU_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='pr-meitu'))
+          PY
+          )
+          SCN_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='pr-scnVietnam'))
+          PY
+          )
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
-          BASE_A_PROMPT="RAW unretouched studio portrait photograph of a young Myanmar woman, head and shoulders, facing the camera, neutral gray seamless studio background, soft even lighting, natural imperfect skin with visible pores, a few small temporary blemishes, slight under-eye darkness, stray flyaway hairs, no retouching, realistic candid skin texture, 85mm portrait lens, photorealistic"
-          BASE_B_PROMPT="Full-length studio photograph of a Myanmar bride in a traditional white and gold wedding dress, standing on a plain light-gray seamless studio backdrop, soft even studio lighting, whole body and shoes visible, natural relaxed pose, soft contact shadow on the floor, photorealistic"
+          # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
+          # bases are IDENTITY-PRESERVING edits from her poster (shipped in the
+          # repo), fair clear complexion, clean white western/Vietnamese-style
+          # dress. The before for the retouch pair keeps honest natural texture
+          # so the divider still has real work to reveal.
+          REF_IMG="docs/assets/site/promo-panel-poster.jpg"
+          IDENTITY="Use the exact same woman and facial identity from the reference image — same face shape, eyes, eyebrows, nose, lips, jawline, expression character and apparent age; do not redesign or beautify her facial structure."
+          # owner correction (2026-08-31): the first cut aged her — the face
+          # came out longer and more gaunt than the reference. She is YOUNG
+          # with very beautiful proportions; the base must hold them exactly.
+          YOUTH="Her exact face proportions from the reference must be kept: she is a very young woman in her early twenties with soft, smooth, slightly rounded youthful cheeks, a gentle jawline and beautiful balanced facial proportions. Do NOT elongate, narrow, hollow, sharpen or age the face in any way — no gauntness, no sunken cheeks, no mature look."
+          BASE_A_PROMPT="$IDENTITY $YOUTH Create a head-and-shoulders studio portrait of her facing the camera on a neutral gray seamless studio background with soft even lighting. Fair, clear complexion but RAW un-retouched skin: visible pores, a few small temporary blemishes, slight under-eye darkness, stray flyaway hairs, no makeup polish. She wears a simple clean white western-style blouse. 85mm portrait lens, photorealistic."
+          BASE_B_PROMPT="$IDENTITY Create a full-length studio photograph of her standing on a plain light-gray seamless studio backdrop with soft even lighting, whole body and shoes visible, natural relaxed pose, soft contact shadow on the floor. She wears an elegant clean pure-white Vietnamese ao-dai-inspired modern dress — minimal, bright white, western-clean styling — with simple white shoes. Fair clear complexion, photorealistic."
           poll_and_fetch() { # $1=name  $2=taskId — RunningHub charges at SUBMIT,
             # so this half is the one that must never be lost
             local n="$1" tid="$2" deadline=$((SECONDS+600)) img="" q st
@@ -138,17 +165,85 @@ jobs:
             exit $fail
           fi
           LIST="$PAIRS"; [ "$LIST" = "all" ] && LIST="retouch scene"
+          refurl=$(reupload "$REF_IMG") || { echo "REFERENCE UPLOAD FAILED"; exit 1; }
           for p in $LIST; do
             case "$p" in
               retouch)
-                submit "ba-retouch-before" "$T2I_PATH" "$(jbody "$BASE_A_PROMPT" "[]" "3:4")" || { fail=1; continue; }
+                submit "ba-retouch-before" "$EDIT_PATH" "$(jbody "$BASE_A_PROMPT" "[\"$refurl\"]" "3:4")" || { fail=1; continue; }
                 u=$(reupload "out/ba-retouch-before.png") || { echo "REUPLOAD FAILED retouch"; fail=1; continue; }
-                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$u\"]" "3:4")" || fail=1
+                # the after is the full shipped pipeline: V2 Retouch, then the
+                # Retouch A Style beauty finish (owner: အရမ်းချောအောင်)
+                submit "ba-retouch-step" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$u\"]" "3:4")" || { fail=1; continue; }
+                u2=$(reupload "out/ba-retouch-step.png") || { echo "REUPLOAD FAILED retouch step"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$u2\"]" "3:4")" || fail=1
+                rm -f out/ba-retouch-step.png
                 ;;
               scene)
-                submit "ba-scene-before" "$T2I_PATH" "$(jbody "$BASE_B_PROMPT" "[]" "2:3")" || { fail=1; continue; }
+                submit "ba-scene-before" "$EDIT_PATH" "$(jbody "$BASE_B_PROMPT" "[\"$refurl\"]" "2:3")" || { fail=1; continue; }
                 u=$(reupload "out/ba-scene-before.png") || { echo "REUPLOAD FAILED scene"; fail=1; continue; }
                 submit "ba-scene-after" "$EDIT_PATH" "$(jbody "$BG_PROMPT $BG_SCENE" "[\"$u\"]" "2:3")" || fail=1
+                ;;
+              glam)
+                # owner (2026-08-31, on the shipped retouch after): "ဒါကို
+                # အရမ်းချောအောင်" — one more REAL product pass, the catalog's
+                # own pr-meitu "Retouch A Style" beauty finish, applied to the
+                # already-shipped after image. The before stays untouched, so
+                # the pair keeps its alignment and its honesty.
+                ug=$(reupload "docs/assets/site/ba/ba-retouch-after.jpg") || { echo "GLAM UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$ug\"]" "3:4")" || fail=1
+                ;;
+              finish)
+                # rerun ONLY the after chain (V2 Retouch, then Retouch A
+                # Style) on the shipped before. Each pass is ANCHORED to the
+                # owner's reference poster as IMAGE 2: a synthetic chain
+                # drifts older and harder with every hop (owner, twice: she
+                # is younger and prettier than this) — a real customer photo
+                # never drifts because the input IS the person, so pinning
+                # the demo's identity to her true face is what makes the
+                # showcase honest, not less so.
+                ANCHOR="IMAGE 2 shows the SAME woman — her true face. While working on IMAGE 1, keep the facial identity, youth and proportions matching IMAGE 2 exactly: a very young woman in her early twenties with soft rounded youthful cheeks and beautiful balanced proportions — never older, longer, harder or more gaunt than IMAGE 2. In IMAGE 1, IMAGE 2's beauty at its freshest."
+                uf=$(reupload "docs/assets/site/ba/ba-retouch-before.jpg") || { echo "FINISH UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-step" "$EDIT_PATH" "$(jbody "$ANCHOR $RETOUCH_PROMPT" "[\"$uf\",\"$refurl\"]" "3:4")" || { fail=1; continue; }
+                u2=$(reupload "out/ba-retouch-step.png") || { echo "FINISH REUPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$ANCHOR $MEITU_PROMPT" "[\"$u2\",\"$refurl\"]" "3:4")" || fail=1
+                rm -f out/ba-retouch-step.png
+                ;;
+              pairv2)
+                # owner, three rounds: she keeps coming back older and harder
+                # than her poster. Root cause: the BEFORE itself drifted, and
+                # every further hop compounds. This path keeps every image ONE
+                # hop from her true face: (1) her glam portrait straight from
+                # the reference, (2) the before is that portrait with the raw
+                # flaws added back (identical face, hair, framing), (3) the
+                # after is ONE real Retouch A Style pass over that before,
+                # anchored to the reference.
+                GLAM_SRC="Using the reference image: the SAME woman, her exact face at its youngest and most beautiful — early twenties, soft rounded youthful cheeks, beautiful balanced proportions exactly as the reference. Create a head-and-shoulders studio portrait facing the camera on a neutral gray seamless background in soft even studio light, hair neatly and loosely tied back with a few soft strands, simple clean white blouse. Give her the full Vietnamese/Chinese glass-skin finish: flawless porcelain skin, milky bright even tone, dewy lifted glow, sparkling eyes with clean catchlights, fresh rosy lips. Photorealistic."
+                DEGRADE="Keep this EXACT photograph — same woman, same face, same hair, same clothing, same pose, framing and background, pixel-for-pixel composition — and only make it look like the RAW un-retouched original the camera captured before any retouching: dull the skin slightly with natural uneven tone, add a few small temporary blemishes and faint under-eye darkness, add a few stray flyaway hairs, and remove the glow and gloss so the skin reads ordinary and matte. Change absolutely nothing else — not the face proportions, not the age, not the hair, not the clothes."
+                ANCHOR2="IMAGE 2 shows the SAME woman — her true face. Keep the facial identity, youth and proportions matching IMAGE 2 exactly: early twenties, soft rounded youthful cheeks, beautiful balanced proportions — never older, longer or harder than IMAGE 2."
+                submit "ba-glam-src" "$EDIT_PATH" "$(jbody "$GLAM_SRC" "[\"$refurl\"]" "3:4")" || { fail=1; continue; }
+                ug1=$(reupload "out/ba-glam-src.png") || { echo "PAIRV2 UPLOAD1 FAILED"; fail=1; continue; }
+                submit "ba-retouch-before" "$EDIT_PATH" "$(jbody "$DEGRADE" "[\"$ug1\"]" "3:4")" || { fail=1; continue; }
+                ug2=$(reupload "out/ba-retouch-before.png") || { echo "PAIRV2 UPLOAD2 FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$ANCHOR2 $MEITU_PROMPT" "[\"$ug2\",\"$refurl\"]" "3:4")" || fail=1
+                rm -f out/ba-glam-src.png
+                ;;
+              afteronly)
+                # one pure product pass: Retouch A Style (hair/wardrobe/pose
+                # locks included) over the shipped before, no reference in the
+                # call — the anchored variant copied IMAGE 2's whole scene,
+                # and with a young one-hop before there is no drift left to
+                # correct.
+                ua=$(reupload "docs/assets/site/ba/ba-retouch-before.jpg") || { echo "AFTERONLY UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$ua\"]" "3:4")" || fail=1
+                ;;
+              vnscene)
+                # owner (2026-08-31, on the palace after): not the yellow
+                # backdrop — a beautiful Library scene, natural indoor light,
+                # tender skin. The catalog's own pr-scnVietnam (Vietnam soft
+                # pastel set) prompt, verbatim, on the shipped scene before;
+                # its LOCK keeps her and the white ao dai exactly as shot.
+                us=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "VNSCENE UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-scene-after" "$EDIT_PATH" "$(jbody "$SCN_PROMPT" "[\"$us\"]" "2:3")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac
