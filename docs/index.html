@@ -726,7 +726,23 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
   .chapter{opacity:1;transform:none;transition:none;
     animation:chCard both cubic-bezier(.16,1,.3,1);animation-timeline:view();animation-range:entry 0% entry 55%}
 }
-@keyframes chCard{from{opacity:0;transform:translateY(44px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes chCard{from{opacity:0;transform:perspective(900px) translateY(44px) rotateX(9deg) scale(.985)}to{opacity:1;transform:none}}
+/* ---- 5D raised finish (owner: "ဖောင်ကြွ") ----
+   The frame floats OFF the card: a deep lifted shadow, a gloss that
+   follows the pointer, and a live 3D tilt on fine-pointer screens (the
+   tilt JS below writes rotateX/rotateY straight onto the frame). Type
+   never leaves its plane — transformed text goes blurry — so the raised
+   look on the number comes from stacked drop-shadows instead. */
+.chapter{perspective:1100px}
+.ch-media{transform-style:preserve-3d;will-change:transform;
+  transition:transform .18s ease,box-shadow .4s ease}
+.chapter:hover .ch-media{box-shadow:0 30px 70px rgba(0,0,0,.62),0 8px 26px rgba(233,185,73,.14),inset 0 1px 0 rgba(247,217,142,.2)}
+.ch-media::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .3s ease;
+  background:radial-gradient(60% 45% at var(--mx,50%) var(--my,40%),rgba(255,244,214,.17),transparent 70%)}
+.chapter:hover .ch-media::after{opacity:1}
+.ch-num{filter:drop-shadow(0 2px 0 rgba(0,0,0,.6)) drop-shadow(0 10px 14px rgba(0,0,0,.35))}
+.ch-stat{box-shadow:0 10px 24px rgba(0,0,0,.35),inset 0 1px 0 rgba(247,217,142,.22)}
+@media (prefers-reduced-motion: reduce){.ch-media{transition:none;transform:none!important}.ch-media::after{display:none}}
 @media (prefers-reduced-motion: reduce){
   .chapter{opacity:1!important;transform:none!important;transition:none!important;animation:none!important}
   .ch-media video{display:none}
@@ -1877,6 +1893,30 @@ fetch("app/version.json",{cache:"no-store"}).then(function(r){return r.json();})
     es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); rio.unobserve(e.target); } });
   },{threshold:.12});
   chs.forEach(function(c){rio.observe(c);});
+})();
+/* THE JOURNEY: the 5D tilt — fine-pointer screens only, the frame leans
+   toward the cursor and the gloss follows it; touch and reduced motion
+   never see a transform. rAF-throttled, transform/opacity only. */
+(function(){
+  var reduceT=false; try{reduceT=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  if(reduceT) return;
+  var fine=false; try{fine=matchMedia("(hover: hover) and (pointer: fine)").matches;}catch(e){}
+  if(!fine) return;
+  [].slice.call(document.querySelectorAll(".chapter")).forEach(function(ch){
+    var media=ch.querySelector(".ch-media"); if(!media) return;
+    var raf=0,rx=0,ry=0,mx=50,my=40,on=false;
+    var paint=function(){ raf=0;
+      media.style.transform=on?("rotateX("+rx.toFixed(2)+"deg) rotateY("+ry.toFixed(2)+"deg) translateZ(14px)"):"";
+      media.style.setProperty("--mx",mx.toFixed(1)+"%"); media.style.setProperty("--my",my.toFixed(1)+"%");
+    };
+    ch.addEventListener("pointermove",function(e){
+      var r=ch.getBoundingClientRect();
+      var px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+      ry=(px-.5)*7; rx=(.5-py)*6; mx=px*100; my=py*100; on=true;
+      if(!raf) raf=requestAnimationFrame(paint);
+    });
+    ch.addEventListener("pointerleave",function(){ on=false; if(!raf) raf=requestAnimationFrame(paint); });
+  });
 })();
 /* ---- THE JOURNEY (v5.59.0): chapter cinemagraphs ----
    Same contract as the app's page heroes: every clip is an mp4/webm pair
