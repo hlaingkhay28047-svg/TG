@@ -351,7 +351,13 @@
     const badge = photo
       ? node("img", { className: "avatar avatar-photo", src: photo, alt: "", "aria-hidden": "true" })
       : node("span", { className: "avatar", text: name.slice(0, 1).toUpperCase(), "aria-hidden": "true" });
-    return [badge, node("span", {}, [node("b", { text: name }), node("small", { text: item.email || item.student_email || "" })])];
+    /* v5.62.1 — when no display name exists, `name` already IS the email;
+       repeating it as the small line doubled every row (owner, phone
+       screenshot). The sub-line renders only when it adds information. */
+    const email = item.email || item.student_email || "";
+    const line = [node("b", { text: name })];
+    if (email && email !== name) line.push(node("small", { text: email }));
+    return [badge, node("span", {}, line)];
   }
 
   function studentStatus(item) {
