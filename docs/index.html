@@ -347,25 +347,32 @@ h1,h2,h3{font-weight:700;line-height:1.6}
 .wf-gallery img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:9px;
   border:1px solid rgba(233,185,73,.22);transition:transform .5s ease,border-color .5s ease}
 .wf-gallery img:hover{transform:scale(1.04);border-color:rgba(233,185,73,.6)}
-/* v5.52.1 — cinema promo acts: full-bleed cinemagraph with a copy stack
-   over a bottom shade; the poster is the ground truth and the fallback. */
+/* v5.60 — cinema promo acts, third cut. The full-bleed 3/4 cover window
+   cropped both clips hard on phones (the Web Studio pair is 3:2, the
+   panel pair ~0.95:1 — neither survives a portrait crop), and the 1s
+   video cross-fade blended two pictures (owner: "video လားပုံလားမသိ,
+   size ပျက်"). Same contract as the journey chapters now: each act is a
+   card whose gold-lined frame carries the clip's TRUE ratio (inline per
+   act — poster and clip share it exactly, so nothing is ever cropped),
+   the copy sits below the picture instead of over it, and the poster
+   steps aside entirely the moment frames actually flow. */
 .cinema{display:grid;gap:14px;margin:34px 0 8px}
-/* NO min-height here: with aspect-ratio set, a min-height transfers back
-   into WIDTH (300px min at 3/2 forced every act to 450px and the whole
-   page sideways-scrolled on phones — the RTL sweep caught it). Portrait
-   3/4 gives phones their height honestly; desktop goes cinematic 3/2. */
-.act{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--panel);aspect-ratio:3/4}
-@media(min-width:900px){.cinema{grid-template-columns:1fr 1fr}.act{aspect-ratio:3/2}}
-.act .act-poster,.act video{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
-.act video{opacity:0;transition:opacity 1s ease}
-.act video.on{opacity:1}
-.act-shade{position:absolute;left:0;right:0;bottom:0;height:72%;
-  background:linear-gradient(to top,rgba(5,8,14,.92) 0%,rgba(5,8,14,.55) 45%,rgba(5,8,14,0) 100%)}
-.act-copy{position:absolute;left:18px;right:18px;bottom:16px;z-index:2}
+@media(min-width:900px){.cinema{grid-template-columns:1fr 1fr;align-items:start}}
+.act{position:relative;display:flex;flex-direction:column;border-radius:var(--r-lg);overflow:hidden;
+  border:1px solid rgba(233,185,73,.18);
+  background:radial-gradient(120% 130% at 88% -10%,rgba(233,185,73,.08),transparent 55%),linear-gradient(160deg,#10131d 0%,#0a0c13 100%)}
+.act-frame{position:relative;width:100%;overflow:hidden;background:#0b0d10;
+  border-bottom:1px solid rgba(233,185,73,.22);box-shadow:inset 0 1px 0 rgba(247,217,142,.14)}
+.act-frame .act-poster,.act-frame video{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
+.act-frame video{opacity:0;transition:opacity .8s ease}
+.act-frame video.on{opacity:1}
+.act-poster{transition:opacity .5s ease .15s}
+.act.motion-live .act-poster{opacity:0}
+.act-copy{padding:16px 18px 18px}
 .act-copy .kick{color:var(--gold);font-size:var(--fs-xs);font-weight:700;letter-spacing:.14em;margin-bottom:6px}
-.act-h{font-size:var(--fs-xl);line-height:1.55;color:#fff;margin:0 0 6px;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.act-h{font-size:var(--fs-xl);line-height:1.55;color:#fff;margin:0 0 6px}
 .act-h em{font-style:normal;color:var(--gold-hi)}
-.act-p{color:#cdd6e0;font-size:var(--fs-xs);margin:0 0 12px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.act-p{color:#cdd6e0;font-size:var(--fs-xs);margin:0 0 12px}
 .cap{font-size:var(--fs-2xs);color:var(--muted);margin-top:var(--sp-3)}
 /* ---- S4 carousel ---- */
 .carousel{display:flex;gap:var(--sp-3);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:var(--sp-2);-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -1082,8 +1089,9 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
      failure leaves the poster photograph. -->
 <section class="cinema" aria-label="HNK cinema showcase">
   <div class="act" data-promo="assets/site/live/promo-webstudio.mp4">
-    <img class="act-poster" loading="lazy" src="app/lib/wf/cards5/kitsune-nine-tail.jpg" alt="Kitsune Nine-Tail — HNK Web Studio fantasy showcase">
-    <div class="act-shade" aria-hidden="true"></div>
+    <div class="act-frame" style="aspect-ratio:1080/720">
+      <img class="act-poster" loading="lazy" src="app/lib/wf/cards5/kitsune-nine-tail.jpg" alt="Kitsune Nine-Tail — HNK Web Studio fantasy showcase">
+    </div>
     <div class="act-copy">
       <div class="kick lat">HNK WEB STUDIO</div>
       <h3 class="act-h">စိတ်ကူးထဲက မြင်ကွင်းကို <em>အစစ်</em> ဖြစ်အောင်</h3>
@@ -1092,8 +1100,9 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
     </div>
   </div>
   <div class="act" data-promo="assets/site/live/promo-panel.mp4">
-    <img class="act-poster" loading="lazy" src="assets/site/promo-panel-poster.jpg" alt="Master BG FG Replace — HNK Photoshop panel showcase">
-    <div class="act-shade" aria-hidden="true"></div>
+    <div class="act-frame" style="aspect-ratio:684/720">
+      <img class="act-poster" loading="lazy" src="assets/site/promo-panel-poster.jpg" alt="Master BG FG Replace — HNK Photoshop panel showcase">
+    </div>
     <div class="act-copy">
       <div class="kick lat" data-i18n="s5.kick">PHOTOSHOP AI PANEL v6.33.0</div>
       <h3 class="act-h">Photoshop ထဲမှာ — <em>Layer + Mask</em> နဲ့ မူရင်းမပျက်</h3>
@@ -2119,8 +2128,10 @@ fetch("app/version.json",{cache:"no-store"}).then(function(r){return r.json();})
         var ok=function(){ v.className="on"; };
         if(p&&p.then)p.then(ok,function(){try{v.remove();}catch(e){}});else ok();
       },{once:true});
+      /* no half-and-half: the poster leaves only once frames actually flow */
+      v.addEventListener("playing",function(){ act.classList.add("motion-live"); },{once:true});
       v.src=act.getAttribute("data-promo");
-      act.insertBefore(v,act.querySelector(".act-shade"));
+      (act.querySelector(".act-frame")||act).appendChild(v);
     };
     var pio=new IntersectionObserver(function(es){
       es.forEach(function(e){
