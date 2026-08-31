@@ -880,3 +880,95 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* ============================================================
+   v6.35.0 — the owner's seven LEARN-DESIGN palettes as full themes.
+   Each dark theme remaps the identity tokens and inherits :root's
+   status colours; porcelain is light and carries light-safe status
+   colours like [data-theme="light"] does. Tap ☀/☽ to step the wheel.
+   ============================================================ */
+[data-theme="olive"] { /* #121A1B / #505039 / #A7AA63 / #EAE6D2 */
+  --bg: #121a1b; --botbar: #101718; --panel: #1a211c; --panel-2: #232b21;
+  --sunk: #0c1213; --field: #242c22; --field-2: #151b16;
+  --line: #2b332a; --line-2: #3a4438; --line-3: #414b3e;
+  --btn: #2b332a; --btn-h: #354039;
+  --text: #eae6d2; --text-2: #cfccb8; --muted: #a7aa63; --muted-2: #8b8e6a; --faint: #5c604d;
+  --accent: #a7aa63; --accent-h: #c6c987; --accent-soft: #b8bb76; --accent-ink: #14170a;
+  --on-title: #c6c987; --stage: #0c1213;
+  --chip-bg: #333a26; --chip-tx: #dfe2c2; --chip-brd: #4c543a; --chip-bg-h: #414a30;
+}
+[data-theme="ember"] { /* #FC5C02 / #E2CEAE / #7C6B51 / #312B1E */
+  --bg: #221d13; --botbar: #1e1a11; --panel: #312b1e; --panel-2: #3b3425;
+  --sunk: #191509; --field: #3d3626; --field-2: #241f14;
+  --line: #453d2c; --line-2: #554c38; --line-3: #5c533e;
+  --btn: #453d2c; --btn-h: #524936;
+  --text: #e2ceae; --text-2: #cbb896; --muted: #a8946f; --muted-2: #8d7c5e; --faint: #625442;
+  --accent: #fc5c02; --accent-h: #ff8a45; --accent-soft: #ff7527; --accent-ink: #2b1000;
+  --on-title: #ff8a45; --stage: #191509;
+  --chip-bg: #46311e; --chip-tx: #f3d9be; --chip-brd: #67492c; --chip-bg-h: #573d24;
+}
+[data-theme="limelight"] { /* #87DB20 / #A935EB / #FFFFFF / #000000 */
+  --bg: #0a1003; --botbar: #0a0e05; --panel: #141c09; --panel-2: #1c2610;
+  --sunk: #050902; --field: #1e2a10; --field-2: #0e1506;
+  --line: #26331a; --line-2: #354627; --line-3: #3c4e2c;
+  --btn: #26331a; --btn-h: #314324;
+  --text: #ffffff; --text-2: #dcedc8; --muted: #a9c185; --muted-2: #8ba06c; --faint: #5a6b47;
+  --accent: #87db20; --accent-h: #a5f04d; --accent-soft: #97e636; --accent-ink: #0c1801;
+  --on-title: #a5f04d; --stage: #050902;
+  --chip-bg: #3a1d52; --chip-tx: #e3c8f8; --chip-brd: #6b2f9e; --chip-bg-h: #4a2568;
+}
+[data-theme="mustard"] { /* #474150 / #F5FFF4 / #9C99B8 / #FFBB00 */
+  --bg: #2b2733; --botbar: #262230; --panel: #3a3545; --panel-2: #474150;
+  --sunk: #201c29; --field: #3d384a; --field-2: #2c2836;
+  --line: #4b4557; --line-2: #5a5468; --line-3: #615b70;
+  --btn: #4b4557; --btn-h: #575165;
+  --text: #f5fff4; --text-2: #d6dcd9; --muted: #9c99b8; --muted-2: #83809c; --faint: #5d5a72;
+  --accent: #ffbb00; --accent-h: #ffd24d; --accent-soft: #ffc61f; --accent-ink: #241a00;
+  --on-title: #ffd24d; --stage: #201c29;
+  --chip-bg: #3f3a56; --chip-tx: #d9d6ec; --chip-brd: #5c5680; --chip-bg-h: #4c4666;
+}
+[data-theme="royal"] { /* #6F2DBD / #A663CC / #171123 / #FBFBFB */
+  --bg: #171123; --botbar: #140f1f; --panel: #221a33; --panel-2: #2c2242;
+  --sunk: #100b1a; --field: #2e2445; --field-2: #1a1428;
+  --line: #342a4b; --line-2: #43375d; --line-3: #4a3d66;
+  --btn: #342a4b; --btn-h: #40345a;
+  --text: #fbfbfb; --text-2: #ddd5ea; --muted: #b39ecd; --muted-2: #9382ab; --faint: #635677;
+  --accent: #a663cc; --accent-h: #c58ce6; --accent-soft: #b573d9; --accent-ink: #1d0b2c;
+  --on-title: #c58ce6; --stage: #100b1a;
+  --chip-bg: #3c2461; --chip-tx: #e5d3f6; --chip-brd: #6f2dbd; --chip-bg-h: #4a2d78;
+}
+[data-theme="electric"] { /* #00FFD4 / #5465FF / #D2DDFF / #050208 */
+  --bg: #070a1c; --botbar: #060818; --panel: #101532; --panel-2: #171e42;
+  --sunk: #040612; --field: #182047; --field-2: #0b0f26;
+  --line: #1f2750; --line-2: #2b3565; --line-3: #313c70;
+  --btn: #1f2750; --btn-h: #2a3467;
+  --text: #d2ddff; --text-2: #b4c1ef; --muted: #8b97cf; --muted-2: #7480b3; --faint: #4d5580;
+  --accent: #5465ff; --accent-h: #00ffd4; --accent-soft: #7c89ff; --accent-ink: #0a0e3c;
+  --on-title: #9daaff; --stage: #040612;
+  --chip-bg: #0e3a38; --chip-tx: #9cf5e4; --chip-brd: #14665c; --chip-bg-h: #124a45;
+}
+[data-theme="porcelain"] { /* light: #90C2E7 / #FEF7F8 / #CDD4DD / #22819A */
+  --bg: #e8f1f7; --botbar: #dde9f2; --panel: #fef7f8; --panel-2: #f2f6fa;
+  --sunk: #dfe9f1; --field: #ffffff; --field-2: #f1f6fa;
+  --line: #cdd4dd; --line-2: #b9c3cf; --line-3: #aebbc9;
+  --btn: #eef4f9; --btn-h: #e0ebf4;
+  --text: #16303a; --text-2: #2b4652; --muted: #52707e; --muted-2: #6c8795; --faint: #93a9b4;
+  --accent: #22819a; --accent-h: #1b6c81; --accent-soft: #1f7891; --accent-ink: #f4fbfd;
+  --on-title: #1b6c81; --stage: #dde9f2;
+  --arm-y: #f0cf82; --arm-b: #4f7fe6; --arm-b-brd: #3f6fd6; --arm-b-ink: #ffffff;
+  --go: #46b25a; --go-brd: #3e9c4e; --go-ink: #ffffff;
+  --ok: #2f9d4e; --err: #d24d4d; --warn: #c07d24;
+  --chip-bg: #dceaf3; --chip-tx: #1f5468; --chip-brd: #a8cadd; --chip-bg-h: #cfe2ee;
+  --shadow: rgba(40, 70, 90, 0.16);
+}
+
+/* v6.35.0 — per-workflow design fields (concept-poster) */
+.hnk-wf-fields { margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+.hnk-wf-field { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hnk-wf-field-l { min-width: 118px; font-size: 12px; color: var(--hnk-mut, #b9c0d0); }
+.hnk-wf-text { flex: 1; min-width: 150px; }
+.hnk-wf-sw { min-width: 52px; }
+.hnk-wf-sw.on { background: var(--hnk-gold, #e9b949); color: #17130a; font-weight: 700; }
+.hnk-wf-swatches { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.hnk-wf-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); padding: 0; }
+.hnk-wf-hex { width: 90px; }

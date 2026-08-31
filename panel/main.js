@@ -5553,7 +5553,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.34.0";
+const PANEL_VERSION = "6.35.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6386,14 +6386,17 @@ REFRESHERS.push(function () {
   } catch (e) { }
 });
 
-/* ---------------- Theme (dark / light) ---------------- */
+/* ---------------- Theme wheel (v6.35.0: dark, light + the owner's seven
+   LEARN-DESIGN palettes; unknown stored values fall back to dark) ---------------- */
+var PANEL_THEMES = ["dark", "light", "olive", "ember", "limelight", "mustard", "royal", "electric", "porcelain"];
 function applyTheme() {
-  const th = (state.theme === "light") ? "light" : "dark";
+  const th = (PANEL_THEMES.indexOf(state.theme) >= 0) ? state.theme : "dark";
   const root = document.getElementById("app") || (document.body || null);
   if (root && root.setAttribute) root.setAttribute("data-theme", th);
   try { if (document.documentElement && document.documentElement.setAttribute) document.documentElement.setAttribute("data-theme", th); } catch (e) { }
   const bt = $("btnTheme");
-  if (bt) bt.textContent = (th === "light") ? "☽" : "☀"; /* light→moon, dark→sun (tap to switch) */
+  /* the two light-surface themes show the moon; every dark theme the sun */
+  if (bt) bt.textContent = (th === "light" || th === "porcelain") ? "☽" : "☀";
 }
 
 /* ---------------- Diagnostics: installation + dependency checker ----------------
@@ -11107,9 +11110,13 @@ function init() {
     });
     const bt = $("btnTheme");
     if (bt) bt.addEventListener("click", function () {
-      state.theme = (state.theme === "light") ? "dark" : "light";
+      /* v6.35.0 — one tap steps the whole theme wheel; the status line
+         names the stop so the walk is never disorienting */
+      var ti = PANEL_THEMES.indexOf(state.theme);
+      state.theme = PANEL_THEMES[(ti + 1) % PANEL_THEMES.length] || "dark";
       applyTheme();
       saveSettings();
+      try { setStatus("Theme: " + state.theme); } catch (e) { }
     });
   });
 

@@ -101,6 +101,19 @@ jobs:
           print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='pr-scnVietnam'))
           PY
           )
+          # v5.62.0 — the Concept Art Poster prompt, verbatim, with its two
+          # design tokens filled exactly the way the app fills them: the
+          # default emerald backdrop and the sample title the text box shows.
+          CP_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          p = next((i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='concept-poster'), '')
+          p = p.replace('{{BG}}', '#123B2F (deep teal)')
+          p = p.replace('{{TEXT}}', 'NGÂN KHÚC LAM GIANG')
+          print(p)
+          PY
+          )
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
           # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
           # bases are IDENTITY-PRESERVING edits from her poster (shipped in the
@@ -244,6 +257,17 @@ jobs:
                 # its LOCK keeps her and the white ao dai exactly as shot.
                 us=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "VNSCENE UPLOAD FAILED"; fail=1; continue; }
                 submit "ba-scene-after" "$EDIT_PATH" "$(jbody "$SCN_PROMPT" "[\"$us\"]" "2:3")" || fail=1
+                ;;
+              poster)
+                # v5.62.0 — the Concept Art Poster card: the new workflow's
+                # own shipped prompt over the shipped scene before (white ao
+                # dai, one hop from her true face). Two outputs: the 3:2 card
+                # photograph for lib/wf/cards5 and the portrait sample the
+                # owner reviews.
+                [ -n "$CP_PROMPT" ] || { echo "POSTER: concept-poster not in catalog on this ref"; fail=1; continue; }
+                up=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "POSTER UPLOAD FAILED"; fail=1; continue; }
+                submit "concept-poster-card" "$EDIT_PATH" "$(jbody "$CP_PROMPT" "[\"$up\"]" "3:2")" || fail=1
+                submit "concept-poster-sample" "$EDIT_PATH" "$(jbody "$CP_PROMPT" "[\"$up\"]" "2:3")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac

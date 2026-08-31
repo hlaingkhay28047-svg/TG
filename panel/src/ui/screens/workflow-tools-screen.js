@@ -209,6 +209,56 @@ function create(deps) {
     root.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc",
       text: dom.t(registry.explanationKey(wf.id), wf.explanation) }));
 
+    // v6.35.0 — the workflow's own design controls: poster text, backdrop
+    // colour swatches + hex, and one ON/OFF switch per enhancement. The
+    // values live on the workflow state and resolve into the prompt at
+    // generation time (workflow-request-compiler).
+    if (wf.fields && wf.fields.length) {
+      var langCode = "en";
+      try { langCode = (globalThis.HNK && globalThis.HNK.i18n && globalThis.HNK.i18n.lang && globalThis.HNK.i18n.lang()) || "en"; } catch (e) { }
+      var fl = function (lbl) { return (lbl && (lbl[langCode] || lbl.en)) || ""; };
+      state.fieldVals = state.fieldVals || {};
+      var fwrap = dom.el(doc, "div", { class: "hnk-wf-fields" });
+      wf.fields.forEach(function (f) {
+        if (state.fieldVals[f.key] === undefined) state.fieldVals[f.key] = f.type === "toggle" ? f.default !== false : (f.default || "");
+        var row = dom.el(doc, "div", { class: "hnk-wf-field" });
+        row.appendChild(dom.el(doc, "span", { class: "hnk-wf-field-l", text: fl(f.label) || f.key }));
+        if (f.type === "toggle") {
+          var tb = dom.el(doc, "button", { class: "hnk-btn hnk-wf-sw" + (state.fieldVals[f.key] ? " on" : ""), text: state.fieldVals[f.key] ? "ON" : "OFF" });
+          dom.on(tb, "click", function () {
+            wstate.setField(state, f.key, !state.fieldVals[f.key]);
+            tb.textContent = state.fieldVals[f.key] ? "ON" : "OFF";
+            tb.className = "hnk-btn hnk-wf-sw" + (state.fieldVals[f.key] ? " on" : "");
+          });
+          row.appendChild(tb);
+        } else if (f.type === "text") {
+          var ti = dom.el(doc, "input", { class: "hnk-input hnk-wf-text" });
+          ti.setAttribute("type", "text");
+          if (f.ph) ti.setAttribute("placeholder", f.ph);
+          ti.value = state.fieldVals[f.key] || "";
+          dom.on(ti, "input", function () { wstate.setField(state, f.key, ti.value); });
+          row.appendChild(ti);
+        } else if (f.type === "color") {
+          var sww = dom.el(doc, "div", { class: "hnk-wf-swatches" });
+          var hexInp = dom.el(doc, "input", { class: "hnk-input hnk-wf-hex" });
+          hexInp.setAttribute("type", "text");
+          hexInp.value = state.fieldVals[f.key] || f.default || "";
+          dom.on(hexInp, "input", function () { wstate.setField(state, f.key, hexInp.value); });
+          (f.swatches || []).forEach(function (swc) {
+            var sb = dom.el(doc, "button", { class: "hnk-wf-swatch" });
+            sb.style.background = swc;
+            sb.setAttribute("aria-label", swc);
+            dom.on(sb, "click", function () { wstate.setField(state, f.key, swc); hexInp.value = swc; });
+            sww.appendChild(sb);
+          });
+          sww.appendChild(hexInp);
+          row.appendChild(sww);
+        }
+        fwrap.appendChild(row);
+      });
+      root.appendChild(fwrap);
+    }
+
     root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_req_images", "Required Images") }));
     var reqWrap = dom.el(doc, "div", { class: "hnk-wf-reqs" });
     state.requiredInputs.forEach(function (inp) { reqWrap.appendChild(inputRow(inp)); });

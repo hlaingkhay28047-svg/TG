@@ -27,7 +27,8 @@ async function extract() {
       items: c.items.map(w => ({
         id: w.id, title: w.title || "", summary: String(w.summary || ""),
         explanation: String(w.explanation || ""), prompt: String(w.prompt || ""),
-        negative: String(w.negative || ""), req: (w.req || []).map(String), opt: (w.opt || []).map(String)
+        negative: String(w.negative || ""), req: (w.req || []).map(String), opt: (w.opt || []).map(String),
+        fields: (w.fields || [])
       }))
     }));
   });
