@@ -8603,6 +8603,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     if(typeof wfModelFilter==="function") wfModelFilter((w.req||[]).length);
     wiz.token++; wiz.busy=false; wiz.result=null; wiz.error=""; window._wizBusy=false;
     wiz.prompt=w.prompt+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
+    wiz.avoidTail=wiz.prompt.slice(w.prompt.length); /* the tail, composed once above */
     wiz.fieldVals=wfFieldDefaults(w); /* v5.62.0 — design fields, fresh per open */
     document.body.style.overflow="hidden";
     window._wizOnPick=renderWiz;
@@ -8619,8 +8620,10 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
      box), so nothing about the generate contract changes. */
   async function runWizGenerate(){
     var w=wiz.w;
-    /* v5.62.0 — the design fields become THE prompt for this run */
-    if(w.fields&&w.fields.length) wiz.prompt=applyWfFields(w,wiz.fieldVals)+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
+    /* v5.62.0 — the design fields become THE prompt for this run; the AVOID
+       tail is reused from openWizard's composition rather than re-spelled,
+       so the wizard and the batch keep exactly one shared expression */
+    if(w.fields&&w.fields.length) wiz.prompt=applyWfFields(w,wiz.fieldVals)+(wiz.avoidTail||"");
     /* v5.56.0 — the capacity guard fires HERE, when the money is about to
        be spent, never on open: if the active model cannot carry every
        required image, switch to the first that can (the footer has been
@@ -9848,7 +9851,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
      single wizard run must send the same text, or the card art lies */
   window._wfBatchPrompt=function(id){
     var w=wfById[id]; if(!w) return null;
-    return w.prompt+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
+    /* v5.62.0 — a fields workflow (concept-poster) batches at its DEFAULT
+       design: switches on, default colour, no custom text — its {{tokens}}
+       must never reach the engine raw. Byte-identical to a wizard run left
+       at its own defaults. */
+    var base=(w.fields&&w.fields.length)?applyWfFields(w,wfFieldDefaults(w)):w.prompt;
+    return base+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
   };
   /* result → continue-editing chain */
   window.openWorkflowById=function(id){
