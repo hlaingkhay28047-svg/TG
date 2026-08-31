@@ -74,6 +74,9 @@ jobs:
             [banner-path-batch]="soft golden light sweeps slowly across the scene, hair and fabric stir gently."
             [banner-coral-fairy]="coral fronds sway as in a gentle current, small motes of light drift upward, her hair floats softly."
             [banner-fairy-forest]="fireflies drift among the trees, leaves flutter down slowly, her wings shimmer faintly."
+            [hero-greet-morning]="soft golden morning light breathes through the scene, her hair stirs gently, dust motes drift in the sunbeams."
+            [hero-greet-afternoon]="bright soft daylight shimmers gently, her hair and clothing sway in a light breeze."
+            [hero-greet-evening]="warm lamplight flickers softly in the evening glow, her hair sways gently, tiny motes of light drift."
           )
           mkdir -p out
           fail=0
