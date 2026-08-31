@@ -178,6 +178,23 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.34.0** — `pending`. The glam retouch wave (2026-08-31, owner:
+  Retouch တွေကို လက်ရှိထက် ၁၀ ဆမက ပိုချောအောင် — Vietnam/China studio
+  glass-skin standard). The four retouch-family workflow prompts
+  (retouch, master-pro-retouch, pr-meitu "Retouch A Style", pr-evoto
+  "Retouch B Style") move from the conservative natural finish to the
+  Vietnamese/Chinese beauty-studio standard — flawless porcelain glass
+  skin, milky even tone, firm lifted glow — at full strength; identity,
+  composition and apparent-age locks stay word-for-word. Catalog data is
+  regenerated from the app so both surfaces stay one catalog (sync tests
+  green). Acceptance: carry over the v6.33.0 checklist; additionally run
+  one One-Tap AI Retouch and one Retouch A Style pass in real Photoshop
+  and confirm the new glam finish returns as layers with the face
+  unchanged. Artifact `HNK_Ai_Panel_v6.34.0.ccx`, SHA-256
+  `f54e282205578bf6f0d3e24de8210599d6202c5d7f8af80c010f4952c9fff6e3`,
+  1,287,825 bytes. Stays disabled for customers until this acceptance.
+- **v6.33.0** — `pending`, now superseded by v6.34.0 (the glam retouch prompts above)
+  before Photoshop acceptance; its rename content ships within v6.34.0. Original entry follows.
 - **v6.33.0** — `pending`. The rename wave (2026-08-31, owner: meitu နဲ့
   evoto အမည်ကို Retouch A နဲ့ Retouch B ဆိုပြီးပြောင်းမယ် — website,
   webapp, Photoshop panel, ဘယ်နေရာမဆို). Every user-visible "Meitu"

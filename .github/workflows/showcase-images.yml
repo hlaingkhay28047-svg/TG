@@ -192,6 +192,16 @@ jobs:
                 ug=$(reupload "docs/assets/site/ba/ba-retouch-after.jpg") || { echo "GLAM UPLOAD FAILED"; fail=1; continue; }
                 submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$ug\"]" "3:4")" || fail=1
                 ;;
+              finish)
+                # rerun ONLY the after chain (V2 Retouch, then Retouch A
+                # Style) on the shipped before — used when the prompts
+                # themselves advance (owner: the 10x VN/CN glam standard)
+                uf=$(reupload "docs/assets/site/ba/ba-retouch-before.jpg") || { echo "FINISH UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-step" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$uf\"]" "3:4")" || { fail=1; continue; }
+                u2=$(reupload "out/ba-retouch-step.png") || { echo "FINISH REUPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$u2\"]" "3:4")" || fail=1
+                rm -f out/ba-retouch-step.png
+                ;;
               vnscene)
                 # owner (2026-08-31, on the palace after): not the yellow
                 # backdrop — a beautiful Library scene, natural indoor light,

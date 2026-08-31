@@ -31,7 +31,7 @@ publicSections.forEach(id => {
 });
 
 check("landing advertises Web Studio 5.61.1", /Web Studio\s+(?:<[^>]+>)*v5\.61\.1/i.test(landing), "release copy is stale");
-check("landing advertises Panel 6.33.0", /Panel(?:[^\n<]|<[^>]+>){0,80}v6\.33\.0/i.test(landing), "panel copy is stale");
+check("landing advertises Panel 6.34.0", /Panel(?:[^\n<]|<[^>]+>){0,80}v6\.34\.0/i.test(landing), "panel copy is stale");
 check("web app reports 5.61.1", /var\s+APP_VER\s*=\s*["']5\.61\.1["']/.test(app), "APP_VER is stale");
 
 check("admin and authenticated download routes stay out of search indexes",

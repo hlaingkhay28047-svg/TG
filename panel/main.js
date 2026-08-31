@@ -5553,7 +5553,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.33.0";
+const PANEL_VERSION = "6.34.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6247,7 +6247,7 @@ const LANGS = [
   { code: "vi", label: "VI", native: "Tiếng Việt" },
   { code: "id", label: "ID", native: "Indonesia" },
   { code: "ms", label: "MS", native: "Melayu" },
-  /* v6.33.0 — the picker offers only languages the PANEL really renders
+  /* v6.34.0 — the picker offers only languages the PANEL really renders
      (owner instruction: show what truly exists). Measured against the
      ~560-key I18N table: the nine core languages are complete, and hi/bn/
      ta/te carry ~500-key native packs — they stay. The ten Myanmar-ethnic
