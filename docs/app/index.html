@@ -1042,6 +1042,12 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stJumpBar{position:sticky;top:calc(var(--navH,54px) + env(safe-area-inset-top) + var(--stageH,0px));z-index:5;background:var(--ink);padding:2px 0 4px}
 #stJumpTop{display:flex;gap:6px;align-items:center;margin-top:4px}
 #stJumpTop .chips{margin-top:0;flex-wrap:nowrap}
+/* v5.60 — the Retouch A/B suite tabs are wider than the MEITU/EVOTO pair they
+   replaced; squeezed flex used to wrap their text to two lines, growing the
+   expanded jump bar past the exit-flip scroll clamp and shoving #stSearch off
+   the 320px edge. The rail now scrolls like #stGroupChips below it. */
+#stSuiteTabs{flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#stSuiteTabs .chip{flex:0 0 auto;white-space:nowrap}
 #stJumpBar .chip{min-height:40px}
 #stStageMin{min-width:44px;justify-content:center}
 #stSearch{flex:1;min-width:80px;min-height:38px;padding:6px 10px;font-size:var(--fs-xs)}
