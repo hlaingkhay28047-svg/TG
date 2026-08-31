@@ -178,16 +178,20 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
-- **v6.37.0** — `pending`. The Design Series wave (2026-08-31, owner: eight
-  reference photo sets — "this exact design, any photo, a hundred photos come
+- **v6.37.0** — `pending`. The Design Series wave (2026-08-31, owner: nine
+  reference sets — "this exact design, any photo, a hundred photos come
   back identical"). Eight new Smart Workflows in Studio Scenes (ink-atelier,
   doll-boudoir, gold-chrysanth, lion-dance, lotus-dance, lotus-garden,
-  saigon-glam, peony-night), each carrying the full ten-field design panel:
+  saigon-glam, peony-night) each carry the full ten-field design panel, and
+  Derma Skin Pro joins Face & Portrait — a dermatologist-grade face-and-body
+  retouch with five ON/OFF switches (blemish healing, tone evening, body
+  skin, eyes & teeth, shine control) that heals what is temporary while
+  keeping true pore texture. The design panels carry:
   an optional caption box hand-lettered into the artwork, a backdrop colour
   picker with six curated swatches, free-text backdrop and props request
   boxes that vanish from the prompt when empty, and six ON/OFF switches
   (skin beauty, colour tone, hair, dress, retouch, liquify) compiled with
-  byte-identical logic on both surfaces. Catalog total moves 133 → 141 (sync
+  byte-identical logic on both surfaces. Catalog total moves 133 → 142 (sync
   tests green); the per-workflow results board covers all eight
   automatically. Acceptance: carry over the v6.36.0 checklist; additionally
   open two of the eight (one light series, one dark series) in real
@@ -196,8 +200,8 @@ eligible students.
   series' design with the caption rendered letter-for-letter and the
   switched-off enhancement absent. Artifact `HNK_Ai_Panel_v6.37.0.ccx`,
   SHA-256
-  `1e556f83173fee1066342b2bb8355d30a6c3245c6d5566f438b7f32578bd6142`,
-  1,307,273 bytes. Stays disabled for customers until this acceptance.
+  `56cd16d3db071f2e3d89239efc112341380a712db58490304c4db011a56d7951`,
+  1,309,020 bytes. Stays disabled for customers until this acceptance.
 - **v6.36.0** — `pending`. The Selection Edit wave (2026-08-31, owner: a
   Rectangle-tool selection plus a typed request must change ONLY the
   selected region — identical pixels outside, same white balance). One new

@@ -324,6 +324,23 @@ jobs:
                 ur=$(reupload "out/region-card-base.png") || { echo "REGION UPLOAD FAILED"; fail=1; continue; }
                 submit "region-card-edit" "$EDIT_PATH" "$(jbody "$RG_PROMPT" "[\"$ur\"]" "3:2")" || fail=1
                 ;;
+              derma)
+                # v5.64.0 — the Derma Skin Pro card: ONE real product pass of
+                # the shipped derma-skin prompt over the shipped raw-skin
+                # before (visible pores and blemishes, one hop from her true
+                # face). The split-face before/after card is composited
+                # locally from this after and the untouched before.
+                DS_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          print(next((i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='derma-skin'), ''))
+          PY
+          )
+                [ -n "$DS_PROMPT" ] || { echo "DERMA: not in catalog on this ref"; fail=1; continue; }
+                ud=$(reupload "docs/assets/site/ba/ba-retouch-before.jpg") || { echo "DERMA UPLOAD FAILED"; fail=1; continue; }
+                submit "card-derma-after" "$EDIT_PATH" "$(jbody "$DS_PROMPT" "[\"$ud\"]" "3:4")" || fail=1
+                ;;
               series)
                 # v5.64.0 — the eight design-series cards: each workflow's own
                 # shipped prompt over the shipped scene before (one hop from
