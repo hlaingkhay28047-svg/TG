@@ -208,6 +208,25 @@ jobs:
                 submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$ANCHOR $MEITU_PROMPT" "[\"$u2\",\"$refurl\"]" "3:4")" || fail=1
                 rm -f out/ba-retouch-step.png
                 ;;
+              pairv2)
+                # owner, three rounds: she keeps coming back older and harder
+                # than her poster. Root cause: the BEFORE itself drifted, and
+                # every further hop compounds. This path keeps every image ONE
+                # hop from her true face: (1) her glam portrait straight from
+                # the reference, (2) the before is that portrait with the raw
+                # flaws added back (identical face, hair, framing), (3) the
+                # after is ONE real Retouch A Style pass over that before,
+                # anchored to the reference.
+                GLAM_SRC="Using the reference image: the SAME woman, her exact face at its youngest and most beautiful — early twenties, soft rounded youthful cheeks, beautiful balanced proportions exactly as the reference. Create a head-and-shoulders studio portrait facing the camera on a neutral gray seamless background in soft even studio light, hair neatly and loosely tied back with a few soft strands, simple clean white blouse. Give her the full Vietnamese/Chinese glass-skin finish: flawless porcelain skin, milky bright even tone, dewy lifted glow, sparkling eyes with clean catchlights, fresh rosy lips. Photorealistic."
+                DEGRADE="Keep this EXACT photograph — same woman, same face, same hair, same clothing, same pose, framing and background, pixel-for-pixel composition — and only make it look like the RAW un-retouched original the camera captured before any retouching: dull the skin slightly with natural uneven tone, add a few small temporary blemishes and faint under-eye darkness, add a few stray flyaway hairs, and remove the glow and gloss so the skin reads ordinary and matte. Change absolutely nothing else — not the face proportions, not the age, not the hair, not the clothes."
+                ANCHOR2="IMAGE 2 shows the SAME woman — her true face. Keep the facial identity, youth and proportions matching IMAGE 2 exactly: early twenties, soft rounded youthful cheeks, beautiful balanced proportions — never older, longer or harder than IMAGE 2."
+                submit "ba-glam-src" "$EDIT_PATH" "$(jbody "$GLAM_SRC" "[\"$refurl\"]" "3:4")" || { fail=1; continue; }
+                ug1=$(reupload "out/ba-glam-src.png") || { echo "PAIRV2 UPLOAD1 FAILED"; fail=1; continue; }
+                submit "ba-retouch-before" "$EDIT_PATH" "$(jbody "$DEGRADE" "[\"$ug1\"]" "3:4")" || { fail=1; continue; }
+                ug2=$(reupload "out/ba-retouch-before.png") || { echo "PAIRV2 UPLOAD2 FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$ANCHOR2 $MEITU_PROMPT" "[\"$ug2\",\"$refurl\"]" "3:4")" || fail=1
+                rm -f out/ba-glam-src.png
+                ;;
               vnscene)
                 # owner (2026-08-31, on the palace after): not the yellow
                 # backdrop — a beautiful Library scene, natural indoor light,
