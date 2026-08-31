@@ -4844,11 +4844,27 @@ function kvDel(k){ return galDb().then(function(db){ return new Promise(function
    arrives with its own photos wins. 72 hours is the shelf life: long enough
    for tomorrow, short enough that stale shoots do not haunt the picker. */
 var WIP_TTL_MS = 72*3600*1000;
+/* v5.59.0 — owner: coming back must mean picking up EXACTLY where you left
+   off. The snapshot therefore carries the typed work too — the five prompt
+   fields a generate is usually mid-thought in — beside the photos. Same
+   shelf life, same only-when-empty restore, and a field the user already
+   typed into this session is never overwritten by yesterday's draft. */
+var WIP_DRAFT_IDS = ["prompt","vidPrompt","vtPrompt","ptCustom","t2iPrompt"];
+function wipDrafts(){
+  var out = {};
+  WIP_DRAFT_IDS.forEach(function(id){
+    var f = $(id);
+    var v = f && typeof f.value === "string" ? f.value.trim() : "";
+    if (v) out[id] = v.slice(0, 4000);
+  });
+  return out;
+}
 function wipSave(){
   try{
     var refs = (state && state.refs) || [];
-    if (refs.some(function(r){ return r && r.b64; }))
-      kvSet("wip", { refs: refs.slice(0,3), t: Date.now() }).catch(function(){});
+    var drafts = wipDrafts();
+    if (refs.some(function(r){ return r && r.b64; }) || Object.keys(drafts).length)
+      kvSet("wip", { refs: refs.slice(0,3), drafts: drafts, t: Date.now() }).catch(function(){});
     else kvDel("wip").catch(function(){});
   }catch(e){}
 }
@@ -4856,6 +4872,16 @@ function wipRestore(){
   kvGet("wip").then(function(w){
     if (!w || !Array.isArray(w.refs)) return;
     if (!(Date.now() - (w.t||0) < WIP_TTL_MS)){ kvDel("wip").catch(function(){}); return; }
+    if (w.drafts && typeof w.drafts === "object"){
+      WIP_DRAFT_IDS.forEach(function(id){
+        var f = $(id), v = w.drafts[id];
+        if (f && typeof v === "string" && v && !f.value.trim()){
+          f.value = v;
+          /* counters and previews listen on input */
+          try{ f.dispatchEvent(new Event("input", { bubbles: true })); }catch(e){}
+        }
+      });
+    }
     if (state.refs.some(function(r){ return r && r.b64; })) return;
     var back = w.refs.slice(0,3).map(function(r){
       return (r && typeof r.mime === "string" && typeof r.b64 === "string") ? r : null;
@@ -22445,7 +22471,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.58.0";
+var APP_VER="5.59.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -22878,6 +22904,29 @@ try {
 /* v5.49.0 — bring back the photos the user was working with when the phone
    reclaimed the tab; runs after the page restore so both land together */
 try { wipRestore(); } catch(e){}
+/* v5.59.0 — owner: a Generate left running must greet the user FINISHED,
+   not wait behind a button. With a key present, every held RunningHub job
+   is claimed automatically a moment after boot — finished results land in
+   the Gallery with a toast, still-running jobs stay on the Home card, and
+   a signed-out (walled) visit never fires a claim. */
+setTimeout(async function(){
+  try{
+    if (document.body.classList.contains("wall")) return;
+    if (!state.rhKey || typeof rhJobClaim !== "function") return;
+    var held = rhJobsLoad(); if (!held.length) return;
+    var got = 0, running = 0;
+    for (var ji = 0; ji < Math.min(held.length, 3); ji++){
+      try{
+        var jr = await rhJobClaim(held[ji]);
+        if (jr.state === "recovered") got += jr.n || 1;
+        else if (jr.state === "running") running++;
+      }catch(e){}
+    }
+    if (typeof renderDashJobs === "function") renderDashJobs();
+    if (got) toast(L9({my:"ခဏထွက်နေတုန်း ပြီးသွားတဲ့ ရလဒ် "+got+" ခု Gallery ထဲ ရောက်နေပါပြီ",en:got+" result(s) finished while you were away — saved to your Gallery",shn:"ၽွၼ်းလႆႈ "+got+" ဢၼ် ယဝ်ႉၵႂႃႇ — သိမ်းဝႆႉတီႈ Gallery ယဝ်ႉ",kac:"Nang pru nga yang ngut ai "+got+" gaw Gallery hta bang da sai",th:"งาน "+got+" ชิ้นเสร็จระหว่างคุณไม่อยู่ — บันทึกไว้ในแกลเลอรีแล้ว",zh:"你离开时完成了 "+got+" 个结果 — 已存入图库",vi:got+" kết quả đã xong khi bạn vắng mặt — đã lưu vào Gallery",id:got+" hasil selesai saat Anda pergi — tersimpan di Galeri",ms:got+" hasil siap semasa anda tiada — disimpan di Galeri"}),"ok");
+    else if (running) toast(L9({my:"Generate လုပ်လက်စ အလုပ် ဆက်လုပ်နေပါတယ် — ပြီးရင် Gallery ထဲ ရောက်လာပါမယ်",en:"Your generate is still running — it will land in the Gallery when done",shn:"တိုၵ်ႉႁဵတ်းယူႇ — ယဝ်ႉၸင်ႇတေၶဝ်ႈ Gallery",kac:"Generate galaw nga ai — ngut yang Gallery hta du na",th:"งานสร้างยังทำงานอยู่ — เสร็จแล้วจะเข้าแกลเลอรี",zh:"生成仍在进行中 — 完成后会进入图库",vi:"Generate vẫn đang chạy — xong sẽ vào Gallery",id:"Generate masih berjalan — akan masuk Galeri saat selesai",ms:"Generate masih berjalan — akan masuk Galeri apabila siap"}),"ok");
+  }catch(e){}
+}, 2500);
 /* Public Panel CTAs carry one acquisition intent instead of a file URL. The
    Account Center decides whether to show login, purchase, verification, or
    the entitled download, and keeps the intent through those transitions. */
