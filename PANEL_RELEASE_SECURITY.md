@@ -178,6 +178,26 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.37.0** — `pending`. The Design Series wave (2026-08-31, owner: eight
+  reference photo sets — "this exact design, any photo, a hundred photos come
+  back identical"). Eight new Smart Workflows in Studio Scenes (ink-atelier,
+  doll-boudoir, gold-chrysanth, lion-dance, lotus-dance, lotus-garden,
+  saigon-glam, peony-night), each carrying the full ten-field design panel:
+  an optional caption box hand-lettered into the artwork, a backdrop colour
+  picker with six curated swatches, free-text backdrop and props request
+  boxes that vanish from the prompt when empty, and six ON/OFF switches
+  (skin beauty, colour tone, hair, dress, retouch, liquify) compiled with
+  byte-identical logic on both surfaces. Catalog total moves 133 → 141 (sync
+  tests green); the per-workflow results board covers all eight
+  automatically. Acceptance: carry over the v6.36.0 checklist; additionally
+  open two of the eight (one light series, one dark series) in real
+  Photoshop, confirm the ten design controls render, run one pass each with
+  a custom caption and one switch OFF, and confirm the result returns in the
+  series' design with the caption rendered letter-for-letter and the
+  switched-off enhancement absent. Artifact `HNK_Ai_Panel_v6.37.0.ccx`,
+  SHA-256
+  `1e556f83173fee1066342b2bb8355d30a6c3245c6d5566f438b7f32578bd6142`,
+  1,307,273 bytes. Stays disabled for customers until this acceptance.
 - **v6.36.0** — `pending`. The Selection Edit wave (2026-08-31, owner: a
   Rectangle-tool selection plus a typed request must change ONLY the
   selected region — identical pixels outside, same white balance). One new

@@ -125,6 +125,27 @@ jobs:
           print(p)
           PY
           )
+          # v5.64.0 — the eight design-series prompts, verbatim from the
+          # shipped catalog with tokens filled at their defaults and the
+          # empty request lines stripped exactly like the app strips them.
+          mkdir -p out/prompts
+          python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          caps = {'ink-atelier':'AUTUMN GOLD','doll-boudoir':'SWEET DREAM','gold-chrysanth':'GOLDEN HOUR','lion-dance':'HAPPY NEW YEAR','lotus-dance':'LOTUS POEM','lotus-garden':'LOTUS GARDEN','saigon-glam':'SAIGON NIGHTS','peony-night':'PEONY NIGHT'}
+          n = 0
+          for c in cat['categories']:
+              for it in c['items']:
+                  sid = it['id']
+                  if sid not in caps: continue
+                  bg = next(f for f in it['fields'] if f.get('type')=='color')['default']
+                  p = it['prompt'].replace('{{BG}}', bg).replace('{{TEXT}}', caps[sid])
+                  p = '\n'.join(l for l in p.split('\n') if '{{' not in l)
+                  open('out/prompts/%s.txt' % sid, 'w').write(p)
+                  n += 1
+          print('series prompts written:', n)
+          PY
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
           # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
           # bases are IDENTITY-PRESERVING edits from her poster (shipped in the
@@ -302,6 +323,18 @@ jobs:
                 submit "region-card-base" "$EDIT_PATH" "$(jbody "$RG_BASE" "[\"$refurl\"]" "3:2")" || { fail=1; continue; }
                 ur=$(reupload "out/region-card-base.png") || { echo "REGION UPLOAD FAILED"; fail=1; continue; }
                 submit "region-card-edit" "$EDIT_PATH" "$(jbody "$RG_PROMPT" "[\"$ur\"]" "3:2")" || fail=1
+                ;;
+              series)
+                # v5.64.0 — the eight design-series cards: each workflow's own
+                # shipped prompt over the shipped scene before (one hop from
+                # her true face), 3:2 card geometry, one submit per card.
+                us=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "SERIES UPLOAD FAILED"; fail=1; continue; }
+                for sid in ink-atelier doll-boudoir gold-chrysanth lion-dance lotus-dance lotus-garden saigon-glam peony-night; do
+                  [ -s "out/prompts/$sid.txt" ] || { echo "SERIES: missing prompt $sid"; fail=1; continue; }
+                  SP=$(cat "out/prompts/$sid.txt")
+                  submit "card-$sid" "$EDIT_PATH" "$(jbody "$SP" "[\"$us\"]" "3:2")" || fail=1
+                done
+                rm -rf out/prompts
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac
