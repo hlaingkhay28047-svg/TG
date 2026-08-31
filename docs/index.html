@@ -683,12 +683,15 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
    desktop and below it on phones, sides alternating for rhythm. Cards
    rise as they enter (scroll-driven where the engine has it, the chapter
    observer everywhere else); reduced motion gets still posters, no rise. */
-#journey{margin:calc(var(--sp-9) * 1.4) calc(50% - 50vw) 0;width:100vw}
-.jy-intro{max-width:var(--maxw);margin:0 auto var(--sp-7);padding:0 var(--sp-5);text-align:center}
+/* the journey sits in the site's own column like every other section —
+   the 100vw breakout mis-resolved its percentage margin on desktop and
+   shoved the whole rail off the right edge (owner: "ဘေးဖက် အရမ်းရောက်"). */
+#journey{margin:calc(var(--sp-9) * 1.4) 0 0}
+.jy-intro{margin:0 auto var(--sp-7);text-align:center}
 .jy-h{font-size:clamp(1.7rem,5.4vw,3rem);line-height:1.22;margin:6px 0 10px;font-weight:800}
 .jy-h em{font-style:normal;color:var(--gold-hi);text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 22px rgba(244,212,136,.4)}
 .jy-sub{color:var(--muted);max-width:560px;margin:0 auto;font-size:var(--fs-sm)}
-.chapters{display:grid;gap:clamp(26px,4.5vh,58px);max-width:1440px;margin:0 auto;padding:0 clamp(14px,4vw,56px)}
+.chapters{display:grid;gap:clamp(26px,4.5vh,58px)}
 .chapter{position:relative;display:grid;grid-template-columns:minmax(280px,5fr) 7fr;gap:clamp(20px,3.5vw,54px);align-items:center;
   padding:clamp(18px,3vw,42px);border:1px solid rgba(233,185,73,.18);border-radius:22px;overflow:hidden;
   background:radial-gradient(120% 130% at 88% -10%,rgba(233,185,73,.08),transparent 55%),linear-gradient(160deg,#10131d 0%,#0a0c13 100%)}
