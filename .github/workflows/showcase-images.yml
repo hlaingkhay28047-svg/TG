@@ -87,6 +87,13 @@ jobs:
           print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='bg-replace'))
           PY
           )
+          MEITU_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='pr-meitu'))
+          PY
+          )
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
           # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
           # bases are IDENTITY-PRESERVING edits from her poster (shipped in the
@@ -159,6 +166,15 @@ jobs:
                 submit "ba-scene-before" "$EDIT_PATH" "$(jbody "$BASE_B_PROMPT" "[\"$refurl\"]" "2:3")" || { fail=1; continue; }
                 u=$(reupload "out/ba-scene-before.png") || { echo "REUPLOAD FAILED scene"; fail=1; continue; }
                 submit "ba-scene-after" "$EDIT_PATH" "$(jbody "$BG_PROMPT $BG_SCENE" "[\"$u\"]" "2:3")" || fail=1
+                ;;
+              glam)
+                # owner (2026-08-31, on the shipped retouch after): "ဒါကို
+                # အရမ်းချောအောင်" — one more REAL product pass, the catalog's
+                # own pr-meitu "Retouch A Style" beauty finish, applied to the
+                # already-shipped after image. The before stays untouched, so
+                # the pair keeps its alignment and its honesty.
+                ug=$(reupload "docs/assets/site/ba/ba-retouch-after.jpg") || { echo "GLAM UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$ug\"]" "3:4")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac
