@@ -346,18 +346,21 @@ function report(name, ok, detail) {
     // carries an injected (not yet armed — heroes are off screen at boot)
     // video element, and nothing unlisted does
     const injected = document.querySelectorAll(".page-hero video.ph-motion").length;
+    // v5.58.0 — the Workflows hero joined the same machinery via .hero-art
+    const wfInjected = document.querySelectorAll(".hero-art video.ph-motion").length;
     const listed = (typeof PH_MOTION_CLIPS !== "undefined") ? PH_MOTION_CLIPS.length : -1;
-    return { heroes, injected, listed };
+    return { heroes, injected, wfInjected, listed };
   });
   const fsMod = require("fs"), pathMod = require("path");
   const motionDir = pathMod.join(__dirname, "..", "docs", "app", "lib", "banners", "motion");
   const clipNames = ["banner-archer","banner-train-station","hero-mermaid","banner-flower-portrait",
-    "banner-flower-gown","banner-naga","banner-superhero","banner-path-batch","banner-coral-fairy","banner-fairy-forest"];
+    "banner-flower-gown","banner-naga","banner-superhero","banner-path-batch","banner-coral-fairy","banner-fairy-forest",
+    "banner-golden-temple"];
   const pairsOnDisk = clipNames.every(n =>
     fsMod.existsSync(pathMod.join(motionDir, n + ".mp4")) && fsMod.existsSync(pathMod.join(motionDir, n + ".webm")));
   const swSrc = fsMod.readFileSync(pathMod.join(__dirname, "..", "docs", "app", "sw.js"), "utf8");
-  report("v5.57.1: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback), all ten clip pairs on disk and announced, clips excluded from LIB_CACHE",
-    v57.heroes >= 11 && v57.listed === 10 && v57.injected >= 10 && pairsOnDisk &&
+  report("v5.58.0: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback), all eleven clip pairs on disk and announced (ten page heroes + the Workflows hero-art), clips excluded from LIB_CACHE",
+    v57.heroes >= 11 && v57.listed === 11 && v57.injected >= 10 && v57.wfInjected === 1 && pairsOnDisk &&
     srcApp.includes('v.className="ph-motion"') &&
     srcApp.includes('canPlayType(\'video/mp4; codecs="avc1.42E01E"\')') &&
     srcApp.includes('"lib/banners/motion/"+m[1]+phExt') &&
