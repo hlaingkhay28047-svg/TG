@@ -194,12 +194,18 @@ jobs:
                 ;;
               finish)
                 # rerun ONLY the after chain (V2 Retouch, then Retouch A
-                # Style) on the shipped before — used when the prompts
-                # themselves advance (owner: the 10x VN/CN glam standard)
+                # Style) on the shipped before. Each pass is ANCHORED to the
+                # owner's reference poster as IMAGE 2: a synthetic chain
+                # drifts older and harder with every hop (owner, twice: she
+                # is younger and prettier than this) — a real customer photo
+                # never drifts because the input IS the person, so pinning
+                # the demo's identity to her true face is what makes the
+                # showcase honest, not less so.
+                ANCHOR="IMAGE 2 shows the SAME woman — her true face. While working on IMAGE 1, keep the facial identity, youth and proportions matching IMAGE 2 exactly: a very young woman in her early twenties with soft rounded youthful cheeks and beautiful balanced proportions — never older, longer, harder or more gaunt than IMAGE 2. In IMAGE 1, IMAGE 2's beauty at its freshest."
                 uf=$(reupload "docs/assets/site/ba/ba-retouch-before.jpg") || { echo "FINISH UPLOAD FAILED"; fail=1; continue; }
-                submit "ba-retouch-step" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$uf\"]" "3:4")" || { fail=1; continue; }
+                submit "ba-retouch-step" "$EDIT_PATH" "$(jbody "$ANCHOR $RETOUCH_PROMPT" "[\"$uf\",\"$refurl\"]" "3:4")" || { fail=1; continue; }
                 u2=$(reupload "out/ba-retouch-step.png") || { echo "FINISH REUPLOAD FAILED"; fail=1; continue; }
-                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$u2\"]" "3:4")" || fail=1
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$ANCHOR $MEITU_PROMPT" "[\"$u2\",\"$refurl\"]" "3:4")" || fail=1
                 rm -f out/ba-retouch-step.png
                 ;;
               vnscene)
