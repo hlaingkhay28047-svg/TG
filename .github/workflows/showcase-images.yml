@@ -227,6 +227,15 @@ jobs:
                 submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$ANCHOR2 $MEITU_PROMPT" "[\"$ug2\",\"$refurl\"]" "3:4")" || fail=1
                 rm -f out/ba-glam-src.png
                 ;;
+              afteronly)
+                # one pure product pass: Retouch A Style (hair/wardrobe/pose
+                # locks included) over the shipped before, no reference in the
+                # call — the anchored variant copied IMAGE 2's whole scene,
+                # and with a young one-hop before there is no drift left to
+                # correct.
+                ua=$(reupload "docs/assets/site/ba/ba-retouch-before.jpg") || { echo "AFTERONLY UPLOAD FAILED"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$MEITU_PROMPT" "[\"$ua\"]" "3:4")" || fail=1
+                ;;
               vnscene)
                 # owner (2026-08-31, on the palace after): not the yellow
                 # backdrop — a beautiful Library scene, natural indoor light,
