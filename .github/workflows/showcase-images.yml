@@ -324,6 +324,25 @@ jobs:
                 ur=$(reupload "out/region-card-base.png") || { echo "REGION UPLOAD FAILED"; fail=1; continue; }
                 submit "region-card-edit" "$EDIT_PATH" "$(jbody "$RG_PROMPT" "[\"$ur\"]" "3:2")" || fail=1
                 ;;
+              blue)
+                # v5.64.0 — the Blue Silk Boudoir card: the workflow's own
+                # shipped prompt (tokens at defaults, request lines stripped)
+                # over the shipped scene before, 3:2 card geometry.
+                BL_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          it = next((i for c in cat['categories'] for i in c['items'] if i['id']=='blue-silk'), None)
+          if it:
+              bg = next(f for f in it['fields'] if f.get('type')=='color')['default']
+              p = it['prompt'].replace('{{BG}}', bg).replace('{{TEXT}}', 'BLUE SILK')
+              print('\n'.join(l for l in p.split('\n') if '{{' not in l))
+          PY
+          )
+                [ -n "$BL_PROMPT" ] || { echo "BLUE: not in catalog on this ref"; fail=1; continue; }
+                ub=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "BLUE UPLOAD FAILED"; fail=1; continue; }
+                submit "card-blue-silk" "$EDIT_PATH" "$(jbody "$BL_PROMPT" "[\"$ub\"]" "3:2")" || fail=1
+                ;;
               derma)
                 # v5.64.0 — the Derma Skin Pro card: ONE real product pass of
                 # the shipped derma-skin prompt over the shipped raw-skin

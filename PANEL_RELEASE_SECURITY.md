@@ -191,7 +191,7 @@ eligible students.
   picker with six curated swatches, free-text backdrop and props request
   boxes that vanish from the prompt when empty, and six ON/OFF switches
   (skin beauty, colour tone, hair, dress, retouch, liquify) compiled with
-  byte-identical logic on both surfaces. Catalog total moves 133 → 142 (sync
+  byte-identical logic on both surfaces. Catalog total moves 133 → 143 (sync
   tests green); the per-workflow results board covers all eight
   automatically. Acceptance: carry over the v6.36.0 checklist; additionally
   open two of the eight (one light series, one dark series) in real
@@ -200,8 +200,8 @@ eligible students.
   series' design with the caption rendered letter-for-letter and the
   switched-off enhancement absent. Artifact `HNK_Ai_Panel_v6.37.0.ccx`,
   SHA-256
-  `9b28d4bd1850a6ce37c916da17c88cb7ba13683c1f72a2beec2534e9d56f1563`,
-  1,309,254 bytes. Stays disabled for customers until this acceptance.
+  `d217497851a15dea0bb10597aa0de2b14d9dc15b5a4dc1cf90953274c07ab1f7`,
+  1,310,273 bytes. Stays disabled for customers until this acceptance.
 - **v6.36.0** — `pending`. The Selection Edit wave (2026-08-31, owner: a
   Rectangle-tool selection plus a typed request must change ONLY the
   selected region — identical pixels outside, same white balance). One new
