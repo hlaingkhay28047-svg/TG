@@ -355,12 +355,15 @@ function report(name, ok, detail) {
   const motionDir = pathMod.join(__dirname, "..", "docs", "app", "lib", "banners", "motion");
   const clipNames = ["banner-archer","banner-train-station","hero-mermaid","banner-flower-portrait",
     "banner-flower-gown","banner-naga","banner-superhero","banner-path-batch","banner-coral-fairy","banner-fairy-forest",
-    "banner-golden-temple"];
+    "banner-golden-temple",
+    /* v5.62.1 — the Freeform page's own hero (banner-freeform) joins the
+       clip system: announced in the same commit that lands its pair. */
+    "banner-freeform"];
   const pairsOnDisk = clipNames.every(n =>
     fsMod.existsSync(pathMod.join(motionDir, n + ".mp4")) && fsMod.existsSync(pathMod.join(motionDir, n + ".webm")));
   const swSrc = fsMod.readFileSync(pathMod.join(__dirname, "..", "docs", "app", "sw.js"), "utf8");
-  report("v5.58.0: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback), all eleven clip pairs on disk and announced (ten page heroes + the Workflows hero-art), clips excluded from LIB_CACHE",
-    v57.heroes >= 11 && v57.listed === 11 && v57.injected >= 10 && v57.wfInjected === 1 && pairsOnDisk &&
+  report("v5.58.0: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback), all twelve clip pairs on disk and announced (ten page heroes + the Workflows hero-art + the Freeform hero), clips excluded from LIB_CACHE",
+    v57.heroes >= 11 && v57.listed === 12 && v57.injected >= 10 && v57.wfInjected === 1 && pairsOnDisk &&
     srcApp.includes('v.className="ph-motion"') &&
     srcApp.includes('canPlayType(\'video/mp4; codecs="avc1.42E01E"\')') &&
     srcApp.includes('"lib/banners/motion/"+m[1]+phExt') &&
