@@ -692,9 +692,14 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
 .chapter{position:relative;display:grid;grid-template-columns:minmax(280px,5fr) 7fr;gap:clamp(20px,3.5vw,54px);align-items:center;
   padding:clamp(18px,3vw,42px);border:1px solid rgba(233,185,73,.18);border-radius:22px;overflow:hidden;
   background:radial-gradient(120% 130% at 88% -10%,rgba(233,185,73,.08),transparent 55%),linear-gradient(160deg,#10131d 0%,#0a0c13 100%)}
+/* true mirroring: the COPY always owns the wide 7fr column — odd chapters
+   read media-left/copy-right, even ones copy-left/media-right. The first
+   cut only swapped widths, which crammed every even chapter's text into
+   the narrow column at the card's edge (owner: "စာက ဘေးရောက်ပြီး ပျောက်"). */
 .chapter:nth-child(even){grid-template-columns:7fr minmax(280px,5fr)}
-.chapter:nth-child(even) .ch-media{order:1}
-.chapter:nth-child(even) .ch-copy{order:2}
+.chapter:nth-child(even) .ch-copy{order:1}
+.chapter:nth-child(even) .ch-media{order:2}
+.ch-copy,.ch-media{min-width:0}
 /* the frame: 16:9 like the clips themselves — the WHOLE video, always */
 .ch-media{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
   border:1px solid rgba(233,185,73,.32);box-shadow:0 18px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(247,217,142,.14)}
