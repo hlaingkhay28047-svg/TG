@@ -11,6 +11,12 @@
   <script>if(!location.pathname.endsWith("/")&&!/\.[a-z0-9]+$/i.test(location.pathname))location.replace(location.pathname+"/"+location.search+location.hash);</script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1018">
+  <!-- v2026-08-31 — the console is installable with its own identity: the
+       ADMIN-badged mark, a standalone manifest scoped to /admin/, and
+       home-screen/desktop shortcut icons on phone and computer alike. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="admin-icon-192.png">
+  <link rel="apple-touch-icon" href="admin-icon-192.png">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self' 'sha256-N1JqgPKm0tGnTeG9YIQ2WKMWU1lwsKr7E7ykGcGDRes='; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'">
   <meta name="robots" content="noindex,nofollow">
   <title>HNK Admin Control Center</title>
@@ -18,12 +24,14 @@
        revalidate this HTML but may keep the assets cached, and a stale
        admin.js binding against changed markup throws before the boot code
        runs, wedging the tab on the "Checking admin access" gate. -->
-  <link rel="stylesheet" href="admin.css?v=20260829d">
+  <link rel="stylesheet" href="admin.css?v=20260831a">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to admin content</a>
 
-  <svg style="display:none" aria-hidden="true">
+  <!-- class, not a style attribute: style-src 'self' has no 'unsafe-inline',
+       so inline styles are dead letters on this page -->
+  <svg class="svg-defs" aria-hidden="true">
     <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9e2a4"/><stop offset=".5" stop-color="#e7bb66"/><stop offset="1" stop-color="#b9861f"/></linearGradient></defs>
     <symbol id="ai-home" viewBox="0 0 24 24"><path d="m4 10.5 8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19v-8.5z"/><path d="M9.5 20.5v-6h5v6"/></symbol>
     <symbol id="ai-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.7c2.3.2 3.9 1.7 4.5 4.3"/></symbol>
@@ -38,10 +46,10 @@
 
   <section class="gate" id="adminLogin" hidden>
     <form class="gate-card gate-form" id="adminLoginForm">
-      <img class="auth-mark" src="../app/lib/icon-192.png" alt="" aria-hidden="true">
+      <img class="auth-mark" src="admin-icon-192.png" alt="" aria-hidden="true">
       <p class="eyebrow">ADMIN CONTROL CENTER</p>
       <h1>Administrator sign in</h1>
-      <p>Use your administrator credentials. This creates a separate, tab-only admin session and never promotes a Student App session.</p>
+      <p>Use your administrator credentials. This creates a separate admin session that stays signed in on this device and never promotes a Student App session.</p>
       <label>Email address<input id="adminLoginEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required></label>
       <label>Password<input id="adminLoginPassword" type="password" autocomplete="current-password" minlength="6" required></label>
       <button class="button primary full" id="adminLoginButton" type="submit">Continue securely</button>
@@ -63,7 +71,7 @@
 
   <div class="shell" id="adminApp" hidden>
     <aside class="sidebar" aria-label="Admin navigation">
-      <a class="brand" href="./" aria-label="HNK Admin home"><img class="brand-mark" src="../app/lib/icon-192.png" alt=""><span><b>Control Center</b><small>Production administration</small></span></a>
+      <a class="brand" href="./" aria-label="HNK Admin home"><img class="brand-mark" src="admin-icon-192.png" alt=""><span><b>Control Center</b><small>Production administration</small></span></a>
       <nav class="side-nav" aria-label="Control Center sections">
         <button class="nav-item active" type="button" data-panel="overview"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-home"/></svg></span>Overview</button>
         <button class="nav-item" type="button" data-panel="students"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-users"/></svg></span>Students</button>
@@ -79,6 +87,15 @@
         <div><p class="eyebrow">HNK STUDIO</p><h1 id="pageTitle">Overview</h1></div>
         <div class="top-actions"><button class="icon-button" id="refreshAll" type="button" aria-label="Refresh current data"><svg class="ib-ic" aria-hidden="true"><use href="#ai-refresh"/></svg></button><div class="admin-identity"><span id="adminInitial">A</span><div><b id="adminName">Administrator</b><small id="adminEmail"></small></div></div><button class="button compact" id="adminSignOut" type="button">Sign out</button></div>
       </header>
+
+      <!-- v2026-08-31 — the studio's cinema language reaches the console: one
+           compact hero band under the topbar, the superhero still as poster
+           and its cinemagraph pair layered in by admin.js when motion is
+           welcome. Decorative — every real title stays in the topbar. -->
+      <section class="admin-hero" aria-hidden="true">
+        <img src="../app/lib/banners/banner-superhero.jpg" alt="">
+        <div class="admin-hero-text"><p class="eyebrow">HNK CREATE STUDIO</p><b>Admin <em>Control Center</em></b></div>
+      </section>
 
       <main id="main" tabindex="-1">
         <section class="panel active" id="panel-overview" aria-labelledby="overviewHeading">
@@ -146,7 +163,7 @@
       <div class="detail-grid"><section><h3>Access permissions</h3><div class="toggle-list" id="permissionToggles"></div></section><section><h3>Registered devices</h3><div class="device-list" id="studentDevices"></div></section></div>
       <section class="action-section"><h3>Account actions</h3><div class="action-grid" id="accountActions"></div></section>
       <section class="action-section"><h3>License</h3><div class="license-actions"><label>Extend by<select id="licenseMonths"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label><button class="button primary" id="extendLicense" type="button">Extend license</button><label>Custom expiry<input id="customExpiry" type="date"></label><button class="button" id="setExpiry" type="button">Set expiry</button></div></section>
-      <section class="action-section"><h3>Security &amp; devices</h3><div class="action-grid" id="securityActions"></div><div class="artifact-fields" style="margin-top:10px"><label>စက် အရေအတွက် (allowed devices)<input id="deviceLimit" inputmode="numeric" pattern="[0-9]+" min="1" max="20" type="number"></label><button class="button" id="deviceLimitSave" type="button">Set devices</button></div><p class="hint" id="deviceLimitHint">စက်အရေအတွက်က renewal ဈေးနှုန်းကိုပါ မြှောက်ပါတယ် (allowed_devices × per-device)။</p></section>
+      <section class="action-section"><h3>Security &amp; devices</h3><div class="action-grid" id="securityActions"></div><div class="artifact-fields stack-top"><label>စက် အရေအတွက် (allowed devices)<input id="deviceLimit" inputmode="numeric" pattern="[0-9]+" min="1" max="20" type="number"></label><button class="button" id="deviceLimitSave" type="button">Set devices</button></div><p class="hint" id="deviceLimitHint">စက်အရေအတွက်က renewal ဈေးနှုန်းကိုပါ မြှောက်ပါတယ် (allowed_devices × per-device)။</p></section>
       <section class="action-section"><div class="surface-head"><h3>Recent history</h3><button class="text-button" id="viewStudentHistory" type="button">Open full history</button></div><div id="studentHistory" class="mini-history"></div></section>
     </div>
   </dialog>
@@ -154,6 +171,6 @@
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js?v=20260829d" defer></script>
+  <script src="admin.js?v=20260831a" defer></script>
 </body>
 </html>

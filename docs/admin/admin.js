@@ -13,6 +13,13 @@
     artifacts: "/api/v1/admin/panel-artifacts",
   });
   const SESSION_KEY = "hnk_admin_sess_v1";
+  /* 2026-08-31 — owner instruction: leaving and returning must not sign the
+     administrator out, and the console must reopen on the panel they left.
+     The session therefore persists in localStorage (still its own isolated
+     admin key — never the student session), with the refresh-token grant
+     reviving expired access tokens on return. Sign out remains the one way
+     to end it, and it clears every copy. */
+  const PANEL_KEY = "hnk_admin_panel_v1";
   const MUTATION_KEY_PREFIX = "hnk_admin_mutation_v1";
   const ARTIFACT_STATE_KEY = "hnk_admin_artifact_upload_v1";
   const CLIENT_TYPE = "admin";
@@ -65,18 +72,29 @@
   }
 
   function readSession() {
-    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null") || {}; }
-    catch (_) { return {}; }
+    try {
+      const persisted = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+      if (persisted) return persisted;
+      /* a session from the tab-scoped era migrates forward once */
+      const legacy = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+      if (legacy) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(legacy));
+        sessionStorage.removeItem(SESSION_KEY);
+        return legacy;
+      }
+      return {};
+    } catch (_) { return {}; }
   }
 
   function saveSession(next) {
     sessionGeneration++;
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(next)); } catch (_) {}
   }
 
   function clearSession() {
     sessionGeneration++;
-    sessionStorage.removeItem(SESSION_KEY);
+    try { localStorage.removeItem(SESSION_KEY); } catch (_) {}
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (_) {}
   }
 
   function sessionEnvelope(body, current = {}) {
@@ -604,8 +622,8 @@
     try {
       const body = await api(API.panelVersion);
       const policy = body.panel || body;
-      $("#latestVersion").value = policy.latest_version || policy.latest || "6.31.0";
-      $("#minimumVersion").value = policy.minimum_supported_version || policy.minimum || "6.31.0";
+      $("#latestVersion").value = policy.latest_version || policy.latest || "6.32.0";
+      $("#minimumVersion").value = policy.minimum_supported_version || policy.minimum || "6.32.0";
       if (!$("#artifactVersion").value) $("#artifactVersion").value = $("#latestVersion").value;
       const resumable = readArtifactState();
       $("#checkArtifactResume").hidden = !(resumable && resumable.id);
@@ -797,6 +815,7 @@
   });
 
   function activatePanel(name) {
+    try { localStorage.setItem(PANEL_KEY, name); } catch (_) {}
     $$(".panel").forEach(panel => panel.classList.toggle("active", panel.id === `panel-${name}`));
     $$(".nav-item").forEach(button => {
       const active = button.dataset.panel === name;
@@ -874,9 +893,38 @@
     try {
       await loadDashboard(true);
       await Promise.all([loadStudents(), loadHistory(), loadPanelVersion()]);
+      /* reopen on the panel the administrator left, per the owner */
+      const remembered = (() => { try { return localStorage.getItem(PANEL_KEY) || ""; } catch (_) { return ""; } })();
+      if (remembered && remembered !== "overview" && $(`#panel-${remembered}`)) activatePanel(remembered);
     } catch (error) { handleError(error, "Could not verify administrator access."); }
   }
 
+  /* 2026-08-31 — the hero band's cinemagraph: same contract as the web app
+     heroes (decoder-picked mp4/webm pair, fade in only once playing, remove
+     on error, never under prefers-reduced-motion). Same-origin asset, so the
+     page's strict connect/media policy is untouched. */
+  function heroMotion() {
+    try {
+      if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const hero = $(".admin-hero");
+      if (!hero) return;
+      const clip = document.createElement("video");
+      clip.muted = true; clip.loop = true; clip.playsInline = true;
+      clip.setAttribute("muted", ""); clip.setAttribute("playsinline", "");
+      clip.setAttribute("aria-hidden", "true"); clip.tabIndex = -1;
+      const ext = clip.canPlayType('video/mp4; codecs="avc1.42E01E"') ? ".mp4"
+        : (clip.canPlayType('video/webm; codecs="vp9"') ? ".webm" : "");
+      if (!ext) return;
+      clip.src = `../app/lib/banners/motion/banner-superhero${ext}`;
+      clip.addEventListener("playing", () => clip.classList.add("live"));
+      clip.addEventListener("error", () => clip.remove());
+      hero.append(clip);
+      const started = clip.play();
+      if (started && started.catch) started.catch(() => {});
+    } catch (_) {}
+  }
+
   bind();
+  heroMotion();
   bootstrap();
 })();

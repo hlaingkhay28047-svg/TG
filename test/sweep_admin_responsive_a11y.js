@@ -106,7 +106,7 @@ function staticServer() {
 
   await page.goto(origin+"/admin/",{waitUntil:"networkidle"});
   await page.waitForSelector("#adminLogin:not([hidden])");
-  const studentIgnored = await page.evaluate(() => ({login:!document.getElementById("adminLogin").hidden,adminSession:sessionStorage.getItem("hnk_admin_sess_v1"),studentSession:!!localStorage.getItem("hnk_acc_sess_v1")}));
+  const studentIgnored = await page.evaluate(() => ({login:!document.getElementById("adminLogin").hidden,adminSession:localStorage.getItem("hnk_admin_sess_v1")||sessionStorage.getItem("hnk_admin_sess_v1"),studentSession:!!localStorage.getItem("hnk_acc_sess_v1")}));
   report("a Student App session cannot enter or silently become an admin session",studentIgnored.login&&!studentIgnored.adminSession&&studentIgnored.studentSession,studentIgnored);
 
   const preLoginAdminReads=calls.filter(call=>call.url.includes("/api/v1/admin/")).length;
@@ -119,9 +119,13 @@ function staticServer() {
     loginCall&&loginCall.method==="POST"&&loginCall.body.client_type==="admin"&&preLoginAdminReads===0,
     {loginCall,preLoginAdminReads});
 
-  const stored=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("hnk_admin_sess_v1")||"{}"));
+  /* 2026-08-31 — owner instruction: the admin session PERSISTS across visits
+     (localStorage, still its own isolated key), so leaving and returning no
+     longer signs the administrator out. The tab-scoped read pinned the
+     retired design. */
+  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem("hnk_admin_sess_v1")||"{}"));
   const mfaAbsence=await page.evaluate(()=>({gate:!!document.getElementById("adminMfa"),card:!!document.getElementById("setupMfa"),markup:/mfa|authenticator/i.test(document.documentElement.outerHTML)}));
-  report("password sign-in opens a tab-scoped admin session with no authenticator step anywhere in the shell",
+  report("password sign-in opens a persistent isolated admin session with no authenticator step anywhere in the shell",
     stored.client_type==="admin"&&stored.access==="ADMIN-A"&&Object.values(mfaAbsence).every(present=>!present),
     {stored,mfaAbsence});
 
@@ -245,7 +249,7 @@ function staticServer() {
   await page.click("#confirmAction");
   const refreshSettled=await Promise.race([refreshedSurfaces.then(()=>true),new Promise(resolve=>setTimeout(()=>resolve(false),10000))]);
   const rotatedKeys=await extendKeys(0);
-  const rotatedSession=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("hnk_admin_sess_v1")||"{}"));
+  const rotatedSession=await page.evaluate(()=>JSON.parse(localStorage.getItem("hnk_admin_sess_v1")||"{}"));
   report("concurrent post-action 401s share one rotating refresh and replay with its new bearer",
     refreshSettled&&refreshCalls===1&&rotatedSession.access==="ADMIN-B"&&rotatedKeys.length===0,
     {refreshSettled,refreshCalls,refreshedSurfaceReads,rotatedSession,rotatedKeys});

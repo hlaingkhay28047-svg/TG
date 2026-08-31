@@ -45,3 +45,22 @@ main{padding:clamp(24px,4vw,48px);max-width:1600px;margin:auto}.panel{display:no
 
 /* v6.28.1 — the owner's real HNK mark replaces the lettered gradient tiles */
 img.brand-mark,img.auth-mark{object-fit:cover;background:#10131c;border:1px solid rgba(231,187,102,.55)}
+/* v2026-08-31 — CSP-clean utilities: this page's style-src has no
+   'unsafe-inline', so what used to ride in style attributes lives here */
+.svg-defs{display:none}
+.stack-top{margin-top:10px}
+/* v2026-08-31 — the studio's cinema hero reaches the console: still as
+   poster, cinemagraph layered in by admin.js, scrim for the type. Same
+   contract as the web app heroes — clip fades in only once playing, and
+   reduced-motion never sees it. */
+.admin-hero{position:relative;min-height:118px;margin:16px clamp(18px,4vw,48px) 0;max-width:1600px;border:1px solid rgba(231,187,102,.24);border-radius:var(--radius);overflow:hidden;display:flex;align-items:flex-end}
+.admin-hero>img,.admin-hero video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center 22%}
+.admin-hero video{opacity:0;transition:opacity .9s ease;pointer-events:none}
+.admin-hero video.live{opacity:1}
+.admin-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(102deg,rgba(8,12,18,.72) 0%,rgba(8,12,18,.42) 45%,rgba(8,12,18,.05) 75%),linear-gradient(180deg,rgba(8,12,18,0) 40%,rgba(8,12,18,.66) 100%)}
+.admin-hero-text{position:relative;z-index:1;padding:14px 18px;text-shadow:0 1px 4px rgba(0,0,0,.9),0 2px 14px rgba(0,0,0,.7)}
+.admin-hero-text .eyebrow{margin:0 0 2px}
+.admin-hero-text b{font-size:clamp(1.05rem,2.6vw,1.5rem);letter-spacing:.02em}
+.admin-hero-text em{font-style:normal;background:linear-gradient(115deg,#f7e2a6 0%,#e9b949 45%,#f9ecc4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+@media(max-width:760px){.admin-hero{margin:12px 12px 0;min-height:96px}}
+@media(prefers-reduced-motion:reduce){.admin-hero video{display:none}}
