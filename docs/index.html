@@ -809,6 +809,18 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
 @media (max-width:560px){.pn-tabs{grid-template-columns:1fr}}
 /* the follow-along CTA bar is a PHONE affordance: on a desktop it lies
    over every chapter's own buttons and reads as a broken overlay */
+/* ---- v5.59.0 — the sleeping-fairy cinemagraph returns to the MAIN hero
+   (owner). The still stays as the poster; the moment the clip actually
+   plays, the poster steps aside entirely so it is unmistakably a VIDEO —
+   never the half-and-half blend. Reduced motion and Data Saver keep the
+   photograph. */
+.hmedia video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:55% 40%;
+  opacity:0;transition:opacity .9s ease;pointer-events:none}
+.hmedia video.live{opacity:1}
+.hmedia img{transition:opacity .9s ease}
+.hmedia.motion-live img{opacity:0}
+@media (min-width:880px){.hmedia video{object-position:50% 24%}}
+@media (prefers-reduced-motion: reduce){.hmedia video{display:none}.hmedia.motion-live img{opacity:1}}
 /* ---- THE UNIVERSE — full-screen 5D chapter world ----
    Owner direction: seen IN FULL, entered like another universe, travelled
    around. The dialog owns the whole viewport; the chapter's cinemagraph
@@ -2083,6 +2095,25 @@ fetch("app/version.json",{cache:"no-store"}).then(function(r){return r.json();})
     es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); countUp(e.target); rio.unobserve(e.target); } });
   },{threshold:.12});
   chs.forEach(function(c){rio.observe(c);});
+})();
+/* the MAIN hero comes alive: the sleeping-fairy clip plays over the top
+   banner, the poster stepping aside once frames actually flow */
+(function(){
+  var reduceH=false; try{reduceH=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  if(reduceH||((navigator.connection||{}).saveData)) return;
+  var box=document.querySelector(".hero .hmedia"); if(!box) return;
+  var v=document.createElement("video");
+  v.muted=true; v.loop=true; v.playsInline=true;
+  v.setAttribute("muted",""); v.setAttribute("playsinline",""); v.setAttribute("aria-hidden","true");
+  var ext=v.canPlayType('video/mp4; codecs="avc1.42E01E"')?".mp4":
+          (v.canPlayType('video/webm; codecs="vp9"')?".webm":"");
+  if(!ext) return;
+  v.src="app/lib/banners/motion/banner-fairy-forest"+ext;
+  v.addEventListener("playing",function(){ v.classList.add("live"); box.classList.add("motion-live"); });
+  v.addEventListener("error",function(){ try{v.remove();}catch(e){} box.classList.remove("motion-live"); });
+  var img=box.querySelector("img");
+  if(img) img.insertAdjacentElement("afterend",v); else box.appendChild(v);
+  var pr=v.play(); if(pr&&pr.catch)pr.catch(function(){});
 })();
 /* THE ROOM: tap a chapter, travel INTO it. The overlay is one dialog fed
    from the tapped chapter's own DOM — headline, story, each checklist row
