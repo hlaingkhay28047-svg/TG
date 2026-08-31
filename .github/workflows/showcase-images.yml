@@ -339,7 +339,13 @@ jobs:
           )
                 [ -n "$DS_PROMPT" ] || { echo "DERMA: not in catalog on this ref"; fail=1; continue; }
                 ud=$(reupload "docs/assets/site/ba/ba-retouch-before.jpg") || { echo "DERMA UPLOAD FAILED"; fail=1; continue; }
-                submit "card-derma-after" "$EDIT_PATH" "$(jbody "$DS_PROMPT" "[\"$ud\"]" "3:4")" || fail=1
+                # two passes of the shipped prompt — the same button pressed
+                # twice, the established multi-pass card practice (see the
+                # retouch pair above); both outputs kept so the card uses the
+                # cleanest honest result.
+                submit "card-derma-p1" "$EDIT_PATH" "$(jbody "$DS_PROMPT" "[\"$ud\"]" "3:4")" || { fail=1; continue; }
+                u2=$(reupload "out/card-derma-p1.png") || { echo "DERMA REUPLOAD FAILED"; fail=1; continue; }
+                submit "card-derma-after" "$EDIT_PATH" "$(jbody "$DS_PROMPT" "[\"$u2\"]" "3:4")" || fail=1
                 ;;
               series)
                 # v5.64.0 — the eight design-series cards: each workflow's own
