@@ -1,0 +1,189 @@
+# Generate the landing Before/After showcase pairs (v5.61.0) on RunningHub.
+#
+# WHY A WORKFLOW: same story as hero-videos.yml — the maintenance container
+# has no egress to runninghub.ai and this public repository must never carry
+# the Enterprise key. The key arrives as a manual dispatch input, is masked
+# in the very first step, lives only in this run's environment, and is never
+# written to any file, artifact or output. Finished images travel home on the
+# throwaway showcase-drop orphan branch (no .github in its tree, so the token
+# needs no workflows permission), and the branch is deleted after the wave.
+#
+# WHAT IT MAKES (owner instruction 2026-08-31: "Before/After ပုံတွေက
+# အသစ်တွေနဲ့ ပိုကောင်းအောင်"): two honest pairs -
+#   pair 1  ba-retouch-before  : T2I base — unretouched studio portrait
+#           ba-retouch-after   : that base run through the shipped catalog's
+#                                REAL "retouch" workflow prompt, verbatim
+#   pair 2  ba-scene-before    : T2I base — bride on a plain studio backdrop
+#           ba-scene-after     : that base run through the shipped catalog's
+#                                REAL "bg-replace" workflow prompt, verbatim,
+#                                plus the new-background description its
+#                                optional slot exists to carry
+# Both edits ride rhart-image-n-pro-official (the app's own Nano Banana Pro
+# endpoints — documented, already-deployed apiPaths; nothing invented).
+# Price-preview runs before every submit so the spend is visible in the log.
+name: Generate showcase before-after pairs
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type GENERATE to run (each image spends RunningHub credit)'
+        required: true
+      rh_key:
+        description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
+        required: true
+      pairs:
+        description: 'space-separated pair names to build (retouch scene), or "all"'
+        required: false
+        default: 'all'
+      tasks:
+        description: 'COLLECT-ONLY: space-separated name:taskId pairs — skips submit and only polls + downloads already-paid tasks (names: ba-retouch-before ba-retouch-after ba-scene-before ba-scene-after)'
+        required: false
+        default: ''
+permissions:
+  contents: write
+concurrency:
+  group: showcase-images
+  cancel-in-progress: false
+jobs:
+  generate:
+    if: ${{ inputs.confirm == 'GENERATE' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Mask the key before any other step can log
+        env:
+          K: ${{ inputs.rh_key }}
+        run: |
+          echo "::add-mask::$K"
+          echo "RH_KEY=$K" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - name: Generate the pairs
+        shell: bash
+        env:
+          PAIRS: ${{ inputs.pairs }}
+          TASKS: ${{ inputs.tasks }}
+        run: |
+          set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
+          BASE="https://www.runninghub.ai/openapi/v2"
+          AUTH="Authorization: Bearer $RH_KEY"
+          T2I_PATH="rhart-image-n-pro-official/text-to-image"
+          EDIT_PATH="rhart-image-n-pro-official/edit"
+          mkdir -p out
+          # The AFTER prompts come from the shipped catalog itself, verbatim —
+          # the showcase demonstrates exactly what the product sends.
+          RETOUCH_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='retouch'))
+          PY
+          )
+          BG_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          print(next(i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='bg-replace'))
+          PY
+          )
+          BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
+          BASE_A_PROMPT="RAW unretouched studio portrait photograph of a young Myanmar woman, head and shoulders, facing the camera, neutral gray seamless studio background, soft even lighting, natural imperfect skin with visible pores, a few small temporary blemishes, slight under-eye darkness, stray flyaway hairs, no retouching, realistic candid skin texture, 85mm portrait lens, photorealistic"
+          BASE_B_PROMPT="Full-length studio photograph of a Myanmar bride in a traditional white and gold wedding dress, standing on a plain light-gray seamless studio backdrop, soft even studio lighting, whole body and shoes visible, natural relaxed pose, soft contact shadow on the floor, photorealistic"
+          poll_and_fetch() { # $1=name  $2=taskId — RunningHub charges at SUBMIT,
+            # so this half is the one that must never be lost
+            local n="$1" tid="$2" deadline=$((SECONDS+600)) img="" q st
+            echo "== $n: task $tid — polling"
+            while [ $SECONDS -lt $deadline ]; do
+              q=$(curl -s -X POST "$BASE/query" -H "$AUTH" -H "Content-Type: application/json" -d "{\"taskId\":\"$tid\"}") || { sleep 6; continue; }
+              st=$(printf '%s' "$q" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("status") or "").upper())' 2>/dev/null) || st=""
+              if [ "$st" = "SUCCESS" ]; then
+                img=$(printf '%s' "$q" | python3 -c 'import json,sys; r=(json.load(sys.stdin).get("results") or [{}])[0]; print(r.get("url") or r.get("fileUrl") or "")')
+                printf '%s' "$q" | python3 -c 'import json,sys; u=json.load(sys.stdin).get("usage") or {}; print("  usage:", u.get("consumeMoney"), u.get("consumeCoins"), "in", u.get("taskCostTime"), "s")' || true
+                break
+              elif [ "$st" = "FAILED" ]; then echo "  FAILED: $q"; return 1; fi
+              sleep 6
+            done
+            [ -n "$img" ] || { echo "NO RESULT $n"; return 1; }
+            echo "== $n: download"
+            curl -sfL "$img" -o "out/$n.png" || { echo "DOWNLOAD FAILED $n"; return 1; }
+            ls -la "out/$n.png"
+          }
+          submit() { # $1=name $2=apiPath $3=json-body -> polls and downloads
+            local n="$1" path="$2" body="$3" sub tid
+            echo "== $n: price preview"
+            curl -s -X POST "$BASE/price-preview/$path" -H "$AUTH" -H "Content-Type: application/json" -d "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  price:", (d.get("data") or {}).get("priceText") or d)' || true
+            echo "== $n: submit"
+            sub=$(curl -sf -X POST "$BASE/$path" -H "$AUTH" -H "Content-Type: application/json" -d "$body") || { echo "SUBMIT FAILED $n"; return 1; }
+            tid=$(printf '%s' "$sub" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("taskId") or (d.get("data") or {}).get("taskId") or "")') || tid=""
+            [ -n "$tid" ] || { echo "SUBMIT PARSE FAILED $n: $sub"; return 1; }
+            echo "  taskId=$tid (collect with: <name>:$tid)"
+            poll_and_fetch "$n" "$tid"
+          }
+          reupload() { # $1=file -> prints a fresh RunningHub URL for edit input
+            local f="$1" up url
+            up=$(curl -sf -X POST "$BASE/media/upload/binary" -H "$AUTH" -F "file=@$f;filename=$(basename "$f")") || return 1
+            url=$(printf '%s' "$up" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["data"].get("download_url") or d["data"].get("fileName") or "")') || return 1
+            [ -n "$url" ] || return 1
+            case "$url" in http*) : ;; *) url="https://www.runninghub.ai/${url#/}";; esac
+            printf '%s' "$url"
+          }
+          jbody() { python3 -c 'import json,sys; d={"prompt":sys.argv[1],"imageUrls":json.loads(sys.argv[2]),"resolution":"2k"}; ratio=sys.argv[3]; d.update({"aspectRatio":ratio} if ratio else {}); print(json.dumps(d))' "$1" "$2" "$3"; }
+          fail=0
+          if [ -n "$TASKS" ]; then
+            for pair in $TASKS; do
+              n="${pair%%:*}"; tid="${pair##*:}"
+              [ -n "$n" ] && [ -n "$tid" ] || { echo "BAD PAIR $pair"; fail=1; continue; }
+              poll_and_fetch "$n" "$tid" || fail=1
+            done
+            ls -la out/ || true
+            exit $fail
+          fi
+          LIST="$PAIRS"; [ "$LIST" = "all" ] && LIST="retouch scene"
+          for p in $LIST; do
+            case "$p" in
+              retouch)
+                submit "ba-retouch-before" "$T2I_PATH" "$(jbody "$BASE_A_PROMPT" "[]" "3:4")" || { fail=1; continue; }
+                u=$(reupload "out/ba-retouch-before.png") || { echo "REUPLOAD FAILED retouch"; fail=1; continue; }
+                submit "ba-retouch-after" "$EDIT_PATH" "$(jbody "$RETOUCH_PROMPT" "[\"$u\"]" "3:4")" || fail=1
+                ;;
+              scene)
+                submit "ba-scene-before" "$T2I_PATH" "$(jbody "$BASE_B_PROMPT" "[]" "2:3")" || { fail=1; continue; }
+                u=$(reupload "out/ba-scene-before.png") || { echo "REUPLOAD FAILED scene"; fail=1; continue; }
+                submit "ba-scene-after" "$EDIT_PATH" "$(jbody "$BG_PROMPT $BG_SCENE" "[\"$u\"]" "2:3")" || fail=1
+                ;;
+              *) echo "UNKNOWN PAIR $p"; fail=1 ;;
+            esac
+          done
+          ls -la out/ || true
+          exit $fail
+      - name: Publish the images as a run artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: showcase-before-after
+          path: out/
+          retention-days: 3
+          if-no-files-found: warn
+      - name: Convert to shipping JPGs and push the drop branch
+        if: success()
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick >/dev/null
+          mkdir -p pub
+          for f in out/*.png; do
+            b=$(basename "$f" .png)
+            # no crop, no resize beyond a sane web ceiling — the pair must stay
+            # pixel-comparable; only the encode changes
+            convert "$f" -resize '1440x1440>' -quality 86 "pub/$b.jpg"
+          done
+          ls -la pub/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # ORPHAN commit holding ONLY the images — no .github in the tree, so
+          # the token needs no workflows permission (the hero-clips lesson).
+          git checkout --orphan showcase-drop
+          git rm -rf --cached . >/dev/null
+          mkdir -p docs/assets/site/ba
+          cp pub/* docs/assets/site/ba/
+          git add -f docs/assets/site/ba
+          git commit -m "Showcase before/after pairs: generated drop"
+          git push -f origin showcase-drop
