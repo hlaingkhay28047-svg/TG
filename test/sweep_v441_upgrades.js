@@ -370,6 +370,35 @@ function report(name, ok, detail) {
     swSrc.includes('url.pathname.indexOf("/lib/banners/motion/") >= 0) return;'),
     JSON.stringify(v57));
 
+  /* ---- 10) v5.58.0 — the greeting card joins the cinemagraph system.
+     Its own manifest (GREET_MOTION_CLIPS — the page-hero list stays pinned
+     at exactly ten above), all three time-of-day pairs on disk, the clip
+     re-attached AFTER renderDashGreet's innerHTML wipe, the scrim lifted to
+     z1 so the video (z0) never rides over it, and the still's drift stopped
+     while the clip is live. */
+  const greet = await page.evaluate(() => {
+    const host = document.getElementById("dashGreet");
+    return {
+      injected: host ? host.querySelectorAll("video.greet-motion").length : -1,
+      listed: (typeof GREET_MOTION_CLIPS !== "undefined") ? GREET_MOTION_CLIPS.length : -1
+    };
+  });
+  const greetNames = ["hero-greet-morning","hero-greet-afternoon","hero-greet-evening"];
+  const greetPairs = greetNames.every(n =>
+    fsMod.existsSync(pathMod.join(motionDir, n + ".mp4")) && fsMod.existsSync(pathMod.join(motionDir, n + ".webm")));
+  report("v5.58.0: greeting cinemagraphs wired (own 3-name manifest, pairs on disk, re-attach after the innerHTML wipe, scrim z1 over clip z0, drift stops under has-motion, reduced-motion hides)",
+    greet.listed === 3 && greet.injected === 1 && greetPairs &&
+    greetNames.every(n => srcApp.includes('"' + n + '"')) &&
+    srcApp.includes("var GREET_MOTION_CLIPS=") &&
+    srcApp.includes("GREET_MOTION_CLIPS.indexOf(name)<0) return;") &&
+    srcApp.includes('"lib/banners/motion/"+name+ext') &&
+    srcApp.includes("greetAttachMotion(host, art);") &&
+    srcApp.includes(".dash-greet video.greet-motion{position:absolute") &&
+    srcApp.includes(".dash-greet.has-motion{animation:none}") &&
+    /\.dash-greet::before\{[^}]*z-index:1/.test(srcApp) &&
+    srcApp.includes(".page-hero video.ph-motion,.dash-greet video.greet-motion{display:none}"),
+    JSON.stringify(greet));
+
   await page.close();
   await browser.close();
   console.log("\n" + (failures ? "FAIL (" + failures + " failure(s))" : "PASS"));

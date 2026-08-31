@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v5-57-2";
+var CACHE = "hnk-web-studio-v5-58-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually

@@ -4,9 +4,11 @@
 # and this public repository must never carry the Enterprise key. The key
 # therefore arrives as a manual dispatch input, is masked in the very first
 # step before anything can log, lives only in this run's environment, and is
-# never written to any file, artifact or output. The clips land as a run
-# artifact; a human (or the maintenance session) downloads, transcodes and
-# commits them separately — this lane never writes to the repository.
+# never written to any file, artifact or output. The finished clips are
+# transcoded on the runner and force-pushed to the throwaway hero-clips-drop
+# branch (the maintenance container cannot reach the artifact blob store);
+# the maintenance session collects them from there and the branch is deleted
+# after the wave ships. This lane never touches main or the work branch.
 #
 # Model: kling-v2.6-pro/image-to-video — body transcribed from the fetched
 # parameter doc (REQUIRED: prompt, imageUrl, sound, duration; optional

@@ -174,7 +174,7 @@ input,textarea,select{font-family:inherit}
    dresses the video exactly as it dresses the still. */
 .page-hero video.ph-motion{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
 .page-hero video.ph-motion.live{opacity:1}
-@media (prefers-reduced-motion: reduce){.page-hero video.ph-motion{display:none}}
+@media (prefers-reduced-motion: reduce){.page-hero video.ph-motion,.dash-greet video.greet-motion{display:none}}
 .page-hero .ph-kick{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
 .page-hero .ph-head{position:relative;z-index:2;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
 @media (min-width:768px){.page-hero{min-height:172px;padding:16px 20px 14px}}
@@ -1229,6 +1229,15 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
      the top 40% of all three frames, so the 22% vertical must never move. */
   animation:greetDrift 34s ease-in-out infinite alternate}
 @keyframes greetDrift{from{background-position:74% 22%}to{background-position:82% 22%}}
+/* v5.58.0 — the three time-of-day greeting arts play as cinemagraphs, the
+   same contract as the page heroes: mp4/webm pair picked by decoder, still
+   stays underneath as the poster, clip fades in only once actually playing.
+   Same 78%/22% crop as the still so the fade-in doesn't jump the frame.
+   While the clip is live the still's drift stops — two motions on one card
+   fight each other. */
+.dash-greet video.greet-motion{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:78% 22%;z-index:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
+.dash-greet video.greet-motion.live{opacity:1}
+.dash-greet.has-motion{animation:none}
 @media (min-width:768px){.dash-greet{min-height:168px;padding:16px 20px}}
 /* The scrim is sized from the art rather than guessed, and it is sized ONCE
    PER FRAME because the frames are not alike. Measured over the text zone
@@ -1239,6 +1248,10 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    black rectangle for no legibility gained. It falls away to nothing by the
    right third so the subject is never touched. */
 .dash-greet::before{content:"";position:absolute;inset:0;pointer-events:none;
+  /* z1: above the cinemagraph (z0), below the text (z2) — without it the
+     video, inserted after the pseudo-element in paint order, would ride
+     over the scrim and put cream type straight onto daylight. */
+  z-index:1;
   background:linear-gradient(97deg,rgba(6,8,14,.78) 0%,rgba(6,8,14,.73) 38%,rgba(6,8,14,.52) 56%,rgba(6,8,14,.14) 76%,rgba(6,8,14,0) 100%)}
 .dash-greet[data-art="evening"]::before{
   background:linear-gradient(97deg,rgba(6,8,14,.5) 0%,rgba(6,8,14,.42) 32%,rgba(6,8,14,.22) 56%,rgba(6,8,14,0) 80%)}
@@ -20249,6 +20262,50 @@ function renderDashCont(){
   });
 }
 /* v4.41: the first screen knows who you are and what time it is */
+/* v5.58.0 — the greeting card joins the cinemagraph system. SEPARATE list
+   from PH_MOTION_CLIPS (that one is pinned at exactly the ten page heroes):
+   same manifest rule though — only a listed basename is ever probed, so a
+   missing clip can never 404 the console. Filled when the generated pairs
+   actually land in lib/banners/motion/. */
+var GREET_MOTION_CLIPS=[];
+function greetAttachMotion(host, art){
+  try{
+    var name="hero-greet-"+art;
+    if(GREET_MOTION_CLIPS.indexOf(name)<0) return;
+    if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var con=navigator.connection;
+    if(con && (con.saveData || /(^|-)2g/.test(String(con.effectiveType||"")))) return;
+    var v=host._gv;
+    if(v && v._art===art){
+      /* renderDashGreet wipes its children on every call (language switch,
+         sign-in, plan change). The element survives in this stash — putting
+         the SAME node back keeps the decoded clip instead of re-fetching,
+         and play() resumes it (detaching pauses media elements). */
+      host.insertBefore(v, host.firstChild);
+      var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){});
+      return;
+    }
+    if(v){ v.remove(); host._gv=null; host.classList.remove("has-motion"); }
+    v=document.createElement("video");
+    v.muted=true; v.loop=true; v.playsInline=true;
+    v.setAttribute("muted",""); v.setAttribute("playsinline","");
+    v.preload="auto"; v.className="greet-motion";
+    v.setAttribute("aria-hidden","true"); v.tabIndex=-1;
+    var canMp4=v.canPlayType('video/mp4; codecs="avc1.42E01E"');
+    var canWebm=v.canPlayType('video/webm; codecs="vp9"');
+    var ext=canMp4?".mp4":(canWebm?".webm":"");
+    if(!ext) return;
+    v._art=art;
+    v.src="lib/banners/motion/"+name+ext;
+    v.addEventListener("playing",function(){ v.classList.add("live"); host.classList.add("has-motion"); });
+    v.addEventListener("error",function(){ v.remove(); host._gv=null; host.classList.remove("has-motion"); });
+    host.insertBefore(v, host.firstChild);
+    host._gv=v;
+    /* Home is on screen at boot and the card is the first thing the eye
+       lands on — play now rather than waiting on an observer. */
+    var p2=v.play(); if(p2&&p2.catch) p2.catch(function(){});
+  }catch(e){}
+}
 function renderDashGreet(){
   var host=$("dashGreet"); if(!host) return;
   var h=new Date().getHours();
@@ -20284,6 +20341,9 @@ function renderDashGreet(){
     if(acc && acc.sess && acc.profile && typeof accPlanLineText==="function")
       host.appendChild(el("span","pill", accPlanLineText()));
   }catch(e){}
+  /* after the innerHTML rebuild above, or the clip would be wiped with the
+     rest of the children */
+  greetAttachMotion(host, art);
 }
 /* v4.52 — jobs RunningHub is still holding, or finished while the app was
    away. The card only exists when there is something to claim; a studio with
@@ -22388,7 +22448,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.57.2";
+var APP_VER="5.58.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
