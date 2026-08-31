@@ -78,6 +78,17 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       if (gold().disabled) return title + " :: next disabled on step2";
       gold().click(); await sleep(30);            // step 2 -> 3
       if (!gold()) return title + " :: no GENERATE button";
+      /* v5.63.0 — a workflow may gate GENERATE on required design fields
+         (Selection Edit's request box). Satisfy the gate the way a user
+         does — type into the empty text fields — and fail loudly if it
+         still refuses; never bypass the gate itself. */
+      if (gold().disabled) {
+        document.querySelectorAll(".wiz.on .wiz-fields input[type=text]").forEach(el => {
+          if (!el.value.trim()) { el.value = "make the white flower red"; el.dispatchEvent(new Event("input", { bubbles: true })); }
+        });
+        await sleep(30);
+        if (gold().disabled) return title + " :: GENERATE stayed disabled after filling required fields";
+      }
       gold().click();                              // GENERATE
       const hasPrompted = () => window.__reqs.some(x => x && typeof x.prompt === "string" && x.prompt.length);
       for (let w = 0; w < 120 && !hasPrompted(); w++) await sleep(50);

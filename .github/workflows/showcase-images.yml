@@ -114,6 +114,17 @@ jobs:
           print(p)
           PY
           )
+          # v5.63.0 — the Selection Edit prompt, verbatim, with its request
+          # token filled the way a user would type it: one flower turns red.
+          RG_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          p = next((i['prompt'] for c in cat['categories'] for i in c['items'] if i['id']=='region-edit'), '')
+          p = p.replace('{{EDIT}}', 'change the white rose at the exact centre of the bouquet into a rich deep-red rose, keeping its shape, lighting and position; change nothing else anywhere in the image')
+          print(p)
+          PY
+          )
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
           # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
           # bases are IDENTITY-PRESERVING edits from her poster (shipped in the
@@ -276,6 +287,21 @@ jobs:
                 # clear left negative space for the page's interface text.
                 FREEFORM_PROMPT="Using the reference image: the SAME woman, her exact young face and beautiful balanced proportions — early twenties, soft rounded youthful cheeks, never older or harder than the reference. Create a cinematic wide studio banner: she stands waist-up at the right third of the frame in a dark teal-and-gold dream atelier, one hand raised with warm golden creative light streaming from her fingertips, while translucent glowing picture-frames of imagined scenes — a white wedding gown, a fairy forest, a golden temple — drift around her like floating holograms; fine gold light particles in the air, soft rim light on her hair, deep cinematic contrast, expensive editorial finish, photorealistic. She wears an elegant modern black-and-gold creative studio outfit. Wide 16:9 banner composition with clear dark negative space on the left third."
                 submit "banner-freeform" "$EDIT_PATH" "$(jbody "$FREEFORM_PROMPT" "[\"$refurl\"]" "16:9")" || fail=1
+                ;;
+              region)
+                # v5.63.0 — the Selection Edit card: two REAL product passes.
+                # Base: the model holding a white-rose bouquet, one hop from
+                # her reference poster. Edit: that base through the shipped
+                # region-edit prompt asking for one red rose. The card itself
+                # is composited LOCALLY by pasting ONLY the flower region of
+                # the edit over the base, so outside the marquee the card is
+                # byte-identical to the base — the same guarantee the
+                # workflow makes inside Photoshop.
+                [ -n "$RG_PROMPT" ] || { echo "REGION: region-edit not in catalog on this ref"; fail=1; continue; }
+                RG_BASE="$IDENTITY $YOUTH Create a waist-up studio photograph of her facing the camera, smiling softly, holding a loose bouquet of pure white roses with both hands at chest height so the bouquet sits clearly at the centre-right of the frame. Soft warm studio light on a deep neutral backdrop, elegant cream blouse, photorealistic, fine crisp detail on every petal."
+                submit "region-card-base" "$EDIT_PATH" "$(jbody "$RG_BASE" "[\"$refurl\"]" "3:2")" || { fail=1; continue; }
+                ur=$(reupload "out/region-card-base.png") || { echo "REGION UPLOAD FAILED"; fail=1; continue; }
+                submit "region-card-edit" "$EDIT_PATH" "$(jbody "$RG_PROMPT" "[\"$ur\"]" "3:2")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac

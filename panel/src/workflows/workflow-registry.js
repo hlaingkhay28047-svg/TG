@@ -218,6 +218,7 @@ if (_CATALOG && _CATALOG.categories) {
         }),
         negative: w.negative,
         fields: w.fields || [],
+        region: w.id === "region-edit",
         hiddenPrompt: w.prompt,
         route: { modelId: "nano-banana-2", auto: true }
       };

@@ -44,12 +44,24 @@ function groupNameFor(feature) {
 /* batchPlay descriptor: white (reveal-all) layer mask on the ACTIVE layer.
    Shared verbatim by the host adapter and main.js so the two paths can never
    drift apart. */
-function maskDescriptor() {
+function maskDescriptor(mode) {
   return {
     _obj: "make",
     "new": { _class: "channel" },
     at: { _ref: "channel", _enum: "channel", _value: "mask" },
-    using: { _enum: "userMaskEnabled", _value: "revealAll" },
+    using: { _enum: "userMaskEnabled", _value: mode === "revealSelection" ? "revealSelection" : "revealAll" },
+    _options: { dialogOptions: "dontDisplay" }
+  };
+}
+
+/* v6.36.0 — batchPlay descriptor: re-make a rectangular selection at exact
+   pixel bounds (region-edit cuts its layer mask from this). Pure builder. */
+function rectSelectDescriptor(b) {
+  var px = function (v) { return { _unit: "pixelsUnit", _value: Math.round(Number(v) || 0) }; };
+  return {
+    _obj: "set",
+    _target: [{ _ref: "channel", _property: "selection" }],
+    to: { _obj: "rectangle", top: px(b.y), left: px(b.x), bottom: px(b.y + b.height), right: px(b.x + b.width) },
     _options: { dialogOptions: "dontDisplay" }
   };
 }
@@ -111,15 +123,19 @@ async function placeResults(deps) {
     var r = results[i] || {};
     // Only trust bounds computed from REAL dimensions; a 0×0 result would
     // otherwise "fit" to a 1px box. The host self-fits when bounds are null.
-    var bounds = (r.width > 0 && r.height > 0)
-      ? fit.computeFit(r, deps.canvas || { width: 1024, height: 1024 }, deps.fitMode || "fit")
-      : null;
+    /* v6.36.0 — a region edit places at the SELECTION's exact bounds and
+       masks to it; everything else keeps the fit behaviour. */
+    var bounds = deps.regionBounds
+      ? deps.regionBounds
+      : (r.width > 0 && r.height > 0)
+        ? fit.computeFit(r, deps.canvas || { width: 1024, height: 1024 }, deps.fitMode || "fit")
+        : null;
     var name = results.length > 1
       ? ("Variant " + (i + 1))
       : resultGroup.layerName(deps.modelId, deps.timeLabel, "HNK " + String(deps.feature || "Result"));
     var placed = null;
     try {
-      placed = await host.placeAsLayer({ ref: r.ref, name: name, bounds: bounds, group: group, mask: caps.canMask });
+      placed = await host.placeAsLayer({ ref: r.ref, name: name, bounds: bounds, group: group, mask: caps.canMask, maskSelection: !!deps.regionBounds });
     } catch (e) { placed = null; }
     var okOne = !!placed;
     anyOk = anyOk || okOne;
@@ -142,6 +158,7 @@ async function placeResults(deps) {
 var API = {
   groupNameFor: groupNameFor,
   maskDescriptor: maskDescriptor,
+  rectSelectDescriptor: rectSelectDescriptor,
   selectLayerDescriptor: selectLayerDescriptor,
   capabilities: capabilities,
   outcomeOf: outcomeOf,

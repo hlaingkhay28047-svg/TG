@@ -140,7 +140,14 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    taking the pack to 132 files / 15.70 MB (15.694701 exactly — rounded up,
    same rule as v5.14/v5.16/v5.17). B above confirms the file is correctly
    sized, so this is real content weight, not the native-1536px mistake. */
-const PREV_MB = 15.70;
+/* v5.63 — the Selection Edit card (region-edit.jpg) shipped its own verified
+   960x640 photo — a real region-edit pass composited over its own base so
+   only the marching-ants marquee region differs, with the Burmese request
+   chip — taking the pack to 133 files / 15.76 MB (15.757370 exactly —
+   rounded up, same rule as v5.14/v5.16/v5.17/v5.62). B above confirms the
+   file is correctly sized, so this is real content weight, not the
+   native-1536px mistake. */
+const PREV_MB = 15.76;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });

@@ -58,6 +58,7 @@ function compile(state) {
   return {
     mode: "smart-workflow",
     workflowId: wf.id,
+    regionBounds: state.regionBounds || null,
     compiledPrompt: prompt,
     negativePrompt: negative || "",
     requiredImages: requiredImages,

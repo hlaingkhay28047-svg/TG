@@ -178,6 +178,30 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.36.0** — `pending`. The Selection Edit wave (2026-08-31, owner: a
+  Rectangle-tool selection plus a typed request must change ONLY the
+  selected region — identical pixels outside, same white balance). One new
+  Smart Workflow (region-edit, Repair & Enhance) that exists mechanically,
+  not just by prompt: at Generate the panel reads the live rectangular
+  selection bounds (batchPlay), captures exactly those composite pixels
+  (imaging.getPixels sourceBounds) as the request image, and on return
+  places the result at the same exact bounds with a layer mask cut from a
+  re-made rectangle selection — pixels outside the marquee are untouched
+  by construction, and the prompt additionally locks white balance,
+  exposure, grain and edge continuity. The request box is a required
+  design field: Generate refuses politely without typed text or without a
+  live selection. Catalog total moves 132 → 133 on both surfaces (sync
+  tests green). Acceptance: carry over the v6.35.0 checklist;
+  additionally, in real Photoshop make a Rectangle-tool selection over an
+  object, type a change (e.g. "make the white flower red"), Generate, and
+  confirm the result returns as a masked layer whose mask matches the
+  marquee exactly, with every pixel outside the selection identical to
+  the original document and no seam or white-balance shift at the edges;
+  also confirm Generate is blocked with the guidance message when no
+  selection exists and when the request box is empty. Artifact
+  `HNK_Ai_Panel_v6.36.0.ccx`, SHA-256
+  `b5deb939b24ada9b4211b4cbc1d883a29dcacd9a4e8a95eac8865806fe1ff32f`,
+  1,298,496 bytes. Stays disabled for customers until this acceptance.
 - **v6.35.0** — `pending`. The Concept Art Poster wave (2026-08-31, owner:
   the two reference videos — heritage art poster design + the DP-CONCEPT
   results grid). One new Smart Workflow (concept-poster, Studio Scenes)

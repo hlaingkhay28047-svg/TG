@@ -38,6 +38,7 @@ function defaultState() {
     validation: {},
     resolvedRoute: null,
     fieldVals: {},           // v6.35.0 — per-workflow design fields (text/colour/toggles)
+    regionBounds: null,      // v6.36.0 — Selection Edit: live rectangle captured at Generate
     output: {}               // shared prefs — set by the app, preserved on switch
   };
 }
@@ -54,6 +55,14 @@ function selectWorkflow(state, workflowId) {
   state.prepared = false;
   state.requiredInputs = wf.requiredInputs.map(function (r) { return { key: r.key, label: r.label, role: r.role, image: null }; });
   state.optionalInputs = wf.optionalInputs.map(function (r) { return { key: r.key, label: r.label, role: r.role, image: null }; });
+  /* v6.36.0 — region workflows take their photo FROM the live rectangular
+     selection at Generate time, so the slot is satisfied by design and the
+     Generate gate can open; doGenerate refuses to fire until a real
+     selection exists and replaces this ref with the captured pixels. */
+  state.regionBounds = null;
+  if (wf.region && state.requiredInputs[0]) {
+    state.requiredInputs[0].image = { source: "selection", role: state.requiredInputs[0].role, ref: "live-selection", valid: true };
+  }
   state.compiledPrompt = "";
   state.negativePrompt = "";
   state.protectionRules = [];
