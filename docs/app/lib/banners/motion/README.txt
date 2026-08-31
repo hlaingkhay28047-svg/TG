@@ -21,7 +21,7 @@ format the browser can actually decode:
   banner-fairy-forest.mp4      My Gallery
 
 The app probes for these at runtime and fades a clip in over its still the
-moment it can play; a missing or failing file silently leaves the Ken Burns
+moment it can play; a missing or failing file silently leaves the clean
 still — nothing else to wire. Spec per mp4: H.264, 1280x720 (or the
 still's aspect), 5-8s, loop-friendly (first and last frames close), muted,
 target 1.5-2.5 MB (ffmpeg -crf 26-28). Generated with an image-to-video
