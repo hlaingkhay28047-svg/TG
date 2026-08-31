@@ -200,8 +200,8 @@ eligible students.
   series' design with the caption rendered letter-for-letter and the
   switched-off enhancement absent. Artifact `HNK_Ai_Panel_v6.37.0.ccx`,
   SHA-256
-  `d217497851a15dea0bb10597aa0de2b14d9dc15b5a4dc1cf90953274c07ab1f7`,
-  1,310,273 bytes. Stays disabled for customers until this acceptance.
+  `acde416aeb69499c9319f06a51ba2a4119620574352d05e4fdc83146253e944c`,
+  1,310,402 bytes. Stays disabled for customers until this acceptance.
 - **v6.36.0** — `pending`. The Selection Edit wave (2026-08-31, owner: a
   Rectangle-tool selection plus a typed request must change ONLY the
   selected region — identical pixels outside, same white balance). One new
