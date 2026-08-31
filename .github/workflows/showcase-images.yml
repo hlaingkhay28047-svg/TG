@@ -341,7 +341,7 @@ jobs:
           )
                 [ -n "$BL_PROMPT" ] || { echo "BLUE: not in catalog on this ref"; fail=1; continue; }
                 ub=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "BLUE UPLOAD FAILED"; fail=1; continue; }
-                submit "card-blue-silk" "$EDIT_PATH" "$(jbody "$BL_PROMPT" "[\"$ub\"]" "3:2")" || fail=1
+                submit "card-blue-silk" "$EDIT_PATH" "$(jbody "$BL_PROMPT" "[\"$ub\"]" "")" || fail=1  # source ratio: the prompt keeps IMAGE 1 framing; the card is cropped locally
                 ;;
               derma)
                 # v5.64.0 — the Derma Skin Pro card: ONE real product pass of
