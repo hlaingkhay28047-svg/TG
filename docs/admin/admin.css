@@ -133,3 +133,24 @@ img.brand-mark,img.auth-mark{object-fit:cover;background:#10131c;border:1px soli
 .student-card .person>span{min-width:0}
 .student-card .person b,.student-card .person small{overflow-wrap:anywhere;white-space:normal}
 .student-card-meta .status-pill{white-space:normal}
+
+/* 20260831d — owner (live phone): three history/detail breakages.
+   1) The Student-Detail dialog head is a flex row whose text column had no
+      min-width, so an unbroken email refused to shrink, painted past the
+      phone screen and let the whole page pan sideways (dialog looked shoved
+      off-screen). The column may now shrink, the title wraps anywhere and
+      scales down on small screens, and the dialog clips any horizontal
+      overflow at its own border so the page can never pan again.
+   2) Status pills broke mid-word ("Succes / s") — a pill never wraps; the
+      student-card seat pill keeps its wrapping override above.
+   3) History cells hold their content: the time column never wraps, the
+      activity detail line becomes its own wrapped row, and the detail-dialog
+      history spans wrap anywhere. */
+dialog{overflow-x:hidden}
+.dialog-head>div{min-width:0}
+.dialog-head h2,.dialog-head p:not(.eyebrow){overflow-wrap:anywhere}
+.dialog-head h2{font-size:clamp(1.05rem,3.6vw,1.5rem)}
+.status-pill{white-space:nowrap}
+td.cell-time{white-space:nowrap}
+#historyRows td small{display:block;color:var(--muted);overflow-wrap:anywhere}
+.history-item span{overflow-wrap:anywhere}
