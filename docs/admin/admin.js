@@ -326,8 +326,8 @@
     const logins = normalizeList(body, ["latest_logins", "logins", "recent_logins"]);
     const rows = logins.map(item => node("tr", {}, [
       node("td", {}, person(item)),
-      node("td", { text: item.device_name || item.device_type || "Unknown device" }),
-      node("td", { text: formatDate(item.login_at || item.created_at || item.time) }),
+      node("td", { text: prettyDevice(item.device_name || item.device_type) || "Unknown device" }),
+      node("td", { className: "cell-time", text: formatDate(item.login_at || item.created_at || item.time) }),
       node("td", {}, statusPill(item.result || item.status || "success")),
     ]));
     $("#latestLogins").replaceChildren(...rows);
@@ -436,14 +436,40 @@
     return item.action || item.event_type || item.type || "activity";
   }
 
+  /* 2026-08-31 — history rows stored the raw browser user-agent as the device
+     name, so phones showed six lines of "Mozilla/5.0 (Linux; Android 10; K)…"
+     per row. A stored label ("Android · Chrome") passes through untouched;
+     only a raw user-agent string is condensed to platform · browser. */
+  function prettyDevice(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return "";
+    if (!/mozilla\/|applewebkit|gecko\/|khtml/i.test(s)) return s;
+    const os = /android/i.test(s) ? "Android" : /iphone|ipad|ipod/i.test(s) ? "iOS" : /windows/i.test(s) ? "Windows" : /macintosh|mac os/i.test(s) ? "macOS" : /linux/i.test(s) ? "Linux" : "Device";
+    const browser = /edg(e|a|ios)?\//i.test(s) ? "Edge" : /opr\/|opera/i.test(s) ? "Opera" : /firefox\/|fxios\//i.test(s) ? "Firefox" : /chrome\/|crios\//i.test(s) ? "Chrome" : /safari\//i.test(s) ? "Safari" : "Browser";
+    return `${os} · ${browser}`;
+  }
+
+  /* Some events carry machine payloads ('{"slot_type":"phone"}') in their
+     detail field. Admins read words, so JSON becomes "Slot type: phone";
+     anything that does not parse stays as it was. */
+  function prettyDetail(raw) {
+    const s = String(raw || "").trim();
+    if (!s || (s[0] !== "{" && s[0] !== "[")) return s;
+    try {
+      const value = JSON.parse(s);
+      const parts = Object.entries(value).map(([key, val]) => `${title(String(key).replace(/_/g, " "))}: ${typeof val === "object" && val !== null ? JSON.stringify(val) : val}`);
+      return parts.length ? parts.join(" · ") : s;
+    } catch (_) { return s; }
+  }
+
   function renderHistory(body) {
     const events = normalizeList(body, ["events", "history", "items", "data"]);
     state.historyTotal = count(body, "total", "count") || events.length;
     $("#historyRows").replaceChildren(...events.map(item => node("tr", {}, [
-      node("td", { text: formatDate(item.created_at || item.time || item.login_at) }),
+      node("td", { className: "cell-time", text: formatDate(item.created_at || item.time || item.login_at) }),
       node("td", {}, person(item)),
-      node("td", {}, [node("b", { text: title(eventName(item)) }), node("small", { text: item.detail || item.message || "" })]),
-      node("td", { text: item.device_name || item.browser || item.app || item.channel || "—" }),
+      node("td", {}, [node("b", { text: title(eventName(item)) }), node("small", { text: prettyDetail(item.detail || item.message || "") })]),
+      node("td", { text: prettyDevice(item.device_name || item.browser || item.app || item.channel) || "—" }),
       node("td", {}, statusPill(item.result || item.status || "success")),
     ])));
     $("#historyEmpty").hidden = events.length > 0;
@@ -533,7 +559,7 @@
 
     const devices = item.devices || {};
     $("#studentDevices").replaceChildren(...[["Phone", devices.phone], ["Computer", devices.computer]].map(([kind, device]) => node("div", { className: "device-row" }, [
-      node("div", {}, [node("b", { text: `${kind} ${device ? "1/1" : "0/1"}` }), node("small", { text: device ? device.label || device.device_name || "Registered" : "Not registered" })]),
+      node("div", {}, [node("b", { text: `${kind} ${device ? "1/1" : "0/1"}` }), node("small", { text: device ? prettyDevice(device.label || device.device_name) || "Registered" : "Not registered" })]),
       statusPill(device ? "active" : "empty"),
     ])));
 
@@ -553,7 +579,7 @@
     if (limitInput) limitInput.value = item.allowed_devices != null ? String(item.allowed_devices) : "2";
 
     const events = normalizeList({ events: item.history }, ["events"]);
-    $("#studentHistory").replaceChildren(...events.slice(0, 6).map(event => node("div", { className: "history-item" }, [node("time", { text: formatDate(event.created_at || event.time) }), node("b", { text: title(eventName(event)) }), node("span", { text: event.detail || event.message || event.device_name || "—" })])));
+    $("#studentHistory").replaceChildren(...events.slice(0, 6).map(event => node("div", { className: "history-item" }, [node("time", { text: formatDate(event.created_at || event.time) }), node("b", { text: title(eventName(event)) }), node("span", { text: prettyDetail(event.detail || event.message) || prettyDevice(event.device_name) || "—" })])));
     if (!events.length) $("#studentHistory").append(node("p", { className: "empty", text: "No recent history." }));
   }
 
