@@ -814,7 +814,10 @@ section.js-rv.in .course-banner img{filter:grayscale(.3) contrast(1.05) brightne
 .ch-open{position:absolute;right:10px;bottom:10px;z-index:3;padding:5px 11px;border-radius:999px;
   border:1px solid rgba(233,185,73,.5);background:rgba(8,9,15,.62);backdrop-filter:blur(6px);
   color:var(--gold-hi);font-size:11.5px;font-weight:700;letter-spacing:.06em;pointer-events:none}
-.chx{width:min(880px,calc(100% - 20px));max-height:calc(100dvh - 20px);padding:0;border:1px solid rgba(233,185,73,.3);
+/* the page's *{margin:0} reset erases the UA's margin:auto that centers a
+   modal dialog — without this the room hugs the top-left corner and its
+   edges read broken */
+.chx{margin:auto;width:min(880px,calc(100% - 20px));max-height:calc(100dvh - 20px);padding:0;border:1px solid rgba(233,185,73,.3);
   border-radius:20px;background:linear-gradient(160deg,#10131d,#0a0c13);color:var(--cream);overflow:hidden;box-shadow:0 40px 110px rgba(0,0,0,.7)}
 .chx::backdrop{background:rgba(4,5,10,.72);backdrop-filter:blur(9px)}
 .chx-in{display:grid;grid-template-columns:1fr;transform:scale(.88) rotateX(8deg);opacity:0;
