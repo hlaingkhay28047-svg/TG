@@ -24,7 +24,7 @@
        revalidate this HTML but may keep the assets cached, and a stale
        admin.js binding against changed markup throws before the boot code
        runs, wedging the tab on the "Checking admin access" gate. -->
-  <link rel="stylesheet" href="admin.css?v=20260831a">
+  <link rel="stylesheet" href="admin.css?v=20260831b">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to admin content</a>
@@ -104,6 +104,7 @@
           <div class="split-grid">
             <section class="surface"><div class="surface-head"><div><p class="eyebrow">RECENT ACCESS</p><h3>Latest logins</h3></div><button class="text-button" type="button" data-go="history">View all</button></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Device</th><th>Time</th><th>Result</th></tr></thead><tbody id="latestLogins"></tbody></table></div><p class="empty" id="latestEmpty" hidden>No recent logins.</p></section>
             <section class="surface attention"><p class="eyebrow">QUICK REVIEW</p><h3>Needs attention</h3><div class="attention-list" id="attentionList"></div><button class="button primary full" type="button" data-go="students" data-filter-status="pending">Review pending students</button></section>
+            <section class="surface" id="visitsCard" hidden><div class="surface-head"><div><p class="eyebrow">WEBSITE VISITORS · 30 DAYS</p><h3>Landing traffic</h3></div></div><div class="attention-list" id="visitsSummary"></div><h3 class="visits-sub">Most-entered rooms</h3><div class="attention-list" id="visitsPages"></div><p class="empty" id="visitsEmpty" hidden>No visits recorded yet.</p></section>
           </div>
         </section>
 
@@ -171,6 +172,6 @@
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js?v=20260831a" defer></script>
+  <script src="admin.js?v=20260831b" defer></script>
 </body>
 </html>

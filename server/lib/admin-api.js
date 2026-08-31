@@ -172,6 +172,24 @@ async function audit(client, identity, action, targetUserId, details, context) {
      context.ipHash || null,context.userAgent || null]);
 }
 
+/* v5.61.0 — the landing's privacy-light visit counters: per-day totals and
+   per-room ranking over the last 30 days. The table stores nothing but
+   (day, page, hits), so this is the whole story there is to tell. */
+async function visits(client, identity) {
+  requireAdmin(identity, "view_visits");
+  const days = await client.query(
+    `select day, sum(hits)::bigint as hits from public.site_visits
+      where day > (now() at time zone 'utc')::date - 30
+      group by day order by day desc`);
+  const pages = await client.query(
+    `select page, sum(hits)::bigint as hits from public.site_visits
+      where day > (now() at time zone 'utc')::date - 30
+      group by page order by hits desc limit 40`);
+  const total = days.rows.reduce((n, r) => n + Number(r.hits), 0);
+  return { total_30d: total, days: days.rows.map(r => ({ day: r.day, hits: Number(r.hits) })),
+    pages: pages.rows.map(r => ({ page: r.page, hits: Number(r.hits) })) };
+}
+
 async function dashboard(client, identity) {
   requireAdmin(identity, "view_dashboard");
   const counts = await client.query(
@@ -999,7 +1017,7 @@ async function mfaVerify(client, identity, body, context) {
   return { ok:true,mfa_verified:true,mfa_replaced:promotingPending };
 }
 
-module.exports={ audit,dashboard,students,studentDetail,studentAction,
+module.exports={ audit,visits,dashboard,students,studentDetail,studentAction,
   listPaymentRequests,reviewPayment,paymentProof,grantPayment,histories,
   getPanelVersion,putPanelVersion,mfaSetup,mfaVerify,requireAdmin,requireAdminBase,
   effectiveAccountStatus,normalizeDeviceSlots,normalizeStudent,normalizeHistoryType,validatePanelPolicy,

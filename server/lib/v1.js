@@ -406,6 +406,21 @@ async function adminCall(identity,context,fn) {
   return asService(client=>fn(client,identity,context));
 }
 
+/* v5.61.0 — the landing's anonymous visit beacon. Deliberately identity-free
+   and content-free: the page name must match a short safe alphabet, and the
+   only write it can ever perform is +1 on a (day, page) counter. Nothing
+   about the visitor is read, derived or stored. */
+const VISIT_PAGE_RE=/^[A-Za-z0-9:_-]{1,64}$/;
+async function recordVisit(body) {
+  const page=String(body&&body.page||"");
+  if (!VISIT_PAGE_RE.test(page)) throw new ApiError(400,"Bad page","invalid_page");
+  await asService(client=>client.query(
+    `insert into public.site_visits (day,page,hits)
+      values ((now() at time zone 'utc')::date,$1,1)
+      on conflict (day,page) do update set hits=public.site_visits.hits+1`,[page]));
+  return {status:202,body:{ok:true}};
+}
+
 async function handle(input) {
   const pathname=input.pathname;
   const method=input.method;
@@ -415,6 +430,7 @@ async function handle(input) {
 
   const downloadMatch=/^\/v1\/downloads\/panel\/([^/]+)$/.exec(pathname);
   if (downloadMatch&&method==="GET") return redeemDownload(downloadMatch[1]);
+  if (pathname==="/v1/visit"&&method==="POST") return recordVisit(body);
 
   requireIdentity(identity);
   if (pathname==="/v1/me/entitlement"&&method==="GET") return meEntitlement(identity,input.params);
@@ -459,6 +475,9 @@ async function handle(input) {
     delete result.passwordResetEmail;
     delete result.passwordReset;
     return {status:result.action==="password_reset"?202:200,body:result};
+  }
+  if (pathname==="/v1/admin/visits"&&method==="GET") {
+    return {status:200,body:await adminCall(identity,context,(client,id)=>admin.visits(client,id))};
   }
   if (pathname==="/v1/admin/histories"&&method==="GET") {
     return {status:200,body:await adminCall(identity,context,(client,id)=>admin.histories(client,id,input.params))};

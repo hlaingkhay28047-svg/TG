@@ -1958,3 +1958,21 @@ create policy panel_artifacts_service_all on public.panel_artifacts for all to p
 create policy panel_artifact_chunks_service_all on public.panel_artifact_chunks for all to public
   using (public.hnk_request_role() = 'service_role')
   with check (public.hnk_request_role() = 'service_role');
+
+-- ---- site visit counters (v5.61.0) ----
+-- Privacy by construction: a day, a page name and a counter — no visitor
+-- identifier, address or agent is ever stored, so there is nothing here to
+-- leak. The anonymous landing beacon can only increment through the service;
+-- reading the numbers back is an administrators' dashboard privilege.
+create table if not exists public.site_visits (
+  day  date not null default (now() at time zone 'utc')::date,
+  page text not null check (page ~ '^[A-Za-z0-9:_-]{1,64}$'),
+  hits bigint not null default 0 check (hits >= 0),
+  primary key (day, page)
+);
+alter table public.site_visits enable row level security;
+alter table public.site_visits force row level security;
+drop policy if exists site_visits_service_all on public.site_visits;
+create policy site_visits_service_all on public.site_visits for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');

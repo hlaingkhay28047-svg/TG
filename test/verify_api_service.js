@@ -479,6 +479,27 @@ function testPasswordHash(password,parallelization) {
   report("J7b) the strict payment queue is likewise reachable before any MFA is enrolled",
     paymentBeforeMfa.status === 200, { status: paymentBeforeMfa.status, body: paymentBeforeMfa.json });
 
+  /* ---- V) v5.61.0 privacy-light visit counters ---- */
+  r = await call("POST", "/v1/visit", { body: { page: "room:pgWf" } });
+  const secondBeat = await call("POST", "/v1/visit", { body: { page: "room:pgWf" } });
+  report("V1) the anonymous visit beacon lands without any identity",
+    r.status === 202 && secondBeat.status === 202, { first: r.status, second: secondBeat.status });
+  r = await call("POST", "/v1/visit", { body: { page: "x".repeat(65) } });
+  const badChars = await call("POST", "/v1/visit", { body: { page: "a page/../../etc" } });
+  report("V2) the beacon rejects pages outside the short safe alphabet",
+    r.status === 400 && badChars.status === 400, { long: r.status, chars: badChars.status });
+  r = await call("GET", "/v1/admin/visits", { token: ownerAdminToken });
+  const wfRow = r.json && Array.isArray(r.json.pages) ? r.json.pages.find(p => p.page === "room:pgWf") : null;
+  report("V3) the admin read aggregates the two beats into one (day, page) counter",
+    r.status === 200 && Number(r.json && r.json.total_30d) >= 2 && !!wfRow && Number(wfRow.hits) === 2,
+    { status: r.status, total: r.json && r.json.total_30d, wfRow });
+  r = await call("GET", "/v1/admin/visits", { token: custToken });
+  report("V4) a customer session cannot read the visit counters",
+    r.status === 403, { status: r.status });
+  r = await call("GET", "/v1/admin/visits", {});
+  report("V5) an anonymous caller cannot read the visit counters",
+    r.status === 401, { status: r.status });
+
   const mfaSetup = await call("POST", "/v1/admin/mfa/setup", { token: ownerAdminToken, body: {} });
   const mfaSecret = mfaSetup.json && mfaSetup.json.secret;
   const mfaCode = mfaSecret

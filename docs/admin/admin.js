@@ -6,6 +6,7 @@
     refresh: "/api/auth/v1/token?grant_type=refresh_token",
     logout: "/api/auth/v1/logout",
     dashboard: "/api/v1/admin/dashboard",
+    visits: "/api/v1/admin/visits",
     students: "/api/v1/admin/students",
     histories: "/api/v1/admin/histories",
     panelVersion: "/api/v1/admin/panel-version",
@@ -804,7 +805,37 @@
     const body = await api(API.dashboard);
     if (reveal) showApp(body);
     renderDashboard(body);
+    loadVisits().catch(() => {});
     return body;
+  }
+
+  /* v5.61.0 — the landing's privacy-light visit counters. The card stays
+     hidden unless the server answers, so an older API never shows a broken
+     panel; the data is only (day, page, hits) — there is nothing else. */
+  const ROOM_NAMES = Object.freeze({
+    landing: "Landing page", "room:pgWf": "Workflows", "room:pgLib": "Library",
+    "room:pgMeitu": "Retouch A", "room:pgEvoto": "Retouch B", "room:pgRetouch": "Retouch",
+    "room:pgEdit": "Freeform", "room:pgVideo": "Media Lab", "room:pgUpscale": "Upscale",
+    "room:pgBatch": "Batch", "room:pgGallery": "Gallery",
+  });
+  async function loadVisits() {
+    const card = $("#visitsCard");
+    if (!card) return;
+    const body = await api(API.visits);
+    const days = Array.isArray(body.days) ? body.days : [];
+    const pages = Array.isArray(body.pages) ? body.pages : [];
+    const today = days.length ? Number(days[0].hits) : 0;
+    const summary = [
+      ["Last 30 days", Number(body.total_30d || 0)],
+      ["Latest day", today],
+    ];
+    $("#visitsSummary").replaceChildren(...summary.map(([label, value]) =>
+      node("div", { className: "attention-row" }, [node("span", { text: label }), node("b", { text: String(value) })])));
+    $("#visitsPages").replaceChildren(...pages.slice(0, 8).map(row =>
+      node("div", { className: "attention-row" }, [
+        node("span", { text: ROOM_NAMES[row.page] || row.page }), node("b", { text: String(row.hits) })])));
+    $("#visitsEmpty").hidden = pages.length > 0;
+    card.hidden = false;
   }
 
   const deviceLimitSave = $("#deviceLimitSave");
