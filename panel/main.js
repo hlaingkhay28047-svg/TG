@@ -5764,7 +5764,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.47.0";
+const PANEL_VERSION = "6.47.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7008,9 +7008,7 @@ function pathFillWorkflows() {
   const list = (reg && reg.list && reg.list()) || [];
   while (sel.firstChild) sel.removeChild(sel.firstChild);
   for (let i = 0; i < list.length; i++) {
-    const o = document.createElement("option");
-    o.value = list[i].id; o.textContent = list[i].title || list[i].id;
-    sel.appendChild(o);
+    sel.appendChild(mkOption(list[i].id, list[i].title || list[i].id));
   }
   if (state.pathWf) { try { sel.value = state.pathWf; } catch (e) { } }
 }
@@ -7111,9 +7109,7 @@ function fillSel(el, values, current) {
   if (!el) return;
   while (el.firstChild) el.removeChild(el.firstChild);
   (values || []).forEach(function (v) {
-    const o = document.createElement("option");
-    o.value = String(v); o.textContent = String(v);
-    el.appendChild(o);
+    el.appendChild(mkOption(String(v), String(v)));
   });
   if (current) { try { el.value = current; } catch (e) { } }
   el.style.display = (values && values.length) ? "" : "none";
@@ -7333,9 +7329,7 @@ function bindVideo() {
     const list = V.models();
     while (sel.firstChild) sel.removeChild(sel.firstChild);
     for (let i = 0; i < list.length; i++) {
-      const o = document.createElement("option");
-      o.value = list[i].id; o.textContent = list[i].label || list[i].id;
-      sel.appendChild(o);
+      sel.appendChild(mkOption(list[i].id, list[i].label || list[i].id));
     }
     sel.addEventListener("change", vidPaintOptions);
   }
@@ -7716,6 +7710,20 @@ const MODEL_OPTIONS = [
   { v: "pro", k: "model_pro" }
 ];
 const RATIO_OPTIONS = ["auto"].concat(RATIOS.map(function (r) { return r.id; }));
+
+/* v6.47.1 — ONE builder for every option, because o.textContent alone is not
+   enough on this renderer. fillSelect has set BOTH o.text and o.textContent
+   since v1 and its callers' comments say why; five hand-rolled loops grew up
+   beside it setting only textContent, and the owner's Photoshop drew exactly
+   what that produces: the Path workflow picker and the Library category
+   picker as empty grey boxes with no label at all. */
+function mkOption(value, label) {
+  const o = document.createElement("option");
+  o.value = value;
+  o.text = label;
+  o.textContent = label;
+  return o;
+}
 
 function fillSelect(sel, items) {
   while (sel.firstChild) sel.removeChild(sel.firstChild);
@@ -9263,10 +9271,7 @@ function populatePipeSel() {
   if (!sel) return;
   while (sel.firstChild) sel.removeChild(sel.firstChild);
   const mkOpt = function (val, label) {
-    const o = document.createElement("option");
-    o.value = val;
-    o.textContent = label;
-    sel.appendChild(o);
+    sel.appendChild(mkOption(val, label));
   };
   mkOpt("__retouch", "\u2726 " + t("pipe_retouch"));
   mkOpt("__relight", "\u2726 " + t("pipe_relight"));
@@ -10384,15 +10389,11 @@ function paintRecentPrompts() {
   const sel = $("selRecentPrompts");
   if (!sel) return;
   while (sel.firstChild) sel.removeChild(sel.firstChild);
-  const head = document.createElement("option");
-  head.value = ""; head.textContent = t("recent_lbl");
-  sel.appendChild(head);
+  sel.appendChild(mkOption("", t("recent_lbl")));
   const list = state.recentPrompts || [];
   for (let i = 0; i < list.length; i++) {
-    const o = document.createElement("option");
-    o.value = list[i].t;
-    o.textContent = list[i].t.length > 58 ? list[i].t.slice(0, 58) + "…" : list[i].t;
-    sel.appendChild(o);
+    sel.appendChild(mkOption(list[i].t,
+      list[i].t.length > 58 ? list[i].t.slice(0, 58) + "…" : list[i].t));
   }
   sel.value = "";
 }
