@@ -114,7 +114,7 @@ const REFRESHERS = [];
 const I18N = {
   /* ---- English (en) — 587 keys, complete ---- */
   en: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "READINESS",
     sec_acct: "ACCOUNT",
@@ -736,7 +736,7 @@ const I18N = {
   },
   /* ---- Burmese (my) — 587 keys, complete ---- */
   my: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "အသင့်ဖြစ်မှု အခြေအနေ",
     sec_acct: "အကောင့်",
@@ -1358,7 +1358,7 @@ const I18N = {
   },
   /* ---- Shan (Tai Long) (shn) — 587 keys, complete ---- */
   shn: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း",
     sec_acct: "ဢၶွင်ႉ",
@@ -1978,7 +1978,7 @@ const I18N = {
   },
   /* ---- Jinghpaw (Kachin) (kac) — 587 keys, complete ---- */
   kac: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Jin ai lam",
     sec_acct: "ACCOUNT",
@@ -2598,7 +2598,7 @@ const I18N = {
   },
   /* ---- Thai (th) — 587 keys, complete ---- */
   th: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "สถานะความพร้อม",
     sec_acct: "บัญชี",
@@ -3218,7 +3218,7 @@ const I18N = {
   },
   /* ---- Chinese (Simplified) (zh) — 587 keys, complete ---- */
   zh: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "就绪状态",
     sec_acct: "账户",
@@ -3838,7 +3838,7 @@ const I18N = {
   },
   /* ---- Vietnamese (vi) — 587 keys, complete ---- */
   vi: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Trạng thái sẵn sàng",
     sec_acct: "TÀI KHOẢN",
@@ -4458,7 +4458,7 @@ const I18N = {
   },
   /* ---- Indonesian (id) — 587 keys, complete ---- */
   id: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesiapan",
     sec_acct: "AKUN",
@@ -5078,7 +5078,7 @@ const I18N = {
   },
   /* ---- Malay (ms) — 587 keys, complete ---- */
   ms: {
-    /* v6.43.0 — Setup follows the web app's own cards; these are the
+    /* v6.44.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesediaan",
     sec_acct: "AKAUN",
@@ -5705,7 +5705,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.43.0";
+const PANEL_VERSION = "6.44.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6603,7 +6603,7 @@ function collectDiag() {
   return rows;
 }
 const DIAG_ICON = { ok: "✓", warn: "!", err: "×", pend: "•" };
-/* v6.43.0 — one row renderer for every Setup card, because the web app's
+/* v6.44.0 — one row renderer for every Setup card, because the web app's
    Setup is a column of status rows and nothing else. It used to serve only
    the diagnostics card; READINESS, ACCOUNT, COST & BALANCE, DATA & BACKUP
    and APP & UPDATES are the same shape, so they share it. A row may name its
@@ -6743,6 +6743,136 @@ function renderAbout() {
   ]);
 }
 
+/* ============================================================
+   PATH — the web app's batch, in Photoshop (v6.44.0)
+
+   The app's Path takes fifty to a hundred photos, one look, and one run.
+   The panel could only ever do one photo, which is the opposite of what a
+   studio actually does on a wedding morning. This drives the panel's own
+   generate — same adapter, same lease, same model routing — once per photo,
+   and writes each result beside the others in a folder the studio picks.
+   Nothing is placed into the document: a hundred results are files.
+   ============================================================ */
+const PATH = { files: [], out: null, busy: false, stop: false, done: 0, fail: 0, rows: [] };
+
+function pathRows() {
+  const rows = [];
+  rows.push({ label: "Photos", level: PATH.files.length ? "ok" : "pend",
+    detail: PATH.files.length ? String(PATH.files.length) : "\u2014" });
+  rows.push({ label: "Save folder", level: PATH.out ? "ok" : "pend",
+    detail: PATH.out ? (PATH.out.name || "chosen") : "\u2014" });
+  if (PATH.busy || PATH.done || PATH.fail) {
+    rows.push({ label: "Done", level: PATH.fail ? "warn" : "ok",
+      detail: PATH.done + " / " + PATH.files.length + (PATH.fail ? "  \u00b7 " + PATH.fail + " failed" : "") });
+  }
+  for (let i = 0; i < PATH.rows.length && i < 12; i++) rows.push(PATH.rows[i]);
+  return rows;
+}
+function renderPath() { renderRows("pathList", pathRows()); }
+
+function pathFillWorkflows() {
+  const sel = $("pathWf");
+  if (!sel) return;
+  let reg = null;
+  try { reg = globalThis.HNK && globalThis.HNK.workflowRegistry; } catch (e) { }
+  const list = (reg && reg.list && reg.list()) || [];
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
+  for (let i = 0; i < list.length; i++) {
+    const o = document.createElement("option");
+    o.value = list[i].id; o.textContent = list[i].title || list[i].id;
+    sel.appendChild(o);
+  }
+  if (state.pathWf) { try { sel.value = state.pathWf; } catch (e) { } }
+}
+async function pathAdd() {
+  try {
+    const uxp = require("uxp");
+    const picked = await uxp.storage.localFileSystem.getFileForOpening({
+      allowMultiple: true, types: ["jpg", "jpeg", "png", "webp"]
+    });
+    const arr = picked ? (Array.isArray(picked) ? picked : [picked]) : [];
+    for (let i = 0; i < arr.length; i++) PATH.files.push(arr[i]);
+    renderPath();
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function pathPickOut() {
+  try {
+    const uxp = require("uxp");
+    const f = await uxp.storage.localFileSystem.getFolder();
+    if (f) PATH.out = f;
+    renderPath();
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function pathRun() {
+  if (PATH.busy) return;
+  if (!PATH.files.length) { setStatus(t("st_need_photos") || "Add photos first", "err"); return; }
+  if (!PATH.out) { setStatus(t("st_need_folder") || "Choose a save folder first", "err"); return; }
+  const wfId = ($("pathWf") && $("pathWf").value) || "";
+  let reg = null, run = null, comp = null;
+  try {
+    reg = globalThis.HNK && globalThis.HNK.workflowRegistry;
+    run = globalThis.HNK && globalThis.HNK.batchGenerate;
+    comp = globalThis.HNK && globalThis.HNK.workflowRequestCompiler;
+  } catch (e) { }
+  if (!reg || !run || !comp) { setStatus("Batch is not available in this build", "err"); return; }
+  PATH.busy = true; PATH.stop = false; PATH.done = 0; PATH.fail = 0; PATH.rows = [];
+  state.pathWf = wfId; saveSettings();
+  renderPath();
+  const uxp = require("uxp");
+  for (let i = 0; i < PATH.files.length && !PATH.stop; i++) {
+    const f = PATH.files[i];
+    try {
+      const buf = await f.read({ format: uxp.storage.formats.binary });
+      const dataUrl = "data:" + extToMime(f.name) + ";base64," + bufToB64(buf);
+      /* Build the same request a single run builds — through the workflow
+         request compiler, so the protected prompt, the model routing and the
+         output settings are identical; only the source image differs. */
+      const wf = reg.get(wfId);
+      if (!wf) throw new Error("workflow not found");
+      const slots = (wf.requiredInputs || []).map(function (inp, n) {
+        return { key: inp.key, label: inp.label, role: inp.role,
+          image: n === 0 ? { source: "file", ref: dataUrl, valid: true } : null };
+      });
+      const req = comp.compile({
+        workflowId: wfId, requiredInputs: slots, optionalInputs: [],
+        fieldVals: {}, output: { size: state.size, ratio: state.ratio }
+      });
+      if (!req) throw new Error("workflow not found");
+      const res = await run(req, function () { });
+      if (!res || !res.ok || !res.results || !res.results.length) throw new Error("no result");
+      const first = res.results[0];
+      const b64 = first.b64 || (first.dataUrl || "").split(",")[1] || "";
+      if (!b64) throw new Error("empty result");
+      const name = String(f.name || ("photo-" + (i + 1))).replace(/\.[^.]+$/, "") + "_hnk.png";
+      const outFile = await PATH.out.createFile(name, { overwrite: true });
+      await outFile.write(b64ToBuf(b64), { format: uxp.storage.formats.binary });
+      PATH.done++;
+      PATH.rows.unshift({ label: name, level: "ok", detail: "saved" });
+    } catch (e) {
+      PATH.fail++;
+      PATH.rows.unshift({ label: String(f && f.name || ("photo " + (i + 1))), level: "err",
+        detail: (e && e.message) ? String(e.message).slice(0, 40) : "failed" });
+    }
+    renderPath();
+  }
+  PATH.busy = false;
+  renderPath();
+  setStatus(PATH.fail ? (PATH.done + " done, " + PATH.fail + " failed") : (PATH.done + " done"), PATH.fail ? "err" : "ok");
+}
+function bindPath() {
+  const add = $("btnPathAdd"); if (add) add.addEventListener("click", pathAdd);
+  const clr = $("btnPathClear");
+  if (clr) clr.addEventListener("click", function () { PATH.files = []; PATH.rows = []; PATH.done = 0; PATH.fail = 0; renderPath(); });
+  const out = $("btnPathOut"); if (out) out.addEventListener("click", pathPickOut);
+  const run = $("btnPathRun"); if (run) run.addEventListener("click", pathRun);
+  const stop = $("btnPathStop"); if (stop) stop.addEventListener("click", function () { PATH.stop = true; });
+  const intro = $("pathIntro");
+  if (intro) intro.textContent = "Many photos, one look, one run \u2014 results are saved as files.";
+  pathFillWorkflows();
+  renderPath();
+  REFRESHERS.push(function () { try { pathFillWorkflows(); renderPath(); } catch (e) { } });
+}
+
 function bindDiag() {
   const out = $("btnAcctOut");
   if (out) {
@@ -6755,6 +6885,7 @@ function bindDiag() {
   const bi = $("btnBackupIn"); if (bi) bi.addEventListener("click", importBackup);
   const up = $("btnCheckUpd");
   if (up) up.addEventListener("click", function () { _updChecked = false; checkPanelUpdate(document); renderAbout(); });
+  bindPath();
   renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout();
   REFRESHERS.push(function () {
     try { renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout(); } catch (e) { }
@@ -9614,7 +9745,7 @@ function imgMagicOk(b64) {
 /* v4.5: references are READ-ONLY inputs - never regenerated or overwritten.
    People-exclusion is handled purely by the reference guards in the prompt. */
 
-/* v6.43.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
+/* v6.44.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
    app does not have). It was a whole second browser living inside a
    Photoshop panel — an allow-list, an address bar, size presets, a
    postMessage image bridge and three global import buttons — none of which
@@ -11030,7 +11161,7 @@ function resetRetouch() {
 }
 
 /* ---------------- Tab pages (web-view style) ---------------- */
-/* v6.43.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
+/* v6.44.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
    The app's bottom bar carries five WORK groups — Home, Workflows, Edit,
    Media Lab, Library — each group's pages appear as second-level pills, and
    Setup is not on the bar at all: it lives behind the header gear. The panel
@@ -11061,6 +11192,7 @@ const PAGES = [
   { key: "meitu",   page: "pageRetouch", group: "edit",  sub: "Retouch A", preset: "pMeitu" },
   { key: "evoto",   page: "pageRetouch", group: "edit",  sub: "Retouch B", preset: "pEvoto" },
   { key: "retouch", page: "pageRetouch", group: "edit",  sub: "Retouch" },
+  { key: "path",    page: "pagePath",    group: "edit",  sub: "Path" },
   { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img" },
   { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference" },
   /* the app's Library holds Reference and Gallery; the panel's own generation

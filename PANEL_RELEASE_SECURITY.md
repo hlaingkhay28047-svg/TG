@@ -178,6 +178,28 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.44.0** — `pending`. Path — many photos, one look, one run
+  (2026-09-01, same owner instruction). The web app's Path takes fifty to a
+  hundred photos through one look in a single run; the panel could only ever
+  do one photo, which is the opposite of what a studio does on a wedding
+  morning, and it was the last page missing from the app's Edit group. Path is
+  the fifth Edit pill now, where the app keeps it. It drives **the panel's own
+  generate** — same adapter, same lease, same model routing, and the request is
+  built by the same workflow request compiler a single run uses, so the
+  protected prompt and the output settings are identical; only the source image
+  differs per item. Two differences make it a batch rather than a hundred single
+  runs: the photos come from a UXP multi-file picker, and results are written
+  as files into a folder the studio chooses (`<name>_hnk.png`) instead of a
+  hundred layers landing in one document. STOP takes effect between photos, a
+  failed photo is counted and named rather than ending the run, and every one
+  of the 143 workflows is selectable. Acceptance: carry over v6.43.0's
+  checklist; additionally add three photos, pick a save folder and a workflow,
+  RUN, and confirm three files appear in that folder with the workflow's look;
+  then RUN again and press STOP after the first, and confirm it stops between
+  photos with the finished one kept. Artifact `HNK_Ai_Panel_v6.44.0.ccx`,
+  SHA-256
+  `a81888576d9bb720a43f03cf5dc5e24e78393673a6599bda98f3ed55796c3c35`,
+  1,320,389 bytes. Stays disabled for customers until this acceptance.
 - **v6.43.0** — `pending`. Retouch A, Retouch B and the teaching (2026-09-01,
   same owner instruction). The app's Edit group reads Freeform · Retouch A ·
   Retouch B · Retouch · Path; the panel's read Freeform · Retouch — not because

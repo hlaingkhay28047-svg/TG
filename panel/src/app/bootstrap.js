@@ -234,12 +234,32 @@ function create(opts) {
   /* Publish the live app so main.js's applyI18n() refresher can repaint the
      AI Tools screens when the header language select changes. Mounting is the
      only re-render entry point the controller exposes, and it is idempotent. */
+  /* v6.44.0 — ONE PHOTO AT A TIME IS NOT WHAT A STUDIO DOES.
+     The web app has Path: fifty to a hundred photos, one look, one run. The
+     panel could only ever do one. This is the same generate the single run
+     uses — same adapter, same lease, same model routing — with two
+     differences that make it a batch: the caller supplies the source image
+     per item, and nothing is placed into the document (a hundred results are
+     files, not a hundred layers). Placement stays the single run's job. */
+  async function batchGenerate(request, onStage) {
+    var panelAuth = (typeof globalThis !== "undefined" && globalThis.HNK)
+      ? globalThis.HNK.panelAuth : null;
+    if (panelAuth && panelAuth.requireLease) await panelAuth.requireLease();
+    var chosen = adapterFor(request && request.model);
+    var s = settings.get();
+    return chosen.generate({
+      transport: opts.transport, configOverride: currentOverride(),
+      apiKey: s.apiKey, host: opts.host, now: opts.now
+    }, request, { onStage: onStage || function () { } });
+  }
+
   function publishApp() {
     try {
       var g = (typeof globalThis !== "undefined") ? globalThis : null;
       if (!g) return;
       g.HNK = g.HNK || {};
       g.HNK.aiToolsApp = app;
+      g.HNK.batchGenerate = batchGenerate;
     } catch (e) { }
   }
 
