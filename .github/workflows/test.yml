@@ -45,9 +45,6 @@ jobs:
       - name: Verify coordinated release and delivery contract
         run: node test/verify_release_contract.js
 
-      - name: Verify the production safety nets (live security headers, backup lane)
-        run: node test/verify_production_safety.js
-
       - name: Verify unified account, license, device, admin, and Panel contracts
         run: |
           node test/verify_no_public_ccx.js
@@ -119,6 +116,13 @@ jobs:
 
       - name: Verify API liveness while the database migration is blocked
         run: node test/verify_api_liveness.js
+
+      # Same reason as the two steps above: this one boots the real API to read
+      # the security headers off a live response, so it must run AFTER the
+      # install — server/lib/db.js requires pg, and a server that cannot load
+      # its driver never reaches listen().
+      - name: Verify the production safety nets (live security headers, backup lane)
+        run: node test/verify_production_safety.js
 
       - name: Verify DigitalOcean live-spec patch is narrow and fail-closed
         run: node test/verify_digitalocean_spec_patch.js

@@ -63,6 +63,16 @@ function request(port, method, urlPath) {
   });
 }
 
+/* A crashing node process prints the offending line, a caret, then the real
+   headline ("Error: Cannot find module 'pg'"). Report that headline when it is
+   there, and the opening lines when it is not — a truncated stack tail names
+   the file but never the fault. */
+function firstProblem(text) {
+  const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
+  const headline = lines.find(line => /^([A-Za-z]*Error|FATAL|Cannot |[A-Z]{4,}:)/.test(line));
+  return (headline || lines.slice(0, 3).join(" | ") || "(said nothing)").slice(0, 240);
+}
+
 function missing(headers) {
   return Object.entries(REQUIRED)
     .filter(([name, pattern]) => !pattern.test(String(headers[name] || "")))
@@ -76,14 +86,22 @@ function missing(headers) {
     env: Object.assign({}, process.env, { PORT: String(port), DATABASE_URL: "" }),
     stdio: ["ignore", "pipe", "pipe"],
   });
-  api.stdout.resume(); api.stderr.resume();
+  /* Keep what the process said. A server that cannot boot — a missing
+     dependency, a port already taken — used to fail this check with nothing
+     but a port number to go on; the reason belongs in the failure itself. */
+  let boot = "";
+  const keep = chunk => { if (boot.length < 4000) boot += chunk; };
+  api.stdout.on("data", keep); api.stderr.on("data", keep);
+  let died = null;
+  api.on("exit", (code, signal) => { died = { code, signal }; });
   let up = false;
   for (let attempt = 0; attempt < 60 && !up; attempt++) {
     await new Promise(resolve => setTimeout(resolve, 250));
     try { await request(port, "GET", "/live"); up = true; } catch (_) { }
   }
   try {
-    report("the API answers its liveness probe without a database", up, { port });
+    report("the API answers its liveness probe without a database", up,
+      { port, exited: died, said: firstProblem(boot) });
     if (up) {
       const live = await request(port, "GET", "/live");
       report("a normal 200 carries the whole security header set",
