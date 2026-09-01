@@ -1055,3 +1055,6 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    owner's Photoshop drew every subtab as a pointed lens ("Freeform",
    "Retouch A", "Path"), where the web app draws a rounded rectangle. A
    radius the box can actually satisfy gives the app's shape on both. */
+/* v6.48.0 — the one line under APP & UPDATES that says what the button can
+   and cannot do: it fetches the release, Creative Cloud installs it. */
+.hint { font-size: 11px; line-height: 1.55; color: var(--muted-2); margin: 6px 2px 0; }
