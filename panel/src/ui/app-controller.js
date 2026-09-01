@@ -35,26 +35,13 @@ function create(deps) {
   var current = "home";
   var free = null, workflow = null;
 
-  /* v6.27.0 — web-app parity (owner report: the localized pill row over the
-     English tab bar read as two stacked navigations saying nothing). The web
-     app's in-page section pills are short ENGLISH words in every locale
-     (Freeform · Studio · Retouch · Path), and none of them repeats a bottom
-     tab: so these pills drop the "Home" duplicate (the bottom Home tab now
-     returns to the cards home from anywhere) and take fixed web-app words —
-     Freeform · Workflows · History · Settings — one row, one language. */
-  function navContainer(activeScreen) {
-    var nav = dom.el(doc, "div", { class: "hnk-nav", id: "hnkNav" });
-    [["free-generate", "Freeform"], ["workflow-tools", "Workflows"],
-     ["history", "History"], ["settings", "Settings"]].forEach(function (pair) {
-      var isActive = pair[0] === activeScreen;
-      var b = dom.el(doc, "button", { class: "hnk-nav-btn" + (isActive ? " active" : ""), id: "hnkNav_" + pair[0], text: pair[1] });
-      if (isActive) b.setAttribute("aria-current", "page");
-      dom.on(b, "click", function () { navigate(pair[0]); });
-      nav.appendChild(b);
-    });
-    return nav;
-  }
-
+  /* v6.40.0 — THE SECOND NAVIGATION IS GONE.
+     This stack used to draw its own pill row — Freeform · Workflows · History
+     · Settings — above the panel's bottom tab bar, so two navigations sat on
+     one screen saying overlapping things, and Settings repeated Setup outright.
+     The web app has exactly one navigation. The bottom bar now carries the
+     app's five groups and reaches every screen here directly (Home, Workflows,
+     Gallery), so this row has nothing left to add. */
   function navigate(screen) {
     if (SCREENS.indexOf(screen) === -1) return;
     // Enforce mode separation on the Free <-> Workflow boundary (§16).
@@ -103,7 +90,6 @@ function create(deps) {
     // Density (compact | normal | comfortable) as a root class (spec: density options).
     var density = (deps.settings && deps.settings.get().density) || "normal";
     rootEl.className = "hnk-root hnk-density-" + density;
-    rootEl.appendChild(navContainer(current));
     var body = dom.el(doc, "div", { class: "hnk-screen", id: "hnkScreen_" + current });
     rootEl.appendChild(body);
 

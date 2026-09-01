@@ -792,6 +792,20 @@ input[type="range"] { min-width: 0; }
 .hnk-cardart { background-color: #0b0d14; }
 .hnk-cardart img { width: 100%; height: auto; display: block; }
 .hnk-action.art-card .hnk-action-txt { padding: 10px 12px 12px; }
+/* v6.40.0 — the web app's second-level pills, ported verbatim in behaviour:
+   a horizontal pill row that only appears when the active group has more than
+   one page, gold when selected, 44px targets. UXP-safe: explicit direction
+   (see the note below — a container that stacks or flows must say so). */
+.subtabbar { display: none; flex-direction: row; gap: 6px; margin: 8px 10px 0;
+  overflow-x: auto; }
+.subtabbar.on { display: flex; }
+.subtab { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel); color: var(--muted); padding: 7px 14px; min-height: 34px;
+  box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; cursor: pointer; }
+.subtab.on { background: var(--accent); border-color: var(--accent); color: #1a1408; }
+.subtab:hover { border-color: var(--accent); }
+
 /* v6.39.0 — THE LINE THAT RAN TOGETHER.
    Every other stacked container in this sheet declares its direction
    (.hnk-screen, .hnk-field, .hnk-slot-errors, .hnk-hist ...) because the

@@ -255,6 +255,29 @@ async function run(browser, cfg) {
   report("I) returning focus forces a fresh live entitlement validation", after > before, { before, after });
   await result.page.close();
 
+  /* v6.40.0 — ONE NAVIGATION, AND IT IS THE WEB APP'S.
+     The panel is the same product in another window, so its navigation is not
+     its own to invent: the app's bottom bar carries five work groups in a
+     fixed order and parks Setup behind a header gear, and the panel now does
+     exactly that. Read from BOTH files so drift on either side fails: the
+     app's TOPGROUPS labels are the expectation, the panel's tab bar is the
+     claim. The panel also used to draw a SECOND navigation inside Home that
+     repeated these tabs — that must not come back. */
+  const appSrc = fs.readFileSync(path.join(ROOT, "docs/app/index.html"), "utf8");
+  const groupBlock = (appSrc.match(/var TOPGROUPS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || "";
+  const appGroups = [...groupBlock.matchAll(/label:\s*"([^"]+)"/g)].map(m => m[1]);
+  const barBlock = (indexHtml.match(/<div class="tabbar">([\s\S]*?)<\/div>/) || [])[1] || "";
+  const panelTabs = [...barBlock.matchAll(/<span class="tabb-l">([^<]*)<\/span>/g)].map(m => m[1]);
+  report("L) the panel's bottom bar is the web app's five groups, in its order",
+    appGroups.length === 5 && JSON.stringify(panelTabs) === JSON.stringify(appGroups),
+    { app: appGroups, panel: panelTabs });
+  report("M) Setup left the bar for the header gear, exactly as the app parks it",
+    !/tabSetup/.test(barBlock) && /id="btnGearSetup"/.test(indexHtml), {
+      onBar: /tabSetup/.test(barBlock), gear: /id="btnGearSetup"/.test(indexHtml) });
+  const controller = fs.readFileSync(path.join(PANEL, "src/ui/app-controller.js"), "utf8");
+  report("N) the panel draws one navigation, not two",
+    !/hnkNav_/.test(controller) && !/id: "hnkNav"/.test(controller), {});
+
   /* v6.39.0 — A BROWSER CANNOT CATCH THIS ONE, WHICH IS WHY IT SHIPPED.
      Photoshop's panel runtime lays a container's children out in a ROW unless
      the container says otherwise; a browser stacks them either way. So every
