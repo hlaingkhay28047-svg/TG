@@ -792,7 +792,17 @@ input[type="range"] { min-width: 0; }
 .hnk-cardart { background-color: #0b0d14; }
 .hnk-cardart img { width: 100%; height: auto; display: block; }
 .hnk-action.art-card .hnk-action-txt { padding: 10px 12px 12px; }
-.hnk-action-txt { flex: 1; min-width: 0; }
+/* v6.39.0 — THE LINE THAT RAN TOGETHER.
+   Every other stacked container in this sheet declares its direction
+   (.hnk-screen, .hnk-field, .hnk-slot-errors, .hnk-hist ...) because the
+   panel's layout engine lays children out in a ROW unless told otherwise.
+   This one container never did, so the title, the summary and the model line
+   were laid side by side and clipped into a single run — "BG Replace" and
+   "the background is replaced" arriving as one unreadable sentence on every
+   Home and Workflows card. Declared like all its siblings. */
+.hnk-action-txt { display: flex; flex-direction: column; align-items: flex-start;
+  flex: 1; min-width: 0; }
+.hnk-action-label, .hnk-action-sub, .hnk-action-meta { display: block; width: 100%; }
 .hnk-action-meta { margin-top: 2px; font-size: 8.5px; font-weight: 700; color: var(--accent-soft); }
 .hnk-wf-hero {
   height: 118px; margin: 6px 0 8px;

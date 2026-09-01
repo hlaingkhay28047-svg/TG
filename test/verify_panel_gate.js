@@ -255,6 +255,32 @@ async function run(browser, cfg) {
   report("I) returning focus forces a fresh live entitlement validation", after > before, { before, after });
   await result.page.close();
 
+  /* v6.39.0 — A BROWSER CANNOT CATCH THIS ONE, WHICH IS WHY IT SHIPPED.
+     Photoshop's panel runtime lays a container's children out in a ROW unless
+     the container says otherwise; a browser stacks them either way. So every
+     Home and Workflows card rendered its title, summary and model line side by
+     side and clipped them into one unreadable run ("BG Replace" + "replaces
+     the background" arriving as a single sentence) in Photoshop, while every
+     test here rendered it correctly. The stylesheet is therefore the thing to
+     assert: a container that holds stacked lines must DECLARE that it stacks. */
+  const stylesheet = fs.readFileSync(path.join(PANEL, "styles.css"), "utf8");
+  function declarationsFor(className) {
+    let block = "";
+    const rule = /([^{}]+)\{([^}]*)\}/g;
+    let match;
+    while ((match = rule.exec(stylesheet))) {
+      const selectors = match[1].split(",").map(part => part.trim());
+      if (selectors.some(sel => sel.split(/\s+/).pop() === className)) block += match[2] + ";";
+    }
+    return block;
+  }
+  const rowRisk = [".hnk-action-txt", ".hnk-field", ".hnk-screen", ".hnk-slot-errors"]
+    .filter(cls => {
+      const decl = declarationsFor(cls);
+      return !(/display\s*:\s*flex/.test(decl) && /flex-direction\s*:\s*column/.test(decl));
+    });
+  report("K) every stacked text container declares that it stacks", rowRisk.length === 0, rowRisk);
+
   report("J) all scenarios complete without uncaught browser errors", allErrors.length === 0, allErrors);
   await browser.close();
   server.close();

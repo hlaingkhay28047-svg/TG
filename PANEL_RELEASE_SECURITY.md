@@ -178,6 +178,24 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.39.0** — `pending`. The line that ran together (2026-09-01, found by the
+  owner's own Photoshop acceptance pass on 6.38.0). Photoshop's panel runtime
+  lays a container's children out in a ROW unless the container declares
+  otherwise; a browser stacks them either way. `.hnk-action-txt` was the one
+  stacked container in the stylesheet that never declared its direction, so on
+  every Home and Workflows card the title, the summary and the model line were
+  laid side by side and clipped into a single unreadable run — "BG Replace" and
+  "the background is replaced" arriving as one sentence — in Photoshop only,
+  while every browser test rendered it correctly. Declared like all its
+  siblings, and pinned: verify_panel_gate.js check K now reads the tracked
+  stylesheet and fails if any stacked text container stops declaring that it
+  stacks, which is the only place a runtime-only layout rule can be caught.
+  No behaviour, catalog or prompt changed from 6.38.0 — carry over its whole
+  acceptance checklist, and additionally confirm on the Home tab that each row
+  shows its title on one line and its description beneath, not run together.
+  Artifact `HNK_Ai_Panel_v6.39.0.ccx`, SHA-256
+  `bc5ea759c0e9e97f6f894f159ad2da721a6d46408e54c53b43fffc5de516e426`,
+  1,312,605 bytes. Stays disabled for customers until this acceptance.
 - **v6.38.0** — `pending`. The real-as-real wave (2026-09-01, owner: the
   result must stay the person who was photographed). Every workflow that
   rebuilds the light around a real face now says so in words. Fifty-three
