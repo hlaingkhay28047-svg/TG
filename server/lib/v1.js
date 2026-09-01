@@ -144,6 +144,18 @@ async function meEntitlement(identity, params) {
   });
 }
 
+/* v5.65.0 — "the oldest build we still accept", asked of the database rather
+   than frozen into the source. A panel that reports no version of its own is
+   assumed to be that build, which is what makes the minimum-version gate mean
+   anything; the literal this replaces was written when 6.24.0 was the minimum
+   and stayed 6.24.0 through thirteen releases. Falls back to the latest row,
+   then to nothing, so an empty table behaves exactly as it did before. */
+async function assumedPanelVersion(client) {
+  const { rows } = await client.query(
+    "select version from public.panel_versions where minimum_supported or is_latest order by minimum_supported desc limit 1");
+  return rows.length ? String(rows[0].version) : "";
+}
+
 async function enrollDevice(identity, body, context) {
   const channel = body.channel === "panel" ? "panel" : "web";
   if (identity.clientType !== channel) {
@@ -161,7 +173,7 @@ async function enrollDevice(identity, body, context) {
   return asService(async client => {
     const fakeDevice={registered:true,matches:true,slotType:deviceType};
     const state=await loadEntitlementState(client,identity.uid,{
-      panelVersion:String(body.panel_version||"6.24.0"),
+      panelVersion:String(body.panel_version||"").trim()||await assumedPanelVersion(client),
     });
     rejectDecision(authorizeState(state,channel==="panel"?"panel":"web",fakeDevice));
     const registry=deviceRegistry(client);
@@ -206,7 +218,7 @@ async function panelPair(identity, body, context) {
   /* kept as a route alias for older panels; pairing codes are ignored now */
   return enrollDevice(identity,{
     channel:"panel",device_type:"computer",installation_id:body.panel_installation_id||body.installation_id,
-    label:body.label,panel_version:body.panel_version||"6.24.0",
+    label:body.label,panel_version:body.panel_version||"",
   },context);
 }
 
@@ -289,8 +301,16 @@ async function configuredArtifact(artifactKey,sizeBytes,expectedSha256) {
 async function issueDownload(identity, body, context) {
   if (identity.clientType !== "web") throw new ApiError(403,"A web session is required","client_type_mismatch");
   return asService(async client => {
-    const version=String(body.version||body.panel_version||"6.24.0");
-    const state=await loadEntitlementState(client,identity.uid,{panelVersion:version});
+    /* v5.65.0 — a request that names no version gets the CURRENT release, read
+       from panel_versions, not a literal. This defaulted to "6.24.0", frozen
+       when it was written: thirteen releases later that row is no longer the
+       latest and is not enabled, so the one caller that omitted a version got
+       a 404 for a panel that exists — or, worse, an old build if that row were
+       ever re-enabled. The database already knows which release is latest. */
+    const requested=String(body.version||body.panel_version||"").trim();
+    const state=await loadEntitlementState(client,identity.uid,{panelVersion:requested});
+    const version=requested||String(state.panelVersion&&state.panelVersion.latestVersion||"");
+    if (!version) throw new ApiError(503,"No panel release is published","version_not_found");
     const device=await sessionComputerDevice(client,identity);
     rejectDecision(authorizeState(state,"download",device));
     const release=await client.query(
