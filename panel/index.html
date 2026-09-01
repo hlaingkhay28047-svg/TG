@@ -127,10 +127,10 @@
     <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
     <div class="hdr-t">
       <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.41.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.42.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
     </div>
     <div class="hdr-ctl">
-      <!-- v6.41.0 — web-app parity: the app parks Setup behind a header gear
+      <!-- v6.42.0 — web-app parity: the app parks Setup behind a header gear
            and keeps its bottom bar to the five work groups. Same here. -->
       <button id="btnGearSetup" class="btn btn-icon" aria-label="Setup"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 14.9a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5v.2a2 2 0 1 1-3.8 0v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1h-.2a2 2 0 1 1 0-3.8h.2a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5v-.2a2 2 0 1 1 3.8 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 3.8h-.2a1.6 1.6 0 0 0-1.5 1Z"/></svg></button>
       <select id="selLang" class="lang-sel" title="Language"></select>
@@ -138,7 +138,7 @@
     </div>
   </div>
 
-  <!-- v6.41.0 — the web app's second-level pills. Its bottom bar carries five
+  <!-- v6.42.0 — the web app's second-level pills. Its bottom bar carries five
        groups and each group's pages appear here, in the app's own English
        wording (the app keeps these words English in every locale). -->
   <div class="subtabbar" id="subtabs"></div>
@@ -154,6 +154,21 @@
           <div class="pgbanner-title" data-i18n="pgb_setup"></div>
         </div>
       </div>
+      <div class="card">
+        <div class="chead" id="cReadyH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_ready"></span></div>
+        <div class="cbody" id="cReadyB">
+          <div class="diag" id="readyList"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="chead" id="cAcctH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_acct"></span></div>
+        <div class="cbody" id="cAcctB">
+          <div class="diag" id="acctList"></div>
+          <div class="row last"><button id="btnAcctOut" class="btn btn-sm grow"></button></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="chead" id="cApiH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_api"></span></div>
         <div class="cbody" id="cApiB">
@@ -210,6 +225,26 @@
       </div>
 
       <div class="card">
+        <div class="chead" id="cMoneyH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_money"></span></div>
+        <div class="cbody" id="cMoneyB">
+          <div class="mut" data-i18n="money_intro"></div>
+          <div class="diag" id="moneyList"></div>
+          <div class="row last"><button id="btnMoney" class="btn btn-sm btn-gold grow" data-i18n="money_refresh"></button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="chead" id="cDataH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_data"></span></div>
+        <div class="cbody" id="cDataB">
+          <div class="diag" id="dataList"></div>
+          <div class="row last">
+            <button id="btnBackupOut" class="btn btn-sm grow" data-i18n="btn_export_backup"></button>
+            <button id="btnBackupIn" class="btn btn-sm grow" data-i18n="btn_import_backup"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="chead" id="cLibH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_reflib"></span></div>
         <div class="cbody" id="cLibB">
           <div class="mut" data-i18n="reflib_note"></div>
@@ -244,20 +279,11 @@
 
 
       <div class="card">
-        <div class="chead" id="cDiagH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_diag"></span></div>
-        <div class="cbody" id="cDiagB">
-          <div class="diag" id="diagList"></div>
-          <div class="row last"><button id="btnDiag" class="btn btn-sm btn-gold grow" data-i18n="btn_diag"></button></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cLogH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_log"></span></div>
-        <div class="cbody" id="cLogB">
-          <textarea id="logBox" class="pbox" readonly></textarea>
+        <div class="chead" id="cAboutH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_about"></span></div>
+        <div class="cbody" id="cAboutB">
+          <div class="diag" id="aboutList"></div>
           <div class="row last">
-            <button id="btnCopyLog" class="btn btn-sm grow" data-i18n="btn_copylog"></button>
-            <button id="btnClearLog" class="btn btn-sm" data-i18n="btn_clearlog"></button>
+            <button id="btnCheckUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_check_update"></button>
           </div>
         </div>
       </div>

@@ -114,6 +114,23 @@ const REFRESHERS = [];
 const I18N = {
   /* ---- English (en) — 587 keys, complete ---- */
   en: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "READINESS",
+    sec_acct: "ACCOUNT",
+    sec_money: "COST & BALANCE",
+    sec_data: "DATA & BACKUP",
+    sec_about: "APP & UPDATES",
+    money_intro: "Every GENERATE is booked at the amount RunningHub actually charged — not an estimate. The balance is read straight from your RunningHub account.",
+    money_bal: "Balance",
+    money_refresh: "Check balance",
+    money_nokey: "Save a RunningHub key first, then the balance can be read.",
+    money_fail: "Could not read the balance — RunningHub may block this call from a browser. The ledger below is still exact.",
+    money_never: "never checked",
+    btn_export_backup: "Export backup",
+    btn_import_backup: "Restore backup",
+    btn_check_update: "Check for updates",
+    btn_hard_refresh: "Clear cache + restart",
     gate_sub_login: "Sign in with your HNK account to use this panel.",
     gate_email_ph: "Email",
     gate_pass_ph: "Password",
@@ -719,6 +736,23 @@ const I18N = {
   },
   /* ---- Burmese (my) — 587 keys, complete ---- */
   my: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "အသင့်ဖြစ်မှု အခြေအနေ",
+    sec_acct: "အကောင့်",
+    sec_money: "ကုန်ကျစရိတ်နှင့် လက်ကျန်ငွေ",
+    sec_data: "DATA သိမ်းဆည်းမှု",
+    sec_about: "APP နဲ့ UPDATE",
+    money_intro: "GENERATE တစ်ခါလုပ်တိုင်း RunningHub က ဖြတ်တဲ့ ငွေအမှန်ကို မှတ်ထားပါတယ် — ခန့်မှန်းချက် မဟုတ်ပါ။ လက်ကျန်ငွေကတော့ RunningHub အကောင့်ကနေ တိုက်ရိုက် ဆွဲယူတာပါ။",
+    money_bal: "လက်ကျန်",
+    money_refresh: "လက်ကျန်ငွေ စစ်မယ်",
+    money_nokey: "RunningHub key ထည့်ပြီးမှ လက်ကျန်ငွေ စစ်လို့ရပါမယ်။",
+    money_fail: "လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — RunningHub က browser ကနေ တိုက်ရိုက်မေးတာကို ပိတ်ထားနိုင်ပါတယ်။ အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။",
+    money_never: "မစစ်ရသေးပါ",
+    btn_export_backup: "Backup ထုတ်မယ်",
+    btn_import_backup: "Backup ပြန်သွင်းမယ်",
+    btn_check_update: "Update စစ်မယ်",
+    btn_hard_refresh: "Cache ရှင်း + ပြန်စမယ်",
     gate_sub_login: "ဒီ panel ကို သုံးရန် သင့် HNK အကောင့်နဲ့ ဝင်ပါ။",
     gate_email_ph: "အီးမေးလ်",
     gate_pass_ph: "စကားဝှက်",
@@ -1324,6 +1358,23 @@ const I18N = {
   },
   /* ---- Shan (Tai Long) (shn) — 587 keys, complete ---- */
   shn: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း",
+    sec_acct: "ဢၶွင်ႉ",
+    sec_money: "ၵႃႈၸႂ်ႉၸၢႆႇ လႄႈ ငိုၼ်းလိူဝ်",
+    sec_data: "DATA လႄႈ BACKUP",
+    sec_about: "APP လႄႈ UPDATE",
+    money_intro: "GENERATE ၵူႈပွၵ်ႈ RunningHub ဢဝ်ငိုၼ်းၵႃႈႁိုဝ် မၢႆဝႆႉတႄႉတႄႉ — ဢမ်ႇၸႂ်ႈလၢမ်း",
+    money_bal: "ငိုၼ်းလိူဝ်",
+    money_refresh: "တူၺ်းငိုၼ်းလိူဝ်",
+    money_nokey: "သႂ်ႇ RunningHub key ဢွၼ်တၢင်း ၸင်ႇတူၺ်းငိုၼ်းလိူဝ်လႆႈ",
+    money_fail: "ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — RunningHub ဢမ်ႇပၼ်ထၢမ်တီႈ browser။ မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ",
+    money_never: "ပႆႇလႆႈတူၺ်း",
+    btn_export_backup: "ဢွၵ်ႇ backup",
+    btn_import_backup: "သႂ်ႇၶိုၼ်း backup",
+    btn_check_update: "ၶူၼ်ႉတူၺ်း update",
+    btn_hard_refresh: "လၢင်ႉ cache + တႄႇၶိုၼ်း",
     gate_sub_login: "ၶဝ်ႈဢၶွင်ႉ HNK သူ ဢွၼ်တၢင်း သေ ၸႂ်ႉ panel ဢၼ်ၼႆႉ။",
     gate_email_ph: "ဢီးမေးလ်",
     gate_pass_ph: "ၶေႃႈလပ်ႉ",
@@ -1927,6 +1978,23 @@ const I18N = {
   },
   /* ---- Jinghpaw (Kachin) (kac) — 587 keys, complete ---- */
   kac: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "Jin ai lam",
+    sec_acct: "ACCOUNT",
+    sec_money: "Manu hte ngun ngam",
+    sec_data: "DATA hte BACKUP",
+    sec_about: "APP hte UPDATE",
+    money_intro: "GENERATE langai mi hpe RunningHub la ai gumhpraw teng teng hpe mahkrum da ai — myit yu ai n re",
+    money_bal: "Ngam ai",
+    money_refresh: "Ngun ngam yu na",
+    money_nokey: "RunningHub key bang ngut jang ngun ngam yu lu na",
+    money_fail: "Ngun ngam n la lu — RunningHub gaw browser kaw na san ai hpe pat na re. Npu na mahkrum gaw teng nga ai",
+    money_never: "n yu shi ai",
+    btn_export_backup: "Backup shapraw u",
+    btn_import_backup: "Backup bai bang u",
+    btn_check_update: "Update sagawn u",
+    btn_hard_refresh: "Cache sausan nna bai hpang u",
     gate_sub_login: "Ndai panel hpe lang na matu na a HNK account hte shang u.",
     gate_email_ph: "Email",
     gate_pass_ph: "Password",
@@ -2530,6 +2598,23 @@ const I18N = {
   },
   /* ---- Thai (th) — 587 keys, complete ---- */
   th: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "สถานะความพร้อม",
+    sec_acct: "บัญชี",
+    sec_money: "ค่าใช้จ่ายและยอดคงเหลือ",
+    sec_data: "ข้อมูลและสำรอง",
+    sec_about: "แอปและอัปเดต",
+    money_intro: "ทุกครั้งที่ GENERATE จะบันทึกยอดที่ RunningHub เก็บจริง ไม่ใช่ค่าประมาณ ยอดคงเหลืออ่านจากบัญชี RunningHub โดยตรง",
+    money_bal: "คงเหลือ",
+    money_refresh: "ตรวจยอดคงเหลือ",
+    money_nokey: "บันทึกคีย์ RunningHub ก่อน จึงจะอ่านยอดคงเหลือได้",
+    money_fail: "อ่านยอดคงเหลือไม่ได้ — RunningHub อาจบล็อกการเรียกจากเบราว์เซอร์ แต่บันทึกด้านล่างยังแม่นยำ",
+    money_never: "ยังไม่เคยตรวจ",
+    btn_export_backup: "ส่งออกสำรอง",
+    btn_import_backup: "กู้คืนสำรอง",
+    btn_check_update: "ตรวจหาอัปเดต",
+    btn_hard_refresh: "ล้างแคช + เริ่มใหม่",
     gate_sub_login: "เข้าสู่ระบบด้วยบัญชี HNK ของคุณเพื่อใช้แผงนี้",
     gate_email_ph: "อีเมล",
     gate_pass_ph: "รหัสผ่าน",
@@ -3133,6 +3218,23 @@ const I18N = {
   },
   /* ---- Chinese (Simplified) (zh) — 587 keys, complete ---- */
   zh: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "就绪状态",
+    sec_acct: "账户",
+    sec_money: "花费与余额",
+    sec_data: "数据与备份",
+    sec_about: "应用与更新",
+    money_intro: "每次 GENERATE 都按 RunningHub 实际扣费记账，不是估算。余额直接从你的 RunningHub 账户读取。",
+    money_bal: "余额",
+    money_refresh: "查询余额",
+    money_nokey: "先保存 RunningHub 密钥，才能查询余额。",
+    money_fail: "无法读取余额 — RunningHub 可能禁止浏览器直接调用。下方的账本仍然准确。",
+    money_never: "尚未查询",
+    btn_export_backup: "导出备份",
+    btn_import_backup: "恢复备份",
+    btn_check_update: "检查更新",
+    btn_hard_refresh: "清缓存并重启",
     gate_sub_login: "请用你的 HNK 账户登录后使用本面板。",
     gate_email_ph: "邮箱",
     gate_pass_ph: "密码",
@@ -3736,6 +3838,23 @@ const I18N = {
   },
   /* ---- Vietnamese (vi) — 587 keys, complete ---- */
   vi: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "Trạng thái sẵn sàng",
+    sec_acct: "TÀI KHOẢN",
+    sec_money: "CHI PHÍ & SỐ DƯ",
+    sec_data: "Dữ liệu & sao lưu",
+    sec_about: "Ứng dụng & cập nhật",
+    money_intro: "Mỗi lần GENERATE được ghi sổ theo số tiền RunningHub thực sự thu — không phải ước tính. Số dư đọc thẳng từ tài khoản RunningHub.",
+    money_bal: "Số dư",
+    money_refresh: "Kiểm tra số dư",
+    money_nokey: "Lưu khóa RunningHub trước thì mới đọc được số dư.",
+    money_fail: "Không đọc được số dư — RunningHub có thể chặn gọi từ trình duyệt. Sổ chi bên dưới vẫn chính xác.",
+    money_never: "chưa kiểm tra",
+    btn_export_backup: "Xuất bản sao lưu",
+    btn_import_backup: "Khôi phục sao lưu",
+    btn_check_update: "Kiểm tra cập nhật",
+    btn_hard_refresh: "Xóa cache + khởi động lại",
     gate_sub_login: "Đăng nhập bằng tài khoản HNK của bạn để dùng bảng này.",
     gate_email_ph: "Email",
     gate_pass_ph: "Mật khẩu",
@@ -4339,6 +4458,23 @@ const I18N = {
   },
   /* ---- Indonesian (id) — 587 keys, complete ---- */
   id: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "Status kesiapan",
+    sec_acct: "AKUN",
+    sec_money: "BIAYA & SALDO",
+    sec_data: "Data & cadangan",
+    sec_about: "Aplikasi & pembaruan",
+    money_intro: "Setiap GENERATE dicatat sebesar yang benar-benar ditagih RunningHub — bukan perkiraan. Saldo dibaca langsung dari akun RunningHub Anda.",
+    money_bal: "Saldo",
+    money_refresh: "Cek saldo",
+    money_nokey: "Simpan kunci RunningHub dulu, baru saldo bisa dibaca.",
+    money_fail: "Saldo tidak terbaca — RunningHub mungkin memblokir panggilan dari browser. Buku di bawah tetap akurat.",
+    money_never: "belum dicek",
+    btn_export_backup: "Ekspor cadangan",
+    btn_import_backup: "Pulihkan cadangan",
+    btn_check_update: "Periksa pembaruan",
+    btn_hard_refresh: "Bersihkan cache + mulai ulang",
     gate_sub_login: "Masuk dengan akun HNK Anda untuk memakai panel ini.",
     gate_email_ph: "Email",
     gate_pass_ph: "Kata sandi",
@@ -4942,6 +5078,23 @@ const I18N = {
   },
   /* ---- Malay (ms) — 587 keys, complete ---- */
   ms: {
+    /* v6.42.0 — Setup follows the web app's own cards; these are the
+       app's own strings, lifted verbatim so both surfaces read alike. */
+    sec_ready: "Status kesediaan",
+    sec_acct: "AKAUN",
+    sec_money: "KOS & BAKI",
+    sec_data: "Data & sandaran",
+    sec_about: "Aplikasi & kemas kini",
+    money_intro: "Setiap GENERATE direkod pada jumlah yang RunningHub benar-benar caj — bukan anggaran. Baki dibaca terus daripada akaun RunningHub anda.",
+    money_bal: "Baki",
+    money_refresh: "Semak baki",
+    money_nokey: "Simpan kunci RunningHub dahulu, barulah baki boleh dibaca.",
+    money_fail: "Baki tidak dapat dibaca — RunningHub mungkin menyekat panggilan dari pelayar. Lejar di bawah tetap tepat.",
+    money_never: "belum disemak",
+    btn_export_backup: "Eksport sandaran",
+    btn_import_backup: "Pulihkan sandaran",
+    btn_check_update: "Semak kemas kini",
+    btn_hard_refresh: "Kosongkan cache + mula semula",
     gate_sub_login: "Log masuk dengan akaun HNK anda untuk menggunakan panel ini.",
     gate_email_ph: "E-mel",
     gate_pass_ph: "Kata laluan",
@@ -5552,7 +5705,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.41.0";
+const PANEL_VERSION = "6.42.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6450,21 +6603,29 @@ function collectDiag() {
   return rows;
 }
 const DIAG_ICON = { ok: "✓", warn: "!", err: "×", pend: "•" };
-function renderDiag() {
-  const box = $("diagList");
+/* v6.42.0 — one row renderer for every Setup card, because the web app's
+   Setup is a column of status rows and nothing else. It used to serve only
+   the diagnostics card; READINESS, ACCOUNT, COST & BALANCE, DATA & BACKUP
+   and APP & UPDATES are the same shape, so they share it. A row may name its
+   label by i18n key (`key`) or carry it literally (`label`). */
+function renderRows(hostId, rows) {
+  const box = $(hostId);
   if (!box) return;
-  const rows = collectDiag();
   while (box.firstChild) box.removeChild(box.firstChild);
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
     const row = document.createElement("div"); row.className = "diagrow";
-    const ic = document.createElement("div"); ic.className = "diag-ic " + r.level; ic.textContent = DIAG_ICON[r.level] || "•";
-    const nm = document.createElement("div"); nm.className = "diag-nm"; nm.textContent = t(r.key);
+    const ic = document.createElement("div"); ic.className = "diag-ic " + (r.level || "pend");
+    ic.textContent = DIAG_ICON[r.level] || DIAG_ICON.pend;
+    const nm = document.createElement("div"); nm.className = "diag-nm";
+    nm.textContent = r.key ? t(r.key) : (r.label || "");
     const st = document.createElement("div"); st.className = "diag-st"; st.textContent = r.detail || "";
     row.appendChild(ic); row.appendChild(nm); row.appendChild(st);
     box.appendChild(row);
   }
 }
+function renderDiag() { renderRows("readyList", collectDiag()); }
+
 function renderLog() {
   const box = $("logBox");
   if (!box) return;
@@ -6479,16 +6640,125 @@ async function copyLog() {
     setStatus(t("st_copied"), "ok");
   } catch (e) { setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err"); }
 }
+/* ---- the web app's Setup, card for card ---------------------------------
+   The app parks everything a student needs to know about themselves on one
+   page: are we ready, what is my plan, what does a run cost, where is my
+   data, what version am I on. The panel showed none of it — it had the key,
+   a folder picker, a diagnostics button and a log box instead. Same cards,
+   same order, same words (their strings are lifted from the app itself). */
+function acctRows() {
+  const ent = (typeof gateS !== "undefined" && gateS.entitlement) || {};
+  const lic = ent.license || {}, dev = ent.devices || {}, panel = ent.panel || {};
+  const dash = "\u2014";
+  return [
+    { label: "Account", level: (typeof gateS !== "undefined" && gateS.sess) ? "ok" : "pend",
+      detail: state.accEmail || dash },
+    { label: "Plan", level: lic.active ? "ok" : "warn",
+      detail: String(lic.status || (lic.active ? "active" : dash)) },
+    { label: "Expires", level: "pend",
+      detail: lic.expires_at ? String(lic.expires_at).slice(0, 10) : dash },
+    { label: "Computer", level: dev.computer ? "ok" : "pend",
+      detail: dev.computer ? (dev.computer.label || dev.computer.device_name || "registered") : dash },
+    { label: "Phone", level: dev.phone ? "ok" : "pend",
+      detail: dev.phone ? (dev.phone.label || dev.phone.device_name || "registered") : dash },
+    { label: "Panel version", level: "pend", detail: String(panel.latest_version || PANEL_VERSION) }
+  ];
+}
+function renderAcct() { renderRows("acctList", acctRows()); }
+
+let _balance = null;   /* last reading; false after a failed one */
+function moneyRows() {
+  if (!state.rhKey) return [{ key: "money_bal", level: "pend", detail: t("money_nokey") }];
+  if (_balance === false) return [{ key: "money_bal", level: "warn", detail: t("money_fail") }];
+  if (!_balance) return [{ key: "money_bal", level: "pend", detail: t("money_never") }];
+  const rows = [{ key: "money_bal", level: "ok",
+    detail: (_balance.money === null ? "\u2014" : String(_balance.money)) +
+      (_balance.currency ? " " + _balance.currency : "") }];
+  if (_balance.coins !== null) rows.push({ label: "Coins", level: "ok", detail: String(_balance.coins) });
+  if (_balance.running !== null) rows.push({ label: "Running now", level: "pend", detail: String(_balance.running) });
+  return rows;
+}
+function renderMoney() { renderRows("moneyList", moneyRows()); }
+/* The app's own call — same endpoint, same fields — and, like the app, a
+   failed reading never stops the studio working. */
+async function checkBalance() {
+  const key = state.rhKey;
+  if (!key) { renderMoney(); return; }
+  try {
+    const r = await hnkFetch("https://www.runninghub.ai/uc/openapi/accountStatus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({ apiKey: key })
+    }, 20000);
+    const j = await r.json();
+    if (!r.ok || (j && "code" in j && Number(j.code) !== 0)) throw new Error("balance");
+    const d = (j && (j.data || j.result)) || j || {};
+    _balance = {
+      money: d.remainMoney === undefined || d.remainMoney === null ? null : Number(d.remainMoney),
+      coins: d.remainCoins === undefined || d.remainCoins === null ? null : Number(d.remainCoins),
+      currency: String(d.currency || ""),
+      running: d.currentTaskCounts === undefined ? null : Number(d.currentTaskCounts)
+    };
+  } catch (e) { _balance = false; }
+  renderMoney();
+}
+
+function renderData() {
+  renderRows("dataList", [
+    { label: "Settings file", level: "ok", detail: SETTINGS_FILE },
+    { label: "Kept in", level: "pend", detail: "Photoshop plugin data folder" }
+  ]);
+}
+async function exportBackup() {
+  try {
+    const uxp = require("uxp");
+    const f = await uxp.storage.localFileSystem.getFileForSaving("hnk-panel-backup.json", { types: ["json"] });
+    if (!f) return;
+    await saveSettings();
+    const folder = await uxp.storage.localFileSystem.getDataFolder();
+    const src = await folder.getEntry(SETTINGS_FILE);
+    const txt = await src.read({ format: uxp.storage.formats.utf8 });
+    await f.write(txt, { format: uxp.storage.formats.utf8 });
+    setStatus(t("st_saved"), "ok");
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function importBackup() {
+  try {
+    const uxp = require("uxp");
+    const f = await uxp.storage.localFileSystem.getFileForOpening({ types: ["json"] });
+    if (!f) return;
+    const txt = await f.read({ format: uxp.storage.formats.utf8 });
+    const folder = await uxp.storage.localFileSystem.getDataFolder();
+    const dst = await folder.createFile(SETTINGS_FILE, { overwrite: true });
+    await dst.write(txt, { format: uxp.storage.formats.utf8 });
+    await loadSettings();
+    setStatus(t("st_saved"), "ok");
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+
+function renderAbout() {
+  renderRows("aboutList", [
+    { label: "Version", level: "ok", detail: "v" + PANEL_VERSION },
+    { label: "Engine", level: "ok", detail: "RunningHub" }
+  ]);
+}
+
 function bindDiag() {
-  const rc = $("btnDiag");
-  if (rc) rc.addEventListener("click", function () { renderDiag(); hlog("diagnostics run"); setStatus(t("diag_done"), "ok"); });
-  const cl = $("btnCopyLog");
-  if (cl) cl.addEventListener("click", copyLog);
-  const clr = $("btnClearLog");
-  if (clr) clr.addEventListener("click", function () { HNK_LOG.length = 0; renderLog(); });
-  renderDiag();
-  renderLog();
-  REFRESHERS.push(function () { try { renderDiag(); } catch (e) { } });
+  const out = $("btnAcctOut");
+  if (out) {
+    out.textContent = (typeof gateT === "function") ? gateT("gate_signout") : "Sign out";
+    out.addEventListener("click", function () { const g = $("gateSignOut"); if (g && g.click) g.click(); });
+  }
+  const bal = $("btnMoney");
+  if (bal) bal.addEventListener("click", function () { checkBalance(); });
+  const bo = $("btnBackupOut"); if (bo) bo.addEventListener("click", exportBackup);
+  const bi = $("btnBackupIn"); if (bi) bi.addEventListener("click", importBackup);
+  const up = $("btnCheckUpd");
+  if (up) up.addEventListener("click", function () { _updChecked = false; checkPanelUpdate(document); renderAbout(); });
+  renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout();
+  REFRESHERS.push(function () {
+    try { renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout(); } catch (e) { }
+  });
 }
 
 /* ============================================================
@@ -9344,7 +9614,7 @@ function imgMagicOk(b64) {
 /* v4.5: references are READ-ONLY inputs - never regenerated or overwritten.
    People-exclusion is handled purely by the reference guards in the prompt. */
 
-/* v6.41.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
+/* v6.42.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
    app does not have). It was a whole second browser living inside a
    Photoshop panel — an allow-list, an address bar, size presets, a
    postMessage image bridge and three global import buttons — none of which
@@ -10760,7 +11030,7 @@ function resetRetouch() {
 }
 
 /* ---------------- Tab pages (web-view style) ---------------- */
-/* v6.41.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
+/* v6.42.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
    The app's bottom bar carries five WORK groups — Home, Workflows, Edit,
    Media Lab, Library — each group's pages appear as second-level pills, and
    Setup is not on the bar at all: it lives behind the header gear. The panel

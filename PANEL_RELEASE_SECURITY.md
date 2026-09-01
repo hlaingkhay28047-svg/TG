@@ -178,6 +178,30 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.42.0** — `pending`. Setup is the web app's Setup (2026-09-01, owner:
+  "I don't know anything — just make it the same as the web app"). The app
+  parks on one page everything a student needs to know about themselves:
+  READINESS · ACCOUNT · RUNNINGHUB ENTERPRISE · COST & BALANCE · DATA &
+  BACKUP · APP & UPDATES. The panel showed none of it — it had the key, a
+  folder picker, a **diagnostics button and a log box**, neither of which the
+  app has. Same cards now, in the app's order, with the app's own strings
+  lifted verbatim into all nine panel locales (READINESS, ACCOUNT, COST &
+  BALANCE, DATA & BACKUP, APP & UPDATES, and the balance copy), so the two
+  surfaces read alike in every language. ACCOUNT shows the live entitlement —
+  account, plan, expiry, computer, phone, panel version — and signs out
+  through the gate's own path. COST & BALANCE calls the app's own endpoint
+  (`POST /uc/openapi/accountStatus`) with the same fields and, like the app,
+  never stops the studio working when a reading is blocked. DATA & BACKUP
+  exports and restores the settings file through UXP. APP & UPDATES shows the
+  version and re-runs the update probe. The reference-folder card stays at the
+  owner's explicit request — the one Photoshop-only card the app cannot have.
+  Diagnostics and the activity log are gone. Acceptance: carry over v6.41.0's
+  checklist; additionally open Setup and confirm the six cards in that order,
+  that ACCOUNT shows your real plan and expiry, that "Check balance" returns a
+  number with a RunningHub key saved, and that Export/Restore backup round-trip
+  a settings file. Artifact `HNK_Ai_Panel_v6.42.0.ccx`, SHA-256
+  `6f3a3717a7ef4ad8f60adcbae0264b777c4f8f428c2537ebd6dbd4b926488763`,
+  1,317,432 bytes. Stays disabled for customers until this acceptance.
 - **v6.41.0** — `pending`. The second browser is gone, and so is its door
   (2026-09-01, owner: keep the seven themes and the reference folder, take the
   Web AI mini browser out). The panel carried a whole web browser inside a
