@@ -93,7 +93,13 @@
     var card=el('article','hnk-lib-card'); card.setAttribute('data-id',item.id);
     var main=el('div','hnk-lib-main');
     var media=el('button','hnk-lib-media'); media.type='button'; media.setAttribute('aria-label','Open full preview: '+item.title);
-    var img=el('img','hnk-lib-image'); img.alt=item.title; img.loading='lazy'; img.decoding='async'; img.src=resolveAsset(item.paths.preview);
+    /* v6.47.1 — EAGER. loading='lazy' asks the renderer to wait until the
+       image is near the viewport, and this one has nothing driving that:
+       the owner's Photoshop showed the first card's art and then a column
+       of black boxes, with no 'Preview unavailable' anywhere — the mark of
+       an image that was never asked to load rather than one that failed.
+       A page shows twelve cards; twelve previews is not a burden. */
+    var img=el('img','hnk-lib-image'); img.alt=item.title; img.loading='eager'; img.decoding='async'; img.src=resolveAsset(item.paths.preview);
     img.onerror=function(){ this.style.display='none'; media.appendChild(el('span','hnk-lib-purpose','Preview unavailable')); };
     media.appendChild(img); media.appendChild(el('span','hnk-lib-ratio',item.ratio)); media.addEventListener('click',function(){openPreview(item);});
     var info=el('div','hnk-lib-info');

@@ -58,10 +58,16 @@ const GATE_ICON_PATHS = new Set([
   "icons/banners/studio.jpg",
 ]);
 const GATE_ICON_PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "base64");
-report("A5) the gate harness isolates only the three excluded initial-view images",
+/* The Library's plate host, isolated for the same reason and pinned to the
+   base the panel actually asks for — if that base ever moves, this glob stops
+   matching and check J goes red rather than quietly covering a real error. */
+const LIBRARY_ASSET_GLOB = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/lib/**";
+report("A5) the gate harness isolates only the three excluded initial-view images and the Library plate host",
   GATE_ICON_PATHS.size === 3 && GATE_ICON_PATHS.has("icons/plugin@2x.png") &&
   GATE_ICON_PATHS.has("icons/hero-banner.jpg") &&
-  GATE_ICON_PATHS.has("icons/banners/studio.jpg"), {});
+  GATE_ICON_PATHS.has("icons/banners/studio.jpg") &&
+  fs.readFileSync(path.join(PANEL, "js/hnk_library_compact_cards.js"), "utf8")
+    .includes("var ASSET_BASE='" + LIBRARY_ASSET_GLOB.replace("**", "") + "'"), {});
 const server = http.createServer((req, res) => {
   const rel = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "") || "index.html";
   const abs = path.resolve(PANEL, rel);
@@ -148,6 +154,17 @@ function initScript(cfg) {
 
 async function run(browser, cfg) {
   const page = await browser.newPage({ viewport: { width: 420, height: 760 } });
+  /* v6.47.1 — the Library's plates live on the licensed web host, never in
+     Git and never in the .ccx (1,801 plates twice over is ~100MB of
+     inspectable client-side bytes), and they load EAGERLY now: lazy loading
+     asked this renderer to wait for something that never came, so the owner's
+     Photoshop showed a column of black cards. This walk has no route to that
+     host, so every plate would answer ERR_TUNNEL_CONNECTION_FAILED and drown
+     check J — a failure of the network, not of the panel. Same answer the
+     three excluded initial-view icons already get below: a deterministic
+     pixel, served here, so J keeps watching for OUR errors. */
+  await page.route(LIBRARY_ASSET_GLOB, route =>
+    route.fulfill({ status: 200, contentType: "image/gif", body: GATE_ICON_PIXEL }));
   const errors = [];
   page.on("pageerror", error => errors.push("pageerror: " + String(error).slice(0, 240)));
   page.on("console", message => { if (message.type() === "error") errors.push("console: " + message.text().slice(0, 200)); });

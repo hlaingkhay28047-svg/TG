@@ -184,11 +184,11 @@ body {
 }
 .topbar-logo { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(233, 196, 106, 0.55); }
 .topbar-brand {
-  font-size: 15px; font-weight: 900; letter-spacing: 2px; line-height: 1.1;
+  font-size: 15px; font-weight: 900; letter-spacing: 1.2px; line-height: 1.1;
   color: #e9c46a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .topbar-label {
-  font-size: 8.5px; font-weight: 800; letter-spacing: 2.4px;
+  font-size: 8.5px; font-weight: 800; letter-spacing: 1.4px;
   color: #f2e2ae; vertical-align: 2px;
 }
 .topbar-sub { font-size: 9px; color: #a8a394; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -202,7 +202,10 @@ body {
    panel the language box ate the header and "HNK AI PANEL · v6.46.0 ·
    RunningHub" was cropped to "H .. v6.4...". The collapsed box only has to
    say which language is on; the popup shows the full list either way. */
-.topbar .lang-sel { width: 96px; min-width: 0; max-width: 96px; }
+/* v6.47.1 — 78px, and the wordmark's letterspacing eased: at the widths the
+   owner actually docks this panel, 96px still cropped "HNK AI PANEL" to
+   "HNK AI P…" and the version line to "RunningHub…". */
+.topbar .lang-sel { width: 78px; min-width: 0; max-width: 78px; }
 .topbar .hdr-ctl { flex: 0 1 auto; min-width: 0; }
 .topbar-plan { color: #e9c46a; font-weight: 700; }
 
@@ -701,7 +704,7 @@ input[type="range"] { min-width: 0; }
 /* v6.28.0 — sized like the web app's subtab pills so all four sit on ONE
    row at real Photoshop panel widths (they wrapped 2×2 on the owner's Mac). */
 .hnk-nav-btn { flex:1 1 0; min-width:0; padding:6px 4px; border:1px solid var(--line); background:var(--btn);
-  color:var(--text); border-radius:999px; font-size:10.5px; font-weight:700; cursor:pointer;
+  color:var(--text); border-radius:10px; font-size:10.5px; font-weight:700; cursor:pointer;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
 .hnk-nav-btn:hover { background:var(--btn-h); }
 .hnk-nav-btn.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; }
@@ -832,7 +835,7 @@ input[type="range"] { min-width: 0; }
 .subtabbar { display: none; flex-direction: row; gap: 6px; margin: 8px 10px 0;
   overflow-x: auto; }
 .subtabbar.on { display: flex; }
-.subtab { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 999px;
+.subtab { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 10px;
   background: var(--panel); color: var(--muted); padding: 7px 14px; min-height: 34px;
   box-sizing: border-box; display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; cursor: pointer; }
@@ -859,7 +862,7 @@ input[type="range"] { min-width: 0; }
 .hnk-wf-chips { display: flex; flex-direction: row; flex-wrap: wrap; margin-bottom: 6px; }
 .hnk-wf-chip {
   margin: 0 4px 4px 0; padding: 2px 7px;
-  border: 1px solid var(--chip-brd); border-radius: 999px;
+  border: 1px solid var(--chip-brd); border-radius: 10px;
   background-color: var(--chip-bg); color: var(--chip-tx);
   font-size: 8.5px; font-weight: 700; white-space: nowrap;
 }
@@ -878,7 +881,7 @@ input[type="range"] { min-width: 0; }
 }
 .hstep {
   font-size: 9px; line-height: 1.6; color: var(--faint);
-  padding: 1px 6px; margin: 1px 2px; border-radius: 999px;
+  padding: 1px 6px; margin: 1px 2px; border-radius: 10px;
   background: var(--panel); border: 1px solid var(--line);
   white-space: nowrap;
 }
@@ -896,7 +899,7 @@ input[type="range"] { min-width: 0; }
 .hnk-progress-row { display: flex; flex-wrap: wrap; }
 .hnk-pstep {
   font-size: 9px; line-height: 1.7; color: var(--faint);
-  padding: 1px 6px; margin: 1px 2px; border-radius: 999px;
+  padding: 1px 6px; margin: 1px 2px; border-radius: 10px;
   background: var(--field-2); border: 1px solid var(--line);
   white-space: nowrap;
 }
@@ -1046,3 +1049,9 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .acc-ava-acts .btn { margin-left: 0; margin-bottom: 6px; }
 .acc-ava-acts .btn.last { margin-bottom: 0; }
 .acc-ava-hint { font-size: 11px; line-height: 1.55; color: var(--muted); margin: 0 0 8px; }
+
+/* ===== v6.47.1 — pills, not lenses =====
+   A 999px radius asks this renderer for a stadium and gets an ellipse: the
+   owner's Photoshop drew every subtab as a pointed lens ("Freeform",
+   "Retouch A", "Path"), where the web app draws a rounded rectangle. A
+   radius the box can actually satisfy gives the app's shape on both. */

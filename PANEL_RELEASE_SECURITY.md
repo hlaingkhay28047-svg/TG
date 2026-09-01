@@ -178,6 +178,31 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.47.1** — `pending`. Three things the div sweep left standing
+  (2026-09-01, owner: "မတူသေးဘူး" on sixteen screenshots of 6.47.0). The
+  controls were the panel's at last, and the rest of the difference was
+  visible in the same pictures. **Empty pickers:** `fillSelect` has set both
+  `o.text` and `o.textContent` since v1 because this renderer needs both, and
+  its callers' comments say so — but five hand-rolled option loops grew up
+  beside it setting only `textContent`, and the Path workflow picker and the
+  Library category picker drew as empty grey boxes with no label at all.
+  Every option now comes from one `mkOption`. **Lens-shaped pills:** a 999px
+  radius asks this renderer for a stadium and gets an ellipse, so Freeform,
+  Retouch A and Path were pointed lenses where the web app draws rounded
+  rectangles; 10px is a radius the box can satisfy. **Black library cards:** `loading='lazy'` asks the renderer to wait until
+  the image is near the viewport and nothing here drives that, so the first
+  card's art painted and the rest stayed black with no "Preview unavailable"
+  anywhere — the mark of an image never asked to load, not one that failed;
+  a page shows twelve cards, so they load eagerly. **A cropped wordmark:**
+  96px of language box still left "HNK AI P…" and "RunningHub…", so the box
+  is 78px and the wordmark's letterspacing is eased. Acceptance: carry over
+  v6.47.0's checklist; additionally open Edit ▸ Path and Library ▸ Reference
+  and confirm both pickers show their text, that the subtab pills are
+  rounded rectangles, and that the header reads "HNK AI PANEL · v6.47.1 ·
+  RunningHub" without an ellipsis at the width you dock the panel. Artifact
+  `HNK_Ai_Panel_v6.47.1.ccx`, SHA-256
+  `a093cb0419f77cf072c0f05dcd5db92992494035e022f5eeb552ecda6ceb06c0`,
+  1,345,073 bytes. Stays disabled for customers until this acceptance.
 - **v6.47.0** — `pending`. The panel's controls are the panel's, not Adobe's
   (2026-09-01, owner: "webapp နဲ့မတူသေးဘူး"). The owner photographed all five
   pages running in Photoshop 2026 and every one of them came back as rows of
