@@ -9380,7 +9380,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "pr-hair":["braid","hair"], "pr-access":["crown","jewel"], "pr-pose":["pose","fashion"],
       "pr-roDressRep":["couture","dress"], "pr-roDressRef":["gown"], "pr-roMkCopy":["glam"],
       "pr-fgProps":["botanical","props"], "pr-style":["cinemat","film"] };
-    /* v5.69.0 — SKIN TONE TRUTH, across every workflow that rebuilds the light.
+    /* v5.70.0 — SKIN TONE TRUTH, across every workflow that rebuilds the light.
        A model asked for a new backdrop or a new key light will happily
        "improve" the person underneath it: lighten the skin, push it orange,
        flatten the undertone. Fifty-three workflows live in the three groups
@@ -9404,7 +9404,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       en:"Keep real skin tone", shn:"Keep real skin tone", kac:"Keep real skin tone",
       th:"\u0e04\u0e07\u0e2a\u0e35\u0e1c\u0e34\u0e27\u0e08\u0e23\u0e34\u0e07", zh:"\u4fdd\u6301\u771f\u5b9e\u80a4\u8272",
       vi:"Gi\u1eef \u0111\u00fang m\u00e0u da th\u1eadt", id:"Pertahankan warna kulit asli", ms:"Kekalkan warna kulit asal"};
-    /* v5.69.0 — and the other half of "real as real": thirteen of those same
+    /* v5.70.0 — and the other half of "real as real": thirteen of those same
        fifty-three never asked for a photograph at all. Each of the thirteen is
        a photographic job — swap this background, add this key light — where a
        rendered or plastic result is simply wrong, so this line is fixed rather
@@ -12173,7 +12173,7 @@ window.addEventListener("beforeunload",function(e){
     e.preventDefault(); e.returnValue="";
   }
 });
-/* v5.69.0 — the same "is real work in flight" question the guard above asks,
+/* v5.70.0 — the same "is real work in flight" question the guard above asks,
    named once so the update self-heal below can ask it too. Two copies of this
    list would drift, and the copy that drifted would be the one deciding
    whether it is safe to reload the page under a running batch. */
@@ -22146,7 +22146,7 @@ function unifiedRender(){
   $("unifiedAccountStatus").textContent = unifiedPretty(status);
   $("unifiedLicenseStatus").textContent = unifiedPretty(license.status || (license.active ? "active" : "inactive"));
   $("unifiedLicenseExpiry").textContent = unifiedDate(license.expires_at);
-  /* v5.69.0 — the panel version shown here is the SERVER's answer or nothing.
+  /* v5.70.0 — the panel version shown here is the SERVER's answer or nothing.
      It used to fall back to a literal "6.24.0" that stopped being true after
      thirteen panel releases, so a student whose entitlement call was still in
      flight — or had failed — was told, confidently, the wrong version of the
@@ -22290,7 +22290,7 @@ function accApplyLang(){
   try { if (acc) { accRender(); accRenderDevices(); accChipRender(); } } catch(e){}
 }
 
-/* v5.69.0 — one source for the panel version, and it is the server.
+/* v5.70.0 — one source for the panel version, and it is the server.
    The CCX is issued by exactly one route: /download/ asks the API, the API
    checks account, licence, download permission and registered computer, and
    only then mints a short-lived link. This button opens that same page — but
@@ -22841,7 +22841,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.69.0";
+var APP_VER="5.70.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -22856,7 +22856,7 @@ function verNewer(a,b){
   }
   return false;
 }
-/* v5.69.0 — A TAB LEFT OPEN IS A VERSION THAT NEVER MOVES.
+/* v5.70.0 — A TAB LEFT OPEN IS A VERSION THAT NEVER MOVES.
    This check ran exactly once, at load. A studio that keeps the Studio open on
    a desktop for a fortnight therefore kept whatever build it opened with — six
    releases behind, still showing the numbers of that build — and nothing ever
