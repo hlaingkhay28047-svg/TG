@@ -127,8 +127,86 @@ async function upscale(deps, videoRef, targetResolution, onStage) {
   }
 }
 
+/* ============================================================
+   v6.50.0 — VIDEO TOOLS, the app's second half of its VidUp page.
+
+   Twenty-seven documented endpoints whose primary input is an existing video
+   (edit, extend, denoise, frame interpolation, subtitle erase, Topaz). The
+   descriptors are the app's own RH_VTOOL_MODELS, lifted verbatim into
+   panel/js/hnk_video_tools.js, and toolBody below is the app's rhVtBody,
+   unchanged in behaviour: the twenty-seven endpoints do not share a request
+   shape, so the shape comes from the tool's own descriptor.
+   ============================================================ */
+var VTOOLS = _req("../../js/hnk_video_tools") || (globalThis.HNK && globalThis.HNK.videoTools) || null;
+/* the app's own Topaz width/height preset table, verbatim */
+var VT_WH = { "720p": [1280, 720], "1080p": [1920, 1080], "2k": [2560, 1440], "4k": [3840, 2160] };
+
+function tools() { return VTOOLS ? VTOOLS.LIST.slice() : []; }
+function getTool(id) { return VTOOLS ? VTOOLS.get(id) : null; }
+
+function toolBody(def, videoUrl, imageUrls, promptText, optVals) {
+  optVals = optVals || {};
+  imageUrls = imageUrls || [];
+  var body = {};
+  if (def.kind === "vnode") {
+    body[def.videoParam] = videoUrl;
+    if (def.imageParam) body[def.imageParam] = imageUrls[0] || "";
+    return body;
+  }
+  body[def.videoParam] = videoUrl;
+  if (def.imageParam && imageUrls.length) {
+    body[def.imageParam] = def.imageArray ? imageUrls.slice(0, def.imageMax || 1) : imageUrls[0];
+  }
+  if (def.prompt) {
+    var pt = String(promptText || "");
+    if (def.promptMax && pt.length > def.promptMax) pt = pt.slice(0, def.promptMax);
+    if (pt || def.prompt === "req") body.prompt = pt;
+  }
+  (def.options || []).forEach(function (o) {
+    var v = (o.key in optVals) ? optVals[o.key] : o.def;
+    body[o.key] = o.int ? Number(v) : v;
+  });
+  if (def.whPreset) {
+    var wh = VT_WH[optVals.whPreset || "720p"] || VT_WH["720p"];
+    body.outputWidth = wh[0]; body.outputHeight = wh[1];
+  }
+  if (def.extra) Object.keys(def.extra).forEach(function (k) { if (!(k in body)) body[k] = def.extra[k]; });
+  return body;
+}
+
+async function runTool(deps, def, videoRef, imageRefs, promptText, optVals, onStage) {
+  deps = Object.assign({}, deps);
+  deps.cfg = deps.cfg || rhConfig.resolve(deps.configOverride);
+  try {
+    if (!def || !def.apiPath) return { ok: false, error: { code: "model", message: "unknown video tool" } };
+    if (!videoRef) return { ok: false, error: { code: "no-video", message: "pick a video first" } };
+    if (onStage) onStage("UPLOADING", { current: 1, total: 1 });
+    var up = await uploadSvc.uploadAll(deps, deps.apiKey, [videoRef], function () { });
+    var imgs = (imageRefs && imageRefs.length)
+      ? await uploadSvc.uploadAll(deps, deps.apiKey, imageRefs, function () { }) : [];
+    var body = toolBody(def, up[0] || "", imgs, promptText, optVals);
+    if (onStage) onStage("SUBMITTING", {});
+    var taskId = await taskSvc.submit(deps, deps.apiKey, def.apiPath, body);
+    if (onStage) onStage("PROCESSING", {});
+    var final = await taskSvc.pollUntilDone(deps, deps.apiKey, taskId, function (elapsed) {
+      if (onStage) onStage("PROCESSING", { elapsedMs: elapsed });
+    });
+    var list = (final && final.results) || [];
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      if (!list[i] || !list[i].url) continue;
+      if (onStage) onStage("DOWNLOADING_RESULT", {});
+      out.push({ ref: await taskSvc.download(deps, list[i].url), url: list[i].url });
+    }
+    return { ok: true, results: out };
+  } catch (e) {
+    return { ok: false, error: { code: (e && e.code) || "network", message: (e && e.message) || "video tool failed" } };
+  }
+}
+
 var API = { models: models, get: get, buildBody: buildBody, generate: generate,
-  upscale: upscale, upscaleResolutions: VU_RES.slice() };
+  upscale: upscale, upscaleResolutions: VU_RES.slice(),
+  tools: tools, getTool: getTool, toolBody: toolBody, runTool: runTool, VT_WH: VT_WH };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.runninghubVideo = API; }
 })();

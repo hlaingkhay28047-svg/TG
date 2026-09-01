@@ -139,7 +139,7 @@
     <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
     <div class="hdr-t">
       <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.49.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.50.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
     </div>
     <div class="hdr-ctl">
       <!-- v6.46.0 — web-app parity: the app parks Setup behind a header gear
@@ -148,9 +148,15 @@
            inline <svg>, so the owner's screenshots showed an empty pill
            where Setup should be. The theme button beside it has always
            been a glyph and has always painted. -->
+      <!-- v6.49.1 — the theme wheel left this bar. The web app's header is
+           logo, wordmark, gear and the language picker — nothing else — and
+           the fourth control here was squeezing the language box to 78px,
+           which is why the owner's Photoshop showed "Mya…" where the app
+           shows the whole language name. The nine palettes are still all
+           here; their control moved to Setup ▸ APP & UPDATES, where the
+           panel keeps its other preferences. -->
       <div role="button" tabindex="0" id="btnGearSetup" class="btn btn-icon" aria-label="Setup" title="Setup">⚙</div>
       <select id="selLang" class="lang-sel" title="Language"></select>
-      <div role="button" tabindex="0" id="btnTheme" class="btn btn-icon" title="Theme">☀</div>
     </div>
   </div>
 
@@ -337,6 +343,14 @@
             <div role="button" tabindex="0" id="btnGetUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_get_update"></div>
           </div>
           <div class="hint" id="updHint" data-i18n="upd_hint"></div>
+          <!-- v6.49.1 — the theme wheel's new home. It left the header so the
+               language picker could be the app's width instead of 78px, and
+               a picker names its stops where a one-tap wheel only cycled
+               them. All nine palettes, unchanged. -->
+          <div class="row last">
+            <div class="lbl">Theme</div>
+            <select id="selTheme" class="inp grow" title="Theme"></select>
+          </div>
         </div>
       </div>
     </div>
@@ -933,100 +947,51 @@
           <div class="pgbanner-title" data-i18n="pgb_create"></div>
         </div>
       </div>
-      <!-- Prompt -->
+      <!-- v6.50.0 — the app's two cards where the panel had one. Its Text to
+           Image page states what the page does (TEXT TO IMAGE + one line),
+           then gives the prompt its own card with a character count. The
+           "Prompt Library" chip row that used to sit here is gone: the app
+           has no such shelf on this page, and the owner asked for nothing
+           extra. -->
       <div class="card">
-        <div class="mut" data-i18n="create_note"></div>
+        <h2>TEXT TO IMAGE</h2>
+        <div class="mut" id="t2iIntro"></div>
+      </div>
+
+      <div class="card">
+        <h2>PROMPT</h2>
         <textarea id="cPromptBox" class="pbox" rows="6" maxlength="20000" data-i18n-ph="create_ph"></textarea>
-        <div class="row tight">
-        </div>
-        <div class="mut" data-i18n="cr_lib"></div>
-        <div class="chiprow" id="libList"></div>
+        <div class="mut" id="cPromptCount"></div>
       </div>
 
-      <!-- References (up to 4) -->
-      <div class="card">
-        <div class="chead" id="cCrefH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="cr_refs"></span></div>
-        <div class="cbody" id="cCrefB">
-          <div class="mut" data-i18n="cr_refs_note"></div>
-          <div class="refrow">
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg0" class="refbg"></div><div id="cRefPh0" class="refph">1</div><div role="button" tabindex="0" id="cRefX0" class="xbtn">&times;</div></div>
-              <div class="reflb" id="cRefLb0"></div>
-              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
-              <div class="row tight">
-                <div role="button" tabindex="0" id="cRefLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
-                <div role="button" tabindex="0" id="cRefFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
-                <div role="button" tabindex="0" id="cRefWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
-              </div>
-            </div>
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg1" class="refbg"></div><div id="cRefPh1" class="refph">2</div><div role="button" tabindex="0" id="cRefX1" class="xbtn">&times;</div></div>
-              <div class="reflb" id="cRefLb1"></div>
-              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
-              <div class="row tight">
-                <div role="button" tabindex="0" id="cRefLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
-                <div role="button" tabindex="0" id="cRefFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
-                <div role="button" tabindex="0" id="cRefWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
-              </div>
-            </div>
-          </div>
-          <div class="refrow" style="margin-top:8px;">
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg2" class="refbg"></div><div id="cRefPh2" class="refph">3</div><div role="button" tabindex="0" id="cRefX2" class="xbtn">&times;</div></div>
-              <div class="reflb" id="cRefLb2"></div>
-              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib2" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
-              <div class="row tight">
-                <div role="button" tabindex="0" id="cRefLayer2" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
-                <div role="button" tabindex="0" id="cRefFile2" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
-                <div role="button" tabindex="0" id="cRefWeb2" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
-              </div>
-            </div>
-            <div class="refslot">
-              <div class="refthumb"><div id="cRefImg3" class="refbg"></div><div id="cRefPh3" class="refph">4</div><div role="button" tabindex="0" id="cRefX3" class="xbtn">&times;</div></div>
-              <div class="reflb" id="cRefLb3"></div>
-              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib3" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
-              <div class="row tight">
-                <div role="button" tabindex="0" id="cRefLayer3" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
-                <div role="button" tabindex="0" id="cRefFile3" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
-                <div role="button" tabindex="0" id="cRefWeb3" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
-              </div>
-            </div>
-          </div>
-          <div class="urlbar" id="cUrlBar">
-            <div class="urlhead">
-              <span class="urlttl" data-i18n="url_title"></span>
-              <span class="urltag" id="cUrlSlotTag"></span>
-            </div>
-            <input id="cUrlInput" type="text" class="inp" data-i18n-ph="url_ph" />
-            <div class="row tight">
-              <div role="button" tabindex="0" id="cBtnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></div>
-              <div role="button" tabindex="0" id="cBtnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></div>
-              <div role="button" tabindex="0" id="cBtnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <!-- v6.50.0 — the four reference slots left this page. The app's Text
+           to Image is text to image: one prompt, no reference photos, and the
+           panel offering four of them was the clearest "ပိုတာ" on the page.
+           Reference work lives on Edit ▸ Freeform, exactly as it does in the
+           app. -->
       <!-- Settings + Generate -->
       <div class="card">
-        <p class="mut" data-i18n="scope_create_note" style="margin-bottom:8px;"></p>
-        <div class="row tight">
+        <h2>GENERATE</h2>
+        <!-- v6.50.0 — the app's ratio set on this page, all eight of it:
+             Auto plus the seven the web app offers. The panel showed five and
+             no Auto. The "how many at once" segment and the scope note left
+             with the reference slots — the app's Text to Image has neither. -->
+        <div class="row tight" id="cRatioRow">
           <div class="slbl" data-i18n="cr_ratio"></div>
           <div role="button" tabindex="0" class="segb" id="cRatio0"></div>
           <div role="button" tabindex="0" class="segb" id="cRatio1"></div>
           <div role="button" tabindex="0" class="segb" id="cRatio2"></div>
           <div role="button" tabindex="0" class="segb" id="cRatio3"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio4"></div>
         </div>
         <div class="row tight">
-          <div class="slbl" data-i18n="cr_var"></div>
-          <div role="button" tabindex="0" class="segb" id="cVar1">1</div>
-          <div role="button" tabindex="0" class="segb" id="cVar2">2</div>
-          <div role="button" tabindex="0" class="segb" id="cVar3">3</div>
-          <div role="button" tabindex="0" class="segb" id="cVar4">4</div>
+          <div class="slbl"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio4"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio5"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio6"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio7"></div>
         </div>
         <div class="mut cengine" id="cEngineTag"></div>
-        <div role="button" tabindex="0" id="btnCreateGen" class="gen" data-i18n="btn_generate"></div>
+        <div role="button" tabindex="0" id="btnCreateGen" class="gen">GENERATE IMAGE</div>
       </div>
 
       <!-- Results -->
@@ -1104,6 +1069,12 @@
          clear). A panel cannot hand a browser a zip, so "save selected"
          writes the chosen files into a folder the studio picks. -->
     <div class="page" id="pageGallery">
+      <div class="pgbanner pgb-gallery">
+        <div class="pgbanner-shade">
+          <div class="pgbanner-kick">My Gallery</div>
+          <div class="pgbanner-title" id="phGallery"></div>
+        </div>
+      </div>
       <div class="card">
         <div class="chead" id="cGalH"><span class="car">&#9662;</span><span class="chead-t">GALLERY</span></div>
         <div class="cbody" id="cGalB">
@@ -1126,46 +1097,110 @@
          list, its resolutions, durations and aspect ratios all come from the
          app's own doc-verified catalog; no endpoint is authored here. -->
     <div class="page" id="pageVideo">
+      <div class="pgbanner pgb-video">
+        <div class="pgbanner-shade">
+          <div class="pgbanner-kick">Image to Video</div>
+          <div class="pgbanner-title" id="phVideo"></div>
+        </div>
+      </div>
+      <!-- v6.50.0 — the app's four cards, in the app's order. The panel had
+           one card holding everything: the model picker, the prompt box, the
+           resolution and duration, the photo button and GENERATE all stacked
+           in a single accordion, where the app splits them into VIDEO,
+           VIDEO WORKFLOW, PROMPT and GENERATE and leads with a shelf of
+           ready-made shots. Same services underneath — same 183 endpoints,
+           same upload/submit/poll — arranged the way the app arranges them. -->
       <div class="card">
-        <div class="chead" id="cVidH"><span class="car">&#9662;</span><span class="chead-t">VIDEO</span></div>
-        <div class="cbody" id="cVidB">
-          <div class="mut" id="vidIntro"></div>
-          <select id="vidModel" class="hnk-sel"></select>
-          <textarea id="vidPromptP" class="hnk-prompt" placeholder="What should happen in the video?"></textarea>
-          <div class="row tight">
-            <select id="vidRes" class="hnk-sel grow"></select>
-            <select id="vidDur" class="hnk-sel grow"></select>
-            <select id="vidAspect" class="hnk-sel grow"></select>
-          </div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnVidPick" class="btn btn-sm grow">Add photo</div>
-            <div role="button" tabindex="0" id="btnVidSave" class="btn btn-sm grow">Save folder</div>
-          </div>
-          <div class="diag" id="vidList"></div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnVidRun" class="btn btn-sm btn-gold grow">GENERATE</div>
-          </div>
+        <h2>VIDEO &mdash; IMAGE TO VIDEO</h2>
+        <div class="mut" id="vidIntro"></div>
+        <div class="row last">
+          <div role="button" tabindex="0" id="btnVidPick" class="btn btn-sm grow">Add photo</div>
+          <div role="button" tabindex="0" id="btnVidSave" class="btn btn-sm grow">Save folder</div>
+        </div>
+      </div>
+
+      <!-- The app's VIDEO WORKFLOW shelf: 29 ready shots, each one setting the
+           prompt, the model, the resolution and the duration in one tap. The
+           cards, their art and their prompts are the app's own, lifted into
+           panel/js/hnk_video_wf_data.js. -->
+      <div class="card">
+        <h2>VIDEO WORKFLOW</h2>
+        <div class="mut" id="vidWfIntro"></div>
+        <div class="wfgrid" id="vidWfRow"></div>
+        <div id="vidWfOpts" style="display:none">
+          <div class="slbl" id="vidWfCityH"></div>
+          <div class="chiprow" id="vidWfCityRow"></div>
+        </div>
+        <div class="mut" id="vidWfHint"></div>
+      </div>
+
+      <div class="card">
+        <h2>PROMPT</h2>
+        <textarea id="vidPromptP" class="pbox" rows="5" placeholder="What should happen in the video?"></textarea>
+        <div class="mut" id="vidPromptCount"></div>
+      </div>
+
+      <div class="card">
+        <h2>GENERATE</h2>
+        <div class="row tight"><select id="vidModel" class="inp grow"></select></div>
+        <div class="row tight">
+          <select id="vidRes" class="inp grow"></select>
+          <select id="vidDur" class="inp grow"></select>
+          <select id="vidAspect" class="inp grow"></select>
+        </div>
+        <div class="diag" id="vidList"></div>
+        <div class="row last">
+          <div role="button" tabindex="0" id="btnVidRun" class="btn btn-gold gen grow">GENERATE VIDEO</div>
         </div>
       </div>
     </div>
 
     <!-- ========== PAGE: VIDEO UPSCALE ========== -->
     <div class="page" id="pageVideoUp">
+      <div class="pgbanner pgb-vidup">
+        <div class="pgbanner-shade">
+          <div class="pgbanner-kick">Video Upscale</div>
+          <div class="pgbanner-title" id="phVideoUp"></div>
+        </div>
+      </div>
+      <!-- v6.50.0 — the app's three cards, in the app's order: VIDEO UPSCALE
+           states what the page does and takes the file, GENERATE carries the
+           resolution and the button, and VIDEO TOOLS is the app's second half
+           of this page — 27 doc-verified video-input endpoints (edit, extend,
+           denoise, frame interpolation, subtitle erase) that the panel simply
+           did not have. -->
       <div class="card">
-        <div class="chead" id="cVuH"><span class="car">&#9662;</span><span class="chead-t">VIDEO UPSCALE</span></div>
-        <div class="cbody" id="cVuB">
-          <div class="mut" id="vuIntro"></div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnVuPickP" class="btn btn-sm grow">Pick video</div>
-            <select id="vuRes" class="hnk-sel grow"></select>
-          </div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnVuSave" class="btn btn-sm grow">Save folder</div>
-          </div>
-          <div class="diag" id="vuList"></div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnVuRun" class="btn btn-sm btn-gold grow">UPSCALE</div>
-          </div>
+        <h2>VIDEO UPSCALE</h2>
+        <div class="mut" id="vuIntro"></div>
+        <div class="row tight">
+          <div role="button" tabindex="0" id="btnVuPickP" class="btn btn-sm grow">Pick video (MP4)</div>
+          <div role="button" tabindex="0" id="btnVuSave" class="btn btn-sm grow">Save folder</div>
+        </div>
+        <div class="mut" id="vuFileNote"></div>
+      </div>
+
+      <div class="card">
+        <h2>GENERATE</h2>
+        <div class="row tight"><select id="vuRes" class="inp grow"></select></div>
+        <div class="diag" id="vuList"></div>
+        <div class="row last">
+          <div role="button" tabindex="0" id="btnVuRun" class="btn btn-gold gen grow">UPSCALE VIDEO</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>VIDEO TOOLS</h2>
+        <div class="mut" id="vtIntro"></div>
+        <div class="row tight"><select id="vtModel" class="inp grow"></select></div>
+        <div class="row tight">
+          <div role="button" tabindex="0" id="btnVtPick" class="btn btn-sm grow">Pick video (MP4)</div>
+          <div role="button" tabindex="0" id="btnVtSave" class="btn btn-sm grow">Save folder</div>
+        </div>
+        <textarea id="vtPrompt" class="pbox" rows="4" placeholder="Prompt (optional)"></textarea>
+        <div class="row tight"><select id="vtOpt" class="inp grow"></select></div>
+        <div class="diag" id="vtList"></div>
+        <div class="row last">
+          <div role="button" tabindex="0" id="btnVtRun" class="btn btn-gold gen grow">RUN VIDEO TOOL</div>
         </div>
       </div>
     </div>
@@ -1174,6 +1209,12 @@
          v6.46.0 — the web app's Path, in Photoshop: many photos, one look,
          one run. Results are written as files, not a hundred layers. -->
     <div class="page" id="pagePath">
+      <div class="pgbanner pgb-path">
+        <div class="pgbanner-shade">
+          <div class="pgbanner-kick">Batch Looks</div>
+          <div class="pgbanner-title" id="phPath"></div>
+        </div>
+      </div>
       <div class="card">
         <div class="chead" id="cPathH"><span class="car">&#9662;</span><span class="chead-t">BATCH LOOKS</span></div>
         <div class="cbody" id="cPathB">
@@ -1370,6 +1411,8 @@
      UXP-safe — publishes to globalThis.HNK, no relative require at runtime) -->
 <script src="js/hnk_wf_catalog_data.js"></script>
 <script src="js/hnk_video_models.js"></script>
+<script src="js/hnk_video_wf_data.js"></script>
+<script src="js/hnk_video_tools.js"></script>
 <script src="src/models/model-registry.js"></script>
 <script src="src/models/capability-resolver.js"></script>
 <script src="src/models/auto-model-selector.js"></script>

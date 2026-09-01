@@ -205,7 +205,10 @@ body {
 /* v6.47.1 — 78px, and the wordmark's letterspacing eased: at the widths the
    owner actually docks this panel, 96px still cropped "HNK AI PANEL" to
    "HNK AI P…" and the version line to "RunningHub…". */
-.topbar .lang-sel { width: 78px; min-width: 0; max-width: 78px; }
+/* v6.49.1 — the app's own width. The theme wheel left this bar, and the
+   112px the web app gives #selLang fits here now: the owner's Photoshop
+   showed "Mya…" where the app shows "Myanmar". */
+.topbar .lang-sel { width: 112px; min-width: 0; max-width: 112px; }
 .topbar .hdr-ctl { flex: 0 1 auto; min-width: 0; }
 .topbar-plan { color: #e9c46a; font-weight: 700; }
 
@@ -229,6 +232,16 @@ body {
 .pgb-aitools { background-image: url("icons/banners/aitools.jpg"); background-position: center 14%; }
 .pgb-presets { background-image: url("icons/banners/presets.jpg"); background-position: center 18%; }
 .pgb-retouch { background-image: url("icons/banners/retouch.jpg"); background-position: center 38%; }
+/* v6.50.0 — the four pages the app gives a hero and the panel did not:
+   Video, VidUp, Path and Gallery opened cold on a card while every other
+   page opened on art. Baked from the app's OWN banner for that page
+   (banner-naga, banner-superhero, banner-path-batch, banner-fairy-forest)
+   at the app's own crop, with the same baked scrim the other eight carry —
+   UXP drops .pgbanner-shade's gradient, so legibility has to be pixels. */
+.pgb-video   { background-image: url("icons/banners/video.jpg"); background-position: center 45%; }
+.pgb-vidup   { background-image: url("icons/banners/vidup.jpg"); background-position: center 10%; }
+.pgb-path    { background-image: url("icons/banners/path.jpg"); background-position: center 50%; }
+.pgb-gallery { background-image: url("icons/banners/gallery.jpg"); background-position: center 50%; }
 /* v6.28.0 — the legibility scrim is BAKED INTO the banner JPEGs now: the
    owner's real-Photoshop screenshots showed white headlines sitting on raw
    bright art because UXP dropped this div's gradient (`background:`
