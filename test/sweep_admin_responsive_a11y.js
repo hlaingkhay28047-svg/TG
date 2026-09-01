@@ -53,7 +53,14 @@ function staticServer() {
   let resolveRefreshedSurfaces;
   const refreshedSurfaces = new Promise(resolve => { resolveRefreshedSurfaces = resolve; });
   const page = await browser.newPage({ viewport:{width:390,height:844} });
-  await page.addInitScript(() => localStorage.setItem("hnk_acc_sess_v1", JSON.stringify({access:"STUDENT",uid:"student-1"})));
+  /* 2026-09-01 — the console ships Burmese by default (the owner's own
+     language). This sweep reads English strings, so it states the language it
+     exercises rather than depending on whatever the default happens to be;
+     the Burmese path gets its own assertion at the end. */
+  await page.addInitScript(() => {
+    localStorage.setItem("hnk_acc_sess_v1", JSON.stringify({access:"STUDENT",uid:"student-1"}));
+    localStorage.setItem("hnk_admin_lang_v1", "en");
+  });
   await page.route("**/api/**", async route => {
     const request = route.request(), url = request.url();
     let parsed = {}; try { parsed = JSON.parse(request.postData() || "{}"); } catch (_) {}
@@ -265,6 +272,28 @@ function staticServer() {
   const historyCall=[...calls].reverse().find(call=>/\/histories\?/.test(call.url));
   const historyParams=new URL(historyCall.url).searchParams;
   report("history type/search filters reach the backend contract",historyParams.get("type")==="failed_login"&&historyParams.get("search")==="Aye",Object.fromEntries(historyParams));
+
+  /* The language toggle is the whole console, not a decoration: one tap
+     translates static markup and re-rendered dynamic text together, the
+     choice persists, and tapping back restores the exact English. */
+  const enTitle=await page.textContent("#pageTitle");
+  await page.click("#langToggle");
+  await page.waitForTimeout(300);
+  const burmese=await page.evaluate(()=>({
+    title:document.getElementById("pageTitle").textContent,
+    nav:document.querySelector('[data-i18n="nav.students"]').textContent,
+    lang:document.documentElement.lang,
+    stored:localStorage.getItem("hnk_admin_lang_v1"),
+    label:document.getElementById("langLabel").textContent,
+  }));
+  report("one tap puts the whole console into Burmese and remembers it",
+    /[\u1000-\u109F]/.test(burmese.title)&&/[\u1000-\u109F]/.test(burmese.nav)&&
+      burmese.lang==="my"&&burmese.stored==="my"&&burmese.label==="EN",burmese);
+  await page.click("#langToggle");
+  await page.waitForTimeout(300);
+  const backToEnglish=await page.textContent("#pageTitle");
+  report("tapping back restores the markup's own English exactly",
+    backToEnglish===enTitle,{enTitle,backToEnglish});
 
   await page.setViewportSize({width:1280,height:900});
   const paymentAbsence=await page.evaluate(()=>({

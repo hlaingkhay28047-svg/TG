@@ -24,10 +24,10 @@
        revalidate this HTML but may keep the assets cached, and a stale
        admin.js binding against changed markup throws before the boot code
        runs, wedging the tab on the "Checking admin access" gate. -->
-  <link rel="stylesheet" href="admin.css?v=20260831e">
+  <link rel="stylesheet" href="admin.css?v=20260901a">
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to admin content</a>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to admin content</a>
 
   <!-- class, not a style attribute: style-src 'self' has no 'unsafe-inline',
        so inline styles are dead letters on this page -->
@@ -37,55 +37,56 @@
     <symbol id="ai-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.7c2.3.2 3.9 1.7 4.5 4.3"/></symbol>
     <symbol id="ai-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/><path d="M12 8v4.5l3 2"/></symbol>
     <symbol id="ai-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.2 2.9 7.4 7 9 4.1-1.6 7-4.8 7-9V6l-7-3z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
+    <symbol id="ai-bell" viewBox="0 0 24 24"><path d="M18 15.5V10a6 6 0 1 0-12 0v5.5L4.5 18h15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></symbol>
     <symbol id="ai-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4"/></symbol>
   </svg>
 
   <section class="gate" id="adminChecking" role="status" aria-live="polite">
-    <div class="gate-card"><span class="spinner" aria-hidden="true"></span><h1>Checking admin access…</h1><p>Verifying this session with HNK securely.</p></div>
+    <div class="gate-card"><span class="spinner" aria-hidden="true"></span><h1 data-i18n="gate.checking">Checking admin access…</h1><p data-i18n="gate.checkingSub">Verifying this session with HNK securely.</p></div>
   </section>
 
   <section class="gate" id="adminLogin" hidden>
     <form class="gate-card gate-form" id="adminLoginForm">
       <img class="auth-mark" src="admin-icon-192.png" alt="" aria-hidden="true">
-      <p class="eyebrow">ADMIN CONTROL CENTER</p>
-      <h1>Administrator sign in</h1>
-      <p>Use your administrator credentials. This creates a separate admin session that stays signed in on this device and never promotes a Student App session.</p>
-      <label>Email address<input id="adminLoginEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required></label>
-      <label>Password<input id="adminLoginPassword" type="password" autocomplete="current-password" minlength="6" required></label>
-      <button class="button primary full" id="adminLoginButton" type="submit">Continue securely</button>
+      <p class="eyebrow" data-i18n="gate.eyebrow">ADMIN CONTROL CENTER</p>
+      <h1 data-i18n="gate.signin">Administrator sign in</h1>
+      <p data-i18n="gate.signinSub">Use your administrator credentials. This creates a separate admin session that stays signed in on this device and never promotes a Student App session.</p>
+      <label><span data-i18n="f.email">Email address</span><input id="adminLoginEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required></label>
+      <label><span data-i18n="f.password">Password</span><input id="adminLoginPassword" type="password" autocomplete="current-password" minlength="6" required></label>
+      <button class="button primary full" id="adminLoginButton" type="submit" data-i18n="gate.continue">Continue securely</button>
       <p class="form-status" id="adminLoginStatus" role="status" aria-live="polite"></p>
-      <p class="privacy-note">Your password is sent only to the same-origin secure authentication endpoint and is never stored by this page.</p>
-      <a class="text-link" href="../app/">Return to Student App</a>
+      <p class="privacy-note" data-i18n="gate.privacy">Your password is sent only to the same-origin secure authentication endpoint and is never stored by this page.</p>
+      <a class="text-link" href="../app/" data-i18n="gate.backApp">Return to Student App</a>
     </form>
   </section>
 
   <section class="gate" id="adminForbidden" hidden>
     <div class="gate-card danger-card">
       <div class="gate-icon" aria-hidden="true">!</div>
-      <p class="eyebrow">ADMIN ACCESS</p>
-      <h1>Not authorized</h1>
-      <p>This page is restricted to verified HNK administrators. Student accounts cannot open the control center.</p>
-      <div class="gate-actions"><a class="button primary" href="../app/">Return to Student App</a><button class="button" id="retryAdmin" type="button">Check again</button><button class="button" id="clearAdmin" type="button">Use another admin</button></div>
+      <p class="eyebrow" data-i18n="gate.accessEyebrow">ADMIN ACCESS</p>
+      <h1 data-i18n="gate.forbidden">Not authorized</h1>
+      <p data-i18n="gate.forbiddenSub">This page is restricted to verified HNK administrators. Student accounts cannot open the control center.</p>
+      <div class="gate-actions"><a class="button primary" href="../app/" data-i18n="gate.backApp">Return to Student App</a><button class="button" id="retryAdmin" type="button" data-i18n="gate.retry">Check again</button><button class="button" id="clearAdmin" type="button" data-i18n="gate.other">Use another admin</button></div>
     </div>
   </section>
 
   <div class="shell" id="adminApp" hidden>
     <aside class="sidebar" aria-label="Admin navigation">
-      <a class="brand" href="./" aria-label="HNK Admin home"><img class="brand-mark" src="admin-icon-192.png" alt=""><span><b>Control Center</b><small>Production administration</small></span></a>
+      <a class="brand" href="./" aria-label="HNK Admin home"><img class="brand-mark" src="admin-icon-192.png" alt=""><span><b data-i18n="brand.name">Control Center</b><small data-i18n="brand.sub">Production administration</small></span></a>
       <nav class="side-nav" aria-label="Control Center sections">
-        <button class="nav-item active" type="button" data-panel="overview"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-home"/></svg></span>Overview</button>
-        <button class="nav-item" type="button" data-panel="students"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-users"/></svg></span>Students</button>
-        <button class="nav-item" type="button" data-panel="history"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-history"/></svg></span>Activity history</button>
-        <button class="nav-item" type="button" data-panel="security"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-shield"/></svg></span>Security &amp; Panel</button>
+        <button class="nav-item active" type="button" data-panel="overview"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-home"/></svg></span><span data-i18n="nav.overview">Overview</span></button>
+        <button class="nav-item" type="button" data-panel="students"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-users"/></svg></span><span data-i18n="nav.students">Students</span></button>
+        <button class="nav-item" type="button" data-panel="history"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-history"/></svg></span><span data-i18n="nav.history">Activity history</span></button>
+        <button class="nav-item" type="button" data-panel="security"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-shield"/></svg></span><span data-i18n="nav.security">Security &amp; Panel</span></button>
       </nav>
-      <div class="side-foot"><span class="online-dot" aria-hidden="true"></span><span>Server-authorized</span><a href="../app/">Student App</a></div>
+      <div class="side-foot"><span class="online-dot" aria-hidden="true"></span><span data-i18n="side.authorized">Server-authorized</span><a href="../app/" data-i18n="side.studentApp">Student App</a></div>
     </aside>
 
     <div class="workspace">
       <header class="topbar">
-        <button class="icon-button menu-button" id="menuButton" type="button" aria-label="Open admin navigation" aria-expanded="false">☰</button>
-        <div><p class="eyebrow">HNK STUDIO</p><h1 id="pageTitle">Overview</h1></div>
-        <div class="top-actions"><button class="icon-button" id="refreshAll" type="button" aria-label="Refresh current data"><svg class="ib-ic" aria-hidden="true"><use href="#ai-refresh"/></svg></button><div class="admin-identity"><span id="adminInitial">A</span><div><b id="adminName">Administrator</b><small id="adminEmail"></small></div></div><button class="button compact" id="adminSignOut" type="button">Sign out</button></div>
+        <button class="icon-button menu-button" id="menuButton" type="button" aria-label="Open admin navigation" data-i18n-al="top.menu" aria-expanded="false">☰</button>
+        <div><p class="eyebrow">HNK STUDIO</p><h1 id="pageTitle" data-i18n="nav.overview">Overview</h1></div>
+        <div class="top-actions"><button class="icon-button bell-button" id="alertBell" type="button" aria-label="Pending students" data-i18n-al="top.bell"><svg class="ib-ic" aria-hidden="true"><use href="#ai-bell"/></svg><span class="bell-badge" id="alertBadge" hidden>0</span></button><button class="icon-button lang-button" id="langToggle" type="button" aria-label="Language · ဘာသာစကား"><span id="langLabel">MY</span></button><button class="icon-button" id="refreshAll" type="button" aria-label="Refresh current data" data-i18n-al="top.refresh"><svg class="ib-ic" aria-hidden="true"><use href="#ai-refresh"/></svg></button><div class="admin-identity"><span id="adminInitial">A</span><div><b id="adminName">Administrator</b><small id="adminEmail"></small></div></div><button class="button compact" id="adminSignOut" type="button" data-i18n="top.signout">Sign out</button></div>
       </header>
 
       <!-- v2026-08-31 — the studio's cinema language reaches the console: one
@@ -94,61 +95,62 @@
            welcome. Decorative — every real title stays in the topbar. -->
       <section class="admin-hero" aria-hidden="true">
         <img src="../app/lib/banners/banner-superhero.jpg" alt="">
-        <div class="admin-hero-text"><p class="eyebrow">HNK CREATE STUDIO</p><b>Admin <em>Control Center</em></b></div>
+        <div class="admin-hero-text"><p class="eyebrow">HNK CREATE STUDIO</p><b>Admin <em data-i18n="brand.name">Control Center</em></b></div>
       </section>
 
       <main id="main" tabindex="-1">
         <section class="panel active" id="panel-overview" aria-labelledby="overviewHeading">
-          <div class="section-head"><div><p class="eyebrow">LIVE OPERATIONS</p><h2 id="overviewHeading">Student access at a glance</h2><p>Account, license, device and session health from the authoritative server.</p></div><time id="overviewUpdated"></time></div>
+          <div class="section-head"><div><p class="eyebrow" data-i18n="ov.eyebrow">LIVE OPERATIONS</p><h2 id="overviewHeading" data-i18n="ov.head">Student access at a glance</h2><p data-i18n="ov.sub">Account, license, device and session health from the authoritative server.</p></div><time id="overviewUpdated"></time></div>
           <div class="metric-grid" id="metricGrid" aria-label="Student metrics"></div>
           <div class="split-grid">
-            <section class="surface"><div class="surface-head"><div><p class="eyebrow">RECENT ACCESS</p><h3>Latest logins</h3></div><button class="text-button" type="button" data-go="history">View all</button></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Device</th><th>Time</th><th>Result</th></tr></thead><tbody id="latestLogins"></tbody></table></div><p class="empty" id="latestEmpty" hidden>No recent logins.</p></section>
-            <section class="surface attention"><p class="eyebrow">QUICK REVIEW</p><h3>Needs attention</h3><div class="attention-list" id="attentionList"></div><button class="button primary full" type="button" data-go="students" data-filter-status="pending">Review pending students</button></section>
-            <section class="surface" id="visitsCard" hidden><div class="surface-head"><div><p class="eyebrow">WEBSITE VISITORS · 30 DAYS</p><h3>Landing traffic</h3></div></div><div class="attention-list" id="visitsSummary"></div><h3 class="visits-sub">Most-entered rooms</h3><div class="attention-list" id="visitsPages"></div><p class="empty" id="visitsEmpty" hidden>No visits recorded yet.</p></section>
+            <section class="surface"><div class="surface-head"><div><p class="eyebrow" data-i18n="ov.recentEyebrow">RECENT ACCESS</p><h3 data-i18n="ov.latest">Latest logins</h3></div><button class="text-button" type="button" data-go="history" data-i18n="ov.viewAll">View all</button></div><div class="table-wrap latest-table"><table><thead><tr><th data-i18n="th.student">Student</th><th data-i18n="th.device">Device</th><th data-i18n="th.time">Time</th><th data-i18n="th.result">Result</th></tr></thead><tbody id="latestLogins"></tbody></table></div><div class="history-cards" id="latestCards"></div><p class="empty" id="latestEmpty" hidden data-i18n="ov.noLogins">No recent logins.</p></section>
+            <section class="surface attention"><p class="eyebrow" data-i18n="ov.quickEyebrow">QUICK REVIEW</p><h3 data-i18n="ov.attention">Needs attention</h3><div class="attention-list" id="attentionList"></div><button class="button primary full" type="button" data-go="students" data-filter-status="pending" data-i18n="ov.reviewPending">Review pending students</button></section>
+            <section class="surface" id="visitsCard" hidden><div class="surface-head"><div><p class="eyebrow" data-i18n="ov.visitsEyebrow">WEBSITE VISITORS · 30 DAYS</p><h3 data-i18n="ov.visitsHead">Landing traffic</h3></div></div><div class="attention-list" id="visitsSummary"></div><figure class="chart" id="visitsChart"></figure><h3 class="visits-sub" data-i18n="ov.rooms">Most-entered rooms</h3><div class="attention-list" id="visitsPages"></div><p class="empty" id="visitsEmpty" hidden data-i18n="ov.noVisits">No visits recorded yet.</p></section>
+            <section class="surface" id="growthCard" hidden><div class="surface-head"><div><p class="eyebrow" data-i18n="ov.growthEyebrow">NEW STUDENTS · 30 DAYS</p><h3 data-i18n="ov.growthHead">Signups</h3></div></div><div class="attention-list" id="growthSummary"></div><figure class="chart" id="growthChart"></figure><p class="empty" id="growthEmpty" hidden data-i18n="ov.noGrowth">No signups in this window.</p></section>
           </div>
         </section>
 
         <section class="panel" id="panel-students" aria-labelledby="studentsHeading">
-          <div class="section-head"><div><p class="eyebrow">STUDENT MANAGEMENT</p><h2 id="studentsHeading">Accounts and licenses</h2><p>Search, review and apply audited account actions.</p></div><button class="button" id="reloadStudents" type="button">Refresh list</button></div>
+          <div class="section-head"><div><p class="eyebrow" data-i18n="st.eyebrow">STUDENT MANAGEMENT</p><h2 id="studentsHeading" data-i18n="st.head">Accounts and licenses</h2><p data-i18n="st.sub">Search, review and apply audited account actions.</p></div><button class="button" id="reloadStudents" type="button" data-i18n="st.refresh">Refresh list</button></div>
           <form class="filter-bar" id="studentFilters" role="search">
-            <label class="search-field"><span class="sr-only">Search students</span><span aria-hidden="true">⌕</span><input id="studentSearch" type="search" placeholder="Search name or email" autocomplete="off"></label>
-            <label><span class="sr-only">Account status</span><select id="studentStatus"><option value="">All account states</option><option value="pending">Pending</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="expired">Expired</option><option value="banned">Banned</option><option value="rejected">Rejected</option></select></label>
-            <label><span class="sr-only">License status</span><select id="studentLicense"><option value="">All licenses</option><option value="active">License active</option><option value="expired">Expired</option><option value="none">No license</option></select></label>
-            <button class="button primary" type="submit">Apply filters</button>
+            <label class="search-field"><span class="sr-only" data-i18n="st.searchLabel">Search students</span><span aria-hidden="true">⌕</span><input id="studentSearch" type="search" placeholder="Search name or email" data-i18n-ph="ph.searchStudents" autocomplete="off"></label>
+            <label><span class="sr-only" data-i18n="st.statusLabel">Account status</span><select id="studentStatus"><option value="" data-i18n="st.allStates">All account states</option><option value="pending" data-i18n="s.pending">Pending</option><option value="active" data-i18n="s.active">Active</option><option value="suspended" data-i18n="s.suspended">Suspended</option><option value="expired" data-i18n="s.expired">Expired</option><option value="banned" data-i18n="s.banned">Banned</option><option value="rejected" data-i18n="s.rejected">Rejected</option></select></label>
+            <label><span class="sr-only" data-i18n="st.licenseLabel">License status</span><select id="studentLicense"><option value="" data-i18n="st.allLicenses">All licenses</option><option value="active" data-i18n="st.licActive">License active</option><option value="expired" data-i18n="s.expired">Expired</option><option value="none" data-i18n="st.licNone">No license</option></select></label>
+            <button class="button primary" type="submit" data-i18n="st.apply">Apply filters</button>
           </form>
           <section class="surface">
-            <div class="table-wrap student-table"><table><thead><tr><th>Student</th><th>Account</th><th>License</th><th>Devices</th><th>Last active</th><th><span class="sr-only">Open</span></th></tr></thead><tbody id="studentRows"></tbody></table></div>
+            <div class="table-wrap student-table"><table><thead><tr><th data-i18n="th.student">Student</th><th data-i18n="th.account">Account</th><th data-i18n="th.license">License</th><th data-i18n="th.devices">Devices</th><th data-i18n="th.lastActive">Last active</th><th><span class="sr-only" data-i18n="th.open">Open</span></th></tr></thead><tbody id="studentRows"></tbody></table></div>
             <div class="student-cards" id="studentCards"></div>
-            <p class="empty" id="studentsEmpty" hidden>No students match these filters.</p>
-            <div class="pagination"><button class="button" id="studentsPrev" type="button">Previous</button><span id="studentsPage">Page 1</span><button class="button" id="studentsNext" type="button">Next</button></div>
+            <p class="empty" id="studentsEmpty" hidden data-i18n="st.empty">No students match these filters.</p>
+            <div class="pagination"><button class="button" id="studentsPrev" type="button" data-i18n="pg.prev">Previous</button><span id="studentsPage">Page 1</span><button class="button" id="studentsNext" type="button" data-i18n="pg.next">Next</button></div>
           </section>
         </section>
 
         <section class="panel" id="panel-history" aria-labelledby="historyHeading">
-          <div class="section-head"><div><p class="eyebrow">AUDIT TRAIL</p><h2 id="historyHeading">Login, device, download and admin activity</h2><p>Server-side events are searchable and never editable here.</p></div><button class="button" id="reloadHistory" type="button">Refresh history</button></div>
+          <div class="section-head"><div><p class="eyebrow" data-i18n="hi.eyebrow">AUDIT TRAIL</p><h2 id="historyHeading" data-i18n="hi.head">Login, device, download and admin activity</h2><p data-i18n="hi.sub">Server-side events are searchable and never editable here.</p></div><button class="button" id="reloadHistory" type="button" data-i18n="hi.refresh">Refresh history</button></div>
           <form class="filter-bar" id="historyFilters" role="search">
-            <label class="search-field"><span class="sr-only">Search activity</span><span aria-hidden="true">⌕</span><input id="historySearch" type="search" placeholder="Student, email, device or action" autocomplete="off"></label>
-            <label><span class="sr-only">Activity type</span><select id="historyType"><option value="">All activity</option><option value="login">Logins</option><option value="failed_login">Failed logins</option><option value="device">Devices</option><option value="download">CCX downloads</option><option value="license">License changes</option><option value="account">Account actions</option><option value="admin">Admin actions</option></select></label>
-            <label class="date-field">From<input id="historyFrom" type="date"></label><label class="date-field">To<input id="historyTo" type="date"></label>
-            <button class="button primary" type="submit">Filter</button>
+            <label class="search-field"><span class="sr-only" data-i18n="hi.searchLabel">Search activity</span><span aria-hidden="true">⌕</span><input id="historySearch" type="search" placeholder="Student, email, device or action" data-i18n-ph="ph.searchActivity" autocomplete="off"></label>
+            <label><span class="sr-only" data-i18n="hi.typeLabel">Activity type</span><select id="historyType"><option value="" data-i18n="hi.all">All activity</option><option value="login" data-i18n="hi.logins">Logins</option><option value="failed_login" data-i18n="hi.failed">Failed logins</option><option value="device" data-i18n="th.devices">Devices</option><option value="download" data-i18n="hi.downloads">CCX downloads</option><option value="license" data-i18n="hi.licenses">License changes</option><option value="account" data-i18n="hi.accounts">Account actions</option><option value="admin" data-i18n="hi.admins">Admin actions</option></select></label>
+            <label class="date-field"><span data-i18n="hi.from">From</span><input id="historyFrom" type="date"></label><label class="date-field"><span data-i18n="hi.to">To</span><input id="historyTo" type="date"></label>
+            <button class="button primary" type="submit" data-i18n="hi.filter">Filter</button>
           </form>
-          <section class="surface"><div class="table-wrap"><table><thead><tr><th>Time</th><th>Student</th><th>Activity</th><th>Device / App</th><th>Result</th></tr></thead><tbody id="historyRows"></tbody></table></div><p class="empty" id="historyEmpty" hidden>No matching activity.</p><div class="pagination"><button class="button" id="historyPrev" type="button">Previous</button><span id="historyPage">Page 1</span><button class="button" id="historyNext" type="button">Next</button></div></section>
+          <section class="surface"><div class="table-wrap history-table"><table><thead><tr><th data-i18n="th.time">Time</th><th data-i18n="th.student">Student</th><th data-i18n="th.activity">Activity</th><th data-i18n="th.deviceApp">Device / App</th><th data-i18n="th.result">Result</th></tr></thead><tbody id="historyRows"></tbody></table></div><div class="history-cards" id="historyCards"></div><p class="empty" id="historyEmpty" hidden data-i18n="hi.empty">No matching activity.</p><div class="pagination"><button class="button" id="historyPrev" type="button" data-i18n="pg.prev">Previous</button><span id="historyPage">Page 1</span><button class="button" id="historyNext" type="button" data-i18n="pg.next">Next</button></div></section>
         </section>
 
         <section class="panel" id="panel-security" aria-labelledby="securityHeading">
-          <div class="section-head"><div><p class="eyebrow">SECURITY &amp; RELEASES</p><h2 id="securityHeading">Panel policy and admin protection</h2><p>Minimum-version enforcement and private panel release control.</p></div></div>
+          <div class="section-head"><div><p class="eyebrow" data-i18n="se.eyebrow">SECURITY &amp; RELEASES</p><h2 id="securityHeading" data-i18n="se.head">Panel policy and admin protection</h2><p data-i18n="se.sub">Minimum-version enforcement and private panel release control.</p></div></div>
           <div class="settings-grid">
-            <form class="surface settings-card" id="panelVersionForm"><div class="setting-icon" aria-hidden="true">Ps</div><p class="eyebrow">PHOTOSHOP PANEL</p><h3>Version control <button type="button" class="help-dot" popovertarget="versionHelp" aria-label="How version control works">?</button></h3><p>Panels older than the minimum version receive Update Required.</p>
-              <div id="versionHelp" popover class="help-pop"><b>ဗားရှင်း ထိန်းချုပ်ပုံ</b><p>Latest = ကျောင်းသားတွေ download ရမယ့် ဗားရှင်း။ Minimum = ဒီထက်ဟောင်းတဲ့ panel တွေ "Update Required" ပြပြီး ပိတ်မယ်။ Release တစ်ခုကို enable လုပ်ဖို့ အောက်က Upload card နဲ့ package ကို အရင် verify လုပ်ရပါမယ်။ GitHub ရဲ့ "Publish the panel release" workflow ကလည်း ဒီအလုပ်ကိုပဲ အလိုအလျောက် လုပ်ပေးနိုင်ပါတယ်။</p></div><label>Latest version<input id="latestVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.34.0"></label><label>Minimum supported<input id="minimumVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.34.0"></label><button class="button primary" type="submit">Save version policy</button></form>
+            <form class="surface settings-card" id="panelVersionForm"><div class="setting-icon" aria-hidden="true">Ps</div><p class="eyebrow" data-i18n="se.psEyebrow">PHOTOSHOP PANEL</p><h3>Version control <button type="button" class="help-dot" popovertarget="versionHelp" aria-label="How version control works">?</button></h3><p data-i18n="se.versionSub">Panels older than the minimum version receive Update Required.</p>
+              <div id="versionHelp" popover class="help-pop"><b>ဗားရှင်း ထိန်းချုပ်ပုံ</b><p>Latest = ကျောင်းသားတွေ download ရမယ့် ဗားရှင်း။ Minimum = ဒီထက်ဟောင်းတဲ့ panel တွေ "Update Required" ပြပြီး ပိတ်မယ်။ Release တစ်ခုကို enable လုပ်ဖို့ အောက်က Upload card နဲ့ package ကို အရင် verify လုပ်ရပါမယ်။ GitHub ရဲ့ "Publish the panel release" workflow ကလည်း ဒီအလုပ်ကိုပဲ အလိုအလျောက် လုပ်ပေးနိုင်ပါတယ်။</p></div><label><span data-i18n="se.latest">Latest version</span><input id="latestVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.34.0"></label><label><span data-i18n="se.minimum">Minimum supported</span><input id="minimumVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.34.0"></label><button class="button primary" type="submit" data-i18n="se.saveVersion">Save version policy</button></form>
             <form class="surface settings-card artifact-card" id="panelArtifactForm">
-              <div class="setting-icon" aria-hidden="true">↑</div><p class="eyebrow">PRIVATE PANEL ARTIFACT</p><h3>Upload, verify and enable a release</h3>
-              <p>The package stays in this tab's memory. HNK hashes it locally, uploads verified chunks to private storage, finalizes the artifact, and only then enables the version.</p>
-              <div class="artifact-fields"><label>Release version<input id="artifactVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.34.0"></label><label>Panel package<input id="panelArtifactFile" type="file" required></label></div>
-              <div class="artifact-file" id="artifactFileSummary">Choose a Creative Cloud panel package. Maximum 512 MiB.</div>
+              <div class="setting-icon" aria-hidden="true">↑</div><p class="eyebrow" data-i18n="se.artEyebrow">PRIVATE PANEL ARTIFACT</p><h3 data-i18n="se.artHead">Upload, verify and enable a release</h3>
+              <p data-i18n="se.artSub">The package stays in this tab's memory. HNK hashes it locally, uploads verified chunks to private storage, finalizes the artifact, and only then enables the version.</p>
+              <div class="artifact-fields"><label><span data-i18n="se.relVersion">Release version</span><input id="artifactVersion" required inputmode="decimal" pattern="[0-9]+\.[0-9]+\.[0-9]+" placeholder="6.34.0"></label><label><span data-i18n="se.package">Panel package</span><input id="panelArtifactFile" type="file" required></label></div>
+              <div class="artifact-file" id="artifactFileSummary" data-i18n="se.choose">Choose a Creative Cloud panel package. Maximum 512 MiB.</div>
               <progress id="artifactProgress" max="100" value="0" aria-label="Panel artifact upload progress"></progress>
-              <div class="artifact-progress-row"><span id="artifactProgressText">Waiting for a package</span><span id="artifactHashText"></span></div>
-              <button class="button primary" id="uploadPanelArtifact" type="submit">Upload, verify &amp; enable release</button>
-              <button class="button" id="checkArtifactResume" type="button" hidden>Check resumable upload</button>
+              <div class="artifact-progress-row"><span id="artifactProgressText" data-i18n="se.waiting">Waiting for a package</span><span id="artifactHashText"></span></div>
+              <button class="button primary" id="uploadPanelArtifact" type="submit" data-i18n="se.upload">Upload, verify &amp; enable release</button>
+              <button class="button" id="checkArtifactResume" type="button" hidden data-i18n="se.resume">Check resumable upload</button>
               <p class="form-status artifact-status" id="artifactUploadStatus" role="status" aria-live="polite"></p>
             </form>
           </div>
@@ -158,20 +160,20 @@
   </div>
 
   <dialog id="studentDialog" aria-labelledby="studentDialogTitle">
-    <div class="dialog-head"><div><p class="eyebrow">STUDENT DETAIL</p><h2 id="studentDialogTitle">Student</h2><p id="studentDialogEmail"></p></div><button class="icon-button" id="closeStudentDialog" type="button" aria-label="Close student detail">×</button></div>
+    <div class="dialog-head"><div><p class="eyebrow" data-i18n="dl.eyebrow">STUDENT DETAIL</p><h2 id="studentDialogTitle" data-i18n="th.student">Student</h2><p id="studentDialogEmail"></p></div><button class="icon-button" id="closeStudentDialog" type="button" aria-label="Close student detail">×</button></div>
     <div class="dialog-scroll">
       <div class="detail-summary" id="studentSummary"></div>
-      <div class="detail-grid"><section><h3>Access permissions</h3><div class="toggle-list" id="permissionToggles"></div></section><section><h3>Registered devices</h3><div class="device-list" id="studentDevices"></div></section></div>
-      <section class="action-section"><h3>Account actions</h3><div class="action-grid" id="accountActions"></div></section>
-      <section class="action-section"><h3>License</h3><div class="license-actions"><label>Extend by<select id="licenseMonths"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label><button class="button primary" id="extendLicense" type="button">Extend license</button><label>Custom expiry<input id="customExpiry" type="date"></label><button class="button" id="setExpiry" type="button">Set expiry</button></div></section>
-      <section class="action-section"><h3>Security &amp; devices</h3><div class="action-grid" id="securityActions"></div><div class="artifact-fields stack-top"><label>စက် အရေအတွက် (allowed devices)<input id="deviceLimit" inputmode="numeric" pattern="[0-9]+" min="1" max="20" type="number"></label><button class="button" id="deviceLimitSave" type="button">Set devices</button></div><p class="hint" id="deviceLimitHint">စက်အရေအတွက်က renewal ဈေးနှုန်းကိုပါ မြှောက်ပါတယ် (allowed_devices × per-device)။</p></section>
-      <section class="action-section"><div class="surface-head"><h3>Recent history</h3><button class="text-button" id="viewStudentHistory" type="button">Open full history</button></div><div id="studentHistory" class="mini-history"></div></section>
+      <div class="detail-grid"><section><h3 data-i18n="dl.permissions">Access permissions</h3><div class="toggle-list" id="permissionToggles"></div></section><section><h3 data-i18n="dl.devices">Registered devices</h3><div class="device-list" id="studentDevices"></div></section></div>
+      <section class="action-section"><h3 data-i18n="hi.accounts">Account actions</h3><div class="action-grid" id="accountActions"></div></section>
+      <section class="action-section"><h3 data-i18n="th.license">License</h3><div class="license-actions"><label><span data-i18n="dl.extendBy">Extend by</span><select id="licenseMonths"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label><button class="button primary" id="extendLicense" type="button" data-i18n="dl.extend">Extend license</button><label><span data-i18n="dl.customExpiry">Custom expiry</span><input id="customExpiry" type="date"></label><button class="button" id="setExpiry" type="button" data-i18n="dl.setExpiry">Set expiry</button></div></section>
+      <section class="action-section"><h3 data-i18n="dl.secDevices">Security &amp; devices</h3><div class="action-grid" id="securityActions"></div><div class="artifact-fields stack-top"><label>စက် အရေအတွက် (allowed devices)<input id="deviceLimit" inputmode="numeric" pattern="[0-9]+" min="1" max="20" type="number"></label><button class="button" id="deviceLimitSave" type="button" data-i18n="dl.setDevices">Set devices</button></div><p class="hint" id="deviceLimitHint">စက်အရေအတွက်က renewal ဈေးနှုန်းကိုပါ မြှောက်ပါတယ် (allowed_devices × per-device)။</p></section>
+      <section class="action-section"><div class="surface-head"><h3 data-i18n="dl.recent">Recent history</h3><button class="text-button" id="viewStudentHistory" type="button" data-i18n="dl.openHistory">Open full history</button></div><div id="studentHistory" class="mini-history"></div></section>
     </div>
   </dialog>
 
-  <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm">Confirm</button></div></form></dialog>
+  <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow" data-i18n="cf.eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle" data-i18n="cf.title">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel" data-i18n="cf.cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm" data-i18n="cf.confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js?v=20260831e" defer></script>
+  <script src="admin.js?v=20260901a" defer></script>
 </body>
 </html>
