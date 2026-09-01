@@ -300,6 +300,37 @@ check("panel source, release metadata, and public version endpoint agree",
 check("the panel agrees with itself about which version it is",
   panelInternals.version === panelVersion && panelInternals.brandVer === panelVersion,
   `main.js ${panelInternals.version || "?"}, index.html ${panelInternals.brandVer || "?"}, release ${panelVersion}${panelInternals.err ? " :: " + panelInternals.err : ""}`);
+/* v5.65.0 — THE VERSION THE APP SHOWS IS THE SERVER'S OR IT IS NOTHING.
+   The Account card had a hardcoded "6.24.0" in three places — the stat, the
+   stat's markup default and the download button's own label — so the app
+   advertised a version thirteen releases old while /download/ issued the
+   current one. Two numbers on two screens read like two delivery routes even
+   though there has only ever been one. This pins the fix: no panel version
+   literal anywhere in the app, the button label built from the entitlement's
+   latest_version, and the only route to the file still the account center. */
+{
+  const app = read("docs/app/index.html");
+  const code = app.replace(/\/\*[\s\S]*?\*\//g, " ");   /* comments may quote the old bug */
+  /* a version LITERAL, not an SVG path coordinate: quoted whole, or written
+     the way a human writes one (v6.24.0) */
+  const literals = (code.match(/"6\.\d+\.\d+"|\bv6\.\d+\.\d+\b/g) || []);
+  check("the web app quotes no panel version of its own",
+    literals.length === 0, "panel version literals left in docs/app/index.html: " + literals.join(", "));
+  /* the same rule on the other side of the wire: the route that issues the
+     file defaulted to "6.24.0" when a caller named no version, and the panel
+     enrolment path assumed that same frozen build was the oldest supported
+     one. Both now ask panel_versions. */
+  const issuer = read("server/lib/v1.js").replace(/\/\*[\s\S]*?\*\//g, " ");
+  check("the download and enrolment routes quote no panel version of their own",
+    !/"6\.\d+\.\d+"/.test(issuer) && /assumedPanelVersion/.test(issuer) &&
+    /state\.panelVersion&&state\.panelVersion\.latestVersion/.test(issuer.replace(/\s+/g, "")),
+    "a frozen panel version is back in server/lib/v1.js");
+  check("the panel download label and stat come from the server's entitlement",
+    /function accPanelBtnLabel\(\)/.test(code) &&
+    /data\.panel&&data\.panel\.latest_version/.test(code.replace(/\s+/g, "")) &&
+    /\$\("unifiedPanelVersion"\)\.textContent\s*=\s*panel\.latest_version/.test(code),
+    "the account card no longer derives the panel version from the entitlement");
+}
 check("the panel's update probe points at the stable service origin",
   panelInternals.updateUrl === `${serviceBase}/download/panel-version.json`,
   panelInternals.updateUrl || "no PANEL_VERSION_URL found");

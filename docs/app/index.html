@@ -2184,7 +2184,7 @@ html.splashing #splash{display:flex}
     <article class="unified-stat"><span>Account status</span><b id="unifiedAccountStatus">Checking</b></article>
     <article class="unified-stat"><span>License status</span><b id="unifiedLicenseStatus">Checking</b></article>
     <article class="unified-stat"><span>License expiry</span><b id="unifiedLicenseExpiry">—</b></article>
-    <article class="unified-stat"><span>Panel version</span><b id="unifiedPanelVersion">6.24.0</b></article>
+    <article class="unified-stat"><span>Panel version</span><b id="unifiedPanelVersion">—</b></article>
     <article class="unified-stat"><span>Web App permission</span><b id="unifiedWebPermission">Checking</b></article>
     <article class="unified-stat"><span>Panel download</span><b id="unifiedDownloadPermission">Checking</b></article>
     <article class="unified-stat"><span>Photoshop Panel</span><b id="unifiedPanelPermission">Checking</b></article>
@@ -12124,10 +12124,18 @@ window.addEventListener("beforeunload",function(e){
      Smart-Workflow-generate, mid-Studio-bake, or mid-Video/T2I-generate lost
      the picked photos AND any already-spent paid API call with zero warning.
      Every in-flight paid/generate path is covered now. */
-  if(PT.busy || window._wizBusy || ST.busy || state.genAbort || state.vidAbort || state.vuAbort || state.t2iAbort){
+  if(appBusy()){
     e.preventDefault(); e.returnValue="";
   }
 });
+/* v5.65.0 — the same "is real work in flight" question the guard above asks,
+   named once so the update self-heal below can ask it too. Two copies of this
+   list would drift, and the copy that drifted would be the one deciding
+   whether it is safe to reload the page under a running batch. */
+function appBusy(){
+  return !!(PT.busy || window._wizBusy || ST.busy ||
+    state.genAbort || state.vidAbort || state.vuAbort || state.t2iAbort);
+}
 function ptEta(){
   var tier=state.pt.tier;
   return tier==="fast" ? t("eta_fast") : tier==="hd" ? t("eta_hd") : t("eta_quality");
@@ -22093,11 +22101,19 @@ function unifiedRender(){
   $("unifiedAccountStatus").textContent = unifiedPretty(status);
   $("unifiedLicenseStatus").textContent = unifiedPretty(license.status || (license.active ? "active" : "inactive"));
   $("unifiedLicenseExpiry").textContent = unifiedDate(license.expires_at);
-  $("unifiedPanelVersion").textContent = panel.latest_version || "6.24.0";
+  /* v5.65.0 — the panel version shown here is the SERVER's answer or nothing.
+     It used to fall back to a literal "6.24.0" that stopped being true after
+     thirteen panel releases, so a student whose entitlement call was still in
+     flight — or had failed — was told, confidently, the wrong version of the
+     file they were about to install. An em dash says "not known yet", which is
+     the truth, and the number can never again drift from what the download
+     lane actually issues. */
+  $("unifiedPanelVersion").textContent = panel.latest_version || "\u2014";
   $("unifiedWebPermission").textContent = p.web_app === true && unifiedAllowed("web_app") ? "ON" : "OFF";
   $("unifiedDownloadPermission").textContent = p.ccx_download === true && unifiedAllowed("ccx_download") ? "ON" : "OFF";
   $("unifiedPanelPermission").textContent = (p.photoshop_panel === true || p.panel === true) && unifiedAllowed("panel") ? "ON" : "OFF";
   $("unifiedPhone").textContent = devices.phone ? ((devices.phone.label || devices.phone.device_name || "Registered") + " · 1/1") : "Available · 0/1";
+  try{ accPanelBtnLabel(); }catch(e){}   /* the button quotes the same answer */
   $("unifiedComputer").textContent = devices.computer ? ((devices.computer.label || devices.computer.device_name || "Registered") + " · shared slot 1/1") : "Available · 0/1";
   var current = unifiedDeviceType();
   $("unifiedEnrollPhone").hidden = current !== "phone" || !!devices.phone;
@@ -22222,13 +22238,28 @@ function accApplyLang(){
   setIcnText($("btnAccPass"), "i-check", t("acc_change_pass_h"));
   setIcnText($("btnDevManage"), "i-phone", t("dev_h"));
   $("accPanelP").textContent = t("acc_panel_p");
-  setIcnText($("accPanelDownload"), "i-download", t("acc_panel_dl").replace("{V}", "6.24.0"));
+  accPanelBtnLabel();
 
   /* the gear's title/aria-label pair is owned by accChipRender() (called just
      below), so hover text and accessible name can never drift apart */
   try { if (acc) { accRender(); accRenderDevices(); accChipRender(); } } catch(e){}
 }
 
+/* v5.65.0 — one source for the panel version, and it is the server.
+   The CCX is issued by exactly one route: /download/ asks the API, the API
+   checks account, licence, download permission and registered computer, and
+   only then mints a short-lived link. This button opens that same page — but
+   its LABEL used to carry a hardcoded "6.24.0", so the app advertised one
+   version while the delivery page issued another, which reads like two
+   different sources even though there has only ever been one. The label now
+   quotes the entitlement's own latest_version, and when that has not arrived
+   yet it simply drops the version rather than inventing one. */
+function accPanelBtnLabel(){
+  var b=$("accPanelDownload"); if(!b) return;
+  var data=unified.entitlement||{}, v=(data.panel&&data.panel.latest_version)||"";
+  var label=t("acc_panel_dl");
+  setIcnText(b,"i-download", v ? label.replace("{V}",v) : label.replace(/\s*v\{V\}/,"").replace("{V}",""));
+}
 /* ---------------- wiring ---------------- */
 function accShowForm(which){
   $("accFormLogin").style.display  = which === "signup" ? "none" : "";
@@ -22765,7 +22796,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.64.0";
+var APP_VER="5.65.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -22780,7 +22811,32 @@ function verNewer(a,b){
   }
   return false;
 }
-fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
+/* v5.65.0 — A TAB LEFT OPEN IS A VERSION THAT NEVER MOVES.
+   This check ran exactly once, at load. A studio that keeps the Studio open on
+   a desktop for a fortnight therefore kept whatever build it opened with — six
+   releases behind, still showing the numbers of that build — and nothing ever
+   told it otherwise, because the one moment it looks was the moment it was
+   already current. It now looks again whenever the tab comes back to the
+   foreground (at most once every five minutes), and on that return, with
+   nothing generating and nothing to lose, it reloads itself instead of asking:
+   drafts and the open page are already persisted, and the tab was idle. Once
+   per version per tab, so a stale shell can never turn into a reload loop. */
+var _verLast=0;
+function verHealOnce(v){
+  try{
+    if(sessionStorage.getItem("hnk_ver_heal_v1")===v) return false;
+    sessionStorage.setItem("hnk_ver_heal_v1",v);
+  }catch(e){}
+  return true;
+}
+function verCheck(canHeal){
+  var now=Date.now();
+  if(now-_verLast < 300000) return;            /* five minutes, not every flick */
+  _verLast=now;
+  fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }).then(function(v){
+    if (canHeal && v && v.v && verNewer(v.v, APP_VER) && !appBusy() && verHealOnce(v.v)){
+      location.reload(); return;
+    }
   /* Only alert when the fetched version is genuinely NEWER — a stale/CDN-cached
      version.json (older than what's already running) must never trigger this,
      since a not-equal check would wrongly claim an old build is "new". */
@@ -22801,7 +22857,11 @@ fetch("version.json", { cache:"no-store" }).then(function(r){ return r.json(); }
       var q=_toastQ.shift(); if(q) toast(q[0],q[1],q[2]);   /* flush what the banner held back */
     }, 20000);
   }
-}).catch(function(){});
+  }).catch(function(){});
+}
+verCheck(false);
+/* the returning tab is the case this exists for */
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) verCheck(true); });
 
 /* ---------- v4.41 Setup upgrades: readiness strip, backup, updates ---------- */
 
