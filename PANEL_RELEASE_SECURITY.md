@@ -178,6 +178,32 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.38.0** — `pending`. The real-as-real wave (2026-09-01, owner: the
+  result must stay the person who was photographed). Every workflow that
+  rebuilds the light around a real face now says so in words. Fifty-three
+  Smart Workflows live in Background & Scene, Studio Scenes and Studio
+  Relight; only eight of them ever mentioned skin colour at all, so an image
+  model asked for a new backdrop was free to lighten, warm or flatten the
+  complexion underneath it. The other **forty-five** now carry one SKIN TONE
+  TRUTH line — relight it, never recolour it; no whitening, no tanning, no
+  cast, no undertone change; face, neck, ears, hands and body one tone — as
+  an ON/OFF switch defaulting ON, so a deliberately stylised look can still
+  turn it off. It locks colour only: texture, retouch and beauty stay
+  whatever each workflow already asked for. Thirteen of those fifty-three
+  never asked for a photograph at all (background swaps and window relights,
+  where a rendered or plastic result is simply wrong); each gains a fixed
+  REAL PHOTOGRAPH line — real pores, real fabric weave, real lens falloff,
+  no AI sheen. Both lines are composed once in the web app's catalog and
+  mirrored into the panel by the generator, so the two surfaces carry the
+  identical wording and the identical switch. Catalog total unchanged at 143.
+  Acceptance: carry over the v6.37.0 checklist; additionally open one
+  Background & Scene and one Studio Relight workflow in real Photoshop on a
+  deep-complexion portrait, run each once with the switch ON and confirm the
+  skin tone in the result matches the source (sample the cheek, the hand and
+  the neck), then once with it OFF and confirm the line is gone from the
+  compiled prompt. Artifact `HNK_Ai_Panel_v6.38.0.ccx`, SHA-256
+  `5e1204f4cf1314974726907eb1b20f1918cb2a3dc430ccb78750be60e2812ca9`,
+  1,312,290 bytes. Stays disabled for customers until this acceptance.
 - **v6.37.0** — `pending`. The Design Series wave (2026-08-31, owner: nine
   reference sets — "this exact design, any photo, a hundred photos come
   back identical"). Eight new Smart Workflows in Studio Scenes (ink-atelier,
