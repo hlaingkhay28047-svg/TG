@@ -178,6 +178,23 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.43.0** — `pending`. Retouch A, Retouch B and the teaching (2026-09-01,
+  same owner instruction). The app's Edit group reads Freeform · Retouch A ·
+  Retouch B · Retouch · Path; the panel's read Freeform · Retouch — not because
+  A and B were missing, but because they were buried as presets on the Retouch
+  page where no one navigating by the app's map would look. They are pills now,
+  in the app's order, each opening the Retouch page with its preset already
+  chosen. And the app's **Tutorials** — three lessons a student meets on the web
+  Home (Dashboard & AI Tools · Phone + Computer · Install the Panel) — were
+  absent from the panel entirely, so anyone who learned on the web app opened
+  the panel and found the teaching gone; they are on the panel's Home now, in
+  the app's own wording. Acceptance: carry over v6.42.0's checklist;
+  additionally confirm Edit shows four pills in that order, that Retouch A and
+  Retouch B each land on the Retouch page with their preset selected, and that
+  Home ends with the three numbered lessons. Artifact
+  `HNK_Ai_Panel_v6.43.0.ccx`, SHA-256
+  `8fc0cbe7eb45cd456d2ca9f4602851ab90b14bd448681ddcb4d130ca2b71fc7b`,
+  1,318,096 bytes. Stays disabled for customers until this acceptance.
 - **v6.42.0** — `pending`. Setup is the web app's Setup (2026-09-01, owner:
   "I don't know anything — just make it the same as the web app"). The app
   parks on one page everything a student needs to know about themselves:
