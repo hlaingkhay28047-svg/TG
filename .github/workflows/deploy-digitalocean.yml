@@ -90,6 +90,13 @@ jobs:
           set -euo pipefail
           umask 077
           doctl apps list --output json > "$RUNNER_TEMP/apps.json"
+          # doctl can exit 0 and write an API error payload when the token has
+          # lost a scope; the selector below would then die on `.spec` with an
+          # opaque jq message. Prove the shape first and name the cause.
+          if ! jq -e 'type == "array"' "$RUNNER_TEMP/apps.json" > /dev/null 2>&1; then
+            echo "::error::doctl did not return an app list. The production token authenticated but is refusing app reads — check the scopes on DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN. DigitalOcean said: $(head -c 300 "$RUNNER_TEMP/apps.json" | tr '\n' ' ')"
+            exit 1
+          fi
           APP_ID="$(jq -r --arg name "$DO_APP_NAME" --arg host "$DO_APP_HOST" --arg repo "$DO_REPO" --arg branch "$DO_BRANCH" '
             .[]
             | select((.spec.name == $name) or (.default_ingress == $host) or (.live_url == ("https://" + $host)))
@@ -128,12 +135,31 @@ jobs:
             echo "::error::Not enough time remains to synchronize the live spec and verify production."
             exit 1
           fi
-          timeout --foreground --signal=TERM --kill-after=10s "${SYNC_TIMEOUT_SECONDS}s" \
+          # This is the first write of the run: everything above only read the
+          # live spec. When it is refused, say which of the two very different
+          # causes it was, because the remedies differ and DigitalOcean's own
+          # git autodeploy is unaffected either way.
+          set +e
+          SYNC_OUT="$(timeout --foreground --signal=TERM --kill-after=10s "${SYNC_TIMEOUT_SECONDS}s" \
             doctl apps update "${{ steps.app.outputs.app_id }}" \
             --spec "$PATCHED_SPEC" \
             --update-sources \
             --wait \
-            --format ID,DefaultIngress,Updated
+            --format ID,DefaultIngress,Updated 2>&1)"
+          SYNC_RC=$?
+          set -e
+          printf '%s\n' "$SYNC_OUT"
+          if [ "$SYNC_RC" -ne 0 ]; then
+            case "$SYNC_OUT" in
+              (*403*forbidden*)
+                echo "::error::DigitalOcean refused the live-spec update as forbidden (403). This job already read the same app's spec with the same token, so the token is valid but no longer carries write scope — regenerate DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN with write access and re-run. The git autodeploy binding is independent and is not affected.";;
+              (*401*unauthorized*)
+                echo "::error::DigitalOcean rejected the token as unauthorized (401) — DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN has been revoked or mistyped.";;
+              (*)
+                echo "::error::Could not synchronize the live production spec (exit $SYNC_RC).";;
+            esac
+            exit "$SYNC_RC"
+          fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Force production deploy for manual recovery
