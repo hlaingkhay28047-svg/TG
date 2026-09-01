@@ -146,8 +146,8 @@ function render(root, deps) {
   var strip = dom.el(doc, "div", { class: "dash-strip" });
   var featured = [];
   try {
-    var LW = (typeof window !== "undefined" && window.HNK_LIBRARY_INDEX) || globalThis.HNK_LIBRARY_INDEX || null;
-    if (LW && LW.featuredIds) featured = LW.featuredIds.slice(0, 10);
+    var LW = (typeof window !== "undefined" && window.HNK_LIB_WF) || globalThis.HNK_LIB_WF || null;
+    if (LW && LW.featured) featured = LW.featured.slice(0, 10);
   } catch (e) { featured = []; }
   featured.forEach(function (fid) {
     var im2 = doc.createElement("img");
@@ -180,8 +180,8 @@ function render(root, deps) {
     if (reg && reg.list) wfCount = reg.list().length;
   } catch (e) { }
   try {
-    var LC = (typeof window !== "undefined" && window.HNK_LIBRARY_INDEX) || globalThis.HNK_LIBRARY_INDEX;
-    if (LC && LC.sourceRecords) libCount = LC.sourceRecords;
+    var LC = (typeof window !== "undefined" && window.HNK_LIB_WF) || globalThis.HNK_LIB_WF;
+    if (LC && LC.items) libCount = LC.items.length;
   } catch (e) { }
   stat(150, "One-Tap Workflows");
   stat(libCount, "Visual Library");

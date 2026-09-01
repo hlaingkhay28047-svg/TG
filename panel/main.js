@@ -105,9 +105,164 @@ const state = {
   learnMode: true, armedKey: null, armedEl: null, armTimer: null, armStage: 0,
   /* Reference Image Library (user-selected folder + persistent token) */
   libToken: "", libFolderName: "", libNativePath: "", libImgCount: 0, libLastScan: 0,
-  refTokens: {} /* stable-slot-id -> persistent file token */
+  refTokens: {}, /* stable-slot-id -> persistent file token */
+  /* v6.51.0 — Freeform = the app's pgCreate. subj is the explicit IMAGE 1
+     (null = the open Photoshop document, as before); rhModel / ffRatio /
+     ffSize / ffCount are the app's own Model / Ratio / Size / Count selects
+     ("" = Auto, exactly the values the app persists). */
+  subj: null, rhModel: "nano-banana-2", ffRatio: "", ffSize: "", ffCount: 1,
+  /* the app's per-slot role sentences (null = defaults: IMAGE 1 subject,
+     IMAGE 2/3 style ref) and the slot a Library pick should land in. */
+  imgRoles: null, libTargetSlot: null
 };
 const REFRESHERS = [];
+
+/* ---------------- Freeform = the web app's pgCreate (v6.51.0) ----------------
+   The app's RunningHub model list, in the app's order, with the app's own
+   labels and per-model ratio/size behaviour (kind). Every id is a deployment
+   the enterprise adapter already knows (runninghub-config.js models) — the
+   panel never invents an apiPath, it only lists what exists. */
+const FREEFORM_MODELS = [
+  { id: "nano-banana-2", label: "Nano Banana 2", kind: "" },
+  { id: "rh-image-g2-off", label: "GPT Image 2 (Official)", kind: "" },
+  { id: "rh-image-g2", label: "GPT Image 2 (Low-cost)", kind: "" },
+  { id: "rh-image-x-off", label: "Grok Imagine — Edit (Official)", kind: "xedit" },
+  { id: "nano-banana-pro-off", label: "Nano Banana Pro (Official)", kind: "" },
+  { id: "nano-banana-pro", label: "Nano Banana Pro", kind: "" },
+  { id: "qwen-image-2", label: "Qwen Image 2", kind: "sizeParam" },
+  { id: "qwen-image-2-pro", label: "Qwen Image 2 Pro", kind: "sizeParam" },
+  { id: "flux-2-dev-edit", label: "Flux 2 Dev — Edit", kind: "fluxedit" },
+  { id: "wan-image-edit", label: "Wan Image Edit", kind: "whParam" },
+  { id: "wan-image-edit-pro", label: "Wan Image Edit Pro", kind: "whParam" },
+  { id: "upscale-pro", label: "Upscale Pro", kind: "upscale" },
+  { id: "seedream-v4", label: "Seedream v4", kind: "seedream" },
+  { id: "seedream-v4-5", label: "Seedream v4.5", kind: "seedream" },
+  { id: "rh-imagine-quality-edit", label: "Grok Imagine — Quality Edit", kind: "imagine" },
+  { id: "z-image-turbo", label: "Z-Image Turbo", kind: "zimage" },
+  { id: "z-image-turbo-lora", label: "Z-Image Turbo — Edit LoRA", kind: "node" },
+  { id: "upscale-transparent", label: "Upscale Transparent", kind: "upscale-transparent" },
+  { id: "seedream-v5-lite", label: "Seedream v5 Lite", kind: "sd5lite" },
+  { id: "seedream-v5-pro", label: "Seedream v5 Pro", kind: "sd5pro" },
+  { id: "dola-seedream-5-pro", label: "Dola Seedream 5.0 Pro", kind: "sd5pro" },
+  { id: "grok-image-i2i", label: "Grok 4.2 Image (Low-cost)", kind: "grokimg" },
+  { id: "qwen-image-3", label: "Qwen Image 3.0", kind: "sizeParam" },
+  { id: "qwen-image-3-pro", label: "Qwen Image 3.0 Pro", kind: "sizeParam" },
+  { id: "wan-25-image", label: "Wan 2.5 Preview — Edit", kind: "wan25" },
+  { id: "nano-banana-v1-off", label: "Nano Banana v1 (Official)", kind: "nanov1" },
+  { id: "nano-banana-v1", label: "Nano Banana v1 (Low-cost)", kind: "nanov1" },
+  { id: "nano-banana-2-off", label: "Nano Banana 2 (Official)", kind: "" },
+  { id: "nano-banana-2-lite-off", label: "Nano Banana 2 Lite (Official)", kind: "ratioOnly" },
+  { id: "nano-banana-2-lite", label: "Nano Banana 2 Lite (Low-cost)", kind: "ratioOnly" },
+  { id: "nano-banana-pro-ultra", label: "Nano Banana Pro Ultra 8K", kind: "" },
+  { id: "gpt-image-15-off", label: "GPT Image 1.5 (Official)", kind: "gpt15" },
+  { id: "jimeng-46", label: "Jimeng 4.6", kind: "bare" },
+  { id: "sd5-layers", label: "Seedream 5 — Layer Split", kind: "sdlayer" },
+  { id: "topaz-gp-standard", label: "Topaz Gigapixel Standard", kind: "upscale-transparent" },
+  { id: "topaz-gp-lowres", label: "Topaz Gigapixel Low-Res", kind: "upscale-transparent" },
+  { id: "topaz-gp-text", label: "Topaz Gigapixel Text", kind: "upscale-transparent" },
+  { id: "topaz-gp-hifi", label: "Topaz Gigapixel HiFi", kind: "upscale-transparent" },
+  { id: "topaz-gp-art", label: "Topaz Gigapixel Art", kind: "upscale-transparent" },
+  { id: "topaz-up-faces", label: "Topaz Detail Faces", kind: "upscale-transparent" },
+  { id: "topaz-up-hifi3", label: "Topaz High Fidelity 3", kind: "upscale-transparent" },
+  { id: "flux-2-dev-edit-plain", label: "Flux 2 Dev — Edit (no LoRA)", kind: "node" },
+  { id: "flux-klein-9b-edit", label: "Flux Klein 9B — Edit", kind: "node" },
+  { id: "flux-klein-4b-edit", label: "Flux Klein 4B — Edit", kind: "node" },
+  { id: "flux-klein-4b-edit-lora", label: "Flux Klein 4B — Edit LoRA", kind: "node" },
+  { id: "flux-kontext-lora", label: "Flux Kontext — Edit LoRA", kind: "node" },
+  { id: "qwen-edit-2511", label: "Qwen Edit 2511", kind: "node" },
+  { id: "qwen-edit-2511-lora", label: "Qwen Edit 2511 — LoRA", kind: "node" },
+  { id: "wan-22-image", label: "Wan 2.2 — Edit", kind: "node" }
+];
+function ffModelById(id) {
+  for (let i = 0; i < FREEFORM_MODELS.length; i++) if (FREEFORM_MODELS[i].id === id) return FREEFORM_MODELS[i];
+  return null;
+}
+function ffModel() { return ffModelById(state.rhModel) || FREEFORM_MODELS[0]; }
+function ffIsUpscale(m) { return m.kind === "upscale" || m.kind === "upscale-transparent"; }
+function ffModelLabel(m) { return m.label + (ffIsUpscale(m) ? " · Upscale" : ""); }
+/* The app's rhNarrowRatioOptionsFor: which ratios a model accepts ("" = Auto). */
+const FF_RATIO_DEFAULT = ["", "1:1", "3:4", "4:3", "4:5", "9:16", "16:9", "2:3", "3:2"];
+const FF_NO_RATIO = { xedit: 1, grokimg: 1, bare: 1, sd5lite: 1, sd5pro: 1, sdlayer: 1 };
+const FF_NO_SIZE = { zimage: 1, fluxedit: 1, xedit: 1, node: 1, grokimg: 1, wan25: 1, nanov1: 1, ratioOnly: 1, gpt15: 1, bare: 1 };
+function ffRatioOptionsFor(m) {
+  if (m.kind === "zimage") return ["3:2", "2:3", "16:9", "9:16", "4:3", "3:4", "1:1"];
+  if (m.kind === "imagine") return ["", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"];
+  if (m.kind === "sizeParam") return ["", "1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9"];
+  if (m.kind === "whParam") return ["", "1:1", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "2:3", "3:2"];
+  if (m.kind === "fluxedit") return ["", "1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2"];
+  return FF_RATIO_DEFAULT.slice();
+}
+function ffHasRatio(m) { return !FF_NO_RATIO[m.kind] && !ffIsUpscale(m); }
+function ffHasSize(m) { return !FF_NO_SIZE[m.kind] && !ffIsUpscale(m); }
+/* The app's brand tile for the model button (renderBtn / brandOf + IC): the
+   tile class and the 15px brand glyph, shipped as icons/ui/brand-<key>.svg
+   because UXP draws no inline <svg>. */
+function ffModelBrand(label) {
+  const s = String(label || "").toLowerCase();
+  if (s.indexOf("nano banana") >= 0) return ["t-banana", "banana"];
+  if (s.indexOf("gpt") >= 0) return ["t-openai", "openai"];
+  if (s.indexOf("qwen") >= 0) return ["t-qwen", "qwen"];
+  if (s.indexOf("flux") >= 0 || s.indexOf("klein") >= 0 || s.indexOf("kontext") >= 0) return ["t-flux", "flux"];
+  if (s.indexOf("wan") >= 0) return ["t-wan", "wan"];
+  if (s.indexOf("upscale") >= 0 || s.indexOf("topaz") >= 0) return ["t-gold", "up"];
+  if (s.indexOf("seedream") >= 0 || s.indexOf("jimeng") >= 0) return ["t-rh", "seed"];
+  if (s.indexOf("z-image") >= 0) return ["t-plain", "zimg"];
+  if (s.indexOf("grok") >= 0) return ["t-plain", "grokx"];
+  return ["t-gold", "spark"];
+}
+function ffModelTile(label) { return ffModelBrand(label)[0]; }
+/* the app's sprite icons (svg.ic-s) as pre-tinted <img> files, icons/ui/<symbol>-<tint>.svg */
+function ffIcon(name, tint, cls) {
+  const im = document.createElement("img");
+  im.className = cls || "ic-s";
+  im.src = "icons/ui/" + name + "-" + (tint || "cream") + ".svg";
+  im.alt = "";
+  return im;
+}
+/* app setIcnText: icon then text into any element */
+function setIcnText(el, name, tint, text) {
+  if (!el) return;
+  el.textContent = "";
+  el.appendChild(ffIcon(name, tint));
+  el.appendChild(document.createTextNode(String(text == null ? "" : text)));
+}
+
+/* The app's own runtime copy for this page, verbatim in its nine languages;
+   resolved late (REFRESHERS) so a language switch repaints it. The shared
+   I18N packs stay untouched — these strings live only on this page. */
+const FF_L = {
+  note: { my: "Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်", en: "Images used by Generate — tap to change", shn: "ၶႅပ်းႁၢင်ႈဢၼ် Generate တေၸႂ်ႉ — ၼဵၵ်းသေ လႅၵ်ႈလႆႈ", kac: "Generate hta lang na sumla ni — dip nna galai mai ai", th: "ภาพที่ Generate จะใช้ — แตะเพื่อเปลี่ยน", zh: "Generate 使用的图片 — 点按可更换", vi: "Ảnh sẽ dùng cho Generate — chạm để thay đổi", id: "Gambar yang dipakai Generate — ketuk untuk mengganti", ms: "Imej yang digunakan oleh Generate — ketik untuk tukar" },
+  refsClear: { my: "ပုံအားလုံး ဖယ်မယ်", en: "Clear all images", shn: "လၢင်ႉၶႅပ်းႁၢင်ႈတင်းမူတ်း", kac: "Sumla yawng hpe sausan u", th: "ล้างรูปทั้งหมด", zh: "清除所有图片", vi: "Xóa tất cả ảnh", id: "Hapus semua gambar", ms: "Kosongkan semua imej" },
+  cleared: { my: "ပုံ ၃ ကွက်လုံး ရှင်းလိုက်ပါပြီ", en: "All image slots cleared", shn: "လၢင်ႉၶႅပ်းႁၢင်ႈတင်းမူတ်းယဝ်ႉ", kac: "Sumla slot yawng sausan sai", th: "ล้างช่องรูปทั้งหมดแล้ว", zh: "已清除所有图片槽", vi: "Đã xóa tất cả ô ảnh", id: "Semua slot gambar dihapus", ms: "Semua slot imej dikosongkan" },
+  promptCopy: { my: "Prompt ကူးမယ်", en: "Copy prompt", shn: "ၶူတ်ႉ prompt", kac: "Prompt hpe kaw u", th: "คัดลอก prompt", zh: "复制 prompt", vi: "Sao chép prompt", id: "Salin prompt", ms: "Salin prompt" },
+  copyErr: { my: "ကူး၍မရပါ — စာကို ကိုယ်တိုင်ရွေးပြီး ကူးပါ", en: "Couldn't copy — select the text manually", shn: "ၶူတ်ႉဢမ်ႇလႆႈ", kac: "N mai kaw ai", th: "คัดลอกไม่ได้", zh: "无法复制", vi: "Không thể sao chép", id: "Tidak dapat menyalin", ms: "Tidak dapat menyalin" },
+  promptPh: { my: "One-Tap နှိပ်ရင် ဒီမှာ prompt အလိုအလျောက် ရောက်လာမယ် — ကိုယ်တိုင်လည်း English/မြန်မာလို ရေးလို့ရတယ်…", en: "Tap any one-tap and the prompt lands here — or write your own in English/Burmese…", shn: "ၼဵၵ်း One-Tap သေ prompt တေမႃးတီႈၼႆႈ — တႅမ်ႈႁင်းၵူၺ်းၵေႃႈလႆႈ…", kac: "One-Tap dip yang prompt ndai kaw du na — nang nan ka mung mai ai…", th: "แตะ One-Tap แล้ว prompt จะมาที่นี่ — พิมพ์เองก็ได้…", zh: "点按任意 One-Tap，prompt 会出现在这里 — 也可以自己输入…", vi: "Chạm One-Tap và prompt sẽ hiện ở đây — hoặc tự viết…", id: "Ketuk One-Tap dan prompt muncul di sini — atau tulis sendiri…", ms: "Ketik One-Tap dan prompt muncul di sini — atau tulis sendiri…" },
+  resultH2: { my: "ရလဒ်", en: "Result", shn: "ၽွၼ်းလႆႈ", kac: "Lachyum", th: "ผลลัพธ์", zh: "结果", vi: "Kết quả", id: "Hasil", ms: "Hasil" },
+  toRef: { my: "↺ IMAGE 1 အဖြစ်သုံး", en: "↺ Use as IMAGE 1", shn: "↺ ႁဵတ်း IMAGE 1", kac: "↺ IMAGE 1 hku lang", th: "↺ ใช้เป็น IMAGE 1", zh: "↺ 设为 IMAGE 1", vi: "↺ Dùng làm IMAGE 1", id: "↺ Jadikan IMAGE 1", ms: "↺ Jadikan IMAGE 1" },
+  toRefSt: { my: "ရလဒ်ကို IMAGE 1 ထဲ ထည့်ပြီး ✓ — ဆက် edit လို့ရပြီ", en: "Result added to IMAGE 1 ✓ — ready to keep editing", shn: "သႂ်ႇၽွၼ်းလႆႈၶဝ်ႈ IMAGE 1 ယဝ်ႉ ✓ — ႁပ်ႉၸႂ်ႉ edit ၵႂႃႇလႆႈယဝ်ႉ", kac: "Lachyum hpe IMAGE 1 kaw jaw sai ✓ — edit galoi mung mai ai", th: "เพิ่มผลลัพธ์ลง IMAGE 1 แล้ว ✓ — พร้อมแก้ไขต่อ", zh: "结果已添加到 IMAGE 1 ✓ — 可以继续编辑", vi: "Đã thêm kết quả vào IMAGE 1 ✓ — sẵn sàng chỉnh sửa tiếp", id: "Hasil ditambahkan ke IMAGE 1 ✓ — siap untuk terus mengedit", ms: "Hasil ditambah ke IMAGE 1 ✓ — sedia untuk terus mengedit" },
+  cmpNeed: { my: "နှိုင်းဖို့ IMAGE 1 (မူရင်းပုံ) လိုတယ်", en: "Need IMAGE 1 (the original photo) to compare", shn: "လူဝ်ႇ IMAGE 1 (ၶႅပ်းႁၢင်ႈမူႇလ) တႃႇတဵင်ႇတူၺ်း", kac: "Nsen chyai na IMAGE 1 (dip sumla) ra ai", th: "ต้องมี IMAGE 1 (รูปต้นฉบับ) เพื่อเปรียบเทียบ", zh: "需要 IMAGE 1（原图）才能比较", vi: "Cần IMAGE 1 (ảnh gốc) để so sánh", id: "Perlu IMAGE 1 (foto asli) untuk membandingkan", ms: "Perlu IMAGE 1 (foto asal) untuk membandingkan" },
+  adv: { my: "Advanced — အသေးစိတ် ရွေးချယ်မှု", en: "Advanced", shn: "Advanced — လွင်ႈလိူၵ်ႈႁူဝ်ယွႆႈ", kac: "Advanced — lata lam ni", th: "ขั้นสูง", zh: "高级选项", vi: "Nâng cao", id: "Lanjutan", ms: "Lanjutan" },
+  remove: { my: "ပုံ ဖျက်", en: "Remove image", shn: "ဢဝ်ၶႅပ်းႁၢင်ႈဢွၵ်ႇ", kac: "Sumla shamat kau", th: "ลบรูปภาพ", zh: "移除图片", vi: "Xóa ảnh", id: "Hapus gambar", ms: "Buang imej" },
+  retouch: { my: "ဒီပုံကို Retouch လုပ်မယ်", en: "Retouch this", shn: "Retouch ႁဵတ်းဢၼ်ၼႆႉ", kac: "Ndai hpe retouch galaw u", th: "รีทัชรูปนี้", zh: "修饰这张", vi: "Retouch ảnh này", id: "Retouch foto ini", ms: "Retouch foto ini" },
+  path: { my: "Path batch ထဲ ထည့်မယ်", en: "Add to Path batch", shn: "သႂ်ႇၶဝ်ႈ Path batch", kac: "Path batch de bang u", th: "เพิ่มเข้าชุด Path", zh: "添加到 Path 批处理", vi: "Thêm vào lô Path", id: "Tambah ke batch Path", ms: "Tambah ke kumpulan Path" },
+  engine: { my: "Model စာရင်း/api စီမံရန် — Setup ဖွင့်မယ်", en: "Manage models/api — open Setup", shn: "ၸတ်းၵၢၼ် model — ပိုတ်ႇ Setup", kac: "Model ni hpe up hkang — Setup hpaw u", th: "จัดการโมเดล — เปิด Setup", zh: "管理模型 — 打开 Setup", vi: "Quản lý model — mở Setup", id: "Kelola model — buka Setup", ms: "Urus model — buka Setup" },
+  where: { my: "ဘယ်ကယူမလဲ", en: "Where from?" },
+  srcLayer: { my: "Photoshop layer ကယူမယ်", en: "Use the selected Photoshop layer" },
+  srcFile: { my: "ဖုန်းထဲက ပုံတင်မယ်", en: "Upload from this device" },
+  srcLib: { my: "Library look ထဲက ယူမယ်", en: "Pick a Library look" },
+  srcLast: { my: "နောက်ဆုံးရလဒ်ကို သုံးမယ်", en: "Use the last result" },
+  resultTo: { my: "ရလဒ် → IMAGE {n} ✓", en: "Result → IMAGE {n} ✓" },
+  min: { my: " မိနစ်", en: " min", shn: " မိၼိတ်ႉ", kac: " minit", th: " นาที", zh: " 分钟", vi: " phút", id: " mnt", ms: " min" },
+  credits: { my: " · RH credit သုံးမယ်", en: " · uses RH credits", shn: " · ၸႂ်ႉ RH credit", kac: " · RH credit lang na", th: " · ใช้เครดิต RH", zh: " · 消耗 RH 额度", vi: " · dùng credit RH", id: " · pakai kredit RH", ms: " · guna kredit RH" },
+  addonsNone: { my: "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်", en: "Nothing enabled — that’s fine too" },
+  modelSet: { my: "RunningHub model → {m} ✓ — ဒီ model နဲ့ generate လုပ်ပါမယ်", en: "RunningHub model → {m} ✓ — generates will use this model" },
+  chainH: { my: "➡ ရလဒ်ကို ဆက်ပြင်မယ်", en: "➡ Continue editing this result", shn: "➡ သိုပ်ႇမႄးထတ်း ၽွၼ်းလႆႈၼႆႉ", kac: "➡ Ndai pru sumla hpe matut galaw", th: "➡ แก้ไขผลลัพธ์นี้ต่อ", zh: "➡ 继续编辑此结果", vi: "➡ Tiếp tục chỉnh sửa kết quả này", id: "➡ Lanjutkan mengedit hasil ini", ms: "➡ Terus sunting hasil ini" }
+};
+function ff9(m) {
+  if (!m) return "";
+  const l = state.lang;
+  return m[l] || m[LANG_FB[l]] || m.en || m.my || "";
+}
 
 /* ---------------- i18n (Myanmar + English, full parity) ---------------- */
 /*I18N_START*/
@@ -6827,32 +6982,71 @@ REFRESHERS.push(function () {
   } catch (e) { }
 });
 
-/* ---------------- v6.50.0 — the four page heroes the app has and the panel
-   did not ----------------
-   Video, VidUp, Path and Gallery opened cold on a card while every other page
-   opened on art with a kick line and a headline. The art is baked from the
-   app's OWN banner for each page; these are the app's own headlines for them,
-   its nine-language maps carried verbatim as data. They live here rather than
-   in the panel's I18N table so the ~20 translation packs keep their pinned key
-   sets — the same rule the Home dashboard's copy follows. The <em> the web app
-   wraps its accent phrase in has no meaning in this renderer, so it is
-   stripped and the phrase reads inline, exactly as the other banners do. */
+/* ---------------- v6.50.0 — the page heroes ----------------
+   Every page opens on the web app's own hero: the app's own plate (baked at
+   the app's own crop with the app's own readability scrim, since UXP has
+   neither object-fit nor gradient overlays), the app's English kick line and
+   the app's headline. These are the app's ph_* maps carried verbatim as data
+   — <em> included, which the painter renders as a real <em> node so the
+   accent phrase reads gold exactly as it does in the browser. They live here
+   rather than in the panel's I18N table so the ~20 translation packs keep
+   their pinned key sets — the same rule the Home dashboard's copy follows. */
 const PAGE_HERO_HEADS = {
-  phVideo: { my: "ဓာတ်ပုံတွေကို အသက်ဝင် လှုပ်ရှားစေမယ်", en: "Your photos come alive in motion",
-    shn: "ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် မီးသၢႆၸႂ်မႃး", kac: "Na a sumla ni shamu shamawt hte asak rawng wa ai",
-    th: "ภาพถ่ายของคุณมีชีวิตด้วยการเคลื่อนไหว", zh: "让你的照片在动态中活起来",
-    vi: "Ảnh của bạn sống động trong chuyển động", id: "Foto Anda menjadi hidup dalam gerakan",
-    ms: "Foto anda hidup dalam gerakan" },
-  phVideoUp: { my: "ဗီဒီယိုအရည်အသွေး နှစ်ဆမြှင့် — ပိုကြည် ပိုပြတ်သား", en: "Double your video quality — sharper, cleaner",
-    shn: "ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း သွင်ပုၼ်ႈ — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်", kac: "Video a atsam hpe lahkawng lang jat u — grau san, grau seng ai",
-    th: "ยกระดับคุณภาพวิดีโอสองเท่า — คมชัดยิ่งขึ้น", zh: "视频画质翻倍 — 更锐利、更干净",
-    vi: "Nhân đôi chất lượng video — sắc nét hơn, sạch hơn", id: "Gandakan kualitas video — lebih tajam, lebih bersih",
-    ms: "Gandakan kualiti video — lebih tajam, lebih bersih" },
-  phPath: { my: "ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ တစ်ပြိုင်နက် ပြင်မယ်", en: "One look, applied to your whole album — all at once",
-    shn: "Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — ၵမ်းလဵဝ်တင်းသဵင်ႈ", kac: "Look langai sha, na a sumla yawng hta — kalang ta yawng",
-    th: "ลุคเดียว ใช้กับทั้งอัลบั้ม — พร้อมกันทั้งหมด", zh: "一个风格，套用整本相册 — 一次全部完成",
-    vi: "Một look, áp cho cả album — tất cả cùng lúc", id: "Satu look untuk seluruh album — sekaligus",
-    ms: "Satu look untuk seluruh album — serentak" },
+  phHome: { my: "တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်", en: "Set up once — <em>ready whenever you are</em>",
+    shn: "Setup ပွၵ်ႈလဵဝ် — <em>ၶႂ်ႈၸႂ်ႉမိူဝ်ႈလႂ်ၵေႃႈ ႁၢင်ႈႁႅၼ်းဝႆႉယဝ်ႉ</em>", kac: "Kalang sha setup galaw u — <em>galoi raitim hkyen da sai</em>",
+    th: "ตั้งค่าครั้งเดียว — <em>พร้อมใช้ทุกเมื่อ</em>", zh: "设置一次 — <em>随时待命</em>",
+    vi: "Thiết lập một lần — <em>sẵn sàng bất cứ lúc nào</em>", id: "Atur sekali — <em>siap kapan saja</em>",
+    ms: "Sedia sekali sahaja — <em>sedia bila-bila masa</em>" },
+  phCreate: { my: "စိတ်ကူးထဲက မြင်ကွင်းတိုင်းကို <em>လွတ်လပ်စွာ</em> ဖန်တီးပါ", en: "Bring every scene you imagine to life — <em>your way</em>",
+    shn: "ႁဵတ်းႁႂ်ႈမူႇၶႅပ်းဢၼ်ၼႂ်းၸႂ်ၸဝ်ႈၵဝ်ႇ ပဵၼ်တႄႉမႃး — <em>ၸွမ်းၸႂ်ၸဝ်ႈၵဝ်ႇ</em>", kac: "Na myit hta mu ai lam shagu hpe asak jaw u — <em>na a lam hku</em>",
+    th: "เนรมิตทุกฉากที่คุณจินตนาการ — <em>ในแบบของคุณ</em>", zh: "把你想象的每个场景变为现实 — <em>随心所欲</em>",
+    vi: "Biến mọi khung cảnh bạn tưởng tượng thành hiện thực — <em>theo cách của bạn</em>", id: "Wujudkan setiap adegan yang Anda bayangkan — <em>dengan cara Anda</em>",
+    ms: "Hidupkan setiap adegan yang anda bayangkan — <em>mengikut cara anda</em>" },
+  phMeitu: { my: "Retouch A ပုံစံ ၁၆၂ မျိုး — <em>Live Preview</em> နဲ့ တစ်ချက်ချင်း မြင်ရမယ်", en: "162 Retouch A controls, every one of them on <em>live preview</em>",
+    shn: "Retouch A 162 ဢၼ် — ပႃး <em>live preview</em> ၵူႈဢၼ်", kac: "Retouch A 162 hpe — yawng <em>live preview</em> hte",
+    th: "ปรับแต่ง Retouch A 162 รายการ พร้อม<em>พรีวิวสด</em>ทุกตัว", zh: "162 项 Retouch A 调整，每一项都有<em>实时预览</em>",
+    vi: "162 tùy chỉnh Retouch A, tất cả đều có <em>xem trước trực tiếp</em>", id: "162 kontrol Retouch A, semuanya dengan <em>pratinjau langsung</em>",
+    ms: "162 kawalan Retouch A, semuanya dengan <em>pratonton langsung</em>" },
+  phEvoto: { my: "Retouch B Pro ၂၁၃ မျိုး — အသားအရေနဲ့ အလင်း <em>အသေးစိတ်</em> ချိန်ညှိ", en: "213 Retouch B Pro controls for skin and light, tuned <em>in detail</em>",
+    shn: "Retouch B Pro 213 ဢၼ် — ၽိဝ်ၼိူဝ်ႉလႄႈ ဢၼ်လႅင်း <em>ဢၼ်လဵၵ်ႉ</em>", kac: "Retouch B Pro 213 hpe — hpyi hte htoi <em>ginsup</em> galaw",
+    th: "Retouch B Pro 213 รายการ ปรับผิวและแสง<em>อย่างละเอียด</em>", zh: "213 项 Retouch B Pro 控制，肤质与光线<em>精细</em>调校",
+    vi: "213 tùy chỉnh Retouch B Pro cho da và ánh sáng, <em>chi tiết</em>", id: "213 kontrol Retouch B Pro untuk kulit dan cahaya, <em>terperinci</em>",
+    ms: "213 kawalan Retouch B Pro untuk kulit dan cahaya, <em>terperinci</em>" },
+  phRetouch: { my: "မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်", en: "Flawless retouching that <em>stays natural</em>",
+    shn: "မႄးၶႅပ်းႁၢင်ႈႁႂ်ႈႁၢင်ႈလီ သေ <em>တိုၵ်ႉပဵၼ်သၽႃႇဝ</em>", kac: "<em>Sha-sha re nga ai</em> tsawm htap ai retouch",
+    th: "รีทัชไร้ที่ติแต่<em>ยังดูเป็นธรรมชาติ</em>", zh: "无瑕精修，<em>依然自然</em>",
+    vi: "Chỉnh sửa hoàn hảo mà <em>vẫn tự nhiên</em>", id: "Retouch sempurna yang <em>tetap alami</em>",
+    ms: "Sentuhan sempurna yang <em>kekal semula jadi</em>" },
+  phT2i: { my: "စာသားတစ်ကြောင်းကနေ <em>ပရော်ဖက်ရှင်နယ်ပုံ</em> ဖြစ်လာမယ်", en: "One line of text becomes a <em>professional image</em>",
+    shn: "လိၵ်ႈထႅဝ်လဵဝ် လႅၵ်ႈပဵၼ် <em>ၶႅပ်းႁၢင်ႈၸၼ်ႉၶိုၵ်ႉ</em>", kac: "Laika hteng langai sha <em>professional sumla</em> byin wa ai",
+    th: "ข้อความบรรทัดเดียวกลายเป็น<em>ภาพระดับมืออาชีพ</em>", zh: "一行文字变成<em>专业级图像</em>",
+    vi: "Một dòng chữ trở thành <em>bức ảnh chuyên nghiệp</em>", id: "Satu baris teks menjadi <em>gambar profesional</em>",
+    ms: "Satu baris teks menjadi <em>imej profesional</em>" },
+  phVideo: { my: "ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်", en: "Your photos <em>come alive</em> in motion",
+    shn: "ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် <em>မီးသၢႆၸႂ်မႃး</em>", kac: "Na a sumla ni shamu shamawt hte <em>asak rawng wa</em> ai",
+    th: "ภาพถ่ายของคุณ<em>มีชีวิต</em>ด้วยการเคลื่อนไหว", zh: "让你的照片在动态中<em>活起来</em>",
+    vi: "Ảnh của bạn <em>sống động</em> trong chuyển động", id: "Foto Anda <em>menjadi hidup</em> dalam gerakan",
+    ms: "Foto anda <em>hidup</em> dalam gerakan" },
+  phVideoUp: { my: "ဗီဒီယိုအရည်အသွေး <em>နှစ်ဆမြှင့်</em> — ပိုကြည် ပိုပြတ်သား", en: "<em>Double</em> your video quality — sharper, cleaner",
+    shn: "ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း <em>သွင်ပုၼ်ႈ</em> — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်", kac: "Video a atsam hpe <em>lahkawng lang</em> jat u — grau san, grau seng ai",
+    th: "ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น", zh: "视频画质<em>翻倍</em> — 更锐利、更干净",
+    vi: "<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn", id: "<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih",
+    ms: "<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih" },
+  phLib: { my: "Look ၁၈၅၀ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်", en: "1850 curated looks — <em>pick one</em> and start instantly",
+    shn: "Look 1850 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်", kac: "Lata da ai look 1850 — <em>langai lata la</em> nna kalang ta hpang u",
+    th: "1850 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที", zh: "1850 款精选风格 — <em>选一款</em>立即开始",
+    vi: "1850 phong cách tuyển chọn — <em>chọn một</em> và bắt đầu ngay", id: "1850 gaya pilihan — <em>pilih satu</em> dan mulai seketika",
+    ms: "1850 gaya pilihan — <em>pilih satu</em> dan mula serta-merta" },
+  phGallery: { my: "ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား", en: "Every creation you make, <em>saved right here</em>",
+    shn: "ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ <em>သိမ်းဝႆႉတီႈၼႆႈ</em>", kac: "Na galaw da ai shagu, <em>ndai kaw makoi da ai</em>",
+    th: "ทุกผลงานที่คุณสร้าง <em>บันทึกไว้ที่นี่</em>", zh: "你的每一件作品，<em>都保存在这里</em>",
+    vi: "Mọi tác phẩm bạn tạo, <em>được lưu ngay tại đây</em>", id: "Setiap karya yang Anda buat, <em>tersimpan di sini</em>",
+    ms: "Setiap hasil ciptaan anda, <em>disimpan di sini</em>" },
+  phPath: { my: "ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ <em>တစ်ပြိုင်နက်</em> ပြင်မယ်", en: "One look, applied to your whole album — <em>all at once</em>",
+    shn: "Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>", kac: "Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>",
+    th: "ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>", zh: "一个风格，套用整本相册 — <em>一次全部完成</em>",
+    vi: "Một look, áp cho cả album — <em>tất cả cùng lúc</em>", id: "Satu look untuk seluruh album — <em>sekaligus</em>",
+    ms: "Satu look untuk seluruh album — <em>serentak</em>" },
   t2iIntro: { my: "Prompt တစ်ခုတည်းနဲ့ ပုံအသစ် ထုတ်ပေးမယ် — reference ပုံ မလိုပါ။ RunningHub Enterprise key လိုအပ်ပါတယ်။",
     en: "Generate a brand-new image from just a text prompt — no reference photo needed. Needs your RunningHub Enterprise key.",
     shn: "ႁဵတ်းၶႅပ်းႁၢင်ႈမႂ်ႇတီႈ prompt ၵူၺ်း — ဢမ်ႇလူဝ်ႇ reference ၶႅပ်းႁၢင်ႈ",
@@ -6860,20 +7054,44 @@ const PAGE_HERO_HEADS = {
     th: "สร้างภาพใหม่จากข้อความอย่างเดียว — ไม่ต้องใช้รูปอ้างอิง", zh: "仅凭文字提示词生成全新图片 — 不需要参考图片",
     vi: "Tạo ảnh hoàn toàn mới chỉ từ một prompt văn bản — không cần ảnh tham chiếu",
     id: "Buat gambar baru hanya dari prompt teks — tidak perlu foto referensi",
-    ms: "Jana imej baharu hanya daripada prompt teks — tidak perlu foto rujukan" },
-  phGallery: { my: "ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ ဒီမှာအမြဲ စုစည်းထား", en: "Every creation you make, saved right here",
-    shn: "ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ သိမ်းဝႆႉတီႈၼႆႈ", kac: "Na galaw da ai shagu, ndai kaw makoi da ai",
-    th: "ทุกผลงานที่คุณสร้าง บันทึกไว้ที่นี่", zh: "你的每一件作品，都保存在这里",
-    vi: "Mọi tác phẩm bạn tạo, được lưu ngay tại đây", id: "Setiap karya yang Anda buat, tersimpan di sini",
-    ms: "Setiap hasil ciptaan anda, disimpan di sini" }
+    ms: "Jana imej baharu hanya daripada prompt teks — tidak perlu foto rujukan" }
 };
+/* The app's ph_* strings mark one accent phrase with <em>; render it as a
+   real <em> child (gold) and everything else as text nodes. */
+function paintHeroHead(el, str) {
+  if (!el) return;
+  while (el.firstChild) el.removeChild(el.firstChild);
+  const parts = String(str || "").split(/<\/?em>/);
+  for (let i = 0; i < parts.length; i++) {
+    if (!parts[i]) continue;
+    if (i % 2 === 1) { const em = document.createElement("em"); em.textContent = parts[i]; el.appendChild(em); }
+    else el.appendChild(document.createTextNode(parts[i]));
+  }
+}
+/* The panel's one Retouch page stands in for the app's Retouch A, Retouch B
+   and Retouch pages, so its hero follows the pill: the app's plate, kick and
+   headline for whichever of the three is open. */
+const RETOUCH_HEROES = {
+  meitu:   { img: "icons/banners/hero-mermaid.jpg",          kick: "Retouch A Studio", head: "phMeitu" },
+  evoto:   { img: "icons/banners/banner-flower-portrait.jpg", kick: "Retouch B Pro",   head: "phEvoto" },
+  retouch: { img: "icons/banners/banner-flower-gown.jpg",     kick: "Retouch Pro",     head: "phRetouch" }
+};
+function paintRetouchHero() {
+  const h = RETOUCH_HEROES[state.page] || RETOUCH_HEROES.retouch;
+  const img = $("phRetouchImg"), kick = $("phRetouchKick"), head = $("phRetouch");
+  if (img && img.getAttribute("src") !== h.img) img.setAttribute("src", h.img);
+  if (kick) kick.textContent = h.kick;
+  const m = PAGE_HERO_HEADS[h.head];
+  if (head && m) paintHeroHead(head, m[state.lang] || m.en);
+}
 function paintPageHeroHeads() {
   for (const id in PAGE_HERO_HEADS) {
     const el = $(id);
     if (!el) continue;
     const m = PAGE_HERO_HEADS[id];
-    el.textContent = m[state.lang] || m.en;
+    paintHeroHead(el, m[state.lang] || m.en);
   }
+  paintRetouchHero();
 }
 REFRESHERS.push(paintPageHeroHeads);
 
@@ -7813,6 +8031,7 @@ const REF_SCAN_DEPTH = 4;    /* recurse a few subfolder levels (Backgrounds/Face
    button id, and how a chosen image is assigned — so one controller serves them
    all and an image can never land in the wrong slot. */
 const REF_SLOTS = [
+  { id: "freeform-image-1", role: "subject", btn: null, assign: function (cap) { state.subj = cap; renderRefs(); } }, /* v6.51.0 — Freeform IMG 1 */
   { id: "subject-reference", role: "subject", btn: "refLib0", assign: function (cap) { state.refs[0] = cap; renderRefs(); } },
   { id: "reference-2", role: "reference", btn: "refLib1", assign: function (cap) { state.refs[1] = cap; renderRefs(); } },
   { id: "create-reference-1", role: "create", btn: "cRefLib0", assign: function (cap) { state.cRefs[0] = cap; paintCreateRefs(); } },
@@ -7848,64 +8067,6 @@ async function refCaptureEntry(f) {
   }
   return captureFileViaPS(f, name, 1536);
 }
-
-/* ---- Compact Visual Library → reference slot bridge ----
-   js/hnk_library_compact_cards.js calls HNK.onLibraryPresetSelect(item) when a
-   card's primary button is tapped. The item's full tier ships inside the plugin
-   (assets/user_library/…), so it is read from the plugin folder and assigned to
-   the reference-2 slot like any other reference capture. */
-async function userLibraryCapture(relPath) {
-  /* v6.27.0 — selecting a library preset was broken in every shipped CCX:
-     the full plates live under assets/user_library/…, which has never been
-     inside the archive (the cards fixed this for THUMBS in v6.25 by reading
-     the licensed web host; the select path kept reading the plugin folder
-     and threw). Read the plate from the same licensed host the manifest
-     already allows, exactly like the cards do; the plugin-folder read stays
-     as the dev-tree fallback. */
-  const rel = String(relPath || "");
-  const m = rel.match(/^assets\/user_library(_ui|_thumb)?\/(.+)$/);
-  if (m) {
-    try {
-      const r = await fetch("https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/lib/" +
-        (m[1] ? "ui" : "full") + "/" + m[2]);
-      if (r && r.ok) {
-        const rbuf = await r.arrayBuffer();
-        if (rbuf && rbuf.byteLength) return { b64: bufToB64(rbuf), mime: "image/jpeg", label: m[2] };
-      }
-    } catch (e) { hwarn("userlib remote:", e); }
-  }
-  let entry = await fsp.getPluginFolder();
-  const parts = rel.split("/");
-  for (let i = 0; i < parts.length; i++) {
-    if (parts[i]) entry = await entry.getEntry(parts[i]);
-  }
-  const buf = await entry.read({ format: formats.binary });
-  if (!buf || buf.byteLength === 0) throw new Error("HNKERR:err_img:empty file");
-  return { b64: bufToB64(buf), mime: "image/jpeg", label: entry.name };
-}
-(function wireUserLibrarySelect() {
-  const g = (typeof globalThis !== "undefined") ? globalThis : window;
-  g.HNK = g.HNK || {};
-  g.HNK.onLibraryPresetSelect = function (item) {
-    if (!item || !item.paths || !item.paths.full) return;
-    /* remember the pick so Smart Workflow inputs can pull it too */
-    g.HNK.lastLibraryPick = { path: item.paths.full, title: item.title || "" };
-    userLibraryCapture(item.paths.full).then(function (cap) {
-      cap.label = item.title || cap.label;
-      const slot = refSlotById("reference-2");
-      if (slot) slot.assign(cap);
-      setStatus((item.title || "Library") + " → Reference 2", "ok");
-    }).catch(function (e) { hwarn("userlib select:", e); });
-  };
-  /* Library → Smart Workflow bridge: hands the last-picked library image to
-     the AI Tools workflow inputs as a data URL (null when nothing picked). */
-  g.HNK.getLibraryPickDataUrl = async function () {
-    const pick = g.HNK.lastLibraryPick;
-    if (!pick || !pick.path) return null;
-    const cap = await userLibraryCapture(pick.path);
-    return { dataUrl: "data:" + cap.mime + ";base64," + cap.b64, title: pick.title };
-  };
-})();
 
 async function refLibChooseFolder() {
   let folder = null;
@@ -8413,7 +8574,8 @@ async function saveSettings() {
       libImgCount: state.libImgCount, libLastScan: state.libLastScan, refTokens: state.refTokens,
       accRefresh: state.accRefresh, accUid: state.accUid, accEmail: state.accEmail,
       accProfile: state.accProfile, accSeenAt: state.accSeenAt, accDevId: state.accDevId,
-      accAvatar: state.accAvatar
+      accAvatar: state.accAvatar,
+      rhModel: state.rhModel, ffRatio: state.ffRatio, ffSize: state.ffSize, ffCount: state.ffCount
     };
     await f.write(JSON.stringify(o), { format: formats.utf8 });
   } catch (e) { hwarn("saveSettings:", e); }
@@ -8448,6 +8610,11 @@ async function loadSettings() {
       if (o.model === "auto" || o.model === "flash" || o.model === "pro") state.model = o.model;
       if (o.size === "1K" || o.size === "2K" || o.size === "4K") state.size = o.size;
       if (typeof o.ratio === "string") state.ratio = o.ratio;
+      /* v6.51.0 — Freeform's app-parity selects, validated against the catalog. */
+      if (typeof o.rhModel === "string" && ffModelById(o.rhModel)) state.rhModel = o.rhModel;
+      if (typeof o.ffRatio === "string" && /^(|\d{1,2}:\d{1,2})$/.test(o.ffRatio)) state.ffRatio = o.ffRatio;
+      if (o.ffSize === "" || o.ffSize === "1K" || o.ffSize === "2K" || o.ffSize === "4K") state.ffSize = o.ffSize;
+      if (o.ffCount === 1 || o.ffCount === 2 || o.ffCount === 4) state.ffCount = o.ffCount;
       if (typeof o.autoRun === "boolean") state.autoRun = o.autoRun;
       if (typeof o.autoPlace === "boolean") state.autoPlace = o.autoPlace;
       if (typeof o.intensity === "number") state.intensity = Math.round(o.intensity);
@@ -8822,37 +8989,198 @@ async function readClipboardText() {
 
 function openUrlBar(idx) {
   state.urlSlot = idx;
-  $("urlBar").style.display = "block";
-  $("urlSlotTag").textContent = "\u2192 Slot " + (idx + 1);
-  $("urlInput").value = "";
-  try { $("urlInput").focus(); } catch (e) { }
+  const bar = $("urlBar"); if (!bar) return; /* v6.51.0 — Freeform has no URL bar any more (app parity) */
+  bar.style.display = "block";
+  const tag = $("urlSlotTag"); if (tag) tag.textContent = "→ Slot " + (idx + 1);
+  const inp = $("urlInput"); if (inp) { inp.value = ""; try { inp.focus(); } catch (e) { } }
 }
 
 function closeUrlBar() {
   state.urlSlot = -1;
-  $("urlBar").style.display = "none";
+  const bar = $("urlBar"); if (bar) bar.style.display = "none";
 }
 
-/* ---------------- Reference slots ---------------- */
+/* ---------------- Reference slots ----------------
+   v6.51.0 — Freeform's PROMPT card carries the web app's three-slot refstrip
+   (IMG 1 / IMG 2 / IMG 3). IMG 1 is state.subj (null = the open Photoshop
+   document, the panel's native base); IMG 2/3 are state.refs[0]/[1], the
+   reference slots every preset already reads. */
+const FF_SLOT_IDS = ["freeform-image-1", "subject-reference", "reference-2"];
+function ffSlotGet(i) { return i === 0 ? state.subj : state.refs[i - 1]; }
+function ffSlotSet(i, cap) {
+  if (i === 0) state.subj = cap; else state.refs[i - 1] = cap;
+  if (!cap) refLibForgetSlot(FF_SLOT_IDS[i]);
+  state.imgRoles = null; /* the app resets the roles on every slot write */
+  renderRefs();
+}
+/* The app's REF_ROLES, verbatim: what each slot tells the model to be. */
+const REF_ROLES = [
+  { k: "subject", sent: "MAIN SUBJECT (keep this person's identity exactly)", label: { my: "Subject", en: "Subject" } },
+  { k: "style", sent: "REFERENCE ONLY (style/scene, not identity)", label: { my: "Style ref", en: "Style ref" } },
+  { k: "person", sent: "SECOND PERSON — include this person in the result and keep their identity exactly", label: { my: "လူ (identity ထိန်း)", en: "Person — identity" } },
+  { k: "sketch", sent: "POSE / LAYOUT SKETCH — GEOMETRY ONLY. Read this image ONLY for pose, limb and head placement, where the subject sits inside the frame, subject scale and camera framing. Do NOT reproduce its lines, strokes, greyscale, paper, flatness or any drawn mark, and do NOT treat anything drawn in it as a person to include. The final result is a PHOTOGRAPH, never a drawing, sketch or illustration. Where the sketch's proportions are anatomically impossible, correct them to natural human proportions — the sketch sets pose and placement, not anatomy.", label: { my: "ပုံကြမ်း — ဟန်/နေရာ", en: "Sketch — pose" } }
+];
+function refRoleIdx(i) {
+  const cur = state.imgRoles && state.imgRoles[i];
+  if (!cur) return i === 0 ? 0 : 1;
+  for (let r = 0; r < REF_ROLES.length; r++) { if (REF_ROLES[r].sent === cur) return r; }
+  return -1;
+}
+const REF_L = {
+  wizRole: { my: "Wizard role", en: "Wizard role" },
+  roleTip: { my: "ဒီပုံရဲ့ အခန်းကဏ္ဍ — နှိပ်ပြီး ပြောင်းပါ", en: "This photo's role — tap to cycle" },
+  libHint: { my: "ပုံရွေးပြီး IMAGE ခလုတ်နှိပ်ပါ — IMAGE {n} ထဲ ဝင်ပါမယ်", en: "Pick an image, then tap an IMAGE button — it fills IMAGE {n}" }
+};
+/* What js/hnk_library_compact_cards.js (the app's pgLib) needs from the
+   panel: language, toast, the slot writer, the Library-target handshake. */
+globalThis.HNK = globalThis.HNK || {};
+globalThis.HNK.libBridge = {
+  lang: function () { return state.lang; },
+  fb: function (l) { return LANG_FB[l]; },
+  status: function (msg, kind) { setStatus(msg, kind); },
+  toSlot: function (slot, cap) { ffSlotSet(slot, cap); },
+  takeTargetSlot: function () {
+    const t = typeof state.libTargetSlot === "number" ? state.libTargetSlot : null;
+    state.libTargetSlot = null;
+    return t;
+  },
+  b64: function (buf) { return bufToB64(buf); },
+  magicOk: function (b64) { return imgMagicOk(b64); }
+};
+function ffThumb(r) {
+  const im = document.createElement("div");
+  im.className = "im";
+  im.style.backgroundImage = 'url("data:' + r.mime + ";base64," + r.b64 + '")';
+  return im;
+}
+function ffPressable(node, fn) {
+  node.setAttribute("role", "button"); node.setAttribute("tabindex", "0");
+  node.addEventListener("click", function (ev) { ev.stopPropagation(); fn(ev); });
+  node.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar") { ev.preventDefault(); ev.stopPropagation(); fn(ev); }
+  });
+}
 function renderRefs() {
-  for (let i = 0; i < 2; i++) {
-    const r = state.refs[i];
-    const img = $("refImg" + i), ph = $("refPh" + i);
-    const lb = $("refLb" + i), x = $("refClear" + i);
-    if (r) {
-      img.style.backgroundImage = 'url("data:' + r.mime + ";base64," + r.b64 + '")';
-      img.style.display = "block";
-      ph.style.display = "none";
-      lb.textContent = r.label || "";
-      x.style.display = "flex";
-    } else {
-      img.style.backgroundImage = "";
-      img.style.display = "none";
-      ph.style.display = "flex";
-      lb.textContent = "";
-      x.style.display = "none";
+  const host = $("refStrip");
+  if (host) {
+    host.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const r = ffSlotGet(i);
+      const d = document.createElement("div");
+      d.className = "rs" + (r ? " filled" : "");
+      if (r) {
+        d.appendChild(ffThumb(r));
+        const x = document.createElement("div");
+        x.className = "rsx"; x.textContent = "×"; x.setAttribute("aria-label", ff9(FF_L.remove));
+        (function (slot) { ffPressable(x, function () { ffSlotSet(slot, null); }); })(i);
+        d.appendChild(x);
+      } else d.appendChild(document.createTextNode("+"));
+      const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "IMG " + (i + 1);
+      d.appendChild(tag);
+      (function (slot) { d.addEventListener("click", function () { ffSrcSheet(slot); }); })(i);
+      host.appendChild(d);
+    }
+    const note = document.createElement("div"); note.className = "note"; note.textContent = ff9(FF_L.note);
+    host.appendChild(note);
+  }
+  /* the Library page's IMAGES card — the app's renderRefs, slot for slot */
+  const refs = $("refs");
+  if (refs) {
+    refs.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const r = ffSlotGet(i);
+      const d = document.createElement("div");
+      d.className = "ref" + (r ? " filled" : "");
+      if (r) {
+        d.appendChild(ffThumb(r));
+        const x = document.createElement("div");
+        x.className = "x"; x.setAttribute("aria-label", ff9(FF_L.remove));
+        x.appendChild(ffIcon("i-close", "cream"));
+        (function (slot) { ffPressable(x, function () { ffSlotSet(slot, null); }); })(i);
+        d.appendChild(x);
+        const ri = refRoleIdx(i);
+        const role = document.createElement("div");
+        role.className = "chip refrole" + (ri !== (i === 0 ? 0 : 1) ? " on" : "");
+        role.textContent = ri >= 0 ? ff9(REF_ROLES[ri].label) : ff9(REF_L.wizRole);
+        role.title = ff9(REF_L.roleTip);
+        (function (slot, cur) {
+          ffPressable(role, function () {
+            const next = REF_ROLES[(cur + 1 + REF_ROLES.length) % REF_ROLES.length];
+            if (!state.imgRoles) {
+              state.imgRoles = [];
+              for (let k = 0; k < 3; k++) state.imgRoles.push(REF_ROLES[k === 0 ? 0 : 1].sent);
+            }
+            state.imgRoles[slot] = next.sent;
+            renderRefs();
+          });
+        })(i, ri);
+        d.appendChild(role);
+      } else {
+        const add = document.createElement("div");
+        add.className = "add"; add.textContent = "+";
+        add.title = i === 0 ? "IMAGE 1 — ပင်မ Subject" : "IMAGE " + (i + 1) + " — Reference";
+        (function (slot) { ffPressable(add, function () { ffSrcSheet(slot); }); })(i);
+        d.appendChild(add);
+      }
+      const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "IMG " + (i + 1);
+      d.appendChild(tag);
+      refs.appendChild(d);
     }
   }
+}
+
+/* The app's refSrcSheet: an empty slot asks where the image comes from. The
+   panel's sources are Photoshop's — the selected layer, a file, a Library
+   look, the last result. */
+function ffSheetClose() { const old = $("ffSheet"); if (old && old.parentNode) old.parentNode.removeChild(old); }
+function ffSrcSheet(slot) {
+  ffSheetClose();
+  const bd = document.createElement("div"); bd.id = "ffSheet"; bd.className = "ff-sheet";
+  const card = document.createElement("div"); card.className = "card";
+  const h = document.createElement("div"); h.className = "subh";
+  h.textContent = "IMAGE " + (slot + 1) + " — " + ff9(FF_L.where);
+  card.appendChild(h);
+  function opt(label, fn) {
+    const b = document.createElement("div");
+    b.className = "btn"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    b.textContent = label;
+    b.addEventListener("click", function () { ffSheetClose(); fn(); });
+    card.appendChild(b);
+  }
+  opt(ff9(FF_L.srcLayer), function () { ffSlotFromLayer(slot); });
+  opt(ff9(FF_L.srcFile), function () { ffSlotFromFile(slot); });
+  opt(ff9(FF_L.srcLib), function () {
+    state.libTargetSlot = slot;
+    switchPage("presets");
+    setStatus(ff9(REF_L.libHint).replace("{n}", String(slot + 1)), "ok");
+  });
+  if (state.resultB64) opt(ff9(FF_L.srcLast), function () {
+    ffSlotSet(slot, { b64: state.resultB64, mime: state.resultMime || "image/png", label: "result" });
+    setStatus(ff9(FF_L.resultTo).replace("{n}", String(slot + 1)), "ok");
+  });
+  bd.addEventListener("click", function (ev) { if (ev.target === bd) ffSheetClose(); });
+  bd.appendChild(card);
+  document.body.appendChild(bd);
+}
+async function ffSlotFromLayer(slot) {
+  if (state.busy) return;
+  try {
+    const cap = await captureLayerB64(1536);
+    if (!imgMagicOk(cap.b64)) { setStatus(t("st_img_bad") + " (IMAGE " + (slot + 1) + ")", "err"); return; }
+    ffSlotSet(slot, cap);
+    setStatus(t("st_ref_layer_added"), "ok");
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function ffSlotFromFile(slot) {
+  if (state.busy) return;
+  try {
+    setStatus(t("st_importing"));
+    const cap = await pickReferenceFile();
+    if (!cap) { setStatus(t("st_ready")); return; }
+    if (!imgMagicOk(cap.b64)) { setStatus(t("st_img_bad") + " (IMAGE " + (slot + 1) + ")", "err"); return; }
+    ffSlotSet(slot, cap);
+    setStatus(t("st_ref_file_added"), "ok");
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
 }
 
 async function addLayerRef(idx) {
@@ -10292,7 +10620,10 @@ function buildFinalPrompt(userText, meta, suppress) {
     head.push("--- IMAGE ROLES ---");
     for (let i = 0; i < meta.length; i++) {
       const m = meta[i];
-      if (m.role === "base") {
+      const own = state.imgRoles && typeof m.slot === "number" ? state.imgRoles[m.slot] : "";
+      if (own) {
+        head.push("IMAGE " + (i + 1) + " = " + own);
+      } else if (m.role === "base") {
         head.push("IMAGE " + (i + 1) + " = MAIN SUBJECT: the base photo from the active Photoshop document layer. This is the hero subject. Apply all edits to this image and keep this person.");
       } else {
         head.push("IMAGE " + (i + 1) + " = REFERENCE (" + (m.label || "reference") + ") - use it only for this role.");
@@ -10321,7 +10652,10 @@ function nearestRatio(v) {
 }
 
 function resolveRatio(base) {
-  if (state.ratio !== "auto") return state.ratio;
+  /* v6.51.0 — the Freeform ratio rail (state.ffRatio, "" = Auto) is the
+     app's ratio control; the Setup ratio select is only its fallback. */
+  if (state.ffRatio) return state.ffRatio;
+  if (state.ratio && state.ratio !== "auto") return state.ratio;
   if (base && base.w && base.h) return nearestRatio(base.w / base.h);
   return "1:1";
 }
@@ -10380,9 +10714,12 @@ function rhErrToHnk(err) {
 }
 
 /* single choke point: every image generation in the classic panel runs on
-   RunningHub Enterprise. `model` (the old Gemini id) is ignored — the tier
-   picker (state.model flash|pro|auto) now shapes the PROMPT and the size,
-   exactly as the web app's fast/quality tiers do. */
+   RunningHub Enterprise. `model` (the old Gemini id) is ignored — v6.51.0:
+   the Freeform Model select (state.rhModel, the app's 49-model list) picks
+   the registry model, the ratio rail / Advanced Size + Count shape the
+   output exactly as the web app's pgCreate does, and every returned take is
+   handed back (first one + `extra`) so history shows ×2 / ×4 runs. The
+   Setup "pro" tier still appends the app's quality line. */
 async function callImageAPI(model, parts, imageConfig) {
   await gateRequireLease();
   const adapter = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.runninghubAdapter) || null;
@@ -10391,16 +10728,18 @@ async function callImageAPI(model, parts, imageConfig) {
   const key = (state.rhKey || "").trim();
   if (!key) throw new Error("HNKERR:err_key:RunningHub Enterprise key missing");
   const m = partsToPromptImages(parts);
-  const pro = state.model === "pro" || (state.model === "auto" && state.size !== "1K");
+  const fm = ffModel();
+  const pro = state.model === "pro";
   let prompt = m.prompt.slice(0, MAX_PROMPT);
   if (pro) prompt += "\n" + RH_QUALITY_LINE;
-  const size = pro && state.size === "1K" ? "2K" : state.size;
-  const ratio = (imageConfig && imageConfig.aspectRatio) || "";
+  const size = ffHasSize(fm) ? (state.ffSize || "") : "";
+  const ratio = ffHasRatio(fm) ? ((imageConfig && imageConfig.aspectRatio) || "") : "";
+  const count = ffIsUpscale(fm) ? 1 : (state.ffCount || 1);
   const res = await adapter.generate(
     { transport: transport, apiKey: key },
-    { model: RH_TIER_MODEL, prompt: prompt,
+    { model: fm.id, prompt: prompt,
       images: m.refs.map(function (r) { return { ref: r }; }),
-      output: { ratio: ratio, size: size }, requestCount: 1 },
+      output: { ratio: ratio, size: size }, requestCount: count },
     { onStage: function (stage, info) {
         if (stage === "UPLOADING" && info && info.total) setStatus(t("st_gen") + " \u00b7 " + (info.current || 0) + "/" + info.total);
       } }
@@ -10409,10 +10748,16 @@ async function callImageAPI(model, parts, imageConfig) {
     if (res && res.cancelled) throw new Error("HNKERR:err_generic:cancelled");
     throw rhErrToHnk(res && res.error);
   }
-  const first = res.results && res.results[0] && res.results[0].ref;
-  const pm = /^data:([^;]+);base64,(.*)$/.exec(String(first || ""));
-  if (!pm) throw new Error("HNKERR:err_generic:RunningHub returned no image");
-  return { b64: pm[2], mime: pm[1] || "image/png" };
+  const takes = [];
+  const list = (res.results || []);
+  for (let i = 0; i < list.length; i++) {
+    const pm = /^data:([^;]+);base64,(.*)$/.exec(String((list[i] && list[i].ref) || ""));
+    if (pm) takes.push({ b64: pm[2], mime: pm[1] || "image/png" });
+  }
+  if (!takes.length) throw new Error("HNKERR:err_generic:RunningHub returned no image");
+  const first = takes[0];
+  first.extra = takes.slice(1);
+  return first;
 }
 
 /* ---------------- Studio Lighting AI (3D diagram + relight) ---------------- */
@@ -10796,24 +11141,23 @@ function paintRecentPrompts() {
   sel.value = "";
 }
 
+/* v6.51.0 \u2014 the app's result-card history strip: one 64px thumbnail per
+   take, the shown one gold-bordered (`.hist img.sel`), tap = show it. */
 function renderHistory() {
-  const row = $("histRow");
-  if (!row) return;
-  while (row.firstChild) row.removeChild(row.firstChild);
+  const host = $("hist");
+  if (!host) return;
+  while (host.firstChild) host.removeChild(host.firstChild);
   for (let i = 0; i < state.history.length; i++) {
     (function (idx) {
       const e = state.history[idx];
-      const d = document.createElement("div");
-      d.className = "histTh" + (state.histSel === idx ? " sel" : "");
-      d.style.backgroundImage = 'url("data:' + e.afterMime + ";base64," + e.after + '")';
-      d.addEventListener("click", function () { selectHistory(idx); });
-      row.appendChild(d);
+      if (!e || !e.after) return;
+      const im = document.createElement("img");
+      im.src = "data:" + (e.afterMime || "image/png") + ";base64," + e.after;
+      im.alt = "result " + (idx + 1);
+      im.className = state.histSel === idx ? "sel" : "";
+      im.addEventListener("click", function () { selectHistory(idx); });
+      host.appendChild(im);
     })(i);
-  }
-  const info = $("histInfo");
-  if (info) {
-    const e = state.history[state.histSel];
-    info.textContent = e ? ((state.histSel + 1) + "/" + state.history.length + " \u00B7 " + (e.action || "")) : "";
   }
 }
 
@@ -11064,7 +11408,7 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
   const allowText = !!op.allowText || !!state.capOn;
   if (state.realOn) userText = (userText ? userText + "\n\n" : "") + buildGuard(effRealDir(op.realDir), allowText);
   const myTxt = getMyPromptText().trim();
-  const hasRef = !noRefs && !!(state.refs[0] || state.refs[1]);
+  const hasRef = !noRefs && !!(state.subj || state.refs[0] || state.refs[1]);
   if (!userText && !myTxt && !hasRef) { setStatus(t("st_no_prompt"), "err"); return; }
   if (myTxt && !getPromptText().trim()) {
     /* v6.26.0 — no translate hop: the Burmese text IS the prompt */
@@ -11077,6 +11421,13 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
     let base = null;
     if (op.base) {
       base = op.base;
+      state.beforeB64 = base.b64;
+      state.beforeMime = base.mime || "image/jpeg";
+      if (base.w && base.h) state.previewRatio = base.h / base.w;
+    } else if (state.subj && state.subj.b64) {
+      /* v6.51.0 — the app's IMAGE 1 slot is the main subject when filled;
+         the open document is only the fallback for an empty slot. */
+      base = state.subj;
       state.beforeB64 = base.b64;
       state.beforeMime = base.mime || "image/jpeg";
       if (base.w && base.h) state.previewRatio = base.h / base.w;
@@ -11101,8 +11452,8 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
 
     const meta = [];
     const parts = [];
-    if (base) meta.push({ role: "base" });
-    for (let i = 0; i < 2; i++) { if (!noRefs && state.refs[i]) meta.push({ role: "ref", label: state.refs[i].label }); }
+    if (base) meta.push({ role: "base", slot: 0 });
+    for (let i = 0; i < 2; i++) { if (!noRefs && state.refs[i]) meta.push({ role: "ref", label: state.refs[i].label, slot: i + 1 }); }
 
     const finalPrompt = buildFinalPrompt(userText, meta, unkeep || []);
     state.lastUserText = userText;
@@ -11140,6 +11491,18 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
     if (!imgMagicOk(img.b64)) throw new Error("HNKERR:st_img_bad:api result"); /* check 2/3 */
     state.resultB64 = img.b64;
     state.resultMime = img.mime || "image/png";
+    /* v6.51.0 — ×2 / ×4 runs: every extra take lands in the history strip
+       behind the first one, exactly as the app's result card shows them. */
+    const extra = (img.extra || []).slice().reverse();
+    for (let x = 0; x < extra.length; x++) {
+      if (!imgMagicOk(extra[x].b64)) continue;
+      pushHistory({
+        after: extra[x].b64, afterMime: extra[x].mime || "image/png",
+        before: state.beforeB64, beforeMime: state.beforeMime,
+        userText: userText, finalPrompt: finalPrompt,
+        action: state.lastAction, ts: Date.now(), ratio: state.previewRatio
+      });
+    }
     pushHistory({
       after: img.b64, afterMime: state.resultMime,
       before: state.beforeB64, beforeMime: state.beforeMime,
@@ -11166,8 +11529,8 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
 
 /* ---------------- Auto-Export (v3.9) ---------------- */
 function provTag() {
-  const tier = state.model === "pro" ? "Quality" : state.model === "flash" ? "Fast" : "Auto";
-  return "RunningHub \u00B7 " + tier;
+  /* v6.51.0 — the app's provenance line names the model that ran */
+  return "RunningHub \u00B7 " + ffModelLabel(ffModel());
 }
 
 function tsStamp() {
@@ -11315,34 +11678,44 @@ async function saveResultAs() {
   }
 }
 
-/* ---------------- Before / After compare ---------------- */
+/* ---------------- Before / After compare ----------------
+   v6.51.0 — the app's result card (docs/app showResult / refreshCmp /
+   cmpLayout): the card appears only once a result exists, the compare box
+   is a percent-split overlay driven by a range input, the take history is a
+   row of thumbnails under it. */
 function refreshCompare() {
   const hasB = !!state.beforeB64, hasA = !!state.resultB64;
-  const iB = $("imgBefore"), iA = $("imgAfter");
-  if (hasB) {
-    iB.onload = function () { fitCompareBox(); };
-    iB.src = "data:" + state.beforeMime + ";base64," + state.beforeB64;
-    iB.style.display = "block";
-  } else { iB.style.display = "none"; }
-  if (hasA) {
-    iA.onload = function () {
-      if (iA.naturalWidth) state.previewRatio = iA.naturalHeight / iA.naturalWidth;
-      fitCompareBox();
-    };
-    iA.src = "data:" + state.resultMime + ";base64," + state.resultB64;
-    iA.style.display = "block";
-  } else { iA.style.display = "none"; }
-
-  const slider = $("cmpSlider");
-  if (hasB && hasA) {
-    slider.disabled = false;
-  } else {
-    slider.value = hasA ? 0 : 100;
-    slider.disabled = true;
+  const box = $("resultBox");
+  if (box) box.className = "card result-box" + (hasA ? " on" : "");
+  const ri = $("resultImg");
+  if (ri) {
+    if (hasA) ri.src = "data:" + state.resultMime + ";base64," + state.resultB64;
+    else ri.removeAttribute("src");
   }
+  const iB = $("imgBefore"), iA = $("imgAfter");
+  if (iB) {
+    if (hasB) { iB.onload = function () { fitCompareBox(); }; iB.src = "data:" + state.beforeMime + ";base64," + state.beforeB64; }
+    else iB.removeAttribute("src");
+  }
+  if (iA) {
+    if (hasA) {
+      iA.onload = function () {
+        if (iA.naturalWidth) state.previewRatio = iA.naturalHeight / iA.naturalWidth;
+        fitCompareBox();
+      };
+      iA.src = "data:" + state.resultMime + ";base64," + state.resultB64;
+    } else iA.removeAttribute("src");
+  }
+  const prov = $("resProv");
+  if (prov) { prov.textContent = hasA ? provTag() : ""; prov.style.display = hasA ? "block" : "none"; }
+  const cw = $("cmpWrap");
+  if (cw && !(hasA && hasB)) { cw.style.display = "none"; const cb = $("btnCmp"); if (cb) cb.className = "btn"; }
   btnOff($("btnPlace"), !hasA);
   btnOff($("btnSaveAs"), !hasA);
-  if (hasA) { try { openCard("prev"); if (!state.batch) switchPage("prompt"); } catch (e) { } }
+  btnOff($("btnResultToRef"), !hasA);
+  ffHandoffRow();
+  renderHistory();
+  if (hasA) { try { if (!state.batch) switchPage("prompt"); } catch (e) { } }
   fitCompareBox();
 }
 
@@ -11351,20 +11724,251 @@ function fitCompareBox() {
   if (!box) return;
   const w = box.clientWidth;
   if (!w) return;
-  const h = Math.max(80, Math.round(w * (state.previewRatio || 0.75)));
-  box.style.height = h + "px";
-  const iB = $("imgBefore"), iA = $("imgAfter");
-  iB.style.width = w + "px";
-  iA.style.width = w + "px";
-  updateCmpPos($("cmpSlider").value);
+  const iB = $("imgBefore");
+  if (iB) iB.style.width = w + "px";
+  const r = $("cmpRange");
+  updateCmpPos(r ? r.value : 50);
 }
 
 function updateCmpPos(v) {
-  const box = $("cmpBox");
-  const w = box ? box.clientWidth : 0;
-  const px = Math.round(w * Number(v) / 100);
-  $("cmpTop").style.width = px + "px";
-  $("cmpLine").style.left = Math.max(0, px - 1) + "px";
+  const pct = Math.max(0, Math.min(100, Number(v) || 0));
+  const top = $("cmpTop"), line = $("cmpLine");
+  if (top) top.style.width = pct + "%";
+  if (line) line.style.left = pct + "%";
+}
+
+/* the app's hand-off chips under the result (stHandoffRow): Retouch this,
+   Add to Path batch. Studio and Share are the browser's own — a UXP panel
+   has neither. */
+function ffHandoffRow() {
+  const host = $("handoffCreate");
+  if (!host) return;
+  host.innerHTML = "";
+  if (!state.resultB64) return;
+  const mime = state.resultMime || "image/png", b64 = state.resultB64;
+  function chip(label, fn) {
+    const b = document.createElement("div");
+    b.className = "chip"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    b.textContent = label;
+    b.addEventListener("click", fn);
+    host.appendChild(b);
+  }
+  chip(ff9(FF_L.retouch), function () {
+    state.subj = { b64: b64, mime: mime, label: "result" };
+    renderRefs();
+    switchPage("retouch");
+  });
+  chip(ff9(FF_L.path), function () {
+    const ext = mime === "image/jpeg" ? "jpg" : "png";
+    PATH.files.push({ name: "hnk-result-" + tsStamp() + "." + ext, read: function () { return Promise.resolve(b64ToBuf(b64)); } });
+    try { renderPath(); } catch (e) { }
+    switchPage("path");
+  });
+}
+
+/* the app's "continue editing this result" chain: five workflow chips that
+   open the workflow with the result already in its first image slot */
+const FF_CHAIN = [["retouch", "i-sparkle", "Retouch"], ["upscale", "i-search", "Upscale"], ["bg-replace", "i-frame", "BG Replace"],
+  ["gown-perfect", "i-dress", "Gown Perfect"], ["bridal-decor", "i-flower", "Decor"]];
+function ffChainTo(id) {
+  const e = state.history[state.histSel];
+  const b64 = e ? e.after : state.resultB64, mime = e ? e.afterMime : state.resultMime;
+  switchPage("wf");
+  let ws = null;
+  try { const aiApp = globalThis.HNK && globalThis.HNK.aiToolsApp; ws = aiApp && aiApp.workflowScreen ? aiApp.workflowScreen() : null; } catch (er) { ws = null; }
+  if (!ws) return;
+  ws.select(id);
+  if (!b64) return;
+  try {
+    const st = ws.getState();
+    const inp = st && st.requiredInputs && st.requiredInputs[0];
+    const wst = globalThis.HNK && globalThis.HNK.workflowState;
+    if (inp && wst && wst.setInput) {
+      wst.setInput(st, inp.key, { source: "library", role: inp.role, ref: "data:" + (mime || "image/png") + ";base64," + b64, valid: true });
+      ws.refresh();
+    }
+  } catch (e) { hwarn("chain:", e); }
+}
+function ffBuildChainRow() {
+  const host = $("chainRow");
+  if (!host) return;
+  host.innerHTML = "";
+  for (let i = 0; i < FF_CHAIN.length; i++) {
+    (function (p) {
+      const b = document.createElement("div");
+      b.className = "chip"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      setIcnText(b, p[1], "cream", p[2]);
+      b.addEventListener("click", function () { ffChainTo(p[0]); });
+      host.appendChild(b);
+    })(FF_CHAIN[i]);
+  }
+}
+
+/* ================= FREEFORM PAGE (v6.51.0 — the app's pgCreate) =================
+   The GENERATE card: the app's 49 RunningHub image models behind the brand
+   picker, the visual ratio rail, Advanced count/size, the add-on summary and
+   the ETA line. The native selects stay the single source of truth, exactly
+   as in the app; the rail only mirrors options → chips and writes taps back. */
+function ffFmtSecs(s) { return s >= 120 ? Math.round(s / 60) + ff9(FF_L.min) : s + "s"; }
+function ffPaintEta() {
+  const el = $("genEta");
+  if (!el) return;
+  const n = Math.max(1, state.ffCount || 1);
+  el.textContent = "≈ " + ffFmtSecs(60) + "–" + ffFmtSecs(180 * n) + ff9(FF_L.credits);
+}
+function ffPaintModelBtn() {
+  const m = ffModel();
+  const label = ffModelLabel(m);
+  const sel = $("ffModel"); if (sel) sel.value = m.id;
+  const v = $("ffModelVal"); if (v) v.textContent = label;
+  const brand = ffModelBrand(label);
+  const tile = $("ffModelTile"); if (tile) tile.className = "hsl-tile " + brand[0];
+  const gl = $("ffModelGlyph"); if (gl) gl.src = "icons/ui/brand-" + brand[1] + ".svg";
+}
+function ffFillRatio() {
+  const sel = $("ffRatio");
+  if (!sel) return;
+  const m = ffModel();
+  const opts = ffRatioOptionsFor(m);
+  if (opts.indexOf(state.ffRatio) < 0) state.ffRatio = opts[0];
+  fillSelect(sel, opts.map(function (v) { return { v: v, label: v ? v : "Ratio: Auto" }; }));
+  sel.value = state.ffRatio;
+  const show = ffHasRatio(m);
+  sel.style.display = "none"; /* the rail is the visible ratio control (app .rr-native) */
+  const rail = $("ffRatioRail");
+  if (rail) rail.style.display = show ? "flex" : "none";
+  ffPaintRail();
+}
+function ffPaintRail() {
+  const rail = $("ffRatioRail"), sel = $("ffRatio");
+  if (!rail || !sel) return;
+  rail.innerHTML = "";
+  for (let i = 0; i < sel.options.length; i++) {
+    (function (o) {
+      const v = o.value, m = /^(\d+):(\d+)$/.exec(v);
+      const b = document.createElement("div");
+      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      b.className = "rchip" + (m ? "" : " auto") + (v === sel.value ? " on" : "");
+      const ic = document.createElement("i");
+      const MX = 20; let w = 15, h = 15;
+      if (m) {
+        const rw = +m[1], rh = +m[2];
+        if (rw >= rh) { w = MX; h = Math.max(7, Math.round(MX * rh / rw)); }
+        else { h = MX; w = Math.max(7, Math.round(MX * rw / rh)); }
+      }
+      ic.style.width = w + "px"; ic.style.height = h + "px";
+      if (!m) ic.textContent = "A";
+      b.appendChild(ic);
+      const sp = document.createElement("span"); sp.textContent = v || "Auto";
+      b.appendChild(sp);
+      b.addEventListener("click", function () {
+        state.ffRatio = v; sel.value = v;
+        ffPaintRail(); saveSettings();
+      });
+      rail.appendChild(b);
+    })(sel.options[i]);
+  }
+}
+function ffPaintAdvanced() {
+  const m = ffModel();
+  const sc = $("ffCount"), ss = $("ffSize");
+  if (ffIsUpscale(m)) state.ffCount = 1;
+  if (sc) { sc.value = String(state.ffCount || 1); sc.style.display = ffIsUpscale(m) ? "none" : ""; }
+  if (ss) { ss.value = ffHasSize(m) ? (state.ffSize || "") : ""; ss.style.display = ffHasSize(m) ? "" : "none"; }
+  ffPaintEta();
+}
+function ffOnModelChange(id) {
+  const m = ffModelById(id) || FREEFORM_MODELS[0];
+  state.rhModel = m.id;
+  ffPaintModelBtn();
+  ffFillRatio();
+  ffPaintAdvanced();
+  try { updateCreateEngineTag(); } catch (e) { }
+  saveSettings();
+  setStatus(ff9(FF_L.modelSet).replace("{m}", ffModelLabel(m)), "ok");
+}
+function ffPaintLabels() {
+  const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
+  setIcnText($("btnRefsClear"), "i-trash", "cream", ff9(FF_L.refsClear));
+  setIcnText($("btnPromptCopy"), "i-doc", "cream", ff9(FF_L.promptCopy));
+  set("genEngine", ff9(FF_L.engine));
+  set("genAdvLbl", ff9(FF_L.adv));
+  set("addonSummaryCreate", ff9(FF_L.addonsNone));
+  set("resultH2", ff9(FF_L.resultH2));
+  set("btnPlace", t("btn_place"));
+  setIcnText($("btnResultToRef"), "i-restore", "cream", ff9(FF_L.toRef));
+  setIcnText($("chainH"), "i-arrow", "muted", ff9(FF_L.chainH));
+  const pb = $("promptBox"); if (pb) pb.placeholder = ff9(FF_L.promptPh);
+  ffPaintEta();
+}
+function bindFreeform() {
+  const sm = $("ffModel");
+  if (sm) {
+    fillSelect(sm, FREEFORM_MODELS.map(function (m) { return { v: m.id, label: "Model: " + ffModelLabel(m) }; }));
+    sm.addEventListener("change", function () { ffOnModelChange(sm.value); });
+  }
+  const sr = $("ffRatio");
+  if (sr) sr.addEventListener("change", function () { state.ffRatio = sr.value; ffPaintRail(); saveSettings(); });
+  const sc = $("ffCount");
+  if (sc) {
+    fillSelect(sc, [{ v: "1", label: "×1" }, { v: "2", label: "×2" }, { v: "4", label: "×4" }]);
+    sc.addEventListener("change", function () { state.ffCount = Number(sc.value) || 1; ffPaintEta(); saveSettings(); });
+  }
+  const ss = $("ffSize");
+  if (ss) {
+    fillSelect(ss, [{ v: "", label: "Size: Auto" }, { v: "1K", label: "1K" }, { v: "2K", label: "2K (Pro)" }, { v: "4K", label: "4K (Pro)" }]);
+    ss.addEventListener("change", function () { state.ffSize = ss.value; saveSettings(); });
+  }
+  const adv = $("genAdvH"), grp = $("genGrpAdvanced");
+  if (adv && grp) adv.addEventListener("click", function () {
+    grp.className = grp.className.indexOf(" open") >= 0 ? "grp app-grp" : "grp app-grp open";
+  });
+  const eng = $("genEngine");
+  if (eng) eng.addEventListener("click", function () { switchPage("setup"); saveSettings(); });
+  const ad = $("addonSummaryCreate");
+  if (ad) ad.addEventListener("click", function () { switchPage("retouch"); saveSettings(); });
+  const rc = $("btnRefsClear");
+  if (rc) rc.addEventListener("click", function () {
+    if (!state.subj && !state.refs[0] && !state.refs[1]) return;
+    state.subj = null; state.refs[0] = null; state.refs[1] = null; state.imgRoles = null;
+    for (let i = 0; i < FF_SLOT_IDS.length; i++) { try { refLibForgetSlot(FF_SLOT_IDS[i]); } catch (e) { } }
+    renderRefs();
+    setStatus(ff9(FF_L.cleared), "ok");
+  });
+  const pc = $("btnPromptCopy");
+  if (pc) pc.addEventListener("click", function () {
+    const v = getPromptText().trim();
+    if (!v) return;
+    const done = function () { setStatus("✓", "ok"); };
+    const fail = function () { setStatus(ff9(FF_L.copyErr), "err"); };
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(v).then(done, fail);
+      } else if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.setContent) {
+        Promise.resolve(navigator.clipboard.setContent({ "text/plain": v })).then(done, fail);
+      } else fail();
+    } catch (e) { fail(); }
+  });
+  const cmp = $("btnCmp"), cw = $("cmpWrap");
+  if (cmp && cw) cmp.addEventListener("click", function () {
+    if (!state.resultB64) return;
+    if (!state.beforeB64) { setStatus(ff9(FF_L.cmpNeed), "err"); return; }
+    const open = cw.style.display === "none";
+    cw.style.display = open ? "block" : "none";
+    cmp.className = "btn" + (open ? " active" : "");
+    if (open) fitCompareBox();
+  });
+  const rg = $("cmpRange");
+  if (rg) rg.addEventListener("input", function () { updateCmpPos(rg.value); });
+  ffBuildChainRow();
+  ffPaintModelBtn();
+  ffFillRatio();
+  ffPaintAdvanced();
+  ffPaintLabels();
+  REFRESHERS.push(function () {
+    try { ffPaintModelBtn(); ffFillRatio(); ffPaintAdvanced(); ffPaintLabels(); } catch (e) { hwarn("freeform:", e); }
+    try { renderRefs(); if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.repaint(); } catch (e) { hwarn("library:", e); }
+  });
 }
 
 /* ================= CREATE MODE (standalone) =================
@@ -12138,22 +12742,22 @@ const PAGES = [
   { key: "setup",   page: "pageSetup",   group: null },
   { key: "aitools", page: "pageAiTools", group: "home" },
   { key: "wf",      page: "pageAiTools", group: "wf" },
-  { key: "prompt",  page: "pagePrompt",  group: "edit",  sub: "Freeform" },
+  { key: "prompt",  page: "pagePrompt",  group: "edit",  sub: "Freeform",  ic: "i-pen" },
   /* the app's Edit group is Freeform · Retouch A · Retouch B · Retouch · Path.
      Retouch A and B already exist here as presets on the Retouch page, so the
      pills open that page with the preset chosen — same names, same order. */
-  { key: "meitu",   page: "pageRetouch", group: "edit",  sub: "Retouch A", preset: "pMeitu" },
-  { key: "evoto",   page: "pageRetouch", group: "edit",  sub: "Retouch B", preset: "pEvoto" },
-  { key: "retouch", page: "pageRetouch", group: "edit",  sub: "Retouch" },
-  { key: "path",    page: "pagePath",    group: "edit",  sub: "Path" },
-  { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img" },
-  { key: "video",   page: "pageVideo",   group: "media", sub: "Video" },
-  { key: "vidup",   page: "pageVideoUp", group: "media", sub: "VidUp" },
-  { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference" },
+  { key: "meitu",   page: "pageRetouch", group: "edit",  sub: "Retouch A", ic: "i-makeup", preset: "pMeitu" },
+  { key: "evoto",   page: "pageRetouch", group: "edit",  sub: "Retouch B", ic: "i-target", preset: "pEvoto" },
+  { key: "retouch", page: "pageRetouch", group: "edit",  sub: "Retouch",   ic: "i-gem" },
+  { key: "path",    page: "pagePath",    group: "edit",  sub: "Path",      ic: "i-stack" },
+  { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img", ic: "i-doc" },
+  { key: "video",   page: "pageVideo",   group: "media", sub: "Video",     ic: "i-clapper" },
+  { key: "vidup",   page: "pageVideoUp", group: "media", sub: "VidUp",     ic: "i-rocket" },
+  { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference", ic: "i-books" },
   /* the app's Library holds Reference and Gallery; the panel's own generation
      history is that gallery of results. Its select / zip / delete actions
      follow in the next wave — the shape of the navigation is the app's now. */
-  { key: "gallery", page: "pageGallery", group: "lib",   sub: "Gallery" }
+  { key: "gallery", page: "pageGallery", group: "lib",   sub: "Gallery",   ic: "i-gallery" }
 ];
 function pageEntry(key) {
   for (let i = 0; i < PAGES.length; i++) if (PAGES[i].key === key) return PAGES[i];
@@ -12175,8 +12779,11 @@ function renderSubtabs(activeKey) {
   for (let i = 0; i < subs.length; i++) {
     (function (sub) {
       const b = mkBtn();
-      b.className = "subtab" + (sub.key === activeKey ? " on" : "");
-      b.textContent = sub.sub;
+      const on = sub.key === activeKey;
+      b.className = "subtab" + (on ? " on" : "");
+      /* the app's icn(meta[1]) before the label: muted on the pill, ink on gold */
+      if (sub.ic) b.appendChild(ffIcon(sub.ic, on ? "ink" : "muted"));
+      b.appendChild(document.createTextNode(sub.sub));
       b.addEventListener("click", function () { switchPage(sub.key); saveSettings(); });
       host.appendChild(b);
     })(subs[i]);
@@ -12201,6 +12808,7 @@ function switchPage(key) {
   }
   renderSubtabs(key);
   if (key === "gallery") { try { galRefresh(); } catch (e) { } }
+  if (active && active.page === "pageRetouch") { try { paintRetouchHero(); } catch (e) { } }
   if (active && active.preset) {
     const pb = $(active.preset);
     if (pb && pb.click) { try { pb.click(); } catch (e) { } }
@@ -12208,6 +12816,7 @@ function switchPage(key) {
   const pg = $("pages");
   if (pg) pg.scrollTop = 0;
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }
+  if (key === "presets") { try { if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.layout(); } catch (e) { } }
   if (key === "create") { try { refreshCreateCompare(); } catch (e) { } }
   /* v6.27.0 — the bottom Home tab always returns to the cards home, like
      the web app; the AI Tools stack's own "Home" pill left with this. */
@@ -12387,10 +12996,14 @@ function init() {
 
   /* prompt — UXP has NO pointer-events:none; click anywhere focuses + places caret */
   safe("prompt", function () {
+    /* v6.51.0 — the Freeform prompt box is sized by the app's own CSS
+       (#promptBox min-height 110px); stylePromptBox's 140px inline sizing is
+       kept only for the legacy boxes below. */
     const pb = $("promptBox");
-    stylePromptBox(pb);
-    detectPromptCap(pb);
-    pb.addEventListener("input", onPromptInput);
+    if (pb) {
+      detectPromptCap(pb);
+      pb.addEventListener("input", onPromptInput);
+    }
     const pm = $("promptBoxMy");
     if (pm) {
       stylePromptBox(pm);
@@ -12409,8 +13022,10 @@ function init() {
     }
     const bc = $("btnCopyFinal");
     if (bc) bc.addEventListener("click", copyFinalPrompt);
-    $("pwrap").addEventListener("click", function () { try { pb.focus(); } catch (e) { } });
-    $("btnClearP").addEventListener("click", function () { setPromptText(""); try { pb.focus(); } catch (e) { } });
+    const pw = $("pwrap");
+    if (pw && pb) pw.addEventListener("click", function () { try { pb.focus(); } catch (e) { } });
+    const bcp = $("btnClearP");
+    if (bcp) bcp.addEventListener("click", function () { setPromptText(""); try { if (pb) pb.focus(); } catch (e) { } });
     const rp = $("selRecentPrompts");
     if (rp) {
       rp.addEventListener("change", function () {
@@ -12421,27 +13036,27 @@ function init() {
     }
   });
 
-  /* reference slots */
+  /* reference slots — v6.51.0: the three Freeform slots are built by
+     renderRefs() itself (tap a slot → source sheet), so there are no fixed
+     per-slot buttons left to wire here. The optional URL bar stays guarded. */
   safe("refs", function () {
-    $("refLayer0").addEventListener("click", function () { addLayerRef(0); });
-    $("refLayer1").addEventListener("click", function () { addLayerRef(1); });
-    $("refFile0").addEventListener("click", function () { addFileRef(0); });
-    $("refFile1").addEventListener("click", function () { addFileRef(1); });
-    $("refClear0").addEventListener("click", function () { state.refs[0] = null; refLibForgetSlot("subject-reference"); renderRefs(); });
-    $("refClear1").addEventListener("click", function () { state.refs[1] = null; refLibForgetSlot("reference-2"); renderRefs(); });
-    $("refWeb0").addEventListener("click", function () { openUrlBar(0); });
-    $("refWeb1").addEventListener("click", function () { openUrlBar(1); });
-    $("btnUrlCancel").addEventListener("click", closeUrlBar);
-    $("btnUrlPaste").addEventListener("click", function () {
+    const uc = $("btnUrlCancel");
+    if (uc) uc.addEventListener("click", closeUrlBar);
+    const up = $("btnUrlPaste");
+    if (up) up.addEventListener("click", function () {
       readClipboardText().then(function (s) {
-        if (s) $("urlInput").value = s.trim();
+        const ui = $("urlInput");
+        if (s && ui) ui.value = s.trim();
       });
     });
-    $("btnUrlLoad").addEventListener("click", function () {
+    const ul = $("btnUrlLoad");
+    if (ul) ul.addEventListener("click", function () {
       if (state.busy || state.urlSlot < 0) return;
-      loadUrlIntoSlot(state.urlSlot, $("urlInput").value);
+      const ui = $("urlInput");
+      loadUrlIntoSlot(state.urlSlot, ui ? ui.value : "");
+    });
   });
-  });
+  safe("freeform", bindFreeform);
 
   /* tab pages */
   safe("tabs", function () {
@@ -12469,7 +13084,6 @@ function init() {
     bindCard("cCrefH", "cCrefB", "crefs", false);
     bindCard("cResH", "cResB", "cresults", false);
     bindCard("cLibH", "cLibB", "reflib", false);
-    bindCard("cUserLibH", "cUserLibB", "userlib", true); /* v6.27.0 — the Library tab IS the library: open by default */
     bindCard("cLightH", "cLightB", "lightcard", false);
     /* the lighting stage measures its own width — re-render when its card opens */
     const lh = $("cLightH");
@@ -12528,12 +13142,14 @@ function init() {
     bindGroup("grpChainsH", "grpChainsB", true);
     bindGroup("grpRestoreH", "grpRestoreB", true);
     bindChecks(RMIX_CK, state.rmix);
-    $("btnRmixGen").addEventListener("click", function () { const g0 = $("btnRmixGen"); armGate("__rmix", g0, function () { setBusyBtn(g0); replaceMixRun(); }); });
+    const rmg = $("btnRmixGen");
+    if (rmg) rmg.addEventListener("click", function () { const g0 = $("btnRmixGen"); armGate("__rmix", g0, function () { setBusyBtn(g0); replaceMixRun(); }); });
     bindGroup("grpI2pH", "grpI2pB", false);
     bindChecks(I2P_CK, state.i2p);
     bindChecks(I2P_OPT_CK, state.i2p);
     /* v6.26.0 — btnI2pExtract left with the Gemini vision bridge */;
-    $("btnSceneGen").addEventListener("click", function () { const g0 = $("btnSceneGen"); armGate("__scene", g0, function () { setBusyBtn(g0); sceneGenerate(); }); });
+    const scg = $("btnSceneGen");
+    if (scg) scg.addEventListener("click", function () { const g0 = $("btnSceneGen"); armGate("__scene", g0, function () { setBusyBtn(g0); sceneGenerate(); }); });
   });
 
   /* studio lighting */
@@ -12614,15 +13230,17 @@ function init() {
 
   /* compare + output */
   safe("compare", function () {
-    $("cmpSlider").addEventListener("input", function () { updateCmpPos($("cmpSlider").value); });
+    /* v6.51.0 \u2014 the slider (#cmpRange) is wired in bindFreeform; "Use as
+       IMAGE 1" fills the app's first slot (state.subj), as the web app does. */
     const r2r = $("btnResultToRef");
     if (r2r) r2r.addEventListener("click", function () {
       if (!state.resultB64) return;
-      state.refs[0] = { b64: state.resultB64, mime: state.resultMime || "image/png", label: "Result \u21BA" };
+      state.subj = { b64: state.resultB64, mime: state.resultMime || "image/png", label: "result" };
       renderRefs();
-      setStatus(t("st_to_ref"), "ok");
+      setStatus(ff9(FF_L.toRefSt), "ok");
     });
-    $("btnPlace").addEventListener("click", function () {
+    const bpl = $("btnPlace");
+    if (bpl) bpl.addEventListener("click", function () {
       if (state.busy || !state.resultB64) return;
       try { setStage("placing"); } catch (e0) { }
       setStatus(t("st_place"));
@@ -12637,7 +13255,8 @@ function init() {
       })
         .catch(function (e) { try { setStage(null); } catch (e2) { } setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err"); });
     });
-    $("btnSaveAs").addEventListener("click", saveResultAs);
+    const bsa = $("btnSaveAs");
+    if (bsa) bsa.addEventListener("click", saveResultAs);
   });
 
   /* resize (guarded window.*) */

@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="styles/hnk_library_compact_cards.css" />
   <!-- v6.22.0 gate. Inline on purpose: this overlay has to be painted by the
        time the document below it exists, and a <link> is one more thing that
        can fail. It ships VISIBLE; JavaScript is what takes it down.
@@ -170,11 +169,10 @@
 
     <!-- ========== PAGE: SETUP ========== -->
     <div class="page" id="pageSetup">
-      <div class="pgbanner pgb-setup">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Setup</div>
-          <div class="pgbanner-title" data-i18n="pgb_setup"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-archer.jpg" alt="" />
+        <div class="ph-kick">Setup</div>
+        <p class="ph-head" id="phHome">တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်</p>
       </div>
       <div class="card">
         <div class="chead" id="cReadyH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_ready"></span></div>
@@ -267,6 +265,19 @@
             <div class="tgltxt" data-i18n="ai_direct_gen">Direct Generate</div>
             <div role="button" tabindex="0" id="setDirect" class="tgl"></div>
           </div>
+          <!-- v6.51.0 — Auto-Place / Auto-Save moved here from Freeform. The
+               web app's Freeform page is PROMPT + GENERATE + result and nothing
+               else; these two are the panel's own Photoshop output settings,
+               so they live with Direct Generate, not on the page the app keeps
+               clean. -->
+          <div class="tglrow">
+            <div class="tgltxt" data-i18n="auto_place"></div>
+            <div role="button" tabindex="0" id="tglAutoPlace" class="tgl"></div>
+          </div>
+          <div class="tglrow">
+            <div class="tgltxt" data-i18n="autosave_lbl"></div>
+            <div role="button" tabindex="0" id="tglAutoSave" class="tgl"></div>
+          </div>
         </div>
       </div>
 
@@ -357,595 +368,94 @@
 
     <!-- ========== PAGE: PROMPT ========== -->
     <div class="page" id="pagePrompt">
-      <div class="pgbanner pgb-studio">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Freeform Create</div>
-          <div class="pgbanner-title" data-i18n="pgb_studio"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-freeform.jpg" alt="" />
+        <div class="ph-kick">Freeform Create</div>
+        <p class="ph-head" id="phCreate">စိတ်ကူးထဲက မြင်ကွင်းတိုင်းကို <em>လွတ်လပ်စွာ</em> ဖန်တီးပါ</p>
       </div>
-      <div class="card">
-        <div class="chead" id="cPromptH">
-          <span class="car">&#9662;</span>
-          <span class="chead-t" data-i18n="sec_prompt"></span>
-          <span class="chead-r" id="charCount">0 / 20000</span>
-        </div>
-        <div class="cbody" id="cPromptB">
-          <div class="pwrap" id="pwrap">
-            <textarea id="promptBox" class="pbox" rows="7" maxlength="20000" data-i18n-ph="hint_prompt"></textarea>
-          </div>
-          <div class="chead" style="margin-top:8px;"><span class="chead-t" data-i18n="lbl_my_prompt">MYANMAR PROMPT</span><span class="chead-r" id="charCountMy">0 / 20000</span></div>
-          <div class="pwrap">
-            <textarea id="promptBoxMy" class="pbox" rows="5" maxlength="20000" data-i18n-ph="hint_prompt_my"></textarea>
-          </div>
-          <!-- v6.26.0 — the Gemini live-translate toggle left with its
-               provider: a Burmese prompt now sends exactly as written. -->
-          <div class="row tight">
-            <select id="selRecentPrompts" class="inp grow"></select>
-          </div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnClearP" class="btn btn-sm grow" data-i18n="btn_clear"></div>
-          </div>
+      <!-- v6.51.0 — Freeform is the web app's pgCreate, card for card: PROMPT
+           (3-slot refstrip + prompt + two chips), GENERATE (model, ratio rail,
+           Advanced count/size, add-on summary, ETA, gold GENERATE) and the
+           hidden result card (Download / Place / Use as IMAGE 1 / Before-After,
+           hand-off chips, slider compare, history). Every control is a
+           role="button" div (UXP), every label is set at runtime from the app's
+           own nine-language copy, and every id main.js reads is kept. -->
+      <div class="card" id="ffPromptCard">
+        <h2 id="ffPromptH2">PROMPT</h2>
+        <div class="refstrip" id="refStrip"></div>
+        <textarea class="inp" id="promptBox"></textarea>
+        <div class="mut" id="genTrHint" style="display:none;margin-top:4px"></div>
+        <div class="mut" id="tapNote" style="margin-top:6px"></div>
+        <div class="arow" style="margin-top:6px">
+          <div role="button" tabindex="0" class="chip" id="btnRefsClear"></div>
+          <div role="button" tabindex="0" class="chip" id="btnPromptCopy"></div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cFinalH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_final"></span></div>
-        <div class="cbody" id="cFinalB">
-          <textarea id="finalPromptBox" class="pbox" rows="8" readonly></textarea>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnCopyFinal" class="btn btn-sm grow" data-i18n="btn_copy"></div>
+      <div class="card" id="ffGenCard">
+        <h2 id="ffGenH2">GENERATE</h2>
+        <div class="arow gen-opts" id="genOpts">
+          <div class="hsl" id="ffModelHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="ffModelBtn">
+              <span class="hsl-tile t-banana" id="ffModelTile"><img class="hsl-glyph-img" id="ffModelGlyph" src="icons/ui/brand-banana.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx" id="ffModelCtx">Model</span><span class="hsl-val" id="ffModelVal">Nano Banana 2</span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="ffModel"></select>
           </div>
+          <select class="inp rr-native" id="ffRatio"></select>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cRefH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_refs"></span></div>
-        <div class="cbody" id="cRefB">
-          <div class="mut" data-i18n="base_note"></div>
-          <div class="refrow">
-            <div class="refslot">
-              <div class="refthumb">
-                <div id="refImg0" class="refbg"></div>
-                <div id="refPh0" class="refph">1</div>
-                <div role="button" tabindex="0" id="refClear0" class="xbtn">&times;</div>
-              </div>
-              <div class="reflb" id="refLb0"></div>
-              <div class="row tight refbtns"><div role="button" tabindex="0" id="refLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
-              <div class="row tight">
-                <div role="button" tabindex="0" id="refLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
-                <div role="button" tabindex="0" id="refFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
-                <div role="button" tabindex="0" id="refWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
-              </div>
-            </div>
-            <div class="refslot">
-              <div class="refthumb">
-                <div id="refImg1" class="refbg"></div>
-                <div id="refPh1" class="refph">2</div>
-                <div role="button" tabindex="0" id="refClear1" class="xbtn">&times;</div>
-              </div>
-              <div class="reflb" id="refLb1"></div>
-              <div class="row tight refbtns"><div role="button" tabindex="0" id="refLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
-              <div class="row tight">
-                <div role="button" tabindex="0" id="refLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
-                <div role="button" tabindex="0" id="refFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
-                <div role="button" tabindex="0" id="refWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
-              </div>
-            </div>
-          </div>
-          <div class="urlbar" id="urlBar">
-            <div class="urlhead">
-              <span class="urlttl" data-i18n="url_title"></span>
-              <span class="urltag" id="urlSlotTag"></span>
-            </div>
-            <input id="urlInput" type="text" class="inp" data-i18n-ph="url_ph" />
-            <div class="row tight">
-              <div role="button" tabindex="0" id="btnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></div>
-              <div role="button" tabindex="0" id="btnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></div>
-              <div role="button" tabindex="0" id="btnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></div>
+        <div role="button" tabindex="0" class="acc-lnk" id="genEngine"></div>
+        <div class="ratio-rail" id="ffRatioRail"></div>
+        <div class="grp app-grp" id="genGrpAdvanced">
+          <div role="button" tabindex="0" class="grp-h" id="genAdvH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span class="grp-lbl"><img class="ic-s" src="icons/ui/i-sliders-cream.svg" alt=""><span id="genAdvLbl">Advanced</span></span></div>
+          <div class="grp-b" id="genAdvB">
+            <div class="arow gen-opts" id="genOptsAdv">
+              <select class="inp" id="ffCount"></select>
+              <select class="inp" id="ffSize"></select>
             </div>
           </div>
         </div>
-      </div>
-      <div class="card">
-        <div class="tglrow">
-          <div class="tgltxt" data-i18n="auto_place"></div>
-          <div role="button" tabindex="0" id="tglAutoPlace" class="tgl"></div>
-        </div>
-          <div class="tglrow">
-            <div class="tgltxt" data-i18n="autosave_lbl"></div>
-            <div role="button" tabindex="0" id="tglAutoSave" class="tgl"></div>
-          </div>
-        <div role="button" tabindex="0" id="btnGenerate" class="gen" data-i18n="btn_generate"></div>
+        <div class="addons" id="addonSummaryCreate"></div>
+        <div class="mut" id="genEta" style="margin-top:6px"></div>
+        <div role="button" tabindex="0" class="btn btn-gold gen" id="btnGenerate"><img class="ic-s" src="icons/ui/i-bolt-ink.svg" alt="">GENERATE — RunningHub</div>
+        <div class="spin" id="spin"></div>
+        <div class="status" id="stGen"></div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cCamH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_campro"></span></div>
-        <div class="cbody" id="cCamB">
-          <div class="tglrow">
-            <div class="tgltxt" data-i18n="cam_master"></div>
-            <div role="button" tabindex="0" id="tglCam" class="tgl"></div>
-          </div>
-          <div class="mut" data-i18n="cam_note"></div>
-          <div class="swrow"><div class="slbl" data-i18n="cam_body"></div><div class="sws" id="swCamBody"></div></div>
-          <div class="swrow"><div class="slbl" data-i18n="cam_lens"></div><div class="sws" id="swCamMm"></div></div>
-          <div class="swrow"><div class="slbl" data-i18n="cam_f"></div><div class="sws" id="swCamF"></div></div>
-          <div class="swrow"><div class="slbl" data-i18n="cam_bokeh"></div><div class="sws" id="swCamBokeh"></div></div>
-          <div class="swrow"><div class="slbl" data-i18n="cam_film"></div><div class="sws" id="swCamFilm"></div></div>
-          <div class="srow"><div role="button" tabindex="0" id="ckIsoOn" class="ckb"></div><div class="slbl" data-i18n="cam_iso"></div><input type="range" id="camIso" min="50" max="1000" step="50" value="100" /><div class="sval" id="camIsoV">100</div></div>
-          <div class="srow last"><div role="button" tabindex="0" id="ckKOn" class="ckb"></div><div class="slbl" data-i18n="cam_k"></div><input type="range" id="camK" min="4000" max="8000" step="100" value="5600" /><div class="sval" id="camKV">5600</div></div>
+      <div class="card result-box" id="resultBox">
+        <h2 id="resultH2"></h2>
+        <div class="mut" id="resProv" style="margin-top:6px"></div>
+        <div class="result-img"><img id="resultImg" alt="result" /></div>
+        <div class="arow" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnSaveAs"><img class="ic-s" src="icons/ui/i-download-ink.svg" alt="">Download</div>
+          <div role="button" tabindex="0" class="btn" id="btnPlace"></div>
+          <div role="button" tabindex="0" class="btn" id="btnResultToRef"></div>
+          <div role="button" tabindex="0" class="btn" id="btnCmp"><img class="ic-s" src="icons/ui/i-compare-cream.svg" alt="">Before/After</div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cBatchH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_batch"></span></div>
-        <div class="cbody" id="cBatchB">
-          <div class="mut" data-i18n="batch_note"></div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnBatchRun" class="btn btn-sm btn-gold grow" data-i18n="btn_batch"></div>
-            <div role="button" tabindex="0" id="btnBatchStop" class="btn btn-sm" data-i18n="btn_batch_stop"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cPrevH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_preview"></span></div>
-        <div class="cbody" id="cPrevB">
-          <div class="mut" data-i18n="hist_note"></div>
-          <div class="histrow" id="histRow"></div>
-          <div class="row tight" style="margin-bottom:8px;">
-            <div class="mut grow" id="histInfo" style="margin-bottom:0;"></div>
-            <div role="button" tabindex="0" id="btnHistPrompt" class="btn btn-xs" data-i18n="btn_hist_prompt"></div>
-          </div>
+        <div class="arow" id="handoffCreate" style="margin-top:8px"></div>
+        <div class="subh" id="chainH" style="margin-top:12px"></div>
+        <div class="chainrow" id="chainRow"></div>
+        <div id="cmpWrap" style="display:none;margin-top:12px">
           <div class="cmp" id="cmpBox">
-            <img id="imgAfter" class="cmp-base" />
-            <div class="cmp-top" id="cmpTop"><img id="imgBefore" /></div>
+            <img id="imgAfter" alt="after" />
+            <div class="cmp-top" id="cmpTop"><img id="imgBefore" alt="before" /></div>
             <div class="cmp-line" id="cmpLine"></div>
-            <div class="cmp-tag tag-b" data-i18n="before"></div>
-            <div class="cmp-tag tag-a" data-i18n="after"></div>
           </div>
-          <div class="slider">
-            <input type="range" id="cmpSlider" min="0" max="100" value="50" />
-          </div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnPlace" class="btn btn-sm grow" data-i18n="btn_place"></div>
-            <div role="button" tabindex="0" id="btnResultToRef" class="btn btn-sm grow" data-i18n="btn_to_ref"></div>
-            <div role="button" tabindex="0" id="btnSaveAs" class="btn btn-sm grow" data-i18n="btn_saveas"></div>
-          </div>
+          <input type="range" id="cmpRange" min="0" max="100" value="50" style="width:100%;margin-top:8px" />
+          <div class="arow" style="justify-content:space-between"><span class="mut">← Before (IMAGE 1)</span><span class="mut">After →</span></div>
         </div>
-      </div>
-      <div class="ftr">HNK Studio &mdash; Portrait &middot; Wedding &middot; Graduation &middot; Myanmar</div>
-
-
-      <!-- v6.27.0 — Learn Mode moved WITH the preset buttons it governs
-           (1 tap = guide, 2 = prompt, 3 = RUN); it had been stranded on the
-           Library page after the regroup. -->
-      <div class="tglrow" style="margin:0 2px 8px 2px;">
-        <div class="tgltxt" data-i18n="learn_lbl"></div>
-        <div role="button" tabindex="0" id="tglLearn" class="tgl"></div>
-      </div>
-
-      <!-- v6.27.0 — regrouped (owner request: each thing with its own group).
-           The one-tap Presets (Retouch A/Retouch B styles included), Chains, Ref ops,
-           Scenes, Wedding, Recipes, Lighting and the Pipeline moved here from
-           the old Presets page: they all edit the CURRENT photo through this
-           page's runGenerate/Keep/cleanup machinery, and the Edit-page batch
-           already advertises chains+cleanup — the Library tab keeps only the
-           1850 Visual Library, like the web app. -->
-      <div class="card">
-        <div class="chead" id="cPipeH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="crd_pipe"></span></div>
-        <div class="cbody" id="cPipeB">
-          <div class="mut" data-i18n="pipe_note"></div>
-          <div class="tglrow">
-            <div class="tgltxt" data-i18n="pipe_merge"></div>
-            <div role="button" tabindex="0" id="tglPipeMerge" class="tgl"></div>
-          </div>
-          <div class="row tight">
-            <select id="pipeSel" class="inp grow"></select>
-            <div role="button" tabindex="0" id="btnPipeAdd" class="btn btn-xs" data-i18n="pipe_add"></div>
-          </div>
-          <div id="pipeList"></div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnPipeRun" class="btn btn-sm btn-gold grow" data-i18n="pipe_run"></div>
-            <div class="mut" id="pipeInfo" style="margin:0 8px;">0 / 6</div>
-            <div role="button" tabindex="0" id="btnPipeClear" class="btn btn-xs" data-i18n="pipe_clear"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cPresetH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_presets"></span></div>
-        <div class="cbody" id="cPresetB">
-          <div class="tglrow">
-            <div class="tgltxt" data-i18n="auto_run"></div>
-            <div role="button" tabindex="0" id="tglAutoRun" class="tgl"></div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="grpCleanH"><span class="car">&#9656;</span><span data-i18n="grp_cleanup"></span></div>
-            <div class="grp-b" id="grpCleanB">
-              <div class="mut" data-i18n="cleanup_note"></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="ckPeople" class="ckb"></div><div class="cklb" data-i18n="p_remove_people"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="ckHands" class="ckb"></div><div class="cklb" data-i18n="p_fix_hands"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="ckLegs" class="ckb"></div><div class="cklb" data-i18n="p_fix_legs"></div></div>
-              <div class="ckrow last"><div role="button" tabindex="0" id="ckFull" class="ckb"></div><div class="cklb" data-i18n="p_full_clean"></div></div>
-            </div>
-          </div>
-          <div class="mut" data-i18n="grp_moved_note"></div>
-
-          <div class="grp">
-            <div class="grp-h" id="grpRepH"><span class="car">&#9656;</span><span data-i18n="grp_repsubj"></span></div>
-            <div class="grp-b" id="grpRepB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="pRepSolo" data-i18n="p_rep_solo"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pRepCouple" data-i18n="p_rep_couple"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pRepFamily" data-i18n="p_rep_family"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="grpMixH"><span class="car">&#9656;</span><span data-i18n="grp_rmix"></span></div>
-            <div class="grp-b" id="grpMixB">
-              <div class="ckrow"><div role="button" tabindex="0" id="rmBg" class="ckb"></div><div class="cklb" data-i18n="rm_bg"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="rmFg" class="ckb"></div><div class="cklb" data-i18n="rm_fg"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="rmLight" class="ckb"></div><div class="cklb" data-i18n="rm_light"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="rmColor" class="ckb"></div><div class="cklb" data-i18n="rm_color"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="rmObject" class="ckb"></div><div class="cklb" data-i18n="rm_object"></div></div>
-              <div class="row last">
-                <div role="button" tabindex="0" id="btnRmixGen" class="btn btn-sm btn-gold grow" data-i18n="btn_rmix"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="grpI2pH"><span class="car">&#9656;</span><span data-i18n="grp_i2p"></span></div>
-            <div class="grp-b" id="grpI2pB">
-              <div class="mut" data-i18n="i2p_note"></div>
-              <!-- v6.26.0 — the scene-EXTRACT checkboxes and button (Gemini
-                   vision) left with their provider; Scene Generate below is a
-                   RunningHub image job and stays. -->
-              <div class="ckrow"><div role="button" tabindex="0" id="i2pFit" class="ckb"></div><div class="cklb" data-i18n="i2p_fit"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="i2pAdapt" class="ckb"></div><div class="cklb" data-i18n="i2p_adapt"></div></div>
-              <div class="row last">
-                <div role="button" tabindex="0" id="btnSceneGen" class="btn btn-sm btn-gold grow" data-i18n="btn_scenegen"></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cChRestH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="crd_chainsrest"></span></div>
-        <div class="cbody" id="cChRestB">
-          <div class="grp">
-            <div class="grp-h" id="grpChainsH"><span class="car">&#9656;</span><span data-i18n="grp_chains"></span></div>
-            <div class="grp-b" id="grpChainsB">
-              <div class="mut" data-i18n="chains_note"></div>
-              <div class="sws">
-                <div role="button" tabindex="0" id="chn_prewedding" class="sw ltchip chn"></div>
-                <div role="button" tabindex="0" id="chn_pageant" class="sw ltchip chn"></div>
-                <div role="button" tabindex="0" id="chn_model" class="sw ltchip chn"></div>
-                <div role="button" tabindex="0" id="chn_glass" class="sw ltchip chn"></div>
-                <div role="button" tabindex="0" id="chn_commercial" class="sw ltchip chn"></div>
-                <div role="button" tabindex="0" id="chn_korea" class="sw ltchip chn"></div>
-                <div role="button" tabindex="0" id="chn_vietnam" class="sw ltchip chn"></div>
-                <div role="button" tabindex="0" id="chn_chinese" class="sw ltchip chn"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="grpRestoreH"><span class="car">&#9656;</span><span data-i18n="grp_restore"></span></div>
-            <div class="grp-b" id="grpRestoreB">
-              <div class="mut" data-i18n="restore_note"></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="ckRestColor" class="ckb"></div><div class="cklb" data-i18n="rest_color"></div></div>
-              <div class="ckrow"><div role="button" tabindex="0" id="ckRestBw" class="ckb"></div><div class="cklb" data-i18n="rest_bw"></div></div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="pRestore" data-i18n="p_restore"></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cRoH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="crd_refops"></span></div>
-        <div class="cbody" id="cRoB">
-          <div class="mut" data-i18n="ro_h_main" style="color:#d9a441;font-weight:700;letter-spacing:0.5px;"></div>
-          <div class="mut" data-i18n="ro_note"></div>
-          <div class="row tight">
-            <div class="slbl" data-i18n="ro_target"></div>
-            <div role="button" tabindex="0" id="roTgSolo" class="segb" data-i18n="ro_solo"></div>
-            <div role="button" tabindex="0" id="roTgCouple" class="segb" data-i18n="ro_couple"></div>
-            <div role="button" tabindex="0" id="roTgFamily" class="segb" data-i18n="ro_family"></div>
-          </div>
-          <div class="sws" style="margin-bottom:8px;">
-            <div role="button" tabindex="0" id="ckRefMk" class="ckb"></div><div class="cklb" data-i18n="ro_mk" style="margin-right:12px;"></div>
-            <div role="button" tabindex="0" id="ckRefHair" class="ckb"></div><div class="cklb" data-i18n="ro_hair"></div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roFaceH"><span class="car">&#9656;</span><span data-i18n="ro_h_face"></span></div>
-            <div class="grp-b" id="roFaceB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="roFaceRep" data-i18n="ro_faceRep"></div>
-                <div role="button" tabindex="0" class="pbtn" id="roFaceSwap" data-i18n="ro_faceSwap"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roBgH"><span class="car">&#9656;</span><span data-i18n="ro_h_bg"></span></div>
-            <div class="grp-b" id="roBgB">
-              <div class="mut" data-i18n="ro_bg_note"></div>
-              <div class="sws" style="margin-bottom:6px;">
-                <div role="button" tabindex="0" id="ckBgFrame" class="ckb"></div><div class="cklb" data-i18n="ro_bg_frame" style="margin-right:12px;"></div>
-                <div role="button" tabindex="0" id="ckBgLight" class="ckb"></div><div class="cklb" data-i18n="ro_bg_light"></div>
-              </div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="roBgRep" data-i18n="ro_bgRep"></div>
-                <div role="button" tabindex="0" class="pbtn" id="roBgSwap" data-i18n="ro_bgSwap"></div>
-                <div role="button" tabindex="0" class="pbtn" id="roFgRep" data-i18n="ro_fgRep"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roSubH"><span class="car">&#9656;</span><span data-i18n="ro_h_sub"></span></div>
-            <div class="grp-b" id="roSubB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="roSubSwap" data-i18n="ro_subSwap"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roLcH"><span class="car">&#9656;</span><span data-i18n="ro_h_lc"></span></div>
-            <div class="grp-b" id="roLcB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="roLcRef" data-i18n="ro_lcRef"></div>
-                <div role="button" tabindex="0" class="pbtn" id="roLcCopy" data-i18n="ro_lcCopy"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roDressH"><span class="car">&#9656;</span><span data-i18n="ro_h_dress"></span></div>
-            <div class="grp-b" id="roDressB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="roDressRef" data-i18n="ro_dressRef"></div>
-                <div role="button" tabindex="0" class="pbtn" id="roDressRep" data-i18n="ro_dressRep"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roMkH"><span class="car">&#9656;</span><span data-i18n="ro_h_mk"></span></div>
-            <div class="grp-b" id="roMkB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="roMkCopy" data-i18n="ro_mkCopy"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roMatchH"><span class="car">&#9656;</span><span data-i18n="ro_h_match"></span></div>
-            <div class="grp-b" id="roMatchB">
-              <div class="mut" data-i18n="ro_match_note"></div>
-              <div class="sws">
-                <div role="button" tabindex="0" id="mColor" class="ckb"></div><div class="cklb" data-i18n="m_color" style="margin-right:10px;"></div>
-                <div role="button" tabindex="0" id="mLight" class="ckb"></div><div class="cklb" data-i18n="m_light" style="margin-right:10px;"></div>
-                <div role="button" tabindex="0" id="mMakeup" class="ckb"></div><div class="cklb" data-i18n="m_makeup" style="margin-right:10px;"></div>
-                <div role="button" tabindex="0" id="mSkin" class="ckb"></div><div class="cklb" data-i18n="m_skin"></div>
-              </div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn gold" id="roMatch" data-i18n="ro_matchBtn"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roDetailH"><span class="car">&#9656;</span><span data-i18n="ro_h_detail"></span></div>
-            <div class="grp-b" id="roDetailB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="pHair" data-i18n="p_hair"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pAccess" data-i18n="p_access"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pPose" data-i18n="p_pose"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="roCompH"><span class="car">&#9656;</span><span data-i18n="ro_h_comp"></span></div>
-            <div class="grp-b" id="roCompB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="pFgProps" data-i18n="p_fgprops"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pTextLogo" data-i18n="p_textlogo"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pStyle" data-i18n="p_style"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pFgBgLc" data-i18n="p_fgbglc"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cScnH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="crd_scenes"></span></div>
-        <div class="cbody" id="cScnB">
-          <div class="mut" data-i18n="scn_note"></div>
-          <div class="row tight">
-            <div class="slbl" data-i18n="ro_target"></div>
-            <div role="button" tabindex="0" id="scnTgSolo" class="segb" data-i18n="ro_solo"></div>
-            <div role="button" tabindex="0" id="scnTgCouple" class="segb" data-i18n="ro_couple"></div>
-            <div role="button" tabindex="0" id="scnTgFamily" class="segb" data-i18n="ro_family"></div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="scnStyleH"><span class="car">&#9656;</span><span data-i18n="scn_h_style"></span></div>
-            <div class="grp-b" id="scnStyleB">
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="scnGrad" data-i18n="scn_grad"></div>
-                <div role="button" tabindex="0" class="pbtn" id="scnPrewed" data-i18n="scn_prewed"></div>
-                <div role="button" tabindex="0" class="pbtn" id="scnVietnam" data-i18n="scn_vietnam"></div>
-                <div role="button" tabindex="0" class="pbtn" id="scnMyanmar" data-i18n="scn_myanmar"></div>
-                <div role="button" tabindex="0" class="pbtn" id="scnChinese" data-i18n="scn_chinese"></div>
-                <div role="button" tabindex="0" class="pbtn" id="scnShan" data-i18n="scn_shan"></div>
-                <div role="button" tabindex="0" class="pbtn" id="scnNewborn" data-i18n="scn_newborn"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="scnBdayH"><span class="car">&#9656;</span><span data-i18n="scn_h_bday"></span></div>
-            <div class="grp-b" id="scnBdayB">
-              <div class="srow"><div class="slbl" data-i18n="scn_age"></div><input type="range" id="scnAge" min="1" max="45" value="18" /><div class="sval" id="scnAgeV">18</div></div>
-              <div class="pbtns"><div role="button" tabindex="0" class="pbtn gold" id="scnBday" data-i18n="scn_bday_go"></div></div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="scnCapH"><span class="car">&#9656;</span><span data-i18n="scn_h_cap"></span></div>
-            <div class="grp-b" id="scnCapB">
-              <div class="ckrow"><div role="button" tabindex="0" id="ckCap" class="ckb"></div><div class="cklb" data-i18n="scn_cap_on"></div></div>
-              <input id="capText" type="text" class="inp" data-i18n-ph="scn_cap_ph" />
-              <div class="row tight">
-                <div class="slbl" data-i18n="scn_cap_pos"></div>
-                <div role="button" tabindex="0" id="capTop" class="segb" data-i18n="scn_top"></div>
-                <div role="button" tabindex="0" id="capBottom" class="segb" data-i18n="scn_bottom"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="scnScarfH"><span class="car">&#9656;</span><span data-i18n="scn_h_scarf"></span></div>
-            <div class="grp-b" id="scnScarfB">
-              <div class="row tight">
-                <div class="slbl" data-i18n="scn_dir"></div>
-                <div role="button" tabindex="0" id="scnDirL" class="segb" data-i18n="scn_left"></div>
-                <div role="button" tabindex="0" id="scnDirR" class="segb" data-i18n="scn_right"></div>
-                <div role="button" tabindex="0" id="scnDirU" class="segb" data-i18n="scn_up"></div>
-              </div>
-              <div class="row tight">
-                <div class="slbl" data-i18n="scn_len"></div>
-                <div role="button" tabindex="0" id="scnLenS" class="segb" data-i18n="scn_short"></div>
-                <div role="button" tabindex="0" id="scnLenL" class="segb" data-i18n="scn_long"></div>
-              </div>
-              <div class="pbtns"><div role="button" tabindex="0" class="pbtn gold" id="scnScarf" data-i18n="scn_scarf"></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cWedH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="crd_wed"></span></div>
-        <div class="cbody" id="cWedB">
-          <div class="mut" data-i18n="wp_note"></div>
-          <div class="grp">
-            <div class="grp-h" id="wpTrailH"><span class="car">&#9656;</span><span data-i18n="wp_h_trail"></span></div>
-            <div class="grp-b" id="wpTrailB">
-              <div class="swrow"><div class="slbl" data-i18n="wp_trail_c"></div><div class="sws" id="swWedTrail"></div></div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn gold" id="wpTrailGo" data-i18n="wp_trail_go"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="wpVeilH"><span class="car">&#9656;</span><span data-i18n="wp_h_veil"></span></div>
-            <div class="grp-b" id="wpVeilB">
-              <div class="swrow"><div class="slbl" data-i18n="wp_veil_c"></div><div class="sws" id="swWedVeil"></div></div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn gold" id="wpVeilGo" data-i18n="wp_veil_go"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="wpGownH"><span class="car">&#9656;</span><span data-i18n="wp_h_gown"></span></div>
-            <div class="grp-b" id="wpGownB">
-              <div class="swrow"><div class="slbl" data-i18n="wp_gown_c"></div><div class="sws" id="swWedGown"></div></div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn gold" id="wpGownGo" data-i18n="wp_gown_go"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="wpPetalH"><span class="car">&#9656;</span><span data-i18n="wp_h_petal"></span></div>
-            <div class="grp-b" id="wpPetalB">
-              <div class="swrow"><div class="slbl" data-i18n="wp_petalcolor"></div><div class="sws" id="swPetal"></div></div>
-              <div class="swrow"><div class="slbl" data-i18n="wp_pet_c"></div><div class="sws" id="swWedPet"></div></div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn gold" id="wpPetalGo" data-i18n="wp_pet_go"></div>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="grp-h" id="wpExtraH"><span class="car">&#9656;</span><span data-i18n="wp_h_extra"></span></div>
-            <div class="grp-b" id="wpExtraB">
-              <div class="swrow"><div class="slbl" data-i18n="wp_extra_c"></div><div class="sws" id="swWedExtra"></div></div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn gold" id="wpExtraGo" data-i18n="wp_extra_go"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cRecH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="crd_recipes"></span></div>
-        <div class="cbody" id="cRecB">
-          <div class="grp last">
-            <div class="grp-h" id="grpRecipesH"><span class="car">&#9656;</span><span data-i18n="grp_recipes"></span></div>
-            <div class="grp-b" id="grpRecipesB">
-              <div class="mut" data-i18n="recipe_note"></div>
-              <div class="row last">
-                <div role="button" tabindex="0" id="btnRecipeSave" class="btn btn-sm btn-gold grow" data-i18n="btn_recipe_save"></div>
-                <div role="button" tabindex="0" id="btnRecipeLoad" class="btn btn-sm grow" data-i18n="btn_recipe_load"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="chead" id="cLightH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_light"></span></div>
-        <div class="cbody" id="cLightB">
-          <div class="mut" data-i18n="light_note"></div>
-          <div class="lstage" id="lightStage">
-            <div class="lfloor"></div>
-            <div class="lsubj" data-i18n="lstage_model">MODEL</div>
-            <div class="lcam" data-i18n="lstage_cam">CAM</div>
-            <div class="ldot" id="ld0"></div><div class="ldot" id="ld1"></div>
-            <div class="ldot" id="ld2"></div><div class="ldot" id="ld3"></div>
-            <div class="ldot" id="ld4"></div><div class="ldot" id="ld5"></div>
-            <div class="ldot" id="ld6"></div><div class="ldot" id="ld7"></div>
-          </div>
-              <div class="lrow" id="lrKey"><div role="button" tabindex="0" id="lrKeyCk" class="ckb"></div><div class="lname" data-i18n="l_key"></div><div class="lsum" id="lrKeySum"></div></div>
-              <div class="lrow" id="lrFill"><div role="button" tabindex="0" id="lrFillCk" class="ckb"></div><div class="lname" data-i18n="l_fill"></div><div class="lsum" id="lrFillSum"></div></div>
-              <div class="lrow" id="lrButterfly"><div role="button" tabindex="0" id="lrButterflyCk" class="ckb"></div><div class="lname" data-i18n="l_butterfly"></div><div class="lsum" id="lrButterflySum"></div></div>
-              <div class="lrow" id="lrSide"><div role="button" tabindex="0" id="lrSideCk" class="ckb"></div><div class="lname" data-i18n="l_side"></div><div class="lsum" id="lrSideSum"></div></div>
-              <div class="lrow" id="lrRim"><div role="button" tabindex="0" id="lrRimCk" class="ckb"></div><div class="lname" data-i18n="l_rim"></div><div class="lsum" id="lrRimSum"></div></div>
-              <div class="lrow" id="lrBack"><div role="button" tabindex="0" id="lrBackCk" class="ckb"></div><div class="lname" data-i18n="l_back"></div><div class="lsum" id="lrBackSum"></div></div>
-              <div class="lrow" id="lrHair"><div role="button" tabindex="0" id="lrHairCk" class="ckb"></div><div class="lname" data-i18n="l_hair"></div><div class="lsum" id="lrHairSum"></div></div>
-              <div class="lrow" id="lrBglight"><div role="button" tabindex="0" id="lrBglightCk" class="ckb"></div><div class="lname" data-i18n="l_bglight"></div><div class="lsum" id="lrBglightSum"></div></div>
-          <div class="lctl">
-            <div class="lselname" id="lightSelName"></div>
-            <div class="sws">
-              <div role="button" tabindex="0" id="ltsoftbox" class="sw ltchip" data-i18n="lt_softbox"></div>
-              <div role="button" tabindex="0" id="ltocta" class="sw ltchip" data-i18n="lt_octa"></div>
-              <div role="button" tabindex="0" id="ltstrip" class="sw ltchip" data-i18n="lt_strip"></div>
-              <div role="button" tabindex="0" id="ltumbrella" class="sw ltchip" data-i18n="lt_umbrella"></div>
-              <div role="button" tabindex="0" id="ltbeauty" class="sw ltchip" data-i18n="lt_beauty"></div>
-              <div role="button" tabindex="0" id="lthard" class="sw ltchip" data-i18n="lt_hard"></div>
-            </div>
-            <div class="srow"><div class="slbl" data-i18n="li_int"></div><input type="range" id="liInt" min="0" max="100" value="80" /><div class="sval" id="liIntV">80</div></div>
-            <div class="srow"><div class="slbl" data-i18n="li_angle"></div><input type="range" id="liAngle" min="-180" max="180" value="-45" /><div class="sval" id="liAngleV">-45</div></div>
-            <div class="srow"><div class="slbl" data-i18n="li_height"></div><input type="range" id="liHeight" min="-50" max="50" value="15" /><div class="sval" id="liHeightV">15</div></div>
-            <div class="srow"><div class="slbl" data-i18n="li_dist"></div><input type="range" id="liDist" min="10" max="100" value="45" /><div class="sval" id="liDistV">45</div></div>
-            <div class="srow last"><div class="slbl" data-i18n="li_size"></div><input type="range" id="liSize" min="10" max="100" value="70" /><div class="sval" id="liSizeV">70</div></div>
-          </div>
-          <div class="ckrow"><div role="button" tabindex="0" id="lgEquip" class="ckb"></div><div class="cklb" data-i18n="lg_equip"></div></div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnLightGen" class="btn btn-sm btn-gold grow" data-i18n="btn_lightgen"></div>
-          </div>
-        </div>
+        <div class="hist" id="hist"></div>
       </div>
 
     </div>
 
     <!-- ========== PAGE: CREATE (standalone) ========== -->
     <div class="page" id="pageCreate">
-      <div class="pgbanner pgb-create">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Text to Image</div>
-          <div class="pgbanner-title" data-i18n="pgb_create"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-coral-fairy.jpg" alt="" />
+        <div class="ph-kick">Text to Image</div>
+        <p class="ph-head" id="phT2i">စာသားတစ်ကြောင်းကနေ <em>ပရော်ဖက်ရှင်နယ်ပုံ</em> ဖြစ်လာမယ်</p>
       </div>
       <!-- v6.50.0 — the app's two cards where the panel had one. Its Text to
            Image page states what the page does (TEXT TO IMAGE + one line),
@@ -1024,21 +534,43 @@
 
     <!-- ========== PAGE: PRESETS ========== -->
     <div class="page" id="pagePresets">
-      <div class="pgbanner pgb-presets">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Reference Library</div>
-          <div class="pgbanner-title" data-i18n="pgb_presets"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-train-station.jpg" alt="" />
+        <div class="ph-kick">Reference Library</div>
+        <p class="ph-head" id="phLib">Look ၁၈၅၀ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်</p>
       </div>
 
-      <!-- Compact user reference library (366 curated assets, 3 collections).
-           Renderer auto-mounts into #hnkCompactLibraryCards; selecting a card
-           routes through HNK.onLibraryPresetSelect → reference-2 slot. -->
+      <!-- v6.51.0 — the web app's pgLib, element for element: the IMAGE strip
+           (main.js renderRefs paints #refs from the same three slots the
+           Freeform page uses) and the 1850 Visual Library card (metadata only —
+           art resolves from the deployed /app/lib tree, so the CCX stays
+           small; js/hnk_library_compact_cards.js mounts into these ids). -->
       <div class="card">
-        <div class="chead" id="cUserLibH"><span class="car">&#9662;</span><span class="chead-t">Visual Library</span></div>
-        <div class="cbody" id="cUserLibB">
-          <div id="hnkCompactLibraryCards" class="hnk-library-root"></div>
+        <h2 id="refsH2"></h2>
+        <div class="refs" id="refs"></div>
+        <div class="mut" style="margin-top:8px" id="refsNote"></div>
+      </div>
+      <div class="card">
+        <h2>VISUAL LIBRARY</h2>
+        <p class="mut" id="libTotal"></p>
+        <div class="row"><input class="inp grow" id="libSearch" type="text" placeholder="ရှာရန် — wedding, child, lighting, myanmar…"></div>
+        <div class="chips" id="libFilters"></div>
+        <div class="chips" id="libGroups"></div>
+        <div class="lib-pick" id="libPick">
+          <div class="im" id="libPickImg"></div>
+          <div class="grow">
+            <div class="ttl" id="libPickTitle"></div>
+            <div class="sub" id="libPickSub"></div>
+            <div class="row">
+              <div class="btn" role="button" tabindex="0" id="libToImg1"></div>
+              <div class="btn btn-gold" role="button" tabindex="0" id="libToImg2"></div>
+              <div class="btn" role="button" tabindex="0" id="libFav" aria-pressed="false"><img class="ic-s" src="icons/ui/i-star-cream.svg" alt=""></div>
+            </div>
+          </div>
         </div>
+        <div class="lib-grid" id="libGrid"></div>
+        <div class="empty-state" id="libEmpty"><div class="ic"><img class="ic-xl" src="icons/ui/i-search-xl.svg" alt=""></div><p class="mut" id="libEmptyTxt"></p></div>
+        <div class="row" style="margin-top:10px;justify-content:center"><div class="btn" role="button" tabindex="0" id="libMore"></div><span class="mut" id="libCount"></span></div>
       </div>
 
     </div>
@@ -1069,11 +601,10 @@
          clear). A panel cannot hand a browser a zip, so "save selected"
          writes the chosen files into a folder the studio picks. -->
     <div class="page" id="pageGallery">
-      <div class="pgbanner pgb-gallery">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">My Gallery</div>
-          <div class="pgbanner-title" id="phGallery"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-fairy-forest.jpg" alt="" />
+        <div class="ph-kick">My Gallery</div>
+        <p class="ph-head" id="phGallery">ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား</p>
       </div>
       <div class="card">
         <div class="chead" id="cGalH"><span class="car">&#9662;</span><span class="chead-t">GALLERY</span></div>
@@ -1097,11 +628,10 @@
          list, its resolutions, durations and aspect ratios all come from the
          app's own doc-verified catalog; no endpoint is authored here. -->
     <div class="page" id="pageVideo">
-      <div class="pgbanner pgb-video">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Image to Video</div>
-          <div class="pgbanner-title" id="phVideo"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-naga.jpg" alt="" />
+        <div class="ph-kick">Image to Video</div>
+        <p class="ph-head" id="phVideo">ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်</p>
       </div>
       <!-- v6.50.0 — the app's four cards, in the app's order. The panel had
            one card holding everything: the model picker, the prompt box, the
@@ -1157,11 +687,10 @@
 
     <!-- ========== PAGE: VIDEO UPSCALE ========== -->
     <div class="page" id="pageVideoUp">
-      <div class="pgbanner pgb-vidup">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Video Upscale</div>
-          <div class="pgbanner-title" id="phVideoUp"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-superhero.jpg" alt="" />
+        <div class="ph-kick">Video Upscale</div>
+        <p class="ph-head" id="phVideoUp">ဗီဒီယိုအရည်အသွေး <em>နှစ်ဆမြှင့်</em> — ပိုကြည် ပိုပြတ်သား</p>
       </div>
       <!-- v6.50.0 — the app's three cards, in the app's order: VIDEO UPSCALE
            states what the page does and takes the file, GENERATE carries the
@@ -1209,11 +738,10 @@
          v6.46.0 — the web app's Path, in Photoshop: many photos, one look,
          one run. Results are written as files, not a hundred layers. -->
     <div class="page" id="pagePath">
-      <div class="pgbanner pgb-path">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Batch Looks</div>
-          <div class="pgbanner-title" id="phPath"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-path-batch.jpg" alt="" />
+        <div class="ph-kick">BATCH LOOKS</div>
+        <p class="ph-head" id="phPath">ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ <em>တစ်ပြိုင်နက်</em> ပြင်မယ်</p>
       </div>
       <div class="card">
         <div class="chead" id="cPathH"><span class="car">&#9662;</span><span class="chead-t">BATCH LOOKS</span></div>
@@ -1239,11 +767,10 @@
     </div>
 
 <div class="page" id="pageRetouch">
-      <div class="pgbanner pgb-retouch">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Retouch Pro</div>
-          <div class="pgbanner-title" data-i18n="pgb_retouch"></div>
-        </div>
+      <div class="page-hero">
+        <img src="icons/banners/banner-flower-gown.jpg" alt="" id="phRetouchImg" />
+        <div class="ph-kick" id="phRetouchKick">Retouch Pro</div>
+        <p class="ph-head" id="phRetouch">မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်</p>
       </div>
       <div class="card">
         <div class="chead" id="cRtH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_retouchpro"></span></div>
@@ -1465,10 +992,10 @@
      window.HNK_AI_TOOLS_AUTOSTART = true is set inside it. -->
 <script src="src/app/aitools-mount.js"></script>
 
-<!-- HNK Compact Library (data → id-alias compat → renderer; renderer
-     auto-mounts into #hnkCompactLibraryCards on DOMContentLoaded) -->
+<!-- HNK Visual Library (generated catalog data → the app's pgLib renderer;
+     the renderer auto-mounts into #pagePresets on DOMContentLoaded and talks
+     to main.js through HNK.libBridge) -->
 <script src="js/hnk_library_compact_data.js"></script>
-<script src="js/user_library_catalog_compat.js"></script>
 <script src="js/hnk_library_compact_cards.js"></script>
 
 <script src="main.js"></script>

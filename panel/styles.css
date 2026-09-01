@@ -10,20 +10,20 @@
    ============================================================ */
 
 :root {
-  /* v6.18 — recoloured to sit exactly on the web app's palette (docs/app's
-     --ink/--panel/--panel-2/--gold/--gold-hi/--cream tokens): --bg now
-     matches --ink byte-for-byte, and every other surface token here carries
-     the identical (-9,-7,-5) RGB shift so the whole family moves toward the
-     web app's cooler blue-black undertone together — no token's contrast
-     relationship to its neighbours changes, only the hue family does. */
+  /* v6.51 — surface tokens are the web app's own values byte-for-byte
+     (docs/app :root --ink/--panel/--panel-2/--line/--gold/--gold-hi/--cream):
+     every page is compared element-by-element against the web app, so the
+     card, field and hairline colours must be identical, not merely close.
+     --line is the app's gold hairline (rgba gold .28); --line-soft the cream
+     .38 one. Theme blocks below override the family as before. */
   --bg: #0b0d14;
   --botbar: #0e1018;
-  --panel: #141620;
-  --panel-2: #1a1c2b;
+  --panel: #131826;
+  --panel-2: #182032;
   --sunk: #070912;
   --field: #1d1f2a;
   --field-2: #0e1019;
-  --line: #222431;
+  --line: rgba(217, 164, 65, 0.28);
   --line-2: #313341;
   --line-3: #343645;
   --btn: #222431;
@@ -54,6 +54,8 @@
   --chip-brd: #443b66;
   --chip-bg-h: #37305a;
   --shadow: rgba(0, 0, 0, 0.35);
+  /* App parity: the web app's soft hairline (docs/app --line-soft). */
+  --line-soft: rgba(243, 239, 230, 0.38);
 }
 
 [data-theme="light"] {
@@ -95,6 +97,7 @@
   --chip-brd: #d4c9f0;
   --chip-bg-h: #e0d8f6;
   --shadow: rgba(60, 60, 90, 0.16);
+  --line-soft: rgba(20, 22, 32, 0.28);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -103,7 +106,7 @@ html, body { width: 100%; height: 100%; }
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: "Segoe UI", "Noto Sans Myanmar", "Myanmar Text", "Noto Sans Thai", "Noto Sans SC", sans-serif;
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
   font-size: 12px;
   overflow: hidden;
   transition: background-color 0.18s ease, color 0.18s ease;
@@ -129,7 +132,10 @@ body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 2px 10px 10px 10px;
+  /* v6.51.0 — app parity: the web app's .wrap is a 16px gutter, so at the
+     panel's 420px width a card is 388px outside / 354px inside. Same gutter
+     here so every page measures like its web-app twin. */
+  padding: 0 16px 10px 16px;
 }
 .page { display: none; }
 .page.on { display: block; }
@@ -212,10 +218,47 @@ body {
 .topbar .hdr-ctl { flex: 0 1 auto; min-width: 0; }
 .topbar-plan { color: #e9c46a; font-weight: 700; }
 
-/* ---------- Per-page hero banners (v6.0) ----------
-   Each tab opens on its own signature visual from the studio's 355-asset
-   library with a meaning line. UXP-SAFE: background-size cover + gradient
-   shade; fixed premium colours so banners read identically in both themes. */
+/* ---------- Page heroes (v6.51.0) ----------
+   The web app's own .page-hero, rule for rule: a 126px art plate with the
+   page's kick line and localized headline sitting on its bottom edge. The
+   plate is the app's OWN banner JPG for that page, baked at the app's
+   object-position with the app's :after readability scrim already in the
+   pixels (UXP has no object-fit and drops gradient overlays). */
+.page-hero {
+  position: relative;
+  min-height: 126px;
+  margin: 12px 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 12px 16px;
+}
+/* the app's .card carries margin:16px 0 and Chromium collapses it against the
+   hero's 12px; UXP is not guaranteed to collapse margins, so the 16px rhythm
+   is written once, on the hero's bottom edge, and cards keep bottom-only. */
+.page-hero + .card { margin-top: 0; }
+.page-hero { margin-bottom: 16px; }
+.page-hero img {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+.ph-kick {
+  position: relative;
+  font-size: 10px; font-weight: 800; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--accent-h);
+}
+.ph-head {
+  position: relative;
+  margin: 2px 0 0;
+  font-size: 15px; font-weight: 800; line-height: 1.5;
+  color: var(--text);
+}
+.ph-head em { font-style: normal; color: var(--accent-h); }
+
+/* Workflows still opens on the studio's own smart-workflow plate (the app's
+   hero-mini strip has no panel twin yet). UXP-SAFE: background-size cover +
+   a scrim baked into the JPEG. */
 .pgbanner {
   margin: 2px 0 10px 0;
   border: 1px solid rgba(217, 164, 65, 0.55);
@@ -226,48 +269,20 @@ body {
   background-position: center;
   background-repeat: no-repeat;
 }
-.pgb-setup   { background-image: url("icons/banners/setup.jpg"); background-position: center 30%; }
-.pgb-studio  { background-image: url("icons/banners/studio.jpg"); background-position: center 12%; }
-.pgb-create  { background-image: url("icons/banners/create.jpg"); background-position: center 18%; }
 .pgb-aitools { background-image: url("icons/banners/aitools.jpg"); background-position: center 14%; }
-.pgb-presets { background-image: url("icons/banners/presets.jpg"); background-position: center 18%; }
-.pgb-retouch { background-image: url("icons/banners/retouch.jpg"); background-position: center 38%; }
-/* v6.50.0 — the four pages the app gives a hero and the panel did not:
-   Video, VidUp, Path and Gallery opened cold on a card while every other
-   page opened on art. Baked from the app's OWN banner for that page
-   (banner-naga, banner-superhero, banner-path-batch, banner-fairy-forest)
-   at the app's own crop, with the same baked scrim the other eight carry —
-   UXP drops .pgbanner-shade's gradient, so legibility has to be pixels. */
-.pgb-video   { background-image: url("icons/banners/video.jpg"); background-position: center 45%; }
-.pgb-vidup   { background-image: url("icons/banners/vidup.jpg"); background-position: center 10%; }
-.pgb-path    { background-image: url("icons/banners/path.jpg"); background-position: center 50%; }
-.pgb-gallery { background-image: url("icons/banners/gallery.jpg"); background-position: center 50%; }
-/* v6.28.0 — the legibility scrim is BAKED INTO the banner JPEGs now: the
-   owner's real-Photoshop screenshots showed white headlines sitting on raw
-   bright art because UXP dropped this div's gradient (`background:`
-   shorthand + rgba stops). Pixels render on every engine. The longhand
-   gradient below stays as a browser-side bonus only. */
 .pgbanner-shade {
   display: flex; flex-direction: column; justify-content: flex-end;
   min-height: 118px;
   padding: 12px 12px 9px 12px;
-  background-image: linear-gradient(180deg, rgba(8, 9, 15, 0) 0%, rgba(8, 9, 15, 0.1) 60%, rgba(8, 9, 15, 0.35) 100%);
 }
 .pgbanner-kick {
   font-size: 7.5px; font-weight: 800; letter-spacing: 2px;
   color: #e9c46a; text-transform: uppercase;
 }
-/* v6.27.0 — the title carries the web app's localized headline now (big
-   Burmese under an English kick, like every web-app page hero). Tall
-   Myanmar glyph metrics: generous line-height, no display letter-spacing. */
 .pgbanner-title {
   margin-top: 3px;
   font-size: 15px; font-weight: 800; letter-spacing: 0.2px; line-height: 1.55;
   color: #f7f4ec;
-}
-.pgbanner-sub {
-  margin-top: 2px;
-  font-size: 9px; line-height: 1.45; color: #ddd6c6;
 }
 .hdr-t { flex: 1; min-width: 0; }
 .title { font-size: 12px; font-weight: 700; color: var(--on-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -287,12 +302,14 @@ body {
 }
 
 /* ---------- Cards + collapsible heads ---------- */
+/* v6.51.0 — app parity: the web app's .card is a 14px-radius, 16px-padded
+   panel with a soft hairline and 16px rhythm between cards. */
 .card {
   background-color: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 9px 10px;
-  margin-bottom: 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 .chead { display: flex; flex-direction: row; align-items: center; }
@@ -327,6 +344,10 @@ body {
   padding: 10px 12px;
   font-size: 13px;
   min-width: 0;
+  /* the app's `input,textarea,select{font-family:inherit}` — a field is told
+     the body stack explicitly (UXP widgets do not inherit it), so a Burmese
+     placeholder measures the same line the app's does */
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
 }
 .inp:focus { border-color: var(--accent); }
 select.inp { padding: 9px 10px; }
@@ -374,7 +395,7 @@ select.inp { padding: 9px 10px; }
    told the font stack explicitly rather than left to inherit one that has no
    Myanmar glyphs. Same list the body and the prompt box already carry. */
 select, option {
-  font-family: "Segoe UI", "Noto Sans Myanmar", "Myanmar Text", "Noto Sans Thai", "Noto Sans SC", sans-serif;
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
 }
 
 /* ---------- Prompt (native textarea — UXP typeable) ----------
@@ -391,7 +412,7 @@ select, option {
   padding: 8px 9px;
   font-size: 12px;
   line-height: 1.55;
-  font-family: "Segoe UI", "Noto Sans Myanmar", "Myanmar Text", "Noto Sans Thai", "Noto Sans SC", sans-serif;
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
   overflow-y: auto;
   height: 140px;
   resize: none;
@@ -858,13 +879,16 @@ input[type="range"] { min-width: 0; }
    a horizontal pill row that only appears when the active group has more than
    one page, gold when selected, 44px targets. UXP-safe: explicit direction
    (see the note below — a container that stacks or flows must say so). */
-.subtabbar { display: none; flex-direction: row; gap: 6px; margin: 8px 10px 0;
+.subtabbar { display: none; flex-direction: row; margin: 12px 16px 0;
   overflow-x: auto; }
 .subtabbar.on { display: flex; }
-.subtab { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 10px;
-  background: var(--panel); color: var(--muted); padding: 7px 14px; min-height: 34px;
+/* v6.51.0 — the app's .subtab verbatim: soft hairline, panel-2 fill, 44px
+   pill (a 20px radius is the pill a 44px box can satisfy; UXP has no 999px). */
+.subtab { flex: 0 0 auto; border: 1px solid var(--line-soft); border-radius: 20px;
+  background: var(--panel-2); color: var(--muted); padding: 7px 14px; min-height: 44px;
   box-sizing: border-box; display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; cursor: pointer; }
+  font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.subtab + .subtab { margin-left: 6px; }
 .subtab.on { background: var(--accent); border-color: var(--accent); color: #1a1408; }
 .subtab:hover { border-color: var(--accent); }
 
@@ -1108,7 +1132,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* The app's section header: .card > h2 in gold small-caps. The panel's own
    .chead is a collapsible affordance; a plain section title is not one. */
 .card h2, .sec-h2 { display: block; font-size: 12px; font-weight: 800; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+  line-height: 1.7; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
 
 /* ---- Home: the greeting hero keeps its art, gains the app's clock line ---- */
 
@@ -1192,3 +1216,225 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   text-transform: none; color: var(--text); }
 .tutorial-card p { margin: 6px 0 10px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .dash-promo .promo-x { position: absolute; top: 8px; right: 8px; min-height: 30px; padding: 2px 10px; }
+
+/* ======================================================================
+   v6.51.0 — Freeform = the web app's pgCreate, pixel for pixel. Every rule
+   below is the app's own component CSS (docs/app/index.html) translated to
+   UXP: flexbox only, class + id selectors only (UXP skips tag.class
+   compounds), no grid / object-fit / pointer-events / inset / ::after art,
+   text glyphs or bordered spans where the app draws an SVG. Scoped to
+   #pagePrompt so the class names the parity dump reads (.mut, .chip, .grp-h,
+   .btn.btn-gold.gen …) stay the app's while the panel's own global rules
+   keep governing every other page.
+   ====================================================================== */
+/* the app's body metrics (15px / 1.7) — every inherited line box on the page
+   (kicker, tags, .mut, .status) measures from them */
+#pagePrompt, #pagePresets { font-size: 15px; line-height: 1.7; }
+/* the app's controls are <button>s, whose UA line-height is `normal` rather
+   than the inherited 1.7 — the panel's div[role=button] twins get the same */
+#pagePrompt .btn, #pagePrompt .chip, #pagePrompt .grp-h, #pagePrompt .acc-lnk,
+#pagePresets .btn, #pagePresets .chip { line-height: normal; }
+#pagePrompt .arow { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; }
+#pagePrompt .arow .chip, #pagePrompt .arow .btn { margin-right: 8px; margin-bottom: 0; }
+#pagePrompt .arow .chip:last-child, #pagePrompt .arow .btn:last-child { margin-right: 0; }
+#pagePrompt .mut, #pagePresets .mut { font-size: 12px; color: var(--muted); margin-bottom: 0; line-height: 1.7; }
+#pagePrompt .inp, #pagePresets .inp { width: 100%; box-sizing: border-box; background-color: var(--panel-2); border: 1px solid var(--line-soft);
+  border-radius: 9px; color: var(--text); padding: 10px 12px; font-size: 14px; }
+/* the app's textarea at panel width (its ≤768px rule: 16px so iOS never zooms) */
+#pagePrompt #promptBox { min-height: 110px; line-height: 1.8; font-size: 16px; }
+
+/* PROMPT card — the three IMAGE slots (app .refstrip) */
+#pagePrompt .refstrip { display: flex; flex-direction: row; align-items: center; margin-bottom: 10px; }
+#pagePrompt .rs { position: relative; width: 52px; height: 52px; margin-right: 8px; border: 1px dashed var(--line);
+  border-radius: 10px; background-color: var(--panel-2); display: flex; flex-direction: row; align-items: center;
+  justify-content: center; color: var(--accent); font-size: 16px; overflow: hidden; flex: none; box-sizing: border-box; }
+#pagePrompt .rs.filled { border-style: solid; }
+#pagePrompt .rs .im { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  background-size: cover; background-position: center; background-repeat: no-repeat; }
+#pagePrompt .rs .tag { position: absolute; left: 2px; bottom: 2px; background-color: rgba(11, 13, 20, 0.85); border-radius: 5px;
+  padding: 0 4px; font-size: 8.5px; color: var(--accent-h); font-weight: 800; }
+#pagePrompt .rsx { position: absolute; top: 1px; right: 1px; width: 20px; height: 20px; border-radius: 6px;
+  background-color: rgba(11, 13, 20, 0.85); color: var(--text); font-size: 10px; display: flex; flex-direction: row;
+  align-items: center; justify-content: center; }
+#pagePrompt .refstrip .note { flex: 1; min-width: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+#pagePrompt .chip, #pagePresets .chip { border: 1px solid var(--line-soft); border-radius: 20px; background-color: var(--panel-2); color: var(--text);
+  padding: 6px 13px; font-size: 12px; font-weight: 700; min-height: 38px; box-sizing: border-box; display: flex;
+  flex-direction: row; align-items: center; }
+/* app sprite icons (svg.ic-s = 1.1em, flex:none) as pre-tinted <img> files —
+   UXP draws no inline <svg>. Sizes are the app's 1.1em resolved per context;
+   in the app's flex containers (.chip/.subtab) the " " after the icon is
+   trimmed, in its inline contexts (.btn/.gen/.subh) it stays a ~0.275em gap. */
+.ic-s { flex: none; display: block; width: 13.2px; height: 13.2px; }
+#pagePrompt .btn .ic-s, #pagePresets .btn .ic-s { width: 14.3px; height: 14.3px; margin-right: 3.6px; }
+#pagePrompt .gen .ic-s { width: 17.6px; height: 17.6px; margin-right: 4.4px; }
+#pagePrompt .subh { display: flex; flex-direction: row; align-items: center; }
+#pagePrompt .subh .ic-s { width: 12.1px; height: 12.1px; margin-right: 3px; }
+
+/* GENERATE card — the model picker (app .hsl: brand tile + context/value, a
+   transparent native select over it) and the 2-up option rows */
+#pagePrompt .gen-opts .inp { flex: 1 1 0; min-width: 0; margin-right: 8px; padding: 10px 6px; font-size: 12px; text-overflow: ellipsis; }
+#pagePrompt .gen-opts .inp:last-child { margin-right: 0; }
+#pagePrompt .gen-opts .hsl { flex: 0 0 auto; width: 49%; width: calc(50% - 4px); margin-right: 0; }
+#pagePrompt .gen-opts .rr-native { display: none; }
+#pagePrompt .hsl { position: relative; display: flex; flex-direction: row; max-width: 100%; min-width: 0; }
+#pagePrompt .hsl-btn { display: flex; flex-direction: row; align-items: center; min-height: 42px; width: 100%; min-width: 0;
+  box-sizing: border-box; padding: 6px 10px 6px 7px;
+  background: linear-gradient(180deg, #1c2336 0%, var(--panel-2) 55%, #141a2a 100%);
+  border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text); font-size: 12px; font-weight: 600;
+  line-height: 1.2; text-align: left; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+#pagePrompt .hsl-tile { flex: 0 0 auto; width: 24px; height: 24px; margin-right: 7px; border-radius: 7px; display: flex;
+  flex-direction: row; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.09);
+  background-color: #181d29; box-sizing: border-box; }
+#pagePrompt .hsl-tile.t-banana { background: radial-gradient(120% 120% at 20% 15%, #3a3016 0%, #241d0d 70%); }
+#pagePrompt .hsl-tile.t-rh { background: radial-gradient(120% 120% at 20% 15%, #0f3b33 0%, #0a2620 70%); }
+#pagePrompt .hsl-tile.t-qwen { background: radial-gradient(120% 120% at 20% 15%, #272052 0%, #181533 70%); }
+#pagePrompt .hsl-tile.t-flux { background: radial-gradient(120% 120% at 20% 15%, #3a2a12 0%, #241a0b 70%); }
+#pagePrompt .hsl-tile.t-wan { background: radial-gradient(120% 120% at 20% 15%, #123240 0%, #0c1f28 70%); }
+#pagePrompt .hsl-tile.t-gold { background: radial-gradient(120% 120% at 20% 15%, #33290f 0%, #1f1909 70%); }
+#pagePrompt .hsl-tile.t-plain { background: radial-gradient(120% 120% at 20% 15%, #232833 0%, #161a23 70%); }
+#pagePrompt .hsl-tile.t-openai { background: radial-gradient(120% 120% at 20% 15%, #232833 0%, #15181f 70%); }
+#pagePrompt .hsl-lab { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#pagePrompt .hsl-ctx { font-size: 8px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  line-height: 1; margin-bottom: 1px; }
+#pagePrompt .hsl-val { font-size: 12px; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* app .hsl-caret: the 9×9 gold chevron svg (CARET), here the same path as an <img> */
+#pagePrompt .hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; margin-left: 7px; }
+/* app .hsl-tile svg{width:15px;height:15px}: the brand glyph (IC map) as an <img> */
+#pagePrompt .hsl-tile .hsl-glyph-img { display: block; width: 15px; height: 15px; }
+#pagePrompt .hsl .inp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
+#pagePrompt .acc-lnk { display: flex; flex-direction: row; align-items: center; background-color: transparent; border: none;
+  color: var(--accent-h); font-size: 14px; font-weight: 700; text-align: left; padding: 8px 0; min-height: 44px; width: 100%;
+  box-sizing: border-box; text-decoration: underline; margin-top: 6px; }
+
+/* the visual ratio rail (app .ratio-rail / .rchip) */
+#pagePrompt .ratio-rail { display: flex; flex-direction: row; margin-top: 8px; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; }
+#pagePrompt .rchip { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  min-width: 46px; min-height: 54px; margin-right: 6px; padding: 7px 9px; box-sizing: border-box; background-color: var(--panel-2);
+  border: 1px solid var(--line-soft); border-radius: 10px; color: var(--muted); font-size: 10.5px; line-height: 1.7; }
+#pagePrompt .rchip span { line-height: 1.7; }
+#pagePrompt .rchip:last-child { margin-right: 0; }
+#pagePrompt .rchip i { display: flex; flex-direction: row; align-items: center; justify-content: center; margin-bottom: 5px;
+  border: 1.6px solid currentColor; border-radius: 3px; opacity: 0.85; font-style: normal; font-size: 9px; font-weight: 800;
+  line-height: 1; box-sizing: border-box; }
+#pagePrompt .rchip.auto i { border-style: dashed; }
+#pagePrompt .rchip.on { border-color: var(--accent); color: var(--accent-h); background-color: rgba(217, 164, 65, 0.10); }
+
+/* Advanced group (app .grp / .grp-h / .grp-b, opened by .open on the group) */
+#pagePrompt .app-grp { border: 1px solid var(--line-soft); border-radius: 12px; margin: 12px 0; overflow: hidden; }
+#pagePrompt .app-grp .grp-h { display: flex; flex-direction: row; align-items: center; width: 100%; min-height: 44px; box-sizing: border-box;
+  background-color: var(--panel-2); border: none; color: var(--text); padding: 14px; font-size: 13px; font-weight: 800; text-align: left; }
+/* app .car: a 12×24 span holding the 12px #i-caret (points right, rotates 90°
+   open); app .grp-h gap:8px becomes the span's right margin */
+#pagePrompt .app-grp .car { flex: 0 0 auto; display: flex; flex-direction: row; align-items: center; width: 12px; height: 24px;
+  margin-right: 8px; color: var(--accent); font-size: 11px; }
+#pagePrompt .app-grp .car .ic-car { display: block; width: 12px; height: 12px; }
+#pagePrompt .app-grp.open .car .ic-car { transform: rotate(90deg); }
+#pagePrompt .grp-lbl { display: flex; flex-direction: row; align-items: center; min-width: 0; }
+#pagePrompt .grp-lbl .ic-s { width: 14.3px; height: 14.3px; margin-right: 3.4px; }
+#pagePrompt .app-grp .grp-b { display: none; padding: 4px 14px 14px; }
+#pagePrompt .app-grp.open .grp-b { display: block; }
+#pagePrompt .addons { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 18px; }
+#pagePrompt .btn, #pagePresets .btn { display: flex; flex-direction: row; align-items: center; justify-content: center; background-color: var(--panel-2);
+  border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text); padding: 8px 16px; font-size: 13px; font-weight: 700;
+  min-height: 44px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#pagePrompt .btn + .btn, #pagePresets .btn + .btn { margin-left: 0; }
+#pagePrompt .btn-gold, #pagePresets .btn-gold { background: linear-gradient(160deg, #f9e2a4 0%, var(--accent) 45%, #b9861f 100%);
+  border-color: rgba(233, 185, 73, 0.6); color: #1a1408; font-weight: 800; }
+#pagePrompt .gen { width: 100%; margin-top: 12px; padding: 15px; font-size: 16px; border-radius: 12px; letter-spacing: 0; min-height: 67px; }
+#pagePrompt .spin { display: none; margin-top: 10px; color: var(--accent-h); font-size: 13px; }
+#pagePrompt .spin.on { display: block; }
+#pagePrompt .status { min-height: 20px; font-size: 13px; margin-top: 8px; text-align: left; color: var(--text); line-height: 1.7; }
+
+/* result card (app .result-box) — hidden until a result exists */
+#pagePrompt .result-box { display: none; margin-top: 4px; }
+#pagePrompt .result-box.on { display: block; }
+#pagePrompt .result-img { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background-color: #050b10; }
+#pagePrompt .result-img img { display: block; width: 100%; }
+#pagePrompt .hist { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
+#pagePrompt .hist img { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); }
+#pagePrompt .hist img.sel { border-color: var(--accent); }
+/* app .subh + .chainrow: "continue editing this result" heading + workflow chips */
+#pagePrompt .subh { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 12px 0 2px; }
+#pagePrompt .chainrow { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
+#pagePrompt .chainrow .chip { margin: 0 6px 6px 0; }
+#pagePrompt .cmp { position: relative; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  background-color: #050b10; }
+#pagePrompt .cmp img { display: block; width: 100%; }
+#pagePrompt .cmp-top { position: absolute; top: 0; left: 0; bottom: 0; height: auto; width: 50%; overflow: hidden; }
+#pagePrompt .cmp-top img { position: absolute; left: 0; top: 0; display: block; width: auto; max-width: none; height: 100%; }
+#pagePrompt .cmp-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: var(--accent); }
+
+/* the IMAGE-slot source sheet (app refSrcSheet): a scrim + card at the bottom */
+.ff-sheet { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 70;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; padding: 0 12px 12px; box-sizing: border-box; }
+.ff-sheet .card { margin: 0; }
+.ff-sheet .subh { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px; }
+.ff-sheet .btn { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; width: 100%; box-sizing: border-box;
+  margin: 8px 0 0; background-color: var(--panel-2); border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text);
+  padding: 8px 16px; font-size: 13px; font-weight: 700; min-height: 44px; text-align: left; }
+
+/* ======================================================================
+   v6.51.0 — Presets = the web app's pgLib (Library / Reference), pixel for
+   pixel: the IMAGE strip (.refs/.ref) and the VISUAL LIBRARY card (search,
+   collection + set chips, the picked look, the plate grid, Load more). The
+   shared 15px/1.7 base, .mut, .inp, .chip, .btn and .btn-gold rules above are
+   already scoped to #pagePresets too; below is what this page adds. Where the
+   app uses grid / aspect-ratio / object-fit / gap, the panel gets the same
+   boxes from flex + margins and background-image thumbs (hnk_library_
+   compact_cards.js computes the grid cells, main.js paints the slots).
+   ====================================================================== */
+#pagePresets .row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; margin-bottom: 0; }
+/* the app's field at panel width (its ≤768px rule: 16px so iOS never zooms) */
+#pagePresets #libSearch { font-size: 16px; }
+/* .chips: the app's flex-wrap rows, except #libFilters/#libGroups which are
+   one-line horizontal rails (nowrap, scrollbar hidden, 4px breathing room) */
+#pagePresets .chips { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+  padding-bottom: 4px; margin-top: 8px; }
+#pagePresets .chips .chip { flex: 0 0 auto; white-space: nowrap; margin-right: 6px; }
+#pagePresets .chips .chip:last-child { margin-right: 0; }
+#pagePresets .chip.on { background-color: var(--accent); border-color: var(--accent); color: #1a1408; }
+
+/* the IMAGE strip — app .refs / .ref at ≤520px (88×88) */
+#pagePresets .refs { display: flex; flex-direction: row; flex-wrap: wrap; }
+#pagePresets .ref { position: relative; width: 88px; height: 88px; border: 1px dashed var(--line); border-radius: 12px;
+  background-color: var(--panel-2); display: flex; flex-direction: row; align-items: center; justify-content: center;
+  overflow: hidden; box-sizing: border-box; margin-right: 10px; }
+#pagePresets .ref:last-child { margin-right: 0; }
+#pagePresets .ref.filled { border-style: solid; }
+#pagePresets .ref .im { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-size: cover; background-position: center; }
+#pagePresets .ref .add { display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100%; height: 100%;
+  font-size: 26px; color: var(--accent); line-height: normal; }
+#pagePresets .ref .x { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line-soft);
+  background-color: rgba(11, 13, 20, 0.8); color: var(--text); font-size: 13px; display: flex; flex-direction: row; align-items: center;
+  justify-content: center; box-sizing: border-box; }
+#pagePresets .ref .x .ic-s { width: 14.3px; height: 14.3px; margin-right: 0; }
+#pagePresets .ref .tag { position: absolute; left: 4px; bottom: 4px; background-color: rgba(11, 13, 20, 0.8); border-radius: 6px; padding: 1px 7px;
+  font-size: 10px; color: var(--accent-h); font-weight: 800; line-height: 1.7; }
+#pagePresets .ref .refrole { position: absolute; right: 4px; bottom: 27px; max-width: 80px; max-height: 57px; align-items: flex-start;
+  padding: 1px 7px; font-size: 9.5px; line-height: 20px; min-height: 0; background-color: rgba(11, 13, 20, 0.85);
+  border: 1px solid var(--line-soft); border-radius: 6px; overflow: hidden; white-space: normal; text-align: right; z-index: 2; color: var(--text); }
+#pagePresets .ref .refrole.on { background-color: rgba(11, 13, 20, 0.85); border-color: var(--accent); color: var(--accent-h); }
+
+/* the plate grid — app .lib-grid (auto-fill 84px+ columns, 144/180 cells,
+   6px gap): the cells' width/height/margins are set by layout() */
+#pagePresets .lib-grid { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
+#pagePresets .lib-grid div { border-radius: 8px; border: 1px solid var(--line-soft); background-color: var(--panel-2);
+  background-size: cover; background-position: center; box-sizing: border-box; }
+#pagePresets .lib-grid .sel { border-color: var(--accent); }
+
+/* the picked look — app .lib-pick (hidden until a plate is tapped) */
+#pagePresets .lib-pick { display: none; margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; background-color: var(--panel-2); padding: 10px; }
+#pagePresets .lib-pick.on { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; }
+#pagePresets .lib-pick .im { flex: none; width: 96px; height: 120px; border-radius: 9px; margin-right: 12px; background-size: cover; background-position: center; }
+#pagePresets .lib-pick .ttl { font-size: 13px; font-weight: 800; }
+#pagePresets .lib-pick .sub { font-size: 11.5px; color: var(--muted); }
+#pagePresets .lib-pick .row .btn { margin-top: 8px; margin-right: 8px; }
+#pagePresets .lib-pick .row .btn:last-child { margin-right: 0; }
+#pagePresets .btn.is-off { opacity: 0.6; }
+
+/* no matches — app .empty-state with its 32px search glyph at half opacity */
+#pagePresets .empty-state { display: none; text-align: center; padding: 24px 12px; }
+#pagePresets .empty-state.on { display: block; }
+#pagePresets .empty-state .ic { display: flex; flex-direction: row; justify-content: center; opacity: 0.5; margin-bottom: 8px; }
+#pagePresets .ic-xl { display: block; width: 32px; height: 32px; }
+#pagePresets #libMore { margin-right: 8px; }
