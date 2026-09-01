@@ -157,7 +157,11 @@ jobs:
           trap cleanup_mirror EXIT
 
           # The bucket and region are plain configuration on the live service.
-          APPS_JSON="$(doctl apps list --output json)"
+          APPS_JSON="$(doctl apps list --output json 2>&1 || true)"
+          if ! printf '%s' "$APPS_JSON" | jq -e 'type == "array"' > /dev/null 2>&1; then
+            echo "::error::doctl did not return an app list. The production token authenticated but is refusing app reads — check the scopes on DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN. DigitalOcean said: $(printf '%s' "$APPS_JSON" | head -1 | cut -c1-300)"
+            exit 1
+          fi
           APP_ID="$(printf '%s' "$APPS_JSON" | jq -r '
             [.[] | select(.spec.name == "hnk-ai-tools-3")] | if length == 1 then .[0].id else empty end')"
           if [ -z "$APP_ID" ]; then
@@ -172,10 +176,25 @@ jobs:
             exit 0
           fi
 
-          MIRROR_JSON="$(curl -fsS --max-time 20 -X POST -H "Authorization: Bearer $DO_TOKEN" \
+          # curl -f collapses every refusal into exit 22 with no body, which
+          # hides the one thing that matters here: whether the token may still
+          # write. Read the status instead; the credential itself never leaves
+          # this shell and is never echoed.
+          MIRROR_RAW="$(curl -sS --max-time 20 -w '\n%{http_code}' -X POST -H "Authorization: Bearer $DO_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"name\":\"hnk-release-ephemeral-$GITHUB_RUN_ID\",\"grants\":[{\"bucket\":\"$BUCKET\",\"permission\":\"readwrite\"}]}" \
-            "https://api.digitalocean.com/v2/spaces/keys")"
+            "https://api.digitalocean.com/v2/spaces/keys" 2>/dev/null || printf '\n000')"
+          MIRROR_STATUS="$(printf '%s' "$MIRROR_RAW" | tail -n 1)"
+          MIRROR_JSON="$(printf '%s' "$MIRROR_RAW" | sed '$d')"
+          case "$MIRROR_STATUS" in
+            (2*) ;;
+            (401|403)
+              echo "::error::DigitalOcean refused to create the ephemeral Spaces upload credential (HTTP $MIRROR_STATUS). This lane already read the live app spec with the same token, so the token is present and valid but no longer carries write scope — regenerate DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN with write access and re-run."
+              exit 1;;
+            (*)
+              echo "::error::The Spaces keys API answered HTTP $MIRROR_STATUS while creating the ephemeral upload credential."
+              exit 1;;
+          esac
           MIRROR_KEY_ACCESS="$(printf '%s' "$MIRROR_JSON" | jq -r '.key.access_key // empty')"
           MIRROR_KEY_SECRET="$(printf '%s' "$MIRROR_JSON" | jq -r '.key.secret_key // empty')"
           if [ -z "$MIRROR_KEY_ACCESS" ] || [ -z "$MIRROR_KEY_SECRET" ]; then
@@ -210,7 +229,16 @@ jobs:
           CA_FILE="$RUNNER_TEMP/release-ca.crt"
           SQL_FILE="$RUNNER_TEMP/release.sql"
           RULE_ADDED=""
-          CLUSTER_ID="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" '.[] | select(.name == $n) | .id')"
+          # doctl answers a scope failure by printing an API error payload, so
+          # piping it straight into `jq '.[] | select(.name ...)'` dies with an
+          # opaque "Cannot index array with string" and the operator learns
+          # nothing. Capture the call, prove the shape, and name the cause.
+          CLUSTERS="$(doctl databases list --output json 2>&1 || true)"
+          if ! printf '%s' "$CLUSTERS" | jq -e 'type == "array"' > /dev/null 2>&1; then
+            echo "::error::doctl did not return a database cluster list. The production token authenticated but is refusing database reads — restore its scopes on DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN. DigitalOcean said: $(printf '%s' "$CLUSTERS" | head -1 | cut -c1-300)"
+            exit 1
+          fi
+          CLUSTER_ID="$(printf '%s' "$CLUSTERS" | jq -r --arg n "$DO_CLUSTER" '.[] | select(.name == $n) | .id')"
           if [ -z "$CLUSTER_ID" ]; then
             echo "::error::Cluster $DO_CLUSTER was not found."
             exit 1

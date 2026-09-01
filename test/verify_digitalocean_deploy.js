@@ -244,6 +244,26 @@ check('production pushes synchronize the current source even when health probes 
 check('staging steady-state exits only when the active deployment matches the pushed commit',
   /if \[ "\$CURRENT_READY_PATH" = "\/ready" \] && \[ "\$CURRENT_LIVE_PATH" = "\/live" \] &&\s*\[ "\$ACTIVE_READY_PATH" = "\/ready" \] && \[ "\$ACTIVE_LIVE_PATH" = "\/live" \] &&\s*\[ "\$ACTIVE_SOURCE_SHA" = "\$GITHUB_SHA" \]; then[\s\S]{0,300}?echo "changed=false" >> "\$GITHUB_OUTPUT"[\s\S]{0,300}?exit 0/.test(stagingWorkflow) &&
   stagingWorkflow.indexOf('doctl apps update', stagingWorkflow.indexOf('[ "$ACTIVE_SOURCE_SHA" = "$GITHUB_SHA" ]')) >= 0);
+// The live-spec update is the first WRITE the production lane attempts; the
+// steps before it only read. On 2026-09-01 it came back
+// `PUT .../v2/apps/065a3e86-...: 403 (request "...") forbidden` while every
+// read in the same job still worked, so the failure had to be readable as
+// "the token lost its write scope" rather than a bare doctl exit.
+check('an app list the token may not read is a named refusal, not a jq crash',
+  productionWorkflow.includes(`jq -e 'type == "array"' "$RUNNER_TEMP/apps.json"`) &&
+  productionWorkflow.includes('refusing app reads') &&
+  productionWorkflow.indexOf(`jq -e 'type == "array"'`) <
+    productionWorkflow.indexOf('APP_ID="$(jq -r --arg name'));
+check('a refused live-spec write names the lost scope instead of a bare exit code',
+  productionWorkflow.includes('SYNC_RC=$?') &&
+  productionWorkflow.includes('(*403*forbidden*)') &&
+  productionWorkflow.includes('no longer carries write scope') &&
+  productionWorkflow.includes('(*401*unauthorized*)') &&
+  productionWorkflow.includes('exit "$SYNC_RC"'));
+check('the refused live-spec write still prints what DigitalOcean said',
+  /printf '%s\\n' "\$SYNC_OUT"/.test(productionWorkflow) &&
+  productionWorkflow.indexOf('printf \'%s\\n\' "$SYNC_OUT"') <
+    productionWorkflow.indexOf('if [ "$SYNC_RC" -ne 0 ]; then'));
 check('the one-time probe transition updates source in the same deployment',
   [productionWorkflow, stagingWorkflow].every(workflow =>
     workflow.includes('doctl apps update') &&

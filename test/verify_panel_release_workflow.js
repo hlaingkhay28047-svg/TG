@@ -147,6 +147,25 @@ report("a missing Space stands the mirror down instead of failing the release",
   WORKFLOW.includes("the release stays on the database bridge"), "graceful stand-down missing");
 report("only a content-addressed object key is accepted from the mirror",
   WORKFLOW.includes("(ccx/*)"), "object key shape check missing");
+// A production token that keeps its identity but loses a scope is the failure
+// this lane actually met (2026-09-01): doctl answered `databases list` with
+// {"errors":[...],"status":403} and the old one-liner died as
+// `jq: error (at <stdin>:1): Cannot index array with string "name"`, naming
+// nothing an operator could act on. Both refusals must name themselves.
+report("a list the token may not read is a named refusal, not a jq crash",
+  (WORKFLOW.match(/jq -e 'type == "array"'/g) || []).length === 2 &&
+  WORKFLOW.includes("refusing database reads") &&
+  WORKFLOW.includes("refusing app reads") &&
+  WORKFLOW.includes("DigitalOcean said:") &&
+  !/doctl databases list --output json \| jq/.test(WORKFLOW) &&
+  !/APPS_JSON="\$\(doctl apps list --output json\)"/.test(WORKFLOW),
+  "a doctl list still flows straight into jq");
+report("a refused Spaces credential reports its HTTP status and the lost scope",
+  WORKFLOW.includes("-w '\\n%{http_code}'") &&
+  WORKFLOW.includes("(401|403)") &&
+  WORKFLOW.includes("no longer carries write scope") &&
+  !/curl -fsS[^\n]*\/v2\/spaces\/keys"/.test(WORKFLOW),
+  "the Spaces key creation still collapses every refusal into curl exit 22");
 
 /* ---- build the real artifact once ---- */
 const releaseDir = fs.mkdtempSync(path.join(os.tmpdir(), "hnk-release-probe-"));
