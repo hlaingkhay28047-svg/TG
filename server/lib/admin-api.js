@@ -212,8 +212,17 @@ async function dashboard(client, identity) {
        from public.login_history h left join public.profiles p on p.id=h.user_id
        left join public.hnk_auth_users u on u.id=h.user_id
       where h.event_type='login' order by h.occurred_at desc limit 10`);
+  /* 2026-09-01 — the console draws a 30-day signup chart from the same
+     authoritative table the counters come from; shaped {day,hits} so the
+     admin page can render it with the identical chart code as visits. */
+  const signups = await client.query(
+    `select created_at::date as day, count(*)::bigint as hits
+       from public.profiles
+      where created_at > (now() at time zone 'utc')::date - 30
+      group by 1 order by 1 desc`);
   return Object.assign({}, counts.rows[0], license.rows[0], {
     online:online.rows[0].n,latest_logins:latest.rows,
+    signups:signups.rows.map(r => ({ day: r.day, hits: Number(r.hits) })),
   });
 }
 

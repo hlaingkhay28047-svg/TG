@@ -154,3 +154,65 @@ dialog{overflow-x:hidden}
 td.cell-time{white-space:nowrap}
 #historyRows td small{display:block;color:var(--muted);overflow-wrap:anywhere}
 .history-item span{overflow-wrap:anywhere}
+
+/* 20260901a — the console in the owner's language, its numbers as pictures,
+   and an audit trail that fits a phone.
+   1) Language toggle + notification bell live in the topbar beside Refresh;
+      the bell's badge is a count, never a bare dot, and it disappears at zero.
+   2) The two 30-day charts: one measure per chart, one hue each — a deeper
+      step of the console's own blue and gold, chosen for this dark surface
+      (OKLCH L 0.55/0.62, >=3:1 contrast, CVD-separated) — thin bars with
+      rounded ends over a recessive baseline.
+   3) Owner (live phone): the five-column audit table and the four-column
+      latest-logins table forced a sideways scroll and cut every row in half.
+      Below 1000px both render as cards, exactly like the student list. */
+.lang-button{font-weight:900;font-size:.78rem;letter-spacing:.06em}
+.bell-button{position:relative}
+.bell-button.has-alerts{border-color:rgba(242,184,95,.5)}
+.bell-button.has-alerts .ib-ic{color:var(--amber)}
+.bell-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;
+  display:grid;place-items:center;border-radius:99px;background:var(--amber);color:#20160a;
+  font-size:.68rem;font-weight:950;line-height:1}
+.chart{margin:14px 0 0;padding:0}
+.chart-svg{display:block;width:100%;height:auto}
+.chart-base{stroke:var(--line);stroke-width:1}
+.chart-bar{fill:#3d8ad0}
+.chart-svg.gold .chart-bar{fill:#b0863a}
+.chart-bar:hover{fill:var(--blue)}
+.chart-svg.gold .chart-bar:hover{fill:var(--gold)}
+.chart-peak{fill:var(--muted);font-size:9px;font-weight:800;letter-spacing:.04em}
+.visits-sub{margin:16px 0 8px}
+.history-cards{display:none}
+.history-card{padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);min-width:0}
+.history-card+.history-card{margin-top:10px}
+.history-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.history-card-top b{font-size:.92rem}
+.history-card-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;color:var(--muted);font-size:.8rem}
+.history-card small{display:block;margin-top:8px;color:var(--muted);overflow-wrap:anywhere}
+.history-card .person b,.history-card .person small{overflow-wrap:anywhere}
+@media(max-width:1000px){
+  .history-table,.latest-table{display:none}
+  .history-cards{display:block;padding:10px}
+  .admin-identity{display:none}
+}
+
+/* The topbar now carries two more controls (bell + language). At phone
+   widths the title column shrinks and truncates instead of pushing the row
+   past the screen; every control keeps its 44px target. */
+.topbar>div:not(.top-actions){min-width:0}
+.topbar h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:560px){
+  .topbar{gap:10px;padding:12px 10px}
+  .topbar .eyebrow{display:none}
+  .topbar h1{font-size:1.05rem}
+  .top-actions{gap:4px}
+  .icon-button{width:44px;min-width:44px;font-size:1.05rem}
+  .button.compact{padding:0 10px;font-size:.8rem}
+}
+
+/* The name/email column stacks and may shrink; the growth card sits at the
+   top of its grid track instead of stretching hollow beside a taller card. */
+.person-lines{min-width:0}
+.person-lines b,.person-lines small{display:block;overflow-wrap:anywhere}
+.person-lines small{color:var(--muted)}
+#growthCard{align-self:start}

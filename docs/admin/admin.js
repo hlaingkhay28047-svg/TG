@@ -47,6 +47,233 @@
   const CLIENT_TYPE = "admin";
   const ARTIFACT_CHUNK_SIZE = 4 * 1024 * 1024;
   const MAX_ARTIFACT_SIZE = 512 * 1024 * 1024;
+
+  /* 2026-09-01 — the console speaks the owner's language. English lives in
+     the markup and in the code literals below (one source of truth, no
+     drift); only Burmese lives in this table. applyI18n snapshots each
+     element's English once, so switching back restores it exactly. Burmese
+     is the default because the owner runs this console every day; the
+     choice is one tap and persists per device. */
+  const LANG_KEY = "hnk_admin_lang_v1";
+  const MY = {
+    "skip": "Admin အကြောင်းအရာသို့ ကျော်သွားရန်",
+    "gate.checking": "Admin ဝင်ခွင့် စစ်နေသည်…",
+    "gate.checkingSub": "ဒီ session ကို HNK နဲ့ လုံခြုံစွာ အတည်ပြုနေပါတယ်။",
+    "gate.eyebrow": "ADMIN ထိန်းချုပ်ခန်း",
+    "gate.signin": "Admin အဖြစ် ဝင်ရန်",
+    "gate.signinSub": "Admin အကောင့်နဲ့ ဝင်ပါ။ ဒီ session က ဒီစက်မှာ ဆက်ဝင်ထားပြီး ကျောင်းသား session ကို ဘယ်တော့မှ admin မဖြစ်စေပါ။",
+    "f.email": "အီးမေးလ်",
+    "f.password": "စကားဝှက်",
+    "gate.continue": "လုံခြုံစွာ ဆက်သွားရန်",
+    "gate.backApp": "ကျောင်းသား App သို့ ပြန်သွားရန်",
+    "gate.privacy": "စကားဝှက်ကို တူညီတဲ့ origin ရဲ့ လုံခြုံတဲ့ endpoint ကိုသာ ပို့ပြီး ဒီစာမျက်နှာမှာ လုံးဝ မသိမ်းပါ။",
+    "gate.accessEyebrow": "ADMIN ဝင်ခွင့်",
+    "gate.forbidden": "ခွင့်ပြုချက် မရှိပါ",
+    "gate.forbiddenSub": "ဒီစာမျက်နှာက HNK admin တွေအတွက်သာ ဖြစ်ပါတယ်။ ကျောင်းသားအကောင့်နဲ့ ဖွင့်လို့ မရပါ။",
+    "gate.retry": "ထပ်စစ်ရန်",
+    "gate.other": "အခြား admin နဲ့ ဝင်ရန်",
+    "brand.name": "ထိန်းချုပ်ခန်း",
+    "brand.sub": "Production စီမံခန့်ခွဲမှု",
+    "nav.overview": "ခြုံငုံကြည့်",
+    "nav.students": "ကျောင်းသားများ",
+    "nav.history": "လုပ်ဆောင်မှု မှတ်တမ်း",
+    "nav.security": "လုံခြုံရေး & Panel",
+    "side.authorized": "ဆာဗာက အတည်ပြုပြီး",
+    "side.studentApp": "ကျောင်းသား App",
+    "top.signout": "ထွက်ရန်",
+    "top.bell": "စောင့်ဆိုင်းနေတဲ့ ကျောင်းသားများ",
+    "top.refresh": "အချက်အလက် ပြန်ခေါ်ရန်",
+    "top.menu": "Admin မီနူး ဖွင့်ရန်",
+    "ov.eyebrow": "လက်ရှိ လည်ပတ်မှု",
+    "ov.head": "ကျောင်းသား ဝင်ခွင့် ခြုံငုံ",
+    "ov.sub": "အကောင့်၊ License၊ စက်နဲ့ session အခြေအနေ — ဆာဗာက တိုက်ရိုက်။",
+    "ov.recentEyebrow": "နောက်ဆုံး ဝင်ရောက်မှု",
+    "ov.latest": "နောက်ဆုံး login များ",
+    "ov.viewAll": "အားလုံးကြည့်",
+    "th.student": "ကျောင်းသား",
+    "th.device": "စက်",
+    "th.time": "အချိန်",
+    "th.result": "ရလဒ်",
+    "ov.noLogins": "မကြာသေးမီ login မရှိပါ။",
+    "ov.quickEyebrow": "အမြန် သုံးသပ်",
+    "ov.attention": "ဂရုစိုက်ရန်",
+    "ov.reviewPending": "စောင့်ဆိုင်းနေသူများ ကြည့်ရန်",
+    "ov.visitsEyebrow": "ဝဘ်ဆိုက် လာရောက်မှု · ရက် ၃၀",
+    "ov.visitsHead": "Landing ဝင်ရောက်မှု",
+    "ov.rooms": "အဝင်အများဆုံး စာမျက်နှာများ",
+    "ov.noVisits": "လာရောက်မှု မှတ်တမ်း မရှိသေးပါ။",
+    "ov.growthEyebrow": "ကျောင်းသားအသစ် · ရက် ၃၀",
+    "ov.growthHead": "စာရင်းသွင်းမှု",
+    "ov.noGrowth": "ဒီကာလအတွင်း စာရင်းသွင်းသူ မရှိပါ။",
+    "ov.newTotal": "ရက် ၃၀ စုစုပေါင်း",
+    "ov.newToday": "ဒီနေ့",
+    "ch.visits": "နေ့စဉ် လာရောက်မှု",
+    "ch.signups": "နေ့စဉ် စာရင်းသွင်းမှု",
+    "ch.peak": "အများဆုံး",
+    "st.eyebrow": "ကျောင်းသား စီမံခန့်ခွဲမှု",
+    "st.head": "အကောင့်နဲ့ License များ",
+    "st.sub": "ရှာဖွေ၊ သုံးသပ်ပြီး မှတ်တမ်းတင်ထားတဲ့ လုပ်ဆောင်ချက်တွေ လုပ်ပါ။",
+    "st.refresh": "စာရင်း ပြန်ခေါ်",
+    "st.searchLabel": "ကျောင်းသား ရှာရန်",
+    "st.statusLabel": "အကောင့် အခြေအနေ",
+    "st.allStates": "အခြေအနေ အားလုံး",
+    "s.pending": "စောင့်ဆိုင်းဆဲ",
+    "s.active": "အသုံးပြုနေ",
+    "s.suspended": "ယာယီပိတ်",
+    "s.expired": "သက်တမ်းကုန်",
+    "s.banned": "ပိတ်ပင်",
+    "s.rejected": "ငြင်းပယ်",
+    "st.licenseLabel": "License အခြေအနေ",
+    "st.allLicenses": "License အားလုံး",
+    "st.licActive": "License သက်တမ်းရှိ",
+    "st.licNone": "License မရှိ",
+    "st.apply": "စစ်ထုတ်ရန်",
+    "th.account": "အကောင့်",
+    "th.license": "License",
+    "th.devices": "စက်များ",
+    "th.lastActive": "နောက်ဆုံး လှုပ်ရှားမှု",
+    "th.open": "ဖွင့်",
+    "st.empty": "ဒီအခြေအနေနဲ့ ကိုက်ညီတဲ့ ကျောင်းသား မရှိပါ။",
+    "pg.prev": "နောက်သို့",
+    "pg.next": "ရှေ့သို့",
+    "pg.page": "စာမျက်နှာ",
+    "hi.eyebrow": "စစ်ဆေးမှု မှတ်တမ်း",
+    "hi.head": "Login၊ စက်၊ download နဲ့ admin လုပ်ဆောင်မှုများ",
+    "hi.sub": "ဆာဗာဘက်က မှတ်တမ်းတွေကို ရှာလို့ရပြီး ဒီမှာ ပြင်လို့ မရပါ။",
+    "hi.refresh": "မှတ်တမ်း ပြန်ခေါ်",
+    "hi.searchLabel": "မှတ်တမ်း ရှာရန်",
+    "hi.typeLabel": "လုပ်ဆောင်မှု အမျိုးအစား",
+    "hi.all": "အားလုံး",
+    "hi.logins": "Login များ",
+    "hi.failed": "မအောင်မြင်တဲ့ login",
+    "hi.devices": "စက်များ",
+    "hi.downloads": "CCX download များ",
+    "hi.licenses": "License ပြောင်းလဲမှု",
+    "hi.accounts": "အကောင့် လုပ်ဆောင်ချက်",
+    "hi.admins": "Admin လုပ်ဆောင်ချက်",
+    "hi.from": "မှ",
+    "hi.to": "အထိ",
+    "hi.filter": "စစ်ထုတ်",
+    "th.activity": "လုပ်ဆောင်မှု",
+    "th.deviceApp": "စက် / App",
+    "hi.empty": "ကိုက်ညီတဲ့ မှတ်တမ်း မရှိပါ။",
+    "se.eyebrow": "လုံခြုံရေး & ထုတ်ဝေမှု",
+    "se.head": "Panel မူဝါဒနဲ့ admin ကာကွယ်မှု",
+    "se.sub": "အနည်းဆုံး ဗားရှင်း သတ်မှတ်ချက်နဲ့ panel ထုတ်ဝေမှု ထိန်းချုပ်မှု။",
+    "se.psEyebrow": "PHOTOSHOP PANEL",
+    "se.versionSub": "အနည်းဆုံးဗားရှင်းထက် ဟောင်းတဲ့ panel တွေ Update Required ပြပါမယ်။",
+    "se.latest": "နောက်ဆုံး ဗားရှင်း",
+    "se.minimum": "အနည်းဆုံး ဗားရှင်း",
+    "se.saveVersion": "ဗားရှင်း မူဝါဒ သိမ်းရန်",
+    "se.artEyebrow": "သီးသန့် PANEL ဖိုင်",
+    "se.artHead": "တင်၊ စစ်ပြီး ထုတ်ဝေရန်",
+    "se.artSub": "ဖိုင်က ဒီ tab ရဲ့ memory ထဲမှာပဲ ရှိပါတယ်။ HNK က ဒီမှာပဲ hash တွက်၊ စစ်ပြီးသား အပိုင်းတွေကို သီးသန့် သိုလှောင်ခန်းသို့ တင်၊ အပြီးသတ်မှသာ ဗားရှင်းကို ဖွင့်ပေးပါတယ်။",
+    "se.relVersion": "ထုတ်ဝေမယ့် ဗားရှင်း",
+    "se.package": "Panel ဖိုင်",
+    "se.choose": "Creative Cloud panel ဖိုင် ရွေးပါ။ အများဆုံး 512 MiB။",
+    "se.waiting": "ဖိုင် စောင့်နေသည်",
+    "se.upload": "တင်၊ စစ် & ထုတ်ဝေရန်",
+    "se.resume": "ဆက်တင်လို့ရမရ စစ်ရန်",
+    "dl.eyebrow": "ကျောင်းသား အသေးစိတ်",
+    "dl.permissions": "ဝင်ခွင့် ခွင့်ပြုချက်များ",
+    "dl.devices": "မှတ်ပုံတင်ထားသော စက်များ",
+    "dl.accountActions": "အကောင့် လုပ်ဆောင်ချက်များ",
+    "dl.extendBy": "သက်တမ်းတိုးရန်",
+    "dl.extend": "License တိုးရန်",
+    "dl.customExpiry": "စိတ်ကြိုက် ကုန်ဆုံးရက်",
+    "dl.setExpiry": "ကုန်ဆုံးရက် သတ်မှတ်",
+    "dl.secDevices": "လုံခြုံရေး & စက်များ",
+    "dl.setDevices": "စက်အရေအတွက် သတ်မှတ်",
+    "dl.recent": "မကြာသေးမီ မှတ်တမ်း",
+    "dl.openHistory": "မှတ်တမ်းအပြည့် ဖွင့်",
+    "dl.noHistory": "မှတ်တမ်း မရှိသေးပါ။",
+    "dl.viewDetails": "အသေးစိတ် ကြည့်",
+    "cf.eyebrow": "ADMIN လုပ်ဆောင်ချက် အတည်ပြုရန်",
+    "cf.title": "အတည်ပြုမလား",
+    "cf.cancel": "မလုပ်တော့",
+    "cf.confirm": "အတည်ပြု",
+    "ph.searchStudents": "အမည် သို့ အီးမေးလ် ရှာရန်",
+    "ph.searchActivity": "ကျောင်းသား၊ အီးမေးလ်၊ စက် သို့ လုပ်ဆောင်ချက်",
+    "m.total": "စုစုပေါင်း ကျောင်းသား",
+    "m.active": "အသုံးပြုနေသူ",
+    "m.pending": "စောင့်ဆိုင်းဆဲ",
+    "m.expired": "သက်တမ်းကုန်",
+    "m.suspended": "ယာယီပိတ်",
+    "m.online": "ယခု အွန်လိုင်း",
+    "m.expiring": "မကြာမီ ကုန်မည်",
+    "m.live": "ဆာဗာ တိုက်ရိုက် ကိန်း",
+    "m.updated": "မွမ်းမံချိန်",
+    "v.total30": "ရက် ၃၀ စုစုပေါင်း",
+    "v.latestDay": "နောက်ဆုံးနေ့",
+    "d.unknownDevice": "မသိသော စက်",
+    "r.success": "အောင်မြင်",
+    "r.failed": "မအောင်မြင်",
+    "r.denied": "ငြင်းပယ်",
+    "r.issued": "ထုတ်ပေးပြီး",
+    "r.downloaded": "download ပြီး",
+    "r.invalid": "မမှန်ကန်",
+    "r.empty": "မရှိ",
+    "e.login": "ဝင်ရောက်",
+    "e.logout": "ထွက်",
+    "e.refresh": "Session သက်တမ်းတိုး",
+    "e.failedLogin": "ဝင်ရန် မအောင်မြင်",
+    "e.forcedLogout": "အတင်း ထုတ်",
+    "e.passwordReset": "စကားဝှက် reset",
+    "e.download": "Download",
+    "e.activity": "လုပ်ဆောင်မှု",
+    "d.starts": "စတင်",
+    "d.expires": "ကုန်ဆုံး",
+    "d.lastLogin": "နောက်ဆုံး login",
+    "d.lastDownload": "နောက်ဆုံး download",
+    "d.phone": "ဖုန်း",
+    "d.computer": "ကွန်ပျူတာ",
+    "d.registered": "မှတ်ပုံတင်ပြီး",
+    "d.notRegistered": "မမှတ်ပုံတင်ရသေး",
+    "p.webApp": "ကျောင်းသား Web App",
+    "p.ccx": "Panel download",
+    "p.panel": "Photoshop Panel",
+    "act.approve": "ခွင့်ပြု",
+    "act.reject": "ငြင်းပယ်",
+    "act.activate": "ဖွင့်",
+    "act.suspend": "ယာယီပိတ်",
+    "act.ban": "ပိတ်ပင်",
+    "act.reset": "စကားဝှက် reset ပို့",
+    "act.forceLogout": "အတင်း ထွက်စေ",
+    "act.resetPhone": "ဖုန်း Reset",
+    "act.resetComputer": "ကွန်ပျူတာ Reset",
+    "msg.pickExpiry": "စိတ်ကြိုက် ကုန်ဆုံးရက်ကို အရင်ရွေးပါ။",
+    "msg.versionSaved": "Panel ဗားရှင်း မူဝါဒ သိမ်းပြီးပါပြီ။",
+    "msg.deviceRange": "စက်အရေအတွက် ၁ မှ ၂၀ ကြား ဖြစ်ရပါမယ်။",
+    "lang.aria": "ဘာသာစကား · Language",
+  };
+  let LANG = "my";
+  try { const stored = localStorage.getItem(LANG_KEY); if (stored === "en" || stored === "my") LANG = stored; } catch (_) { }
+  /* English is whatever the markup/code already says — snapshot it once so a
+     switch back is exact, never a second translation table drifting away. */
+  const EN_SNAP = new Map();
+  function t(key, english) { return (LANG === "my" && MY[key]) ? MY[key] : english; }
+  function applyI18n() {
+    document.documentElement.lang = LANG === "my" ? "my" : "en";
+    $$("[data-i18n]").forEach(el => {
+      const key = el.dataset.i18n;
+      if (!EN_SNAP.has(key)) EN_SNAP.set(key, el.textContent);
+      el.textContent = t(key, EN_SNAP.get(key));
+    });
+    $$("[data-i18n-ph]").forEach(el => {
+      const key = el.dataset.i18nPh;
+      if (!EN_SNAP.has("ph:" + key)) EN_SNAP.set("ph:" + key, el.getAttribute("placeholder") || "");
+      el.setAttribute("placeholder", t(key, EN_SNAP.get("ph:" + key)));
+    });
+    $$("[data-i18n-al]").forEach(el => {
+      const key = el.dataset.i18nAl;
+      if (!EN_SNAP.has("al:" + key)) EN_SNAP.set("al:" + key, el.getAttribute("aria-label") || "");
+      el.setAttribute("aria-label", t(key, EN_SNAP.get("al:" + key)));
+    });
+    const label = $("#langLabel");
+    if (label) label.textContent = LANG === "my" ? "EN" : "MY";
+    const toggle = $("#langToggle");
+    if (toggle) toggle.setAttribute("aria-label", t("lang.aria", "Language · ဘာသာစကား"));
+  }
   const pageSize = 20;
   const state = { studentPage: 1, historyPage: 1, studentTotal: 0, historyTotal: 0,
     selected: null, loading: false, artifactFile: null, artifactBusy: false };
@@ -271,7 +498,12 @@
 
   function statusPill(value) {
     const normalized = text(value, "unknown").toLowerCase().replaceAll(" ", "_");
-    return node("span", { className: `status-pill ${normalized}`, text: title(normalized) });
+    const WORDS = { pending: "s.pending", active: "s.active", suspended: "s.suspended",
+      expired: "s.expired", banned: "s.banned", rejected: "s.rejected",
+      success: "r.success", failed: "r.failed", failure: "r.failed", denied: "r.denied",
+      issued: "r.issued", downloaded: "r.downloaded", invalid: "r.invalid", empty: "r.empty" };
+    const label = WORDS[normalized] ? t(WORDS[normalized], title(normalized)) : title(normalized);
+    return node("span", { className: `status-pill ${normalized}`, text: label });
   }
 
   function normalizeList(body, keys) {
@@ -325,41 +557,122 @@
     return body.metrics || body.counts || body.dashboard || body;
   }
 
+
+  /* 2026-09-01 — two small time charts, built from the data the console
+     already fetches. One measure per chart on one axis (never a second
+     y-scale), one hue per chart stepped for this dark surface and validated
+     for contrast and colour-vision separation, thin bars with rounded ends
+     on a recessive baseline, and a native <title> on every bar so hover and
+     screen readers read the same day. The numbers stay in the rows beside
+     the chart, so the picture is never the only way to read the data. */
+  /* The SVG namespace is read off the sprite already in the markup: this
+     file may not contain an absolute URL literal (same-origin contract,
+     pinned by verify_unified_frontend), and the parser knows it anyway. */
+  const SVGNS = (document.querySelector("svg.svg-defs") || {}).namespaceURI || null;
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS(SVGNS, tag);
+    for (const key in attrs) if (attrs[key] != null) el.setAttribute(key, String(attrs[key]));
+    return el;
+  }
+  function dayChart(series, opts) {
+    /* series: [{ day, hits }] newest first — drawn oldest → newest */
+    const rows = series.slice(0, 30).reverse();
+    const W = 320, H = 96, PAD = 10, base = H - 16;
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart-svg " + (opts.tone || ""),
+      role: "img", "aria-label": opts.label });
+    svg.appendChild(svgEl("line", { class: "chart-base", x1: 0, y1: base + 3, x2: W, y2: base + 3 }));
+    if (!rows.length) return svg;
+    const peak = Math.max(1, ...rows.map(r => Number(r.hits) || 0));
+    const step = (W - PAD * 2) / rows.length;
+    const barW = Math.max(3, Math.min(10, step - 2));   /* 2px surface gap */
+    rows.forEach((row, i) => {
+      const value = Number(row.hits) || 0;
+      const height = Math.max(value > 0 ? 3 : 0, Math.round((value / peak) * (base - 12)));
+      const bar = svgEl("rect", { class: "chart-bar", x: (PAD + i * step + (step - barW) / 2).toFixed(1),
+        y: base - height, width: barW.toFixed(1), height, rx: Math.min(2, barW / 2) });
+      bar.appendChild(svgEl("title", {})).textContent = `${formatDate(row.day, true)} · ${value}`;
+      svg.appendChild(bar);
+    });
+    const peakLabel = svgEl("text", { class: "chart-peak", x: W - 2, y: 11, "text-anchor": "end" });
+    peakLabel.textContent = `${t("ch.peak", "Peak")} ${peak}`;
+    svg.appendChild(peakLabel);
+    return svg;
+  }
+  function paintChart(host, series, opts) {
+    const figure = $(host);
+    if (!figure) return;
+    figure.replaceChildren(dayChart(series, opts));
+  }
+  function renderGrowth(body) {
+    const card = $("#growthCard");
+    if (!card) return;
+    const days = Array.isArray(body && body.signups) ? body.signups : [];
+    const total = days.reduce((n, row) => n + (Number(row.hits) || 0), 0);
+    const today = days.length ? Number(days[0].hits) || 0 : 0;
+    $("#growthSummary").replaceChildren(...[
+      [t("ov.newTotal", "Last 30 days"), total], [t("ov.newToday", "Today"), today],
+    ].map(([label, value]) => node("div", { className: "attention-row" },
+      [node("span", { text: label }), node("b", { text: String(value) })])));
+    paintChart("#growthChart", days, { tone: "gold", label: t("ch.signups", "Signups per day") });
+    $("#growthEmpty").hidden = total > 0;
+    card.hidden = false;
+  }
+  /* The bell counts exactly what the Needs-attention card counts: accounts
+     waiting for the owner's decision. Zero pending hides the badge. */
+  function renderAlerts(metrics) {
+    const bell = $("#alertBell"), badge = $("#alertBadge");
+    if (!bell || !badge) return;
+    const pending = count(metrics, "pending_students", "pending");
+    badge.textContent = String(pending > 99 ? "99+" : pending);
+    badge.hidden = !pending;
+    bell.classList.toggle("has-alerts", !!pending);
+  }
+
   function renderDashboard(body) {
     const metrics = metricsFrom(body);
     const definitions = [
-      ["Total students", count(metrics, "total_students", "total"), "◎", ""],
-      ["Active students", count(metrics, "active_students", "active"), "✓", "good"],
-      ["Pending approval", count(metrics, "pending_students", "pending"), "◷", "warn"],
-      ["Expired", count(metrics, "expired_students", "expired"), "!", "danger"],
-      ["Suspended", count(metrics, "suspended_students", "suspended"), "Ⅱ", "danger"],
-      ["Online now", count(metrics, "online_students", "online"), "●", "good"],
-      ["Expiring soon", count(metrics, "expiring_soon"), "⌛", "warn"],
+      [t("m.total", "Total students"), count(metrics, "total_students", "total"), "◎", ""],
+      [t("m.active", "Active students"), count(metrics, "active_students", "active"), "✓", "good"],
+      [t("m.pending", "Pending approval"), count(metrics, "pending_students", "pending"), "◷", "warn"],
+      [t("m.expired", "Expired"), count(metrics, "expired_students", "expired"), "!", "danger"],
+      [t("m.suspended", "Suspended"), count(metrics, "suspended_students", "suspended"), "Ⅱ", "danger"],
+      [t("m.online", "Online now"), count(metrics, "online_students", "online"), "●", "good"],
+      [t("m.expiring", "Expiring soon"), count(metrics, "expiring_soon"), "⌛", "warn"],
     ];
     const grid = $("#metricGrid");
     grid.replaceChildren(...definitions.map(([label, value, icon, tone]) => node("article", { className: `metric ${tone}` }, [
       node("div", { className: "metric-top" }, [node("span", { text: label }), node("span", { className: "metric-icon", text: icon, "aria-hidden": "true" })]),
-      node("b", { text: String(value) }), node("span", { text: "Live server count" }),
+      node("b", { text: String(value) }), node("span", { text: t("m.live", "Live server count") }),
     ])));
     $("#overviewUpdated").dateTime = new Date().toISOString();
-    $("#overviewUpdated").textContent = `Updated ${formatDate(new Date())}`;
+    $("#overviewUpdated").textContent = `${t("m.updated", "Updated")} ${formatDate(new Date())}`;
 
     const logins = normalizeList(body, ["latest_logins", "logins", "recent_logins"]);
     const rows = logins.map(item => node("tr", {}, [
       node("td", {}, person(item)),
-      node("td", { text: prettyDevice(item.device_name || item.device_type) || "Unknown device" }),
+      node("td", { text: prettyDevice(item.device_name || item.device_type) || t("d.unknownDevice", "Unknown device") }),
       node("td", { className: "cell-time", text: formatDate(item.login_at || item.created_at || item.time) }),
       node("td", {}, statusPill(item.result || item.status || "success")),
     ]));
     $("#latestLogins").replaceChildren(...rows);
+    $("#latestCards").replaceChildren(...logins.map(item => node("article", { className: "history-card" }, [
+      node("div", { className: "history-card-top" }, [
+        node("b", { text: formatDate(item.login_at || item.created_at || item.time) }),
+        statusPill(item.result || item.status || "success")]),
+      node("div", {}, person(item)),
+      node("div", { className: "history-card-meta" }, [
+        node("span", { text: prettyDevice(item.device_name || item.device_type) || t("d.unknownDevice", "Unknown device") })]),
+    ])));
     $("#latestEmpty").hidden = rows.length > 0;
 
     const attention = [
-      ["Pending", count(metrics, "pending_students", "pending")],
-      ["Expired", count(metrics, "expired_students", "expired")],
-      ["Expiring soon", count(metrics, "expiring_soon")],
+      [t("s.pending", "Pending"), count(metrics, "pending_students", "pending")],
+      [t("s.expired", "Expired"), count(metrics, "expired_students", "expired")],
+      [t("m.expiring", "Expiring soon"), count(metrics, "expiring_soon")],
     ];
     $("#attentionList").replaceChildren(...attention.map(([label, value]) => node("div", { className: "attention-row" }, [node("span", { text: label }), node("b", { text: String(value) })])));
+    renderAlerts(metrics);
+    renderGrowth(body);
   }
 
   function person(item) {
@@ -378,7 +691,11 @@
     const email = item.email || item.student_email || "";
     const line = [node("b", { text: name })];
     if (email && email.trim().toLowerCase() !== name.trim().toLowerCase()) line.push(node("small", { text: email }));
-    return [badge, node("span", {}, line)];
+    /* 2026-09-01 — the stylesheet has always described .person (avatar beside
+       a stacked name/email), but nothing ever wore the class: in the wide
+       tables the inline <b> and <small> ran into each other mid-word. The
+       row now IS a .person, so the flex row and the stacked lines apply. */
+    return [node("div", { className: "person" }, [badge, node("span", { className: "person-lines" }, line)])];
   }
 
   function studentStatus(item) {
@@ -402,7 +719,7 @@
 
   function detailButton(item, compact = false) {
     const id = item.id || item.user_id || item.student_id;
-    return node("button", { className: compact ? "button" : "text-button", type: "button", text: "View details", dataset: { studentId: id } });
+    return node("button", { className: compact ? "button" : "text-button", type: "button", text: t("dl.viewDetails", "View details"), dataset: { studentId: id } });
   }
 
   function renderStudents(body) {
@@ -420,7 +737,7 @@
     $("#studentRows").replaceChildren(...rows);
     $("#studentCards").replaceChildren(...cards);
     $("#studentsEmpty").hidden = students.length > 0;
-    $("#studentsPage").textContent = `Page ${state.studentPage}`;
+    $("#studentsPage").textContent = `${t("pg.page", "Page")} ${state.studentPage}`;
     $("#studentsPrev").disabled = state.studentPage <= 1;
     $("#studentsNext").disabled = state.studentPage * pageSize >= state.studentTotal;
   }
@@ -457,6 +774,17 @@
     return item.action || item.event_type || item.type || "activity";
   }
 
+  /* The audit trail's own vocabulary, translated where a word exists and
+     left as the server said it otherwise — never a guess. */
+  function eventLabel(item) {
+    const raw = String(eventName(item)).toLowerCase();
+    const NAMES = { login: "e.login", logout: "e.logout", refresh: "e.refresh",
+      failed_login: "e.failedLogin", forced_logout: "e.forcedLogout",
+      password_reset: "e.passwordReset",
+      download: "e.download", activity: "e.activity" };
+    return NAMES[raw] ? t(NAMES[raw], title(raw)) : title(raw);
+  }
+
   /* 2026-08-31 — history rows stored the raw browser user-agent as the device
      name, so phones showed six lines of "Mozilla/5.0 (Linux; Android 10; K)…"
      per row. A stored label ("Android · Chrome") passes through untouched;
@@ -489,12 +817,25 @@
     $("#historyRows").replaceChildren(...events.map(item => node("tr", {}, [
       node("td", { className: "cell-time", text: formatDate(item.created_at || item.time || item.login_at) }),
       node("td", {}, person(item)),
-      node("td", {}, [node("b", { text: title(eventName(item)) }), node("small", { text: prettyDetail(item.detail || item.message || "") })]),
+      node("td", {}, [node("b", { text: eventLabel(item) }), node("small", { text: prettyDetail(item.detail || item.message || "") })]),
       node("td", { text: prettyDevice(item.device_name || item.browser || item.app || item.channel) || "—" }),
       node("td", {}, statusPill(item.result || item.status || "success")),
     ])));
+    /* 2026-09-01 — owner, live phone: the five-column audit table forced a
+       sideways scroll and cut every row in half. Below 1000px the same rows
+       render as cards instead, exactly like the student list. */
+    $("#historyCards").replaceChildren(...events.map(item => node("article", { className: "history-card" }, [
+      node("div", { className: "history-card-top" }, [
+        node("b", { text: eventLabel(item) }),
+        statusPill(item.result || item.status || "success")]),
+      node("div", {}, person(item)),
+      node("div", { className: "history-card-meta" }, [
+        node("span", { text: formatDate(item.created_at || item.time || item.login_at) }),
+        node("span", { text: prettyDevice(item.device_name || item.browser || item.app || item.channel) || "—" })]),
+      prettyDetail(item.detail || item.message || "") ? node("small", { text: prettyDetail(item.detail || item.message) }) : null,
+    ].filter(Boolean))));
     $("#historyEmpty").hidden = events.length > 0;
-    $("#historyPage").textContent = `Page ${state.historyPage}`;
+    $("#historyPage").textContent = `${t("pg.page", "Page")} ${state.historyPage}`;
     $("#historyPrev").disabled = state.historyPage <= 1;
     $("#historyNext").disabled = state.historyPage * pageSize >= state.historyTotal;
   }
@@ -553,18 +894,18 @@
     const account = item.account || {};
     const license = item.license || {};
     const stats = [
-      ["Account", title(account.effective_status || account.status || studentStatus(item))],
-      ["License", title(license.status || studentLicense(item))],
-      ["Starts", formatDate(license.starts_at, true)],
-      ["Expires", formatDate(license.expires_at || item.license_expires_at, true)],
-      ["Last login", formatDate(item.last_login_at)],
-      ["Last active", formatDate(item.last_active_at)],
-      ["Last download", formatDate(item.last_download_at)],
-      ["Devices", deviceSummary(item)],
+      [t("th.account", "Account"), title(account.effective_status || account.status || studentStatus(item))],
+      [t("th.license", "License"), title(license.status || studentLicense(item))],
+      [t("d.starts", "Starts"), formatDate(license.starts_at, true)],
+      [t("d.expires", "Expires"), formatDate(license.expires_at || item.license_expires_at, true)],
+      [t("d.lastLogin", "Last login"), formatDate(item.last_login_at)],
+      [t("th.lastActive", "Last active"), formatDate(item.last_active_at)],
+      [t("d.lastDownload", "Last download"), formatDate(item.last_download_at)],
+      [t("th.devices", "Devices"), deviceSummary(item)],
     ];
     $("#studentSummary").replaceChildren(...stats.map(([label, value]) => node("div", { className: "detail-stat" }, [node("span", { text: label }), node("b", { text: value })])));
 
-    const permissionLabels = [["web_app", "Student Web App"], ["ccx_download", "Panel download"], ["photoshop_panel", "Photoshop Panel"]];
+    const permissionLabels = [["web_app", t("p.webApp", "Student Web App")], ["ccx_download", t("p.ccx", "Panel download")], ["photoshop_panel", t("p.panel", "Photoshop Panel")]];
     $("#permissionToggles").replaceChildren(...permissionLabels.map(([key, label]) => {
       const control = node("input", { type: "checkbox", checked: permissionValue(item.permissions || {}, key), "aria-label": `${label} permission` });
       control.addEventListener("change", async () => {
@@ -579,29 +920,29 @@
     }));
 
     const devices = item.devices || {};
-    $("#studentDevices").replaceChildren(...[["Phone", devices.phone], ["Computer", devices.computer]].map(([kind, device]) => node("div", { className: "device-row" }, [
-      node("div", {}, [node("b", { text: `${kind} ${device ? "1/1" : "0/1"}` }), node("small", { text: device ? prettyDevice(device.label || device.device_name) || "Registered" : "Not registered" })]),
+    $("#studentDevices").replaceChildren(...[[t("d.phone", "Phone"), devices.phone], [t("d.computer", "Computer"), devices.computer]].map(([kind, device]) => node("div", { className: "device-row" }, [
+      node("div", {}, [node("b", { text: `${kind} ${device ? "1/1" : "0/1"}` }), node("small", { text: device ? prettyDevice(device.label || device.device_name) || t("d.registered", "Registered") : t("d.notRegistered", "Not registered") })]),
       statusPill(device ? "active" : "empty"),
     ])));
 
     const canonicalAccountStatus = String(account.status || item.account_status || item.status || "pending").toLowerCase();
     const accountActions = [
-      ...(canonicalAccountStatus === "pending" ? [["approve", "Approve", "primary"]] : []),
-      ["reject", "Reject", "danger"], ["activate", "Activate", ""],
-      ["suspend", "Suspend", "danger"], ["ban", "Ban", "danger"],
+      ...(canonicalAccountStatus === "pending" ? [["approve", t("act.approve", "Approve"), "primary"]] : []),
+      ["reject", t("act.reject", "Reject"), "danger"], ["activate", t("act.activate", "Activate"), ""],
+      ["suspend", t("act.suspend", "Suspend"), "danger"], ["ban", t("act.ban", "Ban"), "danger"],
     ];
     $("#accountActions").replaceChildren(...accountActions.map(([action, label, tone]) => actionButton(action, label, tone)));
     const securityActions = [
-      ["reset_phone", "Reset Phone", ""], ["reset_computer", "Reset Computer", ""],
-      ["force_logout", "Force logout", "danger"], ["password_reset", "Send password reset", ""],
+      ["reset_phone", t("act.resetPhone", "Reset Phone"), ""], ["reset_computer", t("act.resetComputer", "Reset Computer"), ""],
+      ["force_logout", t("act.forceLogout", "Force logout"), "danger"], ["password_reset", t("act.reset", "Send password reset"), ""],
     ];
     $("#securityActions").replaceChildren(...securityActions.map(([action, label, tone]) => actionButton(action, label, tone)));
     const limitInput = $("#deviceLimit");
     if (limitInput) limitInput.value = item.allowed_devices != null ? String(item.allowed_devices) : "2";
 
     const events = normalizeList({ events: item.history }, ["events"]);
-    $("#studentHistory").replaceChildren(...events.slice(0, 6).map(event => node("div", { className: "history-item" }, [node("time", { text: formatDate(event.created_at || event.time) }), node("b", { text: title(eventName(event)) }), node("span", { text: prettyDetail(event.detail || event.message) || prettyDevice(event.device_name) || "—" })])));
-    if (!events.length) $("#studentHistory").append(node("p", { className: "empty", text: "No recent history." }));
+    $("#studentHistory").replaceChildren(...events.slice(0, 6).map(event => node("div", { className: "history-item" }, [node("time", { text: formatDate(event.created_at || event.time) }), node("b", { text: eventLabel(event) }), node("span", { text: prettyDetail(event.detail || event.message) || prettyDevice(event.device_name) || "—" })])));
+    if (!events.length) $("#studentHistory").append(node("p", { className: "empty", text: t("dl.noHistory", "No recent history.") }));
   }
 
   function selectedId() {
@@ -879,14 +1220,15 @@
     const pages = Array.isArray(body.pages) ? body.pages : [];
     const today = days.length ? Number(days[0].hits) : 0;
     const summary = [
-      ["Last 30 days", Number(body.total_30d || 0)],
-      ["Latest day", today],
+      [t("v.total30", "Last 30 days"), Number(body.total_30d || 0)],
+      [t("v.latestDay", "Latest day"), today],
     ];
     $("#visitsSummary").replaceChildren(...summary.map(([label, value]) =>
       node("div", { className: "attention-row" }, [node("span", { text: label }), node("b", { text: String(value) })])));
     $("#visitsPages").replaceChildren(...pages.slice(0, 8).map(row =>
       node("div", { className: "attention-row" }, [
         node("span", { text: ROOM_NAMES[row.page] || row.page }), node("b", { text: String(row.hits) })])));
+    paintChart("#visitsChart", days, { tone: "blue", label: t("ch.visits", "Visits per day") });
     $("#visitsEmpty").hidden = pages.length > 0;
     card.hidden = false;
   }
@@ -894,7 +1236,7 @@
   const deviceLimitSave = $("#deviceLimitSave");
   if (deviceLimitSave) deviceLimitSave.addEventListener("click", async () => {
     const n = Number(($("#deviceLimit") || {}).value);
-    if (!Number.isInteger(n) || n < 1 || n > 20) { alert("Devices must be 1-20"); return; }
+    if (!Number.isInteger(n) || n < 1 || n > 20) { notify(t("msg.deviceRange", "Devices must be 1-20"), "error"); return; }
     await runAction("set_devices", { allowed_devices: n });
   });
 
@@ -906,8 +1248,10 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-current", active ? "page" : "false");
     });
-    const titles = { security: "Security & Panel" };
-    $("#pageTitle").textContent = titles[name] || title(name);
+    const titles = { overview: ["nav.overview", "Overview"], students: ["nav.students", "Students"],
+      history: ["nav.history", "Activity history"], security: ["nav.security", "Security & Panel"] };
+    const pair = titles[name];
+    $("#pageTitle").textContent = pair ? t(pair[0], pair[1]) : title(name);
     $(".sidebar").classList.remove("open");
     $("#menuButton").setAttribute("aria-expanded", "false");
     if (name === "students") loadStudents();
@@ -931,6 +1275,19 @@
       $("#menuButton").setAttribute("aria-expanded", String(open));
     });
     $("#refreshAll").addEventListener("click", () => activatePanel($(".nav-item.active").dataset.panel));
+    $("#langToggle").addEventListener("click", () => {
+      LANG = LANG === "my" ? "en" : "my";
+      try { localStorage.setItem(LANG_KEY, LANG); } catch (_) { }
+      applyI18n();
+      /* re-render whatever is on screen so dynamic text follows the switch */
+      const active = $(".nav-item.active");
+      if (active) activatePanel(active.dataset.panel);
+    });
+    $("#alertBell").addEventListener("click", () => {
+      activatePanel("students");
+      const select = $("#studentStatus");
+      if (select) { select.value = "pending"; state.studentPage = 1; loadStudents(); }
+    });
     $("#retryAdmin").addEventListener("click", bootstrap);
     $("#reloadStudents").addEventListener("click", loadStudents);
     $("#studentFilters").addEventListener("submit", event => { event.preventDefault(); state.studentPage = 1; loadStudents(); });
@@ -949,7 +1306,7 @@
     $("#extendLicense").addEventListener("click", () => confirmAndRun("extend_license", "Extend license", { months: Number($("#licenseMonths").value) }));
     $("#setExpiry").addEventListener("click", () => {
       const value = $("#customExpiry").value;
-      if (!value) return notify("Choose a custom expiry date first.", "error");
+      if (!value) return notify(t("msg.pickExpiry", "Choose a custom expiry date first."), "error");
       confirmAndRun("set_expiry", "Set custom expiry", { expires_at: new Date(`${value}T23:59:59Z`).toISOString() });
     });
     $("#panelArtifactForm").addEventListener("submit", uploadPanelArtifact);
@@ -965,12 +1322,13 @@
       event.preventDefault();
       try {
         await api(API.panelVersion, { method: "PUT", body: JSON.stringify({ latest_version: $("#latestVersion").value, minimum_supported_version: $("#minimumVersion").value }) });
-        notify("Panel version policy saved.");
+        notify(t("msg.versionSaved", "Panel version policy saved."));
       } catch (error) { handleError(error, "Could not save panel version policy."); }
     });
   }
 
   async function bootstrap() {
+    applyI18n();
     hideAuthSurfaces();
     $("#adminChecking").hidden = false;
     if (!accessToken()) return showLogin();

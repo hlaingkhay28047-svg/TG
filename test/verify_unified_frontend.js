@@ -152,8 +152,13 @@ check("a completed license mutation is never reported as failed when only dashbo
   /notify\(body\.message[\s\S]{0,260}await Promise\.all\([\s\S]{0,180}if \(mutation\) clearMutation\(mutation\)/.test(admin) &&
   /const summary = `\$\{title\(action\)\} completed, but refreshed data could not be loaded\.`/.test(admin) &&
   /handleError\(Object\.assign\(new Error\(message\)/.test(admin));
+/* 20260901a — the console is bilingual: visible labels now pass through
+   t(key, english), the English literal staying in the code as the source of
+   truth. The contract this pins is the GATING (Approve exists only for a
+   canonical pending account) and the label — both still asserted, with the
+   translation wrapper allowed between them. */
 check("Approve is rendered only for a canonical pending account",
-  /canonicalAccountStatus\s*===\s*["']pending["'][\s\S]{0,180}\["approve",\s*"Approve"/.test(admin));
+  /canonicalAccountStatus\s*===\s*["']pending["'][\s\S]{0,220}\["approve",\s*(?:t\(\s*"act\.approve",\s*)?"Approve"/.test(admin));
 check("concurrent admin 401s share one refresh and ignore stale responses after session rotation",
   hasAll(admin, ["refreshInFlight", "sessionGeneration"]) &&
   /accessToken\(\) !== token/.test(admin) && /generation !== sessionGeneration/.test(admin));
