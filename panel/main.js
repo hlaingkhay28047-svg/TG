@@ -5811,7 +5811,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.48.0";
+const PANEL_VERSION = "6.49.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6805,6 +6805,16 @@ function applyI18n() {
        bridged key counts as verified: Free Generate must not nag the user
        to re-verify a key that already runs the classic tabs. */
     g.HNK.studioKeyVerified = function () { return !!(state && state.rhKey); };
+    /* v6.49.0 — the AI Tools screens are the app's Home and Workflows now,
+       and the app's Home routes to OTHER PAGES: its six picture cards open
+       Retouch, Workflows, Freeform, Media Lab, Path and Gallery, and its
+       "Photoshop Panel download" button is the release fetch. Those live in
+       main.js, so the sub-app reaches them through this bridge rather than
+       reaching into the module scope. */
+    g.HNK.panelNav = {
+      switchPage: function (key) { try { switchPage(key); saveSettings(); } catch (e) { } },
+      getUpdate: function () { try { return panelGetUpdate(); } catch (e) { } }
+    };
   } catch (e) { }
 })();
 
@@ -11911,6 +11921,10 @@ function switchPage(key) {
   if (key === "aitools" || key === "wf") {
     /* Home returns to the cards home; Workflows is its own top tab now, the
        way the app has always had it, instead of a pill inside Home. */
+    /* v6.49.0 — and the banner follows the app: its Home starts on the
+       greeting card, its Workflows starts on the hero. */
+    const bn = $("pgbAiTools");
+    if (bn) bn.style.display = (key === "wf") ? "block" : "none";
     const want = key === "wf" ? "workflow-tools" : "home";
     try {
       const aiApp = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.aiToolsApp : null;
@@ -12259,6 +12273,28 @@ function init() {
        gone, so all of the wiring below always runs. */
     bindToggle("tglAutoPlace", "autoPlace");
     bindToggle("tglAutoSave", "autoSave");
+    /* v6.49.0 — Direct Generate lives on Setup now. Its value belongs to the
+       AI Tools settings service (its own file), not to `state`, so it gets
+       its own two-line binder rather than bindToggle's state[key] path. */
+    (function bindDirectGenerate() {
+      const b = $("setDirect");
+      if (!b) return;
+      const svc = function () {
+        try { return (globalThis.HNK && globalThis.HNK.aiToolsSettings) || null; } catch (e) { return null; }
+      };
+      const on = function () { const sv = svc(); return !!(sv && sv.get && sv.get().directGenerate); };
+      const paint = function () {
+        b.className = "tgl" + (on() ? " on" : "");
+        b.textContent = t(on() ? "on" : "off");
+      };
+      b.addEventListener("click", function () {
+        const sv = svc();
+        if (sv && sv.set) sv.set({ directGenerate: !on() });
+        paint();
+      });
+      REFRESHERS.push(paint);
+      paint();
+    })();
     const tas = $("tglAutoSave");
     if (tas) tas.addEventListener("click", function () {
       if (state.autoSave && !state.saveDirH) { pickSaveFolder(); }

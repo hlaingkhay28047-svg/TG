@@ -300,18 +300,23 @@ body {
 .mut { font-size: 10px; color: var(--muted-2); margin-bottom: 7px; line-height: 1.45; }
 
 /* ---------- Inputs ---------- */
+/* v6.49.0 — the app's field, not a shrunken one. A 26px box beside the web
+   app's 42px field is exactly the "အကြီးအသေးဖြစ်နေတာ" the owner reported:
+   the same control, two different sizes, on two surfaces meant to be one
+   product. Padding, radius and type now come from the app's .inp. */
 .inp {
-  height: 26px;
+  min-height: 42px;
+  box-sizing: border-box;
   background-color: var(--field-2);
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 9px;
   color: var(--text);
-  padding: 0 8px;
-  font-size: 11px;
+  padding: 10px 12px;
+  font-size: 13px;
   min-width: 0;
 }
 .inp:focus { border-color: var(--accent); }
-select.inp { padding: 5px 6px; }
+select.inp { padding: 9px 10px; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -666,8 +671,16 @@ input[type="range"] { min-width: 0; }
 
 /* v4.12 Create pro */
 .chiprow { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-.chip { background: var(--chip-bg); color: var(--chip-tx); border: 1px solid var(--chip-brd); border-radius: 14px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
-.chip:hover { background: var(--chip-bg-h); }
+/* v6.49.0 — the app's chip, byte for byte in behaviour: panel ground, soft
+   hairline, cream type, gold when selected. The purple chip family this
+   replaced was the panel's own invention and read as a different product
+   beside the app's identical control. */
+.chip { background-color: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+  border-radius: 14px; padding: 6px 13px; font-size: 12px; font-weight: 700;
+  min-height: 34px; box-sizing: border-box; display: flex; flex-direction: row;
+  align-items: center; cursor: pointer; }
+.chip:hover { border-color: var(--accent); }
+.chip.on { background-color: var(--accent); border-color: var(--accent); color: #1a1408; }
 .gallery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .gthumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--chip-brd); cursor: pointer; }
 .gthumb:hover { border-color: var(--accent-soft); }
@@ -1058,3 +1071,111 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* v6.48.0 — the one line under APP & UPDATES that says what the button can
    and cannot do: it fetches the release, Creative Cloud installs it. */
 .hint { font-size: 11px; line-height: 1.55; color: var(--muted-2); margin: 6px 2px 0; }
+
+/* ============================================================
+   v6.49.0 — THE WEB APP'S OWN HOME AND WORKFLOWS, COMPONENT FOR COMPONENT
+
+   The owner walked both surfaces side by side and said the panel still did
+   not match: "ပိုတာ လိုတာတေွ နေရာမမှန်တာတေွအကြီးအသေးဖြစ်နေတာတေွ မလုိချင်ပါဘူး"
+   — nothing extra, nothing missing, nothing in the wrong place, nothing the
+   wrong size. A machine walk of both surfaces at 420px (scratch harness,
+   later pinned by verify_panel_gate's structural checks) said the same thing
+   in numbers: the panel's Home was the AI-Tools stack home (nine 380x330
+   cards) where the app's Home is a dashboard (six 188x208 cards), and the
+   panel's Workflows was a single column of 380x350 art cards where the app's
+   is a two-column 173px grid behind a search field.
+
+   These are the app's own components, ported to this renderer's rules:
+   flexbox instead of grid (percentage widths, not 1fr), explicit
+   flex-direction on every stacked container, no aspect-ratio, no object-fit,
+   no pseudo-element scrims, and a radius the box can satisfy. Sizes come
+   from the app's measured boxes at the same width, not from taste.
+   ============================================================ */
+
+/* The app's section header: .card > h2 in gold small-caps. The panel's own
+   .chead is a collapsible affordance; a plain section title is not one. */
+.card h2, .sec-h2 { display: block; font-size: 12px; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+
+/* ---- Home: the greeting hero keeps its art, gains the app's clock line ---- */
+
+/* ---- Home: "Student Web App" destinations (the app's .unified-actions) ---- */
+.unified-actions { display: flex; flex-direction: row; flex-wrap: wrap; }
+.unified-actions .btn { margin: 0 6px 6px 0; }
+
+/* ---- Home: the six destination cards, two to a row like the app ---- */
+.dash-grid { display: flex; flex-direction: row; flex-wrap: wrap; margin: 16px 0 0; }
+.dash-card { display: flex; flex-direction: column; width: 48%; margin: 0 4% 16px 0;
+  padding: 0; border: none; background: transparent; color: var(--text);
+  text-align: center; cursor: pointer; box-sizing: border-box; }
+.dash-card:nth-child(2n) { margin-right: 0; }
+.dash-card .art { position: relative; border: 1px solid var(--line); border-radius: 12px;
+  overflow: hidden; background-color: var(--panel); }
+.dash-card .art img { display: block; width: 100%; height: auto; }
+.dash-card .bdg { position: absolute; top: 8px; left: 8px; width: 30px; height: 30px;
+  border-radius: 9px; background-color: rgba(11, 13, 20, .62); color: var(--text);
+  font-size: 14px; line-height: 30px; text-align: center; }
+/* the app clamps the label to two lines and centres it, so all six cards are
+   the same height whatever the locale's word length */
+.dash-card .lbl { display: flex; flex-direction: row; align-items: center; justify-content: center;
+  margin-top: 8px; height: 2.9em; overflow: hidden;
+  font-weight: 800; font-size: 13px; line-height: 1.45; text-align: center; }
+.dash-card .sub { display: block; height: 1.5em; overflow: hidden;
+  font-size: 11px; color: var(--muted); line-height: 1.5; }
+.dash-card:hover .art { border-color: var(--accent); }
+
+/* ---- Home: the Library teaser strip (the app's .dash-strip) ---- */
+.dash-strip { display: flex; flex-direction: row; overflow-x: auto; margin: 8px 0; }
+.dash-strip img { flex: 0 0 auto; width: 96px; height: 128px; margin-right: 8px;
+  border: 1px solid var(--line); border-radius: 12px; }
+
+/* ---- Home: the inventory statline (three across, like the app) ---- */
+.statline { display: flex; flex-direction: row; flex-wrap: wrap; margin: 8px 0 2px; }
+.statline > div { flex: 0 0 33.33%; box-sizing: border-box; padding: 0 4px; text-align: center; }
+.statline b { display: block; color: var(--accent-h); font-size: 17px; }
+.statline span { display: block; font-size: 11px; color: var(--muted); line-height: 1.4; }
+.dash-stat { margin: 20px 0 8px; }
+.dash-stat-link { cursor: pointer; }
+
+/* ---- Home: the Photoshop-panel promo band ---- */
+.dash-promo { position: relative; }
+.dash-promo p { font-size: 12px; line-height: 1.75; margin: 0 0 12px; color: var(--text-2); }
+
+/* ---- Workflows: the app's two-column card grid ---- */
+.wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 6px; }
+.wfmini { position: relative; display: flex; flex-direction: column; width: 48%;
+  margin: 0 4% 8px 0; padding: 10px; box-sizing: border-box;
+  border: 1px solid var(--line); border-radius: 11px; background-color: var(--panel-2);
+  color: var(--text); text-align: left; cursor: pointer; }
+.wfmini:nth-child(2n) { margin-right: 0; }
+.wfmini.wf-span2 { width: 100%; margin-right: 0; }
+.wfmini:hover { border-color: var(--accent); }
+.wfmini .wfv { position: relative; display: block; border-radius: 8px; overflow: hidden;
+  background-color: var(--sunk); }
+.wfmini img { display: block; width: 100%; height: auto; border-radius: 8px; }
+.wfmini .wf-need { position: absolute; left: 6px; bottom: 6px; padding: 2px 8px;
+  border: 1px solid var(--line-2); border-radius: 10px;
+  background-color: rgba(11, 13, 20, .78); color: var(--text); font-size: 10px; }
+.wfmini .t { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 800; line-height: 1.45; }
+.wfmini .s { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.wfmini .go { display: block; margin-top: 6px; font-size: 10.5px; font-weight: 800; color: var(--accent-h); }
+
+/* ---- Workflows: the app's category quick-jump rail ---- */
+.wfjump { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+.wfjump .chip { flex: 0 0 auto; white-space: nowrap; }
+
+/* ---- Tutorials: the app's own page (hero + three lesson cards) ---- */
+.unified-hero { display: flex; flex-direction: column; padding: 20px; margin-bottom: 10px;
+  border: 1px solid var(--line); border-radius: 14px; background-color: var(--panel-2); }
+.unified-kick { margin: 0 0 6px; color: var(--accent-h); font-size: 11px; font-weight: 800;
+  letter-spacing: .13em; text-transform: uppercase; }
+.unified-hero h1 { margin: 0; font-size: 20px; line-height: 1.2; color: var(--text); }
+.unified-hero p { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.tutorial-grid { display: flex; flex-direction: column; }
+.tutorial-card { display: flex; flex-direction: column; align-items: flex-start;
+  padding: 16px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px;
+  background-color: var(--panel); }
+.tutorial-card h2 { margin: 8px 0 0; font-size: 14px; font-weight: 800; letter-spacing: 0;
+  text-transform: none; color: var(--text); }
+.tutorial-card p { margin: 6px 0 10px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.dash-promo .promo-x { position: absolute; top: 8px; right: 8px; min-height: 30px; padding: 2px 10px; }
