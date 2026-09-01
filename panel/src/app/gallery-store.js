@@ -1,0 +1,89 @@
+/* ============================================================
+   HNK — the Gallery store (v6.46.0)
+
+   The web app keeps every result it makes and shows them in Library ▸
+   Gallery, where a studio can pick some out, save them and throw the rest
+   away. The panel kept nothing: a result went into the document as a layer
+   and, once that document was closed without saving, it was gone.
+
+   So the panel keeps them too, the only way a Photoshop plugin can: as files
+   in its own data folder. Writing is fire-and-forget and never fails a
+   generate — a studio that cannot spare the disk still gets its layer.
+   ============================================================ */
+(function () {
+"use strict";
+
+var FOLDER = "gallery";
+var MAX = 200;   /* the app caps its own store too; oldest go first */
+
+function _uxp() { return (typeof require === "function") ? require("uxp") : null; }
+
+async function _folder(create) {
+  var uxp = _uxp();
+  if (!uxp) return null;
+  var data = await uxp.storage.localFileSystem.getDataFolder();
+  try { return await data.getEntry(FOLDER); }
+  catch (e) {
+    if (!create) return null;
+    try { return await data.createFolder(FOLDER); } catch (e2) { return null; }
+  }
+}
+
+/* b64 without the data: prefix. Returns the file name, or "" on any failure. */
+async function save(b64, ext, label) {
+  try {
+    if (!b64) return "";
+    var uxp = _uxp();
+    var dir = await _folder(true);
+    if (!dir) return "";
+    var name = String(label || "hnk").replace(/[^a-z0-9-]+/gi, "-").slice(0, 24) +
+      "-" + Date.now() + "." + (ext || "png");
+    var f = await dir.createFile(name, { overwrite: true });
+    var bin = (globalThis.HNK && globalThis.HNK.b64ToBuf) ? globalThis.HNK.b64ToBuf(b64) : null;
+    if (!bin) return "";
+    await f.write(bin, { format: uxp.storage.formats.binary });
+    await trim();
+    return name;
+  } catch (e) { return ""; }
+}
+
+async function list() {
+  try {
+    var dir = await _folder(false);
+    if (!dir) return [];
+    var all = await dir.getEntries();
+    var files = all.filter(function (e) { return e && e.isFile; });
+    files.sort(function (a, b) { return String(b.name).localeCompare(String(a.name)); });
+    return files;
+  } catch (e) { return []; }
+}
+
+async function trim() {
+  try {
+    var files = await list();
+    for (var i = MAX; i < files.length; i++) { try { await files[i].delete(); } catch (e) { } }
+  } catch (e) { }
+}
+
+async function remove(name) {
+  try {
+    var files = await list();
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].name === name) { await files[i].delete(); return true; }
+    }
+  } catch (e) { }
+  return false;
+}
+
+async function clear() {
+  try {
+    var files = await list();
+    for (var i = 0; i < files.length; i++) { try { await files[i].delete(); } catch (e) { } }
+    return true;
+  } catch (e) { return false; }
+}
+
+var API = { save: save, list: list, remove: remove, clear: clear, MAX: MAX };
+if (typeof module !== "undefined" && module.exports) module.exports = API;
+else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.galleryStore = API; }
+})();

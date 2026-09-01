@@ -1,7 +1,7 @@
 {
   "id": "com.hnkstudio.ai.panel.students",
   "name": "HNK Photoshop Ai Panel (Students) V1",
-  "version": "6.45.0",
+  "version": "6.46.0",
   "main": "index.html",
   "manifestVersion": 5,
   "host": {
