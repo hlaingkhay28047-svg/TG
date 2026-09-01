@@ -178,6 +178,32 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.48.0** — `pending`. The update fetches itself (2026-09-01, owner:
+  "ထပ်ခါထပ်ခါ download မဆွဲရပဲ ... ဒီကနေ update လုပ်လို့ရတာမျိုး"). Half of that
+  request is possible and half is Adobe's to allow, and this ships the half
+  that is ours while saying so on the card. **Not possible, and not
+  attempted:** replacing this plugin in place. A UXP package folder is
+  read-only while the plugin runs, Creative Cloud owns installation, and
+  Photoshop will not hot-swap a plugin's code — that boundary is what makes a
+  signed .ccx mean anything. **Done:** the trip to the website. APP & UPDATES
+  already knew a newer release existed; it now shows which one, and a second
+  button asks the SAME authenticated endpoint the website's download button
+  asks — `POST /v1/downloads/panel`, one-time token, five-minute life,
+  refused for an expired plan or an unregistered computer exactly as before —
+  streams the release and writes it where the studio says. No new endpoint,
+  no new permission, no new grant in the manifest; the .ccx still never gets
+  a permanent URL and still never enters Git. The studio double-clicks the
+  saved file once and Creative Cloud verifies the signature and installs it,
+  which is the real integrity gate and is Adobe's, not ours — this lane does
+  not claim to verify what it downloaded. Acceptance: carry over v6.47.1's
+  checklist; additionally open Setup ▸ APP & UPDATES on an install older than
+  the published release, confirm the Update row names the new version, press
+  Download the update, choose a folder, and confirm the .ccx arrives at the
+  published byte size and installs on a double-click; then confirm the button
+  is absent on an install that is already current. Artifact
+  `HNK_Ai_Panel_v6.48.0.ccx`, SHA-256
+  `c74165e99fa1a2f64de82392dfa31e2242e19bc9a802f6f27ff7a912967170a0`,
+  1,348,338 bytes. Stays disabled for customers until this acceptance.
 - **v6.47.1** — `pending`. Three things the div sweep left standing
   (2026-09-01, owner: "မတူသေးဘူး" on sixteen screenshots of 6.47.0). The
   controls were the panel's at last, and the rest of the difference was

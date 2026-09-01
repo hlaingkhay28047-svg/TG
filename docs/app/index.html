@@ -21619,12 +21619,38 @@ function deviceLabel(){
          : /Safari\//i.test(ua)  ? "Safari" : "Browser";
   return (os + " · " + br).slice(0, 40);
 }
+/* v5.75.3 — THE REASON, not a word search. This asked "does any 4xx body from
+   a devices endpoint contain the word device / limit / exceed?", and a refusal
+   from /v1/devices/enroll almost always does — its own messages are about
+   devices. So a computer slot already claimed by another machine, which is a
+   different problem with a different fix, was reported to the student as
+   "device limit reached — remove one or buy another slot". The owner's own
+   account showed it: ONE device of FOUR used, and the limit warning under it,
+   twice. The server names its reasons (phone_slot_occupied,
+   computer_slot_occupied, panel_slot_occupied) and the schema raises P0001
+   when the seat count is genuinely full; read those. */
+function accDeviceReason(body){
+  var r = (body && (body.error || body.code || body.reason)) || "";
+  if (typeof r !== "string") r = "";
+  if (!r && body && body.detail && typeof body.detail === "string") r = body.detail;
+  return r;
+}
 function accIsDeviceLimit(status, body){
   if (status < 400) return false;
   if (body && body.code === "P0001") return true;
-  var s = ""; try { s = JSON.stringify(body || ""); } catch(e){}
-  return /device|allowed_devices|limit|exceed/i.test(s);
+  var r = accDeviceReason(body);
+  return /^(device_limit|device_limit_reached|allowed_devices|seat_limit)$/.test(r) ||
+         /allowed_devices|device limit|seat limit/i.test(String((body && body.message) || ""));
 }
+/* A slot held by another machine is NOT a full account, and it no longer
+   claims to be. It gets no copy of its own here, on purpose: a new string in
+   this file must be translated into every pack by someone who reads the
+   language — the registry in sweep_v477_upgrades.js exists for the three Tai
+   packs with no reader and nothing else — and inventing twenty translations
+   to explain a case the device list already shows, with the other machine
+   right there badged "Admin reset only", would ship wrong words to real
+   customers to save a scroll. The false instruction to buy another slot is
+   what had to go, and it is gone. */
 function accDevLimitMsg(){
   var m = (acc.profile && acc.profile.allowed_devices != null) ? String(acc.profile.allowed_devices) : "";
   return t("dev_limit").replace("{M}", accNum(m));
@@ -22841,7 +22867,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.75.1";
+var APP_VER="5.75.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

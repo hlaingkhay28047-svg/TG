@@ -139,7 +139,7 @@
     <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
     <div class="hdr-t">
       <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.47.1</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.48.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
     </div>
     <div class="hdr-ctl">
       <!-- v6.46.0 — web-app parity: the app parks Setup behind a header gear
@@ -312,9 +312,21 @@
         <div class="chead" id="cAboutH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_about"></span></div>
         <div class="cbody" id="cAboutB">
           <div class="diag" id="aboutList"></div>
-          <div class="row last">
+          <div class="row">
             <div role="button" tabindex="0" id="btnCheckUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_check_update"></div>
           </div>
+          <!-- v6.48.0 — the update fetches itself. Photoshop will not let a
+               plugin replace its own code (a UXP package folder is read-only
+               at runtime and Creative Cloud owns installation), so the last
+               step is still a double-click — but the trip to the website, the
+               sign-in and the hunt for the download page are gone: the panel
+               is already signed in, and the same authenticated one-time
+               stream the website uses serves it here. Hidden until a check
+               has actually found a newer release. -->
+          <div class="row last" id="updGetRow" style="display:none">
+            <div role="button" tabindex="0" id="btnGetUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_get_update"></div>
+          </div>
+          <div class="hint" id="updHint" data-i18n="upd_hint"></div>
         </div>
       </div>
     </div>
