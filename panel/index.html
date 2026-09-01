@@ -69,7 +69,18 @@
     #hnkGate .gate-b2{background-color:#1c2530;background-image:none;border:1px solid #45536b;color:#e6edf3;font-weight:600}
     #hnkGate .gate-msg{font-size:12px;line-height:1.7;margin:0 0 13px;color:#c9d3de;text-align:left}
     #hnkGate .gate-err{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ff8b8b;min-height:1px}
-    #hnkGate .gate-lang{box-sizing:border-box;margin:14px auto 0;padding:5px 8px;
+    /* v6.47.0 — the secondary block is fenced off from the primary action.
+       In the owner's Photoshop screenshot Sign In and Open website were two
+       identical gold slabs one above the other, so nothing said which one
+       finishes the job; gateApplyWidgetStyles now paints Open website gold
+       ONLY in the locked view, where it really is the way out, and this rule
+       draws the line the eye stops at. A bordered div — no pseudo-elements,
+       which this renderer does not draw. */
+    #hnkGate .gate-hr{margin:14px 0 12px;border-top:1px solid #2a323d}
+    /* Full width, like every control above it: the auto-margin version sat as
+       a narrow chip under a column of full-width buttons and read as a stray
+       widget rather than the language control. */
+    #hnkGate .gate-lang{box-sizing:border-box;display:block;width:100%;margin:0;padding:7px 9px;
       font-size:11px;border-radius:7px;border:1px solid #2a323d;background:#0d1014;color:#9aa7b4}
     .topbar-plan{margin-left:6px;opacity:.9}
   </style>
@@ -104,6 +115,7 @@
       <div id="gateSignIn" class="gate-b" role="button" tabindex="0"></div>
       <div id="gateForgot" role="button" tabindex="0"></div>
     </div>
+    <div class="gate-hr"></div>
     <div id="gateLocked">
       <div class="gate-msg" id="gateLockedMsg"></div>
       <div id="gateBuy" class="gate-b" role="button" tabindex="0"></div>
@@ -127,14 +139,18 @@
     <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
     <div class="hdr-t">
       <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.46.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.47.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
     </div>
     <div class="hdr-ctl">
       <!-- v6.46.0 — web-app parity: the app parks Setup behind a header gear
            and keeps its bottom bar to the five work groups. Same here. -->
-      <button id="btnGearSetup" class="btn btn-icon" aria-label="Setup"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 14.9a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5v.2a2 2 0 1 1-3.8 0v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1h-.2a2 2 0 1 1 0-3.8h.2a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5v-.2a2 2 0 1 1 3.8 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 3.8h-.2a1.6 1.6 0 0 0-1.5 1Z"/></svg></button>
+      <!-- v6.47.0 — a text glyph, not inline SVG: this renderer draws no
+           inline <svg>, so the owner's screenshots showed an empty pill
+           where Setup should be. The theme button beside it has always
+           been a glyph and has always painted. -->
+      <div role="button" tabindex="0" id="btnGearSetup" class="btn btn-icon" aria-label="Setup" title="Setup">⚙</div>
       <select id="selLang" class="lang-sel" title="Language"></select>
-      <button id="btnTheme" class="btn btn-icon" title="Theme">☀</button>
+      <div role="button" tabindex="0" id="btnTheme" class="btn btn-icon" title="Theme">☀</div>
     </div>
   </div>
 
@@ -164,8 +180,22 @@
       <div class="card">
         <div class="chead" id="cAcctH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_acct"></span></div>
         <div class="cbody" id="cAcctB">
+          <!-- v6.47.0 — the member's own profile photo, where the web app keeps
+               it: on the account card, above the account facts. The square is
+               the HNK mark until they choose a picture, exactly as the gate's
+               identity square is. Photoshop does the imaging (UXP has no
+               canvas), and what is stored is the same 256px centre crop the
+               website stores, in the same profiles.avatar column — so one
+               photo serves the panel, the website and the admin list. -->
+          <div class="row acc-ava-row" id="acctAvaRow">
+            <div class="acc-ava"><span id="acctAvaTxt">HNK</span><img id="acctAvaImg" alt="" aria-hidden="true" /></div>
+            <div class="acc-ava-acts">
+              <div role="button" tabindex="0" id="btnAvaPick" class="btn btn-sm grow"></div>
+              <div role="button" tabindex="0" id="btnAvaDrop" class="btn btn-sm grow last"></div>
+            </div>
+          </div>
           <div class="diag" id="acctList"></div>
-          <div class="row last"><button id="btnAcctOut" class="btn btn-sm grow"></button></div>
+          <div class="row last"><div role="button" tabindex="0" id="btnAcctOut" class="btn btn-sm grow"></div></div>
         </div>
       </div>
 
@@ -174,11 +204,11 @@
         <div class="cbody" id="cApiB">
           <div class="row">
             <input id="apiKey" type="password" class="inp grow" placeholder="AIza..." />
-            <button id="btnShowKey" class="btn btn-sm" data-i18n="btn_show"></button>
+            <div role="button" tabindex="0" id="btnShowKey" class="btn btn-sm" data-i18n="btn_show"></div>
           </div>
           <div class="row last">
-            <button id="btnTestKey" class="btn btn-sm grow" data-i18n="btn_test"></button>
-            <button id="btnSaveKey" class="btn btn-sm btn-gold grow" data-i18n="btn_save"></button>
+            <div role="button" tabindex="0" id="btnTestKey" class="btn btn-sm grow" data-i18n="btn_test"></div>
+            <div role="button" tabindex="0" id="btnSaveKey" class="btn btn-sm btn-gold grow" data-i18n="btn_save"></div>
           </div>
           <!-- v6.26.0 — the provider segment and the OpenAI key row left with
                their providers: RunningHub Enterprise is the one engine. -->
@@ -215,9 +245,9 @@
           <div class="row last" id="szRow">
             <div class="lbl" data-i18n="lbl_size"></div>
             <div class="seg grow">
-              <button class="segb" id="size1K">1K</button>
-              <button class="segb" id="size2K">2K</button>
-              <button class="segb" id="size4K">4K</button>
+              <div role="button" tabindex="0" class="segb" id="size1K">1K</div>
+              <div role="button" tabindex="0" class="segb" id="size2K">2K</div>
+              <div role="button" tabindex="0" class="segb" id="size4K">4K</div>
             </div>
           </div>
           <!-- v6.26.0 — the OpenAI quality segment left with its provider. -->
@@ -229,7 +259,7 @@
         <div class="cbody" id="cMoneyB">
           <div class="mut" data-i18n="money_intro"></div>
           <div class="diag" id="moneyList"></div>
-          <div class="row last"><button id="btnMoney" class="btn btn-sm btn-gold grow" data-i18n="money_refresh"></button></div>
+          <div class="row last"><div role="button" tabindex="0" id="btnMoney" class="btn btn-sm btn-gold grow" data-i18n="money_refresh"></div></div>
         </div>
       </div>
 
@@ -238,8 +268,8 @@
         <div class="cbody" id="cDataB">
           <div class="diag" id="dataList"></div>
           <div class="row last">
-            <button id="btnBackupOut" class="btn btn-sm grow" data-i18n="btn_export_backup"></button>
-            <button id="btnBackupIn" class="btn btn-sm grow" data-i18n="btn_import_backup"></button>
+            <div role="button" tabindex="0" id="btnBackupOut" class="btn btn-sm grow" data-i18n="btn_export_backup"></div>
+            <div role="button" tabindex="0" id="btnBackupIn" class="btn btn-sm grow" data-i18n="btn_import_backup"></div>
           </div>
         </div>
       </div>
@@ -249,8 +279,8 @@
         <div class="cbody" id="cLibB">
           <div class="mut" data-i18n="reflib_note"></div>
           <div class="row tight refbtns">
-            <button id="btnLibChoose" class="btn btn-sm btn-gold grow" data-i18n="lib_choose"></button>
-            <button id="btnLibOpen" class="btn btn-sm" data-i18n="lib_open"></button>
+            <div role="button" tabindex="0" id="btnLibChoose" class="btn btn-sm btn-gold grow" data-i18n="lib_choose"></div>
+            <div role="button" tabindex="0" id="btnLibOpen" class="btn btn-sm" data-i18n="lib_open"></div>
           </div>
           <div class="diagrow">
             <div class="diag-nm" data-i18n="lib_current"></div>
@@ -269,9 +299,9 @@
             <div class="diag-st" id="libScanTxt">—</div>
           </div>
           <div class="row last refbtns">
-            <button id="btnLibRescan" class="btn btn-sm grow" data-i18n="lib_rescan"></button>
-            <button id="btnLibChange" class="btn btn-sm" data-i18n="lib_change"></button>
-            <button id="btnLibReset" class="btn btn-sm" data-i18n="lib_reset"></button>
+            <div role="button" tabindex="0" id="btnLibRescan" class="btn btn-sm grow" data-i18n="lib_rescan"></div>
+            <div role="button" tabindex="0" id="btnLibChange" class="btn btn-sm" data-i18n="lib_change"></div>
+            <div role="button" tabindex="0" id="btnLibReset" class="btn btn-sm" data-i18n="lib_reset"></div>
           </div>
         </div>
       </div>
@@ -283,7 +313,7 @@
         <div class="cbody" id="cAboutB">
           <div class="diag" id="aboutList"></div>
           <div class="row last">
-            <button id="btnCheckUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_check_update"></button>
+            <div role="button" tabindex="0" id="btnCheckUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_check_update"></div>
           </div>
         </div>
       </div>
@@ -317,7 +347,7 @@
             <select id="selRecentPrompts" class="inp grow"></select>
           </div>
           <div class="row last">
-            <button id="btnClearP" class="btn btn-sm grow" data-i18n="btn_clear"></button>
+            <div role="button" tabindex="0" id="btnClearP" class="btn btn-sm grow" data-i18n="btn_clear"></div>
           </div>
         </div>
       </div>
@@ -327,7 +357,7 @@
         <div class="cbody" id="cFinalB">
           <textarea id="finalPromptBox" class="pbox" rows="8" readonly></textarea>
           <div class="row last">
-            <button id="btnCopyFinal" class="btn btn-sm grow" data-i18n="btn_copy"></button>
+            <div role="button" tabindex="0" id="btnCopyFinal" class="btn btn-sm grow" data-i18n="btn_copy"></div>
           </div>
         </div>
       </div>
@@ -341,28 +371,28 @@
               <div class="refthumb">
                 <div id="refImg0" class="refbg"></div>
                 <div id="refPh0" class="refph">1</div>
-                <button id="refClear0" class="xbtn">&times;</button>
+                <div role="button" tabindex="0" id="refClear0" class="xbtn">&times;</div>
               </div>
               <div class="reflb" id="refLb0"></div>
-              <div class="row tight refbtns"><button id="refLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight refbtns"><div role="button" tabindex="0" id="refLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
               <div class="row tight">
-                <button id="refLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="refFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="refWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+                <div role="button" tabindex="0" id="refLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
+                <div role="button" tabindex="0" id="refFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
+                <div role="button" tabindex="0" id="refWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
               </div>
             </div>
             <div class="refslot">
               <div class="refthumb">
                 <div id="refImg1" class="refbg"></div>
                 <div id="refPh1" class="refph">2</div>
-                <button id="refClear1" class="xbtn">&times;</button>
+                <div role="button" tabindex="0" id="refClear1" class="xbtn">&times;</div>
               </div>
               <div class="reflb" id="refLb1"></div>
-              <div class="row tight refbtns"><button id="refLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight refbtns"><div role="button" tabindex="0" id="refLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
               <div class="row tight">
-                <button id="refLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="refFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="refWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+                <div role="button" tabindex="0" id="refLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
+                <div role="button" tabindex="0" id="refFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
+                <div role="button" tabindex="0" id="refWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
               </div>
             </div>
           </div>
@@ -373,9 +403,9 @@
             </div>
             <input id="urlInput" type="text" class="inp" data-i18n-ph="url_ph" />
             <div class="row tight">
-              <button id="btnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></button>
-              <button id="btnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></button>
-              <button id="btnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></button>
+              <div role="button" tabindex="0" id="btnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></div>
+              <div role="button" tabindex="0" id="btnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></div>
+              <div role="button" tabindex="0" id="btnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></div>
             </div>
           </div>
         </div>
@@ -383,13 +413,13 @@
       <div class="card">
         <div class="tglrow">
           <div class="tgltxt" data-i18n="auto_place"></div>
-          <button id="tglAutoPlace" class="tgl"></button>
+          <div role="button" tabindex="0" id="tglAutoPlace" class="tgl"></div>
         </div>
           <div class="tglrow">
             <div class="tgltxt" data-i18n="autosave_lbl"></div>
-            <button id="tglAutoSave" class="tgl"></button>
+            <div role="button" tabindex="0" id="tglAutoSave" class="tgl"></div>
           </div>
-        <button id="btnGenerate" class="gen" data-i18n="btn_generate"></button>
+        <div role="button" tabindex="0" id="btnGenerate" class="gen" data-i18n="btn_generate"></div>
       </div>
 
       <div class="card">
@@ -397,7 +427,7 @@
         <div class="cbody" id="cCamB">
           <div class="tglrow">
             <div class="tgltxt" data-i18n="cam_master"></div>
-            <button id="tglCam" class="tgl"></button>
+            <div role="button" tabindex="0" id="tglCam" class="tgl"></div>
           </div>
           <div class="mut" data-i18n="cam_note"></div>
           <div class="swrow"><div class="slbl" data-i18n="cam_body"></div><div class="sws" id="swCamBody"></div></div>
@@ -405,8 +435,8 @@
           <div class="swrow"><div class="slbl" data-i18n="cam_f"></div><div class="sws" id="swCamF"></div></div>
           <div class="swrow"><div class="slbl" data-i18n="cam_bokeh"></div><div class="sws" id="swCamBokeh"></div></div>
           <div class="swrow"><div class="slbl" data-i18n="cam_film"></div><div class="sws" id="swCamFilm"></div></div>
-          <div class="srow"><button id="ckIsoOn" class="ckb"></button><div class="slbl" data-i18n="cam_iso"></div><input type="range" id="camIso" min="50" max="1000" step="50" value="100" /><div class="sval" id="camIsoV">100</div></div>
-          <div class="srow last"><button id="ckKOn" class="ckb"></button><div class="slbl" data-i18n="cam_k"></div><input type="range" id="camK" min="4000" max="8000" step="100" value="5600" /><div class="sval" id="camKV">5600</div></div>
+          <div class="srow"><div role="button" tabindex="0" id="ckIsoOn" class="ckb"></div><div class="slbl" data-i18n="cam_iso"></div><input type="range" id="camIso" min="50" max="1000" step="50" value="100" /><div class="sval" id="camIsoV">100</div></div>
+          <div class="srow last"><div role="button" tabindex="0" id="ckKOn" class="ckb"></div><div class="slbl" data-i18n="cam_k"></div><input type="range" id="camK" min="4000" max="8000" step="100" value="5600" /><div class="sval" id="camKV">5600</div></div>
         </div>
       </div>
 
@@ -415,8 +445,8 @@
         <div class="cbody" id="cBatchB">
           <div class="mut" data-i18n="batch_note"></div>
           <div class="row last">
-            <button id="btnBatchRun" class="btn btn-sm btn-gold grow" data-i18n="btn_batch"></button>
-            <button id="btnBatchStop" class="btn btn-sm" data-i18n="btn_batch_stop"></button>
+            <div role="button" tabindex="0" id="btnBatchRun" class="btn btn-sm btn-gold grow" data-i18n="btn_batch"></div>
+            <div role="button" tabindex="0" id="btnBatchStop" class="btn btn-sm" data-i18n="btn_batch_stop"></div>
           </div>
         </div>
       </div>
@@ -428,7 +458,7 @@
           <div class="histrow" id="histRow"></div>
           <div class="row tight" style="margin-bottom:8px;">
             <div class="mut grow" id="histInfo" style="margin-bottom:0;"></div>
-            <button id="btnHistPrompt" class="btn btn-xs" data-i18n="btn_hist_prompt"></button>
+            <div role="button" tabindex="0" id="btnHistPrompt" class="btn btn-xs" data-i18n="btn_hist_prompt"></div>
           </div>
           <div class="cmp" id="cmpBox">
             <img id="imgAfter" class="cmp-base" />
@@ -441,9 +471,9 @@
             <input type="range" id="cmpSlider" min="0" max="100" value="50" />
           </div>
           <div class="row tight">
-            <button id="btnPlace" class="btn btn-sm grow" data-i18n="btn_place"></button>
-            <button id="btnResultToRef" class="btn btn-sm grow" data-i18n="btn_to_ref"></button>
-            <button id="btnSaveAs" class="btn btn-sm grow" data-i18n="btn_saveas"></button>
+            <div role="button" tabindex="0" id="btnPlace" class="btn btn-sm grow" data-i18n="btn_place"></div>
+            <div role="button" tabindex="0" id="btnResultToRef" class="btn btn-sm grow" data-i18n="btn_to_ref"></div>
+            <div role="button" tabindex="0" id="btnSaveAs" class="btn btn-sm grow" data-i18n="btn_saveas"></div>
           </div>
         </div>
       </div>
@@ -455,7 +485,7 @@
            Library page after the regroup. -->
       <div class="tglrow" style="margin:0 2px 8px 2px;">
         <div class="tgltxt" data-i18n="learn_lbl"></div>
-        <button id="tglLearn" class="tgl"></button>
+        <div role="button" tabindex="0" id="tglLearn" class="tgl"></div>
       </div>
 
       <!-- v6.27.0 — regrouped (owner request: each thing with its own group).
@@ -471,17 +501,17 @@
           <div class="mut" data-i18n="pipe_note"></div>
           <div class="tglrow">
             <div class="tgltxt" data-i18n="pipe_merge"></div>
-            <button id="tglPipeMerge" class="tgl"></button>
+            <div role="button" tabindex="0" id="tglPipeMerge" class="tgl"></div>
           </div>
           <div class="row tight">
             <select id="pipeSel" class="inp grow"></select>
-            <button id="btnPipeAdd" class="btn btn-xs" data-i18n="pipe_add"></button>
+            <div role="button" tabindex="0" id="btnPipeAdd" class="btn btn-xs" data-i18n="pipe_add"></div>
           </div>
           <div id="pipeList"></div>
           <div class="row last">
-            <button id="btnPipeRun" class="btn btn-sm btn-gold grow" data-i18n="pipe_run"></button>
+            <div role="button" tabindex="0" id="btnPipeRun" class="btn btn-sm btn-gold grow" data-i18n="pipe_run"></div>
             <div class="mut" id="pipeInfo" style="margin:0 8px;">0 / 6</div>
-            <button id="btnPipeClear" class="btn btn-xs" data-i18n="pipe_clear"></button>
+            <div role="button" tabindex="0" id="btnPipeClear" class="btn btn-xs" data-i18n="pipe_clear"></div>
           </div>
         </div>
       </div>
@@ -491,16 +521,16 @@
         <div class="cbody" id="cPresetB">
           <div class="tglrow">
             <div class="tgltxt" data-i18n="auto_run"></div>
-            <button id="tglAutoRun" class="tgl"></button>
+            <div role="button" tabindex="0" id="tglAutoRun" class="tgl"></div>
           </div>
           <div class="grp">
             <div class="grp-h" id="grpCleanH"><span class="car">&#9656;</span><span data-i18n="grp_cleanup"></span></div>
             <div class="grp-b" id="grpCleanB">
               <div class="mut" data-i18n="cleanup_note"></div>
-              <div class="ckrow"><button id="ckPeople" class="ckb"></button><div class="cklb" data-i18n="p_remove_people"></div></div>
-              <div class="ckrow"><button id="ckHands" class="ckb"></button><div class="cklb" data-i18n="p_fix_hands"></div></div>
-              <div class="ckrow"><button id="ckLegs" class="ckb"></button><div class="cklb" data-i18n="p_fix_legs"></div></div>
-              <div class="ckrow last"><button id="ckFull" class="ckb"></button><div class="cklb" data-i18n="p_full_clean"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="ckPeople" class="ckb"></div><div class="cklb" data-i18n="p_remove_people"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="ckHands" class="ckb"></div><div class="cklb" data-i18n="p_fix_hands"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="ckLegs" class="ckb"></div><div class="cklb" data-i18n="p_fix_legs"></div></div>
+              <div class="ckrow last"><div role="button" tabindex="0" id="ckFull" class="ckb"></div><div class="cklb" data-i18n="p_full_clean"></div></div>
             </div>
           </div>
           <div class="mut" data-i18n="grp_moved_note"></div>
@@ -509,9 +539,9 @@
             <div class="grp-h" id="grpRepH"><span class="car">&#9656;</span><span data-i18n="grp_repsubj"></span></div>
             <div class="grp-b" id="grpRepB">
               <div class="pbtns">
-                <button class="pbtn" id="pRepSolo" data-i18n="p_rep_solo"></button>
-                <button class="pbtn" id="pRepCouple" data-i18n="p_rep_couple"></button>
-                <button class="pbtn" id="pRepFamily" data-i18n="p_rep_family"></button>
+                <div role="button" tabindex="0" class="pbtn" id="pRepSolo" data-i18n="p_rep_solo"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pRepCouple" data-i18n="p_rep_couple"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pRepFamily" data-i18n="p_rep_family"></div>
               </div>
             </div>
           </div>
@@ -519,13 +549,13 @@
           <div class="grp">
             <div class="grp-h" id="grpMixH"><span class="car">&#9656;</span><span data-i18n="grp_rmix"></span></div>
             <div class="grp-b" id="grpMixB">
-              <div class="ckrow"><button id="rmBg" class="ckb"></button><div class="cklb" data-i18n="rm_bg"></div></div>
-              <div class="ckrow"><button id="rmFg" class="ckb"></button><div class="cklb" data-i18n="rm_fg"></div></div>
-              <div class="ckrow"><button id="rmLight" class="ckb"></button><div class="cklb" data-i18n="rm_light"></div></div>
-              <div class="ckrow"><button id="rmColor" class="ckb"></button><div class="cklb" data-i18n="rm_color"></div></div>
-              <div class="ckrow"><button id="rmObject" class="ckb"></button><div class="cklb" data-i18n="rm_object"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="rmBg" class="ckb"></div><div class="cklb" data-i18n="rm_bg"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="rmFg" class="ckb"></div><div class="cklb" data-i18n="rm_fg"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="rmLight" class="ckb"></div><div class="cklb" data-i18n="rm_light"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="rmColor" class="ckb"></div><div class="cklb" data-i18n="rm_color"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="rmObject" class="ckb"></div><div class="cklb" data-i18n="rm_object"></div></div>
               <div class="row last">
-                <button id="btnRmixGen" class="btn btn-sm btn-gold grow" data-i18n="btn_rmix"></button>
+                <div role="button" tabindex="0" id="btnRmixGen" class="btn btn-sm btn-gold grow" data-i18n="btn_rmix"></div>
               </div>
             </div>
           </div>
@@ -537,10 +567,10 @@
               <!-- v6.26.0 — the scene-EXTRACT checkboxes and button (Gemini
                    vision) left with their provider; Scene Generate below is a
                    RunningHub image job and stays. -->
-              <div class="ckrow"><button id="i2pFit" class="ckb"></button><div class="cklb" data-i18n="i2p_fit"></div></div>
-              <div class="ckrow"><button id="i2pAdapt" class="ckb"></button><div class="cklb" data-i18n="i2p_adapt"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="i2pFit" class="ckb"></div><div class="cklb" data-i18n="i2p_fit"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="i2pAdapt" class="ckb"></div><div class="cklb" data-i18n="i2p_adapt"></div></div>
               <div class="row last">
-                <button id="btnSceneGen" class="btn btn-sm btn-gold grow" data-i18n="btn_scenegen"></button>
+                <div role="button" tabindex="0" id="btnSceneGen" class="btn btn-sm btn-gold grow" data-i18n="btn_scenegen"></div>
               </div>
             </div>
           </div>
@@ -556,14 +586,14 @@
             <div class="grp-b" id="grpChainsB">
               <div class="mut" data-i18n="chains_note"></div>
               <div class="sws">
-                <button id="chn_prewedding" class="sw ltchip chn"></button>
-                <button id="chn_pageant" class="sw ltchip chn"></button>
-                <button id="chn_model" class="sw ltchip chn"></button>
-                <button id="chn_glass" class="sw ltchip chn"></button>
-                <button id="chn_commercial" class="sw ltchip chn"></button>
-                <button id="chn_korea" class="sw ltchip chn"></button>
-                <button id="chn_vietnam" class="sw ltchip chn"></button>
-                <button id="chn_chinese" class="sw ltchip chn"></button>
+                <div role="button" tabindex="0" id="chn_prewedding" class="sw ltchip chn"></div>
+                <div role="button" tabindex="0" id="chn_pageant" class="sw ltchip chn"></div>
+                <div role="button" tabindex="0" id="chn_model" class="sw ltchip chn"></div>
+                <div role="button" tabindex="0" id="chn_glass" class="sw ltchip chn"></div>
+                <div role="button" tabindex="0" id="chn_commercial" class="sw ltchip chn"></div>
+                <div role="button" tabindex="0" id="chn_korea" class="sw ltchip chn"></div>
+                <div role="button" tabindex="0" id="chn_vietnam" class="sw ltchip chn"></div>
+                <div role="button" tabindex="0" id="chn_chinese" class="sw ltchip chn"></div>
               </div>
             </div>
           </div>
@@ -572,10 +602,10 @@
             <div class="grp-h" id="grpRestoreH"><span class="car">&#9656;</span><span data-i18n="grp_restore"></span></div>
             <div class="grp-b" id="grpRestoreB">
               <div class="mut" data-i18n="restore_note"></div>
-              <div class="ckrow"><button id="ckRestColor" class="ckb"></button><div class="cklb" data-i18n="rest_color"></div></div>
-              <div class="ckrow"><button id="ckRestBw" class="ckb"></button><div class="cklb" data-i18n="rest_bw"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="ckRestColor" class="ckb"></div><div class="cklb" data-i18n="rest_color"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="ckRestBw" class="ckb"></div><div class="cklb" data-i18n="rest_bw"></div></div>
               <div class="pbtns">
-                <button class="pbtn" id="pRestore" data-i18n="p_restore"></button>
+                <div role="button" tabindex="0" class="pbtn" id="pRestore" data-i18n="p_restore"></div>
               </div>
             </div>
           </div>
@@ -590,20 +620,20 @@
           <div class="mut" data-i18n="ro_note"></div>
           <div class="row tight">
             <div class="slbl" data-i18n="ro_target"></div>
-            <button id="roTgSolo" class="segb" data-i18n="ro_solo"></button>
-            <button id="roTgCouple" class="segb" data-i18n="ro_couple"></button>
-            <button id="roTgFamily" class="segb" data-i18n="ro_family"></button>
+            <div role="button" tabindex="0" id="roTgSolo" class="segb" data-i18n="ro_solo"></div>
+            <div role="button" tabindex="0" id="roTgCouple" class="segb" data-i18n="ro_couple"></div>
+            <div role="button" tabindex="0" id="roTgFamily" class="segb" data-i18n="ro_family"></div>
           </div>
           <div class="sws" style="margin-bottom:8px;">
-            <button id="ckRefMk" class="ckb"></button><div class="cklb" data-i18n="ro_mk" style="margin-right:12px;"></div>
-            <button id="ckRefHair" class="ckb"></button><div class="cklb" data-i18n="ro_hair"></div>
+            <div role="button" tabindex="0" id="ckRefMk" class="ckb"></div><div class="cklb" data-i18n="ro_mk" style="margin-right:12px;"></div>
+            <div role="button" tabindex="0" id="ckRefHair" class="ckb"></div><div class="cklb" data-i18n="ro_hair"></div>
           </div>
           <div class="grp">
             <div class="grp-h" id="roFaceH"><span class="car">&#9656;</span><span data-i18n="ro_h_face"></span></div>
             <div class="grp-b" id="roFaceB">
               <div class="pbtns">
-                <button class="pbtn" id="roFaceRep" data-i18n="ro_faceRep"></button>
-                <button class="pbtn" id="roFaceSwap" data-i18n="ro_faceSwap"></button>
+                <div role="button" tabindex="0" class="pbtn" id="roFaceRep" data-i18n="ro_faceRep"></div>
+                <div role="button" tabindex="0" class="pbtn" id="roFaceSwap" data-i18n="ro_faceSwap"></div>
               </div>
             </div>
           </div>
@@ -612,13 +642,13 @@
             <div class="grp-b" id="roBgB">
               <div class="mut" data-i18n="ro_bg_note"></div>
               <div class="sws" style="margin-bottom:6px;">
-                <button id="ckBgFrame" class="ckb"></button><div class="cklb" data-i18n="ro_bg_frame" style="margin-right:12px;"></div>
-                <button id="ckBgLight" class="ckb"></button><div class="cklb" data-i18n="ro_bg_light"></div>
+                <div role="button" tabindex="0" id="ckBgFrame" class="ckb"></div><div class="cklb" data-i18n="ro_bg_frame" style="margin-right:12px;"></div>
+                <div role="button" tabindex="0" id="ckBgLight" class="ckb"></div><div class="cklb" data-i18n="ro_bg_light"></div>
               </div>
               <div class="pbtns">
-                <button class="pbtn" id="roBgRep" data-i18n="ro_bgRep"></button>
-                <button class="pbtn" id="roBgSwap" data-i18n="ro_bgSwap"></button>
-                <button class="pbtn" id="roFgRep" data-i18n="ro_fgRep"></button>
+                <div role="button" tabindex="0" class="pbtn" id="roBgRep" data-i18n="ro_bgRep"></div>
+                <div role="button" tabindex="0" class="pbtn" id="roBgSwap" data-i18n="ro_bgSwap"></div>
+                <div role="button" tabindex="0" class="pbtn" id="roFgRep" data-i18n="ro_fgRep"></div>
               </div>
             </div>
           </div>
@@ -626,7 +656,7 @@
             <div class="grp-h" id="roSubH"><span class="car">&#9656;</span><span data-i18n="ro_h_sub"></span></div>
             <div class="grp-b" id="roSubB">
               <div class="pbtns">
-                <button class="pbtn" id="roSubSwap" data-i18n="ro_subSwap"></button>
+                <div role="button" tabindex="0" class="pbtn" id="roSubSwap" data-i18n="ro_subSwap"></div>
               </div>
             </div>
           </div>
@@ -634,8 +664,8 @@
             <div class="grp-h" id="roLcH"><span class="car">&#9656;</span><span data-i18n="ro_h_lc"></span></div>
             <div class="grp-b" id="roLcB">
               <div class="pbtns">
-                <button class="pbtn" id="roLcRef" data-i18n="ro_lcRef"></button>
-                <button class="pbtn" id="roLcCopy" data-i18n="ro_lcCopy"></button>
+                <div role="button" tabindex="0" class="pbtn" id="roLcRef" data-i18n="ro_lcRef"></div>
+                <div role="button" tabindex="0" class="pbtn" id="roLcCopy" data-i18n="ro_lcCopy"></div>
               </div>
             </div>
           </div>
@@ -643,8 +673,8 @@
             <div class="grp-h" id="roDressH"><span class="car">&#9656;</span><span data-i18n="ro_h_dress"></span></div>
             <div class="grp-b" id="roDressB">
               <div class="pbtns">
-                <button class="pbtn" id="roDressRef" data-i18n="ro_dressRef"></button>
-                <button class="pbtn" id="roDressRep" data-i18n="ro_dressRep"></button>
+                <div role="button" tabindex="0" class="pbtn" id="roDressRef" data-i18n="ro_dressRef"></div>
+                <div role="button" tabindex="0" class="pbtn" id="roDressRep" data-i18n="ro_dressRep"></div>
               </div>
             </div>
           </div>
@@ -652,7 +682,7 @@
             <div class="grp-h" id="roMkH"><span class="car">&#9656;</span><span data-i18n="ro_h_mk"></span></div>
             <div class="grp-b" id="roMkB">
               <div class="pbtns">
-                <button class="pbtn" id="roMkCopy" data-i18n="ro_mkCopy"></button>
+                <div role="button" tabindex="0" class="pbtn" id="roMkCopy" data-i18n="ro_mkCopy"></div>
               </div>
             </div>
           </div>
@@ -661,13 +691,13 @@
             <div class="grp-b" id="roMatchB">
               <div class="mut" data-i18n="ro_match_note"></div>
               <div class="sws">
-                <button id="mColor" class="ckb"></button><div class="cklb" data-i18n="m_color" style="margin-right:10px;"></div>
-                <button id="mLight" class="ckb"></button><div class="cklb" data-i18n="m_light" style="margin-right:10px;"></div>
-                <button id="mMakeup" class="ckb"></button><div class="cklb" data-i18n="m_makeup" style="margin-right:10px;"></div>
-                <button id="mSkin" class="ckb"></button><div class="cklb" data-i18n="m_skin"></div>
+                <div role="button" tabindex="0" id="mColor" class="ckb"></div><div class="cklb" data-i18n="m_color" style="margin-right:10px;"></div>
+                <div role="button" tabindex="0" id="mLight" class="ckb"></div><div class="cklb" data-i18n="m_light" style="margin-right:10px;"></div>
+                <div role="button" tabindex="0" id="mMakeup" class="ckb"></div><div class="cklb" data-i18n="m_makeup" style="margin-right:10px;"></div>
+                <div role="button" tabindex="0" id="mSkin" class="ckb"></div><div class="cklb" data-i18n="m_skin"></div>
               </div>
               <div class="pbtns">
-                <button class="pbtn gold" id="roMatch" data-i18n="ro_matchBtn"></button>
+                <div role="button" tabindex="0" class="pbtn gold" id="roMatch" data-i18n="ro_matchBtn"></div>
               </div>
             </div>
           </div>
@@ -675,9 +705,9 @@
             <div class="grp-h" id="roDetailH"><span class="car">&#9656;</span><span data-i18n="ro_h_detail"></span></div>
             <div class="grp-b" id="roDetailB">
               <div class="pbtns">
-                <button class="pbtn" id="pHair" data-i18n="p_hair"></button>
-                <button class="pbtn" id="pAccess" data-i18n="p_access"></button>
-                <button class="pbtn" id="pPose" data-i18n="p_pose"></button>
+                <div role="button" tabindex="0" class="pbtn" id="pHair" data-i18n="p_hair"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pAccess" data-i18n="p_access"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pPose" data-i18n="p_pose"></div>
               </div>
             </div>
           </div>
@@ -685,10 +715,10 @@
             <div class="grp-h" id="roCompH"><span class="car">&#9656;</span><span data-i18n="ro_h_comp"></span></div>
             <div class="grp-b" id="roCompB">
               <div class="pbtns">
-                <button class="pbtn" id="pFgProps" data-i18n="p_fgprops"></button>
-                <button class="pbtn" id="pTextLogo" data-i18n="p_textlogo"></button>
-                <button class="pbtn" id="pStyle" data-i18n="p_style"></button>
-                <button class="pbtn" id="pFgBgLc" data-i18n="p_fgbglc"></button>
+                <div role="button" tabindex="0" class="pbtn" id="pFgProps" data-i18n="p_fgprops"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pTextLogo" data-i18n="p_textlogo"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pStyle" data-i18n="p_style"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pFgBgLc" data-i18n="p_fgbglc"></div>
               </div>
             </div>
           </div>
@@ -701,21 +731,21 @@
           <div class="mut" data-i18n="scn_note"></div>
           <div class="row tight">
             <div class="slbl" data-i18n="ro_target"></div>
-            <button id="scnTgSolo" class="segb" data-i18n="ro_solo"></button>
-            <button id="scnTgCouple" class="segb" data-i18n="ro_couple"></button>
-            <button id="scnTgFamily" class="segb" data-i18n="ro_family"></button>
+            <div role="button" tabindex="0" id="scnTgSolo" class="segb" data-i18n="ro_solo"></div>
+            <div role="button" tabindex="0" id="scnTgCouple" class="segb" data-i18n="ro_couple"></div>
+            <div role="button" tabindex="0" id="scnTgFamily" class="segb" data-i18n="ro_family"></div>
           </div>
           <div class="grp">
             <div class="grp-h" id="scnStyleH"><span class="car">&#9656;</span><span data-i18n="scn_h_style"></span></div>
             <div class="grp-b" id="scnStyleB">
               <div class="pbtns">
-                <button class="pbtn" id="scnGrad" data-i18n="scn_grad"></button>
-                <button class="pbtn" id="scnPrewed" data-i18n="scn_prewed"></button>
-                <button class="pbtn" id="scnVietnam" data-i18n="scn_vietnam"></button>
-                <button class="pbtn" id="scnMyanmar" data-i18n="scn_myanmar"></button>
-                <button class="pbtn" id="scnChinese" data-i18n="scn_chinese"></button>
-                <button class="pbtn" id="scnShan" data-i18n="scn_shan"></button>
-                <button class="pbtn" id="scnNewborn" data-i18n="scn_newborn"></button>
+                <div role="button" tabindex="0" class="pbtn" id="scnGrad" data-i18n="scn_grad"></div>
+                <div role="button" tabindex="0" class="pbtn" id="scnPrewed" data-i18n="scn_prewed"></div>
+                <div role="button" tabindex="0" class="pbtn" id="scnVietnam" data-i18n="scn_vietnam"></div>
+                <div role="button" tabindex="0" class="pbtn" id="scnMyanmar" data-i18n="scn_myanmar"></div>
+                <div role="button" tabindex="0" class="pbtn" id="scnChinese" data-i18n="scn_chinese"></div>
+                <div role="button" tabindex="0" class="pbtn" id="scnShan" data-i18n="scn_shan"></div>
+                <div role="button" tabindex="0" class="pbtn" id="scnNewborn" data-i18n="scn_newborn"></div>
               </div>
             </div>
           </div>
@@ -723,18 +753,18 @@
             <div class="grp-h" id="scnBdayH"><span class="car">&#9656;</span><span data-i18n="scn_h_bday"></span></div>
             <div class="grp-b" id="scnBdayB">
               <div class="srow"><div class="slbl" data-i18n="scn_age"></div><input type="range" id="scnAge" min="1" max="45" value="18" /><div class="sval" id="scnAgeV">18</div></div>
-              <div class="pbtns"><button class="pbtn gold" id="scnBday" data-i18n="scn_bday_go"></button></div>
+              <div class="pbtns"><div role="button" tabindex="0" class="pbtn gold" id="scnBday" data-i18n="scn_bday_go"></div></div>
             </div>
           </div>
           <div class="grp">
             <div class="grp-h" id="scnCapH"><span class="car">&#9656;</span><span data-i18n="scn_h_cap"></span></div>
             <div class="grp-b" id="scnCapB">
-              <div class="ckrow"><button id="ckCap" class="ckb"></button><div class="cklb" data-i18n="scn_cap_on"></div></div>
+              <div class="ckrow"><div role="button" tabindex="0" id="ckCap" class="ckb"></div><div class="cklb" data-i18n="scn_cap_on"></div></div>
               <input id="capText" type="text" class="inp" data-i18n-ph="scn_cap_ph" />
               <div class="row tight">
                 <div class="slbl" data-i18n="scn_cap_pos"></div>
-                <button id="capTop" class="segb" data-i18n="scn_top"></button>
-                <button id="capBottom" class="segb" data-i18n="scn_bottom"></button>
+                <div role="button" tabindex="0" id="capTop" class="segb" data-i18n="scn_top"></div>
+                <div role="button" tabindex="0" id="capBottom" class="segb" data-i18n="scn_bottom"></div>
               </div>
             </div>
           </div>
@@ -743,16 +773,16 @@
             <div class="grp-b" id="scnScarfB">
               <div class="row tight">
                 <div class="slbl" data-i18n="scn_dir"></div>
-                <button id="scnDirL" class="segb" data-i18n="scn_left"></button>
-                <button id="scnDirR" class="segb" data-i18n="scn_right"></button>
-                <button id="scnDirU" class="segb" data-i18n="scn_up"></button>
+                <div role="button" tabindex="0" id="scnDirL" class="segb" data-i18n="scn_left"></div>
+                <div role="button" tabindex="0" id="scnDirR" class="segb" data-i18n="scn_right"></div>
+                <div role="button" tabindex="0" id="scnDirU" class="segb" data-i18n="scn_up"></div>
               </div>
               <div class="row tight">
                 <div class="slbl" data-i18n="scn_len"></div>
-                <button id="scnLenS" class="segb" data-i18n="scn_short"></button>
-                <button id="scnLenL" class="segb" data-i18n="scn_long"></button>
+                <div role="button" tabindex="0" id="scnLenS" class="segb" data-i18n="scn_short"></div>
+                <div role="button" tabindex="0" id="scnLenL" class="segb" data-i18n="scn_long"></div>
               </div>
-              <div class="pbtns"><button class="pbtn gold" id="scnScarf" data-i18n="scn_scarf"></button></div>
+              <div class="pbtns"><div role="button" tabindex="0" class="pbtn gold" id="scnScarf" data-i18n="scn_scarf"></div></div>
             </div>
           </div>
         </div>
@@ -767,7 +797,7 @@
             <div class="grp-b" id="wpTrailB">
               <div class="swrow"><div class="slbl" data-i18n="wp_trail_c"></div><div class="sws" id="swWedTrail"></div></div>
               <div class="pbtns">
-                <button class="pbtn gold" id="wpTrailGo" data-i18n="wp_trail_go"></button>
+                <div role="button" tabindex="0" class="pbtn gold" id="wpTrailGo" data-i18n="wp_trail_go"></div>
               </div>
             </div>
           </div>
@@ -776,7 +806,7 @@
             <div class="grp-b" id="wpVeilB">
               <div class="swrow"><div class="slbl" data-i18n="wp_veil_c"></div><div class="sws" id="swWedVeil"></div></div>
               <div class="pbtns">
-                <button class="pbtn gold" id="wpVeilGo" data-i18n="wp_veil_go"></button>
+                <div role="button" tabindex="0" class="pbtn gold" id="wpVeilGo" data-i18n="wp_veil_go"></div>
               </div>
             </div>
           </div>
@@ -785,7 +815,7 @@
             <div class="grp-b" id="wpGownB">
               <div class="swrow"><div class="slbl" data-i18n="wp_gown_c"></div><div class="sws" id="swWedGown"></div></div>
               <div class="pbtns">
-                <button class="pbtn gold" id="wpGownGo" data-i18n="wp_gown_go"></button>
+                <div role="button" tabindex="0" class="pbtn gold" id="wpGownGo" data-i18n="wp_gown_go"></div>
               </div>
             </div>
           </div>
@@ -795,7 +825,7 @@
               <div class="swrow"><div class="slbl" data-i18n="wp_petalcolor"></div><div class="sws" id="swPetal"></div></div>
               <div class="swrow"><div class="slbl" data-i18n="wp_pet_c"></div><div class="sws" id="swWedPet"></div></div>
               <div class="pbtns">
-                <button class="pbtn gold" id="wpPetalGo" data-i18n="wp_pet_go"></button>
+                <div role="button" tabindex="0" class="pbtn gold" id="wpPetalGo" data-i18n="wp_pet_go"></div>
               </div>
             </div>
           </div>
@@ -804,7 +834,7 @@
             <div class="grp-b" id="wpExtraB">
               <div class="swrow"><div class="slbl" data-i18n="wp_extra_c"></div><div class="sws" id="swWedExtra"></div></div>
               <div class="pbtns">
-                <button class="pbtn gold" id="wpExtraGo" data-i18n="wp_extra_go"></button>
+                <div role="button" tabindex="0" class="pbtn gold" id="wpExtraGo" data-i18n="wp_extra_go"></div>
               </div>
             </div>
           </div>
@@ -819,8 +849,8 @@
             <div class="grp-b" id="grpRecipesB">
               <div class="mut" data-i18n="recipe_note"></div>
               <div class="row last">
-                <button id="btnRecipeSave" class="btn btn-sm btn-gold grow" data-i18n="btn_recipe_save"></button>
-                <button id="btnRecipeLoad" class="btn btn-sm grow" data-i18n="btn_recipe_load"></button>
+                <div role="button" tabindex="0" id="btnRecipeSave" class="btn btn-sm btn-gold grow" data-i18n="btn_recipe_save"></div>
+                <div role="button" tabindex="0" id="btnRecipeLoad" class="btn btn-sm grow" data-i18n="btn_recipe_load"></div>
               </div>
             </div>
           </div>
@@ -840,23 +870,23 @@
             <div class="ldot" id="ld4"></div><div class="ldot" id="ld5"></div>
             <div class="ldot" id="ld6"></div><div class="ldot" id="ld7"></div>
           </div>
-              <div class="lrow" id="lrKey"><button id="lrKeyCk" class="ckb"></button><div class="lname" data-i18n="l_key"></div><div class="lsum" id="lrKeySum"></div></div>
-              <div class="lrow" id="lrFill"><button id="lrFillCk" class="ckb"></button><div class="lname" data-i18n="l_fill"></div><div class="lsum" id="lrFillSum"></div></div>
-              <div class="lrow" id="lrButterfly"><button id="lrButterflyCk" class="ckb"></button><div class="lname" data-i18n="l_butterfly"></div><div class="lsum" id="lrButterflySum"></div></div>
-              <div class="lrow" id="lrSide"><button id="lrSideCk" class="ckb"></button><div class="lname" data-i18n="l_side"></div><div class="lsum" id="lrSideSum"></div></div>
-              <div class="lrow" id="lrRim"><button id="lrRimCk" class="ckb"></button><div class="lname" data-i18n="l_rim"></div><div class="lsum" id="lrRimSum"></div></div>
-              <div class="lrow" id="lrBack"><button id="lrBackCk" class="ckb"></button><div class="lname" data-i18n="l_back"></div><div class="lsum" id="lrBackSum"></div></div>
-              <div class="lrow" id="lrHair"><button id="lrHairCk" class="ckb"></button><div class="lname" data-i18n="l_hair"></div><div class="lsum" id="lrHairSum"></div></div>
-              <div class="lrow" id="lrBglight"><button id="lrBglightCk" class="ckb"></button><div class="lname" data-i18n="l_bglight"></div><div class="lsum" id="lrBglightSum"></div></div>
+              <div class="lrow" id="lrKey"><div role="button" tabindex="0" id="lrKeyCk" class="ckb"></div><div class="lname" data-i18n="l_key"></div><div class="lsum" id="lrKeySum"></div></div>
+              <div class="lrow" id="lrFill"><div role="button" tabindex="0" id="lrFillCk" class="ckb"></div><div class="lname" data-i18n="l_fill"></div><div class="lsum" id="lrFillSum"></div></div>
+              <div class="lrow" id="lrButterfly"><div role="button" tabindex="0" id="lrButterflyCk" class="ckb"></div><div class="lname" data-i18n="l_butterfly"></div><div class="lsum" id="lrButterflySum"></div></div>
+              <div class="lrow" id="lrSide"><div role="button" tabindex="0" id="lrSideCk" class="ckb"></div><div class="lname" data-i18n="l_side"></div><div class="lsum" id="lrSideSum"></div></div>
+              <div class="lrow" id="lrRim"><div role="button" tabindex="0" id="lrRimCk" class="ckb"></div><div class="lname" data-i18n="l_rim"></div><div class="lsum" id="lrRimSum"></div></div>
+              <div class="lrow" id="lrBack"><div role="button" tabindex="0" id="lrBackCk" class="ckb"></div><div class="lname" data-i18n="l_back"></div><div class="lsum" id="lrBackSum"></div></div>
+              <div class="lrow" id="lrHair"><div role="button" tabindex="0" id="lrHairCk" class="ckb"></div><div class="lname" data-i18n="l_hair"></div><div class="lsum" id="lrHairSum"></div></div>
+              <div class="lrow" id="lrBglight"><div role="button" tabindex="0" id="lrBglightCk" class="ckb"></div><div class="lname" data-i18n="l_bglight"></div><div class="lsum" id="lrBglightSum"></div></div>
           <div class="lctl">
             <div class="lselname" id="lightSelName"></div>
             <div class="sws">
-              <button id="ltsoftbox" class="sw ltchip" data-i18n="lt_softbox"></button>
-              <button id="ltocta" class="sw ltchip" data-i18n="lt_octa"></button>
-              <button id="ltstrip" class="sw ltchip" data-i18n="lt_strip"></button>
-              <button id="ltumbrella" class="sw ltchip" data-i18n="lt_umbrella"></button>
-              <button id="ltbeauty" class="sw ltchip" data-i18n="lt_beauty"></button>
-              <button id="lthard" class="sw ltchip" data-i18n="lt_hard"></button>
+              <div role="button" tabindex="0" id="ltsoftbox" class="sw ltchip" data-i18n="lt_softbox"></div>
+              <div role="button" tabindex="0" id="ltocta" class="sw ltchip" data-i18n="lt_octa"></div>
+              <div role="button" tabindex="0" id="ltstrip" class="sw ltchip" data-i18n="lt_strip"></div>
+              <div role="button" tabindex="0" id="ltumbrella" class="sw ltchip" data-i18n="lt_umbrella"></div>
+              <div role="button" tabindex="0" id="ltbeauty" class="sw ltchip" data-i18n="lt_beauty"></div>
+              <div role="button" tabindex="0" id="lthard" class="sw ltchip" data-i18n="lt_hard"></div>
             </div>
             <div class="srow"><div class="slbl" data-i18n="li_int"></div><input type="range" id="liInt" min="0" max="100" value="80" /><div class="sval" id="liIntV">80</div></div>
             <div class="srow"><div class="slbl" data-i18n="li_angle"></div><input type="range" id="liAngle" min="-180" max="180" value="-45" /><div class="sval" id="liAngleV">-45</div></div>
@@ -864,9 +894,9 @@
             <div class="srow"><div class="slbl" data-i18n="li_dist"></div><input type="range" id="liDist" min="10" max="100" value="45" /><div class="sval" id="liDistV">45</div></div>
             <div class="srow last"><div class="slbl" data-i18n="li_size"></div><input type="range" id="liSize" min="10" max="100" value="70" /><div class="sval" id="liSizeV">70</div></div>
           </div>
-          <div class="ckrow"><button id="lgEquip" class="ckb"></button><div class="cklb" data-i18n="lg_equip"></div></div>
+          <div class="ckrow"><div role="button" tabindex="0" id="lgEquip" class="ckb"></div><div class="cklb" data-i18n="lg_equip"></div></div>
           <div class="row last">
-            <button id="btnLightGen" class="btn btn-sm btn-gold grow" data-i18n="btn_lightgen"></button>
+            <div role="button" tabindex="0" id="btnLightGen" class="btn btn-sm btn-gold grow" data-i18n="btn_lightgen"></div>
           </div>
         </div>
       </div>
@@ -898,45 +928,45 @@
           <div class="mut" data-i18n="cr_refs_note"></div>
           <div class="refrow">
             <div class="refslot">
-              <div class="refthumb"><div id="cRefImg0" class="refbg"></div><div id="cRefPh0" class="refph">1</div><button id="cRefX0" class="xbtn">&times;</button></div>
+              <div class="refthumb"><div id="cRefImg0" class="refbg"></div><div id="cRefPh0" class="refph">1</div><div role="button" tabindex="0" id="cRefX0" class="xbtn">&times;</div></div>
               <div class="reflb" id="cRefLb0"></div>
-              <div class="row tight refbtns"><button id="cRefLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib0" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
               <div class="row tight">
-                <button id="cRefLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+                <div role="button" tabindex="0" id="cRefLayer0" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
+                <div role="button" tabindex="0" id="cRefFile0" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
+                <div role="button" tabindex="0" id="cRefWeb0" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
               </div>
             </div>
             <div class="refslot">
-              <div class="refthumb"><div id="cRefImg1" class="refbg"></div><div id="cRefPh1" class="refph">2</div><button id="cRefX1" class="xbtn">&times;</button></div>
+              <div class="refthumb"><div id="cRefImg1" class="refbg"></div><div id="cRefPh1" class="refph">2</div><div role="button" tabindex="0" id="cRefX1" class="xbtn">&times;</div></div>
               <div class="reflb" id="cRefLb1"></div>
-              <div class="row tight refbtns"><button id="cRefLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib1" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
               <div class="row tight">
-                <button id="cRefLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+                <div role="button" tabindex="0" id="cRefLayer1" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
+                <div role="button" tabindex="0" id="cRefFile1" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
+                <div role="button" tabindex="0" id="cRefWeb1" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
               </div>
             </div>
           </div>
           <div class="refrow" style="margin-top:8px;">
             <div class="refslot">
-              <div class="refthumb"><div id="cRefImg2" class="refbg"></div><div id="cRefPh2" class="refph">3</div><button id="cRefX2" class="xbtn">&times;</button></div>
+              <div class="refthumb"><div id="cRefImg2" class="refbg"></div><div id="cRefPh2" class="refph">3</div><div role="button" tabindex="0" id="cRefX2" class="xbtn">&times;</div></div>
               <div class="reflb" id="cRefLb2"></div>
-              <div class="row tight refbtns"><button id="cRefLib2" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib2" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
               <div class="row tight">
-                <button id="cRefLayer2" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile2" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb2" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+                <div role="button" tabindex="0" id="cRefLayer2" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
+                <div role="button" tabindex="0" id="cRefFile2" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
+                <div role="button" tabindex="0" id="cRefWeb2" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
               </div>
             </div>
             <div class="refslot">
-              <div class="refthumb"><div id="cRefImg3" class="refbg"></div><div id="cRefPh3" class="refph">4</div><button id="cRefX3" class="xbtn">&times;</button></div>
+              <div class="refthumb"><div id="cRefImg3" class="refbg"></div><div id="cRefPh3" class="refph">4</div><div role="button" tabindex="0" id="cRefX3" class="xbtn">&times;</div></div>
               <div class="reflb" id="cRefLb3"></div>
-              <div class="row tight refbtns"><button id="cRefLib3" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></button></div>
+              <div class="row tight refbtns"><div role="button" tabindex="0" id="cRefLib3" class="btn btn-xs btn-gold grow" data-i18n="btn_browse"></div></div>
               <div class="row tight">
-                <button id="cRefLayer3" class="btn btn-xs grow" data-i18n="btn_ref_layer"></button>
-                <button id="cRefFile3" class="btn btn-xs grow" data-i18n="btn_ref_file"></button>
-                <button id="cRefWeb3" class="btn btn-xs grow" data-i18n="btn_ref_web"></button>
+                <div role="button" tabindex="0" id="cRefLayer3" class="btn btn-xs grow" data-i18n="btn_ref_layer"></div>
+                <div role="button" tabindex="0" id="cRefFile3" class="btn btn-xs grow" data-i18n="btn_ref_file"></div>
+                <div role="button" tabindex="0" id="cRefWeb3" class="btn btn-xs grow" data-i18n="btn_ref_web"></div>
               </div>
             </div>
           </div>
@@ -947,9 +977,9 @@
             </div>
             <input id="cUrlInput" type="text" class="inp" data-i18n-ph="url_ph" />
             <div class="row tight">
-              <button id="cBtnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></button>
-              <button id="cBtnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></button>
-              <button id="cBtnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></button>
+              <div role="button" tabindex="0" id="cBtnUrlPaste" class="btn btn-xs" data-i18n="btn_paste"></div>
+              <div role="button" tabindex="0" id="cBtnUrlLoad" class="btn btn-xs btn-gold grow" data-i18n="btn_load"></div>
+              <div role="button" tabindex="0" id="cBtnUrlCancel" class="btn btn-xs" data-i18n="btn_cancel"></div>
             </div>
           </div>
         </div>
@@ -960,21 +990,21 @@
         <p class="mut" data-i18n="scope_create_note" style="margin-bottom:8px;"></p>
         <div class="row tight">
           <div class="slbl" data-i18n="cr_ratio"></div>
-          <button class="segb" id="cRatio0"></button>
-          <button class="segb" id="cRatio1"></button>
-          <button class="segb" id="cRatio2"></button>
-          <button class="segb" id="cRatio3"></button>
-          <button class="segb" id="cRatio4"></button>
+          <div role="button" tabindex="0" class="segb" id="cRatio0"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio1"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio2"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio3"></div>
+          <div role="button" tabindex="0" class="segb" id="cRatio4"></div>
         </div>
         <div class="row tight">
           <div class="slbl" data-i18n="cr_var"></div>
-          <button class="segb" id="cVar1">1</button>
-          <button class="segb" id="cVar2">2</button>
-          <button class="segb" id="cVar3">3</button>
-          <button class="segb" id="cVar4">4</button>
+          <div role="button" tabindex="0" class="segb" id="cVar1">1</div>
+          <div role="button" tabindex="0" class="segb" id="cVar2">2</div>
+          <div role="button" tabindex="0" class="segb" id="cVar3">3</div>
+          <div role="button" tabindex="0" class="segb" id="cVar4">4</div>
         </div>
         <div class="mut cengine" id="cEngineTag"></div>
-        <button id="btnCreateGen" class="gen" data-i18n="btn_generate"></button>
+        <div role="button" tabindex="0" id="btnCreateGen" class="gen" data-i18n="btn_generate"></div>
       </div>
 
       <!-- Results -->
@@ -994,12 +1024,12 @@
             <input type="range" id="cCmpSlider" min="0" max="100" value="50" />
           </div>
           <div class="row tight" style="margin-top:8px;">
-            <button id="btnCreateToPS" class="btn btn-sm btn-gold grow" data-i18n="btn_create_ps"></button>
-            <button id="btnCreateSave" class="btn btn-sm grow" data-i18n="cr_save"></button>
+            <div role="button" tabindex="0" id="btnCreateToPS" class="btn btn-sm btn-gold grow" data-i18n="btn_create_ps"></div>
+            <div role="button" tabindex="0" id="btnCreateSave" class="btn btn-sm grow" data-i18n="cr_save"></div>
           </div>
           <div class="row tight">
-            <button id="btnCreateToRef" class="btn btn-sm grow" data-i18n="btn_to_ref"></button>
-            <button id="btnCreateRestyle" class="btn btn-sm grow" data-i18n="cr_restyle"></button>
+            <div role="button" tabindex="0" id="btnCreateToRef" class="btn btn-sm grow" data-i18n="btn_to_ref"></div>
+            <div role="button" tabindex="0" id="btnCreateRestyle" class="btn btn-sm grow" data-i18n="cr_restyle"></div>
           </div>
         </div>
       </div>
@@ -1053,12 +1083,12 @@
         <div class="cbody" id="cGalB">
           <div class="mut" id="galIntro"></div>
           <div class="row tight">
-            <button id="btnGalSel" class="btn btn-sm grow">Select</button>
-            <button id="btnGalSave" class="btn btn-sm grow">Save selected</button>
+            <div role="button" tabindex="0" id="btnGalSel" class="btn btn-sm grow">Select</div>
+            <div role="button" tabindex="0" id="btnGalSave" class="btn btn-sm grow">Save selected</div>
           </div>
           <div class="row tight">
-            <button id="btnGalDel" class="btn btn-sm grow">Delete selected</button>
-            <button id="btnGalClear" class="btn btn-sm">Clear all</button>
+            <div role="button" tabindex="0" id="btnGalDel" class="btn btn-sm grow">Delete selected</div>
+            <div role="button" tabindex="0" id="btnGalClear" class="btn btn-sm">Clear all</div>
           </div>
           <div class="diag" id="galList"></div>
         </div>
@@ -1082,12 +1112,12 @@
             <select id="vidAspect" class="hnk-sel grow"></select>
           </div>
           <div class="row tight">
-            <button id="btnVidPick" class="btn btn-sm grow">Add photo</button>
-            <button id="btnVidSave" class="btn btn-sm grow">Save folder</button>
+            <div role="button" tabindex="0" id="btnVidPick" class="btn btn-sm grow">Add photo</div>
+            <div role="button" tabindex="0" id="btnVidSave" class="btn btn-sm grow">Save folder</div>
           </div>
           <div class="diag" id="vidList"></div>
           <div class="row last">
-            <button id="btnVidRun" class="btn btn-sm btn-gold grow">GENERATE</button>
+            <div role="button" tabindex="0" id="btnVidRun" class="btn btn-sm btn-gold grow">GENERATE</div>
           </div>
         </div>
       </div>
@@ -1100,15 +1130,15 @@
         <div class="cbody" id="cVuB">
           <div class="mut" id="vuIntro"></div>
           <div class="row tight">
-            <button id="btnVuPickP" class="btn btn-sm grow">Pick video</button>
+            <div role="button" tabindex="0" id="btnVuPickP" class="btn btn-sm grow">Pick video</div>
             <select id="vuRes" class="hnk-sel grow"></select>
           </div>
           <div class="row tight">
-            <button id="btnVuSave" class="btn btn-sm grow">Save folder</button>
+            <div role="button" tabindex="0" id="btnVuSave" class="btn btn-sm grow">Save folder</div>
           </div>
           <div class="diag" id="vuList"></div>
           <div class="row last">
-            <button id="btnVuRun" class="btn btn-sm btn-gold grow">UPSCALE</button>
+            <div role="button" tabindex="0" id="btnVuRun" class="btn btn-sm btn-gold grow">UPSCALE</div>
           </div>
         </div>
       </div>
@@ -1123,19 +1153,19 @@
         <div class="cbody" id="cPathB">
           <div class="mut" id="pathIntro"></div>
           <div class="row tight">
-            <button id="btnPathAdd" class="btn btn-sm btn-gold grow">Add photos</button>
-            <button id="btnPathClear" class="btn btn-sm">Clear</button>
+            <div role="button" tabindex="0" id="btnPathAdd" class="btn btn-sm btn-gold grow">Add photos</div>
+            <div role="button" tabindex="0" id="btnPathClear" class="btn btn-sm">Clear</div>
           </div>
           <div class="row tight">
             <select id="pathWf" class="hnk-sel grow"></select>
           </div>
           <div class="row tight">
-            <button id="btnPathOut" class="btn btn-sm grow">Save folder</button>
+            <div role="button" tabindex="0" id="btnPathOut" class="btn btn-sm grow">Save folder</div>
           </div>
           <div class="diag" id="pathList"></div>
           <div class="row last">
-            <button id="btnPathRun" class="btn btn-sm btn-gold grow">RUN</button>
-            <button id="btnPathStop" class="btn btn-sm">STOP</button>
+            <div role="button" tabindex="0" id="btnPathRun" class="btn btn-sm btn-gold grow">RUN</div>
+            <div role="button" tabindex="0" id="btnPathStop" class="btn btn-sm">STOP</div>
           </div>
         </div>
       </div>
@@ -1260,15 +1290,15 @@
                 <div class="intval" id="intVal">60%</div>
               </div>
               <div class="pbtns">
-                <button class="pbtn" id="pEvoto" data-i18n="p_evoto"></button>
-                <button class="pbtn" id="pMeitu" data-i18n="p_meitu"></button>
+                <div role="button" tabindex="0" class="pbtn" id="pEvoto" data-i18n="p_evoto"></div>
+                <div role="button" tabindex="0" class="pbtn" id="pMeitu" data-i18n="p_meitu"></div>
               </div>
             </div>
           </div>
 
           <div class="row last">
-            <button id="btnRtReset" class="btn btn-sm" data-i18n="btn_reset"></button>
-            <button id="btnRtApply" class="btn btn-sm btn-gold grow" data-i18n="btn_apply_rt"></button>
+            <div role="button" tabindex="0" id="btnRtReset" class="btn btn-sm" data-i18n="btn_reset"></div>
+            <div role="button" tabindex="0" id="btnRtApply" class="btn btn-sm btn-gold grow" data-i18n="btn_apply_rt"></div>
           </div>
         </div>
       </div>
@@ -1280,7 +1310,7 @@
   <div class="gbox" id="guideBox">
     <div class="grow gbox-h">
       <div class="gbox-t" id="guideTitle"></div>
-      <button id="guideClose" class="btn btn-xs">&#10005;</button>
+      <div role="button" tabindex="0" id="guideClose" class="btn btn-xs">&#10005;</div>
     </div>
     <div class="gbox-b" id="guideBody"></div>
     <div class="gbox-f" data-i18n="guide_hint"></div>
@@ -1300,11 +1330,11 @@
          text-pill tabs truncated to "H… Cr… Re…" at panel width; an icon
          carries the meaning at any width and the 9.5px label fits. -->
     <div class="tabbar">
-      <button id="tabAiTools" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.8 10.8 8.2-7 8.2 7"/><path d="M5.8 9.2v9.3a1.7 1.7 0 0 0 1.7 1.7h9a1.7 1.7 0 0 0 1.7-1.7V9.2"/><path d="M9.8 20.2v-5a1 1 0 0 1 1-1h2.4a1 1 0 0 1 1 1v5"/></svg><span class="tabb-l">Home</span></button>
-      <button id="tabWf" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.2C10.9 3.9 9 3.5 7.5 4.3 6 5.1 5.3 6.6 5.6 8.1 4.2 8.8 3.4 10.2 3.6 11.8c.1 1.1.8 2.1 1.7 2.7-.3 1.4.2 2.9 1.4 3.7 1.1.8 2.6.9 3.8.2.4.7 1 1.1 1.5 1.1"/><path d="M12 5.2c1.1-1.3 3-1.7 4.5-.9 1.5.8 2.2 2.3 1.9 3.8 1.4.7 2.2 2.1 2 3.7-.1 1.1-.8 2.1-1.7 2.7.3 1.4-.2 2.9-1.4 3.7-1.1.8-2.6.9-3.8.2-.4.7-1 1.1-1.5 1.1"/><path d="M12 5.2v14M8.2 9.3c1 .4 2 .3 2.8-.3M15.8 13.3c-1-.4-2-.3-2.8.3"/></svg><span class="tabb-l">Workflows</span></button>
-      <button id="tabPrompt" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.8c.6 3.7 2.6 5.7 6.3 6.3-3.7.6-5.7 2.6-6.3 6.3-.6-3.7-2.6-5.7-6.3-6.3 3.7-.6 5.7-2.6 6.3-6.3Z"/><path d="M18.3 14.8c.3 1.9 1.3 2.9 3.2 3.2-1.9.3-2.9 1.3-3.2 3.2-.3-1.9-1.3-2.9-3.2-3.2 1.9-.3 2.9-1.3 3.2-3.2Z"/></svg><span class="tabb-l">Edit</span></button>
-      <button id="tabCreate" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h16V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9.5Z"/><path d="m4 9.5 1.4-4.6 14.6 2.5-.7 2.1M8.2 5.7l1.5 3M12.7 6.5l1.5 2.8"/></svg><span class="tabb-l">Media Lab</span></button>
-      <button id="tabPresets" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4.5 18.5 4.5-5 3.4 3.4 2.6-2.8 4.9 5.2"/></svg><span class="tabb-l">Library</span></button>
+      <div role="button" tabindex="0" id="tabAiTools" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.8 10.8 8.2-7 8.2 7"/><path d="M5.8 9.2v9.3a1.7 1.7 0 0 0 1.7 1.7h9a1.7 1.7 0 0 0 1.7-1.7V9.2"/><path d="M9.8 20.2v-5a1 1 0 0 1 1-1h2.4a1 1 0 0 1 1 1v5"/></svg><span class="tabb-l">Home</span></div>
+      <div role="button" tabindex="0" id="tabWf" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.2C10.9 3.9 9 3.5 7.5 4.3 6 5.1 5.3 6.6 5.6 8.1 4.2 8.8 3.4 10.2 3.6 11.8c.1 1.1.8 2.1 1.7 2.7-.3 1.4.2 2.9 1.4 3.7 1.1.8 2.6.9 3.8.2.4.7 1 1.1 1.5 1.1"/><path d="M12 5.2c1.1-1.3 3-1.7 4.5-.9 1.5.8 2.2 2.3 1.9 3.8 1.4.7 2.2 2.1 2 3.7-.1 1.1-.8 2.1-1.7 2.7.3 1.4-.2 2.9-1.4 3.7-1.1.8-2.6.9-3.8.2-.4.7-1 1.1-1.5 1.1"/><path d="M12 5.2v14M8.2 9.3c1 .4 2 .3 2.8-.3M15.8 13.3c-1-.4-2-.3-2.8.3"/></svg><span class="tabb-l">Workflows</span></div>
+      <div role="button" tabindex="0" id="tabPrompt" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.8c.6 3.7 2.6 5.7 6.3 6.3-3.7.6-5.7 2.6-6.3 6.3-.6-3.7-2.6-5.7-6.3-6.3 3.7-.6 5.7-2.6 6.3-6.3Z"/><path d="M18.3 14.8c.3 1.9 1.3 2.9 3.2 3.2-1.9.3-2.9 1.3-3.2 3.2-.3-1.9-1.3-2.9-3.2-3.2 1.9-.3 2.9-1.3 3.2-3.2Z"/></svg><span class="tabb-l">Edit</span></div>
+      <div role="button" tabindex="0" id="tabCreate" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h16V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9.5Z"/><path d="m4 9.5 1.4-4.6 14.6 2.5-.7 2.1M8.2 5.7l1.5 3M12.7 6.5l1.5 2.8"/></svg><span class="tabb-l">Media Lab</span></div>
+      <div role="button" tabindex="0" id="tabPresets" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4.5 18.5 4.5-5 3.4 3.4 2.6-2.8 4.9 5.2"/></svg><span class="tabb-l">Library</span></div>
     </div>
   </div>
 

@@ -216,3 +216,4 @@ td.cell-time{white-space:nowrap}
 .person-lines b,.person-lines small{display:block;overflow-wrap:anywhere}
 .person-lines small{color:var(--muted)}
 #growthCard{align-self:start}
+.dialog-avatar{flex:0 0 auto;margin-right:12px}.dialog-avatar .avatar{width:46px;height:46px;border-radius:14px;font-size:1.05rem}

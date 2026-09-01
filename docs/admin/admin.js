@@ -891,6 +891,17 @@
     const name = item.name || item.full_name || item.email || "Student";
     $("#studentDialogTitle").textContent = name;
     $("#studentDialogEmail").textContent = item.email || "";
+    /* v5.75.0 — the member's own photo in the detail, not only in the list.
+       Same bound as person() applies: API text is accepted ONLY as a small
+       base64 image data URL, and anything else falls back to the initial. */
+    const detailPhoto = typeof item.avatar === "string" && item.avatar.length <= 98304 &&
+      /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(item.avatar) ? item.avatar : "";
+    const detailBadge = $("#studentDialogAvatar");
+    if (detailBadge) {
+      detailBadge.replaceChildren(detailPhoto
+        ? node("img", { className: "avatar avatar-photo", src: detailPhoto, alt: "", "aria-hidden": "true" })
+        : node("span", { className: "avatar", text: name.slice(0, 1).toUpperCase(), "aria-hidden": "true" }));
+    }
     const account = item.account || {};
     const license = item.license || {};
     const stats = [

@@ -197,6 +197,13 @@ body {
   background-color: rgba(16, 18, 27, 0.82); color: #efe7d2;
   border-color: rgba(233, 196, 106, 0.5);
 }
+/* v6.47.0 — the wordmark got its room back. A UXP select sizes itself to its
+   WIDEST option and the controls column was flex:none, so on the owner's
+   panel the language box ate the header and "HNK AI PANEL · v6.46.0 ·
+   RunningHub" was cropped to "H .. v6.4...". The collapsed box only has to
+   say which language is on; the popup shows the full list either way. */
+.topbar .lang-sel { width: 96px; min-width: 0; max-width: 96px; }
+.topbar .hdr-ctl { flex: 0 1 auto; min-width: 0; }
 .topbar-plan { color: #e9c46a; font-weight: 700; }
 
 /* ---------- Per-page hero banners (v6.0) ----------
@@ -322,6 +329,32 @@ select.inp { padding: 5px 6px; }
 .btn-xs { padding: 4px 5px; font-size: 10px; border-radius: 6px; }
 .btn-gold { background-color: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
 .btn:disabled { opacity: 0.45; }
+/* ===== v6.47.0 — the panel's controls are the panel's, not Adobe's =====
+   The owner photographed every page in Photoshop and every control was the
+   same light-grey Adobe pill: the widget honoured our BORDER (the gold
+   outline on RUN and Retouch Apply proves the rule reached it) and ignored
+   background-color and the font stack, so a dark studio came out looking
+   like a system dialog — and worse, Burmese and Shan simply did not paint
+   inside a widget label, which is why "Reference Transfer — reference scene
+   ကို ကူးယူ" arrived as "Reference Transfer  reference  scene" and the
+   language row read a bare "(Myanmar)".
+
+   The gate learned this in v6.25.3 and answered it by being DIVs; the rest
+   of the panel never did. All 215 native buttons are div controls now, so
+   .btn below finally paints them, and the body font stack — which already
+   renders Burmese perfectly in every heading, card and textarea — reaches
+   their labels too.
+
+   A div has no :disabled, so the off state is a class, and the handlers of
+   the seven controls that use it check for the class before they act. */
+.btn { cursor: pointer; }
+.btn.is-off { opacity: 0.45; cursor: default; }
+/* A select is still a native widget — it has to be, for the popup — so it is
+   told the font stack explicitly rather than left to inherit one that has no
+   Myanmar glyphs. Same list the body and the prompt box already carry. */
+select, option {
+  font-family: "Segoe UI", "Noto Sans Myanmar", "Myanmar Text", "Noto Sans Thai", "Noto Sans SC", sans-serif;
+}
 
 /* ---------- Prompt (native textarea — UXP typeable) ----------
    NOTE: class-only selector — UXP's CSS engine skips tag.class compounds. */
@@ -996,3 +1029,20 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .hnk-wf-swatches { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .hnk-wf-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); padding: 0; }
 .hnk-wf-hex { width: 90px; }
+
+/* ===== v6.47.0 — the member's own profile photo on the ACCOUNT card =====
+   The website has let a member save a photo since 5.49.0 and the gate has
+   shown it since 6.27.0; this is where the panel finally lets them CHOOSE
+   one. The block is a row of two things — the picture, and what you can do
+   with it — and the actions column declares that it stacks, because this
+   renderer lays children in a ROW unless a container says otherwise (the
+   defect the owner photographed in 6.38.0 and check K now guards). */
+.acc-ava-row { display: flex; flex-direction: row; align-items: center; margin-bottom: 8px; }
+.acc-ava { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 12px; overflow: hidden;
+  background: linear-gradient(135deg, #f4d488, #c79a3c); color: #161b22;
+  font-weight: 800; font-size: 15px; line-height: 48px; text-align: center; }
+.acc-ava img { display: none; width: 48px; height: 48px; border-radius: 12px; }
+.acc-ava-acts { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin-left: 10px; }
+.acc-ava-acts .btn { margin-left: 0; margin-bottom: 6px; }
+.acc-ava-acts .btn.last { margin-bottom: 0; }
+.acc-ava-hint { font-size: 11px; line-height: 1.55; color: var(--muted); margin: 0 0 8px; }

@@ -5,7 +5,17 @@
   var API = {};
   var state = { data:null, all:[], filtered:[], visible:12, pageSize:12, collection:'All', category:'All', query:'', favorites:{} };
   var ids = { root:'hnkCompactLibraryCards', list:'hnkCompactLibraryList', count:'hnkCompactLibraryCount', search:'hnkCompactLibrarySearch', category:'hnkCompactLibraryCategory', more:'hnkCompactLibraryMore' };
-  function el(tag, cls, text){ var n=doc.createElement(tag); if(cls){n.className=cls;} if(text!==undefined){n.textContent=text;} return n; }
+  /* v6.47.0 — here 'button' means "a control", not "the Adobe widget". UXP
+     paints its button widget with its own chrome and its own font stack, and
+     on the owner's Photoshop that font has no Burmese: the filter row's
+     'အားလုံး' arrived as an empty pill, and 'လမ်းညွှန်' / 'Studio ထဲထည့်မည်' /
+     'နောက်ထပ်ပြမည်' the same. A div wears this panel's stylesheet and this
+     panel's font stack, which render Burmese everywhere else on the page.
+     The .type='button' the call sites set is a harmless no-op on a div. */
+  function el(tag, cls, text){
+    var n=doc.createElement(tag === 'button' ? 'div' : tag);
+    if(tag === 'button'){ n.setAttribute('role','button'); n.setAttribute('tabindex','0'); }
+    if(cls){n.className=cls;} if(text!==undefined){n.textContent=text;} return n; }
   /* v6.25 — THE CARDS SHIPPED IMAGELESS. Every record's paths point at the
      assets/user_library folders, which have never existed inside the CCX (an
      archive carrying 1,801 plates twice over would be ~100MB of inspectable

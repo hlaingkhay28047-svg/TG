@@ -118,6 +118,17 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "READINESS",
     sec_acct: "ACCOUNT",
+    /* v6.47.0 — the member's own profile photo, set from Setup. The five
+       strings the web app already ships for this are lifted verbatim so the
+       two surfaces read alike; ava_working is the panel's own, because
+       Photoshop has to open the picture and that is not instant the way the
+       website's canvas is. */
+    ava_change: "Change profile photo",
+    ava_remove: "Remove photo",
+    ava_saved: "Profile photo saved",
+    ava_removed: "Photo removed",
+    ava_fail: "That image could not be used — try another one",
+    ava_working: "Preparing the photo…",
     sec_money: "COST & BALANCE",
     sec_data: "DATA & BACKUP",
     sec_about: "APP & UPDATES",
@@ -740,6 +751,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "အသင့်ဖြစ်မှု အခြေအနေ",
     sec_acct: "အကောင့်",
+    ava_change: "ပရိုဖိုင်ပုံ ပြောင်းမယ်",
+    ava_remove: "ပုံဖြုတ်မယ်",
+    ava_saved: "ပရိုဖိုင်ပုံ သိမ်းပြီးပါပြီ",
+    ava_removed: "ပုံဖြုတ်ပြီးပါပြီ",
+    ava_fail: "ပုံကို သုံးလို့မရပါ — တခြားပုံတစ်ပုံ စမ်းကြည့်ပါ",
+    ava_working: "ပုံ ပြင်ဆင်နေပါတယ်…",
     sec_money: "ကုန်ကျစရိတ်နှင့် လက်ကျန်ငွေ",
     sec_data: "DATA သိမ်းဆည်းမှု",
     sec_about: "APP နဲ့ UPDATE",
@@ -1362,6 +1379,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း",
     sec_acct: "ဢၶွင်ႉ",
+    ava_change: "လႅၵ်ႈႁၢင်ႈ Profile",
+    ava_remove: "ထွၼ်ႁၢင်ႈ",
+    ava_saved: "သိမ်းႁၢင်ႈယဝ်ႉ",
+    ava_removed: "ထွၼ်ႁၢင်ႈယဝ်ႉ",
+    ava_fail: "ဢမ်ႇၸႂ်ႉႁၢင်ႈၼႆႉလႆႈ — ၶိုၼ်းလိူၵ်ႈထႅင်ႈ",
+    ava_working: "ႁၢင်ႈႁႅၼ်းႁၢင်ႈဝႆႉ…",
     sec_money: "ၵႃႈၸႂ်ႉၸၢႆႇ လႄႈ ငိုၼ်းလိူဝ်",
     sec_data: "DATA လႄႈ BACKUP",
     sec_about: "APP လႄႈ UPDATE",
@@ -1982,6 +2005,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Jin ai lam",
     sec_acct: "ACCOUNT",
+    ava_change: "Profile sumla galai u",
+    ava_remove: "Sumla shaw kau u",
+    ava_saved: "Sumla makoi da sai",
+    ava_removed: "Sumla shaw kau sai",
+    ava_fail: "Ndai sumla n mai lang ai — kaga langai chyam yu u",
+    ava_working: "Sumla hkyen nga ai…",
     sec_money: "Manu hte ngun ngam",
     sec_data: "DATA hte BACKUP",
     sec_about: "APP hte UPDATE",
@@ -2602,6 +2631,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "สถานะความพร้อม",
     sec_acct: "บัญชี",
+    ava_change: "เปลี่ยนรูปโปรไฟล์",
+    ava_remove: "ลบรูป",
+    ava_saved: "บันทึกรูปแล้ว",
+    ava_removed: "ลบรูปแล้ว",
+    ava_fail: "ใช้รูปนี้ไม่ได้ — ลองรูปอื่น",
+    ava_working: "กำลังเตรียมรูป…",
     sec_money: "ค่าใช้จ่ายและยอดคงเหลือ",
     sec_data: "ข้อมูลและสำรอง",
     sec_about: "แอปและอัปเดต",
@@ -3222,6 +3257,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "就绪状态",
     sec_acct: "账户",
+    ava_change: "更换头像",
+    ava_remove: "移除头像",
+    ava_saved: "头像已保存",
+    ava_removed: "头像已移除",
+    ava_fail: "无法使用该图片 — 请换一张",
+    ava_working: "正在处理图片…",
     sec_money: "花费与余额",
     sec_data: "数据与备份",
     sec_about: "应用与更新",
@@ -3842,6 +3883,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Trạng thái sẵn sàng",
     sec_acct: "TÀI KHOẢN",
+    ava_change: "Đổi ảnh đại diện",
+    ava_remove: "Xóa ảnh",
+    ava_saved: "Đã lưu ảnh",
+    ava_removed: "Đã xóa ảnh",
+    ava_fail: "Không dùng được ảnh này — thử ảnh khác",
+    ava_working: "Đang xử lý ảnh…",
     sec_money: "CHI PHÍ & SỐ DƯ",
     sec_data: "Dữ liệu & sao lưu",
     sec_about: "Ứng dụng & cập nhật",
@@ -4462,6 +4509,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesiapan",
     sec_acct: "AKUN",
+    ava_change: "Ganti foto profil",
+    ava_remove: "Hapus foto",
+    ava_saved: "Foto tersimpan",
+    ava_removed: "Foto dihapus",
+    ava_fail: "Gambar tidak bisa dipakai — coba yang lain",
+    ava_working: "Menyiapkan foto…",
     sec_money: "BIAYA & SALDO",
     sec_data: "Data & cadangan",
     sec_about: "Aplikasi & pembaruan",
@@ -5082,6 +5135,12 @@ const I18N = {
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesediaan",
     sec_acct: "AKAUN",
+    ava_change: "Tukar foto profil",
+    ava_remove: "Buang foto",
+    ava_saved: "Foto disimpan",
+    ava_removed: "Foto dibuang",
+    ava_fail: "Imej tidak boleh digunakan — cuba yang lain",
+    ava_working: "Menyediakan foto…",
     sec_money: "KOS & BAKI",
     sec_data: "Data & sandaran",
     sec_about: "Aplikasi & kemas kini",
@@ -5705,7 +5764,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.46.0";
+const PANEL_VERSION = "6.47.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5989,6 +6048,10 @@ function gateShow(view) {
   if (login) login.className = "";
   if (locked) locked.className = "";
   gateTexts();
+  /* v6.47.0 — emphasis follows the view: gold on "Open website" only where it
+     is the way out. gateS.view is already set above, so this reads the new
+     state, not the one being left. */
+  try { gatePaintPrimary(); } catch (e) { }
   if (view !== "checking") gateBusy(false);
 }
 function gateBusy(on) {
@@ -6046,6 +6109,113 @@ async function gateAvatarRefresh() {
   } catch (e) { }
 }
 
+/* ---------------- v6.47.0 CHOOSING the profile photo ----------------
+   The website has let a member save a photo since 5.49.0 and this panel has
+   SHOWN it since 6.27.0 — but a customer whose Photoshop is the only place
+   they ever open the studio had no way to set one, and the teacher's member
+   list showed them as a grey initial forever. Setup > ACCOUNT now picks it.
+
+   The picture travels the website's own road: the same 256px SQUARE centre
+   crop, the same public.profiles.avatar column, the same PATCH under the
+   member's own session — so RLS still says "your row only", the schema's
+   profiles_avatar_chk still bounds what lands, and ONE photo serves the gate
+   square, the website's account card and the admin console alike.
+
+   Photoshop does the imaging, because UXP is not a browser: there is no
+   canvas to draw a downscale on. The file is opened, its centre square read
+   straight out of imaging.getPixels at the target size, and the document
+   closed again — the open/capture/close the reference importer has used
+   since v1, with sourceBounds doing the crop instead of a second pass.
+
+   Three sides, not one: encodeImageData picks its own JPEG quality, so a
+   busy 256px crop can still land over the 96KB the column accepts. Rather
+   than guess at an encoder option this renderer may not take, the capture
+   steps down until the result fits, and says so plainly if none of them
+   does. */
+const AVA_SIDES = [256, 192, 160];
+
+async function avaCaptureSquare(entry, side) {
+  let out = "";
+  await psCore.executeAsModal(async function () {
+    const doc = await app.open(entry);
+    let px = null;
+    try {
+      const dw = Number(doc.width), dh = Number(doc.height);
+      const sq = Math.max(1, Math.min(dw, dh));
+      const left = Math.max(0, Math.round((dw - sq) / 2));
+      const top = Math.max(0, Math.round((dh - sq) / 2));
+      px = await imaging.getPixels({
+        documentID: doc.id, componentSize: 8, applyAlpha: true,
+        sourceBounds: { left: left, top: top, right: left + sq, bottom: top + sq },
+        targetSize: { width: side, height: side }
+      });
+      out = await encodeCaptureB64(px.imageData);
+    } finally {
+      /* always, even when encoding throws: an unclosed temporary document is
+         invisible to the customer and holds native pixel memory. */
+      try { if (px && px.imageData && px.imageData.dispose) px.imageData.dispose(); } catch (de) { }
+      try { await doc.closeWithoutSaving(); } catch (ce) { }
+    }
+  }, { commandName: "HNK Profile Photo" });
+  return out;
+}
+
+/* The ACCOUNT card's square. Same rule as the gate's: the photo when there is
+   a valid one, the HNK mark otherwise — and the remove button exists only
+   when there is something to remove. */
+function avaPaint() {
+  const img = gateEl("acctAvaImg"), txt = gateEl("acctAvaTxt");
+  const drop = gateEl("btnAvaDrop"), pick = gateEl("btnAvaPick");
+  const row = gateEl("acctAvaRow");
+  const signedIn = !!(typeof gateS !== "undefined" && gateS.sess && gateS.sess.uid);
+  const a = (signedIn && gateAvaOk(state.accAvatar)) ? state.accAvatar : "";
+  if (img) {
+    if (a) { img.src = a; img.style.display = "block"; }
+    else { try { img.removeAttribute("src"); } catch (e) { } img.style.display = "none"; }
+  }
+  if (txt) txt.style.display = a ? "none" : "";
+  /* Signed out the whole block is meaningless — there is no row to write to. */
+  if (row) row.style.display = signedIn ? "" : "none";
+  if (pick) pick.textContent = t("ava_change");
+  if (drop) { drop.textContent = t("ava_remove"); drop.style.display = a ? "" : "none"; }
+}
+
+/* One writer for both buttons: "" removes, a data URL sets. */
+async function avaSave(url) {
+  if (!gateS.sess || !gateS.sess.uid || !gateS.sess.access) return;
+  const r = await gateReq("/rest/v1/profiles?id=eq." + encodeURIComponent(gateS.sess.uid),
+    { method: "PATCH", body: JSON.stringify({ avatar: url }) }, gateS.sess.access);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  state.accAvatar = url;
+  saveSettings();
+  gatePaintAvatar();
+  avaPaint();
+  setStatus(t(url ? "ava_saved" : "ava_removed"), "ok");
+}
+
+async function avaPick() {
+  if (!gateS.sess || !gateS.sess.uid || !gateS.sess.access) return;
+  let entry = null;
+  try { entry = await pickAnyFile(); } catch (e) { return; }
+  if (!entry) return;                       /* the customer cancelled */
+  setStatus(t("ava_working"), "");
+  try {
+    let url = "";
+    for (let i = 0; i < AVA_SIDES.length; i++) {
+      const b64 = await avaCaptureSquare(entry, AVA_SIDES[i]);
+      const candidate = b64 ? ("data:image/jpeg;base64," + b64) : "";
+      if (gateAvaOk(candidate)) { url = candidate; break; }
+    }
+    if (!url) { setStatus(t("ava_fail"), "err"); return; }
+    await avaSave(url);
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+
+async function avaDrop() {
+  try { await avaSave(""); }
+  catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+
 /* The header chip is derived only from the live entitlement response. */
 function gatePaintPlan() {
   const el = gateEl("brandPlan"); if (!el) return;
@@ -6096,7 +6266,15 @@ async function gateRegisterDevice() {
 const GATE_REASON_MY = {
   panel_slot_occupied: "ဒီအကောင့်မှာ Photoshop panel တစ်ခု ချိတ်ပြီးသားပါ — စက်ပြောင်း/ပြန်သွင်းထားရင် ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
   computer_slot_occupied: "ဒီအကောင့်ရဲ့ computer နေရာ ပြည့်နေပါတယ် — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
-  device_mismatch: "ဒီစက်က ဒီအကောင့်နဲ့ ချိတ်ထားတာ မဟုတ်ပါ — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ"
+  device_mismatch: "ဒီစက်က ဒီအကောင့်နဲ့ ချိတ်ထားတာ မဟုတ်ပါ — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
+  /* v6.47.0 — the server refuses a build it has no release row for, which is
+     right: an unpublished .ccx must not be trusted. But it said only "Access
+     denied", and the owner met exactly that on a fresh build minutes after
+     installing it (2026-09-01) with no way to tell it from an expired plan or
+     a taken computer slot. Name the real cause: nothing is wrong with the
+     account, this copy simply is not published yet. */
+  version_blocked: "ဒီ panel ဗားရှင်းကို server မှာ မထုတ်ပြန်ရသေးပါ — အကောင့်နဲ့ မသက်ဆိုင်ပါ။ ဆရာ့ကို ပြောပြီး ဒီဗားရှင်းကို ထုတ်ပြန်ခိုင်းပါ ဒါမှမဟုတ် website ကနေ တရားဝင်ဗားရှင်းကို ပြန်သွင်းပါ",
+  invalid_version: "ဒီ panel ဗားရှင်းကို server က မသိပါ — website ကနေ တရားဝင်ဗားရှင်းကို ပြန်သွင်းပါ"
 };
 function gateResponseMessage(j, status) {
   if (status === 426 || (j && j.code === "UPDATE_REQUIRED")) return "Update Required";
@@ -6267,14 +6445,48 @@ function gateApplyWidgetStyles() {
     for (const key in styles) { try { el.style[key] = styles[key]; } catch (e) { } }
   };
   paint("gateSignIn", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
-  paint("gateBuy", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
+  /* gateBuy is deliberately absent here — gatePaintPrimary below owns it,
+     because its emphasis depends on the view and this function runs once. */
   paint("gateForgot", { backgroundColor: "transparent", color: "#9ab", border: "none", fontSize: "11px", textAlign: "center", marginTop: "4px" });
   paint("gateRetry", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   paint("gateSignOut", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
-  paint("gateEmail", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
-  paint("gatePass", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
-  paint("gatePassEye", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", cursor: "pointer" });
-  paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b" });
+  /* v6.47.0 — THE WHOLE BOX, not just its colours. The owner's Photoshop
+     screenshot showed the two fields wearing UXP's own text-widget chrome —
+     a thick light inset frame with square corners — sitting inside a card
+     whose every other control is a soft dark rounded slab. The stylesheet
+     asked for the rounded slab and the widget ignored it; colour alone came
+     through because colour was all this function set. Radius, padding, type
+     size and the two frames the widget draws for itself (box-shadow inset,
+     focus outline) are now stated here too, on the one layer of the cascade
+     every UXP build honours. A property this renderer refuses simply leaves
+     the stylesheet's own attempt standing — the paint() helper swallows it. */
+  const field = {
+    backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b",
+    borderRadius: "9px", padding: "10px 12px", fontSize: "13px",
+    boxShadow: "none", outline: "none"
+  };
+  paint("gateEmail", field);
+  paint("gatePass", field);
+  paint("gatePassEye", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", borderRadius: "9px", boxShadow: "none", outline: "none", cursor: "pointer" });
+  paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b", borderRadius: "7px", boxShadow: "none", outline: "none" });
+  gatePaintPrimary();
+}
+
+/* v6.47.0 — ONE gold button at a time. "Open website" is the way out of a
+   locked account, so it is the primary action there; on the login card it is
+   a side door next to Sign In, and painting both gold left the owner's
+   screenshot with two identical slabs and no answer to "which one finishes
+   this?". Called from gateApplyWidgetStyles (first paint) and from gateShow
+   (every view change), so the card never carries the previous view's
+   emphasis. */
+function gatePaintPrimary() {
+  const el = gateEl("gateBuy");
+  if (!el || !el.style) return;
+  const locked = (typeof gateS !== "undefined" && gateS.view === "locked");
+  const s = locked
+    ? { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" }
+    : { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" };
+  for (const key in s) { try { el.style[key] = s[key]; } catch (e) { } }
 }
 
 function gateWire() {
@@ -6432,11 +6644,26 @@ const LANG_GLOSS = {
 function langOptionLabel(l) {
   /* ASCII parentheses, not a middle dot: the glyph set UXP's select popup
      draws with is narrow, and a label must never depend on it. Defensive
-     because a thrown label would empty the whole dropdown. */
+     because a thrown label would empty the whole dropdown.
+
+     v6.47.0 — THE GLOSS LEADS. v6.25 put the endonym first and appended the
+     ASCII gloss for scripts UXP's select font cannot draw. On the owner's
+     Photoshop the Burmese row then rendered as a bare " (Myanmar)": the
+     glyphs did not paint at all, so the one row a Burmese customer needs
+     opened with a hole where its name should be. Latin first means every row
+     reads on every host, and the endonym still follows for the builds that
+     do draw it. */
   try {
     const gloss = LANG_GLOSS[l.code];
     if (!gloss || String(l.native).indexOf(gloss) >= 0) return l.native;
-    return l.native + " (" + gloss + ")";
+    /* THE GLOSS ALONE. A gloss exists for exactly one reason: this row's
+       endonym is in a script the host may not be able to draw. Keeping the
+       endonym after it was a hedge, and the owner's screenshot showed what
+       the hedge costs — "Myanmar ()", a name followed by an empty pair of
+       brackets where the glyphs failed to paint. If we needed a gloss, the
+       gloss IS the label; a row a customer cannot read is worse than one
+       written in the alphabet everybody here already reads. */
+    return gloss;
   } catch (e) { return l.native; }
 }
 /* Which full I18N table an extended code reads when its starter pack misses:
@@ -6667,7 +6894,7 @@ function acctRows() {
     { label: "Panel version", level: "pend", detail: String(panel.latest_version || PANEL_VERSION) }
   ];
 }
-function renderAcct() { renderRows("acctList", acctRows()); }
+function renderAcct() { renderRows("acctList", acctRows()); try { avaPaint(); } catch (e) { } }
 
 let _balance = null;   /* last reading; false after a failed one */
 function moneyRows() {
@@ -7163,6 +7390,8 @@ function bindDiag() {
     out.textContent = (typeof gateT === "function") ? gateT("gate_signout") : "Sign out";
     out.addEventListener("click", function () { const g = $("gateSignOut"); if (g && g.click) g.click(); });
   }
+  const avaPickBtn = $("btnAvaPick"); if (avaPickBtn) avaPickBtn.addEventListener("click", avaPick);
+  const avaDropBtn = $("btnAvaDrop"); if (avaDropBtn) avaDropBtn.addEventListener("click", avaDrop);
   const bal = $("btnMoney");
   if (bal) bal.addEventListener("click", function () { checkBalance(); });
   const bo = $("btnBackupOut"); if (bo) bo.addEventListener("click", exportBackup);
@@ -7615,6 +7844,31 @@ function b64ToBuf(b64) {
 
 /* ---------------- Status / loading ---------------- */
 let dotsTimer = null;
+/* v6.47.0 — a div control has no .disabled, so "off" is a class, and the
+   handlers below ask before they act. Sliders and selects are still native
+   widgets and still take the real property, which is why this sets both. */
+/* v6.47.0 — every control this panel builds at runtime is a div too, for the
+   same reason the 215 in index.html are: UXP's button widget paints its own
+   grey chrome over our stylesheet and draws labels in a font with no Burmese
+   glyphs. Same events, same classes, our paint. */
+function mkBtn(className, text) {
+  const b = document.createElement("div");
+  b.setAttribute("role", "button");
+  b.setAttribute("tabindex", "0");
+  if (className) b.className = className;
+  if (text !== undefined) b.textContent = text;
+  return b;
+}
+
+function btnOff(el, on) {
+  if (!el) return;
+  try { el.disabled = !!on; } catch (e) { }
+  try { if (el.classList) { if (on) el.classList.add("is-off"); else el.classList.remove("is-off"); } } catch (e) { }
+}
+function btnIsOff(el) {
+  try { return !!(el && el.classList && el.classList.contains("is-off")); } catch (e) { return false; }
+}
+
 function setStatus(msg, kind) {
   const s = $("status");
   if (!s) return;
@@ -7695,7 +7949,7 @@ function startBusy(msgKey) {
     state.busyBtnEl = state.pendingBtn;
     state.busyBtnTxt = state.busyBtnEl.textContent;
   }
-  const g = $("btnGenerate"); if (g) g.disabled = true;
+  const g = $("btnGenerate"); btnOff(g, true);
   stopDots();
   let n = 0;
   try { setStage(BUSY_STAGE[msgKey] || null); } catch (e) { }
@@ -7719,7 +7973,7 @@ function endBusy() {
   state.busyBtnEl = null;
   state.busyBtnTxt = null;
   state.pendingBtn = null;
-  const g = $("btnGenerate"); if (g) g.disabled = false;
+  const g = $("btnGenerate"); btnOff(g, false);
   stopDots();
   try { setStage(null); } catch (e) { }
 }
@@ -8723,7 +8977,7 @@ function buildObjChips(containerId, options, key, after) {
   while (c.firstChild) c.removeChild(c.firstChild);
   for (let i = 0; i < options.length; i++) {
     (function (label, val) {
-      const b = document.createElement("button");
+      const b = mkBtn();
       b.className = "sw ltchip" + ((state[key] === val) ? " on" : "");
       b.textContent = label === "off" ? "\u2013" : label;
       b.addEventListener("click", function () {
@@ -8988,11 +9242,11 @@ function paintPipeline() {
       const nm = document.createElement("div");
       nm.className = "lname";
       nm.textContent = pipeStepLabel(st);
-      const up = document.createElement("button");
+      const up = mkBtn();
       up.className = "btn btn-xs";
       up.textContent = "\u2191";
       up.addEventListener("click", function () { movePipeStep(idx); });
-      const rm = document.createElement("button");
+      const rm = mkBtn();
       rm.className = "btn btn-xs";
       rm.textContent = "\u2715";
       rm.addEventListener("click", function () { removePipeStep(idx); });
@@ -10319,7 +10573,7 @@ async function batchRun() {
   state.batch = true;
   state.batchStop = false;
   const bs = $("btnBatchStop");
-  if (bs) bs.disabled = false;
+  btnOff(bs, false);
   let okC = 0, failC = 0;
   const logLines = [];
   for (let i = 0; i < files.length; i++) {
@@ -10354,7 +10608,7 @@ async function batchRun() {
     await lf.write(buildBatchLog(okC, failC, logLines), { format: formats.utf8 });
   } catch (le) { hwarn("batch log:", le); }
   state.batch = false;
-  if (bs) bs.disabled = true;
+  btnOff(bs, true);
   setStatus(t("st_batch_done") + " \u2713 " + okC + (failC ? (" / \u2717 " + failC) : ""), failC ? "err" : "ok");
 }
 
@@ -10687,8 +10941,8 @@ function refreshCompare() {
     slider.value = hasA ? 0 : 100;
     slider.disabled = true;
   }
-  $("btnPlace").disabled = !hasA;
-  $("btnSaveAs").disabled = !hasA;
+  btnOff($("btnPlace"), !hasA);
+  btnOff($("btnSaveAs"), !hasA);
   if (hasA) { try { openCard("prev"); if (!state.batch) switchPage("prompt"); } catch (e) { } }
   fitCompareBox();
 }
@@ -10856,9 +11110,9 @@ function refreshCreateCompare() {
   const hasResult = !!state.cResultB64;
   if (sl) sl.disabled = !hasResult;
   const psBtn = $("btnCreateToPS"), saveBtn = $("btnCreateSave"), refBtn = $("btnCreateToRef");
-  if (psBtn) psBtn.disabled = !hasResult;
-  if (saveBtn) saveBtn.disabled = !hasResult;
-  if (refBtn) refBtn.disabled = !hasResult;
+  btnOff(psBtn, !hasResult);
+  btnOff(saveBtn, !hasResult);
+  btnOff(refBtn, !hasResult);
   updateCCmpPos(sl ? sl.value : 50);
 }
 
@@ -10981,7 +11235,7 @@ function bindLib() {
   g.innerHTML = "";
   for (let i = 0; i < PROMPT_LIB.length; i++) {
     (function (idx) {
-      const b = document.createElement("button");
+      const b = mkBtn();
       b.className = "chip";
       b.textContent = PROMPT_LIB[idx][0];
       b.addEventListener("click", function () { insertLibPrompt(idx); });
@@ -11281,7 +11535,7 @@ function buildTextChips(containerId, options, valueKey) {
   while (c.firstChild) c.removeChild(c.firstChild);
   for (let i = 0; i < options.length; i++) {
     (function (label, val) {
-      const b = document.createElement("button");
+      const b = mkBtn();
       b.className = "sw ltchip" + ((state.rt[valueKey] === val) ? " on" : "");
       b.textContent = label === "off" ? "\u2013" : label;
       b.addEventListener("click", function () {
@@ -11331,7 +11585,7 @@ function buildSwatches(containerId, palette, colorKey, nameKey) {
   while (c.firstChild) c.removeChild(c.firstChild);
   for (let i = 0; i < palette.length; i++) {
     (function (name, hex) {
-      const b = document.createElement("button");
+      const b = mkBtn();
       b.className = "sw" + (hex ? "" : " none") + ((state.rt[colorKey] === hex) ? " on" : "");
       if (hex) { b.style.backgroundColor = hex; }
       else { b.textContent = "\u2013"; }
@@ -11505,7 +11759,7 @@ function renderSubtabs(activeKey) {
   host.className = "subtabbar on";
   for (let i = 0; i < subs.length; i++) {
     (function (sub) {
-      const b = document.createElement("button");
+      const b = mkBtn();
       b.className = "subtab" + (sub.key === activeKey ? " on" : "");
       b.textContent = sub.sub;
       b.addEventListener("click", function () { switchPage(sub.key); saveSettings(); });
@@ -11902,8 +12156,8 @@ function init() {
     const br = $("btnBatchRun"); if (br) br.addEventListener("click", batchRun);
     const bsp = $("btnBatchStop");
     if (bsp) {
-      bsp.disabled = true;
-      bsp.addEventListener("click", function () { state.batchStop = true; });
+      btnOff(bsp, true);
+      bsp.addEventListener("click", function () { if (btnIsOff(bsp)) return; state.batchStop = true; });
     }
   });
   safe("generate", function () {
