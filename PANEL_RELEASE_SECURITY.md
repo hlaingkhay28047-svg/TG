@@ -178,6 +178,44 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.50.0** — `pending`. Media Lab is the app's Media Lab, and four pages
+  get the hero they were missing (2026-09-01, same owner instruction: "pages
+  တစ်ခုချင်စီအသေးစိတ်သေချာတိုက်ပြီး တူအောင် 100%"). The same headless walk that
+  drove v6.49.0 was run again and read page by page. **Video** was one
+  accordion holding the model picker, the prompt, the size, the length, the
+  photo button and GENERATE; it is now the app's four cards — VIDEO, then the
+  app's own VIDEO WORKFLOW shelf of 29 ready shots (its cards, its art, its
+  prompts, lifted verbatim into `panel/js/hnk_video_wf_data.js`; one tap sets
+  the prompt AND the model, resolution and duration the shot was authored
+  for), then PROMPT with a per-model character count, then GENERATE.
+  **VidUp** gained the whole second half of the app's page: VIDEO TOOLS, 27
+  doc-verified video-input endpoints (edit, extend, denoise, frame
+  interpolation, subtitle erase, Topaz) that the panel simply did not have,
+  through the app's own `rhVtBody` request builder ported unchanged — no
+  endpoint and no parameter is authored here. **Text→Img** was split into the
+  app's TEXT TO IMAGE / PROMPT / GENERATE cards, lost its Prompt-Library chip
+  row and its four reference slots (the app's text-to-image takes no
+  reference photo, and offering four was the clearest extra on the page), and
+  gained the app's full eight-ratio set including Auto. **Four pages that had
+  no hero** — Video, VidUp, Path, Gallery — now open on one, baked from the
+  app's own banner for that page at the app's own crop with the same baked
+  scrim the other eight carry. The header lost the theme wheel (the app's is
+  logo, wordmark, gear and language) so the language box could be the app's
+  112px instead of 78px — the "Mya…" the owner photographed; all nine
+  palettes moved to Setup ▸ APP & UPDATES as a named picker. Acceptance:
+  carry over v6.49.0's checklist; additionally open Media Lab ▸ Video and
+  confirm the banner, the four cards, 29 cards two to a row with their art,
+  that a card fills the prompt and moves the model/resolution/duration, that
+  the city chips appear for Boarding Pass, and that GENERATE VIDEO still
+  produces and saves an .mp4; open VidUp and confirm UPSCALE VIDEO still
+  works and that at least one VIDEO TOOL runs end to end and saves its file;
+  open Text→Img and confirm the three cards, the character count, the eight
+  ratios, and that GENERATE IMAGE still produces an image; confirm Path and
+  Gallery open on their banners; confirm Setup ▸ APP & UPDATES changes the
+  theme and the header language box shows the whole language name. Artifact
+  `HNK_Ai_Panel_v6.50.0.ccx`, SHA-256
+  `3b56ae4b6250eada5142adfc9d762f6def343041376ae32f6e6086fc4b525b50`,
+  1,601,537 bytes. Stays disabled for customers until this acceptance.
 - **v6.49.0** — `pending`. Home and Workflows are the web app's, measured
   (2026-09-01, owner: "မတူသေးဘူး အသေးစိတ်သေချာကြည့်ပါ … webapp ကို သေချာ ss
   ရိုက်ပြီး pages တစ်ခုချင်စီအသေးစိတ်သေချာတိုက်ပြီး တူအောင် 100% လုပ်ပါ").

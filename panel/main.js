@@ -5811,7 +5811,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.49.0";
+const PANEL_VERSION = "6.50.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6827,6 +6827,56 @@ REFRESHERS.push(function () {
   } catch (e) { }
 });
 
+/* ---------------- v6.50.0 — the four page heroes the app has and the panel
+   did not ----------------
+   Video, VidUp, Path and Gallery opened cold on a card while every other page
+   opened on art with a kick line and a headline. The art is baked from the
+   app's OWN banner for each page; these are the app's own headlines for them,
+   its nine-language maps carried verbatim as data. They live here rather than
+   in the panel's I18N table so the ~20 translation packs keep their pinned key
+   sets — the same rule the Home dashboard's copy follows. The <em> the web app
+   wraps its accent phrase in has no meaning in this renderer, so it is
+   stripped and the phrase reads inline, exactly as the other banners do. */
+const PAGE_HERO_HEADS = {
+  phVideo: { my: "ဓာတ်ပုံတွေကို အသက်ဝင် လှုပ်ရှားစေမယ်", en: "Your photos come alive in motion",
+    shn: "ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် မီးသၢႆၸႂ်မႃး", kac: "Na a sumla ni shamu shamawt hte asak rawng wa ai",
+    th: "ภาพถ่ายของคุณมีชีวิตด้วยการเคลื่อนไหว", zh: "让你的照片在动态中活起来",
+    vi: "Ảnh của bạn sống động trong chuyển động", id: "Foto Anda menjadi hidup dalam gerakan",
+    ms: "Foto anda hidup dalam gerakan" },
+  phVideoUp: { my: "ဗီဒီယိုအရည်အသွေး နှစ်ဆမြှင့် — ပိုကြည် ပိုပြတ်သား", en: "Double your video quality — sharper, cleaner",
+    shn: "ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း သွင်ပုၼ်ႈ — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်", kac: "Video a atsam hpe lahkawng lang jat u — grau san, grau seng ai",
+    th: "ยกระดับคุณภาพวิดีโอสองเท่า — คมชัดยิ่งขึ้น", zh: "视频画质翻倍 — 更锐利、更干净",
+    vi: "Nhân đôi chất lượng video — sắc nét hơn, sạch hơn", id: "Gandakan kualitas video — lebih tajam, lebih bersih",
+    ms: "Gandakan kualiti video — lebih tajam, lebih bersih" },
+  phPath: { my: "ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ တစ်ပြိုင်နက် ပြင်မယ်", en: "One look, applied to your whole album — all at once",
+    shn: "Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — ၵမ်းလဵဝ်တင်းသဵင်ႈ", kac: "Look langai sha, na a sumla yawng hta — kalang ta yawng",
+    th: "ลุคเดียว ใช้กับทั้งอัลบั้ม — พร้อมกันทั้งหมด", zh: "一个风格，套用整本相册 — 一次全部完成",
+    vi: "Một look, áp cho cả album — tất cả cùng lúc", id: "Satu look untuk seluruh album — sekaligus",
+    ms: "Satu look untuk seluruh album — serentak" },
+  t2iIntro: { my: "Prompt တစ်ခုတည်းနဲ့ ပုံအသစ် ထုတ်ပေးမယ် — reference ပုံ မလိုပါ။ RunningHub Enterprise key လိုအပ်ပါတယ်။",
+    en: "Generate a brand-new image from just a text prompt — no reference photo needed. Needs your RunningHub Enterprise key.",
+    shn: "ႁဵတ်းၶႅပ်းႁၢင်ႈမႂ်ႇတီႈ prompt ၵူၺ်း — ဢမ်ႇလူဝ်ႇ reference ၶႅပ်းႁၢင်ႈ",
+    kac: "Prompt sha hte lam de sumla nngai galaw ai — reference sumla n ra ai",
+    th: "สร้างภาพใหม่จากข้อความอย่างเดียว — ไม่ต้องใช้รูปอ้างอิง", zh: "仅凭文字提示词生成全新图片 — 不需要参考图片",
+    vi: "Tạo ảnh hoàn toàn mới chỉ từ một prompt văn bản — không cần ảnh tham chiếu",
+    id: "Buat gambar baru hanya dari prompt teks — tidak perlu foto referensi",
+    ms: "Jana imej baharu hanya daripada prompt teks — tidak perlu foto rujukan" },
+  phGallery: { my: "ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ ဒီမှာအမြဲ စုစည်းထား", en: "Every creation you make, saved right here",
+    shn: "ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ သိမ်းဝႆႉတီႈၼႆႈ", kac: "Na galaw da ai shagu, ndai kaw makoi da ai",
+    th: "ทุกผลงานที่คุณสร้าง บันทึกไว้ที่นี่", zh: "你的每一件作品，都保存在这里",
+    vi: "Mọi tác phẩm bạn tạo, được lưu ngay tại đây", id: "Setiap karya yang Anda buat, tersimpan di sini",
+    ms: "Setiap hasil ciptaan anda, disimpan di sini" }
+};
+function paintPageHeroHeads() {
+  for (const id in PAGE_HERO_HEADS) {
+    const el = $(id);
+    if (!el) continue;
+    const m = PAGE_HERO_HEADS[id];
+    el.textContent = m[state.lang] || m.en;
+  }
+}
+REFRESHERS.push(paintPageHeroHeads);
+
 /* ---------------- Theme wheel (v6.35.0: dark, light + the owner's seven
    LEARN-DESIGN palettes; unknown stored values fall back to dark) ---------------- */
 var PANEL_THEMES = ["dark", "light", "olive", "ember", "limelight", "mustard", "royal", "electric", "porcelain"];
@@ -7239,6 +7289,8 @@ function vidPaintOptions() {
   fillSel($("vidDur"), (d && d.durations) || []);
   fillSel($("vidAspect"), (d && d.aspect) || []);
   renderVid();
+  /* the prompt cap belongs to the model, so the counter follows the picker */
+  try { vidPaintPromptCount(); } catch (e) { }
 }
 function vidRows() {
   const d = vidDef();
@@ -7251,6 +7303,118 @@ function vidRows() {
   return rows.concat(VID.rows.slice(0, 6));
 }
 function renderVid() { renderRows("vidList", vidRows()); }
+
+/* ============================================================
+   v6.50.0 — THE APP'S VIDEO WORKFLOW SHELF, on the panel's Video page.
+
+   The web app opens Media Lab ▸ Video on 29 ready-made shots — Boarding Pass
+   Travel, Dress Spin, Veil in the Wind, the ten makeup fast-cuts — because
+   asking a studio to invent a ten-second shot description from an empty box
+   is the one page in the app that used to do that. The panel had the empty
+   box and nothing else. These are the app's own cards, its own art and its
+   own prompts (panel/js/hnk_video_wf_data.js, lifted verbatim), rendered
+   with the same .wfgrid/.wfmini component the Workflows page uses.
+
+   A tap writes the prompt AND the model, resolution, duration and aspect the
+   card was authored for — model first, because painting the model rebuilds
+   the resolution and duration lists and would wipe a value written before it.
+   ============================================================ */
+const VID_ART_BASE = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
+/* the app's own three card labels for this shelf, its nine-language maps
+   carried verbatim (the panel's I18N table stays untouched) */
+const VW_NEED = { my: "၁ ပုံ", en: "1 photo", shn: "1 ၶႅပ်း", kac: "Sumla 1", th: "1 รูป", zh: "1 张", vi: "1 ảnh", id: "1 foto", ms: "1 foto" };
+const VW_USE = { my: "သုံးမယ်", en: "Use this", shn: "ၸႂ်ႉဢၼ်ၼႆႉ", kac: "Ndai lang u", th: "ใช้อันนี้", zh: "使用", vi: "Dùng cái này", id: "Pakai ini", ms: "Guna ini" };
+const VW_SEL = { my: "ရွေးပြီး", en: "Selected", shn: "လိူၵ်ႈယဝ်ႉ", kac: "Lata da sai", th: "เลือกแล้ว", zh: "已选择", vi: "Đã chọn", id: "Terpilih", ms: "Dipilih" };
+function vwL(m) { return (m && m[state.lang] != null) ? m[state.lang] : ((m && m.en) || ""); }
+let vidWfActive = null;
+let vidWfCity = null;
+
+function vidWfPack() { return (globalThis.HNK && globalThis.HNK.videoWorkflows) || null; }
+
+function vidWfApply(w) {
+  const P = vidWfPack();
+  if (!P || !w) return;
+  vidWfActive = w.key;
+  const setup = w.setup || {};
+  const sm = $("vidModel");
+  if (setup.model && sm) { try { sm.value = setup.model; } catch (e) { } vidPaintOptions(); }
+  if (setup.res) { const e = $("vidRes"); if (e) { try { e.value = setup.res; } catch (x) { } } }
+  if (setup.dur) { const e = $("vidDur"); if (e) { try { e.value = String(setup.dur); } catch (x) { } } }
+  if (setup.aspect) { const e = $("vidAspect"); if (e) { try { e.value = setup.aspect; } catch (x) { } } }
+  const box = $("vidPromptP");
+  if (box) {
+    box.value = w.cities ? w.text(P.cityDef(vidWfCity || P.CITIES[0].k)) : w.text();
+    vidPaintPromptCount();
+  }
+  renderVidWf();
+  setStatus(P.tr(w.label) + " ✓", "ok");
+}
+
+function vidPaintPromptCount() {
+  const box = $("vidPromptP"), out = $("vidPromptCount");
+  if (!box || !out) return;
+  const d = vidDef();
+  const max = (d && d.promptMax) || 800;
+  const n = (box.value || "").length;
+  out.textContent = n + " / " + max;
+}
+
+function vidWfCard(w) {
+  const m = mkBtn("wfmini" + (vidWfActive === w.key ? " on" : ""));
+  const v = document.createElement("div");
+  v.className = "wfv";
+  const im = document.createElement("img");
+  im.loading = "eager";
+  im.alt = "";
+  im.onerror = function () { try { m.removeChild(v); } catch (e) { } };
+  im.src = VID_ART_BASE + w.art;
+  v.appendChild(im);
+  const need = document.createElement("div");
+  need.className = "wf-need";
+  need.textContent = vwL(VW_NEED);
+  v.appendChild(need);
+  m.appendChild(v);
+  const P = vidWfPack();
+  const ti = document.createElement("div"); ti.className = "t"; ti.textContent = P ? P.tr(w.label) : ""; m.appendChild(ti);
+  const su = document.createElement("div"); su.className = "s"; su.textContent = P ? P.tr(w.summary) : ""; m.appendChild(su);
+  const go = document.createElement("div"); go.className = "go";
+  go.textContent = "› " + vwL(vidWfActive === w.key ? VW_SEL : VW_USE);
+  m.appendChild(go);
+  m.addEventListener("click", function () { vidWfApply(w); });
+  return m;
+}
+
+function renderVidWf() {
+  const host = $("vidWfRow");
+  const P = vidWfPack();
+  if (!host || !P) return;
+  while (host.firstChild) host.removeChild(host.firstChild);
+  P.WF.forEach(function (w) { host.appendChild(vidWfCard(w)); });
+  /* the app widens the last card of an odd shelf so the grid has no hole */
+  if (P.WF.length % 2 === 1 && host.lastChild && host.lastChild.className)
+    host.lastChild.className = host.lastChild.className + " wf-span2";
+
+  const w = vidWfActive ? P.byKey(vidWfActive) : null;
+  const opts = $("vidWfOpts");
+  if (opts) opts.style.display = (w && w.cities) ? "block" : "none";
+  const hint = $("vidWfHint");
+  if (hint) hint.textContent = w ? P.tr(w.hint) : "";
+  const crow = $("vidWfCityRow");
+  if (crow) {
+    while (crow.firstChild) crow.removeChild(crow.firstChild);
+    if (w && w.cities) {
+      const head = $("vidWfCityH");
+      if (head) head.textContent = "City";
+      P.CITIES.forEach(function (ct) {
+        const b = mkBtn("chip" + ((vidWfCity || P.CITIES[0].k) === ct.k ? " on" : ""));
+        b.textContent = (state.lang === "my" ? ct.my : ct.en) + " · " + ct.loc;
+        b.addEventListener("click", function () { vidWfCity = ct.k; vidWfApply(w); });
+        crow.appendChild(b);
+      });
+    }
+  }
+}
+
 function vuRows() {
   return [
     { label: "Video", level: VU.video ? "ok" : "pend", detail: VU.video ? VU.video.name : "\u2014" },
@@ -7258,6 +7422,87 @@ function vuRows() {
   ].concat(VU.rows.slice(0, 6));
 }
 function renderVu() { renderRows("vuList", vuRows()); }
+
+/* ============================================================
+   v6.50.0 — VIDEO TOOLS, where the app keeps them: the lower half of the
+   VidUp page. Twenty-seven doc-verified endpoints that take an existing
+   video — edit, extend, denoise, frame interpolation, subtitle erase, Topaz.
+   The panel had none of them. Each tool's own option enums (and the Topaz
+   width/height preset) come from its descriptor, exactly as the app builds
+   them; nothing here authors an endpoint or a parameter.
+   ============================================================ */
+const VT = { video: null, out: null, busy: false, rows: [] };
+function vtDef() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const sel = $("vtModel");
+  return (V && V.getTool && sel) ? V.getTool(sel.value) : null;
+}
+function vtRows() {
+  const d = vtDef();
+  return [
+    { label: "Tool", level: d ? "ok" : "pend", detail: d ? (d.label || d.id) : "—" },
+    { label: "Video", level: VT.video ? "ok" : "pend", detail: VT.video ? VT.video.name : "—" },
+    { label: "Save folder", level: VT.out ? "ok" : "pend", detail: VT.out ? (VT.out.name || "chosen") : "—" }
+  ].concat(VT.rows.slice(0, 6));
+}
+function renderVt() { renderRows("vtList", vtRows()); }
+/* the tool's FIRST option select — its real enum, its documented default,
+   or the Topaz resolution preset when the endpoint carries one */
+function vtPaintOptions() {
+  const d = vtDef();
+  const sel = $("vtOpt");
+  const pr = $("vtPrompt");
+  if (pr) pr.style.display = (d && d.prompt) ? "block" : "none";
+  if (!sel) return;
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const defs = [];
+  if (d && d.whPreset && V && V.VT_WH) defs.push({ key: "whPreset", values: Object.keys(V.VT_WH), def: "720p" });
+  (d && d.options || []).forEach(function (o) { defs.push(o); });
+  const o = defs[0];
+  if (!o) { sel.style.display = "none"; renderVt(); return; }
+  o.values.forEach(function (v) {
+    sel.appendChild(mkOption(String(v), o.key.replace(/([A-Z])/g, " $1").toLowerCase() + ": " + v));
+  });
+  try { sel.value = String(o.def); } catch (e) { }
+  sel.setAttribute("data-key", o.key);
+  sel.style.display = "";
+  renderVt();
+}
+async function vtRun() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const d = vtDef();
+  if (VT.busy || !V || !d) return;
+  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
+  if (!VT.video) { setStatus("Pick a video first", "err"); return; }
+  if (!VT.out) { setStatus("Choose a save folder first", "err"); return; }
+  const promptText = ($("vtPrompt") && $("vtPrompt").value || "").trim();
+  if (d.prompt === "req" && !promptText) { setStatus("This tool needs a prompt", "err"); return; }
+  const sel = $("vtOpt");
+  const optVals = {};
+  if (sel && sel.style.display !== "none" && sel.getAttribute("data-key")) {
+    optVals[sel.getAttribute("data-key")] = sel.value;
+  }
+  VT.busy = true; VT.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVt();
+  try {
+    const ref = await fileToDataUrl(VT.video);
+    const res = await V.runTool(videoEnv(), d, ref, [], promptText, optVals, function (stage, info) {
+      VT.rows = [{ label: "Working", level: "pend",
+        detail: stage + (info && info.elapsedMs ? " " + Math.round(info.elapsedMs / 1000) + "s" : "") }];
+      renderVt();
+    });
+    if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
+    const name = "hnk-videotool-" + Date.now() + ".mp4";
+    await saveResultFile(VT.out, name, res.results[0].ref);
+    VT.rows = [{ label: name, level: "ok", detail: "saved" }];
+    setStatus(t("st_done") || "Done", "ok");
+  } catch (e) {
+    VT.rows = [{ label: "Failed", level: "err", detail: (e && e.message) ? String(e.message).slice(0, 48) : "failed" }];
+    setStatus(friendlyErr(e), "err");
+  }
+  VT.busy = false; renderVt();
+}
+
 
 async function pickFile(types) {
   const uxp = require("uxp");
@@ -7465,6 +7710,13 @@ function bindVideo() {
   const run = $("btnVidRun"); if (run) run.addEventListener("click", vidRun);
   const intro = $("vidIntro");
   if (intro) intro.textContent = "A photo and a prompt become a video \u2014 saved as a file.";
+  /* v6.50.0 — the app's shelf, its intro line, and a live prompt counter */
+  const wfIntro = $("vidWfIntro");
+  if (wfIntro) wfIntro.textContent = "One tap sets the prompt, the model, the size and the length.";
+  const box = $("vidPromptP");
+  if (box) box.addEventListener("input", vidPaintPromptCount);
+  renderVidWf();
+  vidPaintPromptCount();
 
   fillSel($("vuRes"), (V && V.upscaleResolutions) || ["1080p"], "1080p");
   const vp = $("btnVuPickP");
@@ -7480,7 +7732,32 @@ function bindVideo() {
   const vr = $("btnVuRun"); if (vr) vr.addEventListener("click", vuRun);
   const vi = $("vuIntro");
   if (vi) vi.textContent = "Make an existing video sharper \u2014 saved as a new file.";
-  vidPaintOptions(); renderVu();
+  const vfn = $("vuFileNote");
+  if (vfn) vfn.textContent = "MP4 only \u2014 convert other formats (an iPhone .mov, say) first.";
+
+  /* v6.50.0 — VIDEO TOOLS */
+  const vtSel = $("vtModel");
+  if (vtSel && V && V.tools) {
+    const tl = V.tools();
+    while (vtSel.firstChild) vtSel.removeChild(vtSel.firstChild);
+    for (let i = 0; i < tl.length; i++) vtSel.appendChild(mkOption(tl[i].id, tl[i].label || tl[i].id));
+    vtSel.addEventListener("change", vtPaintOptions);
+  }
+  const vti = $("vtIntro");
+  if (vti) vti.textContent = "Edit, extend or clean an existing video \u2014 pick a tool, then a clip.";
+  const vtp = $("btnVtPick");
+  if (vtp) vtp.addEventListener("click", async function () {
+    try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VT.video = f; renderVt(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const vts = $("btnVtSave");
+  if (vts) vts.addEventListener("click", async function () {
+    try { const f = await pickFolder(); if (f) VT.out = f; renderVt(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const vtr = $("btnVtRun"); if (vtr) vtr.addEventListener("click", vtRun);
+
+  vidPaintOptions(); renderVu(); vtPaintOptions();
 }
 
 function bindPath() {
@@ -11246,7 +11523,9 @@ async function createGenerate(restyle) {
   const n = Math.max(1, Math.min(4, state.cVariations || 1));
   startBusy("st_gen");
   try {
-    const cfg = { aspectRatio: state.cRatio || "1:1" };
+    /* "auto" means the model picks — send no aspect, exactly as the app does */
+    const cr = state.cRatio || "1:1";
+    const cfg = (cr === "auto") ? {} : { aspectRatio: cr };
     /* Snapshot the sources ONCE so every variation is an INDEPENDENT rendition.
        (Before: the loop reassigned cResultB64 each pass, so restyle variation 2
        restyled variation 1 \u2014 a compounding chain, not a distinct alternative.
@@ -11340,7 +11619,10 @@ const PROMPT_LIB = [
   ["Cyberpunk Night", "cinematic cyberpunk street at night, neon signage, wet reflective ground, moody teal and magenta lighting, volumetric haze"]
 ];
 
-const C_RATIOS = ["1:1", "3:4", "4:3", "9:16", "16:9"];
+/* v6.50.0 — the app's own eight, in the app's order (Auto first, then the
+   seven ratios its .rchip strip offers). The panel offered five and no Auto,
+   so a studio that wanted 2:3 or "let the model decide" could not ask. */
+const C_RATIOS = ["auto", "1:1", "3:4", "4:3", "4:5", "9:16", "16:9", "2:3"];
 
 /* v6.26.0 — the Create tab's AI Improve/Describe (Gemini text) left with
    their provider. */
@@ -11378,7 +11660,7 @@ function bindCreate() {
     (function (idx) {
       const b = $("cRatio" + idx);
       if (b) {
-        b.textContent = C_RATIOS[idx];
+        b.textContent = C_RATIOS[idx] === "auto" ? "Auto" : C_RATIOS[idx];
         b.addEventListener("click", function () { state.cRatio = C_RATIOS[idx]; paintCRatio(); saveSettings(); });
       }
     })(i);
@@ -11404,6 +11686,17 @@ function bindCreate() {
   if (rs) rs.addEventListener("click", function () { createGenerate(true); });
   const g = $("btnCreateGen");
   if (g) g.addEventListener("click", function () { createGenerate(false); });
+  /* v6.50.0 — the app's character count under the Text-to-Image prompt */
+  const cp = $("cPromptBox");
+  if (cp) {
+    const paintCount = function () {
+      const out = $("cPromptCount");
+      if (out) out.textContent = (cp.value || "").length + " / 20000";
+    };
+    cp.addEventListener("input", paintCount);
+    REFRESHERS.push(paintCount);
+    paintCount();
+  }
   for (let i = 0; i < 4; i++) {
     (function (idx) {
       const ly = $("cRefLayer" + idx);
@@ -12049,16 +12342,23 @@ function init() {
       saveSettings();
       setStatus(t("st_ready"));
     });
-    const bt = $("btnTheme");
-    if (bt) bt.addEventListener("click", function () {
-      /* v6.35.0 — one tap steps the whole theme wheel; the status line
-         names the stop so the walk is never disorienting */
-      var ti = PANEL_THEMES.indexOf(state.theme);
-      state.theme = PANEL_THEMES[(ti + 1) % PANEL_THEMES.length] || "dark";
-      applyTheme();
-      saveSettings();
-      try { setStatus("Theme: " + state.theme); } catch (e) { }
-    });
+    /* v6.49.1 — the theme is a Setup picker now, not a header wheel: one
+       tap that cycled nine palettes never said what the next stop was, and
+       the button it lived in was squeezing the language box. Same nine
+       palettes, named. */
+    const st = $("selTheme");
+    if (st) {
+      fillSelect(st, PANEL_THEMES.map(function (th) {
+        return { v: th, label: th.charAt(0).toUpperCase() + th.slice(1) };
+      }));
+      st.value = state.theme;
+      st.addEventListener("change", function () {
+        state.theme = (PANEL_THEMES.indexOf(st.value) >= 0) ? st.value : "dark";
+        applyTheme();
+        saveSettings();
+      });
+      REFRESHERS.push(function () { try { st.value = state.theme; } catch (e) { } });
+    }
   });
 
   /* API key */
