@@ -52,47 +52,157 @@ function create(deps) {
 
   function directMode() { return !!(deps.directGenerate && deps.directGenerate()); }
 
+  /* v6.49.0 — THE APP'S WORKFLOWS PAGE, COMPONENT FOR COMPONENT.
+
+     The owner walked both surfaces and reported the panel still did not
+     match; the machine walk agreed in numbers. The app's Workflows page is a
+     search field over collapsible category groups of TWO-UP 173px cards
+     (.wfgrid > .wfmini: art, photo-count badge, title, summary, "open"); the
+     panel drew one 380px art card per row down a single column with a
+     "Workflow Tools" heading and a Direct Generate toggle the app has no
+     equivalent for. Same 143 workflows, same nine categories, same order —
+     the app's own layout for them, and the toggle moved to Setup where the
+     app keeps its settings.
+
+     UXP notes: the group body is shown/hidden by style.display (this
+     renderer has no :checked or details/summary), the grid is flexbox at 48%
+     (no grid-template), and every card is a div carrying role=button —
+     dom.el maps "button" for exactly that reason. */
+  var L_OPEN = { my: "ဖွင့်မယ်", en: "Wizard", shn: "ပိုတ်ႇ", kac: "Hpaw u", th: "เปิด", zh: "打开", vi: "Mở", id: "Buka", ms: "Buka" };
+  var L_NEED0 = { my: "ပုံမလို", en: "No photo", shn: "ဢမ်ႇလူဝ်ႇၶႅပ်း", kac: "Sumla n ra", th: "ไม่ต้องใช้รูป", zh: "无需照片", vi: "Không cần ảnh", id: "Tanpa foto", ms: "Tanpa foto" };
+  var L_NEED1 = { my: "၁ ပုံ", en: "1 photo", shn: "1 ၶႅပ်း", kac: "Sumla 1", th: "1 รูป", zh: "1 张", vi: "1 ảnh", id: "1 foto", ms: "1 foto" };
+  var L_NEED2 = { my: "၂ ပုံ + Ref", en: "2 photos", shn: "2 ၶႅပ်း", kac: "Sumla 2", th: "2 รูป", zh: "2 张", vi: "2 ảnh", id: "2 foto", ms: "2 foto" };
+  var L_SEARCH = { my: "Workflow ရှာရန် — veil, retouch, relight…", en: "Search Workflow — veil, retouch, relight…", shn: "သွၵ်ႈႁႃ Workflow — veil, retouch, relight…", kac: "Workflow tam u — veil, retouch, relight…", th: "ค้นหา Workflow — veil, retouch, relight…", zh: "搜索 Workflow — veil、retouch、relight…", vi: "Tìm Workflow — veil, retouch, relight…", id: "Cari Workflow — veil, retouch, relight…", ms: "Cari Workflow — veil, retouch, relight…" };
+  var L_UNIT = { my: " ခု", en: "", shn: "", kac: "", th: "", zh: " 个", vi: "", id: "", ms: "" };
+
+  function _lang() {
+    try {
+      var b = globalThis.HNK && globalThis.HNK.i18n;
+      return (b && typeof b.lang === "function") ? b.lang() : "en";
+    } catch (e) { return "en"; }
+  }
+  function l9(m) { var k = _lang(); return (m && m[k] != null) ? m[k] : (m && m.en) || ""; }
+
+  /* every card built this render, so the search field can filter them all */
+  var wfIndex = [];
+
+  function needLabel(wf) {
+    var n = (wf.requiredInputs || []).length;
+    return n === 0 ? l9(L_NEED0) : n === 1 ? l9(L_NEED1) : l9(L_NEED2);
+  }
+
+  function miniCard(wf) {
+    var m = dom.el(doc, "button", { class: "wfmini", id: "hnkWf_" + wf.id });
+    if (wf.visual) {
+      var box = dom.el(doc, "div", { class: "wfv" });
+      var im = doc.createElement("img");
+      /* eager: nothing drives a lazy load in this renderer, and a card that
+         waits for a scroll event that never arrives stays black (v6.47.1) */
+      im.loading = "eager";
+      im.alt = "";
+      im.onerror = function () { try { m.removeChild(box); } catch (e) { } };
+      im.src = wf.visual;
+      box.appendChild(im);
+      box.appendChild(dom.el(doc, "div", { class: "wf-need", text: needLabel(wf) }));
+      m.appendChild(box);
+    }
+    m.appendChild(dom.el(doc, "div", { class: "t", text: wf.title }));
+    var summary = dom.t(registry.summaryKey(wf.id), wf.summary);
+    if (summary) m.appendChild(dom.el(doc, "div", { class: "s", text: summary }));
+    m.appendChild(dom.el(doc, "div", { class: "go", text: "› " + l9(L_OPEN) }));
+    dom.on(m, "click", function () { select(wf.id); });
+    wfIndex.push({ el: m, q: (wf.title + " " + (wf.summary || "") + " " + wf.id + " " + (wf.category || "")).toLowerCase() });
+    return m;
+  }
+
+  /* the app's collapsible category group: a head that toggles its body */
+  function group(title, count, open) {
+    var g = dom.el(doc, "div", { class: "grp" });
+    var car = dom.el(doc, "span", { class: "car", text: open ? "▾" : "▸" });
+    var head = dom.el(doc, "button", { class: "grp-h" }, [
+      car, dom.el(doc, "span", { text: title + " · " + count + l9(L_UNIT) })
+    ]);
+    var body = dom.el(doc, "div", { class: "grp-b" });
+    body.style.display = open ? "block" : "none";
+    dom.on(head, "click", function () {
+      var now = body.style.display === "none";
+      body.style.display = now ? "block" : "none";
+      car.textContent = now ? "▾" : "▸";
+    });
+    g.appendChild(head);
+    g.appendChild(body);
+    return { g: g, b: body, open: function () { body.style.display = "block"; car.textContent = "▾"; } };
+  }
+
   function renderList() {
     dom.clear(root);
-    root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_wf_tools", "Workflow Tools") }));
-    if (deps.onToggleDirect) {
-      var d = dom.el(doc, "button", { class: "hnk-btn hnk-direct", id: "hnkDirectToggle",
-        text: dom.tOnOff("ai_direct_gen", "Direct Generate", directMode()) });
-      dom.on(d, "click", function () { deps.onToggleDirect(); d.textContent = dom.tOnOff("ai_direct_gen", "Direct Generate", directMode()); });
-      root.appendChild(d);
-    }
-    /* v6.27.0 \u2014 all 131 catalog workflows, grouped by the web app's own
-       categories (owner request: the full set, cards included, each family
-       with its own group). Falls back to the flat list if the generated
-       catalog is somehow absent. */
-    var listEl = dom.el(doc, "div", { class: "hnk-wf-list" });
-    function card(wf) {
-      var art = hnkArtCard(doc, wf.visual);
-      var m = modelRegistry.getModel(wf.route.modelId);
-      var b = dom.el(doc, "button", { class: "hnk-action" + (art ? " art-card" : ""), id: "hnkWf_" + wf.id }, [
-        art,
-        dom.el(doc, "div", { class: "hnk-action-txt" }, [
-          dom.el(doc, "div", { class: "hnk-action-label", text: wf.title }),
-          dom.el(doc, "div", { class: "hnk-action-sub",
-            text: dom.t(registry.summaryKey(wf.id), wf.summary) }),
-          dom.el(doc, "div", { class: "hnk-action-meta",
-            text: (m ? m.displayName : wf.route.modelId) +
-              (wf.humanSubject ? " \u00b7 " + dom.t("ai_identity_lock", "Identity Lock") : "") })
-        ])
-      ]);
-      dom.on(b, "click", function () { select(wf.id); });
-      listEl.appendChild(b);
-    }
+    wfIndex = [];
+
     var cats = (registry.categories && registry.categories()) || [];
+    var total = 0;
+    cats.forEach(function (c) { total += c.ids.length; });
+    if (!total) total = registry.list().length;
+
+    var card = dom.el(doc, "div", { class: "card" });
+    /* the app prints this heading in English in every locale (#wfPageH2),
+       so it is the app's literal, not a lookup into the panel's table */
+    card.appendChild(dom.el(doc, "h2", { text: "SMART WORKFLOW — " + total + l9(L_UNIT) }));
+
+    /* the app's search field, in the app's place: above the groups */
+    var srow = dom.el(doc, "div", { class: "row" });
+    var search = doc.createElement("input");
+    search.type = "text";
+    search.className = "inp grow";
+    search.id = "hnkWfSearch";
+    search.placeholder = l9(L_SEARCH);
+    srow.appendChild(search);
+    card.appendChild(srow);
+
+    /* the app's category quick-jump rail */
+    var rail = dom.el(doc, "div", { class: "wfjump" });
+    var groups = [];
+
     if (cats.length) {
-      cats.forEach(function (c) {
-        listEl.appendChild(dom.el(doc, "div", { class: "hnk-sec hnk-wf-cat", text: c.category + " \u00b7 " + c.ids.length }));
-        c.ids.forEach(function (id) { var wf = registry.get(id); if (wf) card(wf); });
+      cats.forEach(function (c, ci) {
+        var g = group(c.category, c.ids.length, ci === 0);
+        var gd = dom.el(doc, "div", { class: "wfgrid" });
+        var made = 0;
+        c.ids.forEach(function (id) {
+          var wf = registry.get(id);
+          if (!wf) return;
+          gd.appendChild(miniCard(wf));
+          made++;
+        });
+        /* the app widens the last card of an odd group to fill the row */
+        if (made % 2 === 1 && gd.lastChild && gd.lastChild.className)
+          gd.lastChild.className = gd.lastChild.className + " wf-span2";
+        g.b.appendChild(gd);
+        groups.push(g);
+        var chip = dom.el(doc, "button", { class: "chip", text: c.category + " " + c.ids.length });
+        dom.on(chip, "click", function () { g.open(); });
+        rail.appendChild(chip);
       });
     } else {
-      registry.list().forEach(card);
+      var gd2 = dom.el(doc, "div", { class: "wfgrid" });
+      registry.list().forEach(function (wf) { gd2.appendChild(miniCard(wf)); });
+      card.appendChild(gd2);
     }
-    root.appendChild(listEl);
+
+    if (rail.childNodes.length) card.appendChild(rail);
+    groups.forEach(function (g) { card.appendChild(g.g); });
+
+    /* filtering is the app's: match the card's own text, open every group
+       that still has a visible card, and leave the rail alone */
+    dom.on(search, "input", function () {
+      var q = String(search.value || "").trim().toLowerCase();
+      for (var i = 0; i < wfIndex.length; i++) {
+        var hit = !q || wfIndex[i].q.indexOf(q) >= 0;
+        wfIndex[i].el.style.display = hit ? "" : "none";
+      }
+      if (q) groups.forEach(function (g) { g.open(); });
+    });
+
+    root.appendChild(card);
   }
 
   function select(workflowId) {

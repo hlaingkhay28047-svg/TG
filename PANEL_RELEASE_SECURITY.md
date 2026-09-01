@@ -178,6 +178,37 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.49.0** — `pending`. Home and Workflows are the web app's, measured
+  (2026-09-01, owner: "မတူသေးဘူး အသေးစိတ်သေချာကြည့်ပါ … webapp ကို သေချာ ss
+  ရိုက်ပြီး pages တစ်ခုချင်စီအသေးစိတ်သေချာတိုက်ပြီး တူအောင် 100% လုပ်ပါ").
+  Instead of reading screenshots, both surfaces were driven headlessly at
+  420×760 and dumped structurally — every visible control, its classes, its
+  measured box — so the difference list is arithmetic rather than opinion.
+  Two pages were not variations of the app's, they were different pages:
+  **Home** was the AI-Tools stack's own home (nine 380×330 art cards plus a
+  LEARNING list) where the app's Home is a dashboard, and **Workflows** was a
+  single column of 380×350 art cards where the app's is a search field over
+  collapsible groups of two-up 173px cards. Both are now the app's, section
+  for section: the greeting hero with its clock line, the "Student Web App"
+  destinations card, the six 4:3 picture cards two to a row, the Library
+  teaser strip, the five-figure statline, the dismissible Photoshop-panel
+  band; and SMART WORKFLOW with its search field, its category quick-jump
+  rail and its nine collapsible groups of .wfmini cards carrying the photo-
+  count badge. The three lessons moved to their own Tutorials page, where the
+  app keeps them. The app's field metrics came with them (a 26px input beside
+  the app's 42px was the "အကြီးအသေး" complaint), and the chip took the app's
+  colours. Direct Generate — a panel-only control the app has no equivalent
+  for — moved off Workflows to Setup ▸ MODEL. Acceptance: carry over
+  v6.48.0's checklist; additionally open Home and confirm the greeting, the
+  four destination buttons, six equal picture cards in two columns, the
+  Library strip, the statline and the panel band, and that each picture card
+  opens the page it names; open Workflows and confirm the search field
+  filters cards, the nine group heads open and close, cards render two to a
+  row with their art and photo-count badge, and a card still opens its
+  workflow and generates; confirm Setup ▸ MODEL carries Direct Generate and
+  it still skips Prepare. Artifact `HNK_Ai_Panel_v6.49.0.ccx`, SHA-256
+  `bb973b23253e4d41d7c1e9090c54298dc5d4dd3799a0afad05a150720958995d`,
+  1,358,396 bytes. Stays disabled for customers until this acceptance.
 - **v6.48.0** — `pending`. The update fetches itself (2026-09-01, owner:
   "ထပ်ခါထပ်ခါ download မဆွဲရပဲ ... ဒီကနေ update လုပ်လို့ရတာမျိုး"). Half of that
   request is possible and half is Adobe's to allow, and this ships the half

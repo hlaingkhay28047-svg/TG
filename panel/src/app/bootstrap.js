@@ -234,7 +234,23 @@ function create(opts) {
     onLanguage: opts.onLanguage,
     onTheme: opts.onTheme,
     rh: rh,
-    onGenerate: handleGenerate
+    onGenerate: handleGenerate,
+    /* v6.49.0 — the app's Home is a router. Its six picture cards and its
+       destination buttons leave for other PANEL PAGES, and its Panel-download
+       button is the in-panel release fetch; both live in main.js and reach
+       this stack through the HNK.panelNav bridge it publishes. */
+    onPage: function (key) {
+      try {
+        var nav = globalThis.HNK && globalThis.HNK.panelNav;
+        if (nav && nav.switchPage) nav.switchPage(key);
+      } catch (e) { }
+    },
+    onGetUpdate: function () {
+      try {
+        var nav = globalThis.HNK && globalThis.HNK.panelNav;
+        if (nav && nav.getUpdate) nav.getUpdate();
+      } catch (e) { }
+    }
   });
 
   // Restore the draft, or seed defaults from settings (spec §21, §26).
@@ -275,6 +291,10 @@ function create(opts) {
       g.HNK = g.HNK || {};
       g.HNK.aiToolsApp = app;
       g.HNK.batchGenerate = batchGenerate;
+      /* v6.49.0 — Direct Generate is a panel-only output setting now (the
+         app's Workflows page carries no such control), so Setup owns its
+         toggle and reads it through this handle. */
+      g.HNK.aiToolsSettings = settings;
     } catch (e) { }
   }
 

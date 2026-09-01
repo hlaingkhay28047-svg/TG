@@ -139,7 +139,7 @@
     <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
     <div class="hdr-t">
       <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.48.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.49.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
     </div>
     <div class="hdr-ctl">
       <!-- v6.46.0 — web-app parity: the app parks Setup behind a header gear
@@ -251,6 +251,16 @@
             </div>
           </div>
           <!-- v6.26.0 — the OpenAI quality segment left with its provider. -->
+          <!-- v6.49.0 — Direct Generate moved here from the Workflows list.
+               The web app's Workflows page is a search field over card groups
+               and nothing else; this toggle is the panel's own (it skips the
+               staged Prepare step a browser wizard has no equivalent for), so
+               it belongs with the panel's other output settings, not on a page
+               the app keeps clean. -->
+          <div class="tglrow" id="setDirectRow">
+            <div class="tgltxt" data-i18n="ai_direct_gen">Direct Generate</div>
+            <div role="button" tabindex="0" id="setDirect" class="tgl"></div>
+          </div>
         </div>
       </div>
 
@@ -1074,7 +1084,11 @@
          Its Settings screen carries the RunningHub Enterprise shared key and the
          Nano Banana / GPT Image model mappings. -->
     <div class="page" id="pageAiTools">
-      <div class="pgbanner pgb-aitools">
+      <!-- v6.49.0 — one container, two of the app's pages. The app's Home
+           (#pgDash) opens on its greeting card with NO banner above it; the
+           app's Workflows (#pgWf) opens on the hero. switchPage hides this
+           banner for Home and shows it for Workflows so each matches. -->
+      <div class="pgbanner pgb-aitools" id="pgbAiTools">
         <div class="pgbanner-shade">
           <div class="pgbanner-kick">Smart Workflow</div>
           <div class="pgbanner-title" data-i18n="pgb_aitools"></div>
@@ -1395,6 +1409,7 @@
 <script src="src/ui/dom.js"></script>
 <script src="src/ui/progress-strip.js"></script>
 <script src="src/ui/screens/home-screen.js"></script>
+<script src="src/ui/screens/tutorials-screen.js"></script>
 <script src="src/ui/screens/free-generate-screen.js"></script>
 <script src="src/ui/screens/workflow-tools-screen.js"></script>
 <script src="src/ui/screens/history-screen.js"></script>

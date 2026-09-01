@@ -19,6 +19,7 @@ function dep(cjsPath, globalName) { return _CJS ? require(cjsPath) : globalThis.
 var dom = dep("./dom", "dom");
 var modeController = dep("../app/mode-controller", "modeController");
 var homeScreen = dep("./screens/home-screen", "homeScreen");
+var tutorialsScreen = dep("./screens/tutorials-screen", "tutorialsScreen");
 var freeScreen = dep("./screens/free-generate-screen", "freeGenerateScreen");
 var workflowScreen = dep("./screens/workflow-tools-screen", "workflowToolsScreen");
 var historyScreen = dep("./screens/history-screen", "historyScreen");
@@ -26,7 +27,10 @@ var settingsScreen = dep("./screens/settings-screen", "settingsScreen");
 var fstate = dep("../free-generate/free-generate-state", "freeGenerateState");
 var wfStateSvc = dep("../workflows/workflow-state", "workflowState");
 
-var SCREENS = ["home", "free-generate", "workflow-tools", "history", "settings"];
+/* v6.49.0 — "tutorials" is the app's own third page (pgTutorials), reached
+   from a Home card exactly as the app reaches it. It left Home when Home
+   became the app's dashboard. */
+var SCREENS = ["home", "tutorials", "free-generate", "workflow-tools", "history", "settings"];
 
 function create(deps) {
   var doc = deps.document;
@@ -97,12 +101,21 @@ function create(deps) {
       homeScreen.render(body, {
         document: doc,
         onNavigate: navigate,
+        /* the app's Home is a router: its cards leave for other pages */
+        onPage: function (key) { if (deps.onPage) deps.onPage(key); },
+        onGetUpdate: function () { if (deps.onGetUpdate) deps.onGetUpdate(); },
         onWorkflow: function (wfId) {
           modeController.switchToWorkflow(ctrl);
           current = "workflow-tools";
           mount();
           if (workflow) workflow.select(wfId);
         }
+      });
+    } else if (current === "tutorials") {
+      tutorialsScreen.render(body, {
+        document: doc,
+        onPage: function (key) { if (deps.onPage) deps.onPage(key); },
+        onGetUpdate: function () { if (deps.onGetUpdate) deps.onGetUpdate(); }
       });
     } else if (current === "free-generate") {
       // Fresh screen bound to the (restored) free state.

@@ -29,6 +29,7 @@ function defaults() {
     theme: "system",
     density: "normal",       // compact | normal | comfortable
     directGenerate: false,   // skip the staged Prepare step when inputs are valid
+    promoHidden: false,      // the Home Photoshop-panel band's ✕ (app parity)
     addAsNewLayer: true
   };
 }
