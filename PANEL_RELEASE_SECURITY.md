@@ -178,6 +178,31 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.40.0** — `pending`. One navigation, and it is the web app's
+  (2026-09-01, owner: "make the CCX exactly like the web app — take out
+  everything that differs, take out the extras"). The panel carried SIX flat
+  bottom tabs including Setup, and a SECOND navigation inside Home (Freeform ·
+  Workflows · History · Settings) that repeated the tabs beneath it: two
+  navigations on one screen, saying overlapping things, in a product whose
+  whole promise is that the panel is the web app in another window. The bar is
+  now the app's own five work groups in the app's order — **Home · Workflows ·
+  Edit · Media Lab · Library** — with the app's icons and its English words
+  (which the app keeps English in every locale); each group's pages appear as
+  the app's second-level pills (Edit: Freeform · Retouch; Library: Reference ·
+  Gallery); Setup left the bar for a header gear exactly as the app parks it;
+  and the second navigation is gone, its screens reached directly from the bar.
+  Every page KEY is unchanged, so every existing switchPage() call still lands
+  where it did. Pinned by verify_panel_gate.js checks L, M and N, which read
+  the app's own TOPGROUPS and the panel's tab bar so drift on EITHER side
+  fails. Still missing against the app and scheduled next: Path, Video, Video
+  Upscale, a real Gallery, Tutorials, Account, and Setup's seven cards.
+  Acceptance: carry over v6.39.0's checklist; additionally walk all five tabs
+  and confirm the bar reads Home · Workflows · Edit · Media Lab · Library, that
+  the gear opens Setup, that Edit and Library show their pill rows, and that no
+  second row of navigation appears anywhere. Artifact
+  `HNK_Ai_Panel_v6.40.0.ccx`, SHA-256
+  `2a088ac9dbbf3a400afd92be02a85765fd36f19e2a4ac9ed42a2e7cbb168ed01`,
+  1,314,251 bytes. Stays disabled for customers until this acceptance.
 - **v6.39.0** — `pending`. The line that ran together (2026-09-01, found by the
   owner's own Photoshop acceptance pass on 6.38.0). Photoshop's panel runtime
   lays a container's children out in a ROW unless the container declares

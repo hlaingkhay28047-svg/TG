@@ -5553,7 +5553,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.39.0";
+const PANEL_VERSION = "6.40.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10956,14 +10956,66 @@ function resetRetouch() {
 }
 
 /* ---------------- Tab pages (web-view style) ---------------- */
-const PAGES = [
-  { key: "setup", tab: "tabSetup", page: "pageSetup" },
-  { key: "prompt", tab: "tabPrompt", page: "pagePrompt" },
-  { key: "create", tab: "tabCreate", page: "pageCreate" },
-  { key: "aitools", tab: "tabAiTools", page: "pageAiTools" },
-  { key: "presets", tab: "tabPresets", page: "pagePresets" },
-  { key: "retouch", tab: "tabRetouch", page: "pageRetouch" }
+/* v6.40.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
+   The app's bottom bar carries five WORK groups — Home, Workflows, Edit,
+   Media Lab, Library — each group's pages appear as second-level pills, and
+   Setup is not on the bar at all: it lives behind the header gear. The panel
+   had six flat tabs including Setup, plus a SECOND navigation inside Home
+   (Freeform / Workflows / History / Settings) that repeated the tabs beneath
+   it; two navigations saying overlapping things is exactly what made the
+   panel harder to teach than the app it mirrors.
+
+   Every page KEY below is unchanged, so every switchPage() call elsewhere in
+   this file still lands where it always did — only how you navigate there
+   follows the app now. Group labels are the app's own English words, which
+   the app keeps English in every locale. */
+const GROUPS = [
+  { key: "home",  tab: "tabAiTools" },
+  { key: "wf",    tab: "tabWf" },
+  { key: "edit",  tab: "tabPrompt" },
+  { key: "media", tab: "tabCreate" },
+  { key: "lib",   tab: "tabPresets" }
 ];
+const PAGES = [
+  { key: "setup",   page: "pageSetup",   group: null },
+  { key: "aitools", page: "pageAiTools", group: "home" },
+  { key: "wf",      page: "pageAiTools", group: "wf" },
+  { key: "prompt",  page: "pagePrompt",  group: "edit",  sub: "Freeform" },
+  { key: "retouch", page: "pageRetouch", group: "edit",  sub: "Retouch" },
+  { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img" },
+  { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference" },
+  /* the app's Library holds Reference and Gallery; the panel's own generation
+     history is that gallery of results. Its select / zip / delete actions
+     follow in the next wave — the shape of the navigation is the app's now. */
+  { key: "gallery", page: "pageAiTools", group: "lib",   sub: "Gallery" }
+];
+function pageEntry(key) {
+  for (let i = 0; i < PAGES.length; i++) if (PAGES[i].key === key) return PAGES[i];
+  return null;
+}
+/* The app shows its second level only where there is a second level to show. */
+function renderSubtabs(activeKey) {
+  const host = $("subtabs");
+  if (!host) return;
+  while (host.firstChild) host.removeChild(host.firstChild);
+  const entry = pageEntry(activeKey);
+  const group = entry ? entry.group : null;
+  const subs = [];
+  for (let i = 0; i < PAGES.length; i++) {
+    if (group && PAGES[i].group === group && PAGES[i].sub) subs.push(PAGES[i]);
+  }
+  if (subs.length < 2) { host.className = "subtabbar"; return; }
+  host.className = "subtabbar on";
+  for (let i = 0; i < subs.length; i++) {
+    (function (sub) {
+      const b = document.createElement("button");
+      b.className = "subtab" + (sub.key === activeKey ? " on" : "");
+      b.textContent = sub.sub;
+      b.addEventListener("click", function () { switchPage(sub.key); saveSettings(); });
+      host.appendChild(b);
+    })(subs[i]);
+  }
+}
 
 function switchPage(key) {
   try { disarm(); } catch (e) { }
@@ -10971,22 +11023,30 @@ function switchPage(key) {
   for (let i = 0; i < PAGES.length; i++) { if (PAGES[i].key === key) found = true; }
   if (!found) key = "aitools";
   state.page = key;
+  const active = pageEntry(key);
   for (let i = 0; i < PAGES.length; i++) {
-    const p = PAGES[i];
-    const pe = $(p.page), te = $(p.tab);
-    if (pe) pe.className = "page" + (p.key === key ? " on" : "");
-    if (te) te.className = "tabb" + (p.key === key ? " on" : "");
+    const p = PAGES[i], pe = $(p.page);
+    /* two keys share pageAiTools (Home and Workflows), so paint by PAGE */
+    if (pe) pe.className = "page" + (active && p.page === active.page ? " on" : "");
   }
+  for (let i = 0; i < GROUPS.length; i++) {
+    const te = $(GROUPS[i].tab);
+    if (te) te.className = "tabb" + (active && GROUPS[i].key === active.group ? " on" : "");
+  }
+  renderSubtabs(key);
   const pg = $("pages");
   if (pg) pg.scrollTop = 0;
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }
   if (key === "create") { try { refreshCreateCompare(); } catch (e) { } }
   /* v6.27.0 — the bottom Home tab always returns to the cards home, like
      the web app; the AI Tools stack's own "Home" pill left with this. */
-  if (key === "aitools") {
+  if (key === "aitools" || key === "wf" || key === "gallery") {
+    /* Home returns to the cards home; Workflows is its own top tab now, the
+       way the app has always had it, instead of a pill inside Home. */
+    const want = key === "wf" ? "workflow-tools" : key === "gallery" ? "history" : "home";
     try {
       const aiApp = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.aiToolsApp : null;
-      if (aiApp && aiApp.current && aiApp.current() !== "home") aiApp.navigate("home");
+      if (aiApp && aiApp.current && aiApp.current() !== want) aiApp.navigate(want);
     } catch (e) { }
   }
   if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
@@ -11003,12 +11063,21 @@ function switchPage(key) {
 }
 
 function bindTabs() {
-  for (let i = 0; i < PAGES.length; i++) {
-    (function (p) {
-      const te = $(p.tab);
-      if (te) te.addEventListener("click", function () { switchPage(p.key); saveSettings(); });
-    })(PAGES[i]);
+  for (let i = 0; i < GROUPS.length; i++) {
+    (function (g) {
+      const te = $(g.tab);
+      if (!te) return;
+      te.addEventListener("click", function () {
+        /* a group opens on its first page, like the app */
+        let first = null;
+        for (let j = 0; j < PAGES.length && !first; j++) if (PAGES[j].group === g.key) first = PAGES[j];
+        switchPage(first ? first.key : "aitools");
+        saveSettings();
+      });
+    })(GROUPS[i]);
   }
+  const gear = $("btnGearSetup");
+  if (gear) gear.addEventListener("click", function () { switchPage("setup"); saveSettings(); });
 }
 
 /* ---------------- Collapsible cards with persisted state ---------------- */
