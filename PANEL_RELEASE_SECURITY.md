@@ -178,6 +178,30 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.45.0** — `pending`. Media Lab's other two pages (2026-09-01, same
+  owner instruction). The app's Media Lab holds three pages; the panel held
+  one. **Video** and **VidUp** are the other two, and the rule that outranks
+  every feature here governed how they were built: a RunningHub apiPath is
+  never invented. The panel's video catalog is the app's own doc-verified
+  `RH_VIDEO_MODELS` table — **183 endpoints lifted verbatim** into
+  `panel/js/hnk_video_models.js` — and the request body is the app's own
+  `rhV2SubmitVideo` builder, unchanged in behaviour, including the node-keyed
+  ComfyUI graphs, the start+end frame pairs, the per-endpoint resolution,
+  duration and aspect enums and every REQUIRED extra at its documented
+  default. Upload, submit, poll, download and cancel are the panel's own
+  services, so a video run carries the same lease and the same timeouts as an
+  image run. VidUp uses the app's upscaler endpoint and its exact resolution
+  enum (720p · 1080p · 2k · 4k). A finished video is written as a file into a
+  folder the studio picks: a panel cannot hand a browser a download, and a
+  video is not a layer. Pinned by verify_panel_gate.js check **P**, which
+  reads BOTH tables and fails unless the panel's is the app's, id for id and
+  path for path. Acceptance: carry over v6.44.0's checklist; additionally open
+  Media Lab and confirm three pills (Text→Img · Video · VidUp), that Video's
+  model list carries the whole catalog and its resolution/duration/aspect
+  menus change with the model, and that one short video generates and lands in
+  the chosen folder. Artifact `HNK_Ai_Panel_v6.45.0.ccx`, SHA-256
+  `6489c09f3b2c312275b28c1b2cda40e052dc3383783a4b4e9bd1f47e18d1df0e`,
+  1,334,296 bytes. Stays disabled for customers until this acceptance.
 - **v6.44.0** — `pending`. Path — many photos, one look, one run
   (2026-09-01, same owner instruction). The web app's Path takes fifty to a
   hundred photos through one look in a single run; the panel could only ever

@@ -127,10 +127,10 @@
     <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
     <div class="hdr-t">
       <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.44.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.45.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
     </div>
     <div class="hdr-ctl">
-      <!-- v6.44.0 — web-app parity: the app parks Setup behind a header gear
+      <!-- v6.45.0 — web-app parity: the app parks Setup behind a header gear
            and keeps its bottom bar to the five work groups. Same here. -->
       <button id="btnGearSetup" class="btn btn-icon" aria-label="Setup"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 14.9a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5v.2a2 2 0 1 1-3.8 0v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1h-.2a2 2 0 1 1 0-3.8h.2a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5v-.2a2 2 0 1 1 3.8 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 3.8h-.2a1.6 1.6 0 0 0-1.5 1Z"/></svg></button>
       <select id="selLang" class="lang-sel" title="Language"></select>
@@ -138,7 +138,7 @@
     </div>
   </div>
 
-  <!-- v6.44.0 — the web app's second-level pills. Its bottom bar carries five
+  <!-- v6.45.0 — the web app's second-level pills. Its bottom bar carries five
        groups and each group's pages appear here, in the app's own English
        wording (the app keeps these words English in every locale). -->
   <div class="subtabbar" id="subtabs"></div>
@@ -1042,8 +1042,57 @@
     </div>
 
     <!-- ========== PAGE: RETOUCH PRO ========== -->
-        <!-- ========== PAGE: PATH (batch) ==========
-         v6.44.0 — the web app's Path, in Photoshop: many photos, one look,
+        <!-- ========== PAGE: VIDEO ==========
+         v6.45.0 — Media Lab's second page, where the app keeps it. The model
+         list, its resolutions, durations and aspect ratios all come from the
+         app's own doc-verified catalog; no endpoint is authored here. -->
+    <div class="page" id="pageVideo">
+      <div class="card">
+        <div class="chead" id="cVidH"><span class="car">&#9662;</span><span class="chead-t">VIDEO</span></div>
+        <div class="cbody" id="cVidB">
+          <div class="mut" id="vidIntro"></div>
+          <select id="vidModel" class="hnk-sel"></select>
+          <textarea id="vidPromptP" class="hnk-prompt" placeholder="What should happen in the video?"></textarea>
+          <div class="row tight">
+            <select id="vidRes" class="hnk-sel grow"></select>
+            <select id="vidDur" class="hnk-sel grow"></select>
+            <select id="vidAspect" class="hnk-sel grow"></select>
+          </div>
+          <div class="row tight">
+            <button id="btnVidPick" class="btn btn-sm grow">Add photo</button>
+            <button id="btnVidSave" class="btn btn-sm grow">Save folder</button>
+          </div>
+          <div class="diag" id="vidList"></div>
+          <div class="row last">
+            <button id="btnVidRun" class="btn btn-sm btn-gold grow">GENERATE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PAGE: VIDEO UPSCALE ========== -->
+    <div class="page" id="pageVideoUp">
+      <div class="card">
+        <div class="chead" id="cVuH"><span class="car">&#9662;</span><span class="chead-t">VIDEO UPSCALE</span></div>
+        <div class="cbody" id="cVuB">
+          <div class="mut" id="vuIntro"></div>
+          <div class="row tight">
+            <button id="btnVuPickP" class="btn btn-sm grow">Pick video</button>
+            <select id="vuRes" class="hnk-sel grow"></select>
+          </div>
+          <div class="row tight">
+            <button id="btnVuSave" class="btn btn-sm grow">Save folder</button>
+          </div>
+          <div class="diag" id="vuList"></div>
+          <div class="row last">
+            <button id="btnVuRun" class="btn btn-sm btn-gold grow">UPSCALE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PAGE: PATH (batch) ==========
+         v6.45.0 — the web app's Path, in Photoshop: many photos, one look,
          one run. Results are written as files, not a hundred layers. -->
     <div class="page" id="pagePath">
       <div class="card">
@@ -1241,6 +1290,7 @@
 <!-- HNK AI Tools core (dependency order; each module is IIFE-wrapped and
      UXP-safe — publishes to globalThis.HNK, no relative require at runtime) -->
 <script src="js/hnk_wf_catalog_data.js"></script>
+<script src="js/hnk_video_models.js"></script>
 <script src="src/models/model-registry.js"></script>
 <script src="src/models/capability-resolver.js"></script>
 <script src="src/models/auto-model-selector.js"></script>
@@ -1259,6 +1309,7 @@
 <script src="src/providers/runninghub-config.js"></script>
 <script src="src/providers/runninghub-upload-service.js"></script>
 <script src="src/providers/runninghub-task-service.js"></script>
+<script src="src/providers/runninghub-video.js"></script>
 <script src="src/providers/runninghub-enterprise-adapter.js"></script>
 <script src="src/providers/runninghub-http.js"></script>
 <script src="src/providers/runninghub-setup.js"></script>

@@ -296,6 +296,25 @@ async function run(browser, cfg) {
     { webviewTag: /<webview/i.test(indexHtml), webviewPermission: "webview" in perms,
       hosts: browserHosts, bindWeb: /function bindWeb\(/.test(mainJs) });
 
+  /* v6.45.0 — THE VIDEO CATALOG IS THE APP'S, ENDPOINT FOR ENDPOINT.
+     Media Lab's Video page can only be as honest as its model list, and the
+     one rule that outranks every feature here is that a RunningHub apiPath is
+     never invented — it is lifted from the app's own doc-verified table or it
+     does not ship. So this reads BOTH tables and requires the panel's to be
+     the app's, id for id and path for path. */
+  const appVideoBlock = (appSrc.match(/var RH_VIDEO_MODELS = \[([\s\S]*?)\n\];/) || [])[1] || "";
+  const panelVideoSrc = fs.readFileSync(path.join(PANEL, "js/hnk_video_models.js"), "utf8");
+  const pairs = src => {
+    const ids = [...src.matchAll(/\bid:\s*"([^"]+)"/g)].map(m => m[1]);
+    const paths = [...src.matchAll(/\bapiPath:\s*"([^"]+)"/g)].map(m => m[1]);
+    return ids.map((id, i) => id + " -> " + (paths[i] || "?"));
+  };
+  const appPairs = pairs(appVideoBlock), panelPairs = pairs(panelVideoSrc);
+  report("P) the panel's video catalog is the web app's, endpoint for endpoint",
+    appPairs.length > 100 && JSON.stringify(appPairs) === JSON.stringify(panelPairs),
+    { app: appPairs.length, panel: panelPairs.length,
+      firstDiff: appPairs.find((x, i) => x !== panelPairs[i]) || null });
+
   /* v6.39.0 — A BROWSER CANNOT CATCH THIS ONE, WHICH IS WHY IT SHIPPED.
      Photoshop's panel runtime lays a container's children out in a ROW unless
      the container says otherwise; a browser stacks them either way. So every
