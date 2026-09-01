@@ -13,9 +13,20 @@
 function _doc(ctx) { return (ctx && ctx.document) || (typeof document !== "undefined" ? document : null); }
 
 /* el(doc, tag, {class, text, id, attrs}, [children]) */
+/* v6.47.0 — "button" here means A CONTROL, and a control in this panel is a
+   div. Adobe's UXP paints its own button widget over our stylesheet: on the
+   owner's Photoshop every screen came back as rows of light-grey system
+   pills, the widget flattened its own children (Home's two-line action cards
+   arrived as one squashed line while the LEARNING cards beside them, which
+   are divs, stacked correctly), and its font stack has no Burmese, so every
+   Myanmar label inside one rendered as empty space. A div wears .hnk-btn,
+   .hnk-action and the body font stack exactly as written. Same events, same
+   ids, same classes — only the tag changes. */
 function el(doc, tag, opts, children) {
   opts = opts || {};
-  var node = doc.createElement(tag);
+  var isBtn = (tag === "button");
+  var node = doc.createElement(isBtn ? "div" : tag);
+  if (isBtn && node.setAttribute) { node.setAttribute("role", "button"); node.setAttribute("tabindex", "0"); }
   if (opts.class) node.className = opts.class;
   if (opts.id) node.id = opts.id;
   if (opts.text != null) node.textContent = String(opts.text);

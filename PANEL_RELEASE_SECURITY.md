@@ -178,6 +178,41 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.47.0** — `pending`. The panel's controls are the panel's, not Adobe's
+  (2026-09-01, owner: "webapp နဲ့မတူသေးဘူး"). The owner photographed all five
+  pages running in Photoshop 2026 and every one of them came back as rows of
+  light-grey system pills. The cause was one thing repeated 257 times: UXP
+  paints its own `<button>` widget over this panel's stylesheet. It honoured
+  our BORDER — the gold outline on RUN and Retouch Apply proves the rule
+  reached it — and ignored background-color and the font stack; it flattened
+  its own children, so Home's two-line action cards arrived as one squashed
+  line while the LEARNING cards beside them, which were already divs, stacked
+  correctly; and its font has no Myanmar glyphs, so "Reference Transfer —
+  reference scene ကို ကူးယူ" arrived as "Reference Transfer  reference  scene"
+  and the Library filter's "အားလုံး" as an empty pill. The gate learned this
+  in v6.25.3 and answered it by being divs; the rest of the panel never did.
+  Every control is a div now — 215 in `panel/index.html`, 7 built at runtime
+  in `main.js`, 28 through `dom.el`, 7 through the library helper — with the
+  same ids, classes and handlers. A div has no `:disabled`, so the off state
+  is a class, and all seven controls that use it already refused to act on
+  their own state, so nothing can misfire. Selects stay native (they need the
+  popup) and are told the Myanmar-capable font stack explicitly, and language
+  rows now LEAD with the Latin gloss, so a script the host cannot draw never
+  leaves a row looking empty. The header wordmark got its room back (a UXP
+  select sizes to its widest option and was eating the bar), Setup's gear is
+  a glyph instead of an inline `<svg>` this renderer does not draw, and the
+  member's own profile photo can finally be CHOSEN in the panel — Setup ▸
+  ACCOUNT picks it, Photoshop crops the centre square to 256px because UXP
+  has no canvas, and it is written to the same `profiles.avatar` column the
+  website writes, so one photo serves the gate, the website and the teacher's
+  member list. Acceptance: carry over v6.46.0's checklist; additionally open
+  every page and confirm no control is a grey system pill, that Burmese reads
+  inside buttons and in the language list, that Home's action rows show two
+  lines, and that Setup ▸ ACCOUNT can add and remove a photo which then
+  appears on the gate card and in the admin console. Artifact
+  `HNK_Ai_Panel_v6.47.0.ccx`, SHA-256
+  `866dec5c66f2f25895b8c15849f551650d7b76b17e7b24c987ee09109985838c`,
+  1,344,431 bytes. Stays disabled for customers until this acceptance.
 - **v6.46.0** — `pending`. The Gallery, and the last page of the parity
   (2026-09-01, same owner instruction). The app's Library holds Reference and
   **Gallery** — every result it has ever made, with select · save · delete ·

@@ -266,11 +266,50 @@ async function run(browser, cfg) {
   const appSrc = fs.readFileSync(path.join(ROOT, "docs/app/index.html"), "utf8");
   const groupBlock = (appSrc.match(/var TOPGROUPS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || "";
   const appGroups = [...groupBlock.matchAll(/label:\s*"([^"]+)"/g)].map(m => m[1]);
-  const barBlock = (indexHtml.match(/<div class="tabbar">([\s\S]*?)<\/div>/) || [])[1] || "";
+  /* v6.47.0 — read the bar by BALANCING its tags, not by stopping at the
+     first </div>. The tabs used to be <button> elements, so the first </div>
+     happened to close the bar; they are div controls now (UXP paints its
+     button widget with its own chrome and a font that has no Burmese, which
+     is why the owner's Photoshop showed grey pills with holes where Myanmar
+     labels belong), and the lazy match stopped after tab one. Same assertion,
+     an extractor that cannot be fooled by the children. */
+  const barBlock = (function () {
+    const open = '<div class="tabbar">';
+    const start = indexHtml.indexOf(open);
+    if (start < 0) return "";
+    const from = start + open.length;
+    const re = /<\/?div\b/g; re.lastIndex = from;
+    let depth = 1, m;
+    while ((m = re.exec(indexHtml))) {
+      depth += (m[0] === "</div") ? -1 : 1;
+      if (depth === 0) return indexHtml.slice(from, m.index);
+    }
+    return "";
+  })();
   const panelTabs = [...barBlock.matchAll(/<span class="tabb-l">([^<]*)<\/span>/g)].map(m => m[1]);
   report("L) the panel's bottom bar is the web app's five groups, in its order",
     appGroups.length === 5 && JSON.stringify(panelTabs) === JSON.stringify(appGroups),
     { app: appGroups, panel: panelTabs });
+  /* v6.47.0 — EVERY control is a div, everywhere, not just on the gate.
+     The owner photographed all five pages in Photoshop: each one came back as
+     rows of light-grey Adobe pills, the widget flattened Home's two-line
+     action cards into one squashed line while the LEARNING cards beside them
+     (already divs) stacked correctly, and its font stack drew no Burmese — so
+     "Reference Transfer — reference scene ကို ကူးယူ" arrived as
+     "Reference Transfer  reference  scene" and the Library filter's
+     "အားလုံး" as an empty pill. The gate learned this in 6.25.3; this check
+     stops the rest of the panel from forgetting it again. */
+  const panelSrcFiles = ["main.js", "src/ui/dom.js", "js/hnk_library_compact_cards.js"]
+    .map(f => ({ f, text: fs.readFileSync(path.join(PANEL, f), "utf8") }));
+  const widgetMarkup = /<button\b/.test(indexHtml.replace(/\/\*[\s\S]*?\*\//g, ""));
+  const widgetRuntime = panelSrcFiles.filter(x =>
+    /createElement\(\s*["']button["']\s*\)/.test(x.text)).map(x => x.f);
+  const domMapsButton = panelSrcFiles.find(x => x.f === "src/ui/dom.js").text
+    .includes('tag === "button"');
+  report("Q) no control is an Adobe widget — every button is a div the stylesheet owns",
+    !widgetMarkup && widgetRuntime.length === 0 && domMapsButton,
+    { markup: widgetMarkup, runtime: widgetRuntime, domMapsButton });
+
   report("M) Setup left the bar for the header gear, exactly as the app parks it",
     !/tabSetup/.test(barBlock) && /id="btnGearSetup"/.test(indexHtml), {
       onBar: /tabSetup/.test(barBlock), gear: /id="btnGearSetup"/.test(indexHtml) });
