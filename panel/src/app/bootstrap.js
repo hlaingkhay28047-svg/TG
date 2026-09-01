@@ -157,6 +157,21 @@ function create(opts) {
         }, request, { onStage: stageAll });
         if (!res.ok) { status(res.error); return res; }
 
+        /* v6.46.0 — keep what we made, the way the app keeps it. Writing to
+           the gallery never blocks or fails the run: a studio that cannot
+           spare the disk still gets its layer. */
+        try {
+          var gs = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.galleryStore : null;
+          if (gs && res.results) {
+            res.results.forEach(function (r) {
+              var ref = String((r && r.ref) || "");
+              var b64 = ref.indexOf("data:") === 0 ? ref.split(",")[1] : "";
+              var ext = /image\/(\w+)/.exec(ref);
+              if (b64) gs.save(b64, (ext && ext[1]) || "png", request && request.workflowId);
+            });
+          }
+        } catch (e) { }
+
         if (s.addAsNewLayer === false) {
           // The user turned placement off in Settings — say so honestly.
           status({ code: "ready", title: dom.t("ai_done", "Done."),

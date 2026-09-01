@@ -178,6 +178,29 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.46.0** — `pending`. The Gallery, and the last page of the parity
+  (2026-09-01, same owner instruction). The app's Library holds Reference and
+  **Gallery** — every result it has ever made, with select · save · delete ·
+  clear. The panel's Library held Reference and a metadata-only history: the
+  pictures themselves were never kept, so a document closed without saving
+  took the result with it. Results are now written to the panel's own gallery
+  folder in its plugin data directory, capped at 200 with the oldest dropped
+  first (the app caps its store too), and the Gallery page is the app's, over
+  that folder. Writing is fire-and-forget and can never fail a generate: a
+  studio out of disk still gets its layer. **Honest difference, stated rather
+  than papered over:** a Photoshop panel cannot hand a browser a zip download,
+  so the app's "zip selected" is "save selected" here — the chosen files are
+  written into a folder the studio picks, which is the same outcome by the
+  only route a plugin has. With this the panel carries every page the web app
+  has: Home (+ Tutorials) · Workflows · Edit ×5 · Media Lab ×3 · Library ×2 ·
+  Setup ×6 cards, one navigation, and nothing the app does not have.
+  Acceptance: carry over v6.45.0's checklist; additionally generate once, open
+  Library ▸ Gallery and confirm the result is listed, press Select, tick it,
+  Save selected into a folder and confirm the file arrives, then Delete
+  selected and confirm it leaves the list. Artifact
+  `HNK_Ai_Panel_v6.46.0.ccx`, SHA-256
+  `0ea79aef2fa9f155f8a4565fc1d642c58cd71dd869a4e6cb1488106c3699a37f`,
+  1,337,385 bytes. Stays disabled for customers until this acceptance.
 - **v6.45.0** — `pending`. Media Lab's other two pages (2026-09-01, same
   owner instruction). The app's Media Lab holds three pages; the panel held
   one. **Video** and **VidUp** are the other two, and the rule that outranks

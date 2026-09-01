@@ -127,10 +127,10 @@
     <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
     <div class="hdr-t">
       <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.45.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+      <div class="sub topbar-sub"><span id="brandVer">v6.46.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
     </div>
     <div class="hdr-ctl">
-      <!-- v6.45.0 — web-app parity: the app parks Setup behind a header gear
+      <!-- v6.46.0 — web-app parity: the app parks Setup behind a header gear
            and keeps its bottom bar to the five work groups. Same here. -->
       <button id="btnGearSetup" class="btn btn-icon" aria-label="Setup"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 14.9a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5v.2a2 2 0 1 1-3.8 0v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1h-.2a2 2 0 1 1 0-3.8h.2a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5v-.2a2 2 0 1 1 3.8 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 3.8h-.2a1.6 1.6 0 0 0-1.5 1Z"/></svg></button>
       <select id="selLang" class="lang-sel" title="Language"></select>
@@ -138,7 +138,7 @@
     </div>
   </div>
 
-  <!-- v6.45.0 — the web app's second-level pills. Its bottom bar carries five
+  <!-- v6.46.0 — the web app's second-level pills. Its bottom bar carries five
        groups and each group's pages appear here, in the app's own English
        wording (the app keeps these words English in every locale). -->
   <div class="subtabbar" id="subtabs"></div>
@@ -1042,8 +1042,31 @@
     </div>
 
     <!-- ========== PAGE: RETOUCH PRO ========== -->
-        <!-- ========== PAGE: VIDEO ==========
-         v6.45.0 — Media Lab's second page, where the app keeps it. The model
+        <!-- ========== PAGE: GALLERY ==========
+         v6.46.0 — the app's Library ▸ Gallery: everything the panel has made,
+         with the app's own actions (select, save the chosen ones, delete,
+         clear). A panel cannot hand a browser a zip, so "save selected"
+         writes the chosen files into a folder the studio picks. -->
+    <div class="page" id="pageGallery">
+      <div class="card">
+        <div class="chead" id="cGalH"><span class="car">&#9662;</span><span class="chead-t">GALLERY</span></div>
+        <div class="cbody" id="cGalB">
+          <div class="mut" id="galIntro"></div>
+          <div class="row tight">
+            <button id="btnGalSel" class="btn btn-sm grow">Select</button>
+            <button id="btnGalSave" class="btn btn-sm grow">Save selected</button>
+          </div>
+          <div class="row tight">
+            <button id="btnGalDel" class="btn btn-sm grow">Delete selected</button>
+            <button id="btnGalClear" class="btn btn-sm">Clear all</button>
+          </div>
+          <div class="diag" id="galList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PAGE: VIDEO ==========
+         v6.46.0 — Media Lab's second page, where the app keeps it. The model
          list, its resolutions, durations and aspect ratios all come from the
          app's own doc-verified catalog; no endpoint is authored here. -->
     <div class="page" id="pageVideo">
@@ -1092,7 +1115,7 @@
     </div>
 
     <!-- ========== PAGE: PATH (batch) ==========
-         v6.45.0 — the web app's Path, in Photoshop: many photos, one look,
+         v6.46.0 — the web app's Path, in Photoshop: many photos, one look,
          one run. Results are written as files, not a hundred layers. -->
     <div class="page" id="pagePath">
       <div class="card">
@@ -1322,6 +1345,7 @@
 <script src="src/photoshop/photoshop-host.js"></script>
 <!-- HNK AI Tools persistence (store-injected) -->
 <script src="src/app/uxp-store.js"></script>
+<script src="src/app/gallery-store.js"></script>
 <script src="src/history/history-service.js"></script>
 <script src="src/history/preset-service.js"></script>
 <script src="src/app/settings-service.js"></script>
