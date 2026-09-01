@@ -9380,6 +9380,51 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "pr-hair":["braid","hair"], "pr-access":["crown","jewel"], "pr-pose":["pose","fashion"],
       "pr-roDressRep":["couture","dress"], "pr-roDressRef":["gown"], "pr-roMkCopy":["glam"],
       "pr-fgProps":["botanical","props"], "pr-style":["cinemat","film"] };
+    /* v5.66.0 — SKIN TONE TRUTH, across every workflow that rebuilds the light.
+       A model asked for a new backdrop or a new key light will happily
+       "improve" the person underneath it: lighten the skin, push it orange,
+       flatten the undertone. Fifty-three workflows live in the three groups
+       that relight a real person, and only eight of them ever said a word
+       about skin colour. The other forty-five now carry one line that says
+       relight it, never recolour it — a toggle, default ON, so a deliberately
+       stylised look can still switch it off, and worded to lock COLOUR only:
+       texture, retouch and beauty stay exactly what each workflow already
+       asked for. Written here rather than into forty-five prompts by hand so
+       the Photoshop panel, which is generated from this composed catalog,
+       carries the identical line and the identical switch. */
+    var TONE_GROUPS=["Background & Scene","Studio Scenes","Studio Relight"];
+    var TONE_TAG="SKIN TONE TRUTH:";
+    var TONE_LINE=TONE_TAG+" keep every person's own natural skin tone exactly as photographed"+
+      " \u2014 relight it, never recolour it: no whitening, no bleaching, no tanning, no orange,"+
+      " grey or pink cast, no change of undertone; light and shadow may follow the new scene,"+
+      " but the colour under that light stays this person's real complexion, and face, neck,"+
+      " ears, hands and body all stay the one tone they started as.";
+    var TONE_HAS=/skin tone|skin-tone|complexion|skin colour|skin color/i;
+    var TONE_LABEL={my:"\u1019\u1030\u101c\u1010\u1014\u103a\u1038 \u1021\u101e\u102c\u1038\u101b\u1031\u102c\u1004\u103a \u1021\u1010\u102d\u102f\u1004\u103a\u1038 \u1011\u102d\u1014\u103a\u1038",
+      en:"Keep real skin tone", shn:"Keep real skin tone", kac:"Keep real skin tone",
+      th:"\u0e04\u0e07\u0e2a\u0e35\u0e1c\u0e34\u0e27\u0e08\u0e23\u0e34\u0e07", zh:"\u4fdd\u6301\u771f\u5b9e\u80a4\u8272",
+      vi:"Gi\u1eef \u0111\u00fang m\u00e0u da th\u1eadt", id:"Pertahankan warna kulit asli", ms:"Kekalkan warna kulit asal"};
+    /* v5.66.0 — and the other half of "real as real": thirteen of those same
+       fifty-three never asked for a photograph at all. Each of the thirteen is
+       a photographic job — swap this background, add this key light — where a
+       rendered or plastic result is simply wrong, so this line is fixed rather
+       than switchable. The forty that already say it keep their own wording. */
+    var REAL_LINE="REAL PHOTOGRAPH: the finished frame must read as a photograph taken with a real"+
+      " camera \u2014 real skin texture with pores and fine hair, real fabric weave, real depth of"+
+      " field and lens falloff; no illustration, no 3D render, no waxy or plastic surfaces, no AI"+
+      " sheen, no over-smoothed faces.";
+    var REAL_HAS=/photograph(ic|ically)|real photo|photoreal|realistic/i;
+    cats.forEach(function(c){
+      if(TONE_GROUPS.indexOf(c.t)<0) return;
+      c.items.forEach(function(w){
+        if(!w.prompt) return;
+        if(!REAL_HAS.test(w.prompt)) w.prompt=w.prompt+"\n"+REAL_LINE;
+        if(TONE_HAS.test(w.prompt)) return;
+        w.prompt=w.prompt+"\n"+TONE_LINE;
+        w.fields=(w.fields||[]).concat([{ key:"skintone", type:"toggle", tag:TONE_TAG,
+          "default":true, label:TONE_LABEL }]);
+      });
+    });
     cats.forEach(function(c){
       c.items.forEach(function(w){
         if(PAIR_KW[w.id]) w.vis2=findVis(PAIR_KW[w.id]);
@@ -12128,7 +12173,7 @@ window.addEventListener("beforeunload",function(e){
     e.preventDefault(); e.returnValue="";
   }
 });
-/* v5.65.0 — the same "is real work in flight" question the guard above asks,
+/* v5.66.0 — the same "is real work in flight" question the guard above asks,
    named once so the update self-heal below can ask it too. Two copies of this
    list would drift, and the copy that drifted would be the one deciding
    whether it is safe to reload the page under a running batch. */
@@ -22101,7 +22146,7 @@ function unifiedRender(){
   $("unifiedAccountStatus").textContent = unifiedPretty(status);
   $("unifiedLicenseStatus").textContent = unifiedPretty(license.status || (license.active ? "active" : "inactive"));
   $("unifiedLicenseExpiry").textContent = unifiedDate(license.expires_at);
-  /* v5.65.0 — the panel version shown here is the SERVER's answer or nothing.
+  /* v5.66.0 — the panel version shown here is the SERVER's answer or nothing.
      It used to fall back to a literal "6.24.0" that stopped being true after
      thirteen panel releases, so a student whose entitlement call was still in
      flight — or had failed — was told, confidently, the wrong version of the
@@ -22245,7 +22290,7 @@ function accApplyLang(){
   try { if (acc) { accRender(); accRenderDevices(); accChipRender(); } } catch(e){}
 }
 
-/* v5.65.0 — one source for the panel version, and it is the server.
+/* v5.66.0 — one source for the panel version, and it is the server.
    The CCX is issued by exactly one route: /download/ asks the API, the API
    checks account, licence, download permission and registered computer, and
    only then mints a short-lived link. This button opens that same page — but
@@ -22796,7 +22841,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.65.0";
+var APP_VER="5.66.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -22811,7 +22856,7 @@ function verNewer(a,b){
   }
   return false;
 }
-/* v5.65.0 — A TAB LEFT OPEN IS A VERSION THAT NEVER MOVES.
+/* v5.66.0 — A TAB LEFT OPEN IS A VERSION THAT NEVER MOVES.
    This check ran exactly once, at load. A studio that keeps the Studio open on
    a desktop for a fortnight therefore kept whatever build it opened with — six
    releases behind, still showing the numbers of that build — and nothing ever
