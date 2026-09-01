@@ -1,7 +1,7 @@
 {
   "id": "com.hnkstudio.ai.panel.students",
   "name": "HNK Photoshop Ai Panel (Students) V1",
-  "version": "6.40.0",
+  "version": "6.41.0",
   "main": "index.html",
   "manifestVersion": 5,
   "host": {
@@ -16,18 +16,6 @@
         "https://*.hnkaistudio.com",
         "https://www.runninghub.ai",
         "https://*.runninghub.ai",
-        "https://photoeditorai.io",
-        "https://*.photoeditorai.io",
-        "https://photoeditor.ai",
-        "https://*.photoeditor.ai",
-        "https://playground.com",
-        "https://*.playground.com",
-        "https://pixlr.com",
-        "https://*.pixlr.com",
-        "https://fotor.com",
-        "https://*.fotor.com",
-        "https://remove.bg",
-        "https://*.remove.bg",
         "https://*.google.com",
         "https://*.googleapis.com",
         "https://*.gstatic.com",
@@ -45,32 +33,6 @@
       ]
     },
     "allowCodeGenerationFromStrings": false,
-    "webview": {
-      "allow": "yes",
-      "domains": [
-        "https://*.hnk-ai-tools-3-s4nnu.ondigitalocean.app",
-        "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app",
-        "https://photoeditorai.io",
-        "https://*.photoeditorai.io",
-        "https://photoeditor.ai",
-        "https://*.photoeditor.ai",
-        "https://playground.com",
-        "https://*.playground.com",
-        "https://pixlr.com",
-        "https://*.pixlr.com",
-        "https://fotor.com",
-        "https://*.fotor.com",
-        "https://remove.bg",
-        "https://*.remove.bg",
-        "https://google.com",
-        "https://*.google.com",
-        "https://*.googleapis.com",
-        "https://*.gstatic.com",
-        "https://*.facebook.com",
-        "https://*.cloudflare.com"
-      ],
-      "enableMessageBridge": "localAndRemote"
-    },
     "clipboard": "readAndWrite"
   },
   "entrypoints": [

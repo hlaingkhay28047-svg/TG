@@ -278,6 +278,24 @@ async function run(browser, cfg) {
   report("N) the panel draws one navigation, not two",
     !/hnkNav_/.test(controller) && !/id: "hnkNav"/.test(controller), {});
 
+  /* v6.41.0 — THE SECOND BROWSER IS GONE AND ITS DOOR IS SHUT.
+     The panel used to carry a whole mini web browser — an allow-list, an
+     address bar, size presets, a postMessage image bridge — which the web app
+     does not have and does not need, and which cost the CCX a webview grant
+     plus eleven third-party domain grants that were call paths in a
+     distributed, inspectable package. Removing the UI without removing the
+     grants would have left the doors open, so both are asserted here. */
+  const panelManifest = JSON.parse(fs.readFileSync(path.join(PANEL, "manifest.json"), "utf8"));
+  const perms = panelManifest.requiredPermissions || {};
+  const domains = ((perms.network || {}).domains || []).join(" ");
+  const browserHosts = ["photoeditorai.io", "photoeditor.ai", "playground.com",
+    "pixlr.com", "fotor.com", "remove.bg"].filter(host => domains.includes(host));
+  report("O) the mini browser is gone, and so is every grant it needed",
+    !/<webview/i.test(indexHtml) && !("webview" in perms) && browserHosts.length === 0 &&
+    !/function bindWeb\(/.test(mainJs) && !/WEB_SITES/.test(mainJs),
+    { webviewTag: /<webview/i.test(indexHtml), webviewPermission: "webview" in perms,
+      hosts: browserHosts, bindWeb: /function bindWeb\(/.test(mainJs) });
+
   /* v6.39.0 — A BROWSER CANNOT CATCH THIS ONE, WHICH IS WHY IT SHIPPED.
      Photoshop's panel runtime lays a container's children out in a ROW unless
      the container says otherwise; a browser stacks them either way. So every

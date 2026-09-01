@@ -178,6 +178,26 @@ eligible students.
   Artifact `HNK_Ai_Panel_v6.26.2.ccx`, SHA-256
   `4613c12a32aaae363fe9b04e367c0f180defeaf6e2dcf4bda9ef86edf2064949`,
   524,577 bytes.
+- **v6.41.0** — `pending`. The second browser is gone, and so is its door
+  (2026-09-01, owner: keep the seven themes and the reference folder, take the
+  Web AI mini browser out). The panel carried a whole web browser inside a
+  Photoshop panel — a site allow-list, an address bar, three size presets, a
+  postMessage image bridge and three global import buttons — which the web app
+  does not have. Removing the UI alone would have left the doors open, so the
+  grants went with it: the **webview permission is gone** and the network
+  allow-list drops from 22 domains to 10, losing every host that existed only
+  as a browser destination (photoeditorai.io, photoeditor.ai, playground.com,
+  pixlr.com, fotor.com, remove.bg). In an inspectable, distributed CCX a
+  lingering domain grant is a lingering call path, which is why this is a
+  security entry and not a UI one. Importing a picture is unchanged and still
+  where the app puts it: each reference slot offers Library · Layer · File ·
+  Web. Pinned by verify_panel_gate.js check O, which fails if the webview tag,
+  the webview permission, any of the six hosts, or bindWeb()/WEB_SITES return.
+  Acceptance: carry over v6.40.0's checklist; additionally confirm Setup no
+  longer shows the Web AI card, and that a reference slot's Web source still
+  imports a pasted image URL. Artifact `HNK_Ai_Panel_v6.41.0.ccx`, SHA-256
+  `6f555c3c7954aac6dab85bdb3e033fec93e33204b0a2e33c1228afb1f65d8545`,
+  1,311,394 bytes. Stays disabled for customers until this acceptance.
 - **v6.40.0** — `pending`. One navigation, and it is the web app's
   (2026-09-01, owner: "make the CCX exactly like the web app — take out
   everything that differs, take out the extras"). The panel carried SIX flat

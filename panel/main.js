@@ -92,7 +92,6 @@ const state = {
   cRatio: "1:1", cVariations: 1, cGallery: [], cSel: 0, cUrlSlot: -1,
   cRefs: [null, null, null, null], cResultB64: null, cMime: "image/png", cBeforeB64: null,
   genCount: 0, batch: false, batchStop: false, lastUserText: "", lastFinalPrompt: "",
-  webUrl: null, webNudged: false,
   realOn: true, realDir: "auto", banText: true,
   camOn: false, camBody: null, camMm: null, camF: null, camFilm: null, camBokeh: null,
   camIso: 100, camIsoOn: false, camK: 5600, camKOn: false,
@@ -5553,7 +5552,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.40.0";
+const PANEL_VERSION = "6.41.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7056,7 +7055,6 @@ async function saveSettings() {
       lightEquip: state.lightEquip, chains: state.chains, restMode: state.restMode,
       cRatio: state.cRatio, cVariations: state.cVariations,
       recentPrompts: state.recentPrompts,
-      webUrl: state.webUrl,
       refTarget: state.refTarget, refMkOn: state.refMkOn, refHairOn: state.refHairOn,
       bgKeepFrame: state.bgKeepFrame, bgKeepSubLight: state.bgKeepSubLight, match: state.match,
       bdayAge: state.bdayAge, capOn: state.capOn, capText: state.capText, capPos: state.capPos, scarfDir: state.scarfDir, scarfLen: state.scarfLen,
@@ -7130,7 +7128,6 @@ async function loadSettings() {
       if (Array.isArray(o.recentPrompts)) state.recentPrompts = o.recentPrompts.filter(function (r) { return r && typeof r.t === "string"; }).slice(0, 20);
       if (typeof o.cRatio === "string") state.cRatio = o.cRatio;
       if (typeof o.cVariations === "number") state.cVariations = Math.max(1, Math.min(4, o.cVariations));
-      if (typeof o.webUrl === "string") state.webUrl = o.webUrl;
       sanitizeCam(o);
       if (o.refTarget === "solo" || o.refTarget === "couple" || o.refTarget === "family") state.refTarget = o.refTarget;
       if (typeof o.refMkOn === "boolean") state.refMkOn = o.refMkOn;
@@ -9347,67 +9344,14 @@ function imgMagicOk(b64) {
 /* v4.5: references are READ-ONLY inputs - never regenerated or overwritten.
    People-exclusion is handled purely by the reference guards in the prompt. */
 
-/* ---------------- Web AI Mini Browser (v2.5) ---------------- */
-const WEB_HOME = "https://photoeditorai.io/";
-const WEB_SITES = [
-  /* v6.10: the panel's own 607-look Library and 116 workflows are the most
-     useful pages this window can show — they lead the row */
-  ["HNK Library", "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/?page=pgLib"],
-  ["HNK Workflows", "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/?page=pgWf"],
-  ["PhotoEditorAI", "https://photoeditorai.io/"],
-  ["Remove.bg", "https://www.remove.bg/"]
-];
-
-/* AUDIT-FIX #6: dropped the broad attacker-hostable wildcards googleusercontent.com
-   and cloudfront.net from the mini-browser allow-list (anyone can publish a page on
-   those multi-tenant namespaces). Import-from-URL uses fetch (network:all), so real
-   image CDNs still work — only in-browser NAVIGATION to those hosts is blocked. */
-const WEB_ALLOWED = ["hnk-ai-tools-3-s4nnu.ondigitalocean.app", "photoeditorai.io", "photoeditor.ai", "playground.com", "pixlr.com", "fotor.com", "remove.bg", "google.com", "googleapis.com", "gstatic.com", "facebook.com", "cloudflare.com"];
-
-function webAllowed(u) {
-  try {
-    const host = String(u).replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
-    for (let i = 0; i < WEB_ALLOWED.length; i++) {
-      if (host === WEB_ALLOWED[i] || host.endsWith("." + WEB_ALLOWED[i])) return true;
-    }
-  } catch (e) { }
-  return false;
-}
-
-/* AUDIT-FIX #6: only these first-party integration origins may push an image
-   straight into the user's document via the WebView message bridge. A CDN / hosting
-   wildcard must NEVER be trusted here — anyone can host a page on one. */
-const BRIDGE_TRUSTED = ["photoeditorai.io", "photoeditor.ai"];
-
-function bridgeOriginOk(origin) {
-  try {
-    if (!origin) return false; /* no origin => reject (cannot be verified) */
-    const host = String(origin).replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
-    for (let i = 0; i < BRIDGE_TRUSTED.length; i++) {
-      if (host === BRIDGE_TRUSTED[i] || host.endsWith("." + BRIDGE_TRUSTED[i])) return true;
-    }
-  } catch (e) { }
-  return false;
-}
-
-function webGo(url) {
-  const w = $("webView");
-  let u = (url || "").trim();
-  if (!u) return;
-  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
-  /* AUDIT-FIX #7: the allow-list check must actually block — without this return
-     a disallowed origin fell through and was loaded + persisted anyway. */
-  if (!webAllowed(u)) { setStatus(t("st_web_notallowed"), "err"); return; }
-  if (w) {
-    try { if (w.loadURL) w.loadURL(u); else w.src = u; }
-    catch (e) { setStatus("WebView: " + (e && e.message ? e.message : e), "err"); }
-  }
-  const ub = $("webUrl");
-  if (ub) ub.value = u;
-  state.webUrl = u;
-  saveSettings();
-}
-
+/* v6.41.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
+   app does not have). It was a whole second browser living inside a
+   Photoshop panel — an allow-list, an address bar, size presets, a
+   postMessage image bridge and three global import buttons — none of which
+   the web app has or needs. Importing a picture is still there where the
+   app puts it: on each reference slot, which offers Library, Layer, File
+   and Web. importImageToPS() stays; it is what the Create page uses to put
+   a finished result back into the document. */
 async function importImageToPS(b64, mime, label) {
   try {
     startBusy("st_place");
@@ -9430,146 +9374,6 @@ async function importImageToPS(b64, mime, label) {
     endBusy();
     setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err");
   }
-}
-
-async function importFromCopiedLink() {
-  try {
-    const s0 = ((await readClipboardText()) || "").trim();
-    if (!s0) { setStatus(t("st_clip_help"), "err"); return; }
-    if (/^blob:/i.test(s0)) { setStatus(t("st_web_blob"), "err"); return; }
-    if (!/^https?:\/\//i.test(s0) && !/^data:image\//i.test(s0)) { setStatus(t("st_web_nourl") + " \u00B7 " + t("st_clip_help"), "err"); return; }
-    startBusy("st_web_fetch");
-    const got = await fetchWebImage(s0);
-    endBusy();
-    await importImageToPS(bufToB64(got.buf), got.mime || "image/png", "WebLink");
-  } catch (e) {
-    endBusy();
-    setStatus(friendlyErr(e), "err");
-  }
-}
-
-/* guaranteed path: import whatever URL is in the address bar */
-async function importFromUrlBar() {
-  try {
-    const u = (($("webUrl") && $("webUrl").value) || "").trim();
-    if (!u || (!/^https?:\/\//i.test(u) && !/^data:image\//i.test(u))) { setStatus(t("st_web_nourl"), "err"); return; }
-    startBusy("st_web_fetch");
-    const got = await fetchWebImage(u);
-    endBusy();
-    await importImageToPS(bufToB64(got.buf), got.mime || "image/png", "WebURL");
-  } catch (e) {
-    endBusy();
-    setStatus(friendlyErr(e), "err");
-  }
-}
-
-async function importFromFile() {
-  try {
-    const f = await fsp.getFileForOpening({ types: ["jpg", "jpeg", "png", "webp"] });
-    if (!f) return;
-    const buf = await f.read({ format: formats.binary });
-    await importImageToPS(bufToB64(buf), extToMime(f.name), "WebFile");
-  } catch (e) {
-    setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err");
-  }
-}
-
-function bindWeb() {
-  const w = $("webView");
-  if (w) {
-    try {
-      w.style.width = "100%";
-      if (!w.style.height) w.style.height = "500px";
-    } catch (e) { }
-  }
-  const ub = $("webUrl");
-  if (ub) {
-    ub.value = state.webUrl || WEB_HOME;
-    ub.addEventListener("keydown", function (e) {
-      if (e && e.key === "Enter") webGo(ub.value);
-    });
-  }
-  const g = $("btnWebGo");
-  if (g) g.addEventListener("click", function () { webGo(ub ? ub.value : WEB_HOME); });
-  const h = $("btnWebHome");
-  if (h) h.addEventListener("click", function () { webGo(WEB_HOME); });
-  const r = $("btnWebReload");
-  if (r) r.addEventListener("click", function () {
-    /* UXP HTMLWebViewElement has no reload(); use loadURL() when present, else re-set src */
-    try {
-      if (w && w.loadURL && w.src) w.loadURL(w.src);
-      else if (w && w.reload) w.reload();
-      else if (w && w.src) w.src = w.src;
-    } catch (e) { }
-  });
-  const bk = $("btnWebBack");
-  if (bk) bk.addEventListener("click", function () {
-    try { if (w && w.goBack) w.goBack(); } catch (e) { }
-  });
-  const sc = $("webSites");
-  if (sc) {
-    while (sc.firstChild) sc.removeChild(sc.firstChild);
-    for (let i = 0; i < WEB_SITES.length; i++) {
-      (function (nm, url) {
-        const bt = document.createElement("button");
-        bt.className = "sw ltchip";
-        bt.textContent = nm;
-        bt.addEventListener("click", function () { webGo(url); });
-        sc.appendChild(bt);
-      })(WEB_SITES[i][0], WEB_SITES[i][1]);
-    }
-  }
-  const hs = [["webHS", 360], ["webHM", 500], ["webHL", 680]];
-  for (let i = 0; i < hs.length; i++) {
-    (function (id, px) {
-      const bh = $(id);
-      if (bh) bh.addEventListener("click", function () {
-        if (w) w.style.height = px + "px";
-        for (let j = 0; j < hs.length; j++) {
-          const o = $(hs[j][0]);
-          if (o) o.className = "segb" + (hs[j][0] === id ? " on" : "");
-        }
-      });
-    })(hs[i][0], hs[i][1]);
-  }
-  /* message bridge: a web app can push its result straight into Photoshop.
-     UXP dispatches WebView -> host messages to the GLOBAL window (not the
-     <webview> element), so the listener MUST live on window or it never fires.
-     We also register on the element as a harmless fallback for older hosts and
-     de-dupe by payload so a double-delivery can never import twice. */
-  let _lastBridgeMsg = "";
-  const bridgeHandler = function (e) {
-    try {
-      let raw = e && e.data;
-      if (!raw) return;
-      const sig = (typeof raw === "string") ? raw : JSON.stringify(raw);
-      if (sig === _lastBridgeMsg) return; /* ignore an identical duplicate delivery */
-      let d = raw;
-      if (typeof d === "string") { try { d = JSON.parse(d); } catch (pe) { return; } }
-      if (d && d.type === "hnk-image") {
-        /* AUDIT-FIX #6: reject a bridge push from any non first-party origin (incl. a
-           missing origin) so untrusted web content can't silently write pixels into
-           the user's open document. */
-        if (!bridgeOriginOk(e && e.origin)) { hwarn("bridge: ignored image from untrusted origin:", (e && e.origin) || "(none)"); return; }
-        _lastBridgeMsg = sig;
-        setTimeout(function () { _lastBridgeMsg = ""; }, 2000);
-        if (d.dataUrl && /^data:image\//i.test(d.dataUrl)) {
-          const m = d.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-          if (m) importImageToPS(m[2], m[1], "WebApp");
-        } else if (d.b64) {
-          importImageToPS(d.b64, d.mime || "image/png", "WebApp");
-        }
-      }
-    } catch (be) { hwarn("bridge:", be); }
-  };
-  try { if (typeof window !== "undefined" && window.addEventListener) window.addEventListener("message", bridgeHandler); } catch (we) { }
-  if (w && w.addEventListener) { try { w.addEventListener("message", bridgeHandler); } catch (ee) { } }
-  const iu = $("btnWebImportUrl");
-  if (iu) iu.addEventListener("click", function () { importFromUrlBar(); });
-  const il = $("btnWebImportLink");
-  if (il) il.addEventListener("click", function () { setBusyBtn(il); importFromCopiedLink(); });
-  const iff = $("btnWebImportFile");
-  if (iff) iff.addEventListener("click", function () { setBusyBtn(iff); importFromFile(); });
 }
 
 /* ---------------- Selection mask capture (v2.4) ---------------- */
@@ -10956,7 +10760,7 @@ function resetRetouch() {
 }
 
 /* ---------------- Tab pages (web-view style) ---------------- */
-/* v6.40.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
+/* v6.41.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
    The app's bottom bar carries five WORK groups — Home, Workflows, Edit,
    Media Lab, Library — each group's pages appear as second-level pills, and
    Setup is not on the bar at all: it lives behind the header gear. The panel
@@ -11050,16 +10854,6 @@ function switchPage(key) {
     } catch (e) { }
   }
   if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
-  if (key === "setup") {
-    try {
-      const wv = $("webView");
-      if (wv && !state.webNudged) {
-        state.webNudged = true;
-        wv.style.width = "100%";
-        if (!wv.style.height) wv.style.height = "500px"; /* no auto-load: user must tap Go */
-      }
-    } catch (e) { }
-  }
 }
 
 function bindTabs() {
@@ -11299,7 +11093,6 @@ function init() {
     bindCard("cLibH", "cLibB", "reflib", false);
     bindCard("cUserLibH", "cUserLibB", "userlib", true); /* v6.27.0 — the Library tab IS the library: open by default */
     bindCard("cLightH", "cLightB", "lightcard", false);
-    bindCard("cWebH", "cWebB", "webcard", false);
     /* the lighting stage measures its own width — re-render when its card opens */
     const lh = $("cLightH");
     if (lh) lh.addEventListener("click", function () { try { renderLightStage(); } catch (e) { } });
@@ -11377,7 +11170,6 @@ function init() {
   safe("diag", bindDiag);
   safe("reflib", bindRefLib);
   safe("web", function () {
-    bindWeb();
     bindGroup("grpSkinH", "grpSkinB", false);
     for (const k in PRESETS) {
       (function (key) {
