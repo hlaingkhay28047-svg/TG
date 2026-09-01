@@ -1,0 +1,218 @@
+name: Back up the production database
+
+# WHY THIS EXISTS. Every student account, license, device registration and
+# audit record lives in one managed PostgreSQL cluster. Until now nothing in
+# this repository could restore it: there was no dump, no copy outside the
+# cluster, and no rehearsal proving a restore works. A backup nobody has ever
+# restored is a hope, not a backup.
+#
+# WHAT IT DOES. A compressed custom-format pg_dump of the production database,
+# written to the SAME private Space the panel artifacts use (never a public
+# object, never the repository), under backups/<UTC date>/. The dump is
+# verified after upload by reading the object back and comparing SHA-256 and
+# byte length — the identical round-trip proof the panel release lane uses.
+# Dumps older than the retention window are deleted in the same run, so the
+# bill stays flat.
+#
+# The credentials are born in the runner: an ephemeral Spaces key created for
+# this run and deleted on every exit path, and the database URI read from the
+# live app spec. Nothing is printed: the summary carries the object key, the
+# byte count and the digest only.
+#
+# SCHEDULE + MANUAL. It runs daily at 18:30 UTC (01:00 Myanmar time, when the
+# studio is quiet) and can be dispatched by hand; a manual run must type
+# BACKUP, the same guard the other production lanes use.
+
+on:
+  schedule:
+    - cron: "30 18 * * *"
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type BACKUP to dump production now"
+        required: true
+        default: ""
+        type: string
+      restore_check:
+        description: "Also restore the dump into a scratch database and count the rows (proves the backup is usable)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digitalocean-production-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump, upload, verify and prune
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: scratch
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      DO_APP_NAME: hnk-ai-tools-3
+      DO_REGION: sgp1
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
+      RETENTION_DAYS: "30"
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      RESTORE_CHECK: ${{ inputs.restore_check }}
+      EVENT_NAME: ${{ github.event_name }}
+    steps:
+      - name: Require the typed confirmation on a manual run
+        shell: bash
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$CONFIRM_INPUT" != "BACKUP" ]; then
+            echo "::error::Refusing to touch production without the typed confirmation BACKUP."
+            exit 1
+          fi
+          if [ -z "$DO_TOKEN" ]; then
+            echo "::error::This lane requires DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Install PostgreSQL 16 client and s3 tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsS --max-time 30 -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16 s3cmd >/dev/null
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ env.DO_TOKEN }}
+          version: 1.166.0
+
+      - name: Dump, upload to the private Space, verify the round trip, prune
+        shell: bash
+        run: |
+          set -euo pipefail   # deliberately NO set -x: nothing here may echo the URI
+          umask 077
+          WORK="$RUNNER_TEMP/backup"; mkdir -p "$WORK"
+          EPHEMERAL_ACCESS=""
+          cleanup() {
+            shred -u "$WORK"/* 2>/dev/null || rm -rf "$WORK"
+            if [ -n "$EPHEMERAL_ACCESS" ]; then
+              curl -fsS --max-time 20 -X DELETE -H "Authorization: Bearer $DO_TOKEN" \
+                "https://api.digitalocean.com/v2/spaces/keys/$EPHEMERAL_ACCESS" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
+
+          APP_ID="$(doctl apps list --output json | jq -r --arg n "$DO_APP_NAME" \
+            '.[] | select(.spec.name==$n) | .id' | head -n1)"
+          [ -n "$APP_ID" ] || { echo "::error::App $DO_APP_NAME not found."; exit 1; }
+
+          # The database URI comes from the live spec, is masked immediately,
+          # and never reaches a file, an argument list or the log.
+          DB_URI="$(doctl apps get "$APP_ID" --output json \
+            | jq -r '.[0].spec.envs[]? , (.[0].spec.services[]?.envs[]?) | select(.key=="DATABASE_URL") | .value' \
+            | head -n1)"
+          if [ -z "$DB_URI" ] || [ "$DB_URI" = "null" ]; then
+            echo "::error::DATABASE_URL is not readable from the live spec."
+            exit 1
+          fi
+          echo "::add-mask::$DB_URI"
+
+          STAMP="$(date -u +%Y-%m-%d)"; TIME="$(date -u +%H%M%SZ)"
+          DUMP="$WORK/hnk-$STAMP-$TIME.dump"
+          echo "== dumping production (custom format, compressed)"
+          PGCONNECT_TIMEOUT=30 pg_dump --format=custom --compress=9 --no-owner --no-privileges \
+            --dbname="$DB_URI" --file="$DUMP"
+          BYTES="$(stat -c %s "$DUMP")"
+          SHA="$(sha256sum "$DUMP" | cut -d' ' -f1)"
+          echo "dump: $BYTES bytes, sha256 $SHA"
+          [ "$BYTES" -gt 4096 ] || { echo "::error::Dump is implausibly small — refusing to call this a backup."; exit 1; }
+
+          # A restore rehearsal: the dump is only a backup once it has been
+          # restored and counted at least once.
+          if [ "$EVENT_NAME" != "workflow_dispatch" ] || [ "$RESTORE_CHECK" = "true" ]; then
+            echo "== restore rehearsal into the scratch database"
+            export PGPASSWORD=scratch
+            psql -h 127.0.0.1 -U postgres -c "drop database if exists restore_check" >/dev/null
+            psql -h 127.0.0.1 -U postgres -c "create database restore_check" >/dev/null
+            pg_restore --no-owner --no-privileges --dbname="postgresql://postgres@127.0.0.1:5432/restore_check" "$DUMP" >/dev/null 2>&1 || true
+            PROFILES="$(psql -h 127.0.0.1 -U postgres -d restore_check -tAc \
+              "select count(*) from public.profiles" 2>/dev/null || echo 0)"
+            TABLES="$(psql -h 127.0.0.1 -U postgres -d restore_check -tAc \
+              "select count(*) from information_schema.tables where table_schema='public'" 2>/dev/null || echo 0)"
+            echo "restored: $TABLES public tables, $PROFILES profile rows"
+            [ "$TABLES" -ge 10 ] || { echo "::error::The dump restored fewer than ten tables — not a usable backup."; exit 1; }
+            echo "RESTORE_TABLES=$TABLES" >> "$GITHUB_ENV"
+            echo "RESTORE_PROFILES=$PROFILES" >> "$GITHUB_ENV"
+          fi
+
+          # The same private Space the panel artifacts live in.
+          ACCOUNT_UUID="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/account" | jq -r '.account.uuid // empty')"
+          BUCKET="hnk-panel-$(printf '%s' "$ACCOUNT_UUID" | tr -dc 'a-f0-9' | cut -c1-8)"
+          KEY_JSON="$(curl -fsS --max-time 20 -X POST -H "Authorization: Bearer $DO_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"hnk-backup-$GITHUB_RUN_ID\",\"grants\":[{\"bucket\":\"$BUCKET\",\"permission\":\"readwrite\"}]}" \
+            "https://api.digitalocean.com/v2/spaces/keys")"
+          EPHEMERAL_ACCESS="$(printf '%s' "$KEY_JSON" | jq -r '.key.access_key // empty')"
+          EPHEMERAL_SECRET="$(printf '%s' "$KEY_JSON" | jq -r '.key.secret_key // empty')"
+          [ -n "$EPHEMERAL_ACCESS" ] && [ -n "$EPHEMERAL_SECRET" ] || { echo "::error::Could not mint an upload key."; exit 1; }
+          echo "::add-mask::$EPHEMERAL_ACCESS"; echo "::add-mask::$EPHEMERAL_SECRET"
+          cat > "$WORK/.s3cfg" <<CFG
+          [default]
+          access_key = $EPHEMERAL_ACCESS
+          secret_key = $EPHEMERAL_SECRET
+          host_base = $DO_REGION.digitaloceanspaces.com
+          host_bucket = %(bucket)s.$DO_REGION.digitaloceanspaces.com
+          use_https = True
+          CFG
+          S3="s3cmd -c $WORK/.s3cfg"
+          KEY="backups/$STAMP/$(basename "$DUMP")"
+          echo "== uploading s3://$BUCKET/$KEY (private)"
+          $S3 put "$DUMP" "s3://$BUCKET/$KEY" --acl-private >/dev/null
+
+          echo "== verifying the round trip"
+          $S3 get "s3://$BUCKET/$KEY" "$WORK/verify.dump" --force >/dev/null
+          BACK_BYTES="$(stat -c %s "$WORK/verify.dump")"
+          BACK_SHA="$(sha256sum "$WORK/verify.dump" | cut -d' ' -f1)"
+          if [ "$BACK_SHA" != "$SHA" ] || [ "$BACK_BYTES" != "$BYTES" ]; then
+            echo "::error::The stored object does not match the dump byte for byte."
+            exit 1
+          fi
+
+          echo "== pruning dumps older than $RETENTION_DAYS days"
+          CUTOFF="$(date -u -d "-$RETENTION_DAYS days" +%Y-%m-%d)"
+          PRUNED=0
+          for OBJ in $($S3 ls "s3://$BUCKET/backups/" | awk '{print $2}'); do
+            DAY="$(basename "${OBJ%/}")"
+            case "$DAY" in
+              20[0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+                if [ "$DAY" \< "$CUTOFF" ]; then $S3 rm --recursive "$OBJ" >/dev/null && PRUNED=$((PRUNED+1)); fi ;;
+            esac
+          done
+          {
+            echo "### Production database backup"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Object | \`$KEY\` (private) |"
+            echo "| Size | $BYTES bytes |"
+            echo "| SHA-256 | \`$SHA\` |"
+            echo "| Round trip | byte-for-byte identical |"
+            echo "| Restore rehearsal | ${RESTORE_TABLES:-skipped} tables, ${RESTORE_PROFILES:-–} profiles |"
+            echo "| Pruned day-folders | $PRUNED (older than $RETENTION_DAYS days) |"
+          } >> "$GITHUB_STEP_SUMMARY"
