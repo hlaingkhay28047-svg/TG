@@ -40,6 +40,7 @@ const DOWNLOAD_MAX_DURATION_MS=boundedTimeout(
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "";
 
 function cors(req, res) {
+  securityHeaders(res);
   const origin = req.headers.origin || "";
   res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN || origin || "*");
   res.setHeader("Vary", "Origin");
@@ -48,6 +49,26 @@ function cors(req, res) {
     "authorization,apikey,content-type,accept,prefer,x-upsert,x-client-info,x-device-name,x-device-type");
   res.setHeader("Access-Control-Expose-Headers", "content-range,content-type");
   res.setHeader("Access-Control-Max-Age", "86400");
+}
+
+/* 2026-09-01 — the headers a browser can only be told once, on the response
+   itself. A <meta> CSP cannot carry frame-ancestors and nothing can carry
+   HSTS, so until now the API answered with neither: no transport pinning, no
+   clickjacking rule, a referrer on every outbound click, and every device
+   permission open by default. These are set on EVERY response — errors,
+   downloads and preflights included — because the one response that skips
+   them is the one an attacker uses.
+
+   Deliberately absent: Cross-Origin-Resource-Policy. The Photoshop panel is
+   a legitimate cross-origin caller and CORS already governs it; a blanket
+   same-origin resource policy would be a footgun aimed at the panel. */
+function securityHeaders(res) {
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()");
 }
 
 function send(res, status, body, contentType) {
