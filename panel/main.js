@@ -114,7 +114,7 @@ const REFRESHERS = [];
 const I18N = {
   /* ---- English (en) — 587 keys, complete ---- */
   en: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "READINESS",
     sec_acct: "ACCOUNT",
@@ -736,7 +736,7 @@ const I18N = {
   },
   /* ---- Burmese (my) — 587 keys, complete ---- */
   my: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "အသင့်ဖြစ်မှု အခြေအနေ",
     sec_acct: "အကောင့်",
@@ -1358,7 +1358,7 @@ const I18N = {
   },
   /* ---- Shan (Tai Long) (shn) — 587 keys, complete ---- */
   shn: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း",
     sec_acct: "ဢၶွင်ႉ",
@@ -1978,7 +1978,7 @@ const I18N = {
   },
   /* ---- Jinghpaw (Kachin) (kac) — 587 keys, complete ---- */
   kac: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Jin ai lam",
     sec_acct: "ACCOUNT",
@@ -2598,7 +2598,7 @@ const I18N = {
   },
   /* ---- Thai (th) — 587 keys, complete ---- */
   th: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "สถานะความพร้อม",
     sec_acct: "บัญชี",
@@ -3218,7 +3218,7 @@ const I18N = {
   },
   /* ---- Chinese (Simplified) (zh) — 587 keys, complete ---- */
   zh: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "就绪状态",
     sec_acct: "账户",
@@ -3838,7 +3838,7 @@ const I18N = {
   },
   /* ---- Vietnamese (vi) — 587 keys, complete ---- */
   vi: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Trạng thái sẵn sàng",
     sec_acct: "TÀI KHOẢN",
@@ -4458,7 +4458,7 @@ const I18N = {
   },
   /* ---- Indonesian (id) — 587 keys, complete ---- */
   id: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesiapan",
     sec_acct: "AKUN",
@@ -5078,7 +5078,7 @@ const I18N = {
   },
   /* ---- Malay (ms) — 587 keys, complete ---- */
   ms: {
-    /* v6.42.0 — Setup follows the web app's own cards; these are the
+    /* v6.43.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesediaan",
     sec_acct: "AKAUN",
@@ -5705,7 +5705,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.42.0";
+const PANEL_VERSION = "6.43.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6603,7 +6603,7 @@ function collectDiag() {
   return rows;
 }
 const DIAG_ICON = { ok: "✓", warn: "!", err: "×", pend: "•" };
-/* v6.42.0 — one row renderer for every Setup card, because the web app's
+/* v6.43.0 — one row renderer for every Setup card, because the web app's
    Setup is a column of status rows and nothing else. It used to serve only
    the diagnostics card; READINESS, ACCOUNT, COST & BALANCE, DATA & BACKUP
    and APP & UPDATES are the same shape, so they share it. A row may name its
@@ -9614,7 +9614,7 @@ function imgMagicOk(b64) {
 /* v4.5: references are READ-ONLY inputs - never regenerated or overwritten.
    People-exclusion is handled purely by the reference guards in the prompt. */
 
-/* v6.42.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
+/* v6.43.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
    app does not have). It was a whole second browser living inside a
    Photoshop panel — an allow-list, an address bar, size presets, a
    postMessage image bridge and three global import buttons — none of which
@@ -11030,7 +11030,7 @@ function resetRetouch() {
 }
 
 /* ---------------- Tab pages (web-view style) ---------------- */
-/* v6.42.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
+/* v6.43.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
    The app's bottom bar carries five WORK groups — Home, Workflows, Edit,
    Media Lab, Library — each group's pages appear as second-level pills, and
    Setup is not on the bar at all: it lives behind the header gear. The panel
@@ -11055,6 +11055,11 @@ const PAGES = [
   { key: "aitools", page: "pageAiTools", group: "home" },
   { key: "wf",      page: "pageAiTools", group: "wf" },
   { key: "prompt",  page: "pagePrompt",  group: "edit",  sub: "Freeform" },
+  /* the app's Edit group is Freeform · Retouch A · Retouch B · Retouch · Path.
+     Retouch A and B already exist here as presets on the Retouch page, so the
+     pills open that page with the preset chosen — same names, same order. */
+  { key: "meitu",   page: "pageRetouch", group: "edit",  sub: "Retouch A", preset: "pMeitu" },
+  { key: "evoto",   page: "pageRetouch", group: "edit",  sub: "Retouch B", preset: "pEvoto" },
   { key: "retouch", page: "pageRetouch", group: "edit",  sub: "Retouch" },
   { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img" },
   { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference" },
@@ -11108,6 +11113,10 @@ function switchPage(key) {
     if (te) te.className = "tabb" + (active && GROUPS[i].key === active.group ? " on" : "");
   }
   renderSubtabs(key);
+  if (active && active.preset) {
+    const pb = $(active.preset);
+    if (pb && pb.click) { try { pb.click(); } catch (e) { } }
+  }
   const pg = $("pages");
   if (pg) pg.scrollTop = 0;
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }

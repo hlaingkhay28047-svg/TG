@@ -86,6 +86,31 @@ function render(root, deps) {
     list.appendChild(card);
   });
   root.appendChild(list);
+
+  /* v6.43.0 — TUTORIALS, where the web app keeps them.
+     The app's Home carries a Tutorials page with three lessons; the panel had
+     none, so a student who learned on the web app opened the panel and found
+     the teaching gone. Same three lessons, the app's own wording (the app
+     prints these in English in every locale, so they are copied as-is). */
+  root.appendChild(dom.el(doc, "div", { class: "hnk-wf-cat", text: "HNK LEARNING" }));
+  var lessons = [
+    ["01", "Dashboard & AI Tools",
+      "Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it."],
+    ["02", "Phone + Computer",
+      "Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel."],
+    ["03", "Install the Panel",
+      "Request a temporary download, install it in Photoshop, then just sign in — the panel registers this computer."]
+  ];
+  var learn = dom.el(doc, "div", { class: "hnk-h-actions", id: "hnkTutorials" });
+  lessons.forEach(function (l) {
+    learn.appendChild(dom.el(doc, "div", { class: "hnk-action" }, [
+      dom.el(doc, "div", { class: "hnk-action-txt" }, [
+        dom.el(doc, "div", { class: "hnk-action-label", text: l[0] + " \u00b7 " + l[1] }),
+        dom.el(doc, "div", { class: "hnk-action-sub", text: l[2] })
+      ])
+    ]));
+  });
+  root.appendChild(learn);
   return root;
 }
 
