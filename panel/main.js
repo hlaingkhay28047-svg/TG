@@ -114,7 +114,7 @@ const REFRESHERS = [];
 const I18N = {
   /* ---- English (en) — 587 keys, complete ---- */
   en: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "READINESS",
     sec_acct: "ACCOUNT",
@@ -736,7 +736,7 @@ const I18N = {
   },
   /* ---- Burmese (my) — 587 keys, complete ---- */
   my: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "အသင့်ဖြစ်မှု အခြေအနေ",
     sec_acct: "အကောင့်",
@@ -1358,7 +1358,7 @@ const I18N = {
   },
   /* ---- Shan (Tai Long) (shn) — 587 keys, complete ---- */
   shn: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း",
     sec_acct: "ဢၶွင်ႉ",
@@ -1978,7 +1978,7 @@ const I18N = {
   },
   /* ---- Jinghpaw (Kachin) (kac) — 587 keys, complete ---- */
   kac: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Jin ai lam",
     sec_acct: "ACCOUNT",
@@ -2598,7 +2598,7 @@ const I18N = {
   },
   /* ---- Thai (th) — 587 keys, complete ---- */
   th: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "สถานะความพร้อม",
     sec_acct: "บัญชี",
@@ -3218,7 +3218,7 @@ const I18N = {
   },
   /* ---- Chinese (Simplified) (zh) — 587 keys, complete ---- */
   zh: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "就绪状态",
     sec_acct: "账户",
@@ -3838,7 +3838,7 @@ const I18N = {
   },
   /* ---- Vietnamese (vi) — 587 keys, complete ---- */
   vi: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Trạng thái sẵn sàng",
     sec_acct: "TÀI KHOẢN",
@@ -4458,7 +4458,7 @@ const I18N = {
   },
   /* ---- Indonesian (id) — 587 keys, complete ---- */
   id: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesiapan",
     sec_acct: "AKUN",
@@ -5078,7 +5078,7 @@ const I18N = {
   },
   /* ---- Malay (ms) — 587 keys, complete ---- */
   ms: {
-    /* v6.44.0 — Setup follows the web app's own cards; these are the
+    /* v6.45.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
     sec_ready: "Status kesediaan",
     sec_acct: "AKAUN",
@@ -5705,7 +5705,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.44.0";
+const PANEL_VERSION = "6.45.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6603,7 +6603,7 @@ function collectDiag() {
   return rows;
 }
 const DIAG_ICON = { ok: "✓", warn: "!", err: "×", pend: "•" };
-/* v6.44.0 — one row renderer for every Setup card, because the web app's
+/* v6.45.0 — one row renderer for every Setup card, because the web app's
    Setup is a column of status rows and nothing else. It used to serve only
    the diagnostics card; READINESS, ACCOUNT, COST & BALANCE, DATA & BACKUP
    and APP & UPDATES are the same shape, so they share it. A row may name its
@@ -6744,7 +6744,7 @@ function renderAbout() {
 }
 
 /* ============================================================
-   PATH — the web app's batch, in Photoshop (v6.44.0)
+   PATH — the web app's batch, in Photoshop (v6.45.0)
 
    The app's Path takes fifty to a hundred photos, one look, and one run.
    The panel could only ever do one photo, which is the opposite of what a
@@ -6859,6 +6859,189 @@ async function pathRun() {
   renderPath();
   setStatus(PATH.fail ? (PATH.done + " done, " + PATH.fail + " failed") : (PATH.done + " done"), PATH.fail ? "err" : "ok");
 }
+/* ============================================================
+   MEDIA LAB — Video and VidUp (v6.45.0)
+
+   The app's Media Lab holds three pages; the panel held one. These are the
+   other two, driven by the app's own doc-verified catalog (183 endpoints,
+   lifted verbatim into panel/js/hnk_video_models.js) through the panel's own
+   upload / submit / poll / download services. A finished video is written as
+   a file into a folder the studio picks — a panel cannot hand a browser a
+   download, and a video is not a layer.
+   ============================================================ */
+const VID = { photo: null, out: null, busy: false, rows: [] };
+const VU = { video: null, out: null, busy: false, rows: [] };
+
+function vidDef() {
+  const sel = $("vidModel");
+  const V = (globalThis.HNK && globalThis.HNK.runninghubVideo) || null;
+  return (V && sel) ? V.get(sel.value) : null;
+}
+function fillSel(el, values, current) {
+  if (!el) return;
+  while (el.firstChild) el.removeChild(el.firstChild);
+  (values || []).forEach(function (v) {
+    const o = document.createElement("option");
+    o.value = String(v); o.textContent = String(v);
+    el.appendChild(o);
+  });
+  if (current) { try { el.value = current; } catch (e) { } }
+  el.style.display = (values && values.length) ? "" : "none";
+}
+function vidPaintOptions() {
+  const d = vidDef();
+  fillSel($("vidRes"), (d && d.resolutions) || []);
+  fillSel($("vidDur"), (d && d.durations) || []);
+  fillSel($("vidAspect"), (d && d.aspect) || []);
+  renderVid();
+}
+function vidRows() {
+  const d = vidDef();
+  const rows = [
+    { label: "Model", level: d ? "ok" : "pend", detail: d ? (d.label || d.id) : "\u2014" },
+    { label: "Photo", level: VID.photo ? "ok" : (d && d.minImages === 0 ? "ok" : "pend"),
+      detail: VID.photo ? VID.photo.name : (d && d.minImages === 0 ? "not needed" : "\u2014") },
+    { label: "Save folder", level: VID.out ? "ok" : "pend", detail: VID.out ? (VID.out.name || "chosen") : "\u2014" }
+  ];
+  return rows.concat(VID.rows.slice(0, 6));
+}
+function renderVid() { renderRows("vidList", vidRows()); }
+function vuRows() {
+  return [
+    { label: "Video", level: VU.video ? "ok" : "pend", detail: VU.video ? VU.video.name : "\u2014" },
+    { label: "Save folder", level: VU.out ? "ok" : "pend", detail: VU.out ? (VU.out.name || "chosen") : "\u2014" }
+  ].concat(VU.rows.slice(0, 6));
+}
+function renderVu() { renderRows("vuList", vuRows()); }
+
+async function pickFile(types) {
+  const uxp = require("uxp");
+  return uxp.storage.localFileSystem.getFileForOpening({ types: types });
+}
+async function pickFolder() {
+  const uxp = require("uxp");
+  return uxp.storage.localFileSystem.getFolder();
+}
+async function fileToDataUrl(f) {
+  const uxp = require("uxp");
+  const buf = await f.read({ format: uxp.storage.formats.binary });
+  return "data:" + extToMime(f.name) + ";base64," + bufToB64(buf);
+}
+async function saveResultFile(folder, name, ref) {
+  const uxp = require("uxp");
+  const b64 = String(ref || "").indexOf("data:") === 0 ? String(ref).split(",")[1] : String(ref || "");
+  if (!b64) throw new Error("empty result");
+  const f = await folder.createFile(name, { overwrite: true });
+  await f.write(b64ToBuf(b64), { format: uxp.storage.formats.binary });
+  return name;
+}
+function videoEnv() {
+  return { transport: (globalThis.HNK && globalThis.HNK.runninghubHttp && globalThis.HNK.runninghubHttp.create)
+    ? globalThis.HNK.runninghubHttp.create() : null, apiKey: state.rhKey };
+}
+async function vidRun() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const d = vidDef();
+  if (VID.busy || !V || !d) return;
+  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
+  const prompt = ($("vidPromptP") && $("vidPromptP").value || "").trim();
+  if (!prompt) { setStatus("Write a prompt first", "err"); return; }
+  if (!VID.out) { setStatus("Choose a save folder first", "err"); return; }
+  if ((d.minImages || 0) > 0 && !VID.photo) { setStatus("This model needs a photo", "err"); return; }
+  VID.busy = true; VID.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVid();
+  try {
+    const refs = VID.photo ? [await fileToDataUrl(VID.photo)] : [];
+    const res = await V.generate(Object.assign(videoEnv(), { def: d }), {
+      def: d, prompt: prompt, imageRefs: refs,
+      resolution: ($("vidRes") && $("vidRes").value) || "",
+      duration: ($("vidDur") && $("vidDur").value) || "",
+      aspectRatio: ($("vidAspect") && $("vidAspect").value) || ""
+    }, function (stage, info) {
+      VID.rows = [{ label: "Working", level: "pend",
+        detail: stage + (info && info.elapsedMs ? " " + Math.round(info.elapsedMs / 1000) + "s" : "") }];
+      renderVid();
+    });
+    if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
+    const name = "hnk-video-" + Date.now() + ".mp4";
+    await saveResultFile(VID.out, name, res.results[0].ref);
+    VID.rows = [{ label: name, level: "ok", detail: "saved" }];
+    setStatus(t("st_done") || "Done", "ok");
+  } catch (e) {
+    VID.rows = [{ label: "Failed", level: "err", detail: (e && e.message) ? String(e.message).slice(0, 48) : "failed" }];
+    setStatus(friendlyErr(e), "err");
+  }
+  VID.busy = false; renderVid();
+}
+async function vuRun() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  if (VU.busy || !V) return;
+  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
+  if (!VU.video) { setStatus("Pick a video first", "err"); return; }
+  if (!VU.out) { setStatus("Choose a save folder first", "err"); return; }
+  VU.busy = true; VU.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVu();
+  try {
+    const ref = await fileToDataUrl(VU.video);
+    const res = await V.upscale(videoEnv(), ref, ($("vuRes") && $("vuRes").value) || "1080p",
+      function (stage, info) {
+        VU.rows = [{ label: "Working", level: "pend",
+          detail: stage + (info && info.elapsedMs ? " " + Math.round(info.elapsedMs / 1000) + "s" : "") }];
+        renderVu();
+      });
+    if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
+    const name = "hnk-upscaled-" + Date.now() + ".mp4";
+    await saveResultFile(VU.out, name, res.results[0].ref);
+    VU.rows = [{ label: name, level: "ok", detail: "saved" }];
+    setStatus(t("st_done") || "Done", "ok");
+  } catch (e) {
+    VU.rows = [{ label: "Failed", level: "err", detail: (e && e.message) ? String(e.message).slice(0, 48) : "failed" }];
+    setStatus(friendlyErr(e), "err");
+  }
+  VU.busy = false; renderVu();
+}
+function bindVideo() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const sel = $("vidModel");
+  if (sel && V) {
+    const list = V.models();
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    for (let i = 0; i < list.length; i++) {
+      const o = document.createElement("option");
+      o.value = list[i].id; o.textContent = list[i].label || list[i].id;
+      sel.appendChild(o);
+    }
+    sel.addEventListener("change", vidPaintOptions);
+  }
+  const pick = $("btnVidPick");
+  if (pick) pick.addEventListener("click", async function () {
+    try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) VID.photo = f; renderVid(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const save = $("btnVidSave");
+  if (save) save.addEventListener("click", async function () {
+    try { const f = await pickFolder(); if (f) VID.out = f; renderVid(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const run = $("btnVidRun"); if (run) run.addEventListener("click", vidRun);
+  const intro = $("vidIntro");
+  if (intro) intro.textContent = "A photo and a prompt become a video \u2014 saved as a file.";
+
+  fillSel($("vuRes"), (V && V.upscaleResolutions) || ["1080p"], "1080p");
+  const vp = $("btnVuPickP");
+  if (vp) vp.addEventListener("click", async function () {
+    try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VU.video = f; renderVu(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const vs = $("btnVuSave");
+  if (vs) vs.addEventListener("click", async function () {
+    try { const f = await pickFolder(); if (f) VU.out = f; renderVu(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const vr = $("btnVuRun"); if (vr) vr.addEventListener("click", vuRun);
+  const vi = $("vuIntro");
+  if (vi) vi.textContent = "Make an existing video sharper \u2014 saved as a new file.";
+  vidPaintOptions(); renderVu();
+}
+
 function bindPath() {
   const add = $("btnPathAdd"); if (add) add.addEventListener("click", pathAdd);
   const clr = $("btnPathClear");
@@ -6885,7 +7068,7 @@ function bindDiag() {
   const bi = $("btnBackupIn"); if (bi) bi.addEventListener("click", importBackup);
   const up = $("btnCheckUpd");
   if (up) up.addEventListener("click", function () { _updChecked = false; checkPanelUpdate(document); renderAbout(); });
-  bindPath();
+  bindPath(); bindVideo();
   renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout();
   REFRESHERS.push(function () {
     try { renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout(); } catch (e) { }
@@ -9745,7 +9928,7 @@ function imgMagicOk(b64) {
 /* v4.5: references are READ-ONLY inputs - never regenerated or overwritten.
    People-exclusion is handled purely by the reference guards in the prompt. */
 
-/* v6.44.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
+/* v6.45.0 — THE WEB AI MINI BROWSER IS GONE (owner: take out what the web
    app does not have). It was a whole second browser living inside a
    Photoshop panel — an allow-list, an address bar, size presets, a
    postMessage image bridge and three global import buttons — none of which
@@ -11161,7 +11344,7 @@ function resetRetouch() {
 }
 
 /* ---------------- Tab pages (web-view style) ---------------- */
-/* v6.44.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
+/* v6.45.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
    The app's bottom bar carries five WORK groups — Home, Workflows, Edit,
    Media Lab, Library — each group's pages appear as second-level pills, and
    Setup is not on the bar at all: it lives behind the header gear. The panel
@@ -11194,6 +11377,8 @@ const PAGES = [
   { key: "retouch", page: "pageRetouch", group: "edit",  sub: "Retouch" },
   { key: "path",    page: "pagePath",    group: "edit",  sub: "Path" },
   { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img" },
+  { key: "video",   page: "pageVideo",   group: "media", sub: "Video" },
+  { key: "vidup",   page: "pageVideoUp", group: "media", sub: "VidUp" },
   { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference" },
   /* the app's Library holds Reference and Gallery; the panel's own generation
      history is that gallery of results. Its select / zip / delete actions
