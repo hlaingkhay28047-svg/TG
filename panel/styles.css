@@ -2201,3 +2201,9 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   border-radius: 6px; padding: 1px 7px; font-size: 10px; font-weight: 800;
   line-height: 17px; color: var(--accent-h);
 }
+
+/* v6.51.0 — Text to Image, the app's own measurements: its #t2iPrompt is a
+   110px box and the character count is an 11px line pinned right. */
+#pageCreate .pbox.t2i-box { height: 110px; min-height: 110px; }
+#pageCreate .mut.t2i-count { margin-top: 4px; font-size: 11px; text-align: right; }
+#pageCreate .ic-h2 { width: 14.4px; height: 14.4px; margin-right: 7px; vertical-align: -2px; }

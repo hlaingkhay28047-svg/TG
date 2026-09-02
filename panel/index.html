@@ -511,7 +511,7 @@
     </div>
 
     <!-- ========== PAGE: CREATE (standalone) ========== -->
-    <div class="page" id="pageCreate">
+    <div class="page apg" id="pageCreate">
       <div class="page-hero">
         <img src="icons/banners/banner-coral-fairy.jpg" alt="" />
         <div class="ph-kick">Text to Image</div>
@@ -524,14 +524,14 @@
            has no such shelf on this page, and the owner asked for nothing
            extra. -->
       <div class="card">
-        <h2>TEXT TO IMAGE</h2>
+        <h2><img class="ic-h2" src="icons/ui/i-doc-gold.svg" alt="" />TEXT TO IMAGE</h2>
         <div class="mut" id="t2iIntro"></div>
       </div>
 
       <div class="card">
         <h2>PROMPT</h2>
-        <textarea id="cPromptBox" class="pbox" rows="6" maxlength="20000" data-i18n-ph="create_ph"></textarea>
-        <div class="mut" id="cPromptCount"></div>
+        <textarea id="cPromptBox" class="pbox t2i-box" rows="6" maxlength="20000" data-i18n-ph="create_ph"></textarea>
+        <div class="mut t2i-count" id="cPromptCount"></div>
       </div>
 
       <!-- v6.50.0 — the four reference slots left this page. The app's Text
@@ -560,14 +560,13 @@
           <div role="button" tabindex="0" class="segb" id="cRatio6"></div>
           <div role="button" tabindex="0" class="segb" id="cRatio7"></div>
         </div>
-        <div class="mut cengine" id="cEngineTag"></div>
         <div role="button" tabindex="0" id="btnCreateGen" class="gen">GENERATE IMAGE</div>
       </div>
 
-      <!-- Results -->
-      <div class="card">
-        <div class="chead" id="cResH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="cr_results"></span></div>
-        <div class="cbody" id="cResB">
+      <!-- Results. v6.51.0 — the app's .result-box: no header, no accordion,
+           and nothing on the page at all until a result exists. -->
+      <div class="card result-box" id="cResultBox">
+        <div id="cResB">
           <div class="mut" id="cGalInfo"></div>
           <div class="gallery" id="cGallery"></div>
           <div class="cmp" id="cCmpBox" style="margin-top:10px;">

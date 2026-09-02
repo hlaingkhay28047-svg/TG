@@ -14201,7 +14201,9 @@ async function loadCreateUrlIntoSlot(idx, rawUrl) {
   });
 }
 
-/* Which engine a Create run will use, shown live above Generate. */
+/* v6.51.0 — the app's Text to Image names no engine above its GENERATE, so
+   neither does the panel; the line is gone from the markup and this keeps
+   its remaining callers null-safe. */
 function updateCreateEngineTag() {
   const el = $("cEngineTag");
   if (el) el.textContent = t("cr_engine") + " \u00b7 " + provTag();
@@ -14227,7 +14229,14 @@ function createAspect() {
   return (a && b) ? (b / a) : 1;
 }
 
+/* the app's result card exists only once there is a result to show */
+function paintCreateResultBox() {
+  const box = $("cResultBox");
+  if (box) box.className = "card result-box" + (state.cResultB64 ? " on" : "");
+}
+
 function refreshCreateCompare() {
+  paintCreateResultBox();
   const iA = $("cImgAfter"), iB = $("cImgBefore"), box = $("cCmpBox");
   if (!iA || !box) return;
   if (state.cResultB64) iA.src = "data:" + state.cMime + ";base64," + state.cResultB64;
@@ -14358,7 +14367,10 @@ const PROMPT_LIB = [
 /* v6.50.0 — the app's own eight, in the app's order (Auto first, then the
    seven ratios its .rchip strip offers). The panel offered five and no Auto,
    so a studio that wanted 2:3 or "let the model decide" could not ask. */
-const C_RATIOS = ["auto", "1:1", "3:4", "4:3", "4:5", "9:16", "16:9", "2:3"];
+/* v6.51.0 — the app's Text to Image ratio set, exactly: Auto plus the seven
+   its #selT2IRatio offers. The panel carried 4:5 (which that page does not
+   offer) and was missing 3:2. */
+const C_RATIOS = ["auto", "1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2"];
 
 /* v6.26.0 — the Create tab's AI Improve/Describe (Gemini text) left with
    their provider. */
@@ -15052,7 +15064,6 @@ function init() {
     bindCard("cCamH", "cCamB", "campro", false);
     bindCard("cBatchH", "cBatchB", "batch", false);
     bindCard("cCrefH", "cCrefB", "crefs", false);
-    bindCard("cResH", "cResB", "cresults", false);
     bindCard("cLibH", "cLibB", "reflib", false);
     bindCard("cLightH", "cLightB", "lightcard", false);
     /* the lighting stage measures its own width — re-render when its card opens */
