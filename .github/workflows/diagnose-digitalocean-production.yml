@@ -169,7 +169,12 @@ jobs:
             # previous failure, which is the reading we already have.
             DISCOVER_DEADLINE=$(( $(date +%s) + 150 ))
             while [ "$(date +%s)" -lt "$DISCOVER_DEADLINE" ]; do
-              DEPLOYMENT="$(running_deployment)"
+              # || true inside the substitution: an assignment whose command
+              # substitution fails is fatal under set -e, and doctl fails
+              # transiently often enough that the lane died mid-watch with no
+              # message at all (2026-09-02). An empty reading is a state this
+              # loop already knows how to handle; an aborted job is not.
+              DEPLOYMENT="$(running_deployment || true)"
               [ -n "$DEPLOYMENT" ] && break
               sleep 10
             done
@@ -254,7 +259,7 @@ jobs:
             DEADLINE=$(( $(date +%s) + 900 ))
             while [ "$(date +%s)" -lt "$DEADLINE" ]; do
               fetch_once
-              PHASE="$(deployment_phase "$DEPLOYMENT")"
+              PHASE="$(deployment_phase "$DEPLOYMENT" || true)"
               case "$PHASE" in
                 ERROR|ACTIVE)
                   echo "Deployment $DEPLOYMENT reached phase $PHASE; stopping."
@@ -266,7 +271,7 @@ jobs:
                   # CANCELED as terminal is what lost the reading three times --
                   # the run that mattered was always the replacement. Follow it.
                   echo "Deployment $DEPLOYMENT is ${PHASE:-gone}; looking for the one that replaced it."
-                  NEXT="$(running_deployment)"
+                  NEXT="$(running_deployment || true)"
                   if [ -n "$NEXT" ] && [ "$NEXT" != "$DEPLOYMENT" ]; then
                     DEPLOYMENT="$NEXT"
                     echo "Following $DEPLOYMENT instead."

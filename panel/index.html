@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.52.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.53.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -542,24 +542,32 @@
       <!-- Settings + Generate -->
       <div class="card">
         <h2>GENERATE</h2>
-        <!-- v6.50.0 — the app's ratio set on this page, all eight of it:
-             Auto plus the seven the web app offers. The panel showed five and
-             no Auto. The "how many at once" segment and the scope note left
-             with the reference slots — the app's Text to Image has neither. -->
-        <div class="row tight" id="cRatioRow">
-          <div class="slbl" data-i18n="cr_ratio"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio0"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio1"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio2"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio3"></div>
+        <!-- v6.53.0 — the app's own three controls, in its order: the Model
+             picker (its 49 text-to-image models, lifted from the app's own
+             RH_T2I_MODELS into js/hnk_t2i_models.js), the Size picker where
+             the chosen model honours size tiers, and the visual ratio rail.
+             The panel used to offer no model choice at all here — a student
+             got whatever model Freeform was set to. -->
+        <div class="arow gen-opts" id="t2iOpts">
+          <div class="hsl hsl-span2" id="t2iModelHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="t2iModelBtn">
+              <span class="hsl-tile t-plain" id="t2iModelTile"><img class="hsl-glyph-img" id="t2iModelGlyph" src="icons/ui/brand-spark.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx">Model</span><span class="hsl-val" id="t2iModelVal"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="t2iModel"></select>
+          </div>
+          <div class="hsl" id="t2iResHsl" style="display:none">
+            <div role="button" tabindex="0" class="hsl-btn" id="t2iResBtn">
+              <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-size.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx">Size</span><span class="hsl-val" id="t2iResVal"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="t2iRes"></select>
+          </div>
         </div>
-        <div class="row tight">
-          <div class="slbl"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio4"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio5"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio6"></div>
-          <div role="button" tabindex="0" class="segb" id="cRatio7"></div>
-        </div>
+        <select class="inp" id="t2iRatio" style="display:none"></select>
+        <div class="ratio-rail" id="t2iRatioRail"></div>
         <div role="button" tabindex="0" id="btnCreateGen" class="gen">GENERATE IMAGE</div>
       </div>
 
@@ -1199,6 +1207,7 @@
      UXP-safe — publishes to globalThis.HNK, no relative require at runtime) -->
 <script src="js/hnk_wf_catalog_data.js"></script>
 <script src="js/hnk_video_models.js"></script>
+<script src="js/hnk_t2i_models.js"></script>
 <script src="js/hnk_video_wf_data.js"></script>
 <script src="js/hnk_video_tools.js"></script>
 <script src="src/models/model-registry.js"></script>
