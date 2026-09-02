@@ -111,7 +111,14 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" s3cmd >/dev/null
-          pg_dump --version
+          # Installing 17 is not enough: /usr/bin/pg_dump is postgresql-common's
+          # wrapper and it kept choosing the runner's preinstalled 16, so the
+          # dump failed on the version mismatch a second time. Put the client's
+          # own bin directory first and prove which binary answers.
+          BIN="/usr/lib/postgresql/$PG_MAJOR/bin"
+          [ -x "$BIN/pg_dump" ] || { echo "::error::postgresql-client-$PG_MAJOR did not install $BIN/pg_dump."; exit 1; }
+          echo "$BIN" >> "$GITHUB_PATH"
+          "$BIN/pg_dump" --version
 
       - name: Install doctl
         uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
@@ -211,11 +218,15 @@ jobs:
           DB_BASE="${DB_URI%%\?*}"
           echo "::add-mask::$DB_BASE"
 
+          # the installed client's own binaries, never postgresql-common's
+          # wrapper — which is what silently ran 16 against the 17 cluster
+          PGBIN="/usr/lib/postgresql/$PG_MAJOR/bin"
+
           STAMP="$(date -u +%Y-%m-%d)"; TIME="$(date -u +%H%M%SZ)"
           DUMP="$WORK/hnk-$STAMP-$TIME.dump"
           echo "== dumping production (custom format, compressed)"
           PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=30 \
-            pg_dump --format=custom --compress=9 --no-owner --no-privileges \
+            "$PGBIN/pg_dump" --format=custom --compress=9 --no-owner --no-privileges \
             --dbname="$DB_BASE?sslmode=verify-ca" --file="$DUMP"
           BYTES="$(stat -c %s "$DUMP")"
           SHA="$(sha256sum "$DUMP" | cut -d' ' -f1)"
@@ -227,12 +238,12 @@ jobs:
           if [ "$EVENT_NAME" != "workflow_dispatch" ] || [ "$RESTORE_CHECK" = "true" ]; then
             echo "== restore rehearsal into the scratch database"
             export PGPASSWORD=scratch
-            psql -h 127.0.0.1 -U postgres -c "drop database if exists restore_check" >/dev/null
-            psql -h 127.0.0.1 -U postgres -c "create database restore_check" >/dev/null
-            pg_restore --no-owner --no-privileges --dbname="postgresql://postgres@127.0.0.1:5432/restore_check" "$DUMP" >/dev/null 2>&1 || true
-            PROFILES="$(psql -h 127.0.0.1 -U postgres -d restore_check -tAc \
+            "$PGBIN/psql" -h 127.0.0.1 -U postgres -c "drop database if exists restore_check" >/dev/null
+            "$PGBIN/psql" -h 127.0.0.1 -U postgres -c "create database restore_check" >/dev/null
+            "$PGBIN/pg_restore" --no-owner --no-privileges --dbname="postgresql://postgres@127.0.0.1:5432/restore_check" "$DUMP" >/dev/null 2>&1 || true
+            PROFILES="$("$PGBIN/psql" -h 127.0.0.1 -U postgres -d restore_check -tAc \
               "select count(*) from public.profiles" 2>/dev/null || echo 0)"
-            TABLES="$(psql -h 127.0.0.1 -U postgres -d restore_check -tAc \
+            TABLES="$("$PGBIN/psql" -h 127.0.0.1 -U postgres -d restore_check -tAc \
               "select count(*) from information_schema.tables where table_schema='public'" 2>/dev/null || echo 0)"
             echo "restored: $TABLES public tables, $PROFILES profile rows"
             [ "$TABLES" -ge 10 ] || { echo "::error::The dump restored fewer than ten tables — not a usable backup."; exit 1; }
