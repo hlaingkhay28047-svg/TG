@@ -6213,7 +6213,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.53.0";
+const PANEL_VERSION = "6.54.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7280,11 +7280,9 @@ function applyI18n() {
          the Workflows page's "Section reset" reads the same way. */
       useWorkflow: function (id) {
         try {
-          state.pathWf = String(id || "");
-          pathFillWorkflows();
+          if (!ptSetWorkflow(String(id || ""))) return;
           switchPage("path");
-          saveSettings();
-          const el = $("pathWf");
+          const el = $("ptWfBox");
           if (el && el.scrollIntoView) setTimeout(() => { try { el.scrollIntoView({ block: "center" }); } catch (e) { } }, 60);
         } catch (e) { }
       },
@@ -8796,118 +8794,752 @@ function bindSetup() {
 
 
 /* ============================================================
-   PATH — the web app's batch, in Photoshop (v6.46.0)
+   PATH — the web app's BATCH LOOKS page, in Photoshop (v6.54.0)
 
-   The app's Path takes fifty to a hundred photos, one look, and one run.
-   The panel could only ever do one photo, which is the opposite of what a
-   studio actually does on a wedding morning. This drives the panel's own
-   generate — same adapter, same lease, same model routing — once per photo,
-   and writes each result beside the others in a folder the studio picks.
-   Nothing is placed into the document: a hundred results are files.
+   The panel used to answer "batch" with a five-button runner of its own
+   design: pick files, pick a workflow from a <select>, pick a folder, Run.
+   The web app answers it with a studio page — twelve looks on a rail, a
+   strength dial, a speed/quality tier, an Effects accordion whose every
+   control is stamped "AI", and a prompt preview that shows, before a single
+   call is spent, exactly what a hundred photos are about to be asked. A
+   student who learned the batch on the web found none of that here.
+
+   This is that page. The looks, the effects, the tiers, the nine-language
+   copy and the prompt composition are LIFTED from the running app into
+   js/hnk_path_looks.js (tools/build_panel_path_looks.js; pinned by
+   test/verify_panel_path_looks.js), so a look renamed on the web is renamed
+   here, and ptBuildPrompt below composes the app's own sentences in the
+   app's own order.
+
+   Three deliberate differences, each because Photoshop is not a browser:
+     · photos arrive through UXP's multi-file dialog, not a file input, and
+       the free CSS preview is not painted over a thumbnail — UXP's renderer
+       does not honour a filter on an <img>, so a promise of "this is what
+       the grade looks like" would be a lie. The thumbnail shows the photo.
+     · Studio mode sends the Studio prompt but cannot pre-bake the local
+       grade: stApplyRecipeTo draws on a <canvas>, and UXP has none.
+     · the app's SAVE card offers ZIP / numbered download / contact sheet.
+       A plugin writes files, so it offers the folder they are written to.
    ============================================================ */
-const PATH = { files: [], out: null, busy: false, stop: false, done: 0, fail: 0, rows: [] };
+const PTD = (globalThis.HNK && globalThis.HNK.pathLooks) || null;
+const PT_MAX = (PTD && PTD.max) || 100;
+const PT_SRC_STUDIO = "@studio";
+const PT = { photos: [], out: null, busy: false, stop: false, ref: null, seq: 0 };
+const ptMulti = { on: false, ids: {} };
 
-function pathRows() {
-  const rows = [];
-  rows.push({ label: "Photos", level: PATH.files.length ? "ok" : "pend",
-    detail: PATH.files.length ? String(PATH.files.length) : "\u2014" });
-  rows.push({ label: "Save folder", level: PATH.out ? "ok" : "pend",
-    detail: PATH.out ? (PATH.out.name || "chosen") : "\u2014" });
-  if (PATH.busy || PATH.done || PATH.fail) {
-    rows.push({ label: "Done", level: PATH.fail ? "warn" : "ok",
-      detail: PATH.done + " / " + PATH.files.length + (PATH.fail ? "  \u00b7 " + PATH.fail + " failed" : "") });
-  }
-  for (let i = 0; i < PATH.rows.length && i < 12; i++) rows.push(PATH.rows[i]);
-  return rows;
+/* the lifted copy, in whichever of the nine languages is showing */
+function ptT(k) { return (PTD && PTD.tr[k]) ? ff9(PTD.tr[k]) : ""; }
+function ptI(k) { return (PTD && PTD.inline[k]) ? ff9(PTD.inline[k]) : ""; }
+function ptS(k) { return (PTD && PTD.src[k]) ? ff9(PTD.src[k]) : ""; }
+function ptLooks() { return (PTD && PTD.looks) || []; }
+function ptLookById(id) {
+  const L = ptLooks();
+  for (let i = 0; i < L.length; i++) if (L[i].id === id) return L[i];
+  return L[0] || null;
 }
-function renderPath() { renderRows("pathList", pathRows()); }
+function ptDef() { return (PTD && PTD.def) || { look: "", tier: "fast", strength: 100, fx: {}, custom: "", wf: "" }; }
+function ptState() {
+  if (!state.pt) {
+    const d = ptDef();
+    state.pt = { look: d.look, tier: d.tier, strength: d.strength, custom: d.custom, wf: d.wf,
+      fx: { blur: d.fx.blur, fg: d.fx.fg, sync: d.fx.sync, proLight: d.fx.proLight, frame: d.fx.frame } };
+  }
+  if (!state.pt.fx) state.pt.fx = { blur: "off", fg: "off", sync: false, proLight: true, frame: "off" };
+  return state.pt;
+}
+function ptLookOf(photo) {
+  const id = (photo && photo.lookOverride) || ptState().look;
+  return ptLookById(id) || ptLookById(ptDef().look);
+}
 
-function pathFillWorkflows() {
-  const sel = $("pathWf");
-  if (!sel) return;
+/* ---- which of the three sources the batch is pointed at ----
+   One field carries all three, exactly as the app's does: "" is a look,
+   "@studio" is the Retouch A/Retouch B suite as it stands, anything else is
+   a Smart Workflow id resolved against the LIVE registry — so a saved id for
+   a card that no longer exists degrades to look mode instead of sending an
+   empty prompt to a hundred photos. */
+function ptWfActive() {
+  const id = ptState().wf;
+  if (!id || id === PT_SRC_STUDIO) return null;
   let reg = null;
   try { reg = globalThis.HNK && globalThis.HNK.workflowRegistry; } catch (e) { }
-  const list = (reg && reg.list && reg.list()) || [];
-  while (sel.firstChild) sel.removeChild(sel.firstChild);
-  for (let i = 0; i < list.length; i++) {
-    sel.appendChild(mkOption(list[i].id, list[i].title || list[i].id));
-  }
-  if (state.pathWf) { try { sel.value = state.pathWf; } catch (e) { } }
+  const wf = (reg && reg.get) ? reg.get(id) : null;
+  if (!wf) return null;
+  const req = wf.requiredInputs || [], opt = wf.optionalInputs || [];
+  return { id: wf.id, title: wf.title || wf.id, cardImg: wf.visual || "",
+    sum: wf.cardSummary || wf.summary || "", reqN: req.length, opt: opt, def: wf };
 }
-async function pathAdd() {
+function ptSrcMode() {
+  if (ptState().wf === PT_SRC_STUDIO) return "studio";
+  return ptWfActive() ? "wf" : "look";
+}
+function ptSetWorkflow(id) {
+  if (PT.busy) { setStatus(ff9(PT_BUSY_L), "err"); return false; }
+  ptState().wf = id || "";
+  if (id) PT.photos.forEach(function (p) { p.lookOverride = null; });
+  ptSync();
+  return true;
+}
+/* the two labels the app has no place for: a browser downloads results, a
+   plugin writes them, so the studio has to be able to say where. Same
+   sentence the VidUp page uses for the same control. */
+const PT_OUT_L = { my: "သိမ်းမယ့် folder ရွေးရန်", en: "Choose the save folder", shn: "လိူၵ်ႈ folder တႃႇသိမ်း", kac: "Makoi na folder lata u", th: "เลือกโฟลเดอร์ที่จะบันทึก", zh: "选择保存文件夹", vi: "Chọn thư mục lưu", id: "Pilih folder simpan", ms: "Pilih folder simpan" };
+const PT_SAVEALL_L = { my: "ရလဒ်အားလုံး folder ထဲ သိမ်းမယ်", en: "Save every result to the folder", shn: "သိမ်းၽွၼ်းလႆႈတင်းသဵင်ႈ တီႈ folder", kac: "Ngut ai yawng hpe folder kaw makoi u", th: "บันทึกผลลัพธ์ทั้งหมดลงโฟลเดอร์", zh: "把所有结果保存到文件夹", vi: "Lưu mọi kết quả vào thư mục", id: "Simpan semua hasil ke folder", ms: "Simpan semua hasil ke folder" };
+const PT_BUSY_L = { my: "Batch လုပ်နေဆဲပါ — ရပ်ပြီးမှ source ပြောင်းပါ", en: "A batch is running — stop it before changing the source", shn: "Batch ႁဵတ်းယူႇ — ၵိုတ်းသေ လႅၵ်ႈ source", kac: "Batch shakut nga ai — jahkring nna galai u", th: "กำลังรันชุดอยู่ — หยุดก่อนเปลี่ยนแหล่ง", zh: "批处理进行中 — 请先停止再更换来源", vi: "Đang chạy lô — hãy dừng trước khi đổi nguồn", id: "Batch sedang berjalan — hentikan sebelum mengganti sumber", ms: "Kumpulan sedang berjalan — hentikan sebelum menukar sumber" };
+/* a finished photo is finished FOR THE SOURCE THAT MADE IT — re-pointing the
+   album leaves the results downloadable and only re-queues what the NEW
+   source has not produced */
+function ptSrcKey() {
+  const m = ptSrcMode();
+  return m === "wf" ? ("wf:" + (ptState().wf || "")) : m;
+}
+function ptPending() {
+  const k = ptSrcKey();
+  return PT.photos.filter(function (p) { return p.status !== "done" || p.doneSrc !== k; });
+}
+
+/* The Studio half of the batch. state.st is the SAME object the suite writes
+   (main.js owns it; js/hnk_studio_suites.js edits it through studioHost), so
+   these read what the Retouch A / Retouch B page is set to right now.
+   ptStudioLocal is the app's question — "is there a local grade to carry?" —
+   answered against the base keys the panel persists. The app also BAKES that
+   grade onto every photo before the prompt goes out; stApplyRecipeTo draws on
+   a <canvas> and UXP has none, so the panel sends the untouched photo with
+   the Studio prompt and says so here rather than pretending otherwise. */
+function ptStudioPend() { return (state.st && state.st.pend) ? state.st.pend : []; }
+function ptStudioLocal() {
+  const A = (globalThis.HNK && globalThis.HNK.studioScreen && globalThis.HNK.studioScreen.api()) || null;
+  if (!A || !state.st || !state.st.t1 || !state.st.t2) return false;
+  try {
+    const d1 = A.stDefT1(), d2 = A.stDefT2();
+    for (const k in d1) if ((state.st.t1[k] || 0) !== d1[k]) return true;
+    for (const k in d2) { if (k === "finish") continue; if ((state.st.t2[k] || 0) !== 0) return true; }
+    if (state.st.t2.finish && state.st.t2.finishV) return true;
+    if (A.stPipeVals && A.stPipeDirty) return !!A.stPipeDirty();
+  } catch (e) { }
+  return false;
+}
+
+/* ---- the app's look strength: one dial scales the whole grade ---- */
+function ptStrength() { const s = +(ptState().strength || 100); return (s >= 25 && s <= 150) ? s : 100; }
+function ptStrengthWord() {
+  const s = ptStrength();
+  return s <= 60 ? "apply the look subtly, at reduced intensity"
+    : s < 90 ? "apply the look gently, below full strength"
+      : s <= 110 ? "apply the look at its natural strength"
+        : "apply the look boldly, pushed past its natural strength";
+}
+/* the app's ptBuildPrompt, sentence for sentence — whatever this returns is
+   exactly what #ptPromptPreview shows and exactly what a photo sends */
+function ptBuildPrompt(photo) {
+  if (!PTD) return "";
+  const mode = ptSrcMode(), pt = ptState();
+  if (mode === "studio") {
+    const S = (globalThis.HNK && globalThis.HNK.studioScreen) || null;
+    let sp = "";
+    try { sp = (S && S.prompt) ? (S.prompt() || "") : ""; } catch (e) { sp = ""; }
+    const scu = (pt.custom || "").trim();
+    if (!sp) return scu;
+    return scu ? (sp + "\n\n" + scu) : sp;
+  }
+  const wf = ptWfActive();
+  if (wf) {
+    let base = "";
+    try {
+      const reg = globalThis.HNK && globalThis.HNK.workflowRegistry;
+      const c = (reg && reg.compile) ? reg.compile(wf.def, {}) : null;
+      base = (c && (c.prompt || c.text)) || wf.def.hiddenPrompt || "";
+    } catch (e) { base = wf.def.hiddenPrompt || ""; }
+    const wcu = (pt.custom || "").trim();
+    return wcu ? (base + "\n\n" + wcu) : base;
+  }
+  const look = ptLookOf(photo), fx = pt.fx, F = PTD.fx, out = [];
+  if (!look) return "";
+  out.push("Professional batch wedding-photo relight/regrade of IMAGE 1 — apply the '" + look.name.en + "' look.");
+  out.push(look.ai);
+  if (ptStrength() !== 100) out.push("Strength " + ptStrength() + "% — " + ptStrengthWord() + ".");
+  if (fx.blur !== "off") out.push(ptFrag(F.blur, fx.blur));
+  if (fx.fg !== "off") out.push(ptFrag(F.fg, fx.fg));
+  if (fx.frame !== "off") out.push(ptFrag(F.frame, fx.frame));
+  if (fx.sync) out.push(F.sync.frag);
+  if (fx.proLight) out.push(F.proLight.frag);
+  if (PT.ref) out.push(PTD.refFrag);
+  const cu = (pt.custom || "").trim();
+  if (cu) out.push(cu);
+  out.push(PTD.preserve);
+  return out.filter(function (x) { return !!x; }).join("\n\n");
+}
+function ptFrag(fx, v) {
+  if (!fx) return "";
+  for (let i = 0; i < fx.opts.length; i++) if (fx.opts[i].v === v) return fx.opts[i].frag || "";
+  return "";
+}
+
+/* ---- counts / the run button's own arithmetic ---- */
+function ptCounts() {
+  const c = { total: PT.photos.length, done: 0, error: 0, queued: 0, running: 0 };
+  PT.photos.forEach(function (p) { c[p.status] = (c[p.status] || 0) + 1; });
+  return c;
+}
+function ptRenderCount() {
+  const c = ptCounts(), bits = [ptT("pt_n").replace("{N}", String(c.total))];
+  if (c.done) bits.push(ptT("pt_done_n").replace("{N}", String(c.done)));
+  if (c.error) bits.push(ptT("pt_err_n").replace("{N}", String(c.error)));
+  const cnt = $("ptCount"); if (cnt) cnt.textContent = bits.join(" · ");
+  const em = $("ptEmpty"); if (em) em.style.display = c.total ? "none" : "";
+  const rc = $("ptRunCard"); if (rc) rc.style.display = c.total ? "" : "none";
+  const oc = $("ptOutCard"); if (oc) oc.style.display = c.total ? "" : "none";
+  setIcnText($("btnPtRun"), "i-stack", "ink", ptT("pt_run") + " (" + String(ptPending().length) + ")");
+  const re = $("btnPtRetryErr");
+  if (re) {
+    re.style.display = c.error ? "" : "none";
+    if (c.error) setIcnText(re, "i-retry", "cream", ptT("pt_retry") + " (" + String(c.error) + ")");
+  }
+}
+
+/* ---- the album ---- */
+function ptRenderGrid() {
+  const host = $("ptGrid"); if (!host) return;
+  host.textContent = "";
+  PT.photos.forEach(function (p, i) {
+    const b = document.createElement("div");
+    b.className = "pt-th"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    const im = document.createElement("img");
+    im.src = (p.status === "done" && p.outB64) ? ("data:" + (p.outMime || "image/png") + ";base64," + p.outB64) : p.srcDataUrl;
+    im.alt = "";
+    b.appendChild(im);
+    const idx = document.createElement("span"); idx.className = "pt-idx"; idx.textContent = String(i + 1);
+    b.appendChild(idx);
+    const badge = document.createElement("span"); badge.className = "pt-badge " + p.status;
+    if (p.status === "done") badge.appendChild(ffIcon("i-check", "ink"));
+    else if (p.status === "error") badge.appendChild(ffIcon("i-warn", "err"));
+    else badge.textContent = "·";
+    b.appendChild(badge);
+    const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = p.name;
+    b.appendChild(nm);
+    if (ptMulti.on) {
+      if (ptMulti.ids[p.id]) b.className += " on";
+      b.addEventListener("click", function () {
+        if (ptMulti.ids[p.id]) delete ptMulti.ids[p.id]; else ptMulti.ids[p.id] = 1;
+        ptRenderGrid();
+      });
+    } else {
+      b.addEventListener("click", function () { ptPhotoMenu(i); });
+    }
+    host.appendChild(b);
+  });
+  ptRenderMultiBar();
+  ptRenderCount();
+}
+/* the app's per-photo sheet is a modal over a live compare slider; the panel
+   answers the same three questions the sheet exists for — put THIS one back
+   in the queue, give it its own look, take it out of the album — from the
+   thumbnail itself, because a UXP panel is 420px wide and a full-screen
+   modal over it hides the album it is talking about. */
+function ptPhotoMenu(i) {
+  const p = PT.photos[i]; if (!p || PT.busy) return;
+  if (p.status === "done" || p.status === "error") { p.status = "queued"; p.doneSrc = ""; ptSync(); return; }
+  if (ptSrcMode() === "look") { p.lookOverride = ptState().look; ptRenderGrid();
+    setStatus(ptS("look") + " ✓", "ok"); return; }
+  ptRenderGrid();
+}
+function ptMultiSel() { return PT.photos.filter(function (p) { return ptMulti.ids[p.id]; }); }
+function ptRenderMultiBar() {
+  const host = $("ptMultiBar"); if (!host) return;
+  host.textContent = "";
+  if (!PT.photos.length) { ptMulti.on = false; ptMulti.ids = {}; return; }
+  const n = ptMultiSel().length;
+  function chip(icon, label, fn) {
+    const b = document.createElement("div");
+    b.className = "chip"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    setIcnText(b, icon, "cream", label);
+    b.addEventListener("click", fn);
+    host.appendChild(b);
+    return b;
+  }
+  const tg = chip("i-stack", ptMulti.on
+    ? ff9({ my: "ရွေးနေသည် — ပိတ်မယ် (" + n + ")", en: "Selecting — done (" + n + ")" })
+    : ff9({ my: "အများရွေးမယ်", en: "Select multiple" }),
+    function () { ptMulti.on = !ptMulti.on; if (!ptMulti.on) ptMulti.ids = {}; ptRenderGrid(); });
+  if (ptMulti.on) tg.className = "chip on";
+  if (!ptMulti.on || !n) return;
+  chip("i-bolt", ff9({ my: "ရွေးထားတာ Run", en: "Run selected" }) + " (" + n + ")",
+    function () { if (!PT.busy) ptRunAll(ptMultiSel()); });
+  const doneSel = ptMultiSel().filter(function (p) { return p.status === "done" && p.outB64; });
+  if (doneSel.length) chip("i-download", ff9({ my: "Folder ထဲ သိမ်းမယ်", en: "Save to folder" }) + " (" + doneSel.length + ")",
+    function () { ptSaveTo(doneSel); });
+  chip("i-close", ff9({ my: "ဖယ်မယ်", en: "Remove" }) + " (" + n + ")", function () {
+    if (PT.busy) return;
+    const removed = ptMultiSel().length;
+    PT.photos = PT.photos.filter(function (p) { return !ptMulti.ids[p.id]; });
+    ptMulti.ids = {};
+    ptSync();
+    setStatus(ff9({ my: removed + " ပုံ ဖယ်လိုက်ပါပြီ", en: "Removed " + removed + " photo" + (removed > 1 ? "s" : "") }), "ok");
+  });
+  if (ptSrcMode() !== "look") return;
+  chip("i-palette", ff9({ my: "လက်ရှိ look တပ်မယ်", en: "Apply current look" }), function () {
+    ptMultiSel().forEach(function (p) { p.lookOverride = ptState().look; });
+    ptRenderGrid();
+    setStatus(ff9({ my: "ရွေးထားတဲ့ပုံတွေမှာ look တပ်ပြီး ✓", en: "Look applied to the selected photos ✓" }), "ok");
+  });
+}
+
+/* ---- the look rail: the app's twelve .pcard tiles, its own chip art ---- */
+function ptRenderRail() {
+  const host = $("ptLookRail"); if (!host) return;
+  host.textContent = "";
+  const cur = ptState().look;
+  ptLooks().forEach(function (look) {
+    const c = document.createElement("div");
+    c.className = "pcard" + (cur === look.id ? " on" : "");
+    c.setAttribute("role", "button"); c.setAttribute("tabindex", "0");
+    const wr = document.createElement("div"); wr.className = "pth";
+    const im = document.createElement("img");
+    im.src = "icons/lookchips/" + look.id + ".jpg"; im.alt = "";
+    wr.appendChild(im);
+    c.appendChild(wr);
+    const sp = document.createElement("span"); sp.textContent = ff9(look.name);
+    c.appendChild(sp);
+    c.title = ff9(look.name);
+    c.addEventListener("click", function () { ptState().look = look.id; ptSync(); });
+    host.appendChild(c);
+  });
+  /* the app's rule: a look that carries its own hint says it; the rest fall
+     back to the page's own line about what the free preview does and does not
+     promise. Silence here would have left ten of the twelve looks noteless. */
+  const note = $("ptLookNote");
+  const look = ptLookById(cur);
+  if (note) note.textContent = (look && look.hint) ? ff9(look.hint) : ptT("pt_look_note");
+}
+
+/* ---- the source switch: Studio look | Smart Workflow | Retouch A/B ---- */
+function ptRenderSrc() {
+  const host = $("ptSrcChips"); if (!host) return;
+  const mode = ptSrcMode(), wf = ptWfActive();
+  host.textContent = "";
+  [["look", "look", "i-palette"], ["wf", "wf", "i-brain"], ["studio", "studio", "i-sliders"]].forEach(function (o) {
+    const b = document.createElement("div");
+    b.className = "chip" + (o[0] === mode ? " on" : "");
+    b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    setIcnText(b, o[2], o[0] === mode ? "ink" : "cream", ptS(o[1]));
+    b.addEventListener("click", function () {
+      if (PT.busy || o[0] === mode) return;
+      if (o[0] === "look") { ptSetWorkflow(""); return; }
+      if (o[0] === "studio") { ptSetWorkflow(PT_SRC_STUDIO); return; }
+      ptOpenWfPick();
+    });
+    host.appendChild(b);
+  });
+  const show = function (id, on) { const e = $(id); if (e) e.style.display = on ? "" : "none"; };
+  show("ptWfBox", mode === "wf");
+  show("ptStBox", mode === "studio");
+  show("ptLookBox", mode === "look");
+  show("ptFxLookOnly", mode === "look");
+  /* who owns IMAGE 2 in each mode: in Studio mode it is Studio's own style
+     reference, and a workflow that declares only IMAGE 1 has no second slot
+     at all, so the backdrop picker steps aside rather than offering a photo
+     the run would drop */
+  const refBox = $("ptRefBox");
+  if (refBox) refBox.style.display = (mode === "look" || (mode === "wf" && wf && (wf.reqN + wf.opt.length) >= 2)) ? "" : "none";
+  const wfn = $("ptWfNote"); if (wfn) wfn.textContent = ptS("note");
+  setIcnText($("btnPtWfPick"), "i-brain", "ink", wf ? ptS("change") : ptS("pick"));
+  show("btnPtWfClear", !!wf);
+  setIcnText($("btnPtWfClear"), "i-close", "cream", ptS("clear"));
+  show("ptWfSel", !!wf);
+  if (wf) {
+    const art = $("ptWfSelArt");
+    if (art) { if (wf.cardImg) { art.src = wf.cardImg; art.style.display = ""; } else { art.removeAttribute("src"); art.style.display = "none"; } }
+    const ti = $("ptWfSelTitle"); if (ti) ti.textContent = wf.title;
+    const su = $("ptWfSelSum"); if (su) su.textContent = wf.sum || "";
+    const nd = $("ptWfSelNeed");
+    if (nd) nd.textContent = wf.reqN >= 2
+      ? (ptS("need2") + (PT.ref ? "" : " — " + ptS("need2missing")))
+      : ptS("need1");
+  }
+  /* Studio mode: what the suite is set to right now */
+  const stn = $("ptStNote"); if (stn) stn.textContent = ptS("stnote");
+  const pend = ptStudioPend();
+  const stt = $("ptStTitle");
+  if (stt) stt.textContent = pend.length ? ptS("stready").replace("{N}", String(pend.length)) : ptS("stempty");
+  const bits = pend.map(function (e) { return e.label || e.key || String(e); });
+  if (ptStudioLocal()) bits.unshift(ptS("stlocal"));
+  const stl = $("ptStList");
+  if (stl) stl.textContent = bits.length ? bits.join(" · ") : "";
+  setIcnText($("btnPtStOpen"), "i-sliders", "cream", ptS("stopen"));
+
+  /* the page renames itself around the source that is actually driving it —
+     the app's own rule: a heading that reads LOOK over a Smart Workflow run
+     is the page contradicting itself at a glance */
+  const headWord = mode === "wf" ? ptS("wf") : mode === "studio" ? ptS("studio") : "LOOK";
+  const h2 = $("ptLookH2");
+  if (h2) {
+    h2.textContent = "";
+    h2.appendChild(ffIcon("i-palette", "hi", "ic-h2"));
+    h2.appendChild(document.createTextNode(headWord));
+  }
+  const fn2 = $("ptFreeNote");
+  if (fn2) fn2.textContent = mode === "look" ? ptT("pt_free_note") : ptS("nofree");
+  const hero = $("phPath");
+  if (hero) {
+    if (mode === "look") paintHeroHead(hero, ff9(PAGE_HERO_HEADS.phPath));
+    else paintHeroHead(hero, ptS("hero2a") + " <em>" + headWord + "</em> " + ptS("hero2b"));
+  }
+  const kick = document.querySelector("#pagePath .ph-kick");
+  if (kick) kick.textContent = mode === "look" ? "BATCH LOOKS" : (mode === "wf" ? "BATCH WORKFLOW" : "BATCH STUDIO");
+  const intro = $("ptIntro");
+  if (intro) intro.textContent = mode === "look"
+    ? ptT("pt_intro").replace("{N}", String(PT_MAX))
+    : ptS("intro2").replace("{N}", String(PT_MAX)).replace("{S}", headWord);
+  /* in workflow mode the reference slot stops being the optional backdrop and
+     becomes that workflow's own IMAGE 2, so it wears that workflow's label */
+  const rl = $("ptLbRef"), rn = $("ptRefNote");
+  if (rl && rn) {
+    const req = (wf && wf.def && wf.def.requiredInputs) || [];
+    let lb = ptT("pt_ref");
+    if (wf && wf.reqN >= 2) { lb = "IMAGE 2 — " + ((req[1] && req[1].label) || ""); rn.textContent = ptS("need2"); }
+    else if (wf && wf.opt.length) { lb = "IMAGE 2 — " + (wf.opt[0].label || ""); rn.textContent = ptT("pt_ref_note"); }
+    else rn.textContent = ptT("pt_ref_note");
+    rl.textContent = lb;
+    const pill = document.createElement("span"); pill.className = "pt-ai"; pill.textContent = "AI";
+    rl.appendChild(pill);
+  }
+}
+/* the app opens a sheet of workflow cards; the panel already HAS that sheet —
+   it is the Workflows page — so the pick hands off there and the card's own
+   batch button (HNK.panelNav.useWorkflow) hands back. */
+function ptOpenWfPick() {
+  switchPage("wf");
+  setStatus(ptS("pick"), "ok");
+}
+
+/* ---- strength / tier / effects chips ---- */
+function ptRenderChips() {
+  if (!PTD) return;
+  const pt = ptState(), fx = pt.fx, F = PTD.fx;
+  function chipRow(hostId, def, cur, set) {
+    const host = $(hostId); if (!host) return;
+    host.textContent = "";
+    def.opts.forEach(function (o) {
+      const b = document.createElement("div");
+      b.className = "chip" + (cur === o.v ? " on" : "");
+      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      b.textContent = ff9(o.label);
+      b.addEventListener("click", function () { set(o.v); });
+      host.appendChild(b);
+    });
+  }
+  const sh = $("ptStrengthChips");
+  if (sh) {
+    sh.textContent = "";
+    [50, 75, 100, 125].forEach(function (s) {
+      const b = document.createElement("div");
+      b.className = "chip" + (ptStrength() === s ? " on" : "");
+      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      b.textContent = s + "%";
+      b.addEventListener("click", function () { pt.strength = s; ptSync(); });
+      sh.appendChild(b);
+    });
+  }
+  chipRow("ptBlurChips", F.blur, fx.blur, function (v) { fx.blur = v; ptSync(); });
+  chipRow("ptFgChips", F.fg, fx.fg, function (v) { fx.fg = v; ptSync(); });
+  chipRow("ptFrameChips", F.frame, fx.frame, function (v) { fx.frame = v; ptSync(); });
+  const fn = $("ptFrameNote"); if (fn) fn.style.display = fx.frame === "off" ? "none" : "";
+  const tog = $("ptToggleChips");
+  if (tog) {
+    tog.textContent = "";
+    [F.sync, F.proLight].forEach(function (f) {
+      const b = document.createElement("div");
+      b.className = "chip" + (fx[f.key] ? " on" : "");
+      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      setIcnText(b, fx[f.key] ? "i-check" : "i-close", fx[f.key] ? "ink" : "cream", ff9(f.label));
+      b.addEventListener("click", function () { fx[f.key] = !fx[f.key]; ptSync(); });
+      tog.appendChild(b);
+    });
+  }
+  const hdOk = !!(state.rhKey && rhIsConfigured("upscale-pro"));
+  const ts = $("ptTierChips");
+  if (ts) {
+    ts.textContent = "";
+    (PTD.tiers || []).forEach(function (q) {
+      const b = document.createElement("div");
+      b.className = "chip" + (pt.tier === q.v ? " on" : "") + (q.v === "hd" && !hdOk ? " off" : "");
+      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      setIcnText(b, q.icon, pt.tier === q.v ? "ink" : "cream", ff9(q.label));
+      b.addEventListener("click", function () {
+        if (q.v === "hd" && !hdOk) { setStatus(ptI("hdHint"), "err"); return; }
+        pt.tier = q.v; ptSync();
+      });
+      ts.appendChild(b);
+    });
+  }
+  const hh = $("ptHdHint"); if (hh) hh.style.display = hdOk ? "none" : "";
+  /* the app's engine honesty line: name the model a batch run will use */
+  const pen = $("ptEngineNote");
+  if (pen) {
+    let pl = "";
+    try { const m = ffModel(); pl = m ? ("RunningHub · " + ffModelLabel(m)) : ""; } catch (e) { pl = ""; }
+    pen.style.display = pl ? "" : "none";
+    if (pl) pen.textContent = "Engine: " + pl + ptI("engineNote");
+  }
+  const rc = $("btnPtRefClear"); if (rc) rc.style.display = PT.ref ? "" : "none";
+  const rt = $("ptRefThumb");
+  if (rt) {
+    if (PT.ref) { rt.src = "data:" + PT.ref.mime + ";base64," + PT.ref.b64; rt.style.display = ""; }
+    else { rt.removeAttribute("src"); rt.style.display = "none"; }
+  }
+}
+/* The app's ptSync() calls saveState(), which writes a string to localStorage;
+   the panel's saveSettings() writes a FILE. ptSync runs on every keystroke in
+   the custom-prompt box, so the write is coalesced — the renders stay
+   immediate, the settings file is written once the typing stops. */
+let _ptSaveT = 0;
+function ptSaveSoon() {
+  if (_ptSaveT) clearTimeout(_ptSaveT);
+  _ptSaveT = setTimeout(function () { _ptSaveT = 0; try { saveSettings(); } catch (e) { } }, 450);
+}
+function ptSync() {
+  ptSaveSoon();
+  ptRenderSrc();
+  ptRenderRail();
+  ptRenderChips();
+  ptRenderGrid();
+  const pv = $("ptPromptPreview"); if (pv) pv.textContent = ptBuildPrompt(null);
+}
+
+/* ---- the panel's own ingest: UXP's multi-file dialog ---- */
+async function ptAdd() {
+  if (PT.busy) return;
   try {
     const uxp = require("uxp");
     const picked = await uxp.storage.localFileSystem.getFileForOpening({
       allowMultiple: true, types: ["jpg", "jpeg", "png", "webp"]
     });
     const arr = picked ? (Array.isArray(picked) ? picked : [picked]) : [];
-    for (let i = 0; i < arr.length; i++) PATH.files.push(arr[i]);
-    renderPath();
+    if (!arr.length) return;
+    let added = 0;
+    for (let i = 0; i < arr.length; i++) {
+      if (PT.photos.length >= PT_MAX) break;
+      const f = arr[i];
+      const du = await fileToDataUrl(f);
+      if (!du) continue;
+      PT.photos.push({ id: "p" + (++PT.seq), name: String(f.name || ("photo-" + PT.seq)),
+        srcDataUrl: du, status: "queued", lookOverride: null, outB64: null, outMime: "", doneSrc: "", file: f });
+      added++;
+    }
+    ptSync();
+    if (added) setStatus(ptT("pt_n").replace("{N}", String(PT.photos.length)), "ok");
   } catch (e) { setStatus(friendlyErr(e), "err"); }
 }
-async function pathPickOut() {
+async function ptPickRef() {
+  try {
+    const uxp = require("uxp");
+    const f = await uxp.storage.localFileSystem.getFileForOpening({ types: ["jpg", "jpeg", "png", "webp"] });
+    if (!f) return;
+    const buf = await f.read({ format: uxp.storage.formats.binary });
+    PT.ref = { b64: bufToB64(buf), mime: extToMime(f.name) };
+    ptSync();
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function ptPickOut() {
   try {
     const uxp = require("uxp");
     const f = await uxp.storage.localFileSystem.getFolder();
-    if (f) PATH.out = f;
-    renderPath();
+    if (f) PT.out = f;
+    ptPaintOut();
   } catch (e) { setStatus(friendlyErr(e), "err"); }
 }
-async function pathRun() {
-  if (PATH.busy) return;
-  if (!PATH.files.length) { setStatus(t("st_need_photos") || "Add photos first", "err"); return; }
-  if (!PATH.out) { setStatus(t("st_need_folder") || "Choose a save folder first", "err"); return; }
-  const wfId = ($("pathWf") && $("pathWf").value) || "";
-  let reg = null, run = null, comp = null;
-  try {
-    reg = globalThis.HNK && globalThis.HNK.workflowRegistry;
-    run = globalThis.HNK && globalThis.HNK.batchGenerate;
-    comp = globalThis.HNK && globalThis.HNK.workflowRequestCompiler;
-  } catch (e) { }
-  if (!reg || !run || !comp) { setStatus("Batch is not available in this build", "err"); return; }
-  PATH.busy = true; PATH.stop = false; PATH.done = 0; PATH.fail = 0; PATH.rows = [];
-  state.pathWf = wfId; saveSettings();
-  renderPath();
+function ptPaintOut() {
+  const n = $("ptOutName");
+  if (n) n.textContent = PT.out ? (PT.out.name || "—") : "—";
+}
+/* write finished results into the studio's folder */
+async function ptSaveTo(list) {
+  if (!PT.out) { await ptPickOut(); if (!PT.out) return; }
   const uxp = require("uxp");
-  for (let i = 0; i < PATH.files.length && !PATH.stop; i++) {
-    const f = PATH.files[i];
+  let n = 0;
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i];
+    if (!p.outB64) continue;
     try {
-      const buf = await f.read({ format: uxp.storage.formats.binary });
-      const dataUrl = "data:" + extToMime(f.name) + ";base64," + bufToB64(buf);
-      /* Build the same request a single run builds — through the workflow
-         request compiler, so the protected prompt, the model routing and the
-         output settings are identical; only the source image differs. */
-      const wf = reg.get(wfId);
-      if (!wf) throw new Error("workflow not found");
-      const slots = (wf.requiredInputs || []).map(function (inp, n) {
-        return { key: inp.key, label: inp.label, role: inp.role,
-          image: n === 0 ? { source: "file", ref: dataUrl, valid: true } : null };
-      });
-      const req = comp.compile({
-        workflowId: wfId, requiredInputs: slots, optionalInputs: [],
-        fieldVals: {}, output: { size: state.size, ratio: state.ratio }
-      });
-      if (!req) throw new Error("workflow not found");
-      const res = await run(req, function () { });
-      if (!res || !res.ok || !res.results || !res.results.length) throw new Error("no result");
-      const first = res.results[0];
-      const b64 = first.b64 || (first.dataUrl || "").split(",")[1] || "";
-      if (!b64) throw new Error("empty result");
-      const name = String(f.name || ("photo-" + (i + 1))).replace(/\.[^.]+$/, "") + "_hnk.png";
-      const outFile = await PATH.out.createFile(name, { overwrite: true });
-      await outFile.write(b64ToBuf(b64), { format: uxp.storage.formats.binary });
-      PATH.done++;
-      PATH.rows.unshift({ label: name, level: "ok", detail: "saved" });
-    } catch (e) {
-      PATH.fail++;
-      PATH.rows.unshift({ label: String(f && f.name || ("photo " + (i + 1))), level: "err",
-        detail: (e && e.message) ? String(e.message).slice(0, 40) : "failed" });
-    }
-    renderPath();
+      const ext = (p.outMime === "image/png") ? "png" : "jpg";
+      const name = String(p.name).replace(/\.[^.]+$/, "") + "_hnk." + ext;
+      const f = await PT.out.createFile(name, { overwrite: true });
+      await f.write(b64ToBuf(p.outB64), { format: uxp.storage.formats.binary });
+      n++;
+    } catch (e) { }
   }
-  PATH.busy = false;
-  renderPath();
-  setStatus(PATH.fail ? (PATH.done + " done, " + PATH.fail + " failed") : (PATH.done + " done"), PATH.fail ? "err" : "ok");
+  setStatus(n + " · " + ff9({ my: "သိမ်းပြီး", en: "saved" }), n ? "ok" : "err");
+}
+
+/* ---- the run: one call per photo, the app's own prompt each time ----
+
+   The tier is not decoration. In the app it forces three things onto the
+   call — quality, size, and for HD a second RunningHub pass — so a panel
+   that drew the chips and ignored them would be charging for Fast while the
+   page said HD. Same three settings here, on the panel's own controls, put
+   back afterwards so Freeform looks untouched: exactly the app's rule that
+   the borrowed selects are restored in `finally`. */
+function ptTierSize() { return ptState().tier === "fast" ? "" : "2K"; }
+function ptHdOn() {
+  return ptState().tier === "hd" && !!state.rhKey && rhIsConfigured("upscale-pro");
+}
+/* the app's ptCostOk: an HD run issues TWO calls a photo, and quoting one
+   number for a run that spends double is the lie this confirm exists to
+   prevent. window.confirm does not exist in UXP — the panel's own dialog. */
+const PT_COST_ASK = 8;
+async function ptCostOk(n) {
+  if (n < PT_COST_ASK) return true;
+  const hd = ptHdOn(), calls = hd ? n * 2 : n, per = hd ? "2" : "1";
+  const wf = ptWfActive();
+  const what = wf ? wf.title
+    : ptSrcMode() === "studio" ? ptS("studio")
+      : ff9((ptLookById(ptState().look) || {}).name || {});
+  return await setupConfirm(ff9({
+    my: "ဓာတ်ပုံ " + n + " ပုံကို \u201c" + what + "\u201d နဲ့ ထုတ်ပါမယ်။\n\nပုံတစ်ပုံ = API ခေါ်ဆိုမှု " + per + " ကြိမ်" + (hd ? " (HD upscale ပါ)" : "") + " — စုစုပေါင်း " + calls + " ကြိမ် ကုန်ကျပါမယ်။ ဆက်လုပ်မလား?",
+    en: "About to run " + n + " photos through \u201c" + what + "\u201d.\n\nOne photo = " + per + " API call" + (hd ? "s (the HD upscale is the second)" : "") + ", so this run costs " + calls + " calls. Continue?"
+  }));
+}
+async function ptRunAll(subset) {
+  if (PT.busy) return;
+  const list = (subset && subset.length) ? subset : ptPending();
+  if (!list.length) { setStatus(ptT("pt_empty").replace("{N}", String(PT_MAX)), "err"); return; }
+  if (ptSrcMode() === "studio" && !ptStudioPend().length) { setStatus(ptS("stneed"), "err"); return; }
+  if (!(await ptCostOk(list.length))) return;
+  PT.busy = true; PT.stop = false;
+  const stop = $("btnPtStop"); if (stop) { stop.style.display = ""; setIcnText(stop, "i-close", "cream", ptT("pt_stop")); }
+  const sn = $("ptStopNote"); if (sn) { sn.style.display = ""; sn.textContent = ptT("pt_stop_note"); }
+  const prog = $("ptProg"); if (prog) prog.style.display = "";
+  const log = $("ptLog"); if (log) log.textContent = "";
+  const key = ptSrcKey(), hd = ptHdOn(), size = ptTierSize();
+  /* the two shared controls this run borrows, restored in the finally below */
+  const svModel = state.model, svCount = state.ffCount;
+  state.model = (ptState().tier === "fast") ? state.model : "pro";
+  state.ffCount = 1;                     /* deterministic per photo, and honest cost */
+  let done = 0, fail = 0;
+  try {
+  for (let i = 0; i < list.length && !PT.stop; i++) {
+    const p = list[i];
+    p.status = "running"; ptRenderGrid();
+    stSet("stPtGen", ptT("pt_n").replace("{N}", String(i + 1) + "/" + list.length), "run");
+    try {
+      const prompt = ptBuildPrompt(p);
+      const parts = [{ text: prompt }];
+      const m = /^data:([^;]+);base64,(.*)$/.exec(p.srcDataUrl || "");
+      if (m) parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
+      if (PT.ref) parts.push({ inlineData: { mimeType: PT.ref.mime, data: PT.ref.b64 } });
+      /* ratio is deliberately left empty: a batch look pass never reframes */
+      const img = await callImageAPI(null, parts, { size: size });
+      if (!img || !img.b64) throw new Error("no result");
+      let outB64 = img.b64, outMime = img.mime || "image/png";
+      /* the HD tier chases the result with the upscale deployment, exactly as
+         the app's ptHdFinish does — and if that second call fails the FIRST
+         result is kept rather than the photo being marked failed */
+      if (hd) {
+        try {
+          const up = await callImageAPI("upscale-pro", [{ text: "" }, { inlineData: { mimeType: outMime, data: outB64 } }], {});
+          if (up && up.b64) { outB64 = up.b64; outMime = up.mime || outMime; }
+        } catch (e) { if (log) log.textContent = p.name + " — HD " + friendlyErr(e) + "\n" + log.textContent; }
+      }
+      p.outB64 = outB64; p.outMime = outMime;
+      p.status = "done"; p.doneSrc = key;
+      done++;
+      try {
+        const gs = globalThis.HNK && globalThis.HNK.galleryStore;
+        if (gs) await gs.save(p.outB64, p.outMime === "image/png" ? "png" : "jpg", "path");
+      } catch (e) { }
+      if (PT.out) await ptSaveTo([p]);
+      if (log) log.textContent = p.name + " ✓\n" + log.textContent;
+    } catch (e) {
+      p.status = "error"; fail++;
+      if (log) log.textContent = p.name + " ✗ " + friendlyErr(e) + "\n" + log.textContent;
+    }
+    const pi = $("ptProgI");
+    if (pi) pi.style.width = Math.round(((i + 1) / list.length) * 100) + "%";
+    ptRenderGrid();
+  }
+  } finally { state.model = svModel; state.ffCount = svCount; }
+  PT.busy = false;
+  if (stop) stop.style.display = "none";
+  if (sn) sn.style.display = "none";
+  if (prog) prog.style.display = "none";
+  ptSync();
+  stSet("stPtGen", ptT("pt_done_n").replace("{N}", String(done)) + (fail ? " · " + fail : ""), fail ? "err" : "ok");
+}
+
+/* ---- static labels: the app's own paint block, key for key ---- */
+function ptPaintLabels() {
+  if (!PTD) return;
+  const pt = ptState();
+  const set = function (id, txt) { const e = $(id); if (e) e.textContent = txt; };
+  set("ptIntro", ptT("pt_intro").replace("{N}", String(PT_MAX)));
+  set("ptFreeNote", ptT("pt_free_note"));
+  setIcnText($("btnPtAdd"), "i-camera", "ink", ptT("pt_add"));
+  setIcnText($("btnPtClear"), "i-trash", "cream", ptT("pt_clear"));
+  set("ptEmpty", ptT("pt_empty").replace("{N}", String(PT_MAX)));
+  set("ptLbTier", ptT("pt_tier"));
+  set("ptHdHint", ptI("hdHint"));
+  set("ptLbFx", ptT("pt_fx"));
+  set("ptFxNote", ptT("pt_fx_note"));
+  /* the "AI" pill marks every control that acts only on the AI run */
+  [["ptLbBlur", "pt_blur"], ["ptLbFg", "pt_fg"], ["ptLbFrame", "pt_frame"],
+   ["ptLbExtras", "pt_extras"], ["ptLbRef", "pt_ref"], ["ptLbCustom", "pt_custom"]].forEach(function (pr) {
+    const e = $(pr[0]); if (!e) return;
+    e.textContent = ptT(pr[1]);
+    const pill = document.createElement("span"); pill.className = "pt-ai"; pill.textContent = "AI";
+    e.appendChild(pill);
+  });
+  set("ptFrameNote", ptT("pt_frame_note"));
+  set("ptRefNote", ptT("pt_ref_note"));
+  set("ptLbStrength", ptI("strength"));
+  setIcnText($("btnPtRef"), "i-frame", "cream", ptT("pt_ref_pick"));
+  setIcnText($("btnPtRefClear"), "i-close", "cream", ptT("pt_ref_clear"));
+  setIcnText($("btnPtFromStudio"), "i-save", "cream", ptI("fromStudio"));
+  const cu = $("ptCustom");
+  if (cu) { cu.placeholder = ptT("pt_custom_ph"); if (cu.value !== (pt.custom || "")) cu.value = pt.custom || ""; }
+  set("ptLbPrompt", ptT("pt_prompt"));
+  set("ptOutNote", ptT("pt_out_note"));
+  setIcnText($("btnPtOut"), "i-folder", "ink", ff9(PT_OUT_L));
+  setIcnText($("btnPtSaveAll"), "i-download", "cream", ff9(PT_SAVEALL_L));
+  ptPaintOut();
+}
+
+function bindPath() {
+  if (!$("ptSrcChips")) return;
+  const add = $("btnPtAdd"); if (add) add.addEventListener("click", ptAdd);
+  const em = $("ptEmpty"); if (em) em.addEventListener("click", ptAdd);
+  const clr = $("btnPtClear");
+  if (clr) clr.addEventListener("click", function () {
+    if (PT.busy) return;
+    PT.photos = []; ptMulti.on = false; ptMulti.ids = {};
+    ptSync();
+  });
+  const fs = $("btnPtFromStudio");
+  if (fs) fs.addEventListener("click", function () {
+    if (!ptSetWorkflow(PT_SRC_STUDIO)) return;
+    setStatus(ptS("stnote"), "ok");
+  });
+  const wp = $("btnPtWfPick"); if (wp) wp.addEventListener("click", ptOpenWfPick);
+  const wc = $("btnPtWfClear"); if (wc) wc.addEventListener("click", function () { ptSetWorkflow(""); });
+  const so = $("btnPtStOpen"); if (so) so.addEventListener("click", function () { switchPage("meitu"); });
+  const rf = $("btnPtRef"); if (rf) rf.addEventListener("click", ptPickRef);
+  const rc = $("btnPtRefClear"); if (rc) rc.addEventListener("click", function () { PT.ref = null; ptSync(); });
+  const cu = $("ptCustom");
+  if (cu) cu.addEventListener("input", function () { ptState().custom = cu.value || ""; ptSync(); });
+  const run = $("btnPtRun"); if (run) run.addEventListener("click", function () { ptRunAll(null); });
+  const re = $("btnPtRetryErr");
+  if (re) re.addEventListener("click", function () {
+    PT.photos.forEach(function (p) { if (p.status === "error") { p.status = "queued"; p.doneSrc = ""; } });
+    ptRunAll(null);
+  });
+  const stop = $("btnPtStop"); if (stop) stop.addEventListener("click", function () { PT.stop = true; });
+  const out = $("btnPtOut"); if (out) out.addEventListener("click", ptPickOut);
+  const sa = $("btnPtSaveAll");
+  if (sa) sa.addEventListener("click", function () {
+    ptSaveTo(PT.photos.filter(function (p) { return p.status === "done" && p.outB64; }));
+  });
+  ptPaintLabels();
+  ptSync();
+  REFRESHERS.push(function () { try { ptPaintLabels(); ptSync(); } catch (e) { } });
 }
 /* ============================================================
    MEDIA LAB — Video and VidUp (v6.46.0)
@@ -10091,20 +10723,6 @@ function bindVideo() {
   vidPaintOptions(); renderVu(); vtPaintOptions();
 }
 
-function bindPath() {
-  const add = $("btnPathAdd"); if (add) add.addEventListener("click", pathAdd);
-  const clr = $("btnPathClear");
-  if (clr) clr.addEventListener("click", function () { PATH.files = []; PATH.rows = []; PATH.done = 0; PATH.fail = 0; renderPath(); });
-  const out = $("btnPathOut"); if (out) out.addEventListener("click", pathPickOut);
-  const run = $("btnPathRun"); if (run) run.addEventListener("click", pathRun);
-  const stop = $("btnPathStop"); if (stop) stop.addEventListener("click", function () { PATH.stop = true; });
-  const intro = $("pathIntro");
-  if (intro) intro.textContent = "Many photos, one look, one run \u2014 results are saved as files.";
-  pathFillWorkflows();
-  renderPath();
-  REFRESHERS.push(function () { try { pathFillWorkflows(); renderPath(); } catch (e) { } });
-}
-
 function bindDiag() {
   bindSetup();
   bindPath(); bindVideo(); bindGallery();
@@ -10687,6 +11305,9 @@ async function saveSettings() {
       lightEquip: state.lightEquip, chains: state.chains, restMode: state.restMode,
       cRatio: state.cRatio, cVariations: state.cVariations,
       t2iModel: state.t2iModel, t2iSize: state.t2iSize,
+      /* v6.54.0 — the Path page's own settings (the app's state.pt): the look,
+         the tier, the strength dial, the effects and the source it is pointed at */
+      pt: state.pt || null,
       recentPrompts: state.recentPrompts,
       refTarget: state.refTarget, refMkOn: state.refMkOn, refHairOn: state.refHairOn,
       bgKeepFrame: state.bgKeepFrame, bgKeepSubLight: state.bgKeepSubLight, match: state.match,
@@ -10795,6 +11416,22 @@ async function loadSettings() {
       if (typeof o.cRatio === "string") state.cRatio = o.cRatio;
       if (typeof o.t2iModel === "string") state.t2iModel = o.t2iModel;
       if (typeof o.t2iSize === "string") state.t2iSize = o.t2iSize;
+      /* v6.54.0 — the Path page, restored the app's tolerant way: every field
+         is checked on its own, so a settings file written by an older panel
+         (or one whose look was later retired) still opens on a working page. */
+      if (o.pt && typeof o.pt === "object") {
+        const d = ptDef(), q = state.pt = { look: d.look, tier: d.tier, strength: d.strength, custom: d.custom, wf: d.wf,
+          fx: { blur: d.fx.blur, fg: d.fx.fg, sync: d.fx.sync, proLight: d.fx.proLight, frame: d.fx.frame } };
+        if (typeof o.pt.look === "string" && ptLookById(o.pt.look) && ptLookById(o.pt.look).id === o.pt.look) q.look = o.pt.look;
+        if (typeof o.pt.tier === "string") q.tier = o.pt.tier;
+        if (typeof o.pt.strength === "number") q.strength = o.pt.strength;
+        if (typeof o.pt.custom === "string") q.custom = o.pt.custom;
+        if (typeof o.pt.wf === "string") q.wf = o.pt.wf;
+        if (o.pt.fx && typeof o.pt.fx === "object") {
+          ["blur", "fg", "frame"].forEach(function (k) { if (typeof o.pt.fx[k] === "string") q.fx[k] = o.pt.fx[k]; });
+          ["sync", "proLight"].forEach(function (k) { if (typeof o.pt.fx[k] === "boolean") q.fx[k] = o.pt.fx[k]; });
+        }
+      }
       if (typeof o.cVariations === "number") state.cVariations = Math.max(1, Math.min(4, o.cVariations));
       sanitizeCam(o);
       if (o.refTarget === "solo" || o.refTarget === "couple" || o.refTarget === "family") state.refTarget = o.refTarget;
@@ -14095,8 +14732,10 @@ function ffHandoffRow() {
   });
   chip(ff9(FF_L.path), function () {
     const ext = mime === "image/jpeg" ? "jpg" : "png";
-    PATH.files.push({ name: "hnk-result-" + tsStamp() + "." + ext, read: function () { return Promise.resolve(b64ToBuf(b64)); } });
-    try { renderPath(); } catch (e) { }
+    PT.photos.push({ id: "p" + (++PT.seq), name: "hnk-result-" + tsStamp() + "." + ext,
+      srcDataUrl: "data:" + mime + ";base64," + b64, status: "queued",
+      lookOverride: null, outB64: null, outMime: "", doneSrc: "", file: null });
+    try { ptSync(); } catch (e) { }
     switchPage("path");
   });
 }
