@@ -113,7 +113,11 @@ const state = {
   subj: null, rhModel: "nano-banana-2", ffRatio: "", ffSize: "", ffCount: 1,
   /* the app's per-slot role sentences (null = defaults: IMAGE 1 subject,
      IMAGE 2/3 style ref) and the slot a Library pick should land in. */
-  imgRoles: null, libTargetSlot: null
+  imgRoles: null, libTargetSlot: null,
+  /* the app's Setup state: per-model RunningHub apiPath/quality overrides
+     + active model (hnk_rh_cfg), the spend ledger (hnk_rh_spend), the last
+     balance check (hnk_rh_bal) and the currency RunningHub last reported. */
+  rhCfg: { models: {}, activeModel: "" }, spend: null, rhBal: null, rhLastCur: ""
 };
 const REFRESHERS = [];
 
@@ -219,12 +223,26 @@ function ffIcon(name, tint, cls) {
   im.alt = "";
   return im;
 }
-/* app setIcnText: icon then text into any element */
-function setIcnText(el, name, tint, text) {
+/* app setIcnText: icon then text into any element. The app's <button> is
+   inline flow, so when a label wraps its sprite rides the FIRST line
+   (vertical-align -.18em); a flex button would centre the icon beside the
+   whole two-line block instead. Buttons therefore get one inner row the
+   button centres as a whole, with the icon baseline-aligned inside it. */
+/* app ICN_LEAD / stripIcn: a label that opens with an emoji ("🔄 Retry") loses
+   it when a sprite icon stands in front — the sprite IS the glyph. */
+const ICN_LEAD = /^(?:[\u2190-\u21FF\u2600-\u27BF\u2B00-\u2BFF\u3030\u25A0-\u25FF\u2B50\uFE0F\u200D]|[\uD83C-\uD83E][\uDC00-\uDFFF])+\s*/;
+function stripIcn(s) { return String(s == null ? "" : s).replace(ICN_LEAD, ""); }
+function setIcnText(el, name, tint, text, cls) {
   if (!el) return;
   el.textContent = "";
-  el.appendChild(ffIcon(name, tint));
-  el.appendChild(document.createTextNode(String(text == null ? "" : text)));
+  let host = el;
+  if (el.classList && el.classList.contains("btn")) {
+    host = document.createElement("div");
+    host.className = "btn-in";
+    el.appendChild(host);
+  }
+  host.appendChild(ffIcon(name, tint, cls));
+  host.appendChild(document.createTextNode(stripIcn(text)));
 }
 
 /* The app's own runtime copy for this page, verbatim in its nine languages;
@@ -256,12 +274,174 @@ const FF_L = {
   credits: { my: " · RH credit သုံးမယ်", en: " · uses RH credits", shn: " · ၸႂ်ႉ RH credit", kac: " · RH credit lang na", th: " · ใช้เครดิต RH", zh: " · 消耗 RH 额度", vi: " · dùng credit RH", id: " · pakai kredit RH", ms: " · guna kredit RH" },
   addonsNone: { my: "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်", en: "Nothing enabled — that’s fine too" },
   modelSet: { my: "RunningHub model → {m} ✓ — ဒီ model နဲ့ generate လုပ်ပါမယ်", en: "RunningHub model → {m} ✓ — generates will use this model" },
-  chainH: { my: "➡ ရလဒ်ကို ဆက်ပြင်မယ်", en: "➡ Continue editing this result", shn: "➡ သိုပ်ႇမႄးထတ်း ၽွၼ်းလႆႈၼႆႉ", kac: "➡ Ndai pru sumla hpe matut galaw", th: "➡ แก้ไขผลลัพธ์นี้ต่อ", zh: "➡ 继续编辑此结果", vi: "➡ Tiếp tục chỉnh sửa kết quả này", id: "➡ Lanjutkan mengedit hasil ini", ms: "➡ Terus sunting hasil ini" }
+  chainH: { my: "➡ ရလဒ်ကို ဆက်ပြင်မယ်", en: "➡ Continue editing this result", shn: "➡ သိုပ်ႇမႄးထတ်း ၽွၼ်းလႆႈၼႆႉ", kac: "➡ Ndai pru sumla hpe matut galaw", th: "➡ แก้ไขผลลัพธ์นี้ต่อ", zh: "➡ 继续编辑此结果", vi: "➡ Tiếp tục chỉnh sửa kết quả này", id: "➡ Lanjutkan mengedit hasil ini", ms: "➡ Terus sunting hasil ini" },
+  /* the app's Generate run feedback (btnGen.onclick): ticker, Stop, Retry,
+     the card's own done / stopped / timed-out lines */
+  spinGen: { my: "တိုက်ရိုက် ထုတ်နေပါတယ် — စက္ကန့် ၂၀-၆၀ လောက် စောင့်ပါ…", en: "Generating — allow 20-60 seconds…", shn: "တိုၵ်ႉႁဵတ်းယူႇ — ပႂ်ႉ 20-60 ဝိၼၢထီး…", kac: "Galaw nga ai — 20-60 second la u…", th: "กำลังสร้าง — รอ 20-60 วินาที…", zh: "正在生成 — 请等待 20-60 秒…", vi: "Đang tạo — chờ 20-60 giây…", id: "Sedang membuat — tunggu 20-60 detik…", ms: "Sedang menjana — tunggu 20-60 saat…" },
+  retry: { my: "🔄 ပြန်စမ်းမယ်", en: "🔄 Retry", shn: "🔄 ၸၢမ်းတူၺ်းၶိုၼ်း", kac: "🔄 Bai chyam yu", th: "🔄 ลองใหม่", zh: "🔄 重试", vi: "🔄 Thử lại", id: "🔄 Coba lagi", ms: "🔄 Cuba semula" },
+  stop: { my: "ရပ်မယ်", en: "Stop", shn: "ၵိုတ်း", kac: "Hkring u", th: "หยุด", zh: "停止", vi: "Dừng", id: "Berhenti", ms: "Berhenti" },
+  stopped: { my: "ရပ်လိုက်ပါပြီ", en: "Stopped", shn: "ၵိုတ်းယဝ်ႉ", kac: "Hkring sai", th: "หยุดแล้ว", zh: "已停止", vi: "Đã dừng", id: "Dihentikan", ms: "Dihentikan" },
+  timedOut: { my: "အချိန်ကုန်သွားပါပြီ — ပြန်စမ်းကြည့်ပါ", en: "Timed out — try again", shn: "ၶၢဝ်းယၢမ်းမူတ်းယဝ်ႉ — ၸၢမ်းၶိုၼ်း", kac: "Aten htum mat sai — bai chyam u", th: "หมดเวลา — ลองใหม่อีกครั้ง", zh: "已超时 — 请重试", vi: "Hết thời gian chờ — thử lại", id: "Waktu habis — coba lagi", ms: "Tamat masa — cuba lagi" },
+  done: { my: "ပြီးပါပြီ ✓", en: "Done ✓", shn: "ယဝ်ႉယဝ်ႈ ✓", kac: "Ngut sai ✓", th: "เสร็จแล้ว ✓", zh: "完成 ✓", vi: "Xong ✓", id: "Selesai ✓", ms: "Siap ✓" },
+  needAny: { my: "Prompt ဒါမှမဟုတ် ပုံ တစ်ခုခု ထည့်ပါ", en: "Add a prompt or an image first", shn: "သႂ်ႇ prompt ဢမ်ႇၼၼ် ၶႅပ်းႁၢင်ႈ", kac: "Prompt (sh) sumla langai bang u", th: "ใส่ prompt หรือรูปภาพก่อน", zh: "请先添加 prompt 或图片", vi: "Thêm prompt hoặc ảnh trước", id: "Tambahkan prompt atau gambar dulu", ms: "Tambah prompt atau imej dahulu" },
+  needKey: { my: "RunningHub key/model setup မလုပ်ရသေးပါ — Setup မှာ ဖြည့်ပါ", en: "RunningHub key/model isn't set up yet — configure it in Setup", shn: "RunningHub key/model ပႆႇလႆႈ setup — ၾၢႆႇ Setup ၵႂႃႇဖြည့်ပါ", kac: "RunningHub key/model n setup ai shi — Setup kaw galaw u", th: "ยังไม่ได้ตั้งค่า RunningHub key/model — ตั้งค่าใน Setup", zh: "尚未设置 RunningHub key/model — 请在 Setup 中配置", vi: "Chưa thiết lập RunningHub key/model — cấu hình trong Setup", id: "RunningHub key/model belum disiapkan — atur di Setup", ms: "RunningHub key/model belum disediakan — konfigurasi dalam Setup" },
+  noImage: { my: "ပုံမထွက်လာပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ", en: "No image came back — try changing the prompt and retry", shn: "ဢမ်ႇမီးၶႅပ်းႁၢင်ႈဢွၵ်ႇမႃး — ၸၢမ်းလႅၵ်ႈ prompt ၶိုၼ်းၸၢမ်း", kac: "Sumla n pru wa ai — prompt hpe galai nna bai chyam u", th: "ไม่มีรูปออกมา — ลองเปลี่ยน prompt แล้วลองใหม่", zh: "没有生成图片 — 请更改 prompt 后重试", vi: "Không có ảnh trả về — thử thay đổi prompt rồi thử lại", id: "Tidak ada gambar yang dihasilkan — coba ubah prompt dan coba lagi", ms: "Tiada imej dihasilkan — cuba tukar prompt dan cuba lagi" }
 };
 function ff9(m) {
   if (!m) return "";
   const l = state.lang;
   return m[l] || m[LANG_FB[l]] || m.en || m.my || "";
+}
+
+/* Setup page strings — the web app's own Setup copy in the panel's nine languages
+   (harvested from docs/app/index.html; the panel's I18N table stays untouched). */
+const SETUP_L = {
+  ph_home:{"my":"တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်","en":"Set up once — <em>ready whenever you are</em>","shn":"Setup ပွၵ်ႈလဵဝ် — <em>ၶႂ်ႈၸႂ်ႉမိူဝ်ႈလႂ်ၵေႃႈ ႁၢင်ႈႁႅၼ်းဝႆႉယဝ်ႉ</em>","kac":"Kalang sha setup galaw u — <em>galoi raitim hkyen da sai</em>","th":"ตั้งค่าครั้งเดียว — <em>พร้อมใช้ทุกเมื่อ</em>","zh":"设置一次 — <em>随时待命</em>","vi":"Thiết lập một lần — <em>sẵn sàng bất cứ lúc nào</em>","id":"Atur sekali — <em>siap kapan saja</em>","ms":"Sedia sekali sahaja — <em>sedia bila-bila masa</em>"},
+  ready_h:{"my":"အသင့်ဖြစ်မှု အခြေအနေ","en":"READINESS","shn":"ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း","kac":"Jin ai lam","th":"สถานะความพร้อม","zh":"就绪状态","vi":"Trạng thái sẵn sàng","id":"Status kesiapan","ms":"Status kesediaan"},
+  ready_ok:{"my":"အသင့် ✓","en":"Ready ✓","shn":"ႁၢင်ႈႁႅၼ်းယဝ်ႉ ✓","kac":"Jin sai ✓","th":"พร้อม ✓","zh":"就绪 ✓","vi":"Sẵn sàng ✓","id":"Siap ✓","ms":"Sedia ✓"},
+  ready_no:{"my":"မထည့်ရသေး","en":"Not set","shn":"ပႆႇသႂ်ႇ","kac":"Rai n bang shi","th":"ยังไม่ตั้งค่า","zh":"未设置","vi":"Chưa đặt","id":"Belum diatur","ms":"Belum ditetapkan"},
+  ready_acc:{"my":"အကောင့်","en":"Account","shn":"Account","kac":"Account","th":"บัญชี","zh":"账号","vi":"Tài khoản","id":"Akun","ms":"Akaun"},
+  ready_out:{"my":"မဝင်ရသေး","en":"Logged out","shn":"ပႆႇၶဝ်ႈ","kac":"Rai n shang shi","th":"ยังไม่เข้าสู่ระบบ","zh":"未登录","vi":"Chưa đăng nhập","id":"Belum masuk","ms":"Belum log masuk"},
+  days_short:{"my":" ရက်","en":"d","shn":" ဝၼ်း","kac":" ya","th":" วัน","zh":" 天","vi":" ngày","id":" hari","ms":" hari"},
+  acc_h2:{"my":"အကောင့်","en":"ACCOUNT","shn":"ဢၶွင်ႉ","kac":"ACCOUNT","th":"บัญชี","zh":"账户","vi":"TÀI KHOẢN","id":"AKUN","ms":"AKAUN"},
+  acc_plan_h:{"my":"အသုံးပြုခွင့် အခြေအနေ","en":"PLAN","shn":"ငဝ်းလၢႆးၸႂ်ႉတိုဝ်း","kac":"PACKAGE","th":"แพ็กเกจ","zh":"套餐状态","vi":"GÓI","id":"PAKET","ms":"PELAN"},
+  acc_panel_h:{"my":"Photoshop Panel","en":"Photoshop Panel","shn":"Photoshop Panel","kac":"Photoshop Panel","th":"Photoshop Panel","zh":"Photoshop Panel","vi":"Photoshop Panel","id":"Photoshop Panel","ms":"Photoshop Panel"},
+  dev_h:{"my":"ကျွန်ုပ်၏ စက်များ","en":"MY DEVICES","shn":"ၶိူင်ႈၸႂ်ႉၶွင်ၵဝ်","kac":"NGAI A DEVICE NI","th":"อุปกรณ์ของฉัน","zh":"我的设备","vi":"THIẾT BỊ CỦA TÔI","id":"PERANGKAT SAYA","ms":"PERANTI SAYA"},
+  aw_en:{"my":"Welcome to <b>HNK AI Studio</b>","en":"Welcome to <b>HNK AI Studio</b>","shn":"Welcome to <b>HNK AI Studio</b>","kac":"Welcome to <b>HNK AI Studio</b>","th":"Welcome to <b>HNK AI Studio</b>","zh":"Welcome to <b>HNK AI Studio</b>","vi":"Welcome to <b>HNK AI Studio</b>","id":"Welcome to <b>HNK AI Studio</b>","ms":"Welcome to <b>HNK AI Studio</b>"},
+  aw_back:{"my":"ပြန်လာတာ ကြိုဆိုပါတယ် — {N}","en":"Welcome back, {N}","shn":"ႁပ်ႉတွၼ်ႈၶိုၼ်း — {N}","kac":"Bai wa ai hpe hkap tau ga ai — {N}","th":"ยินดีต้อนรับกลับ — {N}","zh":"欢迎回来 — {N}","vi":"Chào mừng trở lại — {N}","id":"Selamat datang kembali — {N}","ms":"Selamat kembali — {N}"},
+  aw_sub:{"my":"မင်္ဂလာပါ — သင့် AI ဓာတ်ပုံစတူဒီယိုက ကြိုဆိုနေပါတယ်","en":"Your AI photo studio awaits","shn":"မႂ်ႇသုင်ၶႃႈ — ႁွင်ႈထၢႆႇႁၢင်ႈ AI ၶွင်ၸဝ်ႈပႂ်ႉႁပ်ႉယူႇ","kac":"Shakram ga ai — na a AI sumla studio gaw la taw nga ai","th":"สวัสดี — สตูดิโอภาพ AI ของคุณพร้อมแล้ว","zh":"您好 — 您的 AI 照片工作室已就绪","vi":"Xin chào — studio ảnh AI của bạn đã sẵn sàng","id":"Halo — studio foto AI Anda telah siap","ms":"Selamat datang — studio foto AI anda sedia"},
+  acc_name:{"my":"အမည်","en":"Name","shn":"ၸိုဝ်ႈ","kac":"Mying","th":"ชื่อ","zh":"姓名","vi":"Tên","id":"Nama","ms":"Nama"},
+  acc_email:{"my":"အီးမေးလ်","en":"Email","shn":"ဢီးမေးလ်","kac":"Email","th":"อีเมล","zh":"邮箱","vi":"Email","id":"Email","ms":"E-mel"},
+  acc_member_since:{"my":"အဖွဲ့ဝင် ဖြစ်သည့်နေ့ — {D}","en":"Member since {D}","shn":"ပဵၼ်လုၵ်ႈၸုမ်းမႃး — {D}","kac":"Amyu masha byin ai shani — {D}","th":"เป็นสมาชิกตั้งแต่ {D}","zh":"注册于 {D}","vi":"Thành viên từ {D}","id":"Anggota sejak {D}","ms":"Ahli sejak {D}"},
+  ava_change:{"my":"ပရိုဖိုင်ပုံ ပြောင်းမယ်","en":"Change profile photo","shn":"လႅၵ်ႈႁၢင်ႈ Profile","kac":"Profile sumla galai u","th":"เปลี่ยนรูปโปรไฟล์","zh":"更换头像","vi":"Đổi ảnh đại diện","id":"Ganti foto profil","ms":"Tukar foto profil"},
+  ava_remove:{"my":"ပုံဖြုတ်မယ်","en":"Remove photo","shn":"ထွၼ်ႁၢင်ႈ","kac":"Sumla shaw kau u","th":"ลบรูป","zh":"移除头像","vi":"Xóa ảnh","id":"Hapus foto","ms":"Buang foto"},
+  ava_saved:{"my":"ပရိုဖိုင်ပုံ သိမ်းပြီးပါပြီ","en":"Profile photo saved","shn":"သိမ်းႁၢင်ႈယဝ်ႉ","kac":"Sumla makoi da sai","th":"บันทึกรูปแล้ว","zh":"头像已保存","vi":"Đã lưu ảnh","id":"Foto tersimpan","ms":"Foto disimpan"},
+  ava_removed:{"my":"ပုံဖြုတ်ပြီးပါပြီ","en":"Photo removed","shn":"ထွၼ်ႁၢင်ႈယဝ်ႉ","kac":"Sumla shaw kau sai","th":"ลบรูปแล้ว","zh":"头像已移除","vi":"Đã xóa ảnh","id":"Foto dihapus","ms":"Foto dibuang"},
+  ava_fail:{"my":"ပုံကို သုံးလို့မရပါ — တခြားပုံတစ်ပုံ စမ်းကြည့်ပါ","en":"That image could not be used — try another one","shn":"ဢမ်ႇၸႂ်ႉႁၢင်ႈၼႆႉလႆႈ — ၶိုၼ်းလိူၵ်ႈထႅင်ႈ","kac":"Ndai sumla n mai lang ai — kaga langai chyam yu u","th":"ใช้รูปนี้ไม่ได้ — ลองรูปอื่น","zh":"无法使用该图片 — 请换一张","vi":"Không dùng được ảnh này — thử ảnh khác","id":"Gambar tidak bisa dipakai — coba yang lain","ms":"Imej tidak boleh digunakan — cuba yang lain"},
+  acc_btn_logout:{"my":"ထွက်မယ်","en":"Log out","shn":"ဢွၵ်ႇ","kac":"Pru u","th":"ออกจากระบบ","zh":"退出登录","vi":"Đăng xuất","id":"Keluar","ms":"Log keluar"},
+  acc_change_pass_h:{"my":"စကားဝှက် ပြောင်းရန်","en":"Change password","shn":"လႅၵ်ႈၶေႃႈလပ်ႉ","kac":"Password galai","th":"เปลี่ยนรหัสผ่าน","zh":"更改密码","vi":"Đổi mật khẩu","id":"Ubah kata sandi","ms":"Tukar kata laluan"},
+  acc_pass_new:{"my":"စကားဝှက် အသစ်","en":"New password","shn":"ၶေႃႈလပ်ႉမႂ်ႇ","kac":"Password namsan","th":"รหัสผ่านใหม่","zh":"新密码","vi":"Mật khẩu mới","id":"Kata sandi baru","ms":"Kata laluan baharu"},
+  btn_show:{"my":"ပြ","en":"Show","shn":"ၼႄ","kac":"Madun","th":"แสดง","zh":"显示","vi":"Hiện","id":"Lihat","ms":"Papar"},
+  acc_pass_short:{"my":"စကားဝှက် အနည်းဆုံး စာလုံး ၆ လုံး လိုပါတယ်","en":"Password must be at least 6 characters","shn":"ၶေႃႈလပ်ႉ တေလႆႈမီးတူဝ်လိၵ်ႈ 6 တူဝ်ၶိုၼ်ႈၼိူဝ်","kac":"Password gaw laika 6 hte grau ra ai","th":"รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร","zh":"密码至少需要 6 个字符","vi":"Mật khẩu phải có ít nhất 6 ký tự","id":"Kata sandi minimal 6 karakter","ms":"Kata laluan mesti sekurang-kurangnya 6 aksara"},
+  acc_pass_changed:{"my":"စကားဝှက် ပြောင်းပြီးပါပြီ ✓","en":"Password changed ✓","shn":"လႅၵ်ႈၶေႃႈလပ်ႉယဝ်ႉ ✓","kac":"Password galai ngut sai ✓","th":"เปลี่ยนรหัสผ่านแล้ว ✓","zh":"密码已更改 ✓","vi":"Đã đổi mật khẩu ✓","id":"Kata sandi diubah ✓","ms":"Kata laluan telah ditukar ✓"},
+  acc_plan_free:{"my":"Premium မဝယ်ရသေးပါ","en":"No Premium yet","shn":"ပႆႇလႆႈသိုဝ်ႉ Premium","kac":"Premium n mari shi ai","th":"ยังไม่มี Premium","zh":"尚未购买 Premium","vi":"Chưa có Premium","id":"Belum ada Premium","ms":"Belum ada Premium"},
+  acc_plan_expired:{"my":"Premium သက်တမ်း ကုန်သွားပါပြီ — အောက်မှာ ပြန်လည် သက်တမ်းတိုးနိုင်ပါတယ်","en":"Premium has expired — you can renew below","shn":"Premium မူတ်းယဝ်ႉ — တေႃႇသိုပ်ႇလႆႈတီႈတႂ်ႈၼႆႉ","kac":"Premium htum sai — npu kaw bai matut la lu ai","th":"Premium หมดอายุแล้ว — ต่ออายุได้ด้านล่าง","zh":"Premium 已到期 — 可在下方续费","vi":"Premium đã hết hạn — bạn có thể gia hạn bên dưới","id":"Premium sudah berakhir — perpanjang di bawah","ms":"Premium telah tamat — anda boleh perbaharui di bawah"},
+  acc_plan_soon:{"my":"Premium သက်တမ်း {N} ရက်အတွင်း ကုန်ပါတော့မယ် — ကြိုတင် သက်တမ်းတိုးထားပါ","en":"Premium expires in {N} days — renew now","shn":"Premium တေမူတ်းၼႂ်း {N} ဝၼ်း — တေႃႇသိုပ်ႇဝႆႉၵွၼ်ႇ","kac":"Premium gaw {N} ya hta htum na — ya matut la u","th":"Premium จะหมดอายุใน {N} วัน — ต่ออายุตอนนี้","zh":"Premium 将在 {N} 天后到期 — 请提前续费","vi":"Premium hết hạn sau {N} ngày — gia hạn ngay","id":"Premium berakhir dalam {N} hari — perpanjang sekarang","ms":"Premium tamat dalam {N} hari — perbaharui sekarang"},
+  acc_plan_active:{"my":"Premium သုံးနေဆဲ — {N} ရက် ကျန်ပါသေးတယ်","en":"Premium active — {N} days left","shn":"Premium ၸႂ်ႉယူႇ — ၵိုတ်း {N} ဝၼ်း","kac":"Premium galaw nga ai — {N} ya ngam ai","th":"Premium ใช้งานอยู่ — เหลือ {N} วัน","zh":"Premium 使用中 — 剩余 {N} 天","vi":"Premium đang hoạt động — còn {N} ngày","id":"Premium aktif — sisa {N} hari","ms":"Premium aktif — tinggal {N} hari"},
+  acc_plan_until:{"my":"{D} ထိ","en":"Until {D}","shn":"တေႃႇထိုင် {D}","kac":"{D} du hkra","th":"ถึง {D}","zh":"有效期至 {D}","vi":"Đến {D}","id":"Sampai {D}","ms":"Sehingga {D}"},
+  acc_pending:{"my":"သင့် account ကို HNK က စစ်ဆေးနေပါသည်။ ခွင့်ပြုပြီးပါက ဤနေရာတွင် ပြပါမည်။","en":"HNK is reviewing your account. Once it is approved this is where it will show.","shn":"HNK တိုၵ်ႉတူၺ်း account ၸဝ်ႈၵဝ်ႇယူႇ။ ပေႃးၶႂၢင်းပၼ်ယဝ်ႉ တေၼႄတီႈၼႆႈ။","kac":"HNK nang a account hpe yu nga ai. Hkap la ngut jang ndai kaw madun na.","th":"HNK กำลังตรวจสอบบัญชีของคุณ เมื่ออนุมัติแล้วจะแสดงที่นี่","zh":"HNK 正在审核你的账户。通过后会显示在这里。","vi":"HNK đang xét duyệt tài khoản của bạn. Sau khi được duyệt sẽ hiển thị ở đây.","id":"HNK sedang meninjau akun Anda. Setelah disetujui akan tampil di sini.","ms":"HNK sedang menyemak akaun anda. Setelah diluluskan ia akan dipaparkan di sini."},
+  acc_unreachable:{"my":"အကောင့် server နဲ့ ချိတ်ဆက်လို့ မရသေးပါ — app ကတော့ ပုံမှန် သုံးလို့ရပါတယ်","en":"Can't reach the account service right now — the app still works as normal","shn":"ၵပ်းသိုပ်ႇ server ဢၶွင်ႉ ဢမ်ႇလႆႈ — app တႄႉ ၸႂ်ႉလႆႈပဵၼ်ပိူင်ၵဝ်ႇ","kac":"Account server hte n hkrum lu ai — app gaw mi na zawn galaw lu ai","th":"เชื่อมต่อบริการบัญชีไม่ได้ตอนนี้ — แอปยังใช้งานได้ตามปกติ","zh":"暂时连不上账户服务 — 应用仍可正常使用","vi":"Hiện chưa kết nối được dịch vụ tài khoản — ứng dụng vẫn dùng bình thường","id":"Layanan akun belum bisa dihubungi — aplikasi tetap berjalan normal","ms":"Perkhidmatan akaun tidak dapat dihubungi — apl masih berfungsi seperti biasa"},
+  acc_offline:{"my":"အင်တာနက် မရှိပါ — နောက်ဆုံး သိထားတဲ့ အခြေအနေကို ပြထားပါတယ်","en":"Offline — showing your last known status","shn":"ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ၼႄဝႆႉငဝ်းလၢႆးလိုၼ်းသုတ်း","kac":"Internet n nga ai — hpang jahtum chye da ai lam hpe madun ai","th":"ออฟไลน์ — แสดงสถานะล่าสุดที่ทราบ","zh":"离线 — 显示上次已知的状态","vi":"Ngoại tuyến — hiển thị trạng thái đã biết gần nhất","id":"Offline — menampilkan status terakhir yang diketahui","ms":"Luar talian — memaparkan status terakhir yang diketahui"},
+  acc_panel_p:{"my":"Premium plan သက်တမ်းရှိကြောင်း စစ်ပြီးပါပြီ။ Photoshop 24.2+ အတွက် Panel ကို ဒီမှာရယူနိုင်ပါတယ်။","en":"Your active Premium plan is verified. Get the Panel for Photoshop 24.2+ here.","shn":"ၵူတ်ႇထတ်း Premium plan ဢၼ်တိုၵ်ႉၸႂ်ႉလႆႈယဝ်ႉ။ ဢဝ် Panel တႃႇ Photoshop 24.2+ တီႈၼႆႈ။","kac":"Active Premium plan hpe chyeju dum sai. Photoshop 24.2+ a matu Panel hpe ndai kaw la lu ai.","th":"ตรวจสอบแผน Premium ที่ใช้งานอยู่แล้ว รับ Panel สำหรับ Photoshop 24.2+ ได้ที่นี่","zh":"有效的 Premium 套餐已验证。可在此获取适用于 Photoshop 24.2+ 的 Panel。","vi":"Gói Premium đang hoạt động đã được xác minh. Nhận Panel cho Photoshop 24.2+ tại đây.","id":"Paket Premium aktif Anda telah diverifikasi. Dapatkan Panel untuk Photoshop 24.2+ di sini.","ms":"Pelan Premium aktif anda telah disahkan. Dapatkan Panel untuk Photoshop 24.2+ di sini."},
+  acc_panel_btn:{"my":"Panel ccx ရယူမယ်","en":"Download Panel ccx","shn":"ဢဝ် Panel ccx","kac":"Panel ccx la u","th":"ดาวน์โหลด Panel ccx","zh":"下载 Panel ccx","vi":"Tải Panel ccx","id":"Unduh Panel ccx","ms":"Muat turun Panel ccx"},
+  acc_panel_dl:{"my":"Panel ccx v{V} ရယူမယ်","en":"Download Panel ccx v{V}","shn":"ဢဝ် Panel ccx v{V}","kac":"Panel ccx v{V} la u","th":"ดาวน์โหลด Panel ccx v{V}","zh":"下载 Panel ccx v{V}","vi":"Tải Panel ccx v{V}","id":"Unduh Panel ccx v{V}","ms":"Muat turun Panel ccx v{V}"},
+  dev_count:{"my":"စက် {M} လုံးအနက် {N} လုံး သုံးထားပါတယ်","en":"{N} of {M} devices used","shn":"ၸႂ်ႉဝႆႉ {N} လုၵ်ႈ ၼႂ်းၶိူင်ႈ {M} လုၵ်ႈ","kac":"Device {M} kaw na {N} lang da sai","th":"ใช้ไปแล้ว {N} จาก {M} อุปกรณ์","zh":"已使用 {M} 台中的 {N} 台设备","vi":"Đã dùng {N} trong {M} thiết bị","id":"{N} dari {M} perangkat terpakai","ms":"{N} daripada {M} peranti digunakan"},
+  dev_none:{"my":"စက် တစ်လုံးမှ မမှတ်ပုံတင်ရသေးပါ","en":"No devices registered yet","shn":"ပႆႇမီးၶိူင်ႈဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ","kac":"Device langai mung n mahtai da shi ai","th":"ยังไม่มีอุปกรณ์ที่ลงทะเบียน","zh":"尚未注册任何设备","vi":"Chưa có thiết bị nào được đăng ký","id":"Belum ada perangkat terdaftar","ms":"Belum ada peranti didaftarkan"},
+  dev_this:{"my":"ဒီစက်","en":"This device","shn":"ၶိူင်ႈဢၼ်ၼႆႉ","kac":"Ndai device","th":"อุปกรณ์นี้","zh":"当前设备","vi":"Thiết bị này","id":"Perangkat ini","ms":"Peranti ini"},
+  dev_limit:{"my":"စက် ကန့်သတ်ချက် ပြည့်နေပါပြီ — သင့်အကောင့်မှာ စက် {M} လုံးပဲ သုံးခွင့် ရှိပါတယ်။ အောက်က စာရင်းထဲက မသုံးတော့တဲ့ စက်တစ်လုံးကို ဖယ်ရှားပါ၊ ဒါမှမဟုတ် စက် ထပ်တိုးဖို့ ဝယ်ပါ","en":"Device limit reached — your account allows {M} devices. Remove an old device from the list below, or buy an extra device slot.","shn":"ၶိူင်ႈတဵမ်ယဝ်ႉ — ဢၶွင်ႉသူ ၸႂ်ႉလႆႈၶိူင်ႈ {M} လုၵ်ႈၵူၺ်း။ ဢဝ်ၶိူင်ႈၵဝ်ႇဢၼ်ဢမ်ႇၸႂ်ႉယဝ်ႉ ၼႂ်းသဵၼ်ႈမၢႆတႂ်ႈၼႆႉဢွၵ်ႇ ဢမ်ႇၼၼ် သိုဝ်ႉၶိူင်ႈထႅမ်ထႅင်ႈ။","kac":"Device tup sai — na a account gaw device {M} sha lang lu ai. Npu na list kaw na device dingga langai hpe shale kau u, n rai yang device shara langai mari u.","th":"ถึงขีดจำกัดอุปกรณ์แล้ว — บัญชีของคุณใช้ได้ {M} เครื่อง นำเครื่องเก่าออกจากรายการด้านล่าง หรือซื้อสล็อตอุปกรณ์เพิ่ม","zh":"设备数量已满 — 你的账户最多 {M} 台设备。请在下方列表移除旧设备，或购买额外设备名额。","vi":"Đã đạt giới hạn thiết bị — tài khoản của bạn cho phép {M} thiết bị. Hãy gỡ một thiết bị cũ trong danh sách bên dưới, hoặc mua thêm một suất thiết bị.","id":"Batas perangkat tercapai — akun Anda mengizinkan {M} perangkat. Hapus perangkat lama dari daftar di bawah, atau beli slot perangkat tambahan.","ms":"Had peranti telah dicapai — akaun anda membenarkan {M} peranti. Buang peranti lama daripada senarai di bawah, atau beli slot peranti tambahan."},
+  rh_opt:{"my":"(ချန်ထားလို့ရ)","en":"(optional)","shn":"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)","kac":"(n ra ai)","th":"(ไม่บังคับ)","zh":"（可选）","vi":"(tùy chọn)","id":"(opsional)","ms":"(pilihan)"},
+  rh_intro:{"my":"RunningHub Enterprise-Shared key ကို paste ပြီး Save & Verify နှိပ်ရုံပါပဲ — Nano Banana 2 က key ချက်ချင်း အလိုအလျောက် အသုံးပြုလို့ရပါပြီ (webappId/node id ထည့်စရာမလိုပါ)။ Model တခြားများ ဆက်ချိတ်ချင်ရင် endpoint path ကို RunningHub API docs ကနေ ကူးထည့်ရုံပါပဲ — browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ၊ ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။","en":"Paste your RunningHub Enterprise-Shared key and tap Save & Verify — Nano Banana 2 works instantly with just the key (no webappId/node id needed). To add other models, paste the endpoint path from RunningHub's API docs. Everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.","shn":"Paste RunningHub Enterprise-Shared key သေ ၼဵၵ်း Save & Verify ၵူၺ်း — Nano Banana 2 ၸႂ်ႉလႆႈၵမ်းလဵဝ်လူၺ်ႈ key ဢၼ်လဵဝ် (ဢမ်ႇလူဝ်ႇ webappId/node id)။ ၶႂ်ႈသႂ်ႇ model တၢင်ႇဢၼ်ၼႆ ၶႅတ်ႉ endpoint path တီႈ RunningHub API docs သေမႃးပလၢတ်ႈ။ ၵူႈလွင်ႈသိမ်းဝႆႉၼႂ်း localStorage ၶွင် browser ၼႆႉၵူၺ်း — သူင်ႇၵမ်းသိုဝ်ႈထိုင် RunningHub၊ ဢမ်ႇလတ်းၽၢၼ်ႇ server လႂ်သေဢၼ်။","kac":"Na a RunningHub Enterprise-Shared key hpe paste nna Save & Verify dip u — Nano Banana 2 gaw key sha hte kalang ta galaw mai ai (webappId/node id n ra ai). Kaga model bang mayu yang RunningHub API docs kaw na endpoint path hpe copy paste u. Yawng gaw ndai browser a localStorage hta sha rawng nga ai — RunningHub de ding hkra shagun ai, server langai mi hku mung n lai ai.","th":"วางคีย์ RunningHub Enterprise-Shared แล้วกด Save & Verify — Nano Banana 2 ใช้งานได้ทันทีด้วย key อย่างเดียว (ไม่ต้องใส่ webappId/node id) หากต้องการเพิ่มโมเดลอื่น ให้คัดลอก endpoint path จากเอกสาร API ของ RunningHub มาวาง ทุกอย่างเก็บอยู่ใน localStorage ของเบราว์เซอร์นี้และส่งตรงถึง RunningHub เท่านั้น ไม่ผ่านเซิร์ฟเวอร์ใด ๆ","zh":"粘贴 RunningHub Enterprise-Shared key 并点击 Save & Verify — Nano Banana 2 只需 key 即可立即使用（无需 webappId/node id）。要接入其他模型，从 RunningHub API 文档复制 endpoint path 粘贴即可。一切只保存在本浏览器的 localStorage 中，并直接发送给 RunningHub，绝不经过任何服务器。","vi":"Dán RunningHub Enterprise-Shared key và bấm Save & Verify — Nano Banana 2 hoạt động ngay chỉ với key (không cần webappId/node id). Muốn thêm model khác, dán endpoint path từ tài liệu API của RunningHub. Mọi thứ chỉ nằm trong localStorage của trình duyệt này và gửi thẳng tới RunningHub, không bao giờ qua máy chủ nào.","id":"Tempel RunningHub Enterprise-Shared key lalu tekan Save & Verify — Nano Banana 2 langsung berfungsi hanya dengan key (tanpa webappId/node id). Untuk menambah model lain, tempel endpoint path dari dokumen API RunningHub. Semuanya hanya tersimpan di localStorage browser ini dan dikirim langsung ke RunningHub, tidak pernah lewat server mana pun.","ms":"Tampal RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 terus berfungsi hanya dengan key (tiada webappId/node id diperlukan). Untuk menambah model lain, tampal laluan endpoint dari dokumen API RunningHub. Semuanya kekal dalam localStorage pelayar ini dan dihantar terus ke RunningHub, tidak melalui mana-mana pelayan."},
+  rh_save_verify:{"my":"Save & Verify","en":"Save & Verify","shn":"Save & Verify","kac":"Save & Verify","th":"บันทึกและยืนยัน","zh":"保存并验证","vi":"Lưu & Xác minh","id":"Simpan & Verifikasi","ms":"Simpan & Sahkan"},
+  rh_enter_key:{"my":"key ထည့်ပါ","en":"Enter a key","shn":"သႂ်ႇ key","kac":"key jaw u","th":"กรอก key","zh":"请输入 key","vi":"Nhập key","id":"Masukkan key","ms":"Masukkan key"},
+  rh_checking:{"my":"စစ်နေတယ်…","en":"Checking…","shn":"တွပ်ႇထၢမ်ဝႆႉ…","kac":"Yu chyam nga ai…","th":"กำลังตรวจสอบ…","zh":"检查中…","vi":"Đang kiểm tra…","id":"Memeriksa…","ms":"Menyemak…"},
+  rh_verified:{"my":"Key အလုပ်လုပ်ပါတယ် ✓","en":"Key verified ✓","shn":"Key ၸႂ်ႉလႆႈ ✓","kac":"Key teng ai ✓","th":"Key ใช้งานได้ ✓","zh":"Key 已验证 ✓","vi":"Key hợp lệ ✓","id":"Key terverifikasi ✓","ms":"Key disahkan ✓"},
+  rh_neterr:{"my":"Network error — ပြန်စမ်းပါ","en":"Network error — try again","shn":"Network error — ၸၢမ်းၶိုၼ်း","kac":"Network error — bai chyam u","th":"Network error — ลองใหม่","zh":"网络错误 — 请重试","vi":"Lỗi mạng — thử lại","id":"Error jaringan — coba lagi","ms":"Ralat rangkaian — cuba lagi"},
+  rh_badkey:{"my":"RunningHub key မှားနေပါတယ် — Setup မှာ ပြန်စစ်ပါ","en":"RunningHub key is invalid — recheck it in Setup","shn":"RunningHub key ၽိတ်းယူႇ — ၾၢႆႇ Setup ၵႂႃႇပွင်ႇတူၺ်း","kac":"RunningHub key n teng ai — Setup kaw bai yu chyam u","th":"RunningHub key ไม่ถูกต้อง — ตรวจสอบใน Setup","zh":"RunningHub key 无效 — 请在 Setup 中重新检查","vi":"RunningHub key không hợp lệ — kiểm tra lại trong Setup","id":"RunningHub key tidak valid — periksa lagi di Setup","ms":"RunningHub key tidak sah — semak semula dalam Setup"},
+  rh_err:{"my":"RunningHub error — ပြန်စမ်းကြည့်ပါ ({S})","en":"RunningHub error — try again ({S})","shn":"RunningHub error — ၸၢမ်းၶိုၼ်း ({S})","kac":"RunningHub error — bai chyam u ({S})","th":"RunningHub error — ลองใหม่ ({S})","zh":"RunningHub 错误 — 请重试 ({S})","vi":"Lỗi RunningHub — thử lại ({S})","id":"Error RunningHub — coba lagi ({S})","ms":"Ralat RunningHub — cuba lagi ({S})"},
+  rh_adv:{"my":"Model ချိန်ညှိမှု (Advanced)","en":"Model Config (Advanced)","shn":"Model Config (Advanced)","kac":"Model Config (Advanced)","th":"ตั้งค่าโมเดล (ขั้นสูง)","zh":"模型配置（高级）","vi":"Cấu hình model (Nâng cao)","id":"Konfigurasi model (Lanjutan)","ms":"Konfigurasi model (Lanjutan)"},
+  rh_sample:{"my":"Endpoint path ကို RunningHub API docs (model page ရဲ့ \"Endpoint:\" line) ကနေ copy ပြီး ဒီမှာ paste ပါ — ✓ ပါတဲ့ model တွေက built-in ဖြစ်လို့ ဘာမှ ဖြည့်စရာမလိုပါ။","en":"Copy the endpoint path from RunningHub's API docs (the \"Endpoint:\" line on the model's page) and paste it here — models marked ✓ already have a built-in default, nothing to fill in.","shn":"ၶႅတ်ႉ endpoint path တီႈ RunningHub API docs (ထႅဝ် \"Endpoint:\" ၼိူဝ်ၼႃႈ model) သေ ပလၢတ်ႈတီႈၼႆႈ — model ဢၼ်မီး ✓ ၼၼ်ႉ မီး built-in ဝႆႉယဝ်ႉ ဢမ်ႇလူဝ်ႇတႅမ်ႈသင်ထႅင်ႈ။","kac":"RunningHub API docs (model page a \"Endpoint:\" hteng) kaw na endpoint path hpe copy nna ndai kaw paste u — ✓ lawm ai model ni gaw built-in nga sai majaw hpa n ra ai.","th":"คัดลอก endpoint path จากเอกสาร API ของ RunningHub (บรรทัด \"Endpoint:\" บนหน้าโมเดล) มาวางที่นี่ — โมเดลที่มี ✓ มีค่าเริ่มต้นในตัวแล้ว ไม่ต้องกรอกอะไรเพิ่ม","zh":"从 RunningHub API 文档（模型页面的 \"Endpoint:\" 一行）复制端点路径粘贴到这里 — 带 ✓ 的模型已有内置默认值，无需填写。","vi":"Sao chép endpoint path từ tài liệu API của RunningHub (dòng \"Endpoint:\" trên trang model) và dán vào đây — model có dấu ✓ đã có sẵn mặc định, không cần điền gì.","id":"Salin endpoint path dari dokumen API RunningHub (baris \"Endpoint:\" di halaman model) dan tempel di sini — model bertanda ✓ sudah punya bawaan, tidak perlu diisi.","ms":"Salin laluan endpoint dari dokumen API RunningHub (baris \"Endpoint:\" pada halaman model) dan tampal di sini — model bertanda ✓ sudah ada lalai terbina, tiada apa perlu diisi."},
+  rh_save_model:{"my":"ဒီ Model ကို Save","en":"Save this model","shn":"Save Model ၼႆႉ","kac":"Ndai model hpe Save","th":"บันทึกโมเดลนี้","zh":"保存该模型","vi":"Lưu model này","id":"Simpan model ini","ms":"Simpan model ini"},
+  rh_none:{"my":"model တစ်ခုမှ configure မရသေးပါ","en":"No models configured yet","shn":"model တစ်ခုမွ ဢမ်ႇပႆႇ configure","kac":"Model langai mung n configure shi shi ai","th":"ยังไม่มีการตั้งค่าโมเดลใด","zh":"尚未配置任何模型","vi":"Chưa cấu hình model nào","id":"Belum ada model yang dikonfigurasi","ms":"Belum ada model dikonfigurasi"},
+  rh_chip_title:{"my":"Generate မှာ ဒီ model သုံးဖို့ နှိပ်ပါ","en":"Tap to use this model for Generate","shn":"ၼဵၵ်းသေ ၸႂ်ႉ model ၼႆႉ","kac":"Generate hta ndai model hpe lang na dip u","th":"แตะเพื่อใช้โมเดลนี้ตอน Generate","zh":"点击以在生成时使用此模型","vi":"Chạm để dùng model này khi Generate","id":"Ketuk untuk memakai model ini saat Generate","ms":"Ketik untuk guna model ini semasa Generate"},
+  rh_ep_req:{"my":"endpoint path ဖြည့်ပါ","en":"Endpoint path is required","shn":"လူဝ်ႇ endpoint path","kac":"endpoint path ra ai","th":"ต้องกรอก endpoint path","zh":"需要 endpoint path","vi":"Cần endpoint path","id":"endpoint path wajib diisi","ms":"laluan endpoint diperlukan"},
+  rh_saved:{"my":"Save ပြီးပါပြီ ✓","en":"Saved ✓","shn":"Save ယဝ်ႉ ✓","kac":"Save byin sai ✓","th":"บันทึกแล้ว ✓","zh":"已保存 ✓","vi":"Đã lưu ✓","id":"Tersimpan ✓","ms":"Disimpan ✓"},
+  rh_remove:{"my":"Key ဖျက်မယ်","en":"Remove key","shn":"မွတ်ႇ key","kac":"Key shamat u","th":"ลบคีย์","zh":"移除密钥","vi":"Xóa khóa","id":"Hapus kunci","ms":"Buang kunci"},
+  rh_remove_confirm:{"my":"ဒီ key ကို browser ထဲက ဖျက်မယ် — သေချာလား?","en":"Remove this key from the browser?","shn":"မွတ်ႇ key ၼႆႉ?","kac":"Ndai key hpe shamat na?","th":"ลบคีย์นี้?","zh":"移除此密钥？","vi":"Xóa khóa này?","id":"Hapus kunci ini?","ms":"Buang kunci ini?"},
+  rh_q_none:{"my":"quality: မထည့် (default)","en":"quality: none (default)","shn":"quality: ဢမ်ႇသႂ်ႇ (default)","kac":"quality: n bang (default)","th":"quality: ไม่ใส่ (ค่าเริ่มต้น)","zh":"quality: 不设置（默认）","vi":"quality: không đặt (mặc định)","id":"quality: tidak diatur (default)","ms":"quality: tiada (lalai)"},
+  rh_key_ph:{"my":"RunningHub Enterprise-Shared Key","en":"RunningHub Enterprise-Shared Key","shn":"RunningHub Enterprise-Shared Key","kac":"RunningHub Enterprise-Shared Key","th":"RunningHub Enterprise-Shared Key","zh":"RunningHub Enterprise-Shared Key","vi":"RunningHub Enterprise-Shared Key","id":"RunningHub Enterprise-Shared Key","ms":"RunningHub Enterprise-Shared Key"},
+  rh_path_ph:{"my":"rhart-image-n-g31-flash/image-to-image","en":"rhart-image-n-g31-flash/image-to-image","shn":"rhart-image-n-g31-flash/image-to-image","kac":"rhart-image-n-g31-flash/image-to-image","th":"rhart-image-n-g31-flash/image-to-image","zh":"rhart-image-n-g31-flash/image-to-image","vi":"rhart-image-n-g31-flash/image-to-image","id":"rhart-image-n-g31-flash/image-to-image","ms":"rhart-image-n-g31-flash/image-to-image"},
+  rh_q_low:{"my":"quality: low","en":"quality: low","shn":"quality: low","kac":"quality: low","th":"quality: low","zh":"quality: low","vi":"quality: low","id":"quality: low","ms":"quality: low"},
+  rh_q_medium:{"my":"quality: medium","en":"quality: medium","shn":"quality: medium","kac":"quality: medium","th":"quality: medium","zh":"quality: medium","vi":"quality: medium","id":"quality: medium","ms":"quality: medium"},
+  rh_q_high:{"my":"quality: high","en":"quality: high","shn":"quality: high","kac":"quality: high","th":"quality: high","zh":"quality: high","vi":"quality: high","id":"quality: high","ms":"quality: high"},
+  st_key_noconn:{"my":"ချိတ်ဆက်မရ — internet စစ်ပါ","en":"Couldn't connect — check your internet","shn":"ၽိတ်းၽၢတ်ႇဢမ်ႇလႆႈ — တွပ်ႇထၢမ် internet တူၺ်း","kac":"N grau connect — internet yu chyam u","th":"เชื่อมต่อไม่ได้ — ตรวจสอบอินเทอร์เน็ต","zh":"无法连接 — 请检查网络","vi":"Không thể kết nối — kiểm tra internet","id":"Tidak dapat terhubung — periksa internet Anda","ms":"Tidak dapat berhubung — semak internet anda"},
+  money_h:{"my":"ကုန်ကျစရိတ်နှင့် လက်ကျန်ငွေ","en":"COST & BALANCE","shn":"ၵႃႈၸႂ်ႉၸၢႆႇ လႄႈ ငိုၼ်းလိူဝ်","kac":"Manu hte ngun ngam","th":"ค่าใช้จ่ายและยอดคงเหลือ","zh":"花费与余额","vi":"CHI PHÍ & SỐ DƯ","id":"BIAYA & SALDO","ms":"KOS & BAKI"},
+  money_intro:{"my":"GENERATE တစ်ခါလုပ်တိုင်း RunningHub က ဖြတ်တဲ့ ငွေအမှန်ကို မှတ်ထားပါတယ် — ခန့်မှန်းချက် မဟုတ်ပါ။ လက်ကျန်ငွေကတော့ RunningHub အကောင့်ကနေ တိုက်ရိုက် ဆွဲယူတာပါ။","en":"Every GENERATE is booked at the amount RunningHub actually charged — not an estimate. The balance is read straight from your RunningHub account.","shn":"GENERATE ၵူႈပွၵ်ႈ RunningHub ဢဝ်ငိုၼ်းၵႃႈႁိုဝ် မၢႆဝႆႉတႄႉတႄႉ — ဢမ်ႇၸႂ်ႈလၢမ်း","kac":"GENERATE langai mi hpe RunningHub la ai gumhpraw teng teng hpe mahkrum da ai — myit yu ai n re","th":"ทุกครั้งที่ GENERATE จะบันทึกยอดที่ RunningHub เก็บจริง ไม่ใช่ค่าประมาณ ยอดคงเหลืออ่านจากบัญชี RunningHub โดยตรง","zh":"每次 GENERATE 都按 RunningHub 实际扣费记账，不是估算。余额直接从你的 RunningHub 账户读取。","vi":"Mỗi lần GENERATE được ghi sổ theo số tiền RunningHub thực sự thu — không phải ước tính. Số dư đọc thẳng từ tài khoản RunningHub.","id":"Setiap GENERATE dicatat sebesar yang benar-benar ditagih RunningHub — bukan perkiraan. Saldo dibaca langsung dari akun RunningHub Anda.","ms":"Setiap GENERATE direkod pada jumlah yang RunningHub benar-benar caj — bukan anggaran. Baki dibaca terus daripada akaun RunningHub anda."},
+  money_bal:{"my":"လက်ကျန်","en":"Balance","shn":"ငိုၼ်းလိူဝ်","kac":"Ngam ai","th":"คงเหลือ","zh":"余额","vi":"Số dư","id":"Saldo","ms":"Baki"},
+  money_today:{"my":"ဒီနေ့ ကုန်","en":"Spent today","shn":"မိူဝ်ႈၼႆႉ ၸႂ်ႉ","kac":"Dai ni jaw ai","th":"ใช้วันนี้","zh":"今日花费","vi":"Chi hôm nay","id":"Terpakai hari ini","ms":"Belanja hari ini"},
+  money_month:{"my":"ဒီလ ကုန်","en":"Spent this month","shn":"လိူၼ်ၼႆႉ ၸႂ်ႉ","kac":"Dai shata jaw ai","th":"ใช้เดือนนี้","zh":"本月花费","vi":"Chi tháng này","id":"Terpakai bulan ini","ms":"Belanja bulan ini"},
+  money_runs:{"my":"GENERATE အကြိမ်","en":"Generates","shn":"GENERATE ပွၵ်ႈ","kac":"Generate lang","th":"จำนวนครั้ง","zh":"生成次数","vi":"Lượt tạo","id":"Jumlah generate","ms":"Bilangan generate"},
+  money_refresh:{"my":"လက်ကျန်ငွေ စစ်မယ်","en":"Check balance","shn":"တူၺ်းငိုၼ်းလိူဝ်","kac":"Ngun ngam yu na","th":"ตรวจยอดคงเหลือ","zh":"查询余额","vi":"Kiểm tra số dư","id":"Cek saldo","ms":"Semak baki"},
+  money_runs_t:{"my":"GENERATE တစ်ခုချင်းစီရဲ့ ကုန်ကျစရိတ်","en":"What each GENERATE cost","shn":"GENERATE ၽႂ်မၼ်း ၵႃႈႁိုဝ်","kac":"Generate langai hpra manu","th":"ค่าใช้จ่ายของแต่ละครั้ง","zh":"每次生成的花费","vi":"Chi phí từng lần tạo","id":"Biaya tiap generate","ms":"Kos setiap generate"},
+  money_never:{"my":"မစစ်ရသေးပါ","en":"never checked","shn":"ပႆႇလႆႈတူၺ်း","kac":"n yu shi ai","th":"ยังไม่เคยตรวจ","zh":"尚未查询","vi":"chưa kiểm tra","id":"belum dicek","ms":"belum disemak"},
+  money_checked:{"my":"နောက်ဆုံးစစ်ချိန် — {T}","en":"last checked {T}","shn":"တူၺ်းလိုၼ်းသုတ်း — {T}","kac":"hpang jahtum yu ai {T}","th":"ตรวจล่าสุด {T}","zh":"最近查询 {T}","vi":"kiểm tra lần cuối {T}","id":"terakhir dicek {T}","ms":"disemak {T}"},
+  money_queue:{"my":"အလုပ်လုပ်နေဆဲ {R} · စောင့်နေ {Q} · တစ်ပြိုင်နက် {L}","en":"{R} running · {Q} queued · limit {L}","shn":"ႁဵတ်းယူႇ {R} · ပႂ်ႉ {Q} · ႁူမ်ႈ {L}","kac":"{R} galaw nga · {Q} la nga · limit {L}","th":"กำลังทำ {R} · รอคิว {Q} · จำกัด {L}","zh":"运行中 {R} · 排队 {Q} · 并发上限 {L}","vi":"{R} đang chạy · {Q} chờ · giới hạn {L}","id":"{R} berjalan · {Q} antre · batas {L}","ms":"{R} berjalan · {Q} beratur · had {L}"},
+  money_fail:{"my":"လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — RunningHub က browser ကနေ တိုက်ရိုက်မေးတာကို ပိတ်ထားနိုင်ပါတယ်။ အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။","en":"Could not read the balance — RunningHub may block this call from a browser. The ledger below is still exact.","shn":"ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — RunningHub ဢမ်ႇပၼ်ထၢမ်တီႈ browser။ မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ","kac":"Ngun ngam n la lu — RunningHub gaw browser kaw na san ai hpe pat na re. Npu na mahkrum gaw teng nga ai","th":"อ่านยอดคงเหลือไม่ได้ — RunningHub อาจบล็อกการเรียกจากเบราว์เซอร์ แต่บันทึกด้านล่างยังแม่นยำ","zh":"无法读取余额 — RunningHub 可能禁止浏览器直接调用。下方的账本仍然准确。","vi":"Không đọc được số dư — RunningHub có thể chặn gọi từ trình duyệt. Sổ chi bên dưới vẫn chính xác.","id":"Saldo tidak terbaca — RunningHub mungkin memblokir panggilan dari browser. Buku di bawah tetap akurat.","ms":"Baki tidak dapat dibaca — RunningHub mungkin menyekat panggilan dari pelayar. Lejar di bawah tetap tepat."},
+  money_nokey:{"my":"RunningHub key ထည့်ပြီးမှ လက်ကျန်ငွေ စစ်လို့ရပါမယ်။","en":"Save a RunningHub key first, then the balance can be read.","shn":"သႂ်ႇ RunningHub key ဢွၼ်တၢင်း ၸင်ႇတူၺ်းငိုၼ်းလိူဝ်လႆႈ","kac":"RunningHub key bang ngut jang ngun ngam yu lu na","th":"บันทึกคีย์ RunningHub ก่อน จึงจะอ่านยอดคงเหลือได้","zh":"先保存 RunningHub 密钥，才能查询余额。","vi":"Lưu khóa RunningHub trước thì mới đọc được số dư.","id":"Simpan kunci RunningHub dulu, baru saldo bisa dibaca.","ms":"Simpan kunci RunningHub dahulu, barulah baki boleh dibaca."},
+  money_empty:{"my":"RunningHub GENERATE မလုပ်ရသေးပါ — တစ်ခါလုပ်တာနဲ့ ဒီမှာ ကုန်ကျစရိတ် ပေါ်လာပါမယ်။","en":"No RunningHub GENERATE yet — the first one will show its cost here.","shn":"ပႆႇလႆႈ GENERATE — ပွၵ်ႈဢွၼ်တၢင်း တေပေႃႇတီႈၼႆႈ","kac":"GENERATE n galaw shi ai — langai galaw jang ndai kaw pru na","th":"ยังไม่มี GENERATE — ครั้งแรกจะแสดงค่าใช้จ่ายที่นี่","zh":"还没有 RunningHub 生成 — 第一次的花费会显示在这里。","vi":"Chưa có lần GENERATE nào — lần đầu sẽ hiện chi phí ở đây.","id":"Belum ada GENERATE — yang pertama akan tampil biayanya di sini.","ms":"Belum ada GENERATE — yang pertama akan papar kosnya di sini."},
+  money_unknown:{"my":"ကုန်ကျစရိတ် မပြပါ","en":"cost not reported","shn":"ဢမ်ႇပွင်ႇၵႃႈ","kac":"manu n tsun ai","th":"ไม่ได้แจ้งค่าใช้จ่าย","zh":"未报告费用","vi":"không báo chi phí","id":"biaya tidak dilaporkan","ms":"kos tidak dilaporkan"},
+  money_trim:{"my":"အဟောင်း {N} ခုကို စာရင်းချုပ်ထဲ ပေါင်းထားပါတယ်","en":"{N} older runs folded into the lifetime total","shn":"ဢၼ်ၵဝ်ႇ {N} ႁူမ်ႈဝႆႉၼႂ်းသဵၼ်ႈ","kac":"{N} ba ai ni gaw lifetime hta bang da sai","th":"รวมงานเก่า {N} รายการไว้ในยอดสะสมแล้ว","zh":"较早的 {N} 次已并入累计总额","vi":"{N} lượt cũ đã gộp vào tổng tích lũy","id":"{N} run lama digabung ke total seumur hidup","ms":"{N} larian lama digabung ke jumlah keseluruhan"},
+  money_all_short:{"my":"စုစုပေါင်း ကုန်ကျ","en":"Total charged","shn":"ႁူမ်ႈၸႂ်ႉ","kac":"yawng jaw ai","th":"รวมที่เก็บจริง","zh":"实际扣费合计","vi":"Tổng đã tính phí","id":"Total ditagih","ms":"Jumlah dicaj"},
+  money_unrep:{"my":"အထဲက {N} ကြိမ်အတွက် RunningHub က ကုန်ကျစရိတ် မပြခဲ့ပါ","en":"{N} of these were run without RunningHub reporting a cost","shn":"ၼႂ်း {N} ပွၵ်ႈ RunningHub ဢမ်ႇပွင်ႇၵႃႈ","kac":"{N} lang gaw RunningHub manu n tsun ai","th":"ในจำนวนนี้ {N} ครั้ง RunningHub ไม่ได้แจ้งค่าใช้จ่าย","zh":"其中 {N} 次 RunningHub 未报告费用","vi":"{N} lượt trong số này RunningHub không báo chi phí","id":"{N} di antaranya tidak dilaporkan biayanya oleh RunningHub","ms":"{N} daripadanya tidak dilaporkan kosnya oleh RunningHub"},
+  money_bymodel:{"my":"Model အလိုက်","en":"By model","shn":"ၸွမ်း Model","kac":"Model hte maren","th":"ตามโมเดล","zh":"按模型","vi":"Theo model","id":"Per model","ms":"Ikut model"},
+  money_recent:{"my":"နောက်ဆုံး {N} ကြိမ်","en":"Last {N} runs","shn":"{N} ပွၵ်ႈလိုၼ်းသုတ်း","kac":"hpang jahtum {N} lang","th":"{N} ครั้งล่าสุด","zh":"最近 {N} 次","vi":"{N} lượt gần nhất","id":"{N} run terakhir","ms":"{N} larian terakhir"},
+  money_more:{"my":"နောက်ထပ် {N} ကြိမ် — CSV မှာ အကုန်ပါပါတယ်","en":"{N} more — the CSV has every row","shn":"ထႅင်ႈ {N} ပွၵ်ႈ — CSV မီးၵူႈဢၼ်","kac":"{N} lang ngam — CSV hta yawng nga ai","th":"อีก {N} ครั้ง — ไฟล์ CSV มีครบทุกแถว","zh":"还有 {N} 次 — CSV 包含全部记录","vi":"còn {N} lượt — tệp CSV có đủ mọi dòng","id":"{N} lagi — CSV memuat semua baris","ms":"{N} lagi — CSV mengandungi semua baris"},
+  money_csv:{"my":"CSV ထုတ်မယ်","en":"Export CSV","shn":"ဢွၵ်ႇ CSV","kac":"CSV shapraw","th":"ส่งออก CSV","zh":"导出 CSV","vi":"Xuất CSV","id":"Ekspor CSV","ms":"Eksport CSV"},
+  money_clear:{"my":"မှတ်တမ်း ရှင်းမယ်","en":"Clear ledger","shn":"လၢင်ႉမၢႆတွင်း","kac":"Mahkrum kasin","th":"ล้างบันทึก","zh":"清空账本","vi":"Xóa sổ chi","id":"Hapus buku","ms":"Kosongkan lejar"},
+  money_cleared:{"my":"မှတ်တမ်း ရှင်းပြီးပါပြီ","en":"Ledger cleared","shn":"လၢင်ႉမၢႆတွင်းယဝ်ႉ","kac":"Mahkrum kasin ngut sai","th":"ล้างบันทึกแล้ว","zh":"账本已清空","vi":"Đã xóa sổ chi","id":"Buku dihapus","ms":"Lejar dikosongkan"},
+  money_all:{"my":"စုစုပေါင်း {N} ကြိမ် · {C}","en":"{N} runs all time · {C}","shn":"ႁူမ်ႈ {N} ပွၵ်ႈ · {C}","kac":"yawng {N} lang · {C}","th":"ทั้งหมด {N} ครั้ง · {C}","zh":"累计 {N} 次 · {C}","vi":"tổng {N} lượt · {C}","id":"total {N} run · {C}","ms":"jumlah {N} larian · {C}"},
+  cost_ran:{"my":"ဒီ GENERATE က {C} ကုန်သွားပါတယ်","en":"That GENERATE cost {C}","shn":"GENERATE ၼႆႉ ၸႂ်ႉ {C}","kac":"Ndai GENERATE gaw {C} jaw sai","th":"GENERATE นี้ใช้ไป {C}","zh":"这次生成花费 {C}","vi":"Lần tạo này tốn {C}","id":"GENERATE itu memakan {C}","ms":"GENERATE itu memakan {C}"},
+  cost_free_any:{"my":"အခမဲ့","en":"free","shn":"လၢႆလၢႆ","kac":"manu n ra","th":"ฟรี","zh":"免费","vi":"miễn phí","id":"gratis","ms":"percuma"},
+  job_age_now:{"my":"ခုနလေးတင်","en":"just now","shn":"မိူဝ်ႈလဵဝ်","kac":"ya sha","th":"เมื่อครู่","zh":"刚刚","vi":"vừa xong","id":"barusan","ms":"sebentar tadi"},
+  job_age_min:{"my":"{N} မိနစ်က","en":"{N} min ago","shn":"{N} မိၼိတ်ႉ ပူၼ်ႉမႃး","kac":"{N} minute yang","th":"{N} นาทีที่แล้ว","zh":"{N} 分钟前","vi":"{N} phút trước","id":"{N} mnt lalu","ms":"{N} min lalu"},
+  job_age_hr:{"my":"{N} နာရီက","en":"{N} h ago","shn":"{N} ၸူဝ်ႈမူင်း ပူၼ်ႉမႃး","kac":"{N} ten yang","th":"{N} ชม.ที่แล้ว","zh":"{N} 小时前","vi":"{N} giờ trước","id":"{N} jam lalu","ms":"{N} jam lalu"},
+  data_h:{"my":"DATA သိမ်းဆည်းမှု","en":"DATA & BACKUP","shn":"DATA လႄႈ BACKUP","kac":"DATA hte BACKUP","th":"ข้อมูลและสำรอง","zh":"数据与备份","vi":"Dữ liệu & sao lưu","id":"Data & cadangan","ms":"Data & sandaran"},
+  data_export:{"my":"Backup ထုတ်မယ်","en":"Export backup","shn":"ဢွၵ်ႇ backup","kac":"Backup shapraw u","th":"ส่งออกสำรอง","zh":"导出备份","vi":"Xuất bản sao lưu","id":"Ekspor cadangan","ms":"Eksport sandaran"},
+  data_import:{"my":"Backup ပြန်သွင်းမယ်","en":"Restore backup","shn":"သႂ်ႇၶိုၼ်း backup","kac":"Backup bai bang u","th":"กู้คืนสำรอง","zh":"恢复备份","vi":"Khôi phục sao lưu","id":"Pulihkan cadangan","ms":"Pulihkan sandaran"},
+  data_exported:{"my":"Backup ဖိုင် ထုတ်ပြီးပါပြီ ✓ — ဖိုင်ကို လုံခြုံတဲ့နေရာမှာ သိမ်းထားပါ","en":"Backup exported ✓ — keep the file somewhere safe","shn":"ဢွၵ်ႇ backup ယဝ်ႉ ✓","kac":"Backup shapraw ngut sai ✓","th":"ส่งออกสำรองแล้ว ✓","zh":"备份已导出 ✓","vi":"Đã xuất bản sao lưu ✓","id":"Cadangan diekspor ✓","ms":"Sandaran dieksport ✓"},
+  data_notbk:{"my":"ဒီဖိုင်က HNK backup ဖိုင် မဟုတ်ပါ","en":"That file is not an HNK backup","shn":"ၾၢႆႇၼႆႉ ဢမ်ႇၸႂ်ႈ HNK backup","kac":"Ndai file gaw HNK backup n re","th":"ไฟล์นี้ไม่ใช่สำรองของ HNK","zh":"该文件不是 HNK 备份","vi":"Tệp này không phải bản sao lưu HNK","id":"File itu bukan cadangan HNK","ms":"Fail itu bukan sandaran HNK"},
+  data_nothing:{"my":"ဖိုင်ထဲမှာ ပြန်သွင်းစရာ မတွေ့ပါ","en":"Nothing restorable in that file","shn":"ဢမ်ႇမီးသင်တႃႇသႂ်ႇၶိုၼ်း","kac":"Bai bang na n nga ai","th":"ไม่มีอะไรให้กู้คืน","zh":"文件中没有可恢复内容","vi":"Không có gì để khôi phục","id":"Tidak ada yang bisa dipulihkan","ms":"Tiada apa untuk dipulihkan"},
+  data_confirm:{"my":"Backup ထဲက setting {N} ခုကို ဒီ browser ထဲ ထည့်မယ် — လက်ရှိတန်ဖိုးတွေ အစားထိုးခံရမယ်။ ဆက်မလား?","en":"Restore {N} settings from the backup? Current values will be replaced.","shn":"သႂ်ႇၶိုၼ်း setting {N} ဢၼ်? ဢၼ်မီးယူႇတေထုၵ်ႇတႅၼ်း","kac":"Backup na setting {N} hpe bai bang na? Ya na ni hpe galai kau na","th":"กู้คืน {N} การตั้งค่า? ค่าปัจจุบันจะถูกแทนที่","zh":"恢复 {N} 项设置？当前值将被替换","vi":"Khôi phục {N} cài đặt? Giá trị hiện tại sẽ bị thay thế","id":"Pulihkan {N} pengaturan? Nilai saat ini akan diganti","ms":"Pulihkan {N} tetapan? Nilai semasa akan diganti"},
+  data_total:{"my":"Setting စုစုပေါင်း","en":"Settings total","shn":"Setting တင်းမူတ်း","kac":"Setting yawng","th":"การตั้งค่ารวม","zh":"设置总量","vi":"Tổng cài đặt","id":"Total pengaturan","ms":"Jumlah tetapan"},
+  data_photos:{"my":" ပုံ","en":" photos","shn":" ၶႅပ်း","kac":" sumla","th":" รูป","zh":" 张","vi":" ảnh","id":" foto","ms":" foto"},
+  data_store:{"my":"plugin သိုလှောင်မှု","en":"plugin storage","shn":"သိုၵ်းၶေႃႈမုၼ်း plugin","kac":"plugin storage","th":"พื้นที่ปลั๊กอิน","zh":"插件存储","vi":"bộ nhớ plugin","id":"penyimpanan plugin","ms":"storan plugin"},
+  plat_h2:{"my":"ဘယ်စက်မှာမဆို သုံးလို့ရတယ်","en":"Works on every device","shn":"ၸႂ်ႉလႆႈၼိူဝ်ၶိူင်ႈၵူႈဢၼ်","kac":"Jak shagu hta lang mai ai","th":"ใช้งานได้ทุกอุปกรณ์","zh":"任何设备都能用","vi":"Dùng được trên mọi thiết bị","id":"Berfungsi di semua perangkat","ms":"Berfungsi pada setiap peranti"},
+  plat_p1:{"my":"Chrome နဲ့ဖွင့် → menu (⋮) → “Add to Home screen” / “Install app” → app icon နဲ့ တစ်ချက်နှိပ်ဖွင့်လို့ရပြီ။","en":"Open in Chrome → menu (⋮) → “Add to Home screen” / “Install app” → launch from an app icon.","shn":"ပိုတ်ႇလူၺ်ႈ Chrome → menu (⋮) → “Add to Home screen” / “Install app” → ၼဵၵ်း app icon သေ ပိုတ်ႇလႆႈၵမ်းလဵဝ်။","kac":"Chrome hte hpaw u → menu (⋮) → “Add to Home screen” / “Install app” → app icon kaw na hpaw mai sai.","th":"เปิดใน Chrome → เมนู (⋮) → “Add to Home screen” / “Install app” → เปิดใช้จากไอคอนแอปได้เลย.","zh":"用 Chrome 打开 → 菜单 (⋮) → “Add to Home screen” / “Install app” → 之后即可从 app 图标启动。","vi":"Mở bằng Chrome → menu (⋮) → “Add to Home screen” / “Install app” → khởi chạy từ icon ứng dụng.","id":"Buka di Chrome → menu (⋮) → “Add to Home screen” / “Install app” → luncurkan dari ikon aplikasi.","ms":"Buka dalam Chrome → menu (⋮) → “Add to Home screen” / “Install app” → lancarkan dari ikon app."},
+  plat_p2:{"my":"Safari နဲ့ဖွင့် → Share (⬆︎) ခလုတ် → “Add to Home Screen” → home screen မှာ HNK icon ပေါ်လာမယ်။","en":"Open in Safari → Share (⬆︎) → “Add to Home Screen” → the HNK icon appears on your home screen.","shn":"ပိုတ်ႇလူၺ်ႈ Safari → ၼဵၵ်း Share (⬆︎) → “Add to Home Screen” → HNK icon တေဢွၵ်ႇမႃးၼိူဝ် home screen မႂ်း။","kac":"Safari hte hpaw u → Share (⬆︎) → “Add to Home Screen” → na a home screen kaw HNK icon pru wa na.","th":"เปิดใน Safari → Share (⬆︎) → “Add to Home Screen” → ไอคอน HNK จะปรากฏบนหน้าจอโฮมของคุณ.","zh":"用 Safari 打开 → Share (⬆︎) → “Add to Home Screen” → HNK 图标就会出现在主屏幕上。","vi":"Mở bằng Safari → Share (⬆︎) → “Add to Home Screen” → icon HNK xuất hiện trên màn hình chính.","id":"Buka di Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul di home screen Anda.","ms":"Buka dalam Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul pada skrin utama anda."},
+  plat_p3:{"my":"Chrome / Edge မှာ address bar ညာဘက်က install (⊕) icon နှိပ်ရင် desktop app လို သီးသန့် window နဲ့ ပွင့်မယ်။","en":"In Chrome / Edge, click the install (⊕) icon in the address bar to run it as a desktop app.","shn":"ၼႂ်း Chrome / Edge ၼဵၵ်း install (⊕) icon ၽၢႆႇၶႂႃ address bar သေ ပိုတ်ႇလႆႈမိူၼ် desktop app ၼႂ်း window ႁင်းၶေႃ။","kac":"Chrome / Edge hta address bar na install (⊕) icon dip yang desktop app zawn window langai hte hpaw na.","th":"ใน Chrome / Edge คลิกไอคอน install (⊕) ในแถบที่อยู่เพื่อใช้งานเป็นแอปเดสก์ท็อป.","zh":"在 Chrome / Edge 中，点击地址栏右侧的 install (⊕) 图标，即可作为桌面 app 运行。","vi":"Trong Chrome / Edge, bấm icon install (⊕) trên thanh địa chỉ để chạy như ứng dụng desktop.","id":"Di Chrome / Edge, klik ikon install (⊕) di address bar untuk menjalankannya sebagai aplikasi desktop.","ms":"Dalam Chrome / Edge, klik ikon install (⊕) pada bar alamat untuk menjalankannya sebagai app desktop."},
+  plat_p4:{"my":"CCX ဖိုင် download → double-click → Creative Cloud က install ပေးမယ် → Photoshop ထဲ Plugins → HNK Ai Panel။ RunningHub Enterprise engine · Layer တိုက်ရိုက်ထည့် · Retouch slider 50 အပြည့် — panel မှာသာ ရတယ်။","en":"Download the CCX → double-click → Creative Cloud installs it → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · direct layer placement · full 50-slider retouch — panel only.","shn":"Download ၾၢႆႇ CCX → double-click → Creative Cloud တေ install ပၼ် → ၼႂ်း Photoshop → Plugins → HNK Ai Panel။ RunningHub Enterprise engine · သႂ်ႇ Layer ၵမ်းသိုဝ်ႈ · Retouch slider 50 တဵမ်တဵမ် — လႆႈတီႈ panel ၵူၺ်း။","kac":"CCX download la → double-click → Creative Cloud install ya na → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · layer kaw direct bang · retouch slider 50 hpring tsup — panel kaw sha lu ai.","th":"ดาวน์โหลด CCX → ดับเบิลคลิก → Creative Cloud จะติดตั้งให้ → Photoshop → Plugins → HNK Ai Panel. เอนจิน RunningHub Enterprise · วาง layer ตรงเข้าไฟล์ · รีทัชครบ 50 slider — มีเฉพาะใน panel.","zh":"下载 CCX → 双击 → Creative Cloud 自动安装 → Photoshop → Plugins → HNK Ai Panel。RunningHub Enterprise engine · 图层直接置入 · 完整 50 滑杆精修 — 仅 panel 提供。","vi":"Tải file CCX → double-click → Creative Cloud sẽ cài đặt → Photoshop → Plugins → HNK Ai Panel. Engine RunningHub Enterprise · đặt layer trực tiếp · đủ 50 slider retouch — chỉ có trên panel.","id":"Download CCX → klik dua kali → Creative Cloud menginstalnya → Photoshop → Plugins → HNK Ai Panel. Engine RunningHub Enterprise · penempatan layer langsung · retouch 50 slider penuh — hanya di panel.","ms":"Muat turun CCX → klik dua kali → Creative Cloud memasangnya → Photoshop → Plugins → HNK Ai Panel. Enjin RunningHub Enterprise · peletakan layer terus · retouch 50-slider penuh — panel sahaja."},
+  plat_ps:{"my":"Photoshop (Windows / Mac) — အင်္ဂါရပ် အပြည့်ဆုံး","en":"Photoshop (Windows / Mac) — fullest feature set","shn":"Photoshop (Windows / Mac) — feature တဵမ်ထူၼ်ႈသုတ်း","kac":"Photoshop (Windows / Mac) — feature hpring tsup dik","th":"Photoshop (Windows / Mac) — ฟีเจอร์ครบที่สุด","zh":"Photoshop (Windows / Mac) — 功能最全","vi":"Photoshop (Windows / Mac) — bộ tính năng đầy đủ nhất","id":"Photoshop (Windows / Mac) — fitur paling lengkap","ms":"Photoshop (Windows / Mac) — set ciri paling lengkap"},
+  site_link:{"my":"Website ကြည့်ရန်","en":"View website","shn":"တူၺ်း Website","kac":"Website yu u","th":"ดูเว็บไซต์","zh":"查看网站","vi":"Xem website","id":"Lihat website","ms":"Lihat laman web"},
+  share_h2:{"my":"မိတ်ဆွေတွေကို ဝေမျှရန်","en":"Share with friends","shn":"ၽႄႈပၼ်ဢူၺ်းၵေႃႉ","kac":"Manang ni hpe garan u","th":"แชร์ให้เพื่อน","zh":"分享给朋友","vi":"Chia sẻ với bạn bè","id":"Bagikan ke teman","ms":"Kongsi dengan rakan"},
+  share_p:{"my":"Link ကို Messenger / Telegram / Viber ဘယ်မှာပို့ပို့ — HNK logo နဲ့ preview card လှလှလေး ပေါ်ပြီး နှိပ်လိုက်တာနဲ့ ဒီ app ထဲ တန်းရောက်မယ်။","en":"Paste the link anywhere — Messenger, Telegram, Viber — a beautiful HNK preview card appears, and one tap opens this app.","shn":"သူင်ႇ link တီႈလႂ်ၵေႃႈလႆႈ — preview card ႁၢင်ႈလီ တေဢွၵ်ႇမႃး၊ ၼဵၵ်းၺႃး ၶဝ်ႈ app ၵမ်းလဵဝ်","kac":"Link hpe gara kaw tim shagun u — preview card tsawm ai pru na, dip yang app hta shang na","th":"วางลิงก์ที่ไหนก็ได้ — จะขึ้นการ์ดพรีวิวสวย ๆ แตะแล้วเข้าแอปทันที","zh":"把链接粘贴到任何地方 — 会显示精美的预览卡片，点一下即可打开应用","vi":"Dán link ở bất cứ đâu — thẻ xem trước đẹp sẽ hiện ra, chạm là mở app","id":"Tempel tautan di mana saja — kartu pratinjau cantik muncul, sekali ketuk langsung buka","ms":"Tampal pautan di mana-mana — kad pratonton cantik muncul, satu ketikan terus buka"},
+  share_btn:{"my":"Share Link","en":"Share Link","shn":"ၽႄႈ Link","kac":"Link garan","th":"แชร์ลิงก์","zh":"分享链接","vi":"Chia sẻ link","id":"Bagikan tautan","ms":"Kongsi pautan"},
+  copy_btn:{"my":"Link ကူးယူ","en":"Copy Link","shn":"ၶူတ်ႉ Link","kac":"Link copy","th":"คัดลอกลิงก์","zh":"复制链接","vi":"Sao chép link","id":"Salin tautan","ms":"Salin pautan"},
+  st_share_copied:{"my":"Link ကူးပြီး ✓ — ကြိုက်တဲ့နေရာ paste လုပ်ပို့ပါ","en":"Link copied ✓ — paste it wherever you like","shn":"ၶူတ်ႉ Link ယဝ်ႉ ✓ — paste တီႈလႂ်ၵေႃႈလႆႈ","kac":"Link copy sai ✓ — gara kaw mi paste bang u","th":"คัดลอกลิงก์แล้ว ✓ — วางที่ไหนก็ได้ตามใจ","zh":"链接已复制 ✓ — 可粘贴到任何地方","vi":"Đã sao chép link ✓ — dán ở bất cứ đâu bạn muốn","id":"Tautan disalin ✓ — tempel di mana saja","ms":"Pautan disalin ✓ — tampal di mana-mana"},
+  about_h:{"my":"APP နဲ့ UPDATE","en":"APP & UPDATES","shn":"APP လႄႈ UPDATE","kac":"APP hte UPDATE","th":"แอปและอัปเดต","zh":"应用与更新","vi":"Ứng dụng & cập nhật","id":"Aplikasi & pembaruan","ms":"Aplikasi & kemas kini"},
+  about_check:{"my":"Update စစ်မယ်","en":"Check for updates","shn":"ၶူၼ်ႉတူၺ်း update","kac":"Update sagawn u","th":"ตรวจหาอัปเดต","zh":"检查更新","vi":"Kiểm tra cập nhật","id":"Periksa pembaruan","ms":"Semak kemas kini"},
+  about_cache:{"my":"Cache ရှင်း + ပြန်စမယ်","en":"Clear cache + restart","shn":"လၢင်ႉ cache + တႄႇၶိုၼ်း","kac":"Cache sausan nna bai hpang u","th":"ล้างแคช + เริ่มใหม่","zh":"清缓存并重启","vi":"Xóa cache + khởi động lại","id":"Bersihkan cache + mulai ulang","ms":"Kosongkan cache + mula semula"},
+  about_checking:{"my":"စစ်နေသည်…","en":"Checking…","shn":"တိုၵ်ႉၶူၼ်ႉ…","kac":"Sagawn nga…","th":"กำลังตรวจ…","zh":"检查中…","vi":"Đang kiểm tra…","id":"Memeriksa…","ms":"Menyemak…"},
+  about_new:{"my":"Version အသစ် v{V} ရှိတယ် — ဆွဲယူနေသည်…","en":"New version v{V} found — updating…","shn":"မီး version မႂ်ႇ v{V} — တိုၵ်ႉၸၼ်…","kac":"Version namsan v{V} nga ai — la nga…","th":"พบเวอร์ชันใหม่ v{V} — กำลังอัปเดต…","zh":"发现新版本 v{V} — 正在更新…","vi":"Có phiên bản mới v{V} — đang cập nhật…","id":"Versi baru v{V} ditemukan — memperbarui…","ms":"Versi baharu v{V} dijumpai — mengemas kini…"},
+  about_uptodate:{"my":"နောက်ဆုံး version ဖြစ်နေပါပြီ ✓ (v{V})","en":"You are up to date ✓ (v{V})","shn":"ပဵၼ် version လိုၼ်းသုတ်းယဝ်ႉ ✓","kac":"Version hpang jahtum rai sai ✓","th":"เป็นเวอร์ชันล่าสุดแล้ว ✓","zh":"已是最新版本 ✓","vi":"Bạn đang dùng bản mới nhất ✓","id":"Sudah versi terbaru ✓","ms":"Sudah versi terkini ✓"},
+  about_cache_confirm:{"my":"App cache အကုန်ရှင်းပြီး ပြန်စမယ် — Library ပုံတွေ ပြန်ဆွဲယူရမှာမို့ နည်းနည်းကြာနိုင်တယ်။ ဆက်မလား?","en":"Clear ALL app caches and restart? Library images will re-download, which can take a moment.","shn":"လၢင်ႉ cache တင်းမူတ်းသေ တႄႇၶိုၼ်း?","kac":"Cache yawng sausan nna bai hpang na?","th":"ล้างแคชทั้งหมดแล้วเริ่มใหม่?","zh":"清除全部缓存并重启？","vi":"Xóa toàn bộ cache và khởi động lại?","id":"Bersihkan semua cache dan mulai ulang?","ms":"Kosongkan semua cache dan mula semula?"},
+  about_privacy:{"my":"ကိုယ်ရေးအချက်အလက် မူဝါဒ","en":"Privacy Policy","shn":"Privacy Policy","kac":"Privacy Policy","th":"นโยบายความเป็นส่วนตัว","zh":"隐私政策","vi":"Chính sách bảo mật","id":"Kebijakan Privasi","ms":"Dasar Privasi"},
+  about_terms:{"my":"စည်းကမ်းချက်များ","en":"Terms of Service","shn":"Terms of Service","kac":"Terms of Service","th":"ข้อกำหนดการให้บริการ","zh":"服务条款","vi":"Điều khoản dịch vụ","id":"Ketentuan Layanan","ms":"Terma Perkhidmatan"},
+  about_contact:{"my":"ဆက်သွယ်ရန်","en":"Contact","shn":"Contact","kac":"Contact","th":"ติดต่อ","zh":"联系我们","vi":"Liên hệ","id":"Kontak","ms":"Hubungi"}
+};
+/* the app's own lookup for Setup copy: SETUP_L[k] in the current language */
+function sl(k) { const m = SETUP_L[k]; return m ? (ff9(m) || k) : k; }
+/* app el(tag, cls, text) */
+function sEl(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = String(text);
+  return e;
+}
+/* app setSt(id, msg, kind): a card's own .status line */
+function stSet(id, msg, kind) {
+  const e = $(id);
+  if (!e) return;
+  e.textContent = msg == null ? "" : String(msg);
+  e.className = "status" + (kind ? " " + kind : "");
 }
 
 /* ---------------- i18n (Myanmar + English, full parity) ---------------- */
@@ -6039,7 +6219,10 @@ const GATE_LEASE_REFRESH_MS = 180000;
 const gateS = {
   sess: null, entitlement: null, lease: "", leaseExp: 0, devId: "",
   enrolled: false, busy: false, view: "", run: 0, updateRequired: false,
-  timer: null
+  timer: null,
+  /* the app's acc.prof / acc.devices / profOffline — the profiles row, the
+     enrolled devices list and "the profiles read failed" for the Setup card. */
+  prof: null, devices: [], profOffline: false
 };
 
 /* Every gateCheck takes a ticket. It is reachable from boot, from the Retry
@@ -6112,12 +6295,16 @@ function gateSaveSess(j) {
 function gateForget() {
   gateS.sess = null; gateS.entitlement = null; gateS.lease = "";
   gateS.leaseExp = 0; gateS.enrolled = false; gateS.updateRequired = false;
+  gateS.prof = null; gateS.devices = []; gateS.profOffline = false;
+  _accSessSeen = false;
   gatePaintPlan();
   state.accRefresh = ""; state.accUid = ""; state.accEmail = "";
   state.accProfile = null; state.accSeenAt = 0;
   state.accAvatar = "";           /* v6.27.0 — the photo leaves with the session */
   saveSettings();
   try { gatePaintAvatar(); } catch (e) { }
+  /* the Setup ACCOUNT card follows: signed-out welcome, auth group open */
+  try { accRender(); accRenderDevices(); renderSetupStatus(); accOpenGrp("accGrpAuth"); } catch (e) { }
 }
 
 /* Refresh-token rotation happens at the unified backend. A network failure is
@@ -6297,20 +6484,29 @@ function gatePaintAvatar() {
   }
   if (txt) txt.style.display = a ? "none" : "";
 }
-async function gateAvatarRefresh() {
+/* The app's own profiles read (acc.prof): name, email, member-since, plan,
+   allowed devices and the photo all ride on one row. profOffline is what the
+   ACCOUNT card shows when the read failed (the app's acc_offline line). */
+async function gateProfileRefresh() {
   try {
     if (!gateS.sess || !gateS.sess.uid || !gateS.sess.access) return;
-    const r = await gateReq("/rest/v1/profiles?select=avatar&id=eq." +
+    const r = await gateReq("/rest/v1/profiles?select=*&id=eq." +
       encodeURIComponent(gateS.sess.uid) + "&limit=1", { method: "GET" }, gateS.sess.access);
-    if (!r.ok) return;
-    const rows = await r.json().catch(function () { return null; });
-    const a = rows && rows[0] ? rows[0].avatar : "";
-    const next = gateAvaOk(a) ? a : "";
-    if (next === state.accAvatar) return;
-    state.accAvatar = next;
-    saveSettings();
-    gatePaintAvatar();
-  } catch (e) { }
+    gateS.profOffline = !r.ok;
+    if (r.ok) {
+      const rows = await r.json().catch(function () { return null; });
+      const row = rows && rows[0] ? rows[0] : null;
+      if (row) gateS.prof = row;
+      const a = row ? row.avatar : "";
+      const next = gateAvaOk(a) ? a : "";
+      if (next !== state.accAvatar) {
+        state.accAvatar = next;
+        saveSettings();
+        gatePaintAvatar();
+      }
+    }
+  } catch (e) { gateS.profOffline = true; }
+  try { accRender(); renderSetupStatus(); gatePaintPlan(); } catch (e) { }
 }
 
 /* ---------------- v6.47.0 CHOOSING the profile photo ----------------
@@ -6368,20 +6564,8 @@ async function avaCaptureSquare(entry, side) {
    a valid one, the HNK mark otherwise — and the remove button exists only
    when there is something to remove. */
 function avaPaint() {
-  const img = gateEl("acctAvaImg"), txt = gateEl("acctAvaTxt");
-  const drop = gateEl("btnAvaDrop"), pick = gateEl("btnAvaPick");
-  const row = gateEl("acctAvaRow");
-  const signedIn = !!(typeof gateS !== "undefined" && gateS.sess && gateS.sess.uid);
-  const a = (signedIn && gateAvaOk(state.accAvatar)) ? state.accAvatar : "";
-  if (img) {
-    if (a) { img.src = a; img.style.display = "block"; }
-    else { try { img.removeAttribute("src"); } catch (e) { } img.style.display = "none"; }
-  }
-  if (txt) txt.style.display = a ? "none" : "";
-  /* Signed out the whole block is meaningless — there is no row to write to. */
-  if (row) row.style.display = signedIn ? "" : "none";
-  if (pick) pick.textContent = t("ava_change");
-  if (drop) { drop.textContent = t("ava_remove"); drop.style.display = a ? "" : "none"; }
+  /* the Setup ACCOUNT card's hero (the app's accAvaRender) owns the photo now */
+  try { accAvaRender(); } catch (e) { }
 }
 
 /* One writer for both buttons: "" removes, a data URL sets. */
@@ -6391,10 +6575,11 @@ async function avaSave(url) {
     { method: "PATCH", body: JSON.stringify({ avatar: url }) }, gateS.sess.access);
   if (!r.ok) throw new Error("HTTP " + r.status);
   state.accAvatar = url;
+  if (gateS.prof) gateS.prof.avatar = url;
   saveSettings();
   gatePaintAvatar();
   avaPaint();
-  setStatus(t(url ? "ava_saved" : "ava_removed"), "ok");
+  stSet("stAva", sl(url ? "ava_saved" : "ava_removed"), "ok");
 }
 
 async function avaPick() {
@@ -6402,7 +6587,7 @@ async function avaPick() {
   let entry = null;
   try { entry = await pickAnyFile(); } catch (e) { return; }
   if (!entry) return;                       /* the customer cancelled */
-  setStatus(t("ava_working"), "");
+  stSet("stAva", t("ava_working"), "");
   try {
     let url = "";
     for (let i = 0; i < AVA_SIDES.length; i++) {
@@ -6410,25 +6595,43 @@ async function avaPick() {
       const candidate = b64 ? ("data:image/jpeg;base64," + b64) : "";
       if (gateAvaOk(candidate)) { url = candidate; break; }
     }
-    if (!url) { setStatus(t("ava_fail"), "err"); return; }
+    if (!url) { stSet("stAva", sl("ava_fail"), "err"); return; }
     await avaSave(url);
-  } catch (e) { setStatus(friendlyErr(e), "err"); }
+  } catch (e) { stSet("stAva", friendlyErr(e), "err"); }
 }
 
 async function avaDrop() {
   try { await avaSave(""); }
-  catch (e) { setStatus(friendlyErr(e), "err"); }
+  catch (e) { stSet("stAva", friendlyErr(e), "err"); }
 }
 
 /* The header chip is derived only from the live entitlement response. */
 function gatePaintPlan() {
-  const el = gateEl("brandPlan"); if (!el) return;
   const ent = gateS.entitlement || {};
   const lic = ent.license || ent;
-  const d = gateDaysLeft({ plan_expires_at: lic.expires_at || lic.plan_expires_at || null });
+  const d = Math.max(
+    gateDaysLeft({ plan_expires_at: lic.expires_at || lic.plan_expires_at || null }),
+    gateDaysLeft(gateS.prof));
+  gatePaintAccDot(d);
+  const el = gateEl("brandPlan"); if (!el) return;
   if (!d) { el.textContent = ""; return; }
   el.textContent = gateT("gate_days").replace("{D}", String(d));
   el.style.color = (d <= 7) ? "#f4d488" : "";
+}
+/* v6.51.0 — the app's accChipRender: the header gear carries a 9px state dot.
+   Signed out: none. Signed in without an active plan: a hollow gold ring
+   (acc-in). Active plan: filled gold (acc-pro), red-ringed when it expires
+   within seven days (acc-soon). The dot is a real span here (UXP has no
+   ::after); the gear's own "on" (Setup open) is left as switchPage set it. */
+function gatePaintAccDot(days) {
+  const g = gateEl("btnGearSetup"); if (!g) return;
+  const on = /\bon\b/.test(g.className);
+  let cls = "nav-gear" + (on ? " on" : "");
+  if (gateS.sess) {
+    const premium = days > 0 || gatePremium(gateS.prof);
+    cls += premium ? (days <= 7 ? " acc-soon" : " acc-pro") : " acc-in";
+  }
+  if (g.className !== cls) g.className = cls;
 }
 
 /* ---------------- flow ---------------- */
@@ -6572,10 +6775,10 @@ async function gateCheck() {
     gateErr(rf === "dead" ? gateT("gate_bad") : "License service is unavailable");
     return;
   }
-  /* v6.27.0 — the profile photo rides alongside the device/entitlement
-     round-trip: fire-and-forget, so a slow or missing profiles row can
-     never delay or fail the authorization path. */
-  gateAvatarRefresh();
+  /* v6.27.0 — the profiles row (photo, name, plan, device limit) rides
+     alongside the device/entitlement round-trip: fire-and-forget, so a slow
+     or missing profiles row can never delay or fail the authorization path. */
+  gateProfileRefresh();
   const device = await gateRegisterDevice();
   if (gateStale(ticket)) return;
   if (!device.ok) {
@@ -6583,6 +6786,8 @@ async function gateCheck() {
     return;
   }
   await gateValidate(true);
+  /* the Setup ACCOUNT card repaints from the fresh entitlement */
+  try { accAfterAuth(); accRender(); accRenderDevices(); renderSetupStatus(); } catch (e) { }
   gateBusy(false);
 }
 
@@ -6693,6 +6898,20 @@ function gatePaintPrimary() {
   for (const key in s) { try { el.style[key] = s[key]; } catch (e) { } }
 }
 
+/* Reachable in every state since v6.26.1 — never mid-check: a sign-out
+   under a running gateCheck would race the check's session. Shared by the
+   gate card's own button and the Setup ACCOUNT card's "Sign out". */
+async function gateSignOut() {
+  if (gateS.busy) return;
+  const sess = gateS.sess;
+  try {
+    if (sess && sess.access) await gateReq("/auth/v1/logout", {
+      method: "POST", body: JSON.stringify({ refresh_token: sess.refresh || "" })
+    }, sess.access);
+  } catch (e) { }
+  gateForget(); gateShow("login"); gateErr("");
+}
+
 function gateWire() {
   gateApplyWidgetStyles();
   const on = function (id, fn) {
@@ -6704,18 +6923,7 @@ function gateWire() {
   on("gateBuy", function () { gateOpenSite(); });
   /* the reset flow lives on the website's login card — the gate only links */
   on("gateForgot", function () { gateOpenSite(); });
-  on("gateSignOut", async function () {
-    /* Reachable in every state since v6.26.1 — never mid-check: a sign-out
-       under a running gateCheck would race the check's session. */
-    if (gateS.busy) return;
-    const sess = gateS.sess;
-    try {
-      if (sess && sess.access) await gateReq("/auth/v1/logout", {
-        method: "POST", body: JSON.stringify({ refresh_token: sess.refresh || "" })
-      }, sess.access);
-    } catch (e) { }
-    gateForget(); gateShow("login"); gateErr("");
-  });
+  on("gateSignOut", function () { gateSignOut(); });
   const pw = gateEl("gatePass");
   if (pw && pw.addEventListener) {
     pw.addEventListener("keydown", function (ev) {
@@ -6925,6 +7133,7 @@ function applyI18n() {
   }
   const sel = $("selLang");
   if (sel && sel.value !== state.lang) sel.value = state.lang;
+  try { langPaintHsl(); } catch (e) { }
   for (let i = 0; i < REFRESHERS.length; i++) { try { REFRESHERS[i](); } catch (e) { } }
 }
 
@@ -7108,57 +7317,19 @@ function applyTheme() {
   if (bt) bt.textContent = (th === "light" || th === "porcelain") ? "☽" : "☀";
 }
 
-/* ---------------- Diagnostics: installation + dependency checker ----------------
-   Confirms the host app, the UXP capabilities the panel depends on, and the API
-   keys — so a student can verify a correct install before generating. Passive and
-   offline: it never sends a network request, it only inspects local readiness. */
-function hostVersion() {
-  try { if (uxp && uxp.host && uxp.host.version) return String(uxp.host.version); } catch (e) { }
-  try { if (app && app.version) return String(app.version); } catch (e) { }
-  return "";
-}
-function hostName() {
-  try { if (uxp && uxp.host && uxp.host.name) return String(uxp.host.name); } catch (e) { }
-  return "Photoshop";
-}
-function verGte(v, min) {
-  const a = String(v || "").split(".").map(function (x) { return parseInt(x, 10) || 0; });
-  const b = String(min || "").split(".").map(function (x) { return parseInt(x, 10) || 0; });
-  const n = Math.max(a.length, b.length);
-  for (let i = 0; i < n; i++) {
-    const ai = a[i] || 0, bi = b[i] || 0;
-    if (ai > bi) return true;
-    if (ai < bi) return false;
-  }
-  return true;
-}
-function collectDiag() {
-  const rows = [];
-  const hv = hostVersion();
-  if (!hv) rows.push({ key: "diag_host", level: "warn", detail: hostName() });
-  else if (verGte(hv, "24.2.0")) rows.push({ key: "diag_host", level: "ok", detail: hostName() + " " + hv });
-  else rows.push({ key: "diag_host", level: "err", detail: hostName() + " " + hv + " < 24.2" });
+/* ============================================================
+   SETUP — the web app's pgHome, in Photoshop (v6.51.0)
 
-  const caps = !!((typeof imaging !== "undefined" && imaging) && (typeof batchPlay === "function") && (typeof fsp !== "undefined" && fsp));
-  rows.push({ key: "diag_uxp", level: caps ? "ok" : "err", detail: caps ? "imaging · batchPlay · fs" : t("diag_missing") });
-
-  const pk = state.rhKey;
-  rows.push({ key: "diag_rh", level: pk ? "ok" : "warn", detail: pk ? t("diag_set") : t("diag_unset") });
-
-  const hasDoc = (function () { try { return !!(app && app.activeDocument); } catch (e) { return false; } })();
-  rows.push({ key: "diag_doc", level: hasDoc ? "ok" : "pend", detail: hasDoc ? t("diag_open") : t("diag_none") });
-
-  /* Reference Image Library */
-  const libOn = refLibConfigured();
-  rows.push({
-    key: "diag_lib",
-    level: libOn ? "ok" : "pend",
-    detail: libOn ? (state.libImgCount + " " + t("lib_images")) : t("lib_not_config")
-  });
-  const canOpen = !!(shell && shell.openPath);
-  rows.push({ key: "diag_lib_open", level: canOpen ? "ok" : "pend", detail: canOpen ? t("diag_set") : t("lib_copy_only") });
-  return rows;
-}
+   The owner asked for the panel's Setup to be the app's Setup: the same
+   cards in the same order, the same rows, the same buttons, the same words,
+   nothing extra. So this is the app's own Setup code — renderSetupStatus,
+   the account card (acc*), the RunningHub key + per-model endpoint card
+   (rh*), the spend ledger and balance (spend* and money*), backup, platforms,
+   share and about — ported line for line. What differs is only what UXP
+   forces: `state`/the settings file where the app has localStorage,
+   `<dialog>` where it has window.confirm, the UXP shell where it has
+   window.open, div controls where it has <button>. Row rendering for the
+   other pages (renderRows) stays as it was. */
 const DIAG_ICON = { ok: "✓", warn: "!", err: "×", pend: "•" };
 /* v6.46.0 — one row renderer for every Setup card, because the web app's
    Setup is a column of status rows and nothing else. It used to serve only
@@ -7181,134 +7352,1041 @@ function renderRows(hostId, rows) {
     box.appendChild(row);
   }
 }
-function renderDiag() { renderRows("readyList", collectDiag()); }
 
-function renderLog() {
-  const box = $("logBox");
-  if (!box) return;
-  box.value = logText();
-  try { box.scrollTop = box.scrollHeight; } catch (e) { }
-}
-async function copyLog() {
-  const txt = logText();
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(txt);
-    else if (navigator.clipboard && navigator.clipboard.setContent) await navigator.clipboard.setContent({ "text/plain": txt });
-    setStatus(t("st_copied"), "ok");
-  } catch (e) { setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err"); }
-}
-/* ---- the web app's Setup, card for card ---------------------------------
-   The app parks everything a student needs to know about themselves on one
-   page: are we ready, what is my plan, what does a run cost, where is my
-   data, what version am I on. The panel showed none of it — it had the key,
-   a folder picker, a diagnostics button and a log box instead. Same cards,
-   same order, same words (their strings are lifted from the app itself). */
-function acctRows() {
-  const ent = (typeof gateS !== "undefined" && gateS.entitlement) || {};
-  const lic = ent.license || {}, dev = ent.devices || {}, panel = ent.panel || {};
-  const dash = "\u2014";
-  return [
-    { label: "Account", level: (typeof gateS !== "undefined" && gateS.sess) ? "ok" : "pend",
-      detail: state.accEmail || dash },
-    { label: "Plan", level: lic.active ? "ok" : "warn",
-      detail: String(lic.status || (lic.active ? "active" : dash)) },
-    { label: "Expires", level: "pend",
-      detail: lic.expires_at ? String(lic.expires_at).slice(0, 10) : dash },
-    { label: "Computer", level: dev.computer ? "ok" : "pend",
-      detail: dev.computer ? (dev.computer.label || dev.computer.device_name || "registered") : dash },
-    { label: "Phone", level: dev.phone ? "ok" : "pend",
-      detail: dev.phone ? (dev.phone.label || dev.phone.device_name || "registered") : dash },
-    { label: "Panel version", level: "pend", detail: String(panel.latest_version || PANEL_VERSION) }
-  ];
-}
-function renderAcct() { renderRows("acctList", acctRows()); try { avaPaint(); } catch (e) { } }
+const APP_URL = "https://hnkaistudio.com/app/";
+const PROV_NAME = { rh: "RunningHub" };
+const ACC_GRPS = ["accGrpAuth", "accGrpPlan", "accGrpPanel", "accGrpDev"];
+/* the app's one-shot "first session seen → open the plan group" latch */
+let _accSessSeen = false;
 
-let _balance = null;   /* last reading; false after a failed one */
-function moneyRows() {
-  if (!state.rhKey) return [{ key: "money_bal", level: "pend", detail: t("money_nokey") }];
-  if (_balance === false) return [{ key: "money_bal", level: "warn", detail: t("money_fail") }];
-  if (!_balance) return [{ key: "money_bal", level: "pend", detail: t("money_never") }];
-  const rows = [{ key: "money_bal", level: "ok",
-    detail: (_balance.money === null ? "\u2014" : String(_balance.money)) +
-      (_balance.currency ? " " + _balance.currency : "") }];
-  if (_balance.coins !== null) rows.push({ label: "Coins", level: "ok", detail: String(_balance.coins) });
-  if (_balance.running !== null) rows.push({ label: "Running now", level: "pend", detail: String(_balance.running) });
-  return rows;
-}
-function renderMoney() { renderRows("moneyList", moneyRows()); }
-/* The app's own call — same endpoint, same fields — and, like the app, a
-   failed reading never stops the studio working. */
-async function checkBalance() {
-  const key = state.rhKey;
-  if (!key) { renderMoney(); return; }
+/* ---------- UXP stand-ins for the browser pieces the app leans on ---------- */
+/* window.open → the UXP shell (gateOpenSite's exact ladder), clipboard last. */
+async function openUrl(u) {
+  u = String(u || "");
+  if (!u) return;
   try {
-    const r = await hnkFetch("https://www.runninghub.ai/uc/openapi/accountStatus", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
-      body: JSON.stringify({ apiKey: key })
-    }, 20000);
-    const j = await r.json();
-    if (!r.ok || (j && "code" in j && Number(j.code) !== 0)) throw new Error("balance");
-    const d = (j && (j.data || j.result)) || j || {};
-    _balance = {
-      money: d.remainMoney === undefined || d.remainMoney === null ? null : Number(d.remainMoney),
-      coins: d.remainCoins === undefined || d.remainCoins === null ? null : Number(d.remainCoins),
-      currency: String(d.currency || ""),
-      running: d.currentTaskCounts === undefined ? null : Number(d.currentTaskCounts)
+    if (shell && shell.openExternal) { await shell.openExternal(u); return; }
+  } catch (e) { }
+  try {
+    if (typeof require === "function") {
+      const x = require("uxp");
+      if (x && x.shell && x.shell.openExternal) { await x.shell.openExternal(u); return; }
+    }
+  } catch (e) { }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(u);
+    else if (navigator.clipboard && navigator.clipboard.setContent) await navigator.clipboard.setContent({ "text/plain": u });
+  } catch (e) { }
+}
+/* window.confirm → a modal <dialog> with the app's two-button row. UXP has no
+   window.confirm; its <dialog>.showModal() resolves with the close value. */
+function setupConfirm(msg) {
+  return new Promise(function (resolve) {
+    let done = false, dlg = null;
+    const fin = function (v) {
+      if (done) return;
+      done = true;
+      try { if (dlg && dlg.parentNode) dlg.parentNode.removeChild(dlg); } catch (e) { }
+      resolve(!!v);
     };
-  } catch (e) { _balance = false; }
-  renderMoney();
+    try {
+      dlg = document.createElement("dialog");
+      dlg.className = "hnk-dlg";
+      const body = document.createElement("div"); body.className = "hnk-dlg-body";
+      const p = document.createElement("p"); p.className = "hnk-dlg-msg"; p.textContent = String(msg || "");
+      const row = document.createElement("div"); row.className = "hnk-dlg-row";
+      const no = document.createElement("div"); no.className = "btn"; no.setAttribute("role", "button"); no.setAttribute("tabindex", "0"); no.textContent = t("btn_cancel");
+      const ok = document.createElement("div"); ok.className = "btn btn-gold"; ok.setAttribute("role", "button"); ok.setAttribute("tabindex", "0"); ok.textContent = "OK";
+      no.addEventListener("click", function () { try { dlg.close("cancel"); } catch (e) { } fin(false); });
+      ok.addEventListener("click", function () { try { dlg.close("ok"); } catch (e) { } fin(true); });
+      row.appendChild(no); row.appendChild(ok);
+      body.appendChild(p); body.appendChild(row);
+      dlg.appendChild(body);
+      dlg.addEventListener("close", function () { fin(dlg.returnValue === "ok"); });
+      dlg.addEventListener("cancel", function () { fin(false); });
+      document.body.appendChild(dlg);
+      const r = dlg.showModal();
+      if (r && r.then) r.then(function (v) { fin(v === "ok"); }, function () { fin(false); });
+    } catch (e) {
+      try { if (typeof confirm === "function") { fin(confirm(String(msg || ""))); return; } } catch (e2) { }
+      fin(false);
+    }
+  });
+}
+/* the app's wireKeyReveal: eye button flips a password field, aria-pressed follows */
+function wireKeyReveal(btnId, inputId) {
+  const b = $(btnId), k = $(inputId);
+  if (!b || !k) return;
+  const paint = function () {
+    b.setAttribute("aria-pressed", k.type === "text" ? "true" : "false");
+    if (!b.getAttribute("aria-label")) b.setAttribute("aria-label", sl("btn_show"));
+  };
+  b.onclick = function () { k.type = (k.type === "password") ? "text" : "password"; paint(); };
+  paint();
+}
+/* the app's accNum: Burmese digits in Burmese */
+function accNum(n) {
+  const s = String(n);
+  if (state.lang !== "my") return s;
+  const d = "၀၁၂၃၄၅၆၇၈၉";
+  return s.replace(/[0-9]/g, function (c) { return d.charAt(+c); });
+}
+function accFmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString(state.lang === "my" ? "my-MM" : state.lang, { year: "numeric", month: "short", day: "numeric" });
+  } catch (e) { return String(iso || "").slice(0, 10); }
 }
 
-function renderData() {
-  renderRows("dataList", [
-    { label: "Settings file", level: "ok", detail: SETTINGS_FILE },
-    { label: "Kept in", level: "pend", detail: "Photoshop plugin data folder" }
-  ]);
+/* ---------------- RunningHub config (the app's hnk_rh_cfg) ---------------- */
+function rhCfg() {
+  if (!state.rhCfg || typeof state.rhCfg !== "object") state.rhCfg = { models: {}, activeModel: "" };
+  if (!state.rhCfg.models || typeof state.rhCfg.models !== "object") state.rhCfg.models = {};
+  if (typeof state.rhCfg.activeModel !== "string") state.rhCfg.activeModel = "";
+  return state.rhCfg;
 }
-async function exportBackup() {
-  try {
-    const uxp = require("uxp");
-    const f = await uxp.storage.localFileSystem.getFileForSaving("hnk-panel-backup.json", { types: ["json"] });
-    if (!f) return;
-    await saveSettings();
-    const folder = await uxp.storage.localFileSystem.getDataFolder();
-    const src = await folder.getEntry(SETTINGS_FILE);
-    const txt = await src.read({ format: uxp.storage.formats.utf8 });
-    await f.write(txt, { format: uxp.storage.formats.utf8 });
-    setStatus(t("st_saved"), "ok");
-  } catch (e) { setStatus(friendlyErr(e), "err"); }
+function rhSaveCfg(c) {
+  state.rhCfg = c;
+  if (c.activeModel && ffModelById(c.activeModel)) state.rhModel = c.activeModel;
+  saveSettings();
+  try { ffPaintModelBtn(); ffFillRatio(); ffPaintAdvanced(); updateCreateEngineTag(); } catch (e) { }
 }
-async function importBackup() {
+function rhDefaultModels() {
   try {
-    const uxp = require("uxp");
-    const f = await uxp.storage.localFileSystem.getFileForOpening({ types: ["json"] });
+    const cfg = globalThis.HNK && globalThis.HNK.runninghubConfig;
+    const d = cfg && cfg.defaults ? cfg.defaults() : null;
+    return (d && d.models) ? d.models : {};
+  } catch (e) { return {}; }
+}
+function rhModelDef(id) { return ffModelById(id); }
+function rhDefaultApiPath(id) {
+  const d = rhDefaultModels()[id];
+  return (d && d.apiPath) ? String(d.apiPath) : "";
+}
+function rhEffectiveApiPath(id) {
+  const mc = rhCfg().models[id];
+  if (mc && mc.apiPath) return String(mc.apiPath);
+  return rhDefaultApiPath(id);
+}
+function rhEffectiveQuality(id) {
+  const mc = rhCfg().models[id];
+  if (mc && typeof mc.quality === "string") return mc.quality;
+  const d = rhDefaultModels()[id];
+  return (d && typeof d.quality === "string") ? d.quality : "";
+}
+function rhIsConfigured(id) { return !!rhEffectiveApiPath(id); }
+function rhAnyConfigured() {
+  for (let i = 0; i < FREEFORM_MODELS.length; i++) if (rhIsConfigured(FREEFORM_MODELS[i].id)) return true;
+  return false;
+}
+/* the adapter's configOverride: only the studio's own overrides, quality only when set */
+function rhConfigOverride() {
+  const out = { models: {} };
+  const ms = rhCfg().models;
+  for (const id in ms) {
+    const mc = ms[id];
+    if (!mc || !mc.apiPath) continue;
+    const o = { apiPath: String(mc.apiPath) };
+    if (mc.quality) o.quality = String(mc.quality);
+    out.models[id] = o;
+  }
+  return out;
+}
+async function rhVerifyKey(k) {
+  const adapter = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.runninghubAdapter) || null;
+  const transport = rhTransport();
+  if (!adapter || !transport || !adapter.verifyKey) throw new Error("HNKERR:err_generic:RunningHub engine failed to load - reload the panel");
+  const res = await adapter.verifyKey({ transport: transport, apiKey: k, configOverride: rhConfigOverride() }, k);
+  if (res && res.ok) return { ok: true };
+  return { ok: false, code: res && res.error && res.error.code, status: res && res.error && res.error.status };
+}
+function rhFriendly(e) {
+  const st = e && e.status;
+  if (st === 401 || st === 403 || (e && e.code === "invalid-key")) return sl("rh_badkey");
+  return sl("rh_err").replace("{S}", String(st || "?"));
+}
+
+/* ---------------- RunningHub usage → spend ledger (the app's hnk_rh_spend) ---------------- */
+function rhUnwrap(j) {
+  if (!j || typeof j !== "object") return {};
+  if (("code" in j) && j.data && typeof j.data === "object") return j.data;
+  return j;
+}
+function rhNum(v) { const n = parseFloat(v); return isFinite(n) ? n : 0; }
+function rhUsageOne(u) {
+  if (!u || typeof u !== "object") return null;
+  if (!("consumeMoney" in u) && !("consumeCoins" in u) && !("thirdPartyConsumeMoney" in u)) return null;
+  return {
+    money: rhNum(u.consumeMoney) + rhNum(u.thirdPartyConsumeMoney),
+    coins: rhNum(u.consumeCoins),
+    secs: rhNum(u.taskCostTime),
+    has: true
+  };
+}
+function rhUsageOf(j) {
+  const d = rhUnwrap(j);
+  const list = Array.isArray(d.taskUsageList) ? d.taskUsageList : [];
+  const out = { money: 0, coins: 0, secs: 0, has: false, parts: 0 };
+  const seen = {};
+  for (let i = 0; i < list.length; i++) {
+    const rec = list[i] || {};
+    const id = String(rec.taskId || "");
+    if (id && seen[id]) continue;
+    if (id) seen[id] = 1;
+    const u = rhUsageOne(rec);
+    if (!u) continue;
+    out.money += u.money; out.coins += u.coins; out.secs = Math.max(out.secs, u.secs);
+    out.has = true; out.parts++;
+  }
+  const selfId = String(d.taskId || "");
+  const own = rhUsageOne(d.usage);
+  if (own && !(selfId && seen[selfId])) {
+    out.money += own.money; out.coins += own.coins; out.secs = Math.max(out.secs, own.secs);
+    out.has = true; out.parts++;
+  }
+  return out;
+}
+async function rhAccountStatus(apiKey) {
+  const r = await hnkFetch("https://www.runninghub.ai/uc/openapi/accountStatus", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey },
+    body: JSON.stringify({ apiKey: apiKey })
+  }, 25000);
+  const j = await r.json().catch(function () { return null; });
+  if (!r.ok) { const e = new Error("account-failed"); e.status = r.status; throw e; }
+  if (j && ("code" in j) && Number(j.code) !== 0) throw new Error("account-rejected");
+  const d = rhUnwrap(j);
+  if (d.currency) state.rhLastCur = String(d.currency);
+  return {
+    money: d.remainMoney != null ? rhNum(d.remainMoney) : null,
+    coins: d.remainCoins != null ? rhNum(d.remainCoins) : null,
+    currency: String(d.currency || ""),
+    apiType: String(d.apiType || ""),
+    running: rhNum(d.currentTaskCounts),
+    ts: Date.now()
+  };
+}
+async function rhQueueStatus(apiKey) {
+  const r = await hnkFetch("https://www.runninghub.ai/openapi/v2/queue/status", {
+    method: "GET",
+    headers: { "Authorization": "Bearer " + apiKey }
+  }, 25000);
+  const j = await r.json().catch(function () { return null; });
+  if (!r.ok) { const e = new Error("queue-failed"); e.status = r.status; throw e; }
+  if (j && ("code" in j) && Number(j.code) !== 0) throw new Error("queue-rejected");
+  const d = rhUnwrap(j);
+  return {
+    keyType: String(d.apiKeyType || ""),
+    limit: rhNum(d.concurrentLimit),
+    running: rhNum(d.runningCount),
+    queued: rhNum(d.queuedCount),
+    total: rhNum(d.totalCurrentTasks)
+  };
+}
+function spendLoad() {
+  const o = (state.spend && typeof state.spend === "object") ? state.spend : {};
+  return {
+    rows: Array.isArray(o.rows) ? o.rows : [],
+    old: (o.old && typeof o.old === "object") ? o.old : { n: 0, money: 0, coins: 0 },
+    cur: String(o.cur || "")
+  };
+}
+function spendSave(b) { state.spend = b; saveSettings(); }
+function spendAdd(taskId, meta, u) {
+  const b = spendLoad();
+  const id = String(taskId || "");
+  if (id) for (let i = 0; i < b.rows.length; i++) if (b.rows[i] && b.rows[i].id === id) return;
+  b.rows.push({
+    id: id, ts: Date.now(),
+    k: (meta && meta.kind) || "image",
+    m: String((meta && meta.label) || "").slice(0, 60),
+    p: (meta && meta.prov) || "rh",
+    money: u && u.has ? +(u.money.toFixed(6)) : 0,
+    coins: u && u.has ? +(u.coins.toFixed(4)) : 0,
+    secs: u ? Math.round(u.secs) : 0,
+    has: u && u.has ? 1 : 0
+  });
+  if (u && u.has && !b.cur && state.rhLastCur) b.cur = state.rhLastCur;
+  while (b.rows.length > 400) {
+    const drop = b.rows.shift();
+    b.old.n++; b.old.money += drop.money || 0; b.old.coins += drop.coins || 0;
+  }
+  spendSave(b);
+  try { renderSpend(); } catch (e) { }
+}
+function spendRollup() {
+  const b = spendLoad();
+  const now = Date.now();
+  const td = new Date(); td.setHours(0, 0, 0, 0); const todayStart = td.getTime();
+  const md = new Date(); md.setDate(1); md.setHours(0, 0, 0, 0); const monthStart = md.getTime();
+  const z = function () { return { n: 0, money: 0, coins: 0, secs: 0, unknown: 0 }; };
+  const out = { today: z(), week: z(), month: z(), all: z(), byModel: {}, byProv: {}, rows: b.rows.slice().reverse(), cur: b.cur || state.rhLastCur };
+  for (let i = 0; i < b.rows.length; i++) {
+    const r = b.rows[i];
+    const put = function (a) { a.n++; a.money += r.money || 0; a.coins += r.coins || 0; a.secs += r.secs || 0; if (!r.has) a.unknown++; };
+    put(out.all);
+    if (r.ts >= todayStart) put(out.today);
+    if (r.ts >= now - 7 * 86400000) put(out.week);
+    if (r.ts >= monthStart) put(out.month);
+    const mk = r.m || "?";
+    if (!out.byModel[mk]) out.byModel[mk] = z();
+    put(out.byModel[mk]);
+    const pk = r.p || "rh";
+    if (!out.byProv[pk]) out.byProv[pk] = z();
+    put(out.byProv[pk]);
+  }
+  out.all.n += b.old.n || 0; out.all.money += b.old.money || 0; out.all.coins += b.old.coins || 0;
+  out.trimmed = b.old.n || 0;
+  return out;
+}
+function spendClear() {
+  spendSave({ rows: [], old: { n: 0, money: 0, coins: 0 }, cur: "" });
+  try { renderSpend(); } catch (e) { }
+}
+function fmtMoney(v, cur) {
+  const n = Number(v) || 0;
+  let s;
+  if (n === 0) s = "0";
+  else if (n < 0.1) s = n.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+  else s = n.toFixed(2);
+  return cur ? (s + " " + cur) : s;
+}
+/* a finished RunningHub task books its own cost; the status bar names it */
+function rhBookSpend(taskId, meta, finalJson) {
+  const u = rhUsageOf(finalJson);
+  spendAdd(taskId, meta, u);
+  if (!u.has) return;
+  const cur = spendLoad().cur || state.rhLastCur || "";
+  const bits = [];
+  if (u.money > 0) bits.push(fmtMoney(u.money, cur));
+  if (u.coins > 0) bits.push(Math.round(u.coins) + " RH");
+  if (bits.length) setStatus(sl("cost_ran").replace("{C}", bits.join(" · ")), "ok");
+}
+/* the adapters hand back usage:[{taskId, final}] — one booking per task */
+function rhBookUsage(usage, meta) {
+  if (!Array.isArray(usage)) return;
+  for (let i = 0; i < usage.length; i++) {
+    const e = usage[i];
+    if (!e) continue;
+    try { rhBookSpend(e.taskId, meta, e.final); } catch (err) { }
+  }
+}
+
+/* ---------------- COST & BALANCE (the app's cardMoney) ---------------- */
+function balLoad() { return (state.rhBal && typeof state.rhBal === "object") ? state.rhBal : null; }
+function balSave(b) { state.rhBal = b; saveSettings(); }
+function agoText(ts) {
+  if (!ts) return sl("money_never");
+  const m = Math.round((Date.now() - ts) / 60000);
+  if (m < 1) return sl("job_age_now");
+  if (m < 60) return sl("job_age_min").replace("{N}", String(m));
+  return sl("job_age_hr").replace("{N}", String(Math.round(m / 60)));
+}
+function balText(b, big) {
+  if (!b) return "—";
+  const money = (b.money != null) ? fmtMoney(b.money, b.currency || "") : "";
+  const coins = (b.coins != null) ? (Math.round(b.coins) + " RH") : "";
+  if (big) return money || coins || "—";
+  return [money, coins].filter(Boolean).join(" · ") || "—";
+}
+function renderSpendProv(r) {
+  const host = $("moneyProv");
+  if (!host) return;
+  host.textContent = "";
+  const keys = Object.keys(r.byProv);
+  if (!keys.length) return;
+  keys.sort(function (a, b) { return (a === "rh" ? -1 : 1) - (b === "rh" ? -1 : 1); });
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i], a = r.byProv[k];
+    const box = sEl("div", "acc-sub");
+    box.appendChild(sEl("div", "subh", PROV_NAME[k] || k));
+    const kv = sEl("div", "acc-kv");
+    kv.appendChild(sEl("span", "k", sl("money_runs")));
+    kv.appendChild(sEl("span", "v", String(a.n)));
+    box.appendChild(kv);
+    if (k === "rh") {
+      const kv2 = sEl("div", "acc-kv");
+      kv2.appendChild(sEl("span", "k", sl("money_all_short")));
+      kv2.appendChild(sEl("span", "v", fmtMoney(a.money, r.cur)));
+      box.appendChild(kv2);
+    }
+    if (a.unknown) box.appendChild(sEl("p", "mut", sl("money_unrep").replace("{N}", String(a.unknown))));
+    host.appendChild(box);
+  }
+}
+function renderSpend() {
+  const r = spendRollup(), b = balLoad();
+  setIcnText($("moneyH2"), "i-bolt", "gold", sl("money_h"));
+  const intro = $("moneyIntro"); if (intro) intro.textContent = sl("money_intro");
+  const bl = $("moneyBalL"); if (bl) bl.textContent = sl("money_bal");
+  const tl = $("moneyTodayL"); if (tl) tl.textContent = sl("money_today");
+  const ml = $("moneyMonthL"); if (ml) ml.textContent = sl("money_month");
+  const bal = $("moneyBal"); if (bal) bal.textContent = balText(b, true);
+  const today = $("moneyToday"); if (today) today.textContent = r.today.n ? fmtMoney(r.today.money, r.cur) : "—";
+  const month = $("moneyMonth"); if (month) month.textContent = r.month.n ? fmtMoney(r.month.money, r.cur) : "—";
+  const bR = $("btnMoneyRefresh"); if (bR) bR.textContent = sl("money_refresh");
+  const bC = $("btnMoneyCsv"); if (bC) bC.textContent = sl("money_csv");
+  const bX = $("btnMoneyClear"); if (bX) bX.textContent = sl("money_clear");
+  setIcnText($("moneyRunsT"), "i-stack", "cream", sl("money_runs_t"));
+  const meta = [];
+  if (b && b.coins != null && b.money != null) meta.push(balText(b));
+  meta.push(b ? sl("money_checked").replace("{T}", agoText(b.ts)) : sl("money_never"));
+  if (b && b.queue) meta.push(sl("money_queue").replace("{R}", String(b.queue.running)).replace("{Q}", String(b.queue.queued)).replace("{L}", String(b.queue.limit || "—")));
+  if (b && b.apiType) meta.push(b.apiType);
+  meta.push(sl("money_all").replace("{N}", String(r.all.n)).replace("{C}", fmtMoney(r.all.money, r.cur)));
+  if (r.trimmed) meta.push(sl("money_trim").replace("{N}", String(r.trimmed)));
+  const mm = $("moneyMeta"); if (mm) mm.textContent = meta.join(" · ");
+  renderSpendProv(r);
+  const bm = $("moneyByModel");
+  if (bm) {
+    bm.textContent = "";
+    const keys = Object.keys(r.byModel).sort(function (a, c) { return r.byModel[c].money - r.byModel[a].money; });
+    if (keys.length) {
+      bm.appendChild(sEl("div", "subh", sl("money_bymodel")));
+      for (let i = 0; i < Math.min(8, keys.length); i++) {
+        const a = r.byModel[keys[i]];
+        const kv = sEl("div", "acc-kv");
+        kv.appendChild(sEl("span", "k", keys[i]));
+        kv.appendChild(sEl("span", "v", a.n + "× · " + fmtMoney(a.money, r.cur)));
+        bm.appendChild(kv);
+      }
+    }
+  }
+  const runs = $("moneyRuns");
+  if (!runs) return;
+  runs.textContent = "";
+  if (!r.rows.length) { runs.appendChild(sEl("p", "mut", sl("money_empty"))); return; }
+  const SHOW = 20;
+  const shown = r.rows.slice(0, SHOW);
+  runs.appendChild(sEl("div", "subh", sl("money_recent").replace("{N}", String(shown.length))));
+  const pad = function (n) { return (n < 10 ? "0" : "") + n; };
+  for (let i = 0; i < shown.length; i++) {
+    const row = shown[i];
+    const d = new Date(row.ts);
+    const kv = sEl("div", "acc-kv");
+    kv.appendChild(sEl("span", "k", pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + "  " + (row.m || "—")));
+    let v;
+    if (!row.has) v = sl("money_unknown");
+    else v = [row.money > 0 ? fmtMoney(row.money, r.cur) : "", row.coins > 0 ? (Math.round(row.coins) + " RH") : ""].filter(Boolean).join(" · ") || sl("cost_free_any");
+    kv.appendChild(sEl("span", "v", v));
+    runs.appendChild(kv);
+  }
+  if (r.rows.length > SHOW) runs.appendChild(sEl("p", "mut", sl("money_more").replace("{N}", String(r.rows.length - SHOW))));
+}
+async function moneyRefresh() {
+  const key = (state.rhKey || "").trim();
+  if (!key) { stSet("stMoney", sl("money_nokey"), "err"); return false; }
+  const btn = $("btnMoneyRefresh");
+  btnOff(btn, true);
+  stSet("stMoney", "");
+  let ok = false;
+  try {
+    const a = await rhAccountStatus(key);
+    let q = null;
+    try { q = await rhQueueStatus(key); } catch (e) { q = null; }
+    balSave({ money: a.money, coins: a.coins, currency: a.currency, apiType: a.apiType, ts: a.ts, queue: q });
+    ok = true;
+  } catch (e) {
+    stSet("stMoney", sl("money_fail"), "err");
+  }
+  btnOff(btn, false);
+  renderSpend();
+  return ok;
+}
+async function moneyCsv() {
+  const r = spendRollup();
+  const lines = ["when,model,kind,money,coins,seconds,reported,currency"];
+  const rows = r.rows.slice().reverse();
+  for (let i = 0; i < rows.length; i++) {
+    const x = rows[i];
+    lines.push([new Date(x.ts).toISOString(), '"' + String(x.m || "").replace(/"/g, '""') + '"', x.k || "",
+      x.money || 0, x.coins || 0, x.secs || 0, x.has ? "yes" : "no", r.cur || ""].join(","));
+  }
+  try {
+    const f = await fsp.getFileForSaving("hnk-runninghub-spend.csv", { types: ["csv"] });
     if (!f) return;
-    const txt = await f.read({ format: uxp.storage.formats.utf8 });
-    const folder = await uxp.storage.localFileSystem.getDataFolder();
-    const dst = await folder.createFile(SETTINGS_FILE, { overwrite: true });
-    await dst.write(txt, { format: uxp.storage.formats.utf8 });
+    await f.write(lines.join("\n"), { format: formats.utf8 });
+  } catch (e) { stSet("stMoney", friendlyErr(e), "err"); }
+}
+
+/* ---------------- ACCOUNT (the app's cardAccount) ---------------- */
+function accCollapseGrp(id) {
+  const g = $(id);
+  if (!g) return;
+  const hide = g.classList.contains("hide");
+  g.className = "grp app-grp" + (hide ? " hide" : "");
+  const h = $(id + "H");
+  if (h) h.setAttribute("aria-expanded", "false");
+}
+function accOpenGrp(id) {
+  const g = $(id);
+  if (!g || g.classList.contains("hide")) return;
+  for (let i = 0; i < ACC_GRPS.length; i++) if (ACC_GRPS[i] !== id) accCollapseGrp(ACC_GRPS[i]);
+  g.className = "grp app-grp open";
+  const h = $(id + "H");
+  if (h) h.setAttribute("aria-expanded", "true");
+  accOnGrpOpen(id);
+}
+function accOnGrpOpen(id) {
+  if (id === "accGrpDev" && gateS.sess) accLoadDevices();
+}
+function accPlanLineText() {
+  const p = gateS.prof;
+  if (!p || p.plan_status !== "active") return sl("acc_plan_free").split(" — ")[0];
+  const days = gateDaysLeft(p);
+  if (days <= 0) return sl("acc_plan_expired").split(" — ")[0];
+  return "Premium · " + accNum(days) + sl("days_short");
+}
+function accAvaRender() {
+  const sess = gateS.sess;
+  const a = sess ? (gateAvaOk(state.accAvatar) ? state.accAvatar : "") : "";
+  const img = $("accAvaImg"), brand = $("accAvaBrand");
+  if (img && brand) {
+    if (a) { img.src = a; img.style.display = ""; brand.style.display = "none"; }
+    else { img.removeAttribute("src"); img.style.display = "none"; brand.style.display = ""; }
+  }
+  const plus = $("accAvaPlus"); if (plus) plus.style.display = sess ? "" : "none";
+  const drop = $("btnAvaDrop"); if (drop) drop.style.display = a ? "" : "none";
+  const sub = $("awSub");
+  if (sub) {
+    if (sess) {
+      const prof = gateS.prof || {};
+      const nm = String((prof.name || prof.email || sess.email || state.accEmail) || "").split("@")[0] || "✦";
+      sub.textContent = sl("aw_back").replace("{N}", nm);
+    } else sub.textContent = sl("aw_sub");
+  }
+}
+function unifiedCanDownload() {
+  const data = gateS.entitlement;
+  if (!data || typeof data !== "object") return false;
+  const account = data.account || {};
+  const license = data.license || {};
+  const permissions = data.permissions || {};
+  const devices = data.devices || {};
+  const allowed = data.allowed;
+  if (String(account.effective_status || account.status || "pending").toLowerCase() !== "active") return false;
+  if (!(license.active === true || license.status === "active")) return false;
+  if (permissions.ccx_download !== true) return false;
+  if (!devices.computer) return false;
+  if (allowed === false) return false;
+  if (allowed && typeof allowed === "object" && allowed.ccx_download === false) return false;
+  return true;
+}
+function accRenderPlan() {
+  const p = gateS.prof;
+  const sess = gateS.sess;
+  const days = gateDaysLeft(p);
+  const active = !!(p && p.plan_status === "active");
+  const line = $("accPlanLine"), until = $("accPlanUntil"), pending = $("accPending"), off = $("accPlanOffline");
+  if (pending) pending.style.display = "none";
+  if (line) {
+    line.className = "acc-plan-line";
+    if (!active) {
+      setIcnText(line, "i-key", "cream", sl("acc_plan_free"));
+      if (until) until.textContent = "";
+      if (pending && sess) { pending.textContent = sl("acc_pending"); pending.style.display = ""; }
+    } else if (days === 0) {
+      line.className = "acc-plan-line err";
+      setIcnText(line, "i-warn", "err", sl("acc_plan_expired"));
+      if (until) until.textContent = "";
+    } else if (days <= 7) {
+      line.className = "acc-plan-line gold";
+      setIcnText(line, "i-warn", "hi", sl("acc_plan_soon").replace("{N}", accNum(days)));
+      if (until) until.textContent = sl("acc_plan_until").replace("{D}", accFmtDate(p.plan_expires_at));
+    } else {
+      line.className = "acc-plan-line gold";
+      setIcnText(line, "i-gem", "hi", sl("acc_plan_active").replace("{N}", accNum(days)));
+      if (until) until.textContent = sl("acc_plan_until").replace("{D}", accFmtDate(p.plan_expires_at));
+    }
+  }
+  if (off) {
+    const showOff = !!sess && !!gateS.profOffline;
+    off.textContent = sl("acc_offline");
+    off.style.display = showOff ? "" : "none";
+  }
+  /* the app's unifiedRender repaints the download button from the fresh
+     entitlement — the label quotes panel.latest_version once it has arrived */
+  try { accPanelBtnLabel(); } catch (e) { }
+}
+function accRender() {
+  const sess = gateS.sess;
+  const inn = !!sess;
+  const accIn = $("accIn"); if (accIn) accIn.style.display = inn ? "" : "none";
+  const plan = $("accGrpPlan");
+  if (plan) {
+    const wasOpen = plan.classList.contains("open");
+    plan.className = "grp app-grp" + (inn ? "" : " hide") + (inn && wasOpen ? " open" : "");
+    const h = $("accGrpPlanH"); if (h) h.setAttribute("aria-expanded", inn && wasOpen ? "true" : "false");
+  }
+  const pg = $("accGrpPanel");
+  if (pg) {
+    const showPanel = inn && unifiedCanDownload();
+    const wasOpen = pg.classList.contains("open");
+    pg.className = "grp app-grp" + (showPanel ? "" : " hide") + (showPanel && wasOpen ? " open" : "");
+    const h = $("accGrpPanelH"); if (h) h.setAttribute("aria-expanded", showPanel && wasOpen ? "true" : "false");
+  }
+  if (inn) {
+    const p = gateS.prof || {};
+    const n = $("accInfoName"); if (n) n.textContent = String(p.name || "");
+    const e = $("accInfoEmail"); if (e) e.textContent = String(p.email || sess.email || state.accEmail || "");
+    const s = $("accInfoSince"); if (s) s.textContent = p.created_at ? sl("acc_member_since").replace("{D}", accFmtDate(p.created_at)) : "";
+  } else {
+    stSet("stAva", "");
+    stSet("stAccDev", "");
+    const lim = $("devLimitTxt"); if (lim) lim.style.display = "none";
+  }
+  accAvaRender();
+  accRenderPlan();
+}
+function accRenderDevices() {
+  const host = $("devList");
+  if (!host) return;
+  host.textContent = "";
+  const sess = gateS.sess;
+  const prof = gateS.prof;
+  const list = gateS.devices || [];
+  const mx = prof ? prof.allowed_devices : null;
+  const cntKnown = !!(sess && prof && prof.allowed_devices != null);
+  const cnt = $("devCount");
+  if (cnt) {
+    cnt.textContent = cntKnown ? sl("dev_count").replace("{N}", accNum(list.length)).replace("{M}", accNum(mx)) : "";
+    cnt.style.display = cntKnown ? "" : "none";
+  }
+  const empty = $("devEmpty");
+  if (empty) { empty.textContent = sl("dev_none"); empty.style.display = list.length ? "none" : ""; }
+  const me = sess ? (gateS.devId || state.accDevId) : null;
+  for (let i = 0; i < list.length; i++) {
+    const d = list[i] || {};
+    const lbl = String(d.label || d.device_id || "");
+    const li = document.createElement("li");
+    const ic = document.createElement("span");
+    ic.appendChild(ffIcon(/Android|iPhone|iPad/i.test(lbl) ? "i-phone" : "i-laptop", "cream"));
+    li.appendChild(ic);
+    const nm = sEl("span", "dv-lbl", lbl.slice(0, 40));
+    nm.title = lbl;
+    li.appendChild(nm);
+    const isMe = me && d.device_id === me;
+    li.appendChild(sEl("span", "dv-me", isMe ? sl("dev_this") : "Admin reset only"));
+    host.appendChild(li);
+  }
+}
+async function accLoadDevices() {
+  const sess = gateS.sess;
+  if (!sess || !sess.access || !sess.uid) return;
+  try {
+    const r = await gateReq("/rest/v1/devices?select=*&user_id=eq." + encodeURIComponent(sess.uid) + "&order=created_at.desc", { method: "GET" }, sess.access);
+    if (!r.ok) { stSet("stDev", sl("acc_unreachable"), "err"); return; }
+    const rows = await r.json().catch(function () { return null; });
+    gateS.devices = Array.isArray(rows) ? rows : [];
+    stSet("stDev", "");
+    accRenderDevices();
+  } catch (e) {
+    stSet("stDev", sl("acc_offline"), "err");
+  }
+}
+async function accChangePass() {
+  const inp = $("accPassNew");
+  const pw = inp ? String(inp.value || "") : "";
+  if (pw.length < 6) { stSet("stAccPass", sl("acc_pass_short"), "err"); return; }
+  const sess = gateS.sess;
+  if (!sess || !sess.access) return;
+  const btn = $("btnAccPass");
+  btnOff(btn, true);
+  try {
+    const r = await gateReq("/auth/v1/user", { method: "PUT", body: JSON.stringify({ password: pw }) }, sess.access);
+    const j = await r.json().catch(function () { return null; });
+    if (!r.ok) throw new Error(gateResponseMessage(j, r.status));
+    if (j && j.access_token) gateSaveSess(j);
+    if (inp) inp.value = "";
+    stSet("stAccPass", sl("acc_pass_changed"), "ok");
+  } catch (e) {
+    stSet("stAccPass", friendlyErr(e), "err");
+  } finally {
+    btnOff(btn, false);
+  }
+}
+function accPanelBtnLabel() {
+  const b = $("accPanelDownload");
+  if (!b) return;
+  const ent = gateS.entitlement || {};
+  const v = (ent.panel && ent.panel.latest_version) || "";
+  const label = sl("acc_panel_dl");
+  setIcnText(b, "i-download", "ink", v ? label.replace("{V}", v) : label.replace(/\s*v\{V\}/, "").replace("{V}", ""));
+}
+function accApplyLang() {
+  setIcnText($("accH2"), "i-key", "gold", sl("acc_h2"), "ic-h2");
+  setIcnText($("accGrpAuthT"), "i-key", "cream", sl("acc_h2"));
+  setIcnText($("accGrpPlanT"), "i-gem", "cream", sl("acc_plan_h"));
+  setIcnText($("accGrpPanelT"), "i-palette", "cream", sl("acc_panel_h"));
+  setIcnText($("accGrpDevT"), "i-phone", "cream", sl("dev_h"));
+  const pw = $("accPassNew"); if (pw) pw.placeholder = sl("acc_pass_new");
+  const sh = $("btnShowAccPassNew"); if (sh) sh.textContent = sl("btn_show");
+  const ln = $("accLblName"); if (ln) ln.textContent = sl("acc_name");
+  const le = $("accLblEmail"); if (le) le.textContent = sl("acc_email");
+  const pk = $("btnAvaPick"); if (pk) pk.textContent = sl("ava_change");
+  const dr = $("btnAvaDrop"); if (dr) dr.textContent = sl("ava_remove");
+  const av = $("accAva"); if (av) av.setAttribute("aria-label", sl("ava_change"));
+  accAvaRender();
+  setIcnText($("btnAccLogout"), "i-close", "cream", sl("acc_btn_logout"));
+  const ph = $("accPassH"); if (ph) ph.textContent = sl("acc_change_pass_h");
+  setIcnText($("btnAccPass"), "i-check", "cream", sl("acc_change_pass_h"));
+  const pp = $("accPanelP"); if (pp) pp.textContent = sl("acc_panel_p");
+  accPanelBtnLabel();
+  accRender();
+  accRenderDevices();
+}
+function accWire() {
+  wireKeyReveal("btnShowAccPassNew", "accPassNew");
+  const lo = $("btnAccLogout"); if (lo) lo.addEventListener("click", function () { gateSignOut(); });
+  const cp = $("btnAccPass"); if (cp) cp.addEventListener("click", function () { accChangePass(); });
+  const pk = $("btnAvaPick"); if (pk) pk.addEventListener("click", function () { avaPick(); });
+  const av = $("accAva"); if (av) av.addEventListener("click", function () { if (gateS.sess) avaPick(); });
+  const dr = $("btnAvaDrop"); if (dr) dr.addEventListener("click", function () { avaDrop(); });
+  const dl = $("accPanelDownload"); if (dl) dl.addEventListener("click", function () { panelGetUpdate(); });
+  for (let i = 0; i < ACC_GRPS.length; i++) {
+    (function (id) {
+      const h = $(id + "H");
+      if (!h) return;
+      h.addEventListener("click", function () {
+        const g = $(id);
+        if (!g) return;
+        if (g.classList.contains("open")) accCollapseGrp(id); else accOpenGrp(id);
+      });
+    })(ACC_GRPS[i]);
+  }
+}
+function accBoot() {
+  accCollapseGrp("accGrpPanel");
+  accCollapseGrp("accGrpDev");
+  const sess = gateS.sess || !!state.accRefresh;
+  const auth = $("accGrpAuth");
+  if (sess) accCollapseGrp("accGrpAuth");
+  else if (auth) { auth.className = "grp app-grp open"; const h = $("accGrpAuthH"); if (h) h.setAttribute("aria-expanded", "true"); }
+  accRender();
+  accRenderDevices();
+  if (sess) {
+    const plan = $("accGrpPlan");
+    if (plan) { plan.className = "grp app-grp open"; const h = $("accGrpPlanH"); if (h) h.setAttribute("aria-expanded", "true"); }
+  }
+}
+function accAfterAuth() {
+  if (_accSessSeen || !gateS.sess) return;
+  _accSessSeen = true;
+  accCollapseGrp("accGrpAuth");
+  accOpenGrp("accGrpPlan");
+}
+
+/* ---------------- READINESS (the app's cardSetupStatus) ---------------- */
+function setupJump(cardId) {
+  const c = $(cardId);
+  if (!c) return;
+  try { if (c.scrollIntoView) c.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { }
+}
+function renderSetupStatus() {
+  const h2 = $("setupStatusH2");
+  if (h2) setIcnText(h2, "i-bolt", "gold", sl("ready_h"), "ic-h2");
+  const host = $("setupStatusRows");
+  if (!host) return;
+  host.textContent = "";
+  const sess = gateS.sess;
+  const cfg = rhCfg();
+  const am = (state.rhKey && cfg.activeModel) ? rhModelDef(cfg.activeModel) : null;
+  const txt = function (id) { const e = $(id); return e ? String(e.textContent || "").replace(/^\s*/, "") : ""; };
+  const rows = [
+    ["RunningHub", !!(state.rhKey && rhAnyConfigured()), "cardRh", am ? am.label : ""],
+    [sl("ready_acc"), !!sess, "cardAccount", (sess && gateS.prof) ? accPlanLineText() : "", sl("ready_out")],
+    [txt("moneyH2"), null, "cardMoney"],
+    [txt("dataH2"), null, "cardData"],
+    [txt("aboutH2"), null, "cardAbout"]
+  ];
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[0]) continue;
+    const row = document.createElement("div");
+    row.className = "acc-kv";
+    row.setAttribute("role", "button");
+    row.setAttribute("tabindex", "0");
+    row.style.width = "100%"; row.style.cursor = "pointer"; row.style.background = "none";
+    row.style.border = "0"; row.style.font = "inherit"; row.style.textAlign = "left";
+    row.appendChild(sEl("span", "k", r[0]));
+    const v = sEl("span", "v");
+    if (r[1] === null) { v.textContent = "›"; v.style.color = "#a8a394"; }
+    else {
+      v.textContent = (r[3] ? r[3] + " · " : "") + (r[1] ? sl("ready_ok") : (r[4] || sl("ready_no")));
+      v.style.color = r[1] ? "#f4d488" : "#a8a394";
+    }
+    row.appendChild(v);
+    (function (target) { row.addEventListener("click", function () { setupJump(target); }); })(r[2]);
+    host.appendChild(row);
+  }
+}
+
+/* ---------------- RUNNINGHUB ENTERPRISE (the app's cardRh) ---------------- */
+function rhPaintModelBtn() {
+  const sel = $("rhModelSel");
+  if (!sel) return;
+  const opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+  const label = opt ? String(opt.textContent || "") : "";
+  const v = $("rhModelVal"); if (v) v.textContent = label;
+  const brand = ffModelBrand(label);
+  const tile = $("rhModelTile"); if (tile) tile.className = "hsl-tile " + brand[0];
+  const gl = $("rhModelGlyph"); if (gl) gl.src = "icons/ui/brand-" + brand[1] + ".svg";
+}
+function rhPaintQualityBtn() {
+  const sel = $("rhQuality");
+  if (!sel) return;
+  const opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+  const label = opt ? String(opt.textContent || "").replace(/^quality:\s+/, "") : "";
+  const v = $("rhQualityVal"); if (v) v.textContent = label;
+  const tile = $("rhQualityTile"); if (tile) tile.className = "hsl-tile t-gold";
+  const gl = $("rhQualityGlyph"); if (gl) gl.src = "icons/ui/brand-spark.svg";
+}
+function rhFillModelSel() {
+  const sel = $("rhModelSel");
+  if (!sel) return;
+  const keep = sel.value || rhCfg().activeModel || state.rhModel || "";
+  sel.textContent = "";
+  for (let i = 0; i < FREEFORM_MODELS.length; i++) {
+    const m = FREEFORM_MODELS[i];
+    const o = document.createElement("option");
+    o.value = m.id;
+    o.textContent = m.label + (rhDefaultApiPath(m.id) ? " ✓" : "");
+    sel.appendChild(o);
+  }
+  if (keep && ffModelById(keep)) sel.value = keep;
+}
+function rhLoadFormFor(id) {
+  const ap = $("rhApiPath"); if (ap) ap.value = rhEffectiveApiPath(id);
+  const q = $("rhQuality"); if (q) q.value = rhEffectiveQuality(id);
+}
+function rhRenderConfiguredList() {
+  const host = $("rhConfiguredList");
+  if (!host) return;
+  const cfg = rhCfg();
+  const configured = FREEFORM_MODELS.filter(function (m) { return rhIsConfigured(m.id); });
+  if (!configured.length) { host.textContent = sl("rh_none"); return; }
+  host.textContent = "";
+  for (let i = 0; i < configured.length; i++) {
+    const m = configured[i];
+    const active = cfg.activeModel === m.id;
+    const c = document.createElement("span");
+    c.className = "chip" + (active ? " on" : "");
+    if (active) { c.appendChild(ffIcon("i-star-fill", "ink")); c.appendChild(document.createTextNode(" " + m.label)); }
+    else c.textContent = m.label;
+    c.style.cursor = "pointer";
+    c.title = sl("rh_chip_title");
+    c.setAttribute("role", "button"); c.setAttribute("tabindex", "0");
+    (function (id) {
+      c.addEventListener("click", function () {
+        const cc = rhCfg();
+        cc.activeModel = id;
+        rhSaveCfg(cc);
+        rhRenderConfiguredList();
+        renderSetupStatus();
+      });
+    })(m.id);
+    host.appendChild(c);
+  }
+}
+function rhApplyLang() {
+  const tag = $("rhOptTag"); if (tag) tag.textContent = sl("rh_opt");
+  const intro = $("rhIntro"); if (intro) intro.textContent = sl("rh_intro");
+  const key = $("rhKey"); if (key) key.placeholder = sl("rh_key_ph");
+  const sh = $("btnShowRhKey");
+  if (sh) { sh.textContent = ""; sh.appendChild(ffIcon("i-eye", "cream")); sh.setAttribute("aria-label", sl("btn_show")); }
+  const sv = $("btnSaveRhKey"); if (sv) sv.textContent = sl("rh_save_verify");
+  const del = $("stRhKeyDel"); if (del) { del.textContent = sl("rh_remove"); del.style.display = state.rhKey ? "" : "none"; }
+  setIcnText($("rhAdvT"), "i-gear", "cream", sl("rh_adv"));
+  const note = $("rhSampleNote"); if (note) note.textContent = sl("rh_sample");
+  const ap = $("rhApiPath"); if (ap) ap.placeholder = sl("rh_path_ph");
+  const q = $("rhQuality");
+  if (q && q.options && q.options.length >= 4) {
+    q.options[0].textContent = sl("rh_q_none");
+    q.options[1].textContent = sl("rh_q_low");
+    q.options[2].textContent = sl("rh_q_medium");
+    q.options[3].textContent = sl("rh_q_high");
+  }
+  const bs = $("btnRhSaveModel"); if (bs) bs.textContent = sl("rh_save_model");
+  rhPaintModelBtn();
+  rhPaintQualityBtn();
+  rhRenderConfiguredList();
+}
+async function rhSaveKey() {
+  const inp = $("rhKey"), btn = $("btnSaveRhKey");
+  const k = inp ? String(inp.value || "").trim() : "";
+  if (!k) { stSet("stRhKey", sl("rh_enter_key"), "err"); return; }
+  if (btnIsOff(btn)) return;
+  btnOff(btn, true);
+  stSet("stRhKey", sl("rh_checking"), "");
+  try {
+    const res = await rhVerifyKey(k);
+    if (res.ok) {
+      state.rhKey = k;
+      saveSettings();
+      stSet("stRhKey", sl("rh_verified"), "ok");
+    } else {
+      stSet("stRhKey", rhFriendly(res), "err");
+    }
+  } catch (e) {
+    stSet("stRhKey", sl("rh_neterr"), "err");
+  }
+  btnOff(btn, false);
+  const del = $("stRhKeyDel"); if (del) del.style.display = state.rhKey ? "" : "none";
+  renderSetupStatus();
+  if (state.rhKey) moneyRefresh();
+}
+async function rhRemoveKey() {
+  const ok = await setupConfirm(sl("rh_remove_confirm"));
+  if (!ok) return;
+  state.rhKey = "";
+  saveSettings();
+  const inp = $("rhKey"); if (inp) inp.value = "";
+  stSet("stRhKey", "");
+  const del = $("stRhKeyDel"); if (del) del.style.display = "none";
+  renderSetupStatus();
+}
+function rhSaveModel() {
+  const sel = $("rhModelSel");
+  const id = sel ? sel.value : "";
+  if (!id) return;
+  const ap = $("rhApiPath");
+  const apiPath = ap ? String(ap.value || "").trim().replace(/^\/+/, "").replace(/^openapi\/v2\//, "") : "";
+  if (!apiPath) { stSet("stRhModel", sl("rh_ep_req"), "err"); return; }
+  const c = rhCfg();
+  const q = $("rhQuality");
+  c.models[id] = { apiPath: apiPath, quality: q ? String(q.value || "") : "" };
+  if (!c.activeModel) c.activeModel = id;
+  rhSaveCfg(c);
+  stSet("stRhModel", sl("rh_saved"), "ok");
+  rhRenderConfiguredList();
+  renderSetupStatus();
+}
+
+/* ---------------- DATA & BACKUP (the app's cardData) ---------------- */
+const BACKUP_SKIP = { accRefresh: 1, accUid: 1, accEmail: 1, accProfile: 1, accSeenAt: 1, accDevId: 1, accAvatar: 1 };
+async function settingsFileText() {
+  try {
+    const folder = await fsp.getDataFolder();
+    const f = await folder.getEntry(SETTINGS_FILE);
+    if (!f) return "";
+    return String(await f.read({ format: formats.utf8 }) || "");
+  } catch (e) { return ""; }
+}
+/* the app's line is settings total · Gallery count · storage used; here the
+   third figure is what the plugin's data folder holds (settings + kept files) */
+async function refreshDataStore() {
+  const el = $("dataStore");
+  if (!el) return;
+  const txt = await settingsFileText();
+  const bytes = txt.length;
+  const size = bytes > 1048576 ? (bytes / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(bytes / 1024)) + " KB";
+  const files = (typeof GAL !== "undefined" && GAL && Array.isArray(GAL.files)) ? GAL.files : [];
+  const line = sl("data_total") + ": " + size + " · Gallery: " + files.length + sl("data_photos");
+  el.textContent = line;
+  let used = bytes;
+  for (let i = 0; i < files.length; i++) {
+    try {
+      const f = files[i];
+      const m = (f && typeof f.getMetadata === "function") ? await f.getMetadata() : null;
+      used += Number((m && m.size) || (f && f.size) || 0) || 0;
+    } catch (e) { }
+  }
+  el.textContent = line + " · " + sl("data_store") + ": " + (used / 1048576).toFixed(1) + " MB";
+}
+function backupFilter(o) {
+  const out = {};
+  for (const k in o) { if (!BACKUP_SKIP[k]) out[k] = o[k]; }
+  return out;
+}
+async function exportData() {
+  try {
+    const txt = await settingsFileText();
+    let o = {};
+    try { o = txt ? JSON.parse(txt) : {}; } catch (e) { o = {}; }
+    if (!o || typeof o !== "object") o = {};
+    const ts = new Date().toISOString();
+    const data = {};
+    data[SETTINGS_FILE] = JSON.stringify(backupFilter(o));
+    const out = { hnk_backup: 1, app: "hnk-web-studio", ver: PANEL_VERSION, ts: ts, data: data };
+    const f = await fsp.getFileForSaving("hnk-backup-" + ts.slice(0, 10) + ".json", { types: ["json"] });
+    if (!f) return;
+    await f.write(JSON.stringify(out), { format: formats.utf8 });
+    stSet("stData", sl("data_exported"), "ok");
+  } catch (e) { stSet("stData", friendlyErr(e), "err"); }
+}
+async function pickBackupFile() {
+  try { return await fsp.getFileForOpening({ allowMultiple: false, types: ["json"] }); }
+  catch (e) { return await pickAnyFile(); }
+}
+async function importData() {
+  try {
+    const f = await pickBackupFile();
+    if (!f) return;
+    const txt = await f.read({ format: formats.utf8 });
+    let j = null;
+    try { j = JSON.parse(txt); } catch (e) { j = null; }
+    if (!j || j.hnk_backup !== 1 || !j.data || typeof j.data !== "object") { stSet("stData", sl("data_notbk"), "err"); return; }
+    const keys = Object.keys(j.data).filter(function (k) { return typeof j.data[k] === "string"; });
+    if (!keys.length) { stSet("stData", sl("data_nothing"), "err"); return; }
+    const ok = await setupConfirm(sl("data_confirm").replace("{N}", String(keys.length)));
+    if (!ok) return;
+    let incoming = {};
+    for (let i = 0; i < keys.length; i++) {
+      try {
+        const v = JSON.parse(j.data[keys[i]]);
+        if (v && typeof v === "object") incoming = Object.assign(incoming, backupFilter(v));
+      } catch (e) { }
+    }
+    const curTxt = await settingsFileText();
+    let cur = {};
+    try { cur = curTxt ? JSON.parse(curTxt) : {}; } catch (e) { cur = {}; }
+    if (!cur || typeof cur !== "object") cur = {};
+    const merged = Object.assign(cur, incoming);
+    const folder = await fsp.getDataFolder();
+    const out = await folder.createFile(SETTINGS_FILE, { overwrite: true });
+    await out.write(JSON.stringify(merged), { format: formats.utf8 });
     await loadSettings();
-    setStatus(t("st_saved"), "ok");
-  } catch (e) { setStatus(friendlyErr(e), "err"); }
+    try { applyI18n(); } catch (e) { }
+    try { bindSetupRefresh(); } catch (e) { }
+    stSet("stData", t("st_saved"), "ok");
+  } catch (e) { stSet("stData", friendlyErr(e), "err"); }
 }
 
+/* ---------------- APP & UPDATES (the app's cardAbout) ---------------- */
 /* v6.48.0 — the version the last check found, "" while none is known. */
 let _updLatest = "";
 
 function renderAbout() {
-  const rows = [
-    { label: "Version", level: "ok", detail: "v" + PANEL_VERSION },
-    { label: "Engine", level: "ok", detail: "RunningHub" }
-  ];
-  if (_updLatest) rows.push({ label: "Update", level: "warn", detail: "v" + _updLatest });
-  renderRows("aboutList", rows);
-  const row = $("updGetRow");
-  if (row) row.style.display = _updLatest ? "" : "none";
-  const btn = $("btnGetUpd");
-  if (btn) btn.textContent = t("btn_get_update");
-  const hint = $("updHint");
-  if (hint) hint.textContent = t("upd_hint");
+  const v = $("aboutVer");
+  if (v) v.textContent = "v" + PANEL_VERSION;
+  if (_updLatest) stSet("stAbout", sl("about_new").replace("{V}", _updLatest), "ok");
+}
+async function aboutCheckUpdate() {
+  const btn = $("btnCheckUpdate");
+  if (btnIsOff(btn)) return;
+  btnOff(btn, true);
+  stSet("stAbout", sl("about_checking"), "");
+  try {
+    const r = await hnkFetch(PANEL_VERSION_URL, { cache: "no-store" }, 15000);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    if (j && j.v && panelVerNewer(String(j.v), PANEL_VERSION)) {
+      _updLatest = String(j.v);
+      stSet("stAbout", sl("about_new").replace("{V}", _updLatest), "ok");
+    } else {
+      stSet("stAbout", sl("about_uptodate").replace("{V}", PANEL_VERSION), "ok");
+    }
+  } catch (e) {
+    stSet("stAbout", sl("st_key_noconn"), "err");
+  } finally {
+    btnOff(btn, false);
+  }
+}
+async function aboutHardRefresh() {
+  const ok = await setupConfirm(sl("about_cache_confirm"));
+  if (!ok) return;
+  _updChecked = false;
+  try { checkPanelUpdate(document); } catch (e) { }
+  try { if (typeof location !== "undefined" && location && typeof location.reload === "function") location.reload(); } catch (e) { }
 }
 
 /* ------------------ v6.48.0 FETCHING THE UPDATE ------------------
@@ -7329,16 +8407,23 @@ function renderAbout() {
    once; Creative Cloud verifies the signature and installs.
 
    Nothing here weakens the download rules: no new endpoint, no new
-   permission, the same refusal for an expired plan or a strange machine. */
+   permission, the same refusal for an expired plan or a strange machine.
+
+   v6.51.0 — the button is the app's "Download Panel ccx vX" inside the
+   account card's Panel group. The unified API issues the download only to a
+   web session; when it refuses this panel session, the web app opens so the
+   studio downloads there, exactly as the app's own button would. */
 async function panelGetUpdate() {
   const sess = (typeof gateS !== "undefined" && gateS.sess) || null;
   if (!sess || !sess.access) return;
-  if (!_updLatest) { setStatus(t("upd_none"), "ok"); return; }
-  const btn = $("btnGetUpd");
+  const ent = gateS.entitlement || {};
+  const ver = String((ent.panel && ent.panel.latest_version) || _updLatest || PANEL_VERSION);
+  const btn = $("accPanelDownload");
+  if (btnIsOff(btn)) return;
   btnOff(btn, true);
-  setStatus(t("upd_getting"), "");
+  stSet("stAcc", t("upd_getting"), "");
   try {
-    const r = await gateReq("/v1/downloads/panel", { method: "POST", body: "{}" }, sess.access);
+    const r = await gateReq("/v1/downloads/panel", { method: "POST", body: JSON.stringify({ version: ver }) }, sess.access);
     const j = await r.json().catch(function () { return null; });
     if (!r.ok || !j || !j.download_url) throw new Error(gateResponseMessage(j, r.status));
     /* download_url is server-relative and already carries /api; GATE_API_URL
@@ -7348,17 +8433,138 @@ async function panelGetUpdate() {
     if (!d.ok) throw new Error("HTTP " + d.status);
     const buf = await d.arrayBuffer();
     if (!buf || buf.byteLength < 1024) throw new Error("empty download");
-    const name = "HNK_Ai_Panel_v" + (j.version || _updLatest) + ".ccx";
+    const name = "HNK_Ai_Panel_v" + (j.version || ver) + ".ccx";
     const f = await fsp.getFileForSaving(name, { types: ["ccx"] });
     if (!f) return;                            /* the studio cancelled */
     await f.write(buf, { format: formats.binary });
-    setStatus(t("upd_saved"), "ok");
+    stSet("stAcc", t("upd_saved"), "ok");
   } catch (e) {
-    setStatus(friendlyErr(e), "err");
+    stSet("stAcc", friendlyErr(e), "err");
+    const m = e && e.message ? String(e.message) : "";
+    if (/web session|client_type_mismatch/i.test(m)) { try { openUrl(APP_URL); } catch (e2) { } }
   } finally {
     btnOff(btn, false);
   }
 }
+
+/* ---------------- PLATFORMS · SHARE · ABOUT statics ---------------- */
+function setupApplyStatics() {
+  const platH2 = $("platH2"); if (platH2) platH2.textContent = sl("plat_h2");
+  const p1 = $("platP1"); if (p1) p1.textContent = sl("plat_p1");
+  const p2 = $("platP2"); if (p2) p2.textContent = sl("plat_p2");
+  const p3 = $("platP3"); if (p3) p3.textContent = sl("plat_p3");
+  const p4 = $("platP4"); if (p4) p4.textContent = sl("plat_p4");
+  setIcnText($("platPS"), "i-palette", "cream", sl("plat_ps"));
+  const site = $("siteLink"); if (site) site.textContent = sl("site_link");
+  const sh2 = $("shareH2"); if (sh2) sh2.textContent = sl("share_h2");
+  const sp = $("shareP"); if (sp) sp.textContent = sl("share_p");
+  setIcnText($("btnShare"), "i-external", "cream", sl("share_btn"));
+  setIcnText($("btnCopyLink"), "i-link", "cream", sl("copy_btn"));
+  setIcnText($("aboutH2"), "i-bell", "gold", sl("about_h"), "ic-h2");
+  setIcnText($("btnCheckUpdate"), "i-bell", "ink", sl("about_check"));
+  setIcnText($("btnHardRefresh"), "i-restore", "cream", sl("about_cache"));
+  const pr = $("aboutPrivacy"); if (pr) pr.textContent = sl("about_privacy");
+  const tm = $("aboutTerms"); if (tm) tm.textContent = sl("about_terms");
+  const ch = $("aboutContactH"); if (ch) ch.textContent = sl("about_contact");
+  setIcnText($("dataH2"), "i-stack", "gold", sl("data_h"), "ic-h2");
+  setIcnText($("btnExportData"), "i-download", "cream", sl("data_export"));
+  setIcnText($("btnImportData"), "i-restore", "cream", sl("data_import"));
+}
+async function shareCopy() {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(APP_URL);
+    else if (navigator.clipboard && navigator.clipboard.setContent) await navigator.clipboard.setContent({ "text/plain": APP_URL });
+    else throw new Error("no clipboard");
+    stSet("stShare", sl("st_share_copied"), "ok");
+  } catch (e) {
+    stSet("stShare", APP_URL, "ok");
+  }
+}
+/* a plain open/close group header (Advanced, Runs, the platform groups) */
+function wireStaticGrp(grpId, hdrId) {
+  const g = $(grpId), h = $(hdrId || (grpId + "H"));
+  if (!g || !h) return;
+  h.addEventListener("click", function () {
+    const open = g.classList.contains("open");
+    g.className = "grp app-grp" + (open ? "" : " open");
+    h.setAttribute("aria-expanded", open ? "false" : "true");
+  });
+}
+/* everything a language switch or a settings reload must repaint */
+function bindSetupRefresh() {
+  accApplyLang();
+  const key = $("rhKey"); if (key && key.value !== (state.rhKey || "")) key.value = state.rhKey || "";
+  rhFillModelSel();
+  rhApplyLang();
+  renderSpend();
+  setupApplyStatics();
+  renderAbout();
+  renderSetupStatus();
+  refreshDataStore();
+}
+function bindSetup() {
+  /* account */
+  accWire();
+  accBoot();
+  /* RunningHub key + endpoints */
+  const key = $("rhKey"); if (key) key.value = state.rhKey || "";
+  wireKeyReveal("btnShowRhKey", "rhKey");
+  const sv = $("btnSaveRhKey"); if (sv) sv.addEventListener("click", function () { rhSaveKey(); });
+  if (key) key.addEventListener("keydown", function (e) { if (e && e.key === "Enter") rhSaveKey(); });
+  const del = $("stRhKeyDel"); if (del) del.addEventListener("click", function () { rhRemoveKey(); });
+  rhFillModelSel();
+  const sel = $("rhModelSel");
+  if (sel) {
+    rhLoadFormFor(sel.value);
+    sel.addEventListener("change", function () { rhLoadFormFor(sel.value); rhPaintModelBtn(); });
+  }
+  const q = $("rhQuality"); if (q) q.addEventListener("change", function () { rhPaintQualityBtn(); });
+  const bs = $("btnRhSaveModel"); if (bs) bs.addEventListener("click", function () { rhSaveModel(); });
+  wireStaticGrp("rhGrpAdvanced", "rhAdvH");
+  /* cost & balance */
+  const bR = $("btnMoneyRefresh"); if (bR) bR.addEventListener("click", function () { moneyRefresh(); });
+  const bC = $("btnMoneyCsv"); if (bC) bC.addEventListener("click", function () { moneyCsv(); });
+  const bX = $("btnMoneyClear");
+  if (bX) bX.addEventListener("click", async function () {
+    const ok = await setupConfirm(sl("money_clear") + "?");
+    if (!ok) return;
+    spendClear();
+    stSet("stMoney", sl("money_cleared"), "ok");
+  });
+  wireStaticGrp("moneyGrpRuns", "moneyRunsH");
+  /* data & backup */
+  const ex = $("btnExportData"); if (ex) ex.addEventListener("click", function () { exportData(); });
+  const im = $("btnImportData"); if (im) im.addEventListener("click", function () { importData(); });
+  /* platforms · share · about */
+  wireStaticGrp("platGrpAndroid"); wireStaticGrp("platGrpIos"); wireStaticGrp("platGrpDesktop"); wireStaticGrp("platGrpPs");
+  const site = $("siteLink"); if (site) site.addEventListener("click", function () { openUrl("https://hnkaistudio.com/"); });
+  const shr = $("btnShare"); if (shr) shr.addEventListener("click", function () { shareCopy(); });
+  const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
+  const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
+  const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
+  const about = $("cardAbout");
+  if (about) {
+    const links = about.querySelectorAll("[data-href]");
+    for (let i = 0; i < links.length; i++) {
+      (function (el) {
+        el.addEventListener("click", function () { openUrl(el.getAttribute("data-href")); });
+      })(links[i]);
+    }
+  }
+  /* first paint + the language-switch repaint */
+  bindSetupRefresh();
+  REFRESHERS.push(function () { try { bindSetupRefresh(); } catch (e) { } });
+  /* the app's boot balance check: at most once an hour, only with a key */
+  setTimeout(function () {
+    try {
+      if (!state.rhKey) return;
+      const b = balLoad();
+      if (b && Date.now() - (b.ts || 0) < 3600000) return;
+      moneyRefresh();
+    } catch (e) { }
+  }, 2600);
+}
+
 
 /* ============================================================
    PATH — the web app's batch, in Photoshop (v6.46.0)
@@ -7710,6 +8916,7 @@ async function vtRun() {
       renderVt();
     });
     if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
+    try { rhBookUsage(res.usage, { kind: "video", label: d.label || d.id, prov: "rh" }); } catch (e) { }
     const name = "hnk-videotool-" + Date.now() + ".mp4";
     await saveResultFile(VT.out, name, res.results[0].ref);
     VT.rows = [{ label: name, level: "ok", detail: "saved" }];
@@ -7745,7 +8952,7 @@ async function saveResultFile(folder, name, ref) {
 }
 function videoEnv() {
   return { transport: (globalThis.HNK && globalThis.HNK.runninghubHttp && globalThis.HNK.runninghubHttp.create)
-    ? globalThis.HNK.runninghubHttp.create() : null, apiKey: state.rhKey };
+    ? globalThis.HNK.runninghubHttp.create() : null, apiKey: state.rhKey, configOverride: rhConfigOverride() };
 }
 async function vidRun() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
@@ -7770,6 +8977,7 @@ async function vidRun() {
       renderVid();
     });
     if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
+    try { rhBookUsage(res.usage, { kind: "video", label: d.label || d.id, prov: "rh" }); } catch (e) { }
     const name = "hnk-video-" + Date.now() + ".mp4";
     await saveResultFile(VID.out, name, res.results[0].ref);
     VID.rows = [{ label: name, level: "ok", detail: "saved" }];
@@ -7796,6 +9004,7 @@ async function vuRun() {
         renderVu();
       });
     if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
+    try { rhBookUsage(res.usage, { kind: "video", label: "Video Upscale", prov: "rh" }); } catch (e) { }
     const name = "hnk-upscaled-" + Date.now() + ".mp4";
     await saveResultFile(VU.out, name, res.results[0].ref);
     VU.rows = [{ label: name, level: "ok", detail: "saved" }];
@@ -7993,26 +9202,8 @@ function bindPath() {
 }
 
 function bindDiag() {
-  const out = $("btnAcctOut");
-  if (out) {
-    out.textContent = (typeof gateT === "function") ? gateT("gate_signout") : "Sign out";
-    out.addEventListener("click", function () { const g = $("gateSignOut"); if (g && g.click) g.click(); });
-  }
-  const avaPickBtn = $("btnAvaPick"); if (avaPickBtn) avaPickBtn.addEventListener("click", avaPick);
-  const avaDropBtn = $("btnAvaDrop"); if (avaDropBtn) avaDropBtn.addEventListener("click", avaDrop);
-  const bal = $("btnMoney");
-  if (bal) bal.addEventListener("click", function () { checkBalance(); });
-  const bo = $("btnBackupOut"); if (bo) bo.addEventListener("click", exportBackup);
-  const bi = $("btnBackupIn"); if (bi) bi.addEventListener("click", importBackup);
-  const up = $("btnCheckUpd");
-  if (up) up.addEventListener("click", function () { _updChecked = false; checkPanelUpdate(document); renderAbout(); });
-  const gu = $("btnGetUpd");
-  if (gu) gu.addEventListener("click", function () { if (!btnIsOff(gu)) panelGetUpdate(); });
+  bindSetup();
   bindPath(); bindVideo(); bindGallery();
-  renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout();
-  REFRESHERS.push(function () {
-    try { renderDiag(); renderAcct(); renderMoney(); renderData(); renderAbout(); } catch (e) { }
-  });
 }
 
 /* ============================================================
@@ -8307,6 +9498,7 @@ function populateSelects() {
     }
   }
   if (sl) sl.value = state.lang;
+  try { langPaintHsl(); } catch (e) { }
   const sm = $("selModel");
   if (sm) {
     fillSelect(sm, MODEL_OPTIONS.map(function (m) { return { v: m.v, label: t(m.k) }; }));
@@ -8441,6 +9633,30 @@ function setStatus(msg, kind) {
   if (!s) return;
   s.textContent = msg || "";
   s.className = "status" + (kind ? " " + kind : "");
+  try { toastPaint(msg, kind); } catch (e) { }
+}
+/* v6.51.0 — the app has no status bar: a message is its toast(), a gold-edged
+   panel-2 card floating 86px above the tab bar for 2.6 s. #status still holds
+   the text (every caller and test reads it); the toast around it is its face.
+   Quiet states ("ready", empty) hide it; a busy message stays up while the
+   dots run (startBusy → endBusy) and the message that ends the run gets the
+   app's 2.6 s like any other. */
+let toastTimer = null;
+function toastPaint(msg, kind) {
+  const tb = $("toast"); if (!tb) return;
+  if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+  let idle = !msg;
+  if (!idle) { try { idle = msg === t("st_ready"); } catch (e) { idle = false; } }
+  if (idle) { tb.className = "toast"; return; }
+  tb.className = "toast on" + ((kind === "ok" || kind === "err") ? " " + kind : "");
+  if (!state.busy) toastArm();
+}
+function toastArm() {
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    toastTimer = null;
+    const tb = $("toast"); if (tb) tb.className = "toast";
+  }, 2600);
 }
 function stopDots() { if (dotsTimer) { clearInterval(dotsTimer); dotsTimer = null; } }
 function setBusyBtn(el) { state.pendingBtn = el || null; }
@@ -8543,6 +9759,9 @@ function endBusy() {
   const g = $("btnGenerate"); btnOff(g, false);
   stopDots();
   try { setStage(null); } catch (e) { }
+  /* a run that ends without a closing message must not leave its progress
+     toast up forever — give whatever is showing the app's 2.6 s */
+  try { const tb = $("toast"); if (tb && /\bon\b/.test(tb.className)) toastArm(); } catch (e) { }
 }
 
 /* ---------------- Settings persistence (file-backed JSON) ---------------- */
@@ -8575,7 +9794,8 @@ async function saveSettings() {
       accRefresh: state.accRefresh, accUid: state.accUid, accEmail: state.accEmail,
       accProfile: state.accProfile, accSeenAt: state.accSeenAt, accDevId: state.accDevId,
       accAvatar: state.accAvatar,
-      rhModel: state.rhModel, ffRatio: state.ffRatio, ffSize: state.ffSize, ffCount: state.ffCount
+      rhModel: state.rhModel, ffRatio: state.ffRatio, ffSize: state.ffSize, ffCount: state.ffCount,
+      rhCfg: state.rhCfg, spend: state.spend, rhBal: state.rhBal, rhLastCur: state.rhLastCur
     };
     await f.write(JSON.stringify(o), { format: formats.utf8 });
   } catch (e) { hwarn("saveSettings:", e); }
@@ -8615,6 +9835,32 @@ async function loadSettings() {
       if (typeof o.ffRatio === "string" && /^(|\d{1,2}:\d{1,2})$/.test(o.ffRatio)) state.ffRatio = o.ffRatio;
       if (o.ffSize === "" || o.ffSize === "1K" || o.ffSize === "2K" || o.ffSize === "4K") state.ffSize = o.ffSize;
       if (o.ffCount === 1 || o.ffCount === 2 || o.ffCount === 4) state.ffCount = o.ffCount;
+      /* v6.51.0 — Setup's RunningHub endpoint config, spend ledger and last balance
+         (the app keeps these in localStorage). Re-bounded on load: disk is user-editable. */
+      if (o.rhCfg && typeof o.rhCfg === "object") {
+        const c = { models: {}, activeModel: "" };
+        if (o.rhCfg.models && typeof o.rhCfg.models === "object") {
+          for (const mk in o.rhCfg.models) {
+            const mv = o.rhCfg.models[mk];
+            if (!mv || typeof mv !== "object") continue;
+            const row = {};
+            if (typeof mv.apiPath === "string") row.apiPath = mv.apiPath.slice(0, 200);
+            if (typeof mv.quality === "string") row.quality = mv.quality.slice(0, 40);
+            c.models[String(mk).slice(0, 80)] = row;
+          }
+        }
+        if (typeof o.rhCfg.activeModel === "string") c.activeModel = o.rhCfg.activeModel.slice(0, 80);
+        state.rhCfg = c;
+      }
+      if (o.spend && typeof o.spend === "object" && !Array.isArray(o.spend)) {
+        state.spend = {
+          rows: Array.isArray(o.spend.rows) ? o.spend.rows.filter(function (r) { return r && typeof r === "object"; }).slice(-400) : [],
+          old: (o.spend.old && typeof o.spend.old === "object") ? o.spend.old : { n: 0, money: 0, coins: 0 },
+          cur: typeof o.spend.cur === "string" ? o.spend.cur.slice(0, 12) : ""
+        };
+      }
+      if (o.rhBal && typeof o.rhBal === "object") state.rhBal = o.rhBal;
+      if (typeof o.rhLastCur === "string") state.rhLastCur = o.rhLastCur.slice(0, 12);
       if (typeof o.autoRun === "boolean") state.autoRun = o.autoRun;
       if (typeof o.autoPlace === "boolean") state.autoPlace = o.autoPlace;
       if (typeof o.intensity === "number") state.intensity = Math.round(o.intensity);
@@ -10707,10 +11953,18 @@ function rhErrToHnk(err) {
   const code = (err && err.code) || "";
   const msg = [err && err.title, err && err.message].filter(Boolean).join(" ") ||
     (err && err.bullets && err.bullets.join(" \u00b7 ")) || "RunningHub error";
-  if (code === "invalid-key") return new Error("HNKERR:err_key:" + msg);
-  if (code === "timeout") return new Error("HNKERR:err_net:" + msg);
-  if (code === "quota" || code === "rate-limited") return new Error("HNKERR:err_quota:" + msg);
-  return new Error("HNKERR:err_generic:" + msg);
+  let er;
+  if (code === "invalid-key") er = new Error("HNKERR:err_key:" + msg);
+  else if (code === "timeout") er = new Error("HNKERR:err_net:" + msg);
+  else if (code === "quota" || code === "rate-limited") er = new Error("HNKERR:err_quota:" + msg);
+  else er = new Error("HNKERR:err_generic:" + msg);
+  er.code = code; /* the app's Freeform card names a `timeout` by its own line */
+  return er;
+}
+
+/* the app's Count select: upscale models always run one take */
+function ffReqCount() {
+  return ffIsUpscale(ffModel()) ? 1 : (state.ffCount || 1);
 }
 
 /* single choke point: every image generation in the classic panel runs on
@@ -10720,7 +11974,7 @@ function rhErrToHnk(err) {
    output exactly as the web app's pgCreate does, and every returned take is
    handed back (first one + `extra`) so history shows ×2 / ×4 runs. The
    Setup "pro" tier still appends the app's quality line. */
-async function callImageAPI(model, parts, imageConfig) {
+async function callImageAPI(model, parts, imageConfig, signal) {
   await gateRequireLease();
   const adapter = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.runninghubAdapter) || null;
   const transport = rhTransport();
@@ -10734,20 +11988,24 @@ async function callImageAPI(model, parts, imageConfig) {
   if (pro) prompt += "\n" + RH_QUALITY_LINE;
   const size = ffHasSize(fm) ? (state.ffSize || "") : "";
   const ratio = ffHasRatio(fm) ? ((imageConfig && imageConfig.aspectRatio) || "") : "";
-  const count = ffIsUpscale(fm) ? 1 : (state.ffCount || 1);
+  const count = ffReqCount();
+  /* app v4.28: one AbortController per dispatch \u2014 the card's Stop kills the
+     in-flight provider calls instead of waiting them out */
   const res = await adapter.generate(
-    { transport: transport, apiKey: key },
+    { transport: transport, apiKey: key, configOverride: rhConfigOverride() },
     { model: fm.id, prompt: prompt,
       images: m.refs.map(function (r) { return { ref: r }; }),
       output: { ratio: ratio, size: size }, requestCount: count },
     { onStage: function (stage, info) {
         if (stage === "UPLOADING" && info && info.total) setStatus(t("st_gen") + " \u00b7 " + (info.current || 0) + "/" + info.total);
-      } }
+      },
+      signal: signal || undefined }
   );
   if (!res || !res.ok) {
-    if (res && res.cancelled) throw new Error("HNKERR:err_generic:cancelled");
+    if (res && res.cancelled) { const ce = new Error("HNKERR:err_generic:cancelled"); ce.code = "cancelled"; throw ce; }
     throw rhErrToHnk(res && res.error);
   }
+  try { rhBookUsage(res.usage, { kind: "image", label: fm.label, prov: "rh" }); } catch (e) { }
   const takes = [];
   const list = (res.results || []);
   for (let i = 0; i < list.length; i++) {
@@ -11373,12 +12631,139 @@ async function copyFinalPrompt() {
 }
 
 /* ---------------- Generate pipeline ---------------- */
+/* ================= FREEFORM RUN FEEDBACK (app: btnGen.onclick) =================
+   The web app's GENERATE keeps its label while it works — the button glows
+   (.gen.working), the card's own #spin shows a gold ring, the ticker
+   "<spin_gen> · <secs>s · <done>/<count>" and a sweeping bar, a Stop button
+   aborts the in-flight provider calls, and after a failure a Retry button
+   appears; done / stopped / timed-out lines land in the card's #stGen.
+   UXP has no CSS animation, so the ring and the bar move on a JS interval
+   from the same clock the ticker reads (0.8s per turn, 1.3s ease-in-out
+   sweep — the app's spinring / spinbar keyframes). The shell's bottom
+   status bar keeps its own line; that shell is a later parity wave. */
+const ffRun = { tick: 0, anim: 0, abort: null, t0: 0, count: 1, done: 0 };
+function ffSpinEnsure() {
+  const sp = $("spin");
+  if (!sp) return null;
+  if (!sp.firstChild) {
+    const row = document.createElement("div"); row.className = "spin-row";
+    const ring = document.createElement("img"); ring.className = "spin-ring"; ring.src = "icons/ui/spin-ring.svg"; ring.alt = "";
+    const txt = document.createElement("span"); txt.className = "spin-txt"; txt.id = "spinTxt";
+    row.appendChild(ring); row.appendChild(txt);
+    const bar = document.createElement("div"); bar.className = "spin-bar";
+    const run = document.createElement("div"); run.className = "spin-bar-in";
+    bar.appendChild(run);
+    sp.appendChild(row); sp.appendChild(bar);
+  }
+  return sp;
+}
+function ffSpinText() {
+  const secs = Math.round((Date.now() - ffRun.t0) / 1000);
+  return ff9(FF_L.spinGen) + " · " + secs + "s" + (ffRun.count > 1 ? " · " + ffRun.done + "/" + ffRun.count : "");
+}
+function ffSpinIdleText() {
+  const sp = ffSpinEnsure(), tx = $("spinTxt");
+  if (sp && tx && !ffRun.tick) tx.textContent = ff9(FF_L.spinGen);
+}
+function ffRunStopTimers() {
+  if (ffRun.tick) { clearInterval(ffRun.tick); ffRun.tick = 0; }
+  if (ffRun.anim) { clearInterval(ffRun.anim); ffRun.anim = 0; }
+}
+function ffRunFrame() {
+  const sp = $("spin");
+  if (!sp) return;
+  const ring = sp.querySelector(".spin-ring"), bar = sp.querySelector(".spin-bar"), run = sp.querySelector(".spin-bar-in");
+  const el = Date.now() - ffRun.t0;
+  if (ring) ring.style.transform = "rotate(" + Math.round((el % 800) / 800 * 360) + "deg)";
+  if (bar && run) {
+    /* spinbar 1.3s ease-in-out: background-size 250% with background-position
+       200% → -100% is, modulo the repeating tile, one 2.5-wide gradient whose
+       left edge slides from -0.5 to -1.0 track widths (crest 75% → 25%) */
+    const w = bar.getBoundingClientRect().width || 0;
+    const e = ffEaseInOut((el % 1300) / 1300);
+    run.style.marginLeft = Math.round((-0.5 - 0.5 * e) * w * 10) / 10 + "px";
+  }
+}
+/* CSS ease-in-out = cubic-bezier(.42,0,.58,1): solve x(t)=p for t, return y(t) */
+function ffEaseInOut(p) {
+  if (p <= 0) return 0;
+  if (p >= 1) return 1;
+  const bez = function (a, b, t) { const u = 1 - t; return 3 * u * u * t * a + 3 * u * t * t * b + t * t * t; };
+  let lo = 0, hi = 1, t = p;
+  for (let i = 0; i < 24; i++) {
+    t = (lo + hi) / 2;
+    if (bez(0.42, 0.58, t) < p) lo = t; else hi = t;
+  }
+  return bez(0, 1, t);
+}
+function ffRunStart(count) {
+  ffRun.count = count || 1; ffRun.done = 0; ffRun.t0 = Date.now();
+  ffRun.abort = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  const g = $("btnGenerate"); if (g && g.classList) g.classList.add("working");
+  const sp = ffSpinEnsure();
+  if (sp) { sp.className = "spin on"; const tx = $("spinTxt"); if (tx) tx.textContent = ffSpinText(); }
+  stSet("stGen", "");
+  const rb = $("btnRetry"); if (rb) rb.style.display = "none";
+  const sb = $("btnGenStop"); if (sb) sb.style.display = "";
+  ffRunStopTimers();
+  ffRun.tick = setInterval(function () { const tx = $("spinTxt"); if (tx) tx.textContent = ffSpinText(); }, 1000);
+  ffRun.anim = setInterval(ffRunFrame, 50);
+  ffRunFrame();
+  try { stickyGenSchedule(); } catch (e) { }
+  return ffRun.abort ? ffRun.abort.signal : null;
+}
+function ffRunEnd() {
+  ffRunStopTimers();
+  ffRun.abort = null;
+  const g = $("btnGenerate"); if (g && g.classList) g.classList.remove("working");
+  const sp = $("spin"); if (sp) sp.className = "spin";
+  const sb = $("btnGenStop"); if (sb) sb.style.display = "none";
+  ffSpinIdleText();
+  try { stickyGenSchedule(); } catch (e) { }
+}
+function ffRunOk(n, count) {
+  stSet("stGen", ff9(FF_L.done) + " (" + n + "/" + count + ")", "ok");
+}
+/* the app's catch: a tapped Stop is "Stopped", the provider ceiling is
+   "Timed out", an empty result its own line, anything else the error text */
+function ffRunErrMsg(e, sig) {
+  const stopped = (sig && sig.aborted) || (e && e.code === "cancelled") ||
+    /abort/i.test(((e && e.name) || "") + " " + ((e && e.message) || ""));
+  if (stopped) return ff9(FF_L.stopped);
+  if (e && e.code === "timeout") return ff9(FF_L.timedOut);
+  if (/returned no image/i.test((e && e.message) || "")) return ff9(FF_L.noImage);
+  return friendlyErr(e);
+}
+function ffRunErr(msg) {
+  stSet("stGen", msg, "err");
+  const rb = $("btnRetry"); if (rb) rb.style.display = "";
+}
+function ffGeneratePress() {
+  const g0 = $("btnGenerate");
+  if (!g0) return;
+  /* the label stays put while the run feeds back through the card (no busy dots) */
+  armGate("__gen", g0, function () { setBusyBtn(null); runGenerate(null, false, [], false, { action: "Prompt", ffCard: true }); });
+}
+function bindFreeformRun() {
+  ffSpinEnsure();
+  const g = $("btnGenerate");
+  if (g) g.addEventListener("click", ffGeneratePress);
+  const rb = $("btnRetry");
+  if (rb) rb.addEventListener("click", function () { rb.style.display = "none"; ffGeneratePress(); });
+  const sb = $("btnGenStop");
+  if (sb) sb.addEventListener("click", function () { if (ffRun.abort) { try { ffRun.abort.abort(); } catch (e) { } } });
+}
+
 async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) {
   const op = opts || {};
   if (op.action) state.lastAction = op.action;
   if (state.busy) return;
   const key = (state.rhKey || "").trim();
-  if (!key) { setStatus(t("st_need_key"), "err"); return; }
+  if (!key) {
+    /* the app's Freeform card sends you to Setup with the line under the key field */
+    if (op.ffCard) { switchPage("setup"); stSet("stRhKey", ff9(FF_L.needKey), "err"); return; }
+    setStatus(t("st_need_key"), "err"); return;
+  }
   /* AUDIT-FIX #1: clear any prior result up front so a failed generation can never
      be mistaken for success. batch/pipeline callers snapshot op.base BEFORE calling
      us, so clearing here is safe and makes state.resultB64 a true per-run signal. */
@@ -11409,12 +12794,17 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
   if (state.realOn) userText = (userText ? userText + "\n\n" : "") + buildGuard(effRealDir(op.realDir), allowText);
   const myTxt = getMyPromptText().trim();
   const hasRef = !noRefs && !!(state.subj || state.refs[0] || state.refs[1]);
-  if (!userText && !myTxt && !hasRef) { setStatus(t("st_no_prompt"), "err"); return; }
+  if (!userText && !myTxt && !hasRef) {
+    if (op.ffCard) { stSet("stGen", ff9(FF_L.needAny), "err"); return; }
+    setStatus(t("st_no_prompt"), "err"); return;
+  }
   if (myTxt && !getPromptText().trim()) {
     /* v6.26.0 — no translate hop: the Burmese text IS the prompt */
     userText = (userText ? userText + "\n" : "") + myTxt;
   }
 
+  const ffCount = op.ffCard ? ffReqCount() : 1;
+  const ffSig = op.ffCard ? ffRunStart(ffCount) : null;
   startBusy("st_capture");
   try {
     /* pre-clean Ref1 so no reference person can ever leak into the result */
@@ -11487,15 +12877,17 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
     if (model === MODEL_PRO_IMG && state.size !== "1K") imageConfig.imageSize = state.size;
 
     startBusy("st_gen");
-    const img = await callImageAPI(model, parts, imageConfig);
+    const img = await callImageAPI(model, parts, imageConfig, ffSig);
     if (!imgMagicOk(img.b64)) throw new Error("HNKERR:st_img_bad:api result"); /* check 2/3 */
     state.resultB64 = img.b64;
     state.resultMime = img.mime || "image/png";
     /* v6.51.0 — ×2 / ×4 runs: every extra take lands in the history strip
        behind the first one, exactly as the app's result card shows them. */
     const extra = (img.extra || []).slice().reverse();
+    let ffTakes = 1;
     for (let x = 0; x < extra.length; x++) {
       if (!imgMagicOk(extra[x].b64)) continue;
+      ffTakes++;
       pushHistory({
         after: extra[x].b64, afterMime: extra[x].mime || "image/png",
         before: state.beforeB64, beforeMime: state.beforeMime,
@@ -11520,9 +12912,16 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
       await placeResultToPS();
     }
     endBusy();
+    if (op.ffCard) { ffRunEnd(); ffRunOk(ffTakes, ffCount); }
     setStatus(t("st_done") + " \u00B7 " + provTag(), "ok");
   } catch (e) {
     endBusy();
+    if (op.ffCard) {
+      const fm = ffRunErrMsg(e, ffSig);
+      ffRunEnd(); ffRunErr(fm);
+      setStatus(fm, "err");
+      return;
+    }
     setStatus(friendlyErr(e), "err");
   }
 }
@@ -11869,21 +13268,41 @@ function ffPaintRail() {
     })(sel.options[i]);
   }
 }
+/* app renderBtn: the picker shows the chosen option's text; a "Word: value"
+   label splits into the context word (already static in the markup) and the
+   value, so "Size: Auto" reads Size / Auto while "2K (Pro)" stays whole */
+function ffPaintHslVal(selId, valId) {
+  const sel = $(selId), v = $(valId);
+  if (!sel || !v) return;
+  const opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+  const raw = opt ? String(opt.textContent || "") : "—";
+  const m = /^([A-Za-z][A-Za-z ]{1,11}):\s+(.*)$/.exec(raw);
+  v.textContent = m ? m[2] : raw;
+}
+function ffPaintCountBtn() { ffPaintHslVal("ffCount", "ffCountVal"); }
+function ffPaintSizeBtn() { ffPaintHslVal("ffSize", "ffSizeVal"); }
 function ffPaintAdvanced() {
   const m = ffModel();
   const sc = $("ffCount"), ss = $("ffSize");
+  /* the app hides the select and its .hsl wrapper follows (syncVis); here the
+     wrapper is the thing shown or hidden */
+  const wc = $("ffCountHsl") || sc, ws = $("ffSizeHsl") || ss;
   if (ffIsUpscale(m)) state.ffCount = 1;
-  if (sc) { sc.value = String(state.ffCount || 1); sc.style.display = ffIsUpscale(m) ? "none" : ""; }
-  if (ss) { ss.value = ffHasSize(m) ? (state.ffSize || "") : ""; ss.style.display = ffHasSize(m) ? "" : "none"; }
+  if (sc) { sc.value = String(state.ffCount || 1); wc.style.display = ffIsUpscale(m) ? "none" : ""; }
+  if (ss) { ss.value = ffHasSize(m) ? (state.ffSize || "") : ""; ws.style.display = ffHasSize(m) ? "" : "none"; }
+  ffPaintCountBtn();
+  ffPaintSizeBtn();
   ffPaintEta();
 }
 function ffOnModelChange(id) {
   const m = ffModelById(id) || FREEFORM_MODELS[0];
   state.rhModel = m.id;
+  rhCfg().activeModel = m.id;
   ffPaintModelBtn();
   ffFillRatio();
   ffPaintAdvanced();
   try { updateCreateEngineTag(); } catch (e) { }
+  try { rhRenderConfiguredList(); renderSetupStatus(); } catch (e) { }
   saveSettings();
   setStatus(ff9(FF_L.modelSet).replace("{m}", ffModelLabel(m)), "ok");
 }
@@ -11898,6 +13317,9 @@ function ffPaintLabels() {
   set("btnPlace", t("btn_place"));
   setIcnText($("btnResultToRef"), "i-restore", "cream", ff9(FF_L.toRef));
   setIcnText($("chainH"), "i-arrow", "muted", ff9(FF_L.chainH));
+  setIcnText($("btnGenStop"), "i-close", "cream", ff9(FF_L.stop));
+  setIcnText($("btnRetry"), "i-retry", "cream", ff9(FF_L.retry));
+  ffSpinIdleText();
   const pb = $("promptBox"); if (pb) pb.placeholder = ff9(FF_L.promptPh);
   ffPaintEta();
 }
@@ -11912,12 +13334,12 @@ function bindFreeform() {
   const sc = $("ffCount");
   if (sc) {
     fillSelect(sc, [{ v: "1", label: "×1" }, { v: "2", label: "×2" }, { v: "4", label: "×4" }]);
-    sc.addEventListener("change", function () { state.ffCount = Number(sc.value) || 1; ffPaintEta(); saveSettings(); });
+    sc.addEventListener("change", function () { state.ffCount = Number(sc.value) || 1; ffPaintCountBtn(); ffPaintEta(); saveSettings(); });
   }
   const ss = $("ffSize");
   if (ss) {
     fillSelect(ss, [{ v: "", label: "Size: Auto" }, { v: "1K", label: "1K" }, { v: "2K", label: "2K (Pro)" }, { v: "4K", label: "4K (Pro)" }]);
-    ss.addEventListener("change", function () { state.ffSize = ss.value; saveSettings(); });
+    ss.addEventListener("change", function () { state.ffSize = ss.value; ffPaintSizeBtn(); saveSettings(); });
   }
   const adv = $("genAdvH"), grp = $("genGrpAdvanced");
   if (adv && grp) adv.addEventListener("click", function () {
@@ -11969,6 +13391,128 @@ function bindFreeform() {
     try { ffPaintModelBtn(); ffFillRatio(); ffPaintAdvanced(); ffPaintLabels(); } catch (e) { hwarn("freeform:", e); }
     try { renderRefs(); if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.repaint(); } catch (e) { hwarn("library:", e); }
   });
+  stickyGenBind();
+}
+
+/* ================= STICKY GENERATE (app: position:sticky) =================
+   The web app pins GENERATE with `position:sticky; bottom:calc(76px + safe-area)`
+   — 8.4px above its 67.6px tab bar — so the call to action never leaves the
+   screen while its card is in view. UXP has no sticky, so this reproduces the
+   same rule by hand: while the button's natural spot is below the fold it is
+   lifted into #genDock (absolute inside .app, above the scroller) at the line
+   the app would pin it to, capped — like sticky — at its card's content top;
+   once the natural spot scrolls up past that line the button goes back into
+   the card. A same-height .gen-ph holds the card's layout meanwhile.
+   Listed per page so the other sticky gens (Retouch, Video, VidUp, T2I) can
+   join as their pages reach parity. */
+const STICKY_GENS = [{ page: "prompt", btn: "btnGenerate" }];
+const STICKY_GAP = 8.4;
+const stickyS = { ph: {}, raf: 0 };
+function stickyGenNatural(btn) {
+  const ph = stickyS.ph[btn.id];
+  return (ph && ph.parentNode) ? ph : btn;
+}
+function stickyGenUndock(btn) {
+  const ph = stickyS.ph[btn.id];
+  if (!ph || !ph.parentNode) return;
+  ph.parentNode.insertBefore(btn, ph);
+  ph.parentNode.removeChild(ph);
+  const dock = $("genDock");
+  if (dock && !dock.firstChild) dock.className = "gen-dock";
+}
+function stickyGenDock(btn, ref, top, left, width) {
+  const dock = $("genDock");
+  if (!dock) return;
+  if (ref === btn) {
+    /* first lift: leave a placeholder of the button's margin box behind */
+    let ph = stickyS.ph[btn.id];
+    if (!ph) { ph = document.createElement("div"); ph.className = "gen-ph"; stickyS.ph[btn.id] = ph; }
+    const cs = getComputedStyle(btn);
+    ph.style.height = btn.getBoundingClientRect().height + "px";
+    ph.style.marginTop = cs.marginTop;
+    btn.parentNode.insertBefore(ph, btn);
+    dock.appendChild(btn);
+  }
+  dock.style.top = top + "px";
+  dock.style.left = left + "px";
+  dock.style.width = width + "px";
+  dock.className = "gen-dock on";
+}
+function stickyGenUpdate() {
+  stickyS.raf = 0;
+  const app = document.querySelector(".app"), pages = $("pages"), bot = document.querySelector(".botbar");
+  if (!app || !pages || !bot) return;
+  const ar = app.getBoundingClientRect(), br = bot.getBoundingClientRect(), pr = pages.getBoundingClientRect();
+  const line = Math.min(br.top, pr.bottom) - STICKY_GAP;
+  for (let i = 0; i < STICKY_GENS.length; i++) {
+    const sg = STICKY_GENS[i], btn = $(sg.btn);
+    if (!btn) continue;
+    const ref = stickyGenNatural(btn);
+    const card = ref.closest ? ref.closest(".card") : null;
+    const pageEl = ref.closest ? ref.closest(".page") : null;
+    const shown = pageEl && pageEl.className.indexOf(" on") >= 0 && btn.style.display !== "none";
+    if (!shown || !card) { stickyGenUndock(btn); continue; }
+    const nr = ref.getBoundingClientRect(), cr = card.getBoundingClientRect();
+    const h = ref === btn ? nr.height : parseFloat(ref.style.height) || nr.height;
+    const ccs = getComputedStyle(card), bcs = getComputedStyle(btn);
+    const cap = cr.top + (parseFloat(ccs.paddingTop) || 0) + (parseFloat(bcs.marginTop) || 0);
+    const want = Math.max(line - h, cap);
+    if (nr.top > want + 0.5) stickyGenDock(btn, ref, want - ar.top, nr.left - ar.left, nr.width);
+    else stickyGenUndock(btn);
+  }
+}
+function stickyGenSchedule() {
+  if (stickyS.raf) return;
+  stickyS.raf = (typeof requestAnimationFrame === "function") ? requestAnimationFrame(stickyGenUpdate) : setTimeout(stickyGenUpdate, 16);
+}
+function stickyGenBind() {
+  const pages = $("pages");
+  if (!pages || !$("genDock")) return;
+  pages.addEventListener("scroll", stickyGenSchedule);
+  window.addEventListener("resize", stickyGenSchedule);
+  /* group toggles, model changes and result cards move the natural spot;
+     settle after the tap and again after the app-timed transitions */
+  pages.addEventListener("click", function () { stickyGenSchedule(); setTimeout(stickyGenSchedule, 360); });
+  pages.addEventListener("change", function () { setTimeout(stickyGenSchedule, 0); });
+  REFRESHERS.push(function () { setTimeout(stickyGenSchedule, 0); });
+  setTimeout(stickyGenSchedule, 0);
+  fabTopBind(pages);
+}
+
+/* ================= JUMP-TO-TOP (app: .fab-top / #btnTop) =================
+   The web app shows its "↑" once window.scrollY passes 1200 (the Library is
+   26 "load more" taps deep) and scrolls smoothly back to 0. Here .pages is the
+   scroller; a page switch resets its scrollTop, so the button hides then too. */
+function fabTopPaint() {
+  const b = $("btnTop"), pages = $("pages");
+  if (!b || !pages) return;
+  const on = pages.scrollTop > 1200;
+  const cls = "fab-top" + (on ? " on" : "");
+  if (b.className !== cls) b.className = cls;
+}
+function fabTopBind(pages) {
+  const b = $("btnTop");
+  if (!b || !pages) return;
+  let tick = false;
+  pages.addEventListener("scroll", function () {
+    if (tick) return;
+    tick = true;
+    const fr = function () { tick = false; fabTopPaint(); };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(fr); else setTimeout(fr, 16);
+  });
+  const go = function () {
+    let smooth = false;
+    try {
+      if (typeof pages.scrollTo === "function") { pages.scrollTo({ top: 0, behavior: "smooth" }); smooth = true; }
+    } catch (e) { smooth = false; }
+    if (!smooth) pages.scrollTop = 0;
+    setTimeout(fabTopPaint, 0);
+  };
+  b.addEventListener("click", go);
+  b.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar") { ev.preventDefault(); go(); }
+  });
+  fabTopPaint();
 }
 
 /* ================= CREATE MODE (standalone) =================
@@ -12345,26 +13889,7 @@ function bindCreate() {
   updateCreateEngineTag();
 }
 
-/* ---------------- API key UI ---------------- */
-async function testKey() {
-  const key = $("apiKey").value.trim();
-  if (!key) { setStatus(t("st_need_key"), "err"); return; }
-  setStatus(t("st_testing") + "\u2026");
-  try {
-    const adapter = (globalThis.HNK && globalThis.HNK.runninghubAdapter) || null;
-    const transport = rhTransport();
-    if (!adapter || !transport) { setStatus(t("st_key_bad") + ": engine not loaded", "err"); return; }
-    const res = await adapter.verifyKey({ transport: transport, apiKey: key }, key);
-    if (res && res.ok) {
-      state.rhKey = key;
-      setStatus(t("st_key_ok"), "ok");
-    } else {
-      setStatus(t("st_key_bad"), "err");
-    }
-  } catch (e) {
-    setStatus(t("st_key_bad") + ": " + (e && e.message ? e.message : e), "err");
-  }
-}
+/* v6.51.0 — the RunningHub key UI is Setup's (rhSaveKey / rhRemoveKey). */
 
 function bindScenes() {
   const segPaints = []; /* AUDIT-FIX #9: collect seg paints for post-load restore */
@@ -12419,17 +13944,6 @@ function bindProvider() {
   REFRESHERS.push(function () {
     try { const b2 = $("brandProv"); if (b2) b2.textContent = "RunningHub"; } catch (e) { }
   });
-}
-
-function saveKey() {
-  state.rhKey = $("apiKey").value.trim();
-  saveSettings();
-  setStatus(t("st_key_saved"), "ok");
-}
-
-function paintShowKey() {
-  const b = $("btnShowKey");
-  if (b) b.textContent = t(state.keyShown ? "btn_hide" : "btn_show");
 }
 
 /* v6.26.0 — Improve Prompt (Gemini text) left with its provider. */
@@ -12763,6 +14277,30 @@ function pageEntry(key) {
   for (let i = 0; i < PAGES.length; i++) if (PAGES[i].key === key) return PAGES[i];
   return null;
 }
+/* v6.51.0 — shell glyphs are <img> files (an inline <svg> does not draw in
+   Photoshop, seen in 6.47.0), one file per tint; a state change is a src swap.
+   Only touches the attribute when it differs, so a repaint never reloads. */
+function shellPaintIcon(host, cls, name, tint) {
+  if (!host) return;
+  const img = host.querySelector("." + cls);
+  if (!img) return;
+  const want = "icons/ui/" + name + "-" + tint + ".svg";
+  if (img.getAttribute("src") !== want) img.setAttribute("src", want);
+}
+/* the app's header language button: a round glyph carrying the language's
+   first letter and the language's own native name beside it (glyph(label) in
+   the app = the first code point of the label). The <select> beneath stays the
+   real control; this is only its face. */
+function langPaintHsl() {
+  const gl = $("langGlyph"), val = $("langVal");
+  if (!gl && !val) return;
+  let l = null;
+  for (let i = 0; i < LANGS.length; i++) if (LANGS[i].code === state.lang) l = LANGS[i];
+  const native = String((l && (l.native || l.label)) || state.lang || "").trim();
+  const chars = Array.from(native);
+  if (gl) gl.textContent = chars.length ? chars[0] : "";
+  if (val) val.textContent = native;
+}
 /* The app shows its second level only where there is a second level to show. */
 function renderSubtabs(activeKey) {
   const host = $("subtabs");
@@ -12774,8 +14312,9 @@ function renderSubtabs(activeKey) {
   for (let i = 0; i < PAGES.length; i++) {
     if (group && PAGES[i].group === group && PAGES[i].sub) subs.push(PAGES[i]);
   }
-  if (subs.length < 2) { host.className = "subtabbar"; return; }
+  if (subs.length < 2) { host.className = "subtabbar"; subFadePaint(); return; }
   host.className = "subtabbar on";
+  let activeBtn = null;
   for (let i = 0; i < subs.length; i++) {
     (function (sub) {
       const b = mkBtn();
@@ -12786,15 +14325,43 @@ function renderSubtabs(activeKey) {
       b.appendChild(document.createTextNode(sub.sub));
       b.addEventListener("click", function () { switchPage(sub.key); saveSettings(); });
       host.appendChild(b);
+      if (on) activeBtn = b;
     })(subs[i]);
   }
+  /* the app's updateSubtabFade on scroll, and its scrollIntoView of the
+     active pill so a wide group never leaves the chosen page off-screen */
+  if (!host.getAttribute("data-fade")) {
+    host.setAttribute("data-fade", "1");
+    host.addEventListener("scroll", subFadePaint);
+  }
+  subFadePaint();
+  setTimeout(subFadePaint, 0);
+  if (activeBtn && activeBtn.scrollIntoView) {
+    try { activeBtn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); } catch (e) { }
+  }
+}
+/* v6.51.0 — the app's subtabbar fade-l / fade-r: a 28px ink fade over an
+   edge that still has pills beyond it. Same thresholds as the app. */
+function subFadePaint() {
+  const host = $("subtabs"), fl = $("subfadeL"), fr = $("subfadeR");
+  if (!host || !fl || !fr) return;
+  const on = /\bon\b/.test(host.className);
+  const atStart = host.scrollLeft <= 1;
+  const atEnd = host.scrollLeft + host.clientWidth >= host.scrollWidth - 1;
+  fl.className = "subfade subfade-l" + (on && !atStart ? " on" : "");
+  fr.className = "subfade subfade-r" + (on && !atEnd ? " on" : "");
 }
 
+/* the app's scrollMem: each page keeps its own scroll position across
+   switches (window.scrollY there, .pages.scrollTop here) */
+const scrollMem = {};
 function switchPage(key) {
   try { disarm(); } catch (e) { }
   let found = false;
   for (let i = 0; i < PAGES.length; i++) { if (PAGES[i].key === key) found = true; }
   if (!found) key = "aitools";
+  const pagesEl = $("pages");
+  if (pagesEl && state.page) scrollMem[state.page] = pagesEl.scrollTop;
   state.page = key;
   const active = pageEntry(key);
   for (let i = 0; i < PAGES.length; i++) {
@@ -12804,7 +14371,21 @@ function switchPage(key) {
   }
   for (let i = 0; i < GROUPS.length; i++) {
     const te = $(GROUPS[i].tab);
-    if (te) te.className = "tabb" + (active && GROUPS[i].key === active.group ? " on" : "");
+    if (!te) continue;
+    const on = !!(active && GROUPS[i].key === active.group);
+    te.className = "tabb" + (on ? " on" : "");
+    /* v6.51.0 — the tab glyph is an <img> file (inline <svg> does not draw in
+       Photoshop); the app's muted→gold stroke change is a file swap here */
+    const ic = te.querySelector(".tabic");
+    if (ic) shellPaintIcon(te, "tabic", "i-" + ic.getAttribute("data-ic"), on ? "hi" : "muted");
+  }
+  /* Setup is outside the groups — the header gear is its "active tab" (the
+     app's showPage); its file swaps cream → gold-hi the way the app recolours */
+  const gear = $("btnGearSetup");
+  if (gear) {
+    const onSetup = key === "setup";
+    gear.className = gear.className.replace(/\s*\bon\b/g, "") + (onSetup ? " on" : "");
+    shellPaintIcon(gear, "nav-gear-ic", "i-gear", onSetup ? "hi" : "cream");
   }
   renderSubtabs(key);
   if (key === "gallery") { try { galRefresh(); } catch (e) { } }
@@ -12814,7 +14395,8 @@ function switchPage(key) {
     if (pb && pb.click) { try { pb.click(); } catch (e) { } }
   }
   const pg = $("pages");
-  if (pg) pg.scrollTop = 0;
+  if (pg) pg.scrollTop = scrollMem[key] || 0;
+  try { fabTopPaint(); } catch (e) { }
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }
   if (key === "presets") { try { if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.layout(); } catch (e) { } }
   if (key === "create") { try { refreshCreateCompare(); } catch (e) { } }
@@ -12834,6 +14416,10 @@ function switchPage(key) {
     } catch (e) { }
   }
   if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
+  /* v6.51.0 — Setup repaints its readiness rows and the data-store line on entry, like the app's showPage */
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); } catch (e) { } }
+  /* the sticky GENERATE follows the page that owns it */
+  try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
 
 function bindTabs() {
@@ -12924,11 +14510,11 @@ function init() {
     /* first: the wall comes down only if the plan says so */
     safe("gate", function () { gateBoot(); });
     safe("apply-settings", function () {
-      $("apiKey").value = state.rhKey || "";
-      $("selModel").value = state.model;
-      $("selRatio").value = state.ratio;
-      $("intSlider").value = String(state.intensity);
-      $("intVal").textContent = state.intensity + "%";
+      /* v6.51.0 — the key field and the legacy model/ratio selects are Setup's
+         and Freeform's own (rhKey / ffModelSel); only the intensity slider
+         and the size segment remain here. */
+      const isl = $("intSlider"); if (isl) isl.value = String(state.intensity);
+      const iv = $("intVal"); if (iv) iv.textContent = state.intensity + "%";
       paintSizeSeg();
     });
     safe("i18n", function () { applyTheme(); populateSelects(); applyI18n(); });
@@ -12970,29 +14556,8 @@ function init() {
     }
   });
 
-  /* API key */
-  safe("apikey", function () {
-    $("btnShowKey").addEventListener("click", function () {
-      state.keyShown = !state.keyShown;
-      $("apiKey").type = state.keyShown ? "text" : "password";
-      paintShowKey();
-    });
-    REFRESHERS.push(paintShowKey);
-    $("btnTestKey").addEventListener("click", testKey);
-    $("btnSaveKey").addEventListener("click", saveKey);
-    $("apiKey").addEventListener("input", function () { state.rhKey = $("apiKey").value.trim(); });
-  });
-
-  /* model / ratio / size */
-  safe("model", function () {
-    $("selModel").addEventListener("change", function () {
-      state.model = $("selModel").value;
-      try { updateCreateEngineTag(); } catch (e) { }
-      saveSettings();
-    });
-    $("selRatio").addEventListener("change", function () { state.ratio = $("selRatio").value; saveSettings(); });
-    bindSizeSeg();
-  });
+  /* size segment (the API key UI is Setup's; model + ratio are Freeform's) */
+  safe("model", function () { bindSizeSeg(); });
 
   /* prompt — UXP has NO pointer-events:none; click anywhere focuses + places caret */
   safe("prompt", function () {
@@ -13225,7 +14790,9 @@ function init() {
     }
   });
   safe("generate", function () {
-    $("btnGenerate").addEventListener("click", function () { const g0 = $("btnGenerate"); armGate("__gen", g0, function () { setBusyBtn(g0); runGenerate(null, false, [], false, { action: "Prompt" }); }); });
+    /* v6.51.0 — GENERATE, Stop and Retry feed back through the Freeform card
+       exactly as the app's btnGen / btnGenStop / btnRetry do */
+    bindFreeformRun();
   });
 
   /* compare + output */

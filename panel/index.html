@@ -128,44 +128,40 @@
 
 <div class="app" id="app">
 
-  <!-- ================= HEADER: compact web-app top bar (v6.28.0) =================
-       The web app's own header language: small logo, gold HNK wordmark over a
-       tiny label, controls on the right. The old full-height hero art + chips
-       header is gone — in real Photoshop it truncated the title AND spent a
-       third of a narrow panel before any tool appeared; the web app never had
-       it, and the Home greeting hero already carries the signature art. -->
-  <div class="hdr topbar">
-    <img class="logo topbar-logo" src="icons/plugin@2x.png" alt="" />
-    <div class="hdr-t">
-      <div class="topbar-brand">HNK <span class="topbar-label">AI PANEL</span></div>
-      <div class="sub topbar-sub"><span id="brandVer">v6.50.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></div>
+  <!-- ================= HEADER: the web app's .nav, measured (v6.51.0) =================
+       420×65 like the app at panel width: the 38px logo mark, the HNK wordmark
+       over its small label with the app's gold hairline under them, the 44px
+       gear (Setup — the account dot rides it, as the app's does) and the
+       language picker drawn as the app's own .hsl button: letter glyph, native
+       name, gold caret. The version line stays in the DOM for Setup and the
+       release contract but is not shown here — the app's nav-tag is hidden at
+       this width too.
+       v6.47.0 — no inline <svg> in this bar: this renderer draws none, so the
+       gear and the caret are <img> files like every other icon in the panel. -->
+  <div class="hdr nav">
+    <div class="nav-logo-wrap"><img class="nav-logo" src="icons/plugin@2x.png" alt="" /></div>
+    <div class="nav-name">
+      <span class="hnk-wordmark">HNK</span>
+      <span class="hnk-studio-label">AI PANEL</span>
+      <span class="nav-name-ul"></span>
+      <span class="topbar-sub"><span id="brandVer">v6.50.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
-    <div class="hdr-ctl">
-      <!-- v6.46.0 — web-app parity: the app parks Setup behind a header gear
-           and keeps its bottom bar to the five work groups. Same here. -->
-      <!-- v6.47.0 — a text glyph, not inline SVG: this renderer draws no
-           inline <svg>, so the owner's screenshots showed an empty pill
-           where Setup should be. The theme button beside it has always
-           been a glyph and has always painted. -->
-      <!-- v6.49.1 — the theme wheel left this bar. The web app's header is
-           logo, wordmark, gear and the language picker — nothing else — and
-           the fourth control here was squeezing the language box to 78px,
-           which is why the owner's Photoshop showed "Mya…" where the app
-           shows the whole language name. The nine palettes are still all
-           here; their control moved to Setup ▸ APP & UPDATES, where the
-           panel keeps its other preferences. -->
-      <div role="button" tabindex="0" id="btnGearSetup" class="btn btn-icon" aria-label="Setup" title="Setup">⚙</div>
-      <select id="selLang" class="lang-sel" title="Language"></select>
+    <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
+    <div class="hsl hsl-for-selLang" id="langHsl">
+      <div role="button" tabindex="0" class="hsl-btn" id="langHslBtn"><span class="hsl-glyph" id="langGlyph"></span><span class="hsl-lab"><span class="hsl-val" id="langVal"></span></span><img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="" /></div>
+      <select id="selLang" class="inp" title="Language"></select>
     </div>
   </div>
 
-  <!-- v6.46.0 — the web app's second-level pills. Its bottom bar carries five
-       groups and each group's pages appear here, in the app's own English
-       wording (the app keeps these words English in every locale). -->
-  <div class="subtabbar" id="subtabs"></div>
-
   <!-- ================= PAGES (scroll area) ================= -->
   <div class="pages" id="pages">
+
+    <!-- v6.46.0 — the web app's second-level pills. Its bottom bar carries five
+         groups and each group's pages appear here, in the app's own English
+         wording (the app keeps these words English in every locale).
+         v6.51.0 — inside the scroller, as the app's #subtabbar flows with the
+         page (margin 12px 0 inside the 16px gutter) instead of a fixed strip. -->
+    <div class="subwrap"><div class="subtabbar" id="subtabs"></div><span class="subfade subfade-l" id="subfadeL"></span><span class="subfade subfade-r" id="subfadeR"></span></div>
 
     <!-- ========== PAGE: SETUP ========== -->
     <div class="page" id="pageSetup">
@@ -174,194 +170,239 @@
         <div class="ph-kick">Setup</div>
         <p class="ph-head" id="phHome">တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်</p>
       </div>
-      <div class="card">
-        <div class="chead" id="cReadyH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_ready"></span></div>
-        <div class="cbody" id="cReadyB">
-          <div class="diag" id="readyList"></div>
-        </div>
+      <!-- v6.51.0 — Setup is the web app's pgHome, card for card: readiness,
+           ACCOUNT (sign-in / plan / Photoshop Panel / devices accordions),
+           RUNNINGHUB ENTERPRISE (key + Model Config), COST & BALANCE, DATA,
+           platforms, share and ABOUT. Every control is a role="button" div
+           (UXP), every icon a pre-tinted <img> where the app draws a sprite
+           svg, every label set at runtime from the app's own nine-language
+           Setup copy (SETUP_L in main.js). The panel's former Setup-only
+           settings (Gemini key, model/ratio/size, theme wheel, Direct
+           Generate, Auto-Place/Auto-Save, library folder) are gone: the app's
+           Setup has none of them, and the panel keeps their stored values. -->
+      <div class="card" id="cardSetupStatus">
+        <h2 id="setupStatusH2"><img class="ic-h2" src="icons/ui/i-bolt-gold.svg" alt=""></h2>
+        <div id="setupStatusRows"></div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cAcctH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_acct"></span></div>
-        <div class="cbody" id="cAcctB">
-          <!-- v6.47.0 — the member's own profile photo, where the web app keeps
-               it: on the account card, above the account facts. The square is
-               the HNK mark until they choose a picture, exactly as the gate's
-               identity square is. Photoshop does the imaging (UXP has no
-               canvas), and what is stored is the same 256px centre crop the
-               website stores, in the same profiles.avatar column — so one
-               photo serves the panel, the website and the admin list. -->
-          <div class="row acc-ava-row" id="acctAvaRow">
-            <div class="acc-ava"><span id="acctAvaTxt">HNK</span><img id="acctAvaImg" alt="" aria-hidden="true" /></div>
-            <div class="acc-ava-acts">
-              <div role="button" tabindex="0" id="btnAvaPick" class="btn btn-sm grow"></div>
-              <div role="button" tabindex="0" id="btnAvaDrop" class="btn btn-sm grow last"></div>
+      <div class="card" id="cardAccount">
+        <h2 id="accH2"><img class="ic-h2" src="icons/ui/i-key-gold.svg" alt=""></h2>
+
+        <div class="grp app-grp open" id="accGrpAuth">
+          <div role="button" tabindex="0" class="grp-h" id="accGrpAuthH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span id="accGrpAuthT"><img class="ic-s" src="icons/ui/i-key-cream.svg" alt=""></span></div>
+          <div class="grp-b">
+            <div class="acc-hero">
+              <div role="button" tabindex="0" class="acc-ava" id="accAva">
+                <span class="ava-ring"></span>
+                <span class="ava-clip">
+                  <img id="accAvaImg" alt="" style="display:none">
+                  <span class="ava-brand" id="accAvaBrand">HNK</span>
+                </span>
+                <span class="ava-plus" id="accAvaPlus">+</span>
+              </div>
+              <div class="acc-welcome" id="accWelcome">
+                <div class="aw-en">Welcome to <b>HNK AI Studio</b></div>
+                <div class="aw-sub" id="awSub"></div>
+              </div>
+            </div>
+
+            <div id="accIn" style="display:none">
+              <div class="acc-kv"><span class="k" id="accLblName"></span><span class="v" id="accInfoName"></span></div>
+              <div class="acc-kv"><span class="k" id="accLblEmail"></span><span class="v" id="accInfoEmail"></span></div>
+              <div class="mut" id="accInfoSince" style="margin-top:8px"></div>
+              <div class="acc-actions">
+                <div role="button" tabindex="0" class="btn" id="btnAvaPick"></div>
+                <div role="button" tabindex="0" class="btn" id="btnAvaDrop" style="display:none"></div>
+              </div>
+              <div class="status" id="stAva"></div>
+              <div class="acc-actions"><div role="button" tabindex="0" class="btn" id="btnAccLogout"></div></div>
+              <div class="status" id="stAccDev"></div>
+              <div class="acc-sub">
+                <div class="subh" id="accPassH"></div>
+                <div class="row"><input class="inp grow" id="accPassNew" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false"><div role="button" tabindex="0" class="btn" id="btnShowAccPassNew"></div></div>
+                <div class="row"><div role="button" tabindex="0" class="btn grow" id="btnAccPass"></div></div>
+                <div class="status" id="stAccPass"></div>
+              </div>
+            </div>
+
+            <div class="status" id="stAcc"></div>
+          </div>
+        </div>
+
+        <div class="grp app-grp hide" id="accGrpPlan">
+          <div role="button" tabindex="0" class="grp-h" id="accGrpPlanH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span id="accGrpPlanT"><img class="ic-s" src="icons/ui/i-gem-cream.svg" alt=""></span></div>
+          <div class="grp-b">
+            <div class="acc-plan-line" id="accPlanLine"></div>
+            <div class="mut" id="accPlanUntil" style="margin-top:6px"></div>
+            <div class="mut" id="accPlanOffline" style="display:none;margin-top:6px"></div>
+            <div class="mut" id="accPending" style="display:none;margin-top:6px"></div>
+          </div>
+        </div>
+
+        <div class="grp app-grp hide" id="accGrpPanel">
+          <div role="button" tabindex="0" class="grp-h" id="accGrpPanelH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span id="accGrpPanelT"><img class="ic-s" src="icons/ui/i-palette-cream.svg" alt=""></span></div>
+          <div class="grp-b" id="accGrpPanelBody">
+            <p class="mut" id="accPanelP"></p>
+            <div class="row" style="margin-top:10px">
+              <div role="button" tabindex="0" class="btn btn-gold grow" id="accPanelDownload" style="text-align:center"></div>
             </div>
           </div>
-          <div class="diag" id="acctList"></div>
-          <div class="row last"><div role="button" tabindex="0" id="btnAcctOut" class="btn btn-sm grow"></div></div>
+        </div>
+
+        <div class="grp app-grp" id="accGrpDev">
+          <div role="button" tabindex="0" class="grp-h" id="accGrpDevH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span id="accGrpDevT"><img class="ic-s" src="icons/ui/i-phone-cream.svg" alt=""></span></div>
+          <div class="grp-b">
+            <div class="mut" id="devCount"></div>
+            <ul id="devList"></ul>
+            <div class="mut" id="devEmpty" style="display:none"></div>
+            <div class="mut" id="devLimitTxt" style="display:none;margin-top:10px"></div>
+            <div class="status" id="stDev"></div>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cApiH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_api"></span></div>
-        <div class="cbody" id="cApiB">
-          <div class="row">
-            <input id="apiKey" type="password" class="inp grow" placeholder="AIza..." />
-            <div role="button" tabindex="0" id="btnShowKey" class="btn btn-sm" data-i18n="btn_show"></div>
+      <div class="card" id="cardRh">
+        <h2 id="rhH2"><img class="ic-h2" src="icons/ui/i-link-gold.svg" alt="">RUNNINGHUB ENTERPRISE <span class="mut" style="letter-spacing:0;margin-left:4.8px" id="rhOptTag"></span></h2>
+        <p class="mut" id="rhIntro"></p>
+        <div class="row">
+          <input class="inp grow" id="rhKey" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="RunningHub Enterprise-Shared Key">
+          <div role="button" tabindex="0" class="btn" id="btnShowRhKey"><img class="ic-s" src="icons/ui/i-eye-cream.svg" alt=""></div>
+          <div role="button" tabindex="0" class="btn btn-gold" id="btnSaveRhKey"></div>
+        </div>
+        <div class="status" id="stRhKey"></div>
+        <div role="button" tabindex="0" class="acc-lnk" id="stRhKeyDel" style="display:none"></div>
+
+        <div class="grp app-grp" id="rhGrpAdvanced">
+          <div role="button" tabindex="0" class="grp-h" id="rhAdvH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span id="rhAdvT"><img class="ic-s" src="icons/ui/i-gear-cream.svg" alt=""></span></div>
+          <div class="grp-b">
+            <div class="row">
+              <div class="hsl hsl-for-rhModelSel grow" id="rhModelHsl">
+                <div role="button" tabindex="0" class="hsl-btn" id="rhModelBtn">
+                  <span class="hsl-tile t-banana" id="rhModelTile"><img class="hsl-glyph-img" id="rhModelGlyph" src="icons/ui/brand-banana.svg" alt=""></span>
+                  <span class="hsl-lab"><span class="hsl-ctx">Model</span><span class="hsl-val" id="rhModelVal"></span></span>
+                  <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+                </div>
+                <select class="inp grow" id="rhModelSel"></select>
+              </div>
+            </div>
+            <div class="mut" style="margin-top:12px" id="rhSampleNote"></div>
+            <div class="row" style="margin-top:6px">
+              <input class="inp grow" id="rhApiPath" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="rhart-image-n-g31-flash/image-to-image">
+            </div>
+            <div class="row" style="margin-top:6px">
+              <div class="hsl hsl-for-rhQuality grow" id="rhQualityHsl">
+                <div role="button" tabindex="0" class="hsl-btn" id="rhQualityBtn">
+                  <span class="hsl-tile t-gold"><img class="hsl-glyph-img" src="icons/ui/brand-spark.svg" alt=""></span>
+                  <span class="hsl-lab"><span class="hsl-ctx" id="rhQualityCtx">quality</span><span class="hsl-val" id="rhQualityVal"></span></span>
+                  <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+                </div>
+                <select class="inp grow" id="rhQuality">
+                  <option value="">quality: none (default)</option>
+                  <option value="low">quality: low</option>
+                  <option value="medium">quality: medium</option>
+                  <option value="high">quality: high</option>
+                </select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div role="button" tabindex="0" class="btn grow" id="btnRhSaveModel"></div>
+            </div>
+            <div class="status" id="stRhModel"></div>
+            <div class="mut chips" id="rhConfiguredList" style="margin-top:10px"></div>
           </div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnTestKey" class="btn btn-sm grow" data-i18n="btn_test"></div>
-            <div role="button" tabindex="0" id="btnSaveKey" class="btn btn-sm btn-gold grow" data-i18n="btn_save"></div>
-          </div>
-          <!-- v6.26.0 — the provider segment and the OpenAI key row left with
-               their providers: RunningHub Enterprise is the one engine. -->
         </div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cModelH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_model"></span></div>
-        <div class="cbody" id="cModelB">
-          <p class="mut" data-i18n="scope_model_note" style="margin-bottom:8px;"></p>
-          <div class="row">
-            <select id="selModel" class="inp grow">
-              <option value="auto">Auto (recommended)</option>
-              <option value="flash">Flash - fast (2.5)</option>
-              <option value="pro">Pro - quality (3.0)</option>
-            </select>
-          </div>
-          <div class="row">
-            <div class="lbl" data-i18n="lbl_ratio"></div>
-            <select id="selRatio" class="inp grow">
-              <option value="auto">Auto ratio (from document)</option>
-              <option value="1:1">1:1</option>
-              <option value="4:5">4:5</option>
-              <option value="5:4">5:4</option>
-              <option value="3:4">3:4</option>
-              <option value="4:3">4:3</option>
-              <option value="2:3">2:3</option>
-              <option value="3:2">3:2</option>
-              <option value="9:16">9:16</option>
-              <option value="16:9">16:9</option>
-              <option value="21:9">21:9</option>
-            </select>
-          </div>
-          <div class="row last" id="szRow">
-            <div class="lbl" data-i18n="lbl_size"></div>
-            <div class="seg grow">
-              <div role="button" tabindex="0" class="segb" id="size1K">1K</div>
-              <div role="button" tabindex="0" class="segb" id="size2K">2K</div>
-              <div role="button" tabindex="0" class="segb" id="size4K">4K</div>
+      <div class="card" id="cardMoney">
+        <h2 id="moneyH2"><img class="ic-s" src="icons/ui/i-bolt-gold.svg" alt=""></h2>
+        <p class="mut" id="moneyIntro"></p>
+        <div class="statline money-stat">
+          <div><b id="moneyBal">—</b><span id="moneyBalL"></span></div>
+          <div><b id="moneyToday">—</b><span id="moneyTodayL"></span></div>
+          <div><b id="moneyMonth">—</b><span id="moneyMonthL"></span></div>
+        </div>
+        <div class="mut" id="moneyMeta"></div>
+        <div class="row" style="margin-top:8px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnMoneyRefresh"></div>
+        </div>
+        <div class="status" id="stMoney"></div>
+        <div id="moneyProv"></div>
+
+        <div class="grp app-grp" id="moneyGrpRuns">
+          <div role="button" tabindex="0" class="grp-h" id="moneyRunsH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span id="moneyRunsT"><img class="ic-s" src="icons/ui/i-stack-cream.svg" alt=""></span></div>
+          <div class="grp-b">
+            <div class="mut" id="moneyByModel"></div>
+            <div id="moneyRuns"></div>
+            <div class="row" style="margin-top:8px">
+              <div role="button" tabindex="0" class="btn" id="btnMoneyCsv"></div>
+              <div role="button" tabindex="0" class="btn" id="btnMoneyClear"></div>
             </div>
           </div>
-          <!-- v6.26.0 — the OpenAI quality segment left with its provider. -->
-          <!-- v6.49.0 — Direct Generate moved here from the Workflows list.
-               The web app's Workflows page is a search field over card groups
-               and nothing else; this toggle is the panel's own (it skips the
-               staged Prepare step a browser wizard has no equivalent for), so
-               it belongs with the panel's other output settings, not on a page
-               the app keeps clean. -->
-          <div class="tglrow" id="setDirectRow">
-            <div class="tgltxt" data-i18n="ai_direct_gen">Direct Generate</div>
-            <div role="button" tabindex="0" id="setDirect" class="tgl"></div>
-          </div>
-          <!-- v6.51.0 — Auto-Place / Auto-Save moved here from Freeform. The
-               web app's Freeform page is PROMPT + GENERATE + result and nothing
-               else; these two are the panel's own Photoshop output settings,
-               so they live with Direct Generate, not on the page the app keeps
-               clean. -->
-          <div class="tglrow">
-            <div class="tgltxt" data-i18n="auto_place"></div>
-            <div role="button" tabindex="0" id="tglAutoPlace" class="tgl"></div>
-          </div>
-          <div class="tglrow">
-            <div class="tgltxt" data-i18n="autosave_lbl"></div>
-            <div role="button" tabindex="0" id="tglAutoSave" class="tgl"></div>
-          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cMoneyH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_money"></span></div>
-        <div class="cbody" id="cMoneyB">
-          <div class="mut" data-i18n="money_intro"></div>
-          <div class="diag" id="moneyList"></div>
-          <div class="row last"><div role="button" tabindex="0" id="btnMoney" class="btn btn-sm btn-gold grow" data-i18n="money_refresh"></div></div>
+      <div class="card" id="cardData">
+        <h2 id="dataH2"><img class="ic-h2" src="icons/ui/i-stack-gold.svg" alt=""></h2>
+        <div class="mut" id="dataStore"></div>
+        <div class="row" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn grow" id="btnExportData"></div>
+          <div role="button" tabindex="0" class="btn grow" id="btnImportData"></div>
+        </div>
+        <div class="status" id="stData"></div>
+      </div>
+
+      <div class="card" id="cardPlat">
+        <h2 id="platH2"></h2>
+        <div class="grp app-grp" id="platGrpAndroid">
+          <div role="button" tabindex="0" class="grp-h" id="platGrpAndroidH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span><img class="ic-s" src="icons/ui/i-phone-cream.svg" alt="">Android</span></div>
+          <div class="grp-b"><p class="mut" id="platP1"></p></div>
+        </div>
+        <div class="grp app-grp" id="platGrpIos">
+          <div role="button" tabindex="0" class="grp-h" id="platGrpIosH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span><img class="ic-s" src="icons/ui/i-apple-cream.svg" alt="">iPhone / iPad (iOS)</span></div>
+          <div class="grp-b"><p class="mut" id="platP2"></p></div>
+        </div>
+        <div class="grp app-grp" id="platGrpDesktop">
+          <div role="button" tabindex="0" class="grp-h" id="platGrpDesktopH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span><img class="ic-s" src="icons/ui/i-laptop-cream.svg" alt="">Windows / Mac (Browser)</span></div>
+          <div class="grp-b"><p class="mut" id="platP3"></p></div>
+        </div>
+        <div class="grp app-grp" id="platGrpPs">
+          <div role="button" tabindex="0" class="grp-h" id="platGrpPsH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span id="platPS"><img class="ic-s" src="icons/ui/i-palette-cream.svg" alt=""></span></div>
+          <div class="grp-b"><p class="mut" id="platP4"></p></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn grow" id="siteLink" style="text-align:center"></div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cDataH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_data"></span></div>
-        <div class="cbody" id="cDataB">
-          <div class="diag" id="dataList"></div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnBackupOut" class="btn btn-sm grow" data-i18n="btn_export_backup"></div>
-            <div role="button" tabindex="0" id="btnBackupIn" class="btn btn-sm grow" data-i18n="btn_import_backup"></div>
-          </div>
+      <div class="card" id="cardShare">
+        <h2 id="shareH2"></h2>
+        <p class="mut" id="shareP"></p>
+        <div class="row" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn grow" id="btnShare"></div>
+          <div role="button" tabindex="0" class="btn grow" id="btnCopyLink"></div>
         </div>
+        <div class="status" id="stShare"></div>
       </div>
 
-      <div class="card">
-        <div class="chead" id="cLibH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_reflib"></span></div>
-        <div class="cbody" id="cLibB">
-          <div class="mut" data-i18n="reflib_note"></div>
-          <div class="row tight refbtns">
-            <div role="button" tabindex="0" id="btnLibChoose" class="btn btn-sm btn-gold grow" data-i18n="lib_choose"></div>
-            <div role="button" tabindex="0" id="btnLibOpen" class="btn btn-sm" data-i18n="lib_open"></div>
-          </div>
-          <div class="diagrow">
-            <div class="diag-nm" data-i18n="lib_current"></div>
-            <div class="diag-st" id="libPathTxt">—</div>
-          </div>
-          <div class="diagrow">
-            <div class="diag-nm" data-i18n="lib_found"></div>
-            <div class="diag-st" id="libCountTxt">0</div>
-          </div>
-          <div class="diagrow">
-            <div class="diag-nm" data-i18n="lib_status"></div>
-            <div class="diag-st" id="libStatusTxt">—</div>
-          </div>
-          <div class="diagrow">
-            <div class="diag-nm" data-i18n="lib_lastscan"></div>
-            <div class="diag-st" id="libScanTxt">—</div>
-          </div>
-          <div class="row last refbtns">
-            <div role="button" tabindex="0" id="btnLibRescan" class="btn btn-sm grow" data-i18n="lib_rescan"></div>
-            <div role="button" tabindex="0" id="btnLibChange" class="btn btn-sm" data-i18n="lib_change"></div>
-            <div role="button" tabindex="0" id="btnLibReset" class="btn btn-sm" data-i18n="lib_reset"></div>
-          </div>
+      <div class="card" id="cardAbout">
+        <h2 id="aboutH2"><img class="ic-h2" src="icons/ui/i-bell-gold.svg" alt=""></h2>
+        <div class="acc-kv"><span class="k">Version</span><span class="v" id="aboutVer"></span></div>
+        <div class="row" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnCheckUpdate"></div>
+          <div role="button" tabindex="0" class="btn grow" id="btnHardRefresh"></div>
         </div>
-      </div>
-
-
-
-      <div class="card">
-        <div class="chead" id="cAboutH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_about"></span></div>
-        <div class="cbody" id="cAboutB">
-          <div class="diag" id="aboutList"></div>
-          <div class="row">
-            <div role="button" tabindex="0" id="btnCheckUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_check_update"></div>
-          </div>
-          <!-- v6.48.0 — the update fetches itself. Photoshop will not let a
-               plugin replace its own code (a UXP package folder is read-only
-               at runtime and Creative Cloud owns installation), so the last
-               step is still a double-click — but the trip to the website, the
-               sign-in and the hunt for the download page are gone: the panel
-               is already signed in, and the same authenticated one-time
-               stream the website uses serves it here. Hidden until a check
-               has actually found a newer release. -->
-          <div class="row last" id="updGetRow" style="display:none">
-            <div role="button" tabindex="0" id="btnGetUpd" class="btn btn-sm btn-gold grow" data-i18n="btn_get_update"></div>
-          </div>
-          <div class="hint" id="updHint" data-i18n="upd_hint"></div>
-          <!-- v6.49.1 — the theme wheel's new home. It left the header so the
-               language picker could be the app's width instead of 78px, and
-               a picker names its stops where a one-tap wheel only cycled
-               them. All nine palettes, unchanged. -->
-          <div class="row last">
-            <div class="lbl">Theme</div>
-            <select id="selTheme" class="inp grow" title="Theme"></select>
-          </div>
+        <div class="status" id="stAbout"></div>
+        <div class="about-legal" id="aboutLegal">
+          <div role="button" tabindex="0" class="btn" id="aboutPrivacy" data-href="https://hnkaistudio.com/privacy/"></div>
+          <div role="button" tabindex="0" class="btn" id="aboutTerms" data-href="https://hnkaistudio.com/terms/"></div>
+        </div>
+        <div class="mut" id="aboutContactH" style="margin-top:12px"></div>
+        <div class="about-legal" id="aboutContacts">
+          <div role="button" tabindex="0" class="btn" data-href="https://www.facebook.com/share/1KZppNL9gw/">Facebook</div>
+          <div role="button" tabindex="0" class="btn" data-href="https://t.me/hlaingnoomkhay1551991">Telegram</div>
+          <div role="button" tabindex="0" class="btn" data-href="https://www.tiktok.com/@hlainghoomkhay1551991">TikTok</div>
+          <div role="button" tabindex="0" class="btn" data-href="tel:+959688200680">09688200680</div>
+          <div role="button" tabindex="0" class="btn" data-href="tel:+959942113540">09942113540</div>
         </div>
       </div>
     </div>
@@ -410,17 +451,36 @@
         <div class="grp app-grp" id="genGrpAdvanced">
           <div role="button" tabindex="0" class="grp-h" id="genAdvH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span class="grp-lbl"><img class="ic-s" src="icons/ui/i-sliders-cream.svg" alt=""><span id="genAdvLbl">Advanced</span></span></div>
           <div class="grp-b" id="genAdvB">
+            <!-- the app's scan() dresses #selCount / #selSize as .hsl pickers
+                 (Count / Size context word over the value, the IC count/size
+                 tile) — here the same picker is static markup -->
             <div class="arow gen-opts" id="genOptsAdv">
-              <select class="inp" id="ffCount"></select>
-              <select class="inp" id="ffSize"></select>
+              <div class="hsl" id="ffCountHsl">
+                <div role="button" tabindex="0" class="hsl-btn" id="ffCountBtn">
+                  <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-count.svg" alt=""></span>
+                  <span class="hsl-lab"><span class="hsl-ctx">Count</span><span class="hsl-val" id="ffCountVal">×1</span></span>
+                  <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+                </div>
+                <select class="inp" id="ffCount"></select>
+              </div>
+              <div class="hsl" id="ffSizeHsl">
+                <div role="button" tabindex="0" class="hsl-btn" id="ffSizeBtn">
+                  <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-size.svg" alt=""></span>
+                  <span class="hsl-lab"><span class="hsl-ctx">Size</span><span class="hsl-val" id="ffSizeVal">Auto</span></span>
+                  <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+                </div>
+                <select class="inp" id="ffSize"></select>
+              </div>
             </div>
           </div>
         </div>
         <div class="addons" id="addonSummaryCreate"></div>
         <div class="mut" id="genEta" style="margin-top:6px"></div>
-        <div role="button" tabindex="0" class="btn btn-gold gen" id="btnGenerate"><img class="ic-s" src="icons/ui/i-bolt-ink.svg" alt="">GENERATE — RunningHub</div>
+        <div role="button" tabindex="0" class="btn btn-gold gen" id="btnGenerate"><div class="btn-in"><img class="ic-s" src="icons/ui/i-bolt-ink.svg" alt="">GENERATE — RunningHub</div></div>
         <div class="spin" id="spin"></div>
+        <div class="btn-row"><div role="button" tabindex="0" class="btn" id="btnGenStop" style="display:none;margin-top:8px"></div></div>
         <div class="status" id="stGen"></div>
+        <div class="btn-row"><div role="button" tabindex="0" class="btn" id="btnRetry" style="display:none;margin-top:8px"></div></div>
       </div>
 
       <div class="card result-box" id="resultBox">
@@ -898,7 +958,21 @@
       </div>
     </div>
 
+    <!-- v6.51.0 — the web app's <footer class="foot"> under every page: a
+         line-soft rule, 12px muted line, 30px below the last card, 34px of
+         air before the body's 76px tab-bar reserve. The spacing is written
+         once as padding (14 + the card's own 16 = 30) so it measures the same
+         whether or not this engine collapses margins; -16px side margins let
+         the rule span the full 420px like the app's. -->
+    <div class="foot" id="foot"><div class="foot-in">
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.51.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+    </div></div>
+
   </div>
+
+  <!-- v6.51.0 — the web app's .fab-top (#btnTop): a 44px gold "↑" that appears
+       once the page is 1200px deep and scrolls back to the top -->
+  <div role="button" tabindex="0" class="fab-top" id="btnTop" aria-label="back to top">&#8593;</div>
 
   <!-- ================= BOTTOM BAR (fixed): status + tabs ================= -->
   <div class="gbox" id="guideBox">
@@ -910,25 +984,42 @@
     <div class="gbox-f" data-i18n="guide_hint"></div>
   </div>
 
+  <!-- v6.51.0 — the web app's GENERATE is position:sticky above the tab bar;
+       UXP has no sticky, so stickyGen (main.js) lifts the button in here while
+       its natural spot is below the fold -->
+  <div class="gen-dock" id="genDock"></div>
+
+  <!-- v6.51.0 — the app's .toast: the one status surface the web app has.
+       #status still receives every setStatus()/busy-dots write, so the whole
+       file keeps talking to it; setStatus() shows the toast for a message and
+       hides it for "ready", exactly as the app's setSt() toasts a status whose
+       own line is off screen. The stage strip stays in the DOM (setStage is
+       null-safe) but the app has no stage strip, so it is never shown. -->
+  <div class="toast" id="toast"><span id="status" class="status"></span></div>
+  <div id="hnkStrip" class="hstrip"></div>
+
   <div class="botbar">
-    <div id="hnkStrip" class="hstrip"></div>
-    <div id="status" class="status"></div>
     <!-- v6.27.0 — web-app parity (owner request): the tab bar reads like the
          web app's — Home (the workflow card home) first and the landing tab,
          then the editing surfaces, Library where the web app keeps it, Setup
          last (the web app parks settings behind the gear). Same six pages,
          web-app names and order. -->
     <!-- v6.28.0 — the web app's own bottom nav: stroke icon above a small
-         label (its i-home/i-sparkle/i-pen/i-sliders/i-frame/i-gear paths,
-         inlined because UXP has no <use>/<symbol>). In real Photoshop the old
-         text-pill tabs truncated to "H… Cr… Re…" at panel width; an icon
-         carries the meaning at any width and the 9.5px label fits. -->
+         label. In real Photoshop the old text-pill tabs truncated to
+         "H… Cr… Re…" at panel width; an icon carries the meaning at any width.
+         v6.51.0 — the app's #tabbar, measured: 66.6px tabs that share the
+         width by their labels (flex 1 0 auto), 10.5px/800 labels, the 20px
+         stroke icon from the app's own i-home/i-brain/i-sparkle/i-clapper/
+         i-frame paths as <img> files (this renderer draws no inline <svg>),
+         and the app's 46×28 gold pill behind the active icon — a real span
+         here, since UXP has no ::before. switchPage() swaps the icon file
+         (muted → the app's #e9b949 active stroke) with the .on class. -->
     <div class="tabbar">
-      <div role="button" tabindex="0" id="tabAiTools" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.8 10.8 8.2-7 8.2 7"/><path d="M5.8 9.2v9.3a1.7 1.7 0 0 0 1.7 1.7h9a1.7 1.7 0 0 0 1.7-1.7V9.2"/><path d="M9.8 20.2v-5a1 1 0 0 1 1-1h2.4a1 1 0 0 1 1 1v5"/></svg><span class="tabb-l">Home</span></div>
-      <div role="button" tabindex="0" id="tabWf" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.2C10.9 3.9 9 3.5 7.5 4.3 6 5.1 5.3 6.6 5.6 8.1 4.2 8.8 3.4 10.2 3.6 11.8c.1 1.1.8 2.1 1.7 2.7-.3 1.4.2 2.9 1.4 3.7 1.1.8 2.6.9 3.8.2.4.7 1 1.1 1.5 1.1"/><path d="M12 5.2c1.1-1.3 3-1.7 4.5-.9 1.5.8 2.2 2.3 1.9 3.8 1.4.7 2.2 2.1 2 3.7-.1 1.1-.8 2.1-1.7 2.7.3 1.4-.2 2.9-1.4 3.7-1.1.8-2.6.9-3.8.2-.4.7-1 1.1-1.5 1.1"/><path d="M12 5.2v14M8.2 9.3c1 .4 2 .3 2.8-.3M15.8 13.3c-1-.4-2-.3-2.8.3"/></svg><span class="tabb-l">Workflows</span></div>
-      <div role="button" tabindex="0" id="tabPrompt" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3.8c.6 3.7 2.6 5.7 6.3 6.3-3.7.6-5.7 2.6-6.3 6.3-.6-3.7-2.6-5.7-6.3-6.3 3.7-.6 5.7-2.6 6.3-6.3Z"/><path d="M18.3 14.8c.3 1.9 1.3 2.9 3.2 3.2-1.9.3-2.9 1.3-3.2 3.2-.3-1.9-1.3-2.9-3.2-3.2 1.9-.3 2.9-1.3 3.2-3.2Z"/></svg><span class="tabb-l">Edit</span></div>
-      <div role="button" tabindex="0" id="tabCreate" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h16V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9.5Z"/><path d="m4 9.5 1.4-4.6 14.6 2.5-.7 2.1M8.2 5.7l1.5 3M12.7 6.5l1.5 2.8"/></svg><span class="tabb-l">Media Lab</span></div>
-      <div role="button" tabindex="0" id="tabPresets" class="tabb"><svg class="tabic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4.5 18.5 4.5-5 3.4 3.4 2.6-2.8 4.9 5.2"/></svg><span class="tabb-l">Library</span></div>
+      <div role="button" tabindex="0" id="tabAiTools" class="tabb"><span class="tabpill"></span><img class="tabic" data-ic="home" src="icons/ui/i-home-muted.svg" alt="" /><span class="tabb-l">Home</span></div>
+      <div role="button" tabindex="0" id="tabWf" class="tabb"><span class="tabpill"></span><img class="tabic" data-ic="brain" src="icons/ui/i-brain-muted.svg" alt="" /><span class="tabb-l">Workflows</span></div>
+      <div role="button" tabindex="0" id="tabPrompt" class="tabb"><span class="tabpill"></span><img class="tabic" data-ic="sparkle" src="icons/ui/i-sparkle-muted.svg" alt="" /><span class="tabb-l">Edit</span></div>
+      <div role="button" tabindex="0" id="tabCreate" class="tabb"><span class="tabpill"></span><img class="tabic" data-ic="clapper" src="icons/ui/i-clapper-muted.svg" alt="" /><span class="tabb-l">Media Lab</span></div>
+      <div role="button" tabindex="0" id="tabPresets" class="tabb"><span class="tabpill"></span><img class="tabic" data-ic="frame" src="icons/ui/i-frame-muted.svg" alt="" /><span class="tabb-l">Library</span></div>
     </div>
   </div>
 

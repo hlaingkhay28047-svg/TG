@@ -90,7 +90,8 @@ async function generate(deps, input, onStage) {
       var ref = await taskSvc.download(deps, list[i].url);
       out.push({ ref: ref, url: list[i].url });
     }
-    return { ok: true, results: out };
+    /* the SUCCESS body carries what RunningHub charged — the caller books it */
+    return { ok: true, results: out, usage: [{ taskId: taskId, final: final }] };
   } catch (e) {
     return { ok: false, error: { code: (e && e.code) || "network", message: (e && e.message) || "video failed" } };
   }
@@ -121,7 +122,8 @@ async function upscale(deps, videoRef, targetResolution, onStage) {
       if (onStage) onStage("DOWNLOADING_RESULT", {});
       out.push({ ref: await taskSvc.download(deps, list[i].url), url: list[i].url });
     }
-    return { ok: true, results: out };
+    /* the SUCCESS body carries what RunningHub charged — the caller books it */
+    return { ok: true, results: out, usage: [{ taskId: taskId, final: final }] };
   } catch (e) {
     return { ok: false, error: { code: (e && e.code) || "network", message: (e && e.message) || "upscale failed" } };
   }
@@ -198,7 +200,8 @@ async function runTool(deps, def, videoRef, imageRefs, promptText, optVals, onSt
       if (onStage) onStage("DOWNLOADING_RESULT", {});
       out.push({ ref: await taskSvc.download(deps, list[i].url), url: list[i].url });
     }
-    return { ok: true, results: out };
+    /* the SUCCESS body carries what RunningHub charged — the caller books it */
+    return { ok: true, results: out, usage: [{ taskId: taskId, final: final }] };
   } catch (e) {
     return { ok: false, error: { code: (e && e.code) || "network", message: (e && e.message) || "video tool failed" } };
   }
