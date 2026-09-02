@@ -306,6 +306,7 @@ function renderStPicker() {
   host.innerHTML = "";
   var st = hstate();
   var ref = st.refs && st.refs[0];
+  syncPhoto(ref);
   var d = el("div", "ref" + (ref ? " filled" : " stbig"));
   if (ref) {
     var im = doc().createElement("img");
@@ -339,7 +340,21 @@ function renderStPicker() {
   host.appendChild(d);
   var tg = $("stTarget"); if (tg) tg.style.display = ref ? "" : "none";
 }
-function renderRefs() { renderStPicker(); }
+function renderRefs() { renderStPicker(); if (API && API.renderRsPicker) { try { API.renderRsPicker(); } catch (e) { } } }
+
+/* The app asks ST.srcBitmap "is there a photo?" — for the generate bar's
+   label, the add-a-photo nudge and every control that needs pixels. The panel
+   decodes nothing (Photoshop holds the document), so the answer is simply
+   whether the shared PHOTO slot is filled. */
+function syncPhoto(ref) {
+  if (!API || !API.ST) return;
+  var had = !!API.ST.srcBitmap;
+  API.ST.srcBitmap = ref ? { panel: true } : null;
+  if (had !== !!ref) {
+    try { if (API.stRenderPend) API.stRenderPend(); } catch (e) { }
+    try { if (API.stRefreshUI) API.stRefreshUI(); } catch (e) { }
+  }
+}
 
 /* ------------------------------------------------- 880 style pack */
 /* The app builds a contact sheet on a canvas and hands the whole multi-pick
