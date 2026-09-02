@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.51.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.52.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -654,25 +654,47 @@
          with the app's own actions (select, save the chosen ones, delete,
          clear). A panel cannot hand a browser a zip, so "save selected"
          writes the chosen files into a folder the studio picks. -->
-    <div class="page" id="pageGallery">
+    <!-- ========== PAGE: GALLERY ==========
+         v6.52.0 — the web app's pgGallery, box for box: the note with its
+         live count, the bulk bar (select · save · delete · clear), the picked
+         result with its own actions, the plate grid, and the empty state with
+         its Workflow button. Every label is the app's own copy in its nine
+         languages; the panel's gallery is a folder of files rather than the
+         app's IndexedDB, so "ZIP" is a save into a folder the studio picks —
+         the same outcome by the only route a plugin has. -->
+    <div class="page apg" id="pageGallery">
       <div class="page-hero">
         <img src="icons/banners/banner-fairy-forest.jpg" alt="" />
         <div class="ph-kick">My Gallery</div>
         <p class="ph-head" id="phGallery">ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား</p>
       </div>
       <div class="card">
-        <div class="chead" id="cGalH"><span class="car">&#9662;</span><span class="chead-t">GALLERY</span></div>
-        <div class="cbody" id="cGalB">
-          <div class="mut" id="galIntro"></div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnGalSel" class="btn btn-sm grow">Select</div>
-            <div role="button" tabindex="0" id="btnGalSave" class="btn btn-sm grow">Save selected</div>
+        <h2><img class="ic-h2" src="icons/ui/i-gallery-hi.svg" alt="">MY GALLERY</h2>
+        <div class="mut" id="galNote"></div>
+        <div class="row" id="galBulkBar" style="margin-bottom:8px">
+          <div role="button" tabindex="0" class="chip" id="galSelMode"></div>
+          <div role="button" tabindex="0" class="btn" id="galZipSel" style="display:none"></div>
+          <div role="button" tabindex="0" class="btn" id="galDelSel" style="display:none"></div>
+          <div role="button" tabindex="0" class="btn" id="galClearAll" style="margin-left:auto"></div>
+        </div>
+        <div class="lib-pick" id="galPick" style="display:none">
+          <img id="galPickImg" alt="" />
+          <div class="grow">
+            <div class="sub mut" id="galPickInfo"></div>
+            <div class="row" style="margin-top:8px">
+              <div role="button" tabindex="0" class="btn btn-gold" id="galDl"></div>
+              <div role="button" tabindex="0" class="btn" id="galToImg1"></div>
+              <div role="button" tabindex="0" class="btn" id="galToImg2"></div>
+              <div role="button" tabindex="0" class="btn" id="galKeep"></div>
+              <div role="button" tabindex="0" class="btn" id="galDel"></div>
+            </div>
           </div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnGalDel" class="btn btn-sm grow">Delete selected</div>
-            <div role="button" tabindex="0" id="btnGalClear" class="btn btn-sm">Clear all</div>
-          </div>
-          <div class="diag" id="galList"></div>
+        </div>
+        <div class="lib-grid" id="galGrid"></div>
+        <div id="galEmpty" class="empty-state on">
+          <div class="ic"><img class="ic-xl" src="icons/ui/i-gallery-muted.svg" alt="" /></div>
+          <p class="mut" id="galEmptyTxt"></p>
+          <div role="button" tabindex="0" class="btn btn-gold" id="galEmptyGo"></div>
         </div>
       </div>
     </div>
@@ -776,7 +798,7 @@
     </div>
 
     <!-- ========== PAGE: VIDEO UPSCALE ========== -->
-    <div class="page" id="pageVideoUp">
+    <div class="page apg" id="pageVideoUp">
       <div class="page-hero">
         <img src="icons/banners/banner-superhero.jpg" alt="" />
         <div class="ph-kick">Video Upscale</div>
@@ -789,38 +811,65 @@
            denoise, frame interpolation, subtitle erase) that the panel simply
            did not have. -->
       <div class="card">
-        <h2>VIDEO UPSCALE</h2>
+        <h2><img class="ic-h2" src="icons/ui/i-rocket-hi.svg" alt="">VIDEO UPSCALE</h2>
         <div class="mut" id="vuIntro"></div>
-        <div class="row tight">
-          <div role="button" tabindex="0" id="btnVuPickP" class="btn btn-sm grow">Pick video (MP4)</div>
-          <div role="button" tabindex="0" id="btnVuSave" class="btn btn-sm grow">Save folder</div>
-        </div>
-        <div class="mut" id="vuFileNote"></div>
+        <div role="button" tabindex="0" id="btnVuPickP" class="btn" style="margin-top:10px"></div>
+        <div class="mut" id="vuFormatNote" style="margin-top:4px;font-size:11px"></div>
+        <div class="mut" id="vuFileName" style="margin-top:6px"></div>
+        <!-- panel-only, and unavoidable: a browser downloads the finished
+             clip, a plugin has to be told where to write it -->
+        <div role="button" tabindex="0" id="btnVuSave" class="btn" style="margin-top:8px"></div>
+        <div class="mut" id="vuOutName" style="margin-top:6px"></div>
+        <div class="mut" id="vuNeedNote" style="margin-top:6px"></div>
       </div>
 
       <div class="card">
         <h2>GENERATE</h2>
-        <div class="row tight"><select id="vuRes" class="inp grow"></select></div>
-        <div class="diag" id="vuList"></div>
-        <div class="row last">
-          <div role="button" tabindex="0" id="btnVuRun" class="btn btn-gold gen grow">UPSCALE VIDEO</div>
+        <div class="arow gen-opts" id="vuOpts">
+          <div class="hsl" id="vuResHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="vuResBtn">
+              <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-size.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx">Res</span><span class="hsl-val" id="vuResVal"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="vuRes"></select>
+          </div>
         </div>
+        <div role="button" tabindex="0" id="btnVuRun" class="btn btn-gold gen"><div class="btn-in"><img class="ic-s" src="icons/ui/i-rocket-ink.svg" alt="">UPSCALE VIDEO</div></div>
+        <div class="spin" id="vuSpin"></div>
+        <div class="status" id="stVuGen"></div>
       </div>
 
       <div class="card">
-        <h2>VIDEO TOOLS</h2>
+        <h2><img class="ic-h2" src="icons/ui/i-clapper-hi.svg" alt="">VIDEO TOOLS</h2>
         <div class="mut" id="vtIntro"></div>
-        <div class="row tight"><select id="vtModel" class="inp grow"></select></div>
-        <div class="row tight">
-          <div role="button" tabindex="0" id="btnVtPick" class="btn btn-sm grow">Pick video (MP4)</div>
-          <div role="button" tabindex="0" id="btnVtSave" class="btn btn-sm grow">Save folder</div>
+        <div class="hsl" id="vtModelHsl" style="margin-top:8px">
+          <div role="button" tabindex="0" class="hsl-btn" id="vtModelBtn">
+            <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/brand-spark.svg" alt=""></span>
+            <span class="hsl-lab"><span class="hsl-ctx">Tool</span><span class="hsl-val" id="vtModelVal"></span></span>
+            <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+          </div>
+          <select class="inp" id="vtModel"></select>
         </div>
-        <textarea id="vtPrompt" class="pbox" rows="4" placeholder="Prompt (optional)"></textarea>
-        <div class="row tight"><select id="vtOpt" class="inp grow"></select></div>
-        <div class="diag" id="vtList"></div>
-        <div class="row last">
-          <div role="button" tabindex="0" id="btnVtRun" class="btn btn-gold gen grow">RUN VIDEO TOOL</div>
+        <div role="button" tabindex="0" id="btnVtPick" class="btn" style="margin-top:8px"></div>
+        <div class="mut" id="vtFileName" style="margin-top:6px"></div>
+        <div role="button" tabindex="0" id="btnVtSave" class="btn" style="margin-top:8px"></div>
+        <div class="mut" id="vtOutName" style="margin-top:6px"></div>
+        <textarea id="vtPrompt" class="inp" rows="3" style="margin-top:8px"></textarea>
+        <div class="arow" id="vtOpts" style="margin-top:8px">
+          <div class="hsl" id="vtOptHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="vtOptBtn">
+              <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-size.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx" id="vtOptCtx">resolution</span><span class="hsl-val" id="vtOptVal"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="vtOpt"></select>
+          </div>
         </div>
+        <div class="mut" id="vtNeedNote" style="margin-top:6px"></div>
+        <div role="button" tabindex="0" id="btnVtRun" class="btn btn-gold gen"><div class="btn-in"><img class="ic-s" src="icons/ui/i-clapper-ink.svg" alt="">RUN VIDEO TOOL</div></div>
+        <div class="spin" id="vtSpin"></div>
+        <div class="status" id="stVtGen"></div>
       </div>
     </div>
 

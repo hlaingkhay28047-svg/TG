@@ -6211,7 +6211,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.51.0";
+const PANEL_VERSION = "6.52.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9265,13 +9265,88 @@ function renderVidWf() {
   }
 }
 
-function vuRows() {
-  return [
-    { label: "Video", level: VU.video ? "ok" : "pend", detail: VU.video ? VU.video.name : "\u2014" },
-    { label: "Save folder", level: VU.out ? "ok" : "pend", detail: VU.out ? (VU.out.name || "chosen") : "\u2014" }
-  ].concat(VU.rows.slice(0, 6));
+/* the app's own copy for both halves of the VidUp page (its L9 blocks) */
+const VU_L = {
+  intro: { my: "\u101b\u103e\u102d\u1015\u103c\u102e\u1038\u101e\u102c\u1038 \u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1016\u102d\u102f\u1004\u103a\u1000\u102d\u102f resolution \u1019\u103c\u103e\u1004\u1037\u103a\u1015\u1031\u1038\u1019\u101a\u103a \u2014 RunningHub Enterprise key \u101c\u102d\u102f\u1021\u1015\u103a\u1015\u102b\u1010\u101a\u103a\u104b",
+    en: "Upscale an existing video file to a higher resolution \u2014 needs your RunningHub Enterprise key.",
+    shn: "\u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088\u1022\u107c\u103a\u1019\u102e\u1038\u101a\u1030\u1087 resolution \u101e\u102f\u1004\u103a\u1076\u102d\u102f\u107c\u103a\u1088 \u2014 \u101c\u1030\u101d\u103a\u1087 RunningHub Enterprise key",
+    kac: "Video nga ai hpe resolution grau na ni galaw ai \u2014 RunningHub Enterprise key ra ai",
+    th: "\u0e2d\u0e31\u0e1b\u0e2a\u0e40\u0e01\u0e25\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e17\u0e35\u0e48\u0e21\u0e35\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e2b\u0e49\u0e21\u0e35\u0e04\u0e27\u0e32\u0e21\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e2a\u0e39\u0e07\u0e02\u0e36\u0e49\u0e19 \u2014 \u0e15\u0e49\u0e2d\u0e07\u0e21\u0e35 RunningHub Enterprise key",
+    zh: "\u628a\u73b0\u6709\u89c6\u9891\u63d0\u5347\u5230\u66f4\u9ad8\u5206\u8fa8\u7387 \u2014 \u9700\u8981\u4f60\u7684 RunningHub Enterprise key",
+    vi: "N\u00e2ng c\u1ea5p \u0111\u1ed9 ph\u00e2n gi\u1ea3i c\u1ee7a video c\u00f3 s\u1eb5n \u2014 c\u1ea7n key RunningHub Enterprise",
+    id: "Tingkatkan resolusi video yang ada \u2014 perlu RunningHub Enterprise key",
+    ms: "Tingkatkan resolusi video sedia ada \u2014 perlukan RunningHub Enterprise key" },
+  pick: { my: "\u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1016\u102d\u102f\u1004\u103a \u101b\u103d\u1031\u1038\u101b\u1014\u103a (MP4)", en: "Pick a video file (MP4)", shn: "\u1011\u1062\u1086\u1087\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088 (MP4)",
+    kac: "Video langai tawn shangun (MP4)", th: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e44\u0e1f\u0e25\u0e4c\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d (MP4)", zh: "\u9009\u62e9\u89c6\u9891\u6587\u4ef6\uff08MP4\uff09",
+    vi: "Ch\u1ecdn t\u1ec7p video (MP4)", id: "Pilih file video (MP4)", ms: "Pilih fail video (MP4)" },
+  format: { my: "MP4 \u1016\u102d\u102f\u1004\u103a\u1015\u1032 \u101b\u1015\u102b\u1010\u101a\u103a \u2014 iPhone \u101b\u1032\u1037 .mov \u101c\u102d\u102f\u1019\u103b\u102d\u102f\u1038 \u1010\u1001\u103c\u102c\u1038 format \u1006\u102d\u102f\u101b\u1004\u103a \u1021\u101b\u1004\u103a MP4 \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1015\u1031\u1038\u1015\u102b",
+    en: "MP4 only \u2014 other formats (like an iPhone's .mov) need converting to MP4 first",
+    shn: "\u101c\u1086\u1088\u101e\u1019\u103a\u1089 MP4 \u1075\u1030\u107a\u103a\u1038 \u2014 format \u1022\u107c\u103a\u107d\u102d\u1010\u103a\u1038\u1075\u107c\u103a (iPhone .mov \u1078\u102d\u1030\u101d\u103a\u1038\u107c\u1086\u1089) \u101c\u1030\u101d\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u1015\u1035\u107c\u103a MP4 \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
+    kac: "MP4 sha ra ai \u2014 iPhone .mov nga ai zawn re gaw MP4 hku shawng galai ra ai",
+    th: "\u0e23\u0e31\u0e1a\u0e40\u0e09\u0e1e\u0e32\u0e30 MP4 \u2014 \u0e23\u0e39\u0e1b\u0e41\u0e1a\u0e1a\u0e2d\u0e37\u0e48\u0e19 (\u0e40\u0e0a\u0e48\u0e19 .mov \u0e02\u0e2d\u0e07 iPhone) \u0e15\u0e49\u0e2d\u0e07\u0e41\u0e1b\u0e25\u0e07\u0e40\u0e1b\u0e47\u0e19 MP4 \u0e01\u0e48\u0e2d\u0e19",
+    zh: "\u4ec5\u652f\u6301 MP4 \u2014 \u5176\u4ed6\u683c\u5f0f\uff08\u5982 iPhone \u7684 .mov\uff09\u9700\u8981\u5148\u8f6c\u6362\u4e3a MP4",
+    vi: "Ch\u1ec9 h\u1ed7 tr\u1ee3 MP4 \u2014 \u0111\u1ecbnh d\u1ea1ng kh\u00e1c (nh\u01b0 .mov c\u1ee7a iPhone) c\u1ea7n chuy\u1ec3n sang MP4 tr\u01b0\u1edbc",
+    id: "Hanya MP4 \u2014 format lain (seperti .mov iPhone) perlu dikonversi ke MP4 dulu",
+    ms: "MP4 sahaja \u2014 format lain (seperti .mov iPhone) perlu ditukar ke MP4 dahulu" },
+  need: { my: "\u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1016\u102d\u102f\u1004\u103a \u1010\u1005\u103a\u1001\u102f \u101b\u103d\u1031\u1038\u101b\u1015\u102b\u1019\u101a\u103a", en: "You'll need to pick a video file",
+    shn: "\u101c\u1030\u101d\u103a\u1087\u1011\u1062\u1086\u1087\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038", kac: "Video langai tawn shangun ra ai",
+    th: "\u0e15\u0e49\u0e2d\u0e07\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e44\u0e1f\u0e25\u0e4c\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e01\u0e48\u0e2d\u0e19", zh: "\u9700\u8981\u5148\u9009\u62e9\u4e00\u4e2a\u89c6\u9891\u6587\u4ef6", vi: "B\u1ea1n c\u1ea7n ch\u1ecdn m\u1ed9t t\u1ec7p video",
+    id: "Anda perlu memilih file video", ms: "Anda perlu pilih fail video" },
+  /* the panel's own line: Photoshop writes the finished clip to disk */
+  out: { my: "\u101e\u102d\u1019\u103a\u1038\u1019\u101a\u1037\u103a folder \u101b\u103d\u1031\u1038\u101b\u1014\u103a", en: "Choose the save folder", shn: "\u101c\u102d\u1030\u1075\u103a\u1088 folder \u101e\u102d\u1019\u103a\u1038",
+    kac: "Save folder lata u", th: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01", zh: "\u9009\u62e9\u4fdd\u5b58\u6587\u4ef6\u5939",
+    vi: "Ch\u1ecdn th\u01b0 m\u1ee5c l\u01b0u", id: "Pilih folder simpan", ms: "Pilih folder simpan" },
+  needOut: { my: "\u101e\u102d\u1019\u103a\u1038\u1019\u101a\u1037\u103a folder \u1010\u1005\u103a\u1001\u102f \u101b\u103d\u1031\u1038\u101b\u1015\u102b\u1019\u101a\u103a", en: "You'll need to choose a save folder",
+    shn: "\u101c\u1030\u101d\u103a\u1087\u101c\u102d\u1030\u1075\u103a\u1088 folder \u101e\u102d\u1019\u103a\u1038\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038", kac: "Save folder langai lata ra ai",
+    th: "\u0e15\u0e49\u0e2d\u0e07\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e01\u0e48\u0e2d\u0e19", zh: "\u9700\u8981\u5148\u9009\u62e9\u4fdd\u5b58\u6587\u4ef6\u5939",
+    vi: "B\u1ea1n c\u1ea7n ch\u1ecdn th\u01b0 m\u1ee5c l\u01b0u", id: "Anda perlu memilih folder simpan", ms: "Anda perlu pilih folder simpan" }
+};
+const VT_L = {
+  intro: { my: "\u101b\u103e\u102d\u1015\u103c\u102e\u1038\u101e\u102c\u1038 \u1017\u102e\u1012\u102e\u101a\u102d\u102f\u1000\u102d\u102f \u1015\u103c\u1004\u103a\u1019\u101a\u103a/\u1006\u1000\u103a\u1019\u101a\u103a/\u101e\u1014\u1037\u103a\u1019\u101a\u103a \u2014 model \u1010\u1005\u103a\u1001\u102f\u101b\u103d\u1031\u1038\u1015\u103c\u102e\u1038 \u1017\u102e\u1012\u102e\u101a\u102d\u102f\u1016\u102d\u102f\u1004\u103a \u1010\u1004\u103a\u1015\u102b\u104b RunningHub Enterprise key \u101c\u102d\u102f\u1021\u1015\u103a\u1015\u102b\u1010\u101a\u103a\u104b",
+    en: "Edit, extend or clean an existing video \u2014 pick a tool, upload the clip. Needs your RunningHub Enterprise key.",
+    shn: "\u1019\u1084\u1038\u1076\u102d\u102f\u107c\u103a\u1038/\u101e\u102d\u102f\u1015\u103a\u1087/\u101e\u102f\u1075\u103a\u1088\u101e\u1085\u1004\u103a\u1087 \u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088\u1022\u107c\u103a\u1019\u102e\u1038\u101a\u1030\u1087",
+    kac: "Video nga ai hpe galaw/madung/san seng \u2014 tool langai lata nna video bang u",
+    th: "\u0e41\u0e01\u0e49\u0e44\u0e02 \u0e15\u0e48\u0e2d \u0e2b\u0e23\u0e37\u0e2d\u0e1b\u0e23\u0e31\u0e1a\u0e1b\u0e23\u0e38\u0e07\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e17\u0e35\u0e48\u0e21\u0e35\u0e2d\u0e22\u0e39\u0e48 \u2014 \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e21\u0e37\u0e2d\u0e41\u0e25\u0e49\u0e27\u0e2d\u0e31\u0e1b\u0e42\u0e2b\u0e25\u0e14\u0e04\u0e25\u0e34\u0e1b",
+    zh: "\u7f16\u8f91\u3001\u5ef6\u957f\u6216\u4fee\u590d\u73b0\u6709\u89c6\u9891 \u2014 \u9009\u62e9\u5de5\u5177\u5e76\u4e0a\u4f20\u89c6\u9891",
+    vi: "Ch\u1ec9nh s\u1eeda, k\u00e9o d\u00e0i ho\u1eb7c l\u00e0m s\u1ea1ch video c\u00f3 s\u1eb5n \u2014 ch\u1ecdn c\u00f4ng c\u1ee5 r\u1ed3i t\u1ea3i video l\u00ean",
+    id: "Edit, perpanjang, atau bersihkan video yang ada \u2014 pilih alat lalu unggah klip",
+    ms: "Edit, panjangkan atau bersihkan video sedia ada \u2014 pilih alat dan muat naik klip" },
+  pick: { my: "\u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1016\u102d\u102f\u1004\u103a \u101b\u103d\u1031\u1038\u1019\u101a\u103a (MP4)", en: "Pick a video file (MP4)", shn: "\u1011\u1062\u1086\u1087\u107e\u1062\u1086\u1087\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088 (MP4)",
+    kac: "Video file lata u (MP4)", th: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e44\u0e1f\u0e25\u0e4c\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d (MP4)", zh: "\u9009\u62e9\u89c6\u9891\u6587\u4ef6 (MP4)",
+    vi: "Ch\u1ecdn t\u1ec7p video (MP4)", id: "Pilih file video (MP4)", ms: "Pilih fail video (MP4)" },
+  promptPh: { my: "Prompt (\u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)", en: "Prompt (optional)", shn: "Prompt (\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
+    kac: "Prompt (bang tim mai)", th: "Prompt (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)", zh: "Prompt\uff08\u53ef\u9009\uff09",
+    vi: "Prompt (kh\u00f4ng b\u1eaft bu\u1ed9c)", id: "Prompt (opsional)", ms: "Prompt (pilihan)" }
+};
+
+/* the app paints the file it holds and, when something is still missing, one
+   warned line saying which \u2014 the panel's own save folder joins that line */
+function renderVu() {
+  const fn = $("vuFileName");
+  if (fn) fn.textContent = VU.video ? VU.video.name : "";
+  const on = $("vuOutName");
+  if (on) on.textContent = VU.out ? (VU.out.name || "") : "";
+  const need = $("vuNeedNote");
+  if (need) {
+    if (!VU.video) setIcnText(need, "i-warn", "hi", ff9(VU_L.need));
+    else if (!VU.out) setIcnText(need, "i-warn", "hi", ff9(VU_L.needOut));
+    else need.textContent = "";
+  }
+  const row = VU.rows && VU.rows[0];
+  if (row) stSet("stVuGen", row.label + (row.detail ? " \u00b7 " + row.detail : ""), row.level === "err" ? "err" : row.level === "ok" ? "ok" : "");
 }
-function renderVu() { renderRows("vuList", vuRows()); }
+function vuPaintLabels() {
+  const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
+  set("vuIntro", ff9(VU_L.intro));
+  set("vuFormatNote", ff9(VU_L.format));
+  setIcnText($("btnVuPickP"), "i-clapper", "cream", ff9(VU_L.pick));
+  setIcnText($("btnVuSave"), "i-folder", "cream", ff9(VU_L.out));
+  set("vtIntro", ff9(VT_L.intro));
+  setIcnText($("btnVtPick"), "i-clapper", "cream", ff9(VT_L.pick));
+  setIcnText($("btnVtSave"), "i-folder", "cream", ff9(VU_L.out));
+  const pb = $("vtPrompt"); if (pb) pb.placeholder = ff9(VT_L.promptPh);
+  renderVu(); renderVt();
+}
 
 /* ============================================================
    v6.50.0 — VIDEO TOOLS, where the app keeps them: the lower half of the
@@ -9287,15 +9362,37 @@ function vtDef() {
   const sel = $("vtModel");
   return (V && V.getTool && sel) ? V.getTool(sel.value) : null;
 }
-function vtRows() {
-  const d = vtDef();
-  return [
-    { label: "Tool", level: d ? "ok" : "pend", detail: d ? (d.label || d.id) : "—" },
-    { label: "Video", level: VT.video ? "ok" : "pend", detail: VT.video ? VT.video.name : "—" },
-    { label: "Save folder", level: VT.out ? "ok" : "pend", detail: VT.out ? (VT.out.name || "chosen") : "—" }
-  ].concat(VT.rows.slice(0, 6));
+function renderVt() {
+  const fn = $("vtFileName");
+  if (fn) fn.textContent = VT.video ? VT.video.name : "";
+  const on = $("vtOutName");
+  if (on) on.textContent = VT.out ? (VT.out.name || "") : "";
+  /* the app writes this one as plain text, ⚠ and all (its vuNeedNote is the
+     one that carries a sprite) — so the two pages read the same either way */
+  const need = $("vtNeedNote");
+  if (need) {
+    if (!VT.video) need.textContent = "⚠ " + ff9(VU_L.need);
+    else if (!VT.out) need.textContent = "⚠ " + ff9(VU_L.needOut);
+    else need.textContent = "";
+  }
+  const row = VT.rows && VT.rows[0];
+  if (row) stSet("stVtGen", row.label + (row.detail ? " · " + row.detail : ""), row.level === "err" ? "err" : row.level === "ok" ? "ok" : "");
+  vuPaintHsl();
 }
-function renderVt() { renderRows("vtList", vtRows()); }
+/* the styled buttons over the three native selects on this page, and the
+   app's syncVis: a picker whose select is hidden hides with it */
+function vuPaintHsl() {
+  ffPaintHslVal("vuRes", "vuResVal");
+  ffPaintHslVal("vtModel", "vtModelVal");
+  ffPaintHslVal("vtOpt", "vtOptVal");
+  const sel = $("vtOpt"), w = $("vtOptHsl");
+  if (sel && w) w.className = "hsl" + (sel.style.display === "none" ? " hsl-off" : "");
+  const ctx = $("vtOptCtx");
+  if (ctx && sel) {
+    const key = sel.getAttribute("data-key") || "";
+    if (key) ctx.textContent = key.replace(/([A-Z])/g, " $1").toLowerCase();
+  }
+}
 /* the tool's FIRST option select — its real enum, its documented default,
    or the Topaz resolution preset when the endpoint carries one */
 function vtPaintOptions() {
@@ -9591,101 +9688,327 @@ async function vuRun() {
   VU.busy = false; renderVu();
 }
 /* ============================================================
-   GALLERY — everything the panel has made (v6.46.0)
+   GALLERY — everything the panel has made (v6.52.0)
 
    The app's Library holds Reference and Gallery, and its Gallery is every
-   result it has ever produced, with select / save / delete / clear. The
-   panel's Library held Reference and a metadata-only history: the pictures
-   themselves were never kept, so a document closed without saving took the
-   result with it. Results are written to the panel's own gallery folder now
-   (gallery-store.js), and this is the app's Gallery over that folder. A panel
-   cannot hand a browser a zip, so "save selected" writes the chosen files
-   into a folder the studio picks — the same outcome, by the only route a
-   plugin has.
-   ============================================================ */
-const GAL = { files: [], sel: {}, selMode: false };
+   result it has ever produced, with select / save / delete / clear. Results
+   are written to the panel's own gallery folder (gallery-store.js), and this
+   is the app's Gallery over that folder.
 
-function galRows() {
-  const rows = [{ label: "Kept", level: GAL.files.length ? "ok" : "pend",
-    detail: GAL.files.length ? (GAL.files.length + " / " + ((globalThis.HNK && globalThis.HNK.galleryStore && globalThis.HNK.galleryStore.MAX) || 200)) : "\u2014" }];
-  for (let i = 0; i < GAL.files.length && i < 40; i++) {
-    const n = GAL.files[i].name;
-    rows.push({ label: (GAL.selMode ? (GAL.sel[n] ? "\u2611 " : "\u2610 ") : "") + n,
-      level: GAL.sel[n] ? "ok" : "pend", detail: "" });
-  }
-  return rows;
+   v6.52.0 — the page IS the app's now: the note with its live count, the
+   bulk bar, the plate grid, the picked result with its own actions, the
+   empty state, and every label in the app's own nine languages. Two honest
+   differences, both forced by Photoshop: a plugin cannot hand a browser a
+   zip, so "save selected" writes the chosen files into a folder the studio
+   picks; and the panel keeps its results as files, so the counter reads the
+   panel's own cap rather than the browser's 60.
+   ============================================================ */
+const GAL = { files: [], sel: {}, selMode: false, pick: null, thumbs: {}, keep: {}, clearArm: 0 };
+const GAL_KEEP_FILE = "_keep.json";
+
+/* the app's own copy for this page, lifted from its tr table and its L9
+   blocks so a student reads the same sentence on both surfaces */
+const GAL_L = {
+  note: { my: "ထုတ်ပြီးသမျှ ရလဒ်တွေ ဒီမှာ အလိုအလျောက် စုသိမ်းထားတယ် (ဖုန်းထဲမှာပဲ) — reload လုပ်လည်း မပျောက်ဘူး။",
+    en: "Every result is saved here automatically (on this device only) — it survives reloads.",
+    shn: "ၽွၼ်းလႆႈတင်းသဵင်ႈ သိမ်းဝႆႉတီႈၼႆႈ (ၼႂ်းၶိူင်ႈၼႆႉၵူၺ်း) — reload ၵေႃႈ ဢမ်ႇႁၢႆ",
+    kac: "Lachyum yawng ndai kaw da ai (ndai jak hta sha) — reload tim n mat ai",
+    th: "ผลลัพธ์ทุกภาพถูกเก็บที่นี่อัตโนมัติ (ในเครื่องนี้) — รีโหลดก็ไม่หาย",
+    zh: "所有生成结果自动保存在这里（仅本设备）— 刷新也不会丢失",
+    vi: "Mọi kết quả tự lưu ở đây (chỉ trên máy này) — tải lại vẫn còn",
+    id: "Semua hasil tersimpan otomatis di sini (di perangkat ini) — reload tidak hilang",
+    ms: "Semua hasil disimpan automatik di sini (pada peranti ini) — reload tidak hilang" },
+  empty: { my: "ရလဒ် မရှိသေးပါ — Generate လုပ်ပြီးရင် ဒီမှာ ရောက်လာမယ်။",
+    en: "Nothing yet — results will appear here after you Generate.",
+    shn: "ပႆႇမီးၽွၼ်းလႆႈ — Generate ယဝ်ႉ တေမႃးၼႄတီႈၼႆႈ",
+    kac: "Lachyum rai n nga shi ai — Generate ngut yang ndai kaw du na",
+    th: "ยังไม่มีผลลัพธ์ — หลัง Generate จะมาแสดงที่นี่",
+    zh: "暂无结果 — 生成后会显示在这里",
+    vi: "Chưa có kết quả — sau khi Generate sẽ hiện ở đây",
+    id: "Belum ada hasil — setelah Generate akan muncul di sini",
+    ms: "Belum ada hasil — selepas Generate akan muncul di sini" },
+  emptyGo: { my: "Workflow ကနေ စမယ်", en: "Start from Workflow", shn: "တႄႇတီႈ Workflow",
+    kac: "Workflow kaw na hpang", th: "เริ่มจาก Workflow", zh: "从 Workflow 开始",
+    vi: "Bắt đầu từ Workflow", id: "Mulai dari Workflow", ms: "Mula dari Workflow" },
+  selOff: { my: "အများရွေးမယ်", en: "Select multiple", shn: "လိူၵ်ႈလၢႆဢၼ်", kac: "Law law lata u",
+    th: "เลือกหลายรูป", zh: "多选", vi: "Chọn nhiều", id: "Pilih banyak", ms: "Pilih banyak" },
+  selOn: { my: "ရွေးနေသည် — ပိတ်မယ်", en: "Selecting — done", shn: "တိုၵ်ႉလိူၵ်ႈ — သေယဝ်ႉ",
+    kac: "Lata nga — ngut sai", th: "กำลังเลือก — เสร็จ", zh: "选择中 — 完成",
+    vi: "Đang chọn — xong", id: "Memilih — selesai", ms: "Memilih — selesai" },
+  remove: { my: "ဒီပုံ ဖယ်ထုတ်မယ်", en: "Remove from batch", shn: "ဢဝ်ဢွၵ်ႇပႅတ်ႈ", kac: "Batch kaw na shamat",
+    th: "เอาออกจากชุด", zh: "从批次移除", vi: "Bỏ khỏi lô", id: "Keluarkan dari batch", ms: "Buang dari kelompok" },
+  clear: { my: "Gallery အကုန်ရှင်းမယ်", en: "Clear Gallery", shn: "လၢင်ႉ Gallery တင်းမူတ်း",
+    kac: "Gallery yawng shakau u", th: "ล้าง Gallery", zh: "清空 Gallery",
+    vi: "Xoá sạch Gallery", id: "Bersihkan Gallery", ms: "Kosongkan Gallery" },
+  clearArmed: { my: "သေချာလား? — ထပ်နှိပ်ရင် အကုန်ဖျက်မယ်", en: "Sure? Tap again to delete all",
+    shn: "တႄႉႁိုဝ်? — ၼဵၵ်းထႅင်ႈသေ မွတ်ႇတင်းမူတ်း", kac: "Teng nga ai i? — bai dip yang yawng shakau na",
+    th: "แน่ใจไหม? แตะอีกครั้งเพื่อลบทั้งหมด", zh: "确定吗？再点一次全部删除",
+    vi: "Chắc chưa? Chạm lần nữa để xoá hết", id: "Yakin? Ketuk lagi untuk hapus semua",
+    ms: "Pasti? Ketik lagi untuk padam semua" },
+  keep: { my: "★ သိမ်းထား", en: "★ Protect", shn: "★ ႁၵ်ႉသႃ", kac: "★ Makawp", th: "★ ปกป้อง",
+    zh: "★ 保护", vi: "★ Bảo vệ", id: "★ Lindungi", ms: "★ Lindungi" },
+  kept: { my: "★ သိမ်းထားပြီး", en: "★ Protected", shn: "★ ႁၵ်ႉသႃဝႆႉ", kac: "★ Makawp da sai",
+    th: "★ ปกป้องแล้ว", zh: "★ 已保护", vi: "★ Đã bảo vệ", id: "★ Dilindungi", ms: "★ Dilindungi" },
+  keptOn: { my: "ဒီပုံကို ★ ထားပြီး — နေရာလွတ်ဖို့ ဘယ်တော့မှ မဖျက်တော့ပါ",
+    en: "Starred — this result will never be removed to make room",
+    shn: "မီး ★ ယဝ်ႉ — တေဢမ်ႇမွတ်ႇသေပွၵ်ႈ", kac: "★ tawn sai — shara lu na matu galoi mung n shamat sana",
+    th: "ติดดาวแล้ว — จะไม่ถูกลบเพื่อให้มีที่ว่าง", zh: "已加星 — 不会为腾出空间而移除",
+    vi: "Đã gắn sao — sẽ không bị xoá để lấy chỗ", id: "Diberi bintang — tidak akan dihapus demi ruang",
+    ms: "Dibintangkan — tidak akan dipadam untuk ruang" },
+  del: { my: "ဖျက်", en: "Delete", shn: "မွတ်ႇ", kac: "Shamat", th: "ลบ", zh: "删除",
+    vi: "Xóa", id: "Hapus", ms: "Padam" },
+  pickNone: { my: "ပုံတစ်ပုံ ရွေးပါ", en: "Pick a result first", shn: "လိူၵ်ႈၶႅပ်းၼိုင်ႈ",
+    kac: "Sumla langai lata u", th: "เลือกภาพก่อน", zh: "先选一张", vi: "Hãy chọn một ảnh",
+    id: "Pilih hasil dulu", ms: "Pilih hasil dahulu" }
+};
+
+/* the panel's own keep list, a file beside the pictures — the app keeps the
+   same flag on its IndexedDB record */
+async function galKeepFolder() {
+  const uxp = require("uxp");
+  const data = await uxp.storage.localFileSystem.getDataFolder();
+  return data.getEntry("gallery");
 }
+async function galKeepLoad() {
+  try {
+    const uxp = require("uxp");
+    const gdir = await galKeepFolder();
+    const f = await gdir.getEntry(GAL_KEEP_FILE);
+    const o = JSON.parse(await f.read({ format: uxp.storage.formats.utf8 }));
+    GAL.keep = (o && typeof o === "object") ? o : {};
+  } catch (e) { GAL.keep = {}; }
+}
+async function galKeepSave() {
+  try {
+    const uxp = require("uxp");
+    const gdir = await galKeepFolder();
+    const f = await gdir.createFile(GAL_KEEP_FILE, { overwrite: true });
+    await f.write(JSON.stringify(GAL.keep), { format: uxp.storage.formats.utf8 });
+  } catch (e) { }
+}
+
+function galMax() {
+  const gs = globalThis.HNK && globalThis.HNK.galleryStore;
+  return (gs && gs.MAX) || 200;
+}
+function galSelCount() { let n = 0; for (const k in GAL.sel) n++; return n; }
+
+/* the app's galBulkRefresh: the chip says which mode it is in, and the two
+   bulk buttons appear only with a selection, each carrying its count */
+function galBulkRefresh() {
+  const m = $("galSelMode");
+  if (m) {
+    m.className = "chip" + (GAL.selMode ? " on" : "");
+    setIcnText(m, "i-stack", GAL.selMode ? "ink" : "cream", ff9(GAL.selMode ? GAL_L.selOn : GAL_L.selOff));
+  }
+  const n = galSelCount();
+  const z = $("galZipSel"), dl = $("galDelSel");
+  if (z) { z.style.display = (GAL.selMode && n) ? "" : "none"; setIcnText(z, "i-download", "cream", t("btn_save") + " (" + n + ")"); }
+  if (dl) { dl.style.display = (GAL.selMode && n) ? "" : "none"; setIcnText(dl, "i-trash", "cream", ff9(GAL_L.remove) + " (" + n + ")"); }
+  galClearSync();
+}
+/* the app's two-tap clear: the second tap inside four seconds is the one
+   that deletes, and a starred result survives it */
+function galClearSync() {
+  const b = $("galClearAll"); if (!b) return;
+  const armed = Date.now() - GAL.clearArm < 4000;
+  b.className = "btn" + (armed ? " btn-gold" : "");
+  setIcnText(b, "i-trash", armed ? "ink" : "cream", ff9(armed ? GAL_L.clearArmed : GAL_L.clear));
+}
+
+async function galThumb(f) {
+  if (GAL.thumbs[f.name]) return GAL.thumbs[f.name];
+  try {
+    const url = await fileToDataUrl(f);
+    GAL.thumbs[f.name] = url;
+    return url;
+  } catch (e) { return ""; }
+}
+
 function renderGal() {
-  renderRows("galList", galRows());
-  /* in select mode the rows are the checkboxes */
-  const host = $("galList");
-  if (!host || !GAL.selMode) return;
-  const rows = host.querySelectorAll(".diagrow");
-  for (let i = 1; i < rows.length; i++) {
-    (function (row, name) {
-      row.style.cursor = "pointer";
-      row.addEventListener("click", function () {
-        if (GAL.sel[name]) delete GAL.sel[name]; else GAL.sel[name] = true;
+  const grid = $("galGrid");
+  const note = $("galNote");
+  if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length + " / " + galMax();
+  const empty = $("galEmpty");
+  if (empty) empty.className = "empty-state" + (GAL.files.length ? "" : " on");
+  if (GAL.pick && !GAL.files.some(function (f) { return f.name === GAL.pick; })) GAL.pick = null;
+  const pickBox = $("galPick");
+  if (pickBox) pickBox.style.display = GAL.pick ? "" : "none";
+  galBulkRefresh();
+  if (!grid) return;
+  grid.innerHTML = "";
+  GAL.files.forEach(function (f) {
+    const im = document.createElement("img");
+    im.alt = f.name;
+    im.className = ((GAL.selMode && GAL.sel[f.name]) || GAL.pick === f.name) ? "sel" : "";
+    galThumb(f).then(function (url) { if (url) im.src = url; });
+    im.addEventListener("click", function () {
+      if (GAL.selMode) {
+        if (GAL.sel[f.name]) delete GAL.sel[f.name]; else GAL.sel[f.name] = true;
         renderGal();
-      });
-    })(rows[i], GAL.files[i - 1] && GAL.files[i - 1].name);
+        return;
+      }
+      GAL.pick = f.name;
+      galPaintPick();
+      renderGal();
+    });
+    grid.appendChild(im);
+  });
+}
+
+function galPickFile() {
+  for (let i = 0; i < GAL.files.length; i++) if (GAL.files[i].name === GAL.pick) return GAL.files[i];
+  return null;
+}
+function galPaintPick() {
+  const f = galPickFile();
+  const box = $("galPick");
+  if (!f) { if (box) box.style.display = "none"; return; }
+  if (box) box.style.display = "";
+  const im = $("galPickImg");
+  galThumb(f).then(function (url) { if (im && url) im.src = url; });
+  const info = $("galPickInfo");
+  if (info) info.textContent = f.name;
+  const keep = $("galKeep");
+  if (keep) {
+    keep.className = "btn" + (GAL.keep[f.name] ? " btn-gold" : "");
+    setIcnText(keep, GAL.keep[f.name] ? "i-star-fill" : "i-star", GAL.keep[f.name] ? "ink" : "cream",
+      ff9(GAL.keep[f.name] ? GAL_L.kept : GAL_L.keep));
   }
 }
+
 async function galRefresh() {
   const gs = globalThis.HNK && globalThis.HNK.galleryStore;
-  GAL.files = gs ? await gs.list() : [];
+  const all = gs ? await gs.list() : [];
+  GAL.files = all.filter(function (f) { return f.name !== GAL_KEEP_FILE; });
   const live = {};
   GAL.files.forEach(function (f) { if (GAL.sel[f.name]) live[f.name] = true; });
   GAL.sel = live;
+  await galKeepLoad();
   renderGal();
+  galPaintPick();
+}
+
+async function galSaveFiles(files) {
+  const uxp = require("uxp");
+  const out = await uxp.storage.localFileSystem.getFolder();
+  if (!out) return 0;
+  let n = 0;
+  for (let i = 0; i < files.length; i++) {
+    const buf = await files[i].read({ format: uxp.storage.formats.binary });
+    const dst = await out.createFile(files[i].name, { overwrite: true });
+    await dst.write(buf, { format: uxp.storage.formats.binary });
+    n++;
+  }
+  return n;
 }
 async function galSaveSelected() {
-  const names = Object.keys(GAL.sel);
-  if (!names.length) { setStatus("Select some first", "err"); return; }
-  try {
-    const uxp = require("uxp");
-    const out = await uxp.storage.localFileSystem.getFolder();
-    if (!out) return;
-    let n = 0;
-    for (let i = 0; i < GAL.files.length; i++) {
-      const f = GAL.files[i];
-      if (!GAL.sel[f.name]) continue;
-      const buf = await f.read({ format: uxp.storage.formats.binary });
-      const dst = await out.createFile(f.name, { overwrite: true });
-      await dst.write(buf, { format: uxp.storage.formats.binary });
-      n++;
-    }
-    setStatus(n + " saved", "ok");
-  } catch (e) { setStatus(friendlyErr(e), "err"); }
+  const picked = GAL.files.filter(function (f) { return GAL.sel[f.name]; });
+  if (!picked.length) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
+  try { setStatus(await galSaveFiles(picked) + " · " + t("btn_save"), "ok"); }
+  catch (e) { setStatus(friendlyErr(e), "err"); }
 }
 async function galDeleteSelected() {
   const gs = globalThis.HNK && globalThis.HNK.galleryStore;
   const names = Object.keys(GAL.sel);
-  if (!gs || !names.length) { setStatus("Select some first", "err"); return; }
-  for (let i = 0; i < names.length; i++) await gs.remove(names[i]);
+  if (!gs || !names.length) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
+  for (let i = 0; i < names.length; i++) { await gs.remove(names[i]); delete GAL.keep[names[i]]; delete GAL.thumbs[names[i]]; }
   GAL.sel = {};
+  await galKeepSave();
   await galRefresh();
-  setStatus(names.length + " deleted", "ok");
+  setStatus(names.length + " · " + ff9(GAL_L.del), "ok");
 }
+
+/* the picked result's own row — the app's five actions, in its order */
+async function galSavePick() {
+  const f = galPickFile();
+  if (!f) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
+  try { if (await galSaveFiles([f])) setStatus(t("btn_save"), "ok"); }
+  catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function galToSlot(idx) {
+  const f = galPickFile();
+  if (!f) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
+  try {
+    const url = await galThumb(f);
+    if (!url) throw new Error("unreadable");
+    state.refs[idx] = { b64: String(url).split(",")[1], mime: extToMime(f.name), label: f.name };
+    renderRefs();
+    setStatus("IMAGE " + (idx + 1), "ok");
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function galToggleKeep() {
+  const f = galPickFile();
+  if (!f) return;
+  if (GAL.keep[f.name]) delete GAL.keep[f.name]; else GAL.keep[f.name] = 1;
+  await galKeepSave();
+  galPaintPick();
+  if (GAL.keep[f.name]) setStatus(ff9(GAL_L.keptOn), "ok");
+}
+async function galDeletePick() {
+  const f = galPickFile();
+  const gs = globalThis.HNK && globalThis.HNK.galleryStore;
+  if (!f || !gs) return;
+  await gs.remove(f.name);
+  delete GAL.keep[f.name];
+  delete GAL.thumbs[f.name];
+  GAL.pick = null;
+  await galKeepSave();
+  await galRefresh();
+}
+
 function bindGallery() {
-  const sel = $("btnGalSel");
+  const sel = $("galSelMode");
   if (sel) sel.addEventListener("click", function () {
     GAL.selMode = !GAL.selMode; if (!GAL.selMode) GAL.sel = {};
-    sel.className = "btn btn-sm grow" + (GAL.selMode ? " btn-gold" : "");
     renderGal();
   });
-  const sv = $("btnGalSave"); if (sv) sv.addEventListener("click", galSaveSelected);
-  const dl = $("btnGalDel"); if (dl) dl.addEventListener("click", galDeleteSelected);
-  const cl = $("btnGalClear");
+  const sv = $("galZipSel"); if (sv) sv.addEventListener("click", galSaveSelected);
+  const dl = $("galDelSel"); if (dl) dl.addEventListener("click", galDeleteSelected);
+  const cl = $("galClearAll");
   if (cl) cl.addEventListener("click", async function () {
+    if (Date.now() - GAL.clearArm >= 4000) {
+      GAL.clearArm = Date.now(); galClearSync();
+      setTimeout(galClearSync, 4200);
+      return;
+    }
+    GAL.clearArm = 0;
     const gs = globalThis.HNK && globalThis.HNK.galleryStore;
-    if (gs) await gs.clear();
-    GAL.sel = {};
+    let dropped = 0, kept = 0;
+    if (gs) {
+      for (let i = 0; i < GAL.files.length; i++) {
+        const n = GAL.files[i].name;
+        if (GAL.keep[n]) { kept++; continue; }
+        await gs.remove(n); dropped++;
+      }
+    }
+    GAL.sel = {}; GAL.pick = null; GAL.thumbs = {};
     await galRefresh();
+    setStatus(dropped + " · " + ff9(GAL_L.del) + (kept ? " — ★ " + kept : ""), "ok");
   });
-  const intro = $("galIntro");
-  if (intro) intro.textContent = "Everything this panel has made \u2014 keep what you want, throw the rest away.";
+  const go = $("galEmptyGo");
+  if (go) go.addEventListener("click", function () { switchPage("wf"); saveSettings(); });
+  const dlp = $("galDl"); if (dlp) dlp.addEventListener("click", galSavePick);
+  const i1 = $("galToImg1"); if (i1) i1.addEventListener("click", function () { galToSlot(0); });
+  const i2 = $("galToImg2"); if (i2) i2.addEventListener("click", function () { galToSlot(1); });
+  const kp = $("galKeep"); if (kp) kp.addEventListener("click", galToggleKeep);
+  const dp = $("galDel"); if (dp) dp.addEventListener("click", galDeletePick);
+  galPaintLabels();
+  REFRESHERS.push(function () { try { galPaintLabels(); } catch (e) { hwarn("gallery:", e); } });
   galRefresh();
+}
+/* the app's label pass for this page, re-run on every language switch */
+function galPaintLabels() {
+  const emptyTxt = $("galEmptyTxt"); if (emptyTxt) emptyTxt.textContent = ff9(GAL_L.empty);
+  setIcnText($("galEmptyGo"), "i-brain", "ink", ff9(GAL_L.emptyGo));
+  setIcnText($("galDl"), "i-download", "ink", t("btn_save"));
+  setIcnText($("galToImg1"), "i-restore", "cream", "IMAGE 1");
+  setIcnText($("galToImg2"), "i-restore", "cream", "IMAGE 2");
+  setIcnText($("galDel"), "i-trash", "cream", ff9(GAL_L.del));
+  const note = $("galNote");
+  if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length + " / " + galMax();
+  galBulkRefresh();
+  galPaintPick();
 }
 
 function bindVideo() {
@@ -9717,7 +10040,16 @@ function bindVideo() {
     try { vidPaintLabels(); vidPaintOptions(); renderVidWf(); } catch (e) { hwarn("video:", e); }
   });
 
-  fillSel($("vuRes"), (V && V.upscaleResolutions) || ["1080p"], "1080p");
+  /* the app labels these 720p / 1080p / 2K / 4K; the values stay the
+     endpoint's own lowercase tiers */
+  const vuSel = $("vuRes");
+  if (vuSel) {
+    const tiers = (V && V.upscaleResolutions) || ["1080p"];
+    while (vuSel.firstChild) vuSel.removeChild(vuSel.firstChild);
+    tiers.forEach(function (v) { vuSel.appendChild(mkOption(String(v), String(v).replace(/k$/, "K"))); });
+    try { vuSel.value = "1080p"; } catch (e) { }
+    vuSel.addEventListener("change", vuPaintHsl);
+  }
   const vp = $("btnVuPickP");
   if (vp) vp.addEventListener("click", async function () {
     try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VU.video = f; renderVu(); }
@@ -9729,10 +10061,6 @@ function bindVideo() {
     catch (e) { setStatus(friendlyErr(e), "err"); }
   });
   const vr = $("btnVuRun"); if (vr) vr.addEventListener("click", vuRun);
-  const vi = $("vuIntro");
-  if (vi) vi.textContent = "Make an existing video sharper \u2014 saved as a new file.";
-  const vfn = $("vuFileNote");
-  if (vfn) vfn.textContent = "MP4 only \u2014 convert other formats (an iPhone .mov, say) first.";
 
   /* v6.50.0 — VIDEO TOOLS */
   const vtSel = $("vtModel");
@@ -9742,8 +10070,6 @@ function bindVideo() {
     for (let i = 0; i < tl.length; i++) vtSel.appendChild(mkOption(tl[i].id, tl[i].label || tl[i].id));
     vtSel.addEventListener("change", vtPaintOptions);
   }
-  const vti = $("vtIntro");
-  if (vti) vti.textContent = "Edit, extend or clean an existing video \u2014 pick a tool, then a clip.";
   const vtp = $("btnVtPick");
   if (vtp) vtp.addEventListener("click", async function () {
     try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VT.video = f; renderVt(); }
@@ -9755,6 +10081,10 @@ function bindVideo() {
     catch (e) { setStatus(friendlyErr(e), "err"); }
   });
   const vtr = $("btnVtRun"); if (vtr) vtr.addEventListener("click", vtRun);
+
+  /* the app's nine-language copy for both halves of this page */
+  vuPaintLabels();
+  REFRESHERS.push(function () { try { vuPaintLabels(); } catch (e) { hwarn("vidup:", e); } });
 
   vidPaintOptions(); renderVu(); vtPaintOptions();
 }
