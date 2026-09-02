@@ -214,6 +214,13 @@ function rewrite(text) {
      picker (the subject slot, or the reference slot for a style photo) */
   s = s.replace(/state\.pickSlot="stx"; \$\("filePick"\)\.click\(\);/g, 'H.pickRef();');
   s = s.replace(/state\.pickSlot=0; \$\("filePick"\)\.click\(\);/g, "H.pickPhoto();");
+  /* dataset is one of the DOM niceties UXP does not carry; the same four
+     reads and writes go through attributes instead (assignments first, or
+     the read rule would eat their left-hand side) */
+  s = s.replace(/\b([A-Za-z_$][\w$]*)\.dataset\.([\w$]+)\s*=(?!=)\s*([^;]+);/g,
+    '$1.setAttribute("data-$2", $3);');
+  s = s.replace(/\b([A-Za-z_$][\w$]*)\.dataset\.([\w$]+)/g,
+    '($1.getAttribute("data-$2")||"")');
   /* the app parks late-bound studio functions on window so sibling
      builders can reach them; inside the module they are plain closure vars
      the prelude declares (see WINDOW_FNS) */

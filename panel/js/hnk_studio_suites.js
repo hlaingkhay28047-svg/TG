@@ -427,8 +427,8 @@ function stRenderPend(){
     var lbl=noPhoto ? icn("i-camera")+" "+escH(L9({my:"ပုံထည့်ပါ",en:"Add a photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูป",zh:"添加照片",vi:"Thêm ảnh",id:"Tambah foto",ms:"Tambah foto"}))
       : n ? icn("i-bolt")+" GENERATE ("+n+" AI)"
       : ((live>0||stIsDirty()) ? icn("i-check")+" APPLY ("+escH(L9({my:"စက်တွင်း render",en:"local render"}))+")" : icn("i-bolt")+" GENERATE");
-    if(btn.dataset.lbl!==lblKey){
-      btn.dataset.lbl=lblKey; btn.innerHTML=lbl;
+    if((btn.getAttribute("data-lbl")||"")!==lblKey){
+      btn.setAttribute("data-lbl", lblKey); btn.innerHTML=lbl;
       if(n){ btn.classList.remove("bump"); void btn.offsetWidth; btn.classList.add("bump"); }
     }
   }
@@ -4048,12 +4048,12 @@ renderV2Hero();
   var suiteChips=[];
   function tab(icon,txt,pageId){
     var c=el("button","chip"); c.innerHTML=icn(icon)+" "+escH(txt);
-    c.dataset.pg=pageId;
+    c.setAttribute("data-pg", pageId);
     c.onclick=function(){ if(H.curPage()!==pageId) switchPage(pageId); stSyncSuiteChips(); };
     tabs.appendChild(c); suiteChips.push(c);
   }
   stSyncSuiteChips=function(){
-    suiteChips.forEach(function(c){ c.className="chip"+(c.dataset.pg===H.curPage()?" on":""); });
+    suiteChips.forEach(function(c){ c.className="chip"+((c.getAttribute("data-pg")||"")===H.curPage()?" on":""); });
   };
   tab("i-makeup","RETOUCH A · "+ST_MEITU_COUNT,"pgMeitu");
   tab("i-target","RETOUCH B · "+ST_EVOTO_COUNT,"pgEvoto");

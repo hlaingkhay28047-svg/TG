@@ -83,6 +83,38 @@ function shim() {
   try {
     var E = (typeof Element !== "undefined") ? Element.prototype : null;
     if (!E) return;
+    /* the app's code jumps to a group by scrolling it into view; where the
+       host has no such method the group still opens, it just does not scroll */
+    if (!E.scrollIntoView) E.scrollIntoView = function () { };
+    /* classList: the panel's own helpers avoid it for a reason (UXP's DOM is
+       a subset), and the app's studio uses it thirty times. Backed by
+       className so add/remove/toggle/contains behave the same. */
+    if (!("classList" in E) && Object.defineProperty) {
+      Object.defineProperty(E, "classList", {
+        get: function () {
+          var node = this;
+          function list() { return String(node.className || "").split(/\s+/).filter(Boolean); }
+          function write(a) { node.className = a.join(" "); }
+          return {
+            contains: function (c) { return list().indexOf(c) >= 0; },
+            add: function () {
+              var a = list();
+              for (var i = 0; i < arguments.length; i++) if (a.indexOf(arguments[i]) < 0) a.push(arguments[i]);
+              write(a);
+            },
+            remove: function () {
+              var a = list(), drop = Array.prototype.slice.call(arguments);
+              write(a.filter(function (c) { return drop.indexOf(c) < 0; }));
+            },
+            toggle: function (c, force) {
+              var on = force === undefined ? list().indexOf(c) < 0 : !!force;
+              if (on) this.add(c); else this.remove(c);
+              return on;
+            }
+          };
+        }
+      });
+    }
     if (!E.insertAdjacentElement) {
       E.insertAdjacentElement = function (pos, node) {
         if (pos === "afterend") { if (this.parentNode) this.parentNode.insertBefore(node, this.nextSibling); }
