@@ -94,6 +94,10 @@ function create(deps) {
     // Density (compact | normal | comfortable) as a root class (spec: density options).
     var density = (deps.settings && deps.settings.get().density) || "normal";
     rootEl.className = "hnk-root hnk-density-" + density;
+    /* v6.51.0 — the app's Home (#pgDash) lays its sections out with their own
+       block margins and no wrapper padding; the root's 10px frame and screen
+       gap would add to them, so Home switches them off */
+    if (current === "home") rootEl.className += " hnk-root-home";
     var body = dom.el(doc, "div", { class: "hnk-screen", id: "hnkScreen_" + current });
     rootEl.appendChild(body);
 

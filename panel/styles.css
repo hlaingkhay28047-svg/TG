@@ -10,20 +10,20 @@
    ============================================================ */
 
 :root {
-  /* v6.18 — recoloured to sit exactly on the web app's palette (docs/app's
-     --ink/--panel/--panel-2/--gold/--gold-hi/--cream tokens): --bg now
-     matches --ink byte-for-byte, and every other surface token here carries
-     the identical (-9,-7,-5) RGB shift so the whole family moves toward the
-     web app's cooler blue-black undertone together — no token's contrast
-     relationship to its neighbours changes, only the hue family does. */
+  /* v6.51 — surface tokens are the web app's own values byte-for-byte
+     (docs/app :root --ink/--panel/--panel-2/--line/--gold/--gold-hi/--cream):
+     every page is compared element-by-element against the web app, so the
+     card, field and hairline colours must be identical, not merely close.
+     --line is the app's gold hairline (rgba gold .28); --line-soft the cream
+     .38 one. Theme blocks below override the family as before. */
   --bg: #0b0d14;
   --botbar: #0e1018;
-  --panel: #141620;
-  --panel-2: #1a1c2b;
+  --panel: #131826;
+  --panel-2: #182032;
   --sunk: #070912;
   --field: #1d1f2a;
   --field-2: #0e1019;
-  --line: #222431;
+  --line: rgba(217, 164, 65, 0.28);
   --line-2: #313341;
   --line-3: #343645;
   --btn: #222431;
@@ -54,6 +54,8 @@
   --chip-brd: #443b66;
   --chip-bg-h: #37305a;
   --shadow: rgba(0, 0, 0, 0.35);
+  /* App parity: the web app's soft hairline (docs/app --line-soft). */
+  --line-soft: rgba(243, 239, 230, 0.38);
 }
 
 [data-theme="light"] {
@@ -95,6 +97,7 @@
   --chip-brd: #d4c9f0;
   --chip-bg-h: #e0d8f6;
   --shadow: rgba(60, 60, 90, 0.16);
+  --line-soft: rgba(20, 22, 32, 0.28);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -103,7 +106,7 @@ html, body { width: 100%; height: 100%; }
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: "Segoe UI", "Noto Sans Myanmar", "Myanmar Text", "Noto Sans Thai", "Noto Sans SC", sans-serif;
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
   font-size: 12px;
   overflow: hidden;
   transition: background-color 0.18s ease, color 0.18s ease;
@@ -119,180 +122,216 @@ body {
   background-color: var(--bg);
   transition: background-color 0.18s ease;
 }
+/* ---------- Header: the web app's .nav, measured (v6.51.0) ----------
+   .nav 420×65 = .nav-in (padding 10px 16px, 44px gear row) + 1px line-soft
+   bottom border; children 8px apart (the app's gap:8px at ≤479px — margins
+   here, UXP has no gap). The app's bar is rgba(11,13,20,.9) over the ink
+   ground, which is the ground colour itself once nothing scrolls under it. */
 .hdr {
   flex: none;
   display: flex; flex-direction: row; align-items: center;
-  padding: 9px 10px 6px 10px;
+  padding: 10px 16px;
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--line-soft);
 }
+.nav-logo-wrap { flex: none; display: flex; flex-direction: row; margin-right: 8px; }
+.nav-logo { display: block; width: 38px; height: 38px; border-radius: 9px; }
+/* .nav-name: inline-flex column, gap 2px, padding 1px 0 5px, line-height 1;
+   the ::after hairline is a real span here (UXP has no ::before/::after) */
+.nav-name {
+  position: relative; flex: 0 1 auto; min-width: 0;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: 1px 0 5px; margin-right: 8px; line-height: 1; white-space: nowrap;
+}
+/* the app's wordmark is a gold gradient clipped to the text plus a 5s shine;
+   UXP paints text in one colour, so this is the app's --gold-hi, same metrics */
+.hnk-wordmark {
+  display: block; color: var(--accent-h);
+  font-family: "Arial Black", "Segoe UI Black", Roboto, "Noto Sans", system-ui, sans-serif;
+  font-size: 20px; font-weight: 900; letter-spacing: 0.11em; line-height: 0.9;
+}
+.hnk-studio-label {
+  display: block; margin-top: 2px; color: #f2e2ae;
+  font-size: 8.5px; font-weight: 800; letter-spacing: 0.18em; line-height: 1;
+}
+.nav-name-ul {
+  position: absolute; left: 0; bottom: 0; width: 38px; height: 1px; border-radius: 1px;
+  background: linear-gradient(90deg, transparent, #fff0bd 24%, var(--accent) 68%, transparent);
+  box-shadow: 0 0 6px rgba(233, 185, 73, 0.45); opacity: 0.9;
+}
+/* the version line the release contract reads (id="brandVer") — Setup shows
+   the version; the app's header does not, so this line does not paint here */
+.topbar-sub { display: none; }
+/* .nav-gear 44×44, borderless, margin-left:auto; 22px gear icon; the account
+   dot (the app's ::after) is a real 9×9 span at top 6 / right 6 */
+.nav-gear {
+  position: relative; flex: none; width: 44px; height: 44px; margin-left: auto; margin-right: 8px;
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  background-color: transparent; border: 0; border-radius: 9px; color: var(--text);
+}
+/* on Setup the app paints the gear --gold-hi with no glow (.nav-gear.on is a
+   colour change only); switchPage swaps the file to the gold-hi stroke */
+.nav-gear .nav-gear-ic { display: block; width: 22px; height: 22px; }
+.nav-dot { display: none; position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; box-sizing: border-box; }
+.nav-gear.acc-in .nav-dot { display: block; border: 2px solid var(--accent); background-color: transparent; }
+.nav-gear.acc-pro .nav-dot { display: block; border: 2px solid var(--accent); background-color: var(--accent); }
+.nav-gear.acc-soon .nav-dot { display: block; border: 2px solid var(--err); background-color: var(--accent); }
+/* the language picker: the app's .hsl-for-selLang (max-width 132, 40px button,
+   padding 5px 8px 5px 6px, letter glyph · native name · gold caret) */
+.hdr .hsl { position: relative; flex: 0 1 auto; display: flex; flex-direction: row; max-width: 132px; min-width: 0; }
+.hdr .hsl-btn {
+  display: flex; flex-direction: row; align-items: center; min-height: 40px; width: 100%; min-width: 0;
+  box-sizing: border-box; padding: 5px 8px 5px 6px;
+  background: linear-gradient(180deg, #1c2336 0%, var(--panel-2) 55%, #141a2a 100%);
+  border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text);
+  font-size: 12px; font-weight: 600; line-height: 1.2; text-align: left;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.hdr .hsl-glyph {
+  flex: 0 0 auto; width: 24px; height: 24px; margin-right: 7px; border-radius: 50%; box-sizing: border-box;
+  background: radial-gradient(120% 120% at 25% 20%, #2b2410 0%, #1a1608 75%);
+  border: 1px solid rgba(233, 185, 73, 0.3); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 11px; line-height: 1; color: var(--accent-h);
+}
+.hdr .hsl-lab { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hdr .hsl-val { font-size: 12px; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hdr .hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; margin-left: 7px; }
+.hdr .hsl .inp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
 .pages {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 2px 10px 10px 10px;
+  /* v6.51.0 — app parity: the web app's .wrap is a 16px gutter, so at the
+     panel's 420px width a card is 388px outside / 354px inside. Same gutter
+     here so every page measures like its web-app twin. */
+  padding: 0 16px 8.4px 16px;
+  /* 8.4px = the app's body padding-bottom (76px) less the tab bar that sits
+     over it (67.6px): the air under the footer at full scroll */
 }
 .page { display: none; }
 .page.on { display: block; }
+/* ---------- Footer: the web app's .foot, measured (v6.51.0) ----------
+   line-soft rule 30px under the last card, 20px, 12px/1.7 muted text, 34px.
+   The 30 is the card's own 16px margin plus 14px padding here (no margin, so
+   nothing to collapse); the -16px sides undo the .pages gutter so the rule
+   spans the full width as the app's does. */
+.foot { margin: 0 -16px; padding: 14px 0 0; }
+.foot-in { border-top: 1px solid var(--line-soft); padding: 20px 16px 34px; }
+.foot-p { margin: 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
+/* ---------- Jump-to-top: the web app's .fab-top (v6.51.0) ----------
+   44px round, line border over rgba(11,13,20,.92), gold-hi 18px/800 arrow,
+   14px from the right and 76px up (clear of the tab bar); shown by main.js
+   once .pages is scrolled past 1200px, as the app's is past window.scrollY */
+.fab-top { display: none; position: absolute; right: 14px; bottom: 76px; z-index: 49; width: 44px; height: 44px;
+  border-radius: 22px; border: 1px solid var(--line); background-color: rgba(11, 13, 20, 0.92); color: var(--accent-h);
+  font-size: 18px; font-weight: 800; flex-direction: row; align-items: center; justify-content: center; box-sizing: border-box;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+.fab-top.on { display: flex; }
+/* ---------- Bottom bar: the web app's #tabbar, measured (v6.51.0) ----------
+   420×67.6: 1px --line top border over rgba(11,13,20,.97) (the ground colour
+   once nothing scrolls under it) and five 66.6px tabs that share the width by
+   their labels — flex:1 0 auto, min-width 58 — so Home/Workflows/Edit/Media
+   Lab/Library measure 73.3/102.2/62.5/100.1/81.9 as they do in the app. */
 .botbar {
   flex: none;
-  background-color: var(--botbar);
+  background-color: var(--bg);
   border-top: 1px solid var(--line);
-  padding: 5px 5px 8px 5px;
+  padding: 0;
 }
-.botbar .status { margin: 0 0 6px 0; min-height: 14px; }
-/* v6.28.0 — the web app's own bottom nav: stroke icon above a small label,
-   active tab in gold on a soft gold tint (the web app draws that tint with a
-   ::before pseudo-element, which UXP does not render — here the button
-   itself carries it). The old text-pill tabs truncated to "H… Cr… Re…" at
-   real Photoshop panel widths. */
 .tabbar { display: flex; flex-direction: row; }
 .tabb {
-  font-size: 9.5px; font-weight: 800;
-  flex: 1; min-width: 0;
+  position: relative;
+  flex: 1 0 auto; min-width: 58px;
   display: flex; flex-direction: column; align-items: center;
-  background-color: transparent;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  background-color: transparent; border: 0; border-radius: 0;
   color: var(--muted);
-  letter-spacing: 0.1px;
-  padding: 6px 1px 5px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em;
+  padding: 9px 4px 10px;
   white-space: nowrap;
+  transition: color 0.15s ease;
+}
+/* the app's .ic box is 20×21.6 (a 19px/1 line) with a 3px gap to the label:
+   the 20px icon sits 0.8px into it, the label starts 33.6px down */
+.tabic { position: relative; display: block; width: 20px; height: 20px; margin: 0 0 4.6px; }
+.tabb-l { position: relative; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+/* the app's .tabb::before pill — 46×28 at top 5, centred, rgba(217,164,65,.16),
+   shown only behind the active icon (a real span: UXP has no ::before) */
+.tabpill { display: none; position: absolute; top: 5px; left: 50%; width: 46px; height: 28px; margin-left: -23px;
+  border-radius: 14px; background-color: rgba(217, 164, 65, 0.16); }
+.tabb.on { color: var(--accent-h); }
+.tabb.on .tabpill { display: block; }
+.tabb.on .tabic { transform: translateY(-1px); filter: drop-shadow(0 0 6px rgba(233, 185, 73, 0.4)); }
+
+/* ---------- Status: the web app's .toast (v6.51.0) ----------
+   The app has one status surface — a fixed card 16px in from each side and
+   86px up from the bottom (above the tab bar), panel-2 on a 1px gold line,
+   11px radius, 13px text, shown while a message is live. Absolute inside the
+   .app frame here (the frame already fills the panel; UXP has no fixed). */
+.toast {
+  display: none; position: absolute; left: 16px; right: 16px; bottom: 86px; z-index: 60;
+  background-color: var(--panel-2); border: 1px solid var(--accent); border-radius: 11px;
+  padding: 11px 14px; font-size: 13px; line-height: 1.7; color: var(--text);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+.toast.on { display: block; }
+.toast.ok { color: var(--ok); }
+.toast.err { color: var(--err); }
+.toast .status { display: block; min-height: 0; font-size: 13px; line-height: 1.7; text-align: left; color: inherit; }
+/* the app's toast wears the message's tint itself; the inner #status keeps
+   its ok/err/warn class for the rest of the file and paints nothing of its own */
+.toast .status.ok, .toast .status.err, .toast .status.warn { color: inherit; }
+
+/* ---------- Page heroes (v6.51.0) ----------
+   The web app's own .page-hero, rule for rule: a 126px art plate with the
+   page's kick line and localized headline sitting on its bottom edge. The
+   plate is the app's OWN banner JPG for that page, baked at the app's
+   object-position with the app's :after readability scrim already in the
+   pixels (UXP has no object-fit and drops gradient overlays). */
+.page-hero {
+  position: relative;
+  min-height: 126px;
+  margin: 12px 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
   overflow: hidden;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.tabb + .tabb { margin-left: 2px; }
-.tabic {
-  width: 20px; height: 20px; display: block; margin-bottom: 3px;
-  fill: none; stroke: currentColor; stroke-width: 1.8;
-  stroke-linecap: round; stroke-linejoin: round;
-}
-.tabb-l { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.tabb.on { background-color: rgba(217, 164, 65, 0.16); color: var(--accent); }
-
-/* ---------- Header bits ---------- */
-.logo { width: 32px; height: 32px; border-radius: 8px; margin-right: 8px; }
-
-/* ---------- Compact web-app top bar (v6.28.0) ----------
-   The web app's own header language: small logo, gold HNK wordmark over a
-   tiny letterspaced label, controls on the right. Solid colours only —
-   the old art header proved that a photo + gradient header truncates and
-   crowds a real Photoshop panel. */
-.topbar {
-  padding: 8px 10px;
-  background-color: #0b0d14;
-  border-bottom: 1px solid var(--line);
-}
-.topbar-logo { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(233, 196, 106, 0.55); }
-.topbar-brand {
-  font-size: 15px; font-weight: 900; letter-spacing: 1.2px; line-height: 1.1;
-  color: #e9c46a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.topbar-label {
-  font-size: 8.5px; font-weight: 800; letter-spacing: 1.4px;
-  color: #f2e2ae; vertical-align: 2px;
-}
-.topbar-sub { font-size: 9px; color: #a8a394; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar-sub #brandProv { color: #e9c46a; font-weight: 700; }
-.topbar .lang-sel, .topbar .btn-icon {
-  background-color: rgba(16, 18, 27, 0.82); color: #efe7d2;
-  border-color: rgba(233, 196, 106, 0.5);
-}
-/* v6.47.0 — the wordmark got its room back. A UXP select sizes itself to its
-   WIDEST option and the controls column was flex:none, so on the owner's
-   panel the language box ate the header and "HNK AI PANEL · v6.46.0 ·
-   RunningHub" was cropped to "H .. v6.4...". The collapsed box only has to
-   say which language is on; the popup shows the full list either way. */
-/* v6.47.1 — 78px, and the wordmark's letterspacing eased: at the widths the
-   owner actually docks this panel, 96px still cropped "HNK AI PANEL" to
-   "HNK AI P…" and the version line to "RunningHub…". */
-/* v6.49.1 — the app's own width. The theme wheel left this bar, and the
-   112px the web app gives #selLang fits here now: the owner's Photoshop
-   showed "Mya…" where the app shows "Myanmar". */
-.topbar .lang-sel { width: 112px; min-width: 0; max-width: 112px; }
-.topbar .hdr-ctl { flex: 0 1 auto; min-width: 0; }
-.topbar-plan { color: #e9c46a; font-weight: 700; }
-
-/* ---------- Per-page hero banners (v6.0) ----------
-   Each tab opens on its own signature visual from the studio's 355-asset
-   library with a meaning line. UXP-SAFE: background-size cover + gradient
-   shade; fixed premium colours so banners read identically in both themes. */
-.pgbanner {
-  margin: 2px 0 10px 0;
-  border: 1px solid rgba(217, 164, 65, 0.55);
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: #0b0d14;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-.pgb-setup   { background-image: url("icons/banners/setup.jpg"); background-position: center 30%; }
-.pgb-studio  { background-image: url("icons/banners/studio.jpg"); background-position: center 12%; }
-.pgb-create  { background-image: url("icons/banners/create.jpg"); background-position: center 18%; }
-.pgb-aitools { background-image: url("icons/banners/aitools.jpg"); background-position: center 14%; }
-.pgb-presets { background-image: url("icons/banners/presets.jpg"); background-position: center 18%; }
-.pgb-retouch { background-image: url("icons/banners/retouch.jpg"); background-position: center 38%; }
-/* v6.50.0 — the four pages the app gives a hero and the panel did not:
-   Video, VidUp, Path and Gallery opened cold on a card while every other
-   page opened on art. Baked from the app's OWN banner for that page
-   (banner-naga, banner-superhero, banner-path-batch, banner-fairy-forest)
-   at the app's own crop, with the same baked scrim the other eight carry —
-   UXP drops .pgbanner-shade's gradient, so legibility has to be pixels. */
-.pgb-video   { background-image: url("icons/banners/video.jpg"); background-position: center 45%; }
-.pgb-vidup   { background-image: url("icons/banners/vidup.jpg"); background-position: center 10%; }
-.pgb-path    { background-image: url("icons/banners/path.jpg"); background-position: center 50%; }
-.pgb-gallery { background-image: url("icons/banners/gallery.jpg"); background-position: center 50%; }
-/* v6.28.0 — the legibility scrim is BAKED INTO the banner JPEGs now: the
-   owner's real-Photoshop screenshots showed white headlines sitting on raw
-   bright art because UXP dropped this div's gradient (`background:`
-   shorthand + rgba stops). Pixels render on every engine. The longhand
-   gradient below stays as a browser-side bonus only. */
-.pgbanner-shade {
   display: flex; flex-direction: column; justify-content: flex-end;
-  min-height: 118px;
-  padding: 12px 12px 9px 12px;
-  background-image: linear-gradient(180deg, rgba(8, 9, 15, 0) 0%, rgba(8, 9, 15, 0.1) 60%, rgba(8, 9, 15, 0.35) 100%);
+  padding: 12px 16px;
 }
-.pgbanner-kick {
-  font-size: 7.5px; font-weight: 800; letter-spacing: 2px;
-  color: #e9c46a; text-transform: uppercase;
+/* the app's .card carries margin:16px 0 and Chromium collapses it against the
+   hero's 12px; UXP is not guaranteed to collapse margins, so the 16px rhythm
+   is written once, on the hero's bottom edge, and cards keep bottom-only. */
+.page-hero + .card { margin-top: 0; }
+.page-hero { margin-bottom: 16px; }
+.page-hero img {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
 }
-/* v6.27.0 — the title carries the web app's localized headline now (big
-   Burmese under an English kick, like every web-app page hero). Tall
-   Myanmar glyph metrics: generous line-height, no display letter-spacing. */
-.pgbanner-title {
-  margin-top: 3px;
-  font-size: 15px; font-weight: 800; letter-spacing: 0.2px; line-height: 1.55;
-  color: #f7f4ec;
+.ph-kick {
+  position: relative;
+  font-size: 10px; font-weight: 800; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--accent-h);
 }
-.pgbanner-sub {
-  margin-top: 2px;
-  font-size: 9px; line-height: 1.45; color: #ddd6c6;
+.ph-head {
+  position: relative;
+  margin: 2px 0 0;
+  font-size: 15px; font-weight: 800; line-height: 1.5;
+  color: var(--text);
 }
-.hdr-t { flex: 1; min-width: 0; }
-.title { font-size: 12px; font-weight: 700; color: var(--on-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph-head em { font-style: normal; color: var(--accent-h); }
+
 .sub { font-size: 9px; color: var(--muted-2); }
-.hdr-ctl { display: flex; flex-direction: row; align-items: center; flex: none; }
-.lang-sel {
-  background-color: var(--field); border: 1px solid var(--line-2);
-  border-radius: 7px; color: var(--text);
-  font-size: 11px; height: 26px; padding: 0 6px; min-width: 62px;
-}
-.lang-sel:focus { border-color: var(--accent); }
-.btn-icon {
-  width: 30px; height: 26px; padding: 0; margin-left: 6px;
-  font-size: 14px; line-height: 1;
-  background-color: var(--btn); border: 1px solid var(--line-3);
-  border-radius: 7px; color: var(--text);
-}
 
 /* ---------- Cards + collapsible heads ---------- */
+/* v6.51.0 — app parity: the web app's .card is a 14px-radius, 16px-padded
+   panel with a soft hairline and 16px rhythm between cards. */
 .card {
   background-color: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 9px 10px;
-  margin-bottom: 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 .chead { display: flex; flex-direction: row; align-items: center; }
@@ -327,6 +366,10 @@ body {
   padding: 10px 12px;
   font-size: 13px;
   min-width: 0;
+  /* the app's `input,textarea,select{font-family:inherit}` — a field is told
+     the body stack explicitly (UXP widgets do not inherit it), so a Burmese
+     placeholder measures the same line the app's does */
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
 }
 .inp:focus { border-color: var(--accent); }
 select.inp { padding: 9px 10px; }
@@ -374,7 +417,7 @@ select.inp { padding: 9px 10px; }
    told the font stack explicitly rather than left to inherit one that has no
    Myanmar glyphs. Same list the body and the prompt box already carry. */
 select, option {
-  font-family: "Segoe UI", "Noto Sans Myanmar", "Myanmar Text", "Noto Sans Thai", "Noto Sans SC", sans-serif;
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
 }
 
 /* ---------- Prompt (native textarea — UXP typeable) ----------
@@ -391,7 +434,7 @@ select, option {
   padding: 8px 9px;
   font-size: 12px;
   line-height: 1.55;
-  font-family: "Segoe UI", "Noto Sans Myanmar", "Myanmar Text", "Noto Sans Thai", "Noto Sans SC", sans-serif;
+  font-family: "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Pyidaungsu", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif;
   overflow-y: auto;
   height: 140px;
   resize: none;
@@ -778,22 +821,6 @@ input[type="range"] { min-width: 0; }
 .hnk-url-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; }
 .hnk-url-inp { flex: 1; min-width: 0; font-size: 12px; padding: 7px 9px; }
 
-/* v6.27.0 — webapp-parity time-greeting hero on the AI Tools Home screen
-   (same clock split + banner art as the web app's dashboard greeting). */
-.hnk-greet {
-  position: relative; min-height: 96px; margin: 2px 0 10px; padding: 14px 14px 12px;
-  display: flex; flex-direction: column; justify-content: flex-end;
-  border: 1px solid rgba(217, 164, 65, 0.55); border-radius: 12px;
-  background-color: #0b0d14; background-size: cover; background-position: center 32%; background-repeat: no-repeat;
-  overflow: hidden;
-}
-/* v6.28.0 — no pseudo-element overlay: UXP never rendered it, and the
-   greeting arts now carry their scrim baked in (left + bottom, the web
-   app's own measured shade), so browser and Photoshop paint identically. */
-.hnk-greet > * { position: relative; z-index: 2; }
-.hnk-greet-hi { font-size: 15px; font-weight: 700; color: #f4ead2; letter-spacing: .2px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 2px 12px rgba(0,0,0,.6); }
-.hnk-greet-sub { margin-top: 2px; font-size: 11px; color: #dcd6c9; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
-
 /* ---- HNK AI Tools: History screen (§22) ---- */
 .hnk-hist-list { display:flex; flex-direction:column; gap:8px; }
 .hnk-hist { display:flex; flex-direction:column; gap:4px; padding:10px; border:1px solid var(--line);
@@ -857,14 +884,29 @@ input[type="range"] { min-width: 0; }
 /* v6.40.0 — the web app's second-level pills, ported verbatim in behaviour:
    a horizontal pill row that only appears when the active group has more than
    one page, gold when selected, 44px targets. UXP-safe: explicit direction
-   (see the note below — a container that stacks or flows must say so). */
-.subtabbar { display: none; flex-direction: row; gap: 6px; margin: 8px 10px 0;
+   (see the note below — a container that stacks or flows must say so).
+   v6.51.0 — lives inside #pages' 16px gutter now (the app's nav#subtabbar
+   sits inside .wrap), so no side margin; the 12px below it is the hero's
+   own top margin — written once because UXP may not collapse margins. */
+.subtabbar { display: none; flex-direction: row; margin: 12px 0 0;
   overflow-x: auto; }
 .subtabbar.on { display: flex; }
-.subtab { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 10px;
-  background: var(--panel); color: var(--muted); padding: 7px 14px; min-height: 34px;
+/* the app's .subtabbar:before/:after — a 28px ink fade over whichever edge
+   still has pills scrolled past it (fade-l / fade-r). Real spans on a
+   relative wrapper here (UXP has no ::before/::after, and a child of the
+   scrolling row would scroll with it). */
+.subwrap { position: relative; }
+.subfade { display: none; position: absolute; top: 12px; bottom: 0; width: 28px; z-index: 2; }
+.subfade-l { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
+.subfade-r { right: 0; background: linear-gradient(to left, var(--bg), transparent); }
+.subfade.on { display: block; }
+/* v6.51.0 — the app's .subtab verbatim: soft hairline, panel-2 fill, 44px
+   pill (a 20px radius is the pill a 44px box can satisfy; UXP has no 999px). */
+.subtab { flex: 0 0 auto; border: 1px solid var(--line-soft); border-radius: 20px;
+  background: var(--panel-2); color: var(--muted); padding: 7px 14px; min-height: 44px;
   box-sizing: border-box; display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; cursor: pointer; }
+  font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.subtab + .subtab { margin-left: 6px; }
 .subtab.on { background: var(--accent); border-color: var(--accent); color: #1a1408; }
 .subtab:hover { border-color: var(--accent); }
 
@@ -1108,74 +1150,257 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* The app's section header: .card > h2 in gold small-caps. The panel's own
    .chead is a collapsible affordance; a plain section title is not one. */
 .card h2, .sec-h2 { display: block; font-size: 12px; font-weight: 800; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+  line-height: 1.7; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
 
-/* ---- Home: the greeting hero keeps its art, gains the app's clock line ---- */
+/* ======================================================================
+   v6.51.0 — Home = the web app's pgDash, box for box. Every value below is
+   the app's own dashboard CSS (docs/app/index.html .dash-*) measured at the
+   panel's 388px content width and translated to UXP: flexbox stands in for
+   the two grids, a percentage padding-top for aspect-ratio 4/3, a real
+   absolutely positioned child for the ::before scrim, and margins only on
+   the top edge because flex columns never collapse them. Scoped to
+   #pageAiTools so no other page inherits a dashboard rule by accident.
+   ====================================================================== */
+/* the app's #pgDash has no wrapper padding and no gap between sections —
+   each section brings its own block margin — so the AI Tools root drops its
+   10px frame and the screen its density gap while Home is mounted */
+#hnkAiToolsRoot.hnk-root-home { padding: 0; gap: 0; }
+#hnkAiToolsRoot.hnk-root-home .hnk-screen { gap: 0; }
+/* the app's Workflows (#pgWf) does the same: hero strip, then the card, with
+   their own block margins */
+#hnkAiToolsRoot.hnk-root-wf { padding: 0; gap: 0; }
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen { gap: 0; }
+/* the app's .card{margin:16px 0}: adjacent margins collapse to one 16px there,
+   so here every section carries the 16px on its top edge only */
+#pageAiTools .card { margin: 16px 0 0; }
 
-/* ---- Home: "Student Web App" destinations (the app's .unified-actions) ---- */
-.unified-actions { display: flex; flex-direction: row; flex-wrap: wrap; }
-.unified-actions .btn { margin: 0 6px 6px 0; }
+/* ---- the greeting hero (app .dash-greet, margin 12px 0 0 collapses out of
+   the page top; padding 14/16, min-height 128, art 78% 22% cover) ---- */
+#pageAiTools .dash-greet { position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+  margin: 0; padding: 14px 16px; min-height: 128px; box-sizing: content-box;
+  border: 1px solid var(--line-soft); border-radius: 14px; overflow: hidden;
+  background-color: var(--panel-2); background-image: linear-gradient(135deg, var(--panel-2), var(--panel));
+  background-size: cover; background-position: 78% 22%; background-repeat: no-repeat; }
+/* app .dash-greet::before — the readability scrim, as a real first child */
+#pageAiTools .greet-scrim { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  background: rgba(6, 8, 14, 0.45);
+  background: linear-gradient(97deg, rgba(6, 8, 14, .78) 0%, rgba(6, 8, 14, .73) 38%, rgba(6, 8, 14, .52) 56%, rgba(6, 8, 14, .14) 76%, rgba(6, 8, 14, 0) 100%); }
+#pageAiTools .greet-scrim.evening {
+  background: rgba(6, 8, 14, 0.3);
+  background: linear-gradient(97deg, rgba(6, 8, 14, .5) 0%, rgba(6, 8, 14, .42) 32%, rgba(6, 8, 14, .22) 56%, rgba(6, 8, 14, 0) 80%); }
+/* app .dash-greet>*{position:relative;z-index:2}: the words ride above the scrim */
+#pageAiTools .dash-greet .hi, #pageAiTools .dash-greet .sub, #pageAiTools .dash-greet .pill { position: relative; }
+#pageAiTools .dash-greet .hi { display: block; font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: .2px;
+  line-height: 1.7; max-width: 58%; overflow-wrap: anywhere; word-break: break-word;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .85), 0 2px 14px rgba(0, 0, 0, .6); }
+#pageAiTools .dash-greet .sub { display: block; margin-top: 4px; font-size: 12px; color: #dcd6c9; line-height: 1.7; max-width: 58%;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+#pageAiTools .dash-greet .pill { display: block; align-self: flex-start; margin-top: 8px; padding: 3px 10px;
+  border: 1px solid var(--accent); border-radius: 20px; color: var(--accent-h); font-size: 11px; line-height: 1.7;
+  background-color: rgba(6, 8, 14, .55); }
 
-/* ---- Home: the six destination cards, two to a row like the app ---- */
-.dash-grid { display: flex; flex-direction: row; flex-wrap: wrap; margin: 16px 0 0; }
-.dash-card { display: flex; flex-direction: column; width: 48%; margin: 0 4% 16px 0;
-  padding: 0; border: none; background: transparent; color: var(--text);
-  text-align: center; cursor: pointer; box-sizing: border-box; }
-.dash-card:nth-child(2n) { margin-right: 0; }
-.dash-card .art { position: relative; border: 1px solid var(--line); border-radius: 12px;
-  overflow: hidden; background-color: var(--panel); }
-.dash-card .art img { display: block; width: 100%; height: auto; }
-.dash-card .bdg { position: absolute; top: 8px; left: 8px; width: 30px; height: 30px;
-  border-radius: 9px; background-color: rgba(11, 13, 20, .62); color: var(--text);
-  font-size: 14px; line-height: 30px; text-align: center; }
-/* the app clamps the label to two lines and centres it, so all six cards are
-   the same height whatever the locale's word length */
-.dash-card .lbl { display: flex; flex-direction: row; align-items: center; justify-content: center;
-  margin-top: 8px; height: 2.9em; overflow: hidden;
-  font-weight: 800; font-size: 13px; line-height: 1.45; text-align: center; }
-.dash-card .sub { display: block; height: 1.5em; overflow: hidden;
+/* ---- "Student Web App" (app .unified-actions{display:flex;flex-wrap:wrap;gap:9px}) ---- */
+#pageAiTools .unified-actions { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; margin: 0 0 -9px 0; }
+#pageAiTools .unified-actions .btn { flex: none; margin: 0 9px 9px 0; }
+
+/* ---- COST & BALANCE (app .statline.money-stat: auto-fit 96px+ columns, 10px gap;
+   at 354px that is three 111.3px columns) ---- */
+#pageAiTools .money-stat { display: flex; flex-direction: row; flex-wrap: wrap; margin: 0 0 2px; }
+#pageAiTools .money-stat > div { width: 31.4%; width: calc(33.333% - 6.667px); margin-right: 10px; padding: 0; text-align: left; }
+#pageAiTools .money-stat > div:last-child { margin-right: 0; }
+#pageAiTools .money-stat b { display: block; font-size: 15px; font-weight: 700; color: var(--accent-h); line-height: 1.7; }
+#pageAiTools .money-stat span { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+/* ---- the six destination cards (app .dash-grid{grid:1fr 1fr;gap:16px 12px;margin:16px 0}) ---- */
+#pageAiTools .dash-grid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; margin: 16px 0 0; }
+#pageAiTools .dash-card { display: flex; flex-direction: column; width: 48.45%; width: calc(50% - 6px);
+  margin: 0; padding: 0; border: none; background: transparent; color: var(--text);
+  text-align: center; cursor: pointer; box-sizing: border-box; min-height: 44px; }
+#pageAiTools .dash-card:nth-child(odd) { margin-right: 12px; }
+#pageAiTools .dash-card:nth-child(n+3) { margin-top: 16px; }
+/* app .art{aspect-ratio:4/3;border 1px line-soft;radius 14;bg panel}: the 4:3
+   box is a percentage padding on a zero-height block (188 → 141 with border) */
+#pageAiTools .dash-card .art { position: relative; display: block; width: auto; height: 0;
+  padding: 0; padding-top: 73.94%; padding-top: calc(75% - 2px); box-sizing: content-box;
+  border: 1px solid var(--line-soft); border-radius: 14px; overflow: hidden; background-color: var(--panel); }
+#pageAiTools .dash-card .art > img { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; border-radius: 0; }
+/* app .art.dash-noart: a card whose art failed keeps the app's moss plate */
+#pageAiTools .dash-card .art.dash-noart { background: linear-gradient(160deg, #20261b, #131826); }
+/* app .bdg{abs 8/8;32x32;radius 9;bg rgba(11,13,20,.55)} with an 18px sprite */
+#pageAiTools .dash-card .bdg { position: absolute; top: 8px; left: 8px; width: 32px; height: 32px; padding: 0;
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  border-radius: 9px; background-color: rgba(11, 13, 20, .55); color: var(--text); }
+#pageAiTools .dash-card .bdg .ic-m { flex: none; display: block; width: 18px; height: 18px; margin: 0; }
+/* app .lbl{800;14.5px;mt8;lh1.45;min-height 2.9em;flex centred} — the panel's
+   global .lbl is a 42px-wide muted field label, so every value is restated */
+#pageAiTools .dash-card .lbl { display: flex; flex-direction: row; align-items: center; justify-content: center;
+  width: auto; margin: 8px 0 0; padding: 0; min-height: 2.9em; height: auto; overflow: visible;
+  font-weight: 800; font-size: 14.5px; line-height: 1.45; color: var(--text); text-align: center; }
+#pageAiTools .dash-card .sub { display: block; margin: 0; height: auto; overflow: visible;
   font-size: 11px; color: var(--muted); line-height: 1.5; }
-.dash-card:hover .art { border-color: var(--accent); }
+#pageAiTools .dash-card:hover .art { border-color: var(--accent); }
 
-/* ---- Home: the Library teaser strip (the app's .dash-strip) ---- */
-.dash-strip { display: flex; flex-direction: row; overflow-x: auto; margin: 8px 0; }
-.dash-strip img { flex: 0 0 auto; width: 96px; height: 128px; margin-right: 8px;
-  border: 1px solid var(--line); border-radius: 12px; }
+/* ---- the Library teaser (app .dash-strip{flex;gap 8;overflow-x auto;no scrollbar;
+   margin 8px 0} — its 8px top collapses into the h2's 12px bottom, so only
+   the bottom 8px is written) ---- */
+#pageAiTools .dash-strip { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+  margin: 0 0 8px; padding: 0; scrollbar-width: none; }
+#pageAiTools .dash-strip::-webkit-scrollbar { display: none; }
+#pageAiTools .dash-strip img { flex: none; display: block; width: 96px; height: 128px; margin: 0 8px 0 0; box-sizing: border-box;
+  border: 1px solid var(--line-soft); border-radius: 12px; }
+#pageAiTools .dash-strip img:last-child { margin-right: 0; }
+/* app setIcnText(..., {after:true}): "View More" + a space + the arrow sprite */
+#pageAiTools .btn .btn-in .ic-s.ic-after { margin-left: 3.6px; margin-right: 0; }
 
-/* ---- Home: the inventory statline (three across, like the app) ---- */
-.statline { display: flex; flex-direction: row; flex-wrap: wrap; margin: 8px 0 2px; }
-.statline > div { flex: 0 0 33.33%; box-sizing: border-box; padding: 0 4px; text-align: center; }
-.statline b { display: block; color: var(--accent-h); font-size: 17px; }
-.statline span { display: block; font-size: 11px; color: var(--muted); line-height: 1.4; }
-.dash-stat { margin: 20px 0 8px; }
-.dash-stat-link { cursor: pointer; }
+/* ---- the inventory statline (app .statline{grid 3 x 1fr;gap 14px;margin 8px 0 2px}
+   .dash-stat{margin:20px 0 8px;text-align:center}; the bottom 8px collapses
+   into the promo card's 16px) ---- */
+#pageAiTools .dash-stat { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start;
+  margin: 20px 0 0; padding: 0; text-align: center; }
+#pageAiTools .dash-stat > div { flex: none; width: 30.9%; width: calc(33.333% - 9.333px); margin: 0 14px 0 0; padding: 0;
+  box-sizing: border-box; text-align: center; color: var(--text); }
+#pageAiTools .dash-stat > div:nth-child(3n) { margin-right: 0; }
+#pageAiTools .dash-stat > div:nth-child(n+4) { margin-top: 14px; }
+#pageAiTools .dash-stat b { display: block; font-size: 17px; font-weight: 700; color: var(--accent-h); line-height: 1.7; }
+#pageAiTools .dash-stat span { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+#pageAiTools .dash-stat .dash-stat-link { cursor: pointer; border-radius: 12px; }
 
-/* ---- Home: the Photoshop-panel promo band ---- */
-.dash-promo { position: relative; }
-.dash-promo p { font-size: 12px; line-height: 1.75; margin: 0 0 12px; color: var(--text-2); }
+/* ---- the Photoshop-panel band (app .dash-promo p{14px;lh1.75;mb12}, .btn
+   inline-flex gap 6, the ✕ chip at 10/10 with min-height 44) ---- */
+#pageAiTools .dash-promo { position: relative; }
+#pageAiTools .dash-promo p { display: block; margin: 0 0 12px; font-size: 14px; line-height: 1.75; color: var(--text); }
+#pageAiTools .dash-promo .btn { line-height: 1.7; }
+#pageAiTools .dash-promo .btn .btn-in { align-items: center; }
+#pageAiTools .dash-promo .btn .btn-in .ic-s { top: 0; margin-right: 6px; }
+#pageAiTools .dash-promo .promo-x { position: absolute; top: 10px; right: 10px; min-height: 44px; padding: 2px 10px;
+  border-radius: 22px; line-height: normal; }
 
-/* ---- Workflows: the app's two-column card grid ---- */
-.wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 6px; }
-.wfmini { position: relative; display: flex; flex-direction: column; width: 48%;
-  margin: 0 4% 8px 0; padding: 10px; box-sizing: border-box;
-  border: 1px solid var(--line); border-radius: 11px; background-color: var(--panel-2);
+/* ---- Workflows / Video: the app's two-column card grid, measured against
+   docs/app/index.html (.wfgrid grid 1fr 1fr, gap 8px; .wfmini padding 10,
+   border line-soft, radius 11, flex column gap 4; .wfv 3:2; .wf-need pill;
+   .t 12.5/800 two lines; .s 11.5 muted; .go 10.5/800 gold-hi pinned to the
+   bottom). Flex-wrap stands in for the grid: the 8px column gap is the odd
+   card's right margin, the 8px row gap the top margin of every card past
+   the first pair, and the 3:2 art box is a percentage padding. ---- */
+.wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; margin-top: 6px; }
+.wfmini { position: relative; display: flex; flex-direction: column; width: 49%; width: calc(50% - 4px);
+  margin: 8px 8px 0 0; padding: 10px; box-sizing: border-box;
+  border: 1px solid var(--line-soft); border-radius: 11px; background-color: var(--panel-2);
   color: var(--text); text-align: left; cursor: pointer; }
+.wfmini:nth-child(-n+2) { margin-top: 0; }
 .wfmini:nth-child(2n) { margin-right: 0; }
 .wfmini.wf-span2 { width: 100%; margin-right: 0; }
 .wfmini:hover { border-color: var(--accent); }
-.wfmini .wfv { position: relative; display: block; border-radius: 8px; overflow: hidden;
-  background-color: var(--sunk); }
-.wfmini img { display: block; width: 100%; height: auto; border-radius: 8px; }
-.wfmini .wf-need { position: absolute; left: 6px; bottom: 6px; padding: 2px 8px;
-  border: 1px solid var(--line-2); border-radius: 10px;
-  background-color: rgba(11, 13, 20, .78); color: var(--text); font-size: 10px; }
-.wfmini .t { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 800; line-height: 1.45; }
-.wfmini .s { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); line-height: 1.5; }
-.wfmini .go { display: block; margin-top: 6px; font-size: 10.5px; font-weight: 800; color: var(--accent-h); }
+/* app .wfmini.on: gold border + an inset ring, so the selected card never
+   shifts its neighbours */
+.wfmini.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.wfmini .wfv { position: relative; display: block; width: 100%; height: 0; padding-top: 66.6667%;
+  border-radius: 8px; overflow: hidden; background-color: var(--panel); }
+.wfmini .wfv > img { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; border-radius: 0; }
+/* app .wfv-noart: a card whose art failed to load keeps the app's moss plate */
+.wfmini .wfv.wfv-noart { background: linear-gradient(160deg, #20261b, #131826); }
+.wfmini .wf-need { position: absolute; left: 4px; bottom: 4px; padding: 2px 8px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background-color: rgba(11, 13, 20, .78); color: var(--text); font-size: 10px; line-height: normal; }
+.wfmini .t { display: block; margin-top: 4px; min-height: 2.5em; max-height: 2.9em; font-size: 12.5px; font-weight: 800;
+  line-height: 1.45; overflow: hidden; }
+.wfmini .s { display: block; margin-top: 4px; margin-bottom: 4px; max-height: 3em; font-size: 11.5px; color: var(--muted);
+  line-height: 1.5; overflow: hidden; }
+.wfmini .go { display: flex; flex-direction: row; align-items: center; margin-top: auto;
+  font-size: 10.5px; font-weight: 800; color: var(--accent-h); line-height: normal; }
+.wfmini .go .ic-s { flex: 0 0 auto; width: 11.5px; height: 11.5px; margin-right: 3px; position: relative; top: -1.4px; }
 
 /* ---- Workflows: the app's category quick-jump rail ---- */
 .wfjump { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
 .wfjump .chip { flex: 0 0 auto; white-space: nowrap; }
+
+/* ---- Workflows (v6.51.0): the app's #pgWf, box for box — the
+   .hero-strip.hero-mini picture strip, then the one card (h2 · search ·
+   category rail · favourites · nine .grp accordions of .wfmini cards · empty
+   state · note). Everything below is scoped to #pageAiTools so the shared
+   .wfmini / .app-grp rules the other pages read stay untouched. ---- */
+/* app .hero-mini: min-height 126, padding 14 0 2, column flex pinned to the
+   foot; the scrim is baked into hero-wf.jpg (no ::after in UXP) */
+#pageAiTools .hero-mini { position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+  min-height: 126px; box-sizing: border-box; margin: 0; padding: 14px 0 2px;
+  border: 1px solid var(--line-soft); border-radius: 14px; overflow: hidden; background-color: var(--panel); }
+#pageAiTools .hero-art { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 14px; overflow: hidden; }
+#pageAiTools .hero-art img { display: block; width: 100%; height: 100%; border-radius: 14px; }
+/* app .kick (.68rem/800, .28em tracking) and h1 (18/800, lh 1.35) at 76% width;
+   the app's 1px column gap is the kick's bottom margin (margins never collapse
+   here, so kick 1 + h1 2 = the app's 3) */
+#pageAiTools .hero-mini .kick { position: relative; max-width: 76%; margin: 0 0 1px; padding: 10px 0 0;
+  font-size: 10.88px; font-weight: 800; letter-spacing: .28em; text-transform: uppercase; color: var(--accent); line-height: 1.7;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75); }
+#pageAiTools .hero-mini .h1 { position: relative; max-width: 76%; margin: 2px 0; font-size: 18px; font-weight: 800; line-height: 1.35;
+  color: var(--text); text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75); }
+#pageAiTools .hero-mini .h1 .em { font-style: normal; color: var(--accent-h); }
+/* the category rail: one row, 6px between chips, 4px scroll gutter */
+#pageAiTools .wfjump { margin-top: 8px; margin-bottom: 0; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+#pageAiTools .wfjump .chip { flex: 0 0 auto; white-space: nowrap; margin: 0 6px 0 0; }
+#pageAiTools .wfjump .chip:last-child { margin-right: 0; }
+/* app .chips is gap:6px; the panel's per-chip 6px bottom margin would push
+   the next block 6px down, so the wrapping rows take it back */
+#hnkWfFavHost .chips, #pageAiTools .grp-b .chips { margin-bottom: -6px; }
+/* app .chip-th: a 22px cover-cropped thumb of the card's 3:2 art */
+#pageAiTools .chip-th { flex: 0 0 auto; display: block; width: 22px; height: 22px; margin-right: 4px; border-radius: 5px; overflow: hidden; }
+#pageAiTools .chip-th img { display: block; width: 33px; height: 22px; margin-left: -5.5px; border-radius: 5px; }
+/* accordions: the app's 12px block margins collapse to 12 between groups */
+#pageAiTools .grp.app-grp { margin: 12px 0 0; }
+#pageAiTools .grp-h .cnt { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--muted); line-height: normal; }
+/* app .st-sact (order:4 → last in DOM here) with its 28px .sa reset button */
+#pageAiTools .st-sact { flex: 0 0 auto; display: flex; flex-direction: row; margin-left: 8px; }
+#pageAiTools .sa { display: flex; flex-direction: row; align-items: center; justify-content: center; width: 28px; height: 28px;
+  border-radius: 8px; color: var(--muted); }
+#pageAiTools .sa img { flex: none; display: block; width: 14px; height: 14px; margin: 0; }
+#pageAiTools .grp-b p.mut { margin: 0; }
+/* the grid: 8px gaps as margins; the script marks the first row (.wf-top) and
+   the right column (.wf-r) of the *visible* cards, so a filtered grid keeps
+   its gaps where :nth-child would count the hidden ones */
+#pageAiTools .wfmini { margin: 8px 8px 0 0; }
+#pageAiTools .wfmini.wf-top { margin-top: 0; }
+#pageAiTools .wfmini.wf-r { margin-right: 0; }
+#pageAiTools .wfmini.wf-span2 { width: 100%; margin-right: 0; }
+/* app .bdg: 28.3×23.9 pill at the art's bottom-right holding a 1.1em sprite */
+#pageAiTools .wfmini .bdg { position: absolute; right: 4px; bottom: 4px; display: flex; flex-direction: row; align-items: flex-start;
+  width: 28.3px; height: 23.9px; box-sizing: border-box; padding: 2px 6px 0;
+  border: 1px solid var(--line-soft); border-radius: 8px; background-color: rgba(11, 13, 20, .78); }
+#pageAiTools .wfmini .bdg img { position: static; flex: none; display: block; width: 14.3px; height: 14.3px; margin: 0; }
+/* app .fav / .wfbatch: 44px corner hit boxes over the art, each holding a
+   small dark plate with the sprite */
+#pageAiTools .wfmini .fav, #pageAiTools .wfmini .wfbatch { position: absolute; top: 0; width: 44px; height: 44px; box-sizing: border-box;
+  padding: 6px; display: flex; flex-direction: row; align-items: flex-start; border: none; border-radius: 7px;
+  background-color: transparent; color: var(--muted); }
+#pageAiTools .wfmini .fav { right: 0; justify-content: flex-end; }
+#pageAiTools .wfmini .wfbatch { left: 0; justify-content: flex-start; }
+#pageAiTools .wfmini .fav > span { display: flex; flex-direction: row; align-items: flex-start; width: 25.2px; height: 30px; box-sizing: border-box;
+  padding: 6.9px 0 0 6px; border-radius: 7px; background-color: rgba(11, 13, 20, .72); }
+#pageAiTools .wfmini .fav img { flex: none; display: block; width: 13.2px; height: 13.2px; margin: 0; }
+#pageAiTools .wfmini .wfbatch > span { display: flex; flex-direction: row; align-items: flex-start; width: 25px; height: 18px; box-sizing: border-box;
+  padding: 2px 0 0 6px; border-radius: 7px; background-color: rgba(11, 13, 20, .72); }
+#pageAiTools .wfmini .wfbatch img { flex: none; display: block; width: 13px; height: 13px; margin: 0; }
+/* no matches — app .empty-state with its 32px search glyph at half opacity */
+#pageAiTools .empty-state { display: none; flex-direction: column; align-items: center; text-align: center; padding: 24px 12px; }
+#pageAiTools .empty-state.on { display: flex; }
+/* the app's .ic is a 32px/1.7 text line (54.4 tall) holding an inline glyph
+   that sits 7.7px down on the baseline */
+#pageAiTools .empty-state .ic { display: flex; flex-direction: row; justify-content: center; align-items: flex-start;
+  width: 100%; height: 54.4px; box-sizing: border-box; padding-top: 7.7px; opacity: 0.5; margin-bottom: 8px; }
+#pageAiTools .empty-state .ic-xl { flex: none; display: block; width: 32px; height: 32px; margin: 0; }
+#pageAiTools .empty-state .mut { margin: 0; }
+#pageAiTools .empty-state .btn { margin-top: 16px; }
+/* the 12px above the note is the last group's bottom margin in the app —
+   when a query hides every group the note follows the empty state directly */
+#pageAiTools .wf-note { margin-top: 12px; }
+#pageAiTools .wf-note.wf-note-tight { margin-top: 0; }
+/* favourites / recents shelf: the app's .subh:first-child drops its top margin,
+   and its inline 12.1px glyph sits 1.9px down on the baseline with no gap */
+#hnkWfFavHost .subh { align-items: flex-start; }
+#hnkWfFavHost .subh:first-child { margin-top: 0; }
+#hnkWfFavHost .subh .ic-s { margin: 1.9px 0 0; }
+/* .apg .chip sits after .chip.on in this file and would strip the active
+   look from the rail / Wedding-group chips — restate it, as #pagePresets does */
+#pageAiTools .chip.on { background-color: var(--accent); border-color: var(--accent); color: #1a1408; }
 
 /* ---- Tutorials: the app's own page (hero + three lesson cards) ---- */
 .unified-hero { display: flex; flex-direction: column; padding: 20px; margin-bottom: 10px;
@@ -1191,4 +1416,796 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .tutorial-card h2 { margin: 8px 0 0; font-size: 14px; font-weight: 800; letter-spacing: 0;
   text-transform: none; color: var(--text); }
 .tutorial-card p { margin: 6px 0 10px; color: var(--muted); font-size: 12px; line-height: 1.6; }
-.dash-promo .promo-x { position: absolute; top: 8px; right: 8px; min-height: 30px; padding: 2px 10px; }
+
+/* ======================================================================
+   v6.51.0 — Freeform = the web app's pgCreate, pixel for pixel. Every rule
+   below is the app's own component CSS (docs/app/index.html) translated to
+   UXP: flexbox only, class + id selectors only (UXP skips tag.class
+   compounds), no grid / object-fit / pointer-events / inset / ::after art,
+   text glyphs or bordered spans where the app draws an SVG. Scoped to the
+   .apg ("app page") class every rebuilt .page root carries, so the class
+   names the parity dump reads (.mut, .chip, .grp-h, .btn.btn-gold.gen …)
+   stay the app's on every page while the panel's own global rules only
+   govern what is still unconverted.
+   ====================================================================== */
+/* the app's body metrics (15px / 1.7) — every inherited line box on the page
+   (kicker, tags, .mut, .status) measures from them */
+.apg { font-size: 15px; line-height: 1.7; }
+/* the app's controls are <button>s, whose UA line-height is `normal` rather
+   than the inherited 1.7 — the panel's div[role=button] twins get the same */
+.apg .btn, .apg .chip, .apg .grp-h, .apg .acc-lnk, #genDock .btn { line-height: normal; }
+.apg .arow { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; }
+.apg .arow .chip, .apg .arow .btn { margin-right: 8px; margin-bottom: 0; }
+.apg .arow .chip:last-child, .apg .arow .btn:last-child { margin-right: 0; }
+.apg .mut { font-size: 12px; color: var(--muted); margin-bottom: 0; line-height: 1.7; }
+/* the app's .inp at panel width — its ≤768px rule lifts every field to 16px
+   so iOS never zooms; the panel is always that narrow */
+.apg .inp { width: 100%; box-sizing: border-box; background-color: var(--panel-2); border: 1px solid var(--line-soft);
+  border-radius: 9px; color: var(--text); padding: 10px 12px; font-size: 16px; }
+/* app textarea.inp */
+.apg #promptBox, .apg #vidPromptP { min-height: 110px; line-height: 1.8; font-size: 16px; }
+
+/* PROMPT card — the three IMAGE slots (app .refstrip) */
+.apg .refstrip { display: flex; flex-direction: row; align-items: center; margin-bottom: 10px; }
+.apg .rs { position: relative; width: 52px; height: 52px; margin-right: 8px; border: 1px dashed var(--line);
+  border-radius: 10px; background-color: var(--panel-2); display: flex; flex-direction: row; align-items: center;
+  justify-content: center; color: var(--accent); font-size: 16px; overflow: hidden; flex: none; box-sizing: border-box; }
+.apg .rs.filled { border-style: solid; }
+.apg .rs .im { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  background-size: cover; background-position: center; background-repeat: no-repeat; }
+.apg .rs .tag { position: absolute; left: 2px; bottom: 2px; background-color: rgba(11, 13, 20, 0.85); border-radius: 5px;
+  padding: 0 4px; font-size: 8.5px; color: var(--accent-h); font-weight: 800; }
+.apg .rsx { position: absolute; top: 1px; right: 1px; width: 20px; height: 20px; border-radius: 6px;
+  background-color: rgba(11, 13, 20, 0.85); color: var(--text); font-size: 10px; display: flex; flex-direction: row;
+  align-items: center; justify-content: center; }
+.apg .refstrip .note { flex: 1; min-width: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.apg .chip { border: 1px solid var(--line-soft); border-radius: 20px; background-color: var(--panel-2); color: var(--text);
+  padding: 6px 13px; font-size: 12px; font-weight: 700; min-height: 38px; box-sizing: border-box; display: flex;
+  flex-direction: row; align-items: center; }
+/* app .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px} — the gap as
+   right/bottom margins, since UXP flex draws no gap */
+.apg .chips { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
+.apg .chips .chip { margin: 0 6px 6px 0; }
+/* app sprite icons (svg.ic-s = 1.1em, flex:none) as pre-tinted <img> files —
+   UXP draws no inline <svg>. Sizes are the app's 1.1em resolved per context;
+   in the app's flex containers (.chip/.subtab) the " " after the icon is
+   trimmed, in its inline contexts (.btn/.gen/.subh) it stays a ~0.275em gap. */
+.ic-s { flex: none; display: block; width: 13.2px; height: 13.2px; }
+.apg .btn .ic-s, #genDock .btn .ic-s { width: 14.3px; height: 14.3px; margin-right: 3.6px; }
+.apg .gen .ic-s, #genDock .gen .ic-s { width: 17.6px; height: 17.6px; margin-right: 4.4px; }
+.apg .subh { display: flex; flex-direction: row; align-items: center; }
+.apg .subh .ic-s { width: 12.1px; height: 12.1px; margin-right: 3px; }
+
+/* GENERATE card — the model picker (app .hsl: brand tile + context/value, a
+   transparent native select over it) and the 2-up option rows */
+.apg .gen-opts .inp { flex: 1 1 0; min-width: 0; margin-right: 8px; padding: 10px 6px; font-size: 12px; text-overflow: ellipsis; }
+.apg .gen-opts .inp:last-child { margin-right: 0; }
+.apg .gen-opts .hsl { flex: 0 0 auto; width: 49%; width: calc(50% - 4px); margin-right: 0; }
+/* app #genOptsAdv: grid 1fr 1fr, gap 8px — Count then Size, each 158px at the
+   card's 324px content width */
+.apg #genOptsAdv .hsl:first-child, .apg #vidOpts #vidResHsl { margin-right: 8px; }
+/* app #vidOpts #selVidModel{grid-column:1/-1}: the model picker owns the first
+   grid row, the 8px row gap sits under it, Res and Dur share the second */
+.apg .gen-opts .hsl-span2 { width: 100%; margin-right: 0; margin-bottom: 8px; }
+/* app #vidOpts: the aspect select (shown by the few models that take one)
+   wraps onto the grid's third row, first column, under the 8px row gap */
+.apg #vidOpts .vid-aspect { flex: 0 0 auto; width: 49%; width: calc(50% - 4px); margin: 8px 0 0 0; }
+.apg .gen-opts .rr-native { display: none; }
+/* app .hsl-off — a picker whose select is hidden hides with it */
+.apg .hsl.hsl-off { display: none; }
+.apg .hsl { position: relative; display: flex; flex-direction: row; max-width: 100%; min-width: 0; }
+.apg .hsl-btn { display: flex; flex-direction: row; align-items: center; min-height: 42px; width: 100%; min-width: 0;
+  box-sizing: border-box; padding: 6px 10px 6px 7px;
+  background: linear-gradient(180deg, #1c2336 0%, var(--panel-2) 55%, #141a2a 100%);
+  border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text); font-size: 12px; font-weight: 600;
+  line-height: 1.2; text-align: left; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+.apg .hsl-tile { flex: 0 0 auto; width: 24px; height: 24px; margin-right: 7px; border-radius: 7px; display: flex;
+  flex-direction: row; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.09);
+  background-color: #181d29; box-sizing: border-box; }
+.apg .hsl-tile.t-banana { background: radial-gradient(120% 120% at 20% 15%, #3a3016 0%, #241d0d 70%); }
+.apg .hsl-tile.t-rh { background: radial-gradient(120% 120% at 20% 15%, #0f3b33 0%, #0a2620 70%); }
+.apg .hsl-tile.t-qwen { background: radial-gradient(120% 120% at 20% 15%, #272052 0%, #181533 70%); }
+.apg .hsl-tile.t-flux { background: radial-gradient(120% 120% at 20% 15%, #3a2a12 0%, #241a0b 70%); }
+.apg .hsl-tile.t-wan { background: radial-gradient(120% 120% at 20% 15%, #123240 0%, #0c1f28 70%); }
+.apg .hsl-tile.t-gold { background: radial-gradient(120% 120% at 20% 15%, #33290f 0%, #1f1909 70%); }
+.apg .hsl-tile.t-plain { background: radial-gradient(120% 120% at 20% 15%, #232833 0%, #161a23 70%); }
+.apg .hsl-tile.t-openai { background: radial-gradient(120% 120% at 20% 15%, #232833 0%, #15181f 70%); }
+.apg .hsl-tile.t-gemini { background: radial-gradient(120% 120% at 20% 15%, #243052 0%, #171d33 70%); }
+/* app .hsl-tile b: the family's first letter for a family without a brand mark */
+.apg .hsl-tile .hsl-mono { font-size: 11px; font-weight: 800; line-height: 1; }
+.apg .hsl-lab { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.apg .hsl-ctx { font-size: 8px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  line-height: 1; margin-bottom: 1px; }
+.apg .hsl-val { font-size: 12px; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* app .hsl-caret: the 9×9 gold chevron svg (CARET), here the same path as an <img> */
+.apg .hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; margin-left: 7px; }
+/* app .hsl-tile svg{width:15px;height:15px}: the brand glyph (IC map) as an <img> */
+.apg .hsl-tile .hsl-glyph-img { display: block; width: 15px; height: 15px; }
+.apg .hsl .inp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
+.apg .acc-lnk { display: flex; flex-direction: row; align-items: center; background-color: transparent; border: none;
+  color: var(--accent-h); font-size: 14px; font-weight: 700; text-align: left; padding: 8px 0; min-height: 44px; width: 100%;
+  box-sizing: border-box; text-decoration: underline; margin-top: 6px; }
+
+/* the visual ratio rail (app .ratio-rail / .rchip) */
+.apg .ratio-rail { display: flex; flex-direction: row; margin-top: 8px; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; }
+.apg .rchip { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  min-width: 46px; min-height: 54px; margin-right: 6px; padding: 7px 9px; box-sizing: border-box; background-color: var(--panel-2);
+  border: 1px solid var(--line-soft); border-radius: 10px; color: var(--muted); font-size: 10.5px; line-height: 1.7; }
+.apg .rchip span { line-height: 1.7; }
+.apg .rchip:last-child { margin-right: 0; }
+.apg .rchip i { display: flex; flex-direction: row; align-items: center; justify-content: center; margin-bottom: 5px;
+  border: 1.6px solid currentColor; border-radius: 3px; opacity: 0.85; font-style: normal; font-size: 9px; font-weight: 800;
+  line-height: 1; box-sizing: border-box; }
+.apg .rchip.auto i { border-style: dashed; }
+.apg .rchip.on { border-color: var(--accent); color: var(--accent-h); background-color: rgba(217, 164, 65, 0.10); }
+
+/* Advanced group (app .grp / .grp-h / .grp-b, opened by .open on the group) */
+.apg .app-grp { border: 1px solid var(--line-soft); border-radius: 12px; margin: 12px 0; overflow: hidden; }
+.apg .app-grp .grp-h { display: flex; flex-direction: row; align-items: center; width: 100%; min-height: 44px; box-sizing: border-box;
+  background-color: var(--panel-2); border: none; color: var(--text); padding: 14px; font-size: 13px; font-weight: 800; text-align: left; }
+/* app .car: a 12×24 span holding the 12px #i-caret (points right, rotates 90°
+   open); app .grp-h gap:8px becomes the span's right margin. The app's caret
+   is an inline-block sprite on the span's 11px line box, which leaves it 1px
+   above the span's centre (5px down in the 24px box), so it is placed at that
+   offset rather than centred — the rotation carries the 1px to the right. */
+.apg .app-grp .car { flex: 0 0 auto; display: flex; flex-direction: row; align-items: flex-start; width: 12px; height: 24px;
+  box-sizing: border-box; padding-top: 5px; margin-right: 8px; color: var(--accent); font-size: 11px; }
+.apg .app-grp .car .ic-car { display: block; width: 12px; height: 12px; }
+.apg .app-grp.open .car { transform: rotate(90deg); }
+/* group label: the app's inline span with a 1.1em sprite; like .btn-in the
+   icon sits on the text baseline (2.34px below it, the app's -.18em) so a
+   wrapped label keeps its icon on line one. `center` first is the fallback. */
+.apg .grp-lbl { display: flex; flex-direction: row; align-items: center; align-items: baseline; min-width: 0; }
+.apg .grp-lbl .ic-s { width: 14.3px; height: 14.3px; margin-right: 3.4px; position: relative; top: 2.34px; }
+.apg .app-grp .grp-b { display: none; padding: 4px 14px 14px; }
+.apg .app-grp.open .grp-b { display: block; }
+.apg .addons { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 18px; }
+.apg .btn, #genDock .btn { display: flex; flex-direction: row; align-items: center; justify-content: center; background-color: var(--panel-2);
+  border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text); padding: 8px 16px; font-size: 13px; font-weight: 700;
+  min-height: 44px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.apg .btn + .btn { margin-left: 0; }
+/* the app's .btn is inline flow: its sprite rides the label's first line even
+   when the label wraps (vertical-align -.18em = 2.34px at 13px). The flex twin
+   centres one inner row (.btn-in, built by setIcnText) as a whole; inside it
+   the icon sits on the text baseline, so a wrapped label keeps the icon on
+   line one like the app. `center` is written first so a renderer without
+   baseline alignment keeps the single-line look it has today. */
+.btn .btn-in { display: flex; flex-direction: row; align-items: center; min-width: 0; }
+.apg .btn .btn-in, #genDock .btn .btn-in { align-items: center; align-items: baseline; }
+.apg .btn .btn-in .ic-s, #genDock .btn .btn-in .ic-s { position: relative; top: 2.34px; }
+/* v6.51.0 — a wrapped label, split by fitBtnIn() into the app's inline shape:
+   icon + line one as one row, every further line a block as wide as the
+   label (the flex row would otherwise fill the label and pin the icon to its
+   left edge). A button centres both parts; an accordion title starts both at
+   its left edge, so line two runs under the icon like the app's inline span. */
+.btn .btn-in.icn-wrap, .apg .grp-lbl.icn-wrap, #pageSetup .car + span.icn-wrap { flex: 1 1 auto; flex-direction: column; align-items: flex-start; }
+.icn-wrap .icn-l1 { display: flex; flex-direction: row; align-items: center; align-items: baseline; white-space: nowrap; }
+.icn-wrap .icn-rest { display: block; width: 100%; text-align: left; white-space: normal; }
+.btn .btn-in.icn-wrap { align-items: center; }
+.btn .btn-in.icn-wrap .icn-rest { text-align: center; }
+.apg .gen .btn-in .ic-s, #genDock .gen .btn-in .ic-s { top: 2.88px; }
+.apg .btn-gold, #genDock .btn-gold { background: linear-gradient(160deg, #f9e2a4 0%, var(--accent) 45%, #b9861f 100%);
+  border-color: rgba(233, 185, 73, 0.6); color: #1a1408; font-weight: 800;
+  /* the app's gold buttons float on a drop shadow + gold halo + inset top
+     highlight; the single-shadow line first is the fallback should UXP
+     reject the shadow list */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 3px 14px rgba(233, 185, 73, 0.28), inset 0 1px 0 rgba(255, 250, 230, 0.7); }
+.apg .gen, #genDock .gen { width: 100%; margin-top: 12px; padding: 15px; font-size: 16px; border-radius: 12px; letter-spacing: 0;
+  /* app #btnGen: the sticky Generate trades the gold halo for a soft lift
+     shadow above it (0 -10px 18px -10px); plain blur first as the fallback */
+  box-shadow: 0 -6px 14px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 -10px 18px -10px rgba(0, 0, 0, 0.4); }
+/* app v4.28: while a run is in flight the disabled GENERATE keeps its label
+   and full opacity behind a soft gold "working" halo (the app's .btn:disabled
+   dim is the panel's .is-off) */
+.apg .gen.working, #genDock .gen.working { opacity: 1;
+  box-shadow: 0 0 0 1px rgba(217, 164, 65, 0.4);
+  box-shadow: 0 0 0 1px rgba(217, 164, 65, 0.4), 0 4px 22px -8px rgba(217, 164, 65, 0.5); }
+/* app: #btnGen{position:sticky;bottom:calc(76px + safe-area)} — UXP has no
+   sticky, so stickyGen (main.js) lifts the button into this dock, absolutely
+   positioned inside .app over the scroller, while its natural spot sits below
+   the fold; a same-height .gen-ph keeps the card's layout meanwhile */
+.gen-dock { position: absolute; left: 0; top: 0; width: 100%; z-index: 8; display: none; }
+.gen-dock.on { display: block; }
+#genDock .gen { margin-top: 0; }
+.gen-ph { width: 100%; }
+/* app .spin.on: a flex-wrap row — 14px gold ring (::before), gap 8px, the
+   elapsed-seconds ticker, then a full-width 3px progress bar (::after) on the
+   next wrapped line (8px row gap + 2px margin). UXP draws no ::before/::after
+   art, so the ring is an <img> and the bar a real track + gold runner that
+   ffSpin (main.js) moves by hand; the text sits in its own span so the
+   1s ticker never wipes them. */
+.apg .spin { display: none; margin-top: 10px; color: var(--accent-h); font-size: 13px; line-height: 1.7; }
+.apg .spin.on { display: flex; flex-direction: column; }
+.apg .spin-row { display: flex; flex-direction: row; align-items: center; }
+/* the app's ::before ring is a 14px content box + 2px border = 18px painted */
+.apg .spin-ring { width: 18px; height: 18px; margin-right: 8px; flex: none; }
+.apg .spin-txt { flex: 1; min-width: 0; }
+.apg .spin-bar { display: flex; flex-direction: row; width: 100%; height: 3px; border-radius: 3px; margin-top: 10px; background-color: var(--panel-2); overflow: hidden; }
+/* the app: background-size 250% + spinbar keyframes (200% → -100%) = one
+   2.5-wide gradient tile whose gold crest slides from 75% to 25% of the track
+   every 1.3s; ffRunFrame() moves this runner's margin-left the same way */
+.apg .spin-bar-in { flex: none; height: 3px; width: 250%; margin-left: -50%; border-radius: 3px;
+  background-color: #e9b949;
+  background: linear-gradient(90deg, var(--panel-2) 0%, #e9b949 50%, var(--panel-2) 100%); }
+/* Stop / Retry are the app's inline <button>s — as wide as their label, not
+   the card. A div .btn is block-level flex, so each rides in a one-item flex
+   row that shrink-wraps it; hidden, the row is an empty block that takes no
+   space and lets the neighbours' margins meet exactly as they do in the app. */
+.apg .btn-row { display: flex; flex-direction: row; align-items: flex-start; }
+.apg .btn-row .btn { flex: none; }
+.apg .status { min-height: 20px; font-size: 13px; margin-top: 8px; text-align: left; color: var(--text); line-height: 1.7; }
+.apg .status.ok { color: var(--ok); }
+.apg .status.err { color: var(--err); }
+
+/* result card (app .result-box) — hidden until a result exists */
+.apg .card.result-box { display: none; margin-top: 4px; }
+.apg .card.result-box.on { display: block; }
+.apg .result-img { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background-color: #050b10; }
+.apg .result-img img { display: block; width: 100%; }
+.apg .result-img video { display: block; width: 100%; }
+.apg .hist { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
+.apg .hist img { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); }
+.apg .hist img.sel { border-color: var(--accent); }
+/* app .hist video: the Video page's 64px recent-result tiles, black plate */
+.apg .hist video { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); background-color: #000; }
+.apg .hist video.sel { border-color: var(--accent); }
+/* app .subh + .chainrow: "continue editing this result" heading + workflow chips */
+.apg .subh { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 12px 0 2px; }
+.apg .chainrow { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
+.apg .chainrow .chip { margin: 0 6px 6px 0; }
+.apg .cmp { position: relative; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  background-color: #050b10; }
+.apg .cmp img { display: block; width: 100%; }
+.apg .cmp-top { position: absolute; top: 0; left: 0; bottom: 0; height: auto; width: 50%; overflow: hidden; }
+.apg .cmp-top img { position: absolute; left: 0; top: 0; display: block; width: auto; max-width: none; height: 100%; }
+.apg .cmp-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: var(--accent); }
+
+/* the IMAGE-slot source sheet (app refSrcSheet): a scrim + card at the bottom */
+.ff-sheet { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 70;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; padding: 0 12px 12px; box-sizing: border-box; }
+.ff-sheet .card { margin: 0; }
+.ff-sheet .subh { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px; }
+.ff-sheet .btn { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; width: 100%; box-sizing: border-box;
+  margin: 8px 0 0; background-color: var(--panel-2); border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text);
+  padding: 8px 16px; font-size: 13px; font-weight: 700; min-height: 44px; text-align: left; }
+
+/* ======================================================================
+   v6.51.0 — Presets = the web app's pgLib (Library / Reference), pixel for
+   pixel: the IMAGE strip (.refs/.ref) and the VISUAL LIBRARY card (search,
+   collection + set chips, the picked look, the plate grid, Load more). The
+   shared 15px/1.7 base, .mut, .inp, .chip, .btn and .btn-gold rules above are
+   already scoped to #pagePresets too; below is what this page adds. Where the
+   app uses grid / aspect-ratio / object-fit / gap, the panel gets the same
+   boxes from flex + margins and background-image thumbs (hnk_library_
+   compact_cards.js computes the grid cells, main.js paints the slots).
+   ====================================================================== */
+#pagePresets .row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; margin-bottom: 0; }
+/* the app's field at panel width (its ≤768px rule: 16px so iOS never zooms) */
+#pagePresets #libSearch { font-size: 16px; }
+/* .chips: the app's flex-wrap rows, except #libFilters/#libGroups which are
+   one-line horizontal rails (nowrap, scrollbar hidden, 4px breathing room) */
+#pagePresets .chips { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+  padding-bottom: 4px; margin-top: 8px; }
+#pagePresets .chips .chip { flex: 0 0 auto; white-space: nowrap; margin: 0 6px 0 0; }
+#pagePresets .chips .chip:last-child { margin-right: 0; }
+#pagePresets .chip.on { background-color: var(--accent); border-color: var(--accent); color: #1a1408; }
+
+/* the IMAGE strip — app .refs / .ref at ≤520px (88×88) */
+#pagePresets .refs { display: flex; flex-direction: row; flex-wrap: wrap; }
+#pagePresets .ref { position: relative; width: 88px; height: 88px; border: 1px dashed var(--line); border-radius: 12px;
+  background-color: var(--panel-2); display: flex; flex-direction: row; align-items: center; justify-content: center;
+  overflow: hidden; box-sizing: border-box; margin-right: 10px; }
+#pagePresets .ref:last-child { margin-right: 0; }
+#pagePresets .ref.filled { border-style: solid; }
+#pagePresets .ref .im { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-size: cover; background-position: center; }
+#pagePresets .ref .add { display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100%; height: 100%;
+  font-size: 26px; color: var(--accent); line-height: normal; }
+#pagePresets .ref .x { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line-soft);
+  background-color: rgba(11, 13, 20, 0.8); color: var(--text); font-size: 13px; display: flex; flex-direction: row; align-items: center;
+  justify-content: center; box-sizing: border-box; }
+#pagePresets .ref .x .ic-s { width: 14.3px; height: 14.3px; margin-right: 0; }
+#pagePresets .ref .tag { position: absolute; left: 4px; bottom: 4px; background-color: rgba(11, 13, 20, 0.8); border-radius: 6px; padding: 1px 7px;
+  font-size: 10px; color: var(--accent-h); font-weight: 800; line-height: 1.7; }
+#pagePresets .ref .refrole { position: absolute; right: 4px; bottom: 27px; max-width: 80px; max-height: 57px; align-items: flex-start;
+  padding: 1px 7px; font-size: 9.5px; line-height: 20px; min-height: 0; background-color: rgba(11, 13, 20, 0.85);
+  border: 1px solid var(--line-soft); border-radius: 6px; overflow: hidden; white-space: normal; text-align: right; z-index: 2; color: var(--text); }
+#pagePresets .ref .refrole.on { background-color: rgba(11, 13, 20, 0.85); border-color: var(--accent); color: var(--accent-h); }
+
+/* the plate grid — app .lib-grid (auto-fill 84px+ columns, 144/180 cells,
+   6px gap): the cells' width/height/margins are set by layout() */
+#pagePresets .lib-grid { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
+#pagePresets .lib-grid div { border-radius: 8px; border: 1px solid var(--line-soft); background-color: var(--panel-2);
+  background-size: cover; background-position: center; box-sizing: border-box; }
+#pagePresets .lib-grid .sel { border-color: var(--accent); }
+
+/* the picked look — app .lib-pick (hidden until a plate is tapped) */
+#pagePresets .lib-pick { display: none; margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; background-color: var(--panel-2); padding: 10px; }
+#pagePresets .lib-pick.on { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; }
+#pagePresets .lib-pick .im { flex: none; width: 96px; height: 120px; border-radius: 9px; margin-right: 12px; background-size: cover; background-position: center; }
+#pagePresets .lib-pick .ttl { font-size: 13px; font-weight: 800; }
+#pagePresets .lib-pick .sub { font-size: 11.5px; color: var(--muted); }
+#pagePresets .lib-pick .row .btn { margin-top: 8px; margin-right: 8px; }
+#pagePresets .lib-pick .row .btn:last-child { margin-right: 0; }
+#pagePresets .btn.is-off { opacity: 0.6; }
+
+/* no matches — app .empty-state with its 32px search glyph at half opacity */
+#pagePresets .empty-state { display: none; text-align: center; padding: 24px 12px; }
+#pagePresets .empty-state.on { display: block; }
+#pagePresets .empty-state .ic { display: flex; flex-direction: row; justify-content: center; opacity: 0.5; margin-bottom: 8px; }
+#pagePresets .ic-xl { display: block; width: 32px; height: 32px; }
+#pagePresets #libMore { margin-right: 8px; }
+
+/* ======================================================================
+   v6.51.0 — Setup = the web app's pgHome, card for card: readiness rows,
+   ACCOUNT (sign-in hero + profile / plan / Photoshop Panel / devices
+   accordions), RUNNINGHUB ENTERPRISE (key + Model Config), COST & BALANCE,
+   DATA, platforms, share, ABOUT. The shared 15px/1.7 base, .mut, .inp,
+   .chip, .btn, .btn-gold, .hsl, .acc-lnk, .app-grp and .status rules above
+   are scoped to #pageSetup too; below is what this page adds. Where the app
+   uses grid / gap / inset / conic-gradient / background-clip:text /
+   animation, the panel gets the same boxes from flex + margins, px radii
+   and solid gold. Stacked containers say display:block explicitly — UXP
+   lays children out in a row unless told otherwise.
+   ====================================================================== */
+/* shared by every rebuilt page (.apg): the app's .card is a stacked block */
+.apg .card { display: block; }
+/* app .card h2: 12px/800 gold caps with a 1.2em sprite riding the text line
+   (vertical-align -.24em puts it 2.2px above a centred one). The app's sprite
+   carries margin-right 7px; only the h2s it fills through setIcnText add a
+   " " after the sprite (4.8px at 12px + .14em tracking): the Account h2 and
+   the 1.1em Cost h2 — the readiness, RunningHub, Data and About h2s don't. */
+.apg .card h2 { display: flex; flex-direction: row; align-items: center; font-size: 12px; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; line-height: 1.7; }
+.apg .ic-h2 { flex: none; display: block; width: 14.4px; height: 14.4px; margin-right: 7px; position: relative; top: -2.2px; }
+#pageSetup #accH2 .ic-h2 { margin-right: 11.8px; }
+.apg .card h2 .ic-s { width: 13.2px; height: 13.2px; margin-right: 4.8px; position: relative; top: -1.6px; }
+.apg .card h2 .mut { font-weight: 800; }
+/* app .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center} */
+.apg .row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; margin-bottom: 0; }
+.apg .row .btn, .apg .row .inp, .apg .row .hsl { margin-right: 8px; }
+.apg .row .btn:last-child, .apg .row .inp:last-child, .apg .row .hsl:last-child, .apg .hsl .inp { margin-right: 0; }
+/* the app's fields at panel width (its ≤768px rule: 16px so iOS never zooms) */
+#pageSetup .inp { font-size: 16px; }
+/* app .btn wraps onto two lines (the 74px Import / Hard-refresh buttons) */
+#pageSetup .btn { white-space: normal; overflow: visible; text-overflow: clip; text-align: center; }
+/* app <a class="btn"> twins keep the inherited 1.7 (no UA button line box) and,
+   being plain blocks with min-height slack, hold their label at the top —
+   2px above where a <button> would centre it */
+#pageSetup #accPanelDownload, #pageSetup #siteLink { line-height: 1.7; align-items: flex-start; }
+/* the icon-only Show button: the app's <button> strut makes it 46px, and
+   with no label after the eye there is no 3.6px space to emulate (48.3px) */
+#pageSetup #btnShowRhKey { min-height: 46px; }
+/* the eye rides the button's text line (vertical-align -.18em against a 13px
+   line box), 1.8px above where a centred icon lands */
+#pageSetup #btnShowRhKey .ic-s { margin-right: 0; position: relative; top: -1.8px; }
+.apg .status { display: block; }
+.apg .mut { display: block; }
+#pageSetup .acc-lnk { margin-top: 0; }
+#pageSetup .app-grp.hide { display: none; }
+/* group label: the app's inline span with a 1.1em sprite + trimmed " "; the
+   sprite sits on the text baseline (2.34px below it) so the two-line
+   Photoshop group title keeps it on line one like the app's inline flow */
+#pageSetup .car + span { display: flex; flex-direction: row; align-items: center; align-items: baseline; min-width: 0; }
+#pageSetup .car + span .ic-s { width: 14.3px; height: 14.3px; margin-right: 3.4px; position: relative; top: 2.34px; }
+
+/* readiness rows — app button.acc-kv (font:inherit → 15px/1.7, UA color) */
+#pageSetup #setupStatusRows { display: block; }
+#pageSetup .acc-kv { display: flex; flex-direction: row; align-items: flex-start; margin-top: 8px; font-size: 14px; }
+#pageSetup .acc-kv .k { color: var(--muted); flex: 0 0 auto; min-width: 96px; margin-right: 12px; }
+#pageSetup .acc-kv .v { color: var(--text); min-width: 0; }
+#pageSetup #setupStatusRows .acc-kv { width: 100%; font-size: 15px; background-color: transparent; border: none; padding: 0;
+  text-align: left; color: #000000; }
+
+/* ACCOUNT — app #cardAccount */
+#pageSetup #cardAccount .grp-b { padding-top: 8px; }
+#pageSetup #cardAccount .row { margin-top: 8px; }
+#pageSetup #cardAccount .inp { min-height: 44px; }
+#pageSetup .acc-hero { display: flex; flex-direction: column; align-items: center; margin: 6px 0 14px; }
+/* app button.acc-ava: a bare 96px square holding the ring, the clip, the + */
+#pageSetup .acc-ava { position: relative; display: block; width: 96px; height: 96px; flex: none; margin: 0; padding: 0;
+  border: none; border-radius: 0; overflow: visible; background: none; color: #000000; font-size: 13.3333px;
+  line-height: normal; font-weight: 400; text-align: left; }
+#pageSetup .ava-ring { position: absolute; left: -4px; top: -4px; width: 104px; height: 104px; border-radius: 52px;
+  background: linear-gradient(135deg, rgba(233, 185, 73, 0.05), #f7d98e 25%, rgba(233, 185, 73, 0.12) 50%, #b98a24 75%, rgba(233, 185, 73, 0.05)); }
+#pageSetup .ava-clip { position: absolute; left: 0; top: 0; width: 96px; height: 96px; border-radius: 48px; overflow: hidden;
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  background: radial-gradient(120% 100% at 50% 0%, #2a2417, #12100b);
+  /* app: inset top gleam + inset bottom shade */
+  box-shadow: inset 0 -8px 18px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 0 rgba(247, 217, 142, 0.25), inset 0 -8px 18px rgba(0, 0, 0, 0.55); }
+#pageSetup .ava-clip img { display: block; width: 96px; height: 96px; border-radius: 48px; }
+#pageSetup .ava-brand { font-size: 26px; font-weight: 800; letter-spacing: 0.06em; line-height: 1; color: var(--accent-h); }
+#pageSetup .ava-plus { position: absolute; right: -2px; bottom: -2px; width: 28px; height: 28px; border-radius: 14px; display: flex;
+  flex-direction: row; align-items: center; justify-content: center; font-size: 19px; font-weight: 800; line-height: 1; color: #141005;
+  background: linear-gradient(160deg, #f7d98e, #e9b949 55%, #b98a24); border: 2px solid #0e0d0a; box-sizing: border-box;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55), 0 0 12px rgba(233, 185, 73, 0.35); }
+#pageSetup .acc-welcome { display: block; margin-top: 10px; text-align: center; }
+#pageSetup .aw-en { display: block; font-size: 14px; color: var(--text); letter-spacing: 0.02em; }
+#pageSetup .aw-en b { font-weight: 800; color: var(--accent-h); }
+#pageSetup .aw-sub { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; }
+#pageSetup #accIn { display: block; }
+/* app .acc-actions{display:flex;flex-wrap:wrap;gap:8px} .btn{flex:1 1 140px} */
+#pageSetup .acc-actions { display: flex; flex-direction: row; flex-wrap: wrap; margin: 12px -8px -8px 0; }
+#pageSetup .acc-actions .btn { flex: 1 1 140px; margin: 0 8px 8px 0; }
+#pageSetup .acc-sub { display: block; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+#pageSetup .acc-sub .subh { display: block; font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+#pageSetup .acc-plan-line { display: flex; flex-direction: row; align-items: flex-start; font-size: 14px; font-weight: 700; }
+#pageSetup .acc-plan-line .ic-s { width: 15.4px; height: 15.4px; margin-right: 8px; }
+#pageSetup .acc-plan-line.gold { color: var(--accent-h); }
+#pageSetup .acc-plan-line.err { color: var(--err); }
+/* devices — app #devList li{display:flex;gap:8px} + the gold "this device" pill */
+#pageSetup #devList { display: block; list-style: none; margin: 8px 0 0; padding: 0; }
+#pageSetup #devList li { display: flex; flex-direction: row; align-items: center; padding: 8px 0; border-top: 1px solid var(--line-soft); }
+#pageSetup #devList li:first-child { border-top: none; }
+#pageSetup #devList li span { flex: 0 0 auto; display: flex; flex-direction: row; align-items: center; margin-right: 8px; }
+#pageSetup #devList li span .ic-s { width: 16.5px; height: 16.5px; }
+#pageSetup #devList .dv-lbl { flex: 1 1 auto; display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+#pageSetup #devList .dv-me { flex: 0 0 auto; margin-right: 0; font-size: 10px; font-weight: 800; color: #1a1408;
+  background-color: var(--accent); border-radius: 10px; padding: 2px 8px; }
+
+/* RUNNINGHUB — the configured-model chips (app .chips{gap:6px} of inline .chip spans) */
+#pageSetup .chips { display: flex; flex-direction: row; flex-wrap: wrap; margin: 10px -6px -6px 0; }
+#pageSetup .chips .chip { flex: 0 0 auto; white-space: nowrap; margin: 0 6px 6px 0; }
+
+/* COST & BALANCE — app .statline.money-stat (auto-fit 96px+ columns, 10px gap) */
+#pageSetup .money-stat { display: flex; flex-direction: row; flex-wrap: wrap; margin: 8px 0 2px; }
+#pageSetup .money-stat > div { flex: 1 1 0; width: auto; min-width: 96px; margin-right: 10px; padding: 0; text-align: left; }
+#pageSetup .money-stat > div:last-child { margin-right: 0; }
+#pageSetup .money-stat b { display: block; font-size: 15px; font-weight: 700; color: var(--accent-h); }
+#pageSetup .money-stat span { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+#pageSetup #moneyRuns, #pageSetup #moneyByModel, #pageSetup #moneyProv { display: block; }
+#pageSetup #moneyRuns .acc-kv, #pageSetup #moneyByModel .acc-kv { margin-top: 6px; font-size: 12px; }
+#pageSetup #moneyRuns .acc-kv .k, #pageSetup #moneyByModel .acc-kv .k { flex: 1 1 auto; min-width: 0; }
+#pageSetup #moneyRuns .acc-kv .v, #pageSetup #moneyByModel .acc-kv .v { flex: 0 0 auto; }
+
+/* ABOUT — app .about-legal{display:flex;flex-wrap:wrap;gap:8px} .btn{flex:1 1 auto;min-height:48px;line-height:26px} */
+#pageSetup .about-legal { display: flex; flex-direction: row; flex-wrap: wrap; margin: 12px -8px -8px 0; }
+#pageSetup .about-legal .btn { flex: 1 1 auto; min-height: 48px; line-height: 26px; margin: 0 8px 8px 0; align-items: flex-start; }
+
+/* ===== v6.51.0 — setupConfirm(): the panel's window.confirm =====
+   UXP has no window.confirm, so Setup's "clear the ledger?" / "import this
+   backup?" / "hard refresh?" questions open a <dialog> styled as one of the
+   app's own cards: 14px radius, 16px padding, the gold OK button. Explicit
+   flex-direction everywhere, as UXP's layout requires. */
+.hnk-dlg {
+  background-color: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 0;
+  color: var(--text);
+  width: 300px;
+  max-width: 92vw;
+}
+.hnk-dlg-body { display: block; padding: 16px; }
+.hnk-dlg-msg {
+  display: block;
+  margin: 0 0 14px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.hnk-dlg-row { display: flex; flex-direction: row; justify-content: flex-end; align-items: center; }
+.hnk-dlg-row .btn { min-width: 76px; }
+.hnk-dlg-row .btn + .btn { margin-left: 8px; }
+
+/* ======================================================================
+   v6.51.0 — RETOUCH A / RETOUCH B STUDIO = the web app's two suite pages,
+   component for component. Every rule below is the app's own studio CSS
+   (docs/app/index.html: .st-ctl, .pcard, .st-genbar, #stJumpBar, the
+   #stMuCard/#stEvCard group overrides) translated to what UXP draws:
+   flexbox only, no grid / sticky / object-fit / ::before art / aspect-ratio,
+   and every icon a pre-tinted file rather than a currentColor <svg>.
+   Scoped to .stpg, the class both suite pages and the shared dock carry.
+   ====================================================================== */
+
+/* ---- icon tints. An <img> has no currentColor, so each icon ships as one
+   file per tint it can wear and the rules below reveal exactly one: cream in
+   a chip, ink on the gold active pill and inside a gold button, gold at the
+   head of a group, muted in the queue tally. ---- */
+.stpg .i2g, .stpg .i2k, .stpg .i2m { display: none; }
+.stpg .grp-h .i2c { display: none; }
+.stpg .chip.on .i2c, .stpg .btn-gold .i2c, .stpg .chip.on .i2g { display: none; }
+.stpg .chip.on .i2k, .stpg .btn-gold .i2k { display: block; }
+/* a chip inside a sentence-flow row keeps its icon inline */
+.stpg .chip.on .i2k { display: inline; }
+.stpg #stPendCount .i2c, .stpg #stPendCount .i2g, .stpg #stPendCount .i2k { display: none; }
+.stpg #stPendCount .i2m { display: inline; }
+/* the app's svg.ic-s has no width of its own — it measures 1.1em from the
+   text it sits in (13.2px in a 12px chip, 14.3px in a 13px button) */
+.stpg .ic-s { width: 1.1em; height: 1.1em; vertical-align: -2px; }
+/* an icon that sits INSIDE a sentence is part of the line, not a block of its
+   own: the panel's global .ic-s is display:block (it is a flex child in every
+   button), which here would break the line in two around the glyph. Named by
+   tint so it never un-hides the other copies of the same icon. */
+.stpg p .i2c, .stpg .mut .i2c, .stpg .subh .i2c { display: inline; }
+.stpg .grp-h .ic-s { width: 17px; height: 17px; vertical-align: -3px; }
+.stpg .grp-h .i2g { display: inline; }
+.stpg .ic-h2 { width: 14.4px; height: 14.4px; margin-right: 7px; vertical-align: -2px; }
+.stpg .ic-xl { flex: 0 0 auto; width: 32px; height: 32px; vertical-align: -0.18em; }
+.stpg .ic-car { display: block; width: 12px; height: 12px; }
+.stpg .ic-sa { width: 14px; height: 14px; }
+
+/* ---- the two suite cards' group frames (app: #stMuCard .grp / .grp-h) ---- */
+.stpg #stMuCard .grp, .stpg #stEvCard .grp {
+  border: 1px solid var(--line-soft); border-radius: 12px;
+  background-color: var(--panel); margin: 12px 0 0 0; overflow: hidden;
+}
+/* the app's last group keeps a 9px tail inside the card (its own
+   margin-bottom); margins do not collapse here, so the host carries it */
+.stpg #muHost, .stpg #evHost { display: block; padding-bottom: 9px; }
+.stpg #stMuCard .grp-h, .stpg #stEvCard .grp-h {
+  display: flex; flex-direction: row; align-items: center;
+  min-height: 50px; padding: 12px; background-color: transparent;
+  font-size: 13.5px; font-weight: 700; color: var(--text);
+}
+/* the app lays this row out with `order` (title 2 · caret 2 · badge 3 ·
+   reset 4 · count 5) — UXP has none, so the studio module builds the header
+   in that visual order and these rules only carry the 9px gap and the
+   caret's flex:1 fill that the app's own CSS gives it. */
+.stpg #stMuCard .grp-h > span, .stpg #stEvCard .grp-h > span { flex: 0 0 auto; }
+.stpg #stMuCard .grp-h .car, .stpg #stEvCard .grp-h .car { flex: 1 1 auto; min-width: 0; margin: 0 0 0 11px; }
+.stpg .grp-h .dot {
+  display: none; margin-left: 6px; min-width: 18px; height: 18px; line-height: 18px;
+  text-align: center; background-color: var(--accent); color: #1a1408;
+  border-radius: 9px; font-size: 11px; font-weight: 800; padding: 0 4px;
+}
+.stpg .grp-h .dot.on { display: block; }
+.stpg .st-sact { display: flex; flex-direction: row; flex: 0 0 auto; margin-left: 9px; }
+.stpg .st-sact .sa {
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 8px; color: var(--muted);
+}
+.stpg .grp-h .cnt {
+  flex: 0 0 auto; margin-left: 9px; background-color: var(--panel-2); border-radius: 999px;
+  padding: 4px 9px; font-size: 10px; font-weight: 600; color: var(--muted); white-space: nowrap;
+}
+.stpg .grp-b { display: none; padding: 4px 14px 14px; }
+.stpg .grp.open > .grp-b { display: block; }
+.stpg #stMuCard .grp-b, .stpg #stEvCard .grp-b { padding: 2px 12px 12px; }
+.stpg .grp.open .car .ic-car { transform: rotate(180deg); }
+.stpg .grp.hide { display: none; }
+
+/* ---- one control row (app: .st-ctl / .st-ctl.st-slider) ---- */
+.stpg .st-ctl { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; }
+/* the app's .st-ctl is a flex row with gap:8px */
+.stpg .st-ctl > .chip, .stpg .st-ctl > select, .stpg .st-ctl > .st-sws,
+.stpg .st-ctl > .inp, .stpg .st-ctl > .st-color { margin-left: 8px; }
+.stpg .st-ctl label { flex: 0 0 40%; min-width: 96px; font-size: 11px; line-height: 18.7px; color: var(--text); }
+.stpg #stMuCard .st-ctl.st-slider, .stpg #stEvCard .st-ctl.st-slider {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start;
+  padding: 9px 0 10px; margin: 0; border-top: 1px solid rgba(243, 239, 230, 0.055);
+}
+.stpg #stMuCard .st-ctl.st-slider > label, .stpg #stEvCard .st-ctl.st-slider > label {
+  flex: 1 1 0; min-width: 0; font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 17px;
+}
+/* the app's first row in a group body has no rule above it */
+.stpg #stMuCard .grp-b .st-grid > .st-ctl.st-slider:first-child,
+.stpg #stEvCard .grp-b .st-grid > .st-ctl.st-slider:first-child { border-top: 0; }
+.stpg .st-ctl.sub > label { padding-left: 11px; color: var(--muted); }
+.stpg .st-val {
+  flex: 0 0 auto; min-width: 44px; margin-left: 7px; text-align: right; font-size: 12.5px; font-weight: 700;
+  color: var(--muted); line-height: 17px; background-color: transparent; border: 0; padding: 0;
+}
+.stpg .st-val.on { color: var(--accent-h); }
+/* the app's row-gap:7px between the label line and the track */
+.stpg .rng { flex: 1 0 100%; min-width: 0; height: 22px; min-height: 22px; margin: 7px 0 0 0; padding: 0; accent-color: var(--accent); }
+.stpg .st-q {
+  flex: 0 0 auto; width: 15px; height: 15px; margin-left: 6px; border-radius: 50%;
+  border: 1px solid var(--line-soft); color: var(--muted);
+  font-size: 9px; font-weight: 700; line-height: 13px; text-align: center;
+}
+.stpg .st-bg {
+  flex: 0 0 auto; margin-left: 6px; padding: 3px 5px; border-radius: 5px;
+  font-size: 7.5px; font-weight: 800; letter-spacing: 0.08em; white-space: nowrap;
+}
+.stpg .st-bg.nw { color: #0b1a2a; background-color: #5fc4f5; }
+/* the app's AI badge inside a chip label */
+.stpg .ai-mark {
+  display: inline; margin-left: 6px; padding: 0 4px; border-radius: 4px;
+  font-size: 8.5px; font-weight: 800; letter-spacing: 0.06em; line-height: 12.75px;
+  color: #1a1408; background-color: var(--accent-h);
+}
+.stpg .st-bg.pro { color: #efe6ff; background-color: #7b53f0; }
+.stpg .st-grid { display: block; }
+/* the app's studio sub-heads keep their own case ("One-tap look များ"), so
+   the panel's global uppercase rule steps aside here */
+.stpg .subh { margin-top: 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: var(--muted); text-transform: none; }
+.stpg #stMuCard .subh, .stpg #stEvCard .subh { margin-top: 11px; font-weight: 700; }
+.stpg .st-note { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+/* ---- chips inside the two suite cards (app: #stMuCard .chip / .chips.seg) ---- */
+.stpg #stMuCard .chip, .stpg #stEvCard .chip {
+  min-height: 34px; padding: 5px 12px; font-size: 12px; font-weight: 600; border-radius: 999px;
+}
+/* the app's gold active pill, on all three retouch pages */
+.stpg .chip.on {
+  background-color: var(--accent); color: #1a1408; border-color: transparent; font-weight: 700;
+}
+.stpg .chips.seg {
+  display: flex; flex-direction: row; flex-wrap: nowrap; background-color: var(--panel-2);
+  border: 1px solid var(--line-soft); border-radius: 10px; padding: 3px;
+}
+.stpg .chips.seg .chip {
+  flex: 1 1 0; justify-content: center; border: 0; background-color: transparent;
+  border-radius: 6px; min-height: 32px; padding: 5px 8px; margin: 0;
+}
+/* the app's thumbnail chip grid is display:grid; four flex columns measure
+   the same at panel width */
+.stpg .chips.thumbs { display: flex; flex-direction: row; flex-wrap: wrap; }
+.stpg .chips.thumbs .chip {
+  flex: 0 0 auto; width: 23.5%; flex-direction: column; align-items: stretch;
+  padding: 0; margin: 0 2% 7px 0; background-color: transparent; border: 0; min-height: 0;
+  font-size: 9.5px; font-weight: 600; color: var(--muted); text-align: center;
+}
+.stpg .chips.thumbs.c3 .chip { width: 32%; }
+.stpg .chips.thumbs .chip.on { background-color: transparent; color: var(--accent-h); }
+.stpg .chips.thumbs .chip .st-th {
+  display: block; height: 64px; border-radius: 9px; border: 2px solid transparent;
+  background-color: var(--panel-2); overflow: hidden;
+}
+.stpg .chips.thumbs .chip.on .st-th { border-color: var(--accent); }
+.stpg .chips.thumbs .chip .st-cap { display: block; overflow: hidden; white-space: nowrap; }
+.stpg .st-thph { display: block; width: 100%; height: 100%; }
+
+/* ---- colour wells become swatch rows (UXP has no <input type=color>) ---- */
+.stpg .st-sws { display: flex; flex-direction: row; flex-wrap: wrap; flex: 1 1 auto; }
+.stpg .st-sw {
+  width: 26px; height: 26px; margin: 0 6px 6px 0; border-radius: 50%;
+  border: 2px solid var(--line-soft); background-color: transparent;
+}
+.stpg .st-sw.off { background-color: var(--panel-2); opacity: 0.6; }
+.stpg .st-sw.on { border-color: var(--accent); }
+
+/* ---- one-tap look / recipe / grade tiles (app: .pcard, canvas 76x96) ---- */
+.stpg .prowwrap { display: block; }
+.stpg .prow { display: flex; flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
+.stpg .pcard {
+  position: relative; flex: 0 0 auto; width: 76px; margin-right: 8px; padding: 0;
+  border: 1px solid var(--line-soft); border-radius: 12px; background-color: var(--panel-2); overflow: hidden;
+}
+.stpg .pcard.on { border-color: var(--accent); }
+.stpg .st-tile {
+  display: block; width: 76px; height: 96px; overflow: hidden;
+  background-color: var(--panel-2);
+  background-image: linear-gradient(140deg, #2b2312, #131826);
+}
+/* the app cover-fills its tile biased 22% off the top (stDrawLookArt); with
+   no object-fit the 2:3 art is width-fitted and the window takes the crop */
+.stpg .st-tile-im { display: block; width: 76px; height: 114px; margin-top: -4px; }
+.stpg .pcard span {
+  display: block; font-size: 10px; line-height: 12.5px; text-align: center; padding: 3px 2px;
+  color: var(--muted); min-height: 25px;
+}
+.stpg .pcard .x, .stpg .pcard .pin {
+  position: absolute; top: 4px; width: 24px; height: 24px; border-radius: 8px;
+  border: 1px solid var(--line-soft); background-color: rgba(11, 13, 20, 0.8);
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+}
+.stpg .pcard .x { left: 4px; color: var(--text); }
+.stpg .pcard .pin { right: 4px; color: var(--accent); }
+.stpg .st-tile.rc { background-image: linear-gradient(180deg, #20261b, #131826); }
+.stpg .st-tile-ic { display: block; width: 24px; height: 24px; margin: 36px auto 0; }
+.stpg .hnk-dlg .inp { width: 100%; box-sizing: border-box; margin-bottom: 14px; }
+
+/* ---- the 880 style pack grid (app: .st880-grid, auto-fill 88px) ---- */
+.stpg .st880-grid { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
+.stpg .st880-grid .pcard { width: 31%; margin: 0 2% 8px 0; }
+.stpg .st880-grid .pcard img { display: block; width: 100%; height: 112px; }
+.stpg .st880-grid .pcard span { display: block; font-size: 10.5px; line-height: 1.3; padding: 4px 5px; }
+.stpg .st880-grid .pcard.on { border-color: var(--accent); }
+
+/* The app spaces a chips row with gap; the panel spaces it with a 6px margin
+   under every chip (no gap in UXP), which leaves one 6px tail the app does
+   not have. Pulling the row up by exactly that keeps everything below it on
+   the app's line. The two jump-bar rows never wrap and carry no tail. */
+.stpg .chips { margin-bottom: -6px; }
+.stpg #stSuiteTabs, .stpg #stGroupChips, .stpg #stPendChips { margin-bottom: 0; }
+/* the app's .row gap:8px, between a label and its value */
+.stpg .row b { margin-left: 8px; }
+
+/* ---- the V2 hero's full-width ranges ---- */
+.stpg .v2-range { display: block; width: 100%; height: 44px; min-height: 44px; margin: 0; padding: 0; accent-color: var(--accent); }
+.stpg #v2PromptPreview { display: block; max-height: 180px; overflow: auto; font-size: 10px; white-space: pre-wrap; }
+.stpg #v2Log { display: block; max-height: 110px; overflow-y: auto; font-size: 10px; white-space: pre-wrap; }
+.stpg #rsModeTabs .chip { margin-right: 6px; }
+.stpg #rsSelCount { margin-top: 6px; }
+
+/* ---- PHOTO slot (app: #stPicker / #rsPicker .ref.stbig) ---- */
+.stpg #stPicker .ref { position: relative; display: block; width: 100%; min-height: 120px;
+  border: 1px dashed var(--line); border-radius: 12px; background-color: var(--panel-2); overflow: hidden; }
+.stpg #stPicker .ref.filled { border-style: solid; }
+/* only the loaded photo fills the slot — the empty state's camera glyph is
+   an <img> too, and a bare `.ref img` rule would stretch it to the slot */
+.stpg #stPicker .ref.filled img { display: block; width: 100%; }
+.stpg #stPicker .ref .add {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 120px; font-size: 12px; line-height: normal; color: var(--text); text-align: center; padding: 0;
+}
+.stpg #stPicker .ref .add span:first-child { margin-bottom: 6px; }
+.stpg #stPicker .ref .x {
+  position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 8px;
+  border: 1px solid var(--line-soft); background-color: rgba(11, 13, 20, 0.8);
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+}
+.stpg #stPicker .ref .tag {
+  position: absolute; left: 4px; bottom: 4px; background-color: rgba(11, 13, 20, 0.8);
+  border-radius: 6px; padding: 1px 7px; font-size: 10px; font-weight: 800;
+  line-height: 17px; color: var(--accent-h);
+}
+.stpg .st-refx { display: flex; flex-direction: row; align-items: center; margin-top: 8px; }
+.stpg .st-refx .ref { flex: 0 0 56px; width: 56px; height: 56px; margin-right: 8px; }
+.stpg .st-tgh { display: flex; flex-direction: row; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--muted); }
+.stpg .st-tgh .st-tgi { width: 14px; height: 14px; margin-right: 7px; }
+
+/* ---- the jump bar (app: #stJumpBar, sticky in the app, in flow here) ---- */
+.stpg #stJumpBar { display: block; padding: 2px 0 4px; background-color: var(--bg); }
+.stpg #stJumpTop { display: flex; flex-direction: row; align-items: center; margin-top: 4px; }
+.stpg #stSuiteTabs { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow-x: auto; margin-top: 0; }
+.stpg #stSuiteTabs .chip { flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
+.stpg #stSearch { flex: 1 1 0; min-width: 80px; min-height: 38px; height: 38px; margin-left: 6px; padding: 6px 10px; font-size: 11px; }
+.stpg #stGroupChips { flex-wrap: nowrap; overflow-x: auto; margin-top: 8px; padding-bottom: 2px; }
+.stpg #stGroupChips .chip { flex: 0 0 auto; white-space: nowrap; min-height: 34px; padding: 4px 11px; font-size: 10px; margin-bottom: 0; }
+.stpg #stGroupChips .chip.edited { border-color: var(--accent); color: var(--accent-h); }
+.stpg #stGroupChips .chip.here { background-color: var(--accent); color: #1a1408; border-color: var(--accent); }
+.stpg #stSearchTgl { display: none; }
+.stpg .st-find { width: 100%; margin-top: 8px; }
+
+/* ---- the generate bar (app: .st-genbar, sticky above the tab bar; the
+   panel lifts #btnStGen into #genDock the same way every other page does) ---- */
+.stpg .st-genbar {
+  display: block; background-color: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 5px 12px 6px; margin: 16px 0;
+}
+.stpg #stGenBar .gen { flex: 1 1 auto; min-width: 138px; margin-top: 0; padding: 9px 12px; font-size: 15px; }
+.stpg #stGenBar .gen.is-empty { background-color: transparent; background-image: none; color: var(--text); border: 1px solid var(--line-soft); font-weight: 700; }
+.stpg #stGenBar .row { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; }
+.stpg #stGenBar .row .chip { flex: 0 0 auto; font-size: 11px; padding: 4px 9px; }
+.stpg #stPendChips { flex-wrap: wrap; }
+.stpg #stPendChips .chip { font-size: 11px; padding: 4px 9px; }
+.stpg .st-x { margin-left: 6px; color: var(--muted); }
+.stpg #stHdNote { display: none; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.stpg #stHdNote.on { display: block; }
+.stpg #stGenBar .status { margin-top: 4px; font-size: 12px; min-height: 0; }
+
+/* ---- empty state (app: .empty-state) ---- */
+.stpg .empty-state { display: none; padding: 24px 12px; text-align: center; }
+.stpg .empty-state.on { display: block; }
+/* the app's .ic is a 32px text line (font-size:32px), so the glyph sits in a
+   54.4px line box — the panel's <img> has to be given that box by hand */
+.stpg .empty-state .ic { display: block; font-size: 32px; line-height: 1.7; margin-bottom: 8px; opacity: 0.5; }
+
+/* the two column wrappers are display:contents in the app — UXP has no such
+   display, so they stay plain blocks that add no box of their own */
+.stpg #stColL, .stpg #stColR, .stpg .st-cols, .stpg .st-mount { display: block; }
+
+/* the app gives Retouch Pro's photo slot the same big dropzone as the
+   studio's (#stPicker .ref.stbig, #rsPicker .ref.stbig) */
+.stpg #rsPicker .ref { position: relative; display: block; width: 100%; min-height: 120px;
+  border: 1px dashed var(--line); border-radius: 12px; background-color: var(--panel-2); overflow: hidden; }
+.stpg #rsPicker .ref.filled { border-style: solid; }
+.stpg #rsPicker .ref.filled img { display: block; width: 100%; }
+.stpg #rsPicker .ref .add {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 120px; font-size: 12px; line-height: normal; color: var(--text); text-align: center; padding: 0;
+}
+.stpg #rsPicker .ref .add span:first-child { margin-bottom: 6px; }
+.stpg #rsPicker .ref .x {
+  position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 8px;
+  border: 1px solid var(--line-soft); background-color: rgba(11, 13, 20, 0.8);
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+}
+.stpg #rsPicker .ref .tag {
+  position: absolute; left: 4px; bottom: 4px; background-color: rgba(11, 13, 20, 0.8);
+  border-radius: 6px; padding: 1px 7px; font-size: 10px; font-weight: 800;
+  line-height: 17px; color: var(--accent-h);
+}
+
+/* v6.51.0 — Text to Image, the app's own measurements: its #t2iPrompt is a
+   110px box and the character count is an 11px line pinned right. */
+#pageCreate .pbox.t2i-box { height: 110px; min-height: 110px; }
+#pageCreate .mut.t2i-count { margin-top: 4px; font-size: 11px; text-align: right; }
+#pageCreate .ic-h2 { width: 14.4px; height: 14.4px; margin-right: 7px; vertical-align: -2px; }

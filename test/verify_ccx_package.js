@@ -115,7 +115,10 @@ if (fs.existsSync(METADATA)) {
         expectedBytes: metadata.bytes, actualBytes: fs.statSync(artifact).size }));
     const coreFiles = ["manifest.json", "index.html", "main.js", "styles.css"];
     const mismatched = coreFiles.filter(file => fs.existsSync(path.join(SOURCE, file)) &&
-      execFileSync("unzip", ["-p", artifact, file]).compare(fs.readFileSync(path.join(SOURCE, file))) !== 0);
+      /* main.js alone is over a megabyte, so the default 1MB pipe buffer
+         made this check die with ENOBUFS instead of comparing anything */
+      execFileSync("unzip", ["-p", artifact, file], { maxBuffer: 64 * 1024 * 1024 })
+        .compare(fs.readFileSync(path.join(SOURCE, file))) !== 0);
     check("archive core files are byte-identical to tracked panel source",
       mismatched.length === 0, mismatched.join(", ") || "none");
   }

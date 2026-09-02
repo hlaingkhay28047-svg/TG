@@ -204,10 +204,22 @@ if (_CATALOG && _CATALOG.categories) {
     var ids = [];
     c.items.forEach(function (w) {
       ids.push(w.id);
-      if (_byId[w.id]) { if (!_byId[w.id].category) _byId[w.id].category = c.category; return; }
+      if (_byId[w.id]) {
+        var own = _byId[w.id];
+        if (!own.category) own.category = c.category;
+        /* v6.51.0 — the app's card badge / wedding sub-group ride along for
+           the hand-built definitions too, so the list draws them the same */
+        if (!own.badge) own.badge = w.badge || "";
+        if (!own.wedGroup) own.wedGroup = w.wedGroup || "";
+        /* the app's own card line for this id; `summary` stays the English
+           wizard fallback the wf_sum_* translations key off */
+        if (!own.cardSummary) own.cardSummary = w.summary || "";
+        return;
+      }
       var wf = {
         id: w.id, title: w.title, home: false, category: c.category,
         visual: _ART_BASE + w.id + ".jpg",
+        badge: w.badge || "", wedGroup: w.wedGroup || "",
         summary: w.summary, explanation: w.explanation,
         humanSubject: false, referenceTransfer: false, bespoke: true,
         requiredInputs: (w.req || []).map(function (label, ri) {
@@ -225,7 +237,7 @@ if (_CATALOG && _CATALOG.categories) {
       WORKFLOWS.push(wf);
       _byId[wf.id] = wf;
     });
-    _CATEGORIES.push({ category: c.category, icon: c.icon || "", ids: ids });
+    _CATEGORIES.push({ category: c.category, icon: c.icon || "", desc: c.desc || "", open: !!c.open, ids: ids });
   });
 }
 

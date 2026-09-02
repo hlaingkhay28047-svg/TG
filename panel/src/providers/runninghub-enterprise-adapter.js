@@ -396,6 +396,10 @@ async function _runOnce(deps, request, onStage, m) {
   var final = await taskSvc.pollUntilDone(deps, apiKey, taskId, function (elapsed) {
     _stage(onStage, m, { elapsedMs: elapsed });
   });
+  // The SUCCESS body also carries what RunningHub charged (usage /
+  // taskUsageList). Kept per task so the caller can book the real cost.
+  if (!deps._usage) deps._usage = [];
+  deps._usage.push({ taskId: taskId, final: final });
 
   // Download
   machine.advance(m); _stage(onStage, m); // DOWNLOADING_RESULT
@@ -444,7 +448,7 @@ async function generate(deps, request, opts) {
     }
     machine.advance(m); // (VALIDATING -> ... ) keep top machine READY
     m.stage = "READY"; _stage(onStage, m);
-    return { ok: true, results: all, model: request.model, machine: m };
+    return { ok: true, results: all, model: request.model, machine: m, usage: deps._usage || [] };
   } catch (e) {
     if (e && e.code === "cancelled") {
       machine.cancel(m); _stage(onStage, m);

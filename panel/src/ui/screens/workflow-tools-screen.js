@@ -75,6 +75,32 @@ function create(deps) {
   var L_SEARCH = { my: "Workflow ရှာရန် — veil, retouch, relight…", en: "Search Workflow — veil, retouch, relight…", shn: "သွၵ်ႈႁႃ Workflow — veil, retouch, relight…", kac: "Workflow tam u — veil, retouch, relight…", th: "ค้นหา Workflow — veil, retouch, relight…", zh: "搜索 Workflow — veil、retouch、relight…", vi: "Tìm Workflow — veil, retouch, relight…", id: "Cari Workflow — veil, retouch, relight…", ms: "Cari Workflow — veil, retouch, relight…" };
   var L_UNIT = { my: " ခု", en: "", shn: "", kac: "", th: "", zh: " 个", vi: "", id: "", ms: "" };
 
+  /* v6.51.0 — the rest of the app's Workflows page, string for string: the
+     hero strip over the card, favourites/recents, the per-group reset, the
+     batch shortcut into Path, the "n found" line and the empty state. The
+     kick line is the app's literal in every locale. */
+  var L_KICK = "No Install · Panel Data · RunningHub AI";
+  var L_HERO = { my: "Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ", en: "The panel's <em>One-Taps</em>, now in your browser", shn: "One-Tap ၶွင် Photoshop panel ႁွတ်ႈမႃး ၼႂ်း browser ယဝ်ႉ", kac: "Photoshop panel a One-Tap ni gaw browser hta du sai", th: "One-Tap จากแผง Photoshop มาอยู่ในเบราว์เซอร์แล้ว", zh: "Photoshop 面板的 One-Tap 功能，现已进入浏览器", vi: "One-Tap của bảng Photoshop nay đã có trên trình duyệt", id: "One-Tap dari panel Photoshop kini hadir di browser", ms: "One-Tap panel Photoshop kini di pelayar anda" };
+  var L_NOTE = { my: "Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · သင် setup လုပ်ထားတဲ့ AI engine (RunningHub Enterprise) နဲ့ အလုပ်လုပ်တယ်", en: "Tap any card to open its wizard — Guide → Images → Generate · runs on your configured AI engines (RunningHub Enterprise)", shn: "ၼဵၵ်း card ဢၼ်လႂ်သေဢမ်ႇဝႃႈ wizard တေပိုတ်ႇ — Guide → Images → Generate · ႁဵတ်းၵၢၼ်လူၺ်ႈ AI engine ဢၼ်ၸဝ်ႈၵဝ်ႇ setup ဝႆႉ (RunningHub Enterprise)", kac: "Card langai mi dip yang wizard hpaw na — Guide → Images → Generate · nang setup da ai AI engine (RunningHub Enterprise) hte galaw ai", th: "แตะการ์ดใดก็ได้เพื่อเปิด wizard — Guide → Images → Generate · ทำงานบน AI engine ที่คุณตั้งค่าไว้ (RunningHub Enterprise)", zh: "点击任意卡片即可打开向导 — Guide → Images → Generate · 由你配置的 AI engine 驱动（RunningHub Enterprise）", vi: "Chạm vào card bất kỳ để mở wizard — Guide → Images → Generate · chạy trên engine AI bạn đã cấu hình (RunningHub Enterprise)", id: "Ketuk kartu mana pun untuk membuka wizard-nya — Guide → Images → Generate · berjalan dengan engine AI yang Anda konfigurasi (RunningHub Enterprise)", ms: "Ketik mana-mana kad untuk membuka wizard — Guide → Images → Generate · berjalan pada enjin AI yang anda konfigurasikan (RunningHub Enterprise)" };
+  var L_FAV_HINT = { my: "ကတ်ပေါ်က ★ ကို နှိပ်ပြီး အကြိုက်ဆုံး workflow တွေ ဒီမှာ စုထားနိုင်တယ်", en: "Tap ★ on a card to pin your favorite workflows here", shn: "ၼဵၵ်း ★ ၼိူဝ်ၵၢတ်ႈသေ သိမ်း workflow ဢၼ်လႆႈၸႂ်တီႈၼႆႈ", kac: "Card ntsa na ★ hpe dip nna ra ai workflow ni ndai kaw da u", th: "แตะ ★ บนการ์ดเพื่อปักหมุดเวิร์กโฟลว์โปรดไว้ที่นี่", zh: "点按卡片上的 ★ 把常用工作流固定在这里", vi: "Chạm ★ trên thẻ để ghim workflow yêu thích tại đây", id: "Ketuk ★ pada kartu untuk menyematkan workflow favorit di sini", ms: "Ketik ★ pada kad untuk semat aliran kerja kegemaran di sini" };
+  var L_FAVS = { my: "အကြိုက်ဆုံးများ", en: "Favorites", shn: "ဢၼ်လႆႈၸႂ်", kac: "Ra dik ai ni", th: "รายการโปรด", zh: "收藏", vi: "Yêu thích", id: "Favorit", ms: "Kegemaran" };
+  var L_RECENT = { my: "မကြာခင်သုံးခဲ့", en: "Recent", shn: "ဢၼ်ၸႂ်ႉလိုၼ်းသုတ်း", kac: "Ya sha lang ai", th: "ล่าสุด", zh: "最近", vi: "Gần đây", id: "Terbaru", ms: "Terkini" };
+  var L_ALL = { my: "အားလုံး", en: "All", shn: "တင်းသဵင်ႈ", kac: "Yawng", th: "ทั้งหมด", zh: "全部", vi: "Tất cả", id: "Semua", ms: "Semua" };
+  var L_FAVORITE = { my: "အကြိုက်", en: "Favorite", shn: "ဢၼ်လႆႈၸႂ်", kac: "Ra sharawng ai", th: "รายการโปรด", zh: "收藏", vi: "Yêu thích", id: "Favorit", ms: "Kegemaran" };
+  var L_BATCH = { my: "ပုံအများနဲ့ လုပ်မယ်", en: "Run on many photos", shn: "ႁဵတ်းလူၺ်ႈၶႅပ်းႁၢင်ႈၼမ်", kac: "Sumla law law hte galaw u", th: "ใช้กับรูปหลายรูป", zh: "批量处理多张照片", vi: "Chạy trên nhiều ảnh", id: "Jalankan pada banyak foto", ms: "Jalankan pada banyak foto" };
+  var L_RESET = { my: "ဒီအပိုင်းကို မူလအတိုင်း ပြန်ထား", en: "Reset this section" };
+  var L_RESET_OK = { my: "ဒီအပိုင်း မူလအတိုင်း ပြန်ရောက်ပြီ", en: "Section reset" };
+  var L_EMPTY = { my: "ဒီစကားလုံးနဲ့ workflow ဘာမှ မတွေ့ပါ — တခြားစကားလုံးနဲ့ ရှာကြည့်ပါ", en: "No workflows match that — try a different search", shn: "ဢမ်ႇႁၼ် workflow သင် — ၸၢမ်းသွၵ်ႈတူၺ်းၶေႃႈၵႂၢမ်းတၢင်ႇဢၼ်", kac: "Workflow n mu ai — ga langai bai tam yu u", th: "ไม่พบเวิร์กโฟลว์ — ลองค้นหาคำอื่น", zh: "没有匹配的工作流 — 试试其他关键词", vi: "Không tìm thấy workflow — hãy thử từ khóa khác", id: "Tidak ada workflow yang cocok — coba kata kunci lain", ms: "Tiada aliran kerja sepadan — cuba kata carian lain" };
+  var L_CLEAR = { my: "ရှာဖွေမှု ရှင်းမယ်", en: "Clear search", shn: "လၢင်ႉၶေႃႈသွၵ်ႈ", kac: "Tam ai hpe sausan u", th: "ล้างการค้นหา", zh: "清除搜索", vi: "Xóa tìm kiếm", id: "Hapus pencarian", ms: "Kosongkan carian" };
+  function foundLabel(n) {
+    return l9({ my: n + " ခု တွေ့သည်", en: n + " found", shn: "ႁၼ် " + n + " ဢၼ်", kac: n + " mu ai", th: "พบ " + n + " รายการ", zh: "找到 " + n + " 个", vi: "Tìm thấy " + n, id: n + " ditemukan", ms: n + " dijumpai" });
+  }
+  /* the app's HNK_MY_ALIAS: a Burmese search word also matches its English
+     catalog words (the catalog's ids and summaries are English) */
+  var MY_ALIAS = [["ဆံပင်", "hair"], ["နောက်ခံ", "background"], ["မိတ်ကပ်", "makeup"], ["ဝတ်စုံ", "dress outfit gown"], ["အလင်း", "light lighting relight"], ["မျက်နှာ", "face"], ["မင်္ဂလာ", "wedding"], ["ပန်း", "flower floral"], ["သတို့သမီး", "bride wedding"], ["ကလေး", "child baby"], ["ဓာတ်ပုံဟောင်း", "restore vintage"], ["အသားအရေ", "skin retouch"], ["ရေ", "water"], ["ကောင်းကင်", "sky"], ["လိုဂို", "logo text"], ["ပုံတူ", "pose"], ["မွေးနေ့", "birthday"], ["ဘွဲ့", "graduation"], ["ရိုးရာ", "traditional heritage"], ["စတူဒီယို", "studio"]];
+  /* the app's Wedding Suite sub-group chip labels (English in every locale) */
+  var WG_NAMES = { trail: "Flower Trail", veil: "Veil", gown: "Gown Train", petal: "Petal Rain", extra: "Extra" };
+
   function _lang() {
     try {
       var b = globalThis.HNK && globalThis.HNK.i18n;
@@ -83,70 +109,273 @@ function create(deps) {
   }
   function l9(m) { var k = _lang(); return (m && m[k] != null) ? m[k] : (m && m.en) || ""; }
 
+  /* the app's icn(): a sprite symbol; the panel draws the same symbol from
+     icons/ui/<name>-<tint>.svg as an <img> (UXP has no <svg><use>) */
+  function icon(name, cls, w) {
+    var im = doc.createElement("img");
+    im.className = cls || "ic-s";
+    im.alt = "";
+    im.src = "icons/ui/" + name + ".svg";
+    if (w) { im.style.width = w + "px"; im.style.height = w + "px"; }
+    return im;
+  }
+
+  /* the app's favourites / recents lists, same keys, same shapes (JSON arrays
+     of workflow ids); UXP may deny localStorage, so a memory copy stands in */
+  var K_FAVS = "hnk_ws_wf_favs", K_RECENT = "hnk_ws_wf_recent";
+  var _mem = {};
+  function readList(key) {
+    try {
+      var raw = globalThis.localStorage.getItem(key);
+      if (raw != null) { var v = JSON.parse(raw); if (Array.isArray(v)) return v; }
+    } catch (e) { }
+    return Array.isArray(_mem[key]) ? _mem[key].slice() : [];
+  }
+  function writeList(key, list) {
+    _mem[key] = list.slice();
+    try { globalThis.localStorage.setItem(key, JSON.stringify(list)); } catch (e) { }
+  }
+  function favList() { return readList(K_FAVS); }
+  function favSave(l) { writeList(K_FAVS, l); }
+  function recentList() { return readList(K_RECENT); }
+  function recentPush(id) {
+    var l = recentList().filter(function (x) { return x !== id; });
+    l.unshift(id);
+    writeList(K_RECENT, l.slice(0, 6));
+  }
+
   /* every card built this render, so the search field can filter them all */
   var wfIndex = [];
+  var favHost = null;
 
   function needLabel(wf) {
     var n = (wf.requiredInputs || []).length;
     return n === 0 ? l9(L_NEED0) : n === 1 ? l9(L_NEED1) : l9(L_NEED2);
   }
 
-  function miniCard(wf) {
-    var m = dom.el(doc, "button", { class: "wfmini", id: "hnkWf_" + wf.id });
+  function toast(msg, kind) {
+    try {
+      var nav = globalThis.HNK && globalThis.HNK.panelNav;
+      if (nav && typeof nav.toast === "function") nav.toast(msg, kind);
+    } catch (e) { }
+  }
+
+  /* app .hero-strip.hero-mini: the page's picture strip with the kick line
+     and the two-tone headline pinned to its foot. The scrim is baked into
+     the JPEG (UXP has no ::after). */
+  function heroMini() {
+    var hero = dom.el(doc, "div", { class: "hero-mini", id: "hnkWfHero" });
+    var art = dom.el(doc, "div", { class: "hero-art" });
+    var im = doc.createElement("img");
+    im.alt = ""; im.src = "icons/banners/hero-wf.jpg";
+    art.appendChild(im);
+    hero.appendChild(art);
+    hero.appendChild(dom.el(doc, "div", { class: "kick", text: L_KICK }));
+    var h1 = dom.el(doc, "div", { class: "h1" });
+    var parts = l9(L_HERO).split(/<\/?em>/);
+    parts.forEach(function (p, i) {
+      if (!p) return;
+      if (i % 2) h1.appendChild(dom.el(doc, "span", { class: "em", text: p }));
+      else h1.appendChild(doc.createTextNode(p));
+    });
+    hero.appendChild(h1);
+    return hero;
+  }
+
+  /* app cardVisual() + the two corner buttons + the photo-count pill */
+  function miniCard(wf, grp, catTitle) {
+    var m = dom.el(doc, "button", { class: "wfmini", id: "hnkWf_" + wf.id, attrs: { "data-wg": wf.wedGroup || "" } });
+    var box = dom.el(doc, "div", { class: "wfv" });
     if (wf.visual) {
-      var box = dom.el(doc, "div", { class: "wfv" });
       var im = doc.createElement("img");
       /* eager: nothing drives a lazy load in this renderer, and a card that
          waits for a scroll event that never arrives stays black (v6.47.1) */
       im.loading = "eager";
-      im.alt = "";
-      im.onerror = function () { try { m.removeChild(box); } catch (e) { } };
+      im.alt = wf.title || "";
+      im.onerror = function () { try { box.className = "wfv wfv-noart"; box.removeChild(im); } catch (e) { } };
       im.src = wf.visual;
       box.appendChild(im);
-      box.appendChild(dom.el(doc, "div", { class: "wf-need", text: needLabel(wf) }));
-      m.appendChild(box);
+    } else box.className = "wfv wfv-noart";
+    if (wf.badge) {
+      var bdg = dom.el(doc, "span", { class: "bdg" });
+      bdg.appendChild(icon(wf.badge + "-cream", ""));
+      box.appendChild(bdg);
     }
+    m.appendChild(box);
+
+    /* ★ favourite toggle (app .fav): top-right, 44px hit box */
+    var favs = favList();
+    var isFav = favs.indexOf(wf.id) >= 0;
+    var fav = dom.el(doc, "button", { class: isFav ? "fav on" : "fav", attrs: { "aria-label": l9(L_FAVORITE), "aria-pressed": isFav ? "true" : "false" } });
+    var favIn = dom.el(doc, "span");
+    var favIc = icon(isFav ? "i-star-fill-hi" : "i-star-fill-muted", "");
+    favIn.appendChild(favIc);
+    fav.appendChild(favIn);
+    dom.on(fav, "click", function (ev) {
+      try { ev.stopPropagation(); } catch (e) { }
+      var l = favList();
+      var i = l.indexOf(wf.id);
+      if (i >= 0) l.splice(i, 1); else l.unshift(wf.id);
+      favSave(l);
+      var on = i < 0;
+      fav.className = on ? "fav on" : "fav";
+      fav.setAttribute("aria-pressed", on ? "true" : "false");
+      favIc.src = "icons/ui/" + (on ? "i-star-fill-hi" : "i-star-fill-muted") + ".svg";
+      renderFavRecent();
+    });
+    m.appendChild(fav);
+
+    /* batch shortcut (app .wfbatch): only workflows that take a photo can
+       run over many photos on the Path page */
+    if ((wf.requiredInputs || []).length) {
+      var bt = dom.el(doc, "button", { class: "wfbatch", attrs: { "aria-label": l9(L_BATCH), title: l9(L_BATCH) } });
+      var btIn = dom.el(doc, "span");
+      btIn.appendChild(icon("i-stack-muted", ""));
+      bt.appendChild(btIn);
+      dom.on(bt, "click", function (ev) {
+        try { ev.stopPropagation(); } catch (e) { }
+        try {
+          var nav = globalThis.HNK && globalThis.HNK.panelNav;
+          if (nav && typeof nav.useWorkflow === "function") nav.useWorkflow(wf.id);
+        } catch (e) { }
+      });
+      m.appendChild(bt);
+    }
+    box.appendChild(dom.el(doc, "span", { class: "wf-need", text: needLabel(wf) }));
+
     m.appendChild(dom.el(doc, "div", { class: "t", text: wf.title }));
-    var summary = dom.t(registry.summaryKey(wf.id), wf.summary);
+    /* the app prints the catalog summary as written (one string for every
+       language), so the card does too — the translated wf_sum_* text stays
+       with the wizard */
+    var summary = wf.cardSummary || wf.summary || "";
     if (summary) m.appendChild(dom.el(doc, "div", { class: "s", text: summary }));
-    m.appendChild(dom.el(doc, "div", { class: "go", text: "› " + l9(L_OPEN) }));
+    var go = dom.el(doc, "div", { class: "go" });
+    go.appendChild(icon("i-caret-hi"));
+    /* the app's " " between sprite and label is the .go .ic-s right margin */
+    go.appendChild(doc.createTextNode(l9(L_OPEN)));
+    m.appendChild(go);
     dom.on(m, "click", function () { select(wf.id); });
-    wfIndex.push({ el: m, q: (wf.title + " " + (wf.summary || "") + " " + wf.id + " " + (wf.category || "")).toLowerCase() });
+    wfIndex.push({ el: m, grp: grp, q: (wf.title + " " + (summary || wf.summary || "") + " " + wf.id + " " + (catTitle || "") + " " + (wf.wedGroup || "")).toLowerCase() });
     return m;
   }
 
-  /* the app's collapsible category group: a head that toggles its body */
-  function group(title, count, open) {
-    var g = dom.el(doc, "div", { class: "grp" });
-    var car = dom.el(doc, "span", { class: "car", text: open ? "▾" : "▸" });
-    var head = dom.el(doc, "button", { class: "grp-h" }, [
-      car, dom.el(doc, "span", { text: title + " · " + count + l9(L_UNIT) })
-    ]);
+  /* the app's grp(): caret · icon+title · count · section-reset, over a body
+     the .open class shows (the same .app-grp the other pages use) */
+  function group(title, count, open, ic) {
+    var g = dom.el(doc, "div", { class: open ? "grp app-grp open" : "grp app-grp" });
+    var car = dom.el(doc, "span", { class: "car" });
+    car.appendChild(icon("i-caret-gold", "ic-car"));
+    var lbl = dom.el(doc, "span", { class: "grp-lbl" });
+    if (ic) lbl.appendChild(icon(ic + "-cream"));
+    lbl.appendChild(doc.createTextNode(title));
+    var cnt = dom.el(doc, "span", { class: "cnt", text: count + l9(L_UNIT) });
+    cnt.setAttribute("data-base", count + l9(L_UNIT));
+    var sact = dom.el(doc, "span", { class: "st-sact" });
+    var sa = dom.el(doc, "span", { class: "sa", attrs: { role: "button", tabindex: "0", title: l9(L_RESET) } });
+    sa.appendChild(icon("i-reset-muted", ""));
+    sact.appendChild(sa);
+    var head = dom.el(doc, "button", { class: "grp-h" }, [car, lbl, cnt, sact]);
     var body = dom.el(doc, "div", { class: "grp-b" });
-    body.style.display = open ? "block" : "none";
-    dom.on(head, "click", function () {
-      var now = body.style.display === "none";
-      body.style.display = now ? "block" : "none";
-      car.textContent = now ? "▾" : "▸";
+    function isOpen() { return g.className.indexOf(" open") >= 0; }
+    function setOpen(on) { g.className = on ? "grp app-grp open" : "grp app-grp"; }
+    dom.on(head, "click", function () { setOpen(!isOpen()); });
+    /* app stResetSection(): put every chip row in this body back on its
+       first ("All") chip, then say so */
+    dom.on(sa, "click", function (ev) {
+      try { ev.stopPropagation(); } catch (e) { }
+      var rows = body.querySelectorAll(".chips");
+      for (var i = 0; i < rows.length; i++) {
+        var first = rows[i].firstChild;
+        if (first && first.className.indexOf("on") < 0 && typeof first.click === "function") first.click();
+      }
+      toast(l9(L_RESET_OK), "ok");
     });
     g.appendChild(head);
     g.appendChild(body);
-    return { g: g, b: body, open: function () { body.style.display = "block"; car.textContent = "▾"; } };
+    return { g: g, b: body, cnt: cnt, isOpen: isOpen, setOpen: setOpen };
+  }
+
+  /* the app's grid is CSS grid with an 8px gap; the panel's flex-wrap twin
+     carries the gap as margins, so after any card is hidden or shown the
+     first row loses its top margin and every right-hand card its right
+     margin. A full-width card sits alone on its row. */
+  function layoutGrid(gd) {
+    var col = 0, row = 0;
+    for (var n = gd.firstChild; n; n = n.nextSibling) {
+      if (!n.className || n.style.display === "none") continue;
+      var span2 = n.className.indexOf("wf-span2") >= 0;
+      var cls = n.className.replace(/ wf-top| wf-r/g, "");
+      if (span2) { if (col) { row++; col = 0; } if (row === 0) cls += " wf-top"; row++; col = 0; }
+      else {
+        if (row === 0) cls += " wf-top";
+        if (col === 1) cls += " wf-r";
+        col++;
+        if (col === 2) { col = 0; row++; }
+      }
+      n.className = cls;
+    }
+  }
+
+  /* the app's renderFavRecent(): a chip row per non-empty list, or the
+     "tap ★" hint when both are empty */
+  function renderFavRecent() {
+    if (!favHost) return;
+    dom.clear(favHost);
+    var any = false;
+    [[favList(), "i-star-fill-muted", l9(L_FAVS)], [recentList(), "i-clock-muted", l9(L_RECENT)]].forEach(function (pair) {
+      var ids = pair[0].filter(function (id) { return !!registry.get(id); });
+      if (!ids.length) return;
+      any = true;
+      var sh = dom.el(doc, "div", { class: "subh" });
+      sh.appendChild(icon(pair[1]));
+      sh.appendChild(doc.createTextNode(" " + pair[2]));
+      favHost.appendChild(sh);
+      var chips = dom.el(doc, "div", { class: "chips" });
+      ids.forEach(function (id) {
+        var wf = registry.get(id);
+        var ch = dom.el(doc, "button", { class: "chip" });
+        if (wf.visual) {
+          var th = dom.el(doc, "span", { class: "chip-th" });
+          var im = doc.createElement("img");
+          im.alt = ""; im.loading = "eager";
+          im.onerror = function () { try { ch.removeChild(th); } catch (e) { } };
+          im.src = wf.visual;
+          th.appendChild(im);
+          ch.appendChild(th);
+        }
+        ch.appendChild(doc.createTextNode(wf.title));
+        dom.on(ch, "click", function () { select(id); });
+        chips.appendChild(ch);
+      });
+      favHost.appendChild(chips);
+    });
+    if (!any) favHost.appendChild(dom.el(doc, "div", { class: "mut", text: l9(L_FAV_HINT) }));
   }
 
   function renderList() {
     dom.clear(root);
     wfIndex = [];
+    /* the app's Workflows page owns its own margins (hero, then card): the
+       root's 10px frame and its gaps would double them */
+    try {
+      var pr = root.parentNode;
+      if (pr && String(pr.className).indexOf("hnk-root-wf") < 0) pr.className += " hnk-root-wf";
+    } catch (e) { }
 
     var cats = (registry.categories && registry.categories()) || [];
     var total = 0;
     cats.forEach(function (c) { total += c.ids.length; });
     if (!total) total = registry.list().length;
 
+    root.appendChild(heroMini());
+
     var card = dom.el(doc, "div", { class: "card" });
     /* the app prints this heading in English in every locale (#wfPageH2),
        so it is the app's literal, not a lookup into the panel's table */
-    card.appendChild(dom.el(doc, "h2", { text: "SMART WORKFLOW — " + total + l9(L_UNIT) }));
+    var h2 = dom.el(doc, "h2");
+    h2.appendChild(icon("i-brain-gold", "ic-h2"));
+    h2.appendChild(doc.createTextNode("SMART WORKFLOW — " + total + l9(L_UNIT)));
+    card.appendChild(h2);
 
     /* the app's search field, in the app's place: above the groups */
     var srow = dom.el(doc, "div", { class: "row" });
@@ -157,55 +386,158 @@ function create(deps) {
     search.placeholder = l9(L_SEARCH);
     srow.appendChild(search);
     card.appendChild(srow);
+    var countLine = dom.el(doc, "div", { class: "mut", id: "hnkWfCount" });
+    countLine.style.display = "none";
+    card.appendChild(countLine);
 
     /* the app's category quick-jump rail */
-    var rail = dom.el(doc, "div", { class: "wfjump" });
+    var rail = dom.el(doc, "div", { class: "chips wfjump", id: "hnkWfJump" });
     var groups = [];
+
+    favHost = dom.el(doc, "div", { id: "hnkWfFavHost" });
+    var host = dom.el(doc, "div", { id: "hnkWfHost" });
 
     if (cats.length) {
       cats.forEach(function (c, ci) {
-        var g = group(c.category, c.ids.length, ci === 0);
+        var g = group(c.category, c.ids.length, !!c.open, c.icon);
+        if (c.desc) g.b.appendChild(dom.el(doc, "p", { class: "mut", text: c.desc }));
         var gd = dom.el(doc, "div", { class: "wfgrid" });
-        var made = 0;
+        var made = 0, wgs = {}, wgOrder = [];
+        var cards = [];
         c.ids.forEach(function (id) {
           var wf = registry.get(id);
           if (!wf) return;
-          gd.appendChild(miniCard(wf));
+          if (wf.wedGroup) { if (!wgs[wf.wedGroup]) { wgs[wf.wedGroup] = 0; wgOrder.push(wf.wedGroup); } wgs[wf.wedGroup]++; }
+          var m = miniCard(wf, g, c.category);
+          cards.push(m);
+          gd.appendChild(m);
           made++;
         });
+        /* the app's Wedding Suite sub-group chips: All + one per group */
+        if (wgOrder.length > 1) {
+          var chips = dom.el(doc, "div", { class: "chips" });
+          var wgBtns = [];
+          function wgApply(key, btn) {
+            wgBtns.forEach(function (ch) { ch.className = "chip" + (ch === btn ? " on" : ""); });
+            cards.forEach(function (m) { m.style.display = (!key || m.getAttribute("data-wg") === key) ? "" : "none"; });
+            layoutGrid(gd);
+          }
+          var allBtn = dom.el(doc, "button", { class: "chip on", text: l9(L_ALL) + " (" + made + ")" });
+          dom.on(allBtn, "click", function () { wgApply("", allBtn); });
+          chips.appendChild(allBtn); wgBtns.push(allBtn);
+          wgOrder.forEach(function (k) {
+            var b = dom.el(doc, "button", { class: "chip", text: (WG_NAMES[k] || k) + " (" + wgs[k] + ")" });
+            dom.on(b, "click", function () { wgApply(k, b); });
+            chips.appendChild(b); wgBtns.push(b);
+          });
+          g.b.appendChild(chips);
+        }
         /* the app widens the last card of an odd group to fill the row */
         if (made % 2 === 1 && gd.lastChild && gd.lastChild.className)
           gd.lastChild.className = gd.lastChild.className + " wf-span2";
+        layoutGrid(gd);
         g.b.appendChild(gd);
+        host.appendChild(g.g);
         groups.push(g);
         var chip = dom.el(doc, "button", { class: "chip", text: c.category + " " + c.ids.length });
-        dom.on(chip, "click", function () { g.open(); });
+        dom.on(chip, "click", function () {
+          if (!g.isOpen()) g.setOpen(true);
+          try { if (g.g.scrollIntoView) g.g.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { }
+        });
         rail.appendChild(chip);
       });
     } else {
       var gd2 = dom.el(doc, "div", { class: "wfgrid" });
-      registry.list().forEach(function (wf) { gd2.appendChild(miniCard(wf)); });
-      card.appendChild(gd2);
+      registry.list().forEach(function (wf) { gd2.appendChild(miniCard(wf, null, "")); });
+      layoutGrid(gd2);
+      host.appendChild(gd2);
     }
 
     if (rail.childNodes.length) card.appendChild(rail);
-    groups.forEach(function (g) { card.appendChild(g.g); });
+    card.appendChild(favHost);
+    renderFavRecent();
+    card.appendChild(host);
 
-    /* filtering is the app's: match the card's own text, open every group
-       that still has a visible card, and leave the rail alone */
-    dom.on(search, "input", function () {
+    /* app #wfEmpty: shown only when a query matches nothing */
+    var empty = dom.el(doc, "div", { class: "empty-state", id: "hnkWfEmpty" });
+    var eic = dom.el(doc, "div", { class: "ic" });
+    eic.appendChild(icon("i-search-xl", "ic-xl"));
+    empty.appendChild(eic);
+    empty.appendChild(dom.el(doc, "p", { class: "mut", text: l9(L_EMPTY) }));
+    var clr = dom.el(doc, "button", { class: "btn", text: l9(L_CLEAR) });
+    dom.on(clr, "click", function () { search.value = ""; applyFilter(); try { search.focus(); } catch (e) { } });
+    empty.appendChild(clr);
+    host.appendChild(empty);
+    var note = dom.el(doc, "div", { class: "mut wf-note", id: "hnkWfNote", text: l9(L_NOTE) });
+    host.appendChild(note);
+
+    /* the app's wfApplyFilter(): every plain word must match, or any alias
+       word may; groups with a hit open, the rest hide; the count line and
+       the empty state follow; clearing restores what the user had open */
+    var openSnap = null;
+    function expandQuery(q) {
+      var out = q;
+      MY_ALIAS.forEach(function (p) { if (q.indexOf(p[0]) >= 0) out += " " + p[1]; });
+      return out;
+    }
+    function applyFilter() {
       var q = String(search.value || "").trim().toLowerCase();
+      var toks = q ? expandQuery(q).split(/\s+/).filter(Boolean) : [];
+      var plain = q.split(/\s+/).filter(Boolean);
+      var nHits = 0;
       for (var i = 0; i < wfIndex.length; i++) {
-        var hit = !q || wfIndex[i].q.indexOf(q) >= 0;
-        wfIndex[i].el.style.display = hit ? "" : "none";
+        var it = wfIndex[i];
+        var hit = !q || plain.every(function (tk) { return it.q.indexOf(tk) >= 0; }) ||
+          toks.some(function (tk) { return plain.indexOf(tk) < 0 && it.q.indexOf(tk) >= 0; });
+        it.el.style.display = hit ? "" : "none";
+        if (hit) nHits++;
       }
-      if (q) groups.forEach(function (g) { g.open(); });
+      countLine.style.display = q ? "" : "none";
+      if (q) countLine.textContent = foundLabel(nHits);
+      if (q && !openSnap) openSnap = groups.map(function (g) { return g.isOpen(); });
+      var anyMatch = false;
+      groups.forEach(function (g, gi) {
+        var gd = g.b.querySelector(".wfgrid");
+        if (q) {
+          var vis = 0;
+          for (var n = gd ? gd.firstChild : null; n; n = n.nextSibling) if (n.className && n.style.display !== "none") vis++;
+          if (vis) anyMatch = true;
+          g.g.style.display = vis ? "" : "none";
+          g.setOpen(!!vis);
+          g.cnt.textContent = String(vis) + l9(L_UNIT);
+        } else {
+          g.g.style.display = "";
+          g.setOpen(openSnap ? !!openSnap[gi] : gi === 0);
+          g.cnt.textContent = g.cnt.getAttribute("data-base") || "";
+        }
+        if (gd) layoutGrid(gd);
+      });
+      if (!q) openSnap = null;
+      empty.className = (q && !anyMatch) ? "empty-state on" : "empty-state";
+      /* no group left above the note → no group margin above it either */
+      note.className = "mut wf-note" + ((q && !anyMatch) ? " wf-note-tight" : "");
+    }
+    var timer = null;
+    dom.on(search, "input", function () {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(applyFilter, 120);
+    });
+    dom.on(search, "keydown", function (ev) {
+      if (ev.key === "Escape") { search.value = ""; applyFilter(); }
+      else if (ev.key === "Enter") {
+        if (timer) clearTimeout(timer);
+        applyFilter();
+        for (var i = 0; i < wfIndex.length; i++) {
+          if (wfIndex[i].el.style.display !== "none") { wfIndex[i].el.click(); break; }
+        }
+      }
     });
 
     root.appendChild(card);
   }
 
   function select(workflowId) {
+    recentPush(workflowId);
     wstate.selectWorkflow(state, workflowId);       // Click 1
     if (directMode()) wstate.prepare(state);        // Direct: skip staging
     renderSelected();
@@ -324,6 +656,11 @@ function create(deps) {
   function renderSelected() {
     var wf = registry.get(state.workflowId);
     dom.clear(root);
+    /* back inside the root's framed layout for the wizard */
+    try {
+      var pr = root.parentNode;
+      if (pr) pr.className = String(pr.className).replace(/ ?hnk-root-wf/g, "");
+    } catch (e) { }
     var back = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfBack", text: "\u2190 " + dom.t("ai_wf_tools", "Workflow Tools") });
     dom.on(back, "click", function () { wstate.reset(state); renderList(); });
     root.appendChild(back);

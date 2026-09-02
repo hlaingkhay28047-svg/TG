@@ -185,6 +185,14 @@ jobs:
       - name: Verify the panel Smart Workflow catalog tracks the web app exactly
         run: node test/verify_panel_wf_catalog_sync.js
 
+      # v6.51.0 — the panel's Retouch A / Retouch B / Retouch Pro pages are the
+      # web app's own builders, sliced out of docs/app/index.html. This
+      # re-extracts them against the live app and also BUILDS all three pages
+      # in a browser, so a slice that no longer runs fails here rather than in
+      # Photoshop.
+      - name: Verify the panel studio tracks the web app exactly
+        run: node test/verify_panel_studio_sync.js
+
       - name: Run workflow sweep against docs/app/index.html
         run: node test/sweep_workflows.js
 
