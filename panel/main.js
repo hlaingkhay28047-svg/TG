@@ -6213,7 +6213,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.54.0";
+const PANEL_VERSION = "6.55.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6564,6 +6564,7 @@ async function gateProfileRefresh() {
       const rows = await r.json().catch(function () { return null; });
       const row = rows && rows[0] ? rows[0] : null;
       if (row) gateS.prof = row;
+      if (row) homeRefresh();   /* the greeting can now use the member's name */
       const a = row ? row.avatar : "";
       const next = gateAvaOk(a) ? a : "";
       if (next !== state.accAvatar) {
@@ -6808,6 +6809,7 @@ async function gateValidate(force) {
     state.accSeenAt = 0;
     gateS.updateRequired = false;
     gateErr(""); gateUnlock();
+    homeRefresh();            /* the plan line can now be named */
     return true;
   } catch (e) {
     gateS.lease = ""; gateS.leaseExp = 0;
@@ -7900,7 +7902,7 @@ function rhBookUsage(usage, meta) {
 
 /* ---------------- COST & BALANCE (the app's cardMoney) ---------------- */
 function balLoad() { return (state.rhBal && typeof state.rhBal === "object") ? state.rhBal : null; }
-function balSave(b) { state.rhBal = b; saveSettings(); }
+function balSave(b) { state.rhBal = b; saveSettings(); homeRefresh(); }
 function agoText(ts) {
   if (!ts) return sl("money_never");
   const m = Math.round((Date.now() - ts) / 60000);
@@ -15963,6 +15965,22 @@ function switchPage(key) {
   if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
+}
+
+/* v6.55.0 — HOME'S THREE LATE ARRIVALS. The app's Home greets the member by
+   name, names the plan and shows the spend strip; all three come from the
+   network — the profiles row, the entitlement and the balance reading — and
+   all three land AFTER Home has painted. The panel opens ON Home, so
+   switchPage's guard ("navigate only if we are not already there") never
+   re-entered it: a student saw the pre-profile fallback, their own email
+   local-part, with no plan pill and no spend strip, until they left the page
+   and came back. Whoever resolves one of the three calls this. */
+function homeRefresh() {
+  try {
+    if (state.page !== "aitools") return;
+    const aiApp = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.aiToolsApp : null;
+    if (aiApp && aiApp.current && aiApp.current() === "home" && aiApp.navigate) aiApp.navigate("home");
+  } catch (e) { }
 }
 
 function bindTabs() {
