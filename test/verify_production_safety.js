@@ -157,8 +157,11 @@ function missing(headers) {
      string as a database NAME and went looking for a local socket. The URI
      has to come from the cluster the app is attached to. */
   report("the URI comes from the managed cluster, not the app spec's binding",
-    /v2\/databases\/\$CLUSTER_ID"?\s*\|?\s*jq -r '\.database\.connection\.uri'|databases\/\$CLUSTER_ID" \| jq -r '\.database\.connection\.uri'/.test(lane) &&
+    /v2\/databases\/\$CLUSTER_ID/.test(lane) &&
+    /jq -r '\.database\.connection\.uri'/.test(lane) &&
     !/select\(\.key=="DATABASE_URL"\)/.test(lane));
+  report("a cluster on another PostgreSQL major fails by name, not by pg_dump's riddle",
+    /\.database\.version/.test(lane) && /PG_MAJOR/.test(lane) && /postgresql-client-\$PG_MAJOR/.test(lane));
   report("the dump is taken over an authenticated connection",
     /databases\/\$CLUSTER_ID\/ca/.test(lane) && /sslmode=verify-ca/.test(lane) && /PGSSLROOTCERT/.test(lane));
   report("a trusted-source grant for this runner is removed on every exit",

@@ -60,8 +60,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
+      # the rehearsal server has to be the production major or pg_restore
+      # refuses the dump — the cluster runs PostgreSQL 17
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: scratch
         options: >-
@@ -73,6 +75,7 @@ jobs:
       DO_APP_NAME: hnk-ai-tools-3
       DO_CLUSTER: hnk-pg
       DO_REGION: sgp1
+      PG_MAJOR: "17"
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
       RETENTION_DAYS: "30"
       CONFIRM_INPUT: ${{ inputs.confirm }}
@@ -91,10 +94,15 @@ jobs:
             exit 1
           fi
 
-      - name: Install PostgreSQL 16 client and s3 tooling
+      - name: Install the PostgreSQL client and s3 tooling
         shell: bash
         run: |
           set -euo pipefail
+          # pg_dump refuses a server newer than itself ("aborting because of
+          # server version mismatch"), which is how the first fixed run died
+          # against the 17.11 cluster. The client major must track the
+          # cluster's, so it is named once here and the scratch service image
+          # above carries the same major.
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl -fsS --max-time 30 -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
             https://www.postgresql.org/media/keys/ACCC4CF8.asc
@@ -102,7 +110,8 @@ jobs:
             https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-16 s3cmd >/dev/null
+          sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" s3cmd >/dev/null
+          pg_dump --version
 
       - name: Install doctl
         uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
@@ -179,10 +188,21 @@ jobs:
           fi
           grep -q "BEGIN CERTIFICATE" "$CA_FILE" || { echo "::error::Could not obtain the cluster CA."; exit 1; }
 
+          CLUSTER_JSON="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID")"
+
+          # A client older than the server refuses outright. Say so in one
+          # sentence naming both majors instead of leaving pg_dump's
+          # "server version mismatch" to be decoded from a log.
+          SERVER_MAJOR="$(printf '%s' "$CLUSTER_JSON" | jq -r '.database.version // empty' | cut -d. -f1)"
+          if [ -n "$SERVER_MAJOR" ] && [ "$SERVER_MAJOR" != "$PG_MAJOR" ]; then
+            echo "::error::$DO_CLUSTER runs PostgreSQL $SERVER_MAJOR but this lane installs client $PG_MAJOR. Set PG_MAJOR (and the scratch service image) to $SERVER_MAJOR."
+            exit 1
+          fi
+
           # masked the moment it is read, and never printed, written or passed
           # anywhere but pg_dump's own --dbname
-          DB_URI="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
-            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID" | jq -r '.database.connection.uri')"
+          DB_URI="$(printf '%s' "$CLUSTER_JSON" | jq -r '.database.connection.uri')"
           if [ -z "$DB_URI" ] || [ "$DB_URI" = "null" ]; then
             echo "::error::No connection URI is available for $DO_CLUSTER."
             exit 1
