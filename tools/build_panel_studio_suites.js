@@ -245,18 +245,11 @@ const PRELUDE_NAMES = [
 
 /* --------------------------------------------------------------- capture */
 
-async function capture(slicesText) {
-  const { chromium } = require("playwright-core");
-  const tKeys = uniq(Array.from(slicesText.matchAll(/\bt\("([a-z0-9_]+)"\)/g)).map(function (m) { return m[1]; }));
-  const byKeys = uniq(Array.from(slicesText.matchAll(/\bbyKey\.([a-zA-Z0-9_]+)\b/g)).map(function (m) { return m[1]; }));
-  const dPaths = uniq(Array.from(slicesText.matchAll(/\bD\.([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)/g)).map(function (m) { return m[1]; }));
-  const browser = await chromium.launch();
-  try {
-    const page = await browser.newPage({ viewport: { width: 420, height: 760 } });
-    const errs = [];
-    page.on("pageerror", function (e) { errs.push(String(e).slice(0, 200)); });
-    await page.addInitScript(`try{ localStorage.setItem("hnk_seen_splash","1"); localStorage.setItem("hnk_ws_onboarded","1"); localStorage.setItem("hnk_rh_apikey","TEST_RH_KEY"); }catch(e){}`);
-    await page.addInitScript(`(function(){
+/* The signed-in student the app is read as: splash dismissed, an active
+   licence, and every network call answered locally so the capture — and the
+   parity test that reuses this — sees the studio a paying student sees. */
+const APP_INIT = `try{ localStorage.setItem("hnk_seen_splash","1"); localStorage.setItem("hnk_ws_onboarded","1"); localStorage.setItem("hnk_rh_apikey","TEST_RH_KEY"); }catch(e){}
+(function(){
       var UID="77777777-8888-4999-aaaa-bbbbbbbbbbbb";
       var exp=new Date(Date.now()+30*86400000).toISOString();
       var prof={id:UID,name:"Student Name",email:"student@example.com",created_at:"2026-01-15T10:00:00Z",
@@ -274,7 +267,19 @@ async function capture(slicesText) {
         if(url.indexOf("runninghub.ai")>=0) return json({code:0,data:{}});
         return json({},200);
       };
-    })();`);
+    })();`;
+
+async function capture(slicesText) {
+  const { chromium } = require("playwright-core");
+  const tKeys = uniq(Array.from(slicesText.matchAll(/\bt\("([a-z0-9_]+)"\)/g)).map(function (m) { return m[1]; }));
+  const byKeys = uniq(Array.from(slicesText.matchAll(/\bbyKey\.([a-zA-Z0-9_]+)\b/g)).map(function (m) { return m[1]; }));
+  const dPaths = uniq(Array.from(slicesText.matchAll(/\bD\.([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)/g)).map(function (m) { return m[1]; }));
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 420, height: 760 } });
+    const errs = [];
+    page.on("pageerror", function (e) { errs.push(String(e).slice(0, 200)); });
+    await page.addInitScript(APP_INIT);
     await page.route("**/*", function (route) {
       const u = route.request().url();
       if (u.indexOf("127.0.0.1") >= 0) return route.continue();
@@ -547,4 +552,4 @@ if (require.main === module) {
   })().catch(function (e) { console.error(e && e.stack || e); process.exit(1); });
 }
 
-module.exports = { generate: generate, SLICES: SLICES, OUT: OUT };
+module.exports = { generate: generate, SLICES: SLICES, OUT: OUT, APP_INIT: APP_INIT, APP_PORT: PORT };

@@ -14,7 +14,8 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const { generate, OUT } = require("../tools/build_panel_studio_suites.js");
+const { generate, OUT, APP_INIT, APP_PORT } = require("../tools/build_panel_studio_suites.js");
+const PORT = APP_PORT;
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -92,6 +93,27 @@ function report(name, ok, detail) {
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FAIL — " + (e && e.stack || e)); process.exit(1); });
 
+/* The parity claim itself, as one browser-side function both surfaces run:
+   every visible string under a root, in DOM order, with the groups opened.
+   Run on the web app and on the panel, the two lists must be identical —
+   that is what "webapp လို အတိအကျ" means, checked rather than asserted. */
+const COLLECT = `(function(sel){
+  var root = document.querySelector(sel);
+  if (!root) return ["NO ROOT " + sel];
+  root.querySelectorAll(".grp").forEach(function (g) { if (g.className.indexOf("open") < 0) g.className += " open"; });
+  var out = [];
+  (function walk(e) {
+    var cs = getComputedStyle(e);
+    if (cs.display === "none" || cs.visibility === "hidden") return;
+    var own = "";
+    e.childNodes.forEach(function (n) { if (n.nodeType === 3) own += n.textContent; });
+    own = own.replace(/\\s+/g, " ").trim();
+    if (own) out.push(own);
+    Array.prototype.forEach.call(e.children, walk);
+  })(root);
+  return out;
+})`;
+
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
   ".mp4": "video/mp4", ".woff2": "font/woff2" };
@@ -99,7 +121,11 @@ const PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "b
 
 /* the UXP host the panel boots against, cut down to what a DOM build needs */
 const UXP_STUB = `(function(){
-  var settings = "{}";
+  /* the same signed-in, key-configured student the app is read as (APP_INIT):
+     the two surfaces have to be in the same STATE or their string lists differ
+     for a reason that is not a parity defect — the HD hint, for one, shows
+     only when no RunningHub key is saved. */
+  var settings = JSON.stringify({ rhKey: "TEST_RH_KEY" });
   var file = { read: function(){ return Promise.resolve(settings); },
                write: function(t){ settings = t; return Promise.resolve(); } };
   var folder = { getEntry: function(){ return Promise.resolve(file); },
@@ -180,6 +206,56 @@ async function smoke() {
       counts.pages.rsBundles === 5 && counts.pages.rsChips > 0, JSON.stringify(counts.pages));
     report("the studio's generate bar and Retouch Pro's prompt preview carry text",
       counts.genLabel > 0 && counts.promptPreview > 100, JSON.stringify({ gen: counts.genLabel, preview: counts.promptPreview }));
+
+    /* THE PARITY CLAIM, CHECKED. Every visible string of the three pages,
+       read off the panel and off the live web app, must be the same list in
+       the same order. A label the app rewrites, a control it gains or drops,
+       shows up here as a diff — and the cure is to regenerate the module. */
+    /* the studio's two columns are ONE node the panel moves between its pages,
+       so each page is read while it is the open one — never after switching on */
+    const ROOTS = { meitu: ["#stCols", "#stCols"], evoto: ["#stCols", "#stCols"],
+                    retouch: ["#pageRetouch", "#pgRetouch"] };
+    const PAGE_IDS = { meitu: ["meitu", "pgMeitu"], evoto: ["evoto", "pgEvoto"], retouch: ["retouch", "pgRetouch"] };
+    const KEYS = ["meitu", "evoto", "retouch"];
+    const panelText = {};
+    for (const key of KEYS) {
+      await page.evaluate(k => { try { switchPage(k); } catch (e) { } }, PAGE_IDS[key][0]);
+      await page.waitForTimeout(900);
+      panelText[key] = await page.evaluate(`${COLLECT}(${JSON.stringify(ROOTS[key][0])})`, null);
+    }
+
+    const appPage = await browser.newPage({ viewport: { width: 420, height: 760 } });
+    await appPage.addInitScript(APP_INIT);
+    await appPage.route("**/*", route => {
+      const u = route.request().url();
+      if (u.indexOf("127.0.0.1") >= 0) return route.continue();
+      if (route.request().resourceType() === "image") return route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL });
+      return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+    await appPage.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+    await appPage.waitForTimeout(2200);
+    await appPage.evaluate(() => {
+      try { document.body.classList.remove("wall"); } catch (e) { }
+      try { var s = document.getElementById("splash"); if (s) s.remove(); } catch (e) { }
+      window.scrollTo = function () { }; Element.prototype.scrollIntoView = function () { };
+    });
+    const appText = {};
+    for (const key of KEYS) {
+      await appPage.evaluate(k => { try { switchPage(k); } catch (e) { } }, PAGE_IDS[key][1]);
+      await appPage.waitForTimeout(1200);
+      appText[key] = await appPage.evaluate(`${COLLECT}(${JSON.stringify(ROOTS[key][1])})`, null);
+    }
+
+    [["Retouch A", "meitu"], ["Retouch B", "evoto"], ["Retouch Pro", "retouch"]].forEach(([label, key]) => {
+      const a = appText[key] || [], b = panelText[key] || [];
+      let i = 0;
+      while (i < a.length && i < b.length && a[i] === b[i]) i++;
+      report(`${label} shows the web app's strings, all ${a.length} of them, in order`,
+        a.length === b.length && i === a.length,
+        a.length !== b.length
+          ? `app ${a.length} strings, panel ${b.length}; first difference at ${i}: app "${String(a[i]).slice(0, 60)}" vs panel "${String(b[i]).slice(0, 60)}"`
+          : `first difference at ${i}: app "${String(a[i]).slice(0, 60)}" vs panel "${String(b[i]).slice(0, 60)}"`);
+    });
   } finally {
     await browser.close();
     await new Promise(r => server.close(r));

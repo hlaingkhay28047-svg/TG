@@ -524,10 +524,19 @@ function mount(pageKey) {
   var mnt = page.querySelector ? page.querySelector(".st-mount") : null;
   if (mnt && cols.parentNode !== mnt) mnt.appendChild(cols);
   var colR = $("stColR"), keepId = SUITE_CARD[pageId];
+  /* the card goes back above the result card. The app inserts it before
+     #stResultBox — an id the panel REPLACES with a void element, and
+     insertBefore against a node that is not a child of colR throws and
+     leaves the returning student a page with no controls at all. The
+     panel's own slot holds that place, so anchor on it. */
+  var anchor = colR ? colR.querySelector("#stResultSlot") : null;
   Object.keys(SUITE_CARD).forEach(function (k) {
     var card = $(SUITE_CARD[k]); if (!card) return;
     if (SUITE_CARD[k] === keepId) {
-      if (colR && card.parentNode !== colR) colR.insertBefore(card, $("stResultBox"));
+      if (colR && card.parentNode !== colR) {
+        if (anchor && anchor.parentNode === colR) colR.insertBefore(card, anchor);
+        else colR.appendChild(card);
+      }
     } else if (card.parentNode !== dock) { dock.appendChild(card); }
   });
   mountedPage = pageId;
