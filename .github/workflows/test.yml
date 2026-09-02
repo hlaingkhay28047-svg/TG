@@ -193,6 +193,13 @@ jobs:
       - name: Verify the panel studio tracks the web app exactly
         run: node test/verify_panel_studio_sync.js
 
+      # v6.52.0 — Gallery and VidUp are hand-built rather than sliced, so they
+      # are the pages that drift. Both surfaces are opened side by side and
+      # their visible strings compared; the panel-only lines are named in the
+      # test with the reason each exists.
+      - name: Verify the panel's Gallery and VidUp match the web app
+        run: node test/verify_panel_page_parity.js
+
       - name: Run workflow sweep against docs/app/index.html
         run: node test/sweep_workflows.js
 
