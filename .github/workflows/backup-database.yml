@@ -217,21 +217,48 @@ jobs:
           echo "::add-mask::$DB_URI"
           DB_BASE="${DB_URI%%\?*}"
           echo "::add-mask::$DB_BASE"
+          # everything up to the database name — masking the prefix keeps the
+          # credentials out of the log for every URI composed below
+          DB_PREFIX="${DB_BASE%/*}"
+          echo "::add-mask::$DB_PREFIX"
 
           # the installed client's own binaries, never postgresql-common's
           # wrapper — which is what silently ran 16 against the 17 cluster
           PGBIN="/usr/lib/postgresql/$PG_MAJOR/bin"
+          export PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=30
+
+          # WHICH DATABASE. The connection URI names the cluster's default
+          # database, and dumping that produced an 874-byte file — the app's
+          # tables live in a database of their own. The app spec names it when
+          # it carries db_name; otherwise the cluster is asked which of its
+          # databases holds the most public tables. Names are not secrets, so
+          # the choice is printed and a wrong one is arguable from the log.
+          DB_NAME="$(doctl apps get "$APP_ID" --output json \
+            | jq -r '.[0].spec.databases[]? | select(.cluster_name != null and .cluster_name != "") | .db_name // empty' \
+            | head -n1)"
+          if [ -z "$DB_NAME" ] || [ "$DB_NAME" = "null" ]; then
+            BEST=""; BEST_N=-1
+            for CAND in $("$PGBIN/psql" "$DB_BASE?sslmode=verify-ca" -X -tAc \
+              "select datname from pg_database where datistemplate = false and datallowconn order by datname"); do
+              N="$("$PGBIN/psql" "$DB_PREFIX/$CAND?sslmode=verify-ca" -X -tAc \
+                "select count(*) from information_schema.tables where table_schema = 'public'" 2>/dev/null || echo -1)"
+              echo "  $CAND: $N public tables"
+              if [ "$N" -gt "$BEST_N" ]; then BEST_N="$N"; BEST="$CAND"; fi
+            done
+            DB_NAME="$BEST"
+          fi
+          [ -n "$DB_NAME" ] || { echo "::error::No database in $DO_CLUSTER could be read."; exit 1; }
+          echo "== dumping database $DB_NAME from $DO_CLUSTER"
 
           STAMP="$(date -u +%Y-%m-%d)"; TIME="$(date -u +%H%M%SZ)"
           DUMP="$WORK/hnk-$STAMP-$TIME.dump"
           echo "== dumping production (custom format, compressed)"
-          PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=30 \
-            "$PGBIN/pg_dump" --format=custom --compress=9 --no-owner --no-privileges \
-            --dbname="$DB_BASE?sslmode=verify-ca" --file="$DUMP"
+          "$PGBIN/pg_dump" --format=custom --compress=9 --no-owner --no-privileges \
+            --dbname="$DB_PREFIX/$DB_NAME?sslmode=verify-ca" --file="$DUMP"
           BYTES="$(stat -c %s "$DUMP")"
           SHA="$(sha256sum "$DUMP" | cut -d' ' -f1)"
           echo "dump: $BYTES bytes, sha256 $SHA"
-          [ "$BYTES" -gt 4096 ] || { echo "::error::Dump is implausibly small — refusing to call this a backup."; exit 1; }
+          [ "$BYTES" -gt 4096 ] || { echo "::error::Dump of $DB_NAME is implausibly small ($BYTES bytes) — refusing to call this a backup."; exit 1; }
 
           # A restore rehearsal: the dump is only a backup once it has been
           # restored and counted at least once.
@@ -301,6 +328,7 @@ jobs:
             echo "| | |"
             echo "|---|---|"
             echo "| Object | \`$KEY\` (private) |"
+            echo "| Database | \`$DB_NAME\` on \`$DO_CLUSTER\` |"
             echo "| Size | $BYTES bytes |"
             echo "| SHA-256 | \`$SHA\` |"
             echo "| Round trip | byte-for-byte identical |"
