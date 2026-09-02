@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.53.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.54.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -884,32 +884,139 @@
     <!-- ========== PAGE: PATH (batch) ==========
          v6.46.0 — the web app's Path, in Photoshop: many photos, one look,
          one run. Results are written as files, not a hundred layers. -->
-    <div class="page" id="pagePath">
+    <!-- ========== PAGE: PATH (the app's BATCH LOOKS) ==========
+         v6.54.0 — the web app's pgPath, card for card: PATH RETOUCH (what the
+         page does, the free-preview note, add/clear, the count and the empty
+         state), LOOK (the three sources, the twelve-look rail, strength,
+         quality tiers, the Effects group with its AI-only badges, the
+         reference and the extra prompt) and the prompt preview. The looks,
+         effects, tiers and every string are the app's own, read out of the
+         running app into js/hnk_path_looks.js.
+
+         The RUN and SAVE cards, like the app's, appear only once photos are
+         loaded — and they carry the panel's own save-folder control, because
+         a plugin writes its results to disk where a browser downloads them. -->
+    <div class="page apg" id="pagePath">
       <div class="page-hero">
         <img src="icons/banners/banner-path-batch.jpg" alt="" />
         <div class="ph-kick">BATCH LOOKS</div>
         <p class="ph-head" id="phPath">ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ <em>တစ်ပြိုင်နက်</em> ပြင်မယ်</p>
       </div>
+
       <div class="card">
-        <div class="chead" id="cPathH"><span class="car">&#9662;</span><span class="chead-t">BATCH LOOKS</span></div>
-        <div class="cbody" id="cPathB">
-          <div class="mut" id="pathIntro"></div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnPathAdd" class="btn btn-sm btn-gold grow">Add photos</div>
-            <div role="button" tabindex="0" id="btnPathClear" class="btn btn-sm">Clear</div>
+        <h2 id="ptH2"><img class="ic-h2" src="icons/ui/i-stack-hi.svg" alt="">PATH RETOUCH</h2>
+        <div class="mut" id="ptIntro"></div>
+        <div class="mut" id="ptFreeNote"></div>
+        <div class="row" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnPtAdd"></div>
+          <div role="button" tabindex="0" class="btn" id="btnPtClear"></div>
+        </div>
+        <div class="mut" id="ptCount" style="margin-top:8px"></div>
+        <div class="row" id="ptMultiBar" style="margin-top:6px"></div>
+        <div role="button" tabindex="0" class="pt-empty" id="ptEmpty"></div>
+        <div class="pt-grid" id="ptGrid"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="ptLookH2"><img class="ic-h2" src="icons/ui/i-palette-hi.svg" alt="">LOOK</h2>
+        <div class="chips" id="ptSrcChips"></div>
+        <div id="ptStBox" style="display:none">
+          <div class="mut" id="ptStNote"></div>
+          <div class="pt-wfsel" id="ptStSel">
+            <div>
+              <b id="ptStTitle"></b>
+              <div class="mut" id="ptStList"></div>
+            </div>
           </div>
-          <div class="row tight">
-            <select id="pathWf" class="hnk-sel grow"></select>
-          </div>
-          <div class="row tight">
-            <div role="button" tabindex="0" id="btnPathOut" class="btn btn-sm grow">Save folder</div>
-          </div>
-          <div class="diag" id="pathList"></div>
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnPathRun" class="btn btn-sm btn-gold grow">RUN</div>
-            <div role="button" tabindex="0" id="btnPathStop" class="btn btn-sm">STOP</div>
+          <div class="row" style="margin-top:8px">
+            <div role="button" tabindex="0" class="btn grow" id="btnPtStOpen"></div>
           </div>
         </div>
+        <div id="ptWfBox" style="display:none">
+          <div class="mut" id="ptWfNote"></div>
+          <div class="row">
+            <div role="button" tabindex="0" class="btn btn-gold grow" id="btnPtWfPick"></div>
+            <div role="button" tabindex="0" class="btn" id="btnPtWfClear" style="display:none"></div>
+          </div>
+          <div class="pt-wfsel" id="ptWfSel" style="display:none">
+            <img id="ptWfSelArt" alt="">
+            <div>
+              <b id="ptWfSelTitle"></b>
+              <div class="mut" id="ptWfSelSum"></div>
+              <div class="mut" id="ptWfSelNeed"></div>
+            </div>
+          </div>
+        </div>
+        <div id="ptLookBox">
+          <div class="mut" id="ptLookNote"></div>
+          <div class="prowwrap"><div class="prow" id="ptLookRail"></div></div>
+          <div class="subh" id="ptLbStrength"></div><div class="chips" id="ptStrengthChips"></div>
+          <div role="button" tabindex="0" class="chip" id="btnPtFromStudio" style="margin-top:6px"></div>
+        </div>
+        <div class="subh" id="ptLbTier"></div>
+        <div class="chips" id="ptTierChips"></div>
+        <div class="mut" id="ptEngineNote"></div>
+        <div class="mut" id="ptHdHint" style="display:none"></div>
+
+        <div class="grp app-grp" id="ptGrpFx">
+          <div role="button" tabindex="0" class="grp-h" id="ptFxH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span><img class="ic-s" src="icons/ui/i-sliders-cream.svg" alt=""> <span id="ptLbFx"></span></span></div>
+          <div class="grp-b">
+            <div id="ptFxLookOnly">
+              <div class="mut" id="ptFxNote"></div>
+              <div class="subh" id="ptLbBlur"></div><div class="chips" id="ptBlurChips"></div>
+              <div class="subh" id="ptLbFg"></div><div class="chips" id="ptFgChips"></div>
+              <div class="subh" id="ptLbFrame"></div><div class="chips" id="ptFrameChips"></div>
+              <div class="mut" id="ptFrameNote"></div>
+              <div class="subh" id="ptLbExtras"></div><div class="chips" id="ptToggleChips"></div>
+            </div>
+            <div id="ptRefBox">
+              <div class="subh" id="ptLbRef"></div>
+              <div class="mut" id="ptRefNote"></div>
+              <div class="row">
+                <div role="button" tabindex="0" class="btn" id="btnPtRef"></div>
+                <div role="button" tabindex="0" class="btn" id="btnPtRefClear" style="display:none"></div>
+              </div>
+              <img id="ptRefThumb" alt="" style="display:none">
+            </div>
+            <div class="subh" id="ptLbCustom"></div>
+            <textarea class="inp" id="ptCustom" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="grp app-grp" id="ptGrpPrompt">
+          <div role="button" tabindex="0" class="grp-h" id="ptPromptH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt=""></span><span><img class="ic-s" src="icons/ui/i-doc-cream.svg" alt=""> <span id="ptLbPrompt"></span></span></div>
+          <div class="grp-b">
+            <div id="ptPromptPreview" class="mut pt-prompt"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- the app's RUN card, hidden until there are photos to run -->
+      <div class="card" id="ptRunCard" style="display:none">
+        <div class="row">
+          <div role="button" tabindex="0" class="btn btn-gold gen grow" id="btnPtRun"></div>
+          <div role="button" tabindex="0" class="btn" id="btnPtRetryErr" style="display:none"></div>
+        </div>
+        <div class="pt-prog" id="ptProg" style="display:none"><i id="ptProgI"></i></div>
+        <div class="row" style="align-items:center">
+          <div class="spin" id="ptSpin" style="flex:1"></div>
+          <div role="button" tabindex="0" class="btn" id="btnPtStop" style="display:none;margin-top:10px"></div>
+        </div>
+        <div class="mut" id="ptStopNote" style="display:none"></div>
+        <div class="status" id="stPtGen"></div>
+        <div class="pt-log" id="ptLog"></div>
+      </div>
+
+      <!-- the app's SAVE card. A browser downloads a ZIP; a plugin writes
+           files, so the app's four export buttons become the one thing
+           Photoshop actually needs — the folder every result is written to,
+           and a re-save of the finished album into it. -->
+      <div class="card" id="ptOutCard" style="display:none">
+        <h2 id="ptOutH2"><img class="ic-h2" src="icons/ui/i-download-gold.svg" alt="">SAVE</h2>
+        <div class="mut" id="ptOutNote"></div>
+        <div role="button" tabindex="0" class="btn btn-gold gen" id="btnPtOut"></div>
+        <div class="mut" id="ptOutName" style="margin-top:6px"></div>
+        <div role="button" tabindex="0" class="btn gen" id="btnPtSaveAll" style="margin-top:8px"></div>
       </div>
     </div>
 
@@ -1143,7 +1250,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.51.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.54.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1208,6 +1315,7 @@
 <script src="js/hnk_wf_catalog_data.js"></script>
 <script src="js/hnk_video_models.js"></script>
 <script src="js/hnk_t2i_models.js"></script>
+<script src="js/hnk_path_looks.js"></script>
 <script src="js/hnk_video_wf_data.js"></script>
 <script src="js/hnk_video_tools.js"></script>
 <script src="src/models/model-registry.js"></script>
