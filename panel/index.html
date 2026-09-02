@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.50.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.51.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -164,7 +164,7 @@
     <div class="subwrap"><div class="subtabbar" id="subtabs"></div><span class="subfade subfade-l" id="subfadeL"></span><span class="subfade subfade-r" id="subfadeR"></span></div>
 
     <!-- ========== PAGE: SETUP ========== -->
-    <div class="page" id="pageSetup">
+    <div class="page apg" id="pageSetup">
       <div class="page-hero">
         <img src="icons/banners/banner-archer.jpg" alt="" />
         <div class="ph-kick">Setup</div>
@@ -408,7 +408,7 @@
     </div>
 
     <!-- ========== PAGE: PROMPT ========== -->
-    <div class="page" id="pagePrompt">
+    <div class="page apg" id="pagePrompt">
       <div class="page-hero">
         <img src="icons/banners/banner-freeform.jpg" alt="" />
         <div class="ph-kick">Freeform Create</div>
@@ -593,7 +593,7 @@
     </div>
 
     <!-- ========== PAGE: PRESETS ========== -->
-    <div class="page" id="pagePresets">
+    <div class="page apg" id="pagePresets">
       <div class="page-hero">
         <img src="icons/banners/banner-train-station.jpg" alt="" />
         <div class="ph-kick">Reference Library</div>
@@ -640,17 +640,12 @@
          when window.HNK_AI_TOOLS_AUTOSTART is set (see the mount script below).
          Its Settings screen carries the RunningHub Enterprise shared key and the
          Nano Banana / GPT Image model mappings. -->
-    <div class="page" id="pageAiTools">
+    <div class="page apg" id="pageAiTools">
       <!-- v6.49.0 — one container, two of the app's pages. The app's Home
-           (#pgDash) opens on its greeting card with NO banner above it; the
-           app's Workflows (#pgWf) opens on the hero. switchPage hides this
-           banner for Home and shows it for Workflows so each matches. -->
-      <div class="pgbanner pgb-aitools" id="pgbAiTools">
-        <div class="pgbanner-shade">
-          <div class="pgbanner-kick">Smart Workflow</div>
-          <div class="pgbanner-title" data-i18n="pgb_aitools"></div>
-        </div>
-      </div>
+           (#pgDash) opens on its greeting card; the app's Workflows (#pgWf)
+           opens on its hero strip. v6.51.0 — .apg: both screens are rebuilt
+           to the app's own boxes, and each screen draws its own opener
+           (Home its greeting card, Workflows its hero-mini strip). -->
       <div id="hnkAiToolsRoot"></div>
     </div>
 
@@ -687,61 +682,97 @@
          v6.46.0 — Media Lab's second page, where the app keeps it. The model
          list, its resolutions, durations and aspect ratios all come from the
          app's own doc-verified catalog; no endpoint is authored here. -->
-    <div class="page" id="pageVideo">
+    <div class="page apg" id="pageVideo">
       <div class="page-hero">
         <img src="icons/banners/banner-naga.jpg" alt="" />
         <div class="ph-kick">Image to Video</div>
         <p class="ph-head" id="phVideo">ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်</p>
       </div>
-      <!-- v6.50.0 — the app's four cards, in the app's order. The panel had
-           one card holding everything: the model picker, the prompt box, the
-           resolution and duration, the photo button and GENERATE all stacked
-           in a single accordion, where the app splits them into VIDEO,
-           VIDEO WORKFLOW, PROMPT and GENERATE and leads with a shelf of
-           ready-made shots. Same services underneath — same 183 endpoints,
-           same upload/submit/poll — arranged the way the app arranges them. -->
+      <!-- v6.51.0 — the web app's pgVideo, card for card: VIDEO (intro + the
+           same 3-slot refstrip Freeform uses), VIDEO WORKFLOW (29 ready shots
+           + the destination chips), PROMPT (textarea + counter), GENERATE
+           (Model full row, Res / Duration half rows, the need-note, gold
+           GENERATE VIDEO, spinner, Cancel / status / Retry) and the hidden
+           result card (video, 24-hour note, Download / Direct Link, session
+           history). Same services underneath — same doc-verified endpoints,
+           same upload/submit/poll — with every label set at runtime from the
+           app's own nine-language copy. Every control is a role="button" div
+           (UXP), the selects stay native under a styled .hsl button. -->
       <div class="card">
-        <h2>VIDEO &mdash; IMAGE TO VIDEO</h2>
+        <h2><img class="ic-h2" src="icons/ui/i-clapper-hi.svg" alt="">VIDEO &mdash; IMAGE TO VIDEO</h2>
         <div class="mut" id="vidIntro"></div>
-        <div class="row last">
-          <div role="button" tabindex="0" id="btnVidPick" class="btn btn-sm grow">Add photo</div>
-          <div role="button" tabindex="0" id="btnVidSave" class="btn btn-sm grow">Save folder</div>
-        </div>
+        <div class="refstrip" id="vidRefStrip"></div>
       </div>
 
-      <!-- The app's VIDEO WORKFLOW shelf: 29 ready shots, each one setting the
-           prompt, the model, the resolution and the duration in one tap. The
-           cards, their art and their prompts are the app's own, lifted into
-           panel/js/hnk_video_wf_data.js. -->
       <div class="card">
-        <h2>VIDEO WORKFLOW</h2>
+        <h2 id="vidWfH2"><img class="ic-h2" src="icons/ui/i-brain-hi.svg" alt="">VIDEO WORKFLOW</h2>
         <div class="mut" id="vidWfIntro"></div>
         <div class="wfgrid" id="vidWfRow"></div>
         <div id="vidWfOpts" style="display:none">
-          <div class="slbl" id="vidWfCityH"></div>
-          <div class="chiprow" id="vidWfCityRow"></div>
+          <div class="subh" id="vidWfCityH"></div>
+          <div class="chips" id="vidWfCityRow"></div>
         </div>
-        <div class="mut" id="vidWfHint"></div>
+        <div class="mut" id="vidWfHint" style="margin-top:8px"></div>
       </div>
 
       <div class="card">
         <h2>PROMPT</h2>
-        <textarea id="vidPromptP" class="pbox" rows="5" placeholder="What should happen in the video?"></textarea>
-        <div class="mut" id="vidPromptCount"></div>
+        <textarea class="inp" id="vidPromptP"></textarea>
+        <div class="mut" id="vidTrHint" style="display:none;margin-top:4px"></div>
+        <div class="mut" id="vidPromptCount" style="margin-top:4px;text-align:right;font-size:11px"></div>
       </div>
 
       <div class="card">
         <h2>GENERATE</h2>
-        <div class="row tight"><select id="vidModel" class="inp grow"></select></div>
-        <div class="row tight">
-          <select id="vidRes" class="inp grow"></select>
-          <select id="vidDur" class="inp grow"></select>
-          <select id="vidAspect" class="inp grow"></select>
+        <div class="arow gen-opts" id="vidOpts">
+          <div class="hsl hsl-span2" id="vidModelHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="vidModelBtn">
+              <span class="hsl-tile t-plain" id="vidModelTile"><img class="hsl-glyph-img" id="vidModelGlyph" src="icons/ui/brand-spark.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx">Model</span><span class="hsl-val" id="vidModelVal"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="vidModel"></select>
+          </div>
+          <div class="hsl" id="vidResHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="vidResBtn">
+              <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-size.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx">Res</span><span class="hsl-val" id="vidResVal"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="vidRes"></select>
+          </div>
+          <div class="hsl" id="vidDurHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="vidDurBtn">
+              <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-clock.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx">Duration</span><span class="hsl-val" id="vidDurVal"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="vidDur"></select>
+          </div>
+          <select class="inp vid-aspect" id="vidAspect" style="display:none">
+            <option value="">Ratio: Auto</option>
+            <option value="16:9">16:9</option>
+            <option value="9:16">9:16</option>
+          </select>
         </div>
-        <div class="diag" id="vidList"></div>
-        <div class="row last">
-          <div role="button" tabindex="0" id="btnVidRun" class="btn btn-gold gen grow">GENERATE VIDEO</div>
+        <div class="mut" id="vidNeedNote" style="margin-top:6px"></div>
+        <div role="button" tabindex="0" class="btn btn-gold gen" id="btnVidRun"><div class="btn-in"><img class="ic-s" src="icons/ui/i-clapper-ink.svg" alt="">GENERATE VIDEO</div></div>
+        <div class="spin" id="vidSpin"></div>
+        <div class="btn-row"><div role="button" tabindex="0" class="btn" id="btnVidCancel" style="display:none;margin-top:8px"></div></div>
+        <div class="status" id="stVidGen"></div>
+        <div class="btn-row"><div role="button" tabindex="0" class="btn" id="btnVidRetry" style="display:none;margin-top:8px"></div></div>
+      </div>
+
+      <div class="card result-box" id="vidResultBox">
+        <h2 id="vidResultH2"></h2>
+        <div class="result-img"><video id="vidResultVideo" controls style="width:100%;border-radius:12px;background:#000"></video></div>
+        <div class="mut" id="vidExpireNote" style="margin-top:8px"></div>
+        <div class="arow" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnVidDl"></div>
+          <div role="button" tabindex="0" class="btn" id="btnVidOpen"></div>
         </div>
+        <div class="subh" id="vidHistH" style="margin-top:12px"></div>
+        <div class="hist" id="vidHist"></div>
       </div>
     </div>
 
@@ -825,6 +856,113 @@
         </div>
       </div>
     </div>
+
+    <!-- ========== PAGES: RETOUCH A STUDIO / RETOUCH B PRO ==========
+         The web app's two studio suites, its own markup. Both pages are a
+         hero plus an empty .st-mount: the whole control block lives ONCE, in
+         #stDock/#stCols below, and is MOVED into whichever page is showing
+         (docs/app stMountSuite) so the photo, the queue and every listener
+         survive a suite switch. Everything inside #stCols is built by
+         js/hnk_studio_suites.js — the app's own builders, sliced verbatim —
+         running on src/ui/screens/retouch-studio-screen.js.
+
+         Not carried over: the app's #stStage (live canvas preview, histogram,
+         A|B split). UXP draws no <canvas>, and in Photoshop the DOCUMENT is
+         the preview — the stage is the one part of this page that has no
+         meaning inside the host application. -->
+    <div class="page apg stpg" id="pageMeitu">
+      <div class="page-hero">
+        <img src="icons/banners/hero-mermaid.jpg" alt="" />
+        <div class="ph-kick">Retouch A Studio</div>
+        <p class="ph-head" id="phMeitu"></p>
+      </div>
+      <div class="st-mount"></div>
+    </div>
+
+    <div class="page apg stpg" id="pageEvoto">
+      <div class="page-hero">
+        <img src="icons/banners/banner-flower-portrait.jpg" alt="" />
+        <div class="ph-kick">Retouch B Pro</div>
+        <p class="ph-head" id="phEvoto"></p>
+      </div>
+      <div class="st-mount"></div>
+    </div>
+
+    <!-- class="page" purely so .page{display:none} parks the dock for free,
+         exactly as the web app parks it -->
+    <div class="page apg stpg" id="stDock">
+      <div class="st-cols" id="stCols">
+      <div id="stColL">
+        <div class="card">
+          <h2><img class="ic-h2" src="icons/ui/i-camera-gold.svg" alt="" />PHOTO</h2>
+          <p class="mut" id="stPhotoNote"></p>
+          <div id="stPicker"></div>
+          <div id="stTarget"></div>
+        </div>
+
+        <div id="stJumpBar">
+          <div id="stJumpTop">
+            <div class="chips" id="stSuiteTabs"></div>
+            <input class="inp" id="stSearch" />
+          </div>
+          <div class="chips" id="stGroupChips"><div role="button" tabindex="0" class="chip" id="stSearchTgl"><img class="ic-s" src="icons/ui/i-search-cream.svg" alt="" /></div></div>
+        </div>
+
+        <div class="card" id="stRecipeCard">
+          <h2><img class="ic-h2" src="icons/ui/i-save-gold.svg" alt="" />MY RECIPES</h2>
+          <p class="mut" id="stRecipeNote"></p>
+          <div class="prowwrap"><div class="prow" id="stRecipeRow"></div></div>
+          <div class="row" style="margin-top:8px">
+            <div role="button" tabindex="0" class="btn" id="stSaveRecipe"></div>
+            <div role="button" tabindex="0" class="chip" id="stRecipeExport"></div>
+            <div role="button" tabindex="0" class="chip" id="stRecipeImport"></div>
+          </div>
+        </div>
+      </div><!-- /stColL -->
+
+      <div id="stColR">
+        <div class="card" id="stMuCard">
+          <h2><img class="ic-h2" src="icons/ui/i-makeup-gold.svg" alt="" />RETOUCH A STUDIO</h2>
+          <p class="mut" id="muNote"></p>
+          <div class="subh" id="muPresetSub"></div>
+          <div class="prowwrap"><div class="prow" id="muPresetRow"></div></div>
+          <div id="muHost"></div>
+        </div>
+
+        <div class="card" id="stEvCard">
+          <h2><img class="ic-h2" src="icons/ui/i-target-gold.svg" alt="" />RETOUCH B PRO</h2>
+          <p class="mut" id="evNote"></p>
+          <div class="subh" id="evPresetSub"></div>
+          <div class="prowwrap"><div class="prow" id="evPresetRow"></div></div>
+          <div id="evHost"></div>
+        </div>
+
+        <!-- the app's #stResultBox slot. The panel has ONE result card
+             (#resultBox, with Photoshop's own Place/Save As); it is moved in
+             here while a studio page is showing, so a student's
+             result lands on the page that made it, not on Freeform. -->
+        <div id="stResultSlot"></div>
+
+        <div class="card" id="stExpOpts"></div>
+
+        <div class="st-genbar" id="stGenBar">
+          <div class="mut" id="stPendCount"></div>
+          <p class="mut" id="stFaceNote" style="display:none"></p>
+          <div class="chips" id="stPendChips"></div>
+          <div class="row" style="margin-top:6px">
+            <div role="button" tabindex="0" class="btn btn-gold grow gen" id="btnStGen"><img class="ic-s" src="icons/ui/i-bolt-ink.svg" alt="" /> GENERATE</div>
+            <div role="button" tabindex="0" class="chip" id="btnStStop" style="display:none"></div>
+            <div role="button" tabindex="0" class="chip" id="stClearAi" style="display:none"></div>
+            <div role="button" tabindex="0" class="chip" id="stHd" style="display:none">HD Finish</div>
+          </div>
+          <div id="stHdNote"></div>
+          <div id="stGenCost"></div>
+          <div class="spin" id="stSpin"></div>
+          <div class="status" id="stStatus"></div>
+        </div>
+      </div><!-- /stColR -->
+      </div><!-- /stCols -->
+    </div><!-- /stDock -->
 
 <div class="page" id="pageRetouch">
       <div class="page-hero">
@@ -1075,6 +1213,13 @@
 <script src="src/ui/screens/workflow-tools-screen.js"></script>
 <script src="src/ui/screens/history-screen.js"></script>
 <script src="src/ui/screens/settings-screen.js"></script>
+<!-- The web app's Retouch A / Retouch B studio: the GENERATED module carries
+     the app's own builders (regenerate with tools/build_panel_studio_suites.js,
+     guarded by test/verify_panel_studio_sync.js) and the screen below is the
+     UXP runtime they run on. Data file first — the screen reads its captured
+     tables at definition time. -->
+<script src="js/hnk_studio_suites.js"></script>
+<script src="src/ui/screens/retouch-studio-screen.js"></script>
 <script src="src/ui/app-controller.js"></script>
 <script src="src/app/bootstrap.js"></script>
 

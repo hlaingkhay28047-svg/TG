@@ -243,6 +243,71 @@ function setIcnText(el, name, tint, text, cls) {
   }
   host.appendChild(ffIcon(name, tint, cls));
   host.appendChild(document.createTextNode(stripIcn(text)));
+  /* buttons and accordion titles are the labels that may wrap (see fitBtnIn) */
+  const pn = el.parentNode;
+  if (host !== el || (pn && pn.classList && pn.classList.contains("grp-h"))) {
+    host.__icn = host.firstChild; host.__txt = host.lastChild.nodeValue;
+    host.__base = host.className.replace(/\s*\bicn-wrap\b/g, "");
+    fitBtnInLater(host);
+  }
+}
+/* v6.51.0 — the inner row fills the button the moment its label wraps, which
+   drags the icon to the left edge and centres the second line beside the
+   icon rather than under the button. The app's inline flow centres
+   icon + line one together, then each further line on its own. Where the
+   host lays text out in line boxes we can read (Range.getClientRects), split
+   the label at the first line break into that exact shape; elsewhere the
+   single row stays. Measured after layout, so a hidden page is left pending
+   and switchPage() fits it once the page is on screen. */
+function fitBtnIn(host) {
+  if (!host || !host.__icn || host.__txt == null) return;
+  const txt = host.__txt;
+  host.textContent = "";
+  host.className = host.__base;
+  host.appendChild(host.__icn);
+  const tn = document.createTextNode(txt);
+  host.appendChild(tn);
+  if (!document.createRange || !host.getClientRects || !host.getClientRects().length) return;
+  let rg, rects;
+  try {
+    rg = document.createRange(); rg.selectNodeContents(tn);
+    rects = rg.getClientRects ? rg.getClientRects() : null;
+  } catch (e) { return; }
+  let lines = 0;
+  for (let i = 0; rects && i < rects.length; i++) if (rects[i].width > 0.5) lines++;
+  if (lines < 2) return;
+  /* the first offset whose range already spans two line boxes ends line one */
+  let cut = 0;
+  for (let k = 1; k <= txt.length; k++) {
+    rg.setStart(tn, 0); rg.setEnd(tn, k);
+    const rr = rg.getClientRects(); let n = 0;
+    for (let i = 0; i < rr.length; i++) if (rr[i].width > 0.5) n++;
+    if (n > 1) { cut = k - 1; break; }
+  }
+  if (cut <= 0 || cut >= txt.length) return;
+  const l1 = txt.slice(0, cut).replace(/\s+$/, ""), rest = txt.slice(cut).replace(/^\s+/, "");
+  if (!l1 || !rest) return;
+  host.textContent = "";
+  host.className = (host.__base ? host.__base + " " : "") + "icn-wrap";
+  const row = document.createElement("div"); row.className = "icn-l1";
+  row.appendChild(host.__icn);
+  row.appendChild(document.createTextNode(l1));
+  const more = document.createElement("div"); more.className = "icn-rest";
+  more.textContent = rest;
+  host.appendChild(row); host.appendChild(more);
+}
+function fitBtnInLater(host) {
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => fitBtnIn(host));
+  else setTimeout(() => fitBtnIn(host), 0);
+}
+function fitBtnInAll(root) {
+  if (!root || !root.querySelectorAll) return;
+  const list = root.querySelectorAll(".btn .btn-in, .grp-h span");
+  for (let i = 0; i < list.length; i++) if (list[i].__icn) fitBtnIn(list[i]);
+}
+function fitBtnInAllLater(root) {
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => fitBtnInAll(root));
+  else setTimeout(() => fitBtnInAll(root), 0);
 }
 
 /* The app's own runtime copy for this page, verbatim in its nine languages;
@@ -6146,7 +6211,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.50.0";
+const PANEL_VERSION = "6.51.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7177,10 +7242,115 @@ function applyI18n() {
        reaching into the module scope. */
     g.HNK.panelNav = {
       switchPage: function (key) { try { switchPage(key); saveSettings(); } catch (e) { } },
-      getUpdate: function () { try { return panelGetUpdate(); } catch (e) { } }
+      getUpdate: function () { try { return panelGetUpdate(); } catch (e) { } },
+      /* v6.51.0 — the app's Home greets the signed-in member by name with the
+         plan pill, and shows the COST & BALANCE strip once a run or a balance
+         check exists (renderDashGreet / renderDashMoney). The session, the
+         profile and the spend ledger live here, so the screen asks. */
+      dash: function () {
+        const out = { name: "", planLine: "", money: null };
+        try {
+          const sess = gateS.sess, prof = gateS.prof;
+          if (sess) {
+            out.name = (prof && prof.name) ? String(prof.name) : String(sess.email || "").split("@")[0];
+            if (prof) out.planLine = accPlanLineText();
+          }
+        } catch (e) { }
+        try {
+          const r = spendRollup(), b = balLoad();
+          if (r.all.n || b) {
+            out.money = {
+              h: sl("money_h"),
+              balL: sl("money_bal"), todayL: sl("money_today"), runsL: sl("money_runs"),
+              bal: balText(b, true),
+              today: r.today.n ? fmtMoney(r.today.money, r.cur) : "—",
+              runs: String(r.today.n),
+              note: b
+                ? [balText(b), sl("money_checked").replace("{T}", agoText(b.ts))].join(" · ")
+                : sl("money_all").replace("{N}", String(r.all.n)).replace("{C}", fmtMoney(r.all.money, r.cur))
+            };
+          }
+        } catch (e) { }
+        return out;
+      },
+      /* v6.51.0 — the app's card-corner batch button (_ptUseWorkflow): pick
+         the workflow on the Path page and go there; and the app's toast, so
+         the Workflows page's "Section reset" reads the same way. */
+      useWorkflow: function (id) {
+        try {
+          state.pathWf = String(id || "");
+          pathFillWorkflows();
+          switchPage("path");
+          saveSettings();
+          const el = $("pathWf");
+          if (el && el.scrollIntoView) setTimeout(() => { try { el.scrollIntoView({ block: "center" }); } catch (e) { } }, 60);
+        } catch (e) { }
+      },
+      toast: function (msg, kind) { try { setStatus(msg, kind); } catch (e) { } }
+    };
+    /* v6.51.0 — RETOUCH A / RETOUCH B STUDIO BRIDGE.
+       js/hnk_studio_suites.js carries the web app's own studio builders and
+       src/ui/screens/retouch-studio-screen.js runs them on UXP's DOM. Those
+       files never reach into main.js's scope; everything they need from the
+       panel — the shared state object, the photo slot, the file dialogs, the
+       status line — arrives through here. */
+    g.HNK.studioHost = {
+      state: function () { return state; },
+      saveState: function () { try { saveSettings(); } catch (e) { } },
+      toast: function (msg, kind) { try { setStatus(msg, kind); } catch (e) { } },
+      switchPage: function (id) { try { switchPage(studioPageKey(id)); saveSettings(); } catch (e) { } },
+      curPage: function () { return state.page || ""; },
+      assetBase: APP_URL,
+      /* the app's batch hand-off: pick the workflow on the Path page */
+      ptSetWorkflow: function (id) { try { g.HNK.panelNav.useWorkflow(id); } catch (e) { } },
+      rhIsConfigured: function (id) { try { return rhIsConfigured(id); } catch (e) { return false; } },
+      /* Photoshop has no window.prompt; this is the panel's own one-field
+         dialog, in the same card shape as setupConfirm's */
+      askText: function (msg, def, cb) { studioAskText(msg, def).then(function (v) { cb && cb(v); }); },
+      /* the studio's PHOTO slot IS the panel's subject slot */
+      pickPhoto: function () { try { refLibBrowseInto("subject-reference"); } catch (e) { } },
+      clearPhoto: function () {
+        try {
+          state.refs[0] = null;
+          renderRefs();
+          const sc = g.HNK.studioScreen; if (sc) sc.renderPicker();
+          saveSettings();
+        } catch (e) { }
+      },
+      /* an 880-pack style becomes the reference image, fetched from the same
+         catalog the web app serves */
+      loadRefFromUrl: async function (url, cb) {
+        try {
+          setStatus(t("st_importing"));
+          const got = await fetchWebImage(url);
+          const b64 = bufToB64(got.buf);
+          if (!imgMagicOk(b64)) { setStatus(t("st_img_bad") + " (Ref)", "err"); cb && cb(false); return; }
+          state.refs[1] = { b64: b64, mime: got.mime || "image/jpeg", label: urlLabel(url) };
+          renderRefs();
+          setStatus(t("st_ref_file_added"), "ok");
+          cb && cb(true);
+        } catch (e) { herr("studio ref url:", e); cb && cb(false); }
+      },
+      /* the studio watermark logo: Photoshop's own file dialog, then the
+         data URL the app's watermark code stores */
+      pickLogo: async function (cb) {
+        try {
+          const file = await fsp.getFileForOpening({ allowMultiple: false, types: REF_LIB_TYPES });
+          if (!file) return;
+          const cap = await refCaptureEntry(file);
+          if (!imgMagicOk(cap.b64)) { setStatus(t("st_img_bad"), "err"); return; }
+          cb && cb("data:" + (cap.mime || "image/png") + ";base64," + cap.b64);
+        } catch (e) { herr("studio logo:", e); setStatus(t("st_img_bad"), "err"); }
+      }
     };
   } catch (e) { }
 })();
+
+/* The studio's own switchPage("pgMeitu") style ids, mapped to panel keys. */
+function studioPageKey(id) {
+  const map = { pgMeitu: "meitu", pgEvoto: "evoto", pgRetouch: "retouch", pgPath: "path", pgCreate: "create", pgLib: "presets", pgGallery: "gallery" };
+  return map[id] || id;
+}
 
 /* Re-render the mounted AI Tools sub-app whenever the language changes, so
    its screens repaint in the new language exactly like the classic tabs. */
@@ -7380,6 +7550,44 @@ async function openUrl(u) {
 }
 /* window.confirm → a modal <dialog> with the app's two-button row. UXP has no
    window.confirm; its <dialog>.showModal() resolves with the close value. */
+/* v6.51.0 — the studio's one text question (a recipe's name), asked the way
+   setupConfirm asks a yes/no: a <dialog> wearing the app's card, since UXP
+   has neither window.prompt nor any synchronous dialog. Resolves to null on
+   cancel, so a caller can tell "left alone" from "typed nothing". */
+function studioAskText(msg, def) {
+  return new Promise(function (resolve) {
+    let done = false, dlg = null, inp = null;
+    const fin = function (v) {
+      if (done) return;
+      done = true;
+      try { if (dlg && dlg.parentNode) dlg.parentNode.removeChild(dlg); } catch (e) { }
+      resolve(v);
+    };
+    try {
+      dlg = document.createElement("dialog");
+      dlg.className = "hnk-dlg";
+      const body = document.createElement("div"); body.className = "hnk-dlg-body";
+      const p = document.createElement("p"); p.className = "hnk-dlg-msg"; p.textContent = String(msg || "");
+      inp = document.createElement("input");
+      inp.type = "text"; inp.className = "inp"; inp.value = String(def == null ? "" : def);
+      const row = document.createElement("div"); row.className = "hnk-dlg-row";
+      const no = document.createElement("div"); no.className = "btn"; no.setAttribute("role", "button"); no.setAttribute("tabindex", "0"); no.textContent = t("btn_cancel");
+      const ok = document.createElement("div"); ok.className = "btn btn-gold"; ok.setAttribute("role", "button"); ok.setAttribute("tabindex", "0"); ok.textContent = t("btn_ok");
+      no.addEventListener("click", function () { try { dlg.close("cancel"); } catch (e) { } fin(null); });
+      ok.addEventListener("click", function () { const v = inp.value; try { dlg.close("ok"); } catch (e) { } fin(v); });
+      inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { const v = inp.value; try { dlg.close("ok"); } catch (e) { } fin(v); } });
+      row.appendChild(no); row.appendChild(ok);
+      body.appendChild(p); body.appendChild(inp); body.appendChild(row);
+      dlg.appendChild(body);
+      dlg.addEventListener("cancel", function () { fin(null); });
+      document.body.appendChild(dlg);
+      const r = dlg.showModal();
+      if (r && r.then) r.then(function (v) { fin(v === "ok" ? inp.value : null); }, function () { fin(null); });
+      try { inp.focus(); } catch (e) { }
+    } catch (e) { herr("studio prompt:", e); fin(null); }
+  });
+}
+
 function setupConfirm(msg) {
   return new Promise(function (resolve) {
     let done = false, dlg = null;
@@ -8690,13 +8898,21 @@ async function pathRun() {
    a file into a folder the studio picks — a panel cannot hand a browser a
    download, and a video is not a layer.
    ============================================================ */
-const VID = { photo: null, out: null, busy: false, rows: [] };
+/* v6.51.0 \u2014 the Video page is the app's pgVideo card for card: the run state
+   is the app's (vidHist / vidHistSel, a spinner with its own clock and abort),
+   the photo comes from the same three IMG slots Freeform reads, and the
+   result stays a link the studio downloads to a folder of its choice. */
 const VU = { video: null, out: null, busy: false, rows: [] };
+const vidRun = { tick: 0, anim: 0, abort: null, t0: 0, busy: false, dl: false, base: "" };
+let vidHist = [];
+let vidHistSel = 0;
 
+/* the app's vidModelDef(): an unknown value falls back to the first model */
 function vidDef() {
   const sel = $("vidModel");
   const V = (globalThis.HNK && globalThis.HNK.runninghubVideo) || null;
-  return (V && sel) ? V.get(sel.value) : null;
+  if (!V) return null;
+  return (sel && V.get(sel.value)) || (V.models()[0] || null);
 }
 function fillSel(el, values, current) {
   if (!el) return;
@@ -8707,26 +8923,195 @@ function fillSel(el, values, current) {
   if (current) { try { el.value = current; } catch (e) { } }
   el.style.display = (values && values.length) ? "" : "none";
 }
+
+/* The app's own runtime copy for this page, its nine languages verbatim
+   (docs/app/index.html, the L9 maps around the video generate flow). */
+const VID_L = {
+  intro: { my: "\u101b\u103e\u102d\u1015\u103c\u102e\u1038\u101e\u102c\u1038 \u1015\u102f\u1036\u1000\u1014\u1031 \u101b\u103d\u1031\u1037\u101c\u103b\u102c\u1038\u1014\u1031\u1010\u1032\u1037 \u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1006\u1031\u102c\u1000\u103a\u1015\u1031\u1038\u1019\u101a\u103a \u2014 RunningHub Enterprise key \u101c\u102d\u102f\u1021\u1015\u103a\u1015\u102b\u1010\u101a\u103a\u104b", en: "Turn an existing photo into a moving video \u2014 needs your RunningHub Enterprise key.", shn: "\u1081\u1035\u1010\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1015\u1035\u107c\u103a\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088 \u2014 \u101c\u1030\u101d\u103a\u1087 RunningHub Enterprise key", kac: "Nga ai sumla hpe video ni hku galai ai \u2014 RunningHub Enterprise key ra ai", th: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e23\u0e39\u0e1b\u0e17\u0e35\u0e48\u0e21\u0e35\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e2b\u0e49\u0e40\u0e1b\u0e47\u0e19\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e40\u0e04\u0e25\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e2b\u0e27 \u2014 \u0e15\u0e49\u0e2d\u0e07\u0e21\u0e35 RunningHub Enterprise key", zh: "\u628a\u73b0\u6709\u7167\u7247\u53d8\u6210\u52a8\u6001\u89c6\u9891 \u2014 \u9700\u8981\u4f60\u7684 RunningHub Enterprise key", vi: "Bi\u1ebfn \u1ea3nh c\u00f3 s\u1eb5n th\u00e0nh video chuy\u1ec3n \u0111\u1ed9ng \u2014 c\u1ea7n key RunningHub Enterprise", id: "Ubah foto yang ada menjadi video bergerak \u2014 perlu RunningHub Enterprise key", ms: "Tukar foto sedia ada kepada video bergerak \u2014 perlukan RunningHub Enterprise key" },
+  wfIntro: { my: "\u1000\u1010\u103a\u1010\u1005\u103a\u1001\u103b\u1000\u103a\u1014\u103e\u102d\u1015\u103a\u101b\u102f\u1036\u1014\u1032\u1037 prompt\u104a model\u104a \u1021\u101b\u103d\u101a\u103a\u1021\u1005\u102c\u1038\u104a \u1000\u103c\u102c\u1001\u103b\u102d\u1014\u103a \u1021\u1000\u102f\u1014\u103a \u1001\u103b\u102d\u1014\u103a\u1015\u1031\u1038\u1019\u101a\u103a\u104b", en: "One tap on a card fills the prompt and sets the model, size and duration for you.", shn: "\u107c\u1035\u1075\u103a\u1038\u1075\u1062\u1010\u103a\u1088\u1022\u107c\u103a\u107c\u102d\u102f\u1004\u103a\u1088 \u2014 prompt \u101c\u1084\u1088 model, \u1081\u1062\u1004\u103a\u1088, \u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038 \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u104b", kac: "Card langai mi hkan \u2014 prompt, model, hkum hte ten yawng jaw ya ai.", th: "\u0e41\u0e15\u0e30\u0e01\u0e32\u0e23\u0e4c\u0e14\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27 \u0e40\u0e15\u0e34\u0e21 prompt \u0e41\u0e25\u0e30\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e42\u0e21\u0e40\u0e14\u0e25 \u0e02\u0e19\u0e32\u0e14 \u0e23\u0e30\u0e22\u0e30\u0e40\u0e27\u0e25\u0e32\u0e43\u0e2b\u0e49\u0e40\u0e25\u0e22", zh: "\u70b9\u4e00\u4e0b\u5361\u7247\u5373\u53ef\u586b\u5165 prompt \u5e76\u8bbe\u7f6e\u6a21\u578b\u3001\u5c3a\u5bf8\u4e0e\u65f6\u957f", vi: "M\u1ed9t ch\u1ea1m v\u00e0o th\u1ebb s\u1ebd \u0111i\u1ec1n prompt v\u00e0 \u0111\u1eb7t model, k\u00edch th\u01b0\u1edbc, th\u1eddi l\u01b0\u1ee3ng", id: "Sekali tap kartu mengisi prompt dan mengatur model, ukuran, durasi", ms: "Satu ketikan pada kad mengisi prompt dan menetapkan model, saiz, tempoh" },
+  cityH: { my: "\u1001\u101b\u102e\u1038\u1005\u1009\u103a \u101b\u103d\u1031\u1038\u1015\u102b", en: "Destination", shn: "\u101c\u102d\u1030\u1075\u103a\u1088\u1019\u102d\u1030\u1004\u103a\u1038", kac: "Sa na shara", th: "\u0e08\u0e38\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e1b\u0e25\u0e32\u0e22\u0e17\u0e32\u0e07", zh: "\u76ee\u7684\u5730", vi: "\u0110i\u1ec3m \u0111\u1ebfn", id: "Tujuan", ms: "Destinasi" },
+  introHint: { my: "\u1000\u1010\u103a\u1010\u1005\u103a\u1001\u102f \u101b\u103d\u1031\u1038\u1015\u102b \u2014 \u1012\u102b\u1019\u103e\u1019\u101f\u102f\u1010\u103a \u1021\u1031\u102c\u1000\u103a\u1019\u103e\u102c \u1000\u102d\u102f\u101a\u103a\u1010\u102d\u102f\u1004\u103a \u101b\u1031\u1038\u1015\u102b\u104b", en: "Pick a card \u2014 or write your own prompt below.", shn: "\u101c\u102d\u1030\u1075\u103a\u1088\u1075\u1062\u1010\u103a\u1088\u1022\u107c\u103a\u107c\u102d\u102f\u1004\u103a\u1088 \u2014 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1010\u1085\u1019\u103a\u1088\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038\u104b", kac: "Card langai lata u \u2014 nrai npu de nang tsun u.", th: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e01\u0e32\u0e23\u0e4c\u0e14\u0e2a\u0e31\u0e01\u0e43\u0e1a \u2014 \u0e2b\u0e23\u0e37\u0e2d\u0e40\u0e02\u0e35\u0e22\u0e19 prompt \u0e40\u0e2d\u0e07\u0e14\u0e49\u0e32\u0e19\u0e25\u0e48\u0e32\u0e07", zh: "\u9009\u62e9\u4e00\u5f20\u5361\u7247 \u2014 \u6216\u5728\u4e0b\u65b9\u81ea\u884c\u8f93\u5165", vi: "Ch\u1ecdn m\u1ed9t th\u1ebb \u2014 ho\u1eb7c t\u1ef1 vi\u1ebft prompt b\u00ean d\u01b0\u1edbi", id: "Pilih kartu \u2014 atau tulis prompt sendiri di bawah", ms: "Pilih kad \u2014 atau tulis prompt sendiri di bawah" },
+  promptPh: { my: "\u1017\u102e\u1012\u102e\u101a\u102d\u102f\u1011\u1032\u1019\u103e\u102c \u1018\u102c\u1016\u103c\u1005\u103a\u1005\u1031\u1001\u103b\u1004\u103a\u101c\u1032 \u101b\u1031\u1038\u1015\u102b \u2014 \u1025\u1015\u1019\u102c: subject slowly turns and smiles, camera slowly pushes in\u2026", en: "Describe what should happen in the video \u2014 e.g. subject slowly turns and smiles, camera slowly pushes in\u2026", shn: "\u1010\u1085\u1019\u103a\u1088\u101d\u1083\u1088\u101e\u1004\u103a\u1010\u1031\u1015\u1035\u107c\u103a\u107c\u1082\u103a\u1038\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088", kac: "Video kata gaw n gara hku byin na ni tsun dan u", th: "\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e27\u0e48\u0e32\u0e08\u0e30\u0e40\u0e01\u0e34\u0e14\u0e2d\u0e30\u0e44\u0e23\u0e02\u0e36\u0e49\u0e19\u0e43\u0e19\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d", zh: "\u63cf\u8ff0\u89c6\u9891\u4e2d\u5e94\u8be5\u53d1\u751f\u7684\u4e8b\u60c5", vi: "M\u00f4 t\u1ea3 \u0111i\u1ec1u s\u1ebd x\u1ea3y ra trong video", id: "Jelaskan apa yang harus terjadi di video", ms: "Terangkan apa yang patut berlaku dalam video" },
+  spin: { my: "\u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1011\u102f\u1010\u103a\u1014\u1031\u1015\u102b\u1010\u101a\u103a \u2014 \u1019\u102d\u1014\u1005\u103a\u1021\u1014\u100a\u103a\u1038\u1004\u101a\u103a \u1005\u1031\u102c\u1004\u1037\u103a\u1015\u102b\u2026", en: "Generating video \u2014 allow a few minutes\u2026", shn: "\u1081\u1035\u1010\u103a\u1038\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088\u101a\u1030\u1087 \u2014 \u1076\u103d\u1086\u1010\u103d\u1004\u103a\u1075\u1019\u103a\u1088\u107d\u103d\u1004\u103a\u1088", kac: "Video galaw nga ai \u2014 mizan langai nga chyam sit u", th: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d \u2014 \u0e23\u0e2d\u0e2a\u0e31\u0e01\u0e04\u0e23\u0e39\u0e48", zh: "\u6b63\u5728\u751f\u6210\u89c6\u9891 \u2014 \u8bf7\u7a0d\u5019\u51e0\u5206\u949f", vi: "\u0110ang t\u1ea1o video \u2014 vui l\u00f2ng ch\u1edd v\u00e0i ph\u00fat", id: "Membuat video \u2014 tunggu beberapa menit", ms: "Menjana video \u2014 tunggu beberapa minit" },
+  retry: { my: "\ud83d\udd01 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038", en: "\ud83d\udd01 Retry", shn: "\ud83d\udd01 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038", kac: "\ud83d\udd01 Bai chyam", th: "\ud83d\udd01 \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48", zh: "\ud83d\udd01 \u91cd\u8bd5", vi: "\ud83d\udd01 Th\u1eed l\u1ea1i", id: "\ud83d\udd01 Coba lagi", ms: "\ud83d\udd01 Cuba lagi" },
+  resultH2: { my: "\u101b\u101c\u1012\u103a (\u1017\u102e\u1012\u102e\u101a\u102d\u102f)", en: "Result (video)", shn: "\u101c\u103d\u1004\u103a\u1088\u1022\u103d\u1075\u103a\u1087\u1019\u1083\u1038 (\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088)", kac: "Ah kyu (video)", th: "\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c (\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d)", zh: "\u7ed3\u679c\uff08\u89c6\u9891\uff09", vi: "K\u1ebft qu\u1ea3 (video)", id: "Hasil (video)", ms: "Hasil (video)" },
+  expire: { my: "\u26a0 \u1012\u102e link \u1000 \u1042\u1044 \u1014\u102c\u101b\u102e\u1015\u1032 \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1015\u102b\u1010\u101a\u103a \u2014 download \u1001\u103b\u1000\u103a\u1001\u103b\u1004\u103a\u1038 \u101c\u102f\u1015\u103a\u1011\u102c\u1038\u1015\u102b\u104b Page \u1015\u103c\u1014\u103a reload \u101c\u102f\u1015\u103a\u101b\u1004\u103a \u1012\u102e\u101b\u101c\u1012\u103a \u1015\u103b\u1031\u102c\u1000\u103a\u101e\u103d\u102c\u1038\u1019\u101a\u103a (\u1016\u102d\u102f\u1004\u103a\u1021\u101b\u103d\u101a\u103a\u1021\u1005\u102c\u1038 \u1000\u103c\u102e\u1038\u101c\u102d\u102f\u1037 Gallery \u1011\u1032 \u1019\u101e\u102d\u1019\u103a\u1038\u1015\u102b)\u104b", en: "\u26a0 This link only works for 24 hours \u2014 download it right away. Reloading the page will lose this result (not saved to Gallery \u2014 the file is too large).", shn: "\u26a0 Link \u107c\u1086\u1089 \u1078\u1082\u103a\u1089\u101c\u1086\u1088 24 \u1078\u1030\u101d\u103a\u1088\u1019\u103d\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 \u2014 download \u101d\u1086\u1089\u101c\u1084\u1088\u101c\u102e", kac: "\u26a0 Ndai link gaw 24 hour sha byin ai \u2014 hpang de download nna da u", th: "\u26a0 \u0e25\u0e34\u0e07\u0e01\u0e4c\u0e19\u0e35\u0e49\u0e43\u0e0a\u0e49\u0e44\u0e14\u0e49\u0e41\u0e04\u0e48 24 \u0e0a\u0e31\u0e48\u0e27\u0e42\u0e21\u0e07 \u2014 \u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u0e17\u0e31\u0e19\u0e17\u0e35", zh: "\u26a0 \u6b64\u94fe\u63a5\u4ec5 24 \u5c0f\u65f6\u6709\u6548 \u2014 \u8bf7\u7acb\u5373\u4e0b\u8f7d\u3002\u5237\u65b0\u9875\u9762\u4f1a\u4e22\u5931\u8be5\u7ed3\u679c\uff08\u6587\u4ef6\u8fc7\u5927\u672a\u4fdd\u5b58\u5230 Gallery\uff09\u3002", vi: "\u26a0 Li\u00ean k\u1ebft n\u00e0y ch\u1ec9 ho\u1ea1t \u0111\u1ed9ng trong 24 gi\u1edd \u2014 h\u00e3y t\u1ea3i xu\u1ed1ng ngay. T\u1ea3i l\u1ea1i trang s\u1ebd m\u1ea5t k\u1ebft qu\u1ea3 n\u00e0y (kh\u00f4ng l\u01b0u v\u00e0o Gallery v\u00ec file qu\u00e1 l\u1edbn).", id: "\u26a0 Tautan ini hanya berfungsi 24 jam \u2014 unduh segera. Memuat ulang halaman akan menghilangkan hasil ini (tidak disimpan ke Gallery karena ukuran file terlalu besar).", ms: "\u26a0 Pautan ini hanya berfungsi 24 jam \u2014 muat turun segera. Memuat semula halaman akan kehilangan hasil ini (tidak disimpan ke Gallery kerana saiz fail terlalu besar)." },
+  dl: { my: "\u2b07 Download", en: "\u2b07 Download", shn: "\u2b07 Download", kac: "\u2b07 Download", th: "\u2b07 \u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14", zh: "\u2b07 \u4e0b\u8f7d", vi: "\u2b07 T\u1ea3i xu\u1ed1ng", id: "\u2b07 Unduh", ms: "\u2b07 Muat turun" },
+  dlBusy: { my: "\u2b07 Download \u101c\u102f\u1015\u103a\u1014\u1031\u1010\u101a\u103a\u2026", en: "\u2b07 Downloading\u2026", shn: "\u2b07 Download \u101d\u1086\u1089\u101a\u1030\u1087\u2026", kac: "\u2b07 Download nga ai\u2026", th: "\u2b07 \u0e01\u0e33\u0e25\u0e31\u0e07\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u2026", zh: "\u2b07 \u4e0b\u8f7d\u4e2d\u2026", vi: "\u2b07 \u0110ang t\u1ea3i\u2026", id: "\u2b07 Mengunduh\u2026", ms: "\u2b07 Memuat turun\u2026" },
+  open: { my: "\u2197 Direct Link \u1016\u103d\u1004\u1037\u103a", en: "\u2197 Open direct link", shn: "\u2197 \u1015\u102d\u102f\u1010\u103a\u1087 Direct Link", kac: "\u2197 Direct Link hpaw", th: "\u2197 \u0e40\u0e1b\u0e34\u0e14\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e42\u0e14\u0e22\u0e15\u0e23\u0e07", zh: "\u2197 \u6253\u5f00\u539f\u59cb\u94fe\u63a5", vi: "\u2197 M\u1edf li\u00ean k\u1ebft tr\u1ef1c ti\u1ebfp", id: "\u2197 Buka tautan langsung", ms: "\u2197 Buka pautan terus" },
+  histH: { my: "\u101c\u1010\u103a\u1010\u101c\u1031\u102c \u1011\u102f\u1010\u103a\u1001\u1032\u1037\u1010\u1032\u1037 \u1017\u102e\u1012\u102e\u101a\u102d\u102f\u1019\u103b\u102c\u1038 (session \u1021\u1010\u103d\u1004\u103a\u1038\u1015\u1032)", en: "Recent videos (this session only)", shn: "\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088\u1022\u107c\u103a\u1081\u1035\u1010\u103a\u1038\u101d\u1086\u1089\u1019\u102d\u1030\u101d\u103a\u1088\u101c\u1035\u101d\u103a", kac: "Video ni na galaw da ai (session sha)", th: "\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14 (\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e40\u0e0b\u0e2a\u0e0a\u0e31\u0e19\u0e19\u0e35\u0e49)", zh: "\u6700\u8fd1\u751f\u6210\u7684\u89c6\u9891\uff08\u4ec5\u672c\u6b21\u4f1a\u8bdd\uff09", vi: "Video g\u1ea7n \u0111\u00e2y (ch\u1ec9 trong phi\u00ean n\u00e0y)", id: "Video terbaru (hanya sesi ini)", ms: "Video terkini (sesi ini sahaja)" },
+  needKey: { my: "RunningHub key setup \u1019\u101c\u102f\u1015\u103a\u101b\u101e\u1031\u1038\u1015\u102b \u2014 Setup \u1019\u103e\u102c \u1016\u103c\u100a\u1037\u103a\u1015\u102b", en: "RunningHub key isn't set up yet \u2014 add it in Setup", shn: "RunningHub key \u1015\u1086\u1087\u101c\u1086\u1088 setup \u2014 \u107e\u1062\u1086\u1087 Setup \u1075\u1082\u1083\u1087\u1016\u103c\u100a\u1037\u103a\u1015\u102b", kac: "RunningHub key n setup ai shi \u2014 Setup kaw galaw u", th: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32 RunningHub key \u2014 \u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e43\u0e19 Setup", zh: "\u5c1a\u672a\u8bbe\u7f6e RunningHub key \u2014 \u8bf7\u5728 Setup \u4e2d\u914d\u7f6e", vi: "Ch\u01b0a thi\u1ebft l\u1eadp RunningHub key \u2014 c\u1ea5u h\u00ecnh trong Setup", id: "RunningHub key belum disiapkan \u2014 atur di Setup", ms: "RunningHub key belum disediakan \u2014 konfigurasi dalam Setup" },
+  oddTwo: { my: "\u1015\u102f\u1036 \u1042 \u1015\u102f\u1036 \u1019\u101b\u1015\u102b \u2014 \u1041 \u1015\u102f\u1036 (\u101e\u102d\u102f\u1037) \u1043 \u1015\u102f\u1036 \u1011\u100a\u1037\u103a\u1015\u102b", en: "2 images isn't supported \u2014 use 1 or 3", shn: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 2 \u1022\u1019\u103a\u1087\u101c\u1086\u1088 \u2014 \u1078\u1082\u103a\u1089 1 \u1022\u1019\u103a\u1087\u107c\u107c\u103a 3", kac: "Sumla 2 n mai byin ai \u2014 1 nrai 3 lang u", th: "\u0e43\u0e0a\u0e49 2 \u0e23\u0e39\u0e1b\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49 \u2014 \u0e43\u0e0a\u0e49 1 \u0e2b\u0e23\u0e37\u0e2d 3 \u0e23\u0e39\u0e1b", zh: "\u4e0d\u652f\u6301 2 \u5f20\u56fe\u7247 \u2014 \u8bf7\u7528 1 \u5f20\u6216 3 \u5f20", vi: "Kh\u00f4ng h\u1ed7 tr\u1ee3 2 \u1ea3nh \u2014 d\u00f9ng 1 ho\u1eb7c 3 \u1ea3nh", id: "2 gambar tidak didukung \u2014 gunakan 1 atau 3", ms: "2 imej tidak disokong \u2014 guna 1 atau 3" },
+  needPrompt: { my: "Prompt \u101b\u1031\u1038\u1015\u102b \u2014 \u1017\u102e\u1012\u102e\u101a\u102d\u102f\u1011\u1032\u1019\u103e\u102c \u1018\u102c\u1016\u103c\u1005\u103a\u1005\u1031\u1001\u103b\u1004\u103a\u101c\u1032 \u1016\u1031\u102c\u103a\u1015\u103c\u1015\u102b", en: "Write a prompt describing what should happen in the video", shn: "\u1010\u1085\u1019\u103a\u1088 prompt \u101d\u1083\u1088\u101e\u1004\u103a\u1010\u1031\u1015\u1035\u107c\u103a", kac: "Video kata n gara hku byin na tsun dan prompt ka jaw u", th: "\u0e40\u0e02\u0e35\u0e22\u0e19 prompt \u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48\u0e08\u0e30\u0e40\u0e01\u0e34\u0e14\u0e02\u0e36\u0e49\u0e19\u0e43\u0e19\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d", zh: "\u8bf7\u5199\u4e00\u4e2a prompt \u63cf\u8ff0\u89c6\u9891\u4e2d\u5e94\u8be5\u53d1\u751f\u7684\u4e8b\u60c5", vi: "Vi\u1ebft prompt m\u00f4 t\u1ea3 \u0111i\u1ec1u s\u1ebd x\u1ea3y ra trong video", id: "Tulis prompt yang menjelaskan apa yang terjadi di video", ms: "Tulis prompt yang menerangkan apa yang berlaku dalam video" },
+  noVideo: { my: "\u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1019\u1011\u103d\u1000\u103a\u101c\u102c\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b", en: "No video was returned \u2014 try again", shn: "\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088\u1022\u1019\u103a\u1087\u1022\u103d\u1075\u103a\u1087\u1019\u1083\u1038 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038", kac: "Video n pru wa ai \u2014 bai chyam u", th: "\u0e44\u0e21\u0e48\u0e21\u0e35\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e2a\u0e48\u0e07\u0e01\u0e25\u0e31\u0e1a\u0e21\u0e32 \u2014 \u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48", zh: "\u672a\u8fd4\u56de\u89c6\u9891 \u2014 \u8bf7\u91cd\u8bd5", vi: "Kh\u00f4ng c\u00f3 video tr\u1ea3 v\u1ec1 \u2014 th\u1eed l\u1ea1i", id: "Tidak ada video dikembalikan \u2014 coba lagi", ms: "Tiada video dikembalikan \u2014 cuba lagi" },
+  dlFail: { my: "Download \u1019\u1021\u1031\u102c\u1004\u103a\u1019\u103c\u1004\u103a\u1015\u102b \u2014 Direct Link \u1000\u102d\u102f \u1014\u103e\u102d\u1015\u103a\u1015\u103c\u102e\u1038 manual download \u101c\u102f\u1015\u103a\u1000\u103c\u100a\u1037\u103a\u1015\u102b", en: "Download failed \u2014 try the Direct Link button to save it manually", shn: "Download \u1022\u1019\u103a\u1087\u101e\u1031\u107d\u103d\u1004\u103a\u1088 \u2014 \u1078\u1062\u1019\u103a\u1038\u107c\u1035\u1075\u103a\u1038 Direct Link", kac: "Download n byin ai \u2014 Direct Link dip nna chyam u", th: "\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u0e25\u0e49\u0e21\u0e40\u0e2b\u0e25\u0e27 \u2014 \u0e25\u0e2d\u0e07\u0e43\u0e0a\u0e49\u0e1b\u0e38\u0e48\u0e21 Direct Link", zh: "\u4e0b\u8f7d\u5931\u8d25 \u2014 \u8bf7\u5c1d\u8bd5\u70b9\u51fb\u201c\u76f4\u63a5\u94fe\u63a5\u201d\u6309\u94ae\u624b\u52a8\u4fdd\u5b58", vi: "T\u1ea3i xu\u1ed1ng th\u1ea5t b\u1ea1i \u2014 th\u1eed n\u00fat Direct Link \u0111\u1ec3 l\u01b0u th\u1ee7 c\u00f4ng", id: "Unduh gagal \u2014 coba tombol Direct Link untuk menyimpan manual", ms: "Muat turun gagal \u2014 cuba butang Direct Link untuk simpan secara manual" },
+  clipped: { my: "Prompt \u101b\u103e\u100a\u103a\u101c\u103d\u1014\u103a\u1038\u101c\u102d\u102f\u1037 \u1012\u102e model \u1014\u1032\u1037 \u1016\u103c\u1010\u103a\u1010\u1031\u102c\u1000\u103a\u1001\u1036\u101b\u1019\u101a\u103a", en: "Prompt is longer than this model accepts and would be clipped" }
+};
+/* the app's needMin(n) \u2014 a count baked into the sentence */
+function vidNeedMin(n) {
+  return ff9({ my: "\u1015\u102f\u1036 \u1021\u1014\u100a\u103a\u1038\u1006\u102f\u1036\u1038 " + n + " \u1015\u102f\u1036 \u1011\u100a\u1037\u103a\u1015\u102b", en: "Add at least " + n + " reference image" + (n > 1 ? "s" : ""), shn: "\u1011\u1062\u1086\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 " + n + " \u1022\u1019\u103a\u1087\u101a\u103d\u1019\u103a\u1038", kac: "Sumla " + n + " n law law bang u", th: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e23\u0e39\u0e1b\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e49\u0e2d\u0e22 " + n + " \u0e23\u0e39\u0e1b", zh: "\u81f3\u5c11\u6dfb\u52a0 " + n + " \u5f20\u53c2\u8003\u56fe\u7247", vi: "Th\u00eam \u00edt nh\u1ea5t " + n + " \u1ea3nh tham chi\u1ebfu", id: "Tambahkan minimal " + n + " gambar referensi", ms: "Tambah sekurang-kurangnya " + n + " imej rujukan" });
+}
+/* the app's need-note under the pickers: what this model wants for images */
+function vidNeedNote(m) {
+  if (!m) return "";
+  const min = m.minImages || 0, max = (m.maxImages == null) ? 1 : m.maxImages;
+  if (max === 0) return ff9({ my: "\u1015\u102f\u1036 \u1019\u101c\u102d\u102f\u1015\u102b \u2014 prompt \u1010\u1005\u103a\u1001\u102f\u1010\u100a\u103a\u1038\u1014\u1032\u1037 \u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1011\u102f\u1010\u103a\u1015\u1031\u1038\u1015\u102b\u1010\u101a\u103a", en: "No image needed \u2014 this model generates from the prompt alone", shn: "\u1022\u1019\u103a\u1087\u101c\u1030\u101d\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 \u2014 prompt \u1022\u107c\u103a\u101c\u1035\u101d\u103a\u1075\u1031\u1083\u1088\u101c\u1086\u1088", kac: "Sumla n ra ai \u2014 prompt hte sha video galaw ya ai", th: "\u0e44\u0e21\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e43\u0e0a\u0e49\u0e23\u0e39\u0e1b \u2014 \u0e42\u0e21\u0e40\u0e14\u0e25\u0e19\u0e35\u0e49\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e08\u0e32\u0e01 prompt \u0e2d\u0e22\u0e48\u0e32\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27", zh: "\u65e0\u9700\u56fe\u7247 \u2014 \u8be5\u6a21\u578b\u4ec5\u51ed prompt \u751f\u6210\u89c6\u9891", vi: "Kh\u00f4ng c\u1ea7n \u1ea3nh \u2014 m\u00f4 h\u00ecnh n\u00e0y t\u1ea1o video ch\u1ec9 t\u1eeb prompt", id: "Tidak perlu gambar \u2014 model ini membuat video dari prompt saja", ms: "Tiada imej diperlukan \u2014 model ini menjana daripada prompt sahaja" });
+  if (min === 0) return ff9({ my: "\u1015\u102f\u1036 \u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b \u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b \u2014 \u1021\u1019\u103b\u102c\u1038\u1006\u102f\u1036\u1038 " + max + " \u1015\u102f\u1036", en: "Images are optional \u2014 up to " + max, shn: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088 \u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088 \u2014 \u1011\u102d\u102f\u1004\u103a " + max, kac: "Sumla bang yang mai, n bang yang mai \u2014 " + max + " du hkra", th: "\u0e23\u0e39\u0e1b\u0e20\u0e32\u0e1e\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a \u2014 \u0e2a\u0e39\u0e07\u0e2a\u0e38\u0e14 " + max + " \u0e23\u0e39\u0e1b", zh: "\u56fe\u7247\u53ef\u9009 \u2014 \u6700\u591a " + max + " \u5f20", vi: "\u1ea2nh l\u00e0 t\u00f9y ch\u1ecdn \u2014 t\u1ed1i \u0111a " + max, id: "Gambar opsional \u2014 hingga " + max, ms: "Imej pilihan \u2014 sehingga " + max });
+  if (min === max) return ff9({ my: "\u1015\u102f\u1036 " + min + " \u1015\u102f\u1036 \u101c\u102d\u102f\u1021\u1015\u103a\u1015\u102b\u1010\u101a\u103a", en: "Needs " + min + " reference image" + (min > 1 ? "s" : ""), shn: "\u101c\u1030\u101d\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 " + min + " \u1022\u107c\u103a", kac: "Sumla " + min + " ra ai", th: "\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e23\u0e39\u0e1b\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 " + min + " \u0e23\u0e39\u0e1b", zh: "\u9700\u8981 " + min + " \u5f20\u53c2\u8003\u56fe\u7247", vi: "C\u1ea7n " + min + " \u1ea3nh tham chi\u1ebfu", id: "Butuh " + min + " gambar referensi", ms: "Perlukan " + min + " imej rujukan" });
+  if (m.oddOnly) return ff9({ my: "\u1015\u102f\u1036 \u1041 \u1015\u102f\u1036 (\u101e\u102d\u102f\u1037) \u1043 \u1015\u102f\u1036 \u101c\u102d\u102f\u1021\u1015\u103a\u1015\u102b\u1010\u101a\u103a \u2014 \u1042 \u1015\u102f\u1036 \u1019\u101b\u1015\u102b", en: "Needs 1 or 3 reference images \u2014 2 is not supported", shn: "\u101c\u1030\u101d\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 1 \u1022\u1019\u103a\u1087\u107c\u107c\u103a 3 \u2014 2 \u1022\u1019\u103a\u1087\u101c\u1086\u1088", kac: "Sumla sumla 1 nrai 3 ra ai \u2014 2 gaw n mai byin ai", th: "\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e23\u0e39\u0e1b\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 1 \u0e2b\u0e23\u0e37\u0e2d 3 \u0e23\u0e39\u0e1b \u2014 \u0e43\u0e0a\u0e49 2 \u0e23\u0e39\u0e1b\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49", zh: "\u9700\u8981 1 \u5f20\u6216 3 \u5f20\u53c2\u8003\u56fe\u7247 \u2014 \u4e0d\u652f\u6301 2 \u5f20", vi: "C\u1ea7n 1 ho\u1eb7c 3 \u1ea3nh tham chi\u1ebfu \u2014 kh\u00f4ng h\u1ed7 tr\u1ee3 2 \u1ea3nh", id: "Butuh 1 atau 3 gambar referensi \u2014 2 gambar tidak didukung", ms: "Perlukan 1 atau 3 imej rujukan \u2014 2 imej tidak disokong" });
+  return ff9({ my: "\u1015\u102f\u1036 " + min + "-" + max + " \u1015\u102f\u1036 \u101c\u102d\u102f\u1021\u1015\u103a\u1015\u102b\u1010\u101a\u103a", en: "Needs " + min + "-" + max + " reference images", shn: "\u101c\u1030\u101d\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 " + min + "-" + max, kac: "Sumla " + min + "-" + max + " ra ai", th: "\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e23\u0e39\u0e1b\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 " + min + "-" + max + " \u0e23\u0e39\u0e1b", zh: "\u9700\u8981 " + min + "-" + max + " \u5f20\u53c2\u8003\u56fe\u7247", vi: "C\u1ea7n " + min + "-" + max + " \u1ea3nh tham chi\u1ebfu", id: "Butuh " + min + "-" + max + " gambar referensi", ms: "Perlukan " + min + "-" + max + " imej rujukan" });
+}
+
+/* The app's brandOf(v, label) \u2192 IC tile, verbatim in order, for the 183-model
+   video picker (the Freeform table above only knows the image models). */
+function vidBrandOf(v, label) {
+  const s = (String(v || "") + " " + String(label || "")).toLowerCase();
+  const T = { gemini: "t-gemini", openai: "t-openai", rh: "t-rh", banana: "t-banana", qwen: "t-qwen", flux: "t-flux",
+    wan: "t-wan", seed: "t-rh", up: "t-gold", spark: "t-gold" };
+  let ic = "spark";
+  if (/nano[- ]?banana/.test(s)) ic = "banana";
+  else if (/gemini|^auto |model: auto/.test(s) || v === "auto") ic = "gemini";
+  else if (/sora/.test(s)) ic = "openai";
+  else if (/gpt|openai|dall/.test(s)) ic = "openai";
+  else if (/qwen/.test(s)) ic = "qwen";
+  else if (/kling/.test(s)) ic = "kling";
+  else if (/vidu/.test(s)) ic = "vidu";
+  else if (/veo/.test(s)) ic = "veo";
+  else if (/minimax|hailuo/.test(s)) ic = "hailuo";
+  else if (/pixverse/.test(s)) ic = "pixverse";
+  else if (/\bltx/.test(s)) ic = "ltx";
+  else if (/skyreels/.test(s)) ic = "skyreels";
+  else if (/happyhorse|happy horse/.test(s)) ic = "horse";
+  else if (/higgsfield/.test(s)) ic = "higgs";
+  else if (/dreamactor/.test(s)) ic = "seed";
+  else if (/volc/.test(s)) ic = "volc";
+  else if (/flux/.test(s)) ic = "flux";
+  else if (/^wan|wan[- ]image|wan[- ]2/.test(s)) ic = "wan";
+  else if (/upscale|topaz/.test(s)) ic = "up";
+  else if (/seedance/.test(s)) ic = "seed";
+  else if (/seedream/.test(s)) ic = "seed";
+  else if (/z-image/.test(s)) ic = "zimg";
+  else if (/midjourney|youchuan/.test(s)) ic = "mj";
+  else if (/grok/.test(s)) ic = "grokx";
+  else if (/jimeng/.test(s)) ic = "seed";
+  else if (/klein|krea|kontext|f-dev/.test(s)) ic = "flux";
+  else if (/rh[- ]|rhart|imagine/.test(s)) ic = "rh";
+  return { ic: ic, cls: T[ic] || "t-plain" };
+}
+/* the app's hueOf: a stable hue per family name for the letter tile */
+function vidHueOf(s) {
+  let h = 0;
+  s = String(s || "");
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+/* the app groups the picker by family in <optgroup>s labelled "Fam (n)";
+   UXP's select may not know optgroup, so the family also rides data-fam */
+function vidFamOf(opt) {
+  if (!opt) return "HNK";
+  const p = opt.parentElement;
+  const og = (p && p.tagName === "OPTGROUP") ? (p.label || "") : "";
+  return (og || opt.getAttribute("data-fam") || "HNK").replace(/\s*\(\d+\)\s*$/, "");
+}
+function vidFillModels(sel, list) {
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
+  const fams = [], byFam = {};
+  list.forEach(function (m) {
+    const f = m.fam || "HNK";
+    if (!byFam[f]) { byFam[f] = []; fams.push(f); }
+    byFam[f].push(m);
+  });
+  const hasOg = (typeof HTMLOptGroupElement !== "undefined");
+  fams.forEach(function (f) {
+    const lab = f + " (" + byFam[f].length + ")";
+    let host = sel;
+    if (hasOg) {
+      host = document.createElement("optgroup");
+      host.label = lab;
+      sel.appendChild(host);
+    }
+    byFam[f].forEach(function (m) {
+      const o = mkOption(m.id, m.label || m.id);
+      o.setAttribute("data-fam", lab);
+      host.appendChild(o);
+    });
+  });
+}
+/* app iconFor(selVidModel): a brand tile when the family has one, else the
+   family's initial on a hue the family name hashes to */
+function vidPaintModelBtn() {
+  const sel = $("vidModel");
+  if (!sel) return;
+  const opt = (sel.options && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex] : null;
+  const label = opt ? String(opt.textContent || "") : "\u2014";
+  const fam = vidFamOf(opt);
+  const v = $("vidModelVal"); if (v) v.textContent = label;
+  const tile = $("vidModelTile"), gl = $("vidModelGlyph");
+  if (!tile) return;
+  const b = vidBrandOf(sel.value, fam + " " + label);
+  let mono = tile.querySelector(".hsl-mono");
+  if (b.ic !== "spark") {
+    tile.className = "hsl-tile " + b.cls;
+    tile.style.background = "";
+    if (gl) { gl.style.display = ""; gl.src = "icons/ui/brand-" + b.ic + ".svg"; }
+    if (mono) tile.removeChild(mono);
+  } else {
+    const hue = vidHueOf(fam);
+    tile.className = "hsl-tile";
+    tile.style.background = "radial-gradient(120% 120% at 20% 15%, hsl(" + hue + ", 38%, 26%) 0%, hsl(" + hue + ", 42%, 15%) 70%)";
+    if (gl) gl.style.display = "none";
+    if (!mono) { mono = document.createElement("span"); mono.className = "hsl-mono"; tile.appendChild(mono); }
+    mono.textContent = fam.charAt(0).toUpperCase();
+    mono.style.color = "hsl(" + hue + ", 72%, 68%)";
+  }
+}
+/* app syncVis: a picker whose select is hidden hides with it */
+function vidPaintHsl() {
+  ffPaintHslVal("vidRes", "vidResVal");
+  ffPaintHslVal("vidDur", "vidDurVal");
+  [["vidRes", "vidResHsl"], ["vidDur", "vidDurHsl"]].forEach(function (p) {
+    const sel = $(p[0]), w = $(p[1]);
+    if (sel && w) w.className = "hsl" + (sel.style.display === "none" ? " hsl-off" : "");
+  });
+}
+/* the app's updateVidModelUI: the model owns the Res / Duration / Ratio
+   lists, the prompt cap and the image note */
 function vidPaintOptions() {
-  const d = vidDef();
-  fillSel($("vidRes"), (d && d.resolutions) || []);
-  fillSel($("vidDur"), (d && d.durations) || []);
-  fillSel($("vidAspect"), (d && d.aspect) || []);
-  renderVid();
+  const m = vidDef();
+  const res = $("vidRes"), dur = $("vidDur"), asp = $("vidAspect");
+  if (res) {
+    const prior = res.value;
+    const list = (m && m.resolutions) || [];
+    while (res.firstChild) res.removeChild(res.firstChild);
+    list.forEach(function (r) { res.appendChild(mkOption(String(r), "Res: " + r)); });
+    if (list.indexOf(prior) >= 0) res.value = prior;
+    res.style.display = list.length ? "" : "none";
+  }
+  if (dur) {
+    const prior = dur.value;
+    const list = ((m && m.durations) || []).map(String);
+    while (dur.firstChild) dur.removeChild(dur.firstChild);
+    list.forEach(function (d) { dur.appendChild(mkOption(d, (d === "-1" || d === "auto") ? "Auto" : d + "s")); });
+    if (list.indexOf(prior) >= 0) dur.value = prior;
+    dur.style.display = list.length ? "" : "none";
+  }
+  if (asp) {
+    if (m && m.aspects && m.aspects.length) {
+      const prior = asp.value;
+      while (asp.firstChild) asp.removeChild(asp.firstChild);
+      m.aspects.forEach(function (a) { asp.appendChild(mkOption(String(a), String(a))); });
+      if (m.aspects.indexOf(prior) >= 0) asp.value = prior;
+    }
+    asp.style.display = (m && m.aspect) ? "" : "none";
+  }
+  const box = $("vidPromptP");
+  if (box) { try { box.maxLength = (m && m.promptMax) || 800; } catch (e) { } }
+  vidPaintModelBtn();
+  vidPaintHsl();
   /* the prompt cap belongs to the model, so the counter follows the picker */
   try { vidPaintPromptCount(); } catch (e) { }
+  const note = $("vidNeedNote"); if (note) note.textContent = vidNeedNote(m);
 }
-function vidRows() {
-  const d = vidDef();
-  const rows = [
-    { label: "Model", level: d ? "ok" : "pend", detail: d ? (d.label || d.id) : "\u2014" },
-    { label: "Photo", level: VID.photo ? "ok" : (d && d.minImages === 0 ? "ok" : "pend"),
-      detail: VID.photo ? VID.photo.name : (d && d.minImages === 0 ? "not needed" : "\u2014") },
-    { label: "Save folder", level: VID.out ? "ok" : "pend", detail: VID.out ? (VID.out.name || "chosen") : "\u2014" }
-  ];
-  return rows.concat(VID.rows.slice(0, 6));
-}
-function renderVid() { renderRows("vidList", vidRows()); }
 
 /* ============================================================
    v6.50.0 — THE APP'S VIDEO WORKFLOW SHELF, on the panel's Video page.
@@ -8765,13 +9150,19 @@ function vidWfApply(w) {
   if (setup.res) { const e = $("vidRes"); if (e) { try { e.value = setup.res; } catch (x) { } } }
   if (setup.dur) { const e = $("vidDur"); if (e) { try { e.value = String(setup.dur); } catch (x) { } } }
   if (setup.aspect) { const e = $("vidAspect"); if (e) { try { e.value = setup.aspect; } catch (x) { } } }
+  vidPaintHsl();
   const box = $("vidPromptP");
   if (box) {
-    box.value = w.cities ? w.text(P.cityDef(vidWfCity || P.CITIES[0].k)) : w.text();
+    box.value = w.cities ? w.text(P.cityDef(vidWfCity)) : w.text();
     vidPaintPromptCount();
   }
   renderVidWf();
-  setStatus(P.tr(w.label) + " ✓", "ok");
+  const m = vidDef();
+  if (box && m && box.value.length > (m.promptMax || 800)) {
+    /* the submit path clips silently — the app says so here instead */
+    setStatus(ff9(VID_L.clipped), "err");
+  }
+  setStatus(stripIcn(P.tr(w.label)) + " ✓", "ok");
 }
 
 function vidPaintPromptCount() {
@@ -8783,26 +9174,34 @@ function vidPaintPromptCount() {
   out.textContent = n + " / " + max;
 }
 
+/* the app's vidWfCard: .wfmini > .wfv (img + .wf-need), .t, .s, .go — the
+   card survives its photograph going missing (the art is the nicety, the
+   workflow is the product) */
 function vidWfCard(w) {
+  const P = vidWfPack();
   const m = mkBtn("wfmini" + (vidWfActive === w.key ? " on" : ""));
   const v = document.createElement("div");
   v.className = "wfv";
   const im = document.createElement("img");
   im.loading = "eager";
-  im.alt = "";
-  im.onerror = function () { try { m.removeChild(v); } catch (e) { } };
+  im.alt = P ? stripIcn(P.tr(w.label)) : "";
+  im.onerror = function () {
+    im.onerror = null;
+    v.className = "wfv wfv-noart";
+    try { v.removeChild(im); } catch (e) { }
+  };
   im.src = VID_ART_BASE + w.art;
   v.appendChild(im);
-  const need = document.createElement("div");
+  const need = document.createElement("span");
   need.className = "wf-need";
   need.textContent = vwL(VW_NEED);
   v.appendChild(need);
   m.appendChild(v);
-  const P = vidWfPack();
-  const ti = document.createElement("div"); ti.className = "t"; ti.textContent = P ? P.tr(w.label) : ""; m.appendChild(ti);
-  const su = document.createElement("div"); su.className = "s"; su.textContent = P ? P.tr(w.summary) : ""; m.appendChild(su);
+  const ti = document.createElement("div"); ti.className = "t"; ti.textContent = P ? stripIcn(P.tr(w.label)) : ""; m.appendChild(ti);
+  const su = document.createElement("div"); su.className = "s"; su.textContent = P ? stripIcn(P.tr(w.summary)) : ""; m.appendChild(su);
   const go = document.createElement("div"); go.className = "go";
-  go.textContent = "› " + vwL(vidWfActive === w.key ? VW_SEL : VW_USE);
+  go.appendChild(ffIcon("i-caret", "hi"));
+  go.appendChild(document.createTextNode(vwL(vidWfActive === w.key ? VW_SEL : VW_USE)));
   m.appendChild(go);
   m.addEventListener("click", function () { vidWfApply(w); });
   return m;
@@ -8822,17 +9221,25 @@ function renderVidWf() {
   const opts = $("vidWfOpts");
   if (opts) opts.style.display = (w && w.cities) ? "block" : "none";
   const hint = $("vidWfHint");
-  if (hint) hint.textContent = w ? P.tr(w.hint) : "";
+  if (hint) hint.textContent = w ? stripIcn(P.tr(w.hint)) : ff9(VID_L.introHint);
+  const head = $("vidWfCityH");
+  if (head) head.textContent = ff9(VID_L.cityH);
   const crow = $("vidWfCityRow");
   if (crow) {
     while (crow.firstChild) crow.removeChild(crow.firstChild);
     if (w && w.cities) {
-      const head = $("vidWfCityH");
-      if (head) head.textContent = "City";
       P.CITIES.forEach(function (ct) {
-        const b = mkBtn("chip" + ((vidWfCity || P.CITIES[0].k) === ct.k ? " on" : ""));
+        const b = mkBtn("chip" + (vidWfCity === ct.k ? " on" : ""));
         b.textContent = (state.lang === "my" ? ct.my : ct.en) + " · " + ct.loc;
-        b.addEventListener("click", function () { vidWfCity = ct.k; vidWfApply(w); });
+        b.addEventListener("click", function () {
+          vidWfCity = ct.k;
+          /* re-compose rather than string-patch: the city appears in three
+             different places in the prompt */
+          const cur = P.byKey(vidWfActive);
+          const box = $("vidPromptP");
+          if (cur && cur.cities && box) { box.value = cur.text(ct); vidPaintPromptCount(); }
+          renderVidWf();
+        });
         crow.appendChild(b);
       });
     }
@@ -8954,39 +9361,188 @@ function videoEnv() {
   return { transport: (globalThis.HNK && globalThis.HNK.runninghubHttp && globalThis.HNK.runninghubHttp.create)
     ? globalThis.HNK.runninghubHttp.create() : null, apiKey: state.rhKey, configOverride: rhConfigOverride() };
 }
-async function vidRun() {
-  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
-  const d = vidDef();
-  if (VID.busy || !V || !d) return;
-  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
-  const prompt = ($("vidPromptP") && $("vidPromptP").value || "").trim();
-  if (!prompt) { setStatus("Write a prompt first", "err"); return; }
-  if (!VID.out) { setStatus("Choose a save folder first", "err"); return; }
-  if ((d.minImages || 0) > 0 && !VID.photo) { setStatus("This model needs a photo", "err"); return; }
-  VID.busy = true; VID.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVid();
-  try {
-    const refs = VID.photo ? [await fileToDataUrl(VID.photo)] : [];
-    const res = await V.generate(Object.assign(videoEnv(), { def: d }), {
-      def: d, prompt: prompt, imageRefs: refs,
-      resolution: ($("vidRes") && $("vidRes").value) || "",
-      duration: ($("vidDur") && $("vidDur").value) || "",
-      aspectRatio: ($("vidAspect") && $("vidAspect").value) || ""
-    }, function (stage, info) {
-      VID.rows = [{ label: "Working", level: "pend",
-        detail: stage + (info && info.elapsedMs ? " " + Math.round(info.elapsedMs / 1000) + "s" : "") }];
-      renderVid();
+/* ============================================================
+   v6.51.0 — THE APP'S VIDEO GENERATE FLOW, control for control.
+
+   The page used to be a file picker, a save-folder picker and a row list;
+   the app has none of those. Its Video page reads the same three IMG slots
+   Generate reads, runs with the gold GENERATE VIDEO button, the ring-and-bar
+   spinner, Cancel, a status line and Retry, and shows the result in a card
+   with a 24-hour note, Download, Direct Link and a six-deep session history.
+   That is what this is. Download writes to a folder the studio picks (a
+   plugin cannot hand the browser a blob), Direct Link opens the RunningHub
+   URL in the system browser — the same two outcomes by the only routes UXP
+   has. Nothing else is added.
+   ============================================================ */
+/* the app's refs.filter(Boolean): the three IMG slots, empties dropped */
+function vidRefs() {
+  const out = [];
+  for (let i = 0; i < 3; i++) { const r = ffSlotGet(i); if (r) out.push(r); }
+  return out;
+}
+/* the app's rhFriendly branches this flow can reach */
+const VID_ERR_L = {
+  cancelled: { my: "ရပ်လိုက်ပါပြီ", en: "Cancelled", shn: "ၵိုတ်းယဝ်ႉ", kac: "Hkum tawn kau sai", th: "ยกเลิกแล้ว", zh: "已取消", vi: "Đã hủy", id: "Dibatalkan", ms: "Dibatalkan" },
+  timeout: { my: "RunningHub timeout ဖြစ်သွားပါတယ် — ပြန်စမ်းကြည့်ပါ", en: "RunningHub timed out — try again", shn: "RunningHub timeout ဝႆႉ — ၸၢမ်းၶိုၼ်း", kac: "RunningHub timeout byin mat sai — bai chyam u", th: "RunningHub หมดเวลา — ลองใหม่อีกครั้ง", zh: "RunningHub 超时 — 请重试", vi: "RunningHub hết thời gian chờ — thử lại", id: "RunningHub timeout — coba lagi", ms: "RunningHub timeout — cuba lagi" }
+};
+function vidCancelled(e, sig) {
+  return (sig && sig.aborted) || (e && e.code === "cancelled") ||
+    /abort/i.test(((e && e.name) || "") + " " + ((e && e.message) || ""));
+}
+function vidErrMsg(e, sig) {
+  if (vidCancelled(e, sig)) return ff9(VID_ERR_L.cancelled);
+  if (e && e.code === "timeout") return ff9(VID_ERR_L.timeout);
+  return friendlyErr(e);
+}
+/* the app's stage line: "Generating video … · UPLOADING 1/2 · 12s" */
+function vidSpinLine(status) {
+  const secs = Math.round((Date.now() - vidRun.t0) / 1000);
+  return vidRun.base + (status ? " · " + status : "") + " · " + secs + "s";
+}
+function vidRunStopTimers() {
+  if (vidRun.tick) { clearInterval(vidRun.tick); vidRun.tick = 0; }
+  if (vidRun.anim) { clearInterval(vidRun.anim); vidRun.anim = 0; }
+}
+/* the app's showVidResult(): the card opens on the selected entry and the
+   history strip is rebuilt with the selected thumb ringed gold */
+function showVidResult() {
+  const out = vidHist[vidHistSel];
+  const box = $("vidResultBox");
+  if (!out || !box) return;
+  box.className = "card result-box on";
+  const vid = $("vidResultVideo");
+  if (vid) { try { vid.src = out.url; } catch (e) { } }
+  const h = $("vidHist");
+  if (h) {
+    while (h.firstChild) h.removeChild(h.firstChild);
+    vidHist.forEach(function (e, i) {
+      const v = document.createElement("video");
+      v.src = e.url; v.muted = true; v.preload = "metadata"; v.playsInline = true;
+      v.className = i === vidHistSel ? "sel" : "";
+      ffPressable(v, function () { vidHistSel = i; showVidResult(); });
+      h.appendChild(v);
     });
-    if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
-    try { rhBookUsage(res.usage, { kind: "video", label: d.label || d.id, prov: "rh" }); } catch (e) { }
-    const name = "hnk-video-" + Date.now() + ".mp4";
-    await saveResultFile(VID.out, name, res.results[0].ref);
-    VID.rows = [{ label: name, level: "ok", detail: "saved" }];
-    setStatus(t("st_done") || "Done", "ok");
-  } catch (e) {
-    VID.rows = [{ label: "Failed", level: "err", detail: (e && e.message) ? String(e.message).slice(0, 48) : "failed" }];
-    setStatus(friendlyErr(e), "err");
   }
-  VID.busy = false; renderVid();
+  try { box.scrollIntoView({ behavior: "smooth" }); } catch (e) { }
+}
+async function vidGenerate() {
+  if (vidRun.busy) return;
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const m = vidDef();
+  if (!V || !m) return;
+  if (!state.rhKey) {
+    switchPage("setup");
+    const mk = ff9(VID_L.needKey);
+    stSet("stRhKey", mk, "err"); setStatus(mk, "err");
+    return;
+  }
+  const refs = vidRefs();
+  const minImages = m.minImages || 0;
+  if (refs.length < minImages) { stSet("stVidGen", vidNeedMin(minImages), "err"); return; }
+  if (m.oddOnly && refs.length === 2) { stSet("stVidGen", ff9(VID_L.oddTwo), "err"); return; }
+  const box = $("vidPromptP");
+  const text = ((box && box.value) || "").trim();
+  if (!text) { stSet("stVidGen", ff9(VID_L.needPrompt), "err"); return; }
+  const maxImages = (m.maxImages == null) ? refs.length : m.maxImages;
+  const refDataUrls = refs.slice(0, maxImages).map(function (r) { return "data:" + r.mime + ";base64," + r.b64; });
+  const resolution = ($("vidRes") && $("vidRes").value) || "";
+  const duration = ($("vidDur") && $("vidDur").value) || "";
+  const aspectRatio = m.aspect ? (($("vidAspect") && $("vidAspect").value) || "") : "";
+
+  const btn = $("btnVidRun");
+  vidRun.busy = true; vidRun.t0 = Date.now(); vidRun.base = ff9(VID_L.spin);
+  vidRun.abort = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  const sig = vidRun.abort ? vidRun.abort.signal : null;
+  if (btn && btn.classList) btn.classList.add("working");
+  const sp = ffSpinEnsure("vidSpin");
+  if (sp) sp.className = "spin on";
+  stSet("stVidGen", "");
+  const rb = $("btnVidRetry"); if (rb) rb.style.display = "none";
+  const cb = $("btnVidCancel");
+  if (cb) { setIcnText(cb, "i-close", "cream", t("btn_cancel")); cb.style.display = ""; }
+  let stage = "";
+  const paint = function () { const tx = $("vidSpinTxt"); if (tx) tx.textContent = vidSpinLine(stage); };
+  vidRunStopTimers();
+  vidRun.tick = setInterval(paint, 1000);
+  vidRun.anim = setInterval(function () { spinFrame(sp, vidRun.t0); }, 50);
+  paint(); spinFrame(sp, vidRun.t0);
+  try {
+    const res = await V.generate(Object.assign(videoEnv(), { signal: sig }), {
+      def: m, prompt: text, imageRefs: refDataUrls,
+      resolution: resolution, duration: duration, aspectRatio: aspectRatio
+    }, function (st, info) {
+      stage = st + (st === "UPLOADING" && info && info.total ? " " + info.current + "/" + info.total : "");
+      paint();
+    });
+    if (!res.ok) throw Object.assign(new Error((res.error && res.error.message) || "video failed"), { code: (res.error && res.error.code) || "" });
+    const outs = res.results || [];
+    if (!outs.length) {
+      stSet("stVidGen", ff9(VID_L.noVideo), "err");
+      if (rb) rb.style.display = "";
+    } else {
+      try { rhBookUsage(res.usage, { kind: "video", label: m.label || m.id, prov: "rh" }); } catch (e) { }
+      vidHist.unshift({ url: outs[0].url, ref: outs[0].ref, prompt: text.slice(0, 120), resolution: resolution, duration: duration, ts: Date.now() });
+      while (vidHist.length > 6) vidHist.pop();
+      vidHistSel = 0;
+      showVidResult();
+      stSet("stVidGen", t("st_done"), "ok");
+    }
+  } catch (e) {
+    const cancelled = vidCancelled(e, sig);
+    stSet("stVidGen", vidErrMsg(e, sig), cancelled ? "ok" : "err");
+    if (!cancelled && rb) rb.style.display = "";
+  }
+  vidRunStopTimers();
+  vidRun.abort = null; vidRun.busy = false;
+  if (cb) cb.style.display = "none";
+  if (btn && btn.classList) btn.classList.remove("working");
+  if (sp) sp.className = "spin";
+  const tx = $("vidSpinTxt"); if (tx) tx.textContent = vidRun.base;
+}
+/* the app's Download: the same "hnk-video-<res>-<yyyymmdd>.mp4" name, written
+   into a folder the studio picks */
+async function vidDownload() {
+  const out = vidHist[vidHistSel];
+  const btn = $("btnVidDl");
+  if (!out || !btn || vidRun.dl) return;
+  vidRun.dl = true;
+  setIcnText(btn, "i-download", "ink", ff9(VID_L.dlBusy));
+  try {
+    const folder = await pickFolder();
+    if (folder) {
+      const d = new Date(); const p2 = function (x) { return (x < 10 ? "0" : "") + x; };
+      const stamp = "" + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate());
+      await saveResultFile(folder, "hnk-video-" + (out.resolution || "") + "-" + stamp + ".mp4", out.ref);
+      setStatus(t("st_done"), "ok");
+    }
+  } catch (e) {
+    setStatus(ff9(VID_L.dlFail), "err");
+  }
+  vidRun.dl = false;
+  setIcnText(btn, "i-download", "ink", ff9(VID_L.dl));
+}
+/* the app's <a href=out.url target=_blank>: the system browser opens it */
+function vidOpen() {
+  const out = vidHist[vidHistSel];
+  if (!out || !out.url) return;
+  try { require("uxp").shell.openExternal(out.url); }
+  catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+/* the app's label pass for this page, re-run on every language switch */
+function vidPaintLabels() {
+  const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
+  set("vidIntro", ff9(VID_L.intro));
+  set("vidWfIntro", ff9(VID_L.wfIntro));
+  const box = $("vidPromptP"); if (box) box.placeholder = ff9(VID_L.promptPh);
+  set("vidResultH2", ff9(VID_L.resultH2));
+  setIcnText($("vidExpireNote"), "i-warn", "hi", ff9(VID_L.expire));
+  set("vidHistH", ff9(VID_L.histH));
+  if (!vidRun.dl) setIcnText($("btnVidDl"), "i-download", "ink", ff9(VID_L.dl));
+  setIcnText($("btnVidOpen"), "i-external", "cream", ff9(VID_L.open));
+  setIcnText($("btnVidRetry"), "i-retry", "cream", ff9(VID_L.retry));
+  setIcnText($("btnVidCancel"), "i-close", "cream", t("btn_cancel"));
+  const sp = ffSpinEnsure("vidSpin");
+  if (sp && !vidRun.busy) { vidRun.base = ff9(VID_L.spin); const tx = $("vidSpinTxt"); if (tx) tx.textContent = vidRun.base; }
 }
 async function vuRun() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
@@ -9117,33 +9673,30 @@ function bindVideo() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   const sel = $("vidModel");
   if (sel && V) {
-    const list = V.models();
-    while (sel.firstChild) sel.removeChild(sel.firstChild);
-    for (let i = 0; i < list.length; i++) {
-      sel.appendChild(mkOption(list[i].id, list[i].label || list[i].id));
-    }
+    /* v6.51.0 — the app's family-grouped picker, painted onto the IC tile */
+    vidFillModels(sel, V.models());
     sel.addEventListener("change", vidPaintOptions);
   }
-  const pick = $("btnVidPick");
-  if (pick) pick.addEventListener("click", async function () {
-    try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) VID.photo = f; renderVid(); }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
+  /* the app's five video buttons: generate, cancel, retry, download, open */
+  const run = $("btnVidRun"); if (run) run.addEventListener("click", vidGenerate);
+  const cancel = $("btnVidCancel");
+  if (cancel) cancel.addEventListener("click", function () { if (vidRun.abort) vidRun.abort.abort(); });
+  const retry = $("btnVidRetry");
+  if (retry) retry.addEventListener("click", function () {
+    if (vidRun.busy) return;
+    retry.style.display = "none";
+    vidGenerate();
   });
-  const save = $("btnVidSave");
-  if (save) save.addEventListener("click", async function () {
-    try { const f = await pickFolder(); if (f) VID.out = f; renderVid(); }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
-  });
-  const run = $("btnVidRun"); if (run) run.addEventListener("click", vidRun);
-  const intro = $("vidIntro");
-  if (intro) intro.textContent = "A photo and a prompt become a video \u2014 saved as a file.";
-  /* v6.50.0 — the app's shelf, its intro line, and a live prompt counter */
-  const wfIntro = $("vidWfIntro");
-  if (wfIntro) wfIntro.textContent = "One tap sets the prompt, the model, the size and the length.";
+  const dl = $("btnVidDl"); if (dl) dl.addEventListener("click", vidDownload);
+  const open = $("btnVidOpen"); if (open) open.addEventListener("click", vidOpen);
   const box = $("vidPromptP");
   if (box) box.addEventListener("input", vidPaintPromptCount);
+  /* the app's nine-language copy, repainted on every language change */
+  vidPaintLabels();
   renderVidWf();
-  vidPaintPromptCount();
+  REFRESHERS.push(function () {
+    try { vidPaintLabels(); vidPaintOptions(); renderVidWf(); } catch (e) { hwarn("video:", e); }
+  });
 
   fillSel($("vuRes"), (V && V.upscaleResolutions) || ["1080p"], "1080p");
   const vp = $("btnVuPickP");
@@ -9775,6 +10328,9 @@ async function saveSettings() {
       size: state.size, ratio: state.ratio,
       autoRun: state.autoRun, autoPlace: state.autoPlace, intensity: state.intensity,
       rt: state.rt, sections: state.sections, page: state.page,
+      /* the studio's own slider/chip values — the app's state.st, saved and
+         restored through the app's own tolerant reader (state.stSaved) */
+      st: (state.st ? { t1: state.st.t1, t2: state.st.t2, v: state.st.v, geo: state.st.geo, preset: state.st.preset, target: state.st.target } : null),
       clean: state.clean,
       keep: state.keep, rmix: state.rmix, i2p: state.i2p, lights: state.lights,
       lightEquip: state.lightEquip, chains: state.chains, restMode: state.restMode,
@@ -9930,6 +10486,9 @@ async function loadSettings() {
           });
         }
       }
+      /* handed to the studio module's own restore, which validates every
+         key against its defaults before it touches a control */
+      if (o.st && typeof o.st === "object") state.stSaved = o.st;
       if (o.rt && typeof o.rt === "object") {
         for (const k in RT_DEFAULT) {
           if (typeof RT_DEFAULT[k] === "number" && typeof o.rt[k] === "number") state.rt[k] = Math.round(o.rt[k]);
@@ -10307,8 +10866,10 @@ function ffPressable(node, fn) {
   });
 }
 function renderRefs() {
-  const host = $("refStrip");
-  if (host) {
+  /* v6.51.0 — the app's one refstrip, painted on Freeform and Video alike */
+  ["refStrip", "vidRefStrip"].forEach(function (hostId) {
+    const host = $(hostId);
+    if (!host) return;
     host.innerHTML = "";
     for (let i = 0; i < 3; i++) {
       const r = ffSlotGet(i);
@@ -10328,7 +10889,7 @@ function renderRefs() {
     }
     const note = document.createElement("div"); note.className = "note"; note.textContent = ff9(FF_L.note);
     host.appendChild(note);
-  }
+  });
   /* the Library page's IMAGES card — the app's renderRefs, slot for slot */
   const refs = $("refs");
   if (refs) {
@@ -12642,13 +13203,16 @@ async function copyFinalPrompt() {
    sweep — the app's spinring / spinbar keyframes). The shell's bottom
    status bar keeps its own line; that shell is a later parity wave. */
 const ffRun = { tick: 0, anim: 0, abort: null, t0: 0, count: 1, done: 0 };
-function ffSpinEnsure() {
-  const sp = $("spin");
+/* every .spin.on in the app wears the same ring + sweep (its ::before /
+   ::after); the Video page's #vidSpin shares this builder with #spin */
+function ffSpinEnsure(id) {
+  id = id || "spin";
+  const sp = $(id);
   if (!sp) return null;
   if (!sp.firstChild) {
     const row = document.createElement("div"); row.className = "spin-row";
     const ring = document.createElement("img"); ring.className = "spin-ring"; ring.src = "icons/ui/spin-ring.svg"; ring.alt = "";
-    const txt = document.createElement("span"); txt.className = "spin-txt"; txt.id = "spinTxt";
+    const txt = document.createElement("span"); txt.className = "spin-txt"; txt.id = id + "Txt";
     row.appendChild(ring); row.appendChild(txt);
     const bar = document.createElement("div"); bar.className = "spin-bar";
     const run = document.createElement("div"); run.className = "spin-bar-in";
@@ -12669,11 +13233,11 @@ function ffRunStopTimers() {
   if (ffRun.tick) { clearInterval(ffRun.tick); ffRun.tick = 0; }
   if (ffRun.anim) { clearInterval(ffRun.anim); ffRun.anim = 0; }
 }
-function ffRunFrame() {
-  const sp = $("spin");
+function ffRunFrame() { spinFrame($("spin"), ffRun.t0); }
+function spinFrame(sp, t0) {
   if (!sp) return;
   const ring = sp.querySelector(".spin-ring"), bar = sp.querySelector(".spin-bar"), run = sp.querySelector(".spin-bar-in");
-  const el = Date.now() - ffRun.t0;
+  const el = Date.now() - t0;
   if (ring) ring.style.transform = "rotate(" + Math.round((el % 800) / 800 * 360) + "deg)";
   if (bar && run) {
     /* spinbar 1.3s ease-in-out: background-size 250% with background-position
@@ -13405,7 +13969,13 @@ function bindFreeform() {
    the card. A same-height .gen-ph holds the card's layout meanwhile.
    Listed per page so the other sticky gens (Retouch, Video, VidUp, T2I) can
    join as their pages reach parity. */
-const STICKY_GENS = [{ page: "prompt", btn: "btnGenerate" }];
+const STICKY_GENS = [
+  { page: "prompt", btn: "btnGenerate" },
+  /* the studio's generate bar is one shared node that moves between the two
+     suite pages, so both list the same button id */
+  { page: "meitu", btn: "btnStGen" },
+  { page: "evoto", btn: "btnStGen" }
+];
 const STICKY_GAP = 8.4;
 const stickyS = { ph: {}, raf: 0 };
 function stickyGenNatural(btn) {
@@ -14258,10 +14828,11 @@ const PAGES = [
   { key: "wf",      page: "pageAiTools", group: "wf" },
   { key: "prompt",  page: "pagePrompt",  group: "edit",  sub: "Freeform",  ic: "i-pen" },
   /* the app's Edit group is Freeform · Retouch A · Retouch B · Retouch · Path.
-     Retouch A and B already exist here as presets on the Retouch page, so the
-     pills open that page with the preset chosen — same names, same order. */
-  { key: "meitu",   page: "pageRetouch", group: "edit",  sub: "Retouch A", ic: "i-makeup", preset: "pMeitu" },
-  { key: "evoto",   page: "pageRetouch", group: "edit",  sub: "Retouch B", ic: "i-target", preset: "pEvoto" },
+     v6.51.0 — Retouch A and Retouch B are now the app's OWN studio pages
+     (its two suites, 375 controls, built by the app's own code — see
+     js/hnk_studio_suites.js), not presets on the Retouch page. */
+  { key: "meitu",   page: "pageMeitu",   group: "edit",  sub: "Retouch A", ic: "i-makeup" },
+  { key: "evoto",   page: "pageEvoto",   group: "edit",  sub: "Retouch B", ic: "i-target" },
   { key: "retouch", page: "pageRetouch", group: "edit",  sub: "Retouch",   ic: "i-gem" },
   { key: "path",    page: "pagePath",    group: "edit",  sub: "Path",      ic: "i-stack" },
   { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img", ic: "i-doc" },
@@ -14367,7 +14938,13 @@ function switchPage(key) {
   for (let i = 0; i < PAGES.length; i++) {
     const p = PAGES[i], pe = $(p.page);
     /* two keys share pageAiTools (Home and Workflows), so paint by PAGE */
-    if (pe) pe.className = "page" + (active && p.page === active.page ? " on" : "");
+    if (pe) {
+      /* v6.51.0 — a rebuilt page keeps its scope classes (.apg app-parity,
+         .stpg the studio suites); only .on toggles */
+      const apg = /\bapg\b/.test(pe.className) ? " apg" : "";
+      const stpg = /\bstpg\b/.test(pe.className) ? " stpg" : "";
+      pe.className = "page" + apg + stpg + (active && p.page === active.page ? " on" : "");
+    }
   }
   for (let i = 0; i < GROUPS.length; i++) {
     const te = $(GROUPS[i].tab);
@@ -14390,6 +14967,13 @@ function switchPage(key) {
   renderSubtabs(key);
   if (key === "gallery") { try { galRefresh(); } catch (e) { } }
   if (active && active.page === "pageRetouch") { try { paintRetouchHero(); } catch (e) { } }
+  /* v6.51.0 — the studio's control block lives once and moves to the suite
+     page being shown (the app's stMountSuite), so the photo and the queue
+     survive a switch between Retouch A and Retouch B. */
+  try {
+    const sc = globalThis.HNK && globalThis.HNK.studioScreen;
+    if (sc) { if (key === "meitu" || key === "evoto") sc.mount(key); else sc.unmount(); }
+  } catch (e) { }
   if (active && active.preset) {
     const pb = $(active.preset);
     if (pb && pb.click) { try { pb.click(); } catch (e) { } }
@@ -14397,6 +14981,8 @@ function switchPage(key) {
   const pg = $("pages");
   if (pg) pg.scrollTop = scrollMem[key] || 0;
   try { fabTopPaint(); } catch (e) { }
+  /* wrapped button labels can only be measured once the page is on screen */
+  if (active) { const ape = $(active.page); if (ape) fitBtnInAllLater(ape); }
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }
   if (key === "presets") { try { if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.layout(); } catch (e) { } }
   if (key === "create") { try { refreshCreateCompare(); } catch (e) { } }
@@ -14404,11 +14990,8 @@ function switchPage(key) {
      the web app; the AI Tools stack's own "Home" pill left with this. */
   if (key === "aitools" || key === "wf") {
     /* Home returns to the cards home; Workflows is its own top tab now, the
-       way the app has always had it, instead of a pill inside Home. */
-    /* v6.49.0 — and the banner follows the app: its Home starts on the
-       greeting card, its Workflows starts on the hero. */
-    const bn = $("pgbAiTools");
-    if (bn) bn.style.display = (key === "wf") ? "block" : "none";
+       way the app has always had it, instead of a pill inside Home. The
+       Workflows screen draws the app's hero strip itself (v6.51.0). */
     const want = key === "wf" ? "workflow-tools" : "home";
     try {
       const aiApp = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.aiToolsApp : null;
@@ -14671,6 +15254,37 @@ function init() {
     bindGroup("rtBgH", "rtBgB", false);
     $("btnRtApply").addEventListener("click", function () { const g0 = $("btnRtApply"); armGate("__retouch", g0, function () { setBusyBtn(g0); applyRetouch(); }); });
     $("btnRtReset").addEventListener("click", resetRetouch);
+  });
+
+  /* v6.51.0 — RETOUCH A / RETOUCH B STUDIO. The bar's label, its queue chips
+     and the sentence it sends are all the web app's own (the studio module
+     composes the prompt from the same sliders the app reads); this binding is
+     only the panel's half: the licence gate, the busy button and the run. */
+  safe("studio", function () {
+    const gen = $("btnStGen");
+    if (gen) {
+      gen.addEventListener("click", function () {
+        armGate("__studio", gen, function () {
+          const sc = globalThis.HNK && globalThis.HNK.studioScreen;
+          const api = sc && sc.api && sc.api();
+          if (!api) { setStatus(t("st_err"), "err"); return; }
+          if (!state.refs[0]) { setStatus(api.RS_NEED_PHOTO, "err"); return; }
+          const prompt = String(sc.prompt() || "").trim();
+          if (!prompt) { setStatus(api.RS_NEED_PHOTO, "err"); return; }
+          setBusyBtn(gen);
+          runGenerate(prompt, true, ["skin", "subject"], false, { action: "Retouch", realDir: "edit" });
+        });
+      });
+    }
+    /* the app saves the current look as a recipe from this button */
+    const sr = $("stSaveRecipe");
+    if (sr) {
+      sr.addEventListener("click", function () {
+        const sc = globalThis.HNK && globalThis.HNK.studioScreen;
+        const api = sc && sc.api && sc.api();
+        if (api) { try { api.stSaveRecipe(); } catch (e) { herr("studio recipe:", e); } }
+      });
+    }
   });
 
   /* presets */

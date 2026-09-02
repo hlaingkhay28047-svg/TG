@@ -24,11 +24,15 @@ async function extract() {
     if (!src) return null;
     return src.map(c => ({
       category: c.t, icon: c.ic || "",
+      /* v6.51.0 — the app's list renderer also needs each group's intro line,
+         which group starts open, and per-card badge / wedding sub-group */
+      desc: String(c.desc || ""), open: !!c.open,
       items: c.items.map(w => ({
         id: w.id, title: w.title || "", summary: String(w.summary || ""),
         explanation: String(w.explanation || ""), prompt: String(w.prompt || ""),
         negative: String(w.negative || ""), req: (w.req || []).map(String), opt: (w.opt || []).map(String),
-        fields: (w.fields || [])
+        fields: (w.fields || []),
+        badge: String(w.badge || ""), wedGroup: String(w.wedGroup || ""), hasCard: !!w.cardImg
       }))
     }));
   });
