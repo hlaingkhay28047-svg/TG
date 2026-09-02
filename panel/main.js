@@ -15100,6 +15100,15 @@ function init() {
      composes the prompt from the same sliders the app reads); this binding is
      only the panel's half: the licence gate, the busy button and the run. */
   safe("studio", function () {
+    /* the app's builders capture their strings at build time (var LANG) —
+       which is exactly what makes the labels identical to the web page — so a
+       language change rebuilds the studio rather than patching it */
+    REFRESHERS.push(function () {
+      try {
+        const sc = globalThis.HNK && globalThis.HNK.studioScreen;
+        if (sc && sc.api && sc.api()) sc.rebuild();
+      } catch (e) { herr("studio relang:", e); }
+    });
     const gen = $("btnStGen");
     if (gen) {
       gen.addEventListener("click", function () {
