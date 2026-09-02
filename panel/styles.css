@@ -2011,7 +2011,9 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 }
 .stpg .st-bg.pro { color: #efe6ff; background-color: #7b53f0; }
 .stpg .st-grid { display: block; }
-.stpg .subh { margin-top: 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: var(--muted); }
+/* the app's studio sub-heads keep their own case ("One-tap look များ"), so
+   the panel's global uppercase rule steps aside here */
+.stpg .subh { margin-top: 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: var(--muted); text-transform: none; }
 .stpg #stMuCard .subh, .stpg #stEvCard .subh { margin-top: 11px; font-weight: 700; }
 .stpg .st-note { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 
