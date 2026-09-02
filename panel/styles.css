@@ -1950,7 +1950,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .stpg #stMuCard .grp-h .car, .stpg #stEvCard .grp-h .car { flex: 1 1 auto; min-width: 0; margin: 0 0 0 11px; }
 .stpg .grp-h .dot {
   display: none; margin-left: 6px; min-width: 18px; height: 18px; line-height: 18px;
-  text-align: center; background-color: var(--gold); color: #1a1408;
+  text-align: center; background-color: var(--accent); color: #1a1408;
   border-radius: 9px; font-size: 11px; font-weight: 800; padding: 0 4px;
 }
 .stpg .grp-h .dot.on { display: block; }
@@ -1992,7 +1992,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 }
 .stpg .st-val.on { color: var(--accent-h); }
 /* the app's row-gap:7px between the label line and the track */
-.stpg .rng { flex: 1 0 100%; min-width: 0; height: 22px; min-height: 22px; margin: 7px 0 0 0; padding: 0; }
+.stpg .rng { flex: 1 0 100%; min-width: 0; height: 22px; min-height: 22px; margin: 7px 0 0 0; padding: 0; accent-color: var(--accent); }
 .stpg .st-q {
   flex: 0 0 auto; width: 15px; height: 15px; margin-left: 6px; border-radius: 50%;
   border: 1px solid var(--line-soft); color: var(--muted);
@@ -2021,7 +2021,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 }
 /* the app's gold active pill, on all three retouch pages */
 .stpg .chip.on {
-  background-color: var(--gold); color: #1a1408; border-color: transparent; font-weight: 700;
+  background-color: var(--accent); color: #1a1408; border-color: transparent; font-weight: 700;
 }
 .stpg .chips.seg {
   display: flex; flex-direction: row; flex-wrap: nowrap; background-color: var(--panel-2);
@@ -2045,7 +2045,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   display: block; height: 64px; border-radius: 9px; border: 2px solid transparent;
   background-color: var(--panel-2); overflow: hidden;
 }
-.stpg .chips.thumbs .chip.on .st-th { border-color: var(--gold); }
+.stpg .chips.thumbs .chip.on .st-th { border-color: var(--accent); }
 .stpg .chips.thumbs .chip .st-cap { display: block; overflow: hidden; white-space: nowrap; }
 .stpg .st-thph { display: block; width: 100%; height: 100%; }
 
@@ -2056,7 +2056,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   border: 2px solid var(--line-soft); background-color: transparent;
 }
 .stpg .st-sw.off { background-color: var(--panel-2); opacity: 0.6; }
-.stpg .st-sw.on { border-color: var(--gold); }
+.stpg .st-sw.on { border-color: var(--accent); }
 
 /* ---- one-tap look / recipe / grade tiles (app: .pcard, canvas 76x96) ---- */
 .stpg .prowwrap { display: block; }
@@ -2065,7 +2065,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   position: relative; flex: 0 0 auto; width: 76px; margin-right: 8px; padding: 0;
   border: 1px solid var(--line-soft); border-radius: 12px; background-color: var(--panel-2); overflow: hidden;
 }
-.stpg .pcard.on { border-color: var(--gold); }
+.stpg .pcard.on { border-color: var(--accent); }
 .stpg .st-tile {
   display: block; width: 76px; height: 96px; overflow: hidden;
   background-color: var(--panel-2);
@@ -2084,7 +2084,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   display: flex; flex-direction: row; align-items: center; justify-content: center;
 }
 .stpg .pcard .x { left: 4px; color: var(--text); }
-.stpg .pcard .pin { right: 4px; color: var(--gold); }
+.stpg .pcard .pin { right: 4px; color: var(--accent); }
 .stpg .st-tile.rc { background-image: linear-gradient(180deg, #20261b, #131826); }
 .stpg .st-tile-ic { display: block; width: 24px; height: 24px; margin: 36px auto 0; }
 .stpg .hnk-dlg .inp { width: 100%; box-sizing: border-box; margin-bottom: 14px; }
@@ -2094,7 +2094,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .stpg .st880-grid .pcard { width: 31%; margin: 0 2% 8px 0; }
 .stpg .st880-grid .pcard img { display: block; width: 100%; height: 112px; }
 .stpg .st880-grid .pcard span { display: block; font-size: 10.5px; line-height: 1.3; padding: 4px 5px; }
-.stpg .st880-grid .pcard.on { border-color: var(--gold); }
+.stpg .st880-grid .pcard.on { border-color: var(--accent); }
 
 /* The app spaces a chips row with gap; the panel spaces it with a 6px margin
    under every chip (no gap in UXP), which leaves one 6px tail the app does
@@ -2106,7 +2106,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .stpg .row b { margin-left: 8px; }
 
 /* ---- the V2 hero's full-width ranges ---- */
-.stpg .v2-range { display: block; width: 100%; height: 44px; min-height: 44px; margin: 0; padding: 0; }
+.stpg .v2-range { display: block; width: 100%; height: 44px; min-height: 44px; margin: 0; padding: 0; accent-color: var(--accent); }
 .stpg #v2PromptPreview { display: block; max-height: 180px; overflow: auto; font-size: 10px; white-space: pre-wrap; }
 .stpg #v2Log { display: block; max-height: 110px; overflow-y: auto; font-size: 10px; white-space: pre-wrap; }
 .stpg #rsModeTabs .chip { margin-right: 6px; }
@@ -2147,8 +2147,8 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .stpg #stSearch { flex: 1 1 0; min-width: 80px; min-height: 38px; height: 38px; margin-left: 6px; padding: 6px 10px; font-size: 11px; }
 .stpg #stGroupChips { flex-wrap: nowrap; overflow-x: auto; margin-top: 8px; padding-bottom: 2px; }
 .stpg #stGroupChips .chip { flex: 0 0 auto; white-space: nowrap; min-height: 34px; padding: 4px 11px; font-size: 10px; margin-bottom: 0; }
-.stpg #stGroupChips .chip.edited { border-color: var(--gold); color: var(--accent-h); }
-.stpg #stGroupChips .chip.here { background-color: var(--gold); color: #1a1408; border-color: var(--gold); }
+.stpg #stGroupChips .chip.edited { border-color: var(--accent); color: var(--accent-h); }
+.stpg #stGroupChips .chip.here { background-color: var(--accent); color: #1a1408; border-color: var(--accent); }
 .stpg #stSearchTgl { display: none; }
 .stpg .st-find { width: 100%; margin-top: 8px; }
 
