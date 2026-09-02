@@ -16,8 +16,16 @@ name: Back up the production database
 #
 # The credentials are born in the runner: an ephemeral Spaces key created for
 # this run and deleted on every exit path, and the database URI read from the
-# live app spec. Nothing is printed: the summary carries the object key, the
-# byte count and the digest only.
+# managed cluster itself. Nothing is printed: the summary carries the object
+# key, the byte count and the digest only.
+#
+# WHY NOT THE APP SPEC. The first scheduled run failed: an app spec never
+# holds the resolved URI, only App Platform's binding (${hnk-db.DATABASE_URL}),
+# which pg_dump read as a plain database NAME and tried to reach over a local
+# socket that does not exist on the runner. The cluster is the source of
+# truth, exactly as the migrate lane's probe reads it — connection URI and CA
+# from the DigitalOcean API, with this runner granted as a trusted source for
+# the session when the cluster keeps such a list.
 #
 # SCHEDULE + MANUAL. It runs daily at 18:30 UTC (01:00 Myanmar time, when the
 # studio is quiet) and can be dispatched by hand; a manual run must type
@@ -63,6 +71,7 @@ jobs:
           - 5432:5432
     env:
       DO_APP_NAME: hnk-ai-tools-3
+      DO_CLUSTER: hnk-pg
       DO_REGION: sgp1
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
       RETENTION_DAYS: "30"
@@ -107,9 +116,18 @@ jobs:
           set -euo pipefail   # deliberately NO set -x: nothing here may echo the URI
           umask 077
           WORK="$RUNNER_TEMP/backup"; mkdir -p "$WORK"
+          CA_FILE="$WORK/cluster-ca.crt"
           EPHEMERAL_ACCESS=""
+          CLUSTER_ID=""
+          RULE_ADDED=""
           cleanup() {
             shred -u "$WORK"/* 2>/dev/null || rm -rf "$WORK"
+            # the trusted-source grant is this runner's alone and outlives nothing
+            if [ -n "$RULE_ADDED" ] && [ -n "$CLUSTER_ID" ]; then
+              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null \
+                | awk -v v="$RULE_ADDED" '$2 == "ip_addr" && $3 == v { print $1; exit }')"
+              [ -n "$RULE_UUID" ] && doctl databases firewalls remove "$CLUSTER_ID" --uuid "$RULE_UUID" > /dev/null 2>&1 || true
+            fi
             if [ -n "$EPHEMERAL_ACCESS" ]; then
               curl -fsS --max-time 20 -X DELETE -H "Authorization: Bearer $DO_TOKEN" \
                 "https://api.digitalocean.com/v2/spaces/keys/$EPHEMERAL_ACCESS" >/dev/null 2>&1 || true
@@ -121,22 +139,64 @@ jobs:
             '.[] | select(.spec.name==$n) | .id' | head -n1)"
           [ -n "$APP_ID" ] || { echo "::error::App $DO_APP_NAME not found."; exit 1; }
 
-          # The database URI comes from the live spec, is masked immediately,
-          # and never reaches a file, an argument list or the log.
-          DB_URI="$(doctl apps get "$APP_ID" --output json \
-            | jq -r '.[0].spec.envs[]? , (.[0].spec.services[]?.envs[]?) | select(.key=="DATABASE_URL") | .value' \
+          # THE CLUSTER, not the spec. An app spec carries App Platform's
+          # binding for DATABASE_URL, never the resolved URI — dumping that
+          # string reaches a local socket, which is how the first scheduled
+          # run failed. The cluster the app is attached to answers with the
+          # real connection URI, and the app spec is only consulted to name
+          # it (a spec that names another cluster wins over the default).
+          SPEC_CLUSTER="$(doctl apps get "$APP_ID" --output json \
+            | jq -r '.[0].spec.databases[]? | select(.cluster_name != null and .cluster_name != "") | .cluster_name' \
             | head -n1)"
+          if [ -n "$SPEC_CLUSTER" ] && [ "$SPEC_CLUSTER" != "null" ]; then DO_CLUSTER="$SPEC_CLUSTER"; fi
+          CLUSTER_ID="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" \
+            '.[] | select(.name == $n) | .id' | head -n1)"
+          if [ -z "$CLUSTER_ID" ] || [ "$CLUSTER_ID" = "null" ]; then
+            echo "::error::Managed cluster $DO_CLUSTER was not found. A development database created with the app has no connection URI outside its container and cannot be dumped — attach the managed cluster first (migrate-database.yml, phase attach)."
+            exit 1
+          fi
+
+          # A cluster with a non-empty trusted-sources list blocks every other
+          # address, this runner included; grant it for the session only.
+          # this doctl build prints firewalls as a table, never JSON — count data rows
+          RULES="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null | awk 'NR > 1 && NF > 0' | wc -l)"
+          if [ "${RULES:-0}" -gt 0 ]; then
+            RUNNER_IP="$(curl -fsS --max-time 15 https://api.ipify.org)"
+            case "$RUNNER_IP" in (*[!0-9.]*|"") echo "::error::Could not determine the runner address for the trusted-source grant."; exit 1;; esac
+            doctl databases firewalls append "$CLUSTER_ID" --rule "ip_addr:$RUNNER_IP" > /dev/null
+            RULE_ADDED="$RUNNER_IP"
+            sleep 10
+          fi
+
+          # /ca returns {"ca":{"certificate":"<base64 PEM>"}} — verify-ca, so a
+          # backup is never taken over an unauthenticated connection.
+          CA_RAW="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID/ca" | jq -r '.ca.certificate')"
+          if printf '%s' "$CA_RAW" | grep -q "BEGIN CERTIFICATE"; then
+            printf '%s\n' "$CA_RAW" > "$CA_FILE"
+          else
+            printf '%s' "$CA_RAW" | base64 -d > "$CA_FILE" 2>/dev/null || true
+          fi
+          grep -q "BEGIN CERTIFICATE" "$CA_FILE" || { echo "::error::Could not obtain the cluster CA."; exit 1; }
+
+          # masked the moment it is read, and never printed, written or passed
+          # anywhere but pg_dump's own --dbname
+          DB_URI="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID" | jq -r '.database.connection.uri')"
           if [ -z "$DB_URI" ] || [ "$DB_URI" = "null" ]; then
-            echo "::error::DATABASE_URL is not readable from the live spec."
+            echo "::error::No connection URI is available for $DO_CLUSTER."
             exit 1
           fi
           echo "::add-mask::$DB_URI"
+          DB_BASE="${DB_URI%%\?*}"
+          echo "::add-mask::$DB_BASE"
 
           STAMP="$(date -u +%Y-%m-%d)"; TIME="$(date -u +%H%M%SZ)"
           DUMP="$WORK/hnk-$STAMP-$TIME.dump"
           echo "== dumping production (custom format, compressed)"
-          PGCONNECT_TIMEOUT=30 pg_dump --format=custom --compress=9 --no-owner --no-privileges \
-            --dbname="$DB_URI" --file="$DUMP"
+          PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=30 \
+            pg_dump --format=custom --compress=9 --no-owner --no-privileges \
+            --dbname="$DB_BASE?sslmode=verify-ca" --file="$DUMP"
           BYTES="$(stat -c %s "$DUMP")"
           SHA="$(sha256sum "$DUMP" | cut -d' ' -f1)"
           echo "dump: $BYTES bytes, sha256 $SHA"

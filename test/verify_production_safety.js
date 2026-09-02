@@ -152,6 +152,18 @@ function missing(headers) {
     !/^\s*set -[a-z]*x/m.test(lane) && /trap cleanup EXIT/.test(lane) && /spaces\/keys\/\$EPHEMERAL_ACCESS/.test(lane));
   report("the database URI is masked the moment it is read",
     /::add-mask::\$DB_URI/.test(lane));
+  /* The first scheduled run failed here: an app spec carries App Platform's
+     BINDING for DATABASE_URL, never the resolved URI, and pg_dump read that
+     string as a database NAME and went looking for a local socket. The URI
+     has to come from the cluster the app is attached to. */
+  report("the URI comes from the managed cluster, not the app spec's binding",
+    /v2\/databases\/\$CLUSTER_ID"?\s*\|?\s*jq -r '\.database\.connection\.uri'|databases\/\$CLUSTER_ID" \| jq -r '\.database\.connection\.uri'/.test(lane) &&
+    !/select\(\.key=="DATABASE_URL"\)/.test(lane));
+  report("the dump is taken over an authenticated connection",
+    /databases\/\$CLUSTER_ID\/ca/.test(lane) && /sslmode=verify-ca/.test(lane) && /PGSSLROOTCERT/.test(lane));
+  report("a trusted-source grant for this runner is removed on every exit",
+    /firewalls append "\$CLUSTER_ID"/.test(lane) && /firewalls remove "\$CLUSTER_ID"/.test(lane) &&
+    /RULE_ADDED/.test(lane));
 
   console.log(failures ? `\nFAIL (${failures})` : "\nAll production-safety contracts hold.");
   process.exit(failures ? 1 : 0);
