@@ -1,11 +1,11 @@
-/* v6.52.0 — the panel's Gallery and VidUp ARE the web app's pages.
+/* v6.53.0 — the panel's Gallery, VidUp and Text to Image ARE the web app's pages.
  *
  * WHY THIS FILE EXISTS. The owner's requirement is one studio everywhere:
  * "webapp လို အတိအကျ ui ux pages function features ကွက်တိ" — nothing extra,
  * nothing missing, nothing out of place. The Retouch pages are held to that
  * by verify_panel_studio_sync.js, which compares every visible string of the
- * panel against the live app. These two pages are hand-built rather than
- * sliced out of the app, so they are exactly the ones that drift: a label
+ * panel against the live app. These pages are hand-built rather than sliced
+ * out of the app, so they are exactly the ones that drift: a label
  * rewritten on the web is invisible here until a student reads the panel in
  * Burmese and finds English.
  *
@@ -40,13 +40,14 @@ const PANEL_ONLY = {
     "သိမ်းမယ့် folder ရွေးရန်",   /* Upscale: choose the save folder */
     "သိမ်းမယ့် folder ရွေးရန်"    /* Video Tools: the same, for its own run */
   ],
-  gallery: []
+  gallery: [],
+  create: []
 };
 /* Strings the APP shows that the panel draws instead of writing: the app's
    size tile is an inline <svg> with the letters HD inside it, which counts as
    text here; the panel's tile is the same picture as a file, so it carries no
    text node. Nothing a student sees differs. */
-const APP_ONLY = { vidup: ["HD"], gallery: [] };
+const APP_ONLY = { vidup: ["HD"], gallery: [], create: [] };
 /* The panel keeps its results as files, so its counter names the panel's own
    cap where the app names the browser's 60. */
 const REWRITE = [
@@ -55,7 +56,8 @@ const REWRITE = [
 
 const PAGES = [
   { key: "gallery", panelKey: "gallery", appKey: "pgGallery", panelRoot: "#pageGallery", appRoot: "#pgGallery", label: "Gallery" },
-  { key: "vidup", panelKey: "vidup", appKey: "pgVideoUp", panelRoot: "#pageVideoUp", appRoot: "#pgVideoUp", label: "VidUp" }
+  { key: "vidup", panelKey: "vidup", appKey: "pgVideoUp", panelRoot: "#pageVideoUp", appRoot: "#pgVideoUp", label: "VidUp" },
+  { key: "create", panelKey: "create", appKey: "pgText2Img", panelRoot: "#pageCreate", appRoot: "#pgText2Img", label: "Text to Image" }
 ];
 
 const COLLECT = `(function(sel){
@@ -189,6 +191,6 @@ function rewrite(list) {
   }
   console.log(failures
     ? `\n${failures} FAILURE(S) — the panel page and the web app page have parted; fix the panel, or name the new panel-only line in PANEL_ONLY with its reason.`
-    : "\nAll checks passed — Gallery and VidUp are the web app's pages.");
+    : "\nAll checks passed — these panel pages are the web app's pages.");
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FAIL — " + (e && e.stack || e)); process.exit(1); });

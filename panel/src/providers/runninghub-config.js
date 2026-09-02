@@ -91,6 +91,14 @@ function defaults() {
       "nano-banana-pro-t2i":   { apiPath: "rhart-image-n-pro-official/text-to-image", kind: "t2i", promptMax: 20000,
                                  t2iRatios: ["1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"], resolutionField: true },
       "qwen-image-3-pro-t2i":  { apiPath: "alibaba/qwen-image-3.0-pro/text-to-image", kind: "t2i", sizeParam: true, promptMax: 3000 },
+      /* v6.53.0 — the one text-to-image endpoint the web app offered and the
+         panel did not, lifted from its own RH_T2I_MODELS entry: seven ratios,
+         an 8192-character prompt, and the documented hd flag. Nothing here is
+         authored — the app's table is the source, as it is for every other
+         model on this shelf. */
+      "youchuan-v81":          { apiPath: "youchuan/text-to-image-v81", kind: "t2i", promptMax: 8192,
+                                 t2iRatios: ["1:1", "4:3", "3:2", "16:9", "3:4", "2:3", "9:16"],
+                                 extraBody: { hd: true } },
       "rh-imagine-quality":    { apiPath: "rhart-imagine-image-quality/text-to-image", kind: "t2i", resolutions: ["1k", "2k"], promptMax: 4000,
                                  t2iRatios: ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], resolutionField: true, numImagesField: true, outputFormat: "png" },
       /* v6.29.0 — GPT Image 2 text-to-image (official stable), wired from

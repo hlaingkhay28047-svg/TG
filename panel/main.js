@@ -90,6 +90,8 @@ const state = {
   history: [],
   recentPrompts: [], histSel: -1, lastAction: "Prompt",
   cRatio: "1:1", cVariations: 1, cGallery: [], cSel: 0, cUrlSlot: -1,
+  /* v6.53.0 — Text to Image picks its own model, like the app's page */
+  t2iModel: "", t2iSize: "",
   cRefs: [null, null, null, null], cResultB64: null, cMime: "image/png", cBeforeB64: null,
   genCount: 0, batch: false, batchStop: false, lastUserText: "", lastFinalPrompt: "",
   realOn: true, realDir: "auto", banText: true,
@@ -6211,7 +6213,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.52.0";
+const PANEL_VERSION = "6.53.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10684,6 +10686,7 @@ async function saveSettings() {
       keep: state.keep, rmix: state.rmix, i2p: state.i2p, lights: state.lights,
       lightEquip: state.lightEquip, chains: state.chains, restMode: state.restMode,
       cRatio: state.cRatio, cVariations: state.cVariations,
+      t2iModel: state.t2iModel, t2iSize: state.t2iSize,
       recentPrompts: state.recentPrompts,
       refTarget: state.refTarget, refMkOn: state.refMkOn, refHairOn: state.refHairOn,
       bgKeepFrame: state.bgKeepFrame, bgKeepSubLight: state.bgKeepSubLight, match: state.match,
@@ -10790,6 +10793,8 @@ async function loadSettings() {
       if (typeof o.lightEquip === "boolean") state.lightEquip = o.lightEquip;
       if (Array.isArray(o.recentPrompts)) state.recentPrompts = o.recentPrompts.filter(function (r) { return r && typeof r.t === "string"; }).slice(0, 20);
       if (typeof o.cRatio === "string") state.cRatio = o.cRatio;
+      if (typeof o.t2iModel === "string") state.t2iModel = o.t2iModel;
+      if (typeof o.t2iSize === "string") state.t2iSize = o.t2iSize;
       if (typeof o.cVariations === "number") state.cVariations = Math.max(1, Math.min(4, o.cVariations));
       sanitizeCam(o);
       if (o.refTarget === "solo" || o.refTarget === "couple" || o.refTarget === "family") state.refTarget = o.refTarget;
@@ -12884,6 +12889,19 @@ function ffReqCount() {
    output exactly as the web app's pgCreate does, and every returned take is
    handed back (first one + `extra`) so history shows ×2 / ×4 runs. The
    Setup "pro" tier still appends the app's quality line. */
+/* the lifted text-to-image shelf, in the shape callImageAPI's model def
+   needs: an id the provider config knows, and the ratio/size flags the
+   request builder reads from that config rather than from here. */
+function t2iModelDefFor(id) {
+  const all = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.t2iModels) || [];
+  for (let i = 0; i < all.length; i++) {
+    if (all[i].id === id) {
+      return { id: all[i].id, label: all[i].label, kind: "t2i",
+        ratios: all[i].ratios || all[i].uiRatios || [] };
+    }
+  }
+  return null;
+}
 async function callImageAPI(model, parts, imageConfig, signal) {
   await gateRequireLease();
   const adapter = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.runninghubAdapter) || null;
@@ -12892,11 +12910,17 @@ async function callImageAPI(model, parts, imageConfig, signal) {
   const key = (state.rhKey || "").trim();
   if (!key) throw new Error("HNKERR:err_key:RunningHub Enterprise key missing");
   const m = partsToPromptImages(parts);
-  const fm = ffModel();
+  /* v6.53.0 — the caller may name the model (Text to Image picks its own from
+     the app's shelf); everything else keeps Freeform's. */
+  const fm = (model && (ffModelById(model) || t2iModelDefFor(model))) || ffModel();
   const pro = state.model === "pro";
   let prompt = m.prompt.slice(0, MAX_PROMPT);
   if (pro) prompt += "\n" + RH_QUALITY_LINE;
-  const size = ffHasSize(fm) ? (state.ffSize || "") : "";
+  /* v6.53.0 — a caller may carry its own size tier (Text to Image has its
+     own Size picker); Freeform's stays the default. */
+  const size = ffHasSize(fm)
+    ? (((imageConfig && imageConfig.size) || state.ffSize || ""))
+    : "";
   const ratio = ffHasRatio(fm) ? ((imageConfig && imageConfig.aspectRatio) || "") : "";
   const count = ffReqCount();
   /* app v4.28: one AbortController per dispatch \u2014 the card's Stop kills the
@@ -14601,6 +14625,7 @@ async function createGenerate(restyle) {
     /* "auto" means the model picks — send no aspect, exactly as the app does */
     const cr = state.cRatio || "1:1";
     const cfg = (cr === "auto") ? {} : { aspectRatio: cr };
+    if (state.t2iSize) cfg.size = state.t2iSize;
     /* Snapshot the sources ONCE so every variation is an INDEPENDENT rendition.
        (Before: the loop reassigned cResultB64 each pass, so restyle variation 2
        restyled variation 1 \u2014 a compounding chain, not a distinct alternative.
@@ -14615,7 +14640,10 @@ async function createGenerate(restyle) {
            { inlineData: { mimeType: restyleMime, data: restyleBase } },
            { text: (p || "enhance quality and lighting") + "\n" + CREATE_FINISH }]
         : buildCreateParts(p);
-      const img = await callImageAPI(null, parts, cfg);
+      /* v6.53.0 — a plain run uses the model this page picked; a restyle is
+         an EDIT (it sends the previous result), which a text-to-image
+         endpoint cannot take, so that path keeps the edit model. */
+      const img = await callImageAPI(restyle ? null : (state.t2iModel || null), parts, cfg);
       if (!imgMagicOk(img.b64)) throw new Error("HNKERR:st_img_bad:create result");
       if (i === 0) firstNew = img.b64;
       state.cResultB64 = img.b64;
@@ -14700,7 +14728,6 @@ const PROMPT_LIB = [
 /* v6.51.0 — the app's Text to Image ratio set, exactly: Auto plus the seven
    its #selT2IRatio offers. The panel carried 4:5 (which that page does not
    offer) and was missing 3:2. */
-const C_RATIOS = ["auto", "1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2"];
 
 /* v6.26.0 — the Create tab's AI Improve/Describe (Gemini text) left with
    their provider. */
@@ -14726,24 +14753,155 @@ function bindLib() {
   }
 }
 
-function paintCRatio() {
-  for (let i = 0; i < C_RATIOS.length; i++) {
-    const b = $("cRatio" + i);
-    if (b) b.className = "segb" + (state.cRatio === C_RATIOS[i] ? " on" : "");
+/* ============================================================
+   TEXT TO IMAGE — the app's own model shelf (v6.53.0)
+
+   The page had no model choice at all: every run used whatever model
+   Freeform happened to be set to, which is neither what the app does nor
+   what a student picking "Midjourney v8.1 — Artistic" expects. The list,
+   its order, its labels and each model's ratio and size choices are the
+   app's own RH_T2I_MODELS, lifted into js/hnk_t2i_models.js by
+   tools/build_panel_t2i_models.js — nothing here authors an endpoint.
+   ============================================================ */
+function t2iModels() {
+  const g = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.t2iModels : null;
+  return (g && g.length) ? g : [];
+}
+function t2iDef() {
+  const all = t2iModels();
+  for (let i = 0; i < all.length; i++) if (all[i].id === state.t2iModel) return all[i];
+  return all[0] || null;
+}
+/* the app's updateT2IModelUI: a model without its own ratio list still gets
+   a picker, from whichever size table drives it (uiRatios, lifted) */
+function t2iRatioList(m) {
+  if (!m) return [];
+  return m.ratios || m.uiRatios || [];
+}
+/* the app offers only the size tiers a model actually honours — a pick that
+   would be silently ignored or clamped is worse than no pick */
+function t2iSizeTiers(m) {
+  if (!m) return null;
+  if (m.resolutionField) return m.resolutionEnum || ["1k", "2k", "4k"];
+  if (m.whField) return ["1k", "2k", "4k"];
+  if (m.sizeField && m.sizeMap !== "wan25" && m.sizeMap !== "gpt15") return ["1k", "2k"];
+  return null;
+}
+function t2iFillModels() {
+  const sel = $("t2iModel");
+  if (!sel) return;
+  const all = t2iModels();
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
+  for (let i = 0; i < all.length; i++) sel.appendChild(mkOption(all[i].id, all[i].label));
+  if (!state.t2iModel || !all.some(function (m) { return m.id === state.t2iModel; })) {
+    state.t2iModel = all.length ? all[0].id : "";
+  }
+  try { sel.value = state.t2iModel; } catch (e) { }
+}
+function t2iPaintOptions() {
+  const m = t2iDef();
+  const sel = $("t2iModel");
+  if (sel && sel.value !== state.t2iModel) { try { sel.value = state.t2iModel; } catch (e) { } }
+  /* the ratio rail is the visible control; its native select carries the value */
+  const rsel = $("t2iRatio");
+  const ratios = t2iRatioList(m);
+  if (rsel) {
+    while (rsel.firstChild) rsel.removeChild(rsel.firstChild);
+    rsel.appendChild(mkOption("", "Ratio: Auto"));
+    ratios.forEach(function (r) { rsel.appendChild(mkOption(r, r)); });
+    const want = state.cRatio === "auto" ? "" : (state.cRatio || "");
+    rsel.value = (want && ratios.indexOf(want) >= 0) ? want : "";
+    state.cRatio = rsel.value || "auto";
+  }
+  const rail = $("t2iRatioRail");
+  if (rail) rail.style.display = ratios.length ? "flex" : "none";
+  t2iPaintRail();
+  /* size tiers, and the picker hides with them (the app's syncVis) */
+  const tiers = t2iSizeTiers(m);
+  const zsel = $("t2iRes"), zhsl = $("t2iResHsl");
+  if (zsel) {
+    while (zsel.firstChild) zsel.removeChild(zsel.firstChild);
+    zsel.appendChild(mkOption("", "Size: Auto"));
+    (tiers || []).forEach(function (v) { zsel.appendChild(mkOption(v.toUpperCase(), v.toUpperCase())); });
+    const keep = state.t2iSize || "";
+    zsel.value = (keep && (tiers || []).some(function (v) { return v.toUpperCase() === keep; })) ? keep : "";
+    state.t2iSize = zsel.value;
+  }
+  if (zhsl) zhsl.style.display = tiers ? "" : "none";
+  /* the model's own prompt cap, and the count that reads it */
+  const box = $("cPromptBox");
+  const cap = (m && m.promptMax) || 20000;
+  if (box) box.setAttribute("maxlength", String(cap));
+  t2iPaintCount();
+  t2iPaintModelTile();
+  ffPaintHslVal("t2iModel", "t2iModelVal");
+  ffPaintHslVal("t2iRes", "t2iResVal");
+}
+function t2iPaintCount() {
+  const box = $("cPromptBox"), out = $("cPromptCount");
+  if (!out) return;
+  const m = t2iDef();
+  out.textContent = ((box && box.value) || "").length + " / " + ((m && m.promptMax) || 20000);
+}
+/* the app's brand tile for the picked model */
+function t2iPaintModelTile() {
+  const m = t2iDef();
+  const tile = $("t2iModelTile"), gl = $("t2iModelGlyph");
+  if (!tile || !m) return;
+  const brand = ffModelBrand(m.label);
+  tile.className = "hsl-tile " + brand[0];
+  if (gl) gl.setAttribute("src", "icons/ui/brand-" + brand[1] + ".svg");
+}
+/* the app's .rchip rail: a shaped box per ratio, "A" for Auto */
+function t2iPaintRail() {
+  const rail = $("t2iRatioRail"), sel = $("t2iRatio");
+  if (!rail || !sel) return;
+  rail.innerHTML = "";
+  for (let i = 0; i < sel.options.length; i++) {
+    (function (o) {
+      const v = o.value, m = /^(\d+):(\d+)$/.exec(v);
+      const b = document.createElement("div");
+      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      b.className = "rchip" + (m ? "" : " auto") + (v === sel.value ? " on" : "");
+      const ic = document.createElement("i");
+      const MX = 20; let w = 15, h = 15;
+      if (m) {
+        const rw = +m[1], rh = +m[2];
+        if (rw >= rh) { w = MX; h = Math.max(7, Math.round(MX * rh / rw)); }
+        else { h = MX; w = Math.max(7, Math.round(MX * rw / rh)); }
+      }
+      ic.style.width = w + "px"; ic.style.height = h + "px";
+      if (!m) ic.textContent = "A";
+      b.appendChild(ic);
+      const sp = document.createElement("span"); sp.textContent = v || "Auto";
+      b.appendChild(sp);
+      b.addEventListener("click", function () {
+        sel.value = v; state.cRatio = v || "auto";
+        t2iPaintRail(); saveSettings();
+      });
+      rail.appendChild(b);
+    })(sel.options[i]);
   }
 }
 
 function bindCreate() {
-  for (let i = 0; i < C_RATIOS.length; i++) {
-    (function (idx) {
-      const b = $("cRatio" + idx);
-      if (b) {
-        b.textContent = C_RATIOS[idx] === "auto" ? "Auto" : C_RATIOS[idx];
-        b.addEventListener("click", function () { state.cRatio = C_RATIOS[idx]; paintCRatio(); saveSettings(); });
-      }
-    })(i);
-  }
-  paintCRatio();
+  /* the app's Model picker drives the ratio rail, the size tiers and the
+     prompt cap — all three follow whichever model is chosen */
+  t2iFillModels();
+  const msel = $("t2iModel");
+  if (msel) msel.addEventListener("change", function () {
+    state.t2iModel = msel.value;
+    t2iPaintOptions();
+    saveSettings();
+  });
+  const zsel = $("t2iRes");
+  if (zsel) zsel.addEventListener("change", function () {
+    state.t2iSize = zsel.value;
+    ffPaintHslVal("t2iRes", "t2iResVal");
+    saveSettings();
+  });
+  t2iPaintOptions();
+  REFRESHERS.push(function () { try { t2iPaintOptions(); } catch (e) { hwarn("t2i:", e); } });
   bindLib();
   const vmap = [1, 2, 3, 4];
   const paintV = function () {
@@ -14767,10 +14925,7 @@ function bindCreate() {
   /* v6.50.0 — the app's character count under the Text-to-Image prompt */
   const cp = $("cPromptBox");
   if (cp) {
-    const paintCount = function () {
-      const out = $("cPromptCount");
-      if (out) out.textContent = (cp.value || "").length + " / 20000";
-    };
+    const paintCount = t2iPaintCount;
     cp.addEventListener("input", paintCount);
     REFRESHERS.push(paintCount);
     paintCount();
