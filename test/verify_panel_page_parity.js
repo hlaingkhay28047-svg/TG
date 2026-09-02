@@ -31,6 +31,9 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const { APP_INIT, APP_PORT } = require("../tools/build_panel_studio_suites.js");
+/* the panel host, its signed-in state and the string walker — shared with
+   verify_panel_studio_sync.js so both read the panel the same way */
+const { UXP_STUB, COLLECT } = require("./lib/panel-parity-harness.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -120,40 +123,6 @@ const PAGES = [
   { key: "setup", panelKey: "setup", appKey: "pgHome", panelRoot: "#pageSetup", appRoot: "#pgHome", label: "Setup" }
 ];
 
-const COLLECT = `(function(sel){
-  var root = document.querySelector(sel);
-  if (!root) return ["NO ROOT " + sel];
-  root.querySelectorAll(".grp").forEach(function (g) { if (g.className.indexOf("open") < 0) g.className += " open"; });
-  var out = [];
-  (function walk(e) {
-    var cs = getComputedStyle(e);
-    if (cs.display === "none" || cs.visibility === "hidden") return;
-    /* A button label that wraps is ONE label. The app lets inline flow wrap it
-       and the text stays a single node; UXP centres a flex row, so main.js
-       (fitBtnIn) splits the label into .icn-l1 + .icn-rest to put the icon on
-       line one. Reading those as two strings would report a difference the
-       student never sees, so the wrapper is read whole. */
-    if (typeof e.__txt === "string") {
-      /* THE LABEL, not its line boxes. The app lets inline flow wrap a button
-         label and the text stays one node; UXP centres a flex row, so main.js
-         (setIcnText/fitBtnIn) splits the label across .icn-l1 + .icn-rest to
-         keep the icon on line one — and it splits wherever the line broke,
-         which in Burmese is mid-word, with no space to rejoin on. main.js
-         keeps the original label on the element as __txt, so that is what is
-         read: the string the student sees, however it happened to wrap. */
-      var whole = String(e.__txt).replace(/\\s+/g, " ").trim();
-      if (whole) out.push(whole);
-      return;
-    }
-    var own = "";
-    e.childNodes.forEach(function (n) { if (n.nodeType === 3) own += n.textContent; });
-    own = own.replace(/\\s+/g, " ").trim();
-    if (own) out.push(own);
-    Array.prototype.forEach.call(e.children, walk);
-  })(root);
-  return out;
-})`;
-
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
   ".mp4": "video/mp4", ".woff2": "font/woff2" };
@@ -161,64 +130,6 @@ const PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "b
 
 /* the UXP host the panel boots against, in the same signed-in, key-configured
    state the app is read in */
-/* THE UXP HOST THE PANEL BOOTS AGAINST — and, just as importantly, the STATE
-   it boots into. The web app is read through APP_INIT (tools/build_panel_studio_suites.js)
-   as a signed-in Premium member called "Student Name" with a RunningHub key
-   and a balance reading. A panel read signed-out would differ from it on
-   every page that greets the member or names the plan, and those differences
-   would be the harness's, not the product's. So this stub puts the panel in
-   the SAME state: the same account on disk, the same profile row, the same
-   entitlement, the same balance. Then a difference means a difference. */
-const UXP_STUB = `(function(){
-  var UID = "77777777-8888-4999-aaaa-bbbbbbbbbbbb";
-  var EXP = new Date(Date.now() + 30*86400000).toISOString();
-  var PROF = { id: UID, name: "Student Name", email: "student@example.com",
-               created_at: "2026-01-15T10:00:00Z", plan_status: "active",
-               plan_expires_at: EXP, allowed_devices: 2, is_admin: false, avatar: null };
-  var settings = JSON.stringify({
-    rhKey: "TEST_RH_KEY", lang: "my",
-    accRefresh: "r", accUid: UID, accEmail: "student@example.com",
-    accDevId: "11111111-2222-4333-8444-555555555555",
-    accProfile: { account: { status: "active" }, license: { active: true, status: "active", expires_at: EXP } },
-    accSeenAt: Date.now(),
-    /* the app's money strip appears once a balance has been read; the panel's
-       does the same, so the stub carries one reading for both */
-    /* the queue reading rides along, as the live RunningHub answer carries it:
-       the app's money line names running/queued/limit and the panel's does
-       too, so the seeded reading has to carry the same shape */
-    rhBal: { ts: Date.now(), cur: "USD", bal: 0, queue: { running: 0, queued: 0, limit: 0 } }
-  });
-  var file = { read: function(){ return Promise.resolve(settings); },
-               write: function(t){ settings = t; return Promise.resolve(); } };
-  var folder = { getEntry: function(){ return Promise.resolve(file); },
-                 createFile: function(){ return Promise.resolve(file); },
-                 getEntries: function(){ return Promise.resolve([]); } };
-  var uxp = { storage: { localFileSystem: { getDataFolder: function(){ return Promise.resolve(folder); } }, formats: { utf8: "utf8", binary: "binary" } },
-              shell: { openExternal: function(){ return Promise.resolve(); }, openPath: function(){ return Promise.resolve(); } },
-              entrypoints: { setup: function(){} } };
-  var ps = { app: { documents: [] }, core: { executeAsModal: function(){} }, imaging: {},
-             action: { batchPlay: function(){ return Promise.resolve([]); } }, constants: {} };
-  window.require = function(n){ return n === "photoshop" ? ps : n === "uxp" ? uxp : n === "os" ? { platform: function(){ return "test"; } } : {}; };
-  var realFetch = window.fetch.bind(window);
-  function json(b, s){ return Promise.resolve(new Response(JSON.stringify(b), { status: s || 200, headers: { "Content-Type": "application/json" } })); }
-  window.fetch = function(url, init){
-    url = String(url);
-    if (url.indexOf("127.0.0.1") >= 0) return realFetch(url, init);
-    /* the same answers APP_INIT gives the web app, in the panel's own shapes */
-    if (url.indexOf("/auth/v1/token") >= 0)
-      return json({ access_token: "a", refresh_token: "r", expires_in: 7200, user: { id: UID, email: PROF.email } });
-    if (url.indexOf("/v1/devices/enroll") >= 0) return json({ ok: true });
-    if (url.indexOf("/v1/panel/validate") >= 0)
-      return json({ ok: true, lease_token: "L", lease_expires_at: new Date(Date.now() + 3600000).toISOString(),
-        entitlement: { account: { status: "active" }, license: { active: true, status: "active", expires_at: EXP },
-          permissions: { panel: true, photoshop_panel: true, ccx_download: true, web_app: true } } });
-    if (url.indexOf("/rest/v1/profiles") >= 0) return json([PROF]);
-    if (url.indexOf("/rest/v1/devices") >= 0) return json([]);
-    if (url.indexOf("runninghub.ai") >= 0) return json({ code: 0, data: {} });
-    return json({});
-  };
-})();`;
-
 function routeAll(page, chromiumPixel) {
   return page.route("**/*", route => {
     const u = route.request().url();

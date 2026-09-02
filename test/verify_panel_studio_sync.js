@@ -15,6 +15,9 @@
 const fs = require("fs");
 const path = require("path");
 const { generate, OUT, APP_INIT, APP_PORT } = require("../tools/build_panel_studio_suites.js");
+/* the panel host, its signed-in state and the string walker — shared with
+   verify_panel_page_parity.js so both read the panel the same way */
+const { UXP_STUB, COLLECT } = require("./lib/panel-parity-harness.js");
 const PORT = APP_PORT;
 
 let failures = 0;
@@ -97,52 +100,10 @@ function report(name, ok, detail) {
    every visible string under a root, in DOM order, with the groups opened.
    Run on the web app and on the panel, the two lists must be identical —
    that is what "webapp လို အတိအကျ" means, checked rather than asserted. */
-const COLLECT = `(function(sel){
-  var root = document.querySelector(sel);
-  if (!root) return ["NO ROOT " + sel];
-  root.querySelectorAll(".grp").forEach(function (g) { if (g.className.indexOf("open") < 0) g.className += " open"; });
-  var out = [];
-  (function walk(e) {
-    var cs = getComputedStyle(e);
-    if (cs.display === "none" || cs.visibility === "hidden") return;
-    var own = "";
-    e.childNodes.forEach(function (n) { if (n.nodeType === 3) own += n.textContent; });
-    own = own.replace(/\\s+/g, " ").trim();
-    if (own) out.push(own);
-    Array.prototype.forEach.call(e.children, walk);
-  })(root);
-  return out;
-})`;
-
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
   ".mp4": "video/mp4", ".woff2": "font/woff2" };
 const PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "base64");
-
-/* the UXP host the panel boots against, cut down to what a DOM build needs */
-const UXP_STUB = `(function(){
-  /* the same signed-in, key-configured student the app is read as (APP_INIT):
-     the two surfaces have to be in the same STATE or their string lists differ
-     for a reason that is not a parity defect — the HD hint, for one, shows
-     only when no RunningHub key is saved. */
-  var settings = JSON.stringify({ rhKey: "TEST_RH_KEY" });
-  var file = { read: function(){ return Promise.resolve(settings); },
-               write: function(t){ settings = t; return Promise.resolve(); } };
-  var folder = { getEntry: function(){ return Promise.resolve(file); },
-                 createFile: function(){ return Promise.resolve(file); } };
-  var uxp = { storage: { localFileSystem: { getDataFolder: function(){ return Promise.resolve(folder); } }, formats: { utf8: "utf8" } },
-              shell: { openExternal: function(){ return Promise.resolve(); }, openPath: function(){ return Promise.resolve(); } },
-              entrypoints: { setup: function(){} } };
-  var ps = { app: { documents: [] }, core: { executeAsModal: function(){} }, imaging: {},
-             action: { batchPlay: function(){ return Promise.resolve([]); } }, constants: {} };
-  window.require = function(n){ return n === "photoshop" ? ps : n === "uxp" ? uxp : n === "os" ? { platform: function(){ return "test"; } } : {}; };
-  var realFetch = window.fetch.bind(window);
-  window.fetch = function(url, init){
-    url = String(url);
-    if (url.indexOf("127.0.0.1") >= 0) return realFetch(url, init);
-    return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));
-  };
-})();`;
 
 async function smoke() {
   const http = require("http");

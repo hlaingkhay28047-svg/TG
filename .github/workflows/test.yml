@@ -487,6 +487,14 @@ jobs:
       - name: Run XSS sweep (hostile database text renders as text)
         run: node test/sweep_xss.js
 
+      # v5.83.0 — the admin console is hardened with a strict CSP whose one
+      # allowed inline script is pinned by SHA-256. Nothing recomputed that
+      # hash, and both failure directions are silent: an edited script is
+      # blocked with no error, and widening the policy to 'unsafe-inline' to
+      # make the symptom go away removes the page's whole defence.
+      - name: Verify the admin console's CSP and its one pinned inline script
+        run: node test/verify_admin_csp.js
+
       - name: Run v5.35.0 RTL + shareable-language sweep (Urdu reads right to left)
         run: node test/sweep_v535_rtl_lang.js
 
