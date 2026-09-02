@@ -964,136 +964,120 @@
       </div><!-- /stCols -->
     </div><!-- /stDock -->
 
-<div class="page" id="pageRetouch">
+    <!-- ========== PAGE: RETOUCH PRO (the app's pgRetouch) ==========
+         The web app's V2 hero — photo, strength, mode, quality, the Advanced
+         accordion and its prompt preview — over the Manual accordion's
+         One-Tap / Sliders panes. Every chip, label and default is rendered by
+         js/hnk_studio_suites.js, the app's own code; this file only carries
+         the same static shell the app carries, in UXP's tag set. -->
+    <div class="page apg stpg" id="pageRetouch">
       <div class="page-hero">
         <img src="icons/banners/banner-flower-gown.jpg" alt="" id="phRetouchImg" />
         <div class="ph-kick" id="phRetouchKick">Retouch Pro</div>
-        <p class="ph-head" id="phRetouch">မူရင်းအလှ မပျက်စေဘဲ <em>ချောမွေ့ကြည်လင်</em> စေမယ်</p>
+        <p class="ph-head" id="phRetouch"></p>
       </div>
+
       <div class="card">
-        <div class="chead" id="cRtH"><span class="car">&#9662;</span><span class="chead-t" data-i18n="sec_retouchpro"></span></div>
-        <div class="cbody" id="cRtB">
-
-          <div class="grp">
-            <div class="grp-h" id="rtSkinH"><span class="car">&#9656;</span><span data-i18n="rt_skin"></span></div>
-            <div class="grp-b" id="rtSkinB">
-              <div class="srow"><div class="slbl" data-i18n="rt_smooth"></div><input type="range" id="rtSmooth" min="0" max="100" value="0" /><div class="sval" id="rtSmoothV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_acne"></div><input type="range" id="rtAcne" min="0" max="100" value="0" /><div class="sval" id="rtAcneV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_spots"></div><input type="range" id="rtSpots" min="0" max="100" value="0" /><div class="sval" id="rtSpotsV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_wrinkle"></div><input type="range" id="rtWrinkle" min="0" max="100" value="0" /><div class="sval" id="rtWrinkleV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_tone"></div><input type="range" id="rtTone" min="-50" max="50" value="0" /><div class="sval" id="rtToneV">0</div></div>
-              <div class="srow last"><div class="slbl" data-i18n="rt_glow"></div><input type="range" id="rtGlow" min="0" max="100" value="0" /><div class="sval" id="rtGlowV">0</div></div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="rtFaceH"><span class="car">&#9656;</span><span data-i18n="rt_faceai"></span></div>
-            <div class="grp-b" id="rtFaceB">
-              <div class="srow"><div class="slbl" data-i18n="rt_reshape"></div><input type="range" id="rtReshape" min="0" max="100" value="0" /><div class="sval" id="rtReshapeV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_lash"></div><input type="range" id="rtLash" min="0" max="100" value="0" /><div class="sval" id="rtLashV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_brow"></div><input type="range" id="rtBrow" min="0" max="100" value="0" /><div class="sval" id="rtBrowV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_lipsmooth"></div><input type="range" id="rtLipSmooth" min="0" max="100" value="0" /><div class="sval" id="rtLipSmoothV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_teeth"></div><input type="range" id="rtTeeth" min="0" max="100" value="0" /><div class="sval" id="rtTeethV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_eyewhite"></div><input type="range" id="rtEyeWhite" min="0" max="100" value="0" /><div class="sval" id="rtEyeWhiteV">0</div></div>
-              <div class="swrow"><div class="slbl" data-i18n="rt_lipcolor"></div><div class="sws" id="swLip"></div></div>
-              <div class="swrow"><div class="slbl" data-i18n="rt_lenscolor"></div><div class="sws" id="swLens"></div></div>
-              <div class="swrow"><div class="slbl" data-i18n="rt_blush"></div><div class="sws" id="swBlush"></div></div>
-              <div class="swrow"><div class="slbl" data-i18n="rt_browstyle"></div><div class="sws" id="chBrow"></div></div>
-              <div class="swrow"><div class="slbl" data-i18n="rt_lashstyle"></div><div class="sws" id="chLash"></div></div>
-              <div class="swrow last"><div class="slbl" data-i18n="rt_contour"></div><div class="sws" id="chContour"></div></div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="rtShapeH"><span class="car">&#9656;</span><span data-i18n="rt_shape"></span></div>
-            <div class="grp-b" id="rtShapeB">
-              <div class="srow"><div class="slbl" data-i18n="rt_faceslim"></div><input type="range" id="rtFaceSlim" min="-50" max="50" value="0" /><div class="sval" id="rtFaceSlimV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_jaw"></div><input type="range" id="rtJaw" min="-50" max="50" value="0" /><div class="sval" id="rtJawV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_chin"></div><input type="range" id="rtChin" min="-50" max="50" value="0" /><div class="sval" id="rtChinV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_nosesize"></div><input type="range" id="rtNoseSize" min="-50" max="50" value="0" /><div class="sval" id="rtNoseSizeV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_eyesize"></div><input type="range" id="rtEyeSize" min="-50" max="50" value="0" /><div class="sval" id="rtEyeSizeV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_lipfull"></div><input type="range" id="rtLipFull" min="-50" max="50" value="0" /><div class="sval" id="rtLipFullV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_waist"></div><input type="range" id="rtWaist" min="-50" max="50" value="0" /><div class="sval" id="rtWaistV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_bodyslim"></div><input type="range" id="rtBodySlim" min="-50" max="50" value="0" /><div class="sval" id="rtBodySlimV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_shoulder"></div><input type="range" id="rtShoulder" min="-50" max="50" value="0" /><div class="sval" id="rtShoulderV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_hip"></div><input type="range" id="rtHip" min="-50" max="50" value="0" /><div class="sval" id="rtHipV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_leglen"></div><input type="range" id="rtLegLen" min="-50" max="50" value="0" /><div class="sval" id="rtLegLenV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_armslim"></div><input type="range" id="rtArmSlim" min="-50" max="50" value="0" /><div class="sval" id="rtArmSlimV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_bust"></div><input type="range" id="rtBust" min="-50" max="50" value="0" /><div class="sval" id="rtBustV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_butt"></div><input type="range" id="rtButt" min="-50" max="50" value="0" /><div class="sval" id="rtButtV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_thigh"></div><input type="range" id="rtThigh" min="-50" max="50" value="0" /><div class="sval" id="rtThighV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_calf"></div><input type="range" id="rtCalf" min="-50" max="50" value="0" /><div class="sval" id="rtCalfV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_neck"></div><input type="range" id="rtNeck" min="-50" max="50" value="0" /><div class="sval" id="rtNeckV">0</div></div>
-              <div class="srow last"><div class="slbl" data-i18n="rt_fingers"></div><input type="range" id="rtFingers" min="-50" max="50" value="0" /><div class="sval" id="rtFingersV">0</div></div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="rtBodyH"><span class="car">&#9656;</span><span data-i18n="rt_bodygrp"></span></div>
-            <div class="grp-b" id="rtBodyB">
-              <div class="srow"><div class="slbl" data-i18n="rt_bodysmooth"></div><input type="range" id="rtBodySmooth" min="0" max="100" value="0" /><div class="sval" id="rtBodySmoothV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_bodyblemish"></div><input type="range" id="rtBodyBlemish" min="0" max="100" value="0" /><div class="sval" id="rtBodyBlemishV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_bodytone"></div><input type="range" id="rtBodyTone" min="0" max="100" value="0" /><div class="sval" id="rtBodyToneV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_bodyglow"></div><input type="range" id="rtBodyGlow" min="0" max="100" value="0" /><div class="sval" id="rtBodyGlowV">0</div></div>
-              <div class="srow last"><div class="slbl" data-i18n="rt_bodyhairrm"></div><input type="range" id="rtBodyHairRm" min="0" max="100" value="0" /><div class="sval" id="rtBodyHairRmV">0</div></div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="rtHairH"><span class="car">&#9656;</span><span data-i18n="rt_hair"></span></div>
-            <div class="grp-b" id="rtHairB">
-              <div class="srow"><div class="slbl" data-i18n="rt_hairstray"></div><input type="range" id="rtHairStray" min="0" max="100" value="0" /><div class="sval" id="rtHairStrayV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_hairsmooth"></div><input type="range" id="rtHairSmooth" min="0" max="100" value="0" /><div class="sval" id="rtHairSmoothV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_hairvolume"></div><input type="range" id="rtHairVolume" min="0" max="100" value="0" /><div class="sval" id="rtHairVolumeV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_hairgloss"></div><input type="range" id="rtHairGloss" min="0" max="100" value="0" /><div class="sval" id="rtHairGlossV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_hairfill"></div><input type="range" id="rtHairFill" min="0" max="100" value="0" /><div class="sval" id="rtHairFillV">0</div></div>
-              <div class="srow last"><div class="slbl" data-i18n="rt_hairshine"></div><input type="range" id="rtHairShine" min="0" max="100" value="0" /><div class="sval" id="rtHairShineV">0</div></div>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div class="grp-h" id="rtDressH"><span class="car">&#9656;</span><span data-i18n="rt_dress"></span></div>
-            <div class="grp-b" id="rtDressB">
-              <div class="srow"><div class="slbl" data-i18n="rt_dresssmooth"></div><input type="range" id="rtDressSmooth" min="0" max="100" value="0" /><div class="sval" id="rtDressSmoothV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_dressedge"></div><input type="range" id="rtDressEdge" min="0" max="100" value="0" /><div class="sval" id="rtDressEdgeV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_dresswrinkle"></div><input type="range" id="rtDressWrinkle" min="0" max="100" value="0" /><div class="sval" id="rtDressWrinkleV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_dresstexture"></div><input type="range" id="rtDressTexture" min="0" max="100" value="0" /><div class="sval" id="rtDressTextureV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_dressfit"></div><input type="range" id="rtDressFit" min="-50" max="50" value="0" /><div class="sval" id="rtDressFitV">0</div></div>
-              <div class="srow"><div class="slbl" data-i18n="rt_dressclean"></div><input type="range" id="rtDressClean" min="0" max="100" value="0" /><div class="sval" id="rtDressCleanV">0</div></div>
-              <div class="srow last"><div class="slbl" data-i18n="rt_dresscolorpure"></div><input type="range" id="rtDressColorPure" min="0" max="100" value="0" /><div class="sval" id="rtDressColorPureV">0</div></div>
-            </div>
-          </div>
-
-          <div class="grp last">
-            <div class="grp-h" id="rtBgH"><span class="car">&#9656;</span><span data-i18n="rt_bg"></span></div>
-            <div class="grp-b" id="rtBgB">
-              <div class="srow"><div class="slbl" data-i18n="rt_bgsmooth"></div><input type="range" id="rtBgSmooth" min="0" max="100" value="0" /><div class="sval" id="rtBgSmoothV">0</div></div>
-              <div class="swrow"><div class="slbl" data-i18n="rt_bgcolor"></div><div class="sws" id="swBg"></div></div>
-              <div class="srow last"><div class="slbl" data-i18n="rt_bgrecolor"></div><input type="range" id="rtBgRecolor" min="0" max="100" value="0" /><div class="sval" id="rtBgRecolorV">0</div></div>
-            </div>
-          </div>
-
-          <div class="grp last">
-            <div class="grp-h" id="grpSkinH"><span class="car">&#9656;</span><span data-i18n="grp_retouch"></span></div>
-            <div class="grp-b" id="grpSkinB">
-              <div class="introw">
-                <div class="lbl2" data-i18n="lbl_intensity"></div>
-                <input type="range" id="intSlider" min="10" max="100" value="60" />
-                <div class="intval" id="intVal">60%</div>
+        <h2 id="rsH2"><img class="ic-h2" src="icons/ui/i-gem-gold.svg" alt="" />V2 RETOUCH</h2>
+        <p class="mut" id="rsIntro"></p>
+        <div id="rsPicker"></div>
+        <div id="v2Hero">
+          <div class="chips" id="v2PresetRow"></div>
+          <div class="row"><span class="subh" id="v2LbStrength"></span><b id="v2StrengthVal"></b></div>
+          <input type="range" class="v2-range" id="v2Strength" min="0" max="100" step="5" value="60" />
+          <div class="chips" id="v2Dots"></div>
+          <div class="subh" id="v2LbMode"></div><div class="chips" id="v2ModeChips"></div>
+          <div class="subh" id="v2LbQuality"></div><div class="chips" id="v2QualityChips"></div>
+          <p class="mut" id="v2HdHint" style="display:none"></p>
+          <div class="grp" id="v2GrpAdvanced">
+            <div class="grp-h" id="v2AdvH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt="" /></span><span><img class="ic-s" src="icons/ui/i-sliders-cream.svg" alt="" /> <span id="v2LbAdvanced"></span></span></div>
+            <div class="grp-b" id="v2AdvB">
+              <div class="row"><span class="mut" id="v2LbBalance"></span><b id="v2BalanceVal"></b></div>
+              <input type="range" class="v2-range" id="v2Balance" min="-50" max="50" step="5" value="0" />
+              <div class="row"><span class="mut" id="v2LbBlemish"></span><b id="v2BlemishVal"></b></div>
+              <input type="range" class="v2-range" id="v2Blemish" min="0" max="100" step="5" value="60" />
+              <div class="row"><span class="mut" id="v2LbDeshine"></span><b id="v2DeshineVal"></b></div>
+              <input type="range" class="v2-range" id="v2Deshine" min="0" max="100" step="5" value="0" />
+              <div class="subh" id="v2LbTone"></div><div class="chips" id="v2ToneChips"></div>
+              <div id="v2ToneStrengthWrap" style="display:none">
+                <div class="row"><span class="mut" id="v2LbToneStrength"></span><b id="v2ToneStrengthVal"></b></div>
+                <input type="range" class="v2-range" id="v2ToneStrength" min="0" max="100" step="2" value="42" />
               </div>
-              <div class="pbtns">
-                <div role="button" tabindex="0" class="pbtn" id="pEvoto" data-i18n="p_evoto"></div>
-                <div role="button" tabindex="0" class="pbtn" id="pMeitu" data-i18n="p_meitu"></div>
-              </div>
+              <div class="subh" id="v2LbHair"></div><div class="chips" id="v2HairChips"></div>
+              <div class="subh" id="v2LbOutfit"></div><div class="chips" id="v2OutfitChips"></div>
+              <div class="subh" id="v2LbTeeth"></div><div class="chips" id="v2TeethChips"></div>
+              <div class="subh" id="v2LbEyes"></div><div class="chips" id="v2EyesChips"></div>
+              <div class="subh" id="v2LbEyebag"></div><div class="chips" id="v2EyebagChips"></div>
+              <div class="subh" id="v2LbBody"></div><div class="chips" id="v2BodyChips"></div>
+              <div class="subh" id="v2LbShape"></div><div class="chips" id="v2ShapeChips"></div>
+              <p class="mut" id="v2ShapeNote" style="display:none"></p>
+              <div class="subh" id="v2LbPreview"></div>
+              <div class="chips" id="v2RtCarry"></div>
+              <div id="v2PromptPreview" class="mut v2-pre"></div>
             </div>
           </div>
+          <div class="row" style="margin-top:10px">
+            <div role="button" tabindex="0" class="btn btn-gold grow gen" id="btnV2Start"></div>
+            <div role="button" tabindex="0" class="btn" id="btnV2Batch"></div>
+          </div>
+          <div class="row" style="align-items:center">
+            <div class="spin" id="v2Spin" style="flex:1"></div>
+            <div role="button" tabindex="0" class="btn" id="btnV2Stop" style="display:none;margin-top:10px"></div>
+          </div>
+          <div class="status" id="stV2Gen"></div>
+          <div class="mut v2-log" id="v2Log"></div>
+          <div role="button" tabindex="0" class="btn" id="btnV2Retry" style="display:none;margin-top:8px"></div>
+        </div>
+      </div>
 
-          <div class="row last">
-            <div role="button" tabindex="0" id="btnRtReset" class="btn btn-sm" data-i18n="btn_reset"></div>
-            <div role="button" tabindex="0" id="btnRtApply" class="btn btn-sm btn-gold grow" data-i18n="btn_apply_rt"></div>
+      <div class="card">
+        <div class="grp" id="rsGrpManual">
+          <div class="grp-h" id="rsManualH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt="" /></span><span><img class="ic-s" src="icons/ui/i-tools-cream.svg" alt="" /> <span id="v2LbManual"></span></span></div>
+          <div class="grp-b" id="rsManualB">
+            <div class="row" id="rsModeTabs">
+              <div role="button" tabindex="0" class="chip on" id="rsTabOnetap"></div>
+              <div role="button" tabindex="0" class="chip" id="rsTabSliders"></div>
+            </div>
+
+            <div id="rsOnetapPane">
+              <p class="mut" id="rsOnetapNote"></p>
+              <div class="row">
+                <span class="mut" id="rsOnetapStrengthLbl"></span>
+                <span id="rsOnetapStrengthChips"></span>
+              </div>
+              <div class="chips" id="rsPresetGrid" style="margin-top:8px"></div>
+            </div>
+
+            <div id="rsSlidersPane" style="display:none">
+              <div class="row">
+                <span class="mut" id="rsStrengthLbl"></span>
+                <span id="rsStrengthChips"></span>
+                <div role="button" tabindex="0" class="chip" id="rsClearAll"></div>
+              </div>
+              <div class="mut" id="rsSelCount" style="margin-top:6px"></div>
+              <div class="subh" id="rsBundlesH"></div>
+              <p class="mut" id="rsBundlesNote"></p>
+              <div class="chips" id="rsBundleGrid"></div>
+              <div id="rsChips" style="margin-top:10px"></div>
+            </div>
           </div>
         </div>
       </div>
+
+      <div class="card" id="rsGenCard">
+        <div role="button" tabindex="0" class="btn btn-gold gen" id="btnRsGen"></div>
+        <div class="row" style="align-items:center">
+          <div class="spin" id="rsSpin" style="flex:1"></div>
+          <div role="button" tabindex="0" class="btn" id="btnRsStop" style="display:none;margin-top:10px"></div>
+        </div>
+        <div class="status" id="stRsGen"></div>
+        <div role="button" tabindex="0" class="btn" id="btnRsRetry" style="display:none;margin-top:8px"></div>
+      </div>
+
+      <!-- the app's #rsResultBox. The panel has ONE result card (#resultBox,
+           with Photoshop's Place / Save As); it is moved in here while this
+           page is showing, as it is on the two studio pages. -->
+      <div id="rsResultSlot"></div>
     </div>
 
     <!-- v6.51.0 — the web app's <footer class="foot"> under every page: a

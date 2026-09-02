@@ -64,7 +64,6 @@ const SLICES = [
   { name: "stIsDirty", start: /^function stIsDirty\(/, end: "fn" },
   { name: "stFaceNoteRefresh", start: /^function stFaceNoteRefresh\(/, end: "fn" },
   { name: "WF_BATCH_L", start: /^var WF_BATCH_L=\{/, end: "line" },
-  { name: "RS_NEED_PHOTO", start: /^var RS_NEED_PHOTO = L9\(/, end: "line" },
   { name: "stResetSection + grp + tapChip", start: /^function stResetSection\(/, until: /^function applyTap\(/ },
   { name: "stFeat registry … stRenderPend", start: /^function stFeat\(/, until: /^\/\* ---- v4\.58: quote the GENERATE/ },
   { name: "ST_HELP … factories … helpers … buildMeitu … buildEvoto", start: /^var ST_HELP = \{\}/, until: /^\/\* ================= v4\.45 — HNK 880 STYLE REFERENCE PACK/ },
@@ -79,6 +78,13 @@ const SLICES = [
   { name: "control-count loop + static notes", start: /^ST_MEITU_COUNT=0; ST_EVOTO_COUNT=0;/, until: /^\$\("stHold"\)\.innerHTML=/ },
   { name: "recipe bar + preset subheads + clear-AI + HD finish + target chips",
     start: /^\$\("stRecipeNote"\)\.textContent=/, until: /^\/\* ---- sticky stage chrome/ },
+  /* ---- RETOUCH PRO (the app's pgRetouch: V2 hero + manual one-tap/sliders) ---- */
+  { name: "RT chip rows (Sliders pane)", start: /^var RT_LABEL_OVERRIDE = \{/, until: /^\/\* ---------- Retouch Studio: one-tap presets/ },
+  { name: "RS presets, bundles, picker, mode + strength chips", start: /^var RS_NEW_PRESETS = \[/, until: /^function rsSyncGenControls\(/ },
+  { name: "V2 defaults + state.v2 + house presets", start: /^var V2_DEF=\{/, until: /^function v2SetBusy\(/ },
+  { name: "Retouch Pro static labels + first render", start: /^\$\("rsIntro"\)\.textContent = L9\(/, until: /^\/\* ================= HNK V2 RETOUCH/ },
+  { name: "v2Sync + renderV2Hero", start: /^function v2Sync\(\)\{/, until: /^\/\* v5\.50\.0 — the tier runners used to force a Gemini model/ },
+  { name: "V2 static labels + range wiring", start: /^\$\("v2LbStrength"\)\.textContent=L9\(/, until: /^\/\* ============ v4\.29|^\/\* =+ /, },
   { name: "jump bar IIFE", startBefore: /^  var tabs=\$\("stSuiteTabs"\); if\(!tabs\) return;/, end: "iife" }
 ];
 
@@ -170,12 +176,18 @@ const WINDOW_FNS = ["stRenderGradeCards", "stRenderExportNote", "stSyncSuiteChip
 
 function applyRanges(body) {
   const lines = body.split("\n");
+  /* an anchor is an exact line, or a /regex/ when the line is too long or too
+     full of dictionary text to quote */
+  function find(anchor, from) {
+    if (typeof anchor === "string") return lines.indexOf(anchor, from || 0);
+    for (let i = from || 0; i < lines.length; i++) if (anchor.test(lines[i])) return i;
+    return -1;
+  }
   RANGE_REWRITES.forEach(function (r) {
-    const a = lines.indexOf(r.from);
+    const a = find(r.from);
     if (a < 0) throw new Error("range anchor not found: " + r.name + " (from)");
     /* to === from marks a one-line range */
-    let b = (r.to === r.from) ? a : -1;
-    if (b < 0) for (let i = a + 1; i < lines.length; i++) if (lines[i] === r.to) { b = i; break; }
+    let b = (r.to === r.from) ? a : find(r.to, a + 1);
     if (b < 0) throw new Error("range anchor not found: " + r.name + " (to)");
     const removed = lines.slice(a, b + 1);
     lines.splice(a, b - a + 1, typeof r.repl === "function" ? r.repl(removed) : r.repl);
@@ -198,6 +210,10 @@ function rewrite(text) {
   s = s.replace(/"lib\/styles880\//g, 'ST_ASSET_BASE+"lib/styles880/');
   s = s.replace(/\bcurPage\b/g, "H.curPage()");
   s = s.replace(/\bwindow\.prompt\(/g, "H.promptText(");
+  /* the app opens the browser's shared file input; the panel opens its own
+     picker (the subject slot, or the reference slot for a style photo) */
+  s = s.replace(/state\.pickSlot="stx"; \$\("filePick"\)\.click\(\);/g, 'H.pickRef();');
+  s = s.replace(/state\.pickSlot=0; \$\("filePick"\)\.click\(\);/g, "H.pickPhoto();");
   /* the app parks late-bound studio functions on window so sibling
      builders can reach them; inside the module they are plain closure vars
      the prelude declares (see WINDOW_FNS) */
@@ -216,7 +232,8 @@ const PRELUDE_NAMES = [
   /* pixel pipeline / stage — no live preview in the panel, so these settle to no-ops */
   "stT1Changed", "stT2Changed", "stPipeChanged", "stGeoChanged", "stRenderSettle", "stComputeWb", "stNoiseNote", "stSkinAnalyze", "stAutoEnhance",
   "stDrawHistogram", "stRunPipeline", "stQuoteCost", "stFaceGated", "stMountSuite", "stExportDims", "stExport2Up", "stSyncFromRef",
-  "stDropFull", "wmStamp", "stUiSoon", "stShowZones", "rhIsConfigured", "gate", "stFullSnap", "stUndoBtns", "stUndoTick", "stCssFilter", "stEffT1", "stEffT2", "stUiSave", "stHold", "stZonesBtn"
+  "stDropFull", "wmStamp", "stUiSoon", "stShowZones", "rhIsConfigured", "gate", "stFullSnap", "stUndoBtns",
+  /* Retouch Pro */ "buildRetouch", "renderAddonSummary", "rhEngineLabel", "rsRunOnetap", "setSt", "rsDoGenerate", "rsShowResult", "v2SetBusy", "stUndoTick", "stCssFilter", "stEffT1", "stEffT2", "stUiSave", "stHold", "stZonesBtn"
 ];
 
 /* --------------------------------------------------------------- capture */
@@ -284,6 +301,16 @@ async function capture(slicesText) {
       LANG = keep;
       out.D = {}; out.Dskip = [];
       function plain(v) { var j; try { j = JSON.stringify(v); } catch (e) { return undefined; } return j === undefined ? undefined : JSON.parse(j); }
+      /* `D.presets.filter(...)` names a method, not a subtree — capture the
+         longest prefix that is actually data so the slice still finds it */
+      arg.dPaths = arg.dPaths.map(function (p) {
+        var parts = p.split("."), cur = D, keep = [];
+        for (var i = 0; i < parts.length; i++) {
+          if (cur == null || typeof cur[parts[i]] === "function") break;
+          cur = cur[parts[i]]; keep.push(parts[i]);
+        }
+        return keep.join(".") || p;
+      }).filter(function (p, i, a) { return p && a.indexOf(p) === i; });
       arg.dPaths.forEach(function (p) {
         var parts = p.split("."), cur = D, tgt = out.D;
         for (var i = 0; i < parts.length; i++) {
@@ -349,6 +376,17 @@ function prelude() {
     "     from Setup whether the upscale deployment is configured */",
     "  var rhIsConfigured=H.rhIsConfigured||function(){ return false; }, gate=function(){ return true; };",
     "  var stFullSnap=function(){ return null; }, stUndoBtns=noop;",
+    "  /* ---- Retouch Pro: the prompt the slider chips compose is the app's own;",
+    "     the run itself is the panel's (Photoshop document in, layer out). ---- */",
+    "  function buildRetouch(){",
+    "    var L=[];",
+    "    D.retouch.sliders.forEach(function(s){ if(state.rt[s.key]) L.push(rtLine(s)); });",
+    "    if(!L.length) return \"\";",
+    "    return (D.retouch.header||\"PROFESSIONAL RETOUCH INSTRUCTIONS (studio quality, photorealistic):\")+\"\\n\"+L.join(\"\\n\");",
+    "  }",
+    "  var renderAddonSummary=noop, setSt=noop, rsShowResult=noop, v2SetBusy=noop;",
+    "  var rhEngineLabel=H.rhEngineLabel||function(){ return \"\"; };",
+    "  var rsRunOnetap=H.rsRunOnetap||noop, rsDoGenerate=H.rsDoGenerate||function(){ return Promise.resolve(false); };",
     "  var stSyncFromRef=H.stSyncFromRef||noop, stDropFull=noop, wmStamp=H.wmStamp||function(cv,cb){ cb&&cb(cv); }, stUiSoon=noop, stUndoTick=noop;",
     "  var stCssFilter=function(){ return \"none\"; }, stEffT1=function(){ return state.st.t1; }, stEffT2=function(){ return state.st.t2; };",
     "  var stZonesBtn=null;",
@@ -370,6 +408,10 @@ function exportsBlock() {
     "    st880Load:st880Load, st880Sel:st880Sel, st880Pick:st880Pick, st880Name:st880Name, st880Refresh:st880Refresh, st880Clear:st880Clear, ST880:ST880,",
     "    stLine:stLine, stLineSigned:stLineSigned, RT_BYKEY:RT_BYKEY, stPipeVals:stPipeVals, stCurveVals:stCurveVals,",
     "    stSyncSuiteChips:(typeof stSyncSuiteChips===\"function\"?stSyncSuiteChips:null), wmOn:wmOn, wmGetLogo:wmGetLogo,",
+    "    buildRetouch:buildRetouch, rtLine:rtLine, rtLabel:rtLabel, renderRtChips:renderRtChips,",
+    "    v2BuildPrompt:v2BuildPrompt, renderV2Hero:renderV2Hero, v2Sync:v2Sync, renderRsPicker:renderRsPicker,",
+    "    renderRsPresetGrid:renderRsPresetGrid, renderRsBundleGrid:renderRsBundleGrid, renderRsStrengthChips:renderRsStrengthChips,",
+    "    rsSetMode:rsSetMode, rsPresetText:rsPresetText, RS_ONETAP_KEYS:RS_ONETAP_KEYS,",
     "    RS_NEED_PHOTO:RS_NEED_PHOTO, WF_BATCH_L:WF_BATCH_L, ST_TILE_W:ST_TILE_W, ST_TILE_H:ST_TILE_H, stTileDPR:stTileDPR,",
     "    ST_MEITU_COUNT:ST_MEITU_COUNT, ST_EVOTO_COUNT:ST_EVOTO_COUNT, t:t",
     "  };"
@@ -428,6 +470,12 @@ function freeCalls(bodyText, preludeNames) {
   for (const m of clean.matchAll(/function\s*[\w$]*\s*\(([^)]*)\)/g)) m[1].split(",").forEach(function (p) { p = p.trim(); if (p) defined.add(p); });
   for (const m of clean.matchAll(/\(([A-Za-z_$][\w$,\s]*)\)\s*=>/g)) m[1].split(",").forEach(function (p) { p = p.trim(); if (p) defined.add(p); });
   const GLOBALS = new Set("Math JSON Object Array String Number Boolean Date parseInt parseFloat isNaN isFinite setTimeout clearTimeout setInterval clearInterval requestAnimationFrame cancelAnimationFrame Promise Error Response fetch localStorage document window navigator console encodeURIComponent decodeURIComponent FileReader Image Blob URL Path2D Uint8ClampedArray Uint8Array Float32Array Int32Array Uint32Array ImageData OffscreenCanvas Worker performance alert confirm getComputedStyle escape unescape RegExp Symbol Map Set WeakMap Reflect Proxy structuredClone queueMicrotask atob btoa TextEncoder TextDecoder".split(" "));
+  for (const m of clean.matchAll(/catch\s*\(\s*([\w$]+)\s*\)/g)) defined.add(m[1]);
+  for (const m of clean.matchAll(/for\s*\(\s*(?:var\s+)?([\w$]+)\s+(?:in|of)\b/g)) defined.add(m[1]);
+  /* Calls only. A bare read of an undefined name (`RT_LABEL_OVERRIDE[k]`) is
+     just as fatal, but a regex cannot tell one from a destructured local
+     without a parser — test/verify_panel_studio_sync.js catches that class by
+     BUILDING the module in a browser and failing on the first page error. */
   const free = new Set();
   for (const m of clean.matchAll(/(^|[^\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
     const n = m[2];

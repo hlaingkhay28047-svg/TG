@@ -7300,15 +7300,22 @@ function applyI18n() {
       toast: function (msg, kind) { try { setStatus(msg, kind); } catch (e) { } },
       switchPage: function (id) { try { switchPage(studioPageKey(id)); saveSettings(); } catch (e) { } },
       curPage: function () { return state.page || ""; },
-      assetBase: APP_URL,
+      /* a function, not a value: this bridge is published before APP_URL's
+         own const is evaluated, and a TDZ throw here would silently cost the
+         whole studio its host */
+      assetBase: function () { return APP_URL; },
       /* the app's batch hand-off: pick the workflow on the Path page */
       ptSetWorkflow: function (id) { try { g.HNK.panelNav.useWorkflow(id); } catch (e) { } },
       rhIsConfigured: function (id) { try { return rhIsConfigured(id); } catch (e) { return false; } },
+      /* the app names the model a run will actually use; the panel's own
+         Freeform model selection is that model here */
+      rhEngineLabel: function () { try { const m = ffModel(); return m ? "RunningHub · " + ffModelLabel(m) : ""; } catch (e) { return ""; } },
       /* Photoshop has no window.prompt; this is the panel's own one-field
          dialog, in the same card shape as setupConfirm's */
       askText: function (msg, def, cb) { studioAskText(msg, def).then(function (v) { cb && cb(v); }); },
       /* the studio's PHOTO slot IS the panel's subject slot */
       pickPhoto: function () { try { refLibBrowseInto("subject-reference"); } catch (e) { } },
+      pickRef: function () { try { refLibBrowseInto("reference-2"); } catch (e) { } },
       clearPhoto: function () {
         try {
           state.refs[0] = null;
@@ -7345,6 +7352,25 @@ function applyI18n() {
     };
   } catch (e) { }
 })();
+
+/* v6.51.0 — one run for the app's three retouch pages: the sentence is the
+   app's (its own prompt composer), the run is the panel's. */
+function studioRun(btn, which) {
+  const sc = globalThis.HNK && globalThis.HNK.studioScreen;
+  const api = sc && sc.api && sc.api();
+  if (!api) { setStatus(t("st_err"), "err"); return; }
+  if (!state.refs[0]) { setStatus(api.RS_NEED_PHOTO, "err"); return; }
+  let prompt = "";
+  try {
+    prompt = which === "v2" ? api.v2BuildPrompt()
+      : which === "rs" ? api.buildRetouch()
+        : api.stComposePrompt();
+  } catch (e) { herr("retouch prompt:", e); }
+  prompt = String(prompt || "").trim();
+  if (!prompt) { setStatus(t("rt_none"), "err"); return; }
+  setBusyBtn(btn);
+  runGenerate(prompt, true, ["skin", "subject"], false, { action: "Retouch", realDir: "edit" });
+}
 
 /* The studio's own switchPage("pgMeitu") style ids, mapped to panel keys. */
 function studioPageKey(id) {
@@ -7450,17 +7476,10 @@ function paintHeroHead(el, str) {
 /* The panel's one Retouch page stands in for the app's Retouch A, Retouch B
    and Retouch pages, so its hero follows the pill: the app's plate, kick and
    headline for whichever of the three is open. */
-const RETOUCH_HEROES = {
-  meitu:   { img: "icons/banners/hero-mermaid.jpg",          kick: "Retouch A Studio", head: "phMeitu" },
-  evoto:   { img: "icons/banners/banner-flower-portrait.jpg", kick: "Retouch B Pro",   head: "phEvoto" },
-  retouch: { img: "icons/banners/banner-flower-gown.jpg",     kick: "Retouch Pro",     head: "phRetouch" }
-};
+/* v6.51.0 — Retouch A and Retouch B are the app's own pages now (each with
+   its own hero in the markup), so this one only dresses Retouch Pro. */
 function paintRetouchHero() {
-  const h = RETOUCH_HEROES[state.page] || RETOUCH_HEROES.retouch;
-  const img = $("phRetouchImg"), kick = $("phRetouchKick"), head = $("phRetouch");
-  if (img && img.getAttribute("src") !== h.img) img.setAttribute("src", h.img);
-  if (kick) kick.textContent = h.kick;
-  const m = PAGE_HERO_HEADS[h.head];
+  const head = $("phRetouch"), m = PAGE_HERO_HEADS.phRetouch;
   if (head && m) paintHeroHead(head, m[state.lang] || m.en);
 }
 function paintPageHeroHeads() {
@@ -13075,7 +13094,6 @@ function repaintFromState() {
   try { const sr = $("selRatio"); if (sr) sr.value = state.ratio; } catch (e) { }
   try { paintSizeSeg(); } catch (e) { }
   try { const iv = $("intVal"), is2 = $("intSlider"); if (is2) is2.value = String(state.intensity); if (iv) iv.textContent = state.intensity + "%"; } catch (e) { }
-  try { paintRtSliders(); paintSwatchesAll(); } catch (e) { }
   try { paintChains(); paintRest(); paintClean(); } catch (e) { }
   try {
     paintChecks(KEEP_CK, state.keep); paintChecks(RMIX_CK, state.rmix);
@@ -14535,6 +14553,20 @@ function bindToggle(id, key) {
   paint();
 }
 
+/* v6.51.0 — the app's own accordion: .grp gains and loses `open`, and the
+   caret is the icon file the app rotates, not a text glyph. bindGroup below
+   is the panel's older pattern (inline display + ▸/▾) and stays for the
+   cards that have not been rebuilt from the app yet. */
+function bindAppGroup(grpId, headId) {
+  const g = $(grpId), h = $(headId);
+  if (!g || !h) return;
+  h.addEventListener("click", function () {
+    g.className = /\bopen\b/.test(g.className)
+      ? g.className.replace(/\s*\bopen\b/g, "")
+      : (g.className + " open");
+  });
+}
+
 function bindGroup(headId, bodyId, openDefault) {
   const h = $(headId), bd = $(bodyId);
   if (!h || !bd) return; /* null-guard: one missing group must never crash init and drop later handlers */
@@ -14592,214 +14624,6 @@ const RT_DEFAULT = {
   petalColor: null, petalName: null
 };
 state.rt = JSON.parse(JSON.stringify(RT_DEFAULT));
-
-const RT_SLIDERS = [
-  { id: "rtSmooth", key: "smooth" }, { id: "rtAcne", key: "acne" },
-  { id: "rtSpots", key: "spots" }, { id: "rtWrinkle", key: "wrinkle" },
-  { id: "rtTone", key: "tone", bipolar: true }, { id: "rtGlow", key: "glow" },
-  { id: "rtReshape", key: "reshape" }, { id: "rtLash", key: "lash" },
-  { id: "rtBrow", key: "brow" }, { id: "rtLipSmooth", key: "lipSmooth" },
-  { id: "rtHairStray", key: "hairStray" }, { id: "rtHairSmooth", key: "hairSmooth" },
-  { id: "rtHairShine", key: "hairShine" }, { id: "rtDressSmooth", key: "dressSmooth" },
-  { id: "rtDressEdge", key: "dressEdge" }, { id: "rtDressWrinkle", key: "dressWrinkle" },
-  { id: "rtDressTexture", key: "dressTexture" }, { id: "rtBgSmooth", key: "bgSmooth" },
-  { id: "rtBgRecolor", key: "bgRecolor" },
-  { id: "rtTeeth", key: "teeth" }, { id: "rtEyeWhite", key: "eyeWhite" },
-  { id: "rtFaceSlim", key: "faceSlim", bipolar: true }, { id: "rtJaw", key: "jaw", bipolar: true },
-  { id: "rtChin", key: "chin", bipolar: true }, { id: "rtNoseSize", key: "noseSize", bipolar: true },
-  { id: "rtEyeSize", key: "eyeSize", bipolar: true }, { id: "rtLipFull", key: "lipFull", bipolar: true },
-  { id: "rtWaist", key: "waist", bipolar: true }, { id: "rtBodySlim", key: "bodySlim", bipolar: true },
-  { id: "rtShoulder", key: "shoulder", bipolar: true }, { id: "rtHip", key: "hip", bipolar: true },
-  { id: "rtLegLen", key: "legLen", bipolar: true }, { id: "rtArmSlim", key: "armSlim", bipolar: true },
-  { id: "rtDressFit", key: "dressFit", bipolar: true },
-  { id: "rtDressClean", key: "dressClean" }, { id: "rtDressColorPure", key: "dressColorPure" },
-  { id: "rtBust", key: "bust", bipolar: true }, { id: "rtButt", key: "butt", bipolar: true },
-  { id: "rtThigh", key: "thigh", bipolar: true }, { id: "rtCalf", key: "calf", bipolar: true },
-  { id: "rtNeck", key: "neck", bipolar: true }, { id: "rtFingers", key: "fingers", bipolar: true },
-  { id: "rtBodySmooth", key: "bodySmooth" }, { id: "rtBodyBlemish", key: "bodyBlemish" },
-  { id: "rtBodyTone", key: "bodyTone" }, { id: "rtBodyGlow", key: "bodyGlow" },
-  { id: "rtBodyHairRm", key: "bodyHairRm" },
-  { id: "rtHairVolume", key: "hairVolume" },
-  { id: "rtHairGloss", key: "hairGloss" }, { id: "rtHairFill", key: "hairFill" }
-];
-
-const SW_LIP = [["off", null], ["Pink", "#e78ba0"], ["Coral", "#f2705f"], ["Red", "#c62f3b"], ["Nude", "#c58f7d"], ["Berry", "#a53860"], ["Wine", "#6d1f33"]];
-const SW_LENS = [["off", null], ["Brown", "#6b4a2b"], ["Hazel", "#8a6a3d"], ["Gray", "#9aa0a6"], ["Blue", "#5b84b1"], ["Green", "#5f8f6b"], ["Violet", "#7d6bb0"]];
-const BROW_STYLES = [["off", null], ["Natural", "Natural"], ["Korean Straight", "Korean straight"], ["Soft Arch", "soft arch"], ["High Arch", "high arch"], ["Bold Defined", "bold defined"], ["Feathered", "feathered brushed-up"]];
-const LASH_STYLES = [["off", null], ["Natural", "natural"], ["Wispy", "wispy"], ["Doll", "doll"], ["Cat-Eye", "cat-eye"], ["Volume", "full volume"], ["Manga", "manga spike"]];
-const CONTOUR_STYLES = [["off", null], ["Soft", "soft everyday"], ["Defined", "defined"], ["Sculpted", "sculpted editorial"], ["Glowy", "glowy high-highlight"], ["Korean", "Korean gradient"]];
-const SW_PETAL = [["auto", null], ["White", "#f5f2ec"], ["Blush", "#f7c6d0"], ["Cherry", "#ffb7c5"], ["Red", "#d94a5e"], ["Purple", "#b48fd9"], ["Peach", "#f6b39a"], ["Blue", "#8fb8e8"], ["Gold", "#f2d38b"]];
-
-const SW_BLUSH = [["off", null], ["Peach", "#f6b39a"], ["Pink", "#f3a4b5"], ["Rose", "#e58a9c"], ["Coral", "#f08a76"], ["Berry", "#c96a86"], ["Apricot", "#f2b184"]];
-
-function buildTextChips(containerId, options, valueKey) {
-  const c = $(containerId);
-  if (!c) return;
-  while (c.firstChild) c.removeChild(c.firstChild);
-  for (let i = 0; i < options.length; i++) {
-    (function (label, val) {
-      const b = mkBtn();
-      b.className = "sw ltchip" + ((state.rt[valueKey] === val) ? " on" : "");
-      b.textContent = label === "off" ? "\u2013" : label;
-      b.addEventListener("click", function () {
-        state.rt[valueKey] = val;
-        buildTextChips(containerId, options, valueKey);
-        saveSettings();
-      });
-      c.appendChild(b);
-    })(options[i][0], options[i][1]);
-  }
-}
-
-const SW_BG = [["off", null], ["White", "#f4f4f4"], ["Gray", "#9d9d9d"], ["Black", "#141414"], ["Beige", "#e8dcc7"], ["Sky Blue", "#bcd7ee"], ["Pastel Pink", "#f3d3dc"], ["Sage", "#cfe0d2"]];
-
-function rtVal(def) {
-  const v = state.rt[def.key];
-  return def.bipolar && v > 0 ? "+" + v : String(v);
-}
-
-function paintRtSliders() {
-  for (let i = 0; i < RT_SLIDERS.length; i++) {
-    const d = RT_SLIDERS[i];
-    const el = $(d.id), vl = $(d.id + "V");
-    if (el) el.value = String(state.rt[d.key]);
-    if (vl) vl.textContent = rtVal(d);
-  }
-}
-
-function bindRtSliders() {
-  for (let i = 0; i < RT_SLIDERS.length; i++) {
-    (function (d) {
-      const el = $(d.id);
-      if (!el) return;
-      el.addEventListener("input", function () {
-        state.rt[d.key] = Math.round(Number(el.value));
-        const vl = $(d.id + "V");
-        if (vl) vl.textContent = rtVal(d);
-      });
-      el.addEventListener("change", function () { saveSettings(); });
-    })(RT_SLIDERS[i]);
-  }
-}
-
-function buildSwatches(containerId, palette, colorKey, nameKey) {
-  const c = $(containerId);
-  if (!c) return;
-  while (c.firstChild) c.removeChild(c.firstChild);
-  for (let i = 0; i < palette.length; i++) {
-    (function (name, hex) {
-      const b = mkBtn();
-      b.className = "sw" + (hex ? "" : " none") + ((state.rt[colorKey] === hex) ? " on" : "");
-      if (hex) { b.style.backgroundColor = hex; }
-      else { b.textContent = "\u2013"; }
-      b.addEventListener("click", function () {
-        state.rt[colorKey] = hex;
-        state.rt[nameKey] = hex ? name : null;
-        buildSwatches(containerId, palette, colorKey, nameKey);
-        saveSettings();
-      });
-      c.appendChild(b);
-    })(palette[i][0], palette[i][1]);
-  }
-}
-
-function paintSwatchesAll() {
-  buildSwatches("swLip", SW_LIP, "lipColor", "lipName");
-  buildSwatches("swLens", SW_LENS, "lens", "lensName");
-  buildSwatches("swBg", SW_BG, "bgColor", "bgName");
-  buildSwatches("swBlush", SW_BLUSH, "blushColor", "blushName");
-  buildSwatches("swPetal", SW_PETAL, "petalColor", "petalName");
-  buildTextChips("chBrow", BROW_STYLES, "browStyle");
-  buildTextChips("chLash", LASH_STYLES, "lashStyle");
-  buildTextChips("chContour", CONTOUR_STYLES, "contourStyle");
-}
-
-function buildRetouchPrompt() {
-  const r = state.rt;
-  const L = [];
-  if (r.smooth > 0) L.push("Skin smoothing at " + r.smooth + "% with frequency-separation quality; keep realistic pores and texture.");
-  if (r.acne > 0) L.push("Remove acne and pimples at " + r.acne + "% strength; heal the skin cleanly.");
-  if (r.spots > 0) L.push("Remove dark spots, moles and blemishes at " + r.spots + "%.");
-  if (r.wrinkle > 0) L.push("Reduce wrinkles and fine lines at " + r.wrinkle + "% while keeping natural skin.");
-  if (r.tone > 0) L.push("Brighten and whiten the overall skin tone by " + r.tone + "% evenly with a natural undertone.");
-  if (r.tone < 0) L.push("Deepen the skin tone with a healthy natural tan by " + (-r.tone) + "%.");
-  if (r.glow > 0) L.push("Add a soft healthy skin glow at " + r.glow + "%.");
-  if (r.reshape > 0) L.push("Subtle AI face reshape at " + r.reshape + "%: slightly slimmer jawline and cheeks with refined contours; the person must remain clearly recognizable as the same person.");
-  if (r.lash > 0) L.push("Enhance the eyelashes at " + r.lash + "%: longer, darker, well defined.");
-  if (r.brow > 0) L.push("Groom and define the eyebrows at " + r.brow + "%: clean shape, fill sparse areas naturally.");
-  if (r.lipSmooth > 0) L.push("Smooth the lip texture at " + r.lipSmooth + "%.");
-  if (r.lipColor) L.push("Apply " + (r.lipName || "") + " lipstick color (" + r.lipColor + ") with a natural gradient finish.");
-  if (r.lens) L.push("Change the iris color to " + (r.lensName || "") + " (" + r.lens + ") like natural contact lenses; keep realistic catchlights and pupils.");
-  if (r.hairStray > 0) L.push("Remove stray and flyaway hairs at " + r.hairStray + "%; clean the hairline edges.");
-  if (r.hairSmooth > 0) L.push("Smooth the hair strands at " + r.hairSmooth + "% keeping natural hair texture.");
-  if (r.hairShine > 0) L.push("Hair dodge-and-burn at " + r.hairShine + "%: glossy dimensional shine and depth.");
-  if (r.dressSmooth > 0) L.push("Smooth the clothing fabric at " + r.dressSmooth + "%.");
-  if (r.dressEdge > 0) L.push("Clean and refine the garment edges and outlines at " + r.dressEdge + "%.");
-  if (r.dressWrinkle > 0) L.push("Remove fabric wrinkles and creases at " + r.dressWrinkle + "% then re-smooth the cloth naturally.");
-  if (r.dressTexture > 0) L.push("Recover and enhance the fabric texture detail at " + r.dressTexture + "%.");
-  if (r.bgSmooth > 0) L.push("Clean and smooth the ORIGINAL background at " + r.bgSmooth + "%: remove noise, dust and distractions while keeping the same background content.");
-  if (r.bgColor) L.push("Recolor the background to " + (r.bgName || "") + " (" + r.bgColor + ") as a smooth professional studio backdrop with soft gradient falloff" + (r.bgRecolor > 0 ? (", smoothing at " + r.bgRecolor + "%") : "") + ".");
-  else if (r.bgRecolor > 0) L.push("Polish and smooth the background color at " + r.bgRecolor + "%.");
-  if (r.teeth > 0) L.push("Whiten the teeth at " + r.teeth + "% while keeping natural enamel texture.");
-  if (r.eyeWhite > 0) L.push("Clean and brighten the eye whites (sclera) at " + r.eyeWhite + "%: remove redness and visible veins, keep them realistic.");
-  const bip = function (v, inc, dec) {
-    if (v > 0) L.push(inc + " at " + v + "%.");
-    if (v < 0) L.push(dec + " at " + (-v) + "%.");
-  };
-  bip(r.faceSlim, "Subtly slim the overall face", "Make the face slightly fuller");
-  bip(r.jaw, "Sharpen and slim the jawline", "Soften and round the jawline");
-  bip(r.chin, "Lengthen and refine the chin", "Shorten and soften the chin");
-  bip(r.noseSize, "Slightly enlarge the nose", "Reduce and refine the nose size");
-  bip(r.eyeSize, "Enlarge the eyes", "Reduce the eye size");
-  bip(r.lipFull, "Make the lips fuller", "Make the lips thinner");
-  bip(r.waist, "Slim the waist", "Widen the waist");
-  bip(r.bodySlim, "Slim the whole body silhouette", "Make the body silhouette fuller");
-  bip(r.shoulder, "Broaden the shoulders", "Narrow the shoulders");
-  bip(r.hip, "Slim the hips", "Widen the hips");
-  bip(r.legLen, "Lengthen the legs proportionally", "Shorten the legs proportionally");
-  bip(r.armSlim, "Slim the arms", "Make the arms fuller");
-  if (r.faceSlim || r.jaw || r.chin || r.noseSize || r.eyeSize || r.lipFull || r.waist || r.bodySlim || r.shoulder || r.hip || r.legLen || r.armSlim || r.bust || r.butt || r.thigh || r.calf || r.neck || r.fingers) {
-    L.push("All reshape adjustments must be subtle, anatomically correct and photorealistic - the person must remain clearly recognizable as the same person.");
-  }
-  bip(r.bust, "Enhance and gently lift the bust", "Reduce the bust size");
-  bip(r.butt, "Lift and round the glutes", "Reduce the glutes");
-  bip(r.thigh, "Slim the thighs", "Make the thighs fuller");
-  bip(r.calf, "Slim the calves", "Make the calves fuller");
-  bip(r.neck, "Slim and elongate the neck", "Shorten the neck slightly");
-  bip(r.fingers, "Slim and lengthen the fingers", "Make the fingers shorter and softer");
-  if (r.browStyle) L.push("Apply a " + r.browStyle + " eyebrow style, cleanly shaped and naturally filled.");
-  if (r.lashStyle) L.push("Apply " + r.lashStyle + " style eyelashes, realistic and well separated.");
-  if (r.blushColor) L.push("Apply " + (r.blushName || "") + " (" + r.blushColor + ") blush with soft airbrushed diffusion on the cheeks.");
-  if (r.contourStyle) L.push("Apply " + r.contourStyle + " contour and highlight sculpting, blended invisibly into the skin.");
-  if (r.bodySmooth > 0) L.push("Smooth and even the body skin (arms, shoulders, chest, back, legs) at " + r.bodySmooth + "%, keeping natural pores and realistic texture.");
-  if (r.bodyBlemish > 0) L.push("Remove body blemishes, marks, bruises, mosquito bites and small scars at " + r.bodyBlemish + "%.");
-  if (r.bodyTone > 0) L.push("Even out the body skin tone at " + r.bodyTone + "%: neck, chest, underarms and joints match the face tone naturally.");
-  if (r.bodyGlow > 0) L.push("Add a healthy soft glow to the body skin at " + r.bodyGlow + "%, like professional body makeup.");
-  if (r.bodyHairRm > 0) L.push("Reduce visible fine body hair on arms and legs at " + r.bodyHairRm + "%, keeping skin realistic.");
-  if (r.hairVolume > 0) L.push("Add natural volume and body to the hair at " + r.hairVolume + "%.");
-  if (r.hairGloss > 0) L.push("Add glossy healthy shine to the hair at " + r.hairGloss + "%.");
-  if (r.hairFill > 0) L.push("Fill thin or sparse hair areas at " + r.hairFill + "%, matching the natural hair direction and color.");
-  bip(r.dressFit, "Fit the outfit tighter and cleaner to the body", "Loosen the outfit's drape");
-  if (r.dressClean > 0) L.push("Clean the outfit at " + r.dressClean + "%: remove stains, dust, lint, hairs and marks from the fabric.");
-  if (r.dressColorPure > 0) L.push("Purify and enrich the outfit's color at " + r.dressColorPure + "%: even out the tone, remove color casts, keep the fabric texture.");
-  if (!L.length) return "";
-  return "PROFESSIONAL RETOUCH INSTRUCTIONS (studio quality, photorealistic):\n- " + L.join("\n- ");
-}
-
-function applyRetouch() {
-  if (state.busy) return;
-  const p = buildRetouchPrompt();
-  if (!p) { setStatus(t("rt_none"), "err"); return; }
-  runGenerate(p, true, ["skin", "subject"], false, { action: "Retouch", realDir: "edit" });
-}
-
-function resetRetouch() {
-  state.rt = JSON.parse(JSON.stringify(RT_DEFAULT));
-  paintRtSliders();
-  paintSwatchesAll();
-  saveSettings();
-  setStatus(t("st_ready"));
-}
 
 /* ---------------- Tab pages (web-view style) ---------------- */
 /* v6.46.0 — THE WEB APP'S OWN NAVIGATION, ADOPTED WHOLE.
@@ -14972,7 +14796,7 @@ function switchPage(key) {
      survive a switch between Retouch A and Retouch B. */
   try {
     const sc = globalThis.HNK && globalThis.HNK.studioScreen;
-    if (sc) { if (key === "meitu" || key === "evoto") sc.mount(key); else sc.unmount(); }
+    if (sc) { if (key === "meitu" || key === "evoto" || key === "retouch") sc.mount(key); else sc.unmount(); }
   } catch (e) { }
   if (active && active.preset) {
     const pb = $(active.preset);
@@ -15102,7 +14926,6 @@ function init() {
     });
     safe("i18n", function () { applyTheme(); populateSelects(); applyI18n(); });
     safe("version", function () { paintPanelVersion(); checkPanelUpdate(); });
-    safe("rt-paint", function () { paintRtSliders(); paintSwatchesAll(); });
     safe("ck-paint", function () { paintClean(); paintChecks(RMIX_CK, state.rmix); paintChecks(I2P_CK, state.i2p); paintChecks(I2P_OPT_CK, state.i2p); paintChains(); paintRest(); paintChecks([["lgEquip", "lightEquip"]], state); paintRoTarget(); paintChecks([["ckRefMk", "refMkOn"], ["ckRefHair", "refHairOn"]], state); paintChecks(MATCH_CK, state.match); });
     safe("page-restore", function () { switchPage(state.page || "aitools"); });
     safe("meta", function () { refreshPromptMeta(); renderRefs(); refreshCompare(); });
@@ -15240,20 +15063,26 @@ function init() {
     bindCard("cLogH", "cLogB", "log", false);
   });
 
-  /* Retouch Pro */
+  /* v6.51.0 — RETOUCH PRO is the web app's pgRetouch now: the V2 hero, its
+     Advanced accordion and the Manual One-Tap / Sliders panes are all built
+     by the app's own code (js/hnk_studio_suites.js). What stays here is the
+     panel's half — the two accordions' open/close and the two runs, which go
+     through the licence gate into the panel's own generate. */
   safe("retouch", function () {
-    bindRtSliders();
-    paintRtSliders();
-    paintSwatchesAll();
-    bindGroup("rtSkinH", "rtSkinB", true);
-    bindGroup("rtFaceH", "rtFaceB", false);
-    bindGroup("rtShapeH", "rtShapeB", false);
-    bindGroup("rtBodyH", "rtBodyB", false);
-    bindGroup("rtHairH", "rtHairB", false);
-    bindGroup("rtDressH", "rtDressB", false);
-    bindGroup("rtBgH", "rtBgB", false);
-    $("btnRtApply").addEventListener("click", function () { const g0 = $("btnRtApply"); armGate("__retouch", g0, function () { setBusyBtn(g0); applyRetouch(); }); });
-    $("btnRtReset").addEventListener("click", resetRetouch);
+    bindAppGroup("v2GrpAdvanced", "v2AdvH");
+    bindAppGroup("rsGrpManual", "rsManualH");
+    const start = $("btnV2Start");
+    if (start) {
+      start.addEventListener("click", function () {
+        armGate("__retouch", start, function () { studioRun(start, "v2"); });
+      });
+    }
+    const rsGen = $("btnRsGen");
+    if (rsGen) {
+      rsGen.addEventListener("click", function () {
+        armGate("__retouch", rsGen, function () { studioRun(rsGen, "rs"); });
+      });
+    }
   });
 
   /* v6.51.0 — RETOUCH A / RETOUCH B STUDIO. The bar's label, its queue chips
@@ -15350,11 +15179,18 @@ function init() {
         if (b) b.addEventListener("click", function () { onPreset(key); });
       })(k);
     }
-    $("intSlider").addEventListener("input", function () {
-      state.intensity = Math.round(Number($("intSlider").value));
-      $("intVal").textContent = state.intensity + "%";
-    });
-    $("intSlider").addEventListener("change", function () { saveSettings(); });
+    /* v6.51.0 — the intensity slider left with the old Retouch page (the
+       app's Retouch Pro carries its own strength chips); presets that quote
+       {INT} keep reading state.intensity, so this stays null-safe rather
+       than throwing and dropping the preset wiring above it. */
+    const isl2 = $("intSlider");
+    if (isl2) {
+      isl2.addEventListener("input", function () {
+        state.intensity = Math.round(Number(isl2.value));
+        const iv2 = $("intVal"); if (iv2) iv2.textContent = state.intensity + "%";
+      });
+      isl2.addEventListener("change", function () { saveSettings(); });
+    }
     paintPresetSel();
   });
 

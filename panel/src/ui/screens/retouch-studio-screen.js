@@ -44,7 +44,34 @@ var suites = _CJS ? require("../../../js/hnk_studio_suites.js") : (g.HNK && g.HN
    at mount time and never at definition time. */
 function bridge() { return (g.HNK && g.HNK.studioHost) || null; }
 function doc() { return (typeof document !== "undefined") ? document : null; }
-function $(id) { var d = doc(); return d && d.getElementById ? d.getElementById(id) : null; }
+/* The app's studio pages carry a live canvas stage and their own result
+   cards; the panel replaces both (Photoshop's document is the preview, and
+   one shared result card carries Place / Save As). The app's own code still
+   labels those nodes, so a write to one of them lands on a detached element
+   instead of throwing — while a genuine typo still fails loudly. */
+var REPLACED_IDS = {
+  /* the stage the panel does not draw */
+  stStage: 1, stCanvas: 1, stHist: 1, stZoomWrap: 1, stSplitLine: 1, stRail: 1,
+  stSplit: 1, stStageMin: 1, stStageFlip: 1, stZones: 1, stHold: 1, stReset: 1,
+  stUndoB: 1, stRedoB: 1, stZonesBtn: 1,
+  /* the app's own result cards */
+  stResultBox: 1, stResultH2: 1, stCmp: 1, stCmpAfter: 1, stCmpBefore: 1,
+  stCmpLine: 1, stCmpTop: 1, stCmpRange: 1, btnStDl: 1, btnStToRef: 1, handoffStudio: 1,
+  rsResultBox: 1, rsResultH2: 1, rsCmp: 1, rsCmpAfter: 1, rsCmpBefore: 1, rsCmpLine: 1,
+  rsCmpTop: 1, rsCmpRange: 1, rsCmpBeforeLbl: 1, rsCmpAfterLbl: 1, rsZoomBtn: 1,
+  rsRerunRow: 1, rsRerunLbl: 1, rsRerunChips: 1, btnRsDl: 1, btnRsToRef: 1,
+  btnV2Next: 1, handoffRetouch: 1, rsHistH: 1, rsHist: 1, rsHistClear: 1,
+  /* the browser's shared file input — the panel opens its own picker */
+  filePick: 1
+};
+var _voidEls = {};
+function $(id) {
+  var d = doc();
+  var e = (d && d.getElementById) ? d.getElementById(id) : null;
+  if (e || !REPLACED_IDS[id] || !d) return e;
+  if (!_voidEls[id]) _voidEls[id] = d.createElement("div");
+  return _voidEls[id];
+}
 
 var API = null;        /* what suites.build(H) returned */
 var builtLang = null;  /* the language the current build was made in */
@@ -72,23 +99,15 @@ function shim() {
 /* One <img> per tint the icon's contexts need; styles.css shows exactly one.
    Group-header titles are gold, chips are cream and turn ink on the gold
    active pill, and the two counters in the generate bar are muted. */
-var TINTS = {};
-function tintTable() {
-  if (TINTS.__done) return TINTS;
-  TINTS.__done = true;
-  var counts = (suites && suites.DATA && suites.DATA.counts) || [];
-  for (var i = 0; i < counts.length; i++) {
-    var n = counts[i].icon;
-    if (n) TINTS[n] = ["cream", "gold"];
-  }
-  /* the two symbols that head a group AND sit inside a chip */
-  TINTS["i-drop"] = ["cream", "gold", "ink"];
-  TINTS["i-brush"] = ["cream", "gold", "ink"];
-  /* muted: the live/AI tally the generate bar prints */
-  TINTS["i-eye"] = ["cream", "gold", "muted"];
-  TINTS["i-bolt"] = ["cream", "ink", "muted"];
-  return TINTS;
-}
+/* Every icon ships in the three tints its contexts can call for — cream in a
+   sentence or an idle chip, ink on the gold active pill, gold at the head of
+   a group — plus muted for the two the generate bar prints in its tally. The
+   stylesheet reveals exactly one; a per-symbol table would only mean a
+   missing file (an invisible icon) the day a chip gains an icon it never had. */
+var TINTS_ALL = ["cream", "gold", "ink"];
+var TINTS_MUTED = ["cream", "gold", "ink", "muted"];
+var MUTED_TOO = { "i-eye": 1, "i-bolt": 1, "i-search": 1 };
+function tintsFor(name) { return MUTED_TOO[name] ? TINTS_MUTED : TINTS_ALL; }
 var TINT_LETTER = { cream: "i2c", gold: "i2g", ink: "i2k", muted: "i2m" };
 function icn(name, cls) {
   var c = cls || "ic-s";
@@ -96,7 +115,7 @@ function icn(name, cls) {
   if (c.indexOf("ic-car") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.svg">';
   if (c.indexOf("ic-xl") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-muted.svg">';
   if (c.indexOf("ic-h2") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.svg">';
-  var tints = tintTable()[name] || ["cream", "ink"];
+  var tints = tintsFor(name);
   var out = "";
   for (var i = 0; i < tints.length; i++) {
     out += '<img class="' + c + " " + TINT_LETTER[tints[i]] + '" src="icons/ui/' + name + "-" + tints[i] + '.svg">';
@@ -406,16 +425,21 @@ function makeH() {
     stRenderThumbs: noop, stLookArt: function () { return null; },
     gradeTile: gradeTile, pickLogo: pickLogo,
     stShowZones: stShowZones, stExportDims: stExportDims, stExport2Up: stExport2Up,
+    /* the app's shared #filePick, as the panel's own two pickers */
+    pickPhoto: function () { var b = bridge(); if (b && b.pickPhoto) b.pickPhoto(); },
+    pickRef: function () { var b = bridge(); if (b && b.pickRef) b.pickRef(); },
     stNoiseNote: stNoiseNote,
     stSyncFromRef: noop, stMountSuite: noop, stQuoteCost: noop,
     /* HD Finish only exists when Setup has the upscale deployment */
     rhIsConfigured: function (id) { var b = bridge(); return !!(b && b.rhIsConfigured && b.rhIsConfigured(id)); },
+    rhEngineLabel: function () { var b = bridge(); try { return (b && b.rhEngineLabel) ? b.rhEngineLabel() : ""; } catch (e) { return ""; } },
     beforeBuild: null
   };
 }
 function assetBase() {
   var b = bridge();
-  return (b && b.assetBase) || "https://hnkaistudio.com/app/";
+  try { if (b && typeof b.assetBase === "function") return b.assetBase(); } catch (e) { }
+  return "https://hnkaistudio.com/app/";
 }
 
 /* ------------------------------------------------------------- build */
@@ -436,9 +460,18 @@ function build() {
    same, and shows only the card that belongs to the page. */
 var SUITE_CARD = { pageMeitu: "stMuCard", pageEvoto: "stEvCard" };
 function mount(pageKey) {
-  var pageId = (pageKey === "evoto") ? "pageEvoto" : "pageMeitu";
   if (!API && !build()) return;
   if (builtLang !== lang()) rebuild();
+  /* Retouch Pro is a page of its own — it has no shared block to move, only
+     its result card to borrow and its hero to repaint */
+  if (pageKey === "retouch") {
+    mountedPage = "pageRetouch";
+    takeResultCard("rsResultSlot");
+    try { if (API.renderRsPicker) API.renderRsPicker(); } catch (e) { }
+    try { if (API.renderV2Hero) API.renderV2Hero(); } catch (e) { }
+    return;
+  }
+  var pageId = (pageKey === "evoto") ? "pageEvoto" : "pageMeitu";
   var page = $(pageId), dock = $("stDock"), cols = $("stCols");
   if (!page || !dock || !cols) return;
   var mnt = page.querySelector ? page.querySelector(".st-mount") : null;
@@ -451,7 +484,7 @@ function mount(pageKey) {
     } else if (card.parentNode !== dock) { dock.appendChild(card); }
   });
   mountedPage = pageId;
-  takeResultCard();
+  takeResultCard("stResultSlot");
   renderStPicker();
   if (API && API.stRenderPend) { try { API.stRenderPend(); } catch (e) { } }
   if (API && API.stSyncSuiteChips) { try { API.stSyncSuiteChips(); } catch (e) { } }
@@ -462,8 +495,8 @@ function mount(pageKey) {
    result on the page that made it, and it goes home the moment the student
    leaves — Freeform must never open without its result card. */
 var resultHome = null;
-function takeResultCard() {
-  var box = $("resultBox"), slot = $("stResultSlot");
+function takeResultCard(slotId) {
+  var box = $("resultBox"), slot = $(slotId);
   if (!box || !slot) return;
   if (!resultHome) resultHome = box.parentNode;
   if (box.parentNode !== slot) slot.appendChild(box);
@@ -489,7 +522,7 @@ function rebuild() {
     });
   API = null;
   build();
-  if (mountedPage) mount(mountedPage === "pageEvoto" ? "evoto" : "meitu");
+  if (mountedPage) mount(mountedPage === "pageEvoto" ? "evoto" : mountedPage === "pageRetouch" ? "retouch" : "meitu");
 }
 
 var SCREEN = {

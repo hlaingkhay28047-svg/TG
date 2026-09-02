@@ -78,11 +78,113 @@ function report(name, ok, detail) {
     report("the panel module reaches for no " + what, !m, m && context(bodyOnly, m.index));
   });
 
+  /* THE CHECK THAT MATTERS MOST: the module is not merely well-formed text —
+     it has to RUN. A slice that reaches for a name nothing defines, or a page
+     element the panel does not carry, is a ReferenceError in Photoshop and an
+     empty page for the student. So the panel is loaded in a browser with UXP
+     stubbed, all three retouch pages are opened, and the first page error
+     fails this test. */
+  await smoke();
+
   console.log(failures
     ? `\n${failures} FAILURE(S) — regenerate with: node tools/build_panel_studio_suites.js`
     : "\nAll checks passed — the panel's studio is the app's studio.");
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FAIL — " + (e && e.stack || e)); process.exit(1); });
+
+const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
+  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
+  ".mp4": "video/mp4", ".woff2": "font/woff2" };
+const PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "base64");
+
+/* the UXP host the panel boots against, cut down to what a DOM build needs */
+const UXP_STUB = `(function(){
+  var settings = "{}";
+  var file = { read: function(){ return Promise.resolve(settings); },
+               write: function(t){ settings = t; return Promise.resolve(); } };
+  var folder = { getEntry: function(){ return Promise.resolve(file); },
+                 createFile: function(){ return Promise.resolve(file); } };
+  var uxp = { storage: { localFileSystem: { getDataFolder: function(){ return Promise.resolve(folder); } }, formats: { utf8: "utf8" } },
+              shell: { openExternal: function(){ return Promise.resolve(); }, openPath: function(){ return Promise.resolve(); } },
+              entrypoints: { setup: function(){} } };
+  var ps = { app: { documents: [] }, core: { executeAsModal: function(){} }, imaging: {},
+             action: { batchPlay: function(){ return Promise.resolve([]); } }, constants: {} };
+  window.require = function(n){ return n === "photoshop" ? ps : n === "uxp" ? uxp : n === "os" ? { platform: function(){ return "test"; } } : {}; };
+  var realFetch = window.fetch.bind(window);
+  window.fetch = function(url, init){
+    url = String(url);
+    if (url.indexOf("127.0.0.1") >= 0) return realFetch(url, init);
+    return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));
+  };
+})();`;
+
+async function smoke() {
+  const http = require("http");
+  const { chromium } = require("playwright-core");
+  const PANEL = path.join(__dirname, "..", "panel");
+  const server = http.createServer((req, res) => {
+    const rel = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "") || "index.html";
+    const abs = path.resolve(PANEL, rel);
+    if (!abs.startsWith(PANEL + path.sep) || !fs.existsSync(abs) || fs.statSync(abs).isDirectory()) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200, { "Content-Type": MIME[path.extname(abs).toLowerCase()] || "application/octet-stream", "Cache-Control": "no-store" });
+    res.end(fs.readFileSync(abs));
+  });
+  await new Promise(r => server.listen(0, "127.0.0.1", r));
+  const port = server.address().port;
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 420, height: 760 } });
+    const errs = [];
+    page.on("pageerror", e => errs.push(String(e).slice(0, 200)));
+    page.on("console", m => { if (m.type() === "error") errs.push("console: " + m.text().slice(0, 160)); });
+    await page.route("**/*", route => {
+      const u = route.request().url();
+      if (u.indexOf("127.0.0.1") >= 0) return route.continue();
+      if (route.request().resourceType() === "image") return route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL });
+      return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+    await page.addInitScript(UXP_STUB);
+    await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: "load" });
+    await page.waitForTimeout(2000);
+    const counts = await page.evaluate(() => {
+      var o = { pages: {} };
+      ["meitu", "evoto", "retouch"].forEach(function (k) {
+        try { switchPage(k); } catch (e) { o.err = String(e).slice(0, 160); }
+      });
+      function n(id) { var e = document.getElementById(id); return e ? e.children.length : -1; }
+      o.pages.muGroups = n("muHost");
+      o.pages.evGroups = n("evHost");
+      o.pages.suiteTabs = n("stSuiteTabs");
+      o.pages.groupChips = n("stGroupChips");
+      o.pages.muPresets = n("muPresetRow");
+      o.pages.v2Modes = n("v2ModeChips");
+      o.pages.rsPresets = n("rsPresetGrid");
+      o.pages.rsBundles = n("rsBundleGrid");
+      o.pages.rsChips = n("rsChips");
+      var g = document.getElementById("btnStGen");
+      o.genLabel = g ? (g.textContent || "").trim().length : -1;
+      var pv = document.getElementById("v2PromptPreview");
+      o.promptPreview = pv ? (pv.textContent || "").length : -1;
+      return o;
+    });
+    report("the panel builds all three retouch pages without a page error",
+      errs.length === 0 && !counts.err, (counts.err || "") + " " + errs.slice(0, 3).join(" | "));
+    report("Retouch A and Retouch B each build the app's 17 groups",
+      counts.pages.muGroups === 17 && counts.pages.evGroups === 17, JSON.stringify(counts.pages));
+    report("the jump bar carries both suite tabs and a chip per group",
+      counts.pages.suiteTabs === 2 && counts.pages.groupChips >= 18, JSON.stringify(counts.pages));
+    report("the one-tap look shelf is populated",
+      counts.pages.muPresets === 8, counts.pages.muPresets);
+    report("Retouch Pro builds its mode chips, presets, bundles and slider chips",
+      counts.pages.v2Modes === 3 && counts.pages.rsPresets === 5 &&
+      counts.pages.rsBundles === 5 && counts.pages.rsChips > 0, JSON.stringify(counts.pages));
+    report("the studio's generate bar and Retouch Pro's prompt preview carry text",
+      counts.genLabel > 0 && counts.promptPreview > 100, JSON.stringify({ gen: counts.genLabel, preview: counts.promptPreview }));
+  } finally {
+    await browser.close();
+    await new Promise(r => server.close(r));
+  }
+}
 
 /* the `_app`-suffixed functions are the app originals the runtime layer
    shadows; they never run in Photoshop, so their browser APIs are not a
