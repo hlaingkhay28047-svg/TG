@@ -15042,7 +15042,6 @@ function init() {
     bindCard("cPromptH", "cPromptB", "prompt", true);
     bindCard("cRefH", "cRefB", "refs", true);
     bindCard("cPresetH", "cPresetB", "presets", false);
-    bindCard("cRtH", "cRtB", "rtpro", false);
     bindCard("cPrevH", "cPrevB", "prev", false);
     bindCard("cFinalH", "cFinalB", "final", false);
     bindCard("cPipeH", "cPipeB", "pipe", false);
@@ -15172,7 +15171,6 @@ function init() {
   safe("diag", bindDiag);
   safe("reflib", bindRefLib);
   safe("web", function () {
-    bindGroup("grpSkinH", "grpSkinB", false);
     for (const k in PRESETS) {
       (function (key) {
         const b = $(PRESETS[key].btn);
