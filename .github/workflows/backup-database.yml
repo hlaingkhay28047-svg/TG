@@ -16,8 +16,16 @@ name: Back up the production database
 #
 # The credentials are born in the runner: an ephemeral Spaces key created for
 # this run and deleted on every exit path, and the database URI read from the
-# live app spec. Nothing is printed: the summary carries the object key, the
-# byte count and the digest only.
+# managed cluster itself. Nothing is printed: the summary carries the object
+# key, the byte count and the digest only.
+#
+# WHY NOT THE APP SPEC. The first scheduled run failed: an app spec never
+# holds the resolved URI, only App Platform's binding (${hnk-db.DATABASE_URL}),
+# which pg_dump read as a plain database NAME and tried to reach over a local
+# socket that does not exist on the runner. The cluster is the source of
+# truth, exactly as the migrate lane's probe reads it — connection URI and CA
+# from the DigitalOcean API, with this runner granted as a trusted source for
+# the session when the cluster keeps such a list.
 #
 # SCHEDULE + MANUAL. It runs daily at 18:30 UTC (01:00 Myanmar time, when the
 # studio is quiet) and can be dispatched by hand; a manual run must type
@@ -52,8 +60,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
+      # the rehearsal server has to be the production major or pg_restore
+      # refuses the dump — the cluster runs PostgreSQL 17
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: scratch
         options: >-
@@ -63,7 +73,9 @@ jobs:
           - 5432:5432
     env:
       DO_APP_NAME: hnk-ai-tools-3
+      DO_CLUSTER: hnk-pg
       DO_REGION: sgp1
+      PG_MAJOR: "17"
       DO_TOKEN: ${{ secrets.DIGITALOCEAN_PRODUCTION_ACCESS_TOKEN }}
       RETENTION_DAYS: "30"
       CONFIRM_INPUT: ${{ inputs.confirm }}
@@ -82,10 +94,15 @@ jobs:
             exit 1
           fi
 
-      - name: Install PostgreSQL 16 client and s3 tooling
+      - name: Install the PostgreSQL client and s3 tooling
         shell: bash
         run: |
           set -euo pipefail
+          # pg_dump refuses a server newer than itself ("aborting because of
+          # server version mismatch"), which is how the first fixed run died
+          # against the 17.11 cluster. The client major must track the
+          # cluster's, so it is named once here and the scratch service image
+          # above carries the same major.
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl -fsS --max-time 30 -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
             https://www.postgresql.org/media/keys/ACCC4CF8.asc
@@ -93,7 +110,15 @@ jobs:
             https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-16 s3cmd >/dev/null
+          sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" s3cmd >/dev/null
+          # Installing 17 is not enough: /usr/bin/pg_dump is postgresql-common's
+          # wrapper and it kept choosing the runner's preinstalled 16, so the
+          # dump failed on the version mismatch a second time. Put the client's
+          # own bin directory first and prove which binary answers.
+          BIN="/usr/lib/postgresql/$PG_MAJOR/bin"
+          [ -x "$BIN/pg_dump" ] || { echo "::error::postgresql-client-$PG_MAJOR did not install $BIN/pg_dump."; exit 1; }
+          echo "$BIN" >> "$GITHUB_PATH"
+          "$BIN/pg_dump" --version
 
       - name: Install doctl
         uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
@@ -107,9 +132,18 @@ jobs:
           set -euo pipefail   # deliberately NO set -x: nothing here may echo the URI
           umask 077
           WORK="$RUNNER_TEMP/backup"; mkdir -p "$WORK"
+          CA_FILE="$WORK/cluster-ca.crt"
           EPHEMERAL_ACCESS=""
+          CLUSTER_ID=""
+          RULE_ADDED=""
           cleanup() {
             shred -u "$WORK"/* 2>/dev/null || rm -rf "$WORK"
+            # the trusted-source grant is this runner's alone and outlives nothing
+            if [ -n "$RULE_ADDED" ] && [ -n "$CLUSTER_ID" ]; then
+              RULE_UUID="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null \
+                | awk -v v="$RULE_ADDED" '$2 == "ip_addr" && $3 == v { print $1; exit }')"
+              [ -n "$RULE_UUID" ] && doctl databases firewalls remove "$CLUSTER_ID" --uuid "$RULE_UUID" > /dev/null 2>&1 || true
+            fi
             if [ -n "$EPHEMERAL_ACCESS" ]; then
               curl -fsS --max-time 20 -X DELETE -H "Authorization: Bearer $DO_TOKEN" \
                 "https://api.digitalocean.com/v2/spaces/keys/$EPHEMERAL_ACCESS" >/dev/null 2>&1 || true
@@ -121,38 +155,122 @@ jobs:
             '.[] | select(.spec.name==$n) | .id' | head -n1)"
           [ -n "$APP_ID" ] || { echo "::error::App $DO_APP_NAME not found."; exit 1; }
 
-          # The database URI comes from the live spec, is masked immediately,
-          # and never reaches a file, an argument list or the log.
-          DB_URI="$(doctl apps get "$APP_ID" --output json \
-            | jq -r '.[0].spec.envs[]? , (.[0].spec.services[]?.envs[]?) | select(.key=="DATABASE_URL") | .value' \
+          # THE CLUSTER, not the spec. An app spec carries App Platform's
+          # binding for DATABASE_URL, never the resolved URI — dumping that
+          # string reaches a local socket, which is how the first scheduled
+          # run failed. The cluster the app is attached to answers with the
+          # real connection URI, and the app spec is only consulted to name
+          # it (a spec that names another cluster wins over the default).
+          SPEC_CLUSTER="$(doctl apps get "$APP_ID" --output json \
+            | jq -r '.[0].spec.databases[]? | select(.cluster_name != null and .cluster_name != "") | .cluster_name' \
             | head -n1)"
+          if [ -n "$SPEC_CLUSTER" ] && [ "$SPEC_CLUSTER" != "null" ]; then DO_CLUSTER="$SPEC_CLUSTER"; fi
+          CLUSTER_ID="$(doctl databases list --output json | jq -r --arg n "$DO_CLUSTER" \
+            '.[] | select(.name == $n) | .id' | head -n1)"
+          if [ -z "$CLUSTER_ID" ] || [ "$CLUSTER_ID" = "null" ]; then
+            echo "::error::Managed cluster $DO_CLUSTER was not found. A development database created with the app has no connection URI outside its container and cannot be dumped — attach the managed cluster first (migrate-database.yml, phase attach)."
+            exit 1
+          fi
+
+          # A cluster with a non-empty trusted-sources list blocks every other
+          # address, this runner included; grant it for the session only.
+          # this doctl build prints firewalls as a table, never JSON — count data rows
+          RULES="$(doctl databases firewalls list "$CLUSTER_ID" 2>/dev/null | awk 'NR > 1 && NF > 0' | wc -l)"
+          if [ "${RULES:-0}" -gt 0 ]; then
+            RUNNER_IP="$(curl -fsS --max-time 15 https://api.ipify.org)"
+            case "$RUNNER_IP" in (*[!0-9.]*|"") echo "::error::Could not determine the runner address for the trusted-source grant."; exit 1;; esac
+            doctl databases firewalls append "$CLUSTER_ID" --rule "ip_addr:$RUNNER_IP" > /dev/null
+            RULE_ADDED="$RUNNER_IP"
+            sleep 10
+          fi
+
+          # /ca returns {"ca":{"certificate":"<base64 PEM>"}} — verify-ca, so a
+          # backup is never taken over an unauthenticated connection.
+          CA_RAW="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID/ca" | jq -r '.ca.certificate')"
+          if printf '%s' "$CA_RAW" | grep -q "BEGIN CERTIFICATE"; then
+            printf '%s\n' "$CA_RAW" > "$CA_FILE"
+          else
+            printf '%s' "$CA_RAW" | base64 -d > "$CA_FILE" 2>/dev/null || true
+          fi
+          grep -q "BEGIN CERTIFICATE" "$CA_FILE" || { echo "::error::Could not obtain the cluster CA."; exit 1; }
+
+          CLUSTER_JSON="$(curl -fsS --max-time 20 -H "Authorization: Bearer $DO_TOKEN" \
+            "https://api.digitalocean.com/v2/databases/$CLUSTER_ID")"
+
+          # A client older than the server refuses outright. Say so in one
+          # sentence naming both majors instead of leaving pg_dump's
+          # "server version mismatch" to be decoded from a log.
+          SERVER_MAJOR="$(printf '%s' "$CLUSTER_JSON" | jq -r '.database.version // empty' | cut -d. -f1)"
+          if [ -n "$SERVER_MAJOR" ] && [ "$SERVER_MAJOR" != "$PG_MAJOR" ]; then
+            echo "::error::$DO_CLUSTER runs PostgreSQL $SERVER_MAJOR but this lane installs client $PG_MAJOR. Set PG_MAJOR (and the scratch service image) to $SERVER_MAJOR."
+            exit 1
+          fi
+
+          # masked the moment it is read, and never printed, written or passed
+          # anywhere but pg_dump's own --dbname
+          DB_URI="$(printf '%s' "$CLUSTER_JSON" | jq -r '.database.connection.uri')"
           if [ -z "$DB_URI" ] || [ "$DB_URI" = "null" ]; then
-            echo "::error::DATABASE_URL is not readable from the live spec."
+            echo "::error::No connection URI is available for $DO_CLUSTER."
             exit 1
           fi
           echo "::add-mask::$DB_URI"
+          DB_BASE="${DB_URI%%\?*}"
+          echo "::add-mask::$DB_BASE"
+          # everything up to the database name — masking the prefix keeps the
+          # credentials out of the log for every URI composed below
+          DB_PREFIX="${DB_BASE%/*}"
+          echo "::add-mask::$DB_PREFIX"
+
+          # the installed client's own binaries, never postgresql-common's
+          # wrapper — which is what silently ran 16 against the 17 cluster
+          PGBIN="/usr/lib/postgresql/$PG_MAJOR/bin"
+          export PGSSLROOTCERT="$CA_FILE" PGCONNECT_TIMEOUT=30
+
+          # WHICH DATABASE. The connection URI names the cluster's default
+          # database, and dumping that produced an 874-byte file — the app's
+          # tables live in a database of their own. The app spec names it when
+          # it carries db_name; otherwise the cluster is asked which of its
+          # databases holds the most public tables. Names are not secrets, so
+          # the choice is printed and a wrong one is arguable from the log.
+          DB_NAME="$(doctl apps get "$APP_ID" --output json \
+            | jq -r '.[0].spec.databases[]? | select(.cluster_name != null and .cluster_name != "") | .db_name // empty' \
+            | head -n1)"
+          if [ -z "$DB_NAME" ] || [ "$DB_NAME" = "null" ]; then
+            BEST=""; BEST_N=-1
+            for CAND in $("$PGBIN/psql" "$DB_BASE?sslmode=verify-ca" -X -tAc \
+              "select datname from pg_database where datistemplate = false and datallowconn order by datname"); do
+              N="$("$PGBIN/psql" "$DB_PREFIX/$CAND?sslmode=verify-ca" -X -tAc \
+                "select count(*) from information_schema.tables where table_schema = 'public'" 2>/dev/null || echo -1)"
+              echo "  $CAND: $N public tables"
+              if [ "$N" -gt "$BEST_N" ]; then BEST_N="$N"; BEST="$CAND"; fi
+            done
+            DB_NAME="$BEST"
+          fi
+          [ -n "$DB_NAME" ] || { echo "::error::No database in $DO_CLUSTER could be read."; exit 1; }
+          echo "== dumping database $DB_NAME from $DO_CLUSTER"
 
           STAMP="$(date -u +%Y-%m-%d)"; TIME="$(date -u +%H%M%SZ)"
           DUMP="$WORK/hnk-$STAMP-$TIME.dump"
           echo "== dumping production (custom format, compressed)"
-          PGCONNECT_TIMEOUT=30 pg_dump --format=custom --compress=9 --no-owner --no-privileges \
-            --dbname="$DB_URI" --file="$DUMP"
+          "$PGBIN/pg_dump" --format=custom --compress=9 --no-owner --no-privileges \
+            --dbname="$DB_PREFIX/$DB_NAME?sslmode=verify-ca" --file="$DUMP"
           BYTES="$(stat -c %s "$DUMP")"
           SHA="$(sha256sum "$DUMP" | cut -d' ' -f1)"
           echo "dump: $BYTES bytes, sha256 $SHA"
-          [ "$BYTES" -gt 4096 ] || { echo "::error::Dump is implausibly small — refusing to call this a backup."; exit 1; }
+          [ "$BYTES" -gt 4096 ] || { echo "::error::Dump of $DB_NAME is implausibly small ($BYTES bytes) — refusing to call this a backup."; exit 1; }
 
           # A restore rehearsal: the dump is only a backup once it has been
           # restored and counted at least once.
           if [ "$EVENT_NAME" != "workflow_dispatch" ] || [ "$RESTORE_CHECK" = "true" ]; then
             echo "== restore rehearsal into the scratch database"
             export PGPASSWORD=scratch
-            psql -h 127.0.0.1 -U postgres -c "drop database if exists restore_check" >/dev/null
-            psql -h 127.0.0.1 -U postgres -c "create database restore_check" >/dev/null
-            pg_restore --no-owner --no-privileges --dbname="postgresql://postgres@127.0.0.1:5432/restore_check" "$DUMP" >/dev/null 2>&1 || true
-            PROFILES="$(psql -h 127.0.0.1 -U postgres -d restore_check -tAc \
+            "$PGBIN/psql" -h 127.0.0.1 -U postgres -c "drop database if exists restore_check" >/dev/null
+            "$PGBIN/psql" -h 127.0.0.1 -U postgres -c "create database restore_check" >/dev/null
+            "$PGBIN/pg_restore" --no-owner --no-privileges --dbname="postgresql://postgres@127.0.0.1:5432/restore_check" "$DUMP" >/dev/null 2>&1 || true
+            PROFILES="$("$PGBIN/psql" -h 127.0.0.1 -U postgres -d restore_check -tAc \
               "select count(*) from public.profiles" 2>/dev/null || echo 0)"
-            TABLES="$(psql -h 127.0.0.1 -U postgres -d restore_check -tAc \
+            TABLES="$("$PGBIN/psql" -h 127.0.0.1 -U postgres -d restore_check -tAc \
               "select count(*) from information_schema.tables where table_schema='public'" 2>/dev/null || echo 0)"
             echo "restored: $TABLES public tables, $PROFILES profile rows"
             [ "$TABLES" -ge 10 ] || { echo "::error::The dump restored fewer than ten tables — not a usable backup."; exit 1; }
@@ -210,6 +328,7 @@ jobs:
             echo "| | |"
             echo "|---|---|"
             echo "| Object | \`$KEY\` (private) |"
+            echo "| Database | \`$DB_NAME\` on \`$DO_CLUSTER\` |"
             echo "| Size | $BYTES bytes |"
             echo "| SHA-256 | \`$SHA\` |"
             echo "| Round trip | byte-for-byte identical |"
