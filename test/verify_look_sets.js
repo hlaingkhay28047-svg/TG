@@ -200,6 +200,49 @@ function report(name, ok, detail) {
   });
   report("G) all thirteen render on the Workflows page", G.cards === G.total || G.drawn === G.total, G);
 
+  /* v5.96.0 — the shared boilerplate was 62% of a Look Set prompt and has been
+     compressed (5,150 -> 4,252 characters each), which is only safe if it
+     still SAYS everything it used to. The words may change; the constraints
+     may not. Each entry below is a rule the old wording carried, expressed as
+     the concepts that must still appear somewhere in the composed prompt. */
+  const RULES = [
+    ["only IMAGE 1 is edited",            [/IMAGE 1 is the ONLY edit target/i]],
+    ["identity is preserved",             [/face/i, /identity/i, /expression/i]],
+    ["pose and hands are preserved",      [/pose/i, /hands/i]],
+    ["body is never reshaped",            [/never slim or reshape/i]],
+    ["the person is never swapped",       [/never replace or blend/i]],
+    ["the frame is never re-cropped",     [/never re-crop, zoom or rescale/i]],
+    ["the aspect ratio is kept",          [/aspect ratio/i]],
+    ["the set answers the frame given",   [/build the set to fit the frame/i]],
+    ["only specified things change",      [/Change only what the lines above specify/i]],
+    ["the unspecified stays as shot",     [/stays exactly as photographed/i]],
+    ["the set is FIXED across photos",    [/FIXED for this set/i, /identical in every photograph/i]],
+    ["the palette never drifts",          [/vary the palette/i]],
+    ["no unspecified props",              [/props not specified above/i]],
+    ["only the pose changes",             [/Only the pose changes/i]],
+    ["skin keeps its real texture",       [/pore/i, /freckle/i, /mole/i]],
+    ["makeup is improved, not repainted", [/never repaint/i]],
+    ["skin tone is never shifted",        [/never lightened, darkened, or shifted/i]],
+    ["it must read as a photograph",      [/full-frame camera/i, /never a render/i]],
+    ["no plastic or AI look",             [/No plastic skin/i, /AI gloss/i]],
+    ["nothing is written on the image",   [/No text, logo, signature or watermark/i]]
+  ];
+  const GRULES = await page.evaluate(({ rules }) => {
+    const cat = (window.HNK_WF_CATALOG || []).find(c => c.t === "Look Sets");
+    const missing = [];
+    (cat ? cat.items : []).forEach(w => {
+      const p = window._wfBatchPrompt(w.id) || "";
+      rules.forEach(([name, pats]) => {
+        pats.forEach(src => {
+          if (!new RegExp(src.source, src.flags).test(p)) missing.push(w.id + ": " + name);
+        });
+      });
+    });
+    return missing;
+  }, { rules: RULES.map(([n, ps]) => [n, ps.map(r => ({ source: r.source, flags: r.flags }))]) });
+  report("I) the compressed boilerplate still carries every rule the long wording did — twenty constraints, checked on all thirteen composed prompts",
+    GRULES.length === 0, Array.from(new Set(GRULES)).slice(0, 8));
+
   report("H) no page error while the sets were composed and drawn", errs.length === 0, errs.slice(0, 3));
 
   await browser.close();

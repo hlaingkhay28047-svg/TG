@@ -28,9 +28,53 @@
     if (sp >= floor) return cut.slice(0, sp).replace(/[\s,;:—–-]+$/, "");
     return cut;
   }
+  /* v6.66.0 — whole blocks before any character cut, byte-identical to the
+     app's rhFitByBlocks (docs/app/index.html). A Smart Workflow prompt is
+     written in labelled blocks and a character cut ends mid-block, leaving
+     a half-stated instruction — worse than not stating it. */
+  var DROP_ORDER = [
+    "HAIR:", "SKIN RETOUCH:", "REALISM:", "FINISH:", "SKIN SMOOTHING:",
+    "HAIR RETOUCH:", "COLOUR TONE:", "POSTER ART:", "LIQUIFY:", "DRESS:",
+    "EYE & TEETH:", "SHINE CONTROL:", "BODY SKIN:", "TONE EVENING:",
+    "DIMENSION:", "SET AND BACKGROUND:", "WARDROBE:", "COLOUR:",
+    "SKIN AND DETAIL:", "GARMENT:", "DEPTH & OCCLUSION:", "QUALITY:"
+  ];
+  var BLOCK_LABEL = /^[A-Z][A-Z0-9 ,&'\/()—-]{1,44}:/;
+  function splitBlocks(text) {
+    var lines = String(text || "").split("\n"), blocks = [], cur = null;
+    lines.forEach(function (ln) {
+      if (BLOCK_LABEL.test(ln)) {
+        if (cur) blocks.push(cur);
+        cur = { tag: ln.slice(0, ln.indexOf(":") + 1), lines: [ln] };
+      } else if (cur) { cur.lines.push(ln); }
+      else { cur = { tag: "", lines: [ln] }; }
+    });
+    if (cur) blocks.push(cur);
+    return blocks;
+  }
+  function fitByBlocks(promptText, maxLen) {
+    var s = String(promptText || "");
+    if (!maxLen || s.length <= maxLen) return { text: s, dropped: [] };
+    var tail = "", head = s, ai = s.indexOf("\n\nAVOID:");
+    if (ai >= 0) { tail = s.slice(ai); head = s.slice(0, ai); }
+    var blocks = splitBlocks(head);
+    if (blocks.filter(function (b) { return b.tag; }).length < 3) return { text: s, dropped: [] };
+    var dropped = [];
+    for (var i = 0; i < DROP_ORDER.length; i++) {
+      var joined = blocks.map(function (b) { return b.lines.join("\n"); }).join("\n");
+      if ((joined + tail).length <= maxLen) break;
+      var tag = DROP_ORDER[i], hit = -1;
+      for (var j = 0; j < blocks.length; j++) { if (blocks[j].tag === tag) { hit = j; break; } }
+      if (hit < 0) continue;
+      blocks.splice(hit, 1); dropped.push(tag);
+    }
+    return { text: blocks.map(function (b) { return b.lines.join("\n"); }).join("\n") + tail, dropped: dropped };
+  }
   function fit(promptText, maxLen) {
     var s = String(promptText || "");
     if (!maxLen || s.length <= maxLen) return s;
+    s = fitByBlocks(s, maxLen).text;
+    if (s.length <= maxLen) return s;
     var gi = s.indexOf("TASK GUARD:");
     if (gi < 0) return cutClean(s, maxLen);
     var body = s.slice(0, gi).replace(/\s+$/, ""), tail = s.slice(gi), avoid = "";
@@ -51,5 +95,5 @@
     return out;
   }
   global.HNK = global.HNK || {};
-  global.HNK.promptFit = { fit: fit, cutClean: cutClean };
+  global.HNK.promptFit = { fit: fit, cutClean: cutClean, fitByBlocks: fitByBlocks };
 })(typeof globalThis !== "undefined" ? globalThis : this);

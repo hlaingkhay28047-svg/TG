@@ -79,13 +79,33 @@ function report(name, ok, detail) {
         if (pf !== out) mismatch.push(w.id + "@" + cap);
         const why = [];
         if (out.length > cap) why.push("over cap " + out.length);
-        /* what arrives before the guard must be the OPENING of the task,
-           taken from the front — that is the whole point of the priority */
+        /* v5.95.0 — since rhFitByBlocks the kept text is a SELECTION of whole
+           blocks, not a contiguous prefix, so "is it a prefix of the body" is
+           the wrong question and an earlier cut of this test asked it. What
+           must still hold: the task's own first line always opens the prompt,
+           every line that arrives is a WHOLE line from the source except at
+           most the final one, and that final one stops at a word boundary. */
         const head = out.split("\n\nTASK GUARD:")[0];
-        if (!body.startsWith(head)) why.push("head is not the opening of the task");
-        /* and it must stop at a word boundary, never inside a word */
-        if (head.length < body.length && !/[\s,;:—–-]/.test(body.charAt(head.length)))
-          why.push("mid-word cut: …" + head.slice(-40));
+        const srcLines = new Set(body.split("\n"));
+        const outLines = head.split("\n");
+        /* the first source line may itself be longer than the whole cap, in
+           which case its OPENING is all that can arrive — that is still
+           opening with the task */
+        const firstSrc = body.split("\n")[0];
+        if (outLines[0] !== firstSrc && !firstSrc.startsWith(outLines[0]))
+          why.push("does not open with the task's first line");
+        outLines.slice(0, -1).forEach(l => {
+          if (!srcLines.has(l)) why.push("a line arrived cut: …" + l.slice(-40));
+        });
+        const last = outLines[outLines.length - 1];
+        if (last && !srcLines.has(last)) {
+          /* the one line the character cut may have shortened — it must be the
+             opening of some source line, and must stop between words */
+          const src = body.split("\n").find(l => l.startsWith(last));
+          if (!src) why.push("final line is not the opening of any source line");
+          else if (last.length < src.length && !/[\s,;:—–-]/.test(src.charAt(last.length)))
+            why.push("mid-word cut: …" + last.slice(-40));
+        }
         if (guard) {
           if (out.indexOf("TASK GUARD:") < 0) why.push("guard gone");
           /* the guard is cut only when it alone exceeds the cap */

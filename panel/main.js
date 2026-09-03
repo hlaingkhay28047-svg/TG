@@ -570,6 +570,8 @@ const I18N = {
     gate_checking: "Checking your plan…",
     gate_need: "Enter your email and password.",
     gate_bad: "Wrong email or password.",
+    gate_wait: "Too many sign-in attempts — this is not a wrong password. Wait about 15 minutes and try again.",
+    gate_busy: "The server is busy right now — wait a few seconds and press Log in again.",
     gate_offline: "No internet — your plan could not be checked. Connect, then press Check again.",
     gate_locked: "One payment covers both — the joining fee and the monthly fee open the web app AND this Photoshop panel. Buy or renew on the website, then press Check again.",
     gate_buy: "Open the website",
@@ -1203,6 +1205,8 @@ const I18N = {
     gate_checking: "သင့် plan ကို စစ်ဆေးနေပါတယ်…",
     gate_need: "အီးမေးလ်နဲ့ စကားဝှက် ထည့်ပါ။",
     gate_bad: "အီးမေးလ် ဒါမှမဟုတ် စကားဝှက် မှားနေပါတယ်။",
+    gate_wait: "ဝင်ဖို့ ကြိုးစားတာ များနေပါပြီ — စကားဝှက် မှားလို့ မဟုတ်ပါ။ ၁၅ မိနစ်လောက် စောင့်ပြီး ပြန်ကြိုးစားပါ။",
+    gate_busy: "server အလုပ်များနေပါတယ် — စက္ကန့်အနည်းငယ် စောင့်ပြီး ပြန်နှိပ်ပါ။",
     gate_offline: "အင်တာနက် မရှိပါ — plan ကို စစ်လို့ မရပါ။ ချိတ်ဆက်ပြီး ပြန်စစ်ပါ။",
     gate_locked: "တစ်ကြိမ်ပေးရင် နှစ်ခုလုံး ရပါတယ် — ဝင်ကြေးနဲ့ လစဉ်ကြေးဟာ web app နဲ့ ဒီ Photoshop panel နှစ်ခုလုံးအတွက် ဖြစ်ပါတယ်။ website မှာ ဝယ်ပါ ဒါမှမဟုတ် သက်တမ်းတိုးပြီး ပြန်စစ်ပါ။",
     gate_buy: "website ဖွင့်ရန်",
@@ -1836,6 +1840,8 @@ const I18N = {
     gate_checking: "တိုၵ်ႉၵူတ်ႇထတ်းငဝ်းလၢႆးသူ…",
     gate_need: "သႂ်ႇ ဢီးမေးလ် လႄႈ ၶေႃႈလပ်ႉ",
     gate_bad: "ဢီးမေးလ် ဢမ်ႇၼၼ် ၶေႃႈလပ်ႉ ဢမ်ႇထုၵ်ႇ",
+    gate_wait: "ၶဝ်ႈၸႂ်ႉတိုဝ်း ၼမ်ပူၼ်ႉ — ဢမ်ႇၸႂ်ႈၶေႃႈလပ်ႉၽိတ်း။ ပႂ်ႉ 15 မိၼိတ်ႉသေ ႁဵတ်းထႅင်ႈ။",
+    gate_busy: "ၶိူင်ႈမေႃႈ ၵၢၼ်ၼမ်ဝႆႉ — ပႂ်ႉၵမ်းလဵဝ်သေ ၼဵၵ်းထႅင်ႈ။",
     gate_offline: "ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ၵူတ်ႇထတ်းငဝ်းလၢႆးဢမ်ႇလႆႈ။ ၵပ်းသိုပ်ႇသေ ၵူတ်ႇထတ်းၶိုၼ်း။",
     gate_locked: "သိုဝ်ႉပွၵ်ႈလဵဝ် လႆႈသွင်ဢၼ် — ၵႃႈၶဝ်ႈ လႄႈ ၵႃႈလိူၼ် ပိုတ်ႇပၼ် web app လႄႈ Photoshop panel ဢၼ်ၼႆႉ သွင်ဢၼ်။ သိုဝ်ႉ ဢမ်ႇၼၼ် တေႃႇသိုပ်ႇ တီႈ website သေ ၵူတ်ႇထတ်းၶိုၼ်း။",
     gate_buy: "ပိုတ်ႇ website",
@@ -2467,6 +2473,8 @@ const I18N = {
     gate_checking: "Na a plan hpe sawn yu nga ai…",
     gate_need: "Na a email hte password bang u.",
     gate_bad: "Email sh'ning password n hkrak ai",
+    gate_wait: "Shang na matu grai law sai — password shut ai n re. Minute 15 daram la nna bai shakut u.",
+    gate_busy: "Server bungli law taw ai — sekan kachyi la nna bai dip u.",
     gate_offline: "Internet n nga ai — plan hpe sawn yu n lu ai. Internet hkrum nna bai sawn yu u.",
     gate_locked: "Langai mari yang lahkawng lu ai — shawng mari hte shata shagu jarik gaw web app hte ndai Photoshop panel lahkawng hpe hpaw ya ai. Website kaw mari u n rai yang matut la nna, bai sawn yu u.",
     gate_buy: "Website hpaw u",
@@ -3098,6 +3106,8 @@ const I18N = {
     gate_checking: "กำลังตรวจสอบแพ็กเกจของคุณ…",
     gate_need: "กรอกอีเมลและรหัสผ่าน",
     gate_bad: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    gate_wait: "พยายามเข้าสู่ระบบบ่อยเกินไป — ไม่ใช่รหัสผ่านผิด รอประมาณ 15 นาทีแล้วลองใหม่",
+    gate_busy: "เซิร์ฟเวอร์กำลังไม่ว่าง — รอสักครู่แล้วกดเข้าสู่ระบบอีกครั้ง",
     gate_offline: "ไม่มีอินเทอร์เน็ต — ตรวจสอบแพ็กเกจไม่ได้ เชื่อมต่อแล้วกดตรวจสอบอีกครั้ง",
     gate_locked: "จ่ายครั้งเดียวได้ทั้งสอง — ค่าแรกเข้าและค่ารายเดือนเปิดใช้ทั้งเว็บแอปและแผง Photoshop นี้ ซื้อหรือต่ออายุบนเว็บไซต์ แล้วกดตรวจสอบอีกครั้ง",
     gate_buy: "เปิดเว็บไซต์",
@@ -3729,6 +3739,8 @@ const I18N = {
     gate_checking: "正在检查你的套餐…",
     gate_need: "请输入邮箱和密码。",
     gate_bad: "邮箱或密码不正确。",
+    gate_wait: "登录尝试次数过多 — 并不是密码错误。请等待约 15 分钟后再试。",
+    gate_busy: "服务器正忙 — 请稍候几秒后再次点击登录。",
     gate_offline: "没有网络 — 无法检查你的套餐。请联网后再次检查。",
     gate_locked: "一次付费，两个都能用 — 入会费和月费同时开通网页应用和这个 Photoshop 面板。请在网站上购买或续费，然后再次检查。",
     gate_buy: "打开网站",
@@ -4360,6 +4372,8 @@ const I18N = {
     gate_checking: "Đang kiểm tra gói của bạn…",
     gate_need: "Nhập email và mật khẩu.",
     gate_bad: "Email hoặc mật khẩu không đúng.",
+    gate_wait: "Đăng nhập quá nhiều lần — không phải sai mật khẩu. Hãy đợi khoảng 15 phút rồi thử lại.",
+    gate_busy: "Máy chủ đang bận — đợi vài giây rồi nhấn Đăng nhập lại.",
     gate_offline: "Không có mạng — không kiểm tra được gói. Hãy kết nối rồi kiểm tra lại.",
     gate_locked: "Một lần thanh toán dùng được cả hai — phí gia nhập và phí hàng tháng mở cả ứng dụng web VÀ bảng Photoshop này. Hãy mua hoặc gia hạn trên website, rồi bấm kiểm tra lại.",
     gate_buy: "Mở website",
@@ -4991,6 +5005,8 @@ const I18N = {
     gate_checking: "Memeriksa paket Anda…",
     gate_need: "Masukkan email dan kata sandi.",
     gate_bad: "Email atau kata sandi salah.",
+    gate_wait: "Terlalu banyak percobaan masuk — ini bukan kata sandi salah. Tunggu sekitar 15 menit lalu coba lagi.",
+    gate_busy: "Server sedang sibuk — tunggu beberapa detik lalu tekan Masuk lagi.",
     gate_offline: "Tidak ada internet — paket tidak bisa diperiksa. Sambungkan lalu periksa lagi.",
     gate_locked: "Satu pembayaran untuk keduanya — biaya pendaftaran dan biaya bulanan membuka aplikasi web DAN panel Photoshop ini. Beli atau perpanjang di website, lalu periksa lagi.",
     gate_buy: "Buka website",
@@ -5622,6 +5638,8 @@ const I18N = {
     gate_checking: "Menyemak pelan anda…",
     gate_need: "Masukkan e-mel dan kata laluan.",
     gate_bad: "E-mel atau kata laluan salah.",
+    gate_wait: "Terlalu banyak cubaan log masuk — ini bukan kata laluan salah. Tunggu kira-kira 15 minit dan cuba lagi.",
+    gate_busy: "Pelayan sedang sibuk — tunggu beberapa saat dan tekan Log masuk lagi.",
     gate_offline: "Tiada internet — pelan tidak dapat disemak. Sambung, kemudian semak semula.",
     gate_locked: "Satu bayaran untuk kedua-duanya — yuran masuk dan yuran bulanan membuka apl web DAN panel Photoshop ini. Beli atau perbaharui di laman web, kemudian semak semula.",
     gate_buy: "Buka laman web",
@@ -6225,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.63.0";
+const PANEL_VERSION = "6.68.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6886,7 +6904,21 @@ async function gateSignIn() {
   try {
     const r = await gateReq("/auth/v1/token?grant_type=password",
       { method: "POST", body: JSON.stringify({ email: em, password: pw, client_kind: "panel" }) }, null);
-    if (!r.ok) { gateErr(gateT("gate_bad")); gateBusy(false); return; }
+    /* v6.64.0 — every failed sign-in used to read "Wrong email or password",
+       including the two that are not about the password at all. A student
+       locked out by the failed-login limiter was told their password was
+       wrong, so they tried more passwords — which extends the lockout — and
+       some reset a password that had never been wrong. The web app's
+       accFriendly() has always mapped these; the panel now reads the same
+       codes (server/lib/auth.js) and says the same three things. */
+    if (!r.ok) {
+      let code = "";
+      try { code = JSON.stringify(await r.clone().json()); } catch (e) { }
+      const key = (r.status === 429 || /rate_limited|Too many/i.test(code)) ? "gate_wait"
+        : (r.status === 503 || /auth_busy/i.test(code)) ? "gate_busy"
+        : "gate_bad";
+      gateErr(gateT(key)); gateBusy(false); return;
+    }
     const j = await r.json();
     if (!gateSaveSess(j)) { gateErr(gateT("gate_bad")); gateBusy(false); return; }
     const p = gateEl("gatePass"); if (p) p.value = "";
