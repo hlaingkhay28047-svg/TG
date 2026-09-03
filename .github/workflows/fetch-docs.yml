@@ -17,6 +17,30 @@ permissions:
   contents: read
 
 jobs:
+  index:
+    # v5.89.0 — the owner asks periodically whether RunningHub has published
+    # anything new on the Enterprise-Share catalog. Every earlier round fetched
+    # a hand-typed list of doc ids, which can only ever re-read what we already
+    # knew. This job goes the other way: it reads the doc site's own index and
+    # prints EVERY api-<id> it links, so a page published since the last round
+    # shows up by itself. Nothing here is written to the repo; the ids it finds
+    # are then fetched by the job below.
+    name: index
+    runs-on: ubuntu-24.04
+    steps:
+      - name: List every doc page the site links
+        run: |
+          for u in \
+            "https://www.runninghub.ai/runninghub-api-doc-en/" \
+            "https://www.runninghub.ai/runninghub-api-doc/" \
+            "https://www.runninghub.ai/sitemap.xml" \
+            "https://www.runninghub.ai/runninghub-api-doc-en/sitemap.xml" ; do
+            echo "=====INDEX ${u} START====="
+            curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 "$u" \
+              | grep -oE 'api-[0-9]{6,}' | sort -u \
+              || echo "FETCH-FAILED ${u}"
+            echo "=====INDEX ${u} END====="
+          done
   fetch:
     name: fetch-${{ matrix.name }}
     runs-on: ubuntu-24.04
@@ -24,10 +48,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Round 4 — one page the video round missed: the index files
-          # vidu/reference-to-video-q2-pro under Image > reference-to-image
-          # (miscategorized there), so the video-category sweep skipped it.
-          - name: vid4a
+          # Round 5 — the ids published after the last sweep's highest known
+          # page (498427798). Filled in from the index job's output.
+          - name: new5
             ids: "448184544"
     steps:
       - name: Fetch doc pages
