@@ -152,6 +152,31 @@ const CONTRACT = {
   "rhart-video/wan2.2/character-motion-transfer": [
     "299##image",
     "275##video"
+  ],
+  /* v5.89.0 — four endpoints published since the last sweep. */
+  "google/gemini-omni-1.1-flash/video-edit": [
+    "videoUrl",
+    "prompt",
+    "resolution"
+  ],
+  /* The three MiniMax-H3 regeneration routes: a finished 768P clip goes back
+     in as baseVideoUrl and comes out at 2K. resolution is a one-value enum,
+     and it is still REQUIRED — the kind of field that fails opaquely when an
+     adapter assumes a single-value enum can be left out. */
+  "minimax/hailuo-h3/regeneration-image-to-video": [
+    "prompt",
+    "baseVideoUrl",
+    "resolution"
+  ],
+  "minimax/hailuo-h3/regeneration-text-to-video": [
+    "prompt",
+    "baseVideoUrl",
+    "resolution"
+  ],
+  "minimax/hailuo-h3/regeneration-multimodal-to-video": [
+    "prompt",
+    "baseVideoUrl",
+    "resolution"
   ]
 };
 
@@ -174,8 +199,8 @@ const CONTRACT = {
     paths: RH_VTOOL_MODELS.map(m => m.apiPath),
     options: document.getElementById("selVtModel").querySelectorAll("option").length
   }));
-  report("A) the tools shelf is 27 models with unique ids/endpoints, all in the picker",
-    reg.n === 27 && new Set(reg.ids).size === 27 && new Set(reg.paths).size === 27 && reg.options === 27,
+  report("A) the tools shelf is 31 models with unique ids/endpoints, all in the picker",
+    reg.n === 31 && new Set(reg.ids).size === 31 && new Set(reg.paths).size === 31 && reg.options === 31,
     reg);
 
   /* B) every tool builds a body its own endpoint would accept */
@@ -217,6 +242,30 @@ const CONTRACT = {
   report("C3) wan2.2 motion transfer sends exactly 299##image + 275##video",
     nodeTool && nodeTool.body["299##image"] === "IMG.jpg" && nodeTool.body["275##video"] === "VID.mp4" &&
     Object.keys(nodeTool.body).length === 2, nodeTool && nodeTool.body);
+
+  /* C4) v5.89.0 — the regeneration routes put the SOURCE VIDEO in
+     baseVideoUrl, not videoUrl. Getting that name wrong is the exact failure
+     the contract table above exists to catch, so it is asserted by name and
+     the wrong name is asserted absent. */
+  const regenT = bodies.find(b => b.path === "minimax/hailuo-h3/regeneration-text-to-video");
+  report("C4) H3 regeneration sends baseVideoUrl (never videoUrl) with the required 2K",
+    regenT && regenT.body.baseVideoUrl === "VID.mp4" && !("videoUrl" in regenT.body) &&
+    regenT.body.resolution === "2K" && regenT.body.prompt === "test prompt" &&
+    Object.keys(regenT.body).length === 3, regenT && regenT.body);
+
+  /* C5) and the multimodal one carries its references as an ARRAY, capped at
+     the nine its doc allows — a single string there would be rejected. */
+  const regenM = bodies.find(b => b.path === "minimax/hailuo-h3/regeneration-multimodal-to-video");
+  report("C5) H3 multimodal regeneration sends imageUrls as an array",
+    regenM && Array.isArray(regenM.body.imageUrls) && regenM.body.imageUrls[0] === "IMG.jpg" &&
+    regenM.body.baseVideoUrl === "VID.mp4", regenM && regenM.body);
+
+  /* C6) the new Gemini video edit has NO image field in its doc, unlike its
+     low-cost sibling, so it must not grow one. */
+  const g11 = bodies.find(b => b.path === "google/gemini-omni-1.1-flash/video-edit");
+  report("C6) Gemini Omni 1.1 video edit is exactly videoUrl + prompt + resolution",
+    g11 && Object.keys(g11.body).sort().join(",") === "prompt,resolution,videoUrl",
+    g11 && g11.body);
 
   /* D) UI honesty: image button only when the tool takes one, prompt likewise */
   const ui = await page.evaluate(() => {

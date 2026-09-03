@@ -232,6 +232,11 @@ report("G4) the purge marker covers every replaced name and none of the new ones
      is unchanged: NO_CARD_JPG must name exactly the cards that really have
      no art yet — it happened to hold four between v5.12 and v5.13, and holds
      none now. */
+  /* v5.91.0 — and their thirteen photographs landed one release later, from
+     each set's own shipped prompt, so they came straight back off. The INTENT
+     this pin protects is unchanged and is now the whole of it: NO_CARD_JPG
+     must name exactly the cards that really have no art yet, and right now
+     that is none of them. */
   const EXPECT_SVG_ONLY = [];
   report("H2) no card is left on the generated-icon fallback — every art gap from this wave has landed",
     seen.svgOnly.length === EXPECT_SVG_ONLY.length && EXPECT_SVG_ONLY.every(t => seen.svgOnly.indexOf(t) >= 0),

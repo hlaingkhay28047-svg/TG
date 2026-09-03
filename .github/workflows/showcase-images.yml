@@ -35,7 +35,7 @@ on:
         description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
         required: true
       pairs:
-        description: 'space-separated pair names to build (retouch scene series lookcopy …), or "all"'
+        description: 'space-separated pair names to build (retouch scene series lookcopy looksets …), or "all"'
         required: false
         default: 'all'
       tasks:
@@ -145,6 +145,19 @@ jobs:
                   open('out/prompts/%s.txt' % sid, 'w').write(p)
                   n += 1
           print('series prompts written:', n)
+          # v5.91.0 — the thirteen Look Sets. Each card is that set's own
+          # SHIPPED prompt at its defaults, run over the model's base frame, so
+          # the picture on the card is literally what the button does. The
+          # EXTRA REQUEST line is dropped (it is the student's own field) and
+          # the negative rides along as AVOID, exactly as the series cards do.
+          m = 0
+          for c in cat['categories']:
+              for it in c['items']:
+                  if not it['id'].startswith('look-'): continue
+                  q = '\n'.join(l for l in it['prompt'].split('\n') if '{{' not in l)
+                  open('out/prompts/%s.txt' % it['id'], 'w').write(q + '\n\nAVOID: ' + it['negative'] + '.')
+                  m += 1
+          print('look-set prompts written:', m)
           PY
           BG_SCENE="NEW BACKGROUND: a grand golden palace ballroom in warm evening candlelight — crystal chandeliers, tall gilded arches, marble floor with a soft reflection, gentle bokeh depth."
           # v2 (owner, 2026-08-31): the model is the promo-panel woman — both
@@ -378,35 +391,46 @@ jobs:
                 done
                 rm -rf out/prompts
                 ;;
+              looksets)
+                # v5.91.0 — thirteen cards, one per Look Set, each built by the
+                # set's own shipped prompt over the model's base frame. Same
+                # shape as the series cards above and for the same reason: a
+                # card generated from anything other than the button's own
+                # prompt is a picture of a promise the button does not make.
+                # 3:2 is the card pack's geometry (960x640 at q79).
+                ul=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "LOOKSETS UPLOAD FAILED"; fail=1; continue; }
+                for lid in look-butterfly-wing look-golden-grecian look-highland-indigo look-gold-parasol look-blossom-braids look-sunflower-olive look-chiaroscuro-cream look-misty-grey look-marigold-veil look-peach-velvet look-temple-lightfall look-noir-feather look-imperial-yellow; do
+                  [ -s "out/prompts/$lid.txt" ] || { echo "LOOKSETS: missing prompt $lid"; fail=1; continue; }
+                  LP=$(cat "out/prompts/$lid.txt")
+                  submit "card-$lid" "$EDIT_PATH" "$(jbody "$LP" "[\"$ul\"]" "3:2")" || fail=1
+                done
+                ;;
               lookcopy)
-                # v5.87.0 — the Studio Look Copy card, in two real passes.
+                # v5.88.0 — the Studio Look Copy card, third cut, in three real
+                # passes. The owner rejected cut 1 (the shipped white-ao-dai
+                # before: "too plain") and then cut 2 (a Library couture plate:
+                # "I want exactly the style I gave you"), and re-sent their own
+                # reference set — a milk-bath studio: milky pale water, pink
+                # blossom branches, big tropical leaves, a weathered driftwood
+                # branch, warm backlight. Those photographs are another
+                # studio's watermarked work, so none of them is committed here
+                # or sent anywhere; the SET is described and built with our own
+                # model, which is what the card has to show anyway.
                 #
-                # v1 used the shipped white-ao-dai scene before as IMAGE 1 and
-                # the owner rejected it on sight: "the outfit is too plain —
-                # put the styling I showed you on the card; you may keep this
-                # model's face." Studio Look Copy never changes wardrobe, so a
-                # styled card needs a styled IMAGE 1. Both passes are the
-                # catalog's own shipped prompts, read at run time, never
-                # hand-written here.
+                #   pass 1  the subject : her identity from the shipped promo
+                #           poster, in the ivory silk the reference set uses,
+                #           on a plain backdrop — this is IMAGE 1, and Studio
+                #           Look Copy will keep every bit of it
+                #   pass 2  the look    : the same set with NO person in it —
+                #           water, blossom, leaves, driftwood, light. This is
+                #           IMAGE 2, and only its scene, colour and light are
+                #           ever copied
+                #   pass 3  the card    : studio-look-copy's own shipped
+                #           prompt over those two, read from the catalog at its
+                #           defaults, never hand-written
                 #
-                #   pass 1  full-look-transfer : her identity from the promo
-                #           poster + the couture styling, pose and set of
-                #           user-ref-179 (Pink Blossom Couture, the owner's own
-                #           Library plate) -> a styled base
-                #   pass 2  studio-look-copy   : that styled base + the lotus
-                #           plate its guide shows (user-ref-009) -> the card
-                #
-                # So the card is exactly what the button does: the gown, the
-                # face and the framing come from IMAGE 1 untouched; only the
-                # scene, the light, the colour and the finish come from IMAGE 2.
-                LC_BASE_PROMPT=$(python3 - <<'PY'
-          import re, json
-          src = open('panel/js/hnk_wf_catalog_data.js').read()
-          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
-          it = next((i for c in cat['categories'] for i in c['items'] if i['id']=='full-look-transfer'), None)
-          if it: print(it['prompt'] + '\n\nAVOID: ' + it['negative'] + '.')
-          PY
-          )
+                # So the card is exactly what the button does — and it is the
+                # product's own story: my photo, that studio's look.
                 LC_PROMPT=$(python3 - <<'PY'
           import re, json
           src = open('panel/js/hnk_wf_catalog_data.js').read()
@@ -417,15 +441,22 @@ jobs:
               print(p + '\n\nAVOID: ' + it['negative'] + '.')
           PY
           )
-                [ -n "$LC_PROMPT" ] && [ -n "$LC_BASE_PROMPT" ] || { echo "LOOKCOPY: a prompt is not in the catalog on this ref"; fail=1; continue; }
-                us1=$(reupload "docs/app/lib/full/user-ref-179.jpg") || { echo "LOOKCOPY STYLE UPLOAD FAILED"; fail=1; continue; }
-                submit "lookcopy-styled-base" "$EDIT_PATH" "$(jbody "$LC_BASE_PROMPT" "[\"$refurl\",\"$us1\"]" "2:3")" || { fail=1; continue; }
-                ub=$(reupload "out/lookcopy-styled-base.png") || { echo "LOOKCOPY BASE REUPLOAD FAILED"; fail=1; continue; }
-                ul2=$(reupload "docs/app/lib/full/user-ref-009.jpg") || { echo "LOOKCOPY LOOK UPLOAD FAILED"; fail=1; continue; }
-                # no ratio on pass 2: the prompt locks IMAGE 1's own framing and
-                # aspect, which is the whole promise — asking for 3:2 here would
-                # ask the model to break the one rule the card demonstrates.
-                submit "card-studio-look-copy" "$EDIT_PATH" "$(jbody "$LC_PROMPT" "[\"$ub\",\"$ul2\"]" "")" || fail=1
+                [ -n "$LC_PROMPT" ] || { echo "LOOKCOPY: studio-look-copy not in catalog on this ref"; fail=1; continue; }
+                # owner, on cuts 3 and 4: make the card catch the eye — boudoir,
+                # long hair, warmer, more of her. Boudoir is exactly the genre
+                # their own reference set is shot in, so the frame goes there:
+                # more skin, a stronger line, wet-look light. The last sentence
+                # is the line it does not cross — this card sits on a public
+                # landing page and inside a student app.
+                LC_SUBJ="$IDENTITY $YOUTH Create a sensual boudoir studio photograph of her, half-length, on a plain neutral warm-grey seamless backdrop lit low and warm from one side so the shadows are deep and the body is drawn in light. She kneels back and leans on one hand, torso turned three-quarters with a strong S-curve through the waist and hip, back arched and the long line of her bare back and one bare shoulder to the camera, head turned over the shoulder, chin low, looking straight into the lens, lips parted. Her hair is LONG, loose, heavy and glossy, spilling in waves down her back and over one shoulder. She wears a champagne silk slip worn low — both straps down off the shoulders, the silk held across the bust and falling loose from the hip, one long bare leg drawn up through the slit. Skin luminous, dewy and lightly sheened, with warm highlights along the collarbone, shoulder, spine, waist and thigh; smoky bronze makeup, glossy lip. Photorealistic, shallow depth of field, intimate warm boudoir mood. Suggestive and elegant, never explicit: she is an adult, the silk stays opaque and covers the chest and hips completely, and nothing beneath it is visible."
+                LC_LOOK="Create a photograph of an EMPTY luxury indoor photo-studio set, with NO person and no part of a person anywhere in the frame. A shallow round bathing pool of milky pale water fills the lower half; a large weathered driftwood branch curves across it; the walls behind are a dense garden of pink cherry blossom and pink hydrangea with big glossy tropical monstera and philodendron leaves and ferns; mossy river stones edge the pool; warm golden late-afternoon light rakes through the leaves from the upper right, soft blossom petals on the water, gentle haze, creamy soft-focus background, high-end editorial colour: warm pink and cream against deep green. Photorealistic, no text, no watermark, no people."
+                submit "lookcopy-subject" "$EDIT_PATH" "$(jbody "$LC_SUBJ" "[\"$refurl\"]" "2:3")" || { fail=1; continue; }
+                submit "lookcopy-look" "$EDIT_PATH" "$(jbody "$LC_LOOK" "[\"$refurl\"]" "2:3")" || { fail=1; continue; }
+                ub=$(reupload "out/lookcopy-subject.png") || { echo "LOOKCOPY SUBJECT REUPLOAD FAILED"; fail=1; continue; }
+                ul=$(reupload "out/lookcopy-look.png") || { echo "LOOKCOPY LOOK REUPLOAD FAILED"; fail=1; continue; }
+                # no ratio on the card pass: the prompt locks IMAGE 1's own
+                # framing and aspect, which is the whole promise.
+                submit "card-studio-look-copy" "$EDIT_PATH" "$(jbody "$LC_PROMPT" "[\"$ub\",\"$ul\"]" "")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac

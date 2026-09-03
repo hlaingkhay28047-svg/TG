@@ -29,6 +29,12 @@
 
 var _CJS = (typeof module !== "undefined" && module.exports);
 var dom = _CJS ? require("../dom") : globalThis.HNK.dom;
+/* v6.61.0 — the app's own WHAT'S NEW list, lifted (js/hnk_whats_new.js). The
+   panel is a student's other screen, so it must tell them the same news in
+   the same words; the read-record is the panel's own, because UXP storage
+   and the browser's localStorage cannot see each other. */
+var whatsNew = _CJS ? require("../../../js/hnk_whats_new.js")
+  : (globalThis.HNK && globalThis.HNK.whatsNew);
 
 /* The web app's own asset host for the Library plates. The panel ships
    metadata, never the 1850 plates — the same contract the Library's compact
@@ -71,6 +77,36 @@ var DASH_CARDS = [
 /* The app's renderDashGreet tables, verbatim: three clock bands, nine
    languages each, plus the Burmese names of the cities the timezone list
    can name. */
+/* v6.61.0 — WHAT'S NEW copy and its read-record. The record lives in the same
+   localStorage the ★ favourites already use, with the same in-memory fallback
+   for the UXP builds where it is missing: the news going quiet for a session
+   is a far smaller failure than the strip throwing on a machine that has no
+   storage at all. */
+var L_NEW_H = { my: "အသစ်ရောက်ထားတာတွေ", en: "Just shipped", shn: "ၶိူင်ႈမႂ်ႇ", kac: "Nnan ai ni", th: "ของใหม่ล่าสุด", zh: "最新上线", vi: "Vừa ra mắt", id: "Baru rilis", ms: "Baru keluar" };
+var L_NEW_DISMISS = { my: "ဖျောက်မယ်", en: "Dismiss", shn: "ႁဵတ်းႁၢႆ", kac: "Kau kau u", th: "ปิด", zh: "忽略", vi: "Bỏ qua", id: "Abaikan", ms: "Abaikan" };
+var _nwMem = null;
+function nwSeen() {
+  try {
+    var raw = globalThis.localStorage.getItem(whatsNew ? whatsNew.SEEN_KEY : "hnk_new_seen");
+    if (raw != null) { var v = JSON.parse(raw); if (Array.isArray(v)) return v; }
+  } catch (e) { }
+  return Array.isArray(_nwMem) ? _nwMem.slice() : [];
+}
+function nwMark(e) {
+  if (!whatsNew) return;
+  var l = nwSeen(), k = whatsNew.key(e);
+  if (l.indexOf(k) < 0) l.unshift(k);
+  _nwMem = l.slice(0, 200);
+  try { globalThis.localStorage.setItem(whatsNew.SEEN_KEY, JSON.stringify(_nwMem)); } catch (err) { }
+}
+/* the app's page ids are not the panel's route keys; this is the only place
+   the two vocabularies meet, so the mapping is here and nowhere else. */
+var NW_PAGE = { pgWf: "wf", pgVideo: "video", pgVideoUp: "vidup", pgGallery: "gallery",
+  pgLib: "library", pgText2Img: "t2i", pgCreate: "free", pgPath: "path",
+  pgMeitu: "meitu", pgEvoto: "evoto", pgRetouch: "retouch", pgDash: "home",
+  pgAccount: "setup", pgHome: "setup", pgTutorials: "tutorials" };
+function nwPanelPage(e) { return NW_PAGE[e.ref] || "wf"; }
+
 var L_GREET_MORNING = { my: "မင်္ဂလာနံနက်ခင်းပါ", en: "Good morning", shn: "မႂ်ႇသုင်ၵၢင်ၼႂ်ၶႃႈ", kac: "Jahpawt manap kaja u ga", th: "สวัสดีตอนเช้า", zh: "早上好", vi: "Chào buổi sáng", id: "Selamat pagi", ms: "Selamat pagi" };
 var L_GREET_AFTERNOON = { my: "မင်္ဂလာနေ့လယ်ခင်းပါ", en: "Good afternoon", shn: "မႂ်ႇသုင်ဝၢႆးဝၼ်းၶႃႈ", kac: "Shani kaang kaja u ga", th: "สวัสดีตอนบ่าย", zh: "下午好", vi: "Chào buổi chiều", id: "Selamat siang", ms: "Selamat tengah hari" };
 var L_GREET_EVENING = { my: "မင်္ဂလာညနေခင်းပါ", en: "Good evening", shn: "မႂ်ႇသုင်ၵၢင်ၶမ်ႈၶႃႈ", kac: "Shana maga kaja u ga", th: "สวัสดีตอนเย็น", zh: "晚上好", vi: "Chào buổi tối", id: "Selamat malam", ms: "Selamat petang" };
@@ -164,6 +200,54 @@ function render(root, deps) {
   if (dt) greet.appendChild(dom.el(doc, "div", { class: "sub", text: dt }));
   if (info.planLine) greet.appendChild(dom.el(doc, "span", { class: "pill", text: info.planLine }));
   root.appendChild(greet);
+
+  /* ---- 1b. WHAT'S NEW (v6.61.0 — the app's #dashNew, same place) ----
+     The owner asked that a student be told what just shipped, at the top,
+     and be able to try it on the spot. In Photoshop that means the same gold
+     strip directly under the greeting: one row per unread item, its own
+     line, a NEW mark, and a tap that navigates to the thing itself. It draws
+     nothing at all once everything has been read. */
+  (function () {
+    if (!whatsNew || !whatsNew.LIST) return;
+    var seen = nwSeen();
+    var list = whatsNew.LIST.filter(function (e) { return seen.indexOf(whatsNew.key(e)) < 0; });
+    if (!list.length) return;
+    var card = dom.el(doc, "div", { class: "card nw-card", id: "hnkDashNew" });
+    var h2 = dom.el(doc, "h2", { id: "hnkDashNewH2" });
+    var hic = doc.createElement("img");
+    hic.className = "ic-s"; hic.alt = ""; hic.src = "icons/ui/i-sparkle-gold.svg";
+    h2.appendChild(hic);
+    h2.appendChild(doc.createTextNode(l9(L_NEW_H) + " (" + list.length + ")"));
+    card.appendChild(h2);
+    list.forEach(function (e) {
+      var wrap = dom.el(doc, "div", { class: "nw-wrap" });
+      var row = dom.el(doc, "button", { class: "nw-row", id: "hnkNew_" + e.v.replace(/\./g, "_") + "_" + e.ref,
+        attrs: { "data-nw": whatsNew.key(e) } });
+      var tx = dom.el(doc, "div", { class: "nw-tx" }, [
+        dom.el(doc, "div", { class: "nw-t", text: l9(e.t) }),
+        dom.el(doc, "div", { class: "nw-s", text: l9(e.s) })
+      ]);
+      row.appendChild(tx);
+      row.appendChild(dom.el(doc, "span", { class: "nw-tag", text: "NEW" }));
+      dom.on(row, "click", function () {
+        nwMark(e);
+        if (e.kind === "wf" && deps.onOpenWorkflow) deps.onOpenWorkflow(e.ref);
+        else if (deps.onPage) deps.onPage(nwPanelPage(e));
+      });
+      wrap.appendChild(row);
+      var x = dom.el(doc, "button", { class: "nw-x", text: "\u2715",
+        attrs: { "aria-label": l9(L_NEW_DISMISS), id: "hnkNewX_" + e.v.replace(/\./g, "_") + "_" + e.ref } });
+      dom.on(x, "click", function (ev) {
+        try { ev.stopPropagation(); } catch (err) { }
+        nwMark(e);
+        if (deps.onRefresh) deps.onRefresh();
+        else { try { wrap.parentNode.removeChild(wrap); } catch (err2) { } }
+      });
+      wrap.appendChild(x);
+      card.appendChild(wrap);
+    });
+    root.appendChild(card);
+  })();
 
   /* ---- 2. the destinations card (the app's "Student Web App") ----
      The app prints this heading and its four buttons in English in every
@@ -285,13 +369,13 @@ function render(root, deps) {
     if (pageKey) dom.on(cell, "click", function () { if (deps.onPage) deps.onPage(pageKey); });
     stats.appendChild(cell);
   }
-  var wfCount = 144, libCount = 1850;
+  var wfCount = 157, libCount = 1850;
   try {
     var reg = globalThis.HNK && globalThis.HNK.workflowRegistry;
     if (reg && reg.list) wfCount = reg.list().length;
   } catch (e) { }
   try { if (items.length) libCount = items.length; } catch (e) { }
-  stat(151, "One-Tap Workflows");
+  stat(164, "One-Tap Workflows");
   stat(libCount, "Visual Library");
   stat(wfCount, "Smart Workflow");
   stat(162, "Retouch A Controls", "meitu");

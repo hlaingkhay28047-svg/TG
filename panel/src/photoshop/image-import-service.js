@@ -35,6 +35,31 @@ function isLikelyImageUrl(url) {
   return true;
 }
 
+/* v6.59.0 — the link a studio actually copies.
+   The owner asked for photos to come in "from the web, the way you get one off
+   Pinterest". What a phone or a browser gives you there is a link to the PAGE,
+   not to the picture: pinterest.com/pin/12345, instagram.com/p/…, a Facebook
+   photo permalink. isLikelyImageUrl accepts any http(s) string, so those all
+   passed validation, went to the host, came back HTML instead of an image, and
+   the studio was told "check the URL and try again" — which is true and
+   useless, because the URL is fine, it is just the wrong one.
+   Naming the case is the whole fix: the message can then say the one thing
+   that works — long-press or right-click the picture itself and copy the IMAGE
+   address (it ends .jpg/.png/.webp). Matching is on the host, never on the
+   path, so a direct pinimg.com/… image link still loads normally. */
+var PAGE_HOSTS = ["pinterest.", "pin.it", "instagram.com", "facebook.com", "fb.watch",
+  "twitter.com", "x.com", "weibo.com", "xiaohongshu.com", "xhslink.com",
+  "tiktok.com", "threads.net", "behance.net", "dribbble.com"];
+function isPageLink(url) {
+  var u = String(url || "").trim().toLowerCase();
+  if (!/^https?:\/\//.test(u)) return false;
+  var host = u.replace(/^https?:\/\//, "").split(/[\/?#]/)[0];
+  /* a direct image URL is never a page link, whatever the host */
+  if (/\.(jpe?g|png|webp|gif|bmp|avif)(\?|#|$)/.test(u)) return false;
+  for (var i = 0; i < PAGE_HOSTS.length; i++) if (host.indexOf(PAGE_HOSTS[i]) >= 0) return true;
+  return false;
+}
+
 /* host.captureActiveLayer() -> { ref, width, height } | throws/null */
 function fromActiveLayer(host) {
   try {
@@ -75,6 +100,7 @@ function fromPaste(host) {
    before the host is touched so the validator can show the §24 message. */
 function fromWebLink(host, url) {
   if (!isLikelyImageUrl(url)) return _fail("web-link", "invalid-url");
+  if (isPageLink(url)) return _fail("web-link", "page-link");
   try {
     if (!host || !host.fetchImageUrl) return _fail("web-link", "no-host");
     var res = host.fetchImageUrl(url);
@@ -98,7 +124,8 @@ function reasonMessage(dom, reason) {
     "unreadable":         ["slot_reason_unreadable", "Could not read that file — pick a valid image file."],
     "no-clipboard-image": ["slot_reason_no_clipboard", "No image on the clipboard — copy an image first."],
     "invalid-url":        ["slot_reason_invalid_url", "That doesn't look like a valid image link (must start with http/https)."],
-    "fetch-failed":       ["slot_reason_fetch_failed", "Could not load that image link — check the URL and try again."]
+    "fetch-failed":       ["slot_reason_fetch_failed", "Could not load that image link — check the URL and try again."],
+    "page-link":          ["slot_reason_page_link", "That is a link to the page, not to the picture — open the image, then copy the IMAGE address (it ends .jpg / .png / .webp)."]
   };
   var e = MAP[reason];
   if (!e) return "";
@@ -107,6 +134,7 @@ function reasonMessage(dom, reason) {
 
 var API = {
   isLikelyImageUrl: isLikelyImageUrl,
+  isPageLink: isPageLink,
   fromActiveLayer: fromActiveLayer,
   fromFile: fromFile,
   fromPaste: fromPaste,

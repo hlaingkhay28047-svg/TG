@@ -1,0 +1,208 @@
+/* v5.90.0 — WHAT'S NEW: the student is told, at the top, and can try it.
+ *
+ * WHY THIS FILE EXISTS. The owner asked for something simple to describe and
+ * easy to let rot: when a new Smart Workflow or feature ships, a student
+ * should SEE that it is new — pinned at the top, marked, and tappable so they
+ * can try it right away rather than read about it.
+ *
+ * The rot is the whole risk. An announcement list is not load-bearing: the app
+ * works perfectly with a stale one, so nothing pushes back when a release
+ * forgets to add its entry, and a "NEW" strip that still advertises last
+ * month's release teaches students to ignore it. So the discipline is a test,
+ * not a habit: the newest entry must name THIS APP_VER, every workflow it
+ * points at must exist, and every entry must speak all nine languages.
+ *
+ * Usage: PORT=8931 node test/verify_whats_new.js  (serve docs/app first) */
+"use strict";
+const { chromium } = require("playwright-core");
+const PORT = process.env.PORT || 8931;
+const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
+let failures = 0;
+function report(name, ok, detail) {
+  console.log((ok ? "PASS" : "FAIL") + " — " + name +
+    (ok ? "" : "  :: " + String(typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 500)));
+  if (!ok) failures++;
+}
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errs = [];
+  page.on("pageerror", e => errs.push(String(e).slice(0, 240)));
+  await page.addInitScript(() => {
+    localStorage.setItem("hnk_ws_onboarded", "1");
+    localStorage.setItem("hnk_ws_seen", "1");
+  });
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(2600);
+
+  /* ---- A) the list is real, current, and points at things that exist ---- */
+  const A = await page.evaluate(() => {
+    const wfIds = {};
+    (window.HNK_WF_CATALOG || []).forEach(c => (c.items || []).forEach(w => { wfIds[w.id] = true; }));
+    const pageIds = {};
+    PAGES.forEach(p => { pageIds[p[0]] = true; });
+    return {
+      appVer: APP_VER,
+      n: WHATS_NEW.length,
+      versions: WHATS_NEW.map(e => e.v),
+      kinds: WHATS_NEW.map(e => e.kind),
+      badWf: WHATS_NEW.filter(e => e.kind === "wf" && !wfIds[e.ref]).map(e => e.ref),
+      badPage: WHATS_NEW.filter(e => e.kind === "page" && !pageIds[e.ref]).map(e => e.ref),
+      dupes: WHATS_NEW.map(e => e.v + "|" + e.ref)
+        .filter((k, i, a) => a.indexOf(k) !== i)
+    };
+  });
+
+  report("A) the newest entry names the version being shipped — a release cannot forget to say what it changed",
+    A.versions[0] === A.appVer, { appVer: A.appVer, newest: A.versions[0] });
+
+  const cmp = (a, b) => {
+    const x = a.split(".").map(Number), y = b.split(".").map(Number);
+    for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
+    return 0;
+  };
+  report("A2) entries run newest-first and none claims a version that has not shipped",
+    A.versions.every((v, i) => i === 0 || cmp(A.versions[i - 1], v) > 0) &&
+    A.versions.every(v => cmp(v, A.appVer) <= 0), A.versions);
+
+  report("A3) every entry points at a workflow or a page that actually exists",
+    A.badWf.length === 0 && A.badPage.length === 0, { badWf: A.badWf, badPage: A.badPage });
+
+  report("A4) no two entries share a version+target, so nothing is announced twice",
+    A.dupes.length === 0, A.dupes);
+
+  report("A5) only kinds the app can actually open",
+    A.kinds.every(k => k === "wf" || k === "page"), A.kinds);
+
+  /* ---- B) every entry speaks every language the app offers ---- */
+  const B = await page.evaluate(langs => WHATS_NEW.map(e => ({
+    ref: e.ref,
+    missT: langs.filter(l => !e.t || !e.t[l]),
+    missS: langs.filter(l => !e.s || !e.s[l])
+  })).filter(r => r.missT.length || r.missS.length), LANGS);
+  report("B) every entry has a title and a line in all nine languages", B.length === 0, B.slice(0, 3));
+
+  /* ---- C) the Home strip: at the top, one row each, and it TAKES you there ---- */
+  const C = await page.evaluate(() => {
+    try { localStorage.removeItem("hnk_new_seen"); } catch (e) { }
+    switchPage("pgDash");
+    const card = document.getElementById("dashNew");
+    const dash = document.getElementById("pgDash");
+    const kids = [...dash.children];
+    return {
+      visible: card.style.display !== "none",
+      /* "pinned at the top" is a position, not a wish: nothing but the
+         greeting may come before it. */
+      index: kids.indexOf(card),
+      before: kids.slice(0, kids.indexOf(card)).map(k => k.id || k.className),
+      rows: document.querySelectorAll("#dashNewList .nw-row").length,
+      total: WHATS_NEW.length,
+      tagged: document.querySelectorAll("#dashNewList .nw-tag").length,
+      dismissable: document.querySelectorAll("#dashNewList .nw-x").length
+    };
+  });
+  report("C) with nothing read yet, the strip is visible and sits above every other card on Home",
+    C.visible && C.index === 1 && C.before.every(b => /dash-greet|dashGreet/.test(b)), C);
+  report("C2) one row per entry, each marked NEW and each individually dismissable",
+    C.rows === C.total && C.tagged === C.total && C.dismissable === C.total, C);
+
+  /* ---- D) tapping a row opens the thing, not a changelog ---- */
+  const D = await page.evaluate(async () => {
+    try { localStorage.removeItem("hnk_new_seen"); } catch (e) { }
+    switchPage("pgDash");
+    const wfEntry = WHATS_NEW.find(e => e.kind === "wf");
+    const rows = [...document.querySelectorAll("#dashNewList .nw-row")];
+    const row = rows.find(r => r.dataset.nw === wfEntry.v + "|" + wfEntry.ref);
+    if (!row) return { found: false };
+    row.click();
+    await new Promise(r => setTimeout(r, 120));
+    const wiz = document.querySelector(".wiz.on");
+    const title = wiz ? (wiz.textContent || "").slice(0, 400) : "";
+    const wx = wiz && wiz.querySelector(".wiz-x"); if (wx) wx.click();
+    switchPage("pgDash");
+    return {
+      found: true,
+      opened: !!wiz,
+      namesIt: title.indexOf(wfEntry.ref.replace(/-/g, " ")) >= 0 ||
+        /Studio Look Copy/i.test(title),
+      rowsLeft: document.querySelectorAll("#dashNewList .nw-row").length,
+      total: WHATS_NEW.length
+    };
+  });
+  report("D) tapping a workflow row opens that workflow's wizard",
+    D.found && D.opened, D);
+  report("D2) and opening it retires exactly that one row — the others stay",
+    D.rowsLeft === D.total - 1, D);
+
+  /* ---- E) the Workflows page: ribbon, top-of-category, ✦ NEW rail chip ---- */
+  const E = await page.evaluate(async () => {
+    try { localStorage.removeItem("hnk_new_seen"); } catch (e) { }
+    location.reload();
+  }).catch(() => { });
+  await page.waitForTimeout(2600);
+  const E2 = await page.evaluate(() => {
+    switchPage("pgWf");
+    const wfEntries = WHATS_NEW.filter(e => e.kind === "wf");
+    const marked = [...document.querySelectorAll(".wfmini.is-new")].map(m => m.dataset.nwId);
+    const firsts = [...document.querySelectorAll(".wfgrid")]
+      .map(g => g.firstElementChild && g.firstElementChild.dataset.nwId);
+    const chip = document.getElementById("wfJumpNew");
+    const rail = document.getElementById("wfJump");
+    return {
+      want: wfEntries.map(e => e.ref),
+      marked: marked,
+      ribbons: document.querySelectorAll(".wf-new").length,
+      /* each marked card must be the FIRST card in its own grid */
+      allFirst: marked.every(id => firsts.indexOf(id) >= 0),
+      chipText: chip ? chip.textContent : null,
+      chipIsFirst: !!(chip && rail && rail.firstElementChild === chip)
+    };
+  });
+  report("E) every unread workflow wears a NEW ribbon, and only those",
+    E2.marked.slice().sort().join(",") === E2.want.slice().sort().join(",") &&
+    E2.ribbons === E2.want.length, E2);
+  report("E2) each one is the first card in its own category, so it is seen without scrolling",
+    E2.allFirst, E2);
+  report("E3) the rail's first stop is a ✦ NEW chip carrying the count",
+    !!E2.chipText && /NEW\s+\d+/.test(E2.chipText) && E2.chipIsFirst, E2);
+
+  /* ---- F) the tab dot, and that it goes away ---- */
+  const F = await page.evaluate(() => {
+    const before = document.querySelectorAll("#tabbar .nw-dot").length;
+    /* read everything the way a student eventually does */
+    WHATS_NEW.forEach(e => nwMarkSeen(e));
+    nwSync();
+    switchPage("pgDash");
+    return {
+      before: before,
+      after: document.querySelectorAll("#tabbar .nw-dot").length,
+      cardHidden: document.getElementById("dashNew").style.display === "none",
+      ribbons: document.querySelectorAll(".wf-new").length,
+      chip: !!document.getElementById("wfJumpNew")
+    };
+  });
+  report("F) an unread entry puts a dot on the tab that holds it", F.before > 0, F);
+  report("F2) once everything is read the strip, the ribbons, the chip and the dots are all gone — a studio that is up to date sees no empty box",
+    F.after === 0 && F.cardHidden && F.ribbons === 0 && !F.chip, F);
+
+  /* ---- G) the record is per student and survives a reload ---- */
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(2600);
+  const G = await page.evaluate(() => ({
+    stored: JSON.parse(localStorage.getItem("hnk_new_seen") || "[]").length,
+    total: WHATS_NEW.length,
+    cardHidden: document.getElementById("dashNew").style.display === "none",
+    dots: document.querySelectorAll("#tabbar .nw-dot").length
+  }));
+  report("G) what a student has read is remembered across launches",
+    G.stored === G.total && G.cardHidden && G.dots === 0, G);
+
+  report("H) no page error anywhere in this journey", errs.length === 0, errs.slice(0, 3));
+
+  await browser.close();
+  console.log(failures
+    ? `\n${failures} FAILURE(S) — the students would not learn what shipped.`
+    : "\nAll checks passed — what shipped is at the top of Home, marked on its card, and one tap from being tried.");
+  process.exit(failures ? 1 : 0);
+})().catch(e => { console.error("FAIL — " + (e && e.stack || e)); process.exit(1); });

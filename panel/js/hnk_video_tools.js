@@ -64,6 +64,24 @@ var RH_VTOOL_MODELS = [
   /* api-469373161 — ComfyUI node pair: the reference photo goes to 299##image,
      the motion video to 275##video; no other field exists on this graph. */
   { id:"wan22-motion-transfer", label:"Wan 2.2 Character Motion Transfer", apiPath:"rhart-video/wan2.2/character-motion-transfer", kind:"vnode", videoParam:"275##video", imageParam:"299##image", imageReq:true },
+  /* v5.89.0 api-510034450 — Gemini Omni 1.1 Flash video edit. Its doc
+     declares exactly videoUrl + prompt + resolution, all REQUIRED, and a
+     source video of at most ten seconds; no reference-image field exists on
+     this route, unlike its low-cost gemini-omni-flash sibling above. */
+  { id:"gemini-omni-11-video-edit", label:"Gemini Omni 1.1 Flash video edit", apiPath:"google/gemini-omni-1.1-flash/video-edit", videoParam:"videoUrl", prompt:"req", promptMax:2048, options:[{"key": "resolution", "values": ["360p", "720p", "1080p", "4k"], "def": "720p"}] },
+  /* v5.89.0 — the three MiniMax-H3 REGENERATION routes. These take a 768P H3
+     clip the studio already generated and re-run it at 2K, so their input is
+     a VIDEO (baseVideoUrl) and they belong on this shelf, not in the
+     image-to-video picker where v5.55.0 looked for them. Each doc marks
+     prompt + baseVideoUrl + resolution REQUIRED, resolution is a one-value
+     enum ("2K"), and the prompt cap is 40000 because it must repeat the
+     prompt that made the source clip. api-498427803's optional lastFrameUrl
+     is not sent: this shelf has exactly one photo slot. */
+  { id:"mm-h3-regen-i2v", label:"MiniMax H3 — regenerate to 2K (frame + prompt)", apiPath:"minimax/hailuo-h3/regeneration-image-to-video", videoParam:"baseVideoUrl", imageParam:"firstFrameUrl", prompt:"req", promptMax:40000, options:[{"key": "resolution", "values": ["2K"], "def": "2K"}] },
+  /* api-498427804 */
+  { id:"mm-h3-regen-t2v", label:"MiniMax H3 — regenerate to 2K (prompt only)", apiPath:"minimax/hailuo-h3/regeneration-text-to-video", videoParam:"baseVideoUrl", prompt:"req", promptMax:40000, options:[{"key": "resolution", "values": ["2K"], "def": "2K"}] },
+  /* api-498427802 — up to nine reference images, as at generation time. */
+  { id:"mm-h3-regen-multimodal", label:"MiniMax H3 — regenerate to 2K (references)", apiPath:"minimax/hailuo-h3/regeneration-multimodal-to-video", videoParam:"baseVideoUrl", imageParam:"imageUrls", imageArray:true, imageMax:9, prompt:"req", promptMax:40000, options:[{"key": "resolution", "values": ["2K"], "def": "2K"}] },
 ];
 
 var API = { LIST: RH_VTOOL_MODELS,

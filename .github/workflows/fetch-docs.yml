@@ -9,6 +9,13 @@ name: Fetch RunningHub doc pages
 # and the fetched text is treated as reference data only.
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "identify = print only what each page IS (title/path/folder); full = print the whole spec"
+        required: false
+        default: "identify"
+        type: choice
+        options: ["identify", "full"]
   push:
     branches: [claude/hnk-studio-deployment-pr292-www53j]
     paths: [".github/workflows/fetch-docs.yml"]
@@ -17,6 +24,30 @@ permissions:
   contents: read
 
 jobs:
+  index:
+    # v5.89.0 — the owner asks periodically whether RunningHub has published
+    # anything new on the Enterprise-Share catalog. Every earlier round fetched
+    # a hand-typed list of doc ids, which can only ever re-read what we already
+    # knew. This job goes the other way: it reads the doc site's own index and
+    # prints EVERY api-<id> it links, so a page published since the last round
+    # shows up by itself. Nothing here is written to the repo; the ids it finds
+    # are then fetched by the job below.
+    name: index
+    runs-on: ubuntu-24.04
+    steps:
+      - name: List every doc page the site links
+        run: |
+          for u in \
+            "https://www.runninghub.ai/runninghub-api-doc-en/" \
+            "https://www.runninghub.ai/runninghub-api-doc/" \
+            "https://www.runninghub.ai/sitemap.xml" \
+            "https://www.runninghub.ai/runninghub-api-doc-en/sitemap.xml" ; do
+            echo "=====INDEX ${u} START====="
+            curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 "$u" \
+              | grep -oE 'api-[0-9]{6,}' | sort -u \
+              || echo "FETCH-FAILED ${u}"
+            echo "=====INDEX ${u} END====="
+          done
   fetch:
     name: fetch-${{ matrix.name }}
     runs-on: ubuntu-24.04
@@ -24,13 +55,45 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Round 4 — one page the video round missed: the index files
-          # vidu/reference-to-video-q2-pro under Image > reference-to-image
-          # (miscategorized there), so the video-category sweep skipped it.
-          - name: vid4a
-            ids: "448184544"
+          # Round 6 — the pages that describe something NOT already wired.
+          # Round 5's identify pass named all 33 pages published since the
+          # last sweep; 22 of them document endpoints this app already
+          # sends (the seedance-2.5 token routes, flux-3-video, wan-3.0 and
+          # wan-3.0-prime, grok-imagine v1.5, the minimax-h3-oss plugin
+          # flows), and three describe surfaces the app does not have at all
+          # (Qwen3 TTS voice design is audio; meshy6 image/text-to-3D is 3D).
+          # The eleven below are the real additions, and only a read spec
+          # licenses an entry — six per job keeps each log under the cap.
+          - name: new6a
+            ids: "498427799 498427800 498427801 498427802 498427804 509445864"
+          - name: new6b
+            ids: "509445865 508886443 508886444 508886445 510034450"
+          # The twelfth. regeneration-image-to-video was refused in v5.55.0
+          # with the note "no longer in the doc index at all" — round 5's
+          # index pass found it again, so the reason is stale and its spec
+          # is fetched here rather than assumed from its two siblings.
+          - name: new6c
+            ids: "498427803"
     steps:
+      # v5.89.0 — two modes. IDENTIFY prints only the few lines that say WHAT
+      # an endpoint is (its title, its path, the folder the doc site files it
+      # under). Thirty-three whole OpenAPI specs are hundreds of KB and the
+      # job-log API truncates from the start, so reading them all just to
+      # learn which are new wastes the very budget that loses pages. Once the
+      # interesting ids are known, FULL pulls those specs in whole.
+      - name: Identify each doc page
+        if: ${{ inputs.mode != 'full' }}
+        run: |
+          for id in ${{ matrix.ids }}; do
+            echo "=====ID ${id}====="
+            curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              | grep -E '^# |^  /|x-apifox-folder|^      summary:|^      operationId:' \
+              | head -12 \
+              || echo "FETCH-FAILED ${id}"
+          done
       - name: Fetch doc pages
+        if: ${{ inputs.mode == 'full' }}
         run: |
           for id in ${{ matrix.ids }}; do
             echo "=====DOC ${id} START====="

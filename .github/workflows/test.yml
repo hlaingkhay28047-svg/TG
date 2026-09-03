@@ -229,6 +229,47 @@ jobs:
       - name: Verify Studio Look Copy holds its look on every capable model
         run: node test/verify_studio_look_copy.js
 
+      # v6.59.0 — the owner asked, of the Photoshop panel: on every Smart
+      # Workflow card, on every image slot, can a photo come in from the
+      # ACTIVE LAYER and from the WEB (a link off Pinterest), and does the
+      # result go back into Photoshop? It could — one shared inputRow builds
+      # the buttons — but "because one function builds them" is an argument,
+      # not a check. This opens all 136 photo-taking cards and inspects all
+      # 194 slots, and holds the way back out too.
+      - name: Verify every panel slot offers every source, on every card
+        run: node test/verify_panel_slot_sources.js
+
+      # v5.90.0 — WHAT'S NEW. The owner asked that a student be told what just
+      # shipped, at the top, and be able to try it on the spot. The failure
+      # mode is not a broken widget, it is a list nobody updates: the app
+      # works perfectly with a stale one. So the newest entry must name the
+      # APP_VER being shipped, which makes "tell the students" part of
+      # releasing rather than a thing to remember.
+      - name: Verify the What's New strip, ribbons and per-student memory
+        run: PORT=8931 node test/verify_whats_new.js
+
+      # ...and that the panel says the same thing. A student who works in
+      # Photoshop all day would otherwise be the last to hear about a
+      # workflow they could be using today.
+      - name: Verify the panel carries the app's What's New, word for word
+        run: node test/verify_panel_whats_new.js
+
+      # v5.90.0 / v6.61.0 — the owner asked whether the picture in an image
+      # slot comes out cropped. It did: every slot holding a photo the STUDENT
+      # supplied used object-fit:cover in a square-ish box, so a full-length
+      # shot lost the head and the shoes. This measures the rendered aspect
+      # against the source's, so a crop cannot come back unnoticed.
+      - name: Verify every input slot shows the whole photograph
+        run: PORT=8931 node test/verify_slot_whole_photo.js
+
+      # v5.91.0 — the thirteen Look Sets. The owner sent thirteen reference
+      # shoots and asked for a card each, with the backdrop colour, the light,
+      # the grade and the wardrobe fixed so a hundred photographs cut together
+      # as one shoot. Every one of those promises lives in a prompt, which is
+      # the easiest thing here to weaken by accident, so each is checked.
+      - name: Verify the thirteen Look Sets hold their set
+        run: PORT=8931 node test/verify_look_sets.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

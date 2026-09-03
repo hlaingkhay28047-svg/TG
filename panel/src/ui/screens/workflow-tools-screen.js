@@ -123,6 +123,21 @@ function create(deps) {
   /* the app's favourites / recents lists, same keys, same shapes (JSON arrays
      of workflow ids); UXP may deny localStorage, so a memory copy stands in */
   var K_FAVS = "hnk_ws_wf_favs", K_RECENT = "hnk_ws_wf_recent";
+  /* v6.61.0 — the same lifted WHAT'S NEW list the Home strip reads, so a card
+     the student has not opened yet wears the gold NEW ribbon here too and
+     comes first in its category. Reading the record is enough; Home owns the
+     writing, and opening the card below marks it read. */
+  var whatsNew = _CJS ? require("../../../js/hnk_whats_new.js")
+    : (globalThis.HNK && globalThis.HNK.whatsNew);
+  function nwSeenIds() {
+    var out = {};
+    if (!whatsNew || !whatsNew.LIST) return out;
+    var seen = readList(whatsNew.SEEN_KEY);
+    whatsNew.LIST.forEach(function (e) {
+      if (e.kind === "wf" && seen.indexOf(whatsNew.key(e)) < 0) out[e.ref] = e;
+    });
+    return out;
+  }
   var _mem = {};
   function readList(key) {
     try {
@@ -201,6 +216,8 @@ function create(deps) {
       bdg.appendChild(icon(wf.badge + "-cream", ""));
       box.appendChild(bdg);
     }
+    var _nwNew = nwSeenIds();
+    if (_nwNew[wf.id]) m.className = "wfmini is-new";
     m.appendChild(box);
 
     /* ★ favourite toggle (app .fav): top-right, 44px hit box */
@@ -242,6 +259,11 @@ function create(deps) {
       m.appendChild(bt);
     }
     box.appendChild(dom.el(doc, "span", { class: "wf-need", text: needLabel(wf) }));
+    /* v6.61.0 — the gold NEW ribbon, inside the visual like the photo-count
+       pill so it tracks the art rather than the card box, and appended AFTER
+       that pill because that is the order the app builds them in: this page
+       is measured string-for-string against the app's. */
+    if (_nwNew[wf.id]) box.appendChild(dom.el(doc, "span", { class: "wf-new", text: "NEW" }));
 
     m.appendChild(dom.el(doc, "div", { class: "t", text: wf.title }));
     /* the app prints the catalog summary as written (one string for every
@@ -404,7 +426,16 @@ function create(deps) {
         var gd = dom.el(doc, "div", { class: "wfgrid" });
         var made = 0, wgs = {}, wgOrder = [];
         var cards = [];
-        c.ids.forEach(function (id) {
+        /* v6.62.0 — an unread NEW card comes FIRST in its own category, the
+           same sort the app applies. Sorting the rendered order (not the
+           registry) keeps every other consumer identical, and keeps this page
+           string-for-string equal to the app's, which is what the parity
+           test measures. */
+        var _nwFirst = nwSeenIds();
+        var _ordered = c.ids.slice().sort(function (a, b) {
+          return (_nwFirst[b] ? 1 : 0) - (_nwFirst[a] ? 1 : 0);
+        });
+        _ordered.forEach(function (id) {
           var wf = registry.get(id);
           if (!wf) return;
           if (wf.wedGroup) { if (!wgs[wf.wedGroup]) { wgs[wf.wedGroup] = 0; wgOrder.push(wf.wedGroup); } wgs[wf.wedGroup]++; }
@@ -452,6 +483,21 @@ function create(deps) {
       layoutGrid(gd2);
       host.appendChild(gd2);
     }
+
+    /* v6.62.0 — and the rail's first stop is the new work, as on the app.
+       It exists only while there IS new work: an empty "NEW 0" chip would be
+       worse than no chip, and would also break parity in the other direction. */
+    (function () {
+      var ids = nwSeenIds();
+      var live = Object.keys(ids).filter(function (id) { return !!registry.get(id); });
+      if (!live.length) return;
+      var b = dom.el(doc, "button", { class: "chip on", id: "hnkWfJumpNew", text: "\u2726 NEW " + live.length });
+      dom.on(b, "click", function () {
+        var first = doc.getElementById("hnkWf_" + live[0]);
+        if (first) { try { first.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { } }
+      });
+      if (rail.firstChild) rail.insertBefore(b, rail.firstChild); else rail.appendChild(b);
+    })();
 
     if (rail.childNodes.length) card.appendChild(rail);
     card.appendChild(favHost);
@@ -582,6 +628,20 @@ function create(deps) {
     else applySlot(inp, res);
   }
 
+  /* v6.59.0 — the fifth source, and the one the service had implemented all
+     along. image-import-service has carried fromPaste since the first spec
+     (§5 names Active Layer · File · Paste · Web Link), photoshop-host now
+     really reads the clipboard, and no screen ever offered the button — so a
+     studio who had just copied a picture had to save it to disk first. When
+     the host cannot read the clipboard the slot says exactly that and
+     nothing else changes. */
+  function addFromPaste(inp) {
+    if (!imageImport) return;
+    var res = imageImport.fromPaste(deps.host);
+    if (res && typeof res.then === "function") res.then(function (slot) { applySlot(inp, slot); });
+    else applySlot(inp, res);
+  }
+
   function refresh() {
     if (!state.workflowId) return;
     var ev = validator.evaluate(state);
@@ -596,6 +656,21 @@ function create(deps) {
         var failReason = (!okk && inp.image && inp.image.reason && imageImport) ? imageImport.reasonMessage(dom, inp.image.reason) : "";
         mark.textContent = okk ? "✓" : (failReason || "Missing");
         mark.className = "hnk-req-mark " + (okk ? "ok" : "miss");
+      }
+      /* v6.59.0 — SHOW THE PHOTO THAT LANDED.
+         The slot used to answer with a tick and nothing else, so a studio
+         who had just pasted a web link could not see WHICH picture arrived —
+         and a link is exactly the source where the wrong picture is easy to
+         get. Every source hands the slot a data: URL (layer capture, file
+         read, clipboard, fetched link, Library pick), so the slot can simply
+         show it. A picture that will not decode removes itself and leaves
+         the tick, rather than sitting there as a broken box. */
+      var thumb = nodes["thumb_" + inp.key];
+      if (thumb) {
+        var ref = (inp.image && inp.image.ref) || "";
+        var show = /^data:image\//.test(String(ref));
+        thumb.style.display = show ? "" : "none";
+        if (show && thumb.firstChild && thumb.firstChild.src !== ref) thumb.firstChild.src = ref;
       }
     });
     var ready = ev.ready;
@@ -819,6 +894,8 @@ function create(deps) {
     dom.on(add, "click", function () { addImage(inp); });
     var fileB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfFile_" + inp.key, text: dom.t("btn_ref_file", "File") });
     dom.on(fileB, "click", function () { addFromFile(inp); });
+    var pasteB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfPaste_" + inp.key, text: dom.t("btn_ref_paste", "Paste") });
+    dom.on(pasteB, "click", function () { addFromPaste(inp); });
     var webB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfWeb_" + inp.key, text: dom.t("btn_ref_web", "Web") });
     var lib = dom.el(doc, "button", { class: "hnk-btn hnk-req-add hnk-req-lib", id: "hnkWfLib_" + inp.key, text: "\u2726 " + dom.t("ai_library", "Library") });
     dom.on(lib, "click", function () { addFromLibrary(inp); });
@@ -839,11 +916,27 @@ function create(deps) {
       urlRow.style.display = "none";
     });
 
+    /* v6.59.0 — the slot's own preview; refresh() fills and hides it. A
+       clear button beside it, because a wrong picture must be as easy to
+       take out as it was to put in. */
+    var thumbImg = doc.createElement("img");
+    thumbImg.alt = "";
+    thumbImg.onerror = function () { try { thumb.style.display = "none"; } catch (e) { } };
+    var clear = dom.el(doc, "button", { class: "hnk-btn hnk-req-clear", id: "hnkWfClear_" + inp.key, text: "✕" });
+    dom.on(clear, "click", function () {
+      wstate.setInput(state, inp.key, { source: "", role: inp.role, ref: null, valid: false });
+      refresh();
+    });
+    var thumb = dom.el(doc, "div", { class: "hnk-req-thumb", id: "hnkWfThumb_" + inp.key }, [thumbImg, clear]);
+    thumb.style.display = "none";
+    nodes["thumb_" + inp.key] = thumb;
+
     return dom.el(doc, "div", { class: "hnk-req-block" }, [
       dom.el(doc, "div", { class: "hnk-req-row" }, [
-        dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, fileB, webB, lib
+        dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, fileB, pasteB, webB, lib
       ]),
-      urlRow
+      urlRow,
+      thumb
     ]);
   }
 
