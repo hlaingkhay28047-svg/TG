@@ -68,6 +68,12 @@ jobs:
             ids: "498427799 498427800 498427801 498427802 498427804 509445864"
           - name: new6b
             ids: "509445865 508886443 508886444 508886445 510034450"
+          # The twelfth. regeneration-image-to-video was refused in v5.55.0
+          # with the note "no longer in the doc index at all" — round 5's
+          # index pass found it again, so the reason is stale and its spec
+          # is fetched here rather than assumed from its two siblings.
+          - name: new6c
+            ids: "498427803"
     steps:
       # v5.89.0 — two modes. IDENTIFY prints only the few lines that say WHAT
       # an endpoint is (its title, its path, the folder the doc site files it
