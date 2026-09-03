@@ -4726,6 +4726,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"5.95.0", kind:"page", ref:"pgWf",
+    t:{my:"Model ပြောင်းရင် prompt အလိုအလျောက် လိုက်ညှိပါပြီ",en:"The prompt now fits itself to the model you pick",shn:"လႅၵ်ႈ model ၸိုင် prompt ငၢႆႈငၢႆႈလိုၵ်ႉ",kac:"Model galai yang prompt hkrak hkra galai sai",th:"พรอมต์ปรับตามโมเดลที่เลือกอัตโนมัติแล้ว",zh:"提示词现在会自动适配你选的模型",vi:"Prompt giờ tự khớp với model bạn chọn",id:"Prompt kini menyesuaikan diri dengan model yang dipilih",ms:"Gesaan kini menyesuaikan diri dengan model yang dipilih"},
+    s:{my:"prompt ရှည်ရင် စာကြောင်းအလယ် ဖြတ်တာမျိုး မလုပ်တော့ဘဲ မလိုအပ်တဲ့ အပိုင်းလိုက် ဖြုတ်ပါတယ် — မဝင်နိုင်ရင်တော့ အပြည့်လက်ခံနိုင်တဲ့ model ဆီ ပြောင်းပြီး ဘာကြောင့်လဲ ပြောပြပါတယ်",en:"A long workflow now loses whole sections it can spare instead of stopping mid-sentence — and when even that won't fit, the run moves to a model that can take all of it, and says why",shn:"prompt ယၢဝ်း ၸိုင် တတ်ႉၵၢင်ဝႃႇၵျႃႇဢမ်ႇမီး — ဢမ်ႇမႅၼ်ႈၸိုင် လႅၵ်ႈ model",kac:"Prompt galu yang ka-ang hta n kadun sai — n hkrak yang model galai na",th:"เวิร์กโฟลว์ยาวจะตัดทั้งส่วนแทนการตัดกลางประโยค — ถ้ายังไม่พอจะย้ายไปโมเดลที่รับได้ทั้งหมด",zh:"较长的工作流现在整段舍弃而不是从句子中间截断 — 若仍放不下，会切换到能完整接受的模型",vi:"Workflow dài giờ bỏ trọn từng phần thay vì cắt giữa câu — nếu vẫn không vừa, sẽ chuyển sang model nhận được toàn bộ",id:"Alur panjang kini melepas bagian utuh alih-alih terpotong di tengah kalimat — bila masih tak muat, dipindah ke model yang bisa menerima seluruhnya",ms:"Aliran panjang kini melepaskan bahagian penuh dan bukan terpotong di tengah ayat — jika masih tidak muat, ia bertukar ke model yang boleh menerima kesemuanya"} },
   { v:"5.94.0", kind:"page", ref:"pgCreate",
     t:{my:"ရွေးလိုက်တဲ့ ratio နဲ့ size အမှန်ထွက်ပါပြီ",en:"The ratio and size you pick now really come out",shn:"ratio လႄႈ size ဢၼ်လိူၵ်ႈ ဢွၵ်ႇမႃးတႄႉယဝ်ႉ",kac:"Lata ai ratio hte size teng sha pru wa sai",th:"อัตราส่วนและขนาดที่เลือกออกมาจริงแล้ว",zh:"你选择的比例和尺寸现在真的会生效",vi:"Tỷ lệ và kích thước bạn chọn giờ thực sự ra đúng",id:"Rasio dan ukuran yang kamu pilih kini benar-benar diterapkan",ms:"Nisbah dan saiz yang anda pilih kini benar-benar digunakan"},
     s:{my:"Seedream v4/v4.5 မှာ ratio ရွေးလို့ရပေမဲ့ တကယ်မပါခဲ့ဘူး — အခု မလိုတဲ့ခလုတ်ကို ဖျောက်ထားပါပြီ။ Size က ratio ပေါ်မူတည်တဲ့ model တွေမှာလည်း ကြိုပြောပါပြီ",en:"Seedream v4/v4.5 let you pick a ratio that was never sent — that control is now hidden. And where size comes from the ratio, the app says so before you spend a credit",shn:"Seedream v4/v4.5 လိူၵ်ႈ ratio လႆႈသေတႃႉ ဢမ်ႇသူင်ႇ — ယၢမ်းလဵဝ် ဢိုတ်းဝႆႉ",kac:"Seedream v4/v4.5 hta ratio lata mai tim n sa ai — ya gaw makoi da sai",th:"Seedream v4/v4.5 เคยให้เลือกอัตราส่วนที่ไม่เคยถูกส่ง — ตอนนี้ซ่อนแล้ว",zh:"Seedream v4/v4.5 曾允许选择从未被发送的比例 — 该控件现已隐藏",vi:"Seedream v4/v4.5 từng cho chọn tỷ lệ không bao giờ được gửi — nay đã ẩn",id:"Seedream v4/v4.5 dulu membiarkan memilih rasio yang tak pernah dikirim — kini disembunyikan",ms:"Seedream v4/v4.5 dahulu membenarkan pilihan nisbah yang tidak pernah dihantar — kini disembunyikan"} },
@@ -6214,9 +6217,66 @@ function rhCutClean(text, n){
   if(sp>=floor) return cut.slice(0,sp).replace(/[\s,;:—–-]+$/,"");
   return cut;
 }
+/* v5.95.0 — LOSE A WHOLE SENTENCE, NEVER HALF OF ONE.
+   A Smart Workflow prompt is written in labelled blocks — SET AND BACKDROP,
+   LIGHTING, COLOUR GRADE, HAIR, TASK GUARD — and a character cut respects
+   none of them: it ends mid-block and the model is left with a half-stated
+   instruction, which is worse than not stating it. So before any character
+   cut is considered, whole blocks are dropped by what the photograph can
+   most afford to lose, cheapest first.
+   Nothing on the essential list is ever dropped: the roles, the request,
+   every LOCK, the framing and consistency rules (they are what makes a
+   hundred photographs match), the student's own EXTRA REQUEST, and the
+   guard. A prompt with no labelled blocks — the freeform Create box — comes
+   back untouched and takes the character cut as before. */
+var RH_BLOCK_DROP_ORDER = [
+  "HAIR:", "SKIN RETOUCH:", "REALISM:", "FINISH:", "SKIN SMOOTHING:",
+  "HAIR RETOUCH:", "COLOUR TONE:", "POSTER ART:", "LIQUIFY:", "DRESS:",
+  "EYE & TEETH:", "SHINE CONTROL:", "BODY SKIN:", "TONE EVENING:",
+  "DIMENSION:", "SET AND BACKGROUND:", "WARDROBE:", "COLOUR:",
+  "SKIN AND DETAIL:", "GARMENT:", "DEPTH & OCCLUSION:", "QUALITY:"
+];
+var RH_BLOCK_LABEL = /^[A-Z][A-Z0-9 ,&'\/()—-]{1,44}:/;
+function rhSplitBlocks(text){
+  var lines=String(text||"").split("\n"), blocks=[], cur=null;
+  lines.forEach(function(ln){
+    if(RH_BLOCK_LABEL.test(ln)){
+      if(cur) blocks.push(cur);
+      cur={ tag: ln.slice(0, ln.indexOf(":")+1), lines:[ln] };
+    } else if(cur){ cur.lines.push(ln); }
+    else { cur={ tag:"", lines:[ln] }; }
+  });
+  if(cur) blocks.push(cur);
+  return blocks;
+}
+/* returns { text, dropped:[tag,…] } — dropped is what the student is shown */
+function rhFitByBlocks(promptText, maxLen){
+  var s=String(promptText||"");
+  if(!maxLen || s.length<=maxLen) return { text:s, dropped:[] };
+  var gi=s.indexOf("TASK GUARD:"), tail="";
+  var head=s, ai=s.indexOf("\n\nAVOID:");
+  if(ai>=0){ tail=s.slice(ai); head=s.slice(0,ai); }
+  var blocks=rhSplitBlocks(head);
+  if(blocks.filter(function(b){ return b.tag; }).length<3) return { text:s, dropped:[] };
+  var dropped=[];
+  for(var i=0;i<RH_BLOCK_DROP_ORDER.length;i++){
+    var joined=blocks.map(function(b){ return b.lines.join("\n"); }).join("\n");
+    if((joined+tail).length<=maxLen) break;
+    var tag=RH_BLOCK_DROP_ORDER[i];
+    var hit=-1;
+    for(var j=0;j<blocks.length;j++){ if(blocks[j].tag===tag){ hit=j; break; } }
+    if(hit<0) continue;
+    blocks.splice(hit,1); dropped.push(tag);
+  }
+  var out=blocks.map(function(b){ return b.lines.join("\n"); }).join("\n")+tail;
+  return { text: out, dropped: dropped };
+}
 function rhTruncatePrompt(promptText, maxLen){
   var s=String(promptText||"");
   if(!maxLen || s.length<=maxLen) return s;
+  /* whole blocks first; only what will not fit even then meets the cut */
+  s = rhFitByBlocks(s, maxLen).text;
+  if(s.length<=maxLen) return s;
   var gi=s.indexOf("TASK GUARD:");
   if(gi<0) return rhCutClean(s, maxLen);
   var body=s.slice(0,gi).replace(/\s+$/,""), tail=s.slice(gi), avoid="";
@@ -8249,14 +8309,55 @@ function wfApplyModelFilter(){
      happens at RUN time — wfEnsureCapableModel, called by runWizGenerate
      and the batch hand-off — the moment capacity actually matters. */
 }
-function wfEnsureCapableModel(need){
-  if(!(need>1)) return true;
+/* v5.95.0 — capacity is images AND room for the words. A Look Set is 5,368
+   characters and Qwen Image 2 takes 800: its TASK GUARD alone is longer than
+   the whole cap, so no amount of trimming can deliver the set — the backdrop,
+   the light, the grade and the wardrobe simply cannot be said. Dropping blocks
+   (rhFitByBlocks) closes the middle gaps; this closes the rest by moving the
+   run to a model that can hear the whole thing, exactly as the image-capacity
+   switch has done since v5.56.0. It is never silent: wfSwitchedFor holds what
+   happened and the wizard footer reads it out before the credit is spent. */
+var wfSwitchedFor = null;
+function wfModelFitsPrompt(id, chars){
+  if(!(chars>0)) return true;
+  var d=rhModelDef(id); if(!d) return false;
+  var cap=rhEffectivePromptMax(id);
+  return !cap || cap>=chars;
+}
+function wfEnsureCapableModel(need, chars){
+  wfSwitchedFor=null;
+  var wantImg=need>1, wantTxt=chars>0;
+  if(!wantImg && !wantTxt) return true;
   var sel=$("selModel"); if(!sel || !sel.options.length) return false;
-  if(rhModelMaxIn(sel.value)>=need) return true;
+  var okNow=(!wantImg || rhModelMaxIn(sel.value)>=need) && wfModelFitsPrompt(sel.value, chars);
+  if(okNow) return true;
+  var from=sel.value;
   for(var i=0;i<sel.options.length;i++){
-    if(rhModelMaxIn(sel.options[i].value)>=need){
-      sel.value=sel.options[i].value;
-      if(sel.onchange) sel.onchange();
+    var id=sel.options[i].value;
+    if(wantImg && rhModelMaxIn(id)<need) continue;
+    if(!wfModelFitsPrompt(id, chars)) continue;
+    sel.value=id;
+    if(sel.onchange) sel.onchange();
+    var fd=rhModelDef(from), td=rhModelDef(id);
+    wfSwitchedFor={ from:(fd&&fd.label)||from, to:(td&&td.label)||id,
+      why: (wantImg && rhModelMaxIn(from)<need) ? "images" : "prompt", chars:chars };
+    return true;
+  }
+  /* v5.95.0 — nothing configured can take it whole. Fall back to the widest
+     prompt room available rather than leaving a model that cannot hear half
+     of it; the footer still says what will be cut. */
+  if(wantTxt){
+    var best=null, bestCap=-1;
+    for(var k=0;k<sel.options.length;k++){
+      var kid=sel.options[k].value;
+      if(wantImg && rhModelMaxIn(kid)<need) continue;
+      var kc=rhEffectivePromptMax(kid) || 1e9;
+      if(kc>bestCap){ bestCap=kc; best=kid; }
+    }
+    if(best && best!==sel.value){
+      sel.value=best; if(sel.onchange) sel.onchange();
+      var bd=rhModelDef(best), od=rhModelDef(from);
+      wfSwitchedFor={ from:(od&&od.label)||from, to:(bd&&bd.label)||best, why:"prompt", chars:chars, partial:true };
       return true;
     }
   }
@@ -9251,7 +9352,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        required image, switch to the first that can (the footer has been
        saying so since step 3; when none qualifies nothing switches and
        the run proceeds under the footer's explicit warning). */
-    try{ if(typeof wfEnsureCapableModel==="function") wfEnsureCapableModel((w.req||[]).length); }catch(e){}
+    try{ if(typeof wfEnsureCapableModel==="function") wfEnsureCapableModel((w.req||[]).length, (wiz.prompt||"").length); }catch(e){}
     var inputs=wizInputs(w);
     for(var ri=inputs.length; ri<state.refs.length; ri++) state.refs[ri]=null;
     state.imgRoles=inputs.map(function(x){ return x.label; });
@@ -9556,6 +9657,23 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             vi:"✂ model này chỉ nhận "+pmax+" ký tự, sẽ bị cắt "+nCut+" ký tự"+(kept?" — phần TASK GUARD vẫn được giữ":cutGuard?" — cả phần TASK GUARD cũng bị cắt ngắn; hãy chọn model rộng hơn":"")+(roomy?" · nhận trọn vẹn: "+roomy:""),
             id:"✂ model ini hanya menerima "+pmax+" karakter, "+nCut+" akan terpotong"+(kept?" — blok TASK GUARD tetap ikut":cutGuard?" — blok TASK GUARD juga terpotong; pilih model yang lebih longgar":"")+(roomy?" · menerima seluruhnya: "+roomy:""),
             ms:"✂ model ini hanya terima "+pmax+" aksara, "+nCut+" akan dipotong"+(kept?" — blok TASK GUARD kekal":cutGuard?" — blok TASK GUARD juga dipendekkan; pilih model yang lebih luas":"")+(roomy?" · terima kesemuanya: "+roomy:"")});
+          wfoot.className="mut warn";
+        }
+        /* v5.95.0 — and if the run was moved to a model that can hear the
+           whole workflow, say so. A switch the student cannot see is the
+           same dishonesty as a cut they cannot see. */
+        if(typeof wfSwitchedFor!=="undefined" && wfSwitchedFor){
+          var sw=wfSwitchedFor;
+          wfoot.textContent += " · " + L9({
+            my:"⇄ "+sw.from+" က ဒီ workflow ကို အပြည့်မခံနိုင်လို့ "+sw.to+" ကို ပြောင်းလိုက်ပါပြီ"+(sw.partial?" (ဒါတောင် အပြည့်မဝင်သေးပါ)":""),
+            en:"⇄ "+sw.from+" could not take this whole workflow, so it moved to "+sw.to+(sw.partial?" (still not the whole of it)":""),
+            shn:"⇄ "+sw.from+" ႁပ်ႉဢမ်ႇလႆႈတင်းသဵင်ႈ — လႅၵ်ႈပဵၼ် "+sw.to,
+            kac:"⇄ "+sw.from+" gaw yawng n hkap la lu ai majaw "+sw.to+" de galai sai",
+            th:"⇄ "+sw.from+" รับเวิร์กโฟลว์นี้ทั้งหมดไม่ได้ จึงเปลี่ยนไปใช้ "+sw.to,
+            zh:"⇄ "+sw.from+" 无法完整接受此工作流，已切换到 "+sw.to,
+            vi:"⇄ "+sw.from+" không nhận trọn workflow này nên đã chuyển sang "+sw.to,
+            id:"⇄ "+sw.from+" tidak bisa menerima seluruh alur ini, jadi dipindah ke "+sw.to,
+            ms:"⇄ "+sw.from+" tidak dapat menerima keseluruhan aliran ini, jadi ditukar ke "+sw.to});
           wfoot.className="mut warn";
         }
       };
@@ -12129,7 +12247,8 @@ window._ptUseWorkflow=function(id){
      would silently lose IMAGE 2 — switch to the first model that can,
      and say so, before a hundred calls are spent. */
   try{
-    if(wInfo && wInfo.reqN>1 && typeof wfEnsureCapableModel==="function") wfEnsureCapableModel(wInfo.reqN);
+    if(wInfo && typeof wfEnsureCapableModel==="function")
+      wfEnsureCapableModel(wInfo.reqN, (window._wfBatchPrompt(wInfo.id)||"").length);
   }catch(e){}
   switchPage("pgPath");
   var box=$("ptWfBox");
@@ -23708,7 +23827,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.94.0";
+var APP_VER="5.95.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

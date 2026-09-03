@@ -298,6 +298,16 @@ jobs:
       - name: Verify the size and ratio controls reach the engine
         run: PORT=8931 node test/verify_size_ratio_honesty.js
 
+      # v5.95.0 — the owner asked for the prompt to follow the model: drop
+      # whole labelled BLOCKS by what the photograph can spare rather than
+      # cutting mid-sentence, and when even that will not fit, move the run to
+      # a model that can hear the whole workflow — and say so. This proves a
+      # surviving block is never half-said, that no essential block is ever a
+      # candidate, that freeform text is untouched, and that the panel drops
+      # exactly the same blocks.
+      - name: Verify the prompt fits the model, and the model fits the prompt
+        run: PORT=8931 node test/verify_model_fit.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
