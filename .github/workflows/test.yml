@@ -280,6 +280,24 @@ jobs:
       - name: Verify what a capped model receives, and what OFF means
         run: PORT=8931 node test/verify_prompt_fit.js
 
+      # v5.93.0 — Wave 11 begins at the door. Every state the account server
+      # can report is read from server/lib/auth.js and pushed through both
+      # sign-in surfaces: none may reach a student as "can't reach the account
+      # server" (which makes a locked-out student retry harder) or as "wrong
+      # email or password" (which makes them change a password that was fine).
+      # Also pins Enter-to-submit on both surfaces.
+      - name: Verify what a student is told when sign-in fails
+        run: PORT=8931 node test/verify_auth_messages.js
+
+      # v5.94.0 — the owner asked whether quality, size and ratio really come
+      # out. The app's own rule is "never offered-but-ignored", enforced by two
+      # hand-written kind tables; nothing checked the tables against the
+      # requests. This measures: for every model, does the picked ratio change
+      # the body, does 1K vs 4K change it, and does what is SHOWN match what is
+      # SENT — in both directions.
+      - name: Verify the size and ratio controls reach the engine
+        run: PORT=8931 node test/verify_size_ratio_honesty.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
