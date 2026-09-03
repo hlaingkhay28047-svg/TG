@@ -164,7 +164,16 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    taking the pack to 143 files / 16.66 MB (16.656666 exactly — rounded up,
    same rule as always). B above confirms every file is correctly sized, so
    this is real content weight, not the native-1536px mistake. */
-const PREV_MB = 16.66;
+/* v5.87 — the Studio Look Copy card (studio-look-copy.jpg) shipped its own
+   verified 960x640 photo, encoded at the pack's q79 convention: two real
+   passes of shipped prompts — full-look-transfer for the styling the owner
+   asked the card to show, then studio-look-copy's own prompt into the lotus
+   plate its guide shows — centre-cropped and re-encoded to the pack's exact
+   geometry, taking the pack to 144 files / 16.75 MB (16.742155 exactly —
+   rounded up, same rule as v5.14/v5.16/v5.17/v5.62/v5.63/v5.64). B above
+   confirms the file is correctly sized, so this is real content weight, not
+   the native-1536px mistake this check exists to catch. */
+const PREV_MB = 16.75;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });
