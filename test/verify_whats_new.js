@@ -71,8 +71,12 @@ function report(name, ok, detail) {
     for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
     return 0;
   };
+  /* non-increasing, not strictly decreasing: one release may legitimately
+     have two things to say — 5.97.0 pinned the engine of a series AND took
+     the blown white light out of the thirteen Look Sets — and A4 below is
+     what stops the same thing being announced twice. */
   report("A2) entries run newest-first and none claims a version that has not shipped",
-    A.versions.every((v, i) => i === 0 || cmp(A.versions[i - 1], v) > 0) &&
+    A.versions.every((v, i) => i === 0 || cmp(A.versions[i - 1], v) >= 0) &&
     A.versions.every(v => cmp(v, A.appVer) <= 0), A.versions);
 
   report("A3) every entry points at a workflow or a page that actually exists",
@@ -154,16 +158,28 @@ function report(name, ok, detail) {
     switchPage("pgWf");
     const wfEntries = WHATS_NEW.filter(e => e.kind === "wf");
     const marked = [...document.querySelectorAll(".wfmini.is-new")].map(m => m.dataset.nwId);
-    const firsts = [...document.querySelectorAll(".wfgrid")]
-      .map(g => g.firstElementChild && g.firstElementChild.dataset.nwId);
+    /* the leading run of every grid: the new cards must be positions
+       0..k-1 of their own category, with no older card wedged between
+       them. With one new card that is "it is the first card"; with two
+       it is "they are the first two", which the app already renders by
+       sorting the new ones forward. */
+    const leadOk = [...document.querySelectorAll(".wfgrid")].every(g => {
+      const kids = [...g.children];
+      const at = [];
+      kids.forEach((k, i) => { if (k.classList.contains("is-new")) at.push(i); });
+      return at.every((v, i) => v === i);
+    });
     const chip = document.getElementById("wfJumpNew");
     const rail = document.getElementById("wfJump");
     return {
-      want: wfEntries.map(e => e.ref),
+      /* by card, not by row: a card two releases have touched is named by
+         two entries and must still wear exactly ONE ribbon, which the
+         ribbons === want.length check below then measures. */
+      want: [...new Set(wfEntries.map(e => e.ref))],
       marked: marked,
       ribbons: document.querySelectorAll(".wf-new").length,
-      /* each marked card must be the FIRST card in its own grid */
-      allFirst: marked.every(id => firsts.indexOf(id) >= 0),
+      /* every marked card leads its own grid — see leadOk above */
+      allFirst: leadOk,
       chipText: chip ? chip.textContent : null,
       chipIsFirst: !!(chip && rail && rail.firstElementChild === chip)
     };
@@ -171,7 +187,7 @@ function report(name, ok, detail) {
   report("E) every unread workflow wears a NEW ribbon, and only those",
     E2.marked.slice().sort().join(",") === E2.want.slice().sort().join(",") &&
     E2.ribbons === E2.want.length, E2);
-  report("E2) each one is the first card in its own category, so it is seen without scrolling",
+  report("E2) each one leads its own category — two in one category take the first two places, so none is pushed under an older card",
     E2.allFirst, E2);
   report("E3) the rail's first stop is a ✦ NEW chip carrying the count",
     !!E2.chipText && /NEW\s+\d+/.test(E2.chipText) && E2.chipIsFirst, E2);

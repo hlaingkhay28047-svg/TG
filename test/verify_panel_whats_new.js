@@ -146,7 +146,10 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     await page.evaluate(() => { try { switchPage("wf"); } catch (e) { } });
     await page.waitForTimeout(900);
     const wf = await page.evaluate(() => {
-      const want = (window.HNK.whatsNew.LIST || []).filter(e => e.kind === "wf").map(e => e.ref);
+      /* by card, not by row — see verify_whats_new E: a card named by two
+         entries still wears exactly one ribbon. */
+      const want = [...new Set((window.HNK.whatsNew.LIST || [])
+        .filter(e => e.kind === "wf").map(e => e.ref))];
       return {
         want: want,
         marked: [...document.querySelectorAll(".wfmini.is-new")].map(m => m.id.replace("hnkWf_", "")),

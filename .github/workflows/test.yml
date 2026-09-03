@@ -308,6 +308,15 @@ jobs:
       - name: Verify the prompt fits the model, and the model fits the prompt
         run: PORT=8931 node test/verify_model_fit.js
 
+      # v5.97.0 — the owner asked whether all models could give the same
+      # result. They cannot, and check A proves the reason from the catalog:
+      # not one image model exposes a seed, so no run is repeatable. What a
+      # hundred photographs CAN be is a matching series, which needs one
+      # engine for the whole run — pinned, re-asserted per photo, recorded on
+      # each result, and named aloud if it was ever two.
+      - name: Verify one series is made by one engine
+        run: PORT=8931 node test/verify_series_engine.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
