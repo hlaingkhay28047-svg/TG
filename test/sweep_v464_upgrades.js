@@ -169,7 +169,7 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    passes of shipped prompts — the subject in her own ivory silk, the owner's
    own reference set built empty of people, then studio-look-copy's own prompt
    over the two — centre-cropped and re-encoded to the pack's exact geometry,
-   taking the pack to 144 files / 16.79 MB (16.783476 exactly — rounded up,
+   taking the pack to 144 files / 16.79 MB (16.779114 exactly — rounded up,
    same rule as v5.14/v5.16/v5.17/v5.62/v5.63/v5.64). B above
    confirms the file is correctly sized, so this is real content weight, not
    the native-1536px mistake this check exists to catch. */
