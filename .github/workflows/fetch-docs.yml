@@ -9,6 +9,13 @@ name: Fetch RunningHub doc pages
 # and the fetched text is treated as reference data only.
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "identify = print only what each page IS (title/path/folder); full = print the whole spec"
+        required: false
+        default: "identify"
+        type: choice
+        options: ["identify", "full"]
   push:
     branches: [claude/hnk-studio-deployment-pr292-www53j]
     paths: [".github/workflows/fetch-docs.yml"]
@@ -64,7 +71,25 @@ jobs:
           - name: new5e
             ids: "509122419 509122420 509445864 509445865 510034450"
     steps:
+      # v5.89.0 — two modes. IDENTIFY prints only the few lines that say WHAT
+      # an endpoint is (its title, its path, the folder the doc site files it
+      # under). Thirty-three whole OpenAPI specs are hundreds of KB and the
+      # job-log API truncates from the start, so reading them all just to
+      # learn which are new wastes the very budget that loses pages. Once the
+      # interesting ids are known, FULL pulls those specs in whole.
+      - name: Identify each doc page
+        if: ${{ inputs.mode != 'full' }}
+        run: |
+          for id in ${{ matrix.ids }}; do
+            echo "=====ID ${id}====="
+            curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              | grep -E '^# |^  /|x-apifox-folder|^      summary:|^      operationId:' \
+              | head -12 \
+              || echo "FETCH-FAILED ${id}"
+          done
       - name: Fetch doc pages
+        if: ${{ inputs.mode == 'full' }}
         run: |
           for id in ${{ matrix.ids }}; do
             echo "=====DOC ${id} START====="
