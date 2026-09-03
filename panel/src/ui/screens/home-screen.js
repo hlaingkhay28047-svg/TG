@@ -369,13 +369,13 @@ function render(root, deps) {
     if (pageKey) dom.on(cell, "click", function () { if (deps.onPage) deps.onPage(pageKey); });
     stats.appendChild(cell);
   }
-  var wfCount = 144, libCount = 1850;
+  var wfCount = 157, libCount = 1850;
   try {
     var reg = globalThis.HNK && globalThis.HNK.workflowRegistry;
     if (reg && reg.list) wfCount = reg.list().length;
   } catch (e) { }
   try { if (items.length) libCount = items.length; } catch (e) { }
-  stat(151, "One-Tap Workflows");
+  stat(164, "One-Tap Workflows");
   stat(libCount, "Visual Library");
   stat(wfCount, "Smart Workflow");
   stat(162, "Retouch A Controls", "meitu");

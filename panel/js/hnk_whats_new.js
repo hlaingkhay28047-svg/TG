@@ -9,6 +9,9 @@
 (function () {
 "use strict";
 var WHATS_NEW = [
+  { v:"5.91.0", kind:"wf", ref:"look-golden-grecian",
+    t:{my:"Look Set ကတ်အသစ် ၁၃ ခု",en:"Thirteen new Look Sets",shn:"ၸုမ်းလင်ႇသဵၼ်ႈမႂ်ႇ 13",kac:"Look Set nnan 13",th:"13 เซ็ตลุคใหม่",zh:"13 组全新造型套装",vi:"13 bộ Look Set mới",id:"13 Look Set baru",ms:"13 Look Set baharu"},
+    s:{my:"နောက်ခံအရောင်၊ အလင်း၊ အရောင်ချိန်၊ ဝတ်စုံ အတိအကျ တစ်ပုံစံတည်း — ပုံ ၁၀၀ လုပ်လည်း တစ်ရိုက်တည်းလို။ ဝတ်စုံ+မိတ်ကပ် နဲ့ အသားရောင် ခလုတ် သီးသန့်ပါတယ်",en:"Backdrop, light, grade and wardrobe fixed on every photo, so a hundred frames read as one shoot — with their own wardrobe+makeup and skin-tone switches",shn:"သီလင်၊ ၾႆး၊ လၢႆးသီ၊ ၶူဝ်းၼုင်ႈ မိူၼ်ၵၼ်ၵူႊၶႅပ်း",kac:"Shakum, nhtoi, grade, palawng yawng maren",th:"ฉาก แสง เกรดสี และชุด เหมือนกันทุกภาพ",zh:"背景、布光、调色与服装每张一致",vi:"Phông, ánh sáng, màu và trang phục giống nhau mọi ảnh",id:"Latar, cahaya, grading dan busana sama di setiap foto",ms:"Latar, cahaya, gred dan busana sama pada setiap foto"} },
   { v:"5.90.0", kind:"page", ref:"pgWf",
     t:{my:"အသစ်ထွက်တာတွေ ချက်ချင်းသိရပါပြီ",en:"You'll see what's new, straight away",shn:"တေႁၼ်ၶိူင်ႈမႂ်ႇတင်းသဵင်ႈ",kac:"Nnan ai ni hpe mu na",th:"เห็นของใหม่ได้ทันที",zh:"新功能一眼就看到",vi:"Thấy ngay cái mới",id:"Langsung lihat yang baru",ms:"Terus nampak yang baharu"},
     s:{my:"ကတ်အသစ်တွေမှာ ရွှေရောင် NEW တံဆိပ် တပ်ထားပြီး အပေါ်ဆုံးမှာ ပြပါတယ် — နှိပ်ပြီး ချက်ချင်းစမ်းလို့ရပါတယ်",en:"New cards wear a gold NEW mark and sit at the top of their group — tap to try one now",shn:"ၶႅပ်းမႂ်ႇမီးမၢႆ NEW သီၶမ်း",kac:"Nnan ai card ni gold NEW lam tsun",th:"การ์ดใหม่มีป้าย NEW สีทองและอยู่บนสุด",zh:"新卡片带金色 NEW 标记并排在最前",vi:"Thẻ mới có nhãn NEW vàng và nằm trên cùng",id:"Kartu baru bertanda NEW emas dan ada di paling atas",ms:"Kad baharu bertanda NEW emas di bahagian atas"} },

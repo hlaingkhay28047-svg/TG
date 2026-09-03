@@ -262,6 +262,14 @@ jobs:
       - name: Verify every input slot shows the whole photograph
         run: PORT=8931 node test/verify_slot_whole_photo.js
 
+      # v5.91.0 — the thirteen Look Sets. The owner sent thirteen reference
+      # shoots and asked for a card each, with the backdrop colour, the light,
+      # the grade and the wardrobe fixed so a hundred photographs cut together
+      # as one shoot. Every one of those promises lives in a prompt, which is
+      # the easiest thing here to weaken by accident, so each is checked.
+      - name: Verify the thirteen Look Sets hold their set
+        run: PORT=8931 node test/verify_look_sets.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
