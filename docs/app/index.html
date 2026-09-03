@@ -10366,9 +10366,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     (function(){
       var ids=nwWfIds(), n=Object.keys(ids).filter(function(id){ return wfById[id]; }).length;
       if(!n) return;
+      /* .chip.on already IS the gold pill with dark ink on it (line ~337).
+         An earlier cut added an inline colour:var(--gold) on top of that and
+         painted gold text on a gold fill — a chip nobody could read, shipped
+         to production. The class carries the whole look; nothing goes on top. */
       var b=el("button","chip on","✦ NEW "+n);
       b.id="wfJumpNew";
-      b.style.cssText="border-color:var(--gold);color:var(--gold)";
       b.onclick=function(){
         var first=null;
         Object.keys(ids).forEach(function(id){
@@ -23541,7 +23544,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.91.0";
+var APP_VER="5.91.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
