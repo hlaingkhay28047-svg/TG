@@ -70,8 +70,13 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   report("A2) every entry matches the app's — version, kind, target, and all nine languages of both lines",
     drift.length === 0, drift.slice(0, 5));
 
-  report("A3) the newest entry still names the shipping APP_VER (the app's own gate, re-checked from the panel's copy)",
-    panel.LIST[0] && panel.LIST[0].v === appVer(), { appVer: appVer(), newest: panel.LIST[0] && panel.LIST[0].v });
+  /* v5.91.1 — major.minor, matching the app-side gate and for the same
+     reason: a MINOR adds something and must announce itself, a PATCH repairs
+     something already announced and must not push the real news down the
+     strip to say so. */
+  const mm = v => String(v).split(".").slice(0, 2).join(".");
+  report("A3) the newest entry still names the shipping minor (the app's own gate, re-checked from the panel's copy)",
+    panel.LIST[0] && mm(panel.LIST[0].v) === mm(appVer()), { appVer: appVer(), newest: panel.LIST[0] && panel.LIST[0].v });
 
   /* ---- B) and it reaches the panel's screen ---- */
   const { chromium } = require("playwright-core");

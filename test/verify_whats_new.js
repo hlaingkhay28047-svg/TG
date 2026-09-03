@@ -54,8 +54,17 @@ function report(name, ok, detail) {
     };
   });
 
-  report("A) the newest entry names the version being shipped — a release cannot forget to say what it changed",
-    A.versions[0] === A.appVer, { appVer: A.appVer, newest: A.versions[0] });
+  /* v5.91.1 — matched on major.minor rather than the whole version, and the
+     distinction is real rather than a loophole: a MINOR adds something a
+     student can use, and must announce itself here or the build fails. A
+     PATCH repairs something already announced — 5.91.1 made the ✦ NEW chip
+     readable again — and adding a row for that would push the actual news
+     down the strip to make room for "we fixed the thing we told you about",
+     which serves nobody. Ship a new minor without a row and this still
+     refuses the build. */
+  const mm = v => v.split(".").slice(0, 2).join(".");
+  report("A) the newest entry names the minor being shipped — a release cannot add something and forget to say so",
+    mm(A.versions[0]) === mm(A.appVer), { appVer: A.appVer, newest: A.versions[0] });
 
   const cmp = (a, b) => {
     const x = a.split(".").map(Number), y = b.split(".").map(Number);
@@ -166,6 +175,41 @@ function report(name, ok, detail) {
     E2.allFirst, E2);
   report("E3) the rail's first stop is a ✦ NEW chip carrying the count",
     !!E2.chipText && /NEW\s+\d+/.test(E2.chipText) && E2.chipIsFirst, E2);
+
+  /* E4 — v5.92.0. The owner opened the shipped app and found this chip as a
+     blank gold pill: an inline colour:var(--gold) had been layered on top of
+     .chip.on, which already paints gold, so the text was gold on gold. Every
+     check above passed the whole time — they read the chip's textContent, and
+     text that is present but invisible reads identically to text that works.
+     So this one measures what a person actually sees: the painted colour
+     against the painted background. Any future control that becomes
+     unreadable this way fails here instead of shipping. */
+  const E4 = await page.evaluate(() => {
+    const el = document.getElementById("wfJumpNew");
+    if (!el) return { found: false };
+    const cs = getComputedStyle(el);
+    /* walk up for the first non-transparent background, the way a person's
+       eye does — a transparent chip shows whatever is behind it. */
+    let bg = cs.backgroundColor, node = el;
+    while (node && (!bg || bg === "transparent" || /rgba\(0,\s*0,\s*0,\s*0\)/.test(bg))) {
+      node = node.parentElement;
+      bg = node ? getComputedStyle(node).backgroundColor : "rgb(0,0,0)";
+    }
+    const rgb = s => (s.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number);
+    const lum = c => {
+      const a = c.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+      return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    };
+    const l1 = lum(rgb(cs.color)), l2 = lum(rgb(bg));
+    return {
+      found: true, color: cs.color, bg: bg,
+      contrast: +(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05))).toFixed(2)
+    };
+  });
+  /* 4.5:1 is the ordinary readable-text threshold; the failure this exists to
+     catch scored 1.0 — the exact same colour on both sides. */
+  report("E4) …and its text is actually readable against its own background, not gold on gold",
+    E4.found && E4.contrast >= 4.5, E4);
 
   /* ---- F) the tab dot, and that it goes away ---- */
   const F = await page.evaluate(() => {
