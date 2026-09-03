@@ -216,13 +216,8 @@ function create(deps) {
       bdg.appendChild(icon(wf.badge + "-cream", ""));
       box.appendChild(bdg);
     }
-    /* v6.61.0 — the gold NEW ribbon, inside the visual like the photo-count
-       pill, so it tracks the art rather than the card box. */
     var _nwNew = nwSeenIds();
-    if (_nwNew[wf.id]) {
-      m.className = "wfmini is-new";
-      box.appendChild(dom.el(doc, "span", { class: "wf-new", text: "NEW" }));
-    }
+    if (_nwNew[wf.id]) m.className = "wfmini is-new";
     m.appendChild(box);
 
     /* ★ favourite toggle (app .fav): top-right, 44px hit box */
@@ -264,6 +259,11 @@ function create(deps) {
       m.appendChild(bt);
     }
     box.appendChild(dom.el(doc, "span", { class: "wf-need", text: needLabel(wf) }));
+    /* v6.61.0 — the gold NEW ribbon, inside the visual like the photo-count
+       pill so it tracks the art rather than the card box, and appended AFTER
+       that pill because that is the order the app builds them in: this page
+       is measured string-for-string against the app's. */
+    if (_nwNew[wf.id]) box.appendChild(dom.el(doc, "span", { class: "wf-new", text: "NEW" }));
 
     m.appendChild(dom.el(doc, "div", { class: "t", text: wf.title }));
     /* the app prints the catalog summary as written (one string for every
@@ -426,7 +426,16 @@ function create(deps) {
         var gd = dom.el(doc, "div", { class: "wfgrid" });
         var made = 0, wgs = {}, wgOrder = [];
         var cards = [];
-        c.ids.forEach(function (id) {
+        /* v6.62.0 — an unread NEW card comes FIRST in its own category, the
+           same sort the app applies. Sorting the rendered order (not the
+           registry) keeps every other consumer identical, and keeps this page
+           string-for-string equal to the app's, which is what the parity
+           test measures. */
+        var _nwFirst = nwSeenIds();
+        var _ordered = c.ids.slice().sort(function (a, b) {
+          return (_nwFirst[b] ? 1 : 0) - (_nwFirst[a] ? 1 : 0);
+        });
+        _ordered.forEach(function (id) {
           var wf = registry.get(id);
           if (!wf) return;
           if (wf.wedGroup) { if (!wgs[wf.wedGroup]) { wgs[wf.wedGroup] = 0; wgOrder.push(wf.wedGroup); } wgs[wf.wedGroup]++; }
@@ -474,6 +483,21 @@ function create(deps) {
       layoutGrid(gd2);
       host.appendChild(gd2);
     }
+
+    /* v6.62.0 — and the rail's first stop is the new work, as on the app.
+       It exists only while there IS new work: an empty "NEW 0" chip would be
+       worse than no chip, and would also break parity in the other direction. */
+    (function () {
+      var ids = nwSeenIds();
+      var live = Object.keys(ids).filter(function (id) { return !!registry.get(id); });
+      if (!live.length) return;
+      var b = dom.el(doc, "button", { class: "chip on", id: "hnkWfJumpNew", text: "\u2726 NEW " + live.length });
+      dom.on(b, "click", function () {
+        var first = doc.getElementById("hnkWf_" + live[0]);
+        if (first) { try { first.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { } }
+      });
+      if (rail.firstChild) rail.insertBefore(b, rail.firstChild); else rail.appendChild(b);
+    })();
 
     if (rail.childNodes.length) card.appendChild(rail);
     card.appendChild(favHost);
