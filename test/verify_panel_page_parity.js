@@ -33,7 +33,7 @@ const http = require("http");
 const { APP_INIT, APP_PORT } = require("../tools/build_panel_studio_suites.js");
 /* the panel host, its signed-in state and the string walker — shared with
    verify_panel_studio_sync.js so both read the panel the same way */
-const { UXP_STUB, COLLECT } = require("./lib/panel-parity-harness.js");
+const { UXP_STUB, COLLECT, COLLECT_STATE, stateDiff } = require("./lib/panel-parity-harness.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -229,6 +229,15 @@ function rewrite(list) {
       await app.evaluate(k => { try { switchPage(k); } catch (e) { } }, p.appKey);
       await app.waitForTimeout(1000);
       const a = await app.evaluate(`${COLLECT}(${JSON.stringify(p.appRoot)})`, null);
+
+      /* v6.56.0 — and the STATE, which the string list cannot see: the
+         placeholders (an attribute, never a text node) and which chip is
+         actually chosen. Same page, same moment, both surfaces. */
+      const bState = await panel.evaluate(`${COLLECT_STATE}(${JSON.stringify(p.panelRoot)})`, null);
+      const aState = await app.evaluate(`${COLLECT_STATE}(${JSON.stringify(p.appRoot)})`, null);
+      const sd = stateDiff(aState, bState);
+      report(`${p.label} opens on the web app's own choices — ${aState.ph.length} placeholder(s), ${aState.sel.length} selection(s)`,
+        sd.length === 0, sd.slice(0, 4).join(" | "));
 
       const want = rewrite(dropOnce(a, APP_ONLY[p.key] || []));
       const got = rewrite(dropOnce(b, PANEL_ONLY[p.key] || []));

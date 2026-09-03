@@ -79,7 +79,14 @@ const state = {
   beforeB64: null, beforeMime: "image/jpeg",
   resultB64: null, resultMime: "image/png",
   busy: false, keyShown: false, previewRatio: 0.75, urlSlot: -1,
-  rt: null, sections: {}, promptCap: MAX_PROMPT, page: "aitools", lastPreset: null,
+  rt: null,
+  /* v6.56.0 — Retouch Pro's strength. The app opens on 100% and both of its
+     strength rows (one-tap and sliders) render that chip already chosen; the
+     panel had no such field at all, so `v === state.rtStrength` was never true
+     and a student met two rows of 60 / 90 / 100 with nothing selected — no way
+     to tell what strength the next retouch would actually run at. */
+  rtStrength: 100,
+  sections: {}, promptCap: MAX_PROMPT, page: "aitools", lastPreset: null,
   clean: { people: false, hands: false, legs: false, full: false },
   keep: { frame: true, pose: true, face: true, expr: false, hair: false, dress: false, skin: false, light: false, color: false, bg: false, subject: false },
   rmix: { bg: false, fg: false, light: false, color: false, object: false },
@@ -89,7 +96,12 @@ const state = {
   restMode: "color", pendingBtn: null, busyBtnEl: null, busyBtnTxt: null,
   history: [],
   recentPrompts: [], histSel: -1, lastAction: "Prompt",
-  cRatio: "1:1", cVariations: 1, cGallery: [], cSel: 0, cUrlSlot: -1,
+  /* v6.56.0 — the app's Text to Image opens on AUTO, letting the model pick
+     the shape; the panel opened on 1:1, so a student's first generation came
+     back square when the web's would not have. The string test cannot see
+     this — the two pages carry the same chips, only a different one wears
+     the "on" class. */
+  cRatio: "auto", cVariations: 1, cGallery: [], cSel: 0, cUrlSlot: -1,
   /* v6.53.0 — Text to Image picks its own model, like the app's page */
   t2iModel: "", t2iSize: "",
   cRefs: [null, null, null, null], cResultB64: null, cMime: "image/png", cBeforeB64: null,
@@ -747,7 +759,7 @@ const I18N = {
     prov_lbl: "AI Provider",
     tab_create: "Create",
     create_note: "CREATE MODE \u2014 brand-new image from your prompt (+ its own 4 refs). Fully standalone: never reads the document, presets, chains or locks.",
-    create_ph: "Describe the image you want to create\u2026",
+    create_ph: "Describe the image you want \u2014 e.g. a photorealistic portrait of a woman in a red dress standing in a garden at golden hour\u2026",
     btn_create_ps: "\u2b07 Send to Photoshop",
     btn_to_ref: "\u21ba Use as Ref 1",
     st_to_ref: "Result loaded into Ref 1 \u2713",
@@ -1380,7 +1392,7 @@ const I18N = {
     prov_lbl: "AI \u101d\u1014\u103a\u1006\u1031\u102c\u1004\u103a\u1019\u103e\u102f\u1015\u1031\u1038\u101e\u1030",
     tab_create: "Create",
     create_note: "CREATE MODE \u2014 prompt (+ \u1000\u102d\u102f\u101a\u103a\u1015\u102d\u102f\u1004\u103a ref 4 \u1000\u103d\u1000\u103a) \u1014\u1032\u1037 \u1015\u102f\u1036\u1021\u101e\u1005\u103a\u1016\u1014\u103a\u1010\u102e\u1038\u1019\u101a\u103a\u104b Document \u1000\u102d\u102f \u101c\u102f\u1036\u1038\u101d\u1019\u1016\u1010\u103a \u2014 \u1018\u102c feature \u1014\u1032\u1037\u1019\u103e \u1019\u101b\u1031\u102c\u104b",
-    create_ph: "\u1016\u1014\u103a\u1010\u102e\u1038\u1001\u103b\u1004\u103a\u1010\u1032\u1037\u1015\u102f\u1036\u1000\u102d\u102f \u1016\u1031\u102c\u103a\u1015\u103c\u1015\u102b\u2026",
+    create_ph: "\u1018\u101a\u103a\u101c\u102d\u102f \u1015\u102f\u1036\u1019\u103b\u102d\u102f\u1038 \u101c\u102d\u102f\u1001\u103b\u1004\u103a\u101c\u1032 \u1016\u1031\u102c\u103a\u1015\u103c\u1015\u102b \u2014 \u1025\u1015\u1019\u102c: a photorealistic portrait of a woman in a red dress standing in a garden at golden hour\u2026",
     btn_create_ps: "\u2b07 Photoshop \u1011\u1032\u1015\u102d\u102f\u1037",
     btn_to_ref: "\u21ba Ref 1 \u1021\u1016\u103c\u1005\u103a\u101e\u102f\u1036\u1038",
     st_to_ref: "\u101b\u101c\u1012\u103a\u1000\u102d\u102f Ref 1 \u1011\u1032\u1011\u100a\u1037\u103a\u1015\u103c\u102e\u1038 \u2713",
@@ -2013,7 +2025,7 @@ const I18N = {
     prov_lbl: "\u107d\u1030\u1088\u1015\u107c\u103a\u101d\u1086\u1089 AI",
     tab_create: "Create",
     create_note: "CREATE MODE \u2014 \u1081\u1035\u1010\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1019\u1082\u103a\u1087\u1010\u102e\u1088 prompt \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 (+ ref 4 \u1022\u107c\u103a\u1081\u1004\u103a\u1038\u1076\u1031\u1083)\u104b \u1081\u1004\u103a\u1038\u1076\u1031\u1083\u1010\u1084\u1089\u1010\u1084\u1089: \u1022\u1019\u103a\u1087\u101c\u1030 document, preset, chains \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101c\u103d\u1075\u103a\u1089\u101e\u1004\u103a\u104b",
-    create_ph: "\u1010\u1085\u1019\u103a\u1088\u101d\u1083\u1088 \u1076\u1082\u103a\u1088\u101e\u1062\u1004\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u102e\u1088\u101e\u1004\u103a\u2026",
+    create_ph: "\u1010\u1085\u1019\u103a\u1088\u101d\u1083\u1088\u101c\u103d\u1004\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u101c\u1030\u101d\u103a\u1087",
     btn_create_ps: "\u2b07 \u101e\u1030\u1004\u103a\u1087\u1011\u102d\u102f\u1004\u103a Photoshop",
     btn_to_ref: "\u21ba \u1078\u1082\u103a\u1089\u1015\u1035\u107c\u103a Ref 1",
     st_to_ref: "\u101e\u1082\u103a\u1087\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1076\u101d\u103a\u1088 Ref 1 \u101a\u101d\u103a\u1089 \u2713",
@@ -2644,7 +2656,7 @@ const I18N = {
     prov_lbl: "AI jaw ai",
     tab_create: "Create",
     create_note: "CREATE MODE \u2014 na a prompt kaw na sumla nnan (+ shi a ref 4). Shi hkrai tsap ai: document, preset, chains, lock ni hpe galoi mung n hti ai.",
-    create_ph: "Galaw mayu ai sumla hpe tsun dan u\u2026",
+    create_ph: "Sumla n gara hku ra ai ni tsun dan u",
     btn_create_ps: "\u2b07 Photoshop de shagun",
     btn_to_ref: "\u21ba Ref 1 hku lang",
     st_to_ref: "Pru ai hpe Ref 1 kaw bang sai \u2713",
@@ -3275,7 +3287,7 @@ const I18N = {
     prov_lbl: "\u0e1c\u0e39\u0e49\u0e43\u0e2b\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23 AI",
     tab_create: "Create",
     create_note: "\u0e42\u0e2b\u0e21\u0e14 CREATE \u2014 \u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e21\u0e48\u0e08\u0e32\u0e01\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c (\u0e21\u0e35 ref \u0e02\u0e2d\u0e07\u0e15\u0e31\u0e27\u0e40\u0e2d\u0e07 4 \u0e23\u0e39\u0e1b)",
-    create_ph: "\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e04\u0e38\u0e13\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e2a\u0e23\u0e49\u0e32\u0e07\u2026",
+    create_ph: "\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23",
     btn_create_ps: "\u2b07 \u0e2a\u0e48\u0e07\u0e44\u0e1b Photoshop",
     btn_to_ref: "\u21ba \u0e43\u0e0a\u0e49\u0e40\u0e1b\u0e47\u0e19 Ref 1",
     st_to_ref: "\u0e42\u0e2b\u0e25\u0e14\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e25\u0e07 Ref 1 \u0e41\u0e25\u0e49\u0e27 \u2713",
@@ -3906,7 +3918,7 @@ const I18N = {
     prov_lbl: "AI \u63d0\u4f9b\u65b9",
     tab_create: "Create",
     create_note: "\u521b\u5efa\u6a21\u5f0f \u2014 \u4ec5\u51ed\u63d0\u793a\u8bcd\u751f\u6210\u5168\u65b0\u56fe\u7247\uff08\u542b\u81ea\u5e26 4 \u5f20\u53c2\u8003\u56fe\uff09",
-    create_ph: "\u63cf\u8ff0\u4f60\u60f3\u521b\u5efa\u7684\u56fe\u7247\u2026",
+    create_ph: "\u63cf\u8ff0\u4f60\u60f3\u8981\u7684\u56fe\u7247",
     btn_create_ps: "\u2b07 \u53d1\u9001\u5230 Photoshop",
     btn_to_ref: "\u21ba \u7528\u4f5c Ref 1",
     st_to_ref: "\u7ed3\u679c\u5df2\u8f7d\u5165 Ref 1 \u2713",
@@ -4537,7 +4549,7 @@ const I18N = {
     prov_lbl: "Nh\u00e0 cung c\u1ea5p AI",
     tab_create: "Create",
     create_note: "CH\u1ebe \u0110\u1ed8 CREATE \u2014 t\u1ea1o \u1ea3nh ho\u00e0n to\u00e0n m\u1edbi t\u1eeb prompt c\u1ee7a b\u1ea1n (+ 4 ref ri\u00eang). Ho\u00e0n to\u00e0n \u0111\u1ed9c l\u1eadp: kh\u00f4ng \u0111\u1ecdc t\u00e0i li\u1ec7u, preset, chains hay kh\u00f3a n\u00e0o.",
-    create_ph: "M\u00f4 t\u1ea3 b\u1ee9c \u1ea3nh b\u1ea1n mu\u1ed1n t\u1ea1o\u2026",
+    create_ph: "M\u00f4 t\u1ea3 b\u1ee9c \u1ea3nh b\u1ea1n mu\u1ed1n",
     btn_create_ps: "\u2b07 G\u1eedi sang Photoshop",
     btn_to_ref: "\u21ba D\u00f9ng l\u00e0m Ref 1",
     st_to_ref: "\u0110\u00e3 n\u1ea1p k\u1ebft qu\u1ea3 v\u00e0o Ref 1 \u2713",
@@ -5168,7 +5180,7 @@ const I18N = {
     prov_lbl: "Penyedia AI",
     tab_create: "Create",
     create_note: "MODE CREATE \u2014 gambar baru sepenuhnya dari prompt Anda (+ 4 ref miliknya sendiri). Berdiri sendiri: tidak pernah membaca dokumen, preset, chains, atau kunci.",
-    create_ph: "Jelaskan gambar yang ingin Anda buat\u2026",
+    create_ph: "Jelaskan gambar yang Anda inginkan",
     btn_create_ps: "\u2b07 Kirim ke Photoshop",
     btn_to_ref: "\u21ba Pakai sebagai Ref 1",
     st_to_ref: "Hasil dimuat ke Ref 1 \u2713",
@@ -5799,7 +5811,7 @@ const I18N = {
     prov_lbl: "Pembekal AI",
     tab_create: "Create",
     create_note: "MOD CREATE \u2014 imej baharu sepenuhnya daripada prompt anda (+ 4 ref tersendiri). Berdiri sendiri: tidak pernah membaca dokumen, preset, chains atau kunci.",
-    create_ph: "Terangkan imej yang anda mahu cipta\u2026",
+    create_ph: "Terangkan imej yang anda mahu",
     btn_create_ps: "\u2b07 Hantar ke Photoshop",
     btn_to_ref: "\u21ba Guna sebagai Ref 1",
     st_to_ref: "Hasil dimuat ke Ref 1 \u2713",
@@ -6213,7 +6225,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.55.0";
+const PANEL_VERSION = "6.56.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7301,7 +7313,9 @@ function applyI18n() {
       saveState: function () { try { saveSettings(); } catch (e) { } },
       toast: function (msg, kind) { try { setStatus(msg, kind); } catch (e) { } },
       switchPage: function (id) { try { switchPage(studioPageKey(id)); saveSettings(); } catch (e) { } },
-      curPage: function () { return state.page || ""; },
+      /* the studio compares this with its own page ids, so answer in its
+         language, not the panel's (see studioPageId) */
+      curPage: function () { return studioPageId(state.page || ""); },
       /* a function, not a value: this bridge is published before APP_URL's
          own const is evaluated, and a TDZ throw here would silently cost the
          whole studio its host */
@@ -7374,10 +7388,27 @@ function studioRun(btn, which) {
   runGenerate(prompt, true, ["skin", "subject"], false, { action: "Retouch", realDir: "edit" });
 }
 
-/* The studio's own switchPage("pgMeitu") style ids, mapped to panel keys. */
+/* The studio's own switchPage("pgMeitu") style ids, mapped to panel keys —
+   and, since v6.56.0, back again. ONE table, read both ways: a second
+   hand-written map is exactly how the two directions drift apart. */
+const STUDIO_PAGE_IDS = { pgMeitu: "meitu", pgEvoto: "evoto", pgRetouch: "retouch", pgPath: "path", pgCreate: "create", pgLib: "presets", pgGallery: "gallery" };
 function studioPageKey(id) {
-  const map = { pgMeitu: "meitu", pgEvoto: "evoto", pgRetouch: "retouch", pgPath: "path", pgCreate: "create", pgLib: "presets", pgGallery: "gallery" };
-  return map[id] || id;
+  return STUDIO_PAGE_IDS[id] || id;
+}
+/* v6.56.0 — the sliced studio code asks "which page am I on?" and compares the
+   answer with its OWN ids ("pgMeitu"), because in the web app that is what the
+   page is called. The panel answered with its own key ("meitu"), so the
+   comparison could never be true: the RETOUCH A / RETOUCH B tab never wore the
+   "on" class (the student could not see which suite they were in), a jump-bar
+   chip for a group already on screen re-navigated to the page it was already
+   on, and the feature search counted every match as "over on the other suite"
+   and jumped away from the results it had just found. The string tests could
+   not see any of it — the two surfaces carry the same chips, only a different
+   one wears the class. */
+function studioPageId(key) {
+  const ids = Object.keys(STUDIO_PAGE_IDS);
+  for (let i = 0; i < ids.length; i++) { if (STUDIO_PAGE_IDS[ids[i]] === key) return ids[i]; }
+  return key;
 }
 
 /* Re-render the mounted AI Tools sub-app whenever the language changes, so
@@ -9729,6 +9760,16 @@ function vidPaintHsl() {
     if (sel && w) w.className = "hsl" + (sel.style.display === "none" ? " hsl-off" : "");
   });
 }
+/* v6.56.0 — the Video page's ratio rail, the app's own control. The value
+   lives on the hidden #vidAspect the submit already reads, so a tap here is
+   the same pick the dropdown used to make — only now the student can see the
+   shape of the shot they are asking for. Nothing to persist: the panel's
+   Video page restores its model, resolution and duration from the shot card,
+   not from settings, and the ratio follows them. */
+function vidPaintRail() {
+  paintRatioRail("vidRatioRail", "vidAspect", function () { vidPaintRail(); });
+}
+
 /* the app's updateVidModelUI: the model owns the Res / Duration / Ratio
    lists, the prompt cap and the image note */
 function vidPaintOptions() {
@@ -9758,6 +9799,11 @@ function vidPaintOptions() {
       if (m.aspects.indexOf(prior) >= 0) asp.value = prior;
     }
     asp.style.display = (m && m.aspect) ? "" : "none";
+    /* v6.56.0 — the rail is the visible control (the select is .rr-native, as
+       in the app), and it comes and goes with the model's own aspect support */
+    const vrail = $("vidRatioRail");
+    if (vrail) vrail.style.display = (m && m.aspect) ? "flex" : "none";
+    vidPaintRail();
   }
   const box = $("vidPromptP");
   if (box) { try { box.maxLength = (m && m.promptMax) || 800; } catch (e) { } }
@@ -9805,6 +9851,10 @@ function vidWfApply(w) {
   if (setup.res) { const e = $("vidRes"); if (e) { try { e.value = setup.res; } catch (x) { } } }
   if (setup.dur) { const e = $("vidDur"); if (e) { try { e.value = String(setup.dur); } catch (x) { } } }
   if (setup.aspect) { const e = $("vidAspect"); if (e) { try { e.value = setup.aspect; } catch (x) { } } }
+  /* the card wrote the value straight onto the select, so the rail has to be
+     told — the app nudges its own rail with a change event for the same
+     reason (mlApply). Without this the chosen shape stays unlit. */
+  vidPaintRail();
   vidPaintHsl();
   const box = $("vidPromptP");
   if (box) {
@@ -9950,9 +10000,13 @@ const VT_L = {
   pick: { my: "\u1017\u102e\u1012\u102e\u101a\u102d\u102f \u1016\u102d\u102f\u1004\u103a \u101b\u103d\u1031\u1038\u1019\u101a\u103a (MP4)", en: "Pick a video file (MP4)", shn: "\u1011\u1062\u1086\u1087\u107e\u1062\u1086\u1087\u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088 (MP4)",
     kac: "Video file lata u (MP4)", th: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e44\u0e1f\u0e25\u0e4c\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d (MP4)", zh: "\u9009\u62e9\u89c6\u9891\u6587\u4ef6 (MP4)",
     vi: "Ch\u1ecdn t\u1ec7p video (MP4)", id: "Pilih file video (MP4)", ms: "Pilih fail video (MP4)" },
-  promptPh: { my: "Prompt (\u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)", en: "Prompt (optional)", shn: "Prompt (\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
-    kac: "Prompt (bang tim mai)", th: "Prompt (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)", zh: "Prompt\uff08\u53ef\u9009\uff09",
-    vi: "Prompt (kh\u00f4ng b\u1eaft bu\u1ed9c)", id: "Prompt (opsional)", ms: "Prompt (pilihan)" }
+  /* the app's own words for this box. The panel had said the same thing in
+     different Burmese, Shan, Kachin and Vietnamese — a difference no
+     string-count test could see, because both surfaces have exactly one
+     placeholder here and a placeholder is an attribute, not a text node. */
+  promptPh: { my: "Prompt (\u1011\u100a\u1037\u103a\u1001\u103b\u1004\u103a\u1019\u103e\u1011\u100a\u1037\u103a)", en: "Prompt (optional)", shn: "Prompt (\u101e\u1004\u103a\u1121\u101c\u1088\u1088\u1037\u1088)",
+    kac: "Prompt (nkau)", th: "Prompt (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)", zh: "Prompt\uff08\u53ef\u9009\uff09",
+    vi: "Prompt (t\u00f9y ch\u1ecdn)", id: "Prompt (opsional)", ms: "Prompt (pilihan)" }
 };
 
 /* the app paints the file it holds and, when something is still missing, one
@@ -11298,7 +11352,7 @@ async function saveSettings() {
       rhKey: state.rhKey, lang: state.lang, theme: state.theme, model: state.model,
       size: state.size, ratio: state.ratio,
       autoRun: state.autoRun, autoPlace: state.autoPlace, intensity: state.intensity,
-      rt: state.rt, sections: state.sections, page: state.page,
+      rt: state.rt, rtStrength: state.rtStrength, sections: state.sections, page: state.page,
       /* the studio's own slider/chip values — the app's state.st, saved and
          restored through the app's own tolerant reader (state.stSaved) */
       st: (state.st ? { t1: state.st.t1, t2: state.st.t2, v: state.st.v, geo: state.st.geo, preset: state.st.preset, target: state.st.target } : null),
@@ -11416,6 +11470,7 @@ async function loadSettings() {
       if (typeof o.lightEquip === "boolean") state.lightEquip = o.lightEquip;
       if (Array.isArray(o.recentPrompts)) state.recentPrompts = o.recentPrompts.filter(function (r) { return r && typeof r.t === "string"; }).slice(0, 20);
       if (typeof o.cRatio === "string") state.cRatio = o.cRatio;
+      if (o.rtStrength === 60 || o.rtStrength === 90 || o.rtStrength === 100) state.rtStrength = o.rtStrength;
       if (typeof o.t2iModel === "string") state.t2iModel = o.t2iModel;
       if (typeof o.t2iSize === "string") state.t2iSize = o.t2iSize;
       /* v6.54.0 — the Path page, restored the app's tolerant way: every field
@@ -14815,10 +14870,21 @@ function ffFillRatio() {
   if (rail) rail.style.display = show ? "flex" : "none";
   ffPaintRail();
 }
-function ffPaintRail() {
-  const rail = $("ffRatioRail"), sel = $("ffRatio");
+/* ============================================================
+   v6.56.0 — THE RATIO RAIL, ONCE.
+
+   The web app has exactly one of these (ratioRailAttach), attached to its
+   three ratio selects: Freeform, Text to Image and Video. The panel had two
+   hand-copied builders — one for Freeform, one for Text to Image — and none
+   at all for Video, so on the Video page a student got the raw dropdown the
+   app retired, and no shaped box to read the shot's shape from. Three copies
+   is how a fourth page ends up different again, so there is one builder now
+   and the three rails are three calls to it.
+   ============================================================ */
+function paintRatioRail(railId, selId, pick) {
+  const rail = $(railId), sel = $(selId);
   if (!rail || !sel) return;
-  rail.innerHTML = "";
+  while (rail.firstChild) rail.removeChild(rail.firstChild);
   for (let i = 0; i < sel.options.length; i++) {
     (function (o) {
       const v = o.value, m = /^(\d+):(\d+)$/.exec(v);
@@ -14833,17 +14899,21 @@ function ffPaintRail() {
         else { h = MX; w = Math.max(7, Math.round(MX * rw / rh)); }
       }
       ic.style.width = w + "px"; ic.style.height = h + "px";
+      /* the app's own "A" in the dashed box, so Auto reads as a choice and
+         not as an empty slot */
       if (!m) ic.textContent = "A";
       b.appendChild(ic);
       const sp = document.createElement("span"); sp.textContent = v || "Auto";
       b.appendChild(sp);
-      b.addEventListener("click", function () {
-        state.ffRatio = v; sel.value = v;
-        ffPaintRail(); saveSettings();
-      });
+      b.addEventListener("click", function () { sel.value = v; pick(v); });
       rail.appendChild(b);
     })(sel.options[i]);
   }
+}
+function ffPaintRail() {
+  paintRatioRail("ffRatioRail", "ffRatio", function (v) {
+    state.ffRatio = v; ffPaintRail(); saveSettings();
+  });
 }
 /* app renderBtn: the picker shows the chosen option's text; a "Word: value"
    label splits into the context word (already static in the markup) and the
@@ -15495,34 +15565,9 @@ function t2iPaintModelTile() {
 }
 /* the app's .rchip rail: a shaped box per ratio, "A" for Auto */
 function t2iPaintRail() {
-  const rail = $("t2iRatioRail"), sel = $("t2iRatio");
-  if (!rail || !sel) return;
-  rail.innerHTML = "";
-  for (let i = 0; i < sel.options.length; i++) {
-    (function (o) {
-      const v = o.value, m = /^(\d+):(\d+)$/.exec(v);
-      const b = document.createElement("div");
-      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
-      b.className = "rchip" + (m ? "" : " auto") + (v === sel.value ? " on" : "");
-      const ic = document.createElement("i");
-      const MX = 20; let w = 15, h = 15;
-      if (m) {
-        const rw = +m[1], rh = +m[2];
-        if (rw >= rh) { w = MX; h = Math.max(7, Math.round(MX * rh / rw)); }
-        else { h = MX; w = Math.max(7, Math.round(MX * rw / rh)); }
-      }
-      ic.style.width = w + "px"; ic.style.height = h + "px";
-      if (!m) ic.textContent = "A";
-      b.appendChild(ic);
-      const sp = document.createElement("span"); sp.textContent = v || "Auto";
-      b.appendChild(sp);
-      b.addEventListener("click", function () {
-        sel.value = v; state.cRatio = v || "auto";
-        t2iPaintRail(); saveSettings();
-      });
-      rail.appendChild(b);
-    })(sel.options[i]);
-  }
+  paintRatioRail("t2iRatioRail", "t2iRatio", function (v) {
+    state.cRatio = v || "auto"; t2iPaintRail(); saveSettings();
+  });
 }
 
 function bindCreate() {
