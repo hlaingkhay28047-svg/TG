@@ -104,4 +104,73 @@ const COLLECT = `(function(sel){
   return out;
 })`;
 
-module.exports = { UXP_STUB: UXP_STUB, COLLECT: COLLECT };
+/* v6.56.0 — THE STATE, which no list of strings can see.
+ *
+ * COLLECT reads the words on the page. Two pages can carry exactly the same
+ * words and still be different products: the app's Text to Image opened on
+ * AUTO where the panel opened on 1:1, its Retouch Pro showed 100% already
+ * chosen where the panel showed three strengths and none picked, and its
+ * RETOUCH A tab was lit where the panel's was not — every one of them a chip
+ * both surfaces carry, with the "on" class on a different one. A placeholder
+ * is worse: it is an attribute, so the walker never reads it at all, and the
+ * panel had four languages' worth of its own wording in two prompt boxes.
+ *
+ * This reads the part of a page that is a CHOICE rather than a word:
+ *   ph  — the placeholder of every visible text box
+ *   sel — the label of every chip that is currently on, and the option each
+ *         visible dropdown is showing
+ *
+ * Visibility is measured with client rects, not getComputedStyle alone:
+ * getComputedStyle on a child of a display:none parent still reports the
+ * child's OWN display, so a per-element style check calls hidden things
+ * visible — which is exactly how a rail that is correctly hidden on both
+ * surfaces read as a difference while the real one (a page with no rail at
+ * all) hid behind it. */
+const COLLECT_STATE = `(function(sel){
+  var root = document.querySelector(sel);
+  if (!root) return { ph: ["NO ROOT " + sel], sel: [] };
+  root.querySelectorAll(".grp").forEach(function (g) { if (g.className.indexOf("open") < 0) g.className += " open"; });
+  function vis(e){
+    var cs = getComputedStyle(e);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    return e.getClientRects().length > 0;
+  }
+  function txt(e){ return (e.textContent || "").replace(/\\s+/g, " ").trim(); }
+  var ph = [], on = [];
+  root.querySelectorAll("input,textarea").forEach(function (e) {
+    if (!vis(e)) return;
+    var p = e.getAttribute("placeholder");
+    if (p) ph.push(p.replace(/\\s+/g, " ").trim());
+  });
+  root.querySelectorAll(".chip.on,.rchip.on,.pcard.on,.tabb.on").forEach(function (e) {
+    if (!vis(e)) return;
+    var t = txt(e);
+    if (t) on.push(t);
+  });
+  root.querySelectorAll("select").forEach(function (e) {
+    if (!vis(e)) return;
+    var o = e.options && e.options[e.selectedIndex];
+    if (o) on.push("[select] " + txt(o));
+  });
+  return { ph: ph, sel: on };
+})`;
+
+/* A positional walk calls a whole list different when ONE item is missing, so
+   the two readings are compared as multisets: the answer is the real delta,
+   named item by item, which is what a person needs to fix it. */
+function stateDiff(app, panel) {
+  const out = [];
+  [["placeholder", app.ph || [], panel.ph || []], ["selected", app.sel || [], panel.sel || []]].forEach(function (row) {
+    const name = row[0], A = row[1], B = row[2];
+    const bag = new Map();
+    B.forEach(function (x) { bag.set(x, (bag.get(x) || 0) + 1); });
+    A.forEach(function (x) {
+      const n = bag.get(x) || 0;
+      if (n) bag.set(x, n - 1); else out.push(name + " only in the APP: " + JSON.stringify(x));
+    });
+    bag.forEach(function (n, x) { for (let i = 0; i < n; i++) out.push(name + " only in the PANEL: " + JSON.stringify(x)); });
+  });
+  return out;
+}
+
+module.exports = { UXP_STUB: UXP_STUB, COLLECT: COLLECT, COLLECT_STATE: COLLECT_STATE, stateDiff: stateDiff };

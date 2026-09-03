@@ -17,7 +17,7 @@ const path = require("path");
 const { generate, OUT, APP_INIT, APP_PORT } = require("../tools/build_panel_studio_suites.js");
 /* the panel host, its signed-in state and the string walker — shared with
    verify_panel_page_parity.js so both read the panel the same way */
-const { UXP_STUB, COLLECT } = require("./lib/panel-parity-harness.js");
+const { UXP_STUB, COLLECT, COLLECT_STATE, stateDiff } = require("./lib/panel-parity-harness.js");
 const PORT = APP_PORT;
 
 let failures = 0;
@@ -178,11 +178,12 @@ async function smoke() {
                     retouch: ["#pageRetouch", "#pgRetouch"] };
     const PAGE_IDS = { meitu: ["meitu", "pgMeitu"], evoto: ["evoto", "pgEvoto"], retouch: ["retouch", "pgRetouch"] };
     const KEYS = ["meitu", "evoto", "retouch"];
-    const panelText = {};
+    const panelText = {}, panelState = {};
     for (const key of KEYS) {
       await page.evaluate(k => { try { switchPage(k); } catch (e) { } }, PAGE_IDS[key][0]);
       await page.waitForTimeout(900);
       panelText[key] = await page.evaluate(`${COLLECT}(${JSON.stringify(ROOTS[key][0])})`, null);
+      panelState[key] = await page.evaluate(`${COLLECT_STATE}(${JSON.stringify(ROOTS[key][0])})`, null);
     }
 
     const appPage = await browser.newPage({ viewport: { width: 420, height: 760 } });
@@ -200,12 +201,26 @@ async function smoke() {
       try { var s = document.getElementById("splash"); if (s) s.remove(); } catch (e) { }
       window.scrollTo = function () { }; Element.prototype.scrollIntoView = function () { };
     });
-    const appText = {};
+    const appText = {}, appState = {};
     for (const key of KEYS) {
       await appPage.evaluate(k => { try { switchPage(k); } catch (e) { } }, PAGE_IDS[key][1]);
       await appPage.waitForTimeout(1200);
       appText[key] = await appPage.evaluate(`${COLLECT}(${JSON.stringify(ROOTS[key][1])})`, null);
+      appState[key] = await appPage.evaluate(`${COLLECT_STATE}(${JSON.stringify(ROOTS[key][1])})`, null);
     }
+
+    /* v6.56.0 — THE CHOICES, not just the words. These three pages carry the
+       same chips on both surfaces, so a chip lit on one and dark on the other
+       is invisible to the string list above: the panel's RETOUCH A tab never
+       wore "on" (its curPage answered in the panel's page ids while the app's
+       own code compared them with the app's), and Retouch Pro's two strength
+       rows showed 60 / 90 / 100 with none chosen where the app opens on 100%.
+       Both shipped through a green string test. */
+    [["Retouch A", "meitu"], ["Retouch B", "evoto"], ["Retouch Pro", "retouch"]].forEach(([label, key]) => {
+      const sd = stateDiff(appState[key] || {}, panelState[key] || {});
+      report(`${label} opens on the web app's own choices — ${((appState[key] || {}).sel || []).length} selection(s)`,
+        sd.length === 0, sd.slice(0, 4).join(" | "));
+    });
 
     [["Retouch A", "meitu"], ["Retouch B", "evoto"], ["Retouch Pro", "retouch"]].forEach(([label, key]) => {
       const a = appText[key] || [], b = panelText[key] || [];

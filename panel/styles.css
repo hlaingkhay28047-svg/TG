@@ -1489,7 +1489,6 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .gen-opts .hsl-span2 { width: 100%; margin-right: 0; margin-bottom: 8px; }
 /* app #vidOpts: the aspect select (shown by the few models that take one)
    wraps onto the grid's third row, first column, under the 8px row gap */
-.apg #vidOpts .vid-aspect { flex: 0 0 auto; width: 49%; width: calc(50% - 4px); margin: 8px 0 0 0; }
 .apg .gen-opts .rr-native { display: none; }
 /* app .hsl-off — a picker whose select is hidden hides with it */
 .apg .hsl.hsl-off { display: none; }
