@@ -337,7 +337,12 @@ function report(name, ok, detail) {
     srcApp.includes("if(!wiz.ratioPicked) wzR.value=\"\";") &&
     srcApp.includes('if(pair[0]==="selRatio") wiz.ratioPicked=true;') &&
     srcApp.includes("wfModelFilter((w.req||[]).length)") &&
-    srcApp.includes("wfEnsureCapableModel((w.req||[]).length)") &&
+    /* v5.95.0 — the run-time switch now weighs prompt room as well as image
+       capacity, so the pinned call carries the prompt length too. The intent
+       of this pin is unchanged: the switch is wired in the wizard, at RUN
+       time, and never on open (the negative assertion below still proves the
+       second half). */
+    srcApp.includes("wfEnsureCapableModel((w.req||[]).length, (wiz.prompt||\"\").length)") &&
     !/wfApplyModelFilter\(\)[\s\S]{0,400}sel\.onchange\(\)/.test(srcApp.slice(srcApp.indexOf("function wfApplyModelFilter"), srcApp.indexOf("function wfEnsureCapableModel"))),
     "wizard rail/ratio-honesty/run-time-switch wiring missing");
 
