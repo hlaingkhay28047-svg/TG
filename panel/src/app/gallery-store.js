@@ -14,7 +14,13 @@
 "use strict";
 
 var FOLDER = "gallery";
-var MAX = 200;   /* the app caps its own store too; oldest go first */
+/* v6.57.0 — NOTHING IS DELETED TO MAKE ROOM (owner instruction: keep it
+   until I delete it). This used to drop everything past the newest 200, the
+   same way the web app dropped everything past 60, and for the same reason:
+   room nobody asked us for. A studio that shot a wedding and came back on
+   Monday could find the first hour of it gone. The count is reported, and
+   the studio's own delete is the only thing that removes a file. */
+var MAX = 0;     /* 0 = no ceiling; kept as a field so callers still read it */
 
 function _uxp() { return (typeof require === "function") ? require("uxp") : null; }
 
@@ -58,12 +64,9 @@ async function list() {
   } catch (e) { return []; }
 }
 
-async function trim() {
-  try {
-    var files = await list();
-    for (var i = MAX; i < files.length; i++) { try { await files[i].delete(); } catch (e) { } }
-  } catch (e) { }
-}
+/* Kept as a no-op rather than deleted, so every existing caller keeps its
+   shape and nothing has to remember not to call it. */
+async function trim() { /* v6.57.0 — see MAX: results are the studio's until they delete them */ }
 
 async function remove(name) {
   try {

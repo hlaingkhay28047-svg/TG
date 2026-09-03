@@ -80,8 +80,8 @@ report("the chime file the page names is really in the build",
   fs.existsSync(path.join(ROOT, "docs", "app", "lib", "snd", "splash-chime.mp3")));
 
 /* ---- the shared database upgrade ---- */
-report("gallery database moves to version 2",
-  /indexedDB\.open\("hnk_web_studio",2\)/.test(app));
+report("gallery database moves to version 3",
+  /indexedDB\.open\("hnk_web_studio",3\)/.test(app));
 report("upgrade creates whichever store is missing, never assumes",
   /if\(!d\.objectStoreNames\.contains\("gal"\)\) d\.createObjectStore\("gal",\{keyPath:"id",autoIncrement:true\}\)/.test(app) &&
   /if\(!d\.objectStoreNames\.contains\("kv"\)\) d\.createObjectStore\("kv"\)/.test(app));

@@ -97,17 +97,31 @@ function report(name, ok, detail) {
     out.F_persists = !!rec2 && rec2.keep === 1;
     out.F_reflects = document.getElementById("galKeep").className.indexOf("btn-gold") >= 0;
 
-    /* E) eviction is bounded, announced, and respects the star */
-    out.E_skipsStarred = String(galleryAdd).indexOf("c.value.keep") >= 0;
-    out.E_announces = String(galleryAdd).indexOf("galEvicted") >= 0;
-    out.E_warns = String(galleryAdd).indexOf("galNearFull") >= 0;
+    /* E) NOTHING IS EVICTED (v5.86.0, owner instruction: keep it until I
+       delete it). This check used to pin the opposite — that eviction was
+       bounded, announced and skipped starred records. The behaviour it
+       described was real and careful, and it still deleted a studio's work
+       to make room they were never asked about. The promise is now stronger,
+       so the check pins the stronger promise: the save path deletes nothing,
+       it only counts, and the one control that removes work is the one the
+       studio presses themselves. */
+    out.E_neverDeletes = String(galleryAdd).indexOf("c.delete()") < 0 &&
+      String(galleryAdd).indexOf("toDrop") < 0;
+    out.E_stillCounts = String(galleryAdd).indexOf("galNearFull") >= 0 &&
+      String(galleryAdd).indexOf("st.count()") >= 0;
+    /* Clear Gallery is still the deliberate way out, and it still spares stars */
+    out.E_clearSparesStars = String(document.getElementById("galClearAll").onclick).indexOf("c.value.keep") >= 0;
+    /* the count survives past the old ceiling: sixty-one records, sixty-one kept */
+    const before = (await galCountAll());
+    for (let i = 0; i < 4; i++) await galleryAdd({ mime: "image/jpeg", b64: plate }, "cap probe " + i);
+    out.E_countGrew = (await galCountAll()) === before + 4;
 
     /* G) Home draws its thumbnail from one record */
     out.G_cursor = String(renderDashCont).indexOf('openCursor(null,"prev")') >= 0 &&
       String(renderDashCont).indexOf('objectStore("gal").getAll()') < 0;
 
     /* H) translations */
-    const KEYS = ["gal_near_full", "gal_evicted", "gal_keep", "gal_kept", "gal_kept_on",
+    const KEYS = ["gal_keep", "gal_kept", "gal_kept_on",
       "gal_kept_off", "gal_read_fail", "gal_zip_partial"];
     const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
     out.H_missing = [];
@@ -126,8 +140,8 @@ function report(name, ok, detail) {
   report("C) the full plate is still reachable by id", r.C_full, r);
   report("D) a write reports its outcome and a failure is surfaced",
     r.D_reports && r.D_writeErrors, r);
-  report("E) eviction warns, announces what it dropped, and skips starred results",
-    r.E_skipsStarred && r.E_announces && r.E_warns, r);
+  report("E) nothing is ever deleted to make room — only the studio deletes",
+    r.E_neverDeletes && r.E_stillCounts && r.E_clearSparesStars && r.E_countGrew, r);
   report("F) starring persists to the record and the button reflects it",
     r.F_persists && r.F_reflects, r);
   report("G) Home draws its thumbnail from one record, not the whole store", r.G_cursor, r);
