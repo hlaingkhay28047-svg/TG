@@ -122,11 +122,36 @@ async function fetchImageUrl(url) {
   } catch (e) { return null; }
 }
 
-/* ---- needs in-panel verify: clipboard image ---- */
+/* ---- needs in-panel verify: clipboard image ----
+   v6.59.0 — this used to return null unconditionally, so the Paste source the
+   import service has always implemented could never succeed and no screen
+   offered it. UXP's clipboard support genuinely varies by host version, which
+   is why it stayed stubbed; the answer is to ASK the host rather than assume
+   for it. Every step is guarded and any gap returns null, which the import
+   service reports as "no-clipboard-image" — the studio is told to copy an
+   image (not a file or a link) and nothing crashes. Still marked needs-verify:
+   it is proven in a browser harness, not yet in Photoshop. */
 async function readClipboardImage() {
-  // UXP clipboard image support varies by host version; treat as unavailable
-  // until verified in-panel so the slot falls back cleanly (spec §5).
-  return null;
+  try {
+    var nav = (typeof navigator !== "undefined") ? navigator : null;
+    var cb = nav && nav.clipboard;
+    if (!cb || typeof cb.read !== "function") return null;
+    var items = await cb.read();
+    if (!items || !items.length) return null;
+    for (var i = 0; i < items.length; i++) {
+      var types = items[i].types || [];
+      for (var t = 0; t < types.length; t++) {
+        if (String(types[t]).indexOf("image/") !== 0) continue;
+        var blob = await items[i].getType(types[t]);
+        if (!blob) continue;
+        var ab = await blob.arrayBuffer();
+        var bytes = new Uint8Array(ab);
+        if (!bytes.length) continue;
+        return { ref: "data:" + types[t] + ";base64," + _bytesToBase64(bytes), width: 0, height: 0 };
+      }
+    }
+    return null;
+  } catch (e) { return null; }
 }
 
 /* ---- needs in-panel verify: capture the active layer as an image ref ----

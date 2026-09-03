@@ -582,6 +582,20 @@ function create(deps) {
     else applySlot(inp, res);
   }
 
+  /* v6.59.0 — the fifth source, and the one the service had implemented all
+     along. image-import-service has carried fromPaste since the first spec
+     (§5 names Active Layer · File · Paste · Web Link), photoshop-host now
+     really reads the clipboard, and no screen ever offered the button — so a
+     studio who had just copied a picture had to save it to disk first. When
+     the host cannot read the clipboard the slot says exactly that and
+     nothing else changes. */
+  function addFromPaste(inp) {
+    if (!imageImport) return;
+    var res = imageImport.fromPaste(deps.host);
+    if (res && typeof res.then === "function") res.then(function (slot) { applySlot(inp, slot); });
+    else applySlot(inp, res);
+  }
+
   function refresh() {
     if (!state.workflowId) return;
     var ev = validator.evaluate(state);
@@ -819,6 +833,8 @@ function create(deps) {
     dom.on(add, "click", function () { addImage(inp); });
     var fileB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfFile_" + inp.key, text: dom.t("btn_ref_file", "File") });
     dom.on(fileB, "click", function () { addFromFile(inp); });
+    var pasteB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfPaste_" + inp.key, text: dom.t("btn_ref_paste", "Paste") });
+    dom.on(pasteB, "click", function () { addFromPaste(inp); });
     var webB = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfWeb_" + inp.key, text: dom.t("btn_ref_web", "Web") });
     var lib = dom.el(doc, "button", { class: "hnk-btn hnk-req-add hnk-req-lib", id: "hnkWfLib_" + inp.key, text: "\u2726 " + dom.t("ai_library", "Library") });
     dom.on(lib, "click", function () { addFromLibrary(inp); });
@@ -841,7 +857,7 @@ function create(deps) {
 
     return dom.el(doc, "div", { class: "hnk-req-block" }, [
       dom.el(doc, "div", { class: "hnk-req-row" }, [
-        dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, fileB, webB, lib
+        dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, fileB, pasteB, webB, lib
       ]),
       urlRow
     ]);

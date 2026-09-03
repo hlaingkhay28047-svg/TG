@@ -6225,7 +6225,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.58.0";
+const PANEL_VERSION = "6.59.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10515,7 +10515,7 @@ async function galThumb(f) {
 function renderGal() {
   const grid = $("galGrid");
   const note = $("galNote");
-  /* v6.58.0 — a count, not a countdown: the store no longer deletes anything
+  /* v6.59.0 — a count, not a countdown: the store no longer deletes anything
      to make room, so there is no ceiling to report a distance from. */
   if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length;
   const empty = $("galEmpty");

@@ -121,7 +121,8 @@ function create(deps) {
     root.appendChild(nodes.slotErrors);
     /* v6.27.0 — owner requirement: every image slot offers the classic tabs'
        four sources (Active Layer · File · Web Link · Library), not just the
-       active layer. One applier so every source lands identically. */
+       active layer. One applier so every source lands identically.
+       v6.59.0 — five now: Paste joins them, through the same applier. */
     var atLimit = function () { return state.images.length >= evaluate().maxSlots; }; // dynamic limit (§5)
     var applySlot = function (slot) {
       fstate.addImage(state, { source: slot.source, ref: slot.ref, valid: slot.valid, reason: slot.reason });
@@ -158,6 +159,19 @@ function create(deps) {
       }).catch(function () { applySlot({ source: "file", ref: null, valid: false, reason: "unreadable" }); });
     });
     srcRow.appendChild(nodes.addRefFile);
+    /* v6.59.0 — Paste, the fifth source, on the Freeform slots too: the
+       import service has carried fromPaste since the first spec and the host
+       now really reads the clipboard, so the two screens offer the same five
+       ways in. A host that cannot read the clipboard says so in the slot. */
+    nodes.addRefPaste = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkAddRefPaste", text: dom.t("btn_ref_paste", "Paste") });
+    dom.on(nodes.addRefPaste, "click", function () {
+      if (atLimit()) return;
+      if (!imageImport) return;
+      var res = imageImport.fromPaste(deps.host);
+      if (res && typeof res.then === "function") res.then(applySlot);
+      else applySlot(res);
+    });
+    srcRow.appendChild(nodes.addRefPaste);
     nodes.addRefWeb = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkAddRefWeb", text: dom.t("btn_ref_web", "Web") });
     srcRow.appendChild(nodes.addRefWeb);
     nodes.addRefLib = dom.el(doc, "button", { class: "hnk-btn hnk-req-add hnk-req-lib", id: "hnkAddRefLib", text: "✦ " + dom.t("ai_library", "Library") });
