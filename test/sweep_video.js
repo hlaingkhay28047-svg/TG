@@ -2,8 +2,20 @@
    fake key, fill IMAGE 1 + a prompt, GENERATE with the default video model
    (RH Video G Official, built-in — no manual mapping needed), and assert
    the mocked upload -> submit -> query(poll) chain produces a playable
-   result whose src is the raw RunningHub result URL (video results are
-   NOT base64-downloaded like image results — see rhGenerateVideo).
+   result — and that the studio KEEPS it.
+
+   v5.86.0 changed what "playable" is allowed to mean, so this check moved
+   with it. RunningHub hands back a link that dies in 24 hours; until this
+   release that link WAS the result, the page held nothing else, and a
+   reload lost the clip outright. Now the page shows the link the instant it
+   arrives and, behind that, downloads the file into the Gallery and repaints
+   onto the saved copy. So the promise this asserts is the stronger one: the
+   result box opens, and it settles on a blob: source backed by real saved
+   bytes, with the 24-hour warning down — because that warning belongs to a
+   link, not to a file the studio owns. (Pinning src to the raw RunningHub
+   URL would now pin the defect: it would pass only while the save was still
+   in flight, and would have to be raced to stay green.)
+
    Also checks the client-side "2 images not supported" guard for the
    Gemini Omni Flash video model (1 or 3 images only).
    Usage: PORT=8931 node test/sweep_video.js   (serve docs/app on $PORT first) */
@@ -101,15 +113,29 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     document.getElementById("vidPrompt").value = "subject slowly turns and smiles";
     document.getElementById("btnVidGen").onclick();
     const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const vid = document.getElementById("vidResultVideo");
     for (let w = 0; w < 100 && document.getElementById("vidResultBox").className.indexOf("on") < 0; w++) await sleep(50);
-    const ok = document.getElementById("vidResultBox").className.indexOf("on") >= 0
-      && document.getElementById("vidResultVideo").src === "https://mock.runninghub.test/out.mp4";
-    return ok ? "OK" : ("no result — " + (document.getElementById("stVidGen").textContent || ""));
+    const opened = document.getElementById("vidResultBox").className.indexOf("on") >= 0;
+    /* the link shows first; the saved copy replaces it the moment the bytes
+       are home. Both are legitimate states of a working page — only the
+       second is the one the studio still has tomorrow, so that is the one
+       this waits for. */
+    const liveFirst = vid.src === "https://mock.runninghub.test/out.mp4" || vid.src.indexOf("blob:") === 0;
+    for (let w = 0; w < 120 && vid.src.indexOf("blob:") !== 0; w++) await sleep(50);
+    const rec = state.vidHist[0] || {};
+    const ex = document.getElementById("vidExpireNote");
+    if (!opened) return "the result box never opened — " + (document.getElementById("stVidGen").textContent || "");
+    if (!liveFirst) return "the result box opened on nothing playable: " + vid.src.slice(0, 60);
+    if (vid.src.indexOf("blob:") !== 0) return "the clip never moved onto a saved copy: " + vid.src.slice(0, 60);
+    if (!(rec.blob && rec.blob.size > 0)) return "the page plays a blob but the take carries no saved bytes";
+    if (rec.url !== "https://mock.runninghub.test/out.mp4") return "the take lost the RunningHub link it came from";
+    if (ex && ex.style.display !== "none") return "the 24-hour link warning is still up over a saved file";
+    return "OK";
   }, B64);
 
   const calls = await page.evaluate(() => window.__rhCalls);
   console.log("RunningHub calls made:", JSON.stringify(calls));
-  console.log(result === "OK" ? "PASS (video)" : ("FAIL: " + result));
+  console.log(result === "OK" ? "PASS (video: the take opens, then settles on the saved copy the studio keeps)" : ("FAIL: " + result));
   console.log(guardOk ? "PASS (2 references submit per the doc — no invented odd-count rule)" : "FAIL: 2-image submit did not carry both imageUrls");
 
   // ---- v4.28 §4.5 (W1): the video model label must not credit Gemini ----

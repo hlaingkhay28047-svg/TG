@@ -30,9 +30,9 @@ publicSections.forEach(id => {
     new RegExp(`href=["']#${id}["']`).test(landing), "required destination is not reachable from public navigation");
 });
 
-check("landing advertises Web Studio 5.85.0", /Web Studio\s+(?:<[^>]+>)*v5\.85\.0/i.test(landing), "release copy is stale");
-check("landing advertises Panel 6.56.2", /Panel(?:[^\n<]|<[^>]+>){0,80}v6\.56\.2/i.test(landing), "panel copy is stale");
-check("web app reports 5.85.0", /var\s+APP_VER\s*=\s*["']5\.85\.0["']/.test(app), "APP_VER is stale");
+check("landing advertises Web Studio 5.86.0", /Web Studio\s+(?:<[^>]+>)*v5\.86\.0/i.test(landing), "release copy is stale");
+check("landing advertises Panel 6.57.0", /Panel(?:[^\n<]|<[^>]+>){0,80}v6\.57\.0/i.test(landing), "panel copy is stale");
+check("web app reports 5.86.0", /var\s+APP_VER\s*=\s*["']5\.86\.0["']/.test(app), "APP_VER is stale");
 
 check("admin and authenticated download routes stay out of search indexes",
   /name=["']robots["'][^>]+noindex/i.test(adminRoute) && /name=["']robots["'][^>]+noindex/i.test(downloadRoute));

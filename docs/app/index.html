@@ -665,6 +665,9 @@ img.ld{background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--pa
 .btn.active{background:var(--gold);border-color:var(--gold);color:#1a1408}
 
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin-top:10px}
+/* v5.86.0 — a clip in the Gallery reads as a clip: the poster frame with a
+   play mark over it, so a grid of stills and clips is scannable at a glance. */
+.gal-vid{position:relative;outline:1px solid rgba(217,164,65,.45);outline-offset:-1px}
 .lib-grid img{width:100%;aspect-ratio:144/180;object-fit:cover;border-radius:8px;border:1px solid var(--line-soft);cursor:pointer;background:var(--panel-2)}
 .lib-grid img.sel{border-color:var(--gold)}
 .lib-pick{display:none;margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:10px}
@@ -4755,6 +4758,74 @@ var _panelDownloadStage = "";
    soon as the unified endpoint answers; unknown/error then stays fail-closed. */
 var unified = { entitlement:null, enforced:false, legacy:false, loading:false, error:false, inFlight:null, last:0 };
 
+/* ============================================================
+   v5.86.0 — A PAGE OPENS ON THE WORK IT WAS LEFT WITH.
+   The results were never lost — every image has gone into the Gallery for a
+   long time — but the page that made them forgot. Close the app, come back,
+   and the result card was empty and the take strip was gone; the studio had
+   to go hunting in the Gallery for work they had made ten minutes earlier.
+   That is the thing the owner asked to end.
+   So each page restores its own last takes, from the store, the first time it
+   is opened in a session. Lazily, not at boot: a launch that reads a hundred
+   photographs off disk before it paints is a worse app than one that forgets.
+   ============================================================ */
+var RES_RESTORE_CAP=8;              /* the same depth the take strip has always had */
+var _resRestored={};                /* one restore per page per session */
+function resRestorePage(id){
+  if(!id || _resRestored[id]) return;
+  _resRestored[id]=1;
+  try{
+    if(id==="pgVideo") return resRestoreVideo();
+    if(RES_IMAGE_PAGES.indexOf(id)>=0) return resRestoreImages(id);
+  }catch(e){ }
+}
+/* Each page keeps its takes in its own array and repaints with its own
+   function; the restore has to speak each page's own language rather than
+   assume one shared strip. Text to Image was the trap here — it looks like
+   the others and uses state.t2iHist, not state.hist. */
+var RES_IMAGE_PAGES=["pgCreate","pgRetouch","pgText2Img"];
+function resRestoreImages(id){
+  var t2i=(id==="pgText2Img");
+  var have = t2i ? (state.t2iHist && state.t2iHist.length) : (state.hist && state.hist.length);
+  if(have) return;                                 /* this session already has takes */
+  galListPage(id, RES_RESTORE_CAP).then(function(recs){
+    var takes=recs.filter(function(r){ return r.kind!=="video" && r.b64; });
+    if(!takes.length) return;
+    var still = t2i ? (state.t2iHist && state.t2iHist.length) : (state.hist && state.hist.length);
+    if(still) return;                              /* a generate landed while we read */
+    var list=takes.map(function(r){ return { mime:r.mime, b64:r.b64, _prov:r.prov||"", _id:r.id }; });
+    if(t2i){
+      state.t2iHist=list; state.t2iHistSel=0;
+      try{ if(typeof showT2IResult==="function") showT2IResult(); }catch(e){ }
+      return;
+    }
+    state.hist=list; state.histSel=0; state.result=list[0];
+    /* the before image the compare view needs, taken from the same record so
+       Before/After is the pair it always was rather than the newest upload */
+    var b=takes[0].before;
+    if(b && b.b64){
+      if(id==="pgRetouch") state.rsOrig=state.rsOrig||b; else state.cmpBase=state.cmpBase||b;
+    }
+    try{
+      if(id==="pgRetouch"){ if(typeof rsShowResult==="function") rsShowResult(); }
+      else if(typeof showResult==="function") showResult();
+    }catch(e){ }
+  }).catch(function(){});
+}
+function resRestoreVideo(){
+  if(state.vidHist && state.vidHist.length) return;
+  galListPage("pgVideo", RES_RESTORE_CAP).then(function(recs){
+    var clips=recs.filter(function(r){ return r.kind==="video" && r.blob; });
+    if(!clips.length) return;
+    if(state.vidHist && state.vidHist.length) return;
+    state.vidHist=clips.map(function(r){
+      return { url:"", blob:r.blob, id:r.id, prompt:r.prompt||"", resolution:r.res||"", duration:r.dur||"", ts:r.ts||0 };
+    });
+    state.vidHistSel=0;
+    try{ showVidResult(false); }catch(e){ }
+  }).catch(function(){});
+}
+
 function switchPage(id, fromPop){
   /* v4.96: every deep link, gate and shortcut that still says "pgStudio" lands
      on whichever suite the customer used last, instead of a page that no longer
@@ -4817,6 +4888,7 @@ function switchPage(id, fromPop){
   var gear=$("btnGearSetup");
   if(gear) gear.classList.toggle("on", id==="pgHome");
   renderSubtabs(grp, id);
+  resRestorePage(id);
   window.scrollTo(0, scrollMem[id]||0);
   /* v5.62.0 — while the wall is up, the only reachable page is Home, and
      recording that hop as "the user's page" poisoned the NEXT launch too:
@@ -4880,7 +4952,11 @@ function galDb(){
     /* v5.49.0 — version 2 adds the small "kv" store beside the gallery; the
        upgrade guard creates whichever store a database is missing, so both a
        fresh install and a v1 upgrade end with the same two stores */
-    var r=indexedDB.open("hnk_web_studio",2);
+    /* v5.86.0 — version 3. No new store: a result record simply carries more
+       of itself now (the BEFORE image, the page that made it, and for a video
+       the file's own bytes). Old records lack those fields and are read as
+       image-only takes with no compare, which is exactly what they were. */
+    var r=indexedDB.open("hnk_web_studio",3);
     r.onupgradeneeded=function(){
       var d=r.result;
       if(!d.objectStoreNames.contains("gal")) d.createObjectStore("gal",{keyPath:"id",autoIncrement:true});
@@ -4971,7 +5047,11 @@ document.addEventListener("visibilitychange", function(){
    thumb is stored beside the plate at write time and is the only thing the
    grid ever touches; the full bytes are read back by id, on demand, only when
    something actually needs them (open, download, ZIP, use as IMAGE 1/2). */
-var GAL_THUMB_EDGE=320, GAL_MAX=60, GAL_WARN_AT=48;
+/* v5.86.0 — GAL_MAX is gone: nothing is evicted any more (see galleryAdd).
+   The warning stays, and repeats every GAL_WARN_EVERY records past the first
+   so a studio filling the browser's storage hears about it more than once
+   without being nagged on every single save. */
+var GAL_THUMB_EDGE=320, GAL_WARN_AT=200, GAL_WARN_EVERY=50;
 function galMakeThumb(mime, b64){
   return new Promise(function(res){
     try{
@@ -4993,6 +5073,63 @@ function galMakeThumb(mime, b64){
     }catch(e){ res(""); }
   });
 }
+/* v5.86.0 — THE BEFORE IMAGE, STORED WITH THE AFTER.
+   Before/After was a comparison the app could only make while the original
+   was still in memory: leave the app and come back and the result was still
+   there in the Gallery, but there was nothing left to compare it against. So
+   the original now rides along in the record.
+   It is stored BOUNDED, not whole. A retoucher compares on a screen, and a
+   1600px long edge is past what any phone or laptop shows while costing a
+   fraction of a second copy of every full-size original. The student's own
+   upload is untouched — this is the copy the compare view reads. */
+var GAL_BEFORE_EDGE=1600;
+function galMakeBefore(mime, b64){
+  return new Promise(function(res){
+    try{
+      var img=new Image();
+      img.onload=function(){
+        try{
+          var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+          if(!w||!h) return res(null);
+          var s=Math.min(1, GAL_BEFORE_EDGE/Math.max(w,h));
+          if(s>=1) return res({mime:mime,b64:b64});   /* already small: keep it exact */
+          var cv=document.createElement("canvas");
+          cv.width=Math.max(1,Math.round(w*s)); cv.height=Math.max(1,Math.round(h*s));
+          cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+          var du=cv.toDataURL("image/jpeg",0.85);
+          res({mime:"image/jpeg", b64:(du.split(",")[1])||""});
+        }catch(e){ res(null); }
+      };
+      img.onerror=function(){ res(null); };
+      img.src="data:"+mime+";base64,"+b64;
+    }catch(e){ res(null); }
+  });
+}
+/* The original this result was made from, AS THE PAGE THAT MADE IT KNOWS IT.
+   This has to be page-aware or it lies: Text to Image starts from a sentence,
+   so there is no "before" at all, and taking state.refs[0] there would file a
+   photograph from another page as the original of a picture it never touched.
+   The pages that chain results keep the TRUE first photo (cmpBase / rsOrig /
+   ST.orig) so a second pass still compares against what was uploaded. */
+function galBeforeSource(){
+  try{
+    var page=galCurPage();
+    if(page==="pgText2Img" || page==="pgVideo" || page==="pgVideoUp") return null;
+    if(page==="pgRetouch") return state.rsOrig || (state.refs && state.refs[0]) || null;
+    if(page==="pgMeitu" || page==="pgEvoto")
+      return (typeof ST!=="undefined" && ST.orig) || (state.st && state.st.img) || null;
+    return state.cmpBase || (state.refs && state.refs[0]) || null;
+  }catch(e){ return null; }
+}
+/* Which page made this. Without it a restored result has nowhere to go back
+   to, and "show it where it was" is guesswork. */
+function galCurPage(){
+  try{
+    var p=document.querySelector(".page.on");
+    return (p && p.id) || "";
+  }catch(e){ return ""; }
+}
+
 /* Read one record's full bytes back. Everything that needs real pixels goes
    through here, so the grid never has to hold them. */
 function galFull(id){
@@ -5022,13 +5159,114 @@ function galListWf(wfId, cap){
     });
   }).catch(function(){ return []; });
 }
+/* v5.86.0 — A VIDEO IS A RESULT TOO, AND IT USED TO BE THE ONLY ONE WE LOST.
+   Every image the app makes has been saved to the Gallery for a long time.
+   A video was never saved at all: the page held a RunningHub URL, its own
+   notice said that link works for 24 hours, and the strip under it said
+   "this session only". A studio that made a clip on Saturday and opened the
+   app on Monday had nothing — not a worse copy, nothing.
+   So the bytes come home. The clip is fetched once, kept as a Blob (not
+   base64: a Blob is the file itself, where base64 would cost a third more
+   for nothing), and given a poster frame so the Gallery can show it. From
+   then on the video plays from this device, with no link to expire. */
+function galMakePoster(blob){
+  return new Promise(function(res){
+    var url="", v=null, done=false;
+    function finish(val){ if(done) return; done=true; try{ if(url) URL.revokeObjectURL(url); }catch(e){} res(val); }
+    try{
+      url=URL.createObjectURL(blob);
+      v=document.createElement("video");
+      v.muted=true; v.playsInline=true; v.preload="metadata"; v.src=url;
+      function grab(){
+        try{
+          var w=v.videoWidth, h=v.videoHeight;
+          if(!w||!h) return finish("");
+          var sc=Math.min(1, GAL_THUMB_EDGE/Math.max(w,h));
+          var cv=document.createElement("canvas");
+          cv.width=Math.max(1,Math.round(w*sc)); cv.height=Math.max(1,Math.round(h*sc));
+          cv.getContext("2d").drawImage(v,0,0,cv.width,cv.height);
+          finish((cv.toDataURL("image/jpeg",0.72).split(",")[1])||"");
+        }catch(e){ finish(""); }
+      }
+      /* Seek first, then draw. Drawing on loadeddata catches a frame the
+         decoder has not painted yet on some encoders and yields a blank
+         canvas; "seeked" is the event that means there is a picture. */
+      v.onseeked=grab;
+      v.onloadedmetadata=function(){ try{ v.currentTime=Math.min(0.1, (v.duration||1)/10); }catch(e){ grab(); } };
+      v.onloadeddata=function(){ if(!v.duration) grab(); };
+      v.onerror=function(){ finish(""); };
+      setTimeout(function(){ if(!done) grab(); }, 6000);
+    }catch(e){ finish(""); }
+  });
+}
+/* Fetch the clip and keep it. Resolves with the stored record's id, or 0 —
+   never throws, because a video that could not be saved must still play from
+   its live link for the rest of this session. */
+function galleryAddVideo(url, promptSnippet, meta){
+  meta = meta || {};
+  return fetchWithTimeout(url, {}, MEDIA_DL_TIMEOUT_MS).then(function(r){
+    if(!r.ok) throw new Error("video-fetch-"+r.status);
+    return r.blob();
+  }).then(function(blob){
+    return galMakePoster(blob).then(function(thumb){
+      return galDb().then(function(d){
+        return new Promise(function(resolve){
+          var tx=d.transaction("gal","readwrite"), st=tx.objectStore("gal");
+          var rec={ kind:"video", blob:blob, mime:blob.type||"video/mp4", thumb:thumb,
+            prompt:promptSnippet||"", ts:Date.now(), page:meta.page||galCurPage(),
+            res:meta.res||"", dur:meta.dur||"", srcUrl:url, keep:0, b64:"", before:null, prov:"", wf:"" };
+          var rq=st.add(rec);
+          var failed=false;
+          function fail(){ if(failed) return; failed=true; galSaveFailed(); resolve(0); }
+          rq.onerror=fail; tx.onabort=fail; tx.onerror=fail;
+          tx.oncomplete=function(){ if(!failed) resolve(rq.result||0); };
+        });
+      });
+    });
+  }).catch(function(){ galSaveFailed(); return 0; });
+}
+/* How many results are stored. The app reports a count now that there is no
+   cap to count down to, and the Setup card's storage line reads it too. */
+function galCountAll(){
+  return galDb().then(function(d){
+    return new Promise(function(res){
+      var rq=d.transaction("gal").objectStore("gal").count();
+      rq.onsuccess=function(){ res(rq.result||0); };
+      rq.onerror=function(){ res(0); };
+    });
+  }).catch(function(){ return 0; });
+}
+/* The newest stored results for one page, newest first. This is what lets a
+   page open on the work it was left with instead of on an empty card. */
+function galListPage(pageId, cap){
+  return galDb().then(function(d){
+    return new Promise(function(res){
+      var out=[];
+      var rq=d.transaction("gal").objectStore("gal").openCursor(null,"prev");
+      rq.onsuccess=function(){
+        var c=rq.result;
+        if(!c||out.length>=cap) return res(out);
+        var v=c.value||{};
+        if(v.page===pageId){ v.id=c.primaryKey; out.push(v); }
+        c.continue();
+      };
+      rq.onerror=function(){ res(out); };
+    });
+  }).catch(function(){ return []; });
+}
+
 function galSaveFailed(){
   toast(L9({my:"ရလဒ်ကို Gallery ထဲ မသိမ်းနိုင်ခဲ့ပါ — browser storage ပြည့်နေပါပြီ။ ဒီပုံကို ကိုယ်တိုင် download လုပ်ထားပါ",en:"Couldn't save this result to Gallery — your browser storage is full. Download this photo yourself.",shn:"သိမ်းဢမ်ႇလႆႈၼႂ်း Gallery — browser storage တဵမ်ယဝ်ႉ။ ႁင်းၵူၺ်း download ဝႆႉ",kac:"Gallery kaw n da lu ai — browser storage hpring sai. Nang hkrai download la u",th:"บันทึกผลลัพธ์ลง Gallery ไม่ได้ — พื้นที่เบราว์เซอร์เต็ม กรุณาดาวน์โหลดรูปนี้เอง",zh:"无法保存到 Gallery — 浏览器存储已满，请自行下载这张照片",vi:"Không lưu được vào Thư viện — bộ nhớ trình duyệt đã đầy. Hãy tự tải ảnh này về.",id:"Tidak dapat menyimpan ke Galeri — penyimpanan browser penuh. Unduh foto ini sendiri.",ms:"Tidak dapat simpan ke Galeri — storan pelayar penuh. Muat turun foto ini sendiri."}),"err");
 }
 /* Returns a promise so a caller that must not lie ("saved automatically") can
    wait and say otherwise. Existing fire-and-forget callers are unaffected. */
-function galleryAdd(out, promptSnippet){
+function galleryAdd(out, promptSnippet, meta){
+  meta = meta || {};
+  var beforeSrc = (meta.before !== undefined) ? meta.before : galBeforeSource();
+  var page = meta.page || galCurPage();
   return galMakeThumb(out.mime, out.b64).then(function(thumb){
+   return (beforeSrc && beforeSrc.b64 ? galMakeBefore(beforeSrc.mime, beforeSrc.b64) : Promise.resolve(null))
+   .then(function(before){
    return galDb().then(function(d){
     return new Promise(function(resolve){
     var tx=d.transaction("gal","readwrite"), st=tx.objectStore("gal");
@@ -5038,36 +5276,47 @@ function galleryAdd(out, promptSnippet){
        engine · model made this) — older records simply lack the field
        v4.53: thumb + keep. A quota error used to abort the transaction in
        silence while every string on screen promised the result was safe. */
-    var rq=st.add({ mime:out.mime, b64:out.b64, thumb:thumb, prompt:promptSnippet||"", ts:Date.now(), prov:(out&&out._prov)||"", wf:(typeof state!=="undefined"&&state.runWfId)||"", keep:0 });
+    /* v5.86.0 — before + page + kind ride along, so a result can be shown
+       again where it was made and compared against what made it. */
+    var rq=st.add({ mime:out.mime, b64:out.b64, thumb:thumb, prompt:promptSnippet||"", ts:Date.now(),
+      prov:(out&&out._prov)||"", wf:(typeof state!=="undefined"&&state.runWfId)||"", keep:0,
+      kind:"image", page:page, before:before||null });
     rq.onerror=fail;
     tx.onabort=fail; tx.onerror=fail;
     tx.oncomplete=function(){ if(!failed) resolve(true); };
-    /* keep the newest GAL_MAX, but never silently. Starred records are the
-       studio's own "do not delete" mark and are skipped entirely. */
+    /* nothing is dropped here — see the note in the count handler below. */
+    /* v5.86.0 — KEPT UNTIL THE STUDIO DELETES IT (owner instruction).
+       This used to drop the oldest unstarred takes once the count passed 60.
+       A studio that shot a wedding on Saturday and opened the app on Monday
+       could find the first hour of it gone — deleted by us, for room we never
+       asked them about. Nothing is deleted here any more; the count only
+       warns, and "Clear Gallery" is the one thing that removes work. The
+       browser's own quota is the real ceiling, and galSaveFailed() already
+       says so plainly when a save cannot fit. */
     st.count().onsuccess=function(e){
       var n=e.target.result;
-      if(n>=GAL_WARN_AT && n<=GAL_MAX) galNearFull(n);
-      if(n>GAL_MAX){
-        var toDrop=n-GAL_MAX, dropped=0;
-        st.openCursor().onsuccess=function(ev){
-          var c=ev.target.result;
-          if(c && toDrop>0){
-            if(!c.value || !c.value.keep){ c.delete(); toDrop--; dropped++; }
-            c.continue();
-          } else if(!c && dropped){ galEvicted(dropped); }
-        };
-      }
+      if(n>=GAL_WARN_AT && (n-GAL_WARN_AT)%GAL_WARN_EVERY===0) galNearFull(n);
     };
     });
+   });
    });
   }).catch(function(){ galSaveFailed(); return false; });
 }
 function galNearFull(n){
-  toast(t("gal_near_full").replace("{N}",String(n)).replace("{M}",String(GAL_MAX)),"err");
+  /* the message no longer threatens a limit we enforce — it reports the
+     count and points at the one control that removes work. */
+  toast(L9({
+    my:"Gallery ထဲမှာ ရလဒ် "+n+" ခု ရှိပါပြီ — ဘာမှ အလိုအလျောက် မဖျက်ပါ။ နေရာလိုရင် Gallery ထဲက မလိုတာတွေကို ကိုယ်တိုင် ဖျက်ပါ",
+    en:"Your Gallery holds "+n+" results — nothing is deleted automatically. Remove what you no longer need from the Gallery when you want the space.",
+    shn:"Gallery မီး "+n+" ဢၼ် — ဢမ်ႇမွတ်ႇႁင်းၵူၺ်း။",
+    kac:"Gallery hta "+n+" nga ai — hpa mung shara nnan hkrai n mat ai.",
+    th:"Gallery มี "+n+" รายการ — ไม่มีการลบอัตโนมัติ",
+    zh:"图库中有 "+n+" 个结果 — 不会自动删除。",
+    vi:"Thư viện có "+n+" kết quả — không có gì bị xoá tự động.",
+    id:"Galeri berisi "+n+" hasil — tidak ada yang dihapus otomatis.",
+    ms:"Galeri mempunyai "+n+" hasil — tiada apa dipadam secara automatik."}));
 }
-function galEvicted(n){
-  toast(t("gal_evicted").replace("{N}",String(n)),"err");
-}
+
 function galleryDel(id, cb){
   galDb().then(function(d){
     d.transaction("gal","readwrite").objectStore("gal").delete(id).onsuccess=function(){ if(cb) cb(); };
@@ -5173,6 +5422,14 @@ function galBulkRefresh(){
    size readout the pick card has always shown. Records written before v4.53
    have no thumb; they fall back to their own plate and get one written on the
    next pass, so an existing gallery upgrades itself without a migration. */
+/* A clip whose poster frame could not be grabbed still has to look like
+   something. One flat dark tile, drawn here rather than fetched, with the
+   play badge the stylesheet puts over every .gal-vid. */
+var GAL_VIDEO_TILE="data:image/svg+xml;base64,"+btoa(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="180">'+
+  '<rect width="144" height="180" fill="#121722"/>'+
+  '<path d="M60 78l28 16-28 16z" fill="#d9a441"/></svg>');
+
 function galReadIndex(d){
   return new Promise(function(res){
     var out=[], legacy=[];
@@ -5181,10 +5438,11 @@ function galReadIndex(d){
       var c=ev.target.result;
       if(!c){ res({items:out.reverse(), legacy:legacy}); return; }
       var v=c.value||{};
-      if(!v.thumb && v.b64) legacy.push(v.id);
+      if(!v.thumb && v.b64 && (v.kind||"image")!=="video") legacy.push(v.id);
       out.push({ id:v.id, mime:v.mime, thumb:v.thumb||"", legacyB64:v.thumb?"":(v.b64||""),
                  prompt:v.prompt||"", ts:v.ts||0, prov:v.prov||"", keep:v.keep?1:0,
-                 bytes:(v.b64||"").length });
+                 kind:v.kind||"image", page:v.page||"",
+                 bytes:(v.b64||"").length || ((v.blob&&v.blob.size)||0) });
       c.continue();
     };
     rq.onerror=function(){ res({items:[], legacy:[]}); };
@@ -5224,18 +5482,25 @@ function renderGallery(){
       if(galSel && !items.some(function(it){ return it.id===galSel.id; })) galSel=null;
       if(!galSel){ $("galPick").className="lib-pick"; }
       galBulkRefresh();
-      /* v4.41: the 60-item cap silently drops the oldest work — say where
-         the meter stands instead of promising "everything survives" */
+      /* v5.86.0 — there is no cap any more, so the meter reports a count
+         rather than a countdown to work being deleted. */
       var gn=$("galNote");
       if(gn){
         if(gn.dataset.base===undefined) gn.dataset.base=gn.textContent;
-        gn.textContent=gn.dataset.base+" · "+items.length+" / 60";
+        var nv=items.filter(function(x){ return x.kind==="video"; }).length;
+        gn.textContent=gn.dataset.base+" · "+items.length+(nv?(" ("+nv+" video)"):"");
       }
       if(!items.length){ return; }
       items.forEach(function(it){
         var im=document.createElement("img");
+        /* v5.86.0 — a clip's tile is its poster frame. When the poster could
+           not be grabbed (a codec the browser will not decode into a canvas)
+           the tile stays a labelled placeholder rather than a broken image:
+           the record is still there and still plays. */
         im.src=it.thumb ? "data:image/jpeg;base64,"+it.thumb
-                     : "data:"+it.mime+";base64,"+it.legacyB64;
+                     : (it.kind==="video" ? GAL_VIDEO_TILE
+                        : "data:"+it.mime+";base64,"+it.legacyB64);
+        if(it.kind==="video") im.classList.add("gal-vid");
         im.loading="lazy"; im.decoding="async";
         im.alt=(it.prompt||"").slice(0,80)||"gallery result";
         im.className = (galMulti.on&&galMulti.ids[it.id]) || (galSel&&galSel.id===it.id) ? "sel" : "";
@@ -5256,7 +5521,21 @@ function renderGallery(){
           /* the tile only ever held a thumb — swap in the real plate for the
              preview and the download the moment it is read back */
           galFull(it.id).then(function(rec){
-            if(!rec || !rec.b64 || !galSel || galSel.id!==it.id) return;
+            if(!rec || !galSel || galSel.id!==it.id) return;
+            /* v5.86.0 — a clip is handed over as the file itself. The preview
+               keeps showing the poster (the picker is an <img>), but Download
+               gives the studio the real .mp4 from this device, with no link to
+               have expired in the meantime. */
+            if(rec.kind==="video" && rec.blob){
+              try{
+                if(galSel._u) URL.revokeObjectURL(galSel._u);
+                galSel._u=URL.createObjectURL(rec.blob);
+                $("galDl").href=galSel._u;
+                $("galDl").setAttribute("download","hnk-video-"+ptStamp()+"-"+it.id+".mp4");
+              }catch(x){}
+              return;
+            }
+            if(!rec.b64) return;
             var fullSrc="data:"+rec.mime+";base64,"+rec.b64;
             $("galPickImg").src=fullSrc;
             $("galDl").href=fullSrc;
@@ -22891,7 +23170,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.85.0";
+var APP_VER="5.86.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -24530,20 +24809,33 @@ setIcnText($("btnVidDl"),"i-download",VID_DL_LABEL);
 setIcnText($("btnVidOpen"),"i-external",L9({my:"↗ Direct Link ဖွင့်",en:"↗ Open direct link",shn:"↗ ပိုတ်ႇ Direct Link",kac:"↗ Direct Link hpaw",th:"↗ เปิดลิงก์โดยตรง",zh:"↗ 打开原始链接",vi:"↗ Mở liên kết trực tiếp",id:"↗ Buka tautan langsung",ms:"↗ Buka pautan terus"}));
 $("vidHistH").textContent = L9({my:"လတ်တလော ထုတ်ခဲ့တဲ့ ဗီဒီယိုများ (session အတွင်းပဲ)",en:"Recent videos (this session only)",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်းဝႆႉမိူဝ်ႈလဵဝ်",kac:"Video ni na galaw da ai (session sha)",th:"วิดีโอล่าสุด (เฉพาะเซสชันนี้)",zh:"最近生成的视频（仅本次会话）",vi:"Video gần đây (chỉ trong phiên này)",id:"Video terbaru (hanya sesi ini)",ms:"Video terkini (sesi ini sahaja)"});
 
-function showVidResult(){
+/* v5.86.0 — a stored clip plays from this device; the object URL is made once
+   per entry and kept on the entry, so switching between takes does not leak a
+   new URL every time. */
+function vidPlayUrl(e){
+  if(!e) return "";
+  if(e.blob){ if(!e._u){ try{ e._u=URL.createObjectURL(e.blob); }catch(x){ e._u=""; } } return e._u||e.url||""; }
+  return e.url||"";
+}
+function showVidResult(scroll){
   var out=state.vidHist[state.vidHistSel]; if(!out) return;
   $("vidResultBox").className="card result-box on";
-  $("vidResultVideo").src=out.url;
-  $("btnVidOpen").href=out.url;
+  $("vidResultVideo").src=vidPlayUrl(out);
+  /* "open the direct link" only means anything while the live link exists */
+  var op=$("btnVidOpen");
+  if(op){ op.href=out.url||"#"; op.style.display=out.url?"":"none"; }
+  /* the 24-hour warning belongs to a link, not to a saved file */
+  var ex=$("vidExpireNote");
+  if(ex) ex.style.display=out.blob?"none":"";
   var h=$("vidHist"); h.innerHTML="";
   state.vidHist.forEach(function(e,i){
     var v=document.createElement("video");
-    v.src=e.url; v.muted=true; v.preload="metadata"; v.playsInline=true;
+    v.src=vidPlayUrl(e); v.muted=true; v.preload="metadata"; v.playsInline=true;
     v.className=i===state.vidHistSel?"sel":"";
-    makePickable(v, function(){ state.vidHistSel=i; showVidResult(); });
+    makePickable(v, function(){ state.vidHistSel=i; showVidResult(true); });
     h.appendChild(v);
   });
-  $("vidResultBox").scrollIntoView({behavior:"smooth"});
+  if(scroll!==false) $("vidResultBox").scrollIntoView({behavior:"smooth"});
 }
 
 $("btnVidGen").onclick = async function(){
@@ -24579,11 +24871,24 @@ $("btnVidGen").onclick = async function(){
       setSt("stVidGen", L9({my:"ဗီဒီယို မထွက်လာပါ — ပြန်စမ်းပါ",en:"No video was returned — try again",shn:"ဝီဒီရူဝ်ႈဢမ်ႇဢွၵ်ႇမႃး — ၸၢမ်းၶိုၼ်း",kac:"Video n pru wa ai — bai chyam u",th:"ไม่มีวิดีโอส่งกลับมา — ลองใหม่",zh:"未返回视频 — 请重试",vi:"Không có video trả về — thử lại",id:"Tidak ada video dikembalikan — coba lagi",ms:"Tiada video dikembalikan — cuba lagi"}), "err");
       $("btnVidRetry").style.display="";
     } else {
-      state.vidHist.unshift({ url:outs[0].url, prompt:text.slice(0,120), resolution:resolution, duration:duration, ts:Date.now() });
-      while(state.vidHist.length>6) state.vidHist.pop();
+      var entry={ url:outs[0].url, prompt:text.slice(0,120), resolution:resolution, duration:duration, ts:Date.now() };
+      state.vidHist.unshift(entry);
       state.vidHistSel=0;
       showVidResult();
       setSt("stVidGen", t("st_done"), "ok");
+      /* v5.86.0 — and keep it. The link the studio is watching right now
+         expires in a day; the copy this saves does not. The page is already
+         showing the result, so this runs behind it and repaints once the
+         bytes are home, which is when the 24-hour warning can come down.
+         The strip is no longer trimmed to six: the takes a studio made are
+         theirs until they delete them. */
+      galleryAddVideo(outs[0].url, text.slice(0,120), { page:"pgVideo", res:resolution, dur:String(duration||"") })
+        .then(function(id){
+          if(!id) return;
+          return galFull(id).then(function(rec){
+            if(rec && rec.blob){ entry.blob=rec.blob; entry.id=id; if(state.vidHist[state.vidHistSel]===entry) showVidResult(false); }
+          });
+        }).catch(function(){});
     }
   } catch(e){
     setSt("stVidGen", rhFriendly(e), (e&&e.code==="cancelled")?"ok":"err");
@@ -24599,7 +24904,8 @@ $("btnVidDl").onclick=async function(){
   var out=state.vidHist[state.vidHistSel]; if(!out) return;
   var btn=this; if(btn.disabled) return; btn.disabled=true; setIcnText(btn,"i-download",VID_DL_BUSY);
   try{
-    var blobUrl=await rhVideoDownloadBlobUrl(out.url);
+    /* a saved clip needs no network at all */
+    var blobUrl=out.blob ? URL.createObjectURL(out.blob) : await rhVideoDownloadBlobUrl(out.url);
     var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-video-"+(out.resolution||"")+"-"+ptStamp()+".mp4";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);

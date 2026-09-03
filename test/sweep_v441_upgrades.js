@@ -8,7 +8,7 @@
    4. Workflow page: category jump rail, photo-count pills, alias search with
       live count, wedding sub-group chips, favorites hint
    5. Library: token-AND + Burmese alias search, favorites filter, full-screen
-      viewer; Gallery: provenance line, n/60 meter, IMAGE 2, select-all
+      viewer; Gallery: provenance line, uncapped count, IMAGE 2, select-all
    6. Generate: engine-honest UI, RunningHub-named button, ETA line, settings
       persistence, result provenance
    7. i18n: 30-language picker with my/en fallback resolution */
@@ -212,7 +212,16 @@ function report(name, ok, detail) {
     });
     switchPage("pgGallery");
     await new Promise(r => setTimeout(r, 600));
-    out.meter = /\d+ \/ 60/.test(document.getElementById("galNote").textContent);
+    /* v5.86.0 — the Gallery stopped deleting the oldest work once it passed
+       sixty records, so its note stopped being a countdown to that deletion
+       ("n / 60") and became a plain count of what the studio still has.
+       Keeping the old shape here would have pinned the eviction in place, so
+       the check moved to the stronger promise: the note reports exactly what
+       is on screen, and carries no ceiling at all. */
+    const galTxt = document.getElementById("galNote").textContent;
+    out.meterText = galTxt.slice(-30);
+    out.meter = new RegExp("\u00b7 " + document.querySelectorAll("#galGrid img").length + "(\\b|$)").test(galTxt)
+      && !/\d+\s*\/\s*\d+/.test(galTxt);
     document.querySelectorAll("#galGrid img")[0].click();
     out.prov = document.getElementById("galPickInfo").textContent.indexOf("RunningHub · NB2") >= 0;
     out.dlName = /^hnk-\d{8}-\d{4}-/.test(document.getElementById("galDl").getAttribute("download"));
@@ -232,7 +241,7 @@ function report(name, ok, detail) {
     await new Promise(r => setTimeout(r, 400));
     return out;
   }, PNG1);
-  report("Library: alias + token-AND search, chip rails, ★ filter, full-screen viewer; Gallery: prov line, n/60 meter, dated filename, IMAGE 2, select-all",
+  report("Library: alias + token-AND search, chip rails, ★ filter, full-screen viewer; Gallery: prov line, uncapped count, dated filename, IMAGE 2, select-all",
     lg.aliasHits > 0 && lg.orderInd && lg.nowrap && lg.favChip && lg.zoom && lg.meter && lg.prov && lg.dlName && lg.img2 && lg.selAll, lg);
 
   /* ---- 6) Generate honesty + persistence + provenance ---- */

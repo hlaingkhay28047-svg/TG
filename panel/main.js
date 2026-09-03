@@ -6225,7 +6225,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.56.2";
+const PANEL_VERSION = "6.57.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10477,10 +10477,7 @@ async function galKeepSave() {
   } catch (e) { }
 }
 
-function galMax() {
-  const gs = globalThis.HNK && globalThis.HNK.galleryStore;
-  return (gs && gs.MAX) || 200;
-}
+
 function galSelCount() { let n = 0; for (const k in GAL.sel) n++; return n; }
 
 /* the app's galBulkRefresh: the chip says which mode it is in, and the two
@@ -10518,7 +10515,9 @@ async function galThumb(f) {
 function renderGal() {
   const grid = $("galGrid");
   const note = $("galNote");
-  if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length + " / " + galMax();
+  /* v6.57.0 — a count, not a countdown: the store no longer deletes anything
+     to make room, so there is no ceiling to report a distance from. */
+  if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length;
   const empty = $("galEmpty");
   if (empty) empty.className = "empty-state" + (GAL.files.length ? "" : " on");
   if (GAL.pick && !GAL.files.some(function (f) { return f.name === GAL.pick; })) GAL.pick = null;
@@ -10696,7 +10695,7 @@ function galPaintLabels() {
   setIcnText($("galToImg2"), "i-restore", "cream", "IMAGE 2");
   setIcnText($("galDel"), "i-trash", "cream", ff9(GAL_L.del));
   const note = $("galNote");
-  if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length + " / " + galMax();
+  if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length;
   galBulkRefresh();
   galPaintPick();
 }
