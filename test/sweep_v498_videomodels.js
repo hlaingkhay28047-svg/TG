@@ -53,19 +53,21 @@ const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
 /* The two ids that existed before this release. Every saved config and every
    video workflow card names one of them, so they must survive verbatim. */
 const LEGACY = ["rh-video-g-off", "gemini-omni-video"];
-/* Deliberately absent — v5.55.0: ten documented endpoints this app cannot
-   author inputs for (asset registration, lip-sync session flows, audio-file
-   inputs, script authoring, draftCache), plus the one endpoint no longer in
-   the doc index at all. rhart-video-flux3/image-to-video moved OUT of this
-   list: its doc shows keyframes is an array of image URLs, so it is wired. */
+/* Deliberately absent — v5.55.0: documented endpoints this app cannot author
+   inputs for (asset registration, lip-sync session flows, audio-file inputs,
+   script authoring, draftCache). rhart-video-flux3/image-to-video moved OUT
+   of this list: its doc shows keyframes is an array of image URLs, so it is
+   wired. minimax/hailuo-h3/regeneration-image-to-video moved out in v5.89.0
+   for a different reason — its input is a finished video, so it belongs on
+   the Video Tools shelf (where sweep_video_tools proves its body), and this
+   list is about endpoints nothing in the app can drive at all. */
 const REFUSED = ["kling-elements-advanced",
                  "kling-lip-sync/lip-sync-video",
                  "kling-v2-ai-avatar-standard/image-audio-to-video",
                  "kling-v2-ai-avatar-pro/image-audio-to-video",
                  "vidu/short-play-q3-drama",
                  "vidu/short-play-q3-ad",
-                 "rhart-video-flux3/draft-enhance",
-                 "minimax/hailuo-h3/regeneration-image-to-video"];
+                 "rhart-video-flux3/draft-enhance"];
 
 (async () => {
   const browser = await chromium.launch();
@@ -90,8 +92,8 @@ const REFUSED = ["kling-elements-advanced",
       dur: (m.durations || []).slice(-1)[0], promptMax: m.promptMax, last: !!m.lastParam }))
   }));
 
-  report("A) the shelf is 183 models, with unique ids and unique endpoints",
-    reg.n === 183 && new Set(reg.ids).size === 183 && new Set(reg.paths).size === 183,
+  report("A) the shelf is 191 models, with unique ids and unique endpoints",
+    reg.n === 191 && new Set(reg.ids).size === 191 && new Set(reg.paths).size === 191,
     { n: reg.n, ids: new Set(reg.ids).size, paths: new Set(reg.paths).size });
 
   report("A2) the two that shipped before are still there, under the same ids",
@@ -238,11 +240,11 @@ const REFUSED = ["kling-elements-advanced",
   });
   report("E) a control with no options is hidden, never rendered empty",
     ui.bad.length === 0, ui.bad.slice(0, 5));
-  report("E2) and that is not a hypothetical — 63 models have no resolution, 13 no duration",
-    ui.noRes === 63 && ui.noDur === 13, { noRes: ui.noRes, noDur: ui.noDur });
+  report("E2) and that is not a hypothetical — 66 models have no resolution, 13 no duration",
+    ui.noRes === 66 && ui.noDur === 13, { noRes: ui.noRes, noDur: ui.noDur });
 
-  report("F) 183 options are grouped by family, not one flat scroll",
-    ui.groups.length >= 30 && ui.options === 183 &&
+  report("F) 191 options are grouped by family, not one flat scroll",
+    ui.groups.length >= 30 && ui.options === 191 &&
     ui.groups.some(g => /^Seedance/.test(g)) && ui.groups.some(g => /^Kling/.test(g)),
     { groups: ui.groups, options: ui.options });
 
@@ -257,7 +259,7 @@ const REFUSED = ["kling-elements-advanced",
 
   report("H) no page errors", errs.length === 0, errs);
 
-  console.log("      (the full doc-verified catalog: 183 pane models across " +
+  console.log("      (the full doc-verified catalog: 191 pane models across " +
     ui.groups.length + " family groups — i2v, reference and text-to-video — " +
     "plus the video-input tools shelf; the endpoints this app cannot drive " +
     "are refused by name)");

@@ -36,8 +36,10 @@ var RH_VIDEO_MODELS = [
        kling-v2-ai-avatar-pro/image-audio-to-video (REQUIRE an audio file),
        vidu/short-play-q3-drama + vidu/short-play-q3-ad (script authoring),
        rhart-video-flux3/draft-enhance (needs a prior run's draftCache).
-     minimax/hailuo-h3/regeneration-image-to-video stays refused too — it is
-     no longer in the doc index at all.
+     minimax/hailuo-h3/regeneration-image-to-video is no longer refused: the
+     v5.55.0 note said it had left the doc index, and v5.89.0's index pass
+     found it again. It takes a finished 768P clip and re-runs it at 2K, so
+     it is wired on the Video Tools shelf with its two siblings, not here.
      The two ids every stored config and workflow card names keep the top. */
   /* api-448184392 */
   { id:"rh-video-g-off", label:"Grok Imagine — Quick (6-10s)", apiPath:"rhart-video-g-official/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "10"], aspect:false, promptMax:800 },
@@ -136,6 +138,18 @@ var RH_VIDEO_MODELS = [
   { id:"minimax-hailuo-h3", label:"MiniMax H3 (first last frame) — (768P, 15s)", fam:"MiniMax", apiPath:"minimax/hailuo-h3/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:0, maxImages:2, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
   /* api-502119462 */
   { id:"rhv-mm-h3-oss-fl2va", label:"MiniMax H3 fl2va RH插件流 支持文生、图生、首尾帧 — (15s)", fam:"MiniMax", apiPath:"rhart-video/minimax-h3-oss/fl2va", kind:"vnode", node:{"images": [], "optImages": ["136##image", "152##image"], "prompt": "144##prompt", "fixed": {}, "dur": "157##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  /* v5.89.0 api-509445864 — H3 Max. Its own doc, not H3's: prompt 20480 (H3
+     is 7000), resolution REQUIRED with only 480P/768P, duration "5".."15". */
+  { id:"mm-hailuo-h3-max", label:"MiniMax H3 Max (first last frame) — (768P, 15s)", fam:"MiniMax", apiPath:"minimax/hailuo-h3-max/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480P", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
+  /* v5.89.0 api-498427799 — Context-IR i2va: video WITH a synchronised audio
+     track. The doc declares no resolution field at all and no ratio on this
+     route, so neither is sent; both frames are optional there but the shelf
+     asks for the first, as its name says. */
+  { id:"mm-h3-context-ir-image", label:"MiniMax H3 Context-IR — Photo + sound (15s)", fam:"MiniMax", apiPath:"minimax/hailuo-h3/context-ir-image", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:[], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:7000 },
+  /* v5.89.0 api-508886444 — Gemini Omni 1.1 Flash. duration is an INTEGER
+     3-10 in this doc (durInt), resolution REQUIRED, aspectRatio 16:9/9:16
+     only, and lastImageUrl is the documented optional end frame. */
+  { id:"gemini-omni-11-i2v", label:"Gemini Omni 1.1 Flash — (4k, 10s)", fam:"Omni Flash", apiPath:"google/gemini-omni-1.1-flash/image-to-video", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["360p", "720p", "1080p", "4k"], durations:["3", "4", "5", "6", "7", "8", "9", "10"], durInt:true, aspect:true, aspects:["16:9", "9:16"], promptMax:2048 },
   /* api-448184368 */
   { id:"youchuan", label:"Midjourney — (720p)", fam:"Midjourney", apiPath:"youchuan/image-to-video", imageParam:"firstImageUrl", lastParam:"lastImageUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480p", "720p"], durations:[], aspect:false, promptMax:8192 },
   /* api-448184371 */
@@ -259,6 +273,13 @@ var RH_VIDEO_MODELS = [
   { id:"mm-hailuo-h3-multimodal-to-video", label:"MiniMax H3 Multimodal — Ref (768P, 15s)", fam:"MiniMax · Ref", apiPath:"minimax/hailuo-h3/multimodal-to-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
   /* api-502119463 */
   { id:"rhv-mm-h3-oss-fl2va-advanced", label:"MiniMax H3 ref2va RH插件流 支持多参 — Ref (15s)", fam:"MiniMax · Ref", apiPath:"rhart-video/minimax-h3-oss/fl2va-advanced", kind:"vnode", node:{"images": [], "optImages": ["170##image", "171##image", "172##image", "173##image", "174##image", "175##image", "176##image", "177##image", "178##image"], "prompt": "144##prompt", "fixed": {}, "dur": "157##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:9, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  /* v5.89.0 api-498427801 — Context-IR r2va: up to NINE reference images and
+     a ratio enum that starts at "adaptive". Its optional videoUrls/audioUrls
+     reference slots are not sent — this shelf has no way to author them. */
+  { id:"mm-h3-context-ir-multimodal", label:"MiniMax H3 Context-IR — Ref + sound (15s)", fam:"MiniMax · Ref", apiPath:"minimax/hailuo-h3/context-ir-multimodal", imageParam:"imageUrls", minImages:1, maxImages:9, oddOnly:false, resolutions:[], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:7000 },
+  /* v5.89.0 api-508886445 — up to TEN references; its optional videoUrls are
+     not sent for the same reason. */
+  { id:"gemini-omni-11-r2v", label:"Gemini Omni 1.1 Flash — Ref (4k, 10s)", fam:"Omni Flash · Ref", apiPath:"google/gemini-omni-1.1-flash/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:10, oddOnly:false, resolutions:["360p", "720p", "1080p", "4k"], durations:["3", "4", "5", "6", "7", "8", "9", "10"], durInt:true, aspect:true, aspects:["16:9", "9:16"], promptMax:2048 },
   /* api-459865193 */
   { id:"rhv-v3-1-fast-official-r2v", label:"Veo3.1 Fast — Ref (1080p)", fam:"Veo 3.1 · Ref", apiPath:"rhart-video-v3.1-fast-official/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:3, oddOnly:false, resolutions:["720p", "1080p"], durations:[], aspect:true, aspects:["16:9", "9:16"], promptMax:8000 },
   /* api-448184400 */
@@ -344,6 +365,12 @@ var RH_VIDEO_MODELS = [
   { id:"mm-hailuo-2-3-t2v-standard", label:"Hailuo 2.3 Standard — T2V (10s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-2.3/t2v-standard", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["6", "10"], aspect:false, promptMax:2000, extra:{"enablePromptExpansion": true} },
   /* api-495380677 */
   { id:"mm-hailuo-h3-t2v", label:"MiniMax H3 — T2V (768P, 15s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-h3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
+  /* v5.89.0 api-509445865 — H3 Max T2V. ratio (not aspectRatio) is REQUIRED
+     here and its documented default is 21:9. */
+  { id:"mm-hailuo-h3-max-t2v", label:"MiniMax H3 Max — T2V (768P, 15s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-h3-max/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480P", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
+  /* v5.89.0 api-498427800 — Context-IR t2va: a clip with its own sound from
+     the prompt alone. No resolution field on this route. */
+  { id:"mm-h3-context-ir-text", label:"MiniMax H3 Context-IR — T2V + sound (15s)", fam:"MiniMax · T2V", apiPath:"minimax/hailuo-h3/context-ir-text", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:7000 },
   /* api-448184430 */
   { id:"rhv-v3-1-fast-official-t2v", label:"Veo3.1 Fast — T2V (4k, 8s)", fam:"Veo 3.1 · T2V", apiPath:"rhart-video-v3.1-fast-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8"], aspect:true, aspects:["16:9", "9:16"], promptMax:8000, extra:{"generateAudio": true} },
   /* api-448184429 */
@@ -392,6 +419,8 @@ var RH_VIDEO_MODELS = [
   { id:"skyreels-v4-t2v-std", label:"Skyreels V4 Std — T2V (1080p, 15s)", fam:"SkyReels · T2V", apiPath:"skyreels-v4/text-to-video-std", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2048, extra:{"sound": true, "promptOptimizer": true} },
   /* api-462492099 */
   { id:"gemini-omni-flash-t2v", label:"Gemini omni Flash Low cost — T2V (4k, 10s)", fam:"Omni Flash · T2V", apiPath:"gemini-omni-flash/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "1080p", "4k"], durations:["4", "6", "8", "10"], aspect:true, aspects:["16:9", "9:16"], promptMax:2048 },
+  /* v5.89.0 api-508886443 */
+  { id:"gemini-omni-11-t2v", label:"Gemini Omni 1.1 Flash — T2V (4k, 10s)", fam:"Omni Flash · T2V", apiPath:"google/gemini-omni-1.1-flash/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["360p", "720p", "1080p", "4k"], durations:["3", "4", "5", "6", "7", "8", "9", "10"], durInt:true, aspect:true, aspects:["16:9", "9:16"], promptMax:2048 },
   /* api-498749521 */
   { id:"rhv-flux3-t2v", label:"Flux 3 video — T2V (fhd, 20s)", fam:"Flux · T2V", apiPath:"rhart-video-flux3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["hd", "fhd"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:true, aspects:["auto", "21:9", "2:1", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
   /* -------- registry-sourced keepers: these nine endpoints have NO page in
