@@ -35,7 +35,7 @@ on:
         description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
         required: true
       pairs:
-        description: 'space-separated pair names to build (retouch scene), or "all"'
+        description: 'space-separated pair names to build (retouch scene series lookcopy …), or "all"'
         required: false
         default: 'all'
       tasks:
@@ -377,6 +377,55 @@ jobs:
                   submit "card-$sid" "$EDIT_PATH" "$(jbody "$SP" "[\"$us\"]" "3:2")" || fail=1
                 done
                 rm -rf out/prompts
+                ;;
+              lookcopy)
+                # v5.87.0 — the Studio Look Copy card, in two real passes.
+                #
+                # v1 used the shipped white-ao-dai scene before as IMAGE 1 and
+                # the owner rejected it on sight: "the outfit is too plain —
+                # put the styling I showed you on the card; you may keep this
+                # model's face." Studio Look Copy never changes wardrobe, so a
+                # styled card needs a styled IMAGE 1. Both passes are the
+                # catalog's own shipped prompts, read at run time, never
+                # hand-written here.
+                #
+                #   pass 1  full-look-transfer : her identity from the promo
+                #           poster + the couture styling, pose and set of
+                #           user-ref-179 (Pink Blossom Couture, the owner's own
+                #           Library plate) -> a styled base
+                #   pass 2  studio-look-copy   : that styled base + the lotus
+                #           plate its guide shows (user-ref-009) -> the card
+                #
+                # So the card is exactly what the button does: the gown, the
+                # face and the framing come from IMAGE 1 untouched; only the
+                # scene, the light, the colour and the finish come from IMAGE 2.
+                LC_BASE_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          it = next((i for c in cat['categories'] for i in c['items'] if i['id']=='full-look-transfer'), None)
+          if it: print(it['prompt'] + '\n\nAVOID: ' + it['negative'] + '.')
+          PY
+          )
+                LC_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          it = next((i for c in cat['categories'] for i in c['items'] if i['id']=='studio-look-copy'), None)
+          if it:
+              p = '\n'.join(l for l in it['prompt'].split('\n') if not l.startswith('EXTRA REQUEST:'))
+              print(p + '\n\nAVOID: ' + it['negative'] + '.')
+          PY
+          )
+                [ -n "$LC_PROMPT" ] && [ -n "$LC_BASE_PROMPT" ] || { echo "LOOKCOPY: a prompt is not in the catalog on this ref"; fail=1; continue; }
+                us1=$(reupload "docs/app/lib/full/user-ref-179.jpg") || { echo "LOOKCOPY STYLE UPLOAD FAILED"; fail=1; continue; }
+                submit "lookcopy-styled-base" "$EDIT_PATH" "$(jbody "$LC_BASE_PROMPT" "[\"$refurl\",\"$us1\"]" "2:3")" || { fail=1; continue; }
+                ub=$(reupload "out/lookcopy-styled-base.png") || { echo "LOOKCOPY BASE REUPLOAD FAILED"; fail=1; continue; }
+                ul2=$(reupload "docs/app/lib/full/user-ref-009.jpg") || { echo "LOOKCOPY LOOK UPLOAD FAILED"; fail=1; continue; }
+                # no ratio on pass 2: the prompt locks IMAGE 1's own framing and
+                # aspect, which is the whole promise — asking for 3:2 here would
+                # ask the model to break the one rule the card demonstrates.
+                submit "card-studio-look-copy" "$EDIT_PATH" "$(jbody "$LC_PROMPT" "[\"$ub\",\"$ul2\"]" "")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac
