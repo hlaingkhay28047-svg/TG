@@ -611,6 +611,21 @@ function create(deps) {
         mark.textContent = okk ? "✓" : (failReason || "Missing");
         mark.className = "hnk-req-mark " + (okk ? "ok" : "miss");
       }
+      /* v6.59.0 — SHOW THE PHOTO THAT LANDED.
+         The slot used to answer with a tick and nothing else, so a studio
+         who had just pasted a web link could not see WHICH picture arrived —
+         and a link is exactly the source where the wrong picture is easy to
+         get. Every source hands the slot a data: URL (layer capture, file
+         read, clipboard, fetched link, Library pick), so the slot can simply
+         show it. A picture that will not decode removes itself and leaves
+         the tick, rather than sitting there as a broken box. */
+      var thumb = nodes["thumb_" + inp.key];
+      if (thumb) {
+        var ref = (inp.image && inp.image.ref) || "";
+        var show = /^data:image\//.test(String(ref));
+        thumb.style.display = show ? "" : "none";
+        if (show && thumb.firstChild && thumb.firstChild.src !== ref) thumb.firstChild.src = ref;
+      }
     });
     var ready = ev.ready;
     var canGenerate = ready && (state.prepared || directMode());
@@ -855,11 +870,27 @@ function create(deps) {
       urlRow.style.display = "none";
     });
 
+    /* v6.59.0 — the slot's own preview; refresh() fills and hides it. A
+       clear button beside it, because a wrong picture must be as easy to
+       take out as it was to put in. */
+    var thumbImg = doc.createElement("img");
+    thumbImg.alt = "";
+    thumbImg.onerror = function () { try { thumb.style.display = "none"; } catch (e) { } };
+    var clear = dom.el(doc, "button", { class: "hnk-btn hnk-req-clear", id: "hnkWfClear_" + inp.key, text: "✕" });
+    dom.on(clear, "click", function () {
+      wstate.setInput(state, inp.key, { source: "", role: inp.role, ref: null, valid: false });
+      refresh();
+    });
+    var thumb = dom.el(doc, "div", { class: "hnk-req-thumb", id: "hnkWfThumb_" + inp.key }, [thumbImg, clear]);
+    thumb.style.display = "none";
+    nodes["thumb_" + inp.key] = thumb;
+
     return dom.el(doc, "div", { class: "hnk-req-block" }, [
       dom.el(doc, "div", { class: "hnk-req-row" }, [
         dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, fileB, pasteB, webB, lib
       ]),
-      urlRow
+      urlRow,
+      thumb
     ]);
   }
 

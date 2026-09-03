@@ -48,10 +48,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Round 5 — the ids published after the last sweep's highest known
-          # page (498427798). Filled in from the index job's output.
-          - name: new5
-            ids: "448184544"
+          # Round 5 — every doc page published SINCE the last catalog sweep.
+          # The index job read the site's own sitemap; 498427798 was the
+          # highest page any earlier round had seen, and these 33 ids sit
+          # above it. Seven per job: the job-log API returns ~350KB per job,
+          # truncated from the START, which is the round-3b lesson.
+          - name: new5a
+            ids: "498427799 498427800 498427801 498427802 498427803 498427804 498749512"
+          - name: new5b
+            ids: "498749513 498749514 498749515 498749516 498749517 498749518 498749519"
+          - name: new5c
+            ids: "498749520 498749521 498749522 498749523 502119462 502119463 505575334"
+          - name: new5d
+            ids: "505575335 505922313 505922314 508112799 508886443 508886444 508886445"
+          - name: new5e
+            ids: "509122419 509122420 509445864 509445865 510034450"
     steps:
       - name: Fetch doc pages
         run: |

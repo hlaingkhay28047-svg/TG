@@ -821,6 +821,17 @@ input[type="range"] { min-width: 0; }
 .hnk-url-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; }
 .hnk-url-inp { flex: 1; min-width: 0; font-size: 12px; padding: 7px 9px; }
 
+/* v6.59.0 — the slot shows the picture that landed. Small enough that a
+   two-image workflow still fits a phone-narrow panel, big enough to tell
+   two photographs apart, which is the whole point when the source was a
+   link someone pasted. */
+.hnk-req-thumb { display: flex; align-items: center; gap: 8px; margin: 4px 0 6px; }
+.hnk-req-thumb img {
+  width: 64px; height: 64px; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--line); background: #000;
+}
+.hnk-req-clear { padding: 4px 9px; font-size: 12px; line-height: 1; }
+
 /* ---- HNK AI Tools: History screen (§22) ---- */
 .hnk-hist-list { display:flex; flex-direction:column; gap:8px; }
 .hnk-hist { display:flex; flex-direction:column; gap:4px; padding:10px; border:1px solid var(--line);
