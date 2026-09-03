@@ -201,6 +201,14 @@ jobs:
       - name: Verify every panel page matches the web app
         run: node test/verify_panel_page_parity.js
 
+      # v6.56.1 — the panel's art lives on the web app's host, not inside the
+      # .ccx, so the app's picture is a path that cannot rot and the panel's is
+      # a URL that can. This runs the panel over all thirteen pages and fails on
+      # any visible picture that did not paint — the missing i-target-cream.svg
+      # behind RETOUCH B's tab was a silent 404 no string test could see.
+      - name: Verify every picture the panel asks for actually paints
+        run: node test/verify_panel_art.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
