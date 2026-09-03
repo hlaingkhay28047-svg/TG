@@ -76,6 +76,14 @@ const APP_ONLY = {
      that download — a card inviting a student to install what they are
      already looking at is the one thing this page must not carry. */
   setup: [
+    /* v5.85.0 — the launch chime and its switch. The chime belongs to the
+       INSTALLED WEB APP's splash: a Photoshop plugin has no launch screen to
+       sound over, it opens inside an application the studio already has open,
+       and Adobe's own UI owns any sound at that moment. Offering the switch in
+       the panel would be offering a setting that could never do anything. */
+    "\u1016\u103d\u1004\u1037\u103a\u1010\u1032\u1037\u1021\u1001\u102b \u1021\u101e\u1036",
+    "\u1015\u102d\u1010\u103a\u1011\u102c\u1038",
+    "Default \u1015\u102d\u1010\u103a\u1011\u102c\u1038\u1015\u102b\u1010\u101a\u103a\u104b \u1016\u103d\u1004\u1037\u103a\u1011\u102c\u1038\u101b\u1004\u103a install \u101c\u102f\u1015\u103a\u1011\u102c\u1038\u1010\u1032\u1037 app \u1000\u102d\u102f \u1016\u103d\u1004\u1037\u103a\u1010\u102d\u102f\u1004\u103a\u1038 \u1010\u1005\u103a\u1001\u102b \u1019\u103c\u100a\u103a\u1015\u102b\u1019\u101a\u103a \u2014 \u1016\u102f\u1014\u103a\u1038\u1000 \u1021\u101e\u1036\u1015\u102d\u1010\u103a\u1011\u102c\u1038\u101b\u1004\u103a (\u101e\u102d\u102f\u1037) browser \u1000 \u1001\u103d\u1004\u1037\u103a\u1019\u1015\u103c\u102f\u101b\u1004\u103a \u1019\u1019\u103c\u100a\u103a\u1015\u102b\u104b",
     "Photoshop Panel",
     "Premium plan သက်တမ်းရှိကြောင်း စစ်ပြီးပါပြီ။ Photoshop 24.2+ အတွက် Panel ကို ဒီမှာရယူနိုင်ပါတယ်။",
     "Panel ccx v6.50.0 ရယူမယ်"

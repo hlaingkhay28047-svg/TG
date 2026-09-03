@@ -1801,6 +1801,19 @@ html.splashing #splash{display:flex}
     if (sessionStorage.getItem("hnk_splashed")) return;
     sessionStorage.setItem("hnk_splashed", "1");
     document.documentElement.classList.add("splashing");
+    /* v5.85.0 — the chime, only if this device asked for it. Off is the
+       absence of the key, so a device that has never been told stays silent.
+       A browser may refuse to sound anything before the first tap of a page
+       load; that refusal is normal and is swallowed here, because a chime
+       that arrives late is worse than one that never arrives. */
+    try {
+      if (localStorage.getItem("hnk_splash_chime") === "1") {
+        var ch = new Audio("lib/snd/splash-chime.mp3");
+        ch.volume = 0.5;
+        var pr = ch.play();
+        if (pr && pr.catch) pr.catch(function(){});
+      }
+    } catch (e) { }
     var t0 = Date.now(), gone = false;
     var drop = function(){
       if (gone) return; gone = true;
@@ -2551,6 +2564,17 @@ html.splashing #splash{display:flex}
   <section class="card" id="cardAbout">
     <h2 id="aboutH2"></h2>
     <div class="acc-kv"><span class="k">Version</span><span class="v" id="aboutVer"></span></div>
+    <!-- v5.85.0 — THE LAUNCH CHIME, OFF UNLESS ASKED FOR. A sound a studio
+         did not choose is a sound that goes off in front of a client, so this
+         ships silent and the chip below is the only thing that turns it on.
+         Tapping the chip plays it once: the student hears exactly what they
+         just switched on, from a real tap, which is also the only moment a
+         browser is guaranteed to let it through. -->
+    <div class="acc-kv" id="chimeRow">
+      <span class="k" id="chimeK"></span>
+      <button class="chip" type="button" id="chimeTgl" aria-pressed="false"></button>
+    </div>
+    <p class="mut" id="chimeNote" style="margin-top:6px"></p>
     <div class="row" style="margin-top:10px">
       <button class="btn btn-gold grow" id="btnCheckUpdate"></button>
       <button class="btn grow" id="btnHardRefresh"></button>
@@ -22867,7 +22891,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.84.1";
+var APP_VER="5.85.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -23065,10 +23089,70 @@ function refreshDataStore(){
 }
 
 /* ---- About & Updates ---- */
+/* v5.85.0 — THE LAUNCH CHIME'S ONE SWITCH.
+   The owner asked for it off by default and switchable, which is the right
+   shape for a studio: the app is opened in front of clients, and a sound
+   nobody chose is a sound that goes off at the wrong moment. So the setting
+   is the ABSENCE of a key — a device that has never been told stays silent,
+   including every device that already has the app installed.
+
+   Tapping the chip plays the chime once. That is not decoration: a browser
+   only reliably allows sound after a real tap, so this is the one moment the
+   student is certain to hear what they are choosing. On the next launch the
+   splash tries the same sound and, if the browser refuses it that early, says
+   nothing — the note under the chip tells the student that can happen rather
+   than leaving them to wonder whether the switch worked. */
+var CHIME_KEY = "hnk_splash_chime";
+function chimeOn(){
+  try { return localStorage.getItem(CHIME_KEY) === "1"; } catch(e){ return false; }
+}
+function chimePlay(){
+  try {
+    var a = new Audio("lib/snd/splash-chime.mp3");
+    a.volume = 0.5;
+    var p = a.play();
+    if (p && p.catch) p.catch(function(){});
+  } catch(e){ }
+}
+function chimePaint(){
+  var b = $("chimeTgl"); if (!b) return;
+  var on = chimeOn();
+  b.className = "chip" + (on ? " on" : "");
+  b.setAttribute("aria-pressed", on ? "true" : "false");
+  b.textContent = on
+    ? L9({my:"ဖွင့်ထား",en:"On",shn:"ပိုတ်ႇဝႆႉ",kac:"Hpaw da ai",th:"เปิด",zh:"开",vi:"Bật",id:"Aktif",ms:"Hidup"})
+    : L9({my:"ပိတ်ထား",en:"Off",shn:"ဢိုတ်းဝႆႉ",kac:"Pat da ai",th:"ปิด",zh:"关",vi:"Tắt",id:"Nonaktif",ms:"Mati"});
+}
+function wireSplashChime(){
+  var b = $("chimeTgl"), k = $("chimeK"), n = $("chimeNote");
+  if (!b || !k || !n) return;
+  k.textContent = L9({my:"ဖွင့်တဲ့အခါ အသံ",en:"Launch chime",shn:"သဵင်မိူဝ်ႈပိုတ်ႇ",kac:"Hpaw ai shaloi nsen",
+    th:"เสียงตอนเปิดแอป",zh:"启动提示音",vi:"Âm báo khi mở",id:"Nada saat dibuka",ms:"Bunyi semasa dibuka"});
+  n.textContent = L9({
+    my:"Default ပိတ်ထားပါတယ်။ ဖွင့်ထားရင် install လုပ်ထားတဲ့ app ကို ဖွင့်တိုင်း တစ်ခါ မြည်ပါမယ် — ဖုန်းက အသံပိတ်ထားရင် (သို့) browser က ခွင့်မပြုရင် မမြည်ပါ။",
+    en:"Off by default. When on, it sounds once each time you open the installed app — a phone on silent, or a browser that blocks sound before your first tap, will skip it.",
+    shn:"ပဵၼ်ဢိုတ်းဝႆႉ။ ပိုတ်ႇဝႆႉၼႆ မိူဝ်ႈပိုတ်ႇ app တေမီးသဵင် ၼိုင်ႈပွၵ်ႈ။",
+    kac:"Pat da ai re. Hpaw da yang, app hpaw ai shaloi langai mi nsen pru na.",
+    th:"ปิดไว้เป็นค่าเริ่มต้น เปิดแล้วจะมีเสียงหนึ่งครั้งทุกครั้งที่เปิดแอปที่ติดตั้งไว้",
+    zh:"默认关闭。开启后，每次打开已安装的应用会响一声。",
+    vi:"Mặc định tắt. Khi bật, sẽ kêu một lần mỗi khi bạn mở ứng dụng đã cài.",
+    id:"Nonaktif secara bawaan. Jika aktif, berbunyi sekali setiap kali membuka aplikasi terpasang.",
+    ms:"Dimatikan secara lalai. Apabila hidup, berbunyi sekali setiap kali anda membuka aplikasi yang dipasang."});
+  chimePaint();
+  b.onclick = function(){
+    var next = !chimeOn();
+    try { if (next) localStorage.setItem(CHIME_KEY, "1"); else localStorage.removeItem(CHIME_KEY); } catch(e){ }
+    chimePaint();
+    /* a real tap: the one moment the sound is certain to be allowed */
+    if (next) chimePlay();
+  };
+}
+
 function wireAboutCard(){
   if(!$("cardAbout")) return;
   $("aboutH2").innerHTML=icn("i-bell","ic-h2")+escH(L9({my:"APP နဲ့ UPDATE",en:"APP & UPDATES",shn:"APP လႄႈ UPDATE",kac:"APP hte UPDATE",th:"แอปและอัปเดต",zh:"应用与更新",vi:"Ứng dụng & cập nhật",id:"Aplikasi & pembaruan",ms:"Aplikasi & kemas kini"}));
   $("aboutVer").textContent="v"+APP_VER;
+  wireSplashChime();
   setIcnText($("btnCheckUpdate"),"i-bell",L9({my:"Update စစ်မယ်",en:"Check for updates",shn:"ၶူၼ်ႉတူၺ်း update",kac:"Update sagawn u",th:"ตรวจหาอัปเดต",zh:"检查更新",vi:"Kiểm tra cập nhật",id:"Periksa pembaruan",ms:"Semak kemas kini"}));
   setIcnText($("btnHardRefresh"),"i-restore",L9({my:"Cache ရှင်း + ပြန်စမယ်",en:"Clear cache + restart",shn:"လၢင်ႉ cache + တႄႇၶိုၼ်း",kac:"Cache sausan nna bai hpang u",th:"ล้างแคช + เริ่มใหม่",zh:"清缓存并重启",vi:"Xóa cache + khởi động lại",id:"Bersihkan cache + mulai ulang",ms:"Kosongkan cache + mula semula"}));
   $("btnCheckUpdate").onclick=function(){
