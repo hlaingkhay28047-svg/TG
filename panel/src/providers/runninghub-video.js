@@ -30,7 +30,9 @@ function get(id) {
    endpoints do not share one request shape, so the shape comes from the
    model's own descriptor rather than from a branch here. */
 function buildBody(def, imageUrls, promptText, resolution, duration, aspectRatio, imageParam, promptMax) {
-  var body = { prompt: promptMax ? String(promptText || "").slice(0, promptMax) : (promptText || "") };
+  /* v6.63.0 — cut on a sentence, as the app does (prompt-fit.js) */
+  var pf = (typeof HNK !== "undefined" && HNK.promptFit) || null;
+  var body = { prompt: promptMax ? (pf ? pf.fit(String(promptText || ""), promptMax) : String(promptText || "").slice(0, promptMax)) : (promptText || "") };
   imageUrls = imageUrls || [];
   def = def || {};
   if (def.kind === "vnode" && def.node) {

@@ -270,6 +270,16 @@ jobs:
       - name: Verify the thirteen Look Sets hold their set
         run: PORT=8931 node test/verify_look_sets.js
 
+      # v5.92.0 — what a CAPPED model actually receives, and what a switch
+      # turned OFF actually says. Thirteen image models and most video models
+      # cut long prompts; this proves the cut hands over the task first, keeps
+      # the TASK GUARD whole whenever it fits, never stops mid-word, and is
+      # byte-identical on the panel — and that every Look Set switch states
+      # what OFF means instead of leaving the rest of the prompt to contradict
+      # it.
+      - name: Verify what a capped model receives, and what OFF means
+        run: PORT=8931 node test/verify_prompt_fit.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

@@ -127,7 +127,13 @@ function wanWH(ratio, size) {
 function buildRequestBody(mc, request, uploadedUrls) {
   mc = mc || {};
   var body = { prompt: request.prompt || request.compiledPrompt || "" };
-  if (mc.promptMax && body.prompt.length > mc.promptMax) body.prompt = body.prompt.slice(0, mc.promptMax);
+  /* v6.63.0 — the app's priority cut (guard whole, task opening, AVOID only
+     if whole; never mid-word), not a tail slice. prompt-fit.js; the bare
+     slice stays only as the fallback when this file is loaded on its own. */
+  if (mc.promptMax && body.prompt.length > mc.promptMax) {
+    var pf = (typeof HNK !== "undefined" && HNK.promptFit) || null;
+    body.prompt = pf ? pf.fit(body.prompt, mc.promptMax) : body.prompt.slice(0, mc.promptMax);
+  }
 
   var ratio = (request.output && request.output.ratio) || "";
   var size = (request.output && request.output.size) || "";

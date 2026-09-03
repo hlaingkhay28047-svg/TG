@@ -282,7 +282,10 @@ function applyFields(prompt, fields, vals) {
     var v = vals ? vals[f.key] : undefined;
     if (f.type === "toggle") {
       var on = (v === undefined) ? (f.default !== false) : !!v;
-      if (!on && f.tag) p = p.split("\n").filter(function (ln) { return ln.indexOf(f.tag) !== 0; }).join("\n");
+      /* v6.63.0 — a field with an `off` line puts it in the tagged line's
+         place (the app's applyWfFields, byte for byte); without one the line
+         is removed as before. */
+      if (!on && f.tag) p = p.split("\n").map(function (ln) { return ln.indexOf(f.tag) !== 0 ? ln : (f.off || null); }).filter(function (ln) { return ln !== null; }).join("\n");
     } else if (f.type === "text") {
       var tv = String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, f.max || 80);
       if (!tv && f.tag) p = p.split("\n").filter(function (ln) { return ln.indexOf(f.tag) !== 0; }).join("\n");
