@@ -35,7 +35,7 @@ on:
         description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
         required: true
       pairs:
-        description: 'space-separated pair names to build (retouch scene), or "all"'
+        description: 'space-separated pair names to build (retouch scene series lookcopy …), or "all"'
         required: false
         default: 'all'
       tasks:
@@ -377,6 +377,35 @@ jobs:
                   submit "card-$sid" "$EDIT_PATH" "$(jbody "$SP" "[\"$us\"]" "3:2")" || fail=1
                 done
                 rm -rf out/prompts
+                ;;
+              lookcopy)
+                # v5.87.0 — the Studio Look Copy card: ONE real product pass of
+                # the workflow's own shipped prompt, with the two images the
+                # workflow actually asks for. IMAGE 1 is the shipped scene
+                # before (white ao dai, one hop from her true face); IMAGE 2 is
+                # the same Library plate the workflow's guide shows, so the card
+                # and the guide are provably the same look. The prompt is read
+                # out of the shipped catalog at its own defaults — every switch
+                # on, the empty free-text request line stripped exactly as
+                # applyWfFields strips it — never hand-written here, or the
+                # card would advertise something the button does not do.
+                LC_PROMPT=$(python3 - <<'PY'
+          import re, json
+          src = open('panel/js/hnk_wf_catalog_data.js').read()
+          cat = json.loads(re.search(r'var CATALOG = ({.*?});\n', src, re.S).group(1))
+          it = next((i for c in cat['categories'] for i in c['items'] if i['id']=='studio-look-copy'), None)
+          if it:
+              p = '\n'.join(l for l in it['prompt'].split('\n') if not l.startswith('EXTRA REQUEST:'))
+              print(p + '\n\nAVOID: ' + it['negative'] + '.')
+          PY
+          )
+                [ -n "$LC_PROMPT" ] || { echo "LOOKCOPY: studio-look-copy not in catalog on this ref"; fail=1; continue; }
+                ul1=$(reupload "docs/assets/site/ba/ba-scene-before.jpg") || { echo "LOOKCOPY UPLOAD 1 FAILED"; fail=1; continue; }
+                ul2=$(reupload "docs/app/lib/full/user-ref-009.jpg") || { echo "LOOKCOPY UPLOAD 2 FAILED"; fail=1; continue; }
+                # no ratio: the prompt locks IMAGE 1's own framing and aspect,
+                # which is the whole promise — asking for 3:2 here would ask the
+                # model to break the one rule the card is meant to demonstrate.
+                submit "card-studio-look-copy" "$EDIT_PATH" "$(jbody "$LC_PROMPT" "[\"$ul1\",\"$ul2\"]" "")" || fail=1
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac

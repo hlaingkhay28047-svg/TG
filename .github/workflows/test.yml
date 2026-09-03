@@ -218,6 +218,17 @@ jobs:
       - name: Verify results survive leaving the app, with their originals
         run: node test/verify_results_persist.js
 
+      # v5.87.0 — Studio Look Copy: one reference photograph's whole look,
+      # copied into the student's own photo with their subject, pose, framing
+      # and ratio untouched. Twenty-six shipped models can carry its two
+      # images, but THIRTEEN of them cap the prompt (800 characters on Qwen
+      # Image 2, 2000 on Seedream v4, 3000 on Qwen Image 3) and
+      # rhTruncatePrompt cuts silently — so this proves the workflow's TASK
+      # GUARD block survives the cut at every cap in the shipped catalog, and
+      # that each of its nine switches owns exactly one line of the prompt.
+      - name: Verify Studio Look Copy holds its look on every capable model
+        run: node test/verify_studio_look_copy.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

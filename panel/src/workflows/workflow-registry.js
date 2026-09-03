@@ -218,7 +218,15 @@ if (_CATALOG && _CATALOG.categories) {
       }
       var wf = {
         id: w.id, title: w.title, home: false, category: c.category,
-        visual: _ART_BASE + w.id + ".jpg",
+        /* v6.58.0 — the app publishes a card photograph for a workflow only
+           once one has been made (its NO_CARD_JPG list is exactly that
+           mechanism), and the generated catalog carries the answer as
+           hasCard. This line used to build the URL from the id regardless,
+           so a workflow that shipped ahead of its photograph asked the web
+           app's host for a file that is not there: a silent 404 on every
+           render, and a black tile with no fallback. Honour hasCard and the
+           card falls back to wfv-noart, exactly as the app's grid does. */
+        visual: w.hasCard ? (_ART_BASE + w.id + ".jpg") : "",
         badge: w.badge || "", wedGroup: w.wedGroup || "",
         summary: w.summary, explanation: w.explanation,
         humanSubject: false, referenceTransfer: false, bespoke: true,
