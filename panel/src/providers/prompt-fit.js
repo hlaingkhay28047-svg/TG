@@ -1,0 +1,55 @@
+/* v6.63.0 — what a capped model actually receives, in the app's priority
+   order (docs/app/index.html rhTruncatePrompt, ported byte-for-byte;
+   test/verify_prompt_fit.js proves the two surfaces cut identically).
+   A capped model gets (1) the TASK GUARD block whole whenever it fits at
+   all, (2) the OPENING of the task in whatever room is left, cut on a line
+   or sentence boundary and never mid-word, and (3) the AVOID list only when
+   the whole of it still fits. The adapter used to do a plain slice(0, max),
+   which dropped the guard and the AVOID list first and could end on half a
+   word; the app kept the guard plus AVOID and could drop the task entirely.
+   Now both cut the same way. */
+(function (global) {
+  "use strict";
+  function cutClean(text, n) {
+    var s = String(text || "");
+    if (!(n > 0)) return "";
+    if (s.length <= n) return s;
+    var cut = s.slice(0, n), floor = Math.floor(n * 0.6);
+    var nl = cut.lastIndexOf("\n");
+    if (nl >= floor) return cut.slice(0, nl).replace(/\s+$/, "");
+    var i = cut.length - 1;
+    while (i >= floor) {
+      var c = cut.charAt(i), nx = cut.charAt(i + 1);
+      if ((c === "." || c === "!" || c === "?") && (nx === "" || /[\s"”')\]]/.test(nx))) break;
+      i--;
+    }
+    if (i >= floor) return cut.slice(0, i + 1).replace(/\s+$/, "");
+    var sp = cut.lastIndexOf(" ");
+    if (sp >= floor) return cut.slice(0, sp).replace(/[\s,;:—–-]+$/, "");
+    return cut;
+  }
+  function fit(promptText, maxLen) {
+    var s = String(promptText || "");
+    if (!maxLen || s.length <= maxLen) return s;
+    var gi = s.indexOf("TASK GUARD:");
+    if (gi < 0) return cutClean(s, maxLen);
+    var body = s.slice(0, gi).replace(/\s+$/, ""), tail = s.slice(gi), avoid = "";
+    var ai = tail.indexOf("\n\nAVOID:");
+    if (ai >= 0) { avoid = tail.slice(ai); tail = tail.slice(0, ai); }
+    var guard = tail.replace(/\s+$/, "");
+    var room = maxLen - guard.length - 2, head;
+    if (room <= 0) {
+      /* the guard alone is bigger than the cap. Only here is it cut, and the
+         task still keeps two fifths of the room, so both halves arrive as
+         their own opening sentences rather than one arriving as nothing. */
+      head = cutClean(body, Math.floor(maxLen * 0.4));
+      return (head ? head + "\n\n" : "") + cutClean(guard, maxLen - (head ? head.length + 2 : 0));
+    }
+    head = cutClean(body, room);
+    var out = (head ? head + "\n\n" : "") + guard;
+    if (avoid && out.length + avoid.length <= maxLen) out += avoid;
+    return out;
+  }
+  global.HNK = global.HNK || {};
+  global.HNK.promptFit = { fit: fit, cutClean: cutClean };
+})(typeof globalThis !== "undefined" ? globalThis : this);
