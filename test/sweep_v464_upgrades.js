@@ -173,7 +173,10 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    same rule as v5.14/v5.16/v5.17/v5.62/v5.63/v5.64). B above
    confirms the file is correctly sized, so this is real content weight, not
    the native-1536px mistake this check exists to catch. */
-const PREV_MB = 16.79;
+/* 2026-09-03, v5.91.0 — the thirteen Look Set cards land, +0.95 MB at the
+   pack's own 960x640 / q79 (check B still measures that geometry on every
+   file, so the budget cannot be met by shipping smaller pictures). */
+const PREV_MB = 17.75;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });

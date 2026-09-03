@@ -9750,13 +9750,13 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        prompt over the shipped scene before with the Library plate its guide
        shows as the look reference. So the list is empty again, exactly as
        the rule above says. */
-    /* v5.91.0 — the thirteen Look Sets ship with their prompts first and their
-       card art in the release that follows: the art is generated on the showcase
-       lane from each set's own prompt, which needs the owner's key as a masked
-       dispatch input. Listing them here keeps a certain 404 out of every console
-       (this codebase pins consoles clean) until the jpgs land; each id comes off
-       this list in the same commit that adds its file. */
-    var NO_CARD_JPG=["look-butterfly-wing", "look-golden-grecian", "look-highland-indigo", "look-gold-parasol", "look-blossom-braids", "look-sunflower-olive", "look-chiaroscuro-cream", "look-misty-grey", "look-marigold-veil", "look-peach-velvet", "look-temple-lightfall", "look-noir-feather", "look-imperial-yellow"];
+    /* v5.91.0 — the thirteen Look Sets landed their card photographs in the
+       release after their prompts, each generated from that set's OWN shipped
+       prompt on the showcase lane, and came off this list in the same commit
+       that added the files — the contract this list has carried since v5.12.
+       It is empty again, and any card that ships without art must name itself
+       here rather than 404 quietly. */
+    var NO_CARD_JPG=[];
 
     var cats=[];
     var mm=LANG!=="en";
