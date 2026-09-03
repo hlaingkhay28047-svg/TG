@@ -171,13 +171,18 @@ function report(name, ok, detail) {
 
     /* ---- 5. the card art is either drawn or honestly declared absent ---- */
     const jpg = path.join(ROOT, "docs", "app", "lib", "wf", "cards5", ID + ".jpg");
+    /* cardImg is set on the composed CATEGORY item, not on the raw catalog
+       entry, so ask the app's own accessor rather than the source list. */
     const declared = await page.evaluate(id => {
       const w = LW.workflows.filter(x => x.id === id)[0];
-      return { cardImg: w.cardImg || "", visual: w.visual || "" };
+      return { cardImg: window._wfCardImgById(id) || "", visual: w.visual || "" };
     }, ID);
     const hasJpg = fs.existsSync(jpg);
+    /* _wfCardImgById falls back to the generated SVG when there is no
+       photograph, so "asks for a jpg" is the test, not "asks for anything". */
+    const asksJpg = /lib\/wf\/cards5\//.test(declared.cardImg);
     report("the card either has its photograph on disk, or asks for no photograph at all — never a guaranteed 404",
-      hasJpg === !!declared.cardImg, JSON.stringify({ onDisk: hasJpg, requested: declared.cardImg }));
+      hasJpg === asksJpg, JSON.stringify({ onDisk: hasJpg, requested: declared.cardImg.slice(0, 60) }));
     report("the guide carries a reference plate that exists",
       !!declared.visual && fs.existsSync(path.join(ROOT, "docs", "app", "lib", "ui", declared.visual)),
       declared.visual || "no visual");
