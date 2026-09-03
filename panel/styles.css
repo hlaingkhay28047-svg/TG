@@ -821,13 +821,33 @@ input[type="range"] { min-width: 0; }
 .hnk-url-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; }
 .hnk-url-inp { flex: 1; min-width: 0; font-size: 12px; padding: 7px 9px; }
 
+/* ---- v6.61.0 WHAT'S NEW — the same gold as the web app's, box for box.
+   UXP has no pseudo-elements and no gradients on some builds, so the strip is
+   a flat gold-tinted card rather than the app's gradient; every other measure
+   (44px rows, 56px thumb slot, pill radius) is the app's. ---- */
+.nw-card{border:1px solid var(--gold);background:rgba(244,212,136,.07)}
+.nw-card h2{color:var(--gold)}
+.nw-wrap{display:flex;flex-direction:row;align-items:stretch;margin-top:8px}
+.nw-row{display:flex;flex-direction:row;align-items:center;flex:1;text-align:left;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:10px;color:var(--cream);min-height:44px}
+.nw-tx{flex:1}
+.nw-t{font-weight:800;font-size:12.5px}
+.nw-s{font-size:11px;color:var(--muted);margin-top:2px}
+.nw-tag{color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px;font-size:9.5px;font-weight:900}
+.nw-x{min-width:36px;min-height:36px;margin-left:8px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
+.wf-new{position:absolute;top:8px;right:8px;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:900}
+.wfmini.is-new{border-color:var(--gold)}
 /* v6.59.0 — the slot shows the picture that landed. Small enough that a
    two-image workflow still fits a phone-narrow panel, big enough to tell
    two photographs apart, which is the whole point when the source was a
    link someone pasted. */
 .hnk-req-thumb { display: flex; align-items: center; gap: 8px; margin: 4px 0 6px; }
+/* v6.61.0 — the whole photograph, not a square crop of it. The slot exists so
+   a studio can check the picture BEFORE the credit is spent; a 64px square
+   with object-fit:cover cut the head off a full-length shot and both ends off
+   a group shot, which is the one thing this preview must never do. Wider box
+   so a landscape frame is still legible, letterboxed on black. */
 .hnk-req-thumb img {
-  width: 64px; height: 64px; object-fit: cover;
+  width: 88px; height: 64px; object-fit: contain;
   border-radius: 8px; border: 1px solid var(--line); background: #000;
 }
 .hnk-req-clear { padding: 4px 9px; font-size: 12px; line-height: 1; }
@@ -2325,6 +2345,6 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   margin-right: 12px; background-color: var(--panel); }
 #pagePath .pt-wfsel b { display: block; font-size: 12.5px; line-height: 1.4; }
 #pagePath .pt-wfsel .mut { font-size: 10.5px; line-height: 1.5; }
-#pagePath #ptRefThumb { display: block; width: 96px; height: 120px; object-fit: cover;
+#pagePath #ptRefThumb { display: block; width: 96px; height: 120px; object-fit: contain; background: #000;
   border-radius: 8px; border: 1px solid var(--line-soft); margin-top: 8px; }
 #pagePath #ptMultiBar { flex-wrap: wrap; }

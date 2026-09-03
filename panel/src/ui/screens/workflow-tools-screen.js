@@ -123,6 +123,21 @@ function create(deps) {
   /* the app's favourites / recents lists, same keys, same shapes (JSON arrays
      of workflow ids); UXP may deny localStorage, so a memory copy stands in */
   var K_FAVS = "hnk_ws_wf_favs", K_RECENT = "hnk_ws_wf_recent";
+  /* v6.61.0 — the same lifted WHAT'S NEW list the Home strip reads, so a card
+     the student has not opened yet wears the gold NEW ribbon here too and
+     comes first in its category. Reading the record is enough; Home owns the
+     writing, and opening the card below marks it read. */
+  var whatsNew = _CJS ? require("../../../js/hnk_whats_new.js")
+    : (globalThis.HNK && globalThis.HNK.whatsNew);
+  function nwSeenIds() {
+    var out = {};
+    if (!whatsNew || !whatsNew.LIST) return out;
+    var seen = readList(whatsNew.SEEN_KEY);
+    whatsNew.LIST.forEach(function (e) {
+      if (e.kind === "wf" && seen.indexOf(whatsNew.key(e)) < 0) out[e.ref] = e;
+    });
+    return out;
+  }
   var _mem = {};
   function readList(key) {
     try {
@@ -200,6 +215,13 @@ function create(deps) {
       var bdg = dom.el(doc, "span", { class: "bdg" });
       bdg.appendChild(icon(wf.badge + "-cream", ""));
       box.appendChild(bdg);
+    }
+    /* v6.61.0 — the gold NEW ribbon, inside the visual like the photo-count
+       pill, so it tracks the art rather than the card box. */
+    var _nwNew = nwSeenIds();
+    if (_nwNew[wf.id]) {
+      m.className = "wfmini is-new";
+      box.appendChild(dom.el(doc, "span", { class: "wf-new", text: "NEW" }));
     }
     m.appendChild(box);
 

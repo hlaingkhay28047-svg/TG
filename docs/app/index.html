@@ -304,6 +304,28 @@ select.inp{padding:9px 10px}
 #lzX{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);color:var(--cream);font-size:18px;cursor:pointer}
 .lz-nav{position:absolute;top:50%;transform:translateY(-50%);min-width:44px;min-height:56px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(19,24,38,.8);color:var(--gold-hi);font-size:20px;cursor:pointer}
 #lzPrev{left:8px} #lzNext{right:8px}
+/* ---- v5.90.0 WHAT'S NEW — the gold mark that says "this just shipped" ----
+   The owner's ask, in their words: when something new goes out, a student
+   should see it at the very top, know it is new, and be able to try it right
+   there. Three surfaces carry the same gold: a strip at the top of Home, a
+   ribbon on the workflow card itself, and a dot on the tab that holds it. */
+.nw-card{border:1px solid var(--gold);background:linear-gradient(180deg,rgba(244,212,136,.10),rgba(244,212,136,.03))}
+.nw-card h2{color:var(--gold)}
+.nw-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:10px;color:var(--cream);margin-top:8px;min-height:44px}
+.nw-row:first-of-type{margin-top:0}
+.nw-th{width:56px;height:38px;flex:0 0 auto;object-fit:cover;border-radius:7px;border:1px solid var(--line-soft);background:#000}
+.nw-tx{flex:1;min-width:0}
+.nw-t{font-weight:800;font-size:12.5px;line-height:1.35}
+.nw-s{font-size:11px;color:var(--muted);line-height:1.4;margin-top:2px}
+.nw-tag{flex:0 0 auto;font-size:9.5px;font-weight:900;letter-spacing:.06em;color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px}
+.nw-x{flex:0 0 auto;min-width:36px;min-height:36px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
+/* the card ribbon. Sits opposite .wf-need (top-left) so neither covers the
+   other, and above the ★/batch corner buttons in z-order but not over them. */
+.wf-new{position:absolute;top:8px;right:8px;z-index:3;pointer-events:none;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:900;letter-spacing:.06em}
+.wfmini.is-new{border-color:var(--gold)}
+/* the tab dot. A dot, not a number: the count is on Home, and a numeral this
+   small is unreadable on a phone bar that is already 10.5px. */
+.tabb .nw-dot{position:absolute;top:5px;right:calc(50% - 17px);width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px var(--bg)}
 /* v4.41: photo-count pill on workflow cards */
 .wfmini{position:relative}
 .wf-need{position:absolute;top:8px;left:8px;z-index:2;pointer-events:none;background:rgba(11,13,20,.78);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:10px;color:var(--cream)}
@@ -336,7 +358,19 @@ select.inp{padding:9px 10px}
 .refs{display:flex;gap:10px;flex-wrap:wrap}
 .ref{position:relative;width:104px;height:104px;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .ref.filled{border-style:solid}
-.ref img{width:100%;height:100%;object-fit:cover}
+/* ---- v5.90.0 — AN INPUT SLOT SHOWS THE WHOLE PHOTOGRAPH ----
+   The owner asked whether the picture in an image slot comes out cropped. It
+   did, everywhere: every slot that holds a photo the STUDENT supplied used
+   object-fit:cover in a square-ish box, so a 9:16 full-length shot lost the
+   head and the shoes and a 16:9 group shot lost both ends. That is the one
+   place a crop is not a style choice — the slot exists so a studio can check
+   "is this the right photograph, framed the way I meant" BEFORE the credit is
+   spent, and a preview that silently trims cannot answer that question.
+   These five now letterbox on the panel ground instead: the whole frame, its
+   real proportions, nothing hidden. Card art, the Library plates and the
+   result grids keep cover — they are a wall of pictures where an even grid is
+   worth more than an exact aspect, and none of them is the student's input. */
+.ref img{width:100%;height:100%;object-fit:contain;background:var(--ink)}
 .ref .add{font-size:26px;color:var(--gold);background:none;border:none;width:100%;height:100%}
 .ref .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:13px;display:none}
 .ref.filled .x{display:block}
@@ -505,7 +539,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .wslot{display:flex;gap:12px;align-items:center;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2);padding:10px;margin:10px 0}
 .wslot.filled{border-style:solid}
 .wslot .th{width:64px;height:64px;border-radius:9px;background:var(--ink);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px}
-.wslot .th img{width:100%;height:100%;object-fit:cover}
+.wslot .th img{width:100%;height:100%;object-fit:contain}
 .wslot .nm{font-size:13px;font-weight:800}
 .wslot .rq{font-size:11px;color:var(--gold-hi)}
 .wslot .rq.opt{color:var(--muted)}
@@ -613,7 +647,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .refstrip{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .refstrip .rs{position:relative;width:52px;height:52px;border:1px dashed var(--line);border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:16px;overflow:hidden;flex:none}
 .refstrip .rs.filled{border-style:solid}
-.refstrip .rs img{width:100%;height:100%;object-fit:cover}
+.refstrip .rs img{width:100%;height:100%;object-fit:contain;background:var(--ink)}
 .refstrip .rs .tag{position:absolute;left:2px;bottom:2px;background:rgba(11,13,20,.85);border-radius:5px;padding:0 4px;font-size:8.5px;color:var(--gold-hi);font-weight:800}
 .refstrip .rsx{position:absolute;top:1px;right:1px;width:20px;height:20px;border-radius:6px;border:none;background:rgba(11,13,20,.85);color:var(--cream);font-size:10px;display:flex;align-items:center;justify-content:center;padding:0}
 .refstrip .note{font-size:11px;color:var(--muted);line-height:1.5}
@@ -1322,7 +1356,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 @media (prefers-reduced-motion: reduce){.dash-card:active .art{transform:none}}
 .dash-strip{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;margin:var(--sp-2) 0}
 .dash-strip img{width:96px;height:128px;object-fit:cover;border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
-.dash-cont-thumb{width:72px;height:72px;object-fit:cover;border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
+.dash-cont-thumb{width:72px;height:72px;object-fit:contain;background:var(--ink);border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
 .dash-stat{margin:var(--sp-5) 0 var(--sp-2);text-align:center}
 .dash-stat-link{cursor:pointer;border-radius:var(--r-md);transition:background .2s}
 .dash-stat-link:hover,.dash-stat-link:focus-visible{background:rgba(217,164,65,.1)}
@@ -2130,6 +2164,14 @@ html.splashing #splash{display:flex}
   <!-- v4.41: the first screen greets the owner by name/time-of-day instead of
        opening cold — plan state rides along when an account is signed in -->
   <section class="dash-greet" id="dashGreet"></section>
+  <!-- v5.90.0 — WHAT'S NEW, at the very top of the first screen the student
+       sees, above every other card. Hidden entirely once they have opened or
+       dismissed everything in it, so a studio that is up to date never looks
+       at an empty box. -->
+  <section class="card nw-card" id="dashNew" style="display:none">
+    <h2 id="dashNewH2"></h2>
+    <div id="dashNewList"></div>
+  </section>
   <section class="card" aria-label="Student Web App destinations">
     <h2>Student Web App</h2>
     <div class="unified-actions">
@@ -3254,7 +3296,7 @@ html.splashing #splash{display:flex}
             <button class="btn" id="btnPtRef"></button>
             <button class="btn" id="btnPtRefClear" style="display:none"></button>
           </div>
-          <img id="ptRefThumb" alt="" style="display:none;width:96px;height:120px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line-soft);margin-top:8px">
+          <img id="ptRefThumb" alt="" style="display:none;width:96px;height:120px;object-fit:contain;background:var(--ink);border-radius:var(--r-sm);border:1px solid var(--line-soft);margin-top:8px">
         </div>
         <div class="subh" id="ptLbCustom"></div>
         <textarea class="inp" id="ptCustom" rows="3"></textarea>
@@ -4647,6 +4689,69 @@ var TOPGROUPS=[
   { id:"grpMedia", ic:"i-clapper", label:"Media Lab", pages:["pgText2Img","pgVideo","pgVideoUp"] },
   { id:"grpLib", ic:"i-frame", label:"Library", pages:["pgLib","pgGallery"] }
 ];
+/* ============================ v5.90.0 — WHAT'S NEW ============================
+   THE OWNER'S ASK, VERBATIM IN SPIRIT: when something new ships, a student
+   should be told — pinned at the top, marked "NEW", and tappable so they can
+   try it immediately, not read about it.
+
+   WHY IT IS A SHIPPED LIST AND NOT A FEED. There is no "announcements" table
+   and no place to author one; a feed would be a second thing to keep true,
+   and a stale feed is worse than none. This list ships WITH the release that
+   contains the thing it names, in the same commit, and a test refuses the
+   build if the newest entry is not this exact APP_VER. That makes "tell the
+   students what changed" part of shipping rather than a thing to remember.
+
+   MEMORY IS PER STUDENT AND PER ITEM. Marking one item read must not silence
+   the others, and a student on a shared studio computer must not lose the
+   news because a colleague opened it on their own phone — so the record is
+   localStorage on their device, keyed by version+ref. An entry they have
+   never seen is NEW to them however old the release is, which is the right
+   answer for a student who joins the course in month three.
+
+   Entries are: v    the release that shipped it (must exist; newest === APP_VER)
+                kind "wf" opens a Smart Workflow wizard; "page" switches page
+                ref  the workflow id, or the page id
+                t/s  title and one line, in all nine languages
+   Adding one is the whole job — every surface below reads this array. */
+var WHATS_NEW = [
+  { v:"5.90.0", kind:"page", ref:"pgWf",
+    t:{my:"အသစ်ထွက်တာတွေ ချက်ချင်းသိရပါပြီ",en:"You'll see what's new, straight away",shn:"တေႁၼ်ၶိူင်ႈမႂ်ႇတင်းသဵင်ႈ",kac:"Nnan ai ni hpe mu na",th:"เห็นของใหม่ได้ทันที",zh:"新功能一眼就看到",vi:"Thấy ngay cái mới",id:"Langsung lihat yang baru",ms:"Terus nampak yang baharu"},
+    s:{my:"ကတ်အသစ်တွေမှာ ရွှေရောင် NEW တံဆိပ် တပ်ထားပြီး အပေါ်ဆုံးမှာ ပြပါတယ် — နှိပ်ပြီး ချက်ချင်းစမ်းလို့ရပါတယ်",en:"New cards wear a gold NEW mark and sit at the top of their group — tap to try one now",shn:"ၶႅပ်းမႂ်ႇမီးမၢႆ NEW သီၶမ်း",kac:"Nnan ai card ni gold NEW lam tsun",th:"การ์ดใหม่มีป้าย NEW สีทองและอยู่บนสุด",zh:"新卡片带金色 NEW 标记并排在最前",vi:"Thẻ mới có nhãn NEW vàng và nằm trên cùng",id:"Kartu baru bertanda NEW emas dan ada di paling atas",ms:"Kad baharu bertanda NEW emas di bahagian atas"} },
+  { v:"5.89.0", kind:"page", ref:"pgVideo",
+    t:{my:"Video model အသစ် ၁၂ ခု",en:"Twelve new video models",shn:"ဝီးတီးဢူဝ်း model မႂ်ႇ 12",kac:"Video model nnan 12",th:"โมเดลวิดีโอใหม่ 12 ตัว",zh:"12 个新视频模型",vi:"12 mô hình video mới",id:"12 model video baru",ms:"12 model video baharu"},
+    s:{my:"MiniMax H3 Max, H3 Context-IR (အသံပါ), Gemini Omni 1.1 Flash နဲ့ 768P ကို 2K ပြန်ထုတ်တဲ့ tool တွေ",en:"MiniMax H3 Max, H3 Context-IR (with sound), Gemini Omni 1.1 Flash, and 768P→2K regeneration tools",shn:"MiniMax H3 Max, Context-IR, Gemini Omni 1.1",kac:"MiniMax H3 Max, Context-IR, Gemini Omni 1.1",th:"MiniMax H3 Max, Context-IR (มีเสียง), Gemini Omni 1.1",zh:"MiniMax H3 Max、Context-IR（带声音）、Gemini Omni 1.1",vi:"MiniMax H3 Max, Context-IR (có tiếng), Gemini Omni 1.1",id:"MiniMax H3 Max, Context-IR (bersuara), Gemini Omni 1.1",ms:"MiniMax H3 Max, Context-IR (berbunyi), Gemini Omni 1.1"} },
+  { v:"5.87.0", kind:"wf", ref:"studio-look-copy",
+    t:{my:"Studio Look Copy",en:"Studio Look Copy",shn:"Studio Look Copy",kac:"Studio Look Copy",th:"Studio Look Copy",zh:"Studio Look Copy",vi:"Studio Look Copy",id:"Studio Look Copy",ms:"Studio Look Copy"},
+    s:{my:"နမူနာပုံတစ်ပုံရဲ့ အရောင်၊ အလင်း၊ အသားရေ၊ scene အကုန်လုံးကို ကိုယ့်ပုံဆီ ကူးယူပေးတယ် — ပုံရာနဲ့ချီ တစ်ပုံစံတည်း",en:"Copies one reference photo's whole scene, colour, light and skin into your photo — the same look across a hundred frames",shn:"လၢႆးသီ လႄႈ ၾႆး ၶွင်ၶႅပ်းၼမူႇ",kac:"Reference sumla a nsam hte nhtoi",th:"คัดลอกโทนสี แสง ผิว ทั้งฉากจากรูปอ้างอิง",zh:"把参考照片的场景、色彩、光线和肤质整套复制到你的照片",vi:"Sao chép toàn bộ bối cảnh, màu, ánh sáng và da từ ảnh mẫu",id:"Menyalin seluruh suasana, warna, cahaya dan kulit dari foto acuan",ms:"Menyalin seluruh suasana, warna, cahaya dan kulit dari foto rujukan"} },
+  { v:"5.86.0", kind:"page", ref:"pgGallery",
+    t:{my:"ရလဒ်တွေ အလိုအလျောက် သိမ်းထားပြီ",en:"Your results are kept automatically",shn:"ၽွၼ်းလႆႈ လႆႈသိမ်းဝႆႉ",kac:"Nan a lam ni hpe makawp",th:"ผลงานถูกเก็บอัตโนมัติ",zh:"生成结果会自动保存",vi:"Kết quả được lưu tự động",id:"Hasil tersimpan otomatis",ms:"Hasil disimpan automatik"},
+    s:{my:"Tab ပိတ်သွားရင်တောင် ရလဒ်တွေ Gallery ထဲမှာ ကျန်နေမယ် — ကိုယ်တိုင်ဖျက်မှ ပျောက်မယ်",en:"Close the tab and the results are still in your Gallery — they go only when you delete them",shn:"ပိၵ်း tab သေတႃႉ ၽွၼ်းလႆႈယင်းမီး",kac:"Tab la kau tim Gallery hta naw nga",th:"ปิดแท็บแล้วผลงานยังอยู่ในแกลเลอรี",zh:"关掉分页，结果仍在图库里",vi:"Đóng tab, kết quả vẫn còn trong Thư viện",id:"Tutup tab, hasil tetap ada di Galeri",ms:"Tutup tab, hasil kekal dalam Galeri"} }
+];
+var LS_NEW_SEEN = "hnk_new_seen";
+function nwKey(e){ return e.v + "|" + e.ref; }
+function nwSeenList(){
+  try{ var l=JSON.parse(localStorage.getItem(LS_NEW_SEEN)||"[]"); return Array.isArray(l)?l:[]; }catch(e){ return []; }
+}
+function nwSeenSave(l){ try{ localStorage.setItem(LS_NEW_SEEN, JSON.stringify(l.slice(0,200))); }catch(e){} }
+function nwIsSeen(e){ return nwSeenList().indexOf(nwKey(e))>=0; }
+function nwMarkSeen(e){
+  var l=nwSeenList(), k=nwKey(e);
+  if(l.indexOf(k)<0){ l.unshift(k); nwSeenSave(l); }
+}
+function nwUnseen(){ return WHATS_NEW.filter(function(e){ return !nwIsSeen(e); }); }
+/* the workflow ids the strip is currently announcing, seen or not: the card
+   ribbon marks a release's cards for everyone who has not opened them, and a
+   student who dismissed the Home strip should still recognise the card. */
+function nwWfIds(){
+  var m={};
+  WHATS_NEW.forEach(function(e){ if(e.kind==="wf" && !nwIsSeen(e)) m[e.ref]=true; });
+  return m;
+}
+/* which top-level tab holds an entry's destination — the dot goes there. */
+function nwGroupOf(e){
+  var pg = e.kind==="wf" ? "pgWf" : e.ref;
+  return findGroup(pg);
+}
 function findGroup(id){
   for(var i=0;i<TOPGROUPS.length;i++){ if(TOPGROUPS[i].pages.indexOf(id)>=0) return TOPGROUPS[i]; }
   /* Setup, Account and Tutorials live outside the five compact top groups.
@@ -5709,6 +5814,10 @@ $("galEmptyGo").onclick=function(){ switchPage("pgWf"); };
     };
     bar.appendChild(b);
   });
+  /* v5.90.0 — the dot is painted as soon as the bar exists, not on first
+     visit to Home: a student who lands straight on Workflows must still see
+     that something is waiting somewhere. */
+  try{ renderNewDots(); }catch(e){}
 })();
 $("btnGearSetup").onclick=function(){ switchPage("pgHome"); };
 /* v4.27.0 one-time group-memory seed: the old grpCreate held 6 pages and has
@@ -10138,9 +10247,17 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       });
       g.b.appendChild(wrow);
     }
-    c.items.forEach(function(w){
+    /* v5.90.0 — a card the student has not opened since it shipped comes
+       FIRST in its own category. Sorting the rendered order (not the source
+       array) keeps every other consumer of c.items — the panel's lifted
+       catalog, the search index, the batch picker — byte-identical. */
+    var _nwIds=nwWfIds();
+    var _items=c.items.slice().sort(function(a,b){
+      return (_nwIds[b.id]?1:0)-(_nwIds[a.id]?1:0);
+    });
+    _items.forEach(function(w){
       wfById[w.id]=w;
-      var m=el("button","wfmini");
+      var m=el("button","wfmini"+(_nwIds[w.id]?" is-new":""));
       var cv=cardVisual(w); if(cv) m.appendChild(cv);
       var fav=el("button","fav"+(favList().indexOf(w.id)>=0?" on":""));
       fav.innerHTML="<span>"+icn("i-star-fill")+"</span>";
@@ -10180,11 +10297,24 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         ? L9({my:"ပုံမလို",en:"No photo",shn:"ဢမ်ႇလူဝ်ႇၶႅပ်း",kac:"Sumla n ra",th:"ไม่ต้องใช้รูป",zh:"无需照片",vi:"Không cần ảnh",id:"Tanpa foto",ms:"Tanpa foto"})
         : nReq===1 ? L9({my:"၁ ပုံ",en:"1 photo",shn:"1 ၶႅပ်း",kac:"Sumla 1",th:"1 รูป",zh:"1 张",vi:"1 ảnh",id:"1 foto",ms:"1 foto"})
         : L9({my:"၂ ပုံ + Ref",en:"2 photos",shn:"2 ၶႅပ်း",kac:"Sumla 2",th:"2 รูป",zh:"2 张",vi:"2 ảnh",id:"2 foto",ms:"2 foto"})));
+      /* the ribbon rides inside the visual for the same reason .wf-need does:
+         anchored to the card it drifts as the card grows with the viewport. */
+      if(_nwIds[w.id]){
+        var nb=el("span","wf-new","NEW");
+        ((cv && cv.className==="wfv") ? cv : m).appendChild(nb);
+      }
       m.appendChild(el("div","t",w.title));
       if(w.summary) m.appendChild(el("div","s",w.summary));
       var go=el("div","go"); go.innerHTML=icn("i-caret")+" "+escH(L9({my:"ဖွင့်မယ်",en:"Wizard",shn:"ပိုတ်ႇ",kac:"Hpaw u",th:"เปิด",zh:"打开",vi:"Mở",id:"Buka",ms:"Buka"})); m.appendChild(go);
-      m.onclick=function(){ openWizard(w); };
+      m.onclick=function(){
+        /* opening the card IS reading the news: the ribbon and the Home row
+           both retire on the same act, so nothing has to be dismissed twice */
+        WHATS_NEW.forEach(function(e){ if(e.kind==="wf" && e.ref===w.id) nwMarkSeen(e); });
+        if(typeof nwSync==="function") nwSync();
+        openWizard(w);
+      };
       m.dataset.wg=w.wedGroup||"";
+      m.dataset.nwId=w.id;
       gd.appendChild(m);
       /* v4.41: the index also carries the category title and sub-group so a
          search like "wedding veil" or a category word alone finds its cards */
@@ -10200,6 +10330,30 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   (function(){
     var rail=el("div","chips"); rail.id="wfJump";
     rail.style.cssText="flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px";
+    /* v5.90.0 — the rail's first stop is the new work. It only exists while
+       there IS new work: an empty "NEW 0" chip would be worse than no chip. */
+    (function(){
+      var ids=nwWfIds(), n=Object.keys(ids).filter(function(id){ return wfById[id]; }).length;
+      if(!n) return;
+      var b=el("button","chip on","✦ NEW "+n);
+      b.id="wfJumpNew";
+      b.style.cssText="border-color:var(--gold);color:var(--gold)";
+      b.onclick=function(){
+        var first=null;
+        Object.keys(ids).forEach(function(id){
+          var w=wfById[id]; if(!w) return;
+          for(var i=0;i<wfIndex.length;i++){
+            if(wfIndex[i].q.indexOf(" "+id+" ")>=0 || wfIndex[i].q.split(" ").indexOf(id)>=0){
+              if(wfIndex[i].grp.g.className.indexOf("open")<0) wfIndex[i].grp.g.className="grp open";
+              if(!first) first=wfIndex[i].el;
+              break;
+            }
+          }
+        });
+        if(first) first.scrollIntoView({behavior:"smooth", block:"center"});
+      };
+      rail.appendChild(b);
+    })();
     wfJumpTargets.forEach(function(tg){
       var b=el("button","chip", tg.t+" "+tg.n);
       b.onclick=function(){
@@ -21375,7 +21529,93 @@ function moneyCsv(){
   setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 
+/* v5.90.0 — the Home strip. Every unseen entry gets one row: what it is, one
+   line about it, and a tap that TAKES THEM THERE (the wizard, or the page)
+   rather than just marking it read. The ✕ is for the student who does not
+   want it now — dismissing is not the same as not caring, so it silences
+   only that one row. */
+function renderDashNew(){
+  var card=$("dashNew"), host=$("dashNewList");
+  if(!card || !host) return;
+  var list=nwUnseen();
+  if(!list.length){ card.style.display="none"; return; }
+  card.style.display="";
+  var h2=$("dashNewH2");
+  if(h2) setIcnText(h2,"i-sparkle", L9({my:"အသစ်ရောက်ထားတာတွေ",en:"Just shipped",shn:"ၶိူင်ႈမႂ်ႇ",kac:"Nnan ai ni",th:"ของใหม่ล่าสุด",zh:"最新上线",vi:"Vừa ra mắt",id:"Baru rilis",ms:"Baru keluar"})
+    + " (" + list.length + ")");
+  host.innerHTML="";
+  list.forEach(function(e){
+    var row=el("button","nw-row");
+    row.type="button";
+    row.dataset.nw=nwKey(e);
+    /* a workflow announces itself with its own card art — the student
+       recognises the picture before they read the name */
+    var img=null;
+    if(e.kind==="wf" && typeof window._wfCardImgById==="function"){
+      var src=null; try{ src=window._wfCardImgById(e.ref); }catch(err){}
+      if(src){
+        img=document.createElement("img");
+        img.className="nw-th"; img.src=src; img.alt=""; img.loading="lazy"; img.decoding="async";
+        img.onerror=function(){ img.remove(); };
+        row.appendChild(img);
+      }
+    }
+    var tx=el("div","nw-tx");
+    tx.appendChild(el("div","nw-t", L9(e.t)));
+    tx.appendChild(el("div","nw-s", L9(e.s)));
+    row.appendChild(tx);
+    row.appendChild(el("span","nw-tag","NEW"));
+    row.onclick=function(){
+      nwMarkSeen(e);
+      nwSync();
+      if(e.kind==="wf" && typeof window.openWorkflowById==="function") window.openWorkflowById(e.ref);
+      else switchPage(e.kind==="wf" ? "pgWf" : e.ref);
+    };
+    var wrap=el("div","row");
+    wrap.style.cssText="align-items:stretch;gap:8px";
+    wrap.appendChild(row);
+    var x=el("button","nw-x","✕");
+    x.type="button";
+    x.setAttribute("aria-label", L9({my:"ဖျောက်မယ်",en:"Dismiss",shn:"ႁဵတ်းႁၢႆ",kac:"Kau kau u",th:"ปิด",zh:"忽略",vi:"Bỏ qua",id:"Abaikan",ms:"Abaikan"}));
+    x.onclick=function(ev){ ev.stopPropagation(); nwMarkSeen(e); nwSync(); };
+    wrap.appendChild(x);
+    host.appendChild(wrap);
+  });
+}
+/* the tab dot: one gold dot on each top group that still holds unread news. */
+function renderNewDots(){
+  var bar=$("tabbar"); if(!bar) return;
+  var want={};
+  nwUnseen().forEach(function(e){ var g=nwGroupOf(e); if(g) want[g.id]=true; });
+  for(var i=0;i<bar.children.length && i<TOPGROUPS.length;i++){
+    var b=bar.children[i], has=b.querySelector(".nw-dot");
+    if(want[TOPGROUPS[i].id]){
+      if(!has){ var d=document.createElement("span"); d.className="nw-dot"; d.setAttribute("aria-hidden","true"); b.appendChild(d); }
+    } else if(has) has.remove();
+  }
+}
+/* ONE entry point, so a surface can never fall out of step with the record:
+   every place that changes what has been seen calls this and nothing else. */
+function nwSync(){
+  try{ renderDashNew(); }catch(e){}
+  try{ renderNewDots(); }catch(e){}
+  /* the Workflows page rebuilds its ribbons only on a full rebuild, which is
+     too heavy here — retire them in place instead. */
+  try{
+    var ids=nwWfIds(), left=0;
+    Array.prototype.forEach.call(document.querySelectorAll(".wfmini.is-new"), function(m){
+      if(ids[m.dataset.nwId]){ left++; return; }
+      m.classList.remove("is-new");
+      var r=m.querySelector(".wf-new"); if(r) r.remove();
+    });
+    var chip=document.getElementById("wfJumpNew");
+    if(chip){ if(!left) chip.remove(); else chip.textContent="\u2726 NEW "+left; }
+  }catch(e){}
+}
+try{ window.HNK_WHATS_NEW = WHATS_NEW; }catch(e){}
+
 function renderDash(){
+  renderDashNew();
   renderDashStatic();
   renderDashGreet();
   renderDashCont();
@@ -23270,7 +23510,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="5.89.0";
+var APP_VER="5.90.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
