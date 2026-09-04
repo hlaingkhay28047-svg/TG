@@ -528,6 +528,48 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     await new Promise(r => server.close(r));
   }
 
+  /* ---- E) and the art the cards wear is a picture of what they do ----
+     The render lane submits a REAL call per card and crops its result into
+     the card's picture. That is only honest while the call it submits is the
+     call the card submits, so the lane reads the body out of the app's own
+     rhVtBody (tools/v2v_card_request.js) instead of assembling JSON itself.
+     The first cut of the lane hand-wrote one body shape for two look-alike
+     cards; over nine cards that shape is wrong for seven of them — three
+     take no prompt, four take no photograph, five carry option defaults, and
+     only two carry keepOriginalSound. */
+  const V2V = require(path.join(ROOT, "tools", "v2v_card_request.js"));
+  const reqGaps = [];
+  WF.forEach(w => {
+    let r;
+    try { r = V2V.request(w.key, "https://example.invalid/v.mp4", "https://example.invalid/i.jpg"); }
+    catch (e) { reqGaps.push(w.key + ": " + e.message); return; }
+    const t = TOOLS.find(x => x.id === w.model);
+    if (r.apiPath !== t.apiPath) reqGaps.push(w.key + ": the lane would post to " + r.apiPath);
+    if (!r.body[t.videoParam]) reqGaps.push(w.key + ": the request carries no video");
+    /* the two shapes a hand-written body gets wrong */
+    if (!!r.body.prompt !== !!w.text) reqGaps.push(w.key + ": prompt " + (w.text ? "missing from" : "invented in") + " the request");
+    Object.keys(w.opts || {}).forEach(k => {
+      if (k === "whPreset") { if (!r.body.outputWidth) reqGaps.push(w.key + ": the size preset never became a width"); return; }
+      if (String(r.body[k]) !== String(w.opts[k])) reqGaps.push(w.key + "/" + k + ": the request sends " + r.body[k]);
+    });
+  });
+  report("E) the render lane can build every card's real request, from the app's own builder",
+    reqGaps.length === 0, reqGaps);
+
+  const lane = fs.readFileSync(path.join(ROOT, ".github", "workflows", "showcase-images.yml"), "utf8");
+  /* the lane's own comments explain what it must not hand-write, so read the
+     code and not the prose — otherwise the explanation fails the check it
+     exists to explain */
+  const v2vLane = lane.slice(lane.indexOf("v2vcards)"), lane.indexOf("retouch)"))
+    .split("\n").filter(l => !/^\s*#/.test(l)).join("\n");
+  report("E2) the lane asks that builder for every card rather than writing a body of its own",
+    v2vLane.indexOf("tools/v2v_card_request.js") >= 0 &&
+    v2vLane.indexOf("keys") >= 0 &&
+    !/keepOriginalSound/.test(v2vLane) && !/videoUrl["']\s*:/.test(v2vLane),
+    { callsTool: v2vLane.indexOf("tools/v2v_card_request.js") >= 0,
+      loopsAllCards: v2vLane.indexOf("keys") >= 0,
+      handRolled: /keepOriginalSound|videoUrl["']\s*:/.test(v2vLane) });
+
   console.log(failures
     ? `\n${failures} FAILURE(S) — the Video Smart Workflow would not do what its cards promise.`
     : "\nAll checks passed — nine cards, every one over an endpoint we already ship, the same request on both surfaces.");

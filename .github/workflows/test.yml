@@ -356,6 +356,15 @@ jobs:
       - name: Verify the Video Smart Workflow cards
         run: PORT=8931 node test/verify_video_smart_workflow.js
 
+      # v6.4.0 — the owner picked a clip and a face, left the app, came back,
+      # and both were gone; a paid RunningHub job that finished while the tab
+      # was dead was read once at boot and then left held. This pins all three
+      # halves of the repair: the picked files are SHOWN and kept, a Video
+      # Tools take is saved and restored under its own page, and the job book
+      # is watched until every held job is collected.
+      - name: Verify work survives leaving the app
+        run: PORT=8931 node test/verify_generate_continuity.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

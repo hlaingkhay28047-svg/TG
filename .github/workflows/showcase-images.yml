@@ -32,14 +32,15 @@ on:
         description: 'Type GENERATE to run (each image spends RunningHub credit)'
         required: true
       rh_key:
-        description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
-        required: true
+        description: 'LEAVE EMPTY if the RUNNINGHUB_KEY secret exists. A key typed here is visible on this public run page — only use it as a fallback, then rotate it.'
+        required: false
+        default: ''
       pairs:
         description: 'space-separated pair names to build (retouch scene series lookcopy looksets …), or "all"'
         required: false
         default: 'all'
       tasks:
-        description: 'COLLECT-ONLY: space-separated name:taskId pairs — skips submit and only polls + downloads already-paid tasks (names: ba-retouch-before ba-retouch-after ba-scene-before ba-scene-after)'
+        description: 'COLLECT-ONLY: space-separated name:taskId pairs — skips submit and only polls + downloads already-paid tasks (names: ba-retouch-before ba-retouch-after ba-scene-before ba-scene-after, or v2v-<cardKey> for the Video Smart Workflow cards)'
         required: false
         default: ''
 permissions:
@@ -53,12 +54,29 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
+      # PREFER THE REPOSITORY SECRET. This repository is PUBLIC, and the
+      # inputs a person types into "Run workflow" are shown on the run page,
+      # so a key pasted there is a key published. The secret never appears on
+      # that page. The typed input stays only as a fallback for the case where
+      # the secret has not been added yet; once RUNNINGHUB_KEY exists, leave
+      # the rh_key box EMPTY and the run uses the secret.
       - name: Mask the key before any other step can log
         env:
+          S: ${{ secrets.RUNNINGHUB_KEY }}
           K: ${{ inputs.rh_key }}
         run: |
-          echo "::add-mask::$K"
-          echo "RH_KEY=$K" >> "$GITHUB_ENV"
+          if [ -n "$S" ]; then echo "::add-mask::$S"; fi
+          if [ -n "$K" ]; then echo "::add-mask::$K"; fi
+          USE="${S:-$K}"
+          if [ -z "$USE" ]; then
+            echo "No RunningHub key: add the RUNNINGHUB_KEY repository secret, or type one into rh_key."
+            exit 1
+          fi
+          if [ -n "$S" ]; then echo "using the RUNNINGHUB_KEY secret"; else
+            echo "WARNING: using the typed rh_key — on a public repository that value is visible on this run page. Rotate it and add RUNNINGHUB_KEY as a secret."
+          fi
+          echo "::add-mask::$USE"
+          echo "RH_KEY=$USE" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Generate the pairs
         shell: bash
@@ -239,15 +257,27 @@ jobs:
               # prompts are not retyped here: they are read out of the shipped
               # catalog, so what the card advertises is what the card sends.
               v2vcards)
-                VPATH="kling-video-o3-pro/video-edit"
+                # ALL NINE cards, each through its OWN endpoint. The lane does
+                # not build these bodies: tools/v2v_card_request.js runs the
+                # app's own rhVtBody over the card's own descriptor and opts,
+                # so what is submitted here is character-for-character what a
+                # student's tap submits. Three cards send no prompt, four take
+                # no reference photograph, five carry option defaults and only
+                # two carry keepOriginalSound — hand-rolling that JSON here is
+                # exactly how the art stops being a picture of the card.
                 vurl=$(reupload "docs/app/lib/banners/motion/banner-train-station.mp4") || { echo "V2V VIDEO UPLOAD FAILED"; fail=1; continue; }
                 vref=$(reupload "$REF_IMG") || { echo "V2V REF UPLOAD FAILED"; fail=1; continue; }
-                for idx in 0 1; do
-                  cname=$(node -e 'const A=require("./panel/js/hnk_video_tool_wf.js");process.stdout.write(A.WF[+process.argv[1]].key)' "$idx")
-                  cprompt=$(node -e 'const A=require("./panel/js/hnk_video_tool_wf.js");process.stdout.write(A.WF[+process.argv[1]].text())' "$idx")
-                  [ -n "$cname" ] && [ -n "$cprompt" ] || { echo "V2V PROMPT READ FAILED $idx"; fail=1; continue; }
-                  vbody=$(python3 -c 'import json,sys; print(json.dumps({"videoUrl":sys.argv[1],"imageUrls":[sys.argv[2]],"prompt":sys.argv[3],"keepOriginalSound":True}))' "$vurl" "$vref" "$cprompt")
-                  submit "v2v-$cname" "$VPATH" "$vbody" mp4 || { fail=1; continue; }
+                # the source clip travels home too: it is the BEFORE half of
+                # every pair, and cropping the after against a different frame
+                # would make the divider lie
+                cp docs/app/lib/banners/motion/banner-train-station.mp4 out/v2v-source.mp4
+                for cname in $(node tools/v2v_card_request.js keys); do
+                  req=$(node tools/v2v_card_request.js "$cname" "$vurl" "$vref") || { echo "V2V REQUEST BUILD FAILED $cname"; fail=1; continue; }
+                  cpath=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.load(sys.stdin)["apiPath"])')
+                  cbody=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["body"]))')
+                  [ -n "$cpath" ] && [ -n "$cbody" ] || { echo "V2V REQUEST PARSE FAILED $cname"; fail=1; continue; }
+                  echo "== $cname -> $cpath"
+                  submit "v2v-$cname" "$cpath" "$cbody" mp4 || { fail=1; continue; }
                 done
                 ;;
               retouch)

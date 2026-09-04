@@ -22,8 +22,9 @@ on:
         description: 'Type GENERATE to run (each clip spends RunningHub credit)'
         required: true
       rh_key:
-        description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
-        required: true
+        description: 'LEAVE EMPTY if the RUNNINGHUB_KEY secret exists. A key typed here is visible on this public run page — only use it as a fallback, then rotate it.'
+        required: false
+        default: ''
       banners:
         description: 'space-separated banner basenames, or "all"'
         required: false
@@ -46,12 +47,29 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     steps:
+      # PREFER THE REPOSITORY SECRET. This repository is PUBLIC, and the
+      # inputs a person types into "Run workflow" are shown on the run page,
+      # so a key pasted there is a key published. The secret never appears on
+      # that page. The typed input stays only as a fallback for the case where
+      # the secret has not been added yet; once RUNNINGHUB_KEY exists, leave
+      # the rh_key box EMPTY and the run uses the secret.
       - name: Mask the key before any other step can log
         env:
+          S: ${{ secrets.RUNNINGHUB_KEY }}
           K: ${{ inputs.rh_key }}
         run: |
-          echo "::add-mask::$K"
-          echo "RH_KEY=$K" >> "$GITHUB_ENV"
+          if [ -n "$S" ]; then echo "::add-mask::$S"; fi
+          if [ -n "$K" ]; then echo "::add-mask::$K"; fi
+          USE="${S:-$K}"
+          if [ -z "$USE" ]; then
+            echo "No RunningHub key: add the RUNNINGHUB_KEY repository secret, or type one into rh_key."
+            exit 1
+          fi
+          if [ -n "$S" ]; then echo "using the RUNNINGHUB_KEY secret"; else
+            echo "WARNING: using the typed rh_key — on a public repository that value is visible on this run page. Rotate it and add RUNNINGHUB_KEY as a secret."
+          fi
+          echo "::add-mask::$USE"
+          echo "RH_KEY=$USE" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Generate one clip per banner still
         shell: bash

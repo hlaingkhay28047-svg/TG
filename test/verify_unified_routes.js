@@ -44,6 +44,9 @@ check("landing advertises Web Studio " + APP_VER,
 check("landing advertises Panel " + PANEL_VER,
   new RegExp("Panel(?:[^\\n<]|<[^>]+>){0,80}v" + PANEL_VER.replace(/\./g, "\\.")).test(landing),
   "panel copy is stale — the landing does not name the version the release manifest pins");
+/* the suite-size claim is NOT checked here: verify_landing_counts.js owns it,
+   across all 27 locale records and both share cards. Two tests owning one
+   claim is how they come to disagree. */
 check("the app's published version.json agrees with APP_VER",
   JSON.parse(read("docs/app/version.json")).v === APP_VER,
   "version.json and APP_VER disagree — the update check would tell a student the wrong thing");
