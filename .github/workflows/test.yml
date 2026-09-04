@@ -401,6 +401,14 @@ jobs:
       - name: Verify every replaced library file has a purge newer than it
         run: node test/verify_lib_purge_complete.js
 
+      # v6.6.2 — the purge deletes the stale copy on activate, which is AFTER
+      # the page has painted from it. The owner opened the release that fixed
+      # nine cards and saw all nine still wrong, because the repair landed a
+      # moment too late. The worker now names what it removed and the page
+      # re-requests exactly those pictures, on this launch rather than the next.
+      - name: Verify a replaced picture repaints on the launch that ships it
+        run: PORT=8931 node test/verify_lib_art_repaint.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

@@ -24443,13 +24443,48 @@ try { appWallApply(); } catch(e){}
 
 if ("serviceWorker" in navigator) {
   try { navigator.serviceWorker.register("sw.js"); } catch(e){}
+  /* v6.6.1 — REPAINT WHAT THE WORKER JUST THREW AWAY. Library art is cached
+     first and never revalidated, so when a picture is replaced under its own
+     name the worker purges the stale copy on activate (LIB_PURGES in sw.js).
+     By then this page has already painted from that copy, which is why the
+     owner saw the old cards on the very launch that was supposed to fix them
+     and only the next launch looked right.
+
+     The worker now names the URLs it removed and this repaints exactly those
+     elements. Nothing reloads: a student halfway through a prompt keeps their
+     prompt, and every picture not in the list is left alone. The cache entry
+     is already gone, so the re-request goes to the network and repopulates it
+     under the correct URL — the one-shot bust parameter only defeats the
+     browser's own in-memory copy of the old bytes. */
+  try {
+    navigator.serviceWorker.addEventListener("message", function(ev){
+      var d = ev && ev.data;
+      if(!d || d.type !== "hnk-lib-purged" || !Array.isArray(d.urls) || !d.urls.length) return;
+      var gone = {};
+      d.urls.forEach(function(u){ try{ gone[new URL(u).pathname] = 1; }catch(e){} });
+      var bust = "_p=" + Date.now();
+      var n = 0;
+      /* every card, banner and thumbnail paints through a src attribute
+         (vtWfCard builds an <img>), so this reaches all of them */
+      Array.prototype.forEach.call(document.querySelectorAll("img[src], video[src]"), function(el){
+        var src = el.getAttribute("src") || "";
+        if(!src) return;
+        var pathOnly;
+        try { pathOnly = new URL(src, location.href).pathname; } catch(e){ return; }
+        if(!gone[pathOnly]) return;
+        el.setAttribute("src", src + (src.indexOf("?") >= 0 ? "&" : "?") + bust);
+        n++;
+      });
+      if(n) try{ console.info("HNK: refreshed " + n + " replaced picture(s)"); }catch(e){}
+    });
+  } catch(e){}
   /* ask the browser not to evict this origin (cached library images +
      localStorage gallery/keys) under storage pressure */
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.6.1";
+var APP_VER="6.6.2";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
