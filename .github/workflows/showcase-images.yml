@@ -78,6 +78,17 @@ jobs:
           echo "::add-mask::$USE"
           echo "RH_KEY=$USE" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
+      # v6.4.0 — the v2vcards lane PREPARES two of its before-clips (a burnt-in
+      # subtitle, a softened copy) rather than submitting a clean clip to an
+      # eraser and a restorer that would have nothing to do. ubuntu-24.04 has
+      # no ffmpeg, and the first run failed on that after the checkout but
+      # before any submit — no credit spent, but no art either.
+      - name: Install ffmpeg (the v2vcards lane prepares its own before-clips)
+        run: |
+          command -v ffmpeg >/dev/null 2>&1 && { ffmpeg -version | head -1; exit 0; }
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg fonts-noto-core
+          ffmpeg -version | head -1
       - name: Generate the pairs
         shell: bash
         env:
@@ -275,8 +286,14 @@ jobs:
                 # soft low-resolution copy — and the card's BEFORE half is the
                 # prepared clip the endpoint actually received.
                 mkdir -p out
-                ffmpeg -y -v error -i "$SRC" -vf "drawtext=text='ဒီစာတန်းထိုးကို ဖျက်မယ်':fontfile=/usr/share/fonts/truetype/noto/NotoSansMyanmar-Regular.ttf:fontsize=42:fontcolor=white:borderw=3:bordercolor=black@0.85:x=(w-text_w)/2:y=h-th-46" -c:a copy out/v2v-source-vtEraseSub.mp4 \
-                  || ffmpeg -y -v error -i "$SRC" -vf "drawtext=text='ERASE THIS SUBTITLE':fontsize=44:fontcolor=white:borderw=3:bordercolor=black@0.85:x=(w-text_w)/2:y=h-th-46" -c:a copy out/v2v-source-vtEraseSub.mp4 \
+                # a Burmese subtitle if the runner has a Burmese face, plain
+                # latin if it does not — the point is a REAL burnt-in caption
+                # for the eraser to remove, not which script it is written in
+                MMFONT=$(fc-match -f '%{file}' "Noto Sans Myanmar" 2>/dev/null || true)
+                case "$MMFONT" in *Myanmar*) SUBTXT='ဒီစာတန်းထိုးကို ဖျက်မယ်'; FONTARG=":fontfile=$MMFONT" ;;
+                  *) SUBTXT='ERASE THIS SUBTITLE'; FONTARG="" ;; esac
+                echo "subtitle font: ${MMFONT:-<none>}"
+                ffmpeg -y -v error -i "$SRC" -vf "drawtext=text='$SUBTXT'$FONTARG:fontsize=44:fontcolor=white:borderw=3:bordercolor=black@0.85:x=(w-text_w)/2:y=h-th-46" -c:a copy out/v2v-source-vtEraseSub.mp4 \
                   || { echo "V2V SUBTITLE BURN FAILED"; fail=1; continue; }
                 ffmpeg -y -v error -i "$SRC" -vf "scale=426:240:flags=bilinear,scale=1280:720:flags=bilinear,noise=alls=8:allf=t" -c:v libx264 -crf 34 -preset veryfast -c:a copy out/v2v-source-vtRestore4K.mp4 \
                   || { echo "V2V DEGRADE FAILED"; fail=1; continue; }
