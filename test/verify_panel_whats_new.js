@@ -137,8 +137,14 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     });
     report("B) the strip draws on the panel's Home, directly under the greeting",
       home.drawn && home.index === 1 && home.before.every(b => /dashGreet|dash-greet/.test(b)), home);
-    report("B2) one row per unread entry, each marked NEW and each dismissable",
-      home.rows === home.total && home.tags === home.total && home.xs === home.total, home);
+    /* v6.71.0 — the panel's strip has the same ceiling the app's does
+       (three), so the two surfaces still show a student the same thing.
+       Pinning it to the unread TOTAL would now demand the panel draw a wall
+       of seventeen rows that the app deliberately no longer draws. */
+    const NW_STRIP_MAX = 3;
+    report("B2) the strip draws the newest three, each marked NEW and each dismissable",
+      home.rows === Math.min(home.total, NW_STRIP_MAX) &&
+      home.tags === home.rows && home.xs === home.rows, home);
     report("B3) the rows say what the app's rows say",
       home.titles.length > 0 && home.titles.every(t => t && t.length > 3), home.titles);
 

@@ -210,14 +210,21 @@ function render(root, deps) {
   (function () {
     if (!whatsNew || !whatsNew.LIST) return;
     var seen = nwSeen();
-    var list = whatsNew.LIST.filter(function (e) { return seen.indexOf(whatsNew.key(e)) < 0; });
-    if (!list.length) return;
+    /* v6.71.0 — the strip has a ceiling, exactly as the app's does
+       (docs/app/index.html NW_STRIP_MAX). WHATS_NEW reached seventeen
+       entries, so an unbounded strip met a first-time student with a wall
+       of changelog before the studio itself. The newest three are drawn and
+       the heading still names the true total. */
+    var NW_STRIP_MAX = 3;
+    var all = whatsNew.LIST.filter(function (e) { return seen.indexOf(whatsNew.key(e)) < 0; });
+    if (!all.length) return;
+    var list = all.slice(0, NW_STRIP_MAX);
     var card = dom.el(doc, "div", { class: "card nw-card", id: "hnkDashNew" });
     var h2 = dom.el(doc, "h2", { id: "hnkDashNewH2" });
     var hic = doc.createElement("img");
     hic.className = "ic-s"; hic.alt = ""; hic.src = "icons/ui/i-sparkle-gold.svg";
     h2.appendChild(hic);
-    h2.appendChild(doc.createTextNode(l9(L_NEW_H) + " (" + list.length + ")"));
+    h2.appendChild(doc.createTextNode(l9(L_NEW_H) + " (" + all.length + ")"));
     card.appendChild(h2);
     list.forEach(function (e) {
       var wrap = dom.el(doc, "div", { class: "nw-wrap" });

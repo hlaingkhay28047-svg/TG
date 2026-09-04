@@ -4785,6 +4785,7 @@ var WHATS_NEW = [
     s:{my:"Tab ပိတ်သွားရင်တောင် ရလဒ်တွေ Gallery ထဲမှာ ကျန်နေမယ် — ကိုယ်တိုင်ဖျက်မှ ပျောက်မယ်",en:"Close the tab and the results are still in your Gallery — they go only when you delete them",shn:"ပိၵ်း tab သေတႃႉ ၽွၼ်းလႆႈယင်းမီး",kac:"Tab la kau tim Gallery hta naw nga",th:"ปิดแท็บแล้วผลงานยังอยู่ในแกลเลอรี",zh:"关掉分页，结果仍在图库里",vi:"Đóng tab, kết quả vẫn còn trong Thư viện",id:"Tutup tab, hasil tetap ada di Galeri",ms:"Tutup tab, hasil kekal dalam Galeri"} }
 ];
 var LS_NEW_SEEN = "hnk_new_seen";
+var NW_STRIP_MAX=3;
 function nwKey(e){ return e.v + "|" + e.ref; }
 function nwSeenList(){
   try{ var l=JSON.parse(localStorage.getItem(LS_NEW_SEEN)||"[]"); return Array.isArray(l)?l:[]; }catch(e){ return []; }
@@ -22033,12 +22034,21 @@ function moneyCsv(){
 function renderDashNew(){
   var card=$("dashNew"), host=$("dashNewList");
   if(!card || !host) return;
-  var list=nwUnseen();
-  if(!list.length){ card.style.display="none"; return; }
+  /* v6.0.0 — THE STRIP HAS A CEILING.
+     It drew one row per unread entry with no limit. WHATS_NEW is now
+     seventeen entries, so a student opening the app for the first time met
+     a wall of changelog above the studio itself — and it grew with every
+     release. sweep_v484_bootbytes caught it from the other side: the strip
+     had pushed two of Home's six tiles below the fold, so they were never
+     fetched. The newest three are shown; the heading and the rail chip both
+     still carry the true unread count, so nothing is hidden, and dismissing
+     one brings the next up. */
+  var all=nwUnseen(), list=all.slice(0, NW_STRIP_MAX);
+  if(!all.length){ card.style.display="none"; return; }
   card.style.display="";
   var h2=$("dashNewH2");
   if(h2) setIcnText(h2,"i-sparkle", L9({my:"အသစ်ရောက်ထားတာတွေ",en:"Just shipped",shn:"ၶိူင်ႈမႂ်ႇ",kac:"Nnan ai ni",th:"ของใหม่ล่าสุด",zh:"最新上线",vi:"Vừa ra mắt",id:"Baru rilis",ms:"Baru keluar"})
-    + " (" + list.length + ")");
+    + " (" + all.length + ")");
   host.innerHTML="";
   list.forEach(function(e){
     var row=el("button","nw-row");
