@@ -326,6 +326,15 @@ jobs:
       - name: Verify a photograph is sent as the shape it already is
         run: node test/verify_ratio_fit.js
 
+      # v5.99.0 — the owner asked whether Derma Skin Pro really produces what
+      # its card shows. Its five switches carried no OFF line, so switching
+      # one off only deleted its instruction while FINISH went on demanding
+      # "completely clear skin", BLEMISH HEALING went on naming body skin,
+      # and the AVOID list forbade the mole removal the prompt asked for. A
+      # switch is a promise about what will not be touched; this pins it.
+      - name: Verify a switch turned off means it across the whole request
+        run: PORT=8931 node test/verify_switch_honesty.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
