@@ -86,6 +86,17 @@ const EXPECT = [
     /tkImg:\s*ti/.test(APP) && /tkAud:\s*ta/.test(APP) && /w\.tkAud\s*&&\s*w\.tkAud\.b64/.test(APP),
     "the work-in-progress record does not carry the photo and the recording");
 
+  /* ---- H) the panel's copy of the catalog IS the app's, byte for byte ---- */
+  const built = require("../tools/build_panel_talk_models.js").build();
+  const onDisk = fs.readFileSync(path.join(ROOT, "panel", "js", "hnk_talk_models.js"), "utf8");
+  report("H) the panel's talking-photo catalog is the app's, lifted — not retyped",
+    built === onDisk,
+    "panel/js/hnk_talk_models.js is not what tools/build_panel_talk_models.js produces — re-run it");
+  report("H2) and the panel's request builder is the lifted one, not a second copy",
+    /TALK\.body\(def, imageUrl, audioUrl, promptText\)/.test(
+      fs.readFileSync(path.join(ROOT, "panel", "src", "providers", "runninghub-video.js"), "utf8")),
+    "the panel provider builds its own talking-photo body instead of using the lifted catalog's");
+
   const browser = await chromium.launch();
   withPremium(browser);
   try {

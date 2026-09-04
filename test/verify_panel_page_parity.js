@@ -56,6 +56,15 @@ const PANEL_ONLY = {
   v2v: [
     "သိမ်းမယ့် folder ရွေးရန်"    /* Video Tools: the same, for its own run */
   ],
+  /* Talking Photo: the panel writes its results to disk where the browser
+     downloads them, so it carries a save-folder control the app has no need
+     for; and its model picker is the panel's own .hsl component, whose
+     context label ("Model") the app's plain <select> does not draw. Neither
+     is a difference in what the page offers. */
+  talk: [
+    "Model",
+    "သိမ်းမယ့် folder ရွေးရန်"
+  ],
   gallery: [],
   create: [],
   /* Path's save-folder controls live in its SAVE card, which — like the app's
@@ -70,7 +79,7 @@ const PANEL_ONLY = {
    text here; the panel's tile is the same picture as a file, so it carries no
    text node. Nothing a student sees differs. */
 const APP_ONLY = {
-  vidup: ["HD"], v2v: [], gallery: [], create: [], path: [],
+  vidup: ["HD"], v2v: [], talk: [], gallery: [], create: [], path: [],
   home: [], wf: [], lib: [],
   /* the app's Size tile is an inline <svg> with the letters HD drawn inside
      it, which counts as text here; the panel's tile is that same picture as a
@@ -124,6 +133,9 @@ const PAGES = [
   /* v6.2.0 — the new Video → Video page: the smart cards and all thirty-one
      video-in tools, on both surfaces. */
   { key: "v2v", panelKey: "v2v", appKey: "pgV2V", panelRoot: "#pageV2V", appRoot: "#pgV2V", label: "Video to Video" },
+  /* v6.5.0 — Talking Photo: the one page on either surface with an audio
+     slot, which is what the published lip-sync endpoints require. */
+  { key: "talk", panelKey: "talk", appKey: "pgTalk", panelRoot: "#pageTalk", appRoot: "#pgTalk", label: "Talking Photo" },
   { key: "create", panelKey: "create", appKey: "pgText2Img", panelRoot: "#pageCreate", appRoot: "#pgText2Img", label: "Text to Image" },
   { key: "path", panelKey: "path", appKey: "pgPath", panelRoot: "#pagePath", appRoot: "#pgPath", label: "Path" },
   /* v6.55.0 — the six pages built in the 6.51.0 wave and matched by hand.

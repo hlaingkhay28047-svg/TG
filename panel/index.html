@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.75.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.75.1</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -965,6 +965,60 @@
          The RUN and SAVE cards, like the app's, appear only once photos are
          loaded — and they carry the panel's own save-folder control, because
          a plugin writes its results to disk where a browser downloads them. -->
+    <!-- v6.75.1 — TALKING PHOTO, the app's pgTalk box for box. One photo,
+         one recording, and the person in the photo speaks it, over
+         RunningHub's own published kling-v2-ai-avatar endpoints. This is the
+         only page on either surface with an AUDIO slot, which is exactly why
+         the feature could not ship before. -->
+    <div class="page apg" id="pageTalk">
+      <div class="phero">
+        <img src="icons/banners/banner-train-station.jpg" alt="" />
+        <div class="ph-kick">Talking Photo</div>
+        <p class="ph-head" id="phTalk">ပုံတစ်ပုံ + အသံတစ်ခု — <em>စကားပြောနေတဲ့ ဗီဒီယို</em></p>
+      </div>
+
+      <div class="card">
+        <h2 id="tkH2"><img class="ic-h2" src="icons/ui/i-clapper-hi.svg" alt="">TALKING PHOTO</h2>
+        <div class="mut" id="tkIntro"></div>
+        <div class="hsl" id="tkModelHsl" style="margin-top:8px">
+          <div role="button" tabindex="0" class="hsl-btn" id="tkModelBtn">
+            <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/brand-spark.svg" alt=""></span>
+            <span class="hsl-lab"><span class="hsl-ctx">Model</span><span class="hsl-val" id="tkModelVal"></span></span>
+            <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+          </div>
+          <select class="inp" id="tkModel"></select>
+        </div>
+        <div class="mut" id="tkPriceNote" style="margin-top:6px"></div>
+
+        <div role="button" tabindex="0" id="btnTkImgPick" class="btn" style="margin-top:8px"></div>
+        <div class="vtpick" id="tkImgPrev" style="display:none">
+          <img id="tkImgThumb" alt="">
+          <div class="vtpick-b">
+            <div class="vtpick-n" id="tkImgName"></div>
+            <div class="vtpick-m" id="tkImgMeta"></div>
+          </div>
+          <div role="button" tabindex="0" class="vtpick-x" id="btnTkImgClear">&times;</div>
+        </div>
+
+        <div role="button" tabindex="0" id="btnTkAudPick" class="btn" style="margin-top:8px"></div>
+        <div class="vtpick" id="tkAudPrev" style="display:none">
+          <div class="vtpick-aud" aria-hidden="true"><img class="ic-s" src="icons/ui/i-clapper-hi.svg" alt=""></div>
+          <div class="vtpick-b">
+            <div class="vtpick-n" id="tkAudName"></div>
+            <div class="vtpick-m" id="tkAudMeta"></div>
+          </div>
+          <div role="button" tabindex="0" class="vtpick-x" id="btnTkAudClear">&times;</div>
+        </div>
+
+        <div role="button" tabindex="0" id="btnTkSave" class="btn" style="margin-top:8px"></div>
+        <div class="mut" id="tkOutName" style="margin-top:6px"></div>
+        <textarea id="tkPrompt" class="inp" rows="2" style="margin-top:8px"></textarea>
+        <div class="mut" id="tkNeedNote" style="margin-top:6px"></div>
+        <div role="button" tabindex="0" id="btnTkGen" class="btn btn-gold gen" style="margin-top:8px"></div>
+        <div class="status" id="stTkGen"></div>
+      </div>
+    </div>
+
     <div class="page apg" id="pagePath">
       <div class="page-hero">
         <img src="icons/banners/banner-path-batch.jpg" alt="" />
@@ -1319,7 +1373,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.75.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.75.1</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1388,6 +1442,7 @@
 <script src="js/hnk_video_wf_data.js"></script>
 <script src="js/hnk_video_tools.js"></script>
 <script src="js/hnk_video_tool_wf.js"></script>
+<script src="js/hnk_talk_models.js"></script>
 <script src="js/hnk_whats_new.js"></script>
 <script src="src/models/model-registry.js"></script>
 <script src="src/models/capability-resolver.js"></script>
