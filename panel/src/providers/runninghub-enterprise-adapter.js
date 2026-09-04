@@ -381,6 +381,21 @@ async function _runOnce(deps, request, onStage, m) {
   // Prepare + upload images
   machine.advance(m); _stage(onStage, m); // PREPARING_IMAGES
   var refs = (request.images || []).map(function (im) { return im.ref; }).filter(Boolean);
+  /* v6.69.0 — Auto resolved to a shape this endpoint can actually express,
+     measured from IMAGE 1 (ratio-fit.js; the app does the same inside
+     rhGenerateOne). resolve() hands back the ratio untouched for every kind
+     whose documented enum can already say "match the input", and for a ratio
+     the student picked themselves. */
+  var rf = (typeof HNK !== "undefined" && HNK.ratioFit) || null;
+  if (rf && request.output) {
+    var r0 = request.output.ratio || "";
+    var r1 = rf.resolve(mc, r0, refs[0]);
+    if (r1 !== r0) {
+      request = Object.assign({}, request, {
+        output: Object.assign({}, request.output, { ratio: r1 })
+      });
+    }
+  }
   machine.advance(m); _stage(onStage, m, { total: refs.length }); // UPLOADING
   var uploaded = await uploadSvc.uploadAll(deps, apiKey, refs, function (i, n) {
     // Honour cancel between uploads (spec §13: cancel during upload).

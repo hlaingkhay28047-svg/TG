@@ -317,6 +317,15 @@ jobs:
       - name: Verify one series is made by one engine
         run: PORT=8931 node test/verify_series_engine.js
 
+      # v5.98.0 — the owner photographed a run whose pose AND frame ratio had
+      # both moved while the prompt promised neither would. The prompt was not
+      # the problem: with Ratio on Auto, six endpoints whose documented enum
+      # has no auto value were sent "1" — 1:1, SQUARE. A request beats a
+      # prompt, so this measures IMAGE 1 from its own header bytes and sends
+      # the nearest DOCUMENTED ratio instead, identically on both surfaces.
+      - name: Verify a photograph is sent as the shape it already is
+        run: node test/verify_ratio_fit.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

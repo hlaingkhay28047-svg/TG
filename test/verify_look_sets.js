@@ -219,7 +219,8 @@ function report(name, ok, detail) {
     ["the set is FIXED across photos",    [/FIXED for this set/i, /identical in every photograph/i]],
     ["the palette never drifts",          [/vary the palette/i]],
     ["no unspecified props",              [/props not specified above/i]],
-    ["only the pose changes",             [/Only the pose changes/i]],
+    ["the composition is locked up front", [/Its person, expression, POSE, hands and body/i,
+                                            /camera angle, crop, subject position and scale, aspect ratio/i]],
     ["skin keeps its real texture",       [/pore/i, /freckle/i, /mole/i]],
     ["makeup is improved, not repainted", [/never repaint/i]],
     ["skin tone is never shifted",        [/never lightened, darkened, or shifted/i]],
@@ -227,7 +228,17 @@ function report(name, ok, detail) {
     ["no plastic or AI look",             [/No plastic skin/i, /AI gloss/i]],
     ["nothing is written on the image",   [/No text, logo, signature or watermark/i]]
   ];
-  const GRULES = await page.evaluate(({ rules }) => {
+  /* v5.98.0 — sentences a set must NOT carry. "Only the pose changes from
+     frame to frame" meant "across a hundred photographs the pose is the only
+     thing that differs", but a model editing ONE photograph reads it as
+     permission to change the pose — three lines above a TASK GUARD that says
+     the pose must not change. The owner watched models obey the wrong half.
+     A prompt that contradicts itself is a defect, so the sentence is banned
+     rather than merely absent. */
+  const BANNED = [
+    ["nothing licenses a pose change", /Only the pose changes/i]
+  ];
+  const GRULES = await page.evaluate(({ rules, banned }) => {
     const cat = (window.HNK_WF_CATALOG || []).find(c => c.t === "Look Sets");
     const missing = [];
     (cat ? cat.items : []).forEach(w => {
@@ -237,10 +248,14 @@ function report(name, ok, detail) {
           if (!new RegExp(src.source, src.flags).test(p)) missing.push(w.id + ": " + name);
         });
       });
+      banned.forEach(([name, src]) => {
+        if (new RegExp(src.source, src.flags).test(p)) missing.push(w.id + ": SAYS WHAT IT MUST NOT — " + name);
+      });
     });
     return missing;
-  }, { rules: RULES.map(([n, ps]) => [n, ps.map(r => ({ source: r.source, flags: r.flags }))]) });
-  report("I) the compressed boilerplate still carries every rule the long wording did — twenty constraints, checked on all thirteen composed prompts",
+  }, { rules: RULES.map(([n, ps]) => [n, ps.map(r => ({ source: r.source, flags: r.flags }))]),
+       banned: BANNED.map(([n, r]) => [n, { source: r.source, flags: r.flags }]) });
+  report("I) the compressed boilerplate still carries every rule the long wording did, and none of the ones that contradict it — twenty constraints and one ban, checked on all thirteen composed prompts",
     GRULES.length === 0, Array.from(new Set(GRULES)).slice(0, 8));
 
   report("H) no page error while the sets were composed and drawn", errs.length === 0, errs.slice(0, 3));
