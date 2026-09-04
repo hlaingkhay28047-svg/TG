@@ -98,6 +98,7 @@ jobs:
         env:
           PAIRS: ${{ inputs.pairs }}
           TASKS: ${{ inputs.tasks }}
+          CARDS_IN: ${{ inputs.cards }}
         run: |
           set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
           BASE="https://www.runninghub.ai/openapi/v2"
@@ -390,7 +391,7 @@ jobs:
                 # one is wrong spends the owner's credit eight times over.
                 # CARDS names the ones this run is for; anything else is left
                 # alone, and the drop publishes only what was written.
-                CARDS="${{ inputs.cards }}"; [ -z "$CARDS" ] && CARDS="all"
+                CARDS="${CARDS_IN:-all}"; [ -z "$CARDS" ] && CARDS="all"
                 for cname in $(node tools/v2v_card_request.js keys); do
                   # already collected by the TASKS half above — never pay twice
                   if [ -s "out/v2v-$cname.mp4" ]; then echo "== $cname already home, skipping"; continue; fi
