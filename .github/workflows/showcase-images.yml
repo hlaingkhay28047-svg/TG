@@ -265,14 +265,36 @@ jobs:
                 # no reference photograph, five carry option defaults and only
                 # two carry keepOriginalSound — hand-rolling that JSON here is
                 # exactly how the art stops being a picture of the card.
-                vurl=$(reupload "docs/app/lib/banners/motion/banner-train-station.mp4") || { echo "V2V VIDEO UPLOAD FAILED"; fail=1; continue; }
+                SRC="docs/app/lib/banners/motion/banner-train-station.mp4"
+                # TWO CARDS NEED A SOURCE THAT HAS SOMETHING TO FIX. Submitting
+                # a clean clip to the subtitle eraser returns the clip
+                # unchanged, and a sharp clip to the restorer returns a sharp
+                # clip: in both cases the pair would show two identical halves
+                # under a card claiming an effect. So the lane PREPARES the
+                # before for those two — a real burnt-in subtitle, and a real
+                # soft low-resolution copy — and the card's BEFORE half is the
+                # prepared clip the endpoint actually received.
+                mkdir -p out
+                ffmpeg -y -v error -i "$SRC" -vf "drawtext=text='ဒီစာတန်းထိုးကို ဖျက်မယ်':fontfile=/usr/share/fonts/truetype/noto/NotoSansMyanmar-Regular.ttf:fontsize=42:fontcolor=white:borderw=3:bordercolor=black@0.85:x=(w-text_w)/2:y=h-th-46" -c:a copy out/v2v-source-vtEraseSub.mp4 \
+                  || ffmpeg -y -v error -i "$SRC" -vf "drawtext=text='ERASE THIS SUBTITLE':fontsize=44:fontcolor=white:borderw=3:bordercolor=black@0.85:x=(w-text_w)/2:y=h-th-46" -c:a copy out/v2v-source-vtEraseSub.mp4 \
+                  || { echo "V2V SUBTITLE BURN FAILED"; fail=1; continue; }
+                ffmpeg -y -v error -i "$SRC" -vf "scale=426:240:flags=bilinear,scale=1280:720:flags=bilinear,noise=alls=8:allf=t" -c:v libx264 -crf 34 -preset veryfast -c:a copy out/v2v-source-vtRestore4K.mp4 \
+                  || { echo "V2V DEGRADE FAILED"; fail=1; continue; }
+                vurl=$(reupload "$SRC") || { echo "V2V VIDEO UPLOAD FAILED"; fail=1; continue; }
                 vref=$(reupload "$REF_IMG") || { echo "V2V REF UPLOAD FAILED"; fail=1; continue; }
+                suburl=$(reupload "out/v2v-source-vtEraseSub.mp4") || { echo "V2V SUB UPLOAD FAILED"; fail=1; continue; }
+                softurl=$(reupload "out/v2v-source-vtRestore4K.mp4") || { echo "V2V SOFT UPLOAD FAILED"; fail=1; continue; }
                 # the source clip travels home too: it is the BEFORE half of
                 # every pair, and cropping the after against a different frame
                 # would make the divider lie
-                cp docs/app/lib/banners/motion/banner-train-station.mp4 out/v2v-source.mp4
+                cp "$SRC" out/v2v-source.mp4
                 for cname in $(node tools/v2v_card_request.js keys); do
-                  req=$(node tools/v2v_card_request.js "$cname" "$vurl" "$vref") || { echo "V2V REQUEST BUILD FAILED $cname"; fail=1; continue; }
+                  case "$cname" in
+                    vtEraseSub)  cvid="$suburl" ;;
+                    vtRestore4K) cvid="$softurl" ;;
+                    *)           cvid="$vurl" ;;
+                  esac
+                  req=$(node tools/v2v_card_request.js "$cname" "$cvid" "$vref") || { echo "V2V REQUEST BUILD FAILED $cname"; fail=1; continue; }
                   cpath=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.load(sys.stdin)["apiPath"])')
                   cbody=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["body"]))')
                   [ -n "$cpath" ] && [ -n "$cbody" ] || { echo "V2V REQUEST PARSE FAILED $cname"; fail=1; continue; }
