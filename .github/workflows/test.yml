@@ -375,6 +375,23 @@ jobs:
       - name: Verify the ratio is shown as a shape, in the workflow cards too
         run: PORT=8931 node test/verify_wizard_ratio_rail.js
 
+      # v6.5.0 — RunningHub publishes a machine-readable registry of its own
+      # endpoints (HM-RunningHub/ComfyUI_RH_OpenAPI, developer-kit). Until now
+      # every resolution, duration and ratio in our catalog was transcribed by
+      # hand, and a value the endpoint does not accept is not cosmetic: the
+      # student is charged at submit and gets an errorCode back. This holds the
+      # catalog to the provider's own schema.
+      - name: Verify every shipped endpoint holds to RunningHub's published schema
+        run: node test/verify_rh_registry_contract.js
+
+      # v6.5.0 — TALKING PHOTO. The lip-sync endpoints have been published all
+      # along; what blocked the feature was that no page in this app had an
+      # AUDIO slot to fill their required audioUrl. This pins the slot, the
+      # two endpoints, the exact request body, and that neither half of the
+      # pair can be skipped into a paid call.
+      - name: Verify the Talking Photo page and its two published endpoints
+        run: PORT=8931 node test/verify_talking_photo.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

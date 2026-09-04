@@ -2,7 +2,7 @@
    v4.19.0's Phase 5 (10 flat tabs -> 4 top-level groups); updated for
    v4.27.0's Home + IA re-architecture, which reshapes the groups to
    HOME[pgDash] / WORKFLOWS[pgWf] / EDIT[pgCreate,pgStudio,pgRetouch,pgPath] /
-   MEDIA LAB[pgText2Img,pgVideo,pgVideoUp,pgV2V] / LIBRARY[pgLib,pgGallery] and
+   MEDIA LAB[pgText2Img,pgVideo,pgVideoUp,pgV2V,pgTalk] / LIBRARY[pgLib,pgGallery] and
    demotes Setup (pgHome) from the bar to the header gear button. The Edit
    group gained a 4th page in the v4.28.x wave (pgPath — Path Retouch, the
    batch-look sibling of Retouch), and a 5th in v4.96 when the one Studio
@@ -34,10 +34,13 @@ const ALL_PAGES = [
      and gives a video BACK moved off VidUp onto its own pgV2V, so VidUp is
      Upscale and nothing else; the count here is the whole point of the test,
      so it moves with the group rather than being loosened. */
-  ["pgText2Img", "Media Lab", 4],
-  ["pgVideo", "Media Lab", 4],
-  ["pgVideoUp", "Media Lab", 4],
-  ["pgV2V", "Media Lab", 4],
+  /* v6.5.0 — and a fifth: Talking Photo, the one page in the app with an
+     AUDIO slot, which is what the lip-sync endpoints require. */
+  ["pgText2Img", "Media Lab", 5],
+  ["pgVideo", "Media Lab", 5],
+  ["pgVideoUp", "Media Lab", 5],
+  ["pgV2V", "Media Lab", 5],
+  ["pgTalk", "Media Lab", 5],
   ["pgLib", "Library", 2],
   ["pgGallery", "Library", 2],
   ["pgHome", null, null]

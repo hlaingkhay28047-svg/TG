@@ -179,10 +179,17 @@ const NEW = Object.keys(SCRIPTS);
      so what those readers actually see is the real Shan sentence — A2 below
      measures it. Closing this is one reader, not one more commit. */
   const V620_KEYS = ["ph_v2v"];
+  /* v6.5.0 — the TALKING PHOTO page's hero line (ph_talk) joins on exactly
+     the same terms as ph_v2v did one page earlier: the fifteen packs with
+     readers got real translations in this same commit, and the three Tai
+     packs without one are named here rather than guessed or filled with
+     pasted Shan. LANG_FB routes tdd, khb and kht to Shan, so those readers
+     see the real Shan sentence — A2 below measures it. */
+  const V650_KEYS = ["ph_talk"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

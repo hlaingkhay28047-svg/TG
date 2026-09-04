@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.75.0";
+const PANEL_VERSION = "6.75.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10350,6 +10350,167 @@ async function vtRun() {
 }
 
 
+/* ============================================================
+   v6.75.1 — TALKING PHOTO, the app's pgTalk box for box.
+
+   Two published endpoints, two prices, three fields. The catalog is LIFTED
+   from the app (js/hnk_talk_models.js, built by
+   tools/build_panel_talk_models.js) and the request body comes from that
+   module's own builder, so this surface cannot send a different request —
+   or quote a different price — from the one the app sends and quotes.
+
+   NO TEXT-TO-SPEECH HERE EITHER, and for the app's reason: RunningHub
+   documents three voice ids for its speech endpoint and does not boost
+   Burmese, so a voice picker would offer voices that cannot read our
+   students' own language. A recording works in every language.
+   ============================================================ */
+const TK = { img: null, aud: null, out: null, busy: false, rows: [] };
+const TK_L = {
+  intro: {my:"ပုံတစ်ပုံနဲ့ အသံဖိုင်တစ်ခု ထည့်ပါ — ပုံထဲက လူက အဲ့ဒီအသံအတိုင်း စကားပြောပေးပါမယ်။ ကိုယ်တိုင် အသံသွင်းထားတာ အကောင်းဆုံး — ဘာသာစကား အားလုံး ရပါတယ်။",en:"Add a photo and an audio file — the person in the photo will speak it. Your own recording works best, and works in every language.",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ 1 လႄႈ ၾၢႆႇသဵင် 1 — ၵူၼ်းၼႂ်းၶႅပ်းတေလၢတ်ႈၸွမ်းသဵင်ၼၼ်ႉ",kac:"Sumla langai hte nsen file langai bang u — sumla hta na masha gaw dai nsen hte ga shaga na re",th:"เพิ่มรูปและไฟล์เสียง — คนในรูปจะพูดตามเสียงนั้น เสียงที่คุณอัดเองใช้ได้ทุกภาษา",zh:"添加一张照片和一个音频文件 — 照片里的人就会说出这段话。用你自己录的声音效果最好，任何语言都可以。",vi:"Thêm một ảnh và một tệp âm thanh — người trong ảnh sẽ nói theo. Bản ghi của chính bạn là tốt nhất, dùng được mọi ngôn ngữ.",id:"Tambahkan foto dan file audio — orang di foto akan mengucapkannya. Rekaman Anda sendiri paling bagus dan berlaku untuk semua bahasa.",ms:"Tambah foto dan fail audio — orang dalam foto akan menuturkannya. Rakaman anda sendiri paling baik, untuk semua bahasa."},
+  pickImg: {my:"ပုံ ရွေးမယ်",en:"Choose a photo",shn:"လိူၵ်ႈၶႅပ်းႁၢင်ႈ",kac:"Sumla lata u",th:"เลือกรูป",zh:"选择照片",vi:"Chọn ảnh",id:"Pilih foto",ms:"Pilih foto"},
+  pickAud: {my:"အသံဖိုင် ရွေးမယ်",en:"Choose an audio file",shn:"လိူၵ်ႈၾၢႆႇသဵင်",kac:"Nsen file lata u",th:"เลือกไฟล์เสียง",zh:"选择音频文件",vi:"Chọn tệp âm thanh",id:"Pilih file audio",ms:"Pilih fail audio"},
+  run: {my:"စကားပြောခိုင်းမယ်",en:"Make it talk",shn:"ႁဵတ်းႁႂ်ႈလၢတ်ႈ",kac:"Ga shaga shangun u",th:"ทำให้พูด",zh:"让它说话",vi:"Cho ảnh nói",id:"Buat berbicara",ms:"Buatkan ia bercakap"},
+  need: {my:"လိုအပ်တာ — ပုံ ၁ ပုံ (မျက်နှာ ရှင်းရှင်း၊ ရှေ့တည့်တည့်) နဲ့ အသံဖိုင် ၁ ခု (MP3/M4A/WAV)။",en:"Needs one photo (a clear, front-on face) and one audio file (MP3/M4A/WAV).",shn:"လူဝ်ႇ — ၶႅပ်းႁၢင်ႈ 1 လႄႈ ၾၢႆႇသဵင် 1",kac:"Ra ai — sumla 1 hte nsen file 1",th:"ต้องใช้รูป 1 รูป (หน้าชัด หันตรง) และไฟล์เสียง 1 ไฟล์ (MP3/M4A/WAV)",zh:"需要一张照片（正面清晰的脸）和一个音频文件（MP3/M4A/WAV）",vi:"Cần một ảnh (mặt rõ, chính diện) và một tệp âm thanh (MP3/M4A/WAV)",id:"Perlu satu foto (wajah jelas, menghadap depan) dan satu file audio (MP3/M4A/WAV)",ms:"Perlu satu foto (wajah jelas, menghadap depan) dan satu fail audio (MP3/M4A/WAV)"},
+  needImg: {my:"ပုံ တစ်ပုံ ထည့်ပါ",en:"Add a photo first",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈဢွၼ်တၢင်း",kac:"Sumla langai bang u",th:"เพิ่มรูปก่อน",zh:"请先添加照片",vi:"Thêm ảnh trước",id:"Tambahkan foto dulu",ms:"Tambah foto dahulu"},
+  needAud: {my:"အသံဖိုင် ထည့်ပါ",en:"Add an audio file",shn:"သႂ်ႇၾၢႆႇသဵင်",kac:"Nsen file bang u",th:"เพิ่มไฟล์เสียง",zh:"请添加音频文件",vi:"Thêm tệp âm thanh",id:"Tambahkan file audio",ms:"Tambah fail audio"},
+  price: {my:"{L} — တစ်စက္ကန့် ¥{P}။ အသံ ရှည်လေ ဈေး များလေ။ RunningHub က Generate နှိပ်တဲ့အချိန်မှာ ငွေဖြတ်ပါတယ်။",en:"{L} — ¥{P} per second. The longer the audio, the more it costs. RunningHub charges the moment you press Generate.",shn:"{L} — ¥{P} ဢၼ်ၼိုင်ႈၸဵၵ်ႇ။ သဵင်ယၢဝ်း ၵႃႈၼမ်။",kac:"{L} — sekan langai ¥{P}. Nsen galu yang manga grau law.",th:"{L} — ¥{P} ต่อวินาที ยิ่งเสียงยาวยิ่งแพง คิดเงินตอนกด Generate",zh:"{L} — 每秒 ¥{P}。音频越长费用越高，按下生成时即扣费。",vi:"{L} — ¥{P} mỗi giây. Âm thanh càng dài càng tốn. Trừ tiền ngay khi bấm Generate.",id:"{L} — ¥{P} per detik. Makin panjang audio makin mahal. Ditagih saat menekan Generate.",ms:"{L} — ¥{P} sesaat. Makin panjang audio makin mahal. Dicaj sebaik anda tekan Generate."},
+  promptPh: {my:"မဖြည့်လည်း ရပါတယ် — ဥပမာ: ကင်မရာကို ကြည့်ပြီး သဘာဝကျကျ ပြုံးပါ",en:"Optional — e.g. looking at the camera, a natural friendly smile",shn:"ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ",kac:"Bang ra ai n rai",th:"ไม่ใส่ก็ได้ — เช่น มองกล้อง ยิ้มอย่างเป็นธรรมชาติ",zh:"可留空 — 例如：看着镜头，自然微笑",vi:"Không bắt buộc — ví dụ: nhìn vào máy quay, mỉm cười tự nhiên",id:"Opsional — mis. menatap kamera, senyum alami",ms:"Pilihan — cth. memandang kamera, senyuman semula jadi"}
+};
+function tkDef() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const sel = $("tkModel");
+  return (V && V.getTalk && sel) ? V.getTalk(sel.value) : null;
+}
+function tkFillModels() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const sel = $("tkModel");
+  if (!sel || !V || !V.talkModels) return;
+  if (sel.options.length) return;
+  V.talkModels().forEach(function (m) {
+    const o = document.createElement("option");
+    o.value = m.id; o.textContent = m.label + " — ¥" + m.cny.toFixed(2) + "/s";
+    sel.appendChild(o);
+  });
+}
+function renderTk() {
+  const d = tkDef();
+  vtThumbFor(TK.img, "tkImgThumb", "tkImgName", "tkImgMeta", "tkImgPrev", false);
+  /* the recording has no thumbnail to draw — the strip shows its name and
+     size, and the gold chip stands in for the picture */
+  const ap = $("tkAudPrev");
+  if (ap) {
+    if (TK.aud) {
+      ap.style.display = "";
+      if ($("tkAudName")) $("tkAudName").textContent = TK.aud.name || "";
+      if ($("tkAudMeta") && TK.aud._size) $("tkAudMeta").textContent = TK.aud._size;
+      if (!TK.aud._url && !TK.aud._reading) {
+        TK.aud._reading = true;
+        fileToDataUrl(TK.aud).then(function (u) {
+          TK.aud._url = u;
+          const b64 = String(u).split(",")[1] || "";
+          const bytes = Math.floor(b64.length * 3 / 4);
+          TK.aud._size = bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB"
+            : bytes >= 1024 ? Math.round(bytes / 1024) + " KB" : bytes + " B";
+          TK.aud._reading = false; renderTk();
+        }).catch(function () { TK.aud._reading = false; });
+      }
+    } else {
+      ap.style.display = "none";
+      if ($("tkAudName")) $("tkAudName").textContent = "";
+      if ($("tkAudMeta")) $("tkAudMeta").textContent = "";
+    }
+  }
+  const on = $("tkOutName");
+  if (on) on.textContent = TK.out ? (TK.out.name || "") : "";
+  const pn = $("tkPriceNote");
+  if (pn && d) pn.textContent = ff9(TK_L.price).replace(/\{L\}/g, d.label).replace(/\{P\}/g, d.cny.toFixed(2));
+  const need = $("tkNeedNote");
+  if (need) {
+    /* the app states the requirement here and leaves it stated; this line
+       says the same thing in the same place, and only the panel's own extra
+       requirement — a folder to write the file into, which a browser does
+       not need — ever replaces it. Which half is missing is said on the
+       button press, where the student is looking. */
+    if (TK.img && TK.aud && !TK.out) need.textContent = "⚠ " + ff9(VU_L.needOut);
+    else need.textContent = ff9(TK_L.need);
+  }
+  const row = TK.rows && TK.rows[0];
+  if (row) stSet("stTkGen", row.label + (row.detail ? " · " + row.detail : ""), row.level === "err" ? "err" : row.level === "ok" ? "ok" : "");
+  /* the picker reads exactly what the app's <option> reads — label AND
+     price. Showing the tier without its rate here would mean the two
+     surfaces quote differently on the one page where the cost is the whole
+     decision. */
+  const hv = $("tkModelVal");
+  if (hv && d) hv.textContent = d.label + " — ¥" + d.cny.toFixed(2) + "/s";
+}
+function tkPaintLabels() {
+  const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
+  set("tkIntro", ff9(TK_L.intro));
+  setIcnText($("btnTkImgPick"), "i-frame", "cream", ff9(TK_L.pickImg));
+  setIcnText($("btnTkAudPick"), "i-clapper", "cream", ff9(TK_L.pickAud));
+  setIcnText($("btnTkSave"), "i-folder", "cream", ff9(VU_L.out));
+  setIcnText($("btnTkGen"), "i-clapper", "hi", ff9(TK_L.run));
+  const pb = $("tkPrompt"); if (pb) pb.placeholder = ff9(TK_L.promptPh);
+  renderTk();
+}
+async function tkRun() {
+  const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
+  const d = tkDef();
+  if (TK.busy || !V || !d) return;
+  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
+  if (!TK.img) { setStatus(ff9(TK_L.needImg), "err"); return; }
+  if (!TK.aud) { setStatus(ff9(TK_L.needAud), "err"); return; }
+  if (!TK.out) { setStatus("Choose a save folder first", "err"); return; }
+  const promptText = ($("tkPrompt") && $("tkPrompt").value || "").trim();
+  TK.busy = true; TK.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderTk();
+  try {
+    const imgRef = TK.img._url || await fileToDataUrl(TK.img);
+    const audRef = TK.aud._url || await fileToDataUrl(TK.aud);
+    const res = await V.runTalk(videoEnv(), d, imgRef, audRef, promptText, function (stage, info) {
+      TK.rows = [{ label: "Working", level: "pend",
+        detail: stage + (info && info.elapsedMs ? " " + Math.round(info.elapsedMs / 1000) + "s" : "") }];
+      renderTk();
+    });
+    if (!res.ok || !res.results.length) throw new Error((res.error && res.error.message) || "no video");
+    try { rhBookUsage(res.usage, { kind: "video", label: d.label || d.id, prov: "rh" }); } catch (e) { }
+    const name = "hnk-talking-photo-" + Date.now() + ".mp4";
+    await saveResultFile(TK.out, name, res.results[0].ref);
+    TK.rows = [{ label: name, level: "ok", detail: "saved" }];
+    setStatus(t("st_done") || "Done", "ok");
+  } catch (e) {
+    TK.rows = [{ label: "Failed", level: "err", detail: (e && e.message) ? String(e.message).slice(0, 48) : "failed" }];
+    setStatus(friendlyErr(e), "err");
+  }
+  TK.busy = false; renderTk();
+}
+function bindTalk() {
+  tkFillModels();
+  const sel = $("tkModel");
+  if (sel) sel.addEventListener("change", renderTk);
+  const ip = $("btnTkImgPick");
+  if (ip) ip.addEventListener("click", async function () {
+    try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) TK.img = f; renderTk(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const ap = $("btnTkAudPick");
+  if (ap) ap.addEventListener("click", async function () {
+    try { const f = await pickFile(["mp3", "m4a", "wav", "aac", "ogg"]); if (f) TK.aud = f; renderTk(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const ic = $("btnTkImgClear");
+  if (ic) ic.addEventListener("click", function () { TK.img = null; renderTk(); });
+  const ac = $("btnTkAudClear");
+  if (ac) ac.addEventListener("click", function () { TK.aud = null; renderTk(); });
+  const sv = $("btnTkSave");
+  if (sv) sv.addEventListener("click", async function () {
+    try { const f = await pickFolder(); if (f) TK.out = f; renderTk(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const rn = $("btnTkGen"); if (rn) rn.addEventListener("click", tkRun);
+  tkPaintLabels();
+  REFRESHERS.push(function () { try { tkPaintLabels(); } catch (e) { hwarn("talk:", e); } });
+}
+
 async function pickFile(types) {
   const uxp = require("uxp");
   return uxp.storage.localFileSystem.getFileForOpening({ types: types });
@@ -11004,7 +11165,7 @@ function bindVideo() {
 
 function bindDiag() {
   bindSetup();
-  bindPath(); bindVideo(); bindGallery();
+  bindPath(); bindVideo(); bindGallery(); bindTalk();
 }
 
 /* ============================================================
@@ -16071,6 +16232,9 @@ const PAGES = [
   /* v6.73.0 — the app's new pgV2V: every tool that takes a video in and gives
      a video back, with the smart cards over them. VidUp keeps Upscale. */
   { key: "v2v",     page: "pageV2V",     group: "media", sub: "V\u2192V",   ic: "i-shuffle" },
+  /* v6.75.1 — the app's new pgTalk: a photo, a recording, and the person in
+     the photo speaks. The only page on either surface with an audio slot. */
+  { key: "talk",    page: "pageTalk",    group: "media", sub: "Talk",      ic: "i-clapper" },
   { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference", ic: "i-books" },
   /* the app's Library holds Reference and Gallery; the panel's own generation
      history is that gallery of results. Its select / zip / delete actions

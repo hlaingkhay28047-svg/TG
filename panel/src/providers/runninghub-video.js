@@ -19,6 +19,7 @@ var uploadSvc = _req("./runninghub-upload-service") || (globalThis.HNK && global
 var taskSvc   = _req("./runninghub-task-service")   || (globalThis.HNK && globalThis.HNK.runninghubTasks);
 var rhConfig  = _req("./runninghub-config")         || (globalThis.HNK && globalThis.HNK.runninghubConfig);
 var MODELS    = _req("../../js/hnk_video_models")   || (globalThis.HNK && globalThis.HNK.videoModels) || [];
+var TALK      = _req("../../js/hnk_talk_models")     || (globalThis.HNK && globalThis.HNK.talkModels) || null;
 
 function models() { return MODELS.slice(); }
 function get(id) {
@@ -209,9 +210,51 @@ async function runTool(deps, def, videoRef, imageRefs, promptText, optVals, onSt
   }
 }
 
+/* ---------- TALKING PHOTO (v6.75.1) ----------
+   The one endpoint family in the catalog that needs an AUDIO file. Same
+   lease, timeouts and cancel semantics as every other run here; the body
+   comes from the lifted catalog's own builder so the panel cannot send a
+   different request from the app's. */
+function talkModels() { return TALK ? TALK.models() : []; }
+function getTalk(id) { return TALK ? TALK.get(id) : null; }
+function talkBody(def, imageUrl, audioUrl, promptText) {
+  return TALK ? TALK.body(def, imageUrl, audioUrl, promptText) : {};
+}
+async function runTalk(deps, def, imageRef, audioRef, promptText, onStage) {
+  deps = Object.assign({}, deps);
+  deps.cfg = deps.cfg || rhConfig.resolve(deps.configOverride);
+  try {
+    if (!def || !def.apiPath) return { ok: false, error: { code: "model", message: "unknown talking-photo model" } };
+    if (!imageRef) return { ok: false, error: { code: "no-image", message: "pick a photo first" } };
+    if (!audioRef) return { ok: false, error: { code: "no-audio", message: "pick a recording first" } };
+    if (onStage) onStage("UPLOADING", { current: 1, total: 2 });
+    var upImg = await uploadSvc.uploadAll(deps, deps.apiKey, [imageRef], function () { });
+    if (onStage) onStage("UPLOADING", { current: 2, total: 2 });
+    var upAud = await uploadSvc.uploadAll(deps, deps.apiKey, [audioRef], function () { });
+    var body = talkBody(def, upImg[0] || "", upAud[0] || "", promptText);
+    if (onStage) onStage("SUBMITTING", {});
+    var taskId = await taskSvc.submit(deps, deps.apiKey, def.apiPath, body);
+    if (onStage) onStage("PROCESSING", {});
+    var final = await taskSvc.pollUntilDone(deps, deps.apiKey, taskId, function (elapsed) {
+      if (onStage) onStage("PROCESSING", { elapsedMs: elapsed });
+    });
+    var list = (final && final.results) || [];
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      if (!list[i] || !list[i].url) continue;
+      if (onStage) onStage("DOWNLOADING_RESULT", {});
+      out.push({ ref: await taskSvc.download(deps, list[i].url), url: list[i].url });
+    }
+    return { ok: true, results: out, usage: [{ taskId: taskId, final: final }] };
+  } catch (e) {
+    return { ok: false, error: { code: (e && e.code) || "network", message: (e && e.message) || "talking photo failed" } };
+  }
+}
+
 var API = { models: models, get: get, buildBody: buildBody, generate: generate,
   upscale: upscale, upscaleResolutions: VU_RES.slice(),
-  tools: tools, getTool: getTool, toolBody: toolBody, runTool: runTool, VT_WH: VT_WH };
+  tools: tools, getTool: getTool, toolBody: toolBody, runTool: runTool, VT_WH: VT_WH,
+  talkModels: talkModels, getTalk: getTalk, talkBody: talkBody, runTalk: runTalk };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.runninghubVideo = API; }
 })();

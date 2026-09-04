@@ -2356,6 +2356,9 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   border: 1px solid var(--line-soft); border-radius: 12px; background: rgba(255,255,255,.03); }
 .apg .vtpick video, .apg .vtpick img { width: 72px; height: 72px; flex: 0 0 72px;
   object-fit: cover; border-radius: 9px; background: #000; }
+.apg .vtpick-aud { width: 72px; height: 72px; flex: 0 0 72px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; background: rgba(212,175,55,.12); }
+.apg .vtpick-aud img { width: 28px; height: 28px; flex: 0 0 28px; }
 .apg .vtpick-b { min-width: 0; flex: 1 1 auto; }
 .apg .vtpick-n { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .apg .vtpick-m { font-size: 11px; opacity: .68; }
