@@ -78,6 +78,15 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   report("A3) the newest entry still names the shipping minor (the app's own gate, re-checked from the panel's copy)",
     panel.LIST[0] && mm(panel.LIST[0].v) === mm(appVer()), { appVer: appVer(), newest: panel.LIST[0] && panel.LIST[0].v });
 
+  /* v6.3.0 — and byte for byte, because the lift is now a tool. A2 above
+     compares the fields; this compares the file, so a hand-edit that happens
+     to agree today still fails, and the message says which command repairs
+     it rather than leaving the next person to retype nineteen entries. */
+  const { build } = require(path.join(ROOT, "tools", "build_panel_whats_new.js"));
+  report("A4) the panel's file is exactly what the lift produces from the app today",
+    fs.readFileSync(path.join(PANEL, "js", "hnk_whats_new.js"), "utf8") === build(),
+    "run: node tools/build_panel_whats_new.js");
+
   /* ---- B) and it reaches the panel's screen ---- */
   const { chromium } = require("playwright-core");
   const server = http.createServer((req, res) => {

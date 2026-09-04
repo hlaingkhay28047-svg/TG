@@ -30,9 +30,23 @@ publicSections.forEach(id => {
     new RegExp(`href=["']#${id}["']`).test(landing), "required destination is not reachable from public navigation");
 });
 
-check("landing advertises Web Studio 6.2.0", /Web Studio\s+(?:<[^>]+>)*v6\.2\.0/i.test(landing), "release copy is stale");
-check("landing advertises Panel 6.73.0", /Panel(?:[^\n<]|<[^>]+>){0,80}v6\.73\.0/i.test(landing), "panel copy is stale");
-check("web app reports 6.2.0", /var\s+APP_VER\s*=\s*["']6\.2\.0["']/.test(app), "APP_VER is stale");
+/* v6.3.0 — asked of the SHIPPING versions rather than of two numbers typed
+   into this file. Hard-coded literals had to be hand-edited every release,
+   which made a forgotten edit look like a failing test rather than a stale
+   landing page; read from the app and the release manifest, this check can
+   never go stale and still fails the moment the landing lags behind them. */
+const APP_VER = (app.match(/var\s+APP_VER\s*=\s*["']([^"']+)["']/) || [])[1];
+const PANEL_VER = JSON.parse(read("panel/release-manifest.json")).version;
+check("the web app declares a version at all", !!APP_VER, "APP_VER is missing");
+check("landing advertises Web Studio " + APP_VER,
+  new RegExp("Web Studio\\s+(?:<[^>]+>)*v" + APP_VER.replace(/\./g, "\\.")).test(landing),
+  "release copy is stale — the landing does not name the version the app reports");
+check("landing advertises Panel " + PANEL_VER,
+  new RegExp("Panel(?:[^\\n<]|<[^>]+>){0,80}v" + PANEL_VER.replace(/\./g, "\\.")).test(landing),
+  "panel copy is stale — the landing does not name the version the release manifest pins");
+check("the app's published version.json agrees with APP_VER",
+  JSON.parse(read("docs/app/version.json")).v === APP_VER,
+  "version.json and APP_VER disagree — the update check would tell a student the wrong thing");
 
 check("admin and authenticated download routes stay out of search indexes",
   /name=["']robots["'][^>]+noindex/i.test(adminRoute) && /name=["']robots["'][^>]+noindex/i.test(downloadRoute));

@@ -149,6 +149,67 @@ jobs:
               | head -45 \
               || echo "FETCH-FAILED ${id}"
           done
+  round8:
+    # v6.3.0 — two questions this round, both of which decide code:
+    #   1. does the STANDARD-MODEL API carry lip-sync / talking-photo at all?
+    #      RunningHub plainly has it as an AI App (a webappId flow), and this
+    #      app deliberately runs only the Standard API — so the answer decides
+    #      whether that feature is a card or a whole new integration path.
+    #   2. what are the real clip ceilings for the four endpoints Wave 13's
+    #      new cards drive? A card that promises "up to N seconds" must read
+    #      that N off the spec; inventing it is what this lane exists to stop.
+    # Plus the full specs for the three video endpoints round 7 found and
+    # nothing has wired yet.
+    name: round8
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ask the index what it carries, then read the specs that matter
+        run: |
+          idx=$(curl -sSL --retry 2 --connect-timeout 10 --max-time 90 \
+                 "https://www.runninghub.ai/runninghub-api-doc-en/" || echo "")
+          echo "BYTES: ${#idx}"
+          pairs=$(printf '%s' "$idx" | grep -oE 'api-[0-9]{6,}[^<]{0,12}>[^<]{1,90}' | sort -u)
+          echo "=====LIPSYNC CANDIDATES START====="
+          printf '%s\n' "$pairs" \
+            | grep -iE 'lip|talk|avatar|digital.?human|s2v|audio|voice|sing|dub|face.?swap|portrait' \
+            | head -40 || echo "NONE"
+          echo "=====LIPSYNC CANDIDATES END====="
+          echo "=====WAVE13 ENDPOINTS START====="
+          printf '%s\n' "$pairs" \
+            | grep -iE 'gemini-omni-1\.1-flash/video-edit|wan-2\.7/video-extend|video-starlight|subtitle-erase' \
+            | head -20 || echo "NONE"
+          echo "=====WAVE13 ENDPOINTS END====="
+          ids=$(printf '%s\n' "$pairs" \
+            | grep -iE 'gemini-omni-1\.1-flash/video-edit|wan-2\.7/video-extend|video-starlight|subtitle-erase-pro' \
+            | grep -oE '[0-9]{6,}' | sort -u | head -6)
+          for id in $ids 510573734 510773979 510773980; do
+            echo "=====SPEC ${id}====="
+            curl -sSL --retry 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              | grep -iE '^# |^  /|duration|second|maxLength|maxItems|required:|videoUrl|imageUrls|keepOriginalSound|resolution' \
+              | head -35 \
+              || echo "FETCH-FAILED ${id}"
+          done
+  round9:
+    # v6.3.0 — round 8 answered the question that mattered: the STANDARD-MODEL
+    # API does carry lip-sync and talking-photo, as kling-lip-sync/* and
+    # kling-v2-ai-avatar-*/image-audio-to-video. Nothing is wired, because this
+    # app has never had a place to put an AUDIO file. Before any of that is
+    # built, the specs are read in full: what each one takes, how long a clip
+    # or a voice track may be, and which fields are required.
+    name: round9
+    runs-on: ubuntu-24.04
+    steps:
+      - name: The lip-sync and talking-photo specs, in full
+        run: |
+          for id in 448184460 448184461 448184550 494859297 494859298 448184551; do
+            echo "=====LIPSYNC-SPEC ${id} START====="
+            curl -sSL --retry 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              || echo "FETCH-FAILED ${id}"
+            echo ""
+            echo "=====LIPSYNC-SPEC ${id} END====="
+          done
   fetch:
     name: fetch-${{ matrix.name }}
     runs-on: ubuntu-24.04
