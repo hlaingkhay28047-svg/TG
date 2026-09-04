@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.75.2";
+const PANEL_VERSION = "6.75.3";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10054,6 +10054,8 @@ const VT_L = {
      different Burmese, Shan, Kachin and Vietnamese — a difference no
      string-count test could see, because both surfaces have exactly one
      placeholder here and a placeholder is an attribute, not a text node. */
+  /* v6.6.3 — said before the money moves, not after the endpoint refuses */
+  container: {my:"ဒီ tool က {L} ဖိုင်ပဲ ရပါတယ်",en:"This tool takes {L} only",shn:"Tool ၼႆႉ လႆႈ {L} ၵူၺ်း",kac:"Ndai tool gaw {L} sha la ai",th:"เครื่องมือนี้รับเฉพาะ {L}",zh:"此工具仅支持 {L}",vi:"Công cụ này chỉ nhận {L}",id:"Alat ini hanya menerima {L}",ms:"Alat ini hanya menerima {L}"},
   promptPh: { my: "Prompt (\u1011\u100a\u1037\u103a\u1001\u103b\u1004\u103a\u1019\u103e\u1011\u100a\u1037\u103a)", en: "Prompt (optional)", shn: "Prompt (\u101e\u1004\u103a\u1121\u101c\u1088\u1088\u1037\u1088)",
     kac: "Prompt (nkau)", th: "Prompt (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)", zh: "Prompt\uff08\u53ef\u9009\uff09",
     vi: "Prompt (t\u00f9y ch\u1ecdn)", id: "Prompt (opsional)", ms: "Prompt (pilihan)" }
@@ -11110,7 +11112,20 @@ function bindVideo() {
   }
   const vp = $("btnVuPickP");
   if (vp) vp.addEventListener("click", async function () {
-    try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VU.video = f; renderVu(); }
+    /* v6.6.3 — the upscaler is one of the MP4-only endpoints. The app has
+       always refused a .mov here and said so; the panel offered one and let
+       the student find out after the submit had been charged. It asks the
+       same lifted table the video-tool picker does, so the two surfaces
+       cannot disagree about what this one endpoint takes. */
+    try {
+      const VC = globalThis.HNK && globalThis.HNK.videoContainers;
+      const ap = (V && V.upscaleApiPath) || "rhart-video/video-upscaler";
+      const types = VC ? VC.containers(ap) : ["mp4"];
+      const f = await pickFile(types);
+      if (f && VC && !VC.accepts(ap, f.name)) { setStatus(ff9(VU_L.format), "err"); return; }
+      if (f) VU.video = f;
+      renderVu();
+    }
     catch (e) { setStatus(friendlyErr(e), "err"); }
   });
   const vs = $("btnVuSave");
@@ -11137,7 +11152,23 @@ function bindVideo() {
   });
   const vtp = $("btnVtPick");
   if (vtp) vtp.addEventListener("click", async function () {
-    try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VT.video = f; renderVt(); }
+    /* v6.6.3 — ASK THE TOOL, do not offer everything. This picker used to
+       hand mp4/mov/webm to every endpoint, so a student could choose an
+       iPhone .mov for one of the twenty-three video tools that document MP4
+       only — and find out after the submit had already been charged. The
+       containers come from the app's own lifted table now, per endpoint. */
+    try {
+      const d = vtDef();
+      const VC = globalThis.HNK && globalThis.HNK.videoContainers;
+      const types = (VC && d && d.apiPath) ? VC.containers(d.apiPath) : ["mp4"];
+      const f = await pickFile(types);
+      if (f && VC && d && d.apiPath && !VC.accepts(d.apiPath, f.name)) {
+        setStatus(ff9(VT_L.container).replace("{L}", types.join("/").toUpperCase()), "err");
+        return;
+      }
+      if (f) VT.video = f;
+      renderVt();
+    }
     catch (e) { setStatus(friendlyErr(e), "err"); }
   });
   const vti = $("btnVtImgPick");

@@ -409,6 +409,16 @@ jobs:
       - name: Verify a replaced picture repaints on the launch that ships it
         run: PORT=8931 node test/verify_lib_art_repaint.js
 
+      # v6.6.3 — a video tool is offered only the containers it documents.
+      # RunningHub's registry says twenty-three of the endpoints we ship take
+      # MP4 and only fourteen take anything else; the panel's picker offered
+      # mp4/mov/webm to all of them, so a student could hand an iPhone .mov to
+      # an MP4-only tool, be charged at submit, and be rejected afterwards.
+      # The table is the registry's own and is lifted into the panel, so the
+      # two surfaces cannot answer the question differently.
+      - name: Verify each video tool is offered only the containers it accepts
+        run: node test/verify_video_containers.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

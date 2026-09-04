@@ -252,7 +252,7 @@ async function runTalk(deps, def, imageRef, audioRef, promptText, onStage) {
 }
 
 var API = { models: models, get: get, buildBody: buildBody, generate: generate,
-  upscale: upscale, upscaleResolutions: VU_RES.slice(),
+  upscale: upscale, upscaleResolutions: VU_RES.slice(), upscaleApiPath: VU_APIPATH,
   tools: tools, getTool: getTool, toolBody: toolBody, runTool: runTool, VT_WH: VT_WH,
   talkModels: talkModels, getTalk: getTalk, talkBody: talkBody, runTalk: runTalk };
 if (typeof module !== "undefined" && module.exports) module.exports = API;

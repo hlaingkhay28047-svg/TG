@@ -2667,9 +2667,9 @@ html.splashing #splash{display:flex}
     <input type="file" id="filePick" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" hidden>
     <!-- Path Retouch owns its own multi-pick input: adding multiple to the
          shared #filePick above would break every single-slot page. -->
-    <input type="file" id="ptFilePick" accept="image/png,image/jpeg,image/webp" multiple hidden>
+    <input type="file" id="ptFilePick" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" multiple hidden>
     <!-- Path Retouch reference-backdrop slot (single, optional) -->
-    <input type="file" id="ptRefPick" accept="image/png,image/jpeg,image/webp" hidden>
+    <input type="file" id="ptRefPick" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" hidden>
   </section>
 
   <section class="card">
@@ -3216,7 +3216,7 @@ html.splashing #splash{display:flex}
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-clapper"/></svg>VIDEO TOOLS</h2>
     <p class="mut" id="vtIntro"></p>
     <select class="inp" id="selVtModel" style="width:100%;margin-bottom:8px"></select>
-    <input type="file" accept="video/mp4" id="vtFilePick" style="display:none">
+    <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.avi" id="vtFilePick" style="display:none">
     <button class="btn" id="btnVtPick"></button>
     <!-- v6.4.0 — SHOW WHAT WAS PICKED. The owner picked a clip and a face and
          got two filenames back: a3bcf6d2….mp4 tells a student nothing about
@@ -7971,9 +7971,21 @@ var RH_VU_RES_ENUM = ["720p","1080p","2k","4k"];
 /* video files run much larger than a compressed reference photo — same
    fetchWithTimeout mechanism as RH_UPLOAD_TIMEOUT_MS, just a longer ceiling. */
 var RH_VIDEO_UPLOAD_TIMEOUT_MS = 90000;
+/* v6.6.3 — NAME THE UPLOAD BY WHAT IT ACTUALLY IS. The picker now lets a MOV
+   through for the fourteen tools that document one, so sending every clip up
+   as "hnk_video.mp4" would hand RunningHub a container its own filename
+   denies — the same charged-then-rejected failure the picker just closed,
+   moved one step later. The blob already carries the real type; the name
+   follows it. Anything unrecognised stays .mp4, which is what it was. */
+var RH_VIDEO_UPLOAD_EXT = { "video/mp4":"mp4", "video/quicktime":"mov", "video/webm":"webm",
+  "video/x-m4v":"m4v", "video/m4v":"m4v", "video/x-msvideo":"avi", "video/avi":"avi" };
+function rhVideoUploadName(dataUrl){
+  var m=/^data:([^;,]+)/i.exec(String(dataUrl||""));
+  return "hnk_video." + (RH_VIDEO_UPLOAD_EXT[String((m&&m[1])||"").toLowerCase()] || "mp4");
+}
 async function rhV2UploadVideo(apiKey, dataUrl, signal){
   var fd=new FormData();
-  fd.append("file", rhDataUrlToBlob(dataUrl), "hnk_video.mp4");
+  fd.append("file", rhDataUrlToBlob(dataUrl), rhVideoUploadName(dataUrl));
   var r=await fetchWithTimeout(RH_V2_BASE+RH_V2_PATHS.upload, { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd }, RH_VIDEO_UPLOAD_TIMEOUT_MS, signal);
   if(!r.ok){ var e=new Error("upload-failed"); e.status=r.status; throw e; }
   var j=await r.json().catch(function(){return null;});
@@ -8097,6 +8109,53 @@ var RH_VTOOL_MODELS = [
   { id:"mm-h3-regen-multimodal", label:"MiniMax H3 — regenerate to 2K (references)", apiPath:"minimax/hailuo-h3/regeneration-multimodal-to-video", videoParam:"baseVideoUrl", imageParam:"imageUrls", imageArray:true, imageMax:9, prompt:"req", promptMax:40000, options:[{"key": "resolution", "values": ["2K"], "def": "2K"}] },
 ];
 var RH_VT_WH = { "720p":[1280,720], "1080p":[1920,1080], "2k":[2560,1440], "4k":[3840,2160] };
+
+/* ---- WHAT CONTAINER EACH VIDEO TOOL ACTUALLY TAKES (v6.6.3) ----
+   Every video-input endpoint RunningHub documents accepts MP4; only some
+   accept anything else. The web app has always asked for MP4 and been safe.
+   The PANEL has always offered mov and webm for every tool, which is the
+   unsafe half of the same asymmetry: a student picks the .mov straight off
+   an iPhone, the run is charged at submit, and an MP4-only endpoint rejects
+   it afterwards.
+
+   So the extra containers are named per endpoint, from RunningHub's own
+   published registry (the same file test/fixtures/rh-model-registry.public
+   .json pins), and both surfaces ask the tool before they accept the file.
+   Fourteen of the shipped video tools take more than MP4; the rest do not,
+   and saying so before the money moves is the whole point. */
+var RH_VIDEO_EXTRA_CONTAINERS = {
+  "alibaba/happyhorse-1.0/video-edit": ["mov"],
+  "alibaba/wan-2.6/reference-to-video": ["mov"],
+  "alibaba/wan-2.6/reference-to-video-flash": ["mov"],
+  "alibaba/wan-2.7/reference-to-video": ["mov"],
+  "alibaba/wan-2.7/video-edit": ["mov"],
+  "alibaba/wan-2.7/video-extend": ["mov"],
+  "bytedance/dreamactor-v2": ["mov", "webm"],
+  "minimax/hailuo-h3/multimodal-to-video": ["mov"],
+  "pixverse-v6/extend": ["mov", "webm"],
+  "rhart-video-g-official/video-extend": ["mov"],
+  "rhart-video/sparkvideo-2.0-mini/multimodal-video": ["mov"],
+  "vidu/reference-to-video-q2-pro": ["avi", "mov"],
+  "volc-subtitle-erase-pro/video": ["m4v", "mov", "webm"],
+  "volc-subtitle-erase/video": ["m4v", "mov", "webm"]
+};
+/* the containers a given tool will take, MP4 always first */
+function rhVideoContainers(apiPath){
+  return ["mp4"].concat(RH_VIDEO_EXTRA_CONTAINERS[apiPath] || []);
+}
+function rhVideoAccepts(apiPath, fileName, mime){
+  var ext = String(fileName||"").toLowerCase().replace(/^.*\./, "");
+  var ok = rhVideoContainers(apiPath);
+  if(ok.indexOf(ext) >= 0) return true;
+  /* a file with no usable extension is judged by its type instead */
+  var m = String(mime||"").toLowerCase();
+  if(!ext || ext === String(fileName||"").toLowerCase()){
+    if(m === "video/mp4") return true;
+    if(m === "video/quicktime") return ok.indexOf("mov") >= 0;
+    if(m === "video/webm") return ok.indexOf("webm") >= 0;
+  }
+  return false;
+}
 
 /* ---------- TALKING PHOTO (v6.5.0) ----------
    Two endpoints, both taken verbatim from RunningHub's published registry
@@ -24484,7 +24543,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.6.2";
+var APP_VER="6.6.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26812,8 +26871,17 @@ $("btnVtPick").onclick=function(){ $("vtFilePick").click(); };
 $("vtFilePick").onchange=function(){
   var f=this.files && this.files[0]; this.value="";
   if(!f) return;
-  var looksMp4=(f.type && f.type.toLowerCase()==="video/mp4") || /\.mp4$/i.test(f.name||"");
-  if(!looksMp4){ toast(L9({my:"MP4 ဖိုင်ပဲ ရပါတယ်",en:"MP4 only",shn:"MP4 ၵူၺ်း",kac:"MP4 sha",th:"รับเฉพาะ MP4",zh:"仅支持 MP4",vi:"Chỉ hỗ trợ MP4",id:"Hanya MP4",ms:"MP4 sahaja"}),"err"); return; }
+  /* v6.6.3 — THE TOOL DECIDES, not one blanket rule. Every video endpoint
+     RunningHub documents takes MP4; fourteen of the ones we ship also take
+     MOV (and a few WEBM/M4V/AVI). Refusing an iPhone .mov for a tool that
+     accepts it turned students away for nothing, and accepting one for a
+     tool that does not would charge them and fail afterwards. */
+  var vtDef0=rhVtModelDef($("selVtModel").value);
+  var okList=rhVideoContainers(vtDef0 && vtDef0.apiPath);
+  if(!rhVideoAccepts(vtDef0 && vtDef0.apiPath, f.name, f.type)){
+    toast(L9({my:"ဒီ tool က {L} ဖိုင်ပဲ ရပါတယ်",en:"This tool takes {L} only",shn:"Tool ၼႆႉ လႆႈ {L} ၵူၺ်း",kac:"Ndai tool gaw {L} sha la ai",th:"เครื่องมือนี้รับเฉพาะ {L}",zh:"此工具仅支持 {L}",vi:"Công cụ này chỉ nhận {L}",id:"Alat ini hanya menerima {L}",ms:"Alat ini hanya menerima {L}"}).replace("{L}", okList.join("/").toUpperCase()),"err");
+    return;
+  }
   if(f.size>200*1024*1024){ toast(L9({my:"ဗီဒီယို ကြီးလွန်းပါတယ် (200MB အထိ)",en:"Too large (200MB max)",shn:"ယႂ်ႇပူၼ်ႉ (200MB)",kac:"Kaba law ai (200MB)",th:"ใหญ่เกินไป (สูงสุด 200MB)",zh:"过大（最大 200MB）",vi:"Quá lớn (tối đa 200MB)",id:"Terlalu besar (maks 200MB)",ms:"Terlalu besar (maks 200MB)"}),"err"); return; }
   var rd=new FileReader();
   rd.onload=function(){
