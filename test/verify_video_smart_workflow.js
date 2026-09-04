@@ -78,9 +78,13 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   /* Make-it-longer adds action after the last frame, so it is the one card
      that must NOT swear the timing and the action are unchanged. */
   const KEEP_EXEMPT = { vtExtend: 1 };
-  const EXPECT = ["vtCharSwap", "vtFaceSwap", "vtAnime", "vtFilmLook",
+  /* v6.6.0 — vtHeadSwap sits directly under vtFaceSwap because it is the
+     same endpoint told a different, truer thing: the render proved the tool
+     brings the hair across whatever the prompt says, and RunningHub
+     publishes no face-only endpoint to point a stricter card at. */
+  const EXPECT = ["vtCharSwap", "vtFaceSwap", "vtHeadSwap", "vtAnime", "vtFilmLook",
                   "vtHeritage", "vtExtend", "vtRestore4K", "vtEraseSub", "vtChar30"];
-  report("A) the deck ships all nine cards, the two character cards leading",
+  report("A) the deck ships all ten cards, the character cards leading",
     WF.map(w => w.key).join(",") === EXPECT.join(","), WF.map(w => w.key));
 
   const unknown = WF.filter(w => !TOOLS.some(t => t.id === w.model)).map(w => w.key + "→" + w.model);
@@ -403,7 +407,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       return out;
     }, { quietIdx: QUIET_IDX, optsIdxs: OPTS_IDXS, sentinel: SENTINEL });
 
-    report("C) the deck draws all nine cards on the app's V→V page, each saying what to bring",
+    report("C) the deck draws all ten cards on the app's V→V page, each saying what to bring",
       appCards.drawn && appCards.cards === WF.length && appCards.needs.length === WF.length &&
       appCards.titles.length === WF.length &&
       appCards.titles.every(t => t && t.length > 2), appCards);
@@ -527,7 +531,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       return out;
     }, { quietIdx: QUIET_IDX, optsIdxs: OPTS_IDXS, sentinel: SENTINEL });
 
-    report("D) the panel draws the same nine cards on its V→V page",
+    report("D) the panel draws the same ten cards on its V→V page",
       p.cards === WF.length && p.titles.length === WF.length &&
       p.needs.length === WF.length, p);
     report("D2) the panel's cards are titled exactly as the app's are",
@@ -632,6 +636,6 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
 
   console.log(failures
     ? `\n${failures} FAILURE(S) — the Video Smart Workflow would not do what its cards promise.`
-    : "\nAll checks passed — nine cards, every one over an endpoint we already ship, the same request on both surfaces.");
+    : "\nAll checks passed — ten cards, every one over an endpoint we already ship, the same request on both surfaces.");
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FAIL — " + (e && e.stack || e)); process.exit(1); });

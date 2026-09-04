@@ -291,7 +291,7 @@ jobs:
               # BEFORE half of the thirty-second card. Saved under .mp4 it was
               # a file the composer could not find, so that card was silently
               # skipped in the collect run while everything reported success.
-              case "$n" in v2v-ref) ext=png ;; v2v-*) ext=mp4 ;; *) ext=png ;; esac
+              case "$n" in v2v-ref|v2v-ref2) ext=png ;; v2v-*) ext=mp4 ;; *) ext=png ;; esac
               poll_and_fetch "$n" "$tid" "$ext" || fail=1
             done
             ls -la out/ || true
@@ -360,6 +360,16 @@ jobs:
                 submit "v2v-source" "$T2V_PATH" "$srcbody" mp4 || { echo "CARD SOURCE CLIP FAILED"; fail=1; continue; }
                 refbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"3:4","resolution":"2k"}))' "$CARD_REF")
                 submit "v2v-ref" "$T2I_PATH" "$refbody" png || { echo "CARD REFERENCE PHOTO FAILED"; fail=1; continue; }
+                # A THIRD WOMAN, for the head-swap card only. Two cards driving
+                # the same endpoint with the same reference would produce two
+                # near-identical pictures under two different promises, which
+                # is the confusion the card exists to clear up. Hers is a
+                # short blunt bob — a silhouette neither of the other two has,
+                # so "the hair came across too" is visible at thumbnail size.
+                BEAUTY_REF2="a strikingly beautiful young Chinese woman in her mid twenties, a delicate oval face with a fine jawline, cool porcelain-fair skin, calm dark almond eyes with a crisp double eyelid, a slender straight nose and a soft closed smile, sleek jet-black hair cut in a SHORT BLUNT CHIN-LENGTH BOB with a straight fringe, professional fashion-model looks, tasteful natural glam make-up"
+                CARD_REF2="$BEAUTY_REF2, head and shoulders facing the camera, soft even beauty light, plain light-grey background, wearing a simple ivory turtleneck, the short blunt bob and its straight fringe clearly visible against the background, photorealistic 85mm beauty portrait. Clear unobstructed view of the whole face and the whole haircut. She is plainly a different individual from anyone else in this set: a short chin-length bob, never long hair."
+                ref2body=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"3:4","resolution":"2k"}))' "$CARD_REF2")
+                submit "v2v-ref2" "$T2I_PATH" "$ref2body" png || { echo "CARD SECOND REFERENCE FAILED"; fail=1; continue; }
                 SRC="out/v2v-source.mp4"
                 REF_CARD="out/v2v-ref.png"
                 # TWO CARDS NEED A SOURCE THAT HAS SOMETHING TO FIX. Submitting
@@ -381,6 +391,7 @@ jobs:
                 v2vPrepSources "$SRC" || { fail=1; continue; }
                 vurl=$(reupload "$SRC") || { echo "V2V VIDEO UPLOAD FAILED"; fail=1; continue; }
                 vref=$(reupload "$REF_CARD") || { echo "V2V REF UPLOAD FAILED"; fail=1; continue; }
+                vref2=$(reupload "out/v2v-ref2.png") || { echo "V2V REF2 UPLOAD FAILED"; fail=1; continue; }
                 suburl=$(reupload "out/v2v-source-vtEraseSub.mp4") || { echo "V2V SUB UPLOAD FAILED"; fail=1; continue; }
                 softurl=$(reupload "out/v2v-source-vtRestore4K.mp4") || { echo "V2V SOFT UPLOAD FAILED"; fail=1; continue; }
                 # the source clip travels home too: it is the BEFORE half of
@@ -403,7 +414,14 @@ jobs:
                     vtRestore4K) cvid="$softurl" ;;
                     *)           cvid="$vurl" ;;
                   esac
-                  req=$(node tools/v2v_card_request.js "$cname" "$cvid" "$vref") || { echo "V2V REQUEST BUILD FAILED $cname"; fail=1; continue; }
+                  # the head-swap card gets the second woman; every other card
+                  # keeps the first, so the six cards already on disk stay
+                  # comparable with the ones rendered beside them
+                  case "$cname" in
+                    vtHeadSwap) cref="$vref2" ;;
+                    *)          cref="$vref" ;;
+                  esac
+                  req=$(node tools/v2v_card_request.js "$cname" "$cvid" "$cref") || { echo "V2V REQUEST BUILD FAILED $cname"; fail=1; continue; }
                   cpath=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.load(sys.stdin)["apiPath"])')
                   cbody=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["body"]))')
                   [ -n "$cpath" ] && [ -n "$cbody" ] || { echo "V2V REQUEST PARSE FAILED $cname"; fail=1; continue; }

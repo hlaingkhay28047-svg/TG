@@ -61,6 +61,30 @@ var VT_WF = [
        + "AVOID: changing the hair, the body or the clothes, a different camera move, a re-crop, a face that slides off the head, a mask edge or a blurred patch where the face is, a changed length or speed, a watermark or a caption.";
     } },
 
+  /* v6.6.0 — THE CARD THE RENDER TAUGHT US TO WRITE.
+     vtFaceSwap above says "hair, body and clothes stay as filmed", and its
+     prompt asks for that twice — once in KEEP THE REST OF THE PERSON, again
+     in AVOID. The endpoint changed the hair anyway, and the card art shows
+     it doing so. RunningHub publishes no face-only endpoint (checked against
+     its own registry), so there is nothing to point a stricter card at.
+     Rather than reword a card students already use, this one names the
+     result honestly: the head — face AND hair — becomes the person in the
+     photograph, and everything below the neck stays as filmed. Same
+     endpoint, different promise, and the promise is the one that comes true. */
+  { key:"vtHeadSwap", art:"lib/vid/vt-headswap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+    need:L9({my:"ဗီဒီယို ၁ + မျက်နှာပုံ ၁",en:"1 video + 1 face photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်းၼႃႈ 1",kac:"Video 1 + myiman sumla 1",th:"วิดีโอ 1 + รูปหน้า 1",zh:"1 段视频 + 1 张面部照",vi:"1 video + 1 ảnh mặt",id:"1 video + 1 foto wajah",ms:"1 video + 1 foto wajah"}),
+    label:L9({my:"မျက်နှာ + ဆံပင် လဲမယ်",en:"Face and hair",shn:"လႅၵ်ႈၼႃႈလႄႈၽိူၼ်း",kac:"Myiman hte kara galai",th:"เปลี่ยนใบหน้าและผม",zh:"换脸连发型",vi:"Thay khuôn mặt và tóc",id:"Ganti wajah dan rambut",ms:"Tukar wajah dan rambut"}),
+    summary:L9({my:"ပုံထဲက လူရဲ့ မျက်နှာနဲ့ ဆံပင် နှစ်ခုလုံး ယူ — ကိုယ်လုံး၊ အဝတ်အစား၊ နေရာ အတိုင်း",en:"Takes both the face and the hair from your photo — body, clothes and scene stay as filmed",shn:"ဢဝ်ၼႃႈလႄႈၽိူၼ်းၶူဝ်း — တူဝ်ၶိင်းလႄႈတီႈ ဢမ်ႇလႅၵ်ႈ",kac:"Myiman hte kara yawng la — hkum, palawng hte shara n galai",th:"เอาทั้งใบหน้าและทรงผมจากรูปของคุณ — ลำตัว เสื้อผ้า และฉากคงเดิม",zh:"脸和发型都取自你的照片 — 身形、服装与场景保持原样",vi:"Lấy cả khuôn mặt lẫn mái tóc từ ảnh của bạn — dáng người, trang phục và bối cảnh giữ nguyên",id:"Mengambil wajah sekaligus rambut dari foto Anda — tubuh, pakaian, dan latar tetap",ms:"Mengambil wajah dan rambut daripada foto anda — badan, pakaian dan latar kekal"}),
+    hint:L9({my:"MP4 တစ်ခု (၁၀ စက္ကန့်အထိ) နဲ့ ဆံပင်ပါ မြင်ရတဲ့ ပုံ ၁ ပုံ — ရှေ့တည့်တည့် အကောင်းဆုံး။",en:"One MP4 (up to 10s) and one photo where the hair is visible too — front-on works best.",shn:"MP4 ဢၼ်ၼိုင်ႈ (10 ၸဵၵ်ႇ) လႄႈ ၶႅပ်းဢၼ်ႁၼ်ၽိူၼ်းၶူဝ်းပႃး",kac:"MP4 langai (10s du hkra) hte kara mung mu ai sumla 1",th:"MP4 หนึ่งไฟล์ (ไม่เกิน 10 วินาที) และรูปที่เห็นทรงผมด้วย — หันหน้าตรงดีที่สุด",zh:"一个 MP4（不超过 10 秒）和一张能看到发型的照片，正面最好",vi:"Một MP4 (tối đa 10 giây) và một ảnh thấy rõ cả mái tóc — chụp chính diện là tốt nhất",id:"Satu MP4 (maks 10 detik) dan satu foto yang rambutnya juga terlihat — menghadap depan paling baik",ms:"Satu MP4 (maks 10 saat) dan satu foto yang rambutnya turut kelihatan — menghadap depan paling baik"}),
+    text:function(){
+      return "Replace the HEAD of the main person in this video with the head in the reference photograph.\n"
+       + "HEAD: the face, the face shape, the eyes, the nose, the mouth, the skin tone AND the hairstyle and hair colour of the reference photograph, sitting naturally on the neck already in the video so the tone matches the neck, the ears and the hands in every frame.\n"
+       + "KEEP EVERYTHING BELOW THE NECK: the body, the shoulders, the hands and the clothes are untouched, and so are the set, the light and the background.\n"
+       + VT_KEEP + VT_SOUND + "\n"
+       + VT_FINISH + "\n\n"
+       + "AVOID: changing the body, the clothes or the background, a different camera move, a re-crop, a head that slides off the neck, a mask edge or a blurred collar, a changed length or speed, a watermark or a caption.";
+    } },
+
   { key:"vtAnime", art:"lib/vid/vt-anime.jpg", model:"gemini-omni-11-video-edit", maxSecs:10, opts:{"resolution": "1080p"},
     need:L9({my:"ဗီဒီယို ၁",en:"1 video",shn:"ဝီဒီရူဝ်ႈ 1",kac:"Video 1",th:"วิดีโอ 1",zh:"1 段视频",vi:"1 video",id:"1 video",ms:"1 video"}),
     label:L9({my:"ကာတွန်း / Anime ပုံစံ",en:"Anime restyle",shn:"ႁၢင်ႈၶႃႉတုၼ်း",kac:"Anime hku bai ka",th:"เปลี่ยนเป็นสไตล์อนิเมะ",zh:"改成动漫风格",vi:"Vẽ lại thành anime",id:"Gaya anime",ms:"Gaya anime"}),
