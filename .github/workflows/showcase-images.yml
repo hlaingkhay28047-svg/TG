@@ -39,6 +39,10 @@ on:
         description: 'space-separated pair names to build (retouch scene series lookcopy looksets …), or "all"'
         required: false
         default: 'all'
+      cards:
+        description: 'v2vcards only: space-separated card keys to (re)build, e.g. "vtFaceSwap vtCharSwap vtChar30". Empty or "all" builds every card. Use it to re-render one bad card without paying for the eight that are already good.'
+        required: false
+        default: 'all'
       tasks:
         description: 'COLLECT-ONLY: space-separated name:taskId pairs — skips submit and only polls + downloads already-paid tasks (names: ba-retouch-before ba-retouch-after ba-scene-before ba-scene-after, or v2v-<cardKey> for the Video Smart Workflow cards)'
         required: false
@@ -349,7 +353,8 @@ jobs:
                 # look is named explicitly rather than left to chance.
                 BEAUTY="a strikingly beautiful young Chinese woman in her early twenties, delicate East Asian features, large bright almond eyes, softly arched brows, a small straight nose and full soft lips, smooth luminous fair skin, elegant slender neck, glossy jet-black hair, professional fashion-model looks, tasteful natural glam make-up"
                 CARD_SCENE="$BEAUTY standing in a bright modern photography studio, three-quarter view, soft window light from the left, plain warm-grey seamless backdrop, wearing an elegant deep-teal silk blouse, hair falling loose to her shoulders, a warm gentle expression, photorealistic 85mm editorial portrait, sharp and beautifully lit."
-                CARD_REF="A DIFFERENT $BEAUTY, head and shoulders facing the camera, soft even beauty light, plain light-grey background, wearing an elegant cream silk blouse, hair swept back, a soft warm smile, photorealistic 85mm beauty portrait. Clear unobstructed view of the whole face."
+                BEAUTY_REF="a strikingly beautiful young Chinese woman in her late twenties, a softly rounded face with high full cheekbones, warm honey-toned skin, wide expressive dark-brown eyes with a gentle double eyelid, a slightly fuller rounded nose and a wide warm smile, long softly waved chestnut-brown hair with a blunt fringe across her forehead, professional fashion-model looks, tasteful natural glam make-up"
+                CARD_REF="$BEAUTY_REF, head and shoulders facing the camera, soft even beauty light, plain light-grey background, wearing an elegant blush-pink silk blouse, the fringe and the wavy chestnut hair clearly visible, a soft warm smile, photorealistic 85mm beauty portrait. Clear unobstructed view of the whole face. She is plainly a different individual from anyone else in this set: chestnut-brown wavy hair with a fringe, never straight jet-black hair."
                 srcbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"16:9","duration":"5"}))' "$CARD_SCENE She turns her head slowly towards the camera and settles, a small natural smile, the camera holds completely still.")
                 submit "v2v-source" "$T2V_PATH" "$srcbody" mp4 || { echo "CARD SOURCE CLIP FAILED"; fail=1; continue; }
                 refbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"3:4","resolution":"2k"}))' "$CARD_REF")
@@ -381,9 +386,17 @@ jobs:
                 # every pair, and cropping the after against a different frame
                 # would make the divider lie
                 # $SRC IS out/v2v-source.mp4 already — generated above, not copied
+                # WHICH CARDS. Card art is paid art: re-rendering nine when
+                # one is wrong spends the owner's credit eight times over.
+                # CARDS names the ones this run is for; anything else is left
+                # alone, and the drop publishes only what was written.
+                CARDS="${{ inputs.cards }}"; [ -z "$CARDS" ] && CARDS="all"
                 for cname in $(node tools/v2v_card_request.js keys); do
                   # already collected by the TASKS half above — never pay twice
                   if [ -s "out/v2v-$cname.mp4" ]; then echo "== $cname already home, skipping"; continue; fi
+                  if [ "$CARDS" != "all" ]; then
+                    case " $CARDS " in *" $cname "*) : ;; *) echo "== $cname not in this run's card list, skipping"; continue ;; esac
+                  fi
                   case "$cname" in
                     vtEraseSub)  cvid="$suburl" ;;
                     vtRestore4K) cvid="$softurl" ;;
