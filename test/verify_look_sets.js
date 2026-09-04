@@ -236,7 +236,18 @@ function report(name, ok, detail) {
      A prompt that contradicts itself is a defect, so the sentence is banned
      rather than merely absent. */
   const BANNED = [
-    ["nothing licenses a pose change", /Only the pose changes/i]
+    ["nothing licenses a pose change", /Only the pose changes/i],
+    /* v6.0.0 — proved by a real render (run 33830533477): Golden Grecian's
+       SET line ordered "the far edges go milky" while its LIGHTING line
+       forbade "glow bleeding in at an edge" — and the same sentence had
+       already said the corners fall off to a deeper caramel. The model
+       obeyed the set and blew 28% of the top-left corner to pure white.
+       A prohibition is not a fix while the instruction that causes it is
+       still in the prompt, so the instruction is banned too. Misty Grey's
+       "faint milky bloom over the whole frame" is its identity and is not
+       an edge, which is why this matches edges and corners only. */
+    ["nothing orders the frame's edges lightened",
+      /(?:far )?(?:edges|corners)[^.]{0,24}\bgo (?:milky|white|pale)/i]
   ];
   const GRULES = await page.evaluate(({ rules, banned }) => {
     const cat = (window.HNK_WF_CATALOG || []).find(c => c.t === "Look Sets");
