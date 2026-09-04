@@ -50,7 +50,14 @@ var VT_WF = [
   { key:"vtFaceSwap", art:"lib/vid/vt-faceSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
     need:L9({my:"ဗီဒီယို ၁ + မျက်နှာပုံ ၁",en:"1 video + 1 face photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်းၼႃႈ 1",kac:"Video 1 + myiman sumla 1",th:"วิดีโอ 1 + รูปหน้า 1",zh:"1 段视频 + 1 张面部照",vi:"1 video + 1 ảnh mặt",id:"1 video + 1 foto wajah",ms:"1 video + 1 foto wajah"}),
     label:L9({my:"မျက်နှာပဲ လဲမယ်",en:"Face only",shn:"လႅၵ်ႈၼႃႈၵူၺ်း",kac:"Myiman sha galai u",th:"เปลี่ยนเฉพาะใบหน้า",zh:"只换脸",vi:"Chỉ thay khuôn mặt",id:"Ganti wajah saja",ms:"Tukar wajah sahaja"}),
-    summary:L9({my:"ဗီဒီယိုထဲက လူရဲ့ မျက်နှာကိုပဲ လဲ — ဆံပင်၊ ကိုယ်လုံး၊ အဝတ်အစား အတိုင်း",en:"Change only the face in the clip — hair, body and clothes stay as filmed",shn:"လႅၵ်ႈၼႃႈၵူၺ်း — ၽိူၼ်းၶူဝ်းလႄႈတူဝ်ၶိင်း ဢမ်ႇလႅၵ်ႈ",kac:"Video hta na myiman sha galai — kara, hkum hte palawng n galai ai",th:"เปลี่ยนแค่ใบหน้าในคลิป — ผม ลำตัว และเสื้อผ้าคงเดิม",zh:"只替换片中的脸 — 头发、身形与服装保持原样",vi:"Chỉ đổi khuôn mặt trong clip — tóc, dáng người và trang phục giữ nguyên",id:"Hanya ganti wajah dalam klip — rambut, tubuh, dan pakaian tetap",ms:"Tukar wajah sahaja dalam klip — rambut, badan dan pakaian kekal"}),
+    /* v6.6.0 — SAID HONESTLY. The request below asks for the face alone and
+       says so twice, but the endpoint sometimes brings the hair across with
+       it. That is the model's behaviour, not a setting, and RunningHub
+       publishes no face-only endpoint to point this card at instead. A
+       student who reads "hair stays" and watches it change has been misled
+       by us, so the card now says what may happen and names the card to use
+       when changing the hair is the intention. */
+    summary:L9({my:"ဗီဒီယိုထဲက လူရဲ့ မျက်နှာကို လဲ — ကိုယ်လုံးနဲ့ အဝတ်အစား အတိုင်း။ ဆံပင် မပြောင်းဖို့ ခိုင်းထားပေမဲ့ တစ်ခါတလေ ပါသွားတတ်ပါတယ် — ဆံပင်ပါ အတူ ပြောင်းချင်ရင် \"မျက်နှာ + ဆံပင်\" ကတ်ကို သုံးပါ။",en:"Change the face in the clip — body and clothes stay as filmed. It asks the tool to leave the hair alone, but the hair sometimes comes across too; use the \"Face and hair\" card when you mean to change it.",shn:"လႅၵ်ႈၼႃႈ — တူဝ်ၶိင်းလႄႈၶူဝ်း ဢမ်ႇလႅၵ်ႈ။ ၽိူၼ်းၶူဝ်း တင်းၵမ်ႈၽွင်ႈ လႅၵ်ႈပႃးလႆႈ",kac:"Video hta na myiman galai — hkum hte palawng n galai. Kara mung lawan lawan pawt wa lu ai",th:"เปลี่ยนใบหน้าในคลิป — ลำตัวและเสื้อผ้าคงเดิม สั่งให้คงผมไว้ แต่บางครั้งผมก็เปลี่ยนตามมาด้วย ถ้าตั้งใจเปลี่ยนผมด้วยให้ใช้การ์ด \"เปลี่ยนใบหน้าและผม\"",zh:"替换片中的脸 — 身形与服装保持原样。已要求保留原发型，但有时头发也会跟着换；想连发型一起换请用\"换脸连发型\"那张卡。",vi:"Đổi khuôn mặt trong clip — dáng người và trang phục giữ nguyên. Đã yêu cầu giữ nguyên tóc, nhưng đôi khi tóc cũng đổi theo; nếu bạn muốn đổi tóc hãy dùng thẻ \"Thay khuôn mặt và tóc\".",id:"Ganti wajah dalam klip — tubuh dan pakaian tetap. Alat diminta membiarkan rambut, tetapi kadang rambut ikut berubah; gunakan kartu \"Ganti wajah dan rambut\" bila memang ingin menggantinya.",ms:"Tukar wajah dalam klip — badan dan pakaian kekal. Alat diminta membiarkan rambut, tetapi kadangkala rambut turut bertukar; guna kad \"Tukar wajah dan rambut\" jika anda memang mahu menukarnya."}),
     hint:L9({my:"MP4 တစ်ခု (၁၀ စက္ကန့်အထိ) နဲ့ မျက်နှာ ကြည်လင်တဲ့ ပုံ ၁ ပုံ — ရှေ့တည့်တည့် ကြည့်ထားတဲ့ပုံ အကောင်းဆုံး။",en:"One MP4 (up to 10s) and one clear face photo — front-on works best.",shn:"MP4 ဢၼ်ၼိုင်ႈ (10 ၸဵၵ်ႇ) လႄႈ ၶႅပ်းၼႃႈၸႅင်ႈလီ 1",kac:"MP4 langai (10s du hkra) hte myiman san seng ai sumla 1",th:"MP4 หนึ่งไฟล์ (ไม่เกิน 10 วินาที) และรูปใบหน้าชัด 1 รูป — หันหน้าตรงดีที่สุด",zh:"一个 MP4（不超过 10 秒）和一张清晰的正面照最好",vi:"Một MP4 (tối đa 10 giây) và một ảnh mặt rõ — chụp chính diện là tốt nhất",id:"Satu MP4 (maks 10 detik) dan satu foto wajah yang jelas — menghadap depan paling baik",ms:"Satu MP4 (maks 10 saat) dan satu foto wajah yang jelas — menghadap depan paling baik"}),
     text:function(){
       return "Replace ONLY the face of the main person in this video with the face in the reference photograph.\n"
@@ -59,6 +66,30 @@ var VT_WF = [
        + VT_KEEP + VT_SOUND + "\n"
        + VT_FINISH + "\n\n"
        + "AVOID: changing the hair, the body or the clothes, a different camera move, a re-crop, a face that slides off the head, a mask edge or a blurred patch where the face is, a changed length or speed, a watermark or a caption.";
+    } },
+
+  /* v6.6.0 — THE CARD THE RENDER TAUGHT US TO WRITE.
+     vtFaceSwap above says "hair, body and clothes stay as filmed", and its
+     prompt asks for that twice — once in KEEP THE REST OF THE PERSON, again
+     in AVOID. The endpoint changed the hair anyway, and the card art shows
+     it doing so. RunningHub publishes no face-only endpoint (checked against
+     its own registry), so there is nothing to point a stricter card at.
+     Rather than reword a card students already use, this one names the
+     result honestly: the head — face AND hair — becomes the person in the
+     photograph, and everything below the neck stays as filmed. Same
+     endpoint, different promise, and the promise is the one that comes true. */
+  { key:"vtHeadSwap", art:"lib/vid/vt-headswap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+    need:L9({my:"ဗီဒီယို ၁ + မျက်နှာပုံ ၁",en:"1 video + 1 face photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်းၼႃႈ 1",kac:"Video 1 + myiman sumla 1",th:"วิดีโอ 1 + รูปหน้า 1",zh:"1 段视频 + 1 张面部照",vi:"1 video + 1 ảnh mặt",id:"1 video + 1 foto wajah",ms:"1 video + 1 foto wajah"}),
+    label:L9({my:"မျက်နှာ + ဆံပင် လဲမယ်",en:"Face and hair",shn:"လႅၵ်ႈၼႃႈလႄႈၽိူၼ်း",kac:"Myiman hte kara galai",th:"เปลี่ยนใบหน้าและผม",zh:"换脸连发型",vi:"Thay khuôn mặt và tóc",id:"Ganti wajah dan rambut",ms:"Tukar wajah dan rambut"}),
+    summary:L9({my:"ပုံထဲက လူရဲ့ မျက်နှာနဲ့ ဆံပင် နှစ်ခုလုံး ယူ — ကိုယ်လုံး၊ အဝတ်အစား၊ နေရာ အတိုင်း",en:"Takes both the face and the hair from your photo — body, clothes and scene stay as filmed",shn:"ဢဝ်ၼႃႈလႄႈၽိူၼ်းၶူဝ်း — တူဝ်ၶိင်းလႄႈတီႈ ဢမ်ႇလႅၵ်ႈ",kac:"Myiman hte kara yawng la — hkum, palawng hte shara n galai",th:"เอาทั้งใบหน้าและทรงผมจากรูปของคุณ — ลำตัว เสื้อผ้า และฉากคงเดิม",zh:"脸和发型都取自你的照片 — 身形、服装与场景保持原样",vi:"Lấy cả khuôn mặt lẫn mái tóc từ ảnh của bạn — dáng người, trang phục và bối cảnh giữ nguyên",id:"Mengambil wajah sekaligus rambut dari foto Anda — tubuh, pakaian, dan latar tetap",ms:"Mengambil wajah dan rambut daripada foto anda — badan, pakaian dan latar kekal"}),
+    hint:L9({my:"MP4 တစ်ခု (၁၀ စက္ကန့်အထိ) နဲ့ ဆံပင်ပါ မြင်ရတဲ့ ပုံ ၁ ပုံ — ရှေ့တည့်တည့် အကောင်းဆုံး။",en:"One MP4 (up to 10s) and one photo where the hair is visible too — front-on works best.",shn:"MP4 ဢၼ်ၼိုင်ႈ (10 ၸဵၵ်ႇ) လႄႈ ၶႅပ်းဢၼ်ႁၼ်ၽိူၼ်းၶူဝ်းပႃး",kac:"MP4 langai (10s du hkra) hte kara mung mu ai sumla 1",th:"MP4 หนึ่งไฟล์ (ไม่เกิน 10 วินาที) และรูปที่เห็นทรงผมด้วย — หันหน้าตรงดีที่สุด",zh:"一个 MP4（不超过 10 秒）和一张能看到发型的照片，正面最好",vi:"Một MP4 (tối đa 10 giây) và một ảnh thấy rõ cả mái tóc — chụp chính diện là tốt nhất",id:"Satu MP4 (maks 10 detik) dan satu foto yang rambutnya juga terlihat — menghadap depan paling baik",ms:"Satu MP4 (maks 10 saat) dan satu foto yang rambutnya turut kelihatan — menghadap depan paling baik"}),
+    text:function(){
+      return "Replace the HEAD of the main person in this video with the head in the reference photograph.\n"
+       + "HEAD: the face, the face shape, the eyes, the nose, the mouth, the skin tone AND the hairstyle and hair colour of the reference photograph, sitting naturally on the neck already in the video so the tone matches the neck, the ears and the hands in every frame.\n"
+       + "KEEP EVERYTHING BELOW THE NECK: the body, the shoulders, the hands and the clothes are untouched, and so are the set, the light and the background.\n"
+       + VT_KEEP + VT_SOUND + "\n"
+       + VT_FINISH + "\n\n"
+       + "AVOID: changing the body, the clothes or the background, a different camera move, a re-crop, a head that slides off the neck, a mask edge or a blurred collar, a changed length or speed, a watermark or a caption.";
     } },
 
   { key:"vtAnime", art:"lib/vid/vt-anime.jpg", model:"gemini-omni-11-video-edit", maxSecs:10, opts:{"resolution": "1080p"},

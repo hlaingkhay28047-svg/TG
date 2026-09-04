@@ -103,10 +103,24 @@ const EXPECT = [
     const page = await browser.newPage({ viewport: { width: 420, height: 900 } });
     const errs = [];
     page.on("pageerror", e => errs.push(String(e).slice(0, 240)));
-    /* nothing in this test may reach the network: a submit that escaped would
-       be a real, paid RunningHub call */
-    const posted = [];
-    await page.route("**/openapi/**", route => { posted.push(route.request().url()); route.abort(); });
+    /* NO SUBMIT MAY ESCAPE: a generate that got through would be a real,
+       paid RunningHub call. What is watched is therefore the SUBMIT, not
+       "any request to runninghub.ai" — saving a key makes the app check the
+       account's status (/uc/openapi/accountStatus), which is a read, costs
+       nothing, and happens on every page in the product. The first version of
+       this check counted that probe as a submit; it passed locally only
+       because the probe had not fired inside the window, and went red on CI
+       where it had. Anything carrying one of the two talking-photo apiPaths,
+       or POSTed to the model base, is a submit and fails. */
+    const posted = [];       /* real submits — must stay empty */
+    const probed = [];       /* the account-status read, allowed and counted */
+    await page.route("**/openapi/**", route => {
+      const req = route.request(), url = req.url();
+      const isSubmit = EXPECT.some(p => url.includes(p)) ||
+        (req.method() === "POST" && /\/openapi\/v2\//.test(url));
+      (isSubmit ? posted : probed).push(url);
+      route.abort();
+    });
     await page.goto("http://127.0.0.1:" + PORT + "/index.html", { waitUntil: "load" });
     await page.waitForTimeout(2400);
 
@@ -210,8 +224,11 @@ const EXPECT = [
 
     report("Z) no page error while the Talking Photo page was used",
       errs.length === 0, errs.slice(0, 4));
-    report("Z2) and not one request reached RunningHub during this test",
+    report("Z2) and not one generate reached RunningHub during this test",
       posted.length === 0, posted);
+    report("Z3) the only calls that did go out were reads, not submits",
+      probed.every(u => /accountStatus|\/uc\/openapi\//.test(u)),
+      probed.filter(u => !/accountStatus|\/uc\/openapi\//.test(u)));
   } finally {
     await browser.close();
   }
