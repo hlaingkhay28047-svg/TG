@@ -35,6 +35,23 @@ const DEMANDS = {
   eyes:  /clean the eye whites|tidy the teeth|define lashes/i,
   shine: /reduce oily hotspots|matte-dead/i
 };
+/* v6.0.0 — Studio Look Copy gained three switches (makeup, jewellery and
+   ornaments, hairstyle), and each one had to make an EXISTING lock
+   conditional: the ABSOLUTE LOCK froze "embellishment, jewellery" and the
+   TASK GUARD froze the hairstyle outright. Turning a new switch on while an
+   old lock still forbade it would be the same defect this file was written
+   for, so the new switches are checked the same way. */
+const LOOKCOPY_DEMANDS = {
+  mkcopy:    /MAKEUP COPY: copy|copy IMAGE 2's makeup/i,
+  adorn:     /ADORNMENTS: copy|copy IMAGE 2's jewellery/i,
+  hairstyle: /HAIRSTYLE: copy|copy IMAGE 2's hairstyle/i
+};
+/* and with a switch ON, no other line may still forbid what it asks for */
+const LOOKCOPY_FORBIDS = {
+  mkcopy:    /makeup[^.]{0,40}(?:never|do not|not)\s+(?:change|restyle|recolour)/i,
+  adorn:     /embellishment, jewellery|jewellery[^.]{0,30}never change/i,
+  hairstyle: /without changing the hairstyle/i
+};
 
 (async () => {
   const browser = await chromium.launch();
@@ -113,6 +130,43 @@ const DEMANDS = {
   });
   report("C) no workflow's AVOID list forbids something its own prompt asks for",
     C.length === 0, C);
+
+  /* ---- C2) Studio Look Copy's three new switches ---- */
+  const D2 = await page.evaluate(({ want, forbid }) => {
+    const w = (window.HNK_WF_CATALOG || []).flatMap(c => c.items).find(x => x.id === "studio-look-copy");
+    if (!w) return { missing: true };
+    const keys = Object.keys(want);
+    /* a free-text field's line correctly disappears when it is empty, so
+       only real switches owe an OFF line */
+    const tg = (w.fields || []).filter(f => f.tag && f.type === "toggle");
+    const noOff = tg.filter(f => !f.off).map(f => f.key);
+    const rows = [];
+    keys.forEach(k => {
+      const on = {}; tg.forEach(g => { on[g.key] = true; });
+      const off = {}; tg.forEach(g => { off[g.key] = g.key !== k; });
+      const pOn = window._wfFieldPrompt("studio-look-copy", on) || "";
+      const pOff = window._wfFieldPrompt("studio-look-copy", off) || "";
+      const f = (w.fields || []).find(x => x.key === k) || {};
+      const restOff = pOff.split("\n").filter(l => l !== f.off).join("\n");
+      rows.push({
+        key: k,
+        asksWhenOn: new RegExp(want[k].source, want[k].flags).test(pOn),
+        forbiddenWhenOn: new RegExp(forbid[k].source, forbid[k].flags).test(pOn),
+        stillAsksWhenOff: new RegExp(want[k].source, want[k].flags).test(restOff)
+      });
+    });
+    return { rows, noOff, total: tg.length };
+  }, { want: Object.fromEntries(Object.entries(LOOKCOPY_DEMANDS).map(([k, r]) => [k, { source: r.source, flags: r.flags }])),
+       forbid: Object.fromEntries(Object.entries(LOOKCOPY_FORBIDS).map(([k, r]) => [k, { source: r.source, flags: r.flags }])) });
+
+  report("C2) every Studio Look Copy switch says what OFF means",
+    !D2.missing && D2.noOff.length === 0, D2.missing ? "workflow missing" : D2.noOff);
+  report("C3) each new switch actually asks for its thing when on",
+    !D2.missing && D2.rows.every(r => r.asksWhenOn), (D2.rows || []).filter(r => !r.asksWhenOn).map(r => r.key));
+  report("C4) …and no older lock still forbids what the switch just asked for",
+    !D2.missing && D2.rows.every(r => !r.forbiddenWhenOn), (D2.rows || []).filter(r => r.forbiddenWhenOn).map(r => r.key));
+  report("C5) …and switching it off really stops the asking",
+    !D2.missing && D2.rows.every(r => !r.stillAsksWhenOff), (D2.rows || []).filter(r => r.stillAsksWhenOff).map(r => r.key));
 
   report("D) no page error while every switch state was composed", errs.length === 0, errs.slice(0, 3));
 

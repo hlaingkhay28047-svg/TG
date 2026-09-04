@@ -313,7 +313,18 @@ check("the panel agrees with itself about which version it is",
   const code = app.replace(/\/\*[\s\S]*?\*\//g, " ");   /* comments may quote the old bug */
   /* a version LITERAL, not an SVG path coordinate: quoted whole, or written
      the way a human writes one (v6.24.0) */
-  const literals = (code.match(/"6\.\d+\.\d+"|\bv6\.\d+\.\d+\b/g) || []);
+  const all = (code.match(/"6\.\d+\.\d+"|\bv6\.\d+\.\d+\b/g) || []);
+  /* v6.0.0 — the app reached 6.x itself, so this pattern now also matches
+     the app stating its OWN version (APP_VER, and each what's-new row's
+     v:"…"). That is legitimate and always was. Its own version is therefore
+     excluded — but only while the two numbers differ, which is asserted
+     below: if they were ever equal the exclusion could hide a real panel
+     literal, so the exemption would no longer be safe and this must fail
+     instead of quietly passing. */
+  const own = new Set(['"' + appVersion + '"', "v" + appVersion]);
+  const literals = all.filter(x => !own.has(x));
+  check("the web app and the panel do not share a version number, so the app may state its own",
+    appVersion !== panelVersion, `app ${appVersion}, panel ${panelVersion}`);
   check("the web app quotes no panel version of its own",
     literals.length === 0, "panel version literals left in docs/app/index.html: " + literals.join(", "));
   /* the same rule on the other side of the wire: the route that issues the

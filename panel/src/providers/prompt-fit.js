@@ -34,6 +34,10 @@
      a half-stated instruction — worse than not stating it. */
   var DROP_ORDER = [
     "HAIR:", "SKIN RETOUCH:", "REALISM:", "FINISH:", "SKIN SMOOTHING:",
+    /* v6.71.0 — mirrors the app's RH_BLOCK_DROP_ORDER exactly; Studio Look
+       Copy's three new blocks drop hairstyle, then ornaments, then makeup,
+       because the makeup is what the owner asked for first. */
+    "HAIRSTYLE:", "ADORNMENTS:", "MAKEUP COPY:",
     "HAIR RETOUCH:", "COLOUR TONE:", "POSTER ART:", "LIQUIFY:", "DRESS:",
     "EYE & TEETH:", "SHINE CONTROL:", "BODY SKIN:", "TONE EVENING:",
     "DIMENSION:", "SET AND BACKGROUND:", "WARDROBE:", "COLOUR:",

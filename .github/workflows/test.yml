@@ -335,6 +335,16 @@ jobs:
       - name: Verify a switch turned off means it across the whole request
         run: PORT=8931 node test/verify_switch_honesty.js
 
+      # v6.0.0 — the owner asked whether a seated half-body photo comes back
+      # with its own pose and framing. Sixty-one workflows said nothing at
+      # all about the crop, the camera angle, the subject's scale or the
+      # aspect ratio, and a model is free with what it is not told. Fifty-one
+      # now carry the frame lock, added once where the catalog is assembled;
+      # the composers and the pose tool are exempt on purpose, and this pins
+      # both sides of that.
+      - name: Verify the photograph keeps its own frame and pose
+        run: PORT=8931 node test/verify_frame_lock.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

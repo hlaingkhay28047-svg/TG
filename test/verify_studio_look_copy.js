@@ -82,9 +82,16 @@ function report(name, ok, detail) {
       wf.req === 2 && wf.opt === 0, JSON.stringify({ req: wf.req, opt: wf.opt }));
 
     /* ---- 2. every switch the owner asked for, and each one owns a line ---- */
-    const want = ["scene", "tone", "light", "smooth", "retouch", "skintone", "hair", "finish", "note"];
+    /* v6.0.0 — three more, because the owner asked this tool to copy a look
+       whole: the makeup in full detail, the jewellery and hair ornaments,
+       and the hairstyle. The pin moves 9 -> 12 so a control still cannot
+       vanish unnoticed; the ABSOLUTE LOCK and the TASK GUARD that used to
+       freeze all three are now conditional on these switches, which
+       verify_switch_honesty C2-C5 proves. */
+    const want = ["scene", "tone", "light", "smooth", "retouch", "skintone", "hair", "finish",
+                  "mkcopy", "adorn", "hairstyle", "note"];
     const got = wf.fields.map(f => f.key);
-    report("all nine controls are there — scene, colour+WB, lighting, skin smoothing, skin retouch, face+body tone, hair, finish, and a free request",
+    report("all twelve controls are there — scene, colour+WB, lighting, skin smoothing, skin retouch, face+body tone, hair, finish, makeup, ornaments, hairstyle, and a free request",
       want.every(k => got.indexOf(k) >= 0) && got.length === want.length, got.join(","));
     report("every control starts switched ON, so the default is the whole look",
       wf.fields.filter(f => f.type === "toggle").every(f => f.on), JSON.stringify(wf.fields.map(f => f.key + ":" + f.on)));

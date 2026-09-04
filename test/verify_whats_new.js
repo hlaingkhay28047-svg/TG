@@ -111,22 +111,41 @@ function report(name, ok, detail) {
       before: kids.slice(0, kids.indexOf(card)).map(k => k.id || k.className),
       rows: document.querySelectorAll("#dashNewList .nw-row").length,
       total: WHATS_NEW.length,
+      cap: (typeof NW_STRIP_MAX === "number" ? NW_STRIP_MAX : 0),
+      /* the heading must still confess the true number, or a ceiling would
+         be a way of hiding news rather than of ordering it */
+      headSaysTotal: ((document.getElementById("dashNewH2") || {}).textContent || "")
+        .indexOf("(" + WHATS_NEW.length + ")") >= 0,
       tagged: document.querySelectorAll("#dashNewList .nw-tag").length,
       dismissable: document.querySelectorAll("#dashNewList .nw-x").length
     };
   });
   report("C) with nothing read yet, the strip is visible and sits above every other card on Home",
     C.visible && C.index === 1 && C.before.every(b => /dash-greet|dashGreet/.test(b)), C);
-  report("C2) one row per entry, each marked NEW and each individually dismissable",
-    C.rows === C.total && C.tagged === C.total && C.dismissable === C.total, C);
+  /* v6.0.0 — the strip draws the newest three, not one row per unread
+     entry: WHATS_NEW reached seventeen and a first-ever launch met a wall
+     of changelog above the studio (and pushed two of Home's own tiles below
+     the fold — sweep_v484_bootbytes caught that). The ceiling is only
+     honest while the heading still names the real total, which is checked
+     with it. */
+  report("C2) the strip draws the newest three, each marked NEW and each individually dismissable, and the heading still names the true total",
+    C.cap === 3 && C.rows === Math.min(C.total, C.cap) &&
+    C.tagged === C.rows && C.dismissable === C.rows && C.headSaysTotal, C);
 
   /* ---- D) tapping a row opens the thing, not a changelog ---- */
   const D = await page.evaluate(async () => {
     try { localStorage.removeItem("hnk_new_seen"); } catch (e) { }
     switchPage("pgDash");
-    const wfEntry = WHATS_NEW.find(e => e.kind === "wf");
+    /* pick a workflow row among the ones actually DRAWN: under the ceiling
+       the newest workflow entry is not guaranteed to be on the strip, and a
+       test that reached for a row that was never rendered would report a
+       failure the app did not have. */
     const rows = [...document.querySelectorAll("#dashNewList .nw-row")];
-    const row = rows.find(r => r.dataset.nw === wfEntry.v + "|" + wfEntry.ref);
+    const drawn = new Set(rows.map(r => r.dataset.nw));
+    const wfEntry = WHATS_NEW.find(e => e.kind === "wf" && drawn.has(e.v + "|" + e.ref));
+    if (!wfEntry) return { found: false, why: "no workflow row on the strip" };
+    const wfKey = wfEntry.v + "|" + wfEntry.ref;
+    const row = rows.find(r => r.dataset.nw === wfKey);
     if (!row) return { found: false };
     row.click();
     await new Promise(r => setTimeout(r, 120));
@@ -140,13 +159,19 @@ function report(name, ok, detail) {
       namesIt: title.indexOf(wfEntry.ref.replace(/-/g, " ")) >= 0 ||
         /Studio Look Copy/i.test(title),
       rowsLeft: document.querySelectorAll("#dashNewList .nw-row").length,
-      total: WHATS_NEW.length
+      total: WHATS_NEW.length,
+      cap: (typeof NW_STRIP_MAX === "number" ? NW_STRIP_MAX : 0),
+      /* the row that was opened must be gone by name — counting rows cannot
+         show that under a ceiling, because the next unread takes its place */
+      openedGone: !document.querySelector('#dashNewList .nw-row[data-nw="' + wfKey + '"]'),
+      unseenLeft: nwUnseen().length
     };
   });
   report("D) tapping a workflow row opens that workflow's wizard",
     D.found && D.opened, D);
-  report("D2) and opening it retires exactly that one row — the others stay",
-    D.rowsLeft === D.total - 1, D);
+  report("D2) opening a row retires that exact row, and the next unread moves up to fill the ceiling",
+    D.openedGone && D.unseenLeft === D.total - 1 &&
+    D.rowsLeft === Math.min(D.unseenLeft, D.cap), D);
 
   /* ---- E) the Workflows page: ribbon, top-of-category, ✦ NEW rail chip ---- */
   const E = await page.evaluate(async () => {
