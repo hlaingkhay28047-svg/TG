@@ -49,9 +49,17 @@ INK = (13, 15, 22)
 #              from beyond where the source ended, or the pair shows nothing.
 #   vtRestore  is about detail, which a 720p-wide view hides -- both halves
 #              are the same crop, magnified, so the difference is visible.
+#   vtChar30   is the one card whose BEFORE is not the clip at all. DreamActor
+#              animates the PHOTOGRAPH and takes its motion from the video, so
+#              the result is the photo's person and the photo's world in
+#              motion. Pairing it against a frame of the driving clip showed
+#              two unrelated scenes and taught a student the wrong thing; the
+#              honest pair is the still photograph beside the same person
+#              moving.
 FRAME_PLAN = {
     "vtExtend":    {"left": "end", "right": "tail"},
     "vtRestore4K": {"left": "mid", "right": "mid", "zoom": 2.4},
+    "vtChar30":    {"left_from_pairs": "v2v-ref.png"},
 }
 
 
@@ -175,8 +183,17 @@ def main():
         # frame that was never submitted.
         own = os.path.join(args.pairs, "v2v-source-%s.mp4" % c["key"])
         before_src = own if os.path.exists(own) else src
-        src_dur = probe_duration(before_src)
         res_dur = probe_duration(res)
+        # a card whose before is a still needs no frame grabbed for it
+        # the reference PORTRAIT this lane generated, never a shipped poster
+        left_still = plan.get("left_from_pairs")
+        if left_still:
+            left_still = os.path.join(args.pairs, left_still)
+            if not os.path.exists(left_still):
+                print("missing before-image for " + c["key"] + ": " + left_still, file=sys.stderr)
+                skipped.append(c["key"])
+                continue
+        src_dur = 0.0 if left_still else probe_duration(before_src)
 
         def at(which, dur):
             if which == "end":
@@ -185,9 +202,12 @@ def main():
                 return max(0.0, dur - 0.4)
             return dur * 0.45
 
-        lt = at(plan.get("left", "mid"), src_dur)
         rt = at(plan.get("right", "mid"), res_dur)
-        b = grab(before_src, lt, os.path.join(args.tmp, c["key"] + "-b.jpg"))
+        if left_still:
+            b = left_still
+        else:
+            lt = at(plan.get("left", "mid"), src_dur)
+            b = grab(before_src, lt, os.path.join(args.tmp, c["key"] + "-b.jpg"))
         a = grab(res, rt, os.path.join(args.tmp, c["key"] + "-a.jpg"))
         dest = os.path.join(root, args.out, os.path.basename(c["art"]))
         compose(b, a, dest, zoom=plan.get("zoom", 1.0))

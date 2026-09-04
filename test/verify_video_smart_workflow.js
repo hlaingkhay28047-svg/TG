@@ -600,6 +600,24 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       loopsAllCards: v2vLane.indexOf("keys") >= 0,
       handRolled: /keepOriginalSound|videoUrl["']\s*:/.test(v2vLane) });
 
+  /* E3 — v6.4.0, the owner's rule after seeing the first wave: "ကတ်တေွကို
+     အဟောင်း လုံးဝ မသုံးပါနဲ့". The first cut submitted a shipped banner clip
+     and the shipped promo poster, so every card's picture was built on
+     material a student has already met elsewhere in the product — and the
+     thirty-second card's own before half was that poster. The lane generates
+     BOTH inputs for this purpose now, and this check keeps it that way: no
+     path into docs/ may appear in the card branch at all. */
+  const shippedAssets = [...v2vLane.matchAll(/docs\/[A-Za-z0-9_.\/-]+\.(?:mp4|jpg|jpeg|png|webp)/g)].map(m => m[0]);
+  report("E3) the card lane brings its own clip and its own portrait — no shipped asset is reused",
+    shippedAssets.length === 0 &&
+    /submit "v2v-source"/.test(v2vLane) && /submit "v2v-ref"/.test(v2vLane),
+    { reused: shippedAssets, generatesClip: /submit "v2v-source"/.test(v2vLane),
+      generatesPortrait: /submit "v2v-ref"/.test(v2vLane) });
+  const art = fs.readFileSync(path.join(ROOT, "tools", "build_v2v_card_art.py"), "utf8");
+  report("E3b) and the composer reads only what that lane produced",
+    !/docs\/[A-Za-z0-9_.\/-]+\.(?:mp4|jpg|jpeg|png|webp)/.test(art.replace(/^\s*#.*$/gm, "")),
+    "the composer still points at a shipped file for one of its halves");
+
   console.log(failures
     ? `\n${failures} FAILURE(S) — the Video Smart Workflow would not do what its cards promise.`
     : "\nAll checks passed — nine cards, every one over an endpoint we already ship, the same request on both surfaces.");
