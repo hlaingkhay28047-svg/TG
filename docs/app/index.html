@@ -454,6 +454,7 @@ select.inp{padding:9px 10px}
 .vtpick-b{min-width:0;flex:1 1 auto}
 .vtpick-n{font-size:var(--fs-sm);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vtpick-m{font-size:var(--fs-xs,11px);color:var(--ink-soft,#9aa)}
+.vtpick-aud{width:72px;height:54px;border-radius:8px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:rgba(212,175,55,.12);color:var(--gold,#d4af37)}
 .vtpick-x{flex:0 0 auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line-soft);background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer}
 .vtpick-x:hover{border-color:var(--gold)}
 
@@ -2086,7 +2087,8 @@ html.splashing #splash{display:flex}
     <circle cx="12" cy="14.5" r="5.3"/>
     <path d="m12 4.2-2.4 2.4L12 9l2.4-2.4L12 4.2ZM9.6 6.6h4.8"/>
   </symbol>
-  <symbol id="i-shuffle" viewBox="0 0 24 24">
+  <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8 21h8"/></symbol>
+<symbol id="i-shuffle" viewBox="0 0 24 24">
     <path d="M4 7h3.2c4.1 0 5.5 10 9.6 10H20M4 17h3.2c1.5 0 2.6-1.2 3.5-2.6M13.3 9.6c.9-1.4 2-2.6 3.5-2.6H20"/>
     <path d="m17.8 4.3 2.7 2.7-2.7 2.7M17.8 14.3l2.7 2.7-2.7 2.7"/>
   </symbol>
@@ -3269,6 +3271,75 @@ html.splashing #splash{display:flex}
 </div><!-- /pgV2V -->
 
 
+<!-- ================= TALKING PHOTO (pgTalk) =================
+     v6.5.0 — RunningHub's own published registry (HM-RunningHub/
+     ComfyUI_RH_OpenAPI) documents kling-v2-ai-avatar-{standard,pro}/
+     image-audio-to-video: one photo, one audio file, and the person in the
+     photo speaks it. That is the feature students have asked for and the
+     product could not do, because nothing in the app had an AUDIO slot.
+
+     THE STUDENT BRINGS THE VOICE. There is a text-to-speech endpoint too,
+     but its documented voice list is three names and Burmese is not among
+     the languages it boosts — a picker built on that would be a picker of
+     voices that cannot read our students' own language. Recording yourself
+     works in every language, costs nothing extra, and is the honest path;
+     text-to-speech can join later if a full voice list is ever published. -->
+<div class="page" id="pgTalk">
+  <header class="page-hero"><img src="lib/banners/banner-train-station.jpg" alt="" loading="lazy" decoding="async" style="object-position:38% 42%">
+    <div class="ph-kick">Talking Photo</div>
+    <p class="ph-head" id="phTalk">ပုံတစ်ပုံ + အသံတစ်ခု — <em>စကားပြောနေတဲ့ ဗီဒီယို</em></p>
+  </header>
+
+  <section class="card">
+    <h2 id="tkH2"><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-mic"/></svg>TALKING PHOTO</h2>
+    <p class="mut" id="tkIntro"></p>
+    <select class="inp" id="selTkModel" style="width:100%;margin-bottom:8px"></select>
+    <div class="mut" id="tkPriceNote" style="margin-bottom:8px"></div>
+
+    <input type="file" accept="image/*" id="tkImgPick" style="display:none">
+    <button class="btn" id="btnTkImgPick"></button>
+    <div class="vtpick" id="tkImgPrev" style="display:none">
+      <img id="tkImgThumb" alt="">
+      <div class="vtpick-b">
+        <div class="vtpick-n" id="tkImgName"></div>
+        <div class="vtpick-m" id="tkImgMeta"></div>
+      </div>
+      <button class="vtpick-x" id="btnTkImgClear" type="button" aria-label="remove">&times;</button>
+    </div>
+
+    <input type="file" accept="audio/*" id="tkAudPick" style="display:none">
+    <button class="btn" id="btnTkAudPick" style="margin-top:6px"></button>
+    <div class="vtpick" id="tkAudPrev" style="display:none">
+      <div class="vtpick-aud" aria-hidden="true"><svg class="ic-s"><use href="#i-mic"/></svg></div>
+      <div class="vtpick-b">
+        <div class="vtpick-n" id="tkAudName"></div>
+        <div class="vtpick-m" id="tkAudMeta"></div>
+      </div>
+      <button class="vtpick-x" id="btnTkAudClear" type="button" aria-label="remove">&times;</button>
+    </div>
+    <audio id="tkAudPlay" controls style="display:none;width:100%;margin-top:6px"></audio>
+
+    <textarea class="inp" id="tkPrompt" rows="2" style="margin-top:8px" placeholder=""></textarea>
+    <div class="mut" id="tkNeedNote" style="margin-top:6px"></div>
+    <button class="btn btn-gold gen" id="btnTkGen"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-mic"/></svg> MAKE IT TALK</button>
+    <div class="spin" id="tkSpin"></div>
+    <button class="btn" id="btnTkCancel" style="display:none;margin-top:8px"></button>
+    <div class="status" id="stTkGen"></div>
+    <button class="btn" id="btnTkRetry" style="display:none;margin-top:8px"></button>
+  </section>
+
+  <section class="card result-box" id="tkResultBox">
+    <h2 id="tkResultH2"></h2>
+    <div class="result-img"><video id="tkResultVideo" controls playsinline style="width:100%;border-radius:12px;background:#000"></video></div>
+    <p class="mut" id="tkExpireNote" style="margin-top:8px"></p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn grow" id="btnTkDl"></button>
+    </div>
+    <h3 id="tkHistH" style="margin-top:14px"></h3>
+    <div class="hist" id="tkHist"></div>
+  </section>
+</div>
+
 <!-- ================= PATH RETOUCH (pgPath) — batch looks =================
      Retouch's batch sibling: many photos, ONE look, instant free on-device
      preview on every thumbnail, then an optional sequential AI pass.
@@ -3890,6 +3961,7 @@ var TR_PH={
   ph_video:{my:'ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်',en:'Your photos <em>come alive</em> in motion'},
   ph_videoup:{my:'ဗီဒီယိုအရည်အသွေး <em>နှစ်ဆမြှင့်</em> — ပိုကြည် ပိုပြတ်သား',en:'<em>Double</em> your video quality — sharper, cleaner'},
   ph_v2v:{my:'ဗီဒီယိုထဲ <em>ကိုယ့်ဇာတ်ကောင်</em> — ကင်မရာနဲ့ နောက်ခံ အတိုင်း',en:'<em>Your character</em> inside the clip — camera and scene unchanged'},
+  ph_talk:{my:'ပုံတစ်ပုံ + အသံတစ်ခု — <em>စကားပြောနေတဲ့ ဗီဒီယို</em>',en:'One photo, one recording — <em>a video that speaks</em>'},
   ph_lib:{my:'Look ၁၈၅၀ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်',en:'1850 curated looks — <em>pick one</em> and start instantly'},
   ph_gallery:{my:'ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား',en:'Every creation you make, <em>saved right here</em>'},
   ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'},
@@ -3915,6 +3987,7 @@ var TR_L14={
   ph_video:{shn:'ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် <em>မီးသၢႆၸႂ်မႃး</em>',kac:'Na a sumla ni shamu shamawt hte <em>asak rawng wa</em> ai',th:'ภาพถ่ายของคุณ<em>มีชีวิต</em>ด้วยการเคลื่อนไหว',zh:'让你的照片在动态中<em>活起来</em>',vi:'Ảnh của bạn <em>sống động</em> trong chuyển động',id:'Foto Anda <em>menjadi hidup</em> dalam gerakan',ms:'Foto anda <em>hidup</em> dalam gerakan'},
   ph_videoup:{shn:'ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း <em>သွင်ပုၼ်ႈ</em> — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်',kac:'Video a atsam hpe <em>lahkawng lang</em> jat u — grau san, grau seng ai',th:'ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น',zh:'视频画质<em>翻倍</em> — 更锐利、更干净',vi:'<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn',id:'<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih',ms:'<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih'},
   ph_v2v:{shn:'<em>တူဝ်ၸဝ်ႈၵဝ်ႇ</em> ၼႂ်းဝီးတီးဢူဝ်း — ၵႄႇမရႃႇလႄႈႁွင်ႈလင် ဢမ်ႇလႅၵ်ႈ',kac:'Video hta <em>nang a masha</em> — camera hte shara n galai ai',th:'<em>ตัวละครของคุณ</em>ในคลิป — กล้องและฉากคงเดิม',zh:'片中换成<em>你的角色</em> — 镜头与场景不变',vi:'<em>Nhân vật của bạn</em> trong clip — máy quay và bối cảnh giữ nguyên',id:'<em>Karakter Anda</em> di dalam klip — kamera dan latar tetap',ms:'<em>Watak anda</em> dalam klip — kamera dan latar kekal'},
+  ph_talk:{shn:'ၶႅပ်းႁၢင်ႈ 1 + သဵင် 1 — <em>ငဝ်းလၢတ်ႈၵႂၢမ်း</em>',kac:'Sumla 1 hte nsen 1 — <em>ga shaga ai video</em>',th:'รูปหนึ่งใบ เสียงหนึ่งไฟล์ — <em>วิดีโอที่พูดได้</em>',zh:'一张照片 + 一段声音 — <em>会说话的视频</em>',vi:'Một ảnh, một đoạn ghi âm — <em>video biết nói</em>',id:'Satu foto, satu rekaman — <em>video yang berbicara</em>',ms:'Satu foto, satu rakaman — <em>video yang bercakap</em>'},
   ph_lib:{shn:'Look 1850 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်',kac:'Lata da ai look 1850 — <em>langai lata la</em> nna kalang ta hpang u',th:'1850 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที',zh:'1850 款精选风格 — <em>选一款</em>立即开始',vi:'1850 phong cách tuyển chọn — <em>chọn một</em> và bắt đầu ngay',id:'1850 gaya pilihan — <em>pilih satu</em> dan mulai seketika',ms:'1850 gaya pilihan — <em>pilih satu</em> dan mula serta-merta'},
   ph_gallery:{shn:'ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ <em>သိမ်းဝႆႉတီႈၼႆႈ</em>',kac:'Na galaw da ai shagu, <em>ndai kaw makoi da ai</em>',th:'ทุกผลงานที่คุณสร้าง <em>บันทึกไว้ที่นี่</em>',zh:'你的每一件作品，<em>都保存在这里</em>',vi:'Mọi tác phẩm bạn tạo, <em>được lưu ngay tại đây</em>',id:'Setiap karya yang Anda buat, <em>tersimpan di sini</em>',ms:'Setiap hasil ciptaan anda, <em>disimpan di sini</em>'},
   ph_path:{shn:'Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>',kac:'Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>',th:'ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>',zh:'一个风格，套用整本相册 — <em>一次全部完成</em>',vi:'Một look, áp cho cả album — <em>tất cả cùng lúc</em>',id:'Satu look untuk seluruh album — <em>sekaligus</em>',ms:'Satu look untuk seluruh album — <em>serentak</em>'},
@@ -4171,7 +4244,7 @@ var TR_PATH={
 };
 Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
-var PH_MAP=[["phCreate","ph_create"],["phMeitu","ph_meitu"],["phEvoto","ph_evoto"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phV2V","ph_v2v"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
+var PH_MAP=[["phCreate","ph_create"],["phMeitu","ph_meitu"],["phEvoto","ph_evoto"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phV2V","ph_v2v"],["phTalk","ph_talk"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
 /* v4.41: the language list grows past the nine fully-translated ones.
    Every new code renders through a sensible fallback instead of hallucinated
    text: Myanmar ethnic languages fall back to BURMESE (their readers read
@@ -4746,6 +4819,7 @@ var PAGES=[
   ["pgVideo","i-clapper","Video"],
   ["pgVideoUp","i-rocket","VidUp"],
   ["pgV2V","i-shuffle","V→V"],
+  ["pgTalk","i-mic","Talk"],
   ["pgLib","i-books","Reference"],
   ["pgGallery","i-gallery","Gallery"],
   ["pgHome","i-gear","Setup"]
@@ -4763,7 +4837,7 @@ var TOPGROUPS=[
   { id:"grpDash", ic:"i-home", label:"Home", pages:["pgDash"] },
   { id:"grpWf", ic:"i-brain", label:"Workflows", pages:["pgWf"] },
   { id:"grpEdit", ic:"i-sparkle", label:"Edit", pages:["pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath"] },
-  { id:"grpMedia", ic:"i-clapper", label:"Media Lab", pages:["pgText2Img","pgVideo","pgVideoUp","pgV2V"] },
+  { id:"grpMedia", ic:"i-clapper", label:"Media Lab", pages:["pgText2Img","pgVideo","pgVideoUp","pgV2V","pgTalk"] },
   { id:"grpLib", ic:"i-frame", label:"Library", pages:["pgLib","pgGallery"] }
 ];
 /* ============================ v5.90.0 — WHAT'S NEW ============================
@@ -5019,6 +5093,7 @@ function resRestorePage(id){
     /* v6.4.0 — V→V joins them. It saves its takes exactly as pgVideo does, so
        it reads them back exactly as pgVideo does. */
     if(id==="pgV2V") return resRestoreV2V();
+    if(id==="pgTalk") return resRestoreTalk();
     if(RES_IMAGE_PAGES.indexOf(id)>=0) return resRestoreImages(id);
   }catch(e){ }
 }
@@ -5080,6 +5155,20 @@ function resRestoreV2V(){
     });
     state.vtHistSel=0;
     try{ showVtResult(false); }catch(e){ }
+  }).catch(function(){});
+}
+
+function resRestoreTalk(){
+  if(state.tkHist && state.tkHist.length) return;
+  galListPage("pgTalk", RES_RESTORE_CAP).then(function(recs){
+    var clips=recs.filter(function(r){ return r.kind==="video" && r.blob; });
+    if(!clips.length) return;
+    if(state.tkHist && state.tkHist.length) return;
+    state.tkHist=clips.map(function(r){
+      return { url:"", blob:r.blob, id:r.id, prompt:r.prompt||"", ts:r.ts||0 };
+    });
+    state.tkHistSel=0;
+    try{ showTkResult(false); }catch(e){ }
   }).catch(function(){});
 }
 
@@ -5280,8 +5369,13 @@ function wipSave(){
     var drafts = wipDrafts();
     var vt = wipPick(state && state.vtFile, WIP_VIDEO_MAX_B64);
     var vi = wipPick(state && state.vtImg, 0);
-    if (refs.some(function(r){ return r && r.b64; }) || Object.keys(drafts).length || vt || vi)
-      kvSet("wip", { refs: refs.slice(0,3), drafts: drafts, vtFile: vt, vtImg: vi, t: Date.now() }).catch(function(){});
+    /* v6.5.0 — the Talking Photo slots keep too. A student who picks a photo
+       and a recording, then goes to check the recording in another app, comes
+       back to both still in place rather than to an empty page. */
+    var ti = wipPick(state && state.tkImg, TALK_IMAGE_MAX_B64);
+    var ta = wipPick(state && state.tkAud, TALK_AUDIO_MAX_B64);
+    if (refs.some(function(r){ return r && r.b64; }) || Object.keys(drafts).length || vt || vi || ti || ta)
+      kvSet("wip", { refs: refs.slice(0,3), drafts: drafts, vtFile: vt, vtImg: vi, tkImg: ti, tkAud: ta, t: Date.now() }).catch(function(){});
     else kvDel("wip").catch(function(){});
   }catch(e){}
 }
@@ -5315,6 +5409,11 @@ function wipRestore(){
         if (typeof updateVtModelUI==="function") updateVtModelUI();
         if (typeof renderVtPicks==="function") renderVtPicks();
       }
+      if (w.tkImg && w.tkImg.b64 && !state.tkImg)
+        state.tkImg = { mime:w.tkImg.mime, b64:w.tkImg.b64, name:w.tkImg.name||"" };
+      if (w.tkAud && w.tkAud.b64 && !state.tkAud)
+        state.tkAud = { mime:w.tkAud.mime, b64:w.tkAud.b64, name:w.tkAud.name||"" };
+      if ((w.tkImg || w.tkAud) && typeof renderTkPicks==="function") renderTkPicks();
     }catch(e){}
     if (state.refs.some(function(r){ return r && r.b64; })) return;
     var back = w.refs.slice(0,3).map(function(r){
@@ -7156,6 +7255,24 @@ async function rhJobClaim(job){
           });
         }).catch(function(){});
       n++;
+    } else if(job.kind==="talk"){
+      /* same reason video-tool has its own branch: a Talking Photo run is an
+         MP4. Without this it would be fetched as a data: URI and filed as a
+         still, and a student who left the app mid-run would come back to a
+         broken picture instead of the video they paid for. */
+      var tkEntry={ url:results[i].url, prompt:job.prompt||"", ts:job.ts||Date.now() };
+      state.tkHist.unshift(tkEntry);
+      state.tkHistSel=0;
+      try{ if(galCurPage()==="pgTalk") showTkResult(false); }catch(e5){ }
+      galleryAddVideo(results[i].url, tkEntry.prompt, { page:"pgTalk", res:"", dur:"" })
+        .then(function(id){
+          if(!id) return;
+          return galFull(id).then(function(rec){
+            if(rec && rec.blob){ tkEntry.blob=rec.blob; tkEntry.id=id;
+              try{ if(galCurPage()==="pgTalk" && state.tkHist[state.tkHistSel]===tkEntry) showTkResult(false); }catch(e6){ } }
+          });
+        }).catch(function(){});
+      n++;
     } else {
       try{
         var du=await rhDownloadAsDataUrl(results[i].url);
@@ -7974,6 +8091,78 @@ var RH_VTOOL_MODELS = [
   { id:"mm-h3-regen-multimodal", label:"MiniMax H3 — regenerate to 2K (references)", apiPath:"minimax/hailuo-h3/regeneration-multimodal-to-video", videoParam:"baseVideoUrl", imageParam:"imageUrls", imageArray:true, imageMax:9, prompt:"req", promptMax:40000, options:[{"key": "resolution", "values": ["2K"], "def": "2K"}] },
 ];
 var RH_VT_WH = { "720p":[1280,720], "1080p":[1920,1080], "2k":[2560,1440], "4k":[3840,2160] };
+
+/* ---------- TALKING PHOTO (v6.5.0) ----------
+   Two endpoints, both taken verbatim from RunningHub's published registry
+   (test/fixtures/rh-model-registry.public.json, checked on every CI run):
+
+     kling-v2-ai-avatar-standard/image-audio-to-video
+     kling-v2-ai-avatar-pro/image-audio-to-video
+       imageUrl  IMAGE  required
+       audioUrl  AUDIO  required
+       prompt    STRING optional
+
+   Nothing else is sent. The prices below are RunningHub's own published
+   per-second rates for these two endpoints and are shown to the student
+   BEFORE they submit, because RunningHub charges at submit — the moment the
+   button is pressed, not when the video arrives. */
+var RH_TALK_MODELS = [
+  { id:"talk-std", apiPath:"kling-v2-ai-avatar-standard/image-audio-to-video", label:"Kling V2 Standard", cny:0.36, imageParam:"imageUrl", audioParam:"audioUrl" },
+  { id:"talk-pro", apiPath:"kling-v2-ai-avatar-pro/image-audio-to-video",      label:"Kling V2 Pro",      cny:0.72, imageParam:"imageUrl", audioParam:"audioUrl" }
+];
+/* An audio file is bigger per second than a photo and smaller than a clip;
+   the cap is the one the upload endpoint documents for media, and the app
+   refuses over it rather than letting a long recording fail at upload. */
+var TALK_AUDIO_MAX_B64 = 24*1024*1024;
+var TALK_IMAGE_MAX_B64 = 12*1024*1024;
+
+function rhTalkDef(id){
+  for(var i=0;i<RH_TALK_MODELS.length;i++) if(RH_TALK_MODELS[i].id===id) return RH_TALK_MODELS[i];
+  return RH_TALK_MODELS[0];
+}
+/* The single source of truth for the request body — the page, the tests and
+   any lane that renders card art all build it through here, so what a
+   student submits and what anything else submits cannot drift apart. */
+function rhTalkBody(def, imageUrl, audioUrl, promptText){
+  var body = {};
+  body[def.imageParam] = imageUrl||"";
+  body[def.audioParam] = audioUrl||"";
+  var p = String(promptText||"").trim();
+  if(p) body.prompt = p;
+  return body;
+}
+async function rhV2UploadAudio(apiKey, dataUrl, name, signal){
+  var fd=new FormData();
+  fd.append("file", rhDataUrlToBlob(dataUrl), name || "hnk_audio.mp3");
+  var r=await fetchWithTimeout(RH_V2_BASE+RH_V2_PATHS.upload, { method:"POST", headers:{"Authorization":"Bearer "+apiKey}, body:fd }, RH_VIDEO_UPLOAD_TIMEOUT_MS, signal);
+  if(!r.ok){ var e=new Error("upload-failed"); e.status=r.status; throw e; }
+  var j=await r.json().catch(function(){return null;});
+  var url=j && j.data && (j.data.download_url || j.data.fileName);
+  if(!url){ var e2=new Error("upload-failed"); e2.status=200; e2.body=j; throw e2; }
+  if(!/^https?:\/\//i.test(url)) url = RH_BASE+"/"+String(url).replace(/^\/+/,"");
+  return url;
+}
+async function rhGenerateTalk(apiKey, def, imageDataUrl, audioDataUrl, audioName, promptText, onTick, signal){
+  if(!imageDataUrl){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
+  if(!audioDataUrl){ var e1=new Error("no-audio"); e1.code="no-audio"; throw e1; }
+  var imageUrl = (await rhV2UploadAll(apiKey, [imageDataUrl], signal))[0];
+  var audioUrl = await rhV2UploadAudio(apiKey, audioDataUrl, audioName, signal);
+  var body = rhTalkBody(def, imageUrl, audioUrl, promptText);
+  var r=await fetchWithTimeout(RH_V2_BASE+"/"+def.apiPath, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  /* its own kind, for the same reason video-upscale has one: a job recovered
+     after the tab was killed has to land back on the page that started it,
+     or the student cannot find what they already paid for. */
+  var final = await rhPollTracked(apiKey, j.taskId, {kind:"talk", label:def.apiPath, prompt:promptText||def.label}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
+  var results=(final && final.results)||[];
+  var outs=[];
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    outs.push({ url:results[i].url, outputType:results[i].outputType||"video" });
+  }
+  return outs;
+}
 function rhVtModelDef(id){ return RH_VTOOL_MODELS.find(function(m){ return m.id===id; }) || RH_VTOOL_MODELS[0]; }
 /* The body builder is its own function so tests can prove every tool sends
    exactly the fields ITS endpoint declares (the sweep drives it directly). */
@@ -26150,7 +26339,23 @@ state.vtFile = null; state.vtImg = null;
    the same size class the Video page already saves — so it is saved, restored
    when the page opens, and removed only when the student deletes it. */
 state.vtHist = []; state.vtHistSel = -1;
+state.tkHist = []; state.tkHistSel = -1;
+state.tkImg = null; state.tkAud = null; state.tkAudSecs = 0;
 $("vtIntro").textContent = L9({my:"ရှိပြီးသား ဗီဒီယိုကို ပြင်မယ်/ဆက်မယ်/သန့်မယ် — model တစ်ခုရွေးပြီး ဗီဒီယိုဖိုင် တင်ပါ။ RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Edit, extend or clean an existing video — pick a tool, upload the clip. Needs your RunningHub Enterprise key.",shn:"မႄးၶိုၼ်း/သိုပ်ႇ/သုၵ်ႈသႅင်ႇ ဝီဒီရူဝ်ႈဢၼ်မီးယူႇ",kac:"Video nga ai hpe galaw/madung/san seng — tool langai lata nna video bang u",th:"แก้ไข ต่อ หรือปรับปรุงวิดีโอที่มีอยู่ — เลือกเครื่องมือแล้วอัปโหลดคลิป",zh:"编辑、延长或修复现有视频 — 选择工具并上传视频",vi:"Chỉnh sửa, kéo dài hoặc làm sạch video có sẵn — chọn công cụ rồi tải video lên",id:"Edit, perpanjang, atau bersihkan video yang ada — pilih alat lalu unggah klip",ms:"Edit, panjangkan atau bersihkan video sedia ada — pilih alat dan muat naik klip"});
+
+/* ---- Talking Photo copy (v6.5.0) ---- */
+$("tkIntro").textContent = L9({my:"ပုံတစ်ပုံနဲ့ အသံဖိုင်တစ်ခု ထည့်ပါ — ပုံထဲက လူက အဲ့ဒီအသံအတိုင်း စကားပြောပေးပါမယ်။ ကိုယ်တိုင် အသံသွင်းထားတာ အကောင်းဆုံး — ဘာသာစကား အားလုံး ရပါတယ်။",en:"Add a photo and an audio file — the person in the photo will speak it. Your own recording works best, and works in every language.",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ 1 လႄႈ ၾၢႆႇသဵင် 1 — ၵူၼ်းၼႂ်းၶႅပ်းတေလၢတ်ႈၸွမ်းသဵင်ၼၼ်ႉ",kac:"Sumla langai hte nsen file langai bang u — sumla hta na masha gaw dai nsen hte ga shaga na re",th:"เพิ่มรูปและไฟล์เสียง — คนในรูปจะพูดตามเสียงนั้น เสียงที่คุณอัดเองใช้ได้ทุกภาษา",zh:"添加一张照片和一个音频文件 — 照片里的人就会说出这段话。用你自己录的声音效果最好，任何语言都可以。",vi:"Thêm một ảnh và một tệp âm thanh — người trong ảnh sẽ nói theo. Bản ghi của chính bạn là tốt nhất, dùng được mọi ngôn ngữ.",id:"Tambahkan foto dan file audio — orang di foto akan mengucapkannya. Rekaman Anda sendiri paling bagus dan berlaku untuk semua bahasa.",ms:"Tambah foto dan fail audio — orang dalam foto akan menuturkannya. Rakaman anda sendiri paling baik, untuk semua bahasa."});
+setIcnText($("btnTkImgPick"),"i-camera",L9({my:"ပုံ ရွေးမယ်",en:"Choose a photo",shn:"လိူၵ်ႈၶႅပ်းႁၢင်ႈ",kac:"Sumla lata u",th:"เลือกรูป",zh:"选择照片",vi:"Chọn ảnh",id:"Pilih foto",ms:"Pilih foto"}));
+setIcnText($("btnTkAudPick"),"i-mic",L9({my:"အသံဖိုင် ရွေးမယ်",en:"Choose an audio file",shn:"လိူၵ်ႈၾၢႆႇသဵင်",kac:"Nsen file lata u",th:"เลือกไฟล์เสียง",zh:"选择音频文件",vi:"Chọn tệp âm thanh",id:"Pilih file audio",ms:"Pilih fail audio"}));
+setIcnText($("btnTkGen"),"i-mic",L9({my:"စကားပြောခိုင်းမယ်",en:"Make it talk",shn:"ႁဵတ်းႁႂ်ႈလၢတ်ႈ",kac:"Ga shaga shangun u",th:"ทำให้พูด",zh:"让它说话",vi:"Cho ảnh nói",id:"Buat berbicara",ms:"Buatkan ia bercakap"}));
+setIcnText($("btnTkDl"),"i-download",VID_DL_LABEL);
+$("tkPrompt").placeholder = L9({my:"မဖြည့်လည်း ရပါတယ် — ဥပမာ: ကင်မရာကို ကြည့်ပြီး သဘာဝကျကျ ပြုံးပါ",en:"Optional — e.g. looking at the camera, a natural friendly smile",shn:"ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ",kac:"Bang ra ai n rai",th:"ไม่ใส่ก็ได้ — เช่น มองกล้อง ยิ้มอย่างเป็นธรรมชาติ",zh:"可留空 — 例如：看着镜头，自然微笑",vi:"Không bắt buộc — ví dụ: nhìn vào máy quay, mỉm cười tự nhiên",id:"Opsional — mis. menatap kamera, senyum alami",ms:"Pilihan — cth. memandang kamera, senyuman semula jadi"});
+$("tkNeedNote").textContent = L9({my:"လိုအပ်တာ — ပုံ ၁ ပုံ (မျက်နှာ ရှင်းရှင်း၊ ရှေ့တည့်တည့်) နဲ့ အသံဖိုင် ၁ ခု (MP3/M4A/WAV)။",en:"Needs one photo (a clear, front-on face) and one audio file (MP3/M4A/WAV).",shn:"လူဝ်ႇ — ၶႅပ်းႁၢင်ႈ 1 လႄႈ ၾၢႆႇသဵင် 1",kac:"Ra ai — sumla 1 hte nsen file 1",th:"ต้องใช้รูป 1 รูป (หน้าชัด หันตรง) และไฟล์เสียง 1 ไฟล์ (MP3/M4A/WAV)",zh:"需要一张照片（正面清晰的脸）和一个音频文件（MP3/M4A/WAV）",vi:"Cần một ảnh (mặt rõ, chính diện) và một tệp âm thanh (MP3/M4A/WAV)",id:"Perlu satu foto (wajah jelas, menghadap depan) dan satu file audio (MP3/M4A/WAV)",ms:"Perlu satu foto (wajah jelas, menghadap depan) dan satu fail audio (MP3/M4A/WAV)"});
+$("tkResultH2").textContent = L9({my:"ရလဒ်",en:"Result",shn:"ၽွၼ်းလႆႈ",kac:"Ah kyu",th:"ผลลัพธ์",zh:"结果",vi:"Kết quả",id:"Hasil",ms:"Hasil"});
+$("tkHistH").textContent = L9({my:"အရင် လုပ်ထားတာတွေ",en:"Earlier takes",shn:"ဢၼ်ႁဵတ်းဝႆႉၸဵမ်မိူဝ်ႈၵွၼ်ႇ",kac:"Moi galaw da ai ni",th:"งานก่อนหน้า",zh:"之前的成片",vi:"Các lần trước",id:"Hasil sebelumnya",ms:"Hasil terdahulu"});
+$("tkExpireNote").textContent = L9({my:"⏳ ဒီ link က ၂၄ နာရီအတွင်း ပျက်ပါမယ် — သိမ်းပြီးသွားရင် ဒီစာ ပျောက်သွားပါမယ်။",en:"⏳ This link expires within 24 hours — it disappears once the video is saved on this device.",shn:"⏳ Link ၼႆႉ 24 ၸူဝ်ႈမူင်း တေသဵင်ႈ",kac:"⏳ Ndai link gaw 24 ban hta mat na re",th:"⏳ ลิงก์นี้หมดอายุใน 24 ชั่วโมง — จะหายไปเมื่อบันทึกวิดีโอแล้ว",zh:"⏳ 此链接 24 小时内失效 — 视频保存到本机后这行会消失",vi:"⏳ Liên kết này hết hạn trong 24 giờ — sẽ biến mất khi video đã lưu",id:"⏳ Tautan ini kedaluwarsa dalam 24 jam — hilang setelah video tersimpan",ms:"⏳ Pautan ini luput dalam 24 jam — hilang setelah video disimpan"});
+tkFillModels();
+renderTkPicks();
 setIcnText($("btnVtPick"),"i-clapper",L9({my:"ဗီဒီယို ဖိုင် ရွေးမယ် (MP4)",en:"Pick a video file (MP4)",shn:"ထၢႆႇၾၢႆႇဝီဒီရူဝ်ႈ (MP4)",kac:"Video file lata u (MP4)",th:"เลือกไฟล์วิดีโอ (MP4)",zh:"选择视频文件 (MP4)",vi:"Chọn tệp video (MP4)",id:"Pilih file video (MP4)",ms:"Pilih fail video (MP4)"}));
 setIcnText($("btnVtImgPick"),"i-plus",L9({my:"ပုံ ထည့်မယ်",en:"Add reference photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูปอ้างอิง",zh:"添加参考图片",vi:"Thêm ảnh tham chiếu",id:"Tambah foto referensi",ms:"Tambah foto rujukan"}));
 $("vtResultH2").textContent = L9({my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"});
@@ -26659,6 +26864,192 @@ $("btnVtDl").onclick=async function(){
 };
 $("btnVtCancel").onclick=function(){ if(state.vtAbort) state.vtAbort.abort(); };
 $("btnVtRetry").onclick=function(){ if($("btnVtGen").disabled) return; this.style.display="none"; $("btnVtGen").onclick(); };
+
+/* ================= TALKING PHOTO (pgTalk) — v6.5.0 =================
+   One photo, one audio file, and the person in the photo speaks it. The
+   endpoints take exactly three fields and this page collects exactly those
+   three: everything below is slot, preview, price and the same
+   keep-it-after-you-leave machinery the V->V page grew in v6.4.0. */
+function tkModelDef(){ return rhTalkDef($("selTkModel") ? $("selTkModel").value : ""); }
+function tkPriceLine(){
+  var m=tkModelDef();
+  return L9({
+    my:"{L} — တစ်စက္ကန့် ¥{P}။ အသံ ရှည်လေ ဈေး များလေ။ RunningHub က Generate နှိပ်တဲ့အချိန်မှာ ငွေဖြတ်ပါတယ်။",
+    en:"{L} — ¥{P} per second. The longer the audio, the more it costs. RunningHub charges the moment you press Generate.",
+    shn:"{L} — ¼ ¥{P} ဢၼ်ၼိုင်ႈၸဵၵ်ႇ။ သဵင်ယၢဝ်း ၵႃႈၼမ်။",
+    kac:"{L} — sekan langai ¥{P}. Nsen galu yang manga grau law.",
+    th:"{L} — ¥{P} ต่อวินาที ยิ่งเสียงยาวยิ่งแพง คิดเงินตอนกด Generate",
+    zh:"{L} — 每秒 ¥{P}。音频越长费用越高，按下生成时即扣费。",
+    vi:"{L} — ¥{P} mỗi giây. Âm thanh càng dài càng tốn. Trừ tiền ngay khi bấm Generate.",
+    id:"{L} — ¥{P} per detik. Makin panjang audio makin mahal. Ditagih saat menekan Generate.",
+    ms:"{L} — ¥{P} sesaat. Makin panjang audio makin mahal. Dicaj sebaik anda tekan Generate."
+  }).replace(/\{L\}/g, m.label).replace(/\{P\}/g, m.cny.toFixed(2));
+}
+function renderTkPicks(){
+  var ip=$("tkImgPrev");
+  if(ip){
+    if(state.tkImg){
+      $("tkImgThumb").src = vtDataUrl(state.tkImg);
+      $("tkImgName").textContent = state.tkImg.name || "";
+      $("tkImgMeta").textContent = fmtBytes(vtB64Bytes(state.tkImg.b64));
+      ip.style.display="";
+    } else {
+      ip.style.display="none";
+      $("tkImgName").textContent=""; $("tkImgMeta").textContent="";
+      $("tkImgThumb").removeAttribute("src");
+    }
+  }
+  var ap=$("tkAudPrev"), pl=$("tkAudPlay");
+  if(ap){
+    if(state.tkAud){
+      $("tkAudName").textContent = state.tkAud.name || "";
+      var meta=$("tkAudMeta");
+      meta.textContent = fmtBytes(vtB64Bytes(state.tkAud.b64));
+      ap.style.display="";
+      /* the student hears what they picked before they pay for it, and the
+         length is read off the very element they are listening to */
+      var key=state.tkAud.name+"|"+state.tkAud.b64.length;
+      if(pl && pl.getAttribute("data-src")!==key){
+        pl.setAttribute("data-src", key);
+        pl.src = vtDataUrl(state.tkAud);
+        pl.onloadedmetadata=function(){
+          if(isFinite(pl.duration)){
+            state.tkAudSecs = pl.duration;
+            meta.textContent = Math.round(pl.duration)+"s · "+fmtBytes(vtB64Bytes(state.tkAud.b64))
+              + " · ≈ ¥" + (pl.duration * tkModelDef().cny).toFixed(2);
+          }
+        };
+      }
+      if(pl) pl.style.display="";
+    } else {
+      ap.style.display="none";
+      $("tkAudName").textContent=""; $("tkAudMeta").textContent="";
+      state.tkAudSecs=0;
+      if(pl){ pl.style.display="none"; pl.removeAttribute("data-src"); pl.removeAttribute("src"); }
+    }
+  }
+  var note=$("tkPriceNote"); if(note) note.textContent=tkPriceLine();
+}
+function tkFillModels(){
+  var sel=$("selTkModel"); if(!sel) return;
+  sel.innerHTML="";
+  RH_TALK_MODELS.forEach(function(m){
+    var o=document.createElement("option");
+    o.value=m.id; o.textContent=m.label+" — ¥"+m.cny.toFixed(2)+"/s";
+    sel.appendChild(o);
+  });
+  if(typeof hslSync==="function") try{ hslSync(sel); }catch(e){}
+}
+$("selTkModel").onchange=function(){ renderTkPicks(); };
+$("btnTkImgPick").onclick=function(){ $("tkImgPick").click(); };
+$("btnTkAudPick").onclick=function(){ $("tkAudPick").click(); };
+$("btnTkImgClear").onclick=function(){ state.tkImg=null; renderTkPicks(); wipSave(); };
+$("btnTkAudClear").onclick=function(){ state.tkAud=null; renderTkPicks(); wipSave(); };
+$("tkImgPick").onchange=function(){
+  var f=this.files && this.files[0]; this.value="";
+  if(!f) return;
+  var name=f.name;
+  var rd=new FileReader();
+  rd.onload=function(){
+    downscale(String(rd.result), function(dataUrl){
+      if(!dataUrl){ toast(L9({my:"ဒီပုံကို ဖတ်လို့မရပါ",en:"Couldn't read this image",shn:"ဢမ်ႇလူတ်ႇလႆႈၶႅပ်းႁၢင်ႈၼႆႉ",kac:"Ndai sumla hti n mai ai",th:"อ่านรูปนี้ไม่ได้",zh:"无法读取此图片",vi:"Không đọc được ảnh này",id:"Tidak bisa membaca gambar ini",ms:"Tidak dapat membaca imej ini"}),"err"); return; }
+      var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if(m){ state.tkImg={mime:m[1],b64:m[2],name:name}; renderTkPicks(); wipSave(); }
+    });
+  };
+  rd.readAsDataURL(f);
+};
+$("tkAudPick").onchange=function(){
+  var f=this.files && this.files[0]; this.value="";
+  if(!f) return;
+  var name=f.name;
+  var rd=new FileReader();
+  rd.onload=function(){
+    var m=String(rd.result||"").match(/^data:([^;]+);base64,(.+)$/);
+    if(!m){ toast(L9({my:"ဒီအသံဖိုင်ကို ဖတ်လို့မရပါ",en:"Couldn't read this audio file",shn:"ဢမ်ႇလူတ်ႇလႆႈၾၢႆႇသဵင်ၼႆႉ",kac:"Ndai nsen file hti n mai ai",th:"อ่านไฟล์เสียงนี้ไม่ได้",zh:"无法读取此音频文件",vi:"Không đọc được tệp âm thanh này",id:"Tidak bisa membaca file audio ini",ms:"Tidak dapat membaca fail audio ini"}),"err"); return; }
+    if(m[2].length > TALK_AUDIO_MAX_B64){
+      toast(L9({my:"အသံဖိုင် ကြီးလွန်းပါတယ် — ပိုတိုတဲ့ အသံ သုံးပါ",en:"That audio file is too large — use a shorter recording",shn:"ၾၢႆႇသဵင်ယႂ်ႇပူၼ်ႉ — ၸႂ်ႉဢၼ်ပွတ်း",kac:"Nsen file kaba hkrai — kadun ai jat u",th:"ไฟล์เสียงใหญ่เกินไป — ใช้ไฟล์ที่สั้นกว่า",zh:"音频文件过大 — 请使用更短的录音",vi:"Tệp âm thanh quá lớn — hãy dùng bản ghi ngắn hơn",id:"File audio terlalu besar — gunakan rekaman lebih pendek",ms:"Fail audio terlalu besar — guna rakaman lebih pendek"}),"err");
+      return;
+    }
+    state.tkAud={mime:m[1],b64:m[2],name:name};
+    renderTkPicks(); wipSave();
+  };
+  rd.readAsDataURL(f);
+};
+$("btnTkGen").onclick=async function(){
+  if(!gate("video")) return;
+  if(!state.rhKey){ pendingCapture(); switchPage("pgHome"); toast(t("st_needkey")||"RunningHub key?", "err"); return; }
+  var m=tkModelDef();
+  if(!state.tkImg){ setSt("stTkGen", L9({my:"ပုံ တစ်ပုံ ထည့်ပါ",en:"Add a photo first",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈဢွၼ်တၢင်း",kac:"Sumla langai bang u",th:"เพิ่มรูปก่อน",zh:"请先添加照片",vi:"Thêm ảnh trước",id:"Tambahkan foto dulu",ms:"Tambah foto dahulu"}), "err"); return; }
+  if(!state.tkAud){ setSt("stTkGen", L9({my:"အသံဖိုင် ထည့်ပါ",en:"Add an audio file",shn:"သႂ်ႇၾၢႆႇသဵင်",kac:"Nsen file bang u",th:"เพิ่มไฟล์เสียง",zh:"请添加音频文件",vi:"Thêm tệp âm thanh",id:"Tambahkan file audio",ms:"Tambah fail audio"}), "err"); return; }
+  var text=$("tkPrompt").value.trim();
+  var btn=this; btn.disabled=true; btn.classList.add("working"); $("tkSpin").className="spin on"; setSt("stTkGen","");
+  $("btnTkRetry").style.display="none";
+  var spinBase=$("tkSpin").textContent;
+  var abort=new AbortController(); state.tkAbort=abort;
+  setIcnText($("btnTkCancel"),"i-close",t("btn_cancel")); $("btnTkCancel").style.display="";
+  try{
+    if(text) text = await translateIfMyanmar(text, $("tkSpin"));
+    $("tkSpin").textContent=spinBase;
+    var outs=await rhGenerateTalk(state.rhKey, m, vtDataUrl(state.tkImg), vtDataUrl(state.tkAud), state.tkAud.name, text, function(elapsed, status){
+      $("tkSpin").textContent=spinBase+(status?" · "+status:"")+" · "+Math.round(elapsed/1000)+"s";
+    }, abort.signal);
+    if(!outs.length){
+      setSt("stTkGen", L9({my:"ရလဒ် မထွက်လာပါ — ပြန်စမ်းပါ",en:"Nothing came back — try again",shn:"ဢမ်ႇမီးလွင်ႈဢွၵ်ႇ — ၸၢမ်းၶိုၼ်း",kac:"Hpa n pru ai — bai chyam u",th:"ไม่มีผลลัพธ์ — ลองใหม่",zh:"没有结果 — 请重试",vi:"Không có kết quả — thử lại",id:"Tidak ada hasil — coba lagi",ms:"Tiada hasil — cuba lagi"}), "err");
+      $("btnTkRetry").style.display="";
+    } else {
+      var entry={ url:outs[0].url, prompt:(text||m.label||"").slice(0,120), ts:Date.now() };
+      state.tkHist.unshift(entry);
+      state.tkHistSel=0;
+      showTkResult();
+      setSt("stTkGen", t("st_done"), "ok");
+      galleryAddVideo(outs[0].url, entry.prompt, { page:"pgTalk", res:"", dur:"" })
+        .then(function(id){
+          if(!id) return;
+          return galFull(id).then(function(rec){
+            if(rec && rec.blob){ entry.blob=rec.blob; entry.id=id; if(state.tkHist[state.tkHistSel]===entry) showTkResult(false); }
+          });
+        }).catch(function(){});
+    }
+  }catch(e){
+    setSt("stTkGen", rhFriendly(e), (e&&e.code==="cancelled")?"ok":"err");
+    if(!(e&&e.code==="cancelled")) $("btnTkRetry").style.display="";
+  }
+  state.tkAbort=null;
+  $("btnTkCancel").style.display="none";
+  btn.disabled=false; btn.classList.remove("working"); $("tkSpin").className="spin"; $("tkSpin").textContent=spinBase;
+};
+function showTkResult(scroll){
+  var out=state.tkHist[state.tkHistSel]; if(!out) return;
+  $("tkResultBox").className="card result-box on";
+  $("tkResultVideo").src=vidPlayUrl(out);
+  var ex=$("tkExpireNote");
+  if(ex) ex.style.display=out.blob?"none":"";
+  var h=$("tkHist"); h.innerHTML="";
+  state.tkHist.forEach(function(e,i){
+    var v=document.createElement("video");
+    v.src=vidPlayUrl(e); v.muted=true; v.preload="metadata"; v.playsInline=true;
+    v.className=i===state.tkHistSel?"sel":"";
+    makePickable(v, function(){ state.tkHistSel=i; showTkResult(true); });
+    h.appendChild(v);
+  });
+  if(scroll!==false) $("tkResultBox").scrollIntoView({behavior:"smooth"});
+}
+$("btnTkDl").onclick=async function(){
+  var out=state.tkHist[state.tkHistSel]; if(!out) return;
+  var btn=this; if(btn.disabled) return; btn.disabled=true; setIcnText(btn,"i-download",VID_DL_BUSY);
+  try{
+    var blobUrl=out.blob ? URL.createObjectURL(out.blob) : await rhVideoDownloadBlobUrl(out.url);
+    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-talking-photo-"+ptStamp()+".mp4";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);
+  }catch(e){
+    toast(L9({my:"Download မအောင်မြင်ပါ",en:"Download failed",shn:"Download ဢမ်ႇသေၽွင်ႈ",kac:"Download n byin ai",th:"ดาวน์โหลดล้มเหลว",zh:"下载失败",vi:"Tải xuống thất bại",id:"Unduh gagal",ms:"Muat turun gagal"}), "err");
+  }
+  btn.disabled=false; setIcnText(btn,"i-download",VID_DL_LABEL);
+};
+$("btnTkCancel").onclick=function(){ if(state.tkAbort) state.tkAbort.abort(); };
+$("btnTkRetry").onclick=function(){ if($("btnTkGen").disabled) return; this.style.display="none"; $("btnTkGen").onclick(); };
 
 $("btnVuDl").onclick=async function(){
   var out=state.vuHist[state.vuHistSel]; if(!out) return;

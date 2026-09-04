@@ -384,6 +384,14 @@ jobs:
       - name: Verify every shipped endpoint holds to RunningHub's published schema
         run: node test/verify_rh_registry_contract.js
 
+      # v6.5.0 — TALKING PHOTO. The lip-sync endpoints have been published all
+      # along; what blocked the feature was that no page in this app had an
+      # AUDIO slot to fill their required audioUrl. This pins the slot, the
+      # two endpoints, the exact request body, and that neither half of the
+      # pair can be skipped into a paid call.
+      - name: Verify the Talking Photo page and its two published endpoints
+        run: PORT=8931 node test/verify_talking_photo.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
