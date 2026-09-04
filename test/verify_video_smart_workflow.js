@@ -215,6 +215,36 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   report("A9) no card asks for something it also promises to keep",
     contradictions.length === 0, contradictions);
 
+  /* A7b — v6.4.0. The other way a clip can be wrong for a card: wan-2.7's
+     duration is the TOTAL the result runs, so a clip longer than it is refused
+     by the endpoint itself. The first render wave proved it — a 5.04-second
+     source against a card asking for 5 came back errorCode 1007, after the
+     submit. A card carrying clipUnder must name an option its tool actually
+     has, and must not ALSO default that option to something its own summary
+     calls too short. */
+  const underGaps = [];
+  WF.filter(w => w.clipUnder).forEach(w => {
+    const t = TOOLS.find(x => x.id === w.model);
+    const o = (t && t.options || []).find(x => x.key === w.clipUnder);
+    if (!o) { underGaps.push(w.key + ": clipUnder names " + w.clipUnder + ", which its tool has no option for"); return; }
+    const chosen = Number((w.opts || {})[w.clipUnder] !== undefined ? w.opts[w.clipUnder] : o.def);
+    const highest = Math.max.apply(null, o.values.map(Number).filter(n => !isNaN(n)));
+    if (!chosen) { underGaps.push(w.key + ": no usable default for " + w.clipUnder); return; }
+    /* the card is "make it longer": defaulting to the LOWEST value its tool
+       offers guarantees the refusal for any ordinary clip */
+    const lowest = Math.min.apply(null, o.values.map(Number).filter(n => !isNaN(n)));
+    if (chosen <= lowest) underGaps.push(w.key + ": defaults " + w.clipUnder + " to its tool's smallest value (" + chosen + ")");
+    if (chosen > highest) underGaps.push(w.key + ": defaults " + w.clipUnder + " past what its tool offers");
+  });
+  report("A7b) a card gated on one of its tool's options names a real one, and does not default it to the smallest",
+    underGaps.length === 0, underGaps);
+  /* and the app has to be able to ENFORCE it — a gate nothing reads is a
+     comment, and the student still learns about it from the error */
+  report("A7c) the app measures the clip against that option before the run is paid for",
+    APP.indexOf("w.clipUnder") >= 0 && APP.indexOf("VT_UNDER_WARN") >= 0 &&
+    /_vtUnderBound/.test(APP),
+    "nothing reads clipUnder, or changing the option does not re-check the clip");
+
   /* A10 — the sound is the one promise the prompt cannot keep on its own.
      Both cards tell the model to leave the original sound alone, and the
      endpoint has a field for exactly that; if the body ever stopped sending
@@ -527,6 +557,78 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     await pb.close();
     await new Promise(r => server.close(r));
   }
+
+  /* ---- E) and the art the cards wear is a picture of what they do ----
+     The render lane submits a REAL call per card and crops its result into
+     the card's picture. That is only honest while the call it submits is the
+     call the card submits, so the lane reads the body out of the app's own
+     rhVtBody (tools/v2v_card_request.js) instead of assembling JSON itself.
+     The first cut of the lane hand-wrote one body shape for two look-alike
+     cards; over nine cards that shape is wrong for seven of them — three
+     take no prompt, four take no photograph, five carry option defaults, and
+     only two carry keepOriginalSound. */
+  const V2V = require(path.join(ROOT, "tools", "v2v_card_request.js"));
+  const reqGaps = [];
+  WF.forEach(w => {
+    let r;
+    try { r = V2V.request(w.key, "https://example.invalid/v.mp4", "https://example.invalid/i.jpg"); }
+    catch (e) { reqGaps.push(w.key + ": " + e.message); return; }
+    const t = TOOLS.find(x => x.id === w.model);
+    if (r.apiPath !== t.apiPath) reqGaps.push(w.key + ": the lane would post to " + r.apiPath);
+    if (!r.body[t.videoParam]) reqGaps.push(w.key + ": the request carries no video");
+    /* the two shapes a hand-written body gets wrong */
+    if (!!r.body.prompt !== !!w.text) reqGaps.push(w.key + ": prompt " + (w.text ? "missing from" : "invented in") + " the request");
+    Object.keys(w.opts || {}).forEach(k => {
+      if (k === "whPreset") { if (!r.body.outputWidth) reqGaps.push(w.key + ": the size preset never became a width"); return; }
+      if (String(r.body[k]) !== String(w.opts[k])) reqGaps.push(w.key + "/" + k + ": the request sends " + r.body[k]);
+    });
+  });
+  report("E) the render lane can build every card's real request, from the app's own builder",
+    reqGaps.length === 0, reqGaps);
+
+  const lane = fs.readFileSync(path.join(ROOT, ".github", "workflows", "showcase-images.yml"), "utf8");
+  /* the lane's own comments explain what it must not hand-write, so read the
+     code and not the prose — otherwise the explanation fails the check it
+     exists to explain */
+  const v2vLane = lane.slice(lane.indexOf("v2vcards)"), lane.indexOf("retouch)"))
+    .split("\n").filter(l => !/^\s*#/.test(l)).join("\n");
+  report("E2) the lane asks that builder for every card rather than writing a body of its own",
+    v2vLane.indexOf("tools/v2v_card_request.js") >= 0 &&
+    v2vLane.indexOf("keys") >= 0 &&
+    !/keepOriginalSound/.test(v2vLane) && !/videoUrl["']\s*:/.test(v2vLane),
+    { callsTool: v2vLane.indexOf("tools/v2v_card_request.js") >= 0,
+      loopsAllCards: v2vLane.indexOf("keys") >= 0,
+      handRolled: /keepOriginalSound|videoUrl["']\s*:/.test(v2vLane) });
+
+  /* E3 — v6.4.0, the owner's rule after seeing the first wave: "ကတ်တေွကို
+     အဟောင်း လုံးဝ မသုံးပါနဲ့". The first cut submitted a shipped banner clip
+     and the shipped promo poster, so every card's picture was built on
+     material a student has already met elsewhere in the product — and the
+     thirty-second card's own before half was that poster. The lane generates
+     BOTH inputs for this purpose now, and this check keeps it that way: no
+     path into docs/ may appear in the card branch at all. */
+  const shippedAssets = [...v2vLane.matchAll(/docs\/[A-Za-z0-9_.\/-]+\.(?:mp4|jpg|jpeg|png|webp)/g)].map(m => m[0]);
+  report("E3) the card lane brings its own clip and its own portrait — no shipped asset is reused",
+    shippedAssets.length === 0 &&
+    /submit "v2v-source"/.test(v2vLane) && /submit "v2v-ref"/.test(v2vLane),
+    { reused: shippedAssets, generatesClip: /submit "v2v-source"/.test(v2vLane),
+      generatesPortrait: /submit "v2v-ref"/.test(v2vLane) });
+  const art = fs.readFileSync(path.join(ROOT, "tools", "build_v2v_card_art.py"), "utf8");
+  report("E3b) and the composer reads only what that lane produced",
+    !/docs\/[A-Za-z0-9_.\/-]+\.(?:mp4|jpg|jpeg|png|webp)/.test(art.replace(/^\s*#.*$/gm, "")),
+    "the composer still points at a shipped file for one of its halves");
+
+  /* E4 — a run may publish only what it just composed. The lane copied every
+     vt-*.jpg in the output folder, so a card the composer SKIPPED went out as
+     whatever was already committed: when the RunningHub balance ran out
+     mid-wave, two cards were re-published with art the owner had already
+     rejected, and the run reported success. */
+  report("E4) the lane publishes the cards this run composed, not every file in the folder",
+    /cards-written\.txt/.test(lane) && !/for f in docs\/app\/lib\/vid\/vt-\*\.jpg/.test(lane),
+    "the drop still copies every vt-*.jpg, so a skipped card ships its old art");
+  report("E4b) and the composer records what it wrote for that to read",
+    /cards-written\.txt/.test(art),
+    "build_v2v_card_art.py does not report which cards it actually wrote");
 
   console.log(failures
     ? `\n${failures} FAILURE(S) — the Video Smart Workflow would not do what its cards promise.`

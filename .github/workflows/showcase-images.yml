@@ -32,14 +32,15 @@ on:
         description: 'Type GENERATE to run (each image spends RunningHub credit)'
         required: true
       rh_key:
-        description: 'RunningHub Enterprise key — used for this run only, masked, never stored'
-        required: true
+        description: 'LEAVE EMPTY if the RUNNINGHUB_KEY secret exists. A key typed here is visible on this public run page — only use it as a fallback, then rotate it.'
+        required: false
+        default: ''
       pairs:
         description: 'space-separated pair names to build (retouch scene series lookcopy looksets …), or "all"'
         required: false
         default: 'all'
       tasks:
-        description: 'COLLECT-ONLY: space-separated name:taskId pairs — skips submit and only polls + downloads already-paid tasks (names: ba-retouch-before ba-retouch-after ba-scene-before ba-scene-after)'
+        description: 'COLLECT-ONLY: space-separated name:taskId pairs — skips submit and only polls + downloads already-paid tasks (names: ba-retouch-before ba-retouch-after ba-scene-before ba-scene-after, or v2v-<cardKey> for the Video Smart Workflow cards)'
         required: false
         default: ''
 permissions:
@@ -53,13 +54,41 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
+      # PREFER THE REPOSITORY SECRET. This repository is PUBLIC, and the
+      # inputs a person types into "Run workflow" are shown on the run page,
+      # so a key pasted there is a key published. The secret never appears on
+      # that page. The typed input stays only as a fallback for the case where
+      # the secret has not been added yet; once RUNNINGHUB_KEY exists, leave
+      # the rh_key box EMPTY and the run uses the secret.
       - name: Mask the key before any other step can log
         env:
+          S: ${{ secrets.RUNNINGHUB_KEY }}
           K: ${{ inputs.rh_key }}
         run: |
-          echo "::add-mask::$K"
-          echo "RH_KEY=$K" >> "$GITHUB_ENV"
+          if [ -n "$S" ]; then echo "::add-mask::$S"; fi
+          if [ -n "$K" ]; then echo "::add-mask::$K"; fi
+          USE="${S:-$K}"
+          if [ -z "$USE" ]; then
+            echo "No RunningHub key: add the RUNNINGHUB_KEY repository secret, or type one into rh_key."
+            exit 1
+          fi
+          if [ -n "$S" ]; then echo "using the RUNNINGHUB_KEY secret"; else
+            echo "WARNING: using the typed rh_key — on a public repository that value is visible on this run page. Rotate it and add RUNNINGHUB_KEY as a secret."
+          fi
+          echo "::add-mask::$USE"
+          echo "RH_KEY=$USE" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
+      # v6.4.0 — the v2vcards lane PREPARES two of its before-clips (a burnt-in
+      # subtitle, a softened copy) rather than submitting a clean clip to an
+      # eraser and a restorer that would have nothing to do. ubuntu-24.04 has
+      # no ffmpeg, and the first run failed on that after the checkout but
+      # before any submit — no credit spent, but no art either.
+      - name: Install ffmpeg (the v2vcards lane prepares its own before-clips)
+        run: |
+          command -v ffmpeg >/dev/null 2>&1 && { ffmpeg -version | head -1; exit 0; }
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg fonts-noto-core
+          ffmpeg -version | head -1
       - name: Generate the pairs
         shell: bash
         env:
@@ -215,16 +244,68 @@ jobs:
             case "$url" in http*) : ;; *) url="https://www.runninghub.ai/${url#/}";; esac
             printf '%s' "$url"
           }
+          # v6.4.0 — the two PREPARED before-clips, made here rather than by an
+          # endpoint: a clean clip sent to the subtitle eraser comes back
+          # unchanged and a sharp clip sent to the restorer comes back sharp,
+          # so those two cards would show two identical halves under a claim of
+          # an effect. A COLLECT-ONLY run has to remake them too — the clips
+          # come home by task id but these never do, and without them the
+          # composer would compare each after against a frame nobody submitted.
+          #
+          # The caption is LATIN deliberately: the first wave burnt in Burmese
+          # and volc-subtitle-erase-pro returned the clip untouched, because it
+          # recognises the scripts it was trained on. The card's own copy still
+          # says what it is for, in nine languages.
+          v2vPrepSources() {
+            local src="$1"
+            [ -s "$src" ] || { echo "V2V PREP: no source clip at $src"; return 1; }
+            mkdir -p out
+            ffmpeg -y -v error -i "$src" -vf "drawtext=text='ERASE THIS SUBTITLE':fontsize=44:fontcolor=white:borderw=3:bordercolor=black@0.85:x=(w-text_w)/2:y=h-th-46" -c:a copy out/v2v-source-vtEraseSub.mp4 \
+              || { echo "V2V SUBTITLE BURN FAILED"; return 1; }
+            ffmpeg -y -v error -i "$src" -vf "scale=426:240:flags=bilinear,scale=1280:720:flags=bilinear,noise=alls=8:allf=t" -c:v libx264 -crf 34 -preset veryfast -c:a copy out/v2v-source-vtRestore4K.mp4 \
+              || { echo "V2V DEGRADE FAILED"; return 1; }
+            return 0
+          }
           jbody() { python3 -c 'import json,sys; d={"prompt":sys.argv[1],"imageUrls":json.loads(sys.argv[2]),"resolution":"2k"}; ratio=sys.argv[3]; d.update({"aspectRatio":ratio} if ratio else {}); print(json.dumps(d))' "$1" "$2" "$3"; }
           fail=0
+          # v6.4.0 — COLLECT FIRST, THEN RENDER WHAT IS MISSING. RunningHub
+          # charges at submit, so a wave where seven of nine cards succeeded
+          # must never be re-paid to fix the other two: pass the seven task ids
+          # in "tasks" and the two card names in "pairs", and the loop below
+          # skips any card whose clip is already on disk.
           if [ -n "$TASKS" ]; then
             for pair in $TASKS; do
               n="${pair%%:*}"; tid="${pair##*:}"
               [ -n "$n" ] && [ -n "$tid" ] || { echo "BAD PAIR $pair"; fail=1; continue; }
-              poll_and_fetch "$n" "$tid" || fail=1
+              # v6.4.0 — collect the right KIND of file. Every pair before the
+              # card lane returned a picture, so this half assumed .png; a
+              # Video Smart Workflow take is an MP4, and saving one under .png
+              # produced a file the composer could not open — after the run had
+              # already been paid for.
+              case "$n" in v2v-*) ext=mp4 ;; *) ext=png ;; esac
+              poll_and_fetch "$n" "$tid" "$ext" || fail=1
             done
             ls -la out/ || true
-            exit $fail
+            # a collect-only run of the card lane still has to end with CARDS,
+            # not with loose clips: the compose step runs on the same "out"
+            # directory either way. With no pairs left to render, stop here and
+            # let it compose; with pairs given, fall through and render only
+            # what the collection did not already bring home.
+            if [ -z "$PAIRS" ] || [ "$PAIRS" = "none" ]; then
+              if ls out/v2v-*.mp4 >/dev/null 2>&1; then
+                # the BEFORE half comes from the collected v2v-source clip
+                # itself — it is generated by this lane and collected with the
+                # rest, never substituted from something already shipped
+                if [ -s out/v2v-source.mp4 ]; then
+                  v2vPrepSources out/v2v-source.mp4 || fail=1
+                else
+                  echo "WARNING: no v2v-source collected; cards needing a before frame will be skipped"
+                fi
+                echo "collected card clips — composing below"
+              fi
+              exit $fail
+            fi
+            echo "collected $(ls out/v2v-*.mp4 2>/dev/null | wc -l) clip(s); continuing to render the rest"
           fi
           LIST="$PAIRS"; [ "$LIST" = "all" ] && LIST="retouch scene"
           refurl=$(reupload "$REF_IMG") || { echo "REFERENCE UPLOAD FAILED"; exit 1; }
@@ -239,15 +320,77 @@ jobs:
               # prompts are not retyped here: they are read out of the shipped
               # catalog, so what the card advertises is what the card sends.
               v2vcards)
-                VPATH="kling-video-o3-pro/video-edit"
-                vurl=$(reupload "docs/app/lib/banners/motion/banner-train-station.mp4") || { echo "V2V VIDEO UPLOAD FAILED"; fail=1; continue; }
-                vref=$(reupload "$REF_IMG") || { echo "V2V REF UPLOAD FAILED"; fail=1; continue; }
-                for idx in 0 1; do
-                  cname=$(node -e 'const A=require("./panel/js/hnk_video_tool_wf.js");process.stdout.write(A.WF[+process.argv[1]].key)' "$idx")
-                  cprompt=$(node -e 'const A=require("./panel/js/hnk_video_tool_wf.js");process.stdout.write(A.WF[+process.argv[1]].text())' "$idx")
-                  [ -n "$cname" ] && [ -n "$cprompt" ] || { echo "V2V PROMPT READ FAILED $idx"; fail=1; continue; }
-                  vbody=$(python3 -c 'import json,sys; print(json.dumps({"videoUrl":sys.argv[1],"imageUrls":[sys.argv[2]],"prompt":sys.argv[3],"keepOriginalSound":True}))' "$vurl" "$vref" "$cprompt")
-                  submit "v2v-$cname" "$VPATH" "$vbody" mp4 || { fail=1; continue; }
+                # ALL NINE cards, each through its OWN endpoint. The lane does
+                # not build these bodies: tools/v2v_card_request.js runs the
+                # app's own rhVtBody over the card's own descriptor and opts,
+                # so what is submitted here is character-for-character what a
+                # student's tap submits. Three cards send no prompt, four take
+                # no reference photograph, five carry option defaults and only
+                # two carry keepOriginalSound — hand-rolling that JSON here is
+                # exactly how the art stops being a picture of the card.
+                # NOTHING OLD. The owner, on the first wave: do not reuse the
+                # existing cards' material. The first cut submitted a shipped
+                # banner clip and the shipped promo poster, so every card's art
+                # was built on assets a student has already seen elsewhere in
+                # the product. Both are GENERATED HERE, for this purpose only:
+                # a fresh five-second demo clip and a fresh reference portrait,
+                # through endpoints the app itself ships. They are also the
+                # honest inputs — the same two things a student brings.
+                echo "== card sources: generating a new clip and a new portrait"
+                T2I_PATH="rhart-image-n-pro-official/text-to-image"
+                T2V_PATH="kling-v2.5-turbo-std/text-to-video"
+                # owner, on the first fresh wave: the demo people should read
+                # as young East Asian women. "Myanmar" alone gave the model
+                # too much latitude and it returned a South-Asian face, so the
+                # look is named explicitly rather than left to chance.
+                BEAUTY="a strikingly beautiful young Chinese woman in her early twenties, delicate East Asian features, large bright almond eyes, softly arched brows, a small straight nose and full soft lips, smooth luminous fair skin, elegant slender neck, glossy jet-black hair, professional fashion-model looks, tasteful natural glam make-up"
+                CARD_SCENE="$BEAUTY standing in a bright modern photography studio, three-quarter view, soft window light from the left, plain warm-grey seamless backdrop, wearing an elegant deep-teal silk blouse, hair falling loose to her shoulders, a warm gentle expression, photorealistic 85mm editorial portrait, sharp and beautifully lit."
+                CARD_REF="A DIFFERENT $BEAUTY, head and shoulders facing the camera, soft even beauty light, plain light-grey background, wearing an elegant cream silk blouse, hair swept back, a soft warm smile, photorealistic 85mm beauty portrait. Clear unobstructed view of the whole face."
+                srcbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"16:9","duration":"5"}))' "$CARD_SCENE She turns her head slowly towards the camera and settles, a small natural smile, the camera holds completely still.")
+                submit "v2v-source" "$T2V_PATH" "$srcbody" mp4 || { echo "CARD SOURCE CLIP FAILED"; fail=1; continue; }
+                refbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"3:4","resolution":"2k"}))' "$CARD_REF")
+                submit "v2v-ref" "$T2I_PATH" "$refbody" png || { echo "CARD REFERENCE PHOTO FAILED"; fail=1; continue; }
+                SRC="out/v2v-source.mp4"
+                REF_CARD="out/v2v-ref.png"
+                # TWO CARDS NEED A SOURCE THAT HAS SOMETHING TO FIX. Submitting
+                # a clean clip to the subtitle eraser returns the clip
+                # unchanged, and a sharp clip to the restorer returns a sharp
+                # clip: in both cases the pair would show two identical halves
+                # under a card claiming an effect. So the lane PREPARES the
+                # before for those two — a real burnt-in subtitle, and a real
+                # soft low-resolution copy — and the card's BEFORE half is the
+                # prepared clip the endpoint actually received.
+                mkdir -p out
+                # LATIN, deliberately. The first wave burnt in a Burmese
+                # caption and volc-subtitle-erase-pro returned the clip
+                # untouched: it recognises the scripts it was trained on, and
+                # Burmese is not one of them. The card art has to show the tool
+                # doing its job, so the demo caption is written in a script the
+                # tool actually removes — the card's own copy still says, in
+                # nine languages, what it is for.
+                v2vPrepSources "$SRC" || { fail=1; continue; }
+                vurl=$(reupload "$SRC") || { echo "V2V VIDEO UPLOAD FAILED"; fail=1; continue; }
+                vref=$(reupload "$REF_CARD") || { echo "V2V REF UPLOAD FAILED"; fail=1; continue; }
+                suburl=$(reupload "out/v2v-source-vtEraseSub.mp4") || { echo "V2V SUB UPLOAD FAILED"; fail=1; continue; }
+                softurl=$(reupload "out/v2v-source-vtRestore4K.mp4") || { echo "V2V SOFT UPLOAD FAILED"; fail=1; continue; }
+                # the source clip travels home too: it is the BEFORE half of
+                # every pair, and cropping the after against a different frame
+                # would make the divider lie
+                # $SRC IS out/v2v-source.mp4 already — generated above, not copied
+                for cname in $(node tools/v2v_card_request.js keys); do
+                  # already collected by the TASKS half above — never pay twice
+                  if [ -s "out/v2v-$cname.mp4" ]; then echo "== $cname already home, skipping"; continue; fi
+                  case "$cname" in
+                    vtEraseSub)  cvid="$suburl" ;;
+                    vtRestore4K) cvid="$softurl" ;;
+                    *)           cvid="$vurl" ;;
+                  esac
+                  req=$(node tools/v2v_card_request.js "$cname" "$cvid" "$vref") || { echo "V2V REQUEST BUILD FAILED $cname"; fail=1; continue; }
+                  cpath=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.load(sys.stdin)["apiPath"])')
+                  cbody=$(printf '%s' "$req" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["body"]))')
+                  [ -n "$cpath" ] && [ -n "$cbody" ] || { echo "V2V REQUEST PARSE FAILED $cname"; fail=1; continue; }
+                  echo "== $cname -> $cpath"
+                  submit "v2v-$cname" "$cpath" "$cbody" mp4 || { fail=1; continue; }
                 done
                 ;;
               retouch)
@@ -495,27 +638,63 @@ jobs:
           path: out/
           retention-days: 3
           if-no-files-found: warn
+      # v6.4.0 — the v2vcards lane returns MP4s, not PNGs, and its art belongs
+      # in the app's card folder rather than the landing's showcase folder. It
+      # is composed here, on the runner that has the clips, by the same script
+      # a person would run locally — so what lands on the drop branch is the
+      # finished card, not raw footage nobody can use.
+      - name: Compose the Video Smart Workflow card art
+        if: success()
+        run: |
+          set -euo pipefail
+          ls out/v2v-*.mp4 >/dev/null 2>&1 || { echo "no v2v clips in this run — nothing to compose"; exit 0; }
+          python3 -m pip install --quiet --disable-pip-version-check Pillow
+          python3 tools/build_v2v_card_art.py --pairs out --out docs/app/lib/vid --tmp "$RUNNER_TEMP/v2vart" || true
+          mkdir -p pub/cards
+          # ONLY WHAT THIS RUN COMPOSED. Copying every vt-*.jpg in the folder
+          # published the repository's committed copy for any card the
+          # composer skipped, so a run could report success while re-shipping
+          # art that had already been rejected — which is exactly what happened
+          # to the thirty-second and make-it-longer cards when the RunningHub
+          # balance ran out mid-wave. The composer now lists what it wrote.
+          WROTE="$RUNNER_TEMP/v2vart/cards-written.txt"
+          if [ -s "$WROTE" ]; then
+            while read -r c; do
+              [ -n "$c" ] && [ -e "docs/app/lib/vid/$c" ] && cp "docs/app/lib/vid/$c" pub/cards/
+            done < "$WROTE"
+            echo "publishing $(wc -l < "$WROTE") freshly composed card(s)"
+          else
+            echo "the composer wrote no cards this run — publishing none"
+          fi
+          ls -la pub/cards/ || true
       - name: Convert to shipping JPGs and push the drop branch
         if: success()
         run: |
           set -euo pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick >/dev/null
           mkdir -p pub
+          shopt -s nullglob
           for f in out/*.png; do
             b=$(basename "$f" .png)
             # no crop, no resize beyond a sane web ceiling — the pair must stay
             # pixel-comparable; only the encode changes
             convert "$f" -resize '1440x1440>' -quality 86 "pub/$b.jpg"
           done
-          ls -la pub/
+          pubs=(pub/*.jpg); cards=(pub/cards/*.jpg)
+          if [ ${#pubs[@]} -eq 0 ] && [ ${#cards[@]} -eq 0 ]; then
+            echo "nothing composed and nothing converted — not pushing an empty drop"
+            exit 1
+          fi
+          ls -la pub/ pub/cards/ 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # ORPHAN commit holding ONLY the images — no .github in the tree, so
           # the token needs no workflows permission (the hero-clips lesson).
           git checkout --orphan showcase-drop
           git rm -rf --cached . >/dev/null
-          mkdir -p docs/assets/site/ba
-          cp pub/* docs/assets/site/ba/
-          git add -f docs/assets/site/ba
+          mkdir -p docs/assets/site/ba docs/app/lib/vid
+          [ ${#pubs[@]} -gt 0 ] && cp "${pubs[@]}" docs/assets/site/ba/
+          [ ${#cards[@]} -gt 0 ] && cp "${cards[@]}" docs/app/lib/vid/
+          git add -f docs/assets/site/ba docs/app/lib/vid
           git commit -m "Showcase before/after pairs: generated drop"
           git push -f origin showcase-drop

@@ -2349,3 +2349,15 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 #pagePath #ptRefThumb { display: block; width: 96px; height: 120px; object-fit: contain; background: #000;
   border-radius: 8px; border: 1px solid var(--line-soft); margin-top: 8px; }
 #pagePath #ptMultiBar { flex-wrap: wrap; }
+
+/* v6.4.0 — the picked clip and the picked face on the Video Tools card, the
+   app's .vtpick strip in the panel's own tokens */
+.apg .vtpick { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 8px;
+  border: 1px solid var(--line-soft); border-radius: 12px; background: rgba(255,255,255,.03); }
+.apg .vtpick video, .apg .vtpick img { width: 72px; height: 72px; flex: 0 0 72px;
+  object-fit: cover; border-radius: 9px; background: #000; }
+.apg .vtpick-b { min-width: 0; flex: 1 1 auto; }
+.apg .vtpick-n { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apg .vtpick-m { font-size: 11px; opacity: .68; }
+.apg .vtpick-x { flex: 0 0 auto; width: 32px; height: 32px; line-height: 30px; text-align: center;
+  border-radius: 9px; border: 1px solid var(--line-soft); cursor: pointer; font-size: 19px; }

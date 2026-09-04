@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.74.0";
+const PANEL_VERSION = "6.75.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10026,6 +10026,12 @@ const VU_L = {
     vi: "B\u1ea1n c\u1ea7n ch\u1ecdn th\u01b0 m\u1ee5c l\u01b0u", id: "Anda perlu memilih folder simpan", ms: "Anda perlu pilih folder simpan" }
 };
 const VT_L = {
+  /* v6.4.0 — this surface's reference-photo slot: the app's own two strings
+     for the button and for the warning when a tool demands a photograph the
+     student has not picked yet (docs/app/index.html btnVtImgPick and the
+     imageReq branch of updateVtModelUI). */
+  pickImg: {my:"ပုံ ထည့်မယ်",en:"Add reference photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูปอ้างอิง",zh:"添加参考图片",vi:"Thêm ảnh tham chiếu",id:"Tambah foto referensi",ms:"Tambah foto rujukan"},
+  needImg: {my:"ဒီ tool အတွက် ပုံ တစ်ပုံလည်း လိုပါတယ်",en:"This tool also needs a reference photo",shn:"Tool ၼႆႉလူဝ်ႇၶႅပ်းႁၢင်ႈထႅင်ႈ",kac:"Ndai tool gaw sumla mung ra ai",th:"เครื่องมือนี้ต้องใช้รูปอ้างอิงด้วย",zh:"此工具还需要一张参考图片",vi:"Công cụ này cũng cần một ảnh tham chiếu",id:"Alat ini juga butuh foto referensi",ms:"Alat ini juga perlukan foto rujukan"},
   /* v6.72.0 — the Video Smart Workflow deck's own two lines, the app's
      words exactly (docs/app/index.html #vtWfIntro and VT_WF_INTRO_HINT).
      Every other string the deck shows — label, summary, hint, the badge
@@ -10077,6 +10083,7 @@ function vuPaintLabels() {
   setIcnText($("btnVuSave"), "i-folder", "cream", ff9(VU_L.out));
   set("vtIntro", ff9(VT_L.intro));
   setIcnText($("btnVtPick"), "i-clapper", "cream", ff9(VT_L.pick));
+  setIcnText($("btnVtImgPick"), "i-frame", "cream", ff9(VT_L.pickImg));
   setIcnText($("btnVtSave"), "i-folder", "cream", ff9(VU_L.out));
   const pb = $("vtPrompt"); if (pb) pb.placeholder = ff9(VT_L.promptPh);
   renderVu(); renderVt(); renderVtWf();
@@ -10090,15 +10097,58 @@ function vuPaintLabels() {
    width/height preset) come from its descriptor, exactly as the app builds
    them; nothing here authors an endpoint or a parameter.
    ============================================================ */
-const VT = { video: null, out: null, busy: false, rows: [] };
+const VT = { video: null, img: null, out: null, busy: false, rows: [] };
 function vtDef() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   const sel = $("vtModel");
   return (V && V.getTool && sel) ? V.getTool(sel.value) : null;
 }
+/* v6.4.0 — the two picked files, SHOWN. A UXP file is a host-filesystem
+   entry, not a browser File, so the bytes have to be read before anything can
+   be drawn; both reads are cached on the entry so repainting the card does
+   not re-read the disk. */
+function vtThumbFor(entry, id, nameId, metaId, wrapId, isVideo) {
+  const wrap = $(wrapId), el = $(id);
+  if (!wrap || !el) return;
+  if (!entry) {
+    wrap.style.display = "none";
+    if ($(nameId)) $(nameId).textContent = "";
+    if ($(metaId)) $(metaId).textContent = "";
+    el.removeAttribute("src");
+    return;
+  }
+  wrap.style.display = "";
+  if ($(nameId)) $(nameId).textContent = entry.name || "";
+  if (entry._url) {
+    if (el.getAttribute("src") !== entry._url) el.setAttribute("src", entry._url);
+    if ($(metaId) && !$(metaId).textContent) $(metaId).textContent = entry._size || "";
+    return;
+  }
+  if (entry._reading) return;
+  entry._reading = true;
+  fileToDataUrl(entry).then(function (u) {
+    entry._url = u;
+    /* base64 is 4 characters per 3 bytes — near enough for a size line */
+    const b64 = String(u).split(",")[1] || "";
+    const bytes = Math.floor(b64.length * 3 / 4);
+    entry._size = bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB"
+      : bytes >= 1024 ? Math.round(bytes / 1024) + " KB" : bytes + " B";
+    entry._reading = false;
+    renderVt();
+    if (isVideo && el.tagName === "VIDEO") el.onloadedmetadata = function () {
+      if ($(metaId) && isFinite(el.duration))
+        $(metaId).textContent = Math.round(el.duration) + "s · " + entry._size;
+    };
+  }).catch(function () { entry._reading = false; });
+}
 function renderVt() {
-  const fn = $("vtFileName");
-  if (fn) fn.textContent = VT.video ? VT.video.name : "";
+  const d = vtDef();
+  vtThumbFor(VT.video, "vtFileThumb", "vtFileName", "vtFileMeta", "vtFilePrev", true);
+  /* the photo button follows the tool, exactly as the app's does */
+  const ib = $("btnVtImgPick");
+  if (ib) ib.style.display = (d && d.imageParam) ? "" : "none";
+  if (d && !d.imageParam) VT.img = null;
+  vtThumbFor((d && d.imageParam) ? VT.img : null, "vtImgThumb", "vtImgName", "vtImgMeta", "vtImgPrev", false);
   const on = $("vtOutName");
   if (on) on.textContent = VT.out ? (VT.out.name || "") : "";
   /* the app writes this one as plain text, ⚠ and all (its vuNeedNote is the
@@ -10106,6 +10156,7 @@ function renderVt() {
   const need = $("vtNeedNote");
   if (need) {
     if (!VT.video) need.textContent = "⚠ " + ff9(VU_L.need);
+    else if (d && d.imageParam && d.imageReq && !VT.img) need.textContent = "⚠ " + ff9(VT_L.needImg);
     else if (!VT.out) need.textContent = "⚠ " + ff9(VU_L.needOut);
     else need.textContent = "";
   }
@@ -10272,8 +10323,15 @@ async function vtRun() {
   });
   VT.busy = true; VT.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVt();
   try {
-    const ref = await fileToDataUrl(VT.video);
-    const res = await V.runTool(videoEnv(), d, ref, [], promptText, optVals, function (stage, info) {
+    const ref = VT.video._url || await fileToDataUrl(VT.video);
+    /* v6.4.0 — and the reference photograph, when the tool takes one. This
+       list was hard-coded empty, so every card whose endpoint REQUIRES an
+       image failed on this surface with the endpoint's own error. */
+    const imgs = (d.imageParam && VT.img) ? [VT.img._url || await fileToDataUrl(VT.img)] : [];
+    if (d.imageParam && d.imageReq && !imgs.length) {
+      setStatus(ff9(VT_L.needImg), "err"); VT.busy = false; renderVt(); return;
+    }
+    const res = await V.runTool(videoEnv(), d, ref, imgs, promptText, optVals, function (stage, info) {
       VT.rows = [{ label: "Working", level: "pend",
         detail: stage + (info && info.elapsedMs ? " " + Math.round(info.elapsedMs / 1000) + "s" : "") }];
       renderVt();
@@ -10921,6 +10979,15 @@ function bindVideo() {
     try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VT.video = f; renderVt(); }
     catch (e) { setStatus(friendlyErr(e), "err"); }
   });
+  const vti = $("btnVtImgPick");
+  if (vti) vti.addEventListener("click", async function () {
+    try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) VT.img = f; renderVt(); }
+    catch (e) { setStatus(friendlyErr(e), "err"); }
+  });
+  const vfc = $("btnVtFileClear");
+  if (vfc) vfc.addEventListener("click", function () { VT.video = null; renderVt(); });
+  const vic = $("btnVtImgClear");
+  if (vic) vic.addEventListener("click", function () { VT.img = null; renderVt(); });
   const vts = $("btnVtSave");
   if (vts) vts.addEventListener("click", async function () {
     try { const f = await pickFolder(); if (f) VT.out = f; renderVt(); }

@@ -448,6 +448,14 @@ select.inp{padding:9px 10px}
 .hist img.sel{border-color:var(--gold)}
 .hist video{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line-soft);cursor:pointer;background:#000}
 .hist video.sel{border-color:var(--gold)}
+/* v6.4.0 — the picked clip and the picked face, shown rather than named */
+.vtpick{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px;border:1px solid var(--line-soft);border-radius:12px;background:var(--sunk,rgba(255,255,255,.03))}
+.vtpick video,.vtpick img{width:72px;height:72px;flex:0 0 72px;object-fit:cover;border-radius:9px;background:#000}
+.vtpick-b{min-width:0;flex:1 1 auto}
+.vtpick-n{font-size:var(--fs-sm);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vtpick-m{font-size:var(--fs-xs,11px);color:var(--ink-soft,#9aa)}
+.vtpick-x{flex:0 0 auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line-soft);background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer}
+.vtpick-x:hover{border-color:var(--gold)}
 
 .foot{border-top:1px solid var(--line-soft);margin-top:30px;padding:20px 0 34px}
 .foot p{font-size:12px;color:var(--muted)}
@@ -3208,10 +3216,29 @@ html.splashing #splash{display:flex}
     <select class="inp" id="selVtModel" style="width:100%;margin-bottom:8px"></select>
     <input type="file" accept="video/mp4" id="vtFilePick" style="display:none">
     <button class="btn" id="btnVtPick"></button>
-    <div class="mut" id="vtFileName" style="margin-top:6px"></div>
+    <!-- v6.4.0 — SHOW WHAT WAS PICKED. The owner picked a clip and a face and
+         got two filenames back: a3bcf6d2….mp4 tells a student nothing about
+         whether they picked the right take, and Screenshot_2026-09-03….jpg
+         tells them nothing about whose face is going into it. Both slots now
+         show the thing itself, with its length, and a way to drop it. -->
+    <div class="vtpick" id="vtFilePrev" style="display:none">
+      <video id="vtFileThumb" muted playsinline preload="metadata"></video>
+      <div class="vtpick-b">
+        <div class="vtpick-n" id="vtFileName"></div>
+        <div class="vtpick-m" id="vtFileMeta"></div>
+      </div>
+      <button class="vtpick-x" id="btnVtFileClear" type="button" aria-label="remove">&times;</button>
+    </div>
     <input type="file" accept="image/*" id="vtImgPick" style="display:none">
     <button class="btn" id="btnVtImgPick" style="display:none;margin-top:6px"></button>
-    <div class="mut" id="vtImgName" style="margin-top:6px"></div>
+    <div class="vtpick" id="vtImgPrev" style="display:none">
+      <img id="vtImgThumb" alt="">
+      <div class="vtpick-b">
+        <div class="vtpick-n" id="vtImgName"></div>
+        <div class="vtpick-m" id="vtImgMeta"></div>
+      </div>
+      <button class="vtpick-x" id="btnVtImgClear" type="button" aria-label="remove">&times;</button>
+    </div>
     <textarea class="inp" id="vtPrompt" rows="3" style="display:none;margin-top:8px" placeholder=""></textarea>
     <div class="row" id="vtOpts" style="margin-top:8px">
       <select class="inp" id="selVtOpt1" style="display:none"></select>
@@ -3230,8 +3257,14 @@ html.splashing #splash{display:flex}
     <div class="result-img"><video id="vtResultVideo" controls playsinline style="width:100%;border-radius:12px;background:#000"></video></div>
     <p class="mut" id="vtExpireNote" style="margin-top:8px"></p>
     <div class="row" style="margin-top:10px">
+      <button class="btn grow" id="btnVtDl"></button>
       <a class="btn btn-gold grow" id="btnVtOpen" target="_blank" rel="noopener"></a>
     </div>
+    <!-- v6.4.0 — the takes this page made, kept like the Video page's are:
+         saved to the Gallery as they finish, read back when the page opens,
+         and gone only when the student deletes them. -->
+    <p class="mut" id="vtHistH" style="margin-top:12px"></p>
+    <div class="hist" id="vtHist"></div>
   </section>
 </div><!-- /pgV2V -->
 
@@ -4758,6 +4791,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.4.0", kind:"page", ref:"pgV2V",
+    t:{my:"အပြင်ထွက်သွားလည်း အလုပ်က ဆက်လုပ်နေမယ်",en:"Leave the app and the work keeps going",shn:"ဢွၵ်ႇၵႂႃႇသေတႃႉ ၵၢၼ်ယင်းသိုပ်ႇႁဵတ်းယူႇ",kac:"Pru mat tim bungli gaw naw galaw nga na",th:"ออกจากแอปไปแล้วงานก็ยังทำต่อ",zh:"离开 App，任务照样继续跑",vi:"Rời ứng dụng, việc vẫn chạy tiếp",id:"Tinggalkan aplikasi, pekerjaannya tetap jalan",ms:"Tinggalkan aplikasi, kerjanya tetap berjalan"},
+    s:{my:"Generate နှိပ်ပြီး app ကနေ ထွက်သွားရင်တောင် RunningHub ဘက်မှာ ဆက်လုပ်နေပါတယ် — ပြန်ဝင်တာနဲ့ ရလဒ်ကို အလိုအလျောက် ကောက်ယူပေးမယ်၊ ရလဒ်ထွက်တဲ့အထိ စောင့်ကြည့်ပေးမယ်။ VIDEO → VIDEO က ရလဒ်တွေကိုလည်း သိမ်းထားပြီး စာမျက်နှာ ပြန်ဖွင့်ရင် ပြန်ပေါ်ပါမယ် — ကိုယ်တိုင် မဖျက်မချင်း ကျန်နေပါမယ်။ ရွေးထားတဲ့ ဗီဒီယိုနဲ့ ပုံကိုလည်း နာမည်တင်မဟုတ်တော့ဘဲ ပုံအနေနဲ့ မြင်ရပြီး၊ ကြာချိန်ပါ ပြပါတယ်။",en:"Press Generate and leave — RunningHub keeps rendering, and coming back collects the result by itself; the app now watches until it arrives instead of checking once. VIDEO → VIDEO keeps its results too: they are saved as they finish and are on the page again when you open it, and they stay until you delete them. The clip and the photo you picked are shown as a clip and a photo, with the clip\u2019s length, instead of two filenames.",shn:"ၼဵၵ်း Generate သေဢွၵ်ႇၵႂႃႇလႆႈ — RunningHub သိုပ်ႇႁဵတ်းယူႇ၊ ၶဝ်ႈမႃးၶိုၼ်း တေဢဝ်ၽွၼ်းလႆႈပၼ်ႁင်းၵူၺ်း။ ၽွၼ်းလႆႈ VIDEO → VIDEO လႆႈသိမ်းဝႆႉ။ ဝီဒီရူဝ်ႈလႄႈၶႅပ်းႁၢင်ႈဢၼ်လိူၵ်ႈဝႆႉ ႁၼ်ပဵၼ်ႁၢင်ႈ",kac:"Generate dip nna pru mat tim RunningHub gaw naw galaw nga ai — bai shang wa yang ah kyu hpe shi hkrai la la ai. VIDEO → VIDEO na ah kyu ni mung makawp da nna shara hpaw yang bai mu na. Lata da ai video hte sumla mung mying sha n re, sumla hku mu na",th:"กด Generate แล้วออกจากแอปได้เลย — RunningHub ยังเรนเดอร์ต่อ และเมื่อกลับเข้ามาระบบจะเก็บผลลัพธ์ให้เอง โดยเฝ้ารอจนกว่าจะได้ผล หน้า VIDEO → VIDEO ยังเก็บผลงานไว้ด้วย เปิดหน้าเมื่อไรก็เห็นอีก และอยู่จนกว่าคุณจะลบเอง ส่วนคลิปกับรูปที่เลือกไว้จะแสดงเป็นคลิปและรูปพร้อมความยาว แทนที่จะเป็นชื่อไฟล์",zh:"按下 Generate 就可以离开 — RunningHub 会继续渲染，回来时结果会自动取回，而且会一直守到结果出来，不再只查一次。VIDEO → VIDEO 的结果也会保存，重新打开页面就还在，删掉之前一直都在。选好的视频和照片现在显示为视频和照片本身（还带时长），而不是两行文件名。",vi:"Bấm Generate rồi rời đi — RunningHub vẫn dựng tiếp, và khi quay lại ứng dụng tự lấy kết quả về; nó theo dõi cho tới khi kết quả tới thay vì chỉ kiểm tra một lần. Trang VIDEO → VIDEO cũng giữ kết quả: mở lại là thấy, và còn nguyên cho tới khi bạn xoá. Clip và ảnh bạn đã chọn hiện ra đúng là clip và ảnh, kèm độ dài, thay vì hai tên tệp.",id:"Tekan Generate lalu tinggalkan — RunningHub tetap merender, dan saat kembali hasilnya diambil sendiri; aplikasi menunggu sampai hasilnya datang, bukan sekali cek. Halaman VIDEO → VIDEO juga menyimpan hasilnya: ada lagi saat dibuka, dan bertahan sampai Anda menghapusnya. Klip dan foto yang dipilih kini tampil sebagai klip dan foto beserta durasinya, bukan dua nama file.",ms:"Tekan Generate dan pergi — RunningHub terus render, dan bila anda kembali hasilnya diambil sendiri; aplikasi menunggu sehingga hasil tiba, bukan sekadar semak sekali. Halaman VIDEO → VIDEO turut menyimpan hasilnya: ada semula bila dibuka, dan kekal sehingga anda memadamnya. Klip dan foto yang dipilih kini dipaparkan sebagai klip dan foto berserta durasinya, bukan dua nama fail."} },
   { v:"6.3.0", kind:"page", ref:"pgV2V",
     t:{my:"ဗီဒီယို ကတ် ၇ ခု ထပ်တိုး — ရုပ်ပြောင်း၊ ရှည်အောင်၊ ရှင်းအောင်",en:"Seven more video cards — restyle it, stretch it, clean it up",shn:"ၵၢတ်ႉဝီဒီရူဝ်ႈ 7 ဢၼ်မႂ်ႇ — လႅၵ်ႈႁၢင်ႈ၊ ႁဵတ်းႁႂ်ႈယၢဝ်း၊ ႁဵတ်းႁႂ်ႈၸႅင်ႈ",kac:"Video kat 7 nnan — hkrang galai, galu galaw, san seng galaw",th:"การ์ดวิดีโอใหม่ 7 ใบ — เปลี่ยนสไตล์ ต่อให้ยาว ทำให้คมชัด",zh:"新增 7 张视频卡 — 换风格、加长、修清晰",vi:"Bảy thẻ video mới — đổi phong cách, kéo dài, làm nét",id:"Tujuh kartu video baru — ubah gaya, perpanjang, pertajam",ms:"Tujuh kad video baharu — tukar gaya, panjangkan, tajamkan"},
     s:{my:"VIDEO → VIDEO စာမျက်နှာမှာ ကတ် ၉ ခု ပြည့်သွားပါပြီ — ကာတွန်း/အန်နီမေး ပြောင်း၊ ရုပ်ရှင်အရောင် တင်၊ ရှေးဟောင်း အသွင်၊ ဗီဒီယို ဆက်ရှည်၊ ဟောင်းတဲ့ဗီဒီယို ကြည်လင်အောင်၊ စာတန်းထိုး ဖျက်၊ ၃၀ စက္ကန့်အထိ ဇာတ်ကောင် ထည့် — ကတ်တစ်ချက် နှိပ်ရုံနဲ့ tool ရော prompt ရော အဆင်သင့်။",en:"The VIDEO → VIDEO page now has all nine cards: turn a clip into anime or cartoon, grade it like film, give it a heritage look, make it longer, sharpen an old clip, erase burnt-in subtitles, or put your character into a clip up to 30 seconds — one tap sets the tool and writes the whole request.",shn:"ၼႃႈလိၵ်ႈ VIDEO → VIDEO မီးၵၢတ်ႉ 9 ဢၼ်ယဝ်ႉ — လႅၵ်ႈပဵၼ်ၵႃႇတုၼ်း၊ သီၼင်ႇလိပ်း၊ ႁၢင်ႈၵဝ်ႇ၊ ႁဵတ်းႁႂ်ႈယၢဝ်း၊ မႄးဝီဒီရူဝ်ႈၵဝ်ႇ၊ လုပ်ႇလိၵ်ႈၼိူဝ်ငဝ်း၊ သႂ်ႇတူဝ်ၸဝ်ႈၵဝ်ႇထိုင် 30 ၸဵၵ်ႇ — ၼဵၵ်းၵၢတ်ႉပွၵ်ႈလဵဝ် tool လႄႈ prompt တဵမ်ထူၼ်ႈ။",kac:"VIDEO → VIDEO shara kaw kat 9 hkum sai — cartoon hte anime galai, sumla hkrang zawn nsam jaw, moi hkrang jaw, video galu galaw, video dingsa san seng galaw, ntsa na laika mat kau, 30 sekan du hkra na masha bang — kat langai dip yang tool hte prompt yawng hkum sai.",th:"หน้า VIDEO → VIDEO มีการ์ดครบ 9 ใบแล้ว ทั้งเปลี่ยนเป็นอนิเมะหรือการ์ตูน เกรดสีแบบหนัง ลุคย้อนยุค ต่อคลิปให้ยาวขึ้น กู้คลิปเก่าให้คมชัด ลบซับที่ฝังในภาพ และใส่ตัวละครของคุณลงคลิปยาวถึง 30 วินาที — แตะการ์ดเดียว ได้ทั้งเครื่องมือและ prompt ครบ",zh:"VIDEO → VIDEO 页面现在共有 9 张卡：转成动漫或卡通、电影感调色、复古质感、把片子接长、修复模糊老片、擦掉硬字幕、把你的角色放进最长 30 秒的片子 — 点一下卡片，工具和 prompt 一次写好。",vi:"Trang VIDEO → VIDEO giờ có đủ 9 thẻ: chuyển thành anime hay hoạt hình, chỉnh màu như phim, sắc thái hoài cổ, kéo dài clip, phục hồi clip cũ cho nét, xoá phụ đề cháy hình, và đưa nhân vật của bạn vào clip dài tới 30 giây — chạm một thẻ là có sẵn cả công cụ lẫn prompt.",id:"Halaman VIDEO → VIDEO kini punya sembilan kartu: ubah jadi anime atau kartun, gradasi warna ala film, nuansa klasik, perpanjang klip, pulihkan klip lama jadi tajam, hapus subtitle yang menyatu, dan masukkan karakter Anda ke klip hingga 30 detik — satu ketukan menyiapkan alat sekaligus prompt-nya.",ms:"Halaman VIDEO → VIDEO kini ada sembilan kad: tukar jadi anime atau kartun, gred warna seperti filem, rupa klasik, panjangkan klip, pulihkan klip lama jadi tajam, padam sarikata terbakar, dan masukkan watak anda ke dalam klip sehingga 30 saat — satu ketikan menyediakan alat dan gesaannya sekali."} },
@@ -4980,6 +5016,9 @@ function resRestorePage(id){
   _resRestored[id]=1;
   try{
     if(id==="pgVideo") return resRestoreVideo();
+    /* v6.4.0 — V→V joins them. It saves its takes exactly as pgVideo does, so
+       it reads them back exactly as pgVideo does. */
+    if(id==="pgV2V") return resRestoreV2V();
     if(RES_IMAGE_PAGES.indexOf(id)>=0) return resRestoreImages(id);
   }catch(e){ }
 }
@@ -5027,6 +5066,20 @@ function resRestoreVideo(){
     });
     state.vidHistSel=0;
     try{ showVidResult(false); }catch(e){ }
+  }).catch(function(){});
+}
+
+function resRestoreV2V(){
+  if(state.vtHist && state.vtHist.length) return;
+  galListPage("pgV2V", RES_RESTORE_CAP).then(function(recs){
+    var clips=recs.filter(function(r){ return r.kind==="video" && r.blob; });
+    if(!clips.length) return;
+    if(state.vtHist && state.vtHist.length) return;
+    state.vtHist=clips.map(function(r){
+      return { url:"", blob:r.blob, id:r.id, prompt:r.prompt||"", ts:r.ts||0 };
+    });
+    state.vtHistSel=0;
+    try{ showVtResult(false); }catch(e){ }
   }).catch(function(){});
 }
 
@@ -5207,12 +5260,28 @@ function wipDrafts(){
   });
   return out;
 }
+/* v6.4.0 — and the Video Tools inputs. The owner picked a clip and a face,
+   left the app, came back, and the page was asking for a video again — while
+   the prompt they had been given by a card was still sitting there. Those two
+   files are the expensive part of setting a run up, so they are kept too.
+   BOUNDED, deliberately: a 200MB clip is legal on this page and 266MB of
+   base64 in one IndexedDB record is how a snapshot stops saving anything at
+   all. Above the cap the snapshot keeps the NAME only, so a returning student
+   is told exactly which file to pick again rather than silently losing it. */
+var WIP_VIDEO_MAX_B64 = 48*1024*1024;
+function wipPick(f, cap){
+  if (!f || !f.b64) return null;
+  if (cap && f.b64.length > cap) return { mime:f.mime, b64:"", name:f.name||"", tooBig:true };
+  return { mime:f.mime, b64:f.b64, name:f.name||"" };
+}
 function wipSave(){
   try{
     var refs = (state && state.refs) || [];
     var drafts = wipDrafts();
-    if (refs.some(function(r){ return r && r.b64; }) || Object.keys(drafts).length)
-      kvSet("wip", { refs: refs.slice(0,3), drafts: drafts, t: Date.now() }).catch(function(){});
+    var vt = wipPick(state && state.vtFile, WIP_VIDEO_MAX_B64);
+    var vi = wipPick(state && state.vtImg, 0);
+    if (refs.some(function(r){ return r && r.b64; }) || Object.keys(drafts).length || vt || vi)
+      kvSet("wip", { refs: refs.slice(0,3), drafts: drafts, vtFile: vt, vtImg: vi, t: Date.now() }).catch(function(){});
     else kvDel("wip").catch(function(){});
   }catch(e){}
 }
@@ -5230,6 +5299,23 @@ function wipRestore(){
         }
       });
     }
+    /* the picked clip and face, back where they were — never over a pick the
+       student has already made in this session */
+    try{
+      if (w.vtFile && w.vtFile.b64 && !state.vtFile){
+        state.vtFile = { mime:w.vtFile.mime, b64:w.vtFile.b64, name:w.vtFile.name||"" };
+        if (typeof updateVtModelUI==="function") updateVtModelUI();
+        if (typeof renderVtPicks==="function") renderVtPicks();
+        if (typeof vtWfCheckClip==="function") vtWfCheckClip();
+      } else if (w.vtFile && w.vtFile.tooBig && !state.vtFile && typeof toast==="function"){
+        toast(L9({my:"အရင်ရွေးထားတဲ့ ဗီဒီယို ကြီးလွန်းလို့ မသိမ်းထားနိုင်ပါ — “"+(w.vtFile.name||"")+"” ကို ပြန်ရွေးပေးပါ",en:"The clip you had picked was too large to keep — pick “"+(w.vtFile.name||"")+"” again",shn:"ဝီဒီရူဝ်ႈယႂ်ႇပူၼ်ႉ — လိူၵ်ႈၶိုၼ်း “"+(w.vtFile.name||"")+"”",kac:"Video kaba law ai — “"+(w.vtFile.name||"")+"” bai tawn u",th:"คลิปที่เลือกไว้ใหญ่เกินกว่าจะเก็บ — เลือก “"+(w.vtFile.name||"")+"” อีกครั้ง",zh:"你之前选的视频过大，无法保留 — 请重新选择“"+(w.vtFile.name||"")+"”",vi:"Clip bạn đã chọn quá lớn để giữ — hãy chọn lại “"+(w.vtFile.name||"")+"”",id:"Klip yang Anda pilih terlalu besar untuk disimpan — pilih “"+(w.vtFile.name||"")+"” lagi",ms:"Klip yang anda pilih terlalu besar untuk disimpan — pilih “"+(w.vtFile.name||"")+"” semula"}));
+      }
+      if (w.vtImg && w.vtImg.b64 && !state.vtImg){
+        state.vtImg = { mime:w.vtImg.mime, b64:w.vtImg.b64, name:w.vtImg.name||"" };
+        if (typeof updateVtModelUI==="function") updateVtModelUI();
+        if (typeof renderVtPicks==="function") renderVtPicks();
+      }
+    }catch(e){}
     if (state.refs.some(function(r){ return r && r.b64; })) return;
     var back = w.refs.slice(0,3).map(function(r){
       return (r && typeof r.mime === "string" && typeof r.b64 === "string") ? r : null;
@@ -6824,8 +6910,15 @@ function rhJobsLoad(){
 function rhJobsSave(list){
   try{ localStorage.setItem(RH_JOBS_LS, JSON.stringify(list.slice(0,RH_JOBS_MAX))); }catch(e){}
 }
+/* v6.4.0 — the ids THIS session is actively polling. The boot watcher reads
+   the same book, and a job claimed while rhPollTracked is still awaiting it
+   would file the same result twice — once as a take, once as a "recovered"
+   one. In-memory on purpose: after a reload nothing is live any more, which
+   is exactly when the watcher should take over. */
+var _jobsLive = Object.create(null);
 function rhJobOpen(taskId, meta){
   if(!taskId) return;
+  _jobsLive[String(taskId)] = 1;
   var l=rhJobsLoad().filter(function(j){ return j.taskId!==taskId; });
   l.unshift({
     taskId:String(taskId),
@@ -6838,6 +6931,7 @@ function rhJobOpen(taskId, meta){
   if(typeof renderDashJobs==="function") renderDashJobs();
 }
 function rhJobClose(taskId){
+  delete _jobsLive[String(taskId)];
   rhJobsSave(rhJobsLoad().filter(function(j){ return j.taskId!==taskId; }));
   if(typeof renderDashJobs==="function") renderDashJobs();
 }
@@ -7042,6 +7136,25 @@ async function rhJobClaim(job){
     } else if(job.kind==="video-upscale"){
       state.vuHist.unshift({ url:results[i].url, resolution:"", ts:job.ts||Date.now() });
       while(state.vuHist.length>6) state.vuHist.pop();
+      n++;
+    } else if(job.kind==="video-tool"){
+      /* v6.4.0 — a Video Tools run is an MP4, not a picture. Before this it
+         fell through to the image branch below, which fetched the clip as a
+         data: URI and filed it in the Gallery as a still — so a paid,
+         completed job came back as a broken image record. It now lands where
+         a Video Tools take belongs, and is saved the same way a fresh one is. */
+      var vtEntry={ url:results[i].url, prompt:job.prompt||"", ts:job.ts||Date.now() };
+      state.vtHist.unshift(vtEntry);
+      state.vtHistSel=0;
+      try{ if(galCurPage()==="pgV2V") showVtResult(false); }catch(e3){ }
+      galleryAddVideo(results[i].url, vtEntry.prompt, { page:"pgV2V", res:"", dur:"" })
+        .then(function(id){
+          if(!id) return;
+          return galFull(id).then(function(rec){
+            if(rec && rec.blob){ vtEntry.blob=rec.blob; vtEntry.id=id;
+              try{ if(galCurPage()==="pgV2V" && state.vtHist[state.vtHistSel]===vtEntry) showVtResult(false); }catch(e4){ } }
+          });
+        }).catch(function(){});
       n++;
     } else {
       try{
@@ -8574,8 +8687,18 @@ function wfRoomyModelLabel(chars, need){
    so the rail only mirrors options → chips and writes taps back. Model swaps
    (childList), upscale-kind hiding (style attribute) and persisted restores
    (change events) all flow through the observer untouched. */
-function ratioRailAttach(selId){
-  var sel=$(selId); if(!sel || sel._rail) return;
+/* v6.4.0 — takes an ELEMENT as well as an id. The Smart Workflow wizard
+   builds its whole step off-document and appends it at the end, so by the time
+   this ran for wiz_selRatio the clone existed but document.getElementById
+   could not see it — the call returned on the first line and the wizard's
+   ratio picker shipped as a bare "3:4" dropdown with no shapes beside it,
+   while the Create card two taps away had the rail. The owner asked for the
+   little rectangles in the workflow cards; they were written, and never
+   reached the one screen that most needs them. */
+function ratioRailAttach(selOrId){
+  var sel = (typeof selOrId === "string") ? $(selOrId) : selOrId;
+  if(!sel || sel._rail) return;
+  var selId = sel.id || String(selOrId);
   var rail=document.createElement("div");
   rail.className="ratio-rail"; rail.id=selId+"Rail";
   /* v5.56.0 — the wizard's cloned generate row (.wizrow) hosts a rail too */
@@ -9760,9 +9883,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
            the cloned select: proportioned boxes, dashed "A" for Auto, gold
            highlight. The clone is rebuilt on every change, so any previous
            rail is dropped and a fresh one attached to the live clone. */
-        var oldRail=$("wiz_selRatioRail");
+        var oldRail=row.parentNode && row.parentNode.querySelector("#wiz_selRatioRail");
         if(oldRail && oldRail.parentNode) oldRail.parentNode.removeChild(oldRail);
-        if(row.parentNode && typeof ratioRailAttach==="function") ratioRailAttach("wiz_selRatio");
+        /* by ELEMENT, not by id: this row is still off-document on the first
+           build, and getElementById cannot see it there */
+        var wizRatioSel = row.querySelector("#wiz_selRatio");
+        if(row.parentNode && wizRatioSel && typeof ratioRailAttach==="function") ratioRailAttach(wizRatioSel);
       };
       /* v4.28 C1: the footer names the engine that will actually run — not a
          hardcoded "Gemini" — and re-renders when the provider clone changes */
@@ -22176,18 +22302,55 @@ renderDash();
    in the Gallery by itself, so the common case needs no tap at all. Jobs still
    running stay listed. Runs only with a key configured — without one there is
    nothing to ask. */
+/* v6.4.0 — AND IT KEEPS WORKING UNTIL THE RESULT ARRIVES.
+   The owner: "Generate လုပ်ထားရင် အပြင်ထွက်ပြီး ပြန်ဝင်နေရင်လဲ ဆက်လုပ်နေပါ —
+   Results ထွက်တဲ့အထိ." The sweep already asked RunningHub what became of a
+   job it never saw finish, but it asked ONCE: a job still rendering was left
+   "on the books" and nothing looked at it again until the next cold boot, so
+   a student who came back two minutes early had to leave and come back again.
+   RunningHub charges at SUBMIT and keeps rendering server-side, so the work
+   is already paid for and already happening — the only thing missing was
+   somebody watching. This watches, on the same unhurried cadence the poller
+   itself uses, until every held job is recovered, failed, or past its claim
+   window. Nothing is re-submitted and nothing is charged twice: this only
+   ever reads a taskId that already exists. */
+var JOB_WATCH_MS = 15000;
+var _jobWatch = null;
+async function rhJobsSweepOnce(quiet){
+  if(!state.rhKey) return 0;
+  var jobs=rhJobsLoad(), got=0;
+  for(var i=0;i<jobs.length;i++){
+    if(_jobsLive[jobs[i].taskId]) continue;   /* this session is already on it */
+    var r=await rhJobClaim(jobs[i]);
+    if(r && r.state==="recovered") got+=r.n;
+  }
+  if(got && !quiet) toast(t("job_recovered").replace("{N}",String(got)),"ok");
+  renderDashJobs();
+  return got;
+}
+function rhJobsWatch(){
+  if(_jobWatch) return;                    /* one watcher, however often this is called */
+  _jobWatch=setInterval(function(){
+    if(!rhJobsLoad().length){ clearInterval(_jobWatch); _jobWatch=null; renderDashJobs(); return; }
+    if(document.visibilityState==="hidden") return;   /* a hidden tab is throttled anyway */
+    rhJobsSweepOnce(false).catch(function(){});
+  }, JOB_WATCH_MS);
+}
 (function rhJobsBootSweep(){
-  setTimeout(async function(){
-    if(!state.rhKey) return;
-    var jobs=rhJobsLoad(), got=0;
-    for(var i=0;i<jobs.length;i++){
-      var r=await rhJobClaim(jobs[i]);
-      if(r && r.state==="recovered") got+=r.n;
-    }
-    if(got) toast(t("job_recovered").replace("{N}",String(got)),"ok");
-    renderDashJobs();
+  setTimeout(function(){
+    rhJobsSweepOnce(false).then(function(){
+      if(rhJobsLoad().length) rhJobsWatch();
+    }).catch(function(){});
   }, 1500);
 })();
+/* coming back to a backgrounded tab is the moment a student most expects to
+   find their result waiting */
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState!=="visible") return;
+  if(!rhJobsLoad().length) return;
+  rhJobsSweepOnce(false).catch(function(){});
+  rhJobsWatch();
+});
 /* v4.58 — paint the book from storage immediately, then refresh the balance
    once per session if the last reading is over an hour old. Not on every boot:
    the balance moves when a job runs, and rhBookSpend already repaints. */
@@ -24091,7 +24254,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.3.0";
+var APP_VER="6.4.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -25982,10 +26145,21 @@ $("btnVuRetry").onclick=function(){ if($("btnVuGen").disabled) return; this.styl
 
 /* ---------- v5.55.0 — VIDEO TOOLS wiring (same page as Upscale) ---------- */
 state.vtFile = null; state.vtImg = null;
+/* v6.4.0 — the takes this page made. Unlike the upscale page, whose 4K files
+   really are too large to keep, a Video Tools result is an ordinary clip in
+   the same size class the Video page already saves — so it is saved, restored
+   when the page opens, and removed only when the student deletes it. */
+state.vtHist = []; state.vtHistSel = -1;
 $("vtIntro").textContent = L9({my:"ရှိပြီးသား ဗီဒီယိုကို ပြင်မယ်/ဆက်မယ်/သန့်မယ် — model တစ်ခုရွေးပြီး ဗီဒီယိုဖိုင် တင်ပါ။ RunningHub Enterprise key လိုအပ်ပါတယ်။",en:"Edit, extend or clean an existing video — pick a tool, upload the clip. Needs your RunningHub Enterprise key.",shn:"မႄးၶိုၼ်း/သိုပ်ႇ/သုၵ်ႈသႅင်ႇ ဝီဒီရူဝ်ႈဢၼ်မီးယူႇ",kac:"Video nga ai hpe galaw/madung/san seng — tool langai lata nna video bang u",th:"แก้ไข ต่อ หรือปรับปรุงวิดีโอที่มีอยู่ — เลือกเครื่องมือแล้วอัปโหลดคลิป",zh:"编辑、延长或修复现有视频 — 选择工具并上传视频",vi:"Chỉnh sửa, kéo dài hoặc làm sạch video có sẵn — chọn công cụ rồi tải video lên",id:"Edit, perpanjang, atau bersihkan video yang ada — pilih alat lalu unggah klip",ms:"Edit, panjangkan atau bersihkan video sedia ada — pilih alat dan muat naik klip"});
 setIcnText($("btnVtPick"),"i-clapper",L9({my:"ဗီဒီယို ဖိုင် ရွေးမယ် (MP4)",en:"Pick a video file (MP4)",shn:"ထၢႆႇၾၢႆႇဝီဒီရူဝ်ႈ (MP4)",kac:"Video file lata u (MP4)",th:"เลือกไฟล์วิดีโอ (MP4)",zh:"选择视频文件 (MP4)",vi:"Chọn tệp video (MP4)",id:"Pilih file video (MP4)",ms:"Pilih fail video (MP4)"}));
 setIcnText($("btnVtImgPick"),"i-plus",L9({my:"ပုံ ထည့်မယ်",en:"Add reference photo",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈ",kac:"Sumla bang u",th:"เพิ่มรูปอ้างอิง",zh:"添加参考图片",vi:"Thêm ảnh tham chiếu",id:"Tambah foto referensi",ms:"Tambah foto rujukan"}));
 $("vtResultH2").textContent = L9({my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"});
+/* v6.4.0 — the take strip and the download this page never had, and an
+   expiry note that is about the LINK: the saved copy does not expire, so
+   showVtResult hides this line the moment the bytes are home. */
+setIcnText($("btnVtDl"),"i-download",VID_DL_LABEL);
+setIcnText($("vtExpireNote"),"i-warn",L9({my:"⚠ ဒီ link က ၂၄ နာရီပဲ အလုပ်လုပ်ပါတယ် — သိမ်းပြီးသွားရင် ဒီစာကြောင်း ပျောက်သွားပါမယ်",en:"⚠ This link only works for 24 hours — this line disappears once the saved copy is home",shn:"⚠ Link ၼႆႉ ၸႂ်ႉလႆႈ 24 ၸူဝ်ႈမွင်းၵူၺ်း",kac:"⚠ Ndai link gaw 24 hour sha byin ai",th:"⚠ ลิงก์นี้ใช้ได้แค่ 24 ชั่วโมง — บรรทัดนี้จะหายไปเมื่อบันทึกสำเร็จ",zh:"⚠ 此链接仅 24 小时有效 — 保存完成后这行会消失",vi:"⚠ Liên kết này chỉ hoạt động trong 24 giờ — dòng này biến mất khi bản lưu đã về",id:"⚠ Tautan ini hanya berfungsi 24 jam — baris ini hilang setelah salinan tersimpan",ms:"⚠ Pautan ini hanya berfungsi 24 jam — baris ini hilang setelah salinan disimpan"}));
+$("vtHistH").textContent = L9({my:"ဒီစာမျက်နှာက ထုတ်ခဲ့တဲ့ ဗီဒီယိုများ — ကိုယ်တိုင် မဖျက်မချင်း ကျန်နေပါမယ်",en:"Videos this page made — they stay until you delete them",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်းဝႆႉ — တေမီးၵႂႃႇတေႃႇထိုင်ၸဝ်ႈၵဝ်ႇလုပ်ႇ",kac:"Ndai shara galaw da ai video ni — nang mat kau ai laning du hkra naw nga na",th:"วิดีโอที่หน้านี้สร้างไว้ — อยู่จนกว่าคุณจะลบเอง",zh:"此页面生成的视频 — 在你亲自删除前都会保留",vi:"Video trang này đã tạo — vẫn còn cho tới khi bạn tự xoá",id:"Video yang dibuat halaman ini — tetap ada sampai Anda menghapusnya",ms:"Video yang dibuat halaman ini — kekal sehingga anda memadamnya"});
 (function(){
   var sel=$("selVtModel");
   RH_VTOOL_MODELS.forEach(function(m){
@@ -25996,6 +26170,7 @@ function updateVtModelUI(){
   var m=rhVtModelDef($("selVtModel").value);
   $("btnVtImgPick").style.display = m.imageParam ? "" : "none";
   if(!m.imageParam){ state.vtImg=null; $("vtImgName").textContent=""; }
+  if(typeof renderVtPicks==="function") renderVtPicks();
   var pr=$("vtPrompt");
   pr.style.display = m.prompt ? "" : "none";
   if(m.prompt){ pr.setAttribute("maxlength", m.promptMax||20000);
@@ -26007,6 +26182,15 @@ function updateVtModelUI(){
   (m.options||[]).forEach(function(o){ defs.push(o); });
   if(m.whPreset) defs.unshift({ key:"whPreset", values:Object.keys(RH_VT_WH), def:"720p" });
   slots.forEach(function(slot,idx){
+    /* v6.4.0 — a card can be gated on one of these values (clipUnder), so a
+       student changing it has to re-run the clip check; the listener is
+       attached once per slot rather than per rebuild */
+    if(!slot._vtUnderBound){
+      slot._vtUnderBound = 1;
+      slot.addEventListener("change", function(){
+        if(typeof vtWfCheckClip==="function") vtWfCheckClip();
+      });
+    }
     var o=defs[idx];
     slot.innerHTML="";
     if(!o){ slot.style.display="none"; return; }
@@ -26093,10 +26277,10 @@ var VT_WF = [
     summary:L9({my:"ဗီဒီယိုကို လက်ဆွဲကာတွန်းပုံစံ ပြန်ဆွဲ — လှုပ်ရှားမှုနဲ့ ကင်မရာ အတိုင်း",en:"Redraw the clip as hand-drawn 2D anime — the motion and the camera stay",shn:"ႁဵတ်းႁၢင်ႈၶႃႉတုၼ်း — တူင်ႉၼိုင်လႄႈၵႄႇမရႃႇ ဢမ်ႇလႅၵ်ႈ",kac:"Video hpe anime hku bai ka — shamu ai hte camera n galai",th:"วาดคลิปใหม่เป็นอนิเมะ 2D — การเคลื่อนไหวและกล้องคงเดิม",zh:"把片子重画成手绘 2D 动漫 — 动作与镜头不变",vi:"Vẽ lại clip thành anime 2D — chuyển động và máy quay giữ nguyên",id:"Gambar ulang klip jadi anime 2D — gerakan dan kamera tetap",ms:"Lukis semula klip jadi anime 2D — gerakan dan kamera kekal"}),
     hint:L9({my:"MP4 တစ်ခု (၁၀ စက္ကန့်အထိ) — ပုံ မလိုပါ",en:"One MP4 (up to 10s) — no photo needed",shn:"MP4 ဢၼ်ၼိုင်ႈ (10 ၸဵၵ်ႇ)",kac:"MP4 langai (10s du hkra)",th:"MP4 หนึ่งไฟล์ (ไม่เกิน 10 วินาที) — ไม่ต้องใช้รูป",zh:"一个 MP4（不超过 10 秒）— 不需要照片",vi:"Một MP4 (tối đa 10 giây) — không cần ảnh",id:"Satu MP4 (maks 10 detik) — tanpa foto",ms:"Satu MP4 (maks 10 saat) — tanpa foto"}),
     text:function(){
-      return "Redraw this video as hand-drawn 2D anime, keeping everything that happens in it.\nLOOK: clean cel shading with flat colour fills, crisp ink outlines, backgrounds simplified into painted anime plates in the same palette as the footage, soft highlights in the hair and the eyes.\nIDENTITY: every person stays recognisably themselves — the same face shape, hairstyle, hair colour and clothing, drawn in the new style rather than replaced by someone else.\n"
+      return "Redraw this video as hand-drawn 2D anime, keeping everything that happens in it.\nLOOK: clean cel shading with flat colour fills, crisp ink outlines, backgrounds simplified into painted anime plates in the same palette as the footage, soft highlights in the hair and the eyes.\nPEOPLE: everyone in the shot is drawn in this style — the same hair, the same clothes, the same person doing the same thing.\n"
        + VT_KEEP + "\n"
        + VT_FINISH + "\n\n"
-       + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, extra characters, photographic skin texture left under the drawing, a face that drifts between shots, a slowed or sped-up result, a watermark or a caption.";
+       + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, extra characters, photographic skin texture left under the drawing, a slowed or sped-up result, a watermark or a caption.";
     } },
 
   { key:"vtFilmLook", art:"lib/vid/vt-filmlook.jpg", model:"gemini-omni-11-video-edit", maxSecs:10, opts:{"resolution": "1080p"},
@@ -26123,11 +26307,19 @@ var VT_WF = [
        + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, an orange cast on the skin, blown highlights, a face that drifts between shots, a slowed or sped-up result, a watermark or a caption.";
     } },
 
-  { key:"vtExtend", art:"lib/vid/vt-extend.jpg", model:"wan-2-7-video-extend", opts:{"resolution": "1080P", "duration": "5"},
+  /* v6.4.0 — the duration wan-2.7 takes is the TOTAL the result runs, not the
+     seconds added: the endpoint refuses outright with "first_clip duration
+     cannot exceed the requested N seconds" when the clip is longer than it.
+     Asking for five on a card named "make it longer" was therefore wrong twice
+     — semantically, because five is not longer than most clips a student
+     brings, and practically, because a 5.04-second clip failed the call. Ten
+     is the default now, and clipUnder makes the app measure the picked clip
+     against whatever the student chooses instead of finding out at submit. */
+  { key:"vtExtend", art:"lib/vid/vt-extend.jpg", model:"wan-2-7-video-extend", opts:{"resolution": "1080P", "duration": "10"}, clipUnder:"duration",
     need:L9({my:"ဗီဒီယို ၁",en:"1 video",shn:"ဝီဒီရူဝ်ႈ 1",kac:"Video 1",th:"วิดีโอ 1",zh:"1 段视频",vi:"1 video",id:"1 video",ms:"1 video"}),
     label:L9({my:"ဗီဒီယို ဆက်ရှည်မယ်",en:"Make the clip longer",shn:"သိုပ်ႇဝီဒီရူဝ်ႈ",kac:"Video galu shatawt",th:"ต่อคลิปให้ยาวขึ้น",zh:"把片子接长",vi:"Kéo dài clip",id:"Perpanjang klip",ms:"Panjangkan klip"}),
     summary:L9({my:"နောက်ဆုံး frame ကနေ ဆက်သွား — လူ၊ နေရာ၊ အလင်း အတိုင်း (၁၅ စက္ကန့်အထိ ထွက်)",en:"Carries on from the last frame — same person, place and light (output up to 15s)",shn:"သိုပ်ႇတီႈသုတ်း — ၵူၼ်း၊ တီႈ၊ ၾႆး ဢမ်ႇလႅၵ်ႈ",kac:"Hpang jahtum frame kaw na matut — masha, shara, htoi n galai",th:"เล่นต่อจากเฟรมสุดท้าย — คนเดิม ที่เดิม แสงเดิม (ยาวได้ถึง 15 วินาที)",zh:"从最后一帧继续 — 人、场景、光线不变（最长 15 秒）",vi:"Tiếp tục từ khung hình cuối — vẫn người đó, nơi đó, ánh sáng đó (tối đa 15 giây)",id:"Lanjut dari frame terakhir — orang, tempat, dan cahaya sama (hingga 15 detik)",ms:"Sambung dari bingkai terakhir — orang, tempat dan cahaya sama (sehingga 15 saat)"}),
-    hint:L9({my:"MP4 တစ်ခု — ဘယ်နှစ်စက္ကန့် ဆက်မလဲ အောက်မှာ ရွေးပါ",en:"One MP4 — pick how many seconds to add below",shn:"MP4 ဢၼ်ၼိုင်ႈ — လိူၵ်ႈၶၢဝ်းယၢမ်းတီႈတႂ်ႈ",kac:"MP4 langai — npu de ten lata u",th:"MP4 หนึ่งไฟล์ — เลือกจำนวนวินาทีด้านล่าง",zh:"一个 MP4 — 在下面选要延长几秒",vi:"Một MP4 — chọn số giây muốn thêm bên dưới",id:"Satu MP4 — pilih berapa detik tambahannya di bawah",ms:"Satu MP4 — pilih berapa saat tambahan di bawah"}),
+    hint:L9({my:"MP4 တစ်ခု — အောက်က duration က ပြီးလို့ ထွက်မယ့် ဗီဒီယို စုစုပေါင်း အရှည်ပါ၊ ကိုယ့်ဗီဒီယိုထက် ပိုရှည်တာ ရွေးပါ",en:"One MP4 — the duration below is the TOTAL length of the result, so pick one longer than your clip",shn:"MP4 ဢၼ်ၼိုင်ႈ — duration တီႈတႂ်ႈ ပဵၼ်ၶၢဝ်းယၢဝ်းတင်းသဵင်ႈ၊ လိူၵ်ႈဢၼ်ယၢဝ်းလိူဝ်ဝီဒီရူဝ်ႈၸဝ်ႈၵဝ်ႇ",kac:"MP4 langai — npu na duration gaw ah kyu a galu ting re, na a video hta grau galu ai lata u",th:"MP4 หนึ่งไฟล์ — duration ด้านล่างคือความยาวรวมของผลลัพธ์ ให้เลือกยาวกว่าคลิปของคุณ",zh:"一个 MP4 — 下面的 duration 是成片的总长度，请选比你的视频更长的数值",vi:"Một MP4 — duration bên dưới là TỔNG độ dài của kết quả, hãy chọn dài hơn clip của bạn",id:"Satu MP4 — duration di bawah adalah TOTAL panjang hasilnya, pilih yang lebih panjang dari klip Anda",ms:"Satu MP4 — duration di bawah ialah JUMLAH panjang hasilnya, pilih yang lebih panjang daripada klip anda"}),
     text:function(){
       return "Continue this video from its final frame.\nCARRY ON: the same person, the same wardrobe, the same set and the same light; the action that was under way keeps going at the same pace, and the camera keeps the move it was already making.\nJOIN: the first new frame follows the last filmed frame with no cut, no jump and no change of exposure or colour.\n"
        + VT_FINISH + "\n\n"
@@ -26224,18 +26416,106 @@ var VT_WF_INTRO_HINT = L9({my:"ကတ်တစ်ခု ရွေးပါ — �
    Kling motion-control tools below take up to thirty seconds. */
 var VT_CLIP_WARN = L9({my:"⚠ ဒီ ဗီဒီယိုက {S} စက္ကန့် ရှိတယ် — ဒီကတ်ရဲ့ tool က {M} စက္ကန့်ထက် ပိုတာ လက်မခံဘူး။ ဖြတ်ပြီး ပြန်တင်ပါ။",en:"⚠ This clip is {S}s — the tool this card picks takes at most {M}s. Trim it and upload again.",shn:"⚠ ဝီဒီရူဝ်ႈၼႆႉ {S} ၸဵၵ်ႇ — tool ၼႆႉႁပ်ႉလႆႈ {M} ၸဵၵ်ႇၵူၺ်း",kac:"⚠ Ndai video gaw {S}s re — ndai tool gaw {M}s sha hkam la ai",th:"⚠ คลิปนี้ยาว {S} วินาที — เครื่องมือของการ์ดนี้รับได้สูงสุด {M} วินาที ตัดแล้วอัปโหลดใหม่",zh:"⚠ 这段视频 {S} 秒 — 此卡片使用的工具最多接受 {M} 秒，请剪短后重新上传",vi:"⚠ Clip này dài {S}s — công cụ của thẻ này chỉ nhận tối đa {M}s. Hãy cắt ngắn rồi tải lên lại",id:"⚠ Klip ini {S} detik — alat kartu ini menerima maksimal {M} detik. Potong lalu unggah lagi",ms:"⚠ Klip ini {S} saat — alat kad ini menerima maksimum {M} saat. Potong dan muat naik semula"});
 var vtClipWarn = "";
+/* ---------- v6.4.0 — SHOW THE PICKED CLIP AND THE PICKED FACE ----------
+   The owner picked both and got two filenames: "a3bcf6d2….mp4" and
+   "Screenshot_2026-09-03….jpg". Neither says whether the right take or the
+   right person is about to be sent, and this page spends real money per run.
+   So each slot shows the thing itself — a scrubbable frame of the clip with
+   its length and size, the face at 72px — and each has an × that puts the
+   slot back the way it was. The clip's LENGTH matters most of all here: seven
+   of the nine cards refuse a clip over their tool's ceiling, and until now a
+   student learned that only from a warning after the fact. */
+function fmtBytes(n){
+  n = Number(n)||0;
+  if(n >= 1048576) return (n/1048576).toFixed(n >= 10485760 ? 0 : 1) + " MB";
+  if(n >= 1024) return Math.round(n/1024) + " KB";
+  return n + " B";
+}
+function vtDataUrl(f){ return f ? "data:"+f.mime+";base64,"+f.b64 : ""; }
+/* base64 is 4 characters per 3 bytes, minus the padding — near enough for a
+   size line, and it costs nothing next to decoding the file again */
+function vtB64Bytes(b64){
+  var n = String(b64||"").length;
+  if(!n) return 0;
+  var pad = (b64.charAt(n-1)==="=" ? 1 : 0) + (b64.charAt(n-2)==="=" ? 1 : 0);
+  return Math.max(0, Math.floor(n*3/4) - pad);
+}
+function renderVtPicks(){
+  var fp=$("vtFilePrev"), ip=$("vtImgPrev");
+  if(fp){
+    if(state.vtFile){
+      var th=$("vtFileThumb"), src=vtDataUrl(state.vtFile);
+      if(th.getAttribute("data-src")!==state.vtFile.name+"|"+state.vtFile.b64.length){
+        th.setAttribute("data-src", state.vtFile.name+"|"+state.vtFile.b64.length);
+        th.src=src;
+        /* the length is read off the same element the student is looking at */
+        th.onloadedmetadata=function(){
+          var m=$("vtFileMeta");
+          if(m && isFinite(th.duration))
+            m.textContent = Math.round(th.duration) + "s · " + fmtBytes(vtB64Bytes(state.vtFile.b64));
+        };
+      }
+      $("vtFileName").textContent = state.vtFile.name || "";
+      var mt=$("vtFileMeta");
+      if(mt && !mt.textContent) mt.textContent = fmtBytes(vtB64Bytes(state.vtFile.b64));
+      fp.style.display="";
+    } else {
+      fp.style.display="none";
+      $("vtFileName").textContent=""; $("vtFileMeta").textContent="";
+      $("vtFileThumb").removeAttribute("data-src"); $("vtFileThumb").removeAttribute("src");
+    }
+  }
+  if(ip){
+    /* the photo slot hides with its own button: a tool that takes no
+       reference photograph must not show one the student cannot remove */
+    var wants = $("btnVtImgPick").style.display !== "none";
+    if(state.vtImg && wants){
+      $("vtImgThumb").src = vtDataUrl(state.vtImg);
+      $("vtImgName").textContent = state.vtImg.name || "";
+      $("vtImgMeta").textContent = fmtBytes(vtB64Bytes(state.vtImg.b64));
+      ip.style.display="";
+    } else {
+      ip.style.display="none";
+      $("vtImgName").textContent="";
+      $("vtImgMeta").textContent="";
+      $("vtImgThumb").removeAttribute("src");
+    }
+  }
+}
+/* v6.4.0 — the OTHER way a clip can be wrong for a card. Wan 2.7's duration is
+   the TOTAL the result runs, not the seconds added, so a clip longer than it is
+   refused outright ("first_clip duration cannot exceed the requested N
+   seconds"). A card can now name the option its clip must stay under, and the
+   check is made against whatever the student has actually chosen — before the
+   run is paid for rather than in the error that comes back from it. */
+var VT_UNDER_WARN = L9({my:"⚠ ဒီ ဗီဒီယိုက {S} စက္ကန့် ရှိပြီး၊ အောက်မှာ ရွေးထားတာက {M} စက္ကန့်ပဲ — ထွက်မယ့် ဗီဒီယိုက ကိုယ့်ဗီဒီယိုထက် ပိုရှည်ရပါမယ်။ {M} ထက် ပိုတဲ့ အချိန် ရွေးပါ။",en:"⚠ This clip is {S}s but you picked {M}s below — the result has to be LONGER than your clip. Choose more than {M}s.",shn:"⚠ ဝီဒီရူဝ်ႈၼႆႉ {S} ၸဵၵ်ႇ၊ လိူၵ်ႈဝႆႉ {M} ၸဵၵ်ႇ — လူဝ်ႇလိူၵ်ႈဢၼ်ယၢဝ်းလိူဝ်",kac:"⚠ Ndai video gaw {S}s re, nang gaw {M}s lata da ai — ah kyu gaw grau galu ra ai",th:"⚠ คลิปนี้ยาว {S} วินาที แต่คุณเลือก {M} วินาที — ผลลัพธ์ต้องยาวกว่าคลิปของคุณ เลือกมากกว่า {M} วินาที",zh:"⚠ 这段视频 {S} 秒，但你在下面选了 {M} 秒 — 成片必须比原片更长，请选大于 {M} 秒的值",vi:"⚠ Clip này dài {S}s nhưng bạn chọn {M}s bên dưới — kết quả phải DÀI HƠN clip của bạn. Hãy chọn hơn {M}s",id:"⚠ Klip ini {S} detik tetapi Anda memilih {M} detik di bawah — hasilnya harus LEBIH PANJANG dari klip Anda. Pilih lebih dari {M} detik",ms:"⚠ Klip ini {S} saat tetapi anda pilih {M} saat di bawah — hasilnya mesti LEBIH PANJANG daripada klip anda. Pilih lebih daripada {M} saat"});
+function vtOptValue(key){
+  var out = null;
+  [$("selVtOpt1"), $("selVtOpt2")].forEach(function(slot){
+    if(slot && slot.style.display!=="none" && slot.dataset.key===key) out = slot.value;
+  });
+  return out;
+}
 function vtWfCheckClip(){
   vtClipWarn = "";
   var w = vtWfActive ? vtWfByKey(vtWfActive) : null;
-  if(!w || !w.maxSecs || !state.vtFile){ renderVtWf(); return; }
+  if(!w || (!w.maxSecs && !w.clipUnder) || !state.vtFile){ renderVtWf(); return; }
   var v=document.createElement("video");
   v.preload="metadata";
   v.onloadedmetadata=function(){
     var secs=v.duration;
+    if(!isFinite(secs)){ return; }
     /* half a second of slack: a ten-second clip often measures 10.02 */
-    if(isFinite(secs) && secs > w.maxSecs + 0.5){
+    if(w.maxSecs && secs > w.maxSecs + 0.5){
       vtClipWarn = VT_CLIP_WARN.replace("{S}", String(Math.round(secs))).replace("{M}", String(w.maxSecs));
-      renderVtWf();
+      renderVtWf(); return;
+    }
+    if(w.clipUnder){
+      var want = Number(vtOptValue(w.clipUnder));
+      if(want && secs >= want - 0.5){
+        vtClipWarn = VT_UNDER_WARN.replace(/\{S\}/g, String(Math.round(secs*10)/10)).replace(/\{M\}/g, String(want));
+        renderVtWf(); return;
+      }
     }
   };
   v.src="data:"+state.vtFile.mime+";base64,"+state.vtFile.b64;
@@ -26261,11 +26541,19 @@ $("vtFilePick").onchange=function(){
   var rd=new FileReader();
   rd.onload=function(){
     var m=String(rd.result).match(/^data:([^;]+);base64,(.+)$/);
-    if(m){ state.vtFile={mime:m[1],b64:m[2],name:f.name}; $("vtFileName").textContent=f.name; updateVtModelUI(); vtWfCheckClip(); }
+    if(m){ state.vtFile={mime:m[1],b64:m[2],name:f.name}; updateVtModelUI(); renderVtPicks(); vtWfCheckClip(); wipSave(); }
   };
   rd.readAsDataURL(f);
 };
 $("btnVtImgPick").onclick=function(){ $("vtImgPick").click(); };
+/* the × on each slot: back to nothing picked, in every place that reads it —
+   the need-note, the card deck's clip warning, and the saved snapshot */
+$("btnVtFileClear").onclick=function(){
+  state.vtFile=null; updateVtModelUI(); renderVtPicks(); vtWfCheckClip(); wipSave();
+};
+$("btnVtImgClear").onclick=function(){
+  state.vtImg=null; updateVtModelUI(); renderVtPicks(); wipSave();
+};
 $("vtImgPick").onchange=function(){
   var f=this.files && this.files[0]; this.value="";
   if(!f) return;
@@ -26275,7 +26563,7 @@ $("vtImgPick").onchange=function(){
     downscale(String(rd.result), function(dataUrl){
       if(!dataUrl){ toast(L9({my:"ဒီပုံကို ဖတ်လို့မရပါ",en:"Couldn't read this image",shn:"ဢမ်ႇလူတ်ႇလႆႈၶႅပ်းႁၢင်ႈၼႆႉ",kac:"Ndai sumla hti n mai ai",th:"อ่านรูปนี้ไม่ได้",zh:"无法读取此图片",vi:"Không đọc được ảnh này",id:"Tidak bisa membaca gambar ini",ms:"Tidak dapat membaca imej ini"}),"err"); return; }
       var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-      if(m){ state.vtImg={mime:m[1],b64:m[2]}; $("vtImgName").textContent=name; updateVtModelUI(); }
+      if(m){ state.vtImg={mime:m[1],b64:m[2],name:name}; updateVtModelUI(); renderVtPicks(); wipSave(); }
     });
   };
   rd.readAsDataURL(f);
@@ -26307,12 +26595,24 @@ $("btnVtGen").onclick=async function(){
       setSt("stVtGen", L9({my:"ရလဒ် မထွက်လာပါ — ပြန်စမ်းပါ",en:"Nothing came back — try again",shn:"ဢမ်ႇမီးလွင်ႈဢွၵ်ႇ — ၸၢမ်းၶိုၼ်း",kac:"Hpa n pru ai — bai chyam u",th:"ไม่มีผลลัพธ์ — ลองใหม่",zh:"没有结果 — 请重试",vi:"Không có kết quả — thử lại",id:"Tidak ada hasil — coba lagi",ms:"Tiada hasil — cuba lagi"}), "err");
       $("btnVtRetry").style.display="";
     } else {
-      $("vtResultBox").className="card result-box on";
-      $("vtResultVideo").src=outs[0].url;
-      var a=$("btnVtOpen"); a.href=outs[0].url; setIcnText(a,"i-link",L9({my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"}));
-      $("vtExpireNote").textContent = $("vuExpireNote").textContent;
-      $("vtResultBox").scrollIntoView({behavior:"smooth"});
+      var entry={ url:outs[0].url, prompt:(text||m.label||"").slice(0,120), ts:Date.now() };
+      state.vtHist.unshift(entry);
+      state.vtHistSel=0;
+      var a=$("btnVtOpen"); setIcnText(a,"i-link",L9({my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"}));
+      showVtResult();
       setSt("stVtGen", t("st_done"), "ok");
+      /* v6.4.0 — AND KEEP IT. The link on screen dies in a day; this copy does
+         not. It runs behind the result the student is already watching and
+         repaints once the bytes are home, which is when the 24-hour warning
+         can come down. Nothing is ever evicted: these takes are theirs until
+         they delete them. */
+      galleryAddVideo(outs[0].url, entry.prompt, { page:"pgV2V", res:"", dur:"" })
+        .then(function(id){
+          if(!id) return;
+          return galFull(id).then(function(rec){
+            if(rec && rec.blob){ entry.blob=rec.blob; entry.id=id; if(state.vtHist[state.vtHistSel]===entry) showVtResult(false); }
+          });
+        }).catch(function(){});
     }
   }catch(e){
     setSt("stVtGen", rhFriendly(e), (e&&e.code==="cancelled")?"ok":"err");
@@ -26321,6 +26621,41 @@ $("btnVtGen").onclick=async function(){
   state.vtAbort=null;
   $("btnVtCancel").style.display="none";
   btn.disabled=false; btn.classList.remove("working"); $("vtSpin").className="spin"; $("vtSpin").textContent=spinBase;
+};
+/* v6.4.0 — the result box reads a HISTORY rather than one live URL, exactly
+   as the Video page's does. A saved take plays from its own blob and needs no
+   network and no 24-hour warning; a take whose bytes have not come home yet
+   still plays from the link. */
+function showVtResult(scroll){
+  var out=state.vtHist[state.vtHistSel]; if(!out) return;
+  $("vtResultBox").className="card result-box on";
+  $("vtResultVideo").src=vidPlayUrl(out);
+  var op=$("btnVtOpen");
+  if(op){ op.href=out.url||"#"; op.style.display=out.url?"":"none"; }
+  var ex=$("vtExpireNote");
+  if(ex) ex.style.display=out.blob?"none":"";
+  var h=$("vtHist"); h.innerHTML="";
+  state.vtHist.forEach(function(e,i){
+    var v=document.createElement("video");
+    v.src=vidPlayUrl(e); v.muted=true; v.preload="metadata"; v.playsInline=true;
+    v.className=i===state.vtHistSel?"sel":"";
+    makePickable(v, function(){ state.vtHistSel=i; showVtResult(true); });
+    h.appendChild(v);
+  });
+  if(scroll!==false) $("vtResultBox").scrollIntoView({behavior:"smooth"});
+}
+$("btnVtDl").onclick=async function(){
+  var out=state.vtHist[state.vtHistSel]; if(!out) return;
+  var btn=this; if(btn.disabled) return; btn.disabled=true; setIcnText(btn,"i-download",VID_DL_BUSY);
+  try{
+    var blobUrl=out.blob ? URL.createObjectURL(out.blob) : await rhVideoDownloadBlobUrl(out.url);
+    var a=document.createElement("a"); a.href=blobUrl; a.download="hnk-videotool-"+ptStamp()+".mp4";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 30000);
+  }catch(e){
+    toast(L9({my:"Download မအောင်မြင်ပါ — Direct Link ကို နှိပ်ပြီး manual download လုပ်ကြည့်ပါ",en:"Download failed — try the Direct Link button to save it manually",shn:"Download ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းၼဵၵ်း Direct Link",kac:"Download n byin ai — Direct Link dip nna chyam u",th:"ดาวน์โหลดล้มเหลว — ลองใช้ปุ่ม Direct Link",zh:"下载失败 — 请尝试点击“直接链接”按钮手动保存",vi:"Tải xuống thất bại — thử nút Direct Link để lưu thủ công",id:"Unduh gagal — coba tombol Direct Link untuk menyimpan manual",ms:"Muat turun gagal — cuba butang Direct Link untuk simpan secara manual"}), "err");
+  }
+  btn.disabled=false; setIcnText(btn,"i-download",VID_DL_LABEL);
 };
 $("btnVtCancel").onclick=function(){ if(state.vtAbort) state.vtAbort.abort(); };
 $("btnVtRetry").onclick=function(){ if($("btnVtGen").disabled) return; this.style.display="none"; $("btnVtGen").onclick(); };

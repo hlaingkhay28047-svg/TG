@@ -333,7 +333,15 @@ function report(name, ok, detail) {
      deliberately picked one now survives the run */
   const srcApp = require("fs").readFileSync(require("path").join(__dirname, "..", "docs", "app", "index.html"), "utf8");
   report("v5.56.0: the wizard generate step hosts the ratio rail, honors a deliberate ratio pick, and the capacity switch fires at RUN time only (never on open — opening a guide must not rewrite the active model)",
-    srcApp.includes('ratioRailAttach("wiz_selRatio")') &&
+    /* v6.4.0 — pinned by MECHANISM, not by the old call string. This line
+       used to require ratioRailAttach("wiz_selRatio"), and that call was the
+       bug: the wizard builds its step off-document, so looking the select up
+       by id returned null and the rail never appeared on the one screen this
+       assertion exists to protect. It takes the element now. The rail's
+       actual presence is proved by verify_wizard_ratio_rail.js, which draws
+       it and reads the shapes back — a far stronger claim than a substring. */
+    /ratioRailAttach\(wizRatioSel\)/.test(srcApp) &&
+    srcApp.includes('row.querySelector("#wiz_selRatio")') &&
     srcApp.includes("if(!wiz.ratioPicked) wzR.value=\"\";") &&
     srcApp.includes('if(pair[0]==="selRatio") wiz.ratioPicked=true;') &&
     srcApp.includes("wfModelFilter((w.req||[]).length)") &&
