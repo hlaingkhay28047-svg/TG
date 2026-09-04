@@ -62,6 +62,15 @@ for (const m of REG.models) {
 check("B) every shipped video tool's extra containers match the published registry",
   wrong.length === 0, wrong.slice(0, 8).join(" | "));
 
+/* B0 — the guard this check needs to mean anything. The pinned fixture was
+   once a TRIMMED copy of RunningHub's registry that dropped the very
+   "accept" field B reads, so B compared nothing and passed on an empty
+   loop. A fixture that loses the field again must fail loudly, not quietly
+   go green. */
+check("B0) the pinned registry still carries the container lists B reads",
+  REG.models.reduce((n, m) => n + (m.params || []).filter(q => q.accept).length, 0) > 300,
+  "the fixture has been trimmed of its accept data — check B would pass vacuously");
+
 check("B2) and the table names nothing the registry does not",
   Object.keys(MAP).every(k => byEndpoint.has(k)),
   Object.keys(MAP).filter(k => !byEndpoint.has(k)).join(", "));

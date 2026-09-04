@@ -419,6 +419,16 @@ jobs:
       - name: Verify each video tool is offered only the containers it accepts
         run: node test/verify_video_containers.js
 
+      # v6.7.0 — Retouch A, Retouch B and Retouch Pro all end in one HD Finish
+      # pass, and that pass was a single hard-wired endpoint at its bare
+      # defaults. RunningHub's schema gives that endpoint faceEnhancement a
+      # default of TRUE at 0.8, so the finish quietly re-imagined the face on
+      # top of the skin retouch the student had just paid for. This checks
+      # every field of every finish body against the published schema, and
+      # that the face pass is now the student's choice.
+      - name: Verify every HD Finish body holds to RunningHub's published schema
+        run: node test/verify_retouch_finish.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

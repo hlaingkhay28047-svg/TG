@@ -2878,6 +2878,11 @@ html.splashing #splash{display:flex}
           <div class="subh" id="v2LbBody"></div><div class="chips" id="v2BodyChips"></div>
           <div class="subh" id="v2LbShape"></div><div class="chips" id="v2ShapeChips"></div>
           <p class="mut" id="v2ShapeNote" style="display:none"></p>
+          <!-- v6.7.0 — the HD Finish engine, the same shared setting the
+               Studio options card writes: there is one finish pass between
+               Retouch A, Retouch B and Retouch Pro, so there is one choice. -->
+          <div class="subh" id="v2LbFinish"></div>
+          <div id="v2FinHost"></div>
           <div class="subh" id="v2LbPreview"></div>
           <div class="chips" id="v2RtCarry"></div>
           <pre id="v2PromptPreview" class="mut" style="white-space:pre-wrap;font-size:var(--fs-2xs);max-height:180px;overflow:auto"></pre>
@@ -4865,6 +4870,17 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.7.0", kind:"page", ref:"pgRetouch",
+    t:{my:"HD Finish ကို ကိုယ်တိုင် ရွေးလို့ရပြီ",en:"You choose how the HD Finish works",shn:"လိူၵ်ႈ HD Finish လႆႈယဝ်ႉ",kac:"HD Finish hpe nang lata lu sai",th:"เลือกวิธี HD Finish ได้เองแล้ว",zh:"HD Finish 现在由你决定",vi:"Bạn tự chọn cách HD Finish chạy",id:"Anda yang memilih cara HD Finish bekerja",ms:"Anda pilih cara HD Finish berfungsi"},
+    s:{my:"Retouch A၊ Retouch B၊ Retouch Pro သုံးခုလုံးရဲ့ HD Finish က engine တစ်ခုတည်းနဲ့ ပုံသေ လုပ်နေခဲ့တာ — ပြီးတော့ RunningHub ရဲ့ default အရ မျက်နှာကို Topaz က ထပ်ပြင်နေတယ်၊ သင် သေချာပြင်ထားတဲ့ အသားအရေ ပျက်သွားနိုင်တယ်။ အခု Retouch Pro ထဲမှာ engine ငါးမျိုး (ပုံမှန်၊ မျက်နှာ အသေးစိတ်၊ ပရင့်ထုတ်၊ ပုံသေး/ဓာတ်ပုံဟောင်း၊ HYPIR ပြန်လည်ပြုပြင်) ရွေးလို့ရပြီး၊ \"ငါ့ retouch ကို မထိနဲ့\" လို့လည်း ပြောလို့ရပါပြီ။ ရွေးလိုက်တာက သုံးမျက်နှာလုံးအတွက် တူတူပါပဲ။",
+       en:"The HD Finish behind Retouch A, Retouch B and Retouch Pro was one fixed engine — and RunningHub's default let Topaz re-work the face on top of the skin retouch you had just paid for. Retouch Pro now offers five engines (Standard, Face detail, For print, Small or old photo, HYPIR restore) and lets you say \"keep my retouch\" so the face pass stays off. The choice is shared by all three pages.",
+       shn:"HD Finish တႃႇ Retouch A, B လႄႈ Pro ၸႂ်ႉ engine လဵဝ်ၵူၺ်း — ယၢမ်းလဵဝ် လိူၵ်ႈလႆႈ ႁႃႈမဵဝ်း လႄႈ ဢွၼ်ႇပိၵ်ႉ face pass လႆႈ",
+       kac:"Retouch A, B, Pro ni a HD Finish gaw engine langai sha nga ai — ya gaw manga lata lu, myiman pass mung sat lu ai",
+       th:"HD Finish ของ Retouch A, B และ Pro เคยใช้เอนจินเดียวตายตัว และค่าเริ่มต้นของ RunningHub ปล่อยให้ Topaz แก้ใบหน้าทับรีทัชที่คุณเพิ่งทำ ตอนนี้เลือกได้ 5 เอนจิน และสั่ง \"อย่าแตะรีทัชของฉัน\" ได้",
+       zh:"Retouch A、B、Pro 的 HD Finish 过去固定用一个引擎，而 RunningHub 的默认设置会让 Topaz 在你刚做好的精修之上重做面部。现在可选五种引擎，也可以要求保留你的精修。",
+       vi:"HD Finish của Retouch A, B và Pro trước đây cố định một engine, và mặc định của RunningHub để Topaz làm lại khuôn mặt đè lên bản retouch bạn vừa trả tiền. Giờ có năm engine và tuỳ chọn giữ nguyên bản retouch.",
+       id:"HD Finish di Retouch A, B dan Pro dulu satu engine tetap, dan default RunningHub membiarkan Topaz mengolah ulang wajah di atas retouch Anda. Kini ada lima engine dan opsi mempertahankan retouch Anda.",
+       ms:"HD Finish pada Retouch A, B dan Pro dahulu satu engine tetap, dan lalai RunningHub membiarkan Topaz mengolah semula wajah atas retouch anda. Kini ada lima engine dan pilihan mengekalkan retouch anda."} },
   { v:"6.6.0", kind:"page", ref:"pgV2V",
     t:{my:"မျက်နှာ + ဆံပင် လဲတဲ့ ကတ် အသစ်",en:"A new card: face and hair together",shn:"ၵၢတ်ႉမႂ်ႇ — လႅၵ်ႈၼႃႈလႄႈၽိူၼ်း",kac:"Kat nnan — myiman hte kara galai",th:"การ์ดใหม่: เปลี่ยนทั้งหน้าและผม",zh:"新卡片：脸和发型一起换",vi:"Thẻ mới: đổi cả mặt lẫn tóc",id:"Kartu baru: wajah dan rambut sekaligus",ms:"Kad baharu: wajah dan rambut sekali"},
     s:{my:"VIDEO → VIDEO မှာ ကတ် ဆယ်ခုမြောက် ပါလာပါပြီ။ \"မျက်နှာပဲ လဲမယ်\" ကတ်က ဆံပင်ကိုပါ တစ်ခါတလေ ပြောင်းသွားတတ်လို့ — အဲ့ဒါ model ရဲ့ သဘာဝပါ — အခု တစ်ကယ်ထွက်လာတဲ့ ရလဒ်အတိုင်း အတိအကျ ရေးထားတဲ့ ကတ်အသစ် ထပ်ထည့်ပေးလိုက်ပါတယ်: မျက်နှာနဲ့ ဆံပင် နှစ်ခုလုံး ပုံထဲကလို ဖြစ်သွားပြီး၊ လည်ပင်းအောက် ကိုယ်လုံး၊ အဝတ်အစား၊ နေရာ အတိုင်း ကျန်ပါမယ်။ ရှိပြီးသား ကတ်ကို မထိထားပါဘူး။",en:"VIDEO → VIDEO gains a tenth card. The \"face only\" card sometimes brings the hair across as well — that is the model's behaviour, not a setting — so rather than change a card you already use, here is a new one that says exactly what comes out: the face AND the hair become the person in your photo, while the body, the clothes and the scene below the neck stay as filmed.",shn:"VIDEO → VIDEO မီးၵၢတ်ႉဢၼ်ထူၼ်ႈသိပ်း — လႅၵ်ႈၼႃႈလႄႈၽိူၼ်းၶူဝ်း၊ တူဝ်ၶိင်းလႄႈတီႈ ဢမ်ႇလႅၵ်ႈ",kac:"VIDEO → VIDEO hta kat shi ngu ai nnan nga sai — myiman hte kara galai, hkum hte shara n galai",th:"VIDEO → VIDEO มีการ์ดใบที่สิบ การ์ด \"เปลี่ยนแค่ใบหน้า\" บางครั้งเปลี่ยนผมมาด้วย ซึ่งเป็นพฤติกรรมของโมเดลเอง จึงเพิ่มการ์ดใหม่ที่บอกตรง ๆ ว่าได้อะไร: ทั้งใบหน้าและผมจะกลายเป็นคนในรูปของคุณ ส่วนลำตัว เสื้อผ้า และฉากใต้คอคงเดิม",zh:"VIDEO → VIDEO 增加第十张卡。\"只换脸\"那张有时会连发型一起换 — 这是模型本身的行为 — 与其改动你已经在用的卡片，不如新增一张把结果说清楚的：脸和发型都会变成你照片里的人，脖子以下的身形、服装和场景保持原样。",vi:"VIDEO → VIDEO có thẻ thứ mười. Thẻ \"chỉ đổi khuôn mặt\" đôi khi đổi cả tóc — đó là hành vi của mô hình — nên thay vì sửa thẻ bạn đang dùng, đây là thẻ mới nói đúng kết quả: khuôn mặt VÀ mái tóc thành người trong ảnh của bạn, còn thân người, trang phục và bối cảnh dưới cổ giữ nguyên.",id:"VIDEO → VIDEO mendapat kartu kesepuluh. Kartu \"ganti wajah saja\" kadang ikut mengganti rambut — itu perilaku modelnya — jadi alih-alih mengubah kartu yang sudah Anda pakai, ini kartu baru yang menyebutkan hasilnya apa adanya: wajah DAN rambut menjadi orang di foto Anda, sementara tubuh, pakaian, dan latar di bawah leher tetap.",ms:"VIDEO → VIDEO mendapat kad kesepuluh. Kad \"tukar wajah sahaja\" kadangkala turut menukar rambut — itu perilaku modelnya — jadi daripada mengubah kad yang anda sudah guna, ini kad baharu yang menyatakan hasilnya dengan jujur: wajah DAN rambut menjadi orang dalam foto anda, manakala badan, pakaian dan latar di bawah leher kekal."} },
@@ -7435,6 +7451,112 @@ var RH_VIDEO_TIMEOUT_MS = 600000; /* video renders run far longer than images */
 function hdFinishSize(forced){
   if(forced) return forced;
   var s=$("selSize"); return (s && s.value) || "";
+}
+
+/* ---- WHICH ENGINE FINISHES A RETOUCH (v6.7.0) ----------------------------
+   Retouch A, Retouch B and Retouch Pro all end in the same HD Finish pass,
+   and until now that pass was one hard-wired endpoint with no options:
+   topazlabs/image-upscale-standard-v2 at its bare defaults. Two things were
+   wrong with that.
+
+   FIRST, the defaults are not neutral. RunningHub's published schema for
+   that endpoint gives faceEnhancement a default of TRUE at strength 0.8 —
+   so every HD Finish in this app was quietly running a Topaz face pass over
+   the skin retouch the student had just paid a model to do, and there was no
+   way to ask it not to. A retoucher who spends twenty minutes on pores does
+   not want them re-imagined at the last step.
+
+   SECOND, one engine cannot suit every source. RunningHub publishes several,
+   and a wedding studio really does get all of these photos: a clean DSLR
+   portrait, a face that needs detail, a big print job, and — often — a small
+   old phone shot or a scan of a printed picture.
+
+   Every field below is from the endpoint's own published parameter table in
+   test/fixtures/rh-model-registry.public.json, which CI re-checks. Note the
+   two shapes: some take a relative "scale" enum, others absolute
+   outputWidth/outputHeight, and HYPIR takes an integer "upscale" factor. */
+var RH_FINISH_ENGINES = [
+  /* today's behaviour, kept as the default so nothing changes unasked */
+  { id:"standard", apiPath:"topazlabs/image-upscale-standard-v2",       body:"scale",    face:true,
+    label:{my:"ပုံမှန်",en:"Standard",shn:"ပုၵ်ႉမၢၼ်ႇ",kac:"Hkrang",th:"มาตรฐาน",zh:"标准",vi:"Tiêu chuẩn",id:"Standar",ms:"Standard"} },
+  { id:"faces",    apiPath:"topazlabs/image-upscale-detail-faces",      body:"detail",   face:false,
+    label:{my:"မျက်နှာ အသေးစိတ်",en:"Face detail",shn:"ၼႃႈ လမ်ႇလွင်ႈ",kac:"Myiman detail",th:"รายละเอียดใบหน้า",zh:"面部细节",vi:"Chi tiết khuôn mặt",id:"Detail wajah",ms:"Perincian wajah"} },
+  { id:"fidelity", apiPath:"topazlabs/image-upscale-high-fidelity-v3",  body:"fidelity", face:true,
+    label:{my:"ပရင့်ထုတ် (High Fidelity)",en:"For print",shn:"တႃႇ Print",kac:"Print na",th:"สำหรับพิมพ์",zh:"用于印刷",vi:"Để in",id:"Untuk cetak",ms:"Untuk cetak"} },
+  { id:"lowres",   apiPath:"topazlabs/image-upscale/low-resolution-v2", body:"scale",    face:true,
+    label:{my:"ပုံသေး / ဓာတ်ပုံဟောင်း",en:"Small or old photo",shn:"ၶႅပ်းလဵၵ်ႉ/ၵဝ်ႇ",kac:"Sumla kaji/dinghpring",th:"ภาพเล็กหรือเก่า",zh:"小图或旧照片",vi:"Ảnh nhỏ hoặc cũ",id:"Foto kecil atau lama",ms:"Foto kecil atau lama"} },
+  { id:"restore",  apiPath:"image-enhance/hypir-balance",               body:"hypir",    face:false,
+    label:{my:"ပြန်လည်ပြုပြင် (HYPIR)",en:"Restore (HYPIR)",shn:"မႄးၶိုၼ်း (HYPIR)",kac:"Bai galaw (HYPIR)",th:"ฟื้นฟู (HYPIR)",zh:"修复 (HYPIR)",vi:"Phục hồi (HYPIR)",id:"Pulihkan (HYPIR)",ms:"Pulihkan (HYPIR)"} }
+];
+function rhFinishEngine(id){
+  return RH_FINISH_ENGINES.filter(function(e){ return e.id===id; })[0] || RH_FINISH_ENGINES[0];
+}
+/* the absolute pixel target the W/H-shaped engines want, from the same size
+   tier the scale-shaped ones read — "" (Auto) leaves both fields off so the
+   endpoint's own documented default applies */
+function rhFinishWH(sizeSel){
+  var z=String(sizeSel||"").toLowerCase();
+  if(z==="4k") return {w:3840,h:2160};
+  if(z==="2k") return {w:2560,h:1440};
+  if(z==="1k") return {w:1920,h:1080};
+  return null;
+}
+/* faceMode is the honest part: "auto" omits the face fields entirely so the
+   endpoint's published default stands (what this app has always sent),
+   "keep" turns the face pass OFF so a careful retouch survives the finish,
+   and "strong" asks for it at full strength. Engines whose schema has no
+   face fields ignore it. */
+function rhFinishBody(engine, imageUrl, sizeSel, faceMode){
+  var e=engine||RH_FINISH_ENGINES[0];
+  var body={ imageUrl: imageUrl||"" };
+  var wh=rhFinishWH(sizeSel);
+  if(e.body==="scale"){
+    body.scale = rhScaleFromSize(sizeSel) || "2x";
+  } else if(e.body==="detail"){
+    if(wh){ body.outputWidth=wh.w; body.outputHeight=wh.h; }
+    body.detailStrength = 6;                 /* the endpoint's own default */
+  } else if(e.body==="fidelity"){
+    if(wh){ body.outputWidth=wh.w; body.outputHeight=wh.h; }
+    body.strength = 0.25;                    /* the endpoint's own default */
+  } else if(e.body==="hypir"){
+    /* upscale is REQUIRED here and is a plain integer factor, not an enum */
+    var z=String(sizeSel||"").toLowerCase();
+    body.upscale = (z==="4k") ? 4 : (z==="2k") ? 2 : 1;
+  }
+  if(e.face){
+    if(faceMode==="keep"){ body.faceEnhancement=false; }
+    else if(faceMode==="strong"){ body.faceEnhancement=true; body.faceEnhancementStrength=1; }
+    /* "auto" sends nothing — the published default is the historical behaviour */
+  }
+  return body;
+}
+function rhFinishSettings(){
+  var id=svGet("st_fin_engine","standard");
+  return { engine: rhFinishEngine(id), face: svGet("st_fin_face","auto") };
+}
+async function rhV2SubmitFinish(apiKey, engine, imageUrl, sizeSel, faceMode, signal){
+  var body=rhFinishBody(engine, imageUrl, sizeSel, faceMode);
+  var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(engine.apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
+  var j=await r.json().catch(function(){return null;});
+  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  return j.taskId;
+}
+/* the one HD Finish pass all three retouch pages share */
+async function rhGenerateFinish(apiKey, refDataUrls, sizeSel, onTick, signal){
+  if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
+  var st=rhFinishSettings();
+  var imageUrls = await rhV2UploadAll(apiKey, [refDataUrls[0]], signal);
+  var taskId = await rhV2SubmitFinish(apiKey, st.engine, imageUrls[0], sizeSel, st.face, signal);
+  var final = await rhPollTracked(apiKey, taskId, {kind:"image", label:st.engine.apiPath, prompt:"finish "+st.engine.id+" "+(sizeSel||"auto")}, onTick, null, signal);
+  var results = (final && final.results) || [];
+  var outs=[];
+  for(var i=0;i<results.length;i++){
+    if(!results[i] || !results[i].url) continue;
+    var dataUrl = await rhDownloadAsDataUrl(results[i].url);
+    var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
+    if(m) outs.push({mime:m[1], b64:m[2]});
+  }
+  return outs;
 }
 var RH_VIDEO_MODELS = [
   /* v5.55.0 — the FULL video catalog, doc-verified. Every entry below that
@@ -12071,6 +12193,13 @@ function v2Sync(){
    the very first paint, before this module's statements have run, so it
    guards on state.v2 (same tolerance renderStPicker uses for state.st). */
 function renderV2Hero(){
+  /* v6.7.0 — the shared HD Finish chips. Ahead of the state guard below on
+     purpose: the row is a setting, not a reading of state.v2, and it must
+     exist the first time the card is seen. The first paint can land before
+     stChips has the tables it reads, so a failed build is retried on the
+     next tick rather than remembered as done. */
+  try{ v2BuildFinishChips(); }
+  catch(e){ setTimeout(function(){ try{ v2BuildFinishChips(); }catch(e2){} }, 0); }
   var v=state.v2; if(!v || !$("v2Hero")) return;
   /* v4.45 — house preset chips: tap = restore all 10 params, ✕ = delete */
   var pr=$("v2PresetRow");
@@ -12275,7 +12404,7 @@ async function v2RunOne(){
       v2SetBusy(true,t("hd_finish")+"…");
       hdAbort=new AbortController(); state.genAbort=hdAbort;
       var res=state.hist[0];
-      var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], hdFinishSize("2K"), function(){}, hdAbort.signal);
+      var outs=await rhGenerateFinish(state.rhKey, ["data:"+res.mime+";base64,"+res.b64], hdFinishSize("2K"), function(){}, hdAbort.signal);
       if(outs && outs[0] && !rsStop){
         state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
         state.result=outs[0]; state.histSel=0;
@@ -12498,6 +12627,47 @@ $("v2LbEyes").textContent=L9({my:"မျက်လုံး ကြည်လင်
 $("v2LbEyebag").textContent=L9({my:"မျက်ကွင်းညို လျှော့",en:"Under-eye circles",shn:"တႂ်ႈတႃမိူင်ႈ လူတ်းယွမ်း",kac:"Myi npu chyip ai shayawm",th:"ลดคล้ำใต้ตา",zh:"淡化黑眼圈",vi:"Giảm quầng thâm",id:"Kurangi mata panda",ms:"Kurangkan lingkaran mata"});
 $("v2LbBody").textContent=L9({my:"ကိုယ်ခန္ဓာ အသားအရေ (လည်ပင်း · ပခုံး · လက် · ကျော)",en:"Body skin retouch (neck · shoulders · arms · back)",shn:"ၽိဝ်ၼိူဝ်ႉတူဝ်ၶိင်း",kac:"Hkum hkrang hpyi retouch",th:"รีทัชผิวกาย (คอ·ไหล่·แขน·หลัง)",zh:"身体皮肤精修（颈·肩·臂·背）",vi:"Retouch da cơ thể (cổ·vai·tay·lưng)",id:"Retouch kulit tubuh",ms:"Retouch kulit badan"});
 $("v2LbShape").textContent=L9({my:"ကိုယ်ဟန် ညင်သာပြင် (ရွေးမှသာ)",en:"Body shape (opt-in)",shn:"ႁၢင်ႈတူဝ် မႄးဢူၼ်ႈဢူၼ်ႈ",kac:"Hkum hkrang (lata yang sha)",th:"ทรงรูปร่าง (เลือกเอง)",zh:"身形微调（自选）",vi:"Dáng người (tự chọn)",id:"Bentuk tubuh (opsional)",ms:"Bentuk badan (pilihan)"});
+$("v2LbFinish").textContent=L9({my:"HD Finish engine (Retouch A/B နဲ့ တူတူ)",en:"HD Finish engine (shared with Retouch A/B)",shn:"HD Finish engine (ၸွမ်း Retouch A/B)",kac:"HD Finish engine (Retouch A/B hte rau)",th:"เอนจิน HD Finish (ใช้ร่วมกับ Retouch A/B)",zh:"HD Finish 引擎（与 Retouch A/B 共用）",vi:"Engine HD Finish (dùng chung với Retouch A/B)",id:"Engine HD Finish (bersama Retouch A/B)",ms:"Engine HD Finish (dikongsi dengan Retouch A/B)"});
+/* v6.7.0 — the same two chip rows the Studio options card builds, over the
+   same svGet/svSet keys, so the choice a student makes on one retouch page
+   is the choice every retouch page makes. Built once, on the first paint. */
+/* Built on the first V2 paint, not here: this block is top-level init code
+   that runs before ST_THUMBS exists, and stChips reads it. v2Sync calls it. */
+function v2BuildFinishChips(){
+  var host=$("v2FinHost"); if(!host || host.dataset.built) return;
+  if(typeof stChips!=="function") return;
+  host.appendChild(stChips({id:"v2_fin_engine_ui",allowOff:false,
+    choices:RH_FINISH_ENGINES.map(function(e){ return [e.id, L9(e.label)]; }),
+    get:function(){ return svGet("st_fin_engine","standard"); },
+    set:function(v){ svSet("st_fin_engine",v||"standard"); v2RenderFinishNote(); }}));
+  host.appendChild(stChips({id:"v2_fin_face_ui",allowOff:false,
+    choices:[
+      ["auto",  L9({my:"မျက်နှာ — အလိုအလျောက်",en:"Face — automatic",shn:"ၼႃႈ — ဢႅၼ်ႇတူဝ်ၵဝ်ႇ",kac:"Myiman — hkum sha",th:"ใบหน้า — อัตโนมัติ",zh:"面部 — 自动",vi:"Khuôn mặt — tự động",id:"Wajah — otomatis",ms:"Wajah — automatik"})],
+      ["keep",  L9({my:"ငါ့ retouch ကို မထိနဲ့",en:"Keep my retouch",shn:"ယႃႇတိူဝ်ႉ retouch ၶွင်ၶႃႈ",kac:"Nye a retouch hkum da",th:"อย่าแตะรีทัชของฉัน",zh:"保留我的精修",vi:"Giữ nguyên bản retouch của tôi",id:"Pertahankan retouch saya",ms:"Kekalkan retouch saya"})],
+      ["strong",L9({my:"မျက်နှာ — အပြင်းဆုံး",en:"Face — strongest",shn:"ၼႃႈ — ႁႅင်းသုတ်း",kac:"Myiman — grau dik",th:"ใบหน้า — แรงสุด",zh:"面部 — 最强",vi:"Khuôn mặt — mạnh nhất",id:"Wajah — terkuat",ms:"Wajah — terkuat"})]],
+    get:function(){ return svGet("st_fin_face","auto"); },
+    set:function(v){ svSet("st_fin_face",v||"auto"); v2RenderFinishNote(); }}));
+  var note=el("p","mut"); note.id="v2FinNote"; host.appendChild(note);
+  /* marked built only now: the first paint can run before stChips has its
+     thumbnail table, and a half-built row must be retried, not remembered */
+  host.dataset.built="1";
+  v2RenderFinishNote();
+}
+/* what the finish will actually do, in the student's own language and named
+   by the endpoint it will call — the honest half of the choice above */
+function v2RenderFinishNote(){
+  var n=$("v2FinNote"); if(!n) return;
+  var st=rhFinishSettings();
+  if(!st.engine.face){
+    n.textContent=st.engine.apiPath+" · "+L9({my:"ဒီ engine မှာ မျက်နှာ ခလုတ် မရှိပါ",en:"this engine has no face control",shn:"engine ၼႆႉ ဢမ်ႇမီးၶလုတ်ႉၼႃႈ",kac:"ndai engine gaw myiman matu n nga ai",th:"เอนจินนี้ไม่มีตัวควบคุมใบหน้า",zh:"该引擎没有面部控制",vi:"engine này không có điều khiển khuôn mặt",id:"engine ini tidak punya kontrol wajah",ms:"engine ini tiada kawalan wajah"});
+    return;
+  }
+  n.textContent=st.engine.apiPath+" · "+(st.face==="keep"
+    ? L9({my:"မျက်နှာ pass ပိတ်ထား — retouch အတိုင်း ကျန်မယ်",en:"face pass off — your retouch survives the finish",shn:"ပိၵ်ႉ face pass — retouch တိုၵ်ႉမီး",kac:"face pass sat da — retouch hkum nga na",th:"ปิดการปรับใบหน้า — รีทัชของคุณจะคงอยู่",zh:"面部处理已关闭 — 你的精修会保留",vi:"tắt xử lý khuôn mặt — bản retouch được giữ nguyên",id:"pemrosesan wajah mati — retouch Anda tetap utuh",ms:"pemprosesan wajah dimatikan — retouch anda kekal"})
+    : st.face==="strong"
+    ? L9({my:"မျက်နှာ pass အပြင်းဆုံး (strength 1)",en:"face pass at full strength (1.0)",shn:"face pass ႁႅင်းတဵမ် (1.0)",kac:"face pass grau dik (1.0)",th:"ปรับใบหน้าเต็มกำลัง (1.0)",zh:"面部处理全强度 (1.0)",vi:"xử lý khuôn mặt hết mức (1.0)",id:"pemrosesan wajah penuh (1.0)",ms:"pemprosesan wajah penuh (1.0)"})
+    : L9({my:"RunningHub ရဲ့ မူလ default (မျက်နှာ ဖွင့်၊ 0.8)",en:"RunningHub's own default (face on, 0.8)",shn:"default ၶွင် RunningHub (ၼႃႈ ပိုတ်ႇ, 0.8)",kac:"RunningHub a default (myiman hpaw, 0.8)",th:"ค่าเริ่มต้นของ RunningHub (เปิดใบหน้า 0.8)",zh:"RunningHub 自身默认（面部开启，0.8）",vi:"mặc định của RunningHub (bật khuôn mặt, 0.8)",id:"default RunningHub (wajah aktif, 0.8)",ms:"lalai RunningHub (wajah hidup, 0.8)"}));
+}
 $("v2LbPreview").textContent=L9({my:"Prompt အစမ်းကြည့်",en:"Prompt preview",shn:"တူၺ်း Prompt ဢွၼ်တၢင်း",kac:"Prompt hpe shawng yu u",th:"ดูตัวอย่าง prompt",zh:"Prompt 预览",vi:"Xem trước prompt",id:"Pratinjau prompt",ms:"Pratonton prompt"});
 $("v2LbManual").textContent=L9({my:"Manual — One-Tap / Sliders",en:"Manual — One-Tap & Sliders",shn:"Manual — One-Tap / Sliders",kac:"Manual — One-Tap hte Sliders",th:"Manual — One-Tap และ Sliders",zh:"手动 — 一键与滑块",vi:"Thủ công — One-Tap & Sliders",id:"Manual — One-Tap & Slider",ms:"Manual — One-Tap & Slider"});
 setIcnText($("btnV2Retry"),"i-retry",t("retry"));
@@ -13707,7 +13877,7 @@ async function ptHdFinish(){
   try{
     hdAbort=new AbortController(); state.genAbort=hdAbort;
     var res=state.hist[0];
-    var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], hdFinishSize("2K"), function(){}, hdAbort.signal);
+    var outs=await rhGenerateFinish(state.rhKey, ["data:"+res.mime+";base64,"+res.b64], hdFinishSize("2K"), function(){}, hdAbort.signal);
     if(outs && outs[0] && !PT.stop){
       state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
       state.result=outs[0]; state.histSel=0;
@@ -20924,7 +21094,7 @@ $("btnStGen").onclick=async function(){
         hdAbortSt=new AbortController(); state.genAbort=hdAbortSt;
         if(stStopB) stStopB.style.display="";
         var res=state.hist[0];
-        var outs=await rhGenerateUpscale(state.rhKey, rhEffectiveApiPath("upscale-pro"), ["data:"+res.mime+";base64,"+res.b64], hdFinishSize(), function(){}, hdAbortSt.signal);
+        var outs=await rhGenerateFinish(state.rhKey, ["data:"+res.mime+";base64,"+res.b64], hdFinishSize(), function(){}, hdAbortSt.signal);
         if(outs && outs[0]){
           state.hist.unshift(outs[0]); while(state.hist.length>8) state.hist.pop();
           state.result=outs[0]; state.histSel=0;
@@ -24543,7 +24713,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.6.3";
+var APP_VER="6.7.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
