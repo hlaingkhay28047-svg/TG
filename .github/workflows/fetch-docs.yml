@@ -48,6 +48,34 @@ jobs:
               || echo "FETCH-FAILED ${u}"
             echo "=====INDEX ${u} END====="
           done
+  price:
+    # v6.1.0 — the owner asked whether RunningHub has anything FREE a student
+    # could test with. The API specs never say what a call costs; the cost
+    # lives on the public pricing/plan pages and in the account balance the
+    # app already reads (remainCoins). This job reads only the PUBLIC pages
+    # and prints every line that mentions a free tier, a coin, or a price, so
+    # the answer comes from RunningHub's own words rather than memory. No
+    # secrets, nothing written to the repo.
+    name: price
+    runs-on: ubuntu-24.04
+    steps:
+      - name: What RunningHub says about free use and cost
+        run: |
+          for u in \
+            "https://www.runninghub.ai/pricing" \
+            "https://www.runninghub.ai/en/pricing" \
+            "https://www.runninghub.ai/" \
+            "https://www.runninghub.ai/runninghub-api-doc-en/" ; do
+            echo "=====PRICE ${u} START====="
+            body=$(curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 "$u" || echo "FETCH-FAILED")
+            echo "BYTES: ${#body}"
+            printf '%s' "$body" \
+              | tr '>' '>\n' \
+              | grep -oiE '[^<>]{0,120}(free[^<>]{0,60}|[0-9][0-9., ]*(rh )?coins?|coins?[^<>]{0,40}|per (image|run|call|generation)|\$[0-9]+(\.[0-9]+)?)[^<>]{0,80}' \
+              | grep -viE '^\s*$' | sed 's/^[[:space:]]*//' | sort -u | head -60 \
+              || echo "NO-MATCH"
+            echo "=====PRICE ${u} END====="
+          done
   fetch:
     name: fetch-${{ matrix.name }}
     runs-on: ubuntu-24.04
@@ -74,6 +102,14 @@ jobs:
           # is fetched here rather than assumed from its two siblings.
           - name: new6c
             ids: "498427803"
+          # Round 7 (v6.1.0) — every api-<id> the sitemap links today that no
+          # earlier round has read. Identify-only: a title, a path and the
+          # folder is enough to say whether a page is a model this app could
+          # offer, and only a read spec ever licenses an entry.
+          - name: new7a
+            ids: "502119462 502119463 505575334 505575335 505922313 505922314 508112799"
+          - name: new7b
+            ids: "509122419 509122420 510573734 510773979 510773980"
     steps:
       # v5.89.0 — two modes. IDENTIFY prints only the few lines that say WHAT
       # an endpoint is (its title, its path, the folder the doc site files it
