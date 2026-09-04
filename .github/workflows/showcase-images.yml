@@ -564,27 +564,49 @@ jobs:
           path: out/
           retention-days: 3
           if-no-files-found: warn
+      # v6.4.0 — the v2vcards lane returns MP4s, not PNGs, and its art belongs
+      # in the app's card folder rather than the landing's showcase folder. It
+      # is composed here, on the runner that has the clips, by the same script
+      # a person would run locally — so what lands on the drop branch is the
+      # finished card, not raw footage nobody can use.
+      - name: Compose the Video Smart Workflow card art
+        if: success()
+        run: |
+          set -euo pipefail
+          ls out/v2v-*.mp4 >/dev/null 2>&1 || { echo "no v2v clips in this run — nothing to compose"; exit 0; }
+          python3 -m pip install --quiet --disable-pip-version-check Pillow
+          python3 tools/build_v2v_card_art.py --pairs out --out docs/app/lib/vid --tmp "$RUNNER_TEMP/v2vart" || true
+          mkdir -p pub/cards
+          for f in docs/app/lib/vid/vt-*.jpg; do [ -e "$f" ] && cp "$f" pub/cards/; done
+          ls -la pub/cards/ || true
       - name: Convert to shipping JPGs and push the drop branch
         if: success()
         run: |
           set -euo pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick >/dev/null
           mkdir -p pub
+          shopt -s nullglob
           for f in out/*.png; do
             b=$(basename "$f" .png)
             # no crop, no resize beyond a sane web ceiling — the pair must stay
             # pixel-comparable; only the encode changes
             convert "$f" -resize '1440x1440>' -quality 86 "pub/$b.jpg"
           done
-          ls -la pub/
+          pubs=(pub/*.jpg); cards=(pub/cards/*.jpg)
+          if [ ${#pubs[@]} -eq 0 ] && [ ${#cards[@]} -eq 0 ]; then
+            echo "nothing composed and nothing converted — not pushing an empty drop"
+            exit 1
+          fi
+          ls -la pub/ pub/cards/ 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # ORPHAN commit holding ONLY the images — no .github in the tree, so
           # the token needs no workflows permission (the hero-clips lesson).
           git checkout --orphan showcase-drop
           git rm -rf --cached . >/dev/null
-          mkdir -p docs/assets/site/ba
-          cp pub/* docs/assets/site/ba/
-          git add -f docs/assets/site/ba
+          mkdir -p docs/assets/site/ba docs/app/lib/vid
+          [ ${#pubs[@]} -gt 0 ] && cp "${pubs[@]}" docs/assets/site/ba/
+          [ ${#cards[@]} -gt 0 ] && cp "${cards[@]}" docs/app/lib/vid/
+          git add -f docs/assets/site/ba docs/app/lib/vid
           git commit -m "Showcase before/after pairs: generated drop"
           git push -f origin showcase-drop
