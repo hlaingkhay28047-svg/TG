@@ -365,6 +365,16 @@ jobs:
       - name: Verify work survives leaving the app
         run: PORT=8931 node test/verify_generate_continuity.js
 
+      # v6.4.0 — the owner asked for the little proportioned boxes beside the
+      # ratio choice in the Smart Workflow cards. The rail had existed since
+      # v5.56.0 and the wizard called for it, but the wizard builds its step
+      # off-document and the attach looked its select up by id, which cannot
+      # see a detached element — so the call returned on its first line, in
+      # silence, on the one screen where a student who does not know what
+      # "3:4" means is choosing.
+      - name: Verify the ratio is shown as a shape, in the workflow cards too
+        run: PORT=8931 node test/verify_wizard_ratio_rail.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

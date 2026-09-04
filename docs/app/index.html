@@ -8687,8 +8687,18 @@ function wfRoomyModelLabel(chars, need){
    so the rail only mirrors options → chips and writes taps back. Model swaps
    (childList), upscale-kind hiding (style attribute) and persisted restores
    (change events) all flow through the observer untouched. */
-function ratioRailAttach(selId){
-  var sel=$(selId); if(!sel || sel._rail) return;
+/* v6.4.0 — takes an ELEMENT as well as an id. The Smart Workflow wizard
+   builds its whole step off-document and appends it at the end, so by the time
+   this ran for wiz_selRatio the clone existed but document.getElementById
+   could not see it — the call returned on the first line and the wizard's
+   ratio picker shipped as a bare "3:4" dropdown with no shapes beside it,
+   while the Create card two taps away had the rail. The owner asked for the
+   little rectangles in the workflow cards; they were written, and never
+   reached the one screen that most needs them. */
+function ratioRailAttach(selOrId){
+  var sel = (typeof selOrId === "string") ? $(selOrId) : selOrId;
+  if(!sel || sel._rail) return;
+  var selId = sel.id || String(selOrId);
   var rail=document.createElement("div");
   rail.className="ratio-rail"; rail.id=selId+"Rail";
   /* v5.56.0 — the wizard's cloned generate row (.wizrow) hosts a rail too */
@@ -9873,9 +9883,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
            the cloned select: proportioned boxes, dashed "A" for Auto, gold
            highlight. The clone is rebuilt on every change, so any previous
            rail is dropped and a fresh one attached to the live clone. */
-        var oldRail=$("wiz_selRatioRail");
+        var oldRail=row.parentNode && row.parentNode.querySelector("#wiz_selRatioRail");
         if(oldRail && oldRail.parentNode) oldRail.parentNode.removeChild(oldRail);
-        if(row.parentNode && typeof ratioRailAttach==="function") ratioRailAttach("wiz_selRatio");
+        /* by ELEMENT, not by id: this row is still off-document on the first
+           build, and getElementById cannot see it there */
+        var wizRatioSel = row.querySelector("#wiz_selRatio");
+        if(row.parentNode && wizRatioSel && typeof ratioRailAttach==="function") ratioRailAttach(wizRatioSel);
       };
       /* v4.28 C1: the footer names the engine that will actually run — not a
          hardcoded "Gemini" — and re-renders when the provider clone changes */

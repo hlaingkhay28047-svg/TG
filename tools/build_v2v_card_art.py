@@ -59,7 +59,10 @@ INK = (13, 15, 22)
 FRAME_PLAN = {
     "vtExtend":    {"left": "end", "right": "tail"},
     "vtRestore4K": {"left": "mid", "right": "mid", "zoom": 2.4},
-    "vtChar30":    {"left_from_pairs": "v2v-ref.png"},
+    # the whole point of this card is MOTION, which a middle frame of a gentle
+    # performance cannot show at all: the pair came back looking identical.
+    # Late in the clip the head has actually turned.
+    "vtChar30":    {"left_from_pairs": "v2v-ref.png", "right": "late"},
 }
 
 
@@ -137,9 +140,12 @@ def compose(before_jpg, after_jpg, dest, zoom=1.0):
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=INK + (240,), outline=GOLD + (255,), width=3)
     d.polygon([(cx - 8, cy - 13), (cx + 11, cy), (cx - 8, cy + 13)], fill=GOLD + (255,))
 
+    # TOP corners, not bottom: a burnt-in caption sits at the bottom of a
+    # frame, so the subtitle card's BEFORE pill landed on the very caption the
+    # card exists to remove. Nothing a card demonstrates lives up here.
     f = load_font(26, bold=True)
-    tick(d, (22, CARD_H - 22 - (f.size + 16)), "BEFORE", f)
-    tick(d, (CARD_W - 22, CARD_H - 22 - (f.size + 16)), "AFTER", f, align_right=True)
+    tick(d, (22, 22), "BEFORE", f)
+    tick(d, (CARD_W - 22, 22), "AFTER", f, align_right=True)
 
     card = Image.alpha_composite(card.convert("RGBA"), over).convert("RGB")
     card.save(dest, "JPEG", quality=88, optimize=True, progressive=True)
@@ -200,6 +206,8 @@ def main():
                 return max(0.0, dur - 0.25)
             if which == "tail":
                 return max(0.0, dur - 0.4)
+            if which == "late":
+                return max(0.0, dur * 0.82)
             return dur * 0.45
 
         rt = at(plan.get("right", "mid"), res_dur)

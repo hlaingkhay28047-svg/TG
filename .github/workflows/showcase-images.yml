@@ -313,8 +313,12 @@ jobs:
                 echo "== card sources: generating a new clip and a new portrait"
                 T2I_PATH="rhart-image-n-pro-official/text-to-image"
                 T2V_PATH="kling-v2.5-turbo-std/text-to-video"
-                CARD_SCENE="A young Myanmar woman in her twenties standing in a bright modern photography studio, three-quarter view, soft window light from the left, plain warm-grey seamless backdrop, wearing a simple deep-teal blouse, hair loose to her shoulders, calm natural expression, photorealistic 85mm portrait, sharp and evenly lit."
-                CARD_REF="A different young Myanmar woman in her twenties, head and shoulders facing the camera, soft even studio light, plain light-grey background, wearing a plain cream blouse, hair tied back, natural make-up, calm neutral expression, photorealistic 85mm portrait. Clear unobstructed view of the whole face."
+                # owner, on the first fresh wave: the demo people should read
+                # as young East Asian women. "Myanmar" alone gave the model
+                # too much latitude and it returned a South-Asian face, so the
+                # look is named explicitly rather than left to chance.
+                CARD_SCENE="A young Chinese woman in her early twenties standing in a bright modern photography studio, East Asian features, fair clear skin, three-quarter view, soft window light from the left, plain warm-grey seamless backdrop, wearing a simple deep-teal blouse, straight black hair loose to her shoulders, calm natural expression, photorealistic 85mm portrait, sharp and evenly lit."
+                CARD_REF="A DIFFERENT young Chinese woman in her early twenties, East Asian features, fair clear skin, head and shoulders facing the camera, soft even studio light, plain light-grey background, wearing a plain cream blouse, straight black hair tied back, natural make-up, calm neutral expression, photorealistic 85mm portrait. Clear unobstructed view of the whole face."
                 srcbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"16:9","duration":"5"}))' "$CARD_SCENE She turns her head slowly towards the camera and settles, a small natural smile, the camera holds completely still.")
                 submit "v2v-source" "$T2V_PATH" "$srcbody" mp4 || { echo "CARD SOURCE CLIP FAILED"; fail=1; continue; }
                 refbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"3:4","resolution":"2k"}))' "$CARD_REF")
