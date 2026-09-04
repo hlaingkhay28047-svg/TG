@@ -215,6 +215,36 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   report("A9) no card asks for something it also promises to keep",
     contradictions.length === 0, contradictions);
 
+  /* A7b — v6.4.0. The other way a clip can be wrong for a card: wan-2.7's
+     duration is the TOTAL the result runs, so a clip longer than it is refused
+     by the endpoint itself. The first render wave proved it — a 5.04-second
+     source against a card asking for 5 came back errorCode 1007, after the
+     submit. A card carrying clipUnder must name an option its tool actually
+     has, and must not ALSO default that option to something its own summary
+     calls too short. */
+  const underGaps = [];
+  WF.filter(w => w.clipUnder).forEach(w => {
+    const t = TOOLS.find(x => x.id === w.model);
+    const o = (t && t.options || []).find(x => x.key === w.clipUnder);
+    if (!o) { underGaps.push(w.key + ": clipUnder names " + w.clipUnder + ", which its tool has no option for"); return; }
+    const chosen = Number((w.opts || {})[w.clipUnder] !== undefined ? w.opts[w.clipUnder] : o.def);
+    const highest = Math.max.apply(null, o.values.map(Number).filter(n => !isNaN(n)));
+    if (!chosen) { underGaps.push(w.key + ": no usable default for " + w.clipUnder); return; }
+    /* the card is "make it longer": defaulting to the LOWEST value its tool
+       offers guarantees the refusal for any ordinary clip */
+    const lowest = Math.min.apply(null, o.values.map(Number).filter(n => !isNaN(n)));
+    if (chosen <= lowest) underGaps.push(w.key + ": defaults " + w.clipUnder + " to its tool's smallest value (" + chosen + ")");
+    if (chosen > highest) underGaps.push(w.key + ": defaults " + w.clipUnder + " past what its tool offers");
+  });
+  report("A7b) a card gated on one of its tool's options names a real one, and does not default it to the smallest",
+    underGaps.length === 0, underGaps);
+  /* and the app has to be able to ENFORCE it — a gate nothing reads is a
+     comment, and the student still learns about it from the error */
+  report("A7c) the app measures the clip against that option before the run is paid for",
+    APP.indexOf("w.clipUnder") >= 0 && APP.indexOf("VT_UNDER_WARN") >= 0 &&
+    /_vtUnderBound/.test(APP),
+    "nothing reads clipUnder, or changing the option does not re-check the clip");
+
   /* A10 — the sound is the one promise the prompt cannot keep on its own.
      Both cards tell the model to leave the original sound alone, and the
      endpoint has a field for exactly that; if the body ever stopped sending

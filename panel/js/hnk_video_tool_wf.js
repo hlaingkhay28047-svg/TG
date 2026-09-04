@@ -67,10 +67,10 @@ var VT_WF = [
     summary:L9({my:"ဗီဒီယိုကို လက်ဆွဲကာတွန်းပုံစံ ပြန်ဆွဲ — လှုပ်ရှားမှုနဲ့ ကင်မရာ အတိုင်း",en:"Redraw the clip as hand-drawn 2D anime — the motion and the camera stay",shn:"ႁဵတ်းႁၢင်ႈၶႃႉတုၼ်း — တူင်ႉၼိုင်လႄႈၵႄႇမရႃႇ ဢမ်ႇလႅၵ်ႈ",kac:"Video hpe anime hku bai ka — shamu ai hte camera n galai",th:"วาดคลิปใหม่เป็นอนิเมะ 2D — การเคลื่อนไหวและกล้องคงเดิม",zh:"把片子重画成手绘 2D 动漫 — 动作与镜头不变",vi:"Vẽ lại clip thành anime 2D — chuyển động và máy quay giữ nguyên",id:"Gambar ulang klip jadi anime 2D — gerakan dan kamera tetap",ms:"Lukis semula klip jadi anime 2D — gerakan dan kamera kekal"}),
     hint:L9({my:"MP4 တစ်ခု (၁၀ စက္ကန့်အထိ) — ပုံ မလိုပါ",en:"One MP4 (up to 10s) — no photo needed",shn:"MP4 ဢၼ်ၼိုင်ႈ (10 ၸဵၵ်ႇ)",kac:"MP4 langai (10s du hkra)",th:"MP4 หนึ่งไฟล์ (ไม่เกิน 10 วินาที) — ไม่ต้องใช้รูป",zh:"一个 MP4（不超过 10 秒）— 不需要照片",vi:"Một MP4 (tối đa 10 giây) — không cần ảnh",id:"Satu MP4 (maks 10 detik) — tanpa foto",ms:"Satu MP4 (maks 10 saat) — tanpa foto"}),
     text:function(){
-      return "Redraw this video as hand-drawn 2D anime, keeping everything that happens in it.\nLOOK: clean cel shading with flat colour fills, crisp ink outlines, backgrounds simplified into painted anime plates in the same palette as the footage, soft highlights in the hair and the eyes.\nIDENTITY: every person stays recognisably themselves — the same face shape, hairstyle, hair colour and clothing, drawn in the new style rather than replaced by someone else.\n"
+      return "Redraw this video as hand-drawn 2D anime, keeping everything that happens in it.\nLOOK: clean cel shading with flat colour fills, crisp ink outlines, backgrounds simplified into painted anime plates in the same palette as the footage, soft highlights in the hair and the eyes.\nPEOPLE: everyone in the shot is drawn in this style — the same hair, the same clothes, the same person doing the same thing.\n"
        + VT_KEEP + "\n"
        + VT_FINISH + "\n\n"
-       + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, extra characters, photographic skin texture left under the drawing, a face that drifts between shots, a slowed or sped-up result, a watermark or a caption.";
+       + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, extra characters, photographic skin texture left under the drawing, a slowed or sped-up result, a watermark or a caption.";
     } },
 
   { key:"vtFilmLook", art:"lib/vid/vt-filmlook.jpg", model:"gemini-omni-11-video-edit", maxSecs:10, opts:{"resolution": "1080p"},
@@ -97,11 +97,19 @@ var VT_WF = [
        + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, an orange cast on the skin, blown highlights, a face that drifts between shots, a slowed or sped-up result, a watermark or a caption.";
     } },
 
-  { key:"vtExtend", art:"lib/vid/vt-extend.jpg", model:"wan-2-7-video-extend", opts:{"resolution": "1080P", "duration": "5"},
+  /* v6.4.0 — the duration wan-2.7 takes is the TOTAL the result runs, not the
+     seconds added: the endpoint refuses outright with "first_clip duration
+     cannot exceed the requested N seconds" when the clip is longer than it.
+     Asking for five on a card named "make it longer" was therefore wrong twice
+     — semantically, because five is not longer than most clips a student
+     brings, and practically, because a 5.04-second clip failed the call. Ten
+     is the default now, and clipUnder makes the app measure the picked clip
+     against whatever the student chooses instead of finding out at submit. */
+  { key:"vtExtend", art:"lib/vid/vt-extend.jpg", model:"wan-2-7-video-extend", opts:{"resolution": "1080P", "duration": "10"}, clipUnder:"duration",
     need:L9({my:"ဗီဒီယို ၁",en:"1 video",shn:"ဝီဒီရူဝ်ႈ 1",kac:"Video 1",th:"วิดีโอ 1",zh:"1 段视频",vi:"1 video",id:"1 video",ms:"1 video"}),
     label:L9({my:"ဗီဒီယို ဆက်ရှည်မယ်",en:"Make the clip longer",shn:"သိုပ်ႇဝီဒီရူဝ်ႈ",kac:"Video galu shatawt",th:"ต่อคลิปให้ยาวขึ้น",zh:"把片子接长",vi:"Kéo dài clip",id:"Perpanjang klip",ms:"Panjangkan klip"}),
     summary:L9({my:"နောက်ဆုံး frame ကနေ ဆက်သွား — လူ၊ နေရာ၊ အလင်း အတိုင်း (၁၅ စက္ကန့်အထိ ထွက်)",en:"Carries on from the last frame — same person, place and light (output up to 15s)",shn:"သိုပ်ႇတီႈသုတ်း — ၵူၼ်း၊ တီႈ၊ ၾႆး ဢမ်ႇလႅၵ်ႈ",kac:"Hpang jahtum frame kaw na matut — masha, shara, htoi n galai",th:"เล่นต่อจากเฟรมสุดท้าย — คนเดิม ที่เดิม แสงเดิม (ยาวได้ถึง 15 วินาที)",zh:"从最后一帧继续 — 人、场景、光线不变（最长 15 秒）",vi:"Tiếp tục từ khung hình cuối — vẫn người đó, nơi đó, ánh sáng đó (tối đa 15 giây)",id:"Lanjut dari frame terakhir — orang, tempat, dan cahaya sama (hingga 15 detik)",ms:"Sambung dari bingkai terakhir — orang, tempat dan cahaya sama (sehingga 15 saat)"}),
-    hint:L9({my:"MP4 တစ်ခု — ဘယ်နှစ်စက္ကန့် ဆက်မလဲ အောက်မှာ ရွေးပါ",en:"One MP4 — pick how many seconds to add below",shn:"MP4 ဢၼ်ၼိုင်ႈ — လိူၵ်ႈၶၢဝ်းယၢမ်းတီႈတႂ်ႈ",kac:"MP4 langai — npu de ten lata u",th:"MP4 หนึ่งไฟล์ — เลือกจำนวนวินาทีด้านล่าง",zh:"一个 MP4 — 在下面选要延长几秒",vi:"Một MP4 — chọn số giây muốn thêm bên dưới",id:"Satu MP4 — pilih berapa detik tambahannya di bawah",ms:"Satu MP4 — pilih berapa saat tambahan di bawah"}),
+    hint:L9({my:"MP4 တစ်ခု — အောက်က duration က ပြီးလို့ ထွက်မယ့် ဗီဒီယို စုစုပေါင်း အရှည်ပါ၊ ကိုယ့်ဗီဒီယိုထက် ပိုရှည်တာ ရွေးပါ",en:"One MP4 — the duration below is the TOTAL length of the result, so pick one longer than your clip",shn:"MP4 ဢၼ်ၼိုင်ႈ — duration တီႈတႂ်ႈ ပဵၼ်ၶၢဝ်းယၢဝ်းတင်းသဵင်ႈ၊ လိူၵ်ႈဢၼ်ယၢဝ်းလိူဝ်ဝီဒီရူဝ်ႈၸဝ်ႈၵဝ်ႇ",kac:"MP4 langai — npu na duration gaw ah kyu a galu ting re, na a video hta grau galu ai lata u",th:"MP4 หนึ่งไฟล์ — duration ด้านล่างคือความยาวรวมของผลลัพธ์ ให้เลือกยาวกว่าคลิปของคุณ",zh:"一个 MP4 — 下面的 duration 是成片的总长度，请选比你的视频更长的数值",vi:"Một MP4 — duration bên dưới là TỔNG độ dài của kết quả, hãy chọn dài hơn clip của bạn",id:"Satu MP4 — duration di bawah adalah TOTAL panjang hasilnya, pilih yang lebih panjang dari klip Anda",ms:"Satu MP4 — duration di bawah ialah JUMLAH panjang hasilnya, pilih yang lebih panjang daripada klip anda"}),
     text:function(){
       return "Continue this video from its final frame.\nCARRY ON: the same person, the same wardrobe, the same set and the same light; the action that was under way keeps going at the same pace, and the camera keeps the move it was already making.\nJOIN: the first new frame follows the last filmed frame with no cut, no jump and no change of exposure or colour.\n"
        + VT_FINISH + "\n\n"

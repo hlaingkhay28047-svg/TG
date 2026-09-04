@@ -246,6 +246,11 @@ jobs:
           }
           jbody() { python3 -c 'import json,sys; d={"prompt":sys.argv[1],"imageUrls":json.loads(sys.argv[2]),"resolution":"2k"}; ratio=sys.argv[3]; d.update({"aspectRatio":ratio} if ratio else {}); print(json.dumps(d))' "$1" "$2" "$3"; }
           fail=0
+          # v6.4.0 — COLLECT FIRST, THEN RENDER WHAT IS MISSING. RunningHub
+          # charges at submit, so a wave where seven of nine cards succeeded
+          # must never be re-paid to fix the other two: pass the seven task ids
+          # in "tasks" and the two card names in "pairs", and the loop below
+          # skips any card whose clip is already on disk.
           if [ -n "$TASKS" ]; then
             for pair in $TASKS; do
               n="${pair%%:*}"; tid="${pair##*:}"
@@ -260,15 +265,18 @@ jobs:
             done
             ls -la out/ || true
             # a collect-only run of the card lane still has to end with CARDS,
-            # not with nine loose clips: the compose step below runs on the
-            # same "out" directory either way, so hand control back to it
-            # rather than exiting here when there is card footage to compose.
-            if ls out/v2v-*.mp4 >/dev/null 2>&1; then
-              cp docs/app/lib/banners/motion/banner-train-station.mp4 out/v2v-source.mp4 2>/dev/null || true
-              echo "collected card clips — composing below"
+            # not with loose clips: the compose step runs on the same "out"
+            # directory either way. With no pairs left to render, stop here and
+            # let it compose; with pairs given, fall through and render only
+            # what the collection did not already bring home.
+            if [ -z "$PAIRS" ] || [ "$PAIRS" = "none" ]; then
+              if ls out/v2v-*.mp4 >/dev/null 2>&1; then
+                cp docs/app/lib/banners/motion/banner-train-station.mp4 out/v2v-source.mp4 2>/dev/null || true
+                echo "collected card clips — composing below"
+              fi
               exit $fail
             fi
-            exit $fail
+            echo "collected $(ls out/v2v-*.mp4 2>/dev/null | wc -l) clip(s); continuing to render the rest"
           fi
           LIST="$PAIRS"; [ "$LIST" = "all" ] && LIST="retouch scene"
           refurl=$(reupload "$REF_IMG") || { echo "REFERENCE UPLOAD FAILED"; exit 1; }
@@ -321,6 +329,8 @@ jobs:
                 # would make the divider lie
                 cp "$SRC" out/v2v-source.mp4
                 for cname in $(node tools/v2v_card_request.js keys); do
+                  # already collected by the TASKS half above — never pay twice
+                  if [ -s "out/v2v-$cname.mp4" ]; then echo "== $cname already home, skipping"; continue; fi
                   case "$cname" in
                     vtEraseSub)  cvid="$suburl" ;;
                     vtRestore4K) cvid="$softurl" ;;
