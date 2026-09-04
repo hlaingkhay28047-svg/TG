@@ -392,6 +392,15 @@ jobs:
       - name: Verify the Talking Photo page and its two published endpoints
         run: PORT=8931 node test/verify_talking_photo.js
 
+      # v6.6.1 — /lib/ is served cache-first and never revalidated, so a file
+      # replaced under its own name is invisible to a returning device until a
+      # LIB_PURGES entry NEWER than the replacement clears it. The rule was
+      # missed for three waves and the owner saw nine stale cards. This asks
+      # the question that matters: not "does a pattern match" but "does an
+      # entry a returning device has not run yet match".
+      - name: Verify every replaced library file has a purge newer than it
+        run: node test/verify_lib_purge_complete.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

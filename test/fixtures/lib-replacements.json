@@ -1,0 +1,60 @@
+{
+  "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch.",
+  "files": [
+    {
+      "path": "docs/app/lib/vid/vt-charSwap.jpg",
+      "sha256": "c334808cac44ad1326e326946c4b951de0cfca264d3b1a488ac2bb044818ade1",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-faceSwap.jpg",
+      "sha256": "3287eb18b2b4be1c36442272632766e3767be098606958436c86f0ec16e0095b",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-anime.jpg",
+      "sha256": "53d76a4f17a363a5026f74768ac73b55435cc4f9589eb07ebbff3cb41c0c0b9f",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-filmlook.jpg",
+      "sha256": "9b37ea5d2423029e5170a1601818a9513f6d7d8877f066f04e2f9c05d4ff4575",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-heritage.jpg",
+      "sha256": "07a264e1c977181231f674d9024be3e220857aa419af629bffa679fa6105cb34",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-extend.jpg",
+      "sha256": "2333d2f4178b5ed9e536fd36c1cc040841e076c6399cc6129978464366cdc43d",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-restore.jpg",
+      "sha256": "29d6e0c12f2357196cd7889295cb09773c6a2b00b6452f507946c1935acb588d",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-erasesub.jpg",
+      "sha256": "e9f7f9b2c8b37c8db86058de7861dcef48c37817f87306a2a8525b75577e6138",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/vid/vt-char30.jpg",
+      "sha256": "909945761b16001fcfbd425a1a82673bbb684cb2fc499cde048a83e4155f5c7b",
+      "tag": "./__lib-purge-v6-6-1-v2v-cards"
+    },
+    {
+      "path": "docs/app/lib/wf/cards5/look-golden-grecian.jpg",
+      "sha256": "b26624ddc7be1609e0cc7da8bc4724981ab5dce7fe38048a71110e5c50128ecb",
+      "tag": "./__lib-purge-v6-6-1-cards5-refresh"
+    },
+    {
+      "path": "docs/app/lib/wf/cards5/studio-look-copy.jpg",
+      "sha256": "8edfc98bee97c7b087ccacb29dabbbd96882ae70a3dc899bb9ad20a389926ff4",
+      "tag": "./__lib-purge-v6-6-1-cards5-refresh"
+    }
+  ]
+}

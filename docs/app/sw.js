@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-6-0";
+var CACHE = "hnk-web-studio-v6-6-1";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -194,7 +194,33 @@ var LIB_PURGES = [
      /lib/full|ui/ as a whole — those two folders hold 1811 plates EACH, and
      re-fetching 3622 files to deliver 1000 would cost a studio on mobile data
      real money. */
-  { tag: "./__lib-purge-v4-97-lighting500", re: new RegExp("/lib/(full|ui)/user-ref-(13(1[2-9]|[2-9][0-9])|1[4-7][0-9][0-9]|18(0[0-9]|1[01]))\\.jpg$") }
+  { tag: "./__lib-purge-v4-97-lighting500", re: new RegExp("/lib/(full|ui)/user-ref-(13(1[2-9]|[2-9][0-9])|1[4-7][0-9][0-9]|18(0[0-9]|1[01]))\\.jpg$") },
+  /* v6.6.1 — THE SAME BUG THIS LIST EXISTS FOR, WALKED INTO AGAIN. Over
+     6.4.0, 6.5.0 and 6.6.0 the nine Video Smart Workflow cards were re-shot
+     three times and written back under their own filenames. The owner opened
+     the V→V page and saw exactly one card carrying its new art — vtHeadSwap,
+     the tenth, whose filename no device had ever cached — while the other
+     nine still showed pictures replaced days ago. Nothing was wrong with the
+     files, the deploy or the release: /lib/ is served cache-first and never
+     revalidated, and the only /lib/vid/ entry above is v4.83's, whose marker
+     was set on every device long ago and can never fire again.
+
+     Nine names, not the folder: /lib/vid/ also holds the 36 vw-* workflow
+     cards, and re-downloading those to repair nine files is the mobile-data
+     waste this list's precision rule exists to avoid. vt-headswap is
+     deliberately absent — it is a NEW path, so a cache miss fetches it
+     normally, which is precisely why it was the one card that looked right. */
+  { tag: "./__lib-purge-v6-6-1-v2v-cards", re: new RegExp("/lib/vid/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)\\.jpg$") },
+  /* v6.6.1 — AND TWO THE SAME AUDIT FOUND. Looking for what else had been
+     replaced in place turned up two workflow cards nobody had noticed:
+     look-golden-grecian.jpg (5.97.0, the blown white corner) and
+     studio-look-copy.jpg (5.91.0). Both DO match v4.64's cards5 pattern —
+     which is exactly why they were missed. That entry's marker was set on
+     every device back at v4.64, so it can never fire again, and "a pattern
+     matches it" is not the same question as "an entry that has not yet run
+     here matches it". They get their own marker, and the test added with
+     this release asks the second question rather than the first. */
+  { tag: "./__lib-purge-v6-6-1-cards5-refresh", re: new RegExp("/lib/wf/cards5/(look-golden-grecian|studio-look-copy)\\.jpg$") }
 ];
 
 function purgeReplacedLibArt() {

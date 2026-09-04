@@ -132,7 +132,18 @@ const DECLARED = [
   /* v4.97 — the 500 lighting plates re-shot onto the same ids, 1312-1811.
      Bounded to that range: /lib/full and /lib/ui hold 1811 plates each. */
   { tag: "./__lib-purge-v4-97-lighting500",
-    re: /\/lib\/(full|ui)\/user-ref-(13(1[2-9]|[2-9][0-9])|1[4-7][0-9][0-9]|18(0[0-9]|1[01]))\.jpg$/ }
+    re: /\/lib\/(full|ui)\/user-ref-(13(1[2-9]|[2-9][0-9])|1[4-7][0-9][0-9]|18(0[0-9]|1[01]))\.jpg$/ },
+  /* v6.6.1 — the nine Video Smart Workflow cards, re-shot across 6.4.0, 6.5.0
+     and 6.6.0 and written back under their own names while nobody added an
+     entry here. The owner saw one card carrying its new art (the tenth, whose
+     filename was new) and nine still showing days-old pictures. */
+  { tag: "./__lib-purge-v6-6-1-v2v-cards",
+    re: /\/lib\/vid\/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)\.jpg$/ },
+  /* v6.6.1 — and two workflow cards the same audit turned up. Both match the
+     v4.64 cards5 pattern above, which is why they were missed: that entry's
+     marker was set on every device long ago, so matching it repairs nothing. */
+  { tag: "./__lib-purge-v6-6-1-cards5-refresh",
+    re: /\/lib\/wf\/cards5\/(look-golden-grecian|studio-look-copy)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
