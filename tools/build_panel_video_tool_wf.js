@@ -31,20 +31,41 @@ const OUT = path.join(ROOT, "panel/js/hnk_video_tool_wf.js");
 /* the app's block, start to end: the two shared halves, the clip warning and
    the deck itself. Bracket-matched rather than line-counted, because a card's
    text() body carries brackets of its own. */
+function scanArray(html, open) {
+  /* v6.6.0 — COMMENTS ARE NOT CODE. This scanner used to treat every quote
+     as a string delimiter, including the ones inside the block comments that
+     document each card — so a single apostrophe in prose ("the model's
+     behaviour") opened a string that never closed and the lift died with
+     "unterminated". The comment is the last place a lift should be fragile:
+     it is where the reasoning lives, and prose has apostrophes in it. */
+  let depth = 0, i = open;
+  while (i < html.length) {
+    const c = html[i], d = html[i + 1];
+    if (c === "/" && d === "/") { const nl = html.indexOf("\n", i); if (nl < 0) break; i = nl + 1; continue; }
+    if (c === "/" && d === "*") { const e = html.indexOf("*/", i + 2); if (e < 0) break; i = e + 2; continue; }
+    if (c === '"' || c === "'" || c === "`") {
+      const q = c; i++;
+      while (i < html.length) {
+        if (html[i] === "\\") { i += 2; continue; }
+        if (html[i] === q) { i++; break; }
+        i++;
+      }
+      continue;
+    }
+    if (c === "[") depth++;
+    else if (c === "]") { depth--; if (!depth) return i; }
+    i++;
+  }
+  return -1;
+}
+
 function lift(html) {
   const start = html.indexOf("var VT_KEEP = ");
   if (start < 0) throw new Error("VT_KEEP is no longer in the app — the anchor moved.");
   const arr = html.indexOf("var VT_WF = [", start);
   if (arr < 0) throw new Error("VT_WF is no longer in the app — the anchor moved.");
   const open = html.indexOf("[", arr);
-  let depth = 0, end = -1, inStr = false, q = "";
-  for (let i = open; i < html.length; i++) {
-    const c = html[i];
-    if (inStr) { if (c === "\\") { i++; continue; } if (c === q) inStr = false; continue; }
-    if (c === '"' || c === "'") { inStr = true; q = c; continue; }
-    if (c === "[") depth++;
-    else if (c === "]") { depth--; if (!depth) { end = i; break; } }
-  }
+  const end = scanArray(html, open);
   if (end < 0) throw new Error("the app's VT_WF array is unterminated");
   const semi = html.indexOf(";", end);
   const body = html.slice(start, semi + 1);
