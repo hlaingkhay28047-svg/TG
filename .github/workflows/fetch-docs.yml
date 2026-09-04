@@ -59,22 +59,66 @@ jobs:
     name: price
     runs-on: ubuntu-24.04
     steps:
-      - name: What RunningHub says about free use and cost
+      - name: Where RunningHub publishes its prices
+        # Round 7a guessed /pricing and /en/pricing; both answered 0 bytes, so
+        # the path is something else. Ask the site: read its sitemap and its
+        # own homepage links, and print every URL whose path could carry a
+        # price, a coin or a free tier. No guessing from memory.
+        run: |
+          echo "=====SITEMAP CANDIDATES START====="
+          curl -sSL --retry 2 --connect-timeout 10 --max-time 60 "https://www.runninghub.ai/sitemap.xml" \
+            | grep -oE 'https?://[^<> ]+' | sort -u \
+            | grep -iE 'pric|coin|free|plan|vip|member|billing|recharge|subscri|invite' | head -40 \
+            || echo "NO-MATCH"
+          echo "=====SITEMAP CANDIDATES END====="
+          echo "=====HOMEPAGE LINKS START====="
+          curl -sSL --retry 2 --connect-timeout 10 --max-time 60 "https://www.runninghub.ai/" \
+            | grep -oE 'href="[^"]{1,120}"' | sed 's/^href="//; s/"$//' | sort -u \
+            | grep -iE 'pric|coin|free|plan|vip|member|billing|recharge|subscri|invite' | head -40 \
+            || echo "NO-MATCH"
+          echo "=====HOMEPAGE LINKS END====="
+      - name: What those pages say about free use and cost
         run: |
           for u in \
-            "https://www.runninghub.ai/pricing" \
-            "https://www.runninghub.ai/en/pricing" \
-            "https://www.runninghub.ai/" \
-            "https://www.runninghub.ai/runninghub-api-doc-en/" ; do
+            "https://www.runninghub.ai/pricing-plan" \
+            "https://www.runninghub.ai/price" \
+            "https://www.runninghub.ai/coin" \
+            "https://www.runninghub.ai/membership" \
+            "https://www.runninghub.ai/invite" \
+            "https://www.runninghub.ai/runninghub-api-doc-en/api-425761030.md" ; do
             echo "=====PRICE ${u} START====="
             body=$(curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 "$u" || echo "FETCH-FAILED")
             echo "BYTES: ${#body}"
             printf '%s' "$body" \
               | tr '>' '>\n' \
-              | grep -oiE '[^<>]{0,120}(free[^<>]{0,60}|[0-9][0-9., ]*(rh )?coins?|coins?[^<>]{0,40}|per (image|run|call|generation)|\$[0-9]+(\.[0-9]+)?)[^<>]{0,80}' \
-              | grep -viE '^\s*$' | sed 's/^[[:space:]]*//' | sort -u | head -60 \
+              | grep -oiE '[^<>]{0,100}(free[^<>]{0,60}|[0-9][0-9., ]*(rh )?coins?|per (image|run|call|generation)|\$[0-9]+(\.[0-9]+)?)[^<>]{0,60}' \
+              | sed 's/^[[:space:]]*//' | sort -u | head -40 \
               || echo "NO-MATCH"
             echo "=====PRICE ${u} END====="
+          done
+      - name: Does the API itself grant a free quota
+        # The app already reads freeLimit / isFreeThisCall /
+        # remainingFreeLimitCount off /openapi/v2/price-preview (see
+        # rhPricePreview in docs/app/index.html). Find the doc pages whose
+        # own link text names a price, a coin or a free quota, and print
+        # them, so what a "free call" means comes from the spec rather than
+        # from the field names.
+        run: |
+          idx=$(curl -sSL --retry 2 --connect-timeout 10 --max-time 90 \
+                 "https://www.runninghub.ai/runninghub-api-doc-en/" || echo "")
+          echo "BYTES: ${#idx}"
+          echo "=====MONEY PAGES START====="
+          hits=$(printf '%s' "$idx" \
+            | grep -oE 'api-[0-9]{6,}[^<]{0,12}>[^<]{1,80}' \
+            | grep -iE 'price|free|coin|bill|quota|balance|account|wallet' | sort -u | head -20)
+          echo "$hits"
+          echo "=====MONEY PAGES END====="
+          for id in $(printf '%s' "$hits" | grep -oE '[0-9]{6,}' | sort -u | head -8); do
+            echo "=====FREE-SPEC ${id}====="
+            curl -sSL --retry 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              | grep -iE '^# |^  /|free|coin|price' | head -30 \
+              || echo "FETCH-FAILED ${id}"
           done
   fetch:
     name: fetch-${{ matrix.name }}
