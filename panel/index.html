@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.73.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.74.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -895,7 +895,12 @@
         <div role="button" tabindex="0" id="btnVtSave" class="btn" style="margin-top:8px"></div>
         <div class="mut" id="vtOutName" style="margin-top:6px"></div>
         <textarea id="vtPrompt" class="inp" rows="3" style="margin-top:8px"></textarea>
-        <div class="arow" id="vtOpts" style="margin-top:8px">
+        <!-- v6.3.0 — TWO option selects, as the app has. A tool with two
+             documented enums (Wan 2.7 Extend takes resolution AND duration)
+             used to have its second silently dropped here, so the panel sent
+             the endpoint's own default while a Smart Workflow card promised
+             the student something else. -->
+        <div class="arow gen-opts" id="vtOpts" style="margin-top:8px">
           <div class="hsl" id="vtOptHsl">
             <div role="button" tabindex="0" class="hsl-btn" id="vtOptBtn">
               <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-size.svg" alt=""></span>
@@ -903,6 +908,14 @@
               <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
             </div>
             <select class="inp" id="vtOpt"></select>
+          </div>
+          <div class="hsl" id="vtOpt2Hsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="vtOpt2Btn">
+              <span class="hsl-tile t-plain"><img class="hsl-glyph-img" src="icons/ui/hsl-size.svg" alt=""></span>
+              <span class="hsl-lab"><span class="hsl-ctx" id="vtOpt2Ctx">duration</span><span class="hsl-val" id="vtOpt2Val"></span></span>
+              <img class="hsl-caret" src="icons/ui/hsl-caret-gold.svg" alt="">
+            </div>
+            <select class="inp" id="vtOpt2"></select>
           </div>
         </div>
         <div class="mut" id="vtNeedNote" style="margin-top:6px"></div>
@@ -1282,7 +1295,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.73.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.74.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>

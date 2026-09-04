@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.73.0";
+const PANEL_VERSION = "6.74.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10141,13 +10141,25 @@ function vtWfApply(w) {
   if (!P || !w) return;
   vtWfActive = w.key;
   /* the tool first: vtPaintOptions() rebuilds the prompt box and the option
-     select off the chosen tool, so a request written before the switch would
+     selects off the chosen tool, so a request written before the switch would
      be shown in a box the rebuild then hides */
   const sel = $("vtModel");
   if (sel) { try { sel.value = w.model; } catch (e) { } }
   vtPaintOptions();
+  /* v6.3.0 — three cards write no request at all: their endpoints (Topaz
+     Starlight, the subtitle eraser, DreamActor v2) have no prompt field, so
+     there is nothing to say. Writing an empty string over what the student
+     typed would be a silent deletion, and calling w.text() on a card that
+     has none would throw before the card ever applied. */
   const box = $("vtPrompt");
-  if (box) box.value = w.text();
+  if (box && w.text) box.value = w.text();
+  /* and the option defaults the card promises — the very values vtRun reads */
+  if (w.opts) ["vtOpt", "vtOpt2"].forEach(function (id) {
+    const s = $(id);
+    if (!s || s.style.display === "none") return;
+    const k = s.getAttribute("data-key");
+    if (k && w.opts[k] !== undefined) { try { s.value = String(w.opts[k]); } catch (e) { } }
+  });
   renderVtWf();
   vuPaintHsl();
   setStatus(stripIcn(P.tr(w.label)) + " ✓", "ok");
@@ -10203,36 +10215,44 @@ function renderVtWf() {
 function vuPaintHsl() {
   ffPaintHslVal("vuRes", "vuResVal");
   ffPaintHslVal("vtModel", "vtModelVal");
-  ffPaintHslVal("vtOpt", "vtOptVal");
-  const sel = $("vtOpt"), w = $("vtOptHsl");
-  if (sel && w) w.className = "hsl" + (sel.style.display === "none" ? " hsl-off" : "");
-  const ctx = $("vtOptCtx");
-  if (ctx && sel) {
-    const key = sel.getAttribute("data-key") || "";
-    if (key) ctx.textContent = key.replace(/([A-Z])/g, " $1").toLowerCase();
-  }
+  /* v6.3.0 — both option pickers, each hiding with its own select and each
+     wearing its own tool-supplied key as the little context word */
+  [["vtOpt", "vtOptVal", "vtOptHsl", "vtOptCtx"],
+   ["vtOpt2", "vtOpt2Val", "vtOpt2Hsl", "vtOpt2Ctx"]].forEach(function (q) {
+    ffPaintHslVal(q[0], q[1]);
+    const sel = $(q[0]), w = $(q[2]);
+    if (sel && w) w.className = "hsl" + (sel.style.display === "none" ? " hsl-off" : "");
+    const ctx = $(q[3]);
+    if (ctx && sel) {
+      const key = sel.getAttribute("data-key") || "";
+      if (key) ctx.textContent = key.replace(/([A-Z])/g, " $1").toLowerCase();
+    }
+  });
 }
-/* the tool's FIRST option select — its real enum, its documented default,
-   or the Topaz resolution preset when the endpoint carries one */
+/* the tool's option selects — their real enums, their documented defaults,
+   or the Topaz resolution preset when the endpoint carries one. v6.3.0: two
+   slots, the app's own shape, because Wan 2.7 Extend documents two. */
 function vtPaintOptions() {
   const d = vtDef();
-  const sel = $("vtOpt");
   const pr = $("vtPrompt");
   if (pr) pr.style.display = (d && d.prompt) ? "block" : "none";
-  if (!sel) return;
-  while (sel.firstChild) sel.removeChild(sel.firstChild);
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   const defs = [];
   if (d && d.whPreset && V && V.VT_WH) defs.push({ key: "whPreset", values: Object.keys(V.VT_WH), def: "720p" });
   (d && d.options || []).forEach(function (o) { defs.push(o); });
-  const o = defs[0];
-  if (!o) { sel.style.display = "none"; renderVt(); return; }
-  o.values.forEach(function (v) {
-    sel.appendChild(mkOption(String(v), o.key.replace(/([A-Z])/g, " $1").toLowerCase() + ": " + v));
+  ["vtOpt", "vtOpt2"].forEach(function (id, idx) {
+    const sel = $(id);
+    if (!sel) return;
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    const o = defs[idx];
+    if (!o) { sel.removeAttribute("data-key"); sel.style.display = "none"; return; }
+    o.values.forEach(function (v) {
+      sel.appendChild(mkOption(String(v), o.key.replace(/([A-Z])/g, " $1").toLowerCase() + ": " + v));
+    });
+    try { sel.value = String(o.def); } catch (e) { }
+    sel.setAttribute("data-key", o.key);
+    sel.style.display = "";
   });
-  try { sel.value = String(o.def); } catch (e) { }
-  sel.setAttribute("data-key", o.key);
-  sel.style.display = "";
   renderVt();
 }
 async function vtRun() {
@@ -10244,11 +10264,12 @@ async function vtRun() {
   if (!VT.out) { setStatus("Choose a save folder first", "err"); return; }
   const promptText = ($("vtPrompt") && $("vtPrompt").value || "").trim();
   if (d.prompt === "req" && !promptText) { setStatus("This tool needs a prompt", "err"); return; }
-  const sel = $("vtOpt");
   const optVals = {};
-  if (sel && sel.style.display !== "none" && sel.getAttribute("data-key")) {
-    optVals[sel.getAttribute("data-key")] = sel.value;
-  }
+  ["vtOpt", "vtOpt2"].forEach(function (id) {
+    const sel = $(id);
+    if (sel && sel.style.display !== "none" && sel.getAttribute("data-key"))
+      optVals[sel.getAttribute("data-key")] = sel.value;
+  });
   VT.busy = true; VT.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVt();
   try {
     const ref = await fileToDataUrl(VT.video);
@@ -10888,6 +10909,13 @@ function bindVideo() {
     for (let i = 0; i < tl.length; i++) vtSel.appendChild(mkOption(tl[i].id, tl[i].label || tl[i].id));
     vtSel.addEventListener("change", vtPaintOptions);
   }
+  /* the styled label over each option select is painted from the select's own
+     change, exactly as the app does it — without this a student picks 4K and
+     goes on reading 1080p */
+  ["vtOpt", "vtOpt2"].forEach(function (id) {
+    const s = $(id);
+    if (s) s.addEventListener("change", vuPaintHsl);
+  });
   const vtp = $("btnVtPick");
   if (vtp) vtp.addEventListener("click", async function () {
     try { const f = await pickFile(["mp4", "mov", "webm"]); if (f) VT.video = f; renderVt(); }
