@@ -223,6 +223,21 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       };
       out.first = tap(0);
       out.second = tap(1);
+      /* v6.1.0 — what a person SEES the tool is. The app paints a styled
+         picker over the native select and repaints it from the select's own
+         change event; the first cut of this deck wrote .value silently, so
+         the card's request sat under the name of the previous tool and every
+         value-based check still passed. Same failure shape as the ✦ NEW chip
+         that was gold-on-gold: present, correct, invisible. */
+      const wrap = document.getElementById("selVtModel").closest(".hsl") ||
+                   document.getElementById("selVtModel").parentNode;
+      const lab = wrap && wrap.querySelector(".hsl-val");
+      out.shownTool = lab ? lab.textContent.trim() : "";
+      out.optionText = (() => {
+        const sel = document.getElementById("selVtModel");
+        const o = sel.options[sel.selectedIndex];
+        return o ? o.textContent.trim() : "";
+      })();
       return out;
     });
     report("C) the deck draws on the app's VidUp page, both cards, each saying what to bring",
@@ -240,6 +255,12 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       appCards.second.on[1] === true && appCards.second.on[0] === false, {
         same: appCards.second.prompt === WF[1].text(), on: appCards.second.on
       });
+    /* the label a student reads must name the tool the card actually chose —
+       the option's own text, matched whole, not merely "not empty" */
+    report("C3b) the picker a student can SEE names the tool the card chose",
+      appCards.shownTool.length > 0 &&
+      appCards.optionText.indexOf(appCards.shownTool.replace(/^Tool\s*/, "")) >= 0,
+      { shown: appCards.shownTool, option: appCards.optionText });
     report("C4) no page error while the app drew or applied either card", errs.length === 0, errs.slice(0, 3));
   } finally {
     await browser.close();
@@ -289,6 +310,14 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       if (first) first.click();
       out.model = (document.getElementById("vtModel") || {}).value;
       out.prompt = (document.getElementById("vtPrompt") || {}).value;
+      /* the panel paints its own styled button over the select — same
+         question as C3b, asked of the surface that has its own painter */
+      out.shownTool = ((document.getElementById("vtModelVal") || {}).textContent || "").trim();
+      out.optionText = (() => {
+        const sel = document.getElementById("vtModel");
+        const o = sel && sel.options[sel.selectedIndex];
+        return o ? o.textContent.trim() : "";
+      })();
       out.intro = (document.getElementById("vtWfIntro") || {}).textContent;
       return out;
     });
@@ -300,6 +329,9 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     report("D3) tapping in the panel picks the same tool and writes the same request, character for character",
       p.model === WF[0].model && p.prompt === WF[0].text(),
       { model: p.model, same: p.prompt === WF[0].text(), len: (p.prompt || "").length });
+    report("D3b) the panel's own picker also SHOWS the tool the card chose",
+      p.shownTool.length > 0 && p.optionText.indexOf(p.shownTool) >= 0,
+      { shown: p.shownTool, option: p.optionText });
     report("D4) no page error while the panel drew or applied the card", errs.length === 0, errs.slice(0, 3));
   } finally {
     await pb.close();

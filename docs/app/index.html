@@ -26060,8 +26060,17 @@ function vtWfApply(w){
   /* model first: updateVtModelUI() rebuilds the prompt box and the option
      selects off the chosen tool, so a prompt written before the switch would
      be shown in a box the rebuild then hides */
-  $("selVtModel").value = w.model;
-  updateVtModelUI();
+  /* v6.1.0 — a CHANGE EVENT, not a direct call. Writing .value and calling
+     updateVtModelUI() by hand rebuilt the prompt box correctly and left the
+     styled picker above the select still showing the previous tool: the app
+     paints that label from the select's own change event (see the hsl
+     registry), so a value written silently is a value nobody can see. The
+     first screenshot of this deck showed the request for a character swap
+     sitting under the words "Google veo3.1 fast video extend Official".
+     Dispatching drives BOTH the page's own onchange and the picker. */
+  var vtSel = $("selVtModel");
+  vtSel.value = w.model;
+  vtSel.dispatchEvent(new Event("change", { bubbles: true }));
   $("vtPrompt").value = w.text();
   vtWfCheckClip();
   toast(stripIcn(w.label)+" ✓","ok");
