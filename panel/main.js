@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.71.0";
+const PANEL_VERSION = "6.73.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7502,6 +7502,12 @@ const PAGE_HERO_HEADS = {
     th: "ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น", zh: "视频画质<em>翻倍</em> — 更锐利、更干净",
     vi: "<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn", id: "<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih",
     ms: "<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih" },
+  /* v6.73.0 — the app's ph_v2v, word for word */
+  phV2V: { my: "ဗီဒီယိုထဲ <em>ကိုယ့်ဇာတ်ကောင်</em> — ကင်မရာနဲ့ နောက်ခံ အတိုင်း", en: "<em>Your character</em> inside the clip — camera and scene unchanged",
+    shn: "<em>တူဝ်ၸဝ်ႈၵဝ်ႇ</em> ၼႂ်းဝီးတီးဢူဝ်း — ၵႄႇမရႃႇလႄႈႁွင်ႈလင် ဢမ်ႇလႅၵ်ႈ", kac: "Video hta <em>nang a masha</em> — camera hte shara n galai ai",
+    th: "<em>ตัวละครของคุณ</em>ในคลิป — กล้องและฉากคงเดิม", zh: "片中换成<em>你的角色</em> — 镜头与场景不变",
+    vi: "<em>Nhân vật của bạn</em> trong clip — máy quay và bối cảnh giữ nguyên", id: "<em>Karakter Anda</em> di dalam klip — kamera dan latar tetap",
+    ms: "<em>Watak anda</em> dalam klip — kamera dan latar kekal" },
   phLib: { my: "Look ၁၈၅၀ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်", en: "1850 curated looks — <em>pick one</em> and start instantly",
     shn: "Look 1850 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်", kac: "Lata da ai look 1850 — <em>langai lata la</em> nna kalang ta hpang u",
     th: "1850 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที", zh: "1850 款精选风格 — <em>选一款</em>立即开始",
@@ -10020,6 +10026,12 @@ const VU_L = {
     vi: "B\u1ea1n c\u1ea7n ch\u1ecdn th\u01b0 m\u1ee5c l\u01b0u", id: "Anda perlu memilih folder simpan", ms: "Anda perlu pilih folder simpan" }
 };
 const VT_L = {
+  /* v6.72.0 — the Video Smart Workflow deck's own two lines, the app's
+     words exactly (docs/app/index.html #vtWfIntro and VT_WF_INTRO_HINT).
+     Every other string the deck shows — label, summary, hint, the badge
+     and the request itself — travels inside the lifted catalog. */
+  wfIntro: {my:"ကတ်တစ်ချက် နှိပ်ရုံနဲ့ tool ရွေးပေးပြီး prompt ရေးပေးမယ်။ ပြီးရင် အောက်မှာ ဗီဒီယိုနဲ့ ပုံ တင်ပါ။",en:"One tap picks the tool and writes the request. Then upload your clip and your photo below.",shn:"ၼဵၵ်းၵၢတ်ႈဢၼ်ၼိုင်ႈ — တေလိူၵ်ႈ tool လႄႈတႅမ်ႈ prompt ပၼ်",kac:"Card langai mi hkan — tool lata nna prompt ka ya ai",th:"แตะการ์ดครั้งเดียว ระบบเลือกเครื่องมือและเขียน prompt ให้ แล้วอัปโหลดคลิปกับรูปด้านล่าง",zh:"点一下卡片即可选好工具并写好 prompt，然后在下方上传视频与照片",vi:"Một chạm chọn công cụ và viết prompt. Sau đó tải clip và ảnh lên bên dưới",id:"Sekali tap memilih alat dan menulis prompt. Lalu unggah klip dan foto di bawah",ms:"Satu ketikan memilih alat dan menulis prompt. Kemudian muat naik klip dan foto di bawah"},
+  wfIntroHint: {my:"ကတ်တစ်ခု ရွေးပါ — ဒါမှမဟုတ် အောက်မှာ tool ကို ကိုယ်တိုင် ရွေးပါ။",en:"Pick a card — or choose a tool yourself below.",shn:"လိူၵ်ႈၵၢတ်ႈဢၼ်ၼိုင်ႈ — ဢမ်ႇၼၼ် လိူၵ်ႈ tool ႁင်းၵူၺ်း",kac:"Card langai lata u — nrai npu de tool nang lata u",th:"เลือกการ์ดสักใบ — หรือเลือกเครื่องมือเองด้านล่าง",zh:"选择一张卡片 — 或在下方自行选择工具",vi:"Chọn một thẻ — hoặc tự chọn công cụ bên dưới",id:"Pilih kartu — atau pilih alat sendiri di bawah",ms:"Pilih kad — atau pilih alat sendiri di bawah"},
   intro: { my: "\u101b\u103e\u102d\u1015\u103c\u102e\u1038\u101e\u102c\u1038 \u1017\u102e\u1012\u102e\u101a\u102d\u102f\u1000\u102d\u102f \u1015\u103c\u1004\u103a\u1019\u101a\u103a/\u1006\u1000\u103a\u1019\u101a\u103a/\u101e\u1014\u1037\u103a\u1019\u101a\u103a \u2014 model \u1010\u1005\u103a\u1001\u102f\u101b\u103d\u1031\u1038\u1015\u103c\u102e\u1038 \u1017\u102e\u1012\u102e\u101a\u102d\u102f\u1016\u102d\u102f\u1004\u103a \u1010\u1004\u103a\u1015\u102b\u104b RunningHub Enterprise key \u101c\u102d\u102f\u1021\u1015\u103a\u1015\u102b\u1010\u101a\u103a\u104b",
     en: "Edit, extend or clean an existing video \u2014 pick a tool, upload the clip. Needs your RunningHub Enterprise key.",
     shn: "\u1019\u1084\u1038\u1076\u102d\u102f\u107c\u103a\u1038/\u101e\u102d\u102f\u1015\u103a\u1087/\u101e\u102f\u1075\u103a\u1088\u101e\u1085\u1004\u103a\u1087 \u101d\u102e\u1012\u102e\u101b\u1030\u101d\u103a\u1088\u1022\u107c\u103a\u1019\u102e\u1038\u101a\u1030\u1087",
@@ -10067,7 +10079,7 @@ function vuPaintLabels() {
   setIcnText($("btnVtPick"), "i-clapper", "cream", ff9(VT_L.pick));
   setIcnText($("btnVtSave"), "i-folder", "cream", ff9(VU_L.out));
   const pb = $("vtPrompt"); if (pb) pb.placeholder = ff9(VT_L.promptPh);
-  renderVu(); renderVt();
+  renderVu(); renderVt(); renderVtWf();
 }
 
 /* ============================================================
@@ -10101,6 +10113,91 @@ function renderVt() {
   if (row) stSet("stVtGen", row.label + (row.detail ? " · " + row.detail : ""), row.level === "err" ? "err" : row.level === "ok" ? "ok" : "");
   vuPaintHsl();
 }
+/* ============================================================
+   v6.72.0 — VIDEO SMART WORKFLOW, the app's deck box for box. The tools
+   above already carried every endpoint needed to put a student's own
+   character into a clip they like; what the page asked of them was to know
+   that, to find the right one among thirty-one raw endpoint labels, and
+   then to write the paragraph that keeps the camera, the motion and the
+   background from being rewritten along with the person.
+
+   The cards, their nine-language copy and — the part that matters — the
+   written request itself are the app's own, lifted into
+   js/hnk_video_tool_wf.js by tools/build_panel_video_tool_wf.js. Nothing
+   here authors a prompt or names an endpoint.
+
+   ONE difference from the app, and it is a capability difference rather
+   than a choice: the app measures the picked clip and warns when it runs
+   past the endpoint's documented ten seconds. The panel takes its video as
+   a file the host hands it, not as a data URL a <video> element can read,
+   so it cannot measure — every card therefore keeps its hint on screen,
+   and the hint names the ceiling in words.
+   ============================================================ */
+let vtWfActive = null;
+function vtWfPack() { return (globalThis.HNK && globalThis.HNK.videoToolWorkflows) || null; }
+
+function vtWfApply(w) {
+  const P = vtWfPack();
+  if (!P || !w) return;
+  vtWfActive = w.key;
+  /* the tool first: vtPaintOptions() rebuilds the prompt box and the option
+     select off the chosen tool, so a request written before the switch would
+     be shown in a box the rebuild then hides */
+  const sel = $("vtModel");
+  if (sel) { try { sel.value = w.model; } catch (e) { } }
+  vtPaintOptions();
+  const box = $("vtPrompt");
+  if (box) box.value = w.text();
+  renderVtWf();
+  vuPaintHsl();
+  setStatus(stripIcn(P.tr(w.label)) + " ✓", "ok");
+}
+
+function vtWfCard(w) {
+  const P = vtWfPack();
+  const m = mkBtn("wfmini" + (vtWfActive === w.key ? " on" : ""));
+  const v = document.createElement("div");
+  v.className = "wfv";
+  const im = document.createElement("img");
+  im.loading = "eager";
+  im.alt = P ? stripIcn(P.tr(w.label)) : "";
+  im.onerror = function () {
+    im.onerror = null;
+    v.className = "wfv wfv-noart";
+    try { v.removeChild(im); } catch (e) { }
+  };
+  im.src = VID_ART_BASE + w.art;
+  v.appendChild(im);
+  const need = document.createElement("span");
+  need.className = "wf-need";
+  need.textContent = P ? stripIcn(P.tr(w.need)) : "";
+  v.appendChild(need);
+  m.appendChild(v);
+  const ti = document.createElement("div"); ti.className = "t"; ti.textContent = P ? stripIcn(P.tr(w.label)) : ""; m.appendChild(ti);
+  const su = document.createElement("div"); su.className = "s"; su.textContent = P ? stripIcn(P.tr(w.summary)) : ""; m.appendChild(su);
+  const go = document.createElement("div"); go.className = "go";
+  go.appendChild(ffIcon("i-caret", "hi"));
+  go.appendChild(document.createTextNode(vwL(vtWfActive === w.key ? VW_SEL : VW_USE)));
+  m.appendChild(go);
+  m.addEventListener("click", function () { vtWfApply(w); });
+  return m;
+}
+
+function renderVtWf() {
+  const host = $("vtWfRow");
+  const P = vtWfPack();
+  if (!host || !P) return;
+  while (host.firstChild) host.removeChild(host.firstChild);
+  P.WF.forEach(function (w) { host.appendChild(vtWfCard(w)); });
+  if (P.WF.length % 2 === 1 && host.lastChild && host.lastChild.className)
+    host.lastChild.className = host.lastChild.className + " wf-span2";
+  const w = vtWfActive ? P.byKey(vtWfActive) : null;
+  const hint = $("vtWfHint");
+  if (hint) hint.textContent = w ? stripIcn(P.tr(w.hint)) : ff9(VT_L.wfIntroHint);
+  const intro = $("vtWfIntro");
+  if (intro) intro.textContent = ff9(VT_L.wfIntro);
+}
+
 /* the styled buttons over the three native selects on this page, and the
    app's syncVis: a picker whose select is hidden hides with it */
 function vuPaintHsl() {
@@ -15876,6 +15973,9 @@ const PAGES = [
   { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img", ic: "i-doc" },
   { key: "video",   page: "pageVideo",   group: "media", sub: "Video",     ic: "i-clapper" },
   { key: "vidup",   page: "pageVideoUp", group: "media", sub: "VidUp",     ic: "i-rocket" },
+  /* v6.73.0 — the app's new pgV2V: every tool that takes a video in and gives
+     a video back, with the smart cards over them. VidUp keeps Upscale. */
+  { key: "v2v",     page: "pageV2V",     group: "media", sub: "V\u2192V",   ic: "i-shuffle" },
   { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference", ic: "i-books" },
   /* the app's Library holds Reference and Gallery; the panel's own generation
      history is that gallery of results. Its select / zip / delete actions

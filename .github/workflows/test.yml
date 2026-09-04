@@ -345,6 +345,17 @@ jobs:
       - name: Verify the photograph keeps its own frame and pose
         run: PORT=8931 node test/verify_frame_lock.js
 
+      # v6.1.0 — the Video Smart Workflow. Two cards put a student's own
+      # character into a clip they already like: one replaces the whole
+      # person, one only the face. Both drive an endpoint that already
+      # shipped, so what can go wrong is quieter than a missing feature — a
+      # card naming a tool that takes no reference photo, a request written
+      # past the endpoint's ceiling and clipped mid-lock, a face card that
+      # keeps the hair and changes it in the same breath, or a panel copy
+      # that drifts from the app's. This checks all four, on both surfaces.
+      - name: Verify the Video Smart Workflow cards
+        run: PORT=8931 node test/verify_video_smart_workflow.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

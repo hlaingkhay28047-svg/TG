@@ -316,15 +316,40 @@ check("the panel agrees with itself about which version it is",
   const all = (code.match(/"6\.\d+\.\d+"|\bv6\.\d+\.\d+\b/g) || []);
   /* v6.0.0 — the app reached 6.x itself, so this pattern now also matches
      the app stating its OWN version (APP_VER, and each what's-new row's
-     v:"…"). That is legitimate and always was. Its own version is therefore
-     excluded — but only while the two numbers differ, which is asserted
-     below: if they were ever equal the exclusion could hide a real panel
-     literal, so the exemption would no longer be safe and this must fail
-     instead of quietly passing. */
-  const own = new Set(['"' + appVersion + '"', "v" + appVersion]);
+     v:"…"). That is legitimate and always was.
+
+     v6.1.0 — and it is not only the CURRENT version. Every what's-new row
+     carries the version that shipped it, so the moment the app moved from
+     6.0.0 to 6.1.0 the two 6.0.0 rows still in the table read as panel
+     literals and this check failed on a release that had done nothing
+     wrong. The exemption therefore covers the app's own version AND every
+     version its own what's-new table names — all of them app versions by
+     construction, and all of them read out of the app rather than listed
+     here. The safety property is unchanged and now covers the whole set: if
+     the panel's version ever appeared among them the exemption could hide a
+     real panel literal, so that fails instead of quietly passing. */
+  const newsVersions = [];
+  {
+    const i = app.indexOf("var WHATS_NEW = [");
+    const start = app.indexOf("[", i);
+    let d = 0, end = -1;
+    for (let k = start; k < app.length && i >= 0; k++) {
+      if (app[k] === "[") d++;
+      else if (app[k] === "]") { d--; if (!d) { end = k; break; } }
+    }
+    const table = end > 0 ? app.slice(start, end) : "";
+    let m; const re = /\bv:"(\d+\.\d+\.\d+)"/g;
+    while ((m = re.exec(table))) newsVersions.push(m[1]);
+  }
+  const appVersions = new Set([appVersion].concat(newsVersions));
+  const own = new Set();
+  appVersions.forEach(v => { own.add('"' + v + '"'); own.add("v" + v); });
   const literals = all.filter(x => !own.has(x));
   check("the web app and the panel do not share a version number, so the app may state its own",
     appVersion !== panelVersion, `app ${appVersion}, panel ${panelVersion}`);
+  check("no version the app calls its own is the panel's, so the exemption cannot hide a panel literal",
+    !appVersions.has(panelVersion),
+    `the panel's ${panelVersion} is also claimed by the app: ` + [...appVersions].join(", "));
   check("the web app quotes no panel version of its own",
     literals.length === 0, "panel version literals left in docs/app/index.html: " + literals.join(", "));
   /* the same rule on the other side of the wire: the route that issues the

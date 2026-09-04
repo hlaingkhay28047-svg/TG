@@ -48,8 +48,12 @@ function report(name, ok, detail) {
    output to disk where a browser downloads it, so the studio has to be able
    to say where — that is the whole list. */
 const PANEL_ONLY = {
+  /* v6.2.0 — Video Tools moved to its own page, so VidUp is Upscale alone and
+     carries ONE save-folder control; the other went with it. */
   vidup: [
-    "သိမ်းမယ့် folder ရွေးရန်",   /* Upscale: choose the save folder */
+    "သိမ်းမယ့် folder ရွေးရန်"    /* Upscale: choose the save folder */
+  ],
+  v2v: [
     "သိမ်းမယ့် folder ရွေးရန်"    /* Video Tools: the same, for its own run */
   ],
   gallery: [],
@@ -66,7 +70,7 @@ const PANEL_ONLY = {
    text here; the panel's tile is the same picture as a file, so it carries no
    text node. Nothing a student sees differs. */
 const APP_ONLY = {
-  vidup: ["HD"], gallery: [], create: [], path: [],
+  vidup: ["HD"], v2v: [], gallery: [], create: [], path: [],
   home: [], wf: [], lib: [],
   /* the app's Size tile is an inline <svg> with the letters HD drawn inside
      it, which counts as text here; the panel's tile is that same picture as a
@@ -117,6 +121,9 @@ const REWRITE = [
 const PAGES = [
   { key: "gallery", panelKey: "gallery", appKey: "pgGallery", panelRoot: "#pageGallery", appRoot: "#pgGallery", label: "Gallery" },
   { key: "vidup", panelKey: "vidup", appKey: "pgVideoUp", panelRoot: "#pageVideoUp", appRoot: "#pgVideoUp", label: "VidUp" },
+  /* v6.2.0 — the new Video → Video page: the smart cards and all thirty-one
+     video-in tools, on both surfaces. */
+  { key: "v2v", panelKey: "v2v", appKey: "pgV2V", panelRoot: "#pageV2V", appRoot: "#pgV2V", label: "Video to Video" },
   { key: "create", panelKey: "create", appKey: "pgText2Img", panelRoot: "#pageCreate", appRoot: "#pgText2Img", label: "Text to Image" },
   { key: "path", panelKey: "path", appKey: "pgPath", panelRoot: "#pagePath", appRoot: "#pgPath", label: "Path" },
   /* v6.55.0 — the six pages built in the 6.51.0 wave and matched by hand.

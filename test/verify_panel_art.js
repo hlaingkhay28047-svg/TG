@@ -64,7 +64,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
 
 /* the thirteen pages, by the panel's own key */
 const PAGES = ["aitools", "setup", "wf", "prompt", "meitu", "evoto", "retouch",
-  "path", "create", "video", "vidup", "presets", "gallery"];
+  "path", "create", "video", "vidup", "v2v", "presets", "gallery"];
 
 /* Only what the student can SEE. getComputedStyle on a child of a
    display:none parent still reports the child's own display, so rects are the

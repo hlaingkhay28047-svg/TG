@@ -140,13 +140,27 @@ function report(name, ok, detail) {
        the newest workflow entry is not guaranteed to be on the strip, and a
        test that reached for a row that was never rendered would report a
        failure the app did not have. */
+    /* v6.2.0 — and if the newest three happen to be PAGE entries, the newest
+       workflow row is simply below the ceiling and this check would have
+       nothing to click. That is a property of what shipped this month, not a
+       defect, and skipping would quietly retire the check — so the rows above
+       it are marked READ first, which is exactly what a student who has kept
+       up would have done, and the workflow row rises into the strip. */
+    const wfEntry = WHATS_NEW.find(e => e.kind === "wf");
+    if (!wfEntry) return { found: false, why: "no workflow entry in the table at all" };
+    const preRead = WHATS_NEW.slice(0, WHATS_NEW.indexOf(wfEntry));
+    if (preRead.length) {
+      try { localStorage.setItem("hnk_new_seen", JSON.stringify(preRead.map(e => e.v + "|" + e.ref))); } catch (e) { }
+      /* the app's own single entry point for "what has been seen changed" —
+         switching pages is not it, and a test that repainted by hand would
+         be testing its own repaint rather than the app's */
+      nwSync();
+      await new Promise(r => setTimeout(r, 120));
+    }
     const rows = [...document.querySelectorAll("#dashNewList .nw-row")];
-    const drawn = new Set(rows.map(r => r.dataset.nw));
-    const wfEntry = WHATS_NEW.find(e => e.kind === "wf" && drawn.has(e.v + "|" + e.ref));
-    if (!wfEntry) return { found: false, why: "no workflow row on the strip" };
     const wfKey = wfEntry.v + "|" + wfEntry.ref;
     const row = rows.find(r => r.dataset.nw === wfKey);
-    if (!row) return { found: false };
+    if (!row) return { found: false, why: "the newest workflow row did not reach the strip", drawn: rows.map(r => r.dataset.nw) };
     row.click();
     await new Promise(r => setTimeout(r, 120));
     const wiz = document.querySelector(".wiz.on");
@@ -160,6 +174,7 @@ function report(name, ok, detail) {
         /Studio Look Copy/i.test(title),
       rowsLeft: document.querySelectorAll("#dashNewList .nw-row").length,
       total: WHATS_NEW.length,
+      preRead: preRead.length,
       cap: (typeof NW_STRIP_MAX === "number" ? NW_STRIP_MAX : 0),
       /* the row that was opened must be gone by name — counting rows cannot
          show that under a ceiling, because the next unread takes its place */
@@ -170,7 +185,7 @@ function report(name, ok, detail) {
   report("D) tapping a workflow row opens that workflow's wizard",
     D.found && D.opened, D);
   report("D2) opening a row retires that exact row, and the next unread moves up to fill the ceiling",
-    D.openedGone && D.unseenLeft === D.total - 1 &&
+    D.openedGone && D.unseenLeft === D.total - D.preRead - 1 &&
     D.rowsLeft === Math.min(D.unseenLeft, D.cap), D);
 
   /* ---- E) the Workflows page: ribbon, top-of-category, ✦ NEW rail chip ---- */
