@@ -250,9 +250,24 @@ jobs:
             for pair in $TASKS; do
               n="${pair%%:*}"; tid="${pair##*:}"
               [ -n "$n" ] && [ -n "$tid" ] || { echo "BAD PAIR $pair"; fail=1; continue; }
-              poll_and_fetch "$n" "$tid" || fail=1
+              # v6.4.0 — collect the right KIND of file. Every pair before the
+              # card lane returned a picture, so this half assumed .png; a
+              # Video Smart Workflow take is an MP4, and saving one under .png
+              # produced a file the composer could not open — after the run had
+              # already been paid for.
+              case "$n" in v2v-*) ext=mp4 ;; *) ext=png ;; esac
+              poll_and_fetch "$n" "$tid" "$ext" || fail=1
             done
             ls -la out/ || true
+            # a collect-only run of the card lane still has to end with CARDS,
+            # not with nine loose clips: the compose step below runs on the
+            # same "out" directory either way, so hand control back to it
+            # rather than exiting here when there is card footage to compose.
+            if ls out/v2v-*.mp4 >/dev/null 2>&1; then
+              cp docs/app/lib/banners/motion/banner-train-station.mp4 out/v2v-source.mp4 2>/dev/null || true
+              echo "collected card clips — composing below"
+              exit $fail
+            fi
             exit $fail
           fi
           LIST="$PAIRS"; [ "$LIST" = "all" ] && LIST="retouch scene"
