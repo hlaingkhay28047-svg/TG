@@ -120,6 +120,35 @@ jobs:
               | grep -iE '^# |^  /|free|coin|price' | head -30 \
               || echo "FETCH-FAILED ${id}"
           done
+  vtspec:
+    # v6.1.0 — the Video Smart Workflow drives endpoints this app already
+    # ships (kling video-edit, wan2.2 character-motion-transfer, dreamactor
+    # v2, kling motion-control). Nothing new is being wired; what the cards
+    # need is what each spec CONSTRAINS — how long a clip may be, how many
+    # reference images it takes, how long the prompt may be — so the hint a
+    # student reads is the endpoint's own limit and not a guess.
+    name: vtspec
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Find the doc ids for the endpoints the cards drive
+        run: |
+          idx=$(curl -sSL --retry 2 --connect-timeout 10 --max-time 90 \
+                 "https://www.runninghub.ai/runninghub-api-doc-en/" || echo "")
+          echo "BYTES: ${#idx}"
+          echo "=====VT PAGES START====="
+          hits=$(printf '%s' "$idx" \
+            | grep -oE 'api-[0-9]{6,}[^<]{0,12}>[^<]{1,90}' \
+            | grep -iE 'video-edit|edit-video|motion-control|motion-transfer|dreamactor' | sort -u | head -20)
+          echo "$hits"
+          echo "=====VT PAGES END====="
+          for id in $(printf '%s' "$hits" | grep -oE '[0-9]{6,}' | sort -u | head -10); do
+            echo "=====VT-SPEC ${id}====="
+            curl -sSL --retry 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              | grep -iE '^# |^  /|maxLength|maxItems|minItems|duration|seconds|required:|videoUrl|imageUrls|keepOriginalSound|description:' \
+              | head -45 \
+              || echo "FETCH-FAILED ${id}"
+          done
   fetch:
     name: fetch-${{ matrix.name }}
     runs-on: ubuntu-24.04
