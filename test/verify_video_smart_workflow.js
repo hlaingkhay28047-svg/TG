@@ -301,7 +301,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     }, null, { timeout: 20000 }).catch(() => { throw new Error("the panel never reached its signed-in state"); });
 
     const p = await page.evaluate(() => {
-      try { switchPage("vidup"); } catch (e) { }
+      try { switchPage("v2v"); } catch (e) { }
       const out = {};
       out.cards = document.querySelectorAll("#vtWfRow .wfmini").length;
       out.titles = [...document.querySelectorAll("#vtWfRow .wfmini .t")].map(n => n.textContent);

@@ -2,7 +2,7 @@
    v4.19.0's Phase 5 (10 flat tabs -> 4 top-level groups); updated for
    v4.27.0's Home + IA re-architecture, which reshapes the groups to
    HOME[pgDash] / WORKFLOWS[pgWf] / EDIT[pgCreate,pgStudio,pgRetouch,pgPath] /
-   MEDIA LAB[pgText2Img,pgVideo,pgVideoUp] / LIBRARY[pgLib,pgGallery] and
+   MEDIA LAB[pgText2Img,pgVideo,pgVideoUp,pgV2V] / LIBRARY[pgLib,pgGallery] and
    demotes Setup (pgHome) from the bar to the header gear button. The Edit
    group gained a 4th page in the v4.28.x wave (pgPath — Path Retouch, the
    batch-look sibling of Retouch), and a 5th in v4.96 when the one Studio
@@ -30,9 +30,14 @@ const ALL_PAGES = [
   ["pgEvoto", "Edit", 5],
   ["pgRetouch", "Edit", 5],
   ["pgPath", "Edit", 5],
-  ["pgText2Img", "Media Lab", 3],
-  ["pgVideo", "Media Lab", 3],
-  ["pgVideoUp", "Media Lab", 3],
+  /* v6.2.0 — Media Lab gained a fourth page. Every tool that takes a video IN
+     and gives a video BACK moved off VidUp onto its own pgV2V, so VidUp is
+     Upscale and nothing else; the count here is the whole point of the test,
+     so it moves with the group rather than being loosened. */
+  ["pgText2Img", "Media Lab", 4],
+  ["pgVideo", "Media Lab", 4],
+  ["pgVideoUp", "Media Lab", 4],
+  ["pgV2V", "Media Lab", 4],
   ["pgLib", "Library", 2],
   ["pgGallery", "Library", 2],
   ["pgHome", null, null]

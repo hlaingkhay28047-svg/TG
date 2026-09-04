@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.72.0";
+const PANEL_VERSION = "6.73.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7502,6 +7502,12 @@ const PAGE_HERO_HEADS = {
     th: "ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น", zh: "视频画质<em>翻倍</em> — 更锐利、更干净",
     vi: "<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn", id: "<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih",
     ms: "<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih" },
+  /* v6.73.0 — the app's ph_v2v, word for word */
+  phV2V: { my: "ဗီဒီယိုထဲ <em>ကိုယ့်ဇာတ်ကောင်</em> — ကင်မရာနဲ့ နောက်ခံ အတိုင်း", en: "<em>Your character</em> inside the clip — camera and scene unchanged",
+    shn: "<em>တူဝ်ၸဝ်ႈၵဝ်ႇ</em> ၼႂ်းဝီးတီးဢူဝ်း — ၵႄႇမရႃႇလႄႈႁွင်ႈလင် ဢမ်ႇလႅၵ်ႈ", kac: "Video hta <em>nang a masha</em> — camera hte shara n galai ai",
+    th: "<em>ตัวละครของคุณ</em>ในคลิป — กล้องและฉากคงเดิม", zh: "片中换成<em>你的角色</em> — 镜头与场景不变",
+    vi: "<em>Nhân vật của bạn</em> trong clip — máy quay và bối cảnh giữ nguyên", id: "<em>Karakter Anda</em> di dalam klip — kamera dan latar tetap",
+    ms: "<em>Watak anda</em> dalam klip — kamera dan latar kekal" },
   phLib: { my: "Look ၁၈၅၀ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်", en: "1850 curated looks — <em>pick one</em> and start instantly",
     shn: "Look 1850 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်", kac: "Lata da ai look 1850 — <em>langai lata la</em> nna kalang ta hpang u",
     th: "1850 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที", zh: "1850 款精选风格 — <em>选一款</em>立即开始",
@@ -15967,6 +15973,9 @@ const PAGES = [
   { key: "create",  page: "pageCreate",  group: "media", sub: "Text\u2192Img", ic: "i-doc" },
   { key: "video",   page: "pageVideo",   group: "media", sub: "Video",     ic: "i-clapper" },
   { key: "vidup",   page: "pageVideoUp", group: "media", sub: "VidUp",     ic: "i-rocket" },
+  /* v6.73.0 — the app's new pgV2V: every tool that takes a video in and gives
+     a video back, with the smart cards over them. VidUp keeps Upscale. */
+  { key: "v2v",     page: "pageV2V",     group: "media", sub: "V\u2192V",   ic: "i-shuffle" },
   { key: "presets", page: "pagePresets", group: "lib",   sub: "Reference", ic: "i-books" },
   /* the app's Library holds Reference and Gallery; the panel's own generation
      history is that gallery of results. Its select / zip / delete actions

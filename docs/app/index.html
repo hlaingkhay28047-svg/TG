@@ -836,7 +836,7 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   #pgHome.on,#pgAccount.on{column-count:2;column-gap:18px}
   #pgHome .page-hero,#pgAccount .page-hero,#pgHome #pendingGo{column-span:all}
   #pgHome>.card,#pgHome>section,#pgAccount>.card,#pgAccount>section{break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box;margin-top:0;margin-bottom:var(--sp-4)}
-  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box{max-width:880px;margin-left:auto;margin-right:auto}
+  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgV2V>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box{max-width:880px;margin-left:auto;margin-right:auto}
   /* the edge-to-edge phone tab strip becomes a floating centered dock — a
      desktop control, not a stretched thumb bar. Deliberately still at the
      bottom: the editors' slim-header mode owns the top edge, and a fixed
@@ -3170,6 +3170,21 @@ html.splashing #splash{display:flex}
     <div class="subh" style="margin-top:12px" id="vuHistH"></div>
     <div class="hist" id="vuHist"></div>
   </section>
+</div><!-- /pgVideoUp -->
+
+<!-- ================= VIDEO → VIDEO (pgV2V) =================
+     v6.2.0 — every tool that takes a video IN and gives a video BACK now has
+     its own page. All thirty-one of them, and the smart cards over them, used
+     to sit below the Upscale card on VidUp, which meant the one feature a
+     student came looking for — put my character into this clip — was three
+     screens down a page named after something else. VidUp keeps Upscale and
+     nothing else; this page keeps the rest. Not one endpoint moved, and not
+     one was added: the same catalog, reachable. -->
+<div class="page" id="pgV2V">
+  <header class="page-hero"><img src="lib/banners/banner-train-station.jpg" alt="" loading="lazy" decoding="async" style="object-position:62% 40%">
+    <div class="ph-kick">Video to Video</div>
+    <p class="ph-head" id="phV2V">ဗီဒီယိုထဲ <em>ကိုယ့်ဇာတ်ကောင်</em> — ကင်မရာနဲ့ နောက်ခံ အတိုင်း</p>
+  </header>
   <!-- v6.1.0 — VIDEO SMART WORKFLOW. Video Tools below already carried every
        endpoint needed to put a student's own character into a clip they like;
        what it asked of them was to know that, to find the right one among
@@ -3218,7 +3233,8 @@ html.splashing #splash{display:flex}
       <a class="btn btn-gold grow" id="btnVtOpen" target="_blank" rel="noopener"></a>
     </div>
   </section>
-</div><!-- /pgVideoUp -->
+</div><!-- /pgV2V -->
+
 
 <!-- ================= PATH RETOUCH (pgPath) — batch looks =================
      Retouch's batch sibling: many photos, ONE look, instant free on-device
@@ -3840,6 +3856,7 @@ var TR_PH={
   ph_t2i:{my:'စာသားတစ်ကြောင်းကနေ <em>ပရော်ဖက်ရှင်နယ်ပုံ</em> ဖြစ်လာမယ်',en:'One line of text becomes a <em>professional image</em>'},
   ph_video:{my:'ဓာတ်ပုံတွေကို <em>အသက်ဝင်</em> လှုပ်ရှားစေမယ်',en:'Your photos <em>come alive</em> in motion'},
   ph_videoup:{my:'ဗီဒီယိုအရည်အသွေး <em>နှစ်ဆမြှင့်</em> — ပိုကြည် ပိုပြတ်သား',en:'<em>Double</em> your video quality — sharper, cleaner'},
+  ph_v2v:{my:'ဗီဒီယိုထဲ <em>ကိုယ့်ဇာတ်ကောင်</em> — ကင်မရာနဲ့ နောက်ခံ အတိုင်း',en:'<em>Your character</em> inside the clip — camera and scene unchanged'},
   ph_lib:{my:'Look ၁၈၅၀ မျိုးထဲက ကြိုက်တာ <em>ရွေးလိုက်ရုံ</em> — ချက်ချင်းစနိုင်',en:'1850 curated looks — <em>pick one</em> and start instantly'},
   ph_gallery:{my:'ဖန်တီးခဲ့သမျှ အမှတ်တရတွေ <em>ဒီမှာအမြဲ</em> စုစည်းထား',en:'Every creation you make, <em>saved right here</em>'},
   ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'},
@@ -3864,6 +3881,7 @@ var TR_L14={
   ph_t2i:{shn:'လိၵ်ႈထႅဝ်လဵဝ် လႅၵ်ႈပဵၼ် <em>ၶႅပ်းႁၢင်ႈၸၼ်ႉၶိုၵ်ႉ</em>',kac:'Laika hteng langai sha <em>professional sumla</em> byin wa ai',th:'ข้อความบรรทัดเดียวกลายเป็น<em>ภาพระดับมืออาชีพ</em>',zh:'一行文字变成<em>专业级图像</em>',vi:'Một dòng chữ trở thành <em>bức ảnh chuyên nghiệp</em>',id:'Satu baris teks menjadi <em>gambar profesional</em>',ms:'Satu baris teks menjadi <em>imej profesional</em>'},
   ph_video:{shn:'ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် <em>မီးသၢႆၸႂ်မႃး</em>',kac:'Na a sumla ni shamu shamawt hte <em>asak rawng wa</em> ai',th:'ภาพถ่ายของคุณ<em>มีชีวิต</em>ด้วยการเคลื่อนไหว',zh:'让你的照片在动态中<em>活起来</em>',vi:'Ảnh của bạn <em>sống động</em> trong chuyển động',id:'Foto Anda <em>menjadi hidup</em> dalam gerakan',ms:'Foto anda <em>hidup</em> dalam gerakan'},
   ph_videoup:{shn:'ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း <em>သွင်ပုၼ်ႈ</em> — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်',kac:'Video a atsam hpe <em>lahkawng lang</em> jat u — grau san, grau seng ai',th:'ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น',zh:'视频画质<em>翻倍</em> — 更锐利、更干净',vi:'<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn',id:'<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih',ms:'<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih'},
+  ph_v2v:{shn:'<em>တူဝ်ၸဝ်ႈၵဝ်ႇ</em> ၼႂ်းဝီးတီးဢူဝ်း — ၵႄႇမရႃႇလႄႈႁွင်ႈလင် ဢမ်ႇလႅၵ်ႈ',kac:'Video hta <em>nang a masha</em> — camera hte shara n galai ai',th:'<em>ตัวละครของคุณ</em>ในคลิป — กล้องและฉากคงเดิม',zh:'片中换成<em>你的角色</em> — 镜头与场景不变',vi:'<em>Nhân vật của bạn</em> trong clip — máy quay và bối cảnh giữ nguyên',id:'<em>Karakter Anda</em> di dalam klip — kamera dan latar tetap',ms:'<em>Watak anda</em> dalam klip — kamera dan latar kekal'},
   ph_lib:{shn:'Look 1850 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်',kac:'Lata da ai look 1850 — <em>langai lata la</em> nna kalang ta hpang u',th:'1850 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที',zh:'1850 款精选风格 — <em>选一款</em>立即开始',vi:'1850 phong cách tuyển chọn — <em>chọn một</em> và bắt đầu ngay',id:'1850 gaya pilihan — <em>pilih satu</em> dan mulai seketika',ms:'1850 gaya pilihan — <em>pilih satu</em> dan mula serta-merta'},
   ph_gallery:{shn:'ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ <em>သိမ်းဝႆႉတီႈၼႆႈ</em>',kac:'Na galaw da ai shagu, <em>ndai kaw makoi da ai</em>',th:'ทุกผลงานที่คุณสร้าง <em>บันทึกไว้ที่นี่</em>',zh:'你的每一件作品，<em>都保存在这里</em>',vi:'Mọi tác phẩm bạn tạo, <em>được lưu ngay tại đây</em>',id:'Setiap karya yang Anda buat, <em>tersimpan di sini</em>',ms:'Setiap hasil ciptaan anda, <em>disimpan di sini</em>'},
   ph_path:{shn:'Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>',kac:'Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>',th:'ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>',zh:'一个风格，套用整本相册 — <em>一次全部完成</em>',vi:'Một look, áp cho cả album — <em>tất cả cùng lúc</em>',id:'Satu look untuk seluruh album — <em>sekaligus</em>',ms:'Satu look untuk seluruh album — <em>serentak</em>'},
@@ -4120,7 +4138,7 @@ var TR_PATH={
 };
 Object.keys(TR_PATH).forEach(function(k){ TR[k]=TR_PATH[k]; });
 /* elementId → TR key for the nine .page-hero headlines (applied in applyLang) */
-var PH_MAP=[["phCreate","ph_create"],["phMeitu","ph_meitu"],["phEvoto","ph_evoto"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
+var PH_MAP=[["phCreate","ph_create"],["phMeitu","ph_meitu"],["phEvoto","ph_evoto"],["phRetouch","ph_retouch"],["phT2i","ph_t2i"],["phVideo","ph_video"],["phVideoUp","ph_videoup"],["phV2V","ph_v2v"],["phLib","ph_lib"],["phGallery","ph_gallery"],["phHome","ph_home"],["phPath","ph_path"]];
 /* v4.41: the language list grows past the nine fully-translated ones.
    Every new code renders through a sensible fallback instead of hallucinated
    text: Myanmar ethnic languages fall back to BURMESE (their readers read
@@ -4694,6 +4712,7 @@ var PAGES=[
   ["pgText2Img","i-doc","Text→Img"],
   ["pgVideo","i-clapper","Video"],
   ["pgVideoUp","i-rocket","VidUp"],
+  ["pgV2V","i-shuffle","V→V"],
   ["pgLib","i-books","Reference"],
   ["pgGallery","i-gallery","Gallery"],
   ["pgHome","i-gear","Setup"]
@@ -4711,7 +4730,7 @@ var TOPGROUPS=[
   { id:"grpDash", ic:"i-home", label:"Home", pages:["pgDash"] },
   { id:"grpWf", ic:"i-brain", label:"Workflows", pages:["pgWf"] },
   { id:"grpEdit", ic:"i-sparkle", label:"Edit", pages:["pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath"] },
-  { id:"grpMedia", ic:"i-clapper", label:"Media Lab", pages:["pgText2Img","pgVideo","pgVideoUp"] },
+  { id:"grpMedia", ic:"i-clapper", label:"Media Lab", pages:["pgText2Img","pgVideo","pgVideoUp","pgV2V"] },
   { id:"grpLib", ic:"i-frame", label:"Library", pages:["pgLib","pgGallery"] }
 ];
 /* ============================ v5.90.0 — WHAT'S NEW ============================
@@ -4739,7 +4758,10 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
-  { v:"6.1.0", kind:"page", ref:"pgVideoUp",
+  { v:"6.2.0", kind:"page", ref:"pgV2V",
+    t:{my:"ဗီဒီယိုနဲ့ လုပ်စရာအားလုံး စာမျက်နှာ အသစ်တစ်ခုမှာ",en:"Everything you do to a video now has its own page",shn:"ၵၢၼ်ဝီဒီရူဝ်ႈတင်းသဵင်ႈ မီးၼႃႈလိၵ်ႈမႂ်ႇ",kac:"Video hte galaw ai yawng gaw shara nnan langai lu sai",th:"ทุกอย่างที่ทำกับวิดีโอ มีหน้าของตัวเองแล้ว",zh:"所有对视频的处理现在有了自己的页面",vi:"Mọi thao tác với video giờ có trang riêng",id:"Semua yang Anda lakukan pada video kini punya halamannya sendiri",ms:"Segala yang anda buat pada video kini ada halamannya sendiri"},
+    s:{my:"Media Lab ထဲမှာ VIDEO → VIDEO ဆိုတဲ့ စာမျက်နှာ အသစ် တစ်ခု ထပ်တိုးလိုက်ပါပြီ။ ဗီဒီယိုတစ်ခု ထည့်ပြီး ဗီဒီယိုပြန်ထွက်တဲ့ tool ၃၁ ခုလုံးနဲ့ smart ကတ်တွေ အဲ့ဒီမှာ စုထားပါတယ် — အရင်က VidUp စာမျက်နှာရဲ့ အောက်ခြေမှာ ဝှက်နေခဲ့တာ။ VidUp မှာတော့ Upscale တစ်ခုတည်း ကျန်ပါတယ်။ endpoint အသစ် ထပ်မထည့်ပါ — ရှိပြီးသားတွေကို ရှာလို့ရအောင် လုပ်လိုက်တာပါ",en:"Media Lab has a new page, VIDEO → VIDEO. All thirty-one tools that take a video in and give a video back live there now, together with the smart cards — they used to sit below the fold of a page named after Upscale. VidUp keeps Upscale and nothing else. Not one endpoint was added: the same catalog, reachable",shn:"Media Lab မီးၼႃႈလိၵ်ႈမႂ်ႇ VIDEO → VIDEO — tool 31 ဢၼ်တင်းသဵင်ႈ မီးတီႈၼၼ်ႈ",kac:"Media Lab hta shara nnan VIDEO → VIDEO — tool 31 ting dai kaw nga sai",th:"Media Lab มีหน้าใหม่ VIDEO → VIDEO รวมเครื่องมือวิดีโอทั้ง 31 ตัวและการ์ดอัจฉริยะไว้ที่เดียว ส่วน VidUp เหลือแค่ Upscale",zh:"Media Lab 新增 VIDEO → VIDEO 页面，三十一个视频进视频出的工具和智能卡片都在这里；VidUp 只保留放大。没有新增任何端点，只是让原有的能被找到",vi:"Media Lab có trang mới VIDEO → VIDEO: cả ba mươi mốt công cụ video-vào-video và các thẻ thông minh đều ở đó; VidUp chỉ còn Upscale. Không thêm endpoint nào — chỉ là tìm được",id:"Media Lab punya halaman baru VIDEO → VIDEO: ketiga puluh satu alat video-ke-video dan kartu pintarnya ada di sana; VidUp hanya menyisakan Upscale. Tidak ada endpoint baru — hanya jadi bisa ditemukan",ms:"Media Lab ada halaman baharu VIDEO → VIDEO: kesemua tiga puluh satu alat video-ke-video dan kad pintarnya ada di situ; VidUp kekal Upscale sahaja. Tiada endpoint baharu — cuma kini boleh dijumpai"} },
+  { v:"6.1.0", kind:"page", ref:"pgV2V",
     t:{my:"ကြိုက်တဲ့ ဗီဒီယိုထဲကို ကိုယ့်ဇာတ်ကောင် ထည့်လို့ရပါပြီ",en:"Your own character can now go into any clip you like",shn:"သႂ်ႇတူဝ်ၸဝ်ႈၵဝ်ႇၶဝ်ႈၼႂ်းဝီဒီရူဝ်ႈလႆႈယဝ်ႉ",kac:"Video hta nang a masha bang lu sai",th:"ใส่ตัวละครของคุณลงในคลิปที่ชอบได้แล้ว",zh:"现在可以把你的角色放进任意视频",vi:"Giờ bạn có thể đưa nhân vật của mình vào clip bất kỳ",id:"Karakter Anda kini bisa masuk ke klip mana pun",ms:"Watak anda kini boleh masuk ke dalam mana-mana klip"},
     s:{my:"Video Tools မှာ ကတ် ၂ ခု အသစ် — တစ်ခုက ဗီဒီယိုထဲက လူတစ်ယောက်လုံးကို ကိုယ့်ပုံနဲ့ အစားထိုးပေးတယ်၊ နောက်တစ်ခုက မျက်နှာပဲ လဲပေးတယ်။ ကင်မရာလှုပ်ရှားမှု၊ လှုပ်ရှားချိန်၊ နောက်ခံ၊ အသံ အားလုံး မူရင်းအတိုင်း ကျန်ပါတယ်။ ကတ်တစ်ချက်နှိပ်ရုံနဲ့ tool ရွေးပေးပြီး prompt ရေးပေးမယ် — ဗီဒီယိုက ၁၀ စက္ကန့်အထိ",en:"Two new cards on Video Tools — one replaces the whole person in the clip with the one in your photo, the other changes only the face. The camera move, the timing, the background and the original sound all stay as filmed. One tap picks the tool and writes the request; the clip may run up to ten seconds",shn:"ၵၢတ်ႈမႂ်ႇ 2 ဢၼ်ၼႂ်း Video Tools — ဢၼ်ၼိုင်ႈလႅၵ်ႈၵူၼ်းတင်းတူဝ်၊ ဢၼ်ၼိုင်ႈလႅၵ်ႈၼႃႈၵူၺ်း။ ဝီဒီရူဝ်ႈ 10 ၸဵၵ်ႇ",kac:"Video Tools hta card nnan 2 — langai gaw masha yawng galai, langai gaw myiman sha galai. Video gaw 10s du hkra",th:"การ์ดใหม่ 2 ใบใน Video Tools — ใบหนึ่งแทนคนทั้งคนในคลิปด้วยคนในรูปของคุณ อีกใบเปลี่ยนแค่ใบหน้า การเคลื่อนกล้อง จังหวะ ฉาก และเสียงเดิมคงไว้ทั้งหมด แตะครั้งเดียวเลือกเครื่องมือและเขียนคำสั่งให้ คลิปยาวได้ถึง 10 วินาที",zh:"Video Tools 新增两张卡片 — 一张把片中的整个人换成你照片里的人，另一张只换脸。镜头运动、节奏、背景与原声全部保留。点一下即可选好工具并写好提示词；视频最长 10 秒",vi:"Hai thẻ mới ở Video Tools — một thẻ thay toàn bộ người trong clip bằng người trong ảnh của bạn, thẻ kia chỉ đổi khuôn mặt. Chuyển động máy quay, nhịp, bối cảnh và âm thanh gốc đều giữ nguyên. Một chạm là chọn công cụ và viết prompt; clip tối đa 10 giây",id:"Dua kartu baru di Video Tools — satu mengganti seluruh orang dalam klip dengan orang di foto Anda, satu lagi hanya wajah. Gerak kamera, tempo, latar, dan suara asli tetap. Sekali tap memilih alat dan menulis prompt; klip maksimal 10 detik",ms:"Dua kad baharu di Video Tools — satu menggantikan keseluruhan orang dalam klip dengan orang dalam foto anda, satu lagi wajah sahaja. Gerakan kamera, rentak, latar dan bunyi asal semuanya kekal. Satu ketikan memilih alat dan menulis gesaan; klip sehingga 10 saat"} },
   { v:"6.0.0", kind:"page", ref:"pgWf",
@@ -5293,7 +5315,9 @@ function galMakeBefore(mime, b64){
 function galBeforeSource(){
   try{
     var page=galCurPage();
-    if(page==="pgText2Img" || page==="pgVideo" || page==="pgVideoUp") return null;
+    /* v6.2.0 — pgV2V joins them: it starts from a VIDEO, so there is no
+       photograph to file as its "before" either. */
+    if(page==="pgText2Img" || page==="pgVideo" || page==="pgVideoUp" || page==="pgV2V") return null;
     if(page==="pgRetouch") return state.rsOrig || (state.refs && state.refs[0]) || null;
     if(page==="pgMeitu" || page==="pgEvoto")
       return (typeof ST!=="undefined" && ST.orig) || (state.st && state.st.img) || null;
@@ -24064,7 +24088,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.1.0";
+var APP_VER="6.2.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
