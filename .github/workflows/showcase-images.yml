@@ -282,7 +282,11 @@ jobs:
               # Video Smart Workflow take is an MP4, and saving one under .png
               # produced a file the composer could not open — after the run had
               # already been paid for.
-              case "$n" in v2v-*) ext=mp4 ;; *) ext=png ;; esac
+              # v2v-ref is the reference PORTRAIT, not a clip — and it is the
+              # BEFORE half of the thirty-second card. Saved under .mp4 it was
+              # a file the composer could not find, so that card was silently
+              # skipped in the collect run while everything reported success.
+              case "$n" in v2v-ref) ext=png ;; v2v-*) ext=mp4 ;; *) ext=png ;; esac
               poll_and_fetch "$n" "$tid" "$ext" || fail=1
             done
             ls -la out/ || true
