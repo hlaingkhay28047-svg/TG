@@ -190,6 +190,26 @@ jobs:
               | head -35 \
               || echo "FETCH-FAILED ${id}"
           done
+  round9:
+    # v6.3.0 — round 8 answered the question that mattered: the STANDARD-MODEL
+    # API does carry lip-sync and talking-photo, as kling-lip-sync/* and
+    # kling-v2-ai-avatar-*/image-audio-to-video. Nothing is wired, because this
+    # app has never had a place to put an AUDIO file. Before any of that is
+    # built, the specs are read in full: what each one takes, how long a clip
+    # or a voice track may be, and which fields are required.
+    name: round9
+    runs-on: ubuntu-24.04
+    steps:
+      - name: The lip-sync and talking-photo specs, in full
+        run: |
+          for id in 448184460 448184461 448184550 494859297 494859298 448184551; do
+            echo "=====LIPSYNC-SPEC ${id} START====="
+            curl -sSL --retry 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" \
+              || echo "FETCH-FAILED ${id}"
+            echo ""
+            echo "=====LIPSYNC-SPEC ${id} END====="
+          done
   fetch:
     name: fetch-${{ matrix.name }}
     runs-on: ubuntu-24.04
