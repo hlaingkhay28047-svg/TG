@@ -618,6 +618,18 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     !/docs\/[A-Za-z0-9_.\/-]+\.(?:mp4|jpg|jpeg|png|webp)/.test(art.replace(/^\s*#.*$/gm, "")),
     "the composer still points at a shipped file for one of its halves");
 
+  /* E4 — a run may publish only what it just composed. The lane copied every
+     vt-*.jpg in the output folder, so a card the composer SKIPPED went out as
+     whatever was already committed: when the RunningHub balance ran out
+     mid-wave, two cards were re-published with art the owner had already
+     rejected, and the run reported success. */
+  report("E4) the lane publishes the cards this run composed, not every file in the folder",
+    /cards-written\.txt/.test(lane) && !/for f in docs\/app\/lib\/vid\/vt-\*\.jpg/.test(lane),
+    "the drop still copies every vt-*.jpg, so a skipped card ships its old art");
+  report("E4b) and the composer records what it wrote for that to read",
+    /cards-written\.txt/.test(art),
+    "build_v2v_card_art.py does not report which cards it actually wrote");
+
   console.log(failures
     ? `\n${failures} FAILURE(S) — the Video Smart Workflow would not do what its cards promise.`
     : "\nAll checks passed — nine cards, every one over an endpoint we already ship, the same request on both surfaces.");

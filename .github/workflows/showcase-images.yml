@@ -651,7 +651,21 @@ jobs:
           python3 -m pip install --quiet --disable-pip-version-check Pillow
           python3 tools/build_v2v_card_art.py --pairs out --out docs/app/lib/vid --tmp "$RUNNER_TEMP/v2vart" || true
           mkdir -p pub/cards
-          for f in docs/app/lib/vid/vt-*.jpg; do [ -e "$f" ] && cp "$f" pub/cards/; done
+          # ONLY WHAT THIS RUN COMPOSED. Copying every vt-*.jpg in the folder
+          # published the repository's committed copy for any card the
+          # composer skipped, so a run could report success while re-shipping
+          # art that had already been rejected — which is exactly what happened
+          # to the thirty-second and make-it-longer cards when the RunningHub
+          # balance ran out mid-wave. The composer now lists what it wrote.
+          WROTE="$RUNNER_TEMP/v2vart/cards-written.txt"
+          if [ -s "$WROTE" ]; then
+            while read -r c; do
+              [ -n "$c" ] && [ -e "docs/app/lib/vid/$c" ] && cp "docs/app/lib/vid/$c" pub/cards/
+            done < "$WROTE"
+            echo "publishing $(wc -l < "$WROTE") freshly composed card(s)"
+          else
+            echo "the composer wrote no cards this run — publishing none"
+          fi
           ls -la pub/cards/ || true
       - name: Convert to shipping JPGs and push the drop branch
         if: success()

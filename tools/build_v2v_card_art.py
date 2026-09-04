@@ -225,6 +225,13 @@ def main():
         print("wrote", m)
     if skipped:
         print("NO RENDER, art left untouched: " + ", ".join(skipped), file=sys.stderr)
+    # WHAT THIS RUN ACTUALLY WROTE, on disk, for the caller to publish. The
+    # lane used to ship every vt-*.jpg in the output folder, so a card the
+    # composer SKIPPED was published from whatever was already committed — a
+    # run could look completely successful while re-shipping art the owner had
+    # already rejected. Only this list may be published.
+    with open(os.path.join(args.tmp, "cards-written.txt"), "w") as fh:
+        fh.write("\n".join(made) + ("\n" if made else ""))
     print("%d card(s) rebuilt, %d without a render" % (len(made), len(skipped)))
     return 1 if skipped else 0
 
