@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-6-1";
+var CACHE = "hnk-web-studio-v6-7-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -223,7 +223,19 @@ var LIB_PURGES = [
   { tag: "./__lib-purge-v6-6-1-cards5-refresh", re: new RegExp("/lib/wf/cards5/(look-golden-grecian|studio-look-copy)\\.jpg$") }
 ];
 
+/* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair
+   land on THIS launch instead of the next one. The purge itself has always
+   worked; the trouble is when it runs. A page paints its art from the cache
+   while the new worker is still installing, so by the time activate deletes
+   the stale copies the student is already looking at them, and only a SECOND
+   launch shows the new ones. The owner hit exactly that and reported the
+   cards still wrong after the release that fixed them.
+
+   So the purge collects the URLs it deleted and hands them to every open
+   client, which re-requests just those pictures. Nothing is reloaded and no
+   work in progress is disturbed — a student mid-prompt keeps their prompt. */
 function purgeReplacedLibArt() {
+  var removed = [];
   return caches.open(LIB_CACHE).then(function (c) {
     return Promise.all(LIB_PURGES.map(function (p) {
       return c.match(p.tag).then(function (done) {
@@ -231,12 +243,19 @@ function purgeReplacedLibArt() {
         return c.keys().then(function (keys) {
           return Promise.all(keys.filter(function (k) {
             try { return p.re.test(new URL(k.url).pathname); } catch (err) { return false; }
-          }).map(function (k) { return c.delete(k); }));
+          }).map(function (k) { removed.push(k.url); return c.delete(k); }));
         }).then(function () {
           return c.put(p.tag, new Response("1"));
         });
       });
     }));
+  }).then(function () {
+    if (!removed.length) return;
+    return self.clients.matchAll({ includeUncontrolled: true, type: "window" }).then(function (cs) {
+      cs.forEach(function (client) {
+        try { client.postMessage({ type: "hnk-lib-purged", urls: removed }); } catch (err) { }
+      });
+    });
   }).catch(function () { /* a failed purge must never block activation */ });
 }
 
