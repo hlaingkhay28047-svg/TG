@@ -106,7 +106,8 @@ report("E2) the panel's Lighting designer uses the strengthened clause and ships
 
 /* ---- F) What's New says so, and opens a relight card ---- */
 /* the relight row shipped with 6.16.0; later releases stack above it, so it is found by what it says */
-const wnBlock = APP.slice(APP.indexOf("var WHATS_NEW = ["), APP.indexOf("var WHATS_NEW = [") + 12000);
+const wnStart = APP.indexOf("var WHATS_NEW = [");
+const wnBlock = APP.slice(wnStart, APP.indexOf("\n];", wnStart));   /* the whole table, not a fixed slice */
 report("F) a What's New row opens a Relight card and says the softbox is gone",
   /\{ v:"6\.16\.0", kind:"wf", ref:"lg-side",\n    t:\{[^\n]*no softbox, lamp or light panel/.test(wnBlock), wnBlock.slice(0, 100));
 
