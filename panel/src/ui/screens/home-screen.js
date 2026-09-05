@@ -395,7 +395,10 @@ function render(root, deps) {
     if (reg && reg.list) wfCount = reg.list().length;
   } catch (e) { }
   try { if (items.length) libCount = items.length; } catch (e) { }
-  stat(164, "One-Tap Workflows");
+  /* the app's tapTotal — presets, wedding, lights, prompt library, every
+     kind-less Smart Workflow and the 16 Studio preset cards; 6.10.0 added
+     Lanna Gold Heritage. verify_panel_page_parity holds this to the app. */
+  stat(165, "One-Tap Workflows");
   stat(libCount, "Visual Library");
   stat(wfCount, "Smart Workflow");
   stat(162, "Retouch A Controls", "meitu");
