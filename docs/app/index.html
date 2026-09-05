@@ -449,6 +449,21 @@ select.inp{padding:9px 10px}
 .hist video{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line-soft);cursor:pointer;background:#000}
 .hist video.sel{border-color:var(--gold)}
 /* v6.4.0 — the picked clip and the picked face, shown rather than named */
+/* v6.7.3 — WHAT THIS TOOL NEEDS, SAID BEFORE ANYTHING IS PICKED. The V→V
+   cards carry a pill ("1 video", "1 video + 1 face photo") and students read
+   it; the tool pages that actually take the files said nothing until you
+   scrolled past the pickers, and a tool needing a photo hid its photo button
+   entirely until it was selected. These are the same pill, live: dim while
+   the slot is empty, gold once it is filled, and tapping one opens that
+   slot's picker. */
+.slotchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+.slotchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  border:1px dashed var(--line);background:var(--panel-2);color:var(--muted);
+  font-size:var(--fs-xs,11px);font-weight:600;cursor:pointer;line-height:1.4}
+.slotchip .ic-s{width:14px;height:14px;flex:0 0 14px}
+.slotchip.on{border-style:solid;border-color:var(--gold);color:var(--gold);
+  background:rgba(212,175,55,.10)}
+.slotchip.opt{opacity:.75}
 .vtpick{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px;border:1px solid var(--line-soft);border-radius:12px;background:var(--sunk,rgba(255,255,255,.03))}
 .vtpick video,.vtpick img{width:72px;height:72px;flex:0 0 72px;object-fit:cover;border-radius:9px;background:#000}
 .vtpick-b{min-width:0;flex:1 1 auto}
@@ -2856,6 +2871,12 @@ html.splashing #splash{display:flex}
       <div class="subh" id="v2LbMode"></div><div class="chips" id="v2ModeChips"></div>
       <div class="subh" id="v2LbQuality"></div><div class="chips" id="v2QualityChips"></div>
       <p class="mut" id="v2HdHint" style="display:none"></p>
+      <!-- v6.7.1 — the HD Finish engine sits WITH the quality tier that turns
+           it on, not three taps down inside Advanced. One finish pass runs
+           between Retouch A, Retouch B and Retouch Pro, so this is one shared
+           choice and the same rows appear on the Studio page. -->
+      <div class="subh" id="v2LbFinish"></div>
+      <div id="v2FinHost"></div>
       <div class="grp" id="v2GrpAdvanced">
         <button class="grp-h"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg> <span id="v2LbAdvanced"></span></span></button>
         <div class="grp-b">
@@ -2878,11 +2899,6 @@ html.splashing #splash{display:flex}
           <div class="subh" id="v2LbBody"></div><div class="chips" id="v2BodyChips"></div>
           <div class="subh" id="v2LbShape"></div><div class="chips" id="v2ShapeChips"></div>
           <p class="mut" id="v2ShapeNote" style="display:none"></p>
-          <!-- v6.7.0 — the HD Finish engine, the same shared setting the
-               Studio options card writes: there is one finish pass between
-               Retouch A, Retouch B and Retouch Pro, so there is one choice. -->
-          <div class="subh" id="v2LbFinish"></div>
-          <div id="v2FinHost"></div>
           <div class="subh" id="v2LbPreview"></div>
           <div class="chips" id="v2RtCarry"></div>
           <pre id="v2PromptPreview" class="mut" style="white-space:pre-wrap;font-size:var(--fs-2xs);max-height:180px;overflow:auto"></pre>
@@ -3221,6 +3237,8 @@ html.splashing #splash{display:flex}
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-clapper"/></svg>VIDEO TOOLS</h2>
     <p class="mut" id="vtIntro"></p>
     <select class="inp" id="selVtModel" style="width:100%;margin-bottom:8px"></select>
+    <!-- v6.7.3 — what the chosen tool needs, before anything is picked -->
+    <div class="slotchips" id="vtSlotChips"></div>
     <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.avi" id="vtFilePick" style="display:none">
     <button class="btn" id="btnVtPick"></button>
     <!-- v6.4.0 — SHOW WHAT WAS PICKED. The owner picked a clip and a face and
@@ -3300,6 +3318,10 @@ html.splashing #splash{display:flex}
     <p class="mut" id="tkIntro"></p>
     <select class="inp" id="selTkModel" style="width:100%;margin-bottom:8px"></select>
     <div class="mut" id="tkPriceNote" style="margin-bottom:8px"></div>
+    <!-- v6.7.3 — Talking Photo needs two different KINDS of file, which is
+         exactly the page where a student is most likely to put the wrong one
+         in the wrong place. Both slots are named up front. -->
+    <div class="slotchips" id="tkSlotChips"></div>
 
     <input type="file" accept="image/*" id="tkImgPick" style="display:none">
     <button class="btn" id="btnTkImgPick"></button>
@@ -7529,6 +7551,17 @@ function rhFinishBody(engine, imageUrl, sizeSel, faceMode){
     /* "auto" sends nothing — the published default is the historical behaviour */
   }
   return body;
+}
+/* Is the finish pass actually switched on? Retouch Pro turns it on with its
+   HD quality tier; Retouch A and Retouch B with the HD Finish chip. Either
+   way the engine below only runs when one of them is set — which is what the
+   note under the rows has to be able to say. */
+function finishPassOn(){
+  try{
+    if(state.v2 && state.v2.quality==="hd") return true;
+    if(svGet("st_hd",false)) return true;
+  }catch(e){}
+  return false;
 }
 function rhFinishSettings(){
   var id=svGet("st_fin_engine","standard");
@@ -12658,6 +12691,15 @@ function v2BuildFinishChips(){
 function v2RenderFinishNote(){
   var n=$("v2FinNote"); if(!n) return;
   var st=rhFinishSettings();
+  /* v6.7.1 — SAY WHETHER IT WILL RUN AT ALL. These rows change nothing unless
+     the finish pass itself is switched on (the HD tier here, the HD Finish
+     chip on the Studio page), and a student who picks an engine and sees no
+     difference has been told nothing. The V→V cards say what they need on
+     the card; a setting should say what it needs too. */
+  if(!finishPassOn()){
+    n.textContent=L9({my:"⚠ HD Finish ပိတ်ထားပါတယ် — ဒီ engine က အလုပ်မလုပ်သေးပါ။ အပေါ်က HD ကို ရွေးပါ။",en:"⚠ The finish pass is off — this engine does nothing yet. Choose HD above.",shn:"⚠ ပိၵ်ႉ HD Finish ဝႆႉ — engine ၼႆႉ ပႆႇႁဵတ်းၵၢၼ်။ လိူၵ်ႈ HD ၽၢႆႇၼိူဝ်",kac:"⚠ HD Finish sat da ai — ndai engine gaw n galaw shi ai. Ntsa na HD lata u",th:"⚠ ปิด HD Finish อยู่ — เอนจินนี้ยังไม่ทำงาน เลือก HD ด้านบน",zh:"⚠ HD Finish 已关闭 — 此引擎暂不生效。请在上方选择 HD。",vi:"⚠ HD Finish đang tắt — engine này chưa hoạt động. Hãy chọn HD ở trên.",id:"⚠ HD Finish mati — engine ini belum bekerja. Pilih HD di atas.",ms:"⚠ HD Finish dimatikan — engine ini belum berfungsi. Pilih HD di atas."});
+    return;
+  }
   if(!st.engine.face){
     n.textContent=st.engine.apiPath+" · "+L9({my:"ဒီ engine မှာ မျက်နှာ ခလုတ် မရှိပါ",en:"this engine has no face control",shn:"engine ၼႆႉ ဢမ်ႇမီးၶလုတ်ႉၼႃႈ",kac:"ndai engine gaw myiman matu n nga ai",th:"เอนจินนี้ไม่มีตัวควบคุมใบหน้า",zh:"该引擎没有面部控制",vi:"engine này không có điều khiển khuôn mặt",id:"engine ini tidak punya kontrol wajah",ms:"engine ini tiada kawalan wajah"});
     return;
@@ -17092,7 +17134,19 @@ function stRenderPend(){
   }
   var hdn=$("stHdNote");
   if(hdn){
-    hdn.textContent=L9({my:"HD Finish: RunningHub upscale ပါမယ်",en:"HD Finish: a RunningHub upscale runs after generate"});
+    /* v6.7.1 — NAME THE ENGINE THAT WILL FINISH THE PHOTO. The line used to
+       say "a RunningHub upscale runs" when there was only one engine to run.
+       There are five now, and the choice they share lives on Retouch Pro, so
+       a student on this page must at least be able to READ what their finish
+       will do and where the setting is. */
+    var fs0=rhFinishSettings();
+    hdn.textContent=L9({my:"HD Finish: ",en:"HD Finish: "})+L9(fs0.engine.label)
+      + (fs0.engine.face && fs0.face==="keep"
+          ? " · "+L9({my:"မျက်နှာ မထိ",en:"face pass off",shn:"ဢမ်ႇတိူဝ်ႉၼႃႈ",kac:"myiman n hkra",th:"ไม่แตะใบหน้า",zh:"不动面部",vi:"không đụng khuôn mặt",id:"wajah tidak disentuh",ms:"wajah tidak disentuh"})
+          : fs0.engine.face && fs0.face==="strong"
+          ? " · "+L9({my:"မျက်နှာ အပြင်းဆုံး",en:"face pass strongest",shn:"ၼႃႈ ႁႅင်းသုတ်း",kac:"myiman grau dik",th:"ใบหน้าแรงสุด",zh:"面部最强",vi:"khuôn mặt mạnh nhất",id:"wajah terkuat",ms:"wajah terkuat"})
+          : "")
+      + " — " + L9({my:"ပြောင်းချင်ရင် Retouch Pro မှာ",en:"change it on Retouch Pro",shn:"လႅၵ်ႈလႆႈတီႈ Retouch Pro",kac:"Retouch Pro kaw galai u",th:"เปลี่ยนได้ที่ Retouch Pro",zh:"可在 Retouch Pro 更改",vi:"đổi ở Retouch Pro",id:"ubah di Retouch Pro",ms:"tukar di Retouch Pro"});
     var hdEl=$("stHd");
     hdn.className=(svGet("st_hd",false)&&hdEl&&hdEl.style.display!=="none")?"on":"";
   }
@@ -21376,7 +21430,9 @@ $("stClearAi").onclick=function(){
   var hd=$("stHd"); if(!hd) return;
   if(!rhIsConfigured("upscale-pro")){ hd.style.display="none"; return; }
   hd.style.display="";
-  hd.title=L9({my:"GENERATE ပြီးတိုင်း RunningHub upscale-pro နဲ့ HD တင်ပေးမယ်",en:"After every GENERATE, upscale the result via RunningHub upscale-pro"});
+  /* v6.7.1 — the tooltip named upscale-pro when that was the only engine; the
+     engine is a choice now, so it points at the rows that make it */
+  hd.title=L9({my:"GENERATE ပြီးတိုင်း RunningHub နဲ့ HD အပြီးသတ်ပေးမယ် — engine ကို အောက်က \"HD Finish\" မှာ ရွေးပါ",en:"After every GENERATE, finish the result on RunningHub — pick the engine under \"HD Finish\" below"});
   function refresh(){ hd.className="chip"+(svGet("st_hd",false)?" on":""); }
   hd.textContent=t("hd_finish");
   hd.onclick=function(){
@@ -24713,7 +24769,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.7.0";
+var APP_VER="6.7.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26641,11 +26697,55 @@ $("vtHistH").textContent = L9({my:"ဒီစာမျက်နှာက ထု�
     var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; sel.appendChild(o);
   });
 })();
+/* ---- v6.7.3 SLOT CHIPS: name every file a tool needs, before it is picked ----
+   The V→V deck tells a student "1 video" or "1 video + 1 face photo" on the
+   card itself, and they read it. The pages that actually TAKE those files
+   said nothing: Video Tools showed one button and hid its photo button
+   entirely for tools that do not use one, so nobody learned that some tools
+   want a photo at all, and Talking Photo — the page most likely to receive
+   the wrong kind of file — asked for a picture and a recording with two
+   identical-looking buttons. These chips are the card's own pill, made live:
+   dim and dashed while the slot is empty, gold once it holds something, and
+   tapping one opens that slot's picker. */
+function slotChips(host, slots){
+  var h = (typeof host==="string") ? $(host) : host;
+  if(!h) return;
+  h.innerHTML="";
+  slots.forEach(function(sl){
+    var b=document.createElement("button");
+    b.type="button";
+    b.className="slotchip"+(sl.filled?" on":"")+(sl.optional?" opt":"");
+    b.innerHTML=icn(sl.filled?"i-check":sl.ic)+" "+escH(sl.label)+(sl.optional
+      ? " "+escH(L9({my:"(ထည့်ချင်မှ)",en:"(optional)",shn:"(သင်ႇလႆႈ)",kac:"(nkau)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"}))
+      : "");
+    b.setAttribute("aria-pressed", sl.filled ? "true" : "false");
+    if(sl.pick) b.onclick=function(){ try{ sl.pick(); }catch(e){} };
+    h.appendChild(b);
+  });
+}
+function renderVtSlotChips(){
+  var m=rhVtModelDef($("selVtModel").value);
+  var slots=[{ ic:"i-clapper", label:L9({my:"ဗီဒီယို ၁",en:"1 video",shn:"ဝီဒီရူဝ်ႈ ၁",kac:"Video 1",th:"วิดีโอ 1",zh:"视频 1",vi:"1 video",id:"1 video",ms:"1 video"}),
+    filled: !!state.vtFile, pick:function(){ $("vtFilePick").click(); } }];
+  if(m && m.imageParam) slots.push({ ic:"i-camera",
+    label:L9({my:"ပုံ ၁",en:"1 photo",shn:"ၶႅပ်းႁၢင်ႈ ၁",kac:"Sumla 1",th:"รูป 1",zh:"图片 1",vi:"1 ảnh",id:"1 foto",ms:"1 foto"}),
+    filled: !!state.vtImg, pick:function(){ $("vtImgPick").click(); } });
+  slotChips("vtSlotChips", slots);
+}
+function renderTkSlotChips(){
+  slotChips("tkSlotChips", [
+    { ic:"i-camera", label:L9({my:"ပုံ ၁",en:"1 photo",shn:"ၶႅပ်းႁၢင်ႈ ၁",kac:"Sumla 1",th:"รูป 1",zh:"图片 1",vi:"1 ảnh",id:"1 foto",ms:"1 foto"}),
+      filled: !!state.tkImg, pick:function(){ $("tkImgPick").click(); } },
+    { ic:"i-mic", label:L9({my:"အသံ ၁",en:"1 recording",shn:"သဵင် ၁",kac:"Nsen 1",th:"เสียง 1",zh:"录音 1",vi:"1 bản ghi",id:"1 rekaman",ms:"1 rakaman"}),
+      filled: !!state.tkAud, pick:function(){ $("tkAudPick").click(); } }
+  ]);
+}
 function updateVtModelUI(){
   var m=rhVtModelDef($("selVtModel").value);
   $("btnVtImgPick").style.display = m.imageParam ? "" : "none";
   if(!m.imageParam){ state.vtImg=null; $("vtImgName").textContent=""; }
   if(typeof renderVtPicks==="function") renderVtPicks();
+  renderVtSlotChips();
   var pr=$("vtPrompt");
   pr.style.display = m.prompt ? "" : "none";
   if(m.prompt){ pr.setAttribute("maxlength", m.promptMax||20000);
@@ -26947,6 +27047,7 @@ function vtB64Bytes(b64){
   return Math.max(0, Math.floor(n*3/4) - pad);
 }
 function renderVtPicks(){
+  try{ renderVtSlotChips(); }catch(e){}   /* v6.7.3 — the slot chips follow the slots */
   var fp=$("vtFilePrev"), ip=$("vtImgPrev");
   if(fp){
     if(state.vtFile){
@@ -27196,6 +27297,7 @@ function tkPriceLine(){
   }).replace(/\{L\}/g, m.label).replace(/\{P\}/g, m.cny.toFixed(2));
 }
 function renderTkPicks(){
+  try{ renderTkSlotChips(); }catch(e){}   /* v6.7.3 — the slot chips follow the slots */
   var ip=$("tkImgPrev");
   if(ip){
     if(state.tkImg){

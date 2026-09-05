@@ -34,8 +34,26 @@ function report(name, ok, detail) {
 
 (async () => {
   /* ---- A) the worker's half: it collects what it deleted and tells clients ---- */
+  /* ---- A0) THE ROOT CAUSE THIS FILE MISSED TWICE ----
+     6.6.1 deleted the stale entry from the SERVICE WORKER cache and 6.6.2 made
+     the page re-request it — and the owner still saw the old art three
+     releases later, on 6.7.0, with the repair marked done. Both fixes ended in
+     a plain fetch(), and a plain fetch is answered by the BROWSER'S OWN HTTP
+     cache, which was still holding the same JPEG under the same URL. The
+     purge deleted a copy and immediately put the identical old bytes back.
+     Deleting is only half a repair: the refill has to bypass that cache, and
+     the marker must not be spent when it did not. */
+  report("A0) the refill bypasses the browser's HTTP cache, or it is not a repair",
+    /new Request\(url, \{[^}]*cache:\s*"reload"/.test(SW) &&
+    /function purgeRefill\(/.test(SW) && /purgeRefill\(c, url\)/.test(SW),
+    "purgeReplacedLibArt refills with a plain fetch — the HTTP cache will hand the old bytes back");
+
+  report("A0b) a refill that failed leaves the marker unset, so the next launch retries",
+    /if \(failed\) return;/.test(SW) && /failed = true/.test(SW),
+    "an offline activation burns the one chance this entry had and the picture stays old for ever");
+
   report("A) the purge records the URLs it deletes",
-    /removed\.push\(k\.url\)/.test(SW),
+    /removed\.push\(url\)/.test(SW) && /var url = k\.url;/.test(SW),
     "purgeReplacedLibArt drops the deleted keys on the floor");
   report("A2) and hands them to every open window, uncontrolled ones included",
     /clients\.matchAll\(\{[^}]*includeUncontrolled:\s*true/.test(SW) &&

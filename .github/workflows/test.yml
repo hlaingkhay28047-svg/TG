@@ -429,6 +429,15 @@ jobs:
       - name: Verify every HD Finish body holds to RunningHub's published schema
         run: node test/verify_retouch_finish.js
 
+      # v6.7.3 — the V→V deck names what each card needs ("1 video",
+      # "1 video + 1 face photo") and students read it, but the pages that
+      # TAKE those files said nothing: Video Tools hid its photo button
+      # entirely for tools that do not use one, so nobody learned some tools
+      # want a photo, and Talking Photo asked for a picture and a recording
+      # with two identical buttons. This checks both pages on both surfaces.
+      - name: Verify every tool names the files it takes before one is picked
+        run: PORT=8931 node test/verify_slot_chips.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

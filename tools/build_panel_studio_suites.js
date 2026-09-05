@@ -243,6 +243,7 @@ const PRELUDE_NAMES = [
   /* HD Finish engines — provided by panel/js/hnk_finish_engines.js, lifted
      from the app by tools/build_panel_finish_engines.js */
   "rhFinishSettings", "rhFinishEngine", "rhFinishBody", "RH_FINISH_ENGINES",
+  "finishPassOn", "v2RenderFinishNote",
   /* Retouch Pro */ "buildRetouch", "renderAddonSummary", "rhEngineLabel", "rsRunOnetap", "setSt", "rsDoGenerate", "rsShowResult", "v2SetBusy", "stUndoTick", "stCssFilter", "stEffT1", "stEffT2", "stUiSave", "stHold", "stZonesBtn"
 ];
 

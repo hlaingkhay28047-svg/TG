@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.76.0";
+const PANEL_VERSION = "6.76.2";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10143,7 +10143,51 @@ function vtThumbFor(entry, id, nameId, metaId, wrapId, isVideo) {
     };
   }).catch(function () { entry._reading = false; });
 }
+/* the three slot names, word-for-word the web app's */
+const SLOT_L = {
+  video: {my:"ဗီဒီယို ၁",en:"1 video",shn:"ဝီဒီရူဝ်ႈ ၁",kac:"Video 1",th:"วิดีโอ 1",zh:"视频 1",vi:"1 video",id:"1 video",ms:"1 video"},
+  photo: {my:"ပုံ ၁",en:"1 photo",shn:"ၶႅပ်းႁၢင်ႈ ၁",kac:"Sumla 1",th:"รูป 1",zh:"图片 1",vi:"1 ảnh",id:"1 foto",ms:"1 foto"},
+  audio: {my:"အသံ ၁",en:"1 recording",shn:"သဵင် ၁",kac:"Nsen 1",th:"เสียง 1",zh:"录音 1",vi:"1 bản ghi",id:"1 rekaman",ms:"1 rakaman"}
+};
+/* ---- v6.7.3 SLOT CHIPS — the web app's, in the panel ----
+   The V→V deck names what a card needs ("1 video", "1 video + 1 face photo")
+   and students read it. The pages that TAKE the files said nothing: the photo
+   button was simply hidden for tools that do not use one, so nobody learned
+   some tools want a photo at all, and Talking Photo asked for a picture and a
+   recording with two identical buttons. Dim and dashed while the slot is
+   empty, gold once it holds something, and tapping one opens that picker. */
+function slotChips(hostId, slots) {
+  const h = $(hostId); if (!h) return;
+  while (h.firstChild) h.removeChild(h.firstChild);
+  slots.forEach(function (sl) {
+    const b = document.createElement("div");
+    b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    b.className = "slotchip" + (sl.filled ? " on" : "") + (sl.optional ? " opt" : "");
+    b.setAttribute("aria-pressed", sl.filled ? "true" : "false");
+    b.appendChild(ffIcon(sl.filled ? "i-check" : sl.ic, sl.filled ? "gold" : "cream", "ic-s"));
+    b.appendChild(document.createTextNode(sl.label));
+    if (sl.pick) b.addEventListener("click", function () { try { sl.pick(); } catch (e) { } });
+    h.appendChild(b);
+  });
+}
+function renderVtSlotChips() {
+  const d = vtDef();
+  const slots = [{ ic: "i-clapper", label: ff9(SLOT_L.video), filled: !!VT.video,
+    pick: function () { const b = $("btnVtPick"); if (b) b.click(); } }];
+  if (d && d.imageParam) slots.push({ ic: "i-camera", label: ff9(SLOT_L.photo), filled: !!VT.img,
+    pick: function () { const b = $("btnVtImgPick"); if (b) b.click(); } });
+  slotChips("vtSlotChips", slots);
+}
+function renderTkSlotChips() {
+  slotChips("tkSlotChips", [
+    { ic: "i-camera", label: ff9(SLOT_L.photo), filled: !!TK.img,
+      pick: function () { const b = $("btnTkImgPick"); if (b) b.click(); } },
+    { ic: "i-mic", label: ff9(SLOT_L.audio), filled: !!TK.aud,
+      pick: function () { const b = $("btnTkAudPick"); if (b) b.click(); } }
+  ]);
+}
 function renderVt() {
+  try { renderVtSlotChips(); } catch (e) { }
   const d = vtDef();
   vtThumbFor(VT.video, "vtFileThumb", "vtFileName", "vtFileMeta", "vtFilePrev", true);
   /* the photo button follows the tool, exactly as the app's does */
@@ -10395,6 +10439,7 @@ function tkFillModels() {
   });
 }
 function renderTk() {
+  try { renderTkSlotChips(); } catch (e) { }
   const d = tkDef();
   vtThumbFor(TK.img, "tkImgThumb", "tkImgName", "tkImgMeta", "tkImgPrev", false);
   /* the recording has no thumbnail to draw — the strip shows its name and

@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.76.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.76.2</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -890,6 +890,8 @@
           </div>
           <select class="inp" id="vtModel"></select>
         </div>
+        <!-- v6.7.3 — what the chosen tool needs, before anything is picked -->
+        <div class="slotchips" id="vtSlotChips"></div>
         <div role="button" tabindex="0" id="btnVtPick" class="btn" style="margin-top:8px"></div>
         <!-- v6.4.0 — the picked clip, SHOWN. Same reason as the app: a
              filename says nothing about whether this is the right take, and
@@ -990,6 +992,9 @@
         </div>
         <div class="mut" id="tkPriceNote" style="margin-top:6px"></div>
 
+        <!-- v6.7.3 — a picture and a recording are two different kinds of
+             file; both slots are named up front, as in the web app -->
+        <div class="slotchips" id="tkSlotChips"></div>
         <div role="button" tabindex="0" id="btnTkImgPick" class="btn" style="margin-top:8px"></div>
         <div class="vtpick" id="tkImgPrev" style="display:none">
           <img id="tkImgThumb" alt="">
@@ -1275,6 +1280,10 @@
           <div class="subh" id="v2LbMode"></div><div class="chips" id="v2ModeChips"></div>
           <div class="subh" id="v2LbQuality"></div><div class="chips" id="v2QualityChips"></div>
           <p class="mut" id="v2HdHint" style="display:none"></p>
+          <!-- v6.7.1 — the HD Finish engine sits WITH the quality tier that
+               turns it on, exactly as the web app places it. -->
+          <div class="subh" id="v2LbFinish"></div>
+          <div id="v2FinHost"></div>
           <div class="grp" id="v2GrpAdvanced">
             <div class="grp-h" id="v2AdvH"><span class="car"><img class="ic-car" src="icons/ui/i-caret-gold.svg" alt="" /></span><span><img class="ic-s" src="icons/ui/i-sliders-cream.svg" alt="" /> <span id="v2LbAdvanced"></span></span></div>
             <div class="grp-b" id="v2AdvB">
@@ -1297,11 +1306,6 @@
               <div class="subh" id="v2LbBody"></div><div class="chips" id="v2BodyChips"></div>
               <div class="subh" id="v2LbShape"></div><div class="chips" id="v2ShapeChips"></div>
               <p class="mut" id="v2ShapeNote" style="display:none"></p>
-              <!-- v6.7.0 — the HD Finish engine, the same shared setting the
-                   web app's Retouch Pro card carries: one finish pass between
-                   Retouch A, Retouch B and Retouch Pro, so one choice. -->
-              <div class="subh" id="v2LbFinish"></div>
-              <div id="v2FinHost"></div>
               <div class="subh" id="v2LbPreview"></div>
               <div class="chips" id="v2RtCarry"></div>
               <div id="v2PromptPreview" class="mut v2-pre"></div>
@@ -1378,7 +1382,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.76.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.76.2</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
