@@ -3683,6 +3683,46 @@ function setIcnText(elm, name, text, opts){
   var txt=escH(stripIcn(text));
   elm.innerHTML = opts.after ? txt+" "+icn(name,opts.cls) : icn(name,opts.cls)+" "+txt;
 }
+/* WHY THIS SITS AT THE TOP OF THE SCRIPT AND NOT BESIDE THE CARDS IT SERVES.
+   libArt() is called from ptSetWorkflow's restore path, which runs while this
+   one giant top-level script is still executing — so a `var` assigned further
+   down is still undefined when it is read, and the TypeError kills every line
+   after it (state.st, the whole Studio module, APP_VER, the service worker).
+   The map is data with no dependencies, so it is declared before its first
+   possible reader. test/verify_lib_art_rev.js check E holds it here. */
+/* ---- v6.7.4 A REPLACED PICTURE GETS A NEW URL ------------------------------
+   THIS BUG HAS NOW SURVIVED FOUR FIXES AND THE OWNER IS STILL LOOKING AT IT.
+   6.6.1 purged the service-worker cache, 6.6.2 repainted the page, 6.7.3
+   refilled with cache:"reload" so the BROWSER cache could not hand the old
+   bytes back — and the nine cards are still wrong on their phone.
+
+   The hole in 6.7.3 is that the purge only repairs entries it FINDS in the
+   service-worker cache. A device whose lib cache was emptied — by the app's
+   own "Clear cache + restart" button, or by eviction — has nothing to sweep,
+   so the purge deletes nothing, refills nothing, marks itself done, and the
+   very next request is answered by the browser's HTTP cache with the old
+   JPEG. Every repair so far has been a repair of the WRONG cache, or of a
+   cache that happened to be empty.
+
+   So stop repairing caches. A picture replaced under its own name gets a new
+   URL, and no cache anywhere can serve old bytes for a URL it has never seen.
+   Only the files actually replaced carry a token, so nothing else re-downloads
+   — the ~52MB of thumbnails a customer paid mobile data for stays put.
+
+   THE RULE, for whoever replaces art next: replace docs/app/lib/<path> in
+   place, then bump its number here (or add it at 2). test/verify_lib_art_rev.js
+   fails until you do. */
+var LIB_ART_REV = {
+  "lib/vid/vt-charSwap.jpg": 2, "lib/vid/vt-faceSwap.jpg": 2, "lib/vid/vt-anime.jpg": 2,
+  "lib/vid/vt-filmlook.jpg": 2, "lib/vid/vt-heritage.jpg": 2, "lib/vid/vt-extend.jpg": 2,
+  "lib/vid/vt-restore.jpg": 2, "lib/vid/vt-erasesub.jpg": 2, "lib/vid/vt-char30.jpg": 2,
+  "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2
+};
+function libArt(p){
+  var k=String(p||"").replace(/^\.?\//, "").split("?")[0];
+  var r=LIB_ART_REV[k];
+  return r ? (p + (p.indexOf("?")>=0 ? "&" : "?") + "v=" + r) : p;
+}
 "use strict";
 /* ============ HNK Web Studio v2 — all client-side, panel-data parity ============ */
 /* v5.50.0 — Gemini and OpenAI are retired: RunningHub Enterprise is the one
@@ -4892,6 +4932,17 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.8.0", kind:"page", ref:"pgAccount",
+    t:{my:"Register ပြီးရင် ထွက်ပြီး ပြန်ဝင်စရာ မလိုတော့ပါ",en:"After registering, you no longer sign out and back in",shn:"ႁဵတ်းမၢႆၽၢင်ယဝ်ႉ ဢမ်ႇလူဝ်ႇဢွၵ်ႇသေၶဝ်ႈမႂ်ႇ",kac:"Matsun ngut yang pru nna bai shang ra n nga sai",th:"สมัครแล้วไม่ต้องออกแล้วเข้าใหม่อีก",zh:"注册后不再需要退出再登录",vi:"Đăng ký xong không cần đăng xuất rồi đăng nhập lại",id:"Setelah mendaftar, tidak perlu keluar lalu masuk lagi",ms:"Selepas mendaftar, tidak perlu log keluar dan masuk semula"},
+    s:{my:"အရင်က register ပြီးတာနဲ့ \"ငွေပေးပါ\" စာမျက်နှာ ပေါ်နေပြီး၊ HNK က ခွင့်ပြုပြီးမှ ၅ မိနစ်ကြာမှ ပွင့်တာမို့ သင်တန်းသားတွေ ထွက်ပြီး ပြန်ဝင်နေရတယ်။ အခု register ပြီးရင် \"HNK စစ်ဆေးနေပါတယ်\" လို့ မှန်မှန် ပြောပြီး ၂၀ စက္ကန့်တစ်ခါ ပြန်စစ်ပါတယ် — ခွင့်ပြုတာနဲ့ ရပ်နေတဲ့ နေရာမှာတင် အလိုအလျောက် ပွင့်ပြီး ကြိုဆိုစာ ပေါ်ပါမယ်။",
+       en:"A student who had just registered was shown the PAY screen, and approval only reached them up to five minutes later — so people signed out and back in to get through. The app now says plainly \"HNK is checking your account\", asks again every twenty seconds, and the moment you are approved the page opens where you stand and says so.",
+       shn:"ႁဵတ်းမၢႆၽၢင်ယဝ်ႉ ၼႃႈလိၵ်ႈ \"ပၼ်ငိုၼ်း\" ဢွၵ်ႇမႃး — ယၢမ်းလဵဝ် လၢတ်ႈဝႃႈ HNK တိုၵ်ႉၸႅတ်ႈ လႄႈ ၸႅတ်ႈမႂ်ႇ ၵူႈ ၂၀ ၸႅတ်ႉၵၼ်ႉ၊ ၶႂ်ႈလႆႈယဝ်ႉ ပိုတ်ႇႁင်းၵူၺ်း",
+       kac:"Matsun ngut ai hpang \"gumhpraw jaw\" laika ka pru wa ai — ya gaw HNK yu nga ai nga tsun, 20 second langai lang bai yu, shapraw ngut ai hte shi hkrai hpaw ai",
+       th:"หลังสมัคร เคยเห็นหน้า \"ชำระเงิน\" และการอนุมัติมาถึงช้าถึงห้านาที คนจึงออกแล้วเข้าใหม่ ตอนนี้แอปบอกตรง ๆ ว่า HNK กำลังตรวจสอบ ถามใหม่ทุก 20 วินาที และเมื่ออนุมัติ หน้าจะเปิดเองทันที",
+       zh:"刚注册的学员会看到\"付款\"页面，审核结果最多要五分钟才到，所以大家只能退出再登录。现在应用会直说 HNK 正在审核，每 20 秒重查一次，通过的那一刻页面就地打开并提示你。",
+       vi:"Học viên vừa đăng ký lại thấy màn hình \"thanh toán\", và phê duyệt chỉ đến sau tới năm phút — nên mọi người đăng xuất rồi đăng nhập lại. Giờ ứng dụng nói rõ HNK đang kiểm tra, hỏi lại mỗi 20 giây, và được duyệt là trang mở ngay tại chỗ.",
+       id:"Siswa yang baru mendaftar malah melihat layar \"bayar\", dan persetujuan baru sampai hingga lima menit kemudian — jadi orang keluar lalu masuk lagi. Kini aplikasi berkata jujur HNK sedang memeriksa, bertanya lagi tiap 20 detik, dan begitu disetujui halaman terbuka di tempat.",
+       ms:"Pelajar yang baru mendaftar melihat skrin \"bayar\", dan kelulusan hanya sampai sehingga lima minit kemudian — jadi orang log keluar dan masuk semula. Kini aplikasi berkata terus HNK sedang menyemak, bertanya lagi setiap 20 saat, dan sebaik diluluskan halaman terbuka di situ juga."} },
   { v:"6.7.0", kind:"page", ref:"pgRetouch",
     t:{my:"HD Finish ကို ကိုယ်တိုင် ရွေးလို့ရပြီ",en:"You choose how the HD Finish works",shn:"လိူၵ်ႈ HD Finish လႆႈယဝ်ႉ",kac:"HD Finish hpe nang lata lu sai",th:"เลือกวิธี HD Finish ได้เองแล้ว",zh:"HD Finish 现在由你决定",vi:"Bạn tự chọn cách HD Finish chạy",id:"Anda yang memilih cara HD Finish bekerja",ms:"Anda pilih cara HD Finish berfungsi"},
     s:{my:"Retouch A၊ Retouch B၊ Retouch Pro သုံးခုလုံးရဲ့ HD Finish က engine တစ်ခုတည်းနဲ့ ပုံသေ လုပ်နေခဲ့တာ — ပြီးတော့ RunningHub ရဲ့ default အရ မျက်နှာကို Topaz က ထပ်ပြင်နေတယ်၊ သင် သေချာပြင်ထားတဲ့ အသားအရေ ပျက်သွားနိုင်တယ်။ အခု Retouch Pro ထဲမှာ engine ငါးမျိုး (ပုံမှန်၊ မျက်နှာ အသေးစိတ်၊ ပရင့်ထုတ်၊ ပုံသေး/ဓာတ်ပုံဟောင်း၊ HYPIR ပြန်လည်ပြုပြင်) ရွေးလို့ရပြီး၊ \"ငါ့ retouch ကို မထိနဲ့\" လို့လည်း ပြောလို့ရပါပြီ။ ရွေးလိုက်တာက သုံးမျက်နှာလုံးအတွက် တူတူပါပဲ။",
@@ -13446,7 +13497,7 @@ function ptRenderSrc(){
   sel.style.display = wf ? "" : "none";
   if(wf){
     var art=$("ptWfSelArt");
-    if(wf.cardImg){ art.src=wf.cardImg; art.style.display=""; }
+    if(wf.cardImg){ art.src=libArt(wf.cardImg); art.style.display=""; }
     else { art.removeAttribute("src"); art.style.display="none"; }
     $("ptWfSelTitle").textContent=wf.title;
     $("ptWfSelSum").textContent=wf.summary||"";
@@ -24404,6 +24455,17 @@ function admRender(){
    ============================================================ */
 var WALL_MAXAGE_MS = 30 * 86400000;   /* absolute session age; re-login after */
 var WALL_RECHECK_MS = 5 * 60000;      /* how often a foreground tab revalidates */
+/* v6.8.0 — WHILE WAITING ON APPROVAL, FIVE MINUTES IS THE WHOLE PROBLEM. The
+   app already re-read the profile and dropped the wall by itself, so approval
+   did reach a student without them doing anything — up to five minutes later,
+   behind a screen that meanwhile asked them to pay. Nobody waits five minutes
+   at a screen like that; they sign out and back in, and that is where the
+   "you have to log out and back in" folklore came from. A pending account is
+   the one state where the answer can change from outside at any second, so it
+   asks every twenty seconds — a single small profile read, only while the tab
+   is actually in front of someone, and it stops the moment they are in. */
+var WALL_PENDING_MS = 20000;
+function wallRecheckMs(){ return appWallState() === "pending" ? WALL_PENDING_MS : WALL_RECHECK_MS; }
 var _wallLast = 0;
 /* the last state the accordion was steered for — see appWallApply */
 var _wallLastSt = null;
@@ -24477,7 +24539,8 @@ function wallRetryArm(on){
        the gap is 4 seconds wide and a phone can lose its data inside it. The
        "offline" handler repaints too, so the button also disappears on the
        transition rather than waiting for the next tick. */
-    if (el && appWallState() === "checking" && navigator.onLine){
+    var _st = appWallState();
+    if (el && (_st === "checking" || _st === "pending") && navigator.onLine){
       el.textContent = t("acc_retry");
       el.className = "btn btn-gold on";
     }
@@ -24502,23 +24565,57 @@ function wallRetryWire(){
   });
 }
 
-/* "" open · "login" no session · "buy" signed in without an active plan ·
-   "checking" signed in, profile not read yet — a distinct state on purpose,
-   because treating unknown as "buy" flashes a payment demand at a paying
-   customer for the length of one round trip. */
+/* "" open · "login" no session · "pending" registered, waiting on HNK ·
+   "buy" a plan that has lapsed · "checking" signed in, profile not read yet —
+   a distinct state on purpose, because treating unknown as "buy" flashes a
+   payment demand at a paying customer for the length of one round trip.
+
+   v6.8.0 — WHY "pending" EXISTS. A student who had just registered was shown
+   the PAY wall, because the only question asked was "is this plan active",
+   and a brand-new account's is not. So the app demanded money from someone
+   who was actually waiting on the owner to approve them, while the small
+   account card below said "HNK is checking your account" — two screens
+   disagreeing. The student read the loud one, decided it was broken, signed
+   out and signed back in; by then approval had usually landed, and the whole
+   cohort learned "you have to log out and back in", which was never true.
+   plan_expires_at is null until the first approval and is never cleared, so
+   its absence is exactly "never approved yet". */
 function appWallState(){
   if (!acc.sess) return "login";
+  /* plan_expires_at is written by the first approval and is never cleared, so
+     its absence is exactly "this account has never been approved". Read once,
+     because BOTH gates below can be the one a fresh student meets: the unified
+     entitlement says "License inactive" and the profile says "no plan", and
+     the student is the same person either way — the one waiting on the owner,
+     not the one who has to pay. Only decided when the profile has actually
+     been read; until then "checking" is the honest answer. */
+  var neverApproved = !!(acc.profile && !acc.profile.plan_expires_at);
   if (unified.enforced){
     if (unified.loading || unified.error || !unified.entitlement) return "checking";
-    if (!unifiedCanWeb()) return "unified_blocked";
+    if (!unifiedCanWeb()) return neverApproved ? "pending" : (acc.profile ? "unified_blocked" : "checking");
   }
   if (!acc.profile) return "checking";
-  return isPremium() ? "" : "buy";
+  if (isPremium()) return "";
+  return neverApproved ? "pending" : "buy";
 }
 
+var _wallWasBlocked = null;
 function appWallApply(){
   var st = appWallState();
   var on = st !== "";
+  /* v6.8.0 — SAY IT OUT LOUD WHEN THE DOOR OPENS. The wall dropping is a
+     silent DOM change: a student watching the waiting screen sees the page
+     rearrange and cannot tell whether they were let in or something broke.
+     Only the pending → open transition is announced, once, and only for a
+     student who actually sat behind the wall this session — a returning
+     paying customer boots straight through and is told nothing. */
+  if (_wallWasBlocked === "pending" && !on){
+    try {
+      toast(L9({my:"✅ ခွင့်ပြုပြီးပါပြီ — ကြိုဆိုပါတယ်! ယခု အားလုံး သုံးလို့ရပါပြီ",en:"✅ Approved — welcome! Everything is open to you now",shn:"✅ ၶႂ်ႈလႆႈယဝ်ႉ — ႁပ်ႉတွၼ်ႈ! ၸႂ်ႉလႆႈတင်းမူတ်းယဝ်ႉ",kac:"✅ Shapraw ngut sai — kabu sai! Yawng galaw lu sai",th:"✅ อนุมัติแล้ว — ยินดีต้อนรับ! ใช้ได้ทุกอย่างแล้ว",zh:"✅ 已通过 — 欢迎！现在全部功能都开放了",vi:"✅ Đã duyệt — chào mừng! Mọi thứ đã mở cho bạn",id:"✅ Disetujui — selamat datang! Semuanya sudah terbuka",ms:"✅ Diluluskan — selamat datang! Semuanya kini terbuka"}), "ok");
+    } catch(e){}
+    try { if (typeof switchPage === "function") switchPage("pgHome"); } catch(e){}
+  }
+  _wallWasBlocked = on ? st : null;
   document.body.classList.toggle("wall", on);
   var h = $("wallH"), p = $("wallP");
   /* v5.39.0 — DO NOT REPAINT IDENTICAL COPY. #wallMsg is a polite live region
@@ -24548,6 +24645,20 @@ function appWallApply(){
     if (st === "login"){
       h.innerHTML = icn("i-key","ic-h2") + " " + escH(L9({my:"အကောင့်ဝင်ပါ",en:"Sign in to continue",shn:"ၶဝ်ႈ account",kac:"Account hta shang u",th:"เข้าสู่ระบบก่อน",zh:"请先登录",vi:"Đăng nhập để tiếp tục",id:"Masuk dulu",ms:"Log masuk dahulu"}));
       p.textContent = L9({my:"HNK Web Studio ကို သုံးဖို့ အကောင့်တစ်ခု လိုပါတယ်။ အောက်မှာ ဝင်ပါ — အကောင့်မရှိသေးရင် အသစ်ဖွင့်လို့ရပါတယ်။",en:"HNK Web Studio needs an account. Sign in below — or create one if you do not have it yet.",shn:"HNK Web Studio လူဝ်ႇ account. ၶဝ်ႈတီႈတႂ်ႈ — ဢမ်ႇမီးၸိုင် ႁဵတ်းမႂ်ႇလႆႈ",kac:"HNK Web Studio gaw account ra ai. Npu hta shang u — n nga yang nnan hpaw mai ai",th:"HNK Web Studio ต้องมีบัญชี เข้าสู่ระบบด้านล่าง หรือสมัครใหม่ได้",zh:"HNK Web Studio 需要账号。请在下方登录，或注册一个新账号",vi:"HNK Web Studio cần một tài khoản. Đăng nhập bên dưới, hoặc tạo mới",id:"HNK Web Studio memerlukan akun. Masuk di bawah, atau buat baru",ms:"HNK Web Studio memerlukan akaun. Log masuk di bawah, atau daftar baharu"});
+    } else if (st === "pending"){
+      /* v6.8.0 — the truth, and the one sentence that stops the log-out
+         ritual: it opens BY ITSELF. */
+      h.innerHTML = icn("i-clock","ic-h2") + " " + escH(L9({my:"မှတ်ပုံတင် ပြီးပါပြီ",en:"Registration complete",shn:"ႁဵတ်းမၢႆၽၢင်ယဝ်ႉ",kac:"Matsun hpe ngut sai",th:"ลงทะเบียนเรียบร้อย",zh:"注册完成",vi:"Đăng ký xong",id:"Pendaftaran selesai",ms:"Pendaftaran selesai"}));
+      p.textContent = L9({
+        my:"HNK က သင့်အကောင့်ကို စစ်ဆေးနေပါတယ်။ ခွင့်ပြုတာနဲ့ ဒီစာမျက်နှာ အလိုအလျောက် ပွင့်ပါမယ် — ထွက်ပြီး ပြန်ဝင်စရာ မလိုပါ။ App ကို ဖွင့်ထားလိုက်ပါ။",
+        en:"HNK is checking your account. This page opens by itself the moment you are approved — you do not need to sign out and back in. Just leave the app open.",
+        shn:"HNK တိုၵ်ႉၸႅတ်ႈတူၺ်း account ၶွင်ၸဝ်ႈၵဝ်ႇ။ ပေႃးၶႂ်ႈလႆႈယဝ်ႉ ၼႃႈလိၵ်ႈၼႆႉ တေပိုတ်ႇႁင်းၵူၺ်း — ဢမ်ႇလူဝ်ႇဢွၵ်ႇသေၶဝ်ႈမႂ်ႇ",
+        kac:"HNK gaw na a account hpe yu nga ai. Shapraw ngut ai hte ndai laika ka gaw shi hkrai hpaw na — pru nna bai shang ra n nga ai",
+        th:"HNK กำลังตรวจสอบบัญชีของคุณ หน้านี้จะเปิดเองทันทีที่ได้รับอนุมัติ — ไม่ต้องออกแล้วเข้าใหม่ เปิดแอปทิ้งไว้ได้เลย",
+        zh:"HNK 正在审核你的账号。通过后本页会自动打开 — 不需要退出再登录，让应用开着就行。",
+        vi:"HNK đang kiểm tra tài khoản của bạn. Trang này sẽ tự mở ngay khi được duyệt — bạn không cần đăng xuất rồi đăng nhập lại.",
+        id:"HNK sedang memeriksa akun Anda. Halaman ini terbuka sendiri begitu disetujui — Anda tidak perlu keluar lalu masuk lagi.",
+        ms:"HNK sedang menyemak akaun anda. Halaman ini akan terbuka sendiri sebaik sahaja diluluskan — anda tidak perlu log keluar dan masuk semula."});
     } else if (st === "buy"){
       /* Expired reads differently from never-bought: one is "renew", the other
          is "start". Telling a lapsed customer they have never paid is insulting
@@ -24591,7 +24702,10 @@ function appWallApply(){
      control, because it is the only thing on the screen. The window "online"
      handler below now forces a recheck, so reconnecting clears the wall by
      itself instead of waiting up to five minutes for one. */
-  wallRetryArm(st === "checking" && navigator.onLine);
+  /* v6.8.0 — pending gets the button too: the page will open by itself, but a
+     student who has just been told "you are approved" wants to press
+     something rather than trust a promise. */
+  wallRetryArm((st === "checking" || st === "pending") && navigator.onLine);
   /* only when it is not already built — a11yApplyLang rebuilds it on every
      language change, and appWallApply runs on a 5-minute interval */
   var wh = $("wallHelp");
@@ -24625,7 +24739,12 @@ function appWallApply(){
     if (st !== _wallLastSt){
       try {
         if (st === "login") accOpenGrp("accGrpAuth");
-        else if (st === "buy"){
+        else if (st === "buy" || st === "pending"){
+          /* v6.8.0 — pending steers the same way as buy: the plan group is
+             where the "HNK is reviewing your account" note lives, and the auth
+             group is where sign-out lives. sweep_account 9 and
+             sweep_v530_accesswall H both went red the moment the state split,
+             which is exactly the strand they exist to catch. */
           /* ORDER AND EXCLUSIVITY BOTH MATTER, and getting them wrong broke
              the only path a customer has to pay. accOpenGrp is an EXCLUSIVE
              accordion: its first act is to collapse every other group in
@@ -24704,9 +24823,20 @@ async function wallRecheck(force){
      visibilitychange cycles, profileCalls stayed at 1, forever, until reload.
      navigator.onLine alone is the right gate -- let the fetch decide. */
   if (!navigator.onLine) { appWallApply(); return; }
-  if (!force && Date.now() - _wallLast < WALL_RECHECK_MS) { appWallApply(); return; }
+  if (!force && Date.now() - _wallLast < wallRecheckMs()) { appWallApply(); return; }
   _wallLast = Date.now();
+  var wasPending = appWallState() === "pending";
   try { await accLoadProfile(); } catch(e){}
+  /* v6.8.0 — AND THE ENTITLEMENT, or approval does not land. Two gates decide
+     whether a student is in: the profile's plan, and the unified entitlement's
+     licence. This function only ever re-read the first, so a student sitting
+     on the waiting screen had their profile go active while the cached
+     entitlement still said "License inactive" — still walled, by the other
+     gate, with nothing on screen changing. That is the shape of the bug this
+     whole change exists to end, so the wait re-reads both. Only while pending:
+     a settled account keeps its own 15-second heartbeat and gains nothing
+     from a second call here. */
+  if (wasPending && unified.enforced){ try { await unifiedRefresh(true); } catch(e){} }
   try { accRender(); accChipRender(); } catch(e){}
   appWallApply();
 }
@@ -24715,7 +24845,10 @@ document.addEventListener("visibilitychange", function(){
   if (document.visibilityState === "visible") wallRecheck(false);
 });
 window.addEventListener("focus", function(){ wallRecheck(false); });
-setInterval(function(){ if (document.visibilityState === "visible") wallRecheck(false); }, WALL_RECHECK_MS);
+/* the tick runs at the pending cadence and wallRecheck's own throttle decides
+   whether the read actually goes out, so a settled account still costs one
+   profile read every five minutes */
+setInterval(function(){ if (document.visibilityState === "visible") wallRecheck(false); }, WALL_PENDING_MS);
 /* A visible studio learns about suspension/permission changes within roughly
    15 seconds; focus and visibility changes still force an immediate check. */
 setInterval(unifiedHeartbeat, 15000);
@@ -24769,7 +24902,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.7.3";
+var APP_VER="6.8.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26369,7 +26502,7 @@ function vidWfCard(w){
   var m=el("button","wfmini"+(vidWfActive===w.key?" on":""));
   var v=el("div","wfv");
   var im=document.createElement("img");
-  im.className="svgv"; im.src=w.art; im.alt=stripIcn(w.label);
+  im.className="svgv"; im.src=libArt(w.art); im.alt=stripIcn(w.label);
   im.loading="lazy"; im.decoding="async";
   /* the card must survive its photograph going missing — the art is the
      nicety, the workflow is the product */
@@ -26996,7 +27129,7 @@ function vtWfCard(w){
   var m=el("button","wfmini"+(vtWfActive===w.key?" on":""));
   var v=el("div","wfv");
   var im=document.createElement("img");
-  im.className="svgv"; im.src=w.art; im.alt=stripIcn(w.label);
+  im.className="svgv"; im.src=libArt(w.art); im.alt=stripIcn(w.label);
   im.loading="lazy"; im.decoding="async";
   im.onerror=function(){ im.onerror=null; v.classList.add("wfv-noart"); im.remove(); };
   v.appendChild(im);

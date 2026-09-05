@@ -18,12 +18,19 @@
      session, profile not read ... "checking"   <- deliberately its own state
      session + active plan ....... ""           <- open, no wall
      session + expired plan ...... "buy"        <- "your Premium has ended"
-     session + never bought ...... "buy"        <- "Premium required"
+     session + never approved .... "pending"    <- "Registration complete"
 
    "checking" exists because treating unknown as "buy" flashes a payment demand
    at a paying customer for the length of one round trip. And the last two
    differ in wording on purpose: telling a lapsed customer they have never paid
    is both insulting and false.
+
+   v6.8.0 — "never" is no longer "buy". A brand-new account has not been
+   refused; it is waiting on the owner, and plan_expires_at is null exactly
+   until the first approval. Showing that student the PAY screen is what
+   taught a whole cohort to sign out and back in (test/verify_pending_approval.js
+   carries the full story). The wall's promise to this file is unchanged: the
+   state is walled, distinct in wording from expired, and sign-out is reachable.
 
    UNIFIED ACCESS FAILS CLOSED. The legacy profile cache remains available for
    account copy, but it cannot authorize AI Tools when the authoritative
@@ -231,7 +238,7 @@ async function look(browser, sess, prof, label) {
   /* ---- A ---- */
   report("A) all five account states resolve to the right wall state",
     out.login.state === "login" && out.checking.state === "checking" &&
-    out.open.state === "" && out.expired.state === "buy" && out.never.state === "buy",
+    out.open.state === "" && out.expired.state === "buy" && out.never.state === "pending",
     Object.keys(out).reduce((a, k) => (a[k] = out[k].state, a), {}));
 
   /* ---- B: walled means there is no way round it ---- */
@@ -252,7 +259,7 @@ async function look(browser, sess, prof, label) {
     out.open);
 
   /* ---- D ---- */
-  report("D) 'your Premium ended' and 'Premium required' are different messages",
+  report("D) 'your Premium ended' and 'Registration complete' are different messages",
     !!out.expired.head && !!out.never.head && out.expired.head !== out.never.head,
     { expired: out.expired.head, never: out.never.head });
 
@@ -612,7 +619,8 @@ async function look(browser, sess, prof, label) {
     }));
     report("Z) a 406 (no profiles row) creates the row instead of hanging on 'checking'",
       !!created && Object.keys(created).length === 1 && created.id === "u-test" &&
-      z.hasProfile && z.state === "buy",
+      /* the created row has never been approved, so it waits — it is not asked to pay */
+      z.hasProfile && z.state === "pending",
       { created, ...z });
     await zp.close();
   }

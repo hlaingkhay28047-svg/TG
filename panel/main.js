@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.76.2";
+const PANEL_VERSION = "6.77.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9933,7 +9933,10 @@ function vidWfCard(w) {
     v.className = "wfv wfv-noart";
     try { v.removeChild(im); } catch (e) { }
   };
-  im.src = VID_ART_BASE + w.art;
+  /* v6.7.4 — a replaced picture carries its own revision, so neither the
+     panel's HTTP cache nor a proxy can serve last month's card */
+  im.src = VID_ART_BASE + (function(){ var W=globalThis.HNK && globalThis.HNK.videoToolWorkflows;
+    return (W && typeof W.libArt==="function") ? W.libArt(w.art) : w.art; })();
   v.appendChild(im);
   const need = document.createElement("span");
   need.className = "wf-need";
@@ -10275,7 +10278,10 @@ function vtWfCard(w) {
     v.className = "wfv wfv-noart";
     try { v.removeChild(im); } catch (e) { }
   };
-  im.src = VID_ART_BASE + w.art;
+  /* v6.7.4 — a replaced picture carries its own revision, so neither the
+     panel's HTTP cache nor a proxy can serve last month's card */
+  im.src = VID_ART_BASE + (function(){ var W=globalThis.HNK && globalThis.HNK.videoToolWorkflows;
+    return (W && typeof W.libArt==="function") ? W.libArt(w.art) : w.art; })();
   v.appendChild(im);
   const need = document.createElement("span");
   need.className = "wf-need";
