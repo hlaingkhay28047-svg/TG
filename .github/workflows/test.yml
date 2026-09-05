@@ -477,6 +477,8 @@ jobs:
         run: node test/verify_greet_clock_weather.js
       - name: Style Studio — the RunningHub API apps as cards over the studio's own engines
         run: node test/verify_style_studio.js
+      - name: Creator Studio — the RunningHub API apps as cards over the studio's own engines
+        run: node test/verify_creator_studio.js
 
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker

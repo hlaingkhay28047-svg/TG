@@ -1,9 +1,9 @@
 {
-  "version": "6.80.0",
-  "minimum_supported_version": "6.80.0",
-  "artifact_file": "HNK_Ai_Panel_v6.80.0.ccx",
-  "sha256": "43cca3a72d83105aae1d90b19c2d0913f9a85eb6305b3bda4405fb036f54df25",
-  "bytes": 2982347,
+  "version": "6.81.0",
+  "minimum_supported_version": "6.81.0",
+  "artifact_file": "HNK_Ai_Panel_v6.81.0.ccx",
+  "sha256": "d9e07d60486c4fa7b3376febf3dfd448310e6cd86ded5b24144c7b203eeb6e53",
+  "bytes": 2996739,
   "released": "2026-09-05",
   "distribution": "private authenticated one-time stream",
   "adobe_acceptance": "pending"
