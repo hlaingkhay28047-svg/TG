@@ -184,7 +184,11 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    AI Apps the owner showed, rebuilt over the studio's own engines), ten
    960x640 files at the pack's q79, taking the pack to 168 files / 18.65 MB
    (18.641140 exactly — rounded up, same rule). */
-const PREV_MB = 18.65;
+/* 2026-09-05, v6.12.0 — the ten Creator Studio cards land (the owner's
+   RunningHub Explore feed, rebuilt over the studio's own engines), ten
+   960x640 files at the pack's q79, taking the pack to 178 files / 19.27 MB
+   (19.260005 exactly — rounded up, same rule). */
+const PREV_MB = 19.27;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });
