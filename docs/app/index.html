@@ -27886,9 +27886,10 @@ function renderVWiz(){
       var fast=el("button","btn wiz-fast"); setIcnText(fast,"i-bolt",vwizL("fast"));
       fast.onclick=function(){ goStep(3); }; body.appendChild(fast);
     }
-    var im=document.createElement("img"); im.className="wiz-visual"; im.src=libArt(w.art); im.alt=stripIcn(w.label);
-    im.onerror=function(){ this.onerror=null; this.remove(); };
-    body.appendChild(im);
+    /* the card's own picture, through libArt like the card painters (verify_lib_art_rev D) */
+    var vis=document.createElement("img"); vis.className="wiz-visual"; vis.src=libArt(w.art); vis.alt=stripIcn(w.label);
+    vis.onerror=function(){ this.onerror=null; this.remove(); };
+    body.appendChild(vis);
     body.appendChild(el("div","s",stripIcn(w.summary))).style.margin="10px 0 2px";
     var needRow=el("p","mut"); setIcnText(needRow,"i-camera",vwizNeed()); body.appendChild(needRow);
     var lines=(VWIZ_STEPS[vwiz.kind][LANG]||VWIZ_STEPS[vwiz.kind].en);
