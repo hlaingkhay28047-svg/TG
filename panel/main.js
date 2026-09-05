@@ -127,7 +127,7 @@ const state = {
   subj: null, rhModel: "nano-banana-2", ffRatio: "", ffSize: "", ffCount: 1,
   /* the app's per-slot role sentences (null = defaults: IMAGE 1 subject,
      IMAGE 2/3 style ref) and the slot a Library pick should land in. */
-  imgRoles: null, libTargetSlot: null,
+  imgRoles: null, libTargetSlot: null, vidRefs: [],   /* v6.21.0 — face references behind the base three */
   /* the app's Setup state: per-model RunningHub apiPath/quality overrides
      + active model (hnk_rh_cfg), the spend ledger (hnk_rh_spend), the last
      balance check (hnk_rh_bal) and the currency RunningHub last reported. */
@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.89.0";
+const PANEL_VERSION = "6.90.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9870,6 +9870,27 @@ function vidPaintOptions() {
 const VID_ART_BASE = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
 /* the app's own three card labels for this shelf, its nine-language maps
    carried verbatim (the panel's I18N table stays untouched) */
+/* v6.21.0 — the badge follows the card's model, as the app's does: an array image
+   field with room for more says "1–N photos"; a single frame says "1 photo". */
+function vwRefMax(id) {
+  const ms = (globalThis.HNK && globalThis.HNK.videoModels) || [];
+  const m = ms.find(function (x) { return x.id === id; }); const ip = (m && m.imageParam) || "";
+  return (/Urls$|Images$|keyframes/.test(ip) && ((m && m.maxImages) | 0) > 1) ? m.maxImages : 1;
+}
+function vwNeedFor(w) {
+  const id = (w && w.setup && w.setup.model) || ((vidDef() || {}).id) || "";   /* the panel's page select is vidModel */
+  const mx = vwRefMax(id);
+  return mx > 1 ? vwL({ my: "၁–" + accNum(mx) + " ပုံ", en: "1–" + mx + " photos", shn: "1–" + mx + " ၶႅပ်း", kac: "Sumla 1–" + mx, th: "1–" + mx + " รูป", zh: "1–" + mx + " 张", vi: "1–" + mx + " ảnh", id: "1–" + mx + " foto", ms: "1–" + mx + " foto" }) : vwL(VW_NEED);
+}
+/* v6.21.0 — the app's REF_BASE / vidRefMax / vidSlotsShown on the panel's own slots:
+   IMG 1 = state.subj, IMG 2/3 = state.refs, IMG 4+ = state.vidRefs. */
+const VREF_BASE = 3;
+const FACE_L = { my: "မျက်နှာ", en: "face", shn: "ၼႃႈ", kac: "myi man", th: "ใบหน้า", zh: "人脸", vi: "mặt", id: "wajah", ms: "wajah" };
+function vidRefMaxP() { const m = vidDef(); return vwRefMax((m && m.id) || ""); }
+function vidSlotsShownP(mx) { /* the base three, then the filled extras plus one empty */
+  const ex = state.vidRefs || []; let last = -1; for (let k = 0; k < ex.length; k++) if (ex[k]) last = k;
+  return Math.min(mx, VREF_BASE + last + 2);
+}
 const VW_NEED = { my: "၁ ပုံ", en: "1 photo", shn: "1 ၶႅပ်း", kac: "Sumla 1", th: "1 รูป", zh: "1 张", vi: "1 ảnh", id: "1 foto", ms: "1 foto" };
 const VW_USE = { my: "သုံးမယ်", en: "Use this", shn: "ၸႂ်ႉဢၼ်ၼႆႉ", kac: "Ndai lang u", th: "ใช้อันนี้", zh: "使用", vi: "Dùng cái này", id: "Pakai ini", ms: "Guna ini" };
 const VW_SEL = { my: "ရွေးပြီး", en: "Selected", shn: "လိူၵ်ႈယဝ်ႉ", kac: "Lata da sai", th: "เลือกแล้ว", zh: "已选择", vi: "Đã chọn", id: "Terpilih", ms: "Dipilih" };
@@ -9885,7 +9906,7 @@ function vidWfApply(w) {
   vidWfActive = w.key;
   const setup = w.setup || {};
   const sm = $("vidModel");
-  if (setup.model && sm) { try { sm.value = setup.model; } catch (e) { } vidPaintOptions(); }
+  if (setup.model && sm) { try { sm.value = setup.model; } catch (e) { } vidPaintOptions(); renderRefs(); }   /* v6.21.0 — the strip follows the card's model */
   if (setup.res) { const e = $("vidRes"); if (e) { try { e.value = setup.res; } catch (x) { } } }
   if (setup.dur) { const e = $("vidDur"); if (e) { try { e.value = String(setup.dur); } catch (x) { } } }
   if (setup.aspect) { const e = $("vidAspect"); if (e) { try { e.value = setup.aspect; } catch (x) { } } }
@@ -9940,7 +9961,7 @@ function vidWfCard(w) {
   v.appendChild(im);
   const need = document.createElement("span");
   need.className = "wf-need";
-  need.textContent = vwL(VW_NEED);
+  need.textContent = vwNeedFor(w);   /* v6.21.0 */
   v.appendChild(need);
   m.appendChild(v);
   const ti = document.createElement("div"); ti.className = "t"; ti.textContent = P ? stripIcn(P.tr(w.label)) : ""; m.appendChild(ti);
@@ -10327,7 +10348,7 @@ const vwiz = { kind: "", w: null, step: 1, token: 0, busy: false, result: null, 
 function vwizPack() { return (globalThis.HNK && globalThis.HNK.videoWizard) || null; }
 function vwizL(k) { const P = vwizPack(); return P ? P.tr(P.L[k] || { en: k }) : k; }
 function vwizNeed() {
-  if (vwiz.kind === "i2v") return vwL(VW_NEED);
+  if (vwiz.kind === "i2v") return vwNeedFor(vwiz.w);   /* v6.21.0 */
   const P = vtWfPack(); return (P && vwiz.w && vwiz.w.need) ? stripIcn(P.tr(vwiz.w.need)) : "";
 }
 /* the app's vwizPhotoReq: the tool demands the photograph, or the card's badge promised it (photo:true) */
@@ -10418,6 +10439,17 @@ function renderVWiz() {
       const r = ffSlotGet(0);
       body.appendChild(vwizSlot(!!r, r ? ffThumb(r) : null, "IMAGE 1 — " + vwizL("slotPhoto"), true,
         function () { ffSrcSheet(0); }, function () { ffSlotSet(0, null); renderVWiz(); }));
+      /* v6.21.0 — face-reference slots up to the card's image capacity: the filled ones plus one empty */
+      const vmx = vwRefMax((w.setup && w.setup.model) || ((vidDef() || {}).id) || ""); let vlast = 0;
+      for (let q0 = 1; q0 < vmx; q0++) if (ffSlotGet(q0)) vlast = q0;
+      const vshown = Math.min(vmx, vlast + 2);
+      for (let q = 1; q < vshown; q++) {
+        (function (q) {
+          const rq = ffSlotGet(q);
+          body.appendChild(vwizSlot(!!rq, rq ? ffThumb(rq) : null, "IMAGE " + (q + 1) + " — " + vwizL("slotFace"), false,
+            function () { ffSrcSheet(q); }, function () { ffSlotSet(q, null); renderVWiz(); }));
+        })(q);
+      }
     } else {
       const vname = VT.video ? (VT.video.name || "video") : "";
       const vt = VT.video ? el("mut", vname) : null;
@@ -10821,6 +10853,9 @@ function videoEnv() {
 function vidRefs() {
   const out = [];
   for (let i = 0; i < 3; i++) { const r = ffSlotGet(i); if (r) out.push(r); }
+  /* v6.21.0 — the face references behind the base three, up to the model's image capacity */
+  const mx = vidRefMaxP();
+  for (let k = VREF_BASE; k < mx; k++) { const r = ffSlotGet(k); if (r) out.push(r); }
   return out;
 }
 /* the app's rhFriendly branches this flow can reach */
@@ -11345,6 +11380,7 @@ function bindVideo() {
     /* v6.51.0 — the app's family-grouped picker, painted onto the IC tile */
     vidFillModels(sel, V.models());
     sel.addEventListener("change", vidPaintOptions);
+    sel.addEventListener("change", function () { renderRefs(); });   /* v6.21.0 — the strip's slot count follows the model */
   }
   /* the app's five video buttons: generate, cancel, retry, download, open */
   const run = $("btnVidRun"); if (run) run.addEventListener("click", vidGenerate);
@@ -12541,10 +12577,11 @@ function closeUrlBar() {
    document, the panel's native base); IMG 2/3 are state.refs[0]/[1], the
    reference slots every preset already reads. */
 const FF_SLOT_IDS = ["freeform-image-1", "subject-reference", "reference-2"];
-function ffSlotGet(i) { return i === 0 ? state.subj : state.refs[i - 1]; }
+function ffSlotGet(i) { if (i >= 3) return (state.vidRefs || [])[i - 3] || null; return i === 0 ? state.subj : state.refs[i - 1]; }   /* v6.21.0 — IMG 4+ are the face references */
 function ffSlotSet(i, cap) {
-  if (i === 0) state.subj = cap; else state.refs[i - 1] = cap;
-  if (!cap) refLibForgetSlot(FF_SLOT_IDS[i]);
+  if (i >= 3) { state.vidRefs = state.vidRefs || []; state.vidRefs[i - 3] = cap; }   /* v6.21.0 */
+  else if (i === 0) state.subj = cap; else state.refs[i - 1] = cap;
+  if (!cap && FF_SLOT_IDS[i]) refLibForgetSlot(FF_SLOT_IDS[i]);
   state.imgRoles = null; /* the app resets the roles on every slot write */
   renderRefs();
 }
@@ -12617,6 +12654,26 @@ function renderRefs() {
       d.appendChild(tag);
       (function (slot) { d.addEventListener("click", function () { ffSrcSheet(slot); }); })(i);
       host.appendChild(d);
+    }
+    /* v6.21.0 — the VIDEO strip grows with the model: face-reference slots up to its image capacity */
+    if (hostId === "vidRefStrip") {
+      const mx = vidRefMaxP(), shown = vidSlotsShownP(mx);
+      for (let k = VREF_BASE; k < shown; k++) {
+        const r = ffSlotGet(k);
+        const d = document.createElement("div");
+        d.className = "rs rs-face" + (r ? " filled" : "");
+        if (r) {
+          d.appendChild(ffThumb(r));
+          const x = document.createElement("div");
+          x.className = "rsx"; x.textContent = "×"; x.setAttribute("aria-label", ff9(FF_L.remove));
+          (function (slot) { ffPressable(x, function () { ffSlotSet(slot, null); }); })(k);
+          d.appendChild(x);
+        } else d.appendChild(document.createTextNode("+"));
+        const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "IMG " + (k + 1) + " · " + ff9(FACE_L);
+        d.appendChild(tag);
+        (function (slot) { d.addEventListener("click", function () { ffSrcSheet(slot); }); })(k);
+        host.appendChild(d);
+      }
     }
     const note = document.createElement("div"); note.className = "note"; note.textContent = ff9(FF_L.note);
     host.appendChild(note);

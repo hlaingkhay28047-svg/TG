@@ -189,8 +189,8 @@ const src = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.htm
     c);
 
   report("B) one tap sets the prompt AND the model, resolution, duration and aspect",
-    r.promptEmptyBefore === true && r.setup.model === "gemini-omni-video" &&
-    r.setup.res === "1080p" && r.setup.dur === "10" && r.setup.aspect === "9:16",
+    r.promptEmptyBefore === true && r.setup.model === "seedance-2-5-global-token-mmv" &&
+    r.setup.res === "1080p" && r.setup.dur === "30" && r.setup.aspect === "9:16",
     r.setup);
 
   const tooLong = r.perCity.filter(c => !c.fits);

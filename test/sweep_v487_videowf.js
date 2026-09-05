@@ -113,7 +113,7 @@ const keys = (block.match(/key:"([a-zA-Z]+)"/g) || []).map(k => k.slice(5, -1));
 report("A) all twenty-three added workflows exist, the six originals are intact, and the shelf holds thirty-three (the four reference-video cards of v6.15.0 sit at the end)",
   NEW.every(k => keys.indexOf(k) >= 0) && OLD.every(k => keys.indexOf(k) >= 0) &&
   MK.every(k => keys.indexOf(k) >= 0) &&
-  keys.length === 33 && new Set(keys).size === 33,
+  keys.length === 34 && new Set(keys).size === 34,
   { keys: keys });
 
 /* ---- C + D) the split, in the source ---- */
@@ -180,7 +180,10 @@ report("C) VID_ID exists and carries no setting-freeze claim",
   report("D2) every transforming workflow still locks identity",
     noId.length === 0, { missing: noId });
 
-  /* ---- T) THE TEN-SECOND BUDGET ----
+  /* ---- T) THE TEN-SECOND BUDGET — THIRTY SINCE v6.21.0 ----
+     v6.21.0: VID_SETUP_V pins seedance-2-5-global-token-mmv at dur:"30", the top of its
+     durations enum, and every shelf prompt was rewritten as a thirty-second cut list; the
+     history below is the ten-second era and the assertions now read 30 where they read 10.
      VID_SETUP_V pins dur:"10" and gemini-omni-video's durations enum tops out
      there, so ten seconds is a hard ceiling, not a default. The source clips
      the owner sent run 8.0s to 32.5s, and the first cut of these prompts
@@ -201,7 +204,7 @@ report("C) VID_ID exists and carries no setting-freeze claim",
   const EVERY = NEW.concat(OLD).concat(MK);
   EVERY.forEach(k => {
     const t = byKey[k].text;
-    if (!/\bTen seconds\b/i.test(t)) noBudget.push(k);
+    if (!/\bThirty seconds\b/i.test(t)) noBudget.push(k);
     const secs = (t.match(/\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)s\)/g) || [])
       .map(m => m.match(/\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)s\)/).slice(1).map(Number));
     const at = (t.match(/at (\d+(?:\.\d+)?)s\b/g) || []).map(m => +m.match(/(\d+(?:\.\d+)?)/)[1]);
@@ -210,24 +213,24 @@ report("C) VID_ID exists and carries no setting-freeze claim",
        dressSpin is a single 360 turn, veilWind is a veil moving, portraitLive
        is a blink and a breath — beats would be an invention. Requiring beats of
        those would be testing a house style, not the contract. */
-    const bad = secs.filter(p => p[1] > 10 || p[0] >= p[1]).concat(at.filter(x => x > 10).map(x => [x, x]));
+    const bad = secs.filter(p => p[1] > 30 || p[0] >= p[1]).concat(at.filter(x => x > 30).map(x => [x, x]));
     if (bad.length) overrun.push({ k: k, secs: secs, at: at });
   });
-  report("T) all twenty-nine prompts state the ten-second budget",
+  report("T) all twenty-nine prompts state the thirty-second budget",
     noBudget.length === 0, { missing: noBudget });
-  report("T2) every beat it names lands inside those ten seconds",
+  report("T2) every beat it names lands inside those thirty seconds",
     overrun.length === 0, overrun);
 
-  const SPANS = /across (the full |those )?ten seconds|for the whole ten seconds|for the whole duration|across the whole clip/i;
+  const SPANS = /across (the full |those )?thirty seconds|for the whole thirty seconds|for the whole duration|across the whole clip/i;
   const last = EVERY.map(k => {
     const t = byKey[k].text;
     const secs = (t.match(/\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)s\)/g) || [])
       .map(m => +m.match(/-(\d+(?:\.\d+)?)s\)/)[1]);
     const end = secs.length ? Math.max.apply(null, secs) : 0;
-    const ok = secs.length ? (end >= 9 && end <= 10) : SPANS.test(t);
+    const ok = secs.length ? (end >= 29 && end <= 30) : SPANS.test(t);
     return { k: k, end: end, beats: secs.length, ok: ok };
   }).filter(x => !x.ok);
-  report("T3) each one fills its ten seconds — a beat sheet reaching 10s, or one action stated as spanning the clip",
+  report("T3) each one fills its thirty seconds — a beat sheet reaching 30s, or one action stated as spanning the clip",
     last.length === 0, last);
 
   /* ---- E) each prompt describes its own clip, and they are not clones ---- */
@@ -285,7 +288,7 @@ report("C) VID_ID exists and carries no setting-freeze claim",
       img: (c.querySelector("img") || {}).getAttribute ? c.querySelector("img").getAttribute("src") : null
     })));
   report("G) all thirty-three video cards render with a label, a summary and art",
-    cards.length === 33 &&
+    cards.length === 34 &&
     cards.every(c => c.t.length > 2 && c.s.length > 5 && c.img && /^lib\/vid\//.test(c.img)),
     { n: cards.length, bad: cards.filter(c => !(c.t && c.s && c.img)).length });
 

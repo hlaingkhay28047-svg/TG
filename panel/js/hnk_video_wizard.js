@@ -39,6 +39,7 @@ var VWIZ_L={
   clear:{my:"ဖယ်မယ်",en:"Remove",shn:"ဢဝ်ဢွၵ်ႇ",kac:"Shaw kau",th:"ลบออก",zh:"移除",vi:"Bỏ",id:"Hapus",ms:"Buang"},
   req:{my:"လိုအပ်",en:"Required",shn:"လူဝ်ႇ",kac:"Ra ai",th:"จำเป็น",zh:"必需",vi:"Bắt buộc",id:"Wajib",ms:"Wajib"},
   opt:{my:"ထည့်ချင်မှ ထည့်",en:"Optional",shn:"သင်ႇလႆႈ",kac:"Nkau",th:"ไม่บังคับ",zh:"可选",vi:"Tuỳ chọn",id:"Opsional",ms:"Pilihan"},
+  slotFace:{my:"မျက်နှာ reference (ထည့်ချင်မှ)",en:"Face reference (optional)",shn:"ၶႅပ်းၼႃႈ (သင်ႇလႆႈ)",kac:"Myi man reference (nkau)",th:"รูปอ้างอิงใบหน้า (ไม่บังคับ)",zh:"人脸参考（可选）",vi:"Ảnh tham chiếu khuôn mặt (tuỳ chọn)",id:"Referensi wajah (opsional)",ms:"Rujukan wajah (pilihan)"},
   slotPhoto:{my:"ကိုယ့်ပုံ",en:"Your photo",shn:"ၶႅပ်းၸဝ်ႈၵဝ်ႇ",kac:"Na a sumla",th:"รูปของคุณ",zh:"你的照片",vi:"Ảnh của bạn",id:"Fotomu",ms:"Foto anda"},
   slotVideo:{my:"ကိုယ့်ဗီဒီယို",en:"Your video",shn:"ဝီဒီရူဝ်ႈၸဝ်ႈၵဝ်ႇ",kac:"Na a video",th:"วิดีโอของคุณ",zh:"你的视频",vi:"Video của bạn",id:"Videomu",ms:"Video anda"},
   slotRef:{my:"ကိုးကားပုံ (မျက်နှာ/ဇာတ်ကောင်)",en:"Reference photo (face / character)",shn:"ၶႅပ်းဢိင် (ၼႃႈ)",kac:"Reference sumla (myiman)",th:"รูปอ้างอิง (หน้า/ตัวละคร)",zh:"参考照片（面部/角色）",vi:"Ảnh tham chiếu (mặt / nhân vật)",id:"Foto referensi (wajah / karakter)",ms:"Foto rujukan (wajah / watak)"},
@@ -59,15 +60,15 @@ var VWIZ_L={
 /* the four guide lines, per deck; {N} is the card's own need badge */
 var VWIZ_STEPS={
   i2v:{
-    my:["ပုံ ၁ ပုံ တင်ပါ — {N}","ကတ်က prompt၊ model၊ အရွယ်၊ ကြာချိန် အကုန် ချထားပေးပြီ — ပြင်ချင်ရင် ပြင်လို့ရတယ်","GENERATE နှိပ်ပါ — ဗီဒီယို ထွက်လာဖို့ ၁–၃ မိနစ် ကြာမယ်","ရလဒ်ကို ကြည့်၊ Download လုပ် — Gallery ထဲမှာလည်း သိမ်းပေးထားမယ်"],
-    en:["Add one photo — {N}","The card has set the request, model, size and length — change them if you like","Press GENERATE — the video takes one to three minutes","Watch it and download it — it is kept in your Gallery too"],
-    shn:["သႂ်ႇၶႅပ်း 1 — {N}","ၵၢတ်ႈ ႁၢင်ႈႁႅၼ်း prompt၊ model၊ တၢင်းယႂ်ႇ၊ ၶၢဝ်းယၢမ်း ယဝ်ႉ","ၼဵၵ်း GENERATE — 1–3 မိၼိတ်ႉ","တူၺ်းလႄႈ download — မီးၼႂ်း Gallery ၵေႃႈ"],
-    kac:["Sumla 1 bang u — {N}","Card gaw prompt, model, kaba, aten yawng hkyen da sai — galai mayu yang galai u","GENERATE dip u — video 1–3 minit la ai","Yu nna download u — Gallery hta mung tawn da ai"],
-    th:["ใส่รูป 1 รูป — {N}","การ์ดตั้งคำขอ โมเดล ขนาด และความยาวให้แล้ว — แก้ได้ตามใจ","กด GENERATE — วิดีโอใช้เวลา 1–3 นาที","ดูและดาวน์โหลด — เก็บไว้ในแกลเลอรีด้วย"],
-    zh:["添加一张照片 — {N}","卡片已设好请求、模型、尺寸和时长 — 想改也可以改","按 GENERATE — 视频需要 1–3 分钟","观看并下载 — 也会保存在你的图库里"],
-    vi:["Thêm một ảnh — {N}","Thẻ đã đặt yêu cầu, model, kích cỡ và độ dài — đổi nếu bạn muốn","Nhấn GENERATE — video mất 1–3 phút","Xem và tải về — cũng được lưu trong Gallery của bạn"],
-    id:["Tambahkan satu foto — {N}","Kartu sudah mengatur permintaan, model, ukuran dan durasi — ubah kalau mau","Tekan GENERATE — video butuh 1–3 menit","Tonton dan unduh — tersimpan juga di Galerimu"],
-    ms:["Tambah satu foto — {N}","Kad telah menetapkan permintaan, model, saiz dan tempoh — ubah jika mahu","Tekan GENERATE — video mengambil 1–3 minit","Tonton dan muat turun — turut disimpan dalam Galeri anda"]
+    my:["ကိုယ့်ပုံ တင်ပါ — မျက်နှာ reference ပုံ ထပ်ထည့်လို့ရ — {N}","ကတ်က prompt၊ model၊ အရွယ်၊ ကြာချိန် အကုန် ချထားပေးပြီ — ပြင်ချင်ရင် ပြင်လို့ရတယ်","GENERATE နှိပ်ပါ — ဗီဒီယို ထွက်လာဖို့ ၁–၃ မိနစ် ကြာမယ်","ရလဒ်ကို ကြည့်၊ Download လုပ် — Gallery ထဲမှာလည်း သိမ်းပေးထားမယ်"],
+    en:["Add your photo — plus face references if you like — {N}","The card has set the request, model, size and length — change them if you like","Press GENERATE — the video takes one to three minutes","Watch it and download it — it is kept in your Gallery too"],
+    shn:["သႂ်ႇၶႅပ်းၸဝ်ႈၵဝ်ႇ — ၶႅပ်းၼႃႈထႅင်ႈၵေႃႈလႆႈ — {N}","ၵၢတ်ႈ ႁၢင်ႈႁႅၼ်း prompt၊ model၊ တၢင်းယႂ်ႇ၊ ၶၢဝ်းယၢမ်း ယဝ်ႉ","ၼဵၵ်း GENERATE — 1–3 မိၼိတ်ႉ","တူၺ်းလႄႈ download — မီးၼႂ်း Gallery ၵေႃႈ"],
+    kac:["Na a sumla bang u — myi man reference mung bang lu — {N}","Card gaw prompt, model, kaba, aten yawng hkyen da sai — galai mayu yang galai u","GENERATE dip u — video 1–3 minit la ai","Yu nna download u — Gallery hta mung tawn da ai"],
+    th:["ใส่รูปของคุณ — เพิ่มรูปอ้างอิงใบหน้าได้ — {N}","การ์ดตั้งคำขอ โมเดล ขนาด และความยาวให้แล้ว — แก้ได้ตามใจ","กด GENERATE — วิดีโอใช้เวลา 1–3 นาที","ดูและดาวน์โหลด — เก็บไว้ในแกลเลอรีด้วย"],
+    zh:["添加你的照片 — 可再加人脸参考 — {N}","卡片已设好请求、模型、尺寸和时长 — 想改也可以改","按 GENERATE — 视频需要 1–3 分钟","观看并下载 — 也会保存在你的图库里"],
+    vi:["Thêm ảnh của bạn — có thể thêm ảnh tham chiếu khuôn mặt — {N}","Thẻ đã đặt yêu cầu, model, kích cỡ và độ dài — đổi nếu bạn muốn","Nhấn GENERATE — video mất 1–3 phút","Xem và tải về — cũng được lưu trong Gallery của bạn"],
+    id:["Tambahkan foto Anda — boleh tambah referensi wajah — {N}","Kartu sudah mengatur permintaan, model, ukuran dan durasi — ubah kalau mau","Tekan GENERATE — video butuh 1–3 menit","Tonton dan unduh — tersimpan juga di Galerimu"],
+    ms:["Tambah foto anda — boleh tambah rujukan wajah — {N}","Kad telah menetapkan permintaan, model, saiz dan tempoh — ubah jika mahu","Tekan GENERATE — video mengambil 1–3 minit","Tonton dan muat turun — turut disimpan dalam Galeri anda"]
   },
   v2v:{
     my:["{N} တင်ပါ","ကတ်က tool ရွေးပြီး prompt ရေးပေးပြီ — option တွေ ပြင်လို့ရတယ်","GENERATE နှိပ်ပါ — ဗီဒီယို ထွက်လာဖို့ ၂–၅ မိနစ် ကြာမယ်","ရလဒ်ကို ကြည့်၊ Download လုပ် — Gallery ထဲမှာလည်း သိမ်းပေးထားမယ်"],

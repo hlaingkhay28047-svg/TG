@@ -137,7 +137,7 @@ report("D) the app, the landing and the panel's Home all count 193 Smart Workflo
 /* ---- E) the board helper in the source ---- */
 report("E) the wizard owns a multi-file board input, a composeBoard that lays two or three side by side and four two-by-two, and a Combine button only on a board slot",
   /<input type="file" id="filePickBoard" [^>]*multiple hidden>/.test(APP) && /function composeBoard\(imgs\)\{\n    var n=imgs\.length, cols=n>3\?2:n, rows=n>3\?2:1, cell=1024, gap=24;/.test(APP) &&
-  /if\(w\.board && w\.board\.slot===i\)\{/.test(APP) && /if\(files\.length===1\)\{ acceptImageFile\(files\[0\], slot\); return; \}/.test(APP) && /state\.refs\[slot\]=\{ mime:b\.mime, b64:b\.b64, label:"board x"\+imgs\.length \};/.test(APP), null);
+  /if\(w\.board && w\.board\.slot===i\)\{/.test(APP) && /if\(files\.length===1\)\{ acceptImageFile\(files\[0\], slot\); return; \}/.test(APP) && /refSet\(slot,\{ mime:b\.mime, b64:b\.b64, label:"board x"\+imgs\.length \}\);/.test(APP)   /* v6.21.0 — every slot write goes through refSet */, null);
 
 /* ---- F..H) driven ---- */
 (async () => {
