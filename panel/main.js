@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.82.0";
+const PANEL_VERSION = "6.83.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9949,7 +9949,8 @@ function vidWfCard(w) {
   go.appendChild(ffIcon("i-caret", "hi"));
   go.appendChild(document.createTextNode(vwL(vidWfActive === w.key ? VW_SEL : VW_USE)));
   m.appendChild(go);
-  m.addEventListener("click", function () { vidWfApply(w); });
+  /* v6.14.0 — the tap applies the card to the page AND opens its step-by-step wizard */
+  m.addEventListener("click", function () { vidWfApply(w); openVWiz("i2v", w); });
   return m;
 }
 
@@ -10191,6 +10192,7 @@ function renderTkSlotChips() {
 }
 function renderVt() {
   try { renderVtSlotChips(); } catch (e) { }
+  try { if (typeof vwizRepaint === "function") vwizRepaint(); } catch (e) { }   /* v6.14.0 — the video wizard repaints with the slots */
   const d = vtDef();
   vtThumbFor(VT.video, "vtFileThumb", "vtFileName", "vtFileMeta", "vtFilePrev", true);
   /* the photo button follows the tool, exactly as the app's does */
@@ -10294,7 +10296,8 @@ function vtWfCard(w) {
   go.appendChild(ffIcon("i-caret", "hi"));
   go.appendChild(document.createTextNode(vwL(vtWfActive === w.key ? VW_SEL : VW_USE)));
   m.appendChild(go);
-  m.addEventListener("click", function () { vtWfApply(w); });
+  /* v6.14.0 — the tap applies the card to the page AND opens its step-by-step wizard */
+  m.addEventListener("click", function () { vtWfApply(w); openVWiz("v2v", w); });
   return m;
 }
 
@@ -10311,6 +10314,218 @@ function renderVtWf() {
   if (hint) hint.textContent = w ? stripIcn(P.tr(w.hint)) : ff9(VT_L.wfIntroHint);
   const intro = $("vtWfIntro");
   if (intro) intro.textContent = ff9(VT_L.wfIntro);
+}
+
+/* ---------- v6.14.0 — THE VIDEO WIZARD, the app's step-by-step over both decks ----------
+   1 Guide · 2 Inputs · 3 Generate · 4 Result, on the same four dots the app
+   draws, with the app's own words (js/hnk_video_wizard.js, lifted). Like the
+   app's it owns no state: the card's apply() has already written the request,
+   the tool and the options into the page, the pickers are the page's own
+   buttons, and Generate presses the page's own run. The one panel-only slot
+   is the SAVE FOLDER a video tool needs before it can write its result. */
+const vwiz = { kind: "", w: null, step: 1, token: 0, busy: false, result: null, error: "", tick: null };
+function vwizPack() { return (globalThis.HNK && globalThis.HNK.videoWizard) || null; }
+function vwizL(k) { const P = vwizPack(); return P ? P.tr(P.L[k] || { en: k }) : k; }
+function vwizNeed() {
+  if (vwiz.kind === "i2v") return vwL(VW_NEED);
+  const P = vtWfPack(); return (P && vwiz.w && vwiz.w.need) ? stripIcn(P.tr(vwiz.w.need)) : "";
+}
+/* the app's vwizPhotoReq: the tool demands the photograph, or the card's badge promised it (photo:true) */
+function vwizPhotoReq() { const d = vtDef(); return !!(d && d.imageParam && (d.imageReq || (vwiz.w && vwiz.w.photo))); }
+function vwizInputsOk() {
+  if (vwiz.kind === "i2v") return !!ffSlotGet(0);
+  if (!VT.video) return false;
+  if (vwizPhotoReq() && !VT.img) return false;
+  if (!VT.out) return false;
+  return true;
+}
+function vwizPageText() { const b = $(vwiz.kind === "i2v" ? "vidPromptP" : "vtPrompt"); return (b && b.value) || ""; }
+function vwizHost() {
+  let sh = $("vwizSheet");
+  if (!sh) {
+    sh = document.createElement("div"); sh.id = "vwizSheet"; sh.className = "vwiz-sheet";
+    const inn = document.createElement("div"); inn.className = "wiz-in"; inn.id = "vwizIn"; sh.appendChild(inn);
+    document.body.appendChild(sh);
+  }
+  return sh;
+}
+function openVWiz(kind, w) {
+  vwiz.kind = kind; vwiz.w = w; vwiz.step = 1; vwiz.token++; vwiz.busy = false; vwiz.result = null; vwiz.error = "";
+  if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
+  vwizHost().style.display = "";
+  renderVWiz();
+}
+function closeVWiz() {
+  vwiz.token++; vwiz.busy = false;
+  if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
+  const sh = $("vwizSheet"); if (sh) sh.style.display = "none";
+}
+function vwizRepaint() { const sh = $("vwizSheet"); if (sh && sh.style.display !== "none" && vwiz.w) renderVWiz(); }
+function vwizSlot(filled, thumb, name, req, onPick, onClear) {
+  const slot = document.createElement("div"); slot.className = "wslot" + (filled ? " filled" : "");
+  const th = document.createElement("div"); th.className = "th";
+  if (filled && thumb) th.appendChild(thumb); else th.textContent = filled ? "✓" : "+";
+  slot.appendChild(th);
+  const col = document.createElement("div");
+  const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = name; col.appendChild(nm);
+  const rq = document.createElement("div"); rq.className = "rq" + (req ? "" : " opt"); rq.textContent = req ? vwizL("req") : vwizL("opt"); col.appendChild(rq);
+  slot.appendChild(col);
+  const act = document.createElement("div"); act.className = "act";
+  const pick = mkBtn("btn", ""); setIcnText(pick, "i-folder", "cream", filled ? vwizL("replace") : name.indexOf(vwizL("slotVideo")) === 0 ? vwizL("pickVideo") : vwizL("pickPhoto"));
+  ffPressable(pick, onPick); act.appendChild(pick);
+  if (filled && onClear) { const clr = mkBtn("btn", ""); setIcnText(clr, "i-close", "cream", vwizL("clear")); ffPressable(clr, onClear); act.appendChild(clr); }
+  slot.appendChild(act);
+  return slot;
+}
+function renderVWiz() {
+  const P = vwizPack(), w = vwiz.w; if (!P || !w) return;
+  const deckP = vwiz.kind === "i2v" ? vidWfPack() : vtWfPack();
+  const host = $("vwizIn"); if (!host) return;
+  while (host.firstChild) host.removeChild(host.firstChild);
+  const el = function (cls, text) { const d = document.createElement("div"); if (cls) d.className = cls; if (text != null) d.textContent = text; return d; };
+  const top = el("wiz-top");
+  const ttl = el("ttl"); ttl.appendChild(ffIcon("i-clapper", "hi")); ttl.appendChild(document.createTextNode(" " + (deckP ? stripIcn(deckP.tr(w.label)) : ""))); top.appendChild(ttl);
+  const x = mkBtn("wiz-x", ""); x.appendChild(ffIcon("i-close", "cream")); x.setAttribute("aria-label", vwizL("close")); ffPressable(x, closeVWiz); top.appendChild(x);
+  host.appendChild(top);
+  const dots = el("wiz-dots");
+  P.DOTS.forEach(function (d, i) {
+    const dd = el("wiz-dot" + (i + 1 === vwiz.step ? " on" : (i + 1 < vwiz.step ? " done" : "")));
+    const dc = el("c"); if (i + 1 < vwiz.step) dc.appendChild(ffIcon("i-check", "gold")); else dc.textContent = String(i + 1); dd.appendChild(dc);
+    dd.appendChild(el("l", d)); dots.appendChild(dd);
+  });
+  host.appendChild(dots);
+  const body = el("wiz-body"); body.id = "vwizBody";
+  const nav = el("wiz-nav");
+  const goStep = function (n) { vwiz.step = n; renderVWiz(); try { vwizHost().scrollTop = 0; } catch (e) { } };
+  const d = vtDef();
+  if (vwiz.step === 1) {
+    if (vwizInputsOk()) { const fast = mkBtn("btn wiz-fast", ""); setIcnText(fast, "i-bolt", "cream", vwizL("fast")); ffPressable(fast, function () { goStep(3); }); body.appendChild(fast); }
+    const im = document.createElement("img"); im.className = "wiz-visual";
+    im.src = VID_ART_BASE + (function () { const W = globalThis.HNK && globalThis.HNK.videoToolWorkflows; return (W && typeof W.libArt === "function") ? W.libArt(w.art) : w.art; })();
+    im.onerror = function () { im.onerror = null; if (im.parentNode) im.parentNode.removeChild(im); };
+    body.appendChild(im);
+    const s = el("s", deckP ? stripIcn(deckP.tr(w.summary)) : ""); s.style.margin = "10px 0 2px"; body.appendChild(s);
+    const needRow = el("mut", ""); setIcnText(needRow, "i-camera", "cream", vwizNeed()); body.appendChild(needRow);
+    P.steps(vwiz.kind).forEach(function (line, i) {
+      const row = el("wf-step"); const n = document.createElement("span"); n.className = "n"; n.textContent = String(i + 1); row.appendChild(n);
+      const tx = document.createElement("span"); tx.textContent = line.replace("{N}", vwizNeed()); row.appendChild(tx); body.appendChild(row);
+    });
+    if (w.hint) body.appendChild(el("mut", deckP ? stripIcn(deckP.tr(w.hint)) : ""));
+    const start = mkBtn("btn btn-gold", ""); setIcnText(start, "i-caret", "ink", vwizL("start")); ffPressable(start, function () { goStep(2); }); nav.appendChild(start);
+  }
+  if (vwiz.step === 2) {
+    if (vwiz.kind === "i2v") {
+      const r = ffSlotGet(0);
+      body.appendChild(vwizSlot(!!r, r ? ffThumb(r) : null, "IMAGE 1 — " + vwizL("slotPhoto"), true,
+        function () { ffSrcSheet(0); }, function () { ffSlotSet(0, null); renderVWiz(); }));
+    } else {
+      const vname = VT.video ? (VT.video.name || "video") : "";
+      const vt = VT.video ? el("mut", vname) : null;
+      body.appendChild(vwizSlot(!!VT.video, vt, vwizL("slotVideo") + (vname ? " · " + vname : ""), true,
+        function () { const b = $("btnVtPick"); if (b) b.click(); }, function () { VT.video = null; renderVt(); renderVWiz(); }));
+      if (d && d.imageParam) {
+        body.appendChild(vwizSlot(!!VT.img, VT.img ? ffThumb(VT.img) : null, vwizL("slotRef"), vwizPhotoReq(),
+          function () { const b = $("btnVtImgPick"); if (b) b.click(); }, function () { VT.img = null; renderVt(); renderVWiz(); }));
+      }
+      /* the panel writes its result to disk, so the folder is an input here */
+      body.appendChild(vwizSlot(!!VT.out, VT.out ? el("mut", VT.out.name || "") : null, ff9(VU_L.out), true,
+        function () { const b = $("btnVtSave"); if (b) b.click(); }, null));
+    }
+    if (!vwizInputsOk()) { const rw = el("mut", ""); setIcnText(rw, "i-warn", "hi", vwizL("needInputs")); body.appendChild(rw); }
+    const back = mkBtn("btn", ""); setIcnText(back, "i-caret", "cream", vwizL("back")); ffPressable(back, function () { goStep(1); });
+    const next = mkBtn("btn btn-gold" + (vwizInputsOk() ? "" : " dis"), ""); setIcnText(next, "i-caret", "ink", vwizL("next"));
+    ffPressable(next, function () { if (vwizInputsOk()) goStep(3); });
+    nav.appendChild(back); nav.appendChild(next);
+  }
+  if (vwiz.step === 3) {
+    body.appendChild(el("", vwizL("ready")));
+    const txt = vwizPageText();
+    const pageBox = $(vwiz.kind === "i2v" ? "vidPromptP" : "vtPrompt");
+    if (vwiz.kind === "v2v" && d && !d.prompt) body.appendChild(el("mut", vwizL("noPrompt")));
+    else {
+      const g = el("grp"); const gh = mkBtn("grp-h", ""); gh.textContent = vwizL("viewPrompt") + " · " + txt.length;
+      ffPressable(gh, function () { g.className = g.className.indexOf("open") >= 0 ? "grp" : "grp open"; });
+      const gb = el("grp-b"); const ta = document.createElement("textarea"); ta.className = "inp"; ta.rows = 6; ta.value = txt;
+      ta.addEventListener("input", function () { if (pageBox) { pageBox.value = ta.value; if (vwiz.kind === "i2v") vidPaintPromptCount(); } });
+      gb.appendChild(ta); g.appendChild(gh); g.appendChild(gb); body.appendChild(g);
+    }
+    const row = el("wizrow");
+    const ids = vwiz.kind === "i2v" ? ["vidModel", "vidRes", "vidDur", "vidAspect"] : ["vtOpt", "vtOpt2"];
+    const buildRow = function () {
+      while (row.firstChild) row.removeChild(row.firstChild);
+      if (vwiz.kind === "v2v" && d) { const tl = el("mut", vwizL("toolLine") + ": " + d.label); tl.style.flexBasis = "100%"; row.appendChild(tl); }
+      ids.forEach(function (id) {
+        const mainSel = $(id); if (!mainSel || mainSel.style.display === "none") return;
+        const c = mainSel.cloneNode(true); c.id = "vwiz_" + id; c.className = "inp"; c.value = mainSel.value;
+        c.addEventListener("change", function () {
+          mainSel.value = c.value;
+          try { mainSel.dispatchEvent(new Event("change", { bubbles: true })); } catch (e) { }
+          if (vwiz.kind === "i2v") { try { vidPaintOptions(); vidPaintRail(); vidPaintHsl(); } catch (e) { } } else { try { vuPaintHsl(); } catch (e) { } }
+          buildRow();
+        });
+        row.appendChild(c);
+      });
+    };
+    buildRow(); body.appendChild(row);
+    body.appendChild(el("mut", vwizL("engine").replace("{C}", String(vwizPageText().length))));
+    const back3 = mkBtn("btn", ""); setIcnText(back3, "i-caret", "cream", vwizL("back")); ffPressable(back3, function () { goStep(2); });
+    const gen = mkBtn("btn btn-gold gen", ""); gen.id = "vwizGen"; setIcnText(gen, "i-clapper", "ink", vwizL("gen")); ffPressable(gen, runVWizGenerate);
+    nav.appendChild(back3); nav.appendChild(gen);
+  }
+  if (vwiz.step === 4) {
+    if (vwiz.busy) {
+      body.appendChild(el("", vwizL("running")));
+      const sp = el("mut", ""); sp.id = "vwizSpin"; sp.textContent = vwizSpinLine(); body.appendChild(sp);
+    } else if (vwiz.result) {
+      body.appendChild(el("", vwizL("done")));
+      if (vwiz.kind === "i2v") {
+        const v = document.createElement("video"); v.controls = true; v.src = vwiz.result.url || ""; v.style.width = "100%"; body.appendChild(v);
+        const dl = mkBtn("btn btn-gold", ""); setIcnText(dl, "i-download", "ink", vwizL("download")); ffPressable(dl, function () { vidDownload(); }); nav.appendChild(dl);
+      } else {
+        (vwiz.result.rows || []).forEach(function (r) { body.appendChild(el("mut", (r.label || "") + " · " + (r.detail || ""))); });
+      }
+      const again = mkBtn("btn", ""); setIcnText(again, "i-retry", "cream", vwizL("again")); ffPressable(again, function () { vwiz.result = null; goStep(2); });
+      const onp = mkBtn("btn", ""); setIcnText(onp, "i-caret", "cream", vwizL("onPage")); ffPressable(onp, function () { closeVWiz(); });
+      nav.appendChild(again); nav.appendChild(onp);
+    } else {
+      body.appendChild(el("mut warn", vwizL("failed")));
+      if (vwiz.error) body.appendChild(el("mut", vwiz.error));
+      const b4 = mkBtn("btn", ""); setIcnText(b4, "i-caret", "cream", vwizL("back")); ffPressable(b4, function () { goStep(3); }); nav.appendChild(b4);
+    }
+  }
+  host.appendChild(body); host.appendChild(nav);
+}
+/* the page's own progress line, read rather than re-implemented: the Video
+   page paints #vidSpinTxt, the tools page paints its VT.rows */
+function vwizSpinLine() {
+  if (vwiz.kind === "i2v") { const t = $("vidSpinTxt"); return (t && t.textContent) || ""; }
+  const r = VT.rows && VT.rows[0]; return r ? ((r.label || "") + (r.detail ? " · " + r.detail : "")) : "";
+}
+async function runVWizGenerate() {
+  if (vwiz.busy || !vwizInputsOk()) return;
+  const token = vwiz.token, kind = vwiz.kind;
+  /* a missing key sends the student to Setup (vidGenerate switches the page) — get out of the way first */
+  if (kind === "i2v" && !state.rhKey) { closeVWiz(); try { await vidGenerate(); } catch (e) { } return; }
+  vwiz.step = 4; vwiz.busy = true; vwiz.result = null; vwiz.error = ""; renderVWiz();
+  vwiz.tick = setInterval(function () { const s = $("vwizSpin"); if (s) s.textContent = vwizSpinLine(); }, 1000);
+  if (kind === "i2v") {
+    const before = vidHist[0];
+    try { await vidGenerate(); } catch (e) { }
+    if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
+    if (token !== vwiz.token) return;
+    vwiz.busy = false;
+    if (vidHist[0] !== before) vwiz.result = vidHist[0];
+    else { const st = $("stVidGen"); vwiz.error = (st && st.textContent) || ""; }
+  } else {
+    try { await vtRun(); } catch (e) { }
+    if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
+    if (token !== vwiz.token) return;
+    vwiz.busy = false;
+    const ok = (VT.rows || []).some(function (r) { return r.level === "ok"; });
+    if (ok) vwiz.result = { rows: VT.rows.slice() };
+    else { const st = $("stVtGen"); vwiz.error = (st && st.textContent) || ((VT.rows[0] && VT.rows[0].detail) || ""); }
+  }
+  renderVWiz();
 }
 
 /* the styled buttons over the three native selects on this page, and the
@@ -12381,6 +12596,7 @@ function ffPressable(node, fn) {
 }
 function renderRefs() {
   /* v6.51.0 — the app's one refstrip, painted on Freeform and Video alike */
+  try { if (typeof vwizRepaint === "function") vwizRepaint(); } catch (e) { }   /* v6.14.0 — the video wizard repaints with the slots */
   ["refStrip", "vidRefStrip"].forEach(function (hostId) {
     const host = $(hostId);
     if (!host) return;

@@ -85,7 +85,9 @@ check("C3) a leading ./ does not hide a file from the map",
 check("D) every card the app paints goes through libArt",
   (APP.match(/im\.src=libArt\(w\.art\)/g) || []).length === 2 &&
   /art\.src=libArt\(wf\.cardImg\)/.test(APP) &&
-  !/im\.src=w\.art;/.test(APP),
+  /* v6.14.0 — the video wizard's Guide step shows the card's picture too */
+  /vis\.src=libArt\(w\.art\)/.test(APP) &&
+  !/im\.src=w\.art;/.test(APP) && !/vis\.src=w\.art;/.test(APP),
   "a card still sets its src straight from the raw path");
 
 check("D2) the panel reads the app's map rather than a second copy",

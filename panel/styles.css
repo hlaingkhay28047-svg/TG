@@ -2378,3 +2378,41 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .vtpick-m { font-size: 11px; opacity: .68; }
 .apg .vtpick-x { flex: 0 0 auto; width: 32px; height: 32px; line-height: 30px; text-align: center;
   border-radius: 9px; border: 1px solid var(--line-soft); cursor: pointer; font-size: 19px; }
+
+/* ======================================================================
+   v6.14.0 — THE VIDEO WIZARD: the app's .wiz shell for the two video decks,
+   on the panel's own tokens (--accent is the app's --gold; --bg its --ink).
+   ====================================================================== */
+.vwiz-sheet { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 70; background-color: var(--bg); overflow-y: auto; }
+.vwiz-sheet .wiz-in { max-width: 640px; margin: 0 auto; padding: 12px 14px 32px; }
+.vwiz-sheet .wiz-top { display: flex; flex-direction: row; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.vwiz-sheet .wiz-top .ttl { font-size: 15px; font-weight: 800; color: var(--text); display: flex; flex-direction: row; align-items: center; }
+.vwiz-sheet .wiz-x { margin-left: auto; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line-soft); background-color: var(--panel-2); display: flex; align-items: center; justify-content: center; }
+.vwiz-sheet .wiz-dots { display: flex; flex-direction: row; margin: 16px 0 4px; }
+.vwiz-sheet .wiz-dot { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.vwiz-sheet .wiz-dot .c { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line-soft); background-color: var(--panel-2); color: var(--muted); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.vwiz-sheet .wiz-dot .l { font-size: 10px; color: var(--muted); font-weight: 800; margin-top: 5px; }
+.vwiz-sheet .wiz-dot.on .c { border-color: var(--accent); background-color: var(--accent); color: var(--accent-ink); }
+.vwiz-sheet .wiz-dot.on .l { color: var(--accent-soft); }
+.vwiz-sheet .wiz-dot.done .c { border-color: var(--accent); color: var(--accent-soft); }
+.vwiz-sheet .wiz-body { margin-top: 14px; }
+.vwiz-sheet .wiz-body .s { font-size: 13px; color: var(--text-2); }
+.vwiz-sheet .wiz-visual { width: 100%; height: 190px; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); }
+.vwiz-sheet .wiz-nav { display: flex; flex-direction: row; margin-top: 18px; }
+.vwiz-sheet .wiz-nav .btn { flex: 1; margin: 0 5px; padding: 13px; font-size: 14px; }
+.vwiz-sheet .wiz-fast { width: 100%; margin-bottom: 10px; }
+.vwiz-sheet .btn.dis { opacity: 0.45; }
+.vwiz-sheet .wslot { display: flex; flex-direction: row; align-items: center; border: 1px dashed var(--line); border-radius: 12px; background-color: var(--panel-2); padding: 10px; margin: 10px 0; }
+.vwiz-sheet .wslot.filled { border-style: solid; }
+.vwiz-sheet .wslot .th { width: 64px; height: 64px; border-radius: 9px; background-color: var(--bg); overflow: hidden; flex: none; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 22px; margin-right: 12px; }
+.vwiz-sheet .wslot .th img, .vwiz-sheet .wslot .th video { width: 100%; height: 100%; object-fit: cover; }
+.vwiz-sheet .wslot .nm { font-size: 13px; font-weight: 800; color: var(--text); }
+.vwiz-sheet .wslot .rq { font-size: 11px; color: var(--accent-soft); }
+.vwiz-sheet .wslot .rq.opt { color: var(--muted); }
+.vwiz-sheet .wslot .act { margin-left: auto; display: flex; flex-direction: column; }
+.vwiz-sheet .wslot .act .btn { padding: 9px 12px; font-size: 11.5px; margin: 3px 0; }
+.vwiz-sheet .wf-step { display: flex; flex-direction: row; align-items: flex-start; margin: 8px 0; font-size: 13px; color: var(--text-2); }
+.vwiz-sheet .wf-step .n { flex: none; width: 22px; height: 22px; border-radius: 50%; background-color: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
+.vwiz-sheet .wizrow { display: flex; flex-direction: row; flex-wrap: wrap; margin: 10px 0; }
+.vwiz-sheet .wizrow .inp { flex: 1; min-width: 120px; margin: 4px; }
+.vwiz-sheet .grp-b textarea { width: 100%; min-height: 120px; }
