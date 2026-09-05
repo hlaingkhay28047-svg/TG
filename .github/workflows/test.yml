@@ -456,6 +456,15 @@ jobs:
       - name: Verify a registered student waits on the truth and is let in on approval
         run: PORT=8931 node test/verify_pending_approval.js
 
+      # v6.9.0 — the owner photographed the web app on a wide monitor: a
+      # phone-shaped column in the middle with dark gutters wider than the
+      # content, because layer 2 capped .wrap at 1160px (60% of a 1920 screen,
+      # ~45% of a 2560 one). From 1440px the column follows the screen; this
+      # measures the column as a share of the viewport at 1366/1920/2560, the
+      # wider Smart Workflow grid, no sideways scroll, and the phone untouched.
+      - name: Verify the studio fills the monitor it is opened on
+        run: PORT=8931 node test/verify_desktop_fill.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

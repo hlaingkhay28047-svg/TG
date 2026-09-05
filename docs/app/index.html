@@ -870,6 +870,40 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   body{padding-bottom:112px}
   .page-hero{min-height:208px}
 }
+/* v6.9.0 — DESKTOP LAYER 3: THE APP FILLS THE MONITOR.
+   Owner, photos of a wide ASUS monitor: "ကွန်ပျူတာ mac/win မှာ အပြည့်ပေါ်အောင်".
+   Layer 2 (v5.46) capped .wrap at 1160px, which is 60% of a 1920 screen and
+   ~45% of a 2560 one — the studio sat in a phone-shaped column with dark
+   gutters wider than the content. From 1440px the column follows the screen
+   (94vw, capped at 1720px so ultrawides do not stretch a card to 600px), the
+   Smart Workflow grid grows to four columns then five, Home masonry takes a
+   third column, and the single-flow tool pages widen from 880px to 1120px.
+   Phone, iPad and the 1024/1200 layers are untouched — this is additive and
+   sweep_v528_safearea's byte-exact base .wrap rule still holds. */
+@media(min-width:1440px){
+  .wrap{max-width:min(1720px,94vw)}
+  .wfgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #pgHome.on,#pgAccount.on{column-count:3}
+  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgV2V>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box{max-width:1120px}
+  .lib-grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+  /* THE BANNERS GROW WITH THE COLUMN. Every plate is 1600x800 (2:1). A fixed
+     240px banner across a 1720px column is 7:1 — cover keeps a 28% band of the
+     plate and the owner's screenshot showed the model cut off at the eyes on
+     every page. The banner now holds ~4.2:1 at any width (22vw, clamped so a
+     1080p screen is not half banner), and the art is anchored a little above
+     centre, where the faces in these plates sit. */
+  .page-hero,.hero-mini{min-height:clamp(260px,22vw,460px)} /* .dash-greet: beside its own 768px rule */
+  .page-hero>img,.dash-greet .greet-art,.dash-greet>img{object-position:center 35%}
+}
+@media(min-width:1800px){
+  .wfgrid{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+/* QHD and up (the owner's own monitor): the 1720px cap would leave a third of
+   a 2560 screen dark, so the column takes 92% up to 2040px — five Smart
+   Workflow cards at ~390px, six Home tiles at ~330px, nothing stretched. */
+@media(min-width:2200px){
+  .wrap{max-width:min(2040px,92vw)}
+}
 /* v5.46 — the OS's stock light scrollbars sat on every desktop overflow pane
    like stickers on a dark dashboard. Thin, theme-colored, and only where a
    pointer implies real scrollbars exist. */
@@ -1331,6 +1365,9 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .dash-greet video.greet-motion.live{opacity:1}
 .dash-greet.has-motion{animation:none}
 @media (min-width:768px){.dash-greet{min-height:168px;padding:16px 20px}}
+/* v6.9.0 — on a monitor the greeting grows with the column (see the 1440px
+   layer for the reasoning); declared HERE, after the 768px rule it must outrank */
+@media (min-width:1440px){.dash-greet{min-height:clamp(260px,22vw,460px)}}
 /* The scrim is sized from the art rather than guessed, and it is sized ONCE
    PER FRAME because the frames are not alike. Measured over the text zone
    (left 55%, bottom 45%): morning 193, afternoon 203, evening 30. Cream type
@@ -1389,6 +1426,9 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .dash-promo p{font-size:var(--fs-md);line-height:1.75;margin-bottom:var(--sp-3)}
 .dash-promo .btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 @media (min-width:768px){.dash-grid{grid-template-columns:repeat(4,1fr)}}
+/* v6.9.0 — on a monitor the four Home tiles become six across; declared HERE,
+   after the 768px rule, because on equal specificity the later rule wins */
+@media (min-width:1800px){.dash-grid{grid-template-columns:repeat(6,1fr)}}
 .wiz-fast{width:100%;margin:12px 0 2px;min-height:44px}
 .wiz-result{object-fit:contain;height:auto;max-height:52vh}
 .wiz-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
@@ -4932,6 +4972,17 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.9.0", kind:"page", ref:"pgDash",
+    t:{my:"ကွန်ပျူတာ Mac/Windows မှာ မျက်နှာပြင် အပြည့် ပေါ်ပြီ",en:"On a Mac or Windows monitor the studio now fills the screen",shn:"ၼိူဝ် Mac/Windows ၼႃႈၸေႃးတဵမ်ယဝ်ႉ",kac:"Mac/Windows computer hta screen hpring sai",th:"บนจอ Mac/Windows สตูดิโอเต็มจอแล้ว",zh:"在 Mac/Windows 显示器上工作室现在铺满整个屏幕",vi:"Trên màn hình Mac/Windows studio giờ tràn đầy màn hình",id:"Di monitor Mac/Windows studio kini memenuhi layar",ms:"Pada monitor Mac/Windows studio kini memenuhi skrin"},
+    s:{my:"အရင်က ကွန်ပျူတာ monitor ကြီးမှာ ဖုန်းပုံစံ ကော်လံသေးသေးလေး အလယ်မှာပဲ ပေါ်ပြီး ဘေးနှစ်ဖက် အမှောင်ကြီးနဲ့ — banner ပုံတွေလည်း ပြတ်နေတယ်။ အခု 1440px အထက် screen တိုင်းမှာ ကော်လံက screen အကျယ်လိုက် ပြန့်ပြီး ကတ်တွေ တစ်တန်းမှာ ၄–၅ ခု (Smart Workflow)၊ Home မှာ တစ်တန်း ၆ ခု၊ Library ပိုကျယ်၊ banner တိုင်း ပုံအပြည့် မြင်ရပါပြီ။ ဖုန်းနဲ့ iPad က အရင်အတိုင်းပဲ။",
+       en:"On a big monitor the studio used to sit in a phone-shaped column with dark gutters wider than the content, and every banner was a cropped sliver. From 1440px the column now follows the screen — four or five workflow cards across, six Home tiles, a wider Library, and every page banner shows its whole picture. Phones and iPads are unchanged.",
+       shn:"ၼိူဝ်ၼႃႈၸေႃးယႂ်ႇ ၵူႈပွၵ်ႈပဵၼ်ႁူၺ်ႈၵႅပ်ႈမိူၼ်ၾူၼ်း — ယၢမ်းလဵဝ် ၶႅမ်ႈတဵမ်ၼႃႈၸေႃး၊ ၵၢတ်ႉ ၄–၅ ထႅဝ်၊ banner တဵမ်ႁၢင်ႈ။ ၾူၼ်း/iPad မိူၼ်ၵဝ်ႇ",
+       kac:"Monitor kaba hta phone zawn kachyi sha nga ai — ya screen hpring, card 4–5 hkrang, banner sumla hpring. Phone/iPad gaw shawng na zawn",
+       th:"บนจอใหญ่ก่อนหน้านี้แอปอยู่ในคอลัมน์แคบแบบมือถือและแบนเนอร์ถูกครอป ตอนนี้จาก 1440px คอลัมน์ขยายตามจอ การ์ดเวิร์กโฟลว์เรียง 4–5 คอลัมน์ Home 6 ช่อง แบนเนอร์เห็นทั้งภาพ มือถือ/iPad เหมือนเดิม",
+       zh:"过去在大显示器上工作室只占中间一条手机宽的窄栏，横幅也被裁成一条。现在 1440px 以上栏宽随屏幕变化——工作流卡片一行 4–5 张、首页 6 格、图库更宽、每页横幅完整显示。手机和 iPad 不变。",
+       vi:"Trước đây trên màn hình lớn studio chỉ chiếm một cột hẹp như điện thoại và banner bị cắt. Từ 1440px cột giờ theo màn hình — 4–5 thẻ quy trình một hàng, 6 ô Home, thư viện rộng hơn, banner mỗi trang hiện đủ ảnh. Điện thoại và iPad không đổi.",
+       id:"Dulu di monitor besar studio hanya memakai kolom sempit seperti ponsel dan banner terpotong. Dari 1440px kolom kini mengikuti layar — 4–5 kartu alur kerja sebaris, 6 ubin Home, Library lebih lebar, banner tiap halaman tampil utuh. Ponsel dan iPad tidak berubah.",
+       ms:"Dahulu pada monitor besar studio hanya menggunakan lajur sempit seperti telefon dan sepanduk terpotong. Dari 1440px lajur kini mengikut skrin — 4–5 kad aliran kerja sebaris, 6 jubin Home, Library lebih lebar, sepanduk setiap halaman kelihatan penuh. Telefon dan iPad tidak berubah."} },
   { v:"6.8.0", kind:"page", ref:"pgAccount",
     t:{my:"Register ပြီးရင် ထွက်ပြီး ပြန်ဝင်စရာ မလိုတော့ပါ",en:"After registering, you no longer sign out and back in",shn:"ႁဵတ်းမၢႆၽၢင်ယဝ်ႉ ဢမ်ႇလူဝ်ႇဢွၵ်ႇသေၶဝ်ႈမႂ်ႇ",kac:"Matsun ngut yang pru nna bai shang ra n nga sai",th:"สมัครแล้วไม่ต้องออกแล้วเข้าใหม่อีก",zh:"注册后不再需要退出再登录",vi:"Đăng ký xong không cần đăng xuất rồi đăng nhập lại",id:"Setelah mendaftar, tidak perlu keluar lalu masuk lagi",ms:"Selepas mendaftar, tidak perlu log keluar dan masuk semula"},
     s:{my:"အရင်က register ပြီးတာနဲ့ \"ငွေပေးပါ\" စာမျက်နှာ ပေါ်နေပြီး၊ HNK က ခွင့်ပြုပြီးမှ ၅ မိနစ်ကြာမှ ပွင့်တာမို့ သင်တန်းသားတွေ ထွက်ပြီး ပြန်ဝင်နေရတယ်။ အခု register ပြီးရင် \"HNK စစ်ဆေးနေပါတယ်\" လို့ မှန်မှန် ပြောပြီး ၂၀ စက္ကန့်တစ်ခါ ပြန်စစ်ပါတယ် — ခွင့်ပြုတာနဲ့ ရပ်နေတဲ့ နေရာမှာတင် အလိုအလျောက် ပွင့်ပြီး ကြိုဆိုစာ ပေါ်ပါမယ်။",
@@ -24902,7 +24953,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.8.0";
+var APP_VER="6.9.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
