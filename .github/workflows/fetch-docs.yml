@@ -239,7 +239,7 @@ jobs:
           if [ -n "$GREP" ]; then
             echo "=====INDEX-MATCH START====="
             curl -sSL --retry 2 --connect-timeout 10 --max-time 90 "https://www.runninghub.ai/runninghub-api-doc-en/" \
-              | grep -oE 'api-[0-9]{6,}[^<]{0,12}>[^<]{1,120}' | sort -u | grep -iE "$GREP" | head -60 || echo "NO-MATCH"
+              | grep -aoE 'api-[0-9]{6,}[^<]{0,12}>[^<]{1,120}' | sort -u | grep -aiE "$GREP" | head -60 || echo "NO-MATCH"
             echo "=====INDEX-MATCH END====="
           fi
           for id in $IDS; do
