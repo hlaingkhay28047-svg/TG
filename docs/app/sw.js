@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-7-1";
+var CACHE = "hnk-web-studio-v6-7-2";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -220,7 +220,15 @@ var LIB_PURGES = [
      matches it" is not the same question as "an entry that has not yet run
      here matches it". They get their own marker, and the test added with
      this release asks the second question rather than the first. */
-  { tag: "./__lib-purge-v6-6-1-cards5-refresh", re: new RegExp("/lib/wf/cards5/(look-golden-grecian|studio-look-copy)\\.jpg$") }
+  { tag: "./__lib-purge-v6-6-1-cards5-refresh", re: new RegExp("/lib/wf/cards5/(look-golden-grecian|studio-look-copy)\\.jpg$") },
+  /* v6.7.1 — THE SAME FILES AGAIN, UNDER A NEW MARKER. The 6.6.1 entries above
+     ran on every device and set their markers, so they can never fire again —
+     but they ran through the broken refill described at purgeReplacedLibArt,
+     which handed the browser's HTTP cache straight back. Those devices are
+     still showing the old art with the repair already marked done, which is
+     exactly what the owner is looking at on 6.7.0. A spent marker cannot be
+     un-spent, so the repair needs a new one. */
+  { tag: "./__lib-purge-v6-7-1-http-refill", re: new RegExp("/lib/(vid/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)|wf/cards5/(look-golden-grecian|studio-look-copy))\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair
@@ -234,17 +242,52 @@ var LIB_PURGES = [
    So the purge collects the URLs it deleted and hands them to every open
    client, which re-requests just those pictures. Nothing is reloaded and no
    work in progress is disturbed — a student mid-prompt keeps their prompt. */
+/* v6.7.1 — DELETING IS NOT ENOUGH, AND THAT IS WHY THIS BUG SURVIVED THREE
+   FIXES. Everything here used to do one thing: drop the entry from the
+   SERVICE WORKER cache and let the page ask for the picture again. But that
+   second request is a plain fetch, and a plain fetch is served by the
+   BROWSER'S OWN HTTP CACHE, which is still holding the old JPEG under the
+   same URL. The old bytes came straight back and were written into the fresh
+   cache — a purge that purged nothing, on every device that had ever loaded
+   the card. The one card that looked right after 6.6.1 was the one whose
+   filename had never been requested before, so neither cache had a copy of
+   it; that was the tell, and I read it as an exception instead of the
+   signature it was.
+
+   So the refill is explicit now: each removed URL is re-fetched with
+   cache:"reload", which bypasses the HTTP cache, and the fresh response is
+   put back before the page ever asks. AND THE MARKER IS ONLY SET IF THAT
+   WORKED. A device that was offline during activation retries on the next
+   launch instead of burning its one chance, which is the other half of why
+   this became permanent. */
+function purgeRefill(c, url) {
+  return fetch(new Request(url, { cache: "reload", credentials: "same-origin" }))
+    .then(function (res) {
+      if (!res || !res.ok) throw new Error("refill failed");
+      return c.put(url, res.clone());
+    });
+}
 function purgeReplacedLibArt() {
   var removed = [];
   return caches.open(LIB_CACHE).then(function (c) {
     return Promise.all(LIB_PURGES.map(function (p) {
       return c.match(p.tag).then(function (done) {
         if (done) return;                   /* this entry already ran here */
+        var failed = false;
         return c.keys().then(function (keys) {
           return Promise.all(keys.filter(function (k) {
             try { return p.re.test(new URL(k.url).pathname); } catch (err) { return false; }
-          }).map(function (k) { removed.push(k.url); return c.delete(k); }));
+          }).map(function (k) {
+            var url = k.url;
+            return c.delete(k).then(function () {
+              removed.push(url);
+              return purgeRefill(c, url).catch(function () { failed = true; });
+            });
+          }));
         }).then(function () {
+          /* an entry that could not be replaced stays unmarked, so the next
+             launch tries again rather than leaving the old picture for ever */
+          if (failed) return;
           return c.put(p.tag, new Response("1"));
         });
       });

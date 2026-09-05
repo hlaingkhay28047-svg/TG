@@ -143,7 +143,14 @@ const DECLARED = [
      v4.64 cards5 pattern above, which is why they were missed: that entry's
      marker was set on every device long ago, so matching it repairs nothing. */
   { tag: "./__lib-purge-v6-6-1-cards5-refresh",
-    re: /\/lib\/wf\/cards5\/(look-golden-grecian|studio-look-copy)\.jpg$/ }
+    re: /\/lib\/wf\/cards5\/(look-golden-grecian|studio-look-copy)\.jpg$/ },
+  /* v6.7.1 — the same eleven files under a NEW marker. The 6.6.1 entries ran
+     on every device and set their markers, but they refilled through the
+     browser's own HTTP cache and put the old bytes straight back, so the
+     repair was recorded as done without ever happening. A spent marker
+     cannot be un-spent; the working repair needs its own. */
+  { tag: "./__lib-purge-v6-7-1-http-refill",
+    re: /\/lib\/(vid\/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)|wf\/cards5\/(look-golden-grecian|studio-look-copy))\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
