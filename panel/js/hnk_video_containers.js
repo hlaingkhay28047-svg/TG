@@ -21,6 +21,8 @@ var RH_VIDEO_EXTRA_CONTAINERS = {
   "rhart-video-g-official/video-extend": ["mov"],
   "rhart-video/sparkvideo-2.0-mini/multimodal-video": ["mov"],
   "vidu/reference-to-video-q2-pro": ["avi", "mov"],
+  /* v6.13.0 — the translate-and-dub tool takes the iPhone .mov and .m4v too */
+  "volc-drama/video-translate": ["m4v", "mov", "webm"],
   "volc-subtitle-erase-pro/video": ["m4v", "mov", "webm"],
   "volc-subtitle-erase/video": ["m4v", "mov", "webm"]
 };
