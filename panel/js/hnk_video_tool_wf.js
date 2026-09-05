@@ -248,7 +248,9 @@ var LIB_ART_REV = {
   "lib/vid/vt-filmlook.jpg": 3, "lib/vid/vt-heritage.jpg": 3, "lib/vid/vt-extend.jpg": 3,
   "lib/vid/vt-restore.jpg": 3, "lib/vid/vt-erasesub.jpg": 3, "lib/vid/vt-char30.jpg": 3,
   "lib/vid/vt-headswap.jpg": 2,
-  "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2
+  "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2,
+  /* 6.17.0 — Couple Compose redrawn for its three-input redesign, under its own name */
+  "lib/wf/cards5/couple-compose.jpg": 2
 };
 function libArt(p){
   var k=String(p||"").replace(/^\.?\//, "").split("?")[0];

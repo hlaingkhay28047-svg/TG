@@ -195,7 +195,9 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
 /* 2026-09-05, v6.16.0 — the Flower Path Copy card lands (one 960x640 file at the
    pack's q79), taking the pack to 189 files / 20.01 MB (20.005041 exactly — rounded up,
    same rule). */
-const PREV_MB = 20.01;
+/* 2026-09-05, v6.17.0 — the Couple Compose card is redrawn in place (same name, q79), so the
+   pack total moves: 189 files / 19.97 MB (19.961427 exactly — rounded up, same rule). */
+const PREV_MB = 19.97;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });

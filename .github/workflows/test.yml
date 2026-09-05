@@ -489,6 +489,8 @@ jobs:
         run: node test/verify_no_gear_in_frame.js
       - name: Flower Path Copy — only the reference's flowers, on your photo's floor at the feet, nothing else moved, the same record on the panel
         run: node test/verify_flower_path_copy.js
+      - name: Couple Compose — the bride's and groom's faces set onto the couple photograph, everything else of it kept, the same record on the panel
+        run: node test/verify_couple_compose.js
 
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
