@@ -37,8 +37,11 @@ const PROBE = read("tools/probe_price_preview.py");
 const APP = read("docs/app/index.html");
 
 /* ---- A) the lane ---- */
-report("A) dispatch-only, gated on the word PROBE, contents: read, one job on the pinned runner",
-  /^on:\n  workflow_dispatch:/m.test(WF) && !/\n  push:/.test(WF) && /if: \$\{\{ inputs\.confirm == 'PROBE' \}\}/.test(WF) &&
+const pushBlock = (WF.match(/\n  push:\n((?:    .*\n)+)/) || [])[1] || "";
+report("A) dispatch-only in effect — the one push trigger fires for this file alone (how GitHub registers a workflow_dispatch lane from a work branch, as fetch-docs.yml does) and the confirm gate makes that run a no-op; contents: read; one job on the pinned runner",
+  /^on:\n  workflow_dispatch:/m.test(WF) && (WF.match(/\n  push:/g) || []).length === 1 &&
+  /^    branches: \[claude\/hnk-studio-deployment-pr292-www53j\]\n    paths: \["\.github\/workflows\/probe-video-models\.yml"\]\n$/.test(pushBlock) &&
+  /if: \$\{\{ inputs\.confirm == 'PROBE' \}\}/.test(WF) &&
   /^permissions:\n  contents: read/m.test(WF) && /runs-on: ubuntu-24\.04/.test(WF), null);
 report("A2) the key is masked before any other step — secret first, typed input as the announced fallback — and reaches later steps only through GITHUB_ENV",
   WF.indexOf("- name: Mask the key before any other step can log") < WF.indexOf("- uses: actions/checkout@") &&

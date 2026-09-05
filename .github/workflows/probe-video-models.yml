@@ -36,6 +36,13 @@ on:
         description: 'optional comma-separated model ids to probe (empty = every model in the group)'
         required: false
         default: ''
+  # GitHub lists a workflow_dispatch workflow only once a push event has
+  # carried it (fetch-docs.yml uses the same trick), so this push trigger
+  # exists purely to register the lane from the work branch: it fires for this
+  # file alone, and the job's confirm gate makes that run a no-op.
+  push:
+    branches: [claude/hnk-studio-deployment-pr292-www53j]
+    paths: [".github/workflows/probe-video-models.yml"]
 permissions:
   contents: read
 concurrency:
