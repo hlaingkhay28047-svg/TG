@@ -77,8 +77,8 @@ const SIGNATURE = {
 /* ---- A) registered ---- */
 const block = src.slice(src.indexOf("var VID_WF=["), src.indexOf("function vidWfByKey"));
 const keys = (block.match(/key:"([a-zA-Z0-9]+)"/g) || []).map(k => k.slice(5, -1));
-report("A) all ten makeup workflows are registered and the shelf grew to twenty-nine",
-  MK.every(k => keys.indexOf(k) >= 0) && keys.length === 29 && new Set(keys).size === 29,
+report("A) all ten makeup workflows are registered and the shelf holds thirty-three (twenty-nine here, four reference-video cards since v6.15.0)",
+  MK.every(k => keys.indexOf(k) >= 0) && keys.length === 33 && new Set(keys).size === 33,
   { n: keys.length, missing: MK.filter(k => keys.indexOf(k) < 0) });
 
 /* ---- B) the third tail exists, and is not one of the two that forbid cuts ---- */
@@ -255,12 +255,13 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
     { tags: box.__P.map(p => p.tag).slice(-2),
       uncovered: fresh.length ? MK.filter(k => !fresh[0].re.test("/lib/vid/vw-" + k + ".jpg")) : MK });
 
-  /* The other nineteen cards in /lib/vid/ are untouched by this wave. Purging
+  /* The other twenty-three cards in /lib/vid/ (nineteen then, four more since
+     v6.15.0) are untouched by this wave. Purging
      them would re-download ~2MB on every device to deliver nothing. */
   const OTHER_VID = fs.readdirSync(path.join(APP, "lib", "vid"))
     .filter(f => /^vw-.*\.jpg$/.test(f) && MK.indexOf(f.slice(3, -4)) < 0);
   report("H3b) it covers exactly these ten and none of the other video cards",
-    OTHER_VID.length === 19 &&
+    OTHER_VID.length === 23 &&
     OTHER_VID.every(f => !fresh[0].re.test("/lib/vid/" + f)),
     { others: OTHER_VID.length,
       swept: OTHER_VID.filter(f => fresh.length && fresh[0].re.test("/lib/vid/" + f)) });
@@ -316,8 +317,8 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
       s: (c.querySelector(".s") || {}).textContent || "",
       img: c.querySelector("img") ? c.querySelector("img").getAttribute("src") : null
     })));
-  report("I) all twenty-nine video cards render with a label, a summary and art",
-    cards.length === 29 &&
+  report("I) all thirty-three video cards render with a label, a summary and art",
+    cards.length === 33 &&
     cards.every(c => c.t.length > 2 && c.s.length > 5 && c.img && /^lib\/vid\//.test(c.img)),
     { n: cards.length, bad: cards.filter(c => !(c.t && c.s && c.img)).length });
 
