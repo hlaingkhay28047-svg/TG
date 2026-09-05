@@ -213,8 +213,9 @@ const EXPECT = [
       showTkResult(false);
       return {
         boxOn: D("tkResultBox").className.indexOf("on") >= 0,
-        tiles: D("tkHist").children.length,
-        selected: [...D("tkHist").children].filter(v => v.className === "sel").length,
+        /* v6.20.0 — each take sits in a .hitem wrapper with its own ✕, so count the videos, not the children */
+        tiles: D("tkHist").querySelectorAll("video").length,
+        selected: [...D("tkHist").querySelectorAll("video")].filter(v => v.classList.contains("sel")).length,
         histLabel: D("tkHistH").textContent.length > 0,
         expiryShown: D("tkExpireNote").style.display !== "none"
       };
