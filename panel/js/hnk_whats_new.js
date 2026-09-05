@@ -9,6 +9,17 @@
 (function () {
 "use strict";
 var WHATS_NEW = [
+  { v:"6.9.0", kind:"page", ref:"pgDash",
+    t:{my:"ကွန်ပျူတာ Mac/Windows မှာ မျက်နှာပြင် အပြည့် ပေါ်ပြီ",en:"On a Mac or Windows monitor the studio now fills the screen",shn:"ၼိူဝ် Mac/Windows ၼႃႈၸေႃးတဵမ်ယဝ်ႉ",kac:"Mac/Windows computer hta screen hpring sai",th:"บนจอ Mac/Windows สตูดิโอเต็มจอแล้ว",zh:"在 Mac/Windows 显示器上工作室现在铺满整个屏幕",vi:"Trên màn hình Mac/Windows studio giờ tràn đầy màn hình",id:"Di monitor Mac/Windows studio kini memenuhi layar",ms:"Pada monitor Mac/Windows studio kini memenuhi skrin"},
+    s:{my:"အရင်က ကွန်ပျူတာ monitor ကြီးမှာ ဖုန်းပုံစံ ကော်လံသေးသေးလေး အလယ်မှာပဲ ပေါ်ပြီး ဘေးနှစ်ဖက် အမှောင်ကြီးနဲ့ — banner ပုံတွေလည်း ပြတ်နေတယ်။ အခု 1440px အထက် screen တိုင်းမှာ ကော်လံက screen အကျယ်လိုက် ပြန့်ပြီး ကတ်တွေ တစ်တန်းမှာ ၄–၅ ခု (Smart Workflow)၊ Home မှာ တစ်တန်း ၆ ခု၊ Library ပိုကျယ်၊ banner တိုင်း ပုံအပြည့် မြင်ရပါပြီ။ ဖုန်းနဲ့ iPad က အရင်အတိုင်းပဲ။",
+       en:"On a big monitor the studio used to sit in a phone-shaped column with dark gutters wider than the content, and every banner was a cropped sliver. From 1440px the column now follows the screen — four or five workflow cards across, six Home tiles, a wider Library, and every page banner shows its whole picture. Phones and iPads are unchanged.",
+       shn:"ၼိူဝ်ၼႃႈၸေႃးယႂ်ႇ ၵူႈပွၵ်ႈပဵၼ်ႁူၺ်ႈၵႅပ်ႈမိူၼ်ၾူၼ်း — ယၢမ်းလဵဝ် ၶႅမ်ႈတဵမ်ၼႃႈၸေႃး၊ ၵၢတ်ႉ ၄–၅ ထႅဝ်၊ banner တဵမ်ႁၢင်ႈ။ ၾူၼ်း/iPad မိူၼ်ၵဝ်ႇ",
+       kac:"Monitor kaba hta phone zawn kachyi sha nga ai — ya screen hpring, card 4–5 hkrang, banner sumla hpring. Phone/iPad gaw shawng na zawn",
+       th:"บนจอใหญ่ก่อนหน้านี้แอปอยู่ในคอลัมน์แคบแบบมือถือและแบนเนอร์ถูกครอป ตอนนี้จาก 1440px คอลัมน์ขยายตามจอ การ์ดเวิร์กโฟลว์เรียง 4–5 คอลัมน์ Home 6 ช่อง แบนเนอร์เห็นทั้งภาพ มือถือ/iPad เหมือนเดิม",
+       zh:"过去在大显示器上工作室只占中间一条手机宽的窄栏，横幅也被裁成一条。现在 1440px 以上栏宽随屏幕变化——工作流卡片一行 4–5 张、首页 6 格、图库更宽、每页横幅完整显示。手机和 iPad 不变。",
+       vi:"Trước đây trên màn hình lớn studio chỉ chiếm một cột hẹp như điện thoại và banner bị cắt. Từ 1440px cột giờ theo màn hình — 4–5 thẻ quy trình một hàng, 6 ô Home, thư viện rộng hơn, banner mỗi trang hiện đủ ảnh. Điện thoại và iPad không đổi.",
+       id:"Dulu di monitor besar studio hanya memakai kolom sempit seperti ponsel dan banner terpotong. Dari 1440px kolom kini mengikuti layar — 4–5 kartu alur kerja sebaris, 6 ubin Home, Library lebih lebar, banner tiap halaman tampil utuh. Ponsel dan iPad tidak berubah.",
+       ms:"Dahulu pada monitor besar studio hanya menggunakan lajur sempit seperti telefon dan sepanduk terpotong. Dari 1440px lajur kini mengikut skrin — 4–5 kad aliran kerja sebaris, 6 jubin Home, Library lebih lebar, sepanduk setiap halaman kelihatan penuh. Telefon dan iPad tidak berubah."} },
   { v:"6.8.0", kind:"page", ref:"pgAccount",
     t:{my:"Register ပြီးရင် ထွက်ပြီး ပြန်ဝင်စရာ မလိုတော့ပါ",en:"After registering, you no longer sign out and back in",shn:"ႁဵတ်းမၢႆၽၢင်ယဝ်ႉ ဢမ်ႇလူဝ်ႇဢွၵ်ႇသေၶဝ်ႈမႂ်ႇ",kac:"Matsun ngut yang pru nna bai shang ra n nga sai",th:"สมัครแล้วไม่ต้องออกแล้วเข้าใหม่อีก",zh:"注册后不再需要退出再登录",vi:"Đăng ký xong không cần đăng xuất rồi đăng nhập lại",id:"Setelah mendaftar, tidak perlu keluar lalu masuk lagi",ms:"Selepas mendaftar, tidak perlu log keluar dan masuk semula"},
     s:{my:"အရင်က register ပြီးတာနဲ့ \"ငွေပေးပါ\" စာမျက်နှာ ပေါ်နေပြီး၊ HNK က ခွင့်ပြုပြီးမှ ၅ မိနစ်ကြာမှ ပွင့်တာမို့ သင်တန်းသားတွေ ထွက်ပြီး ပြန်ဝင်နေရတယ်။ အခု register ပြီးရင် \"HNK စစ်ဆေးနေပါတယ်\" လို့ မှန်မှန် ပြောပြီး ၂၀ စက္ကန့်တစ်ခါ ပြန်စစ်ပါတယ် — ခွင့်ပြုတာနဲ့ ရပ်နေတဲ့ နေရာမှာတင် အလိုအလျောက် ပွင့်ပြီး ကြိုဆိုစာ ပေါ်ပါမယ်။",
