@@ -63,6 +63,13 @@ function rhFinishBody(engine, imageUrl, sizeSel, faceMode){
   }
   return body;
 }
+function finishPassOn(){
+  try{
+    if(state.v2 && state.v2.quality==="hd") return true;
+    if(svGet("st_hd",false)) return true;
+  }catch(e){}
+  return false;
+}
 
 /* The student's stored choice. svGet is the studio module's settings store,
    which is present whenever a retouch page is mounted; before that (and in
@@ -83,5 +90,6 @@ else {
   globalThis.rhFinishEngine = rhFinishEngine;
   globalThis.rhFinishBody = rhFinishBody;
   globalThis.rhFinishSettings = settings;
+  globalThis.finishPassOn = finishPassOn;
 }
 })();

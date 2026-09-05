@@ -42,7 +42,8 @@ function lift(html) {
     cut(html, "var RH_FINISH_ENGINES = [", "\n];"),
     cut(html, "function rhFinishEngine(", "\n}"),
     cut(html, "function rhFinishWH(", "\n}"),
-    cut(html, "function rhFinishBody(", "\n}")
+    cut(html, "function rhFinishBody(", "\n}"),
+    cut(html, "function finishPassOn(", "\n}")
   ].join("\n");
 }
 
@@ -87,6 +88,7 @@ else {
   globalThis.rhFinishEngine = rhFinishEngine;
   globalThis.rhFinishBody = rhFinishBody;
   globalThis.rhFinishSettings = settings;
+  globalThis.finishPassOn = finishPassOn;
 }
 })();
 `;
