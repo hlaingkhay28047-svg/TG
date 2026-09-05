@@ -149,9 +149,11 @@ const CONTRACT = {
     "startVideo",
     "resolution"
   ],
+  /* v6.22.0 — RunningHub renamed the graph's node keys to the parameters its doc describes
+     (299##image → imageUrl, 275##video → videoUrl) and refuses the old keys (probed live). */
   "rhart-video/wan2.2/character-motion-transfer": [
-    "299##image",
-    "275##video"
+    "imageUrl",
+    "videoUrl"
   ],
   /* v5.89.0 — four endpoints published since the last sweep. */
   "google/gemini-omni-1.1-flash/video-edit": [
@@ -264,10 +266,11 @@ const CONTRACT = {
     mc && mc.body.imageUrl === "IMG.jpg" && mc.body.videoUrl === "VID.mp4" &&
     mc.body.characterOrientation === "video", mc && mc.body);
 
-  /* C3) the wan2.2 node graph rides its two node keys, nothing else */
+  /* C3) the wan2.2 endpoint takes its two named fields, nothing else (v6.22.0: imageUrl + videoUrl —
+     the node keys it once took are refused by the live API) */
   const nodeTool = bodies.find(b => b.path === "rhart-video/wan2.2/character-motion-transfer");
-  report("C3) wan2.2 motion transfer sends exactly 299##image + 275##video",
-    nodeTool && nodeTool.body["299##image"] === "IMG.jpg" && nodeTool.body["275##video"] === "VID.mp4" &&
+  report("C3) wan2.2 motion transfer sends exactly imageUrl + videoUrl",
+    nodeTool && nodeTool.body["imageUrl"] === "IMG.jpg" && nodeTool.body["videoUrl"] === "VID.mp4" &&
     Object.keys(nodeTool.body).length === 2, nodeTool && nodeTool.body);
 
   /* C4) v5.89.0 — the regeneration routes put the SOURCE VIDEO in
@@ -296,11 +299,13 @@ const CONTRACT = {
 
   /* v6.13.0 — volc-drama/video-translate wants a projectName UNIQUE per job, so
      rhVtBody stamps the submit time into the extra's {{TS}}; dubbing is on, and
-     both languages ride as the registry's own enum strings. */
+     both languages ride as the registry's own enum strings — targetLangs as the
+     one-element LIST RunningHub types it as (v6.22.0: the live probe answered
+     "must be a list, but got java.lang.String" to the bare string). */
   const tr = bodies.find(b => b.path === "volc-drama/video-translate");
-  report("C7) video translate stamps a unique project name, dubs, and carries both languages",
+  report("C7) video translate stamps a unique project name, dubs, and carries both languages (targetLangs as a list)",
     tr && /^HNK-\d{10,}$/.test(String(tr.body.projectName)) && tr.body.isDub === true &&
-    tr.body.sourceLang === "zh" && tr.body.targetLangs === "en" && tr.body.videoUrl === "VID.mp4" &&
+    tr.body.sourceLang === "zh" && JSON.stringify(tr.body.targetLangs) === '["en"]' && tr.body.videoUrl === "VID.mp4" &&
     !("prompt" in tr.body), tr && tr.body);
   /* and the Aleph edit carries its OPTIONAL reference picture in the field the registry names */
   const al = bodies.find(b => b.path === "rhart-video-r/gen4-aleph-official/video-to-video");

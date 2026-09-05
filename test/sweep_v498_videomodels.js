@@ -92,8 +92,8 @@ const REFUSED = ["kling-elements-advanced",
       dur: (m.durations || []).slice(-1)[0], promptMax: m.promptMax, last: !!m.lastParam }))
   }));
 
-  report("A) the shelf is 191 models, with unique ids and unique endpoints",
-    reg.n === 191 && new Set(reg.ids).size === 191 && new Set(reg.paths).size === 191,
+  report("A) the shelf is 188 models (191 until v6.22.0 retired the two Sora low-cost channel rows RunningHub took down and higgsfield/dop, whose required `motions` presets no doc names), with unique ids and unique endpoints",
+    reg.n === 188 && new Set(reg.ids).size === 188 && new Set(reg.paths).size === 188,
     { n: reg.n, ids: new Set(reg.ids).size, paths: new Set(reg.paths).size });
 
   report("A2) the two that shipped before are still there, under the same ids",
@@ -240,11 +240,11 @@ const REFUSED = ["kling-elements-advanced",
   });
   report("E) a control with no options is hidden, never rendered empty",
     ui.bad.length === 0, ui.bad.slice(0, 5));
-  report("E2) and that is not a hypothetical — 66 models have no resolution, 13 no duration",
-    ui.noRes === 66 && ui.noDur === 13, { noRes: ui.noRes, noDur: ui.noDur });
+  report("E2) and that is not a hypothetical — 63 models have no resolution (66 before the three rows v6.22.0 retired), 12 no duration",
+    ui.noRes === 63 && ui.noDur === 12, { noRes: ui.noRes, noDur: ui.noDur });
 
-  report("F) 191 options are grouped by family, not one flat scroll",
-    ui.groups.length >= 30 && ui.options === 191 &&
+  report("F) 188 options are grouped by family, not one flat scroll",
+    ui.groups.length >= 30 && ui.options === 188 &&
     ui.groups.some(g => /^Seedance/.test(g)) && ui.groups.some(g => /^Kling/.test(g)),
     { groups: ui.groups, options: ui.options });
 
@@ -259,7 +259,7 @@ const REFUSED = ["kling-elements-advanced",
 
   report("H) no page errors", errs.length === 0, errs);
 
-  console.log("      (the full doc-verified catalog: 191 pane models across " +
+  console.log("      (the full doc-verified catalog: 188 pane models across " +
     ui.groups.length + " family groups — i2v, reference and text-to-video — " +
     "plus the video-input tools shelf; the endpoints this app cannot drive " +
     "are refused by name)");

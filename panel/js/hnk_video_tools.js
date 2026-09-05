@@ -61,9 +61,10 @@ var RH_VTOOL_MODELS = [
   { id:"rhv-g-official-video-extend", label:"Xai grok imagine video video extend Official", apiPath:"rhart-video-g-official/video-extend", videoParam:"videoUrl", prompt:"req", promptMax:2048, options:[{"key": "duration", "values": ["6", "10"], "def": "6"}] },
   /* api-498749523 */
   { id:"rhv-flux3-video-to-video", label:"Flux 3 video video continuation", apiPath:"rhart-video-flux3/video-to-video", videoParam:"startVideo", prompt:"req", promptMax:20480, options:[{"key": "resolution", "values": ["hd", "fhd"], "def": "hd"}] },
-  /* api-469373161 — ComfyUI node pair: the reference photo goes to 299##image,
-     the motion video to 275##video; no other field exists on this graph. */
-  { id:"wan22-motion-transfer", label:"Wan 2.2 Character Motion Transfer", apiPath:"rhart-video/wan2.2/character-motion-transfer", kind:"vnode", videoParam:"275##video", imageParam:"299##image", imageReq:true },
+  /* api-469373161 — the reference photo is imageUrl, the motion video videoUrl (v6.22.0:
+     RunningHub renamed the graph's 299##image / 275##video and refuses the old keys); no
+     other field exists on this endpoint. */
+  { id:"wan22-motion-transfer", label:"Wan 2.2 Character Motion Transfer", apiPath:"rhart-video/wan2.2/character-motion-transfer", videoParam:"videoUrl", imageParam:"imageUrl", imageReq:true },
   /* v5.89.0 api-510034450 — Gemini Omni 1.1 Flash video edit. Its doc
      declares exactly videoUrl + prompt + resolution, all REQUIRED, and a
      source video of at most ten seconds; no reference-image field exists on
@@ -101,7 +102,7 @@ var RH_VTOOL_MODELS = [
   /* registry: prompt* (2048) + videoUrl* (ONLY THE FIRST FIVE SECONDS are read) + aspectRatio (def 16:9) + referenceImageUrl (optional — a picture that guides the style) */
   { id:"rhv-r-gen4-aleph-video-to-video", label:"Runway Gen-4 Aleph video edit Official", apiPath:"rhart-video-r/gen4-aleph-official/video-to-video", videoParam:"videoUrl", imageParam:"referenceImageUrl", prompt:"req", promptMax:2048, options:[{"key": "aspectRatio", "values": ["16:9", "9:16", "1:1", "4:3", "3:4"], "def": "16:9"}] },
   /* registry: videoUrl* + projectName* (a name the service wants UNIQUE per job — the app stamps the time into it at submit, see rhVtBody) + sourceLang* (def zh) + targetLangs* (def en) + isDub (def false — ON here, so the result speaks the new language) + aiRemoveType (def 1: the burnt-in source subtitles are erased) + dubVoiceMode (def 0). Burmese is not among the nine languages the endpoint lists. */
-  { id:"volc-drama-video-translate", label:"Volc video translate + dub (9 languages)", apiPath:"volc-drama/video-translate", videoParam:"videoUrl", options:[{"key": "sourceLang", "values": ["zh", "en", "ja", "ko", "es", "pt", "id", "th", "vi"], "def": "zh"}, {"key": "targetLangs", "values": ["zh", "en", "ja", "ko", "es", "pt", "id", "th", "vi"], "def": "en"}], extra:{"projectName": "HNK-{{TS}}", "isDub": true, "aiRemoveType": "1", "dubVoiceMode": "0"} },
+  { id:"volc-drama-video-translate", label:"Volc video translate + dub (9 languages)", apiPath:"volc-drama/video-translate", videoParam:"videoUrl", options:[{"key": "sourceLang", "values": ["zh", "en", "ja", "ko", "es", "pt", "id", "th", "vi"], "def": "zh"}, {"key": "targetLangs", "values": ["zh", "en", "ja", "ko", "es", "pt", "id", "th", "vi"], "def": "en", "list": true}], extra:{"projectName": "HNK-{{TS}}", "isDub": true, "aiRemoveType": "1", "dubVoiceMode": "0"} },
 ];
 
 var API = { LIST: RH_VTOOL_MODELS,
