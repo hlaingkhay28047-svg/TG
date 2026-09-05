@@ -207,8 +207,19 @@ function render(root, deps) {
      strip directly under the greeting: one row per unread item, its own
      line, a NEW mark, and a tap that navigates to the thing itself. It draws
      nothing at all once everything has been read. */
-  (function () {
+  /* v6.78.1 — RE-RENDERED, NOT TRIMMED. The × on a row used to remove that
+     one row's wrapper and nothing else (main.js never wires deps.onRefresh),
+     so after the three visible rows were dismissed a student sat under an
+     empty gold card with "(26)" in its heading and 23 unread items that never
+     rose into view. The app's × calls nwSync(), which redraws the strip: the
+     next unread rows come up, and the card disappears once nothing is unread.
+     The panel now does the same — the strip is one function that replaces
+     itself in place, and both the row tap and the × call it. */
+  function renderNews() {
     if (!whatsNew || !whatsNew.LIST) return;
+    var old = root.querySelector("#hnkDashNew");
+    var next = old ? old.nextSibling : null;
+    if (old && old.parentNode) old.parentNode.removeChild(old);
     var seen = nwSeen();
     /* v6.71.0 — the strip has a ceiling, exactly as the app's does
        (docs/app/index.html NW_STRIP_MAX). WHATS_NEW reached seventeen
@@ -248,13 +259,15 @@ function render(root, deps) {
         try { ev.stopPropagation(); } catch (err) { }
         nwMark(e);
         if (deps.onRefresh) deps.onRefresh();
-        else { try { wrap.parentNode.removeChild(wrap); } catch (err2) { } }
+        else renderNews();
       });
       wrap.appendChild(x);
       card.appendChild(wrap);
     });
-    root.appendChild(card);
-  })();
+    if (next && next.parentNode === root) root.insertBefore(card, next);
+    else root.appendChild(card);
+  }
+  renderNews();
 
   /* ---- 2. the destinations card (the app's "Student Web App") ----
      The app prints this heading and its four buttons in English in every
