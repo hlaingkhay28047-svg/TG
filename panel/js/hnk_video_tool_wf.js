@@ -171,9 +171,11 @@ var VT_CLIP_WARN = L9({my:"⚠ ဒီ ဗီဒီယိုက {S} စက္က�
    anywhere can serve the old bytes for it. Lifted with the deck because the
    deck is what names the files. */
 var LIB_ART_REV = {
-  "lib/vid/vt-charSwap.jpg": 2, "lib/vid/vt-faceSwap.jpg": 2, "lib/vid/vt-anime.jpg": 2,
-  "lib/vid/vt-filmlook.jpg": 2, "lib/vid/vt-heritage.jpg": 2, "lib/vid/vt-extend.jpg": 2,
-  "lib/vid/vt-restore.jpg": 2, "lib/vid/vt-erasesub.jpg": 2, "lib/vid/vt-char30.jpg": 2,
+  /* 6.10.0 — the ten Video Smart Workflow cards re-arted as one set (third cut) */
+  "lib/vid/vt-charSwap.jpg": 3, "lib/vid/vt-faceSwap.jpg": 3, "lib/vid/vt-anime.jpg": 3,
+  "lib/vid/vt-filmlook.jpg": 3, "lib/vid/vt-heritage.jpg": 3, "lib/vid/vt-extend.jpg": 3,
+  "lib/vid/vt-restore.jpg": 3, "lib/vid/vt-erasesub.jpg": 3, "lib/vid/vt-char30.jpg": 3,
+  "lib/vid/vt-headswap.jpg": 2,
   "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2
 };
 function libArt(p){

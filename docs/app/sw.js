@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-9-1";
+var CACHE = "hnk-web-studio-v6-10-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -228,7 +228,13 @@ var LIB_PURGES = [
      still showing the old art with the repair already marked done, which is
      exactly what the owner is looking at on 6.7.0. A spent marker cannot be
      un-spent, so the repair needs a new one. */
-  { tag: "./__lib-purge-v6-7-1-http-refill", re: new RegExp("/lib/(vid/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)|wf/cards5/(look-golden-grecian|studio-look-copy))\\.jpg$") }
+  { tag: "./__lib-purge-v6-7-1-http-refill", re: new RegExp("/lib/(vid/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)|wf/cards5/(look-golden-grecian|studio-look-copy))\\.jpg$") },
+  /* 6.10.0 — the ten Video Smart Workflow cards re-arted as ONE set (third
+     cut: one model, futuristic AI-editor studio) under their own filenames.
+     LIB_ART_REV gives each a new URL, so a device that has never seen the
+     token cannot be served the old bytes; this entry clears the copies the
+     old URL left behind so they stop occupying the cache. */
+  { tag: "./__lib-purge-v6-10-0-cards-v3", re: new RegExp("/lib/vid/vt-(charSwap|faceSwap|headswap|anime|filmlook|heritage|extend|restore|erasesub|char30)\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair

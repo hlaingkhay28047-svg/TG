@@ -1,50 +1,50 @@
 {
- "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache.",
+ "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed \u2014 these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set \u2014 re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here).",
  "files": [
   {
    "path": "docs/app/lib/vid/vt-charSwap.jpg",
-   "sha256": "c334808cac44ad1326e326946c4b951de0cfca264d3b1a488ac2bb044818ade1",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "c161e4a58c9504fbc6a1acf190b99fb7392f68e5f882791342857d456ee5ea33",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-faceSwap.jpg",
-   "sha256": "3287eb18b2b4be1c36442272632766e3767be098606958436c86f0ec16e0095b",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "b92a261860785d912808d84ff70677d04d5a0e735547695257d863a397f3b282",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-anime.jpg",
-   "sha256": "53d76a4f17a363a5026f74768ac73b55435cc4f9589eb07ebbff3cb41c0c0b9f",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "223bba8c0cdb9199e946292454f7cc47f3e94da0b7941c7420dc8c2e42ee2745",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-filmlook.jpg",
-   "sha256": "9b37ea5d2423029e5170a1601818a9513f6d7d8877f066f04e2f9c05d4ff4575",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "ba4a965038e062426c1749020978296ef7e63f74c058b125c1e468fd7c111446",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-heritage.jpg",
-   "sha256": "07a264e1c977181231f674d9024be3e220857aa419af629bffa679fa6105cb34",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "6c003202f4d219d458323db0b9925050bcbd01935a2823bfb3be6fe07e0167df",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-extend.jpg",
-   "sha256": "2333d2f4178b5ed9e536fd36c1cc040841e076c6399cc6129978464366cdc43d",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "5c0b92b954c42cf5fc8005f4e1ba5f50ecf3548e325dd97925bc94700f17bd01",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-restore.jpg",
-   "sha256": "29d6e0c12f2357196cd7889295cb09773c6a2b00b6452f507946c1935acb588d",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "98eb587ee1870c3e00bad9153eb47cfac9d5eaed3271ef4a7fb6a0505f5ffb15",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-erasesub.jpg",
-   "sha256": "e9f7f9b2c8b37c8db86058de7861dcef48c37817f87306a2a8525b75577e6138",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "b9724ad0eae5ba689a5d037c5d98ab00ec92f2d6bca717a29ba5cd7c833abcf9",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/vid/vt-char30.jpg",
-   "sha256": "909945761b16001fcfbd425a1a82673bbb684cb2fc499cde048a83e4155f5c7b",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
+   "sha256": "74d91e319f256318ee05f57220507fc539c92dcaf293e874340e6235612754a7",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   },
   {
    "path": "docs/app/lib/wf/cards5/look-golden-grecian.jpg",
@@ -55,6 +55,11 @@
    "path": "docs/app/lib/wf/cards5/studio-look-copy.jpg",
    "sha256": "8edfc98bee97c7b087ccacb29dabbbd96882ae70a3dc899bb9ad20a389926ff4",
    "tag": "./__lib-purge-v6-7-1-http-refill"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-headswap.jpg",
+   "sha256": "bafbc3687010a1ed6211bc4a1ec2fcc570f46b321770dd38b8be1172b8145f00",
+   "tag": "./__lib-purge-v6-10-0-cards-v3"
   }
  ]
 }

@@ -150,7 +150,11 @@ const DECLARED = [
      repair was recorded as done without ever happening. A spent marker
      cannot be un-spent; the working repair needs its own. */
   { tag: "./__lib-purge-v6-7-1-http-refill",
-    re: /\/lib\/(vid\/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)|wf\/cards5\/(look-golden-grecian|studio-look-copy))\.jpg$/ }
+    re: /\/lib\/(vid\/vt-(charSwap|faceSwap|anime|filmlook|heritage|extend|restore|erasesub|char30)|wf\/cards5\/(look-golden-grecian|studio-look-copy))\.jpg$/ },
+  /* 6.10.0 — the ten Video Smart Workflow cards re-arted as one set under
+     their own names; LIB_ART_REV hands each a new URL, this clears the old. */
+  { tag: "./__lib-purge-v6-10-0-cards-v3",
+    re: /\/lib\/vid\/vt-(charSwap|faceSwap|headswap|anime|filmlook|heritage|extend|restore|erasesub|char30)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
