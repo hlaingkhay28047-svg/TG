@@ -204,10 +204,14 @@ function appArray(name) {
     report("E) every card has its own 960x640 picture on disk and it loads",
       KEYS.every(k => fs.existsSync(path.join(ROOT, "docs/app/lib/vid/vw-" + k + ".jpg"))) && art.every(a => a.w === 960 && a.h === 640), art);
 
-    /* ---- F) What's New names the release ---- */
-    const wn = await page.evaluate(() => ({ v: WHATS_NEW[0].v, kind: WHATS_NEW[0].kind, ref: WHATS_NEW[0].ref, t: WHATS_NEW[0].t.en, appVer: APP_VER }));
-    report("F) the newest What's New row is this release's, opens the Video page, and says whose face leads",
-      wn.v.split(".").slice(0, 2).join(".") === wn.appVer.split(".").slice(0, 2).join(".") && wn.kind === "page" && wn.ref === "pgVideo" && /your own face/.test(wn.t), wn);
+    /* ---- F) What's New names the cards — the row shipped with 6.15.0 and later releases stack above it,
+       so it is found by what it says, not by its position ---- */
+    const wn = await page.evaluate(() => {
+      const row = WHATS_NEW.find(e => e.kind === "page" && e.ref === "pgVideo" && /your own face in the lead/.test(e.t.en));
+      return row ? { v: row.v, kind: row.kind, ref: row.ref, t: row.t.en, idx: WHATS_NEW.indexOf(row) } : { missing: true };
+    });
+    report("F) a What's New row opens the Video page and says whose face leads the four cards",
+      !wn.missing && wn.v === "6.15.0" && /Triad Boss|Flying Apsara/.test(wn.t), wn);
 
     report("G) no page errors", errs.length === 0, errs);
   } finally { await browser.close(); }

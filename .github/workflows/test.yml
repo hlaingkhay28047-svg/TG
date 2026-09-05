@@ -485,6 +485,10 @@ jobs:
         run: PORT=8931 node test/verify_video_wizard.js
       - name: Reference-video cards — four image→video Smart Workflow cards rebuilt shot for shot from the owner's clips, your own face in the lead, the same deck lifted into the panel
         run: PORT=8931 node test/verify_ref_video_cards.js
+      - name: No gear in the frame — every relight names the light, never the softbox, and every source stays outside the picture on both surfaces
+        run: node test/verify_no_gear_in_frame.js
+      - name: Flower Path Copy — only the reference's flowers, on your photo's floor at the feet, nothing else moved, the same record on the panel
+        run: node test/verify_flower_path_copy.js
 
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
