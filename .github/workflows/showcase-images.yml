@@ -700,7 +700,10 @@ jobs:
                     case " $CARDS " in *" $cname "*) : ;; *) echo "== $cname not in this run's card list, skipping"; continue ;; esac
                   fi
                   CP=$(python3 -c 'import json,sys; print(next(c["prompt"] for c in json.load(open(sys.argv[1]))["cards"] if c["name"]==sys.argv[2]))' "$CJ" "$cname")
-                  submit "cardv3-$cname" "$EDIT_PATH" "$(jbody "$CP" "[\"$murl\"]" "3:2")" || fail=1
+                  # v6.14.0 — a card may name its own aspect (the page banners
+                  # ride this lane at 16:9); everything else stays the 3:2 card
+                  ASP=$(python3 -c 'import json,sys; print(next(c.get("aspect","3:2") for c in json.load(open(sys.argv[1]))["cards"] if c["name"]==sys.argv[2]))' "$CJ" "$cname")
+                  submit "cardv3-$cname" "$EDIT_PATH" "$(jbody "$CP" "[\"$murl\"]" "$ASP")" || fail=1
                 done
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
@@ -756,7 +759,10 @@ jobs:
             b=$(basename "$f" .png)
             # no crop, no resize beyond a sane web ceiling — the pair must stay
             # pixel-comparable; only the encode changes
-            convert "$f" -resize '1440x1440>' -quality 86 "pub/$b.jpg"
+            # v6.14.0 — a page banner keeps its full 2k width; every card still
+            # lands at the 1440 web ceiling
+            case "$b" in cardv3-banner-*) convert "$f" -resize '2048x2048>' -quality 88 "pub/$b.jpg" ;;
+              *) convert "$f" -resize '1440x1440>' -quality 86 "pub/$b.jpg" ;; esac
           done
           pubs=(pub/*.jpg); cards=(pub/cards/*.jpg)
           if [ ${#pubs[@]} -eq 0 ] && [ ${#cards[@]} -eq 0 ]; then
