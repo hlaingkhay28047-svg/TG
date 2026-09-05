@@ -1864,7 +1864,9 @@ body.wall #wallRetry.on{display:block}
 .tutorial-card>.chip{align-self:flex-start} /* a flex item stretches — the number stays a pill */
 .tutorial-card p{flex:1 1 auto;margin:6px 0 14px}
 .tutorial-card .btn{align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
-@media(hover:hover) and (pointer:fine){
+/* min-width too: a phone held sideways under a headless desktop pointer must keep its slim 50px jump bar
+   (sweep_studio_livepreview #19) — the visible scrollbar is a monitor's, not a landscape phone's */
+@media(hover:hover) and (pointer:fine) and (min-width:1024px){
   #stGroupChips,#libFilters,#libGroups,.prow,#stPendChips,#stGenBar .row,.ratio-rail,#stSuiteTabs{scrollbar-width:thin;scrollbar-color:#2a3450 transparent;padding-bottom:6px}
   #stGroupChips::-webkit-scrollbar,#libFilters::-webkit-scrollbar,#libGroups::-webkit-scrollbar,.prow::-webkit-scrollbar,#stPendChips::-webkit-scrollbar,#stGenBar .row::-webkit-scrollbar,.ratio-rail::-webkit-scrollbar,#stSuiteTabs::-webkit-scrollbar{display:block;height:6px}
   #stGroupChips::-webkit-scrollbar-thumb,#libFilters::-webkit-scrollbar-thumb,#libGroups::-webkit-scrollbar-thumb,.prow::-webkit-scrollbar-thumb,#stPendChips::-webkit-scrollbar-thumb,#stGenBar .row::-webkit-scrollbar-thumb,.ratio-rail::-webkit-scrollbar-thumb,#stSuiteTabs::-webkit-scrollbar-thumb{background:#2a3450;border-radius:6px}
