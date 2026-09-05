@@ -448,6 +448,14 @@ jobs:
       - name: Verify every tool names the files it takes before one is picked
         run: PORT=8931 node test/verify_slot_chips.js
 
+      # v6.8.0 — a student who has just registered used to be shown the PAY
+      # screen while the owner was still approving them, and the wall only
+      # re-asked every five minutes, so a whole cohort learned to sign out and
+      # back in. Waiting is now its own state, with its own words, asked every
+      # twenty seconds, and approval lets them in where they stand.
+      - name: Verify a registered student waits on the truth and is let in on approval
+        run: PORT=8931 node test/verify_pending_approval.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.

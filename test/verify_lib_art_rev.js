@@ -89,6 +89,20 @@ check("D2) the panel reads the app's map rather than a second copy",
   /W\.libArt\(w\.art\)/.test(PANEL) && !/im\.src = VID_ART_BASE \+ w\.art;/.test(PANEL),
   "the panel still builds its card src from the raw path");
 
+/* E — THE ORDERING RULE, learned from a crash that shipped in this very file.
+   docs/app/index.html is ONE top-level script. ptSetWorkflow's restore path
+   calls libArt() while that script is still running, so a `var LIB_ART_REV`
+   declared further down is read as undefined: TypeError, and every line after
+   it — state.st, the Studio module, APP_VER, the service worker — never runs.
+   The app booted into a dead shell for anyone who reloaded with a workflow
+   chosen. The map must be declared before the first line that can read it. */
+const defAt = APP.indexOf("var LIB_ART_REV = {");
+const callAt = Math.min.apply(null,
+  ["libArt(w.art)", "libArt(wf.cardImg)"].map(x => APP.indexOf(x)).filter(i => i >= 0));
+check("E) the map is declared BEFORE the first line that reads it",
+  defAt >= 0 && callAt > 0 && defAt < callAt,
+  `LIB_ART_REV at ${defAt}, first libArt() call at ${callAt} — a later var reads as undefined and kills the rest of the script`);
+
 const LIFTED = read("panel/js/hnk_video_tool_wf.js");
 check("D3) and that map is LIFTED from the app, not retyped",
   LIFTED === require("../tools/build_panel_video_tool_wf.js").build() &&

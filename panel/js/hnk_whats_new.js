@@ -9,6 +9,17 @@
 (function () {
 "use strict";
 var WHATS_NEW = [
+  { v:"6.8.0", kind:"page", ref:"pgAccount",
+    t:{my:"Register ပြီးရင် ထွက်ပြီး ပြန်ဝင်စရာ မလိုတော့ပါ",en:"After registering, you no longer sign out and back in",shn:"ႁဵတ်းမၢႆၽၢင်ယဝ်ႉ ဢမ်ႇလူဝ်ႇဢွၵ်ႇသေၶဝ်ႈမႂ်ႇ",kac:"Matsun ngut yang pru nna bai shang ra n nga sai",th:"สมัครแล้วไม่ต้องออกแล้วเข้าใหม่อีก",zh:"注册后不再需要退出再登录",vi:"Đăng ký xong không cần đăng xuất rồi đăng nhập lại",id:"Setelah mendaftar, tidak perlu keluar lalu masuk lagi",ms:"Selepas mendaftar, tidak perlu log keluar dan masuk semula"},
+    s:{my:"အရင်က register ပြီးတာနဲ့ \"ငွေပေးပါ\" စာမျက်နှာ ပေါ်နေပြီး၊ HNK က ခွင့်ပြုပြီးမှ ၅ မိနစ်ကြာမှ ပွင့်တာမို့ သင်တန်းသားတွေ ထွက်ပြီး ပြန်ဝင်နေရတယ်။ အခု register ပြီးရင် \"HNK စစ်ဆေးနေပါတယ်\" လို့ မှန်မှန် ပြောပြီး ၂၀ စက္ကန့်တစ်ခါ ပြန်စစ်ပါတယ် — ခွင့်ပြုတာနဲ့ ရပ်နေတဲ့ နေရာမှာတင် အလိုအလျောက် ပွင့်ပြီး ကြိုဆိုစာ ပေါ်ပါမယ်။",
+       en:"A student who had just registered was shown the PAY screen, and approval only reached them up to five minutes later — so people signed out and back in to get through. The app now says plainly \"HNK is checking your account\", asks again every twenty seconds, and the moment you are approved the page opens where you stand and says so.",
+       shn:"ႁဵတ်းမၢႆၽၢင်ယဝ်ႉ ၼႃႈလိၵ်ႈ \"ပၼ်ငိုၼ်း\" ဢွၵ်ႇမႃး — ယၢမ်းလဵဝ် လၢတ်ႈဝႃႈ HNK တိုၵ်ႉၸႅတ်ႈ လႄႈ ၸႅတ်ႈမႂ်ႇ ၵူႈ ၂၀ ၸႅတ်ႉၵၼ်ႉ၊ ၶႂ်ႈလႆႈယဝ်ႉ ပိုတ်ႇႁင်းၵူၺ်း",
+       kac:"Matsun ngut ai hpang \"gumhpraw jaw\" laika ka pru wa ai — ya gaw HNK yu nga ai nga tsun, 20 second langai lang bai yu, shapraw ngut ai hte shi hkrai hpaw ai",
+       th:"หลังสมัคร เคยเห็นหน้า \"ชำระเงิน\" และการอนุมัติมาถึงช้าถึงห้านาที คนจึงออกแล้วเข้าใหม่ ตอนนี้แอปบอกตรง ๆ ว่า HNK กำลังตรวจสอบ ถามใหม่ทุก 20 วินาที และเมื่ออนุมัติ หน้าจะเปิดเองทันที",
+       zh:"刚注册的学员会看到\"付款\"页面，审核结果最多要五分钟才到，所以大家只能退出再登录。现在应用会直说 HNK 正在审核，每 20 秒重查一次，通过的那一刻页面就地打开并提示你。",
+       vi:"Học viên vừa đăng ký lại thấy màn hình \"thanh toán\", và phê duyệt chỉ đến sau tới năm phút — nên mọi người đăng xuất rồi đăng nhập lại. Giờ ứng dụng nói rõ HNK đang kiểm tra, hỏi lại mỗi 20 giây, và được duyệt là trang mở ngay tại chỗ.",
+       id:"Siswa yang baru mendaftar malah melihat layar \"bayar\", dan persetujuan baru sampai hingga lima menit kemudian — jadi orang keluar lalu masuk lagi. Kini aplikasi berkata jujur HNK sedang memeriksa, bertanya lagi tiap 20 detik, dan begitu disetujui halaman terbuka di tempat.",
+       ms:"Pelajar yang baru mendaftar melihat skrin \"bayar\", dan kelulusan hanya sampai sehingga lima minit kemudian — jadi orang log keluar dan masuk semula. Kini aplikasi berkata terus HNK sedang menyemak, bertanya lagi setiap 20 saat, dan sebaik diluluskan halaman terbuka di situ juga."} },
   { v:"6.7.0", kind:"page", ref:"pgRetouch",
     t:{my:"HD Finish ကို ကိုယ်တိုင် ရွေးလို့ရပြီ",en:"You choose how the HD Finish works",shn:"လိူၵ်ႈ HD Finish လႆႈယဝ်ႉ",kac:"HD Finish hpe nang lata lu sai",th:"เลือกวิธี HD Finish ได้เองแล้ว",zh:"HD Finish 现在由你决定",vi:"Bạn tự chọn cách HD Finish chạy",id:"Anda yang memilih cara HD Finish bekerja",ms:"Anda pilih cara HD Finish berfungsi"},
     s:{my:"Retouch A၊ Retouch B၊ Retouch Pro သုံးခုလုံးရဲ့ HD Finish က engine တစ်ခုတည်းနဲ့ ပုံသေ လုပ်နေခဲ့တာ — ပြီးတော့ RunningHub ရဲ့ default အရ မျက်နှာကို Topaz က ထပ်ပြင်နေတယ်၊ သင် သေချာပြင်ထားတဲ့ အသားအရေ ပျက်သွားနိုင်တယ်။ အခု Retouch Pro ထဲမှာ engine ငါးမျိုး (ပုံမှန်၊ မျက်နှာ အသေးစိတ်၊ ပရင့်ထုတ်၊ ပုံသေး/ဓာတ်ပုံဟောင်း၊ HYPIR ပြန်လည်ပြုပြင်) ရွေးလို့ရပြီး၊ \"ငါ့ retouch ကို မထိနဲ့\" လို့လည်း ပြောလို့ရပါပြီ။ ရွေးလိုက်တာက သုံးမျက်နှာလုံးအတွက် တူတူပါပဲ။",
