@@ -175,6 +175,49 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       wf.marked.slice().sort().join(",") === wf.want.slice().sort().join(",") &&
       wf.ribbons === wf.want.length, wf);
 
+    /* v6.78.1 — DISMISSING BY HAND, the way a student does it. The × used to
+       remove its own row and nothing else: main.js never wires deps.onRefresh,
+       so after the three visible rows were dismissed a student sat under an
+       empty gold card with "(26)" in its heading and 23 unread items that
+       never rose into view. The app's × redraws the strip (nwSync); the panel
+       must too — the next unread row comes up, and the card leaves once
+       nothing is unread. D pre-seeds storage and would never see this. */
+    const byHand = await page.evaluate(async () => {
+      try { localStorage.removeItem("hnk_new_seen"); } catch (e) { }
+      try { switchPage("wf"); switchPage("home"); } catch (e) { }
+      await new Promise(r => setTimeout(r, 500));
+      const total = window.HNK.whatsNew.LIST.length;
+      const rows = () => document.querySelectorAll("#hnkDashNew .nw-row").length;
+      const head = () => ((document.getElementById("hnkDashNewH2") || {}).textContent || "");
+      const seen = () => { try { return JSON.parse(localStorage.getItem("hnk_new_seen") || "[]").length; } catch (e) { return -1; } };
+      const before = { rows: rows(), head: head(), seen: seen() };
+      const firstKey = (document.querySelector("#hnkDashNew .nw-row") || {}).getAttribute
+        ? document.querySelector("#hnkDashNew .nw-row").getAttribute("data-nw") : null;
+      const x = document.querySelector("#hnkDashNew .nw-x");
+      if (!x) return { total, before, noX: true };
+      x.click();
+      await new Promise(r => setTimeout(r, 300));
+      const afterOne = { rows: rows(), head: head(), seen: seen(),
+        firstGone: !document.querySelector('#hnkDashNew .nw-row[data-nw="' + firstKey + '"]') };
+      let clicks = 1;
+      for (let i = 0; i < total + 5; i++) {
+        const b = document.querySelector("#hnkDashNew .nw-x");
+        if (!b) break;
+        b.click(); clicks++;
+        await new Promise(r => setTimeout(r, 60));
+      }
+      return { total, before, afterOne, clicks,
+        end: { card: !!document.getElementById("hnkDashNew"), seen: seen() } };
+    });
+    report("D1) dismissing one row by hand brings the next unread up — the strip stays three deep and the heading counts down by one",
+      !byHand.noX && byHand.before.rows === 3 && byHand.afterOne.rows === 3 && byHand.afterOne.firstGone &&
+      byHand.afterOne.seen === byHand.before.seen + 1 &&
+      byHand.before.head.indexOf("(" + byHand.total + ")") >= 0 && byHand.afterOne.head.indexOf("(" + (byHand.total - 1) + ")") >= 0,
+      JSON.stringify(byHand).slice(0, 400));
+    report("D2) dismissing every row by hand leaves no card behind — the strip is gone and every item is recorded as read",
+      byHand.end && byHand.end.card === false && byHand.end.seen === byHand.total && byHand.clicks === byHand.total,
+      JSON.stringify({ clicks: byHand.clicks, end: byHand.end, total: byHand.total }));
+
     /* dismissing silences it and stays silenced */
     const after = await page.evaluate(() => {
       const list = window.HNK.whatsNew.LIST;

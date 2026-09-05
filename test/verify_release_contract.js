@@ -297,6 +297,17 @@ check("panel source, release metadata, and public version endpoint agree",
   JSON.stringify({ source: panelSourceManifest.version, release: panelRelease.version,
     minimum: panelRelease.minimum_supported_version, endpoint: panelVersion,
     artifact: panelRelease.artifact_file }));
+/* The landing prints the panel version in more places than the badges the
+   release bump rewrites: a <span> in the features heading read v6.48.0 and the
+   panel's JSON-LD softwareVersion read v6.49.0 for months while the badges
+   beside them said v6.78.0 — a stale string the bump never touched because it
+   never carried the previous version. Every panel version the page prints must
+   be the shipped one, wherever it is printed. */
+const landingPanelClaims = [...landing.matchAll(/Panel(?: <span class="en">| v| \(v)v?(\d+\.\d+\.\d+)/g)].map(m => m[1]);
+const stalePanelClaims = landingPanelClaims.filter(v => v !== panelVersion);
+check("every panel version the landing prints is the shipped one, JSON-LD included",
+  landingPanelClaims.length > 0 && stalePanelClaims.length === 0 && panelSchema.softwareVersion === panelVersion,
+  JSON.stringify({ shipped: panelVersion, stale: Array.from(new Set(stalePanelClaims)), jsonLd: panelSchema.softwareVersion }));
 check("the panel agrees with itself about which version it is",
   panelInternals.version === panelVersion && panelInternals.brandVer === panelVersion,
   `main.js ${panelInternals.version || "?"}, index.html ${panelInternals.brandVer || "?"}, release ${panelVersion}${panelInternals.err ? " :: " + panelInternals.err : ""}`);
