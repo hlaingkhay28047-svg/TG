@@ -1221,11 +1221,13 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   background: rgba(6, 8, 14, 0.3);
   background: linear-gradient(97deg, rgba(6, 8, 14, .5) 0%, rgba(6, 8, 14, .42) 32%, rgba(6, 8, 14, .22) 56%, rgba(6, 8, 14, 0) 80%); }
 /* app .dash-greet>*{position:relative;z-index:2}: the words ride above the scrim */
-#pageAiTools .dash-greet .hi, #pageAiTools .dash-greet .sub, #pageAiTools .dash-greet .pill { position: relative; }
+#pageAiTools .dash-greet .hi, #pageAiTools .dash-greet .sub, #pageAiTools .dash-greet .wx, #pageAiTools .dash-greet .pill { position: relative; }
 #pageAiTools .dash-greet .hi { display: block; font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: .2px;
   line-height: 1.7; max-width: 58%; overflow-wrap: anywhere; word-break: break-word;
   text-shadow: 0 1px 3px rgba(0, 0, 0, .85), 0 2px 14px rgba(0, 0, 0, .6); }
 #pageAiTools .dash-greet .sub { display: block; margin-top: 4px; font-size: 12px; color: #dcd6c9; line-height: 1.7; max-width: 58%;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+#pageAiTools .dash-greet .wx { display: block; margin-top: 3px; font-size: 12px; color: #f1eadb; line-height: 1.7; max-width: 58%;
   text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
 #pageAiTools .dash-greet .pill { display: block; align-self: flex-start; margin-top: 8px; padding: 3px 10px;
   border: 1px solid var(--accent); border-radius: 20px; color: var(--accent-h); font-size: 11px; line-height: 1.7;

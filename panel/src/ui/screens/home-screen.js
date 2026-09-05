@@ -155,6 +155,84 @@ function dashInfo() {
 /* The app's second greeting line — "Tuesday, September 1 · 4:45 PM · Yangon"
    in the app's locale for the language, the city being the last segment of
    the IANA zone (Burmese readers see the Burmese name when one is known). */
+/* v6.11.0 — the app's clock formatter and weather tables, verbatim (see
+   renderDashGreet's note there): twelve-hour AM/PM in every language, and a
+   weather line for the device's zone city from Open-Meteo, kept thirty
+   minutes, silent when there is nothing to show. verify_greet_clock_weather
+   holds these to the app's byte for byte. */
+var WX_COORDS={"Asia/Yangon":[16.87,96.2],"Asia/Rangoon":[16.87,96.2],"Asia/Bangkok":[13.75,100.5],"Asia/Singapore":[1.35,103.82],"Asia/Kuala_Lumpur":[3.14,101.69],"Asia/Jakarta":[-6.21,106.85],"Asia/Ho_Chi_Minh":[10.82,106.63],"Asia/Saigon":[10.82,106.63],"Asia/Shanghai":[31.23,121.47],"Asia/Hong_Kong":[22.32,114.17],"Asia/Macau":[22.2,113.54],"Asia/Tokyo":[35.68,139.69],"Asia/Seoul":[37.57,126.98],"Asia/Taipei":[25.03,121.57],"Asia/Manila":[14.6,120.98],"Asia/Phnom_Penh":[11.56,104.92],"Asia/Vientiane":[17.97,102.6],"Asia/Dhaka":[23.81,90.41],"Asia/Kolkata":[22.57,88.36],"Asia/Kathmandu":[27.72,85.32],"Asia/Colombo":[6.93,79.85],"Asia/Karachi":[24.86,67.01],"Asia/Dubai":[25.2,55.27],"Asia/Riyadh":[24.71,46.68],"Asia/Tehran":[35.69,51.39],"Asia/Kabul":[34.53,69.17],"Asia/Tashkent":[41.3,69.24],"Asia/Almaty":[43.24,76.89],"Asia/Ulaanbaatar":[47.89,106.91],"Asia/Brunei":[4.94,114.95],"Asia/Kuching":[1.55,110.35],"Asia/Makassar":[-5.15,119.43],"Asia/Jayapura":[-2.53,140.72],"Europe/London":[51.51,-0.13],"Europe/Paris":[48.86,2.35],"Europe/Berlin":[52.52,13.41],"Europe/Moscow":[55.76,37.62],"Australia/Sydney":[-33.87,151.21],"Australia/Melbourne":[-37.81,144.96],"Pacific/Auckland":[-36.85,174.76],"America/Los_Angeles":[34.05,-118.24],"America/New_York":[40.71,-74.01],"America/Chicago":[41.88,-87.63],"America/Toronto":[43.65,-79.38]};
+var WX_ICON={clear:"☀️",night:"🌙",partly:"⛅",cloud:"☁️",fog:"🌫️",drizzle:"🌦️",rain:"🌧️",snow:"🌨️",storm:"⛈️"};
+var WX_WORD={
+  clear:{my:"နေသာ",en:"Clear",shn:"ၾႃႉၸႅင်ႈ",kac:"Jan pru",th:"ท้องฟ้าแจ่มใส",zh:"晴",vi:"Trời quang",id:"Cerah",ms:"Cerah"},
+  night:{my:"ကြည်လင်တဲ့ည",en:"Clear night",shn:"ၶမ်ႈၸႅင်ႈ",kac:"Shana san",th:"คืนฟ้าใส",zh:"夜晴",vi:"Đêm quang",id:"Malam cerah",ms:"Malam cerah"},
+  partly:{my:"တိမ်အသင့်အတင့်",en:"Partly cloudy",shn:"မွၵ်ႇၽွင်ႈ",kac:"Summwi kachi",th:"มีเมฆบางส่วน",zh:"局部多云",vi:"Có mây",id:"Berawan sebagian",ms:"Sebahagian berawan"},
+  cloud:{my:"တိမ်ထူ",en:"Cloudy",shn:"မွၵ်ႇၼႃ",kac:"Summwi law",th:"มีเมฆมาก",zh:"多云",vi:"Nhiều mây",id:"Berawan",ms:"Mendung"},
+  fog:{my:"မြူဆိုင်း",en:"Fog",shn:"မွၵ်ႇမူၺ်",kac:"Mawn",th:"หมอก",zh:"雾",vi:"Sương mù",id:"Kabut",ms:"Kabus"},
+  drizzle:{my:"မိုးဖွဲ",en:"Drizzle",shn:"ၽူၼ်ၽွႆး",kac:"Marang kaji",th:"ฝนปรอย",zh:"小雨",vi:"Mưa phùn",id:"Gerimis",ms:"Hujan renyai"},
+  rain:{my:"မိုးရွာ",en:"Rain",shn:"ၽူၼ်တူၵ်း",kac:"Marang htu",th:"ฝนตก",zh:"雨",vi:"Mưa",id:"Hujan",ms:"Hujan"},
+  snow:{my:"ဆီးနှင်းကျ",en:"Snow",shn:"မူၺ်တူၵ်း",kac:"Numri htu",th:"หิมะตก",zh:"雪",vi:"Tuyết",id:"Salju",ms:"Salji"},
+  storm:{my:"မိုးသက်မုန်တိုင်း",en:"Thunderstorm",shn:"ၽူၼ်ၾႃႉၽႃႇ",kac:"Mu nsen",th:"พายุฝนฟ้าคะนอง",zh:"雷雨",vi:"Dông",id:"Badai petir",ms:"Ribut petir"}
+};
+var WX_KEY="hnk_wx_v1", WX_TTL=30*60000, WX_URL="https://api.open-meteo.com/v1/forecast";
+function fmtClock12(d){
+  var h=d.getHours(), m=d.getMinutes(), h12=h%12; if(h12===0) h12=12;
+  return h12+":"+(m<10?"0":"")+m+" "+(h<12?"AM":"PM");
+}
+function wxKind(code, isDay){
+  var c=Number(code);
+  if(c===0) return Number(isDay)===0?"night":"clear";
+  if(c<=2) return "partly";
+  if(c===3) return "cloud";
+  if(c===45||c===48) return "fog";
+  if(c>=51&&c<=57) return "drizzle";
+  if((c>=61&&c<=67)||(c>=80&&c<=82)) return "rain";
+  if((c>=71&&c<=77)||c===85||c===86) return "snow";
+  if(c>=95) return "storm";
+  return "cloud";
+}
+var _wxMem = null;
+function wxLoad() {
+  try {
+    var raw = (typeof localStorage !== "undefined" && localStorage) ? localStorage.getItem(WX_KEY) : null;
+    var v = raw ? JSON.parse(raw) : _wxMem;
+    return (v && v.tz && typeof v.temp === "number") ? v : null;
+  } catch (e) { return _wxMem; }
+}
+function wxSave(v) {
+  _wxMem = v;
+  try { if (typeof localStorage !== "undefined" && localStorage) localStorage.setItem(WX_KEY, JSON.stringify(v)); } catch (e) { }
+}
+function wxLine(w) {
+  if (!w) return "";
+  var k = wxKind(w.code, w.isDay);
+  return WX_ICON[k] + " " + Math.round(w.temp) + "°C · " + l9(WX_WORD[k]);
+}
+var _wxBusy = false, _wxFailAt = 0, WX_RETRY = 5 * 60000;
+/* onReady(reading) is called only when a NEW reading has landed; a failed or
+   empty answer is remembered for five minutes, as the app does */
+function wxRefresh(onReady) {
+  try {
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "", ll = WX_COORDS[tz];
+    if (!ll || _wxBusy || typeof fetch !== "function") return;
+    var cur = wxLoad(); if (cur && cur.tz === tz && Date.now() - cur.t < WX_TTL) return;
+    if (_wxFailAt && Date.now() - _wxFailAt < WX_RETRY) return;
+    _wxBusy = true;
+    var url = WX_URL + "?latitude=" + ll[0] + "&longitude=" + ll[1] + "&current=temperature_2m,weather_code,is_day&timezone=auto";
+    var timer = new Promise(function (res) { setTimeout(function () { res(null); }, 8000); });
+    Promise.race([fetch(url), timer])
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (j) {
+        var c = j && j.current; if (!c || typeof c.temperature_2m !== "number") { _wxFailAt = Date.now(); return; }
+        _wxFailAt = 0;
+        var v = { tz: tz, t: Date.now(), temp: c.temperature_2m, code: c.weather_code, isDay: c.is_day };
+        wxSave(v);
+        try { if (onReady) onReady(v); } catch (e) { }
+      })
+      .catch(function () { _wxFailAt = Date.now(); })
+      .then(function () { _wxBusy = false; });
+  } catch (e) { _wxBusy = false; }
+}
+
 function greetSub() {
   var dt = "";
   try {
@@ -162,7 +240,8 @@ function greetSub() {
     var loc = L === "my" ? "my-MM" : L === "zh" ? "zh-CN" : L;
     var now = new Date();
     var day = new Intl.DateTimeFormat(loc, { weekday: "long", day: "numeric", month: "long" }).format(now);
-    var clock = new Intl.DateTimeFormat(loc, { hour: "numeric", minute: "2-digit" }).format(now);
+    /* v6.11.0 — twelve-hour, AM/PM, every language (fmtClock12 above) */
+    var clock = fmtClock12(now);
     var city = "";
     try {
       var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
@@ -198,6 +277,20 @@ function render(root, deps) {
   greet.appendChild(dom.el(doc, "div", { class: "hi", text: hi }));
   var dt = greetSub();
   if (dt) greet.appendChild(dom.el(doc, "div", { class: "sub", text: dt }));
+  /* v6.11.0 — the weather line, as the app's renderDashGreet: from the
+     reading on hand now, renewed in the background, silent offline */
+  var wxNow = wxLoad();
+  if (wxNow) greet.appendChild(dom.el(doc, "div", { class: "wx", text: wxLine(wxNow) }));
+  wxRefresh(function (w) {
+    try {
+      if (!greet.parentNode) return;
+      var node = dom.el(doc, "div", { class: "wx", text: wxLine(w) });
+      var old = greet.querySelector(".wx");
+      if (old) { greet.replaceChild(node, old); return; }
+      var pill = greet.querySelector(".pill");
+      if (pill) greet.insertBefore(node, pill); else greet.appendChild(node);
+    } catch (e) { }
+  });
   if (info.planLine) greet.appendChild(dom.el(doc, "span", { class: "pill", text: info.planLine }));
   root.appendChild(greet);
 
@@ -397,8 +490,9 @@ function render(root, deps) {
   try { if (items.length) libCount = items.length; } catch (e) { }
   /* the app's tapTotal — presets, wedding, lights, prompt library, every
      kind-less Smart Workflow and the 16 Studio preset cards; 6.10.0 added
-     Lanna Gold Heritage. verify_panel_page_parity holds this to the app. */
-  stat(165, "One-Tap Workflows");
+     Lanna Gold Heritage; 6.11.0 the ten Style Studio cards.
+     verify_panel_page_parity holds this to the app. */
+  stat(175, "One-Tap Workflows");
   stat(libCount, "Visual Library");
   stat(wfCount, "Smart Workflow");
   stat(162, "Retouch A Controls", "meitu");

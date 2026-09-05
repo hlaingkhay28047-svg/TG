@@ -180,7 +180,11 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    reference video as a Smart Workflow), one 960x640 file at the pack's q79
    — the first cut shipped at q82 and this check caught the 8 KB — taking
    the pack to 158 files / 17.83 MB (17.824587 exactly — rounded up, same rule). */
-const PREV_MB = 17.83;
+/* 2026-09-05, v6.11.0 — the ten Style Studio cards land (the RunningHub API_*
+   AI Apps the owner showed, rebuilt over the studio's own engines), ten
+   960x640 files at the pack's q79, taking the pack to 168 files / 18.65 MB
+   (18.641140 exactly — rounded up, same rule). */
+const PREV_MB = 18.65;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });

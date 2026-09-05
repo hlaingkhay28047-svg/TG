@@ -11,6 +11,12 @@ operate on folders selected by the user. The panel does not scan unrelated
 folders automatically. Removing this permission would disable those core
 Photoshop workflows rather than merely narrow an implementation detail.
 
+`https://api.open-meteo.com` (v6.11.0) is the Home card's weather line: one
+keyless request for the current temperature and sky at the coordinates of the
+city named by the device's own IANA time zone — never a geolocation prompt,
+never an address, nothing about the member. The reading is kept thirty
+minutes; offline, the line is simply absent.
+
 Clipboard access supports explicit Copy/Paste actions for prompts, diagnostic
 logs, and image URLs. Remote webviews remain user-initiated and are restricted
 to the domains listed in `manifest.json`. No HNK admin key, service credential,
