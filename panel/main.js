@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.87.0";
+const PANEL_VERSION = "6.89.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -10863,8 +10863,9 @@ function showVidResult() {
       v.src = e.url; v.muted = true; v.preload = "metadata"; v.playsInline = true;
       v.className = i === vidHistSel ? "sel" : "";
       ffPressable(v, function () { vidHistSel = i; showVidResult(); });
-      h.appendChild(v);
+      vidItemP(h, v, i);
     });
+    vidClearSyncP();
   }
   try { box.scrollIntoView({ behavior: "smooth" }); } catch (e) { }
 }
@@ -14711,6 +14712,68 @@ function paintRecentPrompts() {
 
 /* v6.51.0 \u2014 the app's result-card history strip: one 64px thumbnail per
    take, the shown one gold-bordered (`.hist img.sel`), tap = show it. */
+/* v6.20.0 — ✕ per take and Clear on the two result strips, as the web app's
+   (the app's HIST_L strings, so the parity walk reads the same words). The
+   panel's strips are session memory, so the ✕ removes from the strip only. */
+const HIST_L = {
+  clear:  {my:"History ရှင်းမယ်",en:"Clear history",shn:"လၢင်ႉ History",kac:"History shakau u",th:"ล้างประวัติ",zh:"清空历史",vi:"Xoá lịch sử",id:"Bersihkan riwayat",ms:"Bersihkan sejarah"},
+  cleared:{my:"History ရှင်းပြီးပါပြီ",en:"History cleared",shn:"လၢင်ႉ History ယဝ်ႉ",kac:"History shakau sai",th:"ล้าง History แล้ว",zh:"已清空 History",vi:"Đã xoá History",id:"History dibersihkan",ms:"History dibersihkan"},
+  del:    {my:"ဒီရလဒ်ကို ဖျက်",en:"Delete this result",shn:"မွတ်ႇဢၼ်ၼႆႉ",kac:"Ndai hpe shamat",th:"ลบผลลัพธ์นี้",zh:"删除此结果",vi:"Xoá kết quả này",id:"Hapus hasil ini",ms:"Padam hasil ini"},
+  done:   {my:"History က ဖယ်ပြီးပါပြီ",en:"Removed from History",shn:"ဢဝ်ဢွၵ်ႇ History ယဝ်ႉ",kac:"History kaw na shamat sai",th:"ลบออกจากประวัติแล้ว",zh:"已从历史中移除",vi:"Đã gỡ khỏi Lịch sử",id:"Dihapus dari Riwayat",ms:"Dibuang daripada Sejarah"}
+};
+function histXBtn(onRemove) {
+  /* a div, never a <button>: the panel owns every control (verify_panel_gate Q) */
+  const x = document.createElement("div"); x.className = "hx"; x.textContent = "✕";
+  x.setAttribute("aria-label", ff9(HIST_L.del));
+  ffPressable(x, function (ev) { if (ev && ev.preventDefault) ev.preventDefault(); onRemove(); });
+  return x;
+}
+function histItemP(host, im, idx) {
+  const d = document.createElement("div"); d.className = "hitem"; d.appendChild(im);
+  d.appendChild(histXBtn(function () { histRemoveP(idx); })); host.appendChild(d);
+}
+function histRemoveP(idx) {
+  if (!state.history[idx]) return;
+  state.history.splice(idx, 1);
+  if (!state.history.length) { histClearP(false); setStatus(ff9(HIST_L.done), "ok"); return; }
+  let s = state.histSel; if (s > idx) s--; if (s >= state.history.length) s = state.history.length - 1; if (s < 0) s = 0;
+  selectHistory(s); setStatus(ff9(HIST_L.done), "ok");
+}
+function histClearP(say) {
+  state.history = []; state.histSel = -1; state.resultB64 = null; state.resultMime = null;
+  const rb = $("resultBox"); if (rb) rb.className = rb.className.replace(/ ?\bon\b/, "");
+  try { refreshCompare(); } catch (e) { }
+  renderHistory();
+  if (say !== false) setStatus(ff9(HIST_L.cleared), "ok");
+}
+function histClearSyncP() {
+  const b = $("histClear"); if (!b) return;
+  b.style.display = state.history.length ? "" : "none"; b.textContent = ff9(HIST_L.clear);
+  b.onclick = function () { histClearP(true); };
+}
+function vidItemP(h, v, i) {
+  const d = document.createElement("div"); d.className = "hitem"; d.appendChild(v);
+  d.appendChild(histXBtn(function () { vidRemoveP(i); })); h.appendChild(d);
+}
+function vidRemoveP(i) {
+  if (!vidHist[i]) return;
+  vidHist.splice(i, 1);
+  if (!vidHist.length) { vidClearP(false); setStatus(ff9(HIST_L.done), "ok"); return; }
+  if (vidHistSel > i) vidHistSel--; if (vidHistSel >= vidHist.length) vidHistSel = vidHist.length - 1;
+  showVidResult(); setStatus(ff9(HIST_L.done), "ok");
+}
+function vidClearP(say) {
+  vidHist = []; vidHistSel = 0;
+  const h = $("vidHist"); if (h) while (h.firstChild) h.removeChild(h.firstChild);
+  const box = $("vidResultBox"); if (box) box.className = "card result-box";
+  vidClearSyncP();
+  if (say !== false) setStatus(ff9(HIST_L.cleared), "ok");
+}
+function vidClearSyncP() {
+  const b = $("vidHistClear"); if (!b) return;
+  b.style.display = vidHist.length ? "" : "none"; b.textContent = ff9(HIST_L.clear);
+  b.onclick = function () { vidClearP(true); };
+}
 function renderHistory() {
   const host = $("hist");
   if (!host) return;
@@ -14724,9 +14787,10 @@ function renderHistory() {
       im.alt = "result " + (idx + 1);
       im.className = state.histSel === idx ? "sel" : "";
       im.addEventListener("click", function () { selectHistory(idx); });
-      host.appendChild(im);
+      histItemP(host, im, idx);
     })(i);
   }
+  histClearSyncP();
 }
 
 function selectHistory(idx) {

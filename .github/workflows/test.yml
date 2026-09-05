@@ -493,6 +493,10 @@ jobs:
         run: node test/verify_couple_compose.js
       - name: Prompt history delete — a ✕ on every row, a starred preset asks first, one Clear drops the unstarred and keeps the presets, the box hides when the last prompt goes
         run: PORT=8931 node test/verify_prompt_history_delete.js
+      - name: Outfit & Scene — four workflows dress IMAGE 3 from IMAGE 1, set it into IMAGE 2's place and light and keep its pose and frame; the wizard's outfit board lays 2–4 photos into one picture; the same records on the panel
+        run: PORT=8931 node test/verify_outfit_scene.js
+      - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
+        run: PORT=8931 node test/verify_result_history_delete.js
 
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker

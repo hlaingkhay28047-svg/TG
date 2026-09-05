@@ -17,7 +17,7 @@
  *     reference's people or background bleeding in, and flowers landing on the
  *     person instead of the floor;
  *   - nine-language summary; a 960x640 card picture; the landing and the app's
- *     own share text count it (189 / 196); the panel's lifted catalog carries it;
+ *     own share text count it (193 / 200); the panel's lifted catalog carries it;
  *   - What's New leads with it.
  *
  * Usage: node test/verify_flower_path_copy.js   (no browser, no server) */
@@ -101,10 +101,10 @@ const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
 const items = [].concat.apply([], cat.categories.map(c => c.items));
 const total = items.length;
 report("E) the app's share text and the landing count the new workflow — Smart Workflow " + total + " — and the landing carries no stale 188",
-  total === 189 && APP.indexOf("Smart Workflow 189") >= 0 && APP.indexOf("Smart Workflow 188") < 0 &&
-  (LANDING.match(/Smart Workflow 189/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 188") < 0 &&
-  /data-count="wf">189</.test(LANDING) && /data-count="tap">196</.test(LANDING) && APP.indexOf("One-Tap 196") >= 0 && APP.indexOf("One-Tap 195") < 0,
-  { total, app189: APP.indexOf("Smart Workflow 189") >= 0, landing189: (LANDING.match(/Smart Workflow 189/g) || []).length });
+  total === 193 && APP.indexOf("Smart Workflow 193") >= 0 && APP.indexOf("Smart Workflow 188") < 0 &&
+  (LANDING.match(/Smart Workflow 193/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 188") < 0 &&
+  /data-count="wf">193</.test(LANDING) && /data-count="tap">200</.test(LANDING) && APP.indexOf("One-Tap 200") >= 0 && APP.indexOf("One-Tap 195") < 0,
+  { total, app189: APP.indexOf("Smart Workflow 193") >= 0, landing189: (LANDING.match(/Smart Workflow 193/g) || []).length });
 
 /* ---- F) the panel carries it ---- */
 const pit = items.find(i => i.id === ID);

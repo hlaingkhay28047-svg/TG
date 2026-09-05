@@ -1681,6 +1681,10 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .hist { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
 .apg .hist img { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); }
 .apg .hist img.sel { border-color: var(--accent); }
+/* v6.20.0 — every take carries its own ✕, as in the web app */
+.apg .hist .hitem { position: relative; display: inline-block; line-height: 0; }
+.apg .hist .hx { position: absolute; top: -6px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--panel, #0f1424); border: 1px solid var(--line-soft); color: inherit; font-size: 11px; line-height: 18px; text-align: center; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.apg .hist .hx:hover { border-color: var(--accent); }
 /* app .hist video: the Video page's 64px recent-result tiles, black plate */
 .apg .hist video { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); background-color: #000; }
 .apg .hist video.sel { border-color: var(--accent); }
