@@ -64,18 +64,21 @@ check("B3) every revision is an integer above 1 — a first version needs no tok
   Object.values(REV).every(v => Number.isInteger(v) && v >= 2),
   JSON.stringify(REV));
 
-/* C — the helper itself */
+/* C — the helper itself. The expected token is READ from the map: a card that
+   is re-arted again (6.10.0 took the video cards to 3) must not fail the
+   helper's own check for carrying the number the rule demands. */
+const RV = REV["lib/vid/vt-anime.jpg"];
 check("C) a replaced file gets its token, and an untouched one is left alone",
-  libArt("lib/vid/vt-anime.jpg") === "lib/vid/vt-anime.jpg?v=2" &&
+  libArt("lib/vid/vt-anime.jpg") === "lib/vid/vt-anime.jpg?v=" + RV &&
   libArt("lib/vid/never-replaced.jpg") === "lib/vid/never-replaced.jpg",
   `${libArt("lib/vid/vt-anime.jpg")} | ${libArt("lib/vid/never-replaced.jpg")}`);
 
 check("C2) a path that already carries a query keeps it",
-  libArt("lib/vid/vt-anime.jpg?x=1") === "lib/vid/vt-anime.jpg?x=1&v=2",
+  libArt("lib/vid/vt-anime.jpg?x=1") === "lib/vid/vt-anime.jpg?x=1&v=" + RV,
   libArt("lib/vid/vt-anime.jpg?x=1"));
 
 check("C3) a leading ./ does not hide a file from the map",
-  libArt("./lib/vid/vt-anime.jpg") === "./lib/vid/vt-anime.jpg?v=2",
+  libArt("./lib/vid/vt-anime.jpg") === "./lib/vid/vt-anime.jpg?v=" + RV,
   libArt("./lib/vid/vt-anime.jpg"));
 
 /* D — the token reaches the picture, on both surfaces */
