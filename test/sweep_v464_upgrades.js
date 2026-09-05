@@ -176,7 +176,11 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
 /* 2026-09-03, v5.91.0 — the thirteen Look Set cards land, +0.95 MB at the
    pack's own 960x640 / q79 (check B still measures that geometry on every
    file, so the budget cannot be met by shipping smaller pictures). */
-const PREV_MB = 17.75;
+/* 2026-09-05, v6.10.0 — the Lanna Gold Heritage card lands (the owner's
+   reference video as a Smart Workflow), one 960x640 file at the pack's q79
+   — the first cut shipped at q82 and this check caught the 8 KB — taking
+   the pack to 158 files / 17.83 MB (17.824587 exactly — rounded up, same rule). */
+const PREV_MB = 17.83;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });
