@@ -452,6 +452,11 @@ select.inp{padding:9px 10px}
 .hist img.sel{border-color:var(--gold)}
 .hist video{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line-soft);cursor:pointer;background:#000}
 .hist video.sel{border-color:var(--gold)}
+/* v6.20.0 — every take carries its own ✕ */
+.hist .hitem{position:relative;display:inline-block;line-height:0}
+.hist .hx{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--panel);border:1px solid var(--line-soft);color:inherit;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;line-height:0}
+.hist .hx svg{width:11px;height:11px}
+.hist .hx:hover,.hist .hx:focus-visible{border-color:var(--gold)}
 /* v6.4.0 — the picked clip and the picked face, shown rather than named */
 /* v6.7.3 — WHAT THIS TOOL NEEDS, SAID BEFORE ANYTHING IS PICKED. The V→V
    cards carry a pill ("1 video", "1 video + 1 face photo") and students read
@@ -3253,6 +3258,7 @@ html.splashing #splash{display:flex}
     </div>
     <div class="subh" style="margin-top:12px" id="vidHistH"></div>
     <div class="hist" id="vidHist"></div>
+    <button class="chip" id="vidHistClear" style="display:none"></button>
   </section>
 </div><!-- /pgVideo -->
 
@@ -3299,6 +3305,7 @@ html.splashing #splash{display:flex}
     </div>
     <div class="subh" style="margin-top:12px" id="vuHistH"></div>
     <div class="hist" id="vuHist"></div>
+    <button class="chip" id="vuHistClear" style="display:none"></button>
   </section>
 </div><!-- /pgVideoUp -->
 
@@ -3389,6 +3396,7 @@ html.splashing #splash{display:flex}
          and gone only when the student deletes them. -->
     <p class="mut" id="vtHistH" style="margin-top:12px"></p>
     <div class="hist" id="vtHist"></div>
+    <button class="chip" id="vtHistClear" style="display:none"></button>
   </section>
 </div><!-- /pgV2V -->
 
@@ -3463,6 +3471,7 @@ html.splashing #splash{display:flex}
     </div>
     <h3 id="tkHistH" style="margin-top:14px"></h3>
     <div class="hist" id="tkHist"></div>
+    <button class="chip" id="tkHistClear" style="display:none"></button>
   </section>
 </div>
 
@@ -3698,6 +3707,7 @@ html.splashing #splash{display:flex}
       <button class="btn" id="btnT2IToRef"></button>
     </div>
     <div class="hist" id="t2iHist"></div>
+    <button class="chip" id="t2iHistClear" style="display:none"></button>
   </section>
 </div><!-- /pgText2Img -->
 
@@ -5035,6 +5045,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.20.0", kind:"page", ref:"pgCreate",
+    t:{my:"Results History ၇ ခုလုံး ဖျက်လို့ရပြီ — ရလဒ်တိုင်းမှာ ✕ (Gallery ထဲကပါ ဖျက်)၊ VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE မှာ Clear ခလုတ် ပါလာပြီ",en:"All seven Results Histories can be deleted — a ✕ on every take (removes the Gallery copy too), and a Clear button now on VIDEO, VIDEO UPSCALE, VIDEO→VIDEO, TALK and TEXT→IMAGE",shn:"Results History 7 ဢၼ် မွတ်ႇလႆႈယဝ်ႉ — ✕ တီႈၵူႈဢၼ် (မွတ်ႇၼႂ်း Gallery ၸွမ်း)၊ ပုမ်ႇလၢင်ႉ တီႈ VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE",kac:"Results History 7 yawng shamat lu sai — shara shagu hta ✕ (Gallery na mung shamat), VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE hta Clear button",th:"ลบประวัติผลลัพธ์ได้ทั้ง 7 แถบ — มี ✕ ทุกรายการ (ลบสำเนาใน Gallery ด้วย) และปุ่มล้างใน VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE",zh:"七个结果历史都可以删除了 — 每个结果一个 ✕（连 Gallery 里的副本一起删），VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE 也有了清空按钮",vi:"Cả bảy Lịch sử kết quả đều xoá được — mỗi kết quả một ✕ (xoá luôn bản trong Gallery), và nút Xoá trên VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE",id:"Ketujuh Riwayat hasil kini bisa dihapus — ✕ di setiap hasil (menghapus salinan Gallery juga), dan tombol Bersihkan di VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE",ms:"Ketujuh-tujuh Sejarah hasil kini boleh dipadam — ✕ pada setiap hasil (memadam salinan Gallery juga), dan butang Bersihkan di VIDEO / VIDEO UPSCALE / VIDEO→VIDEO / TALK / TEXT→IMAGE"},
+    s:{my:"အရင်က CREATE နဲ့ RETOUCH မှာပဲ \"History ရှင်းမယ်\" ရှိပြီး ရလဒ်တစ်ခုချင်း ဖျက်လို့ မရဘူး၊ ကျန် ၅ စာမျက်နှာမှာ ဘာမှ မရှိဘူး။ အခု ရလဒ် strip ၇ ခုလုံးမှာ ရလဒ်တိုင်း ✕ ပါတယ် — နှိပ်ရင် တစ်ခါ မေးပြီး History ကလည်း ဖယ်၊ Gallery ထဲက မိတ္တူကိုလည်း ဖျက်တယ် (Gallery ကနေ ပြန်ပေါ်လာမှာ မကြောက်ရ)။ Gallery မိတ္တူ မရှိတဲ့ ရလဒ် (ဥပမာ VIDEO UPSCALE) ဆိုရင် History ကပဲ ဖယ်တယ်။ \"History ရှင်းမယ်\" ခလုတ်ကတော့ အရင်လိုပဲ strip ကိုပဲ ရှင်းတယ် — Gallery ထဲက ရလဒ်တွေ မပျက်ပါ။ Photoshop panel ရဲ့ CREATE နဲ့ VIDEO strip တွေမှာလည်း ✕ နဲ့ Clear ပါလာပြီ",en:"Until now only CREATE and RETOUCH had \"Clear history\", no take could be deleted on its own, and the other five pages had nothing. Every one of the seven result strips now carries a ✕ on each take — one tap asks once, then removes it from the History and deletes its Gallery copy too, so it cannot come back from the Gallery on the next launch. A take with no Gallery copy (VIDEO UPSCALE, for instance) is removed from the History only. \"Clear history\" stays what it was: the strip only, every Gallery copy untouched. The Photoshop panel's CREATE and VIDEO strips gain the same ✕ and Clear",shn:"ၵူႈဢၼ်ၼႂ်း strip 7 ဢၼ် မီး ✕ — ၼဵၵ်းသေ ထၢမ်ၼိုင်ႈပွၵ်ႈ၊ မွတ်ႇတီႈ History လႄႈ Gallery။ ပုမ်ႇလၢင်ႉ လၢင်ႉ strip ၵူၺ်း၊ Gallery ဢမ်ႇလူႉ",kac:"Strip 7 hta shara shagu ✕ nga — dip yang langai lang san, History hte Gallery kaw na shamat. Clear gaw strip sha shakau, Gallery n hten",th:"ก่อนหน้านี้มีแค่ CREATE และ RETOUCH ที่มี \"ล้างประวัติ\" ลบทีละรายการไม่ได้ ส่วนอีก 5 หน้าไม่มีอะไรเลย ตอนนี้ทุกแถบมี ✕ ทุกรายการ — แตะแล้วถามครั้งเดียว ลบออกจากประวัติและลบสำเนาใน Gallery ด้วย รายการที่ไม่มีสำเนาใน Gallery (เช่น VIDEO UPSCALE) ลบออกจากประวัติเท่านั้น ปุ่มล้างยังเหมือนเดิม: ล้างแถบอย่างเดียว Gallery ไม่ถูกแตะ แถบ CREATE และ VIDEO ในพาเนล Photoshop ได้ ✕ และปุ่มล้างเหมือนกัน",zh:"以前只有 CREATE 和 RETOUCH 有“清空历史”，无法单独删除某个结果，其余五页什么也没有。现在七条结果条每个结果都有 ✕ — 点一下先确认一次，然后从历史移除并一起删除 Gallery 里的副本，下次启动不会再从 Gallery 回来。没有 Gallery 副本的结果（如 VIDEO UPSCALE）只从历史移除。“清空历史”保持原样：只清空结果条，Gallery 副本不受影响。Photoshop 面板的 CREATE 与 VIDEO 结果条同样加上了 ✕ 和清空",vi:"Trước đây chỉ CREATE và RETOUCH có \"Xoá lịch sử\", không xoá lẻ được, năm trang còn lại không có gì. Nay cả bảy dải kết quả đều có ✕ trên từng kết quả — một chạm hỏi một lần, rồi gỡ khỏi Lịch sử và xoá luôn bản trong Gallery, nên lần mở sau không quay lại. Kết quả không có bản Gallery (như VIDEO UPSCALE) chỉ gỡ khỏi Lịch sử. \"Xoá lịch sử\" giữ như cũ: chỉ dải, bản Gallery không đổi. Dải CREATE và VIDEO của panel Photoshop cũng có ✕ và Xoá",id:"Sebelumnya hanya CREATE dan RETOUCH punya \"Bersihkan riwayat\", tak ada hasil yang bisa dihapus satuan, dan lima halaman lain kosong. Kini ketujuh strip hasil punya ✕ di setiap hasil — satu ketukan bertanya sekali, lalu menghapusnya dari Riwayat dan salinan Gallery-nya, sehingga tidak kembali saat dibuka lagi. Hasil tanpa salinan Gallery (mis. VIDEO UPSCALE) hanya dihapus dari Riwayat. \"Bersihkan riwayat\" tetap: strip saja, Gallery tak tersentuh. Strip CREATE dan VIDEO di panel Photoshop juga mendapat ✕ dan Bersihkan",ms:"Sebelum ini hanya CREATE dan RETOUCH ada \"Bersihkan sejarah\", tiada hasil boleh dipadam satu-satu, dan lima halaman lain kosong. Kini ketujuh-tujuh jalur hasil ada ✕ pada setiap hasil — satu ketikan bertanya sekali, lalu membuangnya daripada Sejarah dan memadam salinan Gallery, jadi tidak kembali pada pelancaran seterusnya. Hasil tanpa salinan Gallery (cth. VIDEO UPSCALE) dibuang daripada Sejarah sahaja. \"Bersihkan sejarah\" kekal: jalur sahaja, Gallery tidak disentuh. Jalur CREATE dan VIDEO panel Photoshop juga mendapat ✕ dan Bersihkan"} },
   { v:"6.19.0", kind:"wf", ref:"outfit-scene-couple",
     t:{my:"Smart Workflow အသစ် ၄ ခု — Outfit & Scene · Solo / Couple / Family / Group: IMAGE 1 ဝတ်စုံ ဝတ်ပေး၊ IMAGE 2 နေရာ + အလင်းထဲ ထည့်၊ skin/ဆံပင် retouch — ကိုယ့်ပုံ IMAGE 3 ရဲ့ ပိုစ့်၊ ဘောင်၊ composition မူရင်းအတိုင်း",en:"Four new Smart Workflows — Outfit & Scene · Solo / Couple / Family / Group: dressed from IMAGE 1, set into IMAGE 2's place and light, skin and hair retouched — your photograph IMAGE 3 keeps its pose, frame and composition",shn:"Smart Workflow မႂ်ႇ 4 — Outfit & Scene · Solo / Couple / Family / Group: ၼုင်ႈၶူဝ်းႁၢင်ႈ 1၊ သႂ်ႇၼႂ်းပိုၼ်ႉတီႈႁၢင်ႈ 2၊ retouch ၽိဝ်ၼင် — ႁၢင်ႈ 3 ႁၢင်ႈၸုၵ်း ဢမ်ႇလႅၵ်ႈ",kac:"Smart Workflow nnan 4 — Outfit & Scene · Solo / Couple / Family / Group: sumla 1 na palawng bu, sumla 2 na shara hta bang, hpyi retouch — sumla 3 na pose n galai",th:"Smart Workflow ใหม่ 4 แบบ — Outfit & Scene · Solo / Couple / Family / Group: ใส่ชุดจาก IMAGE 1 วางในฉากและแสงของ IMAGE 2 รีทัชผิวและผม — ภาพ IMAGE 3 คงท่า กรอบ และองค์ประกอบ",zh:"四个新 Smart Workflow — Outfit & Scene · Solo / Couple / Family / Group：穿上 IMAGE 1 的服装，置入 IMAGE 2 的场景与光线，修饰皮肤与头发 — 你的照片 IMAGE 3 保持姿势、画框与构图",vi:"Bốn Smart Workflow mới — Outfit & Scene · Solo / Couple / Family / Group: mặc trang phục IMAGE 1, đặt vào bối cảnh và ánh sáng IMAGE 2, retouch da và tóc — ảnh IMAGE 3 giữ dáng, khung và bố cục",id:"Empat Smart Workflow baru — Outfit & Scene · Solo / Couple / Family / Group: berbusana dari IMAGE 1, di latar dan cahaya IMAGE 2, retouch kulit dan rambut — foto IMAGE 3 tetap pose, bingkai dan komposisinya",ms:"Empat Smart Workflow baharu — Outfit & Scene · Solo / Couple / Family / Group: berpakaian dari IMAGE 1, dalam latar dan cahaya IMAGE 2, retouch kulit dan rambut — foto IMAGE 3 kekal gaya, bingkai dan komposisi"},
     s:{my:"ဦးလေးရဲ့ ပုံစံအတိုင်း — ဝတ်စုံပုံ၊ နေရာပုံ၊ ကိုယ့်ပုံ ၃ ပုံ။ IMAGE 1 က ဝတ်စုံ (Couple မှာ ဘယ်ဘက် မိန်းကလေး၊ ညာဘက် ယောက်ျားလေး — wizard ထဲ “ပုံ ၂ ပုံ ပေါင်း” နှိပ်ပြီး ပုံ ၂ ပုံ ရွေးရင် app က board တစ်ခုတည်း ပေါင်းပေးတယ်၊ Family/Group မှာ ၂–၄ ပုံ)၊ IMAGE 2 က နေရာ (ထဲမှာ လူပါရင် ဖျောက်ပြီး နောက်ခံနဲ့ scene အလင်းကိုပဲ ယူ)၊ IMAGE 3 က ကိုယ့်ပုံ — ပြင်တဲ့ ပုံ တစ်ပုံတည်း။ ဝတ်စုံကို ရပ်နေတဲ့ ပိုစ့်အတိုင်း ချုပ်ပေး၊ နေရာအသစ်ရဲ့ အလင်း/အရိပ်/perspective အတိုင်း ညှိ၊ အသားအရေ smooth + ကြွ (pores ကျန်၊ plastic မဖြစ်)၊ ဆံပင် smooth retouch — မျက်နှာ၊ ပိုစ့်၊ လက်၊ ဘောင် ratio၊ composition ဘာမှ မပြောင်း။ Background & Scene အမျိုးအစားထဲ ကတ် ၄ ကတ်",en:"To the owner's brief — three pictures: the outfit, the place, your photograph. IMAGE 1 is the outfit (for Couple, hers on the LEFT and his on the RIGHT — tap “Combine 2 photos” in the wizard, pick two photos, and the app lays them out as one board; Family and Group take two to four), IMAGE 2 is the place (any person in it is removed; only its background and scene light are taken), IMAGE 3 is your photograph — the only picture that is edited. The clothes are tailored to the pose as it stands, light, shadow and perspective are matched to the new place, skin is smoothed with a natural glow (pores kept, never plastic), hair retouched smooth — and faces, poses, hands, frame ratio and composition do not move. Four cards in Background & Scene",shn:"ႁၢင်ႈ 3 ဢၼ် — ၶူဝ်း၊ ပိုၼ်ႉတီႈ၊ ႁၢင်ႈတူဝ်ၵဝ်ႇ။ ၶူဝ်းၸွမ်းႁၢင်ႈ 1၊ ပိုၼ်ႉတီႈလႄႈလႅင်းၸွမ်းႁၢင်ႈ 2 (ၵူၼ်းၼႂ်းၼၼ်ႉ မွတ်ႇပႅတ်ႈ)၊ ႁၢင်ႈ 3 ၵူၺ်း မႄး — ၼႃႈ၊ ႁၢင်ႈၸုၵ်း၊ ၶွပ်ႇ ဢမ်ႇလႅၵ်ႈ။ ၵၢတ်ႈ 4 ၼႂ်း Background & Scene",kac:"Sumla 3 — palawng, shara, nang a sumla. Sumla 1 na palawng bu, sumla 2 na shara hte nhtoi la (masha nga yang shamat), sumla 3 sha galai — myi man, pose, frame n galai. Background & Scene hta card 4",th:"ตามโจทย์เจ้าของ — สามภาพ: ชุด สถานที่ และภาพของคุณ IMAGE 1 คือชุด (แบบคู่: ฝ่ายหญิงซ้าย ฝ่ายชายขวา — แตะ “รวม 2 ภาพ” ในวิซาร์ด แอปจะจัดเป็นบอร์ดเดียว ครอบครัว/กลุ่มใช้ 2–4 ภาพ) IMAGE 2 คือสถานที่ (ลบคนออก ใช้เฉพาะฉากหลังและแสง) IMAGE 3 คือภาพของคุณ — ภาพเดียวที่ถูกแก้ เสื้อผ้าตัดให้เข้ากับท่า แสง เงา และมุมมองปรับตามสถานที่ใหม่ ผิวเนียนเป็นธรรมชาติ ผมรีทัชเรียบ — หน้า ท่า มือ สัดส่วนกรอบ และองค์ประกอบไม่เปลี่ยน สี่การ์ดใน Background & Scene",zh:"按店主的要求 — 三张图：服装、场景、你的照片。IMAGE 1 是服装（情侣版：女装在左、男装在右 — 在向导中点“合并 2 张照片”，应用自动排成一块服装板；家庭/团体可放 2–4 张），IMAGE 2 是场景（其中的人会被移除，只取背景与场景光线），IMAGE 3 是你的照片 — 唯一被编辑的图。服装按原有姿势重新裁剪，光影与透视按新场景匹配，皮肤自然平滑有光泽（保留毛孔，不塑料），头发修饰顺滑 — 脸、姿势、手、画框比例与构图完全不动。Background & Scene 分类里的四张卡",vi:"Theo yêu cầu của chủ studio — ba ảnh: trang phục, địa điểm, ảnh của bạn. IMAGE 1 là trang phục (bản Couple: của cô bên TRÁI, của anh bên PHẢI — chạm “Ghép 2 ảnh” trong wizard, ứng dụng xếp thành một bảng; Family/Group nhận 2–4 ảnh), IMAGE 2 là địa điểm (người trong đó bị xoá, chỉ lấy nền và ánh sáng), IMAGE 3 là ảnh của bạn — ảnh duy nhất được chỉnh. Quần áo được may theo đúng dáng đứng, ánh sáng, bóng và phối cảnh khớp với địa điểm mới, da mịn tự nhiên (giữ lỗ chân lông, không nhựa), tóc retouch mượt — mặt, dáng, tay, tỷ lệ khung và bố cục không đổi. Bốn thẻ trong Background & Scene",id:"Sesuai permintaan pemilik — tiga gambar: busana, tempat, foto Anda. IMAGE 1 busana (versi Couple: miliknya di KIRI, milik pria di KANAN — ketuk “Gabungkan 2 foto” di wizard, aplikasi menyusunnya jadi satu papan; Family/Group menerima 2–4 foto), IMAGE 2 tempat (orang di dalamnya dihapus, hanya latar dan cahaya yang diambil), IMAGE 3 foto Anda — satu-satunya yang diedit. Pakaian dijahit mengikuti pose, cahaya, bayangan dan perspektif dicocokkan ke tempat baru, kulit halus alami (pori tetap, tak plastik), rambut retouch halus — wajah, pose, tangan, rasio bingkai dan komposisi tidak berubah. Empat kartu di Background & Scene",ms:"Mengikut permintaan pemilik — tiga gambar: pakaian, tempat, foto anda. IMAGE 1 pakaian (versi Couple: miliknya di KIRI, milik lelaki di KANAN — ketik “Gabung 2 foto” dalam wizard, aplikasi menyusunnya jadi satu papan; Family/Group menerima 2–4 foto), IMAGE 2 tempat (orang di dalamnya dipadam, hanya latar dan cahaya diambil), IMAGE 3 foto anda — satu-satunya yang disunting. Pakaian dijahit mengikut gaya, cahaya, bayang dan perspektif dipadankan dengan tempat baharu, kulit licin semula jadi (liang tetap, tidak plastik), rambut retouch licin — wajah, gaya, tangan, nisbah bingkai dan komposisi tidak berubah. Empat kad dalam Background & Scene"} },
@@ -5931,7 +5944,7 @@ function galleryAdd(out, promptSnippet, meta){
       kind:"image", page:page, before:before||null });
     rq.onerror=fail;
     tx.onabort=fail; tx.onerror=fail;
-    tx.oncomplete=function(){ if(!failed) resolve(true); };
+    tx.oncomplete=function(){ if(!failed){ if(out && rq.result) out._id=rq.result; resolve(true); } };   /* v6.20.0 — the key rides back on the take */
     /* nothing is dropped here — see the note in the count handler below. */
     /* v5.86.0 — KEPT UNTIL THE STUDIO DELETES IT (owner instruction).
        This used to drop the oldest unstarred takes once the count passed 60.
@@ -6025,6 +6038,68 @@ function histClearSync(id){
   var b=$(id); if(!b) return;
   b.style.display=state.hist.length?"":"none";
   setIcnText(b,"i-trash",L9({my:"History ရှင်းမယ်",en:"Clear history",shn:"လၢင်ႉ History",kac:"History shakau u",th:"ล้างประวัติ",zh:"清空历史",vi:"Xoá lịch sử",id:"Bersihkan riwayat",ms:"Kosongkan sejarah"}));
+}
+/* v6.20.0 — owner: "မပါတဲ့ဟာတွေပါအောင် ထည့်ပေးပါ ပြီးပြည့်စုံအောင်" — every result strip
+   gets a ✕ on each take and a Clear. The ✕ asks once and removes the take
+   from the strip AND its Gallery record when the take carries one (fresh
+   takes do from this release; restored ones always did) — otherwise a take
+   removed from the strip would simply come back from the Gallery on the
+   next launch. Clear stays what CREATE's has been since v5.62.0: the strip
+   only, every Gallery copy untouched, and the toast says so. */
+var HIST_STRIPS={
+  hist:   { list:"hist",    sel:"histSel",    idKey:"_id", box:["resultBox","rsResultBox"], clear:["histClear","rsHistClear"], hosts:["hist","rsHist"],
+            show:function(){ if(curPage==="pgRetouch" && typeof rsShowResult==="function") rsShowResult(); else if(typeof showResult==="function") showResult(); },
+            empty:function(){ state.result=null; state.histSel=0; } },
+  vidHist:{ list:"vidHist", sel:"vidHistSel", idKey:"id",  box:["vidResultBox"], clear:["vidHistClear"], hosts:["vidHist"], show:function(){ showVidResult(false); }, empty:function(){ state.vidHistSel=-1; } },
+  vuHist: { list:"vuHist",  sel:"vuHistSel",  idKey:null,  box:["vuResultBox"],  clear:["vuHistClear"],  hosts:["vuHist"],  show:function(){ showVuResult(); },       empty:function(){ state.vuHistSel=-1; } },
+  vtHist: { list:"vtHist",  sel:"vtHistSel",  idKey:"id",  box:["vtResultBox"],  clear:["vtHistClear"],  hosts:["vtHist"],  show:function(){ showVtResult(false); },  empty:function(){ state.vtHistSel=-1; } },
+  tkHist: { list:"tkHist",  sel:"tkHistSel",  idKey:"id",  box:["tkResultBox"],  clear:["tkHistClear"],  hosts:["tkHist"],  show:function(){ showTkResult(false); },  empty:function(){ state.tkHistSel=-1; } },
+  t2iHist:{ list:"t2iHist", sel:"t2iHistSel", idKey:"_id", box:["t2iResultBox"], clear:["t2iHistClear"], hosts:["t2iHist"], show:function(){ showT2IResult(); },      empty:function(){ state.t2iHistSel=-1; } }
+};
+var HIST_L={
+  clear:  {my:"History ရှင်းမယ်",en:"Clear history",shn:"လၢင်ႉ History",kac:"History shakau u",th:"ล้างประวัติ",zh:"清空历史",vi:"Xoá lịch sử",id:"Bersihkan riwayat",ms:"Bersihkan sejarah"},
+  cleared:{my:"History ရှင်းပြီးပါပြီ — Gallery ထဲက ရလဒ်တွေ မပျက်ပါဘူး",en:"History cleared — your Gallery copies are untouched",shn:"လၢင်ႉ History ယဝ်ႉ — ၼႂ်း Gallery ဢမ်ႇလူႉ",kac:"History shakau sai — Gallery na n hten ai",th:"ล้าง History แล้ว — สำเนาใน Gallery ยังอยู่ครบ",zh:"已清空 History — Gallery 里的副本不受影响",vi:"Đã xoá History — bản trong Gallery vẫn còn",id:"History dibersihkan — salinan di Gallery tetap ada",ms:"History dibersihkan — salinan di Gallery kekal"},
+  del:    {my:"ဒီရလဒ်ကို ဖျက်",en:"Delete this result",shn:"မွတ်ႇဢၼ်ၼႆႉ",kac:"Ndai hpe shamat",th:"ลบผลลัพธ์นี้",zh:"删除此结果",vi:"Xoá kết quả này",id:"Hapus hasil ini",ms:"Padam hasil ini"},
+  askGal: {my:"ဒီရလဒ်ကို History နဲ့ Gallery နှစ်ခုလုံးက ဖျက်မလား?",en:"Delete this result from History and from the Gallery?",shn:"မွတ်ႇဢၼ်ၼႆႉ တီႈ History လႄႈ Gallery ႁိုဝ်?",kac:"Ndai hpe History hte Gallery kaw na shamat na i?",th:"ลบผลลัพธ์นี้ออกจากประวัติและ Gallery หรือไม่?",zh:"从历史和 Gallery 中删除此结果？",vi:"Xoá kết quả này khỏi Lịch sử và Gallery?",id:"Hapus hasil ini dari Riwayat dan Gallery?",ms:"Padam hasil ini daripada Sejarah dan Gallery?"},
+  ask:    {my:"ဒီရလဒ်ကို History က ဖယ်မလား?",en:"Remove this result from History?",shn:"ဢဝ်ဢၼ်ၼႆႉ ဢွၵ်ႇ History ႁိုဝ်?",kac:"Ndai hpe History kaw na shamat na i?",th:"ลบผลลัพธ์นี้ออกจากประวัติหรือไม่?",zh:"从历史中移除此结果？",vi:"Gỡ kết quả này khỏi Lịch sử?",id:"Hapus hasil ini dari Riwayat?",ms:"Buang hasil ini daripada Sejarah?"},
+  doneGal:{my:"ဖျက်ပြီးပါပြီ — Gallery ထဲကလည်း ပျက်ပါပြီ",en:"Deleted — from the Gallery too",shn:"မွတ်ႇယဝ်ႉ — ၼႂ်း Gallery ၸွမ်း",kac:"Shamat sai — Gallery kaw na mung",th:"ลบแล้ว — รวมถึงใน Gallery",zh:"已删除 — Gallery 里的也删了",vi:"Đã xoá — cả trong Gallery",id:"Dihapus — dari Gallery juga",ms:"Dipadam — daripada Gallery juga"},
+  done:   {my:"History က ဖယ်ပြီးပါပြီ",en:"Removed from History",shn:"ဢဝ်ဢွၵ်ႇ History ယဝ်ႉ",kac:"History kaw na shamat sai",th:"ลบออกจากประวัติแล้ว",zh:"已从历史中移除",vi:"Đã gỡ khỏi Lịch sử",id:"Dihapus dari Riwayat",ms:"Dibuang daripada Sejarah"}
+};
+function histStripEmpty(key){
+  var c=HIST_STRIPS[key]; state[c.list]=[]; c.empty();
+  c.hosts.forEach(function(id){ var h=$(id); if(h) h.innerHTML=""; });
+  c.clear.forEach(function(id){ var b=$(id); if(b) b.style.display="none"; });
+  c.box.forEach(function(id){ var b=$(id); if(b) b.className=b.className.replace(/ ?\bon\b/,""); });
+}
+function histStripClear(key){ histStripEmpty(key); toast(L9(HIST_L.cleared),"ok"); }
+function histStripClearSync(key){
+  var c=HIST_STRIPS[key], n=(state[c.list]||[]).length;
+  c.clear.forEach(function(id){
+    var b=$(id); if(!b) return;
+    b.style.display=n?"":"none"; setIcnText(b,"i-trash",L9(HIST_L.clear));
+    b.onclick=function(){ histStripClear(key); };
+  });
+}
+function histRemove(key, i){
+  var c=HIST_STRIPS[key], list=state[c.list]||[], it=list[i]; if(!it) return;
+  var gid=c.idKey ? it[c.idKey] : null;
+  if(!confirm(L9(gid ? HIST_L.askGal : HIST_L.ask))) return;
+  list.splice(i,1);
+  if(gid && typeof galleryDel==="function") galleryDel(gid, function(){ if(curPage==="pgGallery" && typeof renderGallery==="function") renderGallery(); });
+  if(!list.length){ histStripEmpty(key); }
+  else{
+    var sel=state[c.sel]; if(typeof sel!=="number"||sel<0) sel=0;
+    if(sel>i) sel--; if(sel>=list.length) sel=list.length-1;
+    state[c.sel]=sel; if(key==="hist") state.result=list[sel];
+    c.show();
+  }
+  toast(L9(gid ? HIST_L.doneGal : HIST_L.done),"ok");
+}
+function histItem(host, media, key, i){
+  var d=el("div","hitem"); d.appendChild(media);
+  var x=el("button","hx"); x.type="button"; x.innerHTML=icn("i-close"); x.setAttribute("aria-label",L9(HIST_L.del));
+  x.onclick=function(ev){ ev.stopPropagation(); ev.preventDefault(); histRemove(key,i); };
+  d.appendChild(x); host.appendChild(d);
 }
 if($("histClear")) $("histClear").onclick=histClearAll;
 if($("rsHistClear")) $("rsHistClear").onclick=histClearAll;
@@ -12399,7 +12474,7 @@ function rsShowResult(){
     im.alt="result "+(i+1);
     im.className=i===state.histSel?"sel":"";
     makePickable(im, function(){ state.histSel=i; rsShowResult(); });
-    h.appendChild(im);
+    histItem(h, im, "hist", i);
   });
   histClearSync("rsHistClear");
   $("rsResultBox").scrollIntoView({behavior:"smooth"});
@@ -25360,7 +25435,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.19.0";
+var APP_VER="6.20.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26271,7 +26346,7 @@ function showResult(){
     im.alt="result "+(i+1);
     im.className=i===state.histSel?"sel":"";
     makePickable(im, function(){ state.histSel=i; showResult(); });
-    h.appendChild(im);
+    histItem(h, im, "hist", i);
   });
   histClearSync("histClear");
   if($("cmpWrap").style.display!=="none") refreshCmp();
@@ -27167,8 +27242,9 @@ function showVidResult(scroll){
     v.src=vidPlayUrl(e); v.muted=true; v.preload="metadata"; v.playsInline=true;
     v.className=i===state.vidHistSel?"sel":"";
     makePickable(v, function(){ state.vidHistSel=i; showVidResult(true); });
-    h.appendChild(v);
+    histItem(h, v, "vidHist", i);
   });
+  histStripClearSync("vidHist");
   if(scroll!==false) $("vidResultBox").scrollIntoView({behavior:"smooth"});
 }
 
@@ -27324,8 +27400,9 @@ function showVuResult(){
     v.src=e.url; v.muted=true; v.preload="metadata"; v.playsInline=true;
     v.className=i===state.vuHistSel?"sel":"";
     makePickable(v, function(){ state.vuHistSel=i; showVuResult(); });
-    h.appendChild(v);
+    histItem(h, v, "vuHist", i);
   });
+  histStripClearSync("vuHist");
   $("vuResultBox").scrollIntoView({behavior:"smooth"});
 }
 
@@ -28042,8 +28119,9 @@ function showVtResult(scroll){
     v.src=vidPlayUrl(e); v.muted=true; v.preload="metadata"; v.playsInline=true;
     v.className=i===state.vtHistSel?"sel":"";
     makePickable(v, function(){ state.vtHistSel=i; showVtResult(true); });
-    h.appendChild(v);
+    histItem(h, v, "vtHist", i);
   });
+  histStripClearSync("vtHist");
   if(scroll!==false) $("vtResultBox").scrollIntoView({behavior:"smooth"});
 }
 $("btnVtDl").onclick=async function(){
@@ -28508,8 +28586,9 @@ function showTkResult(scroll){
     v.src=vidPlayUrl(e); v.muted=true; v.preload="metadata"; v.playsInline=true;
     v.className=i===state.tkHistSel?"sel":"";
     makePickable(v, function(){ state.tkHistSel=i; showTkResult(true); });
-    h.appendChild(v);
+    histItem(h, v, "tkHist", i);
   });
+  histStripClearSync("tkHist");
   if(scroll!==false) $("tkResultBox").scrollIntoView({behavior:"smooth"});
 }
 $("btnTkDl").onclick=async function(){
@@ -28644,8 +28723,9 @@ function showT2IResult(){
     im.alt="result "+(i+1);
     im.className=i===state.t2iHistSel?"sel":"";
     makePickable(im, function(){ state.t2iHistSel=i; showT2IResult(); });
-    h.appendChild(im);
+    histItem(h, im, "t2iHist", i);
   });
+  histStripClearSync("t2iHist");
   $("t2iResultBox").scrollIntoView({behavior:"smooth"});
 }
 
