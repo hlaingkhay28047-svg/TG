@@ -167,7 +167,21 @@ var VT_WF = [
 ];
 var VT_CLIP_WARN = L9({my:"⚠ ဒီ ဗီဒီယိုက {S} စက္ကန့် ရှိတယ် — ဒီကတ်ရဲ့ tool က {M} စက္ကန့်ထက် ပိုတာ လက်မခံဘူး။ ဖြတ်ပြီး ပြန်တင်ပါ။",en:"⚠ This clip is {S}s — the tool this card picks takes at most {M}s. Trim it and upload again.",shn:"⚠ ဝီဒီရူဝ်ႈၼႆႉ {S} ၸဵၵ်ႇ — tool ၼႆႉႁပ်ႉလႆႈ {M} ၸဵၵ်ႇၵူၺ်း",kac:"⚠ Ndai video gaw {S}s re — ndai tool gaw {M}s sha hkam la ai",th:"⚠ คลิปนี้ยาว {S} วินาที — เครื่องมือของการ์ดนี้รับได้สูงสุด {M} วินาที ตัดแล้วอัปโหลดใหม่",zh:"⚠ 这段视频 {S} 秒 — 此卡片使用的工具最多接受 {M} 秒，请剪短后重新上传",vi:"⚠ Clip này dài {S}s — công cụ của thẻ này chỉ nhận tối đa {M}s. Hãy cắt ngắn rồi tải lên lại",id:"⚠ Klip ini {S} detik — alat kartu ini menerima maksimal {M} detik. Potong lalu unggah lagi",ms:"⚠ Klip ini {S} saat — alat kad ini menerima maksimum {M} saat. Potong dan muat naik semula"});
 
-var API = { WF: VT_WF, KEEP: VT_KEEP, FINISH: VT_FINISH, CLIP_WARN: VT_CLIP_WARN, tr: tr,
+/* v6.7.4 — a picture replaced under its own name gets a NEW URL, so no cache
+   anywhere can serve the old bytes for it. Lifted with the deck because the
+   deck is what names the files. */
+var LIB_ART_REV = {
+  "lib/vid/vt-charSwap.jpg": 2, "lib/vid/vt-faceSwap.jpg": 2, "lib/vid/vt-anime.jpg": 2,
+  "lib/vid/vt-filmlook.jpg": 2, "lib/vid/vt-heritage.jpg": 2, "lib/vid/vt-extend.jpg": 2,
+  "lib/vid/vt-restore.jpg": 2, "lib/vid/vt-erasesub.jpg": 2, "lib/vid/vt-char30.jpg": 2,
+  "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2
+};
+function libArt(p){
+  var k=String(p||"").replace(/^\.?\//, "").split("?")[0];
+  var r=LIB_ART_REV[k];
+  return r ? (p + (p.indexOf("?")>=0 ? "&" : "?") + "v=" + r) : p;
+}
+var API = { WF: VT_WF, KEEP: VT_KEEP, FINISH: VT_FINISH, CLIP_WARN: VT_CLIP_WARN, tr: tr, libArt: libArt,
   byKey: function (k) { for (var i = 0; i < VT_WF.length; i++) if (VT_WF[i].key === k) return VT_WF[i]; return null; } };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;

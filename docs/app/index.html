@@ -13446,7 +13446,7 @@ function ptRenderSrc(){
   sel.style.display = wf ? "" : "none";
   if(wf){
     var art=$("ptWfSelArt");
-    if(wf.cardImg){ art.src=wf.cardImg; art.style.display=""; }
+    if(wf.cardImg){ art.src=libArt(wf.cardImg); art.style.display=""; }
     else { art.removeAttribute("src"); art.style.display="none"; }
     $("ptWfSelTitle").textContent=wf.title;
     $("ptWfSelSum").textContent=wf.summary||"";
@@ -24769,7 +24769,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.7.3";
+var APP_VER="6.7.4";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26365,11 +26365,44 @@ function vidWfApply(w){
    and .go — so the two shelves are one component with one stylesheet. The
    only addition is .on, because a video card stays selected after the tap
    where a pgWf card hands off to the wizard and forgets. */
+/* ---- v6.7.4 A REPLACED PICTURE GETS A NEW URL ------------------------------
+   THIS BUG HAS NOW SURVIVED FOUR FIXES AND THE OWNER IS STILL LOOKING AT IT.
+   6.6.1 purged the service-worker cache, 6.6.2 repainted the page, 6.7.3
+   refilled with cache:"reload" so the BROWSER cache could not hand the old
+   bytes back — and the nine cards are still wrong on their phone.
+
+   The hole in 6.7.3 is that the purge only repairs entries it FINDS in the
+   service-worker cache. A device whose lib cache was emptied — by the app's
+   own "Clear cache + restart" button, or by eviction — has nothing to sweep,
+   so the purge deletes nothing, refills nothing, marks itself done, and the
+   very next request is answered by the browser's HTTP cache with the old
+   JPEG. Every repair so far has been a repair of the WRONG cache, or of a
+   cache that happened to be empty.
+
+   So stop repairing caches. A picture replaced under its own name gets a new
+   URL, and no cache anywhere can serve old bytes for a URL it has never seen.
+   Only the files actually replaced carry a token, so nothing else re-downloads
+   — the ~52MB of thumbnails a customer paid mobile data for stays put.
+
+   THE RULE, for whoever replaces art next: replace docs/app/lib/<path> in
+   place, then bump its number here (or add it at 2). test/verify_lib_art_rev.js
+   fails until you do. */
+var LIB_ART_REV = {
+  "lib/vid/vt-charSwap.jpg": 2, "lib/vid/vt-faceSwap.jpg": 2, "lib/vid/vt-anime.jpg": 2,
+  "lib/vid/vt-filmlook.jpg": 2, "lib/vid/vt-heritage.jpg": 2, "lib/vid/vt-extend.jpg": 2,
+  "lib/vid/vt-restore.jpg": 2, "lib/vid/vt-erasesub.jpg": 2, "lib/vid/vt-char30.jpg": 2,
+  "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2
+};
+function libArt(p){
+  var k=String(p||"").replace(/^\.?\//, "").split("?")[0];
+  var r=LIB_ART_REV[k];
+  return r ? (p + (p.indexOf("?")>=0 ? "&" : "?") + "v=" + r) : p;
+}
 function vidWfCard(w){
   var m=el("button","wfmini"+(vidWfActive===w.key?" on":""));
   var v=el("div","wfv");
   var im=document.createElement("img");
-  im.className="svgv"; im.src=w.art; im.alt=stripIcn(w.label);
+  im.className="svgv"; im.src=libArt(w.art); im.alt=stripIcn(w.label);
   im.loading="lazy"; im.decoding="async";
   /* the card must survive its photograph going missing — the art is the
      nicety, the workflow is the product */
@@ -26996,7 +27029,7 @@ function vtWfCard(w){
   var m=el("button","wfmini"+(vtWfActive===w.key?" on":""));
   var v=el("div","wfv");
   var im=document.createElement("img");
-  im.className="svgv"; im.src=w.art; im.alt=stripIcn(w.label);
+  im.className="svgv"; im.src=libArt(w.art); im.alt=stripIcn(w.label);
   im.loading="lazy"; im.decoding="async";
   im.onerror=function(){ im.onerror=null; v.classList.add("wfv-noart"); im.remove(); };
   v.appendChild(im);

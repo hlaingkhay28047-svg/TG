@@ -112,7 +112,12 @@ function tr(m) {
 
 const TAIL = `
 
-var API = { WF: VT_WF, KEEP: VT_KEEP, FINISH: VT_FINISH, CLIP_WARN: VT_CLIP_WARN, tr: tr,
+/* v6.7.4 — a picture replaced under its own name gets a NEW URL, so no cache
+   anywhere can serve the old bytes for it. Lifted with the deck because the
+   deck is what names the files. */
+__LIB_ART_REV__
+__LIB_ART_FN__
+var API = { WF: VT_WF, KEEP: VT_KEEP, FINISH: VT_FINISH, CLIP_WARN: VT_CLIP_WARN, tr: tr, libArt: libArt,
   byKey: function (k) { for (var i = 0; i < VT_WF.length; i++) if (VT_WF[i].key === k) return VT_WF[i]; return null; } };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
@@ -120,10 +125,23 @@ else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.videoToolWorkflows 
 })();
 `;
 
+/* the app's own revision map and helper, copied verbatim */
+function cutArtRev(html) {
+  const a = html.indexOf("var LIB_ART_REV = {");
+  if (a < 0) throw new Error("LIB_ART_REV is no longer in the app — the anchor moved.");
+  const ae = html.indexOf("\n};", a);
+  const f = html.indexOf("function libArt(");
+  if (f < 0) throw new Error("libArt is no longer in the app — the anchor moved.");
+  const fe = html.indexOf("\n}", f);
+  return { rev: html.slice(a, ae + 3), fn: html.slice(f, fe + 2) };
+}
+
 function build() {
   const html = fs.readFileSync(APP, "utf8");
   const { body, warn } = lift(html);
-  return HEAD + body + "\n" + warn + TAIL;
+  const art = cutArtRev(html);
+  return HEAD + body + "\n" + warn +
+    TAIL.replace("__LIB_ART_REV__", art.rev).replace("__LIB_ART_FN__", art.fn);
 }
 
 module.exports = { build };
