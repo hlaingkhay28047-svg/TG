@@ -106,6 +106,80 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
       await ctx.close();
     }
 
+    /* ---- E) v6.14.1 — the monitor audit's fixes, measured at the two desks
+       that showed them. Owner: "check every page on a Mac/Windows computer in
+       detail so the UI/UX shows in full". Screenshots of all seventeen pages
+       at 1280/1440/1920 found five things a thumb never met: a category rail
+       whose last four chips were off-screen with no scrollbar, orphan Home
+       tiles, a Tutorials button on top of its own text, rails a mouse could
+       not move, and 8px labels. Each is measured here, not described. ---- */
+    for (const w of [1280, 1440]) {
+      const ctx = await browser.newContext({ viewport: { width: w, height: 900 } });
+      const page = await ctx.newPage();
+      const errs = [];
+      page.on("pageerror", e => errs.push(String(e).slice(0, 140)));
+      await page.addInitScript(() => { localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1"); localStorage.setItem("hnk_seen_splash", "1"); });
+      await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(2000);
+      const E = await page.evaluate(async () => {
+        const out = {};
+        const settle = ms => new Promise(r => setTimeout(r, ms));
+        switchPage("pgWf"); await settle(120);
+        const rail = document.getElementById("wfJump");
+        const chips = rail ? [...rail.querySelectorAll(".chip")] : [];
+        out.rail = { chips: chips.length, scrolls: rail ? rail.scrollWidth > rail.clientWidth + 2 : null,
+          rows: new Set(chips.map(c => Math.round(c.getBoundingClientRect().top))).size,
+          maxH: chips.length ? Math.max.apply(null, chips.map(c => c.getBoundingClientRect().height)) : 0,
+          lastVisible: chips.length ? chips[chips.length - 1].getBoundingClientRect().right <= rail.getBoundingClientRect().right + 1 : false };
+        switchPage("pgDash"); await settle(120);
+        const dg = document.querySelector("#pgDash .dash-grid");
+        out.dashCols = dg ? getComputedStyle(dg).gridTemplateColumns.split(" ").length : 0;
+        out.dashTiles = dg ? dg.children.length : 0;
+        const strip = document.getElementById("dashLibStrip");
+        const thumbs = strip ? [...strip.querySelectorAll("img")] : [];
+        out.strip = strip ? { thumbs: thumbs.length, thumbW: thumbs.length ? Math.round(thumbs[0].getBoundingClientRect().width) : 0,
+          fill: Math.round((thumbs.length ? thumbs[thumbs.length - 1].getBoundingClientRect().right - thumbs[0].getBoundingClientRect().left : 0) / strip.clientWidth * 100) } : null;
+        switchPage("pgTutorials"); await settle(120);
+        out.tut = [...document.querySelectorAll("#pgTutorials .tutorial-card")].map(c => {
+          const p = c.querySelector("p").getBoundingClientRect(), b = c.querySelector(".btn").getBoundingClientRect();
+          return { gap: Math.round(b.top - p.bottom), btnBottom: Math.round(b.bottom), chipW: Math.round(c.querySelector('.chip').getBoundingClientRect().width) };
+        });
+        switchPage("pgMeitu"); await settle(300);
+        const gr = document.getElementById("stGroupChips");
+        out.wheel = null;
+        if (gr && gr.scrollWidth > gr.clientWidth + 4) {
+          const before = gr.scrollLeft;
+          const target = gr.querySelector(".chip") || gr;
+          const ev = new WheelEvent("wheel", { deltaY: 160, deltaX: 0, bubbles: true, cancelable: true });
+          target.dispatchEvent(ev);
+          out.wheel = { before, after: gr.scrollLeft, prevented: ev.defaultPrevented,
+            scrollbar: getComputedStyle(gr).scrollbarWidth, pointer: matchMedia("(hover:hover) and (pointer:fine)").matches };
+        }
+        switchPage("pgHome"); await settle(120);
+        const kick = document.querySelector("#pgHome .page-hero .ph-kick");
+        switchPage("pgVideo"); await settle(200);
+        const need = document.querySelector("#pgVideo .wf-need"), ctxl = document.querySelector("#pgVideo .hsl-ctx");
+        out.labels = { kick: kick ? parseFloat(getComputedStyle(kick).fontSize) : 0,
+          need: need ? parseFloat(getComputedStyle(need).fontSize) : 0, ctx: ctxl ? parseFloat(getComputedStyle(ctxl).fontSize) : 0 };
+        out.overflow = document.documentElement.scrollWidth > innerWidth + 1;
+        return out;
+      });
+      check(`E) at ${w}px the Smart Workflow category rail wraps into rows — every category visible, no chip squashed`,
+        E.rail.chips >= 10 && E.rail.scrolls === false && E.rail.rows >= 2 && E.rail.maxH <= 48 && E.rail.lastVisible, JSON.stringify(E.rail));
+      check(`E2) at ${w}px the six Home tiles fill their rows (${w >= 1440 ? "six across" : "three across"})`,
+        E.dashTiles === 6 && E.dashCols === (w >= 1440 ? 6 : 3), JSON.stringify({ cols: E.dashCols, tiles: E.dashTiles }));
+      check(`E2b) at ${w}px the Home looks strip fills its row (thumbs ≥ ${w >= 1440 ? 120 : 96}px, ≥ 80% of the width)`,
+        !!E.strip && E.strip.thumbs >= 8 && E.strip.thumbW >= (w >= 1440 ? 120 : 96) && E.strip.fill >= 80, JSON.stringify(E.strip));
+      check(`E3) at ${w}px every Tutorials button sits below its text, all three on one baseline, the number still a pill`,
+        E.tut.length === 3 && E.tut.every(t => t.gap >= 8 && t.chipW < 100) && new Set(E.tut.map(t => t.btnBottom)).size === 1, JSON.stringify(E.tut));
+      check(`E4) at ${w}px the Retouch group rail scrolls with the mouse wheel and shows a thin scrollbar`,
+        !!E.wheel && E.wheel.pointer && E.wheel.after > E.wheel.before && E.wheel.prevented && E.wheel.scrollbar === "thin", JSON.stringify(E.wheel));
+      check(`E5) at ${w}px the small labels read at monitor size (kicker ≥12, card badge ≥11, select context ≥9.5)`,
+        E.labels.kick >= 12 && E.labels.need >= 11 && E.labels.ctx >= 9.5, JSON.stringify(E.labels));
+      check(`E6) at ${w}px nothing scrolls sideways and no page error`, !E.overflow && errs.length === 0, JSON.stringify({ overflow: E.overflow, errs }));
+      await ctx.close();
+    }
+
     /* the phone is exactly what it was */
     const ph = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await ph.addInitScript(() => { localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1"); localStorage.setItem("hnk_seen_splash", "1"); });
@@ -123,6 +197,6 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
     check("C) a phone still gets its full-width column and two-column grid", p.w === 390 && p.cols === 2, JSON.stringify(p));
     await ph.close();
   } finally { await browser.close(); }
-  console.log(failures ? `\n${failures} check(s) failed` : "\nAll checks passed — the studio fills the monitor it is opened on, and the phone is untouched.");
+  console.log(failures ? `\n${failures} check(s) failed` : "\nAll checks passed — the studio fills the monitor it is opened on, every rail, tile and label reads at a desk, and the phone is untouched.");
   process.exit(failures ? 1 : 0);
 })();
