@@ -615,6 +615,15 @@ const PORT = process.env.PORT || 8931;
     const se = document.scrollingElement;
     se.scrollTop = 0;
     await new Promise(r => setTimeout(r, 250));
+    /* v6.22.0 — this check compares two frames for IDENTITY (edited before the
+       hold, edited after the release). The face scan of the photo loaded in #17
+       lands asynchronously (module worker, first inference on a cold runner can
+       take seconds) and re-renders the settle with the scanned zones when it
+       does — a frame change that is correct, and that landed between the two
+       captures on a slow CI runner (restored:false). The scan is part of the
+       photo's state, so wait for it (or for the detector to give up) BEFORE the
+       edit whose frame is compared; nothing about the check itself changes. */
+    for (let w = 0; w < 120 && !((ST.faceLM && ST.faceLM.scanned) || (window.STFACE && STFACE.off)); w++) await new Promise(r => setTimeout(r, 100));
     const sm = document.getElementById("mu_smooth");
     sm.value = "70"; sm.dispatchEvent(new Event("input", { bubbles: true }));
     await new Promise(r => setTimeout(r, 400)); // settle
