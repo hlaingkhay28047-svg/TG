@@ -36,6 +36,10 @@ on:
         description: 'optional comma-separated model ids to probe (empty = every model in the group)'
         required: false
         default: ''
+      variants:
+        description: 'optional JSON {"<id>": [{"field": "value", "drop": null}, ...]} — candidate bodies for a row, probed alongside it as <id>~1, <id>~2 … (the source stays untouched)'
+        required: false
+        default: ''
   # GitHub lists a workflow_dispatch workflow only once a push event has
   # carried it (fetch-docs.yml uses the same trick), so this push trigger
   # exists purely to register the lane from the work branch: it fires for this
@@ -92,9 +96,10 @@ jobs:
         env:
           GROUP: ${{ inputs.group }}
           IDS: ${{ inputs.ids }}
+          VARIANTS: ${{ inputs.variants }}
         run: |
           set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
-          python3 tools/probe_price_preview.py out/bodies.json out/results.json --group "${GROUP:-all}" --ids "${IDS:-}"
+          python3 tools/probe_price_preview.py out/bodies.json out/results.json --group "${GROUP:-all}" --ids "${IDS:-}" --variants "${VARIANTS:-}"
       - name: Keep the key-free report
         if: always()
         uses: actions/upload-artifact@v4

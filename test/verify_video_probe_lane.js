@@ -82,6 +82,10 @@ report("C3) RunningHub's own errorCode/errorMessage is what makes a row REJECTED
 report("C4) the app's price-preview reader agrees: errorCode means rejected, priceText means quoted",
   /if\(d\.errorCode\)\{ var e2=new Error\("price-rejected"\)/.test(APP) && /text:\s+String\(d\.priceText\|\|d\.priceTextEn\|\|""\)/.test(APP), null);
 
+report("C5) --variants rides candidate bodies for a row alongside it (id~1, id~2 …; a null drops the field) so a bare PARAMS_INVALID can be narrowed without touching the source — lane input, env and flag agree",
+  /VARIANTS = json\.loads\(opt\("--variants", ""\) or "\{\}"\)/.test(PROBE) && /"%s~%d" % \(it\["id"\], k\)/.test(PROBE) && /if v is None: body\.pop\(f, None\)/.test(PROBE) &&
+  /^      variants:\n        description: 'optional JSON/m.test(WF) && /VARIANTS: \$\{\{ inputs\.variants \}\}/.test(WF) && /--variants "\$\{VARIANTS:-\}"/.test(WF), null);
+
 /* ---- D) driven ---- */
 (async () => {
   const outDir = fs.mkdtempSync(path.join(require("os").tmpdir(), "hnk-probe-"));
@@ -109,6 +113,16 @@ report("C4) the app's price-preview reader agrees: errorCode means rejected, pri
   report("D3) the probe's dry run reads every body, writes the key-free report and prints the marker block the container reads back",
     !!r && r.probed === (d ? d.counts.video + d.counts.tools + 1 : -1) && r.ok === r.probed && !!marker && JSON.parse(marker[1]).probed === r.probed &&
     !/RH_KEY|Bearer/.test(JSON.stringify(r)), probeErr || (r && { probed: r.probed, ok: r.ok }));
+  const results2 = path.join(outDir, "results-variants.json");
+  let varOut = "", varErr = null;
+  try { varOut = execFileSync("python3", [path.join(ROOT, "tools", "probe_price_preview.py"), bodies, results2, "--dry", "--ids", "rhv-wan-2-2-t2v", "--variants", JSON.stringify({ "rhv-wan-2-2-t2v": [{ resolution: "auto" }, { duration: null }] })], { encoding: "utf8", timeout: 120000 }); }
+  catch (e) { varErr = String((e.stdout || "") + (e.stderr || "")).slice(0, 400); }
+  const r2 = varErr ? null : JSON.parse(fs.readFileSync(results2, "utf8"));
+  const v2 = r2 ? r2.results.map(x => x.id) : [];
+  report("D3b) driven: --variants probes the row's own body first, then id~1 with the patched value and id~2 with the field dropped; the base row's variant is null",
+    !!r2 && r2.probed === 3 && v2.join() === "rhv-wan-2-2-t2v,rhv-wan-2-2-t2v~1,rhv-wan-2-2-t2v~2" && r2.results[0].variant === null &&
+    r2.results[1].variant.resolution === "auto" && r2.results[1].sentKeys.includes("resolution") && r2.results[2].sentKeys.includes("prompt") && !r2.results[2].sentKeys.includes("duration") &&
+    /rhv-wan-2-2-t2v~2/.test(varOut), varErr || v2);
   report("D4) CI runs this", /node test\/verify_video_probe_lane\.js/.test(CI), null);
   console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — every video model can be asked on RunningHub itself, and the key never leaves the run");
   process.exit(failures ? 1 : 0);

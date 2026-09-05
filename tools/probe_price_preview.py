@@ -11,6 +11,10 @@ placeholders stay, and the report says so.
 The key arrives ONLY in the RH_KEY environment variable and is never printed;
 requests and responses are logged without headers. Usage:
   RH_KEY=... python3 tools/probe_price_preview.py out/bodies.json out/results.json [--group all|video|tools] [--ids a,b] [--dry]
+                                              [--variants '{"<id>": [{"field": "value", "drop": null}, ...]}']
+--variants probes candidate bodies for a row ALONGSIDE it — the row's own body plus each patch
+(a null value drops the field) — as <id>~1, <id>~2 …, so a bare "301 PARAMS_INVALID" can be
+narrowed to the field that causes it without touching the source.
 """
 import json, os, sys, time, urllib.request, urllib.error, mimetypes, uuid
 
@@ -24,6 +28,7 @@ def opt(name, default=None):
 DRY = "--dry" in args
 GROUP = opt("--group", "all")
 IDS = [x for x in (opt("--ids", "") or "").replace(" ", ",").split(",") if x]
+VARIANTS = json.loads(opt("--variants", "") or "{}")   # {id: [ {field: value | null}, ... ]}
 src, dst = args[0], args[1]
 KEY = os.environ.get("RH_KEY", "")
 if not KEY and not DRY:
@@ -88,6 +93,16 @@ if GROUP in ("all", "tools"):
     items += [dict(t, group="tool") for t in dump["tools"]]
     if dump.get("upscale"): items.append(dict(dump["upscale"], group="tool", label="Video upscaler"))
 if IDS: items = [i for i in items if i["id"] in IDS]
+if VARIANTS:
+    extra = []
+    for it in items:
+        for k, patch in enumerate(VARIANTS.get(it["id"]) or [], 1):
+            body = dict(it.get("body") or {})
+            for f, v in patch.items():
+                if v is None: body.pop(f, None)
+                else: body[f] = v
+            extra.append(dict(it, id="%s~%d" % (it["id"], k), body=body, variant=patch))
+    items += extra
 
 media = {}
 still = opt("--still", "docs/assets/site/ba/ba-retouch-before.jpg"); clip = opt("--clip", "docs/app/lib/banners/motion/banner-path-batch.mp4")
@@ -107,7 +122,7 @@ for it in items:
     if DRY: status, j = 200, {"estimatedPrice": 0.1, "currency": "USD", "priceText": "dry"}
     else: status, j = post("price-preview/" + it["apiPath"], body)
     verdict, note = classify(status, j)
-    results.append({"group": it["group"], "id": it["id"], "label": it.get("label"), "apiPath": it["apiPath"], "verdict": verdict, "note": note, "status": status, "sentKeys": sorted(body.keys())})
+    results.append({"group": it["group"], "id": it["id"], "label": it.get("label"), "apiPath": it["apiPath"], "verdict": verdict, "note": note, "status": status, "sentKeys": sorted(body.keys()), "variant": it.get("variant")})
     print("%-9s %-42s %-60s %s" % (verdict, it["id"][:42], it["apiPath"][:60], note[:90]))
     if not DRY: time.sleep(0.25)
 
