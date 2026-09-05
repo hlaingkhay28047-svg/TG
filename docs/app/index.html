@@ -564,6 +564,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .wslot.filled{border-style:solid}
 .wslot .th{width:64px;height:64px;border-radius:9px;background:var(--ink);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px}
 .wslot .th img{width:100%;height:100%;object-fit:contain}
+.wslot .th video{width:100%;height:100%;object-fit:cover}
 .wslot .nm{font-size:13px;font-weight:800}
 .wslot .rq{font-size:11px;color:var(--gold-hi)}
 .wslot .rq.opt{color:var(--muted)}
@@ -3253,7 +3254,7 @@ html.splashing #splash{display:flex}
      nothing else; this page keeps the rest. Not one endpoint moved, and not
      one was added: the same catalog, reachable. -->
 <div class="page" id="pgV2V">
-  <header class="page-hero"><img src="lib/banners/banner-train-station.jpg" alt="" loading="lazy" decoding="async" style="object-position:62% 40%">
+  <header class="page-hero"><img src="lib/banners/banner-v2v-portal.jpg" alt="" loading="lazy" decoding="async" style="object-position:50% 38%">
     <div class="ph-kick">Video to Video</div>
     <p class="ph-head" id="phV2V">ဗီဒီယိုထဲ <em>ကိုယ့်ဇာတ်ကောင်</em> — ကင်မရာနဲ့ နောက်ခံ အတိုင်း</p>
   </header>
@@ -3349,7 +3350,7 @@ html.splashing #splash{display:flex}
      works in every language, costs nothing extra, and is the honest path;
      text-to-speech can join later if a full voice list is ever published. -->
 <div class="page" id="pgTalk">
-  <header class="page-hero"><img src="lib/banners/banner-train-station.jpg" alt="" loading="lazy" decoding="async" style="object-position:38% 42%">
+  <header class="page-hero"><img src="lib/banners/banner-talk-photo.jpg" alt="" loading="lazy" decoding="async" style="object-position:50% 30%">
     <div class="ph-kick">Talking Photo</div>
     <p class="ph-head" id="phTalk">ပုံတစ်ပုံ + အသံတစ်ခု — <em>စကားပြောနေတဲ့ ဗီဒီယို</em></p>
   </header>
@@ -4975,6 +4976,12 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.14.0", kind:"page", ref:"pgVideo",
+    t:{my:"ဗီဒီယို ကတ်တိုင်း ၁-၂-၃-၄ wizard နဲ့ — Guide၊ Inputs၊ Generate၊ Result — ပုံ Smart Workflow ကတ်တွေလိုပဲ",en:"Every video card now opens a 1-2-3-4 wizard — Guide, Inputs, Generate, Result — like the image Smart Workflow cards",shn:"ၵၢတ်ႈဝီဒီရူဝ်ႈၵူႈဢၼ် မီး wizard 1-2-3-4 — Guide၊ Inputs၊ Generate၊ Result",kac:"Video card shagu 1-2-3-4 wizard hte hpaw ai — Guide, Inputs, Generate, Result",th:"การ์ดวิดีโอทุกใบเปิดเป็นตัวช่วย 1-2-3-4 — Guide, Inputs, Generate, Result — เหมือนการ์ด Smart Workflow รูปภาพ",zh:"每张视频卡片都以 1-2-3-4 向导打开 — Guide、Inputs、Generate、Result — 和图片 Smart Workflow 卡片一样",vi:"Mọi thẻ video giờ mở theo trình hướng dẫn 1-2-3-4 — Guide, Inputs, Generate, Result — như thẻ Smart Workflow ảnh",id:"Setiap kartu video kini membuka wizard 1-2-3-4 — Guide, Inputs, Generate, Result — seperti kartu Smart Workflow gambar",ms:"Setiap kad video kini membuka wizard 1-2-3-4 — Guide, Inputs, Generate, Result — seperti kad Smart Workflow imej"},
+    s:{my:"ပုံ→ဗီဒီယို နဲ့ ဗီဒီယို→ဗီဒီယို ကတ်တစ်ကတ် နှိပ်လိုက်တာနဲ့ အဆင့် ၄ ဆင့် လမ်းညွှန် ပွင့်လာမယ် — ၁ ဘာယူလာရမလဲ ဖတ်၊ ၂ ပုံ/ဗီဒီယို ထည့်၊ ၃ GENERATE နှိပ်၊ ၄ ရလဒ်ကြည့်ပြီး Download။ ကတ်က prompt၊ model၊ option အကုန် ချထားပေးပြီးသား — စာမျက်နှာပေါ်ကလိုပဲ ပြင်လို့ရတယ်။ ဖိုင်တွေ ရှိပြီးသားဆို Generate ကို တန်းသွားလို့ရတယ်။ ဖုန်း app နဲ့ Photoshop panel နှစ်ခုလုံးမှာ စကားလုံး တစ်ထပ်တည်း",en:"Tap any image→video or video→video card and a four-step guide opens — 1 read what to bring, 2 add the photo or clip, 3 press GENERATE, 4 watch and download. The card has already set the request, the model and the options, and every one of them can still be changed, exactly as on the page underneath. When the files are already in place, one tap skips to Generate. The phone app and the Photoshop panel read the same words",shn:"ၼဵၵ်းၵၢတ်ႈဝီဒီရူဝ်ႈ — လမ်းၼႄ 4 ၶၵ်ႉ ပိုတ်ႇမႃး: ဢၢၼ်ႇ၊ သႂ်ႇၾၢႆႇ၊ ၼဵၵ်း GENERATE၊ တူၺ်းလႄႈ download",kac:"Video card langai dip yang 4 lang lam matsun hpaw ai — hti u, file bang u, GENERATE dip u, yu nna download u. App hte panel gaw ga langai sha",th:"แตะการ์ดรูป→วิดีโอหรือวิดีโอ→วิดีโอใบไหนก็ได้ จะเปิดคู่มือ 4 ขั้น — 1 อ่านว่าต้องเตรียมอะไร 2 ใส่รูปหรือคลิป 3 กด GENERATE 4 ดูและดาวน์โหลด การ์ดตั้งคำขอ โมเดล และตัวเลือกไว้แล้ว และแก้ได้ทุกอย่างเหมือนบนหน้าเพจ ถ้ามีไฟล์อยู่แล้วก็ข้ามไป Generate ได้ทันที แอปมือถือและแผง Photoshop ใช้คำเดียวกัน",zh:"点任意一张图→视频或视频→视频卡片，都会打开四步向导 — 1 看要准备什么，2 添加照片或视频，3 按 GENERATE，4 观看并下载。卡片已设好请求、模型和选项，每一项仍可修改，和页面上一样。文件已就位时一键直达 Generate。手机应用和 Photoshop 面板读的是同一套文字",vi:"Chạm bất kỳ thẻ ảnh→video hay video→video, một hướng dẫn bốn bước mở ra — 1 đọc cần mang gì, 2 thêm ảnh hoặc clip, 3 nhấn GENERATE, 4 xem và tải về. Thẻ đã đặt yêu cầu, model và tuỳ chọn, vẫn đổi được như trên trang. Có sẵn tệp thì một chạm tới thẳng Generate. Ứng dụng điện thoại và bảng Photoshop dùng chung một bộ chữ",id:"Ketuk kartu gambar→video atau video→video mana pun, panduan empat langkah terbuka — 1 baca apa yang perlu dibawa, 2 tambahkan foto atau klip, 3 tekan GENERATE, 4 tonton dan unduh. Kartu sudah mengatur permintaan, model dan opsi, semuanya masih bisa diubah seperti di halaman. Kalau file sudah ada, satu ketukan langsung ke Generate. Aplikasi ponsel dan panel Photoshop membaca kata yang sama",ms:"Ketik mana-mana kad imej→video atau video→video, panduan empat langkah terbuka — 1 baca apa yang perlu dibawa, 2 tambah foto atau klip, 3 tekan GENERATE, 4 tonton dan muat turun. Kad telah menetapkan permintaan, model dan pilihan, semuanya masih boleh diubah seperti di halaman. Jika fail sudah ada, satu ketikan terus ke Generate. Aplikasi telefon dan panel Photoshop membaca perkataan yang sama"} },
+  { v:"6.14.0", kind:"page", ref:"pgTalk",
+    t:{my:"Talking Photo နဲ့ Video→Video စာမျက်နှာတွေမှာ hero banner video အသစ် — စကားပြောတဲ့ ဓာတ်ပုံ၊ ဗီဒီယိုထဲက ထွက်လာတဲ့ model",en:"New hero banner videos on the Talking Photo and Video→Video pages — a photograph that speaks, and a model stepping out of her clip",shn:"ဝီဒီရူဝ်ႈ banner မႂ်ႇ ၼိူဝ်ၼႃႈ Talking Photo လႄႈ Video→Video",kac:"Talking Photo hte Video→Video page hta hero banner video nnan",th:"แบนเนอร์วิดีโอใหม่บนหน้า Talking Photo และ Video→Video — รูปที่พูดได้ และนางแบบที่ก้าวออกจากคลิป",zh:"Talking Photo 与 Video→Video 页面的新横幅视频 — 会说话的照片，走出视频的模特",vi:"Video banner mới trên trang Talking Photo và Video→Video — bức ảnh biết nói, và người mẫu bước ra khỏi clip",id:"Video banner baru di halaman Talking Photo dan Video→Video — foto yang berbicara, dan model yang melangkah keluar dari klipnya",ms:"Video sepanduk baharu di halaman Talking Photo dan Video→Video — foto yang bercakap, dan model yang melangkah keluar dari klipnya"},
+    s:{my:"စာမျက်နှာ နှစ်ခုလုံး ဘူတာရုံ banner တစ်ခုတည်းကို သုံးနေရာကနေ ကိုယ်ပိုင် အဓိပ္ပါယ်ရှိတဲ့ banner ရပါပြီ — Talk မှာ ဘောင်ထဲက ဓာတ်ပုံက နှုတ်ခမ်းလှုပ်ပြီး အသံလှိုင်း မိုက်ခရိုဖုန်းဆီ စီးဆင်းတယ်၊ Video→Video မှာ model က ဗီဒီယိုဘောင်ထဲက လမ်းလျှောက်ထွက်လာပြီး wireframe ရုပ်ပုံက နောက်ကလိုက်တယ်။ ပုံ + လှုပ်ရှားမှု ဗီဒီယို အတွဲလိုက် — ဖုန်း app မှာ ဗီဒီယို ရွေ့၊ Photoshop panel မှာ ပုံ",en:"Both pages shared the train-station banner; each now has its own — on Talk, the photograph in the frame moves her lips while sound waves flow toward the microphone; on Video→Video, the model walks out of the video frame with her wireframe twin a step behind. Still and motion clip as a pair — the phone app plays the clip, the Photoshop panel shows the still",shn:"ၼႃႈလိၵ်ႈသွင်ဢၼ် မီး banner ၶွင်တူဝ်ၵဝ်ႇ — ၶႅပ်းလႄႈဝီဒီရူဝ်ႈ",kac:"Page lahkawng gaw tinang a banner lu sai — sumla hte motion clip lahkawng yan",th:"ทั้งสองหน้าเคยใช้แบนเนอร์สถานีรถไฟร่วมกัน ตอนนี้แต่ละหน้ามีของตัวเอง — หน้า Talk รูปในกรอบขยับปากขณะคลื่นเสียงไหลไปหาไมโครโฟน หน้า Video→Video นางแบบเดินออกจากกรอบวิดีโอโดยมีร่างโครงลวดตามหลังหนึ่งก้าว ภาพนิ่งกับคลิปเป็นคู่ — แอปมือถือเล่นคลิป แผง Photoshop แสดงภาพนิ่ง",zh:"两页原本共用火车站横幅，现在各有自己的 — Talk 页里相框中的照片动起嘴唇，声波流向麦克风；Video→Video 页里模特走出视频画框，线框分身跟在一步之后。静态图与动态短片成对 — 手机应用播放短片，Photoshop 面板显示静态图",vi:"Hai trang từng dùng chung banner nhà ga; nay mỗi trang có banner riêng — trang Talk, bức ảnh trong khung mấp máy môi khi sóng âm chảy về micro; trang Video→Video, người mẫu bước ra khỏi khung video với bản sao lưới đi sau một bước. Ảnh tĩnh và clip đi thành cặp — ứng dụng điện thoại phát clip, bảng Photoshop hiện ảnh tĩnh",id:"Kedua halaman dulu memakai banner stasiun kereta yang sama; kini masing-masing punya sendiri — di Talk, foto dalam bingkai menggerakkan bibir sementara gelombang suara mengalir ke mikrofon; di Video→Video, model berjalan keluar dari bingkai video dengan kembaran wireframe selangkah di belakang. Gambar diam dan klip berpasangan — aplikasi ponsel memutar klip, panel Photoshop menampilkan gambar diam",ms:"Kedua-dua halaman dahulu berkongsi sepanduk stesen kereta api; kini masing-masing ada sendiri — di Talk, foto dalam bingkai menggerakkan bibir sementara gelombang bunyi mengalir ke mikrofon; di Video→Video, model berjalan keluar dari bingkai video dengan kembar wireframe selangkah di belakang. Imej pegun dan klip berpasangan — aplikasi telefon memainkan klip, panel Photoshop memaparkan imej pegun"} },
   { v:"6.13.0", kind:"page", ref:"pgV2V",
     t:{my:"ဗီဒီယို ကတ်အသစ် ၈ ကတ် — 4K·60fps၊ LEGO၊ Van Gogh၊ pixel၊ ကင်မရာထောင့်အသစ်၊ နေရာ/ရာသီဥတု ပြောင်း၊ ဘာသာပြန် အသံထပ်ဆင့်၊ ၃၀ စက္ကန့် ဆက်",en:"Eight new video cards — 4K at 60fps, LEGO, Van Gogh, pixel art, a second camera angle, a new place and weather, translate and dub, thirty more seconds",shn:"ၵၢတ်ႈဝီဒီရူဝ်ႈမႂ်ႇ 8 — 4K·60fps၊ LEGO၊ Van Gogh၊ pixel၊ ၵွင်ႈမႂ်ႇ၊ လႅၵ်ႈတီႈ၊ ပိၼ်ႇၽႃႇသႃႇ၊ သိုပ်ႇ 30 ၸဵၵ်ႇ",kac:"Video card nnan 8 — 4K·60fps, LEGO, Van Gogh, pixel, camera angle nnan, shara galai, ga htai, 30s matut",th:"การ์ดวิดีโอใหม่ 8 ใบ — 4K 60fps, เลโก้, แวนโก๊ะ, พิกเซล, มุมกล้องที่สอง, เปลี่ยนสถานที่และอากาศ, แปลและพากย์, ต่ออีก 30 วินาที",zh:"八张新视频卡 — 4K·60fps、乐高、梵高、像素、第二机位、换地点换天气、翻译配音、再接 30 秒",vi:"Tám thẻ video mới — 4K 60fps, LEGO, Van Gogh, pixel, góc máy thứ hai, đổi cảnh và thời tiết, dịch và lồng tiếng, thêm 30 giây",id:"Delapan kartu video baru — 4K 60fps, LEGO, Van Gogh, pixel, sudut kamera kedua, ganti tempat dan cuaca, terjemah dan sulih suara, tambah 30 detik",ms:"Lapan kad video baharu — 4K 60fps, LEGO, Van Gogh, piksel, sudut kamera kedua, tukar tempat dan cuaca, terjemah dan alih suara, tambah 30 saat"},
     s:{my:"RunningHub ရဲ့ တရားဝင် GitHub kit တွေ (OpenClaw skill၊ RH CLI၊ ComfyUI OpenAPI registry) ကို လေ့လာပြီး ကျွန်တော်တို့ မရှိသေးတဲ့ video endpoint ၆ ခု ထည့်လိုက်ပါပြီ — Topaz 4K+60fps၊ SkyReels restyle ၇ မျိုး၊ SkyReels ဆက်ရှည် ၂ မျိုး၊ Runway Aleph edit၊ Volc ဘာသာပြန်+အသံထပ်ဆင့်။ V→V စာမျက်နှာမှာ ကတ် ၈ ကတ် — တစ်ချက်နှိပ်ရုံ။ ဘာသာပြန်ကတ်က ဘာသာ ၉ မျိုး ရပြီး ဗမာ မပါသေးပါ။ ကတ်ပုံအားလုံး model တစ်ယောက်တည်း",en:"RunningHub's official GitHub kits (the OpenClaw skill, RH CLI, the ComfyUI OpenAPI registry) were read end to end, and six video endpoints the studio did not carry are now on the V→V page — Topaz 4K+60fps in one call, SkyReels' seven restyles, two SkyReels continuations, Runway Aleph's edit-by-description, Volc translate-and-dub — with eight one-tap cards over them. The translate card speaks nine languages; Burmese is not among them yet. Every card picture is the same model",shn:"လူင်ႉ GitHub kit ၶွင် RunningHub — endpoint ဝီဒီရူဝ်ႈမႂ်ႇ 6 လႄႈၵၢတ်ႈ 8 ၼိူဝ်ၼႃႈ V→V",kac:"RunningHub a GitHub kit ni hti nna video endpoint nnan 6 hte card 8 V→V hta bang da ai",th:"อ่านคิตทางการบน GitHub ของ RunningHub ทั้งหมด (OpenClaw skill, RH CLI, ComfyUI OpenAPI registry) แล้วเพิ่ม endpoint วิดีโอ 6 ตัวที่ยังไม่มี — Topaz 4K+60fps, SkyReels 7 สไตล์, SkyReels ต่อคลิป 2 แบบ, Runway Aleph, Volc แปลและพากย์ — พร้อมการ์ด 8 ใบในหน้า V→V การ์ดแปลรองรับ 9 ภาษา ยังไม่มีภาษาพม่า ทุกภาพการ์ดใช้นางแบบคนเดียวกัน",zh:"通读 RunningHub 官方 GitHub 套件（OpenClaw skill、RH CLI、ComfyUI OpenAPI 注册表），补上工作室尚未接入的 6 个视频端点 — Topaz 4K+60fps 一次完成、SkyReels 七种风格、两种 SkyReels 续写、Runway Aleph 描述式编辑、Volc 翻译配音 — 并在 V→V 页放上 8 张一键卡片。翻译卡支持 9 种语言，暂不含缅甸语。所有卡片图为同一位模特",vi:"Đọc trọn bộ kit chính thức trên GitHub của RunningHub (OpenClaw skill, RH CLI, registry ComfyUI OpenAPI) và thêm sáu endpoint video studio còn thiếu — Topaz 4K+60fps một lần, bảy phong cách SkyReels, hai kiểu nối SkyReels, Runway Aleph sửa theo mô tả, Volc dịch và lồng tiếng — với tám thẻ một chạm trên trang V→V. Thẻ dịch nói chín ngôn ngữ, chưa có tiếng Miến. Mọi ảnh thẻ cùng một người mẫu",id:"Kit resmi RunningHub di GitHub (OpenClaw skill, RH CLI, registri ComfyUI OpenAPI) dibaca tuntas dan enam endpoint video yang belum ada kini masuk — Topaz 4K+60fps sekali jalan, tujuh gaya SkyReels, dua perpanjangan SkyReels, Runway Aleph edit lewat deskripsi, Volc terjemah dan sulih suara — dengan delapan kartu sekali tap di halaman V→V. Kartu terjemah punya sembilan bahasa, belum ada bahasa Burma. Semua gambar kartu memakai model yang sama",ms:"Kit rasmi RunningHub di GitHub (OpenClaw skill, RH CLI, registri ComfyUI OpenAPI) dibaca sepenuhnya dan enam endpoint video yang belum ada kini masuk — Topaz 4K+60fps satu panggilan, tujuh gaya SkyReels, dua sambungan SkyReels, Runway Aleph edit melalui penerangan, Volc terjemah dan alih suara — dengan lapan kad satu ketikan di halaman V→V. Kad terjemah bertutur sembilan bahasa, belum termasuk bahasa Burma. Semua gambar kad menggunakan model yang sama"} },
@@ -9330,7 +9337,7 @@ ratioRailAttach("selRatio"); ratioRailAttach("selT2IRatio"); ratioRailAttach("se
    file known to be absent buys a certain 404 in every console (and this
    codebase pins consoles clean), so a clip is announced here in the same
    commit that adds its files. */
-var PH_MOTION_CLIPS=["banner-archer","banner-train-station","hero-mermaid","banner-flower-portrait","banner-flower-gown","banner-naga","banner-superhero","banner-path-batch","banner-coral-fairy","banner-fairy-forest","banner-golden-temple","banner-freeform"];
+var PH_MOTION_CLIPS=["banner-archer","banner-train-station","hero-mermaid","banner-flower-portrait","banner-flower-gown","banner-naga","banner-superhero","banner-path-batch","banner-coral-fairy","banner-fairy-forest","banner-golden-temple","banner-freeform","banner-talk-photo","banner-v2v-portal"];
 (function phMotionBoot(){
   try{
     if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -25143,7 +25150,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.13.0";
+var APP_VER="6.14.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26758,7 +26765,8 @@ function vidWfCard(w){
     ? L9({my:"ရွေးပြီး",en:"Selected",shn:"လိူၵ်ႈယဝ်ႉ",kac:"Lata da sai",th:"เลือกแล้ว",zh:"已选择",vi:"Đã chọn",id:"Terpilih",ms:"Dipilih"})
     : L9({my:"သုံးမယ်",en:"Use this",shn:"ၸႂ်ႉဢၼ်ၼႆႉ",kac:"Ndai lang u",th:"ใช้อันนี้",zh:"使用",vi:"Dùng cái này",id:"Pakai ini",ms:"Guna ini"}));
   m.appendChild(go);
-  m.onclick=function(){ vidWfApply(w); };
+  /* v6.14.0 — the tap applies the card to the page AND opens its step-by-step wizard */
+  m.onclick=function(){ vidWfApply(w); openVWiz("i2v", w); };
   return m;
 }
 
@@ -27191,7 +27199,7 @@ var VT_KEEP = "KEEP EXACTLY AS FILMED: the camera angle, the camera movement, th
 var VT_SOUND = " The original sound is kept as it was recorded.";
 var VT_FINISH = "FINISH: the same person in every frame from the first to the last, holding through every turn and every fast movement, with no flicker at the jaw or the hairline, no seam, no warping, and the clip stays its original length and its original speed.";
 var VT_WF = [
-  { key:"vtCharSwap", art:"lib/vid/vt-charSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+  { key:"vtCharSwap", photo:true, art:"lib/vid/vt-charSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
     need:L9({my:"ဗီဒီယို ၁ + ပုံ ၁",en:"1 video + 1 photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်း 1",kac:"Video 1 + sumla 1",th:"วิดีโอ 1 + รูป 1",zh:"1 段视频 + 1 张照片",vi:"1 video + 1 ảnh",id:"1 video + 1 foto",ms:"1 video + 1 foto"}),
     label:L9({my:"ဗီဒီယိုထဲ ကိုယ့်ဇာတ်ကောင် ထည့်မယ်",en:"Your character in any video",shn:"သႂ်ႇတူဝ်ၸဝ်ႈၵဝ်ႇၶဝ်ႈၼႂ်းဝီဒီရူဝ်ႈ",kac:"Video hta nang a masha bang u",th:"ใส่ตัวละครของคุณลงในวิดีโอ",zh:"把你的角色放进任意视频",vi:"Đưa nhân vật của bạn vào video",id:"Masukkan karakter Anda ke video",ms:"Masukkan watak anda ke dalam video"}),
     summary:L9({my:"ကြိုက်တဲ့ ဗီဒီယိုထဲက လူကို ကိုယ့်ပုံနဲ့ အစားထိုး — ကင်မရာ၊ လှုပ်ရှားမှု၊ နောက်ခံ အတိုင်း",en:"Swap the person in any clip for the one in your photo — camera, motion and scene unchanged",shn:"လႅၵ်ႈၵူၼ်းၼႂ်းဝီဒီရူဝ်ႈပဵၼ်ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ — ၵႄႇမရႃႇလႄႈႁွင်ႈလင် ဢမ်ႇလႅၵ်ႈ",kac:"Video hta na masha hpe nang a sumla hte galai — camera, shamu ai hte shara n galai ai",th:"แทนคนในคลิปด้วยคนในรูปของคุณ — กล้อง การเคลื่อนไหว และฉากคงเดิม",zh:"把片中的人换成你照片里的人 — 镜头、动作与场景不变",vi:"Thay người trong clip bằng người trong ảnh của bạn — máy quay, chuyển động và bối cảnh giữ nguyên",id:"Ganti orang dalam klip dengan orang di foto Anda — kamera, gerakan, dan latar tetap",ms:"Ganti orang dalam klip dengan orang dalam foto anda — kamera, gerakan dan latar kekal"}),
@@ -27206,7 +27214,7 @@ var VT_WF = [
        + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, a face that drifts between shots, extra fingers or limbs, a slowed or sped-up result, a watermark or a caption.";
     } },
 
-  { key:"vtFaceSwap", art:"lib/vid/vt-faceSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+  { key:"vtFaceSwap", photo:true, art:"lib/vid/vt-faceSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
     need:L9({my:"ဗီဒီယို ၁ + မျက်နှာပုံ ၁",en:"1 video + 1 face photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်းၼႃႈ 1",kac:"Video 1 + myiman sumla 1",th:"วิดีโอ 1 + รูปหน้า 1",zh:"1 段视频 + 1 张面部照",vi:"1 video + 1 ảnh mặt",id:"1 video + 1 foto wajah",ms:"1 video + 1 foto wajah"}),
     label:L9({my:"မျက်နှာပဲ လဲမယ်",en:"Face only",shn:"လႅၵ်ႈၼႃႈၵူၺ်း",kac:"Myiman sha galai u",th:"เปลี่ยนเฉพาะใบหน้า",zh:"只换脸",vi:"Chỉ thay khuôn mặt",id:"Ganti wajah saja",ms:"Tukar wajah sahaja"}),
     /* v6.6.0 — SAID HONESTLY. The request below asks for the face alone and
@@ -27237,7 +27245,7 @@ var VT_WF = [
      result honestly: the head — face AND hair — becomes the person in the
      photograph, and everything below the neck stays as filmed. Same
      endpoint, different promise, and the promise is the one that comes true. */
-  { key:"vtHeadSwap", art:"lib/vid/vt-headswap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+  { key:"vtHeadSwap", photo:true, art:"lib/vid/vt-headswap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
     need:L9({my:"ဗီဒီယို ၁ + မျက်နှာပုံ ၁",en:"1 video + 1 face photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်းၼႃႈ 1",kac:"Video 1 + myiman sumla 1",th:"วิดีโอ 1 + รูปหน้า 1",zh:"1 段视频 + 1 张面部照",vi:"1 video + 1 ảnh mặt",id:"1 video + 1 foto wajah",ms:"1 video + 1 foto wajah"}),
     label:L9({my:"မျက်နှာ + ဆံပင် လဲမယ်",en:"Face and hair",shn:"လႅၵ်ႈၼႃႈလႄႈၽိူၼ်း",kac:"Myiman hte kara galai",th:"เปลี่ยนใบหน้าและผม",zh:"换脸连发型",vi:"Thay khuôn mặt và tóc",id:"Ganti wajah dan rambut",ms:"Tukar wajah dan rambut"}),
     summary:L9({my:"ပုံထဲက လူရဲ့ မျက်နှာနဲ့ ဆံပင် နှစ်ခုလုံး ယူ — ကိုယ်လုံး၊ အဝတ်အစား၊ နေရာ အတိုင်း",en:"Takes both the face and the hair from your photo — body, clothes and scene stay as filmed",shn:"ဢဝ်ၼႃႈလႄႈၽိူၼ်းၶူဝ်း — တူဝ်ၶိင်းလႄႈတီႈ ဢမ်ႇလႅၵ်ႈ",kac:"Myiman hte kara yawng la — hkum, palawng hte shara n galai",th:"เอาทั้งใบหน้าและทรงผมจากรูปของคุณ — ลำตัว เสื้อผ้า และฉากคงเดิม",zh:"脸和发型都取自你的照片 — 身形、服装与场景保持原样",vi:"Lấy cả khuôn mặt lẫn mái tóc từ ảnh của bạn — dáng người, trang phục và bối cảnh giữ nguyên",id:"Mengambil wajah sekaligus rambut dari foto Anda — tubuh, pakaian, dan latar tetap",ms:"Mengambil wajah dan rambut daripada foto anda — badan, pakaian dan latar kekal"}),
@@ -27455,7 +27463,8 @@ function vtWfCard(w){
     ? L9({my:"ရွေးပြီး",en:"Selected",shn:"လိူၵ်ႈယဝ်ႉ",kac:"Lata da sai",th:"เลือกแล้ว",zh:"已选择",vi:"Đã chọn",id:"Terpilih",ms:"Dipilih"})
     : L9({my:"သုံးမယ်",en:"Use this",shn:"ၸႂ်ႉဢၼ်ၼႆႉ",kac:"Ndai lang u",th:"ใช้อันนี้",zh:"使用",vi:"Dùng cái này",id:"Pakai ini",ms:"Guna ini"}));
   m.appendChild(go);
-  m.onclick=function(){ vtWfApply(w); };
+  /* v6.14.0 — the tap applies the card to the page AND opens its step-by-step wizard */
+  m.onclick=function(){ vtWfApply(w); openVWiz("v2v", w); };
   return m;
 }
 var VT_WF_INTRO_HINT = L9({my:"ကတ်တစ်ခု ရွေးပါ — ဒါမှမဟုတ် အောက်မှာ tool ကို ကိုယ်တိုင် ရွေးပါ။",en:"Pick a card — or choose a tool yourself below.",shn:"လိူၵ်ႈၵၢတ်ႈဢၼ်ၼိုင်ႈ — ဢမ်ႇၼၼ် လိူၵ်ႈ tool ႁင်းၵူၺ်း",kac:"Card langai lata u — nrai npu de tool nang lata u",th:"เลือกการ์ดสักใบ — หรือเลือกเครื่องมือเองด้านล่าง",zh:"选择一张卡片 — 或在下方自行选择工具",vi:"Chọn một thẻ — hoặc tự chọn công cụ bên dưới",id:"Pilih kartu — atau pilih alat sendiri di bawah",ms:"Pilih kad — atau pilih alat sendiri di bawah"});
@@ -27494,6 +27503,7 @@ function vtB64Bytes(b64){
 }
 function renderVtPicks(){
   try{ renderVtSlotChips(); }catch(e){}   /* v6.7.3 — the slot chips follow the slots */
+  try{ if(window._vwizOnPick) window._vwizOnPick(); }catch(e){}   /* v6.14.0 — the video wizard repaints with the slots */
   var fp=$("vtFilePrev"), ip=$("vtImgPrev");
   if(fp){
     if(state.vtFile){
@@ -27721,6 +27731,284 @@ $("btnVtDl").onclick=async function(){
 };
 $("btnVtCancel").onclick=function(){ if(state.vtAbort) state.vtAbort.abort(); };
 $("btnVtRetry").onclick=function(){ if($("btnVtGen").disabled) return; this.style.display="none"; $("btnVtGen").onclick(); };
+/* ---- VWIZ_DATA ---- v6.14.0 — the step-by-step video wizard's words.
+   Owner: "make the image-to-video and video-to-video workflows step by step,
+   1 2 3 4, with guides, like the image Smart Workflow cards, so students find
+   them easy". Every line a student reads in the wizard lives here, in the nine
+   languages, and tools/build_panel_video_wizard.js lifts this block into
+   panel/js/hnk_video_wizard.js verbatim — the panel never retypes a word. */
+var VWIZ_DOTS=["Guide","Inputs","Generate","Result"];
+var VWIZ_L={
+  start:{my:"စလိုက်မယ်",en:"Start",shn:"တႄႇ",kac:"Hpang u",th:"เริ่ม",zh:"开始",vi:"Bắt đầu",id:"Mulai",ms:"Mula"},
+  next:{my:"ရှေ့ဆက်",en:"Next",shn:"သိုပ်ႇ",kac:"Matut",th:"ถัดไป",zh:"下一步",vi:"Tiếp",id:"Lanjut",ms:"Seterusnya"},
+  back:{my:"နောက်ပြန်",en:"Back",shn:"ၶိုၼ်း",kac:"Hpang de",th:"ย้อนกลับ",zh:"上一步",vi:"Quay lại",id:"Kembali",ms:"Kembali"},
+  close:{my:"ပိတ်မယ်",en:"Close",shn:"ႁပ်း",kac:"Pat u",th:"ปิด",zh:"关闭",vi:"Đóng",id:"Tutup",ms:"Tutup"},
+  gen:{my:"GENERATE — ဗီဒီယို ထုတ်မယ်",en:"GENERATE — make the video",shn:"GENERATE — ႁဵတ်းဝီဒီရူဝ်ႈ",kac:"GENERATE — video galaw u",th:"GENERATE — สร้างวิดีโอ",zh:"GENERATE — 生成视频",vi:"GENERATE — tạo video",id:"GENERATE — buat video",ms:"GENERATE — jana video"},
+  pickPhoto:{my:"ပုံ ရွေးမယ်",en:"Pick a photo",shn:"လိူၵ်ႈၶႅပ်း",kac:"Sumla lata u",th:"เลือกรูป",zh:"选择照片",vi:"Chọn ảnh",id:"Pilih foto",ms:"Pilih foto"},
+  pickVideo:{my:"ဗီဒီယို ရွေးမယ်",en:"Pick a video",shn:"လိူၵ်ႈဝီဒီရူဝ်ႈ",kac:"Video lata u",th:"เลือกวิดีโอ",zh:"选择视频",vi:"Chọn video",id:"Pilih video",ms:"Pilih video"},
+  replace:{my:"ပြောင်းမယ်",en:"Replace",shn:"လႅၵ်ႈ",kac:"Galai u",th:"เปลี่ยน",zh:"更换",vi:"Thay",id:"Ganti",ms:"Tukar"},
+  clear:{my:"ဖယ်မယ်",en:"Remove",shn:"ဢဝ်ဢွၵ်ႇ",kac:"Shaw kau",th:"ลบออก",zh:"移除",vi:"Bỏ",id:"Hapus",ms:"Buang"},
+  req:{my:"လိုအပ်",en:"Required",shn:"လူဝ်ႇ",kac:"Ra ai",th:"จำเป็น",zh:"必需",vi:"Bắt buộc",id:"Wajib",ms:"Wajib"},
+  opt:{my:"ထည့်ချင်မှ ထည့်",en:"Optional",shn:"သင်ႇလႆႈ",kac:"Nkau",th:"ไม่บังคับ",zh:"可选",vi:"Tuỳ chọn",id:"Opsional",ms:"Pilihan"},
+  slotPhoto:{my:"ကိုယ့်ပုံ",en:"Your photo",shn:"ၶႅပ်းၸဝ်ႈၵဝ်ႇ",kac:"Na a sumla",th:"รูปของคุณ",zh:"你的照片",vi:"Ảnh của bạn",id:"Fotomu",ms:"Foto anda"},
+  slotVideo:{my:"ကိုယ့်ဗီဒီယို",en:"Your video",shn:"ဝီဒီရူဝ်ႈၸဝ်ႈၵဝ်ႇ",kac:"Na a video",th:"วิดีโอของคุณ",zh:"你的视频",vi:"Video của bạn",id:"Videomu",ms:"Video anda"},
+  slotRef:{my:"ကိုးကားပုံ (မျက်နှာ/ဇာတ်ကောင်)",en:"Reference photo (face / character)",shn:"ၶႅပ်းဢိင် (ၼႃႈ)",kac:"Reference sumla (myiman)",th:"รูปอ้างอิง (หน้า/ตัวละคร)",zh:"参考照片（面部/角色）",vi:"Ảnh tham chiếu (mặt / nhân vật)",id:"Foto referensi (wajah / karakter)",ms:"Foto rujukan (wajah / watak)"},
+  needInputs:{my:"⚠ လိုအပ်တဲ့ ဖိုင်တွေ အရင် ထည့်ပါ",en:"⚠ Add the required files first",shn:"⚠ သႂ်ႇၾၢႆႇဢၼ်လူဝ်ႇ ဢွၼ်တၢင်း",kac:"⚠ Ra ai file ni hpe shawng bang u",th:"⚠ ใส่ไฟล์ที่จำเป็นก่อน",zh:"⚠ 请先添加必需的文件",vi:"⚠ Thêm các tệp bắt buộc trước",id:"⚠ Tambahkan file wajib dulu",ms:"⚠ Tambah fail yang wajib dahulu"},
+  ready:{my:"အသင့်ပါပြီ — အောက်က ခလုတ်ကို နှိပ်ပါ",en:"Ready — press the button below",shn:"ႁၢင်ႈႁႅၼ်းယဝ်ႉ — ၼဵၵ်းပုမ်တႂ်ႈၼႆႉ",kac:"Hkyen da sai — npu na button dip u",th:"พร้อมแล้ว — กดปุ่มด้านล่าง",zh:"准备好了 — 按下面的按钮",vi:"Sẵn sàng — nhấn nút bên dưới",id:"Siap — tekan tombol di bawah",ms:"Sedia — tekan butang di bawah"},
+  viewPrompt:{my:"Prompt အပြည့် ကြည့်မယ်",en:"View the full request",shn:"တူၺ်း prompt တင်းမူတ်း",kac:"Prompt yawng yu u",th:"ดูคำขอฉบับเต็ม",zh:"查看完整请求",vi:"Xem toàn bộ yêu cầu",id:"Lihat permintaan lengkap",ms:"Lihat permintaan penuh"},
+  noPrompt:{my:"ဒီကတ်က prompt မလိုပါ — tool က သူ့အလုပ် တစ်ခုတည်း လုပ်ပေးမယ်",en:"This card needs no request — the tool does its one job",shn:"ၵၢတ်ႈၼႆႉ ဢမ်ႇလူဝ်ႇ prompt",kac:"Ndai card gaw prompt n ra ai",th:"การ์ดนี้ไม่ต้องใช้ prompt — เครื่องมือทำงานของมันอย่างเดียว",zh:"这张卡不需要 prompt — 工具只做它那一件事",vi:"Thẻ này không cần prompt — công cụ chỉ làm một việc của nó",id:"Kartu ini tak perlu prompt — alatnya melakukan satu tugasnya",ms:"Kad ini tidak perlu prompt — alat melakukan satu tugasnya"},
+  toolLine:{my:"Tool",en:"Tool",shn:"Tool",kac:"Tool",th:"เครื่องมือ",zh:"工具",vi:"Công cụ",id:"Alat",ms:"Alat"},
+  running:{my:"ထုတ်နေပါတယ် — ဒီစာမျက်နှာကို ဖွင့်ထားပါ",en:"Generating — keep this page open",shn:"တိုၵ်ႉႁဵတ်းယူႇ — ပိုတ်ႇၼႃႈလိၵ်ႈဝႆႉ",kac:"Galaw taw nga ai — ndai page hpaw da u",th:"กำลังสร้าง — เปิดหน้านี้ไว้",zh:"正在生成 — 请保持此页打开",vi:"Đang tạo — giữ trang này mở",id:"Sedang dibuat — biarkan halaman ini terbuka",ms:"Sedang dijana — biarkan halaman ini terbuka"},
+  done:{my:"ပြီးပါပြီ — ကိုယ့်ဗီဒီယိုပါ",en:"Done — here is your video",shn:"ယဝ်ႉယဝ်ႈ — ဝီဒီရူဝ်ႈၸဝ်ႈၵဝ်ႇ",kac:"Ngut sai — na a video",th:"เสร็จแล้ว — นี่คือวิดีโอของคุณ",zh:"完成 — 这是你的视频",vi:"Xong — đây là video của bạn",id:"Selesai — ini videomu",ms:"Selesai — inilah video anda"},
+  failed:{my:"မထွက်လာပါ — အောက်က အကြောင်းပြချက် ကြည့်ပြီး ပြန်စမ်းပါ",en:"Nothing came back — read the note below and try again",shn:"ဢမ်ႇမီးလွင်ႈဢွၵ်ႇမႃး — ၶိုၼ်းၸၢမ်း",kac:"Hpa n pru wa ai — bai chyam yu u",th:"ไม่มีผลลัพธ์ — อ่านข้อความด้านล่างแล้วลองอีกครั้ง",zh:"没有结果 — 查看下方说明后重试",vi:"Không có kết quả — đọc ghi chú bên dưới rồi thử lại",id:"Tidak ada hasil — baca catatan di bawah lalu coba lagi",ms:"Tiada hasil — baca nota di bawah dan cuba lagi"},
+  download:{my:"Download",en:"Download",shn:"Download",kac:"Download",th:"ดาวน์โหลด",zh:"下载",vi:"Tải về",id:"Unduh",ms:"Muat turun"},
+  again:{my:"နောက်တစ်ခု ထုတ်မယ်",en:"Make another",shn:"ႁဵတ်းထႅင်ႈဢၼ်ၼိုင်ႈ",kac:"Langai bai galaw u",th:"ทำอีกอัน",zh:"再做一个",vi:"Làm cái khác",id:"Buat lagi",ms:"Buat lagi"},
+  onPage:{my:"စာမျက်နှာပေါ်မှာ ကြည့်မယ်",en:"See it on the page",shn:"တူၺ်းၼိူဝ်ၼႃႈလိၵ်ႈ",kac:"Page ntsa yu u",th:"ดูบนหน้า",zh:"在页面上查看",vi:"Xem trên trang",id:"Lihat di halaman",ms:"Lihat pada halaman"},
+  fast:{my:"ဖိုင်တွေ ရှိပြီးသား — Generate ကို တန်းသွားမယ်",en:"Files already in place — skip to Generate",shn:"ၾၢႆႇမီးယဝ်ႉ — ၵႂႃႇ Generate",kac:"File ni nga sai — Generate de rai u",th:"มีไฟล์แล้ว — ข้ามไป Generate",zh:"文件已就位 — 直接到 Generate",vi:"Đã có tệp — chuyển thẳng tới Generate",id:"File sudah ada — langsung ke Generate",ms:"Fail sudah ada — terus ke Generate"},
+  engine:{my:"RunningHub engine · card ရဲ့ prompt {C} လုံး",en:"RunningHub engine · the card's request, {C} chars",shn:"RunningHub engine · prompt {C} တူဝ်",kac:"RunningHub engine · prompt {C} chars",th:"เอนจิน RunningHub · คำขอของการ์ด {C} ตัวอักษร",zh:"RunningHub 引擎 · 卡片请求 {C} 字",vi:"Engine RunningHub · yêu cầu của thẻ {C} ký tự",id:"Engine RunningHub · permintaan kartu {C} karakter",ms:"Enjin RunningHub · permintaan kad {C} aksara"}
+};
+/* the four guide lines, per deck; {N} is the card's own need badge */
+var VWIZ_STEPS={
+  i2v:{
+    my:["ပုံ ၁ ပုံ တင်ပါ — {N}","ကတ်က prompt၊ model၊ အရွယ်၊ ကြာချိန် အကုန် ချထားပေးပြီ — ပြင်ချင်ရင် ပြင်လို့ရတယ်","GENERATE နှိပ်ပါ — ဗီဒီယို ထွက်လာဖို့ ၁–၃ မိနစ် ကြာမယ်","ရလဒ်ကို ကြည့်၊ Download လုပ် — Gallery ထဲမှာလည်း သိမ်းပေးထားမယ်"],
+    en:["Add one photo — {N}","The card has set the request, model, size and length — change them if you like","Press GENERATE — the video takes one to three minutes","Watch it and download it — it is kept in your Gallery too"],
+    shn:["သႂ်ႇၶႅပ်း 1 — {N}","ၵၢတ်ႈ ႁၢင်ႈႁႅၼ်း prompt၊ model၊ တၢင်းယႂ်ႇ၊ ၶၢဝ်းယၢမ်း ယဝ်ႉ","ၼဵၵ်း GENERATE — 1–3 မိၼိတ်ႉ","တူၺ်းလႄႈ download — မီးၼႂ်း Gallery ၵေႃႈ"],
+    kac:["Sumla 1 bang u — {N}","Card gaw prompt, model, kaba, aten yawng hkyen da sai — galai mayu yang galai u","GENERATE dip u — video 1–3 minit la ai","Yu nna download u — Gallery hta mung tawn da ai"],
+    th:["ใส่รูป 1 รูป — {N}","การ์ดตั้งคำขอ โมเดล ขนาด และความยาวให้แล้ว — แก้ได้ตามใจ","กด GENERATE — วิดีโอใช้เวลา 1–3 นาที","ดูและดาวน์โหลด — เก็บไว้ในแกลเลอรีด้วย"],
+    zh:["添加一张照片 — {N}","卡片已设好请求、模型、尺寸和时长 — 想改也可以改","按 GENERATE — 视频需要 1–3 分钟","观看并下载 — 也会保存在你的图库里"],
+    vi:["Thêm một ảnh — {N}","Thẻ đã đặt yêu cầu, model, kích cỡ và độ dài — đổi nếu bạn muốn","Nhấn GENERATE — video mất 1–3 phút","Xem và tải về — cũng được lưu trong Gallery của bạn"],
+    id:["Tambahkan satu foto — {N}","Kartu sudah mengatur permintaan, model, ukuran dan durasi — ubah kalau mau","Tekan GENERATE — video butuh 1–3 menit","Tonton dan unduh — tersimpan juga di Galerimu"],
+    ms:["Tambah satu foto — {N}","Kad telah menetapkan permintaan, model, saiz dan tempoh — ubah jika mahu","Tekan GENERATE — video mengambil 1–3 minit","Tonton dan muat turun — turut disimpan dalam Galeri anda"]
+  },
+  v2v:{
+    my:["{N} တင်ပါ","ကတ်က tool ရွေးပြီး prompt ရေးပေးပြီ — option တွေ ပြင်လို့ရတယ်","GENERATE နှိပ်ပါ — ဗီဒီယို ထွက်လာဖို့ ၂–၅ မိနစ် ကြာမယ်","ရလဒ်ကို ကြည့်၊ Download လုပ် — Gallery ထဲမှာလည်း သိမ်းပေးထားမယ်"],
+    en:["Add {N}","The card has picked the tool and written the request — change the options if you like","Press GENERATE — the clip takes two to five minutes","Watch it and download it — it is kept in your Gallery too"],
+    shn:["သႂ်ႇ {N}","ၵၢတ်ႈ လိူၵ်ႈ tool လႄႈတႅမ်ႈ prompt ယဝ်ႉ","ၼဵၵ်း GENERATE — 2–5 မိၼိတ်ႉ","တူၺ်းလႄႈ download — မီးၼႂ်း Gallery ၵေႃႈ"],
+    kac:["{N} bang u","Card gaw tool lata nna prompt ka da sai — option ni galai mayu yang galai u","GENERATE dip u — video 2–5 minit la ai","Yu nna download u — Gallery hta mung tawn da ai"],
+    th:["ใส่ {N}","การ์ดเลือกเครื่องมือและเขียนคำขอให้แล้ว — แก้ตัวเลือกได้ตามใจ","กด GENERATE — คลิปใช้เวลา 2–5 นาที","ดูและดาวน์โหลด — เก็บไว้ในแกลเลอรีด้วย"],
+    zh:["添加 {N}","卡片已选好工具并写好请求 — 想改选项也可以","按 GENERATE — 视频需要 2–5 分钟","观看并下载 — 也会保存在你的图库里"],
+    vi:["Thêm {N}","Thẻ đã chọn công cụ và viết yêu cầu — đổi tuỳ chọn nếu bạn muốn","Nhấn GENERATE — clip mất 2–5 phút","Xem và tải về — cũng được lưu trong Gallery của bạn"],
+    id:["Tambahkan {N}","Kartu sudah memilih alat dan menulis permintaan — ubah opsinya kalau mau","Tekan GENERATE — klip butuh 2–5 menit","Tonton dan unduh — tersimpan juga di Galerimu"],
+    ms:["Tambah {N}","Kad telah memilih alat dan menulis permintaan — ubah pilihan jika mahu","Tekan GENERATE — klip mengambil 2–5 minit","Tonton dan muat turun — turut disimpan dalam Galeri anda"]
+  }
+};
+/* ---- /VWIZ_DATA ---- */
+
+/* ---------- v6.14.0 — THE VIDEO WIZARD: 1 Guide · 2 Inputs · 3 Generate · 4 Result ----------
+   Owner: "make image-to-video and video-to-video step by step, 1 2 3 4, with
+   guides, like the image Smart Workflow cards, so students find them easy".
+   The image wizard (openWizard/renderWiz) already owns the modal shell, the
+   dots and the slot component; this one rides the same #wiz host and the same
+   classes so the two wizards look like one product. It does NOT own any state:
+   the page underneath stays the source of truth — the card's apply() has
+   already written the request, the model and the options into the page, the
+   pickers are the page's own file inputs, and Generate presses the page's own
+   button. So a run started here is exactly the run the page would have made,
+   and a student who closes the wizard finds everything where it was. */
+var vwiz={kind:"",w:null,step:1,token:0,busy:false,result:null,error:"",tick:null};
+function vwizL(k){ return L9(VWIZ_L[k]||{en:k}); }
+function vwizTool(){ return vwiz.kind==="v2v" ? rhVtModelDef($("selVtModel").value) : null; }
+function vwizNeed(){
+  /* the words on the card's own badge — the guide's {N} */
+  if(vwiz.kind==="i2v") return L9({my:"၁ ပုံ",en:"1 photo",shn:"1 ၶႅပ်း",kac:"Sumla 1",th:"1 รูป",zh:"1 张",vi:"1 ảnh",id:"1 foto",ms:"1 foto"}); /* the card badge's own words (vidWfCard) */
+  return vwiz.w && vwiz.w.need ? stripIcn(vwiz.w.need) : "";   /* the badge is a string here: L9 ran when the deck was defined */
+}
+/* the photograph slot is REQUIRED when the tool demands it, or when the card's own
+   badge promised it (photo:true — the character cards over a tool whose image is
+   technically optional). A card that swears "your character in any video" and
+   then runs without the character is the silent failure this guards. */
+function vwizPhotoReq(){ var tl=vwizTool(); return !!(tl && tl.imageParam && (tl.imageReq || (vwiz.w && vwiz.w.photo))); }
+function vwizInputsOk(){
+  if(vwiz.kind==="i2v") return !!state.refs[0];
+  var tl=vwizTool(); if(!state.vtFile) return false;
+  if(vwizPhotoReq() && !state.vtImg) return false;
+  return true;
+}
+function vwizPageText(){ return vwiz.kind==="i2v" ? $("vidPrompt").value : $("vtPrompt").value; }
+function openVWiz(kind, w){
+  vwiz.kind=kind; vwiz.w=w; vwiz.step=1; vwiz.token++; vwiz.busy=false; vwiz.result=null; vwiz.error="";
+  if(vwiz.tick){ clearInterval(vwiz.tick); vwiz.tick=null; }
+  document.body.style.overflow="hidden";
+  /* the file inputs are the page's; when one lands, the page repaints and so does this */
+  window._wizOnPick=renderVWiz; window._vwizOnPick=renderVWiz;
+  renderVWiz();
+  $("wiz").className="wiz on"; $("wiz").scrollTop=0;
+  modalOpened("wiz");
+}
+function closeVWiz(){
+  vwiz.token++; vwiz.busy=false;
+  if(vwiz.tick){ clearInterval(vwiz.tick); vwiz.tick=null; }
+  $("wiz").className="wiz"; document.body.style.overflow="";
+  window._wizOnPick=null; window._vwizOnPick=null;
+  modalClosed("wiz");
+}
+function vwizSlot(kind, filled, thumbSrc, name, req, onPick, onClear){
+  var slot=el("div","wslot"+(filled?" filled":""));
+  var th=el("div","th");
+  if(filled){
+    var t0 = kind==="video" ? document.createElement("video") : document.createElement("img");
+    t0.src=thumbSrc; if(kind==="video"){ t0.muted=true; t0.playsInline=true; t0.preload="metadata"; }
+    t0.alt=name; th.appendChild(t0);
+  } else th.textContent="+";
+  slot.appendChild(th);
+  var col=el("div");
+  col.appendChild(el("div","nm",name));
+  col.appendChild(el("div","rq"+(req?"":" opt"), req?vwizL("req"):vwizL("opt")));
+  slot.appendChild(col);
+  var act=el("div","act");
+  var pick=el("button","btn"); setIcnText(pick,"i-folder", filled?vwizL("replace"):(kind==="video"?vwizL("pickVideo"):vwizL("pickPhoto")));
+  pick.onclick=onPick; act.appendChild(pick);
+  if(filled){ var clr=el("button","btn"); setIcnText(clr,"i-close",vwizL("clear")); clr.onclick=onClear; act.appendChild(clr); }
+  slot.appendChild(act);
+  return slot;
+}
+function renderVWiz(){
+  var w=vwiz.w; if(!w) return;
+  var host=$("wizIn"); host.innerHTML="";
+  var top=el("div","wiz-top");
+  var wttl=el("div","ttl"); wttl.innerHTML=icn("i-clapper","ic-m")+" "+escH(stripIcn(w.label)); top.appendChild(wttl);
+  var x=el("button","wiz-x"); x.innerHTML=icn("i-close"); x.setAttribute("aria-label",vwizL("close")); x.onclick=closeVWiz; top.appendChild(x);
+  host.appendChild(top);
+  var dots=el("div","wiz-dots");
+  VWIZ_DOTS.forEach(function(d,i){
+    var dd=el("div","wiz-dot"+(i+1===vwiz.step?" on":(i+1<vwiz.step?" done":"")));
+    var dc=el("div","c"); if(i+1<vwiz.step){dc.innerHTML=icn("i-check");}else{dc.textContent=String(i+1);} dd.appendChild(dc);
+    dd.appendChild(el("div","l",d));
+    dots.appendChild(dd);
+  });
+  host.appendChild(dots);
+  var body=el("div","wiz-body"); body.id="vwizBody";
+  var nav=el("div","wiz-nav");
+  var goStep=function(n){ vwiz.step=n; renderVWiz(); $("wiz").scrollTop=0; };
+  var tl=vwizTool();
+  if(vwiz.step===1){
+    if(vwizInputsOk()){
+      var fast=el("button","btn wiz-fast"); setIcnText(fast,"i-bolt",vwizL("fast"));
+      fast.onclick=function(){ goStep(3); }; body.appendChild(fast);
+    }
+    var im=document.createElement("img"); im.className="wiz-visual"; im.src=libArt(w.art); im.alt=stripIcn(w.label);
+    im.onerror=function(){ this.onerror=null; this.remove(); };
+    body.appendChild(im);
+    body.appendChild(el("div","s",stripIcn(w.summary))).style.margin="10px 0 2px";
+    var needRow=el("p","mut"); setIcnText(needRow,"i-camera",vwizNeed()); body.appendChild(needRow);
+    var lines=(VWIZ_STEPS[vwiz.kind][LANG]||VWIZ_STEPS[vwiz.kind].en);
+    lines.forEach(function(s,i){
+      var row=el("div","wf-step");
+      row.appendChild(el("span","n",String(i+1)));
+      row.appendChild(el("span",null,s.replace("{N}",vwizNeed())));
+      body.appendChild(row);
+    });
+    if(w.hint) body.appendChild(el("p","mut",stripIcn(w.hint)));
+    var start=el("button","btn btn-gold"); setIcnText(start,"i-caret",vwizL("start")); start.onclick=function(){ goStep(2); };
+    nav.appendChild(start);
+  }
+  if(vwiz.step===2){
+    if(vwiz.kind==="i2v"){
+      var ref=state.refs[0];
+      body.appendChild(vwizSlot("image", !!ref, ref?("data:"+ref.mime+";base64,"+ref.b64):"", "IMAGE 1 — "+vwizL("slotPhoto"), true,
+        function(){ state.pickSlot=0; $("filePick").click(); },
+        function(){ state.refs[0]=null; state.imgRoles=null; renderRefs(); renderVWiz(); }));
+    } else {
+      body.appendChild(vwizSlot("video", !!state.vtFile, state.vtFile?vtDataUrl(state.vtFile):"", vwizL("slotVideo"), true,
+        function(){ $("vtFilePick").click(); },
+        function(){ $("btnVtFileClear").onclick(); renderVWiz(); }));
+      if(tl && tl.imageParam){
+        body.appendChild(vwizSlot("image", !!state.vtImg, state.vtImg?("data:"+state.vtImg.mime+";base64,"+state.vtImg.b64):"", vwizL("slotRef"), vwizPhotoReq(),
+          function(){ $("vtImgPick").click(); },
+          function(){ $("btnVtImgClear").onclick(); renderVWiz(); }));
+      }
+      if(typeof vtClipWarn!=="undefined" && vtClipWarn){ var cw=el("div","mut warn"); setIcnText(cw,"i-warn",vtClipWarn); body.appendChild(cw); }
+    }
+    if(!vwizInputsOk()){ var rw=el("div","mut"); setIcnText(rw,"i-warn",vwizL("needInputs")); body.appendChild(rw); }
+    var back=el("button","btn"); setIcnText(back,"i-caret",vwizL("back")); back.onclick=function(){ goStep(1); };
+    var next=el("button","btn btn-gold"); setIcnText(next,"i-caret",vwizL("next")); next.disabled=!vwizInputsOk(); next.onclick=function(){ if(vwizInputsOk()) goStep(3); };
+    nav.appendChild(back); nav.appendChild(next);
+  }
+  if(vwiz.step===3){
+    body.appendChild(el("p",null,vwizL("ready")));
+    /* the request: the page's own box, mirrored — an edit here IS an edit there */
+    var txt=vwizPageText();
+    var pageBox = vwiz.kind==="i2v" ? $("vidPrompt") : $("vtPrompt");
+    if(vwiz.kind==="v2v" && tl && !tl.prompt){
+      body.appendChild(el("p","mut",vwizL("noPrompt")));
+    } else {
+      var pvg=el("div","grp"); var pvh=el("button","grp-h");
+      pvh.innerHTML='<span class="car">'+icn("i-caret","ic-car")+'</span><span>'+escH(vwizL("viewPrompt"))+' · '+txt.length+'</span>';
+      pvh.onclick=function(){ pvg.className = pvg.className.indexOf("open")>=0 ? "grp" : "grp open"; };
+      var pvb=el("div","grp-b"); var ta=document.createElement("textarea"); ta.className="inp"; ta.rows=6; ta.value=txt;
+      ta.oninput=function(){ pageBox.value=ta.value; if(vwiz.kind==="i2v" && typeof updateVidPromptCount==="function") updateVidPromptCount(); };
+      pvb.appendChild(ta); pvg.appendChild(pvh); pvg.appendChild(pvb); body.appendChild(pvg);
+    }
+    /* the options: clones of the page's own selects, synced both ways */
+    var row=el("div","wizrow");
+    var ids = vwiz.kind==="i2v" ? ["selVidModel","selVidRes","selVidDur","selVidAspect"] : ["selVtOpt1","selVtOpt2"];
+    var buildRow=function(){
+      row.innerHTML="";
+      if(vwiz.kind==="v2v" && tl){ var tline=el("div","mut",vwizL("toolLine")+": "+tl.label); tline.style.flexBasis="100%"; row.appendChild(tline); }
+      ids.forEach(function(id){
+        var mainSel=$(id); if(!mainSel) return;
+        if(mainSel.style.display==="none") return;
+        var c=mainSel.cloneNode(true); c.id="vwiz_"+id; c.className="inp"; c.value=mainSel.value;
+        c.onchange=function(){
+          mainSel.value=c.value;
+          if(mainSel.onchange) mainSel.onchange(); else mainSel.dispatchEvent(new Event("change",{bubbles:true}));
+          if(typeof saveState==="function") saveState();
+          buildRow();
+        };
+        row.appendChild(c);
+      });
+    };
+    buildRow(); body.appendChild(row);
+    var foot=el("p","mut",vwizL("engine").replace("{C}",String(vwizPageText().length))); body.appendChild(foot);
+    var back3=el("button","btn"); setIcnText(back3,"i-caret",vwizL("back")); back3.onclick=function(){ goStep(2); };
+    var gen=el("button","btn btn-gold gen"); gen.id="vwizGen"; setIcnText(gen,"i-clapper",vwizL("gen")); gen.onclick=runVWizGenerate;
+    nav.appendChild(back3); nav.appendChild(gen);
+  }
+  if(vwiz.step===4){
+    var spinId = vwiz.kind==="i2v" ? "vidSpin" : "vtSpin";
+    if(vwiz.busy){
+      var ld=el("p",null,vwizL("running")); body.appendChild(ld);
+      var sp=el("div","spin on"); sp.id="vwizSpin"; sp.textContent=$(spinId).textContent; body.appendChild(sp);
+    } else if(vwiz.result){
+      body.appendChild(el("p",null,vwizL("done")));
+      var v=document.createElement("video"); v.controls=true; v.playsInline=true; v.style.cssText="width:100%;border-radius:12px;background:#000"; v.src=vidPlayUrl(vwiz.result); body.appendChild(v);
+      var dl=el("button","btn btn-gold"); setIcnText(dl,"i-download",vwizL("download"));
+      dl.onclick=function(){ $(vwiz.kind==="i2v"?"btnVidDl":"btnVtDl").onclick(); };
+      var again=el("button","btn"); setIcnText(again,"i-retry",vwizL("again")); again.onclick=function(){ vwiz.result=null; goStep(2); };
+      var onp=el("button","btn"); setIcnText(onp,"i-caret",vwizL("onPage"));
+      onp.onclick=function(){ closeVWiz(); var bx=$(vwiz.kind==="i2v"?"vidResultBox":"vtResultBox"); if(bx) bx.scrollIntoView({behavior:"smooth"}); };
+      nav.appendChild(dl); nav.appendChild(again); nav.appendChild(onp);
+    } else {
+      body.appendChild(el("p","mut warn",vwizL("failed")));
+      if(vwiz.error) body.appendChild(el("p","mut",vwiz.error));
+      var b4=el("button","btn"); setIcnText(b4,"i-caret",vwizL("back")); b4.onclick=function(){ goStep(3); };
+      nav.appendChild(b4);
+    }
+  }
+  host.appendChild(body);
+  host.appendChild(nav);
+}
+async function runVWizGenerate(){
+  if(vwiz.busy || !vwizInputsOk()) return;
+  var token=vwiz.token, kind=vwiz.kind;
+  var histKey = kind==="i2v" ? "vidHist" : "vtHist";
+  var before=state[histKey][0];
+  vwiz.step=4; vwiz.busy=true; vwiz.result=null; vwiz.error=""; renderVWiz(); $("wiz").scrollTop=0;
+  var spinId = kind==="i2v" ? "vidSpin" : "vtSpin";
+  vwiz.tick=setInterval(function(){ var s=$("vwizSpin"); if(s) s.textContent=$(spinId).textContent; },1000);
+  var btn=$(kind==="i2v"?"btnVidGen":"btnVtGen");
+  try{ await btn.onclick.call(btn); }catch(e){}
+  if(vwiz.tick){ clearInterval(vwiz.tick); vwiz.tick=null; }
+  if(token!==vwiz.token || $("wiz").className.indexOf("on")<0) return;
+  vwiz.busy=false;
+  if(state[histKey][0]!==before){ vwiz.result=state[histKey][0]; }
+  else {
+    var st=$(kind==="i2v"?"stVidGen":"stVtGen"); vwiz.error=(st&&st.textContent)||"";
+    /* a missing key sent the student to Setup underneath the wizard — get out of the way */
+    if(curPage==="pgHome"){ closeVWiz(); return; }
+  }
+  renderVWiz(); $("wiz").scrollTop=0;
+}
 
 /* ================= TALKING PHOTO (pgTalk) — v6.5.0 =================
    One photo, one audio file, and the person in the photo speaks it. The

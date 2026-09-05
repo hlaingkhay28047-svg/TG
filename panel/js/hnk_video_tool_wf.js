@@ -32,7 +32,7 @@ var VT_KEEP = "KEEP EXACTLY AS FILMED: the camera angle, the camera movement, th
 var VT_SOUND = " The original sound is kept as it was recorded.";
 var VT_FINISH = "FINISH: the same person in every frame from the first to the last, holding through every turn and every fast movement, with no flicker at the jaw or the hairline, no seam, no warping, and the clip stays its original length and its original speed.";
 var VT_WF = [
-  { key:"vtCharSwap", art:"lib/vid/vt-charSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+  { key:"vtCharSwap", photo:true, art:"lib/vid/vt-charSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
     need:L9({my:"ဗီဒီယို ၁ + ပုံ ၁",en:"1 video + 1 photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်း 1",kac:"Video 1 + sumla 1",th:"วิดีโอ 1 + รูป 1",zh:"1 段视频 + 1 张照片",vi:"1 video + 1 ảnh",id:"1 video + 1 foto",ms:"1 video + 1 foto"}),
     label:L9({my:"ဗီဒီယိုထဲ ကိုယ့်ဇာတ်ကောင် ထည့်မယ်",en:"Your character in any video",shn:"သႂ်ႇတူဝ်ၸဝ်ႈၵဝ်ႇၶဝ်ႈၼႂ်းဝီဒီရူဝ်ႈ",kac:"Video hta nang a masha bang u",th:"ใส่ตัวละครของคุณลงในวิดีโอ",zh:"把你的角色放进任意视频",vi:"Đưa nhân vật của bạn vào video",id:"Masukkan karakter Anda ke video",ms:"Masukkan watak anda ke dalam video"}),
     summary:L9({my:"ကြိုက်တဲ့ ဗီဒီယိုထဲက လူကို ကိုယ့်ပုံနဲ့ အစားထိုး — ကင်မရာ၊ လှုပ်ရှားမှု၊ နောက်ခံ အတိုင်း",en:"Swap the person in any clip for the one in your photo — camera, motion and scene unchanged",shn:"လႅၵ်ႈၵူၼ်းၼႂ်းဝီဒီရူဝ်ႈပဵၼ်ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ — ၵႄႇမရႃႇလႄႈႁွင်ႈလင် ဢမ်ႇလႅၵ်ႈ",kac:"Video hta na masha hpe nang a sumla hte galai — camera, shamu ai hte shara n galai ai",th:"แทนคนในคลิปด้วยคนในรูปของคุณ — กล้อง การเคลื่อนไหว และฉากคงเดิม",zh:"把片中的人换成你照片里的人 — 镜头、动作与场景不变",vi:"Thay người trong clip bằng người trong ảnh của bạn — máy quay, chuyển động và bối cảnh giữ nguyên",id:"Ganti orang dalam klip dengan orang di foto Anda — kamera, gerakan, dan latar tetap",ms:"Ganti orang dalam klip dengan orang dalam foto anda — kamera, gerakan dan latar kekal"}),
@@ -47,7 +47,7 @@ var VT_WF = [
        + "AVOID: a different camera move, a re-crop, a changed background, a changed outfit, a face that drifts between shots, extra fingers or limbs, a slowed or sped-up result, a watermark or a caption.";
     } },
 
-  { key:"vtFaceSwap", art:"lib/vid/vt-faceSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+  { key:"vtFaceSwap", photo:true, art:"lib/vid/vt-faceSwap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
     need:L9({my:"ဗီဒီယို ၁ + မျက်နှာပုံ ၁",en:"1 video + 1 face photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်းၼႃႈ 1",kac:"Video 1 + myiman sumla 1",th:"วิดีโอ 1 + รูปหน้า 1",zh:"1 段视频 + 1 张面部照",vi:"1 video + 1 ảnh mặt",id:"1 video + 1 foto wajah",ms:"1 video + 1 foto wajah"}),
     label:L9({my:"မျက်နှာပဲ လဲမယ်",en:"Face only",shn:"လႅၵ်ႈၼႃႈၵူၺ်း",kac:"Myiman sha galai u",th:"เปลี่ยนเฉพาะใบหน้า",zh:"只换脸",vi:"Chỉ thay khuôn mặt",id:"Ganti wajah saja",ms:"Tukar wajah sahaja"}),
     /* v6.6.0 — SAID HONESTLY. The request below asks for the face alone and
@@ -78,7 +78,7 @@ var VT_WF = [
      result honestly: the head — face AND hair — becomes the person in the
      photograph, and everything below the neck stays as filmed. Same
      endpoint, different promise, and the promise is the one that comes true. */
-  { key:"vtHeadSwap", art:"lib/vid/vt-headswap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
+  { key:"vtHeadSwap", photo:true, art:"lib/vid/vt-headswap.jpg", model:"kling-video-o3-pro-video-edit", maxSecs:10,
     need:L9({my:"ဗီဒီယို ၁ + မျက်နှာပုံ ၁",en:"1 video + 1 face photo",shn:"ဝီဒီရူဝ်ႈ 1 + ၶႅပ်းၼႃႈ 1",kac:"Video 1 + myiman sumla 1",th:"วิดีโอ 1 + รูปหน้า 1",zh:"1 段视频 + 1 张面部照",vi:"1 video + 1 ảnh mặt",id:"1 video + 1 foto wajah",ms:"1 video + 1 foto wajah"}),
     label:L9({my:"မျက်နှာ + ဆံပင် လဲမယ်",en:"Face and hair",shn:"လႅၵ်ႈၼႃႈလႄႈၽိူၼ်း",kac:"Myiman hte kara galai",th:"เปลี่ยนใบหน้าและผม",zh:"换脸连发型",vi:"Thay khuôn mặt và tóc",id:"Ganti wajah dan rambut",ms:"Tukar wajah dan rambut"}),
     summary:L9({my:"ပုံထဲက လူရဲ့ မျက်နှာနဲ့ ဆံပင် နှစ်ခုလုံး ယူ — ကိုယ်လုံး၊ အဝတ်အစား၊ နေရာ အတိုင်း",en:"Takes both the face and the hair from your photo — body, clothes and scene stay as filmed",shn:"ဢဝ်ၼႃႈလႄႈၽိူၼ်းၶူဝ်း — တူဝ်ၶိင်းလႄႈတီႈ ဢမ်ႇလႅၵ်ႈ",kac:"Myiman hte kara yawng la — hkum, palawng hte shara n galai",th:"เอาทั้งใบหน้าและทรงผมจากรูปของคุณ — ลำตัว เสื้อผ้า และฉากคงเดิม",zh:"脸和发型都取自你的照片 — 身形、服装与场景保持原样",vi:"Lấy cả khuôn mặt lẫn mái tóc từ ảnh của bạn — dáng người, trang phục và bối cảnh giữ nguyên",id:"Mengambil wajah sekaligus rambut dari foto Anda — tubuh, pakaian, dan latar tetap",ms:"Mengambil wajah dan rambut daripada foto anda — badan, pakaian dan latar kekal"}),
