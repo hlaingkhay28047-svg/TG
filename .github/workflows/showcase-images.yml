@@ -681,9 +681,16 @@ jobs:
                 # (cardsv3-model:<taskId>) when one card is re-rendered later, so
                 # a re-render never invents a second woman
                 if [ -s out/cardsv3-model.png ]; then echo "== cardsv3-model already home"; else
+                  # v6.12.0 — the set's model already exists on the drop branch from the
+                  # first wave: reuse her, so a later card never buys a second woman
+                  if git fetch --depth=1 origin showcase-drop >/dev/null 2>&1 && git show origin/showcase-drop:docs/assets/site/ba/cardsv3-model.jpg > out/cardsv3-model.png 2>/dev/null && [ -s out/cardsv3-model.png ]; then
+                    echo "== cardsv3-model reused from showcase-drop ($(wc -c < out/cardsv3-model.png) bytes)"
+                  else
+                  rm -f out/cardsv3-model.png
                   MP=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["model"]["prompt"])' "$CJ")
                   mbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"3:4","resolution":"2k"}))' "$MP")
                   submit "cardsv3-model" "$T2I_PATH" "$mbody" png || { echo "CARDSV3 MODEL FAILED"; fail=1; continue; }
+                  fi
                 fi
                 murl=$(reupload "out/cardsv3-model.png") || { echo "CARDSV3 MODEL UPLOAD FAILED"; fail=1; continue; }
                 # paid art: CARDS names the ones this run is for, as in v2vcards
