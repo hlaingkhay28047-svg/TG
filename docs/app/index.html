@@ -449,6 +449,21 @@ select.inp{padding:9px 10px}
 .hist video{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line-soft);cursor:pointer;background:#000}
 .hist video.sel{border-color:var(--gold)}
 /* v6.4.0 — the picked clip and the picked face, shown rather than named */
+/* v6.7.3 — WHAT THIS TOOL NEEDS, SAID BEFORE ANYTHING IS PICKED. The V→V
+   cards carry a pill ("1 video", "1 video + 1 face photo") and students read
+   it; the tool pages that actually take the files said nothing until you
+   scrolled past the pickers, and a tool needing a photo hid its photo button
+   entirely until it was selected. These are the same pill, live: dim while
+   the slot is empty, gold once it is filled, and tapping one opens that
+   slot's picker. */
+.slotchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+.slotchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  border:1px dashed var(--line);background:var(--panel-2);color:var(--muted);
+  font-size:var(--fs-xs,11px);font-weight:600;cursor:pointer;line-height:1.4}
+.slotchip .ic-s{width:14px;height:14px;flex:0 0 14px}
+.slotchip.on{border-style:solid;border-color:var(--gold);color:var(--gold);
+  background:rgba(212,175,55,.10)}
+.slotchip.opt{opacity:.75}
 .vtpick{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px;border:1px solid var(--line-soft);border-radius:12px;background:var(--sunk,rgba(255,255,255,.03))}
 .vtpick video,.vtpick img{width:72px;height:72px;flex:0 0 72px;object-fit:cover;border-radius:9px;background:#000}
 .vtpick-b{min-width:0;flex:1 1 auto}
@@ -3222,6 +3237,8 @@ html.splashing #splash{display:flex}
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-clapper"/></svg>VIDEO TOOLS</h2>
     <p class="mut" id="vtIntro"></p>
     <select class="inp" id="selVtModel" style="width:100%;margin-bottom:8px"></select>
+    <!-- v6.7.3 — what the chosen tool needs, before anything is picked -->
+    <div class="slotchips" id="vtSlotChips"></div>
     <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.avi" id="vtFilePick" style="display:none">
     <button class="btn" id="btnVtPick"></button>
     <!-- v6.4.0 — SHOW WHAT WAS PICKED. The owner picked a clip and a face and
@@ -3301,6 +3318,10 @@ html.splashing #splash{display:flex}
     <p class="mut" id="tkIntro"></p>
     <select class="inp" id="selTkModel" style="width:100%;margin-bottom:8px"></select>
     <div class="mut" id="tkPriceNote" style="margin-bottom:8px"></div>
+    <!-- v6.7.3 — Talking Photo needs two different KINDS of file, which is
+         exactly the page where a student is most likely to put the wrong one
+         in the wrong place. Both slots are named up front. -->
+    <div class="slotchips" id="tkSlotChips"></div>
 
     <input type="file" accept="image/*" id="tkImgPick" style="display:none">
     <button class="btn" id="btnTkImgPick"></button>
@@ -24748,7 +24769,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.7.2";
+var APP_VER="6.7.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26676,11 +26697,55 @@ $("vtHistH").textContent = L9({my:"ဒီစာမျက်နှာက ထု�
     var o=document.createElement("option"); o.value=m.id; o.textContent=m.label; sel.appendChild(o);
   });
 })();
+/* ---- v6.7.3 SLOT CHIPS: name every file a tool needs, before it is picked ----
+   The V→V deck tells a student "1 video" or "1 video + 1 face photo" on the
+   card itself, and they read it. The pages that actually TAKE those files
+   said nothing: Video Tools showed one button and hid its photo button
+   entirely for tools that do not use one, so nobody learned that some tools
+   want a photo at all, and Talking Photo — the page most likely to receive
+   the wrong kind of file — asked for a picture and a recording with two
+   identical-looking buttons. These chips are the card's own pill, made live:
+   dim and dashed while the slot is empty, gold once it holds something, and
+   tapping one opens that slot's picker. */
+function slotChips(host, slots){
+  var h = (typeof host==="string") ? $(host) : host;
+  if(!h) return;
+  h.innerHTML="";
+  slots.forEach(function(sl){
+    var b=document.createElement("button");
+    b.type="button";
+    b.className="slotchip"+(sl.filled?" on":"")+(sl.optional?" opt":"");
+    b.innerHTML=icn(sl.filled?"i-check":sl.ic)+" "+escH(sl.label)+(sl.optional
+      ? " "+escH(L9({my:"(ထည့်ချင်မှ)",en:"(optional)",shn:"(သင်ႇလႆႈ)",kac:"(nkau)",th:"(ไม่บังคับ)",zh:"（可选）",vi:"(tùy chọn)",id:"(opsional)",ms:"(pilihan)"}))
+      : "");
+    b.setAttribute("aria-pressed", sl.filled ? "true" : "false");
+    if(sl.pick) b.onclick=function(){ try{ sl.pick(); }catch(e){} };
+    h.appendChild(b);
+  });
+}
+function renderVtSlotChips(){
+  var m=rhVtModelDef($("selVtModel").value);
+  var slots=[{ ic:"i-clapper", label:L9({my:"ဗီဒီယို ၁",en:"1 video",shn:"ဝီဒီရူဝ်ႈ ၁",kac:"Video 1",th:"วิดีโอ 1",zh:"视频 1",vi:"1 video",id:"1 video",ms:"1 video"}),
+    filled: !!state.vtFile, pick:function(){ $("vtFilePick").click(); } }];
+  if(m && m.imageParam) slots.push({ ic:"i-camera",
+    label:L9({my:"ပုံ ၁",en:"1 photo",shn:"ၶႅပ်းႁၢင်ႈ ၁",kac:"Sumla 1",th:"รูป 1",zh:"图片 1",vi:"1 ảnh",id:"1 foto",ms:"1 foto"}),
+    filled: !!state.vtImg, pick:function(){ $("vtImgPick").click(); } });
+  slotChips("vtSlotChips", slots);
+}
+function renderTkSlotChips(){
+  slotChips("tkSlotChips", [
+    { ic:"i-camera", label:L9({my:"ပုံ ၁",en:"1 photo",shn:"ၶႅပ်းႁၢင်ႈ ၁",kac:"Sumla 1",th:"รูป 1",zh:"图片 1",vi:"1 ảnh",id:"1 foto",ms:"1 foto"}),
+      filled: !!state.tkImg, pick:function(){ $("tkImgPick").click(); } },
+    { ic:"i-mic", label:L9({my:"အသံ ၁",en:"1 recording",shn:"သဵင် ၁",kac:"Nsen 1",th:"เสียง 1",zh:"录音 1",vi:"1 bản ghi",id:"1 rekaman",ms:"1 rakaman"}),
+      filled: !!state.tkAud, pick:function(){ $("tkAudPick").click(); } }
+  ]);
+}
 function updateVtModelUI(){
   var m=rhVtModelDef($("selVtModel").value);
   $("btnVtImgPick").style.display = m.imageParam ? "" : "none";
   if(!m.imageParam){ state.vtImg=null; $("vtImgName").textContent=""; }
   if(typeof renderVtPicks==="function") renderVtPicks();
+  renderVtSlotChips();
   var pr=$("vtPrompt");
   pr.style.display = m.prompt ? "" : "none";
   if(m.prompt){ pr.setAttribute("maxlength", m.promptMax||20000);
@@ -26982,6 +27047,7 @@ function vtB64Bytes(b64){
   return Math.max(0, Math.floor(n*3/4) - pad);
 }
 function renderVtPicks(){
+  try{ renderVtSlotChips(); }catch(e){}   /* v6.7.3 — the slot chips follow the slots */
   var fp=$("vtFilePrev"), ip=$("vtImgPrev");
   if(fp){
     if(state.vtFile){
@@ -27231,6 +27297,7 @@ function tkPriceLine(){
   }).replace(/\{L\}/g, m.label).replace(/\{P\}/g, m.cny.toFixed(2));
 }
 function renderTkPicks(){
+  try{ renderTkSlotChips(); }catch(e){}   /* v6.7.3 — the slot chips follow the slots */
   var ip=$("tkImgPrev");
   if(ip){
     if(state.tkImg){

@@ -2352,6 +2352,18 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 
 /* v6.4.0 — the picked clip and the picked face on the Video Tools card, the
    app's .vtpick strip in the panel's own tokens */
+/* v6.7.3 — WHAT THIS TOOL NEEDS, named before anything is picked. The web
+   app's own .slotchip, in the panel's tokens, so a student reads the same
+   pill in Photoshop that the V→V card showed them. */
+.apg .slotchips { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 2px; }
+.apg .slotchip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+  border-radius: 999px; border: 1px dashed var(--line); background: var(--panel-2);
+  color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.4; }
+.apg .slotchip .ic-s { width: 14px; height: 14px; flex: 0 0 14px; }
+.apg .slotchip.on { border-style: solid; border-color: var(--gold); color: var(--gold);
+  background: rgba(212,175,55,.10); }
+.apg .slotchip.opt { opacity: .75; }
+
 .apg .vtpick { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 8px;
   border: 1px solid var(--line-soft); border-radius: 12px; background: rgba(255,255,255,.03); }
 .apg .vtpick video, .apg .vtpick img { width: 72px; height: 72px; flex: 0 0 72px;
