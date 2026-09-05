@@ -192,7 +192,10 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    from RunningHub's own registry, rebuilt over the studio's engines), ten
    960x640 files at the pack's q79, taking the pack to 188 files / 19.95 MB
    (19.942917 exactly — rounded up, same rule). */
-const PREV_MB = 19.95;
+/* 2026-09-05, v6.16.0 — the Flower Path Copy card lands (one 960x640 file at the
+   pack's q79), taking the pack to 189 files / 20.01 MB (20.005041 exactly — rounded up,
+   same rule). */
+const PREV_MB = 20.01;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });

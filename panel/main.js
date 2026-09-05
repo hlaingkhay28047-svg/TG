@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.84.0";
+const PANEL_VERSION = "6.85.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -14398,7 +14398,7 @@ function buildLightingPrompt() {
     "\nRender physically accurate light falloff, soft or hard shadows per modifier, realistic catchlights in the eyes matching the key light, and natural skin response." +
     (state.lightEquip
       ? "\nYou MAY show the actual studio light equipment (softboxes, stands, umbrellas) naturally inside the frame."
-      : "\nDo NOT show any studio equipment in the image - no softboxes, light stands, umbrellas, reflectors or lamps visible anywhere; only their light effect on the subject and scene.");
+      : "\nDo NOT show any studio equipment in the image - no softboxes, light stands, umbrellas, reflectors or lamps visible anywhere, and no bright panel, white rectangle, glowing shape or light spill entering at any edge of the frame; only their light effect on the subject and scene.");
 }
 
 const RELIGHT_GUARD = "RELIGHT RULE: Change ONLY the lighting, shadows, highlights and the resulting color response - follow the light diagram exactly.";
