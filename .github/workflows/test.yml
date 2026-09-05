@@ -483,6 +483,8 @@ jobs:
         run: node test/verify_lens_styles.js
       - name: Video wizard — the 1-2-3-4 guide over the image→video and video→video cards, the same words on app and panel
         run: PORT=8931 node test/verify_video_wizard.js
+      - name: Reference-video cards — four image→video Smart Workflow cards rebuilt shot for shot from the owner's clips, your own face in the lead, the same deck lifted into the panel
+        run: PORT=8931 node test/verify_ref_video_cards.js
 
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker

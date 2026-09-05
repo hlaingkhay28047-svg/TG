@@ -2,7 +2,7 @@
    HNK video-workflow catalog — LIFTED, do not edit by hand.
    Source of truth: the web app's own VID_CITIES / VID_ID / VID_KEEP /
    VID_CUT / VID_SETUP_V / VID_WF block (docs/app/index.html), copied
-   verbatim so Media Lab ▸ Video offers the SAME 29 cards, the SAME prompts
+   verbatim so Media Lab ▸ Video offers the SAME 33 cards, the SAME prompts
    and the SAME model/resolution/duration setup the app offers, and never
    invents one. Regenerate by re-lifting that block when the app changes it.
 
@@ -99,6 +99,15 @@ var VID_KEEP = " Her face, bone structure, hair, makeup and identity stay exactl
    "improve" the face between shots, and that is the one change that would
    make the clip useless to a studio. */
 var VID_CUT = " Her face, bone structure and identity stay exactly as the reference photograph in every shot — the makeup is the only thing that changes on her, and it changes only where the shot says so. Cut hard on the beat: every shot is locked off and holds still, the change happens across the cut and never as a slow morph inside a shot, and no shot dissolves into the next. Real cosmetic texture — powder sits, cream moves, gloss stays wet, and no text or captions anywhere in the frame.";
+
+/* v6.15.0 — a FOURTH tail, for the four reference-video cards. Their bodies are
+   cut lists of a whole scene (twelve hidden-camera cuts, a four-shot reveal, a
+   six-pose dance) in which the wardrobe, the hair and the place all belong to
+   the card, and the men in two of the owner's clips make "Her face" wrong.
+   VID_ID forbids cuts, VID_KEEP freezes the scene, VID_CUT says only the makeup
+   may change — so a fourth clause: identity locked to the student's photograph,
+   cuts allowed, everything else the shots' own. */
+var VID_REF = " Their face, bone structure and identity stay exactly as the reference photograph in every cut — it is the face from that photograph in this video, never another person's — while the styling, wardrobe and setting follow the shots above. Cut hard between shots, no dissolves, and no text or captions anywhere in the frame, no watermarks.";
 
 /* Omni Flash is not a taste call. It is the only registered video model with
    aspect control (these are vertical shots) and a 2048-char prompt ceiling;
@@ -528,7 +537,90 @@ var VID_WF=[
        + "Warm neutral grade with deep falloff into shadow, one soft source from camera left, black and cream only, restrained luxury finish."
        + VID_CUT;
     },
-    hint:L9({my:"ပုံ ၁ ပုံ — ပခုံးထိ မြင်ရတဲ့ ခါးအထက်ပုံ။",en:"1 photo — waist up with the shoulders in frame.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၸိူဝ်ႉမႃႇ",kac:"Sumla 1 — sinlum du hkra mu ai",th:"1 รูป — ครึ่งตัวบน เห็นไหล่",zh:"1 张半身照，含肩部",vi:"1 ảnh nửa người, thấy vai",id:"1 foto separuh badan dengan bahu terlihat",ms:"1 foto separuh badan dengan bahu kelihatan"}) }
+    hint:L9({my:"ပုံ ၁ ပုံ — ပခုံးထိ မြင်ရတဲ့ ခါးအထက်ပုံ။",en:"1 photo — waist up with the shoulders in frame.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ႁၼ်ၸိူဝ်ႉမႃႇ",kac:"Sumla 1 — sinlum du hkra mu ai",th:"1 รูป — ครึ่งตัวบน เห็นไหล่",zh:"1 张半身照，含肩部",vi:"1 ảnh nửa người, thấy vai",id:"1 foto separuh badan dengan bahu terlihat",ms:"1 foto separuh badan dengan bahu kelihatan"}) },
+
+  /* v6.15.0 — FOUR CARDS FROM FOUR REFERENCE VIDEOS. The owner sent four
+     clips, each with "make this video's smart workflow exactly, 100% the same,
+     and add it as a new image→video card", then "so that my own face is the
+     one in it". Two clips showed their Seedance 2.5 prompt on screen (a triad
+     boss and a lonely VIP, fifteen seconds in twelve hidden-camera cuts): those
+     prompts are transcribed word for word, CapCut's @person mention becoming the
+     person in the reference photograph. Two showed no text (a cosplay reveal
+     under a misty stone arch, a Dunhuang flying-apsara dance): their prompts are
+     the shot lists read off the frames, cut by cut, with the clips' own lengths
+     and aspects. All four ride the Seedance 2.5 reference model, the one endpoint
+     in the catalog that takes a reference photograph AND runs to fifteen seconds
+     in 16:9 — so each card carries its OWN setup instead of VID_SETUP_V. They
+     close on VID_REF: identity locked, cuts allowed, hair and wardrobe free. */
+  { key:"triadBoss", art:"lib/vid/vw-triadBoss.jpg", setup:{ model:"seedance-2-5-global-token-mmv", res:"1080p", dur:"15", aspect:"16:9" },
+    label:L9({my:"မာဖီးယား ဘော့စ် (Paparazzi)",en:"Triad Boss Paparazzi",shn:"ႁူဝ်ၼႃႈမႃႇၾီးယႃး (Paparazzi)",kac:"Mafia boss (Paparazzi)",th:"บอสมาเฟีย (ปาปารัซซี่)",zh:"黑帮大佬·偷拍",vi:"Trùm mafia (Paparazzi)",id:"Bos Mafia (Paparazzi)",ms:"Bos Mafia (Paparazzi)"}),
+    summary:L9({my:"ကိုယ့်မျက်နှာနဲ့ မြေအောက်ဘော့စ် — မီးခိုးငွေ့နဲ့ ဝီစကီခွက်တွေကြားက ခိုးရိုက် ၁၂ ချက်ဖြတ်၊ ၁၅ စက္ကန့် neon noir",en:"Your face as an underworld boss — 15 seconds, 12 hidden-camera cuts through smoke and whiskey glasses",shn:"ၼႃႈၸဝ်ႈၵဝ်ႇ ပဵၼ်ႁူဝ်ၼႃႈမႃႇၾီးယႃး — 15 ၸႅၵ်ႉ၊ 12 cut၊ ၵႂၼ်းၾႆးလႄႈၵွၵ်းဝီႇသၵီႇ",kac:"Nang a myi man hte ga npu boss — 15 sekan, 12 cut, wan hkut hte whisky gawk lapran",th:"ใบหน้าคุณเป็นบอสใต้ดิน — 15 วินาที 12 คัทกล้องซ่อนผ่านควันและแก้ววิสกี้",zh:"你的脸成为地下大佬 — 15 秒、12 个偷拍镜头穿过烟雾与威士忌杯",vi:"Mặt bạn thành trùm thế giới ngầm — 15 giây, 12 cú cắt máy giấu qua khói và ly whisky",id:"Wajahmu jadi bos dunia bawah — 15 detik, 12 potongan kamera tersembunyi lewat asap dan gelas wiski",ms:"Wajah anda sebagai bos dunia bawah — 15 saat, 12 potongan kamera tersembunyi menerusi asap dan gelas wiski"}),
+    text:function(){
+      return "A 15-second hyper-kinetic cinematic candid paparazzi video of a tense underground triad boss confrontation, seamlessly structured with exactly 12 rapid rhythmic cuts. "
+       + "The central focus is a breathtakingly attractive, badass mafia boss (the person in the reference photograph) with flawless glass skin. "
+       + "The boss wears either a sleek tailored black dress shirt (if male) or a seductive, slightly unbuttoned loose white silk shirt (if female). "
+       + "Strictly medium shots and extreme close-ups only, absolutely NO full-body shots. "
+       + "The subject radiates dangerous aura, engaged in a cold standoff with an unseen rival, entirely unaware of the camera, looking away with an arrogant, stoic expression, never making direct eye contact with the lens. "
+       + "Every single cut strictly uses heavy blurry foreground framing (silhouettes of intimidating bodyguards' shoulders, glowing whiskey glasses, or rising smoke) to create a highly voyeuristic, hidden-camera depth. "
+       + "[0s-4s] Cut 1-3: Low-angle OTS tracking past a rival's blurry shoulder; the person takes a slow drag from a glowing cigarette, the ember illuminating their flawless jawline. "
+       + "[4s-9s] Cut 4-7: Fast whip-pans behind a bodyguard; the person exhales a thick, cinematic cloud of smoke forward, leaning in slightly with a dangerous, mocking smirk. "
+       + "[9s-12s] Cut 8-10: Sudden anamorphic crash zooms pushing past blurry glasses on the table; the person slams a heavy silver lighter onto the table, maintaining an intimidating, dominant aura. "
+       + "[12s-15s] Cut 11-12: Rapid orbital push-in framed through thick foreground smoke; the person leans back arrogantly into a dark leather sofa (waist-up only), projecting absolute underworld supremacy. "
+       + "Dynamic motion blur, gritty neon noir color grading, high contrast cinematic lighting, 8k photorealistic masterpiece."
+       + VID_REF;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ကိုယ့်မျက်နှာ ကြည်ကြည်လင်လင် ပါတဲ့ ခါးအထက်ပုံ။ ဗီဒီယိုထဲမှာ ပေါ်မယ့် မျက်နှာက ဒီပုံထဲက မျက်နှာပါ။",en:"1 photo — your own face, clear, waist up. The face in the video is the face in this photo.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ၼႃႈၸဝ်ႈၵဝ်ႇ ၸႅင်ႈလီ၊ ၼႂ်းဝီဒီရူဝ်ႈ ပဵၼ်ၼႃႈဢၼ်ၼႆႉ",kac:"Sumla 1 — nang a myi man san seng ai; video hta pru wa ai myi man gaw ndai sumla na myi man re",th:"1 รูป — ใบหน้าของคุณเอง ชัด ครึ่งตัวบน ใบหน้าในวิดีโอคือใบหน้าในรูปนี้",zh:"1 张照片 — 你自己的脸，清晰，半身。视频里出现的就是这张脸",vi:"1 ảnh — chính mặt bạn, rõ, nửa người. Khuôn mặt trong video là khuôn mặt trong ảnh này",id:"1 foto — wajahmu sendiri, jelas, separuh badan. Wajah di video adalah wajah di foto ini",ms:"1 foto — wajah anda sendiri, jelas, separuh badan. Wajah dalam video ialah wajah dalam foto ini"}) },
+
+  { key:"vipNight", art:"lib/vid/vw-vipNight.jpg", setup:{ model:"seedance-2-5-global-token-mmv", res:"1080p", dur:"15", aspect:"16:9" },
+    label:L9({my:"တစ်ယောက်တည်း VIP (Neon Night)",en:"Lonely VIP Neon Night",shn:"VIP ၵေႃႉလဵဝ် (Neon Night)",kac:"VIP langai sha (Neon Night)",th:"VIP เดียวดาย (Neon Night)",zh:"孤独 VIP·霓虹夜",vi:"VIP cô đơn (Neon Night)",id:"VIP Sendiri (Neon Night)",ms:"VIP Sendirian (Neon Night)"}),
+    summary:L9({my:"ကိုယ့်မျက်နှာနဲ့ — လူသူမရှိတဲ့ neon nightclub ထဲ တစ်ယောက်တည်း၊ ၁၂ ချက်ဖြတ် ၁၅ စက္ကန့် ခိုးရိုက်ဗီဒီယို",en:"Your face as a melancholic VIP alone in an empty neon nightclub — 15 seconds, 12 hidden-camera cuts",shn:"ၼႃႈၸဝ်ႈၵဝ်ႇ ပဵၼ် VIP ၵေႃႉလဵဝ် ၼႂ်း nightclub neon — 15 ၸႅၵ်ႉ၊ 12 cut",kac:"Nang a myi man hte VIP langai sha neon nightclub hta — 15 sekan, 12 cut",th:"ใบหน้าคุณเป็น VIP เดียวดายในไนต์คลับนีออนที่ว่างเปล่า — 15 วินาที 12 คัทกล้องซ่อน",zh:"你的脸成为空荡霓虹夜店里独坐的 VIP — 15 秒、12 个偷拍镜头",vi:"Mặt bạn thành VIP u sầu ngồi một mình trong hộp đêm neon trống — 15 giây, 12 cú cắt máy giấu",id:"Wajahmu jadi VIP melankolis sendirian di kelab neon kosong — 15 detik, 12 potongan kamera tersembunyi",ms:"Wajah anda sebagai VIP sayu bersendirian di kelab neon kosong — 15 saat, 12 potongan kamera tersembunyi"}),
+    text:function(){
+      return "A 15-second hyper-kinetic cinematic candid paparazzi video inside an empty, moody, ultra-luxurious neon-lit nightclub, seamlessly structured with exactly 12 rapid rhythmic cuts. "
+       + "The sole focus is a breathtakingly attractive, melancholic VIP (the person in the reference photograph) radiating immense aura and quiet, lonely elegance. "
+       + "The subject wears a premium high-fashion outfit (either a crisp unbuttoned white Korean-style dress shirt or a sexy, sophisticated high-slit silk dress). "
+       + "The subject looks deeply lost in thought, entirely unaware of the camera, looking away with a cold, stoic, and profoundly moody expression, never making eye contact. "
+       + "Every single cut strictly uses blurry foreground framing (silhouettes of empty bar chairs, crystal glass edges, or indoor palm leaves) to create a highly voyeuristic, hidden-camera depth. "
+       + "[0s-4s] Cut 1-3: Low-angle tracking through blurred luxury liquor bottles; the person takes a slow, elegant sip of a glowing drink, eyes heavy with unspoken thoughts. "
+       + "[4s-9s] Cut 4-7: Fast whip-pans behind a blurry column; the person is sitting alone on a plush leather VIP sofa, bathed in sweeping dark blue and purple neon light, displaying a flawless jawline. "
+       + "[9s-12s] Cut 8-10: Sudden anamorphic crash zooms; the person exhales a cloud of cinematic smoke, their face completely stoic but deeply melancholic. "
+       + "[12s-15s] Cut 11-12: Rapid orbital push-in past an empty glass; the person runs a hand slowly through their hair, looking out into the void, dynamic motion blur, high-contrast dark neon noir color grading, 8k photorealistic masterpiece."
+       + VID_REF;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ကိုယ့်မျက်နှာ ကြည်ကြည်လင်လင် ပါတဲ့ ခါးအထက်ပုံ။ ဗီဒီယိုထဲမှာ ပေါ်မယ့် မျက်နှာက ဒီပုံထဲက မျက်နှာပါ။",en:"1 photo — your own face, clear, waist up. The face in the video is the face in this photo.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ၼႃႈၸဝ်ႈၵဝ်ႇ ၸႅင်ႈလီ၊ ၼႂ်းဝီဒီရူဝ်ႈ ပဵၼ်ၼႃႈဢၼ်ၼႆႉ",kac:"Sumla 1 — nang a myi man san seng ai; video hta pru wa ai myi man gaw ndai sumla na myi man re",th:"1 รูป — ใบหน้าของคุณเอง ชัด ครึ่งตัวบน ใบหน้าในวิดีโอคือใบหน้าในรูปนี้",zh:"1 张照片 — 你自己的脸，清晰，半身。视频里出现的就是这张脸",vi:"1 ảnh — chính mặt bạn, rõ, nửa người. Khuôn mặt trong video là khuôn mặt trong ảnh này",id:"1 foto — wajahmu sendiri, jelas, separuh badan. Wajah di video adalah wajah di foto ini",ms:"1 foto — wajah anda sendiri, jelas, separuh badan. Wajah dalam video ialah wajah dalam foto ini"}) },
+
+  { key:"mistArch", art:"lib/vid/vw-mistArch.jpg", setup:{ model:"seedance-2-5-global-token-mmv", res:"1080p", dur:"8", aspect:"16:9" },
+    label:L9({my:"မြူထူ ကျောက်တံတား (Cosplay)",en:"Misty Bridge Reveal",shn:"ၶူဝ်ႁိၼ်ၼႂ်းမွၵ်ႇ (Cosplay)",kac:"Nlung mahkrai (Cosplay)",th:"สะพานหินในหมอก (Cosplay)",zh:"雾中石桥·亮相",vi:"Cầu đá trong sương (Cosplay)",id:"Jembatan Berkabut (Cosplay)",ms:"Jambatan Berkabus (Cosplay)"}),
+    summary:L9({my:"ကိုယ့်မျက်နှာနဲ့ — မြူထူတဲ့ ရှေးဟောင်း ရေမြို့ ကျောက်ခုံးတံတားအောက်က ဂိမ်းဇာတ်ကောင် cosplay ၈ စက္ကန့်၊ ၄ ချက်ဖြတ်",en:"Your face in a game-costume cosplay reveal under a misty ancient water-town arch — 8 seconds, 4 cuts",shn:"ၼႃႈၸဝ်ႈၵဝ်ႇ ၼႂ်း cosplay တႂ်ႈၶူဝ်ႁိၼ်ၼႂ်းမွၵ်ႇ — 8 ၸႅၵ်ႉ၊ 4 cut",kac:"Nang a myi man hte game cosplay, hpun hkut nlung mahkrai npu — 8 sekan, 4 cut",th:"ใบหน้าคุณในคอสเพลย์ตัวละครเกม ใต้สะพานหินเมืองน้ำโบราณในหมอก — 8 วินาที 4 คัท",zh:"你的脸出演雾中古镇石拱下的游戏角色 cosplay 亮相 — 8 秒、4 个镜头",vi:"Mặt bạn trong màn cosplay nhân vật game dưới vòm cầu đá cổ trấn mờ sương — 8 giây, 4 cú cắt",id:"Wajahmu dalam cosplay tokoh game di bawah lengkung jembatan batu kota air berkabut — 8 detik, 4 potongan",ms:"Wajah anda dalam cosplay watak permainan di bawah gerbang jambatan batu pekan air berkabus — 8 saat, 4 potongan"}),
+    text:function(){
+      return "An 8-second cinematic cosplay reveal, widescreen 16:9, in a fog-drowned ancient Chinese water town at dawn — an old grey stone arch bridge over a still canal, whitewashed houses with dark tiled roofs dissolving into pale blue-grey mist, cool desaturated palette. "
+       + "The person in the reference photograph is the cosplayer: their own face, styled in a fantasy game-character costume — a long wavy platinum-blonde wig with a large ornate gold-and-blue filigree hairpiece and a long hair stick, a fitted white-and-gold high-collar qipao gown with a high slit, black opera gloves, long royal-blue tassels and red knotted cords, gold filigree at the collar, amber-gold contact lenses. "
+       + "Four cuts. "
+       + "Cut 1 (0-2s): a wide shot from inside the dark stone arch, the figure standing small and centred in the bright misty opening at the far end, then walking slowly toward the camera and raising one gloved hand to the hairpiece, the arch a black silhouette framing the shot. "
+       + "Cut 2 (2-3.5s): a close-up of the face, eyes closed, then the eyes slowly open and lift to the lens, the hair and tassels moving in a light breeze. "
+       + "Cut 3 (3.5-5.5s): a medium profile shot on the worn stone steps beside the canal with the arch bridge behind, the head turning over the shoulder toward the camera, the slit of the gown and the blue tassels swaying. "
+       + "Cut 4 (5.5-8s): a tight close-up, the face filling the frame, a soft knowing smile growing into direct eye contact, the ornaments swinging and the hair blowing. "
+       + "Slow graceful motion, soft volumetric fog, shallow depth of field, cool cinematic grade with the gold and blue of the costume as the only warm accents, 8k photorealistic."
+       + VID_REF;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ကိုယ့်မျက်နှာ ကြည်ကြည်လင်လင်။ ဆံပင်၊ ဝတ်စုံ၊ နောက်ခံက ကတ်က ပေးမယ်၊ မျက်နှာက ကိုယ့်မျက်နှာအတိုင်း။",en:"1 photo — your own face, clear. The card supplies the hair, costume and place; the face stays yours.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ၼႃႈၸဝ်ႈၵဝ်ႇ ၸႅင်ႈလီ၊ ၶူဝ်းလႄႈၽူမ်ၵၢတ်ႈပၼ်၊ ၼႃႈပဵၼ်ၼႃႈၸဝ်ႈၵဝ်ႇ",kac:"Sumla 1 — nang a myi man san seng ai; kara, palawng hte shara card jaw ai, myi man gaw nang a re",th:"1 รูป — ใบหน้าของคุณเอง ชัด การ์ดจัดผม ชุด และฉากให้ ใบหน้ายังเป็นของคุณ",zh:"1 张照片 — 你自己的脸，清晰。发型、服装和场景由卡片提供，脸还是你的",vi:"1 ảnh — chính mặt bạn, rõ. Thẻ lo tóc, trang phục và bối cảnh; khuôn mặt vẫn là của bạn",id:"1 foto — wajahmu sendiri, jelas. Kartu menyediakan rambut, kostum dan tempat; wajah tetap milikmu",ms:"1 foto — wajah anda sendiri, jelas. Kad menyediakan rambut, kostum dan tempat; wajah tetap milik anda"}) },
+
+  { key:"apsaraDance", art:"lib/vid/vw-apsaraDance.jpg", setup:{ model:"seedance-2-5-global-token-mmv", res:"1080p", dur:"9", aspect:"9:16" },
+    label:L9({my:"ပျံသန်းသူ နတ်သမီး (Dunhuang)",en:"Flying Apsara Dance",shn:"ၼၢင်းၽီမိၼ် (Dunhuang)",kac:"Lamu nat shayi (Dunhuang)",th:"นางฟ้าเหินฟ้า (ตุนหวง)",zh:"敦煌飞天舞",vi:"Vũ nữ Phi Thiên (Đôn Hoàng)",id:"Tari Apsara Terbang (Dunhuang)",ms:"Tari Apsara Terbang (Dunhuang)"}),
+    summary:L9({my:"ကိုယ့်မျက်နှာနဲ့ — Dunhuang နံရံပန်းချီရှေ့ ပိုးဖဲကြိုးပျံလွှား နတ်သမီးအက ၆ ပုံစံ၊ ၉ စက္ကန့် ဒေါင်လိုက်",en:"Your face as a Dunhuang flying apsara — six poses from the lotus to the reverse pipa before the mural, 9 seconds vertical",shn:"ၼႃႈၸဝ်ႈၵဝ်ႇ ပဵၼ်ၼၢင်းၽီမိၼ် Dunhuang — 6 ႁၢင်ႈ၊ 9 ၸႅၵ်ႉ၊ ႁၢင်ႈတင်ႈ",kac:"Nang a myi man hte Dunhuang lamu nat shayi — 6 pose, 9 sekan, tsaw ai frame",th:"ใบหน้าคุณเป็นนางฟ้าเหินฟ้าตุนหวง — หกท่าจากดอกบัวถึงพิณผีผาสะพายหลัง หน้าจิตรกรรมฝาผนัง 9 วินาทีแนวตั้ง",zh:"你的脸成为敦煌飞天 — 壁画前从持莲到反弹琵琶六个姿态，9 秒竖屏",vi:"Mặt bạn thành Phi Thiên Đôn Hoàng — sáu thế từ hoa sen đến đàn tì bà ngược trước bích họa, 9 giây dọc",id:"Wajahmu jadi apsara terbang Dunhuang — enam pose dari lotus sampai pipa terbalik di depan mural, 9 detik vertikal",ms:"Wajah anda sebagai apsara terbang Dunhuang — enam pose dari lotus hingga pipa terbalik di hadapan mural, 9 saat menegak"}),
+    text:function(){
+      return "A 9-second photorealistic dance film, vertical 9:16, of a Dunhuang flying apsara before a cave-mural wall — muted ochre, sage green and dusty rose, a large round faded mandala and faint painted flying figures — under warm directional cinematic light with a soft glow and subtle haze. "
+       + "The person in the reference photograph is the dancer: their own face, styled with long dark hair in a high sculpted double-loop bun with a silver filigree crown and dangling silver-and-pearl tassels, a cream-and-jade strapless brocade bandeau top with a curling cloud pattern, a matching low draped skirt, long translucent mint-green and ivory gauze ribbons floating from the arms, layered pearl chains, bronze arm cuffs and bracelets, bare midriff and bare feet. "
+       + "Six cuts. "
+       + "Cut 1 (0-1.5s): seated on a dark stone, holding a pink lotus blossom at chest height and gazing down at it, the head slightly tilted. "
+       + "Cut 2 (1.5-3.5s): standing with the back three-quarters to the camera, glancing back over the shoulder into the lens, hair and ribbons drifting. "
+       + "Cut 3 (3.5-4.5s): dancing, one arm arched over the head, eyes closed, the ribbons swirling. "
+       + "Cut 4 (4.5-6s): kneeling on the stone with both hands folded at the chest, eyes closed in serene prayer, the lotus resting by the knee. "
+       + "Cut 5 (6-7s): the raised-arm dance pose again, ribbons flying wide. "
+       + "Cut 6 (7-9s): the reverse-pipa pose — standing on one bare foot atop the stone, the other leg lifted, a pipa lute held behind the shoulder, the face turned upward, ribbons streaming. "
+       + "Slow graceful motion, gauze catching the light, soft warm cinematic grade, 8k photorealistic."
+       + VID_REF;
+    },
+    hint:L9({my:"ပုံ ၁ ပုံ — ကိုယ့်မျက်နှာ ကြည်ကြည်လင်လင်။ ဆံပင်၊ ဝတ်စုံ၊ နောက်ခံက ကတ်က ပေးမယ်၊ မျက်နှာက ကိုယ့်မျက်နှာအတိုင်း။",en:"1 photo — your own face, clear. The card supplies the hair, costume and place; the face stays yours.",shn:"ၶႅပ်းႁၢင်ႈ 1 — ၼႃႈၸဝ်ႈၵဝ်ႇ ၸႅင်ႈလီ၊ ၶူဝ်းလႄႈၽူမ်ၵၢတ်ႈပၼ်၊ ၼႃႈပဵၼ်ၼႃႈၸဝ်ႈၵဝ်ႇ",kac:"Sumla 1 — nang a myi man san seng ai; kara, palawng hte shara card jaw ai, myi man gaw nang a re",th:"1 รูป — ใบหน้าของคุณเอง ชัด การ์ดจัดผม ชุด และฉากให้ ใบหน้ายังเป็นของคุณ",zh:"1 张照片 — 你自己的脸，清晰。发型、服装和场景由卡片提供，脸还是你的",vi:"1 ảnh — chính mặt bạn, rõ. Thẻ lo tóc, trang phục và bối cảnh; khuôn mặt vẫn là của bạn",id:"1 foto — wajahmu sendiri, jelas. Kartu menyediakan rambut, kostum dan tempat; wajah tetap milikmu",ms:"1 foto — wajah anda sendiri, jelas. Kad menyediakan rambut, kostum dan tempat; wajah tetap milik anda"}) }
 ];
 
 var API = { CITIES: VID_CITIES, WF: VID_WF, SETUP_V: VID_SETUP_V, tr: tr,

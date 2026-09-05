@@ -110,10 +110,10 @@ const SIGNATURE = {
 /* ---- A ---- */
 const block = src.slice(src.indexOf("var VID_WF=["), src.indexOf("function vidWfByKey"));
 const keys = (block.match(/key:"([a-zA-Z]+)"/g) || []).map(k => k.slice(5, -1));
-report("A) all twenty-three added workflows exist and the six originals are intact",
+report("A) all twenty-three added workflows exist, the six originals are intact, and the shelf holds thirty-three (the four reference-video cards of v6.15.0 sit at the end)",
   NEW.every(k => keys.indexOf(k) >= 0) && OLD.every(k => keys.indexOf(k) >= 0) &&
   MK.every(k => keys.indexOf(k) >= 0) &&
-  keys.length === 29 && new Set(keys).size === 29,
+  keys.length === 33 && new Set(keys).size === 33,
   { keys: keys });
 
 /* ---- C + D) the split, in the source ---- */
@@ -146,7 +146,10 @@ report("C) VID_ID exists and carries no setting-freeze claim",
       model: VID_SETUP_V.model,
       rows: VID_WF.map(w => {
         const t = w.cities ? w.text(sample) : w.text();
-        return { key: w.key, len: t.length, text: t, art: w.art,
+        /* v6.15.0 — a card may pin its own model (the four reference-video cards
+           ride Seedance 2.5 Reference); its ceiling is that model's, not the shelf's */
+        const own = (w.setup && w.setup.model && w.setup.model !== VID_SETUP_V.model) ? rhVideoModelDef(w.setup.model) : null;
+        return { key: w.key, len: t.length, text: t, art: w.art, cap: own ? (own.promptMax || null) : null,
           label: typeof w.label === "string" ? w.label : "",
           summary: typeof w.summary === "string" ? w.summary : "" };
       })
@@ -156,9 +159,9 @@ report("C) VID_ID exists and carries no setting-freeze claim",
   wf.rows.forEach(r => { byKey[r.key] = r; });
 
   /* ---- B) the real ceiling, read from the registry ---- */
-  const over = wf.rows.filter(r => wf.cap && r.len > wf.cap);
-  report("B) every prompt fits the pinned model's promptMax",
-    wf.cap > 0 && over.length === 0,
+  const over = wf.rows.filter(r => { const cap = r.cap || wf.cap; return cap && r.len > cap; });
+  report("B) every prompt fits the promptMax of the model its card pins (the shelf's, or the card's own)",
+    wf.cap > 0 && wf.rows.every(r => r.cap === null || r.cap > 0) && over.length === 0,
     { model: wf.model, cap: wf.cap, longest: Math.max.apply(null, wf.rows.map(r => r.len)),
       over: over.map(r => ({ k: r.key, len: r.len })) });
 
@@ -281,8 +284,8 @@ report("C) VID_ID exists and carries no setting-freeze claim",
       s: (c.querySelector(".s") || {}).textContent || "",
       img: (c.querySelector("img") || {}).getAttribute ? c.querySelector("img").getAttribute("src") : null
     })));
-  report("G) all twenty-nine video cards render with a label, a summary and art",
-    cards.length === 29 &&
+  report("G) all thirty-three video cards render with a label, a summary and art",
+    cards.length === 33 &&
     cards.every(c => c.t.length > 2 && c.s.length > 5 && c.img && /^lib\/vid\//.test(c.img)),
     { n: cards.length, bad: cards.filter(c => !(c.t && c.s && c.img)).length });
 
