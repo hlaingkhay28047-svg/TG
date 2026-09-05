@@ -1,0 +1,109 @@
+# Probe every video model the app ships against RunningHub itself (v6.22.0).
+#
+# WHY A WORKFLOW: the maintenance container has no egress to runninghub.ai and
+# this public repository must never carry the Enterprise key (same story as
+# hero-videos.yml / showcase-images.yml). The key comes from the RUNNINGHUB_KEY
+# secret (or, as a fallback, a masked dispatch input), lives only in this run's
+# environment, and is never written to a file, artifact or output.
+#
+# WHAT IT DOES — and does NOT spend: for each of the video models, video tools
+# and the video upscaler, the app's OWN request builders (rhV2SubmitVideo,
+# rhVtBody, rhV2SubmitVideoUpscale) produce the exact body a student's tap
+# would send; that body goes to POST /openapi/v2/price-preview/<apiPath>, the
+# same pre-submit quote the app's cost line uses. RunningHub validates the
+# endpoint and the body and answers with a price — or an errorCode. No task is
+# submitted, so no credit is charged. One small still and one small clip are
+# uploaded (media/upload/binary, free) so the media fields carry real URLs.
+#
+# The answer per model lands in the job summary and between
+# ===PROBE-JSON-BEGIN=== / ===PROBE-JSON-END=== in the log, key-free.
+name: Probe video models (price-preview, no credit spent)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type PROBE to run'
+        required: true
+      rh_key:
+        description: 'LEAVE EMPTY if the RUNNINGHUB_KEY secret exists. A key typed here is visible on this public run page — only as a fallback, then rotate it.'
+        required: false
+        default: ''
+      group:
+        description: 'all | video | tools'
+        required: false
+        default: 'all'
+      ids:
+        description: 'optional comma-separated model ids to probe (empty = every model in the group)'
+        required: false
+        default: ''
+      variants:
+        description: 'optional JSON {"<id>": [{"field": "value", "drop": null}, ...]} — candidate bodies for a row, probed alongside it as <id>~1, <id>~2 … (the source stays untouched)'
+        required: false
+        default: ''
+  # GitHub lists a workflow_dispatch workflow only once a push event has
+  # carried it (fetch-docs.yml uses the same trick), so this push trigger
+  # exists purely to register the lane from the work branch: it fires for this
+  # file alone, and the job's confirm gate makes that run a no-op.
+  push:
+    branches: [claude/hnk-studio-deployment-pr292-www53j]
+    paths: [".github/workflows/probe-video-models.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: probe-video-models
+  cancel-in-progress: false
+jobs:
+  probe:
+    if: ${{ inputs.confirm == 'PROBE' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Mask the key before any other step can log
+        env:
+          S: ${{ secrets.RUNNINGHUB_KEY }}
+          K: ${{ inputs.rh_key }}
+        run: |
+          if [ -n "$S" ]; then echo "::add-mask::$S"; fi
+          if [ -n "$K" ]; then echo "::add-mask::$K"; fi
+          USE="${S:-$K}"
+          if [ -z "$USE" ]; then
+            echo "No RunningHub key: add the RUNNINGHUB_KEY repository secret, or type one into rh_key."
+            exit 1
+          fi
+          if [ -n "$S" ]; then echo "using the RUNNINGHUB_KEY secret"; else
+            echo "WARNING: using the typed rh_key — on a public repository that value is visible on this run page. Rotate it and add RUNNINGHUB_KEY as a secret."
+          fi
+          echo "::add-mask::$USE"
+          echo "RH_KEY=$USE" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Install Playwright + Chromium
+        run: |
+          npm install playwright@1.62.1
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Serve docs/app
+        run: |
+          python3 -m http.server 8931 --directory docs/app &
+          sleep 1
+      - name: Build every request body with the app's own code (no network)
+        run: |
+          mkdir -p out
+          PORT=8931 node tools/probe_video_bodies.js out/bodies.json
+      - name: Ask RunningHub's price-preview about each body
+        shell: bash
+        env:
+          GROUP: ${{ inputs.group }}
+          IDS: ${{ inputs.ids }}
+          VARIANTS: ${{ inputs.variants }}
+        run: |
+          set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
+          python3 tools/probe_price_preview.py out/bodies.json out/results.json --group "${GROUP:-all}" --ids "${IDS:-}" --variants "${VARIANTS:-}"
+      - name: Keep the key-free report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-model-probe
+          path: out/results.json
+          if-no-files-found: ignore

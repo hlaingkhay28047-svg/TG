@@ -9,6 +9,15 @@
 (function () {
 "use strict";
 var RH_VIDEO_MODELS = [
+  /* RETIRED (v6.22.0) — probed live through price-preview on 2026-09-05 and answered
+     "1000 Unknown error"; RunningHub's own registry files both as 已下架 (taken down):
+       rhart-video-s/image-to-video-pro-deprecated   (was rhart-video-s-pro-deprecated)
+       rhart-video-s/text-to-video-pro-deprecated    (was rhv-s-t2v-pro-deprecated)
+     and higgsfield/dop/image-to-video (was higgsfield-dop): the live API now requires a
+     `motions` list of presets that neither its doc index (no higgsfield page) nor the registry
+     snapshot names — the only option would have been an invented one.
+     A dead option in the picker is worse than its absence; they come back only if a
+     live probe accepts them again. */
   /* v5.55.0 — the FULL video catalog, doc-verified. Every entry below that
      carries an api-<id> comment was generated from RunningHub's own
      published parameter table for that endpoint (fetched via the read-only
@@ -22,7 +31,10 @@ var RH_VIDEO_MODELS = [
      durInt:true marks endpoints whose duration is a JSON NUMBER (integer
      range in the doc) rather than a string enum; resParam:"size" marks the
      two Wan endpoints whose resolution field is literally named "size";
-     kind:"vnode" marks ComfyUI node-keyed graphs (wan-2.2, LTX, MiniMax-H3
+     v6.22.0 — no row is kind:"vnode" any more: RunningHub renamed every ComfyUI node key to the
+     parameter its doc page describes and refuses the old keys (probed live, price-preview);
+     the builder keeps the vnode branch only for a future graph endpoint.
+     kind:"vnode" marked ComfyUI node-keyed graphs (wan-2.2, LTX, MiniMax-H3
      oss): node.images/prompt/dur name the per-graph keys and node.fixed
      carries each REQUIRED select at its documented default.
      TEN documented video endpoints are deliberately NOT here, because this
@@ -137,7 +149,7 @@ var RH_VIDEO_MODELS = [
   /* api-495380676 */
   { id:"minimax-hailuo-h3", label:"MiniMax H3 (first last frame) — (768P, 15s)", fam:"MiniMax", apiPath:"minimax/hailuo-h3/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:0, maxImages:2, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
   /* api-502119462 */
-  { id:"rhv-mm-h3-oss-fl2va", label:"MiniMax H3 fl2va RH插件流 支持文生、图生、首尾帧 — (15s)", fam:"MiniMax", apiPath:"rhart-video/minimax-h3-oss/fl2va", kind:"vnode", node:{"images": [], "optImages": ["136##image", "152##image"], "prompt": "144##prompt", "fixed": {}, "dur": "157##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  { id:"rhv-mm-h3-oss-fl2va", label:"MiniMax H3 fl2va RH插件流 支持文生、图生、首尾帧 — (15s)", fam:"MiniMax", apiPath:"rhart-video/minimax-h3-oss/fl2va", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:0, maxImages:2, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspectParam:"aspectRatio", aspects:["9:16 (Portrait Widescreen)", "16:9 (Widescreen)", "1:1 (Square)", "3:4 (Portrait Standard)", "4:3 (Standard)", "2:3 (Portrait Photo)", "3:2 (Photo)", "21:9 (Ultrawide)"], promptMax:20000 },
   /* v5.89.0 api-509445864 — H3 Max. Its own doc, not H3's: prompt 20480 (H3
      is 7000), resolution REQUIRED with only 480P/768P, duration "5".."15". */
   { id:"mm-hailuo-h3-max", label:"MiniMax H3 Max (first last frame) — (768P, 15s)", fam:"MiniMax", apiPath:"minimax/hailuo-h3-max/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480P", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:false, promptMax:20480 },
@@ -178,8 +190,6 @@ var RH_VIDEO_MODELS = [
   { id:"rhart-video-s-official-realistic", label:"Sora 2 Realistic — (12s)", fam:"Sora", apiPath:"rhart-video-s-official/image-to-video-realistic", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["4", "8", "12"], aspect:false, promptMax:20000 },
   /* api-448184381 */
   { id:"rhart-video-s", label:"Sora 2 Low cost — (15s)", fam:"Sora", apiPath:"rhart-video-s/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
-  /* api-448184379 */
-  { id:"rhart-video-s-pro-deprecated", label:"Sora 2 Pro Low cost — (25s)", fam:"Sora", apiPath:"rhart-video-s/image-to-video-pro-deprecated", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["15", "25"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
   /* api-448184388 */
   { id:"alibaba-wan-2-5-preview", label:"Wan 2.5 Preview — (1080p, 10s)", fam:"Wan", apiPath:"alibaba/wan-2.5-preview/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["5", "10"], aspect:false, promptMax:1500 },
   /* api-448184393 */
@@ -201,13 +211,13 @@ var RH_VIDEO_MODELS = [
   /* api-505575335 */
   { id:"wan-3-0-i2v", label:"Wan 3.0 — (1080P, 30s)", fam:"Wan", apiPath:"alibaba/wan-3.0/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480P", "720P", "1080P"], durations:["auto", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20000 },
   /* api-448184386 */
-  { id:"rhv-wan-2-2-i2v", label:"Wan 2.2", fam:"Wan", apiPath:"rhart-video/wan-2.2/image-to-video", kind:"vnode", node:{"images": ["219##image"], "optImages": [], "prompt": "183##text", "fixed": {"202##select": "1", "218##select": "7"}}, minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000 },
+  { id:"rhv-wan-2-2-i2v", label:"Wan 2.2", fam:"Wan", apiPath:"rhart-video/wan-2.2/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"duration": "5", "resolution": "auto"} },
   /* api-448184382 */
-  { id:"rhv-wan-2-2-se2v", label:"Wan 2.2 video — Start+End", fam:"Wan", apiPath:"rhart-video/wan-2.2/start-to-end", kind:"vnode", node:{"images": ["219##image", "222##image"], "optImages": [], "prompt": "183##text", "fixed": {"202##select": "1", "218##select": "7"}}, minImages:2, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000 },
+  { id:"rhv-wan-2-2-se2v", label:"Wan 2.2 video — Start+End", fam:"Wan", apiPath:"rhart-video/wan-2.2/start-to-end", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"duration": "5", "resolution": "auto"} },
   /* api-448184389 */
-  { id:"rhv-ltx-2-3-i2v", label:"Ltx 2.3 — (20s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video", kind:"vnode", node:{"images": ["98##image"], "optImages": [], "prompt": "200##prompt", "fixed": {"245##select": "1", "240##select": "2"}, "dur": "222##value", "durRange": {"min": 5, "max": 20, "def": 5}}, minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:false, promptMax:20000 },
+  { id:"rhv-ltx-2-3-i2v", label:"Ltx 2.3 — (20s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
   /* api-448184390 */
-  { id:"rhv-ltx-2-3-i2v-lora", label:"Ltx 2.3 lora — (15s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video-lora", kind:"vnode", node:{"images": ["98##image"], "optImages": [], "prompt": "269##prompt", "fixed": {"245##select": "1", "240##select": "2"}, "dur": "222##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  { id:"rhv-ltx-2-3-i2v-lora", label:"Ltx 2.3 lora — (15s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video-lora", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
   /* api-494859289 */
   { id:"rhart-video-g-official-v1-5", label:"Grok imagine video v1.5 — (720p, 15s)", fam:"Grok", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2048 },
   /* api-448184391 */
@@ -272,7 +282,7 @@ var RH_VIDEO_MODELS = [
   /* api-495380675 */
   { id:"mm-hailuo-h3-multimodal-to-video", label:"MiniMax H3 Multimodal — Ref (768P, 15s)", fam:"MiniMax · Ref", apiPath:"minimax/hailuo-h3/multimodal-to-video", imageParam:"imageUrls", minImages:0, maxImages:9, oddOnly:false, resolutions:["2K", "768P"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspectParam:"ratio", aspects:["adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
   /* api-502119463 */
-  { id:"rhv-mm-h3-oss-fl2va-advanced", label:"MiniMax H3 ref2va RH插件流 支持多参 — Ref (15s)", fam:"MiniMax · Ref", apiPath:"rhart-video/minimax-h3-oss/fl2va-advanced", kind:"vnode", node:{"images": [], "optImages": ["170##image", "171##image", "172##image", "173##image", "174##image", "175##image", "176##image", "177##image", "178##image"], "prompt": "144##prompt", "fixed": {}, "dur": "157##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:9, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  { id:"rhv-mm-h3-oss-fl2va-advanced", label:"MiniMax H3 ref2va RH插件流 支持多参 — Ref (15s)", fam:"MiniMax · Ref", apiPath:"rhart-video/minimax-h3-oss/fl2va-advanced", imageParam:"image1", imageParams:["image1", "image2", "image3", "image4", "image5", "image6", "image7", "image8", "image9"], minImages:0, maxImages:9, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspectParam:"aspectRatio", aspects:["16:9 (Widescreen)", "9:16 (Portrait Widescreen)", "1:1 (Square)", "3:4 (Portrait Standard)", "4:3 (Standard)", "2:3 (Portrait Photo)", "3:2 (Photo)", "21:9 (Ultrawide)"], promptMax:20000 },
   /* v5.89.0 api-498427801 — Context-IR r2va: up to NINE reference images and
      a ratio enum that starts at "adaptive". Its optional videoUrls/audioUrls
      reference slots are not sent — this shelf has no way to author them. */
@@ -297,9 +307,9 @@ var RH_VIDEO_MODELS = [
   /* api-494859276 */
   { id:"happyhorse-1-1-r2v", label:"Happyhorse 1.1 — Ref (1080p, 15s)", fam:"HappyHorse · Ref", apiPath:"alibaba/happyhorse-1.1/reference-to-video", imageParam:"imageUrls", minImages:1, maxImages:9, oddOnly:false, resolutions:["720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "3:4", "4:3", "1:1", "4:5", "5:4", "9:21", "21:9"], promptMax:2500 },
   /* api-454760425 */
-  { id:"skyreels-v4-omni-reference-fast", label:"Skyreels V4 omni reference Fast — Ref (1080p, 15s)", fam:"SkyReels · Ref", apiPath:"skyreels-v4/omni-reference-fast", imageParam:"refImages", minImages:0, maxImages:3, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2500 },
+  { id:"skyreels-v4-omni-reference-fast", label:"Skyreels V4 omni reference Fast — Ref (1080p, 15s)", fam:"SkyReels · Ref", apiPath:"skyreels-v4/omni-reference-fast", imageParam:"refImages", refObj:{"type": "image", "url": "{{URL}}"}, minImages:1, maxImages:3, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2500 },
   /* api-454760424 */
-  { id:"skyreels-v4-omni-reference-std", label:"Skyreels V4 omni reference Std — Ref (1080p, 15s)", fam:"SkyReels · Ref", apiPath:"skyreels-v4/omni-reference-std", imageParam:"refImages", minImages:0, maxImages:3, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2500, extra:{"sound": true} },
+  { id:"skyreels-v4-omni-reference-std", label:"Skyreels V4 omni reference Std — Ref (1080p, 15s)", fam:"SkyReels · Ref", apiPath:"skyreels-v4/omni-reference-std", imageParam:"refImages", refObj:{"type": "image", "url": "{{URL}}"}, minImages:1, maxImages:3, oddOnly:false, resolutions:["480p", "720p", "1080p"], durations:["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:2500, extra:{"sound": true} },
   /* ======== v5.55.0 text-to-video — every documented endpoint ======== */
   /* api-448184406 */
   { id:"vidu-t2v", label:"Vidu Q2 — T2V (1080p, 10s)", fam:"Vidu · T2V", apiPath:"vidu/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["540p", "720p", "1080p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], aspect:true, aspects:["4:3", "3:4", "16:9", "9:16", "1:1"], promptMax:4000, extra:{"style": "general", "movementAmplitude": "auto"} },
@@ -387,8 +397,6 @@ var RH_VIDEO_MODELS = [
   { id:"rhv-s-official-t2v-pro", label:"Sora 2 Pro — T2V (1920x1080, 20s)", fam:"Sora · T2V", apiPath:"rhart-video-s-official/text-to-video-pro", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720x1280", "1280x720", "1024x1792", "1792x1024", "1080x1920", "1920x1080"], resParam:"size", durations:["4", "8", "12", "16", "20"], aspect:false, promptMax:20000 },
   /* api-448184443 */
   { id:"rhv-s-t2v", label:"Sora 2 Low cost — T2V (15s)", fam:"Sora · T2V", apiPath:"rhart-video-s/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["10", "15"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
-  /* api-448184441 */
-  { id:"rhv-s-t2v-pro-deprecated", label:"Sora 2 Pro Low cost — T2V (25s)", fam:"Sora · T2V", apiPath:"rhart-video-s/text-to-video-pro-deprecated", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["15", "25"], aspect:true, aspects:["9:16", "16:9"], promptMax:4000 },
   /* api-448184437 */
   { id:"wan-2-5-preview-t2v", label:"Wan 2.5 Preview — T2V (1248*1632, 10s)", fam:"Wan · T2V", apiPath:"alibaba/wan-2.5-preview/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["832*480", "480*832", "624*624", "1280*720", "720*1280", "960*960", "1088*832", "832*1088", "1920*1080", "1080*1920", "1440*1440", "1632*1248", "1248*1632"], resParam:"size", durations:["5", "10"], aspect:false, promptMax:1500 },
   /* api-448184440 */
@@ -396,11 +404,11 @@ var RH_VIDEO_MODELS = [
   /* api-448184436 */
   { id:"wan-2-7-t2v", label:"Wan 2.7 — T2V (1080P, 15s)", fam:"Wan · T2V", apiPath:"alibaba/wan-2.7/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:5000 },
   /* api-448184435 */
-  { id:"rhv-wan-2-2-t2v", label:"Wan 2.2 — T2V", fam:"Wan · T2V", apiPath:"rhart-video/wan-2.2/text-to-video", kind:"vnode", node:{"images": [], "optImages": [], "prompt": "14##positive_prompt", "fixed": {"133##select": "1", "130##select": "1"}}, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000 },
+  { id:"rhv-wan-2-2-t2v", label:"Wan 2.2 — T2V", fam:"Wan · T2V", apiPath:"rhart-video/wan-2.2/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"resolution": "832×480", "duration": "5"} },
   /* api-448184438 */
-  { id:"rhv-ltx-2-3-t2v", label:"Ltx 2.3 — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video", kind:"vnode", node:{"images": [], "optImages": [], "prompt": "188##prompt", "fixed": {"247##select": "2", "248##select": "2"}, "dur": "227##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  { id:"rhv-ltx-2-3-t2v", label:"Ltx 2.3 — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "720p", "aspectRatio": "16:9"} },
   /* api-448184439 */
-  { id:"rhv-ltx-2-3-t2v-lora", label:"Ltx 2.3 lora — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video-lora", kind:"vnode", node:{"images": [], "optImages": [], "prompt": "188##prompt", "fixed": {"247##select": "1", "248##select": "2"}, "dur": "227##value", "durRange": {"min": 5, "max": 15, "def": 5}}, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000 },
+  { id:"rhv-ltx-2-3-t2v-lora", label:"Ltx 2.3 lora — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video-lora", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
   /* api-448184433 */
   { id:"rhv-g-official-t2v", label:"Grok imagine — T2V (480p, 10s)", fam:"Grok · T2V", apiPath:"rhart-video-g-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "10"], aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:800 },
   /* api-498749520 */
@@ -423,12 +431,11 @@ var RH_VIDEO_MODELS = [
   { id:"gemini-omni-11-t2v", label:"Gemini Omni 1.1 Flash — T2V (4k, 10s)", fam:"Omni Flash · T2V", apiPath:"google/gemini-omni-1.1-flash/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["360p", "720p", "1080p", "4k"], durations:["3", "4", "5", "6", "7", "8", "9", "10"], durInt:true, aspect:true, aspects:["16:9", "9:16"], promptMax:2048 },
   /* api-498749521 */
   { id:"rhv-flux3-t2v", label:"Flux 3 video — T2V (fhd, 20s)", fam:"Flux · T2V", apiPath:"rhart-video-flux3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["hd", "fhd"], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:true, aspects:["auto", "21:9", "2:1", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20480 },
-  /* -------- registry-sourced keepers: these nine endpoints have NO page in
-     the current doc index (higgsfield, pixverse c1/v5.5/v5.6, runway gen4
-     pair, sora asyn, veo3.1-lite low-price, vidu q3-pro-fast). They shipped
+  /* -------- registry-sourced keepers: these eight endpoints have NO page in
+     the current doc index (pixverse c1/v5.5/v5.6, runway gen4 pair, sora asyn,
+     veo3.1-lite low-price, vidu q3-pro-fast; higgsfield/dop left in v6.22.0 — see RETIRED). They shipped
      in v4.98 from RunningHub's own model registry and stay exactly as
      registered until a doc page exists to verify them against. -------- */
-  { id:"higgsfield-dop", label:"higgsfield dop", fam:"Higgsfield", apiPath:"higgsfield/dop/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:2048, extra:{"options": "dop-turbo"} },
   { id:"pixverse-c1", label:"pixverse-c1 \u2014 1080p", fam:"PixVerse", apiPath:"pixverse-c1/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:[], aspect:false, promptMax:2048, extra:{duration:5, "generateAudioSwitch": true} },
   { id:"pixverse-v5-5", label:"pixverse-v5.5 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.5/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false", "generateMultiClipSwitch": "false"} },
   { id:"pixverse-v5-6", label:"pixverse-v5.6 \u2014 1080p, 10s", fam:"PixVerse", apiPath:"pixverse-v5.6/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["360p", "540p", "720p", "1080p"], durations:["5", "8", "10"], aspect:false, promptMax:2048, extra:{"generateAudioSwitch": "false"} },

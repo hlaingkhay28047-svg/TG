@@ -16,6 +16,14 @@ on:
         default: "identify"
         type: choice
         options: ["identify", "full"]
+      ids:
+        description: "v6.22.0 — space-separated api-<id> numbers to read IN FULL (request schema only); empty = the fixed matrix below"
+        required: false
+        default: ""
+      grep:
+        description: "v6.22.0 — optional regex; the spec job first prints every doc-index page whose id/title matches it (to find ids for endpoints with no known page)"
+        required: false
+        default: ""
   push:
     branches: [claude/hnk-studio-deployment-pr292-www53j]
     paths: [".github/workflows/fetch-docs.yml"]
@@ -209,6 +217,39 @@ jobs:
               || echo "FETCH-FAILED ${id}"
             echo ""
             echo "=====LIPSYNC-SPEC ${id} END====="
+          done
+  spec:
+    # v6.22.0 — the video-model probe (probe-video-models.yml) found endpoints
+    # whose ComfyUI node-keyed bodies RunningHub now refuses ("parameter
+    # '219##image' is not allowed, please use 'imageUrl' instead") and others
+    # whose field shapes moved (refImages objects, higgsfield motions). The
+    # error names one field at a time; the spec names them all. This job reads
+    # the REQUEST schema of exactly the pages asked for — title, path, and the
+    # requestBody block — so the corrected rows are transcribed from RunningHub's
+    # own words, never guessed. Read-only, no secrets, nothing written.
+    name: spec
+    if: ${{ inputs.ids != '' || inputs.grep != '' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Read the request schema of each requested page
+        env:
+          IDS: ${{ inputs.ids }}
+          GREP: ${{ inputs.grep }}
+        run: |
+          if [ -n "$GREP" ]; then
+            echo "=====INDEX-MATCH START====="
+            curl -sSL --retry 2 --connect-timeout 10 --max-time 90 "https://www.runninghub.ai/runninghub-api-doc-en/" \
+              | grep -aoE 'api-[0-9]{6,}[^<]{0,12}>[^<]{1,120}' | sort -u | grep -aiE "$GREP" | head -60 || echo "NO-MATCH"
+            echo "=====INDEX-MATCH END====="
+          fi
+          for id in $IDS; do
+            echo "=====SPEC ${id} START====="
+            body=$(curl -sSL --retry 2 --retry-delay 2 --connect-timeout 10 --max-time 60 \
+              "https://www.runninghub.ai/runninghub-api-doc-en/api-${id}.md" || echo "FETCH-FAILED")
+            echo "BYTES: ${#body}"
+            printf '%s\n' "$body" | grep -nE '^# |^  /|^title:|summary:' | head -8
+            printf '%s\n' "$body" | awk '/requestBody:/{p=1} /responses:/{p=0} p' | head -400
+            echo "=====SPEC ${id} END====="
           done
   fetch:
     name: fetch-${{ matrix.name }}

@@ -499,6 +499,8 @@ jobs:
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
         run: PORT=8931 node test/verify_video_fx_slots.js
+      - name: Video-model probe lane — every model can be asked on RunningHub itself through price-preview, no credit spent, the key masked and never written
+        run: PORT=8931 node test/verify_video_probe_lane.js
 
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker

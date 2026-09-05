@@ -51,7 +51,11 @@ function buildBody(def, imageUrls, promptText, resolution, duration, aspectRatio
   if (!imageUrls.length && (def.minImages === 0 || def.maxImages === 0)) {
     /* no image field at all */
   } else if (isArrayParam) {
-    body[ip] = imageUrls;
+    /* v6.22.0 — refObj: each reference as an object (SkyReels V4 omni refImages groups); {{URL}} takes the photo */
+    body[ip] = def.refObj ? imageUrls.map(function (u) { var o = {}; Object.keys(def.refObj).forEach(function (k) { o[k] = def.refObj[k] === "{{URL}}" ? u : def.refObj[k]; }); return o; }) : imageUrls;
+  } else if (def.imageParams) {
+    /* v6.22.0 — one named field per photo (minimax-h3-oss/fl2va-advanced: image1..image9) */
+    def.imageParams.forEach(function (k, i) { if (imageUrls[i]) body[k] = imageUrls[i]; });
   } else {
     body[ip] = imageUrls[0] || "";
     if (def.lastParam && imageUrls.length > 1) body[def.lastParam] = imageUrls[1];
@@ -169,7 +173,7 @@ function toolBody(def, videoUrl, imageUrls, promptText, optVals) {
   }
   (def.options || []).forEach(function (o) {
     var v = (o.key in optVals) ? optVals[o.key] : o.def;
-    body[o.key] = o.int ? Number(v) : v;
+    body[o.key] = o.int ? Number(v) : (o.list ? [v] : v);   /* v6.22.0 — LIST-typed option rides as a one-element array */
   });
   if (def.whPreset) {
     var wh = VT_WH[optVals.whPreset || "720p"] || VT_WH["720p"];
