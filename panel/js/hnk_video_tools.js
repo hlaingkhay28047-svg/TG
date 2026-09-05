@@ -82,6 +82,26 @@ var RH_VTOOL_MODELS = [
   { id:"mm-h3-regen-t2v", label:"MiniMax H3 — regenerate to 2K (prompt only)", apiPath:"minimax/hailuo-h3/regeneration-text-to-video", videoParam:"baseVideoUrl", prompt:"req", promptMax:40000, options:[{"key": "resolution", "values": ["2K"], "def": "2K"}] },
   /* api-498427802 — up to nine reference images, as at generation time. */
   { id:"mm-h3-regen-multimodal", label:"MiniMax H3 — regenerate to 2K (references)", apiPath:"minimax/hailuo-h3/regeneration-multimodal-to-video", videoParam:"baseVideoUrl", imageParam:"imageUrls", imageArray:true, imageMax:9, prompt:"req", promptMax:40000, options:[{"key": "resolution", "values": ["2K"], "def": "2K"}] },
+  /* v6.13.0 — SIX MORE TOOLS FROM RUNNINGHUB'S OWN REGISTRY. The owner asked
+     for the official HM-RunningHub kits to be read for endpoints the studio
+     does not carry yet; these six are video-in, exist in models_registry.json
+     (ComfyUI_RH_OpenAPI, 2026-09-01) AND capabilities.json (OpenClaw_RH_Skills,
+     2026-08-18), and each entry below is that registry's own parameter table:
+     the video field, the REQUIRED enums with their documented defaults, and
+     every other REQUIRED parameter at its documented default. Nothing here is
+     inferred from an endpoint name. */
+  /* registry: videoUrl* + targetResolution* (720p/1080p/4k, def 1080p) + targetFps* (30/60, def 30) — one call, both jumps */
+  { id:"topazlabs-video-upscale", label:"Topazlabs video upscale (resolution + fps)", apiPath:"topazlabs/video-upscale", videoParam:"videoUrl", options:[{"key": "targetResolution", "values": ["720p", "1080p", "4k"], "def": "1080p"}, {"key": "targetFps", "values": ["30", "60"], "def": "30"}] },
+  /* registry: videoUrl* (a clip of at most 30s) + styleName* — seven named looks and no documented default, so the first look the cards use stands as the default */
+  { id:"skyreels-v3-video-restyling", label:"SkyReels V3 video restyling (7 looks)", apiPath:"skyreels-v3/video-restyling", videoParam:"videoUrl", options:[{"key": "styleName", "values": ["simpsons", "lego", "paper_cutting", "amigurumi", "animal_crossing", "van_gogh", "pixel_art"], "def": "lego"}] },
+  /* registry: prompt* (2048) + videoUrl* + cutType (def Auto) + duration INT 2–5 (def 5) — the seconds are ADDED after the last frame, from a new camera angle */
+  { id:"skyreels-v3-shot-switching-extension", label:"SkyReels V3 video extension (shot switching)", apiPath:"skyreels-v3/shot-switching-video-extension", videoParam:"videoUrl", prompt:"req", promptMax:2048, options:[{"key": "cutType", "values": ["Auto", "Cut-In", "Cut-Out", "Shot/Reverse Shot", "Multi-Angle", "Cut Away"], "def": "Auto"}, {"key": "duration", "values": ["2", "3", "4", "5"], "def": "5", "int": true}] },
+  /* registry: prompt* + videoUrl* + duration INT 5–30 (def 5) — the seconds are ADDED in the same shot; the registry states no prompt ceiling, so the app holds its sibling's 2048 */
+  { id:"skyreels-v3-single-shot-extension", label:"SkyReels V3 video extension (single shot, +5–30s)", apiPath:"skyreels-v3/single-shot-video-extension", videoParam:"videoUrl", prompt:"req", promptMax:2048, options:[{"key": "duration", "values": ["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], "def": "5", "int": true}] },
+  /* registry: prompt* (2048) + videoUrl* (ONLY THE FIRST FIVE SECONDS are read) + aspectRatio (def 16:9) + referenceImageUrl (optional — a picture that guides the style) */
+  { id:"rhv-r-gen4-aleph-video-to-video", label:"Runway Gen-4 Aleph video edit Official", apiPath:"rhart-video-r/gen4-aleph-official/video-to-video", videoParam:"videoUrl", imageParam:"referenceImageUrl", prompt:"req", promptMax:2048, options:[{"key": "aspectRatio", "values": ["16:9", "9:16", "1:1", "4:3", "3:4"], "def": "16:9"}] },
+  /* registry: videoUrl* + projectName* (a name the service wants UNIQUE per job — the app stamps the time into it at submit, see rhVtBody) + sourceLang* (def zh) + targetLangs* (def en) + isDub (def false — ON here, so the result speaks the new language) + aiRemoveType (def 1: the burnt-in source subtitles are erased) + dubVoiceMode (def 0). Burmese is not among the nine languages the endpoint lists. */
+  { id:"volc-drama-video-translate", label:"Volc video translate + dub (9 languages)", apiPath:"volc-drama/video-translate", videoParam:"videoUrl", options:[{"key": "sourceLang", "values": ["zh", "en", "ja", "ko", "es", "pt", "id", "th", "vi"], "def": "zh"}, {"key": "targetLangs", "values": ["zh", "en", "ja", "ko", "es", "pt", "id", "th", "vi"], "def": "en"}], extra:{"projectName": "HNK-{{TS}}", "isDub": true, "aiRemoveType": "1", "dubVoiceMode": "0"} },
 ];
 
 var API = { LIST: RH_VTOOL_MODELS,

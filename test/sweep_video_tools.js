@@ -177,6 +177,33 @@ const CONTRACT = {
     "prompt",
     "baseVideoUrl",
     "resolution"
+  ],
+  "topazlabs/video-upscale": [
+    "videoUrl",
+    "targetResolution",
+    "targetFps"
+  ],
+  "skyreels-v3/video-restyling": [
+    "videoUrl",
+    "styleName"
+  ],
+  "skyreels-v3/shot-switching-video-extension": [
+    "prompt",
+    "videoUrl"
+  ],
+  "skyreels-v3/single-shot-video-extension": [
+    "prompt",
+    "videoUrl"
+  ],
+  "rhart-video-r/gen4-aleph-official/video-to-video": [
+    "prompt",
+    "videoUrl"
+  ],
+  "volc-drama/video-translate": [
+    "videoUrl",
+    "projectName",
+    "sourceLang",
+    "targetLangs"
   ]
 };
 
@@ -199,8 +226,8 @@ const CONTRACT = {
     paths: RH_VTOOL_MODELS.map(m => m.apiPath),
     options: document.getElementById("selVtModel").querySelectorAll("option").length
   }));
-  report("A) the tools shelf is 31 models with unique ids/endpoints, all in the picker",
-    reg.n === 31 && new Set(reg.ids).size === 31 && new Set(reg.paths).size === 31 && reg.options === 31,
+  report("A) the tools shelf is 37 models with unique ids/endpoints, all in the picker",
+    reg.n === 37 && new Set(reg.ids).size === 37 && new Set(reg.paths).size === 37 && reg.options === 37,
     reg);
 
   /* B) every tool builds a body its own endpoint would accept */
@@ -266,6 +293,20 @@ const CONTRACT = {
   report("C6) Gemini Omni 1.1 video edit is exactly videoUrl + prompt + resolution",
     g11 && Object.keys(g11.body).sort().join(",") === "prompt,resolution,videoUrl",
     g11 && g11.body);
+
+  /* v6.13.0 — volc-drama/video-translate wants a projectName UNIQUE per job, so
+     rhVtBody stamps the submit time into the extra's {{TS}}; dubbing is on, and
+     both languages ride as the registry's own enum strings. */
+  const tr = bodies.find(b => b.path === "volc-drama/video-translate");
+  report("C7) video translate stamps a unique project name, dubs, and carries both languages",
+    tr && /^HNK-\d{10,}$/.test(String(tr.body.projectName)) && tr.body.isDub === true &&
+    tr.body.sourceLang === "zh" && tr.body.targetLangs === "en" && tr.body.videoUrl === "VID.mp4" &&
+    !("prompt" in tr.body), tr && tr.body);
+  /* and the Aleph edit carries its OPTIONAL reference picture in the field the registry names */
+  const al = bodies.find(b => b.path === "rhart-video-r/gen4-aleph-official/video-to-video");
+  report("C8) Runway Aleph sends prompt + videoUrl + aspectRatio and the optional referenceImageUrl",
+    al && al.body.prompt === "test prompt" && al.body.videoUrl === "VID.mp4" && al.body.aspectRatio === "16:9" &&
+    al.body.referenceImageUrl === "IMG.jpg", al && al.body);
 
   /* D) UI honesty: image button only when the tool takes one, prompt likewise */
   const ui = await page.evaluate(() => {
