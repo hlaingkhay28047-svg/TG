@@ -114,7 +114,8 @@ report("F) the panel's lifted catalog carries the record with the same prompt, A
   !!wedCat && /Wedding/.test(String(wedCat.category || "")), { found: !!pit, cat: wedCat && wedCat.category });
 
 /* ---- G) What's New — the row shipped with 6.16.0; later releases stack above it ---- */
-const wn = APP.slice(APP.indexOf("var WHATS_NEW = ["), APP.indexOf("var WHATS_NEW = [") + 12000);
+const wnStart = APP.indexOf("var WHATS_NEW = [");
+const wn = APP.slice(wnStart, APP.indexOf("\n];", wnStart));   /* the whole table — later releases stack above this row */
 report("G) a What's New row opens this workflow", /\{ v:"6\.16\.0", kind:"wf", ref:"flower-path-copy"/.test(wn), wn.slice(0, 100));
 
 console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — only the flowers come across, onto the floor at the feet, on both surfaces");

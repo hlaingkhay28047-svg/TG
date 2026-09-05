@@ -111,8 +111,10 @@ report("E) the panel's lifted catalog carries the record with the same prompt, A
 function REQ3(x) { return x.req[2]; }
 
 /* ---- F) What's New ---- */
-const wn = APP.slice(APP.indexOf("var WHATS_NEW = ["), APP.indexOf("var WHATS_NEW = [") + 300);
-report("F) the newest What's New row opens Couple Compose", /\{ v:"6\.17\.0", kind:"wf", ref:"couple-compose"/.test(wn), wn.slice(0, 100));
+/* the row shipped with 6.17.0; later releases stack above it, so it is found anywhere in the table rather than at its head */
+const wnStart = APP.indexOf("var WHATS_NEW = [");
+const wn = APP.slice(wnStart, APP.indexOf("\n];", wnStart));
+report("F) a What's New row at 6.17.0 opens Couple Compose", /\{ v:"6\.17\.0", kind:"wf", ref:"couple-compose"/.test(wn), wn.slice(0, 100));
 
 console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — two faces onto the couple, everything else kept, on both surfaces");
 process.exit(failures ? 1 : 0);
