@@ -465,6 +465,13 @@ jobs:
       - name: Verify the studio fills the monitor it is opened on
         run: PORT=8931 node test/verify_desktop_fill.js
 
+      # v6.9.x — and the website: every section below the hero sat in a 1120px
+      # column (57% of a 1920 screen, 43% of a 2560 one). From 1440px the
+      # column follows the screen; measured from disk at 1366/1920/2560 and on
+      # a 390px phone, which must be byte-for-byte what it was.
+      - name: Verify the site fills the monitor it is opened on
+        run: node test/verify_landing_fill.js
+
       # v6.53.0 — the Text to Image shelf is the app's own RH_T2I_MODELS,
       # lifted; this re-runs the extraction and proves every model the picker
       # offers has an endpoint the panel can actually run.
