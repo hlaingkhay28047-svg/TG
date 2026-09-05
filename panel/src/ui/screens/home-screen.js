@@ -492,7 +492,7 @@ function render(root, deps) {
      kind-less Smart Workflow and the 16 Studio preset cards; 6.10.0 added
      Lanna Gold Heritage; 6.11.0 the ten Style Studio cards.
      verify_panel_page_parity holds this to the app. */
-  stat(185, "One-Tap Workflows");
+  stat(195, "One-Tap Workflows");
   stat(libCount, "Visual Library");
   stat(wfCount, "Smart Workflow");
   stat(162, "Retouch A Controls", "meitu");

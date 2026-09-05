@@ -175,7 +175,9 @@ function toolBody(def, videoUrl, imageUrls, promptText, optVals) {
     var wh = VT_WH[optVals.whPreset || "720p"] || VT_WH["720p"];
     body.outputWidth = wh[0]; body.outputHeight = wh[1];
   }
-  if (def.extra) Object.keys(def.extra).forEach(function (k) { if (!(k in body)) body[k] = def.extra[k]; });
+  /* v6.13.0 — an extra may carry {{TS}}: volc-drama/video-translate wants a
+     projectName that is UNIQUE per job, so the submit time is stamped in. */
+  if (def.extra) Object.keys(def.extra).forEach(function (k) { if (!(k in body)) { var ev = def.extra[k]; if (typeof ev === "string" && ev.indexOf("{{TS}}") >= 0) ev = ev.replace("{{TS}}", String(Date.now())); body[k] = ev; } });
   return body;
 }
 
