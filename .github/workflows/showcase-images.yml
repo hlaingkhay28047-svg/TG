@@ -40,7 +40,7 @@ on:
         required: false
         default: 'all'
       cards:
-        description: 'v2vcards only: space-separated card keys to (re)build, e.g. "vtFaceSwap vtCharSwap vtChar30". Empty or "all" builds every card. Use it to re-render one bad card without paying for the eight that are already good.'
+        description: 'v2vcards and cardsv3: space-separated card keys to (re)build, e.g. "vtFaceSwap vtCharSwap vtChar30". Empty or "all" builds every card. Use it to re-render one bad card without paying for the eight that are already good.'
         required: false
         default: 'all'
       tasks:
@@ -660,6 +660,41 @@ jobs:
                 # no ratio on the card pass: the prompt locks IMAGE 1's own
                 # framing and aspect, which is the whole promise.
                 submit "card-studio-look-copy" "$EDIT_PATH" "$(jbody "$LC_PROMPT" "[\"$ub\",\"$ul\"]" "")" || fail=1
+                ;;
+              cardsv3)
+                # v6.10.0 — the Video Smart Workflow cards, third cut (owner,
+                # 2026-09-05): not a before/after any more but a CARD — one
+                # original model, the same woman on every card, in a futuristic
+                # AI-editor studio, each card carrying the one motif that says
+                # what its button does. The owner's reference photographs are
+                # of real people from another studio's feed, so none of them is
+                # used or sent anywhere: the model is generated here, once, and
+                # every card is an identity-preserving edit of that portrait
+                # through rhart-image-n-pro-official — the app's own endpoints.
+                # The prompts live in tools/card_art_v3.json, not in this file.
+                # The Lanna Gold Heritage card (the new Smart Workflow) rides in
+                # the same set on the same model. 3:2; cropped to 960x640 locally.
+                CJ="tools/card_art_v3.json"
+                [ -s "$CJ" ] || { echo "CARDSV3: no $CJ on this ref"; fail=1; continue; }
+                T2I_PATH="rhart-image-n-pro-official/text-to-image"
+                # the model portrait is the set's identity: collected by task id
+                # (cardsv3-model:<taskId>) when one card is re-rendered later, so
+                # a re-render never invents a second woman
+                if [ -s out/cardsv3-model.png ]; then echo "== cardsv3-model already home"; else
+                  MP=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["model"]["prompt"])' "$CJ")
+                  mbody=$(python3 -c 'import json,sys; print(json.dumps({"prompt":sys.argv[1],"aspectRatio":"3:4","resolution":"2k"}))' "$MP")
+                  submit "cardsv3-model" "$T2I_PATH" "$mbody" png || { echo "CARDSV3 MODEL FAILED"; fail=1; continue; }
+                fi
+                murl=$(reupload "out/cardsv3-model.png") || { echo "CARDSV3 MODEL UPLOAD FAILED"; fail=1; continue; }
+                # paid art: CARDS names the ones this run is for, as in v2vcards
+                CARDS="${CARDS_IN:-all}"; [ -z "$CARDS" ] && CARDS="all"
+                for cname in $(python3 -c 'import json,sys; print(" ".join(c["name"] for c in json.load(open(sys.argv[1]))["cards"]))' "$CJ"); do
+                  if [ "$CARDS" != "all" ]; then
+                    case " $CARDS " in *" $cname "*) : ;; *) echo "== $cname not in this run's card list, skipping"; continue ;; esac
+                  fi
+                  CP=$(python3 -c 'import json,sys; print(next(c["prompt"] for c in json.load(open(sys.argv[1]))["cards"] if c["name"]==sys.argv[2]))' "$CJ" "$cname")
+                  submit "cardv3-$cname" "$EDIT_PATH" "$(jbody "$CP" "[\"$murl\"]" "3:2")" || fail=1
+                done
                 ;;
               *) echo "UNKNOWN PAIR $p"; fail=1 ;;
             esac
