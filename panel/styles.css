@@ -2410,6 +2410,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .vwiz-sheet .wslot.filled { border-style: solid; }
 .vwiz-sheet .wslot .th { width: 64px; height: 64px; border-radius: 9px; background-color: var(--bg); overflow: hidden; flex: none; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 22px; margin-right: 12px; }
 .vwiz-sheet .wslot .th img, .vwiz-sheet .wslot .th video { width: 100%; height: 100%; object-fit: cover; }
+.vwiz-sheet .wslot .th .im { width: 100%; height: 100%; background-size: cover; background-position: center; }   /* v6.21.0 — ffThumb() in the wizard slot */
 .vwiz-sheet .wslot .nm { font-size: 13px; font-weight: 800; color: var(--text); }
 .vwiz-sheet .wslot .rq { font-size: 11px; color: var(--accent-soft); }
 .vwiz-sheet .wslot .rq.opt { color: var(--muted); }

@@ -83,7 +83,9 @@ report("B5) the guide's first step tells the student about face references in al
 /* ---- C) the panel ---- */
 report("C) the panel's lifted VID_WF carries the same two clauses and the same three tails, and its badge reads the lifted model list",
   PANEL_VID.indexOf("var VID_REFS = ") >= 0 && PANEL_VID.indexOf("var VID_FX = ") >= 0 && PANEL_VID.indexOf("var VID_ID = " + id + ";") >= 0 && PANEL_VID.indexOf("var VID_KEEP = " + keep + ";") >= 0 && PANEL_VID.indexOf("var VID_CUT = " + cut + ";") >= 0 &&
-  /function vwRefMax\(id\)/.test(PANEL_JS) && /function vwNeedFor\(w\)/.test(PANEL_JS) && /need\.textContent = vwNeedFor\(w\);/.test(PANEL_JS) && /if \(vwiz\.kind === "i2v"\) return vwNeedFor\(vwiz\.w\);/.test(PANEL_JS), null);
+  /function vwRefMax\(id\)/.test(PANEL_JS) && /function vwNeedFor\(w\)/.test(PANEL_JS) && /need\.textContent = vwNeedFor\(w\);/.test(PANEL_JS) && /if \(vwiz\.kind === "i2v"\) return vwNeedFor\(vwiz\.w\);/.test(PANEL_JS) &&
+  /function vidRefMaxP\(\)/.test(PANEL_JS) && /if \(i >= 3\) return \(state\.vidRefs \|\| \[\]\)\[i - 3\] \|\| null;/.test(PANEL_JS) && /"rs rs-face"/.test(PANEL_JS) &&
+  /for \(let k = VREF_BASE; k < mx; k\+\+\) \{ const r = ffSlotGet\(k\); if \(r\) out\.push\(r\); \}/.test(PANEL_JS) && /"IMAGE " \+ \(q \+ 1\) \+ " — " \+ vwizL\("slotFace"\), false,/.test(PANEL_JS), null);
 
 /* ---- D..H) driven ---- */
 (async () => {

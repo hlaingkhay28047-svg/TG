@@ -248,9 +248,9 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     I.open && same(I.dots, D.DOTS) && same(I.onDot, ["Guide"]) && same(I.steps, I.want) && I.steps.length === 4 &&
     I.art && I.title && I.title.length > 2 && I.applied.prompt > 40 && !I.fastShown,
     { open: I.open, dots: I.dots, onDot: I.onDot, steps: I.steps, want: I.want, art: I.art, fast: I.fastShown });
-  report("C2) Inputs asks for one photograph, marked required, and Next stays dead until it lands",
-    same(I.step2.onDot, ["Inputs"]) && I.step2.slots === 1 && I.step2.filled === 0 && I.step2.nextDisabled === true &&
-    same(I.step2.req, [D.L.req[app.lang] || D.L.req.en]), I.step2);
+  report("C2) Inputs asks for one photograph, marked required, plus one optional face-reference slot (v6.21.0 — the slots follow the model), and Next stays dead until the photograph lands",
+    same(I.step2.onDot, ["Inputs"]) && I.step2.slots === 2 && I.step2.filled === 0 && I.step2.nextDisabled === true &&
+    same(I.step2.req, [D.L.req[app.lang] || D.L.req.en, D.L.opt[app.lang] || D.L.opt.en]), I.step2);
   report("C3) a photo dropped on the PAGE's slot repaints the wizard — slot filled, thumbnail drawn, Next alive",
     I.step2b.filled === 1 && I.step2b.thumb && I.step2b.nextDisabled === false, I.step2b);
   report("C4) Generate mirrors the page: the request box and the model/size/length selects, clones reading the page's values",
@@ -331,7 +331,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       switchPage("video"); await settle();
       q("#vidWfRow .wfmini")[0].click(); await settle();
       out.i2v = { open: visible(), dots: txt("#vwizIn .wiz-dot .l"), onDot: txt("#vwizIn .wiz-dot.on .l"),
-        steps: txt("#vwizIn .wf-step span:not(.n)"), want: P.steps("i2v").map(s => s.replace("{N}", vwizNeed())),
+        steps: txt("#vwizIn .wf-step span:not(.n)"), want: P.steps("i2v").map(s => s.replace("{N}", vwizNeed())), need: vwizNeed(),
         title: ((document.querySelector("#vwizIn .wiz-top .ttl") || {}).textContent || "").trim(),
         art: !!document.querySelector("#vwizIn img.wiz-visual"), pagePrompt: document.getElementById("vidPromptP").value.length };
       document.querySelector("#vwizIn .wiz-nav .btn-gold").click(); await settle();
@@ -394,11 +394,11 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     PI.steps.length === 4 && PI.art && PI.title.length > 2 && PI.pagePrompt > 40,
     { before: pan.beforeOpen, open: PI.open, dots: PI.dots, steps: PI.steps, want: PI.want, art: PI.art });
   report("D2) the same words on both surfaces: dots identical, and the Burmese guide lines the panel draws are the app's block verbatim",
-    same(PI.dots, I.dots) && pan.lang === "my" && same(PI.steps, D.STEPS.i2v.my.map(s => s.replace("{N}", "၁ ပုံ"))) &&
+    same(PI.dots, I.dots) && pan.lang === "my" && same(PI.steps, D.STEPS.i2v.my.map(s => s.replace("{N}", PI.need))) &&   /* v6.21.0 — {N} is the card's own badge */
     same(PV.steps, D.STEPS.v2v.my.map(s => s.replace("{N}", PV.need))),
     { panelLang: pan.lang, panel: PI.steps, block: D.STEPS.i2v.my, v2v: PV.steps });
-  report("D3) Inputs: one photo slot, Next dead; the panel's slot filling (ffSlotSet → renderRefs) repaints the wizard and frees Next",
-    same(PI.step2.onDot, ["Inputs"]) && PI.step2.slots === 1 && PI.step2.nextDis === true &&
+  report("D3) Inputs: the photo slot plus one optional face-reference slot, Next dead; the panel's slot filling (ffSlotSet → renderRefs) repaints the wizard and frees Next",
+    same(PI.step2.onDot, ["Inputs"]) && PI.step2.slots === 2 && PI.step2.nextDis === true &&
     PI.step2b.filled === 1 && PI.step2b.thumb && PI.step2b.nextDis === false, { step2: PI.step2, step2b: PI.step2b });
   report("D4) Generate clones the page's model select and mirrors its request; a pick here lands on the page and on its painted label",
     same(PI.step3.onDot, ["Generate"]) && PI.step3.gen && PI.step3.clone && PI.step3.cloneValue === PI.step3.pageValue &&
