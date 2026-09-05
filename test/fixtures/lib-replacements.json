@@ -1,5 +1,5 @@
 {
- "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed \u2014 these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set \u2014 re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here).",
+ "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed \u2014 these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set \u2014 re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign \u2014 pinned to __lib-purge-v6-17-0-couple-compose.",
  "files": [
   {
    "path": "docs/app/lib/vid/vt-charSwap.jpg",
@@ -60,6 +60,11 @@
    "path": "docs/app/lib/vid/vt-headswap.jpg",
    "sha256": "bafbc3687010a1ed6211bc4a1ec2fcc570f46b321770dd38b8be1172b8145f00",
    "tag": "./__lib-purge-v6-10-0-cards-v3"
+  },
+  {
+   "path": "docs/app/lib/wf/cards5/couple-compose.jpg",
+   "sha256": "80f7ea623a1d466c058997d6453c95e85582c92d6a94a8956b8eed1edaae0072",
+   "tag": "./__lib-purge-v6-17-0-couple-compose"
   }
  ]
 }

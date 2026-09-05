@@ -105,13 +105,10 @@ report("E2) the panel's Lighting designer uses the strengthened clause and ships
   /lightEquip: false,/.test(PANEL_MAIN), { designer: designer.slice(0, 160) });
 
 /* ---- F) What's New says so, and opens a relight card ---- */
-/* the relight row rides this release; another row may lead it (6.16.0 ships a new workflow in the same release),
-   so the check is: among the rows of the newest version there is one that opens a Relight card and says so */
-const wnBlock = APP.slice(APP.indexOf("var WHATS_NEW = ["), APP.indexOf("var WHATS_NEW = [") + 8000);
-const newest = (wnBlock.match(/\{ v:"([0-9.]+)"/) || [])[1] || "";
-const rowRe = new RegExp('\\{ v:"' + newest.replace(/\./g, "\\.") + '", kind:"wf", ref:"lg-side",\\n    t:\\{[^\\n]*no softbox, lamp or light panel');
-report("F) a What's New row of the newest version (" + newest + ") opens a Relight card and says the softbox is gone",
-  !!newest && rowRe.test(wnBlock), { newest, sample: wnBlock.slice(0, 100) });
+/* the relight row shipped with 6.16.0; later releases stack above it, so it is found by what it says */
+const wnBlock = APP.slice(APP.indexOf("var WHATS_NEW = ["), APP.indexOf("var WHATS_NEW = [") + 12000);
+report("F) a What's New row opens a Relight card and says the softbox is gone",
+  /\{ v:"6\.16\.0", kind:"wf", ref:"lg-side",\n    t:\{[^\n]*no softbox, lamp or light panel/.test(wnBlock), wnBlock.slice(0, 100));
 
 console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — twelve lights described as light, every source outside the picture, on both surfaces");
 process.exit(failures ? 1 : 0);

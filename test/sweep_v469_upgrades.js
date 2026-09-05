@@ -154,7 +154,10 @@ const DECLARED = [
   /* 6.10.0 — the ten Video Smart Workflow cards re-arted as one set under
      their own names; LIB_ART_REV hands each a new URL, this clears the old. */
   { tag: "./__lib-purge-v6-10-0-cards-v3",
-    re: /\/lib\/vid\/vt-(charSwap|faceSwap|headswap|anime|filmlook|heritage|extend|restore|erasesub|char30)\.jpg$/ }
+    re: /\/lib\/vid\/vt-(charSwap|faceSwap|headswap|anime|filmlook|heritage|extend|restore|erasesub|char30)\.jpg$/ },
+  /* 6.17.0 — Couple Compose redrawn under its own name; LIB_ART_REV hands it a new URL, this clears the old. */
+  { tag: "./__lib-purge-v6-17-0-couple-compose",
+    re: /\/lib\/wf\/cards5\/(couple-compose)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",

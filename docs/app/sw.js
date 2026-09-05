@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-16-0";
+var CACHE = "hnk-web-studio-v6-17-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -234,7 +234,11 @@ var LIB_PURGES = [
      LIB_ART_REV gives each a new URL, so a device that has never seen the
      token cannot be served the old bytes; this entry clears the copies the
      old URL left behind so they stop occupying the cache. */
-  { tag: "./__lib-purge-v6-10-0-cards-v3", re: new RegExp("/lib/vid/vt-(charSwap|faceSwap|headswap|anime|filmlook|heritage|extend|restore|erasesub|char30)\\.jpg$") }
+  { tag: "./__lib-purge-v6-10-0-cards-v3", re: new RegExp("/lib/vid/vt-(charSwap|faceSwap|headswap|anime|filmlook|heritage|extend|restore|erasesub|char30)\\.jpg$") },
+  /* 6.17.0 — Couple Compose redrawn under its own name for the three-input
+     redesign (two faces set onto a couple photograph). LIB_ART_REV gives the
+     card a new URL; this clears the copy the old URL left behind. */
+  { tag: "./__lib-purge-v6-17-0-couple-compose", re: new RegExp("/lib/wf/cards5/(couple-compose)\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair
