@@ -78,7 +78,7 @@ const SIGNATURE = {
 const block = src.slice(src.indexOf("var VID_WF=["), src.indexOf("function vidWfByKey"));
 const keys = (block.match(/key:"([a-zA-Z0-9]+)"/g) || []).map(k => k.slice(5, -1));
 report("A) all ten makeup workflows are registered and the shelf holds thirty-three (twenty-nine here, four reference-video cards since v6.15.0)",
-  MK.every(k => keys.indexOf(k) >= 0) && keys.length === 33 && new Set(keys).size === 33,
+  MK.every(k => keys.indexOf(k) >= 0) && keys.length === 34 && new Set(keys).size === 34,
   { n: keys.length, missing: MK.filter(k => keys.indexOf(k) < 0) });
 
 /* ---- B) the third tail exists, and is not one of the two that forbid cuts ---- */
@@ -131,7 +131,7 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
       byKey[k].text.indexOf("One continuous take") < 0),
     MK.filter(k => byKey[k].text.indexOf("Cut hard on the beat") < 0));
 
-  /* ---- D) THE SHOTS TILE THE TEN SECONDS EXACTLY ----
+  /* ---- D) THE SHOTS TILE THE THIRTY SECONDS EXACTLY (ten until v6.21.0) ----
      Not just "inside ten seconds" (v4.87 T2) and not just "reaches ten"
      (T3): no gap, no overlap, no dead air. */
   const tiling = MK.map(k => {
@@ -144,12 +144,12 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
     return { k: k, start: b.length ? b[0][0] : null, end: b.length ? b[b.length - 1][1] : null,
       holes: holes, shrink: shrink };
   });
-  report("D) the shots tile the clip exactly — start at 0, end at 10, no gap and no overlap",
-    tiling.every(t => t.start === 0 && t.end === 10 && !t.holes.length && !t.shrink.length),
-    tiling.filter(t => !(t.start === 0 && t.end === 10 && !t.holes.length && !t.shrink.length)));
+  report("D) the shots tile the clip exactly — start at 0, end at 30, no gap and no overlap",
+    tiling.every(t => t.start === 0 && t.end === 30 && !t.holes.length && !t.shrink.length),
+    tiling.filter(t => !(t.start === 0 && t.end === 30 && !t.holes.length && !t.shrink.length)));
 
-  report("D2) the ten-second budget is the model's real ceiling, not a house preference",
-    got.dur === "10", { dur: got.dur });
+  report("D2) the thirty-second budget is the model's real ceiling, not a house preference — Seedance 2.5's durations enum tops out at 30",
+    got.dur === "30", { dur: got.dur });
 
   /* ---- E) the ceiling that truncation makes real ---- */
   const lens = MK.map(k => ({ k: k, len: byKey[k].text.length }));
@@ -165,13 +165,16 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
   report("F) each prompt names the things actually in its own clip",
     sigMiss.length === 0, sigMiss);
 
+  /* v6.21.0 — VID_CUT grew (transitions between shots, the one-person clause); it is
+     shared by design, so the colour-swap check reads each prompt's own body only */
+  function body(t) { return t.split(" Her face, bone structure and identity stay exactly as the reference photograph in every shot")[0]; }
   function words(t) {
     return new Set(t.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w => w.length > 3));
   }
   const pairs = [];
   for (let i = 0; i < MK.length; i++)
     for (let j = i + 1; j < MK.length; j++) {
-      const A = words(byKey[MK[i]].text), B = words(byKey[MK[j]].text);
+      const A = words(body(byKey[MK[i]].text)), B = words(body(byKey[MK[j]].text));
       let inter = 0; A.forEach(w => { if (B.has(w)) inter++; });
       pairs.push({ a: MK[i], b: MK[j], j: +(inter / (A.size + B.size - inter)).toFixed(3) });
     }
@@ -261,7 +264,7 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
   const OTHER_VID = fs.readdirSync(path.join(APP, "lib", "vid"))
     .filter(f => /^vw-.*\.jpg$/.test(f) && MK.indexOf(f.slice(3, -4)) < 0);
   report("H3b) it covers exactly these ten and none of the other video cards",
-    OTHER_VID.length === 23 &&
+    OTHER_VID.length === 24 &&
     OTHER_VID.every(f => !fresh[0].re.test("/lib/vid/" + f)),
     { others: OTHER_VID.length,
       swept: OTHER_VID.filter(f => fresh.length && fresh[0].re.test("/lib/vid/" + f)) });
@@ -318,7 +321,7 @@ report("B2) VID_CUT names the one change a beauty edit must not make",
       img: c.querySelector("img") ? c.querySelector("img").getAttribute("src") : null
     })));
   report("I) all thirty-three video cards render with a label, a summary and art",
-    cards.length === 33 &&
+    cards.length === 34 &&
     cards.every(c => c.t.length > 2 && c.s.length > 5 && c.img && /^lib\/vid\//.test(c.img)),
     { n: cards.length, bad: cards.filter(c => !(c.t && c.s && c.img)).length });
 

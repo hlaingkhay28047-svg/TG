@@ -255,7 +255,7 @@ const REFUSED = ["kling-elements-advanced",
     stillValid: !!rhVideoModelDef(VID_SETUP_V.model)
   }));
   report("G) the video workflow shelf still pins a model that exists (thirty-three cards since v6.15.0)",
-    wf.n === 33 && wf.setup.model === "gemini-omni-video" && wf.stillValid === true, wf);
+    wf.n === 34 && wf.setup.model === "seedance-2-5-global-token-mmv" && wf.stillValid === true, wf);
 
   report("H) no page errors", errs.length === 0, errs);
 

@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.89.0";
+const PANEL_VERSION = "6.90.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9870,6 +9870,18 @@ function vidPaintOptions() {
 const VID_ART_BASE = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
 /* the app's own three card labels for this shelf, its nine-language maps
    carried verbatim (the panel's I18N table stays untouched) */
+/* v6.21.0 — the badge follows the card's model, as the app's does: an array image
+   field with room for more says "1–N photos"; a single frame says "1 photo". */
+function vwRefMax(id) {
+  const ms = (globalThis.HNK && globalThis.HNK.videoModels) || [];
+  const m = ms.find(function (x) { return x.id === id; }); const ip = (m && m.imageParam) || "";
+  return (/Urls$|Images$|keyframes/.test(ip) && ((m && m.maxImages) | 0) > 1) ? m.maxImages : 1;
+}
+function vwNeedFor(w) {
+  const id = (w && w.setup && w.setup.model) || ($("selVidModel") && $("selVidModel").value) || "";
+  const mx = vwRefMax(id);
+  return mx > 1 ? vwL({ my: "၁–" + accNum(mx) + " ပုံ", en: "1–" + mx + " photos", shn: "1–" + mx + " ၶႅပ်း", kac: "Sumla 1–" + mx, th: "1–" + mx + " รูป", zh: "1–" + mx + " 张", vi: "1–" + mx + " ảnh", id: "1–" + mx + " foto", ms: "1–" + mx + " foto" }) : vwL(VW_NEED);
+}
 const VW_NEED = { my: "၁ ပုံ", en: "1 photo", shn: "1 ၶႅပ်း", kac: "Sumla 1", th: "1 รูป", zh: "1 张", vi: "1 ảnh", id: "1 foto", ms: "1 foto" };
 const VW_USE = { my: "သုံးမယ်", en: "Use this", shn: "ၸႂ်ႉဢၼ်ၼႆႉ", kac: "Ndai lang u", th: "ใช้อันนี้", zh: "使用", vi: "Dùng cái này", id: "Pakai ini", ms: "Guna ini" };
 const VW_SEL = { my: "ရွေးပြီး", en: "Selected", shn: "လိူၵ်ႈယဝ်ႉ", kac: "Lata da sai", th: "เลือกแล้ว", zh: "已选择", vi: "Đã chọn", id: "Terpilih", ms: "Dipilih" };
@@ -9940,7 +9952,7 @@ function vidWfCard(w) {
   v.appendChild(im);
   const need = document.createElement("span");
   need.className = "wf-need";
-  need.textContent = vwL(VW_NEED);
+  need.textContent = vwNeedFor(w);   /* v6.21.0 */
   v.appendChild(need);
   m.appendChild(v);
   const ti = document.createElement("div"); ti.className = "t"; ti.textContent = P ? stripIcn(P.tr(w.label)) : ""; m.appendChild(ti);
@@ -10327,7 +10339,7 @@ const vwiz = { kind: "", w: null, step: 1, token: 0, busy: false, result: null, 
 function vwizPack() { return (globalThis.HNK && globalThis.HNK.videoWizard) || null; }
 function vwizL(k) { const P = vwizPack(); return P ? P.tr(P.L[k] || { en: k }) : k; }
 function vwizNeed() {
-  if (vwiz.kind === "i2v") return vwL(VW_NEED);
+  if (vwiz.kind === "i2v") return vwNeedFor(vwiz.w);   /* v6.21.0 */
   const P = vtWfPack(); return (P && vwiz.w && vwiz.w.need) ? stripIcn(P.tr(vwiz.w.need)) : "";
 }
 /* the app's vwizPhotoReq: the tool demands the photograph, or the card's badge promised it (photo:true) */

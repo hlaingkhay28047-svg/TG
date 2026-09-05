@@ -71,7 +71,7 @@ function appArray(name) {
   const block = APP.slice(APP.indexOf("var VID_WF=["), APP.indexOf("function vidWfByKey"));
   const keys = (block.match(/key:"([a-zA-Z0-9]+)"/g) || []).map(k => k.slice(5, -1));
   report("A) the deck holds thirty-three cards and the four reference-video cards close it, in the order the clips arrived",
-    keys.length === 33 && new Set(keys).size === 33 && keys.slice(-4).join(",") === KEYS.join(","), { n: keys.length, tail: keys.slice(-4) });
+    keys.length === 34 && new Set(keys).size === 34 && keys.slice(-4).join(",") === KEYS.join(","), { n: keys.length, tail: keys.slice(-4) });
   const setupGaps = [];
   KEYS.forEach(k => {
     const m = block.match(new RegExp('\\{ key:"' + k + '", art:"lib/vid/vw-' + k + '\\.jpg", setup:\\{ model:"([^"]+)", res:"([^"]+)", dur:"([^"]+)", aspect:"([^"]+)" \\},'));
@@ -232,7 +232,7 @@ function appArray(name) {
     LANGS.forEach(l => { if (!w.label[l] || !w.summary[l] || !w.hint[l]) pGaps.push(k + "." + l + " missing on the panel"); });
   });
   report("H2) the lifted deck carries all thirty-three cards, the four with the same setup and prompts, and the panel's own video catalog knows the model they pin",
-    pack.WF.length === 33 && pGaps.length === 0 && !!pm && pm.apiPath === m.apiPath, { n: pack.WF.length, pGaps, panelModel: !!pm });
+    pack.WF.length === 34 && pGaps.length === 0 && !!pm && pm.apiPath === m.apiPath, { n: pack.WF.length, pGaps, panelModel: !!pm });
 
   console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS");
   process.exit(failures ? 1 : 0);
