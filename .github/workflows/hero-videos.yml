@@ -99,6 +99,7 @@ jobs:
             [hero-greet-evening]="warm lamplight flickers softly in the evening glow, her hair sways gently, tiny motes of light drift."
             [banner-golden-temple]="warm golden light breathes across the temple, her hair and earrings sway gently, thin incense haze drifts through the air."
             [banner-freeform]="the floating scene-frames drift and shimmer slowly, golden particles stream gently from her raised hand, her hair stirs in a soft breeze."
+            [banner-talk-photo]="inside the framed photograph her lips move softly as if speaking and her eyes blink once, the glowing sound-wave ribbons pulse and flow slowly from the frame toward the microphone, the small holographic waveform bars rise and fall in rhythm, thin haze drifts across the floor."
           )
           mkdir -p out
           fail=0
