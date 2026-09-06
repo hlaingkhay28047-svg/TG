@@ -512,6 +512,8 @@ jobs:
         run: PORT=8931 node test/verify_retouch_reshape.js
       - name: One download door — the website /download/ route forwards into the web app, every in-app link opens the account card in place, the panel button opens the web app, the server issues to web sessions only
         run: PORT=8931 node test/verify_download_door.js
+      - name: Greyed video models — the seven wan-2.2 / ltx-2.3 graphs RunningHub refuses server-side stay listed but disabled with the note, a stored pick falls back, generate refuses, panel in step
+        run: PORT=8931 node test/verify_video_down.js
       - name: Native pick — every pick control carries a real file input on top, so Android shells that ignore a programmatic click still open the chooser; the file lands in the same slot
         run: PORT=8931 node test/verify_native_pick.js
       - name: Retouch A / B live preview — the stage measures its own speed and walks a quality ladder, zoom presets frame the face, press-and-hold peeks at Before, the A|B split swaps sides
