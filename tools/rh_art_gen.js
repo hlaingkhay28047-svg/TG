@@ -10,7 +10,9 @@
    environment only and is never printed; the log carries images and task
    ids, nothing else.
 
-   Usage:  RH_KEY=… node tools/rh_art_gen.js <jobs.json> [onlyJobName,…]
+   Usage:  RH_KEY=… [ART_OUT=dir] [ART_PRINT=0] node tools/rh_art_gen.js <jobs.json> [onlyJobName,…]
+   ART_OUT writes every picture (+ summary.json) into a directory; ART_PRINT=0 keeps the base64 dump out
+   of the log (the workflow publishes the directory on a scratch branch instead).
    jobs.json: { "jobs": [ { "name": "light-01", "apiPath": "rhart-image-n-g31-flash/image-to-image",
                             "base": "docs/app/lib/st-sample.jpg" | null, "prompt": "…",
                             "ratio": "1:1" | "", "resolution": "1k" | "2k", "extra": { … body fields … } } ] }
@@ -29,6 +31,9 @@ const jobsFile = process.argv[2];
 const only = (process.argv[3] || "").split(",").map(s => s.trim()).filter(Boolean);
 const spec = JSON.parse(fs.readFileSync(jobsFile, "utf8"));
 const jobs = spec.jobs.filter(j => !only.length || only.indexOf(j.name) >= 0);
+const OUT_DIR = String(process.env.ART_OUT || "").trim();
+const PRINT = String(process.env.ART_PRINT || "1") !== "0";
+if (OUT_DIR) fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const H = { "Authorization": "Bearer " + KEY, "Accept": "application/json" };
 const uploads = new Map();
@@ -88,11 +93,17 @@ async function runJob(job) {
   if (!res) throw new Error("no result " + JSON.stringify(fin).slice(0, 200));
   const r = await fetch(res.url); const ab = Buffer.from(await r.arrayBuffer());
   const ct = r.headers.get("content-type") || "image/png";
-  const b64 = ab.toString("base64");
-  console.log(`=====ART ${job.name} ${ct} ${ab.length} START=====`);
-  for (let i = 0; i < b64.length; i += 60000) console.log(b64.slice(i, i + 60000));
-  console.log(`=====ART ${job.name} END=====`);
-  return { name: job.name, taskId: tid, bytes: ab.length, usage: fin.usage || fin.taskUsageList || null };
+  const ext = /png/i.test(ct) ? "png" : /webp/i.test(ct) ? "webp" : "jpg";
+  /* ART_OUT: also write the picture to a directory (the workflow publishes it on a scratch branch the
+     container can git-fetch — a 55-picture base64 log is too large for the log API to hand back). */
+  if (OUT_DIR) fs.writeFileSync(path.join(OUT_DIR, job.name + "." + ext), ab);
+  if (PRINT) {
+    const b64 = ab.toString("base64");
+    console.log(`=====ART ${job.name} ${ct} ${ab.length} START=====`);
+    for (let i = 0; i < b64.length; i += 60000) console.log(b64.slice(i, i + 60000));
+    console.log(`=====ART ${job.name} END=====`);
+  }
+  return { name: job.name, file: OUT_DIR ? job.name + "." + ext : null, taskId: tid, bytes: ab.length, usage: fin.usage || fin.taskUsageList || null };
 }
 (async () => {
   const done = [], failed = [];
@@ -105,8 +116,10 @@ async function runJob(job) {
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
+  const summary = { ok: done.map(d => ({ name: d.name, file: d.file, taskId: d.taskId, bytes: d.bytes, usage: d.usage })), failed };
   console.log("===ART-SUMMARY-BEGIN===");
-  console.log(JSON.stringify({ ok: done.map(d => ({ name: d.name, taskId: d.taskId, bytes: d.bytes, usage: d.usage })), failed }, null, 0));
+  console.log(JSON.stringify(summary, null, 0));
   console.log("===ART-SUMMARY-END===");
+  if (OUT_DIR) fs.writeFileSync(path.join(OUT_DIR, "summary.json"), JSON.stringify(summary, null, 1));
   process.exit(failed.length && !done.length ? 1 : 0);
 })();

@@ -7,9 +7,15 @@
 # never written to a file, artifact or output.
 #
 # WHAT IT SPENDS: exactly the jobs listed in the checked-in jobs file (tools/…json),
-# one task each, on the model each job names. The results are printed as base64
-# between ===== ART <name> ===== markers; the container decodes them, resizes
-# them and commits the finished art. Nothing is written to the repo by the run.
+# one task each, on the model each job names.
+#
+# HOW THE PICTURES COME BACK: run #1 printed 55 pictures as base64 into the job log —
+# ~55 MB the log API could not hand back to the container, and the log/artifact download
+# hosts are not reachable from it. So the run now writes the pictures to art_out/ and
+# publishes that directory on a scratch branch, art/<run id>, with the workflow's own
+# token; the container git-fetches it, finishes the art, and deletes the branch. The
+# scratch branch carries generated pictures and a summary (task ids, byte counts) only —
+# never the key, never a change to the product tree.
 name: Generate card art on RunningHub
 on:
   workflow_dispatch:
@@ -30,7 +36,7 @@ on:
         required: false
         default: ''
 permissions:
-  contents: read
+  contents: write   # the scratch art/<run id> branch (see the header); nothing else is written
 concurrency:
   group: gen-art
   cancel-in-progress: false
@@ -52,7 +58,26 @@ jobs:
           RH_KEY: ${{ secrets.RUNNINGHUB_KEY != '' && secrets.RUNNINGHUB_KEY || inputs.rh_key }}
           JOBS: ${{ inputs.jobs }}
           ONLY: ${{ inputs.only }}
+          ART_OUT: art_out
+          ART_PRINT: "0"
         run: |
           if [ -z "$RH_KEY" ]; then echo "no key: add the RUNNINGHUB_KEY secret or pass rh_key"; exit 1; fi
           echo "::add-mask::$RH_KEY"
           node tools/rh_art_gen.js "$JOBS" "$ONLY"
+      - name: Publish the pictures on a scratch branch (art/<run id>)
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ ! -d art_out ] || [ -z "$(ls -A art_out)" ]; then echo "nothing to publish"; exit 0; fi
+          ls -la art_out | head -80
+          BR="art/${GITHUB_RUN_ID}"
+          git config user.name "hnk-art-lane"
+          git config user.email "art-lane@users.noreply.github.com"
+          git checkout --orphan "$BR" >/dev/null 2>&1
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          git add -f art_out
+          git -c commit.gpgsign=false commit -q -m "art: pictures from gen-art run ${GITHUB_RUN_ID} (generated on RunningHub; scratch branch, deleted after the container fetches it)"
+          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/${BR}"
+          echo "published refs/heads/${BR} ($(ls art_out | wc -l) files)"
