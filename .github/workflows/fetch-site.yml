@@ -48,7 +48,7 @@ jobs:
 
       - name: Read the pages
         env:
-          URLS: ${{ inputs.urls || 'https://foneoai.com/en https://foneoai.com' }}
+          URLS: ${{ inputs.urls || 'https://foneoai.com/en/download https://foneoai.com/en/changelog https://foneoai.com/en/blog https://foneoai.com/en/about https://foneoai.com/en/contact https://foneoai.com/en/pricing' }}
           SHOTS: ${{ inputs.shots || 'yes' }}
           SCROLL: ${{ inputs.scroll || '8' }}
         run: |
@@ -76,6 +76,8 @@ jobs:
                     meta.forEach(m => console.log("meta:", m.slice(0, 300)));
                     const text = await page.evaluate(() => document.body ? document.body.innerText : "");
                     console.log("-----TEXT-----"); console.log(text.replace(/\n{3,}/g, "\n\n").slice(0, 80000));
+                    const hidden = await page.evaluate(() => (document.body ? document.body.textContent : "").replace(/\s+/g, " ").trim());
+                    console.log("-----TEXTCONTENT-----"); console.log(hidden.slice(0, 60000));
                     const links = await page.evaluate(() => Array.from(document.querySelectorAll("a[href]")).map(a => (a.getAttribute("href") || "") + " | " + (a.innerText || "").trim().replace(/\s+/g, " ").slice(0, 80)));
                     console.log("-----LINKS-----"); Array.from(new Set(links)).forEach(l => console.log(l));
                     const imgs = await page.evaluate(() => Array.from(document.querySelectorAll("img,video,source")).map(i => i.tagName + " " + (i.getAttribute("src") || i.getAttribute("data-src") || i.getAttribute("srcset") || "").slice(0, 200) + " | alt=" + (i.getAttribute("alt") || "")));
