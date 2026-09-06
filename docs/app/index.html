@@ -2426,7 +2426,12 @@ html.splashing #splash{display:flex}
     <h2>Secure Photoshop Panel</h2>
     <p class="mut" id="unifiedDownloadNote">Approved account, active license, download permission and the registered Computer are required.</p>
     <div class="unified-actions">
-      <button class="btn btn-gold" id="unifiedDownload" type="button" disabled>Create temporary Panel download</button>
+      <!-- v6.28.1 — ONE REQUESTER (owner decision, 2026-09-06). This page reports the account,
+           the license and the registered devices; the Panel itself is downloaded from the Account
+           card's Photoshop Panel group on Home and nowhere else. This is a door to it (the same
+           in-place intent the dashboard and Tutorials links use), not a second place that asks
+           the API for the file. -->
+      <a class="btn btn-gold" id="unifiedDownload" href="?panel=download" data-panel-intent>Get the Panel — Account → Photoshop Panel</a>
       <button class="btn" id="unifiedOpenSetup" type="button">Login, password &amp; payments</button>
       <button class="btn" id="unifiedLogout" type="button">Logout</button>
     </div>
@@ -25398,7 +25403,7 @@ function unifiedRender(){
     $("unifiedAccessText").textContent = "Open Login, password & payments to sign in or register.";
     $("unifiedAccountStatus").textContent = "Signed out"; $("unifiedLicenseStatus").textContent = "—"; $("unifiedLicenseExpiry").textContent = "—";
     $("unifiedWebPermission").textContent = "—"; $("unifiedDownloadPermission").textContent = "—"; $("unifiedPanelPermission").textContent = "—";
-    $("unifiedDownload").disabled = true; return;
+    return;
   }
   if (unified.loading || (unified.enforced && !data)){
     banner.className = "unified-banner";
@@ -25406,7 +25411,7 @@ function unifiedRender(){
     $("unifiedAccessText").textContent = "AI Tools and Panel delivery remain locked until the server confirms this session.";
     $("unifiedAccountStatus").textContent = "Checking"; $("unifiedLicenseStatus").textContent = "Checking";
     $("unifiedWebPermission").textContent = "Checking"; $("unifiedDownloadPermission").textContent = "Checking"; $("unifiedPanelPermission").textContent = "Checking";
-    $("unifiedDownload").disabled = true; return;
+    return;
   }
   if (!data){
     banner.className = "unified-banner";
@@ -25414,7 +25419,7 @@ function unifiedRender(){
     $("unifiedAccessText").textContent = "Refreshing the unified account service. Your existing plan remains visible in Setup.";
     $("unifiedAccountStatus").textContent = acc.profile ? "Active plan check" : "Checking"; $("unifiedLicenseStatus").textContent = isPremium() ? "Active" : "Inactive";
     $("unifiedWebPermission").textContent = "Legacy"; $("unifiedDownloadPermission").textContent = "Legacy"; $("unifiedPanelPermission").textContent = "Legacy";
-    $("unifiedDownload").disabled = true; return;
+    return;
   }
   var status = unifiedAccountStatus(data), license = data.license || {}, p = data.permissions || {}, devices = data.devices || {}, panel = data.panel || {};
   var msg = unifiedMessage(status,data), ready = unifiedCanWeb();
@@ -25440,9 +25445,8 @@ function unifiedRender(){
   var current = unifiedDeviceType();
   $("unifiedEnrollPhone").hidden = current !== "phone" || !!devices.phone;
   $("unifiedEnrollComputer").hidden = current !== "computer" || !!devices.computer;
-  $("unifiedDownload").disabled = !unifiedCanDownload();
   $("unifiedDownloadNote").textContent = unifiedCanDownload()
-    ? "Verified. A temporary link will be created only when you press the button."
+    ? "Verified. Get the Panel from the Account card's Photoshop Panel group — the one place that creates the temporary link."
     : "Download requires Active account + license, download permission and this registered Computer.";
   var legacyPanel = $("accGrpPanel");
   if (legacyPanel){
@@ -25512,7 +25516,6 @@ function unifiedWire(){
   document.querySelectorAll("[data-unified-page],[data-tutorial-page]").forEach(function(b){ b.addEventListener("click",function(){ switchPage(b.getAttribute("data-unified-page")||b.getAttribute("data-tutorial-page")); }); });
   var ep=$("unifiedEnrollPhone"); if(ep) ep.onclick=function(){ unifiedEnroll("phone"); };
   var ec=$("unifiedEnrollComputer"); if(ec) ec.onclick=function(){ unifiedEnroll("computer"); };
-  var dl=$("unifiedDownload"); if(dl) dl.onclick=accRequestPanelDownload;
   /* v6.28.0 — ONE DOOR: the dashboard and tutorial "Photoshop Panel download" links no longer
      leave for the website's /download/ route (which now forwards back here). They open the
      account card's Panel group in place — the same intent the ?panel=download deep link and
@@ -26256,7 +26259,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.28.0";
+var APP_VER="6.28.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

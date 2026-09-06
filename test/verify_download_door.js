@@ -67,14 +67,18 @@ report("A4) panel-version.json stays where the panel's update probe reads it",
   exists("docs/download/panel-version.json") && PANEL.includes("/download/panel-version.json"));
 
 /* ---- B) the web app's doors ---- */
-const intentDoors = (APP.match(/<a class="btn(?: btn-gold)?" href="\?panel=download" data-panel-intent>/g) || []).length;
-report("B) every in-app door is the account card's own intent: no link leaves for ../download/, the dashboard and tutorial links carry the intent, the account-card button keeps ?panel=download as its no-script fallback",
-  !APP.includes('href="../download/"') && intentDoors === 2 &&
+const intentDoors = (APP.match(/<a class="btn(?: btn-gold)?"(?: id="[^"]+")? href="\?panel=download" data-panel-intent>/g) || []).length;
+report("B) every in-app door is the account card's own intent: no link leaves for ../download/, the dashboard, Tutorials and Account Center links carry the intent, the account-card button keeps ?panel=download as its no-script fallback",
+  !APP.includes('href="../download/"') && intentDoors === 3 &&
   APP.includes('<a class="btn btn-gold grow" id="accPanelDownload" href="?panel=download" style="text-align:center"></a>') &&
   !APP.includes("Open secure download area"), { intentDoors });
-report("B2) unifiedWire opens the intent in place for those links (no reload) and still binds both explicit controls to the request",
+report("B2) unifiedWire opens the intent in place for those links (no reload) and binds exactly ONE control to the request — the Account card's Panel button (v6.28.1)",
   APP.includes('document.querySelectorAll("a[data-panel-intent]").forEach(function(a){ a.addEventListener("click",function(ev){ if(ev&&ev.preventDefault) ev.preventDefault(); accPanelIntentStart(); }); });') &&
-  APP.includes('dl.onclick=accRequestPanelDownload') && APP.includes('ad.addEventListener("click",accRequestPanelDownload)'));
+  !APP.includes('dl.onclick=accRequestPanelDownload') && APP.includes('ad.addEventListener("click",accRequestPanelDownload)') &&
+  (APP.match(/accRequestPanelDownload/g) || []).length === 2);
+report("B2b) the Account Center's Panel section is a door, not a requester: a link carrying the intent, no disabled-button state, a note that names the one place",
+  APP.includes('<a class="btn btn-gold" id="unifiedDownload" href="?panel=download" data-panel-intent>Get the Panel — Account → Photoshop Panel</a>') &&
+  !/\$\("unifiedDownload"\)\.disabled/.test(APP) && APP.includes("Get the Panel from the Account card's Photoshop Panel group"));
 const requester = (APP.match(/async function accRequestPanelDownload\(ev\)\{[\s\S]*?\n\}/) || [""])[0];
 report("B3) the request itself is unchanged: POST /v1/downloads/panel from the account card, same-origin delivery address, no device id round-trip",
   requester.includes('accFetch("/v1/downloads/panel",{method:"POST"') && requester.includes("u.origin!==location.origin") &&
@@ -139,7 +143,7 @@ async function armPage(page, errs) {
     window.__mark = (window.__mark || 0) + 1;
     _panelDownloadIntent = false; _panelDownloadStage = "";
     const links = Array.from(document.querySelectorAll("a[data-panel-intent]"));
-    const a = which === "dash" ? links[0] : links[1];
+    const a = which === "dash" ? links[0] : (which === "tut" ? links[1] : links[2]);
     if (!a) return { missing: true };
     const href0 = location.href;
     a.click();
@@ -156,6 +160,10 @@ async function armPage(page, errs) {
   const d2 = await door("tut");
   report("D2) the Tutorials card's link does the same from another page",
     d2.mark === 2 && d2.sameUrl && d2.stage === "done" && d2.panelOpen && d2.focused === "accPanelDownload" && d2.home, d2);
+  await page.evaluate(() => switchPage("pgAccount")); await page.waitForTimeout(200);
+  const d2b = await door("acc");
+  report("D2b) the Account Center's Panel button is a door too: it opens the Account card's Panel group in place and hands the request to that one button",
+    d2b.mark === 3 && d2b.sameUrl && d2b.stage === "done" && d2b.panelOpen && d2b.focused === "accPanelDownload" && d2b.home, d2b);
   await page.evaluate(() => document.getElementById("accPanelDownload").click());
   await page.waitForTimeout(900);
   report("D3) the account-card button posts to /v1/downloads/panel and fetches the issued one-time address — the door still delivers",
