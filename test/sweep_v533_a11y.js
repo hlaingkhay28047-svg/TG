@@ -77,7 +77,13 @@ async function nameOf(page, selector) {
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", e => errors.push(String(e)));
-  page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
+  page.on("console", m => {
+    /* v6.27.0 — WebKit logs the Chromium-only viewport key (interactive-widget=resizes-content, the
+       phone keyboard rule) as an error-level notice and ignores it; that is the engine talking
+       about a key it does not have, not the app raising an error. Measured by the cross-engine lane. */
+    if (/Viewport argument key "interactive-widget" not recognized/.test(m.text())) return;
+    if (m.type() === "error") errors.push(m.text());
+  });
   await page.goto(BASE, { waitUntil: "networkidle" });
   await page.waitForTimeout(2200);
 

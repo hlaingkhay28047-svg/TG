@@ -152,8 +152,13 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
           const target = gr.querySelector(".chip") || gr;
           const ev = new WheelEvent("wheel", { deltaY: 160, deltaX: 0, bubbles: true, cancelable: true });
           target.dispatchEvent(ev);
+          /* v6.27.0 - does this engine let author CSS set scrollbar-width at all? Headless Firefox
+             computes "none" whatever the stylesheet says (even !important; measured on the
+             cross-engine lane), so the thin-bar claim is unobservable there and is reported as such. */
+          const probe = document.createElement("style"); probe.textContent = "#stGroupChips{scrollbar-width:thin !important}"; document.head.appendChild(probe);
+          const honours = getComputedStyle(gr).scrollbarWidth === "thin"; probe.remove();
           out.wheel = { before, after: gr.scrollLeft, prevented: ev.defaultPrevented,
-            scrollbar: getComputedStyle(gr).scrollbarWidth, pointer: matchMedia("(hover:hover) and (pointer:fine)").matches };
+            scrollbar: getComputedStyle(gr).scrollbarWidth, honours, pointer: matchMedia("(hover:hover) and (pointer:fine)").matches };
         }
         switchPage("pgHome"); await settle(120);
         const kick = document.querySelector("#pgHome .page-hero .ph-kick");
@@ -173,7 +178,7 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
       check(`E3) at ${w}px every Tutorials button sits below its text, all three on one baseline, the number still a pill`,
         E.tut.length === 3 && E.tut.every(t => t.gap >= 8 && t.chipW < 100) && new Set(E.tut.map(t => t.btnBottom)).size === 1, JSON.stringify(E.tut));
       check(`E4) at ${w}px the Retouch group rail scrolls with the mouse wheel and shows a thin scrollbar`,
-        !!E.wheel && E.wheel.pointer && E.wheel.after > E.wheel.before && E.wheel.prevented && E.wheel.scrollbar === "thin", JSON.stringify(E.wheel));
+        !!E.wheel && E.wheel.pointer && E.wheel.after > E.wheel.before && E.wheel.prevented && (E.wheel.scrollbar === "thin" || E.wheel.honours === false), JSON.stringify(E.wheel));
       check(`E5) at ${w}px the small labels read at monitor size (kicker ≥12, card badge ≥11, select context ≥9.5)`,
         E.labels.kick >= 12 && E.labels.need >= 11 && E.labels.ctx >= 9.5, JSON.stringify(E.labels));
       check(`E6) at ${w}px nothing scrolls sideways and no page error`, !E.overflow && errs.length === 0, JSON.stringify({ overflow: E.overflow, errs }));

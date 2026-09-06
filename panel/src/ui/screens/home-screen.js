@@ -495,7 +495,7 @@ function render(root, deps) {
   stat(200, "One-Tap Workflows");
   stat(libCount, "Visual Library");
   stat(wfCount, "Smart Workflow");
-  stat(162, "Retouch A Controls", "meitu");
+  stat(163, "Retouch A Controls", "meitu");
   stat(213, "Retouch B Pro", "evoto");
   root.appendChild(stats);
 
