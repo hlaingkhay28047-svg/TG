@@ -116,7 +116,10 @@ function report(name, ok, detail) {
   const heic = await page.evaluate(async () => {
     const accept = document.getElementById("filePick").getAttribute("accept") || "";
     const nullResult = await new Promise(res => downscale("data:image/heic;base64,AAAA", res));
-    return { accept: /heic/.test(accept) && /heif/.test(accept), nullOnBad: nullResult === null, msg: typeof unreadableImgMsg === "function" && unreadableImgMsg().length > 10 };
+    /* v6.23.1: the attribute is image/* — it covers image/heic and image/heif, and the explicit MIME list it replaced
+       is one of the things OEM pickers refuse (verify_native_pick pins image/* and the .heic/.heif name sniff) */
+    const heicOk = accept === "image/*" || (/heic/.test(accept) && /heif/.test(accept));
+    return { accept: heicOk, nullOnBad: nullResult === null, msg: typeof unreadableImgMsg === "function" && unreadableImgMsg().length > 10 };
   });
   report("6) HEIC accept + undecodable -> null + localized reason", heic.accept && heic.nullOnBad && heic.msg, heic);
 
