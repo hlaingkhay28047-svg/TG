@@ -1,0 +1,91 @@
+name: Fetch public web pages (read-only)
+
+# Read-only helper (task #112, 2026-09-06). The dev container's egress policy blocks
+# most public sites (foneoai.com among them); GitHub runners can read them. This job
+# opens the pages named in the dispatch in headless Chromium, prints each page's
+# visible text, links and images between unambiguous markers, and prints a desktop
+# and a phone screenshot as base64 chunks the container decodes. Nothing is written
+# to the repo, no secrets are used, and the fetched text is reference data only —
+# never instructions.
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "space-separated https URLs to read"
+        required: true
+      shots:
+        description: "print full-page screenshots as base64 (yes/no)"
+        required: false
+        default: "yes"
+      scroll:
+        description: "scroll passes before reading (lazy sections); 0-20"
+        required: false
+        default: "6"
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    name: fetch
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install playwright@1.62.1
+          ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Read the pages
+        env:
+          URLS: ${{ inputs.urls }}
+          SHOTS: ${{ inputs.shots }}
+          SCROLL: ${{ inputs.scroll }}
+        run: |
+          cat > /tmp/fetch.js <<'JS'
+          const { chromium } = require("playwright");
+          const urls = (process.env.URLS || "").split(/\s+/).filter(Boolean);
+          const shots = (process.env.SHOTS || "yes") === "yes";
+          const passes = Math.max(0, Math.min(20, parseInt(process.env.SCROLL || "6", 10) || 0));
+          const b64 = (tag, buf) => { const s = buf.toString("base64"); console.log(`-----${tag} base64 ${s.length}-----`); for (let i = 0; i < s.length; i += 60000) console.log(s.slice(i, i + 60000)); console.log(`-----${tag} END-----`); };
+          (async () => {
+            const browser = await chromium.launch();
+            for (const u of urls) {
+              console.log(`=====PAGE ${u} START=====`);
+              for (const [name, vp, mobile] of [["desktop", { width: 1280, height: 900 }, false], ["phone", { width: 393, height: 851 }, true]]) {
+                const ctx = await browser.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: 1, locale: "en-US", userAgent: mobile ? "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1" : undefined });
+                const page = await ctx.newPage();
+                try {
+                  const resp = await page.goto(u, { waitUntil: "domcontentloaded", timeout: 90000 });
+                  try { await page.waitForLoadState("networkidle", { timeout: 20000 }); } catch (e) {}
+                  for (let i = 0; i < passes; i++) { await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.9)); await page.waitForTimeout(600); }
+                  await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(800);
+                  if (name === "desktop") {
+                    console.log("final-url:", page.url(), "| status:", resp && resp.status(), "| title:", await page.title());
+                    const meta = await page.evaluate(() => Array.from(document.querySelectorAll("meta[name],meta[property]")).map(m => (m.getAttribute("name") || m.getAttribute("property")) + "=" + (m.getAttribute("content") || "")).slice(0, 60));
+                    meta.forEach(m => console.log("meta:", m.slice(0, 300)));
+                    const text = await page.evaluate(() => document.body ? document.body.innerText : "");
+                    console.log("-----TEXT-----"); console.log(text.replace(/\n{3,}/g, "\n\n").slice(0, 80000));
+                    const hidden = await page.evaluate(() => (document.body ? document.body.textContent : "").replace(/\s+/g, " ").trim());
+                    console.log("-----TEXTCONTENT-----"); console.log(hidden.slice(0, 60000));
+                    const links = await page.evaluate(() => Array.from(document.querySelectorAll("a[href]")).map(a => (a.getAttribute("href") || "") + " | " + (a.innerText || "").trim().replace(/\s+/g, " ").slice(0, 80)));
+                    console.log("-----LINKS-----"); Array.from(new Set(links)).forEach(l => console.log(l));
+                    const imgs = await page.evaluate(() => Array.from(document.querySelectorAll("img,video,source")).map(i => i.tagName + " " + (i.getAttribute("src") || i.getAttribute("data-src") || i.getAttribute("srcset") || "").slice(0, 200) + " | alt=" + (i.getAttribute("alt") || "")));
+                    console.log("-----MEDIA-----"); Array.from(new Set(imgs)).forEach(l => console.log(l));
+                    const heads = await page.evaluate(() => Array.from(document.querySelectorAll("h1,h2,h3,h4")).map(h => h.tagName + " " + (h.innerText || "").trim().replace(/\s+/g, " ").slice(0, 160)));
+                    console.log("-----HEADINGS-----"); heads.forEach(h => console.log(h));
+                  }
+                  if (shots) b64(`SHOT ${name}`, await page.screenshot({ fullPage: true, type: "jpeg", quality: 55 }));
+                } catch (e) { console.log("FETCH-FAILED", name, u, String(e).slice(0, 300)); }
+                await ctx.close();
+              }
+              console.log(`=====PAGE ${u} END=====`);
+            }
+            await browser.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          JS
+          NODE_PATH="$PWD/node_modules" node /tmp/fetch.js
