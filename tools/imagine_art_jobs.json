@@ -1,0 +1,445 @@
+{
+ "note": "Imagine W1 art — 54 template thumbnails (image-to-image on the studio's own base photos with the template's own prompt) and the page banner. Card art = base | cardPreset composite, built by the wave script.",
+ "jobs": [
+  {
+   "name": "th-lighting-window",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: soft directional daylight from a large window to one side — gentle wrap, a soft falloff into the shadow side, neutral daylight colour. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-warmWindow",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: warm late-afternoon sunlight pouring through a window — amber tones on the lit side, soft warm bounce in the shadows. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-brightGlow",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: bright airy high-key light — luminous glowing highlights on skin and hair, lifted shadows, a clean fresh feel without blowing out detail. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-warm",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: a warm tungsten-toned soft light — cosy golden-orange colour temperature, soft shadows, an intimate evening-indoors mood. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-harshSun",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: hard midday sunlight from high above — crisp sharp-edged shadows, bright specular highlights, strong contrast, a clear-sky look. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-goldenSun",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: golden-hour sunlight — low warm sun, long soft-edged shadows, a honey-coloured glow on skin, gentle warm haze. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-sunRays",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: visible beams of sunlight cutting through light haze from behind and above — luminous rays, glowing edges, soft volumetric light. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-afternoon",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: low afternoon sun from the side — warm directional light, long shadows, gentle contrast, a relaxed end-of-day feel. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-windowStreaks",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: sunlight through a window frame — sharp bright streaks and blind-slat shadow stripes falling across the subject and the background. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-leafDapple",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: dappled sunlight filtered through tree leaves — soft-edged leaf-shadow patterns dancing over the subject, warm and cool speckles. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-soft",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: a large soft diffused beauty light from the front — even flattering illumination, minimal shadows, smooth gentle gradients. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-lighting-goldRim",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/st-sample.jpg",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: a golden backlight rimming the hair and shoulders — glowing edge light with a darker, softly filled front, cinematic separation from the background. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-winterStreet",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a snowy European-style town street in winter — soft falling snow, frosted shopfronts, cool blue-grey daylight with warm window lights. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-softGarden",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a lush green garden in gentle soft sunlight — leafy bokeh, a light breeze, fresh natural greens, soft flattering light. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-flowerGarden",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a blooming flower garden — roses and hydrangeas in soft pastel colours around and behind the person, dreamy shallow depth of field. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-wildflowerField",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a wide field of wildflowers under an open sky — daisies and poppies to the horizon, warm natural daylight. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-countryField",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a calm countryside field — soft grass, a distant tree line and farmhouse, gentle overcast-to-sunny light. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-riceField",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a ripe golden rice paddy at harvest time — glowing yellow rice heads, low warm sun, soft haze over distant fields. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-goldenHill",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a rolling hill of tall golden grass in backlight — grass heads glowing, a soft sky, warm rim light on the person. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-autumnPark",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: an autumn park — orange and red maple trees, fallen leaves on the path, soft golden afternoon light. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-beach",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a bright tropical beach — white sand, turquoise water and gentle waves behind, clear blue sky, sunny daylight. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-sunsetSea",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: the sea at sunset — an orange-pink sky, the sun low over the water, warm light on the person, gentle waves. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-morningSun",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a soft early-morning scene — pale golden sun, dewy grass and light mist, calm and fresh, gentle warm light. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-mistyDawn",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a misty dawn landscape — soft fog layers, muted pastel sky, diffused cool-warm light, quiet atmosphere. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-goldenWind",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: an open golden field with a breeze — swaying grass and hair, warm backlight, drifting seeds catching the sun. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-goldenSunset",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: a golden sunset horizon — deep amber sky, sun flare at the edge of frame, warm glowing light on skin. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-portrait-blueTwilight",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-093.jpg",
+   "prompt": "Place the person from this photograph into a new scene: blue-hour twilight — a deep blue dusk sky, city or garden lights beginning to glow, cool ambient light with a soft warm fill. Cut the person out cleanly with hair strands and edges intact and re-light them to match the new scene's light direction, colour and softness, with correct contact shadows and reflections; keep the camera angle, framing and crop of the original.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-grass",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: fresh green lawn grass, even and well kept, vivid healthy green. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-naturalGrass",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: natural meadow grass in mixed greens with small clover and uneven tufts, soft and slightly wild. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-meadowGrass",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: open meadow grass, knee-length with seed heads, gently swaying, green with hints of yellow. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-wildGrass",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: tall wild grass and reeds, untamed and textured, greens and browns mixed. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-dryGrass",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: dry golden-brown late-summer grass, straw-like and sunlit. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-greenFlowerField",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: a green field dotted with small yellow and white meadow flowers among the grass. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-whiteFlowers",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: a carpet of tiny white flowers, like daisies or baby's breath, dense and soft over low green. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-naturalFlowers",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: a natural mix of meadow flowers in soft pinks, whites and purples growing among grass. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-wildflowers",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: colourful wildflowers — red poppies, blue cornflowers, yellow buttercups — scattered thickly in the grass. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-goldenSand",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: warm golden beach sand with soft ripples and footprints, dry and fine. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-whiteSand",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: fine bright white tropical sand, smooth with gentle texture. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-blueLake",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: the shallow edge of a clear blue lake — the person standing in ankle-deep water with soft ripples and a faint reflection. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-stillWater",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: a mirror-still sheet of shallow water reflecting the person and the sky, soft ripples only at the feet. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-pebbles",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: smooth grey and white river pebbles, rounded and varied, dry and natural. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-surface-deepBlueSea",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Replace ONLY the ground surface under and around the subject: deep blue sea water — the person standing knee-deep in clear rich blue water with gentle waves and light foam. Keep the person, their pose, shoes and shadows anchored naturally on the new surface with correct contact and perspective; keep the sky, the background above the ground line and everything else unchanged.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-snowfall",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: gentle falling snow — soft flakes near and far, a light dusting of snow on the ground and shoulders, cool bright winter light. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-lightRain",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: a light drizzle — fine rain streaks, wet glossy ground with soft reflections, overcast diffused light. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-heavyRain",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: heavy dramatic rain — dense rain streaks, splashes on the ground, wet hair and fabric sheen, moody dark-grey sky. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-fogMist",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: soft low fog and mist — the background fading into pale layers, muted colours, the person still crisp in front. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-goldenHaze",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: warm golden-hour haze — sun-lit atmospheric glow, soft flare, dust motes glittering in the light. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-overcast",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: a soft overcast sky — even diffused cloud light, gentle shadows, calm muted tones, a clean editorial feel. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-stormClouds",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: dramatic dark storm clouds rolling in — deep grey-blue sky, a brooding contrast, a shaft of light on the person. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-rainbow",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: a fresh-after-rain sky with a soft natural rainbow arcing behind the scene, clearing clouds, clean bright light. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-blueHour",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: blue-hour dusk — a deep blue sky after sunset, cool ambient light, small warm lights beginning to glow in the distance. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-clearSunny",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: a clear sunny day — a vivid blue sky with a few soft white clouds, crisp bright sunlight, clean shadows. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-autumnLeaves",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: orange and red autumn leaves drifting through the air and settling on the ground, warm soft afternoon light. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "th-weather-blossomPetals",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "base": "docs/app/lib/full/user-ref-200.jpg",
+   "prompt": "Add weather to this photograph: pale pink blossom petals swirling in a soft breeze, some near the lens and softly blurred, gentle spring light. Keep the person, clothing, background and framing; the weather elements must sit at the right depth — some in front of and some behind the subject — with matching light, colour temperature and reflections, as a real camera would have captured it.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k"
+  },
+  {
+   "name": "banner-imagine",
+   "apiPath": "rhart-image-n-pro-official/text-to-image",
+   "base": null,
+   "ratio": "16:9",
+   "resolution": "2k",
+   "prompt": "Cinematic wide studio banner for an AI photo-editing tool called Imagine: a young Southeast Asian woman photographer in a dark modern studio holds a tablet showing a before/after split of the same portrait — the left half in flat grey light, the right half glowing in warm golden-hour light with soft falling snow; behind her, floating translucent glass cards show tiny template thumbnails (sun rays, rain, flower field, sand). Warm gold and deep navy palette, soft rim light, shallow depth of field, photoreal, no text, no captions, no watermark, no logos."
+  }
+ ]
+}
