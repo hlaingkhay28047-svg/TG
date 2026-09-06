@@ -550,8 +550,7 @@ const I18N = {
        do is stated on the card, not left for the customer to discover. */
     btn_get_update: "Download the update",
     upd_hint: "The panel fetches the new release itself — you are already signed in. Photoshop does not let a plugin replace its own files, so the last step is yours: double-click the saved .ccx and Creative Cloud installs it.",
-    upd_getting: "Fetching the update…",
-    upd_saved: "Saved. Double-click it and Creative Cloud installs the update.",
+    upd_web: "Opening the Web App — get the Panel from Account → Photoshop Panel there.",
     upd_none: "This is the newest release.",
     money_intro: "Every GENERATE is booked at the amount RunningHub actually charged — not an estimate. The balance is read straight from your RunningHub account.",
     money_bal: "Balance",
@@ -1185,8 +1184,7 @@ const I18N = {
     sec_about: "APP နဲ့ UPDATE",
     btn_get_update: "Update ကို ဒေါင်းမယ်",
     upd_hint: "Panel ကိုယ်တိုင် ဗားရှင်းအသစ်ကို ဆွဲပေးပါတယ် — အကောင့်ဝင်ပြီးသားမို့ website ပြန်သွားစရာ မလိုတော့ပါ။ Photoshop က plugin ကို သူ့ဖာသာသူ ပြောင်းခွင့် မပေးလို့ နောက်ဆုံးအဆင့်ကတော့ အရှင်လုပ်ရပါမယ် — သိမ်းထားတဲ့ .ccx ကို နှစ်ချက်နှိပ်ပါ၊ Creative Cloud က သွင်းပေးပါလိမ့်မယ်။",
-    upd_getting: "Update ဆွဲနေပါတယ်…",
-    upd_saved: "သိမ်းပြီးပါပြီ။ နှစ်ချက်နှိပ်ရင် Creative Cloud က သွင်းပေးပါလိမ့်မယ်။",
+    upd_web: "Web App ဖွင့်ပေးနေပါတယ် — Panel ကို Account → Photoshop Panel မှာ ယူပါ။",
     upd_none: "ဒါက နောက်ဆုံးဗားရှင်းပါ။",
     money_intro: "GENERATE တစ်ခါလုပ်တိုင်း RunningHub က ဖြတ်တဲ့ ငွေအမှန်ကို မှတ်ထားပါတယ် — ခန့်မှန်းချက် မဟုတ်ပါ။ လက်ကျန်ငွေကတော့ RunningHub အကောင့်ကနေ တိုက်ရိုက် ဆွဲယူတာပါ။",
     money_bal: "လက်ကျန်",
@@ -1820,8 +1818,7 @@ const I18N = {
     sec_about: "APP လႄႈ UPDATE",
     btn_get_update: "လူတ်ဢဝ် Update",
     upd_hint: "Panel ႁင်းၵူၺ်းလူတ်ဢဝ်ႁဵတ်းဝႆႉ — လူင်ႈၶဝ်ႈဝႆႉယဝ်ႉ။ Photoshop ဢမ်ႇပၼ် plugin လႅၵ်ႈႁင်းၵူၺ်း၊ ၶၵ်ႉလိုၼ်းသုတ်း တဵၵ်း .ccx သွင်းပၼ်။",
-    upd_getting: "လူတ်ဢဝ်ဝႆႉ…",
-    upd_saved: "သိမ်းယဝ်ႉ။ တဵၵ်းသွင်ႇသွင်ႇ Creative Cloud သႂ်ႇပၼ်။",
+    upd_web: "ပိုတ်ႇ Web App — ဢဝ် Panel တီႈ Account → Photoshop Panel။",
     upd_none: "ၼႆႉပဵၼ်ဢၼ်မႂ်ႇသုတ်းယဝ်ႉ။",
     money_intro: "GENERATE ၵူႈပွၵ်ႈ RunningHub ဢဝ်ငိုၼ်းၵႃႈႁိုဝ် မၢႆဝႆႉတႄႉတႄႉ — ဢမ်ႇၸႂ်ႈလၢမ်း",
     money_bal: "ငိုၼ်းလိူဝ်",
@@ -2453,8 +2450,7 @@ const I18N = {
     sec_about: "APP hte UPDATE",
     btn_get_update: "Update la u",
     upd_hint: "Panel gaw nnan ai version hpe shi hkrai la ai — nang gaw shang da sai. Photoshop gaw plugin hpe shi hkrai galai na matu n hkraw ai majaw, hpang jahtum lam gaw nang na lam re: makoi da ai .ccx hpe lahkawng lang dip u, Creative Cloud gaw bang ya na re.",
-    upd_getting: "Update la nga ai…",
-    upd_saved: "Makoi da sai. Lahkawng lang dip yang Creative Cloud bang ya na re.",
+    upd_web: "Web App hpaw nga ai — Panel hpe Account → Photoshop Panel kaw la u.",
     upd_none: "Ndai gaw nnan htum ai re.",
     money_intro: "GENERATE langai mi hpe RunningHub la ai gumhpraw teng teng hpe mahkrum da ai — myit yu ai n re",
     money_bal: "Ngam ai",
@@ -3086,8 +3082,7 @@ const I18N = {
     sec_about: "แอปและอัปเดต",
     btn_get_update: "ดาวน์โหลดอัปเดต",
     upd_hint: "แผงดึงเวอร์ชันใหม่มาให้เอง — คุณลงชื่อเข้าใช้อยู่แล้ว Photoshop ไม่ให้ปลั๊กอินแทนที่ไฟล์ตัวเอง ขั้นสุดท้ายจึงเป็นของคุณ: ดับเบิลคลิกไฟล์ .ccx ที่บันทึกไว้ แล้ว Creative Cloud จะติดตั้งให้",
-    upd_getting: "กำลังดาวน์โหลด…",
-    upd_saved: "บันทึกแล้ว ดับเบิลคลิกเพื่อให้ Creative Cloud ติดตั้ง",
+    upd_web: "กำลังเปิด Web App — รับ Panel ได้ที่ Account → Photoshop Panel",
     upd_none: "นี่คือเวอร์ชันล่าสุด",
     money_intro: "ทุกครั้งที่ GENERATE จะบันทึกยอดที่ RunningHub เก็บจริง ไม่ใช่ค่าประมาณ ยอดคงเหลืออ่านจากบัญชี RunningHub โดยตรง",
     money_bal: "คงเหลือ",
@@ -3719,8 +3714,7 @@ const I18N = {
     sec_about: "应用与更新",
     btn_get_update: "下载更新",
     upd_hint: "面板会自行下载新版本——你已经登录。Photoshop 不允许插件替换自身文件，所以最后一步由你完成：双击保存的 .ccx，Creative Cloud 会安装它。",
-    upd_getting: "正在下载…",
-    upd_saved: "已保存。双击后 Creative Cloud 会安装。",
+    upd_web: "正在打开 Web App — 请在 Account → Photoshop Panel 处获取面板。",
     upd_none: "这已是最新版本。",
     money_intro: "每次 GENERATE 都按 RunningHub 实际扣费记账，不是估算。余额直接从你的 RunningHub 账户读取。",
     money_bal: "余额",
@@ -4352,8 +4346,7 @@ const I18N = {
     sec_about: "Ứng dụng & cập nhật",
     btn_get_update: "Tải bản cập nhật",
     upd_hint: "Panel tự tải bản mới — bạn đã đăng nhập rồi. Photoshop không cho plugin tự thay tệp của chính nó, nên bước cuối là của bạn: nhấp đúp tệp .ccx đã lưu, Creative Cloud sẽ cài đặt.",
-    upd_getting: "Đang tải…",
-    upd_saved: "Đã lưu. Nhấp đúp để Creative Cloud cài đặt.",
+    upd_web: "Đang mở Web App — tải Panel tại Account → Photoshop Panel.",
     upd_none: "Đây là bản mới nhất.",
     money_intro: "Mỗi lần GENERATE được ghi sổ theo số tiền RunningHub thực sự thu — không phải ước tính. Số dư đọc thẳng từ tài khoản RunningHub.",
     money_bal: "Số dư",
@@ -4985,8 +4978,7 @@ const I18N = {
     sec_about: "Aplikasi & pembaruan",
     btn_get_update: "Unduh pembaruan",
     upd_hint: "Panel mengunduh rilis baru sendiri — Anda sudah masuk. Photoshop tidak mengizinkan plugin mengganti berkasnya sendiri, jadi langkah terakhir milik Anda: klik dua kali berkas .ccx yang tersimpan dan Creative Cloud akan memasangnya.",
-    upd_getting: "Mengunduh…",
-    upd_saved: "Tersimpan. Klik dua kali dan Creative Cloud memasangnya.",
+    upd_web: "Membuka Web App — ambil Panel di Account → Photoshop Panel.",
     upd_none: "Ini rilis terbaru.",
     money_intro: "Setiap GENERATE dicatat sebesar yang benar-benar ditagih RunningHub — bukan perkiraan. Saldo dibaca langsung dari akun RunningHub Anda.",
     money_bal: "Saldo",
@@ -5618,8 +5610,7 @@ const I18N = {
     sec_about: "Aplikasi & kemas kini",
     btn_get_update: "Muat turun kemas kini",
     upd_hint: "Panel memuat turun keluaran baharu sendiri — anda sudah log masuk. Photoshop tidak membenarkan pemalam menggantikan failnya sendiri, jadi langkah terakhir milik anda: klik dua kali fail .ccx yang disimpan dan Creative Cloud akan memasangnya.",
-    upd_getting: "Memuat turun…",
-    upd_saved: "Disimpan. Klik dua kali dan Creative Cloud memasangnya.",
+    upd_web: "Membuka Web App — dapatkan Panel di Account → Photoshop Panel.",
     upd_none: "Ini keluaran terbaharu.",
     money_intro: "Setiap GENERATE direkod pada jumlah yang RunningHub benar-benar caj — bukan anggaran. Baki dibaca terus daripada akaun RunningHub anda.",
     money_bal: "Baki",
@@ -6243,7 +6234,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.96.0";
+const PANEL_VERSION = "6.97.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8687,59 +8678,27 @@ async function aboutHardRefresh() {
   try { if (typeof location !== "undefined" && location && typeof location.reload === "function") location.reload(); } catch (e) { }
 }
 
-/* ------------------ v6.48.0 FETCHING THE UPDATE ------------------
-   The owner asked for the panel to update itself instead of a download
-   round-trip on the website every release. Half of that is possible and half
-   is Adobe's to allow, so this does the half that is ours and says so.
-
-   NOT possible: replacing this plugin in place. A UXP package folder is
-   read-only while the plugin runs, Creative Cloud owns installation, and
-   Photoshop will not hot-swap a plugin's code — that boundary is what makes
-   a signed .ccx mean anything, and no amount of code here gets around it.
-
-   Possible, and done here: the trip to the website. The panel is already
-   signed in, so it asks the SAME authenticated endpoint the website's
-   download button asks — one-time token, five-minute life, checked against
-   the plan and the registered computer exactly as before — streams the
-   release, and writes it where the studio says. The studio double-clicks it
-   once; Creative Cloud verifies the signature and installs.
-
-   Nothing here weakens the download rules: no new endpoint, no new
-   permission, the same refusal for an expired plan or a strange machine.
-
-   v6.51.0 — the button is the app's "Download Panel ccx vX" inside the
-   account card's Panel group. The unified API issues the download only to a
-   web session; when it refuses this panel session, the web app opens so the
-   studio downloads there, exactly as the app's own button would. */
+/* v6.97.0 — THE WEB APP IS THE ONLY DOWNLOAD DOOR (owner decision). Up to
+   6.96.0 this button asked the unified API for the file itself and, when the
+   API refused the panel session, fell back to opening the web app. The API
+   has issued the one-time, five-minute delivery to a signed-in WEB session
+   only since v6.51.0 (server/lib/v1.js: "A web session is required"), so the
+   first half of that ladder could never succeed and only made a second door
+   to explain. Now the button IS the second half: it opens the web app on the
+   account card's Panel group (the ?panel=download intent the website's old
+   /download/ route also forwards to), where the studio signs in, the plan and
+   the registered computer are checked and the temporary delivery is created —
+   exactly as before, in the one place that does it. Nothing about the
+   download rules changed: no new endpoint, no new permission. */
 async function panelGetUpdate() {
-  const sess = (typeof gateS !== "undefined" && gateS.sess) || null;
-  if (!sess || !sess.access) return;
-  const ent = gateS.entitlement || {};
-  const ver = String((ent.panel && ent.panel.latest_version) || _updLatest || PANEL_VERSION);
   const btn = $("accPanelDownload");
   if (btnIsOff(btn)) return;
   btnOff(btn, true);
-  stSet("stAcc", t("upd_getting"), "");
   try {
-    const r = await gateReq("/v1/downloads/panel", { method: "POST", body: JSON.stringify({ version: ver }) }, sess.access);
-    const j = await r.json().catch(function () { return null; });
-    if (!r.ok || !j || !j.download_url) throw new Error(gateResponseMessage(j, r.status));
-    /* download_url is server-relative and already carries /api; GATE_API_URL
-       ends in /api, so the host is taken from it rather than re-spelled. */
-    const host = GATE_API_URL.replace(/\/api$/, "");
-    const d = await hnkFetch(host + j.download_url, { cache: "no-store" }, 180000);
-    if (!d.ok) throw new Error("HTTP " + d.status);
-    const buf = await d.arrayBuffer();
-    if (!buf || buf.byteLength < 1024) throw new Error("empty download");
-    const name = "HNK_Ai_Panel_v" + (j.version || ver) + ".ccx";
-    const f = await fsp.getFileForSaving(name, { types: ["ccx"] });
-    if (!f) return;                            /* the studio cancelled */
-    await f.write(buf, { format: formats.binary });
-    stSet("stAcc", t("upd_saved"), "ok");
+    stSet("stAcc", sl("upd_web"), "");
+    await openUrl(APP_URL + "?panel=download");
   } catch (e) {
     stSet("stAcc", friendlyErr(e), "err");
-    const m = e && e.message ? String(e.message) : "";
-    if (/web session|client_type_mismatch/i.test(m)) { try { openUrl(APP_URL); } catch (e2) { } }
   } finally {
     btnOff(btn, false);
   }

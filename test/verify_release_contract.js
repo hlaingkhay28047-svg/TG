@@ -503,9 +503,11 @@ const accountCardEnd = html.indexOf("</section>", accountCardStart);
 const accountCard = accountCardStart >= 0 && accountCardEnd > accountCardStart
   ? html.slice(accountCardStart, accountCardEnd)
   : "";
-check("the Account Center sends panel acquisition through the authenticated download area",
+/* v6.28.0 — ONE DOOR: the button's no-script fallback is the app's own ?panel=download intent,
+   not the website's retired /download/ sign-in route (which now forwards back here). */
+check("the Account Center sends panel acquisition through its own authenticated handler (the one door)",
   accountCard.includes(`id="accGrpPanel"`) && accountCard.includes(`id="accPanelDownload"`) &&
-  accountCard.includes(`href="../download/"`) &&
+  accountCard.includes(`href="?panel=download"`) && !accountCard.includes(`href="../download/"`) &&
   /function unifiedCanDownload\(\)[\s\S]{0,500}?p\.ccx_download\s*===\s*true/.test(html) &&
   /accPanelDownload["']\);\s*if\s*\(ad\)\s*ad\.addEventListener\("click",accRequestPanelDownload\)/.test(html),
   `panel ${panelVersion}; account group ${accountCard.includes('id="accGrpPanel"')}; authenticated handler ${html.includes("accRequestPanelDownload")}`);

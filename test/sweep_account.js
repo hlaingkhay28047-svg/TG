@@ -418,7 +418,7 @@ const SB_FIX = {
     c6route.buy.intent === true && c6route.buy.stage === "buy" && c6route.buy.open === true && c6route.buy.panelHidden === true &&
     c6route.stable.planOpen === true &&
     c6route.panel.intent === false && c6route.panel.stage === "done" && c6route.panel.open === true && c6route.panel.hidden === false &&
-    c6route.panel.href === "../download/" && c6route.panel.focused === true && c6route.panel.expanded === "true" &&
+    c6route.panel.href === "?panel=download" && c6route.panel.focused === true && c6route.panel.expanded === "true" &&
     c6route.promo.panelOpen === true && c6route.promo.intent === false && c6route.promo.stage === "done",
     JSON.stringify(c6route));
 
