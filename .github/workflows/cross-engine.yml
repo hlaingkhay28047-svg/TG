@@ -1,0 +1,67 @@
+name: Cross-engine sweep (WebKit + Firefox)
+
+# v6.27.0 — the studio is used from iPhones (WebKit) and from Firefox on
+# desktops, yet every browser test in test/ opens Chromium. This lane runs the
+# layout / behaviour tests that need only the served web app on the other two
+# engines, unchanged: test/_engine.js is preloaded and swaps
+# require("playwright").chromium for the engine named in HNK_ENGINE.
+# Dispatch-only while the list settles; test.yml carries the gate.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tests:
+        description: "space-separated test basenames (empty = the fixed list below)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    name: ${{ matrix.engine }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, firefox]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install Playwright + ${{ matrix.engine }}
+        run: |
+          npm install playwright@1.62.1
+          ./node_modules/.bin/playwright install --with-deps ${{ matrix.engine }}
+
+      - name: Serve docs/app
+        run: |
+          (cd docs/app && python3 -m http.server 8931 >/dev/null 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8931/index.html >/dev/null && break; sleep 1; done
+
+      - name: Run the layout and behaviour tests on ${{ matrix.engine }}
+        env:
+          HNK_ENGINE: ${{ matrix.engine }}
+          NODE_OPTIONS: --require ./test/_engine.js
+          PORT: "8931"
+          TESTS: ${{ inputs.tests }}
+        run: |
+          set +e
+          LIST="${TESTS:-verify_tabbar_reachable verify_clean_stage verify_native_pick verify_slot_whole_photo verify_freeform_slots verify_desktop_fill sweep_v492_gridfit sweep_v528_safearea sweep_v533_a11y sweep_v535_rtl_lang verify_landing_fill}"
+          failed=""
+          for t in $LIST; do
+            echo "::group::$t on $HNK_ENGINE"
+            timeout 900 node test/$t.js; rc=$?
+            echo "::endgroup::"
+            echo "== $t rc=$rc"
+            [ $rc -eq 0 ] || failed="$failed $t"
+          done
+          echo "===CROSS-ENGINE $HNK_ENGINE failed:${failed:- none}==="
+          [ -z "$failed" ]
