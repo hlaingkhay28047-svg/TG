@@ -355,8 +355,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log("imagine edit submit body:", JSON.stringify(imagineResult.body));
   const imagineOk = imagineResult.ok && imagineResult.body && imagineResult.body.resolution === "2k"
     && imagineResult.body.numImages === "1" && imagineResult.body.aspectRatio === "16:9"
-    && typeof imagineResult.body.imageUrl === "string" && imagineResult.body.imageUrl.length > 0
-    && imagineResult.body.imageUrls === undefined;
+    && Array.isArray(imagineResult.body.imageUrl) && imagineResult.body.imageUrl.length === 1 && typeof imagineResult.body.imageUrl[0] === "string"
+    && imagineResult.body.imageUrls === undefined;   /* v6.26.0 - the live validator wants imageUrl as a one-element list */
   console.log(imagineOk ? "PASS (imagine edit resolution clamp + numImages)" : ("FAIL (imagine edit): " + JSON.stringify(imagineResult)));
 
   // Z-Image Turbo (v5.53.4 — corrected to the owner's OpenAPI spec): the
@@ -384,14 +384,16 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body, st: document.getElementById("stGen").textContent };
   }, B64);
   console.log("z-image submit body (ratio 4:5 out of endpoint enum):", JSON.stringify(zimageResult.body));
-  const zimageOk = zimageResult.ok && zimageResult.body && zimageResult.body["64##select"] === "1"
-    && zimageResult.body["65##file_type"] === "PNG"
-    && typeof zimageResult.body["66##image"] === "string" && zimageResult.body["66##image"].length > 0
-    && String(zimageResult.body["41##text"]).indexOf("test z-image prompt") >= 0
-    && zimageResult.body.aspectRatio === undefined && zimageResult.body.outputFormat === undefined
-    && zimageResult.body.imageUrl === undefined && zimageResult.body.imageUrls === undefined
-    && zimageResult.body.prompt === undefined && zimageResult.body.resolution === undefined;
-  console.log(zimageOk ? "PASS (z-image node-keyed body; out-of-enum ratio falls back to \"1\" = 1:1)" : ("FAIL (z-image): " + JSON.stringify(zimageResult)));
+  /* v6.26.0 - probe runs #14/#15: the graph refuses its node keys and quotes the flat body - imageUrl,
+     prompt, aspectRatio (the ratio itself; no auto on this graph, so 4:5 falls back to 1:1), outputFormat png. */
+  const zimageOk = zimageResult.ok && zimageResult.body && zimageResult.body.aspectRatio === "1:1"
+    && zimageResult.body.outputFormat === "png"
+    && typeof zimageResult.body.imageUrl === "string" && zimageResult.body.imageUrl.length > 0
+    && String(zimageResult.body.prompt).indexOf("test z-image prompt") >= 0
+    && zimageResult.body["64##select"] === undefined && zimageResult.body["65##file_type"] === undefined
+    && zimageResult.body["66##image"] === undefined && zimageResult.body["41##text"] === undefined
+    && zimageResult.body.imageUrls === undefined && zimageResult.body.resolution === undefined;
+  console.log(zimageOk ? "PASS (z-image flat body; out-of-enum ratio falls back to 1:1)" : ("FAIL (z-image): " + JSON.stringify(zimageResult)));
 
   // A valid Z-Image Turbo ratio must pass through unchanged (not always 1:1).
   const zimageValidResult = await page.evaluate(async (b64) => {
@@ -410,8 +412,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
   }, B64);
   console.log("z-image submit body (valid ratio 16:9):", JSON.stringify(zimageValidResult.body));
-  const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body["64##select"] === "5";
-  console.log(zimageValidOk ? 'PASS (z-image valid ratio 16:9 maps to the documented "5")' : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
+  const zimageValidOk = zimageValidResult.ok && zimageValidResult.body && zimageValidResult.body.aspectRatio === "16:9";
+  console.log(zimageValidOk ? 'PASS (z-image valid ratio 16:9 rides as itself)' : ("FAIL (z-image valid ratio): " + JSON.stringify(zimageValidResult)));
 
   // Flux 2 Dev — Edit (v5.53.4): the ComfyUI node-keyed body from the owner's
   // rhart-image/f-2-dev/edit-lora OpenAPI spec — 51##image/16##text/
@@ -443,16 +445,17 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   }, B64);
   console.log("flux edit submit body:", JSON.stringify(fluxResult.body),
     "ratioHas45:", fluxResult.ratioHas45, "sizeHidden:", fluxResult.sizeHidden);
+  /* v6.26.0 - flat body (probe runs #14/#15): imageUrl, prompt, aspectRatio 16:9, outputFormat png; no node keys, no LoRA pair */
   const fluxOk = fluxResult.ok && fluxResult.body
-    && typeof fluxResult.body["51##image"] === "string" && fluxResult.body["51##image"].length > 0
-    && String(fluxResult.body["16##text"]).indexOf("test flux edit prompt") >= 0
-    && fluxResult.body["47##select"] === "5"
-    && fluxResult.body["52##file_type"] === "PNG"
-    && fluxResult.body.prompt === undefined && fluxResult.body.imageUrls === undefined
-    && fluxResult.body.resolution === undefined && fluxResult.body.aspectRatio === undefined
-    && fluxResult.body["18##lora_name"] === undefined && fluxResult.body["18##strength_model"] === undefined
+    && typeof fluxResult.body.imageUrl === "string" && fluxResult.body.imageUrl.length > 0
+    && String(fluxResult.body.prompt).indexOf("test flux edit prompt") >= 0
+    && fluxResult.body.aspectRatio === "16:9"
+    && fluxResult.body.outputFormat === "png"
+    && fluxResult.body["51##image"] === undefined && fluxResult.body["16##text"] === undefined && fluxResult.body["47##select"] === undefined && fluxResult.body["52##file_type"] === undefined
+    && fluxResult.body.imageUrls === undefined && fluxResult.body.resolution === undefined
+    && fluxResult.body["18##lora_name"] === undefined && fluxResult.body["18##strength_model"] === undefined && fluxResult.body.lora === undefined
     && fluxResult.ratioHas45 === false && fluxResult.sizeHidden === true;
-  console.log(fluxOk ? "PASS (flux edit node-keyed body + narrowed controls)" : ("FAIL (flux edit): " + JSON.stringify(fluxResult)));
+  console.log(fluxOk ? "PASS (flux edit flat body + narrowed controls)" : ("FAIL (flux edit): " + JSON.stringify(fluxResult)));
 
   // Auto ratio must send the documented "9" (auto-match the input image) —
   // 47##select is REQUIRED, so it can never be omitted or guessed.
@@ -470,8 +473,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return { ok: document.getElementById("resultBox").className.indexOf("on") >= 0, body: body };
   }, B64);
   console.log("flux edit auto-ratio body:", JSON.stringify(fluxAutoResult.body));
-  const fluxAutoOk = fluxAutoResult.ok && fluxAutoResult.body && fluxAutoResult.body["47##select"] === "9";
-  console.log(fluxAutoOk ? 'PASS (flux edit Auto ratio sends the documented "9" auto-match)' : ("FAIL (flux edit auto ratio): " + JSON.stringify(fluxAutoResult)));
+  const fluxAutoOk = fluxAutoResult.ok && fluxAutoResult.body && fluxAutoResult.body.aspectRatio === "auto";
+  console.log(fluxAutoOk ? 'PASS (flux edit Auto ratio sends "auto" - the graph offers it)' : ("FAIL (flux edit auto ratio): " + JSON.stringify(fluxAutoResult)));
 
   // Restore the full ratio dropdown for the tests below (they assume the
   // default, un-narrowed control set).
@@ -559,10 +562,12 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     return (window.__rhBodies.find(b => b.url.indexOf("/qwen-image/edit-2511") >= 0) || {}).body || null;
   }, B64);
   console.log("qwen-2511 body:", JSON.stringify(q2511));
-  const q2511Ok = q2511 && typeof q2511["57##image"] === "string" && typeof q2511["58##image"] === "string"
-    && q2511["59##image"] === undefined && q2511["28##select"] === "5" && q2511["52##file_type"] === "PNG"
-    && q2511.prompt === undefined && q2511.imageUrls === undefined;
-  console.log(q2511Ok ? "PASS (generic node kind: multi-slot fill + shared ratio table)" : ("FAIL (qwen-2511): " + JSON.stringify(q2511)));
+  /* v6.26.0 - the three-slot graph takes imageUrl / imageUrl2 / imageUrl3 (imageUrls is refused: "imageUrl is required") */
+  const q2511Ok = q2511 && typeof q2511.imageUrl === "string" && typeof q2511.imageUrl2 === "string"
+    && q2511.imageUrl3 === undefined && q2511.aspectRatio === "16:9" && q2511.outputFormat === "png"
+    && q2511["57##image"] === undefined && q2511["28##select"] === undefined && q2511["52##file_type"] === undefined
+    && String(q2511.prompt).indexOf("test 2511") >= 0 && q2511.imageUrls === undefined;
+  console.log(q2511Ok ? "PASS (generic node kind: multi-slot fill as imageUrl/imageUrl2 + the ratio itself)" : ("FAIL (qwen-2511): " + JSON.stringify(q2511)));
 
   // grokimg: REQUIRED model field, single optional imageUrl, nothing else.
   const grok42 = await page.evaluate(async (b64) => {

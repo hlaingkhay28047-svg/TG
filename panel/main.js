@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.94.0";
+const PANEL_VERSION = "6.95.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9891,6 +9891,19 @@ function vidSlotsShownP(mx) { /* the base three, then the filled extras plus one
   const ex = state.vidRefs || []; let last = -1; for (let k = 0; k < ex.length; k++) if (ex[k]) last = k;
   return Math.min(mx, VREF_BASE + last + 2);
 }
+/* v6.26.0 — the app's ffRefMax / ffSlotsShown / ffAllRefs: Freeform's reference slots follow the IMAGE model's
+   MEASURED photo capacity (runninghub-config maxImages, from the probe lane). Single-image kinds stay at one; a
+   node graph with an ordered image list takes exactly that many; the extras are the same IMG 4+ state.vidRefs. */
+function ffRefMaxP(m) {
+  m = m || rhDefaultModels()[state.rhModel] || null; if (!m) return VREF_BASE;
+  const k = m.kind || "", ip = m.imageParam || "imageUrls";
+  if (ip === "image" || ip === "imageUrl" || k === "fluxedit" || k === "zimage" || k === "grokimg" || k === "sdlayer" || k === "upscale" || k === "upscale-transparent" || (k === "node" && !(m.node && m.node.images))) return 1;
+  if (k === "node" && m.node && m.node.images) return m.node.images.length;
+  return (m.maxImages | 0) > 0 ? m.maxImages : VREF_BASE;
+}
+function ffSlotsShownP(mx) { const ex = state.vidRefs || []; let last = -1; for (let k = 0; k < ex.length; k++) if (ex[k]) last = k; return Math.max(Math.min(mx, VREF_BASE + last + 2), VREF_BASE); }
+function ffExtraRefs() { const out = []; const mx = ffRefMaxP(); for (let k = VREF_BASE; k < mx; k++) { const r = ffSlotGet(k); if (r) out.push(r); } return out; }
+function ffCapLabelP(m) { const mx = ffRefMaxP(m); let nx = String(mx); try { nx = accNum(mx); } catch (e0) { } return mx > 1 ? vwL({ my: "ပုံ " + nx + " ပုံအထိ", en: "up to " + mx + " photos", shn: "ထိုင် " + mx + " ၶႅပ်း", kac: "Sumla " + mx + " du hkra", th: "สูงสุด " + mx + " รูป", zh: "最多 " + mx + " 张", vi: "tối đa " + mx + " ảnh", id: "hingga " + mx + " foto", ms: "hingga " + mx + " foto" }) : vwL({ my: "ပုံ ၁ ပုံ", en: "1 photo", shn: "1 ၶႅပ်း", kac: "Sumla 1", th: "1 รูป", zh: "1 张", vi: "1 ảnh", id: "1 foto", ms: "1 foto" }); }
 const VW_NEED = { my: "၁ ပုံ", en: "1 photo", shn: "1 ၶႅပ်း", kac: "Sumla 1", th: "1 รูป", zh: "1 张", vi: "1 ảnh", id: "1 foto", ms: "1 foto" };
 const VW_USE = { my: "သုံးမယ်", en: "Use this", shn: "ၸႂ်ႉဢၼ်ၼႆႉ", kac: "Ndai lang u", th: "ใช้อันนี้", zh: "使用", vi: "Dùng cái này", id: "Pakai ini", ms: "Guna ini" };
 const VW_SEL = { my: "ရွေးပြီး", en: "Selected", shn: "လိူၵ်ႈယဝ်ႉ", kac: "Lata da sai", th: "เลือกแล้ว", zh: "已选择", vi: "Đã chọn", id: "Terpilih", ms: "Dipilih" };
@@ -12136,7 +12149,7 @@ async function loadSettings() {
       /* v6.51.0 — Freeform's app-parity selects, validated against the catalog. */
       if (typeof o.rhModel === "string" && ffModelById(o.rhModel)) state.rhModel = o.rhModel;
       if (typeof o.ffRatio === "string" && /^(|\d{1,2}:\d{1,2})$/.test(o.ffRatio)) state.ffRatio = o.ffRatio;
-      if (o.ffSize === "" || o.ffSize === "1K" || o.ffSize === "2K" || o.ffSize === "4K") state.ffSize = o.ffSize;
+      if (o.ffSize === "" || o.ffSize === "1K" || o.ffSize === "2K" || o.ffSize === "4K" || o.ffSize === "8K") state.ffSize = o.ffSize;   /* v6.26.0 — 8K */
       if (o.ffCount === 1 || o.ffCount === 2 || o.ffCount === 4) state.ffCount = o.ffCount;
       /* v6.51.0 — Setup's RunningHub endpoint config, spend ledger and last balance
          (the app keeps these in localStorage). Re-bounded on load: disk is user-editable. */
@@ -12655,6 +12668,26 @@ function renderRefs() {
       (function (slot) { d.addEventListener("click", function () { ffSrcSheet(slot); }); })(i);
       host.appendChild(d);
     }
+    /* v6.26.0 — the CREATE strip grows with the IMAGE model: reference slots up to its measured photo capacity */
+    if (hostId === "refStrip") {
+      const fmx = ffRefMaxP(), fshown = ffSlotsShownP(fmx);
+      for (let k = VREF_BASE; k < fshown; k++) {
+        const r = ffSlotGet(k);
+        const d = document.createElement("div");
+        d.className = "rs rs-face rs-ref" + (r ? " filled" : "");
+        if (r) {
+          d.appendChild(ffThumb(r));
+          const x = document.createElement("div");
+          x.className = "rsx"; x.textContent = "×"; x.setAttribute("aria-label", ff9(FF_L.remove));
+          (function (slot) { ffPressable(x, function () { ffSlotSet(slot, null); }); })(k);
+          d.appendChild(x);
+        } else d.appendChild(document.createTextNode("+"));
+        const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "IMG " + (k + 1);
+        d.appendChild(tag);
+        (function (slot) { d.addEventListener("click", function () { ffSrcSheet(slot); }); })(k);
+        host.appendChild(d);
+      }
+    }
     /* v6.21.0 — the VIDEO strip grows with the model: face-reference slots up to its image capacity */
     if (hostId === "vidRefStrip") {
       const mx = vidRefMaxP(), shown = vidSlotsShownP(mx);
@@ -12677,12 +12710,13 @@ function renderRefs() {
     }
     const note = document.createElement("div"); note.className = "note"; note.textContent = ff9(FF_L.note);
     host.appendChild(note);
+    if (hostId === "refStrip") { const cm = ffModel(); const cap = document.createElement("div"); cap.className = "note cap"; cap.textContent = cm.label + " · " + ffCapLabelP(); host.appendChild(cap); } /* v6.26.0 — what this model takes */
   });
   /* the Library page's IMAGES card — the app's renderRefs, slot for slot */
   const refs = $("refs");
   if (refs) {
     refs.innerHTML = "";
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < ffSlotsShownP(ffRefMaxP()); i++) {   /* v6.26.0 — the grid grows with the image model */
       const r = ffSlotGet(i);
       const d = document.createElement("div");
       d.className = "ref" + (r ? " filled" : "");
@@ -15226,7 +15260,7 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
   const allowText = !!op.allowText || !!state.capOn;
   if (state.realOn) userText = (userText ? userText + "\n\n" : "") + buildGuard(effRealDir(op.realDir), allowText);
   const myTxt = getMyPromptText().trim();
-  const hasRef = !noRefs && !!(state.subj || state.refs[0] || state.refs[1]);
+  const hasRef = !noRefs && !!(state.subj || state.refs[0] || state.refs[1] || ffExtraRefs().length);   /* v6.26.0 — IMG 4+ count too */
   if (!userText && !myTxt && !hasRef) {
     if (op.ffCard) { stSet("stGen", ff9(FF_L.needAny), "err"); return; }
     setStatus(t("st_no_prompt"), "err"); return;
@@ -15277,6 +15311,7 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
     const parts = [];
     if (base) meta.push({ role: "base", slot: 0 });
     for (let i = 0; i < 2; i++) { if (!noRefs && state.refs[i]) meta.push({ role: "ref", label: state.refs[i].label, slot: i + 1 }); }
+    if (!noRefs) ffExtraRefs().forEach(function (r, x) { meta.push({ role: "ref", label: r.label, slot: 3 + x }); });   /* v6.26.0 */
 
     const finalPrompt = buildFinalPrompt(userText, meta, unkeep || []);
     state.lastUserText = userText;
@@ -15298,6 +15333,8 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
         imgNo++;
       }
     }
+    /* v6.26.0 — IMG 4+ up to the image model's measured capacity ride along as further references */
+    if (!noRefs) { const xs = ffExtraRefs(); for (let x = 0; x < xs.length; x++) { parts.push({ text: "IMAGE " + imgNo + " \u2014 REFERENCE ONLY (do not output this image or its people):" }); parts.push({ inlineData: { mimeType: xs[x].mime, data: xs[x].b64 } }); imgNo++; } }
     if (selMask) {
       parts.push({ text: "EDIT MASK for IMAGE 1 \u2014 edit only the WHITE areas, keep every BLACK area unchanged:" });
       parts.push({ inlineData: { mimeType: selMask.mime, data: selMask.b64 } });
@@ -15731,9 +15768,22 @@ function ffPaintHslVal(selId, valId) {
 }
 function ffPaintCountBtn() { ffPaintHslVal("ffCount", "ffCountVal"); }
 function ffPaintSizeBtn() { ffPaintHslVal("ffSize", "ffSizeVal"); }
+/* v6.26.0 — the app's rhNarrowSizeOptionsFor: a model that publishes its own resolution list (runninghub-config
+   `resolutions`, e.g. Nano Banana Pro Ultra 4k/8k) offers exactly those tiers; every other model the stock four. */
+const FF_SIZE_STOCK = [{ v: "", label: "Size: Auto" }, { v: "1K", label: "1K" }, { v: "2K", label: "2K (Pro)" }, { v: "4K", label: "4K (Pro)" }];
+function ffNarrowSize(m) {
+  const ss = $("ffSize"); if (!ss) return;
+  const mc = rhDefaultModels()[(m && m.id) || ""] || {};
+  const list = (mc.resolutions && mc.resolutions.length) ? mc.resolutions : null;
+  const want = list ? [{ v: "", label: "Size: Auto" }].concat(list.map(function (r) { const u = String(r).toUpperCase(); return { v: u, label: u }; })) : FF_SIZE_STOCK;
+  const cur = Array.prototype.map.call(ss.options, function (o) { return o.value; }).join("|"), nxt = want.map(function (o) { return o.v; }).join("|");
+  if (cur !== nxt) fillSelect(ss, want);
+  if (!want.some(function (o) { return o.v === state.ffSize; })) state.ffSize = "";
+}
 function ffPaintAdvanced() {
   const m = ffModel();
   const sc = $("ffCount"), ss = $("ffSize");
+  ffNarrowSize(m);   /* v6.26.0 — only the tiers this model honours */
   /* the app hides the select and its .hsl wrapper follows (syncVis); here the
      wrapper is the thing shown or hidden */
   const wc = $("ffCountHsl") || sc, ws = $("ffSizeHsl") || ss;
@@ -15747,6 +15797,7 @@ function ffPaintAdvanced() {
 function ffOnModelChange(id) {
   const m = ffModelById(id) || FREEFORM_MODELS[0];
   state.rhModel = m.id;
+  try { renderRefs(); } catch (e0) { } /* v6.26.0 — the slots follow the model */
   rhCfg().activeModel = m.id;
   ffPaintModelBtn();
   ffFillRatio();

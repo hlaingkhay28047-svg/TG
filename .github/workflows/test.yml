@@ -505,6 +505,8 @@ jobs:
         run: PORT=8931 node test/verify_retouch_precision.js
       - name: Clean stage — nothing over the picture, one toolbar under it, zoom presets row, compact essentials, measured exit band, phone GENERATE bar folds its queue
         run: PORT=8931 node test/verify_clean_stage.js
+      - name: Freeform slots follow the model — measured maxImages on every image model, the strip and grid grow to it, the dispatch sends up to it, wan-2.5 n, panel parity
+        run: PORT=8931 node test/verify_freeform_slots.js
       - name: Native pick — every pick control carries a real file input on top, so Android shells that ignore a programmatic click still open the chooser; the file lands in the same slot
         run: PORT=8931 node test/verify_native_pick.js
       - name: Retouch A / B live preview — the stage measures its own speed and walks a quality ladder, zoom presets frame the face, press-and-hold peeks at Before, the A|B split swaps sides

@@ -63,7 +63,7 @@ report("B) the body script drives the app's own builders under a halting fetch s
   /rhV2SubmitVideo\("K", m\.apiPath/.test(BODIES) && /rhVtBody\(d, P\.VID, \[P\.IMG1\]/.test(BODIES) && /rhV2SubmitVideoUpscale\("K", P\.VID/.test(BODIES) &&
   /window\.fetch = async \(u, o\) => \{ seen = /.test(BODIES) && /throw new Error\("halt"\)/.test(BODIES) &&
   /for \(const m of RH_VIDEO_MODELS\)/.test(BODIES) && /for \(const d of RH_VTOOL_MODELS\)/.test(BODIES) &&
-  /if \(dump\.counts\.videoNoBody \|\| dump\.counts\.toolsNoBody \|\| errs\.length\) process\.exit\(1\);/.test(BODIES), null);
+  /if \(dump\.counts\.videoNoBody \|\| dump\.counts\.toolsNoBody \|\| dump\.counts\.imageNoBody \|\| dump\.counts\.t2iNoBody \|\| errs\.length\) process\.exit\(1\);/.test(BODIES), null);
 report("B2) its media are placeholders on a reserved, unroutable host — nothing real is baked into the repository",
   /placeholder\.invalid\/FIRST\.jpg/.test(BODIES) && /placeholder\.invalid\/SECOND\.jpg/.test(BODIES) && /placeholder\.invalid\/VIDEO\.mp4/.test(BODIES), null);
 
@@ -111,8 +111,28 @@ report("C5) --variants rides candidate bodies for a row alongside it (id~1, id~2
   const r = probeErr ? null : JSON.parse(fs.readFileSync(results, "utf8"));
   const marker = /===PROBE-JSON-BEGIN===\n(\{.*\})\n===PROBE-JSON-END===/.exec(probeOut);
   report("D3) the probe's dry run reads every body, writes the key-free report and prints the marker block the container reads back",
-    !!r && r.probed === (d ? d.counts.video + d.counts.tools + 1 : -1) && r.ok === r.probed && !!marker && JSON.parse(marker[1]).probed === r.probed &&
+    !!r && r.probed === (d ? d.counts.video + d.counts.tools + 1 + d.counts.image + d.counts.t2i : -1) && r.ok === r.probed && !!marker && JSON.parse(marker[1]).probed === r.probed &&
     !/RH_KEY|Bearer/.test(JSON.stringify(r)), probeErr || (r && { probed: r.probed, ok: r.ok }));
+  /* v6.26.0 — the IMAGE catalog rides the same lane: every RH_MODELS entry with an apiPath has a body at
+     each reference count the UI could offer (single-image kinds once), addressed to its own apiPath, and the
+     dry run's imageCap table names every model with its largest accepted count. */
+  const imStart = APP.indexOf("var RH_MODELS = ["), imEnd = APP.indexOf("\n];", imStart);
+  const imIds = (APP.slice(imStart, imEnd).match(/\n  \{ id:"([^"]+)"/g) || []).map(x => x.replace(/[\s\S]*id:"/, "").replace(/"$/, ""));
+  const imBase = d ? Array.from(new Set(d.image.map(x => x.id))) : [];
+  const capIds = r && r.imageCap ? Object.keys(r.imageCap) : [];
+  report("D5) the image group: one dump row per model per probed reference count (single-image kinds exactly once, array kinds at 1..14), each on its own apiPath with a body, and the dry run's imageCap table covers every image model",
+    !!d && d.counts.image === d.image.length && d.counts.imageNoBody === 0 && imBase.length === imIds.length && imBase.every(id => imIds.includes(id)) &&
+    d.image.every(x => x.url === "https://www.runninghub.ai/openapi/v2/" + x.apiPath && x.body) &&
+    d.image.filter(x => x.single).every(x => x.n === 1) && d.image.filter(x => x.id === "nano-banana-pro").map(x => x.n).join() === "1,2,3,4,5,6,8,10,14" &&
+    d.image.filter(x => x.id === "qwen-edit-2511").map(x => x.n).join() === "1,3" && d.image.filter(x => x.id === "upscale-pro").length === 1 &&
+    !!r && capIds.length === imIds.length && capIds.every(id => imIds.includes(id)) && r.imageCap["nano-banana-pro"].max === 14 && r.imageCap["upscale-pro"].single === true,
+    d && r && { image: d.counts.image, models: imBase.length, want: imIds.length, cap: capIds.length });
+  /* v6.26.0 — the TEXT→IMAGE catalog rides the lane too: one body per RH_T2I_MODELS entry through rhV2SubmitT2I */
+  const t2Start = APP.indexOf("var RH_T2I_MODELS = ["), t2End = APP.indexOf("\n];", t2Start);
+  const nT2i = (APP.slice(t2Start, t2End).match(/\n  \{ id:"/g) || []).length;
+  report("D6) the t2i group: one dump row per text-to-image model, each on its own apiPath with a body carrying the prompt, none missing",
+    !!d && d.counts.t2i === nT2i && d.counts.t2iNoBody === 0 && d.t2i.every(x => x.url === "https://www.runninghub.ai/openapi/v2/" + x.apiPath && x.body && Object.values(x.body).some(v => typeof v === "string" && /red dress/.test(v))),
+    d && { t2i: d.counts.t2i, want: nT2i, noBody: d.counts.t2iNoBody });
   const results2 = path.join(outDir, "results-variants.json");
   let varOut = "", varErr = null;
   try { varOut = execFileSync("python3", [path.join(ROOT, "tools", "probe_price_preview.py"), bodies, results2, "--dry", "--ids", "rhv-wan-2-2-t2v", "--variants", JSON.stringify({ "rhv-wan-2-2-t2v": [{ resolution: "auto" }, { duration: null }] })], { encoding: "utf8", timeout: 120000 }); }

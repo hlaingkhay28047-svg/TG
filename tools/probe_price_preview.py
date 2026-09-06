@@ -16,7 +16,7 @@ requests and responses are logged without headers. Usage:
 (a null value drops the field) — as <id>~1, <id>~2 …, so a bare "301 PARAMS_INVALID" can be
 narrowed to the field that causes it without touching the source.
 """
-import json, os, sys, time, urllib.request, urllib.error, mimetypes, uuid
+import json, os, re, sys, time, urllib.request, urllib.error, mimetypes, uuid
 
 BASE = "https://www.runninghub.ai/openapi/v2"
 PH = { "https://placeholder.invalid/FIRST.jpg": "img1", "https://placeholder.invalid/SECOND.jpg": "img2", "https://placeholder.invalid/VIDEO.mp4": "vid" }
@@ -26,7 +26,7 @@ def opt(name, default=None):
         i = args.index(name); return args[i + 1] if i + 1 < len(args) else default
     return default
 DRY = "--dry" in args
-GROUP = opt("--group", "all")
+GROUP = opt("--group", "all")   # all | video | tools | image | t2i   (v6.26.0: image = every RH_MODELS body at each reference count)
 IDS = [x for x in (opt("--ids", "") or "").replace(" ", ",").split(",") if x]
 VARIANTS = json.loads(opt("--variants", "") or "{}")   # {id: [ {field: value | null}, ... ]}
 src, dst = args[0], args[1]
@@ -92,11 +92,16 @@ if GROUP in ("all", "video"): items += [dict(v, group="video") for v in dump["vi
 if GROUP in ("all", "tools"):
     items += [dict(t, group="tool") for t in dump["tools"]]
     if dump.get("upscale"): items.append(dict(dump["upscale"], group="tool", label="Video upscaler"))
-if IDS: items = [i for i in items if i["id"] in IDS]
+if GROUP in ("all", "t2i"):
+    items += [dict(v, group="t2i") for v in dump.get("t2i", [])]   # v6.26.0 — the text-to-image catalog
+if GROUP in ("all", "image"):
+    # v6.26.0 — one row per (model, reference count): "<id>@<n>"; `base` keeps the model id for the capacity table
+    items += [dict(v, group="image", id="%s@%d" % (v["id"], v["n"]), base=v["id"]) for v in dump.get("image", [])]
+if IDS: items = [i for i in items if i["id"] in IDS or i.get("base") in IDS]
 if VARIANTS:
     extra = []
     for it in items:
-        for k, patch in enumerate(VARIANTS.get(it["id"]) or [], 1):
+        for k, patch in enumerate(VARIANTS.get(it["id"]) or VARIANTS.get(it.get("base") or "") or [], 1):   # v6.26.0 — image rows are "<id>@<n>": the model id keys their variants too
             body = dict(it.get("body") or {})
             for f, v in patch.items():
                 if v is None: body.pop(f, None)
@@ -111,7 +116,10 @@ if os.path.exists(clip): media["vid"] = upload(clip, "probe-clip.mp4")
 print("media:", {k: ("uploaded" if v else "PLACEHOLDER") for k, v in media.items()})
 
 def swap(x):
-    if isinstance(x, str): return media.get(PH.get(x, ""), x) or x
+    if isinstance(x, str):
+        mi = re.match(r"^https://placeholder\.invalid/IMG(\d+)\.jpg$", x)   # v6.26.0 — IMG1..IMG14 alternate the two stills
+        if mi: return media.get("img1" if int(mi.group(1)) % 2 else "img2") or x
+        return media.get(PH.get(x, ""), x) or x
     if isinstance(x, list): return [swap(y) for y in x]
     if isinstance(x, dict): return {k: swap(v) for k, v in x.items()}
     return x
@@ -122,20 +130,31 @@ for it in items:
     if DRY: status, j = 200, {"estimatedPrice": 0.1, "currency": "USD", "priceText": "dry"}
     else: status, j = post("price-preview/" + it["apiPath"], body)
     verdict, note = classify(status, j)
-    results.append({"group": it["group"], "id": it["id"], "label": it.get("label"), "apiPath": it["apiPath"], "verdict": verdict, "note": note, "status": status, "sentKeys": sorted(body.keys()), "variant": it.get("variant")})
+    results.append({"group": it["group"], "id": it["id"], "label": it.get("label"), "apiPath": it["apiPath"], "verdict": verdict, "note": note, "status": status, "sentKeys": sorted(body.keys()), "variant": it.get("variant"), "base": it.get("base"), "n": it.get("n"), "single": it.get("single")})
     print("%-9s %-42s %-60s %s" % (verdict, it["id"][:42], it["apiPath"][:60], note[:90]))
     if not DRY: time.sleep(0.25)
 
 ok = sum(1 for r in results if r["verdict"] == "OK"); bad = [r for r in results if r["verdict"] != "OK"]
-summary = {"probed": len(results), "ok": ok, "notOk": len(bad), "media": {k: bool(v) for k, v in media.items()}, "results": results}
+# v6.26.0 — image capacity: per model, the largest accepted reference count and the first refusal
+cap = {}
+for r in results:
+    if r["group"] != "image": continue
+    c = cap.setdefault(r["base"], {"apiPath": r["apiPath"], "single": bool(r.get("single")), "max": None, "okAt": [], "refused": {}})
+    if r["verdict"] in ("OK", "NO-PRICE"): c["okAt"].append(r["n"]); c["max"] = max(c["max"] or 0, r["n"])
+    else: c["refused"][str(r["n"])] = r["note"][:120]
+summary = {"probed": len(results), "ok": ok, "notOk": len(bad), "media": {k: bool(v) for k, v in media.items()}, "imageCap": cap, "results": results}
 json.dump(summary, open(dst, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-md = ["## Video model probe — %d probed, %d accepted, %d not accepted" % (len(results), ok, len(bad)), "",
+md = ["## Model probe — %d probed, %d accepted, %d not accepted" % (len(results), ok, len(bad)), "",
       "media: " + ", ".join("%s=%s" % (k, "uploaded" if v else "placeholder") for k, v in media.items()), "",
       "| verdict | group | id | apiPath | note |", "|---|---|---|---|---|"]
 for r in bad + [r for r in results if r["verdict"] == "OK"]:
     md.append("| %s | %s | `%s` | `%s` | %s |" % (r["verdict"], r["group"], r["id"], r["apiPath"], r["note"].replace("|", "\\|")))
+if cap:
+    md += ["", "## Image capacity (largest accepted reference count)", "", "| model | apiPath | single | max ok | ok at | refused |", "|---|---|---|---|---|---|"]
+    for b, c in cap.items():
+        md.append("| `%s` | `%s` | %s | %s | %s | %s |" % (b, c["apiPath"], "yes" if c["single"] else "", c["max"], ",".join(map(str, sorted(c["okAt"]))), "; ".join("%s: %s" % (k, v.replace("|", "\\|")) for k, v in c["refused"].items())))
 gs = os.environ.get("GITHUB_STEP_SUMMARY")
 if gs: open(gs, "a", encoding="utf-8").write("\n".join(md) + "\n")
 print("===PROBE-JSON-BEGIN===")
-print(json.dumps({"probed": len(results), "ok": ok, "notOk": [{"id": r["id"], "apiPath": r["apiPath"], "verdict": r["verdict"], "note": r["note"]} for r in bad]}, ensure_ascii=False))
+print(json.dumps({"probed": len(results), "ok": ok, "notOk": [{"id": r["id"], "apiPath": r["apiPath"], "verdict": r["verdict"], "note": r["note"]} for r in bad], "imageCap": cap}, ensure_ascii=False))
 print("===PROBE-JSON-END===")
