@@ -1176,6 +1176,15 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stStage.compact .st-zoom-presets,#stStage.mini .st-zoom-presets,#stStage.pip .st-zoom-presets{display:contents}
 #stStage.pip .st-zp,#stStage.pip #stSplitSwap{display:none}
 #stZoomWrap{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* v6.24.0 — true-detail overlay rides over the loupe; 2-up puts the compare pane beside the picture */
+#stHiCanvas{position:absolute;left:0;top:0;pointer-events:none;border-radius:var(--r-md);z-index:2}
+#stCanvasB{display:none;max-width:100%;max-height:30vh;border-radius:var(--r-md);background:#000;border:1px solid var(--line-soft)}
+@media(min-width:768px){#stCanvasB{max-height:36vh}}
+#stStage.sbs #stZoomWrap{display:flex;gap:4px;align-items:flex-start;width:100%;max-width:100%}
+#stStage.sbs #stCanvas,#stStage.sbs #stCanvasB{width:calc(50% - 2px);max-width:calc(50% - 2px);height:auto;max-height:none;margin:0}
+#stStage.sbs #stCanvasB{display:block}
+@media(min-width:1024px){#pgStudio .st-cols.sbs,#pgMeitu .st-cols.sbs,#pgEvoto .st-cols.sbs{grid-template-columns:minmax(0,1fr) minmax(300px,34%)}}
+#stZoomInd.on:not(:empty){letter-spacing:.01em}
 #stStage.compact .st-ov,#stStage.mini .st-ov{position:static;min-height:44px;min-width:44px;top:auto;left:auto;right:auto;bottom:auto;transform:none;justify-content:center}
 /* PiP: floating corner thumbnail for landscape phones / keyboard-open (leaves the sticky flow; --stageH reports 0) */
 #stStage.pip{position:fixed;right:calc(10px + var(--sa-r));left:auto;bottom:auto;top:calc(var(--navH,54px) + env(safe-area-inset-top) + 8px);width:min(30vw,200px);z-index:7;padding:0;margin:0;border-radius:var(--r-md);box-shadow:0 6px 18px rgba(0,0,0,.55)}
@@ -5061,6 +5070,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.24.0", kind:"page", ref:"pgMeitu",
+    t:{my:"Retouch A / B — 100% zoom က export ဖိုင်အတိုင်း (မူရင်း full-res ကနေ) ပြ၊ နှုတ်ခမ်း/မျက်လုံး/မျက်ခုံး contour mask အစစ်၊ မျက်ကွင်းညို · မျက်ရစ် · ပြုံးကြောင်း · မျက်ခုံး တိုက်ရိုက်၊ Pin + 2-up compare",en:"Retouch A / B — zoom shows the file itself (rendered from the original), true lip / eye / brow contour masks, Dark Circles · Eye Bags · Smile Lines · Brow live, Pin + 2-up compare",shn:"Retouch A / B — zoom ၼႄၾၢႆႇ export (တီႈမူႇလ)၊ contour mask သူပ်း/မၢၵ်ႇတႃ/ၶိူင်ႈတႃ၊ ၸႅတ်ႈတႃ · ထူင်တႃ · ႁွႆးယုမ်ႉ · ၶိူင်ႈတႃ ၵမ်းသိုဝ်ႈ၊ Pin + 2-up",kac:"Retouch A / B — zoom gaw export file hpe madun (shawng na hkrang kaw na), contour mask n-gup/myi/myi-mun, myi kawng · myi hpaw · mani kawng · myi-mun live, Pin + 2-up",th:"Retouch A / B — ซูมแล้วเห็นไฟล์จริง (เรนเดอร์จากต้นฉบับ), มาสก์ตามเส้นขอบปาก/ตา/คิ้วจริง, รอยคล้ำ · ถุงใต้ตา · ร่องแก้ม · คิ้ว แบบสด, Pin + เทียบ 2 ภาพ",zh:"Retouch A / B — 放大即看到导出文件本身（由原图渲染），唇/眼/眉真实轮廓遮罩，黑眼圈 · 眼袋 · 法令纹 · 眉毛实时，钉住 + 并排对比",vi:"Retouch A / B — zoom thấy đúng file xuất (render từ ảnh gốc), mask theo đường viền môi/mắt/mày thật, Quầng thâm · Bọng mắt · Nếp cười · Lông mày trực tiếp, Ghim + so sánh 2 ảnh",id:"Retouch A / B — zoom menampilkan file sebenarnya (dirender dari asli), mask kontur bibir/mata/alis sungguhan, Lingkar hitam · Kantung mata · Garis senyum · Alis langsung, Pin + banding 2 gambar",ms:"Retouch A / B — zum menunjukkan fail sebenar (dirender dari asal), topeng kontur bibir/mata/kening sebenar, Lingkaran gelap · Beg mata · Garis senyum · Kening secara langsung, Pin + banding 2 imej"},
+    s:{my:"Zoom ဝင်ရင် stage က ပုံကို 1280 buffer ကနေ မကြီးတော့ဘဲ မူရင်း full-res ကို pipeline တစ်ခုတည်းနဲ့ (worker မှာ) ပြန် render ပြီး loupe ပေါ် 1:1 ပြတယ် — 100% မှာ မြင်တာ = ထွက်မယ့် ဖိုင်။ ပြင်တိုင်း ပြန် render (ပြီးမှ HD အမှတ် ပေါ်)၊ '1:1' preset အသစ်။ နှုတ်ခမ်း/သွား/မျက်လုံး/မျက်ခုံး/ပြုံးကြောင်း region တွေက 68-point contour polygon အစစ် (ellipse မဟုတ်တော့) + feather ပါ — lip color က နှုတ်ခမ်းဒေါင့်ကျော် မလွှမ်းတော့။ မျက်ကွင်းညိုဖယ် · မျက်ရစ်ဖယ် · ပြုံးကြောင်းဖယ် · မျက်ခုံးမိတ်ကပ် ပမာဏ slider ၄ ခုက AI ပို့တဲ့အပြင် အခု live pixel ပါ ပြတယ် (hybrid)။ Pin 📌 — လက်ရှိအဆင့်ကို မှတ်ထားရင် Before / A|B က မူရင်းအစား ဒါနဲ့ နှိုင်းပြ။ 2-up — ကျယ်တဲ့ stage မှာ မူရင်း | ပြင်ပြီး ဘေးချင်းကပ်။ Photoshop panel မှာ live stage မရှိတာ မူလ design အတိုင်း။",en:"Zoomed in, the stage no longer magnifies the 1280 buffer: the same pipeline renders the retained original on the worker and the visible window is drawn 1:1 over the loupe — what you see at 100% is the file. Every edit re-renders it (an HD mark shows when it has landed); a new 1:1 preset. Lips, teeth, eyes, brows and the nasolabial band are now the measured 68-point contours (feathered polygons, not bounding ellipses), so lip colour no longer reaches past the mouth corners. Dark Circles · Eye Bags · Smile Lines · Brow Makeup amount now paint live pixels as well as their AI line (hybrid). Pin 📌 a state and Before / A|B compare against it instead of the original. 2-up shows before beside after on a wide stage. The Photoshop panel has no live stage by design.",shn:"Zoom သေ ႁၢင်ႈ render မႂ်ႇတီႈမူႇလ (worker) ၼႄ 1:1 — 100% = ၾၢႆႇ။ Contour polygon သူပ်း/ၶဵဝ်ႈ/မၢၵ်ႇတႃ/ၶိူင်ႈတႃ။ Slider 4 ဢၼ် live ပႃး AI။ Pin 📌 + 2-up။",kac:"Zoom yang shawng na hkrang kaw na render bai (worker) 1:1 madun — 100% = file. Contour polygon n-gup/wa/myi/myi-mun. Slider 4 live hte AI. Pin 📌 + 2-up.",th:"เมื่อซูม สเตจเรนเดอร์จากต้นฉบับใหม่ (worker) แล้ววาด 1:1 — 100% = ไฟล์จริง มาสก์ปาก/ฟัน/ตา/คิ้วเป็นรูปหลายเหลี่ยมตามจุด 68 จุดจริง สไลเดอร์ 4 ตัวสดพร้อม AI Pin 📌 + เทียบ 2 ภาพ",zh:"放大时舞台从原图重新渲染（worker）并按 1:1 绘制——100% 即文件本身。唇/牙/眼/眉为 68 点真实轮廓多边形。4 个滑块实时 + AI。钉住 📌 + 并排对比。",vi:"Khi zoom, stage render lại từ ảnh gốc (worker) và vẽ 1:1 — 100% = file. Mask môi/răng/mắt/mày là đa giác 68 điểm thật. 4 thanh trượt trực tiếp + AI. Ghim 📌 + so sánh 2 ảnh.",id:"Saat zoom, stage merender ulang dari asli (worker) dan menggambar 1:1 — 100% = file. Mask bibir/gigi/mata/alis poligon 68 titik sungguhan. 4 slider langsung + AI. Pin 📌 + banding 2 gambar.",ms:"Apabila zum, stage merender semula dari asal (worker) dan melukis 1:1 — 100% = fail. Topeng bibir/gigi/mata/kening poligon 68 titik sebenar. 4 slider langsung + AI. Pin 📌 + banding 2 imej."} },
   { v:"6.23.0", kind:"page", ref:"pgMeitu",
     t:{my:"Retouch A / B live preview upgrade — မြန်တဲ့ စက်မှာ ပိုကြည် (တိုင်းတာပြီး 2048px အထိ)၊ မျက်နှာ · မျက်လုံး · နှုတ်ခမ်း zoom၊ ပုံပေါ် ဖိထားရင် မူရင်းပြ၊ A|B ဘက်လှဲ",en:"Retouch A / B live preview upgrade — sharper on fast devices (measured, up to 2048px), Face · Eyes · Lips zoom presets, press-and-hold Before peek, A|B swap",shn:"Retouch A / B live preview — ၸႅင်ႈလိူဝ် တီႈၶိူင်ႈဝႆး (ထိုင် 2048px)၊ zoom ၼႃႈ · မၢၵ်ႇတႃ · သူပ်း၊ ၼဵၵ်းဝႆႉ ၼႄမူႇလ၊ A|B လႅၵ်ႈၾၢႆႇ",kac:"Retouch A / B live preview upgrade — lawan ai jak hta grau san (2048px du hkra), Myi man · Myi · N-gup zoom, dip tawn yang shawng na madun, A|B maga galai",th:"อัปเกรด live preview ของ Retouch A / B — คมขึ้นบนเครื่องเร็ว (วัดจริง สูงสุด 2048px), ซูมหน้า · ตา · ปาก, กดค้างดูภาพก่อน, สลับด้าน A|B",zh:"Retouch A / B 实时预览升级 — 快设备上更清晰（实测，最高 2048px）、脸 · 眼 · 唇缩放预设、长按看原图、A|B 换边",vi:"Nâng cấp live preview Retouch A / B — nét hơn trên máy nhanh (đo thực, tới 2048px), zoom Mặt · Mắt · Môi, giữ để xem ảnh gốc, đổi bên A|B",id:"Upgrade live preview Retouch A / B — lebih tajam di perangkat cepat (terukur, hingga 2048px), zoom Wajah · Mata · Bibir, tekan-tahan untuk lihat asli, tukar sisi A|B",ms:"Naik taraf live preview Retouch A / B — lebih tajam pada peranti pantas (diukur, hingga 2048px), zum Muka · Mata · Bibir, tekan-tahan untuk lihat asal, tukar sisi A|B"},
     s:{my:"ဦးလေး ပြောတဲ့ Retouch A / B live preview upgrade — stage က ကိုယ့် settle နဲ့ drag-proxy အမြန်နှုန်းကို ကိုယ်တိုင် တိုင်းပြီး quality ladder အတိုင်း တက်/ဆင်းတယ်: desktop 1280 → 1600 → 2048၊ ဖုန်း 896 → 1280 — မြန်တဲ့ frame ၃ ခု ဆက်ရင် တစ်ဆင့်တက်၊ နှေးတဲ့ ၂ ခု ဆက်ရင် ဆင်း၊ စက်တိုင်းအတွက် မှတ်ထားတယ်။ နှေးတဲ့ ဖုန်းကို မနိုင်တာ ဘယ်တော့မှ မတွန်း။ Zoom preset: မျက်နှာ · မျက်လုံးနှစ်ဖက် · နှုတ်ခမ်း (detect ရတဲ့ မျက်နှာအတိုင်း) တစ်ချက်နှိပ်ရင် ချဲ့ပြ၊ Fit နဲ့ 100% ဘေးမှာ။ ပုံပေါ် ဘယ်နေရာမဆို ဖိထားရင် မူရင်းပြ၊ လွှတ်ရင် ပြင်ပြီးပုံ ပြန်ပြ။ A|B split မှာ ဘက်လှဲ chip ထပ်ပါလာတယ်။ Photoshop panel မှာ live stage မရှိတာ မူလ design အတိုင်းပါ။",en:"The owner asked for the Retouch A / B live preview to be upgraded. The stage now measures its own settle and drag-proxy speed and walks a quality ladder — 1280 → 1600 → 2048 on desktop, 896 → 1280 on a phone — up after three fast frames, down after two slow ones, remembered per device; a slow phone is never pushed past what it can settle. Zoom presets frame the detected face, both eyes or the lips with one tap, beside Fit and 100%. Press and hold anywhere on the picture to see Before; release to return to the edit. The A|B split gains a swap chip so you compare from either side. The Photoshop panel has no live stage by design — unchanged.",shn:"Stage ၸၢမ်းတူၺ်း ၽၢႆးဝႆး ႁင်းၵူၺ်း သေ ၶိုၼ်ႈ/လူင်း ladder: desktop 1280 → 1600 → 2048၊ ၾူၼ်း 896 → 1280။ Zoom ၼႃႈ · မၢၵ်ႇတႃ · သူပ်း ၼဵၵ်းၵမ်းလဵဝ်။ ၼဵၵ်းဝႆႉ ၼိူဝ်ႁၢင်ႈ ၼႄမူႇလ။ A|B လႅၵ်ႈၾၢႆႇ။",kac:"Stage gaw tinang a lawan ai hpe chyawm nna quality ladder hte lung/yu: desktop 1280 → 1600 → 2048, phone 896 → 1280. Myi man · Myi · N-gup hpe kalang dip yang zoom. Sumla ntsa dip tawn yang shawng na madun. A|B maga galai.",th:"สเตจวัดความเร็ว settle และ drag-proxy ของตัวเองแล้วไล่ระดับคุณภาพ: เดสก์ท็อป 1280 → 1600 → 2048, มือถือ 896 → 1280 — ขึ้นเมื่อเร็ว 3 เฟรมติด ลงเมื่อช้า 2 เฟรม จำต่อเครื่อง ซูมหน้า · ตา · ปาก แตะครั้งเดียว กดค้างบนภาพเพื่อดูก่อนแก้ สลับด้าน A|B",zh:"舞台自行测量 settle 与拖动代理速度并沿质量阶梯升降：桌面 1280 → 1600 → 2048，手机 896 → 1280——连续 3 帧快则升、2 帧慢则降，按设备记忆。脸 · 眼 · 唇一键缩放；长按画面看原图；A|B 可换边。",vi:"Stage tự đo tốc độ settle và drag-proxy rồi đi theo bậc chất lượng: desktop 1280 → 1600 → 2048, điện thoại 896 → 1280 — lên sau 3 khung nhanh, xuống sau 2 khung chậm, nhớ theo máy. Zoom Mặt · Mắt · Môi một chạm; giữ trên ảnh để xem gốc; A|B đổi bên.",id:"Stage mengukur kecepatan settle dan drag-proxy-nya sendiri lalu menaiki/menuruni tangga kualitas: desktop 1280 → 1600 → 2048, ponsel 896 → 1280 — naik setelah 3 frame cepat, turun setelah 2 frame lambat, diingat per perangkat. Zoom Wajah · Mata · Bibir sekali ketuk; tekan-tahan pada foto untuk melihat asli; A|B tukar sisi.",ms:"Stage mengukur kelajuan settle dan drag-proxy sendiri lalu menaiki/menuruni tangga kualiti: desktop 1280 → 1600 → 2048, telefon 896 → 1280 — naik selepas 3 bingkai pantas, turun selepas 2 bingkai perlahan, diingati mengikut peranti. Zum Muka · Mata · Bibir satu ketik; tekan-tahan pada foto untuk lihat asal; A|B tukar sisi."} },
@@ -15451,7 +15463,7 @@ var ST = {
   rafPending:false, settleT:null, svT:null, uiT:null,
   refreshFns:[], feats:{}, grpOf:{}, g1:{}, g2:{},
   groups:[], rowMap:{}, searchIdx:[],
-  split:{on:false,pct:50,swap:false}, stageResult:null, showingResult:false,
+  split:{on:false,pct:50,swap:false}, sbs:{on:false}, pin:null, stageResult:null, showingResult:false,
   presetSnap:null,
   undoSnap:null,
   /* v4.27.1 stage UI prefs — mode/pipCorner persist in hnk_st_ui (NOT state.st.v: stReset
@@ -15488,7 +15500,7 @@ function stTileDPR(){
 }
 
 function stDefT1(){ return {exp:0,bri:0,con:0,sat:0,vib:0,wrm:0,tnt:0,hi:0,sh:0,shp:0,cla:0,grn:0,vig:0,fad:0,bgb:0,wht:0,blk:0,dhz:0,glow:0}; }
-function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0,gdn:0,nrL:0,nrC:0,hairShine:0,hairDeep:0,lipV:0,blushV:0,eyeDef:0}; }
+function stDefT2(){ return {smooth:0,denoise:0,even:0,deyellow:0,white:0,rosy:0,deshine:0,gloss:0,teeth:0,eyeb:0,radiance:0,freqHi:0,freqLo:0,finish:null,finishV:0,gdn:0,nrL:0,nrC:0,hairShine:0,hairDeep:0,lipV:0,blushV:0,eyeDef:0,ueDark:0,ueBags:0,smile:0,browFill:0}; }
 function stDefGeo(){ return {rot:0,flipH:false,flipV:false,straighten:0,crop:null,ox:0.5,oy:0.5}; }
 state.st = { img:null, t1:stDefT1(), t2:stDefT2(), pend:[], preset:null, target:"all", v:{}, geo:stDefGeo(), refX:null };
 (function(){ /* tolerant restore — missing keys keep their defaults; img is never persisted */
@@ -15556,6 +15568,14 @@ function stEffT2(){
   ["smooth","denoise","even","deyellow","white","deshine","teeth","eyeb","radiance","gdn","nrL","nrC","hairShine","hairDeep","lipV","blushV","eyeDef"].forEach(function(k2){ o[k2]=stClamp(o[k2]||0,0,100); });
   o.rosy=stClamp(o.rosy,-100,100); o.gloss=stClamp(o.gloss,-100,100);
   o.freqHi=stClamp(o.freqHi,-100,100); o.freqLo=stClamp(o.freqLo,-100,100);
+  /* v6.24.0 — HYBRID: the Dark Circles / Eye Bags / Smile Lines / Brow Makeup
+     sliders stay AI features (their line goes to GENERATE), and now ALSO drive a
+     live pixel pass, so the value the prompt will state is the value the preview
+     shows. Read here, on the main thread, so the worker receives them resolved. */
+  o.ueDark=stClamp(svGet("mu_ueDark",0)||0,0,100); o.ueBags=stClamp(svGet("mu_ueBags",0)||0,0,100);
+  o.smile=stClamp(svGet("mu_smileLines",0)||0,0,100); o.browFill=stClamp(svGet("mu_browMkV",0)||0,0,100);
+  var _bc=svGet("mu_browColor",null);
+  o.browC = _bc==="dark brown" ? [1.02,0.97,0.92] : _bc==="ash" ? [0.96,0.98,1.02] : _bc==="taupe" ? [1.0,0.98,0.95] : [1,1,1];
   return o;
 }
 
@@ -15984,6 +16004,57 @@ function stFaceRegions(F){
 
    The 68-point layout is the standard one: 0-16 jaw, 17-26 brows, 27-35 nose,
    36-41 and 42-47 eyes, 48-59 outer lip, 60-67 inner lip. */
+/* v6.24.0 — CONTOUR MASKS. The 68-point net traces the lips, the eyes, the
+   brows and the jaw as CONTOURS; the ellipse fitted to a contour's bounding box
+   covers the corners of that box too, which is how lip colour reached the skin
+   past the mouth corners and teeth whitening reached the lips. These helpers
+   keep the measured polygon, widen a polyline into a band (brows, nasolabial
+   folds), scale a polygon about its centroid, and rasterise any set of shapes
+   into one feathered alpha plane — inside the render worker too (OffscreenCanvas
+   + ctx.filter, both probed before the worker is trusted). */
+function stLmPoly(pts,idx){ var o=[],i,p; for(i=0;i<idx.length;i++){ p=pts[idx[i]]; if(p) o.push([p[0],p[1]]); } return o.length>=3?o:null; }
+function stLmBand(pts,idx,half){
+  var q=[],i,p; for(i=0;i<idx.length;i++){ p=pts[idx[i]]; if(p) q.push(p); }
+  if(q.length<2) return null;
+  var fwd=[],back=[];
+  for(i=0;i<q.length;i++){
+    var a=q[Math.max(0,i-1)], b=q[Math.min(q.length-1,i+1)];
+    var dx=b[0]-a[0],dy=b[1]-a[1],L=Math.sqrt(dx*dx+dy*dy)||1, nx=-dy/L*half, ny=dx/L*half;
+    fwd.push([q[i][0]+nx,q[i][1]+ny]); back.push([q[i][0]-nx,q[i][1]-ny]);
+  }
+  return fwd.concat(back.reverse());
+}
+function stLmQuad(a,b,half){
+  if(!a||!b) return null;
+  var dx=b[0]-a[0],dy=b[1]-a[1],L=Math.sqrt(dx*dx+dy*dy)||1,nx=-dy/L*half,ny=dx/L*half;
+  return [[a[0]+nx,a[1]+ny],[b[0]+nx,b[1]+ny],[b[0]-nx,b[1]-ny],[a[0]-nx,a[1]-ny]];
+}
+function stPolyScale(poly,sc){
+  if(!poly||!poly.length) return poly;
+  var cx=0,cy=0,i; for(i=0;i<poly.length;i++){ cx+=poly[i][0]; cy+=poly[i][1]; } cx/=poly.length; cy/=poly.length;
+  var o=[]; for(i=0;i<poly.length;i++) o.push([cx+(poly[i][0]-cx)*sc, cy+(poly[i][1]-cy)*sc]);
+  return o;
+}
+function stShapeAlpha(W,H,shapes,feather){
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  var cx=cv.getContext("2d",{willReadFrequently:true});
+  cx.fillStyle="#fff";
+  function draw(){
+    for(var k=0;k<shapes.length;k++){
+      var sh=shapes[k]; if(!sh) continue;
+      cx.beginPath();
+      if(sh.poly&&sh.poly.length>=3){ for(var j=0;j<sh.poly.length;j++){ if(j) cx.lineTo(sh.poly[j][0],sh.poly[j][1]); else cx.moveTo(sh.poly[j][0],sh.poly[j][1]); } cx.closePath(); }
+      else if(sh.ell){ cx.ellipse(sh.ell.cx,sh.ell.cy,Math.max(1,sh.ell.rx),Math.max(1,sh.ell.ry),sh.ell.rot||0,0,Math.PI*2); }
+      else continue;
+      cx.fill();
+    }
+  }
+  if(feather>0.5){ cx.save(); try{ cx.filter="blur("+feather+"px)"; }catch(e){} draw(); cx.restore(); }
+  else draw();
+  var d=cx.getImageData(0,0,W,H).data, out=new Float32Array(W*H);
+  for(var i=0,q=3;i<out.length;i++,q+=4) out[i]=d[q]/255;
+  return out;
+}
 function stLmEll(pts,idx,padX,padY){
   var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,i,p;
   for(i=0;i<idx.length;i++){
@@ -16033,6 +16104,14 @@ function stZonesOneFace(f,sx,sy){
   R.cheekL=stLmEll(pts,[1,2,3,31,41],0.8,0.8);
   R.cheekR=stLmEll(pts,[13,14,15,35,46],0.8,0.8);
   R.faceOval=stLmEll(pts,stLmRange(0,26),1.05,1.15);
+  /* v6.24.0 — the measured contours themselves (render px), and two regions
+     the net does not trace but the frame places: the under-eye hollow and the
+     nasolabial band (nose wing to mouth corner). */
+  R.poly={ lips:stLmPoly(pts,stLmRange(48,59)), lipInner:stLmPoly(pts,stLmRange(60,67)),
+           eyeL:stLmPoly(pts,stLmRange(36,41)), eyeR:stLmPoly(pts,stLmRange(42,47)),
+           browL:stLmBand(pts,stLmRange(17,21),F.iod*0.09), browR:stLmBand(pts,stLmRange(22,26),F.iod*0.09),
+           smileL:stLmQuad(pts[31],pts[48],F.iod*0.16), smileR:stLmQuad(pts[35],pts[54],F.iod*0.16) };
+  R.underEyeL=F.E(-0.5,0.40,0.36,0.20); R.underEyeR=F.E(0.5,0.40,0.36,0.20);
   return { eyes:[eyeL,eyeR], mouth:lipO, head:head, frame:F, r:R,
            conf:(f.score>=0.6?"high":"low"), score:f.score, real:true };
 }
@@ -16193,7 +16272,7 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
      itself, skin-limited, instead of a global unsharp pass. */
   var fsLo = (t2.freqLo>0||t2.freqHi||t2.hairShine>0||t2.eyeDef>0) ? stBlurData(cv,W,H,6*rs) : null;
   var fsLoB = t2.freqLo>0 ? stBlurData(cv,W,H,(6+t2.freqLo/100*16)*rs) : null;
-  var zones = (t2.teeth>0||t2.eyeb>0||t2.lipV>0||t2.blushV>0||t2.eyeDef>0) ? stFaceZones(px,W,H,mi,lm) : null;
+  var zones = (t2.teeth>0||t2.eyeb>0||t2.lipV>0||t2.blushV>0||t2.eyeDef>0||t2.ueDark>0||t2.ueBags>0||t2.smile>0||t2.browFill>0) ? stFaceZones(px,W,H,mi,lm) : null;
   /* v4.56 — ONE head box for every face-relative band below. Each of these
      used to derive its geometry from mi.box, the box around every skin pixel
      in the frame, so on a half-body portrait the hair band covered the dress
@@ -16252,6 +16331,51 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
      function must not touch svGet so it can run inside the render worker */
   var lipC=t2.lipC||{r:192,g:72,b:88};
   var blushC=t2.blushC||{r:232,g:138,b:154};
+  /* v6.24.0 — CONTOUR ALPHA PLANES, one per active feature, feathered by a
+     fraction of the interocular distance so the edge is soft on every photo
+     size. Built only for the passes that will read them; the ellipse tests
+     below stay as the fallback when a face carries no polygons. */
+  var lipA=null, teethA=null, eyeA=null, eyeDefA=null, ueA=null, smA=null, browA=null, ueRef=null, blurUE=null, blurSM=null;
+  if(faceSet.length){
+    var iodM=0, shp={lips:[],lipIn:[],eye135:[],eye160:[],ue:[],sm:[],brow:[]};
+    for(var fj=0;fj<faceSet.length;fj++){
+      var fq=faceSet[fj], P=fq.r&&fq.r.poly; if(!P) continue;
+      iodM=Math.max(iodM,(fq.frame&&fq.frame.iod)||0);
+      if(P.lips) shp.lips.push({poly:P.lips});
+      if(P.lipInner) shp.lipIn.push({poly:stPolyScale(P.lipInner,1.08)});
+      if(P.eyeL){ shp.eye135.push({poly:stPolyScale(P.eyeL,1.35)}); shp.eye160.push({poly:stPolyScale(P.eyeL,1.6)}); }
+      if(P.eyeR){ shp.eye135.push({poly:stPolyScale(P.eyeR,1.35)}); shp.eye160.push({poly:stPolyScale(P.eyeR,1.6)}); }
+      if(fq.r.underEyeL) shp.ue.push({ell:fq.r.underEyeL}); if(fq.r.underEyeR) shp.ue.push({ell:fq.r.underEyeR});
+      if(P.smileL) shp.sm.push({poly:P.smileL}); if(P.smileR) shp.sm.push({poly:P.smileR});
+      if(P.browL) shp.brow.push({poly:P.browL}); if(P.browR) shp.brow.push({poly:P.browR});
+    }
+    var fe=Math.max(1,iodM*0.06);
+    if(t2.lipV>0&&shp.lips.length) lipA=stShapeAlpha(W,H,shp.lips,fe*0.6);
+    if(t2.teeth>0&&shp.lipIn.length) teethA=stShapeAlpha(W,H,shp.lipIn,fe*0.5);
+    if(t2.eyeb>0&&shp.eye135.length) eyeA=stShapeAlpha(W,H,shp.eye135,fe);
+    if(t2.eyeDef>0&&shp.eye160.length) eyeDefA=stShapeAlpha(W,H,shp.eye160,fe);
+    if((t2.ueDark>0||t2.ueBags>0)&&shp.ue.length) ueA=stShapeAlpha(W,H,shp.ue,fe*2.5);
+    if(t2.smile>0&&shp.sm.length) smA=stShapeAlpha(W,H,shp.sm,fe*1.5);
+    if(t2.browFill>0&&shp.brow.length) browA=stShapeAlpha(W,H,shp.brow,fe*0.8);
+    if(ueA&&t2.ueBags>0) blurUE=stBlurData(cv,W,H,8*rs);
+    if(smA) blurSM=stBlurData(cv,W,H,7*rs);
+    if(ueA&&t2.ueDark>0){
+      /* the skin the hollow should match: the cheeks, measured, skin-gated */
+      var sr=0,sg=0,sb=0,sc=0;
+      for(var fk=0;fk<faceSet.length;fk++){
+        var cz=faceSet[fk].r, ells=[cz&&cz.cheekL,cz&&cz.cheekR];
+        for(var ek=0;ek<2;ek++){
+          var e=ells[ek]; if(!e) continue;
+          var x0=Math.max(0,Math.floor(e.cx-e.rx)),x1=Math.min(W-1,Math.ceil(e.cx+e.rx)),y0=Math.max(0,Math.floor(e.cy-e.ry)),y1=Math.min(H-1,Math.ceil(e.cy+e.ry));
+          for(var yy=y0;yy<=y1;yy+=2) for(var xx=x0;xx<=x1;xx+=2){
+            if(mask[yy*W+xx]<128||!stInEllipse(xx,yy,e,1)) continue;
+            var qq=(yy*W+xx)*4; sr+=d[qq]; sg+=d[qq+1]; sb+=d[qq+2]; sc++;
+          }
+        }
+      }
+      if(sc>20) ueRef={r:sr/sc,g:sg/sc,b:sb/sc,l:(0.299*sr+0.587*sg+0.114*sb)/sc};
+    }
+  }
   var meanCb=0,meanCr=0;
   if(t2.even>0){
     var cnt=0;
@@ -16275,16 +16399,16 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
        heuristic when it doesn't. Zone-limited whitening can afford a lower
        luma floor — real teeth in shade get caught, the wall doesn't. */
     if(t2.teeth>0){
-      var inMouth=zMouths.length ? stInAny(xPix,yPix,zMouths,1.15) : null;
+      var inMouth=teethA ? (teethA[i]>0.05) : (zMouths.length ? stInAny(xPix,yPix,zMouths,1.15) : null);
       /* the old no-mouth branch whitened EVERY bright skin pixel in the frame
          — a gown, a veil, a lit shoulder. Without a measured mouth, teeth
          whitening now does nothing at all. */
-      var tOk = zMouths.length ? (inMouth && lum>105) : false;
+      var tOk = (teethA||zMouths.length) ? (inMouth && lum>105) : false;
       if(tOk){
         var mx0=Math.max(R,G,B),mn0=Math.min(R,G,B);
         if((mx0-mn0)<(inMouth?55:40) && ((R+G)/2-B)>(inMouth?2:6)){
-          var tv=t2.teeth/100;
-          B+=(G-B)*tv*0.6; var lift=t2.teeth*0.15;
+          var tA=teethA?teethA[i]:1, tv=t2.teeth/100*tA;
+          B+=(G-B)*tv*0.6; var lift=t2.teeth*0.15*tA;
           R+=lift; G+=lift; B+=lift;
         }
       }
@@ -16354,11 +16478,11 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
          so lip colour used to bleed onto both. */
       /* no measured lip band -> no lip colour. The old fallback painted the
          whole mouth ellipse, which on a mis-read face is a patch of cheek. */
-      var inLip = zLips.length ? stInAny(xPix,yPix,zLips,1.0) : null;
+      var inLip = lipA ? (lipA[i]>0.02) : (zLips.length ? stInAny(xPix,yPix,zLips,1.0) : null);
       if(t2.lipV>0&&inLip){
         var crL=128+0.5*R-0.418688*G-0.081312*B;
         if(crL>138){ /* lip pixels, not teeth */
-          var aL=t2.lipV/100*0.55;
+          var aL=t2.lipV/100*0.55*(lipA?lipA[i]:1);
           var lumL=0.299*R+0.587*G+0.114*B, lumLT=0.299*lipC.r+0.587*lipC.g+0.114*lipC.b;
           R+=((lipC.r-lumLT+lumL)-R)*aL; G+=((lipC.g-lumLT+lumL)-G)*aL; B+=((lipC.b-lumLT+lumL)-B)*aL;
         }
@@ -16368,8 +16492,22 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
         var lumB2=0.299*R+0.587*G+0.114*B, lumBT=0.299*blushC.r+0.587*blushC.g+0.114*blushC.b;
         R+=((blushC.r-lumBT+lumB2)-R)*aB; G+=((blushC.g-lumBT+lumB2)-G)*aB; B+=((blushC.b-lumBT+lumB2)-B)*aB;
       }
-      if(t2.eyeDef>0&&zEyes.length&&fsLo&&stInAny(xPix,yPix,zEyes,1.6)){
-        var kE=t2.eyeDef/100*0.6;
+      /* v6.24.0 — LIVE under-eye, smile lines and brow fill on the measured face */
+      if(ueA&&ueA[i]>0.01){
+        var ua=ueA[i];
+        if(ueRef&&t2.ueDark>0){
+          var lumU=0.299*R+0.587*G+0.114*B, gap=ueRef.l-lumU;
+          if(gap>2){ var aU=t2.ueDark/100*0.55*ua*Math.min(1,gap/40); R+=(ueRef.r-R)*aU; G+=(ueRef.g-G)*aU; B+=(ueRef.b-B)*aU; }
+        }
+        if(blurUE&&t2.ueBags>0){ var aBg=t2.ueBags/100*0.85*ua; R+=(blurUE[p]-R)*aBg; G+=(blurUE[p+1]-G)*aBg; B+=(blurUE[p+2]-B)*aBg; }
+      }
+      if(smA&&blurSM&&smA[i]>0.01&&m>0.3){ var aS=t2.smile/100*0.75*smA[i]; R+=(blurSM[p]-R)*aS; G+=(blurSM[p+1]-G)*aS; B+=(blurSM[p+2]-B)*aS; }
+      if(browA&&browA[i]>0.01){
+        var lumBr=0.299*R+0.587*G+0.114*B;
+        if(lumBr<190){ var kB=t2.browFill/100*0.35*browA[i], bc=t2.browC||[1,1,1]; R*=1-kB*bc[0]; G*=1-kB*bc[1]; B*=1-kB*0.92*bc[2]; }
+      }
+      if(t2.eyeDef>0&&fsLo&&(eyeDefA ? eyeDefA[i]>0.02 : (zEyes.length&&stInAny(xPix,yPix,zEyes,1.6)))){
+        var kE=t2.eyeDef/100*0.6*(eyeDefA?eyeDefA[i]:1);
         R+=(R-fsLo[p])*kE; G+=(G-fsLo[p+1])*kE; B+=(B-fsLo[p+2])*kE;
       }
     }
@@ -16382,13 +16520,14 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
       /* the old fallback was a RECTANGULAR BAND across the head box, and when
          that box was the whole picture the band was a stripe across the photo.
          Without measured eyes, eye brightening now does nothing. */
-      var inEye = zEyes.length ? stInAny(xPix,yPix,zEyes,1.35) : false;
+      var inEye = eyeA ? (eyeA[i]>0.02) : (zEyes.length ? stInAny(xPix,yPix,zEyes,1.35) : false);
       if(inEye){
-        if(lumE<(zEyes.length?95:80)){ var eb=t2.eyeb*0.25; R+=eb;G+=eb;B+=eb; }
+        var eA=eyeA?eyeA[i]:1;
+        if(lumE<(zEyes.length?95:80)){ var eb=t2.eyeb*0.25*eA; R+=eb;G+=eb;B+=eb; }
         else { var mx1=Math.max(R,G,B),mn1=Math.min(R,G,B);
           if(lumE>(zEyes.length?150:180)&&(mx1-mn1)<(zEyes.length?45:30)){
-            var eb2=t2.eyeb*0.2; R+=eb2;G+=eb2;B+=eb2;
-            if(zEyes.length){ B+=(mx1-B)*t2.eyeb/100*0.3; } /* de-yellow the sclera */
+            var eb2=t2.eyeb*0.2*eA; R+=eb2;G+=eb2;B+=eb2;
+            if(zEyes.length){ B+=(mx1-B)*t2.eyeb/100*0.3*eA; } /* de-yellow the sclera */
           } }
       }
     }
@@ -16493,6 +16632,10 @@ function stGeoSource(){
   if(!ST.geoCache) ST.geoCache=stApplyGeo(ST.srcBitmap);
   return ST.geoCache;
 }
+/* v6.24.0 — what Before and the A|B split compare AGAINST: the original, or
+   the state the retoucher pinned (a look-in-progress, a client's approved
+   version) — compare tools follow the pin, the pipeline never does. */
+function stCompareSource(){ return (ST.pin&&ST.pin.cv) ? ST.pin.cv : stGeoSource(); }
 /* v4.51 — DELIVERY source. Everything on screen runs on the downscaled
    preview bitmap (1536 long edge, or 2048 on a paid Retouch tier), which is
    right for interactivity and wrong for the file the studio hands a client:
@@ -16562,6 +16705,7 @@ function stLoadFullSource(du){
     }
     ST.geoCacheFull=null;
     if(typeof stRenderExportNote==="function") stRenderExportNote();
+    if(typeof stRefreshUI==="function") stRefreshUI(); /* v6.24.0 — the 1:1 preset appears once the original is here */
   };
   img.onerror=function(){ ST.fullBitmap=null; };
   img.src=du;
@@ -16852,7 +16996,7 @@ function stRunPipeline(srcImg,W,H,opts){
     cx.putImageData(px,0,0);
   }
   /* (4) Tier-2 skin ops on the cached (or freshly computed) skin mask */
-  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef);
+  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef||t2.ueDark||t2.ueBags||t2.smile||t2.browFill);
   if(needSkin){
     var mi=opts.maskInfo || stSkinMask(px,W,H,opts.lm||null);
     /* v4.42 — painted brush mask rides every render size (live buffer,
@@ -16983,7 +17127,7 @@ function stRenderSettle(){
   ST.showingResult=false;
   var W=ST.buf.width,H=ST.buf.height;
   var t2=stEffT2();
-  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef);
+  var needSkin=!!(t2.smooth||t2.denoise||t2.even||t2.deyellow||t2.white||t2.rosy||t2.deshine||t2.gloss||t2.teeth||t2.eyeb||t2.radiance||t2.freqLo>0||t2.freqHi||t2.hairShine||t2.hairDeep||t2.lipV||t2.blushV||t2.eyeDef||t2.ueDark||t2.ueBags||t2.smile||t2.browFill);
   if(needSkin&&!ST.maskCache) ST.maskCache=stSkinMask(ST.px0,W,H,ST.faceLM||null);
   /* v4.42 — big buffers settle on the render worker so slider drags never
      jank the UI thread; small buffers (phones, tests) keep the sync path */
@@ -17000,7 +17144,7 @@ function stPresentSettle(out){
   cc.clearRect(0,0,c.width,c.height); cc.drawImage(out,0,0);
   /* SHOULD #11: A|B split — untouched source clipped left of the divider */
   if(ST.split.on){
-    var src=stGeoSource();
+    var src=stCompareSource();
     var cwp=Math.round(c.width*ST.split.pct/100);
     /* v6.23.0 — the untouched source sits LEFT of the divider, or RIGHT when swapped */
     var sx0=ST.split.swap?cwp:0, sw0=ST.split.swap?c.width-cwp:cwp;
@@ -17018,6 +17162,9 @@ function stPresentSettle(out){
   if(out&&out.close){ try{ out.close(); }catch(_e){} }
   var fl=$("stStageFlip");
   if(fl&&ST.stageResult) fl.textContent=L9({my:"ရလဒ်ပြ",en:"Show result"});
+  /* v6.24.0 — the 2-up pane and the true-detail overlay follow every settled frame */
+  if(ST._sbsSync&&ST.sbs&&ST.sbs.on) ST._sbsSync();
+  if(ST._hiSync) ST._hiSync();
 }
 /* ---------- v4.42: render worker — the full pixel pipeline off the UI thread ---------- */
 var STW={w:null,ready:false,dead:false,busy:false,queued:false,id:0,cb:{},exp:{}};
@@ -17034,7 +17181,7 @@ function stWorker(){
     /* the worker is built from the LIVE sources of the pipeline family, so it
        can never drift from the sync path. Guarded fallbacks (opts.t1||stEffT1()
        etc.) are never evaluated there — every message carries resolved params. */
-    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinWindow,stSkinMask,stBlurData,stHeadBox,stFaceFrame,stFaceRegions,stLmEll,stLmRange,stZonesOneFace,stZonesFromLM,stFaceZones,stInEllipse,stInAny,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
+    var fns=[stClamp,stComputeLut,stBoxBlurMask,stSkinWindow,stSkinMask,stBlurData,stHeadBox,stFaceFrame,stFaceRegions,stLmEll,stLmRange,stLmPoly,stLmBand,stLmQuad,stPolyScale,stShapeAlpha,stZonesOneFace,stZonesFromLM,stFaceZones,stInEllipse,stInAny,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stRunPipeline];
     var src='var document={createElement:function(){return new OffscreenCanvas(1,1);}};\n'
       + fns.map(function(f){ return f.toString(); }).join("\n")
       + '\nvar _pc=new OffscreenCanvas(4,4).getContext("2d");var FILTER_OK=false;'
@@ -17394,6 +17541,9 @@ function stBuildBuffer(){
   var src=stGeoSource(), gw=src.width||src.naturalWidth, gh=src.height||src.naturalHeight;
   var MAX=stBufMax(), s=Math.min(1,MAX/Math.max(gw,gh));
   ST.q.pendingBuf=false;                    /* v6.23.0 — this build is at the current rung */
+  /* v6.24.0 — a new photo (or a new geometry) drops the hi-res frame and the pin */
+  if(ST.hi&&ST.hi.bmp){ try{ ST.hi.bmp.close(); }catch(_eh){} ST.hi.bmp=null; ST.hi.key=""; }
+  ST.pin=null; var _pb=$("stPin"); if(_pb) _pb.classList.remove("on");
   var bw=Math.max(1,Math.round(gw*s)), bh=Math.max(1,Math.round(gh*s));
   ST.buf=document.createElement("canvas"); ST.buf.width=bw; ST.buf.height=bh;
   ST.bctx=ST.buf.getContext("2d",{willReadFrequently:true});
@@ -18071,11 +18221,14 @@ function stColorInp(o){ /* {id,get,set,dflt,label} */
   return inp;
 }
 /* shorthand builders bound to the value store */
+/* v6.24.0 — the AI sliders that also drive a live pixel pass (see stEffT2) */
+var ST_LIVE_SV={mu_ueDark:1,mu_ueBags:1,mu_smileLines:1,mu_browMkV:1};
 function svSlider(id,label,bidir,featId,max){
   return stAiMark(stSlider({id:id,label:label,min:bidir?-100:0,max:max||100,def:0,
     get:function(){ return svGet(id,0); },
     set:function(v){
       svSet(id,v);
+      if(ST_LIVE_SV[id]&&typeof stT2Changed==="function") stT2Changed(); /* hybrid: live pixels + the AI line */
       if(v&&stSeedParent(id,featId)) stRefreshUI();
       stSync(featId);
       /* if the edit STILL didn't land (un-seedable parent, e.g. a required
@@ -21040,7 +21193,7 @@ function renderStPicker(){
     var c=$("stCanvas"); c.style.filter="";
     var cc=c.getContext("2d");
     cc.clearRect(0,0,c.width,c.height);
-    cc.drawImage(stGeoSource(),0,0,c.width,c.height);
+    cc.drawImage(stCompareSource(),0,0,c.width,c.height);
   }
   function up(){
     if(!ST.holding) return;
@@ -22360,6 +22513,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   sp.parentNode.insertBefore(sw,sp.nextSibling);
   sp.onclick=function(){
     if(ST.zoomReset) ST.zoomReset(); /* split and zoom are mutually exclusive (§3.1) */
+    if(ST.sbs&&ST.sbs.on&&!ST.split.on){ ST.sbs.on=false; var sbB=$("stSbs"); if(sbB) sbB.classList.remove("on"); if(ST._sbsSync) ST._sbsSync(); } /* v6.24.0 — split and 2-up are exclusive */
     ST.split.on=!ST.split.on;
     stg.classList.toggle("split",ST.split.on);
     sp.classList.toggle("on",ST.split.on);
@@ -22400,29 +22554,41 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   function cssW(){ return c.clientWidth||1; }
   function cssH(){ return c.clientHeight||1; }
   function nativeS(){ return Math.max(1.01,(c.width||1)/cssW()); }
+  /* v6.24.0 — the loupe may go PAST the buffer's native scale once the true-detail
+     frame exists: 1:1 then means one export pixel per device pixel */
+  function maxS(){
+    var n=nativeS();
+    if(ST.hi&&ST.hi.bmp&&ST.hi.w>c.width){ var dpr=Math.min(2,window.devicePixelRatio||1); return Math.max(n, ST.hi.w/(cssW()*dpr)); }
+    return n;
+  }
   function apply(){
     var w=cssW(),h=cssH();
     Z.x=stClamp(Z.x,Math.min(0,w-w*Z.s),0);
     Z.y=stClamp(Z.y,Math.min(0,h-h*Z.s),0);
+    var cB=$("stCanvasB");
     if(Z.s<=1.001){
       Z.s=1; Z.x=0; Z.y=0;
       c.style.transform=""; c.style.transformOrigin=""; wrap.style.touchAction="";
+      if(cB){ cB.style.transform=""; cB.style.transformOrigin=""; }
       ind.style.display="none"; ind.classList.remove("on");
     }else{
       c.style.transformOrigin="0 0";
       c.style.transform="translate("+Z.x+"px,"+Z.y+"px) scale("+Z.s+")";
+      if(cB){ cB.style.transformOrigin="0 0"; cB.style.transform=c.style.transform; } /* v6.24.0 — 2-up pans with the picture */
       wrap.style.touchAction="none"; /* while zoomed the wrap owns the gestures; page scroll returns at s=1 */
       ind.style.display=""; ind.classList.add("on");
       var pct=Z.s/nativeS();
-      ind.textContent=(pct>0.97&&pct<1.03)?"100%":"×"+(Math.round(Z.s*10)/10);
+      Z.indBase=(pct>0.97&&pct<1.03)?"100%":"×"+(Math.round(Z.s*10)/10);
+      ind.textContent=Z.indBase+((ST.hi&&ST.hi.on)?" · HD":"");
     }
+    if(ST._hiSync) ST._hiSync(); /* v6.24.0 — the true-detail overlay follows the loupe */
   }
   function zoomReset(){ Z.s=1; Z.x=0; Z.y=0; apply(); }
   function zoomTo(s,cx,cy){ /* cx,cy in wrap-local CSS px; defaults to center */
     if(ST.split.on){ var sp=$("stSplit"); if(sp&&sp.onclick) sp.onclick(); } /* zoom exits split first (§3.1) */
     var w=cssW(),h=cssH();
     if(cx==null) cx=w/2; if(cy==null) cy=h/2;
-    var s0=Z.s||1, s1=stClamp(s,1,nativeS());
+    var s0=Z.s||1, s1=stClamp(s,1,maxS());
     Z.x=cx-(cx-Z.x)*(s1/s0); Z.y=cy-(cy-Z.y)*(s1/s0); Z.s=s1;
     apply();
   }
@@ -22482,6 +22648,118 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     presets.style.display=ST.srcBitmap?"":"none";
   }
   ST.refreshFns.push(presetsSync); presetsSync();
+  /* ---- v6.24.0: PIN — compare against a chosen state, not only the original.
+     Before (button, B key, long press) and the A|B split read stCompareSource(),
+     which is the pin while one exists. A new photo drops it. ---- */
+  var pin=pchip("stPin","\ud83d\udccc",L9({my:"ဒီအဆင့်ကို မှတ်ထား — Before / A|B က ဒါနဲ့ နှိုင်းမယ်",en:"Pin this state — Before and A|B compare against it",shn:"မၢႆဝႆႉ ၸၼ်ႉၼႆႉ — Before / A|B ၼိူင်းတင်းၼႆႉ",kac:"Ndai hpe pin u — Before / A|B gaw ndai hte shai yu na",th:"ปักหมุดสถานะนี้ — Before / A|B จะเทียบกับมัน",zh:"钉住此状态 — Before / A|B 与之对比",vi:"Ghim trạng thái này — Before / A|B so với nó",id:"Sematkan keadaan ini — Before / A|B dibandingkan dengannya",ms:"Pin keadaan ini — Before / A|B dibanding dengannya"}),function(){
+    if(ST.pin){ ST.pin=null; pin.classList.remove("on"); }
+    else {
+      if(ST.split.on){ var spP=$("stSplit"); if(spP&&spP.onclick) spP.onclick(); }
+      var pv=document.createElement("canvas"); pv.width=c.width; pv.height=c.height;
+      pv.getContext("2d").drawImage(c,0,0);
+      ST.pin={cv:pv,w:c.width,h:c.height}; pin.classList.add("on");
+    }
+    if(ST.srcBitmap){ if(ST.split.on) stRenderSettle(); if(ST._sbsSync&&ST.sbs.on) ST._sbsSync(); }
+  });
+  /* ---- v6.24.0: 2-UP — before beside after on a stage wide enough; the loupe
+     pans both panes together. Split and 2-up are exclusive. ---- */
+  var cB=document.createElement("canvas"); cB.id="stCanvasB"; cB.style.display="none"; wrap.insertBefore(cB,c);
+  var stg2=$("stStage");
+  function sbsSync(){
+    var on=!!(ST.sbs&&ST.sbs.on);
+    if(stg2) stg2.classList.toggle("sbs",on);
+    var cols=$("stCols"); if(cols) cols.classList.toggle("sbs",on); /* desktop: the stage column widens for two panes */
+    cB.style.display=on?"":"none";
+    if(on&&ST.srcBitmap){
+      if(cB.width!==c.width||cB.height!==c.height){ cB.width=c.width; cB.height=c.height; }
+      var s=stCompareSource(); if(s){ var bx=cB.getContext("2d"); bx.clearRect(0,0,cB.width,cB.height); bx.drawImage(s,0,0,cB.width,cB.height); }
+    }
+    if(ST._stageHUpd) ST._stageHUpd();
+  }
+  ST._sbsSync=sbsSync;
+  var sbs=pchip("stSbs","2-up",L9({my:"မူရင်း | ပြင်ပြီး ဘေးချင်းကပ်",en:"Side by side — before beside after",shn:"မူႇလ | မႄးယဝ်ႉ ၶၢင်ႈၵၼ်",kac:"Shawng | galai ngut makau hkat",th:"เทียบข้างกัน — ก่อน | หลัง",zh:"并排 — 原图 | 修改后",vi:"Cạnh nhau — trước | sau",id:"Berdampingan — sebelum | sesudah",ms:"Sebelah-menyebelah — sebelum | selepas"}),function(){
+    ST.sbs.on=!ST.sbs.on; sbs.classList.toggle("on",ST.sbs.on);
+    if(ST.sbs.on&&ST.split.on){ var sp3=$("stSplit"); if(sp3&&sp3.onclick) sp3.onclick(); }
+    if(ST.sbs.on&&Z.s>1) zoomReset();
+    sbsSync(); apply();
+  });
+  /* ---- v6.24.0: TRUE-DETAIL ZOOM. The loupe used to magnify the 1280/896
+     preview buffer: at 100% a student saw buffer pixels, not the file. Now,
+     while zoomed, the SAME pipeline renders the retained original (the export
+     source, capped for memory) on the worker's export path, and the visible
+     window of that frame is drawn 1:1 over the loupe — what you see at 100% is
+     what the delivered file carries. Any edit invalidates the frame (its key is
+     the whole recipe); it re-renders 600ms after the last settle while zoomed.
+     Off while split / 2-up / Before / zones / a result is showing. ---- */
+  var ST_HI_CAP = window.innerWidth<720 ? 2560 : 4096;
+  var hi=document.createElement("canvas"); hi.id="stHiCanvas"; hi.style.display="none"; wrap.appendChild(hi);
+  ST.hi={bmp:null,w:0,h:0,key:"",busy:false,want:false,t:0,on:false,wantFull:false};
+  function hiSourceInfo(){
+    if(!ST.srcBitmap||!ST.fullBitmap||!ST.buf||typeof stExportSource!=="function") return null;
+    var src=stExportSource(); if(!src) return null;
+    var w=src.width||src.naturalWidth, h=src.height||src.naturalHeight; if(!w||!h) return null;
+    if(Math.max(w,h)<=Math.max(ST.buf.width,ST.buf.height)*1.15) return null;   /* nothing sharper to show */
+    var sc=Math.min(1,ST_HI_CAP/Math.max(w,h));
+    return {src:src, W:Math.max(1,Math.round(w*sc)), H:Math.max(1,Math.round(h*sc))};
+  }
+  function hiKey(){
+    try{ return JSON.stringify([stEffT1(),stEffT2(),stPipeVals(),stCurveVals(),ST.heals||null,svGet("st_brushMode",null),state.st.geo,ST.srcW,ST.srcH,(state.st.img&&state.st.img.b64||"").length]); }
+    catch(e){ return "k"+Date.now(); }
+  }
+  function hiWanted(){ return !!(ST.srcBitmap&&Z.s>1.05&&!ST.split.on&&!ST.holding&&!ST.showingResult&&!(ST.sbs&&ST.sbs.on)&&!ST.showZones); }
+  function indSync(){ if(Z.s>1.001) ind.textContent=(Z.indBase||"")+(ST.hi.on?" · HD":""); }
+  function hiHide(){ if(ST.hi.on){ ST.hi.on=false; hi.style.display="none"; indSync(); } }
+  function hiDraw(){
+    if(!hiWanted()||!ST.hi.bmp||ST.hi.key!==hiKey()){ hiHide(); return; }
+    var dpr=Math.min(2,window.devicePixelRatio||1), vw=cssW(), vh=cssH();
+    var ow=Math.round(vw*dpr), oh=Math.round(vh*dpr); if(!ow||!oh) return;
+    if(hi.width!==ow||hi.height!==oh){ hi.width=ow; hi.height=oh; }
+    var k=vw/(c.width||1), fx=ST.hi.w/c.width, fy=ST.hi.h/c.height;
+    var sx=(-Z.x)/(Z.s*k)*fx, sy=(-Z.y)/(Z.s*k)*fy, sw=vw/(Z.s*k)*fx, sh=vh/(Z.s*k)*fy;
+    var hx=hi.getContext("2d"); hx.imageSmoothingEnabled=true; hx.imageSmoothingQuality="high"; hx.clearRect(0,0,ow,oh);
+    try{ hx.drawImage(ST.hi.bmp,sx,sy,sw,sh,0,0,ow,oh); }catch(e){ hiHide(); return; }
+    hi.style.width=vw+"px"; hi.style.height=vh+"px";
+    hi.style.left=(c.offsetLeft+c.clientLeft)+"px"; hi.style.top=(c.offsetTop+c.clientTop)+"px"; /* over the canvas content, inside its border */
+    hi.style.display=""; ST.hi.on=true; indSync();
+  }
+  function hiRequest(){
+    var info=hiSourceInfo(); if(!info||!hiWanted()){ hiHide(); return; }
+    if(!(typeof stWorkerOk==="function"&&stWorkerOk())) return;
+    var w; try{ w=stWorker(); }catch(e){ w=null; }
+    if(!w||STW.dead||!STW.ready) return;
+    if(ST.hi.busy){ ST.hi.want=true; return; }
+    var key=hiKey(); if(ST.hi.bmp&&ST.hi.key===key){ hiDraw(); return; }
+    var msg; try{ msg=stExportParams(info.W,info.H); }catch(e){ return; }
+    ST.hi.busy=true; ST.hi.want=false;
+    var id=++STW.id; STW.exp[id]=1;
+    STW.cb[id]=function(bmp){
+      ST.hi.busy=false;
+      if(bmp){ if(ST.hi.bmp){ try{ ST.hi.bmp.close(); }catch(e){} } ST.hi.bmp=bmp; ST.hi.w=info.W; ST.hi.h=info.H; ST.hi.key=key; }
+      if(ST.hi.want){ ST.hi.want=false; hiSoon(); }
+      else { hiDraw(); if(ST.hi.wantFull){ ST.hi.wantFull=false; zoomTo(maxS()); } }
+    };
+    var srcCv=info.src;
+    if(info.W!==(info.src.width||info.src.naturalWidth)){ var dc=document.createElement("canvas"); dc.width=info.W; dc.height=info.H; dc.getContext("2d").drawImage(info.src,0,0,info.W,info.H); srcCv=dc; }
+    createImageBitmap(srcCv).then(function(bmp){ msg.id=id; msg.bmp=bmp; w.postMessage(msg,[bmp]); })
+      .catch(function(){ delete STW.cb[id]; delete STW.exp[id]; ST.hi.busy=false; });
+  }
+  function hiSoon(){ clearTimeout(ST.hi.t); ST.hi.t=setTimeout(hiRequest,600); }
+  function hiSync(){
+    if(!hiWanted()){ hiHide(); return; }
+    if(ST.hi.bmp&&ST.hi.key===hiKey()) hiDraw(); else { hiHide(); hiSoon(); }
+  }
+  ST._hiSync=hiSync; ST._hiDraw=hiDraw; ST._hiSourceInfo=hiSourceInfo;
+  var p11=pchip("stZp11","1:1",L9({my:"1:1 — export pixel တစ်ခု = screen pixel တစ်ခု (မူရင်း full-res ကနေ)",en:"1:1 — one export pixel per screen pixel, rendered from the original",shn:"1:1",kac:"1:1",th:"1:1",zh:"1:1",vi:"1:1",id:"1:1",ms:"1:1"}),function(){
+    if(ST.split.on){ var spQ=$("stSplit"); if(spQ&&spQ.onclick) spQ.onclick(); }
+    if(ST.sbs&&ST.sbs.on){ sbs.onclick(); }
+    ST.hi.wantFull=true; zoomTo(maxS()); hiRequest();
+  });
+  function extraSync(){
+    p11.style.display = hiSourceInfo() ? "" : "none";
+    sbs.style.display = (ST.srcBitmap && stg2 && (stg2.clientWidth>=560 || window.innerWidth>=1024)) ? "" : "none";
+    pin.style.display = ST.srcBitmap ? "" : "none";
+  }
+  ST.refreshFns.push(extraSync); extraSync();
   /* ---- v6.23.0: PRESS-AND-HOLD ON THE PICTURE = BEFORE PEEK ----
      The thumb-on-the-photo habit every retouching app teaches; the rail's
      Before button and the B key stay. A long press (350ms, no drift over 8px,
@@ -22534,7 +22812,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     if(g.mode==="pinch"&&ids.length>=2){
       var a=pts[ids[0]], b=pts[ids[1]], wr=wrap.getBoundingClientRect();
       var mx=(a.x+b.x)/2-wr.left, my=(a.y+b.y)/2-wr.top;
-      Z.s=stClamp(g.s0*(Math.hypot(a.x-b.x,a.y-b.y)||1)/g.d0,1,nativeS());
+      Z.s=stClamp(g.s0*(Math.hypot(a.x-b.x,a.y-b.y)||1)/g.d0,1,maxS());
       Z.x=mx-g.lx*Z.s; Z.y=my-g.ly*Z.s; /* focal point stays put */
       apply();
     }else if(g.mode==="pan"){
@@ -25690,7 +25968,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.23.1";
+var APP_VER="6.24.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
