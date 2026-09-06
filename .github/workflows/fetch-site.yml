@@ -21,12 +21,6 @@ on:
         description: "scroll passes before reading (lazy sections); 0-20"
         required: false
         default: "6"
-  # a new workflow cannot be dispatched by the API until it exists on the default
-  # branch (the cross-engine lane met the same 404); a push of this file runs it
-  # once with the default URLs below, exactly as fetch-docs.yml does
-  push:
-    branches: [claude/hnk-studio-deployment-pr292-www53j]
-    paths: [".github/workflows/fetch-site.yml"]
 
 permissions:
   contents: read
@@ -48,9 +42,9 @@ jobs:
 
       - name: Read the pages
         env:
-          URLS: ${{ inputs.urls || 'https://foneoai.com/en/download https://foneoai.com/en/changelog https://foneoai.com/en/blog https://foneoai.com/en/about https://foneoai.com/en/contact https://foneoai.com/en/pricing' }}
-          SHOTS: ${{ inputs.shots || 'yes' }}
-          SCROLL: ${{ inputs.scroll || '8' }}
+          URLS: ${{ inputs.urls }}
+          SHOTS: ${{ inputs.shots }}
+          SCROLL: ${{ inputs.scroll }}
         run: |
           cat > /tmp/fetch.js <<'JS'
           const { chromium } = require("playwright");
