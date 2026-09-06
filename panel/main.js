@@ -6234,7 +6234,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.97.1";
+const PANEL_VERSION = "6.97.2";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9635,6 +9635,26 @@ function vidNeedMin(n) {
   return ff9({ my: "\u1015\u102f\u1036 \u1021\u1014\u100a\u103a\u1038\u1006\u102f\u1036\u1038 " + n + " \u1015\u102f\u1036 \u1011\u100a\u1037\u103a\u1015\u102b", en: "Add at least " + n + " reference image" + (n > 1 ? "s" : ""), shn: "\u1011\u1062\u1086\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 " + n + " \u1022\u1019\u103a\u1087\u101a\u103d\u1019\u103a\u1038", kac: "Sumla " + n + " n law law bang u", th: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e23\u0e39\u0e1b\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e49\u0e2d\u0e22 " + n + " \u0e23\u0e39\u0e1b", zh: "\u81f3\u5c11\u6dfb\u52a0 " + n + " \u5f20\u53c2\u8003\u56fe\u7247", vi: "Th\u00eam \u00edt nh\u1ea5t " + n + " \u1ea3nh tham chi\u1ebfu", id: "Tambahkan minimal " + n + " gambar referensi", ms: "Tambah sekurang-kurangnya " + n + " imej rujukan" });
 }
 /* the app's need-note under the pickers: what this model wants for images */
+/* v6.97.2 — the app's RH_DOWN_NOTE / rhDownLabel / rhFirstUpModel, verbatim in meaning: a
+   model flagged down:"rh-301" in the lifted catalog stays listed but greyed, a stored pick of
+   one falls back to the first model that answers, and generate refuses (see the DOWN note in
+   panel/js/hnk_video_models.js). */
+const RH_DOWN_NOTE = { my: "RunningHub ဘက် ပြဿနာ — ခေတ္တ မရသေးပါ", en: "RunningHub-side issue — temporarily unavailable", shn: "ပၼ်ႁႃ ၽၢႆႇ RunningHub — ယင်းပႆႇလႆႈ", kac: "RunningHub maga a mahkak — ya lang n lu shi", th: "ปัญหาฝั่ง RunningHub — ใช้ไม่ได้ชั่วคราว", zh: "RunningHub 侧问题 — 暂不可用", vi: "Sự cố phía RunningHub — tạm không dùng được", id: "Masalah di sisi RunningHub — sementara tidak tersedia", ms: "Masalah di pihak RunningHub — buat sementara tidak tersedia" };
+function vidDownLabel(m) { return (m.label || m.id) + " \u2014 " + ff9(RH_DOWN_NOTE); }
+function vidFirstUp() {
+  const V = (globalThis.HNK && globalThis.HNK.runninghubVideo) || null;
+  const list = V ? V.models() : [];
+  for (let i = 0; i < list.length; i++) if (!list[i].down) return list[i];
+  return list[0] || null;
+}
+function vidPaintDownOptions(sel) {
+  const V = (globalThis.HNK && globalThis.HNK.runninghubVideo) || null;
+  if (!sel || !V) return;
+  for (let i = 0; i < sel.options.length; i++) {
+    const o = sel.options[i], d = V.get(o.value);
+    if (d && d.down) { o.disabled = true; const lab = vidDownLabel(d); o.text = lab; o.textContent = lab; o.setAttribute("data-down", d.down); }
+  }
+}
 function vidNeedNote(m) {
   if (!m) return "";
   const min = m.minImages || 0, max = (m.maxImages == null) ? 1 : m.maxImages;
@@ -9714,7 +9734,8 @@ function vidFillModels(sel, list) {
       sel.appendChild(host);
     }
     byFam[f].forEach(function (m) {
-      const o = mkOption(m.id, m.label || m.id);
+      const o = mkOption(m.id, m.down ? vidDownLabel(m) : (m.label || m.id));
+      if (m.down) { o.disabled = true; o.setAttribute("data-down", m.down); }   /* v6.97.2 — greyed, still listed */
       o.setAttribute("data-fam", lab);
       host.appendChild(o);
     });
@@ -9770,6 +9791,11 @@ function vidPaintRail() {
 /* the app's updateVidModelUI: the model owns the Res / Duration / Ratio
    lists, the prompt cap and the image note */
 function vidPaintOptions() {
+  /* v6.97.2 — a stored pick of a greyed model falls back to the first model that answers */
+  const sel0 = $("vidModel"), V0 = (globalThis.HNK && globalThis.HNK.runninghubVideo) || null;
+  const raw = (sel0 && V0) ? V0.get(sel0.value) : null;
+  if (raw && raw.down) { const up = vidFirstUp(); if (up) { sel0.value = up.id; try { setStatus((raw.label || raw.id) + " \u2014 " + ff9(RH_DOWN_NOTE) + " \u2192 " + (up.label || up.id), "err"); } catch (e) { } } }
+  vidPaintDownOptions(sel0);
   const m = vidDef();
   const res = $("vidRes"), dur = $("vidDur"), asp = $("vidAspect");
   if (res) {
@@ -10881,6 +10907,7 @@ async function vidGenerate() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   const m = vidDef();
   if (!V || !m) return;
+  if (m.down) { setStatus((m.label || m.id) + " \u2014 " + ff9(RH_DOWN_NOTE), "err"); return; }   /* v6.97.2 — greyed models never submit */
   if (!state.rhKey) {
     switchPage("setup");
     const mk = ff9(VID_L.needKey);

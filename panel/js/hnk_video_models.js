@@ -9,6 +9,19 @@
 (function () {
 "use strict";
 var RH_VIDEO_MODELS = [
+  /* DOWN (v6.28.2) — down:"rh-301". Seven rhart-video graphs (wan-2.2 image-to-video /
+     start-to-end / text-to-video, ltx-2.3 image-to-video / image-to-video-lora / text-to-video /
+     text-to-video-lora) answer price-preview with a bare "301 PARAMS_INVALID" to the body
+     RunningHub's own field validator accepts (probe runs #19, #22, #23 — 43 bodies — and #24 on
+     2026-09-06; docs run #35 read all seven request schemas). Every field name and every enum
+     the app sends is exactly what that validator demands — feeding it the doc's option codes is
+     refused with "please use '480p' instead" — and 46 other rhart-video graphs accept the same
+     body shape, so the refusal is RunningHub's, after field validation. A dead option that looks
+     alive is the dishonesty the RETIRED note above is about; these seven stay LISTED so the
+     catalog count and every stored setup keep their meaning, but the picker greys them with the
+     RH_DOWN_NOTE, a stored pick falls back to the first model that answers, and GENERATE refuses.
+     Remove the flag only when the probe lane accepts the row again
+     (probe-video-models.yml: group video, ids <the id>). */
   /* RETIRED (v6.22.0) — probed live through price-preview on 2026-09-05 and answered
      "1000 Unknown error"; RunningHub's own registry files both as 已下架 (taken down):
        rhart-video-s/image-to-video-pro-deprecated   (was rhart-video-s-pro-deprecated)
@@ -211,13 +224,13 @@ var RH_VIDEO_MODELS = [
   /* api-505575335 */
   { id:"wan-3-0-i2v", label:"Wan 3.0 — (1080P, 30s)", fam:"Wan", apiPath:"alibaba/wan-3.0/image-to-video", imageParam:"firstFrameUrl", lastParam:"lastFrameUrl", minImages:1, maxImages:2, oddOnly:false, resolutions:["480P", "720P", "1080P"], durations:["auto", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"], aspect:true, aspects:["adaptive", "16:9", "4:3", "1:1", "3:4", "9:16"], promptMax:20000 },
   /* api-448184386 */
-  { id:"rhv-wan-2-2-i2v", label:"Wan 2.2", fam:"Wan", apiPath:"rhart-video/wan-2.2/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"duration": "5", "resolution": "auto"} },
+  { id:"rhv-wan-2-2-i2v", down:"rh-301", label:"Wan 2.2", fam:"Wan", apiPath:"rhart-video/wan-2.2/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"duration": "5", "resolution": "auto"} },
   /* api-448184382 */
-  { id:"rhv-wan-2-2-se2v", label:"Wan 2.2 video — Start+End", fam:"Wan", apiPath:"rhart-video/wan-2.2/start-to-end", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"duration": "5", "resolution": "auto"} },
+  { id:"rhv-wan-2-2-se2v", down:"rh-301", label:"Wan 2.2 video — Start+End", fam:"Wan", apiPath:"rhart-video/wan-2.2/start-to-end", imageParam:"imageUrl", lastParam:"lastImageUrl", minImages:2, maxImages:2, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"duration": "5", "resolution": "auto"} },
   /* api-448184389 */
-  { id:"rhv-ltx-2-3-i2v", label:"Ltx 2.3 — (20s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
+  { id:"rhv-ltx-2-3-i2v", down:"rh-301", label:"Ltx 2.3 — (20s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
   /* api-448184390 */
-  { id:"rhv-ltx-2-3-i2v-lora", label:"Ltx 2.3 lora — (15s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video-lora", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
+  { id:"rhv-ltx-2-3-i2v-lora", down:"rh-301", label:"Ltx 2.3 lora — (15s)", fam:"LTX", apiPath:"rhart-video/ltx-2.3/image-to-video-lora", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
   /* api-494859289 */
   { id:"rhart-video-g-official-v1-5", label:"Grok imagine video v1.5 — (720p, 15s)", fam:"Grok", apiPath:"rhart-video-g-official/image-to-video-v1.5", imageParam:"imageUrl", minImages:1, maxImages:1, oddOnly:false, resolutions:["480p", "720p"], durations:["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:2048 },
   /* api-448184391 */
@@ -404,11 +417,11 @@ var RH_VIDEO_MODELS = [
   /* api-448184436 */
   { id:"wan-2-7-t2v", label:"Wan 2.7 — T2V (1080P, 15s)", fam:"Wan · T2V", apiPath:"alibaba/wan-2.7/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720P", "1080P"], durations:["2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], aspect:true, aspects:["16:9", "9:16", "1:1", "4:3", "3:4"], promptMax:5000 },
   /* api-448184435 */
-  { id:"rhv-wan-2-2-t2v", label:"Wan 2.2 — T2V", fam:"Wan · T2V", apiPath:"rhart-video/wan-2.2/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"resolution": "832×480", "duration": "5"} },
+  { id:"rhv-wan-2-2-t2v", down:"rh-301", label:"Wan 2.2 — T2V", fam:"Wan · T2V", apiPath:"rhart-video/wan-2.2/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:[], aspect:false, promptMax:20000, extra:{"resolution": "832×480", "duration": "5"} },
   /* api-448184438 */
-  { id:"rhv-ltx-2-3-t2v", label:"Ltx 2.3 — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "720p", "aspectRatio": "16:9"} },
+  { id:"rhv-ltx-2-3-t2v", down:"rh-301", label:"Ltx 2.3 — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "720p", "aspectRatio": "16:9"} },
   /* api-448184439 */
-  { id:"rhv-ltx-2-3-t2v-lora", label:"Ltx 2.3 lora — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video-lora", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
+  { id:"rhv-ltx-2-3-t2v-lora", down:"rh-301", label:"Ltx 2.3 lora — T2V (15s)", fam:"LTX · T2V", apiPath:"rhart-video/ltx-2.3/text-to-video-lora", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:[], durations:["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"], durInt:true, aspect:false, promptMax:20000, extra:{"resolution": "480p", "aspectRatio": "16:9"} },
   /* api-448184433 */
   { id:"rhv-g-official-t2v", label:"Grok imagine — T2V (480p, 10s)", fam:"Grok · T2V", apiPath:"rhart-video-g-official/text-to-video", imageParam:null, minImages:0, maxImages:0, oddOnly:false, resolutions:["720p", "480p"], durations:["6", "10"], aspect:true, aspects:["16:9", "9:16", "1:1"], promptMax:800 },
   /* api-498749520 */
