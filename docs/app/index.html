@@ -691,7 +691,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .refstrip .rs{position:relative;width:52px;height:52px;border:1px dashed var(--line);border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:16px;overflow:hidden;flex:none}
 .refstrip .rs.filled{border-style:solid}
 .refstrip .rs img{width:100%;height:100%;object-fit:contain;background:var(--ink)}
-.refstrip .rs .tag{position:absolute;left:2px;bottom:2px;background:rgba(11,13,20,.85);border-radius:5px;padding:0 4px;font-size:8.5px;color:var(--gold-hi);font-weight:800}
+.refstrip .rs .tag{position:absolute;left:2px;bottom:2px;background:rgba(11,13,20,.85);border-radius:5px;padding:0 4px;font-size:9.5px;color:var(--gold-hi);font-weight:800}
 .refstrip .rsx{position:absolute;top:1px;right:1px;width:20px;height:20px;border-radius:6px;border:none;background:rgba(11,13,20,.85);color:var(--cream);font-size:10px;display:flex;align-items:center;justify-content:center;padding:0}
 .refstrip .note{font-size:11px;color:var(--muted);line-height:1.5}
 .wfmini{position:relative}
@@ -1109,6 +1109,14 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 /* v4.44.1 — desktop drag-over highlight for the two drop targets */
 .droptgt{outline:2px dashed var(--gold);outline-offset:4px;border-radius:var(--r-lg)}
 .st-genbar .st-x{margin-left:6px;color:var(--muted)}
+/* v6.25.0 — phone: one slim action row; the queue opens from ▾ */
+.st-genbar .st-more .ic-s{transition:transform .18s ease}.st-genbar .st-more.on .ic-s.ic-r90{transform:rotate(270deg)}
+@media(max-width:767px){.st-genbar #stPendChips,.st-genbar #stClearAi,.st-genbar #stToBatch{display:none}.st-genbar.open #stPendChips{display:flex;margin-top:6px}.st-genbar.open #stClearAi,.st-genbar.open #stToBatch{display:inline-flex}.st-genbar>.row{margin-top:4px!important}.st-genbar #stPendCount{font-size:11px;padding-right:48px;min-height:18px}#stGenMore{position:absolute;top:5px;right:8px;min-height:32px;min-width:38px;padding:2px 8px}#stGenBar.open>.row{flex-wrap:wrap;overflow:visible}#stGenBar.open>.row .gen{flex:1 1 100%}#stCanvas{max-height:28vh}}
+/* v6.25.0 — the studio pages carry their own sticky stage + jump bar; the back-to-top FAB only collided with the GENERATE bar there */
+body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto.on) .fab-top{display:none!important}
+/* the compact jump bar's sticky search toggle reads as a control, not a chip floating over the row */
+#pgStudio.stcompact #stSearchTgl,#pgMeitu.stcompact #stSearchTgl,#pgEvoto.stcompact #stSearchTgl{background:var(--ink);box-shadow:10px 0 14px -4px var(--ink);z-index:2}
+@media(min-width:768px){#stGenMore{display:none!important}}
 /* v4.65: this line does double duty — when work is queued it shows two short
    counts, but when nothing is queued it carries the sentence that explains what
    the whole page IS ("sliders preview instantly, AI edits queue for one
@@ -1156,25 +1164,30 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stStage.compact #stZoomWrap,#stStage.mini #stZoomWrap{margin:0;flex:0 0 auto}
 #stStage.compact #stCanvas{max-height:var(--stCompactH,140px);margin:0}
 #stStage.mini #stCanvas{max-height:96px;margin:0;width:auto}
-.st-rail{display:flex;flex-wrap:wrap;gap:6px;align-content:center;flex:1;min-width:0}
-#stStage:not(.compact):not(.mini) .st-rail{display:contents}
-.st-ov{position:absolute;z-index:3;min-height:38px;padding:4px 10px;font-size:var(--fs-2xs);opacity:.95}
-#stSplit{top:10px;left:6px}
-#stStageMin{top:10px;right:6px}
-#stStageFlip{top:10px;left:50%;transform:translateX(-50%)}
-#stHold{bottom:12px;left:6px}
-#stReset{bottom:12px;right:6px}
-#stUndoB{bottom:12px;left:50%;transform:translateX(-104%)}
-#stRedoB{bottom:12px;left:50%;transform:translateX(6%)}
+/* v6.25.0 — CLEAN STAGE. Nothing sits on the picture any more: only the split line, the histogram
+   and a small transient zoom pill ride on it. ONE toolbar of equal icon+label buttons runs underneath —
+   Before · A|B · (⇄) · Pin · (2-up) · Zoom · Zones · Undo · Redo · Reset · ⌄ — and the zoom presets
+   (Fit · 100% · 1:1 · Face · Eyes · Lips) are a second row that opens from Zoom or whenever the loupe
+   is zoomed. Compact / mini keep the thumbnail + the four essentials on one row. */
+.st-rail{display:flex;flex-wrap:nowrap;align-items:stretch;justify-content:space-between;gap:2px;width:100%;max-width:100%;margin:6px auto 0;padding:0;flex:1;min-width:0}
+.st-ov{position:static;z-index:auto;flex:1 1 0;min-width:0;min-height:46px;padding:5px 2px 4px;font-size:10px;font-weight:700;opacity:1;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;line-height:1.1;border-radius:12px;transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-ov .ic-s{width:18px;height:18px;flex:none}
+.st-ov .st-ovi{font-size:16px;line-height:1}
+#stHold{order:1}#stSplit{order:2}#stSplitSwap{order:3}#stPin{order:4}#stSbs{order:5}#stZoomTgl{order:6}#stZones{order:7}#stUndoB{order:8}#stRedoB{order:9}#stReset{order:10}#stStageMin{order:11}#stStageFlip{order:12}
+#stSplit{font-size:12px;letter-spacing:.02em}
+#stSplitSwap{min-width:38px;justify-content:center;flex:0 0 auto}
+#stStageMin{flex:0 0 auto;min-width:40px;color:var(--muted)}
 #stUndoB:disabled,#stRedoB:disabled{opacity:.35}
 #stStage.compact #stUndoB,#stStage.compact #stRedoB,#stStage.mini #stUndoB,#stStage.mini #stRedoB{display:none}
-#stZoomInd{bottom:12px;left:50%;transform:translateX(-50%)}
-/* v6.23.0 — swap chip beside A|B; zoom presets on a second row under it; the picture owns the long press */
-#stSplitSwap{top:10px;left:62px;min-width:38px;justify-content:center}
-.st-zoom-presets{position:absolute;top:52px;left:6px;right:6px;z-index:3;display:flex;flex-wrap:wrap;gap:4px;pointer-events:none}
-.st-zoom-presets .st-zp{position:static;min-height:30px;padding:2px 9px;font-size:11px;opacity:.9;pointer-events:auto}
-#stStage.compact .st-zoom-presets,#stStage.mini .st-zoom-presets,#stStage.pip .st-zoom-presets{display:contents}
-#stStage.pip .st-zp,#stStage.pip #stSplitSwap{display:none}
+#stZoomInd,#stZoomInd.on{position:absolute;top:8px;right:8px;z-index:4;height:28px;min-height:28px;min-width:0;width:auto;flex:none;flex-direction:row;padding:0 10px;font-size:11px;line-height:1;opacity:.94;border-radius:999px;background:rgba(11,13,20,.84);color:var(--gold-hi);border-color:rgba(233,185,73,.55)}
+.st-zoom-presets{display:none;flex-wrap:wrap;gap:4px;justify-content:center;width:100%;margin:6px 0 0;pointer-events:auto}
+#stStage.zoomrow .st-zoom-presets,#stStage.zoomed .st-zoom-presets{display:flex}
+.st-zoom-presets .st-zp{position:static;flex:0 0 auto;flex-direction:row;min-height:32px;min-width:44px;padding:2px 10px;font-size:11px;opacity:.95;border-radius:999px}
+#stZoomTgl.on{background:var(--gold);color:#1a1408;border-color:var(--gold)}
+#stStage.compact .st-rail,#stStage.mini .st-rail{margin:0;justify-content:flex-start;gap:6px;flex-wrap:wrap}
+#stStage.compact #stPin,#stStage.compact #stSbs,#stStage.compact #stZoomTgl,#stStage.compact #stZones,#stStage.compact #stSplitSwap,#stStage.compact .st-zoom-presets,#stStage.mini #stPin,#stStage.mini #stSbs,#stStage.mini #stZoomTgl,#stStage.mini #stZones,#stStage.mini #stSplitSwap,#stStage.mini .st-zoom-presets{display:none}
+#stStage.pip .st-zp,#stStage.pip #stSplitSwap,#stStage.pip .st-zoom-presets{display:none}
+@media(max-width:359px){.st-ov{font-size:9px;padding:4px 0 3px;border-radius:10px;gap:2px}.st-ov .ic-s{width:16px;height:16px}}
 #stZoomWrap{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 /* v6.24.0 — true-detail overlay rides over the loupe; 2-up puts the compare pane beside the picture */
 #stHiCanvas{position:absolute;left:0;top:0;pointer-events:none;border-radius:var(--r-md);z-index:2}
@@ -1192,7 +1205,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 #stStage.pip #stCanvas{max-height:40vh;width:auto;max-width:100%;margin:0 auto}
 #stStage.pip .st-ov{display:none}
 #stStage.pip #stStageMin{display:inline-flex;position:absolute;top:2px;right:2px;min-height:38px;min-width:38px}
-#stHist{position:absolute;top:54px;right:8px;width:220px;max-width:60%;height:48px;background:var(--panel);opacity:.85;border-radius:6px;z-index:2;display:none;border:1px solid var(--line-soft)}
+#stHist{position:absolute;top:8px;left:8px;right:auto;width:220px;max-width:60%;height:48px;background:var(--panel);opacity:.85;border-radius:6px;z-index:2;display:none;border:1px solid var(--line-soft)}
 #stHist.on{display:block}
 #stStage.compact #stHist{width:110px;height:28px;top:auto;bottom:4px;right:4px;max-width:40%}
 #stStage.mini #stHist,#stStage.pip #stHist{display:none}
@@ -1257,7 +1270,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
   #stColL #stJumpBar{order:-1} /* suite nav directly under the preview; PHOTO card + recipes scroll below */
   #stJumpBar{position:static}
   #stCanvas{max-height:calc(100vh - 260px)}
-  #stColL #stCanvas{max-height:calc(100vh - 330px)}
+  #stColL #stCanvas{max-height:calc(100vh - 400px)}
 }
 /* ---- V2 Retouch (pgRetouch hero) ---- */
 .v2-range{width:100%;min-height:44px;accent-color:var(--gold)}
@@ -1283,11 +1296,11 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
    by dropping the version tag (still shown in Setup + footer) and, at the
    narrowest widths, the logo mark, instead of letting the brand stack */
 .nav-name{white-space:nowrap}
-@media(max-width:479px){ .nav-tag{display:none} .nav-in{gap:8px} .hnk-studio-label{font-size:8.5px;letter-spacing:.18em} }
+@media(max-width:479px){ .nav-tag{display:none} .nav-in{gap:8px} .hnk-studio-label{font-size:9.5px;letter-spacing:.16em} }
 /* v4.28: the logo is the brand — never drop it. At the narrowest widths it
    shrinks (and the wordmark tightens) instead of disappearing, which is what
    made the mark vanish on 360px phones. */
-@media(max-width:379px){.hnk-wordmark{font-size:17px;letter-spacing:.08em}.hnk-studio-label{font-size:7.5px;letter-spacing:.15em}.nav-name::after{width:30px}}
+@media(max-width:379px){.hnk-wordmark{font-size:17px;letter-spacing:.08em}.hnk-studio-label{font-size:9px;letter-spacing:.12em}.nav-name::after{width:30px}}
 @media(max-width:379px){ .nav-logo{width:30px;height:30px;border-radius:8px} .nav-in{gap:6px} .nav-in #selLang{max-width:88px;padding:8px 6px;font-size:12px} .nav-name{font-size:12px;letter-spacing:.02em} }
 @media(max-width:339px){ .nav-name{font-size:11px} .nav-in #selLang{max-width:74px} }
 /* ---- v4.30 Accounts + Premium ----
@@ -1735,7 +1748,7 @@ body.wall #wallRetry.on{display:block}
 
 /* section-level actions (reset) — spans, never counted by the badge law */
 .st-sact{order:4;display:inline-flex;gap:2px;flex:0 0 auto}
-.st-sact .sa{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
+.st-sact .sa{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
   color:var(--muted);cursor:pointer;transition:background var(--dur-1) var(--ease-out),color var(--dur-1) var(--ease-out)}
 /* Split apart: the hover treatment is fine, but sharing the selector with
    :focus-visible meant `outline:none` killed the keyboard ring too. */
@@ -2970,6 +2983,7 @@ html.splashing #splash{display:flex}
       <button class="chip" id="btnStStop" style="display:none"></button>
       <button class="chip" id="stClearAi" style="display:none"></button>
       <button class="chip" id="stHd" style="display:none">HD Finish</button>
+      <button class="chip st-more" id="stGenMore" aria-expanded="false" style="display:none"><svg class="ic-s ic-r90" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></button>
     </div>
     <div id="stHdNote"></div>
     <!-- v4.58: what this GENERATE will cost, quoted by RunningHub against the
@@ -5070,6 +5084,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.25.0", kind:"page", ref:"pgMeitu",
+    t:{my:"Retouch A / B stage အသစ် — ပုံပေါ်မှာ ခလုတ် မထားတော့ဘူး၊ toolbar တစ်တန်း (မူရင်း · A|B · Pin · Zoom · ဇုန် · Undo · Redo · Reset) ပုံအောက်မှာ၊ GENERATE bar ဖုန်းမှာ slim",en:"Retouch A / B clean stage — nothing sits on the picture; one toolbar under it (Before · A|B · Pin · Zoom · Zones · Undo · Redo · Reset), zoom presets on their own row, a slim GENERATE bar on phones",shn:"Retouch A / B stage မႂ်ႇ — ၼိူဝ်ႁၢင်ႈ ဢမ်ႇမီးပုမ်ႇ၊ toolbar ၼိုင်ႈထႅဝ် တႂ်ႈႁၢင်ႈ၊ GENERATE bar ၽူၼ်း slim",kac:"Retouch A / B stage nnan — sumla ntsa hta button n nga sai, toolbar langai sumla npu, GENERATE bar phone hta slim",th:"สเตจ Retouch A / B ใหม่ — ไม่มีปุ่มบนภาพ แถบเครื่องมือหนึ่งแถวใต้ภาพ (ต้นฉบับ · A|B · ปัก · ซูม · โซน · เลิกทำ · ทำซ้ำ · รีเซ็ต) แถบ GENERATE บางลงบนมือถือ",zh:"Retouch A / B 全新舞台——图片上不再有按钮，一条工具栏在图下（原图 · A|B · 钉住 · 缩放 · 区域 · 撤销 · 重做 · 重置），手机上的 GENERATE 栏更纤薄",vi:"Stage Retouch A / B mới — không còn nút trên ảnh, một thanh công cụ dưới ảnh (Gốc · A|B · Ghim · Zoom · Vùng · Hoàn tác · Làm lại · Đặt lại), thanh GENERATE gọn trên điện thoại",id:"Stage Retouch A / B baru — tak ada tombol di atas foto, satu toolbar di bawahnya (Asli · A|B · Pin · Zoom · Zona · Urungkan · Ulangi · Reset), bar GENERATE ramping di ponsel",ms:"Stage Retouch A / B baharu — tiada butang di atas gambar, satu bar alat di bawahnya (Asal · A|B · Pin · Zum · Zon · Buat asal · Buat semula · Set semula), bar GENERATE nipis di telefon"},
+    s:{my:"ဖုန်းမှာ preview ကို ခလုတ်တွေ ကွယ်နေတယ်ဆိုတဲ့ အကြံပြုချက်အတိုင်း — ပုံက တစ်ခုတည်း ထင်ရှားပြီး (split line + zoom pill သေးသေးပဲ ပေါ်)၊ toolbar က icon + စာသား တူညီတဲ့ ခလုတ် 44px တွေ။ Zoom preset (Fit · 100% · 1:1 · မျက်နှာ · မျက်လုံး · နှုတ်ခမ်း) က Zoom ခလုတ်နှိပ်မှ / zoom ဆွဲမှ ပေါ်။ Scroll ဆွဲရင် compact mode မှာ thumbnail + အရေးကြီး 4 ခုပဲ။ GENERATE bar ရဲ့ pending chip တွေ ▾ နှိပ်မှ ပြ။ Desktop မှာ 2-up ပါ toolbar ထဲ။ Video generate မရရင် RunningHub ပြောတဲ့ အကြောင်းရင်းကို error ထဲ တိုက်ရိုက် ပြပေးပြီ ((200) ဗလာ မဖြစ်တော့)။",en:"From the owner's phone review (controls hid the preview): the picture stands alone — only the split line and a small zoom pill ride on it — and the toolbar is a row of equal 44px icon+label buttons. Zoom presets (Fit · 100% · 1:1 · Face · Eyes · Lips) open from the Zoom button or whenever zoomed. Scrolled, the compact stage keeps the thumbnail plus four essentials. On phones the GENERATE bar folds its queue under ▾. Desktop carries 2-up in the same toolbar. A refused video generate now quotes RunningHub's own reason instead of a blank (200).",shn:"ႁၢင်ႈ ၼႄ ၼိုင်ႈဢၼ်၊ toolbar 44px ၽဵင်ႇၵၼ်။ Zoom preset ပိုတ်ႇတီႈ Zoom။ Compact = thumbnail + 4 ဢၼ်။",kac:"Sumla hkrai madun, toolbar 44px maren. Zoom preset gaw Zoom button kaw hpaw. Compact = thumbnail + 4.",th:"ภาพโดดเด่นอย่างเดียว แถบเครื่องมือปุ่ม 44px เท่ากัน ค่าซูมเปิดจากปุ่มซูม โหมดย่อ = ภาพย่อ + 4 ปุ่มสำคัญ แถบ GENERATE พับคิวไว้ใต้ ▾",zh:"图片独立呈现，工具栏为等宽 44px 图标+文字按钮。缩放预设由缩放按钮打开。紧凑模式 = 缩略图 + 4 个必需按钮。GENERATE 栏的队列折叠在 ▾ 下。",vi:"Ảnh nổi bật một mình, thanh công cụ là các nút 44px icon+chữ đồng đều. Zoom preset mở từ nút Zoom. Chế độ gọn = ảnh nhỏ + 4 nút chính. Thanh GENERATE gấp hàng đợi dưới ▾.",id:"Foto tampil sendiri, toolbar tombol 44px ikon+teks seragam. Preset zoom terbuka dari tombol Zoom. Mode ringkas = thumbnail + 4 tombol utama. Bar GENERATE melipat antrean di bawah ▾.",ms:"Gambar tampil sendiri, bar alat butang 44px ikon+teks seragam. Pratetap zum dibuka dari butang Zum. Mod padat = thumbnail + 4 butang utama. Bar GENERATE melipat giliran di bawah ▾."} },
   { v:"6.24.0", kind:"page", ref:"pgMeitu",
     t:{my:"Retouch A / B — 100% zoom က export ဖိုင်အတိုင်း (မူရင်း full-res ကနေ) ပြ၊ နှုတ်ခမ်း/မျက်လုံး/မျက်ခုံး contour mask အစစ်၊ မျက်ကွင်းညို · မျက်ရစ် · ပြုံးကြောင်း · မျက်ခုံး တိုက်ရိုက်၊ Pin + 2-up compare",en:"Retouch A / B — zoom shows the file itself (rendered from the original), true lip / eye / brow contour masks, Dark Circles · Eye Bags · Smile Lines · Brow live, Pin + 2-up compare",shn:"Retouch A / B — zoom ၼႄၾၢႆႇ export (တီႈမူႇလ)၊ contour mask သူပ်း/မၢၵ်ႇတႃ/ၶိူင်ႈတႃ၊ ၸႅတ်ႈတႃ · ထူင်တႃ · ႁွႆးယုမ်ႉ · ၶိူင်ႈတႃ ၵမ်းသိုဝ်ႈ၊ Pin + 2-up",kac:"Retouch A / B — zoom gaw export file hpe madun (shawng na hkrang kaw na), contour mask n-gup/myi/myi-mun, myi kawng · myi hpaw · mani kawng · myi-mun live, Pin + 2-up",th:"Retouch A / B — ซูมแล้วเห็นไฟล์จริง (เรนเดอร์จากต้นฉบับ), มาสก์ตามเส้นขอบปาก/ตา/คิ้วจริง, รอยคล้ำ · ถุงใต้ตา · ร่องแก้ม · คิ้ว แบบสด, Pin + เทียบ 2 ภาพ",zh:"Retouch A / B — 放大即看到导出文件本身（由原图渲染），唇/眼/眉真实轮廓遮罩，黑眼圈 · 眼袋 · 法令纹 · 眉毛实时，钉住 + 并排对比",vi:"Retouch A / B — zoom thấy đúng file xuất (render từ ảnh gốc), mask theo đường viền môi/mắt/mày thật, Quầng thâm · Bọng mắt · Nếp cười · Lông mày trực tiếp, Ghim + so sánh 2 ảnh",id:"Retouch A / B — zoom menampilkan file sebenarnya (dirender dari asli), mask kontur bibir/mata/alis sungguhan, Lingkar hitam · Kantung mata · Garis senyum · Alis langsung, Pin + banding 2 gambar",ms:"Retouch A / B — zum menunjukkan fail sebenar (dirender dari asal), topeng kontur bibir/mata/kening sebenar, Lingkaran gelap · Beg mata · Garis senyum · Kening secara langsung, Pin + banding 2 imej"},
     s:{my:"Zoom ဝင်ရင် stage က ပုံကို 1280 buffer ကနေ မကြီးတော့ဘဲ မူရင်း full-res ကို pipeline တစ်ခုတည်းနဲ့ (worker မှာ) ပြန် render ပြီး loupe ပေါ် 1:1 ပြတယ် — 100% မှာ မြင်တာ = ထွက်မယ့် ဖိုင်။ ပြင်တိုင်း ပြန် render (ပြီးမှ HD အမှတ် ပေါ်)၊ '1:1' preset အသစ်။ နှုတ်ခမ်း/သွား/မျက်လုံး/မျက်ခုံး/ပြုံးကြောင်း region တွေက 68-point contour polygon အစစ် (ellipse မဟုတ်တော့) + feather ပါ — lip color က နှုတ်ခမ်းဒေါင့်ကျော် မလွှမ်းတော့။ မျက်ကွင်းညိုဖယ် · မျက်ရစ်ဖယ် · ပြုံးကြောင်းဖယ် · မျက်ခုံးမိတ်ကပ် ပမာဏ slider ၄ ခုက AI ပို့တဲ့အပြင် အခု live pixel ပါ ပြတယ် (hybrid)။ Pin 📌 — လက်ရှိအဆင့်ကို မှတ်ထားရင် Before / A|B က မူရင်းအစား ဒါနဲ့ နှိုင်းပြ။ 2-up — ကျယ်တဲ့ stage မှာ မူရင်း | ပြင်ပြီး ဘေးချင်းကပ်။ Photoshop panel မှာ live stage မရှိတာ မူလ design အတိုင်း။",en:"Zoomed in, the stage no longer magnifies the 1280 buffer: the same pipeline renders the retained original on the worker and the visible window is drawn 1:1 over the loupe — what you see at 100% is the file. Every edit re-renders it (an HD mark shows when it has landed); a new 1:1 preset. Lips, teeth, eyes, brows and the nasolabial band are now the measured 68-point contours (feathered polygons, not bounding ellipses), so lip colour no longer reaches past the mouth corners. Dark Circles · Eye Bags · Smile Lines · Brow Makeup amount now paint live pixels as well as their AI line (hybrid). Pin 📌 a state and Before / A|B compare against it instead of the original. 2-up shows before beside after on a wide stage. The Photoshop panel has no live stage by design.",shn:"Zoom သေ ႁၢင်ႈ render မႂ်ႇတီႈမူႇလ (worker) ၼႄ 1:1 — 100% = ၾၢႆႇ။ Contour polygon သူပ်း/ၶဵဝ်ႈ/မၢၵ်ႇတႃ/ၶိူင်ႈတႃ။ Slider 4 ဢၼ် live ပႃး AI။ Pin 📌 + 2-up။",kac:"Zoom yang shawng na hkrang kaw na render bai (worker) 1:1 madun — 100% = file. Contour polygon n-gup/wa/myi/myi-mun. Slider 4 live hte AI. Pin 📌 + 2-up.",th:"เมื่อซูม สเตจเรนเดอร์จากต้นฉบับใหม่ (worker) แล้ววาด 1:1 — 100% = ไฟล์จริง มาสก์ปาก/ฟัน/ตา/คิ้วเป็นรูปหลายเหลี่ยมตามจุด 68 จุดจริง สไลเดอร์ 4 ตัวสดพร้อม AI Pin 📌 + เทียบ 2 ภาพ",zh:"放大时舞台从原图重新渲染（worker）并按 1:1 绘制——100% 即文件本身。唇/牙/眼/眉为 68 点真实轮廓多边形。4 个滑块实时 + AI。钉住 📌 + 并排对比。",vi:"Khi zoom, stage render lại từ ảnh gốc (worker) và vẽ 1:1 — 100% = file. Mask môi/răng/mắt/mày là đa giác 68 điểm thật. 4 thanh trượt trực tiếp + AI. Ghim 📌 + so sánh 2 ảnh.",id:"Saat zoom, stage merender ulang dari asli (worker) dan menggambar 1:1 — 100% = file. Mask bibir/gigi/mata/alis poligon 68 titik sungguhan. 4 slider langsung + AI. Pin 📌 + banding 2 gambar.",ms:"Apabila zum, stage merender semula dari asal (worker) dan melukis 1:1 — 100% = fail. Topeng bibir/gigi/mata/kening poligon 68 titik sebenar. 4 slider langsung + AI. Pin 📌 + banding 2 imej."} },
@@ -7022,12 +7039,22 @@ function rhTruncatePrompt(promptText, maxLen){
    can be taken against the EXACT payload the submit would send. A quote for a
    different body is a quote for a different job: resolution, aspect ratio and
    quality all move the price. */
+/* v6.25.0 — the create answer's task id, whatever envelope the endpoint uses: flat {taskId},
+   {data:{taskId}}, snake_case task_id, or a taskIds list. Anything else is the server's refusal
+   and is kept whole (e.body + the raw text) so the error line can quote it. */
+function rhV2TaskIdOf(j){
+  if(!j||typeof j!=="object") return "";
+  var d=(j.data&&typeof j.data==="object")?j.data:null;
+  var v=j.taskId||j.task_id||(d&&(d.taskId||d.task_id))||(Array.isArray(j.taskIds)&&j.taskIds[0])||(d&&Array.isArray(d.taskIds)&&d.taskIds[0])||"";
+  return v?String(v):"";
+}
 async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolution, modelCfg, signal){
   var body=rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg);
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  return tid;
 }
 function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
   var cfg = modelCfg || {};
@@ -7719,9 +7746,10 @@ function rhScaleFromSize(sizeSel){
 async function rhV2SubmitUpscale(apiKey, apiPath, imageUrl, scale, signal){
   var body = { imageUrl: imageUrl||"", scale: scale||"2x" };
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  return tid;
 }
 async function rhGenerateUpscale(apiKey, apiPath, refDataUrls, sizeSel, onTick, signal){
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
@@ -7762,9 +7790,10 @@ async function rhV2SubmitUpscaleTransparent(apiKey, apiPath, imageUrl, sizeSel, 
   var wh = rhUpscaleTransparentWH(sizeSel);
   if(wh){ body.outputWidth = wh.w; body.outputHeight = wh.h; }
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  return tid;
 }
 async function rhGenerateUpscaleTransparent(apiKey, apiPath, refDataUrls, sizeSel, onTick, signal){
   if(!refDataUrls.length){ var e0=new Error("no-image"); e0.code="no-image"; throw e0; }
@@ -7895,9 +7924,10 @@ function rhFinishSettings(){
 async function rhV2SubmitFinish(apiKey, engine, imageUrl, sizeSel, faceMode, signal){
   var body=rhFinishBody(engine, imageUrl, sizeSel, faceMode);
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(engine.apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  return tid;
 }
 /* the one HD Finish pass all three retouch pages share */
 async function rhGenerateFinish(apiKey, refDataUrls, sizeSel, onTick, signal){
@@ -8423,9 +8453,10 @@ async function rhV2SubmitVideo(apiKey, apiPath, imageUrls, promptText, resolutio
   if(def.extra) Object.keys(def.extra).forEach(function(k){ if(!(k in body)) body[k]=def.extra[k]; });
   }
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  return tid;
 }
 async function rhGenerateVideo(apiKey, apiPath, promptText, imageDataUrls, resolution, duration, aspectRatio, imageParam, onTick, signal, promptMax, def){
   var imageUrls = imageDataUrls.length ? await rhV2UploadAll(apiKey, imageDataUrls, signal) : [];
@@ -8490,9 +8521,10 @@ async function rhV2SubmitVideoUpscale(apiKey, videoUrl, targetResolution, signal
   var res = RH_VU_RES_ENUM.indexOf(targetResolution)>=0 ? targetResolution : "1080p";
   var body = { videoUrl: videoUrl||"", targetResolution: res };
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+RH_VU_APIPATH, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  return tid;
 }
 async function rhGenerateVideoUpscale(apiKey, videoDataUrl, targetResolution, onTick, signal){
   if(!videoDataUrl){ var e0=new Error("no-video"); e0.code="no-video"; throw e0; }
@@ -8729,12 +8761,13 @@ async function rhGenerateTalk(apiKey, def, imageDataUrl, audioDataUrl, audioName
   var audioUrl = await rhV2UploadAudio(apiKey, audioDataUrl, audioName, signal);
   var body = rhTalkBody(def, imageUrl, audioUrl, promptText);
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+def.apiPath, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
   /* its own kind, for the same reason video-upscale has one: a job recovered
      after the tab was killed has to land back on the page that started it,
      or the student cannot find what they already paid for. */
-  var final = await rhPollTracked(apiKey, j.taskId, {kind:"talk", label:def.apiPath, prompt:promptText||def.label}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
+  var final = await rhPollTracked(apiKey, tid, {kind:"talk", label:def.apiPath, prompt:promptText||def.label}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -8784,9 +8817,10 @@ async function rhGenerateVideoTool(apiKey, def, videoDataUrl, imageDataUrls, pro
   var imageUrls = (imageDataUrls&&imageDataUrls.length) ? await rhV2UploadAll(apiKey, imageDataUrls, signal) : [];
   var body = rhVtBody(def, videoUrl, imageUrls, promptText, optVals);
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+def.apiPath, { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  var final = await rhPollTracked(apiKey, j.taskId, {kind:"video-tool", label:def.apiPath, prompt:promptText||def.label}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  var final = await rhPollTracked(apiKey, tid, {kind:"video-tool", label:def.apiPath, prompt:promptText||def.label}, onTick, RH_VIDEO_TIMEOUT_MS, signal);
   var results=(final && final.results)||[];
   var outs=[];
   for(var i=0;i<results.length;i++){
@@ -9003,9 +9037,10 @@ async function rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel, signal){
   if(model.numImagesField) body[model.numImagesField] = "1";
   if(model.extra) Object.keys(model.extra).forEach(function(k){ body[k]=model.extra[k]; });
   var r=await fetchWithTimeout(RH_V2_BASE+"/"+String(model.apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(body) }, RH_SUBMIT_TIMEOUT_MS, signal);
-  var j=await r.json().catch(function(){return null;});
-  if(!r.ok || !j || !j.taskId){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; throw e; }
-  return j.taskId;
+  var txt=await r.text().catch(function(){return "";}); var j=null; try{ j=JSON.parse(txt); }catch(x0){} /* v6.25.0 — keep the text a refusal came as */
+  var tid=rhV2TaskIdOf(j);
+  if(!r.ok || !tid){ var e=new Error("submit-failed"); e.status=r.status; e.body=j; e.raw=String(txt||"").slice(0,300); throw e; }
+  return tid;
 }
 async function rhGenerateT2I(apiKey, model, promptText, ratio, sizeSel, onTick, signal){
   var taskId = await rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel, signal);
@@ -9057,7 +9092,12 @@ function rhFriendly(e){
   var bodyMsg="";
   try{
     var bb=e && e.body;
-    if(bb) bodyMsg=String(bb.msg||bb.message||(bb.error&&(bb.error.message||bb.error))||bb.code||"").slice(0,120);
+    if(bb) bodyMsg=String(bb.msg||bb.message||(bb.error&&(bb.error.message||bb.error))||bb.reason||bb.failReason||bb.detail||bb.code||"").slice(0,120);
+    /* v6.25.0 — no known field: quote the answer itself (its JSON, or the raw text a non-JSON
+       answer came as) — a blank "(200)" left the owner with nothing to send back */
+    if(!bodyMsg && bb && typeof bb==="object") bodyMsg=JSON.stringify(bb).slice(0,120);
+    if(!bodyMsg && e && e.raw) bodyMsg=String(e.raw).replace(/\s+/g," ").trim().slice(0,120);
+    if(!bodyMsg && e && e.message==="submit-failed") bodyMsg="no taskId in the answer";
   }catch(x){}
   return L9({my:"RunningHub error — ပြန်စမ်းကြည့်ပါ ("+(status||"?")+")",en:"RunningHub error — try again ("+(status||"?")+")",shn:"RunningHub error — ၸၢမ်းၶိုၼ်း ("+(status||"?")+")",kac:"RunningHub error — bai chyam u ("+(status||"?")+")",th:"RunningHub error — ลองใหม่ ("+(status||"?")+")",zh:"RunningHub 错误 — 请重试 ("+(status||"?")+")",vi:"Lỗi RunningHub — thử lại ("+(status||"?")+")",id:"Error RunningHub — coba lagi ("+(status||"?")+")",ms:"Ralat RunningHub — cuba lagi ("+(status||"?")+")"})+(bodyMsg?" · "+bodyMsg:"");
 }
@@ -17673,6 +17713,7 @@ function stFaceScanNow(buf,tok){
       stRenderSettle();
       stUiSoon();
       try{ stFaceNoteRefresh(); }catch(e){}
+      if(typeof stRefreshUI==="function") stRefreshUI(); /* v6.25.0 — the Face · Eyes · Lips zoom presets appear the moment the scan lands */
     };
     w.postMessage({ id:id, bitmap:bmp, w:sw, h:sh },[bmp]);
   }).catch(function(){});
@@ -17908,6 +17949,9 @@ function stRenderPend(){
   var cEl=$("stPendCount");
   if(cEl){ if(n||live){ cEl.innerHTML=icn("i-eye")+" "+escH(L9({my:"တိုက်ရိုက် "+live,en:live+" live"}))+" · "+icn("i-bolt")+" "+escH(L9({my:"AI "+n,en:n+" AI"})); } else cEl.textContent = L9({my:"Slider တွေက ပုံပေါ်မှာ ချက်ချင်းမြင်ရ — AI လိုတဲ့အရာတွေက ဒီမှာ စုပြီး GENERATE တစ်ချက်တည်း",en:"Sliders preview instantly on the photo — AI-only edits queue here for one GENERATE"}); }
   var gbEl=$("stGenBar"); if(gbEl) gbEl.classList.toggle("haspend",!!(n||live)); /* gen-bar diet: explainer collapses in compact when queue is empty */
+  /* v6.25.0 — on a phone the queued chips fold under a ▾; the count line stays as the one-line summary */
+  var more=$("stGenMore");
+  if(more){ more.style.display=n?"":"none"; if(!more._w){ more._w=1; more.onclick=function(){ var op=!gbEl.classList.contains("open"); gbEl.classList.toggle("open",op); more.classList.toggle("on",op); more.setAttribute("aria-expanded",op?"true":"false"); }; } }
   var clr=$("stClearAi");
   if(clr) clr.style.display=n?"":"none";
   /* v5.0 — the reverse of Path's Studio source: once a suite has AI edits
@@ -22177,8 +22221,10 @@ ST.groups.forEach(function(g){
 $("stPhotoNote").textContent=L9({my:"ပုံတစ်ပုံတင်ပြီး slider ရွှေ့ရင် ပုံပေါ်မှာ ချက်ချင်းမြင်ရမယ် — AI လိုတဲ့ ပြင်ဆင်ချက်တွေက GENERATE တစ်ချက်တည်းနဲ့ အကုန်ထွက်မယ်",en:"Add one photo — sliders preview instantly on it; AI-only edits run together in a single GENERATE"});
 $("muNote").textContent=L9({my:"ချိန်ညှိချက် "+ST_MEITU_COUNT+" ခု · One-tap look များ + တိုက်ရိုက် Live slider",en:ST_MEITU_COUNT+" controls · one-tap looks + live sliders"});
 $("evNote").textContent=L9({my:"Pro ချိန်ညှိချက် "+ST_EVOTO_COUNT+" ခု · Studio အဆင့် ရီတပ်ချ်",en:ST_EVOTO_COUNT+" pro controls · studio-grade retouch"});
-$("stHold").innerHTML=icn("i-eye")+" "+escH(L9({my:"မူရင်း (ဖိထား)",en:"Before (hold)"}));
-$("stReset").innerHTML=icn("i-restore")+" Reset";
+$("stHold").innerHTML=icn("i-eye")+" "+escH(L9({my:"မူရင်း",en:"Before",shn:"မူႇလ",kac:"Shawng",th:"ต้นฉบับ",zh:"原图",vi:"Gốc",id:"Asli",ms:"Asal"}));
+$("stHold").title=L9({my:"ဖိထားရင် မူရင်းပုံ ပြ (B key)",en:"Hold to see the original (B key)"});
+if($("stZones")) $("stZones").innerHTML=icn("i-target")+" "+escH(L9({my:"ဇုန်",en:"Zones",shn:"ဇုၼ်ႇ",kac:"Zone",th:"โซน",zh:"区域",vi:"Vùng",id:"Zona",ms:"Zon"}));
+$("stReset").innerHTML=icn("i-restore")+" "+escH(L9({my:"ပြန်စ",en:"Reset",shn:"တႄႇမႂ်ႇ",kac:"Reset",th:"รีเซ็ต",zh:"重置",vi:"Đặt lại",id:"Reset",ms:"Set semula"}));
 /* v4.42: gesture-grouped undo/redo as stage overlay chips (bottom-centre —
    the only free corner-slot; hidden in compact/mini/pip so the calibrated
    compact chip rail and PiP layouts stay byte-identical) */
@@ -22186,7 +22232,7 @@ $("stReset").innerHTML=icn("i-restore")+" Reset";
   var stage=$("stSplit") && $("stSplit").parentNode; if(!stage) return;
   function mk(id,ic,label,fn){
     var b=el("button","chip st-ov"); b.id=id; b.disabled=true;
-    b.innerHTML=icn(ic); b.setAttribute("aria-label",label); b.title=label;
+    b.innerHTML=icn(ic)+" "+escH(String(label).replace(/\s*\([^)]*\)\s*$/,"")); b.setAttribute("aria-label",label); b.title=label;
     b.onclick=fn;
     return b;
   }
@@ -22304,7 +22350,12 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     pg().style.setProperty("--stageH",(off?0:stg.offsetHeight)+"px");
   }
   /* ---- adaptive engine: auto(full<->compact by scroll) / compact-pinned / mini, PiP forced by env ---- */
-  var natTop=null, autoCompact=false, forcedKb=false, pipFree=false, cur="";
+  var natTop=null, autoCompact=false, forcedKb=false, pipFree=false, cur="", lastShrink=0;
+  /* v6.25.0 — the compact transition compensates the scroll by the measured stack shrink; the auto-EXIT
+     band must sit below where that lands (enter +40 − shrink) or a full compensation would trip it at
+     once. 120 was that number for the chip-over-picture stage; the toolbar stage measures its own. */
+  function exitBand(){ return Math.max(120,(lastShrink||0)-10); }
+  ST._stageExitBand=exitBand;
   function stuck(){ return stg.getBoundingClientRect().top<=navH()+2; }
   function natTopUpd(){ /* natural top is only trustworthy while un-stuck and docked */
     if(stg.style.display==="none"||stg.classList.contains("pip")) return;
@@ -22380,8 +22431,9 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     if(engaged||exitComp){ /* scroll compensation — content under the stage must not jump (§2.1) */
       var delta=stackH()-hBefore;
       var y=window.scrollY||0;
+      if(engaged&&delta<0) lastShrink=-delta; /* v6.25.0 — remembered for the exit band */
       if(delta<0&&natTop!=null){ /* never compensate below the exit band (prevents flip-flop on tall viewports) */
-        var minY=Math.max(0,natTop-110);
+        var minY=Math.max(0,natTop-(exitBand()-10));
         if(y+delta<minY) delta=Math.min(0,minY-y);
       }
       if(exitComp&&delta>0){ /* stop short of natTop+30 so we never re-arm autoCompact */
@@ -22433,7 +22485,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
       if(ST.ui.mode==="auto"&&window.innerWidth<1024&&natTop!=null){
         var y=window.scrollY||0;
         if(!autoCompact&&y>natTop+40){ autoCompact=true; apply(); }
-        else if(autoCompact&&y<Math.max(0,natTop-120)){ autoCompact=false; apply(); }
+        else if(autoCompact&&y<Math.max(0,natTop-exitBand())){ autoCompact=false; apply(); }
       }
       chipSpot();
     });
@@ -22497,6 +22549,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     var c=$("stCanvas");
     var r=c.getBoundingClientRect(), sr=stg.getBoundingClientRect();
     line.style.left=(r.left-sr.left+r.width*ST.split.pct/100)+"px";
+    line.style.top=(r.top-sr.top)+"px"; line.style.height=r.height+"px"; /* v6.25.0 — the toolbar sits below the picture */
   }
   ST._splitLayout=layout;
   sp.textContent="A|B";
@@ -22543,14 +22596,14 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
 /* ---- preview zoom loupe (§3.1): pinch / double-tap 100% / ctrl-wheel — CSS transform only, the
    settle buffer + toDataURL stay untouched; 100% = one buffer pixel per CSS pixel ---- */
 (function(){
-  var wrap=$("stZoomWrap"), c=$("stCanvas");
+  var wrap=$("stZoomWrap"), c=$("stCanvas"), stgEl=$("stStage");
   if(!wrap||!c) return;
   var Z=ST.ui.zoom;
   var ind=el("button","chip st-ov");
   ind.id="stZoomInd"; ind.style.display="none";
   var it=L9({my:"Zoom ပြန်ဖျက် (နှစ်ချက်နှိပ်ရင် 100%)",en:"Reset zoom (double-tap for 100%)",shn:"လူတ်း zoom ၶိုၼ်း (ၼဵၵ်းသွင်ၵမ်း 100%)",kac:"Zoom bai reset u (lahkawng lang dip yang 100%)",th:"รีเซ็ตซูม (แตะสองครั้งเพื่อ 100%)",zh:"重置缩放（双击 100%）",vi:"Đặt lại zoom (chạm đôi để 100%)",id:"Reset zoom (ketuk dua kali untuk 100%)",ms:"Set semula zum (ketik dua kali untuk 100%)"});
   ind.title=it; ind.setAttribute("aria-label",it);
-  var rail=$("stRail"); if(rail) rail.appendChild(ind);
+  var rail=$("stRail"); wrap.appendChild(ind); /* v6.25.0 — the zoom pill rides on the picture, top-right */
   function cssW(){ return c.clientWidth||1; }
   function cssH(){ return c.clientHeight||1; }
   function nativeS(){ return Math.max(1.01,(c.width||1)/cssW()); }
@@ -22571,12 +22624,14 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
       c.style.transform=""; c.style.transformOrigin=""; wrap.style.touchAction="";
       if(cB){ cB.style.transform=""; cB.style.transformOrigin=""; }
       ind.style.display="none"; ind.classList.remove("on");
+      if(stgEl) stgEl.classList.remove("zoomed");
     }else{
       c.style.transformOrigin="0 0";
       c.style.transform="translate("+Z.x+"px,"+Z.y+"px) scale("+Z.s+")";
       if(cB){ cB.style.transformOrigin="0 0"; cB.style.transform=c.style.transform; } /* v6.24.0 — 2-up pans with the picture */
       wrap.style.touchAction="none"; /* while zoomed the wrap owns the gestures; page scroll returns at s=1 */
       ind.style.display=""; ind.classList.add("on");
+      if(stgEl) stgEl.classList.add("zoomed"); /* v6.25.0 — the presets row shows while zoomed */
       var pct=Z.s/nativeS();
       Z.indBase=(pct>0.97&&pct<1.03)?"100%":"×"+(Math.round(Z.s*10)/10);
       ind.textContent=Z.indBase+((ST.hi&&ST.hi.on)?" · HD":"");
@@ -22641,11 +22696,19 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   var fz=pchip("stZpFace",L9({my:"မျက်နှာ",en:"Face",shn:"ၼႃႈ",kac:"Myi man",th:"หน้า",zh:"脸",vi:"Mặt",id:"Wajah",ms:"Muka"}),L9({my:"မျက်နှာကို ချဲ့ကြည့်",en:"Zoom to the face",shn:"ၶႂၢၵ်ႈတူၺ်း ၼႃႈ",kac:"Myi man hpe zoom u",th:"ซูมที่หน้า",zh:"放大到脸",vi:"Phóng to mặt",id:"Zoom ke wajah",ms:"Zum ke muka"}),function(){ zoomRegion("face"); });
   var ez=pchip("stZpEyes",L9({my:"မျက်လုံး",en:"Eyes",shn:"မၢၵ်ႇတႃ",kac:"Myi",th:"ตา",zh:"眼",vi:"Mắt",id:"Mata",ms:"Mata"}),L9({my:"မျက်လုံးနှစ်ဖက်ကို ချဲ့ကြည့်",en:"Zoom to the eyes",shn:"ၶႂၢၵ်ႈတူၺ်း မၢၵ်ႇတႃ",kac:"Myi hpe zoom u",th:"ซูมที่ตา",zh:"放大到眼睛",vi:"Phóng to mắt",id:"Zoom ke mata",ms:"Zum ke mata"}),function(){ zoomRegion("eyes"); });
   var lz=pchip("stZpLips",L9({my:"နှုတ်ခမ်း",en:"Lips",shn:"သူပ်း",kac:"N-gup",th:"ปาก",zh:"唇",vi:"Môi",id:"Bibir",ms:"Bibir"}),L9({my:"နှုတ်ခမ်းကို ချဲ့ကြည့်",en:"Zoom to the lips",shn:"ၶႂၢၵ်ႈတူၺ်း သူပ်း",kac:"N-gup hpe zoom u",th:"ซูมที่ปาก",zh:"放大到嘴唇",vi:"Phóng to môi",id:"Zoom ke bibir",ms:"Zum ke bibir"}),function(){ zoomRegion("lips"); });
-  if(rail) rail.appendChild(presets);
+  if(rail&&rail.parentNode) rail.parentNode.insertBefore(presets,rail.nextSibling); /* v6.25.0 — a row under the toolbar, not over the picture */
+  /* v6.25.0 — the Zoom button opens the presets row; zooming opens it too */
+  var ztg=el("button","chip st-ov"); ztg.id="stZoomTgl";
+  ztg.innerHTML=icn("i-search")+" "+escH(L9({my:"Zoom",en:"Zoom",shn:"Zoom",kac:"Zoom",th:"ซูม",zh:"缩放",vi:"Zoom",id:"Zoom",ms:"Zoom"}));
+  var ztt=L9({my:"Zoom preset ပြ/ဖျောက် — Fit · 100% · 1:1 · မျက်နှာ · မျက်လုံး · နှုတ်ခမ်း",en:"Show / hide the zoom presets — Fit · 100% · 1:1 · Face · Eyes · Lips",shn:"Zoom",kac:"Zoom",th:"ซูม",zh:"缩放预设",vi:"Zoom",id:"Zoom",ms:"Zoom"});
+  ztg.title=ztt; ztg.setAttribute("aria-label",ztt);
+  ztg.onclick=function(){ if(!ST.srcBitmap) return; var on=!(stgEl&&stgEl.classList.contains("zoomrow")); if(stgEl) stgEl.classList.toggle("zoomrow",on); ztg.classList.toggle("on",on); };
+  if(rail) rail.appendChild(ztg);
   function presetsSync(){
     var has=!!faceRegion("eyes");
     [fz,ez,lz].forEach(function(b){ b.style.display=has?"":"none"; });
     presets.style.display=ST.srcBitmap?"":"none";
+    ztg.style.display=ST.srcBitmap?"":"none";
   }
   ST.refreshFns.push(presetsSync); presetsSync();
   /* ---- v6.24.0: PIN — compare against a chosen state, not only the original.
@@ -22754,6 +22817,9 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     if(ST.sbs&&ST.sbs.on){ sbs.onclick(); }
     ST.hi.wantFull=true; zoomTo(maxS()); hiRequest();
   });
+  /* v6.25.0 — Pin and 2-up are toolbar buttons, not zoom presets */
+  [pin,sbs].forEach(function(b){ b.classList.remove("st-zp"); if(rail) rail.appendChild(b); });
+  pin.innerHTML='<span class="st-ovi" aria-hidden="true">\ud83d\udccc</span>'+escH(L9({my:"မှတ်",en:"Pin",shn:"မၢႆ",kac:"Pin",th:"ปัก",zh:"钉住",vi:"Ghim",id:"Pin",ms:"Pin"}));
   function extraSync(){
     p11.style.display = hiSourceInfo() ? "" : "none";
     sbs.style.display = (ST.srcBitmap && stg2 && (stg2.clientWidth>=560 || window.innerWidth>=1024)) ? "" : "none";
@@ -25968,7 +26034,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.24.0";
+var APP_VER="6.25.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -503,6 +503,8 @@ jobs:
         run: PORT=8931 node test/verify_video_probe_lane.js
       - name: Retouch A / B precision — true-detail zoom from the original, contour masks, live Dark Circles / Eye Bags / Smile Lines / Brow, pin + 2-up compare
         run: PORT=8931 node test/verify_retouch_precision.js
+      - name: Clean stage — nothing over the picture, one toolbar under it, zoom presets row, compact essentials, measured exit band, phone GENERATE bar folds its queue
+        run: PORT=8931 node test/verify_clean_stage.js
       - name: Native pick — every pick control carries a real file input on top, so Android shells that ignore a programmatic click still open the chooser; the file lands in the same slot
         run: PORT=8931 node test/verify_native_pick.js
       - name: Retouch A / B live preview — the stage measures its own speed and walks a quality ladder, zoom presets frame the face, press-and-hold peeks at Before, the A|B split swaps sides
