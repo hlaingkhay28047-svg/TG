@@ -5,9 +5,13 @@ name: Cross-engine sweep (WebKit + Firefox)
 # layout / behaviour tests that need only the served web app on the other two
 # engines, unchanged: test/_engine.js is preloaded and swaps
 # require("playwright").chromium for the engine named in HNK_ENGINE.
-# Dispatch-only while the list settles; test.yml carries the gate.
+# Runs on a push of its own file (a new workflow is not dispatchable until it
+# reaches main) and on dispatch; test.yml carries the gate once the list is green.
 
 on:
+  push:
+    branches: [claude/hnk-studio-deployment-pr292-www53j]
+    paths: [".github/workflows/cross-engine.yml", "test/_engine.js"]
   workflow_dispatch:
     inputs:
       tests:
