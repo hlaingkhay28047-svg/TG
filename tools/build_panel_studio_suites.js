@@ -243,6 +243,7 @@ const PRELUDE_NAMES = [
   /* pixel pipeline / stage — no live preview in the panel, so these settle to no-ops */
   "stT1Changed", "stT2Changed", "stPipeChanged", "stGeoChanged", "stRenderSettle", "stComputeWb", "stNoiseNote", "stSkinAnalyze", "stAutoEnhance",
   "stDrawHistogram", "stRunPipeline", "stQuoteCost", "stFaceGated", "stMountSuite", "stExportDims", "stExport2Up", "stSyncFromRef",
+  "stAutoBlemish", "stWarpActive", /* v6.27.0 — auto blemish and the live reshape touch pixels the panel does not hold */
   "stDropFull", "wmStamp", "stUiSoon", "stShowZones", "rhIsConfigured", "gate", "stFullSnap", "stUndoBtns",
   /* HD Finish engines — provided by panel/js/hnk_finish_engines.js, lifted
      from the app by tools/build_panel_finish_engines.js */
@@ -388,6 +389,7 @@ function prelude() {
     "  var stT1Changed=H.stT1Changed||noop, stT2Changed=H.stT2Changed||noop, stPipeChanged=noop, stGeoChanged=noop, stRenderSettle=noop;",
     "  var stComputeWb=H.stComputeWb||noop, stNoiseNote=H.stNoiseNote||noop, stSkinAnalyze=H.stSkinAnalyze||noop, stAutoEnhance=H.stAutoEnhance||noop;",
     "  var stDrawHistogram=noop, stRunPipeline=noop, stQuoteCost=H.stQuoteCost||noop;",
+    "  var stAutoBlemish=H.stAutoBlemish||noop, stWarpActive=H.stWarpActive||function(){ return false; };",
     "  var " + WINDOW_FNS.map(function (n) { return n + "=null"; }).join(", ") + ";",
     "  function stFaceGated(){ return false; }",
     "  var stMountSuite=H.stMountSuite||noop, stExportDims=H.stExportDims||function(){ return null; }, stExport2Up=H.stExport2Up||noop;",

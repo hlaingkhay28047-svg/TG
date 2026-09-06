@@ -6243,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.95.0";
+const PANEL_VERSION = "6.96.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7472,11 +7472,11 @@ const PAGE_HERO_HEADS = {
     th: "เนรมิตทุกฉากที่คุณจินตนาการ — <em>ในแบบของคุณ</em>", zh: "把你想象的每个场景变为现实 — <em>随心所欲</em>",
     vi: "Biến mọi khung cảnh bạn tưởng tượng thành hiện thực — <em>theo cách của bạn</em>", id: "Wujudkan setiap adegan yang Anda bayangkan — <em>dengan cara Anda</em>",
     ms: "Hidupkan setiap adegan yang anda bayangkan — <em>mengikut cara anda</em>" },
-  phMeitu: { my: "Retouch A ပုံစံ ၁၆၂ မျိုး — <em>Live Preview</em> နဲ့ တစ်ချက်ချင်း မြင်ရမယ်", en: "162 Retouch A controls, every one of them on <em>live preview</em>",
-    shn: "Retouch A 162 ဢၼ် — ပႃး <em>live preview</em> ၵူႈဢၼ်", kac: "Retouch A 162 hpe — yawng <em>live preview</em> hte",
-    th: "ปรับแต่ง Retouch A 162 รายการ พร้อม<em>พรีวิวสด</em>ทุกตัว", zh: "162 项 Retouch A 调整，每一项都有<em>实时预览</em>",
-    vi: "162 tùy chỉnh Retouch A, tất cả đều có <em>xem trước trực tiếp</em>", id: "162 kontrol Retouch A, semuanya dengan <em>pratinjau langsung</em>",
-    ms: "162 kawalan Retouch A, semuanya dengan <em>pratonton langsung</em>" },
+  phMeitu: { my: "Retouch A ပုံစံ ၁၆၃ မျိုး — <em>Live Preview</em> နဲ့ တစ်ချက်ချင်း မြင်ရမယ်", en: "163 Retouch A controls, every one of them on <em>live preview</em>",
+    shn: "Retouch A 163 ဢၼ် — ပႃး <em>live preview</em> ၵူႈဢၼ်", kac: "Retouch A 163 hpe — yawng <em>live preview</em> hte",
+    th: "ปรับแต่ง Retouch A 163 รายการ พร้อม<em>พรีวิวสด</em>ทุกตัว", zh: "163 项 Retouch A 调整，每一项都有<em>实时预览</em>",
+    vi: "163 tùy chỉnh Retouch A, tất cả đều có <em>xem trước trực tiếp</em>", id: "163 kontrol Retouch A, semuanya dengan <em>pratinjau langsung</em>",
+    ms: "163 kawalan Retouch A, semuanya dengan <em>pratonton langsung</em>" },
   phEvoto: { my: "Retouch B Pro ၂၁၃ မျိုး — အသားအရေနဲ့ အလင်း <em>အသေးစိတ်</em> ချိန်ညှိ", en: "213 Retouch B Pro controls for skin and light, tuned <em>in detail</em>",
     shn: "Retouch B Pro 213 ဢၼ် — ၽိဝ်ၼိူဝ်ႉလႄႈ ဢၼ်လႅင်း <em>ဢၼ်လဵၵ်ႉ</em>", kac: "Retouch B Pro 213 hpe — hpyi hte htoi <em>ginsup</em> galaw",
     th: "Retouch B Pro 213 รายการ ปรับผิวและแสง<em>อย่างละเอียด</em>", zh: "213 项 Retouch B Pro 控制，肤质与光线<em>精细</em>调校",

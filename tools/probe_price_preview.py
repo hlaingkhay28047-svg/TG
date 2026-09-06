@@ -77,7 +77,10 @@ def classify(status, j):
         code = str(d.get("errorCode", ""))
         # 1501 PRICE_CONFIG_NOT_FOUND: RunningHub has no price table for the endpoint — the body was
         # not refused, the quote is simply unavailable (kling-video-o3 pro/std r2v, veo3.1 fast r2v)
-        verdict = "NO-PRICE" if code == "1501" else "REJECTED"
+        # 1001 "Invalid URL" from the price-preview route itself: RunningHub has no preview route for the
+        # endpoint (seedream-v5-pro/layer-decomposition, api-498427798 — its create path exists and the
+        # body matches the doc). Filed as NO-ROUTE so the lane does not report a refused body.
+        verdict = "NO-PRICE" if code == "1501" else ("NO-ROUTE" if code == "1001" else "REJECTED")
         return verdict, ("%s %s" % (code, d.get("errorMessage", "")))[:200]
     if isinstance(j, dict) and j.get("code") not in (None, 0, "0") :
         return "REJECTED", ("%s %s" % (j.get("code"), j.get("msg") or j.get("message") or ""))[:200]
