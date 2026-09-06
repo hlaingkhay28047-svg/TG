@@ -579,6 +579,15 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .wslot .rq.opt{color:var(--muted)}
 .wslot .act{margin-left:auto;display:flex;gap:6px;flex-direction:column}
 .wslot .act .btn{padding:11px 13px;font-size:11.5px;min-height:40px}
+/* v6.23.1 — native pick: a real file input rides on top of every pick control (see nativePick) */
+.npick{position:absolute;left:0;top:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer;font-size:0;z-index:2;-webkit-appearance:none;appearance:none}
+.npick-wrap{position:relative;display:inline-flex;max-width:100%;min-width:0}
+.npick-wrap.grow,.npick-wrap.block,.wslot .act .npick-wrap,.ref .npick-wrap{display:flex}
+.npick-wrap.block,.ref .npick-wrap{width:100%}
+.npick-wrap>.btn,.npick-wrap>.add,.npick-wrap>.pt-empty{flex:1 1 auto;min-width:0}
+.ref .npick-wrap{height:100%}
+.has-npick{position:relative}
+.has-npick .rsx{z-index:3}
 textarea.wiz-prompt{min-height:220px}
 .wizpair{display:flex;gap:8px;align-items:center}
 .wizpair img{flex:1;min-width:0;aspect-ratio:4/5;object-fit:cover;object-position:center 12%;border-radius:12px;border:1px solid var(--line)}
@@ -2788,13 +2797,13 @@ html.splashing #splash{display:flex}
     <h2 id="refsH2"></h2>
     <div class="refs" id="refs"></div>
     <div class="mut" style="margin-top:8px" id="refsNote"></div>
-    <input type="file" id="filePick" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" hidden>
-    <input type="file" id="filePickBoard" accept="image/png,image/jpeg,image/webp" multiple hidden>
+    <input type="file" id="filePick" accept="image/*" hidden>
+    <input type="file" id="filePickBoard" accept="image/*" multiple hidden>
     <!-- Path Retouch owns its own multi-pick input: adding multiple to the
          shared #filePick above would break every single-slot page. -->
-    <input type="file" id="ptFilePick" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" multiple hidden>
+    <input type="file" id="ptFilePick" accept="image/*" multiple hidden>
     <!-- Path Retouch reference-backdrop slot (single, optional) -->
-    <input type="file" id="ptRefPick" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" hidden>
+    <input type="file" id="ptRefPick" accept="image/*" hidden>
   </section>
 
   <section class="card">
@@ -9647,6 +9656,7 @@ function renderRefStrip(){
       d.appendChild(el("span","tag","IMG "+(i+1)));
       d.onclick=function(){ state.pickSlot=i; $("filePick").click(); };
       host.appendChild(d);
+      nativePick(d,"filePick",function(){ state.pickSlot=i; });
     });
     /* v6.21.0 — the VIDEO strip grows with the model: face-reference slots up to its image capacity */
     if(hostId==="vidRefStrip" && typeof vidRefMax==="function"){
@@ -9661,6 +9671,7 @@ function renderRefStrip(){
         d.appendChild(el("span","tag","IMG "+(k+1)+" · "+L9({my:"မျက်နှာ",en:"face",shn:"ၼႃႈ",kac:"myi man",th:"ใบหน้า",zh:"人脸",vi:"mặt",id:"wajah",ms:"wajah"})));
         d.onclick=function(){ state.pickSlot=k; $("filePick").click(); };
         host.appendChild(d);
+        nativePick(d,"filePick",function(){ state.pickSlot=k; });
       })(k); }
     }
     host.appendChild(el("div","note", L9({my:"Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်",en:"Images used by Generate — tap to change",shn:"ၶႅပ်းႁၢင်ႈဢၼ် Generate တေၸႂ်ႉ — ၼဵၵ်းသေ လႅၵ်ႈလႆႈ",kac:"Generate hta lang na sumla ni — dip nna galai mai ai",th:"ภาพที่ Generate จะใช้ — แตะเพื่อเปลี่ยน",zh:"Generate 使用的图片 — 点按可更换",vi:"Ảnh sẽ dùng cho Generate — chạm để thay đổi",id:"Gambar yang dipakai Generate — ketuk untuk mengganti",ms:"Imej yang digunakan oleh Generate — ketik untuk tukar"})));
@@ -9871,6 +9882,49 @@ function acceptImageFile(f, slot){
     }, cap);
   };
   rd.readAsDataURL(f);
+}
+/* ---- v6.23.1 — NATIVE PICK. Redmi Note 15 Pro+ (HyperOS), the installed PWA:
+   tapping ရွေး did nothing — no chooser, no error, twelve seconds of taps on
+   video. Every pick in this app was a programmatic click() on ONE hidden
+   <input type=file>, and some Android shells (Xiaomi's PWA shell and Mi
+   Browser, several in-app browsers) ignore that click while honouring a real
+   tap on a real file input. So every pick control now carries its own
+   transparent file input ON TOP of it: the tap is the input's own, the chooser
+   opens natively, and the chosen files are handed to the hidden input's
+   existing handler — same code path, same slot. The programmatic path stays
+   underneath for keyboards and for browsers that let the tap through.
+   accept narrows to image/* — an explicit MIME list (heic/heif included) is
+   another thing OEM pickers have refused; acceptImageFile still sniffs. ---- */
+function nativePick(btn, mirrorId, before){
+  if(!btn) return null;
+  var mirror=$(mirrorId); if(!mirror) return null;
+  if(btn.querySelector&&btn.querySelector(".npick")) return null;
+  var host=btn;
+  if(btn.tagName==="BUTTON"||btn.tagName==="A"){
+    /* the wrapper takes the button's place in the layout: inline beside its
+       neighbours, stretched only where the button was (grow / full-width),
+       and hidden whenever the button is */
+    var wrap=document.createElement("span"); wrap.className="npick-wrap";
+    if(btn.classList.contains("grow")) wrap.classList.add("grow");
+    if(btn.classList.contains("pt-empty")||btn.classList.contains("add")) wrap.classList.add("block");
+    var syncHide=function(){ wrap.style.display=(getComputedStyle(btn).display==="none")?"none":""; };
+    if(btn.parentNode) btn.parentNode.insertBefore(wrap,btn);
+    wrap.appendChild(btn); host=wrap; syncHide();
+    try{ new MutationObserver(syncHide).observe(btn,{attributes:true,attributeFilter:["style","class","hidden"]}); }catch(e1){}
+  } else btn.classList.add("has-npick");
+  var inp=document.createElement("input"); inp.type="file"; inp.className="npick";
+  inp.accept=mirror.accept||"image/*"; inp.multiple=!!mirror.multiple;
+  inp.setAttribute("aria-hidden","true"); inp.tabIndex=-1;
+  inp.onclick=function(ev){ ev.stopPropagation(); }; /* the tap is the input's own — the button's programmatic path must not fire too */
+  inp.onchange=function(){
+    var fs=this.files?Array.prototype.slice.call(this.files):[]; this.value="";
+    if(!fs.length) return;
+    if(before){ try{ before(); }catch(e0){} }
+    var fake={files:fs, value:"", multiple:mirror.multiple};
+    try{ if(typeof mirror.onchange==="function") mirror.onchange.call(fake); }catch(e){}
+  };
+  host.appendChild(inp);
+  return inp;
 }
 $("filePick").onchange = function(){
   /* v4.28 batch: a Batch-armed pick hands the whole FileList to the V2 batch
@@ -10675,12 +10729,14 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         var pick=el("button","btn"); setIcnText(pick,"i-folder",t("wiz_pick"));
         pick.onclick=function(){ state.pickSlot=i; $("filePick").click(); };
         act.appendChild(pick);
+        nativePick(pick,"filePick",function(){ state.pickSlot=i; });
         /* v6.19.0 — a board slot also takes two to N photographs at once, laid out as one picture */
         if(w.board && w.board.slot===i){
           var bmax=w.board.max||2, bn=bmax>2?"2–"+bmax:"2", bnMy=bmax>2?"၂–"+({3:"၃",4:"၄"}[bmax]||bmax):"၂";
           var bd=el("button","btn wboard"); setIcnText(bd,"i-stack",L9({my:"ပုံ "+bnMy+" ပုံ ပေါင်း",en:"Combine "+bn+" photos",shn:"ႁူမ်ႈဟၢင်ႈ "+bn,kac:"Sumla "+bn+" hpawng",th:"รวม "+bn+" ภาพ",zh:"合并 "+bn+" 张",vi:"Ghép "+bn+" ảnh",id:"Gabungkan "+bn+" foto",ms:"Gabung "+bn+" foto"}));
           bd.onclick=function(){ $("filePickBoard").click(); };
           act.appendChild(bd);
+          nativePick(bd,"filePickBoard");
         }
         if(ref){
           var clr=el("button","btn"); setIcnText(clr,"i-close",t("wiz_clear"));
@@ -12236,6 +12292,7 @@ function renderRsPicker(){
     a.title = RS_NEED_PHOTO;
     a.onclick=function(){ state.pickSlot=0; $("filePick").click(); };
     d.appendChild(a);
+    nativePick(a,"filePick",function(){ state.pickSlot=0; });
   }
   d.appendChild(el("span","tag", L9({my:"မူရင်း",en:"Before",shn:"မူႇလ",kac:"Shawng",th:"ก่อน",zh:"之前",vi:"Trước",id:"Sebelum",ms:"Sebelum"})));
   host.appendChild(d);
@@ -15165,6 +15222,7 @@ $("ptCmpAfterLbl").textContent=t("pt_after");
 
 $("btnPtAdd").onclick=function(){ if(PT.busy) return; $("ptFilePick").click(); };
 $("ptEmpty").onclick=function(){ if(PT.busy) return; $("ptFilePick").click(); };
+nativePick($("btnPtAdd"),"ptFilePick"); nativePick($("ptEmpty"),"ptFilePick");
 /* snapshot the FileList BEFORE resetting .value — the list is live and
    clearing the input empties it out from under ptIngestFiles (the same
    slice-first order the shared #filePick handler uses) */
@@ -15202,6 +15260,7 @@ $("btnPtStOpen").onclick=function(){ if(!PT.busy) switchPage("pgStudio"); };
 /* v5.0 — IMAGE 2 is checked once, before the loop, so removing or swapping it
    mid-run would leave the guard protecting only the first photo of the batch. */
 $("btnPtRef").onclick=function(){ if(PT.busy){ toast(L9(PT_BUSY_L),"err"); return; } $("ptRefPick").click(); };
+nativePick($("btnPtRef"),"ptRefPick");
 $("ptRefPick").onchange=function(){
   var f=this.files && this.files[0];
   if(!f){ this.value=""; return; }
@@ -18090,6 +18149,7 @@ function stRefXPicker(){
       a.title=L9({my:"Reference ပုံထည့်ပါ",en:"Add a reference photo"});
       a.onclick=function(){ state.pickSlot="stx"; $("filePick").click(); };
       box.appendChild(a);
+      nativePick(a,"filePick",function(){ state.pickSlot="stx"; });
     }
   }
   ST.refreshFns.push(refresh); refresh();
@@ -20962,6 +21022,7 @@ function renderStPicker(){
     a.title=RS_NEED_PHOTO;
     a.onclick=function(){ state.pickSlot=0; $("filePick").click(); };
     d.appendChild(a);
+    nativePick(a,"filePick",function(){ state.pickSlot=0; });
   }
   d.appendChild(el("span","tag",L9({my:"မူရင်း",en:"Before"})));
   host.appendChild(d);
@@ -25629,7 +25690,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.23.0";
+var APP_VER="6.23.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -27445,6 +27506,7 @@ setIcnText($("btnVuOpen"),"i-external",L9({my:"↗ Direct Link ဖွင့်",
 $("vuHistH").textContent = L9({my:"လတ်တလော resolution မြှင့်ခဲ့တဲ့ ဗီဒီယိုများ (session အတွင်းပဲ)",en:"Recently upscaled videos (this session only)",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်း resolution သုင်ၶိုၼ်ႈဝႆႉမိူဝ်ႈလဵဝ်",kac:"Video resolution grau na ni galaw da ai (session sha)",th:"วิดีโออัปสเกลล่าสุด (เฉพาะเซสชันนี้)",zh:"最近提升分辨率的视频（仅本次会话）",vi:"Video vừa nâng cấp gần đây (chỉ trong phiên này)",id:"Video yang baru ditingkatkan (hanya sesi ini)",ms:"Video yang baru ditingkatkan (sesi ini sahaja)"});
 
 $("btnVuPick").onclick = function(){ $("vuFilePick").click(); };
+nativePick($("btnVuPick"),"vuFilePick");
 $("vuFilePick").onchange = function(){
   var f=this.files && this.files[0]; this.value="";
   if(!f) return;
@@ -28103,6 +28165,7 @@ function renderVtWf(){
 $("vtWfIntro").textContent = L9({my:"ကတ်တစ်ချက် နှိပ်ရုံနဲ့ tool ရွေးပေးပြီး prompt ရေးပေးမယ်။ ပြီးရင် အောက်မှာ ဗီဒီယိုနဲ့ ပုံ တင်ပါ။",en:"One tap picks the tool and writes the request. Then upload your clip and your photo below.",shn:"ၼဵၵ်းၵၢတ်ႈဢၼ်ၼိုင်ႈ — တေလိူၵ်ႈ tool လႄႈတႅမ်ႈ prompt ပၼ်",kac:"Card langai mi hkan — tool lata nna prompt ka ya ai",th:"แตะการ์ดครั้งเดียว ระบบเลือกเครื่องมือและเขียน prompt ให้ แล้วอัปโหลดคลิปกับรูปด้านล่าง",zh:"点一下卡片即可选好工具并写好 prompt，然后在下方上传视频与照片",vi:"Một chạm chọn công cụ và viết prompt. Sau đó tải clip và ảnh lên bên dưới",id:"Sekali tap memilih alat dan menulis prompt. Lalu unggah klip dan foto di bawah",ms:"Satu ketikan memilih alat dan menulis prompt. Kemudian muat naik klip dan foto di bawah"});
 renderVtWf();
 $("btnVtPick").onclick=function(){ $("vtFilePick").click(); };
+nativePick($("btnVtPick"),"vtFilePick");
 $("vtFilePick").onchange=function(){
   var f=this.files && this.files[0]; this.value="";
   if(!f) return;
@@ -28126,6 +28189,7 @@ $("vtFilePick").onchange=function(){
   rd.readAsDataURL(f);
 };
 $("btnVtImgPick").onclick=function(){ $("vtImgPick").click(); };
+nativePick($("btnVtImgPick"),"vtImgPick");
 /* the × on each slot: back to nothing picked, in every place that reads it —
    the need-note, the card deck's clip warning, and the saved snapshot */
 $("btnVtFileClear").onclick=function(){
@@ -28352,7 +28416,7 @@ function closeVWiz(){
   window._wizOnPick=null; window._vwizOnPick=null;
   modalClosed("wiz");
 }
-function vwizSlot(kind, filled, thumbSrc, name, req, onPick, onClear){
+function vwizSlot(kind, filled, thumbSrc, name, req, onPick, onClear, mirrorId, before){
   var slot=el("div","wslot"+(filled?" filled":""));
   var th=el("div","th");
   if(filled){
@@ -28368,6 +28432,7 @@ function vwizSlot(kind, filled, thumbSrc, name, req, onPick, onClear){
   var act=el("div","act");
   var pick=el("button","btn"); setIcnText(pick,"i-folder", filled?vwizL("replace"):(kind==="video"?vwizL("pickVideo"):vwizL("pickPhoto")));
   pick.onclick=onPick; act.appendChild(pick);
+  if(mirrorId) nativePick(pick, mirrorId, before); /* v6.23.1 — a real tap on a real file input */
   if(filled){ var clr=el("button","btn"); setIcnText(clr,"i-close",vwizL("clear")); clr.onclick=onClear; act.appendChild(clr); }
   slot.appendChild(act);
   return slot;
@@ -28418,7 +28483,8 @@ function renderVWiz(){
       var ref=state.refs[0];
       body.appendChild(vwizSlot("image", !!ref, ref?("data:"+ref.mime+";base64,"+ref.b64):"", "IMAGE 1 — "+vwizL("slotPhoto"), true,
         function(){ state.pickSlot=0; $("filePick").click(); },
-        function(){ state.refs[0]=null; state.imgRoles=null; renderRefs(); renderVWiz(); }));
+        function(){ state.refs[0]=null; state.imgRoles=null; renderRefs(); renderVWiz(); },
+        "filePick", function(){ state.pickSlot=0; }));
       /* v6.21.0 — face-reference slots up to the model's image capacity: the filled ones plus one empty */
       var vmx=vidRefMax(), vlast=0; for(var q0=1;q0<vmx;q0++) if(refGet(q0)) vlast=q0;
       var vshown=Math.min(vmx, vlast+2);
@@ -28426,16 +28492,17 @@ function renderVWiz(){
         var r=refGet(q);
         body.appendChild(vwizSlot("image", !!r, r?("data:"+r.mime+";base64,"+r.b64):"", "IMAGE "+(q+1)+" — "+vwizL("slotFace"), false,
           function(){ state.pickSlot=q; $("filePick").click(); },
-          function(){ refSet(q,null); state.imgRoles=null; renderRefs(); renderVWiz(); }));
+          function(){ refSet(q,null); state.imgRoles=null; renderRefs(); renderVWiz(); },
+          "filePick", function(){ state.pickSlot=q; }));
       })(q); }
     } else {
       body.appendChild(vwizSlot("video", !!state.vtFile, state.vtFile?vtDataUrl(state.vtFile):"", vwizL("slotVideo"), true,
         function(){ $("vtFilePick").click(); },
-        function(){ $("btnVtFileClear").onclick(); renderVWiz(); }));
+        function(){ $("btnVtFileClear").onclick(); renderVWiz(); }, "vtFilePick"));
       if(tl && tl.imageParam){
         body.appendChild(vwizSlot("image", !!state.vtImg, state.vtImg?("data:"+state.vtImg.mime+";base64,"+state.vtImg.b64):"", vwizL("slotRef"), vwizPhotoReq(),
           function(){ $("vtImgPick").click(); },
-          function(){ $("btnVtImgClear").onclick(); renderVWiz(); }));
+          function(){ $("btnVtImgClear").onclick(); renderVWiz(); }, "vtImgPick"));
       }
       if(typeof vtClipWarn!=="undefined" && vtClipWarn){ var cw=el("div","mut warn"); setIcnText(cw,"i-warn",vtClipWarn); body.appendChild(cw); }
     }
@@ -28609,6 +28676,7 @@ function tkFillModels(){
 $("selTkModel").onchange=function(){ renderTkPicks(); };
 $("btnTkImgPick").onclick=function(){ $("tkImgPick").click(); };
 $("btnTkAudPick").onclick=function(){ $("tkAudPick").click(); };
+nativePick($("btnTkImgPick"),"tkImgPick"); nativePick($("btnTkAudPick"),"tkAudPick");
 $("btnTkImgClear").onclick=function(){ state.tkImg=null; renderTkPicks(); wipSave(); };
 $("btnTkAudClear").onclick=function(){ state.tkAud=null; renderTkPicks(); wipSave(); };
 $("tkImgPick").onchange=function(){

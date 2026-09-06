@@ -214,6 +214,10 @@ function rewrite(text) {
      picker (the subject slot, or the reference slot for a style photo) */
   s = s.replace(/state\.pickSlot="stx"; \$\("filePick"\)\.click\(\);/g, 'H.pickRef();');
   s = s.replace(/state\.pickSlot=0; \$\("filePick"\)\.click\(\);/g, "H.pickPhoto();");
+  /* v6.23.1: the web app lays a real <input type="file"> over each pick
+     control (phone PWAs swallow the programmatic click on the hidden
+     shared input); UXP has no file inputs, so the overlay call goes */
+  s = s.replace(/^[ \t]*nativePick\([^\n]*\);[ \t]*\n/gm, "");
   /* dataset is one of the DOM niceties UXP does not carry; the same four
      reads and writes go through attributes instead (assignments first, or
      the read rule would eat their left-hand side) */
