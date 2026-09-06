@@ -14,15 +14,17 @@ function check(name, ok, detail) {
   else { failed++; console.error("FAIL — " + name + (detail ? "\n       " + detail : "")); }
 }
 
-const needed = ["docs/admin/index.html", "docs/admin/admin.js", "docs/admin/admin.css",
-  "docs/download/index.html", "docs/download/download.js", "docs/download/download.css"];
+/* v6.28.0 — the website's /download/ route is a forwarder into the web app's account card
+   (one door); its own script and stylesheet are gone and must stay gone. */
+const needed = ["docs/admin/index.html", "docs/admin/admin.js", "docs/admin/admin.css", "docs/download/index.html"];
+["docs/download/download.js", "docs/download/download.css"].forEach(rel =>
+  check(rel + " is gone — the route forwards, it does not sign anyone in", !fs.existsSync(path.join(ROOT, rel))));
 needed.forEach(rel => check(rel + " exists", fs.existsSync(path.join(ROOT, rel))));
 
 const app = read("docs/app/index.html");
 const admin = fs.existsSync(path.join(ROOT, "docs/admin/admin.js")) ? read("docs/admin/admin.js") : "";
 const adminHtml = fs.existsSync(path.join(ROOT, "docs/admin/index.html")) ? read("docs/admin/index.html") : "";
 const adminCss = fs.existsSync(path.join(ROOT, "docs/admin/admin.css")) ? read("docs/admin/admin.css") : "";
-const download = fs.existsSync(path.join(ROOT, "docs/download/download.js")) ? read("docs/download/download.js") : "";
 const downloadHtml = fs.existsSync(path.join(ROOT, "docs/download/index.html")) ? read("docs/download/index.html") : "";
 
 function hasAll(text, values) { return values.every(value => text.includes(value)); }
@@ -163,14 +165,22 @@ check("concurrent admin 401s share one refresh and ignore stale responses after 
   hasAll(admin, ["refreshInFlight", "sessionGeneration"]) &&
   /accessToken\(\) !== token/.test(admin) && /generation !== sessionGeneration/.test(admin));
 
-check("download requests a temporary URL only from an explicit control",
-  download.includes("/api/v1/downloads/panel") && /addEventListener\s*\(\s*["']click["']/.test(download));
+/* v6.28.0 — ONE DOOR. The temporary delivery is requested from the web app's account card and
+   nowhere else; the website's /download/ route forwards there with no script of its own. */
+const requester = (app.match(/async function accRequestPanelDownload\(ev\)\{[\s\S]*?\n\}/) || [""])[0];
+check("the web app requests a temporary URL only from its explicit account-card controls",
+  requester.includes("/v1/downloads/panel") && app.includes('dl.onclick=accRequestPanelDownload') &&
+  app.includes('ad.addEventListener("click",accRequestPanelDownload)'));
 check("download request never round-trips a server device id or installation hash",
-  !/computer_installation_id|installation_hash/.test(download));
-check("download page never embeds a CCX path", !/\.ccx(?:["'?#]|$)/i.test(download + downloadHtml));
-check("download UI describes expiring secure delivery", /expir|temporary|secure|သက်တမ်း/i.test(downloadHtml + download));
+  requester.length > 0 && !/computer_installation_id|installation_hash/.test(requester));
+check("the download route forwards into the web app and carries no script, fetch or sign-in of its own",
+  /http-equiv=["']refresh["'][^>]+url=\.\.\/app\/\?panel=download/.test(downloadHtml) &&
+  /href=["']\.\.\/app\/\?panel=download["']/.test(downloadHtml) &&
+  !/<script/i.test(downloadHtml) && !/fetch\(|\/v1\/downloads|localStorage/.test(downloadHtml));
+check("download page never embeds a CCX path", !/\.ccx(?:["'?#]|$)/i.test(downloadHtml));
+check("download UI describes expiring secure delivery", /expir|temporary|secure|သက်တမ်း/i.test(downloadHtml));
 
-const published = app + admin + adminHtml + download + downloadHtml;
+const published = app + admin + adminHtml + downloadHtml;
 check("new clients contain no service/admin/database secret",
   !/(service[_-]?role|database[_-]?service[_-]?key|secret[_-]?admin[_-]?key)/i.test(published));
 

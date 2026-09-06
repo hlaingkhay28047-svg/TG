@@ -4,40 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#090d14">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'sha256-CFmHbvbjd3cxiaQYeTPypSdiAYm+M15AVwbjYAVCMpQ='; base-uri 'none'; form-action 'none';">
   <meta name="robots" content="noindex,nofollow">
-  <title>Secure Photoshop Panel Download — HNK Studio</title>
-  <link rel="stylesheet" href="download.css">
+  <meta http-equiv="refresh" content="0; url=../app/?panel=download">
+  <title>Photoshop Panel download — inside the Web App · HNK Studio</title>
+  <style>html{background:#090d14;color:#f3ead7;font-family:Inter,"Noto Sans Myanmar","Padauk",system-ui,sans-serif}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px}
+main{max-width:520px;text-align:center}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:#e9c46a;margin:0 0 10px}
+h1{font-size:24px;line-height:1.3;margin:0 0 12px}
+p{color:#c9cedb;line-height:1.55;margin:0 0 10px}
+.btn{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:999px;background:#e9c46a;color:#141414;font-weight:700;text-decoration:none}
+footer{margin-top:28px;font-size:12px;color:#7d8397}</style>
 </head>
 <body>
-  <a class="skip" href="#main">Skip to secure download</a>
-  <header><a class="brand" href="../"><span>HNK</span><b>Secure Download</b></a><a class="account-link" href="../app/?page=pgAccount">Student Account</a></header>
-  <main id="main" tabindex="-1">
-    <section class="hero">
-      <div class="orb" aria-hidden="true"><span>Ps</span></div>
-      <p class="eyebrow">PHOTOSHOP PANEL · PRIVATE DELIVERY</p>
-      <h1>Your licensed panel, delivered securely.</h1>
-      <p class="lede">HNK checks your approved account, active license, download permission and registered Computer before issuing a temporary link.</p>
-    </section>
-    <section class="download-card" aria-labelledby="downloadTitle">
-      <div class="checking" id="downloadChecking" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><div><h2 id="downloadTitle">Checking access…</h2><p>Reading your current entitlement from the HNK server.</p></div></div>
-      <div id="downloadResult" hidden>
-        <div class="status-icon" id="statusIcon" aria-hidden="true">✓</div><p class="eyebrow" id="statusLabel">READY</p><h2 id="statusTitle">Panel download available</h2><p id="statusMessage"></p>
-        <div class="facts" id="downloadFacts"></div>
-        <button class="primary" id="requestDownload" type="button">Create secure download</button>
-        <a class="secondary" id="accountAction" href="../app/?page=pgAccount">Open account &amp; device status</a>
-        <p class="privacy-note">The file address is temporary and generated only after you press the button. Each successful request is recorded in your download history.</p>
-      </div>
-      <div class="issued" id="issuedState" hidden role="status" aria-live="polite"><div class="status-icon" aria-hidden="true">↓</div><p class="eyebrow">TEMPORARY LINK ISSUED</p><h2>Your download is starting</h2><p id="issuedMessage">Keep this page open while your browser begins the secure transfer.</p><div class="countdown" id="downloadCountdown"></div><button class="secondary button-reset" id="requestAgain" type="button">Create another link</button></div>
-    </section>
-    <section class="trust-grid" aria-label="Download security">
-      <article><span aria-hidden="true">⌁</span><h2>Server checked</h2><p>Account, license and permission decisions come from the shared backend—not this page.</p></article>
-      <article><span aria-hidden="true">⌘</span><h2>One Computer</h2><p>The Web App computer and Photoshop Panel share the same registered Computer slot.</p></article>
-      <article><span aria-hidden="true">◷</span><h2>Short lived</h2><p>Temporary delivery expires within minutes and is recorded for your protection.</p></article>
-    </section>
+  <!-- v6.28.0 — ONE DOOR. The Photoshop Panel is downloaded from the Web App's
+       Account → Photoshop Panel group and nowhere else: the unified API issues
+       its one-time, five-minute delivery to a signed-in web session only, so
+       this route no longer signs anyone in or asks for a link. It forwards. Old
+       links, bookmarks and the panel's own button all land on the same door. -->
+  <main>
+    <p class="eyebrow">PHOTOSHOP PANEL · PRIVATE DELIVERY</p>
+    <h1>The Panel download lives inside the Web App.</h1>
+    <p>Sign in to the Web App and open Account → Photoshop Panel. The temporary, server-checked secure delivery is created there; this page only forwards you.</p>
+    <p lang="my">Panel ကို Web App ထဲ Account → Photoshop Panel မှာပဲ ယူပါ။ ဒီ page က ဆက်ပို့ပေးတာပဲ။</p>
+    <a class="btn" href="../app/?panel=download">Open the Web App</a>
   </main>
-  <footer><span>HNK Studio · Web App 6.27.0 · Panel 6.96.0</span><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a></footer>
-  <div class="toast" id="downloadLive" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="download.js" defer></script>
+  <footer><span>HNK Studio · Web App 6.28.0 · Panel 6.97.0</span></footer>
 </body>
 </html>
