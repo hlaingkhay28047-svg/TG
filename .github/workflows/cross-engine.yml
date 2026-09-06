@@ -73,11 +73,14 @@ jobs:
           # sweep_v535_rtl_lang serves the untouched docs tree itself and verify_landing_fill opens the
           # landing over file:// — both meet the same WebKit upgrade / file-fetch limits, so they run on
           # Firefox only; every other test runs on both engines.
-          # verify_clean_stage is back on the WebKit leg: the two "WebKit-only" findings run #2 measured
-          # (the compact stage not restoring on a scroll back to the top; the GENERATE button not filling
-          # its row with the queue open) were the service worker answering the test's API mocks — the
-          # 6.27.0 preload blocks it on the swapped engines (test/_engine.js) and dispatch run #14
-          # passed every section of the test on WebKit.
+          # verify_clean_stage is back on the WebKit leg (task #107). Run #2's "compact stage does not
+          # restore on a scroll back to the top" was the read racing the engine, not the stage: WebKit
+          # delivers a programmatic scroll's event only at its next rendering opportunity, 300–550 ms
+          # later while the studio's hi-res preview tier is still rendering (diag run #17), and the test
+          # read a fixed 350 ms after scrolling. The test now waits for the reaction (the exit fires
+          # within ~50 ms once the thread is idle, 16/16 cycles). Its second finding — the GENERATE
+          # button not filling its row with the queue open — has not reproduced since the 6.27.0
+          # service-worker block (runs #14–#17); the diag measured the same flex geometry as Chromium.
           if [ "$HNK_ENGINE" = "webkit" ]; then
             LIST="${TESTS:-verify_tabbar_reachable verify_clean_stage verify_native_pick verify_slot_whole_photo verify_freeform_slots verify_desktop_fill sweep_v492_gridfit sweep_v528_safearea sweep_v533_a11y}"
           else
