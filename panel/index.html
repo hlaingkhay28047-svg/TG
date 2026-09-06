@@ -144,7 +144,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.97.2</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.98.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -1150,6 +1150,19 @@
       </div>
     </div>
 
+    <!-- ========== PAGE: IMAGINE (6.29.0 wave — the app's pgImagine) ==========
+         The hub and the tool view are drawn into #imRoot by js/hnk_imagine.js, the app's own
+         IMAGINE module lifted verbatim (tools/build_panel_imagine.js); main.js hands it the
+         panel host (file dialog, callImageAPI, galleryStore, place-into-Photoshop). -->
+    <div class="page apg" id="pageImagine">
+      <div class="page-hero">
+        <img src="icons/banners/banner-imagine.jpg" alt="" />
+        <div class="ph-kick">Imagine</div>
+        <p class="ph-head" id="phImagine">ပုံထည့် · template ရွေး · <em>တစ်ချက်နှိပ်</em> — prompt မလို</p>
+      </div>
+      <div id="imRoot"></div>
+    </div>
+
     <!-- ========== PAGES: RETOUCH A STUDIO / RETOUCH B PRO ==========
          The web app's two studio suites, its own markup. Both pages are a
          hero plus an empty .st-mount: the whole control block lives ONCE, in
@@ -1384,7 +1397,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.97.2</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.98.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1458,6 +1471,7 @@
 <script src="js/hnk_video_containers.js"></script>
 <script src="js/hnk_finish_engines.js"></script>
 <script src="js/hnk_whats_new.js"></script>
+<script src="js/hnk_imagine.js"></script>
 <script src="src/models/model-registry.js"></script>
 <script src="src/models/capability-resolver.js"></script>
 <script src="src/models/auto-model-selector.js"></script>

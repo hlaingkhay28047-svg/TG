@@ -65,7 +65,7 @@ report("A) pgMeitu and pgEvoto are registered pages and pgStudio is not",
   { meitu: /\["pgMeitu"/.test(src), evoto: /\["pgEvoto"/.test(src), studio: /\["pgStudio",/.test(src) });
 
 report("A2) both sit in the Edit group, beside the other photo pages",
-  /pages:\["pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath"\]/.test(src));
+  /pages:\["pgCreate","pgImagine","pgMeitu","pgEvoto","pgRetouch","pgPath"\]/.test(src));
 
 (async () => {
   const browser = await chromium.launch();

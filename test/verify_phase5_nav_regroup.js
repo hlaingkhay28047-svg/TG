@@ -22,14 +22,16 @@ const PORT = process.env.PORT || 8931;
 //  the header gear since v4.27.0), expected subtab count (null = no subtabs)]
 // v4.96: the single ["pgStudio","Edit",4] row became two rows — the Retouch A and
 // Retouch B suites are separate pages now — so every Edit page shows 5 subtabs.
+// 6.29.0 wave: Imagine (one-tap AI tools) joins Edit after Freeform — six subtabs.
 const ALL_PAGES = [
   ["pgDash", "Home", null],
   ["pgWf", "Workflows", null],
-  ["pgCreate", "Edit", 5],
-  ["pgMeitu", "Edit", 5],
-  ["pgEvoto", "Edit", 5],
-  ["pgRetouch", "Edit", 5],
-  ["pgPath", "Edit", 5],
+  ["pgCreate", "Edit", 6],
+  ["pgImagine", "Edit", 6],
+  ["pgMeitu", "Edit", 6],
+  ["pgEvoto", "Edit", 6],
+  ["pgRetouch", "Edit", 6],
+  ["pgPath", "Edit", 6],
   /* v6.2.0 — Media Lab gained a fourth page. Every tool that takes a video IN
      and gives a video BACK moved off VidUp onto its own pgV2V, so VidUp is
      Upscale and nothing else; the count here is the whole point of the test,
@@ -146,7 +148,7 @@ const ST_SUITE_PAGES = ["pgMeitu", "pgEvoto"];
   const legacyOk = ST_SUITE_PAGES.indexOf(legacyStudio.landed) >= 0 && !legacyStudio.studioStillAPage &&
     legacyStudio.pageVisible && legacyStudio.activeTopCount === 1 &&
     legacyStudio.activeTopText.indexOf("Edit") >= 0 &&
-    legacyStudio.subVisible && legacyStudio.subCount === 5 && legacyStudio.activeSubCount === 1;
+    legacyStudio.subVisible && legacyStudio.subCount === 6 && legacyStudio.activeSubCount === 1;   /* 6.29.0 wave: Imagine joined Edit */
   console.log(legacyOk ? "PASS (legacy pgStudio deep link still reaches a live suite page under Edit)" : "FAIL (legacy pgStudio id became a dead end)");
 
   // clicking a top-tab returns to the last-visited page within that group,

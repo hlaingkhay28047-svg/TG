@@ -35,14 +35,33 @@ on:
         description: 'optional comma-separated job names to run (empty = every job in the file)'
         required: false
         default: ''
+      delete_branch:
+        description: 'cleanup only: name of a scratch branch (art/<run id>) to delete — runs no jobs, needs no key'
+        required: false
+        default: ''
 permissions:
   contents: write   # the scratch art/<run id> branch (see the header); nothing else is written
 concurrency:
   group: gen-art
   cancel-in-progress: false
 jobs:
+  cleanup:
+    if: ${{ inputs.delete_branch != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Delete the scratch branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BR: ${{ inputs.delete_branch }}
+        run: |
+          case "$BR" in art/*) ;; *) echo "only art/<run id> branches are deleted here"; exit 1;; esac
+          git init -q scratch && cd scratch
+          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" --delete "refs/heads/${BR}"
+          echo "deleted refs/heads/${BR}"
   art:
-    if: ${{ inputs.confirm == 'ART' }}
+    if: ${{ inputs.confirm == 'ART' && inputs.delete_branch == '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:

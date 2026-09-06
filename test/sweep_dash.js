@@ -332,7 +332,7 @@ function check(ok, label, detail) {
     const withKey = el.offsetHeight;
     state.rhKey = ""; updateKeyBanner();
     return { noKey, withKey, pages: pgs.length };
-  }, ["pgDash","pgWf","pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath","pgText2Img","pgVideo","pgVideoUp","pgLib","pgGallery","pgHome"]);
+  }, ["pgDash","pgWf","pgCreate","pgImagine","pgMeitu","pgEvoto","pgRetouch","pgPath","pgText2Img","pgVideo","pgVideoUp","pgLib","pgGallery","pgHome"]);
   const kbHidden = Object.keys(kb.noKey).filter(k => !(kb.noKey[k] > 0));
   check(kbHidden.length === 0 && kb.withKey === 0,
     "key banner: a user with no API key sees the prompt on EVERY page (not just Workflows), and it disappears once a key is saved",
