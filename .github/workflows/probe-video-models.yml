@@ -6,8 +6,8 @@
 # secret (or, as a fallback, a masked dispatch input), lives only in this run's
 # environment, and is never written to a file, artifact or output.
 #
-# WHAT IT DOES — and does NOT spend: for each of the video models, video tools
-# and the video upscaler, the app's OWN request builders (rhV2SubmitVideo,
+# WHAT IT DOES — and does NOT spend: for each of the video models, video tools,
+# the video upscaler and (v6.26.0) every image model at 1..14 reference photos, the app's OWN request builders (rhV2SubmitVideo,
 # rhVtBody, rhV2SubmitVideoUpscale) produce the exact body a student's tap
 # would send; that body goes to POST /openapi/v2/price-preview/<apiPath>, the
 # same pre-submit quote the app's cost line uses. RunningHub validates the
@@ -29,7 +29,7 @@ on:
         required: false
         default: ''
       group:
-        description: 'all | video | tools'
+        description: 'all | video | tools | image   (v6.26.0: image = every image model at 1..14 reference photos — measures each endpoint''s photo capacity)'
         required: false
         default: 'all'
       ids:
