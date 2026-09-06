@@ -168,9 +168,10 @@ check("concurrent admin 401s share one refresh and ignore stale responses after 
 /* v6.28.0 — ONE DOOR. The temporary delivery is requested from the web app's account card and
    nowhere else; the website's /download/ route forwards there with no script of its own. */
 const requester = (app.match(/async function accRequestPanelDownload\(ev\)\{[\s\S]*?\n\}/) || [""])[0];
-check("the web app requests a temporary URL only from its explicit account-card controls",
-  requester.includes("/v1/downloads/panel") && app.includes('dl.onclick=accRequestPanelDownload') &&
-  app.includes('ad.addEventListener("click",accRequestPanelDownload)'));
+check("the web app requests a temporary URL from ONE explicit control — the Account card's Panel button (v6.28.1: the Account Center's button is a door to it, not a second requester)",
+  requester.includes("/v1/downloads/panel") && !app.includes('dl.onclick=accRequestPanelDownload') &&
+  app.includes('ad.addEventListener("click",accRequestPanelDownload)') && (app.match(/accRequestPanelDownload/g) || []).length === 2 &&
+  app.includes('<a class="btn btn-gold" id="unifiedDownload" href="?panel=download" data-panel-intent>'));
 check("download request never round-trips a server device id or installation hash",
   requester.length > 0 && !/computer_installation_id|installation_hash/.test(requester));
 check("the download route forwards into the web app and carries no script, fetch or sign-in of its own",

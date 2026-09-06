@@ -450,7 +450,7 @@ const SB_FIX = {
              license: document.getElementById("unifiedLicenseStatus").textContent.trim(),
              computer: document.getElementById("unifiedComputer").textContent.trim(),
              version: document.getElementById("unifiedPanelVersion").textContent.trim(),
-             disabled: document.getElementById("unifiedDownload").disabled };
+             door: document.getElementById("unifiedDownload").getAttribute("href") };
   });
   await page.evaluate(() => {
     window.__downloadTap = "";
@@ -463,7 +463,11 @@ const SB_FIX = {
     };
     window.__sb = [];
   });
+  /* v6.28.1 — ONE REQUESTER: the Account Center's button is a door into the Account card's Panel
+     group (in place, no reload); the signed POST comes from that group's button alone. */
   await page.click("#unifiedDownload");
+  await page.waitForTimeout(500);
+  await page.click("#accPanelDownload");
   await page.waitForTimeout(250);
   const c6cDownload = await page.evaluate(() => {
     const call = window.__sb.filter(c => /\/v1\/downloads\/panel$/.test(c.url))[0] || {};
@@ -498,7 +502,7 @@ const SB_FIX = {
   report("6c unified entitlement: an active account opens AI Tools and requests Panel delivery only through a user-initiated POST; Pending/Suspended/Expired/Banned/Rejected and Web-App-disabled verdicts all fail closed immediately",
     c6cActive.enforced && c6cActive.web && c6cActive.download && c6cActive.state === "" &&
     c6cActive.page === "pgAccount" && c6cActive.account === "Active" && c6cActive.license === "Active" &&
-    /shared slot 1\/1/i.test(c6cActive.computer) && c6cActive.version === "6.24.0" && !c6cActive.disabled &&
+    /shared slot 1\/1/i.test(c6cActive.computer) && c6cActive.version === "6.24.0" && c6cActive.door === "?panel=download" &&
     c6cDownload.method === "POST" && !("computer_installation_id" in c6cDownload.body) &&
     c6cDownload.body.version === "6.24.0" && /\/api\/v1\/downloads\/panel\/test-token$/.test(c6cDownload.tap) &&
     /Temporary Panel delivery created/i.test(c6cDownload.status) &&
