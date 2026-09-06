@@ -24,7 +24,7 @@ const IMGS = Array.from({ length: 14 }, (_, i) => "https://placeholder.invalid/I
     await page.goto("http://127.0.0.1:" + PORT + "/index.html", { waitUntil: "load" });
     await page.waitForTimeout(1200);
     const dump = await page.evaluate(async (P) => {
-      const out = { video: [], tools: [], upscale: null, image: [], counts: {} };
+      const out = { video: [], tools: [], upscale: null, image: [], t2i: [], counts: {} };
       const orig = window.fetch;
       const capture = async (fn) => {
         let seen = null;
@@ -72,13 +72,21 @@ const IMGS = Array.from({ length: 14 }, (_, i) => "https://placeholder.invalid/I
           }
         }
       }
+      /* v6.26.0 — every text-to-image model through rhV2SubmitT2I (its first ratio, "1k"), the same halting stub */
+      if (typeof RH_T2I_MODELS !== "undefined" && typeof rhV2SubmitT2I === "function") {
+        for (const m of RH_T2I_MODELS) {
+          if (!m.apiPath) continue;
+          const seen = await capture(() => rhV2SubmitT2I("K", m, "A woman in a red dress, soft studio light, natural skin, sharp eyes.", (m.ratios || [])[0] || "1:1", "1k", null));
+          out.t2i.push({ id: m.id, label: m.label, apiPath: m.apiPath, url: seen && seen.url, body: seen && seen.body, nodeKeys: !!m.nodeKeys });
+        }
+      }
       window.fetch = orig;
-      out.counts = { video: out.video.length, tools: out.tools.length, videoNoBody: out.video.filter(v => !v.body).length, toolsNoBody: out.tools.filter(t => !t.body).length, image: out.image.length, imageNoBody: out.image.filter(x => !x.body).length };
+      out.counts = { video: out.video.length, tools: out.tools.length, videoNoBody: out.video.filter(v => !v.body).length, toolsNoBody: out.tools.filter(t => !t.body).length, image: out.image.length, imageNoBody: out.image.filter(x => !x.body).length, t2i: out.t2i.length, t2iNoBody: out.t2i.filter(x => !x.body).length };
       return out;
     }, { IMG1, IMG2, VID, IMGS, COUNTS });
     dump.errors = errs;
     fs.writeFileSync(OUT, JSON.stringify(dump, null, 1));
     console.log("bodies:", JSON.stringify(dump.counts), "pageErrors:", errs.length, "->", OUT);
-    if (dump.counts.videoNoBody || dump.counts.toolsNoBody || dump.counts.imageNoBody || errs.length) process.exit(1);
+    if (dump.counts.videoNoBody || dump.counts.toolsNoBody || dump.counts.imageNoBody || dump.counts.t2iNoBody || errs.length) process.exit(1);
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exit(1); });

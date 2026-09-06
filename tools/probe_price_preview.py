@@ -26,7 +26,7 @@ def opt(name, default=None):
         i = args.index(name); return args[i + 1] if i + 1 < len(args) else default
     return default
 DRY = "--dry" in args
-GROUP = opt("--group", "all")   # all | video | tools | image   (v6.26.0: image = every RH_MODELS body at each reference count)
+GROUP = opt("--group", "all")   # all | video | tools | image | t2i   (v6.26.0: image = every RH_MODELS body at each reference count)
 IDS = [x for x in (opt("--ids", "") or "").replace(" ", ",").split(",") if x]
 VARIANTS = json.loads(opt("--variants", "") or "{}")   # {id: [ {field: value | null}, ... ]}
 src, dst = args[0], args[1]
@@ -92,6 +92,8 @@ if GROUP in ("all", "video"): items += [dict(v, group="video") for v in dump["vi
 if GROUP in ("all", "tools"):
     items += [dict(t, group="tool") for t in dump["tools"]]
     if dump.get("upscale"): items.append(dict(dump["upscale"], group="tool", label="Video upscaler"))
+if GROUP in ("all", "t2i"):
+    items += [dict(v, group="t2i") for v in dump.get("t2i", [])]   # v6.26.0 — the text-to-image catalog
 if GROUP in ("all", "image"):
     # v6.26.0 — one row per (model, reference count): "<id>@<n>"; `base` keeps the model id for the capacity table
     items += [dict(v, group="image", id="%s@%d" % (v["id"], v["n"]), base=v["id"]) for v in dump.get("image", [])]

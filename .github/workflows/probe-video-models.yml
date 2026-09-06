@@ -29,7 +29,7 @@ on:
         required: false
         default: ''
       group:
-        description: 'all | video | tools | image   (v6.26.0: image = every image model at 1..14 reference photos — measures each endpoint''s photo capacity)'
+        description: 'all | video | tools | image | t2i   (v6.26.0: image = every image model at 1..14 reference photos — measures each endpoint''s photo capacity; t2i = every text-to-image model)'
         required: false
         default: 'all'
       ids:
