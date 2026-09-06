@@ -132,12 +132,14 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   // prompt/aspectRatio/outputFormat keys must be gone.
   const flux = await runModel("flux-2-dev", "", "1K", "a lion on the savannah", "f-2-dev/text-to-image");
   console.log("flux body:", JSON.stringify(flux.body));
-  const fluxOk = flux.ok && flux.body && flux.body["41##select"] === "1"
-    && String(flux.body["12##text"]).indexOf("a lion on the savannah") >= 0
-    && flux.body["43##file_type"] === "PNG"
-    && flux.body.prompt === undefined && flux.body.aspectRatio === undefined
-    && flux.body.outputFormat === undefined && flux.body.imageUrls === undefined;
-  console.log(fluxOk ? "PASS (flux node-keyed body; Auto ratio sends \"1\" = 1:1)" : ("FAIL (flux): " + JSON.stringify(flux)));
+  /* v6.26.0 - probe run #18: the graph refuses its node keys ("please use 'prompt' instead") and quotes the flat body -
+     prompt, aspectRatio (the ratio itself; Auto falls back to the first documented ratio, 1:1), outputFormat png (REQUIRED). */
+  const fluxOk = flux.ok && flux.body && flux.body.aspectRatio === "1:1"
+    && String(flux.body.prompt).indexOf("a lion on the savannah") >= 0
+    && flux.body.outputFormat === "png"
+    && flux.body["12##text"] === undefined && flux.body["41##select"] === undefined
+    && flux.body["43##file_type"] === undefined && flux.body.imageUrls === undefined;
+  console.log(fluxOk ? "PASS (flux flat t2i body; Auto ratio sends 1:1)" : ("FAIL (flux): " + JSON.stringify(flux)));
 
   // Qwen 3.0 Pro T2I: uses "size" WxH, no aspectRatio/resolution fields.
   const qwen = await runModel("qwen-image-3-pro-t2i", "16:9", "2K", "a futuristic city skyline", "qwen-image-3.0-pro/text-to-image");
@@ -199,9 +201,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   console.log(nv1Ok ? 'PASS (nano v1 t2i Auto sends the documented literal "auto")' : ("FAIL (nano v1): " + JSON.stringify(nv1.body)));
   // z-image turbo t2i: node-keyed (10##text/28##select/29##file_type).
   const zt = await runModel("z-turbo-t2i", "9:16", "1K", "a neon sign", "rhart-image/z-image/turbo");
-  const ztOk = zt.ok && zt.body && zt.body["28##select"] === "4" && zt.body["29##file_type"] === "PNG"
-    && String(zt.body["10##text"]).indexOf("a neon sign") >= 0 && zt.body.prompt === undefined;
-  console.log(ztOk ? "PASS (z-image turbo t2i node-keyed body)" : ("FAIL (z-turbo): " + JSON.stringify(zt.body)));
+  const ztOk = zt.ok && zt.body && zt.body.aspectRatio === "9:16" && zt.body.outputFormat === "png"
+    && String(zt.body.prompt).indexOf("a neon sign") >= 0 && zt.body["10##text"] === undefined && zt.body["28##select"] === undefined;
+  console.log(ztOk ? "PASS (z-image turbo t2i flat body - the ratio rides as itself)" : ("FAIL (z-turbo): " + JSON.stringify(zt.body)));
 
   // ---- v5.50.0: the Gemini translate bridge is retired — a Burmese t2i
   // prompt always ships raw with the English-recommended hint shown, and no
@@ -216,9 +218,9 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     var h = document.getElementById("t2iTrHint");
     return !!h && h.style.display !== "none";
   });
-  console.log("raw Burmese t2i body prompt:", JSON.stringify(trWithKey.body && trWithKey.body["12##text"]));
+  console.log("raw Burmese t2i body prompt:", JSON.stringify(trWithKey.body && trWithKey.body.prompt));
   const trOk = trWithKey.ok && trWithKey.body && trCalls === 0
-    && String(trWithKey.body["12##text"]).indexOf(MY) >= 0 && hintWithKey;
+    && String(trWithKey.body.prompt).indexOf(MY) >= 0 && hintWithKey;
   console.log(trOk ? "PASS (Burmese t2i prompt sends raw with the hint — no translate call leaves the browser)"
     : ("FAIL (t2i translate gate): " + JSON.stringify({ trCalls, hintWithKey, prompt: trWithKey.body && trWithKey.body.prompt })));
 
@@ -233,7 +235,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   });
   console.log("no-key hint:", JSON.stringify(noKeyState));
   const noKeyOk = noKey.ok && noKey.body && noKeyState.visible && noKeyState.text.length > 0
-    && noKeyState.calls === 0 && String(noKey.body["12##text"]).indexOf(MY) >= 0;
+    && noKeyState.calls === 0 && String(noKey.body.prompt).indexOf(MY) >= 0;
   console.log(noKeyOk ? "PASS (no key: inline hint is shown and the raw prompt still sends)"
     : ("FAIL (t2i no-key hint): " + JSON.stringify({ noKeyState, prompt: noKey.body && noKey.body.prompt })));
 
@@ -245,7 +247,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
     hint: document.getElementById("t2iTrHint").style.display !== "none"
   }));
   const enOk = enOnly.ok && enState.calls === 0 && !enState.hint
-    && String(enOnly.body["12##text"]).indexOf("a lighthouse at dawn") >= 0;
+    && String(enOnly.body.prompt).indexOf("a lighthouse at dawn") >= 0;
   console.log(enOk ? "PASS (English prompt skips the translator and the hint entirely)"
     : ("FAIL (t2i english passthrough): " + JSON.stringify(enState)));
 

@@ -687,13 +687,15 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800}
 
 /* v3.0 UX */
-.refstrip{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.refstrip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .refstrip .rs{position:relative;width:52px;height:52px;border:1px dashed var(--line);border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:16px;overflow:hidden;flex:none}
 .refstrip .rs.filled{border-style:solid}
 .refstrip .rs img{width:100%;height:100%;object-fit:contain;background:var(--ink)}
 .refstrip .rs .tag{position:absolute;left:2px;bottom:2px;background:rgba(11,13,20,.85);border-radius:5px;padding:0 4px;font-size:9.5px;color:var(--gold-hi);font-weight:800}
 .refstrip .rsx{position:absolute;top:1px;right:1px;width:20px;height:20px;border-radius:6px;border:none;background:rgba(11,13,20,.85);color:var(--cream);font-size:10px;display:flex;align-items:center;justify-content:center;padding:0}
-.refstrip .note{font-size:11px;color:var(--muted);line-height:1.5}
+.refstrip .note{flex:1 1 100%;font-size:11px;color:var(--muted);line-height:1.5}
+.refstrip .note.cap{margin-top:-6px;color:var(--gold-hi);opacity:.85;font-weight:700}
+.refstrip .rs.rs-ref{border-color:rgba(233,185,73,.35)}
 .wfmini{position:relative}
 /* 44px touch floor: the glyph stays small but the hit box doesn't */
 .wfmini .fav{position:absolute;top:0;right:0;background:transparent;border:none;border-radius:7px;min-width:44px;min-height:44px;padding:6px;font-size:12px;color:var(--muted);z-index:2;display:flex;align-items:flex-start;justify-content:flex-end}
@@ -3908,13 +3910,13 @@ var RH_POLL_MS = 2500, RH_TIMEOUT_MS = 300000;
    defaults to "imageUrls" (array); a few endpoints take a single "image"
    string instead. */
 var RH_MODELS = [
-  { id:"nano-banana-2",     label:"Nano Banana 2",           apiPath:"rhart-image-n-g31-flash/image-to-image" },
+  { id:"nano-banana-2",     label:"Nano Banana 2",           apiPath:"rhart-image-n-g31-flash/image-to-image", maxImages:10 },
   /* v5.53.3 — relabeled for what it actually is: the owner's verified
    Enterprise-Shared reference (2026-08-30) maps rhart-image-g-2-official
    to "GPT Image 2 — official stable". Same id, same endpoint, same
    documented required quality — only the name stops hiding the model.
    Precedent: the v4.98.1 Grok Imagine relabel. */
-  { id:"rh-image-g2-off",   label:"GPT Image 2 (Official)",  apiPath:"rhart-image-g-2-official/image-to-image", quality:"medium" },
+  { id:"rh-image-g2-off",   label:"GPT Image 2 (Official)",  apiPath:"rhart-image-g-2-official/image-to-image", quality:"medium", maxImages:10 },
   /* v5.53.4 — identified by the endpoint's own fetched doc (api-448184504):
      rhart-image-g-2/image-to-image is "gpt-image-2.0/edit-channel-low-price"
      — GPT Image 2's cheaper channel route (doc's own caveat: stability not
@@ -3922,7 +3924,7 @@ var RH_MODELS = [
      field-for-field against the default branch: prompt 1-20000 REQUIRED
      (cap added), imageUrls ≤10 REQUIRED, aspectRatio optional 15-enum,
      resolution optional 1k/2k/4k — no quality field, so none is sent. */
-  { id:"rh-image-g2",       label:"GPT Image 2 (Low-cost)",  apiPath:"rhart-image-g-2/image-to-image", promptMax:20000 },
+  { id:"rh-image-g2",       label:"GPT Image 2 (Low-cost)",  apiPath:"rhart-image-g-2/image-to-image", promptMax:20000, maxImages:10 },
   /* v5.53.4 — identified and corrected by the owner's OpenAPI spec
      (2026-08-30): rhart-image-x-official/edit is "xai/grok-imagine-image/
      edit-official-stable" — Grok Imagine's image edit model (same
@@ -3930,17 +3932,17 @@ var RH_MODELS = [
      EXACTLY two fields, prompt (5-20000) + image — the resolution and
      aspectRatio the default branch used to append are not in the spec, so
      kind:"xedit" sends the bare pair and the UI hides Ratio/Size. */
-  { id:"rh-image-x-off",    label:"Grok Imagine — Edit (Official)", apiPath:"rhart-image-x-official/edit", imageParam:"image", kind:"xedit", promptMax:20000 },
+  { id:"rh-image-x-off",    label:"Grok Imagine — Edit (Official)", apiPath:"rhart-image-x-official/edit", imageParam:"image", kind:"xedit", promptMax:20000, maxImages:1 },
   /* name_en in RunningHub's own model-registry.public.json literally reads
      "nano-banana-pro/edit-...-stable" for these two endpoints — not a guess. */
-  { id:"nano-banana-pro-off", label:"Nano Banana Pro (Official)", apiPath:"rhart-image-n-pro-official/edit" },
-  { id:"nano-banana-pro",     label:"Nano Banana Pro",            apiPath:"rhart-image-n-pro/edit" },
+  { id:"nano-banana-pro-off", label:"Nano Banana Pro (Official)", apiPath:"rhart-image-n-pro-official/edit", maxImages:10 },
+  { id:"nano-banana-pro",     label:"Nano Banana Pro",            apiPath:"rhart-image-n-pro/edit", maxImages:10 },
   /* Qwen's image-edit endpoints take a "size" WxH string (512*512-2048*2048),
      not resolution/aspectRatio like the RHArt-family endpoints above — mapped
      via RH_QWEN_SIZE_MAP from the exact enum options in the registry. Prompt
      is capped at 800 chars here (vs. 20000 for the RHArt endpoints above). */
-  { id:"qwen-image-2",      label:"Qwen Image 2",            apiPath:"alibaba/qwen-image-2.0/image-edit",     sizeParam:true, promptMax:800 },
-  { id:"qwen-image-2-pro",  label:"Qwen Image 2 Pro",        apiPath:"alibaba/qwen-image-2.0-pro/image-edit", sizeParam:true, promptMax:800 },
+  { id:"qwen-image-2",      label:"Qwen Image 2",            apiPath:"alibaba/qwen-image-2.0/image-edit",     sizeParam:true, promptMax:800, maxImages:3 },
+  { id:"qwen-image-2-pro",  label:"Qwen Image 2 Pro",        apiPath:"alibaba/qwen-image-2.0-pro/image-edit", sizeParam:true, promptMax:800, maxImages:3 },
   /* v5.53.4 — configured at last: the owner's OpenAPI spec (2026-08-30) for
      rhart-image/f-2-dev/edit-lora is FLUX.2 Dev's image-editing route. Its
      body is ComfyUI node-keyed (51##image/16##text/47##select/52##file_type
@@ -3949,18 +3951,18 @@ var RH_MODELS = [
      fields are omitted (documented default strength 0 = plain FLUX.2 Dev
      editing) until a real LoRA picker exists — a guessed .safetensors name
      would be inventing a server-side asset. */
-  { id:"flux-2-dev",        label:"Flux 2 Dev — Edit",       apiPath:"rhart-image/f-2-dev/edit-lora", kind:"fluxedit" },
+  { id:"flux-2-dev",        label:"Flux 2 Dev — Edit",       apiPath:"rhart-image/f-2-dev/edit-lora", kind:"fluxedit", maxImages:1 },
   /* Wan's image-edit takes explicit width/height ints (512-4096, default
      1024x1024), not resolution/aspectRatio — mapped via RH_WAN_RATIO_WH. */
-  { id:"wan-image-edit",    label:"Wan Image Edit",          apiPath:"alibaba/wan-2.7/image-edit", whParam:true, promptMax:2048 },
+  { id:"wan-image-edit",    label:"Wan Image Edit",          apiPath:"alibaba/wan-2.7/image-edit", whParam:true, promptMax:2048, maxImages:9 },
   /* Wan Image Edit Pro: confirmed identical request shape to Wan Image Edit
      above (imageUrls/prompt/width/height, same 512-4096 range) — only the
      apiPath differs, so it reuses whParam/RH_WAN_RATIO_WH unchanged. */
-  { id:"wan-image-edit-pro", label:"Wan Image Edit Pro",     apiPath:"alibaba/wan-2.7/image-edit-pro", whParam:true, promptMax:2048 },
+  { id:"wan-image-edit-pro", label:"Wan Image Edit Pro",     apiPath:"alibaba/wan-2.7/image-edit-pro", whParam:true, promptMax:2048, maxImages:9 },
   /* Upscale has a fundamentally different shape (no prompt at all — a single
      imageUrl + a "scale" enum) so it's routed through a dedicated submit path
      (rhV2SubmitUpscale) instead of the generic edit/generate one. */
-  { id:"upscale-pro",       label:"Upscale Pro",             apiPath:"topazlabs/image-upscale-standard-v2", imageParam:"imageUrl", kind:"upscale" },
+  { id:"upscale-pro",       label:"Upscale Pro",             apiPath:"topazlabs/image-upscale-standard-v2", imageParam:"imageUrl", kind:"upscale", maxImages:1 },
   /* Seedream v4/v4.5 image-to-image: confirmed identical request shape for
      both versions (only apiPath differs) — imageUrls array, prompt 5-2000
      chars, optional width/height (512-8192), and an optional "resolution"
@@ -3970,8 +3972,8 @@ var RH_MODELS = [
      an explicit, confirmed field rather than guessed dimensions — plus the
      documented sequentialImageGeneration/maxImages defaults for a single
      output image. */
-  { id:"seedream-v4",       label:"Seedream v4",             apiPath:"seedream-v4/image-to-image",   kind:"seedream", promptMax:2000 },
-  { id:"seedream-v4-5",     label:"Seedream v4.5",           apiPath:"seedream-v4.5/image-to-image", kind:"seedream", promptMax:2000 },
+  { id:"seedream-v4",       label:"Seedream v4",             apiPath:"seedream-v4/image-to-image",   kind:"seedream", promptMax:2000, maxImages:10 },
+  { id:"seedream-v4-5",     label:"Seedream v4.5",           apiPath:"seedream-v4.5/image-to-image", kind:"seedream", promptMax:2000, maxImages:10 },
   /* Grok Imagine Quality Edit — v5.53.4: the owner's full OpenAPI spec
      (2026-08-30) titles rhart-imagine-image-quality/edit
      "xai/rhart-imagine-image-quality/edit-official-stable", i.e. the Grok
@@ -3984,7 +3986,7 @@ var RH_MODELS = [
      that documented set (omitting = the documented "auto" default) and the
      UI narrows the dropdown to those seven plus Auto. The 4K→2k clamp
      stays. */
-  { id:"rh-imagine-quality-edit", label:"Grok Imagine — Quality Edit", apiPath:"rhart-imagine-image-quality/edit", imageParam:"imageUrl", kind:"imagine", promptMax:4000 },
+  { id:"rh-imagine-quality-edit", label:"Grok Imagine — Quality Edit", apiPath:"rhart-imagine-image-quality/edit", imageParam:"imageUrl", kind:"imagine", promptMax:4000, maxImages:1 },
   /* Z-Image Turbo image-to-image — v5.53.4: the owner's full OpenAPI spec
      for this exact endpoint (2026-08-30) shows its body is ComfyUI
      node-keyed like its rhart-image/ sibling f-2-dev/edit-lora — 66##image
@@ -3997,7 +3999,7 @@ var RH_MODELS = [
      substance of the old confirmation stands: one image, seven fixed
      ratios (1:1 fallback since the field can't be omitted), constant PNG
      output, no size tier. */
-  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", kind:"zimage" },
+  { id:"z-image-turbo", label:"Z-Image Turbo", apiPath:"rhart-image/z-image-turbo/image-to-image", kind:"zimage", maxImages:1 },
   /* api-448184490 — the LoRA sibling of the route above (completeness pass,
      v5.55.0): same node-keyed graph under different key numbers — 44##image /
      18##text / 41##select (the shared "1".."7" table; the doc's default "8"
@@ -4005,79 +4007,79 @@ var RH_MODELS = [
      non-LoRA route) / 42##file_type. The optional 43##lora_name/
      43##strength_model pair is omitted on purpose — documented default
      strength 0 = plain Z-Image Turbo (the f-2-dev/edit-lora precedent). */
-  { id:"z-image-turbo-lora", label:"Z-Image Turbo — Edit LoRA", apiPath:"rhart-image/z-image-turbo/image-to-image-lora", kind:"node", node:{ image:"44##image", prompt:"18##text", ratio:"41##select", fileType:"42##file_type" } },
+  { id:"z-image-turbo-lora", label:"Z-Image Turbo — Edit LoRA", apiPath:"rhart-image/z-image-turbo/image-to-image-lora", kind:"node", node:{ image:"44##image", prompt:"18##text", ratio:"41##select", fileType:"42##file_type" }, maxImages:1 },
   /* Upscale Transparent: a second Upscale variant, routed through its own
      dedicated submit/generate pair (rhV2SubmitUpscaleTransparent /
      rhGenerateUpscaleTransparent) since — like Upscale Pro — its body shape
      doesn't overlap with the generic edit/generate path at all. */
-  { id:"upscale-transparent", label:"Upscale Transparent", apiPath:"topazlabs/image-upscale-transparent", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"upscale-transparent", label:"Upscale Transparent", apiPath:"topazlabs/image-upscale-transparent", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* ---------- v5.54.0 full-catalog wave ----------
      Every entry below was wired from its own fetched doc page (the
      api-<id> comment; pulled by .github/workflows/fetch-docs.yml). The
      body shape comes from the kind/flags exactly as documented; nothing
      below is guessed. */
   /* api-448184476 */
-  { id:"seedream-v5-lite", label:"Seedream v5 Lite", apiPath:"seedream-v5-lite/image-to-image", kind:"sd5lite", promptMax:2000 },
+  { id:"seedream-v5-lite", label:"Seedream v5 Lite", apiPath:"seedream-v5-lite/image-to-image", kind:"sd5lite", promptMax:2000, maxImages:10 },
   /* api-494859263 */
-  { id:"seedream-v5-pro", label:"Seedream v5 Pro", apiPath:"seedream-v5-pro/image-to-image", kind:"sd5pro", promptMax:5000 },
+  { id:"seedream-v5-pro", label:"Seedream v5 Pro", apiPath:"seedream-v5-pro/image-to-image", kind:"sd5pro", promptMax:5000, maxImages:10 },
   /* api-494859267 */
-  { id:"dola-seedream-5-pro", label:"Dola Seedream 5.0 Pro", apiPath:"dola-Seedream-5.0-pro/image-to-image", kind:"sd5pro", promptMax:5000 },
+  { id:"dola-seedream-5-pro", label:"Dola Seedream 5.0 Pro", apiPath:"dola-Seedream-5.0-pro/image-to-image", kind:"sd5pro", promptMax:5000, maxImages:10 },
   /* api-448184479 */
-  { id:"grok-image-i2i", label:"Grok 4.2 Image (Low-cost)", apiPath:"rhart-image-g/image-to-image", kind:"grokimg" },
+  { id:"grok-image-i2i", label:"Grok 4.2 Image (Low-cost)", apiPath:"rhart-image-g/image-to-image", kind:"grokimg", maxImages:1 },
   /* api-497874395 */
-  { id:"qwen-image-3", label:"Qwen Image 3.0", apiPath:"alibaba/qwen-image-3.0/image-edit", sizeParam:true, promptMax:3000 },
+  { id:"qwen-image-3", label:"Qwen Image 3.0", apiPath:"alibaba/qwen-image-3.0/image-edit", sizeParam:true, promptMax:3000, maxImages:3 },
   /* api-494859264 */
-  { id:"qwen-image-3-pro", label:"Qwen Image 3.0 Pro", apiPath:"alibaba/qwen-image-3.0-pro/image-edit", sizeParam:true, promptMax:3000 },
+  { id:"qwen-image-3-pro", label:"Qwen Image 3.0 Pro", apiPath:"alibaba/qwen-image-3.0-pro/image-edit", sizeParam:true, promptMax:3000, maxImages:3 },
   /* api-448184493 */
-  { id:"wan-25-image", label:"Wan 2.5 Preview — Edit", apiPath:"alibaba/wan-2.5-preview/image-to-image", kind:"wan25", promptMax:2000, ratioEnum:["1:1","2:3","3:2","3:4","4:3","9:16","16:9","21:9"] },
+  { id:"wan-25-image", label:"Wan 2.5 Preview — Edit", apiPath:"alibaba/wan-2.5-preview/image-to-image", kind:"wan25", promptMax:2000, ratioEnum:["1:1","2:3","3:2","3:4","4:3","9:16","16:9","21:9"], maxImages:3 },
   /* api-448184495 */
-  { id:"nano-banana-v1-off", label:"Nano Banana v1 (Official)", apiPath:"rhart-image-v1-official/edit", kind:"nanov1", promptMax:20000, ratioEnum:["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"] },
+  { id:"nano-banana-v1-off", label:"Nano Banana v1 (Official)", apiPath:"rhart-image-v1-official/edit", kind:"nanov1", promptMax:20000, ratioEnum:["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"], maxImages:5 },
   /* api-448184498 */
-  { id:"nano-banana-v1", label:"Nano Banana v1 (Low-cost)", apiPath:"rhart-image-v1/edit", kind:"nanov1", promptMax:20000, ratioEnum:["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"] },
+  { id:"nano-banana-v1", label:"Nano Banana v1 (Low-cost)", apiPath:"rhart-image-v1/edit", kind:"nanov1", promptMax:20000, ratioEnum:["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"], maxImages:5 },
   /* api-448184501 */
-  { id:"nano-banana-2-off", label:"Nano Banana 2 (Official)", apiPath:"rhart-image-n-g31-flash-official/image-to-image", promptMax:20000 },
+  { id:"nano-banana-2-off", label:"Nano Banana 2 (Official)", apiPath:"rhart-image-n-g31-flash-official/image-to-image", promptMax:20000, maxImages:14 },
   /* api-494859265 */
-  { id:"nano-banana-2-lite-off", label:"Nano Banana 2 Lite (Official)", apiPath:"rhart-image-n-g31-flash-lite-official/image-to-image", kind:"ratioOnly", promptMax:20000, ratioEnum:["auto","1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+  { id:"nano-banana-2-lite-off", label:"Nano Banana 2 Lite (Official)", apiPath:"rhart-image-n-g31-flash-lite-official/image-to-image", kind:"ratioOnly", promptMax:20000, ratioEnum:["auto","1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"], maxImages:4 },
   /* api-494859266 */
-  { id:"nano-banana-2-lite", label:"Nano Banana 2 Lite (Low-cost)", apiPath:"rhart-image-n-g31-flash-lite/image-to-image", kind:"ratioOnly", promptMax:20000, ratioEnum:["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+  { id:"nano-banana-2-lite", label:"Nano Banana 2 Lite (Low-cost)", apiPath:"rhart-image-n-g31-flash-lite/image-to-image", kind:"ratioOnly", promptMax:20000, ratioEnum:["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"], maxImages:10 },
   /* api-448184496 */
-  { id:"nano-banana-pro-ultra", label:"Nano Banana Pro Ultra 8K", apiPath:"rhart-image-n-pro-official/edit-ultra", promptMax:20000, resolutions:["4k","8k"] },
+  { id:"nano-banana-pro-ultra", label:"Nano Banana Pro Ultra 8K", apiPath:"rhart-image-n-pro-official/edit-ultra", promptMax:20000, resolutions:["4k","8k"], maxImages:10 },
   /* api-448184503 */
-  { id:"gpt-image-15-off", label:"GPT Image 1.5 (Official)", apiPath:"rhart-image-g-1.5-official/image-to-image", kind:"gpt15", ratioEnum:["1:1","3:4","4:3","9:16","16:9","2:3","3:2"] },
+  { id:"gpt-image-15-off", label:"GPT Image 1.5 (Official)", apiPath:"rhart-image-g-1.5-official/image-to-image", kind:"gpt15", ratioEnum:["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], maxImages:10 },
   /* api-465292102 */
-  { id:"jimeng-46", label:"Jimeng 4.6", apiPath:"bytedance/jimeng-4.6/image-to-image", kind:"bare", promptMax:800 },
+  { id:"jimeng-46", label:"Jimeng 4.6", apiPath:"bytedance/jimeng-4.6/image-to-image", kind:"bare", promptMax:800, maxImages:14 },
   /* api-498427798 */
-  { id:"sd5-layers", label:"Seedream 5 — Layer Split", apiPath:"seedream-v5-pro/layer-decomposition", kind:"sdlayer", promptMax:2000 },
+  { id:"sd5-layers", label:"Seedream 5 — Layer Split", apiPath:"seedream-v5-pro/layer-decomposition", kind:"sdlayer", promptMax:2000, maxImages:1 },
   /* api-495680091 */
-  { id:"topaz-gp-standard", label:"Topaz Gigapixel Standard", apiPath:"topazlabs/image-gigapixel-standard-2", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"topaz-gp-standard", label:"Topaz Gigapixel Standard", apiPath:"topazlabs/image-gigapixel-standard-2", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* api-495680090 */
-  { id:"topaz-gp-lowres", label:"Topaz Gigapixel Low-Res", apiPath:"topazlabs/image-gigapixel-low-resolution-2", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"topaz-gp-lowres", label:"Topaz Gigapixel Low-Res", apiPath:"topazlabs/image-gigapixel-low-resolution-2", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* api-495680089 */
-  { id:"topaz-gp-text", label:"Topaz Gigapixel Text", apiPath:"topazlabs/image-gigapixel-text-and-shapes", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"topaz-gp-text", label:"Topaz Gigapixel Text", apiPath:"topazlabs/image-gigapixel-text-and-shapes", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* api-495680092 */
-  { id:"topaz-gp-hifi", label:"Topaz Gigapixel HiFi", apiPath:"topazlabs/image-gigapixel-high-fidelity-2", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"topaz-gp-hifi", label:"Topaz Gigapixel HiFi", apiPath:"topazlabs/image-gigapixel-high-fidelity-2", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* api-495680093 */
-  { id:"topaz-gp-art", label:"Topaz Gigapixel Art", apiPath:"topazlabs/image-gigapixel-art-and-cgi", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"topaz-gp-art", label:"Topaz Gigapixel Art", apiPath:"topazlabs/image-gigapixel-art-and-cgi", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* api-495680095 */
-  { id:"topaz-up-faces", label:"Topaz Detail Faces", apiPath:"topazlabs/image-upscale-detail-faces", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"topaz-up-faces", label:"Topaz Detail Faces", apiPath:"topazlabs/image-upscale-detail-faces", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* api-495680096 */
-  { id:"topaz-up-hifi3", label:"Topaz High Fidelity 3", apiPath:"topazlabs/image-upscale-high-fidelity-v3", imageParam:"imageUrl", kind:"upscale-transparent" },
+  { id:"topaz-up-hifi3", label:"Topaz High Fidelity 3", apiPath:"topazlabs/image-upscale-high-fidelity-v3", imageParam:"imageUrl", kind:"upscale-transparent", maxImages:1 },
   /* api-448184482 */
-  { id:"flux-2-dev-edit-plain", label:"Flux 2 Dev — Edit (no LoRA)", apiPath:"rhart-image/f-2-dev/edit", kind:"node", node:{ image:"20##image", prompt:"17##text", ratio:"46##select", fileType:"51##file_type", auto:true } },
+  { id:"flux-2-dev-edit-plain", label:"Flux 2 Dev — Edit (no LoRA)", apiPath:"rhart-image/f-2-dev/edit", kind:"node", node:{ image:"20##image", prompt:"17##text", ratio:"46##select", fileType:"51##file_type", auto:true }, maxImages:1 },
   /* api-448184483 */
-  { id:"flux-klein-9b-edit", label:"Flux Klein 9B — Edit", apiPath:"rhart-image/f-2-klein-9b/edit", kind:"node", node:{ image:"53##image", prompt:"54##text", ratio:"81##select", fileType:"55##file_type", auto:true } },
+  { id:"flux-klein-9b-edit", label:"Flux Klein 9B — Edit", apiPath:"rhart-image/f-2-klein-9b/edit", kind:"node", node:{ image:"53##image", prompt:"54##text", ratio:"81##select", fileType:"55##file_type", auto:true }, maxImages:1 },
   /* api-448184484 */
-  { id:"flux-klein-4b-edit", label:"Flux Klein 4B — Edit", apiPath:"rhart-image/f-2-klein-4b/edit", kind:"node", node:{ image:"19##image", prompt:"17##text", ratio:"47##select", fileType:"51##file_type" } },
+  { id:"flux-klein-4b-edit", label:"Flux Klein 4B — Edit", apiPath:"rhart-image/f-2-klein-4b/edit", kind:"node", node:{ image:"19##image", prompt:"17##text", ratio:"47##select", fileType:"51##file_type" }, maxImages:1 },
   /* api-448184485 */
-  { id:"flux-klein-4b-edit-lora", label:"Flux Klein 4B — Edit LoRA", apiPath:"rhart-image/f-2-klein-4b/edit-lora", kind:"node", node:{ image:"41##image", prompt:"16##text", ratio:"37##select", fileType:"40##file_type" } },
+  { id:"flux-klein-4b-edit-lora", label:"Flux Klein 4B — Edit LoRA", apiPath:"rhart-image/f-2-klein-4b/edit-lora", kind:"node", node:{ image:"41##image", prompt:"16##text", ratio:"37##select", fileType:"40##file_type" }, maxImages:1 },
   /* api-448184480 */
-  { id:"flux-kontext-lora", label:"Flux Kontext — Edit LoRA", apiPath:"rhart-video/f-kontext/dev-lora", kind:"node", node:{ image:"15##image", prompt:"4##text", ratio:"41##select", fileType:"16##file_type", auto:true } },
+  { id:"flux-kontext-lora", label:"Flux Kontext — Edit LoRA", apiPath:"rhart-video/f-kontext/dev-lora", kind:"node", node:{ image:"15##image", prompt:"4##text", ratio:"41##select", fileType:"16##file_type", auto:true }, maxImages:1 },
   /* api-448184487 */
-  { id:"qwen-edit-2511", label:"Qwen Edit 2511", apiPath:"rhart-image/qwen-image/edit-2511", kind:"node", node:{ images:["57##image","58##image","59##image"], prompt:"53##text", ratio:"28##select", fileType:"52##file_type" } },
+  { id:"qwen-edit-2511", label:"Qwen Edit 2511", apiPath:"rhart-image/qwen-image/edit-2511", kind:"node", node:{ images:["57##image","58##image","59##image"], prompt:"53##text", ratio:"28##select", fileType:"52##file_type" }, maxImages:3 },
   /* api-448184486 */
-  { id:"qwen-edit-2511-lora", label:"Qwen Edit 2511 — LoRA", apiPath:"rhart-image/qwen-image/edit-2511-lora", kind:"node", node:{ image:"44##image", prompt:"38##text", ratio:"32##select", fileType:"40##file_type" } },
+  { id:"qwen-edit-2511-lora", label:"Qwen Edit 2511 — LoRA", apiPath:"rhart-image/qwen-image/edit-2511-lora", kind:"node", node:{ image:"44##image", prompt:"38##text", ratio:"32##select", fileType:"40##file_type" }, maxImages:1 },
   /* api-448184492 */
-  { id:"wan-22-image", label:"Wan 2.2 — Edit", apiPath:"rhart-video/wan-2.2/image-to-image", kind:"node", node:{ image:"272##image", prompt:"79##text", ratio:"267##select", fileType:"242##file_type", auto:true } },
+  { id:"wan-22-image", label:"Wan 2.2 — Edit", apiPath:"rhart-video/wan-2.2/image-to-image", kind:"node", node:{ image:"272##image", prompt:"79##text", ratio:"267##select", fileType:"242##file_type", auto:true }, maxImages:1 },
 ];
 /* OpenAI (GPT Image) — same bring-your-own-key reasoning as RunningHub above.
    Unlike RunningHub this is a single synchronous request (no upload/poll
@@ -5084,6 +5086,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.26.0", kind:"page", ref:"pgCreate",
+    t:{my:"Freeform ရဲ့ ပုံ slot တွေ model အလိုက် ကိုယ်တိုင် တိုးတယ် — Nano Banana / GPT Image / Seedream ၁၀ ပုံ၊ Nano Banana 2 Official ၁၄၊ Wan 2.7 Edit ၉၊ Nano v1 ၅၊ Qwen / Wan 2.5 ၃ — RunningHub ကိုယ်တိုင် တိုင်းထားတဲ့ အရေအတွက်",en:"Freeform's photo slots follow the model — Nano Banana / GPT Image / Seedream take 10, Nano Banana 2 Official 14, Wan 2.7 Edit 9, Nano v1 5, Qwen / Wan 2.5 3 — measured against RunningHub itself",shn:"Freeform slot ႁၢင်ႈ ၸွမ်း model — Nano Banana 10, Nano Banana 2 Official 14, Wan 2.7 Edit 9, Qwen 3",kac:"Freeform sumla slot gaw model hte maren — Nano Banana 10, Nano Banana 2 Official 14, Wan 2.7 Edit 9, Qwen 3",th:"ช่องรูปของ Freeform ขยายตามโมเดล — Nano Banana / GPT Image / Seedream 10 รูป, Nano Banana 2 Official 14, Wan 2.7 Edit 9, Nano v1 5, Qwen / Wan 2.5 3 — วัดกับ RunningHub จริง",zh:"Freeform 的图片槽位随模型变化——Nano Banana / GPT Image / Seedream 10 张，Nano Banana 2 Official 14，Wan 2.7 Edit 9，Nano v1 5，Qwen / Wan 2.5 3——以 RunningHub 实测为准",vi:"Ô ảnh của Freeform theo model — Nano Banana / GPT Image / Seedream 10 ảnh, Nano Banana 2 Official 14, Wan 2.7 Edit 9, Nano v1 5, Qwen / Wan 2.5 3 — đo trực tiếp với RunningHub",id:"Slot foto Freeform mengikuti model — Nano Banana / GPT Image / Seedream 10 foto, Nano Banana 2 Official 14, Wan 2.7 Edit 9, Nano v1 5, Qwen / Wan 2.5 3 — diukur langsung ke RunningHub",ms:"Slot foto Freeform ikut model — Nano Banana / GPT Image / Seedream 10 foto, Nano Banana 2 Official 14, Wan 2.7 Edit 9, Nano v1 5, Qwen / Wan 2.5 3 — diukur terus dengan RunningHub"},
+    s:{my:"IMG 1–3 အပြင် model က ရသလောက် IMG 4, 5 … ကို တစ်ခုချင်း ဖြည့်တိုင်း slot အသစ် ပွင့်ပေးတယ်။ Strip အောက်မှာ model က ပုံ ဘယ်နှစ်ပုံအထိ လက်ခံလဲ ပြထားတယ်။ Generate ကလည်း ဖြည့်ထားတဲ့ ပုံအားလုံးကို model ရဲ့ ကန့်သတ်အထိ ပို့ပြီး ကျန်ရင် ပြောပေးတယ်။ Wan 2.5 Edit ရဲ့ (200) error (n is required) ပြင်ပြီး၊ Nano Banana Pro Ultra ကို 4K/8K ပဲ ပို့တယ်။ Library ရဲ့ IMAGES card လည်း အတူတူ ကြီးတယ်။",en:"Beyond IMG 1–3 the strip opens IMG 4, 5 … one at a time as far as the model takes, and a line under it says how many photos this model accepts. GENERATE sends every filled photo up to that limit and says so when it had to leave some out. Wan 2.5 Edit's (200) refusal (n is required) is fixed; Nano Banana Pro Ultra only gets 4K/8K. The Library IMAGES card grows the same way.",shn:"IMG 4, 5 … ပိုတ်ႇၸွမ်း model။ GENERATE သူင်ႇႁၢင်ႈ ထိုင် limit။ Wan 2.5 Edit error ၸႅတ်ႈယဝ်ႉ။",kac:"IMG 4, 5 … model hte maren hpaw. GENERATE gaw limit du hkra shangun. Wan 2.5 Edit error hkrak sai.",th:"เปิด IMG 4, 5 … ทีละช่องตามที่โมเดลรับได้ มีบรรทัดบอกจำนวนรูป GENERATE ส่งทุกรูปถึงขีดจำกัด แก้ error (200) ของ Wan 2.5 Edit แล้ว",zh:"IMG 4、5… 按模型容量逐个开启，条下标明可接受张数。GENERATE 发送到上限为止并提示。已修复 Wan 2.5 Edit 的 (200) 错误。",vi:"Mở IMG 4, 5 … từng ô theo sức chứa của model, có dòng ghi số ảnh nhận. GENERATE gửi đến giới hạn và báo nếu bỏ sót. Đã sửa lỗi (200) của Wan 2.5 Edit.",id:"IMG 4, 5 … terbuka satu per satu sesuai kapasitas model, ada baris jumlah foto. GENERATE mengirim sampai batas dan memberi tahu. Error (200) Wan 2.5 Edit diperbaiki.",ms:"IMG 4, 5 … terbuka satu demi satu ikut kapasiti model, ada baris bilangan foto. GENERATE hantar hingga had dan beritahu. Ralat (200) Wan 2.5 Edit dibaiki."} },
   { v:"6.25.0", kind:"page", ref:"pgMeitu",
     t:{my:"Retouch A / B stage အသစ် — ပုံပေါ်မှာ ခလုတ် မထားတော့ဘူး၊ toolbar တစ်တန်း (မူရင်း · A|B · Pin · Zoom · ဇုန် · Undo · Redo · Reset) ပုံအောက်မှာ၊ GENERATE bar ဖုန်းမှာ slim",en:"Retouch A / B clean stage — nothing sits on the picture; one toolbar under it (Before · A|B · Pin · Zoom · Zones · Undo · Redo · Reset), zoom presets on their own row, a slim GENERATE bar on phones",shn:"Retouch A / B stage မႂ်ႇ — ၼိူဝ်ႁၢင်ႈ ဢမ်ႇမီးပုမ်ႇ၊ toolbar ၼိုင်ႈထႅဝ် တႂ်ႈႁၢင်ႈ၊ GENERATE bar ၽူၼ်း slim",kac:"Retouch A / B stage nnan — sumla ntsa hta button n nga sai, toolbar langai sumla npu, GENERATE bar phone hta slim",th:"สเตจ Retouch A / B ใหม่ — ไม่มีปุ่มบนภาพ แถบเครื่องมือหนึ่งแถวใต้ภาพ (ต้นฉบับ · A|B · ปัก · ซูม · โซน · เลิกทำ · ทำซ้ำ · รีเซ็ต) แถบ GENERATE บางลงบนมือถือ",zh:"Retouch A / B 全新舞台——图片上不再有按钮，一条工具栏在图下（原图 · A|B · 钉住 · 缩放 · 区域 · 撤销 · 重做 · 重置），手机上的 GENERATE 栏更纤薄",vi:"Stage Retouch A / B mới — không còn nút trên ảnh, một thanh công cụ dưới ảnh (Gốc · A|B · Ghim · Zoom · Vùng · Hoàn tác · Làm lại · Đặt lại), thanh GENERATE gọn trên điện thoại",id:"Stage Retouch A / B baru — tak ada tombol di atas foto, satu toolbar di bawahnya (Asli · A|B · Pin · Zoom · Zona · Urungkan · Ulangi · Reset), bar GENERATE ramping di ponsel",ms:"Stage Retouch A / B baharu — tiada butang di atas gambar, satu bar alat di bawahnya (Asal · A|B · Pin · Zum · Zon · Buat asal · Buat semula · Set semula), bar GENERATE nipis di telefon"},
     s:{my:"ဖုန်းမှာ preview ကို ခလုတ်တွေ ကွယ်နေတယ်ဆိုတဲ့ အကြံပြုချက်အတိုင်း — ပုံက တစ်ခုတည်း ထင်ရှားပြီး (split line + zoom pill သေးသေးပဲ ပေါ်)၊ toolbar က icon + စာသား တူညီတဲ့ ခလုတ် 44px တွေ။ Zoom preset (Fit · 100% · 1:1 · မျက်နှာ · မျက်လုံး · နှုတ်ခမ်း) က Zoom ခလုတ်နှိပ်မှ / zoom ဆွဲမှ ပေါ်။ Scroll ဆွဲရင် compact mode မှာ thumbnail + အရေးကြီး 4 ခုပဲ။ GENERATE bar ရဲ့ pending chip တွေ ▾ နှိပ်မှ ပြ။ Desktop မှာ 2-up ပါ toolbar ထဲ။ Video generate မရရင် RunningHub ပြောတဲ့ အကြောင်းရင်းကို error ထဲ တိုက်ရိုက် ပြပေးပြီ ((200) ဗလာ မဖြစ်တော့)။",en:"From the owner's phone review (controls hid the preview): the picture stands alone — only the split line and a small zoom pill ride on it — and the toolbar is a row of equal 44px icon+label buttons. Zoom presets (Fit · 100% · 1:1 · Face · Eyes · Lips) open from the Zoom button or whenever zoomed. Scrolled, the compact stage keeps the thumbnail plus four essentials. On phones the GENERATE bar folds its queue under ▾. Desktop carries 2-up in the same toolbar. A refused video generate now quotes RunningHub's own reason instead of a blank (200).",shn:"ႁၢင်ႈ ၼႄ ၼိုင်ႈဢၼ်၊ toolbar 44px ၽဵင်ႇၵၼ်။ Zoom preset ပိုတ်ႇတီႈ Zoom။ Compact = thumbnail + 4 ဢၼ်။",kac:"Sumla hkrai madun, toolbar 44px maren. Zoom preset gaw Zoom button kaw hpaw. Compact = thumbnail + 4.",th:"ภาพโดดเด่นอย่างเดียว แถบเครื่องมือปุ่ม 44px เท่ากัน ค่าซูมเปิดจากปุ่มซูม โหมดย่อ = ภาพย่อ + 4 ปุ่มสำคัญ แถบ GENERATE พับคิวไว้ใต้ ▾",zh:"图片独立呈现，工具栏为等宽 44px 图标+文字按钮。缩放预设由缩放按钮打开。紧凑模式 = 缩略图 + 4 个必需按钮。GENERATE 栏的队列折叠在 ▾ 下。",vi:"Ảnh nổi bật một mình, thanh công cụ là các nút 44px icon+chữ đồng đều. Zoom preset mở từ nút Zoom. Chế độ gọn = ảnh nhỏ + 4 nút chính. Thanh GENERATE gấp hàng đợi dưới ▾.",id:"Foto tampil sendiri, toolbar tombol 44px ikon+teks seragam. Preset zoom terbuka dari tombol Zoom. Mode ringkas = thumbnail + 4 tombol utama. Bar GENERATE melipat antrean di bawah ▾.",ms:"Gambar tampil sendiri, bar alat butang 44px ikon+teks seragam. Pratetap zum dibuka dari butang Zum. Mod padat = thumbnail + 4 butang utama. Bar GENERATE melipat giliran di bawah ▾."} },
@@ -6740,7 +6745,7 @@ function rhV2Ratio(ratio){ return RH_RATIO_ENUM.indexOf(ratio)>=0 ? ratio : ""; 
    1k/2k/4k on every call, so "Auto" maps to the cheapest tier. */
 function rhV2Resolution(sizeSel){
   var s=String(sizeSel||"").toLowerCase();
-  return (s==="1k"||s==="2k"||s==="4k") ? s : "1k";
+  return (s==="1k"||s==="2k"||s==="4k"||s==="8k") ? s : "1k";   /* v6.26.0 — 8k: Nano Banana Pro Ultra's top tier */
 }
 async function rhV2Upload(apiKey, dataUrl, idx, signal){
   var fd=new FormData();
@@ -7059,52 +7064,27 @@ async function rhV2Submit(apiKey, apiPath, imageUrls, promptText, ratio, resolut
 function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
   var cfg = modelCfg || {};
   imageUrls = imageUrls||[];
-  /* FLUX.2 Dev edit-lora takes a ComfyUI node-keyed body — completely unlike
-     the field-named endpoints below: 51##image (ONE image URL), 16##text
-     (the prompt), 47##select (ratio enum — see RH_NODE_RATIO_MAP),
-     52##file_type (output format). The optional 18##lora_name/
-     18##strength_model pair is omitted on purpose (documented default
-     strength 0 = plain FLUX.2 Dev editing), and no resolution/size field
-     exists on this endpoint at all. Auto/unknown ratios send this
-     endpoint's documented "9" (auto-match the input image). */
-  if(cfg.kind==="fluxedit"){
-    var fx={};
-    fx["51##image"]=imageUrls[0]||"";
-    fx["16##text"]=rhTruncatePrompt(promptText, cfg.promptMax);
-    fx["47##select"]=RH_NODE_RATIO_MAP[ratio]||"9";
-    fx["52##file_type"]="PNG";
-    return fx;
-  }
-  /* Z-Image Turbo (v5.53.4): the owner's OpenAPI spec shows this
-     rhart-image/ sibling is node-keyed too — 66##image/41##text/
-     64##select/65##file_type, all REQUIRED. Its ratio enum is the shared
-     "1".."7" table with NO auto option, so out-of-enum/Auto falls back to
-     "1" (1:1) — the same fallback the old flat body used. The flat
-     imageUrl/prompt/aspectRatio/outputFormat keys shipped before are not
-     in this spec and are gone. */
-  if(cfg.kind==="zimage"){
-    var zb={};
-    zb["66##image"]=imageUrls[0]||"";
-    zb["41##text"]=rhTruncatePrompt(promptText, cfg.promptMax);
-    zb["64##select"]=RH_NODE_RATIO_MAP[ratio]||"1";
-    zb["65##file_type"]="PNG";
-    return zb;
-  }
-  /* v5.54.0 — generic ComfyUI node-keyed image-edit endpoints: cfg.node
-     names each model's keys (single `image` or an ordered `images` list for
-     multi-slot graphs like qwen edit-2511). All share the "1".."7" ratio
-     table; models whose doc also lists "9" auto-match set node.auto, the
-     rest fall back to "1" = 1:1. fileType (when the field exists) always
-     ships the documented "PNG"; LoRA node pairs are never sent, so each
-     graph's documented default adapter/strength applies. */
-  if(cfg.kind==="node"){
-    var nn=cfg.node||{}, nb2={};
-    if(nn.images){ for(var qi=0;qi<nn.images.length && qi<imageUrls.length;qi++) nb2[nn.images[qi]]=imageUrls[qi]; }
-    else nb2[nn.image]=imageUrls[0]||"";
-    nb2[nn.prompt]=rhTruncatePrompt(promptText, cfg.promptMax);
-    nb2[nn.ratio]=RH_NODE_RATIO_MAP[ratio]||(nn.auto?"9":"1");
-    if(nn.fileType) nb2[nn.fileType]="PNG";
-    return nb2;
+  /* v6.26.0 — THE NODE GRAPHS SPEAK FLAT NOW. Every rhart-image/* graph (and rhart-video/f-kontext,
+     rhart-video/wan-2.2) used to take ComfyUI node-keyed bodies — 51##image / 16##text / 47##select /
+     52##file_type and so on, each def's node map, verbatim from the fetched specs. Probe runs #14/#15
+     (price-preview, 2026-09-06): RunningHub now refuses the keys — "parameter '66##image' is not
+     allowed, please use 'imageUrl' instead", then "aspectRatio value '1' is not allowed, please use
+     '1:1'", "outputFormat 'PNG' … use 'png'" — and quotes the flat body for all eleven graphs:
+       imageUrl (+ imageUrl2, imageUrl3 for the three-slot qwen edit-2511 graph — imageUrls is refused),
+       prompt,
+       aspectRatio — the ratio itself (1:1 3:4 4:3 9:16 16:9 2:3 3:2) or "auto" where the graph offers it
+                     (flux-2-dev edit-lora, f-2-dev/edit, klein-9b, kontext, wan-2.2), else 1:1,
+       outputFormat "png".
+     The node maps stay on the defs as the record of each graph's slots (how many images it takes); the
+     LoRA pairs are still never sent. */
+  if(cfg.kind==="fluxedit"||cfg.kind==="zimage"||cfg.kind==="node"){
+    var nn=cfg.node||{}, slots=(nn.images&&nn.images.length)||1, autoOk=(cfg.kind==="fluxedit")||!!nn.auto;
+    var fb={ imageUrl: imageUrls[0]||"" };
+    for(var fq=1;fq<slots&&fq<imageUrls.length;fq++) fb["imageUrl"+(fq+1)]=imageUrls[fq];
+    fb.prompt=rhTruncatePrompt(promptText, cfg.promptMax);
+    fb.aspectRatio = RH_NODE_RATIO_MAP[ratio] ? ratio : (autoOk ? "auto" : "1:1");
+    fb.outputFormat="png";
+    return fb;
   }
   /* api-448184479 — one endpoint carries four Grok image versions via a
      REQUIRED "model" field; prompt REQUIRED, imageUrl optional single. */
@@ -7139,6 +7119,9 @@ function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
     body.sequentialImageGeneration = "disabled";
     body.maxImages = 1;
   } else if(cfg.kind==="imagine"){
+    /* v6.26.0 — probe run #14: rhart-imagine-image-quality/edit refuses a bare string ("field 'imageUrl' must be a
+       list") and quotes the one-element list — so the single image rides as a list here. */
+    body.imageUrl=imageUrls.slice(0,1);
     var res3 = String(resolution||"").toLowerCase();
     body.resolution = (res3==="2k"||res3==="4k") ? "2k" : "1k";
     body.numImages = "1";
@@ -7165,6 +7148,9 @@ function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
     /* api-448184493 — a fixed W*H "size" enum keyed by ratio; omitted on
        Auto so the documented 1280*1280 default applies. */
     var w25=RH_WAN25I_SIZE[ratio]; if(w25) body.size=w25;
+    /* v6.26.0 — api-448184493 lists n (integer 1-4, output count) as REQUIRED: without it the
+       owner's generate came back errorCode 1007 "'n' is required, can not be empty". */
+    body.n=1;
   } else if(cfg.kind==="nanov1"){
     /* api-448184495 / api-448184498 — aspectRatio is REQUIRED and "auto"
        is a documented enum value: anything outside the enum sends "auto". */
@@ -7189,7 +7175,10 @@ function rhV2Body(apiPath, imageUrls, promptText, ratio, resolution, modelCfg){
     var wh = rhWanWH(ratio, resolution);
     if(wh){ body.width = wh.w; body.height = wh.h; }
   } else {
-    body.resolution = resolution || "1k";
+    body.resolution = String(resolution||"1k").toLowerCase();
+    /* v6.26.0 — the probe lane: rhart-image-n-pro-official/edit-ultra refuses "1k" ("allowed values: 4k, 8k"), so a
+       model that publishes its own resolution list is clamped to it — its lowest tier when the pick is outside. */
+    if(cfg.resolutions && cfg.resolutions.length && cfg.resolutions.indexOf(body.resolution)<0) body.resolution=cfg.resolutions[0];
     var r2=rhV2Ratio(ratio); if(r2) body.aspectRatio=r2;
   }
   if(cfg.quality) body.quality=cfg.quality;
@@ -8992,15 +8981,18 @@ async function rhV2SubmitT2I(apiKey, model, promptText, ratio, sizeSel, signal){
      (1:1). fileType ships the documented "PNG" wherever the field exists
      (klein-4b's t2i-lora graph has none). */
   if(model.nodeKeys){
-    var nb={};
-    nb[model.nodeKeys.prompt] = model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"");
+    /* v6.26.0 — probe run #18 (price-preview, 2026-09-06): all fourteen node-keyed text-to-image graphs refuse
+       their keys ("parameter '10##text' is not allowed, please use 'prompt' instead") and quote the flat body —
+       prompt, aspectRatio (the ratio itself), outputFormat "png" (REQUIRED: "field 'outputFormat' is required").
+       The nodeKeys map stays on the def as the record that this is a graph endpoint. */
+    var nb={ prompt: model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"") };
     var nr = model.ratios && model.ratios.indexOf(ratio)>=0 ? ratio : (model.ratios ? model.ratios[0] : "1:1");
-    nb[model.nodeKeys.ratio] = RH_NODE_RATIO_MAP[nr] || "1";
-    if(model.nodeKeys.fileType) nb[model.nodeKeys.fileType] = "PNG";
+    nb.aspectRatio = nr; nb.outputFormat = "png";
     var rN=await fetchWithTimeout(RH_V2_BASE+"/"+String(model.apiPath||"").replace(/^\/+/,""), { method:"POST", headers:rhV2Headers(apiKey), body:JSON.stringify(nb) }, RH_SUBMIT_TIMEOUT_MS, signal);
-    var jN=await rN.json().catch(function(){return null;});
-    if(!rN.ok || !jN || !jN.taskId){ var eN=new Error("submit-failed"); eN.status=rN.status; eN.body=jN; throw eN; }
-    return jN.taskId;
+    var tN=await rN.text().catch(function(){return "";}); var jN=null; try{ jN=JSON.parse(tN); }catch(x0){} /* v6.26.0 — same reader as every other create site */
+    var tidN=rhV2TaskIdOf(jN);
+    if(!rN.ok || !tidN){ var eN=new Error("submit-failed"); eN.status=rN.status; eN.body=jN; eN.raw=String(tN||"").slice(0,300); throw eN; }
+    return tidN;
   }
   var body = { prompt: model.promptMax ? String(promptText||"").slice(0, model.promptMax) : (promptText||"") };
   if(model.ratios){
@@ -9196,6 +9188,20 @@ var _selRatioDefaultHtml = null;
    models below. v5.53.4: Flux 2 Dev — Edit joins the narrowed set — its
    node select documents exactly seven ratios (no "4:5") plus an auto-match
    option the Auto entry maps to. */
+/* v6.26.0 — a model that publishes its own resolution list offers exactly those tiers. Probe run #12:
+   rhart-image-n-pro-official/edit-ultra refused the default "1k" ("allowed values: 4k, 8k") — a Size control
+   offering 1K/2K/4K there was three picks the engine would clamp to one; now it reads Auto · 4K · 8K. Every
+   other model keeps the stock Auto · 1K · 2K · 4K. */
+var RH_SIZE_OPTIONS_STOCK=null;
+function rhNarrowSizeOptionsFor(active){
+  var sel=$("selSize"); if(!sel) return;
+  if(!RH_SIZE_OPTIONS_STOCK) RH_SIZE_OPTIONS_STOCK=Array.prototype.map.call(sel.options,function(o){ return {v:o.value,t:o.textContent}; });
+  var list=(active&&active.resolutions&&active.resolutions.length)?active.resolutions:null, keep=sel.value;
+  var want=list ? [{v:"",t:"Size: Auto"}].concat(list.map(function(r){ var u=String(r).toUpperCase(); return {v:u,t:u}; })) : RH_SIZE_OPTIONS_STOCK;
+  var cur=Array.prototype.map.call(sel.options,function(o){ return o.value; }).join("|"), nxt=want.map(function(o){ return o.v; }).join("|");
+  if(cur!==nxt){ sel.innerHTML=""; want.forEach(function(o){ var op=document.createElement("option"); op.value=o.v; op.textContent=o.t; sel.appendChild(op); }); }
+  sel.value = Array.prototype.some.call(sel.options,function(o){ return o.value===keep; }) ? keep : "";
+}
 function rhNarrowRatioOptionsFor(active){
   var sel=$("selRatio");
   if(!_selRatioDefaultHtml) _selRatioDefaultHtml = sel.innerHTML;
@@ -9305,6 +9311,7 @@ function updateGenOptsForRHKind(){
   if(isUpscaleKind) $("selCount").value = "1";
   if(!hideRatio) rhNarrowRatioOptionsFor(active);
   $("selSize").style.display = (active && noSize[active.kind]) ? "none" : "";
+  rhNarrowSizeOptionsFor(active);   /* v6.26.0 — only the tiers this model honours */
   /* v5.94.0 — on these kinds the pixel size is looked up FROM the ratio
      (RH_QWEN3_T2I_SIZE / RH_WAN_RATIO_WH), so with Ratio on Auto — the
      default — a 2K or 4K pick reaches the engine as nothing at all and the
@@ -9563,6 +9570,7 @@ $("selModel").onchange = function(){
     var cc=rhCfg(); cc.activeModel=id; rhSaveCfg(cc);
     if(typeof rhRenderConfiguredList==="function") rhRenderConfiguredList();
     updateGenOptsForRHKind();
+    try{ renderRefs(); }catch(e0){} /* v6.26.0 — the slot strip follows the model */
     var d=rhModelDef(id)||{};
     toast(L9({my:"RunningHub model → "+(d.label||id)+" ✓ — ဒီ model နဲ့ generate လုပ်ပါမယ်",en:"RunningHub model → "+(d.label||id)+" ✓ — generates will use this model"}),"ok");
   }
@@ -9710,6 +9718,22 @@ function renderRefStrip(){
       host.appendChild(d);
       nativePick(d,"filePick",function(){ state.pickSlot=i; });
     });
+    /* v6.26.0 — the CREATE strip grows with the IMAGE model: reference slots up to its measured photo capacity */
+    if(hostId==="refStrip" && typeof ffRefMax==="function"){
+      var fmx=ffRefMax(), fshown=ffSlotsShown(fmx);
+      for(var fk=REF_BASE;fk<fshown;fk++){ (function(k){
+        var ref=refGet(k), d=el("div","rs rs-face rs-ref"+(ref?" filled":""));
+        if(ref){
+          var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(k+1); d.appendChild(im);
+          var x=el("button","rsx"); x.innerHTML=icn("i-close"); x.setAttribute("aria-label",t("lb_remove_image"));
+          x.onclick=function(ev){ ev.stopPropagation(); refSet(k,null); state.imgRoles=null; renderRefs(); }; d.appendChild(x);
+        } else d.appendChild(document.createTextNode("+"));
+        d.appendChild(el("span","tag","IMG "+(k+1)));
+        d.onclick=function(){ state.pickSlot=k; $("filePick").click(); };
+        host.appendChild(d);
+        nativePick(d,"filePick",function(){ state.pickSlot=k; });
+      })(fk); }
+    }
     /* v6.21.0 — the VIDEO strip grows with the model: face-reference slots up to its image capacity */
     if(hostId==="vidRefStrip" && typeof vidRefMax==="function"){
       var mx=vidRefMax(), shown=vidSlotsShown(mx);
@@ -9727,6 +9751,7 @@ function renderRefStrip(){
       })(k); }
     }
     host.appendChild(el("div","note", L9({my:"Generate မှာ သုံးမယ့်ပုံတွေ — နှိပ်ပြီး ပြောင်းလို့ရတယ်",en:"Images used by Generate — tap to change",shn:"ၶႅပ်းႁၢင်ႈဢၼ် Generate တေၸႂ်ႉ — ၼဵၵ်းသေ လႅၵ်ႈလႆႈ",kac:"Generate hta lang na sumla ni — dip nna galai mai ai",th:"ภาพที่ Generate จะใช้ — แตะเพื่อเปลี่ยน",zh:"Generate 使用的图片 — 点按可更换",vi:"Ảnh sẽ dùng cho Generate — chạm để thay đổi",id:"Gambar yang dipakai Generate — ketuk untuk mengganti",ms:"Imej yang digunakan oleh Generate — ketik untuk tukar"})));
+    if(hostId==="refStrip" && typeof ffRefMax==="function"){ var cm=rhActiveModelCfg(); if(cm) host.appendChild(el("div","note cap",(cm.label||cm.id)+" · "+ffCapLabel(cm))); } /* v6.26.0 — what this model takes */
   });
 }
 /* v4.45 — editable IMAGE roles: what each photo MEANS to the model, cycled on
@@ -9821,13 +9846,14 @@ function renderRefs(){
   renderStPicker(); /* Studio's Before slot mirrors slot 0 too (guarded until its module inits) */
   renderV2Hero(); /* V2 hero mirrors slot 0 + next-photo auto-start */
   var host=$("refs"); host.innerHTML="";
-  state.refs.forEach(function(ref,i){
-    var d=el("div","ref"+(ref?" filled":""));
+  var gmx=(typeof ffRefMax==="function")?ffRefMax():3, gshown=(typeof ffSlotsShown==="function")?ffSlotsShown(gmx):3; /* v6.26.0 — the grid grows with the image model */
+  for(var gi=0;gi<gshown;gi++){ (function(ref,i){
+    var d=el("div","ref"+(ref?" filled":"")+(i>=3?" ref-x":""));
     if (ref) {
       var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="IMAGE "+(i+1); d.appendChild(im);
       var x=el("button","x"); x.innerHTML=icn("i-close");
       x.setAttribute("aria-label",t("lb_remove_image"));
-      x.onclick=function(){ state.refs[i]=null; state.imgRoles=null; renderRefs(); };
+      x.onclick=function(){ refSet(i,null); state.imgRoles=null; renderRefs(); };
       d.appendChild(x);
       var ri=refRoleIdx(i);
       var rb=el("button","chip refrole"+(ri!==(i===0?0:1)?" on":""),
@@ -9850,7 +9876,7 @@ function renderRefs(){
     }
     d.appendChild(el("span","tag","IMG "+(i+1)));
     host.appendChild(d);
-  });
+  })(refGet(gi),gi); }
 }
 renderRefs();
 /* auto-downscale big phone photos to 1536px (same cap as the panel) —
@@ -26034,7 +26060,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.25.0";
+var APP_VER="6.26.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -26676,14 +26702,17 @@ $("btnGen").onclick = async function(){
        paths of this dispatcher, not just Gemini */
     text = await translateIfMyanmar(text, $("spin"));
     $("spin").textContent=t("spin_gen");
-    var refs=state.refs.filter(Boolean);
+    /* v6.26.0 — every filled slot up to the model's measured capacity (IMG 4+ included); more than that is
+       left out and said so, instead of a refusal from the endpoint's maxItems */
+    var ffMx=ffRefMax(rhActive), ffAll=ffAllRefs(ffMx), ffSent=ffAll.slice(0, Math.max(ffMx,1)), refs=ffSent.map(function(x){ return x.ref; });
+    if(ffAll.length>ffSent.length) toast(L9({my:(rhActive.label||rhActive.id)+" က ပုံ "+ffMx+" ပုံပဲ လက်ခံလို့ ပထမ "+ffSent.length+" ပုံပဲ ပို့ပါမယ်",en:(rhActive.label||rhActive.id)+" takes "+ffMx+" photo(s) — the first "+ffSent.length+" were sent"}),"");
     /* v5.50.0 — the Gemini body used to carry each image's role as an inline
        text part; RunningHub takes the images by upload, so the same role
        lines now ride at the head of the prompt itself. Without them a
        multi-image run loses "which photo is the subject". */
     var roleLines=[], roleIdx=0;
-    state.refs.forEach(function(r,slot){
-      if(!r) return;
+    ffSent.forEach(function(x){
+      var slot=x.slot;
       roleIdx++;
       var role = state.imgRoles && state.imgRoles[slot]
         ? state.imgRoles[slot]
@@ -27030,6 +27059,25 @@ function refSet(slot,obj){ if(slot<REF_BASE) state.refs[slot]=obj; else { state.
 function vidRefMax(m){ m=m||vidModelDef(); var ip=(m&&m.imageParam)||""; return (/Urls$|Images$|keyframes/.test(ip) && (m.maxImages|0)>1) ? m.maxImages : 1; }
 function vidAllRefs(){ var mx=vidRefMax(); return state.refs.concat((state.vidRefs||[]).slice(0, Math.max(0, mx-REF_BASE))).filter(Boolean); }
 function vidSlotsShown(mx){ /* the base three, then the filled extras plus one empty */ var ex=state.vidRefs||[], last=-1; for(var k=0;k<ex.length;k++) if(ex[k]) last=k; return Math.min(mx, REF_BASE+last+2); }
+/* v6.26.0 — FREEFORM SLOTS FOLLOW THE MODEL. Owner: "freeform page မှာ models အလိုက် image slots
+   တွေ … nano banana က reference 10 ပုံအထက်ရရတာမျိုး … သူ့ဟာသူ reference ဘယ်နှစ်ခုထိ ရတယ်ဆိုတာမျိုး".
+   Every RH_MODELS entry now carries maxImages, MEASURED by the probe lane (price-preview at
+   1..14 reference photos, no credit spent) — not read off a brand name. The Create strip and the
+   Library IMAGES grid grow past the base three to that number, one empty slot at a time (the
+   extras live in state.vidRefs, the same IMG 4+ photos the VIDEO page offers); the dispatch sends
+   every filled slot up to the model's capacity and says so when it had to leave some out. Kinds
+   that take one image by construction (imageUrl/image fields, one-image node graphs, the
+   upscalers) stay at one; a node graph with an ordered image list takes exactly that many. */
+function ffRefMax(m){
+  m=m||rhActiveModelCfg(); var RB=(typeof REF_BASE==="number")?REF_BASE:3; if(!m) return RB;
+  var k=m.kind||"", ip=m.imageParam||"imageUrls";
+  if(ip==="image"||ip==="imageUrl"||k==="fluxedit"||k==="zimage"||k==="grokimg"||k==="sdlayer"||k==="upscale"||k==="upscale-transparent"||(k==="node"&&!(m.node&&m.node.images))) return 1;
+  if(k==="node"&&m.node&&m.node.images) return m.node.images.length;
+  return (m.maxImages|0)>0 ? m.maxImages : RB;
+}
+function ffSlotsShown(mx){ var RB=(typeof REF_BASE==="number")?REF_BASE:3, ex=state.vidRefs||[], last=-1; for(var k=0;k<ex.length;k++) if(ex[k]) last=k; return Math.max(Math.min(mx, RB+last+2), RB); }
+function ffAllRefs(mx){ var RB=(typeof REF_BASE==="number")?REF_BASE:3, out=[], top=Math.max(mx||ffRefMax(), RB); for(var q=0;q<top;q++){ var r=refGet(q); if(r) out.push({slot:q, ref:r}); } return out; }
+function ffCapLabel(m){ var mx=ffRefMax(m), nx=String(mx); try{ nx=accNum(mx); }catch(e0){} return mx>1 ? L9({my:"ပုံ "+nx+" ပုံအထိ",en:"up to "+mx+" photos",shn:"ထိုင် "+mx+" ၶႅပ်း",kac:"Sumla "+mx+" du hkra",th:"สูงสุด "+mx+" รูป",zh:"最多 "+mx+" 张",vi:"tối đa "+mx+" ảnh",id:"hingga "+mx+" foto",ms:"hingga "+mx+" foto"}) : L9({my:"ပုံ ၁ ပုံ",en:"1 photo",shn:"1 ၶႅပ်း",kac:"Sumla 1",th:"1 รูป",zh:"1 张",vi:"1 ảnh",id:"1 foto",ms:"1 foto"}); }
 function vidNeedLabel(m){
   var mx=vidRefMax(m);
   return mx>1 ? L9({my:"၁–"+accNum(mx)+" ပုံ",en:"1–"+mx+" photos",shn:"1–"+mx+" ၶႅပ်း",kac:"Sumla 1–"+mx,th:"1–"+mx+" รูป",zh:"1–"+mx+" 张",vi:"1–"+mx+" ảnh",id:"1–"+mx+" foto",ms:"1–"+mx+" foto"})

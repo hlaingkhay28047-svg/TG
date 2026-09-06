@@ -57,23 +57,23 @@ function defaults() {
     //                  anything outside it up to the smallest documented tier
     //                  (Seedream v4.5 documents 2k|4k only, so Auto/1K → 2k).
     models: {
-      "nano-banana-2":         { apiPath: "rhart-image-n-g31-flash/image-to-image" },
-      "nano-banana-pro":       { apiPath: "rhart-image-n-pro/edit" },
-      "nano-banana-pro-off":   { apiPath: "rhart-image-n-pro-official/edit" },
-      "rh-image-g2-off":       { apiPath: "rhart-image-g-2-official/image-to-image", quality: "medium" },
+      "nano-banana-2":         { apiPath: "rhart-image-n-g31-flash/image-to-image", maxImages: 10 },
+      "nano-banana-pro":       { apiPath: "rhart-image-n-pro/edit", maxImages: 10 },
+      "nano-banana-pro-off":   { apiPath: "rhart-image-n-pro-official/edit", maxImages: 10 },
+      "rh-image-g2-off":       { apiPath: "rhart-image-g-2-official/image-to-image", quality: "medium", maxImages: 10 },
       /* v6.29.0 — the fetched doc (api-448184504) identifies this as
          "gpt-image-2.0/edit-channel-low-price": GPT Image 2's cheaper
          channel route. prompt is capped at its documented 20000; no
          quality field exists here, so none is configured. */
-      "rh-image-g2":           { apiPath: "rhart-image-g-2/image-to-image", promptMax: 20000 },
+      "rh-image-g2":           { apiPath: "rhart-image-g-2/image-to-image", promptMax: 20000, maxImages: 10 },
       /* v6.29.0 — the owner's OpenAPI spec titles this endpoint
          "xai/grok-imagine-image/edit-official-stable": Grok Imagine's
          image edit model, whose body declares EXACTLY prompt + image.
          kind:"xedit" stops the default branch appending the undeclared
          resolution/aspectRatio it used to send. */
-      "rh-image-x-off":        { apiPath: "rhart-image-x-official/edit", imageParam: "image", kind: "xedit", promptMax: 20000 },
-      "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800 },
-      "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800 },
+      "rh-image-x-off":        { apiPath: "rhart-image-x-official/edit", imageParam: "image", kind: "xedit", promptMax: 20000, maxImages: 1 },
+      "qwen-image-2":          { apiPath: "alibaba/qwen-image-2.0/image-edit", sizeParam: true, promptMax: 800, maxImages: 3 },
+      "qwen-image-2-pro":      { apiPath: "alibaba/qwen-image-2.0-pro/image-edit", sizeParam: true, promptMax: 800, maxImages: 3 },
       /* v6.29.0 — corrected to the endpoint's own fetched doc
          (api-448184518): node-keyed like its rhart-image/ siblings —
          12##text/41##select/43##file_type, all REQUIRED, no auto ratio
@@ -109,24 +109,24 @@ function defaults() {
       "rh-image-g2-t2i":       { apiPath: "rhart-image-g-2-official/text-to-image", kind: "t2i", promptMax: 20000,
                                  t2iRatios: ["1:1", "1:2", "2:1", "1:3", "3:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "21:9", "9:21", "16:9"],
                                  resolutionField: true, quality: "medium" },
-      "wan-image-edit":        { apiPath: "alibaba/wan-2.7/image-edit", whParam: true, promptMax: 2048 },
-      "wan-image-edit-pro":    { apiPath: "alibaba/wan-2.7/image-edit-pro", whParam: true, promptMax: 2048 },
-      "upscale-pro":           { apiPath: "topazlabs/image-upscale-standard-v2", imageParam: "imageUrl", kind: "upscale" },
-      "seedream-v4":           { apiPath: "seedream-v4/image-to-image", kind: "seedream", promptMax: 2000 },
-      "seedream-v4-5":         { apiPath: "seedream-v4.5/image-to-image", kind: "seedream", promptMax: 2000, resolutions: ["2k", "4k"] },
+      "wan-image-edit":        { apiPath: "alibaba/wan-2.7/image-edit", whParam: true, promptMax: 2048, maxImages: 9 },
+      "wan-image-edit-pro":    { apiPath: "alibaba/wan-2.7/image-edit-pro", whParam: true, promptMax: 2048, maxImages: 9 },
+      "upscale-pro":           { apiPath: "topazlabs/image-upscale-standard-v2", imageParam: "imageUrl", kind: "upscale", maxImages: 1 },
+      "seedream-v4":           { apiPath: "seedream-v4/image-to-image", kind: "seedream", promptMax: 2000, maxImages: 10 },
+      "seedream-v4-5":         { apiPath: "seedream-v4.5/image-to-image", kind: "seedream", promptMax: 2000, resolutions: ["2k", "4k"], maxImages: 10 },
       /* v6.29.0 — promptMax 4000 per the owner's OpenAPI spec, which also
          narrows this endpoint's optional aspectRatio to seven ratios plus
          auto (enforced in the adapter's imagine branch). */
-      "rh-imagine-quality-edit": { apiPath: "rhart-imagine-image-quality/edit", imageParam: "imageUrl", kind: "imagine", promptMax: 4000 },
+      "rh-imagine-quality-edit": { apiPath: "rhart-imagine-image-quality/edit", imageParam: "imageUrl", kind: "imagine", promptMax: 4000, maxImages: 1 },
       /* v6.29.0 — imageParam dropped: the owner's OpenAPI spec shows this
          endpoint's body is ComfyUI node-keyed (66##image/41##text/
          64##select/65##file_type), built whole in the adapter's zimage
          branch — no flat image field exists to name. */
-      "z-image-turbo":         { apiPath: "rhart-image/z-image-turbo/image-to-image", kind: "zimage" },
+      "z-image-turbo":         { apiPath: "rhart-image/z-image-turbo/image-to-image", kind: "zimage", maxImages: 1 },
       /* api-448184490 — LoRA sibling, node-keyed; LoRA pair omitted (default
          strength 0 = plain Z-Image Turbo). v6.31.0 completeness pass. */
-      "z-image-turbo-lora":    { apiPath: "rhart-image/z-image-turbo/image-to-image-lora", kind: "node", node: { image: "44##image", prompt: "18##text", ratio: "41##select", fileType: "42##file_type" } },
-      "upscale-transparent":   { apiPath: "topazlabs/image-upscale-transparent", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "z-image-turbo-lora":    { apiPath: "rhart-image/z-image-turbo/image-to-image-lora", kind: "node", node: { image: "44##image", prompt: "18##text", ratio: "41##select", fileType: "42##file_type" }, maxImages: 1 },
+      "upscale-transparent":   { apiPath: "topazlabs/image-upscale-transparent", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* ---------- v6.30.0 full-catalog wave ----------
          Every entry below was wired from its own fetched doc page (the
          api-<id> comment; pulled by fetch-docs.yml). Body shapes come
@@ -134,67 +134,67 @@ function defaults() {
          Node-keyed graphs never send their LoRA pairs, so each doc's
          default adapter/strength applies. */
       /* api-448184476 */
-      "seedream-v5-lite": { apiPath: "seedream-v5-lite/image-to-image", kind: "sd5lite", promptMax: 2000 },
+      "seedream-v5-lite": { apiPath: "seedream-v5-lite/image-to-image", kind: "sd5lite", promptMax: 2000, maxImages: 10 },
       /* api-494859263 */
-      "seedream-v5-pro": { apiPath: "seedream-v5-pro/image-to-image", kind: "sd5pro", promptMax: 5000 },
+      "seedream-v5-pro": { apiPath: "seedream-v5-pro/image-to-image", kind: "sd5pro", promptMax: 5000, maxImages: 10 },
       /* api-494859267 */
-      "dola-seedream-5-pro": { apiPath: "dola-Seedream-5.0-pro/image-to-image", kind: "sd5pro", promptMax: 5000 },
+      "dola-seedream-5-pro": { apiPath: "dola-Seedream-5.0-pro/image-to-image", kind: "sd5pro", promptMax: 5000, maxImages: 10 },
       /* api-448184479 */
-      "grok-image-i2i": { apiPath: "rhart-image-g/image-to-image", kind: "grokimg" },
+      "grok-image-i2i": { apiPath: "rhart-image-g/image-to-image", kind: "grokimg", maxImages: 1 },
       /* api-497874395 */
-      "qwen-image-3": { apiPath: "alibaba/qwen-image-3.0/image-edit", sizeParam: true, promptMax: 3000 },
+      "qwen-image-3": { apiPath: "alibaba/qwen-image-3.0/image-edit", sizeParam: true, promptMax: 3000, maxImages: 3 },
       /* api-494859264 */
-      "qwen-image-3-pro": { apiPath: "alibaba/qwen-image-3.0-pro/image-edit", sizeParam: true, promptMax: 3000 },
+      "qwen-image-3-pro": { apiPath: "alibaba/qwen-image-3.0-pro/image-edit", sizeParam: true, promptMax: 3000, maxImages: 3 },
       /* api-448184493 */
-      "wan-25-image": { apiPath: "alibaba/wan-2.5-preview/image-to-image", kind: "wan25", promptMax: 2000, ratioEnum: ["1:1","2:3","3:2","3:4","4:3","9:16","16:9","21:9"] },
+      "wan-25-image": { apiPath: "alibaba/wan-2.5-preview/image-to-image", kind: "wan25", promptMax: 2000, ratioEnum: ["1:1","2:3","3:2","3:4","4:3","9:16","16:9","21:9"], maxImages: 3 },
       /* api-448184495 */
-      "nano-banana-v1-off": { apiPath: "rhart-image-v1-official/edit", kind: "nanov1", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"] },
+      "nano-banana-v1-off": { apiPath: "rhart-image-v1-official/edit", kind: "nanov1", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"], maxImages: 5 },
       /* api-448184498 */
-      "nano-banana-v1": { apiPath: "rhart-image-v1/edit", kind: "nanov1", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"] },
+      "nano-banana-v1": { apiPath: "rhart-image-v1/edit", kind: "nanov1", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9"], maxImages: 5 },
       /* api-448184501 */
-      "nano-banana-2-off": { apiPath: "rhart-image-n-g31-flash-official/image-to-image", promptMax: 20000 },
+      "nano-banana-2-off": { apiPath: "rhart-image-n-g31-flash-official/image-to-image", promptMax: 20000, maxImages: 14 },
       /* api-494859265 */
-      "nano-banana-2-lite-off": { apiPath: "rhart-image-n-g31-flash-lite-official/image-to-image", kind: "ratioOnly", promptMax: 20000, ratioEnum: ["auto","1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+      "nano-banana-2-lite-off": { apiPath: "rhart-image-n-g31-flash-lite-official/image-to-image", kind: "ratioOnly", promptMax: 20000, ratioEnum: ["auto","1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"], maxImages: 4 },
       /* api-494859266 */
-      "nano-banana-2-lite": { apiPath: "rhart-image-n-g31-flash-lite/image-to-image", kind: "ratioOnly", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"] },
+      "nano-banana-2-lite": { apiPath: "rhart-image-n-g31-flash-lite/image-to-image", kind: "ratioOnly", promptMax: 20000, ratioEnum: ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","5:4","4:5","21:9","1:4","4:1","1:8","8:1"], maxImages: 10 },
       /* api-448184496 */
-      "nano-banana-pro-ultra": { apiPath: "rhart-image-n-pro-official/edit-ultra", promptMax: 20000, resolutions: ["4k", "8k"] },
+      "nano-banana-pro-ultra": { apiPath: "rhart-image-n-pro-official/edit-ultra", promptMax: 20000, resolutions: ["4k", "8k"], maxImages: 10 },
       /* api-448184503 */
-      "gpt-image-15-off": { apiPath: "rhart-image-g-1.5-official/image-to-image", kind: "gpt15", ratioEnum: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"] },
+      "gpt-image-15-off": { apiPath: "rhart-image-g-1.5-official/image-to-image", kind: "gpt15", ratioEnum: ["1:1","3:4","4:3","9:16","16:9","2:3","3:2"], maxImages: 10 },
       /* api-465292102 */
-      "jimeng-46": { apiPath: "bytedance/jimeng-4.6/image-to-image", kind: "bare", promptMax: 800 },
+      "jimeng-46": { apiPath: "bytedance/jimeng-4.6/image-to-image", kind: "bare", promptMax: 800, maxImages: 14 },
       /* api-498427798 */
-      "sd5-layers": { apiPath: "seedream-v5-pro/layer-decomposition", kind: "sdlayer", promptMax: 2000 },
+      "sd5-layers": { apiPath: "seedream-v5-pro/layer-decomposition", kind: "sdlayer", promptMax: 2000, maxImages: 1 },
       /* api-495680091 */
-      "topaz-gp-standard": { apiPath: "topazlabs/image-gigapixel-standard-2", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "topaz-gp-standard": { apiPath: "topazlabs/image-gigapixel-standard-2", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* api-495680090 */
-      "topaz-gp-lowres": { apiPath: "topazlabs/image-gigapixel-low-resolution-2", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "topaz-gp-lowres": { apiPath: "topazlabs/image-gigapixel-low-resolution-2", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* api-495680089 */
-      "topaz-gp-text": { apiPath: "topazlabs/image-gigapixel-text-and-shapes", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "topaz-gp-text": { apiPath: "topazlabs/image-gigapixel-text-and-shapes", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* api-495680092 */
-      "topaz-gp-hifi": { apiPath: "topazlabs/image-gigapixel-high-fidelity-2", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "topaz-gp-hifi": { apiPath: "topazlabs/image-gigapixel-high-fidelity-2", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* api-495680093 */
-      "topaz-gp-art": { apiPath: "topazlabs/image-gigapixel-art-and-cgi", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "topaz-gp-art": { apiPath: "topazlabs/image-gigapixel-art-and-cgi", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* api-495680095 */
-      "topaz-up-faces": { apiPath: "topazlabs/image-upscale-detail-faces", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "topaz-up-faces": { apiPath: "topazlabs/image-upscale-detail-faces", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* api-495680096 */
-      "topaz-up-hifi3": { apiPath: "topazlabs/image-upscale-high-fidelity-v3", imageParam: "imageUrl", kind: "upscale-transparent" },
+      "topaz-up-hifi3": { apiPath: "topazlabs/image-upscale-high-fidelity-v3", imageParam: "imageUrl", kind: "upscale-transparent", maxImages: 1 },
       /* api-448184482 */
-      "flux-2-dev-edit-plain": { apiPath: "rhart-image/f-2-dev/edit", kind: "node", node: { image: "20##image", prompt: "17##text", ratio: "46##select", fileType: "51##file_type", auto: true } },
+      "flux-2-dev-edit-plain": { apiPath: "rhart-image/f-2-dev/edit", kind: "node", node: { image: "20##image", prompt: "17##text", ratio: "46##select", fileType: "51##file_type", auto: true }, maxImages: 1 },
       /* api-448184483 */
-      "flux-klein-9b-edit": { apiPath: "rhart-image/f-2-klein-9b/edit", kind: "node", node: { image: "53##image", prompt: "54##text", ratio: "81##select", fileType: "55##file_type", auto: true } },
+      "flux-klein-9b-edit": { apiPath: "rhart-image/f-2-klein-9b/edit", kind: "node", node: { image: "53##image", prompt: "54##text", ratio: "81##select", fileType: "55##file_type", auto: true }, maxImages: 1 },
       /* api-448184484 */
-      "flux-klein-4b-edit": { apiPath: "rhart-image/f-2-klein-4b/edit", kind: "node", node: { image: "19##image", prompt: "17##text", ratio: "47##select", fileType: "51##file_type" } },
+      "flux-klein-4b-edit": { apiPath: "rhart-image/f-2-klein-4b/edit", kind: "node", node: { image: "19##image", prompt: "17##text", ratio: "47##select", fileType: "51##file_type" }, maxImages: 1 },
       /* api-448184485 */
-      "flux-klein-4b-edit-lora": { apiPath: "rhart-image/f-2-klein-4b/edit-lora", kind: "node", node: { image: "41##image", prompt: "16##text", ratio: "37##select", fileType: "40##file_type" } },
+      "flux-klein-4b-edit-lora": { apiPath: "rhart-image/f-2-klein-4b/edit-lora", kind: "node", node: { image: "41##image", prompt: "16##text", ratio: "37##select", fileType: "40##file_type" }, maxImages: 1 },
       /* api-448184480 */
-      "flux-kontext-lora": { apiPath: "rhart-video/f-kontext/dev-lora", kind: "node", node: { image: "15##image", prompt: "4##text", ratio: "41##select", fileType: "16##file_type", auto: true } },
+      "flux-kontext-lora": { apiPath: "rhart-video/f-kontext/dev-lora", kind: "node", node: { image: "15##image", prompt: "4##text", ratio: "41##select", fileType: "16##file_type", auto: true }, maxImages: 1 },
       /* api-448184487 */
-      "qwen-edit-2511": { apiPath: "rhart-image/qwen-image/edit-2511", kind: "node", node: { images: ["57##image","58##image","59##image"], prompt: "53##text", ratio: "28##select", fileType: "52##file_type" } },
+      "qwen-edit-2511": { apiPath: "rhart-image/qwen-image/edit-2511", kind: "node", node: { images: ["57##image","58##image","59##image"], prompt: "53##text", ratio: "28##select", fileType: "52##file_type" }, maxImages: 3 },
       /* api-448184486 */
-      "qwen-edit-2511-lora": { apiPath: "rhart-image/qwen-image/edit-2511-lora", kind: "node", node: { image: "44##image", prompt: "38##text", ratio: "32##select", fileType: "40##file_type" } },
+      "qwen-edit-2511-lora": { apiPath: "rhart-image/qwen-image/edit-2511-lora", kind: "node", node: { image: "44##image", prompt: "38##text", ratio: "32##select", fileType: "40##file_type" }, maxImages: 1 },
       /* api-448184492 */
-      "wan-22-image": { apiPath: "rhart-video/wan-2.2/image-to-image", kind: "node", node: { image: "272##image", prompt: "79##text", ratio: "267##select", fileType: "242##file_type", auto: true } },
+      "wan-22-image": { apiPath: "rhart-video/wan-2.2/image-to-image", kind: "node", node: { image: "272##image", prompt: "79##text", ratio: "267##select", fileType: "242##file_type", auto: true }, maxImages: 1 },
       /* api-448184505 */
       "seedream-v4-t2i": { apiPath: "seedream-v4/text-to-image", kind: "t2i", resolutionField: true, extraBody: { sequentialImageGeneration:"disabled", maxImages:1 } },
       /* api-448184506 */

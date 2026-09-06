@@ -70,9 +70,13 @@ function report(name, ok, detail) {
       const list = offered.length ? offered : ALL;
       const distinct = new Set(list.map(rt => bodyFor(rt, "")));
       const ratioMatters = distinct.size > 1;
-      const sizeMatters = bodyFor("", "1K") !== bodyFor("", "4K");
+      /* v6.26.0 — the Size picker is narrowed per model (a model with its own resolution list offers exactly
+         those tiers), so the honest question is whether the LOWEST and HIGHEST tier it offers reach the body. */
+      const sizesOffered = Array.from(document.getElementById("selSize").options).map(o => o.value).filter(Boolean);
+      const szLo = sizesOffered[0] || "1K", szHi = sizesOffered[sizesOffered.length - 1] || "4K";
+      const sizeMatters = bodyFor("", szLo) !== bodyFor("", szHi);
       const firstReal = (offered.length ? offered : ALL).find(x => x !== "");
-      const sizeMattersWithRatio = bodyFor(firstReal, "1K") !== bodyFor(firstReal, "4K");
+      const sizeMattersWithRatio = bodyFor(firstReal, szLo) !== bodyFor(firstReal, szHi);
       rows.push({ id: m.id, kind: cfg.kind || "", ratioShown, sizeShown,
         ratioMatters, sizeMatters, sizeMattersWithRatio, offered: list.length, distinct: distinct.size,
         sample: bodyFor(list[0], "").slice(0, 160) });

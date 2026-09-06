@@ -75,7 +75,7 @@ function rhRatio(ratio) { return RH_RATIO_ENUM.indexOf(ratio) !== -1 ? ratio : "
    on every call, never an empty/omitted value. */
 function rhResolution(size) {
   var s = String(size || "").toLowerCase();
-  return (s === "1k" || s === "2k" || s === "4k") ? s : "1k";
+  return (s === "1k" || s === "2k" || s === "4k" || s === "8k") ? s : "1k";   // v6.26.0 — 8k: Nano Banana Pro Ultra's top tier
 }
 /* Some endpoints document a NARROWER resolution enum than 1k/2k/4k (config
    flag `resolutions`, e.g. Seedream v4.5 accepts only 2k|4k). Anything outside
@@ -155,12 +155,12 @@ function buildRequestBody(mc, request, uploadedUrls) {
     // option exists on its "1".."8" select — fallback t2iRatios[0] (1:1),
     // the same value the old required-ratio logic defaulted to.
     if (mc.t2iNodeKeys) {
-      var nbT = {};
-      nbT[mc.t2iNodeKeys.prompt] = body.prompt;
+      // v6.26.0 — probe run #18: the node-keyed text-to-image graphs refuse their keys ("please use 'prompt'
+      // instead") and quote the flat body — prompt, aspectRatio (the ratio itself), outputFormat "png"
+      // (REQUIRED). Ported 1:1 from the web app; t2iNodeKeys stays as the record that this is a graph endpoint.
+      var nbT = { prompt: body.prompt };
       var nrT = mc.t2iRatios && mc.t2iRatios.indexOf(ratio) !== -1 ? ratio : (mc.t2iRatios ? mc.t2iRatios[0] : "1:1");
-      nbT[mc.t2iNodeKeys.ratio] = RH_NODE_RATIO_MAP[nrT] || "1";
-      // v6.30.0 — klein-4b's t2i-lora graph has no file_type field at all.
-      if (mc.t2iNodeKeys.fileType) nbT[mc.t2iNodeKeys.fileType] = "PNG";
+      nbT.aspectRatio = nrT; nbT.outputFormat = "png";
       return nbT;
     }
     if (mc.t2iRatios) {
@@ -201,53 +201,19 @@ function buildRequestBody(mc, request, uploadedUrls) {
 
   uploadedUrls = uploadedUrls || [];
 
-  // FLUX.2 Dev edit-lora (flux-2-dev-edit) takes a ComfyUI node-keyed body,
-  // completely unlike the field-named endpoints around it: 51##image (ONE
-  // image URL), 16##text (the prompt), 47##select (ratio enum — see
-  // RH_FLUXEDIT_RATIO_MAP), 52##file_type (output format). The optional
-  // 18##lora_name/18##strength_model pair is omitted on purpose (documented
-  // default strength 0 = plain FLUX.2 Dev editing — a guessed .safetensors
-  // name would invent a server-side asset), and no resolution/size field
-  // exists on this endpoint. Ported 1:1 from the web app's fluxedit branch.
-  if (mc.kind === "fluxedit") {
-    var fx = {};
-    fx["51##image"] = uploadedUrls[0] || "";
-    fx["16##text"] = body.prompt;
-    fx["47##select"] = RH_NODE_RATIO_MAP[ratio] || "9";
-    fx["52##file_type"] = "PNG";
-    return fx;
-  }
-
-  // Z-Image Turbo (v6.29.0): the owner's OpenAPI spec shows this
-  // rhart-image/ sibling is node-keyed too — 66##image/41##text/
-  // 64##select/65##file_type, all REQUIRED. Its ratio enum is the shared
-  // "1".."7" table with NO auto option, so out-of-enum/Auto falls back to
-  // "1" (1:1) — the same fallback the old flat body used. The flat
-  // imageUrl/prompt/aspectRatio/outputFormat keys shipped before are not
-  // in this spec and are gone. Ported 1:1 from the web app.
-  if (mc.kind === "zimage") {
-    var zb = {};
-    zb["66##image"] = uploadedUrls[0] || "";
-    zb["41##text"] = body.prompt;
-    zb["64##select"] = RH_NODE_RATIO_MAP[ratio] || "1";
-    zb["65##file_type"] = "PNG";
-    return zb;
-  }
-
-  // v6.30.0 — generic ComfyUI node-keyed image-edit endpoints: mc.node
-  // names each model's keys (single `image` or an ordered `images` list for
-  // multi-slot graphs like qwen edit-2511). All share the "1".."7" ratio
-  // table; models whose doc also lists "9" auto-match set node.auto, the
-  // rest fall back to "1" = 1:1. fileType (when the field exists) always
-  // ships the documented "PNG"; LoRA node pairs are never sent.
-  if (mc.kind === "node") {
-    var nn = mc.node || {}, nb2 = {};
-    if (nn.images) { for (var qi = 0; qi < nn.images.length && qi < uploadedUrls.length; qi++) nb2[nn.images[qi]] = uploadedUrls[qi]; }
-    else nb2[nn.image] = uploadedUrls[0] || "";
-    nb2[nn.prompt] = body.prompt;
-    nb2[nn.ratio] = RH_NODE_RATIO_MAP[ratio] || (nn.auto ? "9" : "1");
-    if (nn.fileType) nb2[nn.fileType] = "PNG";
-    return nb2;
+  // v6.26.0 — the node graphs speak flat now (probe runs #14/#15, price-preview): RunningHub refuses
+  // the ComfyUI node keys ("parameter '66##image' is not allowed, please use 'imageUrl' instead") and
+  // quotes imageUrl (+ imageUrl2/imageUrl3 for the three-slot qwen edit-2511 graph), prompt,
+  // aspectRatio (the ratio itself, or "auto" where the graph offers it, else 1:1), outputFormat "png".
+  // Ported 1:1 from the web app; the node maps stay as the record of each graph's slots.
+  if (mc.kind === "fluxedit" || mc.kind === "zimage" || mc.kind === "node") {
+    var nn = mc.node || {}, slots = (nn.images && nn.images.length) || 1, autoOk = (mc.kind === "fluxedit") || !!nn.auto;
+    var fb = { imageUrl: uploadedUrls[0] || "" };
+    for (var fq = 1; fq < slots && fq < uploadedUrls.length; fq++) fb["imageUrl" + (fq + 1)] = uploadedUrls[fq];
+    fb.prompt = body.prompt;
+    fb.aspectRatio = RH_NODE_RATIO_MAP[ratio] ? ratio : (autoOk ? "auto" : "1:1");
+    fb.outputFormat = "png";
+    return fb;
   }
   // api-448184479 — one endpoint carries four Grok image versions via a
   // REQUIRED "model" field; prompt REQUIRED, imageUrl optional single.
@@ -277,6 +243,7 @@ function buildRequestBody(mc, request, uploadedUrls) {
     body.sequentialImageGeneration = "disabled";
     body.maxImages = 1;
   } else if (mc.kind === "imagine") {
+    body.imageUrl = uploadedUrls.slice(0, 1); // v6.26.0 — the live validator wants a one-element list ("field 'imageUrl' must be a list")
     var res3 = String(size || "").toLowerCase();
     body.resolution = (res3 === "2k" || res3 === "4k") ? "2k" : "1k";
     body.numImages = "1";
@@ -303,6 +270,7 @@ function buildRequestBody(mc, request, uploadedUrls) {
     // api-448184493 — a fixed W*H "size" enum keyed by ratio; omitted on
     // Auto so the documented 1280*1280 default applies.
     var w25 = RH_WAN25I_SIZE[ratio]; if (w25) body.size = w25;
+    body.n = 1; // v6.26.0 — api-448184493: n (integer 1-4) is REQUIRED; without it RunningHub answers errorCode 1007
   } else if (mc.kind === "nanov1") {
     // api-448184495 / api-448184498 — aspectRatio is REQUIRED and "auto"
     // is a documented enum value: anything outside the enum sends "auto".
