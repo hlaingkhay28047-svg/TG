@@ -64,3 +64,4 @@ npm-debug.log*
 /panel/assets/
 /panel/.package-*
 /server/private/
+__pycache__/
