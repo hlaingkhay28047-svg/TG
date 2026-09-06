@@ -131,23 +131,30 @@ const RAIL = ["stHold", "stSplit", "stPin", "stZoomTgl", "stZones", "stUndoB", "
   report("D) A|B: the split line spans exactly the picture (not the toolbar) and the swap chip appears beside A|B in the toolbar; off again hides both",
     sp.on && sp.lineShown && Math.abs(sp.lineTop) <= 2 && Math.abs(sp.lineBottom) <= 2 && sp.swapShown && sp.swapBesideAB && sp.off, sp);
 
-  /* E) compact: four essentials; the exit band measured */
+  /* E) compact: four essentials; the exit band measured.
+     Timing (task #107, cross-engine diag run #17): the stage reacts to the scroll EVENT, and WebKit delivers a
+     programmatic scroll's event only at its next rendering opportunity — with the studio's hi-res preview tier
+     still rendering that landed 300–550 ms after the scroll, while a fixed 350 ms read raced it (run #2 and the
+     PR run at c433b91 read "still compact"; the exit itself fires within ~50 ms once the thread is idle, 16/16
+     cycles). So wait for the reaction, up to two seconds, and report how long each direction took. */
   const cp = await page.evaluate(async (ids) => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const until = async (fn, max) => { const t0 = performance.now(); while (performance.now() - t0 < max) { if (fn()) return Math.round(performance.now() - t0); await sleep(25); } return null; };
     const se = document.scrollingElement, stg = document.getElementById("stStage");
-    se.scrollTop = 0; await sleep(300);
+    se.scrollTop = 0; await until(() => !stg.classList.contains("compact"), 2000); await sleep(300);
     const nat = stg.getBoundingClientRect().top + window.scrollY;
-    se.scrollTop = nat + 30; await sleep(260); se.scrollTop += 60; await sleep(350);
+    se.scrollTop = nat + 30; await sleep(260); se.scrollTop += 60;
+    const enterMs = await until(() => stg.classList.contains("compact"), 2000); await sleep(120);
     const compact = stg.classList.contains("compact");
     const vis = ids.filter(id => { const e = document.getElementById(id); const r = e.getBoundingClientRect(); return getComputedStyle(e).display !== "none" && r.width > 0; });
     const presetsHidden = getComputedStyle(document.getElementById("stZoomPresets")).display === "none";
     const band = ST._stageExitBand ? ST._stageExitBand() : null;
     const fab = document.getElementById("btnTop"); fab.classList.add("on"); const fabHidden = getComputedStyle(fab).display === "none"; fab.classList.remove("on");
-    se.scrollTop = 0; await sleep(350);
-    return { compact, vis, presetsHidden, band, fabHidden, backFull: !stg.classList.contains("compact") };
+    se.scrollTop = 0; const exitMs = await until(() => !stg.classList.contains("compact"), 2000);
+    return { compact, enterMs, vis, presetsHidden, band, fabHidden, exitMs, backFull: !stg.classList.contains("compact") };
   }, RAIL);
   report("E) scrolled past the enter band the compact stage shows exactly Before · A|B · Reset · ⌄ (no presets), the exit band is measured (≥120 and above the old constant for this taller stage), the back-to-top FAB stays hidden on the studio page, and the top scroll restores the full stage",
-    cp.compact && JSON.stringify(cp.vis) === JSON.stringify(["stHold", "stSplit", "stReset", "stStageMin"]) && cp.presetsHidden && typeof cp.band === "number" && cp.band >= 120 && cp.fabHidden && cp.backFull, cp);
+    cp.compact && typeof cp.enterMs === "number" && JSON.stringify(cp.vis) === JSON.stringify(["stHold", "stSplit", "stReset", "stStageMin"]) && cp.presetsHidden && typeof cp.band === "number" && cp.band >= 120 && cp.fabHidden && typeof cp.exitMs === "number" && cp.backFull, cp);
 
   /* F) phone GENERATE bar */
   const gb = await page.evaluate(async () => {
