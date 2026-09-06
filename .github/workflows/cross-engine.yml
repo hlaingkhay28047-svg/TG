@@ -46,8 +46,21 @@ jobs:
           ./node_modules/.bin/playwright install --with-deps ${{ matrix.engine }}
 
       - name: Serve docs/app
+        # WebKit upgrades loopback http to https under the app's upgrade-insecure-requests
+        # policy (Chromium and Firefox treat 127.0.0.1 as potentially trustworthy and leave
+        # it alone, as the Secure Contexts spec says). Over https nothing listens, so sw.js,
+        # the face worker and every fetch fail before a single layout check runs. The WebKit
+        # leg therefore serves a COPY with that one directive removed; the source pins in each
+        # test still read the untouched docs/app/index.html, and production is https anyway.
         run: |
-          (cd docs/app && python3 -m http.server 8931 >/dev/null 2>&1 &)
+          SERVE=docs/app
+          if [ "${{ matrix.engine }}" = "webkit" ]; then
+            mkdir -p /tmp/hnk-app && cp -r docs/app/. /tmp/hnk-app/
+            sed -i 's/; upgrade-insecure-requests"/"/' /tmp/hnk-app/index.html
+            grep -c "upgrade-insecure-requests" /tmp/hnk-app/index.html || true
+            SERVE=/tmp/hnk-app
+          fi
+          (cd "$SERVE" && python3 -m http.server 8931 >/dev/null 2>&1 &)
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8931/index.html >/dev/null && break; sleep 1; done
 
       - name: Run the layout and behaviour tests on ${{ matrix.engine }}
@@ -58,7 +71,14 @@ jobs:
           TESTS: ${{ inputs.tests }}
         run: |
           set +e
-          LIST="${TESTS:-verify_tabbar_reachable verify_clean_stage verify_native_pick verify_slot_whole_photo verify_freeform_slots verify_desktop_fill sweep_v492_gridfit sweep_v528_safearea sweep_v533_a11y sweep_v535_rtl_lang verify_landing_fill}"
+          # sweep_v535_rtl_lang serves the untouched docs tree itself and verify_landing_fill opens the
+          # landing over file:// — both meet the same WebKit upgrade / file-fetch limits, so they run on
+          # Firefox only; every other test runs on both engines.
+          if [ "$HNK_ENGINE" = "webkit" ]; then
+            LIST="${TESTS:-verify_tabbar_reachable verify_clean_stage verify_native_pick verify_slot_whole_photo verify_freeform_slots verify_desktop_fill sweep_v492_gridfit sweep_v528_safearea sweep_v533_a11y}"
+          else
+            LIST="${TESTS:-verify_tabbar_reachable verify_clean_stage verify_native_pick verify_slot_whole_photo verify_freeform_slots verify_desktop_fill sweep_v492_gridfit sweep_v528_safearea sweep_v533_a11y sweep_v535_rtl_lang verify_landing_fill}"
+          fi
           failed=""
           for t in $LIST; do
             echo "::group::$t on $HNK_ENGINE"
