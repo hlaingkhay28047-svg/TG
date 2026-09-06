@@ -821,3 +821,7 @@ jobs:
 
       - name: Run unified admin MFA, responsive, and accessibility sweep
         run: node test/sweep_admin_responsive_a11y.js
+
+      # 6.29.0 wave — Imagine: the hub and its four one-tap tools, drawn by one module on the app AND the panel
+      - name: Run Imagine W1 sweep (hub, templates, mocked Apply, nine languages, panel lift in sync)
+        run: PORT=8931 node test/verify_imagine_w1.js

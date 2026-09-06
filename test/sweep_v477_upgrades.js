@@ -186,10 +186,17 @@ const NEW = Object.keys(SCRIPTS);
      pasted Shan. LANG_FB routes tdd, khb and kht to Shan, so those readers
      see the real Shan sentence — A2 below measures it. */
   const V650_KEYS = ["ph_talk"];
+  /* 6.29.0 wave — the IMAGINE page's hero line (ph_imagine) joins on the same
+     terms as ph_v2v and ph_talk: the fifteen packs with readers got real
+     translations in the same commit, and the three Tai packs without one are
+     named here rather than guessed or filled with pasted Shan. LANG_FB routes
+     tdd, khb and kht to Shan, so those readers see the real Shan sentence —
+     A2 below measures it. */
+  const V6290_KEYS = ["ph_imagine"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

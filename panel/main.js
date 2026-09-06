@@ -6234,7 +6234,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.97.2";
+const PANEL_VERSION = "6.98.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7463,6 +7463,7 @@ const PAGE_HERO_HEADS = {
     th: "เนรมิตทุกฉากที่คุณจินตนาการ — <em>ในแบบของคุณ</em>", zh: "把你想象的每个场景变为现实 — <em>随心所欲</em>",
     vi: "Biến mọi khung cảnh bạn tưởng tượng thành hiện thực — <em>theo cách của bạn</em>", id: "Wujudkan setiap adegan yang Anda bayangkan — <em>dengan cara Anda</em>",
     ms: "Hidupkan setiap adegan yang anda bayangkan — <em>mengikut cara anda</em>" },
+  phImagine: {"my": "ပုံထည့် · template ရွေး · <em>တစ်ချက်နှိပ်</em> — prompt မလို", "en": "Add a photo · pick a template · <em>one tap</em> — no prompt", "shn": "သႂ်ႇၶႅပ်း · လိူၵ်ႈ template · <em>ၼဵၵ်းပွၵ်ႈလဵဝ်</em>", "kac": "Sumla bang · template lata · <em>kalang dip</em>", "th": "เพิ่มรูป · เลือกเทมเพลต · <em>แตะครั้งเดียว</em> — ไม่ต้องพรอมต์", "zh": "添加照片 · 选择模板 · <em>一键</em>——无需提示词", "vi": "Thêm ảnh · chọn mẫu · <em>một chạm</em> — không cần prompt", "id": "Tambah foto · pilih templat · <em>sekali ketuk</em> — tanpa prompt", "ms": "Tambah foto · pilih templat · <em>sekali ketik</em> — tanpa prompt"},
   phMeitu: { my: "Retouch A ပုံစံ ၁၆၃ မျိုး — <em>Live Preview</em> နဲ့ တစ်ချက်ချင်း မြင်ရမယ်", en: "163 Retouch A controls, every one of them on <em>live preview</em>",
     shn: "Retouch A 163 ဢၼ် — ပႃး <em>live preview</em> ၵူႈဢၼ်", kac: "Retouch A 163 hpe — yawng <em>live preview</em> hte",
     th: "ปรับแต่ง Retouch A 163 รายการ พร้อม<em>พรีวิวสด</em>ทุกตัว", zh: "163 项 Retouch A 调整，每一项都有<em>实时预览</em>",
@@ -15661,6 +15662,75 @@ function ffBuildChainRow() {
   }
 }
 
+/* ================= IMAGINE PAGE (6.29.0 wave — the app's pgImagine) =================
+   The page is DRAWN by js/hnk_imagine.js, the app's own IMAGINE module lifted verbatim
+   (tools/build_panel_imagine.js); this is the panel's side of its host contract — the
+   same six things the web app hands it, done the Photoshop way: ff9 strings, <img>
+   icons, icons/imagine assets, the UXP file dialog (refCaptureEntry handles PSD/TIFF),
+   callImageAPI on the chosen model, the panel's gallery store, and Export = place the
+   result into the document (plus the auto-save folder when one is set). */
+let imagineReady = false;
+function imagineHost() {
+  return {
+    t9: function (m) { return ff9(m); },
+    icon: function (name) { return ffIcon(name, "cream"); },
+    button: function (cls) { return mkBtn(cls); },
+    asset: function (kind, file) { return (kind === "thumb" ? "icons/imagine/th/" : "icons/imagine/") + file; },
+    pickWire: function (btn, onFiles) {
+      btn.addEventListener("click", async function () {
+        try {
+          const picked = await fsp.getFileForOpening({ allowMultiple: true, types: REF_LIB_TYPES });
+          const arr = picked ? (Array.isArray(picked) ? picked : [picked]) : [];
+          const out = [];
+          for (let i = 0; i < arr.length; i++) {
+            try {
+              const e = await refCaptureEntry(arr[i]);
+              if (e && e.b64) out.push({ dataUrl: "data:" + (e.mime || "image/jpeg") + ";base64," + e.b64, name: e.label || arr[i].name || "" });
+            } catch (e) { setStatus(friendlyErr(e), "err"); }
+          }
+          if (out.length) onFiles(out);
+        } catch (e) { setStatus(friendlyErr(e), "err"); }
+      });
+    },
+    hasModel: function (id) { return !!ffModelById(id); },
+    sizeTiers: function (id) { const m = ffModelById(id); if (!m || !ffHasSize(m)) return null; return t2iSizeTiers(m) || ["1k", "2k", "4k"]; },
+    hasKey: function () { return !!(state.rhKey || "").trim(); },
+    gotoSetup: function () { switchPage("setup"); },
+    generate: async function (o) {
+      const m = /^data:([^;]+);base64,(.*)$/.exec(o.dataUrl || "");
+      const parts = [{ text: o.prompt }, { inlineData: { mimeType: m ? m[1] : "image/jpeg", data: m ? m[2] : "" } }];
+      /* one photo in, one photo out — Freeform's take count does not apply here */
+      const svCount = state.ffCount; state.ffCount = 1;
+      try {
+        const r = await callImageAPI(o.modelId, parts, { size: String(o.size || "").toUpperCase() }, o.signal);
+        return r ? { b64: r.b64, mime: r.mime || "image/png" } : null;
+      } finally { state.ffCount = svCount; }
+    },
+    friendly: function (e) { return friendlyErr(e); },
+    saveGallery: async function (out) {
+      const gs = globalThis.HNK && globalThis.HNK.galleryStore;
+      if (gs) await gs.save(out.b64, out.mime === "image/jpeg" ? "jpg" : "png", "imagine");
+    },
+    exportOut: async function (out) {
+      state.resultB64 = out.b64; state.resultMime = out.mime || "image/png"; state.lastAction = "Imagine";
+      await placeResultToPS();
+      await saveResultToDisk();
+    },
+    toast: function (msg, kind) { setStatus(msg, kind === "ok" ? "ok" : kind === "err" ? "err" : ""); },
+    scrollTop: function () { const pg = $("pages"); if (pg) pg.scrollTop = 0; }
+  };
+}
+function imagineEnter() {
+  const im = globalThis.HNK && globalThis.HNK.imagine;
+  if (!im) return;
+  const head = $("phImagine"), m = PAGE_HERO_HEADS.phImagine;
+  if (head && m) paintHeroHead(head, m[state.lang] || m[LANG_FB[state.lang]] || m.en);
+  if (!imagineReady) { im.init(imagineHost(), $("imRoot")); imagineReady = true; }
+  else im.onEnter();
+}
+/* a language change repaints the page the way the app's reload would */
+REFRESHERS.push(function () { try { if (imagineReady) imagineEnter(); } catch (e) { } });
+
 /* ================= FREEFORM PAGE (v6.51.0 — the app's pgCreate) =================
    The GENERATE card: the app's 49 RunningHub image models behind the brand
    picker, the visual ratio rail, Advanced count/size, the add-on summary and
@@ -16674,6 +16744,8 @@ const PAGES = [
   { key: "aitools", page: "pageAiTools", group: "home" },
   { key: "wf",      page: "pageAiTools", group: "wf" },
   { key: "prompt",  page: "pagePrompt",  group: "edit",  sub: "Freeform",  ic: "i-pen" },
+  /* 6.29.0 wave — the app's pgImagine: one-tap AI tools, drawn by the app's own IMAGINE module (js/hnk_imagine.js) */
+  { key: "imagine", page: "pageImagine", group: "edit",  sub: "Imagine",   ic: "i-wand" },
   /* the app's Edit group is Freeform · Retouch A · Retouch B · Retouch · Path.
      v6.51.0 — Retouch A and Retouch B are now the app's OWN studio pages
      (its two suites, 375 controls, built by the app's own code — see
@@ -16852,6 +16924,7 @@ function switchPage(key) {
     } catch (e) { }
   }
   if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
+  if (key === "imagine") { try { imagineEnter(); } catch (e) { hwarn("imagine:", e); } }   /* 6.29.0 wave — paints the hub / tool view on entry */
   /* v6.51.0 — Setup repaints its readiness rows and the data-store line on entry, like the app's showPage */
   if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */

@@ -145,6 +145,9 @@ const PAGES = [
   { key: "home", panelKey: "aitools", appKey: "pgDash", panelRoot: "#pageAiTools", appRoot: "#pgDash", label: "Home" },
   { key: "wf", panelKey: "wf", appKey: "pgWf", panelRoot: "#pageAiTools", appRoot: "#pgWf", label: "Workflows" },
   { key: "edit", panelKey: "prompt", appKey: "pgCreate", panelRoot: "#pagePrompt", appRoot: "#pgCreate", label: "Edit" },
+  /* 6.29.0 wave — Imagine is ONE module on both surfaces (js/hnk_imagine.js is the app's block, lifted), so its
+     hub must read identically: kick, headline, intro, four cards, the coming-waves line. */
+  { key: "imagine", panelKey: "imagine", appKey: "pgImagine", panelRoot: "#pageImagine", appRoot: "#pgImagine", label: "Imagine" },
   { key: "lib", panelKey: "presets", appKey: "pgLib", panelRoot: "#pagePresets", appRoot: "#pgLib", label: "Library" },
   { key: "video", panelKey: "video", appKey: "pgVideo", panelRoot: "#pageVideo", appRoot: "#pgVideo", label: "Video" },
   { key: "setup", panelKey: "setup", appKey: "pgHome", panelRoot: "#pageSetup", appRoot: "#pgHome", label: "Setup" }

@@ -142,8 +142,8 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
      ["pgCreate","pgMeitu","pgEvoto","pgRetouch","pgPath"] — 5 subtabs, not 4.
      The count is still exact; the two new siblings are named so the number is
      pinned to that split rather than to an arbitrary total. */
-  report("1 page renders: pgPath is switchable and visible, its hero headline is non-empty, the Edit group now carries 5 subtabs (Retouch A and Retouch B having replaced the merged Studio page) including Path, and the new i-stack sprite symbol exists",
-    r1.on && r1.offsetOk && r1.hero.length > 4 && r1.subtabs.length === 5 && r1.subtabs.some(s => /Path/.test(s))
+  report("1 page renders: pgPath is switchable and visible, its hero headline is non-empty, the Edit group now carries 6 subtabs (Retouch A and Retouch B having replaced the merged Studio page; Imagine joined after Freeform in the 6.29.0 wave) including Path, and the new i-stack sprite symbol exists",
+    r1.on && r1.offsetOk && r1.hero.length > 4 && r1.subtabs.length === 6 && r1.subtabs.some(s => /Path/.test(s)) && r1.subtabs.some(s => /Imagine/.test(s))
       && r1.subtabs.some(s => /Retouch A/.test(s)) && r1.subtabs.some(s => /Retouch B/.test(s))
       && r1.inPages && r1.sprite && r1.lookCount === 12,
     JSON.stringify(r1));
