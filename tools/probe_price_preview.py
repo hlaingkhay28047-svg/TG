@@ -99,7 +99,7 @@ if IDS: items = [i for i in items if i["id"] in IDS or i.get("base") in IDS]
 if VARIANTS:
     extra = []
     for it in items:
-        for k, patch in enumerate(VARIANTS.get(it["id"]) or [], 1):
+        for k, patch in enumerate(VARIANTS.get(it["id"]) or VARIANTS.get(it.get("base") or "") or [], 1):   # v6.26.0 — image rows are "<id>@<n>": the model id keys their variants too
             body = dict(it.get("body") or {})
             for f, v in patch.items():
                 if v is None: body.pop(f, None)
