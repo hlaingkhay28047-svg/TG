@@ -20,7 +20,17 @@ const PORT = process.env.PORT || 8931;
           if (m) rules.push({ sel: r.selectorText.slice(0, 90), val: r.style.scrollbarWidth, media: media || "", mediaMatches: media ? media.split(" && ").every(x => x.startsWith("@supports") ? true : matchMedia(x).matches) : true }); } } };
       walk(list, "");
     }
-    return { ua: navigator.userAgent.slice(0, 70), computed: cs.scrollbarWidth, innerWidth, hover: mq("(hover:hover)"), pointer: mq("(pointer:fine)"), w1024: mq("(min-width:1024px)"), combo: mq("(hover:hover) and (pointer:fine) and (min-width:1024px)"), rules };
+    /* experiments: which rule forms make this engine compute "thin" */
+    const exp = {}; const inline = { style: el.getAttribute("style"), prop: el.style.scrollbarWidth };
+    const tryRule = (name, css) => { const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st); exp[name] = getComputedStyle(el).scrollbarWidth; st.remove(); };
+    tryRule("plainId", "#stGroupChips{scrollbar-width:thin}");
+    tryRule("mediaHoverPointer", "@media(hover:hover) and (pointer:fine){#stGroupChips{scrollbar-width:thin}}");
+    tryRule("mediaSpaced", "@media (hover: hover) and (pointer: fine) and (min-width: 1024px) { #stGroupChips { scrollbar-width: thin } }");
+    tryRule("doubleId", "#stGroupChips#stGroupChips{scrollbar-width:thin}");
+    tryRule("important", "#stGroupChips{scrollbar-width:thin !important}");
+    tryRule("listCopy", "@media(hover:hover) and (pointer:fine) and (min-width:1024px){#stGroupChips,#libFilters,#libGroups,.prow,#stPendChips,#stGenBar .row,.ratio-rail,#stSuiteTabs{scrollbar-width:thin;scrollbar-color:#2a3450 transparent;padding-bottom:6px}}");
+    const after = getComputedStyle(el).scrollbarWidth;
+    return { ua: navigator.userAgent.slice(0, 70), computed: cs.scrollbarWidth, inline, exp, after, innerWidth, hover: mq("(hover:hover)"), pointer: mq("(pointer:fine)"), w1024: mq("(min-width:1024px)"), combo: mq("(hover:hover) and (pointer:fine) and (min-width:1024px)"), rules };
   });
   console.log(JSON.stringify(r, null, 1)); console.log("pageErrors", JSON.stringify(errs)); await b.close();
 })();
