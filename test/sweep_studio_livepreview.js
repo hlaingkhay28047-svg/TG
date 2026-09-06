@@ -691,25 +691,28 @@ const PORT = process.env.PORT || 8931;
     se.scrollTop = Math.round(nat + 260); await sleep(120);
     se.scrollTop = Math.round(nat + 261); await sleep(320);   // enter band -> compact
     if (!stg.classList.contains("compact")) return { skip: "did not enter compact", cls: stg.className };
-    // crawl up to just ABOVE the exit threshold (natTop-120) while still compact
-    for (let y = Math.round(nat + 261); y > Math.round(nat - 110); y -= 40) { se.scrollTop = y; await sleep(30); }
-    se.scrollTop = Math.round(nat - 110); await sleep(300);
+    /* v6.25.0 — the exit band follows the measured full→compact shrink (120 was the chip-over-picture
+       stage's number; the toolbar stage measures its own), so the crawl stops 10px above ITS threshold */
+    const band = ST._stageExitBand ? ST._stageExitBand() : 120, edge = band - 10;
+    // crawl up to just ABOVE the exit threshold (natTop-band) while still compact
+    for (let y = Math.round(nat + 261); y > Math.round(nat - edge); y -= 40) { se.scrollTop = y; await sleep(30); }
+    se.scrollTop = Math.round(nat - edge); await sleep(300);
     const stillCompact = stg.classList.contains("compact");
     // a plain, non-sticky card below the stage in normal flow
     const marker = document.getElementById("stRecipeCard");
     const before = marker.getBoundingClientRect().top, yBefore = window.scrollY;
-    se.scrollTop = Math.round(nat - 110 - STEP);              // ONE step across the exit threshold
+    se.scrollTop = Math.round(nat - edge - STEP);             // ONE step across the exit threshold
     await sleep(360);
     const after = marker.getBoundingClientRect().top, yAfter = window.scrollY;
     se.scrollTop = 0; await sleep(200);
     return {
-      natTop: Math.round(nat), yBefore, yAfter, stillCompact,
+      natTop: Math.round(nat), band, yBefore, yAfter, stillCompact,
       shift: Math.round(after - before),
       expanded: !stg.classList.contains("compact"),
       reentered: yAfter > nat + 40
     };
   }, STEP23);
-  report("§10.1 exit-flip: crossing natTop-120 upward re-expands the stage while content below stays put (shift == the test's own scroll step)",
+  report("§10.1 exit-flip: crossing natTop-exitBand upward re-expands the stage while content below stays put (shift == the test's own scroll step)",
     !exit23.skip && exit23.stillCompact && exit23.expanded && !exit23.reentered
     && Math.abs(exit23.shift - STEP23) <= 15,
     JSON.stringify(exit23));

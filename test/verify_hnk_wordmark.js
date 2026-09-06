@@ -20,7 +20,7 @@ const checks = [
   ["brand accent line", /\.nav-name::after\s*\{[^}]*linear-gradient\(/s],
   ["reduced-motion support", /prefers-reduced-motion:\s*reduce[^}]*\.hnk-wordmark[^}]*animation:none!important/s],
   ["forced-colors fallback", /forced-colors:active[^}]*\.hnk-wordmark\s*\{[^}]*-webkit-text-fill-color:CanvasText[^}]*animation:none/s],
-  ["small-phone label stays visible (compact)", /@media\(max-width:479px\)\{[\s\S]{0,300}\.hnk-studio-label\s*\{[^}]*font-size:8\.5px/],
+  ["small-phone label stays visible (compact)", /@media\(max-width:479px\)\{[\s\S]{0,300}\.hnk-studio-label\s*\{[^}]*font-size:9\.5px/],
   ["type label gold gradient", /\.hnk-studio-label\s*\{[^}]*linear-gradient\([^}]*background-clip:text/s],
   ["small-phone sizing", /@media\(max-width:379px\)[^{]*\{[^}]*\.hnk-wordmark\s*\{[^}]*font-size:/s]
 ];

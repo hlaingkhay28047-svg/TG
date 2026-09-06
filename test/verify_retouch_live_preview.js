@@ -37,7 +37,7 @@ report("A4) a changed buffer rung is never a mid-session rebuild: the ladder onl
   /ST\.q\.pendingBuf=false;\s+\/\* v6\.23\.0 — this build is at the current rung \*\//.test(APP) &&
   !/stQApply/.test(APP) && !/stBuildBuffer\(\)[^\n]*\n[^\n]*stQObserve/.test(APP), null);
 report("A5) stage chrome: swap chip beside A|B, zoom presets row, the picture owns the long press (no callout / selection); the panel still has no live stage by design",
-  /#stSplitSwap\{top:10px;left:62px/.test(APP) && /\.st-zoom-presets\{position:absolute;top:52px;left:6px;right:6px/.test(APP) &&
+  /#stSplitSwap\{min-width:38px;justify-content:center;flex:0 0 auto\}/.test(APP) && /\.st-zoom-presets\{display:none;flex-wrap:wrap;gap:4px;justify-content:center;width:100%/.test(APP) && /#stStage\.zoomrow \.st-zoom-presets,#stStage\.zoomed \.st-zoom-presets\{display:flex\}/.test(APP) &&
   /#stZoomWrap\{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none\}/.test(APP) &&
   /var sx0=ST\.split\.swap\?cwp:0, sw0=ST\.split\.swap\?c\.width-cwp:cwp;/.test(APP) &&
   !/id="stStage"/.test(PANEL), null);
