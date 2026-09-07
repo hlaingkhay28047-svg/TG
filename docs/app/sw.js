@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-29-1";
+var CACHE = "hnk-web-studio-v6-29-2";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -238,7 +238,13 @@ var LIB_PURGES = [
   /* 6.17.0 — Couple Compose redrawn under its own name for the three-input
      redesign (two faces set onto a couple photograph). LIB_ART_REV gives the
      card a new URL; this clears the copy the old URL left behind. */
-  { tag: "./__lib-purge-v6-17-0-couple-compose", re: new RegExp("/lib/wf/cards5/(couple-compose)\\.jpg$") }
+  { tag: "./__lib-purge-v6-17-0-couple-compose", re: new RegExp("/lib/wf/cards5/(couple-compose)\\.jpg$") },
+  /* 6.29.2 — Imagine's page banner, four card pairs and 54 template thumbnails, re-shot on the brand model under their own
+     names. THE SAME BUG AGAIN, ONE RELEASE LATER: 6.29.1 had already replaced the thumbnails and the banner in place with
+     neither a revision nor an entry here, and the owner opened the templates on the very release that changed them and saw
+     the 6.29.0 library pictures. LIB_ART_REV now hands every one of these a new URL; this entry clears the copies the old
+     URLs left behind. Named by folder-and-pattern rather than 63 filenames: /lib/wf/imagine/ holds nothing else. */
+  { tag: "./__lib-purge-v6-29-2-imagine", re: new RegExp("/lib/(wf/imagine/(th/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners/banner-imagine)\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair

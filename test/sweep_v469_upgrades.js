@@ -157,7 +157,11 @@ const DECLARED = [
     re: /\/lib\/vid\/vt-(charSwap|faceSwap|headswap|anime|filmlook|heritage|extend|restore|erasesub|char30)\.jpg$/ },
   /* 6.17.0 — Couple Compose redrawn under its own name; LIB_ART_REV hands it a new URL, this clears the old. */
   { tag: "./__lib-purge-v6-17-0-couple-compose",
-    re: /\/lib\/wf\/cards5\/(couple-compose)\.jpg$/ }
+    re: /\/lib\/wf\/cards5\/(couple-compose)\.jpg$/ },
+  /* 6.29.2 — Imagine's banner, card pairs and template thumbnails re-shot on the brand model under their own names;
+     LIB_ART_REV hands each a new URL, this clears the old (the folder holds nothing else). */
+  { tag: "./__lib-purge-v6-29-2-imagine",
+    re: /\/lib\/(wf\/imagine\/(th\/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners\/banner-imagine)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
