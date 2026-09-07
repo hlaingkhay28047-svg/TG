@@ -5,7 +5,7 @@
    "name": "base-lighting",
    "apiPath": "rhart-image-n-pro-official/text-to-image",
    "base": null,
-   "prompt": "Studio head-and-shoulders portrait photograph of a beautiful young Vietnamese woman about 21 years old, fair porcelain skin, delicate soft features, long straight dark hair, natural light makeup, gentle calm expression, slim, elegant, wearing a plain charcoal-grey crew-neck t-shirt, in front of a plain mid-grey seamless paper backdrop, lit by completely FLAT even shadowless light with no visible light direction, no highlights and no rim light (slightly dull, like an ID photo), looking straight at the camera, 85mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "prompt": "Editorial three-quarter-length fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a fitted black satin camisole top and high-waist cream wide-leg trousers, a dynamic pose: one hand lifting her hair, shoulders turned, chin tilted, looking over her shoulder at the camera with a slight smile — in front of a plain mid-grey seamless backdrop, lit by completely FLAT even shadowless light with no visible light direction, no highlights and no rim light (deliberately dull, waiting to be relit), 85mm lens, vertical 2:3 framing, photoreal fashion editorial, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
@@ -13,7 +13,7 @@
    "name": "base-portrait",
    "apiPath": "rhart-image-n-pro-official/text-to-image",
    "base": null,
-   "prompt": "Full-body photograph of a beautiful young Vietnamese woman about 21 years old, fair porcelain skin, delicate soft features, long straight dark hair, natural light makeup, gentle calm expression, slim, elegant, wearing a simple white sleeveless midi sundress and flat white sandals, standing relaxed with her whole body and feet visible, in an empty plain light-grey photo studio (plain grey floor, plain grey backdrop, nothing else), soft even lighting, a soft smile toward the camera, 50mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "prompt": "Full-body street-fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a cropped white ribbed tank top, high-waist light-blue denim shorts, white sneakers and small gold hoop earrings, caught mid-stride walking toward the camera, hair swinging, one hand adjusting sunglasses on her head, a bright playful laugh — the whole body including shoes visible, in an EMPTY plain light-grey photo studio (plain grey floor and plain grey backdrop, nothing else), soft even lighting, 50mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
@@ -21,7 +21,7 @@
    "name": "base-surface",
    "apiPath": "rhart-image-n-pro-official/text-to-image",
    "base": null,
-   "prompt": "Full-body photograph of a beautiful young Vietnamese woman about 21 years old, fair porcelain skin, delicate soft features, long straight dark hair, natural light makeup, gentle calm expression, slim, elegant, wearing a cream ribbed knit dress and clean white sneakers, standing on a huge flat plain grey concrete floor that fills the entire lower half of the frame, camera at waist height tilted slightly down so a wide expanse of bare ground is visible around and in front of her feet, a plain pale overcast sky and a faint far horizon behind her, soft daylight, looking at the camera, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "prompt": "Full-body fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a fitted pastel-pink summer mini dress with thin straps and chunky white sneakers, sitting relaxed on a huge flat plain grey concrete floor with her legs stretched out to one side and one hand behind her, laughing toward the camera — the bare ground fills the entire lower half of the frame around and beyond her, camera slightly above her eye level looking down, a plain pale overcast sky and a faint far horizon behind, soft daylight, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
@@ -29,7 +29,7 @@
    "name": "base-weather",
    "apiPath": "rhart-image-n-pro-official/text-to-image",
    "base": null,
-   "prompt": "Three-quarter photograph of a beautiful young Vietnamese woman about 21 years old, fair porcelain skin, delicate soft features, long straight dark hair, natural light makeup, gentle calm expression, slim, elegant, wearing a light beige trench coat over a white top, standing on an open grassy hilltop path, a wide clear pale-blue sky filling the upper half of the frame, calm plain weather, soft daylight, hair resting still, looking slightly past the camera, 35mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "prompt": "Full-body photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a flowing floral-print silk slip dress to mid-thigh and strappy sandals, twirling on an open grassy hilltop path with her arms spread wide and the dress and hair flaring in the spin, joyful open-mouth smile, a wide clear pale-blue sky filling the upper half of the frame, calm plain weather, soft daylight, 35mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },

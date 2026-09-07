@@ -2429,12 +2429,14 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    flex gap, no aspect-ratio and no object-fit — thumbnails are background-size:cover boxes. */
 #pageImagine .im-intro{margin:0 0 12px;line-height:1.6}
 .im-grid{display:flex;flex-wrap:wrap;margin:0 -5px}
-.im-card{flex:1 1 40%;min-width:240px;margin:5px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--text)}
-.im-card:hover,.im-card:focus-visible{border-color:var(--accent);outline:none}
-.im-card-art{position:relative;height:160px;background-size:cover;background-position:center}
-.im-card-art:after{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:var(--accent);box-shadow:0 0 6px rgba(217,164,65,.8)}
-.im-card-art .lb{position:absolute;bottom:6px;left:6px;font-size:9.5px;font-weight:800;letter-spacing:.05em;padding:1px 6px;border-radius:5px;background:rgba(11,13,20,.78);color:var(--text);z-index:1}
-.im-card-art .lb.r{left:auto;right:6px}
+.im-card{flex:1 1 40%;min-width:240px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--text);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.im-card:hover,.im-card.lift,.im-card:focus-visible{border-color:var(--accent);outline:none;transform:translateY(-6px) scale(1.012);box-shadow:0 16px 34px rgba(0,0,0,.5)}
+.im-card.lift{border-color:var(--accent-h)}
+/* the card picture: a 2:3 Before | After compare, the after as the whole picture, the before clipped on top */
+.im-hubcmp{position:relative;overflow:hidden;background:#050b10;user-select:none;-webkit-user-select:none;touch-action:pan-y pinch-zoom;cursor:ew-resize}
+.im-hubcmp img.im-base{display:block;width:100%;height:auto;max-width:100%}
+.im-hubcmp .im-cmp-knob{width:34px;height:34px;margin:-17px 0 0 -17px;line-height:34px}
+@media (min-width:1100px){.im-card{flex:1 1 20%;min-width:0;max-width:calc(25% - 10px)}}
 .im-card-body{padding:10px 12px 12px;display:flex;flex-direction:column;flex:1 1 auto}
 .im-card-name{font-weight:800;font-size:14px;display:flex;align-items:center;color:var(--text)}
 .im-card-name .ic-s{margin-right:6px;flex:none}

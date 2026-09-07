@@ -383,12 +383,15 @@ function report(name, ok, detail) {
     "banner-freeform",
     /* v6.14.0 — the Talk and Video→Video pages' own heroes (a photograph
        that speaks; a model stepping out of her clip), same commit as the pairs. */
-    "banner-talk-photo", "banner-v2v-portal"];
+    "banner-talk-photo", "banner-v2v-portal",
+    /* 6.29.1 wave — the Imagine page's own hero (a model half in flat studio light, half in a golden
+       rice field — the tool's promise in one frame), same commit as the pair. */
+    "banner-imagine"];
   const pairsOnDisk = clipNames.every(n =>
     fsMod.existsSync(pathMod.join(motionDir, n + ".mp4")) && fsMod.existsSync(pathMod.join(motionDir, n + ".webm")));
   const swSrc = fsMod.readFileSync(pathMod.join(__dirname, "..", "docs", "app", "sw.js"), "utf8");
-  report("v5.58.0: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback), all fourteen clip pairs on disk and announced (twelve page heroes + the Workflows hero-art + the Freeform hero), clips excluded from LIB_CACHE",
-    v57.heroes >= 11 && v57.listed === 14 && v57.injected >= 10 && v57.wfInjected === 1 && pairsOnDisk &&
+  report("v5.58.0: video-hero layer wired (lazy IO arm, off-screen pause, codec-picked mp4/webm, silent fallback), all fifteen clip pairs on disk and announced (thirteen page heroes + the Workflows hero-art + the Freeform hero), clips excluded from LIB_CACHE",
+    v57.heroes >= 11 && v57.listed === 15 && v57.injected >= 10 && v57.wfInjected === 1 && pairsOnDisk &&
     srcApp.includes('v.className="ph-motion"') &&
     srcApp.includes('canPlayType(\'video/mp4; codecs="avc1.42E01E"\')') &&
     srcApp.includes('"lib/banners/motion/"+m[1]+phExt') &&
