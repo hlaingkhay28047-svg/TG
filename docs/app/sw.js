@@ -250,7 +250,10 @@ var LIB_PURGES = [
   { tag: "./__lib-purge-v6-29-2-imagine", re: new RegExp("/lib/((wf/imagine/(th/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners/banner-imagine)\\.jpg|banners/motion/banner-imagine\\.(mp4|webm))$") },
   /* 6.30.0 — Portrait Scene's card after and its Golden Rice Field thumbnail, re-shot with a pose lock (the owner saw the
      6.29.2 result change her pose and add sunglasses). Two files, rev 3 in LIB_ART_REV; this clears the rev-2 copies. */
-  { tag: "./__lib-purge-v6-30-0-portrait-card", re: new RegExp("/lib/wf/imagine/(card-portrait-after|th/portrait-riceField)\\.jpg$") }
+  { tag: "./__lib-purge-v6-30-0-portrait-card", re: new RegExp("/lib/wf/imagine/(card-portrait-after|th/portrait-riceField)\\.jpg$") },
+  /* 6.30.0 — the four W1 tools re-shot (short modern fashion, the house beauty retouch): 8 cards + 54 thumbnails replaced in place,
+     rev 3 (Portrait's after and Golden Rice Field rev 4). This clears the rev-2/rev-3 copies; the hero still and its clips stay. */
+  { tag: "./__lib-purge-v6-30-0-imagine-w1-beauty", re: new RegExp("/lib/wf/imagine/(card-(lighting|portrait|surface|weather)-(before|after)|th/(lighting|portrait|surface|weather)-[A-Za-z0-9]+)\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair

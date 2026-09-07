@@ -1,5 +1,5 @@
 {
- "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest.",
+ "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest. 6.30.0: the four Imagine W1 tools re-shot as short modern fashion with the house beauty retouch — 62 files pinned to __lib-purge-v6-30-0-imagine-w1-beauty (rev 3; Portrait's after and Golden Rice Field rev 4).",
  "files": [
   {
    "path": "docs/app/lib/vid/vt-charSwap.jpg",
@@ -72,306 +72,6 @@
    "tag": "./__lib-purge-v6-29-2-imagine"
   },
   {
-   "path": "docs/app/lib/wf/imagine/card-lighting-before.jpg",
-   "sha256": "f4c5e52a54a55522ff1133dc1381c4188d62940795c97c0bf55bd4b18ab218d3",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-lighting-after.jpg",
-   "sha256": "983c297b237134182fdaedfc3e71c5d05908a0d8c9b671ce3beb089b578c1e76",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-portrait-before.jpg",
-   "sha256": "098b11d6913033c0d9521b0300b60cbe1deff2eb1282c47ddb1cf5f52a171019",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-surface-before.jpg",
-   "sha256": "67d42109d5c9c62d6326d23f3ce92a144f65b9791f1f4800a86b2ee97dd4275a",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-surface-after.jpg",
-   "sha256": "1a5412a1f9518965f949548b69e84182b020c1de4164424c1de9588024fb61c0",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-weather-before.jpg",
-   "sha256": "ee931286b87d5c32f951acb404c2aac4e9f3e79f0ee3adb6bffb76cb0ef01dab",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-weather-after.jpg",
-   "sha256": "1c78a14a1137f5d3b15897f6667f4466c8bbac0f7541c63b08232545aaf5bdd5",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-window.jpg",
-   "sha256": "dee96732781ccfb753d1fae86c35761cea1cabe46e2a7dde3ebab448b3bbf6a9",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-warmWindow.jpg",
-   "sha256": "a93ab0ae50eb4a275803660b6d8f404d8f010d827873bf1920aa2f915e213be8",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-brightGlow.jpg",
-   "sha256": "3f4cf9a642c7e2c01f95e857c7186ca9c96d29a036998b8bc1d62871419fee28",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-warm.jpg",
-   "sha256": "a534fd27b55a5f5ff8f4e09e726366cd8dc3e77e58e74913c7a3268364980127",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-harshSun.jpg",
-   "sha256": "14f0216ef1890930b46959770ee8edf7cf18f02fdf535d42e5ea0a2d15ec7150",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-goldenSun.jpg",
-   "sha256": "6ef7a22cd11371c3261db69812c18b80854b7d75ee68a671291145c44a52f732",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-sunRays.jpg",
-   "sha256": "08981337614ffbfe15044754ca6e5a49027e714890b5052ed8b2af51a48d2abe",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-afternoon.jpg",
-   "sha256": "9eabe11ea89882f060b9920f87ecbeeba1a9e9273b2df682dff47e2327aa66ca",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-windowStreaks.jpg",
-   "sha256": "4f256c1a1bc018357ed2a95b18c0a7f5c79825eae1dcffeba1a7cc8fd3e76980",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-leafDapple.jpg",
-   "sha256": "71e0117542edb833d34799abe63ca70e7790f7a5f4841c585aa145ec09b84324",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-soft.jpg",
-   "sha256": "fa2d1bf3148ce1f750eed4add7b298c0afb9408af8fc890edc728b751d45aac4",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-goldRim.jpg",
-   "sha256": "88d000ecd107728b896d8efe6dd7aefce87e8fea0d7a6665c39a5c8c06e469b8",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-winterStreet.jpg",
-   "sha256": "eb1b2ddb52a03d429533c2f2738e39e0d7bb8984e5387e7b34201a7fcb7bc2ff",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-softGarden.jpg",
-   "sha256": "4d5d15349d6d72e2d98f93743182dd6155a5b467a138fb9286c86e62686b0ee2",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-flowerGarden.jpg",
-   "sha256": "f8929cc9361fcc461abbfcd1cb7c7e9870226eece3a6fc77f6a8f4ce2714e37c",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-wildflowerField.jpg",
-   "sha256": "fb4a32b59789e327942a7f7a3a7c1180544617f7bf0ef31f609fab3ba3f1e0e9",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-countryField.jpg",
-   "sha256": "1e798e3d64bddb659ad67a08f78cd69a8a186db373590d1bfbd8dbeb5b5a0ced",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-goldenHill.jpg",
-   "sha256": "da1e7663309c6cea44f8db266745e2cc38ab277ee64a7fff948ce908c20fcbb9",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-autumnPark.jpg",
-   "sha256": "5102213c53a9ad95285942023e4357dee8206b8328449e5c16d4a9cdaa37acd9",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-beach.jpg",
-   "sha256": "9a7a265d5dfcc8dfe3a1c9da57661f9cd3b1aa5d2d19a66aac25f449275d52de",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-sunsetSea.jpg",
-   "sha256": "48734e704360a3174cbfaee1eb81ea5a20663fd8f33c0e4884590d1a880dfff3",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-morningSun.jpg",
-   "sha256": "fbdffb8b01f16c7b00e248a972223a7588c40f00c57a3efca77c0409c90ff187",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-mistyDawn.jpg",
-   "sha256": "b2261250c1920020c90380d21a4a4bd4addc6b4ef893b79df5a9a2b7d1a53144",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-goldenWind.jpg",
-   "sha256": "9a1449a9977b560d97d925c3982cf2af98d1df685b151fbf23a84c8354281779",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-goldenSunset.jpg",
-   "sha256": "a7edd92b20d095d896bd6b24ca67c0987babd41292150706764ab8a6b369f479",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-blueTwilight.jpg",
-   "sha256": "e6495b10dee7b17cdbe31c2d7fb9aa49d12830e513423fc5b5ebf3e33d892989",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-grass.jpg",
-   "sha256": "41430086ee5637d35606ee15386a300795b1cfd37c688caf69fb6448b4384a89",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-naturalGrass.jpg",
-   "sha256": "a17d15a4be5100af541f769cf34f81277d3abec8e69f5876cbc80c32c3dce59c",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-meadowGrass.jpg",
-   "sha256": "7dbb12ebfc1e0bcc84383f3c86d57ad84b0e7bacea9ac44cd6f301382add470c",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-wildGrass.jpg",
-   "sha256": "cd4ecfbc28d243af817c235554f9509d21c6ba5cfdce43faac002d313edac9d0",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-dryGrass.jpg",
-   "sha256": "e95bb54365727cfb8e39e3387a39f80842253f55e98d64147b67370e68da7441",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-greenFlowerField.jpg",
-   "sha256": "ff0d6b120e9711820116d9996bd065c9ce1be640cdd48d789e6acec6ced09566",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-whiteFlowers.jpg",
-   "sha256": "eb10278f3713ce047e2359a621e77fe7ccd79e94199ef3d0bbc6aebafebe0e32",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-naturalFlowers.jpg",
-   "sha256": "4b0bd79933f38ec5507d6309726ac4fb2096e8df493e7b3ea5b02510b569c800",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-wildflowers.jpg",
-   "sha256": "8288b476f71f71bf3b7f2098bf53943ec3ba688d2b9849de63c5452fba28fb39",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-goldenSand.jpg",
-   "sha256": "b25544a1cd74a563369f2ae8b3a4143ccde490a463c42807e60ea84d4240d17f",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-whiteSand.jpg",
-   "sha256": "c2e3d0a2ea870813a2f5e6127f044df89a78ef7dac12050c2cac62b2d89eede8",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-blueLake.jpg",
-   "sha256": "e924544233bf6312111036b79b44ad4f4eaeb6b25b2079ade51b5b3ab1d019f3",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-stillWater.jpg",
-   "sha256": "9343a8fcaa46b9ea41153379106c31e3f5c055567b40e06ba0e0b12dbee1c47a",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-pebbles.jpg",
-   "sha256": "dc74feae1ad1f46fdc3b85821378867df321dc6cc63c3161ef9938c0ce8b40bb",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/surface-deepBlueSea.jpg",
-   "sha256": "45bae9574eb5620519afd603190fad6339bb3372c9a1ddbe6f11a5a6615b1394",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-snowfall.jpg",
-   "sha256": "a6291d5945096b11bdc683500428db917897773aeb52d7dac4265f8a04330645",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-lightRain.jpg",
-   "sha256": "3724b8f1f5a3c11e19394c9876a562d1a6e231e505d6048dbfea66cd0f63a2d3",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-heavyRain.jpg",
-   "sha256": "c890afeab52ec8661a4c94adaef6e0cc7592d21630e4d1dffe1be8b61fc59d1c",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-fogMist.jpg",
-   "sha256": "80412a2dbabe29283344eb1df42a71c97cbfcd4ef9192154d585478466e6c4cd",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-goldenHaze.jpg",
-   "sha256": "bb09011737efc3e88ab4204b688466b36fae59c96fe42a559433f6bf42ed06fd",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-overcast.jpg",
-   "sha256": "e72fdd05b0ee89ebda75e16f30680eea6b04d33e79d1fc81c6cf14fbff561253",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-stormClouds.jpg",
-   "sha256": "115df261665171f58675f74f56d4bcd6bc6b3f42e73f346eef05be8ccfb5f75a",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-rainbow.jpg",
-   "sha256": "cdeb71eddaeadbf1c03d066be526689084930318d96332d66022b2f57f2f31c8",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-blueHour.jpg",
-   "sha256": "1de6b01b559dcfb98d07d94a3f0d489cdc6248af3d210061019aaa80022c0a7a",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-clearSunny.jpg",
-   "sha256": "8722f9247f4af3866c96328a388bb3ba14c1a6ab692ce3b7a6fbeb6a36b5da8a",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-autumnLeaves.jpg",
-   "sha256": "292d17d709271fb06055cc42773431d2c22fcb2b61b5f101dc185ec301ce7081",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/weather-blossomPetals.jpg",
-   "sha256": "41627e5c637102d346f1a7bedae0c65056ac2c50eb05fd6aa965f1513c426c28",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
    "path": "docs/app/lib/banners/motion/banner-imagine.mp4",
    "sha256": "db364b24b60c4b3e7512b1a53f97e310fbd204a78840c99818fab0cc98141dd5",
    "tag": "./__lib-purge-v6-29-2-imagine"
@@ -382,14 +82,314 @@
    "tag": "./__lib-purge-v6-29-2-imagine"
   },
   {
+   "path": "docs/app/lib/wf/imagine/card-lighting-before.jpg",
+   "sha256": "b3c62764227fb7e1361c388b56bfa847999d936d5cec3345e8fa657db3fedd3f",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-lighting-after.jpg",
+   "sha256": "eb0605768f47cdf984d54c8e3b0511c13d7d6fa5a8934ae5b5ddd8bafaa05c73",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-window.jpg",
+   "sha256": "544322c2e693d9aa3ae450d3cc3716a3e09f5be7332839d40c0518153b457bac",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-warmWindow.jpg",
+   "sha256": "ddc15838246f4c605502e40bc8b4511bc188765e698537b0ad9173a3973235e5",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-brightGlow.jpg",
+   "sha256": "47e7c595ae354e5c7ba5ceebe1f07422d984267d5f9edfa647fb4d8b8a38f739",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-warm.jpg",
+   "sha256": "436da7d9b4737f372d334b02056b8bb1893aa3cdbe931b09f0b4e339478ab4a1",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-harshSun.jpg",
+   "sha256": "9c3f2880375e1696124c3c2b51154f623228a442ce9f1572d32fe2ecd2f585ba",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-goldenSun.jpg",
+   "sha256": "273bc010ecfbf20a46636ff95753486c93930f60d1ee5c09f11d24cab81af056",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-sunRays.jpg",
+   "sha256": "bc94b885fae9849207ff636eb98dd08b1368d4c780d7113b17f8e80933eaed73",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-afternoon.jpg",
+   "sha256": "0378a6edab381c422f52000eeb851fd43b691b076b3e3e75f6dc0d14eefccd93",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-windowStreaks.jpg",
+   "sha256": "d0e33bf01ac1f3f5553809f76445df4a87e47479c8a8becf17bf5d0b4c8839ae",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-leafDapple.jpg",
+   "sha256": "c1b4a6230829ab7967902b4efedb64f581e424760945f6de39e07fc78f47a1ea",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-soft.jpg",
+   "sha256": "907f2ee31016e69687b231d47d7fba9cd72e49adfe11e8ed4be6c83eba91aead",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-goldRim.jpg",
+   "sha256": "a6fc4de5e01103a695490ed3ba8f2b5539175eebd8e8c0f6c5bd9dcd1765af47",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-portrait-before.jpg",
+   "sha256": "ff8170a5856b8f857640c2cf7baf6728157f2794b72bf14460572750fbc616f5",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
    "path": "docs/app/lib/wf/imagine/card-portrait-after.jpg",
-   "sha256": "2f394d104a43dae8000880688839a9deb8c268a8684e442e146def172b69cd70",
-   "tag": "./__lib-purge-v6-30-0-portrait-card"
+   "sha256": "121c04994858b32c63160b17a0f788f033671ae39325b8b8ecba05266fc11920",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-winterStreet.jpg",
+   "sha256": "0e5694872fd62781c531e31923b0d0a6ac1f9fd168917a1ad64289bf446d9b55",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-softGarden.jpg",
+   "sha256": "bc1ae2f896e3fc766653f1ae57da4ad0853c06147da8fbdbf9f9de989946157b",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-flowerGarden.jpg",
+   "sha256": "e0a04ef6988f7a92f6ce59b34f0e5aff2e1ac314d5326ac2c58c609a01f8b191",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-wildflowerField.jpg",
+   "sha256": "f317485e3d61aa533e492cf580ccc610607846105b0563d48b8e9feec8b797fa",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-countryField.jpg",
+   "sha256": "49e86bb3a3edb3122e147f6c4788e1b2907599fd8bf5670df5094f33ecbdd58c",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
   },
   {
    "path": "docs/app/lib/wf/imagine/th/portrait-riceField.jpg",
-   "sha256": "0e27b530c029d325252042f7b4825d45edcc3a66afc761c34f254f2fd5fa2659",
-   "tag": "./__lib-purge-v6-30-0-portrait-card"
+   "sha256": "138fe1709026edcb48ca0c7dd505b871db7cf3ca821e7e1d97fe230af55b4e13",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-goldenHill.jpg",
+   "sha256": "f4e75a8aef6fb3132a833b9744386b799b23b850357d14c7cd6365f07a60c868",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-autumnPark.jpg",
+   "sha256": "a3bb0c1a940a52a6ddc86cbdb0ee6f9c7a676d4c5cf91bc16df7979d91a0207f",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-beach.jpg",
+   "sha256": "d391922e24a31ad1138786548a3a243abefcb897d4828b93d45cac69df638dd0",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-sunsetSea.jpg",
+   "sha256": "588e8d1fa208f41b28e223f4c7fe55a582f41028a8bf42c8a31038722a9b94f3",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-morningSun.jpg",
+   "sha256": "b4efb92cfbd2f0343509d62afb0e645383aef25d73f83b13651f63b6d734e096",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-mistyDawn.jpg",
+   "sha256": "6bf1bdec2178e189eeabdcccd5b398d8211d154d62002f7d1a854473d65a8c60",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-goldenWind.jpg",
+   "sha256": "c68137560328bb3c049118ad03b9b0009c77848dfbbc5325c84c90537a81c94e",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-goldenSunset.jpg",
+   "sha256": "bb2140898426db9759b11a317c67b31d987865f09b47ad9e3d35b5c65e018ec9",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-blueTwilight.jpg",
+   "sha256": "f6e3d4a15c31819c26187f8520a29ecb7d8060f0d5d7ba25d88529392d425856",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-surface-before.jpg",
+   "sha256": "445cef6206e699d6e808f048fabf7f4941b1cd14f2cab89d7e864b164547a0f1",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-surface-after.jpg",
+   "sha256": "403ee6a046ff18f7f9e278ba7d21dfeab9d785f3eaa78eb941df89009db7240a",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-grass.jpg",
+   "sha256": "810083bdbfe274311c0e218fae7060699076a658ec4f1e6d04b94ae0ad32ab30",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-naturalGrass.jpg",
+   "sha256": "2ba32be03d629219d1762c74c022d5cc4e591a1b0e23c426f022b15a35ef1a01",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-meadowGrass.jpg",
+   "sha256": "b22a7d32d70b32ee1b61660bec25fe9f496f3a5073f21b5e84bf42eab4decd5a",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-wildGrass.jpg",
+   "sha256": "15a329fc12ff7339ca199e2048f7885202ab3f9632aacee767e8ec14d3f19a8e",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-dryGrass.jpg",
+   "sha256": "de34cdac8cfb0c0c53f750c4fff8343be3a9fbc2c5ea9e16550cfe2e0e7ed5df",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-greenFlowerField.jpg",
+   "sha256": "9713ea3e82fe6f849dd3e6d3e5c63a5f1722d95dc945dc60c150b72e642ddacd",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-whiteFlowers.jpg",
+   "sha256": "0d96e05b96b6959b2314d18ae16d606079e2f5a52167ab4b92f7050540a3a605",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-naturalFlowers.jpg",
+   "sha256": "e4b8cf41d805699476e4886359207d883814d827f098560a03c85b8bbe83a31a",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-wildflowers.jpg",
+   "sha256": "8bcc71fe4c277e08d88b70a972e1c2083b7227721025d361bf4482e0729ff9d2",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-goldenSand.jpg",
+   "sha256": "79b605a87d44da61e337a9a05a35d8bf48b0399b77fa2c8f5b625db17d56efc1",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-whiteSand.jpg",
+   "sha256": "3eaba54a643175c4771d92ca7d5e5235c277939621c6ffe33108bf28ebccc7d1",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-blueLake.jpg",
+   "sha256": "4fd1f8ee07c205f842340dc5dd075d9a7fc72517f00a22019a1a9d1aea909ee4",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-stillWater.jpg",
+   "sha256": "ecdabc2a5b0368160ca9302e33b37de41a06d133b603498f06c74ae64462ca5d",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-pebbles.jpg",
+   "sha256": "de0204d8eb4805fb6535eb4b97bfd1e4d8ce09567b779d70150d82a61276f5ae",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-deepBlueSea.jpg",
+   "sha256": "b3b9da7128f130edad9c8a97c50a05f8e96c0a9113731c2c74cfffd75d37304d",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-weather-before.jpg",
+   "sha256": "04c083bf1d599e80a25e1486f422e1cdd698a598dcc5f66ff7d96f983f758d23",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-weather-after.jpg",
+   "sha256": "dfd4b19f841625b151c70c73d90e400d5069e4b8f6d31c0bd4a20849714070c7",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-snowfall.jpg",
+   "sha256": "8630f8496a692a713e923947a431820761c3e8d237e995551669121c66b1489d",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-lightRain.jpg",
+   "sha256": "d43617dc7ce32c0023e2d0130a3870311393cbb0e8c521f6066a52a1024e9f8d",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-heavyRain.jpg",
+   "sha256": "66fc9445f1c2c318acee1137faa97c7cc15d4d11cf6b2fa2304f5ea158698994",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-fogMist.jpg",
+   "sha256": "58ae807dc5dde57a2d8640f8166cfb3aea97b9cb6c7343902870947188c1835c",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-goldenHaze.jpg",
+   "sha256": "53a6a82fba40ba89d733e59e8fba4960ce3dee0798c23b8d57cc7e3a125b8c13",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-overcast.jpg",
+   "sha256": "802f8a0dd7419fe6129272db95f1afce4d08ee5b1d32a252025d41feab55089d",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-stormClouds.jpg",
+   "sha256": "d56bd67f0c5f84cc9b74ac49f16d850f37244235fe5f14b89456c70d179c09e9",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-rainbow.jpg",
+   "sha256": "d329883da4f9bea7917eaf302244ae25c26ce5ccf12983d0147c08593a6f4531",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-blueHour.jpg",
+   "sha256": "49964321db5c5da39aff5e3374e8d50a1122b89da8c7ab45a8d685ae3fb7b6f3",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-clearSunny.jpg",
+   "sha256": "2717264bc4f7a978a3be887a11e8a8568f3fa74ef5239674a4b38db2467831d7",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-autumnLeaves.jpg",
+   "sha256": "b8ae24740080a675f7ad94ce0a39183d1f344a8f1c8f68f1602e3398d02f7e90",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/weather-blossomPetals.jpg",
+   "sha256": "591bec4abc886fe403a616a8d279b6e546a8ffc1c5dab91afa988841608502d8",
+   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
   }
  ]
 }
