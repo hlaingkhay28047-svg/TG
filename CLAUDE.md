@@ -59,5 +59,6 @@ get green, and never expose or commit API keys or tokens.
   Motion clips too: they skip the worker cache but not the browser's (6.29.2).
 - Owner-supplied reference packs (other studios' photographs, watermarks removed,
   real people) are look direction only — tone, skin, light, mood, palette in
-  words. Never commit, upload or publish the photographs themselves; the art is
-  generated on the brand model (6.30.0 Color Tone + Skin).
+  words. Never commit, upload or publish the photographs themselves, and never
+  copy a photograph pose-for-pose; the studio's own art is generated on the brand
+  model and never takes a lingerie / boudoir direction.

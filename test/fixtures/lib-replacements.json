@@ -1,5 +1,5 @@
 {
- "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair.",
+ "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest.",
  "files": [
   {
    "path": "docs/app/lib/vid/vt-charSwap.jpg",
@@ -84,11 +84,6 @@
   {
    "path": "docs/app/lib/wf/imagine/card-portrait-before.jpg",
    "sha256": "098b11d6913033c0d9521b0300b60cbe1deff2eb1282c47ddb1cf5f52a171019",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-portrait-after.jpg",
-   "sha256": "0db871273a84403758af97b207ec1a291c352f3a101d79d09d6d85d8e8498480",
    "tag": "./__lib-purge-v6-29-2-imagine"
   },
   {
@@ -194,11 +189,6 @@
   {
    "path": "docs/app/lib/wf/imagine/th/portrait-countryField.jpg",
    "sha256": "1e798e3d64bddb659ad67a08f78cd69a8a186db373590d1bfbd8dbeb5b5a0ced",
-   "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/portrait-riceField.jpg",
-   "sha256": "e381e8bc47dd89acc35a5d430a96d9bd9e1e82afe787596e92c2bedb826330c1",
    "tag": "./__lib-purge-v6-29-2-imagine"
   },
   {
@@ -390,6 +380,16 @@
    "path": "docs/app/lib/banners/motion/banner-imagine.webm",
    "sha256": "c64121396eb9d6eea689c0aa7b287e6abee9cc09e85ea09e84304c823e1f06eb",
    "tag": "./__lib-purge-v6-29-2-imagine"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-portrait-after.jpg",
+   "sha256": "2f394d104a43dae8000880688839a9deb8c268a8684e442e146def172b69cd70",
+   "tag": "./__lib-purge-v6-30-0-portrait-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-riceField.jpg",
+   "sha256": "0e27b530c029d325252042f7b4825d45edcc3a66afc761c34f254f2fd5fa2659",
+   "tag": "./__lib-purge-v6-30-0-portrait-card"
   }
  ]
 }

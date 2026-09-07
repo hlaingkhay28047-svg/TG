@@ -1,6 +1,6 @@
 /* Imagine W2 (6.30.0) — seven more one-tap tools on the W1 shell: Describe Edit, Architecture, ID Photo, Product Enhance,
  * Product Background, Background Replace, Outfit Change. An eighth, Color Tone + Skin (twenty-eight preset cards, five swatches
- * and a mood line per tile), is built but held back until the owner chooses its pictures; when IMAGINE_DATA carries it, the
+ * and a mood line per tile), is built but held back; when IMAGINE_DATA carries it, the
  * checks marked HAS_CT run too. Same module, same hub, same tool view — what is NEW and pinned here:
  *   A) the roster (the W1 four + the W2 tools, every template counted, nine languages), the icons on BOTH surfaces, and each tool's own KEEP / AVOID
  *      line where the shared identity lock would forbid the very thing the tool does (Outfit changes clothes; Product and
@@ -27,7 +27,7 @@ const DATA = (() => { const a = mod.indexOf("var IMAGINE_DATA = ") + "var IMAGIN
 const JOBS = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/imagine_art_jobs_w2.json"), "utf8")).jobs;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = o => !!o && LANGS.every(l => typeof o[l] === "string" && o[l].length > 0);
-const HAS_CT = DATA.tools.some(t => t.id === "colortone");   /* Color Tone + Skin: held back until the owner picks its pictures */
+const HAS_CT = DATA.tools.some(t => t.id === "colortone");   /* Color Tone + Skin: held back */
 const W2 = { describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15 }; if (HAS_CT) W2.colortone = 28;
 const ORDER = ["lighting", "portrait", "surface", "weather"].concat(Object.keys(W2));
 const NW2 = Object.keys(W2).length, THUMBS = Object.values(W2).reduce((a, b) => a + b, 0), TOTAL = 54 + THUMBS, WORD = { 11: "eleven", 12: "twelve" }[ORDER.length];
@@ -92,7 +92,7 @@ report("A7) Color Tone + Skin: 28 preset cards — five hex swatches each (named
   /im-tpl-sw/.test(mod) && /im-tpl-sub/.test(mod) && /im-tpl-sw/.test(PANEL_JS) && /\.im-tpl-sw span\{display:block;width:10px;height:10px;border-radius:50%/.test(APP) && /\.im-tpl-sub\{font-size:10px/.test(APP) &&
   DATA.tools.filter(t => t.id !== "colortone").every(t => t.presets.every(p => !p.sw && !p.sub)),
   { n: CT.presets.length, bad: ctBad.slice(0, 3).map(p => p.id), base: !!ctBase });
-} else console.log("INFO — A7) Color Tone + Skin is held back (owner decision on its pictures pending): no colortone tool, no swatch presets expected");
+} else console.log("INFO — A7) Color Tone + Skin is held back: no colortone tool, no swatch presets expected");
 
 const wn = (APP.match(/\{ v:"6\.30\.0", kind:"page", ref:"pgImagine",[\s\S]*?\} \},\n/) || [""])[0];
 report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in all nine languages, and CI runs this test",
