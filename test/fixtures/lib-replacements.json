@@ -1,5 +1,5 @@
 {
- "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest. 6.30.0: the four Imagine W1 tools re-shot as short modern fashion with the house beauty retouch — 62 files pinned to __lib-purge-v6-30-0-imagine-w1-beauty (rev 3; Portrait's after and Golden Rice Field rev 4). 6.31.0: the Lighting tool re-shot front-facing on Qwen — 14 files pinned to __lib-purge-v6-31-0-lighting-card (rev 4).",
+ "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest. 6.30.0: the four Imagine W1 tools re-shot as short modern fashion with the house beauty retouch — 62 files pinned to __lib-purge-v6-30-0-imagine-w1-beauty (rev 3; Portrait's after and Golden Rice Field rev 4). 6.31.0: the Lighting tool re-shot front-facing on Qwen — 14 files pinned to __lib-purge-v6-31-0-lighting-card (rev 4). 6.32.1: three Imagine hub cards re-made so each Before | After tells its tool's story — Color Tone + Skin's after is the same photo regraded (it had been the Sky Blue Grace look tile, a different scene), Face Clarity's before an honest soft focus and its after the clean picture, Upscale's after the clean picture — pinned to __lib-purge-v6-32-1-repair-cards.",
  "files": [
   {
    "path": "docs/app/lib/vid/vt-charSwap.jpg",
@@ -390,6 +390,26 @@
    "path": "docs/app/lib/wf/imagine/th/lighting-goldRim.jpg",
    "sha256": "1b3dc59a10a6321549f33844ad91c966b0a961874f057c1d3e06ec0c9e8929e5",
    "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-colortone-after.jpg",
+   "sha256": "d09a188f8223eec103d829bef3bd0efd6ef725e1cd4ec2b29de9677285001204",
+   "tag": "./__lib-purge-v6-32-1-repair-cards"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-faceclear-before.jpg",
+   "sha256": "31d9f93867e369f5523129f6c87572fbe6143dc5d5116362fd8ab2f7d8a97ee0",
+   "tag": "./__lib-purge-v6-32-1-repair-cards"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-faceclear-after.jpg",
+   "sha256": "c6eff8feec68157394c623605a4750820f1be1280a20c8f6f6cd823983ef6cdf",
+   "tag": "./__lib-purge-v6-32-1-repair-cards"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-upscale-after.jpg",
+   "sha256": "bed8ac69f0235188fdfbc4c78a6e7ce7ce7811451db65bd7250d858dbc1332ef",
+   "tag": "./__lib-purge-v6-32-1-repair-cards"
   }
  ]
 }

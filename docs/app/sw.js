@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-32-0";
+var CACHE = "hnk-web-studio-v6-32-1";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -255,7 +255,9 @@ var LIB_PURGES = [
      rev 3 (Portrait's after and Golden Rice Field rev 4). This clears the rev-2/rev-3 copies; the hero still and its clips stay. */
   { tag: "./__lib-purge-v6-30-0-imagine-w1-beauty", re: new RegExp("/lib/wf/imagine/(card-(lighting|portrait|surface|weather)-(before|after)|th/(lighting|portrait|surface|weather)-[A-Za-z0-9]+)\\.jpg$") },
   /* 6.31.0 — the Lighting tool re-shot front-facing (Qwen): its card pair and 12 thumbnails replaced in place, rev 4. */
-  { tag: "./__lib-purge-v6-31-0-lighting-card", re: new RegExp("/lib/wf/imagine/(card-lighting-(before|after)|th/lighting-[A-Za-z0-9]+)\\.jpg$") }
+  { tag: "./__lib-purge-v6-31-0-lighting-card", re: new RegExp("/lib/wf/imagine/(card-lighting-(before|after)|th/lighting-[A-Za-z0-9]+)\\.jpg$") },
+  /* 6.32.1 — three hub cards re-made (Color Tone after = the same photo regraded; Face Clarity before/after; Upscale after): four files, rev 2. */
+  { tag: "./__lib-purge-v6-32-1-repair-cards", re: new RegExp("/lib/wf/imagine/card-(colortone-after|faceclear-(before|after)|upscale-after)\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair

@@ -278,7 +278,10 @@ var LIB_ART_REV = {
   "lib/wf/imagine/th/surface-stillWater.jpg": 3, "lib/wf/imagine/th/surface-pebbles.jpg": 3, "lib/wf/imagine/th/surface-deepBlueSea.jpg": 3,
   "lib/wf/imagine/th/weather-snowfall.jpg": 3, "lib/wf/imagine/th/weather-lightRain.jpg": 3, "lib/wf/imagine/th/weather-heavyRain.jpg": 3, "lib/wf/imagine/th/weather-fogMist.jpg": 3,
   "lib/wf/imagine/th/weather-goldenHaze.jpg": 3, "lib/wf/imagine/th/weather-overcast.jpg": 3, "lib/wf/imagine/th/weather-stormClouds.jpg": 3, "lib/wf/imagine/th/weather-rainbow.jpg": 3,
-  "lib/wf/imagine/th/weather-blueHour.jpg": 3, "lib/wf/imagine/th/weather-clearSunny.jpg": 3, "lib/wf/imagine/th/weather-autumnLeaves.jpg": 3, "lib/wf/imagine/th/weather-blossomPetals.jpg": 3
+  "lib/wf/imagine/th/weather-blueHour.jpg": 3, "lib/wf/imagine/th/weather-clearSunny.jpg": 3, "lib/wf/imagine/th/weather-autumnLeaves.jpg": 3, "lib/wf/imagine/th/weather-blossomPetals.jpg": 3,
+  /* 6.32.1 — three hub cards re-made so each Before | After tells its tool's story (owner): Color Tone's after is now the same photo regraded
+     (it had been a different scene), Face Clarity's before is an honest soft focus and its after the clean picture, Upscale's after the clean picture: ?v=2 */
+  "lib/wf/imagine/card-colortone-after.jpg": 2, "lib/wf/imagine/card-faceclear-before.jpg": 2, "lib/wf/imagine/card-faceclear-after.jpg": 2, "lib/wf/imagine/card-upscale-after.jpg": 2
 };
 function libArt(p){
   var k=String(p||"").replace(/^\.?\//, "").split("?")[0];
