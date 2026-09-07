@@ -255,6 +255,9 @@ var LIB_ART_REV = {
      6.29.1 had ALREADY replaced the thumbnails and the banner in place without a revision — the owner opened the templates and saw
      the 6.29.0 library pictures, exactly the failure this map exists for. Every one of them now rides ?v=2. */
   "lib/banners/banner-imagine.jpg": 2,
+  /* 6.29.3 — and its motion clip pair: the clips skip the worker cache but not the browser's HTTP cache, and 6.29.2 had
+     replaced them in place; a device that played the 6.29.1 clip kept it under the hero until this token */
+  "lib/banners/motion/banner-imagine.mp4": 2, "lib/banners/motion/banner-imagine.webm": 2,
   "lib/wf/imagine/card-lighting-before.jpg": 2, "lib/wf/imagine/card-lighting-after.jpg": 2,
   "lib/wf/imagine/card-portrait-before.jpg": 2, "lib/wf/imagine/card-portrait-after.jpg": 2,
   "lib/wf/imagine/card-surface-before.jpg": 2, "lib/wf/imagine/card-surface-after.jpg": 2,

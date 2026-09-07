@@ -3974,6 +3974,9 @@ var LIB_ART_REV = {
      6.29.1 had ALREADY replaced the thumbnails and the banner in place without a revision — the owner opened the templates and saw
      the 6.29.0 library pictures, exactly the failure this map exists for. Every one of them now rides ?v=2. */
   "lib/banners/banner-imagine.jpg": 2,
+  /* 6.29.3 — and its motion clip pair: the clips skip the worker cache but not the browser's HTTP cache, and 6.29.2 had
+     replaced them in place; a device that played the 6.29.1 clip kept it under the hero until this token */
+  "lib/banners/motion/banner-imagine.mp4": 2, "lib/banners/motion/banner-imagine.webm": 2,
   "lib/wf/imagine/card-lighting-before.jpg": 2, "lib/wf/imagine/card-lighting-after.jpg": 2,
   "lib/wf/imagine/card-portrait-before.jpg": 2, "lib/wf/imagine/card-portrait-after.jpg": 2,
   "lib/wf/imagine/card-surface-before.jpg": 2, "lib/wf/imagine/card-surface-after.jpg": 2,
@@ -9804,7 +9807,7 @@ var PH_MOTION_CLIPS=["banner-archer","banner-train-station","hero-mermaid","bann
       var canWebm=v.canPlayType('video/webm; codecs="vp9"');
       var phExt=canMp4?".mp4":(canWebm?".webm":"");
       if(!phExt) return;
-      v.src="lib/banners/motion/"+m[1]+phExt;
+      v.src=libArt("lib/banners/motion/"+m[1]+phExt);   /* 6.29.3 — a replaced clip rides its LIB_ART_REV token (the browser's HTTP cache, not the worker's, held the old one) */
       v.addEventListener("playing",function(){ v.classList.add("live"); hero.classList.add("has-motion"); });
       v.addEventListener("error",function(){ io.unobserve(hero); v.remove(); hero.classList.remove("has-motion"); });
       img.insertAdjacentElement("afterend", v);
@@ -23810,7 +23813,7 @@ function greetAttachMotion(host, art){
     var ext=canMp4?".mp4":(canWebm?".webm":"");
     if(!ext) return;
     v._art=art;
-    v.src="lib/banners/motion/"+name+ext;
+    v.src=libArt("lib/banners/motion/"+name+ext);   /* 6.29.3 — same rule for the greeting clips */
     v.addEventListener("playing",function(){ v.classList.add("live"); host.classList.add("has-motion"); });
     v.addEventListener("error",function(){ v.remove(); host._gv=null; host.classList.remove("has-motion"); });
     host.insertBefore(v, host.firstChild);
@@ -26402,7 +26405,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.29.2";
+var APP_VER="6.29.3";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

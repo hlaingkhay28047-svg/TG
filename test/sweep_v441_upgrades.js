@@ -394,7 +394,7 @@ function report(name, ok, detail) {
     v57.heroes >= 11 && v57.listed === 15 && v57.injected >= 10 && v57.wfInjected === 1 && pairsOnDisk &&
     srcApp.includes('v.className="ph-motion"') &&
     srcApp.includes('canPlayType(\'video/mp4; codecs="avc1.42E01E"\')') &&
-    srcApp.includes('"lib/banners/motion/"+m[1]+phExt') &&
+    srcApp.includes('libArt("lib/banners/motion/"+m[1]+phExt)') &&
     srcApp.includes('v.addEventListener("error"') &&
     /else if\(!v\.paused\)\{ v\.pause\(\); \}/.test(srcApp) &&
     /* NO_CARD_JPG's rule for video: a clip is probed only when its files
@@ -425,7 +425,7 @@ function report(name, ok, detail) {
     greetNames.every(n => srcApp.includes('"' + n + '"')) &&
     srcApp.includes("var GREET_MOTION_CLIPS=") &&
     srcApp.includes("GREET_MOTION_CLIPS.indexOf(name)<0) return;") &&
-    srcApp.includes('"lib/banners/motion/"+name+ext') &&
+    srcApp.includes('libArt("lib/banners/motion/"+name+ext)') &&
     srcApp.includes("greetAttachMotion(host, art);") &&
     srcApp.includes(".dash-greet video.greet-motion{position:absolute") &&
     srcApp.includes(".dash-greet.has-motion{animation:none}") &&
