@@ -6,7 +6,7 @@
  *      brush UI strings, the module's brush (canvas feature-detected, strokes as normalised polylines, the composite the model receives,
  *      the mark prompt) lifted to the panel byte for byte, the icons and the art on both surfaces, the lane's two job files, the What's New
  *      row, the CI step.
- *   B) in the browser: the hub shows seventeen cards; a tool without a brush shows no Mark bar; Object Remove shows it once a photo is in;
+ *   B) in the browser: the hub shows every card (seventeen at 6.32.0, twenty-two once W4 followed) with the W3 five in their places; a tool without a brush shows no Mark bar; Object Remove shows it once a photo is in;
  *      Mark opens the paint view, a real pointer stroke lands as red paint (the composite carries red where the stroke is and none where
  *      it is not), the strip badge and the hint follow, Undo / Clear work; the prompt the page would send is the mark prompt inside the
  *      tool's frame (Object Add with a reference adds the shared red-paint line); Object Add refuses a mark with nothing to add, Object
@@ -35,6 +35,10 @@ const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = o => !!o && LANGS.every(l => typeof o[l] === "string" && o[l].length > 0);
 const W3 = { restore: 12, upscale: 8, faceclear: 12, objremove: 10, objadd: 12 };
 const IDS = Object.keys(W3), DEGRADED = ["restore", "upscale", "faceclear"], BRUSHED = ["objremove", "objadd"];
+/* 6.33.0 — W4 (Hair & Makeup · Body Shape · Sky Replace · Text & Sign Edit · Batch Imagine) follows W3 in the roster; verify_imagine_w4.js pins it, this file only counts it:
+   the W3 five sit right after the W1 four and the W2 eight (positions 13-17), the roster is 12 + 5 + 5 tools and 232 + 52 templates */
+const W4 = { hairmakeup: 14, bodyshape: 10, sky: 12, textedit: 8, batch: 8 };
+const W3AT = 12, NTOOLS = W3AT + IDS.length + Object.keys(W4).length, TOTAL = 232 + Object.values(W4).reduce((a, b) => a + b, 0);
 const GEAR = /NO STUDIO GEAR IN THE FRAME/;
 const ART = path.join(ROOT, "docs/app/lib/wf/imagine"), PART = path.join(ROOT, "panel/icons/imagine");
 const byId = Object.fromEntries(DATA.tools.map(t => [t.id, t]));
@@ -51,9 +55,9 @@ function jpegSize(file) {
 }
 
 /* ---------------- A) the source, both surfaces ---------------- */
-report("A1) the roster ends with the W3 five in order (restore · upscale · faceclear · objremove · objadd), seventeen tools and 232 templates in all, every name, summary and template in nine languages, {P} in every base prompt, unique template ids",
-  DATA.tools.length === 17 && DATA.tools.slice(-5).map(t => t.id).join(",") === IDS.join(",") && IDS.every(id => byId[id] && byId[id].presets.length === W3[id]) &&
-  DATA.tools.reduce((n, t) => n + t.presets.length, 0) === 232 &&
+report("A1) the roster carries the W3 five in order (restore · upscale · faceclear · objremove · objadd) right after the W1 four and the W2 eight, " + NTOOLS + " tools and " + TOTAL + " templates in all (the W4 five counted after them), every name, summary and template in nine languages, {P} in every base prompt, unique template ids",
+  DATA.tools.length === NTOOLS && DATA.tools.slice(W3AT, W3AT + 5).map(t => t.id).join(",") === IDS.join(",") && IDS.every(id => byId[id] && byId[id].presets.length === W3[id]) &&
+  DATA.tools.reduce((n, t) => n + t.presets.length, 0) === TOTAL &&
   IDS.every(id => all9(byId[id].name) && all9(byId[id].sum) && /\{P\}/.test(byId[id].basePrompt) && byId[id].presets.every(p => all9(p.name) && p.p.length > 30) && new Set(byId[id].presets.map(p => p.id)).size === byId[id].presets.length),
   { ids: DATA.tools.map(t => t.id), counts: DATA.tools.map(t => t.presets.length) });
 
@@ -150,10 +154,11 @@ const MOCK = `(function(){
 
     const hub = await page.evaluate(() => {
       const cards = [...document.querySelectorAll("#pgImagine .im-card")];
-      return { n: cards.length, last5: cards.slice(-5).map(c => c.getAttribute("data-tool")), chips: cards.slice(-5).map(c => c.querySelector(".im-tplcount").textContent), canMark: IMAGINE.canMark };
+      const w3 = cards.slice(12, 17);   /* 6.33.0 — the W3 five sit after the W1 four and the W2 eight; the W4 five follow them */
+      return { n: cards.length, w3: w3.map(c => c.getAttribute("data-tool")), chips: w3.map(c => c.querySelector(".im-tplcount").textContent), canMark: IMAGINE.canMark };
     });
-    report("B1) the hub shows seventeen cards, the W3 five last with their template counts (12 · 8 · 12 · 10 · 12); the page can paint (a 2D canvas exists)",
-      hub.n === 17 && hub.last5.join(",") === IDS.join(",") && [12, 8, 12, 10, 12].every((n, i) => new RegExp("(^|\\D)" + n + "(\\D|$)").test(hub.chips[i])) && hub.canMark === true, hub);
+    report("B1) the hub shows " + NTOOLS + " cards, the W3 five at positions 13-17 with their template counts (12 · 8 · 12 · 10 · 12); the page can paint (a 2D canvas exists)",
+      hub.n === NTOOLS && hub.w3.join(",") === IDS.join(",") && [12, 8, 12, 10, 12].every((n, i) => new RegExp("(^|\\D)" + n + "(\\D|$)").test(hub.chips[i])) && hub.canMark === true, hub);
 
     /* a 60x90 blue photo, made in the page */
     const photo = await page.evaluate(() => { const c = document.createElement("canvas"); c.width = 60; c.height = 90; const x = c.getContext("2d"); x.fillStyle = "#1030ff"; x.fillRect(0, 0, 60, 90); return c.toDataURL("image/png"); });

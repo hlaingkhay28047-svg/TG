@@ -841,3 +841,7 @@ jobs:
       # 6.32.0 wave — Imagine W3: Photo Restore · Upscale & Enhance · Face Clarity · Object Remove (brush) · Object Add (brush), art on Qwen / Wan
       - name: Run Imagine W3 sweep (five more tools, the brush's red paint composited into IMAGE 1 and its prompt, both surfaces, art, What's New)
         run: PORT=8931 node test/verify_imagine_w3.js
+
+      # 6.33.0 wave — Imagine W4: Hair & Makeup · Body Shape · Sky Replace · Text & Sign Edit (brush + typed words) · Batch Imagine (recipes)
+      - name: Run Imagine W4 sweep (five more tools, typed-words templates, recipe chains on both surfaces, art, the chain-aware art runner, What's New)
+        run: PORT=8931 node test/verify_imagine_w4.js
