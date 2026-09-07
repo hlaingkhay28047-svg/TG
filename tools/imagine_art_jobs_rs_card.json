@@ -1,0 +1,38 @@
+{
+ "note": "Reference Scenes card art (6.32.2) — the Smart Workflow's own prompt, word for word as the owner wrote it, run once on two generated pictures: IMAGE 1 (refsFrom) a plain-studio half-body of the brand model at 3:2, IMAGE 2 (baseFrom) a lavender-field scene with no people from Wan 2.7 Pro. The card is the result with the two inputs inset (finish_rs_card.py).",
+ "jobs": [
+  {
+   "name": "rs-subject",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a half-body photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, slim, elegant, standing in a plain light-grey photo studio (plain grey backdrop, plain grey floor, nothing else), wearing a white ribbed knit top and light-blue straight jeans, hair loose over the shoulders, hands relaxed at her sides, a soft natural smile straight into the camera, soft even shadowless light (a plain subject photograph waiting for a scene), 50mm lens, HORIZONTAL 3:2 framing with open room on both sides of her, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "rs-scene",
+   "apiPath": "alibaba/wan-2.7/text-to-image-pro",
+   "base": null,
+   "ratio": "3:2",
+   "resolution": "2k",
+   "prompt": "A real photograph of a place with NO people at all: a blooming lavender field at golden hour, long rows of purple lavender running toward a low weathered wooden fence and a line of tall cypress trees, the low warm sun behind a soft haze, gentle depth of field, natural film-like colour, horizontal 3:2 framing, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "rs-result",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refsFrom": [
+    "rs-subject"
+   ],
+   "baseFrom": "rs-scene",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Reference scenes from image 2 keep image 1 subject frame and composition and scenes follow the subject compose"
+  }
+ ]
+}
