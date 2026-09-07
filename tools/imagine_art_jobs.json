@@ -13,7 +13,7 @@
    "name": "base-portrait",
    "apiPath": "rhart-image-n-pro-official/text-to-image",
    "base": null,
-   "prompt": "Full-body street-fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a cropped white ribbed tank top, high-waist light-blue denim shorts, white sneakers and small gold hoop earrings, caught mid-stride walking toward the camera, hair swinging, one hand adjusting sunglasses on her head, a bright playful laugh — the whole body including shoes visible, in an EMPTY plain light-grey photo studio (plain grey floor and plain grey backdrop, nothing else), soft even lighting, 50mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "prompt": "Full-body street-fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a white sleeveless ribbed top tucked into high-waist light-blue denim shorts, white sneakers and small gold hoop earrings, walking toward the camera mid-stride with her hair swinging, one hand lifting a pair of sunglasses onto her head, a bright laugh — the whole body including the shoes visible, inside an EMPTY plain light-grey photo studio (plain grey floor, plain grey backdrop, nothing else), soft even lighting, 50mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
