@@ -253,7 +253,9 @@ var LIB_PURGES = [
   { tag: "./__lib-purge-v6-30-0-portrait-card", re: new RegExp("/lib/wf/imagine/(card-portrait-after|th/portrait-riceField)\\.jpg$") },
   /* 6.30.0 — the four W1 tools re-shot (short modern fashion, the house beauty retouch): 8 cards + 54 thumbnails replaced in place,
      rev 3 (Portrait's after and Golden Rice Field rev 4). This clears the rev-2/rev-3 copies; the hero still and its clips stay. */
-  { tag: "./__lib-purge-v6-30-0-imagine-w1-beauty", re: new RegExp("/lib/wf/imagine/(card-(lighting|portrait|surface|weather)-(before|after)|th/(lighting|portrait|surface|weather)-[A-Za-z0-9]+)\\.jpg$") }
+  { tag: "./__lib-purge-v6-30-0-imagine-w1-beauty", re: new RegExp("/lib/wf/imagine/(card-(lighting|portrait|surface|weather)-(before|after)|th/(lighting|portrait|surface|weather)-[A-Za-z0-9]+)\\.jpg$") },
+  /* 6.31.0 — the Lighting tool re-shot front-facing (Qwen): its card pair and 12 thumbnails replaced in place, rev 4. */
+  { tag: "./__lib-purge-v6-31-0-lighting-card", re: new RegExp("/lib/wf/imagine/(card-lighting-(before|after)|th/lighting-[A-Za-z0-9]+)\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair
