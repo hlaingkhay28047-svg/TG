@@ -20,6 +20,7 @@ format the browser can actually decode:
   banner-coral-fairy.mp4       Text to Image
   banner-fairy-forest.mp4      My Gallery
   banner-golden-temple.mp4     Workflows (hero-strip, joined v5.58.0)
+  banner-imagine.mp4           Imagine (one-tap AI tools; 6.29.1 wave)
 
 The three Home greeting arts follow the SAME pair contract but live on
 their own manifest — GREET_MOTION_CLIPS in docs/app/index.html (the

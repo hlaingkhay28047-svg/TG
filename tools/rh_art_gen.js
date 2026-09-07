@@ -16,6 +16,11 @@
    jobs.json: { "jobs": [ { "name": "light-01", "apiPath": "rhart-image-n-g31-flash/image-to-image",
                             "base": "docs/app/lib/st-sample.jpg" | null, "prompt": "…",
                             "ratio": "1:1" | "", "resolution": "1k" | "2k", "extra": { … body fields … } } ] }
+   Optional per job (6.29.1 wave): "baseFrom": "<other job name>" — that job's OWN output is the base
+   (a generated photo feeds the edits in the same run; such jobs run in a second pass), "imageParam":
+   "imageUrl" — the single-image field name for endpoints that take one (image-to-video), "duration": "5"
+   (+ "durInt": true for integer-typed endpoints), "maxMs": 900000 — a longer poll for video. A video
+   result is written as .mp4.
    ============================================================ */
 "use strict";
 const fs = require("fs");
@@ -38,9 +43,10 @@ if (OUT_DIR) fs.mkdirSync(OUT_DIR, { recursive: true });
 const H = { "Authorization": "Bearer " + KEY, "Accept": "application/json" };
 const uploads = new Map();
 
-async function upload(rel) {
+const outputs = new Map();   /* job name → { buf, ext } — the bases other jobs build on */
+async function upload(rel, buf) {
   if (uploads.has(rel)) return uploads.get(rel);
-  const buf = fs.readFileSync(path.resolve(rel));
+  if (!buf) buf = fs.readFileSync(path.resolve(rel));
   const ext = /\.png$/i.test(rel) ? "png" : /\.webp$/i.test(rel) ? "webp" : "jpg";
   const fd = new FormData();
   fd.append("file", new Blob([buf], { type: ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg" }), "hnk_base." + ext);
@@ -59,9 +65,9 @@ async function submit(apiPath, body) {
   if (!r.ok || !tid) throw new Error("submit-failed " + r.status + " " + txt.slice(0, 240));
   return tid;
 }
-async function poll(tid) {
+async function poll(tid, maxMs) {
   const t0 = Date.now();
-  while (Date.now() - t0 < POLL_MAX_MS) {
+  while (Date.now() - t0 < (maxMs || POLL_MAX_MS)) {
     const r = await fetch(V2 + "/query", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ taskId: tid }) });
     const j = await r.json().catch(() => ({}));
     const s = String(j.status || "").toUpperCase();
@@ -80,20 +86,27 @@ function bodyFor(job, imageUrl) {
     return body;
   }
   body.prompt = job.prompt;
-  if (imageUrl) body.imageUrls = [imageUrl];
+  if (imageUrl) { if (job.imageParam) body[job.imageParam] = imageUrl; else body.imageUrls = [imageUrl]; }
   if (job.ratio) body.aspectRatio = job.ratio;
   if (job.resolution) body.resolution = job.resolution;
+  if (job.duration) body.duration = job.durInt ? Number(job.duration) : String(job.duration);   /* the app's rhGenerateVideo rule */
   return body;
 }
 async function runJob(job) {
-  const imageUrl = job.base ? await upload(job.base) : null;
+  let imageUrl = null;
+  if (job.baseFrom) {
+    const dep = outputs.get(job.baseFrom);
+    if (!dep) throw new Error("baseFrom " + job.baseFrom + " did not produce a picture");
+    imageUrl = await upload("job:" + job.baseFrom + "." + dep.ext, dep.buf);
+  } else if (job.base) imageUrl = await upload(job.base);
   const tid = await submit(job.apiPath, bodyFor(job, imageUrl));
-  const fin = await poll(tid);
+  const fin = await poll(tid, job.maxMs);
   const res = (fin.results || []).find(x => x && x.url);
   if (!res) throw new Error("no result " + JSON.stringify(fin).slice(0, 200));
   const r = await fetch(res.url); const ab = Buffer.from(await r.arrayBuffer());
-  const ct = r.headers.get("content-type") || "image/png";
-  const ext = /png/i.test(ct) ? "png" : /webp/i.test(ct) ? "webp" : "jpg";
+  const ct = r.headers.get("content-type") || (/\.mp4(\?|$)/i.test(res.url) ? "video/mp4" : "image/png");
+  const ext = /mp4|video/i.test(ct) ? "mp4" : /png/i.test(ct) ? "png" : /webp/i.test(ct) ? "webp" : "jpg";
+  outputs.set(job.name, { buf: ab, ext });
   /* ART_OUT: also write the picture to a directory (the workflow publishes it on a scratch branch the
      container can git-fetch — a 55-picture base64 log is too large for the log API to hand back). */
   if (OUT_DIR) fs.writeFileSync(path.join(OUT_DIR, job.name + "." + ext), ab);
@@ -107,15 +120,20 @@ async function runJob(job) {
 }
 (async () => {
   const done = [], failed = [];
-  let i = 0;
-  async function worker() {
-    while (i < jobs.length) {
-      const job = jobs[i++];
-      try { done.push(await runJob(job)); console.log("OK", job.name); }
-      catch (e) { failed.push({ name: job.name, error: String(e && e.message || e).slice(0, 300) }); console.log("FAIL", job.name, String(e && e.message || e).slice(0, 300)); }
+  /* two passes: the pictures other jobs build on first, then the jobs that build on them */
+  async function pass(list) {
+    let i = 0;
+    async function worker() {
+      while (i < list.length) {
+        const job = list[i++];
+        try { done.push(await runJob(job)); console.log("OK", job.name); }
+        catch (e) { failed.push({ name: job.name, error: String(e && e.message || e).slice(0, 300) }); console.log("FAIL", job.name, String(e && e.message || e).slice(0, 300)); }
+      }
     }
+    if (list.length) await Promise.all(Array.from({ length: Math.min(CONCURRENCY, list.length) }, worker));
   }
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
+  await pass(jobs.filter(j => !j.baseFrom));
+  await pass(jobs.filter(j => !!j.baseFrom));
   const summary = { ok: done.map(d => ({ name: d.name, file: d.file, taskId: d.taskId, bytes: d.bytes, usage: d.usage })), failed };
   console.log("===ART-SUMMARY-BEGIN===");
   console.log(JSON.stringify(summary, null, 0));

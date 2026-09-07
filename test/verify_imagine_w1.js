@@ -58,12 +58,27 @@ report("A5) What's New announces it (kind page → pgImagine, nine languages)",
   /\{ v:"6\.29\.0", kind:"page", ref:"pgImagine",\n\s*t:\{my:/.test(APP) && (() => { const i = APP.indexOf('{ v:"6.29.0", kind:"page", ref:"pgImagine"'); const row = APP.slice(i, APP.indexOf(" },\n", i)); return LANGS.every(l => new RegExp("\\b" + l + ':"').test(row)); })(), null);
 /* art on both surfaces */
 const ART = path.join(ROOT, "docs/app/lib/wf/imagine"), PART = path.join(ROOT, "panel/icons/imagine");
-const wantFiles = DATA.tools.map(t => t.card).concat(DATA.tools.flatMap(t => t.presets.map(p => "th/" + t.id + "-" + p.id + ".jpg")));
+/* 6.29.1 wave — the card picture is a Before | After PAIR (the generated base photograph, the cardPreset result), both 2:3 and
+   the same size so nothing is cropped in the compare; the page hero has a still AND a motion clip pair (mp4 + webm). */
+function jpegSize(file) {
+  const b = fs.readFileSync(file); let i = 2;
+  while (i < b.length) { if (b[i] !== 0xFF) { i++; continue; } const m = b[i + 1]; if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) return { h: b.readUInt16BE(i + 5), w: b.readUInt16BE(i + 7) }; i += 2 + b.readUInt16BE(i + 2); }
+  return null;
+}
+const wantFiles = DATA.tools.flatMap(t => [t.before, t.after]).concat(DATA.tools.flatMap(t => t.presets.map(p => "th/" + t.id + "-" + p.id + ".jpg")));
 const missingArt = wantFiles.filter(f => !fs.existsSync(path.join(ART, f)) || fs.statSync(path.join(ART, f)).size < 4000);
 const driftArt = wantFiles.filter(f => !fs.existsSync(path.join(PART, f)) || !fs.readFileSync(path.join(ART, f)).equals(fs.readFileSync(path.join(PART, f))));
-report("A6) card art (4) + template thumbnails (54) + the page banner exist, and the panel carries the same bytes",
-  !missingArt.length && !driftArt.length && fs.existsSync(path.join(ROOT, "docs/app/lib/banners/banner-imagine.jpg")) && fs.existsSync(path.join(ROOT, "panel/icons/banners/banner-imagine.jpg")),
-  { missingArt: missingArt.slice(0, 5), driftArt: driftArt.slice(0, 5), files: wantFiles.length });
+const cardShapes = DATA.tools.map(t => { const b = fs.existsSync(path.join(ART, t.before)) && jpegSize(path.join(ART, t.before)), a = fs.existsSync(path.join(ART, t.after)) && jpegSize(path.join(ART, t.after)); return { id: t.id, b, a, ok: !!(b && a && b.w === a.w && b.h === a.h && Math.abs(b.w / b.h - 2 / 3) < 0.01 && b.w >= 600) }; });
+const staleCards = DATA.tools.filter(t => fs.existsSync(path.join(ART, "card-" + t.id + ".jpg")) || fs.existsSync(path.join(PART, "card-" + t.id + ".jpg"))).map(t => t.id);
+report("A6) card Before | After pairs (4 × 2, each pair one 2:3 size — nothing cropped) + template thumbnails (54) + the page banner exist, the old composite cards are gone, and the panel carries the same bytes",
+  !missingArt.length && !driftArt.length && cardShapes.every(c => c.ok) && !staleCards.length && fs.existsSync(path.join(ROOT, "docs/app/lib/banners/banner-imagine.jpg")) && fs.existsSync(path.join(ROOT, "panel/icons/banners/banner-imagine.jpg")),
+  { missingArt: missingArt.slice(0, 5), driftArt: driftArt.slice(0, 5), files: wantFiles.length, cardShapes: cardShapes.filter(c => !c.ok), staleCards });
+const MOTION = path.join(ROOT, "docs/app/lib/banners/motion");
+report("A6b) the Imagine hero has its motion clip pair (mp4 + webm, 0.3–4 MB each) and it is announced in PH_MOTION_CLIPS, the README and the v441 sweep",
+  ["mp4", "webm"].every(e => fs.existsSync(path.join(MOTION, "banner-imagine." + e)) && fs.statSync(path.join(MOTION, "banner-imagine." + e)).size > 300000 && fs.statSync(path.join(MOTION, "banner-imagine." + e)).size < 4000000) &&
+  /var PH_MOTION_CLIPS=\[[^\]]*"banner-imagine"\]/.test(APP) && /banner-imagine\.mp4/.test(fs.readFileSync(path.join(MOTION, "README.txt"), "utf8")) &&
+  /"banner-imagine"\]/.test(fs.readFileSync(path.join(ROOT, "test/sweep_v441_upgrades.js"), "utf8")) && /v57\.listed === 15/.test(fs.readFileSync(path.join(ROOT, "test/sweep_v441_upgrades.js"), "utf8")),
+  ["mp4", "webm"].map(e => fs.existsSync(path.join(MOTION, "banner-imagine." + e)) ? fs.statSync(path.join(MOTION, "banner-imagine." + e)).size : "missing"));
 const dry = lifter.build({ dry: true });
 report("A7) the panel's module, CSS and art are exactly what the lift produces from the app today (run: node tools/build_panel_imagine.js)",
   dry.changed.length === 0 && PANEL_JS.indexOf(mod) >= 0 && /globalThis\.HNK\.imagine = IMAGINE;/.test(PANEL_JS) &&
@@ -128,6 +143,31 @@ const MOCK = `(function(){
   /* the strings are the module's own, in the current language (my by default) */
   const strs = await page.evaluate(() => ({ h2: document.querySelector("#pgImagine .im-hub h2").textContent.trim(), want: IMAGINE_DATA.ui.hub_h2[LANG], chips: [...document.querySelectorAll("#pgImagine .im-tplcount")].map(c => c.textContent), lang: LANG }));
   report("B2) the hub reads in the app's language and every card names its template count", strs.h2 === strs.want && strs.chips.length === 4 && strs.chips.every(c => /12|15/.test(c)), strs);
+  /* 6.29.1 wave — the card picture is a real Before | After compare, dragged on the picture, and a tap still opens the tool */
+  const hubCmp = await page.evaluate(async () => {
+    const cards = [...document.querySelectorAll("#pgImagine .im-card")];
+    const shape = cards.map(c => ({ base: !!c.querySelector(".im-hubcmp img.im-base"), top: !!c.querySelector(".im-hubcmp .im-cmp-top img.im-orig"), knob: !!c.querySelector(".im-hubcmp .im-cmp-knob"), labels: c.querySelectorAll(".im-hubcmp .im-lb").length, w0: c.querySelector(".im-hubcmp .im-cmp-top").style.width }));
+    const art = cards[0].querySelector(".im-hubcmp"); const r = art.getBoundingClientRect();
+    const ev = (type, x) => art.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: r.top + r.height / 2, pointerId: 1, pointerType: "touch", isPrimary: true, button: 0 }));
+    ev("pointerdown", r.left + r.width * 0.5); const lifted = cards[0].classList.contains("lift");
+    ev("pointermove", r.left + r.width * 0.55); ev("pointermove", r.left + r.width * 0.72); ev("pointerup", r.left + r.width * 0.72);
+    await new Promise(x => setTimeout(x, 60));
+    const afterDrag = { w: cards[0].querySelector(".im-hubcmp .im-cmp-top").style.width, line: cards[0].querySelector(".im-hubcmp .im-cmp-line").style.left, split: IMAGINE.hubSplit().lighting, stillHub: IMAGINE.state.tool === null && document.querySelectorAll("#pgImagine .im-card").length === 4 };
+    await new Promise(x => setTimeout(x, 260)); const unlifted = !cards[0].classList.contains("lift");
+    /* a plain tap (no movement) opens the tool */
+    const art2 = document.querySelectorAll("#pgImagine .im-card")[1].querySelector(".im-hubcmp"); const r2 = art2.getBoundingClientRect();
+    const ev2 = (type) => art2.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, clientX: r2.left + r2.width / 2, clientY: r2.top + r2.height / 2, pointerId: 2, pointerType: "touch", isPrimary: true, button: 0 }));
+    ev2("pointerdown"); ev2("pointerup"); await new Promise(x => setTimeout(x, 80));
+    const opened = IMAGINE.state.tool; IMAGINE.goHub(); await new Promise(x => setTimeout(x, 40));
+    const kept = document.querySelector('#pgImagine .im-card[data-tool="lighting"] .im-cmp-top').style.width;
+    const cs = getComputedStyle(document.querySelector("#pgImagine .im-card")); const hover = /transform/.test(cs.transitionProperty || "") || /transform/.test(cs.transition || "");
+    const motion = { listed: PH_MOTION_CLIPS.indexOf("banner-imagine") >= 0, video: !!document.querySelector("#pgImagine .page-hero video.ph-motion") };
+    return { shape, lifted, afterDrag, unlifted, opened, kept, hover, motion };
+  });
+  report("B2b) every hub card is a Before | After compare (after as the picture, before clipped on top, knob, two labels, 50% start); a drag moves the line to ~72%, keeps the hub, and the split is remembered",
+    hubCmp.shape.every(x => x.base && x.top && x.knob && x.labels === 2 && x.w0 === "50%") && hubCmp.afterDrag.w === "72%" && hubCmp.afterDrag.line === "72%" && hubCmp.afterDrag.split === 72 && hubCmp.afterDrag.stillHub && hubCmp.kept === "72%", hubCmp);
+  report("B2c) the card lifts under a finger (lift class on pointerdown, gone after release; hover transitions transform), a plain tap on the picture opens that tool, and the hero carries its motion clip",
+    hubCmp.lifted && hubCmp.unlifted && hubCmp.opened === "portrait" && hubCmp.hover && hubCmp.motion.listed && hubCmp.motion.video, { lifted: hubCmp.lifted, unlifted: hubCmp.unlifted, opened: hubCmp.opened, hover: hubCmp.hover, motion: hubCmp.motion });
   /* open each tool: tile count, back to hub */
   const tools = await page.evaluate(async () => {
     const out = {};
