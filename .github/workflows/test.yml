@@ -833,3 +833,7 @@ jobs:
       # 6.31.0 wave — the Reference Card on every Imagine tool (the reference rides as IMAGE 2), Color Tone + Skin, the lane on Qwen / Wan
       - name: Run Imagine Reference Card sweep (per-tool transfer lines, both hosts take two pictures, tile in the browser, What's New)
         run: PORT=8931 node test/verify_imagine_ref.js
+
+      # 6.32.0 wave — Imagine W3: Photo Restore · Upscale & Enhance · Face Clarity · Object Remove (brush) · Object Add (brush), art on Qwen / Wan
+      - name: Run Imagine W3 sweep (five more tools, the brush's red paint composited into IMAGE 1 and its prompt, both surfaces, art, What's New)
+        run: PORT=8931 node test/verify_imagine_w3.js

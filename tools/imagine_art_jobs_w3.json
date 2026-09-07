@@ -1,0 +1,268 @@
+{
+ "note": "Imagine W3 art, run A (6.32.0 wave) — five brand-model bases (identity edits from tools/art_ref, 2:3, Qwen 3.0 Pro): a clean family-album portrait, a rooftop half-body, a café close portrait, a busy seaside promenade, a park bench with room around her; plus the Object Remove and Object Add thumbnails on their bases (baseFrom). The restore / upscale / faceclear bases are degraded locally into their befores (finish_w3.py) — their thumbnails come in run B.",
+ "jobs": [
+  {
+   "name": "base-restore",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a warm nostalgic family-album portrait photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, slim, elegant, in the manner of a 1990s colour film snapshot: seated on a wooden chair in a sunlit living room with lace curtains and a potted plant, wearing a pastel-pink knitted cardigan over a white blouse and a thin gold necklace, hair loose over one shoulder, hands folded in her lap, a soft natural smile straight into the camera, gentle window light, 50mm lens, vertical 2:3 framing, sharp and clean (the damage is added afterwards), photoreal, no text, no captions, no watermark, no logo.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "base-upscale",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a candid half-body photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, slim, elegant, on a city rooftop at blue hour, wearing a cream oversized blazer over a black top and small gold hoop earrings, hair loose and slightly wind-blown, leaning on a glass railing and turning toward the camera with a soft smile, the city lights softly blurred behind her, natural phone-camera look, vertical 2:3 framing, sharp and detailed (the blur is added afterwards), photoreal, no text, no captions, no watermark, no logo.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "base-faceclear",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a close head-and-shoulders portrait photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, slim, elegant, in a warm café by a large window, hair loose, wearing a soft beige knitted sweater and small pearl earrings, chin resting lightly on one hand, a gentle smile and bright clear eyes looking into the camera, warm window light on one side, 85mm lens, vertical 2:3 framing, sharp and detailed (the softness is added afterwards), photoreal, no text, no captions, no watermark, no logo.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "base-objremove",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a full-length travel photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, slim, elegant, standing on a sunny seaside promenade, wearing a white linen shirt dress, a straw tote bag and flat sandals, sunglasses pushed up in her hair, smiling into the camera; behind her several blurred tourists walk along the railing, a parked scooter, a green litter bin and a lamp post with tangled wires stand at the kerb, and an ice-cream sign board leans against the railing — a busy real scene with things to remove; bright daylight, 35mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "base-objadd",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a three-quarter-length photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, slim, elegant, sitting on a low stone wall in a green park in soft late-afternoon light, wearing a white cotton sundress and delicate gold earrings, hair loose, hands resting open in her lap, a natural relaxed smile toward the camera, a clear stretch of lawn, trees and open sky around her with room to add things, 50mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-people",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: every other person in the background — passers-by, tourists, crowds — leaving only the main subject in the empty scene. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-wires",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the overhead wires, cables, poles and lamp posts, continuing the sky and the buildings behind them. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-clutter",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the litter, bins, bags, boxes and every piece of clutter on the ground, continuing the pavement, floor or grass beneath. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-vehicles",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the parked or passing cars, scooters, bicycles and vans, continuing the road, kerb and scenery behind them. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-signs",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the signboards, posters, banners and street signs in the scene, continuing the wall, railing or shopfront behind them. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-shadows",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the stray shadows cast by people or objects outside the frame, restoring the evenly lit ground and wall as if nothing stood there. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-reflections",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the unwanted reflections and glare in windows, glass, mirrors or water, restoring what the surface really shows. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-props",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the chairs, tables, stands, boxes and props in the way, continuing the room, floor and wall behind them. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-stains",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the stains, marks, cracks, graffiti and dirt on the wall and the floor, restoring their clean continuous surface. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objremove-photobomb",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objremove",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the stray hand, arm, shoulder or head intruding at the edge of the frame, continuing the scene behind it. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-bouquet",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a fresh bouquet of soft pink and white peonies held naturally in the hands, with correct grip, weight and a soft shadow on the dress Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-balloons",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a bunch of pastel pink, cream and pale-blue balloons on thin strings held in one hand, floating up naturally in the breeze Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-hat",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a wide-brim natural straw hat sitting on the head, casting a soft shadow across the brow, the hair falling naturally around it Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-sunglasses",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a pair of classic tortoiseshell sunglasses on the face, fitted naturally with correct reflections and a light shadow Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-coffee",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a takeaway coffee cup with a lid held in one hand, the fingers wrapped around it naturally Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-dog",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a fluffy golden retriever puppy sitting beside the person, looking up at them, its fur lit by the same light Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-cat",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a soft grey tabby cat curled on the lap, resting under one hand, its fur catching the light Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-butterflies",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a few delicate blue and white butterflies fluttering around the person, one resting on a raised finger, softly lit Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-umbrella",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a pastel-pink parasol held open above the head in one hand, its soft shade falling over the face and shoulders Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-birds",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a small flock of birds flying across the sky in the distance, tiny and natural, matching the light of the scene Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-moon",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a large soft full moon rising low in the sky behind, glowing gently, the scene's light and colours otherwise unchanged Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  },
+  {
+   "name": "th-objadd-lanterns",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-objadd",
+   "prompt": "Add to this photograph, as if it had been there when the picture was taken: a few glowing warm paper lanterns drifting in the air around and above the person, their soft light touching the face and dress Match the scene's perspective, scale, light direction, colour temperature, shadows, reflections and grain; the person, pose, framing and everything else stay exactly as they are.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing, background and framing stay exactly. SCENE LOCK: the added element joins the existing scene naturally; only the new element and its own shadow or reflection appear, nothing else moves or changes.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose, a floating or pasted-on look, wrong scale or perspective, a missing contact shadow, duplicated elements, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000
+  }
+ ]
+}

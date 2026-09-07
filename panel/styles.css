@@ -2508,4 +2508,28 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .im-field>.mut{display:block;margin-bottom:4px}
 .im-field select.inp{width:100%}
 @media (min-width:1100px){.im-tpl{width:23%}}
+/* 6.31.0 — the Reference Card: a dashed empty slot until a picture is dropped in; then the picture with remove (✕) and replace (↻)
+   (6.32.0: these rules moved inside the markers — the panel lifter copies only what lies between them) */
+.im-tpl.im-ref .im-tpl-im{border:1.5px dashed rgba(233,196,106,.55);border-radius:8px 8px 0 0;background:rgba(233,196,106,.06);box-sizing:border-box}
+.im-tpl.im-ref.has .im-tpl-im{border-style:solid;border-color:rgba(233,196,106,.35)}
+.im-ref-empty{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box}
+.im-ref-plus{font-size:38px;line-height:1;color:#e9c46a;font-weight:700;margin-bottom:6px}   /* a margin, not flex gap — UXP draws no gap */
+.im-ref-add{font-size:11px;line-height:1.35;color:var(--text);opacity:.85}
+.im-ref-x,.im-ref-sw{position:absolute;top:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.58);color:#fff;font-size:13px;line-height:26px;text-align:center;padding:0;cursor:pointer}
+.im-ref-x{right:6px}.im-ref-sw{left:6px}
+/* 6.32.0 — the brush (Object Remove / Object Add): a bar of chips above the picture, translucent red strokes on a canvas over the photo */
+.im-markbar{display:flex;flex-wrap:wrap;align-items:center;margin:0 -3px 8px}
+.im-markbar .chip{margin:3px;cursor:pointer}
+.im-markbar .chip.on{border-color:var(--accent);color:var(--accent-h);box-shadow:0 0 0 1px var(--accent)}
+.im-markbar .im-brush{width:34px;justify-content:center;padding-left:0;padding-right:0}
+.im-markbar .im-brush span{display:inline-block;border-radius:50%;background:#ff3b3b;opacity:.75}
+.im-markbar .im-brush.s span{width:6px;height:6px}.im-markbar .im-brush.m span{width:11px;height:11px}.im-markbar .im-brush.l span{width:17px;height:17px}
+.im-markbar .im-marksep{width:1px;height:22px;background:var(--line-soft);margin:0 6px}
+.im-markhint{margin:-2px 0 8px;line-height:1.5}
+.im-markwrap{position:relative;border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;background:#050b10;user-select:none;-webkit-user-select:none}
+.im-markwrap img{display:block;width:100%;height:auto;max-width:100%}
+.im-markcv{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.im-markcv.ro{pointer-events:none}
+.im-markwrap.on{border-color:#ff3b3b;box-shadow:0 0 0 1px rgba(255,59,59,.55)}
+.im-th-mk{position:absolute;bottom:2px;left:4px;font-size:11px;font-weight:800;color:#ff6b6b;text-shadow:0 1px 2px #000}
 /* ---- /IMAGINE_CSS ---- */

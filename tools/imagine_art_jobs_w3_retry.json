@@ -1,0 +1,14 @@
+{
+ "note": "Imagine W3 run D (6.32.0) — the one Upscale thumbnail that timed out in run B (th-upscale-phoneBoost, RunningHub 1006), redone image-to-image on the committed card-upscale-before.jpg. (Run C, the same file's earlier content, redid th-objremove-shadows from run A.)",
+ "jobs": [
+  {
+   "name": "th-upscale-phoneBoost",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: raise this phone snapshot to professional camera quality — true detail, clean tonal range, natural depth, no phone over-processing artefacts. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  }
+ ]
+}

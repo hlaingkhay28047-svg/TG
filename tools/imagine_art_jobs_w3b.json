@@ -1,0 +1,293 @@
+{
+ "note": "Imagine W3 art, run B (6.32.0 wave) — the Photo Restore, Upscale & Enhance and Face Clarity thumbnails, image-to-image on the committed DEGRADED before-cards (an old scratched faded print, a small blurry compressed photo, a soft noisy face), so each template picture really repairs what its card shows.",
+ "jobs": [
+  {
+   "name": "th-restore-fullRestore",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: repair everything at once — remove scratches, dust, creases and stains, revive the faded colours to natural life, restore sharpness and fine detail, and clean the grain, so the print looks freshly made. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-scratches",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: remove every scratch, hairline, dust speck and fleck from the print, reconstructing the image detail beneath them; colours and tone stay as they are. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-fade",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: revive the faded, washed-out colours to their natural original life — correct skin tones, true blacks and clean whites, balanced saturation, no cast. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-colorize",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: colourise the black-and-white photograph with natural, believable colours — realistic skin, hair and eye colour, period-true clothing and surroundings, soft film-like saturation. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-creases",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: mend the creases, fold lines and tears running through the print, reconstructing the picture across them so no line, ridge or gap remains. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-stains",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: remove the water stains, tide marks, mould spots and discoloured patches, restoring the true image and tone beneath them. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-sharpen",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: restore sharpness and true fine detail to the soft, blurred print — faces, eyes, hair and fabric become clear as in the original moment, without over-sharpened edges. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-yellowing",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: remove the yellow-orange age cast of the paper and dyes, returning neutral whites, clean greys and natural colours across the whole picture. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-torn",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: reconstruct the torn-off corner or missing piece of the print by continuing the real scene — wall, floor, fabric or background — seamlessly into the gap; nothing else changes. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-grain",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: clean the heavy film grain, noise and speckle while keeping real detail and texture — smooth, natural tones, no plastic smoothing. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-lowres",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: rebuild this small, low-resolution scan into a clear, detailed picture — faces, hair and clothing rendered sharply from what the picture actually shows, no invented features. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-restore-sepiaKeep",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Restore this old, damaged photograph: repair all damage — scratches, creases, stains, blur — but keep the photograph's warm vintage sepia tone and soft film character exactly as it is. Keep the same people, their faces, expressions, poses, clothing, the composition and the framing exactly; rebuild only what damage, fading or blur destroyed, in the same photographic style, so the result reads as the very same picture on the day it was printed.\n\nIDENTITY LOCK: the same photograph of the same people — every face, its features, proportions and expression, the hair, body, pose, clothing and framing stay exactly as they were; nobody is redesigned, beautified, slimmed or replaced. Recover, do not reinvent.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, invented details that were not in the picture, a changed pose or outfit, painterly or plastic skin, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg"
+  },
+  {
+   "name": "th-upscale-crisp2x",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: double the resolution with clean, natural sharpness — edges crisp, textures true, nothing over-processed. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-upscale-ultra4x",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: quadruple the resolution with rich ultra-fine detail — every eyelash, hair strand and fabric thread rendered, clean and photographic. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-upscale-faceFirst",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: enhance the face above all — crisp eyes, lashes, brows and lips, clean even skin with natural texture — then the rest of the picture to match. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-upscale-textureKeep",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: upscale while preserving true natural texture — real skin, fabric and surface detail, gentle film-like grain — no plastic, no waxy smoothing. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-upscale-denoise",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: remove the low-light noise and colour speckle, then restore clean sharp detail — smooth even tones with real texture kept. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-upscale-phoneBoost",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: raise this phone snapshot to professional camera quality — true detail, clean tonal range, natural depth, no phone over-processing artefacts. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-upscale-webLowres",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: rebuild this small, compressed web or screenshot image into a clear high-resolution photograph — compression blocks, ringing and blur gone, true detail restored. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-upscale-printReady",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Upscale and enhance this photograph: enhance to poster-print quality — very high resolution feel, clean crisp edges, smooth gradients, natural colour, no banding or noise. Recover true fine detail — eyelashes, hair strands, fabric weave, skin, background texture — from what the picture actually shows; do not invent a different face, expression or object. The same picture, larger, sharper and cleaner.\n\nIDENTITY LOCK: the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly; do not slim, age, reshape or restyle anyone. DETAIL LOCK: sharpen and enrich what is there; never repaint, restyle or redesign.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, hallucinated details that change the picture, plastic over-smoothed skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg"
+  },
+  {
+   "name": "th-faceclear-softFocus",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face is softly out of focus — bring it into crisp focus with true detail in the eyes, lashes, brows, lips and hair. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-motionBlur",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face is smeared by camera shake or movement — reconstruct it sharp and still, every feature in its true place. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-lowLight",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face is dark, grainy and noisy from low light — lift it to clean natural exposure, remove the noise and colour speckle, restore clear detail. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-lowRes",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face is tiny and pixelated — rebuild it as a clear, detailed face true to what the pixels show, no invented features. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-eyesSharp",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: make the eyes crisp and alive — sharp irises with natural catchlights, defined lashes and brows — the rest of the face gently clear. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-skinClean",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: clean and even the skin — blemishes, redness and noise gone, a smooth luminous finish with fine natural texture kept — the features untouched. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-oldPhotoFace",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face comes from a faded, scratched old print — restore it clear and true, with natural skin and eye colour, the period look kept. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-glassesGlare",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: remove the glare and reflections on the glasses so both eyes show clearly through the lenses; the frames and the face stay exactly as they are. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-backlit",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face is dark against a bright background — lift it to natural clear exposure with detail and colour, keeping the bright background as it is. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-compression",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face is broken by messaging-app compression — blocks, ringing and mushy detail — rebuild it clean and clear, true to the person. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-oversmooth",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: the face has been over-smoothed by a beauty filter into a plastic, waxy look — bring back a clear natural face with real fine skin texture, the features exactly the same. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  },
+  {
+   "name": "th-faceclear-groupFaces",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Bring the face in this photograph into clear, sharp focus: bring every face in this group photograph into clear sharp focus with clean skin and bright eyes — each person exactly themselves. Restore the true detail of the eyes, lashes, brows, lips, skin and hair from what the picture shows — the same face, expression and features, only clear.\n\nIDENTITY LOCK: the same photograph of the same person — the face stays exactly theirs: the same eyes, nose, lips, jawline, proportions and expression, the same hair, body, pose, clothing and framing; no reshaping, slimming or restyling. SKIN: clean, even and smooth with fine natural detail kept where the picture has it.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different face, changed eye shape or size, a changed expression, plastic or waxy skin, halos, over-sharpened edges, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg"
+  }
+ ]
+}
