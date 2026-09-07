@@ -94,9 +94,10 @@ var IMAGINE = (function(){
     var go=function(){ openTool(tool.id); };
     var art = el("div","im-card-art im-hubcmp"); c.appendChild(art);
     var split = (S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : 50;
-    var aft = el("img","im-base"); aft.alt=""; aft.src=H.asset("card", tool.after); art.appendChild(aft);
+    /* lazy + async: eight 2:3 pictures must not ride on the boot of a page the student did not open (sweep_v484's budget) */
+    var aft = el("img","im-base"); aft.alt=""; aft.loading="lazy"; aft.decoding="async"; aft.src=H.asset("card", tool.after); art.appendChild(aft);
     var top = el("div","im-cmp-top"); top.style.width=split+"%"; art.appendChild(top);
-    var bef = el("img","im-orig"); bef.alt=""; bef.src=H.asset("card", tool.before); top.appendChild(bef);
+    var bef = el("img","im-orig"); bef.alt=""; bef.loading="lazy"; bef.decoding="async"; bef.src=H.asset("card", tool.before); top.appendChild(bef);
     var line = el("div","im-cmp-line"); line.style.left=split+"%"; art.appendChild(line);
     var knob = el("div","im-cmp-knob","⇔"); knob.style.left=split+"%"; art.appendChild(knob);
     art.appendChild(el("span","im-lb l", t("before"))); art.appendChild(el("span","im-lb r", t("after")));
@@ -348,13 +349,17 @@ var IMAGINE = (function(){
   /* ---------- navigation ---------- */
   function openTool(id){ if(!toolById(id)) return; S.tool=id; S.status=""; save(); render(); try{ if(H.scrollTop) H.scrollTop(); }catch(e){} }
   function goHub(){ S.tool=null; save(); render(); }
+  function visible(){ try{ return !!(root && root.getClientRects && root.getClientRects().length); }catch(e){ return true; } }
   function init(host, rootEl){
-    H=host; root=rootEl; load(); render();
+    H=host; root=rootEl; load();
+    /* drawn on entry (switchPage → onEnter) when the page is hidden at boot — nothing of this page is fetched before it is opened */
+    if(visible()) render();
     try{ window.addEventListener("resize", function(){ for(var i=0;i<hubSyncs.length;i++) hubSyncs[i](); if(refs.syncW) refs.syncW(); }); }catch(e){}
   }
   function onEnter(){ render(); }
+  function drawn(){ return !!(root && root.firstChild); }
 
-  return { init:init, render:render, onEnter:onEnter, openTool:openTool, goHub:goHub, addPhotos:addPhotos, removePhoto:removePhoto,
+  return { init:init, render:render, onEnter:onEnter, drawn:drawn, openTool:openTool, goHub:goHub, addPhotos:addPhotos, removePhoto:removePhoto,
     applyOne:applyOne, applyAll:applyAll, stop:stopAll, exportCur:exportCur, setSplit:setSplit, hubSplit:function(){ return S.hubSplit||{}; },
     prompt:function(toolId, presetId, desc){ var tool=toolById(toolId); return tool ? buildPrompt(tool, presetById(tool,presetId), desc) : ""; },
     state:S, data:D, MAX_PHOTOS:MAX_PHOTOS, DESC_MAX:DESC_MAX };
