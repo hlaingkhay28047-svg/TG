@@ -1,35 +1,35 @@
 {
- "note": "Imagine art (6.29.1 wave) — 4 generated 2:3 base photos (the studio's own models), 54 template thumbnails on them (baseFrom), the page banner still and its motion clip. Cards = base (before) | cardPreset result (after), finished by the wave script.",
+ "note": "Imagine art (6.29.2 wave) — every person is the brand model (tools/art_ref/hnk-model.jpg, the Freeform hero's face): 4 base photos are identity edits from it at 2:3, 54 template thumbnails build on them (baseFrom), the page banner still is an identity edit at 16:9 and the motion clip an image-to-video from it. Cards = base (before) | cardPreset result (after), finished by the wave script.",
  "jobs": [
   {
    "name": "base-lighting",
-   "apiPath": "rhart-image-n-pro-official/text-to-image",
-   "base": null,
-   "prompt": "Editorial three-quarter-length fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a fitted black satin camisole top and high-waist cream wide-leg trousers, a dynamic pose: one hand lifting her hair, shoulders turned, chin tilted, looking over her shoulder at the camera with a slight smile — in front of a plain mid-grey seamless backdrop, lit by completely FLAT even shadowless light with no visible light direction, no highlights and no rim light (deliberately dull, waiting to be relit), 85mm lens, vertical 2:3 framing, photoreal fashion editorial, no text, no captions, no watermark, no logo.",
+   "apiPath": "rhart-image-n-pro-official/edit",
+   "base": "tools/art_ref/hnk-model.jpg",
+   "prompt": "Using the reference photo: keep the EXACT SAME woman — same face shape, eyes, eyebrows, nose, lips, jawline, skin tone, apparent age (early twenties) and long dark wavy hair; do not redesign, beautify, age or replace her. Change everything else as described. Create an editorial three-quarter-length fashion photograph of the EXACT SAME woman as in the reference photo — her face, eyes, eyebrows, nose, lips, jawline, warm fair skin tone and long dark wavy hair kept identical, do not redesign, age or swap her — glossy soft glam makeup, slim toned figure, confident playful expression, wearing a fitted black satin camisole top and high-waist cream wide-leg trousers, a dynamic pose: one hand lifting her hair, shoulders turned, chin tilted, looking over her shoulder at the camera with a slight smile — in front of a plain mid-grey seamless backdrop, lit by completely FLAT even shadowless light with no visible light direction, no highlights and no rim light (deliberately dull, waiting to be relit), 85mm lens, vertical 2:3 framing, photoreal fashion editorial, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
   {
    "name": "base-portrait",
-   "apiPath": "rhart-image-n-pro-official/text-to-image",
-   "base": null,
-   "prompt": "Full-body street-fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a white sleeveless ribbed top tucked into high-waist light-blue denim shorts, white sneakers and small gold hoop earrings, walking toward the camera mid-stride with her hair swinging, one hand lifting a pair of sunglasses onto her head, a bright laugh — the whole body including the shoes visible, inside an EMPTY plain light-grey photo studio (plain grey floor, plain grey backdrop, nothing else), soft even lighting, 50mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "apiPath": "rhart-image-n-pro-official/edit",
+   "base": "tools/art_ref/hnk-model.jpg",
+   "prompt": "Using the reference photo: keep the EXACT SAME woman — same face shape, eyes, eyebrows, nose, lips, jawline, skin tone, apparent age (early twenties) and long dark wavy hair; do not redesign, beautify, age or replace her. Change everything else as described. Create a full-body street-fashion photograph of the EXACT SAME woman as in the reference photo — her face, eyes, eyebrows, nose, lips, jawline, warm fair skin tone and long dark wavy hair kept identical, do not redesign, age or swap her — glossy soft glam makeup, slim toned figure, confident playful expression, wearing a white sleeveless ribbed top tucked into high-waist light-blue denim shorts, white sneakers and small gold hoop earrings, walking toward the camera mid-stride with her hair swinging, one hand lifting a pair of sunglasses onto her head, a bright laugh — the whole body including the shoes visible, inside an EMPTY plain light-grey photo studio (plain grey floor, plain grey backdrop, nothing else), soft even lighting, 50mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
   {
    "name": "base-surface",
-   "apiPath": "rhart-image-n-pro-official/text-to-image",
-   "base": null,
-   "prompt": "Full-body fashion photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a fitted pastel-pink summer mini dress with thin straps and chunky white sneakers, sitting relaxed on a huge flat plain grey concrete floor with her legs stretched out to one side and one hand behind her, laughing toward the camera — the bare ground fills the entire lower half of the frame around and beyond her, camera slightly above her eye level looking down, a plain pale overcast sky and a faint far horizon behind, soft daylight, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "apiPath": "rhart-image-n-pro-official/edit",
+   "base": "tools/art_ref/hnk-model.jpg",
+   "prompt": "Using the reference photo: keep the EXACT SAME woman — same face shape, eyes, eyebrows, nose, lips, jawline, skin tone, apparent age (early twenties) and long dark wavy hair; do not redesign, beautify, age or replace her. Change everything else as described. Create a full-body fashion photograph of the EXACT SAME woman as in the reference photo — her face, eyes, eyebrows, nose, lips, jawline, warm fair skin tone and long dark wavy hair kept identical, do not redesign, age or swap her — glossy soft glam makeup, slim toned figure, confident playful expression, wearing a fitted pastel-pink summer mini dress with thin straps and chunky white sneakers, sitting relaxed on a huge flat plain grey concrete floor with her legs stretched out to one side and one hand behind her, laughing toward the camera — the bare ground fills the entire lower half of the frame around and beyond her, camera slightly above her eye level looking down, a plain pale overcast sky and a faint far horizon behind, soft daylight, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
   {
    "name": "base-weather",
-   "apiPath": "rhart-image-n-pro-official/text-to-image",
-   "base": null,
-   "prompt": "Full-body photograph of a stunning young Vietnamese fashion model about 21 years old, fair luminous skin, delicate pretty features, long silky dark-brown hair, glossy natural makeup, slim toned figure, confident playful expression, wearing a flowing floral-print silk slip dress to mid-thigh and strappy sandals, twirling on an open grassy hilltop path with her arms spread wide and the dress and hair flaring in the spin, joyful open-mouth smile, a wide clear pale-blue sky filling the upper half of the frame, calm plain weather, soft daylight, 35mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "apiPath": "rhart-image-n-pro-official/edit",
+   "base": "tools/art_ref/hnk-model.jpg",
+   "prompt": "Using the reference photo: keep the EXACT SAME woman — same face shape, eyes, eyebrows, nose, lips, jawline, skin tone, apparent age (early twenties) and long dark wavy hair; do not redesign, beautify, age or replace her. Change everything else as described. Create a full-body photograph of the EXACT SAME woman as in the reference photo — her face, eyes, eyebrows, nose, lips, jawline, warm fair skin tone and long dark wavy hair kept identical, do not redesign, age or swap her — glossy soft glam makeup, slim toned figure, confident playful expression, wearing a flowing floral-print silk slip dress to mid-thigh and strappy sandals, twirling on an open grassy hilltop path with her arms spread wide and the dress and hair flaring in the spin, joyful open-mouth smile, a wide clear pale-blue sky filling the upper half of the frame, calm plain weather, soft daylight, 35mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
    "ratio": "2:3",
    "resolution": "2k"
   },
@@ -467,11 +467,11 @@
   },
   {
    "name": "banner-imagine",
-   "apiPath": "rhart-image-n-pro-official/text-to-image",
-   "base": null,
+   "apiPath": "rhart-image-n-pro-official/edit",
+   "base": "tools/art_ref/hnk-model.jpg",
    "ratio": "16:9",
    "resolution": "2k",
-   "prompt": "Cinematic 16:9 hero banner photograph for an AI photo-editing tool. a beautiful young Vietnamese woman about 21 years old, fair porcelain skin, delicate soft features, long straight dark hair, natural light makeup, gentle calm expression, slim, elegant, wearing a simple white dress, standing in the middle of the frame. The LEFT half of the frame shows her plain flat-lit reality: a dull grey studio floor and grey backdrop, flat shadowless light. The RIGHT half of the very same frame is transformed: a golden-hour rice field at sunset with warm rim light on her hair and shoulders and a few gently falling petals. The two halves meet at one clean vertical line of soft light passing straight through her; her face, body, pose and dress are IDENTICAL on both sides — only the light and the scene change. Elegant, photoreal, shallow depth of field, warm gold and deep navy palette, no text, no captions, no logos, no watermark, no UI."
+   "prompt": "Using the reference photo: keep the EXACT SAME woman — same face shape, eyes, eyebrows, nose, lips, jawline, skin tone, apparent age (early twenties) and long dark wavy hair; do not redesign, beautify, age or replace her. Change everything else as described. Cinematic 16:9 hero banner photograph for an AI photo-editing tool called IMAGINE, one frame that tells the whole story. the exact same woman as in the reference photo (same face, same long dark wavy hair, warm fair skin, soft glam makeup), early twenties, slim, elegant, wearing a fitted black satin slip dress with thin straps, standing just right of centre, three-quarter length, caught mid-turn toward the camera with her hair swinging and a joyful open smile, her right hand raised beside her face with the fingers just snapped — a ribbon of warm golden light streams from her fingertips and sweeps in a soft S-curve across the frame like a magic brush stroke. Everything to the LEFT of that ribbon is her dull reality: a flat-lit plain grey photo studio, grey floor, grey backdrop, no shadows, muted colour. Everything to the RIGHT of the ribbon has been transformed by it into a golden-hour rice field at sunset — warm rim light on her hair and shoulder, tall golden stalks, a drift of cherry petals and glowing dust in the air, deep amber sky. The boundary between the two worlds follows the light ribbon exactly, with the grey side visibly dissolving into colour along its edge. Her face and body are one continuous figure across both sides. Dark navy and gold palette, shallow depth of field, photoreal, expensive editorial finish, the left third kept simple and darker for a headline. No text, no captions, no logos, no watermark, no UI."
   },
   {
    "name": "banner-imagine-motion",
@@ -480,7 +480,7 @@
    "imageParam": "imageUrl",
    "duration": "5",
    "maxMs": 1200000,
-   "prompt": "Subtle cinemagraph, camera locked off, no zoom, no pan. The woman stays in place and only breathes softly and blinks, a very gentle smile forming. On the right half, golden petals drift slowly down, the rice stalks sway in a light breeze and the warm sunset light shimmers faintly; the left half stays calm and almost still. Photoreal, seamless, no text, no captions, no watermark."
+   "prompt": "Lively cinemagraph, slow gentle push-in. The golden light ribbon flows outward from her fingertips across the frame, and as it sweeps the grey studio on the left blooms into the golden sunset field — colour and warm light spreading along the ribbon's edge. Cherry petals and glowing dust swirl in a soft breeze, her hair and the straps of her dress sway, she turns her head a little further toward the camera and her smile widens, the sunset light shimmers on the rice stalks. Photoreal, smooth, seamless, no text, no captions, no watermark."
   }
  ]
 }
