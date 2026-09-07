@@ -20,7 +20,8 @@
    Optional per job (6.29.2 wave): "refs": ["tools/art_ref/a.jpg", …] — reference pictures uploaded once each and sent
    as imageUrls (before the base, if any) for identity-preserving edits that need more than one view of the same person.
    Optional per job (6.29.1 wave): "baseFrom": "<other job name>" — that job's OWN output is the base
-   (a generated photo feeds the edits in the same run; such jobs run in a second pass), "imageParam":
+   (a generated photo feeds the edits in the same run; such jobs run after their inputs, chains included — 6.32.2), "refsFrom":
+   ["<job name>", …] — other jobs' pictures as references before the base (a two-image workflow on generated inputs), "imageParam":
    "imageUrl" — the single-image field name for endpoints that take one (image-to-video), "duration": "5"
    (+ "durInt": true for integer-typed endpoints), "maxMs": 900000 — a longer poll for video. A video
    result is written as .mp4.
@@ -122,6 +123,8 @@ async function runJob(job) {
   } else if (job.base) imageUrl = await upload(job.base);
   const refUrls = [];
   for (const r of (job.refs || [])) refUrls.push(await upload(r));
+  /* 6.32.2 — refsFrom: other jobs' pictures as references (before the base in imageUrls): IMAGE 1 = refsFrom[0], IMAGE 2 = the base */
+  for (const n of (job.refsFrom || [])) { const dep = outputs.get(n); if (!dep) throw new Error("refsFrom " + n + " did not produce a picture"); refUrls.push(await upload("job:" + n + "." + dep.ext, dep.buf)); }
   const tid = await submit(job.apiPath, bodyFor(job, imageUrl, refUrls));
   const fin = await poll(tid, job.maxMs);
   const res = (fin.results || []).find(x => x && x.url);
@@ -155,8 +158,19 @@ async function runJob(job) {
     }
     if (list.length) await Promise.all(Array.from({ length: Math.min(CONCURRENCY, list.length) }, worker));
   }
-  await pass(jobs.filter(j => !j.baseFrom));
-  await pass(jobs.filter(j => !!j.baseFrom));
+  /* 6.32.2 — passes follow the dependencies (baseFrom + refsFrom): first the jobs that build on nothing, then, as long as something
+     is ready, every job whose inputs have been produced — so chains (a Batch Imagine recipe: step 2 on step 1's picture, step 3 on
+     step 2's; a two-image workflow on two generated pictures) run in order without a second dispatch. A job whose input never came is
+     reported failed with the reason, not attempted. */
+  function depsOf(j) { return (j.baseFrom ? [j.baseFrom] : []).concat(j.refsFrom || []); }
+  await pass(jobs.filter(j => !depsOf(j).length));
+  let waiting = jobs.filter(j => depsOf(j).length);
+  while (waiting.length) {
+    const ready = waiting.filter(j => depsOf(j).every(d => outputs.has(d)));
+    if (!ready.length) { for (const j of waiting) { const miss = depsOf(j).filter(d => !outputs.has(d)); failed.push({ name: j.name, error: miss.join(", ") + " did not produce a picture" }); console.log("FAIL", j.name, miss.join(", "), "did not produce a picture"); } break; }
+    await pass(ready);
+    waiting = waiting.filter(j => ready.indexOf(j) < 0);
+  }
   const summary = { ok: done.map(d => ({ name: d.name, file: d.file, taskId: d.taskId, bytes: d.bytes, usage: d.usage })), failed };
   console.log("===ART-SUMMARY-BEGIN===");
   console.log(JSON.stringify(summary, null, 0));

@@ -199,7 +199,9 @@ report("B) every workflow card is present and 960x640 (3:2), and the pack may gr
    pack total moves: 189 files / 19.97 MB (19.961427 exactly — rounded up, same rule). */
 /* 2026-09-05, v6.19.0 — four Outfit & Scene cards join the pack (new names, q79): 193 files / 20.27 MB
    (20.260815 exactly — rounded up, same rule). */
-const PREV_MB = 20.27;
+/* 2026-09-07, v6.32.2 — the Reference Scenes card lands (the owner's two-image workflow, its prompt word for word; one 960x640
+   file at the pack's q79), taking the pack to 194 files / 20.37 MB (20.366194 exactly — rounded up, same rule). */
+const PREV_MB = 20.37;
 report("E) the new set is no heavier than the one it replaced (phone data budget)",
   totalBytes / 1e6 <= PREV_MB,
   { newMB: +(totalBytes / 1e6).toFixed(2), prevMB: PREV_MB, nativeWouldHaveBeenMB: 38.1 });
