@@ -2,7 +2,7 @@
  *
  * The owner's brief (2026-09-07): "Reference scenes from image 2 keep image 1 subject frame and composition and scenes follow
  * the subject compose — ခုပေးထားတဲ့ prompts ကို အတိအကျ သုံးပြီး Reference scenes smart workflow card အသစ်လုပ်ပေးပါ": a card that
- * takes the student's photo (IMAGE 1) and a scene photograph (IMAGE 2) and sends EXACTLY that sentence. So this test pins the
+ * takes the student's photo (IMAGE 1) and a scene photograph (IMAGE 2) and sends that sentence FIRST, then (6.32.3) the input roles. So this test pins the
  * prompt byte for byte — in the record, in the panel's lifted catalog, and in the prompt the page composes for the engine
  * (wfLocked adds no FRAME LOCK: the sentence already speaks of composition) — plus the two required inputs, no fields, the
  * Background & Scene slot after Studio Look Copy, the nine-language summary, the four-step guide in both languages, the card
@@ -42,8 +42,12 @@ const lib = JSON.parse(APP.match(/<script id="hnkLibWf" type="application\/json"
 const w = lib.workflows.find(x => x.id === ID), idx = lib.workflows.findIndex(x => x.id === ID), slc = lib.workflows.findIndex(x => x.id === "studio-look-copy");
 report("A) the record takes exactly two required inputs — your photo as IMAGE 1, the scene as IMAGE 2 — no optional input and no fields",
   !!w && w.req.length === 2 && /Your Photo.*IMAGE 1/.test(w.req[0]) && /Scene.*IMAGE 2/.test(w.req[1]) && (w.opt || []).length === 0 && Array.isArray(w.fields) && w.fields.length === 0, w && { req: w.req, fields: w.fields });
-report("A2) the prompt is the owner's sentence, byte for byte — nothing added before or after it",
-  !!w && w.prompt === PROMPT, w && w.prompt);
+/* 6.32.3 — the bare sentence made two-image edit models hand IMAGE 2 back (the reference photograph itself, watermark included); the roles
+   behind it are the Studio Look Copy shape: IMAGE 1 the only edit target and the only person, IMAGE 2 the place only, never returned itself */
+report("A2) the prompt OPENS with the owner's sentence, byte for byte, then names the input roles (IMAGE 1 the only edit target and the only person; IMAGE 2 a scene reference only, never returned itself, its person and watermark never copied) — no lock, guard or token words",
+  !!w && w.prompt.indexOf(PROMPT + "\n\nINPUT ROLES:\n- IMAGE 1 is the ONLY edit target and the ONLY person in the result.") === 0 && /- IMAGE 2 is a SCENE REFERENCE ONLY\./.test(w.prompt) && /Never return IMAGE 2 itself, and never put IMAGE 2's person in the frame\.$/.test(w.prompt) &&
+  /never copy any text, logo, signature or watermark on it/.test(w.prompt) && !/FRAME LOCK|TASK GUARD|EXTRA REQUEST|\{\{/.test(w.prompt) && /IMAGE 2 returned as the result/.test(w.negative) && /reference watermark/.test(w.negative),
+  w && { head: w.prompt.slice(0, 140), tail: w.prompt.slice(-80) });
 report("A3) title, summary and explanation say what moves and what stays; the AVOID list names IMAGE 2's person, a re-crop and a floating subject; the record sits right after Studio Look Copy",
   !!w && w.title === "Reference Scenes" && /IMAGE 2/.test(w.summary) && /IMAGE 1/.test(w.summary) && /stay as shot/.test(w.summary) && /word for word/.test(w.explanation) &&
   /IMAGE 2's person/.test(w.negative) && /re-cropped/.test(w.negative) && /floating subject/.test(w.negative) && idx === slc + 1 && typeof w.visual === "string" && /^user-ref-\d+\.jpg$/.test(w.visual) && fs.existsSync(path.join(ROOT, "docs", "app", "lib", "ui", w.visual)),
@@ -71,6 +75,9 @@ report("D) the app's meta, the landing and its counter all count 194 Smart Workf
   /data-count="wf">194</.test(LANDING) && !/data-count="wf">193</.test(LANDING) && lib.workflows.filter(x => !x.kind).length + 0 > 0,
   { app: APP.indexOf("Smart Workflow 194") >= 0, landing: (LANDING.match(/Smart Workflow 194/g) || []).length });
 const wn = (APP.match(new RegExp('\\{ v:"6\\.32\\.2", kind:"wf", ref:"' + ID + '",[\\s\\S]*?\\} \\},\\n')) || [""])[0];
+const wn3 = (APP.match(new RegExp('\\{ v:"6\\.32\\.3", kind:"wf", ref:"' + ID + '",[\\s\\S]*?\\} \\},\\n')) || [""])[0];
+report("D3) WHATS_NEW carries the 6.32.3 fix row (kind wf) above the 6.32.2 row, a title and a line in all nine languages, and it names the roles",
+  !!wn3 && LANGS.every(l => (wn3.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /IMAGE 1 = the person to keep/.test(wn3) && APP.indexOf(wn3) < APP.indexOf(wn), { row: wn3.slice(0, 90) });
 report("D2) WHATS_NEW carries the 6.32.2 row (kind wf) with a title and a line in all nine languages, the panel's lifted What's New carries it, and CI runs this test",
   !!wn && LANGS.every(l => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /word for word/.test(wn) && PANEL_WN.indexOf('"' + ID + '"') >= 0 && /PORT=8931 node test\/verify_reference_scenes\.js/.test(CI),
   { row: wn.slice(0, 100), panel: PANEL_WN.indexOf('"' + ID + '"') >= 0, ci: /verify_reference_scenes/.test(CI) });
@@ -82,10 +89,11 @@ const bgCat = cat.categories.find(c => c.items.some(x => x.id === ID));
 /* the lifted catalog carries the COMPOSED prompt — the owner's sentence first, then only the two house lines every Background & Scene card
    gets (REAL PHOTOGRAPH, SKIN TONE TRUTH); no FRAME LOCK (the sentence already speaks of composition), no guard, no token */
 const HOUSE = /^(REAL PHOTOGRAPH:|SKIN TONE TRUTH:)/;
+const REC = w ? w.prompt : PROMPT;   /* 6.32.3 — the record's whole prompt (sentence + roles); the house lines follow THAT */
 const houseOnly = extra => { const ls = extra.split("\n"); return ls[0] === "" && ls.length >= 2 && ls.slice(1).every(l => HOUSE.test(l)) && !/FRAME LOCK|TASK GUARD|\{\{|EXTRA REQUEST/.test(extra); };
-report("E) the panel's lifted catalog carries the record in Background & Scene with the same two inputs, the owner's sentence as the whole of its own prompt (only the house REAL PHOTOGRAPH line after it), and counts 194 items",
-  !!pi && typeof pi.prompt === "string" && pi.prompt.indexOf(PROMPT) === 0 && houseOnly(pi.prompt.slice(PROMPT.length)) && Array.isArray(pi.req) && pi.req.length === 2 && !!bgCat && /Background/.test(bgCat.category || bgCat.t || "") && items.length === 194,
-  { found: !!pi, head: pi && pi.prompt.slice(0, 120), tail: pi && pi.prompt.slice(PROMPT.length, PROMPT.length + 60), n: items.length, cat: bgCat && (bgCat.category || bgCat.t) });
+report("E) the panel's lifted catalog carries the record in Background & Scene with the same two inputs, the record's prompt (the owner's sentence + the roles) with only the house lines after it, and counts 194 items",
+  !!pi && typeof pi.prompt === "string" && pi.prompt.indexOf(REC) === 0 && houseOnly(pi.prompt.slice(REC.length)) && Array.isArray(pi.req) && pi.req.length === 2 && !!bgCat && /Background/.test(bgCat.category || bgCat.t || "") && items.length === 194,
+  { found: !!pi, head: pi && pi.prompt.slice(0, 120), tail: pi && pi.prompt.slice(REC.length, REC.length + 60), n: items.length, cat: bgCat && (bgCat.category || bgCat.t) });
 
 /* ---- F) the page ---- */
 (async () => {
@@ -105,11 +113,11 @@ report("E) the panel's lifted catalog carries the record in Background & Scene w
       return { rec: !!rec, cats: cats.map(c => c.t), after: ids.indexOf(id) === ids.indexOf("studio-look-copy") + 1, composed, itemPrompt: item && item.prompt, summary: item && item.summary, req: item && item.req };
     }, ID);
     /* the page's item prompt = the owner's sentence + the two house lines; the batch prompt the engine receives = that + the AVOID list, as on every card */
-    const itemOk = typeof live.itemPrompt === "string" && live.itemPrompt.indexOf(PROMPT) === 0 && houseOnly(live.itemPrompt.slice(PROMPT.length));
-    report("F) on the page the record is in Background & Scene right after Studio Look Copy; its prompt opens with the owner's sentence exactly, followed only by the two house lines every card gets (REAL PHOTOGRAPH, SKIN TONE TRUTH) — no FRAME LOCK (the sentence already speaks of composition), no token, nothing else; the batch prompt the engine receives is that plus the AVOID list; the panel's lifted item is the same prompt",
+    const itemOk = typeof live.itemPrompt === "string" && live.itemPrompt.indexOf(REC) === 0 && houseOnly(live.itemPrompt.slice(REC.length));
+    report("F) on the page the record is in Background & Scene right after Studio Look Copy; its prompt opens with the owner's sentence exactly, then the input roles, followed only by the two house lines every card gets (REAL PHOTOGRAPH, SKIN TONE TRUTH) — no FRAME LOCK (the prompt already speaks of crop and framing), no token, nothing else; the batch prompt the engine receives is that plus the AVOID list; the panel's lifted item is the same prompt",
       live.rec && live.cats.length === 1 && /Background/.test(live.cats[0]) && live.after && itemOk && live.composed === live.itemPrompt + "\n\nAVOID: " + w.negative + "." && (!pi || pi.prompt === live.itemPrompt) &&
       typeof live.summary === "string" && live.summary.length > 10 && live.req && live.req.length === 2,
-      { cats: live.cats, after: live.after, item: live.itemPrompt && live.itemPrompt.slice(0, 130), tail: live.itemPrompt && live.itemPrompt.slice(PROMPT.length, PROMPT.length + 40), avoid: live.composed && live.composed.slice(-60), panelSame: !!pi && pi.prompt === live.itemPrompt });
+      { cats: live.cats, after: live.after, item: live.itemPrompt && live.itemPrompt.slice(0, 130), tail: live.itemPrompt && live.itemPrompt.slice(REC.length, REC.length + 40), avoid: live.composed && live.composed.slice(-60), panelSame: !!pi && pi.prompt === live.itemPrompt });
     report("F2) no page error", errs.length === 0, errs);
   } finally { await browser.close(); }
   console.log(failures ? `\n${failures} FAILED` : "\nALL PASSED");
