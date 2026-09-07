@@ -170,7 +170,10 @@ const DECLARED = [
     re: /\/lib\/wf\/imagine\/(card-(lighting|portrait|surface|weather)-(before|after)|th\/(lighting|portrait|surface|weather)-[A-Za-z0-9]+)\.jpg$/ },
   /* 6.31.0 — the Lighting tool re-shot front-facing: 14 files, rev 4. */
   { tag: "./__lib-purge-v6-31-0-lighting-card",
-    re: /\/lib\/wf\/imagine\/(card-lighting-(before|after)|th\/lighting-[A-Za-z0-9]+)\.jpg$/ }
+    re: /\/lib\/wf\/imagine\/(card-lighting-(before|after)|th\/lighting-[A-Za-z0-9]+)\.jpg$/ },
+  /* 6.32.1 — three hub cards re-made (Color Tone after, Face Clarity before + after, Upscale after): four files, rev 2. */
+  { tag: "./__lib-purge-v6-32-1-repair-cards",
+    re: /\/lib\/wf\/imagine\/card-(colortone-after|faceclear-(before|after)|upscale-after)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",
