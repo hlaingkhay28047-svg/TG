@@ -6234,7 +6234,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.99.0";
+const PANEL_VERSION = "6.100.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -15693,12 +15693,16 @@ function imagineHost() {
       });
     },
     hasModel: function (id) { return !!ffModelById(id); },
+    /* 6.31.0 — how many pictures the model takes in one call: a Reference Card needs two (the photo + the reference) */
+    maxImages: function (id) { const m = ffModelById(id); if (!m) return 0; if (m.maxImages) return m.maxImages; if (m.node && m.node.images && m.node.images.length) return m.node.images.length; return (m.imageParam === "image" || m.imageParam === "imageUrl") ? 1 : 10; },
     sizeTiers: function (id) { const m = ffModelById(id); if (!m || !ffHasSize(m)) return null; return t2iSizeTiers(m) || ["1k", "2k", "4k"]; },
     hasKey: function () { return !!(state.rhKey || "").trim(); },
     gotoSetup: function () { switchPage("setup"); },
     generate: async function (o) {
       const m = /^data:([^;]+);base64,(.*)$/.exec(o.dataUrl || "");
       const parts = [{ text: o.prompt }, { inlineData: { mimeType: m ? m[1] : "image/jpeg", data: m ? m[2] : "" } }];
+      /* 6.31.0 — the Reference Card rides as IMAGE 2 beside the photo (IMAGE 1) */
+      if (o.refDataUrl) { const r2 = /^data:([^;]+);base64,(.*)$/.exec(o.refDataUrl); if (r2) parts.push({ inlineData: { mimeType: r2[1], data: r2[2] } }); }
       /* one photo in, one photo out — Freeform's take count does not apply here */
       const svCount = state.ffCount; state.ffCount = 1;
       try {

@@ -1,101 +1,461 @@
 {
- "note": "Imagine 6.30.0 — Lighting's Sun Rays thumbnail redone on the committed card-lighting-before.jpg with a subtler template (owner, 15:37: the rays looked unnatural, far too much): a few faint gentle beams, the subject still naturally lit. The file carries Lighting's twelve; the dispatch runs only th-lighting-sunRays.",
+ "note": "Imagine 6.31.0 — on Qwen 3.0 Pro image-edit (owner: the card pictures on Qwen and Wan): the Lighting tool re-shot (front-facing base in a silver evening mini dress, tall slim figure, the house retouch, under the deliberately flat light) — base + 12 thumbnails — and the Color Tone + Skin tool's ungraded base + its 28 preset looks recreated on the brand model from their written descriptions.",
  "jobs": [
   {
+   "name": "base-lighting",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a full-body fashion photograph of the HNK model from the references — her exact face from the references, facing the camera and looking into the lens, flawless glass-smooth fair porcelain skin, long dark wavy hair — soft glam makeup, a slim, tall, long-legged figure (camera a little below her eye level so she reads tall), wearing a silver liquid-satin evening mini dress with thin straps, a deep V neckline, a small waist cut-out and a short hem, bare arms and shoulders, silver strappy heels, small diamond earrings, a graceful red-carpet pose: weight on one leg, hips angled, one hand lifting her hair, the other resting on her hip, chin lifted, a confident soft smile — the whole body including the shoes visible, in front of a plain mid-grey seamless backdrop, lit by completely FLAT even shadowless light with no visible light direction, no highlights and no rim light (deliberately dull, waiting to be relit), 85mm lens, vertical 2:3 framing, photoreal fashion editorial, no text, no captions, no watermark, no logo.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "base-colortone",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a straight-out-of-camera, UNGRADED three-quarter-length photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, slim, elegant, wearing an ivory silk slip dress, seated on a linen armchair beside a tall bright window, holding a small loose bouquet of white and pale-pink garden roses in her lap, a leafy green plant and a pale wall behind her, looking at the camera with a soft calm half-smile; deliberately FLAT and NEUTRAL: neutral white balance, a flat low-contrast tonal curve, slightly dull colours, unretouched natural skin with visible pores and a little natural unevenness (a real capture waiting for its grade and retouch), even soft daylight, 85mm lens, vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
    "name": "th-lighting-window",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: soft directional daylight from a large window to one side — gentle wrap, a soft falloff into the shadow side, neutral daylight colour. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-warmWindow",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: warm late-afternoon sunlight pouring through a window — amber tones on the lit side, soft warm bounce in the shadows. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-brightGlow",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: bright airy high-key light — luminous glowing highlights on skin and hair, lifted shadows, a clean fresh feel without blowing out detail. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-warm",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: a warm tungsten-toned soft light — cosy golden-orange colour temperature, soft shadows, an intimate evening-indoors mood. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-harshSun",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: hard midday sunlight from high above — crisp sharp-edged shadows, bright specular highlights, strong contrast, a clear-sky look. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-goldenSun",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: golden-hour sunlight — low warm sun, long soft-edged shadows, a honey-coloured glow on skin, gentle warm haze. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-sunRays",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: soft natural sunlight from a high window behind and to one side — a few faint, gentle beams in light haze, subtle and believable, the subject still evenly and naturally lit, no glare, no washed-out highlights, nothing overpowering. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-afternoon",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: low afternoon sun from the side — warm directional light, long shadows, gentle contrast, a relaxed end-of-day feel. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-windowStreaks",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: sunlight through a window frame — sharp bright streaks and blind-slat shadow stripes falling across the subject and the background. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-leafDapple",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: dappled sunlight filtered through tree leaves — soft-edged leaf-shadow patterns dancing over the subject, warm and cool speckles. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-soft",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: a large soft diffused beauty light from the front — even flattering illumination, minimal shadows, smooth gentle gradients. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
   },
   {
    "name": "th-lighting-goldRim",
-   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "base-lighting",
    "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: a golden backlight rimming the hair and shoulders — glowing edge light with a darker, softly filled front, cinematic separation from the background. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, its features and proportions, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not slim, age, reshape or restyle anyone. BEAUTY RETOUCH: the skin of the face and the whole body is retouched to a flawless, poreless, glass-smooth porcelain finish — evenly luminous, no visible pores, no skin texture, no blemishes, no fine lines, no dark or uneven patches on the knees, elbows, shins or under the eyes — while every facial feature stays exactly hers.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
-   "ratio": "",
-   "resolution": "1k",
-   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-rusticBlueGrace",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: three-quarter-length portrait, body turned to her left with one hip out and a hand resting on her thigh, looking back over her shoulder at the camera; a navy-blue denim-textured qipao-style dress with cold-shoulder ruffled bell sleeves, white piping, silver floral embroidery and a ruffled tiered skirt; hair in two long braids over the shoulders with pink and lilac silk-flower hairpins; soft doll-like makeup, pink blush, glossy pink lips, winged liner; behind her a weathered dark-wood rural cottage with a tiled roof and a green hillside, softly blurred; cool overcast daylight; muted cool grade of deep indigo and slate. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-sunflowerSoftOlive",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: standing three-quarter length, body turned slightly left, head bowed looking down at sunflowers, one hand on her chest and the other holding a sunflower; an ivory crinkle-pleated cotton sundress with thin straps; hair in a sleek low bun, gold drop earrings; matte natural makeup; a mass of sunflowers fills the lower frame; a mottled olive-green painted studio wall behind; soft directional daylight; warm olive-and-gold grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-butterflyIvoryDream",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: standing beside a small wooden side table holding a vase of blue and white hydrangeas, body in profile, head bowed, one hand lifting the gauzy fabric of her sleeve; a sheer ivory organza gown with puffed sleeves and a long ivory veil worn over the head, a blue butterfly hair ornament; dark hair up under the veil; soft rosy makeup; a plain dark-grey painted studio wall; soft diffused window light; airy pastel low-contrast grade with a soft haze. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-royalBlueBlossom",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: reclining on the floor propped on one elbow with her legs extended, looking at the camera; a royal-blue satin halter-neck evening gown; long dark hair loose; polished glam makeup; the wall behind her covered with large mustard-yellow oiled-paper parasols and cherry-blossom branches, pink petals scattered across the black floor; sculpted studio light on a black backdrop; bold royal-blue and gold grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-pinkDahliaMuse",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: standing frontal, three-quarter length, both hands holding one pink dahlia stem at her waist, calm direct gaze; a white pleated sleeveless halter dress with ruffled edges and black ribbon trims; hair in two long braids with pink flower hairpins and pink flower drop earrings; soft pink blush and glossy lips; a plain warm-taupe studio backdrop; soft frontal beauty light; romantic blush-neutral grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-goldenVeilGlow",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: full length, standing turned to her right holding an open pale-blue translucent parasol above her head, a long pale-blue tulle veil streaming from the parasol down to the floor; a marigold-yellow lace long dress with sleeves; hair pinned up; white petals falling around her like snow; a black studio backdrop; warm key light with deep falloff; golden cinematic grade with teal-blue shadows. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-copperVelvetBloom",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: three-quarter length, standing slightly turned with one hand resting on her waist, looking off to the side; a copper-orange crushed-velvet halter dress with silver floral embroidery; hair in a low updo with a small orange flower; soft matte makeup; a deep forest-green painted backdrop with dark pine branches blurred in the foreground; soft warm side light; earthy copper grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-ivoryPeonyLight",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: three-quarter length, body turned, head bowed looking down at a single white peony held in both hands, sheer sleeves flowing; a flowing ivory silk-chiffon robe-dress with wide sleeves over a satin slip; long dark hair loose, a small pearl drop earring; minimal makeup; a very dark charcoal studio backdrop; one soft directional window light from the left; low-key moody ivory grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-midnightLaceMood",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: standing in a dim moody interior in front of dark wooden French doors, one hand on her hip, chin lifted; a floor-length black lace evening gown with long lace sleeves and a high neckline, black feather trim at the shoulders and hem; hair in a messy high updo with face-framing strands; smoky dramatic makeup, dark lips; cool low-key sculpting light; dark luxury grey-silver grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-vintageWeddingGlow",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: editorial wedding portrait, full length: she is the bride in a strapless white ruffled ball gown with a long floral-appliqué veil sweeping across the floor, holding hands with a groom in a black tuxedo beside her; a moody vintage interior with a tall arched window pouring in light, aged textured plaster walls, a crystal chandelier above, a dark wooden floor; warm chandelier-gold grade with deep brown shadows. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-botanicalMist",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated on a white bed beside a bright window, leaning slightly to one side, a large loose bouquet of white daisies, purple wildflowers and green foliage in her lap, gazing softly to the side; a simple white cotton mini dress with thin straps; long dark wavy hair loose; soft pink blush, glossy lips; sheer white curtains behind; diffused window light with a luminous haze; milky, muted-sage low-contrast grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-sunlitBotanical",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated on a white bed with her knees drawn up and one arm around them, surrounded by tall green foliage and wildflowers in vases, backlit by a bright window with a soft sun flare; a white off-shoulder puff-sleeve mini dress; long dark wavy hair, wind-blown; peach-cream skin with rosy cheeks; warm ivory and fresh-sage grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-crimsonBronze",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: editorial pose standing on a deep crimson-red studio backdrop, one hand on her hip, weight on one leg, a large brown faux-fur stole draped over one shoulder, looking straight into the camera; a bronze-brown satin strapless midi dress and black knee-high leather boots; long dark voluminous hair; sculpted bronze glam makeup; sculpted soft studio light; deep crimson, bronze and clean-black grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-mapleAutumn",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: wide full-length scene in a Japanese garden in autumn: she stands on stepping stones beside a small pond with a red wooden bridge and a stone lantern, framed by fiery orange and red maple foliage; a red floral-patterned kimono with a fluffy white fur collar stole; hair up with a white flower ornament; soft outdoor light through warm foliage; amber-and-rust autumn grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-violetPorcelain",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: close three-quarter beauty portrait, head tilted up and to the side, eyes half closed, one hand raised beside her face touching her hair; a rich blue-violet satin blouse; long sleek black hair, a purple bellflower vine hanging above her head; luminous porcelain skin, soft pink blush, glossy lips; a deep black backdrop; soft directional beauty light; blue-violet satin grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-violetOrchid",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: wide full-length scene on a black backdrop: she sits on the floor in a voluminous blue-violet satin gown whose skirt spreads across the floor, one hand at her chest, eyes closed serenely; a huge arrangement of blue-violet orchids hangs above her; long black hair loose; soft studio light with rich contrast; blue-violet silk and deep-black grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-rubyRose",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: close-up beauty portrait, one hand cupping her cheek, intense direct gaze; a red strapless top; hair in a braided crown updo; rosy-peach dewy skin, red lips; a deep ruby-red backdrop with ornamental teal-and-gold Chinese cloud motifs and red-and-gold lion-dance props in the foreground; soft close-up beauty light; ruby and bright-red festive grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-goldenChrysanthemum",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated three-quarter portrait, gazing gently down; a traditional ivory Chinese hanfu-style robe with sheer embroidered organza layers, a golden hairpiece in a classical updo; a bunch of yellow chrysanthemums in her hands; a warm antique-gold painted backdrop with hanging golden foliage; warm directional light with gentle falloff; antique gold and ivory grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-skyBlueGrace",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated in a green rice paddy under a bright blue sky with a few clouds and distant hills, one hand at her cheek, smiling; a blue-and-white tie-dye ethnic gown with a silver-embroidered bodice, a blue beaded headdress with silver charms, layered blue bead necklaces and bracelets, a woven rattan basket beside her; bright open daylight; clean cool natural grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-whiteVeilSerenity",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated, one arm raised holding a long sheer white veil over her head, gaze soft and downcast; a white tulle gown; hair loose beneath the veil; porcelain makeup; a dark charcoal studio with white peony branches in a tall vase behind her; soft diffused light; muted elegant grey-white grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-lotusWeddingHarmony",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: full-length couple portrait in a traditional Vietnamese studio: she wears a white silk ao dai with sheer flowing sleeves, hair in a low bun with white flowers, dancing lightly on one foot with a raised sleeve while holding the hand of a groom in a white ao dai; white lotus flowers and lotus leaves around a dark wooden stool; a warm brown painted backdrop with gold accents; soft studio light; warm balanced grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-classicLilyPearl",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated on a dark wooden chair, three-quarter length, one arm resting on the chair back, holding a woven fan; a champagne-ivory silk dress with soft cap sleeves and a pearl necklace; hair in a classic low chignon; a vase of white lilies on a wooden side table; a warm brown textured backdrop; soft directional light; warm classic grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-bridalIvoryGlow",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: bridal beauty portrait, hands clasped at her chin in white lace gloves, gazing at the camera; a white strapless satin ball gown and a huge voluminous white tulle veil framing her like a cloud; hair in a bun; pearl earrings; soft glam makeup with pink lips; a plain pale grey-white backdrop; soft high-key light; clean neutral high-key grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-moodyBronzeSoft",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated and reclining against a dark teal wall, head tilted back, eyes closed, one arm raised behind her head; a champagne satin slip dress with a mustard-yellow silk wrap over her lap; hair in a low bun; low soft light from above; cinematic warm bronze grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-peachWindowMist",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: leaning through an open rustic wooden window frame, eyes closed, one hand touching her shoulder and the other holding a peach against the glass, more peaches on the sill; a white floral-print strapless summer dress; hair in a soft updo with bangs; dewy natural makeup; green garden foliage behind; natural window light; soft peach-and-sage pastel grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-blossomGardenGlow",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated on a wooden log in a lush garden of pink blossoms and large tropical leaves, one hand behind her on the log, gazing off to the side; a white draped off-the-shoulder midi dress with long sleeves and a modest neckline; hair in a loose romantic updo; fresh glowing makeup; soft natural garden light; fresh warm grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-rosyBridalNude",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: close bridal beauty portrait, shoulders up, one hand lifted toward her collarbone, gazing at the camera with big doe eyes; a beaded ivory corset wedding gown, a sheer veil, a diamond necklace and earrings; hair in a sleek low bun; rosy doll-like makeup with pink blush and glossy pink lips; a plain cream backdrop; even soft light; soft warm nude grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
+  },
+  {
+   "name": "th-colortone-vintageFloralCream",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Recreate this photograph on the HNK model from the references — the same face — as a real fashion photograph: seated three-quarter portrait, one hand raised to her hair, gazing at the camera; a cream pleated off-shoulder gown with a ruffled neckline; very long dark voluminous curls draped over one shoulder with a white rose tucked in; tall white daisies and a cream ceramic vase beside her; a warm cream painted backdrop; soft ambient light; vintage creamy honey grade. Her skin: smooth, even, luminous, fine natural pores kept, never plastic. Vertical 2:3 framing, photoreal, no text, no captions, no watermark, no logo. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.",
+   "ratio": "2:3",
+   "resolution": "2k"
   }
  ]
 }

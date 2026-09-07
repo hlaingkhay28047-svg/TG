@@ -16,6 +16,7 @@
    jobs.json: { "jobs": [ { "name": "light-01", "apiPath": "rhart-image-n-g31-flash/image-to-image",
                             "base": "docs/app/lib/st-sample.jpg" | null, "prompt": "…",
                             "ratio": "1:1" | "", "resolution": "1k" | "2k", "extra": { … body fields … } } ] }
+   6.31.0: alibaba/qwen-image* (prompt + imageUrls + size) and alibaba/wan-2.7/text-to-image* (prompt + width/height) bodies mirror the app.
    Optional per job (6.29.2 wave): "refs": ["tools/art_ref/a.jpg", …] — reference pictures uploaded once each and sent
    as imageUrls (before the base, if any) for identity-preserving edits that need more than one view of the same person.
    Optional per job (6.29.1 wave): "baseFrom": "<other job name>" — that job's OWN output is the base
@@ -85,6 +86,23 @@ function bodyFor(job, imageUrl, refUrls) {
   if (/^rhart-image\//.test(ap)) { /* the flat node-graph shape (v6.26.0) */
     if (imageUrl) body.imageUrl = imageUrl;
     body.prompt = job.prompt; body.aspectRatio = job.ratio || "auto"; body.outputFormat = "png";
+    return body;
+  }
+  /* 6.31.0 — the alibaba endpoints (the app's rhV2Body / text-to-image builder, mirrored): Qwen image-edit takes prompt + imageUrls +
+     a "W*H" size string keyed by ratio (2k = the hd step); Wan 2.7 text-to-image takes prompt + width/height ints (long side 1024/1536/2048). */
+  const QWEN_SIZE = { "1:1": ["1024*1024", "1536*1536"], "2:3": ["768*1152", "1024*1536"], "3:2": ["1152*768", "1536*1024"], "3:4": ["960*1280", "1080*1440"], "4:3": ["1280*960", "1440*1080"], "9:16": ["720*1280", "1080*1920"], "16:9": ["1280*720", "1920*1080"] };
+  const WAN_WH = { "1:1": [1, 1], "3:4": [3, 4], "4:3": [4, 3], "4:5": [4, 5], "5:4": [5, 4], "9:16": [9, 16], "16:9": [16, 9], "2:3": [2, 3], "3:2": [3, 2] };
+  if (/^alibaba\/qwen-image/.test(ap)) {
+    body.prompt = job.prompt;
+    const qu = (refUrls || []).concat(imageUrl ? [imageUrl] : []);
+    if (qu.length) body.imageUrls = qu;
+    const qs = QWEN_SIZE[job.ratio]; if (qs) body.size = /^(2k|4k)$/i.test(job.resolution || "") ? qs[1] : qs[0];
+    return body;
+  }
+  if (/^alibaba\/wan-2\.7\/text-to-image/.test(ap)) {
+    body.prompt = job.prompt;
+    const pr = WAN_WH[job.ratio];
+    if (pr) { const base = /^4k$/i.test(job.resolution || "") ? 2048 : /^2k$/i.test(job.resolution || "") ? 1536 : 1024; let w, h; if (pr[0] >= pr[1]) { w = base; h = Math.round(base * pr[1] / pr[0]); } else { h = base; w = Math.round(base * pr[0] / pr[1]); } body.width = Math.max(512, Math.min(4096, w)); body.height = Math.max(512, Math.min(4096, h)); }
     return body;
   }
   body.prompt = job.prompt;
